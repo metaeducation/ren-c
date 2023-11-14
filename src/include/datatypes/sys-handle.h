@@ -59,14 +59,14 @@ inline static NoQuote(Cell(const*)) VAL_HANDLE_CANON(NoQuote(Cell(const*)) v) {
     assert(CELL_HEART_UNCHECKED(v) == REB_HANDLE);
     if (Not_Cell_Flag_Unchecked(v, FIRST_IS_NODE))
         return v;  // changing handle instance won't be seen by copies
-    return ARR_SINGLE(VAL_HANDLE_SINGULAR(v));  // has shared node
+    return Array_Single(VAL_HANDLE_SINGULAR(v));  // has shared node
 }
 
 inline static Cell(*) mutable_VAL_HANDLE_CANON(Cell(*) v) {
     assert(CELL_HEART_UNCHECKED(v) == REB_HANDLE);
     if (Not_Cell_Flag_Unchecked(v, FIRST_IS_NODE))
         return v;  // changing handle instance won't be seen by copies
-    return ARR_SINGLE(VAL_HANDLE_SINGULAR(v));  // has shared node
+    return Array_Single(VAL_HANDLE_SINGULAR(v));  // has shared node
 }
 
 inline static uintptr_t VAL_HANDLE_LEN(NoQuote(Cell(const*)) v) {
@@ -152,7 +152,7 @@ inline static void Init_Handle_Managed_Common(
     Array(*) singular = Alloc_Singular(FLAG_FLAVOR(HANDLE) | NODE_FLAG_MANAGED);
     singular->misc.cleaner = cleaner;
 
-    Cell(*) single = ARR_SINGLE(singular);
+    Cell(*) single = Array_Single(singular);
     Reset_Unquoted_Header_Untracked(
         single,
         FLAG_HEART_BYTE(REB_HANDLE) | CELL_FLAG_FIRST_IS_NODE
@@ -186,7 +186,7 @@ inline static REBVAL *Init_Handle_Cdata_Managed(
     // Leave the non-singular cfunc as trash; clients should not be using
 
     Array(*) a = VAL_HANDLE_SINGULAR(out);
-    VAL_HANDLE_CDATA_P(ARR_SINGLE(a)) = cdata;
+    VAL_HANDLE_CDATA_P(Array_Single(a)) = cdata;
     return cast(REBVAL*, out);
 }
 
@@ -200,6 +200,6 @@ inline static REBVAL *Init_Handle_Cdata_Managed_Cfunc(
     // Leave the non-singular cfunc as trash; clients should not be using
 
     Array(*) a = VAL_HANDLE_SINGULAR(out);
-    VAL_HANDLE_CFUNC_P(ARR_SINGLE(a)) = cfunc;
+    VAL_HANDLE_CFUNC_P(Array_Single(a)) = cfunc;
     return cast(REBVAL*, out);
 }

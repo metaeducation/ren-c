@@ -40,7 +40,7 @@ Context(*) Alloc_Context_Core(enum Reb_Kind kind, REBLEN capacity, Flags flags)
         SERIES_MASK_KEYLIST | NODE_FLAG_MANAGED  // always shareable
     );
     mutable_LINK(Ancestor, keylist) = keylist;  // default to keylist itself
-    assert(SER_USED(keylist) == 0);
+    assert(Series_Used(keylist) == 0);
 
     Array(*) varlist = Make_Array_Core(
         capacity + 1,  // size + room for rootvar (array terminator implicit)
@@ -81,7 +81,7 @@ bool Expand_Context_Keylist_Core(Context(*) context, REBLEN delta)
         Keylist(*) copy = cast(KeylistT*, Copy_Series_At_Len_Extra(
             keylist,
             0,
-            SER_USED(keylist),
+            Series_Used(keylist),
             delta,
             SERIES_MASK_KEYLIST
         ));
@@ -215,7 +215,7 @@ static REBVAR* Append_Context_Core(
             INIT_VAL_WORD_INDEX(unwrap(any_word), INDEX_ATTACHED);
         }
 
-        return cast(REBVAR*, ARR_SINGLE(patch));
+        return cast(REBVAR*, Array_Single(patch));
     }
 
     Keylist(*) keylist = CTX_KEYLIST(context);
@@ -227,14 +227,14 @@ static REBVAR* Append_Context_Core(
     // Review why this is expanding when the callers are expanding.  Should
     // also check that redundant keys aren't getting added here.
     //
-    EXPAND_SERIES_TAIL(keylist, 1);  // updates the used count
-    Init_Key(SER_LAST(REBKEY, keylist), symbol);
+    Expand_Series_Tail(keylist, 1);  // updates the used count
+    Init_Key(Series_Last(REBKEY, keylist), symbol);
 
     // Add a slot to the var list
     //
-    EXPAND_SERIES_TAIL(CTX_VARLIST(context), 1);
+    Expand_Series_Tail(CTX_VARLIST(context), 1);
 
-    Cell(*) value = Erase_Cell(ARR_LAST(CTX_VARLIST(context)));
+    Cell(*) value = Erase_Cell(Array_Last(CTX_VARLIST(context)));
 
     if (any_word) {
         REBLEN len = CTX_LEN(context);  // length we just bumped
@@ -440,11 +440,11 @@ Keylist(*) Collect_Keylist_Managed(
         );
 
         StackValue(*) word = Data_Stack_At(cl->stack_base) + 1;
-        REBKEY* key = SER_HEAD(REBKEY, keylist);
+        REBKEY* key = Series_Head(REBKEY, keylist);
         for (; word != TOP + 1; ++word, ++key)
             Init_Key(key, VAL_WORD_SYMBOL(word));
 
-        SET_SERIES_USED(keylist, num_collected);  // no terminator
+        Set_Series_Used(keylist, num_collected);  // no terminator
     }
 
     Collect_End(cl);
@@ -581,8 +581,8 @@ void Rebind_Context_Deep(
     Context(*) dest,
     Option(struct Reb_Binder*) binder
 ){
-    Cell(const*) tail = ARR_TAIL(CTX_VARLIST(dest));
-    Cell(*) head = ARR_HEAD(CTX_VARLIST(dest));
+    Cell(const*) tail = Array_Tail(CTX_VARLIST(dest));
+    Cell(*) head = Array_Head(CTX_VARLIST(dest));
     Rebind_Values_Deep(head, tail, source, dest, binder);
 }
 
@@ -612,13 +612,13 @@ Context(*) Make_Context_Detect_Managed(
         COLLECT_ONLY_SET_WORDS
     );
 
-    REBLEN len = SER_USED(keylist);
+    REBLEN len = Series_Used(keylist);
     Array(*) varlist = Make_Array_Core(
         1 + len,  // needs room for rootvar
         SERIES_MASK_VARLIST
             | NODE_FLAG_MANAGED // Note: Rebind below requires managed context
     );
-    SET_SERIES_LEN(varlist, 1 + len);
+    Set_Series_Len(varlist, 1 + len);
     mutable_MISC(VarlistAdjunct, varlist) = nullptr;
     mutable_LINK(Patches, varlist) = nullptr;  // start w/no virtual binds
 
@@ -648,7 +648,7 @@ Context(*) Make_Context_Detect_Managed(
         }
     }
 
-    Value(*) var = VAL(ARR_HEAD(varlist));
+    Value(*) var = VAL(Array_Head(varlist));
     INIT_VAL_CONTEXT_ROOTVAR(var, kind, varlist);
 
     ++var;
@@ -930,8 +930,8 @@ void Assert_Context_Core(Context(*) c)
 
     Keylist(*) keylist = CTX_KEYLIST(c);
 
-    REBLEN keys_len = SER_USED(keylist);
-    REBLEN vars_len = ARR_LEN(varlist);
+    REBLEN keys_len = Series_Used(keylist);
+    REBLEN vars_len = Array_Len(varlist);
 
     if (vars_len < 1)
         panic (varlist);

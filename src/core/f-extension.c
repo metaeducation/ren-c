@@ -167,15 +167,15 @@ DECLARE_NATIVE(load_extension)
         rebRelease(lib_api);  // should we hang onto lib to pass along?
     }
 
-    assert(ARR_LEN(collated) == IDX_COLLATOR_MAX);
+    assert(Array_Len(collated) == IDX_COLLATOR_MAX);
     PUSH_GC_GUARD(collated);
 
     Cell(const*) script_compressed
-        = ARR_AT(collated, IDX_COLLATOR_SCRIPT);
+        = Array_At(collated, IDX_COLLATOR_SCRIPT);
     REBLEN script_num_codepoints
-        = VAL_UINT32(ARR_AT(collated, IDX_COLLATOR_SCRIPT_NUM_CODEPOINTS));
+        = VAL_UINT32(Array_At(collated, IDX_COLLATOR_SCRIPT_NUM_CODEPOINTS));
     Cell(const*) cfuncs_handle
-        = ARR_AT(collated, IDX_COLLATOR_CFUNCS);
+        = Array_At(collated, IDX_COLLATOR_CFUNCS);
 
     REBLEN num_natives = VAL_HANDLE_LEN(cfuncs_handle);
     CFUNC* *cfuncs = VAL_HANDLE_POINTER(
@@ -220,12 +220,12 @@ DECLARE_NATIVE(load_extension)
     // this *should* make no difference.
     //
     if (SPORADICALLY(2)) {
-        Binary(*) bin = VAL_BINARY_ENSURE_MUTABLE(script);
-        mutable_SER_FLAVOR(bin) = FLAVOR_STRING;
-        TERM_STR_LEN_SIZE(
+        Binary(*) bin = VAL_BINARY_Ensure_Mutable(script);
+        mutable_Series_Flavor(bin) = FLAVOR_STRING;
+        Term_String_Len_Size(
             cast(String(*), bin),  // legal for tweaking cached data
             script_num_codepoints,
-            BIN_LEN(bin)
+            Binary_Len(bin)
         );
         mutable_LINK(Bookmarks, m_cast(Binary(*), bin)) = nullptr;
 

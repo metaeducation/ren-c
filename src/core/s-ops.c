@@ -124,16 +124,16 @@ void Trim_Tail(REB_MOLD *mo, Byte ascii)
 {
     assert(ascii < 0x80);  // more work needed for multi-byte characters
 
-    Length len = STR_LEN(mo->series);
-    Size size = STR_SIZE(mo->series);
+    Length len = String_Len(mo->series);
+    Size size = String_Size(mo->series);
 
     for (; size > 0; --size, --len) {
-        Byte b = *BIN_AT(mo->series, size - 1);
+        Byte b = *Binary_At(mo->series, size - 1);
         if (b != ascii)
             break;
     }
 
-    TERM_STR_LEN_SIZE(mo->series, len, size);
+    Term_String_Len_Size(mo->series, len, size);
 }
 
 
@@ -173,7 +173,7 @@ void Change_Case(
     // be possible, only contractions (is that true?)  Review when UTF-8
     // Everywhere is more mature to the point this is worth worrying about.
     //
-    Utf8(*) up = VAL_STRING_AT_ENSURE_MUTABLE(val);
+    Utf8(*) up = VAL_STRING_AT_Ensure_Mutable(val);
     Utf8(*) dp;
     if (upper) {
         REBLEN n;
@@ -260,7 +260,7 @@ Array(*) Split_Lines(const REBVAL *str)
     // If there's any remainder we pushed in the buffer, consider the end of
     // string to be an implicit line-break
 
-    if (STR_SIZE(mo->series) == mo->base.size)
+    if (String_Size(mo->series) == mo->base.size)
         Drop_Mold(mo);
     else {
         Init_Text(PUSH(), Pop_Molded_String(mo));

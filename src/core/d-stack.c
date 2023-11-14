@@ -41,8 +41,8 @@
 //
 void Collapsify_Array(Array(*) array, REBSPC *specifier, REBLEN limit)
 {
-    Cell(const*) tail = ARR_TAIL(array);
-    Cell(*) item = ARR_HEAD(array);
+    Cell(const*) tail = Array_Tail(array);
+    Cell(*) item = Array_Head(array);
     for (; item != tail; ++item) {
         if (ANY_ARRAY(item) and VAL_LEN_AT(item) > limit) {
             REBSPC *derived = Derive_Specifier(specifier, item);
@@ -53,7 +53,7 @@ void Collapsify_Array(Array(*) array, REBSPC *specifier, REBLEN limit)
                 limit + 1
             );
 
-            Init_Word(ARR_AT(copy, limit), Canon(ELLIPSIS_1));
+            Init_Word(Array_At(copy, limit), Canon(ELLIPSIS_1));
 
             Collapsify_Array(
                 copy,
@@ -121,8 +121,8 @@ REBVAL *Init_Near_For_Level(Cell(*) out, Level(*) L)
         start = 0;
 
     REBLEN count = 0;
-    Cell(const*) tail = ARR_TAIL(Level_Array(L));
-    Cell(const*) item = ARR_AT(Level_Array(L), start);
+    Cell(const*) tail = Array_Tail(Level_Array(L));
+    Cell(const*) item = Array_At(Level_Array(L), start);
     for (; item != tail and count < 6; ++item, ++count) {
         assert(not Is_Void(item));  // can't be in arrays, API won't splice
         assert(not Is_Isotope(item));  // can't be in arrays, API won't splice

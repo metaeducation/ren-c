@@ -39,7 +39,7 @@ Array(*) Copy_Array_At_Extra_Shallow(
     REBLEN extra,
     Flags flags
 ){
-    REBLEN len = ARR_LEN(original);
+    REBLEN len = Array_Len(original);
 
     if (index > len)
         return Make_Array_For_Copy(extra, flags, original);
@@ -47,10 +47,10 @@ Array(*) Copy_Array_At_Extra_Shallow(
     len -= index;
 
     Array(*) copy = Make_Array_For_Copy(len + extra, flags, original);
-    SET_SERIES_LEN(copy, len);
+    Set_Series_Len(copy, len);
 
-    Cell(const*) src = ARR_AT(original, index);
-    Cell(*) dest = ARR_HEAD(copy);
+    Cell(const*) src = Array_At(original, index);
+    Cell(*) dest = Array_Head(copy);
     REBLEN count = 0;
     for (; count < len; ++count, ++dest, ++src)
         Derelativize(dest, src, specifier);
@@ -73,18 +73,18 @@ Array(*) Copy_Array_At_Max_Shallow(
 ){
     const Flags flags = 0;
 
-    if (index > ARR_LEN(original))
+    if (index > Array_Len(original))
         return Make_Array_For_Copy(0, flags, original);
 
-    if (index + max > ARR_LEN(original))
-        max = ARR_LEN(original) - index;
+    if (index + max > Array_Len(original))
+        max = Array_Len(original) - index;
 
     Array(*) copy = Make_Array_For_Copy(max, flags, original);
-    SET_SERIES_LEN(copy, max);
+    Set_Series_Len(copy, max);
 
     REBLEN count = 0;
-    Cell(const*) src = ARR_AT(original, index);
-    Cell(*) dest = ARR_HEAD(copy);
+    Cell(const*) src = Array_At(original, index);
+    Cell(*) dest = Array_Head(copy);
     for (; count < max; ++count, ++src, ++dest)
         Derelativize(dest, src, specifier);
 
@@ -106,11 +106,11 @@ Array(*) Copy_Values_Len_Extra_Shallow_Core(
     Flags flags
 ){
     Array(*) a = Make_Array_Core(len + extra, flags);
-    SET_SERIES_LEN(a, len);
+    Set_Series_Len(a, len);
 
     REBLEN count = 0;
     Cell(const*) src = head;
-    Cell(*) dest = ARR_HEAD(a);
+    Cell(*) dest = Array_Head(a);
     for (; count < len; ++count, ++src, ++dest) {
         if (
             Is_Isotope(src)
@@ -214,8 +214,8 @@ void Clonify(
         // copied series and "clonify" the values in it.
         //
         if (would_need_deep and (deep_types & FLAGIT_KIND(heart))) {
-            Cell(const*) sub_tail = ARR_TAIL(ARR(series));
-            Cell(*) sub = ARR_HEAD(ARR(series));
+            Cell(const*) sub_tail = Array_Tail(ARR(series));
+            Cell(*) sub = Array_Head(ARR(series));
             for (; sub != sub_tail; ++sub)
                 Clonify(sub, flags, deep_types);
         }
@@ -251,10 +251,10 @@ Array(*) Copy_Array_Core_Managed(
     if (index > tail) // !!! should this be asserted?
         index = tail;
 
-    if (index > ARR_LEN(original)) // !!! should this be asserted?
+    if (index > Array_Len(original)) // !!! should this be asserted?
         return Make_Array_Core(extra, flags | NODE_FLAG_MANAGED);
 
-    assert(index <= tail and tail <= ARR_LEN(original));
+    assert(index <= tail and tail <= Array_Len(original));
 
     REBLEN len = tail - index;
 
@@ -265,10 +265,10 @@ Array(*) Copy_Array_Core_Managed(
         flags | NODE_FLAG_MANAGED,
         original
     );
-    SET_SERIES_LEN(copy, len);
+    Set_Series_Len(copy, len);
 
-    Cell(const*) src = ARR_AT(original, index);
-    Cell(*) dest = ARR_HEAD(copy);
+    Cell(const*) src = Array_At(original, index);
+    Cell(*) dest = Array_Head(copy);
     REBLEN count = 0;
     for (; count < len; ++count, ++dest, ++src) {
         Clonify(
@@ -306,10 +306,10 @@ Array(*) Copy_Rerelativized_Array_Deep_Managed(
 ){
     const Flags flags = NODE_FLAG_MANAGED;
 
-    Array(*) copy = Make_Array_For_Copy(ARR_LEN(original), flags, original);
-    Cell(const*) src_tail = ARR_TAIL(original);
-    Cell(const*) src = ARR_HEAD(original);
-    Cell(*) dest = ARR_HEAD(copy);
+    Array(*) copy = Make_Array_For_Copy(Array_Len(original), flags, original);
+    Cell(const*) src_tail = Array_Tail(original);
+    Cell(const*) src = Array_Head(original);
+    Cell(*) dest = Array_Head(copy);
 
     for (; src != src_tail; ++src, ++dest) {
         if (not IS_RELATIVE(src)) {
@@ -342,7 +342,7 @@ Array(*) Copy_Rerelativized_Array_Deep_Managed(
 
     }
 
-    SET_SERIES_LEN(copy, ARR_LEN(original));
+    Set_Series_Len(copy, Array_Len(original));
 
     return copy;
 }
@@ -360,9 +360,9 @@ Array(*) Copy_Rerelativized_Array_Deep_Managed(
 //
 Cell(*) Alloc_Tail_Array(Array(*) a)
 {
-    EXPAND_SERIES_TAIL(a, 1);
-    SET_SERIES_LEN(a, ARR_LEN(a));
-    Cell(*) last = ARR_LAST(a);
+    Expand_Series_Tail(a, 1);
+    Set_Series_Len(a, Array_Len(a));
+    Cell(*) last = Array_Last(a);
 
   #if DEBUG_ERASE_ALLOC_TAIL_CELLS
     if (not Is_Cell_Erased(last)) {
@@ -385,8 +385,8 @@ void Uncolor_Array(Array(const*) a)
 
     Flip_Series_To_White(a);
 
-    Cell(const*) tail = ARR_TAIL(a);
-    Cell(const*) v = ARR_HEAD(a);
+    Cell(const*) tail = Array_Tail(a);
+    Cell(const*) v = Array_Head(a);
     for (; v != tail; ++v) {
         if (ANY_PATH(v) or ANY_ARRAY(v) or IS_MAP(v) or ANY_CONTEXT(v))
             Uncolor(v);

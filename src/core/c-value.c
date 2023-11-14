@@ -59,7 +59,7 @@ Node* Dump_Value_Debug(Cell(const*) v)
     printf("kind_byte=%d\n", cast(int, VAL_TYPE_UNCHECKED(v)));
 
     enum Reb_Kind heart = CELL_HEART(VAL_UNESCAPED(v));
-    const char *type = STR_UTF8(Canon_Symbol(SYM_FROM_KIND(heart)));
+    const char *type = String_UTF8(Canon_Symbol(SYM_FROM_KIND(heart)));
     printf("cell_heart=%s\n", type);
     fflush(stdout);
 
@@ -140,7 +140,7 @@ inline static void Probe_Molded_Value(const REBVAL *v)
     Push_Mold(mo);
     Mold_Value(mo, v);
 
-    printf("%s\n", cast(const char*, STR_AT(mo->series, mo->base.index)));
+    printf("%s\n", cast(const char*, String_At(mo->series, mo->base.index)));
     fflush(stdout);
 
     Drop_Mold(mo);
@@ -248,8 +248,8 @@ void* Probe_Core_Debug(
 
   blockscope {
     Series(*) s = m_cast(SeriesT*, cast(const SeriesT* , p));
-    assert(not IS_FREE_NODE(s));  // Detect should have caught, above
-    Flavor flavor = SER_FLAVOR(s);
+    assert(not Is_Free_Node(s));  // Detect should have caught, above
+    Flavor flavor = Series_Flavor(s);
     ASSERT_SERIES(s); // if corrupt, gives better info than a print crash
 
     switch (flavor) {
@@ -323,10 +323,10 @@ void* Probe_Core_Debug(
     //=//// SERIES WITH ELEMENTS sizeof(void*) /////////////////////////////=//
 
       case FLAVOR_KEYLIST: {
-        assert(SER_WIDE(s) == sizeof(REBKEY));  // ^-- or is byte size
+        assert(Series_Wide(s) == sizeof(REBKEY));  // ^-- or is byte size
         Probe_Print_Helper(p, expr, "Keylist Series", file, line);
-        const REBKEY *tail = SER_TAIL(REBKEY, s);
-        const REBKEY *key = SER_HEAD(REBKEY, s);
+        const REBKEY *tail = Series_Tail(REBKEY, s);
+        const REBKEY *key = Series_Head(REBKEY, s);
         Append_Ascii(mo->series, "<< ");
         for (; key != tail; ++key) {
             Mold_Text_Series_At(mo, KEY_SYMBOL(key), 0);
@@ -373,9 +373,9 @@ void* Probe_Core_Debug(
         Binary(*) bin = BIN(s);
         Probe_Print_Helper(p, expr, "Byte-Size Series", file, line);
 
-        const bool brk = (BIN_LEN(bin) > 32);  // !!! duplicates MF_Binary code
+        const bool brk = (Binary_Len(bin) > 32);  // !!! duplicates MF_Binary code
         Append_Ascii(mo->series, "#{");
-        Form_Base16(mo, BIN_HEAD(bin), BIN_LEN(bin), brk);
+        Form_Base16(mo, Binary_Head(bin), Binary_Len(bin), brk);
         Append_Ascii(mo->series, "}");
         break; }
 
@@ -402,15 +402,15 @@ void* Probe_Core_Debug(
     #endif
 
       default:
-        Probe_Print_Helper(p, expr, "!!! Unknown SER_FLAVOR() !!!", file, line);
+        Probe_Print_Helper(p, expr, "!!! Unknown Series_Flavor() !!!", file, line);
         break;
     }
   }
 
   cleanup:
 
-    if (mo->base.size != STR_SIZE(mo->series))
-        printf("%s\n", cast(const char*, STR_AT(mo->series, mo->base.index)));
+    if (mo->base.size != String_Size(mo->series))
+        printf("%s\n", cast(const char*, String_At(mo->series, mo->base.index)));
     fflush(stdout);
 
     Drop_Mold(mo);
@@ -448,7 +448,7 @@ void Where_Core_Debug(Level(*) L) {
         Mold_Array_At(mo, FEED_ARRAY(L->feed), before_index, "[]");
         Throttle_Mold(mo);
         printf("Where(Before):\n");
-        printf("%s\n\n", BIN_AT(mo->series, mo->base.size));
+        printf("%s\n\n", Binary_At(mo->series, mo->base.size));
         Drop_Mold(mo);
     }
 
@@ -459,7 +459,7 @@ void Where_Core_Debug(Level(*) L) {
     Mold_Array_At(mo, FEED_ARRAY(L->feed), index, "[]");
     Throttle_Mold(mo);
     printf("Where(At):\n");
-    printf("%s\n\n", BIN_AT(mo->series, mo->base.size));
+    printf("%s\n\n", Binary_At(mo->series, mo->base.size));
     Drop_Mold(mo);
 }
 

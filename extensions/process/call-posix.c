@@ -143,9 +143,9 @@ Bounce Call_Core(Level(*) level_) {
     // they are not read-only, before we try appending to them.
     //
     if (IS_TEXT(ARG(output)) or IS_BINARY(ARG(output)))
-        ENSURE_MUTABLE(ARG(output));
+        Ensure_Mutable(ARG(output));
     if (IS_TEXT(ARG(error)) or IS_BINARY(ARG(error)))
-        ENSURE_MUTABLE(ARG(error));
+        Ensure_Mutable(ARG(error));
 
     char *inbuf;
     size_t inbuf_size;

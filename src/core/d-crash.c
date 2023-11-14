@@ -237,7 +237,7 @@ DECLARE_NATIVE(panic)
     }
     else {  // interpret reason as a message
       if (Is_Word_Isotope(v)) {
-            p = STR_UTF8(VAL_WORD_SYMBOL(v));
+            p = String_UTF8(VAL_WORD_SYMBOL(v));
         }
         else if (IS_TEXT(v)) {
             p = VAL_UTF8_AT(v);

@@ -147,9 +147,9 @@ DECLARE_NATIVE(augment_p)  // see extended definition AUGMENT in %base-defs.r
     // with patching the augmentee's action information (phase and binding)
     // into the paramlist...and reusing the Specializer_Dispatcher.
 
-    assert(Is_Word_Isotope_With_Id(ARR_HEAD(paramlist), SYM_ROOTVAR));
+    assert(Is_Word_Isotope_With_Id(Array_Head(paramlist), SYM_ROOTVAR));
     INIT_VAL_FRAME_ROOTVAR(
-        ARR_HEAD(paramlist),
+        Array_Head(paramlist),
         paramlist,
         ACT_IDENTITY(VAL_ACTION(ARG(original))),
         VAL_FRAME_BINDING(ARG(original))

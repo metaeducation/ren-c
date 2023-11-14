@@ -525,7 +525,7 @@ Node* Try_Find_Containing_Node_Debug(const void *p)
             }
 
             if (p < cast(void*,
-                s->content.dynamic.data - (SER_WIDE(s) * SER_BIAS(s))
+                s->content.dynamic.data - (Series_Wide(s) * Series_Bias(s))
             )) {
                 // The memory lies before the series data allocation.
                 //
@@ -533,7 +533,7 @@ Node* Try_Find_Containing_Node_Debug(const void *p)
             }
 
             if (p >= cast(void*, s->content.dynamic.data
-                + (SER_WIDE(s) * SER_REST(s))
+                + (Series_Wide(s) * Series_Rest(s))
             )) {
                 // The memory lies after the series capacity.
                 //
@@ -555,7 +555,7 @@ Node* Try_Find_Containing_Node_Debug(const void *p)
 
             if (p >= cast(void*,
                 s->content.dynamic.data
-                + (SER_WIDE(s) * SER_USED(s))
+                + (Series_Wide(s) * Series_Used(s))
             )) {
                 printf("Pointer found in freed tail capacity of series\n");
                 fflush(stdout);
@@ -725,22 +725,22 @@ void Free_Unbiased_Series_Data(char *unbiased, Size total)
 //
 void Expand_Series(Series(*) s, REBLEN index, REBLEN delta)
 {
-    ASSERT_SERIES_TERM_IF_NEEDED(s);
+    Assert_Series_Term_If_Needed(s);
 
-    assert(index <= SER_USED(s));
+    assert(index <= Series_Used(s));
     if (delta & 0x80000000)
         fail (Error_Index_Out_Of_Range_Raw()); // 2GB max
 
     if (delta == 0)
         return;
 
-    REBLEN used_old = SER_USED(s);
+    REBLEN used_old = Series_Used(s);
 
-    Byte wide = SER_WIDE(s);
+    Byte wide = Series_Wide(s);
 
     const bool was_dynamic = Get_Series_Flag(s, DYNAMIC);
 
-    if (was_dynamic and index == 0 and SER_BIAS(s) >= delta) {
+    if (was_dynamic and index == 0 and Series_Bias(s) >= delta) {
 
     //=//// HEAD INSERTION OPTIMIZATION ///////////////////////////////////=//
 
@@ -750,7 +750,7 @@ void Expand_Series(Series(*) s, REBLEN index, REBLEN delta)
         SER_SUB_BIAS(s, delta);
 
       #if !defined(NDEBUG)
-        if (IS_SER_ARRAY(s)) {
+        if (Is_Series_Array(s)) {
             //
             // When the bias region was marked, it was made "unsettable" if
             // this was a debug build.  Now that the memory is included in
@@ -761,10 +761,10 @@ void Expand_Series(Series(*) s, REBLEN index, REBLEN delta)
             // but when it is this will be useful.
             //
             for (index = 0; index < delta; index++)
-                Erase_Cell(ARR_AT(ARR(s), index));
+                Erase_Cell(Array_At(ARR(s), index));
         }
       #endif
-        ASSERT_SERIES_TERM_IF_NEEDED(s);
+        Assert_Series_Term_If_Needed(s);
         return;
     }
 
@@ -772,10 +772,10 @@ void Expand_Series(Series(*) s, REBLEN index, REBLEN delta)
 
     REBLEN start = index * wide;
     REBLEN extra = delta * wide;
-    REBLEN size = SER_USED(s) * wide;
+    REBLEN size = Series_Used(s) * wide;
 
     // + wide for terminator
-    if ((size + extra + wide) <= SER_REST(s) * SER_WIDE(s)) {
+    if ((size + extra + wide) <= Series_Rest(s) * Series_Wide(s)) {
         //
         // No expansion was needed.  Slide data down if necessary.  Note that
         // the tail is not moved and instead the termination is done
@@ -784,8 +784,8 @@ void Expand_Series(Series(*) s, REBLEN index, REBLEN delta)
 
         UNPOISON_SERIES_TAIL(s);
         memmove(
-            SER_DATA(s) + start + extra,
-            SER_DATA(s) + start,
+            Series_Data(s) + start + extra,
+            Series_Data(s) + start,
             size - start
         );
         Set_Series_Used_Internal(s, used_old + delta);
@@ -793,12 +793,12 @@ void Expand_Series(Series(*) s, REBLEN index, REBLEN delta)
 
         assert(
             not was_dynamic or (
-                SER_TOTAL(s) > ((SER_USED(s) + SER_BIAS(s)) * wide)
+                SER_TOTAL(s) > ((Series_Used(s) + Series_Bias(s)) * wide)
             )
         );
 
       #if !defined(NDEBUG)
-        if (IS_SER_ARRAY(s)) {
+        if (Is_Series_Array(s)) {
             //
             // The opened up area needs to be set to "settable" trash in the
             // debug build.  This takes care of making "unsettable" values
@@ -808,7 +808,7 @@ void Expand_Series(Series(*) s, REBLEN index, REBLEN delta)
             //
             while (delta != 0) {
                 --delta;
-                Erase_Cell(ARR_AT(ARR(s), index + delta));
+                Erase_Cell(Array_At(ARR(s), index + delta));
             }
         }
       #endif
@@ -840,7 +840,7 @@ void Expand_Series(Series(*) s, REBLEN index, REBLEN delta)
     REBLEN n_found;
     for (n_found = 0; n_found < MAX_EXPAND_LIST; n_found++) {
         if (Prior_Expand[n_found] == s) {
-            x = SER_USED(s) + delta + 1; // Double the size
+            x = Series_Used(s) + delta + 1; // Double the size
             break;
         }
         if (!Prior_Expand[n_found])
@@ -866,7 +866,7 @@ void Expand_Series(Series(*) s, REBLEN index, REBLEN delta)
     char *data_old;
     if (was_dynamic) {
         data_old = s->content.dynamic.data;
-        bias_old = SER_BIAS(s);
+        bias_old = Series_Bias(s);
         size_old = SER_TOTAL(s);
     }
     else {
@@ -883,7 +883,7 @@ void Expand_Series(Series(*) s, REBLEN index, REBLEN delta)
         fail (Error_No_Memory((used_old + delta + x) * wide));
 
     assert(Get_Series_Flag(s, DYNAMIC));
-    if (IS_SER_ARRAY(s))
+    if (Is_Series_Array(s))
         Prep_Array(ARR(s), 0); // capacity doesn't matter it will prep
 
     // If necessary, add series to the recently expanded list
@@ -908,7 +908,7 @@ void Expand_Series(Series(*) s, REBLEN index, REBLEN delta)
         //
         // We have to de-bias the data pointer before we can free it.
         //
-        assert(SER_BIAS(s) == 0); // should be reset
+        assert(Series_Bias(s) == 0); // should be reset
         Free_Unbiased_Series_Data(data_old - (wide * bias_old), size_old);
     }
 
@@ -917,7 +917,7 @@ void Expand_Series(Series(*) s, REBLEN index, REBLEN delta)
   #endif
 
     assert(Not_Series_Flag(s, MARKED));
-    TERM_SERIES_IF_NECESSARY(s);  // code will not copy terminator over
+    Term_Series_If_Necessary(s);  // code will not copy terminator over
 }
 
 
@@ -939,8 +939,8 @@ void Swap_Series_Content(Series(*) a, Series(*) b)
     // non-array or vice versa.  Cases haven't come up for swapping series
     // of varying width, either.
     //
-    assert(IS_SER_ARRAY(a) == IS_SER_ARRAY(b));
-    assert(SER_WIDE(a) == SER_WIDE(b));
+    assert(Is_Series_Array(a) == Is_Series_Array(b));
+    assert(Series_Wide(a) == Series_Wide(b));
 
     bool a_dynamic = Get_Series_Flag(a, DYNAMIC);
     if (Get_Series_Flag(b, DYNAMIC))
@@ -1018,8 +1018,8 @@ void Remake_Series(Series(*) s, REBLEN units, Flags flags)
 
     bool preserve = did (flags & NODE_FLAG_NODE);
 
-    REBLEN used_old = SER_USED(s);
-    Byte wide = SER_WIDE(s);
+    REBLEN used_old = Series_Used(s);
+    Byte wide = Series_Wide(s);
 
     assert(Not_Series_Flag(s, FIXED_SIZE));
 
@@ -1037,7 +1037,7 @@ void Remake_Series(Series(*) s, REBLEN units, Flags flags)
     if (was_dynamic) {
         assert(s->content.dynamic.data != NULL);
         data_old = s->content.dynamic.data;
-        bias_old = SER_BIAS(s);
+        bias_old = Series_Bias(s);
         size_old = SER_TOTAL(s);
     }
     else {
@@ -1059,7 +1059,7 @@ void Remake_Series(Series(*) s, REBLEN units, Flags flags)
         fail (Error_No_Memory((units + 1) * wide));
     }
     assert(Get_Series_Flag(s, DYNAMIC));
-    if (IS_SER_ARRAY(s))
+    if (Is_Series_Array(s))
         Prep_Array(ARR(s), 0); // capacity doesn't matter, it will prep
 
     if (preserve) {
@@ -1077,9 +1077,9 @@ void Remake_Series(Series(*) s, REBLEN units, Flags flags)
         s->content.dynamic.used = 0;
 
   #if DEBUG_UTF8_EVERYWHERE
-    if (IS_NONSYMBOL_STRING(s)) {
+    if (Is_NonSymbol_String(s)) {
         s->misc.length = 0xDECAFBAD;
-        TOUCH_STUB_IF_DEBUG(s);
+        Touch_Stub_If_Debug(s);
     }
   #endif
 
@@ -1095,7 +1095,7 @@ void Decay_Series(Series(*) s)
 {
     assert(Not_Series_Flag(s, INACCESSIBLE));
 
-    switch (SER_FLAVOR(s)) {
+    switch (Series_Flavor(s)) {
       case FLAVOR_STRING:
         Free_Bookmarks_Maybe_Null(STR(s));
         break;
@@ -1132,7 +1132,7 @@ void Decay_Series(Series(*) s)
         break;
 
       case FLAVOR_HANDLE: {
-        Cell(*) v = ARR_SINGLE(ARR(s));
+        Cell(*) v = Array_Single(ARR(s));
         assert(CELL_HEART_UNCHECKED(v) == REB_HANDLE);
 
         // Some handles use the managed form just because they want changes to
@@ -1154,9 +1154,9 @@ void Decay_Series(Series(*) s)
     }
 
     if (Get_Series_Flag(s, DYNAMIC)) {
-        Byte wide = SER_WIDE(s);
-        REBLEN bias = SER_BIAS(s);
-        REBLEN total = (bias + SER_REST(s)) * wide;
+        Byte wide = Series_Wide(s);
+        REBLEN bias = Series_Bias(s);
+        REBLEN total = (bias + Series_Rest(s)) * wide;
         char *unbiased = s->content.dynamic.data - (wide * bias);
 
         // !!! Contexts and actions keep their archetypes, for now, in the
@@ -1166,7 +1166,7 @@ void Decay_Series(Series(*) s)
         // possibility exists for the other array with a "canon" [0]
         //
         if (IS_VARLIST(s) or IS_DETAILS(s))
-            s->content.fixed.cells[0] = *ARR_HEAD(ARR(s));
+            s->content.fixed.cells[0] = *Array_Head(ARR(s));
 
         Free_Unbiased_Series_Data(unbiased, total);
 
@@ -1197,7 +1197,7 @@ void Decay_Series(Series(*) s)
 void GC_Kill_Series(Series(*) s)
 {
   #if !defined(NDEBUG)
-    if (IS_FREE_NODE(s)) {
+    if (Is_Free_Node(s)) {
         printf("Freeing already freed node.\n");
         panic (s);
     }
@@ -1207,15 +1207,15 @@ void GC_Kill_Series(Series(*) s)
     // freed it.  If you need to know the tick where it was allocated, then
     // comment this out so it remains that way.
     //
-    TOUCH_STUB_IF_DEBUG(s);
+    Touch_Stub_If_Debug(s);
 
     if (Not_Series_Flag(s, INACCESSIBLE))
         Decay_Series(s);
 
   #if !defined(NDEBUG)
-    FREETRASH_POINTER_IF_DEBUG(s->info.node);
+    FreeTrash_Pointer_If_Debug(s->info.node);
     // The spot LINK occupies will be used by Free_Pooled() to link the freelist
-    FREETRASH_POINTER_IF_DEBUG(s->misc.trash);
+    FreeTrash_Pointer_If_Debug(s->misc.trash);
   #endif
 
     Free_Pooled(STUB_POOL, s);
@@ -1237,7 +1237,7 @@ void GC_Kill_Series(Series(*) s)
 void Free_Unmanaged_Series(Series(*) s)
 {
   #if !defined(NDEBUG)
-    if (IS_FREE_NODE(s)) {
+    if (Is_Free_Node(s)) {
         printf("Trying to Free_Umanaged_Series() on already freed series\n");
         panic (s); // erroring here helps not conflate with tracking problems
     }
@@ -1326,7 +1326,7 @@ REBLEN Check_Memory_Debug(void)
             if (Not_Series_Flag(s, DYNAMIC))
                 continue; // data lives in the series node itself
 
-            if (SER_REST(s) == 0)
+            if (Series_Rest(s) == 0)
                 panic (s); // zero size allocations not legal
 
             PoolId pool_id = Pool_Id_For_Size(SER_TOTAL(s));
@@ -1402,13 +1402,13 @@ void Dump_All_Series_Of_Width(Size wide)
                 continue;
 
             Series(*) s = SER(cast(void*, stub));
-            if (SER_WIDE(s) == wide) {
+            if (Series_Wide(s) == wide) {
                 ++count;
                 printf(
                     "%3d %4d %4d\n",
                     cast(int, count),
-                    cast(int, SER_USED(s)),
-                    cast(int, SER_REST(s))
+                    cast(int, Series_Used(s)),
+                    cast(int, Series_Rest(s))
                 );
             }
             fflush(stdout);
@@ -1550,15 +1550,15 @@ REBU64 Inspect_Series(bool show)
 
             tot_size += SER_TOTAL_IF_DYNAMIC(s); // else 0
 
-            if (IS_SER_ARRAY(s)) {
+            if (Is_Series_Array(s)) {
                 blks++;
                 blk_size += SER_TOTAL_IF_DYNAMIC(s);
             }
-            else if (SER_WIDE(s) == 1) {
+            else if (Series_Wide(s) == 1) {
                 strs++;
                 str_size += SER_TOTAL_IF_DYNAMIC(s);
             }
-            else if (SER_WIDE(s) != 0) {
+            else if (Series_Wide(s) != 0) {
                 odds++;
                 odd_size += SER_TOTAL_IF_DYNAMIC(s);
             }

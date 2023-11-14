@@ -198,7 +198,7 @@ inline static bool Try_Add_Binder_Index(
         NODE_FLAG_MANAGED | SERIES_FLAG_BLACK | FLAG_FLAVOR(HITCH)
     );
     Clear_Series_Flag(new_hitch, MANAGED);
-    Init_Integer(ARR_SINGLE(new_hitch), index);
+    Init_Integer(Array_Single(new_hitch), index);
     node_MISC(Hitch, new_hitch) = old_hitch;
 
     mutable_MISC(Hitch, s) = new_hitch;
@@ -234,7 +234,7 @@ inline static REBINT Get_Binder_Index_Else_0( // 0 if not present
     //
     if (hitch == s or Not_Series_Flag(hitch, BLACK))
         return 0;
-    return VAL_INT32(ARR_SINGLE(ARR(hitch)));
+    return VAL_INT32(Array_Single(ARR(hitch)));
 }
 
 
@@ -248,7 +248,7 @@ inline static REBINT Remove_Binder_Index_Else_0( // return old value if there
 
     Array(*) hitch = ARR(MISC(Hitch, s));
 
-    REBINT index = VAL_INT32(ARR_SINGLE(hitch));
+    REBINT index = VAL_INT32(Array_Single(hitch));
     mutable_MISC(Hitch, s) = ARR(node_MISC(Hitch, hitch));
     Set_Series_Flag(hitch, MANAGED);  // we didn't manuals track it
     GC_Kill_Series(hitch);
@@ -517,8 +517,8 @@ inline static Option(Series(*)) Get_Word_Container(
             goto skip_miss_patch;
         }
 
-        if (IS_MODULE(ARR_SINGLE(specifier))) {
-            Context(*) mod = VAL_CONTEXT(ARR_SINGLE(specifier));
+        if (IS_MODULE(Array_Single(specifier))) {
+            Context(*) mod = VAL_CONTEXT(Array_Single(specifier));
             REBVAL *var = MOD_VAR(mod, symbol, true);
             if (var) {
                 *index_out = INDEX_PATCHED;
@@ -528,7 +528,7 @@ inline static Option(Series(*)) Get_Word_Container(
         }
 
         Array(*) overbind;  // avoid goto-past-initialization warning
-        overbind = ARR(BINDING(ARR_SINGLE(specifier)));
+        overbind = ARR(BINDING(Array_Single(specifier)));
         if (not IS_VARLIST(overbind)) {  // a patch-formed LET overload
             if (INODE(LetSymbol, overbind) == symbol) {
                 *index_out = 1;
@@ -538,7 +538,7 @@ inline static Option(Series(*)) Get_Word_Container(
         }
 
         if (
-            IS_SET_WORD(ARR_SINGLE(specifier))
+            IS_SET_WORD(Array_Single(specifier))
             and REB_SET_WORD != CELL_HEART(any_word)
         ){
             goto skip_miss_patch;
@@ -553,7 +553,7 @@ inline static Option(Series(*)) Get_Word_Container(
         // not really work.  A "rematch" with virtual binding is in the works,
         // where all these ideas will be reviewed.
         //
-        /* REBLEN cached_len = VAL_WORD_INDEX(ARR_SINGLE(specifier)); */
+        /* REBLEN cached_len = VAL_WORD_INDEX(Array_Single(specifier)); */
 
         REBLEN index = 1;
         const REBKEY *key_tail;
@@ -753,7 +753,7 @@ inline static Value(const*) Lookup_Word_May_Fail(
         fail (Error_Unassigned_Attach_Raw(any_word));
     }
     if (IS_LET(s) or IS_PATCH(s))
-        return SPECIFIC(ARR_SINGLE(ARR(s)));
+        return SPECIFIC(Array_Single(ARR(s)));
     Context(*) c = CTX(s);
     if (Get_Series_Flag(CTX_VARLIST(c), INACCESSIBLE))
         fail (Error_No_Relative_Core(any_word));
@@ -772,7 +772,7 @@ inline static Option(Value(const*)) Lookup_Word(
     if (not s)
         return nullptr;
     if (IS_LET(s) or IS_PATCH(s))
-        return SPECIFIC(ARR_SINGLE(ARR(s)));
+        return SPECIFIC(Array_Single(ARR(s)));
     Context(*) c = CTX(s);
     if (Get_Series_Flag(CTX_VARLIST(c), INACCESSIBLE))
         return nullptr;
@@ -805,7 +805,7 @@ inline static REBVAL *Lookup_Mutable_Word_May_Fail(
 
     REBVAL *var;
     if (IS_LET(s) or IS_PATCH(s))
-        var = SPECIFIC(ARR_SINGLE(ARR(s)));
+        var = SPECIFIC(Array_Single(ARR(s)));
     else {
         Context(*) c = CTX(s);
 
@@ -816,7 +816,7 @@ inline static REBVAL *Lookup_Mutable_Word_May_Fail(
         //
         // Lock bits are all in SER->info and checked in the same instruction.
         //
-        FAIL_IF_READ_ONLY_SER(CTX_VARLIST(c));
+        Fail_If_Read_Only_Series(CTX_VARLIST(c));
 
         var = CTX_VAR(c, index);
     }
@@ -1081,8 +1081,8 @@ inline static Array(*) Merge_Patches_May_Reuse(
         kind = REB_WORD;
     }
     else {
-        binding = ARR(BINDING(ARR_SINGLE(parent)));
-        kind = VAL_TYPE(ARR_SINGLE(parent));
+        binding = ARR(BINDING(Array_Single(parent)));
+        kind = VAL_TYPE(Array_Single(parent));
     }
 
     return Make_Use_Core(
@@ -1307,7 +1307,7 @@ inline static REBSPC *Derive_Specifier_Core(
 //
 // Instead write:
 //
-//     Bind_Values_Deep(ARR_HEAD(VAL_ARRAY(block)), context);
+//     Bind_Values_Deep(Array_Head(VAL_ARRAY(block)), context);
 //
 // That will pass the address of the first value element of the block's
 // contents.  You could use a later value element, but note that the interface

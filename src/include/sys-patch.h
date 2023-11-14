@@ -123,7 +123,7 @@ inline static Array(*) Make_Use_Core(
     // Over the long run, this needs to be legal, though.
     //
     if (next and IS_USE(next)) {
-        assert(BINDING(ARR_SINGLE(next)) != binding);
+        assert(BINDING(Array_Single(next)) != binding);
     }
 
     // A virtual bind patch array is a singular node holding an ANY-WORD!
@@ -168,11 +168,11 @@ inline static Array(*) Make_Use_Core(
         // of telling the historical order.  Punt on figuring out the answer
         // for it and just let virtual binds see the latest situation.
         //
-        Init_Context_Cell(ARR_SINGLE(use), REB_MODULE, CTX(binding));
+        Init_Context_Cell(Array_Single(use), REB_MODULE, CTX(binding));
     }
     else {
         Init_Any_Word_Bound_Untracked(
-            TRACK(ARR_SINGLE(use)),
+            TRACK(Array_Single(use)),
             kind,
             IS_VARLIST(binding)
                 ? KEY_SYMBOL(CTX_KEY(CTX(binding), 1))  // arbitrary word

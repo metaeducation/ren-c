@@ -110,7 +110,7 @@ static void reverse_string(String(*) str, REBLEN index, REBLEN len)
         return; // if non-zero, at least one character in the string
 
     if (Is_String_Definitely_ASCII(str)) {
-        Byte* bp = STR_AT(str, index);
+        Byte* bp = String_At(str, index);
 
         REBLEN n = 0;
         REBLEN m = len - 1;
@@ -129,9 +129,9 @@ static void reverse_string(String(*) str, REBLEN index, REBLEN len)
         DECLARE_MOLD (mo);
         Push_Mold(mo);
 
-        REBLEN val_len_head = STR_LEN(str);
+        REBLEN val_len_head = String_Len(str);
 
-        Utf8(const*) up = STR_TAIL(str);  // last exists due to len != 0
+        Utf8(const*) up = String_Tail(str);  // last exists due to len != 0
         REBLEN n;
         for (n = 0; n < len; ++n) {
             Codepoint c;
@@ -448,14 +448,14 @@ void Mold_Uni_Char(REB_MOLD *mo, Codepoint c, bool parened)
         if (parened or c == 0x1E or c == 0xFEFF) {
             Append_Ascii(buf, "^(");
 
-            Length len_old = STR_LEN(buf);
-            Size size_old = STR_SIZE(buf);
-            EXPAND_SERIES_TAIL(buf, 5);  // worst case: ^(1234), ^( is done
-            TERM_STR_LEN_SIZE(buf, len_old, size_old);
+            Length len_old = String_Len(buf);
+            Size size_old = String_Size(buf);
+            Expand_Series_Tail(buf, 5);  // worst case: ^(1234), ^( is done
+            Term_String_Len_Size(buf, len_old, size_old);
 
-            Byte* bp = BIN_TAIL(buf);
+            Byte* bp = Binary_Tail(buf);
             Byte* ep = Form_Uni_Hex(bp, c); // !!! Make a mold...
-            TERM_STR_LEN_SIZE(
+            Term_String_Len_Size(
                 buf,
                 len_old + (ep - bp),
                 size_old + (ep - bp)
@@ -483,12 +483,12 @@ void Mold_Uni_Char(REB_MOLD *mo, Codepoint c, bool parened)
 void Mold_Text_Series_At(REB_MOLD *mo, String(const*) s, REBLEN index) {
     String(*) buf = mo->series;
 
-    if (index >= STR_LEN(s)) {
+    if (index >= String_Len(s)) {
         Append_Ascii(buf, "\"\"");
         return;
     }
 
-    REBLEN len = STR_LEN(s) - index;
+    REBLEN len = String_Len(s) - index;
 
     bool parened = GET_MOLD_FLAG(mo, MOLD_FLAG_NON_ANSI_PARENED);
 
@@ -503,7 +503,7 @@ void Mold_Text_Series_At(REB_MOLD *mo, String(const*) s, REBLEN index) {
     REBLEN chr1e = 0;
     REBLEN malign = 0;
 
-    Utf8(const*) up = STR_AT(s, index);
+    Utf8(const*) up = String_At(s, index);
 
     REBLEN x;
     for (x = index; x < len; x++) {
@@ -549,7 +549,7 @@ void Mold_Text_Series_At(REB_MOLD *mo, String(const*) s, REBLEN index) {
     if (NOT_MOLD_FLAG(mo, MOLD_FLAG_NON_ANSI_PARENED))
         paren = 0;
 
-    up = STR_AT(s, index);
+    up = String_At(s, index);
 
     // If it is a short quoted string, emit it as "string"
     //
@@ -557,7 +557,7 @@ void Mold_Text_Series_At(REB_MOLD *mo, String(const*) s, REBLEN index) {
         Append_Codepoint(buf, '"');
 
         REBLEN n;
-        for (n = index; n < STR_LEN(s); n++) {
+        for (n = index; n < String_Len(s); n++) {
             Codepoint c;
             up = NEXT_CHR(&c, up);
             Mold_Uni_Char(mo, c, parened);
@@ -574,7 +574,7 @@ void Mold_Text_Series_At(REB_MOLD *mo, String(const*) s, REBLEN index) {
     Append_Codepoint(buf, '{');
 
     REBLEN n;
-    for (n = index; n < STR_LEN(s); n++) {
+    for (n = index; n < String_Len(s); n++) {
         Codepoint c;
         up = NEXT_CHR(&c, up);
 
@@ -764,7 +764,7 @@ REBTYPE(String)
         if (not Did_Get_Series_Index_From_Picker(&n, v, picker))
             return nullptr;
 
-        Codepoint c = GET_CHAR_AT(VAL_STRING(v), n);
+        Codepoint c = Get_Char_At(VAL_STRING(v), n);
 
         return Init_Char_Unchecked(OUT, c); }
 
@@ -795,8 +795,8 @@ REBTYPE(String)
         if (c == 0)
             fail (Error_Illegal_Zero_Byte_Raw());
 
-        String(*) s = VAL_STRING_ENSURE_MUTABLE(v);
-        SET_CHAR_AT(s, n, c);
+        String(*) s = VAL_STRING_Ensure_Mutable(v);
+        Set_Char_At(s, n, c);
 
         return nullptr; }  // Array(*) is still fine, caller need not update
 
@@ -827,7 +827,7 @@ REBTYPE(String)
 
         UNUSED(PARAM(series)); // already accounted for
 
-        String(*) s = VAL_STRING_ENSURE_MUTABLE(v);
+        String(*) s = VAL_STRING_Ensure_Mutable(v);
 
         REBINT limit;
         if (REF(part))
@@ -845,11 +845,11 @@ REBTYPE(String)
         Size size = VAL_SIZE_LIMIT_AT(&len, v, limit);
 
         Size offset = VAL_BYTEOFFSET_FOR_INDEX(v, index);
-        Size size_old = STR_SIZE(s);
+        Size size_old = String_Size(s);
 
         Remove_Series_Units(s, offset, size);  // !!! at one time, kept term
         Free_Bookmarks_Maybe_Null(s);
-        TERM_STR_LEN_SIZE(s, tail - len, size_old - size);
+        Term_String_Len_Size(s, tail - len, size_old - size);
 
         return COPY(v); }
 
@@ -976,13 +976,13 @@ REBTYPE(String)
 
         return Init_Char_Unchecked(
             OUT,
-            CHR_CODE(STR_AT(VAL_STRING(v), ret))
+            CHR_CODE(String_At(VAL_STRING(v), ret))
         ); }
 
       case SYM_TAKE: {
         INCLUDE_PARAMS_OF_TAKE;
 
-        ENSURE_MUTABLE(v);
+        Ensure_Mutable(v);
 
         UNUSED(PARAM(series));
 
@@ -1027,7 +1027,7 @@ REBTYPE(String)
         return OUT; }
 
       case SYM_CLEAR: {
-        String(*) s = VAL_STRING_ENSURE_MUTABLE(v);
+        String(*) s = VAL_STRING_Ensure_Mutable(v);
 
         REBLEN index = VAL_INDEX(v);
         REBLEN tail = VAL_LEN_HEAD(v);
@@ -1046,7 +1046,7 @@ REBTYPE(String)
         Size offset = VAL_BYTEOFFSET_FOR_INDEX(v, index);
         Free_Bookmarks_Maybe_Null(s);
 
-        TERM_STR_LEN_SIZE(s, cast(REBLEN, index), offset);
+        Term_String_Len_Size(s, cast(REBLEN, index), offset);
         return COPY(v); }
 
     //-- Creation:
@@ -1073,18 +1073,18 @@ REBTYPE(String)
         if (VAL_TYPE(v) != VAL_TYPE(arg))
             fail (Error_Not_Same_Type_Raw());
 
-        String(*) v_str = VAL_STRING_ENSURE_MUTABLE(v);
-        String(*) arg_str = VAL_STRING_ENSURE_MUTABLE(arg);
+        String(*) v_str = VAL_STRING_Ensure_Mutable(v);
+        String(*) arg_str = VAL_STRING_Ensure_Mutable(arg);
 
         REBLEN index = VAL_INDEX(v);
         REBLEN tail = VAL_LEN_HEAD(v);
 
         if (index < tail and VAL_INDEX(arg) < VAL_LEN_HEAD(arg)) {
-            Codepoint v_c = GET_CHAR_AT(v_str, VAL_INDEX(v));
-            Codepoint arg_c = GET_CHAR_AT(arg_str, VAL_INDEX(arg));
+            Codepoint v_c = Get_Char_At(v_str, VAL_INDEX(v));
+            Codepoint arg_c = Get_Char_At(arg_str, VAL_INDEX(arg));
 
-            SET_CHAR_AT(v_str, VAL_INDEX(v), arg_c);
-            SET_CHAR_AT(arg_str, VAL_INDEX(arg), v_c);
+            Set_Char_At(v_str, VAL_INDEX(v), arg_c);
+            Set_Char_At(arg_str, VAL_INDEX(arg), v_c);
         }
         return COPY(v); }
 
@@ -1092,7 +1092,7 @@ REBTYPE(String)
         INCLUDE_PARAMS_OF_REVERSE;
         UNUSED(ARG(series));
 
-        String(*) str = VAL_STRING_ENSURE_MUTABLE(v);
+        String(*) str = VAL_STRING_Ensure_Mutable(v);
 
         Copy_Cell(OUT, v);  // save before index adjustment
         REBINT len = Part_Len_May_Modify_Index(v, ARG(part));
@@ -1105,7 +1105,7 @@ REBTYPE(String)
 
         UNUSED(PARAM(series));
 
-        String(*) str = VAL_STRING_ENSURE_MUTABLE(v);  // just ensure mutability
+        String(*) str = VAL_STRING_Ensure_Mutable(v);  // just ensure mutability
         UNUSED(str);  // we use the VAL_UTF8_AT() accessor, which is const
 
         if (REF(all))
@@ -1185,11 +1185,11 @@ REBTYPE(String)
 
             return Init_Char_Unchecked(
                 OUT,
-                GET_CHAR_AT(VAL_STRING(v), index)
+                Get_Char_At(VAL_STRING(v), index)
             );
         }
 
-        String(*) str = VAL_STRING_ENSURE_MUTABLE(v);
+        String(*) str = VAL_STRING_Ensure_Mutable(v);
 
         if (not Is_String_Definitely_ASCII(str))
             fail ("UTF-8 Everywhere: String shuffle temporarily unavailable");
@@ -1197,12 +1197,12 @@ REBTYPE(String)
         bool secure = REF(secure);
 
         REBLEN n;
-        for (n = STR_LEN(str) - index; n > 1;) {
+        for (n = String_Len(str) - index; n > 1;) {
             REBLEN k = index + cast(REBLEN, Random_Int(secure)) % n;
             n--;
-            Codepoint swap = GET_CHAR_AT(str, k);
-            SET_CHAR_AT(str, k, GET_CHAR_AT(str, n + index));
-            SET_CHAR_AT(str, n + index, swap);
+            Codepoint swap = Get_Char_At(str, k);
+            Set_Char_At(str, k, Get_Char_At(str, n + index));
+            Set_Char_At(str, n + index, swap);
         }
         return COPY(v); }
 

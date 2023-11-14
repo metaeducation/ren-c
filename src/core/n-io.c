@@ -121,7 +121,7 @@ DECLARE_NATIVE(write_stdout)
     fail ("Boot WRITE-STDOUT needs DEBUG_HAS_PROBE or loaded I/O module");
   #else
     if (IS_TEXT(v)) {
-        printf("WRITE-STDOUT: %s\n", cast(const char*, STR_HEAD(VAL_STRING(v))));
+        printf("WRITE-STDOUT: %s\n", cast(const char*, String_Head(VAL_STRING(v))));
         fflush(stdout);
     }
     else if (IS_CHAR(v)) {
@@ -159,7 +159,7 @@ DECLARE_NATIVE(new_line)
 
     REBVAL *pos = ARG(position);
     Cell(const*) tail;
-    Cell(*) item = VAL_ARRAY_AT_ENSURE_MUTABLE(&tail, pos);
+    Cell(*) item = VAL_ARRAY_AT_Ensure_Mutable(&tail, pos);
     Array(*) a = VAL_ARRAY_KNOWN_MUTABLE(pos);  // need if setting flag at tail
 
     REBINT skip;
@@ -177,9 +177,9 @@ DECLARE_NATIVE(new_line)
     for (n = 0; true; ++n, ++item) {
         if (item == tail) {  // no cell at tail; use flag on array
             if (mark)
-                Set_Subclass_Flag(ARRAY, a, NEWLINE_AT_TAIL);
+                Set_Array_Flag(a, NEWLINE_AT_TAIL);
             else
-                Clear_Subclass_Flag(ARRAY, a, NEWLINE_AT_TAIL);
+                Clear_Array_Flag(a, NEWLINE_AT_TAIL);
             break;
         }
 
@@ -262,7 +262,7 @@ DECLARE_NATIVE(new_line_q)
     if (item != tail)
         return Init_Logic(OUT, Get_Cell_Flag(item, NEWLINE_BEFORE));
 
-    return Init_Logic(OUT, Get_Subclass_Flag(ARRAY, arr, NEWLINE_AT_TAIL));
+    return Init_Logic(OUT, Get_Array_Flag(arr, NEWLINE_AT_TAIL));
 }
 
 
@@ -330,7 +330,7 @@ DECLARE_NATIVE(basic_read)
     fail ("BASIC-READ is a simple demo used in WASI only");
   #else
     String(const*) filename = VAL_STRING(ARG(file));
-    FILE* f = fopen(STR_UTF8(filename), "rb");
+    FILE* f = fopen(String_UTF8(filename), "rb");
     if (f == nullptr)
         fail (rebError_OS(errno));
     fseek(f, 0, SEEK_END);
@@ -338,8 +338,8 @@ DECLARE_NATIVE(basic_read)
     fseek(f, 0, SEEK_SET);
 
     Binary(*) bin = Make_Binary(size);
-    fread(BIN_HEAD(bin), size, 1, f);
-    TERM_BIN_LEN(bin, size);
+    fread(Binary_Head(bin), size, 1, f);
+    Term_Binary_Len(bin, size);
     fclose(f);
 
     return Init_Binary(OUT, bin);
@@ -369,7 +369,7 @@ DECLARE_NATIVE(basic_write)
     fail ("BASIC-WRITE is a simple demo used in WASI only");
   #else
     String(const*) filename = VAL_STRING(ARG(file));
-    FILE* f = fopen(STR_UTF8(filename), "wb");
+    FILE* f = fopen(String_UTF8(filename), "wb");
     if (f == nullptr)
         fail (rebError_OS(errno));
 

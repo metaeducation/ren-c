@@ -58,18 +58,18 @@ void Dump_Series(Series(*) s, const char *memo)
     if (s == NULL)
         return;
 
-    printf(" wide: %d\n", cast(int, SER_WIDE(s)));
+    printf(" wide: %d\n", cast(int, Series_Wide(s)));
     printf(" size: %ld\n", cast(unsigned long, SER_TOTAL_IF_DYNAMIC(s)));
     if (Get_Series_Flag(s, DYNAMIC))
-        printf(" bias: %d\n", cast(int, SER_BIAS(s)));
-    printf(" used: %d\n", cast(int, SER_USED(s)));
-    printf(" rest: %d\n", cast(int, SER_REST(s)));
+        printf(" bias: %d\n", cast(int, Series_Bias(s)));
+    printf(" used: %d\n", cast(int, Series_Used(s)));
+    printf(" rest: %d\n", cast(int, Series_Rest(s)));
 
     // flags includes len if non-dynamic
     printf(" flags: %lx\n", cast(unsigned long, s->leader.bits));
 
     // info includes width
-    printf(" info: %lx\n", cast(unsigned long, SER_INFO(s)));
+    printf(" info: %lx\n", cast(unsigned long, SERIES_INFO(s)));
 
     fflush(stdout);
 }
@@ -94,7 +94,7 @@ void Dump_Info(void)
 
     printf("    Ballast: %d\n", cast(int, GC_Ballast));
     printf("    Disable: %s\n", GC_Disabled ? "yes" : "no");
-    printf("    Guarded Nodes: %d\n", cast(int, SER_USED(GC_Guarded)));
+    printf("    Guarded Nodes: %d\n", cast(int, Series_Used(GC_Guarded)));
     fflush(stdout);
 }
 
@@ -119,7 +119,7 @@ void Dump_Stack(Level(*) L)
     else if (not L->label)
         label = "<anonymous>";
     else
-        label = STR_UTF8(unwrap(L->label));
+        label = String_UTF8(unwrap(L->label));
 
     printf("LABEL: %s @ FILE: %s @ LINE: %" PRIuPTR "\n",  // uintptr_t format
         label,

@@ -1011,7 +1011,7 @@ const Byte* Scan_Email(
     REBLEN len
 ){
     String(*) s = Make_String(len * 2);  // !!! guess...use mold buffer instead?
-    Utf8(*) up = STR_HEAD(s);
+    Utf8(*) up = String_Head(s);
 
     REBLEN num_chars = 0;
 
@@ -1045,7 +1045,7 @@ const Byte* Scan_Email(
     if (not found_at)
         return_NULL;
 
-    TERM_STR_LEN_SIZE(s, num_chars, up - STR_HEAD(s));
+    Term_String_Len_Size(s, num_chars, up - String_Head(s));
 
     Init_Email(out, s);
     return cp;
@@ -1274,8 +1274,8 @@ DECLARE_NATIVE(scan_net_header)
         cp++;
         // Search if word already present:
 
-        Cell(const*) item_tail = ARR_TAIL(result);
-        Cell(*) item = ARR_HEAD(result);
+        Cell(const*) item_tail = Array_Tail(result);
+        Cell(*) item = Array_Head(result);
 
         for (; item != item_tail; item += 2) {
             assert(IS_TEXT(item + 1) || IS_BLOCK(item + 1));
@@ -1336,7 +1336,7 @@ DECLARE_NATIVE(scan_net_header)
         // in the loop above.  Better to convert to usermode.
 
         String(*) string = Make_String(len * 2);
-        Utf8(*) str = STR_HEAD(string);
+        Utf8(*) str = String_Head(string);
         cp = start;
 
         // "Code below *MUST* mirror that above:"
@@ -1355,7 +1355,7 @@ DECLARE_NATIVE(scan_net_header)
             while (!ANY_CR_LF_END(*cp))
                 str = WRITE_CHR(str, *cp++);
         }
-        TERM_STR_LEN_SIZE(string, len, str - STR_HEAD(string));
+        Term_String_Len_Size(string, len, str - String_Head(string));
         Init_Text(val, string);
     }
 

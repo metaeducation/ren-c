@@ -501,7 +501,7 @@
 //
 //     variadic_print("print me", "and me", "stop @ NULL", (char*)NULL);
 //
-// Because libRebol hinges on a premise of making the internal NULL signifier
+// Since libRebol hinges on a premise of making the internal ~null~ signifier
 // interface as a C NULL pointer, and hinges on variadics, this is a problem.
 // Rather than introduce a "new" abstraction or macro, this adds a shim of
 // C++11's `nullptr` to C++98, and a simple macro to C.
@@ -707,21 +707,21 @@
 // This came in handly for a debugging scenario.  But because it uses deep
 // voodoo to accomplish its work (like overloading -> and &), it interferes
 // with more important applications of that voodoo.  So it shouldn't be used
-// on types that depend on that (like REBVAL pointers).
+// on types that depend on that (like Cell pointers).
 //
 
 #if (! CPLUSPLUS_11) || defined(NDEBUG)
-    #define NEVERNULL(type) \
+    #define NeverNull(type) \
         type
 #else
     template <typename P>
-    class Never_Null {  // named so error message hints what's wrong
+    class NeverNullEnforcer {  // named so error message hints what's wrong
         typedef typename std::remove_pointer<P>::type T;
         P p;
 
       public:
-        Never_Null () : p () {}
-        Never_Null (P & p) : p (p) {
+        NeverNullEnforcer () : p () {}
+        NeverNullEnforcer (P & p) : p (p) {
             assert(p != nullptr);
         }
         T& operator*() { return *p; }
@@ -734,8 +734,8 @@
         }
     };
 
-    #define NEVERNULL(type) \
-        Never_Null<type>
+    #define NeverNull(type) \
+        NeverNullEnforcer<type>
 #endif
 
 
@@ -853,7 +853,7 @@
 // would prefer to intercept accesses as if they were freed.)
 //
 // Also, in order to overwrite a pointer with garbage, the historical method
-// of using 0xBADF00D or 0xDECAFBAD is formalized with TRASH_POINTER_IF_DEBUG.
+// of using 0xBADF00D or 0xDECAFBAD is formalized with Trash_Pointer_If_Debug.
 // This makes the instances easier to find and standardizes how it is done.
 // Special choices are made for 0xF4EEF4EE to indicate a freed thing, and
 // 0x5AFE5AFE to indicate an allocated thing.
@@ -866,10 +866,10 @@
     // <IMPORTANT> Address sanitizer's memory poisoning must not have two
     // threads both poisoning/unpoisoning the same addresses at the same time.
 
-    #define POISON_MEMORY(reg, mem_size) \
+    #define Poison_Memory_If_Sanitize(reg, mem_size) \
         ASAN_POISON_MEMORY_REGION(reg, mem_size)
 
-    #define UNPOISON_MEMORY(reg, mem_size) \
+    #define Unpoison_Memory_If_Sanitize(reg, mem_size) \
         ASAN_UNPOISON_MEMORY_REGION(reg, mem_size)
 #else
     // !!! @HostileFork wrote a tiny C++ "poor man's memory poisoner" that
@@ -881,49 +881,49 @@
 
     #define ATTRIBUTE_NO_SANITIZE_ADDRESS
 
-    #define POISON_MEMORY(reg, mem_size) \
+    #define Poison_Memory_If_Sanitize(reg, mem_size) \
         NOOP
 
-    #define UNPOISON_MEMORY(reg, mem_size) \
+    #define Unpoison_Memory_If_Sanitize(reg, mem_size) \
         NOOP
 #endif
 
 #ifdef NDEBUG
-    #define TRASH_POINTER_IF_DEBUG(p)       NOOP
-    #define TRASH_CFUNC_IF_DEBUG(T,p)       NOOP
+    #define Trash_Pointer_If_Debug(p)       NOOP
+    #define Trash_Cfunc_If_Debug(T,p)       NOOP
 #else
     #if defined(__cplusplus) // needed even if not C++11
         template<class T>
-        inline static void TRASH_POINTER_IF_DEBUG(T* &p) {
+        inline static void Trash_Pointer_If_Debug(T* &p) {
             p = reinterpret_cast<T*>(static_cast<uintptr_t>(0xDECAFBAD));
         }
 
         template<class T>
-        inline static void SAFETRASH_POINTER_IF_DEBUG(T* &p) {
+        inline static void SafeTrash_Pointer_If_Debug(T* &p) {
             p = reinterpret_cast<T*>(static_cast<uintptr_t>(0x5AFE5AFE));
         }
 
         template<class T>
-        inline static void FREETRASH_POINTER_IF_DEBUG(T* &p) {
+        inline static void FreeTrash_Pointer_If_Debug(T* &p) {
             p = reinterpret_cast<T*>(static_cast<uintptr_t>(0xF4EEF4EEE));
         }
 
         template<class T>
-        inline static bool IS_POINTER_TRASH_DEBUG(T* p) {
+        inline static bool Is_Pointer_Trash_Debug(T* p) {
             return (
                 p == reinterpret_cast<T*>(static_cast<uintptr_t>(0xDECAFBAD))
             );
         }
 
         template<class T>
-        inline static bool IS_POINTER_SAFETRASH_DEBUG(T* p) {
+        inline static bool Is_Pointer_SafeTrash_Debug(T* p) {
             return (
                 p == reinterpret_cast<T*>(static_cast<uintptr_t>(0x5AFE5AFE))
             );
         }
 
         template<class T>
-        inline static bool IS_POINTER_FREETRASH_DEBUG(T* p) {
+        inline static bool Is_Pointer_FreeTrash_Debug(T* p) {
             return (
                 p == reinterpret_cast<T*>(static_cast<uintptr_t>(0xF4EEF4EE))
             );
@@ -931,12 +931,12 @@
 
     #if DEBUG_CHECK_OPTIONALS
         template<class P>
-        inline static void TRASH_POINTER_IF_DEBUG(OptionWrapper<P> &p) {
+        inline static void Trash_Pointer_If_Debug(OptionWrapper<P> &p) {
             p.wrapped = reinterpret_cast<P>(static_cast<uintptr_t>(0xDECAFBAD));
         }
 
         template<class P>
-        inline static bool IS_POINTER_TRASH_DEBUG(OptionWrapper<P> &p) {
+        inline static bool Is_Pointer_Trash_Debug(OptionWrapper<P> &p) {
             return p.wrapped == (
                 reinterpret_cast<P>(static_cast<uintptr_t>(0xDECAFBAD))
             );
@@ -945,40 +945,40 @@
 
     #if CPLUSPLUS_11
         template<class P>
-        inline static void TRASH_POINTER_IF_DEBUG(Never_Null<P> &p) {
+        inline static void Trash_Pointer_If_Debug(NeverNullEnforcer<P> &p) {
             p = reinterpret_cast<P>(static_cast<uintptr_t>(0xDECAFBAD));
         }
 
         template<class P>
-        inline static bool IS_POINTER_TRASH_DEBUG(Never_Null<P> &p) {
+        inline static bool Is_Pointer_Trash_Debug(NeverNullEnforcer<P> &p) {
             return (
                 p == reinterpret_cast<P>(static_cast<uintptr_t>(0xDECAFBAD))
             );
         }
       #endif
     #else
-        #define TRASH_POINTER_IF_DEBUG(p) \
+        #define Trash_Pointer_If_Debug(p) \
             ((p) = cast(void*, cast(uintptr_t, 0xDECAFBAD)))
 
-        #define SAFETRASH_POINTER_IF_DEBUG(p) \
+        #define SafeTrash_Pointer_If_Debug(p) \
             ((p) = cast(void*, cast(uintptr_t, 0x5AFE5AFE)))
 
-        #define FREETRASH_POINTER_IF_DEBUG(p) \
+        #define FreeTrash_Pointer_If_Debug(p) \
             ((p) = cast(void*, cast(uintptr_t, 0xF4EEF4EE)))
 
-        #define IS_POINTER_TRASH_DEBUG(p) \
+        #define Is_Pointer_Trash_Debug(p) \
             ((p) == cast(void*, cast(uintptr_t, 0xDECAFBAD)))
 
-        #define IS_POINTER_SAFETRASH_DEBUG(p) \
+        #define Is_Pointer_SafeTrash_Debug(p) \
             ((p) == cast(void*, cast(uintptr_t, 0x5AFE5AFE)))
 
-        #define IS_POINTER_FREETRASH_DEBUG(p) \
+        #define Is_Pointer_FreeTrash_Debug(p) \
             ((p) == cast(void*, cast(uintptr_t, 0xF4EEF4EE)))
     #endif
 
     // C functions must be cast to the right type, even in C (no void*)
 
-    #define TRASH_CFUNC_IF_DEBUG(T,p) \
+    #define Trash_Cfunc_If_Debug(T,p) \
         ((p) = cast(T, cast(uintptr_t, 0xDECAFBAD)))
 
     #define IS_CFUNC_TRASH_DEBUG(T,p) \
@@ -1078,13 +1078,13 @@
 #if defined(NDEBUG) || (! CPLUSPLUS_11)
     #include <string.h>
 
-    #define TRASH_IF_DEBUG(x) \
+    #define Trash_If_Debug(x) \
         memset(&(x), 0xBD, sizeof(x));
 
     #define UNUSED(x) \
         ((void)(x))
 #else
-    #define UNUSED TRASH_IF_DEBUG
+    #define UNUSED Trash_If_Debug
 
     #include <cstring>  // for memset
 
@@ -1105,7 +1105,7 @@
             )
         >::type* = nullptr
     >
-    void TRASH_IF_DEBUG(T && v) {
+    void Trash_If_Debug(T && v) {
         ((void)(v));
     }
 
@@ -1122,12 +1122,12 @@
             && std::is_pointer<TRR>::value
         >::type* = nullptr
     >
-    void TRASH_IF_DEBUG(T && v) {
+    void Trash_If_Debug(T && v) {
         static bool zero = false;
         if (zero)
             v = nullptr; // do null half the time, deterministic
         else
-            TRASH_POINTER_IF_DEBUG(v); // trash the other half of the time
+            Trash_Pointer_If_Debug(v); // trash the other half of the time
         zero = not zero;
     }
 
@@ -1143,7 +1143,7 @@
             && !std::is_pointer<TRR>::value
         >::type* = nullptr
     >
-    void TRASH_IF_DEBUG(T && v) {
+    void Trash_If_Debug(T && v) {
         static bool zero = false;
         if (zero)
             v = false; // false/0 half the time, deterministic
@@ -1176,7 +1176,7 @@
             )
         >::type* = nullptr
     >
-    void TRASH_IF_DEBUG(T && v) {
+    void Trash_If_Debug(T && v) {
         memset(&v, 123, sizeof(TRR));
     }
 #endif

@@ -251,7 +251,7 @@ Array(*) Make_Let_Patch(
             | SERIES_FLAG_INFO_NODE_NEEDS_MARK  // inode of symbol
     );
 
-    Finalize_None(VAL(ARR_SINGLE(let)));  // start variable as unset
+    Finalize_None(VAL(Array_Single(let)));  // start variable as unset
 
     if (specifier) {
         assert(IS_LET(specifier) or IS_USE(specifier) or IS_VARLIST(specifier));
@@ -453,7 +453,7 @@ DECLARE_NATIVE(let)
         INIT_VAL_WORD_BINDING(where, bindings);
         INIT_VAL_WORD_INDEX(where, INDEX_ATTACHED);
 
-        TRASH_POINTER_IF_DEBUG(vars);  // if in spare, we may have overwritten
+        Trash_Pointer_If_Debug(vars);  // if in spare, we may have overwritten
     }
     else {
         assert(IS_BLOCK(vars) or IS_SET_BLOCK(vars));
@@ -530,7 +530,7 @@ DECLARE_NATIVE(let)
         }
         INIT_BINDING_MAY_MANAGE(where, bindings);
 
-        TRASH_POINTER_IF_DEBUG(vars);  // if in spare, we may have overwritten
+        Trash_Pointer_If_Debug(vars);  // if in spare, we may have overwritten
     }
 
     //=//// ONE EVAL STEP WITH OLD BINDINGS IF SET-WORD! or SET-BLOCK! /////=//
@@ -544,7 +544,7 @@ DECLARE_NATIVE(let)
     // with the rebound SET-WORD! or SET-BLOCK!
 
     mutable_BINDING(bindings_holder) = bindings;
-    TRASH_POINTER_IF_DEBUG(bindings);  // catch uses after this point in scope
+    Trash_Pointer_If_Debug(bindings);  // catch uses after this point in scope
 
     if (STATE != ST_LET_EVAL_STEP) {
         assert(IS_WORD(OUT) or IS_BLOCK(OUT));  // should have written output
@@ -617,7 +617,7 @@ DECLARE_NATIVE(add_let_binding) {
         Set_Series_Flag(L_specifier, MANAGED);
     REBSPC *let = Make_Let_Patch(VAL_WORD_SYMBOL(ARG(word)), L_specifier);
 
-    Move_Cell(ARR_SINGLE(let), ARG(value));
+    Move_Cell(Array_Single(let), ARG(value));
 
     mutable_BINDING(FEED_SINGLE(L->feed)) = let;
 
@@ -748,8 +748,8 @@ static void Clonify_And_Bind_Relative(
         // copied series and "clonify" the values in it.
         //
         if (would_need_deep and (deep_types & FLAGIT_KIND(heart))) {
-            Cell(*) sub = ARR_HEAD(ARR(series));
-            Cell(*) sub_tail = ARR_TAIL(ARR(series));
+            Cell(*) sub = Array_Head(ARR(series));
+            Cell(*) sub_tail = Array_Tail(ARR(series));
             for (; sub != sub_tail; ++sub)
                 Clonify_And_Bind_Relative(
                     SPECIFIC(sub),
@@ -833,7 +833,7 @@ Array(*) Copy_And_Bind_Relative_Deep_Managed(
     REBLEN index = VAL_INDEX(body);
     REBSPC *specifier = VAL_SPECIFIER(body);
     REBLEN tail = VAL_LEN_AT(body);
-    assert(tail <= ARR_LEN(original));
+    assert(tail <= Array_Len(original));
 
     if (index > tail)  // !!! should this be asserted?
         index = tail;
@@ -846,10 +846,10 @@ Array(*) Copy_And_Bind_Relative_Deep_Managed(
     // Currently we start by making a shallow copy and then adjust it
 
     copy = Make_Array_For_Copy(len, flags, original);
-    SET_SERIES_LEN(copy, len);
+    Set_Series_Len(copy, len);
 
-    Cell(const*) src = ARR_AT(original, index);
-    Cell(*) dest = ARR_HEAD(copy);
+    Cell(const*) src = Array_At(original, index);
+    Cell(*) dest = Array_Head(copy);
     REBLEN count = 0;
     for (; count < len; ++count, ++dest, ++src) {
         Clonify_And_Bind_Relative(
@@ -1181,7 +1181,7 @@ Context(*) Virtual_Bind_Deep_To_New_Context(
 
     if (not duplicate) {
         //
-        // This is effectively `Bind_Values_Deep(ARR_HEAD(body_out), context)`
+        // Effectively `Bind_Values_Deep(Array_Head(body_out), context)`
         // but we want to reuse the binder we had anyway for detecting the
         // duplicates.
         //

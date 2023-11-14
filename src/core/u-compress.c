@@ -427,7 +427,7 @@ DECLARE_NATIVE(checksum_core)
     }
 
     Binary(*) bin = Make_Binary(4);
-    Byte* bp = BIN_HEAD(bin);
+    Byte* bp = Binary_Head(bin);
 
     // Returning as a BINARY! avoids signedness issues (R3-Alpha CRC-32 was a
     // signed integer, which was weird):
@@ -441,7 +441,7 @@ DECLARE_NATIVE(checksum_core)
         *bp = crc % 256;
         crc >>= 8;
     }
-    TERM_BIN_LEN(bin, 4);
+    Term_Binary_Len(bin, 4);
 
     return Init_Binary(OUT, bin);
 }

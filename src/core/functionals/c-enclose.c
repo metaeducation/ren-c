@@ -86,7 +86,7 @@ Bounce Encloser_Dispatcher(Level(*) const L)
     USE_LEVEL_SHORTHANDS (L);
 
     Details(*) details = ACT_DETAILS(PHASE);
-    assert(ARR_LEN(details) == IDX_ENCLOSER_MAX);
+    assert(Array_Len(details) == IDX_ENCLOSER_MAX);
 
     REBVAL *inner = DETAILS_AT(details, IDX_ENCLOSER_INNER);
     assert(IS_FRAME(inner));  // same args as f

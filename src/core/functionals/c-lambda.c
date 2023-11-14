@@ -75,7 +75,7 @@ Bounce Lambda_Dispatcher(Level(*) const L)
     USE_LEVEL_SHORTHANDS (L);
 
     Details(*) details = ACT_DETAILS(PHASE);
-    assert(ARR_LEN(details) == IDX_LAMBDA_MAX);
+    assert(Array_Len(details) == IDX_LAMBDA_MAX);
 
     const REBVAL *block = DETAILS_AT(details, IDX_LAMBDA_BLOCK);
     assert(IS_BLOCK(block));
@@ -107,7 +107,7 @@ Bounce Lambda_Dispatcher(Level(*) const L)
 Bounce Lambda_Unoptimized_Dispatcher(Level(*) level_)
 {
     Details(*) details = ACT_DETAILS(PHASE);
-    Cell(*) body = ARR_AT(details, IDX_DETAILS_1);  // code to run
+    Cell(*) body = Array_At(details, IDX_DETAILS_1);  // code to run
     assert(IS_BLOCK(body) and IS_RELATIVE(body) and VAL_INDEX(body) == 0);
 
     return DELEGATE_CORE(
@@ -261,7 +261,7 @@ DECLARE_NATIVE(lambda)
     assert(ACT_ADJUNCT(lambda) == nullptr);
 
     Details(*) details = ACT_DETAILS(lambda);
-    Copy_Cell(ARR_AT(details, IDX_LAMBDA_BLOCK), body);
+    Copy_Cell(Array_At(details, IDX_LAMBDA_BLOCK), body);
 
     return Init_Activation(OUT, lambda, ANONYMOUS, UNBOUND);
 }

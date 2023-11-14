@@ -32,10 +32,10 @@
     *cast(const Byte*, ensure(const Node*, p))
 
 #ifdef NDEBUG
-    #define IS_FREE_NODE(p) \
+    #define Is_Free_Node(p) \
         (did (*cast(const Byte*, (p)) & NODE_BYTEMASK_0x40_STALE))
 #else
-    inline static bool IS_FREE_NODE(const void *p) {
+    inline static bool Is_Free_Node(const void *p) {
         Byte first = *cast(const Byte*, p);  // NODE_BYTE asserts on free!
 
         if (not (first & NODE_BYTEMASK_0x40_STALE))
@@ -171,7 +171,7 @@ inline static void *Try_Alloc_Pooled(PoolId pool_id)
 
     // !!! Review this, as not all pools store "nodes".
     //
-    assert(IS_FREE_NODE(cast(Node*, unit)));  // client must make non-free
+    assert(Is_Free_Node(cast(Node*, unit)));  // client must make non-free
     return cast(void*, unit);
 }
 
@@ -267,7 +267,7 @@ inline static void Free_Pooled(PoolId pool_id, void* p)
 // make this routine able to work.
 //
 
-enum Reb_Pointer_Detect {
+enum PointerDetectEnum {
     DETECTED_AS_UTF8 = 0,
 
     DETECTED_AS_END = 1,  // may be in a cell, or a rebEND signal (char* align)
@@ -275,7 +275,9 @@ enum Reb_Pointer_Detect {
     DETECTED_AS_CELL = 3
 };
 
-inline static enum Reb_Pointer_Detect Detect_Rebol_Pointer(const void *p)
+typedef enum PointerDetectEnum PointerDetect;
+
+inline static PointerDetect Detect_Rebol_Pointer(const void *p)
 {
     const Byte* bp = cast(const Byte*, p);
 

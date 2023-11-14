@@ -56,10 +56,10 @@ void Assert_Cell_Marked_Correctly(Cell(const*) v)
         and not IS_SYMBOL(binding)
         and Not_Series_Flag(binding, INACCESSIBLE)
     ){
-        if (not IS_SER_ARRAY(binding))
+        if (not Is_Series_Array(binding))
             panic(binding);
 
-        assert(IS_SER_ARRAY(binding));
+        assert(Is_Series_Array(binding));
         if (IS_VARLIST(binding) and CTX_TYPE(CTX(binding)) == REB_FRAME) {
             Node* keysource = BONUS(KeySource, ARR(binding));
             if (Is_Node_A_Stub(keysource)) {
@@ -108,7 +108,7 @@ void Assert_Cell_Marked_Correctly(Cell(const*) v)
             // live on something that doesn't need to be live, and also makes
             // the invariants more complex.
             //
-            assert(SER_USED(s) + 1 > sizeof(PAYLOAD(Bytes, v).at_least_8));
+            assert(Series_Used(s) + 1 > sizeof(PAYLOAD(Bytes, v).at_least_8));
         }
         else {
             // it's bytes
@@ -143,7 +143,7 @@ void Assert_Cell_Marked_Correctly(Cell(const*) v)
         assert(Get_Cell_Flag_Unchecked(v, FIRST_IS_NODE));
         Map(const*) map = VAL_MAP(v);
         assert(Is_Marked(map));
-        assert(IS_SER_ARRAY(MAP_PAIRLIST(map)));
+        assert(Is_Series_Array(MAP_PAIRLIST(map)));
         break; }
 
       case REB_HANDLE: { // See %sys-handle.h
@@ -161,7 +161,7 @@ void Assert_Cell_Marked_Correctly(Cell(const*) v)
             assert(v->header.bits & CELL_FLAG_FIRST_IS_NODE);
             assert(Is_Marked(a));
 
-            Cell(*) single = ARR_SINGLE(a);
+            Cell(*) single = Array_Single(a);
             assert(IS_HANDLE(single));
             assert(VAL_HANDLE_SINGULAR(single) == a);
             if (v != single) {
@@ -185,8 +185,8 @@ void Assert_Cell_Marked_Correctly(Cell(const*) v)
         if (Get_Series_Flag(s, INACCESSIBLE))
             break;
 
-        assert(SER_WIDE(s) == sizeof(Byte));
-        ASSERT_SERIES_TERM_IF_NEEDED(s);
+        assert(Series_Wide(s) == sizeof(Byte));
+        Assert_Series_Term_If_Needed(s);
         assert(Is_Marked(s));
         break; }
 
@@ -201,15 +201,15 @@ void Assert_Cell_Marked_Correctly(Cell(const*) v)
 
         assert(Get_Cell_Flag_Unchecked(v, FIRST_IS_NODE));
         Series(const*) s = VAL_SERIES(v);
-        ASSERT_SERIES_TERM_IF_NEEDED(s);
+        Assert_Series_Term_If_Needed(s);
 
-        assert(SER_WIDE(s) == sizeof(Byte));
+        assert(Series_Wide(s) == sizeof(Byte));
         assert(Is_Marked(s));
 
-        if (IS_NONSYMBOL_STRING(s)) {
+        if (Is_NonSymbol_String(s)) {
             BookmarkList(*) book = LINK(Bookmarks, s);
             if (book) {
-                assert(SER_USED(book) == 1);  // just one for now
+                assert(Series_Used(book) == 1);  // just one for now
                 //
                 // The intent is that bookmarks are unmanaged stubs, which
                 // get freed when the string GCs.  This mechanic could be a by
@@ -237,7 +237,7 @@ void Assert_Cell_Marked_Correctly(Cell(const*) v)
 
         if (Is_Action_Native(a)) {
             Details(*) details = ACT_DETAILS(a);
-            assert(ARR_LEN(details) >= IDX_NATIVE_MAX);
+            assert(Array_Len(details) >= IDX_NATIVE_MAX);
             Value(*) body = DETAILS_AT(details, IDX_NATIVE_BODY);
             Value(*) context = DETAILS_AT(details, IDX_NATIVE_CONTEXT);
             assert(
@@ -333,7 +333,7 @@ void Assert_Cell_Marked_Correctly(Cell(const*) v)
         if (Get_Series_Flag(a, INACCESSIBLE))
             break;
 
-        ASSERT_SERIES_TERM_IF_NEEDED(a);
+        Assert_Series_Term_If_Needed(a);
 
         assert(Get_Cell_Flag_Unchecked(v, FIRST_IS_NODE));
         assert(Is_Marked(a));
@@ -362,7 +362,7 @@ void Assert_Cell_Marked_Correctly(Cell(const*) v)
         const Node* node1 = VAL_NODE1(v);
         assert(not (NODE_BYTE(node1) & NODE_BYTEMASK_0x01_CELL));
 
-        switch (SER_FLAVOR(SER(node1))) {
+        switch (Series_Flavor(SER(node1))) {
           case FLAVOR_SYMBOL :
             break;
 
@@ -380,9 +380,9 @@ void Assert_Cell_Marked_Correctly(Cell(const*) v)
             Array(*) a = ARR(VAL_NODE1(v));
             assert(Not_Series_Flag(a, INACCESSIBLE));
 
-            assert(ARR_LEN(a) >= 2);
-            Cell(const*) tail = ARR_TAIL(a);
-            Cell(const*) item = ARR_HEAD(a);
+            assert(Array_Len(a) >= 2);
+            Cell(const*) tail = Array_Tail(a);
+            Cell(const*) item = Array_Head(a);
             for (; item != tail; ++item)
                 assert(not ANY_PATH_KIND(VAL_TYPE_UNCHECKED(item)));
             assert(Is_Marked(a));
@@ -468,12 +468,12 @@ void Assert_Array_Marked_Correctly(Array(const*) a) {
         // For a lighter check, make sure it's marked as a value-bearing array
         // and that it hasn't been freed.
         //
-        assert(not IS_FREE_NODE(a));
-        assert(IS_SER_ARRAY(a));
+        assert(not Is_Free_Node(a));
+        assert(Is_Series_Array(a));
     #endif
 
     if (IS_DETAILS(a)) {
-        Cell(const*) archetype = ARR_HEAD(a);
+        Cell(const*) archetype = Array_Head(a);
         assert(IS_FRAME(archetype));
         assert(VAL_FRAME_BINDING(archetype) == UNBOUND);
 
@@ -540,7 +540,7 @@ void Assert_Array_Marked_Correctly(Array(const*) a) {
         // which case the hashlist may be NULL.
         //
         Series(*) hashlist = LINK(Hashlist, a);
-        assert(SER_FLAVOR(hashlist) == FLAVOR_HASHLIST);
+        assert(Series_Flavor(hashlist) == FLAVOR_HASHLIST);
         UNUSED(hashlist);
     }
 }

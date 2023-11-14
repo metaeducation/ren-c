@@ -235,12 +235,12 @@ inline TP mp_cast_helper(SeriesHolder<TP>& s)
 
 #if !defined(NDEBUG)
     template <typename TP>
-    inline static void TRASH_POINTER_IF_DEBUG(SeriesHolder<TP>& s) {
+    inline static void Trash_Pointer_If_Debug(SeriesHolder<TP>& s) {
         s.p = nullptr;  // smart pointer can't hold trash
     }
 
     template <typename TP>
-    inline static bool IS_POINTER_TRASH_DEBUG(SeriesHolder<TP>& s) {
+    inline static bool Is_Pointer_Trash_Debug(SeriesHolder<TP>& s) {
         return (
             s.p == nullptr  // smart pointer can't hold trash
         );

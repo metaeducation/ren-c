@@ -181,7 +181,7 @@ inline static void INIT_VAL_CONTEXT_ROOTVAR_Core(
     Array(*) varlist
 ){
     assert(kind != REB_FRAME);  // use INIT_VAL_FRAME_ROOTVAR() instead
-    assert(out == ARR_HEAD(varlist));
+    assert(out == Array_Head(varlist));
     Reset_Unquoted_Header_Untracked(
         out,
         FLAG_HEART_BYTE(kind) | CELL_MASK_ANY_CONTEXT
@@ -204,8 +204,8 @@ inline static void INIT_VAL_FRAME_ROOTVAR_Core(
     Context(*) binding  // allowed to be UNBOUND
 ){
     assert(
-        (Get_Series_Flag(varlist, INACCESSIBLE) and out == ARR_SINGLE(varlist))
-        or out == ARR_HEAD(varlist)
+        (Get_Series_Flag(varlist, INACCESSIBLE) and out == Array_Single(varlist))
+        or out == Array_Head(varlist)
     );
     assert(phase != nullptr);
     Reset_Unquoted_Header_Untracked(out, CELL_MASK_FRAME);
@@ -287,7 +287,7 @@ inline static const REBKEY *CTX_KEY(Context(*) c, REBLEN n) {
     /* assert(Not_Series_Flag(c, INACCESSIBLE)); */
 
     assert(n != 0 and n <= CTX_LEN(c));
-    return SER_AT(const REBKEY, CTX_KEYLIST(c), n - 1);
+    return Series_At(const REBKEY, CTX_KEYLIST(c), n - 1);
 }
 
 inline static REBVAR *CTX_VAR(Context(*) c, REBLEN n) {  // 1-based, no Cell(*)
@@ -324,7 +324,7 @@ inline static REBVAR *MOD_VAR(Context(*) c, Symbol(const*) sym, bool strict) {
 
         for (; patch != sym; patch = SER(node_MISC(Hitch, patch))) {
             if (INODE(PatchContext, patch) == c)
-                return cast(REBVAR*, ARR_SINGLE(ARR(patch)));
+                return cast(REBVAR*, Array_Single(ARR(patch)));
         }
         if (strict)
             return nullptr;
@@ -338,15 +338,15 @@ inline static REBVAR *MOD_VAR(Context(*) c, Symbol(const*) sym, bool strict) {
 // CTX_VAR() does not.  Also, CTX_KEYS_HEAD() gives back a mutable slot.
 
 #define CTX_KEYS_HEAD(c) \
-    SER_AT(REBKEY, CTX_KEYLIST(c), 0)  // 0-based
+    Series_At(REBKEY, CTX_KEYLIST(c), 0)  // 0-based
 
 #define CTX_VARS_HEAD(c) \
     (cast(REBVAR*, cast(Series(*), (c))->content.dynamic.data) + 1)
 
 inline static const REBKEY *CTX_KEYS(const REBKEY ** tail, Context(*) c) {
     Series(*) keylist = CTX_KEYLIST(c);
-    *tail = SER_TAIL(REBKEY, keylist);
-    return SER_HEAD(REBKEY, keylist);
+    *tail = Series_Tail(REBKEY, keylist);
+    return Series_Head(REBKEY, keylist);
 }
 
 inline static REBVAR *CTX_VARS(const REBVAR ** tail, Context(*) c) {
@@ -519,9 +519,9 @@ inline static REBVAL *Init_Context_Cell(
     Extra_Init_Context_Cell_Checks_Debug(kind, c);
   #endif
     UNUSED(kind);
-    ASSERT_SERIES_MANAGED(CTX_VARLIST(c));
+    Assert_Series_Managed(CTX_VARLIST(c));
     if (CTX_TYPE(c) != REB_MODULE)
-        ASSERT_SERIES_MANAGED(CTX_KEYLIST(c));
+        Assert_Series_Managed(CTX_KEYLIST(c));
     return Copy_Cell(out, CTX_ARCHETYPE(c));
 }
 
@@ -673,8 +673,8 @@ inline static Context(*) Steal_Context_Vars(Context(*) c, Node* keysource) {
         SERIES_MASK_VARLIST
             | SERIES_FLAG_FIXED_SIZE
     );
-    SER_INFO(copy) = SERIES_INFO_MASK_NONE;
-    TRASH_POINTER_IF_DEBUG(node_BONUS(KeySource, copy)); // needs update
+    SERIES_INFO(copy) = SERIES_INFO_MASK_NONE;
+    Trash_Pointer_If_Debug(node_BONUS(KeySource, copy)); // needs update
     memcpy(  // https://stackoverflow.com/q/57721104/
         cast(char*, &copy->content),
         cast(char*, &stub->content),

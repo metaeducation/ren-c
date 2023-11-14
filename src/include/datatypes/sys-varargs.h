@@ -89,10 +89,10 @@ inline static REBVAL *Init_Varargs_Untyped_Enfix(
         feed = EMPTY_ARRAY;
     else {
         Array(*) singular = Alloc_Singular(NODE_FLAG_MANAGED);
-        Copy_Cell(ARR_SINGLE(singular), unwrap(left));
+        Copy_Cell(Array_Single(singular), unwrap(left));
 
         feed = Alloc_Singular(FLAG_FLAVOR(FEED) | NODE_FLAG_MANAGED);
-        Init_Block(ARR_SINGLE(feed), singular);  // index 0
+        Init_Block(Array_Single(feed), singular);  // index 0
     }
 
     Reset_Unquoted_Header_Untracked(out, CELL_MASK_VARARGS);
@@ -120,7 +120,7 @@ inline static bool Is_Block_Style_Varargs(
     // array with one BLOCK!, that is the actual array and index to advance.
     //
     Array(*) array1 = binding;
-    *shared_out = cast(REBVAL*, ARR_SINGLE(array1));
+    *shared_out = cast(REBVAL*, Array_Single(array1));
     assert(
         Is_Cell_Poisoned(*shared_out)
         or (IS_SPECIFIC(cast(Cell(*), *shared_out)) and IS_BLOCK(*shared_out))
@@ -197,7 +197,7 @@ inline static const REBPAR *Param_For_Varargs_Maybe_Null(
                     phase,
                     (- VAL_VARARGS_SIGNED_PARAM_INDEX(v))
                 );
-            return cast(REBPAR*, ARR_AT(
+            return cast(REBPAR*, Array_At(
                 paramlist,
                 - VAL_VARARGS_SIGNED_PARAM_INDEX(v)
             ));
@@ -207,7 +207,7 @@ inline static const REBPAR *Param_For_Varargs_Maybe_Null(
             phase,
             VAL_VARARGS_SIGNED_PARAM_INDEX(v)
         );
-        return cast(REBPAR*, ARR_AT(
+        return cast(REBPAR*, Array_At(
             paramlist,
             VAL_VARARGS_SIGNED_PARAM_INDEX(v)
         ));

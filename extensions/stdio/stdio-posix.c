@@ -130,7 +130,7 @@ void Write_IO(const REBVAL *data, REBLEN len)
             //
             bool ok = true;
 
-            const Byte* tail = BIN_TAIL(VAL_BINARY(data));
+            const Byte* tail = Binary_Tail(VAL_BINARY(data));
             const Byte* bp = VAL_BINARY_AT(data);
             for (; bp != tail; ++bp) {
                 char digits[2];

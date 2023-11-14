@@ -590,12 +590,12 @@ DECLARE_NATIVE(deline)
         return OUT;
     }
 
-    String(*) s = VAL_STRING_ENSURE_MUTABLE(input);
-    REBLEN len_head = STR_LEN(s);
+    String(*) s = VAL_STRING_Ensure_Mutable(input);
+    REBLEN len_head = String_Len(s);
 
     REBLEN len_at = VAL_LEN_AT(input);
 
-    Utf8(*) dest = VAL_STRING_AT_KNOWN_MUTABLE(input);
+    Utf8(*) dest = VAL_STRING_AT_Known_Mutable(input);
     Utf8(const*) src = dest;
 
     // DELINE tolerates either LF or CR LF, in order to avoid disincentivizing
@@ -631,12 +631,12 @@ DECLARE_NATIVE(deline)
                 continue;
             }
             // DELINE requires any CR to be followed by an LF
-            fail (Error_Illegal_Cr(BACK_STR(src), STR_HEAD(s)));
+            fail (Error_Illegal_Cr(BACK_STR(src), String_Head(s)));
         }
         dest = WRITE_CHR(dest, c);
     }
 
-    TERM_STR_LEN_SIZE(s, len_head, dest - VAL_STRING_AT(input));
+    Term_String_Len_Size(s, len_head, dest - VAL_STRING_AT(input));
 
     return input;
 }
@@ -657,7 +657,7 @@ DECLARE_NATIVE(enline)
 
     REBVAL *val = ARG(string);
 
-    String(*) s = VAL_STRING_ENSURE_MUTABLE(val);
+    String(*) s = VAL_STRING_Ensure_Mutable(val);
     REBLEN idx = VAL_INDEX(val);
 
     Length len;
@@ -673,7 +673,7 @@ DECLARE_NATIVE(enline)
     // but this would not work if someone added, say, an ENLINE/PART...since
     // the byte ending position of interest might not be end of the string.
 
-    Utf8(*) cp = STR_AT(s, idx);
+    Utf8(*) cp = String_At(s, idx);
 
     bool relax = false;  // !!! in case we wanted to tolerate CR LF already?
     Codepoint c_prev = '\0';
@@ -685,7 +685,7 @@ DECLARE_NATIVE(enline)
         if (c == LF and (not relax or c_prev != CR))
             ++delta;
         if (c == CR and not relax)  // !!! Note: `relax` fixed at false, ATM
-            fail (Error_Illegal_Cr(BACK_STR(cp), STR_HEAD(s)));
+            fail (Error_Illegal_Cr(BACK_STR(cp), String_Head(s)));
         c_prev = c;
     }
 
@@ -693,7 +693,7 @@ DECLARE_NATIVE(enline)
         return COPY(ARG(string)); // nothing to do
 
     REBLEN old_len = s->misc.length;
-    EXPAND_SERIES_TAIL(s, delta);  // corrupts str->misc.length
+    Expand_Series_Tail(s, delta);  // corrupts str->misc.length
     s->misc.length = old_len + delta;  // just adding CR's
 
     // One feature of using UTF-8 for strings is that CR/LF substitution can
@@ -703,8 +703,8 @@ DECLARE_NATIVE(enline)
 
     Free_Bookmarks_Maybe_Null(s);  // !!! Could this be avoided sometimes?
 
-    Byte* bp = STR_HEAD(s); // expand may change the pointer
-    Size tail = STR_SIZE(s); // size in bytes after expansion
+    Byte* bp = String_Head(s); // expand may change the pointer
+    Size tail = String_Size(s); // size in bytes after expansion
 
     // Add missing CRs
 
@@ -959,8 +959,8 @@ DECLARE_NATIVE(to_hex)
     // !!! Issue should be able to use string from mold buffer directly when
     // UTF-8 Everywhere unification of ANY-WORD! and ANY-STRING! is done.
     //
-    assert(len == STR_SIZE(mo->series) - mo->base.size);
-    if (NULL == Scan_Issue(OUT, BIN_AT(mo->series, mo->base.size), len))
+    assert(len == String_Size(mo->series) - mo->base.size);
+    if (NULL == Scan_Issue(OUT, Binary_At(mo->series, mo->base.size), len))
         fail (PARAM(value));
 
     Drop_Mold(mo);
@@ -1005,7 +1005,7 @@ DECLARE_NATIVE(invalid_utf8_q)
         trail = trailingBytesForUTF8[*utf8] + 1;
         if (utf8 + trail > end or not isLegalUTF8(utf8, trail)) {
             Copy_Cell(OUT, arg);
-            VAL_INDEX_RAW(OUT) = utf8 - BIN_HEAD(VAL_BINARY(arg));
+            VAL_INDEX_RAW(OUT) = utf8 - Binary_Head(VAL_BINARY(arg));
             return OUT;
         }
     }

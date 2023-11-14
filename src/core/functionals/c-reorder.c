@@ -75,7 +75,7 @@ enum {
 //
 Bounce Reorderer_Dispatcher(Level(*) L) {
     Details(*) details = ACT_DETAILS(Level_Phase(L));
-    assert(ARR_LEN(details) == IDX_REORDERER_MAX);
+    assert(Array_Len(details) == IDX_REORDERER_MAX);
 
     REBVAL *reorderee = DETAILS_AT(details, IDX_REORDERER_REORDEREE);
 

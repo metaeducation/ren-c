@@ -169,11 +169,11 @@ void *RL_rebMalloc(size_t size)
             | SERIES_FLAG_DYNAMIC  // rebRepossess() needs bias field
     );
 
-    Byte* ptr = BIN_HEAD(s) + ALIGN_SIZE;
+    Byte* ptr = Binary_Head(s) + ALIGN_SIZE;
 
     Series(*) *ps = (cast(Series(*)*, ptr) - 1);
     *ps = s;  // save self in bytes that appear immediately before the data
-    POISON_MEMORY(ps, sizeof(Series(*)));  // let ASAN catch underruns
+    Poison_Memory_If_Sanitize(ps, sizeof(Series(*)));  // catch underruns
 
     // !!! The data is uninitialized, and if it is turned into a BINARY! via
     // rebRepossess() before all bytes are assigned initialized, it could be
@@ -187,7 +187,7 @@ void *RL_rebMalloc(size_t size)
     // promise--and leave it uninitialized so that address sanitizer notices
     // when bytes are used that haven't been assigned.
     //
-    TERM_BIN_LEN(s, ALIGN_SIZE + size);
+    Term_Binary_Len(s, ALIGN_SIZE + size);
 
     return ptr;
 }
@@ -220,11 +220,11 @@ void *RL_rebRealloc(void *ptr, size_t new_size)
         return rebMalloc(new_size);
 
     Binary(*) *ps = cast(Binary(*)*, ptr) - 1;
-    UNPOISON_MEMORY(ps, sizeof(Binary(*)));  // need to underrun to fetch `s`
+    Unpoison_Memory_If_Sanitize(ps, sizeof(Binary(*)));  // getting s underruns
 
     Binary(*) s = *ps;
 
-    REBLEN old_size = BIN_LEN(s) - ALIGN_SIZE;
+    REBLEN old_size = Binary_Len(s) - ALIGN_SIZE;
 
     // !!! It's less efficient to create a new series with another call to
     // rebMalloc(), but simpler for the time being.  Switch to do this with
@@ -251,7 +251,7 @@ void RL_rebFree(void *ptr)
         return;
 
     Binary(*) *ps = cast(Binary(*)*, ptr) - 1;
-    UNPOISON_MEMORY(ps, sizeof(Binary(*)));  // need to underrun to fetch `s`
+    Unpoison_Memory_If_Sanitize(ps, sizeof(Binary(*)));  // need to underrun to fetch `s`
 
     Binary(*) s = *ps;
     if (Is_Node_A_Cell(s)) {
@@ -263,7 +263,7 @@ void RL_rebFree(void *ptr)
         );
     }
 
-    assert(SER_WIDE(s) == 1);
+    assert(Series_Wide(s) == 1);
 
     Free_Unmanaged_Series(s);
 }
@@ -286,7 +286,7 @@ void RL_rebFree(void *ptr)
 // point, as failure to do so will mean reads crash the interpreter.  See
 // remarks in rebMalloc() about the issue, and possibly doing zero fills.
 //
-// !!! It might seem tempting to use (BIN_LEN(s) - ALIGN_SIZE).  However,
+// !!! It might seem tempting to use (Binary_Len(s) - ALIGN_SIZE).  However,
 // some routines make allocations bigger than they ultimately need and do not
 // realloc() before converting the memory to a series...rebInflate() and
 // rebDeflate() do this.  So a version passing the size will be necessary,
@@ -298,12 +298,12 @@ REBVAL *RL_rebRepossess(void *ptr, size_t size)
     ENTER_API;
 
     Binary(*) *ps = cast(Binary(*)*, ptr) - 1;
-    UNPOISON_MEMORY(ps, sizeof(Binary(*)));  // need to underrun to fetch `s`
+    Unpoison_Memory_If_Sanitize(ps, sizeof(Binary(*)));  // need to underrun to fetch `s`
 
     Binary(*) s = *ps;
     assert(Not_Series_Flag(s, MANAGED));
 
-    if (size > BIN_LEN(s) - ALIGN_SIZE)
+    if (size > Binary_Len(s) - ALIGN_SIZE)
         fail ("Attempt to rebRepossess() more than rebMalloc() capacity");
 
     assert(Get_Series_Flag(s, DONT_RELOCATE));
@@ -315,7 +315,7 @@ REBVAL *RL_rebRepossess(void *ptr, size_t size)
         // allocated capacity at the head of a series.  Bump the "bias" to
         // treat the embedded Series(*) (aligned to REBI64) as unused capacity.
         //
-        SER_SET_BIAS(s, ALIGN_SIZE);
+        Set_Series_Bias(s, ALIGN_SIZE);
         s->content.dynamic.data += ALIGN_SIZE;
         s->content.dynamic.rest -= ALIGN_SIZE;
     }
@@ -323,13 +323,13 @@ REBVAL *RL_rebRepossess(void *ptr, size_t size)
         // Data is in Series Stub itself, no bias.  Just slide the bytes down.
         //
         memmove(  // src overlaps destination, can't use memcpy()
-            BIN_HEAD(s),
-            BIN_HEAD(s) + ALIGN_SIZE,
+            Binary_Head(s),
+            Binary_Head(s) + ALIGN_SIZE,
             size
         );
     }
 
-    TERM_BIN_LEN(s, size);
+    Term_Binary_Len(s, size);
     return Init_Binary(Alloc_Value(), s);
 }
 
@@ -566,8 +566,8 @@ REBVAL *RL_rebSizedBinary(const void *bytes, size_t size)
     ENTER_API;
 
     Binary(*) bin = Make_Binary(size);
-    memcpy(BIN_HEAD(bin), bytes, size);
-    TERM_BIN_LEN(bin, size);
+    memcpy(Binary_Head(bin), bytes, size);
+    Term_Binary_Len(bin, size);
 
     return Init_Binary(Alloc_Value(), bin);
 }
@@ -602,7 +602,7 @@ REBVAL *RL_rebUninitializedBinary_internal(size_t size)
     // random by the rules of C if they don't get written!  Must be filled
     // immediately by caller--before a GC or other operation.
     //
-    TERM_BIN_LEN(bin, size);
+    Term_Binary_Len(bin, size);
 
     return Init_Binary(Alloc_Value(), bin);
 }
@@ -624,7 +624,7 @@ unsigned char *RL_rebBinaryHead_internal(const REBVAL *binary)
 {
     ENTER_API;
 
-    return BIN_HEAD(VAL_BINARY_KNOWN_MUTABLE(binary));
+    return Binary_Head(VAL_BINARY_Known_Mutable(binary));
 }
 
 
@@ -635,7 +635,7 @@ unsigned char *RL_rebBinaryAt_internal(const REBVAL *binary)
 {
     ENTER_API;
 
-    return VAL_BINARY_AT_KNOWN_MUTABLE(binary);
+    return VAL_BINARY_AT_Known_Mutable(binary);
 }
 
 
@@ -2058,7 +2058,7 @@ const REBINS *RL_rebQUOTING(const void *p)
         fail ("Unknown pointer");
     }
 
-    Value(*) v = VAL(ARR_SINGLE(a));
+    Value(*) v = VAL(Array_Single(a));
     Meta_Quotify(v);
     return a;
 }
@@ -2113,7 +2113,7 @@ const REBINS *RL_rebUNQUOTING(const void *p)
         fail ("Unknown pointer");
     }
 
-    Cell(*) v = ARR_SINGLE(a);
+    Cell(*) v = Array_Single(a);
     if (
         QUOTE_BYTE(v) == UNQUOTED_1
         or QUOTE_BYTE(v) == QUASI_2
@@ -2170,7 +2170,7 @@ const void *RL_rebINLINE(const REBVAL *v)
     if (not (IS_BLOCK(v) or IS_QUOTED(v) or IS_BLANK(v)))
         fail ("rebINLINE() requires argument to be a BLOCK!/QUOTED!/BLANK!");
 
-    Copy_Cell(ARR_SINGLE(a), v);
+    Copy_Cell(Array_Single(a), v);
 
     return cast(REBINS*, a);
 }
@@ -2214,7 +2214,7 @@ const REBINS *RL_rebRUN(const void *p)
         fail ("Unknown pointer");
     }
 
-    Value(*) v = VAL(ARR_SINGLE(a));
+    Value(*) v = VAL(Array_Single(a));
     if (Is_Activation(v))
         mutable_QUOTE_BYTE(v) = UNQUOTED_1;
     else if (not IS_FRAME(v))
@@ -2284,8 +2284,8 @@ void RL_rebUnmanage(void *p)
     Clear_Series_Flag(a, MANAGED);
     Unlink_Api_Handle_From_Level(a);
 
-    TRASH_POINTER_IF_DEBUG(a->link.trash);
-    TRASH_POINTER_IF_DEBUG(a->misc.trash);
+    Trash_Pointer_If_Debug(a->link.trash);
+    Trash_Pointer_If_Debug(a->misc.trash);
 }
 
 
@@ -2619,19 +2619,19 @@ REBVAL *RL_rebCollateExtension_internal(
     int cfuncs_len
 ){
     Array(*) a = Make_Array(IDX_COLLATOR_MAX);  // details
-    SET_SERIES_LEN(a, IDX_COLLATOR_MAX);
+    Set_Series_Len(a, IDX_COLLATOR_MAX);
 
     Init_Handle_Cdata(
-        ARR_AT(a, IDX_COLLATOR_SCRIPT),
+        Array_At(a, IDX_COLLATOR_SCRIPT),
         m_cast(Byte*, script_compressed),  // !!! by contract, don't change!
         script_compressed_size
     );
     Init_Integer(
-        ARR_AT(a, IDX_COLLATOR_SCRIPT_NUM_CODEPOINTS),
+        Array_At(a, IDX_COLLATOR_SCRIPT_NUM_CODEPOINTS),
         script_num_codepoints
     );
     Init_Handle_Cdata(
-        ARR_AT(a, IDX_COLLATOR_CFUNCS),
+        Array_At(a, IDX_COLLATOR_CFUNCS),
         cfuncs,
         cfuncs_len
     );

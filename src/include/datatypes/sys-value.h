@@ -497,7 +497,7 @@ inline static bool IS_RELATIVE(Cell(const*) v) {
     if (not binding)
         return false;  // INTEGER! and other types are inherently "specific"
 
-    if (not IS_SER_ARRAY(binding))
+    if (not Is_Series_Array(binding))
         return false;
 
     return IS_DETAILS(binding);  // action
@@ -528,7 +528,7 @@ inline static bool IS_RELATIVE(Cell(const*) v) {
 // Also, if you are enumerating an array of items you "know to be specific"
 // then you have to worry about if the array is empty:
 //
-//     Value(*) head = SPECIFIC(ARR_HEAD(a));  // a might be at tail !!!
+//     Value(*) head = SPECIFIC(Array_Head(a));  // a might be at tail !!!
 //
 
 inline static Value(*) SPECIFIC(Cell(const_if_c*) v) {
@@ -600,7 +600,7 @@ inline static bool ANY_ARRAYLIKE(NoQuote(Cell(const*)) v) {
     const Node* node1 = VAL_NODE1(v);
     if (Is_Node_A_Cell(node1))
         return false;
-    return SER_FLAVOR(SER(node1)) == FLAVOR_ARRAY;
+    return Series_Flavor(SER(node1)) == FLAVOR_ARRAY;
 }
 
 inline static bool ANY_WORDLIKE(NoQuote(Cell(const*)) v) {
@@ -614,7 +614,7 @@ inline static bool ANY_WORDLIKE(NoQuote(Cell(const*)) v) {
     const Node* node1 = VAL_NODE1(v);
     if (Is_Node_A_Cell(node1))
         return false;
-    return SER_FLAVOR(SER(node1)) == FLAVOR_SYMBOL;
+    return Series_Flavor(SER(node1)) == FLAVOR_SYMBOL;
 }
 
 inline static bool ANY_STRINGLIKE(NoQuote(Cell(const*)) v) {

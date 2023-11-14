@@ -91,17 +91,17 @@ Bounce Series_Common_Action_Maybe_Unhandled(
 
           case SYM_FILE: {
             Series(const*) s = VAL_SERIES(v);
-            if (not IS_SER_ARRAY(s))
+            if (not Is_Series_Array(s))
                 return nullptr;
-            if (Not_Subclass_Flag(ARRAY, s, HAS_FILE_LINE_UNMASKED))
+            if (Not_Array_Flag(cast(ArrayT*, s), HAS_FILE_LINE_UNMASKED))
                 return nullptr;
             return Init_File(OUT, LINK(Filename, s)); }
 
           case SYM_LINE: {
             Series(const*) s = VAL_SERIES(v);
-            if (not IS_SER_ARRAY(s))
+            if (not Is_Series_Array(s))
                 return nullptr;
-            if (Not_Subclass_Flag(ARRAY, s, HAS_FILE_LINE_UNMASKED))
+            if (Not_Array_Flag(cast(ArrayT*, s), HAS_FILE_LINE_UNMASKED))
                 return nullptr;
             return Init_Integer(OUT, s->misc.line); }
 
@@ -180,7 +180,7 @@ Bounce Series_Common_Action_Maybe_Unhandled(
         INCLUDE_PARAMS_OF_REMOVE;
         UNUSED(PARAM(series));  // accounted for by `value`
 
-        ENSURE_MUTABLE(v);  // !!! Review making this extract
+        Ensure_Mutable(v);  // !!! Review making this extract
 
         REBINT len;
         if (REF(part))
@@ -261,10 +261,10 @@ REBINT Compare_Arrays_At_Indexes(
     if (s_array == t_array and s_index == t_index)
          return 0;
 
-    Cell(const*) s_tail = ARR_TAIL(s_array);
-    Cell(const*) t_tail = ARR_TAIL(t_array);
-    Cell(const*) s = ARR_AT(s_array, s_index);
-    Cell(const*) t = ARR_AT(t_array, t_index);
+    Cell(const*) s_tail = Array_Tail(s_array);
+    Cell(const*) t_tail = Array_Tail(t_array);
+    Cell(const*) s = Array_At(s_array, s_index);
+    Cell(const*) t = Array_At(t_array, t_index);
 
     if (s == s_tail or t == t_tail)
         goto diff_of_ends;
@@ -469,12 +469,12 @@ REBLEN Find_In_Array_Simple(
     REBLEN index,
     Cell(const*) target
 ){
-    Cell(const*) value = ARR_HEAD(array);
+    Cell(const*) value = Array_Head(array);
 
-    for (; index < ARR_LEN(array); index++) {
+    for (; index < Array_Len(array); index++) {
         if (0 == Cmp_Value(value + index, target, false))
             return index;
     }
 
-    return ARR_LEN(array);
+    return Array_Len(array);
 }

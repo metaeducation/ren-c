@@ -393,9 +393,9 @@ Bounce MAKE_Varargs(
         //
         Array(*) array1 = Alloc_Singular(NODE_FLAG_MANAGED);
         if (VAL_LEN_AT(arg) == 0)
-            Poison_Cell(ARR_SINGLE(array1));
+            Poison_Cell(Array_Single(array1));
         else
-            Copy_Cell(ARR_SINGLE(array1), arg);
+            Copy_Cell(Array_Single(array1), arg);
 
         Reset_Unquoted_Header_Untracked(TRACK(OUT), CELL_MASK_VARARGS);
         INIT_VAL_VARARGS_PHASE(OUT, nullptr);

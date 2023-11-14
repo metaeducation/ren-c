@@ -107,7 +107,7 @@ Bounce Yielder_Dispatcher(Level(*) const L)
     // If there is no yield, we want a callback so we can mark the
     // generator as finished.
     //
-    Cell(*) body = ARR_AT(details, IDX_DETAILS_1);  // code to run
+    Cell(*) body = Array_At(details, IDX_DETAILS_1);  // code to run
 
     Init_Quasi_Void(mode);  // indicate "running"
     STATE = ST_YIELDER_RUNNING_BODY;
@@ -290,7 +290,7 @@ DECLARE_NATIVE(yielder)
 
     Details(*) details = ACT_DETAILS(yielder);
 
-    assert(IS_BLOCK(ARR_AT(details, IDX_YIELDER_BODY)));
+    assert(IS_BLOCK(Array_At(details, IDX_YIELDER_BODY)));
     Init_Blank(DETAILS_AT(details, IDX_YIELDER_MODE));  // starting
     Init_Trash(DETAILS_AT(details, IDX_YIELDER_LAST_YIELDER_CONTEXT));
     Init_Trash(DETAILS_AT(details, IDX_YIELDER_LAST_YIELD_RESULT));
@@ -397,7 +397,7 @@ DECLARE_NATIVE(yield)
     Value(*) mode = DETAILS_AT(yielder_details, IDX_YIELDER_MODE);
     assert(Is_Quasi_Void(mode));  // should be signal for "currently running"
     Init_Frame(mode, Context_For_Level_May_Manage(yield_level), ANONYMOUS);
-    ASSERT_SERIES_MANAGED(VAL_CONTEXT(mode));
+    Assert_Series_Managed(VAL_CONTEXT(mode));
     assert(CTX_LEVEL_IF_ON_STACK(VAL_CONTEXT(mode)) == yield_level);
 
     // We store the frame chain into the yielder, as a FRAME! value.  The
@@ -415,7 +415,7 @@ DECLARE_NATIVE(yield)
     // but the next run of the yielder will swap in its new REBFRM* over that.
     //
     assert(CTX_VARLIST(yielder_context) == yielder_level->varlist);
-    ASSERT_SERIES_MANAGED(yielder_level->varlist);
+    Assert_Series_Managed(yielder_level->varlist);
 
     // We don't only write the yielded value into the output slot so it is
     // returned from the yielder.  We also stow an extra copy of the value

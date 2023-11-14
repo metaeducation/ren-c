@@ -362,7 +362,7 @@ void Set_Location_Of_Error(
             //
             continue;
         }
-        if (Not_Subclass_Flag(ARRAY, Level_Array(L), HAS_FILE_LINE_UNMASKED))
+        if (Not_Array_Flag(Level_Array(L), HAS_FILE_LINE_UNMASKED))
             continue;
         break;
     }
@@ -1333,7 +1333,7 @@ Context(*) Startup_Errors(const REBVAL *boot_errors)
 
     Cell(const*) errors_tail;
     Cell(*) errors_head
-        = VAL_ARRAY_KNOWN_MUTABLE_AT(&errors_tail, boot_errors);
+        = VAL_ARRAY_Known_Mutable_AT(&errors_tail, boot_errors);
 
     assert(VAL_INDEX(boot_errors) == 0);
     Context(*) catalog = Construct_Context_Managed(
@@ -1346,11 +1346,11 @@ Context(*) Startup_Errors(const REBVAL *boot_errors)
 
     // Morph blocks into objects for all error categories.
     //
-    Cell(const*) category_tail = ARR_TAIL(CTX_VARLIST(catalog));
+    Cell(const*) category_tail = Array_Tail(CTX_VARLIST(catalog));
     REBVAL *category = CTX_VARS_HEAD(catalog);
     for (; category != category_tail; ++category) {
         Cell(const*) tail = VAL_ARRAY_TAIL(category);
-        Cell(*) head = ARR_HEAD(VAL_ARRAY_KNOWN_MUTABLE(category));
+        Cell(*) head = Array_Head(VAL_ARRAY_KNOWN_MUTABLE(category));
         Context(*) error = Construct_Context_Managed(
             REB_OBJECT,
             head,  // modifies bindings
@@ -1413,22 +1413,22 @@ static void Mold_Value_Limit(REB_MOLD *mo, Cell(*) v, REBLEN limit)
 {
     String(*) str = mo->series;
 
-    REBLEN start_len = STR_LEN(str);
-    Size start_size = STR_SIZE(str);
+    REBLEN start_len = String_Len(str);
+    Size start_size = String_Size(str);
 
     Mold_Value(mo, v);  // Note: can't cache pointer into `str` across this
 
-    REBLEN end_len = STR_LEN(str);
+    REBLEN end_len = String_Len(str);
 
     if (end_len - start_len > limit) {
         Utf8(const*) at = cast(Utf8(const*),
-            cast(const Byte*, STR_HEAD(str)) + start_size
+            cast(const Byte*, String_Head(str)) + start_size
         );
         REBLEN n = 0;
         for (; n < limit; ++n)
             at = NEXT_STR(at);
 
-        TERM_STR_LEN_SIZE(str, start_len + limit, at - STR_HEAD(str));
+        Term_String_Len_Size(str, start_len + limit, at - String_Head(str));
         Free_Bookmarks_Maybe_Null(str);
 
         Append_Ascii(str, "...");

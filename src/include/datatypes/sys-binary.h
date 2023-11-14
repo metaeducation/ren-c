@@ -50,45 +50,45 @@
 
 //=//// BINARY! SERIES ////////////////////////////////////////////////////=//
 
-inline static Byte* BIN_AT(const_if_c Binary(*) bin, REBLEN n)
-  { return SER_AT(Byte, bin, n); }
+inline static Byte* Binary_At(const_if_c Binary(*) bin, REBLEN n)
+  { return Series_At(Byte, bin, n); }
 
-inline static Byte* BIN_HEAD(const_if_c Binary(*) bin)
-  { return SER_HEAD(Byte, bin); }
+inline static Byte* Binary_Head(const_if_c Binary(*) bin)
+  { return Series_Head(Byte, bin); }
 
-inline static Byte* BIN_TAIL(const_if_c Binary(*) bin)
-  { return SER_TAIL(Byte, bin); }
+inline static Byte* Binary_Tail(const_if_c Binary(*) bin)
+  { return Series_Tail(Byte, bin); }
 
-inline static Byte* BIN_LAST(const_if_c Binary(*) bin)
-  { return SER_LAST(Byte, bin); }
+inline static Byte* Binary_Last(const_if_c Binary(*) bin)
+  { return Series_Last(Byte, bin); }
 
 #if CPLUSPLUS_11
-    inline static const Byte* BIN_AT(Binary(const*) bin, REBLEN n)
-      { return SER_AT(const Byte, bin, n); }
+    inline static const Byte* Binary_At(Binary(const*) bin, REBLEN n)
+      { return Series_At(const Byte, bin, n); }
 
-    inline static const Byte* BIN_HEAD(Binary(const*) bin)
-      { return SER_HEAD(const Byte, bin); }
+    inline static const Byte* Binary_Head(Binary(const*) bin)
+      { return Series_Head(const Byte, bin); }
 
-    inline static const Byte* BIN_TAIL(Binary(const*) bin)
-      { return SER_TAIL(const Byte, bin); }
+    inline static const Byte* Binary_Tail(Binary(const*) bin)
+      { return Series_Tail(const Byte, bin); }
 
-    inline static const Byte* BIN_LAST(Binary(const*) bin)
-      { return SER_LAST(const Byte, bin); }
+    inline static const Byte* Binary_Last(Binary(const*) bin)
+      { return Series_Last(const Byte, bin); }
 #endif
 
-inline static REBLEN BIN_LEN(Binary(const*) s) {
-    assert(SER_WIDE(s) == 1);
-    return SER_USED(s);
+inline static REBLEN Binary_Len(Binary(const*) s) {
+    assert(Series_Wide(s) == 1);
+    return Series_Used(s);
 }
 
-inline static void TERM_BIN(Binary(*) s) {
-    *BIN_TAIL(s) = '\0';
+inline static void Term_Binary(Binary(*) s) {
+    *Binary_Tail(s) = '\0';
 }
 
-inline static void TERM_BIN_LEN(Binary(*) s, REBLEN len) {
-    assert(SER_WIDE(s) == 1);
-    SET_SERIES_USED(s, len);
-    *BIN_TAIL(s) = '\0';
+inline static void Term_Binary_Len(Binary(*) s, REBLEN len) {
+    assert(Series_Wide(s) == 1);
+    Set_Series_Used(s, len);
+    *Binary_Tail(s) = '\0';
 }
 
 // Make a byte series of length 0 with the given capacity (plus 1, to permit
@@ -105,7 +105,7 @@ inline static Binary(*) Make_Binary_Core(REBLEN capacity, Flags flags)
         FLAG_FLAVOR(BINARY) | flags
     );
   #if DEBUG_POISON_SERIES_TAILS
-    *SER_HEAD(Byte, bin) = BINARY_BAD_UTF8_TAIL_BYTE;  // reserve for '\0'
+    *Series_Head(Byte, bin) = BINARY_BAD_UTF8_TAIL_BYTE;  // reserve for '\0'
   #endif
     return bin;
 }
@@ -121,11 +121,11 @@ inline static Binary(const*) VAL_BINARY(NoQuote(Cell(const*)) v) {
     return BIN(VAL_SERIES(v));
 }
 
-#define VAL_BINARY_ENSURE_MUTABLE(v) \
-    m_cast(Binary(*), VAL_BINARY(ENSURE_MUTABLE(v)))
+#define VAL_BINARY_Ensure_Mutable(v) \
+    m_cast(Binary(*), VAL_BINARY(Ensure_Mutable(v)))
 
-#define VAL_BINARY_KNOWN_MUTABLE(v) \
-    m_cast(Binary(*), VAL_BINARY(KNOWN_MUTABLE(v)))
+#define VAL_BINARY_Known_Mutable(v) \
+    m_cast(Binary(*), VAL_BINARY(Known_Mutable(v)))
 
 
 inline static const Byte* VAL_BINARY_SIZE_AT(
@@ -134,25 +134,25 @@ inline static const Byte* VAL_BINARY_SIZE_AT(
 ){
     Binary(const*) bin = VAL_BINARY(v);
     REBIDX i = VAL_INDEX_RAW(v);
-    Size size = BIN_LEN(bin);
+    Size size = Binary_Len(bin);
     if (i < 0 or i > cast(REBIDX, size))
         fail (Error_Index_Out_Of_Range_Raw());
     if (size_at_out)
         *unwrap(size_at_out) = size - i;
-    return BIN_AT(bin, i);
+    return Binary_At(bin, i);
 }
 
-#define VAL_BINARY_SIZE_AT_ENSURE_MUTABLE(size_out,v) \
-    m_cast(Byte*, VAL_BINARY_SIZE_AT((size_out), ENSURE_MUTABLE(v)))
+#define VAL_BINARY_SIZE_AT_Ensure_Mutable(size_out,v) \
+    m_cast(Byte*, VAL_BINARY_SIZE_AT((size_out), Ensure_Mutable(v)))
 
 #define VAL_BINARY_AT(v) \
     VAL_BINARY_SIZE_AT(nullptr, (v))
 
-#define VAL_BINARY_AT_ENSURE_MUTABLE(v) \
-    m_cast(Byte*, VAL_BINARY_AT(ENSURE_MUTABLE(v)))
+#define VAL_BINARY_AT_Ensure_Mutable(v) \
+    m_cast(Byte*, VAL_BINARY_AT(Ensure_Mutable(v)))
 
-#define VAL_BINARY_AT_KNOWN_MUTABLE(v) \
-    m_cast(Byte*, VAL_BINARY_AT(KNOWN_MUTABLE(v)))
+#define VAL_BINARY_AT_Known_Mutable(v) \
+    m_cast(Byte*, VAL_BINARY_AT(Known_Mutable(v)))
 
 #define Init_Binary(out,bin) \
     Init_Series_Cell((out), REB_BINARY, (bin))

@@ -61,7 +61,7 @@ inline static Array(*) MAP_PAIRLIST(Map(const_if_c*) map)
     LINK(Hashlist, MAP_PAIRLIST(m))
 
 #define MAP_HASHES(m) \
-    SER_HEAD(MAP_HASHLIST(m))
+    Series_Head(MAP_HASHLIST(m))
 
 
 inline static Map(const*) VAL_MAP(NoQuote(Cell(const*)) v) {
@@ -74,16 +74,16 @@ inline static Map(const*) VAL_MAP(NoQuote(Cell(const*)) v) {
     return MAP(a);
 }
 
-#define VAL_MAP_ENSURE_MUTABLE(v) \
-    m_cast(Map(*), VAL_MAP(ENSURE_MUTABLE(v)))
+#define VAL_MAP_Ensure_Mutable(v) \
+    m_cast(Map(*), VAL_MAP(Ensure_Mutable(v)))
 
-#define VAL_MAP_KNOWN_MUTABLE(v) \
-    m_cast(Map(*), VAL_MAP(KNOWN_MUTABLE(v)))
+#define VAL_MAP_Known_Mutable(v) \
+    m_cast(Map(*), VAL_MAP(Known_Mutable(v)))
 
 inline static REBLEN Length_Map(Map(const*) map)
 {
-    Cell(const*) tail = ARR_TAIL(MAP_PAIRLIST(map));
-    const REBVAL *v = SPECIFIC(ARR_HEAD(MAP_PAIRLIST(map)));
+    Cell(const*) tail = Array_Tail(MAP_PAIRLIST(map));
+    const REBVAL *v = SPECIFIC(Array_Head(MAP_PAIRLIST(map)));
 
     REBLEN count = 0;
     for (; v != tail; v += 2) {

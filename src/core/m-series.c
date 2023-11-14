@@ -34,9 +34,9 @@
 //
 void Extend_Series_If_Necessary(Series(*) s, REBLEN delta)
 {
-    REBLEN used_old = SER_USED(s);
-    EXPAND_SERIES_TAIL(s, delta);
-    SET_SERIES_LEN(s, used_old);
+    REBLEN used_old = Series_Used(s);
+    Expand_Series_Tail(s, delta);
+    Set_Series_Len(s, used_old);
 }
 
 
@@ -56,44 +56,44 @@ void Extend_Series_If_Necessary(Series(*) s, REBLEN delta)
 //
 Series(*) Copy_Series_Core(Series(const*) s, Flags flags)
 {
-    assert(not IS_SER_ARRAY(s));
+    assert(not Is_Series_Array(s));
 
-    REBLEN used = SER_USED(s);
+    REBLEN used = Series_Used(s);
     Series(*) copy;
 
     // !!! Semantics of copying hasn't really covered how flags will be
     // propagated.  This includes locks, etc.  But the string flag needs
     // to be copied, for sure.
     //
-    if (IS_SER_UTF8(s)) {
+    if (Is_Series_UTF8(s)) {
         //
         // Note: If the string was a symbol (aliased via AS) it will lose
         // that information.
         //
         copy = Make_String_Core(used, flags);
-        SET_SERIES_USED(copy, used);
-        *SER_TAIL(Byte, copy) = '\0';
+        Set_Series_Used(copy, used);
+        *Series_Tail(Byte, copy) = '\0';
         mutable_LINK(Bookmarks, copy) = nullptr;  // !!! Review: copy these?
         copy->misc.length = s->misc.length;
     }
-    else if (SER_WIDE(s) == 1) {  // non-string BINARY!
+    else if (Series_Wide(s) == 1) {  // non-string BINARY!
         copy = Make_Series_Core(
             used + 1,  // term space
-            FLAG_FLAVOR_BYTE(SER_FLAVOR(s)) | flags
+            FLAG_FLAVOR_BYTE(Series_Flavor(s)) | flags
         );
-        SET_SERIES_USED(copy, used);
+        Set_Series_Used(copy, used);
     }
     else {
         copy = Make_Series_Core(
             used,
-            FLAG_FLAVOR_BYTE(SER_FLAVOR(s)) | flags
+            FLAG_FLAVOR_BYTE(Series_Flavor(s)) | flags
         );
-        SET_SERIES_USED(copy, used);
+        Set_Series_Used(copy, used);
     }
 
-    memcpy(SER_DATA(copy), SER_DATA(s), used * SER_WIDE(s));
+    memcpy(Series_Data(copy), Series_Data(s), used * Series_Wide(s));
 
-    ASSERT_SERIES_TERM_IF_NEEDED(copy);
+    Assert_Series_Term_If_Needed(copy);
     return copy;
 }
 
@@ -119,20 +119,20 @@ Series(*) Copy_Series_At_Len_Extra(
     REBLEN extra,
     Flags flags
 ){
-    assert(not IS_SER_ARRAY(s));
+    assert(not Is_Series_Array(s));
 
     REBLEN capacity = len + extra;
-    if (SER_WIDE(s) == 1)
+    if (Series_Wide(s) == 1)
         ++capacity;
     Series(*) copy = Make_Series_Core(capacity, flags);
-    assert(SER_WIDE(s) == SER_WIDE(copy));
+    assert(Series_Wide(s) == Series_Wide(copy));
     memcpy(
-        SER_DATA(copy),
-        SER_DATA(s) + index * SER_WIDE(s),
-        len * SER_WIDE(s)  // !!! Review if +1 copying terminator is worth it
+        Series_Data(copy),
+        Series_Data(s) + index * Series_Wide(s),
+        len * Series_Wide(s)  // !!! Would +1 copying terminator be worth it?
     );
-    SET_SERIES_USED(copy, len);
-    TERM_SERIES_IF_NECESSARY(copy);
+    Set_Series_Used(copy, len);
+    Term_Series_If_Necessary(copy);
     return copy;
 }
 
@@ -149,9 +149,9 @@ void Remove_Series_Units(Series(*) s, Size byteoffset, REBLEN quantity)
         return;
 
     bool is_dynamic = Get_Series_Flag(s, DYNAMIC);
-    REBLEN used_old = SER_USED(s);
+    REBLEN used_old = Series_Used(s);
 
-    REBLEN start = byteoffset * SER_WIDE(s);
+    REBLEN start = byteoffset * Series_Wide(s);
 
     // Optimized case of head removal.  For a dynamic series this may just
     // add "bias" to the head...rather than move any bytes.
@@ -163,44 +163,44 @@ void Remove_Series_Units(Series(*) s, Size byteoffset, REBLEN quantity)
         s->content.dynamic.used -= quantity;
         if (s->content.dynamic.used == 0) {
             // Reset bias to zero:
-            quantity = SER_BIAS(s);
-            SER_SET_BIAS(s, 0);
+            quantity = Series_Bias(s);
+            Set_Series_Bias(s, 0);
             s->content.dynamic.rest += quantity;
-            s->content.dynamic.data -= SER_WIDE(s) * quantity;
+            s->content.dynamic.data -= Series_Wide(s) * quantity;
         }
         else {
             // Add bias to head:
             unsigned int bias;
-            if (REB_U32_ADD_OF(SER_BIAS(s), quantity, &bias))
+            if (REB_U32_ADD_OF(Series_Bias(s), quantity, &bias))
                 fail (Error_Overflow_Raw());
 
             if (bias > 0xffff) { // 16-bit, simple SER_ADD_BIAS could overflow
                 char *data = s->content.dynamic.data;
 
-                data += SER_WIDE(s) * quantity;
-                s->content.dynamic.data -= SER_WIDE(s) * SER_BIAS(s);
+                data += Series_Wide(s) * quantity;
+                s->content.dynamic.data -= Series_Wide(s) * Series_Bias(s);
 
-                s->content.dynamic.rest += SER_BIAS(s);
-                SER_SET_BIAS(s, 0);
+                s->content.dynamic.rest += Series_Bias(s);
+                Set_Series_Bias(s, 0);
 
                 memmove(
                     s->content.dynamic.data,
                     data,
-                    SER_USED(s) * SER_WIDE(s)
+                    Series_Used(s) * Series_Wide(s)
                 );
             }
             else {
-                SER_SET_BIAS(s, bias);
+                Set_Series_Bias(s, bias);
                 s->content.dynamic.rest -= quantity;
-                s->content.dynamic.data += SER_WIDE(s) * quantity;
-                if ((start = SER_BIAS(s)) != 0) {
+                s->content.dynamic.data += Series_Wide(s) * quantity;
+                if ((start = Series_Bias(s)) != 0) {
                     // If more than half biased:
-                    if (start >= MAX_SERIES_BIAS or start > SER_REST(s))
+                    if (start >= MAX_SERIES_BIAS or start > Series_Rest(s))
                         Unbias_Series(s, true);
                 }
             }
         }
-        TERM_SERIES_IF_NECESSARY(s);  // !!! Review doing more elegantly
+        Term_Series_If_Necessary(s);  // !!! Review doing more elegantly
         return;
     }
 
@@ -210,19 +210,19 @@ void Remove_Series_Units(Series(*) s, Size byteoffset, REBLEN quantity)
     // Clip if past end and optimize the remove operation:
 
     if (quantity + byteoffset >= used_old) {
-        SET_SERIES_USED(s, byteoffset);
+        Set_Series_Used(s, byteoffset);
         return;
     }
 
-    REBLEN total = SER_USED(s) * SER_WIDE(s);
+    REBLEN total = Series_Used(s) * Series_Wide(s);
 
-    Byte* data = SER_DATA(s) + start;
+    Byte* data = Series_Data(s) + start;
     memmove(
         data,
-        data + (quantity * SER_WIDE(s)),
-        total - (start + (quantity * SER_WIDE(s)))
+        data + (quantity * Series_Wide(s)),
+        total - (start + (quantity * Series_Wide(s)))
     );
-    SET_SERIES_USED(s, used_old - quantity);
+    Set_Series_Used(s, used_old - quantity);
 }
 
 
@@ -256,7 +256,7 @@ void Remove_Any_Series_Len(REBVAL *v, REBLEN index, REBINT len)
     else  // ANY-ARRAY! is more straightforward
         Remove_Series_Units(VAL_SERIES_ENSURE_MUTABLE(v), index, len);
 
-    ASSERT_SERIES_TERM_IF_NEEDED(VAL_SERIES(v));
+    Assert_Series_Term_If_Needed(VAL_SERIES(v));
 }
 
 
@@ -267,19 +267,19 @@ void Remove_Any_Series_Len(REBVAL *v, REBLEN index, REBINT len)
 //
 void Unbias_Series(Series(*) s, bool keep)
 {
-    REBLEN bias = SER_BIAS(s);
+    REBLEN bias = Series_Bias(s);
     if (bias == 0)
         return;
 
     Byte* data = cast(Byte*, s->content.dynamic.data);
 
-    SER_SET_BIAS(s, 0);
+    Set_Series_Bias(s, 0);
     s->content.dynamic.rest += bias;
-    s->content.dynamic.data -= SER_WIDE(s) * bias;
+    s->content.dynamic.data -= Series_Wide(s) * bias;
 
     if (keep) {
-        memmove(s->content.dynamic.data, data, SER_USED(s) * SER_WIDE(s));
-        TERM_SERIES_IF_NECESSARY(s);
+        memmove(s->content.dynamic.data, data, Series_Used(s) * Series_Wide(s));
+        Term_Series_If_Necessary(s);
     }
 }
 
@@ -294,7 +294,7 @@ void Reset_Array(Array(*) a)
 {
     if (Get_Series_Flag(a, DYNAMIC))
         Unbias_Series(a, false);
-    SET_SERIES_LEN(a, 0);
+    Set_Series_Len(a, 0);
 }
 
 
@@ -310,7 +310,7 @@ void Clear_Series(Series(*) s)
 
     if (Get_Series_Flag(s, DYNAMIC)) {
         Unbias_Series(s, false);
-        memset(s->content.dynamic.data, 0, SER_REST(s) * SER_WIDE(s));
+        memset(s->content.dynamic.data, 0, Series_Rest(s) * Series_Wide(s));
     }
     else
         memset(cast(Byte*, &s->content), 0, sizeof(s->content));
@@ -330,11 +330,11 @@ Byte* Reset_Buffer(Series(*) buf, REBLEN len)
     if (buf == NULL)
         panic ("buffer not yet allocated");
 
-    SET_SERIES_LEN(buf, 0);
+    Set_Series_Len(buf, 0);
     Unbias_Series(buf, true);
     Expand_Series(buf, 0, len); // sets new tail
 
-    return SER_DATA(buf);
+    return Series_Data(buf);
 }
 
 
@@ -345,18 +345,18 @@ Byte* Reset_Buffer(Series(*) buf, REBLEN len)
 //
 void Assert_Series_Term_Core(Series(const*) s)
 {
-    if (IS_SER_ARRAY(s)) {
+    if (Is_Series_Array(s)) {
       #if DEBUG_POISON_SERIES_TAILS
         if (Get_Series_Flag(s, DYNAMIC)) {
-            Cell(const*) tail = ARR_TAIL(ARR(s));
+            Cell(const*) tail = Array_Tail(ARR(s));
             if (not Is_Cell_Poisoned(tail))
                 panic (tail);
         }
       #endif
     }
-    else if (SER_WIDE(s) == 1) {
-        const Byte* tail = BIN_TAIL(BIN(s));
-        if (IS_SER_UTF8(s)) {
+    else if (Series_Wide(s) == 1) {
+        const Byte* tail = Binary_Tail(BIN(s));
+        if (Is_Series_UTF8(s)) {
             if (*tail != '\0')
                 panic (s);
         }
@@ -375,11 +375,11 @@ void Assert_Series_Term_Core(Series(const*) s)
 //
 void Assert_Series_Basics_Core(Series(const*) s)
 {
-    if (IS_FREE_NODE(s))
+    if (Is_Free_Node(s))
         panic (s);
 
-    assert(SER_FLAVOR(s) != FLAVOR_TRASH);
-    assert(SER_USED(s) <= SER_REST(s));
+    assert(Series_Flavor(s) != FLAVOR_TRASH);
+    assert(Series_Used(s) <= Series_Rest(s));
 
     Assert_Series_Term_Core(s);
 }

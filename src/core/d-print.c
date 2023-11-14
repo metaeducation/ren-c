@@ -106,12 +106,12 @@ void Form_Hex_Esc(REB_MOLD *mo, Byte b)
 //
 void Form_RGBA(REB_MOLD *mo, const Byte* dp)
 {
-    REBLEN len_old = STR_LEN(mo->series);
-    Size used_old = STR_SIZE(mo->series);
+    REBLEN len_old = String_Len(mo->series);
+    Size used_old = String_Size(mo->series);
 
-    EXPAND_SERIES_TAIL(mo->series, 8);  // grow by 8 bytes, may realloc
+    Expand_Series_Tail(mo->series, 8);  // grow by 8 bytes, may realloc
 
-    Byte* bp = BIN_AT(mo->series, used_old);  // potentially new buffer
+    Byte* bp = Binary_At(mo->series, used_old);  // potentially new buffer
 
     bp[0] = Hex_Digits[(dp[0] >> 4) & 0xf];
     bp[1] = Hex_Digits[dp[0] & 0xf];
@@ -123,7 +123,7 @@ void Form_RGBA(REB_MOLD *mo, const Byte* dp)
     bp[7] = Hex_Digits[dp[3] & 0xf];
     bp[8] = '\0';
 
-    TERM_STR_LEN_SIZE(mo->series, len_old + 8, used_old + 8);
+    Term_String_Len_Size(mo->series, len_old + 8, used_old + 8);
 }
 
 

@@ -53,7 +53,7 @@
 // of resizing.  (In the future, it may be reallocated just as an idle task
 // by the GC to reclaim or optimize space.)
 //
-//    *** THIS MEANS POINTERS INTO THE SER_DATA() FOR A MANAGED SERIES
+//    *** THIS MEANS POINTERS INTO THE Series_Data() FOR A MANAGED SERIES
 //    MUST NOT BE HELD ONTO ACROSS EVALUATIONS, WITHOUT SPECIAL PROTECTION
 //    OR ACCOMMODATION.**
 //
@@ -297,10 +297,10 @@
 inline static Byte FLAVOR_BYTE(uintptr_t flags)
   { return THIRD_BYTE(flags); }
 
-#define SER_FLAVOR(s) \
+#define Series_Flavor(s) \
     cast(Flavor, THIRD_BYTE((s)->leader))
 
-#define mutable_SER_FLAVOR(s) \
+#define mutable_Series_Flavor(s) \
     mutable_THIRD_BYTE((s)->leader)
 
 
@@ -336,7 +336,7 @@ inline static Byte FLAVOR_BYTE(uintptr_t flags)
 // the lifetime of the series--defaulting to FALSE.
 //
 // !!! The current main application of series info is a byte's worth of space
-// for the SER_USED() of series content that fits in the cell area, and
+// for the Series_Used() of series content that fits in the cell area, and
 // flags pertaining to locking.  The idea of "popping out" that series info
 // upon a hold lock being taken--such that the info bits move and the slot
 // holds a locking pointer--is currently being thught about.  See the INODE()
@@ -434,13 +434,13 @@ STATIC_ASSERT(SERIES_INFO_0_IS_FALSE == NODE_FLAG_NODE);
     FLAG_LEFT_BIT(6)
 
 
-//=//// SERIES_INFO_7 //////////////////////////////////////////////////////=//
+//=//// SERIES_INFO_7 /////////////////////////////////////////////////////=//
 //
 #define SERIES_INFO_7 \
     FLAG_LEFT_BIT(7)
 
 
-//=//// BITS 8-15 ARE SER_USED() FOR NON-DYNAMIC NON-ARRAYS ///////////////=//
+//=//// BITS 8-15 ARE Series_Used() FOR NON-DYNAMIC NON-ARRAYS ////////////=//
 
 // SERIES_FLAG_DYNAMIC indicates that a series has a dynamically allocated
 // portion, and it has a whole uintptr_t to use for the length.  However, if
@@ -449,7 +449,7 @@ STATIC_ASSERT(SERIES_INFO_0_IS_FALSE == NODE_FLAG_NODE);
 //
 // If the data is an array, then the length can only be 0 or 1, since the
 // tracking information is the same size as a cell.  This can be encoded by
-// having the cell be END or non-END to know the length.
+// having the cell be poisoned or non-poisoned to know the length.
 //
 // For binaries and other non-arrays the length has to be stored somewhere.
 // The third byte of the INFO is set aside for the purpose.
@@ -464,10 +464,10 @@ STATIC_ASSERT(SERIES_INFO_0_IS_FALSE == NODE_FLAG_NODE);
     FLAG_SECOND_BYTE(len)
 
 #define USED_BYTE(s) \
-    SECOND_BYTE(SER_INFO(s))
+    SECOND_BYTE(SERIES_INFO(s))
 
 #define mutable_USED_BYTE(s) \
-    mutable_SECOND_BYTE(SER_INFO(s))
+    mutable_SECOND_BYTE(SERIES_INFO(s))
 
 
 //=//// BITS 16-31 ARE SymId FOR SYMBOLS //////////////////////////////////=//
@@ -597,7 +597,7 @@ union StubContentUnion {
 
     // If not(SERIES_FLAG_DYNAMIC), then 0 or 1 length arrays can be held in
     // the series node.  If the single cell holds an END, it's 0 length...
-    // otherwise it's length 1.  This means SER_USED() for non-dynamic
+    // otherwise it's length 1.  This means Series_Used() for non-dynamic
     // arrays is technically available for other purposes.
     //
     union {
@@ -615,11 +615,11 @@ union StubContentUnion {
     } fixed;
 };
 
-#define SER_CELL(s) \
-    cast(Cell(const*), &(s)->content.fixed.cells[0])  // unchecked ARR_SINGLE()
+#define Stub_Cell(s) \
+    cast(Cell(const*), &(s)->content.fixed.cells[0])  // fast Array_Single()
 
-#define mutable_SER_CELL(s) \
-    cast(Cell(*), &(s)->content.fixed.cells[0])  // unchecked ARR_SINGLE()
+#define mutable_Stub_Cell(s) \
+    cast(Cell(*), &(s)->content.fixed.cells[0])  // fast Array_Single()
 
 
 union StubLinkUnion {
@@ -672,7 +672,7 @@ union StubMiscUnion {
 
     // Under UTF-8 everywhere, strings are byte-sized...so the series "used"
     // is actually counting *bytes*, not logical character codepoint units.
-    // SER_USED() and STR_LEN() can therefore be different...where STR_LEN()
+    // Series_Used() and String_Len() can therefore be different...where String_Len()
     // on a string series comes from here, vs. just report the used units.
     //
     REBLEN length;
@@ -699,7 +699,7 @@ union StubMiscUnion {
 
 // Some series flags imply the INFO is used not for flags, but for another
 // markable pointer.  This is not legal for any series that needs to encode
-// its SER_USED(), so only strings and arrays can pull this trick...when
+// its Series_Used(), so only strings and arrays can pull this trick...when
 // they are used to implement internal structures.
 //
 union StubInfoUnion {

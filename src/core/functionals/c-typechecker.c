@@ -59,7 +59,7 @@ void Datatype_Checker_Intrinsic(Value(*) out, Action(*) action, Value(*) arg)
     assert(ACT_DISPATCHER(action) == &Intrinsic_Dispatcher);
 
     Details(*) details = ACT_DETAILS(action);
-    assert(ARR_LEN(details) == IDX_TYPECHECKER_MAX);
+    assert(Array_Len(details) == IDX_TYPECHECKER_MAX);
 
     REBVAL *datatype = DETAILS_AT(details, IDX_TYPECHECKER_TYPE);
 
@@ -77,7 +77,7 @@ void Typeset_Checker_Intrinsic(Value(*) out, Action(*) action, Value(*) arg)
     assert(ACT_DISPATCHER(action) == &Intrinsic_Dispatcher);
 
     Details(*) details = ACT_DETAILS(action);
-    assert(ARR_LEN(details) == IDX_TYPECHECKER_MAX);
+    assert(Array_Len(details) == IDX_TYPECHECKER_MAX);
 
     REBVAL *typeset_index = DETAILS_AT(details, IDX_TYPECHECKER_TYPE);
     assert(IS_INTEGER(typeset_index));
@@ -106,7 +106,7 @@ Phase(*) Make_Typechecker(Value(const*) type) {
     //
     DECLARE_STABLE (spec);
     Array(*) spec_array = Alloc_Singular(NODE_FLAG_MANAGED);
-    Init_Word(ARR_SINGLE(spec_array), Canon(VALUE));
+    Init_Word(Array_Single(spec_array), Canon(VALUE));
     Init_Block(spec, spec_array);
 
     Context(*) meta;
@@ -116,7 +116,7 @@ Phase(*) Make_Typechecker(Value(const*) type) {
         spec,
         &flags  // return type checked only in debug build
     );
-    ASSERT_SERIES_TERM_IF_NEEDED(paramlist);
+    Assert_Series_Term_If_Needed(paramlist);
 
     Phase(*) typechecker = Make_Action(
         paramlist,
@@ -191,8 +191,8 @@ bool Typecheck_Value(
         Array(const*) array = try_unwrap(VAL_PARAMETER_ARRAY(tests));
         if (array == nullptr)
             return true;  // implicitly all is permitted
-        item = ARR_HEAD(array);
-        tail = ARR_TAIL(array);
+        item = Array_Head(array);
+        tail = Array_Tail(array);
         match_all = false;
         break; }
 

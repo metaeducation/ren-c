@@ -257,10 +257,10 @@ inline static Phase(*) ACT_IDENTITY(Action(*) action) {
 // archetype is updated to match its container.
 //
 // Note that the details array represented by the identity is not guaranteed
-// to be SERIES_FLAG_DYNAMIC, so we use SER_AT() here vs. optimize further.
+// to be SERIES_FLAG_DYNAMIC, so we use Series_At() here vs. optimize further.
 //
 #define ACT_ARCHETYPE(action) \
-    SER_AT(REBVAL, ACT_IDENTITY(action), 0)
+    Series_At(REBVAL, ACT_IDENTITY(action), 0)
 
 
 inline static bool Is_Frame_Details(NoQuote(Cell(const*)) v) {
@@ -359,7 +359,7 @@ inline static Context(*) ACT_EXEMPLAR(Action(*) a) {
     cast(KeylistT*, BONUS(KeySource, ACT_EXEMPLAR(a)))
 
 #define ACT_KEYS_HEAD(a) \
-    SER_HEAD(const REBKEY, ACT_KEYLIST(a))
+    Series_Head(const REBKEY, ACT_KEYLIST(a))
 
 #define ACT_KEYS(tail,a) \
     CTX_KEYS((tail), ACT_EXEMPLAR(a))

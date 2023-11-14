@@ -129,7 +129,7 @@ Array(*) Startup_Generics(const REBVAL *boot_generics)
 {
     assert(VAL_INDEX(boot_generics) == 0); // should be at head, sanity check
     Cell(const*) tail;
-    Cell(*) head = VAL_ARRAY_KNOWN_MUTABLE_AT(&tail, boot_generics);
+    Cell(*) head = VAL_ARRAY_Known_Mutable_AT(&tail, boot_generics);
     REBSPC *specifier = VAL_SPECIFIER(boot_generics);
 
     // Add SET-WORD!s that are top-level in the generics block to the lib
@@ -154,7 +154,7 @@ Array(*) Startup_Generics(const REBVAL *boot_generics)
 
     // Sanity check the symbol transformation
     //
-    if (0 != strcmp("open", STR_UTF8(Canon(OPEN))))
+    if (0 != strcmp("open", String_UTF8(Canon(OPEN))))
         panic (Canon(OPEN));
 
     StackIndex base = TOP_INDEX;

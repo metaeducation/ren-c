@@ -87,7 +87,7 @@
 static REBI64 mark_count = 0;
 
 #define ASSERT_NO_GC_MARKS_PENDING() \
-    assert(SER_USED(GC_Mark_Stack) == 0)
+    assert(Series_Used(GC_Mark_Stack) == 0)
 
 
 static void Queue_Mark_Cell_Deep(Cell(const*) v);
@@ -181,7 +181,7 @@ static void Queue_Mark_Node_Deep(const Node** pp) {
     }
 
  #if !defined(NDEBUG)
-    if (IS_FREE_NODE(s))
+    if (Is_Free_Node(s))
         panic (s);
 
     if (Not_Series_Flag(s, MANAGED)) {
@@ -240,8 +240,8 @@ static void Queue_Unmarked_Accessible_Series_Deep(Series(*) s)
         // !!! Keylists may not be the only category that are just a straight
         // list of node pointers.
         //
-        REBKEY *tail = SER_TAIL(REBKEY, s);
-        REBKEY *key = SER_HEAD(REBKEY, s);
+        REBKEY *tail = Series_Tail(REBKEY, s);
+        REBKEY *key = Series_Head(REBKEY, s);
         for (; key != tail; ++key) {
             //
             // Symbol(*) are not available to the user to free out from under
@@ -253,7 +253,7 @@ static void Queue_Unmarked_Accessible_Series_Deep(Series(*) s)
             Queue_Unmarked_Accessible_Series_Deep(m_cast(SymbolT*, *key));
         }
     }
-    else if (IS_SER_ARRAY(s)) {
+    else if (Is_Series_Array(s)) {
         Array(*) a = ARR(s);
 
     //=//// MARK BONUS (if not using slot for `bias`) /////////////////////=//
@@ -291,10 +291,13 @@ static void Queue_Unmarked_Accessible_Series_Deep(Series(*) s)
         // !!! Should this use a "bumping a NULL at the end" technique to
         // grow, like the data stack?
         //
-        if (SER_FULL(GC_Mark_Stack))
+        if (Is_Series_Full(GC_Mark_Stack))
             Extend_Series_If_Necessary(GC_Mark_Stack, 8);
-        *SER_AT(Array(*), GC_Mark_Stack, SER_USED(GC_Mark_Stack)) = a;
-        SET_SERIES_USED(GC_Mark_Stack, SER_USED(GC_Mark_Stack) + 1);  // !term
+        *Series_At(Array(*), GC_Mark_Stack, Series_Used(GC_Mark_Stack)) = a;
+        Set_Series_Used(  // doesn't add a terminator
+            GC_Mark_Stack,
+            Series_Used(GC_Mark_Stack) + 1
+        );
     }
 }
 
@@ -356,19 +359,27 @@ static void Propagate_All_GC_Marks(void)
 {
     assert(not in_mark);
 
-    while (SER_USED(GC_Mark_Stack) != 0) {
-        SET_SERIES_USED(GC_Mark_Stack, SER_USED(GC_Mark_Stack) - 1);  // safe
+    while (Series_Used(GC_Mark_Stack) != 0) {
+        Set_Series_Used(GC_Mark_Stack, Series_Used(GC_Mark_Stack) - 1);
 
         // Data pointer may change in response to an expansion during
         // Mark_Array_Deep_Core(), so must be refreshed on each loop.
         //
-        Array(*) a = *SER_AT(Array(*), GC_Mark_Stack, SER_USED(GC_Mark_Stack));
+        Array(*) a = *Series_At(
+            ArrayT*,
+            GC_Mark_Stack,
+            Series_Used(GC_Mark_Stack)
+        );
 
         // Termination is not required in the release build (the length is
         // enough to know where it ends).  But overwrite with trash in debug.
         //
-        TRASH_POINTER_IF_DEBUG(
-            *SER_AT(Array(*), GC_Mark_Stack, SER_USED(GC_Mark_Stack))
+        Trash_Pointer_If_Debug(
+            *Series_At(
+                ArrayT*,
+                GC_Mark_Stack,
+                Series_Used(GC_Mark_Stack)
+            )
         );
 
         // We should have marked this series at queueing time to keep it from
@@ -376,11 +387,11 @@ static void Propagate_All_GC_Marks(void)
         //
         assert(a->leader.bits & NODE_FLAG_MARKED);
 
-        Cell(*) v = ARR_HEAD(a);
-        Cell(const*) tail = ARR_TAIL(a);
+        Cell(*) v = Array_Head(a);
+        Cell(const*) tail = Array_Tail(a);
         for (; v != tail; ++v) {
           #if DEBUG
-            Flavor flavor = SER_FLAVOR(a);
+            Flavor flavor = Series_Flavor(a);
             assert(flavor <= FLAVOR_MAX_ARRAY);
 
             switch (QUOTE_BYTE_UNCHECKED(v)) {
@@ -463,9 +474,9 @@ void Reify_Variadic_Feed_As_Array_Feed(
         // need to be sure feed->p isn't invalid... and not end
 
         if (truncated)
-            feed->p = ARR_AT(FEED_ARRAY(feed), 1);  // skip trunc
+            feed->p = Array_At(FEED_ARRAY(feed), 1);  // skip trunc
         else
-            feed->p = ARR_HEAD(FEED_ARRAY(feed));
+            feed->p = Array_Head(FEED_ARRAY(feed));
 
         assert(READABLE(At_Feed(feed)));  // not end at start, not end now
 
@@ -491,7 +502,7 @@ void Reify_Variadic_Feed_As_Array_Feed(
         feed->p = &PG_Feed_At_End;
     }
 
-    assert(FEED_INDEX(feed) <= cast(Index, ARR_LEN(FEED_ARRAY(feed))));
+    assert(FEED_INDEX(feed) <= cast(Index, Array_Len(FEED_ARRAY(feed))));
 }
 
 
@@ -543,7 +554,7 @@ static void Mark_Root_Series(void)
                 //
                 if (not (a->leader.bits & NODE_FLAG_MANAGED)) {
                     // if it's not managed, don't mark it (don't have to?)
-                    Queue_Mark_Cell_Deep(ARR_SINGLE(a));
+                    Queue_Mark_Cell_Deep(Array_Single(a));
                 }
                 else {  // Note that Mark_Level_Stack_Deep() marks the owner
                     if (not (a->leader.bits & NODE_FLAG_MARKED)) {
@@ -556,7 +567,7 @@ static void Mark_Root_Series(void)
                         //
                         // !!! Should we verify this?
                         //
-                        Queue_Mark_Maybe_Fresh_Cell_Deep(ARR_SINGLE(a));
+                        Queue_Mark_Maybe_Fresh_Cell_Deep(Array_Single(a));
                     }
                 }
 
@@ -582,7 +593,7 @@ static void Mark_Root_Series(void)
             //
             Series(*) s = SER(cast(void*, stub));
             if (
-                IS_SER_ARRAY(s)
+                Is_Series_Array(s)
                 and s != DS_Array  // !!! Review DS_Array exemption!
             ){
                 if (s->leader.bits & NODE_FLAG_MANAGED)
@@ -616,8 +627,8 @@ static void Mark_Root_Series(void)
                     if (node_MISC(Node, a))
                         Queue_Mark_Node_Deep(&a->misc.any.node);
 
-                Cell(const*) item_tail = ARR_TAIL(a);
-                Cell(*) item = ARR_HEAD(a);
+                Cell(const*) item_tail = Array_Tail(a);
+                Cell(*) item = Array_Head(a);
                 for (; item != item_tail; ++item)
                     Queue_Mark_Cell_Deep(item);
             }
@@ -641,7 +652,7 @@ static void Mark_Root_Series(void)
 //
 static void Mark_Data_Stack(void)
 {
-    Cell(const*) head = ARR_HEAD(DS_Array);
+    Cell(const*) head = Array_Head(DS_Array);
     assert(Is_Cell_Poisoned(head));  // Data_Stack_At(0) is deliberately invalid
 
     REBVAL *stackval = DS_Movable_Top;
@@ -650,7 +661,7 @@ static void Mark_Data_Stack(void)
 
   #if DEBUG_POISON_DROPPED_STACK_CELLS
     stackval = DS_Movable_Top + 1;
-    for (; stackval != ARR_TAIL(DS_Array); ++stackval)
+    for (; stackval != Array_Tail(DS_Array); ++stackval)
         assert(Is_Cell_Poisoned(stackval));
   #endif
 
@@ -692,8 +703,8 @@ static void Mark_Symbol_Series(void)
 //
 static void Mark_Guarded_Nodes(void)
 {
-    const Node* *np = SER_HEAD(const Node*, GC_Guarded);
-    REBLEN n = SER_USED(GC_Guarded);
+    const Node* *np = Series_Head(const Node*, GC_Guarded);
+    REBLEN n = Series_Used(GC_Guarded);
     for (; n > 0; --n, ++np) {
         if (*cast(const Byte*, *np) == PREP_SIGNAL_BYTE) {
             //
@@ -740,7 +751,7 @@ static void Mark_Level_Stack_Deep(void)
         //
         Array(*) singular = FEED_SINGULAR(L->feed);
         do {
-            Queue_Mark_Cell_Deep(ARR_SINGLE(singular));
+            Queue_Mark_Cell_Deep(Array_Single(singular));
             singular = LINK(Splice, singular);
         } while (singular);
 
@@ -1047,8 +1058,8 @@ static Count Sweep_Series(void)
 //
 REBLEN Fill_Sweeplist(Series(*) sweeplist)
 {
-    assert(SER_WIDE(sweeplist) == sizeof(Node*));
-    assert(SER_USED(sweeplist) == 0);
+    assert(Series_Wide(sweeplist) == sizeof(Node*));
+    assert(Series_Used(sweeplist) == 0);
 
     Count sweep_count = 0;
 
@@ -1063,7 +1074,7 @@ REBLEN Fill_Sweeplist(Series(*) sweeplist)
             switch (*stub >> 4) {
               case 9: {  // 0x8 + 0x1
                 Series(*) s = SER(cast(void*, stub));
-                ASSERT_SERIES_MANAGED(s);
+                Assert_Series_Managed(s);
                 if (s->leader.bits & NODE_FLAG_MARKED) {
                     s->leader.bits &= ~NODE_FLAG_MARKED;
                   #if !defined(NDEBUG)
@@ -1071,8 +1082,8 @@ REBLEN Fill_Sweeplist(Series(*) sweeplist)
                   #endif
                 }
                 else {
-                    EXPAND_SERIES_TAIL(sweeplist, 1);
-                    *SER_AT(Node*, sweeplist, sweep_count) = s;
+                    Expand_Series_Tail(sweeplist, 1);
+                    *Series_At(Node*, sweeplist, sweep_count) = s;
                     ++sweep_count;
                 }
                 break; }
@@ -1093,8 +1104,8 @@ REBLEN Fill_Sweeplist(Series(*) sweeplist)
                   #endif
                 }
                 else {
-                    EXPAND_SERIES_TAIL(sweeplist, 1);
-                    *SER_AT(Node*, sweeplist, sweep_count) = pairing;
+                    Expand_Series_Tail(sweeplist, 1);
+                    *Series_At(Node*, sweeplist, sweep_count) = pairing;
                     ++sweep_count;
                 }
                 break; }
@@ -1191,8 +1202,8 @@ REBLEN Recycle_Core(bool shutdown, Series(*) sweeplist)
     while (true) {
         REBI64 before_count = mark_count;
 
-        Symbol(*) *psym = SER_HEAD(Symbol(*), PG_Symbols_By_Hash);
-        Symbol(*) *psym_tail = SER_TAIL(Symbol(*), PG_Symbols_By_Hash);
+        Symbol(*) *psym = Series_Head(Symbol(*), PG_Symbols_By_Hash);
+        Symbol(*) *psym_tail = Series_Tail(Symbol(*), PG_Symbols_By_Hash);
         for (; psym != psym_tail; ++psym) {
             if (*psym == nullptr or *psym == &PG_Deleted_Symbol)
                 continue;
@@ -1207,7 +1218,7 @@ REBLEN Recycle_Core(bool shutdown, Series(*) sweeplist)
                     Set_Series_Flag(patch, MARKED);
                     ++mark_count;
 
-                    Queue_Mark_Cell_Deep(ARR_SINGLE(ARR(patch)));
+                    Queue_Mark_Cell_Deep(Array_Single(ARR(patch)));
 
                     // We also have to keep the word alive, but not necessarily
                     // keep all the other declarations in other modules alive.
@@ -1382,12 +1393,12 @@ void Push_Guard_Node(const Node* node)
     }
   #endif
 
-    if (SER_FULL(GC_Guarded))
+    if (Is_Series_Full(GC_Guarded))
         Extend_Series_If_Necessary(GC_Guarded, 8);
 
-    *SER_AT(const Node*, GC_Guarded, SER_USED(GC_Guarded)) = node;
+    *Series_At(const Node*, GC_Guarded, Series_Used(GC_Guarded)) = node;
 
-    SET_SERIES_USED(GC_Guarded, SER_USED(GC_Guarded) + 1);
+    Set_Series_Used(GC_Guarded, Series_Used(GC_Guarded) + 1);
 }
 
 

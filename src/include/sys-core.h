@@ -524,7 +524,7 @@ inline static const REBVAR *Try_Lib_Var(SymId id) {
     if (INODE(PatchContext, &PG_Lib_Patches[id]) == nullptr)
         return nullptr;
 
-    return cast(REBVAR*, ARR_SINGLE(&PG_Lib_Patches[id]));
+    return cast(REBVAR*, Array_Single(&PG_Lib_Patches[id]));
 }
 
 #define Lib(name) \

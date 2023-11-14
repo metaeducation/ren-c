@@ -117,13 +117,13 @@ enum {
 };
 
 inline static bool Last_In_Mold_Is_Slash(REB_MOLD *mo) {
-    if (mo->base.size == SER_USED(mo->series))
+    if (mo->base.size == Series_Used(mo->series))
         return false;  // nothing added yet
 
     // It's UTF-8 data, so we can just check the last byte; if it's a
     // continuation code it will not match an ASCII character.
     //
-    return *SER_LAST(Byte, mo->series) == '/';
+    return *Series_Last(Byte, mo->series) == '/';
 }
 
 
@@ -179,7 +179,7 @@ restart:;
                 //
                 // Drop mold so far, and change C:/ to /C/ (and C:X to /C/X)
                 //
-                TERM_STR_LEN_SIZE(mo->series, mo->base.index, mo->base.size);
+                Term_String_Len_Size(mo->series, mo->base.index, mo->base.size);
                 Append_Codepoint(mo->series, '/');
                 lead_slash = true; // don't do this the second time around
                 goto restart;
@@ -359,10 +359,10 @@ void Mold_File_To_Local(REB_MOLD *mo, Cell(const*) file, Flags flags) {
                     // Seek back to the previous slash in the mold buffer and
                     // truncate it there, to trim off one path segment.
                     //
-                    REBLEN n = STR_LEN(mo->series);
+                    REBLEN n = String_Len(mo->series);
                     Codepoint c2;  // character in mold buffer
                     if (n > mo->base.index) {
-                        Utf8(*) tp = STR_TAIL(mo->series);
+                        Utf8(*) tp = String_Tail(mo->series);
 
                         --n;
                         tp = BACK_CHR(&c2, tp);
@@ -382,10 +382,10 @@ void Mold_File_To_Local(REB_MOLD *mo, Cell(const*) file, Flags flags) {
 
                         // Terminate, loses '/' (or '\'), but added back below
                         //
-                        TERM_STR_LEN_SIZE(
+                        Term_String_Len_Size(
                             mo->series,
                             n,
-                            tp - STR_HEAD(mo->series) + 1
+                            tp - String_Head(mo->series) + 1
                         );
                     }
 
@@ -420,10 +420,10 @@ void Mold_File_To_Local(REB_MOLD *mo, Cell(const*) file, Flags flags) {
                 continue;
             }
 
-            REBLEN n = STR_SIZE(mo->series);
+            REBLEN n = String_Size(mo->series);
             if (
                 n > mo->base.size
-                and *BIN_AT(mo->series, n - 1) == OS_DIR_SEP
+                and *Binary_At(mo->series, n - 1) == OS_DIR_SEP
             ){
                 // Collapse multiple sequential slashes into just one, by
                 // skipping to the next character without adding to mold.
@@ -458,9 +458,9 @@ void Mold_File_To_Local(REB_MOLD *mo, Cell(const*) file, Flags flags) {
     // is included in the filename (move, delete), so it might not be wanted.
     //
     if (flags & REB_FILETOLOCAL_NO_TAIL_SLASH) {
-        Size n = STR_SIZE(mo->series);
-        if (n > mo->base.size and *BIN_AT(mo->series, n - 1) == OS_DIR_SEP)
-            TERM_STR_LEN_SIZE(mo->series, STR_LEN(mo->series) - 1, n - 1);
+        Size n = String_Size(mo->series);
+        if (n > mo->base.size and *Binary_At(mo->series, n - 1) == OS_DIR_SEP)
+            Term_String_Len_Size(mo->series, String_Len(mo->series) - 1, n - 1);
     }
 }
 

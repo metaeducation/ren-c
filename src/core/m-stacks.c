@@ -45,29 +45,29 @@ void Startup_Data_Stack(Length capacity)
         1,
         FLAG_FLAVOR(DATASTACK) | SERIES_FLAGS_NONE
     );
-    SET_SERIES_LEN(DS_Array, 1);
+    Set_Series_Len(DS_Array, 1);
     assert(Not_Series_Flag(DS_Array, DYNAMIC));
 
-    Cell(*) head = ARR_HEAD(DS_Array);
+    Cell(*) head = Array_Head(DS_Array);
     assert(Is_Cell_Erased(head));  // non-dynamic array, length 1 indicator
     Init_Trash(head);
 
     // The tail marker will signal PUSH() that it has run out of space,
     // and it will perform the allocation at that time.
     //
-    DS_Movable_Tail = ARR_TAIL(DS_Array);
+    DS_Movable_Tail = Array_Tail(DS_Array);
 
     // Reuse the expansion logic that happens on a PUSH() to get the
     // initial stack size.  It requires you to be on an END to run.
     //
     DS_Index = 1;
-    DS_Movable_Top = SPECIFIC(ARR_AT(DS_Array, DS_Index));  // no Cells
+    DS_Movable_Top = SPECIFIC(Array_At(DS_Array, DS_Index));  // no Cells
     Expand_Data_Stack_May_Fail(capacity);
 
     DROP();  // drop the hypothetical thing that triggered the expand
 
     assert(Get_Series_Flag(DS_Array, DYNAMIC));
-    Poison_Cell(ARR_HEAD(DS_Array));  // new head
+    Poison_Cell(Array_Head(DS_Array));  // new head
 }
 
 
@@ -77,7 +77,7 @@ void Startup_Data_Stack(Length capacity)
 void Shutdown_Data_Stack(void)
 {
     assert(TOP_INDEX == 0);
-    assert(Is_Cell_Poisoned(ARR_HEAD(DS_Array)));
+    assert(Is_Cell_Poisoned(Array_Head(DS_Array)));
 
     Free_Unmanaged_Series(DS_Array);
     DS_Array = nullptr;
@@ -124,7 +124,7 @@ void Startup_Level_Stack(void)
     Level(*) L = Make_End_Level(LEVEL_MASK_NONE);  // ensure L->prior, see [1]
     Push_Level(nullptr, L);  // global API handles attach here, see [2]
 
-    TRASH_POINTER_IF_DEBUG(L->prior);  // catches enumeration past BOTTOM_LEVEL
+    Trash_Pointer_If_Debug(L->prior);  // catches enumeration past BOTTOM_LEVEL
     TG_Bottom_Level = L;
 
     assert(TOP_LEVEL == L and BOTTOM_LEVEL == L);
@@ -147,7 +147,7 @@ void Shutdown_Level_Stack(void)
 {
     assert(TOP_LEVEL == BOTTOM_LEVEL);
 
-    assert(IS_POINTER_TRASH_DEBUG(TG_Bottom_Level->prior));  // trash, see [1]
+    assert(Is_Pointer_Trash_Debug(TG_Bottom_Level->prior));  // trash, see [1]
     TG_Bottom_Level->prior = nullptr;
 
   blockscope {
@@ -169,7 +169,7 @@ void Shutdown_Level_Stack(void)
 
         for (; n > 0; --n, unit += Mem_Pools[LEVEL_POOL].wide) {
             Level(*) L = cast(Level(*), unit);  // ^-- pool size may round up
-            if (IS_FREE_NODE(L))
+            if (Is_Free_Node(L))
                 continue;
           #if DEBUG_COUNT_TICKS
             printf(
@@ -194,7 +194,7 @@ void Shutdown_Level_Stack(void)
 
         for (; n > 0; --n, unit += Mem_Pools[FEED_POOL].wide) {
             Feed(*) feed = cast(Feed(*), unit);
-            if (IS_FREE_NODE(feed))
+            if (Is_Free_Node(feed))
                 continue;
           #if DEBUG_COUNT_TICKS
             printf(
@@ -274,22 +274,22 @@ Context(*) Get_Context_From_Stack(void)
 //
 void Expand_Data_Stack_May_Fail(REBLEN amount)
 {
-    REBLEN len_old = ARR_LEN(DS_Array);
+    REBLEN len_old = Array_Len(DS_Array);
 
     // The current requests for expansion should only happen when the stack
     // is at its end.  Sanity check that.
     //
     assert(len_old == DS_Index);
-    assert(DS_Movable_Top == ARR_TAIL(DS_Array));
+    assert(DS_Movable_Top == Array_Tail(DS_Array));
     assert(
-        cast(Cell(*), DS_Movable_Top) - ARR_HEAD(DS_Array)
+        cast(Cell(*), DS_Movable_Top) - Array_Head(DS_Array)
         == cast(int, len_old)
     );
 
     // If adding in the requested amount would overflow the stack limit, then
     // give a data stack overflow error.
     //
-    if (SER_REST(DS_Array) + amount >= STACK_LIMIT) {
+    if (Series_Rest(DS_Array) + amount >= STACK_LIMIT) {
         //
         // Because the stack pointer was incremented and hit the END marker
         // before the expansion, we have to decrement it if failing.
@@ -303,23 +303,23 @@ void Expand_Data_Stack_May_Fail(REBLEN amount)
     // Update the pointer used for fast access to the top of the stack that
     // likely was moved by the above allocation (needed before using TOP)
     //
-    DS_Movable_Top = cast(REBVAL*, ARR_AT(DS_Array, DS_Index));
+    DS_Movable_Top = cast(REBVAL*, Array_At(DS_Array, DS_Index));
 
     REBLEN len_new = len_old + amount;
-    SET_SERIES_LEN(DS_Array, len_new);
+    Set_Series_Len(DS_Array, len_new);
 
   #if DEBUG_POISON_DROPPED_STACK_CELLS
     REBVAL *poison = DS_Movable_Top;
     REBLEN n;
     for (n = len_old; n < len_new; ++n, ++poison)
         Poison_Cell(poison);
-    assert(poison == ARR_TAIL(DS_Array));
+    assert(poison == Array_Tail(DS_Array));
   #endif
 
     // Update the end marker to serve as the indicator for when the next
     // stack push would need to expand.
     //
-    DS_Movable_Tail = ARR_TAIL(DS_Array);
+    DS_Movable_Tail = Array_Tail(DS_Array);
 }
 
 
@@ -336,15 +336,15 @@ Array(*) Pop_Stack_Values_Core(StackIndex base, Flags flags)
 
     Length len = TOP_INDEX - base;
     Array(*) a = Make_Array_Core(len, flags);
-    SET_SERIES_LEN(a, len);
+    Set_Series_Len(a, len);
 
   #if DEBUG
-    Flavor flavor = SER_FLAVOR(a);  // flavor comes from flags
+    Flavor flavor = Series_Flavor(a);  // flavor comes from flags
   #endif
 
     Count count = 0;
     Value(*) src = Data_Stack_At(base + 1);  // not const, will be FRESHEN()
-    Cell(*) dest = ARR_HEAD(a);
+    Cell(*) dest = Array_Head(a);
     for (; count < len; ++count, ++src, ++dest) {
       #if DEBUG
         if (Is_Isotope(src)) {

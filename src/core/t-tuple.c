@@ -136,8 +136,8 @@ Bounce MAKE_Sequence(
         Byte* vp = buf;
 
         String(const*) spelling = VAL_STRING(arg);
-        const Byte* ap = STR_HEAD(spelling);
-        size_t size = STR_SIZE(spelling); // UTF-8 len
+        const Byte* ap = String_Head(spelling);
+        size_t size = String_Size(spelling); // UTF-8 len
         if (size & 1)
             fail (arg); // must have even # of chars
         size /= 2;

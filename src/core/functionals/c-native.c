@@ -41,7 +41,7 @@ Intrinsic* Extract_Intrinsic(Action(*) action)
     assert(ACT_DISPATCHER(action) == &Intrinsic_Dispatcher);
 
     Details(*) details = ACT_DETAILS(action);
-    assert(ARR_LEN(details) >= IDX_INTRINSIC_MAX);  // e.g. typecheck uses more
+    assert(Array_Len(details) >= IDX_INTRINSIC_MAX);  // typecheck uses more
 
     Cell(*) handle = DETAILS_AT(details, IDX_INTRINSIC_CFUNC);
     return cast(Intrinsic*, VAL_HANDLE_CFUNC(handle));
@@ -120,7 +120,7 @@ Phase(*) Make_Native(
         spec,
         &flags  // return type checked only in debug build
     );
-    ASSERT_SERIES_TERM_IF_NEEDED(paramlist);
+    Assert_Series_Term_If_Needed(paramlist);
 
     Phase(*) native;
     if (native_type == NATIVE_INTRINSIC) {
@@ -168,7 +168,7 @@ Phase(*) Make_Native(
         );
 
         Copy_Cell(
-            ARR_AT(ACT_DETAILS(native), 1),  // IDX_COMBINATOR_BODY
+            Array_At(ACT_DETAILS(native), 1),  // IDX_COMBINATOR_BODY
             ACT_ARCHETYPE(native_combinator)
         );
     }
@@ -282,7 +282,7 @@ Array(*) Startup_Natives(const REBVAL *boot_natives)
 
     assert(VAL_INDEX(boot_natives) == 0); // should be at head, sanity check
     Cell(const*) tail;
-    Cell(*) item = VAL_ARRAY_KNOWN_MUTABLE_AT(&tail, boot_natives);
+    Cell(*) item = VAL_ARRAY_Known_Mutable_AT(&tail, boot_natives);
     assert(VAL_SPECIFIER(boot_natives) == SPECIFIED);
 
     // !!! We could avoid this by making NATIVE a specialization of a NATIVE*

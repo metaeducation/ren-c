@@ -411,12 +411,12 @@ union AnyUnion {  // needed to beat strict aliasing, used in payload
     void *p;
     CFUNC *cfunc;  // C function/data pointers pointers may differ in size
 
-    // This is not legal to use in an EXTRA(), only the `PAYLOAD().first` slot
-    // (and perhaps in the future, the payload second slot).  If you do use
-    // a node in the cell, be sure to set CELL_FLAG_FIRST_IS_NODE!
+    // The NODE_FLAG_GC_ONE and NODE_FLAG_GC_TWO are used by Cells (for
+    // VAL_NODE1() and VAL_NODE2()) and by Stubs (for LINK() and MISC()) to
+    // be able to signal the GC to mark those slots if this node field
+    // is in use.
     //
-    // No Nodes (Stubs or Cells) are ever actually declared as const, but
-    // care should be taken on extraction to give back a `const` reference
+    // Care should be taken on extraction to give back a `const` reference
     // if the intent is immutability, or a conservative state of possible
     // immutability (e.g. the CONST usermode status hasn't been checked)
     //

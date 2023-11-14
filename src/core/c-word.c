@@ -130,21 +130,21 @@ static void Expand_Word_Table(void)
     // The only full list of symbol words available is the old hash table.
     // Hold onto it while creating the new hash table.
 
-    REBLEN old_num_slots = SER_USED(PG_Symbols_By_Hash);
-    Symbol(*) *old_symbols_by_hash = SER_HEAD(Symbol(*), PG_Symbols_By_Hash);
+    REBLEN old_num_slots = Series_Used(PG_Symbols_By_Hash);
+    Symbol(*) *old_symbols_by_hash = Series_Head(Symbol(*), PG_Symbols_By_Hash);
 
     REBLEN num_slots = Get_Hash_Prime_May_Fail(old_num_slots + 1);
-    assert(SER_WIDE(PG_Symbols_By_Hash) == sizeof(Symbol(*)));
+    assert(Series_Wide(PG_Symbols_By_Hash) == sizeof(Symbol(*)));
 
     Series(*) ser = Make_Series_Core(
         num_slots, FLAG_FLAVOR(CANONTABLE) | SERIES_FLAG_POWER_OF_2
     );
     Clear_Series(ser);
-    SET_SERIES_LEN(ser, num_slots);
+    Set_Series_Len(ser, num_slots);
 
     // Rehash all the symbols:
 
-    Symbol(*) *new_symbols_by_hash = SER_HEAD(Symbol(*), ser);
+    Symbol(*) *new_symbols_by_hash = Series_Head(Symbol(*), ser);
 
     REBLEN old_slot;
     for (old_slot = 0; old_slot != old_num_slots; ++old_slot) {
@@ -213,13 +213,13 @@ Symbol(const*) Intern_UTF8_Managed_Core(
     // actually kept larger than that, but to be on the right side of theory,
     // the table is always checked for expansion needs *before* the search.)
     //
-    REBLEN num_slots = SER_USED(PG_Symbols_By_Hash);
+    REBLEN num_slots = Series_Used(PG_Symbols_By_Hash);
     if (PG_Num_Symbol_Slots_In_Use > num_slots / 2) {
         Expand_Word_Table();
-        num_slots = SER_USED(PG_Symbols_By_Hash);  // got larger
+        num_slots = Series_Used(PG_Symbols_By_Hash);  // got larger
     }
 
-    Symbol(*) *symbols_by_hash = SER_HEAD(Symbol(*), PG_Symbols_By_Hash);
+    Symbol(*) *symbols_by_hash = Series_Head(Symbol(*), PG_Symbols_By_Hash);
 
     REBLEN skip; // how many slots to skip when occupied candidates found
     REBLEN slot = First_Hash_Candidate_Slot(
@@ -243,7 +243,7 @@ Symbol(const*) Intern_UTF8_Managed_Core(
         }
 
       blockscope {
-        REBINT cmp = Compare_UTF8(STR_HEAD(symbol), utf8, size);
+        REBINT cmp = Compare_UTF8(String_Head(symbol), utf8, size);
         if (cmp == 0) {
             assert(not preallocated);
             return symbol;  // was a case-sensitive match
@@ -327,8 +327,8 @@ Symbol(const*) Intern_UTF8_Managed_Core(
     // The incoming string isn't always null terminated, e.g. if you are
     // interning `foo` in `foo: bar + 1` it would be colon-terminated.
     //
-    memcpy(BIN_HEAD(s), utf8, size);
-    TERM_BIN_LEN(s, size);
+    memcpy(Binary_Head(s), utf8, size);
+    Term_Binary_Len(s, size);
 
     // The UTF-8 series can be aliased with AS to become an ANY-STRING! or a
     // BINARY!.  If it is, then it should not be modified.
@@ -448,8 +448,8 @@ void GC_Kill_Interning(String(*) intern)
     }
     node_MISC(Hitch, patch) = node_MISC(Hitch, intern);  // may be no-op
 
-    REBLEN num_slots = SER_USED(PG_Symbols_By_Hash);
-    Symbol(*) *symbols_by_hash = SER_HEAD(Symbol(*), PG_Symbols_By_Hash);
+    REBLEN num_slots = Series_Used(PG_Symbols_By_Hash);
+    Symbol(*) *symbols_by_hash = Series_Head(Symbol(*), PG_Symbols_By_Hash);
 
     REBLEN skip;
     REBLEN slot = First_Hash_Candidate_Slot(
@@ -530,7 +530,7 @@ void Startup_Interning(void)
         n, FLAG_FLAVOR(CANONTABLE) | SERIES_FLAG_POWER_OF_2
     );
     Clear_Series(PG_Symbols_By_Hash);  // all slots start as nullptr
-    SET_SERIES_LEN(PG_Symbols_By_Hash, n);
+    Set_Series_Len(PG_Symbols_By_Hash, n);
 }
 
 
@@ -590,16 +590,16 @@ void Startup_Symbols(void)
 
     assert(id == ALL_SYMS_MAX);  // includes the + 1 for REB_0 slot
 
-    if (0 != strcmp("blank!", STR_UTF8(Canon(BLANK_X))))
+    if (0 != strcmp("blank!", String_UTF8(Canon(BLANK_X))))
         panic (Canon(BLANK_X));
 
-    if (0 != strcmp("true", STR_UTF8(Canon(TRUE))))
+    if (0 != strcmp("true", String_UTF8(Canon(TRUE))))
         panic (Canon(TRUE));
 
-    if (0 != strcmp("open", STR_UTF8(Canon(OPEN))))
+    if (0 != strcmp("open", String_UTF8(Canon(OPEN))))
         panic (Canon(OPEN));
 
-    if (0 != strcmp("parse-reject", STR_UTF8(Canon(PARSE_REJECT))))
+    if (0 != strcmp("parse-reject", String_UTF8(Canon(PARSE_REJECT))))
         panic (Canon(PARSE_REJECT));
 }
 
@@ -642,8 +642,8 @@ void Shutdown_Interning(void)
         fflush(stdout);
 
         REBLEN slot;
-        for (slot = 0; slot < SER_USED(PG_Symbols_By_Hash); ++slot) {
-            Symbol(*) symbol = *SER_AT(Symbol(*), PG_Symbols_By_Hash, slot);
+        for (slot = 0; slot < Series_Used(PG_Symbols_By_Hash); ++slot) {
+            Symbol(*) symbol = *Series_At(Symbol(*), PG_Symbols_By_Hash, slot);
             if (symbol and symbol != DELETED_SYMBOL)
                 panic (symbol);
         }

@@ -66,7 +66,7 @@ Level(*) Push_Downshifted_Level(Atom(*) out, Level(*) L) {
     sub->varlist = L->varlist;
     assert(BONUS(KeySource, sub->varlist) == L);
     INIT_BONUS_KEYSOURCE(sub->varlist, sub);
-    sub->rootvar = SPECIFIC(ARR_HEAD(sub->varlist));
+    sub->rootvar = SPECIFIC(Array_Head(sub->varlist));
 
     // Note that it can occur that this may be a TRAMPOLINE_KEEPALIVE sublevel
     // of something like another CHAIN, that it intends to reuse (!)  This
@@ -76,14 +76,14 @@ Level(*) Push_Downshifted_Level(Atom(*) out, Level(*) L) {
     //
     L->varlist = &PG_Inaccessible_Series;  // trash?  nullptr?
     L->rootvar = nullptr;
-    TRASH_CFUNC_IF_DEBUG(Executor*, L->executor);  // caller must set
-    TRASH_POINTER_IF_DEBUG(L->label);
+    Trash_Cfunc_If_Debug(Executor*, L->executor);  // caller must set
+    Trash_Pointer_If_Debug(L->label);
 
     sub->u.action.dispatcher_base = L->u.action.dispatcher_base;
 
     sub->executor = &Action_Executor;
 
-    TRASH_IF_DEBUG(L->u);  // not an action anymore; trash after get stack base
+    Trash_If_Debug(L->u);  // not an action anymore; trash after get stack base
 
     return sub;
 }
@@ -154,7 +154,7 @@ Bounce Chainer_Dispatcher(Level(*) const L)
   initial_entry: {  //////////////////////////////////////////////////////////
 
     Details(*) details = ACT_DETAILS(PHASE);
-    assert(ARR_LEN(details) == IDX_CHAINER_MAX);
+    assert(Array_Len(details) == IDX_CHAINER_MAX);
 
     Value(*) pipeline_at = Init_Block(
         SPARE,  // index of BLOCK! is current step
@@ -177,7 +177,7 @@ Bounce Chainer_Dispatcher(Level(*) const L)
     sub->label = VAL_FRAME_LABEL(chained);
   #if !defined(NDEBUG)
     sub->label_utf8 = sub->label
-        ? STR_UTF8(unwrap(sub->label))
+        ? String_UTF8(unwrap(sub->label))
         : "(anonymous)";
   #endif
 
@@ -273,7 +273,7 @@ DECLARE_NATIVE(chain_p)  // see extended definition CHAIN in %base-defs.r
         IDX_CHAINER_MAX  // details array capacity
     );
     Force_Value_Frozen_Deep(pipeline);
-    Copy_Cell(ARR_AT(ACT_DETAILS(chain), IDX_CHAINER_PIPELINE), pipeline);
+    Copy_Cell(Array_At(ACT_DETAILS(chain), IDX_CHAINER_PIPELINE), pipeline);
 
     return Init_Activation(out, chain, VAL_FRAME_LABEL(first), UNBOUND);
 }

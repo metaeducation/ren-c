@@ -241,7 +241,7 @@ Bounce Action_Executor(Level(*) L)
 
   fulfill: {  ////////////////////////////////////////////////////////////////
 
-    assert(not IS_POINTER_TRASH_DEBUG(ORIGINAL));  // set by Begin_Action()
+    assert(not Is_Pointer_Trash_Debug(ORIGINAL));  // set by Begin_Action()
 
     assert(TOP_INDEX >= L->baseline.stack_base);  // paths push refinements
 
@@ -930,7 +930,7 @@ Bounce Action_Executor(Level(*) L)
     Set_Action_Executor_Flag(L, IN_DISPATCH);
 
     Action(*) save_original = L->u.action.original;
-    TRASH_IF_DEBUG(L->u);  // freed for dispatcher use...
+    Trash_If_Debug(L->u);  // freed for dispatcher use...
     L->u.action.original = save_original;  // ...er, mostly.  see [1]
     L->u.action.dispatcher_base = TOP_INDEX;
 
@@ -989,7 +989,7 @@ Bounce Action_Executor(Level(*) L)
 
     /*STATIC_ASSERT(DETAILS_FLAG_IS_NATIVE == SERIES_INFO_HOLD);*/
     if (Is_Action_Native(phase))
-        SER_INFO(L->varlist) |= SERIES_INFO_HOLD;  // prevents crashes, see [2]
+        SERIES_INFO(L->varlist) |= SERIES_INFO_HOLD;  // prevents crashes, see [2]
 
     Dispatcher* dispatcher = ACT_DISPATCHER(phase);
 
@@ -1198,7 +1198,7 @@ void Push_Action(
         SERIES_MASK_VARLIST
             | SERIES_FLAG_FIXED_SIZE // FRAME!s don't expand ATM
     );
-    SER_INFO(s) = SERIES_INFO_MASK_NONE;
+    SERIES_INFO(s) = SERIES_INFO_MASK_NONE;
     INIT_BONUS_KEYSOURCE(ARR(s), L);  // maps varlist back to L
     mutable_MISC(VarlistAdjunct, s) = nullptr;
     mutable_LINK(Patches, s) = nullptr;
@@ -1231,7 +1231,7 @@ void Push_Action(
     // notion of being able to just memset() to 0 or calloc().  The debug
     // build still wants to initialize the cells with file/line info though.
     //
-    Cell(*) tail = ARR_TAIL(L->varlist);
+    Cell(*) tail = Array_Tail(L->varlist);
     Cell(*) prep = L->rootvar + 1;
     if (IS_DETAILS(act)) {
         for (; prep < tail; ++prep)
@@ -1253,7 +1253,7 @@ void Push_Action(
   #endif
 
   #if DEBUG_POISON_SERIES_TAILS  // redundant if excess capacity poisoned
-    Poison_Cell(ARR_TAIL(L->varlist));
+    Poison_Cell(Array_Tail(L->varlist));
   #endif
 
     // Each layer of specialization of a function can only add specializations
@@ -1264,8 +1264,8 @@ void Push_Action(
     //
     Array(*) partials = try_unwrap(ACT_PARTIALS(act));
     if (partials) {
-        Cell(const*) word_tail = ARR_TAIL(partials);
-        const REBVAL *word = SPECIFIC(ARR_HEAD(partials));
+        Cell(const*) word_tail = Array_Tail(partials);
+        const REBVAL *word = SPECIFIC(Array_Head(partials));
         for (; word != word_tail; ++word)
             Copy_Cell(PUSH(), word);
     }
@@ -1298,7 +1298,7 @@ void Begin_Action_Core(
     PARAM = ACT_PARAMS_HEAD(ACT_IDENTITY(ORIGINAL));
     ARG = L->rootvar + 1;
 
-    assert(IS_POINTER_TRASH_DEBUG(L->label));  // ACTION! makes valid
+    assert(Is_Pointer_Trash_Debug(L->label));  // ACTION! makes valid
     assert(not label or IS_SYMBOL(unwrap(label)));
     L->label = label;
   #if DEBUG_LEVEL_LABELS  // helpful for looking in the debugger
@@ -1405,7 +1405,7 @@ void Drop_Action(Level(*) L) {
         Clear_Subclass_Flag(VARLIST, L->varlist, FRAME_HAS_BEEN_INVOKED);
 
         assert(
-            0 == (SER_INFO(L->varlist) & ~(  // <- note bitwise not
+            0 == (SERIES_INFO(L->varlist) & ~(  // <- note bitwise not
                 SERIES_INFO_0_IS_FALSE
                     | FLAG_USED_BYTE(255)  // mask out non-dynamic-len
         )));
@@ -1416,18 +1416,18 @@ void Drop_Action(Level(*) L) {
         assert(Not_Series_Flag(L->varlist, INACCESSIBLE));
         assert(Not_Series_Flag(L->varlist, MANAGED));
 
-        Cell(*) rootvar = ARR_HEAD(L->varlist);
+        Cell(*) rootvar = Array_Head(L->varlist);
         assert(CTX_VARLIST(VAL_CONTEXT(rootvar)) == L->varlist);
         INIT_VAL_FRAME_PHASE_OR_LABEL(rootvar, nullptr);  // can't trash ptr
-        TRASH_POINTER_IF_DEBUG(mutable_BINDING(rootvar));
+        Trash_Pointer_If_Debug(mutable_BINDING(rootvar));
     }
   #endif
 
-    TRASH_POINTER_IF_DEBUG(ORIGINAL); // action is no longer running
+    Trash_Pointer_If_Debug(ORIGINAL); // action is no longer running
     L->executor = nullptr;  // so GC won't think level needs Action marking
 
-    TRASH_POINTER_IF_DEBUG(L->label);
+    Trash_Pointer_If_Debug(L->label);
   #if DEBUG_LEVEL_LABELS
-    TRASH_POINTER_IF_DEBUG(L->label_utf8);
+    Trash_Pointer_If_Debug(L->label_utf8);
   #endif
 }

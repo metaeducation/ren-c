@@ -348,7 +348,7 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
         assert(LEVEL == TOP_LEVEL);  // Action_Executor() helps, drops inerts
 
         /*assert(not IS_CFUNC_TRASH_DEBUG(Executor*, LEVEL->executor));*/
-        TRASH_CFUNC_IF_DEBUG(Executor*, LEVEL->executor);
+        Trash_Cfunc_If_Debug(Executor*, LEVEL->executor);
 
         if (Get_Level_Flag(LEVEL, ABRUPT_FAILURE)) {
             //

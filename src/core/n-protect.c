@@ -205,13 +205,13 @@ void Protect_Series(Series(const*) s_const, REBLEN index, Flags flags)
         Clear_Series_Info(s, PROTECTED);
     }
 
-    if (not IS_SER_ARRAY(s) or not (flags & PROT_DEEP))
+    if (not Is_Series_Array(s) or not (flags & PROT_DEEP))
         return;
 
     Flip_Series_To_Black(s); // recursion protection
 
-    Cell(const*) val_tail = ARR_TAIL(ARR(s));
-    Cell(const*) val = ARR_AT(ARR(s), index);
+    Cell(const*) val_tail = Array_Tail(ARR(s));
+    Cell(const*) val = Array_At(ARR(s), index);
     for (; val != val_tail; val++)
         Protect_Value(val, flags);
 }

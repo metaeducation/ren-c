@@ -43,7 +43,7 @@ REBINT Compare_Spellings(Symbol(const*) a, Symbol(const*) b, bool strict)
         //
         // https://en.wikipedia.org/wiki/Unicode_equivalence#Normalization
         //
-        REBINT diff = strcmp(STR_UTF8(a), STR_UTF8(b));  // byte match check
+        REBINT diff = strcmp(String_UTF8(a), String_UTF8(b));  // byte match check
         if (diff == 0)
             return 0;
         return diff > 0 ? 1 : -1;  // strcmp result not strictly in [-1 0 1]
@@ -57,7 +57,7 @@ REBINT Compare_Spellings(Symbol(const*) a, Symbol(const*) b, bool strict)
         // !!! "They must differ by case...."  This needs to account for
         // unicode "case folding", as well as "normalization".
         //
-        REBINT diff = Compare_UTF8(STR_HEAD(a), STR_HEAD(b), STR_SIZE(b));
+        REBINT diff = Compare_UTF8(String_Head(a), String_Head(b), String_Size(b));
         if (diff >= 0) {
             assert(diff == 0 or diff == 1 or diff == 3);
             return 0;  // non-case match
@@ -199,11 +199,11 @@ inline static void Mold_Word(REB_MOLD *mo, Symbol(const*) symbol, bool escape)
 {
     if (escape) {
         Append_Codepoint(mo->series, '|');
-        Append_Utf8(mo->series, STR_UTF8(symbol), STR_SIZE(symbol));
+        Append_Utf8(mo->series, String_UTF8(symbol), String_Size(symbol));
         Append_Codepoint(mo->series, '|');
     }
     else
-        Append_Utf8(mo->series, STR_UTF8(symbol), STR_SIZE(symbol));
+        Append_Utf8(mo->series, String_UTF8(symbol), String_Size(symbol));
 }
 
 
@@ -313,8 +313,8 @@ REBTYPE(Word)
         switch (property) {
           case SYM_LENGTH: {  // byte size stored, but not # of codepoints
             String(const*) spelling = VAL_WORD_SYMBOL(v);
-            Utf8(const*) cp = STR_HEAD(spelling);
-            Size size = STR_SIZE(spelling);
+            Utf8(const*) cp = String_Head(spelling);
+            Size size = String_Size(spelling);
             Length len = 0;
             for (; size > 0; cp = NEXT_STR(cp)) {  // manually walk codepoints
                 size = size - 1;

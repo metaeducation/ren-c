@@ -39,12 +39,12 @@ Value(*) Try_Init_Any_Sequence_At_Arraylike_Core(
 ){
     assert(ANY_SEQUENCE_KIND(kind));
     assert(Get_Series_Flag(a, MANAGED));
-    ASSERT_SERIES_TERM_IF_NEEDED(a);
+    Assert_Series_Term_If_Needed(a);
     assert(index == 0);  // !!! current rule
     assert(Is_Array_Frozen_Shallow(a));  // must be immutable (may be aliased)
 
-    assert(index < ARR_LEN(a));
-    REBLEN len_at = ARR_LEN(a) - index;
+    assert(index < Array_Len(a));
+    REBLEN len_at = Array_Len(a) - index;
 
     if (len_at < 2) {
         Init_Nulled(out);  // signal that array is too short
@@ -63,8 +63,8 @@ Value(*) Try_Init_Any_Sequence_At_Arraylike_Core(
         if (Try_Init_Any_Sequence_Pairlike_Core(
             out,
             kind,
-            ARR_AT(a, index),
-            ARR_AT(a, index + 1),
+            Array_At(a, index),
+            Array_At(a, index + 1),
             specifier
         )){
             return cast(REBVAL*, out);
@@ -76,14 +76,14 @@ Value(*) Try_Init_Any_Sequence_At_Arraylike_Core(
     if (Try_Init_Any_Sequence_All_Integers(
         out,
         kind,
-        ARR_AT(a, index),
+        Array_At(a, index),
         len_at
     )){
         return cast(REBVAL*, out);
     }
 
-    Cell(const*) tail = ARR_TAIL(a);
-    Cell(const*) v = ARR_HEAD(a);
+    Cell(const*) tail = Array_Tail(a);
+    Cell(const*) v = Array_Head(a);
     for (; v != tail; ++v) {
         if (not Is_Valid_Sequence_Element(kind, v)) {
             Derelativize(out, v, specifier);

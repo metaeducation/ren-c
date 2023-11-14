@@ -202,8 +202,8 @@ DECLARE_NATIVE(read_stdin)
         Size max = VAL_UINT32(ARG(size));
         Binary(*) bin = Make_Binary(max);
         REBLEN i = 0;
-        while (BIN_LEN(bin) < max) {
-            if (Read_Stdin_Byte_Interrupted(&eof, BIN_AT(bin, i))) {  // Ctrl-C
+        while (Binary_Len(bin) < max) {
+            if (Read_Stdin_Byte_Interrupted(&eof, Binary_At(bin, i))) {  // Ctrl-C
                 if (rebWasHalting())
                     rebJumps(Lib(HALT));
                 fail ("Interruption of READ-STDIN for reason other than HALT?");
@@ -212,7 +212,7 @@ DECLARE_NATIVE(read_stdin)
                 break;
             ++i;
         }
-        TERM_BIN_LEN(bin, i);
+        Term_Binary_Len(bin, i);
 
         Init_Logic(ARG(eof), eof);
         Init_Binary(OUT, bin);
@@ -304,7 +304,7 @@ DECLARE_NATIVE(read_line)
                 fail ("Interruption of READ-LINE for reason other than HALT?");
             }
             if (eof) {
-                if (mo->base.size == STR_SIZE(mo->series)) {
+                if (mo->base.size == String_Size(mo->series)) {
                     //
                     // If we hit the end of file before accumulating any data,
                     // then just return nullptr as an end of file signal.

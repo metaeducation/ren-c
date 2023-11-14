@@ -719,8 +719,8 @@ static Context(*) Error_Syntax(SCAN_STATE *ss, enum Reb_Token token) {
     // to get almost as much brevity and not much less clarity than bp and
     // ep, while avoiding the possibility of the state getting out of sync?
     //
-    assert(ss->begin and not IS_POINTER_TRASH_DEBUG(ss->begin));
-    assert(ss->end and not IS_POINTER_TRASH_DEBUG(ss->end));
+    assert(ss->begin and not Is_Pointer_Trash_Debug(ss->begin));
+    assert(ss->end and not Is_Pointer_Trash_Debug(ss->end));
     assert(ss->end >= ss->begin);
 
     DECLARE_LOCAL (token_name);
@@ -844,7 +844,7 @@ static Context(*) Error_Mismatch(SCAN_LEVEL *level, char wanted, char seen) {
 //
 static LEXFLAGS Prescan_Token(SCAN_STATE *ss)
 {
-    assert(IS_POINTER_TRASH_DEBUG(ss->end));  // prescan only uses ->begin
+    assert(Is_Pointer_Trash_Debug(ss->end));  // prescan only uses ->begin
 
     const Byte* cp = ss->begin;
     LEXFLAGS flags = 0;  // flags for all LEX_SPECIALs seen after ss->begin[0]
@@ -999,7 +999,7 @@ static enum Reb_Token Maybe_Locate_Token_May_Push_Mold(
 ){
     SCAN_LEVEL *level = &L->u.scan;
     SCAN_STATE *ss = level->ss;
-    TRASH_POINTER_IF_DEBUG(ss->end);  // this routine should set ss->end
+    Trash_Pointer_If_Debug(ss->end);  // this routine should set ss->end
 
   acquisition_loop:
     //
@@ -1361,7 +1361,7 @@ static enum Reb_Token Maybe_Locate_Token_May_Push_Mold(
             // there's more content yet to come.
             //
             ss->begin = nullptr;
-            TRASH_POINTER_IF_DEBUG(ss->end);
+            Trash_Pointer_If_Debug(ss->end);
             goto acquisition_loop;
 
           case LEX_DELIMIT_COMMA:
@@ -1852,7 +1852,7 @@ void Init_Scan_Level(
     level->ss = ss;
 
     ss->begin = try_unwrap(bp);  // Locate_Token's first fetch from vaptr
-    TRASH_POINTER_IF_DEBUG(ss->end);
+    Trash_Pointer_If_Debug(ss->end);
 
     ss->file = file;
 
@@ -1906,8 +1906,8 @@ Bounce Scanner_Executor(Level(*) const L) {
     const Byte* ep;
     REBLEN len;
 
-    TRASH_POINTER_IF_DEBUG(bp);
-    TRASH_POINTER_IF_DEBUG(ep);
+    Trash_Pointer_If_Debug(bp);
+    Trash_Pointer_If_Debug(ep);
 
     enum {
         ST_SCANNER_INITIAL_ENTRY = STATE_0,
@@ -2081,8 +2081,8 @@ Bounce Scanner_Executor(Level(*) const L) {
         Init_Word(
             PUSH(),
             Intern_UTF8_Managed(
-                BIN_AT(mo->series, mo->base.size),
-                BIN_LEN(mo->series) - mo->base.size
+                Binary_At(mo->series, mo->base.size),
+                Binary_Len(mo->series) - mo->base.size
             )
         );
         Drop_Mold(mo);
@@ -2195,7 +2195,7 @@ Bounce Scanner_Executor(Level(*) const L) {
         //
         a->misc.line = ss->line;
         mutable_LINK(Filename, a) = ss->file;
-        Set_Subclass_Flag(ARRAY, a, HAS_FILE_LINE_UNMASKED);
+        Set_Array_Flag(a, HAS_FILE_LINE_UNMASKED);
         Set_Series_Flag(a, LINK_NODE_NEEDS_MARK);
 
         enum Reb_Kind kind =
@@ -2480,18 +2480,18 @@ Bounce Scanner_Executor(Level(*) const L) {
         //
         array->misc.line = ss->line;
         mutable_LINK(Filename, array) = ss->file;
-        Set_Subclass_Flag(ARRAY, array, HAS_FILE_LINE_UNMASKED);
+        Set_Array_Flag(array, HAS_FILE_LINE_UNMASKED);
         Set_Series_Flag(array, LINK_NODE_NEEDS_MARK);
 
-        if (ARR_LEN(array) == 0 or not IS_WORD(ARR_HEAD(array))) {
+        if (Array_Len(array) == 0 or not IS_WORD(Array_Head(array))) {
             DECLARE_LOCAL (temp);
             Init_Block(temp, array);
             return RAISE(Error_Malconstruct_Raw(temp));
         }
 
-        Symbol(const*) symbol = VAL_WORD_SYMBOL(ARR_HEAD(array));
+        Symbol(const*) symbol = VAL_WORD_SYMBOL(Array_Head(array));
 
-        if (ARR_LEN(array) == 1) {
+        if (Array_Len(array) == 1) {
             //
             // #[none], #[true], #[false], #[unset]
             // !!! These should be under a LEGACY flag...
@@ -2519,7 +2519,7 @@ Bounce Scanner_Executor(Level(*) const L) {
                 return RAISE(Error_Malconstruct_Raw(temp)); }
             }
         }
-        else if (ARR_LEN(array) == 2) {  // #[xxx! [...]], #[xxx! yyy!], etc.
+        else if (Array_Len(array) == 2) {  // #[xxx! [...]], #[xxx! yyy!], etc.
             //
             // !!! At one time, Ren-C attempted to merge "construction syntax"
             // with MAKE, so that `#[xxx! [...]]` matched `make xxx! [...]`.
@@ -2686,7 +2686,7 @@ Bounce Scanner_Executor(Level(*) const L) {
                 Array(*) a = Alloc_Singular(NODE_FLAG_MANAGED);
                 mutable_HEART_BYTE(cleanup) = REB_GET_WORD;
 
-                Move_Cell(ARR_SINGLE(a), cleanup);
+                Move_Cell(Array_Single(a), cleanup);
                 Init_Group(cleanup, a);
             }
         }
@@ -2793,12 +2793,12 @@ Bounce Scanner_Executor(Level(*) const L) {
         if (
             Get_Cell_Flag(TOP, FIRST_IS_NODE)
             and VAL_NODE1(TOP) != nullptr  // null legal in node slots ATM
-            and IS_SER_ARRAY(SER(VAL_NODE1(TOP)))
+            and Is_Series_Array(SER(VAL_NODE1(TOP)))
         ){
             Array(*) a = ARR(VAL_NODE1(TOP));
             a->misc.line = ss->line;
             mutable_LINK(Filename, a) = ss->file;
-            Set_Subclass_Flag(ARRAY, a, HAS_FILE_LINE_UNMASKED);
+            Set_Array_Flag(a, HAS_FILE_LINE_UNMASKED);
             Set_Series_Flag(a, LINK_NODE_NEEDS_MARK);
 
             // !!! Does this mean anything for paths?  The initial code
@@ -2806,7 +2806,7 @@ Bounce Scanner_Executor(Level(*) const L) {
             // are currently being used to solidify paths.
             //
             if (Get_Scan_Executor_Flag(L, NEWLINE_PENDING))
-                Set_Subclass_Flag(ARRAY, a, NEWLINE_AT_TAIL);
+                Set_Array_Flag(a, NEWLINE_AT_TAIL);
         }
 
         if (level->token == TOKEN_TUPLE) {
@@ -2997,7 +2997,7 @@ Array(*) Scan_UTF8_Managed(
 
     a->misc.line = 1;
     mutable_LINK(Filename, a) = file;
-    Set_Subclass_Flag(ARRAY, a, HAS_FILE_LINE_UNMASKED);
+    Set_Array_Flag(a, HAS_FILE_LINE_UNMASKED);
     Set_Series_Flag(a, LINK_NODE_NEEDS_MARK);
 
     return a;
@@ -3066,7 +3066,10 @@ DECLARE_NATIVE(transcode)
         goto initial_entry;
 
       case ST_TRANSCODE_SCANNING :
-        ss = cast(SCAN_STATE*, BIN_HEAD(VAL_BINARY_KNOWN_MUTABLE(ss_buffer)));
+        ss = cast(
+            SCAN_STATE*,
+            Binary_Head(VAL_BINARY_Known_Mutable(ss_buffer))
+        );
         goto scan_to_stack_maybe_failed;
     }
 
@@ -3096,7 +3099,7 @@ DECLARE_NATIVE(transcode)
   //    !!! Should the base name and extension be stored, or whole path?
 
     if (IS_BINARY(source))  // scanner needs data to end in '\0', see [1]
-        TERM_BIN(m_cast(Binary(*), VAL_BINARY(source)));
+        Term_Binary(m_cast(Binary(*), VAL_BINARY(source)));
 
     String(const*) file;
     if (REF(file)) {
@@ -3149,13 +3152,13 @@ DECLARE_NATIVE(transcode)
     SCAN_LEVEL *level = &sub->u.scan;
 
     Binary(*) bin = Make_Binary(sizeof(SCAN_STATE));
-    ss = cast(SCAN_STATE*, BIN_HEAD(bin));
+    ss = cast(SCAN_STATE*, Binary_Head(bin));
 
     UNUSED(size);  // currently we don't use this information
 
     Init_Scan_Level(level, ss, file, start_line, bp);
 
-    TERM_BIN_LEN(bin, sizeof(SCAN_STATE));
+    Term_Binary_Len(bin, sizeof(SCAN_STATE));
 
     Init_Binary(ss_buffer, bin);
 
@@ -3215,9 +3218,9 @@ DECLARE_NATIVE(transcode)
     if (IS_BINARY(source)) {
         Binary(const*) bin = VAL_BINARY(source);
         if (ss->begin)
-            VAL_INDEX_UNBOUNDED(rest) = ss->begin - BIN_HEAD(bin);
+            VAL_INDEX_UNBOUNDED(rest) = ss->begin - Binary_Head(bin);
         else
-            VAL_INDEX_UNBOUNDED(rest) = BIN_LEN(bin);
+            VAL_INDEX_UNBOUNDED(rest) = Binary_Len(bin);
     }
     else {
         assert(IS_TEXT(source));
@@ -3235,7 +3238,7 @@ DECLARE_NATIVE(transcode)
         if (ss->begin)
             VAL_INDEX_RAW(rest) += Num_Codepoints_For_Bytes(bp, ss->begin);
         else
-            VAL_INDEX_RAW(rest) += BIN_TAIL(VAL_STRING(source)) - bp;
+            VAL_INDEX_RAW(rest) += Binary_Tail(VAL_STRING(source)) - bp;
     }
 
     if (Is_Nulled(OUT))

@@ -134,8 +134,8 @@ Series(*) Make_Set_Operation_Series(
             // Iterate over first series
             //
             i = VAL_INDEX(val1);
-            for (; i < ARR_LEN(array1); i += skip) {
-                Cell(const*) item = ARR_AT(array1, i);
+            for (; i < Array_Len(array1); i += skip) {
+                Cell(const*) item = Array_At(array1, i);
                 if (flags & SOP_FLAG_CHECK) {
                     h = Find_Key_Hashed(
                         m_cast(Array(*), VAL_ARRAY(val2)),  // mode 1 unchanged
@@ -162,7 +162,7 @@ Series(*) Make_Set_Operation_Series(
                 }
             }
 
-            if (i != ARR_LEN(array1)) {
+            if (i != Array_Len(array1)) {
                 //
                 // In the current philosophy, the semantics of what to do
                 // with things like `intersect/skip [1 2 3] [7] 2` is too
@@ -217,7 +217,7 @@ Series(*) Make_Set_Operation_Series(
             //
             for (
                 ;
-                VAL_INDEX_RAW(iter) < cast(REBIDX, STR_LEN(str));
+                VAL_INDEX_RAW(iter) < cast(REBIDX, String_Len(str));
                 VAL_INDEX_RAW(iter) += skip
             ){
                 REBLEN len_match;
@@ -247,7 +247,7 @@ Series(*) Make_Set_Operation_Series(
                     NOT_FOUND == Find_Binstr_In_Binstr(
                         &len_match,
                         mo_value,
-                        STR_LEN(mo->series),  // tail
+                        String_Len(mo->series),  // tail
                         iter,
                         1,  // single codepoint length
                         cased ? AM_FIND_CASE : 0,  // flags
@@ -276,8 +276,8 @@ Series(*) Make_Set_Operation_Series(
         assert(IS_BINARY(val1) and IS_BINARY(val2));
 
         Binary(*) buf = BYTE_BUF;
-        REBLEN buf_start_len = BIN_LEN(buf);
-        EXPAND_SERIES_TAIL(buf, i);  // ask for at least `i` capacity
+        REBLEN buf_start_len = Binary_Len(buf);
+        Expand_Series_Tail(buf, i);  // ask for at least `i` capacity
         REBLEN buf_at = buf_start_len;
 
         do {
@@ -292,7 +292,7 @@ Series(*) Make_Set_Operation_Series(
 
             for (
                 ;
-                VAL_INDEX_RAW(iter) < cast(REBIDX, BIN_LEN(bin));
+                VAL_INDEX_RAW(iter) < cast(REBIDX, Binary_Len(bin));
                 VAL_INDEX_RAW(iter) += skip
             ){
                 REBLEN len_match;
@@ -332,11 +332,11 @@ Series(*) Make_Set_Operation_Series(
                         skip
                     )
                 ){
-                    EXPAND_SERIES_TAIL(buf, skip);
+                    Expand_Series_Tail(buf, skip);
                     Size size_at;
                     const Byte* iter_at = VAL_BINARY_SIZE_AT(&size_at, iter);
                     REBLEN min = MIN(size_at, skip);
-                    memcpy(BIN_AT(buf, buf_at), iter_at, min);
+                    memcpy(Binary_At(buf, buf_at), iter_at, min);
                     buf_at += min;
                 }
             }
@@ -355,11 +355,11 @@ Series(*) Make_Set_Operation_Series(
 
         REBLEN out_len = buf_at - buf_start_len;
         Binary(*) out_bin = Make_Binary(out_len);
-        memcpy(BIN_HEAD(out_bin), BIN_AT(buf, buf_start_len), out_len);
-        TERM_BIN_LEN(out_bin, out_len);
+        memcpy(Binary_Head(out_bin), Binary_At(buf, buf_start_len), out_len);
+        Term_Binary_Len(out_bin, out_len);
         out_ser = out_bin;
 
-        TERM_BIN_LEN(buf, buf_start_len);
+        Term_Binary_Len(buf, buf_start_len);
     }
 
     return out_ser;

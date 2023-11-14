@@ -85,7 +85,7 @@ inline static Array(const*) Level_Array(Level(*) L) {
 //
 inline static REBLEN Level_Array_Index(Level(*) L) {
     if (Is_Feed_At_End(L->feed))
-        return ARR_LEN(Level_Array(L));
+        return Array_Len(Level_Array(L));
 
     assert(not Level_Is_Variadic(L));
     return FEED_INDEX(L->feed) - 1;
@@ -99,7 +99,7 @@ inline static REBLEN Level_Expression_Index(Level(*) L) {
 inline static String(const*) File_Of_Level(Level(*) L) {
     if (Level_Is_Variadic(L))
         return nullptr;
-    if (Not_Subclass_Flag(ARRAY, Level_Array(L), HAS_FILE_LINE_UNMASKED))
+    if (Not_Array_Flag(Level_Array(L), HAS_FILE_LINE_UNMASKED))
         return nullptr;
     return LINK(Filename, Level_Array(L));
 }
@@ -109,13 +109,13 @@ inline static const char* File_UTF8_Of_Level(Level(*) L) {
     // !!! Note: Too early in boot at the moment to use Canon(ANONYMOUS).
     //
     String(const*) str = File_Of_Level(L);
-    return str ? STR_UTF8(str) : "~anonymous~";
+    return str ? String_UTF8(str) : "~anonymous~";
 }
 
 inline static LineNumber LineNumber_Of_Level(Level(*) L) {
     if (Level_Is_Variadic(L))
         return 0;
-    if (Not_Subclass_Flag(ARRAY, Level_Array(L), HAS_FILE_LINE_UNMASKED))
+    if (Not_Array_Flag(Level_Array(L), HAS_FILE_LINE_UNMASKED))
         return 0;
     return Level_Array(L)->misc.line;
 }
@@ -220,7 +220,7 @@ inline static void Get_Level_Label_Or_Nulled(Sink(Value(*)) out, Level(*) L) {
 inline static const char* Level_Label_Or_Anonymous_UTF8(Level(*) L) {
     assert(Is_Action_Level(L));
     if (L->label)
-        return STR_UTF8(unwrap(L->label));
+        return String_UTF8(unwrap(L->label));
     return "[anonymous]";
 }
 
@@ -256,9 +256,9 @@ inline static void Free_Level_Internal(Level(*) L) {
 
     if (L->varlist and Not_Series_Flag(L->varlist, MANAGED))
         GC_Kill_Series(L->varlist);
-    TRASH_POINTER_IF_DEBUG(L->varlist);
+    Trash_Pointer_If_Debug(L->varlist);
 
-    assert(IS_POINTER_TRASH_DEBUG(L->alloc_value_list));
+    assert(Is_Pointer_Trash_Debug(L->alloc_value_list));
 
     Free_Pooled(LEVEL_POOL, L);
 }
@@ -313,7 +313,7 @@ inline static void Push_Level(
     L->prior = TG_Top_Level;
     TG_Top_Level = L;
 
-    assert(IS_POINTER_TRASH_DEBUG(L->alloc_value_list));
+    assert(Is_Pointer_Trash_Debug(L->alloc_value_list));
     L->alloc_value_list = L;  // doubly link list, terminates in `L`
 }
 
@@ -341,10 +341,10 @@ inline static void Drop_Level_Core(Level(*) L) {
         while (n != L) {
             ArrayT* a = ARR(n);
             n = LINK(ApiNext, a);
-            FRESHEN(ARR_SINGLE(a));
+            FRESHEN(Array_Single(a));
             GC_Kill_Series(a);
         }
-        TRASH_POINTER_IF_DEBUG(L->alloc_value_list);
+        Trash_Pointer_If_Debug(L->alloc_value_list);
 
         // There could be outstanding values on the data stack, or data in the
         // mold buffer...we clean it up automatically in these cases.
@@ -359,7 +359,7 @@ inline static void Drop_Level_Core(Level(*) L) {
             printf("API handle was allocated but not freed, panic'ing leak\n");
             panic (a);
         }
-        TRASH_POINTER_IF_DEBUG(L->alloc_value_list);
+        Trash_Pointer_If_Debug(L->alloc_value_list);
       #endif
     }
 
@@ -409,14 +409,14 @@ inline static Level(*) Prep_Level_Core(
 
     L->feed = feed;
     Erase_Cell(&L->spare);
-    TRASH_POINTER_IF_DEBUG(L->out);
+    Trash_Pointer_If_Debug(L->out);
 
     L->varlist = nullptr;
     L->executor = &Evaluator_Executor;  // compatible default (for now)
 
-    TRASH_POINTER_IF_DEBUG(L->alloc_value_list);
+    Trash_Pointer_If_Debug(L->alloc_value_list);
 
-    TRASH_IF_DEBUG(L->u);  // fills with garbage bytes in debug build
+    Trash_If_Debug(L->u);  // fills with garbage bytes in debug build
 
     // !!! Recycling is done in the trampoline before the level gets a chance
     // to run.  So it's hard for the GC to know if it's okay to mark the
@@ -425,9 +425,9 @@ inline static Level(*) Prep_Level_Core(
     //
     Erase_Cell(&L->u.eval.scratch);
 
-    TRASH_POINTER_IF_DEBUG(L->label);
+    Trash_Pointer_If_Debug(L->label);
   #if DEBUG_LEVEL_LABELS
-    TRASH_POINTER_IF_DEBUG(L->label_utf8);
+    Trash_Pointer_If_Debug(L->label_utf8);
   #endif
 
     // !!! Previously just TOP_STACK was captured in L->baseline.stack_base,

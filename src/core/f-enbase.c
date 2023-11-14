@@ -175,7 +175,7 @@ static Binary(*) Decode_Base2(const Byte* *src, REBLEN len, Byte delim)
     REBLEN accum = 0;
 
     Binary(*) bin = Make_Binary(len >> 3);
-    Byte* bp = BIN_HEAD(bin);
+    Byte* bp = Binary_Head(bin);
     const Byte* cp = *src;
 
     for (; len > 0; cp++, len--) {
@@ -200,7 +200,7 @@ static Binary(*) Decode_Base2(const Byte* *src, REBLEN len, Byte delim)
     }
     if (count) goto err; // improper modulus
 
-    TERM_BIN_LEN(bin, bp - BIN_HEAD(bin));
+    Term_Binary_Len(bin, bp - Binary_Head(bin));
     return bin;
 
 err:
@@ -219,7 +219,7 @@ static Binary(*) Decode_Base16(const Byte* *src, REBLEN len, Byte delim)
     REBLEN accum = 0;
 
     Binary(*) bin = Make_Binary(len / 2);
-    Byte* bp = BIN_HEAD(bin);
+    Byte* bp = Binary_Head(bin);
     const Byte* cp = *src;
 
     for (; len > 0; cp++, len--) {
@@ -238,7 +238,7 @@ static Binary(*) Decode_Base16(const Byte* *src, REBLEN len, Byte delim)
     }
     if (count & 1) goto err; // improper modulus
 
-    TERM_BIN_LEN(bin, bp - BIN_HEAD(bin));
+    Term_Binary_Len(bin, bp - Binary_Head(bin));
     return bin;
 
 err:
@@ -260,7 +260,7 @@ static Binary(*) Decode_Base64(const Byte* *src, REBLEN len, Byte delim)
     // Accounts for e bytes decoding into 3 bytes.
 
     Binary(*) bin = Make_Binary(((len + 3) * 3) / 4);
-    Byte* bp = BIN_HEAD(bin);
+    Byte* bp = Binary_Head(bin);
     const Byte* cp = *src;
 
     for (; len > 0; cp++, len--) {
@@ -311,7 +311,7 @@ static Binary(*) Decode_Base64(const Byte* *src, REBLEN len, Byte delim)
 
     if (flip) goto err;
 
-    TERM_BIN_LEN(bin, bp - BIN_HEAD(bin));
+    Term_Binary_Len(bin, bp - Binary_Head(bin));
     return bin;
 
 err:
@@ -385,7 +385,7 @@ void Form_Base2(REB_MOLD *mo, const Byte* src, REBLEN len, bool brk)
             Append_Codepoint(mo->series, LF);
     }
 
-    if (*BIN_TAIL(mo->series) != LF && len > 9 && brk)
+    if (*Binary_Tail(mo->series) != LF && len > 9 && brk)
         Append_Codepoint(mo->series, LF);
 }
 
@@ -415,7 +415,7 @@ void Form_Base16(REB_MOLD *mo, const Byte* src, REBLEN len, bool brk)
             Append_Codepoint(mo->series, LF);
     }
 
-    if (brk and (len >= 32) and *BIN_LAST(mo->series) != LF)
+    if (brk and (len >= 32) and *Binary_Last(mo->series) != LF)
         Append_Codepoint(mo->series, LF);
 }
 
@@ -475,6 +475,6 @@ void Form_Base64(REB_MOLD *mo, const Byte* src, REBLEN len, bool brk)
         Append_Codepoint(s, '=');
     }
 
-    if (brk and x > 49 and *BIN_LAST(s) != LF)
+    if (brk and x > 49 and *Binary_Last(s) != LF)
         Append_Codepoint(s, LF);
 }

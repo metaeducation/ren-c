@@ -75,9 +75,9 @@ Bounce Block_Dispatcher(Level(*) const L)
     USE_LEVEL_SHORTHANDS (L);
 
     Details(*) details = ACT_DETAILS(PHASE);
-    assert(ARR_LEN(details) == IDX_DOES_MAX);
+    assert(Array_Len(details) == IDX_DOES_MAX);
 
-    Cell(*) block = ARR_AT(details, IDX_DOES_BLOCK);
+    Cell(*) block = Array_At(details, IDX_DOES_BLOCK);
         // ^-- note not a `Cell(const*) block`, may get updated!
     assert(IS_BLOCK(block) and VAL_INDEX(block) == 0);
 
@@ -112,10 +112,10 @@ Bounce Block_Dispatcher(Level(*) const L)
 
         // Preserve file and line information from the original, if present.
         //
-        if (Get_Subclass_Flag(ARRAY, body, HAS_FILE_LINE_UNMASKED)) {
+        if (Get_Array_Flag(body, HAS_FILE_LINE_UNMASKED)) {
             mutable_LINK(Filename, relativized) = LINK(Filename, body);
             relativized->misc.line = body->misc.line;
-            Set_Subclass_Flag(ARRAY, relativized, HAS_FILE_LINE_UNMASKED);
+            Set_Array_Flag(relativized, HAS_FILE_LINE_UNMASKED);
         }
 
         // Update block cell as a relativized copy (we won't do this again).
@@ -196,7 +196,7 @@ DECLARE_NATIVE(does)
         // Block_Dispatcher() *may* copy at an indeterminate time, so to keep
         // things invariant we have to lock it.
         //
-        Cell(*) body = ARR_AT(ACT_DETAILS(doer), IDX_DOES_BLOCK);
+        Cell(*) body = Array_At(ACT_DETAILS(doer), IDX_DOES_BLOCK);
         Force_Value_Frozen_Deep(source);
         Copy_Cell(body, source);
 

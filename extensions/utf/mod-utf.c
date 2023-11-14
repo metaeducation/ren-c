@@ -98,7 +98,7 @@ String(*) Decode_UTF16(
 
     REBLEN num_chars = 0;
 
-    Utf8(*) dp = STR_HEAD(s);
+    Utf8(*) dp = String_Head(s);
 
     for (; len > 0; len--, src++) {
         //
@@ -143,7 +143,7 @@ String(*) Decode_UTF16(
     //
     UNUSED(ascii);
 
-    TERM_STR_LEN_SIZE(s, num_chars, dp - STR_HEAD(s));
+    Term_String_Len_Size(s, num_chars, dp - String_Head(s));
     return s;
 }
 
@@ -223,7 +223,7 @@ static Series(*) Encode_Utf16(
     Utf8(const*) cp = data;
 
     Binary(*) bin = Make_Binary(sizeof(uint16_t) * len);
-    uint16_t* up = cast(uint16_t*, BIN_HEAD(bin));
+    uint16_t* up = cast(uint16_t*, Binary_Head(bin));
 
     REBLEN i = 0;
     for (i = 0; i < len; ++i) {
@@ -250,7 +250,7 @@ static Series(*) Encode_Utf16(
 
     up[i] = '\0'; // needs two bytes worth of NULL, not just one.
 
-    SET_SERIES_LEN(bin, len * sizeof(uint16_t));
+    Set_Series_Len(bin, len * sizeof(uint16_t));
     return bin;
 }
 

@@ -276,7 +276,7 @@ void Write_IO(const REBVAL *data, REBLEN len)
             // Write out one byte at a time, by translating it into two hex
             // digits and sending them to WriteConsole().
             //
-            const Byte* tail = BIN_TAIL(VAL_BINARY(data));
+            const Byte* tail = Binary_Tail(VAL_BINARY(data));
             const Byte* bp = VAL_BINARY_AT(data);
             for (; bp != tail; ++bp) {
                 WCHAR digits[2];

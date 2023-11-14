@@ -274,7 +274,7 @@ REBINT Find_Binstr_In_Binstr(
         //
         // Note: `find/skip tail "abcdef" "def" -3` is "def", so first search
         // position should be at the `d`.  We can reduce the amount of work
-        // we do in the later loop checking against STR_LEN(str1) `len` by
+        // we do in the later loop checking against String_Len(str1) `len` by
         // up-front finding the earliest point we can look modulo `skip`,
         // e.g. `find/skip tail "abcdef" "cdef" -2` should start at `c`.
         //
@@ -388,17 +388,17 @@ REBINT Find_Binstr_In_Binstr(
                 return NOT_FOUND;
 
             if (is_1_str)
-                assert(cp1 >= STR_AT(VAL_STRING(binstr1), - skip1));
+                assert(cp1 >= String_At(VAL_STRING(binstr1), - skip1));
             else
-                assert(cp1 >= BIN_AT(VAL_BINARY(binstr1), - skip1));
+                assert(cp1 >= Binary_At(VAL_BINARY(binstr1), - skip1));
         } else {
             if (index1 > end1)
                 return NOT_FOUND;
 
             if (is_1_str)
-                assert(cp1 <= STR_AT(VAL_STRING(binstr1), len_head1 - skip1));
+                assert(cp1 <= String_At(VAL_STRING(binstr1), len_head1 - skip1));
             else
-                assert(cp1 <= BIN_AT(VAL_BINARY(binstr1), len_head1 - skip1));
+                assert(cp1 <= Binary_At(VAL_BINARY(binstr1), len_head1 - skip1));
         }
 
         // Regardless of whether we are searching in binstr1 as a string even

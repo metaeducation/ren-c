@@ -154,7 +154,7 @@ Bounce File_Actor(Level(*) level_, REBVAL *port, Symbol(const*) verb)
         //
         Binary(*) bin = Make_Binary(sizeof(FILEREQ));
         Init_Binary(state, bin);
-        TERM_BIN_LEN(bin, sizeof(FILEREQ));
+        Term_Binary_Len(bin, sizeof(FILEREQ));
 
         file = File_Of_Port(port);
         file->id = FILEHANDLE_NONE;

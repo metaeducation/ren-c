@@ -124,7 +124,7 @@ Bounce Func_Dispatcher(Level(*) const L)
   initial_entry: {  //////////////////////////////////////////////////////////
 
     Details(*) details = ACT_DETAILS(PHASE);
-    Cell(*) body = ARR_AT(details, IDX_DETAILS_1);  // code to run
+    Cell(*) body = Array_At(details, IDX_DETAILS_1);  // code to run
     assert(IS_BLOCK(body) and IS_RELATIVE(body) and VAL_INDEX(body) == 0);
 
     assert(ACT_HAS_RETURN(PHASE));  // all FUNC have RETURN
@@ -258,17 +258,17 @@ Phase(*) Make_Interpreted_Action_May_Fail(
 
     // Favor the spec first, then the body, for file and line information.
     //
-    if (Get_Subclass_Flag(ARRAY, VAL_ARRAY(spec), HAS_FILE_LINE_UNMASKED)) {
+    if (Get_Array_Flag(VAL_ARRAY(spec), HAS_FILE_LINE_UNMASKED)) {
         mutable_LINK(Filename, copy) = LINK(Filename, VAL_ARRAY(spec));
         copy->misc.line = VAL_ARRAY(spec)->misc.line;
-        Set_Subclass_Flag(ARRAY, copy, HAS_FILE_LINE_UNMASKED);
+        Set_Array_Flag(copy, HAS_FILE_LINE_UNMASKED);
     }
     else if (
-        Get_Subclass_Flag(ARRAY, VAL_ARRAY(body), HAS_FILE_LINE_UNMASKED)
+        Get_Array_Flag(VAL_ARRAY(body), HAS_FILE_LINE_UNMASKED)
     ){
         mutable_LINK(Filename, copy) = LINK(Filename, VAL_ARRAY(body));
         copy->misc.line = VAL_ARRAY(body)->misc.line;
-        Set_Subclass_Flag(ARRAY, copy, HAS_FILE_LINE_UNMASKED);
+        Set_Array_Flag(copy, HAS_FILE_LINE_UNMASKED);
     }
     else {
         // Ideally all source series should have a file and line numbering
@@ -283,7 +283,7 @@ Phase(*) Make_Interpreted_Action_May_Fail(
     //
     Details(*) details = ACT_DETAILS(a);
     Cell(*) rebound = Init_Relative_Block(
-        ARR_AT(details, IDX_NATIVE_BODY),
+        Array_At(details, IDX_NATIVE_BODY),
         a,
         copy
     );

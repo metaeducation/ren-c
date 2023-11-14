@@ -138,7 +138,7 @@
             (snprintf(js_trace_buf_debug, JS_TRACE_BUF_SIZE, __VA_ARGS__), \
                 js_trace_buf_debug))
 
-    // TRASH_POINTER_IF_DEBUG() is defined in release builds as a no-op, but
+    // Trash_Pointer_If_Debug() is defined in release builds as a no-op, but
     // it's kind of complicated.  For the purposes in this file these END
     // macros work just as well and don't collide.
 
@@ -896,8 +896,8 @@ DECLARE_NATIVE(js_native)
     // The javascript code for registering the function body is now the last
     // thing in the mold buffer.  Get a pointer to it.
     //
-    TERM_BIN(mo->series);  // !!! is this necessary?
-    const char *js = cs_cast(BIN_AT(mo->series, mo->base.size));
+    Term_Binary(mo->series);  // !!! is this necessary?
+    const char *js = cs_cast(Binary_At(mo->series, mo->base.size));
 
     TRACE("Registering native_id %ld", cast(long, native_id));
 

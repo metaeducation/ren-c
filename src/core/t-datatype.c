@@ -34,7 +34,7 @@
 //
 Array(*) Startup_Datatypes(Array(*) boot_typespecs)
 {
-    if (ARR_LEN(boot_typespecs) != REB_MAX - 1)  // exclude REB_VOID
+    if (Array_Len(boot_typespecs) != REB_MAX - 1)  // exclude REB_VOID
         panic (boot_typespecs);
 
     Array(*) catalog = Make_Array(REB_MAX - 1);

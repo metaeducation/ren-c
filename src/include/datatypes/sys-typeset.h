@@ -230,7 +230,7 @@ inline static REBVAL *Init_Parameter_Core(Cell(*) out, Array(const*) array)
 {
     Reset_Unquoted_Header_Untracked(out, CELL_MASK_PARAMETER);
     if (array)
-        ASSERT_SERIES_MANAGED(array);
+        Assert_Series_Managed(array);
     INIT_VAL_PARAMETER_ARRAY(out, array);
     VAL_PARAM_FLAGS(out) = FLAG_PARAM_CLASS_BYTE(PARAM_CLASS_0);
     return cast(REBVAL*, out);
@@ -247,7 +247,7 @@ inline static REBPAR *Init_Param_Core(
 ){
     Reset_Unquoted_Header_Untracked(out, CELL_MASK_PARAMETER);
     if (array)
-        ASSERT_SERIES_MANAGED(array);
+        Assert_Series_Managed(array);
 
     VAL_PARAM_FLAGS(out) = param_flags;
     INIT_VAL_PARAMETER_ARRAY(out, array);

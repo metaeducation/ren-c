@@ -178,7 +178,7 @@ DECLARE_NATIVE(reduce)
     Drop_Level_Unbalanced(SUBLEVEL);  // Drop_Level() asserts on accumulation
 
     Flags pop_flags = NODE_FLAG_MANAGED | ARRAY_MASK_HAS_FILE_LINE;
-    if (Get_Subclass_Flag(ARRAY, VAL_ARRAY(v), NEWLINE_AT_TAIL))
+    if (Get_Array_Flag(VAL_ARRAY(v), NEWLINE_AT_TAIL))
         pop_flags |= ARRAY_FLAG_NEWLINE_AT_TAIL;
 
     return Init_Array_Cell(
@@ -437,7 +437,7 @@ static Atom(*) Finalize_Composer_Level(
     }
 
     Flags flags = NODE_FLAG_MANAGED | ARRAY_MASK_HAS_FILE_LINE;
-    if (Get_Subclass_Flag(ARRAY, VAL_ARRAY(composee), NEWLINE_AT_TAIL))
+    if (Get_Array_Flag(VAL_ARRAY(composee), NEWLINE_AT_TAIL))
         flags |= ARRAY_FLAG_NEWLINE_AT_TAIL;  // proxy newline flag, see [3]
 
     Init_Array_Cell(
@@ -855,7 +855,7 @@ static void Flatten_Core(
             REBSPC *derived = Derive_Specifier(specifier, item);
 
             Cell(const*) sub_tail;
-            Cell(*) sub = VAL_ARRAY_AT_ENSURE_MUTABLE(&sub_tail, item);
+            Cell(*) sub = VAL_ARRAY_AT_Ensure_Mutable(&sub_tail, item);
             Flatten_Core(
                 sub,
                 sub_tail,
@@ -888,7 +888,7 @@ DECLARE_NATIVE(flatten)
     StackIndex base = TOP_INDEX;
 
     Cell(const*) tail;
-    Cell(*) at = VAL_ARRAY_AT_ENSURE_MUTABLE(&tail, ARG(block));
+    Cell(*) at = VAL_ARRAY_AT_Ensure_Mutable(&tail, ARG(block));
     Flatten_Core(
         at,
         tail,

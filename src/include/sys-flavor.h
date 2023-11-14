@@ -184,7 +184,7 @@ enum StubFlavorEnum {
 typedef enum StubFlavorEnum Flavor;
 
 
-// Most accesses of series via SER_AT(...) and ARR_AT(...) macros already
+// Most accesses of series via Series_At(...) and Array_At(...) macros already
 // know at the callsite the size of the access.  The width is only a double
 // check in the debug build, and used at allocation time and other moments
 // when the system has to know the size but doesn't yet know the type.  Hence
@@ -204,23 +204,23 @@ inline static size_t Wide_For_Flavor(Flavor flavor) {
     return sizeof(void*);
 }
 
-#define SER_WIDE(s) \
-    Wide_For_Flavor(SER_FLAVOR(s))
+#define Series_Wide(s) \
+    Wide_For_Flavor(Series_Flavor(s))
 
 
 
-#define IS_SER_ARRAY(s)         (SER_FLAVOR(s) <= FLAVOR_MAX_ARRAY)
-#define IS_SER_UTF8(s)          (SER_FLAVOR(s) >= FLAVOR_MIN_UTF8)
+#define Is_Series_Array(s)         (Series_Flavor(s) <= FLAVOR_MAX_ARRAY)
+#define Is_Series_UTF8(s)          (Series_Flavor(s) >= FLAVOR_MIN_UTF8)
 
-#define IS_NONSYMBOL_STRING(s)  (SER_FLAVOR(s) == FLAVOR_STRING)
-#define IS_SYMBOL(s)            (SER_FLAVOR(s) == FLAVOR_SYMBOL)
+#define Is_NonSymbol_String(s)  (Series_Flavor(s) == FLAVOR_STRING)
+#define IS_SYMBOL(s)            (Series_Flavor(s) == FLAVOR_SYMBOL)
 
-#define IS_KEYLIST(s)           (SER_FLAVOR(s) == FLAVOR_KEYLIST)
+#define IS_KEYLIST(s)           (Series_Flavor(s) == FLAVOR_KEYLIST)
 
-#define IS_LET(s)               (SER_FLAVOR(s) == FLAVOR_LET)
-#define IS_USE(s)               (SER_FLAVOR(s) == FLAVOR_USE)
-#define IS_PATCH(s)             (SER_FLAVOR(s) == FLAVOR_PATCH)
-#define IS_VARLIST(s)           (SER_FLAVOR(s) == FLAVOR_VARLIST)
-#define IS_PAIRLIST(s)          (SER_FLAVOR(s) == FLAVOR_PAIRLIST)
-#define IS_DETAILS(s)           (SER_FLAVOR(s) == FLAVOR_DETAILS)
-#define IS_PARTIALS(s)          (SER_FLAVOR(s) == FLAVOR_PARTIALS)
+#define IS_LET(s)               (Series_Flavor(s) == FLAVOR_LET)
+#define IS_USE(s)               (Series_Flavor(s) == FLAVOR_USE)
+#define IS_PATCH(s)             (Series_Flavor(s) == FLAVOR_PATCH)
+#define IS_VARLIST(s)           (Series_Flavor(s) == FLAVOR_VARLIST)
+#define IS_PAIRLIST(s)          (Series_Flavor(s) == FLAVOR_PAIRLIST)
+#define IS_DETAILS(s)           (Series_Flavor(s) == FLAVOR_DETAILS)
+#define IS_PARTIALS(s)          (Series_Flavor(s) == FLAVOR_PARTIALS)

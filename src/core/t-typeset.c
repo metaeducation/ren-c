@@ -73,7 +73,7 @@ void Startup_Typesets(void)
         //
         Array(*) a = Alloc_Singular(NODE_FLAG_MANAGED);
         Init_Any_Word_Bound(
-            ARR_SINGLE(a),
+            Array_Single(a),
             REB_WORD,
             Canon_Symbol(cast(SymId, id)),
             Lib_Context,
@@ -90,7 +90,7 @@ void Startup_Typesets(void)
   {
     Array(*) a = Alloc_Singular(NODE_FLAG_MANAGED);
     Init_Any_Word_Bound(
-        ARR_SINGLE(a),
+        Array_Single(a),
         REB_WORD,
         Canon(NULL_Q),
         Lib_Context,
@@ -103,7 +103,7 @@ void Startup_Typesets(void)
   {
     Array(*) a = Alloc_Singular(NODE_FLAG_MANAGED);
     Init_Any_Word_Bound(
-        ARR_SINGLE(a),
+        Array_Single(a),
         REB_WORD,
         Canon(ACTIVATION_Q),
         Lib_Context,
@@ -116,7 +116,7 @@ void Startup_Typesets(void)
   {
     Array(*) a = Alloc_Singular(NODE_FLAG_MANAGED);
     Init_Any_Word_Bound(
-        ARR_SINGLE(a),
+        Array_Single(a),
         REB_WORD,
         Canon(ANY_MATCHER_Q),
         Lib_Context,

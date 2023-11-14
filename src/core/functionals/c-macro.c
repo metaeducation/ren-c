@@ -98,7 +98,7 @@ Bounce Macro_Dispatcher(Level(*) const L)
     USE_LEVEL_SHORTHANDS (L);
 
     Details(*) details = ACT_DETAILS(PHASE);
-    Cell(*) body = ARR_AT(details, IDX_DETAILS_1);  // code to run
+    Cell(*) body = Array_At(details, IDX_DETAILS_1);  // code to run
     assert(IS_BLOCK(body) and IS_RELATIVE(body) and VAL_INDEX(body) == 0);
 
     assert(ACT_HAS_RETURN(PHASE));
@@ -204,7 +204,7 @@ DECLARE_NATIVE(inline)
         // turn it into a block.
         //
         Array(*) a = Alloc_Singular(SERIES_FLAGS_NONE);
-        Unquotify(Move_Cell(ARR_SINGLE(a), splice), 1);
+        Unquotify(Move_Cell(Array_Single(a), splice), 1);
         Init_Block(splice, a);
         Splice_Block_Into_Feed(level_->feed, ARG(splice));
     }

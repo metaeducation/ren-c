@@ -365,9 +365,9 @@ Bounce Console_Actor(Level(*) level_, REBVAL *port, Symbol(const*) verb)
         if (not IS_BINARY(data)) {
             Init_Binary(data, Make_Binary(readbuf_size));
         }
-        else if (SER_REST(VAL_BINARY(data)) < readbuf_size) {
-            Binary(*) bin = VAL_BINARY_ENSURE_MUTABLE(data);
-            EXPAND_SERIES_TAIL(bin, readbuf_size - SER_REST(bin));
+        else if (Series_Rest(VAL_BINARY(data)) < readbuf_size) {
+            Binary(*) bin = VAL_BINARY_Ensure_Mutable(data);
+            Expand_Series_Tail(bin, readbuf_size - Series_Rest(bin));
         }
 
         // !!! An egregious hack in READ-LINE to try and coax the system to
@@ -390,16 +390,16 @@ Bounce Console_Actor(Level(*) level_, REBVAL *port, Symbol(const*) verb)
             // Windows data as text with lines will thus have to deline it (!)
             //
             size_t size = readbuf_size - VAL_LEN_AT(data);
-            Binary(*) bin = VAL_BINARY_ENSURE_MUTABLE(data);
+            Binary(*) bin = VAL_BINARY_Ensure_Mutable(data);
             REBLEN orig_len = VAL_LEN_AT(data);
 
-            assert(SER_AVAIL(bin) >= size);
+            assert(Series_Available_Space(bin) >= size);
 
-            Byte* buf = BIN_AT(bin, orig_len);
+            Byte* buf = Binary_At(bin, orig_len);
 
             size_t actual = Read_IO(buf, size);  // appends to tail
 
-            TERM_BIN_LEN(bin, orig_len + actual);
+            Term_Binary_Len(bin, orig_len + actual);
         }
 
         // Give back a BINARY! which is as large as the portion of the buffer

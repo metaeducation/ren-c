@@ -220,8 +220,8 @@ static void Startup_Lib(void)
         mutable_INODE(PatchContext, patch) = nullptr;  // signals unused
         mutable_LINK(PatchReserved, patch) = nullptr;
         mutable_MISC(PatchHitch, patch) = nullptr;
-        assert(Is_Cell_Poisoned(ARR_SINGLE(patch)));
-        TRACK(Erase_Cell(ARR_SINGLE(patch)));  // Lib(XXX) unreadable until set
+        assert(Is_Cell_Poisoned(Array_Single(patch)));
+        TRACK(Erase_Cell(Array_Single(patch)));  // Lib(XXX) starts unreadable
     }
 
   //=//// INITIALIZE EARLY BOOT USED VALUES ////////////////////////////////=//
@@ -277,7 +277,7 @@ static void Shutdown_Lib(void)
         if (INODE(PatchContext, patch) == nullptr)
             continue;  // was never initialized !!! should it not be in lib?
 
-        Erase_Cell(ARR_SINGLE(patch));  // may be PROTECTED, can't FRESHEN()
+        Erase_Cell(Array_Single(patch));  // may be PROTECTED, can't FRESHEN()
         Decay_Series(patch);
 
         // !!! Typically nodes aren't zeroed out when they are freed.  Since
@@ -359,16 +359,16 @@ static void Startup_Empty_Arrays(void)
 
   blockscope {
     Array(*) a = Make_Array_Core(1, NODE_FLAG_MANAGED);
-    SET_SERIES_LEN(a, 1);
-    Init_Quasi_Null(ARR_AT(a, 0));
+    Set_Series_Len(a, 1);
+    Init_Quasi_Null(Array_At(a, 0));
     Freeze_Array_Deep(a);
     PG_1_Quasi_Null_Array = a;
   }
 
   blockscope {
     Array(*) a = Make_Array_Core(1, NODE_FLAG_MANAGED);
-    SET_SERIES_LEN(a, 1);
-    Init_Quoted_Void(ARR_AT(a, 0));
+    Set_Series_Len(a, 1);
+    Init_Quoted_Void(Array_At(a, 0));
     Freeze_Array_Deep(a);
     PG_1_Quoted_Void_Array = a;
   }
@@ -380,9 +380,9 @@ static void Startup_Empty_Arrays(void)
     //
   blockscope {
     Array(*) a = Make_Array_Core(2, NODE_FLAG_MANAGED);
-    SET_SERIES_LEN(a, 2);
-    Init_Blank(ARR_AT(a, 0));
-    Init_Blank(ARR_AT(a, 1));
+    Set_Series_Len(a, 2);
+    Init_Blank(Array_At(a, 0));
+    Init_Blank(Array_At(a, 1));
     Freeze_Array_Deep(a);
     PG_2_Blanks_Array = a;
   }
@@ -490,9 +490,9 @@ static void Init_Root_Vars(void)
 
   #if !defined(NDEBUG)
     Codepoint test_nul;
-    NEXT_CHR(&test_nul, STR_AT(nulled_uni, 0));
+    NEXT_CHR(&test_nul, String_At(nulled_uni, 0));
     assert(test_nul == '\0');
-    assert(STR_LEN(nulled_uni) == 0);
+    assert(String_Len(nulled_uni) == 0);
   #endif
 
     ensureNullptr(Root_Empty_Text) = Init_Text(Alloc_Value(), nulled_uni);
@@ -541,7 +541,7 @@ static void Init_System_Object(
     assert(VAL_INDEX(boot_sysobj_spec) == 0);
     Cell(const*) spec_tail;
     Cell(*) spec_head
-        = VAL_ARRAY_KNOWN_MUTABLE_AT(&spec_tail, boot_sysobj_spec);
+        = VAL_ARRAY_Known_Mutable_AT(&spec_tail, boot_sysobj_spec);
 
     // Create the system object from the sysobj block (defined in %sysobj.r)
     //
@@ -841,8 +841,8 @@ void Startup_Core(void)
 
   blockscope {
     Array(*) a = Make_Array_Core(1, NODE_FLAG_MANAGED);
-    SET_SERIES_LEN(a, 1);
-    Init_Quasi_Word(ARR_AT(a, 0), Canon(FALSE));
+    Set_Series_Len(a, 1);
+    Init_Quasi_Word(Array_At(a, 0), Canon(FALSE));
     Freeze_Array_Deep(a);
     PG_1_Meta_False_Array = a;
   }
@@ -897,8 +897,9 @@ void Startup_Core(void)
 
     rebFree(utf8); // don't need decompressed text after it's scanned
 
-    BOOT_BLK *boot =
-        cast(BOOT_BLK*, ARR_HEAD(VAL_ARRAY_KNOWN_MUTABLE(ARR_HEAD(boot_array))));
+    BOOT_BLK *boot = cast(BOOT_BLK*,
+        Array_Head(VAL_ARRAY_KNOWN_MUTABLE(Array_Head(boot_array)))
+    );
 
     // ID_OF_SYMBOL(), VAL_WORD_ID() and Canon(XXX) now available
 

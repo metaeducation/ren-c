@@ -302,7 +302,7 @@ Bounce Reframer_Dispatcher(Level(*) const L)
     USE_LEVEL_SHORTHANDS (L);
 
     Details(*) details = ACT_DETAILS(PHASE);
-    assert(ARR_LEN(details) == IDX_REFRAMER_MAX);
+    assert(Array_Len(details) == IDX_REFRAMER_MAX);
 
     REBVAL* shim = DETAILS_AT(details, IDX_REFRAMER_SHIM);
     assert(IS_FRAME(shim));

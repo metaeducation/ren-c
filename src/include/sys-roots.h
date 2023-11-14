@@ -79,7 +79,7 @@ inline static void Link_Api_Handle_To_Level(Array(*) a, Level(*) L)
     bool empty_list = L->alloc_value_list == L;
 
     if (not empty_list) {  // head of list exists, take its spot at the head
-        assert(Is_Api_Value(ARR_SINGLE(ARR(L->alloc_value_list))));
+        assert(Is_Api_Value(Array_Single(ARR(L->alloc_value_list))));
         mutable_MISC(ApiPrev, SER(L->alloc_value_list)) = a;  // link back
     }
 
@@ -101,17 +101,17 @@ inline static void Unlink_Api_Handle_From_Level(Array(*) a)
         L->alloc_value_list = LINK(ApiNext, a);
 
         if (not at_tail) {  // only set next item's backlink if it exists
-            assert(Is_Api_Value(ARR_SINGLE(ARR(LINK(ApiNext, a)))));
+            assert(Is_Api_Value(Array_Single(ARR(LINK(ApiNext, a)))));
             mutable_MISC(ApiPrev, SER(LINK(ApiNext, a))) = L;
         }
     }
     else {
         // we're not at the head, so there is a node before us, set its "next"
-        assert(Is_Api_Value(ARR_SINGLE(ARR(MISC(ApiPrev, a)))));
+        assert(Is_Api_Value(Array_Single(ARR(MISC(ApiPrev, a)))));
         mutable_LINK(ApiNext, SER(MISC(ApiPrev, a))) = LINK(ApiNext, a);
 
         if (not at_tail) {  // only set next item's backlink if it exists
-            assert(Is_Api_Value(ARR_SINGLE(ARR(LINK(ApiNext, a)))));
+            assert(Is_Api_Value(Array_Single(ARR(LINK(ApiNext, a)))));
             mutable_MISC(ApiPrev, SER(LINK(ApiNext, a))) = MISC(ApiPrev, a);
         }
     }
@@ -137,7 +137,7 @@ inline static REBVAL *Alloc_Value(void)
     //
     // This is still tolerated as a "fresh" state for purposes of init.
     //
-    REBVAL *v = SPECIFIC(ARR_SINGLE(a));
+    REBVAL *v = SPECIFIC(Array_Single(a));
     v->header.bits = CELL_MASK_0_ROOT;  // not readable, but still "fresh"
 
     // We link the API handle into a doubly linked list maintained by the
@@ -159,7 +159,7 @@ inline static void Free_Value(REBVAL *v)
     if (Get_Series_Flag(a, MANAGED))
         Unlink_Api_Handle_From_Level(a);
 
-    Poison_Cell(ARR_SINGLE(a));  // has to be last (removes NODE_FLAG_ROOT)
+    Poison_Cell(v);  // has to be last (removes NODE_FLAG_ROOT)
     GC_Kill_Series(a);
 }
 

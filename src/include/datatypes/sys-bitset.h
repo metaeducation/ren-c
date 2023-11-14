@@ -52,12 +52,12 @@ inline static Binary(*) VAL_BITSET(NoQuote(Cell(const*)) v) {
     return BIN(VAL_NODE1(v));
 }
 
-#define VAL_BITSET_ENSURE_MUTABLE(v) \
-    m_cast(Binary(*), VAL_BITSET(ENSURE_MUTABLE(v)))
+#define VAL_BITSET_Ensure_Mutable(v) \
+    m_cast(Binary(*), VAL_BITSET(Ensure_Mutable(v)))
 
 inline static REBVAL *Init_Bitset(Cell(*) out, Binary(*) bits) {
     Reset_Unquoted_Header_Untracked(out, CELL_MASK_BITSET);
-    ASSERT_SERIES_MANAGED(bits);
+    Assert_Series_Managed(bits);
     INIT_VAL_NODE1(out, bits);
     return cast(REBVAL*, out);
 }

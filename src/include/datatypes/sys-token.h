@@ -97,7 +97,7 @@ inline static REBVAL *Init_Issue_Utf8(
     }
     else {
         String(*) str = Make_Sized_String_UTF8(cs_cast(utf8), size);
-        assert(STR_LEN(str) == len);  // ^-- revalidates :-/ should match
+        assert(String_Len(str) == len);  // ^-- revalidates :-/ should match
         Freeze_Series(str);
         Init_Text(out, str);
         mutable_HEART_BYTE(out) = REB_ISSUE;
@@ -257,8 +257,8 @@ inline static const Byte* VAL_BYTES_LIMIT_AT(
     assert(cast(REBLEN, limit) == VAL_LEN_AT(v));
 
     String(const*) spelling = VAL_WORD_SYMBOL(v);
-    *size_out = STR_SIZE(spelling);
-    return STR_HEAD(spelling);
+    *size_out = String_Size(spelling);
+    return String_Head(spelling);
 }
 
 #define VAL_BYTES_AT(size_out,v) \
@@ -323,11 +323,11 @@ inline static Utf8(const*) VAL_UTF8_LEN_SIZE_AT_LIMIT(
         assert(ANY_WORDLIKE(v));
 
         String(const*) spelling = VAL_WORD_SYMBOL(v);
-        utf8 = STR_HEAD(spelling);
+        utf8 = String_Head(spelling);
 
         if (size_out or length_out) {
             if (limit == UNLIMITED and not length_out)
-                *unwrap(size_out) = STR_SIZE(spelling);
+                *unwrap(size_out) = String_Size(spelling);
             else {
                 // WORD!s don't cache their codepoint length, must calculate
                 //

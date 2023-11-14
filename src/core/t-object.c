@@ -193,14 +193,14 @@ void Init_Evars(EVARS *e, NoQuote(Cell(const*)) v) {
     if (kind == REB_FRAME and Is_Frame_Details(v)) {
         e->index = 0;  // will be bumped to 1
 
-        TRASH_POINTER_IF_DEBUG(e->ctx);
+        Trash_Pointer_If_Debug(e->ctx);
 
         Action(*) act = VAL_ACTION(v);
         e->key = ACT_KEYS(&e->key_tail, act) - 1;
         e->var = nullptr;
         e->param = ACT_PARAMS_HEAD(act) - 1;
 
-        assert(SER_USED(ACT_KEYLIST(act)) <= ACT_NUM_PARAMS(act));
+        assert(Series_Used(ACT_KEYLIST(act)) <= ACT_NUM_PARAMS(act));
 
         // There's no clear best answer to whether the locals should be
         // visible when enumerating an action, only the caller knows if it's
@@ -215,7 +215,7 @@ void Init_Evars(EVARS *e, NoQuote(Cell(const*)) v) {
       #endif
 
         e->word = nullptr;
-        TRASH_POINTER_IF_DEBUG(e->word_tail);
+        Trash_Pointer_If_Debug(e->word_tail);
     }
     else if (kind == REB_MODULE) {
         //
@@ -231,8 +231,8 @@ void Init_Evars(EVARS *e, NoQuote(Cell(const*)) v) {
 
         StackIndex base = TOP_INDEX;
 
-        Symbol(*) *psym = SER_HEAD(Symbol(*), PG_Symbols_By_Hash);
-        Symbol(*) *psym_tail = SER_TAIL(Symbol(*), PG_Symbols_By_Hash);
+        Symbol(*) *psym = Series_Head(Symbol(*), PG_Symbols_By_Hash);
+        Symbol(*) *psym_tail = Series_Tail(Symbol(*), PG_Symbols_By_Hash);
         for (; psym != psym_tail; ++psym) {
             if (*psym == nullptr or *psym == &PG_Deleted_Symbol)
                 continue;
@@ -261,10 +261,10 @@ void Init_Evars(EVARS *e, NoQuote(Cell(const*)) v) {
         e->wordlist = Pop_Stack_Values_Core(base, SERIES_FLAG_MANAGED);
         Clear_Series_Flag(e->wordlist, MANAGED);  // see [1]
 
-        e->word = cast(REBVAL*, ARR_HEAD(e->wordlist)) - 1;
-        e->word_tail = cast(REBVAL*, ARR_TAIL(e->wordlist));
+        e->word = cast(REBVAL*, Array_Head(e->wordlist)) - 1;
+        e->word_tail = cast(REBVAL*, Array_Tail(e->wordlist));
 
-        TRASH_POINTER_IF_DEBUG(e->key_tail);
+        Trash_Pointer_If_Debug(e->key_tail);
         e->var = nullptr;
         e->param = nullptr;
     }
@@ -275,7 +275,7 @@ void Init_Evars(EVARS *e, NoQuote(Cell(const*)) v) {
 
         e->var = CTX_VARS_HEAD(e->ctx) - 1;
 
-        assert(SER_USED(CTX_KEYLIST(e->ctx)) <= CTX_LEN(e->ctx));
+        assert(Series_Used(CTX_KEYLIST(e->ctx)) <= CTX_LEN(e->ctx));
 
         if (kind != REB_FRAME) {
             e->param = nullptr;
@@ -323,7 +323,7 @@ void Init_Evars(EVARS *e, NoQuote(Cell(const*)) v) {
             Action(*) action = phase;
             e->param = ACT_PARAMS_HEAD(action) - 1;
             e->key = ACT_KEYS(&e->key_tail, action) - 1;
-            assert(SER_USED(ACT_KEYLIST(action)) <= ACT_NUM_PARAMS(action));
+            assert(Series_Used(ACT_KEYLIST(action)) <= ACT_NUM_PARAMS(action));
         }
 
       #if !defined(NDEBUG)
@@ -805,11 +805,11 @@ Context(*) Copy_Context_Extra_Managed(
         nullptr // original_array, N/A because LINK()/MISC() used otherwise
     );
     if (CTX_TYPE(original) == REB_MODULE)
-        SET_SERIES_USED(varlist, 1);  // all variables linked from word table
+        Set_Series_Used(varlist, 1);  // all variables linked from word table
     else
-        SET_SERIES_LEN(varlist, CTX_LEN(original) + 1);
+        Set_Series_Len(varlist, CTX_LEN(original) + 1);
 
-    Cell(*) dest = ARR_HEAD(varlist);
+    Cell(*) dest = Array_Head(varlist);
 
     // The type information and fields in the rootvar (at head of the varlist)
     // get filled in with a copy, but the varlist needs to be updated in the
@@ -842,8 +842,8 @@ Context(*) Copy_Context_Extra_Managed(
         Context(*) copy = CTX(varlist); // now a well-formed context
         assert(Get_Series_Flag(varlist, DYNAMIC));
 
-        Symbol(*) *psym = SER_HEAD(Symbol(*), PG_Symbols_By_Hash);
-        Symbol(*) *psym_tail = SER_TAIL(Symbol(*), PG_Symbols_By_Hash);
+        Symbol(*) *psym = Series_Head(Symbol(*), PG_Symbols_By_Hash);
+        Symbol(*) *psym_tail = Series_Tail(Symbol(*), PG_Symbols_By_Hash);
         for (; psym != psym_tail; ++psym) {
             if (*psym == nullptr or *psym == &PG_Deleted_Symbol)
                 continue;
@@ -855,7 +855,7 @@ Context(*) Copy_Context_Extra_Managed(
             for (; patch != *psym; patch = SER(node_MISC(Hitch, patch))) {
                 if (original == INODE(PatchContext, patch)) {
                     REBVAL *var = Append_Context(copy, *psym);
-                    Copy_Cell(var, SPECIFIC(ARR_SINGLE(ARR(patch))));
+                    Copy_Cell(var, SPECIFIC(Array_Single(ARR(patch))));
                     break;
                 }
             }
@@ -864,7 +864,7 @@ Context(*) Copy_Context_Extra_Managed(
         return copy;
     }
 
-    ASSERT_SERIES_MANAGED(CTX_KEYLIST(original));
+    Assert_Series_Managed(CTX_KEYLIST(original));
 
     ++dest;
 
@@ -1196,7 +1196,7 @@ REBTYPE(Context)
         if (Is_Void(arg))
             return COPY(context);  // don't fail on R/O if it would be a no-op
 
-        ENSURE_MUTABLE(context);
+        Ensure_Mutable(context);
         if (not IS_OBJECT(context) and not IS_MODULE(context))
             fail ("APPEND only works on OBJECT! and MODULE! contexts");
 
@@ -1464,11 +1464,11 @@ REBTYPE(Frame)
             // it returns for FILE OF and LINE OF.
 
             Details(*) details = ACT_DETAILS(act);
-            if (ARR_LEN(details) < 1 or not ANY_ARRAY(ARR_HEAD(details)))
+            if (Array_Len(details) < 1 or not ANY_ARRAY(Array_Head(details)))
                 return nullptr;
 
-            Array(const*) a = VAL_ARRAY(ARR_HEAD(details));
-            if (Not_Subclass_Flag(ARRAY, a, HAS_FILE_LINE_UNMASKED))
+            Array(const*) a = VAL_ARRAY(Array_Head(details));
+            if (Not_Array_Flag(a, HAS_FILE_LINE_UNMASKED))
                 return nullptr;
 
             // !!! How to tell URL! vs FILE! ?
@@ -1761,7 +1761,7 @@ DECLARE_NATIVE(construct)
     // appropriately sized context.
     //
     Cell(const*) tail;
-    Cell(*) at = VAL_ARRAY_AT_ENSURE_MUTABLE(&tail, spec);
+    Cell(*) at = VAL_ARRAY_AT_Ensure_Mutable(&tail, spec);
 
     Context(*) ctx = Make_Context_Detect_Managed(
         parent ? CTX_TYPE(parent) : REB_OBJECT,  // !!! Presume object?

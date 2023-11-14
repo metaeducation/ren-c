@@ -100,8 +100,8 @@ REBINT Find_Key_Hashed(
     // adding skip (and subtracting len when needed) all positions are
     // visited.  1 <= skip < len, and len is prime, so this is guaranteed.
     //
-    REBLEN used = SER_USED(hashlist);
-    REBLEN *indexes = SER_HEAD(REBLEN, hashlist);
+    REBLEN used = Series_Used(hashlist);
+    REBLEN *indexes = Series_Head(REBLEN, hashlist);
 
     uint32_t hash = Hash_Value(key);
     REBLEN slot = hash % used;  // first slot to try for this hash
@@ -121,7 +121,7 @@ REBINT Find_Key_Hashed(
 
     REBLEN n;
     while ((n = indexes[slot]) != 0) {
-        Cell(*) k = ARR_AT(array, (n - 1) * wide); // stored key
+        Cell(*) k = Array_At(array, (n - 1) * wide); // stored key
         if (0 == Cmp_Value(k, key, true)) {
             if (strict)
                 return slot; // don't need to check synonyms, stop looking
@@ -156,7 +156,7 @@ REBINT Find_Key_Hashed(
         assert(mode == 0);
         slot = zombie_slot;
         Derelativize(
-            ARR_AT(array, (indexes[slot] - 1) * wide),
+            Array_At(array, (indexes[slot] - 1) * wide),
             key,
             specifier
         );
@@ -164,7 +164,7 @@ REBINT Find_Key_Hashed(
 
     if (mode > 1) { // append new value to the target series
         Cell(const*) src = key;
-        indexes[slot] = (ARR_LEN(array) / wide) + 1;
+        indexes[slot] = (Array_Len(array) / wide) + 1;
 
         REBLEN index;
         for (index = 0; index < wide; ++src, ++index)
@@ -186,13 +186,13 @@ static void Rehash_Map(Map(*) map)
 
     if (!hashlist) return;
 
-    REBLEN *hashes = SER_HEAD(REBLEN, hashlist);
+    REBLEN *hashes = Series_Head(REBLEN, hashlist);
     Array(*) pairlist = MAP_PAIRLIST(map);
 
-    REBVAL *key = SPECIFIC(ARR_HEAD(pairlist));
+    REBVAL *key = SPECIFIC(Array_Head(pairlist));
     REBLEN n;
 
-    for (n = 0; n < ARR_LEN(pairlist); n += 2, key += 2) {
+    for (n = 0; n < Array_Len(pairlist); n += 2, key += 2) {
         const bool cased = true; // cased=true is always fine
 
         if (Is_Void(key + 1)) {
@@ -200,12 +200,12 @@ static void Rehash_Map(Map(*) map)
             // It's a "zombie", move last key to overwrite it
             //
             Copy_Cell(
-                key, SPECIFIC(ARR_AT(pairlist, ARR_LEN(pairlist) - 2))
+                key, SPECIFIC(Array_At(pairlist, Array_Len(pairlist) - 2))
             );
             Copy_Cell(
-                &key[1], SPECIFIC(ARR_AT(pairlist, ARR_LEN(pairlist) - 1))
+                &key[1], SPECIFIC(Array_At(pairlist, Array_Len(pairlist) - 1))
             );
-            SET_SERIES_LEN(pairlist, ARR_LEN(pairlist) - 2);
+            Set_Series_Len(pairlist, Array_Len(pairlist) - 2);
         }
 
         REBLEN hash = Find_Key_Hashed(
@@ -215,8 +215,8 @@ static void Rehash_Map(Map(*) map)
 
         // discard zombies at end of pairlist
         //
-        while (Is_Void(ARR_AT(pairlist, ARR_LEN(pairlist) - 1))) {
-            SET_SERIES_LEN(pairlist, ARR_LEN(pairlist) - 2);
+        while (Is_Void(Array_At(pairlist, Array_Len(pairlist) - 1))) {
+            Set_Series_Len(pairlist, Array_Len(pairlist) - 2);
         }
     }
 }
@@ -229,9 +229,9 @@ static void Rehash_Map(Map(*) map)
 //
 void Expand_Hash(Series(*) ser)
 {
-    assert(not IS_SER_ARRAY(ser));
+    assert(not Is_Series_Array(ser));
 
-    REBINT prime = Get_Hash_Prime_May_Fail(SER_USED(ser) + 1);
+    REBINT prime = Get_Hash_Prime_May_Fail(Series_Used(ser) + 1);
     Remake_Series(
         ser,
         prime + 1,
@@ -239,7 +239,7 @@ void Expand_Hash(Series(*) ser)
     );
 
     Clear_Series(ser);
-    SET_SERIES_LEN(ser, prime);
+    Set_Series_Len(ser, prime);
 }
 
 
@@ -267,7 +267,7 @@ REBLEN Find_Map_Entry(
     assert(hashlist);
 
     // Get hash table, expand it if needed:
-    if (ARR_LEN(pairlist) > SER_USED(hashlist) / 2) {
+    if (Array_Len(pairlist) > Series_Used(hashlist) / 2) {
         Expand_Hash(hashlist); // modifies size value
         Rehash_Map(map);
     }
@@ -278,7 +278,7 @@ REBLEN Find_Map_Entry(
         pairlist, hashlist, key, key_specifier, wide, strict, mode
     );
 
-    REBLEN *indexes = SER_HEAD(REBLEN, hashlist);
+    REBLEN *indexes = Series_Head(REBLEN, hashlist);
     REBLEN n = indexes[slot];
 
     // n==0 or pairlist[(n-1)*]=~key
@@ -296,7 +296,7 @@ REBLEN Find_Map_Entry(
     // Must set the value:
     if (n) {  // re-set it:
         Derelativize(
-            ARR_AT(pairlist, ((n - 1) * 2) + 1),
+            Array_At(pairlist, ((n - 1) * 2) + 1),
             val,
             val_specifier
         );
@@ -311,7 +311,7 @@ REBLEN Find_Map_Entry(
     Append_Value_Core(pairlist, key, key_specifier);
     Append_Value_Core(pairlist, val, val_specifier);
 
-    return (indexes[slot] = (ARR_LEN(pairlist) / 2));
+    return (indexes[slot] = (Array_Len(pairlist) / 2));
 }
 
 
@@ -401,10 +401,10 @@ inline static Map(*) Copy_Map(Map(const*) map, REBU64 types) {
     // need to be copied deeply.  This is because they are immutable at the
     // time of insertion.
     //
-    assert(ARR_LEN(copy) % 2 == 0); // should be [key value key value]...
+    assert(Array_Len(copy) % 2 == 0); // should be [key value key value]...
 
-    Cell(const*) tail = ARR_TAIL(copy);
-    REBVAL *key = SPECIFIC(ARR_HEAD(copy));  // keys/vals specified
+    Cell(const*) tail = Array_Tail(copy);
+    REBVAL *key = SPECIFIC(Array_Head(copy));  // keys/vals specified
     for (; key != tail; key += 2) {
         assert(Is_Value_Frozen_Deep(key));  // immutable key
 
@@ -469,9 +469,9 @@ Array(*) Map_To_Array(Map(const*) map, REBINT what)
     REBLEN count = Length_Map(map);
     Array(*) a = Make_Array(count * ((what == 0) ? 2 : 1));
 
-    Cell(*) dest = ARR_HEAD(a);
-    Cell(const*) val_tail = ARR_TAIL(MAP_PAIRLIST(map));
-    Cell(const*) val = ARR_HEAD(MAP_PAIRLIST(map));
+    Cell(*) dest = Array_Head(a);
+    Cell(const*) val_tail = Array_Tail(MAP_PAIRLIST(map));
+    Cell(const*) val = Array_Head(MAP_PAIRLIST(map));
     for (; val != val_tail; val += 2) {
         if (Is_Void(val + 1))  // val + 1 can't be past tail
             continue;  // zombie key, e.g. not actually in map
@@ -486,7 +486,7 @@ Array(*) Map_To_Array(Map(const*) map, REBINT what)
         }
     }
 
-    SET_SERIES_LEN(a, dest - ARR_HEAD(a));
+    Set_Series_Len(a, dest - Array_Head(a));
     return a;
 }
 
@@ -505,8 +505,8 @@ Context(*) Alloc_Context_From_Map(Map(const*) map)
     REBLEN count = 0;
 
   blockscope {
-    Cell(const*) mval_tail = ARR_TAIL(MAP_PAIRLIST(map));
-    Cell(const*) mval = ARR_HEAD(MAP_PAIRLIST(map));
+    Cell(const*) mval_tail = Array_Tail(MAP_PAIRLIST(map));
+    Cell(const*) mval = Array_Head(MAP_PAIRLIST(map));
     for (; mval != mval_tail; mval += 2) {  // note mval must not be END
         if (ANY_WORD(mval) and not Is_Void(mval + 1))
             ++count;
@@ -517,8 +517,8 @@ Context(*) Alloc_Context_From_Map(Map(const*) map)
 
     Context(*) c = Alloc_Context(REB_OBJECT, count);
 
-    Cell(const*) mval_tail = ARR_TAIL(MAP_PAIRLIST(map));
-    Cell(const*) mval = ARR_HEAD(MAP_PAIRLIST(map));
+    Cell(const*) mval_tail = Array_Tail(MAP_PAIRLIST(map));
+    Cell(const*) mval = Array_Head(MAP_PAIRLIST(map));
 
     for (; mval != mval_tail; mval += 2) {  // note mval must not be END
         if (ANY_WORD(mval) and not Is_Void(mval + 1)) {
@@ -556,8 +556,8 @@ void MF_Map(REB_MOLD *mo, NoQuote(Cell(const*)) v, bool form)
     //
     mo->indent++;
 
-    Cell(const*) tail = ARR_TAIL(MAP_PAIRLIST(m));
-    Cell(const*) key = ARR_HEAD(MAP_PAIRLIST(m));
+    Cell(const*) tail = Array_Tail(MAP_PAIRLIST(m));
+    Cell(const*) key = Array_Head(MAP_PAIRLIST(m));
     for (; key != tail; key += 2) {  // note value slot must not be END
         assert(key + 1 != tail);
         if (Is_Void(key + 1))
@@ -647,7 +647,7 @@ REBTYPE(Map)
 
         Copy_Cell(
             OUT,
-            SPECIFIC(ARR_AT(MAP_PAIRLIST(m), ((n - 1) * 2) + 1))
+            SPECIFIC(Array_At(MAP_PAIRLIST(m), ((n - 1) * 2) + 1))
         );
 
         return OUT; }
@@ -657,7 +657,7 @@ REBTYPE(Map)
         UNUSED(ARG(series)); // extracted to `map`
 
         REBINT n = Find_Map_Entry(
-            VAL_MAP_ENSURE_MUTABLE(map),
+            VAL_MAP_Ensure_Mutable(map),
             ARG(key),
             SPECIFIED,
             ARG(value),  // non-null indicates it will modify, vs. just search
@@ -682,7 +682,7 @@ REBTYPE(Map)
 
         mutable_QUOTE_BYTE(value) = UNQUOTED_1;
 
-        Map(*) m = VAL_MAP_ENSURE_MUTABLE(map);
+        Map(*) m = VAL_MAP_Ensure_Mutable(map);
 
         if (REF(line) or REF(dup))
             fail (Error_Bad_Refines_Raw());
@@ -710,7 +710,7 @@ REBTYPE(Map)
         return Init_Map(OUT, Copy_Map(VAL_MAP(map), types)); }
 
       case SYM_CLEAR: {
-        Map(*) m = VAL_MAP_ENSURE_MUTABLE(map);
+        Map(*) m = VAL_MAP_Ensure_Mutable(map);
 
         Reset_Array(MAP_PAIRLIST(m));
 
@@ -746,7 +746,7 @@ REBTYPE(Map)
             return nullptr;
 
         const REBVAL *val = SPECIFIC(
-            ARR_AT(MAP_PAIRLIST(VAL_MAP(map)), ((n - 1) * 2) + 1)
+            Array_At(MAP_PAIRLIST(VAL_MAP(map)), ((n - 1) * 2) + 1)
         );
         if (Is_Void(val))  // zombie entry, means unused
             return nullptr;
@@ -778,7 +778,7 @@ REBTYPE(Map)
             return RAISE(Error_Bad_Isotope(setval));
 
         REBINT n = Find_Map_Entry(
-            VAL_MAP_ENSURE_MUTABLE(map),  // modified
+            VAL_MAP_Ensure_Mutable(map),  // modified
             picker,
             SPECIFIED,
             setval,  // value to set (either ARG(value) or L->out)

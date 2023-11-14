@@ -93,9 +93,9 @@
 //
 Byte* Prep_Mold_Overestimated(REB_MOLD *mo, REBLEN num_bytes)
 {
-    REBLEN tail = STR_LEN(mo->series);
-    EXPAND_SERIES_TAIL(mo->series, num_bytes);  // terminates at guess
-    return BIN_AT(mo->series, tail);
+    REBLEN tail = String_Len(mo->series);
+    Expand_Series_Tail(mo->series, num_bytes);  // terminates at guess
+    return Binary_At(mo->series, tail);
 }
 
 
@@ -158,10 +158,10 @@ void New_Indented_Line(REB_MOLD *mo)
     // Check output string has content already but no terminator:
     //
     Byte* bp;
-    if (STR_LEN(mo->series) == 0)
+    if (String_Len(mo->series) == 0)
         bp = nullptr;
     else {
-        bp = BIN_LAST(mo->series);  // legal way to check UTF-8
+        bp = Binary_Last(mo->series);  // legal way to check UTF-8
         if (*bp == ' ' or *bp == '\t')
             *bp = '\n';
         else
@@ -199,8 +199,8 @@ void New_Indented_Line(REB_MOLD *mo)
 REBINT Find_Pointer_In_Series(Series(*) s, const void *p)
 {
     REBLEN index = 0;
-    for (; index < SER_USED(s); ++index) {
-        if (*SER_AT(void*, s, index) == p)
+    for (; index < Series_Used(s); ++index) {
+        if (*Series_At(void*, s, index) == p)
             return index;
     }
     return NOT_FOUND;
@@ -211,10 +211,10 @@ REBINT Find_Pointer_In_Series(Series(*) s, const void *p)
 //
 void Push_Pointer_To_Series(Series(*) s, const void *p)
 {
-    if (SER_FULL(s))
+    if (Is_Series_Full(s))
         Extend_Series_If_Necessary(s, 8);
-    *SER_AT(const void*, s, SER_USED(s)) = p;
-    SET_SERIES_USED(s, SER_USED(s) + 1);
+    *Series_At(const void*, s, Series_Used(s)) = p;
+    Set_Series_Used(s, Series_Used(s) + 1);
 }
 
 //
@@ -222,9 +222,9 @@ void Push_Pointer_To_Series(Series(*) s, const void *p)
 //
 void Drop_Pointer_From_Series(Series(*) s, const void *p)
 {
-    assert(p == *SER_AT(void*, s, SER_USED(s) - 1));
+    assert(p == *Series_At(void*, s, Series_Used(s) - 1));
     UNUSED(p);
-    SET_SERIES_USED(s, SER_USED(s) - 1);
+    Set_Series_Used(s, Series_Used(s) - 1);
 
     // !!! Could optimize so mold stack is always dynamic, and just use
     // s->content.dynamic.len--
@@ -261,8 +261,8 @@ void Mold_Array_At(
 
     bool first_item = true;
 
-    Cell(const*) item_tail = ARR_TAIL(a);
-    Cell(const*) item = ARR_AT(a, index);
+    Cell(const*) item_tail = Array_Tail(a);
+    Cell(const*) item = Array_At(a, index);
     assert(item <= item_tail);
     while (item != item_tail) {
         if (Get_Cell_Flag(item, NEWLINE_BEFORE)) {
@@ -314,13 +314,13 @@ void Form_Array_At(
     Option(Context(*)) context
 ){
     // Form a series (part_mold means mold non-string values):
-    REBINT len = ARR_LEN(array) - index;
+    REBINT len = Array_Len(array) - index;
     if (len < 0)
         len = 0;
 
     REBINT n;
     for (n = 0; n < len;) {
-        Cell(const*) item = ARR_AT(array, index + n);
+        Cell(const*) item = Array_At(array, index + n);
         Option(Value(*)) wval = nullptr;
         if (context and (IS_WORD(item) or IS_GET_WORD(item))) {
             wval = Select_Symbol_In_Context(
@@ -338,8 +338,8 @@ void Form_Array_At(
         else {  // Add a space if needed
             if (
                 n < len
-                and STR_LEN(mo->series) != 0
-                and *BIN_LAST(mo->series) != LF
+                and String_Len(mo->series) != 0
+                and *Binary_Last(mo->series) != LF
                 and NOT_MOLD_FLAG(mo, MOLD_FLAG_TIGHT)
             ){
                 Append_Codepoint(mo->series, ' ');
@@ -392,7 +392,7 @@ void Mold_Or_Form_Cell(
     bool form
 ){
     String(*) s = mo->series;
-    ASSERT_SERIES_TERM_IF_NEEDED(s);
+    Assert_Series_Term_If_Needed(s);
 
     if (C_STACK_OVERFLOWING(&s))
         Fail_Stack_Overflow();
@@ -407,7 +407,7 @@ void Mold_Or_Form_Cell(
         // the debug build keep going to exercise mold on the data.)
         //
       #ifdef NDEBUG
-        if (STR_LEN(s) >= mo->limit)
+        if (String_Len(s) >= mo->limit)
             return;
       #endif
     }
@@ -415,7 +415,7 @@ void Mold_Or_Form_Cell(
     MOLD_HOOK *hook = Mold_Or_Form_Hook_For_Type_Of(cell);
     hook(mo, cell, form);
 
-    ASSERT_SERIES_TERM_IF_NEEDED(s);
+    Assert_Series_Term_If_Needed(s);
 }
 
 
@@ -507,18 +507,18 @@ void Push_Mold(REB_MOLD *mo)
     assert(mo->series == nullptr);  // Indicates not pushed, see DECLARE_MOLD
 
     String(*) s = MOLD_BUF;
-    ASSERT_SERIES_TERM_IF_NEEDED(s);
+    Assert_Series_Term_If_Needed(s);
 
     mo->series = s;
-    mo->base.size = STR_SIZE(s);
-    mo->base.index = STR_LEN(s);
+    mo->base.size = String_Size(s);
+    mo->base.index = String_Len(s);
 
     if (GET_MOLD_FLAG(mo, MOLD_FLAG_LIMIT))
         assert(mo->limit != 0);  // !!! Should a limit of 0 be allowed?
 
     if (
         GET_MOLD_FLAG(mo, MOLD_FLAG_RESERVE)
-        and SER_REST(s) < mo->reserve
+        and Series_Rest(s) < mo->reserve
     ){
         // Expand will add to the series length, so we set it back.
         //
@@ -528,22 +528,22 @@ void Push_Mold(REB_MOLD *mo)
         // empty buffer after a push.
         //
         Expand_Series(s, mo->base.size, mo->reserve);
-        SET_SERIES_USED(s, mo->base.size);
+        Set_Series_Used(s, mo->base.size);
     }
-    else if (SER_REST(s) - SER_USED(s) > MAX_COMMON) {
+    else if (Series_Rest(s) - Series_Used(s) > MAX_COMMON) {
         //
         // If the "extra" space in the series has gotten to be excessive (due
         // to some particularly large mold), back off the space.  But preserve
         // the contents, as there may be important mold data behind the
         // ->start index in the stack!
         //
-        REBLEN len = STR_LEN(MOLD_BUF);
+        REBLEN len = String_Len(MOLD_BUF);
         Remake_Series(
             s,
-            SER_USED(s) + MIN_COMMON,
+            Series_Used(s) + MIN_COMMON,
             NODE_FLAG_NODE // NODE_FLAG_NODE means preserve the data
         );
-        TERM_STR_LEN_SIZE(mo->series, len, SER_USED(s));
+        Term_String_Len_Size(mo->series, len, Series_Used(s));
     }
 
     if (GET_MOLD_FLAG(mo, MOLD_FLAG_ALL))
@@ -586,21 +586,21 @@ void Throttle_Mold(REB_MOLD *mo) {
     if (NOT_MOLD_FLAG(mo, MOLD_FLAG_LIMIT))
         return;
 
-    if (STR_LEN(mo->series) - mo->base.index > mo->limit) {
-        REBINT overage = (STR_LEN(mo->series) - mo->base.index) - mo->limit;
+    if (String_Len(mo->series) - mo->base.index > mo->limit) {
+        REBINT overage = (String_Len(mo->series) - mo->base.index) - mo->limit;
 
         // Mold buffer is UTF-8...length limit is (currently) in characters,
         // not bytes.  Have to back up the right number of bytes, but also
         // adjust the character length appropriately.
 
-        Utf8(*) tail = STR_TAIL(mo->series);
+        Utf8(*) tail = String_Tail(mo->series);
         Codepoint dummy;
         Utf8(*) cp = SKIP_CHR(&dummy, tail, -(overage));
 
-        TERM_STR_LEN_SIZE(
+        Term_String_Len_Size(
             mo->series,
-            STR_LEN(mo->series) - overage,
-            STR_SIZE(mo->series) - (tail - cp)
+            String_Len(mo->series) - overage,
+            String_Size(mo->series) - (tail - cp)
         );
 
         assert(not (mo->opts & MOLD_FLAG_WAS_TRUNCATED));
@@ -614,12 +614,12 @@ void Throttle_Mold(REB_MOLD *mo) {
 //
 String(*) Pop_Molded_String_Core(String(*) buf, Size offset, Index index)
 {
-    Size size = STR_SIZE(buf) - offset;
-    Length len = STR_LEN(buf) - index;
+    Size size = String_Size(buf) - offset;
+    Length len = String_Len(buf) - index;
 
     String(*) popped = Make_String(size);
-    memcpy(BIN_HEAD(popped), BIN_AT(buf, offset), size);
-    TERM_STR_LEN_SIZE(popped, len, size);
+    memcpy(Binary_Head(popped), Binary_At(buf, offset), size);
+    Term_String_Len_Size(popped, len, size);
 
     // Though the protocol of Mold_Value does terminate, it only does so if
     // it adds content to the buffer.  If we did not terminate when we
@@ -627,7 +627,7 @@ String(*) Pop_Molded_String_Core(String(*) buf, Size offset, Index index)
     // whatever value in the terminator spot was there.  This could be
     // addressed by making no-op molds terminate.
     //
-    TERM_STR_LEN_SIZE(buf, index, offset);
+    Term_String_Len_Size(buf, index, offset);
 
     return popped;
 }
@@ -645,7 +645,7 @@ String(*) Pop_Molded_String_Core(String(*) buf, Size offset, Index index)
 String(*) Pop_Molded_String(REB_MOLD *mo)
 {
     assert(mo->series != nullptr);  // if null, there was no Push_Mold()
-    ASSERT_SERIES_TERM_IF_NEEDED(mo->series);
+    Assert_Series_Term_If_Needed(mo->series);
 
     // Limit string output to a specified size to prevent long console
     // garbage output if MOLD_FLAG_LIMIT was set in Push_Mold().
@@ -671,15 +671,15 @@ String(*) Pop_Molded_String(REB_MOLD *mo)
 //
 Binary(*) Pop_Molded_Binary(REB_MOLD *mo)
 {
-    assert(STR_LEN(mo->series) >= mo->base.size);
+    assert(String_Len(mo->series) >= mo->base.size);
 
-    ASSERT_SERIES_TERM_IF_NEEDED(mo->series);
+    Assert_Series_Term_If_Needed(mo->series);
     Throttle_Mold(mo);
 
-    Size size = STR_SIZE(mo->series) - mo->base.size;
+    Size size = String_Size(mo->series) - mo->base.size;
     Binary(*) bin = Make_Binary(size);
-    memcpy(BIN_HEAD(bin), BIN_AT(mo->series, mo->base.size), size);
-    TERM_BIN_LEN(bin, size);
+    memcpy(Binary_Head(bin), Binary_At(mo->series, mo->base.size), size);
+    Term_Binary_Len(bin, size);
 
     // Though the protocol of Mold_Value does terminate, it only does so if
     // it adds content to the buffer.  If we did not terminate when we
@@ -687,7 +687,7 @@ Binary(*) Pop_Molded_Binary(REB_MOLD *mo)
     // whatever value in the terminator spot was there.  This could be
     // addressed by making no-op molds terminate.
     //
-    TERM_STR_LEN_SIZE(mo->series, mo->base.index, mo->base.size);
+    Term_String_Len_Size(mo->series, mo->base.index, mo->base.size);
 
     mo->series = nullptr;  // indicates mold is not currently pushed
     return bin;
@@ -723,7 +723,7 @@ void Drop_Mold_Core(
 
     // see notes in Pop_Molded_String()
     //
-    TERM_STR_LEN_SIZE(mo->series, mo->base.index, mo->base.size);
+    Term_String_Len_Size(mo->series, mo->base.index, mo->base.size);
 
     mo->series = nullptr;  // indicates mold is not currently pushed
 }

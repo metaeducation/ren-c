@@ -826,7 +826,7 @@ DECLARE_NATIVE(apply)
     // to mean we are naming the next argument.
 
   #if !defined(NDEBUG)
-    TRASH_POINTER_IF_DEBUG(param);
+    Trash_Pointer_If_Debug(param);
   #endif
 
     if (IS_PATH(at) and IS_REFINEMENT(at)) {
@@ -891,7 +891,7 @@ DECLARE_NATIVE(apply)
         }
     }
 
-    assert(not IS_POINTER_TRASH_DEBUG(param));  // nullptr means toss result
+    assert(not Is_Pointer_Trash_Debug(param));  // nullptr means toss result
 
     if (param and VAL_PARAM_CLASS(param) == PARAM_CLASS_META)
         Set_Level_Flag(SUBLEVEL, META_RESULT);  // get decayed result otherwise

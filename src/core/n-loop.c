@@ -734,7 +734,7 @@ void Init_Loop_Each(Value(*) iterator, Value(*) data)
         else if (IS_MAP(data)) {
             les->series = MAP_PAIRLIST(VAL_MAP(data));
             les->u.eser.index = 0;
-            les->u.eser.len = SER_USED(les->series);  // has HOLD, won't change
+            les->u.eser.len = Series_Used(les->series);  // immutable--has HOLD
         }
         else
             panic ("Illegal type passed to Loop_Each()");
@@ -838,7 +838,7 @@ static bool Try_Loop_Each_Next(Value(const*) iterator, Context(*) vars_ctx)
             if (var)
                 Derelativize(
                     var,
-                    ARR_AT(ARR(les->series), les->u.eser.index),
+                    Array_At(ARR(les->series), les->u.eser.index),
                     les->specifier
                 );
             if (++les->u.eser.index == les->u.eser.len)
@@ -885,9 +885,9 @@ static bool Try_Loop_Each_Next(Value(const*) iterator, Context(*) vars_ctx)
             const REBVAL *key;
             const REBVAL *val;
             while (true) {  // pass over the unused map slots
-                key = SPECIFIC(ARR_AT(ARR(les->series), les->u.eser.index));
+                key = SPECIFIC(Array_At(ARR(les->series), les->u.eser.index));
                 ++les->u.eser.index;
-                val = SPECIFIC(ARR_AT(ARR(les->series), les->u.eser.index));
+                val = SPECIFIC(Array_At(ARR(les->series), les->u.eser.index));
                 ++les->u.eser.index;
                 if (les->u.eser.index == les->u.eser.len)
                     les->more_data = false;
@@ -920,7 +920,7 @@ static bool Try_Loop_Each_Next(Value(const*) iterator, Context(*) vars_ctx)
           case REB_BINARY: {
             Binary(const*) bin = BIN(les->series);
             if (var)
-                Init_Integer(var, BIN_HEAD(bin)[les->u.eser.index]);
+                Init_Integer(var, Binary_Head(bin)[les->u.eser.index]);
             if (++les->u.eser.index == les->u.eser.len)
                 les->more_data = false;
             break; }
@@ -933,7 +933,7 @@ static bool Try_Loop_Each_Next(Value(const*) iterator, Context(*) vars_ctx)
             if (var)
                 Init_Char_Unchecked(
                     var,
-                    GET_CHAR_AT(STR(les->series), les->u.eser.index)
+                    Get_Char_At(STR(les->series), les->u.eser.index)
                 );
             if (++les->u.eser.index == les->u.eser.len)
                 les->more_data = false;
@@ -1276,7 +1276,7 @@ DECLARE_NATIVE(remove_each)
         // We're going to use NODE_FLAG_MARKED on the elements of data's
         // array for those items we wish to remove later.  See [2]
         //
-        TRASH_POINTER_IF_DEBUG(mo);
+        Trash_Pointer_If_Debug(mo);
     }
     else {
         // Generate a new data allocation, but then swap its underlying content
@@ -1288,8 +1288,8 @@ DECLARE_NATIVE(remove_each)
     Set_Series_Info(series, HOLD);  // disallow mutations until finalize
 
     REBLEN len = ANY_STRING(data)
-        ? STR_LEN(STR(series))
-        : SER_USED(series);  // temp read-only, this won't change
+        ? String_Len(STR(series))
+        : Series_Used(series);  // temp read-only, this won't change
 
     bool threw = false;
     bool breaking = false;
@@ -1309,18 +1309,18 @@ DECLARE_NATIVE(remove_each)
             if (ANY_ARRAY(data))
                 Derelativize(
                     var,
-                    ARR_AT(VAL_ARRAY(data), index),
+                    Array_At(VAL_ARRAY(data), index),
                     VAL_SPECIFIER(data)
                 );
             else if (IS_BINARY(data)) {
                 Binary(*) bin = BIN(series);
-                Init_Integer(var, cast(REBI64, BIN_HEAD(bin)[index]));
+                Init_Integer(var, cast(REBI64, Binary_Head(bin)[index]));
             }
             else {
                 assert(ANY_STRING(data));
                 Init_Char_Unchecked(
                     var,
-                    GET_CHAR_AT(STR(series), index)
+                    Get_Char_At(STR(series), index)
                 );
             }
             ++index;
@@ -1378,7 +1378,7 @@ DECLARE_NATIVE(remove_each)
             do {
                 assert(start <= len);
                 Set_Cell_Flag(  // v-- okay to mark despite read only
-                    m_cast(Cell(*), ARR_AT(VAL_ARRAY(data), start)),
+                    m_cast(Cell(*), Array_At(VAL_ARRAY(data), start)),
                     NOTE_REMOVE
                 );
                 ++start;
@@ -1396,14 +1396,14 @@ DECLARE_NATIVE(remove_each)
                     Binary(*) bin = BIN(series);
                     Append_Ascii_Len(
                         mo->series,
-                        cs_cast(BIN_AT(bin, start)),
+                        cs_cast(Binary_At(bin, start)),
                         1
                     );
                 }
                 else {
                     Append_Codepoint(
                         mo->series,
-                        GET_CHAR_AT(STR(series), start)
+                        Get_Char_At(STR(series), start)
                     );
                 }
                 ++start;
@@ -1425,7 +1425,7 @@ DECLARE_NATIVE(remove_each)
     if (ANY_ARRAY(data)) {
         if (not threw and breaking) {  // clean marks, don't remove
             Cell(const*) tail;
-            Cell(*) temp = VAL_ARRAY_KNOWN_MUTABLE_AT(&tail, data);
+            Cell(*) temp = VAL_ARRAY_Known_Mutable_AT(&tail, data);
             for (; temp != tail; ++temp) {
                 if (Get_Cell_Flag(temp, NOTE_REMOVE))
                     Clear_Cell_Flag(temp, NOTE_REMOVE);
@@ -1434,7 +1434,7 @@ DECLARE_NATIVE(remove_each)
         }
 
         Cell(const*) tail;
-        Cell(*) dest = VAL_ARRAY_KNOWN_MUTABLE_AT(&tail, data);
+        Cell(*) dest = VAL_ARRAY_Known_Mutable_AT(&tail, data);
         Cell(*) src = dest;
 
         // avoid blitting cells onto themselves by making the first thing we
@@ -1455,7 +1455,7 @@ DECLARE_NATIVE(remove_each)
                 ++removals;
             }
             if (src == tail) {
-                SET_SERIES_LEN(VAL_ARRAY_KNOWN_MUTABLE(data), len);
+                Set_Series_Len(VAL_ARRAY_KNOWN_MUTABLE(data), len);
                 goto done_finalizing;
             }
             Copy_Cell(dest, src);  // same array, so we can do this
@@ -1477,14 +1477,14 @@ DECLARE_NATIVE(remove_each)
         assert(start <= orig_len);
         Append_Ascii_Len(
             mo->series,
-            cs_cast(BIN_AT(bin, start)),
+            cs_cast(Binary_At(bin, start)),
             orig_len - start
         );
 
         Binary(*) popped = Pop_Molded_Binary(mo);  // not UTF-8 if binary, see [7]
 
-        assert(BIN_LEN(popped) <= VAL_LEN_HEAD(data));
-        removals = VAL_LEN_HEAD(data) - BIN_LEN(popped);
+        assert(Binary_Len(popped) <= VAL_LEN_HEAD(data));
+        removals = VAL_LEN_HEAD(data) - Binary_Len(popped);
 
         Swap_Series_Content(popped, series);  // swap series identity, see [3]
 
@@ -1505,14 +1505,14 @@ DECLARE_NATIVE(remove_each)
         for (; start != orig_len; ++start) {
             Append_Codepoint(
                 mo->series,
-                GET_CHAR_AT(STR(series), start)
+                Get_Char_At(STR(series), start)
             );
         }
 
         StringT* popped = Pop_Molded_String(mo);
 
-        assert(STR_LEN(popped) <= VAL_LEN_HEAD(data));
-        removals = VAL_LEN_HEAD(data) - STR_LEN(popped);
+        assert(String_Len(popped) <= VAL_LEN_HEAD(data));
+        removals = VAL_LEN_HEAD(data) - String_Len(popped);
 
         Swap_Series_Content(popped, series);  // swap series identity, see [3]
 

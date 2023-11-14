@@ -48,6 +48,23 @@
 //    access.  But the release build does not do this)
 
 
+// These flags are only for checking "plain" array flags...so not varlists
+// or paramlists or anything that isn't just an ordinary source-level array
+// (like you'd find in a BLOCK!)
+
+#define Get_Array_Flag(a,flag) \
+    Get_Subclass_Flag(ARRAY, ensure(Array(const*), (a)), flag)
+
+#define Not_Array_Flag(a,flag) \
+    Not_Subclass_Flag(ARRAY, ensure(Array(const*), (a)), flag)
+
+#define Set_Array_Flag(a,flag) \
+    Set_Subclass_Flag(ARRAY, ensure(Array(*), (a)), flag)
+
+#define Clear_Array_Flag(a,flag) \
+    Clear_Subclass_Flag(ARRAY, ensure(Array(*), (a)), flag)
+
+
 // !!! We generally want to use LINK(Filename, x) but that uses the STR()
 // macro which is not defined in this file.  There's a bit of a circular
 // dependency since %sys-string.h uses arrays for bookmarks; so having a
@@ -59,7 +76,7 @@
 
 
 inline static bool Has_Newline_At_Tail(Array(const*) a) {
-    if (SER_FLAVOR(a) != FLAVOR_ARRAY)
+    if (Series_Flavor(a) != FLAVOR_ARRAY)
         return false;  // only plain arrays can have newlines
 
     // Using Get_Subclass_Flag() would redundantly check it's a plain array.
@@ -68,7 +85,7 @@ inline static bool Has_Newline_At_Tail(Array(const*) a) {
 }
 
 inline static bool Has_File_Line(Array(const*) a) {
-    if (SER_FLAVOR(a) != FLAVOR_ARRAY)
+    if (Series_Flavor(a) != FLAVOR_ARRAY)
         return false;  // only plain arrays can have newlines
 
     // Using Get_Subclass_Flag() would redundantly check it's a plain array.
@@ -80,39 +97,39 @@ inline static bool Has_File_Line(Array(const*) a) {
 // HEAD, TAIL, and LAST refer to specific value pointers in the array.  Since
 // empty arrays have no "last" value then ARR_LAST should not be called on it.
 
-inline static Cell(*) ARR_AT(const_if_c Array(*) a, REBLEN n)
-  { return SER_AT(CellT, a, n); }
+inline static Cell(*) Array_At(const_if_c Array(*) a, REBLEN n)
+  { return Series_At(CellT, a, n); }
 
-inline static Cell(*) ARR_HEAD(const_if_c Array(*) a)
-  { return SER_HEAD(CellT, a); }
+inline static Cell(*) Array_Head(const_if_c Array(*) a)
+  { return Series_Head(CellT, a); }
 
-inline static Cell(*) ARR_TAIL(const_if_c Array(*) a)
-  { return SER_TAIL(CellT, a); }
+inline static Cell(*) Array_Tail(const_if_c Array(*) a)
+  { return Series_Tail(CellT, a); }
 
-inline static Cell(*) ARR_LAST(const_if_c Array(*) a)
-  { return SER_LAST(CellT, a); }
+inline static Cell(*) Array_Last(const_if_c Array(*) a)
+  { return Series_Last(CellT, a); }
 
-inline static Cell(*) ARR_SINGLE(const_if_c Array(*) a) {
+inline static Cell(*) Array_Single(const_if_c Array(*) a) {
     assert(Not_Series_Flag(a, DYNAMIC));
-    return mutable_SER_CELL(a);
+    return mutable_Stub_Cell(a);
 }
 
 #if CPLUSPLUS_11
-    inline static Cell(const*) ARR_AT(Array(const*) a, REBLEN n)
-        { return SER_AT(const CellT, a, n); }
+    inline static Cell(const*) Array_At(Array(const*) a, REBLEN n)
+        { return Series_At(const CellT, a, n); }
 
-    inline static Cell(const*) ARR_HEAD(Array(const*) a)
-        { return SER_HEAD(const CellT, a); }
+    inline static Cell(const*) Array_Head(Array(const*) a)
+        { return Series_Head(const CellT, a); }
 
-    inline static Cell(const*) ARR_TAIL(Array(const*) a)
-        { return SER_TAIL(const CellT, a); }
+    inline static Cell(const*) Array_Tail(Array(const*) a)
+        { return Series_Tail(const CellT, a); }
 
-    inline static Cell(const*) ARR_LAST(Array(const*) a)
-        { return SER_LAST(const CellT, a); }
+    inline static Cell(const*) Array_Last(Array(const*) a)
+        { return Series_Last(const CellT, a); }
 
-    inline static Cell(const*) ARR_SINGLE(Array(const*) a) {
+    inline static Cell(const*) Array_Single(Array(const*) a) {
         assert(Not_Series_Flag(a, DYNAMIC));
-        return SER_CELL(a);
+        return Stub_Cell(a);
     }
 #endif
 
@@ -131,9 +148,8 @@ inline static Array(*) Singular_From_Cell(Cell(const*) v) {
     return singular;
 }
 
-inline static REBLEN ARR_LEN(Array(const*) a)
-  { return SER_USED(a); }
-
+#define Array_Len(a) \
+    Series_Used(ensure(Array(const*), (a)))
 
 
 // See READABLE(), WRITABLE() and related functions for an explanation of the
@@ -145,7 +161,7 @@ inline static void Prep_Array(
 ){
     assert(Get_Series_Flag(a, DYNAMIC));
 
-    Cell(*) prep = ARR_HEAD(a);
+    Cell(*) prep = Array_Head(a);
 
     if (Not_Series_Flag(a, FIXED_SIZE)) {
         //
@@ -179,7 +195,7 @@ inline static void Prep_Array(
 
 
 // Make a series that is the right size to store REBVALs (and marked for the
-// garbage collector to look into recursively).  ARR_LEN() will be 0.
+// garbage collector to look into recursively).  Array_Len() will be 0.
 //
 inline static Array(*) Make_Array_Core_Into(
     void* preallocated,
@@ -192,17 +208,17 @@ inline static Array(*) Make_Array_Core_Into(
   #endif
 
     Series(*) s = Make_Series_Into(preallocated, capacity, flags);
-    assert(IS_SER_ARRAY(s));  // flavor should have been an array flavor
+    assert(Is_Series_Array(s));  // flavor should have been an array flavor
 
     if (Get_Series_Flag(s, DYNAMIC)) {
         Prep_Array(ARR(s), capacity);
 
       #if DEBUG_POISON_SERIES_TAILS
-        Poison_Cell(ARR_HEAD(ARR(s)));
+        Poison_Cell(Array_Head(ARR(s)));
       #endif
     }
     else {
-        Poison_Cell(mutable_SER_CELL(s));  // optimized prep for 0 length
+        Poison_Cell(mutable_Stub_Cell(s));  // optimized prep for 0 length
     }
 
     // Arrays created at runtime default to inheriting the file and line
@@ -215,14 +231,14 @@ inline static Array(*) Make_Array_Core_Into(
         assert(flags & SERIES_FLAG_LINK_NODE_NEEDS_MARK);
         if (
             not Level_Is_Variadic(TOP_LEVEL) and
-            Get_Subclass_Flag(ARRAY, Level_Array(TOP_LEVEL), HAS_FILE_LINE_UNMASKED)
+            Get_Array_Flag(Level_Array(TOP_LEVEL), HAS_FILE_LINE_UNMASKED)
         ){
             mutable_LINK(Filename, s) = LINK_FILENAME_HACK(Level_Array(TOP_LEVEL));
             s->misc.line = Level_Array(TOP_LEVEL)->misc.line;
         }
         else {
-            Clear_Subclass_Flag(ARRAY, s, HAS_FILE_LINE_UNMASKED);
-            Clear_Series_Flag(s, LINK_NODE_NEEDS_MARK);
+            Clear_Array_Flag(cast(ArrayT*, s), HAS_FILE_LINE_UNMASKED);
+            Clear_Series_Flag(cast(ArrayT*, s), LINK_NODE_NEEDS_MARK);
         }
     }
 
@@ -230,7 +246,7 @@ inline static Array(*) Make_Array_Core_Into(
     PG_Reb_Stats->Blocks++;
   #endif
 
-    assert(ARR_LEN(cast(Array(*), s)) == 0);
+    assert(Array_Len(cast(Array(*), s)) == 0);
     return cast(Array(*), s);
 }
 
@@ -271,7 +287,7 @@ inline static Array(*) Make_Array_For_Copy(
         );
         mutable_LINK(Filename, a) = LINK_FILENAME_HACK(original);
         a->misc.line = original->misc.line;
-        Set_Subclass_Flag(ARRAY, a, HAS_FILE_LINE_UNMASKED);
+        Set_Array_Flag(a, HAS_FILE_LINE_UNMASKED);
         return a;
     }
 
@@ -282,7 +298,7 @@ inline static Array(*) Make_Array_For_Copy(
 // A singular array is specifically optimized to hold *one* value in the
 // series Stub directly, and stay fixed at that size.
 //
-// Note ARR_SINGLE() must be overwritten by the caller...it contains an end
+// Note Array_Single() must be overwritten by the caller...it contains an end
 // marker but the array length is 1, so that will assert if you don't.
 //
 // For `flags`, be sure to consider if you need ARRAY_FLAG_HAS_FILE_LINE.
@@ -290,7 +306,7 @@ inline static Array(*) Make_Array_For_Copy(
 inline static Array(*) Alloc_Singular(Flags flags) {
     assert(not (flags & SERIES_FLAG_DYNAMIC));
     Array(*) a = Make_Array_Core(1, flags | SERIES_FLAG_FIXED_SIZE);
-    Erase_Cell(mutable_SER_CELL(a));  // poison means length 0, erased length 1
+    Erase_Cell(mutable_Stub_Cell(a));  // poison means length 0, erased length 1
     return a;
 }
 
@@ -361,7 +377,7 @@ inline static Array(*) Copy_Array_At_Extra_Deep_Flags_Managed(
         original,
         index, // at
         specifier,
-        ARR_LEN(original), // tail
+        Array_Len(original), // tail
         extra, // extra
         flags, // note no ARRAY_HAS_FILE_LINE by default
         TS_SERIES & ~TS_NOT_COPIED // types
@@ -398,10 +414,10 @@ inline static Array(const*) VAL_ARRAY(NoQuote(Cell(const*)) v) {
 }
 
 #define VAL_ARRAY_ENSURE_MUTABLE(v) \
-    m_cast(Array(*), VAL_ARRAY(ENSURE_MUTABLE(v)))
+    m_cast(Array(*), VAL_ARRAY(Ensure_Mutable(v)))
 
 #define VAL_ARRAY_KNOWN_MUTABLE(v) \
-    m_cast(Array(*), VAL_ARRAY(KNOWN_MUTABLE(v)))
+    m_cast(Array(*), VAL_ARRAY(Known_Mutable(v)))
 
 
 // These array operations take the index position into account.  The use
@@ -418,12 +434,12 @@ inline static Cell(const*) VAL_ARRAY_LEN_AT(
 ){
     Array(const*) arr = VAL_ARRAY(v);
     REBIDX i = VAL_INDEX_RAW(v);  // VAL_ARRAY() already checks it's series
-    REBLEN len = ARR_LEN(arr);
+    REBLEN len = Array_Len(arr);
     if (i < 0 or i > cast(REBIDX, len))
         fail (Error_Index_Out_Of_Range_Raw());
     if (len_at_out)  // inlining should remove this if() for VAL_ARRAY_AT()
         *unwrap(len_at_out) = len - i;
-    return ARR_AT(arr, i);
+    return Array_At(arr, i);
 }
 
 inline static Cell(const*) VAL_ARRAY_AT(
@@ -432,10 +448,10 @@ inline static Cell(const*) VAL_ARRAY_AT(
 ){
     Array(const*) arr = VAL_ARRAY(v);
     REBIDX i = VAL_INDEX_RAW(v);  // VAL_ARRAY() already checks it's series
-    REBLEN len = ARR_LEN(arr);
+    REBLEN len = Array_Len(arr);
     if (i < 0 or i > cast(REBIDX, len))
         fail (Error_Index_Out_Of_Range_Raw());
-    Cell(const*) at = ARR_AT(arr, i);
+    Cell(const*) at = Array_At(arr, i);
     if (tail_out)  // inlining should remove this if() for no tail
         *unwrap(tail_out) = at + (len - i);
     return at;
@@ -449,11 +465,11 @@ inline static Cell(const*) VAL_ARRAY_ITEM_AT(NoQuote(Cell(const*)) v) {
 }
 
 
-#define VAL_ARRAY_AT_ENSURE_MUTABLE(tail_out,v) \
-    m_cast(Cell(*), VAL_ARRAY_AT((tail_out), ENSURE_MUTABLE(v)))
+#define VAL_ARRAY_AT_Ensure_Mutable(tail_out,v) \
+    m_cast(Cell(*), VAL_ARRAY_AT((tail_out), Ensure_Mutable(v)))
 
-#define VAL_ARRAY_KNOWN_MUTABLE_AT(tail_out,v) \
-    m_cast(Cell(*), VAL_ARRAY_AT((tail_out), KNOWN_MUTABLE(v)))
+#define VAL_ARRAY_Known_Mutable_AT(tail_out,v) \
+    m_cast(Cell(*), VAL_ARRAY_AT((tail_out), Known_Mutable(v)))
 
 
 // !!! R3-Alpha introduced concepts of immutable series with PROTECT, but
@@ -469,7 +485,7 @@ inline static Cell(const*) VAL_ARRAY_ITEM_AT(NoQuote(Cell(const*)) v) {
     m_cast(Cell(*), VAL_ARRAY_AT((tail_out), (v)))
 
 #define VAL_ARRAY_TAIL(v) \
-  ARR_TAIL(VAL_ARRAY(v))
+  Array_Tail(VAL_ARRAY(v))
 
 
 //=//// ANY-ARRAY! INITIALIZER HELPERS ////////////////////////////////////=//
@@ -540,14 +556,14 @@ inline static Cell(*) Init_Relative_Block_At(
         Assert_Array_Core(s)
 
     inline static void ASSERT_SERIES(Series(const*) s) {
-        if (IS_SER_ARRAY(s))
+        if (Is_Series_Array(s))
             Assert_Array_Core(ARR(s));  // calls Assert_Series_Basics_Core()
         else
             Assert_Series_Basics_Core(s);
     }
 
     #define IS_VALUE_IN_ARRAY_DEBUG(a,v) \
-        (ARR_LEN(a) != 0 and (v) >= ARR_HEAD(a) and (v) < ARR_TAIL(a))
+        (Array_Len(a) != 0 and (v) >= Array_Head(a) and (v) < Array_Tail(a))
 #endif
 
 

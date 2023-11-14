@@ -154,11 +154,11 @@ DECLARE_NATIVE(recycle)
       #else
         Series(*) sweeplist = Make_Series_Core(100, FLAG_FLAVOR(NODELIST));
         count = Recycle_Core(false, sweeplist);
-        assert(count == SER_USED(sweeplist));
+        assert(count == Series_Used(sweeplist));
 
         REBLEN index = 0;
         for (index = 0; index < count; ++index) {
-            Node* node = *SER_AT(Node*, sweeplist, index);
+            Node* node = *Series_At(Node*, sweeplist, index);
             PROBE(node);
             UNUSED(node);
         }

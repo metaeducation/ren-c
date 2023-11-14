@@ -597,13 +597,13 @@ Array(*) Pop_Paramlist_With_Adjunct_May_Fail(
         num_slots,
         SERIES_MASK_PARAMLIST
     );
-    SET_SERIES_LEN(paramlist, num_slots);
+    Set_Series_Len(paramlist, num_slots);
 
     Keylist(*) keylist = Make_Series(KeylistT,
         (num_slots - 1),  // - 1 archetype
         SERIES_MASK_KEYLIST | NODE_FLAG_MANAGED
     );
-    SET_SERIES_USED(keylist, num_slots - 1);  // no terminator
+    Set_Series_Used(keylist, num_slots - 1);  // no terminator
     mutable_LINK(Ancestor, keylist) = keylist;  // chain ends with self
 
     if (flags & MKF_HAS_RETURN)
@@ -622,9 +622,9 @@ Array(*) Pop_Paramlist_With_Adjunct_May_Fail(
 
   blockscope {
     REBVAL *param = 1 + Init_Word_Isotope(
-        VAL(ARR_HEAD(paramlist)), Canon(ROOTVAR)
+        VAL(Array_Head(paramlist)), Canon(ROOTVAR)
     );
-    REBKEY *key = SER_HEAD(REBKEY, keylist);
+    REBKEY *key = Series_Head(REBKEY, keylist);
 
     if (return_stackindex != 0) {
         assert(flags & MKF_RETURN);
@@ -700,9 +700,9 @@ Array(*) Pop_Paramlist_With_Adjunct_May_Fail(
     // Must remove binder indexes for all words, even if about to fail
     //
   blockscope {
-    const REBKEY *tail = SER_TAIL(REBKEY, keylist);
-    const REBKEY *key = SER_HEAD(REBKEY, keylist);
-    const REBPAR *param = SER_AT(REBPAR, paramlist, 1);
+    const REBKEY *tail = Series_Tail(REBKEY, keylist);
+    const REBKEY *key = Series_Head(REBKEY, keylist);
+    const REBPAR *param = Series_At(REBPAR, paramlist, 1);
     for (; key != tail; ++key, ++param) {
         //
         // See notes in AUGMENT on why we don't do binder indices on "sealed"
@@ -760,17 +760,17 @@ Array(*) Pop_Paramlist_With_Adjunct_May_Fail(
             num_slots,
             SERIES_MASK_VARLIST | NODE_FLAG_MANAGED
         );
-        SET_SERIES_LEN(types_varlist, num_slots);
+        Set_Series_Len(types_varlist, num_slots);
 
         mutable_MISC(VarlistAdjunct, types_varlist) = nullptr;
         mutable_LINK(Patches, types_varlist) = nullptr;
         INIT_CTX_KEYLIST_SHARED(CTX(types_varlist), keylist);
 
-        Cell(*) rootvar = ARR_HEAD(types_varlist);
+        Cell(*) rootvar = Array_Head(types_varlist);
         INIT_VAL_CONTEXT_ROOTVAR(rootvar, REB_OBJECT, types_varlist);
 
         REBVAL *dest = SPECIFIC(rootvar) + 1;
-        Cell(const*) param = ARR_AT(paramlist, 1);
+        Cell(const*) param = Array_At(paramlist, 1);
 
         if (return_stackindex != 0) {
             assert(flags & MKF_RETURN);
@@ -809,16 +809,16 @@ Array(*) Pop_Paramlist_With_Adjunct_May_Fail(
             num_slots,
             SERIES_MASK_VARLIST | NODE_FLAG_MANAGED
         );
-        SET_SERIES_LEN(notes_varlist, num_slots);
+        Set_Series_Len(notes_varlist, num_slots);
 
         mutable_MISC(VarlistAdjunct, notes_varlist) = nullptr;
         mutable_LINK(Patches, notes_varlist) = nullptr;
         INIT_CTX_KEYLIST_SHARED(CTX(notes_varlist), keylist);
 
-        Cell(*) rootvar = ARR_HEAD(notes_varlist);
+        Cell(*) rootvar = Array_Head(notes_varlist);
         INIT_VAL_CONTEXT_ROOTVAR(rootvar, REB_OBJECT, notes_varlist);
 
-        Cell(const*) param = ARR_AT(paramlist, 1);
+        Cell(const*) param = Array_At(paramlist, 1);
         REBVAL *dest = SPECIFIC(rootvar) + 1;
 
         if (return_stackindex != 0) {
@@ -968,7 +968,7 @@ Phase(*) Make_Action(
 
     assert(Get_Series_Flag(paramlist, MANAGED));
     assert(
-        Is_Word_Isotope_With_Id(ARR_HEAD(paramlist), SYM_ROOTVAR)  // fills in
+        Is_Word_Isotope_With_Id(Array_Head(paramlist), SYM_ROOTVAR)  // fills in
         or CTX_TYPE(CTX(paramlist)) == REB_FRAME
     );
 
@@ -983,10 +983,10 @@ Phase(*) Make_Action(
   blockscope {
     Keylist(*) keylist = cast(KeylistT*, BONUS(KeySource, paramlist));
 
-    ASSERT_SERIES_MANAGED(keylist);  // paramlists/keylists, can be shared
-    assert(SER_USED(keylist) + 1 == ARR_LEN(paramlist));
+    Assert_Series_Managed(keylist);  // paramlists/keylists, can be shared
+    assert(Series_Used(keylist) + 1 == Array_Len(paramlist));
     if (Get_Subclass_Flag(VARLIST, paramlist, PARAMLIST_HAS_RETURN)) {
-        const REBKEY *key = SER_AT(const REBKEY, keylist, 0);
+        const REBKEY *key = Series_At(const REBKEY, keylist, 0);
         assert(KEY_SYM(key) == SYM_RETURN);
         UNUSED(key);
     }
@@ -1000,9 +1000,9 @@ Phase(*) Make_Action(
         details_capacity,  // Note: may be just 1 (so non-dynamic!)
         SERIES_MASK_DETAILS | NODE_FLAG_MANAGED
     );
-    SET_SERIES_LEN(details, details_capacity);
+    Set_Series_Len(details, details_capacity);
 
-    Cell(*) archetype = ARR_HEAD(details);
+    Cell(*) archetype = Array_Head(details);
     Reset_Unquoted_Header_Untracked(TRACK(archetype), CELL_MASK_FRAME);
     INIT_VAL_ACTION_DETAILS(archetype, details);
     mutable_BINDING(archetype) = UNBOUND;
@@ -1023,7 +1023,7 @@ Phase(*) Make_Action(
 
     // !!! We may have to initialize the exemplar rootvar.
     //
-    REBVAL *rootvar = SER_HEAD(REBVAL, paramlist);
+    REBVAL *rootvar = Series_Head(REBVAL, paramlist);
     if (Is_Word_Isotope_With_Id(rootvar, SYM_ROOTVAR)) {
         INIT_VAL_FRAME_ROOTVAR(rootvar, paramlist, ACT_IDENTITY(act), UNBOUND);
     }
@@ -1108,7 +1108,7 @@ void Get_Maybe_Fake_Action_Body(Sink(Value(*)) out, Value(const*) action)
         // to the action.
 
         Details(*) details = ACT_DETAILS(a);
-        Cell(*) body = ARR_AT(details, IDX_DETAILS_1);
+        Cell(*) body = Array_At(details, IDX_DETAILS_1);
 
         // The PARAMLIST_HAS_RETURN tricks for definitional return make it
         // seem like a generator authored more code in the action's body...but
@@ -1149,7 +1149,7 @@ void Get_Maybe_Fake_Action_Body(Sink(Value(*)) out, Value(const*) action)
             // To give it the appearance of executing code in place, we use
             // a GROUP!.
 
-            Cell(*) slot = ARR_AT(fake, real_body_index);  // #BODY
+            Cell(*) slot = Array_At(fake, real_body_index);  // #BODY
             assert(IS_ISSUE(slot));
 
             // Note: clears VAL_FLAG_LINE

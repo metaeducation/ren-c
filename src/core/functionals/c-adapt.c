@@ -75,7 +75,7 @@ Bounce Adapter_Dispatcher(Level(*) const L)
     USE_LEVEL_SHORTHANDS (L);
 
     Details(*) details = ACT_DETAILS(PHASE);
-    assert(ARR_LEN(details) == IDX_ADAPTER_MAX);
+    assert(Array_Len(details) == IDX_ADAPTER_MAX);
 
     enum {
         ST_ADAPTER_INITIAL_ENTRY = STATE_0,
@@ -90,7 +90,7 @@ Bounce Adapter_Dispatcher(Level(*) const L)
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
-    Cell(*) prelude = ARR_AT(details, IDX_ADAPTER_PRELUDE);  // code to run
+    Cell(*) prelude = Array_At(details, IDX_ADAPTER_PRELUDE);  // code to run
     assert(
         IS_BLOCK(prelude)
         and IS_RELATIVE(prelude)
@@ -163,7 +163,7 @@ DECLARE_NATIVE(adapt_p)  // see extended definition ADAPT in %base-defs.r
     //
     Details(*) details = ACT_DETAILS(adaptation);
     Init_Relative_Block(
-        ARR_AT(details, IDX_ADAPTER_PRELUDE),
+        Array_At(details, IDX_ADAPTER_PRELUDE),
         adaptation,
         prelude
     );

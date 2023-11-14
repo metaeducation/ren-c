@@ -216,7 +216,7 @@ uint32_t Hash_Value(Cell(const*) cell)
         const Node* node1 = VAL_NODE1(cell);
         assert(not (NODE_BYTE(node1) & NODE_BYTEMASK_0x01_CELL));
 
-        switch (SER_FLAVOR(SER(node1))) {
+        switch (Series_Flavor(SER(node1))) {
           case FLAVOR_SYMBOL:
             goto hash_any_word;
 
@@ -256,7 +256,7 @@ uint32_t Hash_Value(Cell(const*) cell)
         // problems.  Do not hash mutable arrays unless you are sure hashings
         // won't cross a mutation.
         //
-        hash = ARR_LEN(VAL_ARRAY(cell));
+        hash = Array_Len(VAL_ARRAY(cell));
         break;
 
       case REB_BITSET:
@@ -359,7 +359,7 @@ Series(*) Make_Hash_Series(REBLEN len)
     REBLEN n = Get_Hash_Prime_May_Fail(len * 2);  // best when 2X # of keys
     Series(*) ser = Make_Series_Core(n + 1, FLAG_FLAVOR(HASHLIST));
     Clear_Series(ser);
-    SET_SERIES_LEN(ser, n);
+    Set_Series_Len(ser, n);
 
     return ser;
 }
@@ -404,7 +404,7 @@ Series(*) Hash_Block(const REBVAL *block, REBLEN skip, bool cased)
     if (value == tail)
         return hashlist;
 
-    REBLEN *hashes = SER_HEAD(REBLEN, hashlist);
+    REBLEN *hashes = Series_Head(REBLEN, hashlist);
 
     Array(const*) array = VAL_ARRAY(block);
     REBLEN n = VAL_INDEX(block);

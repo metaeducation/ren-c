@@ -665,7 +665,7 @@ REBVAL *Try_Get_One_Console_Event(STD_TERM *t, bool buffered, int timeout_msec)
     KEY_EVENT_RECORD *key_event = &t->in->Event.KeyEvent;  // shorthand
   #if !defined(NDEBUG)
     if (t->in->EventType != KEY_EVENT)
-        TRASH_POINTER_IF_DEBUG(key_event);
+        Trash_Pointer_If_Debug(key_event);
   #endif
 
     if (t->in->EventType == WINDOW_BUFFER_SIZE_EVENT) {

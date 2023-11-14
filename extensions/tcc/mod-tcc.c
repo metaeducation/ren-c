@@ -110,7 +110,7 @@ bool Is_User_Native(Action(*) act) {
         return false;
 
     Details(*) details = ACT_DETAILS(act);
-    assert(ARR_LEN(details) >= 2); // ACTION_FLAG_NATIVE needs source+context
+    assert(Array_Len(details) >= 2); // ACTION_FLAG_NATIVE needs source+context
     return IS_TEXT(DETAILS_AT(details, IDX_NATIVE_BODY));
 }
 
@@ -574,7 +574,7 @@ DECLARE_NATIVE(compile_p)
         if (
             tcc_compile_string(
                 state,
-                cs_cast(BIN_AT(mo->series, mo->base.size))
+                cs_cast(Binary_At(mo->series, mo->base.size))
             ) < 0
         ){
             rebJumps ("fail [",

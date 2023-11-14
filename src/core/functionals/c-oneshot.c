@@ -54,7 +54,7 @@ Bounce Downshot_Dispatcher(Level(*) const L)  // runs until count is reached
     USE_LEVEL_SHORTHANDS (L);
 
     Details(*) details = ACT_DETAILS(PHASE);
-    assert(ARR_LEN(details) == IDX_ONESHOT_MAX);
+    assert(Array_Len(details) == IDX_ONESHOT_MAX);
 
     Cell(*) n = DETAILS_AT(details, IDX_ONESHOT_COUNTER);
     if (VAL_INT64(n) == 0)
@@ -71,7 +71,7 @@ Bounce Upshot_Dispatcher(Level(*) const L)  // won't run until count is reached
     USE_LEVEL_SHORTHANDS (L);
 
     Details(*) details = ACT_DETAILS(PHASE);
-    assert(ARR_LEN(details) == IDX_ONESHOT_MAX);
+    assert(Array_Len(details) == IDX_ONESHOT_MAX);
 
     Cell(*) n = DETAILS_AT(details, IDX_ONESHOT_COUNTER);
     if (VAL_INT64(n) < 0) {
@@ -130,7 +130,7 @@ DECLARE_NATIVE(n_shot)
         n >= 0 ? &Downshot_Dispatcher : &Upshot_Dispatcher,
         IDX_ONESHOT_MAX  // details array capacity
     );
-    Init_Integer(ARR_AT(ACT_DETAILS(n_shot), IDX_ONESHOT_COUNTER), n);
+    Init_Integer(Array_At(ACT_DETAILS(n_shot), IDX_ONESHOT_COUNTER), n);
 
     return Init_Activation(OUT, n_shot, ANONYMOUS, UNBOUND);
 }

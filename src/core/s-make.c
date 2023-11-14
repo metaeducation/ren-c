@@ -43,7 +43,7 @@ String(*) Make_String_Core(Size encoded_capacity, Flags flags)
     );
     str->misc.length = 0;
     mutable_LINK(Bookmarks, str) = nullptr;  // generated on demand
-    *BIN_HEAD(str) = '\0';  // zero length, so head = tail
+    *Binary_Head(str) = '\0';  // zero length, so head = tail
     return str;
 }
 
@@ -60,8 +60,8 @@ Binary(*) Copy_Bytes(const Byte* src, REBINT len)
         len = strsize(src);
 
     Binary(*) bin = Make_Binary(len);
-    memcpy(BIN_HEAD(bin), src, len);
-    TERM_BIN_LEN(bin, len);
+    memcpy(Binary_Head(bin), src, len);
+    Term_Binary_Len(bin, len);
     return bin;
 }
 
@@ -85,8 +85,8 @@ String(*) Copy_String_At_Limit(Cell(const*) src, REBINT limit)
     );
 
     String(*) dst = Make_String(limited_size);
-    memcpy(STR_HEAD(dst), utf8, limited_size);
-    TERM_STR_LEN_SIZE(dst, limited_length, limited_size);
+    memcpy(String_Head(dst), utf8, limited_size);
+    Term_String_Len_Size(dst, limited_length, limited_size);
 
     return dst;
 }
@@ -112,16 +112,16 @@ String(*) Append_Codepoint(String(*) dst, Codepoint c)
     assert(c <= MAX_UNI);
     assert(not IS_SYMBOL(dst));
 
-    Length old_len = STR_LEN(dst);
+    Length old_len = String_Len(dst);
 
-    Size tail = STR_SIZE(dst);
+    Size tail = String_Size(dst);
     Size encoded_size = Encoded_Size_For_Codepoint(c);
-    EXPAND_SERIES_TAIL(dst, encoded_size);
-    Encode_UTF8_Char(BIN_AT(dst, tail), c, encoded_size);
+    Expand_Series_Tail(dst, encoded_size);
+    Encode_UTF8_Char(Binary_At(dst, tail), c, encoded_size);
 
     // "length" grew by 1 codepoint, but "size" grew by 1 to UNI_MAX_ENCODED
     //
-    TERM_STR_LEN_SIZE(dst, old_len + 1, tail + encoded_size);
+    Term_String_Len_Size(dst, old_len + 1, tail + encoded_size);
 
     return dst;
 }
@@ -142,8 +142,8 @@ String(*) Make_Codepoint_String(Codepoint c)
 
     Size size = Encoded_Size_For_Codepoint(c);
     String(*) s = Make_String(size);
-    Encode_UTF8_Char(STR_HEAD(s), c, size);
-    TERM_STR_LEN_SIZE(s, 1, size);
+    Encode_UTF8_Char(String_Head(s), c, size);
+    Term_String_Len_Size(s, 1, size);
     return s;
 }
 
@@ -168,14 +168,14 @@ String(*) Append_Ascii_Len(String(*) dst, const char *ascii, REBLEN len)
         old_len = 0;
     }
     else {
-        old_size = STR_SIZE(dst);
-        old_len = STR_LEN(dst);
-        EXPAND_SERIES_TAIL(dst, len);
+        old_size = String_Size(dst);
+        old_len = String_Len(dst);
+        Expand_Series_Tail(dst, len);
     }
 
-    memcpy(BIN_AT(dst, old_size), ascii, len);
+    memcpy(Binary_At(dst, old_size), ascii, len);
 
-    TERM_STR_LEN_SIZE(dst, old_len + len, old_size + len);
+    Term_String_Len_Size(dst, old_len + len, old_size + len);
     return dst;
 }
 
@@ -212,7 +212,7 @@ String(*) Append_Utf8(String(*) dst, const char *utf8, size_t size)
 //
 void Append_Spelling(String(*) dst, String(const*) spelling)
 {
-    Append_Utf8(dst, STR_UTF8(spelling), STR_SIZE(spelling));
+    Append_Utf8(dst, String_UTF8(spelling), String_Size(spelling));
 }
 
 
@@ -230,14 +230,14 @@ void Append_String_Limit(String(*) dst, NoQuote(Cell(const*)) src, REBLEN limit)
     Size size;
     Utf8(const*) utf8 = VAL_UTF8_LEN_SIZE_AT_LIMIT(&len, &size, src, limit);
 
-    Length old_len = STR_LEN(dst);
-    Size old_used = STR_SIZE(dst);
+    Length old_len = String_Len(dst);
+    Size old_used = String_Size(dst);
 
-    REBLEN tail = STR_SIZE(dst);
+    REBLEN tail = String_Size(dst);
     Expand_Series(dst, tail, size);  // series USED changes too
 
-    memcpy(BIN_AT(dst, tail), utf8, size);
-    TERM_STR_LEN_SIZE(dst, old_len + len, old_used + size);
+    memcpy(Binary_At(dst, tail), utf8, size);
+    Term_String_Len_Size(dst, old_len + len, old_used + size);
 }
 
 
@@ -338,20 +338,20 @@ String(*) Append_UTF8_May_Fail(
     if (not dst)
         return Pop_Molded_String(mo);
 
-    Length old_len = STR_LEN(dst);
-    Size old_size = STR_SIZE(dst);
+    Length old_len = String_Len(dst);
+    Size old_size = String_Size(dst);
 
-    EXPAND_SERIES_TAIL(dst, size);
+    Expand_Series_Tail(dst, size);
     memcpy(
-        BIN_AT(dst, old_size),
-        BIN_AT(mo->series, mo->base.size),
-        STR_SIZE(mo->series) - mo->base.size
+        Binary_At(dst, old_size),
+        Binary_At(mo->series, mo->base.size),
+        String_Size(mo->series) - mo->base.size
     );
 
-    TERM_STR_LEN_SIZE(
+    Term_String_Len_Size(
         dst,
         old_len + num_codepoints,
-        old_size + STR_SIZE(mo->series) - mo->base.size
+        old_size + String_Size(mo->series) - mo->base.size
     );
 
     Drop_Mold(mo);
@@ -381,7 +381,7 @@ void Join_Binary_In_Byte_Buf(const REBVAL *blk, REBINT limit)
     if (limit < 0)
         limit = VAL_LEN_AT(blk);
 
-    SET_SERIES_LEN(buf, 0);
+    Set_Series_Len(buf, 0);
 
     Cell(const*) val = VAL_ARRAY_ITEM_AT(blk);
     for (; limit > 0; val++, limit--) {
@@ -393,15 +393,15 @@ void Join_Binary_In_Byte_Buf(const REBVAL *blk, REBINT limit)
             fail (Error_Bad_Value(val));
 
           case REB_INTEGER:
-            EXPAND_SERIES_TAIL(buf, 1);
-            *BIN_AT(buf, tail) = cast(Byte, VAL_UINT8(val));  // can fail()
+            Expand_Series_Tail(buf, 1);
+            *Binary_At(buf, tail) = cast(Byte, VAL_UINT8(val));  // can fail()
             break;
 
           case REB_BINARY: {
             Size size;
             const Byte* data = VAL_BINARY_SIZE_AT(&size, val);
-            EXPAND_SERIES_TAIL(buf, size);
-            memcpy(BIN_AT(buf, tail), data, size);
+            Expand_Series_Tail(buf, size);
+            memcpy(Binary_At(buf, tail), data, size);
             break; }
 
           case REB_ISSUE:
@@ -413,17 +413,17 @@ void Join_Binary_In_Byte_Buf(const REBVAL *blk, REBINT limit)
             Size utf8_size;
             Utf8(const*) utf8 = VAL_UTF8_SIZE_AT(&utf8_size, val);
 
-            EXPAND_SERIES_TAIL(buf, utf8_size);
-            memcpy(BIN_AT(buf, tail), utf8, utf8_size);
-            SET_SERIES_LEN(buf, tail + utf8_size);
+            Expand_Series_Tail(buf, utf8_size);
+            memcpy(Binary_At(buf, tail), utf8, utf8_size);
+            Set_Series_Len(buf, tail + utf8_size);
             break; }
 
           default:
             fail (Error_Bad_Value(val));
         }
 
-        tail = SER_USED(buf);
+        tail = Series_Used(buf);
     }
 
-    *BIN_AT(buf, tail) = 0;
+    *Binary_At(buf, tail) = 0;
 }

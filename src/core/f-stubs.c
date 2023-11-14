@@ -290,7 +290,7 @@ void Extra_Init_Context_Cell_Checks_Debug(enum Reb_Kind kind, Context(*) c) {
     //
     if (CTX_TYPE(c) != REB_MODULE) {  // keylist is global symbol table
         Keylist(*) keylist = CTX_KEYLIST(c);
-        ASSERT_SERIES_MANAGED(keylist);
+        Assert_Series_Managed(keylist);
     }
 
     assert(not CTX_ADJUNCT(c) or ANY_CONTEXT_KIND(CTX_TYPE(CTX_ADJUNCT(c))));

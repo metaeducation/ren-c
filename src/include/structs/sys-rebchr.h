@@ -29,12 +29,12 @@
 //
 // So for instance: instead of simply saying:
 //
-//     Codepoint *ptr = STR_HEAD(string_series);
+//     Codepoint *ptr = String_Head(string_series);
 //     Codepoint c = *ptr++;  // !!! invalid, treating UTF-8 like it's ASCII!
 //
 // ...one must instead write:
 //
-//     Utf8(*) ptr = STR_HEAD(string_series);
+//     Utf8(*) ptr = String_Head(string_series);
 //     Codepoint c;
 //     ptr = NEXT_CHR(&c, ptr);  // ++ptr or ptr[n] will error in C++ build
 //

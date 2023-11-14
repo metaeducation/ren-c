@@ -195,17 +195,17 @@ DECLARE_NATIVE(bind)
             VAL_ARRAY(v),
             VAL_INDEX(v), // at
             VAL_SPECIFIER(v),
-            ARR_LEN(VAL_ARRAY(v)), // tail
+            Array_Len(VAL_ARRAY(v)), // tail
             0, // extra
             ARRAY_MASK_HAS_FILE_LINE, // flags
             TS_ARRAY // types to copy deeply
         );
-        at = ARR_HEAD(copy);
-        tail = ARR_TAIL(copy);
+        at = Array_Head(copy);
+        tail = Array_Tail(copy);
         Init_Array_Cell(OUT, VAL_TYPE(v), copy);
     }
     else {
-        ENSURE_MUTABLE(v);  // use IN for virtual binding
+        Ensure_Mutable(v);  // use IN for virtual binding
         at = VAL_ARRAY_AT_MUTABLE_HACK(&tail, v);  // !!! only *after* index!
         Copy_Cell(OUT, v);
     }
@@ -554,7 +554,7 @@ DECLARE_NATIVE(unbind)
         assert(IS_BLOCK(word));
 
         Cell(const*) tail;
-        Cell(*) at = VAL_ARRAY_AT_ENSURE_MUTABLE(&tail, word);
+        Cell(*) at = VAL_ARRAY_AT_Ensure_Mutable(&tail, word);
         Option(Context(*)) context = nullptr;
         Unbind_Values_Core(at, tail, context, REF(deep));
     }
@@ -677,7 +677,7 @@ bool Get_Var_Push_Refinements_Throws(
             fail (var);
         }
 
-        switch (SER_FLAVOR(SER(node1))) {
+        switch (Series_Flavor(SER(node1))) {
           case FLAVOR_SYMBOL:
             if (Get_Cell_Flag(var, REFINEMENT_LIKE))  // `/a` or `.a`
                 goto get_source;
@@ -868,7 +868,7 @@ bool Get_Path_Push_Refinements_Throws(
         return false;
     }
 
-    switch (SER_FLAVOR(SER(node1))) {
+    switch (Series_Flavor(SER(node1))) {
       case FLAVOR_SYMBOL : {
         if (Get_Cell_Flag(path, REFINEMENT_LIKE)) {  // `/a` - should these GET?
             Get_Word_May_Fail(out, path, path_specifier);
@@ -1260,7 +1260,7 @@ bool Set_Var_Core_Updater_Throws(
             fail (var);
         }
 
-        switch (SER_FLAVOR(SER(node1))) {
+        switch (Series_Flavor(SER(node1))) {
           case FLAVOR_SYMBOL: {
             if (Get_Cell_Flag(var, REFINEMENT_LIKE))  // `/a` or `.a`
                goto set_target;
@@ -1807,14 +1807,14 @@ bool Try_As_String(
         // Checking before keeps from constraining input on errors, but
         // may be misleading by suggesting a valid "codepoint" was seen.
         //
-        const Byte* at_ptr = BIN_AT(bin, byteoffset);
+        const Byte* at_ptr = Binary_At(bin, byteoffset);
         if (Is_Continuation_Byte_If_Utf8(*at_ptr))
             fail ("Index at codepoint to convert binary to ANY-STRING!");
 
         String(const*) str;
         REBLEN index;
         if (
-            not IS_SER_UTF8(bin)
+            not Is_Series_UTF8(bin)
             or strmode != STRMODE_ALL_CODEPOINTS
         ){
             // If the binary wasn't created as a view on string data to
@@ -1835,15 +1835,15 @@ bool Try_As_String(
 
             index = 0;
 
-            Size bytes_left = BIN_LEN(bin);
-            const Byte* bp = BIN_HEAD(bin);
+            Size bytes_left = Binary_Len(bin);
+            const Byte* bp = Binary_Head(bin);
             for (; bytes_left > 0; --bytes_left, ++bp) {
                 if (bp < at_ptr)
                     ++index;
 
                 Codepoint c = *bp;
                 if (c < 0x80)
-                    Validate_Ascii_Byte(bp, strmode, BIN_HEAD(bin));
+                    Validate_Ascii_Byte(bp, strmode, Binary_Head(bin));
                 else {
                     bp = Back_Scan_UTF8_Char(&c, bp, &bytes_left);
                     if (bp == NULL)  // !!! Should Back_Scan() fail?
@@ -1854,13 +1854,13 @@ bool Try_As_String(
 
                 ++num_codepoints;
             }
-            mutable_SER_FLAVOR(m_cast(Binary(*), bin)) = FLAVOR_STRING;
+            mutable_Series_Flavor(m_cast(Binary(*), bin)) = FLAVOR_STRING;
             str = STR(bin);
 
-            TERM_STR_LEN_SIZE(
+            Term_String_Len_Size(
                 m_cast(StringT*, str),  // legal for tweaking cached data
                 num_codepoints,
-                BIN_LEN(bin)
+                Binary_Len(bin)
             );
             mutable_LINK(Bookmarks, m_cast(Binary(*), bin)) = nullptr;
 
@@ -1876,8 +1876,8 @@ bool Try_As_String(
             str = STR(bin);
             index = 0;
 
-            Utf8(const*) cp = STR_HEAD(str);
-            REBLEN len = STR_LEN(str);
+            Utf8(const*) cp = String_Head(str);
+            REBLEN len = String_Len(str);
             while (index < len and cp != at_ptr) {
                 ++index;
                 cp = NEXT_STR(cp);
@@ -1904,8 +1904,8 @@ bool Try_As_String(
         assert(size + 1 <= sizeof(PAYLOAD(Bytes, v).at_least_8));  // must fit
 
         String(*) str = Make_String_Core(size, SERIES_FLAGS_NONE);
-        memcpy(SER_DATA(str), utf8, size + 1);  // +1 to include '\0'
-        TERM_STR_LEN_SIZE(str, len, size);  // !!! SET_STR asserts size, review
+        memcpy(Series_Data(str), utf8, size + 1);  // +1 to include '\0'
+        Term_String_Len_Size(str, len, size);
         Freeze_Series(str);
         Init_Any_String(out, new_kind, str);
     }
@@ -1968,19 +1968,19 @@ DECLARE_NATIVE(as)
             const Node* node1 = VAL_NODE1(v);
             assert(not (NODE_BYTE(node1) & NODE_BYTEMASK_0x01_CELL));
 
-            switch (SER_FLAVOR(SER(node1))) {
+            switch (Series_Flavor(SER(node1))) {
               case FLAVOR_SYMBOL: {
                 Array(*) a = Make_Array_Core(2, NODE_FLAG_MANAGED);
-                SET_SERIES_LEN(a, 2);
+                Set_Series_Len(a, 2);
                 if (Get_Cell_Flag(v, REFINEMENT_LIKE)) {
-                    Init_Blank(ARR_AT(a, 0));
-                    Copy_Cell(ARR_AT(a, 1), v);
-                    mutable_HEART_BYTE(ARR_AT(a, 1)) = REB_WORD;
+                    Init_Blank(Array_At(a, 0));
+                    Copy_Cell(Array_At(a, 1), v);
+                    mutable_HEART_BYTE(Array_At(a, 1)) = REB_WORD;
                 }
                 else {
-                    Copy_Cell(ARR_AT(a, 0), v);
-                    mutable_HEART_BYTE(ARR_AT(a, 0)) = REB_WORD;
-                    Init_Blank(ARR_AT(a, 1));
+                    Copy_Cell(Array_At(a, 0), v);
+                    mutable_HEART_BYTE(Array_At(a, 0)) = REB_WORD;
+                    Init_Blank(Array_At(a, 1));
                 }
                 Init_Block(v, a);
                 break; }
@@ -2208,7 +2208,7 @@ DECLARE_NATIVE(as)
                 // Constrain the input in the way it would be if we were doing
                 // the more efficient reuse.
                 //
-                mutable_SER_FLAVOR(m_cast(Binary(*), bin)) = FLAVOR_STRING;
+                mutable_Series_Flavor(m_cast(Binary(*), bin)) = FLAVOR_STRING;
                 Freeze_Series(bin);
             }
 
@@ -2229,8 +2229,8 @@ DECLARE_NATIVE(as)
             Size size;
             Utf8(const*) utf8 = VAL_UTF8_SIZE_AT(&size, v);
             Binary(*) bin = Make_Binary_Core(size, NODE_FLAG_MANAGED);
-            memcpy(BIN_HEAD(bin), utf8, size + 1);
-            SET_SERIES_USED(bin, size);
+            memcpy(Binary_Head(bin), utf8, size + 1);
+            Set_Series_Used(bin, size);
             Freeze_Series(bin);
             Init_Binary(OUT, bin);
             return Inherit_Const(stable_OUT, v);

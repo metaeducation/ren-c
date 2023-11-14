@@ -288,7 +288,7 @@ static bool Subparse_Throws(
     REBLEN collect_tail;
     if (collection) {
         Init_Block(ARG(collection), unwrap(collection));
-        collect_tail = ARR_LEN(unwrap(collection));  // rollback here on fail
+        collect_tail = Array_Len(unwrap(collection));  // rollback here on fail
     }
     else {
         Init_Nulled(ARG(collection));
@@ -312,7 +312,7 @@ static bool Subparse_Throws(
     Drop_Action(L);
 
     if ((b == BOUNCE_THROWN or Is_Nulled(out)) and collection)
-        SET_SERIES_LEN(unwrap(collection), collect_tail);  // abort rollback
+        Set_Series_Len(unwrap(collection), collect_tail);  // abort rollback
 
     if (b == BOUNCE_THROWN) {
         Drop_Level(L);
@@ -386,7 +386,7 @@ static void Print_Parse_Index(Level(*) level_) {
         P_TYPE,
         P_INPUT,
         P_POS,
-        IS_SER_ARRAY(P_INPUT)
+        Is_Series_Array(P_INPUT)
             ? P_INPUT_SPECIFIER
             : SPECIFIED
     );
@@ -617,9 +617,9 @@ static REBIXO Parse_One_Rule(
         // Other cases handled distinctly between blocks/strings/binaries...
     }
 
-    if (IS_SER_ARRAY(P_INPUT)) {
+    if (Is_Series_Array(P_INPUT)) {
         Array(const*) arr = ARR(P_INPUT);
-        Cell(const*) item = ARR_AT(arr, pos);
+        Cell(const*) item = Array_At(arr, pos);
 
         switch (VAL_TYPE(rule)) {
           case REB_QUOTED:
@@ -707,11 +707,11 @@ static REBIXO Parse_One_Rule(
             bool uncased;
             Codepoint uni;
             if (P_TYPE == REB_BINARY) {
-                uni = *BIN_AT(BIN(P_INPUT), P_POS);
+                uni = *Binary_At(BIN(P_INPUT), P_POS);
                 uncased = false;
             }
             else {
-                uni = GET_CHAR_AT(STR(P_INPUT), P_POS);
+                uni = Get_Char_At(STR(P_INPUT), P_POS);
                 uncased = not (P_FLAGS & AM_FIND_CASE);
             }
 
@@ -758,8 +758,8 @@ static REBIXO To_Thru_Block_Rule(
         VAL_INDEX_RAW(iter) <= cast(REBIDX, P_INPUT_LEN);
         ++VAL_INDEX_RAW(iter)
     ){  // see note
-        Cell(const*) blk_tail = ARR_TAIL(VAL_ARRAY(rule_block));
-        Cell(const*) blk = ARR_HEAD(VAL_ARRAY(rule_block));
+        Cell(const*) blk_tail = Array_Tail(VAL_ARRAY(rule_block));
+        Cell(const*) blk = Array_Head(VAL_ARRAY(rule_block));
         for (; blk != blk_tail; blk++) {
             if (IS_BAR(blk))
                 fail (Error_Parse_Rule());  // !!! Shouldn't `TO [|]` succeed?
@@ -914,7 +914,7 @@ static REBIXO To_Thru_Block_Rule(
             else {
                 assert(ANY_STRING_KIND(P_TYPE));
 
-                Codepoint unadjusted = GET_CHAR_AT(STR(P_INPUT), VAL_INDEX(iter));
+                Codepoint unadjusted = Get_Char_At(STR(P_INPUT), VAL_INDEX(iter));
                 if (unadjusted == '\0') {  // cannot be passed to UP_CASE()
                     assert(VAL_INDEX(iter) == P_INPUT_LEN);
 
@@ -1043,7 +1043,7 @@ static REBIXO To_Thru_Non_Block_Rule(
             fail ("TAG! combinator must be <here> or <end> ATM");
     }
 
-    if (IS_SER_ARRAY(P_INPUT)) {
+    if (Is_Series_Array(P_INPUT)) {
         //
         // FOR ARRAY INPUT WITH NON-BLOCK RULES, USE Find_In_Array()
         //
@@ -1074,7 +1074,7 @@ static REBIXO To_Thru_Non_Block_Rule(
             ARR(P_INPUT),
             P_INPUT_SPECIFIER,
             P_POS,
-            ARR_LEN(ARR(P_INPUT)),
+            Array_Len(ARR(P_INPUT)),
             rule,
             SPECIFIED,  // !!! is it specific?
             find_flags,
@@ -1302,7 +1302,7 @@ DECLARE_NATIVE(subparse)
     // were not clear; many cases dropped them on the floor in R3-Alpha, and
     // no real resolution exists...see the UNUSED(interrupted) cases.)
     //
-    REBLEN collection_tail = P_COLLECTION ? ARR_LEN(P_COLLECTION) : 0;
+    REBLEN collection_tail = P_COLLECTION ? Array_Len(P_COLLECTION) : 0;
     UNUSED(ARG(collection));  // implicitly accessed as P_COLLECTION
 
     assert(Is_Fresh(OUT));  // invariant provided by parse3
@@ -1727,7 +1727,7 @@ DECLARE_NATIVE(subparse)
                             )
                         );
                     }
-                    else if (not IS_SER_ARRAY(P_INPUT)) {  // BINARY! (?)
+                    else if (not Is_Series_Array(P_INPUT)) {  // BINARY! (?)
                         target = nullptr;  // not an array, one item
                         Init_Series_Cell(
                             Alloc_Tail_Array(P_COLLECTION),
@@ -1754,7 +1754,7 @@ DECLARE_NATIVE(subparse)
                         for (n = pos_before; n < pos_after; ++n) {
                             Derelativize(
                                 Alloc_Tail_Array(target),
-                                ARR_AT(ARR(P_INPUT), n),
+                                Array_At(ARR(P_INPUT), n),
                                 P_INPUT_SPECIFIER
                             );
                         }
@@ -2176,7 +2176,7 @@ DECLARE_NATIVE(subparse)
 
               case SYM_QUOTE:  // temporarily behaving like LIT for bootstrap
               case SYM_THE: {
-                if (not IS_SER_ARRAY(P_INPUT))
+                if (not Is_Series_Array(P_INPUT))
                     fail (Error_Parse_Rule());  // see #2253
 
                 if (P_AT_END)
@@ -2185,8 +2185,8 @@ DECLARE_NATIVE(subparse)
                 if (not subrule)  // capture only on iteration #1
                     FETCH_NEXT_RULE_KEEP_LAST(&subrule, L);
 
-                Cell(const*) input_tail = ARR_TAIL(ARR(P_INPUT));
-                Cell(const*) cmp = ARR_AT(ARR(P_INPUT), P_POS);
+                Cell(const*) input_tail = Array_Tail(ARR(P_INPUT));
+                Cell(const*) cmp = Array_At(ARR(P_INPUT), P_POS);
 
                 if (cmp == input_tail)
                     i = END_FLAG;
@@ -2216,11 +2216,11 @@ DECLARE_NATIVE(subparse)
                 // parse ["aa"] [into ["a" "a"]] ; is legal
                 // parse "aa" [into ["a" "a"]] ; is not...already "into"
                 //
-                if (not IS_SER_ARRAY(P_INPUT))
+                if (not Is_Series_Array(P_INPUT))
                     fail (Error_Parse_Rule());
 
-                Cell(const*) input_tail = ARR_TAIL(ARR(P_INPUT));
-                Cell(const*) into = ARR_AT(ARR(P_INPUT), P_POS);
+                Cell(const*) input_tail = Array_Tail(ARR(P_INPUT));
+                Cell(const*) into = Array_At(ARR(P_INPUT), P_POS);
                 if (into == input_tail) {
                     i = END_FLAG;  // `parse [] [into [...]]`, rejects
                     break;
@@ -2485,12 +2485,12 @@ DECLARE_NATIVE(subparse)
                             )
                         );
                 }
-                else if (IS_SER_ARRAY(P_INPUT)) {
+                else if (Is_Series_Array(P_INPUT)) {
                     assert(count == 1);  // check for > 1 would have errored
 
                     Derelativize(
                         Sink_Word_May_Fail(set_or_copy_word, P_RULE_SPECIFIER),
-                        ARR_AT(ARR(P_INPUT), begin),
+                        Array_At(ARR(P_INPUT), begin),
                         P_INPUT_SPECIFIER
                     );
                 }
@@ -2517,17 +2517,17 @@ DECLARE_NATIVE(subparse)
                     */
 
                     if (P_TYPE == REB_BINARY)
-                        Init_Integer(var, *BIN_AT(BIN(P_INPUT), begin));
+                        Init_Integer(var, *Binary_At(BIN(P_INPUT), begin));
                     else
                         Init_Char_Unchecked(
                             var,
-                            GET_CHAR_AT(STR(P_INPUT), begin)
+                            Get_Char_At(STR(P_INPUT), begin)
                         );
                 }
             }
 
             if (P_FLAGS & PF_REMOVE) {
-                ENSURE_MUTABLE(ARG(position));
+                Ensure_Mutable(ARG(position));
                 if (count)
                     Remove_Any_Series_Len(ARG(position), begin, count);
                 P_POS = begin;
@@ -2579,7 +2579,7 @@ DECLARE_NATIVE(subparse)
                 Decay_If_Unstable(atom_evaluated);
               }
 
-                if (IS_SER_ARRAY(P_INPUT)) {
+                if (Is_Series_Array(P_INPUT)) {
                     REBLEN mod_flags = (P_FLAGS & PF_INSERT) ? 0 : AM_PART;
                     if (not only and ANY_ARRAY(evaluated))
                         mod_flags |= AM_SPLICE;
@@ -2643,7 +2643,7 @@ DECLARE_NATIVE(subparse)
             goto return_null;
 
         if (P_COLLECTION)
-            SET_SERIES_LEN(P_COLLECTION, collection_tail);
+            Set_Series_Len(P_COLLECTION, collection_tail);
 
         FETCH_TO_BAR_OR_END(L);
         if (P_AT_END)  // no alternate rule
@@ -2670,14 +2670,14 @@ DECLARE_NATIVE(subparse)
 
   return_null:
     if (not Is_Nulled(ARG(collection)))  // fail -> drop COLLECT additions
-      SET_SERIES_LEN(P_COLLECTION, collection_tail);
+      Set_Series_Len(P_COLLECTION, collection_tail);
 
     return Init_Nulled(OUT);
 
   return_thrown:
     if (not Is_Nulled(ARG(collection)))  // throw -> drop COLLECT additions
         if (VAL_THROWN_LABEL(LEVEL) != Lib(PARSE_BREAK))  // ...unless
-            SET_SERIES_LEN(P_COLLECTION, collection_tail);
+            Set_Series_Len(P_COLLECTION, collection_tail);
 
     return THROWN;
 }

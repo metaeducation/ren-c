@@ -56,7 +56,7 @@ Binary(*) Make_Bitset(REBLEN num_bits)
     REBLEN num_bytes = (num_bits + 7) / 8;
     Binary(*) bin = Make_Binary(num_bytes);
     Clear_Series(bin);
-    TERM_BIN_LEN(bin, num_bytes);
+    Term_Binary_Len(bin, num_bytes);
     INIT_BITS_NOT(bin, false);
     return bin;
 }
@@ -114,7 +114,7 @@ Bounce MAKE_Bitset(
     if (IS_BINARY(arg)) {
         Size size;
         const Byte* at = VAL_BINARY_SIZE_AT(&size, arg);
-        memcpy(BIN_HEAD(bin), at, (size / 8) + 1);
+        memcpy(Binary_Head(bin), at, (size / 8) + 1);
         return OUT;
     }
 
@@ -202,7 +202,7 @@ REBINT Find_Max_Bit(Cell(const*) val)
 bool Check_Bit(Binary(const*) bset, REBLEN c, bool uncased)
 {
     REBLEN i, n = c;
-    REBLEN tail = BIN_LEN(bset);
+    REBLEN tail = Binary_Len(bset);
     bool flag = false;
 
     if (uncased) {
@@ -216,7 +216,7 @@ bool Check_Bit(Binary(const*) bset, REBLEN c, bool uncased)
 retry:
     i = n >> 3;
     if (i < tail)
-        flag = did (BIN_HEAD(bset)[i] & (1 << (7 - (n & 7))));
+        flag = did (Binary_Head(bset)[i] & (1 << (7 - (n & 7))));
 
     // Check uppercase if needed:
     if (uncased && !flag) {
@@ -240,22 +240,22 @@ retry:
 void Set_Bit(Binary(*) bset, REBLEN n, bool set)
 {
     REBLEN i = n >> 3;
-    REBLEN tail = BIN_LEN(bset);
+    REBLEN tail = Binary_Len(bset);
     Byte bit;
 
     // Expand if not enough room:
     if (i >= tail) {
         if (!set) return; // no need to expand
         Expand_Series(bset, tail, (i - tail) + 1);
-        memset(BIN_AT(bset, tail), 0, (i - tail) + 1);
-        TERM_SERIES_IF_NECESSARY(bset);
+        memset(Binary_At(bset, tail), 0, (i - tail) + 1);
+        Term_Series_If_Necessary(bset);
     }
 
     bit = 1 << (7 - ((n) & 7));
     if (set)
-        BIN_HEAD(bset)[i] |= bit;
+        Binary_Head(bset)[i] |= bit;
     else
-        BIN_HEAD(bset)[i] &= ~bit;
+        Binary_Head(bset)[i] &= ~bit;
 }
 
 
@@ -277,7 +277,7 @@ bool Set_Bits(Binary(*) bset, Cell(const*) val, bool set)
     if (IS_BINARY(val)) {
         REBLEN i = VAL_INDEX(val);
 
-        const Byte* bp = BIN_HEAD(VAL_BINARY(val));
+        const Byte* bp = Binary_Head(VAL_BINARY(val));
         for (; i != VAL_LEN_HEAD(val); i++)
             Set_Bit(bset, bp[i], set);
 
@@ -388,12 +388,12 @@ bool Set_Bits(Binary(*) bset, Cell(const*) val, bool set)
             Size n;
             const Byte* at = VAL_BINARY_SIZE_AT(&n, item);
 
-            Codepoint c = BIN_LEN(bset);
+            Codepoint c = Binary_Len(bset);
             if (n >= c) {
                 Expand_Series(bset, c, (n - c));
-                memset(BIN_AT(bset, c), 0, (n - c));
+                memset(Binary_At(bset, c), 0, (n - c));
             }
-            memcpy(BIN_HEAD(bset), at, n);
+            memcpy(Binary_Head(bset), at, n);
             break; }
 
         default:
@@ -421,7 +421,7 @@ bool Check_Bits(Binary(const*) bset, Cell(const*) val, bool uncased)
 
     if (IS_BINARY(val)) {
         REBLEN i = VAL_INDEX(val);
-        const Byte* bp = BIN_HEAD(VAL_BINARY(val));
+        const Byte* bp = Binary_Head(VAL_BINARY(val));
         for (; i != VAL_LEN_HEAD(val); ++i)
             if (Check_Bit(bset, bp[i], uncased))
                 return true;
@@ -531,8 +531,8 @@ bool Check_Bits(Binary(const*) bset, Cell(const*) val, bool uncased)
 //
 void Trim_Tail_Zeros(Binary(*) ser)
 {
-    REBLEN len = BIN_LEN(ser);
-    Byte* bp = BIN_HEAD(ser);
+    REBLEN len = Binary_Len(ser);
+    Byte* bp = Binary_Head(ser);
 
     while (len > 0 && bp[len] == 0)
         len--;
@@ -540,7 +540,7 @@ void Trim_Tail_Zeros(Binary(*) ser)
     if (bp[len] != 0)
         len++;
 
-    SET_SERIES_LEN(ser, len);
+    Set_Series_Len(ser, len);
 }
 
 
@@ -575,7 +575,7 @@ REBTYPE(Bitset)
 
         REBVAL *setval = ARG(value);
 
-        Binary(*) bset = BIN(VAL_BITSET_ENSURE_MUTABLE(v));
+        Binary(*) bset = BIN(VAL_BITSET_Ensure_Mutable(v));
         if (not Set_Bits(
             bset,
             picker,
@@ -593,11 +593,11 @@ REBTYPE(Bitset)
         Option(SymId) property = VAL_WORD_ID(ARG(property));
         switch (property) {
           case SYM_LENGTH:
-            return Init_Integer(v, BIN_LEN(VAL_BITSET(v)) * 8);
+            return Init_Integer(v, Binary_Len(VAL_BITSET(v)) * 8);
 
           case SYM_TAIL_Q:
             // Necessary to make EMPTY? work:
-            return Init_Logic(OUT, BIN_LEN(VAL_BITSET(v)) == 0);
+            return Init_Logic(OUT, Binary_Len(VAL_BITSET(v)) == 0);
 
           default:
             break;
@@ -636,7 +636,7 @@ REBTYPE(Bitset)
         if (Is_Isotope(arg))
             fail (arg);
 
-        Binary(*) bin = VAL_BITSET_ENSURE_MUTABLE(v);
+        Binary(*) bin = VAL_BITSET_Ensure_Mutable(v);
 
         bool diff;
         if (BITS_NOT(VAL_BITSET(v)))
@@ -652,7 +652,7 @@ REBTYPE(Bitset)
         INCLUDE_PARAMS_OF_REMOVE;
         UNUSED(PARAM(series));  // covered by `v`
 
-        Binary(*) bin = VAL_BITSET_ENSURE_MUTABLE(v);
+        Binary(*) bin = VAL_BITSET_Ensure_Mutable(v);
 
         if (not REF(part))
             fail (Error_Missing_Arg_Raw());
@@ -674,7 +674,7 @@ REBTYPE(Bitset)
         return Init_Bitset(OUT, copy); }
 
       case SYM_CLEAR: {
-        Binary(*) bin = VAL_BITSET_ENSURE_MUTABLE(v);
+        Binary(*) bin = VAL_BITSET_Ensure_Mutable(v);
         INIT_BITS_NOT(bin, false);
         Clear_Series(bin);
         return COPY(v); }
@@ -741,7 +741,7 @@ REBTYPE(Bitset)
 
         REBVAL *processed = rebValue(rebR(action), rebQ(v), rebQ(arg));
 
-        Binary(*) bits = VAL_BINARY_KNOWN_MUTABLE(processed);
+        Binary(*) bits = VAL_BINARY_Known_Mutable(processed);
         rebRelease(processed);
 
         INIT_BITS_NOT(bits, negated_result);

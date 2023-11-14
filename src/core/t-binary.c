@@ -74,7 +74,7 @@ REBINT CT_Binary(NoQuote(Cell(const*)) a, NoQuote(Cell(const*)) b, bool strict)
 static Binary(*) Make_Binary_BE64(const REBVAL *arg)
 {
     Binary(*) bin = Make_Binary(8);
-    Byte* bp = BIN_HEAD(bin);
+    Byte* bp = Binary_Head(bin);
 
     REBI64 i;
     REBDEC d;
@@ -106,7 +106,7 @@ static Binary(*) Make_Binary_BE64(const REBVAL *arg)
     #error "Unsupported CPU endian"
   #endif
 
-    TERM_BIN_LEN(bin, 8);
+    Term_Binary_Len(bin, 8);
     return bin;
 }
 
@@ -142,8 +142,8 @@ static Bounce MAKE_TO_Binary_Common(Level(*) level_, const REBVAL *arg)
         Utf8(const*) utf8 = VAL_UTF8_SIZE_AT(&utf8_size, arg);
 
         Binary(*) bin = Make_Binary(utf8_size);
-        memcpy(BIN_HEAD(bin), utf8, utf8_size);
-        TERM_BIN_LEN(bin, utf8_size);
+        memcpy(Binary_Head(bin), utf8, utf8_size);
+        Term_Binary_Len(bin, utf8_size);
         return Init_Binary(OUT, bin); }
 
       case REB_BLOCK: {
@@ -154,8 +154,8 @@ static Bounce MAKE_TO_Binary_Common(Level(*) level_, const REBVAL *arg)
       case REB_TUPLE: {
         REBLEN len = VAL_SEQUENCE_LEN(arg);
         Binary(*) bin = Make_Binary(len);
-        if (Did_Get_Sequence_Bytes(BIN_HEAD(bin), arg, len)) {
-            TERM_BIN_LEN(bin, len);
+        if (Did_Get_Sequence_Bytes(Binary_Head(bin), arg, len)) {
+            Term_Binary_Len(bin, len);
             return Init_Binary(OUT, bin);
         }
         fail ("TUPLE! did not consist entirely of INTEGER! values 0-255"); }
@@ -163,13 +163,13 @@ static Bounce MAKE_TO_Binary_Common(Level(*) level_, const REBVAL *arg)
       case REB_BITSET:
         return Init_Binary(
             OUT,
-            Copy_Bytes(BIN_HEAD(VAL_BINARY(arg)), VAL_LEN_HEAD(arg))
+            Copy_Bytes(Binary_Head(VAL_BINARY(arg)), VAL_LEN_HEAD(arg))
         );
 
       case REB_MONEY: {
         Binary(*) bin = Make_Binary(12);
-        deci_to_binary(BIN_HEAD(bin), VAL_MONEY_AMOUNT(arg));
-        TERM_BIN_LEN(bin, 12);
+        deci_to_binary(Binary_Head(bin), VAL_MONEY_AMOUNT(arg));
+        Term_Binary_Len(bin, 12);
         return Init_Binary(OUT, bin); }
 
       default:
@@ -326,7 +326,7 @@ REBTYPE(Binary)
         if (not Did_Get_Series_Index_From_Picker(&n, v, picker))
             return nullptr;
 
-        Byte b = *BIN_AT(VAL_BINARY(v), n);
+        Byte b = *Binary_At(VAL_BINARY(v), n);
 
         return Init_Integer(OUT, b);
       }
@@ -361,8 +361,8 @@ REBTYPE(Binary)
         if (i > 0xff)
             fail (Error_Out_Of_Range(setval));
 
-        Binary(*) bin = VAL_BINARY_ENSURE_MUTABLE(v);
-        BIN_HEAD(bin)[n] = cast(Byte, i);
+        Binary(*) bin = VAL_BINARY_Ensure_Mutable(v);
+        Binary_Head(bin)[n] = cast(Byte, i);
 
         return nullptr; }  // caller's Binary(*) is not stale, no update needed
 
@@ -495,12 +495,12 @@ REBTYPE(Binary)
         if (ret >= cast(REBLEN, tail))
             return nullptr;
 
-        return Init_Integer(OUT, *BIN_AT(VAL_BINARY(v), ret)); }
+        return Init_Integer(OUT, *Binary_At(VAL_BINARY(v), ret)); }
 
       case SYM_TAKE: {
         INCLUDE_PARAMS_OF_TAKE;
 
-        Binary(*) bin = VAL_BINARY_ENSURE_MUTABLE(v);
+        Binary(*) bin = VAL_BINARY_Ensure_Mutable(v);
 
         UNUSED(PARAM(series));
 
@@ -550,7 +550,7 @@ REBTYPE(Binary)
         return OUT; }
 
       case SYM_CLEAR: {
-        Binary(*) bin = VAL_BINARY_ENSURE_MUTABLE(v);
+        Binary(*) bin = VAL_BINARY_Ensure_Mutable(v);
 
         REBINT tail = cast(REBINT, VAL_LEN_HEAD(v));
         REBINT index = cast(REBINT, VAL_INDEX(v));
@@ -565,7 +565,7 @@ REBTYPE(Binary)
         if (index == 0 and Get_Series_Flag(bin, DYNAMIC))
             Unbias_Series(bin, false);
 
-        TERM_BIN_LEN(bin, cast(REBLEN, index));  // may have string alias
+        Term_Binary_Len(bin, cast(REBLEN, index));  // may have string alias
         return COPY(v); }
 
     //-- Creation:
@@ -604,9 +604,9 @@ REBTYPE(Binary)
         Size larger = MAX(t0, t1);
 
         Binary(*) series = Make_Binary(larger);
-        TERM_BIN_LEN(series, larger);
+        Term_Binary_Len(series, larger);
 
-        Byte* dest = BIN_HEAD(series);
+        Byte* dest = Binary_Head(series);
 
         switch (id) {
           case SYM_BITWISE_AND: {
@@ -649,9 +649,9 @@ REBTYPE(Binary)
         const Byte* bp = VAL_BINARY_SIZE_AT(&size, v);
 
         Binary(*) bin = Make_Binary(size);
-        TERM_BIN_LEN(bin, size);  // !!! size is decremented, must set now
+        Term_Binary_Len(bin, size);  // !!! size is decremented, must set now
 
-        Byte* dp = BIN_HEAD(bin);
+        Byte* dp = Binary_Head(bin);
         for (; size > 0; --size, ++bp, ++dp)
             *dp = ~(*bp);
 
@@ -682,7 +682,7 @@ REBTYPE(Binary)
       case SYM_SUBTRACT:
       case SYM_ADD: {
         REBVAL *arg = D_ARG(2);
-        Binary(*) bin = VAL_BINARY_ENSURE_MUTABLE(v);
+        Binary(*) bin = VAL_BINARY_Ensure_Mutable(v);
 
         REBINT amount;
         if (IS_INTEGER(arg))
@@ -704,7 +704,7 @@ REBTYPE(Binary)
         while (amount != 0) {
             REBLEN wheel = VAL_LEN_HEAD(v) - 1;
             while (true) {
-                Byte* b = BIN_AT(bin, wheel);
+                Byte* b = Binary_At(bin, wheel);
                 if (amount > 0) {
                     if (*b == 255) {
                         if (wheel == VAL_INDEX(v))
@@ -743,8 +743,8 @@ REBTYPE(Binary)
         if (VAL_TYPE(v) != VAL_TYPE(arg))
             fail (Error_Not_Same_Type_Raw());
 
-        Byte* v_at = VAL_BINARY_AT_ENSURE_MUTABLE(v);
-        Byte* arg_at = VAL_BINARY_AT_ENSURE_MUTABLE(arg);
+        Byte* v_at = VAL_BINARY_AT_Ensure_Mutable(v);
+        Byte* arg_at = VAL_BINARY_AT_Ensure_Mutable(arg);
 
         REBINT tail = cast(REBINT, VAL_LEN_HEAD(v));
         REBINT index = cast(REBINT, VAL_INDEX(v));
@@ -761,7 +761,7 @@ REBTYPE(Binary)
         UNUSED(ARG(series));
 
         REBLEN len = Part_Len_May_Modify_Index(v, ARG(part));
-        Byte* bp = VAL_BINARY_AT_ENSURE_MUTABLE(v);  // index may've changed
+        Byte* bp = VAL_BINARY_AT_Ensure_Mutable(v);  // index may've changed
 
         if (len > 0) {
             REBLEN n = 0;
@@ -793,7 +793,7 @@ REBTYPE(Binary)
         Copy_Cell(OUT, v);  // copy to output before index adjustment
 
         REBLEN len = Part_Len_May_Modify_Index(v, ARG(part));
-        Byte* data_at = VAL_BINARY_AT_ENSURE_MUTABLE(v);  // ^ index changes
+        Byte* data_at = VAL_BINARY_AT_Ensure_Mutable(v);  // ^ index changes
 
         if (len <= 1)
             return OUT;
@@ -847,19 +847,19 @@ REBTYPE(Binary)
             index += cast(REBLEN, Random_Int(REF(secure)))
                 % (tail - index);
             Binary(const*) bin = VAL_BINARY(v);
-            return Init_Integer(OUT, *BIN_AT(bin, index));  // PICK
+            return Init_Integer(OUT, *Binary_At(bin, index));  // PICK
         }
 
-        Binary(*) bin = VAL_BINARY_ENSURE_MUTABLE(v);
+        Binary(*) bin = VAL_BINARY_Ensure_Mutable(v);
 
         bool secure = REF(secure);
         REBLEN n;
-        for (n = BIN_LEN(bin) - index; n > 1;) {
+        for (n = Binary_Len(bin) - index; n > 1;) {
             REBLEN k = index + cast(REBLEN, Random_Int(secure)) % n;
             n--;
-            Byte swap = *BIN_AT(bin, k);
-            *BIN_AT(bin, k) = *BIN_AT(bin, n + index);
-            *BIN_AT(bin, n + index) = swap;
+            Byte swap = *Binary_At(bin, k);
+            *Binary_At(bin, k) = *Binary_At(bin, n + index);
+            *Binary_At(bin, n + index) = swap;
         }
         return COPY(v); }
 
@@ -923,7 +923,7 @@ DECLARE_NATIVE(enbin)
     Binary(*) bin = Make_Binary(num_bytes);
 
     REBINT delta = little ? 1 : -1;
-    Byte* bp = BIN_HEAD(bin);
+    Byte* bp = Binary_Head(bin);
     if (not little)
         bp += num_bytes - 1;  // go backwards for big endian
 
@@ -970,7 +970,7 @@ DECLARE_NATIVE(enbin)
             "]"
         );
 
-    TERM_BIN_LEN(bin, num_bytes);
+    Term_Binary_Len(bin, num_bytes);
     return Init_Binary(OUT, bin);
 }
 

@@ -139,7 +139,7 @@
 
 // Includes SERIES_FLAG_DYNAMIC because an action's paramlist is always
 // allocated dynamically, in order to make access to the archetype and the
-// parameters faster than ARR_AT().  See code for ACT_KEY(), etc.
+// parameters faster than Array_At().  See code for ACT_KEY(), etc.
 //
 // !!! This used to include SERIES_FLAG_FIXED_SIZE for both.  However, that
 // meant the mask was different for paramlists and context keylists (which

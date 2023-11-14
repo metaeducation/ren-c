@@ -86,7 +86,7 @@ Bounce Combinator_Dispatcher(Level(*) L)
 {
     Phase(*) phase = Level_Phase(L);
     Details(*) details = ACT_DETAILS(phase);
-    Cell(*) body = ARR_AT(details, IDX_DETAILS_1);  // code to run
+    Cell(*) body = Array_At(details, IDX_DETAILS_1);  // code to run
 
     Bounce b;
     if (IS_FRAME(body)) {  // NATIVE-COMBINATOR
@@ -229,7 +229,11 @@ Array(*) Expanded_Combinator_Spec(const REBVAL *original)
     // on the product.
     //
     Array(*) expanded = Pop_Stack_Values(base);
-    Bind_Values_Deep(ARR_HEAD(expanded), ARR_TAIL(expanded), Lib_Context_Value);
+    Bind_Values_Deep(
+        Array_Head(expanded),
+        Array_Tail(expanded),
+        Lib_Context_Value
+    );
 
     return expanded;
 }
@@ -286,7 +290,7 @@ DECLARE_NATIVE(combinator)
     );
 
     Init_Relative_Block(
-        ARR_AT(ACT_DETAILS(combinator), IDX_COMBINATOR_BODY),
+        Array_At(ACT_DETAILS(combinator), IDX_COMBINATOR_BODY),
         combinator,
         relativized
     );
@@ -533,7 +537,7 @@ DECLARE_NATIVE(some_combinator)
 } first_parse_result_in_out: {  //////////////////////////////////////////////
 
     if (Is_Nulled(OUT)) {  // didn't match even once, so not enough
-        Remove_Series_Units(loops, ARR_LEN(loops) - 1, 1);  // drop loop
+        Remove_Series_Units(loops, Array_Len(loops) - 1, 1);  // drop loop
         return nullptr;
     }
 
@@ -555,7 +559,7 @@ DECLARE_NATIVE(some_combinator)
 
     if (Is_Nulled(SPARE)) {  // first still succeeded, so we're okay.
         Set_Var_May_Fail(remainder, SPECIFIED, input);  // put back, see [3]
-        Remove_Series_Units(loops, ARR_LEN(loops) - 1, 1);  // drop loop
+        Remove_Series_Units(loops, Array_Len(loops) - 1, 1);  // drop loop
         return OUT;  // return previous successful parser result
     }
 

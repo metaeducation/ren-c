@@ -478,7 +478,7 @@ void on_read_alloc(uv_handle_t *handle, size_t suggested_size, uv_buf_t *buf)
         Init_Binary(port_data, bin);
     }
     else {
-        bin = VAL_BINARY_KNOWN_MUTABLE(port_data);
+        bin = VAL_BINARY_Known_Mutable(port_data);
 
         // !!! Port code doesn't skip the index, but what if user does?
         //
@@ -490,7 +490,7 @@ void on_read_alloc(uv_handle_t *handle, size_t suggested_size, uv_buf_t *buf)
         Extend_Series_If_Necessary(bin, bufsize);
     }
 
-    buf->base = s_cast(BIN_TAIL(bin));
+    buf->base = s_cast(Binary_Tail(bin));
     buf->len = bufsize;
 
     // We are handing out a buffer of size buf->len
@@ -522,7 +522,7 @@ void on_read(uv_stream_t *stream, ssize_t nread, const uv_buf_t *buf)
         bin = nullptr;
     }
     else
-        bin = VAL_BINARY_KNOWN_MUTABLE(port_data);
+        bin = VAL_BINARY_Known_Mutable(port_data);
 
     if (nread == 0) {  // Zero bytes read
         //
@@ -589,7 +589,7 @@ void on_read(uv_stream_t *stream, ssize_t nread, const uv_buf_t *buf)
         // Note that "each buffer is used only once", e.g. there is a call
         // to on_read_alloc() for every read.
         //
-        assert(buf->base == s_cast(BIN_TAIL(bin)));
+        assert(buf->base == s_cast(Binary_Tail(bin)));
         UNUSED(buf);
 
         rebreq->actual += nread;
@@ -598,7 +598,7 @@ void on_read(uv_stream_t *stream, ssize_t nread, const uv_buf_t *buf)
         // them.  This rule is maintained in case binaries alias UTF-8 strings,
         // which are stored terminated with 0.
         //
-        TERM_BIN_LEN(bin, BIN_LEN(bin) + nread);
+        Term_Binary_Len(bin, Binary_Len(bin) + nread);
 
         if (rebreq->length == UNLIMITED) {
             //

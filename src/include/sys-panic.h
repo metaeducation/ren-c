@@ -31,7 +31,7 @@
 //     if (VAL_TYPE(value) == REB_QUASI)
 //         panic (value);  // debug build points out this file and line
 //
-//     if (ARR_LEN(array) < 2)
+//     if (Array_Len(array) < 2)
 //         panic (array);  // panic is polymorphic, see Detect_Rebol_Pointer()
 //
 // But if no smoking gun is available, a UTF-8 string can also be passed to

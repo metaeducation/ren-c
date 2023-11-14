@@ -72,7 +72,7 @@
 
 
 #define FEED_SINGULAR(feed)     ARR(&(feed)->singular)
-#define FEED_SINGLE(feed)       mutable_SER_CELL(&(feed)->singular)
+#define FEED_SINGLE(feed)       mutable_Stub_Cell(&(feed)->singular)
 
 #define LINK_Splice_TYPE        Array(*)
 #define LINK_Splice_CAST        ARR
@@ -180,8 +180,8 @@ inline static void Finalize_Variadic_Feed(Feed(*) feed) {
     else
         assert(FEED_PACKED(feed));
 
-    TRASH_POINTER_IF_DEBUG(FEED_VAPTR_POINTER(feed));
-    TRASH_POINTER_IF_DEBUG(FEED_PACKED(feed));
+    Trash_Pointer_If_Debug(FEED_VAPTR_POINTER(feed));
+    Trash_Pointer_If_Debug(FEED_PACKED(feed));
 }
 
 
@@ -223,10 +223,10 @@ inline static Option(Value(const*)) Try_Reify_Variadic_Feed_Series(
 ){
     Series(*) s = SER(m_cast(void*, feed->p));
 
-    switch (SER_FLAVOR(s)) {
+    switch (Series_Flavor(s)) {
       case FLAVOR_INSTRUCTION_SPLICE: {
         Array(*) inst1 = ARR(s);
-        REBVAL *single = SPECIFIC(ARR_SINGLE(inst1));
+        REBVAL *single = SPECIFIC(Array_Single(inst1));
         if (IS_BLANK(single)) {
             GC_Kill_Series(inst1);
             return nullptr;
@@ -265,7 +265,7 @@ inline static Option(Value(const*)) Try_Reify_Variadic_Feed_Series(
         // vs. putting it in fetched/MARKED_TEMPORARY...but that makes
         // this more convoluted.  Review.
 
-        REBVAL *single = SPECIFIC(ARR_SINGLE(inst1));
+        REBVAL *single = SPECIFIC(Array_Single(inst1));
         feed->p = single;
         feed->p = Copy_Reified_Variadic_Feed_Cell(&feed->fetched, feed);
         rebRelease(single);  // *is* the instruction
@@ -366,7 +366,7 @@ inline static void Force_Variadic_Feed_At_Cell_Or_End_May_Fail(Feed(*) feed)
         assert(Is_Feed_At_End(feed));
         Finalize_Variadic_Feed(feed);
 
-        feed->p = ARR_HEAD(reified);
+        feed->p = Array_Head(reified);
         Init_Array_Cell_At(FEED_SINGLE(feed), REB_BLOCK, reified, 1);
         break; }
 
@@ -413,7 +413,7 @@ inline static void Fetch_Next_In_Feed(Feed(*) feed) {
   #endif
 
     assert(Not_End(feed->p));  // should test for end before fetching again
-    TRASH_POINTER_IF_DEBUG(feed->p);
+    Trash_Pointer_If_Debug(feed->p);
 
     // We are changing "Feed_At()", and thus by definition any ->gotten value
     // will be invalid.  It might be "wasteful" to always set this to null,
@@ -450,8 +450,8 @@ inline static void Fetch_Next_In_Feed(Feed(*) feed) {
         Force_Variadic_Feed_At_Cell_Or_End_May_Fail(feed);
     }
     else {
-        if (FEED_INDEX(feed) != cast(REBINT, ARR_LEN(FEED_ARRAY(feed)))) {
-            feed->p = ARR_AT(FEED_ARRAY(feed), FEED_INDEX(feed));
+        if (FEED_INDEX(feed) != cast(REBINT, Array_Len(FEED_ARRAY(feed)))) {
+            feed->p = Array_At(FEED_ARRAY(feed), FEED_INDEX(feed));
             ++FEED_INDEX(feed);
         }
         else {
@@ -643,10 +643,10 @@ inline static Feed(*) Prep_Feed_Common(void* preallocated, Flags flags) {
     mutable_MISC(Pending, s) = nullptr;
 
     feed->flags.bits = flags;
-    TRASH_POINTER_IF_DEBUG(feed->p);
-    TRASH_POINTER_IF_DEBUG(feed->gotten);
+    Trash_Pointer_If_Debug(feed->p);
+    Trash_Pointer_If_Debug(feed->gotten);
 
-    TRASH_POINTER_IF_DEBUG(feed->context);  // experiment!
+    Trash_Pointer_If_Debug(feed->context);  // experiment!
     return feed;
 }
 
@@ -667,8 +667,8 @@ inline static Feed(*) Prep_Array_Feed(
         );
     }
     else {
-        feed->p = ARR_AT(array, index);
-        if (feed->p == ARR_TAIL(array))
+        feed->p = Array_At(array, index);
+        if (feed->p == Array_Tail(array))
             feed->p = &PG_Feed_At_End;
         Init_Array_Cell_At_Core(
             FEED_SINGLE(feed), REB_BLOCK, array, index + 1, specifier

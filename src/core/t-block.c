@@ -59,9 +59,9 @@ DECLARE_NATIVE(only_p)  // https://forum.rebol.info/t/1182/11
 
     Array(*) a = Alloc_Singular(NODE_FLAG_MANAGED);  // semi-efficient, see [1]
     if (Is_Nulled(v))
-        SET_SERIES_LEN(a, 0);  // singulars initialize at length 1
+        Set_Series_Len(a, 0);  // singulars initialize at length 1
     else
-        Copy_Cell(ARR_SINGLE(a), ARG(value));
+        Copy_Cell(Array_Single(a), ARG(value));
     return Init_Block(OUT, a);
 }
 
@@ -285,7 +285,7 @@ Bounce MAKE_Array(
             Context(*) context = CTX(VAL_VARARGS_BINDING(arg));
             Level(*) param_level = CTX_LEVEL_MAY_FAIL(context);
 
-            REBVAL *param = SPECIFIC(ARR_HEAD(
+            REBVAL *param = SPECIFIC(Array_Head(
                 CTX_VARLIST(ACT_EXEMPLAR(Level_Phase(param_level)))
             ));
             if (VAL_VARARGS_SIGNED_PARAM_INDEX(arg) < 0)
@@ -355,7 +355,7 @@ Bounce TO_Array(Level(*) level_, enum Reb_Kind kind, const REBVAL *arg) {
         // !!! Review handling of making a 1-element PATH!, e.g. TO PATH! 10
         //
         Array(*) single = Alloc_Singular(NODE_FLAG_MANAGED);
-        Copy_Cell(ARR_SINGLE(single), arg);
+        Copy_Cell(Array_Single(single), arg);
         return Init_Array_Cell(OUT, kind, single);
     }
 }
@@ -402,8 +402,8 @@ REBINT Find_In_Array(
             return index_unsigned;
 
         for (; index >= start and index < end; index += skip) {
-            Cell(const*) item_tail = ARR_TAIL(array);
-            Cell(const*) item = ARR_AT(array, index);
+            Cell(const*) item_tail = Array_Tail(array);
+            Cell(const*) item = Array_At(array, index);
 
             REBLEN count = 0;
             Cell(const*) other_tail;
@@ -434,7 +434,7 @@ REBINT Find_In_Array(
         *len = 1;
 
         for (; index >= start and index < end; index += skip) {
-            Cell(const*) item = ARR_AT(array, index);
+            Cell(const*) item = Array_At(array, index);
 
             if (Matcher_Matches(
                 pattern,
@@ -471,7 +471,7 @@ REBINT Find_In_Array(
 
     if (ANY_WORD(pattern)) {
         for (; index >= start and index < end; index += skip) {
-            Cell(const*) item = ARR_AT(array, index);
+            Cell(const*) item = Array_At(array, index);
             Symbol(const*) pattern_symbol = VAL_WORD_SYMBOL(pattern);
             if (ANY_WORD(item)) {
                 if (flags & AM_FIND_CASE) { // Must be same type and spelling
@@ -496,7 +496,7 @@ REBINT Find_In_Array(
     // All other cases
 
     for (; index >= start and index < end; index += skip) {
-        Cell(const*) item = ARR_AT(array, index);
+        Cell(const*) item = Array_At(array, index);
         if (0 == Cmp_Value(
             item,
             pattern,
@@ -594,14 +594,14 @@ void Shuffle_Array(Array(*) arr, REBLEN idx, bool secure)
 {
     REBLEN n;
     REBLEN k;
-    Cell(*) data = ARR_HEAD(arr);
+    Cell(*) data = Array_Head(arr);
 
     // Rare case where Cell bit copying is okay...between spots in the
     // same array.
     //
     CellT swap;
 
-    for (n = ARR_LEN(arr) - idx; n > 1;) {
+    for (n = Array_Len(arr) - idx; n > 1;) {
         k = idx + (REBLEN)Random_Int(secure) % n;
         n--;
 
@@ -695,7 +695,7 @@ bool Did_Pick_Block(
     if (n < 0 or cast(REBLEN, n) >= VAL_LEN_HEAD(block))
         return false;
 
-    Cell(const*) slot = ARR_AT(VAL_ARRAY(block), n);
+    Cell(const*) slot = Array_At(VAL_ARRAY(block), n);
     Derelativize(out, slot, VAL_SPECIFIER(block));
     return true;
 }
@@ -831,7 +831,7 @@ REBTYPE(Array)
         if (n < 0 or n >= cast(REBINT, VAL_LEN_HEAD(array)))
             return nullptr;
 
-        Cell(const*) at = ARR_AT(VAL_ARRAY(array), n);
+        Cell(const*) at = Array_At(VAL_ARRAY(array), n);
 
         Derelativize(OUT, at, VAL_SPECIFIER(array));
         Inherit_Const(stable_OUT, array);
@@ -864,7 +864,7 @@ REBTYPE(Array)
             fail (Error_Out_Of_Range(picker));
 
         Array(*) mut_arr = VAL_ARRAY_ENSURE_MUTABLE(array);
-        Cell(*) at = ARR_AT(mut_arr, n);
+        Cell(*) at = Array_At(mut_arr, n);
         Copy_Cell(at, setval);
 
         return nullptr; }  // Array(*) is still fine, caller need not update
@@ -917,7 +917,7 @@ REBTYPE(Array)
                 OUT, Copy_Array_At_Max_Shallow(arr, index, specifier, len)
             );
         else
-            Derelativize(OUT, &ARR_HEAD(arr)[index], specifier);
+            Derelativize(OUT, &Array_Head(arr)[index], specifier);
 
         Remove_Series_Units(arr, index, len);
         return OUT; }
@@ -987,7 +987,7 @@ REBTYPE(Array)
             if (ret >= limit)
                 return nullptr;
 
-            Derelativize(OUT, ARR_AT(arr, ret), specifier);
+            Derelativize(OUT, Array_At(arr, ret), specifier);
         }
         return Inherit_Const(stable_OUT, array); }
 
@@ -1057,7 +1057,7 @@ REBTYPE(Array)
             if (index == 0)
                 Reset_Array(arr);
             else
-                SET_SERIES_LEN(arr, cast(REBLEN, index));
+                Set_Series_Len(arr, cast(REBLEN, index));
         }
         return COPY(array);
     }
@@ -1112,8 +1112,8 @@ REBTYPE(Array)
         ){
             // Cell bits can be copied within the same array
             //
-            Cell(*) a = VAL_ARRAY_AT_ENSURE_MUTABLE(nullptr, array);
-            Cell(*) b = VAL_ARRAY_AT_ENSURE_MUTABLE(nullptr, arg);
+            Cell(*) a = VAL_ARRAY_AT_Ensure_Mutable(nullptr, array);
+            Cell(*) b = VAL_ARRAY_AT_Ensure_Mutable(nullptr, arg);
             CellT temp;
             temp.header = a->header;
             temp.payload = a->payload;
@@ -1134,7 +1134,7 @@ REBTYPE(Array)
         if (len == 0)
             return COPY(array); // !!! do 1-element reversals update newlines?
 
-        Cell(*) front = ARR_AT(arr, index);
+        Cell(*) front = Array_At(arr, index);
         Cell(*) back = front + len - 1;
 
         // We must reverse the sense of the newline markers as well, #2326
@@ -1143,8 +1143,8 @@ REBTYPE(Array)
         // on the next element and putting them on the previous element.
 
         bool line_back;
-        if (back == ARR_LAST(arr)) // !!! review tail newline handling
-            line_back = Get_Subclass_Flag(ARRAY, arr, NEWLINE_AT_TAIL);
+        if (back == Array_Last(arr)) // !!! review tail newline handling
+            line_back = Get_Array_Flag(arr, NEWLINE_AT_TAIL);
         else
             line_back = Get_Cell_Flag(back + 1, NEWLINE_BEFORE);
 
@@ -1245,7 +1245,7 @@ REBTYPE(Array)
         }
 
         reb_qsort_r(
-            ARR_AT(arr, index),
+            Array_At(arr, index),
             len / skip,
             sizeof(CellT) * skip,
             &flags,
@@ -1343,8 +1343,8 @@ DECLARE_NATIVE(blockify)
     if (Is_Nulled(v)) {
         // leave empty
     } else {
-        SET_SERIES_LEN(a, 1);
-        Copy_Cell(ARR_HEAD(a), v);
+        Set_Series_Len(a, 1);
+        Copy_Cell(Array_Head(a), v);
     }
     return Init_Block(OUT, Freeze_Array_Shallow(a));
 }
@@ -1376,8 +1376,8 @@ DECLARE_NATIVE(groupify)
     if (Is_Nulled(v)) {
         // leave empty
     } else {
-        SET_SERIES_LEN(a, 1);
-        Copy_Cell(ARR_HEAD(a), v);
+        Set_Series_Len(a, 1);
+        Copy_Cell(Array_Head(a), v);
     }
     return Init_Group(OUT, Freeze_Array_Shallow(a));
 }
@@ -1407,8 +1407,8 @@ DECLARE_NATIVE(enblock)
     if (Is_Nulled(v)) {
         // leave empty
     } else {
-        SET_SERIES_LEN(a, 1);
-        Copy_Cell(ARR_HEAD(a), v);
+        Set_Series_Len(a, 1);
+        Copy_Cell(Array_Head(a), v);
     }
     return Init_Block(OUT, Freeze_Array_Shallow(a));
 }
@@ -1438,8 +1438,8 @@ DECLARE_NATIVE(engroup)
     if (Is_Nulled(v)) {
         // leave empty
     } else {
-        SET_SERIES_LEN(a, 1);
-        Copy_Cell(ARR_HEAD(a), v);
+        Set_Series_Len(a, 1);
+        Copy_Cell(Array_Head(a), v);
     }
     return Init_Group(OUT, Freeze_Array_Shallow(a));
 }
@@ -1493,8 +1493,8 @@ DECLARE_NATIVE(glom)
             return COPY(result);  // see note: index may be nonzero
 
         Array(*) a = Make_Array_Core(1, SERIES_FLAG_MANAGED);
-        SET_SERIES_LEN(a, 1);
-        Copy_Cell(ARR_HEAD(a), result);  // we know it was inert or quoted
+        Set_Series_Len(a, 1);
+        Copy_Cell(Array_Head(a), result);  // we know it was inert or quoted
         return Init_Block(OUT, a);
     }
 
@@ -1522,20 +1522,20 @@ DECLARE_NATIVE(glom)
         //
         Array(*) r = VAL_ARRAY_ENSURE_MUTABLE(result);
         REBSPC *r_specifier = VAL_SPECIFIER(result);
-        REBLEN a_len = ARR_LEN(a);
-        REBLEN r_len = ARR_LEN(r);
-        EXPAND_SERIES_TAIL(a, r_len);  // can move memory, get `at` after
-        Cell(*) dst = ARR_AT(a, a_len);  // old tail position
-        Cell(*) src = ARR_HEAD(r);
+        REBLEN a_len = Array_Len(a);
+        REBLEN r_len = Array_Len(r);
+        Expand_Series_Tail(a, r_len);  // can move memory, get `at` after
+        Cell(*) dst = Array_At(a, a_len);  // old tail position
+        Cell(*) src = Array_Head(r);
 
         REBLEN index;
         for (index = 0; index < r_len; ++index, ++src, ++dst)
             Derelativize(dst, src, r_specifier);
 
-        assert(ARR_LEN(a) == a_len + r_len);  // EXPAND_SERIES_TAIL sets
+        assert(Array_Len(a) == a_len + r_len);  // Expand_Series_Tail sets
 
      #if DEBUG_POISON_SERIES_TAILS  // need trash at tail with this debug setting
-        TERM_SERIES_IF_NECESSARY(a);
+        Term_Series_If_Necessary(a);
      #endif
 
         // GLOM only works with mutable arrays, as part of its efficiency.  We
@@ -1557,16 +1557,16 @@ DECLARE_NATIVE(glom)
 //
 void Assert_Array_Core(Array(const*) a)
 {
-    assert(SER_FLAVOR(a) != FLAVOR_DATASTACK);  // has special handling
+    assert(Series_Flavor(a) != FLAVOR_DATASTACK);  // has special handling
 
     Assert_Series_Basics_Core(a);  // not marked free, etc.
 
-    if (not IS_SER_ARRAY(a))
+    if (not Is_Series_Array(a))
         panic (a);
 
-    Cell(const*) item = ARR_HEAD(a);
+    Cell(const*) item = Array_Head(a);
     Offset n;
-    Length len = ARR_LEN(a);
+    Length len = Array_Len(a);
     for (n = 0; n < len; ++n, ++item) {
         if (HEART_BYTE(item) >= REB_MAX) {  // checks READABLE()
             printf("Invalid HEART_BYTE() at index %d\n", cast(int, n));
@@ -1575,7 +1575,7 @@ void Assert_Array_Core(Array(const*) a)
     }
 
     if (Get_Series_Flag(a, DYNAMIC)) {
-        Length rest = SER_REST(a);
+        Length rest = Series_Rest(a);
 
       #if DEBUG_POISON_SERIES_TAILS
         assert(rest > 0 and rest > n);

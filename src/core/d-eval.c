@@ -140,7 +140,7 @@ static void Evaluator_Shared_Checks_Debug(Level(*) L)
 
     // We only have a label if we are in the middle of running a function.
     //
-    assert(IS_POINTER_TRASH_DEBUG(unwrap(L->label)));
+    assert(Is_Pointer_Trash_Debug(unwrap(L->label)));
 
     if (L->varlist) {
         assert(Not_Series_Flag(L->varlist, MANAGED));
@@ -203,9 +203,9 @@ void Evaluator_Expression_Checks_Debug(Level(*) L)
 
     // Trash fields that GC won't be seeing unless Is_Action_Level()
     //
-    TRASH_POINTER_IF_DEBUG(L->u.action.key);
-    TRASH_POINTER_IF_DEBUG(L->u.action.arg);
-    TRASH_POINTER_IF_DEBUG(L->u.action.param);
+    Trash_Pointer_If_Debug(L->u.action.key);
+    Trash_Pointer_If_Debug(L->u.action.arg);
+    Trash_Pointer_If_Debug(L->u.action.param);
 
     assert(not L->varlist or Not_Series_Flag(L->varlist, INACCESSIBLE));
 
@@ -253,9 +253,9 @@ void Evaluator_Exit_Checks_Debug(Level(*) L) {
     Evaluator_Shared_Checks_Debug(L);
 
     if (Not_Level_At_End(L) and not Level_Is_Variadic(L)) {
-        if (Level_Array_Index(L) > ARR_LEN(Level_Array(L))) {
+        if (Level_Array_Index(L) > Array_Len(Level_Array(L))) {
             assert(Is_Throwing(L));
-            assert(Level_Array_Index(L) == ARR_LEN(Level_Array(L)) + 1);
+            assert(Level_Array_Index(L) == Array_Len(Level_Array(L)) + 1);
         }
     }
 
