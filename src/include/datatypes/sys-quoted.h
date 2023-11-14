@@ -61,7 +61,7 @@
 //
 
 inline static Count VAL_QUOTED_DEPTH(Cell(const*) v) {
-    assert(IS_QUOTED(v));
+    assert(Is_Quoted(v));
     return (QUOTE_BYTE(v) - UNQUOTED_1) >> 1;
 }
 
@@ -170,8 +170,6 @@ inline static Count Dequotify(Cell(*) v) {
 // isotopes aren't just not allowed in blocks, they can't be in variables.
 //
 
-#define Is_Isotope(v) \
-    (QUOTE_BYTE(v) == ISOTOPE_0)
 
 inline static bool Is_Isotope_Unstable(Atom(const*) v) {
     assert(QUOTE_BYTE_UNCHECKED(v) == ISOTOPE_0);  // say Is_Isotope() checked

@@ -1391,10 +1391,10 @@ Bounce Evaluator_Executor(Level(*) L)
         StackIndex stackindex_circled = 0;
 
         for (; check != tail; ++check) {  // push variables first, see [2]
-            if (IS_QUOTED(check))
+            if (Is_Quoted(check))
                 fail ("QUOTED! not currently permitted in SET-BLOCK!s");
 
-            bool raised_ok = IS_QUASI(check);  // quasi has meaning
+            bool raised_ok = Is_Quasi(check);  // quasi has meaning
             enum Reb_Kind heart = CELL_HEART(check);
 
             bool is_optional;
@@ -1445,7 +1445,7 @@ Bounce Evaluator_Executor(Level(*) L)
             if (is_optional)  // so next phase won't worry about leading slash
                 Set_Cell_Flag(TOP, STACK_NOTE_OPTIONAL);
 
-            if (raised_ok and not IS_QUASI(TOP))
+            if (raised_ok and not Is_Quasi(TOP))
                 Quasify(TOP);  // keep this as signal for raised ok
 
             if (
@@ -1554,8 +1554,8 @@ Bounce Evaluator_Executor(Level(*) L)
             Value(*) var = SCRATCH;  // stable location, safe across SET of var
             Copy_Cell(var, Data_Stack_At(stackindex_var));
 
-            assert(not IS_QUOTED(var));
-            bool raised_ok = IS_QUASI(var);  // quasi has meaning
+            assert(not Is_Quoted(var));
+            bool raised_ok = Is_Quasi(var);  // quasi has meaning
             enum Reb_Kind var_heart = CELL_HEART(var);
 
             if (pack_meta_at == pack_meta_tail) {

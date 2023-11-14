@@ -212,7 +212,7 @@ DECLARE_NATIVE(the_p)
 
     REBVAL *v = ARG(value);
 
-    if (IS_QUASI(v)) {  // for `rebElide("@", nullptr, "else [...]");`
+    if (Is_Quasi(v)) {  // for `rebElide("@", nullptr, "else [...]");`
         Copy_Cell(OUT, v);
         mutable_QUOTE_BYTE(OUT) = ISOTOPE_0;
     }
@@ -339,7 +339,7 @@ DECLARE_NATIVE(quasi)
 
     Value(*) v = ARG(value);
 
-    if (IS_QUOTED(v))
+    if (Is_Quoted(v))
         fail ("QUOTED! values do not have QUASI! forms");
 
     return COPY(Quasify(v));
@@ -381,10 +381,10 @@ DECLARE_NATIVE(isotopic)
 
     Value(*) v = ARG(value);
 
-    if (IS_QUOTED(v))
+    if (Is_Quoted(v))
         fail ("QUOTED! values have no isotopic form (isotopes are quoted -1");
 
-    if (IS_QUASI(v))  // Review: Allow this?
+    if (Is_Quasi(v))  // Review: Allow this?
         fail ("QUASI! values can be made isotopic with UNMETA");
 
     Copy_Cell(OUT, v);
@@ -480,7 +480,7 @@ DECLARE_INTRINSIC(spread)
     else if (IS_BLANK(arg)) {
         Init_Splice(out, EMPTY_ARRAY);  // treat blank as if it was [], see [2]
     }
-    else if (IS_QUOTED(arg)) {
+    else if (Is_Quoted(arg)) {
         Unquotify(Copy_Cell(out, arg), 1);  // !!! good idea or not?  see [3]
     }
     else {
@@ -513,7 +513,7 @@ DECLARE_NATIVE(lazy)
     if (Is_Nulled(v))
         return nullptr;
 
-    if (IS_QUOTED(v))
+    if (Is_Quoted(v))
         return Unquotify(Copy_Cell(OUT, v), 1);
 
     if (IS_BLOCK(v)) {
@@ -553,7 +553,7 @@ DECLARE_NATIVE(pack)
     if (Is_Nulled(v))
         return nullptr;
 
-    if (IS_QUOTED(v))
+    if (Is_Quoted(v))
         return Unquotify(Copy_Cell(OUT, v), 1);
 
     if (IS_THE_BLOCK(v)) {
@@ -641,7 +641,7 @@ DECLARE_NATIVE(any_matcher_q)
 
     Value(*) v = ARG(value);
 
-    if (IS_QUASI(v) and ANY_TYPE_VALUE_KIND(HEART_BYTE(v)))
+    if (Is_Quasi(v) and ANY_TYPE_VALUE_KIND(HEART_BYTE(v)))
         return Init_True(OUT);
 
     return Init_False(OUT);

@@ -1052,7 +1052,7 @@ static REBIXO To_Thru_Non_Block_Rule(
         //
         Flags find_flags = (P_FLAGS & AM_FIND_CASE);
         DECLARE_STABLE (temp);
-        if (IS_QUOTED(rule)) {  // make `'[foo bar]` match `[foo bar]`
+        if (Is_Quoted(rule)) {  // make `'[foo bar]` match `[foo bar]`
             Derelativize(temp, rule, P_RULE_SPECIFIER);
             rule = Unquotify(temp, 1);
         }

@@ -2167,7 +2167,7 @@ const void *RL_rebINLINE(const REBVAL *v)
         FLAG_FLAVOR(INSTRUCTION_SPLICE) | NODE_FLAG_MANAGED
     );
     Clear_Series_Flag(a, MANAGED);  // lying avoided manuals tracking
-    if (not (IS_BLOCK(v) or IS_QUOTED(v) or IS_BLANK(v)))
+    if (not (IS_BLOCK(v) or Is_Quoted(v) or IS_BLANK(v)))
         fail ("rebINLINE() requires argument to be a BLOCK!/QUOTED!/BLANK!");
 
     Copy_Cell(Array_Single(a), v);

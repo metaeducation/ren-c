@@ -237,7 +237,7 @@ inline static Option(Value(const*)) Try_Reify_Variadic_Feed_Series(
             Splice_Block_Into_Feed(feed, single);
         }
         else {
-            assert(IS_QUOTED(single));
+            assert(Is_Quoted(single));
             Unquotify(Copy_Cell(&feed->fetched, single), 1);
             feed->p = &feed->fetched;
         }

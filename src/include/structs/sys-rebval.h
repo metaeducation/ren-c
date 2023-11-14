@@ -160,7 +160,7 @@
 #define mutable_QUOTE_BYTE(v)       mutable_THIRD_BYTE(WRITABLE(v)->header)
 
 #define ISOTOPE_0           0  // Also QUASI (e.g. with NONQUASI_BIT is clear)
-#define UNQUOTED_1          1
+#define UNQUOTED_1           1
 #define NONQUASI_BIT        1
 #define QUASI_2             2
 #define ONEQUOTE_3          3  // non-QUASI state of having one quote level
@@ -169,6 +169,18 @@
 #define SubtractQuote(byte)      ((byte) - 2)
 
 #define MAX_QUOTE_DEPTH     126  // highest legal quoting level
+
+#define Is_Isotope(v) \
+    (QUOTE_BYTE(v) == ISOTOPE_0)
+
+#define Is_Unquoted(v) \
+    (QUOTE_BYTE(v) == UNQUOTED_1)
+
+#define Is_Quasi(v) \
+    (QUOTE_BYTE(v) == QUASI_2)
+
+#define Is_Quoted(v) \
+    (QUOTE_BYTE(v) >= ONEQUOTE_3)  // quoted-quasi e.g. '~a~ considered QUOTED!
 
 
 //=//// BITS 24-31: CELL FLAGS ////////////////////////////////////////////=//

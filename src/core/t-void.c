@@ -39,7 +39,7 @@ Bounce MAKE_Quasi(
     assert(not parent);
     UNUSED(parent);
 
-    if (IS_QUOTED(arg))  // QUOTED! competes for quote byte with quasiform
+    if (Is_Quoted(arg))  // QUOTED! competes for quote byte with quasiform
         return RAISE(Error_Bad_Make(kind, arg));
 
     // !!! Should it allow things that are already QUASI! (?)  This does, but

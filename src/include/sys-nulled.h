@@ -83,7 +83,7 @@ inline static bool Is_Nulled(Cell(const*) v) {
     Init_Quasi_Word((out), Canon(NULL))
 
 inline static bool Is_Quasi_Null(Cell(const*) v) {
-    if (not IS_QUASI(v))
+    if (not Is_Quasi(v))
         return false;
     if (HEART_BYTE(v) != REB_WORD)
         return false;

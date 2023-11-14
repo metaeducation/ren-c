@@ -431,7 +431,7 @@ bool Typecheck_Coerce_Argument(
         if (Is_Nulled(arg))
             return GET_PARAM_FLAG(param, ENDABLE);
 
-        if (not IS_QUASI(arg) and not IS_QUOTED(arg))
+        if (not Is_Quasi(arg) and not Is_Quoted(arg))
             return false;
 
         Meta_Unquotify_Undecayed(arg);  // temporary adjustment (easiest option)

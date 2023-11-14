@@ -198,7 +198,7 @@ DECLARE_NATIVE(inline)
     if (IS_BLANK(splice)) {
         // do nothing, just return invisibly
     }
-    else if (IS_QUOTED(splice)) {
+    else if (Is_Quoted(splice)) {
         //
         // This could probably be done more efficiently, but for now just
         // turn it into a block.

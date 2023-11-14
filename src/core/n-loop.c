@@ -1635,7 +1635,7 @@ DECLARE_NATIVE(map)
         // treat as a generator
     }
     else if (
-        not IS_QUOTED(data)
+        not Is_Quoted(data)
         or VAL_QUOTED_DEPTH(data) != 1
         or not (
             ANY_SERIES(Unquotify(data, 1))
@@ -1853,7 +1853,7 @@ DECLARE_NATIVE(for)
     if (not IS_BLOCK(body))
         fail ("FOR has a new syntax, use CFOR for old arity-5 behavior.");
 
-    if (IS_QUOTED(value)) {
+    if (Is_Quoted(value)) {
         Unquotify(value, 1);
 
         if (not (ANY_SERIES(value) or ANY_SEQUENCE(value)))

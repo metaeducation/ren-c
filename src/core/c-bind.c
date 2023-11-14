@@ -401,7 +401,7 @@ DECLARE_NATIVE(let)
         if (Do_Any_Array_At_Throws(SPARE, vars, SPECIFIED))
             return THROWN;
 
-        if (IS_QUOTED(SPARE))  // should (let 'x: <whatever>) be legal? see [3]
+        if (Is_Quoted(SPARE))  // should (let 'x: <whatever>) be legal? see [3]
             fail ("QUOTED! escapes not supported at top level of LET");
 
         switch (CELL_HEART(SPARE)) {  // QUASI! states mean isotopes ok
@@ -470,7 +470,7 @@ DECLARE_NATIVE(let)
             Cell(const*) temp = item;
             REBSPC *temp_specifier = item_specifier;
 
-            if (IS_QUOTED(temp)) {
+            if (Is_Quoted(temp)) {
                 Derelativize(PUSH(), temp, temp_specifier);
                 Unquotify(TOP, 1);  // drop quote in output block, see [5]
                 altered = true;

@@ -422,6 +422,12 @@ comma       "separator between full evaluations (that is otherwise invisible)"
 ;
 ; Neither are inert...QUASI! becomes isotopic when evaluated, and QUOTED!
 ; removes one level of quoting.
+;
+; NOTE: These are in the %types.r table because that drives the creation of
+; things like "type spec strings" as well as the QUOTED! and QUOTED? usermode
+; functions, which are in specific places expected for a "datatype".  The
+; macros for testing Is_Quoted()/Is_Quasi()/Is_Isotope() are exempted and
+; written by hand.
 
 quasi       "value which evaluates to a form that triggers errors on access"
             ()

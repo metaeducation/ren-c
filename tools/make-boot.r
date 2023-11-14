@@ -388,6 +388,13 @@ e-types/emit {
 e-types/emit newline
 
 for-each-datatype t [
+    ;
+    ; Pseudotypes don't make macros or cell masks.
+    ;
+    if find [quoted quasi isotope] t/name  [
+        continue
+    ]
+
     if not empty? t/cellmask [
         e-types/emit 't {
             #define CELL_MASK_${T/NAME} \

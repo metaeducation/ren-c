@@ -166,7 +166,7 @@ DECLARE_NATIVE(delimit)
             if (pending and REF(delimiter))
                 Form_Value(mo, delimiter);
 
-            if (IS_QUOTED(OUT)) {
+            if (Is_Quoted(OUT)) {
                 Unquotify(OUT, 1);
                 Mold_Value(mo, OUT);
             }

@@ -155,7 +155,7 @@ DECLARE_NATIVE(lambda)
         IS_WORD(spec)
         or IS_GET_WORD(spec)
         or IS_META_WORD(spec)
-        or IS_QUOTED(spec)
+        or Is_Quoted(spec)
         or (IS_PATH(spec) and IS_REFINEMENT(spec))
     ){
         item = spec;
@@ -196,7 +196,7 @@ DECLARE_NATIVE(lambda)
             pclass = PARAM_CLASS_SOFT;
             mutable_HEART_BYTE(key_slot) = REB_WORD;
         }
-        else if (IS_QUOTED(key_slot)) {
+        else if (Is_Quoted(key_slot)) {
             Unquotify(key_slot, 1);
             if (not IS_WORD(key_slot))
                 fail (item);

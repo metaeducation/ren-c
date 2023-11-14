@@ -269,7 +269,7 @@ bool Init_Frame_From_Feed_Throws(
     if (IS_FRAME(out))
         return false;
 
-    assert(IS_QUOTED(out));
+    assert(Is_Quoted(out));
     Context(*) exemplar = Make_Context_For_Action(
         Lib(IDENTITY),
         TOP_INDEX,

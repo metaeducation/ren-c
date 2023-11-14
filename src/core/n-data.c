@@ -451,7 +451,7 @@ DECLARE_INTRINSIC(quasi_word_q)
 {
     UNUSED(action);
 
-    Init_Logic(out, IS_QUASI(arg) and HEART_BYTE(arg) == REB_WORD);
+    Init_Logic(out, Is_Quasi(arg) and HEART_BYTE(arg) == REB_WORD);
 }
 
 
@@ -744,7 +744,7 @@ bool Get_Var_Push_Refinements_Throws(
 
   blockscope {
     StackValue(*) at = Data_Stack_At(stackindex);
-    if (IS_QUOTED(at)) {
+    if (Is_Quoted(at)) {
         Copy_Cell(out, at);
         Unquotify(out, 1);
     }
@@ -1332,7 +1332,7 @@ bool Set_Var_Core_Updater_Throws(
 
   blockscope {
     StackValue(*) at = Data_Stack_At(stackindex);
-    if (IS_QUOTED(at)) {
+    if (Is_Quoted(at)) {
         Copy_Cell(out, at);
         Unquotify(out, 1);
     }

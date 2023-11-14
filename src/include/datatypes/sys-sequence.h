@@ -101,7 +101,7 @@ inline static bool Is_Valid_Sequence_Element(
 
     // QUASI! cases are legal, to support e.g. `~/home/Projects/ren-c/README.md`
     //
-    enum Reb_Kind k = IS_QUASI(v) ? CELL_HEART(v) : VAL_TYPE(v);
+    enum Reb_Kind k = Is_Quasi(v) ? CELL_HEART(v) : VAL_TYPE(v);
     if (
         k == REB_BLANK
         or k == REB_INTEGER

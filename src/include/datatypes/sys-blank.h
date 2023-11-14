@@ -85,4 +85,4 @@ inline static Value(*) Init_Blank_Untracked(Cell(*) out, Byte quote_byte) {
     TRACK(Init_Blank_Untracked((out), QUASI_2))
 
 inline static bool Is_Quasi_Blank(Cell(const*) v)
-  { return IS_QUASI(v) and HEART_BYTE(v) == REB_BLANK; }
+  { return Is_Quasi(v) and HEART_BYTE(v) == REB_BLANK; }

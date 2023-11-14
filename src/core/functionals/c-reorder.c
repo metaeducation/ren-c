@@ -161,7 +161,7 @@ DECLARE_NATIVE(reorder_p)  // see REORDER in %base-defs.r, for inheriting meta
             symbol = VAL_REFINEMENT_SYMBOL(item);
             ignore = true;  // to use a refinement, don't /refine it
         }
-        else if (IS_QUOTED(item)) {
+        else if (Is_Quoted(item)) {
             if (
                 VAL_QUOTED_DEPTH(item) != 1
                 or not ANY_WORD_KIND(CELL_HEART(item))

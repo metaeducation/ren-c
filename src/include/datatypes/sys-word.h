@@ -183,4 +183,4 @@ inline static bool Is_Word_Isotope_With_Id(Cell(const*) v, SymId id) {
 }
 
 inline static bool Is_Quasi_Word(Cell(const*) v)
-  { return IS_QUASI(v) and HEART_BYTE_UNCHECKED(v) == REB_WORD; }
+  { return Is_Quasi(v) and HEART_BYTE_UNCHECKED(v) == REB_WORD; }
