@@ -1017,10 +1017,10 @@
     #define ensurer(T)
     #define ensured(T,L,left) (left)
 #else
-    #define ensure(T,v) \
-        static_cast<T>(v)
-
     #if (! DEBUG_CHECK_CASTS)
+        #define ensure(T,v) \
+            static_cast<T>(v)  // permits downcasts, but better than nothing
+
         #define ensurer(T)
         #define ensured(T,L,left) (left)
     #else
@@ -1032,6 +1032,7 @@
             template<typename U>
             static T check(U u) { return u; }
         };
+        #define ensure(T,v) ensure_reader<T>::check(v)
         #define ensurer(T) ensure_reader<T>() <<
 
         template<typename T, typename L>

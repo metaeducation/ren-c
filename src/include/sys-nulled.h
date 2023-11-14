@@ -70,7 +70,7 @@ inline static bool Is_Nulled(Cell(const*) v) {
 }
 
 #define Init_Word_Isotope(out,label) \
-    TRACK(Init_Any_Word_Untracked(ensure(Value(*), (out)), REB_WORD, \
+    TRACK(Init_Any_Word_Untracked(ensure(Sink(Value(*)), (out)), REB_WORD, \
             (label), ISOTOPE_0))
 
 #define Init_Quasi_Word(out,label) \
