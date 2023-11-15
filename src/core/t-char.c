@@ -32,7 +32,7 @@
 // left as-is for anyone who may want to do such conversion, which was
 // allowed in earlier algorithms.
 //
-const char trailingBytesForUTF8[256] = {
+const char g_trailing_bytes_for_utf8[256] = {
     0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
     0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
     0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
@@ -48,7 +48,7 @@ const char trailingBytesForUTF8[256] = {
 // This table contains as many values as there might be trailing bytes
 // in a UTF-8 sequence.
 //
-const uint_fast32_t offsetsFromUTF8[6] = {
+const uint_fast32_t g_offsets_from_utf8[6] = {
     0x00000000UL, 0x00003080UL, 0x000E2080UL,
     0x03C82080UL, 0xFA082080UL, 0x82082080UL
 };
@@ -60,7 +60,7 @@ const uint_fast32_t offsetsFromUTF8[6] = {
 // (I.e., one byte sequence, two byte... etc.). Remember that sequencs
 // for *legal* UTF-8 will be 4 or fewer bytes total.
 //
-const uint_fast8_t firstByteMark[7] = {
+const uint_fast8_t g_first_byte_mark_utf8[7] = {
     0x00, 0x00, 0xC0, 0xE0, 0xF0, 0xF8, 0xFC
 };
 
@@ -141,7 +141,7 @@ Bounce MAKE_Issue(
         if (VAL_LEN_AT(arg) == 0)
             fail ("Empty ISSUE! is zero codepoint, unlike empty TEXT!");
         if (VAL_LEN_AT(arg) == 1)
-            return Init_Char_Unchecked(OUT, CHR_CODE(VAL_UTF8_AT(arg)));
+            return Init_Char_Unchecked(OUT, Codepoint_At(VAL_UTF8_AT(arg)));
         return MAKE_String(level_, kind, nullptr, arg);
 
       default:
@@ -284,8 +284,8 @@ void MF_Issue(REB_MOLD *mo, NoQuote(Cell(const*)) v, bool form)
 
     bool no_quotes = true;
     Utf8(const*) cp = VAL_UTF8_AT(v);
-    Codepoint c = CHR_CODE(cp);
-    for (; c != '\0'; cp = NEXT_CHR(&c, cp)) {
+    Codepoint c = Codepoint_At(cp);
+    for (; c != '\0'; cp = Utf8_Next(&c, cp)) {
         if (
             c <= 32  // control codes up to 32 (space)
             or (
@@ -390,9 +390,9 @@ REBTYPE(Issue)
             return nullptr;
 
         Codepoint c;
-        cp = NEXT_CHR(&c, cp);
+        cp = Utf8_Next(&c, cp);
         for (; n != 1; --n)
-            cp = NEXT_CHR(&c, cp);
+            cp = Utf8_Next(&c, cp);
 
         return Init_Integer(OUT, c); }
 
@@ -521,7 +521,7 @@ DECLARE_NATIVE(trailing_bytes_for_utf8)
     if (byte < 0 or byte > 255)
         fail (Error_Out_Of_Range(ARG(first_byte)));
 
-    uint_fast8_t trail = trailingBytesForUTF8[cast(Byte, byte)];
+    uint_fast8_t trail = g_trailing_bytes_for_utf8[cast(Byte, byte)];
     if (trail > 3 and not REF(extended)) {
         assert(trail == 4 or trail == 5);
         fail ("Use /EXTENDED with TRAILNG-BYTES-FOR-UTF-8 for 4 or 5 bytes");

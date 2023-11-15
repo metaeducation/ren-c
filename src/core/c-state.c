@@ -334,7 +334,7 @@ void Assert_State_Balanced_Debug(
 
     if (s->guarded_len != Series_Used(g_gc.guarded)) {
         printf(
-            "PUSH_GC_GUARD()x%d without DROP_GC_GUARD()\n",
+            "Push_GC_Guard()x%d without Drop_GC_Guard()\n",
             cast(int, Series_Used(g_gc.guarded) - s->guarded_len)
         );
         Node* guarded = *Series_At(

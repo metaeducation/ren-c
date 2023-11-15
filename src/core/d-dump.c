@@ -59,9 +59,12 @@ void Dump_Series(Series(*) s, const char *memo)
         return;
 
     printf(" wide: %d\n", cast(int, Series_Wide(s)));
-    printf(" size: %ld\n", cast(unsigned long, SER_TOTAL_IF_DYNAMIC(s)));
-    if (Get_Series_Flag(s, DYNAMIC))
+    if (Get_Series_Flag(s, DYNAMIC)) {
+        printf(" size: %ld\n", cast(unsigned long, Series_Total(s)));
         printf(" bias: %d\n", cast(int, Series_Bias(s)));
+    }
+    else
+        printf(" size: 0\n");
     printf(" used: %d\n", cast(int, Series_Used(s)));
     printf(" rest: %d\n", cast(int, Series_Rest(s)));
 

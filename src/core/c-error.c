@@ -1426,7 +1426,7 @@ static void Mold_Value_Limit(REB_MOLD *mo, Cell(*) v, REBLEN limit)
         );
         REBLEN n = 0;
         for (; n < limit; ++n)
-            at = NEXT_STR(at);
+            at = Skip_Codepoint(at);
 
         Term_String_Len_Size(str, start_len + limit, at - String_Head(str));
         Free_Bookmarks_Maybe_Null(str);

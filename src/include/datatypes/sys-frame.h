@@ -318,7 +318,7 @@ inline static void Push_Level(
 }
 
 
-inline static void UPDATE_EXPRESSION_START(Level(*) L) {
+inline static void Update_Expression_Start(Level(*) L) {
     if (not Level_Is_Variadic(L))
         L->expr_index = Level_Array_Index(L);
 }

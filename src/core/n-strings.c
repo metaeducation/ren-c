@@ -310,10 +310,10 @@ DECLARE_NATIVE(enhex)
     Utf8(const*) cp = VAL_UTF8_LEN_SIZE_AT(&len, nullptr, ARG(string));
 
     Codepoint c;
-    cp = NEXT_CHR(&c, cp);
+    cp = Utf8_Next(&c, cp);
 
     REBLEN i;
-    for (i = 0; i < len; cp = NEXT_CHR(&c, cp), ++i) {
+    for (i = 0; i < len; cp = Utf8_Next(&c, cp), ++i) {
         //
         // !!! Length 4 should be legal here, but a warning in an older GCC
         // is complaining that Encode_UTF8_Char reaches out of array bounds
@@ -463,7 +463,7 @@ DECLARE_NATIVE(dehex)
     Utf8(const*) cp = VAL_UTF8_LEN_SIZE_AT(&len, nullptr, ARG(string));
 
     Codepoint c;
-    cp = NEXT_CHR(&c, cp);
+    cp = Utf8_Next(&c, cp);
 
     REBLEN i;
     for (i = 0; i < len;) {
@@ -473,13 +473,13 @@ DECLARE_NATIVE(dehex)
             if (i + 2 >= len)
                fail ("Percent decode has less than two codepoints after %");
 
-            cp = NEXT_CHR(&c, cp);
+            cp = Utf8_Next(&c, cp);
             ++i;
             if (c > UINT8_MAX)
                 c = '\0'; // LEX_DELIMIT, will cause error below
             Byte lex1 = Lex_Map[cast(Byte, c)];
 
-            cp = NEXT_CHR(&c, cp);
+            cp = Utf8_Next(&c, cp);
             ++i;
             if (c > UINT8_MAX)
                 c = '\0'; // LEX_DELIMIT, will cause error below
@@ -507,7 +507,7 @@ DECLARE_NATIVE(dehex)
             scan[scan_size++] = b;
         }
 
-        cp = NEXT_CHR(&c, cp); // c may be '\0', guaranteed if `i == len`
+        cp = Utf8_Next(&c, cp); // c may be '\0', guaranteed if `i == len`
         ++i;
 
         // If our scanning buffer is full (and hence should contain at *least*
@@ -595,7 +595,7 @@ DECLARE_NATIVE(deline)
 
     REBLEN len_at = VAL_LEN_AT(input);
 
-    Utf8(*) dest = VAL_STRING_AT_Known_Mutable(input);
+    Utf8(*) dest = VAL_STRING_AT_KNOWN_MUTABLE(input);
     Utf8(const*) src = dest;
 
     // DELINE tolerates either LF or CR LF, in order to avoid disincentivizing
@@ -610,7 +610,7 @@ DECLARE_NATIVE(deline)
     REBLEN n;
     for (n = 0; n < len_at;) {
         Codepoint c;
-        src = NEXT_CHR(&c, src);
+        src = Utf8_Next(&c, src);
         ++n;
         if (c == LF) {
             if (seen_a_cr_lf)
@@ -622,8 +622,8 @@ DECLARE_NATIVE(deline)
             if (seen_a_lone_lf)
                 fail (Error_Mixed_Cr_Lf_Found_Raw());
 
-            dest = WRITE_CHR(dest, LF);
-            src = NEXT_CHR(&c, src);
+            dest = Write_Codepoint(dest, LF);
+            src = Utf8_Next(&c, src);
             ++n;  // will see '\0' terminator before loop check, so is safe
             if (c == LF) {
                 --len_head;  // don't write carraige return, note loss of char
@@ -631,9 +631,9 @@ DECLARE_NATIVE(deline)
                 continue;
             }
             // DELINE requires any CR to be followed by an LF
-            fail (Error_Illegal_Cr(BACK_STR(src), String_Head(s)));
+            fail (Error_Illegal_Cr(Step_Back_Codepoint(src), String_Head(s)));
         }
-        dest = WRITE_CHR(dest, c);
+        dest = Write_Codepoint(dest, c);
     }
 
     Term_String_Len_Size(s, len_head, dest - VAL_STRING_AT(input));
@@ -681,11 +681,11 @@ DECLARE_NATIVE(enline)
     REBLEN n;
     for (n = 0; n < len; ++n) {
         Codepoint c;
-        cp = NEXT_CHR(&c, cp);
+        cp = Utf8_Next(&c, cp);
         if (c == LF and (not relax or c_prev != CR))
             ++delta;
         if (c == CR and not relax)  // !!! Note: `relax` fixed at false, ATM
-            fail (Error_Illegal_Cr(BACK_STR(cp), String_Head(s)));
+            fail (Error_Illegal_Cr(Step_Back_Codepoint(cp), String_Head(s)));
         c_prev = c;
     }
 
@@ -763,7 +763,7 @@ DECLARE_NATIVE(entab)
     REBINT n = 0;
     for (; index < len; index++) {
         Codepoint c;
-        up = NEXT_CHR(&c, up);
+        up = Utf8_Next(&c, up);
 
         // Count leading spaces, insert TAB for each tabsize:
         if (c == ' ') {
@@ -796,7 +796,7 @@ DECLARE_NATIVE(entab)
                     break;
                 }
                 Append_Codepoint(mo->series, c);
-                up = NEXT_CHR(&c, up);
+                up = Utf8_Next(&c, up);
             }
         }
     }
@@ -842,7 +842,7 @@ DECLARE_NATIVE(detab)
 
     for (; index < len; ++index) {
         Codepoint c;
-        cp = NEXT_CHR(&c, cp);
+        cp = Utf8_Next(&c, cp);
 
         if (c == '\t') {
             Append_Codepoint(mo->series, ' ');
@@ -1002,8 +1002,8 @@ DECLARE_NATIVE(invalid_utf8_q)
 
     REBLEN trail;
     for (; utf8 != end; utf8 += trail) {
-        trail = trailingBytesForUTF8[*utf8] + 1;
-        if (utf8 + trail > end or not isLegalUTF8(utf8, trail)) {
+        trail = g_trailing_bytes_for_utf8[*utf8] + 1;
+        if (utf8 + trail > end or not Is_Legal_UTF8(utf8, trail)) {
             Copy_Cell(OUT, arg);
             VAL_INDEX_RAW(OUT) = utf8 - Binary_Head(VAL_BINARY(arg));
             return OUT;

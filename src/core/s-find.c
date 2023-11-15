@@ -252,7 +252,7 @@ REBINT Find_Binstr_In_Binstr(
     if (not is_2_str)
         caseless = false;  //
 
-    // Binary-compatible to: [next2 = NEXT_CHR(&c2_canon, head2)]
+    // Binary-compatible to: [next2 = Utf8_Next(&c2_canon, head2)]
     Codepoint c2_canon;  // calculate first char lowercase once, vs. each step
     const Byte* next2;
     if (not is_2_str or *head2 < 0x80) {
@@ -284,7 +284,7 @@ REBINT Find_Binstr_In_Binstr(
                 return NOT_FOUND;
 
             if (is_1_str)
-                cp1 = SKIP_CHR(&c1, cast(Utf8(const*), cp1), skip1);
+                cp1 = Utf8_Skip(&c1, cast(Utf8(const*), cp1), skip1);
             else if (is_2_str) {  // have to treat binstr1 as a string anyway
                 cp1 += skip1;
                 size -= skip1;  // size grows by skip
@@ -303,7 +303,7 @@ REBINT Find_Binstr_In_Binstr(
             return NOT_FOUND;
 
         if (is_1_str)
-            c1 = CHR_CODE(cast(Utf8(const*), cp1));
+            c1 = Codepoint_At(cast(Utf8(const*), cp1));
         else if (is_2_str) {  // have to treat binstr1 as a string anyway
             Size size_temp = size;
             const Byte* temp = Back_Scan_UTF8_Char(&c1, cp1, &size_temp);
@@ -321,10 +321,10 @@ REBINT Find_Binstr_In_Binstr(
             // Now check subsequent positions, where both may need LO_CASE().
             //
 
-            // Binary-compatible to: [tp1 = NEXT_STR(cp1)]
+            // Binary-compatible to: [tp1 = Skip_Codepoint(cp1)]
             const Byte* tp1;
             if (is_1_str)  // binstr2 can't be binary
-                tp1 = NEXT_STR(cast(Utf8(const*), cp1));
+                tp1 = Skip_Codepoint(cast(Utf8(const*), cp1));
             else if (is_2_str) {  // searching binary as if it's a string
                 Size encoded_c1_size = Encoded_Size_For_Codepoint(c1);
                 tp1 = cp1 + encoded_c1_size;
@@ -338,7 +338,7 @@ REBINT Find_Binstr_In_Binstr(
             REBLEN n;
             for (n = 1; n < len2; n++) {  // n=0 (first item) already matched
 
-                // Binary-compatible to: [tp1 = NEXT_CHR(&c1, tp1)]
+                // Binary-compatible to: [tp1 = Utf8_Next(&c1, tp1)]
                 if (not is_2_str or *tp1 < 0x80)
                     c1 = *tp1;
                 else if (is_1_str)
@@ -351,7 +351,7 @@ REBINT Find_Binstr_In_Binstr(
                 }
                 ++tp1;
 
-                // Binary-compatible to: [tp2 = NEXT_CHR(&c2, tp2)]
+                // Binary-compatible to: [tp2 = Utf8_Next(&c2, tp2)]
                 Codepoint c2;
                 if (not is_2_str or *tp2 < 0x80)
                     c2 = *tp2;
@@ -406,7 +406,7 @@ REBINT Find_Binstr_In_Binstr(
         // codepoints if string or bytes if not.
         //
         if (is_1_str)
-            cp1 = SKIP_CHR(&c1, cast(Utf8(const*), cp1), skip1);
+            cp1 = Utf8_Skip(&c1, cast(Utf8(const*), cp1), skip1);
         else {
             // When binstr2 is a string and binstr1 isn't, we are treating
             // binstr1 as a string despite being unchecked bytes.  Reset the
@@ -465,13 +465,13 @@ REBINT Find_Bitset_In_Binstr(
     Codepoint c1;
     if (skip > 0) {  // skip 1 will pass over cp1, so leave as is
         if (is_str)
-            c1 = CHR_CODE(cast(Utf8(const*), cp1));
+            c1 = Codepoint_At(cast(Utf8(const*), cp1));
         else
             c1 = *cp1;
     }
     else {
         if (is_str)
-            cp1 = BACK_CHR(&c1, cast(Utf8(const*), cp1));
+            cp1 = Utf8_Back(&c1, cast(Utf8(const*), cp1));
         else {
             --cp1;
             c1 = *cp1;
@@ -493,7 +493,7 @@ REBINT Find_Bitset_In_Binstr(
             break;
 
         if (is_str)
-            cp1 = SKIP_CHR(&c1, cast(Utf8(const*), cp1), skip);
+            cp1 = Utf8_Skip(&c1, cast(Utf8(const*), cp1), skip);
         else {
             cp1 += skip;
             c1 = *cp1;

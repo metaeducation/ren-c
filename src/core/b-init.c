@@ -488,7 +488,7 @@ static void Init_Root_Vars(void)
 
   #if !defined(NDEBUG)
     Codepoint test_nul;
-    NEXT_CHR(&test_nul, String_At(nulled_uni, 0));
+    Utf8_Next(&test_nul, String_At(nulled_uni, 0));
     assert(test_nul == '\0');
     assert(String_Len(nulled_uni) == 0);
   #endif
@@ -820,7 +820,7 @@ void Startup_Core(void)
         utf8_size,
         Lib_Context  // used by Base + Mezzanine, overruled in SYS.UTIL
     );
-    PUSH_GC_GUARD(boot_array); // managed, so must be guarded
+    Push_GC_Guard(boot_array); // managed, so must be guarded
 
     rebFree(utf8); // don't need decompressed text after it's scanned
 
@@ -845,7 +845,7 @@ void Startup_Core(void)
         VAL_ARRAY_KNOWN_MUTABLE(&boot->typespecs)
     );
     Manage_Series(datatypes_catalog);
-    PUSH_GC_GUARD(datatypes_catalog);
+    Push_GC_Guard(datatypes_catalog);
 
     // !!! REVIEW: Startup_Typesets() uses symbols, data stack, and adds words
     // to lib--not available until this point in time.
@@ -859,18 +859,18 @@ void Startup_Core(void)
     //
     Array(*) natives_catalog = Startup_Natives(SPECIFIC(&boot->natives));
     Manage_Series(natives_catalog);
-    PUSH_GC_GUARD(natives_catalog);
+    Push_GC_Guard(natives_catalog);
 
     // boot->generics is the list in %generics.r
     //
     Array(*) generics_catalog = Startup_Generics(SPECIFIC(&boot->generics));
     Manage_Series(generics_catalog);
-    PUSH_GC_GUARD(generics_catalog);
+    Push_GC_Guard(generics_catalog);
 
     // boot->errors is the error definition list from %errors.r
     //
     Context(*) errors_catalog = Startup_Errors(SPECIFIC(&boot->errors));
-    PUSH_GC_GUARD(errors_catalog);
+    Push_GC_Guard(errors_catalog);
 
     Init_System_Object(
         SPECIFIC(&boot->sysobj),
@@ -880,10 +880,10 @@ void Startup_Core(void)
         errors_catalog
     );
 
-    DROP_GC_GUARD(errors_catalog);
-    DROP_GC_GUARD(generics_catalog);
-    DROP_GC_GUARD(natives_catalog);
-    DROP_GC_GUARD(datatypes_catalog);
+    Drop_GC_Guard(errors_catalog);
+    Drop_GC_Guard(generics_catalog);
+    Drop_GC_Guard(natives_catalog);
+    Drop_GC_Guard(datatypes_catalog);
 
     Init_Contexts_Object();
 
@@ -1032,7 +1032,7 @@ void Startup_Core(void)
 
     assert(TOP_INDEX == 0 and TOP_LEVEL == BOTTOM_LEVEL);
 
-    DROP_GC_GUARD(boot_array);
+    Drop_GC_Guard(boot_array);
 
     PG_Boot_Phase = BOOT_DONE;
 

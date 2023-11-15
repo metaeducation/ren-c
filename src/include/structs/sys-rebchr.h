@@ -36,7 +36,7 @@
 //
 //     Utf8(*) ptr = String_Head(string_series);
 //     Codepoint c;
-//     ptr = NEXT_CHR(&c, ptr);  // ++ptr or ptr[n] will error in C++ build
+//     ptr = Utf8_Next(&c, ptr);  // ++ptr or ptr[n] will error in C++ build
 //
 // The code that runs behind the scenes is typical UTF-8 forward and backward
 // scanning code, minus any need for error handling.
@@ -126,8 +126,11 @@
         operator bool() { return bp != nullptr; }  // implicit
         operator const void*() { return bp; }  // implicit
         operator const Byte*() { return bp; }  // implicit
-        operator const char*()
-          { return reinterpret_cast<const char*>(bp); }  // implicit
+        operator const char*() { return cast(const char*, bp); }  // implicit
+
+        explicit operator Byte*() {  // explicit, does not require m_cast
+            return m_cast(Byte*, bp);
+        }
     };
 
     template<>
@@ -137,26 +140,10 @@
         explicit Utf8Ptr (Byte* bp)
             : Utf8Ptr<const Byte*> (bp) {}
         explicit Utf8Ptr (char *cstr)
-            : Utf8Ptr<const Byte*> (reinterpret_cast<Byte*>(cstr)) {}
+            : Utf8Ptr<const Byte*> (cast(Byte*, cstr)) {}
 
-        static Utf8(*) nonconst(Utf8(const*) cp)
-          { return Utf8Ptr {const_cast<Byte*>(cp.bp)}; }
-
-        operator void*() { return const_cast<Byte*>(bp); }  // implicit
-        operator Byte*() { return const_cast<Byte*>(bp); }  // implicit
-        explicit operator char*()
-            { return const_cast<char*>(reinterpret_cast<const char*>(bp)); }
+        operator void*() { return m_cast(Byte*, bp); }  // implicit
+        operator Byte*() { return m_cast(Byte*, bp); }  // implicit
+        operator char*() { return x_cast(char*, bp); }  // implicit
     };
-
-    // const_cast<> and reinterpret_cast<> don't work with user-defined
-    // conversion operators.  But since this codebase uses m_cast, we can
-    // cheat when the class is being used with the helpers.
-    //
-    template <>
-    inline Utf8(*) mp_cast_helper(Utf8(const*) v)
-      { return Utf8Ptr<Byte*> {const_cast<Byte*>(v.bp)}; }
-
-    template <>
-    inline Utf8(*) mp_cast_helper(Utf8(*) v)
-      { return v; }  // m_cast() is supposed to be able to be a no-op
 #endif

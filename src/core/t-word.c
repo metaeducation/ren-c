@@ -316,7 +316,7 @@ REBTYPE(Word)
             Utf8(const*) cp = String_Head(spelling);
             Size size = String_Size(spelling);
             Length len = 0;
-            for (; size > 0; cp = NEXT_STR(cp)) {  // manually walk codepoints
+            for (; size > 0; cp = Skip_Codepoint(cp)) {  // manually walk codepoints
                 size = size - 1;
                 len = len + 1;
             }

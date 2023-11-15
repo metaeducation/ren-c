@@ -290,13 +290,13 @@
 // See documentation of `bias` and `rest` in %sys-rebser.h
 //
 
-inline static bool IS_SER_BIASED(Series(const*) s) {
+inline static bool Is_Series_Biased(Series(const*) s) {
     assert(Get_Series_Flag(s, DYNAMIC));
     return not IS_VARLIST(s);
 }
 
 inline static REBLEN Series_Bias(Series(const*) s) {
-    if (not IS_SER_BIASED(s))
+    if (not Is_Series_Biased(s))
         return 0;
     return cast(REBLEN, ((s)->content.dynamic.bonus.bias >> 16) & 0xffff);
 }
@@ -304,18 +304,18 @@ inline static REBLEN Series_Bias(Series(const*) s) {
 #define MAX_SERIES_BIAS 0x1000
 
 inline static void Set_Series_Bias(Series(*) s, REBLEN bias) {
-    assert(IS_SER_BIASED(s));
+    assert(Is_Series_Biased(s));
     s->content.dynamic.bonus.bias =
         (s->content.dynamic.bonus.bias & 0xffff) | (bias << 16);
 }
 
 inline static void SER_ADD_BIAS(Series(*) s, REBLEN b) {
-    assert(IS_SER_BIASED(s));
+    assert(Is_Series_Biased(s));
     s->content.dynamic.bonus.bias += b << 16;
 }
 
 inline static void SER_SUB_BIAS(Series(*) s, REBLEN b) {
-    assert(IS_SER_BIASED(s));
+    assert(Is_Series_Biased(s));
     s->content.dynamic.bonus.bias -= b << 16;
 }
 
@@ -324,20 +324,14 @@ inline static Length Series_Rest(Series(const*) s) {
         return s->content.dynamic.rest;
 
     if (Is_Series_Array(s))
-        return 2; // includes info bits acting as trick "terminator"
+        return 1;  // capacity of singular non-dynamic arrays is exactly 1
 
     assert(sizeof(s->content) % Series_Wide(s) == 0);
     return sizeof(s->content) / Series_Wide(s);
 }
 
-inline static size_t SER_TOTAL(Series(const*) s) {
+inline static size_t Series_Total(Series(const*) s) {
     return (Series_Rest(s) + Series_Bias(s)) * Series_Wide(s);
-}
-
-inline static size_t SER_TOTAL_IF_DYNAMIC(Series(const*) s) {
-    if (Not_Series_Flag(s, DYNAMIC))
-        return 0;
-    return SER_TOTAL(s);
 }
 
 
@@ -422,7 +416,7 @@ inline static size_t SER_TOTAL_IF_DYNAMIC(Series(const*) s) {
 //
 
 #if DEBUG_MONITOR_SERIES
-    inline static void MONITOR_SERIES(void *p) {
+    inline static void Debug_Monitor_Series(void *p) {
         printf("Adding monitor to %p on tick #%d\n", p, cast(int, TG_tick));
         fflush(stdout);
         g_mem.monitor_node = SER(cast(Node*, p));
@@ -733,7 +727,7 @@ inline static void Term_Series_If_Necessary(Series(*) s)
 
 // Just a No-Op note to point out when a series may-or-may-not be terminated
 //
-#define NOTE_SERIES_MAYBE_TERM(s) NOOP
+#define Note_Series_Maybe_Term(s) NOOP
 
 
 //=//// SERIES MANAGED MEMORY /////////////////////////////////////////////=//
@@ -992,20 +986,20 @@ inline static Cell(const*) Ensure_Mutable(Cell(const*) v) {
 // before a command ends.
 //
 
-#define PUSH_GC_GUARD(node) \
+#define Push_GC_Guard(node) \
     Push_Guard_Node(node)
 
-inline static void DROP_GC_GUARD(const Node* node) {
+inline static void Drop_GC_Guard(const Node* node) {
   #if defined(NDEBUG)
     UNUSED(node);
   #else
     if (node != *Series_Last(const Node*, g_gc.guarded)) {
-        printf("DROP_GC_GUARD() pointer that wasn't last PUSH_GC_GUARD()\n");
+        printf("Drop_GC_Guard() pointer that wasn't last Push_GC_Guard()\n");
         panic (node);
     }
   #endif
 
-    --g_gc.guarded->content.dynamic.used;
+    g_gc.guarded->content.dynamic.used -= 1;
 }
 
 
@@ -1308,7 +1302,7 @@ inline static bool Did_Series_Data_Alloc(Series(*) s, REBLEN capacity) {
     // Set_Series_Bias() uses bit masking on an existing value, we are sure
     // here to clear out the whole value for starters.
     //
-    if (IS_SER_BIASED(s))
+    if (Is_Series_Biased(s))
         s->content.dynamic.bonus.bias = 0;
     else {
         // Leave as trash, or as existing bonus (if called in Expand_Series())
@@ -1330,7 +1324,7 @@ inline static bool Did_Series_Data_Alloc(Series(*) s, REBLEN capacity) {
     if ((g_gc.depletion -= size) <= 0)
         SET_SIGNAL(SIG_RECYCLE);
 
-    assert(SER_TOTAL(s) <= size);  // irregular sizes won't use all the space
+    assert(Series_Total(s) <= size);  // irregular sizes won't use all the space
     return true;
 }
 
@@ -1384,7 +1378,7 @@ inline static Series(*) Make_Series_Into(
 
     // It is more efficient if you know a series is going to become managed to
     // create it in the managed state.  But be sure no evaluations are called
-    // before it's made reachable by the GC, or use PUSH_GC_GUARD().
+    // before it's made reachable by the GC, or use Push_GC_Guard().
     //
     // !!! Code duplicated in Make_Array_Core() ATM.
     //

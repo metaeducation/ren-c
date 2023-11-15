@@ -200,13 +200,13 @@ Bounce MAKE_Decimal(
         DECLARE_STABLE (denominator);
         GET_SEQUENCE_AT(numerator, arg, VAL_SEQUENCE_SPECIFIER(arg), 0);
         GET_SEQUENCE_AT(denominator, arg, VAL_SEQUENCE_SPECIFIER(arg), 1);
-        PUSH_GC_GUARD(numerator);  // might be GROUP!, so (1.2)/4
-        PUSH_GC_GUARD(denominator);
+        Push_GC_Guard(numerator);  // might be GROUP!, so (1.2)/4
+        Push_GC_Guard(denominator);
 
         REBVAL *quotient = rebValue("divide", numerator, denominator);
 
-        DROP_GC_GUARD(denominator);
-        DROP_GC_GUARD(numerator);
+        Drop_GC_Guard(denominator);
+        Drop_GC_Guard(numerator);
 
         if (IS_INTEGER(quotient))
             d = cast(REBDEC, VAL_INT64(quotient));

@@ -59,7 +59,7 @@
 //
 // Series may be either manually memory managed or delegated to the garbage
 // collector.  Free_Unmanaged_Series() may only be called on manual series.
-// See Manage_Series()/PUSH_GC_GUARD() for remarks on how to work safely
+// See Manage_Series()/Push_GC_Guard() for remarks on how to work safely
 // with pointers to garbage-collected series, to avoid having them be GC'd
 // out from under the code while working with them.
 //

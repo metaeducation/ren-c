@@ -74,8 +74,8 @@ const Byte* Analyze_String_For_Scan(
     //
     Codepoint c;
     Codepoint i;
-    for (i = 0; IS_SPACE(c = CHR_CODE(up)) and (i < len); ++i, --len)
-        up = NEXT_STR(up);
+    for (i = 0; IS_SPACE(c = Codepoint_At(up)) and (i < len); ++i, --len)
+        up = Skip_Codepoint(up);
 
     if (len == 0)
         fail (Error_Index_Out_Of_Range_Raw());
@@ -97,8 +97,8 @@ const Byte* Analyze_String_For_Scan(
             fail (Error_Too_Long_Raw());
 
         --len;
-        up = NEXT_STR(up);
-    } while (len > 0 and not IS_SPACE(c = CHR_CODE(up)));
+        up = Skip_Codepoint(up);
+    } while (len > 0 and not IS_SPACE(c = Codepoint_At(up)));
 
     if (size_out)  // give back byte size before trailing spaces
         *unwrap(size_out) = up - at_index;
@@ -108,7 +108,7 @@ const Byte* Analyze_String_For_Scan(
     for (; len > 0; --len) {
         if (not IS_SPACE(c))
             fail (Error_Invalid_Chars_Raw());
-        up = NEXT_CHR(&c, up);
+        up = Utf8_Next(&c, up);
     }
 
     return at_index;
@@ -173,7 +173,7 @@ void Change_Case(
     // be possible, only contractions (is that true?)  Review when UTF-8
     // Everywhere is more mature to the point this is worth worrying about.
     //
-    Utf8(*) up = VAL_STRING_AT_Ensure_Mutable(val);
+    Utf8(*) up = VAL_STRING_AT_ENSURE_MUTABLE(val);
     Utf8(*) dp;
     if (upper) {
         REBLEN n;
@@ -181,9 +181,9 @@ void Change_Case(
             dp = up;
 
             Codepoint c;
-            up = NEXT_CHR(&c, up);
+            up = Utf8_Next(&c, up);
             if (c < UNICODE_CASES) {
-                dp = WRITE_CHR(dp, UP_CASE(c));
+                dp = Write_Codepoint(dp, UP_CASE(c));
                 assert(dp == up); // !!! not all case changes same byte size?
             }
         }
@@ -194,9 +194,9 @@ void Change_Case(
             dp = up;
 
             Codepoint c;
-            up = NEXT_CHR(&c, up);
+            up = Utf8_Next(&c, up);
             if (c < UNICODE_CASES) {
-                dp = WRITE_CHR(dp, LO_CASE(c));
+                dp = Write_Codepoint(dp, LO_CASE(c));
                 assert(dp == up); // !!! not all case changes same byte size?
             }
         }
@@ -235,9 +235,9 @@ Array(*) Split_Lines(const REBVAL *str)
     Utf8(const*) cp = VAL_STRING_AT(str);
 
     Codepoint c;
-    cp = NEXT_CHR(&c, cp);
+    cp = Utf8_Next(&c, cp);
 
-    for (; i < len; ++i, cp = NEXT_CHR(&c, cp)) {
+    for (; i < len; ++i, cp = Utf8_Next(&c, cp)) {
         if (c != LF && c != CR) {
             Append_Codepoint(mo->series, c);
             continue;
@@ -249,7 +249,7 @@ Array(*) Split_Lines(const REBVAL *str)
         Push_Mold(mo);
 
         if (c == CR) {
-            Utf8(const*) tp = NEXT_CHR(&c, cp);
+            Utf8(const*) tp = Utf8_Next(&c, cp);
             if (c == LF) {
                 ++i;
                 cp = tp; // treat CR LF as LF, lone CR as LF

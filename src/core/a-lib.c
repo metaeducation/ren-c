@@ -27,7 +27,7 @@
 //
 // What characterizes the external API is that it is not necessary to #include
 // the extensive definitions of `struct SeriesT` or the APIs for dealing with
-// all the internal details (e.g. PUSH_GC_GUARD(), which are easy to get
+// all the internal details (e.g. Push_GC_Guard(), which are easy to get
 // wrong).  Not only does this simplify the interface, but it also means that
 // the C code using the library isn't competing as much for definitions in
 // the global namespace.
@@ -1592,7 +1592,7 @@ static unsigned int Spell_Into_Wide(
     Utf8(const*) cp = VAL_UTF8_AT(v);
 
     Codepoint c;
-    cp = NEXT_CHR(&c, cp);
+    cp = Utf8_Next(&c, cp);
 
     REBLEN i = 0;
     while (c != '\0' and i < buf_wchars) {
@@ -1609,7 +1609,7 @@ static unsigned int Spell_Into_Wide(
             i += 2;
             num_wchars += 2;
         }
-        cp = NEXT_CHR(&c, cp);
+        cp = Utf8_Next(&c, cp);
     }
 
     if (buf)
@@ -1621,7 +1621,7 @@ static unsigned int Spell_Into_Wide(
         else
             num_wchars += 2;  // requires surrogate pair to represent
 
-        cp = NEXT_CHR(&c, cp);
+        cp = Utf8_Next(&c, cp);
     }
 
     return num_wchars;  // if allocating, caller needs space for num_wchars + 1

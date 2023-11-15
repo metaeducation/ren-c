@@ -297,7 +297,7 @@ inline static Utf8(const*) VAL_UTF8_LEN_SIZE_AT_LIMIT(
                 PAYLOAD(Bytes, v).at_least_8
             );
             for (; limit != 0; --limit, ++len)
-                at = NEXT_STR(at);
+                at = Skip_Codepoint(at);
             size = at - PAYLOAD(Bytes, v).at_least_8;
         }
 
@@ -335,8 +335,8 @@ inline static Utf8(const*) VAL_UTF8_LEN_SIZE_AT_LIMIT(
                 //
                 Utf8(const*) cp = utf8;
                 REBLEN index = 0;
-                for (; index < cast(REBLEN, limit); ++index, cp = NEXT_STR(cp)) {
-                    if (CHR_CODE(cp) == '\0')
+                for (; index < cast(REBLEN, limit); ++index, cp = Skip_Codepoint(cp)) {
+                    if (Codepoint_At(cp) == '\0')
                         break;
                 }
                 if (size_out)

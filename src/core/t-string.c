@@ -77,8 +77,8 @@ REBINT CT_String(NoQuote(Cell(const*)) a, NoQuote(Cell(const*)) b, bool strict)
         Codepoint c1;
         Codepoint c2;
 
-        cp1 = NEXT_CHR(&c1, cp1);
-        cp2 = NEXT_CHR(&c2, cp2);
+        cp1 = Utf8_Next(&c1, cp1);
+        cp2 = Utf8_Next(&c2, cp2);
 
         REBINT d;
         if (strict)
@@ -135,7 +135,7 @@ static void reverse_string(String(*) str, REBLEN index, REBLEN len)
         REBLEN n;
         for (n = 0; n < len; ++n) {
             Codepoint c;
-            up = BACK_CHR(&c, up);
+            up = Utf8_Back(&c, up);
             Append_Codepoint(mo->series, c);
         }
 
@@ -508,7 +508,7 @@ void Mold_Text_Series_At(REB_MOLD *mo, String(const*) s, REBLEN index) {
     REBLEN x;
     for (x = index; x < len; x++) {
         Codepoint c;
-        up = NEXT_CHR(&c, up);
+        up = Utf8_Next(&c, up);
 
         switch (c) {
           case '{':
@@ -559,7 +559,7 @@ void Mold_Text_Series_At(REB_MOLD *mo, String(const*) s, REBLEN index) {
         REBLEN n;
         for (n = index; n < String_Len(s); n++) {
             Codepoint c;
-            up = NEXT_CHR(&c, up);
+            up = Utf8_Next(&c, up);
             Mold_Uni_Char(mo, c, parened);
         }
 
@@ -576,7 +576,7 @@ void Mold_Text_Series_At(REB_MOLD *mo, String(const*) s, REBLEN index) {
     REBLEN n;
     for (n = index; n < String_Len(s); n++) {
         Codepoint c;
-        up = NEXT_CHR(&c, up);
+        up = Utf8_Next(&c, up);
 
         switch (c) {
           case '{':
@@ -634,7 +634,7 @@ static void Mold_File(REB_MOLD *mo, NoQuote(Cell(const*)) v)
     REBLEN n;
     for (n = 0; n < len; ++n) {
         Codepoint c;
-        cp = NEXT_CHR(&c, cp);
+        cp = Utf8_Next(&c, cp);
 
         if (IS_FILE_ESC(c))
             Form_Hex_Esc(mo, c); // c => %xx
@@ -976,7 +976,7 @@ REBTYPE(String)
 
         return Init_Char_Unchecked(
             OUT,
-            CHR_CODE(String_At(VAL_STRING(v), ret))
+            Codepoint_At(String_At(VAL_STRING(v), ret))
         ); }
 
       case SYM_TAKE: {
@@ -1021,7 +1021,7 @@ REBTYPE(String)
         if (REF(part))
             Init_Any_String(OUT, VAL_TYPE(v), Copy_String_At_Limit(v, len));
         else
-            Init_Char_Unchecked(OUT, CHR_CODE(VAL_STRING_AT(v)));
+            Init_Char_Unchecked(OUT, Codepoint_At(VAL_STRING_AT(v)));
 
         Remove_Any_Series_Len(v, VAL_INDEX(v), len);
         return OUT; }

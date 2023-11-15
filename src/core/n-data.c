@@ -40,7 +40,7 @@ static bool Check_Char_Range(const REBVAL *val, REBLEN limit)
 
     for (; len > 0; len--) {
         Codepoint c;
-        up = NEXT_CHR(&c, up);
+        up = Utf8_Next(&c, up);
 
         if (c > limit)
             return false;
@@ -648,15 +648,15 @@ bool Get_Var_Push_Refinements_Throws(
 
     if (ANY_PATH(var)) {  // !!! SET-PATH! too?
         DECLARE_LOCAL (safe);
-        PUSH_GC_GUARD(safe);
+        Push_GC_Guard(safe);
         DECLARE_LOCAL (result);
-        PUSH_GC_GUARD(result);
+        Push_GC_Guard(result);
 
         bool threw = Get_Path_Push_Refinements_Throws(
             result, safe, var, var_specifier  // var may be in `out`
         );
-        DROP_GC_GUARD(result);
-        DROP_GC_GUARD(safe);
+        Drop_GC_Guard(result);
+        Drop_GC_Guard(safe);
 
         if (steps_out and steps_out != GROUPS_OK)
             Init_None(unwrap(steps_out));  // !!! What to return?
@@ -762,7 +762,7 @@ bool Get_Var_Push_Refinements_Throws(
     ++stackindex;
 
     DECLARE_LOCAL (temp);
-    PUSH_GC_GUARD(temp);
+    Push_GC_Guard(temp);
 
     while (stackindex != TOP_INDEX + 1) {
         Move_Cell(temp, out);
@@ -773,13 +773,13 @@ bool Get_Var_Push_Refinements_Throws(
             Canon(PICK_P), temp, ins
         )){
             Drop_Data_Stack_To(base);
-            DROP_GC_GUARD(temp);
+            Drop_GC_Guard(temp);
             fail (Error_No_Catch_For_Throw(TOP_LEVEL));
         }
         ++stackindex;
     }
 
-    DROP_GC_GUARD(temp);
+    Drop_GC_Guard(temp);
 
     if (steps_out and steps_out != GROUPS_OK) {
         Array(*) a = Pop_Stack_Values(base);
@@ -1219,15 +1219,15 @@ bool Set_Var_Core_Updater_Throws(
             //
             Derelativize(temp, var, var_specifier);
             QUOTE_BYTE(temp) = ONEQUOTE_3;
-            PUSH_GC_GUARD(temp);
+            Push_GC_Guard(temp);
             if (rebRunThrows(
                 out,  // <-- output cell
                 rebRUN(updater), "binding of", temp, temp, rebQ(setval)
             )){
-                DROP_GC_GUARD(temp);
+                Drop_GC_Guard(temp);
                 fail (Error_No_Catch_For_Throw(TOP_LEVEL));
             }
-            DROP_GC_GUARD(temp);
+            Drop_GC_Guard(temp);
         }
 
         if (steps_out and steps_out != GROUPS_OK) {
@@ -1318,10 +1318,10 @@ bool Set_Var_Core_Updater_Throws(
         fail (var);
 
     DECLARE_STABLE (writeback);
-    PUSH_GC_GUARD(writeback);
+    Push_GC_Guard(writeback);
     Finalize_None(writeback);  // needs to be GC safe
 
-    PUSH_GC_GUARD(temp);
+    Push_GC_Guard(temp);
 
     StackIndex stackindex_top = TOP_INDEX;
 
@@ -1359,8 +1359,8 @@ bool Set_Var_Core_Updater_Throws(
             out,  // <-- output cell
             Canon(PICK_P), temp, ins
         )){
-            DROP_GC_GUARD(temp);
-            DROP_GC_GUARD(writeback);
+            Drop_GC_Guard(temp);
+            Drop_GC_Guard(writeback);
             fail (Error_No_Catch_For_Throw(TOP_LEVEL));  // don't let PICKs throw
         }
         ++stackindex;
@@ -1376,8 +1376,8 @@ bool Set_Var_Core_Updater_Throws(
         out,  // <-- output cell
         rebRUN(updater), temp, ins, rebQ(setval)
     )){
-        DROP_GC_GUARD(temp);
-        DROP_GC_GUARD(writeback);
+        Drop_GC_Guard(temp);
+        Drop_GC_Guard(writeback);
         fail (Error_No_Catch_For_Throw(TOP_LEVEL));  // don't let POKEs throw
     }
 
@@ -1405,8 +1405,8 @@ bool Set_Var_Core_Updater_Throws(
     }
   }
 
-    DROP_GC_GUARD(temp);
-    DROP_GC_GUARD(writeback);
+    Drop_GC_Guard(temp);
+    Drop_GC_Guard(writeback);
 
     if (steps_out and steps_out != GROUPS_OK)
         Init_Block(unwrap(steps_out), Pop_Stack_Values(base));
@@ -1807,7 +1807,7 @@ bool Try_As_String(
         // may be misleading by suggesting a valid "codepoint" was seen.
         //
         const Byte* at_ptr = Binary_At(bin, byteoffset);
-        if (Is_Continuation_Byte_If_Utf8(*at_ptr))
+        if (Is_Continuation_Byte(*at_ptr))
             fail ("Index at codepoint to convert binary to ANY-STRING!");
 
         String(const*) str;
@@ -1879,7 +1879,7 @@ bool Try_As_String(
             REBLEN len = String_Len(str);
             while (index < len and cp != at_ptr) {
                 ++index;
-                cp = NEXT_STR(cp);
+                cp = Skip_Codepoint(cp);
             }
         }
 

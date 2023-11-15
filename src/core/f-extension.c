@@ -168,7 +168,7 @@ DECLARE_NATIVE(load_extension)
     }
 
     assert(Array_Len(collated) == IDX_COLLATOR_MAX);
-    PUSH_GC_GUARD(collated);
+    Push_GC_Guard(collated);
 
     Cell(const*) script_compressed
         = Array_At(collated, IDX_COLLATOR_SCRIPT);
@@ -192,7 +192,7 @@ DECLARE_NATIVE(load_extension)
 
     DECLARE_LOCAL (module);
     Init_Context_Cell(module, REB_MODULE, module_ctx);
-    PUSH_GC_GUARD(module);  // !!! Is GC guard unnecessary due to references?
+    Push_GC_Guard(module);  // !!! Is GC guard unnecessary due to references?
 
     size_t script_size;
     Byte* script_utf8 = Decompress_Alloc_Core(
@@ -250,8 +250,8 @@ DECLARE_NATIVE(load_extension)
 
     rebRelease(script);
 
-    DROP_GC_GUARD(module);
-    DROP_GC_GUARD(collated);
+    Drop_GC_Guard(module);
+    Drop_GC_Guard(collated);
 
     rebElide("append system.extensions", CTX_ARCHETYPE(module_ctx));
 

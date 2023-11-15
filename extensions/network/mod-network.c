@@ -340,7 +340,7 @@ void on_new_connection(uv_stream_t *server, int status) {
         fail (rebError_UV(status));
 
     Context(*) client = Copy_Context_Shallow_Managed(listener_port_ctx);
-    PUSH_GC_GUARD(client);
+    Push_GC_Guard(client);
 
     Init_Nulled(CTX_VAR(client, STD_PORT_DATA));  // just to be sure
 
@@ -372,7 +372,7 @@ void on_new_connection(uv_stream_t *server, int status) {
 
     Get_Local_IP(sock_new);
 
-    DROP_GC_GUARD(client);
+    Drop_GC_Guard(client);
 
     rebElide("(", listening_port, ").spec.accept", CTX_ARCHETYPE(client));
 }

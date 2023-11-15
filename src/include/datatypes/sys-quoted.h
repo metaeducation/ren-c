@@ -19,11 +19,11 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Value cells reserve a byte in their header called the QUOTE_BYTE().  The
-// most basic usage is that any value can be "quote" escaped.  The depth is
-// the number of apostrophes, e.g. ''''X is a depth of 4.  The operator QUOTE
-// can be used to add a quoting level to a value, UNQUOTE to remove one,
-// and NOQUOTE to remove all quotes.
+// Cells reserve a byte in their header called the QUOTE_BYTE().  The most
+// basic usage is that any value can be "quote" escaped.  The depth is the
+// number of apostrophes, e.g. ''''X is a depth of 4.  The operator QUOTE can
+// be used to add a quoting level to a value, UNQUOTE to remove one, and
+// NOQUOTE to remove all quotes.
 //
 //     >> quote [a]
 //     == '[a]
@@ -34,8 +34,7 @@
 // But the QUOTE_BYTE() is used to encode other states as well: all datatypes
 // (besides QUOTED! itself) have an "isotopic" form as well as a "quasi" form.
 // The quasi form will evaluate to the isotopic form, and the isotopic form is
-// expressly prohibited from being put in arrays, while also causing errors
-// if accessed from plain word fetches.
+// expressly prohibited from being put in arrays:
 //
 //     >> nice: first [~foo~]
 //     == ~foo~
@@ -46,18 +45,18 @@
 //     >> mean: ~foo~
 //     == ~foo~  ; isotope
 //
-//     >> mean
-//     ** Script Error: mean is ~foo~ isotope (see ^(...) and GET/ANY)
-//
 // With the use of the `^xxx` family of types and the `^` operator, it is
 // possible to leverage a form of quoting to transition isotopes to normal, and
-// normal bad words to quoted:
+// normal quasiforms to quoted:
 //
 //     >> ^nice
 //     == '~foo~
 //
 //     >> ^mean
 //     == ~foo~
+//
+// Isotopes are new in Ren-C and central to how the design solves historical
+// problems in Rebol languages.
 //
 
 inline static Count VAL_QUOTED_DEPTH(Cell(const*) v) {
@@ -87,7 +86,7 @@ inline static Cell(*) Quotify_Core(Cell(*) v, Count depth) {
     #define Quotify Quotify_Core
 #else
     inline static Value(*) Quotify(Value(*) v, Count depth)
-        { return cast(REBVAL*, Quotify_Core(v, depth)); }
+        { return cast(Value(*), Quotify_Core(v, depth)); }
 
     inline static Cell(*) Quotify(Cell(*) v, Count depth)
         { return Quotify_Core(v, depth); }
@@ -113,7 +112,7 @@ inline static Cell(*) Unquotify_Core(Cell(*) v, Count unquotes) {
     #define Unquotify Unquotify_Core
 #else
     inline static Value(*) Unquotify(Value(*) v, Count depth)
-        { return cast(REBVAL*, Unquotify_Core(v, depth)); }
+        { return cast(Value(*), Unquotify_Core(v, depth)); }
 
     inline static Cell(*) Unquotify(Cell(*) v, Count depth)
         { return Unquotify_Core(v, depth); }

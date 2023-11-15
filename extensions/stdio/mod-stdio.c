@@ -326,7 +326,7 @@ DECLARE_NATIVE(read_line)
 
             Codepoint c;
 
-            uint_fast8_t trail = trailingBytesForUTF8[encoded[0]];
+            uint_fast8_t trail = g_trailing_bytes_for_utf8[encoded[0]];
             if (trail == 0)
                 c = encoded[0];
             else {
@@ -515,7 +515,7 @@ DECLARE_NATIVE(read_char)
 
         Codepoint c;
 
-        uint_fast8_t trail = trailingBytesForUTF8[encoded[0]];
+        uint_fast8_t trail = g_trailing_bytes_for_utf8[encoded[0]];
         if (trail == 0)
             c = encoded[0];
         else {

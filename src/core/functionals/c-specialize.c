@@ -298,9 +298,9 @@ bool Specialize_Action_Throws(
 
         // Run block and ignore result (unless it is thrown)
         //
-        PUSH_GC_GUARD(exemplar);
+        Push_GC_Guard(exemplar);
         bool threw = Do_Any_Array_At_Throws(out, unwrap(def), SPECIFIED);
-        DROP_GC_GUARD(exemplar);
+        Drop_GC_Guard(exemplar);
 
         if (threw) {
             Drop_Data_Stack_To(lowest_ordered_stackindex);

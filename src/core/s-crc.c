@@ -87,7 +87,7 @@ uint32_t Hash_UTF8_Len_Caseless(Utf8(const*) cp, REBLEN len) {
     REBLEN n;
     for (n = 0; n < len; n++) {
         Codepoint c;
-        cp = NEXT_CHR(&c, cp);
+        cp = Utf8_Next(&c, cp);
 
         c = LO_CASE(c);
 

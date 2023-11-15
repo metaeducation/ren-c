@@ -188,7 +188,7 @@ void New_Indented_Line(REB_MOLD *mo)
 // is robust to their existence.  These helper functions can be used to
 // maintain a stack of series.
 //
-// !!! TBD: Unify this with the PUSH_GC_GUARD and DROP_GC_GUARD implementation
+// !!! TBD: Unify this with the Push_GC_Guard and Drop_GC_Guard implementation
 // so that improvements in one will improve the other?
 //
 //=////////////////////////////////////////////////////////////////////////=//
@@ -597,7 +597,7 @@ void Throttle_Mold(REB_MOLD *mo) {
 
         Utf8(*) tail = String_Tail(mo->series);
         Codepoint dummy;
-        Utf8(*) cp = SKIP_CHR(&dummy, tail, -(overage));
+        Utf8(*) cp = Utf8_Skip(&dummy, tail, -(overage));
 
         Term_String_Len_Size(
             mo->series,
@@ -721,7 +721,7 @@ void Drop_Mold_Core(
     // When pushed data are to be discarded, mo->series may be unterminated.
     // (Indeed that happens when Scan_Item_Push_Mold returns NULL/0.)
     //
-    NOTE_SERIES_MAYBE_TERM(mo->series);
+    Note_Series_Maybe_Term(mo->series);
 
     // see notes in Pop_Molded_String()
     //

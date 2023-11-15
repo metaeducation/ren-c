@@ -1349,8 +1349,7 @@ DECLARE_NATIVE(subparse)
 
     Cell(const*) rule = P_AT_END ? nullptr : P_RULE;
 
-    /* Print_Parse_Index(L); */
-    UPDATE_EXPRESSION_START(L);
+    Update_Expression_Start(L);
 
     //=//// FIRST THINGS FIRST: CHECK FOR END /////////////////////////////=//
 
@@ -1977,7 +1976,7 @@ DECLARE_NATIVE(subparse)
                 10,  // !!! how big?
                 NODE_FLAG_MANAGED
             );
-            PUSH_GC_GUARD(collection);
+            Push_GC_Guard(collection);
 
             Level(*) sub = Make_Level(L->feed, LEVEL_MASK_NONE);
 
@@ -1994,7 +1993,7 @@ DECLARE_NATIVE(subparse)
                     | (P_FLAGS & PF_REDBOL)
             );
 
-            DROP_GC_GUARD(collection);
+            Drop_GC_Guard(collection);
             UNUSED(interrupted);  // !!! ignore ACCEPT/REJECT (?)
 
             if (threw)

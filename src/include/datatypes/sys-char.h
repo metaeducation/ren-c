@@ -91,10 +91,12 @@
 #define UNI_ENCODED_MAX 4
 
 
-#define Is_Continuation_Byte_If_Utf8(b) \
+#define Is_Continuation_Byte(b) \
     (((b) & 0xC0) == 0x80)  // only certain if UTF-8 validity is already known
 
-extern const uint_fast8_t firstByteMark[7];  // defined in %t-char.c
+extern const uint_fast8_t g_first_byte_mark_utf8[7];  // defined in %t-char.c
+extern const char g_trailing_bytes_for_utf8[256];  // defined in %t-char.c
+extern const uint_fast32_t g_offsets_from_utf8[6];  // defined in %t-char.c
 
 #define UNI_REPLACEMENT_CHAR    (Codepoint)0x0000FFFD
 #define UNI_MAX_BMP             (Codepoint)0x0000FFFF
@@ -125,7 +127,7 @@ inline static uint_fast8_t Encoded_Size_For_Codepoint(Codepoint c) {
     fail ("Codepoint is greater than maximum legal UTF-32 value");
 }
 
-// Encodes a single codepoint with known size (see WRITE_CHR() for wrapper)
+// Encodes a single codepoint with known size (see Write_Codepoint() wrapper)
 // Be sure dst has at least `encoded_size` bytes available.
 //
 inline static void Encode_UTF8_Char(
@@ -149,7 +151,7 @@ inline static void Encode_UTF8_Char(
         *--dst = cast(Byte, (c | mark) & mask);
         c >>= 6;  // falls through
       case 1:
-        *--dst = cast(Byte, c | firstByteMark[encoded_size]);
+        *--dst = cast(Byte, c | g_first_byte_mark_utf8[encoded_size]);
     }
 }
 
@@ -204,15 +206,11 @@ inline static bool IS_SPACE(Codepoint c)
   { assert(c != '\0'); return c <= 32 and ((White_Chars[c] & 2) != 0); }
 
 
-extern const char trailingBytesForUTF8[256];  // defined in %t-char.c
-extern const uint_fast32_t offsetsFromUTF8[6];  // defined in %t-char.c
-
-
 // Utility routine to tell whether a sequence of bytes is legal UTF-8.
 // This must be called with the length pre-determined by the first byte.
 // If not calling this from ConvertUTF8to*, then the length can be set by:
 //
-//  length = trailingBytesForUTF8[*source] + 1;
+//  length = g_trailing_bytes_for_utf8[*source] + 1;
 //
 // and the sequence is illegal right away if there aren't that many bytes
 // available.
@@ -220,7 +218,7 @@ extern const uint_fast32_t offsetsFromUTF8[6];  // defined in %t-char.c
 // If presented with a length > 4, this returns false.  The Unicode
 // definition of UTF-8 goes up to 4-byte sequences.
 //
-inline static bool isLegalUTF8(const Byte* source, int length) {
+inline static bool Is_Legal_UTF8(const Byte* source, int length) {
     Byte a;
     const Byte* srcptr = source + length;
 
@@ -301,7 +299,7 @@ inline static const Byte* Back_Scan_UTF8_Char(
     *out = 0;
 
     const Byte* source = bp;
-    uint_fast8_t trail = trailingBytesForUTF8[*source];
+    uint_fast8_t trail = g_trailing_bytes_for_utf8[*source];
 
     // Check that we have enough valid source bytes:
     if (size) {
@@ -314,7 +312,7 @@ inline static const Byte* Back_Scan_UTF8_Char(
                 return nullptr;
         } while (--trail != 0);
 
-        trail = trailingBytesForUTF8[*source];
+        trail = g_trailing_bytes_for_utf8[*source];
     }
 
     // This check was considered "too expensive" and omitted in R3-Alpha:
@@ -331,7 +329,7 @@ inline static const Byte* Back_Scan_UTF8_Char(
     // routine could be stripped down to remove checks for character decoding.
     // But again, low priority--it would only apply to non-ASCII chars.
     //
-    if (not isLegalUTF8(source, trail + 1))
+    if (not Is_Legal_UTF8(source, trail + 1))
         return nullptr;
 
     switch (trail) {
@@ -342,7 +340,7 @@ inline static const Byte* Back_Scan_UTF8_Char(
         case 1: *out += *source++; *out <<= 6;  // falls through
         case 0: *out += *source++;
     }
-    *out -= offsetsFromUTF8[trail];
+    *out -= g_offsets_from_utf8[trail];
 
     // UTF-16 surrogate values are illegal in UTF-32, and anything
     // over Plane 17 (> 0x10FFFF) is illegal.
@@ -389,7 +387,7 @@ inline static const Byte* Back_Scan_UTF8_Char_Unchecked(
     *out = *bp;  // wait to increment...
     uint_fast8_t trail = 0;  // count as we go
 
-    while (Is_Continuation_Byte_If_Utf8(bp[1])) {
+    while (Is_Continuation_Byte(bp[1])) {
         *out <<= 6;
         ++bp;  // ...NOW we increment
         *out += *bp;
@@ -397,7 +395,7 @@ inline static const Byte* Back_Scan_UTF8_Char_Unchecked(
     }
     assert(trail <= 5);
 
-    *out -= offsetsFromUTF8[trail];  // subtract the "magic number"
+    *out -= g_offsets_from_utf8[trail];  // subtract the "magic number"
 
     assert(*out <= UNI_MAX_LEGAL_UTF32);
     assert(*out < UNI_SUR_HIGH_START or *out > UNI_SUR_LOW_END);

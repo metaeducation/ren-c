@@ -158,7 +158,7 @@ REBINT Find_Max_Bit(Cell(const*) val)
         Utf8(const*) up = VAL_UTF8_LEN_SIZE_AT(&len, nullptr, val);
         for (; len > 0; --len) {
             Codepoint c;
-            up = NEXT_CHR(&c, up);
+            up = Utf8_Next(&c, up);
             if (c > maxi)
                 maxi = cast(REBINT, c);
         }
@@ -289,7 +289,7 @@ bool Set_Bits(Binary(*) bset, Cell(const*) val, bool set)
         Utf8(const*) up = VAL_UTF8_LEN_SIZE_AT(&len, nullptr, val);
         for (; len > 0; --len) {
             Codepoint c;
-            up = NEXT_CHR(&c, up);
+            up = Utf8_Next(&c, up);
             Set_Bit(bset, c, set);
         }
 
@@ -433,7 +433,7 @@ bool Check_Bits(Binary(const*) bset, Cell(const*) val, bool uncased)
         Utf8(const*) up = VAL_UTF8_LEN_SIZE_AT(&len, nullptr, val);
         for (; len > 0; --len) {
             Codepoint c;
-            up = NEXT_CHR(&c, up);
+            up = Utf8_Next(&c, up);
             if (Check_Bit(bset, c, uncased))
                 return true;
         }

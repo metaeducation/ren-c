@@ -415,7 +415,7 @@ Bounce Evaluator_Executor(Level(*) L)
     Trash_Pointer_If_Debug(L_current);
     Trash_Pointer_If_Debug(L_current_gotten);
 
-    UPDATE_EXPRESSION_START(L);  // !!! See Level_Array_Index() for caveats
+    Update_Expression_Start(L);  // !!! See Level_Array_Index() for caveats
 
     if (Is_Level_At_End(L)) {
         Finalize_Void(OUT);

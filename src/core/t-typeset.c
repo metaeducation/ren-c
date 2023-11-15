@@ -273,9 +273,9 @@ void MF_Parameter(REB_MOLD *mo, NoQuote(Cell(const*)) v, bool form)
     else
         Init_Block(temp, EMPTY_ARRAY);
 
-    PUSH_GC_GUARD(temp);
+    Push_GC_Guard(temp);
     Mold_Or_Form_Value(mo, temp, form);
-    DROP_GC_GUARD(temp);
+    Drop_GC_Guard(temp);
 
     if (not form) {
         End_Mold(mo);

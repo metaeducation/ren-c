@@ -165,7 +165,7 @@ restart:;
 
     REBLEN i;
     for (i = 0; i < len;) {
-        up = NEXT_CHR(&c, up);
+        up = Utf8_Next(&c, up);
         ++i;
 
         if (c == ':') {
@@ -190,7 +190,7 @@ restart:;
             Append_Codepoint(mo->series, '/'); // replace : with a /
 
             if (i < len) {
-                up = NEXT_CHR(&c, up);
+                up = Utf8_Next(&c, up);
                 ++i;
 
                 if (c == '\\' || c == '/') {
@@ -199,7 +199,7 @@ restart:;
                     //
                     if (i >= len)
                         break;
-                    up = NEXT_CHR(&c, up);
+                    up = Utf8_Next(&c, up);
                     ++i;
                 }
             }
@@ -259,13 +259,13 @@ void Mold_File_To_Local(REB_MOLD *mo, Cell(const*) file, Flags flags) {
     if (len == 0)
         c = '\0';
     else
-        up = NEXT_CHR(&c, up);
+        up = Utf8_Next(&c, up);
 
     // Prescan for: /c/dir = c:/dir, /vol/dir = //vol/dir, //dir = ??
     //
     if (c == '/') { // %/
         if (i < len) {
-            up = NEXT_CHR(&c, up);
+            up = Utf8_Next(&c, up);
             ++i;
         }
         else
@@ -279,14 +279,14 @@ void Mold_File_To_Local(REB_MOLD *mo, Cell(const*) file, Flags flags) {
             Codepoint d = '/';
             Utf8(const*) dp;
             if (i < len)
-                dp = NEXT_CHR(&d, up);
+                dp = Utf8_Next(&d, up);
             else
                 dp = up;
             if (d == '/') { // %/c/ => "c:/"
                 ++i;
                 Append_Codepoint(mo->series, c);
                 Append_Codepoint(mo->series, ':');
-                up = NEXT_CHR(&c, dp);
+                up = Utf8_Next(&c, dp);
                 ++i;
             }
             else {
@@ -319,7 +319,7 @@ void Mold_File_To_Local(REB_MOLD *mo, Cell(const*) file, Flags flags) {
     // this loop always follows / or start).  Each iteration takes care of one
     // segment of the path, i.e. stops after OS_DIR_SEP
     //
-    for (; i < len; up = NEXT_CHR(&c, up), ++i) {
+    for (; i < len; up = Utf8_Next(&c, up), ++i) {
         if (flags & REB_FILETOLOCAL_FULL) {
             //
             // While file and directory names like %.foo or %..foo/ are legal,
@@ -327,7 +327,7 @@ void Mold_File_To_Local(REB_MOLD *mo, Cell(const*) file, Flags flags) {
             // starts with `.` then look ahead for special consideration.
             //
             if (c == '.') {
-                up = NEXT_CHR(&c, up);
+                up = Utf8_Next(&c, up);
                 ++i;
 
                 if (c == '\0') {
@@ -350,7 +350,7 @@ void Mold_File_To_Local(REB_MOLD *mo, Cell(const*) file, Flags flags) {
 
                 // We've seen two sequential dots, so .. or ../ or ..xxx
 
-                up = NEXT_CHR(&c, up);
+                up = Utf8_Next(&c, up);
                 ++i;
                 assert(c != '\0' || i == len);
 
@@ -365,20 +365,20 @@ void Mold_File_To_Local(REB_MOLD *mo, Cell(const*) file, Flags flags) {
                         Utf8(*) tp = String_Tail(mo->series);
 
                         --n;
-                        tp = BACK_CHR(&c2, tp);
+                        tp = Utf8_Back(&c2, tp);
                         assert(c2 == OS_DIR_SEP);
 
                         if (n > mo->base.index) {
                             --n; // don't want the *ending* slash
-                            tp = BACK_CHR(&c2, tp);
+                            tp = Utf8_Back(&c2, tp);
                         }
 
                         while (n > mo->base.index and c2 != OS_DIR_SEP) {
                             --n;
-                            tp = BACK_CHR(&c2, tp);
+                            tp = Utf8_Back(&c2, tp);
                         }
 
-                        tp = BACK_CHR(&c2, tp);
+                        tp = Utf8_Back(&c2, tp);
 
                         // Terminate, loses '/' (or '\'), but added back below
                         //
@@ -394,7 +394,7 @@ void Mold_File_To_Local(REB_MOLD *mo, Cell(const*) file, Flags flags) {
                     Append_Codepoint(mo->series, OS_DIR_SEP);
 
                     if (i == len) {
-                        assert(c == '\0');  // don't run NEXT_CHR() again!
+                        assert(c == '\0');  // don't run Utf8_Next() again!
                         break;
                     }
                     continue;
@@ -410,7 +410,7 @@ void Mold_File_To_Local(REB_MOLD *mo, Cell(const*) file, Flags flags) {
         }
 
     segment_loop:;
-        for (; i < len; up = NEXT_CHR(&c, up), ++i) {
+        for (; i < len; up = Utf8_Next(&c, up), ++i) {
             //
             // Keep copying characters out of the path segment until we find
             // a slash or hit the end of the input path string.
@@ -445,7 +445,7 @@ void Mold_File_To_Local(REB_MOLD *mo, Cell(const*) file, Flags flags) {
         }
 
         // If we're past the end of the content, we don't want to run the
-        // outer loop test and NEXT_CHR() again...that's past the terminator.
+        // outer loop test and Utf8_Next() again...that's past the terminator.
         //
         assert(i <= len);
         if (i == len) {

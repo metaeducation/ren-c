@@ -788,7 +788,7 @@ void Expand_Series(Series(*) s, REBLEN index, REBLEN delta)
 
         assert(
             not was_dynamic or (
-                SER_TOTAL(s) > ((Series_Used(s) + Series_Bias(s)) * wide)
+                Series_Total(s) > ((Series_Used(s) + Series_Bias(s)) * wide)
             )
         );
 
@@ -861,7 +861,7 @@ void Expand_Series(Series(*) s, REBLEN index, REBLEN delta)
     if (was_dynamic) {
         data_old = s->content.dynamic.data;
         bias_old = Series_Bias(s);
-        size_old = SER_TOTAL(s);
+        size_old = Series_Total(s);
     }
     else {
         content_old = s->content;
@@ -1032,7 +1032,7 @@ void Remake_Series(Series(*) s, REBLEN units, Flags flags)
         assert(s->content.dynamic.data != NULL);
         data_old = s->content.dynamic.data;
         bias_old = Series_Bias(s);
-        size_old = SER_TOTAL(s);
+        size_old = Series_Total(s);
     }
     else {
         content_old = s->content;
@@ -1323,11 +1323,11 @@ REBLEN Check_Memory_Debug(void)
             if (Series_Rest(s) == 0)
                 panic (s); // zero size allocations not legal
 
-            PoolId pool_id = Pool_Id_For_Size(SER_TOTAL(s));
+            PoolId pool_id = Pool_Id_For_Size(Series_Total(s));
             if (pool_id >= STUB_POOL)
                 continue; // size doesn't match a known pool
 
-            if (g_mem.pools[pool_id].wide < SER_TOTAL(s))
+            if (g_mem.pools[pool_id].wide < Series_Total(s))
                 panic (s);
         }
     }
@@ -1437,7 +1437,7 @@ void Dump_Series_In_Pool(PoolId pool_id)
                 pool_id == UNLIMITED
                 or (
                     Get_Series_Flag(s, DYNAMIC)
-                    and pool_id == Pool_Id_For_Size(SER_TOTAL(s))
+                    and pool_id == Pool_Id_For_Size(Series_Total(s))
                 )
             ){
                 Dump_Series(s, "Dump_Series_In_Pool");
@@ -1542,19 +1542,23 @@ REBU64 Inspect_Series(bool show)
 
             Series(*) s = SER(cast(void*, stub));
 
-            tot_size += SER_TOTAL_IF_DYNAMIC(s); // else 0
+            if (Get_Series_Flag(s, DYNAMIC))
+                tot_size += Series_Total(s);
 
             if (Is_Series_Array(s)) {
                 blks++;
-                blk_size += SER_TOTAL_IF_DYNAMIC(s);
+                if (Get_Series_Flag(s, DYNAMIC))
+                    blk_size += Series_Total(s);
             }
             else if (Series_Wide(s) == 1) {
                 strs++;
-                str_size += SER_TOTAL_IF_DYNAMIC(s);
+                if (Get_Series_Flag(s, DYNAMIC))
+                    str_size += Series_Total(s);
             }
             else if (Series_Wide(s) != 0) {
                 odds++;
-                odd_size += SER_TOTAL_IF_DYNAMIC(s);
+                if (Get_Series_Flag(s, DYNAMIC))
+                    odd_size += Series_Total(s);
             }
         }
     }

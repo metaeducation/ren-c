@@ -120,7 +120,7 @@ String(*) Decode_UTF16(
             //
             if (expect_lf and c != LF) {
                 expect_lf = false;
-                dp = WRITE_CHR(dp, LF);
+                dp = Write_Codepoint(dp, LF);
                 ++num_chars;
             }
             if (c == CR) {
@@ -134,7 +134,7 @@ String(*) Decode_UTF16(
         if (c > 127)
             ascii = false;
 
-        dp = WRITE_CHR(dp, c);
+        dp = Write_Codepoint(dp, c);
         ++num_chars;
     }
 
@@ -228,7 +228,7 @@ static Series(*) Encode_Utf16(
     REBLEN i = 0;
     for (i = 0; i < len; ++i) {
         Codepoint c;
-        cp = NEXT_CHR(&c, cp);
+        cp = Utf8_Next(&c, cp);
 
         // !!! TBD: handle large codepoints bigger than 0xffff, and encode
         // as UTF16.

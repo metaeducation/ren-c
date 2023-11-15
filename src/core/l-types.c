@@ -1032,12 +1032,12 @@ const Byte* Scan_Email(
             if (cp == NULL)
                 return_NULL;
 
-            up = WRITE_CHR(up, decoded);
+            up = Write_Codepoint(up, decoded);
             ++num_chars;
             len -= 2;
         }
         else {
-            up = WRITE_CHR(up, *cp++);
+            up = Write_Codepoint(up, *cp++);
             ++num_chars;
         }
     }
@@ -1332,7 +1332,7 @@ DECLARE_NATIVE(scan_net_header)
         //
         // !!! This is written to deal with unicode lengths in terms of *size*
         // in bytes, not *length* in characters.  If it were to be done
-        // correctly, it would need to use NEXT_CHR to count the characters
+        // correctly, it would need to use Utf8_Next to count the characters
         // in the loop above.  Better to convert to usermode.
 
         String(*) string = Make_String(len * 2);
@@ -1342,7 +1342,7 @@ DECLARE_NATIVE(scan_net_header)
         // "Code below *MUST* mirror that above:"
 
         while (!ANY_CR_LF_END(*cp))
-            str = WRITE_CHR(str, *cp++);
+            str = Write_Codepoint(str, *cp++);
         while (*cp != '\0') {
             if (*cp == CR)
                 ++cp;
@@ -1353,7 +1353,7 @@ DECLARE_NATIVE(scan_net_header)
             while (IS_LEX_SPACE(*cp))
                 ++cp;
             while (!ANY_CR_LF_END(*cp))
-                str = WRITE_CHR(str, *cp++);
+                str = Write_Codepoint(str, *cp++);
         }
         Term_String_Len_Size(string, len, str - String_Head(string));
         Init_Text(val, string);

@@ -208,7 +208,7 @@ bool Init_Invokable_From_Feed_Throws(
     //
     DECLARE_STABLE (action);
     Move_Cell(action, out);
-    PUSH_GC_GUARD(action);
+    Push_GC_Guard(action);
 
     Option(String(const*)) label = VAL_FRAME_LABEL(action);
 
@@ -222,7 +222,7 @@ bool Init_Invokable_From_Feed_Throws(
 
     if (Is_Throwing(L)) {  // signals threw
         Drop_Level(L);
-        DROP_GC_GUARD(action);
+        Drop_GC_Guard(action);
         return true;
     }
 
@@ -239,7 +239,7 @@ bool Init_Invokable_From_Feed_Throws(
     L->varlist = nullptr;  // don't let Drop_Level() free varlist (we want it)
     INIT_BONUS_KEYSOURCE(varlist, ACT_KEYLIST(act));  // disconnect from f
     Drop_Level(L);
-    DROP_GC_GUARD(action);
+    Drop_GC_Guard(action);
 
     Set_Series_Flag(varlist, MANAGED); // can't use Manage_Series
 

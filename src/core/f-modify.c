@@ -251,7 +251,7 @@ REBLEN Modify_String_Or_Binary(
     if (IS_BINARY(dst)) {  // check invariants up front even if NULL / no-op
         if (Is_NonSymbol_String(dst_ser)) {
             Byte at = *Binary_At(dst_ser, dst_idx);
-            if (Is_Continuation_Byte_If_Utf8(at))
+            if (Is_Continuation_Byte(at))
                 fail (Error_Bad_Utf8_Bin_Edit_Raw());
             dst_len_old = String_Len(STR(dst_ser));
         }
@@ -387,7 +387,7 @@ REBLEN Modify_String_Or_Binary(
         else {
             if (Is_NonSymbol_String(bin)) {  // guaranteed valid UTF-8
                 String(const*) str = STR(bin);
-                if (Is_Continuation_Byte_If_Utf8(*src_ptr))
+                if (Is_Continuation_Byte(*src_ptr))
                     fail (Error_Bad_Utf8_Bin_Edit_Raw());
 
                 // !!! We could be more optimal here since we know it's valid
@@ -505,7 +505,7 @@ REBLEN Modify_String_Or_Binary(
     if (Is_NonSymbol_String(dst_ser)) {
         Utf8(const*) t = cast(Utf8(const*), src_ptr + src_size_raw);
         while (src_len_raw > limit) {
-            t = BACK_STR(t);
+            t = Step_Back_Codepoint(t);
             --src_len_raw;
         }
         src_size_raw = t - src_ptr;  // src_len_raw now equals limit
@@ -617,11 +617,11 @@ REBLEN Modify_String_Or_Binary(
                     Utf8(*) pp = cast(Utf8(*),
                         Binary_At(dst_ser, dst_off + part_size)
                     );
-                    if (Is_Continuation_Byte_If_Utf8(*cast(Byte*, pp)))
+                    if (Is_Continuation_Byte(*cast(Byte*, pp)))
                         fail (Error_Bad_Utf8_Bin_Edit_Raw());
 
                     part = 0;
-                    for (; cp != pp; cp = NEXT_STR(cp))
+                    for (; cp != pp; cp = Skip_Codepoint(cp))
                         ++part;
                 }
             }

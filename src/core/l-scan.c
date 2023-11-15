@@ -2728,9 +2728,9 @@ Bounce Scanner_Executor(Level(*) const L) {
                     REB_THE_BLOCK,  // don't want to evaluate
                     Pop_Stack_Values(stackindex_path_head - 1)
                 );
-                PUSH_GC_GUARD(items);
+                Push_GC_Guard(items);
                 REBVAL *email = rebValue("as email! delimit {.}", items);
-                DROP_GC_GUARD(items);
+                Drop_GC_Guard(items);
                 Copy_Cell(temp, email);
                 rebRelease(email);
                 goto push_temp;
@@ -3311,7 +3311,7 @@ const Byte* Scan_Issue(Cell(*) out, const Byte* cp, Size size)
 
     Size n = size;
     while (n > 0) {
-        if (not Is_Continuation_Byte_If_Utf8(*bp))
+        if (not Is_Continuation_Byte(*bp))
             ++len;
 
         // Allows nearly every visible character that isn't a delimiter

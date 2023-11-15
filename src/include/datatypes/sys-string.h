@@ -7,7 +7,7 @@
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // Copyright 2012 REBOL Technologies
-// Copyright 2012-2019 Ren-C Open Source Contributors
+// Copyright 2012-2023 Ren-C Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information
@@ -71,108 +71,111 @@
 #define HAS_LINK_Bookmarks      FLAVOR_STRING
 
 
-inline static Utf8(*) NEXT_CHR(
-    Codepoint *codepoint_out,
+inline static Utf8(*) Skip_Codepoint(Utf8(const_if_c*) cp) {
+    Byte* t = x_cast(Byte*, cp);
+    do {
+        ++t;
+    } while (Is_Continuation_Byte(*t));
+    return cast(Utf8(*), t);
+}
+
+inline static Utf8(*) Step_Back_Codepoint(Utf8(const_if_c*) cp) {
+    const_if_c Byte* t = cp;
+    do {
+        --t;
+    } while (Is_Continuation_Byte(*t));
+    return cast(Utf8(*), t);
+}
+
+inline static Utf8(*) Utf8_Next(
+    Codepoint* codepoint_out,
     Utf8(const_if_c*) cp
 ){
-    const_if_c Byte* t = cp;
+    Byte* t = x_cast(Byte*, cp);
     if (*t < 0x80)
         *codepoint_out = *t;
     else
         t = m_cast(Byte*, Back_Scan_UTF8_Char_Unchecked(codepoint_out, t));
-    return cast(Utf8(*), m_cast(Byte*, t + 1));
+    return cast(Utf8(*), t + 1);
 }
 
-inline static Utf8(*) BACK_CHR(
-    Codepoint *codepoint_out,
+inline static Utf8(*) Utf8_Back(
+    Codepoint* codepoint_out,
     Utf8(const_if_c*) cp
 ){
-    const_if_c Byte* t = cp;
+    Byte* t = x_cast(Byte*, cp);
     --t;
-    while (Is_Continuation_Byte_If_Utf8(*t))
+    while (Is_Continuation_Byte(*t))
         --t;
-    NEXT_CHR(codepoint_out, cast(Utf8(const_if_c*), t));
-    return cast(Utf8(*), m_cast(Byte*, t));
+    Utf8_Next(codepoint_out, cast(Utf8(*), t));
+    return cast(Utf8(*), t);
 }
 
-inline static Utf8(*) NEXT_STR(Utf8(const_if_c*) cp) {
-    const_if_c Byte* t = cp;
-    do {
-        ++t;
-    } while (Is_Continuation_Byte_If_Utf8(*t));
-    return cast(Utf8(*), m_cast(Byte*, t));
-}
-
-inline static Utf8(*) BACK_STR(Utf8(const_if_c*) cp) {
-    const_if_c Byte* t = cp;
-    do {
-        --t;
-    } while (Is_Continuation_Byte_If_Utf8(*t));
-    return cast(Utf8(*), m_cast(Byte*, t));
-}
-
-inline static Utf8(*) SKIP_CHR(
-    Codepoint *codepoint_out,
+inline static Utf8(*) Utf8_Skip(
+    Codepoint* codepoint_out,
     Utf8(const_if_c*) cp,
     REBINT delta
 ){
     if (delta > 0) {
         while (delta != 0) {
-            cp = NEXT_STR(cp);
+            cp = Skip_Codepoint(cp);
             --delta;
         }
     }
     else {
         while (delta != 0) {
-            cp = BACK_STR(cp);
+            cp = Step_Back_Codepoint(cp);
             ++delta;
         }
     }
-    NEXT_CHR(codepoint_out, cp);
-    return mp_cast(Utf8(*), cp);
+    Utf8_Next(codepoint_out, cp);
+    return cast(Utf8(*), x_cast(Byte*, cp));
 }
 
 #if CPLUSPLUS_11
-    //
     // See the definition of `const_if_c` for the explanation of why this
     // overloading technique is needed to make output constness match input.
-    //
-    inline static Utf8(const*) NEXT_CHR(
-        Codepoint *codepoint_out,
+
+    inline static Utf8(const*) Skip_Codepoint(Utf8(const*) cp)
+      { return Skip_Codepoint(cast(Utf8(*), x_cast(Byte*, cp))); }
+
+    inline static Utf8(const*) Step_Back_Codepoint(Utf8(const*) cp)
+      { return Step_Back_Codepoint(cast(Utf8(*), x_cast(Byte*, cp))); }
+
+    inline static Utf8(const*) Utf8_Next(
+        Codepoint* codepoint_out,
         Utf8(const*) cp
     ){
-        return NEXT_CHR(codepoint_out, mp_cast(Utf8(*), cp));
+        return Utf8_Next(codepoint_out, cast(Utf8(*), x_cast(Byte*, cp)));
     }
 
-    inline static Utf8(const*) BACK_CHR(
-        Codepoint *codepoint_out,
+    inline static Utf8(const*) Utf8_Back(
+        Codepoint* codepoint_out,
         Utf8(const*) cp
     ){
-        return BACK_CHR(codepoint_out, mp_cast(Utf8(*), cp));
+        return Utf8_Back(codepoint_out, cast(Utf8(*), x_cast(Byte*, cp)));
     }
 
-    inline static Utf8(const*) NEXT_STR(Utf8(const*) cp)
-      { return NEXT_STR(mp_cast(Utf8(*), cp)); }
-
-    inline static Utf8(const*) BACK_STR(Utf8(const*) cp)
-      { return BACK_STR(mp_cast(Utf8(*), cp)); }
-
-    inline static Utf8(const*) SKIP_CHR(
-        Codepoint *codepoint_out,
+    inline static Utf8(const*) Utf8_Skip(
+        Codepoint* codepoint_out,
         Utf8(const*) cp,
         REBINT delta
     ){
-        return SKIP_CHR(codepoint_out, m_cast(Utf8(*), cp), delta);
+        return Utf8_Skip(
+            codepoint_out,
+            cast(Utf8(*), x_cast(Byte*, cp)),
+            delta
+        );
     }
 #endif
 
-inline static Codepoint CHR_CODE(Utf8(const*) cp) {
+inline static Codepoint Codepoint_At(Utf8(const*) cp) {
     Codepoint codepoint;
-    NEXT_CHR(&codepoint, cp);
+    Utf8_Next(&codepoint, cp);
     return codepoint;
 }
 
-inline static Utf8(*) WRITE_CHR(Utf8(*) cp, Codepoint c) {
+inline static Utf8(*) Write_Codepoint(Utf8(*) cp, Codepoint c) {
     Size size = Encoded_Size_For_Codepoint(c);
     Encode_UTF8_Char(cp, c, size);
     return cast(Utf8(*), cast(Byte*, cp) + size);
@@ -241,7 +244,7 @@ inline static Length String_Len(String(const*) s) {
     Utf8(const*) ep = String_Tail(s);
     Utf8(const*) cp = String_Head(s);
     while (cp != ep) {
-        cp = NEXT_STR(cp);
+        cp = Skip_Codepoint(cp);
         ++len;
     }
     return len;
@@ -253,7 +256,7 @@ inline static REBLEN String_Index_At(String(const*) s, Size byteoffset) {
 
     // The position `offset` describes must be a codepoint boundary.
     //
-    assert(not Is_Continuation_Byte_If_Utf8(*Binary_At(s, byteoffset)));
+    assert(not Is_Continuation_Byte(*Binary_At(s, byteoffset)));
 
     if (Is_NonSymbol_String(s)) {  // length is cached for non-ANY-WORD!
       #if DEBUG_UTF8_EVERYWHERE
@@ -272,7 +275,7 @@ inline static REBLEN String_Index_At(String(const*) s, Size byteoffset) {
     Utf8(const*) ep = cast(Utf8(const*), Binary_At(s, byteoffset));
     Utf8(const*) cp = String_Head(s);
     while (cp != ep) {
-        cp = NEXT_STR(cp);
+        cp = Skip_Codepoint(cp);
         ++index;
     }
     return index;
@@ -344,7 +347,7 @@ inline static void Free_Bookmarks_Maybe_Null(String(*) str) {
         Utf8(*) cp = String_Head(s);
         REBLEN i;
         for (i = 0; i != index; ++i)
-            cp = NEXT_STR(cp);
+            cp = Skip_Codepoint(cp);
 
         Size actual = cast(Byte*, cp) - Series_Data(s);
         assert(actual == offset);
@@ -489,7 +492,7 @@ inline static Utf8(*) String_At(String(const_if_c*) s, REBLEN at) {
   scan_forward:
     assert(index <= at);
     for (; index != at; ++index)
-        cp = NEXT_STR(cp);
+        cp = Skip_Codepoint(cp);
 
     if (not book)
         return cp;
@@ -506,7 +509,7 @@ inline static Utf8(*) String_At(String(const_if_c*) s, REBLEN at) {
   scan_backward:
     assert(index >= at);
     for (; index != at; --index)
-        cp = BACK_STR(cp);
+        cp = Step_Back_Codepoint(cp);
 
     if (not book) {
       #if DEBUG_TRACE_BOOKMARKS
@@ -526,7 +529,7 @@ inline static Utf8(*) String_At(String(const_if_c*) s, REBLEN at) {
     Utf8(*) check_cp = String_Head(s);
     REBLEN check_index = 0;
     for (; check_index != at; ++check_index)
-        check_cp = NEXT_STR(check_cp);
+        check_cp = Skip_Codepoint(check_cp);
     assert(check_cp == cp);
   #endif
 
@@ -534,8 +537,8 @@ inline static Utf8(*) String_At(String(const_if_c*) s, REBLEN at) {
 }
 
 #if CPLUSPLUS_11
-    inline static Utf8(const*) String_At(const StringT* s, REBLEN at)
-      { return String_At(m_cast(StringT*, s), at); }
+    inline static Utf8(const*) String_At(String(const*) s, REBLEN at)
+      { return String_At(m_cast(String(*), s), at); }
 #endif
 
 
@@ -600,11 +603,11 @@ inline static Utf8(const*) VAL_STRING_TAIL(NoQuote(Cell(const*)) v) {
 
 
 
-#define VAL_STRING_AT_Ensure_Mutable(v) \
-    mp_cast(Utf8(*), VAL_STRING_AT(Ensure_Mutable(v)))
+#define VAL_STRING_AT_ENSURE_MUTABLE(v) \
+    cast(Utf8(*), x_cast(Byte*, VAL_STRING_AT(Ensure_Mutable(v))))
 
-#define VAL_STRING_AT_Known_Mutable(v) \
-    mp_cast(Utf8(*), VAL_STRING_AT(Known_Mutable(v)))
+#define VAL_STRING_AT_KNOWN_MUTABLE(v) \
+    cast(Utf8(*), x_cast(Byte*, VAL_STRING_AT(Known_Mutable(v))))
 
 
 inline static Size VAL_SIZE_LIMIT_AT(
@@ -629,7 +632,7 @@ inline static Size VAL_SIZE_LIMIT_AT(
             *unwrap(length_out) = limit;
         tail = at;
         for (; limit > 0; --limit)
-            tail = NEXT_STR(tail);
+            tail = Skip_Codepoint(tail);
     }
 
     return tail - at;
@@ -678,7 +681,7 @@ inline static Size VAL_BYTEOFFSET_FOR_INDEX(
 inline static Codepoint Get_Char_At(String(const*) s, REBLEN n) {
     Utf8(const*) up = String_At(s, n);
     Codepoint c;
-    NEXT_CHR(&c, up);
+    Utf8_Next(&c, up);
     return c;
 }
 
@@ -701,7 +704,7 @@ inline static void Set_Char_At(String(*) s, REBLEN n, Codepoint c) {
     assert(n < String_Len(s));
 
     Utf8(*) cp = String_At(s, n);
-    Utf8(*) old_next_cp = NEXT_STR(cp);  // scans fast (for leading bytes)
+    Utf8(*) old_next_cp = Skip_Codepoint(cp);  // scans fast (for leading bytes)
 
     Size size = Encoded_Size_For_Codepoint(c);
     Size old_size = old_next_cp - cp;
@@ -762,7 +765,7 @@ inline static REBLEN Num_Codepoints_For_Bytes(
     REBLEN num_chars = 0;
     Utf8(const*) cp = cast(Utf8(const*), start);
     for (; cp != end; ++num_chars)
-        cp = NEXT_STR(cp);
+        cp = Skip_Codepoint(cp);
     return num_chars;
 }
 
@@ -882,7 +885,7 @@ inline static Context(*) Error_Illegal_Cr(const Byte* at, const Byte* start)
     REBLEN back_len = 0;
     Utf8(const*) back = cast(Utf8(const*), at);
     while (back_len < 41 and back != start) {
-        back = BACK_STR(back);
+        back = Step_Back_Codepoint(back);
         ++back_len;
     }
     REBVAL *str = rebSizedText(

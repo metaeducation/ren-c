@@ -828,7 +828,7 @@ DECLARE_NATIVE(combinatorize)
     s.level_ = level_;
     s.rule_end = nullptr;  // argument found by param hook
 
-    PUSH_GC_GUARD(s.ctx);  // Combinator_Param_Hook may call evaluator
+    Push_GC_Guard(s.ctx);  // Combinator_Param_Hook may call evaluator
 
     USED(REF(state));
     USED(REF(value));
@@ -844,7 +844,7 @@ DECLARE_NATIVE(combinatorize)
     Copy_Cell(s.rule_end, ARG(rules));
 
     Phase(*) parser = Make_Action_From_Exemplar(s.ctx, label);
-    DROP_GC_GUARD(s.ctx);
+    Drop_GC_Guard(s.ctx);
 
     Activatify(Init_Frame_Details(
         OUT,

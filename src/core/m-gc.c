@@ -612,7 +612,7 @@ static void Mark_Root_Series(void)
                 // Only plain arrays are supported as unmanaged across
                 // evaluations, because Context and REBACT and REBMAP are too
                 // complex...they must be managed before evaluations happen.
-                // Manage and use PUSH_GC_GUARD and DROP_GC_GUARD on them.
+                // Manage and use Push_GC_Guard and Drop_GC_Guard on them.
                 //
                 assert(
                     not IS_VARLIST(a)
@@ -698,7 +698,7 @@ static void Mark_Symbol_Series(void)
 //  Mark_Guarded_Nodes: C
 //
 // Mark series and values that have been temporarily protected from garbage
-// collection with PUSH_GC_GUARD.  Subclasses e.g. ARRAY_IS_CONTEXT will
+// collection with Push_GC_Guard.  Subclasses e.g. ARRAY_IS_CONTEXT will
 // have their LINK() and MISC() fields guarded appropriately for the class.
 //
 static void Mark_Guarded_Nodes(void)
