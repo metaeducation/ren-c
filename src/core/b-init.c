@@ -165,7 +165,7 @@ static void Check_Basics(void)
 // stack overflow detection.  Note that each thread would have its own stack
 // address limits, so this has to be updated for threading.
 //
-// Currently, this is called every time PUSH_TRAP() is called when Saved_State
+// Currently, this is called every time RESCUE_SCOPE() is used when Saved_State
 // is NULL, and hopefully only one instance of it per thread will be in effect
 // (otherwise, the bounds would add and be useless).
 //
@@ -707,15 +707,11 @@ void Startup_Core(void)
 
 //=//// INITIALIZE STACK MARKER METRICS ///////////////////////////////////=//
 
-    // !!! See notes on Set_Stack_Limit() about the dodginess of this
-    // approach.  Note also that even with a single evaluator used on multiple
-    // threads, you have to trap errors to make sure an attempt is not made
-    // to longjmp the state to an address from another thread--hence every
-    // thread switch must also be a site of trapping all errors.  (Or the
-    // limit must be saved in thread local storage.)
-    //
-    // (This will be irrelevant after transitioning to the "stackless" approach
-    // where interpreter stack frames are independent of the C stack.)
+    // !!! See notes on Set_Stack_Limit() about the dodginess of this.
+    // Although the system is largely transitioned to a "stackless" approach,
+    // this mechanism is still hanging around to protect against deep
+    // recursions in some functions--like molding or comparison--which are
+    // not currently using the trampoline in their implementation.
 
     int dummy;  // variable whose address acts as base of stack for below code
     Set_Stack_Limit(&dummy, DEFAULT_STACK_BOUNDS);
@@ -916,21 +912,17 @@ void Startup_Core(void)
     // By this point, the Lib_Context contains basic definitions for things
     // like true, false, the natives, and the generics.
     //
-    // It's also possible to trap failures and exit in a graceful fashion.
-    //
     // There is theoretically some level of error recovery that could be done
     // here.  e.g. the evaluator works, it just doesn't have many functions you
     // would expect.  How bad it is depends on whether base and sys ran, so
     // perhaps only errors running "mezz" should be tolerated.  But the
     // console may-or-may-not run.
     //
-    // For now, assume any failure to declare the functions in those sections
-    // is a critical one.  It may be desirable to tell the caller that the user
-    // halted (quitting may not be appropriate if the app is more than just
-    // the interpreter)
+    // For now, assume any failure in code running doing boot is fatal.
     //
-    // !!! If halt cannot be handled cleanly, it should be set up so that the
-    // user isn't even *able* to request a halt at this boot phase.
+    // (Handling of Ctrl-C is an issue...if halt cannot be handled cleanly,
+    // it should be set up so that the user isn't even *able* to request a
+    // halt at this boot phase.)
 
     PG_Boot_Phase = BOOT_MEZZ;
 

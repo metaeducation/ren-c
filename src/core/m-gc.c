@@ -1417,7 +1417,7 @@ void Startup_GC(void)
   #endif
 
     // Manually allocated series that GC is not responsible for (unless a
-    // trap occurs). Holds series pointers.  Must happen before any unmanaged
+    // fail() occurs). Holds series pointers.  Must happen before any unmanaged
     // allocations!
     //
     // As a trick to keep this series from trying to track itself, say it's

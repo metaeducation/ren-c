@@ -7,7 +7,7 @@
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // Copyright 2012 REBOL Technologies
-// Copyright 2012-2017 Ren-C Open Source Contributors
+// Copyright 2012-2023 Ren-C Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information
@@ -20,56 +20,49 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Rebol is settled upon a stable and pervasive implementation baseline of
-// ANSI-C (C89).  That commitment provides certain advantages.
+// This file implements a RESCUE_SCOPE abstraction of C++'s `try/catch`
+// which can also be compiled as plain C using setjmp/longjmp().  It's for
+// trapping "abrupt errors", that trigger from the `fail` pseudo-"keyword"
+// in C code.  These happen at arbitrary moments and are not willing (or able)
+// to go through a normal `return` chain to pipe a raised ERROR! up the stack.
 //
-// One of the *disadvantages* is that there is no safe way to do non-local
-// jumps with stack unwinding (as in C++).  If you've written some code that
-// performs a raw malloc and then wants to "throw" via a `longjmp()`, that
-// will leak the malloc.
+// The abstraction is done with macros, and looks similar to try/catch:
 //
-// In order to mitigate the inherent failure of trying to emulate stack
-// unwinding via longjmp, the macros in this file provide an abstraction
-// layer.  These allow Rebol to clean up after itself for some kinds of
-// "dangling" state--such as manually memory managed series that have been
-// made with Make_Series() but never passed to either Free_Unmanaged_Series()
-// or Manage_Series().  This covers several potential leaks known-to-Rebol,
-// but custom interception code is needed for any generalized resource
-// that might be leaked in the case of a longjmp().
+//     RESCUE_SCOPE_IN_CASE_OF_ABRUPT_FAILURE {
+//        //
+//        // code that may trigger a fail() ...
+//        //
+//     } ON_ABRUPT_FAILURE(Context(*) e) {
+//        //
+//        // code that handles the error in `e`
+//        //
+//     }
 //
-// The triggering of the longjmp() is done via "fail", and it's important
-// to know the distinction between a "fail" and a "throw".  In Rebol
-// terminology, a `throw` is a cooperative concept, which does *not* use
-// longjmp(), and instead must cleanly pipe the thrown value up through
-// the OUT pointer that each function call writes into.  The `throw` will
-// climb the stack until somewhere in the backtrace, one of the calls
-// chooses to intercept the thrown value instead of pass it on.
-//
-// By contrast, a `fail` is non-local control that interrupts the stack,
-// and can only be intercepted by points up the stack that have explicitly
-// registered themselves interested.  So comparing these two bits of code:
-//
-//     catch [if 1 < 2 [sys.util.rescue [print ["Foo" (throw "Throwing")]]]]
-//
-//     sys.util.rescue [if 1 < 2 [catch [print ["Foo" (fail "Failing")]]]]
-//
-// In the first case, the THROW is offered to each point up the chain as
-// a special sort of "return value" that only natives can examine.  The
-// `print` will get a chance, the `rescue` will get a chance, the `if` will
-// get a chance...but only CATCH will take the opportunity.
-//
-// In the second case, the FAIL is implemented with longjmp().  So it
-// doesn't make a return value...it never reaches the return.  It offers an
-// ERROR! up the stack to native functions that have called PUSH_TRAP() in
-// advance--as a way of registering interest in intercepting failures.  For
-// IF or CATCH or PRINT to have an opportunity, they would need to be changed
-// to include a PUSH_TRAP() call.
+// Being able to build either way has important benefits, beyond just the
+// stubborn insistence that Rebol can compile as C99.  Some older/simpler
+// platforms only offer setjmp/longjmp and do not have exceptions, while some
+// newer structured platforms (like WebAssembly) may only offer exceptions (or
+// if they do offer setjmp/longjmp, the emulation is brittle and slow.)
 //
 //=//// NOTES /////////////////////////////////////////////////////////////=//
 //
-// * Mixing C++ and C code using longjmp is a recipe for disaster.  The plan
-//   is that API primitives like rebRescue() will be able to abstract the
-//   mechanism for fail, but for the moment only longjmp is implemented.
+// * In Rebol terminology, abrupt errors triggered by "fail" are mechanically
+//   distinct from a "throw".  Rebol THROW is a cooperative concept, which
+//   does *not* use exceptions or longjmp().  Instead a native implementation
+//   must go all the way to the `return` statement to say `return THROWN;`.
+//
+// * To help Rebol clean up after itself for some kinds of "dangling" state,
+//   it will automatically free manually memory managed series made with
+//   Make_Series() but never passed to either Free_Unmanaged_Series() or
+//   Manage_Series().  These series are used to implement rebMalloc() so
+//   that allocations will be automatically freed on failure.  But if you've
+//   written code that performs a raw malloc and triggers an abrupt failure
+//   up the stack, it will leak the malloc.
+//
+// * Mixing C++ and C code using longjmp is a recipe for disaster.  Currently
+//   the uses of C++ features are limited, and only in debug builds.  So it
+//   shouldn't be too much of a problem to build with the C++/debug/longjmp
+//   combination...but there may be some issues.
 //
 
 #if REBOL_FAIL_USES_LONGJMP
@@ -78,7 +71,7 @@
 
 
 // R3-Alpha set up a separate `jmp_buf` at each point in the stack that wanted
-// to be able to do a TRAP.  With stackless Ren-C, only one jmp_buf is needed
+// to be able catch failures.  With stackless Ren-C, only one jmp_buf is needed
 // per instance of the Trampoline on the stack.  (The codebase ideally does
 // not invoke more than one trampoline to implement its native code, but if
 // it is to call out to C code that wishes to use synchronous forms of API
@@ -118,72 +111,13 @@ struct JumpStruct {
 };
 
 
-// "Under FreeBSD 5.2.1 and Mac OS X 10.3, setjmp and longjmp save and restore
-// the signal mask. Linux 2.4.22 and Solaris 9, however, do not do this.
-// FreeBSD and Mac OS X provide the functions _setjmp and _longjmp, which do
-// not save and restore the signal mask."
+////// RESCUE_SCOPE ABSTRACTION //////////////////////////////////////////////
 //
-// "To allow either form of behavior, POSIX.1 does not specify the effect of
-// setjmp and longjmp on signal masks. Instead, two new functions, sigsetjmp
-// and siglongjmp, are defined by POSIX.1. These two functions should always
-// be used when branching from a signal handler."
-//
-// Note: longjmp is able to pass a value (though only an integer on 64-bit
-// platforms, and not enough to pass a pointer).  This can be used to
-// dictate the value setjmp returns in the longjmp case, though the code
-// does not currently use that feature.
-//
-// Also note: with compiler warnings on, it can tell us when values are set
-// before the setjmp and then changed before a potential longjmp:
-//
-//     http://stackoverflow.com/q/7721854/211160
-//
-// Because of this longjmp/setjmp "clobbering", it's a useful warning to
-// have enabled in.  One option for suppressing it would be to mark
-// a parameter as 'volatile', but that is implementation-defined.
-// It is best to use a new variable if you encounter such a warning.
-//
-#if defined(__MINGW64__) && (__GNUC__ < 5)
-    //
-    // 64-bit builds made by MinGW in the 4.x range have an unfortunate bug in
-    // the setjmp/longjmp mechanic, which causes hangs for reasons that are
-    // seemingly random, like "using -O0 optimizations instead of -O2":
-    //
-    // https://sourceforge.net/p/mingw-w64/bugs/406/
-    //
-    // Bending to the bugs of broken compilers is usually not interesting, but
-    // the some cross-platform builds on Linux targeting Windows were set
-    // up on this old version--which otherwise is a good test the codebase
-    // hasn't picked up dependencies that are too "modern".
-
-    #define SET_JUMP(s) \
-        __builtin_setjmp(s)
-
-    #define LONG_JUMP(s,v) \
-        __builtin_longjmp((s), (v))
-
-#elif defined(HAS_POSIX_SIGNAL)
-    #define SET_JUMP(s) \
-        sigsetjmp((s), 1)
-
-    #define LONG_JUMP(s,v) \
-        siglongjmp((s), (v))
-#else
-    #define SET_JUMP(s) \
-        setjmp(s)
-
-    #define LONG_JUMP(s,v) \
-        longjmp((s), (v))
-#endif
-
-
-// TRAP_BLOCK is an abstraction of `try {} catch(...) {}` which can also
-// work in plain C using setjmp/longjmp().  It's for trapping "abrupt errors",
-// which are triggered the `fail` pseudo-"keyword" in C code.  These happen at
-// arbitrary moments and are not willing (or able) to go through a normal
-// `return` chain to pipe the error to the trampoline as a "thrown value".
+// This is a pretty clever bit of design trickery, if I do say so myself!
 //
 // IN THE SETJMP IMPLEMENTATION...
+//
+// (See: https://en.wikipedia.org/wiki/Setjmp.h#Exception_handling)
 //
 // Jump buffers contain a pointer-to-a-Context(*) which represents an error.
 // Using the tricky mechanisms of setjmp/longjmp, there will be a first pass
@@ -199,7 +133,7 @@ struct JumpStruct {
 // IN THE TRY/CATCH IMPLEMENTATION...
 //
 // With the setjmp() version of the macros, it's incidental that what follows
-// the TRAP_BLOCK is a C scope {...}.  But it's critical to the TRY/CATCH
+// the RESCUE_SCOPE is a C scope {...}.  But it's critical to the TRY/CATCH
 // version...because the last thing in the macro is a hanging `try` keyword.
 // Similarly, what follows the ON_ABRUPT_FAILURE() need not be a scope in the
 // setjmp() version, but must be a block for the hanging `catch(...)`.
@@ -208,24 +142,48 @@ struct JumpStruct {
 // variable into the subsequent scope is to actually make the error what the
 // `throw` is passed.  Fortunately this works out exactly as one would want!
 //
+// C++ exceptions have an added bonus, that most compilers can provide a
+// benefit of avoiding paying for catch blocks unless an exception occurs.
+// This is called "zero-cost exceptions":
+//
+//   https://stackoverflow.com/q/15464891/ (description of the phenomenon)
+//   https://stackoverflow.com/q/38878999/ (note on needing linker support)
+//
 //////////////////////////////////////////////////////////////////////////////
 //
-// 1. Although setjmp() does return a value, that value cannot be used in
+// 1. 64-bit builds made by MinGW in the 4.x range have an unfortunate bug in
+//    the setjmp/longjmp mechanic, which causes hangs for reasons that are
+//    seemingly random, like "using -O0 optimizations instead of -O2".
+//    This issue is unfortunately common in some older cross-compilers:
+//
+//    https://sourceforge.net/p/mingw-w64/bugs/406/
+//
+// 2. "Under FreeBSD 5.2.1 and Mac OS X 10.3, setjmp and longjmp save and
+//     restore the signal mask. Linux 2.4.22 and Solaris 9, however, do not
+//     do this.  FreeBSD and Mac OS X provide the functions _setjmp and
+//     _longjmp, which do not save and restore the signal mask."
+//
+//    "To allow either form of behavior, POSIX.1 does not specify the effect
+//     of setjmp and longjmp on signal masks.  Instead, two new functions,
+//     sigsetjmp and siglongjmp, are defined by POSIX.1.  These two functions
+//     should always be used when branching from a signal handler."
+//
+// 3. Although setjmp() does return a value, that value cannot be used in
 //    conditions, e.g. `setjmp(...) ? x : y`
 //
 //    http://stackoverflow.com/questions/30416403/
 //
-// 2. setjmp() can't be used with inline functions in gcc:
+// 4. setjmp() can't be used with inline functions in gcc.  According to the
+//    developers, "This is not a bug as if you inline it, the place setjmp
+//    goes to could be not where you want to goto."
 //
 //    https://gcc.gnu.org/bugzilla/show_bug.cgi?id=24556
 //
-//    According to the developers, "This is not a bug as if you inline it,
-//    the place setjmp goes to could be not where you want to goto."
-//
-// 3. Sadly, there's no real way to make the C version "automagically" know
+// 5. Sadly, there's no real way to make the C version "automagically" know
 //    when you've done a `return` out of the trapped block.  As a result, the
 //    notion of which CPU buffer to jump to cannot be updated--which is a
-//    requirement when nested instances of the trap are allowed.
+//    requirement when nested instances of RESCUE are allowed.  So you have
+//    to manually call a CLEANUP_BEFORE_EXITING_RESCUE_SCOPE macro.
 //
 //    We make the best of it by using it as an opportunity to keep other
 //    information up to date, like letting the system globally know what
@@ -236,18 +194,29 @@ struct JumpStruct {
     STATIC_ASSERT(REBOL_FAIL_USES_TRY_CATCH == 0);
     STATIC_ASSERT(REBOL_FAIL_JUST_ABORTS == 0);
 
-    #define TRAP_BLOCK_IN_CASE_OF_ABRUPT_FAILURE \
+    #if defined(__MINGW64__) && (__GNUC__ < 5)  // see [1]
+        #define SET_JUMP(s)     __builtin_setjmp(s)
+        #define LONG_JUMP(s,v)  __builtin_longjmp((s), (v))
+    #elif defined(HAS_POSIX_SIGNAL)  // see [2]
+        #define SET_JUMP(s)     sigsetjmp((s), 1)
+        #define LONG_JUMP(s,v)  siglongjmp((s), (v))
+    #else
+        #define SET_JUMP(s)     setjmp(s)
+        #define LONG_JUMP(s,v)  longjmp((s), (v))
+    #endif
+
+    #define RESCUE_SCOPE_IN_CASE_OF_ABRUPT_FAILURE \
         NOOP; /* stops warning when case previous statement was label */ \
         Jump jump;  /* one setjmp() per trampoline invocation */ \
         jump.last_jump = g_ts.jump_list; \
         jump.level = TOP_LEVEL; \
         jump.error = nullptr; \
         g_ts.jump_list = &jump; \
-        if (1 == SET_JUMP(jump.cpu_state))  /* beware return value, see [1] */ \
+        if (1 == SET_JUMP(jump.cpu_state))  /* beware return value, see [3] */ \
             goto longjmp_happened; /* jump.error will be set */ \
         /* fall through to subsequent block, happens on first SET_JUMP() */
 
-    #define CLEANUP_BEFORE_EXITING_TRAP_BLOCK /* can't avoid, see [3] */ \
+    #define CLEANUP_BEFORE_EXITING_RESCUE_SCOPE /* can't avoid, see [5] */ \
         assert(jump.error == nullptr); \
         g_ts.jump_list = jump.last_jump
 
@@ -262,7 +231,7 @@ struct JumpStruct {
 
     STATIC_ASSERT(REBOL_FAIL_JUST_ABORTS == 0);
 
-    #define TRAP_BLOCK_IN_CASE_OF_ABRUPT_FAILURE \
+    #define RESCUE_SCOPE_IN_CASE_OF_ABRUPT_FAILURE \
         ; /* in case previous tatement was label */ \
         Jump jump; /* one per trampoline invocation */ \
         jump.last_jump = g_ts.jump_list; \
@@ -270,7 +239,7 @@ struct JumpStruct {
         g_ts.jump_list = &jump; \
         try /* picks up subsequent {...} block */
 
-    #define CLEANUP_BEFORE_EXITING_TRAP_BLOCK /* can't avoid, see [3] */ \
+    #define CLEANUP_BEFORE_EXITING_RESCUE_SCOPE /* can't avoid, see [5] */ \
         g_ts.jump_list = jump.last_jump
 
     #define ON_ABRUPT_FAILURE(decl) \
@@ -280,7 +249,7 @@ struct JumpStruct {
 
     STATIC_ASSERT(REBOL_FAIL_JUST_ABORTS);
 
-    #define TRAP_BLOCK_IN_CASE_OF_ABRUPT_FAILURE \
+    #define RESCUE_SCOPE_IN_CASE_OF_ABRUPT_FAILURE \
         ; /* in case previous tatement was label */ \
         Jump jump; /* one per trampoline invocation */ \
         jump.last_jump = g_ts.jump_list; \
@@ -289,7 +258,7 @@ struct JumpStruct {
         if (false) \
             goto abrupt_failure;  /* avoids unreachable code warning */
 
-    #define CLEANUP_BEFORE_EXITING_TRAP_BLOCK /* can't avoid, see [3] */ \
+    #define CLEANUP_BEFORE_EXITING_RESCUE_SCOPE /* can't avoid, see [5] */ \
         g_ts.jump_list = jump.last_jump
 
     #define ON_ABRUPT_FAILURE(decl) \

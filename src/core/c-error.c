@@ -29,7 +29,7 @@
 //
 //  Fail_Core: C
 //
-// Cause a "trap" of an error by longjmp'ing to the enclosing PUSH_TRAP.  Note
+// Trigger failure of an error by longjmp'ing to enclosing RESCUE_SCOPE.  Note
 // that these failures interrupt code mid-stream, so if a Rebol function is
 // running it will not make it to the point of returning the result value.
 // This distinguishes the "fail" mechanic from the "throw" mechanic, which has
@@ -194,7 +194,7 @@ ATTRIBUTE_NO_RETURN void Fail_Core(const void *p)
     if (PG_Boot_Phase < BOOT_DONE)
         panic (error);
 
-    // There should be a PUSH_TRAP of some kind in effect if a `fail` can
+    // There should be a RESCUE_SCOPE of some kind in effect if a `fail` can
     // ever be run.
     //
     if (g_ts.jump_list == nullptr)

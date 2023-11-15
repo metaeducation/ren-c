@@ -153,7 +153,7 @@ static const Byte Debase64[128] =
 //
 // NOTE: Entered one-character-at-a-time in array initialization
 // format to avoid the length of 65 which would be needed if
-// a string literal were used.  This helps memory tools trap
+// a string literal were used.  This helps memory tools catch
 // errant accesses to Enbase64[64] if there's an algorithm bug.
 //
 static const Byte Enbase64[64] =

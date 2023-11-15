@@ -87,9 +87,9 @@ inline static Bounce Init_Thrown_With_Label(  // assumes `arg` in g_ts.thrown_ar
     return BOUNCE_THROWN;
 }
 
-// When errors are put in the throw state, they are the label--not the value.
+// When failures are put in the throw state, they are the label--not the value.
 //
-inline static Bounce Init_Thrown_Error(Level(*) L, Value(const*) error) {
+inline static Bounce Init_Thrown_Failure(Level(*) L, Value(const*) error) {
     assert(IS_ERROR(error));
     return Init_Thrown_With_Label(L, Lib(NULL), error);
 }

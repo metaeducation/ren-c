@@ -221,7 +221,7 @@
 #include "structs/sys-rebchr.h"  // Utf8(*) is Byte* in validated UTF8
 
 #include "structs/sys-rebfed.h"  // REBFED (feed) definition
-#include "structs/sys-rebjmp.h"  // Jump state (for TRAP)
+#include "structs/sys-rebjmp.h"  // state of variables restored on jumps
 #include "structs/sys-rebfrm.h"  // C struct for running frame, uses REBFED
 
 
@@ -386,7 +386,7 @@ typedef struct {
   #endif
     uintptr_t C_stack_address_limit;  // past this, raise a CPU stack overflow
 
-    Jump* jump_list;  // Saved state for TRAP
+    Jump* jump_list;  // Saved state for RESCUE_SCOPE
 
     AtomT thrown_arg;
     ValueT thrown_label;
@@ -538,7 +538,7 @@ extern void reb_qsort_r(void *a, size_t n, size_t es, void *thunk, cmp_t *cmp);
 #include "tmp-error-funcs.h" // functions below are called
 
 
-#include "sys-trap.h" // includes PUSH_TRAP, fail()
+#include "sys-trap.h" // includes RESCUE_SCOPE, fail()
 
 #include "sys-node.h"
 

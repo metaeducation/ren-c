@@ -118,7 +118,7 @@ Bounce Macro_Dispatcher(Level(*) const L)
         CTX(L->varlist)  // bind this return to know where to return from
     );
 
-    // Must trap RETURN ourselves, as letting it bubble up to generic UNWIND
+    // Must catch RETURN ourselves, as letting it bubble up to generic UNWIND
     // handling would return a BLOCK! instead of splice it.
     //
     if (Do_Any_Array_At_Throws(SPARE, body, SPC(L->varlist))) {

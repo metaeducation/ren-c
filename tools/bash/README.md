@@ -20,7 +20,7 @@ local variables, this is one of the few tools complex bash scripts have for
 cleanly isolating parts from one another.
 
 To import these functions into a script, one uses `source`.  Then you call
-the functions, and you can trap their output into variables:
+the functions, and you can capture their output into variables:
 
     source ${repo_dir}bash/fetch-prebuilt.sh
     r3_make=$(fetch_prebuilt)  # returns the prebuilt r3 executable path

@@ -91,7 +91,7 @@
 //
 void *Try_Alloc_Mem(size_t size)
 {
-    // Trap memory usage limit *before* the allocation is performed
+    // notice memory usage limit exceeded *before* the allocation is performed
 
     g_mem.usage += size;
     if (g_mem.usage_limit and g_mem.usage > unwrap(g_mem.usage_limit)) {

@@ -1692,7 +1692,7 @@ DECLARE_NATIVE(map)
     }
     else if (Is_Isotope(SPARE)) {
         Init_Error(SPARE, Error_Bad_Isotope(SPARE));
-        Init_Thrown_Error(LEVEL, stable_SPARE);
+        Init_Thrown_Failure(LEVEL, stable_SPARE);
         goto finalize_map;
     }
     else if (Is_Nulled(SPARE)) {

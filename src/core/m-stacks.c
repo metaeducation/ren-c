@@ -136,8 +136,6 @@ Context(*) Get_Context_From_Stack(void)
         // but the user context is now no longer available during much of the
         // boot...so we fall back to the Lib_Context during boot.
         //
-        // Note: This can be dangerous if no rebRescue() or TRAP is in effect.
-        //
         return User_Context != nullptr ? User_Context : Lib_Context;
     }
 

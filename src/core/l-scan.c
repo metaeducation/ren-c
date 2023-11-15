@@ -2950,9 +2950,9 @@ Bounce Scanner_Executor(Level(*) const L) {
 //
 // This is a "stackful" call that takes a buffer of UTF-8 and will try to
 // scan it into an array, or raise an "abrupt" error (that won't be catchable
-// by things like ATTEMPT or EXCEPT, only TRAP).
+// by things like ATTEMPT or EXCEPT, only RESCUE).
 //
-// 1. This routine doesn't offer parameterizatoin for variadic "splicing" of
+// 1. This routine doesn't offer parameterization for variadic "splicing" of
 //    already-loaded values mixed with the textual code as it's being
 //    scanned.  (For that, see `rebTranscodeInto()`.)  But the underlying
 //    scanner API requires a variadic feed to be provided...so we just pass

@@ -1184,7 +1184,7 @@ DECLARE_NATIVE(dh_compute_secret)
 
     REBVAL *obj = ARG(obj);
 
-    // Extract fields up front, so that if they fail we don't have to TRAP it
+    // Extract fields up front, so that if they fail we don't have to RESCUE it
     // to clean up an initialized dhm_context...
     //
     // !!! used to ensure object only had other fields SELF, PUB-KEY, G

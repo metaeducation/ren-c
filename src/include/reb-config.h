@@ -477,7 +477,7 @@ Special internal defines used by RT, not Host-Kit developers:
 // that cannot handle setjmp()/longjmp().
 //
 // To abstract this, Ren-C uses a keyword-like-macro called `fail()` that
-// hides the differences.  See TRAP_BLOCK_IN_CASE_OF_ABRUPT_FAILURE for a
+// hides the differences.  See RESCUE_SCOPE_IN_CASE_OF_ABRUPT_FAILURE for a
 // breakdown of how this is pulled off.
 //
 // 1. setjmp()/longjmp() are essentially "goto on steroids", and on a

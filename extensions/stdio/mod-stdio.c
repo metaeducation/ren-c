@@ -120,22 +120,27 @@ DECLARE_NATIVE(write_stdout)
         Move_Cell(v, SPARE);
     }
 
-    // !!! The historical division of labor between the "core" and the "host"
-    // is that the host doesn't know how to poll for cancellation.  So data
-    // gets broken up into small batches and it's this loop that has access
-    // to the core "Do_Signals_Throws" query.  Hence one can send a giant
-    // string to the code that does write() and be able to interrupt it,
-    // even though that device request could block forever in theory.
+    // !!! The Write_IO() function does not test for halts.  So data is broken
+    // up into small batches and it's this loop that calls rebWasHalting().
+    // So one can send a giant string to the code that does write() and be
+    // able to interrupt it...
     //
-    // There may well be a better way to go about this.
+    // ...at least, theoretically.  The device request could block forever.
+    // There might be some smarter way to plug into the unix signal system
+    // to guarantee breaking out of writes.
+    //
+    // There may well be a better way to go about this, but at least a very
+    // long write can be canceled with this.
     //
     REBLEN remaining;
     while ((remaining = VAL_LEN_AT(v)) > 0) {
         //
         // Yield to signals processing for cancellation requests.
         //
-        if (Do_Signals_Throws(LEVEL))
-            fail (Error_No_Catch_For_Throw(LEVEL));
+        if (rebWasHalting()) {  // the test clears halt request
+            rebHalt();  // put in a new halt request and stop
+            return NONE;  // ...or, could also RAISE() or FAIL() a halt
+        }
 
         REBLEN part;
         if (remaining <= 1024)

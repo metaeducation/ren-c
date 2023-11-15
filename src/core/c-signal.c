@@ -37,12 +37,6 @@
 // a Ctrl-C can be picked up and then triggered during an Out_Value, jumping
 // the stack from there.
 //
-// This means a top-level trap must always be in effect, even though no eval
-// is running.  This trap's job is to handle errors that happen *while
-// reporting another error*, with Ctrl-C triggering a HALT being the most
-// likely example if not running an evaluation (though any fail() could
-// cause it)
-//
 
 #include "sys-core.h"
 
@@ -124,7 +118,7 @@ bool Do_Signals_Throws(Level(*) level_)
         // Early in the booting process, it's not possible to handle Ctrl-C.
         //
         if (g_ts.jump_list == nullptr)
-            panic ("Ctrl-C or other HALT signal with no trap to process it");
+            panic ("Ctrl-C or other HALT signal with no rescue to process it");
 
         CLR_SIGNAL(SIG_HALT);
         g_ts.eval_sigmask = saved_sigmask;

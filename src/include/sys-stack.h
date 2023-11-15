@@ -20,10 +20,10 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// The data stack (DS_) is for pushing one individual REBVAL at a time.  The
+// The data stack (DS_) is for pushing one individual Cell at a time.  The
 // values can then be popped in a Last-In-First-Out way.  It is also possible
 // to mark a stack position, do any number of pushes, and then ask for the
-// range of values pushed since the mark to be placed into a ArrayT array.
+// range of values pushed since the mark to be placed into a newly-made Array.
 // As long as a value is on the data stack, any series it refers to will be
 // protected from being garbage-collected.
 //
@@ -39,7 +39,7 @@
 // a check in the main evaluator loop that the stack has been balanced to
 // wherever it started by the time a function call ends.  It's not necessary
 // necessary to balance the stack in the case of calling a `fail`--because
-// it is restored to where it was at PUSH_TRAP_SO_FAIL_CAN_JUMP_BACK_HERE().
+// it is restored to where it was by the mechanics of RESCUE_SCOPE.
 //
 // To speed pushes and pops to the stack while also making sure that each
 // push is tested to see if an expansion is needed, a trick is used.  This
@@ -192,7 +192,7 @@
 //    to know the address after the content.
 //
 inline static StackValue(*) Data_Stack_At(StackIndex i) {
-    REBVAL *at = cast(REBVAL*, g_ds.array->content.dynamic.data) + i;  // see [1]
+    REBVAL *at = cast(REBVAL*, g_ds.array->content.dynamic.data) + i;  // [1]
 
     if (i == 0) {
         assert(Is_Cell_Poisoned(at));
@@ -293,7 +293,7 @@ inline static void Drop_Data_Stack_To(StackIndex i) {
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // Rebol doesn't want to crash in the event of a stack overflow, but would
-// like to gracefully trap it and return the user to the console.  While it
+// like to gracefully error and return the user to the console.  While it
 // is possible for Rebol to set a limit to how deeply it allows function
 // calls in the interpreter to recurse, there's no *portable* way to
 // catch a stack overflow in the C code of the interpreter itself.
@@ -320,7 +320,7 @@ inline static void Drop_Data_Stack_To(StackIndex i) {
 // address of some variable local to the currently executed function.
 // Note that because the limit is noticed before the C stack has *actually*
 // overflowed, you still have a bit of stack room to do the cleanup and
-// raise an error trap.  (You need to take care of any unmanaged series
+// raise the failure.  (You need to take care of any unmanaged series
 // allocations, etc).  So cleaning up that state should be doable without
 // making deep function calls.
 //
@@ -351,10 +351,10 @@ inline static void Drop_Data_Stack_To(StackIndex i) {
 
 #else
 
-    #define C_STACK_OVERFLOWING(address_of_local_var) \
+    #define C_STACK_OVERFLOWING(local_var_addr) \
         (g_ts.C_stack_grows_up \
-            ? cast(uintptr_t, (address_of_local_var)) >= g_ts.C_stack_address_limit \
-            : cast(uintptr_t, (address_of_local_var)) <= g_ts.C_stack_address_limit)
+            ? cast(uintptr_t, (local_var_addr)) >= g_ts.C_stack_address_limit \
+            : cast(uintptr_t, (local_var_addr)) <= g_ts.C_stack_address_limit)
 #endif
 
 

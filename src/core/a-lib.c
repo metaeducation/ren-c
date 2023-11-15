@@ -1820,54 +1820,47 @@ unsigned char *RL_rebBytes(
 
 //=//// EXCEPTION HANDLING ////////////////////////////////////////////////=//
 //
-// The API is approaching exception handling with three different modes.
+// Exception handling with the API is a work-in-progress.  A lot has changed
+// in the implementation, in particular support for either compiling with
+// setjmp/longjmp -or- try/catch as the mechanic managing abrupt failures.
 //
-// One is to use setjmp()/longjmp(), which is extremely dodgy.  But it's what
-// R3-Alpha used, and it's the only choice if one is sticking to ANSI C89-99:
+// But also, with stackless processing, only one setjmp() or try{} is needed
+// for each invocation of the trampoline.  This means that abrupt failure
+// protection comes "for free" with every API call that invokes a new
+// trampoline...and it's just a matter of deciding what to do at the
+// interface level if the result is an unhandled raised error.
 //
-// https://en.wikipedia.org/wiki/Setjmp.h#Exception_handling
-//
-// If one is willing to compile as C++ -and- link in the necessary support
-// for exception handling, there are benefits to doing exception handling
-// with throw()/catch().  One advantage is that most compilers can avoid
-// paying for catch blocks unless a throw occurs ("zero-cost exceptions"):
-//
-// https://stackoverflow.com/q/15464891/ (description of the phenomenon)
-// https://stackoverflow.com/q/38878999/ (note that it needs linker support)
-//
-// It also means that C++ API clients can use try/catch blocks without needing
-// the rebRescue() abstraction, as well as have destructors run safely.
-// (longjmp pulls the rug out from under execution, and doesn't stack unwind).
-//
-// The third exceptio nmode is for JavaScript, where an emscripten build would
-// have to painstakingly emulate setjmp/longjmp.  Using inline JavaScript to
-// catch and throw is more efficient, and also provides the benefit of API
-// clients being able to use normal try/catch of a RebolError instead of
-// having to go through rebRescue().
-//
-// !!! Currently only the setjmp()/longjmp() form is emulated.  Clients must
-// either explicitly TRAP errors within their Rebol code calls, or use the
-// rebRescue() abstraction to catch the setjmp/longjmp failures.  Rebol
-// THROW and CATCH cannot be thrown across an API call barrier--it will be
-// handled as an uncaught throw and raised as an error.
+// It's a largely uncharted territory at this time...so the hope is that
+// your code "just works".  The JavaScript ReplPad runs the console extension
+// code which is already protected by SYS.UTIL.RESCUE, so this captures the
+// failures in API calls in JS-NATIVEs pretty well...but other scenarios
+// might be messier.
 //
 //=////////////////////////////////////////////////////////////////////////=//
+
 
 //
 //  rebRescue: RL_API
 //
-// This API abstracts the mechanics by which exception-handling is done.
-//
-// Using rebRescue() internally to the core allows it to be compiled and run
-// compatibly regardless of what .  It is named after Ruby's operation,
-// which deals with the identical problem:
+// This API was an early attempt at wrapping arbitrary API calls which might
+// have failures in the code they evaluate.  It is named after Ruby's
+// operation, which deals with the identical problem:
 //
 // http://silverhammermba.github.io/emberb/c/#rescue
 //
-// !!! As a first step, this only implements the setjmp/longjmp logic.
+// Unlike SYS.UTIL.RESCUE, it returns an ERROR! in case of failure, or the
+// result of the code otherwise.  This creates conflation problems when
+// the code actually returned an ERROR!.  SYS.UTIL.ENRESCUE solves this
+// problem by returning a plain ERROR! in case of failure or a META result
+// otherwise, so a plain error would appear quoted.
+//
+// !!! Redesign of this function at this time is probably not as good an
+// investment as working more on interoperability of exceptions with
+// JavaScript try/catch.  Code which is protecting against errors and
+// knows it needs to can just use SYS.UTIL.RESCUE in the API call itself.
 //
 REBVAL *RL_rebRescue(
-    REBDNG *dangerous, // !!! pure C function only if not using throw/catch!
+    REBDNG *dangerous,  // !!! pure C function if REBOL_FAIL_USES_LONGJMP
     void *opaque
 ){
     return RL_rebRescueWith(dangerous, nullptr, opaque);
@@ -1877,9 +1870,7 @@ REBVAL *RL_rebRescue(
 //
 //  rebRescueWith: RL_API
 //
-// Variant of rebRescue() with a handler hook (parallels TRAP/WITH, except
-// for C code as the protected code and the handler).  More similar to
-// Ruby's rescue2 operation.
+// Variant of rebRescue() with a handler, similar to Ruby's rescue2 operation.
 //
 // 1. We want API allocations via rebValue() or rebMalloc() that occur in the
 //    body of the C function for the rebRescue() to be automatically cleaned
@@ -1895,7 +1886,7 @@ REBVAL *RL_rebRescueWith(
     Level(*) dummy = Make_End_Level(LEVEL_MASK_NONE);
     Push_Level(nullptr, dummy);  // for owning API cells, see [1]
 
-  TRAP_BLOCK_IN_CASE_OF_ABRUPT_FAILURE {  ////////////////////////////////////
+  RESCUE_SCOPE_IN_CASE_OF_ABRUPT_FAILURE {  //////////////////////////////////
 
     REBVAL *result = (*dangerous)(opaque);
 
@@ -1907,11 +1898,10 @@ REBVAL *RL_rebRescueWith(
         and QUOTE_BYTE(result) == UNQUOTED_1
         and HEART_BYTE(result) == REB_ERROR
     ){
-        // Analogous to how TRAP works, if you don't have a handler for the
-        // error case then you can't return an ERROR!, since all errors
-        // indicate a failure.  Use HEART_BYTE() since BOUNCE_THROWN or other
-        // special things can be used internally, and literal errors don't
-        // count either.
+        // If you don't have a handler for the error case then you can't
+        // return an ERROR!, since all errors indicate a failure.  Use
+        // HEART_BYTE() since BOUNCE_THROWN or other special things can be
+        // used internally, and literal errors don't count either.
         //
         if (Is_Api_Value(result))
             rebRelease(result);
@@ -1940,21 +1930,21 @@ REBVAL *RL_rebRescueWith(
 
     Drop_Level(dummy);  // Drop_Level_Unbalanced() if for some internal uses
 
-    CLEANUP_BEFORE_EXITING_TRAP_BLOCK;
+    CLEANUP_BEFORE_EXITING_RESCUE_SCOPE;
     return result;
 
-} ON_ABRUPT_FAILURE(Context(*) e) {  ////////////////////////////////////////////
+} ON_ABRUPT_FAILURE(Context(*) e) {  /////////////////////////////////////////
 
     Drop_Level(dummy);
 
     REBVAL *error = Init_Error(Alloc_Value(), e);
 
-    CLEANUP_BEFORE_EXITING_TRAP_BLOCK;
+    CLEANUP_BEFORE_EXITING_RESCUE_SCOPE;
 
     if (not rescuer)
         return error;  // plain rebRescue() behavior
 
-    REBVAL *result = (*rescuer)(error, opaque);  // *not* guarded by trap!
+    REBVAL *result = (*rescuer)(error, opaque);  // *not* guarded by RESCUE!
     rebRelease(error);
     return result;  // no special handling, may be null
 }}

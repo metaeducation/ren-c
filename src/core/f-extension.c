@@ -239,8 +239,7 @@ DECLARE_NATIVE(load_extension)
     //
     rebElide("sys.util.import*/into lib", script, module);
 
-    // !!! Note: This does not get cleaned up in case of an error, needs to
-    // have TRAP.
+    // !!! Note: This does not get cleaned up in case of an error.
     //
     if (PG_Next_Native_Cfunc != cfuncs + num_natives)
         panic ("NATIVE calls did not line up with stored C function count");

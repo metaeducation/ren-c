@@ -96,11 +96,11 @@ DECLARE_NATIVE(enrescue)
 //          [block! frame!]
 //  ]
 //
-DECLARE_NATIVE(entrap)  // wrapped as multi-return versions TRAP and ATTEMPT
+DECLARE_NATIVE(entrap)  // wrapped as TRAP and ATTEMPT
 //
 // Unlike SYS.UTIL.RESCUE, the ENTRAP function only reacts to errors from the
 // functions it directly calls via LEVEL_FLAG_FAILURE_RESULT_OK.  Hence it
-// does not intercept "thrown" errors, making it much safer to react to the
+// does not intercept thrown "failures", making it much safer to react to the
 // errors one gets back from it.
 {
     INCLUDE_PARAMS_OF_ENTRAP;

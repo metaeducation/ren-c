@@ -55,21 +55,6 @@
 //    No cases of this exist yet, so asserting you only pass in the topmost
 //    level is conservative for now.
 //
-// 3. A fail() can happen at any moment--even due to something like a failed
-//    memory allocation requested by an executor itself.  These are called
-//    "abrupt failures" (see LEVEL_FLAG_ABRUPT_FAILURE).  The executor which
-//    was active when that failure occurred is offered a chance to clean up.
-//    But any stacks that it pushed which were not running will be discarded.
-//
-// 4. When fails occur, any levels which have been pushed that the trampoline
-//    is not running currently will be above LEVEL.  These are not offered the
-//    chance to handle or trap the error.
-//
-//    (Example: When something like ALL is "between steps", the level it
-//     pushed to process its block will be above it on the stack.  If the ALL
-//     decides to call fail(), the non-running stack level can be "TOP_LEVEL"
-//     above the ALL's "LEVEL".)
-//
 
 
 #include "sys-core.h"
@@ -126,9 +111,9 @@ Bounce Delegated_Executor(Level(*) L)
 //
 Bounce Trampoline_From_Top_Maybe_Root(void)
 {
-  bounce_on_trampoline_with_trap:
+  bounce_on_trampoline_with_rescue:
 
-  // TRAP_BLOCK is an abstraction of `try {} catch(...) {}` which can also
+  // RESCUE_SCOPE is an abstraction of `try {} catch(...) {}` which can also
   // work in plain C using setjmp/longjmp().  It's considered desirable to
   // support both approaches: plain C compilation (e.g. with TCC) runs on many
   // legacy/embedded platforms, but structured exception handling has support
@@ -136,7 +121,7 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
   //
   // Regardless of which implementation you are using, once an "exception" has
   // occurred you must jump up above the block to re-enable the "catching".
-  // C++ does not allow a `goto` from outside of `try` block into it:
+  // C++ does not allow a `goto` from outside of `try {}` block into it:
   //
   //    "A goto or switch statement shall not be used to transfer control
   //     into a try block or into a handler. "
@@ -145,10 +130,10 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
   // after a longjmp() occurs, so obviously it needs to be re-setjmp'd.
   //
   // So either way, we can only jump to `bounce_on_trampoline` if no abrupt
-  // fail() has occurred.  otherwise jump to `bounce_on_trampoline_with_trap`
-  // to put the trapping back into effect.
+  // fail() has occurred.  Else jump to `bounce_on_trampoline_with_rescue`
+  // to put the rescue back into effect.
 
-  TRAP_BLOCK_IN_CASE_OF_ABRUPT_FAILURE {  ////////////////////////////////////
+  RESCUE_SCOPE_IN_CASE_OF_ABRUPT_FAILURE {  //////////////////////////////////
 
   bounce_on_trampoline_skip_just_use_out:
 
@@ -182,7 +167,7 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
     g_ts.total_eval_cycles_check += 1;
   #endif
 
-    if (--g_ts.eval_countdown <= 0) {  // defer updating total_eval_cycles, see [2]
+    if (--g_ts.eval_countdown <= 0) {  // defer total_eval_cycles update, [2]
         //
         // Doing signals covers several things that may cause interruptions:
         //
@@ -192,7 +177,7 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
         //
         if (Do_Signals_Throws(LEVEL)) {
             r = BOUNCE_THROWN;
-            goto thrown;
+            goto handle_thrown;
         }
     }
 
@@ -246,8 +231,8 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
                 // anywhere, so it is bubbled up as a throw.
                 //
                 mutable_QUOTE_BYTE(OUT) = UNQUOTED_1;
-                Init_Thrown_Error(LEVEL, stable_OUT);
-                goto thrown;
+                Init_Thrown_Failure(LEVEL, stable_OUT);
+                goto handle_thrown;
             }
         }
         else if (Get_Level_Flag(LEVEL, BRANCH)) {
@@ -255,7 +240,7 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
         }
 
         if (Get_Level_Flag(LEVEL, ROOT_LEVEL)) {  // may keepalive sublevels
-            CLEANUP_BEFORE_EXITING_TRAP_BLOCK;  // switches LEVEL pointer...
+            CLEANUP_BEFORE_EXITING_RESCUE_SCOPE;  // switches LEVEL pointer...
             return TOP_LEVEL->out;  // ...so return new top_level->out
         }
 
@@ -317,41 +302,41 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
     }
 
     if (r == BOUNCE_SUSPEND) {  // just to get emscripten started w/o Asyncify
-        CLEANUP_BEFORE_EXITING_TRAP_BLOCK;
+        CLEANUP_BEFORE_EXITING_RESCUE_SCOPE;
         return BOUNCE_SUSPEND;
     }
 
 
   //=//// HANDLE THROWS, INCLUDING (NON-ABRUPT) ERRORS ////////////////////=//
 
-    // 1. Having handling of UNWIND be in the trampoline means that any level
-    //    can be "teleported to" with a result, not just action levels.  It
-    //    has a notable use by RETURN from a FUNC, which considers its type
-    //    checking to be finished so it can skip past the Action_Executor().
-    //
-    //    !!! Using BOUNCE_THROWN makes it possible for UNWIND to be offered to
-    //    dispatchers that catch throws.  This is used for instance in MACRO,
-    //    which intercepts the UNWIND issued by RETURN, because it doesn't want
-    //    to actually return the block (it wants to splice it).  But that may
-    //    suggest MACRO wants to use its own throw type in a definitional
-    //    return, so that you could generically UNWIND to a macro level and
-    //    overwrite the result verbatim.
-    //
-    // 2. Note LEVEL->varlist may be SERIES_FLAG_INACCESSIBLE here.  This can
-    //    happen with RETURN during ENCLOSE.  So don't use CTX(LEVEL->varlist)
-    //    here, as that would try to validate it as not being inaccessible.
-    //
-    // 3. Constructs like REDUCE-EACH keep a sublevel pushed to do evaluation,
-    //    but then want to keep that state while doing another evaluation
-    //    (e.g. the body block).  To "punch a hole" through the evaluation
-    //    level it sets the executor to Just_Use_Out and can get the result
-    //    without dropping the level.  But thrown values like CONTINUE lead
-    //    to a problem of how to express wanting TRAMPOLINE_KEEPALIVE to be
-    //    applicable to throw situations as well--not all want it.  For now
-    //    we conflate Just_Use_Out with the intent of keepalive on throw.
+  // 1. Having handling of UNWIND be in the trampoline means that any level
+  //    can be "teleported to" with a result, not just action levels.  It
+  //    has a notable use by RETURN from a FUNC, which considers its type
+  //    checking to be finished so it can skip past the Action_Executor().
+  //
+  //    !!! Using BOUNCE_THROWN makes it possible for UNWIND to be offered to
+  //    dispatchers that catch throws.  This is used for instance in MACRO,
+  //    which intercepts the UNWIND issued by RETURN, because it doesn't want
+  //    to actually return the block (it wants to splice it).  But that may
+  //    suggest MACRO wants to use its own throw type in a definitional
+  //    return, so that you could generically UNWIND to a macro level and
+  //    overwrite the result verbatim.
+  //
+  // 2. Note LEVEL->varlist may be SERIES_FLAG_INACCESSIBLE here.  This can
+  //    happen with RETURN during ENCLOSE.  So don't use CTX(LEVEL->varlist)
+  //    here, as that would try to validate it as not being inaccessible.
+  //
+  // 3. Constructs like REDUCE-EACH keep a sublevel pushed to do evaluation,
+  //    but then want to keep that state while doing another evaluation
+  //    (e.g. the body block).  To "punch a hole" through the evaluation
+  //    level it sets the executor to Just_Use_Out and can get the result
+  //    without dropping the level.  But thrown values like CONTINUE lead
+  //    to a problem of how to express wanting TRAMPOLINE_KEEPALIVE to be
+  //    applicable to throw situations as well--not all want it.  For now
+  //    we conflate Just_Use_Out with the intent of keepalive on throw.
 
     if (r == BOUNCE_THROWN) {
-      thrown:
+      handle_thrown:
 
         assert(LEVEL == TOP_LEVEL);  // Action_Executor() helps, drops inerts
 
@@ -384,7 +369,7 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
 
         if (Get_Level_Flag(LEVEL, ROOT_LEVEL)) {  // don't abort top
             assert(Not_Level_Flag(TOP_LEVEL, TRAMPOLINE_KEEPALIVE));
-            CLEANUP_BEFORE_EXITING_TRAP_BLOCK;
+            CLEANUP_BEFORE_EXITING_RESCUE_SCOPE;
             return BOUNCE_THROWN;
         }
 
@@ -404,23 +389,26 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
 
 } ON_ABRUPT_FAILURE(Context(*) e) {  /////////////////////////////////////////
 
-  // 1. An abrupt fail(...) is treated as a "thrown error", which can not be
-  //    intercepted in the same way as a definitional error can be.
+  // A fail() can happen at any moment--even due to something like a failed
+  // memory allocation requested by an executor itself.  These are called
+  // "abrupt failures" (see LEVEL_FLAG_ABRUPT_FAILURE).  They cannot be
+  // TRAP'd or TRY'd in the same way a raised error can be.
   //
-  //   (It was wondered if since we know what LEVEL was "in control" when a
-  //    fail() occurred, if this code should put a Raised() in the output
-  //    slot...as if a `return RAISE(xxx)` occurred.  But just because we know
-  //    what LEVEL the trampoline last called does not mean every incidental
-  //    error should be attributed to being "from" that level.  That would
-  //    promote any incidental error--like "out of memory", that could come
-  //    from any nested library call--to being definitional.)
+  // 1. Just because we know what LEVEL was "in control" when a fail()
+  //    occurred, we don't put a raised error in the output slot...as if a
+  //    `return RAISE(xxx)` occurred.  That would promote any incidental error
+  //    like "out of memory"--that could come from any nested library call--to
+  //    being definitional.  This doesn't align with raised errors being a
+  //    limited set of contractual return values for the routine.
   //
-  // 2. A level that asked to be notified about abrupt failures will get the
-  //    failure thrown.  The default behavior of staying in the thrown state
-  //    will be to convert it to a definitional failure on return.
+  // 2. When fails occur, any levels which have pushed that the trampoline
+  //    is not running currently will be above LEVEL.  These are not offered
+  //    the chance to handle or rescue the error.
   //
-  //    e.g. ABRUPT_FAILURE + NOTIFIY_ON_ABRUPT_FAILURE + return BOUNCE_THROWN
-  //    will act as if there had never been a NOTIFY_ON_ABRUPT_FAILURE
+  //    (Example: When something like ALL is "between steps", the level it
+  //     pushed to process its block will be above it on the stack.  If the ALL
+  //     decides to call fail(), the non-running stack level can be "TOP_LEVEL"
+  //     above the ALL's "LEVEL".)
 
     ASSERT_CONTEXT(e);
     assert(CTX_TYPE(e) == REB_ERROR);
@@ -428,9 +416,9 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
     Set_Level_Flag(LEVEL, ABRUPT_FAILURE);
 
     FRESHEN_MOVED_CELL_EVIL_MACRO(OUT);  // avoid sweep error under rug assert
-    Init_Thrown_Error(LEVEL, CTX_ARCHETYPE(e));  // non-definitional, see [1]
+    Init_Thrown_Failure(LEVEL, CTX_ARCHETYPE(e));  // non-definitional, see [1]
 
-    while (TOP_LEVEL != LEVEL) {  // drop idle levels above the fail
+    while (TOP_LEVEL != LEVEL) {  // drop idle levels above the fail, see [2]
         assert(Not_Level_Flag(TOP_LEVEL, NOTIFY_ON_ABRUPT_FAILURE));
         assert(Not_Level_Flag(TOP_LEVEL, ROOT_LEVEL));
 
@@ -445,16 +433,16 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
 
     if (Not_Level_Flag(LEVEL, NOTIFY_ON_ABRUPT_FAILURE)) {
         if (Get_Level_Flag(LEVEL, ROOT_LEVEL)) {
-            CLEANUP_BEFORE_EXITING_TRAP_BLOCK;
+            CLEANUP_BEFORE_EXITING_RESCUE_SCOPE;
             return BOUNCE_THROWN;
         }
 
         Drop_Level(LEVEL);
     }
 
-    CLEANUP_BEFORE_EXITING_TRAP_BLOCK;  /* Note: changes LEVEL */
-    // (TOP_LEVEL will become LEVEL again after push_trap)
-    goto bounce_on_trampoline_with_trap;  // after exception, need new trap
+    CLEANUP_BEFORE_EXITING_RESCUE_SCOPE;  /* Note: changes LEVEL */
+    // (TOP_LEVEL will become LEVEL again after RESCUE_SCOPE)
+    goto bounce_on_trampoline_with_rescue;  // after exception, need new rescue
 }}
 
 
@@ -477,7 +465,7 @@ bool Trampoline_With_Top_As_Root_Throws(void)
     Bounce r = Trampoline_From_Top_Maybe_Root();
 
   #if !defined(NDEBUG)
-    assert(check == g_ts.jump_list);  // must CLEANUP_BEFORE_EXITING_TRAP_BLOCK
+    assert(check == g_ts.jump_list);  // see CLEANUP_BEFORE_EXITING_RESCUE_SCOPE
     assert(TOP_LEVEL == root);
     assert(Get_Level_Flag(root, ROOT_LEVEL));
   #endif

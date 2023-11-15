@@ -428,10 +428,10 @@ ATTRIBUTE_NO_RETURN void Panic_Series_Debug(Series(*) s)
 
   #if DEBUG_SERIES_ORIGINS
     if (*s->guard == 1020)  // should make valgrind or asan alert
-        panic ("series guard didn't trigger ASAN/valgrind trap");
+        panic ("series guard didn't trigger ASAN/valgrind alert");
 
     panic (
-        "series guard didn't trigger ASAN/Valgrind trap\n" \
+        "series guard didn't trigger ASAN/Valgrind alert\n" \
         "either not a series, or you're not running ASAN/Valgrind\n"
     );
   #else
