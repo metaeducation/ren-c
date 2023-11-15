@@ -210,7 +210,7 @@ DECLARE_NATIVE(read_stdin)
         while (Binary_Len(bin) < max) {
             if (Read_Stdin_Byte_Interrupted(&eof, Binary_At(bin, i))) {  // Ctrl-C
                 if (rebWasHalting())
-                    rebJumps(Lib(HALT));
+                    rebJumps(Canon(HALT));
                 fail ("Interruption of READ-STDIN for reason other than HALT?");
             }
             if (eof)
@@ -263,7 +263,7 @@ DECLARE_NATIVE(read_line)
     if (Term_IO) {
         line = Read_Line(Term_IO);
         if (rebUnboxLogic(rebQ(line), "= '~halt~"))
-            rebJumps(Lib(HALT));
+            rebJumps(Canon(HALT));
 
         // ESCAPE is a special condition distinct from end of file.  It is a
         // request to nullify the current input--which may apply to several
@@ -304,7 +304,7 @@ DECLARE_NATIVE(read_line)
         while (true) {
             if (Read_Stdin_Byte_Interrupted(&eof, &encoded[0])) {  // Ctrl-C
                 if (rebWasHalting())
-                    rebJumps(Lib(HALT));
+                    rebJumps(Canon(HALT));
 
                 fail ("Interruption of READ-LINE for reason other than HALT?");
             }
@@ -334,7 +334,7 @@ DECLARE_NATIVE(read_line)
                 while (trail != 0) {
                     if (Read_Stdin_Byte_Interrupted(&eof, &encoded[size])) {
                         if (rebWasHalting())
-                            rebJumps(Lib(HALT));
+                            rebJumps(Canon(HALT));
 
                         fail ("Interruption of READ-LINE"
                               " for reason other than HALT?");
@@ -449,7 +449,7 @@ DECLARE_NATIVE(read_char)
 
         if (rebUnboxLogic("quasi?", rebQ(e))) {
             if (rebUnboxLogic(rebQ(e), "= '~halt~"))  // Ctrl-C instead of key
-                rebJumps(Lib(HALT));
+                rebJumps(Canon(HALT));
 
             if (rebUnboxLogic(rebQ(e), "= '~timeout~"))
                 return e;  // just return the timeout answer
@@ -501,7 +501,7 @@ DECLARE_NATIVE(read_char)
 
         if (Read_Stdin_Byte_Interrupted(&eof, &encoded[0])) {  // Ctrl-C
             if (rebWasHalting())
-                rebJumps(Lib(HALT));
+                rebJumps(Canon(HALT));
 
             fail ("Interruption of READ-CHAR for reason other than HALT?");
         }
@@ -523,7 +523,7 @@ DECLARE_NATIVE(read_char)
             while (trail != 0) {
                 if (Read_Stdin_Byte_Interrupted(&eof, &encoded[size])) {
                     if (rebWasHalting())
-                        rebJumps(Lib(HALT));
+                        rebJumps(Canon(HALT));
 
                     fail ("Interruption of READ-CHAR"
                             " for reason other than HALT?");
