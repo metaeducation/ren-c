@@ -35,7 +35,7 @@
 //
 Context(*) Alloc_Context_Core(enum Reb_Kind kind, REBLEN capacity, Flags flags)
 {
-    Keylist(*) keylist = Make_Series(KeylistT,
+    KeyList(*) keylist = Make_Series(KeyListT,
         capacity,  // no terminator
         SERIES_MASK_KEYLIST | NODE_FLAG_MANAGED  // always shareable
     );
@@ -59,13 +59,13 @@ Context(*) Alloc_Context_Core(enum Reb_Kind kind, REBLEN capacity, Flags flags)
 
 
 //
-//  Expand_Context_Keylist_Core: C
+//  Expand_Context_KeyList_Core: C
 //
 // Returns whether or not the expansion invalidated existing keys.
 //
-bool Expand_Context_Keylist_Core(Context(*) context, REBLEN delta)
+bool Expand_Context_KeyList_Core(Context(*) context, REBLEN delta)
 {
-    Keylist(*) keylist = CTX_KEYLIST(context);
+    KeyList(*) keylist = CTX_KEYLIST(context);
     assert(IS_KEYLIST(keylist));
 
     if (Get_Subclass_Flag(KEYLIST, keylist, SHARED)) {
@@ -78,7 +78,7 @@ bool Expand_Context_Keylist_Core(Context(*) context, REBLEN delta)
         // (If all shared copies break away in this fashion, then the last
         // copy of the dangling keylist will be GC'd.)
 
-        Keylist(*) copy = cast(KeylistT*, Copy_Series_At_Len_Extra(
+        KeyList(*) copy = cast(KeyListT*, Copy_Series_At_Len_Extra(
             keylist,
             0,
             Series_Used(keylist),
@@ -130,7 +130,7 @@ void Expand_Context(Context(*) context, REBLEN delta)
     //
     Extend_Series_If_Necessary(CTX_VARLIST(context), delta);
 
-    Expand_Context_Keylist_Core(context, delta);
+    Expand_Context_KeyList_Core(context, delta);
 }
 
 
@@ -218,7 +218,7 @@ static REBVAR* Append_Context_Core(
         return cast(REBVAR*, Array_Single(patch));
     }
 
-    Keylist(*) keylist = CTX_KEYLIST(context);
+    KeyList(*) keylist = CTX_KEYLIST(context);
 
     // Add the key to key list
     //
@@ -390,7 +390,7 @@ static void Collect_Inner_Loop(
 
 
 //
-//  Collect_Keylist_Managed: C
+//  Collect_KeyList_Managed: C
 //
 // Scans a block for words to extract and make into symbol keys to use for
 // a context.  The Bind_Table is used to quickly determine duplicate entries.
@@ -402,7 +402,7 @@ static void Collect_Inner_Loop(
 // in prior) then then `prior`'s keylist may be returned.  The result is
 // always pre-managed, because it may not be legal to free prior's keylist.
 //
-Keylist(*) Collect_Keylist_Managed(
+KeyList(*) Collect_KeyList_Managed(
     Option(Cell(const*)) head,
     Option(Cell(const*)) tail,
     Option(Context(*)) prior,
@@ -430,11 +430,11 @@ Keylist(*) Collect_Keylist_Managed(
     // collect buffer than the original keylist) then make a new keylist
     // array, otherwise reuse the original
     //
-    Keylist(*) keylist;
+    KeyList(*) keylist;
     if (prior and CTX_LEN(unwrap(prior)) == num_collected)
         keylist = CTX_KEYLIST(unwrap(prior));
     else {
-        keylist = Make_Series(KeylistT,
+        keylist = Make_Series(KeyListT,
             num_collected,  // no terminator
             SERIES_MASK_KEYLIST | NODE_FLAG_MANAGED
         );
@@ -605,7 +605,7 @@ Context(*) Make_Context_Detect_Managed(
 ) {
     assert(kind != REB_MODULE);
 
-    Keylist(*) keylist = Collect_Keylist_Managed(
+    KeyList(*) keylist = Collect_KeyList_Managed(
         head,
         tail,
         parent,
@@ -625,7 +625,7 @@ Context(*) Make_Context_Detect_Managed(
     Context(*) context = CTX(varlist);
 
     // This isn't necessarily the clearest way to determine if the keylist is
-    // shared.  Note Collect_Keylist_Managed() isn't called from anywhere
+    // shared.  Note Collect_KeyList_Managed() isn't called from anywhere
     // else, so it could probably be inlined here and it would be more
     // obvious what's going on.
     //
@@ -928,7 +928,7 @@ void Assert_Context_Core(Context(*) c)
     if (not ANY_CONTEXT(rootvar) or VAL_CONTEXT(rootvar) != c)
         panic (rootvar);
 
-    Keylist(*) keylist = CTX_KEYLIST(c);
+    KeyList(*) keylist = CTX_KEYLIST(c);
 
     REBLEN keys_len = Series_Used(keylist);
     REBLEN vars_len = Array_Len(varlist);

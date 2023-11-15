@@ -599,7 +599,7 @@ Array(*) Pop_Paramlist_With_Adjunct_May_Fail(
     );
     Set_Series_Len(paramlist, num_slots);
 
-    Keylist(*) keylist = Make_Series(KeylistT,
+    KeyList(*) keylist = Make_Series(KeyListT,
         (num_slots - 1),  // - 1 archetype
         SERIES_MASK_KEYLIST | NODE_FLAG_MANAGED
     );
@@ -981,7 +981,7 @@ Phase(*) Make_Action(
     // a placeholder for more useful consistency checking which might be done.
     //
   blockscope {
-    Keylist(*) keylist = cast(KeylistT*, BONUS(KeySource, paramlist));
+    KeyList(*) keylist = cast(KeyListT*, BONUS(KeySource, paramlist));
 
     Assert_Series_Managed(keylist);  // paramlists/keylists, can be shared
     assert(Series_Used(keylist) + 1 == Array_Len(paramlist));

@@ -810,7 +810,7 @@ union StubInfoUnion {
 
     struct MapT : public SeriesT {};  // the "pairlist" is the identity
 
-    struct KeylistT : public SeriesT {};
+    struct KeyListT : public SeriesT {};
 #else
     typedef SeriesT BinaryT;
     typedef SeriesT StringT;
@@ -820,7 +820,7 @@ union StubInfoUnion {
     typedef SeriesT PhaseT;
     typedef SeriesT ContextT;
     typedef SeriesT MapT;
-    typedef SeriesT KeylistT;
+    typedef SeriesT KeyListT;
 #endif
 
 #define Binary(star_maybe_const) \
@@ -854,8 +854,8 @@ union StubInfoUnion {
 #define Context(star_maybe_const) \
     ContextT star_maybe_const
 
-#define Keylist(star_maybe_const) \
-    KeylistT star_maybe_const
+#define KeyList(star_maybe_const) \
+    KeyListT star_maybe_const
 
 #define Map(star_maybe_const) \
     MapT star_maybe_const

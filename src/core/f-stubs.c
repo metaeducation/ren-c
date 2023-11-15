@@ -285,11 +285,11 @@ void Extra_Init_Context_Cell_Checks_Debug(enum Reb_Kind kind, Context(*) c) {
         or CTX_TYPE(c) == REB_FRAME
     );
 
-    // Keylists are uniformly managed, or certain routines would return
+    // KeyLists are uniformly managed, or certain routines would return
     // "sometimes managed, sometimes not" keylists...a bad invariant.
     //
     if (CTX_TYPE(c) != REB_MODULE) {  // keylist is global symbol table
-        Keylist(*) keylist = CTX_KEYLIST(c);
+        KeyList(*) keylist = CTX_KEYLIST(c);
         Assert_Series_Managed(keylist);
     }
 
@@ -320,7 +320,7 @@ void Extra_Init_Frame_Details_Checks_Debug(Phase(*) a) {
     //
     UNUSED(archetype);
 
-    Keylist(*) keylist = ACT_KEYLIST(a);
+    KeyList(*) keylist = ACT_KEYLIST(a);
     assert(
         (keylist->leader.bits & SERIES_MASK_KEYLIST)
         == SERIES_MASK_KEYLIST

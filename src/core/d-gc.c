@@ -518,7 +518,7 @@ void Assert_Array_Marked_Correctly(Array(const*) a) {
             assert(IS_FRAME(archetype));
         }
         else {
-            Keylist(*) keylist = cast(KeylistT*, keysource);
+            KeyList(*) keylist = cast(KeyListT*, keysource);
             assert(IS_KEYLIST(keylist));
 
             if (IS_FRAME(archetype)) {
@@ -526,7 +526,7 @@ void Assert_Array_Marked_Correctly(Array(const*) a) {
                 // place to put an ancestor link.
             }
             else {
-                Keylist(*) ancestor = LINK(Ancestor, keylist);
+                KeyList(*) ancestor = LINK(Ancestor, keylist);
                 UNUSED(ancestor);  // maybe keylist
             }
         }

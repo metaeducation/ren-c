@@ -328,7 +328,7 @@ void* Probe_Core_Debug(
 
       case FLAVOR_KEYLIST: {
         assert(Series_Wide(s) == sizeof(REBKEY));  // ^-- or is byte size
-        Probe_Print_Helper(p, expr, "Keylist Series", file, line);
+        Probe_Print_Helper(p, expr, "KeyList Series", file, line);
         const REBKEY *tail = Series_Tail(REBKEY, s);
         const REBKEY *key = Series_Head(REBKEY, s);
         Append_Ascii(mo->series, "<< ");

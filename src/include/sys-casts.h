@@ -308,4 +308,4 @@ inline static Map(*) MAP(void *p) {  // not a fancy cast ATM.
     return cast(Map(*), a);
 }
 
-#define KEYS(p)         x_cast(KeylistT*, (p))
+#define KEYS(p)         x_cast(KeyListT*, (p))

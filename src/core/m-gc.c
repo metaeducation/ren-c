@@ -237,7 +237,7 @@ static void Queue_Unmarked_Accessible_Series_Deep(Series(*) s)
 
     if (IS_KEYLIST(s)) {
         //
-        // !!! Keylists may not be the only category that are just a straight
+        // !!! KeyLists may not be the only category that are just a straight
         // list of node pointers.
         //
         REBKEY *tail = Series_Tail(REBKEY, s);

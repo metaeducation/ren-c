@@ -1032,7 +1032,7 @@ Context(*) Virtual_Bind_Deep_To_New_Context(
         rebinding = IS_WORD(item) or IS_META_WORD(item);
     }
 
-    // Keylists are always managed, but varlist is unmanaged by default (so
+    // KeyLists are always managed, but varlist is unmanaged by default (so
     // it can be freed if there is a problem)
     //
     Context(*) c = Alloc_Context(REB_OBJECT, num_vars);

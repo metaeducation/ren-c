@@ -358,7 +358,7 @@ inline static Context(*) ACT_EXEMPLAR(Action(*) a) {
 // and also forward declared.
 //
 #define ACT_KEYLIST(a) \
-    cast(KeylistT*, BONUS(KeySource, ACT_EXEMPLAR(a)))
+    cast(KeyListT*, BONUS(KeySource, ACT_EXEMPLAR(a)))
 
 #define ACT_KEYS_HEAD(a) \
     Series_Head(const REBKEY, ACT_KEYLIST(a))
@@ -516,7 +516,7 @@ inline static void INIT_VAL_ACTION_LABEL(
 // The code for processing derivation is slightly different; it should be
 // unified more if possible.
 
-#define LINK_Ancestor_TYPE              KeylistT*
+#define LINK_Ancestor_TYPE              KeyListT*
 #define LINK_Ancestor_CAST              KEYS
 #define HAS_LINK_Ancestor               FLAVOR_KEYLIST
 

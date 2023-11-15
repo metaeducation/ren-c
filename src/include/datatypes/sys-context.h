@@ -235,7 +235,7 @@ inline static void INIT_VAL_FRAME_ROOTVAR_Core(
 // is moved (see CELL_MASK_COPIED regarding this mechanic)
 //
 
-inline static Keylist(*) CTX_KEYLIST(Context(*) c) {
+inline static KeyList(*) CTX_KEYLIST(Context(*) c) {
     assert(CTX_TYPE(c) != REB_MODULE);
     if (Is_Node_A_Cell(BONUS(KeySource, CTX_VARLIST(c)))) {
         //
@@ -243,7 +243,7 @@ inline static Keylist(*) CTX_KEYLIST(Context(*) c) {
         //
         return ACT_KEYLIST(CTX_FRAME_PHASE(c));
     }
-    return cast(KeylistT*, BONUS(KeySource, CTX_VARLIST(c)));  // not Level
+    return cast(KeyListT*, BONUS(KeySource, CTX_VARLIST(c)));  // not Level
 }
 
 inline static void INIT_CTX_KEYLIST_SHARED(Context(*) c, Series(*) keylist) {
@@ -251,7 +251,7 @@ inline static void INIT_CTX_KEYLIST_SHARED(Context(*) c, Series(*) keylist) {
     INIT_BONUS_KEYSOURCE(CTX_VARLIST(c), keylist);
 }
 
-inline static void INIT_CTX_KEYLIST_UNIQUE(Context(*) c, KeylistT *keylist) {
+inline static void INIT_CTX_KEYLIST_UNIQUE(Context(*) c, KeyListT *keylist) {
     assert(Not_Subclass_Flag(KEYLIST, keylist, SHARED));
     INIT_BONUS_KEYSOURCE(CTX_VARLIST(c), keylist);
 }
@@ -557,8 +557,8 @@ inline static REBVAL *Init_Frame(
 // Make sure a context's keylist is not shared.  Note any CTX_KEY() values
 // may go stale from this context after this call.
 //
-inline static Context(*) Force_Keylist_Unique(Context(*) context) {
-    bool was_changed = Expand_Context_Keylist_Core(context, 0);
+inline static Context(*) Force_KeyList_Unique(Context(*) context) {
+    bool was_changed = Expand_Context_KeyList_Core(context, 0);
     UNUSED(was_changed);  // keys wouldn't go stale if this was false
     return context;
 }

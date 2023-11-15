@@ -176,8 +176,8 @@ Bounce Hijacker_Dispatcher(Level(*) level_)
     // specalization etc. which was made *after* the hijack, the frame should
     // be compatible.  Check by seeing if the keylists are derived.
     //
-    Keylist(*) exemplar_keylist = CTX_KEYLIST(ACT_EXEMPLAR(hijacker));
-    Keylist(*) keylist = CTX_KEYLIST(CTX(LEVEL->varlist));
+    KeyList(*) exemplar_keylist = CTX_KEYLIST(ACT_EXEMPLAR(hijacker));
+    KeyList(*) keylist = CTX_KEYLIST(CTX(LEVEL->varlist));
     while (true) {
         if (keylist == exemplar_keylist)
             return ACT_DISPATCHER(hijacker)(LEVEL);

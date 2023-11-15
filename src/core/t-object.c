@@ -893,7 +893,7 @@ Context(*) Copy_Context_Extra_Managed(
     else {
         assert(CTX_TYPE(original) != REB_FRAME);  // can't expand FRAME!s
 
-        Keylist(*) keylist = cast(KeylistT*, Copy_Series_At_Len_Extra(
+        KeyList(*) keylist = cast(KeyListT*, Copy_Series_At_Len_Extra(
             CTX_KEYLIST(original),
             0,
             CTX_LEN(original),
