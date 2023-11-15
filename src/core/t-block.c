@@ -1028,7 +1028,7 @@ REBTYPE(Array)
         }
         else if (Is_Splice(arg)) {
             flags |= AM_SPLICE;
-            mutable_QUOTE_BYTE(arg) = UNQUOTED_1;  // make plain group
+            QUOTE_BYTE(arg) = UNQUOTED_1;  // make plain group
         }
         else if (Is_Isotope(arg))  // only SPLICE! in typecheck
             fail (Error_Bad_Isotope(arg));  // ...but that doesn't filter yet
@@ -1484,8 +1484,8 @@ DECLARE_NATIVE(glom)
     if (Is_Splice(result)) {
         splice = true;
         assert(HEART_BYTE(result) == REB_GROUP);
-        mutable_HEART_BYTE(result) = REB_BLOCK;  // interface is for blocks
-        mutable_QUOTE_BYTE(result) = UNQUOTED_1;
+        HEART_BYTE(result) = REB_BLOCK;  // interface is for blocks
+        QUOTE_BYTE(result) = UNQUOTED_1;
     }
 
     if (Is_Nulled(accumulator)) {

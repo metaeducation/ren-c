@@ -169,15 +169,15 @@ STATIC_ASSERT(ISOTOPE_0 == 0);  // QUOTE_BYTE() of 0 means it's an isotope
 
 inline static Value(*) Finalize_None_Untracked(Atom(*) out) {
     ASSERT_CELL_FRESH_EVIL_MACRO(out);  // can bitwise OR, need node+cell flags
-    assert(
-        HEART_BYTE_UNCHECKED(out) == 0
-        and QUOTE_BYTE_UNCHECKED(out) == 0
-    );
+
+    assert(HEART_BYTE(out) == 0 and QUOTE_BYTE(out) == 0);
+
     out->header.bits |= (
         NODE_FLAG_NODE | NODE_FLAG_CELL  // might already be set, might not...
             /* | FLAG_HEART_BYTE(REB_VOID) */  // already 0
             /* | FLAG_QUOTE_BYTE(ISOTOPE_0) */  // already 0
     );
+
     return cast(Value(*), out);
 }
 
@@ -186,15 +186,15 @@ inline static Value(*) Finalize_None_Untracked(Atom(*) out) {
 
 inline static Value(*) Finalize_Void_Untracked(Atom(*) out) {
     ASSERT_CELL_FRESH_EVIL_MACRO(out);  // can bitwise OR, need node+cell flags
-    assert(
-        HEART_BYTE_UNCHECKED(out) == 0
-        and QUOTE_BYTE_UNCHECKED(out) == 0
-    );
+
+    assert(HEART_BYTE(out) == 0 and QUOTE_BYTE(out) == 0);
+
     out->header.bits |= (
         NODE_FLAG_NODE | NODE_FLAG_CELL  // might already be set, might not...
             /* | FLAG_HEART_BYTE(REB_VOID) */  // already 0
             | FLAG_QUOTE_BYTE(UNQUOTED_1)  // mask over top of existing 0
     );
+
     return cast(Value(*), out);
 }
 

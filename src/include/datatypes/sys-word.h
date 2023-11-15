@@ -168,9 +168,10 @@ inline static bool IS_QUOTED_WORD(Cell(const*) v) {
 
 
 inline static bool Is_Word_Isotope(Cell(const*) v) {
+    ASSERT_CELL_READABLE_EVIL_MACRO(v);
     if (HEART_BYTE(v) != REB_WORD)
         return false;
-    return QUOTE_BYTE_UNCHECKED(v) == ISOTOPE_0;
+    return QUOTE_BYTE(v) == ISOTOPE_0;
 }
 
 inline static bool Is_Word_Isotope_With_Id(Cell(const*) v, SymId id) {
@@ -183,4 +184,4 @@ inline static bool Is_Word_Isotope_With_Id(Cell(const*) v, SymId id) {
 }
 
 inline static bool Is_Quasi_Word(Cell(const*) v)
-  { return Is_Quasi(v) and HEART_BYTE_UNCHECKED(v) == REB_WORD; }
+  { return Is_Quasi(v) and HEART_BYTE(v) == REB_WORD; }

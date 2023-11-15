@@ -94,7 +94,7 @@
 // a variable could easily be unset with (var: ~)
 //
 inline static bool Is_Isotope_Set_Friendly(Value(const*) v) {
-    assert(QUOTE_BYTE_UNCHECKED(v) == ISOTOPE_0);
+    assert(QUOTE_BYTE(v) == ISOTOPE_0);
     UNUSED(v);
     return true;
 }
@@ -106,7 +106,7 @@ inline static bool Is_Isotope_Set_Friendly(Value(const*) v) {
 // assignment, isotopic voids are not get-friendly.
 //
 inline static bool Is_Isotope_Get_Friendly(Value(const*) v) {
-    assert(QUOTE_BYTE_UNCHECKED(v) == ISOTOPE_0);
+    assert(QUOTE_BYTE(v) == ISOTOPE_0);
     return HEART_BYTE(v) != REB_VOID;
 }
 

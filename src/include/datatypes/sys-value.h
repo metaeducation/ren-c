@@ -180,7 +180,7 @@
 
     #define ASSERT_CELL_READABLE_EVIL_MACRO(c) do {  /* EVIL! see above */ \
         if ( \
-            (FIRST_BYTE((c)->header) & ( \
+            (FIRST_BYTE((c)->header.bits) & ( \
                 NODE_BYTEMASK_0x01_CELL | NODE_BYTEMASK_0x80_NODE \
                     | NODE_BYTEMASK_0x40_STALE \
             )) != 0x81 \
@@ -200,7 +200,7 @@
 
     #define ASSERT_CELL_WRITABLE_EVIL_MACRO(c) do {  /* EVIL! see above */ \
         if ( \
-            (FIRST_BYTE((c)->header) & ( \
+            (FIRST_BYTE((c)->header.bits) & ( \
                 NODE_BYTEMASK_0x01_CELL | NODE_BYTEMASK_0x80_NODE \
                     | CELL_FLAG_PROTECTED \
             )) != 0x81 \
@@ -256,17 +256,8 @@ inline static void INIT_VAL_NODE2(Cell(*) v, Option(const Node*) node) {
     m_cast(Node*, PAYLOAD(Any, (v)).second.node)
 
 
-
-// Note: Only change bits of existing cells if the new type payload matches
-// the type and bits (e.g. ANY-WORD! to another ANY-WORD!).  Otherwise the
-// value-specific flags might be misinterpreted.
-//
-#define mutable_HEART_BYTE(v) \
-    mutable_SECOND_BYTE(WRITABLE(v)->header)
-
-
 #define CELL_HEART_UNCHECKED(cell) \
-    cast(enum Reb_Kind, HEART_BYTE_UNCHECKED(cell))
+    cast(enum Reb_Kind, HEART_BYTE(cell))
 
 #define CELL_HEART(cell) \
     CELL_HEART_UNCHECKED(READABLE(cell))
@@ -296,11 +287,12 @@ inline static Cell(const*) CELL_TO_VAL(NoQuote(Cell(const*)) cell)
 //
 
 inline static enum Reb_Kind VAL_TYPE_UNCHECKED(Cell(const*) v) {
-    switch (QUOTE_BYTE_UNCHECKED(v)) {
+    switch (QUOTE_BYTE(v)) {
       case ISOTOPE_0: {
-        Byte heart = HEART_BYTE_UNCHECKED(v);
+        Byte heart = HEART_BYTE(v);
         assert(  // can't answer VAL_TYPE() for unstable isotopes
             heart != REB_BLOCK
+            and heart != REB_COMMA
             and heart != REB_ERROR
             and heart != REB_OBJECT
         );
@@ -308,7 +300,7 @@ inline static enum Reb_Kind VAL_TYPE_UNCHECKED(Cell(const*) v) {
         return REB_ISOTOPE; }
 
       case UNQUOTED_1:
-        return cast(enum Reb_Kind, HEART_BYTE_UNCHECKED(v));
+        return cast(enum Reb_Kind, HEART_BYTE(v));
 
       case QUASI_2:
         return REB_QUASI;
@@ -433,8 +425,8 @@ inline static Cell(*) Erase_Cell_Untracked(RawCell* c) {
 //    over the "hot potato" of the error.
 
 #define FRESHEN_CELL_EVIL_MACRO(v) do { \
-    if (HEART_BYTE_UNCHECKED(v) == REB_ERROR)  /* must suppress, see [1] */ \
-        assert(QUOTE_BYTE_UNCHECKED(v) != ISOTOPE_0);\
+    if (HEART_BYTE(v) == REB_ERROR)  /* must suppress, see [1] */ \
+        assert(QUOTE_BYTE(v) != ISOTOPE_0);\
     assert(not ((v)->header.bits & CELL_FLAG_PROTECTED)); \
     (v)->header.bits &= CELL_MASK_PERSIST;  /* Note: no CELL or NODE flags */ \
 } while (0)

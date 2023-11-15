@@ -100,7 +100,7 @@ inline static REBVAL *Init_Issue_Utf8(
         assert(String_Len(str) == len);  // ^-- revalidates :-/ should match
         Freeze_Series(str);
         Init_Text(out, str);
-        mutable_HEART_BYTE(out) = REB_ISSUE;
+        HEART_BYTE(out) = REB_ISSUE;
     }
     return cast(REBVAL*, out);
 }
@@ -135,7 +135,7 @@ inline static REBVAL *Init_Char_Unchecked_Untracked(Cell(*) out, Codepoint c) {
         EXTRA(Bytes, out).exactly_4[IDX_EXTRA_LEN] = 1;  // just one codepoint
     }
 
-    mutable_HEART_BYTE(out) = REB_ISSUE;  // heart is TEXT, presents as issue
+    HEART_BYTE(out) = REB_ISSUE;  // heart is TEXT, presents as issue
     assert(VAL_CHAR(out) == c);
     return cast(REBVAL*, out);
 }

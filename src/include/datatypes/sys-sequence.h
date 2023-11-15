@@ -193,7 +193,7 @@ inline static REBVAL *Try_Leading_Blank_Pathify(
     enum Reb_Kind inner_kind = VAL_TYPE(v);
     if (inner_kind == REB_WORD) {
         Set_Cell_Flag(v, REFINEMENT_LIKE);
-        mutable_HEART_BYTE(v) = kind;
+        HEART_BYTE(v) = kind;
         return v;
     }
 
@@ -206,7 +206,7 @@ inline static REBVAL *Try_Leading_Blank_Pathify(
     Freeze_Array_Shallow(a);
 
     Init_Block(v, a);
-    mutable_HEART_BYTE(v) = kind;
+    HEART_BYTE(v) = kind;
 
     return v;
 }
@@ -326,7 +326,7 @@ inline static REBVAL *Try_Init_Any_Sequence_Pairlike_Core(
     enum Reb_Kind inner = VAL_TYPE(v1);
     if (IS_BLANK(v2) and inner == REB_WORD) {
         Derelativize(out, v1, specifier);
-        mutable_HEART_BYTE(out) = kind;
+        HEART_BYTE(out) = kind;
         return cast(REBVAL*, out);
     }
 
@@ -358,7 +358,7 @@ inline static REBVAL *Try_Init_Any_Sequence_Pairlike_Core(
     Freeze_Array_Shallow(a);
 
     Init_Block(out, a);
-    mutable_HEART_BYTE(out) = kind;
+    HEART_BYTE(out) = kind;
     return cast(REBVAL*, out);
 }
 
@@ -532,8 +532,8 @@ inline static Cell(const*) VAL_SEQUENCE_AT(
         //
         if (sequence != store)
             Copy_Cell(store, CELL_TO_VAL(sequence));
-        mutable_HEART_BYTE(store) = REB_WORD;
-        mutable_QUOTE_BYTE(store) = UNQUOTED_1;  // quote is "on" the sequence
+        HEART_BYTE(store) = REB_WORD;
+        QUOTE_BYTE(store) = UNQUOTED_1;  // quote is "on" the sequence
         return store; }
 
       case FLAVOR_ARRAY : {  // uncompressed sequence
@@ -578,8 +578,8 @@ inline static Value(*) GET_SEQUENCE_AT(
         // a WORD! also unless we fiddle the bits at a new location.
         //
         Derelativize(out, cast(Cell(const*), sequence), specifier);
-        mutable_HEART_BYTE(out) = REB_WORD;
-        mutable_QUOTE_BYTE(out) = UNQUOTED_1;  // quote is "on" the sequence
+        HEART_BYTE(out) = REB_WORD;
+        QUOTE_BYTE(out) = UNQUOTED_1;  // quote is "on" the sequence
         return out; }
 
       case FLAVOR_ARRAY : {  // uncompressed sequence

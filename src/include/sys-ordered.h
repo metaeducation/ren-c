@@ -55,7 +55,7 @@
     ((k) >= REB_OBJECT)
 
 #define Is_Bindable(v) \
-    IS_BINDABLE_KIND(HEART_BYTE_UNCHECKED(v))  // checked elsewhere
+    IS_BINDABLE_KIND(HEART_BYTE(v))  // READABLE() checked elsewhere
 
 
 //=//// INERTNESS ////////////////////////////////////////////////////////=//

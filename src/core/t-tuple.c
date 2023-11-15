@@ -371,7 +371,7 @@ REBTYPE(Sequence)
             return Copy_Cell(level_->out, sequence);
 
         enum Reb_Kind kind = VAL_TYPE(sequence);
-        mutable_HEART_BYTE(sequence) = REB_BLOCK;
+        HEART_BYTE(sequence) = REB_BLOCK;
 
         Atom(*) r = Atom_From_Bounce(T_Array(level_, verb));
         assert(CELL_HEART(r) == REB_BLOCK);
@@ -380,7 +380,7 @@ REBTYPE(Sequence)
             Copy_Cell(OUT, r);
 
         Freeze_Array_Shallow(VAL_ARRAY_KNOWN_MUTABLE(OUT));
-        mutable_HEART_BYTE(OUT) = kind;
+        HEART_BYTE(OUT) = kind;
         return OUT; }
 
       case SYM_PICK_P: {

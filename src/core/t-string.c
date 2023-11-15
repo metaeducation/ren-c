@@ -897,7 +897,7 @@ REBTYPE(String)
             // not necessarily a no-op (e.g. CHANGE can erase)
         }
         else if (Is_Splice(arg)) {
-            mutable_QUOTE_BYTE(arg) = UNQUOTED_1;
+            QUOTE_BYTE(arg) = UNQUOTED_1;
         }
         else if (Is_Isotope(arg)) {  // only SPLICE! in typecheck
             fail (Error_Bad_Isotope(arg));  // ...but that doesn't filter yet

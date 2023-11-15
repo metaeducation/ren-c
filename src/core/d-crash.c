@@ -149,7 +149,7 @@ ATTRIBUTE_NO_RETURN void Panic_Core(
         if (IS_VARLIST(s)) {
             printf("Series VARLIST detected.\n");
             Context(*) context = cast(ContextT*, s);  // CTX() does too much checking!
-            if (HEART_BYTE_UNCHECKED(CTX_ARCHETYPE(context)) == REB_ERROR) {
+            if (HEART_BYTE(CTX_ARCHETYPE(context)) == REB_ERROR) {
                 printf("...and that VARLIST is of an ERROR!...");
                 Force_Location_Of_Error(context, TOP_LEVEL);
                 PROBE(context);
@@ -166,7 +166,7 @@ ATTRIBUTE_NO_RETURN void Panic_Core(
       case DETECTED_AS_END: {
         const REBVAL *v = cast(const REBVAL*, p);
       #if DEBUG_FANCY_PANIC
-        if (HEART_BYTE_UNCHECKED(v) == REB_ERROR) {
+        if (HEART_BYTE(v) == REB_ERROR) {
             printf("...panicking on an ERROR! value...");
             PROBE(v);
         }

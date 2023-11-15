@@ -98,7 +98,7 @@ inline static void Term_Binary_Len(Binary(*) s, REBLEN len) {
 //
 inline static Binary(*) Make_Binary_Core(REBLEN capacity, Flags flags)
 {
-    assert(FLAVOR_BYTE(flags) == 0);  // shouldn't pass in a flavor
+    assert(Flavor_From_Flags(flags) == 0);  // shouldn't pass in a flavor
 
     Binary(*) bin = Make_Series(BinaryT,
         capacity + 1,

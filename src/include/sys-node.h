@@ -208,7 +208,7 @@ inline static void Free_Pooled(PoolId pool_id, void* p)
 
     PoolUnit* unit = cast(PoolUnit*, p);
 
-    mutable_FIRST_BYTE(unit->headspot) = FREED_SERIES_BYTE;
+    FIRST_BYTE(unit->headspot.bits) = FREED_SERIES_BYTE;
 
     Pool* pool = &g_mem.pools[pool_id];
 

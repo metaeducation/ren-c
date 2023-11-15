@@ -64,8 +64,9 @@
 //
 
 inline static bool Is_Nulled(Cell(const*) v) {
-    return QUOTE_BYTE(v) == 0  // Checked version, checks for READABLE()
-        and HEART_BYTE_UNCHECKED(v) == REB_WORD
+    ASSERT_CELL_READABLE_EVIL_MACRO(v);
+    return QUOTE_BYTE(v) == 0
+        and HEART_BYTE(v) == REB_WORD
         and VAL_WORD_ID(v) == SYM_NULL;
 }
 

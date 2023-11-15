@@ -107,7 +107,7 @@
     MISC(Pending, &(feed)->singular)
 
 #define FEED_IS_VARIADIC(feed) \
-    (REB_COMMA == HEART_BYTE_UNCHECKED(FEED_SINGLE(feed)))
+    (REB_COMMA == HEART_BYTE(FEED_SINGLE(feed)))
 
 #define FEED_VAPTR_POINTER(feed)    PAYLOAD(Comma, FEED_SINGLE(feed)).vaptr
 #define FEED_PACKED(feed)           PAYLOAD(Comma, FEED_SINGLE(feed)).packed
@@ -202,7 +202,7 @@ inline static Value(const*) Copy_Reified_Variadic_Feed_Cell(
 
     if (Is_Isotope(cell)) {  // @ will turn these back into isotopes
         Copy_Cell(out, SPECIFIC(cell));
-        mutable_QUOTE_BYTE(out) = QUASI_2;
+        QUOTE_BYTE(out) = QUASI_2;
         return VAL(out);
     }
 

@@ -35,7 +35,7 @@
 //
 String(*) Make_String_Core(Size encoded_capacity, Flags flags)
 {
-    assert(FLAVOR_BYTE(flags) == 0);  // shouldn't have a flavor
+    assert(Flavor_From_Flags(flags) == 0);  // shouldn't have a flavor
 
     String(*) str = Make_Series(StringT,
         encoded_capacity + 1,  // binary includes room for '\0' terminator

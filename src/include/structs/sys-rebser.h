@@ -293,15 +293,13 @@
 
 #define FLAG_FLAVOR_BYTE(flavor)        FLAG_THIRD_BYTE(flavor)
 #define FLAG_FLAVOR(name)               FLAG_FLAVOR_BYTE(FLAVOR_##name)
+#define FLAVOR_BYTE(series)             THIRD_BYTE((series)->leader.bits)
 
-inline static Byte FLAVOR_BYTE(uintptr_t flags)
-  { return THIRD_BYTE(flags); }
+inline static Flavor Flavor_From_Flags(uintptr_t flags)
+  { return cast(Flavor, THIRD_BYTE(flags)); }
 
 #define Series_Flavor(s) \
-    cast(Flavor, THIRD_BYTE((s)->leader))
-
-#define mutable_Series_Flavor(s) \
-    mutable_THIRD_BYTE((s)->leader)
+    cast(Flavor, FLAVOR_BYTE(s))
 
 
 //=//// BITS 24-31: SUBCLASS FLAGS ////////////////////////////////////////=//
@@ -460,14 +458,8 @@ STATIC_ASSERT(SERIES_INFO_0_IS_FALSE == NODE_FLAG_NODE);
 // additional space from rounding up.
 //
 
-#define FLAG_USED_BYTE(len) \
-    FLAG_SECOND_BYTE(len)
-
-#define USED_BYTE(s) \
-    SECOND_BYTE(SERIES_INFO(s))
-
-#define mutable_USED_BYTE(s) \
-    mutable_SECOND_BYTE(SERIES_INFO(s))
+#define FLAG_USED_BYTE(len)     FLAG_SECOND_BYTE(len)
+#define USED_BYTE(s)            SECOND_BYTE(SERIES_INFO(s))
 
 
 //=//// BITS 16-31 ARE SymId FOR SYMBOLS //////////////////////////////////=//

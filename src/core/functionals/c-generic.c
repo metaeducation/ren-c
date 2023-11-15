@@ -163,7 +163,7 @@ Array(*) Startup_Generics(const REBVAL *boot_generics)
     for (; item != tail; ++item)
         if (IS_SET_WORD(item)) {
             Derelativize(PUSH(), item, specifier);
-            mutable_HEART_BYTE(TOP) = REB_WORD; // change pushed to WORD!
+            HEART_BYTE(TOP) = REB_WORD;  // change pushed to WORD!
         }
 
     return Pop_Stack_Values(base);  // catalog of generics

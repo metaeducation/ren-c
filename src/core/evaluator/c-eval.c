@@ -1122,7 +1122,7 @@ Bounce Evaluator_Executor(Level(*) L)
         REBVAL *redbol = Get_System(SYS_OPTIONS, OPTIONS_REDBOL_PATHS);
         if (not IS_LOGIC(redbol) or VAL_LOGIC(redbol) == false) {
             Derelativize(OUT, L_current, L_specifier);
-            mutable_HEART_BYTE(OUT) = REB_SET_TUPLE;
+            HEART_BYTE(OUT) = REB_SET_TUPLE;
 
             Derelativize(SPARE, L_current, L_specifier);
             rebElide(
@@ -1298,7 +1298,7 @@ Bounce Evaluator_Executor(Level(*) L)
 
       case REB_GET_BLOCK: {
         Derelativize(SPARE, L_current, L_specifier);
-        mutable_HEART_BYTE(SPARE) = REB_BLOCK;
+        HEART_BYTE(SPARE) = REB_BLOCK;
         if (rebRunThrows(
             cast(REBVAL*, OUT),  // <-- output cell, API won't make atoms
             Canon(REDUCE), SPARE
@@ -1590,7 +1590,7 @@ Bounce Evaluator_Executor(Level(*) L)
                     goto circled_check;
                 }
                 if (Is_Meta_Of_Raised(SPARE) and not raised_ok) {
-                    mutable_QUOTE_BYTE(SPARE) = UNQUOTED_1;
+                    QUOTE_BYTE(SPARE) = UNQUOTED_1;
                     fail (VAL_CONTEXT(SPARE));
                 }
                 Set_Var_May_Fail(var, SPECIFIED, stable_SPARE);  // is meta'd
@@ -1676,7 +1676,7 @@ Bounce Evaluator_Executor(Level(*) L)
 
       case REB_META_BLOCK:
         Inertly_Derelativize_Inheriting_Const(OUT, L_current, L->feed);
-        mutable_HEART_BYTE(OUT) = REB_BLOCK;
+        HEART_BYTE(OUT) = REB_BLOCK;
         Quotify(OUT, 1);
         break;
 
@@ -1762,7 +1762,7 @@ Bounce Evaluator_Executor(Level(*) L)
 
       case REB_QUASI:
         Derelativize(OUT, L_current, L_specifier);
-        mutable_QUOTE_BYTE(OUT) = ISOTOPE_0;
+        QUOTE_BYTE(OUT) = ISOTOPE_0;
         break;
 
 

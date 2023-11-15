@@ -49,10 +49,12 @@
 #define Is_False(out)       Is_Word_Isotope_With_Id((out), SYM_FALSE)
 
 inline static bool IS_LOGIC(Cell(const*) v) {
+    ASSERT_CELL_READABLE_EVIL_MACRO(v);
+
     if (QUOTE_BYTE(v) != ISOTOPE_0)
         return false;
 
-    if (HEART_BYTE_UNCHECKED(v) != REB_WORD)  // quote byte checked it
+    if (HEART_BYTE(v) != REB_WORD)  // quote byte checked it
         return false;
 
     Option(SymId) id = VAL_WORD_ID(v);
@@ -74,8 +76,10 @@ inline static bool VAL_LOGIC(Cell(const*) v) {
 }
 
 inline static bool Is_Truthy(Cell(const*) v) {
+    ASSERT_CELL_READABLE_EVIL_MACRO(v);
+
     if (QUOTE_BYTE(v) == ISOTOPE_0) {
-        if (HEART_BYTE_UNCHECKED(v) != REB_WORD)
+        if (HEART_BYTE(v) != REB_WORD)
             return true;  // all non-word isotopes are truthy?
         Option(SymId) id = VAL_WORD_ID(v);
         if (id == SYM_NULL)
@@ -87,10 +91,10 @@ inline static bool Is_Truthy(Cell(const*) v) {
         fail (Error_Bad_Isotope(v));  // !!! special error?
     }
 
-    if (QUOTE_BYTE_UNCHECKED(v) != UNQUOTED_1)
+    if (QUOTE_BYTE(v) != UNQUOTED_1)
         return true;  // all QUOTED! and QUASI! types are truthy
 
-    if (HEART_BYTE_UNCHECKED(v) == REB_VOID)
+    if (HEART_BYTE(v) == REB_VOID)
         fail (Error_Bad_Void());  // void is neither truthy nor falsey
 
     return true;  // all other non-isotopic values are truthy

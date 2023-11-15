@@ -214,7 +214,7 @@ DECLARE_NATIVE(the_p)
 
     if (Is_Quasi(v)) {  // for `rebElide("@", nullptr, "else [...]");`
         Copy_Cell(OUT, v);
-        mutable_QUOTE_BYTE(OUT) = ISOTOPE_0;
+        QUOTE_BYTE(OUT) = ISOTOPE_0;
     }
     else {
         Copy_Cell(OUT, v);
@@ -388,7 +388,7 @@ DECLARE_NATIVE(isotopic)
         fail ("QUASI! values can be made isotopic with UNMETA");
 
     Copy_Cell(OUT, v);
-    mutable_QUOTE_BYTE(OUT) = ISOTOPE_0;
+    QUOTE_BYTE(OUT) = ISOTOPE_0;
     return OUT;
 }
 
@@ -486,8 +486,8 @@ DECLARE_INTRINSIC(spread)
     else {
         assert(ANY_ARRAY(arg));
         Copy_Cell(out, arg);
-        mutable_HEART_BYTE(out) = REB_GROUP;
-        mutable_QUOTE_BYTE(out) = ISOTOPE_0;
+        HEART_BYTE(out) = REB_GROUP;
+        QUOTE_BYTE(out) = ISOTOPE_0;
     }
 }
 
@@ -524,7 +524,7 @@ DECLARE_NATIVE(lazy)
         Copy_Cell(OUT, v);
 
     assert(IS_OBJECT(OUT));
-    mutable_QUOTE_BYTE(OUT) = ISOTOPE_0;
+    QUOTE_BYTE(OUT) = ISOTOPE_0;
     return OUT;
 }
 
@@ -602,8 +602,8 @@ DECLARE_NATIVE(matches)
 
     assert(IS_BLOCK(v));
     Copy_Cell(OUT, v);
-    mutable_HEART_BYTE(OUT) = REB_TYPE_BLOCK;
-    mutable_QUOTE_BYTE(OUT) = ISOTOPE_0;
+    HEART_BYTE(OUT) = REB_TYPE_BLOCK;
+    QUOTE_BYTE(OUT) = ISOTOPE_0;
 
     return OUT;
 }
@@ -730,7 +730,7 @@ DECLARE_INTRINSIC(runs)
     UNUSED(phase);
 
     Copy_Cell(out, arg);  // may or may not be isotope
-    mutable_QUOTE_BYTE(out) = ISOTOPE_0;  // now it's known to be an isotope
+    QUOTE_BYTE(out) = ISOTOPE_0;  // now it's known to be an isotope
 }
 
 
@@ -748,7 +748,7 @@ DECLARE_INTRINSIC(unrun)
     UNUSED(phase);
 
     Copy_Cell(out, arg);  // may or may not be isotope
-    mutable_QUOTE_BYTE(out) = UNQUOTED_1;  // now it's known to not be isotopic
+    QUOTE_BYTE(out) = UNQUOTED_1;  // now it's known to not be isotopic
 }
 
 

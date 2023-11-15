@@ -158,7 +158,7 @@ DECLARE_NATIVE(entrap)  // wrapped as TRAP and ATTEMPT
     if (Is_Raised(SPARE)) {
         Drop_Level(SUBLEVEL);
         Move_Cell(OUT, SPARE);
-        mutable_QUOTE_BYTE(OUT) = UNQUOTED_1;  // change isotope error to plain
+        QUOTE_BYTE(OUT) = UNQUOTED_1;  // change isotope error to plain
         return BRANCHED(OUT);
     }
 

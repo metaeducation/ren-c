@@ -2333,7 +2333,7 @@ Bounce Scanner_Executor(Level(*) const L) {
             return DROP(), RAISE(Error_Syntax(ss, level->token));
 
         if (bp[len - 1] == '%') {
-            mutable_HEART_BYTE(TOP) = REB_PERCENT;
+            HEART_BYTE(TOP) = REB_PERCENT;
 
             // !!! DEBUG_EXTANT_STACK_POINTERS can't resolve if this is
             // a NoQuote(Cell(const*)) or REBVAL* overload with DEBUG_CHECK_CASTS.
@@ -2684,7 +2684,7 @@ Bounce Scanner_Executor(Level(*) const L) {
         for (; cleanup <= TOP; ++cleanup) {
             if (IS_GET_WORD(cleanup)) {
                 Array(*) a = Alloc_Singular(NODE_FLAG_MANAGED);
-                mutable_HEART_BYTE(cleanup) = REB_GET_WORD;
+                HEART_BYTE(cleanup) = REB_GET_WORD;
 
                 Move_Cell(Array_Single(a), cleanup);
                 Init_Group(cleanup, a);
@@ -2857,7 +2857,7 @@ Bounce Scanner_Executor(Level(*) const L) {
         if (not ANY_PLAIN_KIND(kind))
             return RAISE(Error_Syntax(ss, level->token));
 
-        mutable_HEART_BYTE(TOP) = SETIFY_ANY_PLAIN_KIND(kind);
+        HEART_BYTE(TOP) = SETIFY_ANY_PLAIN_KIND(kind);
 
         ss->begin = ++ss->end;  // !!! ?
     }
@@ -2868,19 +2868,19 @@ Bounce Scanner_Executor(Level(*) const L) {
 
         switch (level->prefix_pending) {
           case TOKEN_COLON:
-            mutable_HEART_BYTE(TOP) = GETIFY_ANY_PLAIN_KIND(kind);
+            HEART_BYTE(TOP) = GETIFY_ANY_PLAIN_KIND(kind);
             break;
 
           case TOKEN_CARET:
-            mutable_HEART_BYTE(TOP) = METAFY_ANY_PLAIN_KIND(kind);
+            HEART_BYTE(TOP) = METAFY_ANY_PLAIN_KIND(kind);
             break;
 
           case TOKEN_AT:
-            mutable_HEART_BYTE(TOP) = THEIFY_ANY_PLAIN_KIND(kind);
+            HEART_BYTE(TOP) = THEIFY_ANY_PLAIN_KIND(kind);
             break;
 
           case TOKEN_AMPERSAND:
-            mutable_HEART_BYTE(TOP) = TYPEIFY_ANY_PLAIN_KIND(kind);
+            HEART_BYTE(TOP) = TYPEIFY_ANY_PLAIN_KIND(kind);
             break;
 
           default:

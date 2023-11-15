@@ -464,7 +464,7 @@ bool Try_Fill_Pool(Pool* pool)
     }
 
     while (true) {
-        mutable_FIRST_BYTE(unit->headspot) = FREED_SERIES_BYTE;
+        FIRST_BYTE(unit->headspot.bits) = FREED_SERIES_BYTE;
 
         if (--num_units == 0) {
             unit->next_if_free = nullptr;
@@ -666,7 +666,7 @@ void Free_Unbiased_Series_Data(char *unbiased, Size total)
         pool->first = unit;
         pool->free++;
 
-        mutable_FIRST_BYTE(unit->headspot) = FREED_SERIES_BYTE;
+        FIRST_BYTE(unit->headspot.bits) = FREED_SERIES_BYTE;
     }
     else {
         FREE_N(char, total, unbiased);
@@ -947,8 +947,8 @@ void Swap_Series_Content(Series(*) a, Series(*) b)
         Clear_Series_Flag(b, DYNAMIC);
 
     Byte a_len = USED_BYTE(a);  // unused (for now) when SERIES_FLAG_DYNAMIC()
-    mutable_USED_BYTE(a) = USED_BYTE(b);
-    mutable_USED_BYTE(b) = a_len;
+    USED_BYTE(a) = USED_BYTE(b);
+    USED_BYTE(b) = a_len;
 
     union StubContentUnion a_content = a->content;
     a->content = b->content;

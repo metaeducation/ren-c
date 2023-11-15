@@ -1201,7 +1201,7 @@ REBTYPE(Context)
             fail ("APPEND only works on OBJECT! and MODULE! contexts");
 
         if (Is_Splice(arg)) {
-            mutable_QUOTE_BYTE(arg) = UNQUOTED_1;  // make plain group
+            QUOTE_BYTE(arg) = UNQUOTED_1;  // make plain group
         }
         else if (ANY_WORD(arg)) {
             // Add an unset word: `append context 'some-word`

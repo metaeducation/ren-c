@@ -43,12 +43,12 @@
     FIRST_BYTE(EXTRA(Parameter, (v)).param_flags)
 
 #define mutable_VAL_PARAMETER_CLASS_BYTE(v) \
-    mutable_FIRST_BYTE(EXTRA(Parameter, (v)).param_flags)
+    FIRST_BYTE(EXTRA(Parameter, (v)).param_flags)
 
 inline static Option(Array(const*)) VAL_PARAMETER_ARRAY(
     NoQuote(Cell(const*)) v
 ){
-    assert(HEART_BYTE_UNCHECKED(v) == REB_PARAMETER);
+    assert(HEART_BYTE(v) == REB_PARAMETER);
 
     Array(const*) a = ARR(VAL_NODE1(v));
     if (a != nullptr and Get_Series_Flag(a, INACCESSIBLE))
@@ -82,7 +82,7 @@ inline static bool Matcher_Matches(
     assert(Is_Matcher(matcher));
     DECLARE_LOCAL (plain);
     Derelativize(plain, matcher, matcher_specifier);
-    mutable_QUOTE_BYTE(plain) = UNQUOTED_1;
+    QUOTE_BYTE(plain) = UNQUOTED_1;
 
     DECLARE_STABLE (v_derelativized);
     Derelativize(v_derelativized, v, v_specifier);
@@ -197,7 +197,7 @@ inline static bool Matcher_Matches(
 
 
 inline static enum Reb_Param_Class VAL_PARAM_CLASS(const REBPAR *param) {
-    assert(HEART_BYTE_UNCHECKED(param) == REB_PARAMETER);
+    assert(HEART_BYTE(param) == REB_PARAMETER);
     enum Reb_Param_Class pclass = cast(enum Reb_Param_Class,
         VAL_PARAMETER_CLASS_BYTE(param)
     );
@@ -213,10 +213,10 @@ inline static enum Reb_Param_Class VAL_PARAM_CLASS(const REBPAR *param) {
 //
 inline static bool Is_Specialized(const REBPAR *param) {
     if (
-        HEART_BYTE_UNCHECKED(param) == REB_PARAMETER  // no assert on isotope
+        HEART_BYTE(param) == REB_PARAMETER  // no assert on isotope
         and VAL_PARAM_CLASS(param) != PARAM_CLASS_0  // non-parameter typeset
     ){
-        assert(QUOTE_BYTE_UNCHECKED(param) == UNQUOTED_1);  // no quoteds
+        assert(QUOTE_BYTE(param) == UNQUOTED_1);  // no quoteds
         if (Get_Cell_Flag_Unchecked(param, VAR_MARKED_HIDDEN))
             assert(!"Unspecialized parameter is marked hidden!");
         return false;

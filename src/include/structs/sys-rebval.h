@@ -136,9 +136,7 @@
 // the heart, then (''''x) will equal (x) because both hearts are WORD!.
 
 #define FLAG_HEART_BYTE(kind)       FLAG_SECOND_BYTE(kind)
-#define HEART_BYTE_UNCHECKED(v)     SECOND_BYTE((v)->header)
-#define HEART_BYTE(v)               SECOND_BYTE(READABLE(v)->header)
-#define mutable_HEART_BYTE(v)       mutable_SECOND_BYTE(WRITABLE(v)->header)
+#define HEART_BYTE(cell)            SECOND_BYTE((cell)->header.bits)
 
 
 //=//// BITS 16-23: QUOTING DEPTH BYTE ("QUOTE") //////////////////////////=//
@@ -154,10 +152,8 @@
 // get conflated.  See `NoQuote(Cell(const*))` for some of that mechanic.
 //
 
-#define FLAG_QUOTE_BYTE(b)          FLAG_THIRD_BYTE(b)
-#define QUOTE_BYTE_UNCHECKED(v)     THIRD_BYTE((v)->header)
-#define QUOTE_BYTE(v)               THIRD_BYTE(READABLE(v)->header)
-#define mutable_QUOTE_BYTE(v)       mutable_THIRD_BYTE(WRITABLE(v)->header)
+#define FLAG_QUOTE_BYTE(byte)       FLAG_THIRD_BYTE(byte)
+#define QUOTE_BYTE(cell)            THIRD_BYTE((cell)->header.bits)
 
 #define ISOTOPE_0           0  // Also QUASI (e.g. with NONQUASI_BIT is clear)
 #define UNQUOTED_1           1
@@ -171,16 +167,16 @@
 #define MAX_QUOTE_DEPTH     126  // highest legal quoting level
 
 #define Is_Isotope(v) \
-    (QUOTE_BYTE(v) == ISOTOPE_0)
+    (QUOTE_BYTE(READABLE(v)) == ISOTOPE_0)
 
 #define Is_Unquoted(v) \
-    (QUOTE_BYTE(v) == UNQUOTED_1)
+    (QUOTE_BYTE(READABLE(v)) == UNQUOTED_1)
 
 #define Is_Quasi(v) \
-    (QUOTE_BYTE(v) == QUASI_2)
+    (QUOTE_BYTE(READABLE(v)) == QUASI_2)
 
 #define Is_Quoted(v) \
-    (QUOTE_BYTE(v) >= ONEQUOTE_3)  // quoted-quasi e.g. '~a~ considered QUOTED!
+    (QUOTE_BYTE(READABLE(v)) >= ONEQUOTE_3)  // '''~a~ is quoted, not quasi
 
 
 //=//// BITS 24-31: CELL FLAGS ////////////////////////////////////////////=//

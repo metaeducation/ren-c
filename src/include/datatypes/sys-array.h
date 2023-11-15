@@ -225,7 +225,7 @@ inline static Array(*) Make_Array_Core_Into(
     // number from the array executing in the current frame.
     //
     if (
-        FLAVOR_BYTE(flags) == FLAVOR_ARRAY
+        Flavor_From_Flags(flags) == FLAVOR_ARRAY
         and (flags & ARRAY_FLAG_HAS_FILE_LINE_UNMASKED)  // hope callsites fold
     ){
         assert(flags & SERIES_FLAG_LINK_NODE_NEEDS_MARK);
@@ -277,7 +277,7 @@ inline static Array(*) Make_Array_For_Copy(
     }
 
     if (
-        FLAVOR_BYTE(flags) == FLAVOR_ARRAY
+        Flavor_From_Flags(flags) == FLAVOR_ARRAY
         and (flags & ARRAY_FLAG_HAS_FILE_LINE_UNMASKED)
         and (original and Has_File_Line(original))
     ){
@@ -610,7 +610,7 @@ inline static bool Is_Any_Doubled_Group(NoQuote(Cell(const*)) group) {
 
 inline static Value(*) Init_Pack_Untracked(Atom(*) out, Array(*) a) {
     Init_Block(out, a);
-    mutable_QUOTE_BYTE(out) = ISOTOPE_0;
+    QUOTE_BYTE(out) = ISOTOPE_0;
     return cast(Value(*), out);  // Note: Is_Isotope_Unstable(out)
 }
 
@@ -668,14 +668,14 @@ inline static bool Is_Meta_Of_Nihil(Cell(const*) v) {
 
 inline static Value(*) Splicify(Value(*) v) {
     assert(ANY_ARRAY(v) and QUOTE_BYTE(v) == UNQUOTED_1);
-    mutable_QUOTE_BYTE(v) = ISOTOPE_0;
-    mutable_HEART_BYTE(v) = REB_GROUP;
+    QUOTE_BYTE(v) = ISOTOPE_0;
+    HEART_BYTE(v) = REB_GROUP;
     return VAL(v);
 }
 
 inline static Value(*) Init_Splice_Untracked(Value(*) out, Array(*) a) {
     Init_Group(out, a);
-    mutable_QUOTE_BYTE(out) = ISOTOPE_0;
+    QUOTE_BYTE(out) = ISOTOPE_0;
     return out;
 }
 

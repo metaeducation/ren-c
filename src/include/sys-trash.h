@@ -59,9 +59,9 @@
     }
 
     inline static bool IS_TRASH(Cell(const*) v) {
-        if (CELL_HEART_UNCHECKED(v) != REB_VOID)
+        if (CELL_HEART(v) != REB_VOID)
             return false;
-        if (QUOTE_BYTE_UNCHECKED(v) != QUASI_2)
+        if (QUOTE_BYTE(v) != QUASI_2)
             return false;
         return Get_Cell_Flag_Unchecked(v, STALE);
     }

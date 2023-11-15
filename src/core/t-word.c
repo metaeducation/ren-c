@@ -104,7 +104,7 @@ Bounce MAKE_Word(
         // Rethink what it means to preserve the bits vs. not.
         //
         Copy_Cell(OUT, arg);
-        mutable_HEART_BYTE(OUT) = kind;
+        HEART_BYTE(OUT) = kind;
         return OUT;
     }
 
@@ -187,7 +187,7 @@ Bounce TO_Word(Level(*) level_, enum Reb_Kind kind, const REBVAL *arg)
         if (Is_Fresh(OUT))
             return RAISE("Can't MAKE ANY-WORD! from PATH! that's all BLANK!s");
 
-        mutable_HEART_BYTE(OUT) = kind;
+        HEART_BYTE(OUT) = kind;
         return OUT;
     }
 

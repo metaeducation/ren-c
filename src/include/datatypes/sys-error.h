@@ -57,13 +57,12 @@ inline static void Force_Location_Of_Error(Context(*) error, Level(*) where) {
 // also be passed around normally until it's UNMETA'd back to a failure again.
 
 inline static bool Is_Raised(Atom(const*) v)
-  { return HEART_BYTE_UNCHECKED(v) == REB_ERROR
-    and QUOTE_BYTE_UNCHECKED(v) == ISOTOPE_0; }
+  { return HEART_BYTE(v) == REB_ERROR and QUOTE_BYTE(v) == ISOTOPE_0; }
 
 inline static Atom(*) Raisify(Atom(*) v) {
     assert(IS_ERROR(v) and QUOTE_BYTE(v) == UNQUOTED_1);
     Force_Location_Of_Error(VAL_CONTEXT(v), TOP_LEVEL);  // ideally already set
-    mutable_QUOTE_BYTE(v) = ISOTOPE_0;
+    QUOTE_BYTE(v) = ISOTOPE_0;
     return v;
 }
 
@@ -73,5 +72,4 @@ inline static Atom(*) Raisify(Atom(*) v) {
 #endif
 
 inline static bool Is_Meta_Of_Raised(Cell(const*) v)
-  { return HEART_BYTE_UNCHECKED(v) == REB_ERROR
-    and QUOTE_BYTE_UNCHECKED(v) == QUASI_2; }
+  { return HEART_BYTE(v) == REB_ERROR and QUOTE_BYTE(v) == QUASI_2; }

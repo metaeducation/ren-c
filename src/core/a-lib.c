@@ -2206,7 +2206,7 @@ const REBINS *RL_rebRUN(const void *p)
 
     Value(*) v = VAL(Array_Single(a));
     if (Is_Activation(v))
-        mutable_QUOTE_BYTE(v) = UNQUOTED_1;
+        QUOTE_BYTE(v) = UNQUOTED_1;
     else if (not IS_FRAME(v))
         fail ("rebRUN() only accepts FRAME! or actions (aka FRAME! isotopes)");
 

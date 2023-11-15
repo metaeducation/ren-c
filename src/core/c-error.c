@@ -707,7 +707,7 @@ Context(*) Make_Error_Managed_Core(
 
     assert(CTX_LEN(error) == CTX_LEN(root_error) + expected_args);
 
-    mutable_HEART_BYTE(CTX_ROOTVAR(error)) = REB_ERROR;
+    HEART_BYTE(CTX_ROOTVAR(error)) = REB_ERROR;
 
     // C struct mirroring fixed portion of error fields
     //

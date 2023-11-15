@@ -640,7 +640,7 @@ inline static void Set_Series_Used_Internal(Series(*) s, REBLEN used) {
             }
         }
         else
-            mutable_USED_BYTE(s) = used;
+            USED_BYTE(s) = used;
     }
 
   #if DEBUG_UTF8_EVERYWHERE
@@ -1344,7 +1344,7 @@ inline static Series(*) Make_Series_Into(
     REBLEN capacity,
     Flags flags
 ){
-    size_t wide = Wide_For_Flavor(cast(Flavor, FLAVOR_BYTE(flags)));
+    size_t wide = Wide_For_Flavor(Flavor_From_Flags(flags));
     if (cast(REBU64, capacity) * wide > INT32_MAX)
         fail (Error_No_Memory(cast(REBU64, capacity) * wide));
 

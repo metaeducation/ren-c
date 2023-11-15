@@ -394,7 +394,7 @@ static void Propagate_All_GC_Marks(void)
             Flavor flavor = Series_Flavor(a);
             assert(flavor <= FLAVOR_MAX_ARRAY);
 
-            switch (QUOTE_BYTE_UNCHECKED(v)) {
+            switch (QUOTE_BYTE(v)) {
               case ISOTOPE_0:
                 if (flavor < FLAVOR_MIN_ISOTOPES_OK)
                     panic (v);  // isotopes not legal in some array types
@@ -404,7 +404,7 @@ static void Propagate_All_GC_Marks(void)
                 break;
 
               case UNQUOTED_1:
-                if (HEART_BYTE_UNCHECKED(v) == REB_VOID) {
+                if (HEART_BYTE(v) == REB_VOID) {
                     if (flavor < FLAVOR_MIN_VOIDS_OK)
                         panic (v);  // voids not legal in some array types
                 }

@@ -597,7 +597,7 @@ Bounce Composer_Executor(Level(*) const L)
 
     Derelativize(SPARE, cast(Cell(const*), match), match_specifier);
     Dequotify(SPARE);  // cast was needed because there may have been quotes
-    mutable_HEART_BYTE(SPARE) = REB_GROUP;  // don't confuse with decoration
+    HEART_BYTE(SPARE) = REB_GROUP;  // don't confuse with decoration
     if (not Is_Nulled(label))
         VAL_INDEX_RAW(SPARE) += 1;  // wasn't possibly at END
 
@@ -681,7 +681,7 @@ Bounce Composer_Executor(Level(*) const L)
     else {
         if (QUOTE_BYTE(TOP) != UNQUOTED_1)
             fail ("COMPOSE cannot quasify items not at quote level 0");
-        mutable_QUOTE_BYTE(TOP) = group_quote_byte;
+        QUOTE_BYTE(TOP) = group_quote_byte;
     }
 
     // Use newline intent from the GROUP! in the compose pattern

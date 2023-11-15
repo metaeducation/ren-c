@@ -216,13 +216,13 @@ bool Typecheck_Value(
         // items.  For the moment just try quasi-words for isotopes.
         //
         if (VAL_TYPE_UNCHECKED(item) == REB_QUASI) {
-            if (HEART_BYTE_UNCHECKED(item) == REB_VOID) {
+            if (HEART_BYTE(item) == REB_VOID) {
                 if (Is_None(v))
                     goto test_succeeded;
                 goto test_failed;
             }
 
-            if (HEART_BYTE_UNCHECKED(item) != REB_WORD)
+            if (HEART_BYTE(item) != REB_WORD)
                 fail (item);
 
             if (not Is_Isoword(v))
@@ -458,7 +458,7 @@ bool Typecheck_Coerce_Argument(
       do_coercion:
 
         if (Is_Activation(arg)) {
-            mutable_QUOTE_BYTE(arg) = UNQUOTED_1;
+            QUOTE_BYTE(arg) = UNQUOTED_1;
             coerced = true;
             goto typecheck_again;
         }

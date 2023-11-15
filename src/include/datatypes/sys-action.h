@@ -710,13 +710,13 @@ inline static Bounce Native_None_Result_Untracked(
 
 inline static Value(*) Activatify(Value(*) v) {
     assert(IS_FRAME(v) and QUOTE_BYTE(v) == UNQUOTED_1);
-    mutable_QUOTE_BYTE(v) = ISOTOPE_0;
+    QUOTE_BYTE(v) = ISOTOPE_0;
     return VAL(v);
 }
 
 inline static Cell(*) Deactivate_If_Activation(Cell(*) v) {
     if (Is_Activation(v))
-        mutable_QUOTE_BYTE(v) = UNQUOTED_1;
+        QUOTE_BYTE(v) = UNQUOTED_1;
     return v;
 }
 

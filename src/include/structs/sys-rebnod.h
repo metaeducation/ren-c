@@ -172,18 +172,43 @@ typedef uintptr_t Flags;
 // access the bytes despite being written via a `uintptr_t`, due to the strict
 // aliasing exemption for character types (some say uint8_t should count...)
 //
-// mutable and immutable variations are needed, because sometimes the flags
-// are const (e.g. of a header in a `const REBVAL*`)
+// To make it possible to use these as the left hand side of assignments,
+// the C build throws away the const information in the macro.  But the
+// C++11 build can use references to accomplish it.  This requires inline
+// functions that cost a little in the debug build for these very commonly
+// used functions... so it's only in the DEBUG_CHECK_CASTS builds.
 
-#define FIRST_BYTE(flags)       ((const unsigned char*)&(flags))[0]
-#define SECOND_BYTE(flags)      ((const unsigned char*)&(flags))[1]
-#define THIRD_BYTE(flags)       ((const unsigned char*)&(flags))[2]
-#define FOURTH_BYTE(flags)      ((const unsigned char*)&(flags))[3]
+#if (! CPLUSPLUS_11)  // use x_cast and throw away const knowledge
+    #define FIRST_BYTE(u)       x_cast(unsigned char*, &(u))[0]
+    #define SECOND_BYTE(u)      x_cast(unsigned char*, &(u))[1]
+    #define THIRD_BYTE(u)       x_cast(unsigned char*, &(u))[2]
+    #define FOURTH_BYTE(u)      x_cast(unsigned char*, &(u))[3]
+#else
+    inline static unsigned char FIRST_BYTE(const uintptr_t& u)
+      { return cast(unsigned char*, &u)[0]; }
 
-#define mutable_FIRST_BYTE(flags)       ((unsigned char*)&(flags))[0]
-#define mutable_SECOND_BYTE(flags)      ((unsigned char*)&(flags))[1]
-#define mutable_THIRD_BYTE(flags)       ((unsigned char*)&(flags))[2]
-#define mutable_FOURTH_BYTE(flags)      ((unsigned char*)&(flags))[3]
+    inline static unsigned char& FIRST_BYTE(uintptr_t& u)
+      { return cast(unsigned char*, &u)[0]; }
+
+    inline static unsigned char SECOND_BYTE(const uintptr_t& u)
+      { return cast(unsigned char*, &u)[1]; }
+
+    inline static unsigned char& SECOND_BYTE(uintptr_t& u)
+      { return cast(unsigned char*, &u)[1]; }
+
+    inline static unsigned char THIRD_BYTE(const uintptr_t& u)
+      { return cast(unsigned char*, &u)[2]; }
+
+    inline static unsigned char& THIRD_BYTE(uintptr_t& u)
+      { return cast(unsigned char*, &u)[2]; }
+
+    inline static unsigned char FOURTH_BYTE(const uintptr_t& u)
+      { return cast(unsigned char*, &u)[3]; }
+
+    inline static unsigned char& FOURTH_BYTE(uintptr_t& u)
+      { return cast(unsigned char*, &u)[3]; }
+#endif
+
 
 // There might not seem to be a good reason to keep the uint16_t variant in
 // any particular order.  But if you cast a uintptr_t (or otherwise) to byte

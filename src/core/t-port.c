@@ -85,7 +85,7 @@ Bounce TO_Port(Level(*) level_, enum Reb_Kind kind, const REBVAL *arg)
     //
     Context(*) context = Copy_Context_Shallow_Managed(VAL_CONTEXT(arg));
     REBVAL *rootvar = CTX_ROOTVAR(context);
-    mutable_HEART_BYTE(rootvar) = REB_PORT;
+    HEART_BYTE(rootvar) = REB_PORT;
 
     return Init_Port(OUT, context);
 }

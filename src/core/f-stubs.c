@@ -500,19 +500,19 @@ int64_t Mul_Max(enum Reb_Kind type, int64_t n, int64_t m, int64_t maxi)
 REBVAL *Setify(REBVAL *out) {  // called on stack values; can't call evaluator
     enum Reb_Kind heart = CELL_HEART(out);
     if (ANY_WORD_KIND(heart)) {
-        mutable_HEART_BYTE(out) = REB_SET_WORD;
+        HEART_BYTE(out) = REB_SET_WORD;
     }
     else if (ANY_PATH_KIND(heart)) {
-        mutable_HEART_BYTE(out) = REB_SET_PATH;
+        HEART_BYTE(out) = REB_SET_PATH;
     }
     else if (ANY_TUPLE_KIND(heart)) {
-        mutable_HEART_BYTE(out) = REB_SET_TUPLE;
+        HEART_BYTE(out) = REB_SET_TUPLE;
     }
     else if (ANY_BLOCK_KIND(heart)) {
-        mutable_HEART_BYTE(out) = REB_SET_BLOCK;
+        HEART_BYTE(out) = REB_SET_BLOCK;
     }
     else if (ANY_GROUP_KIND(heart)) {
-        mutable_HEART_BYTE(out) = REB_SET_GROUP;
+        HEART_BYTE(out) = REB_SET_GROUP;
     }
     else
         fail ("Cannot SETIFY");
@@ -546,19 +546,19 @@ DECLARE_NATIVE(setify)
 REBVAL *Getify(REBVAL *out) {  // called on stack values; can't call evaluator
     enum Reb_Kind heart = CELL_HEART(out);
     if (ANY_BLOCK_KIND(heart)) {
-        mutable_HEART_BYTE(out) = REB_GET_BLOCK;
+        HEART_BYTE(out) = REB_GET_BLOCK;
     }
     else if (ANY_GROUP_KIND(heart)) {
-        mutable_HEART_BYTE(out) = REB_GET_GROUP;
+        HEART_BYTE(out) = REB_GET_GROUP;
     }
     else if (ANY_PATH_KIND(heart)) {
-        mutable_HEART_BYTE(out) = REB_GET_PATH;
+        HEART_BYTE(out) = REB_GET_PATH;
     }
     else if (ANY_TUPLE_KIND(heart)) {
-        mutable_HEART_BYTE(out) = REB_GET_TUPLE;
+        HEART_BYTE(out) = REB_GET_TUPLE;
     }
     else if (ANY_WORD_KIND(heart)) {
-        mutable_HEART_BYTE(out) = REB_GET_WORD;
+        HEART_BYTE(out) = REB_GET_WORD;
     }
     else
         fail ("Cannot GETIFY");
@@ -592,19 +592,19 @@ DECLARE_NATIVE(getify)
 REBVAL *Metafy(REBVAL *out) {  // called on stack values; can't call evaluator
     enum Reb_Kind heart = CELL_HEART(out);
     if (ANY_WORD_KIND(heart)) {
-        mutable_HEART_BYTE(out) = REB_META_WORD;
+        HEART_BYTE(out) = REB_META_WORD;
     }
     else if (ANY_PATH_KIND(heart)) {
-        mutable_HEART_BYTE(out) = REB_META_PATH;
+        HEART_BYTE(out) = REB_META_PATH;
     }
     else if (ANY_TUPLE_KIND(heart)) {
-        mutable_HEART_BYTE(out) = REB_META_TUPLE;
+        HEART_BYTE(out) = REB_META_TUPLE;
     }
     else if (ANY_BLOCK_KIND(heart)) {
-        mutable_HEART_BYTE(out) = REB_META_BLOCK;
+        HEART_BYTE(out) = REB_META_BLOCK;
     }
     else if (ANY_GROUP_KIND(heart)) {
-        mutable_HEART_BYTE(out) = REB_META_GROUP;
+        HEART_BYTE(out) = REB_META_GROUP;
     }
     else if (heart == REB_VOID) {
         Init_Word(out, Canon(CARET_1));
@@ -641,19 +641,19 @@ DECLARE_NATIVE(metafy)
 REBVAL *Theify(REBVAL *out) {  // called on stack values; can't call evaluator
     enum Reb_Kind heart = CELL_HEART(out);
     if (ANY_WORD_KIND(heart)) {
-        mutable_HEART_BYTE(out) = REB_THE_WORD;
+        HEART_BYTE(out) = REB_THE_WORD;
     }
     else if (ANY_PATH_KIND(heart)) {
-        mutable_HEART_BYTE(out) = REB_THE_PATH;
+        HEART_BYTE(out) = REB_THE_PATH;
     }
     else if (ANY_TUPLE_KIND(heart)) {
-        mutable_HEART_BYTE(out) = REB_THE_TUPLE;
+        HEART_BYTE(out) = REB_THE_TUPLE;
     }
     else if (ANY_BLOCK_KIND(heart)) {
-        mutable_HEART_BYTE(out) = REB_THE_BLOCK;
+        HEART_BYTE(out) = REB_THE_BLOCK;
     }
     else if (ANY_GROUP_KIND(heart)) {
-        mutable_HEART_BYTE(out) = REB_THE_GROUP;
+        HEART_BYTE(out) = REB_THE_GROUP;
     }
     else if (heart == REB_VOID) {
         Init_Word(out, Canon(AT_1));
@@ -694,19 +694,19 @@ DECLARE_NATIVE(inert)
 REBVAL *Plainify(REBVAL *out) {
     enum Reb_Kind heart = CELL_HEART(out);
     if (ANY_WORD_KIND(heart)) {
-        mutable_HEART_BYTE(out) = REB_WORD;
+        HEART_BYTE(out) = REB_WORD;
     }
     else if (ANY_PATH_KIND(heart)) {
-        mutable_HEART_BYTE(out) = REB_PATH;
+        HEART_BYTE(out) = REB_PATH;
     }
     else if (ANY_TUPLE_KIND(heart)) {
-        mutable_HEART_BYTE(out) = REB_TUPLE;
+        HEART_BYTE(out) = REB_TUPLE;
     }
     else if (ANY_BLOCK_KIND(heart)) {
-        mutable_HEART_BYTE(out) = REB_BLOCK;
+        HEART_BYTE(out) = REB_BLOCK;
     }
     else if (ANY_GROUP_KIND(heart)) {
-        mutable_HEART_BYTE(out) = REB_GROUP;
+        HEART_BYTE(out) = REB_GROUP;
     }
 
     return out;

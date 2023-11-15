@@ -272,7 +272,7 @@ Bounce Reflect_Core(Level(*) level_)
         break;
     }
 
-    mutable_QUOTE_BYTE(ARG(value)) = UNQUOTED_1;  // ignore QUASI! or QUOTED!
+    QUOTE_BYTE(ARG(value)) = UNQUOTED_1;  // ignore QUASI! or QUOTED!
 
     INIT_LVL_PHASE(
         level_,

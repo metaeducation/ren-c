@@ -102,7 +102,7 @@ Value(*) Try_Init_Any_Sequence_At_Arraylike_Core(
     // PATH! from non-head positions.
 
     Init_Series_Cell_At_Core(out, REB_BLOCK, a, index, specifier);
-    mutable_HEART_BYTE(out) = kind;
+    HEART_BYTE(out) = kind;
 
     return cast(REBVAL*, out);
 }
@@ -323,7 +323,7 @@ Bounce TO_Sequence(Level(*) level_, enum Reb_Kind kind, const REBVAL *arg) {
         // new bindings in lookups.  Review!
         //
         Copy_Cell(OUT, arg);
-        mutable_HEART_BYTE(OUT) = kind;
+        HEART_BYTE(OUT) = kind;
         return OUT;
     }
 

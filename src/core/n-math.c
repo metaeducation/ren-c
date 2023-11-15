@@ -479,8 +479,8 @@ REBINT Compare_Modify_Values(Cell(*) a, Cell(*) b, bool strict)
     if (QUOTE_BYTE(a) != QUOTE_BYTE(b))
         return QUOTE_BYTE(a) > QUOTE_BYTE(b) ? 1 : -1;
 
-    mutable_QUOTE_BYTE(a) = UNQUOTED_1;
-    mutable_QUOTE_BYTE(b) = UNQUOTED_1;
+    QUOTE_BYTE(a) = UNQUOTED_1;
+    QUOTE_BYTE(b) = UNQUOTED_1;
 
     enum Reb_Kind ta = CELL_HEART(a);
     enum Reb_Kind tb = CELL_HEART(b);

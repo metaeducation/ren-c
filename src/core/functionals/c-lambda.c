@@ -190,11 +190,11 @@ DECLARE_NATIVE(lambda)
             pclass = PARAM_CLASS_NORMAL;
         else if (IS_META_WORD(key_slot)) {
             pclass = PARAM_CLASS_META;
-            mutable_HEART_BYTE(key_slot) = REB_WORD;
+            HEART_BYTE(key_slot) = REB_WORD;
         }
         else if (IS_GET_WORD(key_slot)) {
             pclass = PARAM_CLASS_SOFT;
-            mutable_HEART_BYTE(key_slot) = REB_WORD;
+            HEART_BYTE(key_slot) = REB_WORD;
         }
         else if (Is_Quoted(key_slot)) {
             Unquotify(key_slot, 1);

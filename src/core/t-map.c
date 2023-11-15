@@ -680,7 +680,7 @@ REBTYPE(Map)
         if (not Is_Splice(value))
             fail ("Appending to MAP! only accepts a splice block of key/value");
 
-        mutable_QUOTE_BYTE(value) = UNQUOTED_1;
+        QUOTE_BYTE(value) = UNQUOTED_1;
 
         Map(*) m = VAL_MAP_Ensure_Mutable(map);
 

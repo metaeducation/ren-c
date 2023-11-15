@@ -79,7 +79,7 @@ inline static Cell(*) Quotify_Core(Cell(*) v, Count depth) {
     if (VAL_NUM_QUOTES(v) + depth >  MAX_QUOTE_DEPTH)
         fail ("Quoting Depth of 126 Exceeded");
 
-    mutable_QUOTE_BYTE(v) += (depth << 1);
+    QUOTE_BYTE(v) += (depth << 1);
     return v;
 }
 
@@ -105,7 +105,7 @@ inline static Cell(*) Unquotify_Core(Cell(*) v, Count unquotes) {
     if (unquotes > VAL_NUM_QUOTES(v))
         fail ("Attempt to set quoting level of value to less than 0");
 
-    mutable_QUOTE_BYTE(v) -= (unquotes << 1);
+    QUOTE_BYTE(v) -= (unquotes << 1);
     return v;
 }
 
@@ -126,10 +126,10 @@ inline static Cell(*) Unquotify_Core(Cell(*) v, Count unquotes) {
 
 inline static Count Dequotify(Cell(*) v) {
     Count depth = VAL_NUM_QUOTES(v);
-    if (mutable_QUOTE_BYTE(v) & NONQUASI_BIT)
-        mutable_QUOTE_BYTE(v) = UNQUOTED_1;
+    if (QUOTE_BYTE(v) & NONQUASI_BIT)
+        QUOTE_BYTE(v) = UNQUOTED_1;
     else
-        mutable_QUOTE_BYTE(v) = QUASI_2;
+        QUOTE_BYTE(v) = QUASI_2;
     return depth;
 }
 
@@ -172,12 +172,13 @@ inline static Count Dequotify(Cell(*) v) {
 
 
 inline static bool Is_Isotope_Unstable(Atom(const*) v) {
-    assert(QUOTE_BYTE_UNCHECKED(v) == ISOTOPE_0);  // say Is_Isotope() checked
+    // Assume Is_Isotope() checked READABLE()
+    assert(QUOTE_BYTE(v) == ISOTOPE_0);
     return (
-        HEART_BYTE_UNCHECKED(v) == REB_BLOCK  // Is_Pack()
-        or HEART_BYTE_UNCHECKED(v) == REB_ERROR  // Is_Raised()
-        or HEART_BYTE_UNCHECKED(v) == REB_COMMA  // Is_Barrier()
-        or HEART_BYTE_UNCHECKED(v) == REB_OBJECT  // Is_Lazy()
+        HEART_BYTE(v) == REB_BLOCK  // Is_Pack()
+        or HEART_BYTE(v) == REB_ERROR  // Is_Raised()
+        or HEART_BYTE(v) == REB_COMMA  // Is_Barrier()
+        or HEART_BYTE(v) == REB_OBJECT  // Is_Lazy()
     );
 }
 
@@ -185,13 +186,14 @@ inline static bool Is_Isotope_Unstable(Atom(const*) v) {
     (not Is_Isotope_Unstable(v))
 
 inline static bool Is_Stable(Atom(const*) v) {  // repeat for non-inlined speed
+    ASSERT_CELL_READABLE_EVIL_MACRO(v);
     if (QUOTE_BYTE(v) != ISOTOPE_0)
         return true;
     return (
-        HEART_BYTE_UNCHECKED(v) != REB_BLOCK  // Is_Pack()
-        and HEART_BYTE_UNCHECKED(v) != REB_ERROR  // Is_Raised()
-        and HEART_BYTE_UNCHECKED(v) != REB_COMMA  // Is_Barrier()
-        and HEART_BYTE_UNCHECKED(v) != REB_OBJECT  // Is_Lazy()
+        HEART_BYTE(v) != REB_BLOCK  // Is_Pack()
+        and HEART_BYTE(v) != REB_ERROR  // Is_Raised()
+        and HEART_BYTE(v) != REB_COMMA  // Is_Barrier()
+        and HEART_BYTE(v) != REB_OBJECT  // Is_Lazy()
     );
 }
 
@@ -216,32 +218,32 @@ inline static bool Is_Stable(Atom(const*) v) {  // repeat for non-inlined speed
 
 inline static Value(*) Unquasify(Value(*) v) {
     assert(QUOTE_BYTE(v) == QUASI_2);
-    mutable_QUOTE_BYTE(v) = UNQUOTED_1;
+    QUOTE_BYTE(v) = UNQUOTED_1;
     return v;
 }
 
 inline static Value(*) Quasify(Value(*) v) {
     assert(QUOTE_BYTE(v) == UNQUOTED_1);  // e.g. can't quote void
-    mutable_QUOTE_BYTE(v) = QUASI_2;
+    QUOTE_BYTE(v) = QUASI_2;
     return v;
 }
 
 inline static Value(*) Quasify_Isotope(Atom(*) v) {
     assert(Is_Isotope(v));
-    mutable_QUOTE_BYTE(v) = QUASI_2;
+    QUOTE_BYTE(v) = QUASI_2;
     return cast(Value(*), v);
 }
 
 inline static Value(*) Reify(Atom(*) v) {
     assert(not Is_Void(v));
     if (QUOTE_BYTE(v) == ISOTOPE_0)
-        mutable_QUOTE_BYTE(v) = QUASI_2;
+        QUOTE_BYTE(v) = QUASI_2;
     return cast(Value(*), v);
 }
 
 inline static Atom(*) Degrade(Atom(*) v) {
     if (QUOTE_BYTE(v) == QUASI_2)
-        mutable_QUOTE_BYTE(v) = ISOTOPE_0;
+        QUOTE_BYTE(v) = ISOTOPE_0;
     return v;
 }
 
@@ -249,7 +251,7 @@ inline static Value(*) Concretize(Value(*) v) {
     assert(not Is_Void(v));
     assert(not Is_None(v));
     if (QUOTE_BYTE(v) == ISOTOPE_0)
-        mutable_QUOTE_BYTE(v) = UNQUOTED_1;
+        QUOTE_BYTE(v) = UNQUOTED_1;
     return v;
 }
 
@@ -270,7 +272,7 @@ inline static Value(*) Concretize(Value(*) v) {
 
 inline static Value(*) Meta_Quotify(Atom(*) v) {
     if (QUOTE_BYTE(v) == ISOTOPE_0) {
-        mutable_QUOTE_BYTE(v) = QUASI_2;
+        QUOTE_BYTE(v) = QUASI_2;
         return cast(Value(*), v);
     }
     return cast(Value(*), Quotify(v, 1));  // a non-isotope winds up quoted
@@ -278,7 +280,7 @@ inline static Value(*) Meta_Quotify(Atom(*) v) {
 
 inline static Atom(*) Meta_Unquotify_Undecayed(Atom(*) v) {
     if (QUOTE_BYTE(v) == QUASI_2)
-        mutable_QUOTE_BYTE(v) = ISOTOPE_0;
+        QUOTE_BYTE(v) = ISOTOPE_0;
     else
         Unquotify_Core(v, 1);  // will assert the input is quoted
     return v;

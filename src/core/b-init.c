@@ -294,7 +294,7 @@ static void Shutdown_Lib(void)
 
 static REBVAL *Make_Locked_Tag(const char *utf8) { // helper
     REBVAL *t = rebText(utf8);
-    mutable_HEART_BYTE(t) = REB_TAG;
+    HEART_BYTE(t) = REB_TAG;
 
     Force_Value_Frozen_Deep(t);
     return t;
@@ -611,14 +611,14 @@ static void Init_System_Object(
   blockscope {
     REBVAL *std_error = Get_System(SYS_STANDARD, STD_ERROR);
     Context(*) c = VAL_CONTEXT(std_error);
-    mutable_HEART_BYTE(std_error) = REB_ERROR;
+    HEART_BYTE(std_error) = REB_ERROR;
 
     REBVAL *rootvar = CTX_ROOTVAR(c);
   #if !defined(NDEBUG)
     assert(rootvar->header.bits & CELL_FLAG_PROTECTED);
     rootvar->header.bits &= ~CELL_FLAG_PROTECTED;
   #endif
-    mutable_HEART_BYTE(rootvar) = REB_ERROR;
+    HEART_BYTE(rootvar) = REB_ERROR;
   #if !defined(NDEBUG)
     rootvar->header.bits |= CELL_FLAG_PROTECTED;
   #endif

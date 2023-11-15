@@ -646,7 +646,7 @@ DECLARE_NATIVE(inherit_adjunct)
     INCLUDE_PARAMS_OF_INHERIT_ADJUNCT;
 
     REBVAL *derived = ARG(derived);
-    mutable_QUOTE_BYTE(derived) = ISOTOPE_0;  // ensure return is isotope
+    QUOTE_BYTE(derived) = ISOTOPE_0;  // ensure return is isotope
 
     const REBVAL *original = ARG(original);
 

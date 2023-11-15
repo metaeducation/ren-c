@@ -639,7 +639,7 @@ bool Get_Var_Push_Refinements_Throws(
             // set the steps out *first* before overwriting out
             //
             Derelativize(unwrap(steps_out), var, var_specifier);
-            mutable_HEART_BYTE(unwrap(steps_out)) = REB_THE_WORD;
+            HEART_BYTE(unwrap(steps_out)) = REB_THE_WORD;
         }
 
         Copy_Cell(out, Lookup_Word_May_Fail(var, var_specifier));
@@ -977,9 +977,8 @@ bool Get_Path_Push_Refinements_Throws(
         if (Is_Isotope(lookup))
             fail (Error_Bad_Word_Get(head, lookup));
 
-
         Derelativize(safe, path, path_specifier);
-        mutable_HEART_BYTE(safe) = REB_TUPLE;
+        HEART_BYTE(safe) = REB_TUPLE;
 
         // ...but historical Rebol used PATH! for everything.  For Redbol
         // compatibility, we flip over to a TUPLE!.  We must be sure that
@@ -1219,7 +1218,7 @@ bool Set_Var_Core_Updater_Throws(
             // as BINDING OF is reviewed in terms of answers for LET.
             //
             Derelativize(temp, var, var_specifier);
-            mutable_QUOTE_BYTE(temp) = ONEQUOTE_3;
+            QUOTE_BYTE(temp) = ONEQUOTE_3;
             PUSH_GC_GUARD(temp);
             if (rebRunThrows(
                 out,  // <-- output cell
@@ -1238,7 +1237,7 @@ bool Set_Var_Core_Updater_Throws(
             // If the variable is a compressed path form like `a.` then turn
             // it into a plain word.
             //
-            mutable_HEART_BYTE(unwrap(steps_out)) = REB_WORD;
+            HEART_BYTE(unwrap(steps_out)) = REB_WORD;
         }
         return false;  // did not throw
     }
@@ -1854,7 +1853,7 @@ bool Try_As_String(
 
                 ++num_codepoints;
             }
-            mutable_Series_Flavor(m_cast(Binary(*), bin)) = FLAVOR_STRING;
+            FLAVOR_BYTE(m_cast(Binary(*), bin)) = FLAVOR_STRING;
             str = STR(bin);
 
             Term_String_Len_Size(
@@ -1912,7 +1911,7 @@ bool Try_As_String(
     else if (ANY_STRING(v) or IS_URL(v)) {
       any_string:
         Copy_Cell(out, v);
-        mutable_HEART_BYTE(out) = new_kind;
+        HEART_BYTE(out) = new_kind;
         Trust_Const(Quotify(out, quotes));
     }
     else
@@ -1975,11 +1974,11 @@ DECLARE_NATIVE(as)
                 if (Get_Cell_Flag(v, REFINEMENT_LIKE)) {
                     Init_Blank(Array_At(a, 0));
                     Copy_Cell(Array_At(a, 1), v);
-                    mutable_HEART_BYTE(Array_At(a, 1)) = REB_WORD;
+                    HEART_BYTE(Array_At(a, 1)) = REB_WORD;
                 }
                 else {
                     Copy_Cell(Array_At(a, 0), v);
-                    mutable_HEART_BYTE(Array_At(a, 0)) = REB_WORD;
+                    HEART_BYTE(Array_At(a, 0)) = REB_WORD;
                     Init_Blank(Array_At(a, 1));
                 }
                 Init_Block(v, a);
@@ -1988,7 +1987,7 @@ DECLARE_NATIVE(as)
               case FLAVOR_ARRAY:
                 assert(Is_Array_Frozen_Shallow(VAL_ARRAY(v)));
                 assert(VAL_INDEX(v) == 0);
-                mutable_HEART_BYTE(v) = REB_BLOCK;
+                HEART_BYTE(v) = REB_BLOCK;
                 break;
 
               default:
@@ -2033,8 +2032,7 @@ DECLARE_NATIVE(as)
 
         if (ANY_SEQUENCE(v)) {
             Copy_Cell(OUT, v);
-            mutable_HEART_BYTE(OUT)
-                = new_kind;
+            HEART_BYTE(OUT) = new_kind;
             return Trust_Const(OUT);
         }
 
@@ -2080,7 +2078,7 @@ DECLARE_NATIVE(as)
                 }
                 Freeze_Series(VAL_SERIES(OUT));  // must be frozen
             }
-            mutable_HEART_BYTE(OUT) = REB_ISSUE;
+            HEART_BYTE(OUT) = REB_ISSUE;
             return OUT;
         }
 
@@ -2208,7 +2206,7 @@ DECLARE_NATIVE(as)
                 // Constrain the input in the way it would be if we were doing
                 // the more efficient reuse.
                 //
-                mutable_Series_Flavor(m_cast(Binary(*), bin)) = FLAVOR_STRING;
+                FLAVOR_BYTE(m_cast(Binary(*), bin)) = FLAVOR_STRING;
                 Freeze_Series(bin);
             }
 
@@ -2282,7 +2280,7 @@ DECLARE_NATIVE(as)
     // updating the quotes is enough.
     //
     Copy_Cell(OUT, v);
-    mutable_HEART_BYTE(OUT) = new_kind;
+    HEART_BYTE(OUT) = new_kind;
     return Trust_Const(OUT);
 }
 
@@ -2680,5 +2678,5 @@ DECLARE_INTRINSIC(noisotope)
     Copy_Cell(out, arg);
 
     if (Is_Isotope(out))
-        mutable_QUOTE_BYTE(out) = UNQUOTED_1;
+        QUOTE_BYTE(out) = UNQUOTED_1;
 }

@@ -109,12 +109,12 @@ DECLARE_NATIVE(now)
         VAL_DATE(OUT).zone = NO_DATE_ZONE;
     }
     else if (REF(time)) {
-        mutable_HEART_BYTE(OUT) = REB_TIME;
+        HEART_BYTE(OUT) = REB_TIME;
     }
     else if (REF(zone)) {
         PAYLOAD(Time, OUT).nanoseconds
             = VAL_ZONE(OUT) * ZONE_MINS * MIN_SEC;
-        mutable_HEART_BYTE(OUT) = REB_TIME;
+        HEART_BYTE(OUT) = REB_TIME;
     }
     else if (REF(weekday))
         n = Week_Day(stable_OUT);

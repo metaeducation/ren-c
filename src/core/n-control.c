@@ -1691,7 +1691,7 @@ void Debranch_Output(Atom(*) out) {
 bool Pushed_Decaying_Level(Atom(*) out, Atom(const*) obj, Flags flags) {
     if (out != obj)
         Copy_Cell(out, obj);
-    mutable_QUOTE_BYTE(out) = UNQUOTED_1;
+    QUOTE_BYTE(out) = UNQUOTED_1;
     Option(Value(*)) decayer = Select_Symbol_In_Context(
         cast(Cell(const*), out),
         Canon(DECAY)

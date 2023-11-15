@@ -221,7 +221,7 @@ DECLARE_NATIVE(load_extension)
     //
     if (SPORADICALLY(2)) {
         Binary(*) bin = VAL_BINARY_Ensure_Mutable(script);
-        mutable_Series_Flavor(bin) = FLAVOR_STRING;
+        FLAVOR_BYTE(bin) = FLAVOR_STRING;
         Term_String_Len_Size(
             cast(String(*), bin),  // legal for tweaking cached data
             script_num_codepoints,

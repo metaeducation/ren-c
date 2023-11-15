@@ -69,7 +69,7 @@ inline static Value(*) Init_Comma(Cell(*) out) {
 
 inline static Value(*) Init_Barrier(Cell(*) out) {
     Init_Comma(out);
-    mutable_QUOTE_BYTE(out) = ISOTOPE_0;
+    QUOTE_BYTE(out) = ISOTOPE_0;
     return cast(Value(*), out);
 }
 
