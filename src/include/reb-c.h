@@ -418,23 +418,20 @@
 #define cast(T,v)       ((T)(v))
 
 #if (! CPLUSPLUS_11)
-    #define x_cast(T,v)    ((T)(v))  /* pointer casts different in C++11 */
-
-    #define m_cast(T,v)     ((T)(v))
+    #define x_cast(T,v)     ((T)(v))  /* pointer casts different in C++11 */
     #define c_cast(T,v)     ((T)(v))
+    #define m_cast(T,v)     ((T)(v))
     /*
      * Q: Why divide roles?  A: Frequently, input to cast is const but you
      * "just forget" to include const in the result type, gaining mutable
      * access.  Stray writes to that can cause even time-traveling bugs, with
      * effects *before* that write is made...due to "undefined behavior".
      */
-
-    #define mp_cast(T,v)     ((T)(v))
 #else
     /* We build an arbitrary pointer cast out of two steps: one which adds
      * a const if it wasn't already there, and then a const_cast to the
      * desired type (which will remove the const if target type isn't const).
-     * This has no runtime cost, so provides the desired efficiency.
+     * This has no runtime cost in debug builds due to no inline function.
      */
     #define x_cast(T,v) \
        (const_cast<T>( \
@@ -454,30 +451,32 @@
             void /* failure case--you get this if c_cast to mutable type */ \
         >::type>(v))
 
-    #define m_cast(T,v) \
-        (const_cast<std::conditional< \
-            ! std::is_const<std::remove_pointer<T>::type>::value, \
-            T, /* success case */ \
-            void /* failure case--you get this if m_cast to const type */ \
-        >::type>(v))
-
     /*
-     * NOTE: mp_cast_helper() is needed vs. plain const_cast<> in all C++ builds
+     * NOTE: m_cast_helper() is needed vs. plain const_cast<> in all C++ builds
      * as a hook point to overload casting with smart pointer types, e.g.
-     * `mp_cast(Utf8(*), some_const_rebchr)`.  Search for overloads of the
-     * mp_cast_helper() in certain builds before deciding to simplify this.
-     * (C++ smart pointers have this problem too, see `const_cast_pointer<>`)
+     * `m_cast(Utf8(*), some_const_rebchr)`.  Search for overloads of the
+     * m_cast_helper() in certain builds before deciding to simplify this.
+     * Use x_cast() wherever this causes performance problems in dbeug builds.
      */
-    template<typename T, typename V>
-    T mp_cast_helper(V v) {
+    template<
+        typename TP,
+        typename std::enable_if<
+            std::is_pointer<TP>::value
+        >::type* = nullptr,
+        typename T = typename std::remove_pointer<TP>::type,
+        typename CT = typename std::add_const<T>::type,
+        typename CTP = typename std::add_pointer<CT>::type
+    >
+    TP m_cast_helper(CTP v) {
         static_assert(
-            !std::is_const<typename std::remove_pointer<T>::type>::value,
-            "invalid mp_cast() - requested a const type for output result"
+            !std::is_const<typename std::remove_pointer<TP>::type>::value,
+            "invalid m_cast() - requested a const type for output result"
         );
-        return const_cast<T>(v);
+        /* ignore volatile, we don't use it */
+        return const_cast<TP>(v);
     }
 
-    #define mp_cast(T,v)     mp_cast_helper<T>(v)
+    #define m_cast(TP,v)     m_cast_helper<TP>(v)
 #endif
 
 
@@ -572,8 +571,8 @@
 //
 //
 #if CPLUSPLUS_11
-    template<class T>
-    inline static T*& ensureNullptr(T*& p) {
+    template<class TP>
+    inline static TP& ensureNullptr(TP& p) {
         assert(p == nullptr);
         return p;
     }
@@ -804,6 +803,11 @@
 
         explicit operator T()  // must be an *explicit* cast
           { return wrapped; }
+
+        explicit operator bool() {
+           // explicit exception in if https://stackoverflow.com/q/39995573/
+           return cast(bool, wrapped);
+        }
     };
 
     template<typename L, typename R>
@@ -931,29 +935,25 @@
 
     #if DEBUG_CHECK_OPTIONALS
         template<class P>
-        inline static void Trash_Pointer_If_Debug(OptionWrapper<P> &p) {
-            p.wrapped = reinterpret_cast<P>(static_cast<uintptr_t>(0xDECAFBAD));
+        inline static void Trash_Pointer_If_Debug(OptionWrapper<P> &option) {
+            Trash_Pointer_If_Debug(option.wrapped);
         }
 
         template<class P>
-        inline static bool Is_Pointer_Trash_Debug(OptionWrapper<P> &p) {
-            return p.wrapped == (
-                reinterpret_cast<P>(static_cast<uintptr_t>(0xDECAFBAD))
-            );
+        inline static bool Is_Pointer_Trash_Debug(OptionWrapper<P> &option) {
+            return Is_Pointer_Trash_Debug(option.wrapped);
         }
     #endif
 
     #if CPLUSPLUS_11
         template<class P>
-        inline static void Trash_Pointer_If_Debug(NeverNullEnforcer<P> &p) {
-            p = reinterpret_cast<P>(static_cast<uintptr_t>(0xDECAFBAD));
+        inline static void Trash_Pointer_If_Debug(NeverNullEnforcer<P> &nn) {
+            Trash_Pointer_If_Debug(nn.p);
         }
 
         template<class P>
-        inline static bool Is_Pointer_Trash_Debug(NeverNullEnforcer<P> &p) {
-            return (
-                p == reinterpret_cast<P>(static_cast<uintptr_t>(0xDECAFBAD))
-            );
+        inline static bool Is_Pointer_Trash_Debug(NeverNullEnforcer<P> &nn) {
+            return Is_Pointer_Trash_Debug(nn.p);
         }
       #endif
     #else

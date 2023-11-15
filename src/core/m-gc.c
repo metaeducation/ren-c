@@ -817,7 +817,7 @@ static void Mark_Level_Stack_Deep(void)
             Symbol(const*) sym = unwrap(L->label);
             if (Not_Series_Flag(sym, MARKED)) {
                 assert(Not_Series_Flag(sym, INACCESSIBLE));  // can't happen
-                Queue_Unmarked_Accessible_Series_Deep(m_cast(SymbolT*, sym));
+                Queue_Unmarked_Accessible_Series_Deep(m_cast(Symbol(*), sym));
             }
         }
 
@@ -1201,8 +1201,8 @@ REBLEN Recycle_Core(bool shutdown, Series(*) sweeplist)
     while (true) {
         REBI64 before_count = mark_count;
 
-        Symbol(*) *psym = Series_Head(Symbol(*), g_symbols.by_hash);
-        Symbol(*) *psym_tail = Series_Tail(Symbol(*), g_symbols.by_hash);
+        SymbolT** psym = Series_Head(SymbolT*, g_symbols.by_hash);
+        SymbolT** psym_tail = Series_Tail(SymbolT*, g_symbols.by_hash);
         for (; psym != psym_tail; ++psym) {
             if (*psym == nullptr or *psym == &g_symbols.deleted_symbol)
                 continue;

@@ -231,8 +231,8 @@ void Init_Evars(EVARS *e, NoQuote(Cell(const*)) v) {
 
         StackIndex base = TOP_INDEX;
 
-        Symbol(*) *psym = Series_Head(Symbol(*), g_symbols.by_hash);
-        Symbol(*) *psym_tail = Series_Tail(Symbol(*), g_symbols.by_hash);
+        SymbolT** psym = Series_Head(SymbolT*, g_symbols.by_hash);
+        SymbolT** psym_tail = Series_Tail(SymbolT*, g_symbols.by_hash);
         for (; psym != psym_tail; ++psym) {
             if (*psym == nullptr or *psym == &g_symbols.deleted_symbol)
                 continue;
@@ -842,8 +842,8 @@ Context(*) Copy_Context_Extra_Managed(
         Context(*) copy = CTX(varlist); // now a well-formed context
         assert(Get_Series_Flag(varlist, DYNAMIC));
 
-        Symbol(*) *psym = Series_Head(Symbol(*), g_symbols.by_hash);
-        Symbol(*) *psym_tail = Series_Tail(Symbol(*), g_symbols.by_hash);
+        SymbolT** psym = Series_Head(SymbolT*, g_symbols.by_hash);
+        SymbolT** psym_tail = Series_Tail(SymbolT*, g_symbols.by_hash);
         for (; psym != psym_tail; ++psym) {
             if (*psym == nullptr or *psym == &g_symbols.deleted_symbol)
                 continue;

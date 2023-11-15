@@ -62,21 +62,29 @@
     // So we just trust the occasional build with DEBUG_CHECK_CASTS will use
     // C++ templating magic to validate the constness, and keep the C source
     // form more readable at the callsites.
+    //
+    // Note: x_cast's fast method vaporizing at compile time in C++ will not
+    // work on smart pointer types, so don't try writing:
+    //
+    //    #define SER(p)    x_cast(Series(*), (p))
+    //
+    // It may work when none of the macros actually resolve to smart pointer
+    // classes, but will break when they are.
 
     #define NOD(p)          x_cast(Node*, (p))
 
-    #define SER(p)          x_cast(SeriesT*, (p))
-    #define ARR(p)          x_cast(ArrayT*, (p))
-    #define ACT(p)          x_cast(ActionT*, (p))
-    #define CTX(p)          x_cast(ContextT*, (p))
+    #define SER(p)          cast(Series(*), x_cast(SeriesT*, (p)))
+    #define ARR(p)          cast(Array(*), x_cast(ArrayT*, (p)))
+    #define ACT(p)          cast(Action(*), x_cast(ActionT*, (p)))
+    #define CTX(p)          cast(Context(*), x_cast(ContextT*, (p)))
 
-    #define STR(p)          x_cast(StringT*, (p))
+    #define STR(p)          cast(String(*), x_cast(StringT*, (p)))
 
-    #define SYM(p)          x_cast(SymbolT*, (p))
+    #define SYM(p)          cast(Symbol(*), x_cast(SymbolT*, (p)))
 
-    #define VAL(p)          x_cast(REBVAL*, (p))
+    #define VAL(p)          cast(Value(*), x_cast(ValueT*, (p)))
 
-    #define LVL(p)          x_cast(Level(*), (p))
+    #define LVL(p)          cast(Level(*), x_cast(LevelT*, (p)))
 #else
 
   #if (! CPLUSPLUS_11)

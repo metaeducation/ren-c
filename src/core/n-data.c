@@ -1857,7 +1857,7 @@ bool Try_As_String(
             str = STR(bin);
 
             Term_String_Len_Size(
-                m_cast(StringT*, str),  // legal for tweaking cached data
+                m_cast(String(*), str),  // legal for tweaking cached data
                 num_codepoints,
                 Binary_Len(bin)
             );

@@ -202,7 +202,7 @@ static REBVAR* Append_Context_Core(
 
         // skip over binding-related hitches
         //
-        Series(*) updating = m_cast(SymbolT*, symbol);
+        Series(*) updating = m_cast(Symbol(*), symbol);
         while (Get_Series_Flag(SER(node_MISC(Hitch, updating)), BLACK))
             updating = SER(node_MISC(Hitch, updating));
 

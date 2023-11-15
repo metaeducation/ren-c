@@ -94,29 +94,40 @@
 template<typename TP>
 struct SeriesHolder {
     typedef typename std::remove_pointer<TP>::type T;
-    typedef typename std::add_const<T> CT;
-    typedef typename std::add_pointer<CT> CTP;
+    typedef typename std::add_const<T>::type CT;
+    typedef typename std::add_pointer<CT>::type CTP;
+    typedef typename std::remove_const<T>::type MT;
+    typedef typename std::add_pointer<MT>::type MTP;
 
-    T* p;
+    typedef MTP MutablePointerType;
+    typedef TP PointerType;
+
+    TP p;
+    bool trashed;
 
     static_assert(
         std::is_base_of<SeriesT, typename std::remove_const<T>::type>::value,
         "SeriesHolder<SeriesT*> only works on SeriesT derived types"
     );
 
-    SeriesHolder () : p (nullptr) { }  // must initialize, see [1]
+    SeriesHolder () : p (nullptr), trashed (false) { }  // must init, see [1]
 
-    explicit SeriesHolder (const void* other) {  // allow casting
+    explicit SeriesHolder (const void* other, bool other_trashed = false) {
         p = reinterpret_cast<T*>(const_cast<void*>(other));
-        if (p) {
+        trashed = other_trashed;
+        if (not trashed and p) {
             auto* s = x_cast(SeriesT*, p);
             assert(s->num_locals < INT32_MAX);
-            s->num_locals = s->num_locals + 1;
+            s->num_locals += 1;
         }
     }
 
+    explicit SeriesHolder (uintptr_t other) :  // allow casting
+        SeriesHolder (reinterpret_cast<void*>(other))
+        {}
+
     SeriesHolder (SeriesHolder& other)  // copy constructor
-        : SeriesHolder (other.p)  // just construct with other's pointer
+        : SeriesHolder (other.p, other.trashed)  // construct w/other's pointer
         {}
 
     template<
@@ -132,6 +143,7 @@ struct SeriesHolder {
     friend void swap(SeriesHolder& first, SeriesHolder& second)
     {
         using std::swap;
+        swap(first.trashed, second.trashed);
         swap(first.p, second.p);
     }
 
@@ -156,15 +168,15 @@ struct SeriesHolder {
     }
 
     ~SeriesHolder () {
-        if (p) {
+        if (not trashed and p) {
             auto* s = x_cast(SeriesT*, p);
             assert(s->num_locals > 0);
             s->num_locals = s->num_locals - 1;
         }
     }
 
-    T* operator->() { return p; }
-    T& operator*() { return *p; }
+    T* operator->() const { return p; }
+    T& operator*() const { return *p; }
 
     template<
         typename U,
@@ -173,8 +185,8 @@ struct SeriesHolder {
             && !std::is_same<U, SeriesHolder<T*>>::value  // builtin, see [4]
         >::type* = nullptr
     >
-    bool operator== (U right)
-        { return p == right; }
+    bool operator== (U right) const
+        { return not trashed and p == right; }
 
     template<
         typename U,
@@ -183,11 +195,13 @@ struct SeriesHolder {
             && !std::is_same<U, SeriesHolder<T*>>::value  // builtin, see [4]
         >::type* = nullptr
     >
-    bool operator!= (U right)
-        { return p != right; }
+    bool operator!= (U right) const {
+        assert(not trashed);
+        return p != right;
+    }
 
     explicit operator bool () const {  // "explicit" has exceptions...
-        return p != nullptr;  // https://stackoverflow.com/q/39995573/
+        return trashed or p != nullptr;  // https://stackoverflow.com/q/39995573/
     }
 
     operator T* () const { return p; }
@@ -199,6 +213,10 @@ struct SeriesHolder {
         >::type* = nullptr
     >
     explicit operator U* () const { return static_cast<U*>(p); }
+
+    explicit operator SeriesHolder<MTP> () const {
+        return const_cast<MTP>(p);
+    }
 };
 
 
@@ -216,33 +234,34 @@ bool operator!= (U left, SeriesHolder<T*>& right)
 
 
 // const_cast<> and reinterpret_cast<> don't work with user-defined
-// conversion operators.  But since this codebase uses mp_cast, we can
+// conversion operators.  But since this codebase uses m_cast, we can
 // cheat when the class is being used with the helpers.
 //
 template <
-    typename TP,
-    typename T = typename std::remove_pointer<TP>::type,
-    typename CT = typename std::add_const<T>::type,
-    typename CTP = typename std::add_pointer<CT>::type
+    typename HTP,
+    typename MTP = typename HTP::MutablePointerType,
+    typename CT = typename std::add_const<MTP>::type,
+    typename CTP = typename std::add_pointer<CT>::type,
+    typename HCTP = typename SeriesHolder<CTP>::PointerType
 >
-inline TP mp_cast_helper(SeriesHolder<CTP>& s)  // "CTP" => const T pointer
-  { return const_cast<T*>(s.p); }
+inline HTP m_cast_helper(SeriesHolder<CTP> const& s)
+  { return const_cast<MTP>(s.p); }
 
-template <typename TP>
-inline TP mp_cast_helper(SeriesHolder<TP>& s)
-    { return s.p; }  // mp_cast() allows being a no-op
+
+/*template <typename TP>
+inline TP m_cast_helper(SeriesHolder<TP>& s)
+    { return s.p; }  // m_cast() allows being a no-op*/
 
 
 #if !defined(NDEBUG)
     template <typename TP>
     inline static void Trash_Pointer_If_Debug(SeriesHolder<TP>& s) {
-        s.p = nullptr;  // smart pointer can't hold trash
+        s.trashed = true;
+        s.p = reinterpret_cast<TP>(static_cast<uintptr_t>(0xDECAFBAD));
     }
 
     template <typename TP>
-    inline static bool Is_Pointer_Trash_Debug(SeriesHolder<TP>& s) {
-        return (
-            s.p == nullptr  // smart pointer can't hold trash
-        );
+    inline static bool Is_Pointer_Trash_Debug(SeriesHolder<TP> const& s) {
+        return s.trashed;
     }
 #endif

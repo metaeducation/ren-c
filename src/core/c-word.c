@@ -137,13 +137,13 @@ static void Expand_Word_Table(void)
     // Hold onto it while creating the new hash table.
 
     REBLEN old_num_slots = Series_Used(g_symbols.by_hash);
-    Symbol(*) *old_symbols_by_hash = Series_Head(
-        Symbol(*),
+    SymbolT** old_symbols_by_hash = Series_Head(
+        SymbolT*,
         g_symbols.by_hash
     );
 
     REBLEN num_slots = Get_Hash_Prime_May_Fail(old_num_slots + 1);
-    assert(Series_Wide(g_symbols.by_hash) == sizeof(Symbol(*)));
+    assert(Series_Wide(g_symbols.by_hash) == sizeof(SymbolT*));
 
     Series(*) ser = Make_Series_Core(
         num_slots, FLAG_FLAVOR(CANONTABLE) | SERIES_FLAG_POWER_OF_2
@@ -153,7 +153,7 @@ static void Expand_Word_Table(void)
 
     // Rehash all the symbols:
 
-    Symbol(*) *new_symbols_by_hash = Series_Head(Symbol(*), ser);
+    SymbolT** new_symbols_by_hash = Series_Head(SymbolT*, ser);
 
     REBLEN old_slot;
     for (old_slot = 0; old_slot != old_num_slots; ++old_slot) {
@@ -228,7 +228,7 @@ Symbol(const*) Intern_UTF8_Managed_Core(
         num_slots = Series_Used(g_symbols.by_hash);  // got larger
     }
 
-    Symbol(*) *symbols_by_hash = Series_Head(Symbol(*), g_symbols.by_hash);
+    SymbolT** symbols_by_hash = Series_Head(SymbolT*, g_symbols.by_hash);
 
     REBLEN skip; // how many slots to skip when occupied candidates found
     REBLEN slot = First_Hash_Candidate_Slot(
@@ -243,7 +243,7 @@ Symbol(const*) Intern_UTF8_Managed_Core(
     // case-insensitive...but reports if synonyms via > 0 results.
     //
     Symbol(*) synonym = nullptr;
-    Symbol(*) *deleted_slot = nullptr;
+    SymbolT** deleted_slot = nullptr;
     Symbol(*) symbol;
     while ((symbol = symbols_by_hash[slot])) {
         if (symbol == DELETED_SYMBOL) {
@@ -458,7 +458,7 @@ void GC_Kill_Interning(String(*) intern)
     node_MISC(Hitch, patch) = node_MISC(Hitch, intern);  // may be no-op
 
     REBLEN num_slots = Series_Used(g_symbols.by_hash);
-    Symbol(*) *symbols_by_hash = Series_Head(Symbol(*), g_symbols.by_hash);
+    SymbolT** symbols_by_hash = Series_Head(SymbolT*, g_symbols.by_hash);
 
     REBLEN skip;
     REBLEN slot = First_Hash_Candidate_Slot(
@@ -580,7 +580,7 @@ void Startup_Symbols(void)
         size_t size = *at;  // length prefix byte
         ++at;
 
-        Symbol(*) canon = &g_symbols.builtin_canons[id];  // pass as preallocated space
+        SymbolT* canon = &g_symbols.builtin_canons[id];  // not valid Symbol(*)
         Intern_UTF8_Managed_Core(canon, at, size);
         at += size;
 
@@ -652,7 +652,7 @@ void Shutdown_Interning(void)
 
         REBLEN slot;
         for (slot = 0; slot < Series_Used(g_symbols.by_hash); ++slot) {
-            Symbol(*) symbol = *Series_At(Symbol(*), g_symbols.by_hash, slot);
+            Symbol(*) symbol = *Series_At(SymbolT*, g_symbols.by_hash, slot);
             if (symbol and symbol != DELETED_SYMBOL)
                 panic (symbol);
         }

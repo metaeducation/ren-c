@@ -542,15 +542,15 @@ inline static Utf8(*) String_At(String(const_if_c*) s, REBLEN at) {
 #endif
 
 
-inline static const StringT *VAL_STRING(NoQuote(Cell(const*)) v) {
+inline static String(const*) VAL_STRING(NoQuote(Cell(const*)) v) {
     if (ANY_STRINGLIKE(v))
         return STR(VAL_NODE1(v));  // VAL_SERIES() would assert
 
     return VAL_WORD_SYMBOL(v);  // asserts ANY_WORD_KIND() for heart
 }
 
-#define VAL_STRING_Ensure_Mutable(v) \
-    m_cast(StringT*, VAL_STRING(Ensure_Mutable(v)))
+#define VAL_STRING_ENSURE_MUTABLE(v) \
+    m_cast(String(*), VAL_STRING(Ensure_Mutable(v)))
 
 // This routine works with the notion of "length" that corresponds to the
 // idea of the datatype which the series index is for.  Notably, a BINARY!

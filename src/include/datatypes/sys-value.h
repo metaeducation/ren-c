@@ -624,7 +624,7 @@ inline static bool ANY_STRINGLIKE(NoQuote(Cell(const*)) v) {
 inline static void INIT_VAL_WORD_SYMBOL(Cell(*) v, Symbol(const*) symbol)
   { INIT_VAL_NODE1(v, symbol); }
 
-inline static const SymbolT* VAL_WORD_SYMBOL(NoQuote(Cell(const*)) cell) {
+inline static Symbol(const*) VAL_WORD_SYMBOL(NoQuote(Cell(const*)) cell) {
     assert(ANY_WORDLIKE(cell));  // no _UNCHECKED variant :-(
     return SYM(VAL_NODE1(cell));
 }

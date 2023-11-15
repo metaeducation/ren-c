@@ -795,7 +795,7 @@ REBTYPE(String)
         if (c == 0)
             fail (Error_Illegal_Zero_Byte_Raw());
 
-        String(*) s = VAL_STRING_Ensure_Mutable(v);
+        String(*) s = VAL_STRING_ENSURE_MUTABLE(v);
         Set_Char_At(s, n, c);
 
         return nullptr; }  // Array(*) is still fine, caller need not update
@@ -827,7 +827,7 @@ REBTYPE(String)
 
         UNUSED(PARAM(series)); // already accounted for
 
-        String(*) s = VAL_STRING_Ensure_Mutable(v);
+        String(*) s = VAL_STRING_ENSURE_MUTABLE(v);
 
         REBINT limit;
         if (REF(part))
@@ -1027,7 +1027,7 @@ REBTYPE(String)
         return OUT; }
 
       case SYM_CLEAR: {
-        String(*) s = VAL_STRING_Ensure_Mutable(v);
+        String(*) s = VAL_STRING_ENSURE_MUTABLE(v);
 
         REBLEN index = VAL_INDEX(v);
         REBLEN tail = VAL_LEN_HEAD(v);
@@ -1073,8 +1073,8 @@ REBTYPE(String)
         if (VAL_TYPE(v) != VAL_TYPE(arg))
             fail (Error_Not_Same_Type_Raw());
 
-        String(*) v_str = VAL_STRING_Ensure_Mutable(v);
-        String(*) arg_str = VAL_STRING_Ensure_Mutable(arg);
+        String(*) v_str = VAL_STRING_ENSURE_MUTABLE(v);
+        String(*) arg_str = VAL_STRING_ENSURE_MUTABLE(arg);
 
         REBLEN index = VAL_INDEX(v);
         REBLEN tail = VAL_LEN_HEAD(v);
@@ -1092,7 +1092,7 @@ REBTYPE(String)
         INCLUDE_PARAMS_OF_REVERSE;
         UNUSED(ARG(series));
 
-        String(*) str = VAL_STRING_Ensure_Mutable(v);
+        String(*) str = VAL_STRING_ENSURE_MUTABLE(v);
 
         Copy_Cell(OUT, v);  // save before index adjustment
         REBINT len = Part_Len_May_Modify_Index(v, ARG(part));
@@ -1105,7 +1105,7 @@ REBTYPE(String)
 
         UNUSED(PARAM(series));
 
-        String(*) str = VAL_STRING_Ensure_Mutable(v);  // just ensure mutability
+        String(*) str = VAL_STRING_ENSURE_MUTABLE(v);  // just ensure mutability
         UNUSED(str);  // we use the VAL_UTF8_AT() accessor, which is const
 
         if (REF(all))
@@ -1189,7 +1189,7 @@ REBTYPE(String)
             );
         }
 
-        String(*) str = VAL_STRING_Ensure_Mutable(v);
+        String(*) str = VAL_STRING_ENSURE_MUTABLE(v);
 
         if (not Is_String_Definitely_ASCII(str))
             fail ("UTF-8 Everywhere: String shuffle temporarily unavailable");
