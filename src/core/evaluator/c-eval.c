@@ -363,7 +363,8 @@ Bounce Evaluator_Executor(Level(*) L)
       intrinsic_in_scratch_arg_in_spare:
       case ST_EVALUATOR_CALCULATING_INTRINSIC_ARG : {
         Action(*) action = VAL_ACTION(SCRATCH);
-        Intrinsic* intrinsic = Extract_Intrinsic(action);
+        assert(IS_DETAILS(action));
+        Intrinsic* intrinsic = Extract_Intrinsic(cast(Phase(*), action));
         REBPAR* param = ACT_PARAM(action, 2);
 
         if (VAL_PARAM_CLASS(param) == PARAM_CLASS_META)
@@ -373,7 +374,7 @@ Bounce Evaluator_Executor(Level(*) L)
             const REBKEY* key = ACT_KEY(action, 2);
             fail (Error_Arg_Type(label, key, param, stable_SPARE));
         }
-        (*intrinsic)(OUT, action, stable_SPARE);
+        (*intrinsic)(OUT, cast(Phase(*), action), stable_SPARE);
         goto lookahead; }
 
       case REB_GROUP :
@@ -742,6 +743,7 @@ Bounce Evaluator_Executor(Level(*) L)
             if (
                 not enfixed  // too rare a case for intrinsic optimization
                 and ACT_DISPATCHER(action) == &Intrinsic_Dispatcher
+                and IS_DETAILS(action)  // don't do specializations
                 and Not_Level_At_End(L)  // can't do <end>, fallthru to error
                 and not SPORADICALLY(10)  // debug build bypass every 10th call
             ){

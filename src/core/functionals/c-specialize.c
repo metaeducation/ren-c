@@ -42,7 +42,7 @@
 // Hence a compact "singular" array of 1 cell can be used for the details.
 //
 enum {
-    IDX_SPECIALIZER_MAX = 1  // has just ACT_DETAILS[0], the ACT_ARCHETYPE()
+    IDX_SPECIALIZER_MAX = 1  // has just Phase_Details[0], the ACT_ARCHETYPE()
 };
 
 

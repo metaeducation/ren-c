@@ -1012,45 +1012,46 @@
 // helpful when you need to do something like assign to a void* and can't
 // do weird cast dereferencing or you'll violate strict aliasing.
 //
-#if (! CPLUSPLUS_11)
+// 1. Because ensure is a no-op in non-checked builds, it does no casting in
+//    the checked builds.  It only validates the type is convertible, and
+//    then passes it through as its original self!  So if you say something
+//    like `ensure(const foo*, bar)` and bar is a pointer to a mutable foo,
+//    it will be valid...but pass the mutable bar as-is.
+//
+#if (! CPLUSPLUS_11 || ! DEBUG_CHECK_CASTS)
     #define ensure(T,v) (v)
     #define ensurer(T)
     #define ensured(T,L,left) (left)
 #else
-    #if (! DEBUG_CHECK_CASTS)
-        #define ensure(T,v) \
-            static_cast<T>(v)  // permits downcasts, but better than nothing
+    template<typename T>
+    struct EnsureReader {
+        template<typename U>
+        T operator<< (U u) { return u; }
 
-        #define ensurer(T)
-        #define ensured(T,L,left) (left)
-    #else
-        template<typename T>
-        struct ensure_reader {
-            template<typename U>
-            T operator<< (U u) { return u; }
+        template<typename U>
+        static U check(U u) {
+            static_assert(std::is_convertible<U,T>::value, "ensure() failed");
+            return u;  // doesn't coerce to type T, same as unchecked, see [1]
+        }
+    };
+    #define ensure(T,v) EnsureReader<T>::check(v)
+    #define ensurer(T) EnsureReader<T>() <<
 
-            template<typename U>
-            static T check(U u) { return u; }
-        };
-        #define ensure(T,v) ensure_reader<T>::check(v)
-        #define ensurer(T) ensure_reader<T>() <<
-
-        template<typename T, typename L>
-        struct ensure_writer {
-            L &left;
-            ensure_writer(L &left) : left (left) {}
-            void operator=(const T &right) {
-                left = right;
-            }
-        };
-        #define ensured(T,L,left) (ensure_writer<T,L>{(left)})
-            //
-            // ^-- Note: C++17 should be able to infer template arguments from
-            // constructors, so this could just be `ensurer(T,left)`.  There
-            // aren't enough of these to worry about it, yet.
-            //
-            // https://stackoverflow.com/a/984597/
-  #endif
+    template<typename T, typename L>
+    struct EnsureWriter {
+        L &left;
+        EnsureWriter(L &left) : left (left) {}
+        void operator=(const T &right) {
+            left = right;
+        }
+    };
+    #define ensured(T,L,left) EnsureWriter<T,L>{left}
+        //
+        // ^-- Note: C++17 should be able to infer template arguments from
+        // constructors, so this could just be `ensurer(T,left)`.  There
+        // aren't enough of these to worry about it, yet.
+        //
+        // https://stackoverflow.com/a/984597/
 #endif
 
 

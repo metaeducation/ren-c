@@ -301,7 +301,7 @@ Bounce Reframer_Dispatcher(Level(*) const L)
 {
     USE_LEVEL_SHORTHANDS (L);
 
-    Details(*) details = ACT_DETAILS(PHASE);
+    Details(*) details = Phase_Details(PHASE);
     assert(Array_Len(details) == IDX_REFRAMER_MAX);
 
     REBVAL* shim = DETAILS_AT(details, IDX_REFRAMER_SHIM);
@@ -471,7 +471,7 @@ DECLARE_NATIVE(reframer_p)
         IDX_REFRAMER_MAX  // details array capacity => [shim, param_index]
     );
 
-    Details(*) details = ACT_DETAILS(reframer);
+    Details(*) details = Phase_Details(reframer);
     Copy_Cell(DETAILS_AT(details, IDX_REFRAMER_SHIM), ARG(shim));
     Init_Integer(DETAILS_AT(details, IDX_REFRAMER_PARAM_INDEX), param_index);
 

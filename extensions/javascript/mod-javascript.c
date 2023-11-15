@@ -697,7 +697,7 @@ Bounce JavaScript_Dispatcher(Level(*) const L)
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
-    Details(*) details = ACT_DETAILS(PHASE);
+    Details(*) details = Phase_Details(PHASE);
     bool is_awaiter = VAL_LOGIC(DETAILS_AT(details, IDX_JS_NATIVE_IS_AWAITER));
 
     struct Reb_Promise_Info *info = PG_Promises;
@@ -826,7 +826,7 @@ DECLARE_NATIVE(js_native)
 
     heapaddr_t native_id = Native_Id_For_Action(native);
 
-    Details(*) details = ACT_DETAILS(native);
+    Details(*) details = Phase_Details(native);
 
     if (Is_Series_Frozen(VAL_SERIES(source)))
         Copy_Cell(DETAILS_AT(details, IDX_NATIVE_BODY), source);  // no copy

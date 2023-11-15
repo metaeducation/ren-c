@@ -48,7 +48,7 @@ typedef REBINT (COMPARE_HOOK)(
 // Helper for declaring an intrinsic native (can be dispatched w/o a frame)
 //
 #define DECLARE_INTRINSIC(n) \
-    void N_##n(Value(*) out, Action(*) action, Value(*) arg)
+    void N_##n(Value(*) out, Phase(*) phase, Value(*) arg)
 
 
 // PER-TYPE MAKE HOOKS: for `make datatype def`

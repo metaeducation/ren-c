@@ -85,7 +85,7 @@ Bounce Encloser_Dispatcher(Level(*) const L)
 {
     USE_LEVEL_SHORTHANDS (L);
 
-    Details(*) details = ACT_DETAILS(PHASE);
+    Details(*) details = Phase_Details(PHASE);
     assert(Array_Len(details) == IDX_ENCLOSER_MAX);
 
     REBVAL *inner = DETAILS_AT(details, IDX_ENCLOSER_INNER);
@@ -227,7 +227,7 @@ DECLARE_NATIVE(enclose_p)  // see extended definition ENCLOSE in %base-defs.r
         IDX_ENCLOSER_MAX  // details array capacity => [inner, outer]
     );
 
-    Details(*) details = ACT_DETAILS(enclosure);
+    Details(*) details = Phase_Details(enclosure);
     Copy_Cell(DETAILS_AT(details, IDX_ENCLOSER_INNER), inner);
     Copy_Cell(DETAILS_AT(details, IDX_ENCLOSER_OUTER), outer);
 

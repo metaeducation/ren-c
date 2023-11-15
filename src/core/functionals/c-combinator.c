@@ -85,7 +85,7 @@ enum {
 Bounce Combinator_Dispatcher(Level(*) L)
 {
     Phase(*) phase = Level_Phase(L);
-    Details(*) details = ACT_DETAILS(phase);
+    Details(*) details = Phase_Details(phase);
     Cell(*) body = Array_At(details, IDX_DETAILS_1);  // code to run
 
     Bounce b;
@@ -290,7 +290,7 @@ DECLARE_NATIVE(combinator)
     );
 
     Init_Relative_Block(
-        Array_At(ACT_DETAILS(combinator), IDX_COMBINATOR_BODY),
+        Array_At(Phase_Details(combinator), IDX_COMBINATOR_BODY),
         combinator,
         relativized
     );

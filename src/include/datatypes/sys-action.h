@@ -257,10 +257,13 @@ inline static Phase(*) ACT_IDENTITY(Action(*) action) {
 // archetype is updated to match its container.
 //
 // Note that the details array represented by the identity is not guaranteed
-// to be SERIES_FLAG_DYNAMIC, so we use Series_At() here vs. optimize further.
+// to be SERIES_FLAG_DYNAMIC, so we use Series_Data() that handles it.
 //
 #define ACT_ARCHETYPE(action) \
-    Series_At(REBVAL, ACT_IDENTITY(action), 0)
+    cast(Value(*), Series_Data(ACT_IDENTITY(action)))
+
+#define Phase_Archetype(phase) \
+    cast(Value(*), Series_Data(ensure(Phase(*), phase)))
 
 
 inline static bool Is_Frame_Details(NoQuote(Cell(const*)) v) {
@@ -278,21 +281,20 @@ inline static bool Is_Frame_Details(NoQuote(Cell(const*)) v) {
 // * When you COPY an action, it creates a minimal details array of length 1
 //   whose archetype points at the details array of what it copied...not
 //   back to itself.  So the dispatcher of the original funciton may run for a
-//   phase with this mostly-empty-array, but expect ACT_DETAILS() to give
+//   phase with this mostly-empty-array, but expect Phase_Details() to give
 //   it the original details.
 //
 // * HIJACK swaps out the archetype in the 0 details slot and puts in the
 //   archetype of the hijacker.  (It leaves the rest of the array alone.)
-//   When the hijacking function runs, it wants ACT_DETAILS() for the phase
+//   When the hijacking function runs, it wants Phase_Details() for the phase
 //   to give the details that the hijacking dispatcher wants.
 //
 // So consequently, all phases have to look in the archetype, in case they
 // are running the implementation of a copy or are spliced in as a hijacker.
 //
-inline static Details(*) ACT_DETAILS(Action(*) a) {
-    if (not IS_DETAILS(a))
-        a = CTX_FRAME_PHASE(cast(Context(*), a));
-    return x_cast(Details(*), ACT_ARCHETYPE(a)->payload.Any.first.node);
+inline static Details(*) Phase_Details(Phase(*) a) {
+    assert(IS_DETAILS(a));
+    return x_cast(Details(*), Phase_Archetype(a)->payload.Any.first.node);
 }
 
 

@@ -432,7 +432,7 @@ bool Did_Get_Binding_Of(Sink(Value(*)) out, const REBVAL *v)
 //
 DECLARE_INTRINSIC(refinement_q)
 {
-    UNUSED(action);
+    UNUSED(phase);
 
     Init_Logic(out, IS_PATH(arg) and IS_REFINEMENT(arg));
 }
@@ -449,7 +449,7 @@ DECLARE_INTRINSIC(refinement_q)
 //
 DECLARE_INTRINSIC(quasi_word_q)
 {
-    UNUSED(action);
+    UNUSED(phase);
 
     Init_Logic(out, Is_Quasi(arg) and HEART_BYTE(arg) == REB_WORD);
 }
@@ -466,7 +466,7 @@ DECLARE_INTRINSIC(quasi_word_q)
 //
 DECLARE_INTRINSIC(char_q)
 {
-    UNUSED(action);
+    UNUSED(phase);
 
     Init_Logic(out, IS_CHAR(arg));
 }
@@ -1620,7 +1620,7 @@ DECLARE_NATIVE(proxy_exports)
 //
 DECLARE_INTRINSIC(enfix_q)
 {
-    UNUSED(action);
+    UNUSED(phase);
 
     Init_Logic(out, Is_Enfixed(arg));
 }
@@ -1638,7 +1638,7 @@ DECLARE_INTRINSIC(enfix_q)
 //
 DECLARE_INTRINSIC(enfix)
 {
-    UNUSED(action);
+    UNUSED(phase);
 
     Activatify(Copy_Cell(out, arg));
     Set_Cell_Flag(out, ENFIX_FRAME);
@@ -1657,7 +1657,7 @@ DECLARE_INTRINSIC(enfix)
 //
 DECLARE_INTRINSIC(unenfix)
 {
-    UNUSED(action);
+    UNUSED(phase);
 
     Activatify(Copy_Cell(out, arg));
     Clear_Cell_Flag(out, ENFIX_FRAME);
@@ -2354,7 +2354,7 @@ DECLARE_NATIVE(aliases_q)
 //
 DECLARE_INTRINSIC(null_q)
 {
-    UNUSED(action);
+    UNUSED(phase);
 
     Init_Logic(out, Is_Nulled(arg));
 }
@@ -2372,7 +2372,7 @@ DECLARE_INTRINSIC(null_q)
 //
 DECLARE_INTRINSIC(logic_q)
 {
-    UNUSED(action);
+    UNUSED(phase);
 
     Init_Logic(out, IS_LOGIC(arg));
 }
@@ -2389,7 +2389,7 @@ DECLARE_INTRINSIC(logic_q)
 //
 DECLARE_INTRINSIC(nihil_q)
 {
-    UNUSED(action);
+    UNUSED(phase);
 
     Init_Logic(out, Is_Meta_Of_Nihil(arg));
 }
@@ -2406,7 +2406,7 @@ DECLARE_INTRINSIC(nihil_q)
 //
 DECLARE_INTRINSIC(barrier_q)
 {
-    UNUSED(action);
+    UNUSED(phase);
 
     Init_Logic(out, Is_Meta_Of_Barrier(arg));
 }
@@ -2423,7 +2423,7 @@ DECLARE_INTRINSIC(barrier_q)
 //
 DECLARE_INTRINSIC(elision_q)
 {
-    UNUSED(action);
+    UNUSED(phase);
 
     Init_Logic(out, Is_Meta_Of_Elision(arg));
 }
@@ -2456,7 +2456,7 @@ DECLARE_NATIVE(none)
 //
 DECLARE_INTRINSIC(void_q)
 {
-    UNUSED(action);
+    UNUSED(phase);
 
     Init_Logic(out, Is_Void(arg));
 }
@@ -2480,7 +2480,7 @@ DECLARE_INTRINSIC(none_q)
 //    intended that raised errors be tolerated by this test, so the type
 //    constraint is just to regular values.
 {
-    UNUSED(action);
+    UNUSED(phase);
 
     Init_Logic(out, Is_Meta_Of_None(arg));
 }
@@ -2497,7 +2497,7 @@ DECLARE_INTRINSIC(none_q)
 //
 DECLARE_INTRINSIC(blackhole_q)
 {
-    UNUSED(action);
+    UNUSED(phase);
 
     Init_Logic(out, Is_Blackhole(arg));
 }
@@ -2579,7 +2579,7 @@ DECLARE_INTRINSIC(decay)
 //    break the contract in the case of an error.  So we let the parameter
 //    fulfillment cause the problem.
 {
-    UNUSED(action);
+    UNUSED(phase);
 
     ASSERT_STABLE(arg);  // paranoid check...Value(*) should always be stable
     Copy_Cell(out, arg);  // pre-decayed by non-^META argument, see [1]
@@ -2675,7 +2675,7 @@ DECLARE_NATIVE(concretize)
 //
 DECLARE_INTRINSIC(noisotope)
 {
-    UNUSED(action);
+    UNUSED(phase);
 
     Copy_Cell(out, arg);
 

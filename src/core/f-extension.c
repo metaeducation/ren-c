@@ -274,7 +274,7 @@ static const REBVAL *Unloaded_Dispatcher(Level(*) L)
 {
     UNUSED(L);
 
-    fail (Error_Native_Unloaded_Raw(ACT_ARCHETYPE(Level_Phase(L))));
+    fail (Error_Native_Unloaded_Raw(Phase_Archetype(Level_Phase(L))));
 }
 
 

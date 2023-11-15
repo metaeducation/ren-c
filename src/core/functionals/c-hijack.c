@@ -170,7 +170,7 @@ Bounce Hijacker_Dispatcher(Level(*) level_)
     // The PHASE here is the *identity that the hijacker has overtaken*
     // But the actual hijacker is in the archetype.
 
-    Action(*) hijacker = VAL_ACTION(ACT_ARCHETYPE(PHASE));
+    Action(*) hijacker = VAL_ACTION(Phase_Archetype(PHASE));
 
     // If the hijacked function was called directly -or- by an adaptation or
     // specalization etc. which was made *after* the hijack, the frame should
@@ -189,7 +189,7 @@ Bounce Hijacker_Dispatcher(Level(*) level_)
     // Otherwise, we assume the frame was built for the function prior to
     // the hijacking...and has to be remapped.
     //
-    Push_Redo_Action_Level(OUT, LEVEL, ACT_ARCHETYPE(PHASE));
+    Push_Redo_Action_Level(OUT, LEVEL, Phase_Archetype(PHASE));
     return DELEGATE_SUBLEVEL(TOP_LEVEL);
 }
 
@@ -259,12 +259,18 @@ DECLARE_NATIVE(hijack)
             = cast(CFUNC*, &Hijacker_Dispatcher);
     }
 
-    Clear_Cell_Flag(ACT_ARCHETYPE(victim), PROTECTED);  // changing on purpose
-    Copy_Cell(  // move the archetype into the 0 slot of victim's identity
-        ACT_ARCHETYPE(victim),
-        ACT_ARCHETYPE(hijacker)
+    Clear_Cell_Flag(  // change on purpose
+        Phase_Archetype(victim_identity),
+        PROTECTED
     );
-    Set_Cell_Flag(ACT_ARCHETYPE(victim), PROTECTED);  // restore invariant
+    Copy_Cell(  // move the archetype into the 0 slot of victim's identity
+        Phase_Archetype(victim_identity),
+        Phase_Archetype(hijacker_identity)
+    );
+    Set_Cell_Flag(  // restore invariant
+        Phase_Archetype(victim_identity),
+        PROTECTED
+    );
 
     return Init_Activation(  // don't bother returning copy of original, see [3]
         OUT,

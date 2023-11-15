@@ -1402,7 +1402,8 @@ REBTYPE(Frame)
         INCLUDE_PARAMS_OF_REFLECT;
         UNUSED(ARG(value));
 
-        Action(*) act = VAL_ACTION(frame);
+        Phase(*) act = cast(Phase(*), VAL_ACTION(frame));
+        assert(IS_DETAILS(act));
 
         REBVAL *property = ARG(property);
         Option(SymId) sym = VAL_WORD_ID(property);
@@ -1463,7 +1464,7 @@ REBTYPE(Frame)
             // is a series with the file and line bits set, then that's what
             // it returns for FILE OF and LINE OF.
 
-            Details(*) details = ACT_DETAILS(act);
+            Details(*) details = Phase_Details(act);
             if (Array_Len(details) < 1 or not ANY_ARRAY(Array_Head(details)))
                 return nullptr;
 
@@ -1507,7 +1508,7 @@ REBTYPE(Frame)
     // with an extant reference still lingering in the other.)
     //
     // The modified solution tweaks it so that the identity array for an
-    // action is not necessarily where it looks for its ACT_DETAILS(), with
+    // action is not necessarily where it looks for its Phase_Details(), with
     // the details instead coming out of the archetype slot [0] of that array.
     //
     // !!! There are higher-level interesting mechanics that might be called
@@ -1532,7 +1533,7 @@ REBTYPE(Frame)
             // !!! always "deep", allow it?
         }
 
-        Action(*) act = VAL_ACTION(frame);
+        Phase(*) act = cast(Phase(*), VAL_ACTION(frame));
 
         // If the function had code, then that code will be bound relative
         // to the original paramlist that's getting hijacked.  So when the
@@ -1560,9 +1561,9 @@ REBTYPE(Frame)
         if (Get_Action_Flag(act, POSTPONES_ENTIRELY))
             Set_Action_Flag(proxy, POSTPONES_ENTIRELY);
 
-        Clear_Cell_Flag(ACT_ARCHETYPE(proxy), PROTECTED);  // intentional change
-        Copy_Cell(ACT_ARCHETYPE(proxy), ACT_ARCHETYPE(act));
-        Set_Cell_Flag(ACT_ARCHETYPE(proxy), PROTECTED);  // restore invariant
+        Clear_Cell_Flag(Phase_Archetype(proxy), PROTECTED);  // changing it
+        Copy_Cell(Phase_Archetype(proxy), Phase_Archetype(act));
+        Set_Cell_Flag(Phase_Archetype(proxy), PROTECTED);  // restore invariant
 
         return Init_Frame_Details(
             OUT,

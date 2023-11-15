@@ -255,17 +255,17 @@ DECLARE_NATIVE(check)
     //
     Check_Memory_Debug();
 
-    // !!! Should call generic ASSERT_VALUE macro with more cases
+    // !!! Should call generic Assert_Value() macro with more cases
     //
     if (ANY_SERIES(value)) {
-        ASSERT_SERIES(VAL_SERIES(value));
+        Assert_Series(VAL_SERIES(value));
     }
     else if (IS_FRAME(value)) {
-        ASSERT_SERIES(VAL_ACTION_KEYLIST(value));
-        ASSERT_ARRAY(ACT_DETAILS(VAL_ACTION(value)));
+        Assert_Series(VAL_ACTION_KEYLIST(value));
+        Assert_Array(Phase_Details(ACT_IDENTITY(VAL_ACTION(value))));
     }
     else if (ANY_CONTEXT(value)) {
-        ASSERT_CONTEXT(VAL_CONTEXT(value));
+        Assert_Context(VAL_CONTEXT(value));
     }
 
     return COPY(value);

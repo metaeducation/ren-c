@@ -36,11 +36,11 @@
 //
 //  Extract_Intrinsic: C
 //
-Intrinsic* Extract_Intrinsic(Action(*) action)
+Intrinsic* Extract_Intrinsic(Phase(*) phase)
 {
-    assert(ACT_DISPATCHER(action) == &Intrinsic_Dispatcher);
+    assert(ACT_DISPATCHER(phase) == &Intrinsic_Dispatcher);
 
-    Details(*) details = ACT_DETAILS(action);
+    Details(*) details = Phase_Details(phase);
     assert(Array_Len(details) >= IDX_INTRINSIC_MAX);  // typecheck uses more
 
     Cell(*) handle = DETAILS_AT(details, IDX_INTRINSIC_CFUNC);
@@ -131,7 +131,7 @@ Phase(*) Make_Native(
             IDX_INTRINSIC_MAX  // details array capacity
         );
 
-        Details(*) details = ACT_DETAILS(native);
+        Details(*) details = Phase_Details(native);
         Init_Handle_Cfunc(DETAILS_AT(details, IDX_INTRINSIC_CFUNC), cfunc);
     }
     else {
@@ -142,7 +142,7 @@ Phase(*) Make_Native(
             IDX_NATIVE_MAX  // details array capacity
         );
 
-        Details(*) details = ACT_DETAILS(native);
+        Details(*) details = Phase_Details(native);
 
         Init_Blank(DETAILS_AT(details, IDX_NATIVE_BODY));
         Copy_Cell(
@@ -159,7 +159,7 @@ Phase(*) Make_Native(
     // that the actual "native" in that case.
     //
     if (native_type == NATIVE_COMBINATOR) {
-        Action(*) native_combinator = native;
+        Phase(*) native_combinator = native;
         native = Make_Action(
             ACT_PARAMLIST(native_combinator),
             nullptr,  // no partials
@@ -168,8 +168,8 @@ Phase(*) Make_Native(
         );
 
         Copy_Cell(
-            Array_At(ACT_DETAILS(native), 1),  // IDX_COMBINATOR_BODY
-            ACT_ARCHETYPE(native_combinator)
+            Array_At(Phase_Details(native), 1),  // IDX_COMBINATOR_BODY
+            Phase_Archetype(native_combinator)
         );
     }
 

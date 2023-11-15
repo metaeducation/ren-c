@@ -123,7 +123,7 @@ Bounce Func_Dispatcher(Level(*) const L)
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
-    Details(*) details = ACT_DETAILS(PHASE);
+    Details(*) details = Phase_Details(PHASE);
     Cell(*) body = Array_At(details, IDX_DETAILS_1);  // code to run
     assert(IS_BLOCK(body) and IS_RELATIVE(body) and VAL_INDEX(body) == 0);
 
@@ -281,7 +281,7 @@ Phase(*) Make_Interpreted_Action_May_Fail(
     // running frame instance (the Level(*) received by the dispatcher) before
     // executing the interpreted code.
     //
-    Details(*) details = ACT_DETAILS(a);
+    Details(*) details = Phase_Details(a);
     Cell(*) rebound = Init_Relative_Block(
         Array_At(details, IDX_NATIVE_BODY),
         a,

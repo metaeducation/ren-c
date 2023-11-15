@@ -50,16 +50,16 @@
 
 //=//// BINARY! SERIES ////////////////////////////////////////////////////=//
 
-inline static Byte* Binary_At(const_if_c Binary(*) bin, REBLEN n)
+inline static Byte* Binary_At(Binary(const_if_c*) bin, REBLEN n)
   { return Series_At(Byte, bin, n); }
 
-inline static Byte* Binary_Head(const_if_c Binary(*) bin)
+inline static Byte* Binary_Head(Binary(const_if_c*) bin)
   { return Series_Head(Byte, bin); }
 
-inline static Byte* Binary_Tail(const_if_c Binary(*) bin)
+inline static Byte* Binary_Tail(Binary(const_if_c*) bin)
   { return Series_Tail(Byte, bin); }
 
-inline static Byte* Binary_Last(const_if_c Binary(*) bin)
+inline static Byte* Binary_Last(Binary(const_if_c*) bin)
   { return Series_Last(Byte, bin); }
 
 #if CPLUSPLUS_11

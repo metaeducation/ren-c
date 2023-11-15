@@ -141,7 +141,7 @@ ATTRIBUTE_NO_RETURN void Fail_Core(const void *p)
         panic (p);  // suppress compiler error from non-smart compilers
     }
 
-    ASSERT_CONTEXT(error);
+    Assert_Context(error);
     assert(CTX_TYPE(error) == REB_ERROR);
 
   #if DEBUG_EXTANT_STACK_POINTERS

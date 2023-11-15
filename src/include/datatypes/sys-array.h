@@ -95,21 +95,21 @@ inline static bool Has_File_Line(Array(const*) a) {
 
 
 // HEAD, TAIL, and LAST refer to specific value pointers in the array.  Since
-// empty arrays have no "last" value then ARR_LAST should not be called on it.
+// empty arrays have no "last" value Array_Last() should not be called on it.
 
-inline static Cell(*) Array_At(const_if_c Array(*) a, REBLEN n)
+inline static Cell(*) Array_At(Array(const_if_c*) a, REBLEN n)
   { return Series_At(CellT, a, n); }
 
-inline static Cell(*) Array_Head(const_if_c Array(*) a)
+inline static Cell(*) Array_Head(Array(const_if_c*) a)
   { return Series_Head(CellT, a); }
 
-inline static Cell(*) Array_Tail(const_if_c Array(*) a)
+inline static Cell(*) Array_Tail(Array(const_if_c*) a)
   { return Series_Tail(CellT, a); }
 
-inline static Cell(*) Array_Last(const_if_c Array(*) a)
+inline static Cell(*) Array_Last(Array(const_if_c*) a)
   { return Series_Last(CellT, a); }
 
-inline static Cell(*) Array_Single(const_if_c Array(*) a) {
+inline static Cell(*) Array_Single(Array(const_if_c*) a) {
     assert(Not_Series_Flag(a, DYNAMIC));
     return mutable_Stub_Cell(a);
 }
@@ -549,13 +549,13 @@ inline static Cell(*) Init_Relative_Block_At(
 
 
 #ifdef NDEBUG
-    #define ASSERT_ARRAY(s)     NOOP
-    #define ASSERT_SERIES(s)    NOOP
+    #define Assert_Array(s)     NOOP
+    #define Assert_Series(s)    NOOP
 #else
-    #define ASSERT_ARRAY(s) \
+    #define Assert_Array(s) \
         Assert_Array_Core(s)
 
-    inline static void ASSERT_SERIES(Series(const*) s) {
+    inline static void Assert_Series(Series(const*) s) {
         if (Is_Series_Array(s))
             Assert_Array_Core(ARR(s));  // calls Assert_Series_Basics_Core()
         else

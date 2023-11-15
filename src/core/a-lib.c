@@ -2588,7 +2588,7 @@ DECLARE_NATIVE(api_transient)
 // executable to do deferred loading.
 //
 // !!! For starters, this just returns an array of the values...but this is
-// the same array that would be used as the ACT_DETAILS() of an action.  So
+// the same array that would be used as the Phase_Details() of an action.  So
 // it could return a generator ACTION!.
 //
 // !!! It may be desirable to separate out the module header and go ahead and

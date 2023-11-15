@@ -79,9 +79,9 @@
 
 
 #ifdef NDEBUG
-    #define ASSERT_CONTEXT(c) cast(void, 0)
+    #define Assert_Context(c) cast(void, 0)
 #else
-    #define ASSERT_CONTEXT(c) Assert_Context_Core(c)
+    #define Assert_Context(c) Assert_Context_Core(c)
 #endif
 
 
@@ -153,7 +153,6 @@ inline static const REBVAL *CTX_ARCHETYPE(Context(*) c) {  // read-only form
         assert(Not_Series_Flag(varlist, DYNAMIC));  // variables are gone
         return cast(const REBVAL*, &varlist->content.fixed);
     }
-    assert(Not_Series_Flag(varlist, INACCESSIBLE));
     return cast(const REBVAL*, varlist->content.dynamic.data);
 }
 

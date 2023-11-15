@@ -69,7 +69,7 @@
 #define DECLARE_EXT_COLLATE(ext_name) \
     EXT_API REBVAL *RX_COLLATE_NAME(ext_name)(RL_LIB* api)
 
-// !!! Currently used for just a BLOCK!, but may become ACT_DETAILS()
+// !!! Currently used for just a BLOCK!, but may become Phase_Details()
 //
 #define IDX_COLLATOR_SCRIPT 0
 #define IDX_COLLATOR_SCRIPT_NUM_CODEPOINTS 1

@@ -97,7 +97,7 @@ Bounce Macro_Dispatcher(Level(*) const L)
 {
     USE_LEVEL_SHORTHANDS (L);
 
-    Details(*) details = ACT_DETAILS(PHASE);
+    Details(*) details = Phase_Details(PHASE);
     Cell(*) body = Array_At(details, IDX_DETAILS_1);  // code to run
     assert(IS_BLOCK(body) and IS_RELATIVE(body) and VAL_INDEX(body) == 0);
 

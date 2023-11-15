@@ -94,7 +94,10 @@
 #if defined(NDEBUG)
     #define ensure_flavor(flavor,s) (s)  // no-op in release build
 #else
-    inline static Series(*) ensure_flavor(Flavor flavor, const_if_c Series(*) s) {
+    inline static Series(*) ensure_flavor(
+        Flavor flavor,
+        Series(const_if_c*) s
+    ){
         if (Series_Flavor(s) != flavor) {
             Flavor actual_flavor = Series_Flavor(s);
             USED(actual_flavor);
@@ -458,8 +461,9 @@ inline static Length Series_Used(Series(const*) s) {
 // for instance a generic debugging routine might just want a byte pointer
 // but have no element type pointer to pass in.
 //
-inline static Byte* Series_Data(const_if_c Series(*) s) {
-    // if updating, also update manual inlining in Series_At_RAW
+// Note: if updating, also update manual inlining in Series_Data_At()
+//
+inline static Byte* Series_Data(Series(const_if_c*) s) {
 
     // The VAL_CONTEXT(), VAL_SERIES(), VAL_ARRAY() extractors do the failing
     // upon extraction--that's meant to catch it before it gets this far.
@@ -471,7 +475,7 @@ inline static Byte* Series_Data(const_if_c Series(*) s) {
         : cast(Byte*, &s->content);
 }
 
-inline static Byte* Series_Data_At(Byte w, const_if_c Series(*) s, REBLEN i) {
+inline static Byte* Series_Data_At(Byte w, Series(const_if_c*) s, REBLEN i) {
   #if !defined(NDEBUG)
     if (w != Series_Wide(s)) {  // will be "unusual" value if free
         if (Is_Free_Node(s))
@@ -493,7 +497,7 @@ inline static Byte* Series_Data_At(Byte w, const_if_c Series(*) s, REBLEN i) {
 
     assert(i <= Series_Used(s));
 
-    return ((w) * (i)) + ( // v-- inlining of SER_DATA
+    return ((w) * (i)) + ( // v-- inlining of Series_Data()
         Get_Series_Flag(s, DYNAMIC)
             ? cast(Byte*, s->content.dynamic.data)
             : cast(Byte*, &s->content)
@@ -521,11 +525,16 @@ inline static Byte* Series_Data_At(Byte w, const_if_c Series(*) s, REBLEN i) {
 // Note that series indexing in C is zero based.  So as far as SERIES is
 // concerned, `Series_Head(t, s)` is the same as `Series_At(t, s, 0)`
 
-#define Series_At(t,s,i) \
-    cast(t*, Series_Data_At(sizeof(t), (s), (i)))
+#define Series_At(T,s,i) \
+    cast(T*, Series_Data_At(sizeof(T), (s), (i)))
 
-#define Series_Head(t,s) \
-    Series_At(t, (s), 0)  // Series_Data() wouldn't check width, _At() does
+#if DEBUG
+    #define Series_Head(T,s) \
+        Series_At(T, (s), 0)  // Series_Data() doesn't check width, _At() does
+#else
+    #define Series_Head(T,s) \
+        cast(T*, Series_Data(s))
+#endif
 
 
 // If a binary series is a string (or aliased as a string), it must have all

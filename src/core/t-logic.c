@@ -135,7 +135,7 @@ DECLARE_NATIVE(false_if_zero)
 //
 DECLARE_INTRINSIC(not_1)  // see TO-C-NAME
 {
-    UNUSED(action);
+    UNUSED(phase);
 
     Init_Logic(out, Is_Falsey(arg));
 }

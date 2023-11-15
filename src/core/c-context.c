@@ -675,7 +675,7 @@ Context(*) Make_Context_Detect_Managed(
     if (parent)  // v-- passing in nullptr to indicate no more binds
         Rebind_Context_Deep(unwrap(parent), context, nullptr);
 
-    ASSERT_CONTEXT(context);
+    Assert_Context(context);
 
   #if DEBUG_COLLECT_STATS
     g_mem.objects_made += 1;

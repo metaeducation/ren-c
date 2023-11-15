@@ -265,7 +265,7 @@ REBINT Get_System_Int(REBLEN i1, REBLEN i2, REBINT default_int)
 //
 //  Extra_Init_Context_Cell_Checks_Debug: C
 //
-// !!! Overlaps with ASSERT_CONTEXT, review folding them together.
+// !!! Overlaps with Assert_Context, review folding them together.
 //
 void Extra_Init_Context_Cell_Checks_Debug(enum Reb_Kind kind, Context(*) c) {
     assert(
@@ -312,8 +312,8 @@ void Extra_Init_Context_Cell_Checks_Debug(enum Reb_Kind kind, Context(*) c) {
 //
 // !!! Overlaps with ASSERT_ACTION, review folding them together.
 //
-void Extra_Init_Frame_Details_Checks_Debug(Action(*) a) {
-    REBVAL *archetype = ACT_ARCHETYPE(a);
+void Extra_Init_Frame_Details_Checks_Debug(Phase(*) a) {
+    Value(*) archetype = Phase_Archetype(a);
 
     // Once it was true that `VAL_ACTION(archetype) == a`.  That's no longer
     // true, but there might be some checks that apply regarding the two?

@@ -89,7 +89,7 @@
 //=//// DETAILS_FLAG_IS_NATIVE ////////////////////////////////////////////=//
 //
 // Native functions are flagged that their dispatcher represents a native in
-// order to say that their ACT_DETAILS() follow the protocol that the [0]
+// order to say that their Phase_Details() follow the protocol that the [0]
 // slot is "equivalent source" (may be a TEXT!, as in user natives, or a
 // BLOCK!).  The [1] slot is a module or other context into which APIs like
 // rebValue() etc. should consider for binding, in addition to lib.  A BLANK!

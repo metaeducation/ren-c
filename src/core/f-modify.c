@@ -205,7 +205,7 @@ REBLEN Modify_Array(
         Poison_Cell(Array_Tail(dst_arr));
   #endif
 
-    ASSERT_ARRAY(dst_arr);
+    Assert_Array(dst_arr);
 
     return tail_idx;
 }

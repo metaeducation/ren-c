@@ -146,7 +146,7 @@ Context(*) Get_Context_From_Stack(void)
     if (not Is_Action_Native(phase))
         return Lib_Context;
 
-    Details(*) details = ACT_DETAILS(phase);
+    Details(*) details = Phase_Details(phase);
     REBVAL *context = DETAILS_AT(details, IDX_NATIVE_CONTEXT);
     return VAL_CONTEXT(context);
 }

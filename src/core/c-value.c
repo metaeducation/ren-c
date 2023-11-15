@@ -250,7 +250,7 @@ void* Probe_Core_Debug(
     Series(*) s = m_cast(SeriesT*, cast(const SeriesT* , p));
     assert(not Is_Free_Node(s));  // Detect should have caught, above
     Flavor flavor = Series_Flavor(s);
-    ASSERT_SERIES(s); // if corrupt, gives better info than a print crash
+    Assert_Series(s);  // if corrupt, gives better info than a print crash
 
     switch (flavor) {
 
@@ -268,7 +268,11 @@ void* Probe_Core_Debug(
 
       case FLAVOR_DETAILS:
         Probe_Print_Helper(p, expr, "Details", file, line);
-        MF_Frame(mo, ACT_ARCHETYPE(ACT(m_cast(void*, p))), false);
+        MF_Frame(
+            mo,
+            Phase_Archetype(cast(Phase(*), ACT(m_cast(void*, p)))),
+            false
+        );
         break;
 
       case FLAVOR_PAIRLIST:

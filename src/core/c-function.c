@@ -947,7 +947,7 @@ Array(*) Make_Paramlist_Managed_May_Fail(
 // RETURN is distinguished from another--the binding data stored in the REBVAL
 // identifies the pointer of the FRAME! to exit).
 //
-// Actions have an associated Array(*) of data, accessible via ACT_DETAILS().
+// Actions have an associated Array(*) of data, accessible via Phase_Details().
 // This is where they can store information that will be available when the
 // dispatcher is called.
 //
@@ -962,7 +962,7 @@ Phase(*) Make_Action(
     Array(*) paramlist,
     Option(Array(*)) partials,
     Dispatcher* dispatcher,  // native C function called by Action_Executor()
-    REBLEN details_capacity  // capacity of ACT_DETAILS (including archetype)
+    REBLEN details_capacity  // capacity of Phase_Details (including archetype)
 ){
     assert(details_capacity >= 1);  // need archetype, maybe 1 (singular array)
 
@@ -975,7 +975,7 @@ Phase(*) Make_Action(
     // !!! There used to be more validation code needed here when it was
     // possible to pass a specialization frame separately from a paramlist.
     // But once paramlists were separated out from the function's identity
-    // array (using ACT_DETAILS() as the identity instead of ACT_KEYLIST())
+    // array (using Phase_Details() as the identity instead of ACT_KEYLIST())
     // then all the "shareable" information was glommed up minus redundancy
     // into the ACT_SPECIALTY().  Here's some of the residual checking, as
     // a placeholder for more useful consistency checking which might be done.
@@ -1107,7 +1107,7 @@ void Get_Maybe_Fake_Action_Body(Sink(Value(*)) out, Value(const*) action)
         // Interpreted code, the body is a block with some bindings relative
         // to the action.
 
-        Details(*) details = ACT_DETAILS(a);
+        Details(*) details = Phase_Details(ACT_IDENTITY(a));
         Cell(*) body = Array_At(details, IDX_DETAILS_1);
 
         // The PARAMLIST_HAS_RETURN tricks for definitional return make it
@@ -1188,7 +1188,7 @@ void Get_Maybe_Fake_Action_Body(Sink(Value(*)) out, Value(const*) action)
     }
 
     if (ACT_DISPATCHER(a) == &Generic_Dispatcher) {
-        Details(*) details = ACT_DETAILS(a);
+        Details(*) details = Phase_Details(ACT_IDENTITY(a));
         REBVAL *verb = DETAILS_AT(details, 1);
         assert(IS_WORD(verb));
         Copy_Cell(out, verb);

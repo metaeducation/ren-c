@@ -230,13 +230,13 @@ void Assert_Cell_Marked_Correctly(Cell(const*) v)
         {
         assert((v->header.bits & CELL_MASK_FRAME) == CELL_MASK_FRAME);
 
-        Action(*) a = VAL_ACTION(v);
+        Phase(*) a = cast(Phase(*), VAL_ACTION(v));
         assert(Is_Marked(a));
         if (VAL_ACTION_PARTIALS_OR_LABEL(v))
             assert(Is_Marked(VAL_ACTION_PARTIALS_OR_LABEL(v)));
 
         if (Is_Action_Native(a)) {
-            Details(*) details = ACT_DETAILS(a);
+            Details(*) details = Phase_Details(a);
             assert(Array_Len(details) >= IDX_NATIVE_MAX);
             Value(*) body = DETAILS_AT(details, IDX_NATIVE_BODY);
             Value(*) context = DETAILS_AT(details, IDX_NATIVE_CONTEXT);
@@ -253,7 +253,7 @@ void Assert_Cell_Marked_Correctly(Cell(const*) v)
         // that is consistent with the details itself.  That is no longer true
         // (by design), see HIJACK and COPY of actions for why.
         //
-        REBVAL *archetype = ACT_ARCHETYPE(a);
+        REBVAL *archetype = Phase_Archetype(a);
         assert(IS_FRAME(archetype));
         break; }
 
@@ -462,7 +462,7 @@ void Assert_Array_Marked_Correctly(Array(const*) a) {
         // managed will go through, so it's a good time to assert properties
         // about the array.
         //
-        ASSERT_ARRAY(a);
+        Assert_Array(a);
     #else
         //
         // For a lighter check, make sure it's marked as a value-bearing array

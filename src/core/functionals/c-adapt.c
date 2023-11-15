@@ -74,7 +74,7 @@ Bounce Adapter_Dispatcher(Level(*) const L)
 {
     USE_LEVEL_SHORTHANDS (L);
 
-    Details(*) details = ACT_DETAILS(PHASE);
+    Details(*) details = Phase_Details(PHASE);
     assert(Array_Len(details) == IDX_ADAPTER_MAX);
 
     enum {
@@ -161,7 +161,7 @@ DECLARE_NATIVE(adapt_p)  // see extended definition ADAPT in %base-defs.r
     // Adapter_Dispatcher() must combine it with the FRAME! instance before
     // it can be executed (e.g. the `Level(*) L` it is dispatching).
     //
-    Details(*) details = ACT_DETAILS(adaptation);
+    Details(*) details = Phase_Details(adaptation);
     Init_Relative_Block(
         Array_At(details, IDX_ADAPTER_PRELUDE),
         adaptation,

@@ -121,5 +121,5 @@
         | SERIES_FLAG_LINK_NODE_NEEDS_MARK  /* ancestor */ )
 
 
-inline static Array(*) CTX_VARLIST(Context(*) ctx)
-  { return cast(Array(*), ctx); }  // ARR() has debug cost, not defined yet
+#define CTX_VARLIST(ctx) \
+    cast(Array(*), ensure(Context(*), ctx))

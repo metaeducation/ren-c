@@ -153,7 +153,7 @@ Bounce Chainer_Dispatcher(Level(*) const L)
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
-    Details(*) details = ACT_DETAILS(PHASE);
+    Details(*) details = Phase_Details(PHASE);
     assert(Array_Len(details) == IDX_CHAINER_MAX);
 
     Value(*) pipeline_at = Init_Block(
@@ -273,7 +273,7 @@ DECLARE_NATIVE(chain_p)  // see extended definition CHAIN in %base-defs.r
         IDX_CHAINER_MAX  // details array capacity
     );
     Force_Value_Frozen_Deep(pipeline);
-    Copy_Cell(Array_At(ACT_DETAILS(chain), IDX_CHAINER_PIPELINE), pipeline);
+    Copy_Cell(Array_At(Phase_Details(chain), IDX_CHAINER_PIPELINE), pipeline);
 
     return Init_Activation(out, chain, VAL_FRAME_LABEL(first), UNBOUND);
 }

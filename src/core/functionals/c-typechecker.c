@@ -54,11 +54,11 @@ enum {
 //
 // Intrinsic used by TYPECHECKER generator for when argument is a datatype.
 //
-void Datatype_Checker_Intrinsic(Value(*) out, Action(*) action, Value(*) arg)
+void Datatype_Checker_Intrinsic(Value(*) out, Phase(*) phase, Value(*) arg)
 {
-    assert(ACT_DISPATCHER(action) == &Intrinsic_Dispatcher);
+    assert(ACT_DISPATCHER(phase) == &Intrinsic_Dispatcher);
 
-    Details(*) details = ACT_DETAILS(action);
+    Details(*) details = Phase_Details(phase);
     assert(Array_Len(details) == IDX_TYPECHECKER_MAX);
 
     REBVAL *datatype = DETAILS_AT(details, IDX_TYPECHECKER_TYPE);
@@ -72,11 +72,11 @@ void Datatype_Checker_Intrinsic(Value(*) out, Action(*) action, Value(*) arg)
 //
 // Intrinsic used by TYPECHECKER generator for when argument is a typeset.
 //
-void Typeset_Checker_Intrinsic(Value(*) out, Action(*) action, Value(*) arg)
+void Typeset_Checker_Intrinsic(Value(*) out, Phase(*) phase, Value(*) arg)
 {
-    assert(ACT_DISPATCHER(action) == &Intrinsic_Dispatcher);
+    assert(ACT_DISPATCHER(phase) == &Intrinsic_Dispatcher);
 
-    Details(*) details = ACT_DETAILS(action);
+    Details(*) details = Phase_Details(phase);
     assert(Array_Len(details) == IDX_TYPECHECKER_MAX);
 
     REBVAL *typeset_index = DETAILS_AT(details, IDX_TYPECHECKER_TYPE);
@@ -125,7 +125,7 @@ Phase(*) Make_Typechecker(Value(const*) type) {
         IDX_TYPECHECKER_MAX  // details array capacity
     );
 
-    Details(*) details = ACT_DETAILS(typechecker);
+    Details(*) details = Phase_Details(typechecker);
 
     Init_Handle_Cfunc(
         DETAILS_AT(details, IDX_TYPECHECKER_CFUNC),
@@ -264,7 +264,8 @@ bool Typecheck_Value(
             Action(*) action = VAL_ACTION(test);
 
             if (ACT_DISPATCHER(action) == &Intrinsic_Dispatcher) {
-                Intrinsic* intrinsic = Extract_Intrinsic(action);
+                assert(IS_DETAILS(action));
+                Intrinsic* intrinsic = Extract_Intrinsic(cast(Phase(*), action));
 
                 REBPAR* param = ACT_PARAM(action, 2);
                 DECLARE_LOCAL (arg);
@@ -275,7 +276,7 @@ bool Typecheck_Value(
                     goto test_failed;
 
                 DECLARE_LOCAL (out);
-                (*intrinsic)(out, action, Stable_Unchecked(arg));
+                (*intrinsic)(out, cast(Phase(*), action), Stable_Unchecked(arg));
                 if (not IS_LOGIC(out))
                     fail (Error_No_Logic_Typecheck(label));
                 if (VAL_LOGIC(out))

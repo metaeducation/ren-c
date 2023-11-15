@@ -302,7 +302,7 @@ typedef Executor Dispatcher;  // sub-dispatched in Action_Executor()
 // Intrinsics are a special form of implementing natives that do not need
 // to instantiate a frame.  See Intrinsic_Dispatcher().
 //
-typedef void (Intrinsic)(Atom(*) out, Action(*) action, Value(*) arg);
+typedef void (Intrinsic)(Atom(*) out, Phase(*) phase, Value(*) arg);
 
 // This is for working around pedantic C and C++ errors, when an extension
 // that doesn't use %sys-core.h tries to redefine dispatcher in terms of

@@ -415,7 +415,7 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
   //     decides to call fail(), the non-running stack level can be "TOP_LEVEL"
   //     above the ALL's "LEVEL".)
 
-    ASSERT_CONTEXT(e);
+    Assert_Context(e);
     assert(CTX_TYPE(e) == REB_ERROR);
 
     Set_Level_Flag(LEVEL, ABRUPT_FAILURE);

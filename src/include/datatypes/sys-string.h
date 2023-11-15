@@ -222,7 +222,6 @@ inline static Utf8(*) String_Tail(const_if_c StringT* s)
       { return String_Tail(m_cast(StringT*, s)); }
 #endif
 
-
 inline static Length String_Len(String(const*) s) {
     if (Is_Definitely_Ascii(s))
         return String_Size(s);
@@ -370,7 +369,7 @@ inline static void Free_Bookmarks_Maybe_Null(String(*) str) {
 // to iterate much faster, and most of the strings in the system might be able
 // to get away with not having any bookmarks at all.
 //
-inline static Utf8(*) String_At(const_if_c StringT* s, REBLEN at) {
+inline static Utf8(*) String_At(String(const_if_c*) s, REBLEN at) {
     assert(at <= String_Len(s));
 
     if (Is_Definitely_Ascii(s)) {  // can't have any false positives
@@ -776,7 +775,7 @@ inline static REBLEN Num_Codepoints_For_Bytes(
 inline static REBVAL *Init_Any_String_At(
     Cell(*) out,
     enum Reb_Kind kind,
-    const_if_c StringT* str,
+    String(const_if_c*) str,
     REBLEN index
 ){
     Init_Series_Cell_At_Core(
@@ -793,9 +792,10 @@ inline static REBVAL *Init_Any_String_At(
     inline static REBVAL *Init_Any_String_At(
         Cell(*) out,
         enum Reb_Kind kind,
-        const StringT* str,
+        String(const*) str,
         REBLEN index
     ){
+        // Init will assert if str is not managed...
         return Init_Series_Cell_At_Core(out, kind, str, index, UNBOUND);
     }
 #endif

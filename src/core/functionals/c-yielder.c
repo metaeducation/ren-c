@@ -62,8 +62,7 @@ Bounce Yielder_Dispatcher(Level(*) const L)
 {
     USE_LEVEL_SHORTHANDS (L);
 
-    Action(*) phase = Level_Phase(L);
-    Details(*) details = ACT_DETAILS(phase);
+    Details(*) details = Phase_Details(PHASE);
     Value(*) mode = DETAILS_AT(details, IDX_YIELDER_MODE);
 
     switch (STATE) {
@@ -78,7 +77,7 @@ Bounce Yielder_Dispatcher(Level(*) const L)
     // Because yielders accrue state as they run, more than one can't be in
     // flight at a time.  Hence what would usually be an "initial entry" of
     // a new call for other dispatchers, each call is effectively to the same
-    // "instance" of this yielder.  So the ACT_DETAILS() is modified while
+    // "instance" of this yielder.  So the Phase_Details() is modified while
     // running, and it's the `state` we pay attention to.
 
     if (Is_Quasi_Void(mode))  // currently on the stack and running
@@ -288,7 +287,7 @@ DECLARE_NATIVE(yielder)
     );
     rebRelease(body);
 
-    Details(*) details = ACT_DETAILS(yielder);
+    Details(*) details = Phase_Details(yielder);
 
     assert(IS_BLOCK(Array_At(details, IDX_YIELDER_BODY)));
     Init_Blank(DETAILS_AT(details, IDX_YIELDER_MODE));  // starting
@@ -364,7 +363,7 @@ DECLARE_NATIVE(yield)
     if (not yielder_level)
         fail ("Cannot yield to generator that has completed");
 
-    Action(*) yielder_phase = Level_Phase(yielder_level);
+    Phase(*) yielder_phase = Level_Phase(yielder_level);
     assert(ACT_DISPATCHER(yielder_phase) == &Yielder_Dispatcher);
 
     // !!! How much sanity checking should be done before doing the passing
@@ -374,7 +373,7 @@ DECLARE_NATIVE(yield)
     if (Is_Nulled(ARG(value)))
         return nullptr;
 
-    Details(*) yielder_details = ACT_DETAILS(yielder_phase);
+    Details(*) yielder_details = Phase_Details(yielder_phase);
 
     // Evaluations will frequently use the L->out to accrue state, perhaps
     // preloading with something (like NULL) that is expected to be there.
