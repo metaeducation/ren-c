@@ -221,7 +221,7 @@ static void Process_Block_Helper(
 static void Add_API_Symbol_Helper(
     TCCState *state,
     const char *symbol,
-    CFUNC *cfunc_ptr  // see CFUNC for why func and data pointers differ
+    CFunction* cfunc_ptr  // see CFunction for why func/data pointers differ
 ){
     void *void_ptr;
     assert(sizeof(void_ptr) == sizeof(cfunc_ptr));
@@ -416,7 +416,7 @@ DECLARE_NATIVE(compile_p)
     Init_Handle_Cdata_Managed(
         handle,
         state, // "data" pointer
-        1,  // unused length (can't be 0, reserved for CFUNC)
+        1,  // unused length (can't be 0, reserved for CFunction)
         cleanup // called upon GC
     );
     Push_GC_Guard(handle);
@@ -631,7 +631,7 @@ DECLARE_NATIVE(compile_p)
         //
         // .inc file contains calls for each function in %a-lib.c like:
         //
-        // Add_API_Symbol_Helper(state, "RL_rebX", cast(CFUNC*, &RL_rebX));
+        // Add_API_Symbol_Helper(state, "RL_rebX", cast(CFunction*, &RL_rebX));
         //
         #include "tmp-librebol-symbols.inc"
     }

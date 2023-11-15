@@ -82,7 +82,7 @@ inline static void *VAL_HANDLE_VOID_POINTER(NoQuote(Cell(const*)) v) {
 #define VAL_HANDLE_POINTER(T, v) \
     cast(T*, VAL_HANDLE_VOID_POINTER(v))
 
-inline static CFUNC *VAL_HANDLE_CFUNC(NoQuote(Cell(const*)) v) {
+inline static CFunction* VAL_HANDLE_CFUNC(NoQuote(Cell(const*)) v) {
     assert(Is_Handle_Cfunc(v));
     return VAL_HANDLE_CFUNC_P(VAL_HANDLE_CANON(v));
 }
@@ -103,7 +103,7 @@ inline static void SET_HANDLE_CDATA(Cell(*) v, void *cdata) {
     VAL_HANDLE_CDATA_P(canon) = cdata;
 }
 
-inline static void SET_HANDLE_CFUNC(Cell(*) v, CFUNC *cfunc) {
+inline static void SET_HANDLE_CFUNC(Cell(*) v, CFunction* cfunc) {
     assert(Is_Handle_Cfunc(v));
     Cell(*) canon = mutable_VAL_HANDLE_CANON(v);
     assert(VAL_HANDLE_LENGTH_U(canon) == 0);
@@ -130,7 +130,7 @@ inline static REBVAL *Init_Handle_Cdata(
 
 inline static REBVAL *Init_Handle_Cfunc(
     Cell(*) out,
-    CFUNC *cfunc
+    CFunction* cfunc
 ){
     Reset_Unquoted_Header_Untracked(
         out,
@@ -192,7 +192,7 @@ inline static REBVAL *Init_Handle_Cdata_Managed(
 
 inline static REBVAL *Init_Handle_Cdata_Managed_Cfunc(
     Cell(*) out,
-    CFUNC *cfunc,
+    CFunction* cfunc,
     CLEANUP_CFUNC *cleaner
 ){
     Init_Handle_Managed_Common(out, 0, cleaner);

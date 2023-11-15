@@ -94,7 +94,7 @@ Bounce Intrinsic_Dispatcher(Level(*) const L)
 Phase(*) Make_Native(
     REBVAL *spec,
     NativeType native_type,
-    CFUNC* cfunc,  // may be Dispatcher*, may be Intrinsic*
+    CFunction* cfunc,  // may be Dispatcher*, may be Intrinsic*
     Context(*) module
 ){
     // There are implicit parameters to both NATIVE/COMBINATOR and usermode
@@ -223,7 +223,7 @@ DECLARE_NATIVE(native)
     if (not PG_Next_Native_Cfunc)
         fail ("NATIVE is for internal use during boot and extension loading");
 
-    CFUNC* cfunc = *PG_Next_Native_Cfunc;
+    CFunction* cfunc = *PG_Next_Native_Cfunc;
     ++PG_Next_Native_Cfunc;
 
     Phase(*) native = Make_Native(

@@ -513,7 +513,7 @@ gen-obj: func [
                 ; It's useful to know when function pointers are assigned to
                 ; an incompatible type of function pointer.  But Rebol relies
                 ; on the ability to have a kind of "void*-for-functions", e.g.
-                ; CFUNC, which holds arbitrary function pointers.  There seems
+                ; CFunction, which holds arbitrary function pointers.  There seems
                 ; to be no way to get function pointer type checking allowing
                 ; downcasts and upcasts from just that pointer type, so it
                 ; has to be completely disabled (or managed with #pragma,
@@ -1740,7 +1740,7 @@ for-each ext extensions [
 
     ; %prep-extensions.r creates a temporary .c file which contains the
     ; collated information for the module (compressed script and spec bytes,
-    ; array of dispatcher CFUNC pointers for the natives) and RX_Collate
+    ; array of dispatcher CFunction pointers for the natives) and RX_Collate
     ; function.  It is located in the %prep/ directory for the extension.
     ;
     ext-name-lower: lowercase copy to text! ext/name

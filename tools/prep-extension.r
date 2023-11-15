@@ -375,8 +375,8 @@ e/emit 'mod {
      * an extension uses "rebol.h" and doesn't return a Bounce C++ class it
      * should still work (it's a standard layout type).
      */
-    static CFUNC* native_cfuncs[$<num-natives> + 1] = {
-        (CFUNC*)$[Dispatcher_C_Names],
+    static CFunction* native_cfuncs[$<num-natives> + 1] = {
+        (CFunction*)$[Dispatcher_C_Names],
         nullptr /* just here to ensure > 0 length array (C++ requirement) */
     };
 

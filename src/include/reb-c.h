@@ -668,9 +668,9 @@
 //
 //
 #if TO_WINDOWS
-    typedef void (__cdecl CFUNC)(void);
+    typedef void (__cdecl CFunction)(void);
 #else
-    typedef void (CFUNC)(void);
+    typedef void (CFunction)(void);
 #endif
 
 

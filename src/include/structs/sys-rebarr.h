@@ -66,7 +66,7 @@ typedef ArrayT REBSPC;
 //
 // For efficiency, what's put in the extra is what would be like that type's
 // row in the `Builtin_Type_Hooks` if it had been built-in.  These table
-// rows are speculatively implemented as an untyped array of CFUNC* which is
+// rows are speculatively implemented as an untyped array of CFunction* which is
 // null terminated (vs. a struct with typed fields) so that the protocol can
 // be expanded without breaking strict aliasing.
 //

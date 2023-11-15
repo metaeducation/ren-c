@@ -561,11 +561,11 @@ hookname: enfix func [
 hook-list: collect [
     keep cscape {
         {  /* VOID = 0 */
-            cast(CFUNC*, nullptr),  /* generic */
-            cast(CFUNC*, nullptr),  /* compare */
-            cast(CFUNC*, nullptr),  /* make */
-            cast(CFUNC*, nullptr),  /* to */
-            cast(CFUNC*, MF_Void),  /* mold */
+            cast(CFunction*, nullptr),  /* generic */
+            cast(CFunction*, nullptr),  /* compare */
+            cast(CFunction*, nullptr),  /* make */
+            cast(CFunction*, nullptr),  /* to */
+            cast(CFunction*, MF_Void),  /* mold */
             nullptr
         }
     }
@@ -573,11 +573,11 @@ hook-list: collect [
     for-each-datatype t [
         keep cscape/with {
             {  /* $<T/NAME> = $<T/HEART> */
-                cast(CFUNC*, ${"T_" Hookname T 'Class}),  /* generic */
-                cast(CFUNC*, ${"CT_" Hookname T 'Class}),  /* compare */
-                cast(CFUNC*, ${"MAKE_" Hookname T 'Make}),  /* make */
-                cast(CFUNC*, ${"TO_" Hookname T 'Make}),  /* to */
-                cast(CFUNC*, ${"MF_" Hookname T 'Mold}),  /* mold */
+                cast(CFunction*, ${"T_" Hookname T 'Class}),  /* generic */
+                cast(CFunction*, ${"CT_" Hookname T 'Class}),  /* compare */
+                cast(CFunction*, ${"MAKE_" Hookname T 'Make}),  /* make */
+                cast(CFunction*, ${"TO_" Hookname T 'Make}),  /* to */
+                cast(CFunction*, ${"MF_" Hookname T 'Mold}),  /* mold */
                 nullptr
             }} [t]
     ]
@@ -587,7 +587,7 @@ e-hooks/emit 'hook-list {
     #include "sys-core.h"
 
     /* See comments in %sys-ordered.h */
-    CFUNC* Builtin_Type_Hooks[REB_MAX][IDX_HOOKS_MAX] = {
+    CFunction* Builtin_Type_Hooks[REB_MAX][IDX_HOOKS_MAX] = {
         $(Hook-List),
     };
 }
@@ -972,11 +972,11 @@ nats: collect [
     ; Most C functions backing natives are Dispatchers (take a "Frame" pointer,
     ; return a "Bounce").  But some are intrinsics and are able to be called
     ; without building a frame.  It would be a nuisance to separate these
-    ; into distinct tables, so they're all coerced to a CFUNC, and then
+    ; into distinct tables, so they're all coerced to a CFunction, and then
     ; Make_Native() decides which actual function type to cast them to.
     ;
     for-each name native-names [
-        keep cscape/with {(CFUNC*)N_${name}} 'name
+        keep cscape/with {(CFunction*)N_${name}} 'name
     ]
 ]
 
@@ -1010,7 +1010,7 @@ e-bootblock/emit 'nats {
     #define NUM_NATIVES $<length of nats>
     const REBLEN Num_Natives = NUM_NATIVES;
 
-    CFUNC* const Native_C_Funcs[NUM_NATIVES] = {
+    CFunction* const Native_C_Funcs[NUM_NATIVES] = {
         $(Nats),
     };
 }
@@ -1091,7 +1091,7 @@ e-boot/emit 'fields {
      * Raw C function pointers for natives, take Level(*) and return Bounce.
      */
     EXTERN_C const REBLEN Num_Natives;
-    EXTERN_C CFUNC* const Native_C_Funcs[];
+    EXTERN_C CFunction* const Native_C_Funcs[];
 
     typedef struct REBOL_Boot_Block {
         $[Fields];

@@ -380,7 +380,7 @@ inline static REBPAR *ACT_PARAMS_HEAD(Action(*) a) {
     LINK_DISPATCHER(ACT_IDENTITY(a))
 
 #define INIT_ACT_DISPATCHER(a,cfunc) \
-    mutable_LINK_DISPATCHER(ACT_IDENTITY(a)) = cast(CFUNC*, (cfunc))
+    mutable_LINK_DISPATCHER(ACT_IDENTITY(a)) = cast(CFunction*, (cfunc))
 
 
 // The DETAILS array isn't guaranteed to be SERIES_FLAG_DYNAMIC (it may hold

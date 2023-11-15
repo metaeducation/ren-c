@@ -78,7 +78,7 @@ bool Do_Breakpoint_Throws(
     // code that was executing when the breakpoint hit.
     //
     if (IS_HANDLE(inst)) {
-        CFUNC *cfunc = VAL_HANDLE_CFUNC(inst);
+        CFunction* cfunc = VAL_HANDLE_CFUNC(inst);
         rebRelease(inst);
         UNUSED(cfunc);
 

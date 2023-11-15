@@ -113,20 +113,20 @@ extern const REBU64 Typesets[];
 // keep its design goal of fitting an event in a single cell with no outside
 // allocations.  The importance of that design goal should be reviewed.
 //
-extern CFUNC* Builtin_Type_Hooks[REB_MAX][IDX_HOOKS_MAX];
+extern CFunction* Builtin_Type_Hooks[REB_MAX][IDX_HOOKS_MAX];
 
 
 // The datatype only knows a symbol.  Have to look that symbol up to get the
 // list of hooks registered by the extension providing the custom type.
 //
-inline static CFUNC** VAL_TYPE_HOOKS(NoQuote(Cell(const*)) type) {
+inline static CFunction** VAL_TYPE_HOOKS(NoQuote(Cell(const*)) type) {
     assert(CELL_HEART(type) == REB_TYPE_WORD);
     enum Reb_Kind k = VAL_TYPE_KIND(type);
     assert(k < REB_MAX);
     return Builtin_Type_Hooks[k];
 }
 
-inline static CFUNC** HOOKS_FOR_TYPE_OF(NoQuote(Cell(const*)) v) {
+inline static CFunction** HOOKS_FOR_TYPE_OF(NoQuote(Cell(const*)) v) {
     enum Reb_Kind k = CELL_HEART(v);
     assert(k < REB_MAX);
     return Builtin_Type_Hooks[k];

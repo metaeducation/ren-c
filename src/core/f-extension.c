@@ -178,8 +178,8 @@ DECLARE_NATIVE(load_extension)
         = Array_At(collated, IDX_COLLATOR_CFUNCS);
 
     REBLEN num_natives = VAL_HANDLE_LEN(cfuncs_handle);
-    CFUNC* *cfuncs = VAL_HANDLE_POINTER(
-        CFUNC*,
+    CFunction* *cfuncs = VAL_HANDLE_POINTER(
+        CFunction*,
         cfuncs_handle
     );
 

@@ -130,8 +130,8 @@ Phase(*) Make_Typechecker(Value(const*) type) {
     Init_Handle_Cfunc(
         DETAILS_AT(details, IDX_TYPECHECKER_CFUNC),
         IS_TYPE_WORD(type)
-            ? cast(CFUNC*, &Datatype_Checker_Intrinsic)
-            : cast(CFUNC*, &Typeset_Checker_Intrinsic)
+            ? cast(CFunction*, &Datatype_Checker_Intrinsic)
+            : cast(CFunction*, &Typeset_Checker_Intrinsic)
     );
     Copy_Cell(DETAILS_AT(details, IDX_TYPECHECKER_TYPE), type);
 

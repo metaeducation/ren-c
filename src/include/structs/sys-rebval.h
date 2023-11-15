@@ -417,7 +417,7 @@ union AnyUnion {  // needed to beat strict aliasing, used in payload
     REBD32 d32;  // 32-bit float not in C standard, typically just `float`
 
     void *p;
-    CFUNC *cfunc;  // C function/data pointers pointers may differ in size
+    CFunction* cfunc;  // C function/data pointers pointers may differ in size
 
     // The NODE_FLAG_GC_ONE and NODE_FLAG_GC_TWO are used by Cells (for
     // VAL_NODE1() and VAL_NODE2()) and by Stubs (for LINK() and MISC()) to

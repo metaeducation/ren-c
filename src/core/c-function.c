@@ -1014,7 +1014,7 @@ Phase(*) Make_Action(
 
     // Leave rest of the cells in the capacity uninitialized (caller fills in)
 
-    mutable_LINK_DISPATCHER(details) = cast(CFUNC*, dispatcher);
+    mutable_LINK_DISPATCHER(details) = cast(CFunction*, dispatcher);
     mutable_MISC(DetailsAdjunct, details) = nullptr;  // caller can fill in
 
     mutable_INODE(Exemplar, details) = CTX(paramlist);

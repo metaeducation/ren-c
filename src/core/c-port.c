@@ -51,5 +51,5 @@
 //
 void Make_Port_Actor_Handle(Sink(Value(*)) out, PORT_HOOK paf)
 {
-    Init_Handle_Cfunc(out, cast(CFUNC*, paf));
+    Init_Handle_Cfunc(out, cast(CFunction*, paf));
 }

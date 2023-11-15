@@ -252,11 +252,11 @@ DECLARE_NATIVE(hijack)
 
     if (Action_Is_Base_Of(victim, hijacker)) {  // no shim needed, see [1]
         mutable_LINK_DISPATCHER(victim_identity)
-            = cast(CFUNC*, LINK_DISPATCHER(hijacker_identity));
+            = cast(CFunction*, LINK_DISPATCHER(hijacker_identity));
     }
     else {  // mismatch, so shim required, see [2]
         mutable_LINK_DISPATCHER(victim_identity)
-            = cast(CFUNC*, &Hijacker_Dispatcher);
+            = cast(CFunction*, &Hijacker_Dispatcher);
     }
 
     Clear_Cell_Flag(  // change on purpose
