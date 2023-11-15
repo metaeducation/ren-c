@@ -87,7 +87,7 @@
 static REBI64 mark_count = 0;
 
 #define ASSERT_NO_GC_MARKS_PENDING() \
-    assert(Series_Used(GC_Mark_Stack) == 0)
+    assert(Series_Used(g_gc.mark_stack) == 0)
 
 
 static void Queue_Mark_Cell_Deep(Cell(const*) v);
@@ -291,12 +291,12 @@ static void Queue_Unmarked_Accessible_Series_Deep(Series(*) s)
         // !!! Should this use a "bumping a NULL at the end" technique to
         // grow, like the data stack?
         //
-        if (Is_Series_Full(GC_Mark_Stack))
-            Extend_Series_If_Necessary(GC_Mark_Stack, 8);
-        *Series_At(Array(*), GC_Mark_Stack, Series_Used(GC_Mark_Stack)) = a;
+        if (Is_Series_Full(g_gc.mark_stack))
+            Extend_Series_If_Necessary(g_gc.mark_stack, 8);
+        *Series_At(Array(*), g_gc.mark_stack, Series_Used(g_gc.mark_stack)) = a;
         Set_Series_Used(  // doesn't add a terminator
-            GC_Mark_Stack,
-            Series_Used(GC_Mark_Stack) + 1
+            g_gc.mark_stack,
+            Series_Used(g_gc.mark_stack) + 1
         );
     }
 }
@@ -359,16 +359,16 @@ static void Propagate_All_GC_Marks(void)
 {
     assert(not in_mark);
 
-    while (Series_Used(GC_Mark_Stack) != 0) {
-        Set_Series_Used(GC_Mark_Stack, Series_Used(GC_Mark_Stack) - 1);
+    while (Series_Used(g_gc.mark_stack) != 0) {
+        Set_Series_Used(g_gc.mark_stack, Series_Used(g_gc.mark_stack) - 1);
 
         // Data pointer may change in response to an expansion during
         // Mark_Array_Deep_Core(), so must be refreshed on each loop.
         //
         Array(*) a = *Series_At(
             ArrayT*,
-            GC_Mark_Stack,
-            Series_Used(GC_Mark_Stack)
+            g_gc.mark_stack,
+            Series_Used(g_gc.mark_stack)
         );
 
         // Termination is not required in the release build (the length is
@@ -377,8 +377,8 @@ static void Propagate_All_GC_Marks(void)
         Trash_Pointer_If_Debug(
             *Series_At(
                 ArrayT*,
-                GC_Mark_Stack,
-                Series_Used(GC_Mark_Stack)
+                g_gc.mark_stack,
+                Series_Used(g_gc.mark_stack)
             )
         );
 
@@ -525,11 +525,11 @@ void Reify_Variadic_Feed_As_Array_Feed(
 //
 static void Mark_Root_Series(void)
 {
-    Segment* seg = Mem_Pools[STUB_POOL].segments;
+    Segment* seg = g_mem.pools[STUB_POOL].segments;
 
     for (; seg != nullptr; seg = seg->next) {
         Byte* stub = cast(Byte*, seg + 1);
-        Length n = Mem_Pools[STUB_POOL].num_units_per_segment;
+        Length n = g_mem.pools[STUB_POOL].num_units_per_segment;
         for (; n > 0; --n, stub += sizeof(Stub)) {
             //
             // !!! A smarter switch statement here could do this more
@@ -584,8 +584,8 @@ static void Mark_Root_Series(void)
                 Queue_Mark_Cell_Deep(PAIRING_KEY(paired));
             }
 
-            // !!! The DS_Array does not currently keep its `used` field up
-            // to date, because this is one more than the DS_Index and would
+            // !!! The g_ds.array does not currently keep its `used` field up
+            // to date, because this is one more than the g_ds.index and would
             // require math to be useful.  (While the array tends to want to
             // know the length and the tail pointer to stop at, clients of
             // the stack want to know the "last".)  Hence it is exempt from
@@ -594,7 +594,7 @@ static void Mark_Root_Series(void)
             Series(*) s = SER(cast(void*, stub));
             if (
                 Is_Series_Array(s)
-                and s != DS_Array  // !!! Review DS_Array exemption!
+                and s != g_ds.array  // !!! Review g_ds.array exemption!
             ){
                 if (s->leader.bits & NODE_FLAG_MANAGED)
                     continue; // BLOCK! should mark it
@@ -652,16 +652,16 @@ static void Mark_Root_Series(void)
 //
 static void Mark_Data_Stack(void)
 {
-    Cell(const*) head = Array_Head(DS_Array);
+    Cell(const*) head = Array_Head(g_ds.array);
     assert(Is_Cell_Poisoned(head));  // Data_Stack_At(0) is deliberately invalid
 
-    REBVAL *stackval = DS_Movable_Top;
+    REBVAL *stackval = g_ds.movable_top;
     for (; stackval != head; --stackval)  // stop before Data_Stack_At(0)
         Queue_Mark_Cell_Deep(stackval);
 
   #if DEBUG_POISON_DROPPED_STACK_CELLS
-    stackval = DS_Movable_Top + 1;
-    for (; stackval != Array_Tail(DS_Array); ++stackval)
+    stackval = g_ds.movable_top + 1;
+    for (; stackval != Array_Tail(g_ds.array); ++stackval)
         assert(Is_Cell_Poisoned(stackval));
   #endif
 
@@ -678,8 +678,8 @@ static void Mark_Data_Stack(void)
 //
 static void Mark_Symbol_Series(void)
 {
-    SymbolT* canon = &PG_Symbol_Canons[0];
-    SymbolT* tail = &PG_Symbol_Canons[0] + ALL_SYMS_MAX;
+    SymbolT* canon = &g_symbols.builtin_canons[0];
+    SymbolT* tail = &g_symbols.builtin_canons[0] + ALL_SYMS_MAX;
 
     assert(canon->leader.bits & SERIES_FLAG_FREE);  // SYM_0, we corrupt it
     ++canon;
@@ -703,8 +703,8 @@ static void Mark_Symbol_Series(void)
 //
 static void Mark_Guarded_Nodes(void)
 {
-    const Node* *np = Series_Head(const Node*, GC_Guarded);
-    REBLEN n = Series_Used(GC_Guarded);
+    const Node* *np = Series_Head(const Node*, g_gc.guarded);
+    REBLEN n = Series_Used(g_gc.guarded);
     for (; n > 0; --n, ++np) {
         if (*cast(const Byte*, *np) == PREP_SIGNAL_BYTE) {
             //
@@ -921,10 +921,10 @@ static Count Sweep_Series(void)
     Count sweep_count = 0;
 
   blockscope {
-    Segment* seg = Mem_Pools[STUB_POOL].segments;
+    Segment* seg = g_mem.pools[STUB_POOL].segments;
 
     for (; seg != nullptr; seg = seg->next) {
-        Count n = Mem_Pools[STUB_POOL].num_units_per_segment;
+        Count n = g_mem.pools[STUB_POOL].num_units_per_segment;
         Byte* stub = cast(Byte*, seg + 1);  // byte beats strict alias, see [1]
 
         for (; n > 0; --n, stub += sizeof(Stub)) {
@@ -1015,10 +1015,10 @@ static Count Sweep_Series(void)
 
   #if UNUSUAL_CELL_SIZE  // pairing pool is separate in this case, see [2]
   blockscope {
-    Segment* seg = Mem_Pools[PAIR_POOL].segments;
+    Segment* seg = g_mem.pools[PAIR_POOL].segments;
 
     for (; seg != nullptr; seg = seg->next) {
-        Length n = Mem_Pools[PAIR_POOL].num_units_per_segment;
+        Length n = g_mem.pools[PAIR_POOL].num_units_per_segment;
 
         REBVAL *v = cast(REBVAL*, seg + 1);
         for (; n > 0; --n, v += 2) {
@@ -1063,10 +1063,10 @@ REBLEN Fill_Sweeplist(Series(*) sweeplist)
 
     Count sweep_count = 0;
 
-    Segment* seg = Mem_Pools[STUB_POOL].segments;
+    Segment* seg = g_mem.pools[STUB_POOL].segments;
 
     for (; seg != nullptr; seg = seg->next) {
-        Count n = Mem_Pools[STUB_POOL].num_units_per_segment;
+        Count n = g_mem.pools[STUB_POOL].num_units_per_segment;
 
         Byte* stub = cast(Byte*, seg + 1);
 
@@ -1134,7 +1134,7 @@ REBLEN Recycle_Core(bool shutdown, Series(*) sweeplist)
     // debugging easier...but make a note that it's not ordinarily legal.
     //
   #if !defined(NDEBUG)
-    if (GC_Recycling) {
+    if (g_gc.recycling) {
         printf("Recycle re-entry; should only happen in debug scenarios.\n");
         SET_SIGNAL(SIG_RECYCLE);
         return 0;
@@ -1144,21 +1144,20 @@ REBLEN Recycle_Core(bool shutdown, Series(*) sweeplist)
     // If disabled by RECYCLE/OFF, exit now but set the pending flag.  (If
     // shutdown, ignore so recycling runs and can be checked for balance.)
     //
-    if (not shutdown and GC_Disabled) {
+    if (not shutdown and g_gc.disabled) {
         SET_SIGNAL(SIG_RECYCLE);
         return 0;
     }
 
   #if !defined(NDEBUG)
-    GC_Recycling = true;
+    g_gc.recycling = true;
   #endif
 
     ASSERT_NO_GC_MARKS_PENDING();
 
   #if DEBUG_COLLECT_STATS
-    PG_Reb_Stats->Recycle_Counter++;
-    PG_Reb_Stats->Recycle_Series = Mem_Pools[STUB_POOL].free;
-    PG_Reb_Stats->Mark_Count = 0;
+    g_gc.recycle_counter++;
+    g_gc.recycle_series = g_mem.pools[STUB_POOL].free;
   #endif
 
     if (not shutdown)
@@ -1168,8 +1167,8 @@ REBLEN Recycle_Core(bool shutdown, Series(*) sweeplist)
     // was in a thrown state.  There's no particular reason to enforce that
     // in stackless, so it has been relaxed.
     //
-    Queue_Mark_Maybe_Fresh_Cell_Deep(&TG_Thrown_Arg);
-    Queue_Mark_Maybe_Fresh_Cell_Deep(&TG_Thrown_Label);
+    Queue_Mark_Maybe_Fresh_Cell_Deep(&g_ts.thrown_arg);
+    Queue_Mark_Maybe_Fresh_Cell_Deep(&g_ts.thrown_label);
     Propagate_All_GC_Marks();
 
     // MARKING PHASE: the "root set" from which we determine the liveness
@@ -1202,10 +1201,10 @@ REBLEN Recycle_Core(bool shutdown, Series(*) sweeplist)
     while (true) {
         REBI64 before_count = mark_count;
 
-        Symbol(*) *psym = Series_Head(Symbol(*), PG_Symbols_By_Hash);
-        Symbol(*) *psym_tail = Series_Tail(Symbol(*), PG_Symbols_By_Hash);
+        Symbol(*) *psym = Series_Head(Symbol(*), g_symbols.by_hash);
+        Symbol(*) *psym_tail = Series_Tail(Symbol(*), g_symbols.by_hash);
         for (; psym != psym_tail; ++psym) {
-            if (*psym == nullptr or *psym == &PG_Deleted_Symbol)
+            if (*psym == nullptr or *psym == &g_symbols.deleted_symbol)
                 continue;
             Series(*) patch = MISC(Hitch, *psym);
             for (; patch != *psym; patch = SER(node_MISC(Hitch, patch))) {
@@ -1270,7 +1269,7 @@ REBLEN Recycle_Core(bool shutdown, Series(*) sweeplist)
     // Unmark the Canon() fixed symbols
     //
     for (REBLEN i = 1; i < ALL_SYMS_MAX; ++i) {
-        Symbol(*) canon = &PG_Symbol_Canons[i];
+        Symbol(*) canon = &g_symbols.builtin_canons[i];
 
         if (not shutdown)
            assert(Get_Series_Flag(canon, MARKED));
@@ -1287,10 +1286,9 @@ REBLEN Recycle_Core(bool shutdown, Series(*) sweeplist)
 
   #if DEBUG_COLLECT_STATS
     // Compute new stats:
-    PG_Reb_Stats->Recycle_Series
-        = Mem_Pools[STUB_POOL].free - PG_Reb_Stats->Recycle_Series;
-    PG_Reb_Stats->Recycle_Series_Total += PG_Reb_Stats->Recycle_Series;
-    PG_Reb_Stats->Recycle_Prior_Eval = Total_Eval_Cycles;
+    g_gc.recycle_series
+        = g_mem.pools[STUB_POOL].free - g_gc.recycle_series;
+    g_gc.recycle_series_total += g_gc.recycle_series;
   #endif
 
     // !!! This reset of the "ballast" is the original code from R3-Alpha:
@@ -1305,12 +1303,12 @@ REBLEN Recycle_Core(bool shutdown, Series(*) sweeplist)
     // task variables or boot strings in shutdown when they are being freed."
     //
     if (not shutdown)
-        GC_Ballast = TG_Ballast;
+        g_gc.depletion = g_gc.ballast;
 
     ASSERT_NO_GC_MARKS_PENDING();
 
   #if !defined(NDEBUG)
-    GC_Recycling = false;
+    g_gc.recycling = false;
   #endif
 
   #if !defined(NDEBUG)
@@ -1320,7 +1318,7 @@ REBLEN Recycle_Core(bool shutdown, Series(*) sweeplist)
     // though we've finished the recycle, we're still in the signal handling
     // stack, so calling into the evaluator e.g. for rebPrint() may be bad.
     //
-    if (Reb_Opts->watch_recycle) {
+    if (g_gc.watch_recycle) {
         printf("RECYCLE: %u nodes\n", cast(unsigned int, sweep_count));
         fflush(stdout);
     }
@@ -1393,12 +1391,12 @@ void Push_Guard_Node(const Node* node)
     }
   #endif
 
-    if (Is_Series_Full(GC_Guarded))
-        Extend_Series_If_Necessary(GC_Guarded, 8);
+    if (Is_Series_Full(g_gc.guarded))
+        Extend_Series_If_Necessary(g_gc.guarded, 8);
 
-    *Series_At(const Node*, GC_Guarded, Series_Used(GC_Guarded)) = node;
+    *Series_At(const Node*, g_gc.guarded, Series_Used(g_gc.guarded)) = node;
 
-    Set_Series_Used(GC_Guarded, Series_Used(GC_Guarded) + 1);
+    Set_Series_Used(g_gc.guarded, Series_Used(g_gc.guarded) + 1);
 }
 
 
@@ -1409,19 +1407,62 @@ void Push_Guard_Node(const Node* node)
 //
 void Startup_GC(void)
 {
-    assert(not GC_Disabled);
-    assert(not GC_Recycling);
+    assert(not g_gc.disabled);
+    assert(not g_gc.recycling);
 
-    GC_Ballast = MEM_BALLAST;
+  #if DEBUG_COLLECT_STATS
+    assert(g_gc.recycle_counter == 0);
+    assert(g_gc.recycle_series_total == 0);
+    assert(g_gc.recycle_series == 0);
+  #endif
+
+    // Manually allocated series that GC is not responsible for (unless a
+    // trap occurs). Holds series pointers.  Must happen before any unmanaged
+    // allocations!
+    //
+    // As a trick to keep this series from trying to track itself, say it's
+    // managed, then sneak the flag off.
+    //
+    ensureNullptr(g_gc.manuals) = Make_Series_Core(
+        15,
+        FLAG_FLAVOR(SERIESLIST) | NODE_FLAG_MANAGED
+    );
+    Clear_Series_Flag(g_gc.manuals, MANAGED);
 
     // Temporary series and values protected from GC. Holds node pointers.
     //
-    GC_Guarded = Make_Series_Core(15, FLAG_FLAVOR(NODELIST));
+    ensureNullptr(g_gc.guarded) = Make_Series_Core(15, FLAG_FLAVOR(NODELIST));
 
     // The marking queue used in lieu of recursion to ensure that deeply
     // nested structures don't cause the C stack to overflow.
     //
-    GC_Mark_Stack = Make_Series_Core(100, FLAG_FLAVOR(NODELIST));
+    ensureNullptr(g_gc.mark_stack) = Make_Series_Core(
+        100,
+        FLAG_FLAVOR(NODELIST)
+    );
+
+    g_gc.ballast = MEM_BALLAST; // or overwritten by debug build below...
+
+  #ifndef NDEBUG
+    const char *env_recycle_torture = getenv("R3_RECYCLE_TORTURE");
+    if (env_recycle_torture and atoi(env_recycle_torture) != 0)
+        g_gc.ballast = 0;
+
+    if (g_gc.ballast == 0) {
+        printf(
+            "**\n" \
+            "** R3_RECYCLE_TORTURE is nonzero in environment variable!\n" \
+            "** (or g_gc.ballast is set to 0 manually in the init code)\n" \
+            "** Recycling on EVERY evaluator step, *EXTREMELY* SLOW!...\n" \
+            "** Useful in finding bugs before you can run RECYCLE/TORTURE\n" \
+            "** But you might only want to do this with -O2 debug builds.\n"
+            "**\n"
+        );
+        fflush(stdout);
+     }
+  #endif
+
+    g_gc.depletion = g_gc.ballast;
 }
 
 
@@ -1430,6 +1471,22 @@ void Startup_GC(void)
 //
 void Shutdown_GC(void)
 {
-    Free_Unmanaged_Series(GC_Guarded);
-    Free_Unmanaged_Series(GC_Mark_Stack);
+    Free_Unmanaged_Series(g_gc.guarded);
+    g_gc.guarded = nullptr;
+
+    Free_Unmanaged_Series(g_gc.mark_stack);
+    g_gc.mark_stack = nullptr;
+
+    // Can't use Free_Unmanaged_Series() because g_gc.manuals couldn't be put
+    // in the manuals list...Catch-22!  This free must happen after all
+    // unmanaged series have been freed.
+    //
+    GC_Kill_Series(g_gc.manuals);
+    g_gc.manuals = nullptr;
+
+  #if DEBUG_COLLECT_STATS
+    g_gc.recycle_counter = 0;
+    g_gc.recycle_series_total = 0;
+    g_gc.recycle_series = 0;
+  #endif
 }

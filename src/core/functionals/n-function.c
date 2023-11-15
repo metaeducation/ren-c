@@ -437,7 +437,7 @@ Bounce Init_Thrown_Unwind_Value(
     Copy_Cell(label, Lib(UNWIND));
 
     if (IS_FRAME(seek) and Is_Frame_On_Stack(VAL_CONTEXT(seek))) {
-        TG_Unwind_Level = CTX_LEVEL_IF_ON_STACK(VAL_CONTEXT(seek));
+        g_ts.unwind_level = CTX_LEVEL_IF_ON_STACK(VAL_CONTEXT(seek));
     }
     else if (IS_FRAME(seek)) {
         Level(*) L = target->prior;
@@ -452,7 +452,7 @@ Bounce Init_Thrown_Unwind_Value(
                 continue; // not ready to exit
 
             if (VAL_ACTION(seek) == L->u.action.original) {
-                TG_Unwind_Level = L;
+                g_ts.unwind_level = L;
                 break;
             }
         }
@@ -477,7 +477,7 @@ Bounce Init_Thrown_Unwind_Value(
 
             --count;
             if (count == 0) {
-                TG_Unwind_Level = L;
+                g_ts.unwind_level = L;
                 break;
             }
         }
@@ -619,7 +619,7 @@ DECLARE_NATIVE(definitional_return)
 
     DECLARE_STABLE (label);
     Copy_Cell(label, Lib(UNWIND)); // see Make_Thrown_Unwind_Value
-    TG_Unwind_Level = target_level;
+    g_ts.unwind_level = target_level;
 
     if (not Is_Raised(atom) and not REF(only))
         Proxy_Multi_Returns_Core(target_level, atom);

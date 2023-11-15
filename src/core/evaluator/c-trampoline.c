@@ -78,10 +78,12 @@
 #if DEBUG_COUNT_TICKS  // <-- THIS IS VERY USEFUL, SEE UPDATE_TICK_DEBUG()
 
     //      *** DON'T COMMIT THIS v-- KEEP IT AT ZERO! ***
-    Tick TG_break_at_tick =        0;
+    Tick g_break_at_tick =         0;
     //      *** DON'T COMMIT THIS --^ KEEP IT AT ZERO! ***
 
 #endif  // ^-- SERIOUSLY: READ ABOUT C-DEBUG-BREAK AND PLACES TICKS ARE STORED
+
+#define EVAL_DOSE 10000
 
 
 //
@@ -116,7 +118,7 @@ Bounce Delegated_Executor(Level(*) L)
 // like OUT and SPARE.  It also hooks up to `#define LEVEL level_` as a way
 // of getting at the jump list's notion of which level currently has "control"
 //
-#define level_ (TG_Jump_List->level)
+#define level_ (g_ts.jump_list->level)
 
 
 //
@@ -160,9 +162,15 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
   //    passthru is intended.  (Review in light of use of nonzero for GC
   //    and bookkeeping purposes; e.g. could STATE of 255 mean Just_Use_Out?)
   //
-  // 2. Stale voids are allowed because they are used by Alloc_Value() and
-  //    DECLARE_LOCAL, in order to help signal an uninitialized value should
-  //    not be read from (beyond the usual taboo of looking at voids)
+  // 2. In R3-Alpha, micro-optimizations were stylized so that it would set
+  //    a counter for how many cycles would pass before it automatically
+  //    triggered garbage collection.  It would decrement that counter
+  //    looking for zero, and when zero was reached it would add the number of
+  //    cycles it had been counting down from to the total.  This avoided
+  //    needing to do math on multiple counters on every eval step...limiting
+  //    it to a periodic reconciliation when GCs occurred.  Ren-C keeps this,
+  //    but the debug build double checks that whatever magic is done reflects
+  //    the real count.
 
     ASSERT_NO_DATA_STACK_POINTERS_EXTANT();
 
@@ -170,11 +178,11 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
 
     Bounce r;
 
-  #if !defined(NDEBUG)  // Total_Eval_Cycles is periodically reconciled
-    ++Total_Eval_Cycles_Doublecheck;
+  #if !defined(NDEBUG)  // validate total_eval_cycles reconciliation, see [2]
+    g_ts.total_eval_cycles_check += 1;
   #endif
 
-    if (--Eval_Countdown <= 0) {
+    if (--g_ts.eval_countdown <= 0) {  // defer updating total_eval_cycles, see [2]
         //
         // Doing signals covers several things that may cause interruptions:
         //
@@ -207,7 +215,7 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
 
     UPDATE_TICK_DEBUG(nullptr);
 
-    // v-- This is the TG_break_at_tick or C-DEBUG-BREAK landing spot --v
+    // v-- This is the g_break_at_tick or C-DEBUG-BREAK landing spot --v
                       r = (LEVEL->executor)(LEVEL);
     // ^-- **STEP IN** to this call using the debugger to debug it!!! --^
 
@@ -248,7 +256,7 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
 
         if (Get_Level_Flag(LEVEL, ROOT_LEVEL)) {  // may keepalive sublevels
             CLEANUP_BEFORE_EXITING_TRAP_BLOCK;  // switches LEVEL pointer...
-            return TOP_LEVEL->out;  // ...so return what's now TOP_LEVEL->out
+            return TOP_LEVEL->out;  // ...so return new top_level->out
         }
 
         // Some natives and executors want to be able to leave a pushed level
@@ -258,10 +266,10 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
         //
         if (Get_Level_Flag(LEVEL, TRAMPOLINE_KEEPALIVE)) {
             LEVEL = LEVEL->prior;
-            assert(LEVEL != TOP_LEVEL);  // sanity check (*not* top of stack)
+            assert(LEVEL != TOP_LEVEL);  // should *not* be top of stack
         }
         else {
-            assert(LEVEL == TOP_LEVEL);  // sanity check (is top of the stack)
+            assert(LEVEL == TOP_LEVEL);  // should be top of the stack
             Drop_Level(LEVEL);
             LEVEL = TOP_LEVEL;
         }
@@ -368,7 +376,7 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
         if (
             IS_FRAME(label)
             and VAL_ACTION(label) == VAL_ACTION(Lib(UNWIND))
-            and TG_Unwind_Level == LEVEL  // may be inaccessible, see [2]
+            and g_ts.unwind_level == LEVEL  // may be inaccessible, see [2]
         ){
             CATCH_THROWN(OUT, LEVEL);
             goto result_in_out;
@@ -458,7 +466,7 @@ bool Trampoline_With_Top_As_Root_Throws(void)
     Level(*) root = TOP_LEVEL;
 
   #if !defined(NDEBUG)
-    struct Reb_Jump *check = TG_Jump_List;
+    Jump* check = g_ts.jump_list;
     assert(Not_Level_Flag(root, ROOT_LEVEL));
   #endif
 
@@ -469,7 +477,7 @@ bool Trampoline_With_Top_As_Root_Throws(void)
     Bounce r = Trampoline_From_Top_Maybe_Root();
 
   #if !defined(NDEBUG)
-    assert(check == TG_Jump_List);  // must CLEANUP_BEFORE_EXITING_TRAP_BLOCK
+    assert(check == g_ts.jump_list);  // must CLEANUP_BEFORE_EXITING_TRAP_BLOCK
     assert(TOP_LEVEL == root);
     assert(Get_Level_Flag(root, ROOT_LEVEL));
   #endif
@@ -511,4 +519,142 @@ bool Trampoline_Throws(Atom(*) out, Level(*) root)
     bool threw = Trampoline_With_Top_As_Root_Throws();
     Drop_Level(root);
     return threw;
+}
+
+
+//
+//  Startup_Signals: C
+//
+// When allocations are performed, they may set flags for signaling the need
+// for a recycle/etc.  Therefore the bits of trampoline state related to
+// evaluation counting and signal management must be initialized very early.
+//
+void Startup_Signals(void)
+{
+    g_ts.eval_signals = 0;
+    g_ts.eval_sigmask = ALL_BITS;
+    g_ts.eval_dose = EVAL_DOSE;
+    g_ts.eval_countdown = g_ts.eval_dose;
+    g_ts.total_eval_cycles = 0;
+    g_ts.eval_cycles_limit = 0;
+
+  #if !defined(NDEBUG)
+    g_ts.total_eval_cycles_check = 0;
+  #endif
+}
+
+
+//
+//  Startup_Trampoline: C
+//
+// 1. We always push one unused level at the bottom of the stack.  This way, it
+//    is not necessary for used levels to check if `L->prior` is null; it
+//    may be assumed that it never is.
+//
+// 2. Also: since levels are needed to track API handles, this permits making
+//    API handles for things that come into existence at boot and aren't freed
+//    until shutdown, as they attach to this level.
+//
+void Startup_Trampoline(void)
+{
+    assert(TOP_LEVEL == nullptr);
+    assert(BOTTOM_LEVEL == nullptr);
+
+    Level(*) L = Make_End_Level(LEVEL_MASK_NONE);  // ensure L->prior, see [1]
+    Push_Level(nullptr, L);  // global API handles attach here, see [2]
+
+    Trash_Pointer_If_Debug(L->prior);  // catches enumeration past bottom_level
+    g_ts.bottom_level = L;
+
+    assert(TOP_LEVEL == L and BOTTOM_LEVEL == L);
+
+    assert(g_ts.jump_list == nullptr);
+
+    // The thrown arg is not intended to ever be around long enough to be
+    // seen by the GC.
+    //
+    assert(Is_Cell_Erased(&g_ts.thrown_arg));
+    assert(Is_Cell_Erased(&g_ts.thrown_label));
+
+    assert(g_ts.unwind_level == nullptr);
+}
+
+
+//
+//  Shutdown_Trampoline: C
+//
+// 1. To stop enumerations from using nullptr to stop the walk, and not count
+//    the bottom level as a "real stack level", it had a trash pointer put
+//    in the debug build.  Restore it to a typical null before the drop.
+//
+// 2. There's a Catch-22 on checking the balanced state for outstanding
+//    manual series allocations, e.g. it can't check *before* the mold buffer
+//    is freed because it would look like it was a leaked series, but it
+//    can't check *after* because the mold buffer balance check would crash.
+//
+void Shutdown_Trampoline(void)
+{
+    assert(TOP_LEVEL == BOTTOM_LEVEL);
+
+    assert(Is_Pointer_Trash_Debug(BOTTOM_LEVEL->prior));  // trash, see [1]
+    BOTTOM_LEVEL->prior = nullptr;
+
+  blockscope {
+    Level(*) L = TOP_LEVEL;
+    Drop_Level_Core(L);  // can't Drop_Level()/Drop_Level_Unbalanced(), see [2]
+    assert(not TOP_LEVEL);
+  }
+
+    g_ts.top_level = nullptr;
+    g_ts.bottom_level = nullptr;
+
+  #if !defined(NDEBUG)
+  blockscope {
+    Segment* seg = g_mem.pools[LEVEL_POOL].segments;
+
+    for (; seg != nullptr; seg = seg->next) {
+        Count n = g_mem.pools[LEVEL_POOL].num_units_per_segment;
+        Byte* unit = cast(Byte*, seg + 1);
+
+        for (; n > 0; --n, unit += g_mem.pools[LEVEL_POOL].wide) {
+            Level(*) L = cast(Level(*), unit);  // ^-- pool size may round up
+            if (Is_Free_Node(L))
+                continue;
+          #if DEBUG_COUNT_TICKS
+            printf(
+                "** FRAME LEAKED at tick %lu\n",
+                cast(unsigned long, L->tick)
+            );
+          #else
+            assert(!"** FRAME LEAKED but DEBUG_COUNT_TICKS not enabled");
+          #endif
+        }
+    }
+  }
+  #endif
+
+  #if !defined(NDEBUG)
+  blockscope {
+    Segment* seg = g_mem.pools[FEED_POOL].segments;
+
+    for (; seg != nullptr; seg = seg->next) {
+        REBLEN n = g_mem.pools[FEED_POOL].num_units_per_segment;
+        Byte* unit = cast(Byte*, seg + 1);
+
+        for (; n > 0; --n, unit += g_mem.pools[FEED_POOL].wide) {
+            Feed(*) feed = cast(Feed(*), unit);
+            if (Is_Free_Node(feed))
+                continue;
+          #if DEBUG_COUNT_TICKS
+            printf(
+                "** FEED LEAKED at tick %lu\n",
+                cast(unsigned long, feed->tick)
+            );
+          #else
+            assert(!"** FEED LEAKED but no DEBUG_COUNT_TICKS enabled\n");
+          #endif
+        }
+    }
+  }
+  #endif
 }

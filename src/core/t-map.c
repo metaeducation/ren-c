@@ -539,12 +539,12 @@ void MF_Map(REB_MOLD *mo, NoQuote(Cell(const*)) v, bool form)
     Map(const*) m = VAL_MAP(v);
 
     // Prevent endless mold loop:
-    if (Find_Pointer_In_Series(TG_Mold_Stack, m) != NOT_FOUND) {
+    if (Find_Pointer_In_Series(g_mold.stack, m) != NOT_FOUND) {
         Append_Ascii(mo->series, "...]");
         return;
     }
 
-    Push_Pointer_To_Series(TG_Mold_Stack, m);
+    Push_Pointer_To_Series(g_mold.stack, m);
 
     if (not form) {
         Pre_Mold(mo, v);
@@ -580,7 +580,7 @@ void MF_Map(REB_MOLD *mo, NoQuote(Cell(const*)) v, bool form)
 
     End_Mold(mo);
 
-    Drop_Pointer_From_Series(TG_Mold_Stack, m);
+    Drop_Pointer_From_Series(g_mold.stack, m);
 }
 
 

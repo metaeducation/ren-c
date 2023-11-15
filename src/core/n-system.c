@@ -124,26 +124,26 @@ DECLARE_NATIVE(recycle)
     INCLUDE_PARAMS_OF_RECYCLE;
 
     if (REF(off)) {
-        GC_Disabled = true;
+        g_gc.disabled = true;
         return nullptr;
     }
 
     if (REF(on)) {
-        GC_Disabled = false;
-        TG_Ballast = TG_Max_Ballast;
+        g_gc.disabled = false;
+        g_gc.ballast = MEM_BALLAST;
     }
 
     if (REF(ballast)) {
-        TG_Max_Ballast = VAL_INT32(ARG(ballast));
-        TG_Ballast = TG_Max_Ballast;
+        g_gc.disabled = false;
+        g_gc.ballast = VAL_INT32(ARG(ballast));
     }
 
     if (REF(torture)) {
-        GC_Disabled = false;
-        TG_Ballast = 0;
+        g_gc.disabled = false;
+        g_gc.ballast = 0;
     }
 
-    if (GC_Disabled)
+    if (g_gc.disabled)
         return nullptr; // don't give misleading "0", since no recycle ran
 
     REBLEN count;
@@ -180,8 +180,8 @@ DECLARE_NATIVE(recycle)
         // There might should be some kind of generic way to set these kinds
         // of flags individually, perhaps having them live in SYSTEM/...
         //
-        Reb_Opts->watch_recycle = not Reb_Opts->watch_recycle;
-        Reb_Opts->watch_expand = not Reb_Opts->watch_expand;
+        g_gc.watch_recycle = not g_gc.watch_recycle;
+        g_mem.watch_expand = not g_mem.watch_expand;
       #endif
     }
 
@@ -209,12 +209,12 @@ DECLARE_NATIVE(limit_usage)
     // !!! comment said "Only gets set once"...why?
     //
     if (sym == SYM_EVAL) {
-        if (Eval_Limit == 0)
-            Eval_Limit = Int64(ARG(limit));
+        if (not g_ts.eval_cycles_limit)
+            g_ts.eval_cycles_limit = Int64(ARG(limit));
     }
     else if (sym == SYM_MEMORY) {
-        if (PG_Mem_Limit == 0)
-            PG_Mem_Limit = Int64(ARG(limit));
+        if (not g_mem.usage_limit)
+            g_mem.usage_limit = Int64(ARG(limit));
     }
     else
         fail (PARAM(field));
@@ -347,7 +347,7 @@ DECLARE_NATIVE(c_debug_break)
         // Queue it so the break happens right before the MOLD, not after it
         // happened and has been passed as an argument.
         //
-        TG_break_at_tick = level_->tick + 1;
+        g_break_at_tick = level_->tick + 1;
         return VOID;
      #else
         // No tick counting or tick-break checking, but still want some

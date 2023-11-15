@@ -186,7 +186,7 @@
 #define MIN_COMMON 10000        // min size of common buffer
 #define MAX_COMMON 100000       // max size of common buffer (shrink trigger)
 #define MAX_NUM_LEN 64          // As many numeric digits we will accept on input
-#define MAX_EXPAND_LIST 5       // number of series-1 in Prior_Expand list
+#define MAX_EXPAND_LIST 5       // number of series-1 in g_mem.prior_expand list
 
 
 //=//// FORWARD-DECLARE TYPES USED IN %tmp-internals.h ////////////////////=//
@@ -295,28 +295,125 @@ typedef struct Reb_Enum_Vars EVARS;
 **
 ***********************************************************************/
 
-//-- Measurement Variables:
-typedef struct rebol_stats {
-    REBI64  Series_Memory;
-    REBLEN  Series_Made;
-    REBLEN  Series_Freed;
-    REBLEN  Series_Expanded;
-    REBLEN  Recycle_Counter;
-    REBLEN  Recycle_Series_Total;
-    REBLEN  Recycle_Series;
-    REBI64  Recycle_Prior_Eval;
-    REBLEN  Mark_Count;
-    REBLEN  Blocks;
-    REBLEN  Objects;
-} REB_STATS;
+typedef struct {
+    Pool* pools;  // memory pool array
+    Byte* pools_by_size;  // map for speedup during allocation (made on boot)
 
-//-- Options of various kinds:
-typedef struct rebol_opts {
-    bool  watch_recycle;
-    bool  watch_series;
-    bool  watch_expand;
-    bool  crash_dump;
-} REB_OPTS;
+  #if DEBUG_ENABLE_ALWAYS_MALLOC
+    bool always_malloc;   // For memory-related troubleshooting
+  #endif
+
+    Series(*)* prior_expand;  // Track prior series expansions (acceleration)
+
+    uintptr_t usage;  // Overall memory used
+    Option(uintptr_t) usage_limit;  // Memory limit set by SECURE
+
+  #if !defined(NDEBUG)  // Used by the FUZZ native to inject alloc failures
+    intptr_t fuzz_factor;  // (-) => a countdown, (+) percent of 10000
+  #endif
+
+  #if DEBUG_MONITOR_SERIES
+    const Node* monitor_node;
+  #endif
+
+  #if DEBUG
+    bool watch_expand;
+  #endif
+
+  #if DEBUG
+    intptr_t num_black_series;
+  #endif
+
+  #if DEBUG_COLLECT_STATS
+    REBI64 series_memory;
+    REBLEN series_made;
+    REBLEN series_freed;
+    REBLEN series_expanded;
+    REBLEN blocks_made;
+    REBLEN objects_made;
+  #endif
+} MemoryState;
+
+typedef struct {
+    SymbolT builtin_canons[ALL_SYMS_MAX + 1];
+
+    Series(*) by_hash;  // Symbol REBSTR pointers indexed by hash
+    REBLEN num_slots_in_use;  // Total symbol hash slots (+deleteds)
+  #if !defined(NDEBUG)
+    REBLEN num_deleteds;  // Deleted symbol hash slots "in use"
+  #endif
+    SymbolT deleted_symbol;  // pointer used to indicate a deletion
+} SymbolState;
+
+typedef struct {
+    bool recycling;  // True when the GC is in a recycle
+    intptr_t depletion;  // bytes left to allocate until automatic GC is forced
+    intptr_t ballast;  // what depletion is reset to after a GC
+    bool disabled;  // true when RECYCLE/OFF is run
+    Series(*) guarded;  // stack of GC protected series and values
+    Series(*) mark_stack;  // series pending to mark their reachables as live
+    Series(*) manuals;  // Manually memory managed (not by GC)
+
+  #if DEBUG
+    bool watch_recycle;
+  #endif
+
+  #if DEBUG_COLLECT_STATS
+    REBLEN recycle_counter;
+    REBLEN recycle_series_total;
+    REBLEN recycle_series;
+  #endif
+} GarbageCollectorState;
+
+
+typedef struct {
+    Array(*) array;
+    StackIndex index;
+    Value(*) movable_top;
+    Cell(const*) movable_tail;
+
+  #if DEBUG_EXTANT_STACK_POINTERS
+    Count num_refs_extant;  // # of Data_Stack_At()/TOP refs extant
+  #endif
+} DataStackState;
+
+typedef struct {
+    Level(*) top_level;
+    Level(*) bottom_level;
+
+  #if !defined(OS_STACK_GROWS_UP) && !defined(OS_STACK_GROWS_DOWN)
+    bool C_stack_grows_up;  // will be detected via questionable method
+  #endif
+    uintptr_t C_stack_address_limit;  // past this, raise a CPU stack overflow
+
+    Jump* jump_list;  // Saved state for TRAP
+
+    AtomT thrown_arg;
+    ValueT thrown_label;
+    Level(*) unwind_level;
+
+    Flags eval_signals;  // signal flags (Rebol signals, not unix ones!)
+    Flags eval_sigmask;  // masking out signal flags
+    int_fast32_t eval_countdown;  // evaluation counter until Do_Signals()
+    int_fast32_t eval_dose;  // evaluation counter reset value
+    REBI64 total_eval_cycles;  // total evaluation counter (upward)
+    Option(REBI64) eval_cycles_limit;  // evaluation limit (set by secure)
+
+  #if DEBUG
+    REBI64 total_eval_cycles_check;  // validate periodic reconciliation method
+  #endif
+} TrampolineState;
+
+typedef struct {
+    Series(*) stack;  // tracked to prevent infinite loop in cyclical molds
+
+    String(*) buffer;  // temporary UTF8 buffer
+
+  #if DEBUG
+    bool currently_pushing;  // Push_Mold() should not directly recurse
+  #endif
+} MoldState;
+
 
 
 /***********************************************************************
@@ -482,29 +579,29 @@ enum rebol_signals {
 };
 
 inline static void SET_SIGNAL(Flags f) { // used in %sys-series.h
-    Eval_Signals |= f;
+    g_ts.eval_signals |= f;
 
-    if (Eval_Countdown == -1)  // already set to trigger on next tick...
+    if (g_ts.eval_countdown == -1)  // already set to trigger on next tick...
         return;  // ...we already reconciled the dose
 
-    assert(Eval_Countdown > 0);  // transition to 0 triggers signals
+    assert(g_ts.eval_countdown > 0);  // transition to 0 triggers signals
 
     // This forces the next step in the evaluator to count down to 0 and
     // trigger an interrupt.  But we have to reconcile the count first.
     //
-    Total_Eval_Cycles += Eval_Dose - Eval_Countdown;
+    g_ts.total_eval_cycles += g_ts.eval_dose - g_ts.eval_countdown;
   #if !defined(NDEBUG)
-    assert(Total_Eval_Cycles == Total_Eval_Cycles_Doublecheck);
+    assert(g_ts.total_eval_cycles == g_ts.total_eval_cycles_check);
   #endif
 
-    Eval_Countdown = -1;
+    g_ts.eval_countdown = -1;
 }
 
 #define GET_SIGNAL(f) \
-    (did (Eval_Signals & (f)))
+    (did (g_ts.eval_signals & (f)))
 
 #define CLR_SIGNAL(f) \
-    cast(void, Eval_Signals &= ~(f))
+    cast(void, g_ts.eval_signals &= ~(f))
 
 
 #include "datatypes/sys-series.h"

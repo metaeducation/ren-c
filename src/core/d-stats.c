@@ -46,7 +46,7 @@ DECLARE_NATIVE(stats)
 {
     INCLUDE_PARAMS_OF_STATS;
 
-    REBI64 num_evals = Total_Eval_Cycles + Eval_Dose - Eval_Countdown;
+    REBI64 num_evals = g_ts.total_eval_cycles + g_ts.eval_dose - g_ts.eval_countdown;
 
     if (REF(evals))
         return Init_Integer(OUT, num_evals);
@@ -55,14 +55,14 @@ DECLARE_NATIVE(stats)
       #if DEBUG_COLLECT_STATS
         return rebValue("make object! [",
             "evals:", rebI(num_evals),
-            "series-made:", rebI(PG_Reb_Stats->Series_Made),
-            "series-freed:", rebI(PG_Reb_Stats->Series_Freed),
-            "series-expanded:", rebI(PG_Reb_Stats->Series_Expanded),
-            "series-bytes:", rebI(PG_Reb_Stats->Series_Memory),
-            "series-recycled:", rebI(PG_Reb_Stats->Recycle_Series_Total),
-            "made-blocks:", rebI(PG_Reb_Stats->Blocks),
-            "made-objects:", rebI(PG_Reb_Stats->Objects),
-            "recycles:", rebI(PG_Reb_Stats->Recycle_Counter),
+            "series-made:", rebI(g_mem.series_made),
+            "series-freed:", rebI(g_mem.series_freed),
+            "series-expanded:", rebI(g_mem.series_expanded),
+            "series-bytes:", rebI(g_mem.series_memory),
+            "series-recycled:", rebI(g_gc.recycle_series_total),
+            "blocks-made:", rebI(g_mem.blocks_made),
+            "objects-made:", rebI(g_mem.objects_made),
+            "recycles:", rebI(g_gc.recycle_counter),
         "]");
       #else
         fail (Error_Debug_Only_Raw());

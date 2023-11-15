@@ -678,7 +678,7 @@ Context(*) Make_Context_Detect_Managed(
     ASSERT_CONTEXT(context);
 
   #if DEBUG_COLLECT_STATS
-    PG_Reb_Stats->Objects++;
+    g_mem.objects_made += 1;
   #endif
 
     return context;

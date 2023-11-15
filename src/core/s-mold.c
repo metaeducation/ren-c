@@ -243,7 +243,7 @@ void Mold_Array_At(
     const char *sep
 ){
     // Recursion check:
-    if (Find_Pointer_In_Series(TG_Mold_Stack, a) != NOT_FOUND) {
+    if (Find_Pointer_In_Series(g_mold.stack, a) != NOT_FOUND) {
         if (sep[0] != '\0')
             Append_Codepoint(mo->series, sep[0]);
         Append_Ascii(mo->series, "...");
@@ -252,7 +252,7 @@ void Mold_Array_At(
         return;
     }
 
-    Push_Pointer_To_Series(TG_Mold_Stack, a);
+    Push_Pointer_To_Series(g_mold.stack, a);
 
     bool indented = false;
 
@@ -300,7 +300,7 @@ void Mold_Array_At(
         Append_Codepoint(mo->series, sep[1]);
     }
 
-    Drop_Pointer_From_Series(TG_Mold_Stack, a);
+    Drop_Pointer_From_Series(g_mold.stack, a);
 }
 
 
@@ -500,13 +500,15 @@ String(*) Copy_Mold_Or_Form_Cell(NoQuote(Cell(const*)) cell, Flags opts, bool fo
 void Push_Mold(REB_MOLD *mo)
 {
   #if !defined(NDEBUG)
-    assert(not TG_Pushing_Mold);  // Can't do debug molding during Push_Mold()
-    TG_Pushing_Mold = true;
+    assert(not g_mold.currently_pushing);  // Can't mold during Push_Mold()
+    g_mold.currently_pushing = true;
   #endif
 
     assert(mo->series == nullptr);  // Indicates not pushed, see DECLARE_MOLD
 
-    String(*) s = MOLD_BUF;
+    String(*) s = g_mold.buffer;
+    assert(LINK(Bookmarks, s) == nullptr);  // should never bookmark buffer
+
     Assert_Series_Term_If_Needed(s);
 
     mo->series = s;
@@ -537,7 +539,7 @@ void Push_Mold(REB_MOLD *mo)
         // the contents, as there may be important mold data behind the
         // ->start index in the stack!
         //
-        REBLEN len = String_Len(MOLD_BUF);
+        REBLEN len = String_Len(g_mold.buffer);
         Remake_Series(
             s,
             Series_Used(s) + MIN_COMMON,
@@ -572,7 +574,7 @@ void Push_Mold(REB_MOLD *mo)
     }
 
   #if !defined(NDEBUG)
-    TG_Pushing_Mold = false;
+    g_mold.currently_pushing = false;
   #endif
 }
 
@@ -734,16 +736,9 @@ void Drop_Mold_Core(
 //
 void Startup_Mold(REBLEN size)
 {
-    TG_Mold_Stack = Make_Series_Core(10, FLAG_FLAVOR(MOLDSTACK));
+    g_mold.stack = Make_Series_Core(10, FLAG_FLAVOR(MOLDSTACK));
 
-    // Most string code tries to optimize "bookmarks" that help map indices
-    // to encoded codepoint positions in such a way that when the string
-    // gets short, the bookmarks are discarded.  The mold buffer does not
-    // do this.
-    //
-    // !!! Review, seems like the mold buffer logic is broken.  :-/
-    //
-    TG_Mold_Buf = Make_String_Core(size, SERIES_FLAG_DYNAMIC);
+    ensureNullptr(g_mold.buffer) = Make_String_Core(size, SERIES_FLAG_DYNAMIC);
 }
 
 
@@ -752,9 +747,10 @@ void Startup_Mold(REBLEN size)
 //
 void Shutdown_Mold(void)
 {
-    Free_Unmanaged_Series(TG_Mold_Buf);
-    TG_Mold_Buf = nullptr;
+    assert(LINK(Bookmarks, g_mold.buffer) == nullptr);  // should not happen
+    Free_Unmanaged_Series(g_mold.buffer);
+    g_mold.buffer = nullptr;
 
-    Free_Unmanaged_Series(TG_Mold_Stack);
-    TG_Mold_Stack = nullptr;
+    Free_Unmanaged_Series(g_mold.stack);
+    g_mold.stack = nullptr;
 }

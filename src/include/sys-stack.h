@@ -90,8 +90,8 @@
     // case of pushing across a stack expansion.
     //
     #define ASSERT_NO_DATA_STACK_POINTERS_EXTANT() \
-        do { if (TG_Stack_Outstanding != 0) { \
-            if (not GC_Disabled or DS_Movable_Top == DS_Movable_Tail) \
+        do { if (g_ds.num_refs_extant != 0) { \
+            if (not g_gc.disabled or g_ds.movable_top == g_ds.movable_tail) \
                 assert(!"PUSH() while StackValue(*) pointers are extant"); \
         } } while (0)
 
@@ -102,23 +102,23 @@
         Reb_Stack_Value_Ptr () : v (nullptr) {}
         Reb_Stack_Value_Ptr (REBVAL *v) : v (v) {
             if (v != nullptr)
-                ++TG_Stack_Outstanding;
+                ++g_ds.num_refs_extant;
         }
         Reb_Stack_Value_Ptr (const Reb_Stack_Value_Ptr &stk) : v (stk.v) {
             if (v != nullptr)
-                ++TG_Stack_Outstanding;
+                ++g_ds.num_refs_extant;
         }
         ~Reb_Stack_Value_Ptr() {
             if (v != nullptr)
-                --TG_Stack_Outstanding;
+                --g_ds.num_refs_extant;
         }
 
         Reb_Stack_Value_Ptr& operator=(const Reb_Stack_Value_Ptr& other) {
             if (v != nullptr)
-                --TG_Stack_Outstanding;
+                --g_ds.num_refs_extant;
             v = other.v;
             if (v != nullptr)
-                ++TG_Stack_Outstanding;
+                ++g_ds.num_refs_extant;
             return *this;
         }
 
@@ -171,12 +171,12 @@
 
 
 #define TOP_INDEX \
-    cast(StackIndex, DS_Index)  // cast helps stop ++TOP_INDEX, etc.
+    cast(StackIndex, g_ds.index)  // cast helps stop ++TOP_INDEX, etc.
 
 // TOP is the most recently pushed item.
 //
 #define TOP \
-    cast(StackValue(*), DS_Movable_Top) // cast helps stop ++TOP, etc.
+    cast(StackValue(*), g_ds.movable_top) // cast helps stop ++TOP, etc.
 
 
 // 1. Use the fact that the data stack is always dynamic to avoid having to
@@ -192,7 +192,7 @@
 //    to know the address after the content.
 //
 inline static StackValue(*) Data_Stack_At(StackIndex i) {
-    REBVAL *at = cast(REBVAL*, DS_Array->content.dynamic.data) + i;  // see [1]
+    REBVAL *at = cast(REBVAL*, g_ds.array->content.dynamic.data) + i;  // see [1]
 
     if (i == 0) {
         assert(Is_Cell_Poisoned(at));
@@ -213,7 +213,7 @@ inline static StackValue(*) Data_Stack_At(StackIndex i) {
 
 #if !defined(NDEBUG)
     #define IN_DATA_STACK_DEBUG(v) \
-        IS_VALUE_IN_ARRAY_DEBUG(DS_Array, (v))
+        IS_VALUE_IN_ARRAY_DEBUG(g_ds.array, (v))
 #endif
 
 //
@@ -231,22 +231,22 @@ inline static StackValue(*) Data_Stack_At(StackIndex i) {
 
 #define STACK_EXPAND_BASIS 128
 
-// Note: DS_Movable_Top is just TOP, but accessing TOP asserts on ENDs
+// Note: g_ds.movable_top is just TOP, but accessing TOP asserts on ENDs
 //
 inline static StackValue(*) PUSH(void) {
     ASSERT_NO_DATA_STACK_POINTERS_EXTANT();
 
-    ++DS_Index;
-    ++DS_Movable_Top;
-    if (DS_Movable_Top == DS_Movable_Tail)
+    ++g_ds.index;
+    ++g_ds.movable_top;
+    if (g_ds.movable_top == g_ds.movable_tail)
         Expand_Data_Stack_May_Fail(STACK_EXPAND_BASIS);
 
   #if DEBUG_POISON_DROPPED_STACK_CELLS
-    assert(Is_Cell_Poisoned(DS_Movable_Top));
+    assert(Is_Cell_Poisoned(g_ds.movable_top));
   #endif
 
-    Erase_Cell(DS_Movable_Top);
-    return DS_Movable_Top;
+    Erase_Cell(g_ds.movable_top);
+    return g_ds.movable_top;
 }
 
 
@@ -261,11 +261,11 @@ inline static void DROP(void) {
     ASSERT_NO_DATA_STACK_POINTERS_EXTANT();
 
   #if DEBUG_POISON_DROPPED_STACK_CELLS
-    Poison_Cell(DS_Movable_Top);
+    Poison_Cell(g_ds.movable_top);
   #endif
 
-    --DS_Index;
-    --DS_Movable_Top;
+    --g_ds.index;
+    --g_ds.movable_top;
 }
 
 inline static void Drop_Data_Stack_To(StackIndex i) {
@@ -342,19 +342,19 @@ inline static void Drop_Data_Stack_To(StackIndex i) {
 #elif defined(OS_STACK_GROWS_UP)
 
     #define C_STACK_OVERFLOWING(address_of_local_var) \
-        (cast(uintptr_t, (address_of_local_var)) >= TG_Stack_Limit)
+        (cast(uintptr_t, (address_of_local_var)) >= g_ts.C_stack_address_limit)
 
 #elif defined(OS_STACK_GROWS_DOWN)
 
     #define C_STACK_OVERFLOWING(address_of_local_var) \
-        (cast(uintptr_t, (address_of_local_var)) <= TG_Stack_Limit)
+        (cast(uintptr_t, (address_of_local_var)) <= g_ts.C_stack_address_limit)
 
 #else
 
     #define C_STACK_OVERFLOWING(address_of_local_var) \
-        (TG_Stack_Grows_Up \
-            ? cast(uintptr_t, (address_of_local_var)) >= TG_Stack_Limit \
-            : cast(uintptr_t, (address_of_local_var)) <= TG_Stack_Limit)
+        (g_ts.C_stack_grows_up \
+            ? cast(uintptr_t, (address_of_local_var)) >= g_ts.C_stack_address_limit \
+            : cast(uintptr_t, (address_of_local_var)) <= g_ts.C_stack_address_limit)
 #endif
 
 

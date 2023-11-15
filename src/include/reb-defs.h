@@ -164,7 +164,7 @@ typedef struct LevelStruct LevelT;
 typedef struct FeedStruct FeedT;
 
 struct Reb_State;
-struct Reb_Jump;
+typedef struct JumpStruct Jump;
 
 
 typedef enum {

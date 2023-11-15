@@ -519,9 +519,8 @@ typedef void (Intrinsic)(Atom(*) out, Action(*) action, Value(*) arg);
 inline static Array(const*) Level_Array(Level(*) L);
 inline static bool Level_Is_Variadic(Level(*) L);
 
-
-#define TOP_LEVEL (TG_Top_Level + 0)  // avoid assign to TOP_LEVEL via + 0
-#define BOTTOM_LEVEL (TG_Bottom_Level + 0)  // avoid assign to BOTTOM_LEVEL
+#define TOP_LEVEL (g_ts.top_level + 0)  // avoid assign to TOP_LEVEL via + 0
+#define BOTTOM_LEVEL (g_ts.bottom_level + 0)  // avoid assign to BOTTOM_LEVEL
 
 
 // There are 8 flags in a level header that are reserved for the use of the

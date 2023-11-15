@@ -93,20 +93,20 @@ void *Try_Alloc_Mem(size_t size)
 {
     // Trap memory usage limit *before* the allocation is performed
 
-    PG_Mem_Usage += size;
-    if (PG_Mem_Limit != 0 and PG_Mem_Usage > PG_Mem_Limit) {
-        PG_Mem_Usage -= size;
+    g_mem.usage += size;
+    if (g_mem.usage_limit and g_mem.usage > unwrap(g_mem.usage_limit)) {
+        g_mem.usage -= size;
     }
 
   #if !defined(NDEBUG)
-    if (PG_Fuzz_Factor != 0) {
-        if (PG_Fuzz_Factor < 0) {
-            ++PG_Fuzz_Factor;
-            if (PG_Fuzz_Factor == 0)
+    if (g_mem.fuzz_factor != 0) {
+        if (g_mem.fuzz_factor < 0) {
+            ++g_mem.fuzz_factor;
+            if (g_mem.fuzz_factor == 0)
                 return nullptr;
         }
-        else if ((TG_tick % 10000) <= cast(REBLEN, PG_Fuzz_Factor)) {
-            PG_Fuzz_Factor = 0;
+        else if ((TG_tick % 10000) <= cast(REBLEN, g_mem.fuzz_factor)) {
+            g_mem.fuzz_factor = 0;
             return nullptr;
         }
     }
@@ -126,7 +126,7 @@ void *Try_Alloc_Mem(size_t size)
 
     void *p_extra = malloc(size + ALIGN_SIZE);
     if (not p_extra) {
-        PG_Mem_Usage -= size;
+        g_mem.usage -= size;
         return nullptr;
     }
     *cast(REBI64*, p_extra) = size;
@@ -167,7 +167,7 @@ void Free_Mem(void *mem, size_t size)
     free(ptr);
   #endif
 
-    PG_Mem_Usage -= size;
+    g_mem.usage -= size;
 }
 
 
@@ -239,15 +239,20 @@ const PoolSpec Mem_Pool_Spec[MAX_POOLS] =
 //
 void Startup_Pools(REBINT scale)
 {
+    g_mem.usage = 0;
+    g_mem.usage_limit = 0;  // unlimited
+
   #if DEBUG_ENABLE_ALWAYS_MALLOC
+    g_mem.always_malloc = false;
+
     const char *env_always_malloc = getenv("R3_ALWAYS_MALLOC");
     if (env_always_malloc and atoi(env_always_malloc) != 0)
-        PG_Always_Malloc = true;
-    if (PG_Always_Malloc) {
+        g_mem.always_malloc = true;
+    if (g_mem.always_malloc) {
         printf(
             "**\n" \
             "** R3_ALWAYS_MALLOC is nonzero in environment variable!\n" \
-            "** (Or hardcoded PG_Always_Malloc = true in initialization)\n" \
+            "** (Or hardcoded g_mem.always_malloc = true in initialization)\n" \
             "** Memory allocations aren't pooled, expect slowness...\n" \
             "**\n"
         );
@@ -263,15 +268,15 @@ void Startup_Pools(REBINT scale)
         scale = 1;
     }
 
-    Mem_Pools = TRY_ALLOC_N(Pool, MAX_POOLS);
+    g_mem.pools = TRY_ALLOC_N(Pool, MAX_POOLS);
 
     // Copy pool sizes to new pool structure:
     //
     REBLEN n;
     for (n = 0; n < MAX_POOLS; n++) {
-        Mem_Pools[n].segments = nullptr;
-        Mem_Pools[n].first = nullptr;
-        Mem_Pools[n].last = nullptr;
+        g_mem.pools[n].segments = nullptr;
+        g_mem.pools[n].first = nullptr;
+        g_mem.pools[n].last = nullptr;
 
         // A panic is used instead of an assert, since the debug sizes and
         // release sizes may be different...and both must be checked.
@@ -281,53 +286,43 @@ void Startup_Pools(REBINT scale)
             panic ("memory pool width is not 64-bit aligned");
       #endif
 
-        Mem_Pools[n].wide = Mem_Pool_Spec[n].wide;
+        g_mem.pools[n].wide = Mem_Pool_Spec[n].wide;
 
-        Mem_Pools[n].num_units_per_segment = (
+        g_mem.pools[n].num_units_per_segment = (
             (Mem_Pool_Spec[n].num_units_per_segment * scale) / unscale
         );
 
-        if (Mem_Pools[n].num_units_per_segment < 2)
-            Mem_Pools[n].num_units_per_segment = 2;
-        Mem_Pools[n].free = 0;
-        Mem_Pools[n].has = 0;
+        if (g_mem.pools[n].num_units_per_segment < 2)
+            g_mem.pools[n].num_units_per_segment = 2;
+        g_mem.pools[n].free = 0;
+        g_mem.pools[n].has = 0;
     }
 
-    // For pool lookup. Maps size to pool index. (See Find_Pool below)
-    PG_Pool_Map = TRY_ALLOC_N(Byte, (4 * MEM_BIG_SIZE) + 1);
+    g_mem.pools_by_size = TRY_ALLOC_N(Byte, POOLS_BY_SIZE_LEN);
 
     // sizes 0 - 8 are pool 0
-    for (n = 0; n <= 8; n++) PG_Pool_Map[n] = 0;
+    for (n = 0; n <= 8; n++) g_mem.pools_by_size[n] = 0;
     for (; n <= 16 * MEM_MIN_SIZE; n++)
-        PG_Pool_Map[n] = MEM_TINY_POOL + ((n-1) / MEM_MIN_SIZE);
+        g_mem.pools_by_size[n] = MEM_TINY_POOL + ((n-1) / MEM_MIN_SIZE);
     for (; n <= 32 * MEM_MIN_SIZE; n++)
-        PG_Pool_Map[n] = MEM_SMALL_POOLS-4 + ((n-1) / (MEM_MIN_SIZE * 4));
+        g_mem.pools_by_size[n] = MEM_SMALL_POOLS-4 + ((n-1) / (MEM_MIN_SIZE * 4));
     for (; n <=  4 * MEM_BIG_SIZE; n++)
-        PG_Pool_Map[n] = MEM_MID_POOLS + ((n-1) / MEM_BIG_SIZE);
+        g_mem.pools_by_size[n] = MEM_MID_POOLS + ((n-1) / MEM_BIG_SIZE);
 
-    // !!! Revisit where series init/shutdown goes when the code is more
-    // organized to have some of the logic not in the pools file
+    assert(n == POOLS_BY_SIZE_LEN);
 
   #if DEBUG_COLLECT_STATS
-    PG_Reb_Stats = TRY_ALLOC(REB_STATS);
-    memset(PG_Reb_Stats, 0, sizeof(REB_STATS));
+    assert(g_mem.series_memory == 0);
+    assert(g_mem.series_made == 0);
+    assert(g_mem.series_freed == 0);
+    assert(g_mem.series_expanded == 0);
+    assert(g_mem.blocks_made == 0);
+    assert(g_mem.objects_made == 0);
   #endif
 
-    // Manually allocated series that GC is not responsible for (unless a
-    // trap occurs). Holds series pointers.
-    //
-    // As a trick to keep this series from trying to track itself, say it's
-    // managed, then sneak the flag off.
-    //
-    GC_Manuals = Make_Series_Core(
-        15,
-        FLAG_FLAVOR(SERIESLIST) | NODE_FLAG_MANAGED
-    );
-    Clear_Series_Flag(GC_Manuals, MANAGED);
-
-    Prior_Expand = TRY_ALLOC_N(Series(*), MAX_EXPAND_LIST);
-    memset(Prior_Expand, 0, sizeof(Series(*)) * MAX_EXPAND_LIST);
-    Prior_Expand[0] = (Series(*))1;
+    g_mem.prior_expand = TRY_ALLOC_N(Series(*), MAX_EXPAND_LIST);
+    memset(g_mem.prior_expand, 0, sizeof(Series(*)) * MAX_EXPAND_LIST);
+    g_mem.prior_expand[0] = (Series(*))1;
 }
 
 
@@ -338,19 +333,14 @@ void Startup_Pools(REBINT scale)
 //
 void Shutdown_Pools(void)
 {
-    // Can't use Free_Unmanaged_Series() because GC_Manuals couldn't be put in
-    // the manuals list...
-    //
-    GC_Kill_Series(GC_Manuals);
-
   #if !defined(NDEBUG)
   blockscope {
     Count num_leaks = 0;
     Series(*) leaked = nullptr;
-    Segment* seg = Mem_Pools[STUB_POOL].segments;
+    Segment* seg = g_mem.pools[STUB_POOL].segments;
 
     for(; seg != nullptr; seg = seg->next) {
-        Count n = Mem_Pools[STUB_POOL].num_units_per_segment;
+        Count n = g_mem.pools[STUB_POOL].num_units_per_segment;
         Byte* stub = cast(Byte*, seg + 1);
 
         for (; n > 0; --n, stub += sizeof(Stub)) {
@@ -384,7 +374,7 @@ void Shutdown_Pools(void)
 
     PoolId pool_id;
     for (pool_id = 0; pool_id < MAX_POOLS; ++pool_id) {
-        Pool *pool = &Mem_Pools[pool_id];
+        Pool *pool = &g_mem.pools[pool_id];
         Size mem_size = (
             pool->wide * pool->num_units_per_segment + sizeof(Segment)
         );
@@ -397,19 +387,24 @@ void Shutdown_Pools(void)
         }
     }
 
-    FREE_N(Pool, MAX_POOLS, Mem_Pools);
+    FREE_N(Pool, MAX_POOLS, g_mem.pools);
 
-    FREE_N(Byte, (4 * MEM_BIG_SIZE) + 1, PG_Pool_Map);
+    FREE_N(Byte, POOLS_BY_SIZE_LEN, g_mem.pools_by_size);
 
     // !!! Revisit location (just has to be after all series are freed)
-    FREE_N(Series(*), MAX_EXPAND_LIST, Prior_Expand);
+    FREE_N(Series(*), MAX_EXPAND_LIST, g_mem.prior_expand);
 
   #if DEBUG_COLLECT_STATS
-    FREE(REB_STATS, PG_Reb_Stats);
+    g_mem.series_memory = 0;
+    g_mem.series_made = 0;
+    g_mem.series_freed = 0;
+    g_mem.series_expanded = 0;
+    g_mem.blocks_made = 0;
+    g_mem.objects_made = 0;
   #endif
 
   #if !defined(NDEBUG)
-    if (PG_Mem_Usage != 0) {
+    if (g_mem.usage != 0) {
         //
         // If using valgrind or address sanitizer, they can present more
         // information about leaks than just how much was leaked.  So don't
@@ -417,8 +412,8 @@ void Shutdown_Pools(void)
         // presenting the leaks at program termination.
         //
         printf(
-            "*** PG_Mem_Usage = %lu ***\n",
-            cast(unsigned long, PG_Mem_Usage)
+            "*** g_mem.usage = %lu ***\n",
+            cast(unsigned long, g_mem.usage)
         );
 
         printf(
@@ -496,10 +491,10 @@ bool Try_Fill_Pool(Pool* pool)
 //
 Node* Try_Find_Containing_Node_Debug(const void *p)
 {
-    Segment* seg = Mem_Pools[STUB_POOL].segments;
+    Segment* seg = g_mem.pools[STUB_POOL].segments;
 
     for (; seg != nullptr; seg = seg->next) {
-        Count n = Mem_Pools[STUB_POOL].num_units_per_segment;
+        Count n = g_mem.pools[STUB_POOL].num_units_per_segment;
         Byte* stub = cast(Byte*, seg + 1);
 
         for (; n > 0; --n, stub += sizeof(Stub)) {
@@ -664,9 +659,9 @@ void Free_Unbiased_Series_Data(char *unbiased, Size total)
         //
         PoolUnit* unit = cast(PoolUnit*, unbiased);
 
-        assert(Mem_Pools[pool_id].wide >= total);
+        assert(g_mem.pools[pool_id].wide >= total);
 
-        pool = &Mem_Pools[pool_id];
+        pool = &g_mem.pools[pool_id];
         unit->next_if_free = pool->first;
         pool->first = unit;
         pool->free++;
@@ -675,8 +670,8 @@ void Free_Unbiased_Series_Data(char *unbiased, Size total)
     }
     else {
         FREE_N(char, total, unbiased);
-        Mem_Pools[SYSTEM_POOL].has -= total;
-        Mem_Pools[SYSTEM_POOL].free++;
+        g_mem.pools[SYSTEM_POOL].has -= total;
+        g_mem.pools[SYSTEM_POOL].free++;
     }
 }
 
@@ -820,8 +815,8 @@ void Expand_Series(Series(*) s, REBLEN index, REBLEN delta)
     if (Get_Series_Flag(s, FIXED_SIZE))
         fail (Error_Locked_Series_Raw());
 
-  #ifndef NDEBUG
-    if (Reb_Opts->watch_expand) {
+  #if DEBUG
+    if (g_mem.watch_expand) {
         printf(
             "Expand %p wide: %d tail: %d delta: %d\n",
             cast(void*, s),
@@ -839,18 +834,17 @@ void Expand_Series(Series(*) s, REBLEN index, REBLEN delta)
     REBLEN n_available = 0;
     REBLEN n_found;
     for (n_found = 0; n_found < MAX_EXPAND_LIST; n_found++) {
-        if (Prior_Expand[n_found] == s) {
+        if (g_mem.prior_expand[n_found] == s) {
             x = Series_Used(s) + delta + 1; // Double the size
             break;
         }
-        if (!Prior_Expand[n_found])
+        if (!g_mem.prior_expand[n_found])
             n_available = n_found;
     }
 
-  #ifndef NDEBUG
-    if (Reb_Opts->watch_expand) {
-        // Print_Num("Expand:", series->tail + delta + 1);
-    }
+  #if DEBUG
+    if (g_mem.watch_expand)
+        printf("Expand: %d\n", cast(int, Series_Used(s) + delta + 1));
   #endif
 
     // !!! The protocol for doing new allocations currently mandates that the
@@ -889,7 +883,7 @@ void Expand_Series(Series(*) s, REBLEN index, REBLEN delta)
     // If necessary, add series to the recently expanded list
     //
     if (n_found >= MAX_EXPAND_LIST)
-        Prior_Expand[n_available] = s;
+        g_mem.prior_expand[n_available] = s;
 
     // Copy the series up to the expansion point
     //
@@ -913,7 +907,7 @@ void Expand_Series(Series(*) s, REBLEN index, REBLEN delta)
     }
 
   #if DEBUG_COLLECT_STATS
-    PG_Reb_Stats->Series_Expanded++;
+    g_mem.series_expanded += 1;
   #endif
 
     assert(Not_Series_Flag(s, MARKED));
@@ -1150,7 +1144,7 @@ void Decay_Series(Series(*) s)
     // Remove series from expansion list, if found:
     REBLEN n;
     for (n = 1; n < MAX_EXPAND_LIST; n++) {
-        if (Prior_Expand[n] == s) Prior_Expand[n] = 0;
+        if (g_mem.prior_expand[n] == s) g_mem.prior_expand[n] = 0;
     }
 
     if (Get_Series_Flag(s, DYNAMIC)) {
@@ -1178,7 +1172,7 @@ void Decay_Series(Series(*) s)
         // level" allocations.
 
         int tmp;
-        GC_Ballast = REB_I32_ADD_OF(GC_Ballast, total, &tmp)
+        g_gc.depletion = REB_I32_ADD_OF(g_gc.depletion, total, &tmp)
             ? INT32_MAX
             : tmp;
     }
@@ -1220,11 +1214,11 @@ void GC_Kill_Series(Series(*) s)
 
     Free_Pooled(STUB_POOL, s);
 
-    if (GC_Ballast > 0)
+    if (g_gc.depletion > 0)
         CLR_SIGNAL(SIG_RECYCLE);  // Enough space that requested GC can cancel
 
   #if DEBUG_COLLECT_STATS
-    PG_Reb_Stats->Series_Freed++;
+    g_mem.series_freed += 1;
   #endif
 }
 
@@ -1309,10 +1303,10 @@ void Assert_Pointer_Detection_Working(void)
 //
 REBLEN Check_Memory_Debug(void)
 {
-    Segment* seg = Mem_Pools[STUB_POOL].segments;
+    Segment* seg = g_mem.pools[STUB_POOL].segments;
 
     for (; seg != nullptr; seg = seg->next) {
-        Count n = Mem_Pools[STUB_POOL].num_units_per_segment;
+        Count n = g_mem.pools[STUB_POOL].num_units_per_segment;
         Byte* stub = cast(Byte*, seg + 1);
 
         for (; n > 0; --n, stub += sizeof(Stub)) {
@@ -1333,7 +1327,7 @@ REBLEN Check_Memory_Debug(void)
             if (pool_id >= STUB_POOL)
                 continue; // size doesn't match a known pool
 
-            if (Mem_Pools[pool_id].wide < SER_TOTAL(s))
+            if (g_mem.pools[pool_id].wide < SER_TOTAL(s))
                 panic (s);
         }
     }
@@ -1344,14 +1338,14 @@ REBLEN Check_Memory_Debug(void)
     for (pool_id = 0; pool_id != SYSTEM_POOL; pool_id++) {
         Count pool_free_nodes = 0;
 
-        PoolUnit* unit = Mem_Pools[pool_id].first;
+        PoolUnit* unit = g_mem.pools[pool_id].first;
         for (; unit != nullptr; unit = unit->next_if_free) {
             assert(*cast(const Byte*, unit) & NODE_BYTEMASK_0x40_STALE);
 
             ++pool_free_nodes;
 
             bool found = false;
-            seg = Mem_Pools[pool_id].segments;
+            seg = g_mem.pools[pool_id].segments;
             for (; seg != nullptr; seg = seg->next) {
                 if (
                     cast(uintptr_t, unit) > cast(uintptr_t, seg)
@@ -1375,7 +1369,7 @@ REBLEN Check_Memory_Debug(void)
             }
         }
 
-        if (Mem_Pools[pool_id].free != pool_free_nodes)
+        if (g_mem.pools[pool_id].free != pool_free_nodes)
             panic ("actual free unit count does not agree with pool header");
 
         total_free_nodes += pool_free_nodes;
@@ -1391,10 +1385,10 @@ REBLEN Check_Memory_Debug(void)
 void Dump_All_Series_Of_Width(Size wide)
 {
     Count count = 0;
-    Segment* seg = Mem_Pools[STUB_POOL].segments;
+    Segment* seg = g_mem.pools[STUB_POOL].segments;
 
     for (; seg != nullptr; seg = seg->next) {
-        Count n = Mem_Pools[STUB_POOL].num_units_per_segment;
+        Count n = g_mem.pools[STUB_POOL].num_units_per_segment;
         Byte* stub = cast(Byte*, seg + 1);
 
         for (; n > 0; --n, stub += sizeof(Stub)) {
@@ -1424,10 +1418,10 @@ void Dump_All_Series_Of_Width(Size wide)
 //
 void Dump_Series_In_Pool(PoolId pool_id)
 {
-    Segment* seg = Mem_Pools[STUB_POOL].segments;
+    Segment* seg = g_mem.pools[STUB_POOL].segments;
 
     for (; seg != nullptr; seg = seg->next) {
-        Count n = Mem_Pools[STUB_POOL].num_units_per_segment;
+        Count n = g_mem.pools[STUB_POOL].num_units_per_segment;
         Byte* stub = cast(Byte*, seg + 1);
 
         for (; n > 0; --n, stub += sizeof(Stub)) {
@@ -1469,26 +1463,26 @@ void Dump_Pools(void)
         Count num_segs = 0;
         Size size = 0;
 
-        Segment* seg = Mem_Pools[id].segments;
+        Segment* seg = g_mem.pools[id].segments;
 
         for (; seg != nullptr; seg = seg->next, ++num_segs)
             size += seg->size;
 
-        REBLEN used = Mem_Pools[id].has - Mem_Pools[id].free;
+        REBLEN used = g_mem.pools[id].has - g_mem.pools[id].free;
         printf(
             "Pool[%-2d] %5dB %-5d/%-5d:%-4d (%3d%%) ",
             cast(int, id),
-            cast(int, Mem_Pools[id].wide),
+            cast(int, g_mem.pools[id].wide),
             cast(int, used),
-            cast(int, Mem_Pools[id].has),
-            cast(int, Mem_Pools[id].num_units_per_segment),
+            cast(int, g_mem.pools[id].has),
+            cast(int, g_mem.pools[id].num_units_per_segment),
             cast(int,
-                Mem_Pools[id].has != 0 ? ((used * 100) / Mem_Pools[id].has) : 0
+                g_mem.pools[id].has != 0 ? ((used * 100) / g_mem.pools[id].has) : 0
             )
         );
         printf("%-2d segs, %-7d total\n", cast(int, num_segs), cast(int, size));
 
-        tused += used * Mem_Pools[id].wide;
+        tused += used * g_mem.pools[id].wide;
         total += size;
     }
 
@@ -1498,8 +1492,8 @@ void Dump_Pools(void)
         cast(int, total),
         cast(int, (tused * 100) / total)
     );
-    printf("System pool used %d\n", cast(int, Mem_Pools[SYSTEM_POOL].has));
-    printf("Raw allocator reports %lu\n", cast(unsigned long, PG_Mem_Usage));
+    printf("System pool used %d\n", cast(int, g_mem.pools[SYSTEM_POOL].has));
+    printf("Raw allocator reports %lu\n", cast(unsigned long, g_mem.usage));
 
     fflush(stdout);
 }
@@ -1528,10 +1522,10 @@ REBU64 Inspect_Series(bool show)
 
     Size tot_size = 0;
 
-    Segment* seg = Mem_Pools[STUB_POOL].segments;
+    Segment* seg = g_mem.pools[STUB_POOL].segments;
 
     for (; seg != nullptr; seg = seg->next, seg_size += seg->size, ++segs) {
-        Count n = Mem_Pools[STUB_POOL].num_units_per_segment;
+        Count n = g_mem.pools[STUB_POOL].num_units_per_segment;
         Byte* stub = cast(Byte*, seg + 1);
 
         for (; n > 0; --n, stub += sizeof(Stub)) {
@@ -1570,7 +1564,7 @@ REBU64 Inspect_Series(bool show)
     REBU64 fre_size = 0;
     PoolId pool_id;
     for (pool_id = 0; pool_id != SYSTEM_POOL; pool_id++) {
-        fre_size += Mem_Pools[pool_id].free * Mem_Pools[pool_id].wide;
+        fre_size += g_mem.pools[pool_id].free * g_mem.pools[pool_id].wide;
     }
 
     if (show) {

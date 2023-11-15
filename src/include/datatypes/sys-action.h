@@ -176,7 +176,7 @@ inline static bool Is_Throwing(Level(*) level_) {
     // only be able to return *true* to a throw request if there are no
     // frames above on the stack.
     //
-    if (not Is_Cell_Erased(&TG_Thrown_Arg)) {
+    if (not Is_Cell_Erased(&g_ts.thrown_arg)) {
         /*assert(level_ == TOP_LEVEL);*/  // forget even that check
         UNUSED(level_);  // currently only used for debug build check
         return true;

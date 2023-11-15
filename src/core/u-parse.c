@@ -527,11 +527,6 @@ static REBIXO Parse_One_Rule(
         rule = SPARE;
     }
 
-    if (Trace_Level) {
-        Trace_Value("match", rule);
-        Trace_Parse_Input(ARG(position));
-    }
-
     if (pos == P_INPUT_LEN) {  // at end of input
         if (IS_LOGIC(rule) or IS_BLOCK(rule) or Is_Void(rule)) {
             //
@@ -1432,11 +1427,11 @@ DECLARE_NATIVE(subparse)
 
       do_signals:
 
-      #if !defined(NDEBUG)  // Total_Eval_Cycles is periodically reconciled
-        ++Total_Eval_Cycles_Doublecheck;
+      #if !defined(NDEBUG)  // total_eval_cycles is periodically reconciled
+        ++g_ts.total_eval_cycles_check;
       #endif
 
-        if (--Eval_Countdown <= 0) {
+        if (--g_ts.eval_countdown <= 0) {
             if (Do_Signals_Throws(LEVEL))
                 return THROWN;
         }

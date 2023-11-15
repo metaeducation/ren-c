@@ -49,13 +49,13 @@
 // and can only be intercepted by points up the stack that have explicitly
 // registered themselves interested.  So comparing these two bits of code:
 //
-//     catch [if 1 < 2 [trap [print ["Foo" (throw "Throwing")]]]]
+//     catch [if 1 < 2 [sys.util.rescue [print ["Foo" (throw "Throwing")]]]]
 //
-//     trap [if 1 < 2 [catch [print ["Foo" (fail "Failing")]]]]
+//     sys.util.rescue [if 1 < 2 [catch [print ["Foo" (fail "Failing")]]]]
 //
 // In the first case, the THROW is offered to each point up the chain as
 // a special sort of "return value" that only natives can examine.  The
-// `print` will get a chance, the `trap` will get a chance, the `if` will
+// `print` will get a chance, the `rescue` will get a chance, the `if` will
 // get a chance...but only CATCH will take the opportunity.
 //
 // In the second case, the FAIL is implemented with longjmp().  So it
@@ -101,7 +101,7 @@
 //    trampoline stores its concept of "current" level in the jump structure
 //    so it is available to Fail_Core() for automated or manual inspection.
 //
-struct Reb_Jump {
+struct JumpStruct {
   #if REBOL_FAIL_USES_LONGJMP
     #ifdef HAS_POSIX_SIGNAL
         sigjmp_buf cpu_state;  // jmp_buf as first field of struct, see [1]
@@ -112,7 +112,7 @@ struct Reb_Jump {
     Context(*) error;  // longjmp() case tunnels pointer back via this, see [2]
   #endif
 
-    struct Reb_Jump *last_jump;
+    struct JumpStruct* last_jump;
 
     Level(*) level;  // trampoline caches level here for flexibility, see [3]
 };
@@ -238,18 +238,18 @@ struct Reb_Jump {
 
     #define TRAP_BLOCK_IN_CASE_OF_ABRUPT_FAILURE \
         NOOP; /* stops warning when case previous statement was label */ \
-        struct Reb_Jump jump;  /* one setjmp() per trampoline invocation */ \
-        jump.last_jump = TG_Jump_List; \
+        Jump jump;  /* one setjmp() per trampoline invocation */ \
+        jump.last_jump = g_ts.jump_list; \
         jump.level = TOP_LEVEL; \
         jump.error = nullptr; \
-        TG_Jump_List = &jump; \
+        g_ts.jump_list = &jump; \
         if (1 == SET_JUMP(jump.cpu_state))  /* beware return value, see [1] */ \
             goto longjmp_happened; /* jump.error will be set */ \
         /* fall through to subsequent block, happens on first SET_JUMP() */
 
     #define CLEANUP_BEFORE_EXITING_TRAP_BLOCK /* can't avoid, see [3] */ \
         assert(jump.error == nullptr); \
-        TG_Jump_List = jump.last_jump
+        g_ts.jump_list = jump.last_jump
 
     #define ON_ABRUPT_FAILURE(decl) \
       longjmp_happened: \
@@ -264,14 +264,14 @@ struct Reb_Jump {
 
     #define TRAP_BLOCK_IN_CASE_OF_ABRUPT_FAILURE \
         ; /* in case previous tatement was label */ \
-        struct Reb_Jump jump; /* one per trampoline invocation */ \
-        jump.last_jump = TG_Jump_List; \
+        Jump jump; /* one per trampoline invocation */ \
+        jump.last_jump = g_ts.jump_list; \
         jump.level = TOP_LEVEL; \
-        TG_Jump_List = &jump; \
+        g_ts.jump_list = &jump; \
         try /* picks up subsequent {...} block */
 
     #define CLEANUP_BEFORE_EXITING_TRAP_BLOCK /* can't avoid, see [3] */ \
-        TG_Jump_List = jump.last_jump
+        g_ts.jump_list = jump.last_jump
 
     #define ON_ABRUPT_FAILURE(decl) \
         catch (decl) /* picks up subsequent {...} block */
@@ -282,15 +282,15 @@ struct Reb_Jump {
 
     #define TRAP_BLOCK_IN_CASE_OF_ABRUPT_FAILURE \
         ; /* in case previous tatement was label */ \
-        struct Reb_Jump jump; /* one per trampoline invocation */ \
-        jump.last_jump = TG_Jump_List; \
+        Jump jump; /* one per trampoline invocation */ \
+        jump.last_jump = g_ts.jump_list; \
         jump.level = TOP_LEVEL; \
-        TG_Jump_List = &jump; \
+        g_ts.jump_list = &jump; \
         if (false) \
             goto abrupt_failure;  /* avoids unreachable code warning */
 
     #define CLEANUP_BEFORE_EXITING_TRAP_BLOCK /* can't avoid, see [3] */ \
-        TG_Jump_List = jump.last_jump
+        g_ts.jump_list = jump.last_jump
 
     #define ON_ABRUPT_FAILURE(decl) \
       abrupt_failure: /* impossible jump here to avoid unreachable warning */ \

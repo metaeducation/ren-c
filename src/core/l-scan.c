@@ -943,9 +943,9 @@ static LEXFLAGS Prescan_Token(SCAN_STATE *ss)
 // Determining the end point of token types that need escaping requires
 // processing (for instance `{a^}b}` can't see the first close brace as ending
 // the string).  To avoid double processing, the routine decodes the string's
-// content into MOLD_BUF for any quoted form to be used by the caller.  It's
+// content into the mold buffer for any quoted form used by the caller.  It's
 // overwritten in successive calls, and is only done for quoted forms (e.g.
-// %"foo" will have data in MOLD_BUF but %foo will not.)
+// %"foo" will have data in the mold buffer but %foo will not.)
 //
 // !!! This is a somewhat weird separation of responsibilities, that seems to
 // arise from a desire to make "Scan_XXX" functions independent of the
@@ -971,17 +971,17 @@ static LEXFLAGS Prescan_Token(SCAN_STATE *ss)
 //     $10AE.20 sent => fail()
 //     B       E
 //
-//     {line1\nline2}  => TOKEN_STRING (content in MOLD_BUF)
+//     {line1\nline2}  => TOKEN_STRING (content in mold buffer)
 //     B             E
 //
 //     \n{line2} => TOKEN_NEWLINE (newline is external)
 //     BB
 //       E
 //
-//     %"a ^"b^" c" d => TOKEN_FILE (content in MOLD_BUF)
+//     %"a ^"b^" c" d => TOKEN_FILE (content in mold buffer)
 //     B           E
 //
-//     %a-b.c d => TOKEN_FILE (content *not* in MOLD_BUF)
+//     %a-b.c d => TOKEN_FILE (content *not* in mold buffer)
 //     B     E
 //
 //     \0 => TOKEN_END
@@ -2393,7 +2393,7 @@ Bounce Scanner_Executor(Level(*) const L) {
             return DROP(), RAISE(error);
         break; }
 
-      case TOKEN_STRING:  // UTF-8 pre-scanned above, and put in MOLD_BUF
+      case TOKEN_STRING:  // UTF-8 pre-scanned above, and put in mold buffer
         Init_Text(PUSH(), Pop_Molded_String(mo));
         break;
 

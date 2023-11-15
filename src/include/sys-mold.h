@@ -21,8 +21,6 @@
 //=////////////////////////////////////////////////////////////////////////=//
 //
 
-#define MOLD_BUF TG_Mold_Buf
-
 struct rebol_mold {
     String(*) series;     // destination series (utf8)
     struct {

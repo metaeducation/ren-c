@@ -310,8 +310,8 @@ inline static void Push_Level(
     L->line = LineNumber_Of_Level(L);
   #endif
 
-    L->prior = TG_Top_Level;
-    TG_Top_Level = L;
+    L->prior = TOP_LEVEL;
+    g_ts.top_level = L;
 
     assert(Is_Pointer_Trash_Debug(L->alloc_value_list));
     L->alloc_value_list = L;  // doubly link list, terminates in `L`
@@ -329,7 +329,7 @@ inline static void Drop_Level_Core(Level(*) L) {
     free(L->stress);
   #endif
 
-    assert(TG_Top_Level == L);
+    assert(TOP_LEVEL == L);
 
     if (Is_Throwing(L) or (L->out and Is_Raised(L->out))) {
         //
@@ -363,7 +363,7 @@ inline static void Drop_Level_Core(Level(*) L) {
       #endif
     }
 
-    TG_Top_Level = L->prior;
+    g_ts.top_level = L->prior;
 
     // Note: Free_Feed() will handle feeding a feed through to its end (which
     // may release handles/etc), so no requirement Level_At(L) be at END.
@@ -431,12 +431,12 @@ inline static Level(*) Prep_Level_Core(
   #endif
 
     // !!! Previously just TOP_STACK was captured in L->baseline.stack_base,
-    // but then redundantly captured via a SNAP_STATE() in Push_Level().  The
+    // but then redundantly captured via a Snap_State() in Push_Level().  The
     // responsibilities of Prep_Level() vs Push_Level() aren't clearly laid
     // out, but some clients do depend on the StackIndex being captured before
     // Push_Level() is called, so this snaps the whole baseline here.
     //
-    SNAP_STATE(&L->baseline);  // see notes on `baseline` in LevelT
+    Snap_State(&L->baseline);  // see notes on `baseline` in LevelT
 
   #if DEBUG_COUNT_TICKS
     L->tick = TG_tick;

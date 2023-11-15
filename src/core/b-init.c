@@ -52,8 +52,6 @@
 
 #include "sys-core.h"
 
-#define EVAL_DOSE 10000
-
 
 //
 //  Check_Basics: C
@@ -173,15 +171,15 @@ static void Check_Basics(void)
 //
 void Set_Stack_Limit(void *base, uintptr_t bounds) {
   #if defined(OS_STACK_GROWS_UP)
-    TG_Stack_Limit = cast(uintptr_t, base) + bounds;
+    g_ts.C_stack_address_limit = cast(uintptr_t, base) + bounds;
   #elif defined(OS_STACK_GROWS_DOWN)
-    TG_Stack_Limit = cast(uintptr_t, base) - bounds;
+    g_ts.C_stack_address_limit = cast(uintptr_t, base) - bounds;
   #else
-    TG_Stack_Grows_Up = Guess_If_Stack_Grows_Up(NULL);
-    if (TG_Stack_Grows_Up)
-        TG_Stack_Limit = cast(uintptr_t, base) + bounds;
+    g_ts.C_stack_grows_up = Guess_If_Stack_Grows_Up(NULL);
+    if (g_ts.C_stack_grows_up)
+        g_ts.C_stack_address_limit = cast(uintptr_t, base) + bounds;
     else
-        TG_Stack_Limit = cast(uintptr_t, base) - bounds;
+        g_ts.C_stack_address_limit = cast(uintptr_t, base) - bounds;
   #endif
 }
 
@@ -658,60 +656,6 @@ static void Init_Contexts_Object(void)
 }
 
 
-//
-//  Startup_Signals: C
-//
-// Creating series calls SET_SIGNAL(), and that is done in %m-pools.c right
-// now.  That needs the Eval_XXX variables to be initialized at present.
-//
-void Startup_Signals(void)
-{
-    Trace_Level = 0;
-    TG_Jump_List = nullptr;
-
-  #if !defined(NDEBUG)
-    Total_Eval_Cycles_Doublecheck = 0;
-  #endif
-
-    Total_Eval_Cycles = 0;
-    Eval_Dose = EVAL_DOSE;
-    Eval_Countdown = Eval_Dose;
-    Eval_Signals = 0;
-    Eval_Sigmask = ALL_BITS;
-    Eval_Limit = 0;
-
-    TG_Ballast = MEM_BALLAST; // or overwritten by debug build below...
-    TG_Max_Ballast = MEM_BALLAST;
-
-  #ifndef NDEBUG
-    const char *env_recycle_torture = getenv("R3_RECYCLE_TORTURE");
-    if (env_recycle_torture and atoi(env_recycle_torture) != 0)
-        TG_Ballast = 0;
-
-    if (TG_Ballast == 0) {
-        printf(
-            "**\n" \
-            "** R3_RECYCLE_TORTURE is nonzero in environment variable!\n" \
-            "** (or TG_Ballast is set to 0 manually in the init code)\n" \
-            "** Recycling on EVERY evaluator step, *EXTREMELY* SLOW!...\n" \
-            "** Useful in finding bugs before you can run RECYCLE/TORTURE\n" \
-            "** But you might only want to do this with -O2 debug builds.\n"
-            "**\n"
-        );
-        fflush(stdout);
-     }
-  #endif
-
-    // The thrown arg is not intended to ever be around long enough to be
-    // seen by the GC.
-    //
-    assert(Is_Cell_Erased(&TG_Thrown_Arg));
-    assert(Is_Cell_Erased(&TG_Thrown_Label));
-
-    assert(TG_Unwind_Level == nullptr);
-}
-
-
 #if !defined(NDEBUG)
     //
     // The C language initializes global variables to zero:
@@ -784,28 +728,18 @@ void Startup_Core(void)
     fail ("early fail test"); // same as panic (crash)
   #endif
 
-  #if DEBUG_ENABLE_ALWAYS_MALLOC
-    PG_Always_Malloc = false;
-  #endif
-
   #if DEBUG_HAS_PROBE
     PG_Probe_Failures = false;
   #endif
 
     // Globals
     PG_Boot_Phase = BOOT_START;
-    PG_Boot_Level = BOOT_LEVEL_FULL;
-    PG_Mem_Usage = 0;
-    PG_Mem_Limit = 0;
-    Reb_Opts = TRY_ALLOC(REB_OPTS);
-    memset(Reb_Opts, 0, sizeof(REB_OPTS));
-    TG_Jump_List = nullptr;
 
     Check_Basics();
 
 //=//// INITIALIZE MEMORY AND ALLOCATORS //////////////////////////////////=//
 
-    Startup_Signals();
+    Startup_Signals();  // allocation can set signal flags for recycle/etc.
 
     Startup_Pools(0);  // performs allocation, calls SET_SIGNAL()
     Startup_GC();
@@ -833,7 +767,7 @@ void Startup_Core(void)
     Startup_Mold(MIN_COMMON / 4);
 
     Startup_Data_Stack(STACK_MIN / 4);
-    Startup_Level_Stack();  // uses Canon() in File_Of_Level() currently
+    Startup_Trampoline();  // uses Canon() in File_Of_Level() currently
 
     Startup_Api();
 
@@ -851,7 +785,7 @@ void Startup_Core(void)
 
     Init_Root_Vars();    // Special REBOL values per program
 
-    Init_Action_Spec_Tags(); // Note: uses MOLD_BUF, not available until here
+    Init_Action_Spec_Tags();  // Note: requires mold buffer be initialized
 
 //=//// CREATE SYSTEM MODULES //////////////////////////////////////////////=//
 
@@ -1147,7 +1081,7 @@ void Startup_Core(void)
 //
 void Shutdown_Core(bool clean)
 {
-    assert(TG_Jump_List == nullptr);
+    assert(g_ts.jump_list == nullptr);
 
     // Shutting down extensions is currently considered semantically mandatory,
     // as it may flush writes to files (filesystem extension) or do other
@@ -1192,7 +1126,7 @@ void Shutdown_Core(bool clean)
 
     Shutdown_Feeds();
 
-    Shutdown_Level_Stack();  // all API calls (e.g. rebRelease()) before this
+    Shutdown_Trampoline();  // all API calls (e.g. rebRelease()) before this
     Shutdown_Api();
 
 //=//// ALL MANAGED SERIES MUST HAVE THE KEEPALIVE REFERENCES GONE NOW ////=//
@@ -1200,9 +1134,9 @@ void Shutdown_Core(bool clean)
     const bool shutdown = true;  // go ahead and free all managed series
     Recycle_Core(shutdown, nullptr);
 
-    assert(Is_Cell_Erased(&TG_Thrown_Arg));
-    assert(Is_Cell_Erased(&TG_Thrown_Label));
-    assert(TG_Unwind_Level == nullptr);
+    assert(Is_Cell_Erased(&g_ts.thrown_arg));
+    assert(Is_Cell_Erased(&g_ts.thrown_label));
+    assert(g_ts.unwind_level == nullptr);
 
     Shutdown_Mold();
     Shutdown_Collector();
@@ -1219,8 +1153,6 @@ void Shutdown_Core(bool clean)
     Shutdown_GC();
 
     Shutdown_Empty_Arrays();  // should have been freed.
-
-    FREE(REB_OPTS, Reb_Opts);
 
     // Shutting down the memory manager must be done after all the Free_Mem
     // calls have been made to balance their Alloc_Mem calls.

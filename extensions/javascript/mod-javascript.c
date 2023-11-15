@@ -1126,7 +1126,7 @@ DECLARE_NATIVE(js_stacklimit)
     StackIndex base = TOP_INDEX;
 
     Init_Integer(PUSH(), cast(uintptr_t, &base));  // local pointer
-    Init_Integer(PUSH(), TG_Stack_Limit);
+    Init_Integer(PUSH(), g_ts.C_stack_address_limit);
     return Init_Block(OUT, Pop_Stack_Values(base));
 }
 

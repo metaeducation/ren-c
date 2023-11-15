@@ -50,21 +50,21 @@
 //
 //  Do_Signals_Throws: C
 //
-// !!! R3-Alpha's evaluator loop had a countdown (Eval_Countdown) which was
+// !!! R3-Alpha's evaluator loop had a countdown (eval_countdown) which was
 // decremented on every step.  When this counter reached zero, it would call
 // this routine to process any "signals"...which could be requests for
 // garbage collection, network-related, Ctrl-C being hit, etc.
 //
-// It also would check the Eval_Signals mask to see if it was non-zero on
+// It also would check the eval_signals mask to see if it was non-zero on
 // every step.  If it was, then it would always call this routine--regardless
-// of the Eval_Countdown.
+// of the eval_countdown.
 //
 // While a broader review of how signals would work in Ren-C is pending, it
-// seems best to avoid checking two things each step.  So only the Eval_Countdown
-// is checked, and places that set Eval_Signals set it to 1...to have the
-// same effect as if it were being checked.  Then if the Eval_Signals are
-// not cleared by the end of this routine, it resets the Eval_Countdown to 1
-// rather than giving it the full EVAL_DOSE of counts until next call.
+// seems best to avoid checking two things each step.  So only eval_countdown
+// is checked, and places that set eval_signals set eval_countdown it to 1.
+// Then if the eval_signals are not cleared by the end of this routine,
+// it resets the eval_countdown to 1 rather than giving it the full
+// EVAL_DOSE of counts until next call.  Same outcome, but cheaper.
 //
 // Currently the ability of a signal to THROW comes from the processing of
 // breakpoints.  The RESUME instruction is able to execute code with /DO,
@@ -72,20 +72,20 @@
 //
 bool Do_Signals_Throws(Level(*) level_)
 {
-    if (Eval_Countdown >= 0) {  // natural countdown or invocation
+    if (g_ts.eval_countdown >= 0) {  // natural countdown or invocation
         //
         // Periodic reconciliation of total evaluation cycles.  Avoids needing
-        // to touch *both* Eval_Countdown and Total_Eval_Cycles on every eval.
+        // to touch *both* eval_countdown and total_eval_cycles on every eval.
         //
-        Total_Eval_Cycles += Eval_Dose - Eval_Countdown;
+        g_ts.total_eval_cycles += g_ts.eval_dose - g_ts.eval_countdown;
     }
-    else if (Eval_Countdown == -2) {
+    else if (g_ts.eval_countdown == -2) {
         //
         // SET_SIGNAL() sets the countdown to -1, which then reaches -2 on
         // a tick of the evaluator.  We *only* add that one tick, because
         // reconciliation was already performed.
         //
-        ++Total_Eval_Cycles;
+        ++g_ts.total_eval_cycles;
     }
     else {
         // This means SET_SIGNAL() ran, and Do_Signals_Throws() was called
@@ -93,14 +93,14 @@ bool Do_Signals_Throws(Level(*) level_)
         // call in Prin_OS_String at time of writing.  There's no tick that
         // needs accounting for in this case.
         //
-        assert(Eval_Countdown == -1);
+        assert(g_ts.eval_countdown == -1);
     }
 
   #if !defined(NDEBUG)
-    assert(Total_Eval_Cycles == Total_Eval_Cycles_Doublecheck);
+    assert(g_ts.total_eval_cycles == g_ts.total_eval_cycles_check);
   #endif
 
-    Eval_Countdown = Eval_Dose;
+    g_ts.eval_countdown = g_ts.eval_dose;
 
     bool thrown = false;
 
@@ -108,9 +108,9 @@ bool Do_Signals_Throws(Level(*) level_)
     // signals.  It defaults to ALL_BITS, but during signal processing
     // itself, the mask is set to 0 to avoid recursion.
     //
-    Flags filtered_sigs = Eval_Signals & Eval_Sigmask;
-    Flags saved_sigmask = Eval_Sigmask;
-    Eval_Sigmask = 0;
+    Flags filtered_sigs = g_ts.eval_signals & g_ts.eval_sigmask;
+    Flags saved_sigmask = g_ts.eval_sigmask;
+    g_ts.eval_sigmask = 0;
 
     // "Be careful of signal loops! EG: do not PRINT from here."
 
@@ -123,11 +123,11 @@ bool Do_Signals_Throws(Level(*) level_)
         //
         // Early in the booting process, it's not possible to handle Ctrl-C.
         //
-        if (TG_Jump_List == nullptr)
+        if (g_ts.jump_list == nullptr)
             panic ("Ctrl-C or other HALT signal with no trap to process it");
 
         CLR_SIGNAL(SIG_HALT);
-        Eval_Sigmask = saved_sigmask;
+        g_ts.eval_sigmask = saved_sigmask;
 
         Init_Thrown_With_Label(LEVEL, Lib(NULL), Lib(HALT));
         return true; // thrown
@@ -145,7 +145,7 @@ bool Do_Signals_Throws(Level(*) level_)
         // if the garbage collector and such are going to run during this
         // execution, the signal mask has to be turned back on.  Review.
         //
-        Eval_Sigmask = saved_sigmask;
+        g_ts.eval_sigmask = saved_sigmask;
 
         // !!! If implemented, this would allow triggering a breakpoint
         // with a keypress.  This needs to be thought out a bit more,
@@ -154,6 +154,6 @@ bool Do_Signals_Throws(Level(*) level_)
         fail ("BREAKPOINT from SIG_INTERRUPT not currently implemented");
     }
 
-    Eval_Sigmask = saved_sigmask;
+    g_ts.eval_sigmask = saved_sigmask;
     return thrown;
 }

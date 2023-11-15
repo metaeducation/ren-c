@@ -126,7 +126,7 @@ Bounce Macro_Dispatcher(Level(*) const L)
         if (
             IS_FRAME(label)  // catch UNWIND here, see [2]
             and VAL_ACTION(label) == VAL_ACTION(Lib(UNWIND))
-            and TG_Unwind_Level == L
+            and g_ts.unwind_level == L
         ){
             CATCH_THROWN(SPARE, L);  // preserves CELL_FLAG_UNEVALUATED
         }

@@ -69,12 +69,12 @@
             if (TG_tick < INTPTR_MAX)  /* avoid rollover (may be 32-bit!) */ \
                 ++TG_tick; \
             if ( \
-                TG_break_at_tick != 0 and TG_tick >= TG_break_at_tick \
+                g_break_at_tick != 0 and TG_tick >= g_break_at_tick \
             ){ \
                 printf("BREAKING AT TICK %u\n", cast(unsigned int, TG_tick)); \
                 Dump_Level_Location((v), level_); \
                 debug_break();  /* see %debug_break.h */ \
-                TG_break_at_tick = 0; \
+                g_break_at_tick = 0; \
             } \
         } while (false)  // macro so that breakpoint is at right stack level!
 #else

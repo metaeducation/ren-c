@@ -20,12 +20,21 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// A SYM refers to one of the built-in words and can be used in C switch
-// statements.  A canon STR is used to identify everything else.
+// In Ren-C, words are Symbol series (String subtype).  They may be GC'd
+// (unless they are in the %words.r list, in which case their canon forms are
+// protected in order to do SYM_XXX switch statements in the C source, etc.)
+//
+// There is a global hash table which accelerates finding a word's Symbol
+// stub from a UTF-8 source string.  Entries are added to it when new canon
+// forms of words are created, and removed when they are GC'd.  It is scaled
+// according to the total number of canons in the system.
+//
+// A SymId refers to one of the built-in words and can be used in C switch
+// statements.  A canon Symbol is used to identify everything else.
 //
 // R3-Alpha's concept was that all words got persistent integer values, which
 // prevented garbage collection.  Ren-C only gives built-in words integer
-// values--or SYMIDs--while others must be compared by pointers to their
+// values--or SymIds--while others must be compared by pointers to their
 // name or canon-name pointers.  A non-built-in symbol will return SYM_0 as
 // its symbol ID, allowing it to fall through to defaults in case statements.
 //
@@ -97,7 +106,7 @@ inline static Option(SymId) ID_OF_SYMBOL(Symbol(const*) s)
 inline static Symbol(const*) Canon_Symbol(SymId symid) {
     assert(cast(REBLEN, symid) != 0);
     assert(cast(REBLEN, symid) < ALL_SYMS_MAX);
-    return &PG_Symbol_Canons[symid];
+    return &g_symbols.builtin_canons[symid];
 }
 
 #define Canon(name) \

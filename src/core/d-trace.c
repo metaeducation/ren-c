@@ -20,7 +20,7 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// TRACE is functionality that was in R3-Alpha for doing low-level tracing.
+// TRACE was functionality that was in R3-Alpha for doing low-level tracing.
 // It could be turned on with `trace on` and off with `trace off`.  While
 // it was on, it would print out information about the current execution step.
 //
@@ -30,51 +30,22 @@
 // evaluator from within.
 //
 // A lower-level trace facility may still be interesting even then, for
-// "debugging the debugger".  Either way, the feature is fully decoupled from
-// %c-eval.c, and the system could be compiled without it (or it could be
-// done as an extension).
+// "debugging the debugger".
+//
+// The redesign of the evaluator to be based around a "trampoline" and to
+// operate stacklessly requires a complete rewrite of the trace facility.
+// While that work has not been done, an example of how powerful the new
+// hooking mechanisms are can be seen in this demo of a GUI debugger for
+// PARSE running in a web browser:
+//
+// https://forum.rebol.info/t/visualizing-parse/1639/8
+//
+// So the fundamentals are in place, but it just needs some shaping up and
+// attention given.  (Essentially, the evaluator needs to expose some kind of
+// parallel interface for hooking "evaluations" instead of combinators.)
 //
 
 #include "sys-core.h"
-
-
-//
-//  Trace_Value: C
-//
-void Trace_Value(
-    const char* label, // currently "match" or "input"
-    Cell(const*) value
-){
-    // !!! The way the parse code is currently organized, the value passed
-    // in is a relative value.  It would take some changing to get a specific
-    // value, but that's needed by the API.  Molding can be done on just a
-    // relative value, however.
-
-    DECLARE_MOLD (mo);
-    Push_Mold(mo);
-    Mold_Value(mo, value);
-
-    DECLARE_LOCAL (molded);
-    Init_Text(molded, Pop_Molded_String(mo));
-    PUSH_GC_GUARD(molded);
-
-    rebElide("print [",
-        "{Parse}", rebT(label), "{:}", molded,
-    "]");
-
-    DROP_GC_GUARD(molded);
-}
-
-
-//
-//  Trace_Parse_Input: C
-//
-void Trace_Parse_Input(const REBVAL *str)
-{
-    rebElide("print [",
-        "{Parse input:} mold/limit", str, "60"
-    "]");
-}
 
 
 //
@@ -96,19 +67,11 @@ DECLARE_NATIVE(trace)
 // of it after the fact.  This makes more sense as a usermode feature, where
 // the backtrace is stored structurally, vs trying to implement in C.
 //
-// Currently TRACE only applies to PARSE.
 {
     INCLUDE_PARAMS_OF_TRACE;
 
-    REBVAL *mode = ARG(mode);
-
-    // Set the trace level:
-    if (IS_LOGIC(mode))
-        Trace_Level = VAL_LOGIC(mode) ? 100000 : 0;
-    else
-        Trace_Level = Int32(mode);
-
+    UNUSED(ARG(mode));
     UNUSED(ARG(function));
 
-    return nullptr;
+    fail ("TRACE is being redesigned in light of Trampolines/Stackless");
 }

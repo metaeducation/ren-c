@@ -231,10 +231,10 @@ void Init_Evars(EVARS *e, NoQuote(Cell(const*)) v) {
 
         StackIndex base = TOP_INDEX;
 
-        Symbol(*) *psym = Series_Head(Symbol(*), PG_Symbols_By_Hash);
-        Symbol(*) *psym_tail = Series_Tail(Symbol(*), PG_Symbols_By_Hash);
+        Symbol(*) *psym = Series_Head(Symbol(*), g_symbols.by_hash);
+        Symbol(*) *psym_tail = Series_Tail(Symbol(*), g_symbols.by_hash);
         for (; psym != psym_tail; ++psym) {
-            if (*psym == nullptr or *psym == &PG_Deleted_Symbol)
+            if (*psym == nullptr or *psym == &g_symbols.deleted_symbol)
                 continue;
 
             Series(*) patch = MISC(Hitch, *psym);
@@ -842,10 +842,10 @@ Context(*) Copy_Context_Extra_Managed(
         Context(*) copy = CTX(varlist); // now a well-formed context
         assert(Get_Series_Flag(varlist, DYNAMIC));
 
-        Symbol(*) *psym = Series_Head(Symbol(*), PG_Symbols_By_Hash);
-        Symbol(*) *psym_tail = Series_Tail(Symbol(*), PG_Symbols_By_Hash);
+        Symbol(*) *psym = Series_Head(Symbol(*), g_symbols.by_hash);
+        Symbol(*) *psym_tail = Series_Tail(Symbol(*), g_symbols.by_hash);
         for (; psym != psym_tail; ++psym) {
-            if (*psym == nullptr or *psym == &PG_Deleted_Symbol)
+            if (*psym == nullptr or *psym == &g_symbols.deleted_symbol)
                 continue;
 
             Series(*) patch = MISC(Hitch, *psym);
@@ -936,7 +936,7 @@ void MF_Context(REB_MOLD *mo, NoQuote(Cell(const*)) v, bool form)
 
     // Prevent endless mold loop:
     //
-    if (Find_Pointer_In_Series(TG_Mold_Stack, c) != NOT_FOUND) {
+    if (Find_Pointer_In_Series(g_mold.stack, c) != NOT_FOUND) {
         if (not form) {
             Pre_Mold(mo, v); // If molding, get #[object! etc.
             Append_Codepoint(s, '[');
@@ -949,13 +949,13 @@ void MF_Context(REB_MOLD *mo, NoQuote(Cell(const*)) v, bool form)
         }
         return;
     }
-    Push_Pointer_To_Series(TG_Mold_Stack, c);
+    Push_Pointer_To_Series(g_mold.stack, c);
 
     if (CELL_HEART(v) == REB_FRAME and not IS_FRAME_PHASED(v)) {
         Array(*) varlist = CTX_VARLIST(VAL_CONTEXT(v));
         if (Get_Subclass_Flag(VARLIST, varlist, FRAME_HAS_BEEN_INVOKED)) {
             Append_Ascii(s, "make frame! [...invoked frame...]\n");
-            Drop_Pointer_From_Series(TG_Mold_Stack, c);
+            Drop_Pointer_From_Series(g_mold.stack, c);
             return;
         }
     }
@@ -991,7 +991,7 @@ void MF_Context(REB_MOLD *mo, NoQuote(Cell(const*)) v, bool form)
         if (had_output)
             Trim_Tail(mo, '\n');
 
-        Drop_Pointer_From_Series(TG_Mold_Stack, c);
+        Drop_Pointer_From_Series(g_mold.stack, c);
         return;
     }
 
@@ -1047,7 +1047,7 @@ void MF_Context(REB_MOLD *mo, NoQuote(Cell(const*)) v, bool form)
 
     End_Mold(mo);
 
-    Drop_Pointer_From_Series(TG_Mold_Stack, c);
+    Drop_Pointer_From_Series(g_mold.stack, c);
 }
 
 

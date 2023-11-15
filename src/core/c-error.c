@@ -154,7 +154,7 @@ ATTRIBUTE_NO_RETURN void Fail_Core(const void *p)
     // Set_Location_Of_Error() uses stack, so this has to be done first, else
     // the PUSH() will warn that there is stack outstanding.
     //
-    TG_Stack_Outstanding = 0;
+    g_ds.num_refs_extant = 0;
   #endif
 
     // If the error doesn't have a where/near set, set it from stack.  Do
@@ -197,14 +197,14 @@ ATTRIBUTE_NO_RETURN void Fail_Core(const void *p)
     // There should be a PUSH_TRAP of some kind in effect if a `fail` can
     // ever be run.
     //
-    if (TG_Jump_List == nullptr)
+    if (g_ts.jump_list == nullptr)
         panic (error);
 
     // If a throw was being processed up the stack when the error was raised,
     // then it had the thrown argument set.
     //
-    Erase_Cell(&TG_Thrown_Arg);
-    Erase_Cell(&TG_Thrown_Label);
+    Erase_Cell(&g_ts.thrown_arg);
+    Erase_Cell(&g_ts.thrown_label);
 
   #if REBOL_FAIL_JUST_ABORTS
     panic (nullptr);  // all branches need to do something, this never happens
@@ -219,8 +219,8 @@ ATTRIBUTE_NO_RETURN void Fail_Core(const void *p)
     //
     //  http://en.cppreference.com/w/c/program/longjmp
 
-    TG_Jump_List->error = error;  // longjmp() argument too small for pointer
-    LONG_JUMP(TG_Jump_List->cpu_state, 1);  // 1 so setjmp() returns nonzero
+    g_ts.jump_list->error = error;  // longjmp() argument too small for pointer
+    LONG_JUMP(g_ts.jump_list->cpu_state, 1);  // 1 so setjmp() returns nonzero
   #endif
 }
 

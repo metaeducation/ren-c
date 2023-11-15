@@ -890,11 +890,11 @@ static bool Run_Va_Throws(
     // the intereter will be okay, it's like any line in your program could
     // have half-run.  Review a holistic answer.
     //
-    Flags saved_sigmask = Eval_Sigmask;
+    Flags saved_sigmask = g_ts.eval_sigmask;
     if (interruptible)
-        Eval_Sigmask |= SIG_HALT;  // enable
+        g_ts.eval_sigmask |= SIG_HALT;  // enable
     else
-        Eval_Sigmask &= ~SIG_HALT;  // disable
+        g_ts.eval_sigmask &= ~SIG_HALT;  // disable
 
     Feed(*) feed = Make_Variadic_Feed(
         p, vaptr,
@@ -914,7 +914,7 @@ static bool Run_Va_Throws(
         assert(QUOTE_BYTE(out) >= QUASI_2);
 
     // (see also Reb_State->saved_sigmask RE: if a longjmp happens)
-    Eval_Sigmask = saved_sigmask;
+    g_ts.eval_sigmask = saved_sigmask;
 
     return threw;
 }

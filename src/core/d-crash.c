@@ -63,7 +63,7 @@ ATTRIBUTE_NO_RETURN void Panic_Core(
     const char *file, // UTF8
     int line
 ){
-    GC_Disabled = true;  // crashing is a legitimate reason to disable the GC
+    g_gc.disabled = true;  // crashing is a legitimate reason to disable the GC
 
   #if DEBUG_FANCY_PANIC
     printf("C Source File %s, Line %d, Pointer %p\n", file, line, p);

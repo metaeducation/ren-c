@@ -59,7 +59,7 @@
     // This may be worked around by making sure all the types used in that
     // file are present in %reb-defs.h ... review.
     //
-    extern Tick TG_break_at_tick;
+    extern Tick g_break_at_tick;
 #endif
 
 #if DEBUG_COUNT_TICKS

@@ -199,8 +199,8 @@ void* Probe_Core_Debug(
     DECLARE_MOLD (mo);
     Push_Mold(mo);
 
-    bool was_disabled = GC_Disabled;
-    GC_Disabled = true;
+    bool was_disabled = g_gc.disabled;
+    g_gc.disabled = true;
 
     if (not p) {
         Probe_Print_Helper(p, expr, "C nullptr", file, line);
@@ -415,8 +415,8 @@ void* Probe_Core_Debug(
 
     Drop_Mold(mo);
 
-    assert(GC_Disabled);
-    GC_Disabled = was_disabled;
+    assert(g_gc.disabled);
+    g_gc.disabled = was_disabled;
 
     return m_cast(void*, p); // must be cast back to const if source was const
 }

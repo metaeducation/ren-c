@@ -83,18 +83,18 @@ void Dump_Info(void)
     printf("^/--REBOL Kernel Dump--\n");
 
     printf("Evaluator:\n");
-    printf("    Cycles:  %ld\n", cast(unsigned long, Total_Eval_Cycles));
-    printf("    Counter: %d\n", cast(int, Eval_Countdown));
-    printf("    Dose:    %d\n", cast(int, Eval_Dose));
-    printf("    Signals: %lx\n", cast(unsigned long, Eval_Signals));
-    printf("    Sigmask: %lx\n", cast(unsigned long, Eval_Sigmask));
+    printf("    Cycles:  %ld\n", cast(unsigned long, g_ts.total_eval_cycles));
+    printf("    Counter: %d\n", cast(int, g_ts.eval_countdown));
+    printf("    Dose:    %d\n", cast(int, g_ts.eval_dose));
+    printf("    Signals: %lx\n", cast(unsigned long, g_ts.eval_signals));
+    printf("    Sigmask: %lx\n", cast(unsigned long, g_ts.eval_sigmask));
     printf("    TOP_INDEX: %ld\n", cast(unsigned long, TOP_INDEX));
 
     printf("Memory/GC:\n");
 
-    printf("    Ballast: %d\n", cast(int, GC_Ballast));
-    printf("    Disable: %s\n", GC_Disabled ? "yes" : "no");
-    printf("    Guarded Nodes: %d\n", cast(int, Series_Used(GC_Guarded)));
+    printf("    Ballast: %d\n", cast(int, g_gc.depletion));
+    printf("    Disable: %s\n", g_gc.disabled ? "yes" : "no");
+    printf("    Guarded Nodes: %d\n", cast(int, Series_Used(g_gc.guarded)));
     fflush(stdout);
 }
 

@@ -373,8 +373,8 @@ DECLARE_NATIVE(console)
     // decide whether to accept the cancellation or consider it an error
     // condition or a reason to fall back to the default skin).
     //
-    assert(not (Eval_Sigmask & SIG_HALT));
-    Eval_Sigmask |= SIG_HALT;  // tell Trampoline to throw evaluator on halts
+    assert(not (g_ts.eval_sigmask & SIG_HALT));
+    g_ts.eval_sigmask |= SIG_HALT;  // tell Trampoline to throw evaluator on halts
     Enable_Halting();  // add hook that will call rebHalt() on Ctrl-C
 
     // DON'T ADD ANY MORE LIBREBOL CODE HERE.  If this is a user-requested
@@ -402,7 +402,7 @@ DECLARE_NATIVE(console)
 
 } request_result_in_out: {  //////////////////////////////////////////////////
 
-    Eval_Sigmask &= ~SIG_HALT;  // tell Trampoline not to halt on evals
+    g_ts.eval_sigmask &= ~SIG_HALT;  // tell Trampoline not to halt on evals
     Disable_Halting();  // remove hook that calls rebHalt() on Ctrl-C
 
     if (THROWING)

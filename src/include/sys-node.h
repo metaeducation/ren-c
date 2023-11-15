@@ -124,21 +124,21 @@
 //
 inline static void *Try_Alloc_Pooled(PoolId pool_id)
 {
-    Pool* pool = &Mem_Pools[pool_id];
+    Pool* pool = &g_mem.pools[pool_id];
     if (not pool->first) {  // pool has run out of nodes
         if (not Try_Fill_Pool(pool))  // attempt to refill it
             return nullptr;
     }
 
   #if !defined(NDEBUG)
-    if (PG_Fuzz_Factor != 0) {
-        if (PG_Fuzz_Factor < 0) {
-            ++PG_Fuzz_Factor;
-            if (PG_Fuzz_Factor == 0)
+    if (g_mem.fuzz_factor != 0) {
+        if (g_mem.fuzz_factor < 0) {
+            ++g_mem.fuzz_factor;
+            if (g_mem.fuzz_factor == 0)
                 return nullptr;
         }
-        else if ((TG_tick % 10000) <= cast(REBLEN, PG_Fuzz_Factor)) {
-            PG_Fuzz_Factor = 0;
+        else if ((TG_tick % 10000) <= cast(REBLEN, g_mem.fuzz_factor)) {
+            g_mem.fuzz_factor = 0;
             return nullptr;
         }
     }
@@ -181,12 +181,12 @@ inline static void *Alloc_Pooled(PoolId pool_id) {
     if (node)
         return node;
 
-    Pool* pool = &Mem_Pools[pool_id];
+    Pool* pool = &g_mem.pools[pool_id];
     fail (Error_No_Memory(pool->wide * pool->num_units_per_segment));
 }
 
 #define Alloc_Stub() ( \
-    (GC_Ballast -= sizeof(Stub)) <= 0 ? SET_SIGNAL(SIG_RECYCLE) : NOOP, \
+    (g_gc.depletion -= sizeof(Stub)) <= 0 ? SET_SIGNAL(SIG_RECYCLE) : NOOP, \
     Alloc_Pooled(STUB_POOL))  // won't pass SER() yet, don't cast it
 
 
@@ -197,7 +197,7 @@ inline static void *Alloc_Pooled(PoolId pool_id) {
 inline static void Free_Pooled(PoolId pool_id, void* p)
 {
   #if DEBUG_MONITOR_SERIES
-    if (p == PG_Monitor_Node_Debug) {
+    if (p == g_mem.monitor_node) {
         printf(
             "Freeing series %p on tick #%d\n", p,
             cast(int, TG_tick)
@@ -210,7 +210,7 @@ inline static void Free_Pooled(PoolId pool_id, void* p)
 
     mutable_FIRST_BYTE(unit->headspot) = FREED_SERIES_BYTE;
 
-    Pool* pool = &Mem_Pools[pool_id];
+    Pool* pool = &g_mem.pools[pool_id];
 
   #ifdef NDEBUG
     unit->next_if_free = pool->first;

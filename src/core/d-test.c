@@ -167,7 +167,7 @@ DECLARE_NATIVE(fuzz)
     fail ("FUZZ is only availble in DEBUG builds");
   #else
     if (IS_INTEGER(ARG(factor))) {
-        PG_Fuzz_Factor = - VAL_INT32(ARG(factor));  // negative counts ticks
+        g_mem.fuzz_factor = - VAL_INT32(ARG(factor));  // negative counts ticks
     }
     else {
         // Positive number is used with SPORADICALLY(10000) as the number
@@ -176,7 +176,7 @@ DECLARE_NATIVE(fuzz)
         // 0.0 is thus 0, which never will.
         //
         assert(IS_PERCENT(ARG(factor)));
-        PG_Fuzz_Factor = 10000 * VAL_DECIMAL(ARG(factor));
+        g_mem.fuzz_factor = 10000 * VAL_DECIMAL(ARG(factor));
     }
     return NONE;
   #endif

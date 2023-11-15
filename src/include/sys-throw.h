@@ -63,23 +63,23 @@
 
 inline static Value(const*) VAL_THROWN_LABEL(Level(*) level_) {
     UNUSED(level_);
-    assert(not Is_Cell_Erased(&TG_Thrown_Label));
-    return &TG_Thrown_Label;
+    assert(not Is_Cell_Erased(&g_ts.thrown_label));
+    return &g_ts.thrown_label;
 }
 
-inline static Bounce Init_Thrown_With_Label(  // assumes `arg` in TG_Thrown_Arg
+inline static Bounce Init_Thrown_With_Label(  // assumes `arg` in g_ts.thrown_arg
     Level(*) level_,
     Atom(const*) arg,
     const REBVAL *label  // Note: is allowed to be same as `out`
 ){
     assert(not THROWING);
 
-    assert(Is_Cell_Erased(&TG_Thrown_Arg));
-    Copy_Cell(&TG_Thrown_Arg, arg);
+    assert(Is_Cell_Erased(&g_ts.thrown_arg));
+    Copy_Cell(&g_ts.thrown_arg, arg);
 
-    assert(Is_Cell_Erased(&TG_Thrown_Label));
-    Copy_Cell(&TG_Thrown_Label, label);
-    Deactivate_If_Activation(&TG_Thrown_Label);
+    assert(Is_Cell_Erased(&g_ts.thrown_label));
+    Copy_Cell(&g_ts.thrown_label, label);
+    Deactivate_If_Activation(&g_ts.thrown_label);
 
     assert(THROWING);
 
@@ -102,14 +102,14 @@ inline static void CATCH_THROWN(
 
     assert(THROWING);
 
-    Copy_Cell(arg_out, &TG_Thrown_Arg);
+    Copy_Cell(arg_out, &g_ts.thrown_arg);
 
-    Erase_Cell(&TG_Thrown_Arg);
-    Erase_Cell(&TG_Thrown_Label);
+    Erase_Cell(&g_ts.thrown_arg);
+    Erase_Cell(&g_ts.thrown_label);
 
     assert(not THROWING);
 
-    TG_Unwind_Level = nullptr;
+    g_ts.unwind_level = nullptr;
 }
 
 

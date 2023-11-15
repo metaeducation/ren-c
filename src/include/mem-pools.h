@@ -105,6 +105,15 @@ typedef struct PoolStruct {
 #define MEM_MIN_SIZE sizeof(CellT)
 #define MEM_BIG_SIZE 1024
 
+#define POOLS_BY_SIZE_LEN ((4 * MEM_BIG_SIZE) + 1)
+
+// The ballast is how much memory the garbage collector will allow to be used
+// up before it decides to trigger a GC.  This is the default value it is
+// primed to, and it keeps track of the remaining amount in `m_gc.depletion`.
+//
+// !!! Choosing this amount dynamically based on the system is probably
+// wiser, but there's a lot of work the naive mark-and-sweep GC needs.
+//
 #define MEM_BALLAST 3000000
 
 typedef signed int PoolId;  // used with UNLIMITED (-1)

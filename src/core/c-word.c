@@ -111,11 +111,17 @@ REBINT Get_Hash_Prime_May_Fail(REBLEN minimum)
 //
 // http://stackoverflow.com/a/279812/211160
 //
-// Since it's not enough to simply NULL out the spot when an interned string
+// "For linear probing, Knuth suggests that a simple approach is to have a
+//  way to mark a slot as empty, deleted, or occupied. Mark a removed occupant
+//  slot as deleted so that overflow by linear probing will skip past it, but
+//  if an insertion is needed, you can fill the first deleted slot that you
+//  passed over.  This assumes that deletions are rather rare."
+//
+// Since it's not enough make the spot nullptr when an interned string
 // is GC'd, a special pointer signaling "deletedness" is used.  It does not
 // cause a linear probe to terminate, but it is reused on insertions.
 //
-#define DELETED_SYMBOL &PG_Deleted_Symbol
+#define DELETED_SYMBOL &g_symbols.deleted_symbol
 
 
 //
@@ -130,11 +136,14 @@ static void Expand_Word_Table(void)
     // The only full list of symbol words available is the old hash table.
     // Hold onto it while creating the new hash table.
 
-    REBLEN old_num_slots = Series_Used(PG_Symbols_By_Hash);
-    Symbol(*) *old_symbols_by_hash = Series_Head(Symbol(*), PG_Symbols_By_Hash);
+    REBLEN old_num_slots = Series_Used(g_symbols.by_hash);
+    Symbol(*) *old_symbols_by_hash = Series_Head(
+        Symbol(*),
+        g_symbols.by_hash
+    );
 
     REBLEN num_slots = Get_Hash_Prime_May_Fail(old_num_slots + 1);
-    assert(Series_Wide(PG_Symbols_By_Hash) == sizeof(Symbol(*)));
+    assert(Series_Wide(g_symbols.by_hash) == sizeof(Symbol(*)));
 
     Series(*) ser = Make_Series_Core(
         num_slots, FLAG_FLAVOR(CANONTABLE) | SERIES_FLAG_POWER_OF_2
@@ -153,9 +162,9 @@ static void Expand_Word_Table(void)
             continue;
 
         if (symbol == DELETED_SYMBOL) {  // clean out deleted symbol entries
-            --PG_Num_Symbol_Slots_In_Use;
+            g_symbols.num_slots_in_use -= 1;
           #if !defined(NDEBUG)
-            --PG_Num_Symbol_Deleteds;  // keep track for shutdown assert
+            g_symbols.num_deleteds -= 1;  // keep track for shutdown assert
           #endif
             continue;
         }
@@ -175,8 +184,8 @@ static void Expand_Word_Table(void)
         new_symbols_by_hash[slot] = symbol;
     }
 
-    Free_Unmanaged_Series(PG_Symbols_By_Hash);
-    PG_Symbols_By_Hash = ser;
+    Free_Unmanaged_Series(g_symbols.by_hash);
+    g_symbols.by_hash = ser;
 }
 
 
@@ -213,13 +222,13 @@ Symbol(const*) Intern_UTF8_Managed_Core(
     // actually kept larger than that, but to be on the right side of theory,
     // the table is always checked for expansion needs *before* the search.)
     //
-    REBLEN num_slots = Series_Used(PG_Symbols_By_Hash);
-    if (PG_Num_Symbol_Slots_In_Use > num_slots / 2) {
+    REBLEN num_slots = Series_Used(g_symbols.by_hash);
+    if (g_symbols.num_slots_in_use > num_slots / 2) {
         Expand_Word_Table();
-        num_slots = Series_Used(PG_Symbols_By_Hash);  // got larger
+        num_slots = Series_Used(g_symbols.by_hash);  // got larger
     }
 
-    Symbol(*) *symbols_by_hash = Series_Head(Symbol(*), PG_Symbols_By_Hash);
+    Symbol(*) *symbols_by_hash = Series_Head(Symbol(*), g_symbols.by_hash);
 
     REBLEN skip; // how many slots to skip when occupied candidates found
     REBLEN slot = First_Hash_Candidate_Slot(
@@ -379,12 +388,12 @@ Symbol(const*) Intern_UTF8_Managed_Core(
     if (deleted_slot) {
         *deleted_slot = SYM(s);  // reuse the deleted slot
       #if !defined(NDEBUG)
-        --PG_Num_Symbol_Deleteds;  // note slot usage count stays constant
+        g_symbols.num_deleteds -= 1;  // note slot usage count stays constant
       #endif
     }
     else {
         symbols_by_hash[slot] = SYM(s);
-        ++PG_Num_Symbol_Slots_In_Use;
+        ++g_symbols.num_slots_in_use;
     }
 
     return SYM(s);
@@ -448,8 +457,8 @@ void GC_Kill_Interning(String(*) intern)
     }
     node_MISC(Hitch, patch) = node_MISC(Hitch, intern);  // may be no-op
 
-    REBLEN num_slots = Series_Used(PG_Symbols_By_Hash);
-    Symbol(*) *symbols_by_hash = Series_Head(Symbol(*), PG_Symbols_By_Hash);
+    REBLEN num_slots = Series_Used(g_symbols.by_hash);
+    Symbol(*) *symbols_by_hash = Series_Head(Symbol(*), g_symbols.by_hash);
 
     REBLEN skip;
     REBLEN slot = First_Hash_Candidate_Slot(
@@ -486,7 +495,7 @@ void GC_Kill_Interning(String(*) intern)
     symbols_by_hash[previous_slot] = DELETED_SYMBOL;
 
   #if !defined(NDEBUG)
-    ++PG_Num_Symbol_Deleteds;  // total use same (PG_Num_Symbols_Or_Deleteds)
+    g_symbols.num_deleteds += 1;  // total use same (num_symbols_or_deleteds)
   #endif
 }
 
@@ -503,9 +512,9 @@ void GC_Kill_Interning(String(*) intern)
 //
 void Startup_Interning(void)
 {
-    PG_Num_Symbol_Slots_In_Use = 0;
+    g_symbols.num_slots_in_use = 0;
   #if !defined(NDEBUG)
-    PG_Num_Symbol_Deleteds = 0;
+    g_symbols.num_deleteds = 0;
   #endif
 
     // Start hash table out at a fixed size.  When collisions occur, it
@@ -526,11 +535,11 @@ void Startup_Interning(void)
     n = 1; // forces exercise of rehashing logic in debug build
   #endif
 
-    ensureNullptr(PG_Symbols_By_Hash) = Make_Series_Core(
+    ensureNullptr(g_symbols.by_hash) = Make_Series_Core(
         n, FLAG_FLAVOR(CANONTABLE) | SERIES_FLAG_POWER_OF_2
     );
-    Clear_Series(PG_Symbols_By_Hash);  // all slots start as nullptr
-    Set_Series_Len(PG_Symbols_By_Hash, n);
+    Clear_Series(g_symbols.by_hash);  // all slots start as nullptr
+    Set_Series_Len(g_symbols.by_hash, n);
 }
 
 
@@ -556,7 +565,7 @@ void Startup_Symbols(void)
     // Hence Canon(0) is illegal, to avoid `Canon(X) == Canon(Y)` being
     // true when X and Y are different symbols with no SYM_XXX id.
     //
-    PG_Symbol_Canons[SYM_0].leader.bits = SERIES_FLAG_FREE;
+    g_symbols.builtin_canons[SYM_0].leader.bits = SERIES_FLAG_FREE;
 
     SymId id = cast(SymId, cast(REBLEN, SYM_0 + 1));  // SymId for debug watch
 
@@ -571,7 +580,7 @@ void Startup_Symbols(void)
         size_t size = *at;  // length prefix byte
         ++at;
 
-        Symbol(*) canon = &PG_Symbol_Canons[id];  // pass as preallocated space
+        Symbol(*) canon = &g_symbols.builtin_canons[id];  // pass as preallocated space
         Intern_UTF8_Managed_Core(canon, at, size);
         at += size;
 
@@ -609,12 +618,12 @@ void Startup_Symbols(void)
 //
 void Shutdown_Symbols(void)
 {
-    // The Shutdown_Interning() code checks for PG_Symbols_By_Hash to be
+    // The Shutdown_Interning() code checks for g_symbols.by_hash to be
     // empty...the necessary removal happens in Decay_Series().  (Note that a
     // "dirty" shutdown--typically used--avoids all these balancing checks!)
     //
     for (REBLEN i = 1; i < ALL_SYMS_MAX; ++i) {
-        Symbol(*) canon = &PG_Symbol_Canons[i];
+        Symbol(*) canon = &g_symbols.builtin_canons[i];
         Decay_Series(canon);
     }
 }
@@ -626,7 +635,7 @@ void Shutdown_Symbols(void)
 void Shutdown_Interning(void)
 {
   #if !defined(NDEBUG)
-    if (PG_Num_Symbol_Slots_In_Use - PG_Num_Symbol_Deleteds != 0) {
+    if (g_symbols.num_slots_in_use - g_symbols.num_deleteds != 0) {
         //
         // !!! There needs to be a more user-friendly output for this,
         // and to detect if it really was an API problem or something else
@@ -635,21 +644,21 @@ void Shutdown_Interning(void)
         //
         printf(
             "!!! %d leaked canons found in shutdown\n",
-            cast(int, PG_Num_Symbol_Slots_In_Use - PG_Num_Symbol_Deleteds)
+            cast(int, g_symbols.num_slots_in_use - g_symbols.num_deleteds)
         );
         printf("!!! LIKELY rebUnmanage() without a rebRelease() in API\n");
 
         fflush(stdout);
 
         REBLEN slot;
-        for (slot = 0; slot < Series_Used(PG_Symbols_By_Hash); ++slot) {
-            Symbol(*) symbol = *Series_At(Symbol(*), PG_Symbols_By_Hash, slot);
+        for (slot = 0; slot < Series_Used(g_symbols.by_hash); ++slot) {
+            Symbol(*) symbol = *Series_At(Symbol(*), g_symbols.by_hash, slot);
             if (symbol and symbol != DELETED_SYMBOL)
                 panic (symbol);
         }
     }
   #endif
 
-    Free_Unmanaged_Series(PG_Symbols_By_Hash);
-    PG_Symbols_By_Hash = nullptr;
+    Free_Unmanaged_Series(g_symbols.by_hash);
+    g_symbols.by_hash = nullptr;
 }

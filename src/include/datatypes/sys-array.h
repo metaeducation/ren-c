@@ -243,7 +243,7 @@ inline static Array(*) Make_Array_Core_Into(
     }
 
   #if DEBUG_COLLECT_STATS
-    PG_Reb_Stats->Blocks++;
+    g_mem.blocks_made += 1;
   #endif
 
     assert(Array_Len(cast(Array(*), s)) == 0);

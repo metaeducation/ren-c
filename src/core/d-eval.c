@@ -136,7 +136,7 @@ static void Evaluator_Shared_Checks_Debug(Level(*) L)
     // equal number of times after Flip_Series_To_Black, which means that
     // the custom marker on series accumulated.
     //
-    assert(TG_Num_Black_Series == 0);
+    assert(g_mem.num_black_series == 0);
 
     // We only have a label if we are in the middle of running a function.
     //

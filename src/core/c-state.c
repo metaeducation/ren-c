@@ -33,23 +33,23 @@
 
 
 //
-//  Snap_State_Core: C
+//  Snap_State: C
 //
 // **Note:** Modifying this routine likely means a necessary modification to
 // `Assert_State_Balanced_Debug()`.
 //
-void Snap_State_Core(struct Reb_State *s)
+void Snap_State(struct Reb_State *s)
 {
     s->stack_base = TOP_INDEX;
 
-    s->guarded_len = Series_Used(GC_Guarded);
+    s->guarded_len = Series_Used(g_gc.guarded);
 
-    s->manuals_len = Series_Used(GC_Manuals);
-    s->mold_buf_len = String_Len(STR(MOLD_BUF));
-    s->mold_buf_size = String_Size(STR(MOLD_BUF));
-    s->mold_loop_tail = Series_Used(TG_Mold_Stack);
+    s->manuals_len = Series_Used(g_gc.manuals);
+    s->mold_buf_len = String_Len(g_mold.buffer);
+    s->mold_buf_size = String_Size(g_mold.buffer);
+    s->mold_loop_tail = Series_Used(g_mold.stack);
 
-    s->saved_sigmask = Eval_Sigmask;
+    s->saved_sigmask = g_ts.eval_sigmask;
 }
 
 
@@ -58,7 +58,7 @@ void Snap_State_Core(struct Reb_State *s)
 //
 // This routine is used by things like Drop_Level() when a fail occurs, to
 // automatically restore the state of globals to how they were at the time
-// the passed-in state was SNAP_STATE()'d.
+// the passed-in state was Snap_State()'d.
 //
 void Rollback_Globals_To_State(struct Reb_State *s)
 {
@@ -69,16 +69,16 @@ void Rollback_Globals_To_State(struct Reb_State *s)
     // into the managed state).  This will include the series used as backing
     // store for rebMalloc() calls.
     //
-    assert(Series_Used(GC_Manuals) >= s->manuals_len);
-    while (Series_Used(GC_Manuals) != s->manuals_len) {
+    assert(Series_Used(g_gc.manuals) >= s->manuals_len);
+    while (Series_Used(g_gc.manuals) != s->manuals_len) {
         Free_Unmanaged_Series(
-            *Series_At(Series(*), GC_Manuals, Series_Used(GC_Manuals) - 1)
-        );  // ^-- Free_Unmanaged_Series will decrement Series_Used(GC_Manuals)
+            *Series_At(Series(*), g_gc.manuals, Series_Used(g_gc.manuals) - 1)
+        );  // ^-- Free_Unmanaged_Series will decrement Series_Used(g_gc.manuals)
     }
 
-    Set_Series_Len(GC_Guarded, s->guarded_len);
+    Set_Series_Len(g_gc.guarded, s->guarded_len);
 
-    Term_String_Len_Size(STR(MOLD_BUF), s->mold_buf_len, s->mold_buf_size);
+    Term_String_Len_Size(g_mold.buffer, s->mold_buf_len, s->mold_buf_size);
 
   #if !defined(NDEBUG)
     //
@@ -87,12 +87,12 @@ void Rollback_Globals_To_State(struct Reb_State *s)
     // that does happen...and can land on the right comment.  If there's
     // a fail of some kind, the flag for the warning needs to be cleared.
     //
-    TG_Pushing_Mold = false;
+    g_mold.currently_pushing = false;
   #endif
 
-    Set_Series_Len(TG_Mold_Stack, s->mold_loop_tail);
+    Set_Series_Len(g_mold.stack, s->mold_loop_tail);
 
-    Eval_Sigmask = s->saved_sigmask;
+    g_ts.eval_sigmask = s->saved_sigmask;
 }
 
 
@@ -204,12 +204,12 @@ void Unplug_Stack(
     //
     Flags flags = FLAG_FLAVOR(PLUG);  // be agnostic, to be generic!
 
-    if (String_Size(STR(MOLD_BUF)) > base->baseline.mold_buf_size) {
+    if (String_Size(g_mold.buffer) > base->baseline.mold_buf_size) {
         flags |= PLUG_FLAG_HAS_MOLD;
         Init_Text(
             PUSH(),
             Pop_Molded_String_Core(
-                STR(MOLD_BUF),
+                g_mold.buffer,
                 base->baseline.mold_buf_size,
                 base->baseline.mold_buf_len
             )
@@ -227,7 +227,7 @@ void Unplug_Stack(
             Pop_Stack_Values_Core(base->baseline.stack_base, flags)
         );
 
-    TG_Top_Level = base;
+    g_ts.top_level = base;
 }
 
 
@@ -294,7 +294,7 @@ void Replug_Stack(Level(*) L, Level(*) base, Value(*) plug) {
         --item;
         assert(IS_TEXT(item));
         assert(VAL_INDEX(item) == 0);
-        Append_String(STR(MOLD_BUF), item);
+        Append_String(g_mold.buffer, item);
     }
 
     if (Get_Subclass_Flag(PLUG, array, HAS_DATA_STACK)) {
@@ -307,7 +307,7 @@ void Replug_Stack(Level(*) L, Level(*) base, Value(*) plug) {
 
     Init_Trash(plug);  // no longer needed, let it be GC'd
 
-    TG_Top_Level = L;  // make the jump deeper into the stack official...
+    g_ts.top_level = L;  // make the jump deeper into the stack official...
 }}
 
 
@@ -332,27 +332,27 @@ void Assert_State_Balanced_Debug(
         panic_at (nullptr, file, line);
     }
 
-    if (s->guarded_len != Series_Used(GC_Guarded)) {
+    if (s->guarded_len != Series_Used(g_gc.guarded)) {
         printf(
             "PUSH_GC_GUARD()x%d without DROP_GC_GUARD()\n",
-            cast(int, Series_Used(GC_Guarded) - s->guarded_len)
+            cast(int, Series_Used(g_gc.guarded) - s->guarded_len)
         );
         Node* guarded = *Series_At(
             Node*,
-            GC_Guarded,
-            Series_Used(GC_Guarded) - 1
+            g_gc.guarded,
+            Series_Used(g_gc.guarded) - 1
         );
         panic_at (guarded, file, line);
     }
 
-    // !!! Note that this inherits a test that uses GC_Manuals->content.xxx
+    // !!! Note that this inherits a test that uses g_gc.manuals->content.xxx
     // instead of Series_Used().  The idea being that although some series
-    // are able to fit in the series node, the GC_Manuals wouldn't ever
+    // are able to fit in the series node, the g_gc.manuals wouldn't ever
     // pay for that check because it would always be known not to.  Review
     // this in general for things that may not need "series" overhead,
     // e.g. a contiguous pointer stack.
     //
-    if (s->manuals_len > Series_Used(GC_Manuals)) {
+    if (s->manuals_len > Series_Used(g_gc.manuals)) {
         //
         // Note: Should this ever actually happen, panic() on the series won't
         // do any real good in helping debug it.  You'll probably need
@@ -361,24 +361,24 @@ void Assert_State_Balanced_Debug(
         //
         panic_at ("manual series freed outside checkpoint", file, line);
     }
-    else if (s->manuals_len < Series_Used(GC_Manuals)) {
+    else if (s->manuals_len < Series_Used(g_gc.manuals)) {
         printf(
             "Make_Series()x%d w/o Free_Unmanaged_Series or Manage_Series\n",
-            cast(int, Series_Used(GC_Manuals) - s->manuals_len)
+            cast(int, Series_Used(g_gc.manuals) - s->manuals_len)
         );
         Series(*) manual = *(Series_At(
             Series(*),
-            GC_Manuals,
-            Series_Used(GC_Manuals) - 1
+            g_gc.manuals,
+            Series_Used(g_gc.manuals) - 1
         ));
         panic_at (manual, file, line);
     }
 
-    assert(s->mold_buf_len == String_Len(STR(MOLD_BUF)));
-    assert(s->mold_buf_size == String_Size(STR(MOLD_BUF)));
-    assert(s->mold_loop_tail == Series_Used(TG_Mold_Stack));
+    assert(s->mold_buf_len == String_Len(g_mold.buffer));
+    assert(s->mold_buf_size == String_Size(g_mold.buffer));
+    assert(s->mold_loop_tail == Series_Used(g_mold.stack));
 
-/*    assert(s->saved_sigmask == Eval_Sigmask);  // !!! is this always true? */
+/*    assert(s->saved_sigmask == g_ts.eval_sigmask);  // !!! is this always true? */
 }
 
 #endif

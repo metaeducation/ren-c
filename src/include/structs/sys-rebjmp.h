@@ -70,13 +70,13 @@ struct Reb_State {
     StackIndex stack_base;
     REBLEN guarded_len;
 
-    REBLEN manuals_len; // Where GC_Manuals was when state started
+    REBLEN manuals_len; // Where g_gc.manuals was when state started
     REBLEN mold_buf_len;
     Size mold_buf_size;
     REBLEN mold_loop_tail;
 
     // Some operations disable the ability to halt, e.g. remove SIG_HALT
-    // from Eval_Sigmask...and then restore it when they are done.  If one of
+    // from eval_sigmask...and then restore it when they are done.  If one of
     // these operations is running and then there is a longjmp past the place
     // where the restore is going to happen, they'd have to pay the cost of
     // a PUSH_TRAP to put it back.  We save effort for that case by saving
@@ -84,18 +84,6 @@ struct Reb_State {
     //
     Flags saved_sigmask;
 };
-
-
-// Capture a measure of the current global state.
-//
-// !!! This is a macro because it may be that since snapping the state is
-// done on every level push, that code should be in the header so it could
-// get inlined.  However, header dependencies currently put definitions like
-// TOP_INDEX and MOLD_BUF later.  Review if it's worth it to break this out
-// in a different way.
-//
-#define SNAP_STATE(s) \
-    Snap_State_Core(s)
 
 
 // Check that the current global state lines up with the passed-in state.

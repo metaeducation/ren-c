@@ -422,7 +422,7 @@ inline static size_t SER_TOTAL_IF_DYNAMIC(Series(const*) s) {
     inline static void MONITOR_SERIES(void *p) {
         printf("Adding monitor to %p on tick #%d\n", p, cast(int, TG_tick));
         fflush(stdout);
-        PG_Monitor_Node_Debug = SER(cast(Node*, p));
+        g_mem.monitor_node = SER(cast(Node*, p));
     }
 #endif
 
@@ -746,11 +746,11 @@ inline static void Term_Series_If_Necessary(Series(*) s)
 inline static void Untrack_Manual_Series(Series(*) s)
 {
     Series(*) * const last_ptr
-        = &cast(Series(*)*, GC_Manuals->content.dynamic.data)[
-            GC_Manuals->content.dynamic.used - 1
+        = &cast(Series(*)*, g_gc.manuals->content.dynamic.data)[
+            g_gc.manuals->content.dynamic.used - 1
         ];
 
-    assert(GC_Manuals->content.dynamic.used >= 1);
+    assert(g_gc.manuals->content.dynamic.used >= 1);
     if (*last_ptr != s) {
         //
         // If the series is not the last manually added series, then
@@ -763,7 +763,7 @@ inline static void Untrack_Manual_Series(Series(*) s)
           #if !defined(NDEBUG)
             if (
                 current_ptr
-                <= cast(Series(*)*, GC_Manuals->content.dynamic.data)
+                <= cast(Series(*)*, g_gc.manuals->content.dynamic.data)
             ){
                 printf("Series not in list of last manually added series\n");
                 panic(s);
@@ -773,9 +773,9 @@ inline static void Untrack_Manual_Series(Series(*) s)
         *current_ptr = *last_ptr;
     }
 
-    // !!! Should GC_Manuals ever shrink or save memory?
+    // !!! Should g_gc.manuals ever shrink or save memory?
     //
-    --GC_Manuals->content.dynamic.used;
+    --g_gc.manuals->content.dynamic.used;
 }
 
 inline static Series(*) Manage_Series(Series(*) s)  // give manual series to GC
@@ -856,7 +856,7 @@ inline static void Flip_Series_To_Black(Series(const*) s) {
     assert(Not_Series_Flag(s, BLACK));
     Set_Series_Flag(m_cast(Series(*), s), BLACK);
   #if !defined(NDEBUG)
-    ++TG_Num_Black_Series;
+    g_mem.num_black_series += 1;
   #endif
 }
 
@@ -864,7 +864,7 @@ inline static void Flip_Series_To_White(Series(const*) s) {
     assert(Get_Series_Flag(s, BLACK));
     Clear_Series_Flag(m_cast(Series(*), s), BLACK);
   #if !defined(NDEBUG)
-    --TG_Num_Black_Series;
+    g_mem.num_black_series -= 1;
   #endif
 }
 
@@ -990,13 +990,13 @@ inline static void DROP_GC_GUARD(const Node* node) {
   #if defined(NDEBUG)
     UNUSED(node);
   #else
-    if (node != *Series_Last(const Node*, GC_Guarded)) {
+    if (node != *Series_Last(const Node*, g_gc.guarded)) {
         printf("DROP_GC_GUARD() pointer that wasn't last PUSH_GC_GUARD()\n");
         panic (node);
     }
   #endif
 
-    --GC_Guarded->content.dynamic.used;
+    --g_gc.guarded->content.dynamic.used;
 }
 
 
@@ -1204,7 +1204,7 @@ inline static Stub* Prep_Stub(void *preallocated, Flags flags) {
   #endif
 
   #if DEBUG_COLLECT_STATS
-    PG_Reb_Stats->Series_Made++;
+    g_mem.series_made += 1;
   #endif
 
   #if DEBUG_COUNT_LOCALS
@@ -1217,16 +1217,12 @@ inline static Stub* Prep_Stub(void *preallocated, Flags flags) {
 
 inline static PoolId Pool_Id_For_Size(Size size) {
   #if DEBUG_ENABLE_ALWAYS_MALLOC
-    if (PG_Always_Malloc)
+    if (g_mem.always_malloc)
         return SYSTEM_POOL;
   #endif
 
-    // Using a simple > or < check here triggers Spectre Mitigation warnings
-    // in MSVC, while the division does not.  :-/  Hopefully the compiler is
-    // smart enough to figure out how to do this efficiently in any case.
-
-    if (size / (4 * MEM_BIG_SIZE + 1) == 0)
-        return PG_Pool_Map[size]; // ((4 * MEM_BIG_SIZE) + 1) entries
+    if (size < POOLS_BY_SIZE_LEN)
+        return g_mem.pools_by_size[size];
 
     return SYSTEM_POOL;
 }
@@ -1265,7 +1261,7 @@ inline static bool Did_Series_Data_Alloc(Series(*) s, REBLEN capacity) {
 
         // The pooled allocation might wind up being larger than we asked.
         // Don't waste the space...mark as capacity the series could use.
-        size = Mem_Pools[pool_id].wide;
+        size = g_mem.pools[pool_id].wide;
         assert(size >= capacity * wide);
 
         // We don't round to power of 2 for allocations in memory pools
@@ -1295,8 +1291,8 @@ inline static bool Did_Series_Data_Alloc(Series(*) s, REBLEN capacity) {
         if (not s->content.dynamic.data)
             return false;
 
-        Mem_Pools[SYSTEM_POOL].has += size;
-        Mem_Pools[SYSTEM_POOL].free++;
+        g_mem.pools[SYSTEM_POOL].has += size;
+        g_mem.pools[SYSTEM_POOL].free++;
     }
 
     // Note: Bias field may contain other flags at some point.  Because
@@ -1322,7 +1318,7 @@ inline static bool Did_Series_Data_Alloc(Series(*) s, REBLEN capacity) {
 
     // See if allocation tripped our need to queue a garbage collection
 
-    if ((GC_Ballast -= size) <= 0)
+    if ((g_gc.depletion -= size) <= 0)
         SET_SIGNAL(SIG_RECYCLE);
 
     assert(SER_TOTAL(s) <= size);  // irregular sizes won't use all the space
@@ -1373,7 +1369,7 @@ inline static Series(*) Make_Series_Into(
         }
 
       #if DEBUG_COLLECT_STATS
-        PG_Reb_Stats->Series_Memory += capacity * wide;
+        g_mem.series_memory += capacity * wide;
       #endif
     }
 
@@ -1384,11 +1380,11 @@ inline static Series(*) Make_Series_Into(
     // !!! Code duplicated in Make_Array_Core() ATM.
     //
     if (not (flags & NODE_FLAG_MANAGED)) {
-        if (Is_Series_Full(GC_Manuals))
-            Extend_Series_If_Necessary(GC_Manuals, 8);
+        if (Is_Series_Full(g_gc.manuals))
+            Extend_Series_If_Necessary(g_gc.manuals, 8);
 
-        cast(Series(*)*, GC_Manuals->content.dynamic.data)[
-            GC_Manuals->content.dynamic.used++
+        cast(Series(*)*, g_gc.manuals->content.dynamic.data)[
+            g_gc.manuals->content.dynamic.used++
         ] = s; // start out managed to not need to find/remove from this later
     }
 
