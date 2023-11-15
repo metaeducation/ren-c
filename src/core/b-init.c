@@ -698,11 +698,8 @@ void Startup_Core(void)
 
 //=//// INITIALIZE TICK COUNT /////////////////////////////////////////////=//
 
-    // The timer tick starts at 1, not 0.  This has allowed a signed timer
-    // tick to indicate some other characteristic when tick values are stored.
-    //
   #if DEBUG_COUNT_TICKS
-    TG_tick = 1;
+    TG_tick = 0;
   #endif
 
 //=//// INITIALIZE STACK MARKER METRICS ///////////////////////////////////=//

@@ -1427,17 +1427,15 @@ DECLARE_NATIVE(subparse)
 
       do_signals:
 
-      #if !defined(NDEBUG)  // total_eval_cycles is periodically reconciled
-        ++g_ts.total_eval_cycles_check;
-      #endif
+        Update_Tick_If_Enabled();
 
         if (--g_ts.eval_countdown <= 0) {
             if (Do_Signals_Throws(LEVEL))
                 return THROWN;
         }
-    }
 
-    UPDATE_TICK_DEBUG(nullptr);  // wait after GC to identify *last* tick
+        Maybe_DebugBreak_On_Tick();
+    }
 
     // Some iterated rules have a parameter.  `3 into [some "a"]` will
     // actually run the INTO `rule` 3 times with the `subrule` of

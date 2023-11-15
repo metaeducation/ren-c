@@ -71,7 +71,11 @@ bool Do_Signals_Throws(Level(*) level_)
         // Periodic reconciliation of total evaluation cycles.  Avoids needing
         // to touch *both* eval_countdown and total_eval_cycles on every eval.
         //
-        g_ts.total_eval_cycles += g_ts.eval_dose - g_ts.eval_countdown;
+        uintptr_t delta = g_ts.eval_dose - g_ts.eval_countdown;
+        if (UINTPTR_MAX - g_ts.total_eval_cycles > delta)
+            g_ts.total_eval_cycles += delta;
+        else
+            g_ts.total_eval_cycles = UINTPTR_MAX;
     }
     else if (g_ts.eval_countdown == -2) {
         //
@@ -79,7 +83,8 @@ bool Do_Signals_Throws(Level(*) level_)
         // a tick of the evaluator.  We *only* add that one tick, because
         // reconciliation was already performed.
         //
-        ++g_ts.total_eval_cycles;
+        if (g_ts.total_eval_cycles < UINTPTR_MAX)
+            g_ts.total_eval_cycles += 1;
     }
     else {
         // This means SET_SIGNAL() ran, and Do_Signals_Throws() was called
@@ -90,8 +95,8 @@ bool Do_Signals_Throws(Level(*) level_)
         assert(g_ts.eval_countdown == -1);
     }
 
-  #if !defined(NDEBUG)
-    assert(g_ts.total_eval_cycles == g_ts.total_eval_cycles_check);
+  #if DEBUG_COUNT_TICKS
+    assert(g_ts.total_eval_cycles == TG_tick);
   #endif
 
     g_ts.eval_countdown = g_ts.eval_dose;

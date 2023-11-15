@@ -151,7 +151,7 @@
     do { \
         printf("BREAK_ON_TICK() @ tick %ld\n", cast(long int, TG_tick)); \
         fflush(stdout); \
-        Dump_Level_Location(nullptr, TOP_LEVEL); \
+        Dump_Level_Location(TOP_LEVEL); \
         debug_break(); /* see %debug_break.h */ \
     } while (false)
 

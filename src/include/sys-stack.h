@@ -81,7 +81,7 @@
 //
 #if ! DEBUG_EXTANT_STACK_POINTERS
 
-    #define ASSERT_NO_DATA_STACK_POINTERS_EXTANT()
+    #define Assert_No_DataStack_Pointers_Extant()
 
 #else
 
@@ -89,7 +89,7 @@
     // not report the problem unless it would cause a crash, e.g. an actual
     // case of pushing across a stack expansion.
     //
-    #define ASSERT_NO_DATA_STACK_POINTERS_EXTANT() \
+    #define Assert_No_DataStack_Pointers_Extant() \
         do { if (g_ds.num_refs_extant != 0) { \
             if (not g_gc.disabled or g_ds.movable_top == g_ds.movable_tail) \
                 assert(!"PUSH() while StackValue(*) pointers are extant"); \
@@ -234,7 +234,7 @@ inline static StackValue(*) Data_Stack_At(StackIndex i) {
 // Note: g_ds.movable_top is just TOP, but accessing TOP asserts on ENDs
 //
 inline static StackValue(*) PUSH(void) {
-    ASSERT_NO_DATA_STACK_POINTERS_EXTANT();
+    Assert_No_DataStack_Pointers_Extant();
 
     ++g_ds.index;
     ++g_ds.movable_top;
@@ -258,7 +258,7 @@ inline static StackValue(*) PUSH(void) {
 //
 
 inline static void DROP(void) {
-    ASSERT_NO_DATA_STACK_POINTERS_EXTANT();
+    Assert_No_DataStack_Pointers_Extant();
 
   #if DEBUG_POISON_DROPPED_STACK_CELLS
     Poison_Cell(g_ds.movable_top);
@@ -269,7 +269,7 @@ inline static void DROP(void) {
 }
 
 inline static void Drop_Data_Stack_To(StackIndex i) {
-    ASSERT_NO_DATA_STACK_POINTERS_EXTANT();
+    Assert_No_DataStack_Pointers_Extant();
 
     assert(TOP_INDEX >= i);
     while (TOP_INDEX != i)

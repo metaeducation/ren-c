@@ -60,7 +60,7 @@
 #include "sys-core.h"
 
 
-#if DEBUG_COUNT_TICKS  // <-- THIS IS VERY USEFUL, SEE UPDATE_TICK_DEBUG()
+#if DEBUG_COUNT_TICKS  // <-- EXTREMELY USEFUL!  SEE Maybe_DebugBreak_On_Tick()
 
     //      *** DON'T COMMIT THIS v-- KEEP IT AT ZERO! ***
     Tick g_break_at_tick =         0;
@@ -111,6 +111,13 @@ Bounce Delegated_Executor(Level(*) L)
 //
 Bounce Trampoline_From_Top_Maybe_Root(void)
 {
+  #if DEBUG && CPLUSPLUS_11  // reference capture for easy view in watchlist
+    Level(*) & L = LEVEL;
+    Tick & tick = TG_tick;
+    USED(L);
+    USED(tick);
+  #endif
+
   bounce_on_trampoline_with_rescue:
 
   // RESCUE_SCOPE is an abstraction of `try {} catch(...) {}` which can also
@@ -157,15 +164,13 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
   //    but the debug build double checks that whatever magic is done reflects
   //    the real count.
 
-    ASSERT_NO_DATA_STACK_POINTERS_EXTANT();
+    Assert_No_DataStack_Pointers_Extant();
 
     assert(LEVEL->executor != &Just_Use_Out_Executor);  // drops skip, see [1]
 
-    Bounce r;
+    Bounce bounce;
 
-  #if !defined(NDEBUG)  // validate total_eval_cycles reconciliation, see [2]
-    g_ts.total_eval_cycles_check += 1;
-  #endif
+    Update_Tick_If_Enabled();
 
     if (--g_ts.eval_countdown <= 0) {  // defer total_eval_cycles update, [2]
         //
@@ -176,7 +181,7 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
         //  * (future?) Allowing a break into an interactive debugger
         //
         if (Do_Signals_Throws(LEVEL)) {
-            r = BOUNCE_THROWN;
+            bounce = BOUNCE_THROWN;
             goto handle_thrown;
         }
     }
@@ -194,17 +199,17 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
     // The executor may push more levels or change the executor of the level
     // it receives.  The LEVEL may not match TOP_LEVEL at this moment.
 
-  #if !defined(NDEBUG)
+  #if DEBUG
     Level(*) check = LEVEL;  // make sure LEVEL doesn't change during executor
   #endif
 
-    UPDATE_TICK_DEBUG(nullptr);
+    Maybe_DebugBreak_On_Tick();
 
     // v-- This is the g_break_at_tick or C-DEBUG-BREAK landing spot --v
-                      r = (LEVEL->executor)(LEVEL);
+                    bounce = (LEVEL->executor)(LEVEL);
     // ^-- **STEP IN** to this call using the debugger to debug it!!! --^
 
-  #if !defined(NDEBUG)
+  #if DEBUG
     assert(LEVEL == check);  // R is relative to the OUT of LEVEL we executed
   #endif
 
@@ -212,11 +217,11 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
 
     if (Get_Level_Flag(LEVEL, ABRUPT_FAILURE)) {
         assert(Get_Level_Flag(LEVEL, NOTIFY_ON_ABRUPT_FAILURE));
-        assert(r == BOUNCE_THROWN);
+        assert(bounce == BOUNCE_THROWN);
         assert(IS_ERROR(VAL_THROWN_LABEL(LEVEL)));
     }
 
-    if (r == OUT) {
+    if (bounce == OUT) {
       result_in_out:
         assert(not Is_Fresh(OUT));
         assert(IS_SPECIFIC(cast(Cell(*), OUT)));
@@ -280,7 +285,7 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
   //    also helps with bookkeeping and GC features, allowing the zero value
   //    to be reserved to mean something else.)
 
-    if (r == BOUNCE_CONTINUE) {
+    if (bounce == BOUNCE_CONTINUE) {
         if (LEVEL != TOP_LEVEL)  // continuing self ok, see [1]
             assert(STATE != 0);  // otherwise state enforced nonzero, see [2]
 
@@ -288,7 +293,7 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
         goto bounce_on_trampoline_skip_just_use_out;
     }
 
-    if (r == BOUNCE_DELEGATE) {
+    if (bounce == BOUNCE_DELEGATE) {
         //
         // We could unhook the level from the stack here, but leaving it in
         // provides clarity in the stack.   Hence this should not be used in
@@ -301,13 +306,13 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
         goto bounce_on_trampoline;
     }
 
-    if (r == BOUNCE_SUSPEND) {  // just to get emscripten started w/o Asyncify
+    if (bounce == BOUNCE_SUSPEND) {  // to get emscripten started w/o Asyncify
         CLEANUP_BEFORE_EXITING_RESCUE_SCOPE;
         return BOUNCE_SUSPEND;
     }
 
 
-  //=//// HANDLE THROWS, INCLUDING (NON-ABRUPT) ERRORS ////////////////////=//
+  //=//// HANDLE THROWS, INCLUDING (NON-ABRUPT) FAILURES //////////////////=//
 
   // 1. Having handling of UNWIND be in the trampoline means that any level
   //    can be "teleported to" with a result, not just action levels.  It
@@ -335,7 +340,7 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
   //    applicable to throw situations as well--not all want it.  For now
   //    we conflate Just_Use_Out with the intent of keepalive on throw.
 
-    if (r == BOUNCE_THROWN) {
+    if (bounce == BOUNCE_THROWN) {
       handle_thrown:
 
         assert(LEVEL == TOP_LEVEL);  // Action_Executor() helps, drops inerts
@@ -385,7 +390,7 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
     }
 
     assert(!"executor(L) not OUT, BOUNCE_THROWN, or BOUNCE_CONTINUE");
-    panic (cast(void*, r));
+    panic (cast(void*, bounce));
 
 } ON_ABRUPT_FAILURE(Context(*) e) {  /////////////////////////////////////////
 
@@ -525,10 +530,6 @@ void Startup_Signals(void)
     g_ts.eval_countdown = g_ts.eval_dose;
     g_ts.total_eval_cycles = 0;
     g_ts.eval_cycles_limit = 0;
-
-  #if !defined(NDEBUG)
-    g_ts.total_eval_cycles_check = 0;
-  #endif
 }
 
 

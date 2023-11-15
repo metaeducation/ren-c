@@ -224,7 +224,7 @@ void Expand_Data_Stack_May_Fail(REBLEN amount)
 //
 Array(*) Pop_Stack_Values_Core(StackIndex base, Flags flags)
 {
-    ASSERT_NO_DATA_STACK_POINTERS_EXTANT();  // in the future, pop may disrupt
+    Assert_No_DataStack_Pointers_Extant();  // in the future, pop may disrupt
 
     Length len = TOP_INDEX - base;
     Array(*) a = Make_Array_Core(len, flags);

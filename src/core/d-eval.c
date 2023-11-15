@@ -54,25 +54,23 @@
 //
 //  Dump_Level_Location: C
 //
-void Dump_Level_Location(Cell(const*) v, Level(*) L)
+void Dump_Level_Location(Level(*) L)
 {
     DECLARE_LOCAL (dump);
 
-    if (v) {
-        Derelativize(dump, v, L_specifier);
+    if (L->executor == &Evaluator_Executor) {  // looks ahead by one
+        Derelativize(dump, L->u.eval.current, L_specifier);
         printf("Dump_Level_Location() current\n");
         PROBE(dump);
     }
 
     if (Is_Feed_At_End(L->feed)) {
         printf("...then Dump_Level_Location() is at end of array\n");
-        if (not v) {  // well, that wasn't informative
-            if (L->prior == BOTTOM_LEVEL)
-                printf("...and no parent frame, so you're out of luck\n");
-            else {
-                printf("...dumping parent in case that's more useful?\n");
-                Dump_Level_Location(nullptr, L->prior);
-            }
+        if (L->prior == BOTTOM_LEVEL)
+            printf("...and no parent frame, so you're out of luck\n");
+        else {
+            printf("...dumping parent in case that's more useful?\n");
+            Dump_Level_Location(L->prior);
         }
     }
     else {
@@ -120,7 +118,7 @@ static void Evaluator_Shared_Checks_Debug(Level(*) L)
     // on the data stack or mold stack/etc.  See Drop_Level() for the actual
     // balance check.
     //
-    ASSERT_NO_DATA_STACK_POINTERS_EXTANT();
+    Assert_No_DataStack_Pointers_Extant();
 
     // See notes on L->feed->gotten about the coherence issues in the face
     // of arbitrary function execution.

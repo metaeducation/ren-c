@@ -396,12 +396,8 @@ typedef struct {
     Flags eval_sigmask;  // masking out signal flags
     int_fast32_t eval_countdown;  // evaluation counter until Do_Signals()
     int_fast32_t eval_dose;  // evaluation counter reset value
-    REBI64 total_eval_cycles;  // total evaluation counter (upward)
-    Option(REBI64) eval_cycles_limit;  // evaluation limit (set by secure)
-
-  #if DEBUG
-    REBI64 total_eval_cycles_check;  // validate periodic reconciliation method
-  #endif
+    Tick total_eval_cycles;  // total evals, unsigned overflow well defined
+    Option(Tick) eval_cycles_limit;  // evaluation limit (set by secure)
 } TrampolineState;
 
 typedef struct {
@@ -589,9 +585,14 @@ inline static void SET_SIGNAL(Flags f) { // used in %sys-series.h
     // This forces the next step in the evaluator to count down to 0 and
     // trigger an interrupt.  But we have to reconcile the count first.
     //
-    g_ts.total_eval_cycles += g_ts.eval_dose - g_ts.eval_countdown;
-  #if !defined(NDEBUG)
-    assert(g_ts.total_eval_cycles == g_ts.total_eval_cycles_check);
+    uintptr_t delta = g_ts.eval_dose - g_ts.eval_countdown;
+    if (UINTPTR_MAX - g_ts.total_eval_cycles > delta)
+        g_ts.total_eval_cycles += delta;
+    else
+        g_ts.total_eval_cycles = UINTPTR_MAX;
+
+  #if DEBUG_COUNT_TICKS
+    assert(g_ts.total_eval_cycles == TG_tick);
   #endif
 
     g_ts.eval_countdown = -1;

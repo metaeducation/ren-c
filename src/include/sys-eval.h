@@ -64,21 +64,26 @@
     // see TOUCH_SERIES() and TOUCH_CELL().  Note also that BREAK_NOW() can be
     // called to pause and dump state at any moment.
 
-    #define UPDATE_TICK_DEBUG(v) \
+    #define Update_Tick_If_Enabled() \
         do { \
-            if (TG_tick < INTPTR_MAX)  /* avoid rollover (may be 32-bit!) */ \
-                ++TG_tick; \
+            if (TG_tick < UINTPTR_MAX) /* avoid rollover */ \
+                TG_tick += 1; /* never zero for g_break_at_tick check */ \
+        } while (false)  // macro so that breakpoint is at right stack level!
+
+    #define Maybe_DebugBreak_On_Tick() \
+        do { \
             if ( \
                 g_break_at_tick != 0 and TG_tick >= g_break_at_tick \
             ){ \
-                printf("BREAKING AT TICK %u\n", cast(unsigned int, TG_tick)); \
-                Dump_Level_Location((v), level_); \
-                debug_break();  /* see %debug_break.h */ \
+                printf("BREAK AT TICK %lu\n", cast(unsigned long, TG_tick)); \
+                Dump_Level_Location(level_); \
+                debug_break(); /* see %debug_break.h */ \
                 g_break_at_tick = 0; \
             } \
         } while (false)  // macro so that breakpoint is at right stack level!
 #else
-    #define UPDATE_TICK_DEBUG(v) NOOP
+    #define Update_Tick_If_Enabled() NOOP
+    #define Maybe_DebugBreak_On_Tick() NOOP
 #endif
 
 
