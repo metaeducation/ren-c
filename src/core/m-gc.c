@@ -8,7 +8,7 @@
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // Copyright 2012 REBOL Technologies
-// Copyright 2012-2019 Ren-C Open Source Contributors
+// Copyright 2012-2023 Ren-C Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information.
@@ -84,8 +84,51 @@
     static bool in_mark = false; // needs to be per-GC thread
 #endif
 
-#define ASSERT_NO_GC_MARKS_PENDING() \
+#define Assert_No_GC_Marks_Pending() \
     assert(Series_Used(g_gc.mark_stack) == 0)
+
+// The mark_count double checks that every marker set by the GC is cleared.
+// To avoid the cost of incrementing and decrementing, only in debug builds.
+//
+#if DEBUG
+    inline static void Remove_GC_Mark(Node* node) {  // stub or cell (pairing)
+        assert(Is_Node_Marked(node));
+        NODE_BYTE(node) &= ~NODE_BYTEMASK_0x10_MARKED;
+        g_gc.mark_count -= 1;
+    }
+
+    inline static void Remove_GC_Mark_If_Marked(Node* node) {
+        if (Is_Node_Marked(node)) {
+            NODE_BYTE(node) &= ~NODE_BYTEMASK_0x10_MARKED;
+            g_gc.mark_count -= 1;
+        }
+    }
+
+    inline static void Add_GC_Mark(Node* node) {
+        assert(not Is_Node_Marked(node));
+        NODE_BYTE(node) |= NODE_BYTEMASK_0x10_MARKED;
+        g_gc.mark_count += 1;
+    }
+
+    inline static void Add_GC_Mark_If_Not_Already_Marked(Node* node) {
+        if (not Is_Node_Marked(node)) {
+            NODE_BYTE(node) |= NODE_BYTEMASK_0x10_MARKED;
+            g_gc.mark_count += 1;
+        }
+    }
+#else
+    #define Remove_GC_Mark(node) \
+        NODE_BYTE(node) &= ~NODE_BYTEMASK_0x10_MARKED
+
+    #define Remove_GC_Mark_If_Marked(node) \
+        NODE_BYTE(node) &= ~NODE_BYTEMASK_0x10_MARKED
+
+    #define Add_GC_Mark(node) \
+        NODE_BYTE(node) |= NODE_BYTEMASK_0x10_MARKED
+
+    #define Add_GC_Mark_If_Not_Already_Marked(node) \
+        NODE_BYTE(node) |= NODE_BYTEMASK_0x10_MARKED
+#endif
 
 
 static void Queue_Mark_Cell_Deep(Cell(const*) v);
@@ -113,8 +156,6 @@ inline static void Queue_Mark_Maybe_Fresh_Cell_Deep(Cell(*) v) {
 //
 static void Queue_Mark_Pairing_Deep(REBVAL *paired)
 {
-    assert(not (paired->header.bits & NODE_FLAG_MARKED));
-
     // !!! Hack doesn't work generically, review
 
   #if !defined(NDEBUG)
@@ -125,8 +166,7 @@ static void Queue_Mark_Pairing_Deep(REBVAL *paired)
     Queue_Mark_Cell_Deep(paired);
     Queue_Mark_Cell_Deep(PAIRING_KEY(paired));  // QUOTED! uses void
 
-    paired->header.bits |= NODE_FLAG_MARKED;
-    ++g_gc.mark_count;
+    Add_GC_Mark(paired);
 
   #if !defined(NDEBUG)
     in_mark = was_in_mark;
@@ -143,11 +183,11 @@ static void Queue_Unmarked_Accessible_Series_Deep(Series(*) s);
 // pointers to be swept.  See Decay_Series()
 //
 static void Queue_Mark_Node_Deep(const Node** pp) {
-    Byte first = *cast(const Byte*, *pp);
-    if (first & NODE_BYTEMASK_0x10_MARKED)
+    Byte nodebyte = NODE_BYTE(*pp);
+    if (nodebyte & NODE_BYTEMASK_0x10_MARKED)
         return;  // may not be finished marking yet, but has been queued
 
-    if (first & NODE_BYTEMASK_0x01_CELL) {  // e.g. a pairing
+    if (nodebyte & NODE_BYTEMASK_0x01_CELL) {  // e.g. a pairing
         REBVAL *v = VAL(m_cast(Node*, *pp));
         if (Get_Cell_Flag(v, MANAGED))
             Queue_Mark_Pairing_Deep(v);
@@ -208,8 +248,7 @@ static void Queue_Mark_Node_Deep(const Node** pp) {
 //
 static void Queue_Unmarked_Accessible_Series_Deep(Series(*) s)
 {
-    s->leader.bits |= NODE_FLAG_MARKED;
-    ++g_gc.mark_count;
+    Add_GC_Mark(s);
 
   //=//// MARK LINK AND MISC IF DESIRED ////////////////////////////////////=//
 
@@ -246,7 +285,7 @@ static void Queue_Unmarked_Accessible_Series_Deep(Series(*) s)
             // a keylist (can't use FREE on them) and shouldn't vanish.
             //
             assert(Not_Series_Flag(*key, INACCESSIBLE));
-            if (Get_Series_Flag(*key, MARKED))
+            if (Is_Node_Marked(*key))
                 continue;
             Queue_Unmarked_Accessible_Series_Deep(m_cast(SymbolT*, *key));
         }
@@ -383,7 +422,7 @@ static void Propagate_All_GC_Marks(void)
         // We should have marked this series at queueing time to keep it from
         // being doubly added before the queue had a chance to be processed
         //
-        assert(a->leader.bits & NODE_FLAG_MARKED);
+        assert(Is_Node_Marked(a));
 
         Cell(*) v = Array_Head(a);
         Cell(const*) tail = Array_Tail(a);
@@ -604,7 +643,6 @@ static void Mark_Root_Series(void)
             SeriesT* s = cast(SeriesT*, stub);
 
             if (nodebyte & NODE_BYTEMASK_0x02_ROOT) {
-                assert(Not_Series_Flag(s, MARKED));
 
                 // This stub came from Alloc_Value() or rebMalloc(); the only
                 // references should be from the C stack.  So this pass is the
@@ -613,10 +651,11 @@ static void Mark_Root_Series(void)
                 if (Not_Series_Flag(s, MANAGED)) {
                     //
                     // If it's not managed, don't mark it (don't have to)
+                    //
+                    assert(not Is_Node_Marked(s));
                 }
                 else {
-                    s->leader.bits |= NODE_FLAG_MARKED;
-                    ++g_gc.mark_count;
+                    Add_GC_Mark(s);
                 }
 
                 if (Is_Series_Array(s)) {  // It's an Alloc_Value()
@@ -719,31 +758,6 @@ static void Mark_Data_Stack(void)
   #endif
 
     Propagate_All_GC_Marks();
-}
-
-
-//
-//  Mark_Symbol_Series: C
-//
-// Mark symbol series.  These canon words for SYM_XXX are the only ones that
-// are never candidates for GC (until shutdown).  All other symbol series may
-// go away if no words, parameters, object keys, etc. refer to them.
-//
-static void Mark_Symbol_Series(void)
-{
-    SymbolT* canon = &g_symbols.builtin_canons[0];
-    SymbolT* tail = &g_symbols.builtin_canons[0] + ALL_SYMS_MAX;
-
-    assert(canon->leader.bits & SERIES_FLAG_FREE);  // SYM_0, we corrupt it
-    ++canon;
-
-    for (; canon != tail; ++canon) {
-        assert(not (canon->leader.bits & NODE_FLAG_MARKED));
-        canon->leader.bits |= NODE_FLAG_MARKED;
-        ++g_gc.mark_count;
-    }
-
-    ASSERT_NO_GC_MARKS_PENDING(); // doesn't ues any queueing
 }
 
 
@@ -868,7 +882,7 @@ static void Mark_Level_Stack_Deep(void)
 
         if (L->label) { // nullptr if anonymous
             Symbol(const*) sym = unwrap(L->label);
-            if (Not_Series_Flag(sym, MARKED)) {
+            if (not Is_Node_Marked(sym)) {
                 assert(Not_Series_Flag(sym, INACCESSIBLE));  // can't happen
                 Queue_Unmarked_Accessible_Series_Deep(m_cast(Symbol(*), sym));
             }
@@ -969,7 +983,7 @@ static void Mark_Level_Stack_Deep(void)
 //    two cells a size greater than Stub size require doing pairings in a
 //    different pool.
 //
-static Count Sweep_Series(void)
+Count Sweep_Series(void)
 {
     Count sweep_count = 0;
 
@@ -991,7 +1005,7 @@ static Count Sweep_Series(void)
               case 6:  // 0x4 + 0x2
               case 7:  // 0x4 + 0x2 + 0x1
                 //
-                // NODE_FLAG_NODE (0x8) is clear.  This signature is
+                // NODE_FLAG_NODE (0x80 => 0x8) is clear.  This signature is
                 // reserved for UTF-8 strings (corresponding to valid ASCII
                 // values in the first byte).
                 //
@@ -1004,11 +1018,7 @@ static Count Sweep_Series(void)
                 // with Make_Series() and hasn't been managed.  It doesn't
                 // participate in the GC.  Leave it as is.
                 //
-                // !!! Are there actually legitimate reasons to do this with
-                // arrays, where the creator knows the cells do not need
-                // GC protection?  Should finding an array in this state be
-                // considered a problem (e.g. the GC ran when you thought it
-                // couldn't run yet, hence would be able to free the array?)
+                // (Alloc_Value() and rebMalloc() produce these by default)
                 //
                 break;
 
@@ -1030,8 +1040,7 @@ static Count Sweep_Series(void)
                     Free_Pooled(STUB_POOL, stub);  // Free_Pairing manual
                 }
                 else {
-                    Series(*) s = cast(Series(*), stub);
-                    GC_Kill_Series(s);
+                    GC_Kill_Series(cast(SeriesT*, stub));
                 }
                 ++sweep_count;
                 break;
@@ -1040,10 +1049,7 @@ static Count Sweep_Series(void)
                 // 0x8 + 0x2 + 0x1: managed and marked, so it's still live.
                 // Don't GC it, just clear the mark.
                 //
-                *stub &= ~NODE_BYTEMASK_0x10_MARKED;
-              #if !defined(NDEBUG)
-                --g_gc.mark_count;
-              #endif
+                Remove_GC_Mark(cast(Node*, stub));
                 break;
 
             // v-- Everything below this line has the two leftmost bits set
@@ -1084,11 +1090,8 @@ static Count Sweep_Series(void)
 
             if (v->header.bits & NODE_FLAG_MANAGED) {
                 assert(not (v->header.bits & NODE_FLAG_ROOT));
-                if (v->header.bits & NODE_FLAG_MARKED) {
-                    v->header.bits &= ~NODE_FLAG_MARKED;
-                  #if !defined(NDEBUG)
-                    --g_gc.mark_count;
-                  #endif
+                if (Is_Node_Marked(v)) {
+                    Remove_GC_Mark(v);
                 }
                 else {
                     Free_Pooled(PAIR_POOL, v);  // Free_Pairing is for manuals
@@ -1127,11 +1130,8 @@ REBLEN Fill_Sweeplist(Series(*) sweeplist)
               case 9: {  // 0x8 + 0x1
                 Series(*) s = SER(cast(void*, stub));
                 Assert_Series_Managed(s);
-                if (s->leader.bits & NODE_FLAG_MARKED) {
-                    s->leader.bits &= ~NODE_FLAG_MARKED;
-                  #if !defined(NDEBUG)
-                    --g_gc.mark_count;
-                  #endif
+                if (Is_Node_Marked(s)) {
+                    Remove_GC_Mark(s);
                 }
                 else {
                     Expand_Series_Tail(sweeplist, 1);
@@ -1149,11 +1149,8 @@ REBLEN Fill_Sweeplist(Series(*) sweeplist)
                 //
                 REBVAL *pairing = VAL(cast(void*, stub));
                 assert(pairing->header.bits & NODE_FLAG_MANAGED);
-                if (pairing->header.bits & NODE_FLAG_MARKED) {
-                    pairing->header.bits &= ~NODE_FLAG_MARKED;
-                  #if !defined(NDEBUG)
-                    --g_gc.mark_count;
-                  #endif
+                if (Is_Node_Marked(pairing)) {
+                    Remove_GC_Mark(pairing);
                 }
                 else {
                     Expand_Series_Tail(sweeplist, 1);
@@ -1175,10 +1172,10 @@ REBLEN Fill_Sweeplist(Series(*) sweeplist)
 //  Recycle_Core: C
 //
 // Recycle memory no longer needed.  If sweeplist is not NULL, then it needs
-// to be a series whose width is sizeof(Series(*)), and it will be filled with
+// to be a series whose width is sizeof(Stub), and it will be filled with
 // the list of series that *would* be recycled.
 //
-REBLEN Recycle_Core(bool shutdown, Series(*) sweeplist)
+REBLEN Recycle_Core(Series(*) sweeplist)
 {
     // Ordinarily, it should not be possible to spawn a recycle during a
     // recycle.  But when debug code is added into the recycling code, it
@@ -1196,7 +1193,7 @@ REBLEN Recycle_Core(bool shutdown, Series(*) sweeplist)
     // If disabled by RECYCLE/OFF, exit now but set the pending flag.  (If
     // shutdown, ignore so recycling runs and can be checked for balance.)
     //
-    if (not shutdown and g_gc.disabled) {
+    if (g_gc.disabled) {
         SET_SIGNAL(SIG_RECYCLE);
         return 0;
     }
@@ -1205,15 +1202,27 @@ REBLEN Recycle_Core(bool shutdown, Series(*) sweeplist)
     g_gc.recycling = true;
   #endif
 
-    ASSERT_NO_GC_MARKS_PENDING();
+    Assert_No_GC_Marks_Pending();
 
   #if DEBUG_COLLECT_STATS
     g_gc.recycle_counter++;
     g_gc.recycle_series = g_mem.pools[STUB_POOL].free;
   #endif
 
-    if (not shutdown)
-        Mark_Symbol_Series();
+    // Builtin patches for Lib contain variables that can be read by Lib(XXX)
+    // in the C code.  Since effectively any of them could become referred
+    // to in code, we need to keep the cells alive.  We also mark the patches
+    // for efficiency--so that references will not try to mark them and go
+    // through the slow process of finding out they're singular arrays and
+    // that the array content is already marked.
+    //
+    assert(Is_Free_Node(&PG_Lib_Patches[0]));  // skip SYM_0
+    for (REBLEN i = 1; i < LIB_SYMS_MAX; ++i) {
+        Array(*) patch = &PG_Lib_Patches[i];
+        Queue_Mark_Maybe_Fresh_Cell_Deep(Array_Single(patch));
+        Add_GC_Mark(patch);
+    }
+    Propagate_All_GC_Marks();
 
     // It was previously assumed no recycle would happen while the evaluator
     // was in a thrown state.  There's no particular reason to enforce that
@@ -1230,18 +1239,12 @@ REBLEN Recycle_Core(bool shutdown, Series(*) sweeplist)
     // are bound to levels will be freed, if the level is expired.)
     //
     Mark_Root_Series();
+    Propagate_All_GC_Marks();
 
-    if (not shutdown) {
-        Propagate_All_GC_Marks();
-
-        Mark_Data_Stack();
-
-        Mark_Guarded_Nodes();
-
-        Mark_Level_Stack_Deep();
-
-        Propagate_All_GC_Marks();
-    }
+    Mark_Data_Stack();
+    Mark_Guarded_Nodes();
+    Mark_Level_Stack_Deep();
+    Propagate_All_GC_Marks();
 
     // The last thing we do is go through all the "sea contexts" and make sure
     // that if anyone referenced the context, then their variables remain live.
@@ -1251,7 +1254,7 @@ REBLEN Recycle_Core(bool shutdown, Series(*) sweeplist)
     // to check if any more markings occur.
     //
     while (true) {
-        REBI64 before_count = g_gc.mark_count;
+        bool added_marks = false;
 
         SymbolT** psym = Series_Head(SymbolT*, g_symbols.by_hash);
         SymbolT** psym_tail = Series_Tail(SymbolT*, g_symbols.by_hash);
@@ -1261,40 +1264,37 @@ REBLEN Recycle_Core(bool shutdown, Series(*) sweeplist)
             Series(*) patch = MISC(Hitch, *psym);
             for (; patch != *psym; patch = SER(node_MISC(Hitch, patch))) {
                 Context(*) context = INODE(PatchContext, patch);
-                if (Get_Series_Flag(patch, MARKED)) {
-                    assert(Get_Series_Flag(CTX_VARLIST(context), MARKED));
+                if (Is_Node_Marked(patch)) {
+                    assert(Is_Node_Marked(CTX_VARLIST(context)));
                     continue;
                 }
-                if (Get_Series_Flag(CTX_VARLIST(context), MARKED)) {
-                    Set_Series_Flag(patch, MARKED);
-                    ++g_gc.mark_count;
+                if (Is_Node_Marked(CTX_VARLIST(context))) {
+                    Add_GC_Mark(patch);
+                    added_marks = true;
 
                     Queue_Mark_Cell_Deep(Array_Single(ARR(patch)));
 
                     // We also have to keep the word alive, but not necessarily
                     // keep all the other declarations in other modules alive.
                     //
-                    if (Not_Series_Flag(*psym, MARKED)) {
-                        Set_Series_Flag(*psym, MARKED);
-                        ++g_gc.mark_count;
-                    }
+                    Add_GC_Mark_If_Not_Already_Marked(*psym);
                 }
             }
             Propagate_All_GC_Marks();
         }
 
-        if (before_count == g_gc.mark_count)
-            break;  // no more added
+        if (not added_marks)
+            break;
     }
 
     // SWEEPING PHASE
 
-    ASSERT_NO_GC_MARKS_PENDING();
+    Assert_No_GC_Marks_Pending();
 
     // Note: We do not need to mark the PG_Inaccessible_Series, because it is
     // not subject to GC and no one should mark it.  Make sure that's true.
     //
-    assert(Not_Series_Flag(&PG_Inaccessible_Series, MARKED));
+    assert(not Is_Node_Marked(&PG_Inaccessible_Series));
 
     REBLEN sweep_count;
 
@@ -1308,32 +1308,24 @@ REBLEN Recycle_Core(bool shutdown, Series(*) sweeplist)
     else
         sweep_count = Sweep_Series();
 
-    // Unmark the Lib() fixed patches
+    // Unmark the Lib() fixed patches (not in stub pool, never get swept)
     //
+    assert(Is_Free_Node(&PG_Lib_Patches[0]));  // skip SYM_0
     for (REBLEN i = 1; i < LIB_SYMS_MAX; ++i) {
         Array(*) patch = &PG_Lib_Patches[i];
-        if (Get_Series_Flag(patch, MARKED)) {
-            Clear_Series_Flag(patch, MARKED);
-            --g_gc.mark_count;
-        }
+        Remove_GC_Mark(patch);
     }
 
-    // Unmark the Canon() fixed symbols
+    // Unmark the Canon() fixed symbols (not in stub pool, never get swept)
     //
+    assert(Is_Free_Node(&g_symbols.builtin_canons[0]));  // skip SYM_0
     for (REBLEN i = 1; i < ALL_SYMS_MAX; ++i) {
         Symbol(*) canon = &g_symbols.builtin_canons[i];
-
-        if (not shutdown)
-           assert(Get_Series_Flag(canon, MARKED));
-
-        if (Get_Series_Flag(canon, MARKED)) {
-            Clear_Series_Flag(canon, MARKED);
-            --g_gc.mark_count;
-        }
+        Remove_GC_Mark_If_Marked(canon);
     }
 
   #if !defined(NDEBUG)
-    assert(g_gc.mark_count == 0);  // should balance out
+    assert(g_gc.mark_count == 0);  // should have balanced out
   #endif
 
   #if DEBUG_COLLECT_STATS
@@ -1354,10 +1346,9 @@ REBLEN Recycle_Core(bool shutdown, Series(*) sweeplist)
     // Reverted to the R3-Alpha state, accommodating a comment "do not adjust
     // task variables or boot strings in shutdown when they are being freed."
     //
-    if (not shutdown)
-        g_gc.depletion = g_gc.ballast;
+    g_gc.depletion = g_gc.ballast;
 
-    ASSERT_NO_GC_MARKS_PENDING();
+    Assert_No_GC_Marks_Pending();
 
   #if !defined(NDEBUG)
     g_gc.recycling = false;
@@ -1387,9 +1378,7 @@ REBLEN Recycle_Core(bool shutdown, Series(*) sweeplist)
 //
 REBLEN Recycle(void)
 {
-    // Default to not passing the `shutdown` flag.
-    //
-    REBLEN n = Recycle_Core(false, NULL);
+    REBLEN n = Recycle_Core(nullptr);
 
   #ifdef DOUBLE_RECYCLE_TEST
     //
@@ -1398,7 +1387,7 @@ REBLEN Recycle(void)
     // shouldn't crash.)  This is an expensive check, but helpful to try if
     // it seems a GC left things in a bad state that crashed a later GC.
     //
-    REBLEN n2 = Recycle_Core(false, NULL);
+    REBLEN n2 = Recycle_Core(nullptr);
     assert(n2 == 0);
   #endif
 
@@ -1523,9 +1512,11 @@ void Startup_GC(void)
 //
 void Shutdown_GC(void)
 {
+    assert(Series_Used(g_gc.guarded) == 0);
     Free_Unmanaged_Series(g_gc.guarded);
     g_gc.guarded = nullptr;
 
+    assert(Series_Used(g_gc.mark_stack) == 0);
     Free_Unmanaged_Series(g_gc.mark_stack);
     g_gc.mark_stack = nullptr;
 
@@ -1533,6 +1524,7 @@ void Shutdown_GC(void)
     // in the manuals list...Catch-22!  This free must happen after all
     // unmanaged series have been freed.
     //
+    assert(Series_Used(g_gc.manuals) == 0);
     GC_Kill_Series(g_gc.manuals);
     g_gc.manuals = nullptr;
 

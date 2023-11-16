@@ -565,7 +565,11 @@ void Startup_Symbols(void)
     // Hence Canon(0) is illegal, to avoid `Canon(X) == Canon(Y)` being
     // true when X and Y are different symbols with no SYM_XXX id.
     //
-    g_symbols.builtin_canons[SYM_0].leader.bits = SERIES_FLAG_FREE;
+    // We turn it into a freed series, so Detect_Rebol_Pointer() doesn't
+    // confuse the zeroed memory with an empty UTF-8 string.
+    //
+    assert(NODE_BYTE(&g_symbols.builtin_canons[SYM_0]) == 0);
+    NODE_BYTE(&g_symbols.builtin_canons[SYM_0]) = FREED_SERIES_BYTE;
 
     SymId id = cast(SymId, cast(REBLEN, SYM_0 + 1));  // SymId for debug watch
 
@@ -618,6 +622,9 @@ void Startup_Symbols(void)
 //
 void Shutdown_Symbols(void)
 {
+    assert(Is_Free_Node(&g_symbols.builtin_canons[SYM_0]));
+    NODE_BYTE(&g_symbols.builtin_canons[SYM_0]) = 0;  // restore to clean state
+
     // The Shutdown_Interning() code checks for g_symbols.by_hash to be
     // empty...the necessary removal happens in Decay_Series().  (Note that a
     // "dirty" shutdown--typically used--avoids all these balancing checks!)

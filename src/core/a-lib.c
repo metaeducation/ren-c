@@ -304,8 +304,10 @@ void RL_rebFreeMaybe(void *ptr)
 
     if (g_gc.recycling and Get_Series_Flag(s, MARKED)) {
         assert(Get_Series_Flag(s, MANAGED));
-        Clear_Series_Flag(s, MARKED);
+        NODE_BYTE(s) &= ~NODE_BYTEMASK_0x10_MARKED;
+      #if DEBUG
         g_gc.mark_count -= 1;
+      #endif
     }
 
     Clear_Series_Flag(s, ROOT);

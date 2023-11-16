@@ -199,7 +199,10 @@ static void Startup_Lib(void)
 
   //=//// INITIALIZE LIB PATCHES ///////////////////////////////////////////=//
 
-    for (REBLEN i = 1; i < LIB_SYMS_MAX; ++i) {
+    assert(NODE_BYTE(&PG_Lib_Patches[SYM_0]) == 0);  // conflates with "\0"
+    NODE_BYTE(&PG_Lib_Patches[SYM_0]) = FREED_SERIES_BYTE;  // invalid UTF-8
+
+    for (REBLEN i = 1; i < LIB_SYMS_MAX; ++i) {  // skip SYM_0
         Array(*) patch = Make_Array_Core_Into(
             &PG_Lib_Patches[i],
             1,
@@ -269,6 +272,9 @@ static void Shutdown_Lib(void)
     // variables are FRESHEN() and that the patches look empty in case the
     // Startup() gets called again.
     //
+    assert(Is_Free_Node(&PG_Lib_Patches[0]));
+    NODE_BYTE(&PG_Lib_Patches[0]) = 0;
+
     for (REBLEN i = 1; i < LIB_SYMS_MAX; ++i) {
         Array(*) patch = &PG_Lib_Patches[i];
 
@@ -1122,8 +1128,7 @@ void Shutdown_Core(bool clean)
 
 //=//// ALL MANAGED SERIES MUST HAVE THE KEEPALIVE REFERENCES GONE NOW ////=//
 
-    const bool shutdown = true;  // go ahead and free all managed series
-    Recycle_Core(shutdown, nullptr);
+    Sweep_Series();  // go ahead and free all managed series
 
     assert(Is_Cell_Erased(&g_ts.thrown_arg));
     assert(Is_Cell_Erased(&g_ts.thrown_label));

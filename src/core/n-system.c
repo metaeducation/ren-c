@@ -153,7 +153,7 @@ DECLARE_NATIVE(recycle)
         fail (Error_Debug_Only_Raw());
       #else
         Series(*) sweeplist = Make_Series_Core(100, FLAG_FLAVOR(NODELIST));
-        count = Recycle_Core(false, sweeplist);
+        count = Recycle_Core(sweeplist);
         assert(count == Series_Used(sweeplist));
 
         REBLEN index = 0;
@@ -165,7 +165,7 @@ DECLARE_NATIVE(recycle)
 
         Free_Unmanaged_Series(sweeplist);
 
-        REBLEN recount = Recycle_Core(false, NULL);
+        REBLEN recount = Recycle_Core(nullptr);
         assert(recount == count);
       #endif
     }

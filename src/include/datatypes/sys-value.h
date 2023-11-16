@@ -375,7 +375,7 @@ inline static enum Reb_Kind VAL_TYPE_UNCHECKED(Cell(const*) v) {
 // all zeros to protect leakage from other processes...so it's good to be
 // able to take advantage of it where possible.
 //
-// Note that an erased cell is FRESH(), but not READABLE() or WRITABLE().
+// Note that an erased cell Is_Fresh(), but not READABLE() or WRITABLE().
 
 inline static Cell(*) Erase_Cell_Untracked(RawCell* c) {
     ALIGN_CHECK_CELL_EVIL_MACRO(c);

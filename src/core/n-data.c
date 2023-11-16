@@ -485,7 +485,7 @@ DECLARE_INTRINSIC(lit_word_q)
 {
     UNUSED(phase);
 
-    Init_Logic(out, IS_QUOTED_WORD(arg));
+    Init_Logic(out, not Is_Isotope(arg) and IS_QUOTED_WORD(arg));
 }
 
 

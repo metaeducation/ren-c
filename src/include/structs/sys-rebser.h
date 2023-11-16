@@ -103,7 +103,6 @@
 #define SERIES_FLAG_FREE        NODE_FLAG_STALE
 #define SERIES_FLAG_MANAGED     NODE_FLAG_MANAGED
 #define SERIES_FLAG_ROOT        NODE_FLAG_ROOT
-#define SERIES_FLAG_MARKED      NODE_FLAG_MARKED
 
 
 //=//// SERIES_FLAG_LINK_NODE_NEEDS_MARK //////////////////////////////////=//

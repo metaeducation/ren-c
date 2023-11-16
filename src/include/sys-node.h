@@ -28,8 +28,13 @@
 //
 
 
+// We don't worry about losing const information for fetching NODE_BYTE().
+// The GC can fiddle with the marked flag even on const series, for instance.
+// And if you're changing something from a Cell to a Stub--or otherwise--you
+// have much bigger concerns regarding safety and unsafety than const.
+
 #define NODE_BYTE(p) \
-    *cast(const Byte*, ensure(const Node*, p))
+    *x_cast(Byte*, ensure(const Node*, (p)))
 
 #ifdef NDEBUG
     #define Is_Free_Node(p) \
@@ -110,6 +115,9 @@
 
 #define Is_Node_A_Stub(n) \
     (not Is_Node_A_Cell(n))
+
+#define Is_Node_Marked(n) \
+    (NODE_BYTE(n) & NODE_BYTEMASK_0x10_MARKED)
 
 
 // Allocate a node from a pool.  Returned node will not be zero-filled, but
