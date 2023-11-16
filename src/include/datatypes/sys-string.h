@@ -373,6 +373,8 @@ inline static void Free_Bookmarks_Maybe_Null(String(*) str) {
 // to get away with not having any bookmarks at all.
 //
 inline static Utf8(*) String_At(String(const_if_c*) s, REBLEN at) {
+    assert(s != g_mold.buffer);  // String_At() makes bookmarks, don't want!
+
     assert(at <= String_Len(s));
 
     if (Is_Definitely_Ascii(s)) {  // can't have any false positives
@@ -412,8 +414,7 @@ inline static Utf8(*) String_At(String(const_if_c*) s, REBLEN at) {
         }
         if (not book and Is_NonSymbol_String(s)) {
             book = Alloc_BookmarkList();
-            const StringT* p = s;
-            mutable_LINK(Bookmarks, m_cast(StringT*, p)) = book;
+            mutable_LINK(Bookmarks, m_cast(StringT*, s)) = book;
             goto scan_from_head;  // will fill in bookmark
         }
     }
@@ -428,8 +429,7 @@ inline static Utf8(*) String_At(String(const_if_c*) s, REBLEN at) {
         }
         if (not book and Is_NonSymbol_String(s)) {
             book = Alloc_BookmarkList();
-            const StringT *p = s;
-            mutable_LINK(Bookmarks, m_cast(StringT*, p)) = book;
+            mutable_LINK(Bookmarks, m_cast(StringT*, s)) = book;
             goto scan_from_tail;  // will fill in bookmark
         }
     }

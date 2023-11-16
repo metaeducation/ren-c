@@ -747,7 +747,7 @@ void Startup_Mold(REBLEN size)
 //
 void Shutdown_Mold(void)
 {
-    assert(LINK(Bookmarks, g_mold.buffer) == nullptr);  // should not happen
+    assert(LINK(Bookmarks, g_mold.buffer) == nullptr);  // should not be set
     Free_Unmanaged_Series(g_mold.buffer);
     g_mold.buffer = nullptr;
 

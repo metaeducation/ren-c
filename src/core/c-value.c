@@ -140,7 +140,7 @@ inline static void Probe_Molded_Value(const REBVAL *v)
     Push_Mold(mo);
     Mold_Value(mo, v);
 
-    printf("%s\n", cast(const char*, String_At(mo->series, mo->base.index)));
+    printf("%s\n", cast(const char*, Binary_At(mo->series, mo->base.size)));
     fflush(stdout);
 
     Drop_Mold(mo);
@@ -414,7 +414,7 @@ void* Probe_Core_Debug(
   cleanup:
 
     if (mo->base.size != String_Size(mo->series))
-        printf("%s\n", cast(const char*, String_At(mo->series, mo->base.index)));
+        printf("%s\n", cast(const char*, Binary_At(mo->series, mo->base.size)));
     fflush(stdout);
 
     Drop_Mold(mo);
