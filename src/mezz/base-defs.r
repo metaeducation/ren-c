@@ -440,25 +440,13 @@ run func* [
     <end>
 
 
-; Note: `LIT-WORD!: UNEVAL WORD!` and `LIT-PATH!: UNEVAL PATH!` is actually
-; set up in %b-init.c.  Also LIT-WORD! and LIT-PATH! are handled specially in
-; %words.r for bootstrap compatibility as a parse keyword.
+; bridge compatibility, as LIT-WORD! and LIT-PATH! are no longer fundamental
+; datatypes... but type constraints (LIT-WORD? and LIT-PATH?)
 
-lit-word?: lambda [value] [
-    to-logic all [
-        quoted? value
-        word? unquote value
-    ]
-]
 to-lit-word: func* [return: [quoted!] value [any-value!]] [
     return quote to word! noquote value
 ]
-lit-path?: lambda [value] [
-    to-logic all [
-        quoted? value
-        path? unquote value
-    ]
-]
+
 to-lit-path: func* [return: [quoted!] value [any-value!]] [
     return quote to path! noquote value
 ]

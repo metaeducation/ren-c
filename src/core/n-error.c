@@ -224,7 +224,7 @@ DECLARE_NATIVE(except)
 
 
 //
-//  raised?: native [
+//  raised?: native/intrinsic [
 //
 //  "Tells you if argument is a failure, but does not raise it"
 //
@@ -232,11 +232,11 @@ DECLARE_NATIVE(except)
 //      ^optional
 //  ]
 //
-DECLARE_NATIVE(raised_q)
+DECLARE_INTRINSIC(raised_q)
 {
-    INCLUDE_PARAMS_OF_RAISED_Q;
+    UNUSED(phase);
 
-    return Init_Logic(OUT, Is_Meta_Of_Raised(ARG(optional)));
+    Init_Logic(out, Is_Meta_Of_Raised(arg));
 }
 
 

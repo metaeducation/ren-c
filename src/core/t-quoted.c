@@ -627,7 +627,7 @@ DECLARE_INTRINSIC(splice_q)
 
 
 //
-//  any-matcher?: native [
+//  any-matcher?: native/intrinsic [
 //
 //  "Tells you if argument is any kind of matcher (TYPE-XXX! isotope)"
 //
@@ -635,16 +635,14 @@ DECLARE_INTRINSIC(splice_q)
 //      ^value [<opt> <void> raised? pack? any-value!]
 //  ]
 //
-DECLARE_NATIVE(any_matcher_q)
+DECLARE_INTRINSIC(any_matcher_q)
 {
-    INCLUDE_PARAMS_OF_ANY_MATCHER_Q;
+    UNUSED(phase);
 
-    Value(*) v = ARG(value);
-
-    if (Is_Quasi(v) and ANY_TYPE_VALUE_KIND(HEART_BYTE(v)))
-        return Init_True(OUT);
-
-    return Init_False(OUT);
+    if (Is_Quasi(arg) and ANY_TYPE_VALUE_KIND(HEART_BYTE(arg)))
+        Init_True(out);
+    else
+        Init_False(out);
 }
 
 

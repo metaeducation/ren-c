@@ -473,7 +473,7 @@ DECLARE_INTRINSIC(char_q)
 
 
 //
-//  lit-word?: native [
+//  lit-word?: native/intrinsic [
 //
 //  "Test if an argument is quoted word"
 //
@@ -481,17 +481,16 @@ DECLARE_INTRINSIC(char_q)
 //      value
 //  ]
 //
-DECLARE_NATIVE(lit_word_q)
+DECLARE_INTRINSIC(lit_word_q)
 {
-    INCLUDE_PARAMS_OF_LIT_WORD_Q;
-    Value(*) v = ARG(value);
+    UNUSED(phase);
 
-    return Init_Logic(OUT, IS_QUOTED_WORD(v));
+    Init_Logic(out, IS_QUOTED_WORD(arg));
 }
 
 
 //
-//  lit-path?: native [
+//  lit-path?: native/intrinsic [
 //
 //  "Test if an argument is a quoted path"
 //
@@ -499,12 +498,11 @@ DECLARE_NATIVE(lit_word_q)
 //      value
 //  ]
 //
-DECLARE_NATIVE(lit_path_q)
+DECLARE_INTRINSIC(lit_path_q)
 {
-    INCLUDE_PARAMS_OF_LIT_PATH_Q;
-    Value(*) v = ARG(value);
+    UNUSED(phase);
 
-    return Init_Logic(OUT, IS_QUOTED_PATH(v));
+    Init_Logic(out, IS_QUOTED_PATH(arg));
 }
 
 
