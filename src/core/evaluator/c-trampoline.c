@@ -228,7 +228,7 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
             Meta_Quotify(OUT);
         }
         else if (Is_Raised(OUT)) {
-            if (Not_Level_Flag(LEVEL, FAILURE_RESULT_OK)) {
+            if (Not_Level_Flag(LEVEL, RAISED_RESULT_OK)) {
                 //
                 // treat any failure as if it could have been thrown from
                 // anywhere, so it is bubbled up as a throw.

@@ -136,7 +136,7 @@ STATIC_ASSERT(LEVEL_FLAG_7_IS_TRUE == NODE_FLAG_CELL);
 #undef LEVEL_FLAG_15
 
 
-//=//// LEVEL_FLAG_FAILURE_RESULT_OK ///////////////////////////////////////=//
+//=//// LEVEL_FLAG_RAISED_RESULT_OK ///////////////////////////////////////=//
 //
 // The special ISOTOPE_0 quotelevel will trip up code that isn't expecting
 // it, so most levels do not want to receive these "isotopic forms of error!"
@@ -146,7 +146,7 @@ STATIC_ASSERT(LEVEL_FLAG_7_IS_TRUE == NODE_FLAG_CELL);
 // Note: This bit is the same as CELL_FLAG_NOTE, which may be something that
 // could be exploited for some optimization.
 //
-#define LEVEL_FLAG_FAILURE_RESULT_OK \
+#define LEVEL_FLAG_RAISED_RESULT_OK \
     FLAG_LEFT_BIT(16)
 
 

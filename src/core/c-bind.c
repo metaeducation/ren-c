@@ -556,7 +556,7 @@ DECLARE_NATIVE(let)
     Flags flags =
         FLAG_STATE_BYTE(ST_EVALUATOR_REEVALUATING)
         | (L->flags.bits & EVAL_EXECUTOR_FLAG_FULFILLING_ARG)
-        | (L->flags.bits & LEVEL_FLAG_FAILURE_RESULT_OK);
+        | (L->flags.bits & LEVEL_FLAG_RAISED_RESULT_OK);
 
     Level(*) sub = Make_Level(LEVEL->feed, flags);
     sub->u.eval.current = SPARE;

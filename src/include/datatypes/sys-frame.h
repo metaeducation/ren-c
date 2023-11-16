@@ -707,7 +707,7 @@ inline static bool Pushed_Continuation(
         Level(*) L = Make_Level_At_Core(branch, branch_specifier, flags);
         if (CELL_HEART_UNCHECKED(branch) == REB_META_BLOCK) {
             Set_Level_Flag(L, META_RESULT);
-            Set_Level_Flag(L, FAILURE_RESULT_OK);
+            Set_Level_Flag(L, RAISED_RESULT_OK);
         }
         L->executor = &Array_Executor;
 
@@ -896,7 +896,7 @@ inline static Bounce Continue_Sublevel_Helper(
     assert((o) == level_->out), \
     Pushed_Continuation( \
         level_->out, \
-        (sub_flags) | (level_->flags.bits & LEVEL_FLAG_FAILURE_RESULT_OK), \
+        (sub_flags) | (level_->flags.bits & LEVEL_FLAG_RAISED_RESULT_OK), \
         __VA_ARGS__  /* branch_specifier, branch, and "with" argument */ \
     ) ? BOUNCE_DELEGATE \
         : level_->out)  // no need to give callback to delegator

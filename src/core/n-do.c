@@ -965,7 +965,7 @@ DECLARE_NATIVE(apply)
 //
 #define Make_Action_Sublevel(parent) \
     Make_Level((parent)->feed, \
-        LEVEL_FLAG_FAILURE_RESULT_OK \
+        LEVEL_FLAG_RAISED_RESULT_OK \
         | ((parent)->flags.bits & EVAL_EXECUTOR_FLAG_DIDNT_LEFT_QUOTE_TUPLE))
 
 

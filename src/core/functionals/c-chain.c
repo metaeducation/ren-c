@@ -58,7 +58,7 @@ enum {
 //
 Level(*) Push_Downshifted_Level(Atom(*) out, Level(*) L) {
     Flags flags = ACTION_EXECUTOR_FLAG_IN_DISPATCH;
-    flags |= L->flags.bits & LEVEL_FLAG_FAILURE_RESULT_OK;
+    flags |= L->flags.bits & LEVEL_FLAG_RAISED_RESULT_OK;
 
     Level(*) sub = Make_Level(L->feed, flags);
     Push_Level(out, sub);
@@ -188,8 +188,8 @@ Bounce Chainer_Dispatcher(Level(*) const L)
 } run_next_in_chain: {  //////////////////////////////////////////////////////
 
     Level(*) sub = SUBLEVEL;
-    if (Get_Level_Flag(L, FAILURE_RESULT_OK))
-        assert(Get_Level_Flag(sub, FAILURE_RESULT_OK));
+    if (Get_Level_Flag(L, RAISED_RESULT_OK))
+        assert(Get_Level_Flag(sub, RAISED_RESULT_OK));
 
     if (sub->varlist and Not_Series_Flag(sub->varlist, MANAGED))
         GC_Kill_Series(sub->varlist);

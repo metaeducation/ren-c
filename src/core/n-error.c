@@ -99,7 +99,7 @@ DECLARE_NATIVE(enrescue)
 DECLARE_NATIVE(entrap)  // wrapped as TRAP and ATTEMPT
 //
 // Unlike SYS.UTIL.RESCUE, the ENTRAP function only reacts to errors from the
-// functions it directly calls via LEVEL_FLAG_FAILURE_RESULT_OK.  Hence it
+// functions it directly calls via LEVEL_FLAG_RAISED_RESULT_OK.  Hence it
 // does not intercept thrown "failures", making it much safer to react to the
 // errors one gets back from it.
 {
@@ -126,7 +126,7 @@ DECLARE_NATIVE(entrap)  // wrapped as TRAP and ATTEMPT
 
     Flags flags =
         LEVEL_FLAG_TRAMPOLINE_KEEPALIVE  // reused for each step
-        | LEVEL_FLAG_FAILURE_RESULT_OK;  // we're trapping it
+        | LEVEL_FLAG_RAISED_RESULT_OK;  // we're trapping it
 
     Level(*) sub;
     if (IS_BLOCK(code)) {

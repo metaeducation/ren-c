@@ -457,35 +457,6 @@ Series(*) Hash_Block(const REBVAL *block, REBLEN skip, bool cased)
 
 
 //
-//  Compute_IPC: C
-//
-// Compute an IP checksum given some data and a length.
-// Used only on BINARY values.
-//
-REBINT Compute_IPC(const Byte* data, Size size)
-{
-    REBLEN sum = 0;  // stores the summation
-    const Byte* bp = data;
-
-    while (size > 1) {
-        sum += (bp[0] << 8) | bp[1];
-        bp += 2;
-        size -= 2;
-    }
-
-    if (size != 0)
-        sum += *bp;  // Handle the odd byte if necessary
-
-    // Add back the carry outs from the 16 bits to the low 16 bits
-
-    sum = (sum >> 16) + (sum & 0xffff);  // Add high-16 to low-16
-    sum += (sum >> 16);  // Add carry
-    return cast(REBINT, (~sum) & 0xffff);  // 1's complement, then truncate
-}
-
-
-
-//
 //  Hash_Bytes: C
 //
 // Return a 32-bit hash value for the bytes.

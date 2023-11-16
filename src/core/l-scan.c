@@ -2159,7 +2159,7 @@ Bounce Scanner_Executor(Level(*) const L) {
             L->feed,
             LEVEL_FLAG_TRAMPOLINE_KEEPALIVE  // we want accrued stack
                 | (L->flags.bits & SCAN_EXECUTOR_MASK_RECURSE)
-                | LEVEL_FLAG_FAILURE_RESULT_OK
+                | LEVEL_FLAG_RAISED_RESULT_OK
         );
         sub->executor = &Scanner_Executor;
 
@@ -2443,7 +2443,7 @@ Bounce Scanner_Executor(Level(*) const L) {
             L->feed,
             LEVEL_FLAG_TRAMPOLINE_KEEPALIVE  // we want accrued stack
                 | (L->flags.bits & SCAN_EXECUTOR_MASK_RECURSE)
-                | LEVEL_FLAG_FAILURE_RESULT_OK
+                | LEVEL_FLAG_RAISED_RESULT_OK
         );
         sub->executor = &Scanner_Executor;
 
@@ -2633,7 +2633,7 @@ Bounce Scanner_Executor(Level(*) const L) {
         else {
             Level(*) sub = Make_Level(
                 L->feed,
-                LEVEL_FLAG_FAILURE_RESULT_OK
+                LEVEL_FLAG_RAISED_RESULT_OK
             );
             sub->executor = &Scanner_Executor;
 
@@ -3141,7 +3141,7 @@ DECLARE_NATIVE(transcode)
 
     Flags flags =
         LEVEL_FLAG_TRAMPOLINE_KEEPALIVE  // query pending newline
-        | LEVEL_FLAG_FAILURE_RESULT_OK  // want to pass on definitional error
+        | LEVEL_FLAG_RAISED_RESULT_OK  // want to pass on definitional error
         | LEVEL_FLAG_ALLOCATED_FEED;
 
     if (REF(one))

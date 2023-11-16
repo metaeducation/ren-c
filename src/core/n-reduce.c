@@ -251,7 +251,7 @@ DECLARE_NATIVE(reduce_each)
     Flags flags = LEVEL_FLAG_TRAMPOLINE_KEEPALIVE;
 
     if (IS_META_WORD(vars)) {  // Note: gets converted to object in next step
-        flags |= LEVEL_FLAG_META_RESULT | LEVEL_FLAG_FAILURE_RESULT_OK;
+        flags |= LEVEL_FLAG_META_RESULT | LEVEL_FLAG_RAISED_RESULT_OK;
     }
 
     Context(*) context = Virtual_Bind_Deep_To_New_Context(
@@ -386,7 +386,7 @@ static void Push_Composer_Level(
         adjusted ? SPECIFIED : specifier,
         EVAL_EXECUTOR_FLAG_NO_EVALUATIONS
             | LEVEL_FLAG_TRAMPOLINE_KEEPALIVE  // allows stack accumulation
-            | LEVEL_FLAG_FAILURE_RESULT_OK  // bubbles up definitional errors
+            | LEVEL_FLAG_RAISED_RESULT_OK  // bubbles up definitional errors
     );
     Push_Level(out, sub);  // sublevel may raise definitional failure
 

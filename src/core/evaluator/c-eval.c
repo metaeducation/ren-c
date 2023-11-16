@@ -125,7 +125,7 @@ STATIC_ASSERT(
 
 #define Make_Action_Sublevel(parent) \
     Make_Level((parent)->feed, \
-        LEVEL_FLAG_FAILURE_RESULT_OK \
+        LEVEL_FLAG_RAISED_RESULT_OK \
         | ((parent)->flags.bits & EVAL_EXECUTOR_FLAG_DIDNT_LEFT_QUOTE_TUPLE))
 
 
@@ -204,7 +204,7 @@ inline static Level(*) Maybe_Rightward_Continuation_Needed(Level(*) L)
 
     Flags flags =  // v-- if f was fulfilling, we are
         (L->flags.bits & EVAL_EXECUTOR_FLAG_FULFILLING_ARG)
-        | LEVEL_FLAG_FAILURE_RESULT_OK;  // trap [e: transcode "1&aa"] works
+        | LEVEL_FLAG_RAISED_RESULT_OK;  // trap [e: transcode "1&aa"] works
 
     if (Did_Init_Inert_Optimize_Complete(OUT, L->feed, &flags))
         return nullptr;  // If eval not hooked, ANY-INERT! may not need a frame
@@ -260,7 +260,7 @@ Bounce Array_Executor(Level(*) L)
 
     Level(*) sub = Make_Level(
         L->feed,
-        LEVEL_FLAG_FAILURE_RESULT_OK
+        LEVEL_FLAG_RAISED_RESULT_OK
             | LEVEL_FLAG_TRAMPOLINE_KEEPALIVE
     );
     Push_Level(SPARE, sub);
@@ -752,7 +752,7 @@ Bounce Evaluator_Executor(Level(*) L)
                 REBPAR* param = ACT_PARAM(action, 2);
                 Flags flags = EVAL_EXECUTOR_FLAG_FULFILLING_ARG;
                 if (VAL_PARAM_CLASS(param) == PARAM_CLASS_META)
-                    flags |= LEVEL_FLAG_FAILURE_RESULT_OK;
+                    flags |= LEVEL_FLAG_RAISED_RESULT_OK;
 
                 Clear_Feed_Flag(L->feed, NO_LOOKAHEAD);  // when non-enfix call
 
@@ -921,7 +921,7 @@ Bounce Evaluator_Executor(Level(*) L)
       case REB_META_GROUP: {
         L_next_gotten = nullptr;  // arbitrary code changes fetched variables
 
-        Flags flags = LEVEL_FLAG_FAILURE_RESULT_OK
+        Flags flags = LEVEL_FLAG_RAISED_RESULT_OK
             | FLAG_STATE_BYTE(ST_ARRAY_PRELOADED_ENTRY);  // see [2]
 
         if (STATE == REB_META_GROUP)

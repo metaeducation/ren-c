@@ -1252,6 +1252,27 @@ void RL_rebPushContinuation(
 
 
 //
+//  rebDelegate: RL_API
+//
+// !!! At the moment, this is used to work around the inability of REBVAL* to
+// store unstable isotopes, which hinders extensions that want to do multiple
+// return values.  Review
+//
+REBVAL *RL_rebDelegate(  // !!! Hack: returns BOUNCE, not REBVAL*
+    const void *p, va_list *vaptr
+){
+    ENTER_API;
+
+    RL_rebPushContinuation(
+        cast(REBVAL*, TOP_LEVEL->out),
+        LEVEL_FLAG_RAISED_RESULT_OK,  // definitional error if raised
+        p, vaptr
+    );
+    return cast(REBVAL*, BOUNCE_DELEGATE);  // !!! Evil hack!.
+}
+
+
+//
 //  rebMeta: RL_API
 //
 // Builds in a ^META operation to rebValue; shorthand that's more efficient.
@@ -1626,6 +1647,22 @@ void *RL_rebUnboxHandleCData(
     if (size_out)
         *size_out = VAL_HANDLE_LEN(v);
     return VAL_HANDLE_POINTER(void*, v);
+}
+
+
+//
+//  rebExtractHandleCleaner: RL_API
+//
+CLEANUP_CFUNC *RL_rebExtractHandleCleaner(
+    const REBVAL* v
+){
+    ENTER_API_RECYCLING_OK;
+
+    if (VAL_TYPE(v) != REB_HANDLE)
+        fail ("rebUnboxHandleCleaner() called on non-HANDLE!");
+
+    Array(*) singular = VAL_HANDLE_SINGULAR(v);
+    return singular->misc.cleaner;
 }
 
 
