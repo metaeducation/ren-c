@@ -566,10 +566,10 @@ DECLARE_NATIVE(pack)
     }
 
     assert(IS_BLOCK(v));
-    if (rebRunThrows(cast(REBVAL*, SPARE),
-        Canon(QUASI), Canon(COLLECT), "[", Canon(REDUCE_EACH), "^x", v,
-            "[keep x]",
-        "]"
+
+    if (rebRunThrows(
+        cast(REBVAL*, SPARE),  // output cell
+        Canon(QUASI), "reduce/predicate", v, Lib(META)
     )){
         return THROWN;
     }

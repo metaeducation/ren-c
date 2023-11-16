@@ -131,8 +131,17 @@ DECLARE_NATIVE(reduce)
     if (Is_Nulled(predicate))  // default is no processing
         goto process_out;
 
-    if (Is_Elision(OUT) or Is_Void(OUT))  // not given to predicates, by design
-        goto next_reduce_step;  // reduce skips over voids and nones
+    if (Is_Barrier(OUT))  // voids and nihils offered to predicate, not commas
+        goto next_reduce_step;
+
+    if (Is_Void(OUT) or Is_Nihil(OUT)) {
+        const REBPAR* param = First_Unspecialized_Param(
+            nullptr,
+            VAL_ACTION(predicate)
+        );
+        if (not TYPE_CHECK(param, OUT))
+            goto next_reduce_step;
+    }
 
     SUBLEVEL->executor = &Just_Use_Out_Executor;
     STATE = ST_REDUCE_RUNNING_PREDICATE;
