@@ -26,17 +26,14 @@
 #if TO_WINDOWS
     #define WIN32_LEAN_AND_MEAN  // trim down the Win32 headers
     #include <windows.h>
-    #undef OUT  // %minwindef.h defines this, we have a better use for it
-    #undef VOID  // %winnt.h defines this, we have a better use for it
 #endif
+
 #include <locale.h>
 
-// IS_ERROR might be defined in winerror.h and tmp-kinds.h
-#ifdef IS_ERROR
-#undef IS_ERROR
-#endif
+#include "rebol.h"  // not %sys-core.h !
 
-#include "sys-core.h"
+#include "assert.h"
+#include "reb-c.h"
 
 #include "tmp-mod-locale.h"
 
@@ -58,19 +55,17 @@ DECLARE_NATIVE(locale)
 //    parses environment variables and uses compiled-in tables.  See the HIJACK
 //    in %ext-locale-init.reb for that.
 {
-  #if TO_WINDOWS
     LOCALE_INCLUDE_PARAMS_OF_LOCALE;
 
-    REBVAL *cat = ARG(category);
-
+  #if TO_WINDOWS
     LCTYPE type = rebUnbox(
         "select [",
             "language", rebI(LOCALE_SENGLANGUAGE),
             "language*", rebI(LOCALE_SNATIVELANGNAME),
             "territory", rebI(LOCALE_SENGCOUNTRY),
             "territory*", rebI(LOCALE_SCOUNTRY),
-        "]", rebQ(cat), "else [",
-            "fail [{Invalid locale category:}", rebQ(cat), "]",
+        "] @", rebArgR("category"), "else [",
+            "fail [{Invalid locale category:} @", rebArgR("category"), "]",
         "]"  // !!! review using fail with ID-based errors
     );
 
@@ -82,18 +77,20 @@ DECLARE_NATIVE(locale)
     //
     int len_plus_term = GetLocaleInfo(0, type, 0, 0); // fetch needed length
 
-    WCHAR *buffer = rebAllocN(WCHAR, len_plus_term);
+    WCHAR* buffer = rebAllocN(WCHAR, len_plus_term);
 
     int len_check = GetLocaleInfo(0, type, buffer, len_plus_term); // now get
     assert(len_check == len_plus_term);
     UNUSED(len_check);
 
-    REBVAL *text = rebLengthedTextWide(buffer, len_plus_term - 1);
+    REBVAL* text = rebLengthedTextWide(buffer, len_plus_term - 1);
     rebFree(buffer);
 
     return text;
   #else
-    return RAISE("LOCALE not implemented natively for non-Windows");  // see [1]
+    rebJumps(
+        "fail {LOCALE not implemented natively for non-Windows}"  // see [1]
+    );
   #endif
 }
 
@@ -147,7 +144,7 @@ DECLARE_NATIVE(setlocale)
 
     // GNU extensions are #define'd to -1 above this routine if not available
     //
-    REBVAL *map = rebValue(
+    REBVAL* map = rebValue(
         "make map! [",
             "all", rebI(LC_ALL),
             "address", rebI(LC_ADDRESS), // GNU extension
@@ -165,15 +162,15 @@ DECLARE_NATIVE(setlocale)
         "]"
     );
 
-    int cat = rebUnbox("select", map, "@", ARG(category), "else [-1]");
+    int cat = rebUnbox("select", map, "@", rebArgR("category"), "else [-1]");
     rebRelease(map);
 
     if (cat == -1)
         rebJumps(
-            "fail [{Invalid locale category:} @", ARG(category), "]"
+            "fail [{Invalid locale category:} @", rebArgR("category"), "]"
         );
 
-    char *value_utf8 = rebSpell(ARG(value));
+    char* value_utf8 = rebSpell(rebArgR("value"));
     const char *result = setlocale(cat, value_utf8);
     rebFree(value_utf8);
 

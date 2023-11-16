@@ -45,12 +45,6 @@
 #include <sql.h>  // depends on defines like VOID on Windows
 #include <sqlext.h>
 
-#if TO_WINDOWS
-    #undef IS_ERROR
-    #undef OUT  // %minwindef.h defines this, we have a better use for it
-    #undef VOID  // %winnt.h defines this, we have a better use for it
-#endif
-
 #include "rebol.h"  // not %sys-core.h !
 
 #include "assert.h"
