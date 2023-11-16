@@ -112,9 +112,7 @@ Bounce Delegated_Executor(Level(*) L)
 Bounce Trampoline_From_Top_Maybe_Root(void)
 {
   #if DEBUG && CPLUSPLUS_11  // reference capture for easy view in watchlist
-    Level(*) & L = LEVEL;
     Tick & tick = TG_tick;
-    USED(L);
     USED(tick);
   #endif
 

@@ -541,7 +541,16 @@ e-lib/emit 'ver {
     typedef REBVAL* (REBRSC)(REBVAL *error, void *opaque);
 
     /*
-     * For some HANDLE!s GC callback
+     * For some HANDLE!s GC callback.  Note that because these cleanups are
+     * called during recycling, they cannot run most API routines.  Some
+     * exceptions are made for extracting handle properties and running
+     * rebFree() functions, but they have to be managed carefully.
+     *
+     * !!! It may be common enough to want to defer some code until after
+     * the GC and have a list to process that this be offered as a service.
+     * Users have a problem implementing such a service themselves in terms
+     * of knowing when the GC is.  Though since a GC can happen at any time,
+     * this might create some unpredictable nesting.
      */
     typedef void (CLEANUP_CFUNC)(const REBVAL*);
 
@@ -902,24 +911,39 @@ e-lib/emit 'ver {
      *     failure vs. needing special handling by returning NULL (which may
      *     or may not be desirable, depending on what you're doing)
      *
-     * Additionally, the rebAlloc(type) and rebAllocN(type, num) macros
-     * automatically cast to the correct type for C++ compatibility.
+     * Additionally, the rebAlloc(T) and rebAllocN(T, num) macros automatically
+     * cast to the correct type for C++ compatibility.
      *
-     * Note: There currently is no rebUnmanage() equivalent for rebMalloc()
-     * data, so it must either be rebRepossess()'d or rebFree()'d before its
-     * frame ends.  This limitation will be addressed in the future.
+     * By default, the returned memory must either be rebRepossess()'d or
+     * rebFree()'d before its frame ends.  To get around this limitation,
+     * you can call rebUnmanageMemory() on the pointer...but it will then no
+     * longer be cleaned up automatically in case of a fail().
      */
 
-    #define rebAlloc(t) \
-        ((t*)rebMalloc(sizeof(t)))
-    #define rebAllocN(t,n) \
-        ((t*)rebMalloc(sizeof(t) * (n)))
+    #define rebAlloc(T) \
+        ((T*)rebMalloc(sizeof(T)))
+
+    #define rebAllocN(T,n) \
+        ((T*)rebMalloc(sizeof(T) * (n)))
+
+    #define rebTryAlloc(T) \
+        ((T*)rebTryMalloc(sizeof(T)))
+
+    #define rebTryAllocN(T,n) \
+        ((T*)rebTryMalloc(sizeof(T) * (n)))
 
     /* Used during boot to zero out global variables */
     inline static void rebReleaseAndNull(REBVAL** v) {
         rebRelease(*v);
         *v = 0;  /* NULL or nullptr may not be defined */
     }
+
+    /*
+     * TYPE-SAFE rebUnboxHandle() MACRO VARIANTS
+     */
+
+    #define rebUnboxHandle(TP,v) \
+        ((TP)rebUnboxHandleCData((size_t*)(0), (v)))  // 0=NULL, don't get size
 
     #endif  /* REBOL_H_1020_0304 */
 }

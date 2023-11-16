@@ -205,7 +205,7 @@ e1/emit newline
 if use-librebol [
     for-each info all-protos [
         parse2 info/proto [
-            copy proto-name to ":"
+            opt ["export" space] copy proto-name to ":"
         ]
         proto-name: to-c-name proto-name
         e1/emit [info u-m-name] {

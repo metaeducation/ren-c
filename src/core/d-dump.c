@@ -110,6 +110,9 @@ void Dump_Info(void)
 //
 void Dump_Stack(Level(*) L)
 {
+    if (L == nullptr)
+        L = TOP_LEVEL;
+
     if (L == BOTTOM_LEVEL) {
         printf("<BOTTOM_LEVEL>\n");
         fflush(stdout);

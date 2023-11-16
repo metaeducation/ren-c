@@ -110,9 +110,18 @@ inline static const REBVAL *NULLIFY_NULLED(const REBVAL *cell) {
 // in particular notice if the core tries to use an API function before the
 // proper moment in the boot.
 //
+#define ENTER_API_RECYCLING_OK \
+    do { \
+        if (not PG_Api_Initialized) \
+            panic ("rebStartup() not called before API call"); \
+    } while (0)
+
 #define ENTER_API \
-    if (not PG_Api_Initialized) \
-        panic ("rebStartup() not called before API call");
+    do { \
+        ENTER_API_RECYCLING_OK; \
+        if (g_gc.recycling) \
+            panic ("Can't call libRebol API from HANDLE!'s CLEANUP_CFUNC()"); \
+    } while (0)
 
 
 //=//// SERIES-BACKED ALLOCATORS //////////////////////////////////////////=//
@@ -167,13 +176,14 @@ void *RL_rebMalloc(size_t size)
         FLAG_FLAVOR(BINARY)  // rebRepossess() only creates binary series ATM
             | SERIES_FLAG_DONT_RELOCATE  // direct data pointer handed back
             | SERIES_FLAG_DYNAMIC  // rebRepossess() needs bias field
+            | SERIES_FLAG_ROOT  // indicate this originated from the API
     );
 
     Byte* ptr = Binary_Head(s) + ALIGN_SIZE;
 
-    Series(*) *ps = (cast(Series(*)*, ptr) - 1);
+    BinaryT** ps = (cast(BinaryT**, ptr) - 1);
     *ps = s;  // save self in bytes that appear immediately before the data
-    Poison_Memory_If_Sanitize(ps, sizeof(Series(*)));  // catch underruns
+    Poison_Memory_If_Sanitize(ps, sizeof(BinaryT*));  // catch underruns
 
     // !!! The data is uninitialized, and if it is turned into a BINARY! via
     // rebRepossess() before all bytes are assigned initialized, it could be
@@ -183,13 +193,34 @@ void *RL_rebMalloc(size_t size)
     // https://stackoverflow.com/a/37184840
     //
     // It may be that rebMalloc() and rebRealloc() should initialize with 0
-    // to defend against that, but that isn't free.  For now we make no such
+    // to defend against that, but that has a cost.  For now we make no such
     // promise--and leave it uninitialized so that address sanitizer notices
     // when bytes are used that haven't been assigned.
     //
     Term_Binary_Len(s, ALIGN_SIZE + size);
 
     return ptr;
+}
+
+//
+//  rebTryMalloc: RL_API
+//
+// Variant of rebMalloc() that returns nullptr on failure.  To accomplish this
+// it just uses a RESCUE_SCOPE to intercept any fail() that happens in the
+// course of the underlying series creation.
+//
+void *RL_rebTryMalloc(size_t size)
+{
+    void* p;
+
+    RESCUE_SCOPE_IN_CASE_OF_ABRUPT_FAILURE {
+        p = RL_rebMalloc(size);
+        CLEANUP_BEFORE_EXITING_RESCUE_SCOPE;
+        return p;
+    } ON_ABRUPT_FAILURE (Context(*) e) {
+        UNUSED(e);
+        return nullptr;
+    }
 }
 
 
@@ -205,7 +236,7 @@ void *RL_rebMalloc(size_t size)
 // https://stackoverflow.com/a/9575348
 //
 // * Unlike plain realloc() (but like rebMalloc()), this fails instead of
-//   returning null, hence it is safe to say `ptr = rebRealloc(ptr, new_size)`
+//   returning null, hence it's "safe" to say `ptr = rebRealloc(ptr, new_size)`
 //
 // * A 0 size is considered illegal.  This is consistent with the C11 standard
 //   for realloc(), but not with malloc() or rebMalloc()...which allow it.
@@ -217,12 +248,13 @@ void *RL_rebRealloc(void *ptr, size_t new_size)
     assert(new_size > 0);  // realloc() deprecated this as of C11 DR 400
 
     if (not ptr)  // C realloc() accepts null
-        return rebMalloc(new_size);
+        return RL_rebMalloc(new_size);
 
-    Binary(*) *ps = cast(Binary(*)*, ptr) - 1;
-    Unpoison_Memory_If_Sanitize(ps, sizeof(Binary(*)));  // getting s underruns
+    BinaryT** ps = cast(BinaryT**, ptr) - 1;
+    Unpoison_Memory_If_Sanitize(ps, sizeof(Binary(*)));  // fetch `s` underruns
 
     Binary(*) s = *ps;
+    assert(Get_Series_Flag(s, ROOT));
 
     REBLEN old_size = Binary_Len(s) - ALIGN_SIZE;
 
@@ -230,9 +262,9 @@ void *RL_rebRealloc(void *ptr, size_t new_size)
     // rebMalloc(), but simpler for the time being.  Switch to do this with
     // the same series node.
     //
-    void *reallocated = rebMalloc(new_size);
+    void *reallocated = RL_rebMalloc(new_size);
     memcpy(reallocated, ptr, old_size < new_size ? old_size : new_size);
-    Free_Unmanaged_Series(s);
+    RL_rebFree(ptr);
 
     return reallocated;
 }
@@ -243,18 +275,22 @@ void *RL_rebRealloc(void *ptr, size_t new_size)
 //
 // * As with free(), null is accepted as a no-op.
 //
+// * Because of the practical usefulness, this operation is legal to call
+//   during a GC... although it's a little bit shaky to do so.
+//
 void RL_rebFree(void *ptr)
 {
-    ENTER_API;
+    ENTER_API_RECYCLING_OK;
 
     if (not ptr)
         return;
 
-    Binary(*) *ps = cast(Binary(*)*, ptr) - 1;
-    Unpoison_Memory_If_Sanitize(ps, sizeof(Binary(*)));  // need to underrun to fetch `s`
+    BinaryT** ps = cast(BinaryT**, ptr) - 1;
+    Unpoison_Memory_If_Sanitize(ps, sizeof(BinaryT*));  // fetch `s` underruns
 
     Binary(*) s = *ps;
-    if (Is_Node_A_Cell(s)) {
+
+    if (Is_Node_A_Cell(s) or not (NODE_BYTE(s) & NODE_BYTEMASK_0x02_ROOT)) {
         rebJumps(
             "panic [",
                 "{rebFree() mismatched with allocator!}"
@@ -265,7 +301,18 @@ void RL_rebFree(void *ptr)
 
     assert(Series_Wide(s) == 1);
 
-    Free_Unmanaged_Series(s);
+    if (g_gc.recycling and Get_Series_Flag(s, MARKED)) {
+        assert(Get_Series_Flag(s, MANAGED));
+        Clear_Series_Flag(s, MARKED);
+        g_gc.mark_count -= 1;
+    }
+
+    Clear_Series_Flag(s, ROOT);
+
+    if (Get_Series_Flag(s, MANAGED))  // set by rebUnmanageMemory()
+        GC_Kill_Series(s);
+    else
+        Free_Unmanaged_Series(s);
 }
 
 
@@ -297,16 +344,17 @@ REBVAL *RL_rebRepossess(void *ptr, size_t size)
 {
     ENTER_API;
 
-    Binary(*) *ps = cast(Binary(*)*, ptr) - 1;
-    Unpoison_Memory_If_Sanitize(ps, sizeof(Binary(*)));  // need to underrun to fetch `s`
+    BinaryT** ps = cast(BinaryT**, ptr) - 1;
+    Unpoison_Memory_If_Sanitize(ps, sizeof(BinaryT*));  // fetch `s` underruns
 
     Binary(*) s = *ps;
-    assert(Not_Series_Flag(s, MANAGED));
+    assert(Get_Series_Flag(s, ROOT));  // may or may not be managed
+    assert(Get_Series_Flag(s, DONT_RELOCATE));
 
     if (size > Binary_Len(s) - ALIGN_SIZE)
         fail ("Attempt to rebRepossess() more than rebMalloc() capacity");
 
-    assert(Get_Series_Flag(s, DONT_RELOCATE));
+    Clear_Series_Flag(s, ROOT);
     Clear_Series_Flag(s, DONT_RELOCATE);
 
     if (Get_Series_Flag(s, DYNAMIC)) {
@@ -331,6 +379,42 @@ REBVAL *RL_rebRepossess(void *ptr, size_t size)
 
     Term_Binary_Len(s, size);
     return Init_Binary(Alloc_Value(), s);
+}
+
+
+//
+//  rebUnmanageMemory: RL_API
+//
+// By default, any memory allocated by rebAlloc() will be freed in case of
+// a fail().  However it must be rebRepossess()'d or rebFree()'d before the
+// frame terminates if there is no error.
+//
+// This removes that limitation--making it more like a regular malloc() with
+// an indefinite lifetime.  It has the corresponding downside of not being
+// freed automatically in case of a failure.
+//
+// The return value is the same as the input pointer, so you can write:
+//
+//    void* p = rebUnmanageMemory(rebAlloc(...));
+//
+void* RL_rebUnmanageMemory(void *ptr)
+{
+    ENTER_API;
+
+    BinaryT** ps = cast(BinaryT**, ptr) - 1;
+    Unpoison_Memory_If_Sanitize(ps, sizeof(BinaryT*));  // fetch `s` underruns
+
+    // We "manage" the series to remove it from the tracked manuals list.
+    // But the fact that it still has NODE_FLAG_ROOT means it should not be
+    // garbage collected.
+    //
+    Binary(*) s = *ps;
+    assert(Get_Series_Flag(s, ROOT));
+    Manage_Series(s);  // panics if already unmanaged... should it tolerate?
+
+    Poison_Memory_If_Sanitize(ps, sizeof(BinaryT*));  // catch underruns
+
+    return ptr;
 }
 
 
@@ -745,6 +829,54 @@ REBVAL *RL_rebHandle(
     ENTER_API;
 
     return Init_Handle_Cdata_Managed(Alloc_Value(), data, length, cleaner);
+}
+
+
+//
+//  rebModifyHandleCData: RL_API
+//
+void RL_rebModifyHandleCData(
+    REBVAL *v,
+    void *data  // !!! What about `const void*`?  How to handle const?
+){
+    ENTER_API;
+
+    if (not IS_HANDLE(v))
+        fail ("rebModifyHandleCData() called on non-HANDLE!");
+
+    assert(Get_Cell_Flag(v, FIRST_IS_NODE));  // api only sees managed handles
+
+    SET_HANDLE_CDATA(v, data);
+}
+
+
+//
+//  rebModifyHandleLength: RL_API
+//
+void RL_rebModifyHandleLength(REBVAL *v, size_t length) {
+    ENTER_API;
+
+    if (not IS_HANDLE(v))
+        fail ("rebModifyHandleLength() called on non-HANDLE!");
+
+    assert(Get_Cell_Flag(v, FIRST_IS_NODE));  // api only sees managed handles
+
+    SET_HANDLE_LEN(v, length);
+}
+
+
+//
+//  rebModifyHandleCleaner: RL_API
+//
+void RL_rebModifyHandleCleaner(REBVAL *v, CLEANUP_CFUNC *cleaner) {
+    ENTER_API;
+
+    if (not IS_HANDLE(v))
+        fail ("rebModifyHandleCleaner() called on non-HANDLE!");
+
+    assert(Get_Cell_Flag(v, FIRST_IS_NODE));  // api only sees managed handles
+
+    VAL_HANDLE_SINGULAR(v)->misc.cleaner = cleaner;
 }
 
 
@@ -1464,22 +1596,20 @@ uint32_t RL_rebUnboxChar(
 
 
 //
-//  rebUnboxHandle: RL_API
+//  rebUnboxHandleCData: RL_API
 //
-void *RL_rebUnboxHandle(
+void *RL_rebUnboxHandleCData(
     size_t *size_out,
-    const void *p, va_list *vaptr
+    const REBVAL* v
 ){
-    ENTER_API;
+    ENTER_API_RECYCLING_OK;
 
-    DECLARE_STABLE (result);
-    Run_Va_Decay_May_Fail_Calls_Va_End(result, p, vaptr);
+    if (VAL_TYPE(v) != REB_HANDLE)
+        fail ("rebUnboxHandleCData() called on non-HANDLE!");
 
-    if (VAL_TYPE(result) != REB_HANDLE)
-        fail ("rebUnboxHandle() called on non-HANDLE!");
-
-    *size_out = VAL_HANDLE_LEN(result);
-    return VAL_HANDLE_POINTER(void*, result);
+    if (size_out)
+        *size_out = VAL_HANDLE_LEN(v);
+    return VAL_HANDLE_POINTER(void*, v);
 }
 
 

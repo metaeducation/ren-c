@@ -3358,7 +3358,7 @@ const Byte* Scan_Issue(Cell(*) out, const Byte* cp, Size size)
 //
 Option(Array(*)) Try_Scan_Variadic_Feed_Utf8_Managed(Feed(*) feed)
 {
-    assert(Detect_Rebol_Pointer(feed->p)  == DETECTED_AS_UTF8);
+    assert(Detect_Rebol_Pointer(feed->p) == DETECTED_AS_UTF8);
 
     Level(*) L = Make_Level(feed, LEVEL_MASK_NONE);
     L->executor = &Scanner_Executor;

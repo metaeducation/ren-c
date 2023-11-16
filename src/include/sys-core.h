@@ -354,6 +354,8 @@ typedef struct {
     Series(*) mark_stack;  // series pending to mark their reachables as live
     Series(*) manuals;  // Manually memory managed (not by GC)
 
+    intptr_t mark_count;  // Count of stubs with NODE_FLAG_MARKED, must balance
+
   #if DEBUG
     bool watch_recycle;
   #endif

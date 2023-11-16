@@ -1079,6 +1079,8 @@ void Shutdown_Core(bool clean)
     //
     Shutdown_Extension_Loader();
 
+    Run_All_Handle_Cleaners();  // there may be rebFree() and other API code
+
   #if !defined(NDEBUG)
     Check_Memory_Debug(); // old R3-Alpha check, call here to keep it working
   #endif

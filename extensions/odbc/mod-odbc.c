@@ -8,7 +8,7 @@
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // Copyright 2010-2011 Christian Ensel
-// Copyright 2017-2021 Ren-C Open Source Contributors
+// Copyright 2017-2023 Ren-C Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information.
@@ -51,7 +51,14 @@
     #undef VOID  // %winnt.h defines this, we have a better use for it
 #endif
 
-#include "sys-core.h"
+#include "rebol.h"  // not %sys-core.h !
+
+#include "assert.h"
+#include "reb-c.h"
+
+#if !defined(NDEBUG)
+    #include <stdio.h>
+#endif
 
 #include "tmp-mod-odbc.h"
 
@@ -94,23 +101,23 @@
 SQLHENV henv = SQL_NULL_HANDLE;
 
 
-struct tagCONNECTION {  // indirection so SHUTDOWN* can find and kill open HDBC
+struct ConnectionStruct {  // indirect so SHUTDOWN* can find and kill open HDBC
     SQLHDBC hdbc;  // if SQL_NULL_HANDLE, cleanup already done
 
-    struct tagCONNECTION *next;
+    struct ConnectionStruct* next;
 };
-typedef struct tagCONNECTION CONNECTION;
+typedef struct ConnectionStruct Connection;
 
-struct tagPARAMETER {  // For binding parameters
+struct ParameterStruct {  // For binding parameters
     SQLULEN column_size;
     SQLPOINTER buffer;
     SQLULEN buffer_size;
     SQLLEN length;
 };
-typedef struct tagPARAMETER PARAMETER;
+typedef struct ParameterStruct Parameter;
 
-struct tagCOLUMN {  // For describing a single column
-    REBVAL *title;  // a TEXT!
+struct ColumnStruct {  // For describing a single column
+    REBVAL* title;  // a TEXT!
     SQLSMALLINT sql_type;
     SQLSMALLINT c_type;
     SQLULEN column_size;
@@ -121,16 +128,16 @@ struct tagCOLUMN {  // For describing a single column
     SQLSMALLINT nullable;
     bool is_unsigned;
 };
-typedef struct tagCOLUMN COLUMN;
+typedef struct ColumnStruct Column;
 
 
-struct tagCOLUMNLIST {  // For describing a list of columns
-    COLUMN *columns;  // if nullptr, cleanup already done
+struct ColumnListStruct {  // For describing a list of columns
+    Column* columns;  // if nullptr, cleanup already done
     SQLLEN num_columns;
 
-    struct tagCOLUMNLIST *next;
+    struct ColumnListStruct* next;
 };
-typedef struct tagCOLUMNLIST COLUMNLIST;
+typedef struct ColumnListStruct ColumnList;
 
 
 // Because this C code is bridging to a garbage collected language, we have to
@@ -141,8 +148,8 @@ typedef struct tagCOLUMNLIST COLUMNLIST;
 // The only time anything is actually removed from this list is when the
 // HANDLE! holding the reference is GC'd.
 //
-CONNECTION *all_connections = nullptr;
-COLUMNLIST *all_columnlists = nullptr;
+Connection* all_connections = nullptr;
+ColumnList* all_columnlists = nullptr;
 
 
 //=////////////////////////////////////////////////////////////////////////=//
@@ -158,7 +165,7 @@ COLUMNLIST *all_columnlists = nullptr;
 // just being strings.
 //
 
-REBVAL *Error_ODBC_Core(
+REBVAL* Error_ODBC_Core(
     SQLSMALLINT handleType,
     SQLHANDLE handle,
     const char *file,  // nullptr in release builds
@@ -251,7 +258,7 @@ REBVAL *Error_ODBC_Core(
 // GC notices no one is using them anymore (as opposed to being explicitly
 // called by a close operation).
 
-static void force_connection_cleanup(CONNECTION *conn) {
+static void Force_Connection_Cleanup(Connection* conn) {
     if (conn->hdbc == SQL_NULL_HANDLE)
         return;  // already cleared out by CLOSE-CONNECTION or SHUTDOWN*
 
@@ -260,20 +267,20 @@ static void force_connection_cleanup(CONNECTION *conn) {
     conn->hdbc = SQL_NULL_HANDLE;
 }
 
-static void free_connection(const REBVAL *v) {
-    CONNECTION *conn = cast(CONNECTION*, VAL_HANDLE_VOID_POINTER(v));
-    force_connection_cleanup(conn);
+static void Free_Connection(const REBVAL* v) {
+    Connection* conn = rebUnboxHandle(Connection*, v);
+    Force_Connection_Cleanup(conn);
 
     if (conn == all_connections)
         all_connections = conn->next;
     else {
-        CONNECTION *temp = all_connections;
+        Connection* temp = all_connections;
         while (temp->next != conn)
             temp = temp->next;
         temp->next = temp->next->next;
     }
 
-    free(conn);  // can't use rebFree(), could be during shutdown (no API!)
+    rebFree(conn);
 }
 
 
@@ -298,7 +305,7 @@ static void free_connection(const REBVAL *v) {
 // Latin1 was tried, but it wasn't that either.  As a workaround, we let
 // you globally set the encoding/decoding method of CHAR fields.
 //
-enum CharColumnEncoding {
+typedef enum {
     CHAR_COL_UTF8,
     //
     // !!! Should we offer a CHAR_COL_UCS2, which errors if you use any
@@ -306,13 +313,13 @@ enum CharColumnEncoding {
     //
     CHAR_COL_UTF16,
     CHAR_COL_LATIN1
-};
+} CharColumnEncoding;
 
 // For now, default to the most conservative choice...which is to let the
 // driver/driver-manager do the translation from wide characters, but that is
 // less efficient than doing UTF-8
 //
-enum CharColumnEncoding char_column_encoding = CHAR_COL_UTF16;
+CharColumnEncoding char_column_encoding = CHAR_COL_UTF16;
 
 //
 //  export odbc-set-char-encoding: native [
@@ -330,8 +337,8 @@ DECLARE_NATIVE(odbc_set_char_encoding)
 {
     ODBC_INCLUDE_PARAMS_OF_ODBC_SET_CHAR_ENCODING;
 
-    char_column_encoding = cast(enum CharColumnEncoding, rebUnboxInteger(
-        "switch @", ARG(encoding), "[",
+    char_column_encoding = cast(CharColumnEncoding, rebUnboxInteger(
+        "switch @", rebArgR("encoding"), "[",
             "'utf-8 [", rebI(CHAR_COL_UTF8), "]",
             "'ucs-2 [", rebI(CHAR_COL_UTF16), "]",  // TBD: limited codepoints
             "'utf-16 [", rebI(CHAR_COL_UTF16), "]",
@@ -391,7 +398,7 @@ DECLARE_NATIVE(open_connection)
             0  // StringLength (ignored for this attribute)
         );
         if (not SQL_SUCCEEDED(rc)) {
-            REBVAL *error = Error_ODBC_Env(henv);
+            REBVAL* error = Error_ODBC_Env(henv);
             SQLFreeHandle(SQL_HANDLE_ENV, henv);
             henv = SQL_NULL_HANDLE;
             rebJumps ("fail", error);
@@ -403,7 +410,7 @@ DECLARE_NATIVE(open_connection)
     SQLHDBC hdbc;
     rc = SQLAllocHandle(SQL_HANDLE_DBC, henv, &hdbc);
     if (not SQL_SUCCEEDED(rc)) {
-        REBVAL *error = Error_ODBC_Env(henv);
+        REBVAL* error = Error_ODBC_Env(henv);
         SQLFreeHandle(SQL_HANDLE_ENV, henv);
         rebJumps ("fail", error);
     }
@@ -415,14 +422,14 @@ DECLARE_NATIVE(open_connection)
         0
     );
     if (not SQL_SUCCEEDED(rc)) {
-        REBVAL *error = Error_ODBC_Dbc(hdbc);
+        REBVAL* error = Error_ODBC_Dbc(hdbc);
         SQLFreeHandle(SQL_HANDLE_DBC, hdbc);
         rebJumps ("fail", error);
     }
 
     // Connect to the Driver
 
-    SQLWCHAR *connect_string = rebSpellWide(ARG(spec));
+    SQLWCHAR *connect_string = rebSpellWide(rebArgR("spec"));
 
     SQLSMALLINT out_connect_len;
     rc = SQLDriverConnectW(
@@ -438,7 +445,7 @@ DECLARE_NATIVE(open_connection)
     rebFree(connect_string);
 
     if (not SQL_SUCCEEDED(rc)) {
-        REBVAL *error = Error_ODBC_Dbc(hdbc);
+        REBVAL* error = Error_ODBC_Dbc(hdbc);
         SQLFreeHandle(SQL_HANDLE_DBC, hdbc);
         rebJumps ("fail", error);
     }
@@ -446,17 +453,16 @@ DECLARE_NATIVE(open_connection)
     // Extension SHUTDOWN* might happen with HDBC handles outstanding, so we
     // need a level of indirection to enumerate them (ODBC does not offer it).
     //
-    // We can't use rebAlloc() because the GC finalization can happen at
-    // shutdown when rebFree() in the API is unavailable.  :-(
-    //
-    CONNECTION *conn = cast(CONNECTION*, malloc(sizeof(CONNECTION)));
+    Connection* conn = rebTryAlloc(Connection);
     if (conn == nullptr)
-        rebJumps ("fail {Could not allocation CONNECTION tracking object}");
+        rebJumps ("fail {Could not allocate Connection tracking object}");
+    rebUnmanageMemory(conn);
+
     conn->hdbc = hdbc;
     conn->next = all_connections;
     all_connections = conn;
 
-    REBVAL *hdbc_value = rebHandle(conn, sizeof(CONNECTION*), &free_connection);
+    REBVAL* hdbc_value = rebHandle(conn, sizeof(Connection*), &Free_Connection);
 
     return rebValue(
         "make database-prototype [",
@@ -482,11 +488,10 @@ DECLARE_NATIVE(open_statement)
 {
     ODBC_INCLUDE_PARAMS_OF_OPEN_STATEMENT;
 
-    REBVAL *connection = ARG(connection);
-    REBVAL *hdbc_value = rebValue(
-        "ensure handle! pick @", connection, "'hdbc"
+    REBVAL* hdbc_value = rebValue(
+        "ensure handle! pick @", rebArgR("connection"), "'hdbc"
     );
-    CONNECTION *conn = VAL_HANDLE_POINTER(CONNECTION, hdbc_value);
+    Connection* conn = rebUnboxHandle(Connection*, hdbc_value);
     SQLHDBC hdbc = conn->hdbc;
     rebRelease(hdbc_value);
 
@@ -497,9 +502,9 @@ DECLARE_NATIVE(open_statement)
     if (not SQL_SUCCEEDED(rc))
         rebJumps ("fail", Error_ODBC_Dbc(hdbc));
 
-    REBVAL *hstmt_value = rebHandle(hstmt, sizeof(hstmt), nullptr);
+    REBVAL* hstmt_value = rebHandle(hstmt, sizeof(hstmt), nullptr);
 
-    rebElide("poke", ARG(statement), "'hstmt", rebR(hstmt_value));
+    rebElide("poke", rebArgR("statement"), "'hstmt", rebR(hstmt_value));
 
     return rebLogic(true);
 }
@@ -515,9 +520,9 @@ DECLARE_NATIVE(open_statement)
 //
 SQLRETURN ODBC_BindParameter(
     SQLHSTMT hstmt,
-    PARAMETER *p,
+    Parameter* p,
     SQLUSMALLINT number,  // parameter number
-    const REBVAL *v
+    const REBVAL* v
 ){
     assert(number != 0);
 
@@ -673,8 +678,8 @@ SQLRETURN ODBC_BindParameter(
         p->buffer_size = sizeof(TIMESTAMP_STRUCT);
         p->buffer = rebAllocN(char, p->buffer_size);
 
-        REBVAL *time = rebValue("pick", v, "'time");
-        REBVAL *second_and_fraction = rebValue("pick", time, "'second");
+        REBVAL* time = rebValue("pick", v, "'time");
+        REBVAL* second_and_fraction = rebValue("pick", time, "'second");
 
         // !!! Although we write a `fraction` out, this appears to often
         // be dropped by the ODBC binding:
@@ -708,7 +713,7 @@ SQLRETURN ODBC_BindParameter(
         // subset even on databases that don't know what they're dealing with.
         //
       case SQL_C_CHAR: {  // TEXT! when target column is VARCHAR
-        Size encoded_size_no_term;
+        size_t encoded_size_no_term;
         switch (char_column_encoding) {
           case CHAR_COL_UTF8: {
             unsigned char *utf8 = rebBytes(&encoded_size_no_term, v);
@@ -719,7 +724,7 @@ SQLRETURN ODBC_BindParameter(
             goto encode_as_utf16;  // if driver can't handle UTF-8
 
           case CHAR_COL_LATIN1: {
-            REBVAL *temp = rebValue(
+            REBVAL* temp = rebValue(
                 "append make binary! length of", v,
                     "map-each ch", v, "["
                         "if 255 < to integer! ch ["
@@ -801,9 +806,9 @@ SQLRETURN ODBC_BindParameter(
 }
 
 
-SQLRETURN ODBC_GetCatalog(
+SQLRETURN Get_ODBC_Catalog(
     SQLHSTMT hstmt,
-    REBVAL *block
+    REBVAL* block
 ){
     int which = rebUnbox(
         "switch first ensure block! @", block, "[",
@@ -880,48 +885,48 @@ SQLRETURN ODBC_GetCatalog(
 
 #define COLUMN_TITLE_SIZE 255
 
-static void force_columnlist_cleanup(COLUMNLIST *list) {
+static void Force_ColumnList_Cleanup(ColumnList* list) {
     if (list->columns == nullptr)
         return;  // already freed e.g. by SHUTDOWN*
 
     SQLSMALLINT col_num;
     for (col_num = 0; col_num < list->num_columns; ++col_num) {
-        COLUMN *col = &list->columns[col_num];
-        FREE_N(char, col->buffer_size, cast(char*, col->buffer));
+        Column* col = &list->columns[col_num];
+        rebFree(col->buffer);
         rebRelease(col->title);
     }
-    free(list->columns);
+    rebFree(list->columns);
     list->columns = nullptr;
 }
 
-static void free_columnlist(const REBVAL *v) {
-    COLUMNLIST *list = cast(COLUMNLIST*, VAL_HANDLE_VOID_POINTER(v));
-    force_columnlist_cleanup(list);
+static void Free_ColumnList(const REBVAL* v) {
+    ColumnList* list = rebUnboxHandle(ColumnList*, v);
+    Force_ColumnList_Cleanup(list);
 
     if (list == all_columnlists)
         all_columnlists = list->next;
     else {
-        COLUMNLIST *temp = all_columnlists;
+        ColumnList* temp = all_columnlists;
         while (temp->next != list)
             temp = temp->next;
         temp->next = temp->next->next;
     }
 
-    free(list);  // can't use rebFree(), could be during shutdown (no API!)
+    rebFree(list);
 }
 
 
 //
 // Sets up the COLUMNS description, retrieves column titles and descriptions
 //
-void ODBC_DescribeResults(
+void Describe_ODBC_Results(
     SQLHSTMT hstmt,
     int num_columns,
-    COLUMN *columns
+    Column* columns
 ){
     SQLSMALLINT column_index;
     for (column_index = 1; column_index <= num_columns; ++column_index) {
-        COLUMN *col = &columns[column_index - 1];
+        Column* col = &columns[column_index - 1];
 
         SQLWCHAR title[COLUMN_TITLE_SIZE];
         SQLSMALLINT title_length;
@@ -1004,7 +1009,7 @@ void ODBC_DescribeResults(
             // case insensitive.  It's not super fast, but this only happens
             // once per query--not per row.
             //
-            REBVAL *type_name_rebval = rebTextWide(type_name);
+            REBVAL* type_name_rebval = rebTextWide(type_name);
             col->sql_type = rebUnboxInteger(
                 "switch", type_name_rebval, "[",
                     "{VARCHAR} [", rebI(SQL_VARCHAR), "]",  // make fastest
@@ -1154,9 +1159,11 @@ void ODBC_DescribeResults(
             rebJumps ("fail {Unknown column SQL_XXX type}");
         }
 
-        col->buffer = TRY_ALLOC_N(char, col->buffer_size);
+        col->buffer = rebTryAllocN(char, col->buffer_size);
         if (col->buffer == nullptr)
             rebJumps ("fail {Couldn't allocate column buffer!}");
+
+        rebUnmanageMemory(col->buffer);
     }
 }
 
@@ -1177,11 +1184,13 @@ DECLARE_NATIVE(insert_odbc)
 {
     ODBC_INCLUDE_PARAMS_OF_INSERT_ODBC;
 
-    REBVAL *statement = ARG(statement);
-    REBVAL *hstmt_value = rebValue(
+    REBVAL* sql = rebArg("sql");
+    REBVAL* statement = rebArg("statement");
+
+    REBVAL* hstmt_value = rebValue(
         "ensure handle! pick", statement, "'hstmt"
     );
-    SQLHSTMT hstmt = VAL_HANDLE_POINTER(SQLHSTMT, hstmt_value);
+    SQLHSTMT hstmt = rebUnboxHandle(SQLHSTMT*, hstmt_value);
     rebRelease(hstmt_value);
 
     SQLRETURN rc;
@@ -1196,19 +1205,19 @@ DECLARE_NATIVE(insert_odbc)
     bool use_cache = false;
 
     bool get_catalog = rebUnboxLogic(
-        "switch/type first", ARG(sql), "[",
+        "switch/type first", sql, "[",
             "lit-word! [true]",  // like Rebol2: 'tables, 'columns, 'types
             "text! [false]",
         "] else [",
             "fail [",
                 "{SQL dialect must start with WORD! or TEXT! value}",
-                "mold", ARG(sql),
+                "mold", sql,
             "]",
         "]"
     );
 
     if (get_catalog) {
-        rc = ODBC_GetCatalog(hstmt, ARG(sql));
+        rc = Get_ODBC_Catalog(hstmt, sql);
     }
     else {
         // Prepare/Execute statement, when first element in the block is a
@@ -1218,14 +1227,14 @@ DECLARE_NATIVE(insert_odbc)
         // then prepare a new statement.
         //
         use_cache = rebUnboxLogic(
-            "strict-equal? first", ARG(sql),
+            "strict-equal? first", sql,
                 "ensure [<opt> text!] pick", statement, "'string"
         );
 
-        REBLEN sql_index = 1;
+        SQLLEN sql_index = 1;
 
         if (not use_cache) {
-            SQLWCHAR *sql_string = rebSpellWide("first", ARG(sql));
+            SQLWCHAR *sql_string = rebSpellWide("first", sql);
 
             rc = SQLPrepareW(
                 hstmt,
@@ -1243,7 +1252,7 @@ DECLARE_NATIVE(insert_odbc)
             // !!! Could re-use value with existing series if read only
             //
             rebElide(
-                "poke", statement, "'string", "(copy first", ARG(sql), ")"
+                "poke", statement, "'string", "(copy first", sql, ")"
             );
         }
 
@@ -1252,18 +1261,18 @@ DECLARE_NATIVE(insert_odbc)
         // different quarantined part of the query is to protect against SQL
         // injection.
 
-        REBLEN num_params
-            = rebUnbox("length of", ARG(sql)) - sql_index;  // after SQL
+        SQLLEN num_params
+            = rebUnbox("length of", sql) - sql_index;  // after SQL
 
         ++sql_index;
 
-        PARAMETER *params = nullptr;
+        Parameter* params = nullptr;
         if (num_params != 0) {
-            params = rebAllocN(PARAMETER, num_params);
+            params = rebAllocN(Parameter, num_params);
 
-            REBLEN n;
+            SQLLEN n;
             for (n = 0; n < num_params; ++n, ++sql_index) {
-                REBVAL *value = rebValue("pick", ARG(sql), rebI(sql_index));
+                REBVAL* value = rebValue("pick", sql, rebI(sql_index));
                 rc = ODBC_BindParameter(
                     hstmt,
                     &params[n],
@@ -1282,7 +1291,7 @@ DECLARE_NATIVE(insert_odbc)
         rc = SQLExecute(hstmt);
 
         if (num_params != 0) {
-            REBLEN n;
+            SQLLEN n;
             for (n = 0; n != num_params; ++n) {
                 if (params[n].buffer != nullptr)
                     rebFree(params[n].buffer);
@@ -1321,6 +1330,12 @@ DECLARE_NATIVE(insert_odbc)
         }
     }
 
+    //=//// RELEASE SQL BEFORE ANY `return` FROM THIS FUNCTION ///////////=//
+
+    // Statement is still used..
+
+    rebRelease(sql);
+
     //=//// RETURN RECORD COUNT IF NO RESULT ROWS /////////////////////////=//
     //
     // Insert/Update/Delete statements do not return records, and this is
@@ -1337,6 +1352,7 @@ DECLARE_NATIVE(insert_odbc)
         if (not SQL_SUCCEEDED(rc))
             rebJumps ("fail", Error_ODBC_Stmt(hstmt));
 
+        rebRelease(statement);
         return rebInteger(num_rows);
     }
 
@@ -1354,13 +1370,14 @@ DECLARE_NATIVE(insert_odbc)
     // routine does this.
 
     if (use_cache) {
-        REBVAL *cache = rebValue(
+        REBVAL* cache = rebValue(
             "ensure block! pick", statement, "'titles"
         );
+        rebRelease(statement);
         return cache;
     }
 
-    REBVAL *old_columns_value = rebValue(
+    REBVAL* old_columns_value = rebValue(
         "ensure [<opt> handle!] pick", statement, "'columns"
     );
     if (old_columns_value) {
@@ -1370,14 +1387,17 @@ DECLARE_NATIVE(insert_odbc)
         // GC of the HANDLE! would need to detect nulls.  Just let the GC do
         // the free.
         //
-        COLUMNLIST *old_list = VAL_HANDLE_POINTER(COLUMNLIST, old_columns_value);
-        force_columnlist_cleanup(old_list);
+        ColumnList* old_list = rebUnboxHandle(ColumnList*, old_columns_value);
+        Force_ColumnList_Cleanup(old_list);
         rebRelease(old_columns_value);
     }
 
-    COLUMNLIST *list = cast(COLUMNLIST*, malloc(sizeof(COLUMNLIST)));
+    ColumnList* list = rebAlloc(ColumnList);
+    rebUnmanageMemory(list);
 
-    list->columns = cast(COLUMN*, malloc(sizeof(COLUMN) * num_columns));
+    list->columns = rebAllocN(Column, num_columns);
+    rebUnmanageMemory(list->columns);
+
     list->num_columns = num_columns;
     if (not list->columns) {
         rebFree(list);
@@ -1387,13 +1407,13 @@ DECLARE_NATIVE(insert_odbc)
     list->next = all_columnlists;
     all_columnlists = list;
 
-    REBVAL *columns_value = rebHandle(list, 1, &free_columnlist);
+    REBVAL* columns_value = rebHandle(list, 1, &Free_ColumnList);
 
     rebElide("poke", statement, "'columns", rebR(columns_value));
 
-    ODBC_DescribeResults(hstmt, num_columns, list->columns);
+    Describe_ODBC_Results(hstmt, num_columns, list->columns);
 
-    REBVAL *titles = rebValue("make block!", rebI(num_columns));
+    REBVAL* titles = rebValue("make block!", rebI(num_columns));
     SQLSMALLINT column_index;
     for (column_index = 1; column_index <= num_columns; ++column_index)
         rebElide("append", titles, list->columns[column_index - 1].title);
@@ -1402,6 +1422,7 @@ DECLARE_NATIVE(insert_odbc)
     //
     rebElide("poke", statement, "'titles", titles);
 
+    rebRelease(statement);
     return titles;
 }
 
@@ -1411,7 +1432,7 @@ DECLARE_NATIVE(insert_odbc)
 // reinterpreted as a Rebol value.  Successive queries for records reuse the
 // buffer for a column.
 //
-REBVAL *ODBC_Column_To_Rebol_Value(COLUMN *col)
+REBVAL* ODBC_Column_To_Rebol_Value(Column* col)
 {
     if (col->length == SQL_NULL_DATA)
         return rebBlank();
@@ -1450,7 +1471,7 @@ REBVAL *ODBC_Column_To_Rebol_Value(COLUMN *col)
         return rebInteger(*cast(SQLBIGINT*, col->buffer));
 
       case SQL_C_UBIGINT:  // unsigned: 0..2[64] - 1
-        if (*cast(REBU64*, col->buffer) > INT64_MAX)
+        if (*cast(SQLUBIGINT*, col->buffer) > INT64_MAX)
             rebJumps ("fail {INTEGER! can't hold some unsigned 64-bit values}");
 
         return rebInteger(*cast(SQLUBIGINT*, col->buffer));
@@ -1462,7 +1483,7 @@ REBVAL *ODBC_Column_To_Rebol_Value(COLUMN *col)
         return rebDecimal(*cast(SQLDOUBLE*, col->buffer));
 
       case SQL_C_TYPE_DATE: {
-        DATE_STRUCT *date = cast(DATE_STRUCT*, col->buffer);
+        DATE_STRUCT* date = cast(DATE_STRUCT*, col->buffer);
         return rebValue(
             "make date! [",
                 rebI(date->year), rebI(date->month), rebI(date->day),
@@ -1475,7 +1496,7 @@ REBVAL *ODBC_Column_To_Rebol_Value(COLUMN *col)
         // component.  Hence a TIME(7) might be able to store 17:32:19.123457
         // but when it is retrieved it will just be 17:32:19
         //
-        TIME_STRUCT *time = cast(TIME_STRUCT*, col->buffer);
+        TIME_STRUCT* time = cast(TIME_STRUCT*, col->buffer);
         return rebValue(
             "make time! [",
                 rebI(time->hour), rebI(time->minute), rebI(time->second),
@@ -1488,7 +1509,7 @@ REBVAL *ODBC_Column_To_Rebol_Value(COLUMN *col)
     // try and figure this out in the future if they are so inclined.
 
       case SQL_C_TYPE_TIMESTAMP: {
-        TIMESTAMP_STRUCT *stamp = cast(TIMESTAMP_STRUCT*, col->buffer);
+        TIMESTAMP_STRUCT* stamp = cast(TIMESTAMP_STRUCT*, col->buffer);
 
         // !!! The fraction is generally 0, even if you wrote a nonzero value
         // in the timestamp:
@@ -1543,7 +1564,7 @@ REBVAL *ODBC_Column_To_Rebol_Value(COLUMN *col)
             // !!! This is a slow way to do it; but optimize when needed.
             // (Should there be rebSizedTextLatin1() ?)
             //
-            REBVAL *binary = rebSizedBinary(
+            REBVAL* binary = rebSizedBinary(
                 cast(unsigned char*, col->buffer),
                 col->length
             );
@@ -1585,17 +1606,17 @@ DECLARE_NATIVE(copy_odbc)
 {
     ODBC_INCLUDE_PARAMS_OF_COPY_ODBC;
 
-    REBVAL *hstmt_value = rebValue(
-        "ensure handle! pick", ARG(statement), "'hstmt"
+    REBVAL* hstmt_value = rebValue(
+        "ensure handle! pick", rebArgR("statement"), "'hstmt"
     );
-    SQLHSTMT hstmt = cast(SQLHSTMT, VAL_HANDLE_VOID_POINTER(hstmt_value));
+    SQLHSTMT hstmt = rebUnboxHandle(SQLHSTMT, hstmt_value);
     rebRelease(hstmt_value);
 
-    REBVAL *columns_value = rebValue(
-        "ensure handle! pick", ARG(statement), "'columns"
+    REBVAL* columns_value = rebValue(
+        "ensure handle! pick", rebArgR("statement"), "'columns"
     );
-    COLUMNLIST *list = VAL_HANDLE_POINTER(COLUMNLIST, columns_value);
-    COLUMN *columns = list->columns;
+    ColumnList* list = rebUnboxHandle(ColumnList*, columns_value);
+    Column* columns = list->columns;
     rebRelease(columns_value);
 
     if (hstmt == SQL_NULL_HANDLE or not columns)
@@ -1611,9 +1632,9 @@ DECLARE_NATIVE(copy_odbc)
     // compares-0 based row against num_rows, so -1 is chosen to never match
     // and hence mean "as many rows as available"
     //
-    SQLLEN num_rows = rebUnbox("any [@", ARG(part), "-1]");
+    SQLLEN num_rows = rebUnbox("any [@", rebArgR("part"), "-1]");
 
-    REBVAL *results = rebValue(
+    REBVAL* results = rebValue(
         "make block!", rebI(num_rows == -1 ? 10 : num_rows)
     );
 
@@ -1669,11 +1690,11 @@ DECLARE_NATIVE(copy_odbc)
             rebJumps ("fail", Error_ODBC_Stmt(hstmt));
         }
 
-        REBVAL *record = rebValue("make block!", rebI(num_columns));
+        REBVAL* record = rebValue("make block!", rebI(num_columns));
 
         SQLSMALLINT column_index;
         for (column_index = 1; column_index <= num_columns; ++column_index) {
-            COLUMN *col = &columns[column_index - 1];
+            Column* col = &columns[column_index - 1];
 
             rc = SQLGetData(
                 hstmt,
@@ -1728,7 +1749,7 @@ DECLARE_NATIVE(copy_odbc)
                 rebJumps ("fail", Error_ODBC_Stmt(hstmt));
             }
 
-            REBVAL *temp = ODBC_Column_To_Rebol_Value(col);
+            REBVAL* temp = ODBC_Column_To_Rebol_Value(col);
             rebElide("append", record, rebQ(temp));  // Q because blank => NULL
             rebRelease(temp);
         }
@@ -1756,19 +1777,17 @@ DECLARE_NATIVE(update_odbc)
 {
     ODBC_INCLUDE_PARAMS_OF_UPDATE_ODBC;
 
-    REBVAL *connection = ARG(connection);
-
     // Get connection handle
     //
-    REBVAL *hdbc_value = rebValue(
-        "ensure handle! pick", connection, "'hdbc"
+    REBVAL* hdbc_value = rebValue(
+        "ensure handle! pick", rebArgR("connection"), "'hdbc"
     );
-    SQLHDBC hdbc = cast(SQLHDBC, VAL_HANDLE_VOID_POINTER(hdbc_value));
+    SQLHDBC hdbc = rebUnboxHandle(SQLHDBC, hdbc_value);
     rebRelease(hdbc_value);
 
     SQLRETURN rc;
 
-    bool access = rebUnboxLogic(ARG(access));
+    bool access = rebUnboxLogic(rebArgR("access"));
     rc = SQLSetConnectAttr(
         hdbc,
         SQL_ATTR_ACCESS_MODE,
@@ -1781,7 +1800,7 @@ DECLARE_NATIVE(update_odbc)
     if (not SQL_SUCCEEDED(rc))
         rebJumps ("fail", Error_ODBC_Dbc(hdbc));
 
-    bool commit = rebUnboxLogic(ARG(commit));
+    bool commit = rebUnboxLogic(rebArgR("commit"));
     rc = SQLSetConnectAttr(
         hdbc,
         SQL_ATTR_AUTOCOMMIT,
@@ -1809,32 +1828,37 @@ DECLARE_NATIVE(close_statement)
 {
     ODBC_INCLUDE_PARAMS_OF_CLOSE_STATEMENT;
 
-    REBVAL *statement = ARG(statement);
+    REBVAL* statement = rebArg("statement");
 
-    REBVAL *columns_value = rebValue(
+    REBVAL* columns_value = rebValue(
         "ensure [<opt> handle!] pick", statement, "'columns"
     );
     if (columns_value) {
-        COLUMNLIST *list = VAL_HANDLE_POINTER(COLUMNLIST, columns_value);
-        force_columnlist_cleanup(list);
+        ColumnList* list = rebUnboxHandle(ColumnList*, columns_value);
+        Force_ColumnList_Cleanup(list);
         rebElide("poke", statement, "'columns", "null");
 
         rebRelease(columns_value);
     }
 
-    REBVAL *hstmt_value = rebValue(
+    REBVAL* hstmt_value = rebValue(
         "ensure [<opt> handle!] pick", statement, "'hstmt"
     );
     if (hstmt_value) {
-        SQLHSTMT hstmt = cast(SQLHSTMT, VAL_HANDLE_VOID_POINTER(hstmt_value));
+        SQLHSTMT hstmt = rebUnboxHandle(SQLHSTMT, hstmt_value);
         assert(hstmt);
 
         SQLFreeHandle(SQL_HANDLE_STMT, hstmt);
-        SET_HANDLE_CDATA(hstmt_value, SQL_NULL_HANDLE);  // avoid GC cleanup
+
+        rebModifyHandleCData(hstmt_value, SQL_NULL_HANDLE);
+        rebModifyHandleCleaner(hstmt_value, nullptr);
+
         rebElide("poke", statement, "'hstmt", "null");
 
         rebRelease(hstmt_value);
     }
+
+    rebRelease(statement);
 
     return rebLogic(true);
 }
@@ -1851,15 +1875,15 @@ DECLARE_NATIVE(close_connection)
 {
     ODBC_INCLUDE_PARAMS_OF_CLOSE_CONNECTION;
 
-    REBVAL *connection = ARG(connection);
+    REBVAL* connection = rebArg("connection");
 
-    REBVAL *hdbc_value = rebValue(
+    REBVAL* hdbc_value = rebValue(
         "ensure [<opt> handle!] pick", connection, "'hdbc"
     );
     if (not hdbc_value)  // connection was already closed (be tolerant?)
         return rebLogic(false);
 
-    CONNECTION *conn = cast(CONNECTION*, VAL_HANDLE_VOID_POINTER(hdbc_value));
+    Connection* conn = rebUnboxHandle(Connection*, hdbc_value);
     rebRelease(hdbc_value);
 
     // We clean up the connection but do not free it; that can only be done
@@ -1867,7 +1891,7 @@ DECLARE_NATIVE(close_connection)
     // eliminating one instance but someone might have copied the connection
     // object, for example.)
     //
-    force_connection_cleanup(conn);
+    Force_Connection_Cleanup(conn);
 
     rebElide("poke", connection, "'hdbc", "null");
 
@@ -1875,6 +1899,8 @@ DECLARE_NATIVE(close_connection)
     // global `henv` here if that seemed important (vs waiting for SHUTDOWN*).
     // But that could also slow down opening another connection, so favor
     // less complexity for now.
+
+    rebRelease(connection);
 
     return rebLogic(true);
 }
@@ -1934,13 +1960,13 @@ DECLARE_NATIVE(shutdown_p)
     // no longer in use so that when the handles are later processed they
     // know to only free the associated memory.
 
-    COLUMNLIST *list = all_columnlists;
+    ColumnList* list = all_columnlists;
     for (; list != nullptr; list = list->next)
-        force_columnlist_cleanup(list);
+        Force_ColumnList_Cleanup(list);
 
-    CONNECTION *conn = all_connections;
+    Connection* conn = all_connections;
     for (; conn != nullptr; conn = conn->next)
-        force_connection_cleanup(conn);
+        Force_Connection_Cleanup(conn);
 
     if (henv != SQL_NULL_HANDLE) {
         SQLFreeHandle(SQL_HANDLE_ENV, henv);

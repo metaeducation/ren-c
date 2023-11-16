@@ -84,8 +84,6 @@
     static bool in_mark = false; // needs to be per-GC thread
 #endif
 
-static REBI64 mark_count = 0;
-
 #define ASSERT_NO_GC_MARKS_PENDING() \
     assert(Series_Used(g_gc.mark_stack) == 0)
 
@@ -128,7 +126,7 @@ static void Queue_Mark_Pairing_Deep(REBVAL *paired)
     Queue_Mark_Cell_Deep(PAIRING_KEY(paired));  // QUOTED! uses void
 
     paired->header.bits |= NODE_FLAG_MARKED;
-    ++mark_count;
+    ++g_gc.mark_count;
 
   #if !defined(NDEBUG)
     in_mark = was_in_mark;
@@ -211,7 +209,7 @@ static void Queue_Mark_Node_Deep(const Node** pp) {
 static void Queue_Unmarked_Accessible_Series_Deep(Series(*) s)
 {
     s->leader.bits |= NODE_FLAG_MARKED;
-    ++mark_count;
+    ++g_gc.mark_count;
 
   //=//// MARK LINK AND MISC IF DESIRED ////////////////////////////////////=//
 
@@ -507,6 +505,57 @@ void Reify_Variadic_Feed_As_Array_Feed(
 
 
 //
+//  Run_All_Handle_Cleaners: C
+//
+// !!! There's an issue with handles storing pointers to rebMalloc()'d data,
+// which is that they want to do their cleanup work before the system is
+// damaged by the shutdown process.  This is a naive extra pass done during
+// shutdown to deal with the problem--but it should be folded in with
+// Mark_Root_Series().
+//
+void Run_All_Handle_Cleaners(void) {
+    Segment* seg = g_mem.pools[STUB_POOL].segments;
+
+    for (; seg != nullptr; seg = seg->next) {
+        Stub* stub = cast(Stub*, seg + 1);
+        Length n = g_mem.pools[STUB_POOL].num_units_per_segment;
+        for (; n > 0; --n, ++stub) {
+            //
+            // !!! A smarter switch statement here could do this more
+            // optimally...see the sweep code for an example.
+            //
+            Byte nodebyte = NODE_BYTE(stub);
+            if (nodebyte & NODE_BYTEMASK_0x40_STALE)
+                continue;
+
+            if (nodebyte & NODE_BYTEMASK_0x01_CELL)
+                continue;  // assume no handles in pairings, for now?
+
+            if (stub == g_ds.array)
+                continue;
+            if (Get_Series_Flag(stub, INACCESSIBLE))
+                continue;
+            if (not Is_Series_Array(stub))
+                continue;
+
+            Cell(const*) item_tail = Array_Tail(cast(ArrayT*, stub));
+            Cell(*) item = Array_Head(cast(ArrayT*, stub));
+            for (; item != item_tail; ++item) {
+                if (CELL_HEART(item) != REB_HANDLE)
+                    continue;
+                if (Not_Cell_Flag(item, FIRST_IS_NODE))
+                    continue;
+                ArrayT* singular = VAL_HANDLE_SINGULAR(item);
+                if (Get_Series_Flag(singular, INACCESSIBLE))
+                    continue;
+                Decay_Series(singular);
+            }
+        }
+    }
+}
+
+
+//
 //  Mark_Root_Series: C
 //
 // Root Series are any manual series that were allocated but have not been
@@ -517,11 +566,14 @@ void Reify_Variadic_Feed_As_Array_Feed(
 // will panic if that frame did not end due to a fail().  This could be
 // relaxed to automatically free those nodes as a normal GC.
 //
-// !!! This implementation walks over *all* the nodes.  It wouldn't have to
+// !!! This implementation walks over *all* the stubs.  It wouldn't have to
 // if API nodes were in their own pool, or if the outstanding manuals list
 // were maintained even in non-debug builds--it could just walk those.  This
 // should be weighed against background GC and other more sophisticated
 // methods which might come down the road for the GC than this simple one.
+//
+// !!! A smarter switch statement here could do this more
+// optimally...see the sweep code for an example.
 //
 static void Mark_Root_Series(void)
 {
@@ -530,51 +582,15 @@ static void Mark_Root_Series(void)
     for (; seg != nullptr; seg = seg->next) {
         Byte* stub = cast(Byte*, seg + 1);
         Length n = g_mem.pools[STUB_POOL].num_units_per_segment;
+
         for (; n > 0; --n, stub += sizeof(Stub)) {
-            //
-            // !!! A smarter switch statement here could do this more
-            // optimally...see the sweep code for an example.
-            //
-            Byte nodebyte = *stub;
+            Byte nodebyte = stub[0];
             if (nodebyte & NODE_BYTEMASK_0x40_STALE)
                 continue;
 
             assert(nodebyte & NODE_BYTEMASK_0x80_NODE);
 
-            if (nodebyte & NODE_BYTEMASK_0x02_ROOT) {
-                //
-                // This came from Alloc_Value(); all references should be
-                // from the C stack, only this visit should be marking it.
-                //
-                Array(*) a = ARR(cast(void*, stub));
-
-                assert(not (a->leader.bits & NODE_FLAG_MARKED));
-
-                // Note: Eval_Core() might target API cells, uses END
-                //
-                if (not (a->leader.bits & NODE_FLAG_MANAGED)) {
-                    // if it's not managed, don't mark it (don't have to?)
-                    Queue_Mark_Cell_Deep(Array_Single(a));
-                }
-                else {  // Note that Mark_Level_Stack_Deep() marks the owner
-                    if (not (a->leader.bits & NODE_FLAG_MARKED)) {
-                        a->leader.bits |= NODE_FLAG_MARKED;
-                        ++mark_count;
-
-                        // Like frame cells or locals, API cells can be
-                        // evaluation targets.  They should only be fresh if
-                        // they are targeted by some frame's L->out.
-                        //
-                        // !!! Should we verify this?
-                        //
-                        Queue_Mark_Maybe_Fresh_Cell_Deep(Array_Single(a));
-                    }
-                }
-
-                continue;
-            }
-
-            if (nodebyte & NODE_BYTEMASK_0x01_CELL) {  // a pairing
+            if (nodebyte & NODE_BYTEMASK_0x01_CELL) {  // a "Pairing"
                 REBVAL *paired = VAL(cast(void*, stub));
                 if (paired->header.bits & NODE_FLAG_MANAGED)
                     continue; // PAIR! or other value will mark it
@@ -582,6 +598,43 @@ static void Mark_Root_Series(void)
                 assert(!"unmanaged pairings not believed to exist yet");
                 Queue_Mark_Cell_Deep(paired);
                 Queue_Mark_Cell_Deep(PAIRING_KEY(paired));
+                continue;
+            }
+
+            SeriesT* s = cast(SeriesT*, stub);
+
+            if (nodebyte & NODE_BYTEMASK_0x02_ROOT) {
+                assert(Not_Series_Flag(s, MARKED));
+
+                // This stub came from Alloc_Value() or rebMalloc(); the only
+                // references should be from the C stack.  So this pass is the
+                // only place where these stubs could be marked.
+
+                if (Not_Series_Flag(s, MANAGED)) {
+                    //
+                    // If it's not managed, don't mark it (don't have to)
+                }
+                else {
+                    s->leader.bits |= NODE_FLAG_MARKED;
+                    ++g_gc.mark_count;
+                }
+
+                if (Is_Series_Array(s)) {  // It's an Alloc_Value()
+                    //
+                    // 1. Mark_Level_Stack_Deep() marks the owner.
+                    //
+                    // 2. Evaluation may target API cells, may be Is_Fresh().
+                    // (They should only be fresh if they are targeted by some
+                    // Level's L->out...could we verify that?)
+                    //
+                    ArrayT* a = cast(ArrayT*, s);
+                    Queue_Mark_Maybe_Fresh_Cell_Deep(Array_Single(a));  // [2]
+                }
+                else {  // It's a rebMalloc()
+                    assert(Series_Flavor(s) == FLAVOR_BINARY);
+                }
+
+                continue;
             }
 
             // !!! The g_ds.array does not currently keep its `used` field up
@@ -591,15 +644,14 @@ static void Mark_Root_Series(void)
             // the stack want to know the "last".)  Hence it is exempt from
             // this marking rather than keeping the length up to date.  Review.
             //
-            Series(*) s = SER(cast(void*, stub));
             if (
                 Is_Series_Array(s)
                 and s != g_ds.array  // !!! Review g_ds.array exemption!
             ){
                 if (s->leader.bits & NODE_FLAG_MANAGED)
-                    continue; // BLOCK! should mark it
+                    continue;  // BLOCK! or OBJECT! etc. holding it should mark
 
-                Array(*) a = ARR(s);
+                ArrayT* a = cast(ArrayT*, s);
 
                 if (IS_VARLIST(a))
                     if (CTX_TYPE(CTX(a)) == REB_FRAME)
@@ -607,7 +659,8 @@ static void Mark_Root_Series(void)
 
                 // This means someone did something like Make_Array() and then
                 // ran an evaluation before referencing it somewhere from the
-                // root set.
+                // root set.  (Review: Should this be supported?  If so,
+                // couldn't we just walk GC_manuals?)
 
                 // Only plain arrays are supported as unmanaged across
                 // evaluations, because Context and REBACT and REBMAP are too
@@ -687,7 +740,7 @@ static void Mark_Symbol_Series(void)
     for (; canon != tail; ++canon) {
         assert(not (canon->leader.bits & NODE_FLAG_MARKED));
         canon->leader.bits |= NODE_FLAG_MARKED;
-        ++mark_count;
+        ++g_gc.mark_count;
     }
 
     ASSERT_NO_GC_MARKS_PENDING(); // doesn't ues any queueing
@@ -989,7 +1042,7 @@ static Count Sweep_Series(void)
                 //
                 *stub &= ~NODE_BYTEMASK_0x10_MARKED;
               #if !defined(NDEBUG)
-                --mark_count;
+                --g_gc.mark_count;
               #endif
                 break;
 
@@ -1034,7 +1087,7 @@ static Count Sweep_Series(void)
                 if (v->header.bits & NODE_FLAG_MARKED) {
                     v->header.bits &= ~NODE_FLAG_MARKED;
                   #if !defined(NDEBUG)
-                    --mark_count;
+                    --g_gc.mark_count;
                   #endif
                 }
                 else {
@@ -1067,7 +1120,6 @@ REBLEN Fill_Sweeplist(Series(*) sweeplist)
 
     for (; seg != nullptr; seg = seg->next) {
         Count n = g_mem.pools[STUB_POOL].num_units_per_segment;
-
         Byte* stub = cast(Byte*, seg + 1);
 
         for (; n > 0; --n, stub += sizeof(Stub)) {
@@ -1078,7 +1130,7 @@ REBLEN Fill_Sweeplist(Series(*) sweeplist)
                 if (s->leader.bits & NODE_FLAG_MARKED) {
                     s->leader.bits &= ~NODE_FLAG_MARKED;
                   #if !defined(NDEBUG)
-                    --mark_count;
+                    --g_gc.mark_count;
                   #endif
                 }
                 else {
@@ -1100,7 +1152,7 @@ REBLEN Fill_Sweeplist(Series(*) sweeplist)
                 if (pairing->header.bits & NODE_FLAG_MARKED) {
                     pairing->header.bits &= ~NODE_FLAG_MARKED;
                   #if !defined(NDEBUG)
-                    --mark_count;
+                    --g_gc.mark_count;
                   #endif
                 }
                 else {
@@ -1199,7 +1251,7 @@ REBLEN Recycle_Core(bool shutdown, Series(*) sweeplist)
     // to check if any more markings occur.
     //
     while (true) {
-        REBI64 before_count = mark_count;
+        REBI64 before_count = g_gc.mark_count;
 
         SymbolT** psym = Series_Head(SymbolT*, g_symbols.by_hash);
         SymbolT** psym_tail = Series_Tail(SymbolT*, g_symbols.by_hash);
@@ -1215,7 +1267,7 @@ REBLEN Recycle_Core(bool shutdown, Series(*) sweeplist)
                 }
                 if (Get_Series_Flag(CTX_VARLIST(context), MARKED)) {
                     Set_Series_Flag(patch, MARKED);
-                    ++mark_count;
+                    ++g_gc.mark_count;
 
                     Queue_Mark_Cell_Deep(Array_Single(ARR(patch)));
 
@@ -1224,14 +1276,14 @@ REBLEN Recycle_Core(bool shutdown, Series(*) sweeplist)
                     //
                     if (Not_Series_Flag(*psym, MARKED)) {
                         Set_Series_Flag(*psym, MARKED);
-                        ++mark_count;
+                        ++g_gc.mark_count;
                     }
                 }
             }
             Propagate_All_GC_Marks();
         }
 
-        if (before_count == mark_count)
+        if (before_count == g_gc.mark_count)
             break;  // no more added
     }
 
@@ -1262,7 +1314,7 @@ REBLEN Recycle_Core(bool shutdown, Series(*) sweeplist)
         Array(*) patch = &PG_Lib_Patches[i];
         if (Get_Series_Flag(patch, MARKED)) {
             Clear_Series_Flag(patch, MARKED);
-            --mark_count;
+            --g_gc.mark_count;
         }
     }
 
@@ -1276,13 +1328,13 @@ REBLEN Recycle_Core(bool shutdown, Series(*) sweeplist)
 
         if (Get_Series_Flag(canon, MARKED)) {
             Clear_Series_Flag(canon, MARKED);
-            --mark_count;
+            --g_gc.mark_count;
         }
     }
 
-   #if !defined(NDEBUG)
-     assert(mark_count == 0);  // should balance out
-   #endif
+  #if !defined(NDEBUG)
+    assert(g_gc.mark_count == 0);  // should balance out
+  #endif
 
   #if DEBUG_COLLECT_STATS
     // Compute new stats:

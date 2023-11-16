@@ -43,3 +43,5 @@ libraries: switch platform-config/os-base [
 options: [
     odbc-requires-ltdl [logic!] ()
 ]
+
+use-librebol: true  ; ODBC is a great example of not depending on %sys-core.h !

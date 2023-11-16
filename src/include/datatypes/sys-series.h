@@ -788,8 +788,8 @@ inline static Series(*) Manage_Series(Series(*) s)  // give manual series to GC
         panic (s);  // shouldn't manage an already managed series
   #endif
 
-    s->leader.bits |= NODE_FLAG_MANAGED;
     Untrack_Manual_Series(s);
+    Set_Series_Flag(s, MANAGED);
     return s;
 }
 
