@@ -261,8 +261,9 @@ to-js-type: func [
         ; UTF-8 on the emscripten heap (freed after the call).  Returned
         ; `char *` should be turned into JS GC'd strings, then freed.
         ;
-        ; !!! These APIs may nulls.  rebTrySpell("second [{a}]") is null, as a
-        ; way of doing passthru on soft failure.
+        ; !!! By default, unboxing APIs are not null tolerant. rebXXXMaybe()
+        ; will allow returning nullptr if the input is null, for example
+        ; `rebSpellMaybe("second [{a}]")` gives nullptr
         ;
         (s = "char *") or (s = "const char *") ["'string'"]
 

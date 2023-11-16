@@ -937,8 +937,7 @@ REBVAL *Get_Current_Exec(void)
         char *path_utf8 = rebAllocN(char, PATH_MAX);
         int r = readlink(self, path_utf8, PATH_MAX);
 
-        if (buffer)
-            rebFree(buffer);
+        rebFreeMaybe(buffer);
 
         if (r < 0) {
             rebFree(path_utf8);

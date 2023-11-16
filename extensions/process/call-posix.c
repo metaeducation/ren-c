@@ -856,16 +856,14 @@ Bounce Call_Core(Level(*) level_) {
         // child is stopped
         //
         assert(false);
-        if (infobuf)
-            rebFree(infobuf);
+        rebFreeMaybe(infobuf);
         rebJumps("fail {Child process is stopped}");
     }
     else {
         non_errno_ret = -2048;  // !!! randomly picked
     }
 
-    if (infobuf != nullptr)
-        rebFree(infobuf);
+    rebFreeMaybe(infobuf);
 
   info_pipe_err:
 
@@ -948,8 +946,7 @@ Bounce Call_Core(Level(*) level_) {
     else
         assert(errbuf == nullptr);
 
-    if (inbuf != nullptr)
-        rebFree(inbuf);
+    rebFreeMaybe(inbuf);
 
     if (ret != 0)
         rebFail_OS (ret);

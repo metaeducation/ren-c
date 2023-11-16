@@ -467,7 +467,7 @@ DECLARE_NATIVE(set_env)
 
   #if TO_WINDOWS
     WCHAR* key_wide = rebSpellWide(variable);
-    Option(WCHAR*) val_wide = rebTrySpellWide("ensure [<opt> text!]", value);
+    Option(WCHAR*) val_wide = rebSpellWideMaybe("ensure [<opt> text!]", value);
 
     if (not SetEnvironmentVariable(
         key_wide,

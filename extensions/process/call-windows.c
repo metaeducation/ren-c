@@ -733,8 +733,7 @@ Bounce Call_Core(Level(*) level_) {
     else
         assert(errbuf == nullptr);
 
-    if (inbuf != nullptr)
-        rebFree(inbuf);
+    rebFreeMaybe(inbuf);
 
     if (ret != 0)
         rebFail_OS (ret);

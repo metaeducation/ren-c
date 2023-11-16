@@ -271,14 +271,15 @@ void *RL_rebRealloc(void *ptr, size_t new_size)
 
 
 //
-//  rebFree: RL_API
+//  rebFreeMaybe: RL_API
 //
-// * As with free(), null is accepted as a no-op.
+// * As with free(), null is accepted as a no-op.  Use rebFree() if you want
+//   the code to error on null input
 //
 // * Because of the practical usefulness, this operation is legal to call
 //   during a GC... although it's a little bit shaky to do so.
 //
-void RL_rebFree(void *ptr)
+void RL_rebFreeMaybe(void *ptr)
 {
     ENTER_API_RECYCLING_OK;
 
@@ -313,6 +314,21 @@ void RL_rebFree(void *ptr)
         GC_Kill_Series(s);
     else
         Free_Unmanaged_Series(s);
+}
+
+
+//
+//  rebFree: RL_API
+//
+// Variant of rebFreeMaybe() that errors on null input
+//
+void RL_rebFree(void *ptr) {
+    ENTER_API_RECYCLING_OK;
+
+    if (ptr == nullptr)
+        fail ("rebFree() does not take NULL, see rebFreeMaybe()");
+
+    RL_rebFreeMaybe(ptr);
 }
 
 
@@ -1662,7 +1678,7 @@ size_t RL_rebSpellInto(
 
 
 //
-//  rebTrySpell: RL_API
+//  rebSpellMaybe: RL_API
 //
 // This gives the spelling as UTF-8 bytes.  Length in codepoints should be
 // extracted with LENGTH OF.  If size in bytes of the encoded UTF-8 is needed,
@@ -1670,7 +1686,7 @@ size_t RL_rebSpellInto(
 //
 // Can return nullptr.  Use rebSpell() if you want a failure instead.
 //
-char *RL_rebTrySpell(const void *p, va_list *vaptr)
+char *RL_rebSpellMaybe(const void *p, va_list *vaptr)
 {
     ENTER_API;
 
@@ -1694,12 +1710,12 @@ char *RL_rebTrySpell(const void *p, va_list *vaptr)
 //
 //  rebSpell: RL_API
 //
-// Raises error on NULL
+// Raises error on NULL input
 //
 char *RL_rebSpell(const void *p, va_list *vaptr) {
-    char* spell = RL_rebTrySpell(p, vaptr);
+    char* spell = RL_rebSpellMaybe(p, vaptr);
     if (spell == nullptr)
-        fail ("rebSpell() does not take NULL, see rebTrySpell()");
+        fail ("rebSpell() does not take NULL, see rebSpellMaybe()");
     return spell;
 }
 
@@ -1781,12 +1797,12 @@ unsigned int RL_rebSpellIntoWide(
 
 
 //
-//  rebTrySpellWide: RL_API
+//  rebSpellWideMaybe: RL_API
 //
 // Gives the spelling as WCHARs.  The result is UTF-16, so some codepoints
 // won't fit in single WCHARs.
 //
-REBWCHAR *RL_rebTrySpellWide(const void *p, va_list *vaptr)
+REBWCHAR *RL_rebSpellWideMaybe(const void *p, va_list *vaptr)
 {
     ENTER_API;
 
@@ -1816,9 +1832,9 @@ REBWCHAR *RL_rebTrySpellWide(const void *p, va_list *vaptr)
 //
 REBWCHAR *RL_rebSpellWide(const void *p, va_list *vaptr)
 {
-    REBWCHAR* spell = RL_rebTrySpellWide(p, vaptr);
+    REBWCHAR* spell = RL_rebSpellWideMaybe(p, vaptr);
     if (spell == nullptr)
-        fail ("rebSpellWide() does not take NULL, see rebTrySpellWide()");
+        fail ("rebSpellWide() does not take NULL, see rebSpellWideMaybe()");
     return spell;
 }
 
@@ -1901,13 +1917,13 @@ size_t RL_rebBytesInto(
 
 
 //
-//  rebTryBytes: RL_API
+//  rebBytesMaybe: RL_API
 //
 // Can be used to get the bytes of a BINARY! and its size, or the UTF-8
 // encoding of an ANY-STRING! or ANY-WORD! and that size in bytes.  (Hence,
 // for strings it is like rebSpell() except telling you how many bytes.)
 //
-unsigned char *RL_rebTryBytes(
+unsigned char *RL_rebBytesMaybe(
     size_t *size_out,  // !!! Enforce non-null, to ensure type safety?
     const void *p, va_list *vaptr
 ){
@@ -1941,9 +1957,9 @@ unsigned char *RL_rebBytes(
     size_t *size_out,  // !!! Enforce non-null, to ensure type safety?
     const void *p, va_list *vaptr
 ){
-    unsigned char* bytes = RL_rebTryBytes(size_out, p, vaptr);
+    unsigned char* bytes = RL_rebBytesMaybe(size_out, p, vaptr);
     if (bytes == nullptr)
-        fail ("rebBytes() does not take NULL, see rebTryBytes()");
+        fail ("rebBytes() does not take NULL, see rebBytesMaybe()");
     return bytes;
 }
 

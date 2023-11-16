@@ -27,11 +27,6 @@
 // It's not clear why the file and directory picker codebases are separate,
 // since the common dialogs seem able to do either.
 //
-// For something of this relatively simple nature, it would be ideal if the
-// code did not know about Series(*) or other aspects of the internal API.
-// But the external API is not quite polished yet, so some fledgling features
-// are being used here.
-//
 
 #include "reb-config.h"
 
@@ -43,10 +38,6 @@
 
     #include <process.h>
     #include <shlobj.h>
-
-    #undef IS_ERROR  // %winerror.h defines, Rebol has a different meaning
-    #undef OUT  // %minwindef.h defines this, we have a better use for it
-    #undef VOID  // %winnt.h defines this, we have a better use for it
 #else
     #if !defined(__cplusplus) && TO_LINUX
         //
@@ -87,7 +78,10 @@
     #endif
 #endif
 
-#include "sys-core.h"
+#include "rebol.h"  // not %sys-core.h !
+
+#include "assert.h"
+#include "reb-c.h"
 
 #include "tmp-mod-view.h"
 
@@ -104,7 +98,7 @@
 //          [<opt> file! block!]
 //      /save "File save mode"
 //      /multi "Allows multiple file selection, returned as a block"
-//      /file "Default file name or directory"
+//      /initial "Default file name or directory"
 //          [file!]
 //      /title "Window title"
 //          [text!]
@@ -116,9 +110,15 @@ DECLARE_NATIVE(request_file_p)
 {
     VIEW_INCLUDE_PARAMS_OF_REQUEST_FILE_P;
 
-    REBVAL *results = rebValue("copy []");  // collected in block and returned
+    REBVAL* results = rebValue("copy []");  // collected in block and returned
 
-    REBVAL *error = nullptr;  // error saved to raise after buffers freed
+    REBVAL* error = nullptr;  // error saved to raise after buffers freed
+
+    bool saving = rebDid(rebArgR("save"));
+    bool multi = rebDid(rebArgR("multi"));
+    REBVAL* initial = rebArg("initial");
+    REBVAL* title = rebArg("title");
+    REBVAL* filter = rebArg("filter");
 
   #if TO_WINDOWS
     OPENFILENAME ofn;
@@ -128,23 +128,23 @@ DECLARE_NATIVE(request_file_p)
     ofn.hwndOwner = nullptr;  // !!! Should be set to something for modality
     ofn.hInstance = nullptr;  // !!! Also should be set for context (app type)
 
-    WCHAR *lpstrFilter;
-    if (REF(filter)) {
+    WCHAR *filter_utf16;
+    if (filter) {
         //
         // The technique used is to separate the filters by '\0', and end
-        // with a doubled up `\0\0`.  This can't be done in strings, and
-        // wide character strings can't be easily built in binaries.  So
-        // do the delimiting with tab characters, then do a pass to replace
+        // with a doubled up `\0\0`.  Ren-C strings don't allow embedded `\0`
+        // bytes, and wide character strings can't be easily built in binaries.
+        // Do the delimiting with tab characters, then do a pass to replace
         // replace them in the extracted wide character buffer.
         //
         rebElide(
-            "for-each item", ARG(filter), "[",
+            "for-each item", filter, "[",
                 "if find item tab [fail {TAB chars not legal in filters}]",
             "]"
         );
-        lpstrFilter = rebSpellWide("append delimit tab", ARG(filter), "tab");
-        WCHAR *pwc;
-        for (pwc = lpstrFilter; *pwc != 0; ++pwc) {
+        filter_utf16 = rebSpellWide("append delimit tab", filter, "tab");
+        WCHAR* pwc;
+        for (pwc = filter_utf16; *pwc != 0; ++pwc) {
             if (*pwc == '\t')
                 *pwc = '\0';
         }
@@ -154,9 +154,9 @@ DECLARE_NATIVE(request_file_p)
         // done by a HIJACK of REQUEST-FILE with an adaptation that tests
         // if no filters are given and supplies a block.
         //
-        lpstrFilter = nullptr;
+        filter_utf16 = nullptr;
     }
-    ofn.lpstrFilter = lpstrFilter;
+    ofn.lpstrFilter = filter_utf16;
 
     ofn.lpstrCustomFilter = nullptr; // would let user save filters they add
     ofn.nMaxCustFilter = 0;
@@ -166,33 +166,34 @@ DECLARE_NATIVE(request_file_p)
     //
     ofn.nFilterIndex = 0;
 
-    WCHAR* lpstrFile = rebAllocN(WCHAR, MAX_FILE_REQ_BUF);
-    ofn.lpstrFile = lpstrFile;
-    ofn.lpstrFile[0] = '\0';  // may be filled with ARG(name) below
+    WCHAR* chosen_utf16 = rebAllocN(WCHAR, MAX_FILE_REQ_BUF);
+    ofn.lpstrFile = chosen_utf16;
+    ofn.lpstrFile[0] = '\0';  // may be filled with `name` argument below
     ofn.nMaxFile = MAX_FILE_REQ_BUF - 1;  // size in characters, space for \0
 
     ofn.lpstrFileTitle = nullptr;  // can be used to get file w/o path info...
     ofn.nMaxFileTitle = 0;  // ...but we want the full path
 
-    WCHAR *lpstrInitialDir;
-    if (REF(file)) {
-        WCHAR *path = rebSpellWide("file-to-local/full", ARG(file));
-        unsigned int cch_path = wcslen(path);
+    WCHAR *initial_dir_utf16;
+    if (initial and rebUnboxLogic("not empty?", initial)) {
+        WCHAR* initial_utf16 = rebSpellWide("file-to-local/full", initial);
+        size_t initial_len = wcslen(initial_utf16);
 
         // If the last character doesn't indicate a directory, that means
         // we are trying to pre-select a file, which we do by copying the
         // content into the ofn.lpstrFile field.
         //
-        if (path[cch_path - 1] != '\\') {
-            unsigned int cch;
-            if (cch_path + 2 > ofn.nMaxFile)
-                cch = ofn.nMaxFile - 2;
+        if (initial_utf16[initial_len - 1] != '\\') {
+            size_t len;
+            if (initial_len + 2 > ofn.nMaxFile)
+                len = ofn.nMaxFile - 2;
             else
-                cch = cch_path;
-            wcsncpy_s(ofn.lpstrFile, MAX_FILE_REQ_BUF, path, cch);
-            lpstrFile[cch] = '\0';
-            lpstrInitialDir = nullptr;
-            rebFree(path);
+                len = initial_len;
+            wcsncpy_s(chosen_utf16, MAX_FILE_REQ_BUF, initial_utf16, len);
+            chosen_utf16[len] = '\0';
+            rebFree(initial_utf16);
+
+            initial_dir_utf16 = nullptr;
         }
         else {
             // Otherwise it's a directory, and we have to put that in the
@@ -200,23 +201,19 @@ DECLARE_NATIVE(request_file_p)
             // lpstrFile that it can't hold a directory when your goal is
             // to select a file?
             //
-            lpstrInitialDir = path;
+            initial_dir_utf16 = initial_utf16;
         }
     }
     else
-        lpstrInitialDir = nullptr;
-    ofn.lpstrInitialDir = lpstrInitialDir;
+        initial_dir_utf16 = nullptr;
+    ofn.lpstrInitialDir = initial_dir_utf16;
 
-    WCHAR *lpstrTitle;
-    if (REF(title))
-        lpstrTitle = rebSpellWide(ARG(title));
-    else
-        lpstrTitle = nullptr;  // Will use "Save As" or "Open" defaults
-    ofn.lpstrTitle = lpstrTitle;
+    WCHAR *title_utf16 = rebSpellWideMaybe(title);
+    ofn.lpstrTitle = title_utf16;  // nullptr defaults to "Save As" or "Open"
 
     // !!! What about OFN_NONETWORKBUTTON?
     ofn.Flags = OFN_HIDEREADONLY | OFN_EXPLORER | OFN_NOCHANGEDIR;
-    if (REF(multi))
+    if (multi)
         ofn.Flags |= OFN_ALLOWMULTISELECT;
 
     // These can be used to find the offset in characters from the beginning
@@ -229,12 +226,12 @@ DECLARE_NATIVE(request_file_p)
     // Currently unused stuff.
     //
     ofn.lpstrDefExt = nullptr;
-    ofn.lCustData = (LPARAM)(nullptr);  // !!! cast() macro failing on nullptr
+    ofn.lCustData = cast(LPARAM, nullptr);
     ofn.lpfnHook = nullptr;
     ofn.lpTemplateName = nullptr;
 
     BOOL ret;
-    if (REF(save))
+    if (saving)
         ret = GetSaveFileName(&ofn);
     else
         ret = GetOpenFileName(&ofn);
@@ -256,43 +253,43 @@ DECLARE_NATIVE(request_file_p)
             );
     }
     else {
-        if (not REF(multi)) {
+        if (not multi) {
             rebElide(
                 "append", results, "local-to-file",
-                    rebR(rebTextWide(ofn.lpstrFile))
+                    rebR(rebTextWide(chosen_utf16))
             );
         }
         else {
-            const WCHAR *item = ofn.lpstrFile;
+            const WCHAR *item_utf16 = chosen_utf16;
 
-            unsigned int cch_item = wcslen(item);
-            assert(cch_item != 0);  // must have at least one char for success
-            if (wcslen(item + cch_item + 1) == 0) {
+            size_t item_len = wcslen(item_utf16);
+            assert(item_len != 0);  // must have at least one char for success
+            if (wcslen(item_utf16 + item_len + 1) == 0) {
                 //
                 // When there's only one item in a multi-selection scenario,
                 // that item is the filename including path...the lone result.
                 //
-                REBVAL *path = rebLengthedTextWide(item, cch_item);
-                rebElide("append", results, "local-to-file", rebR(path));
+                REBVAL *item = rebLengthedTextWide(item_utf16, item_len);
+                rebElide("append", results, "local-to-file", rebR(item));
             }
             else {
                 // More than one item means the first is a directory, and the
                 // rest are files in that directory.  We want to merge them
                 // together to make fully specified paths.
                 //
-                REBVAL *dir = rebLengthedTextWide(item, cch_item);
+                REBVAL *dir = rebLengthedTextWide(item_utf16, item_len);
 
-                item += cch_item + 1;  // next
+                item_utf16 += item_len + 1;  // next
 
-                while ((cch_item = wcslen(item)) != 0) {
-                    REBVAL *file = rebLengthedTextWide(item, cch_item);
+                while ((item_len = wcslen(item_utf16)) != 0) {
+                    REBVAL *item = rebLengthedTextWide(item_utf16, item_len);
 
                     rebElide(
                         "append", results,
-                            "local-to-file join", dir, rebR(file)
+                            "local-to-file join", dir, rebR(item)
                     );
 
-                    item += cch_item + 1;  // next
+                    item_utf16 += item_len + 1;  // next
                 }
 
                 rebRelease(dir);
@@ -300,16 +297,11 @@ DECLARE_NATIVE(request_file_p)
         }
     }
 
-    // Being somewhat paranoid that Windows won't corrupt the pointers in
-    // the OPENFILENAME structure...so we free caches of what we put in.
-    //
-    if (REF(filter))
-        rebFree(lpstrFilter);
-    rebFree(lpstrFile);
-    if (REF(file) and lpstrInitialDir != nullptr)
-        rebFree(lpstrInitialDir);
-    if (REF(title))
-        rebFree(lpstrTitle);
+    rebFree(chosen_utf16);  // was always allocated
+
+    rebFreeMaybe(filter_utf16);
+    rebFreeMaybe(initial_dir_utf16);
+    rebFreeMaybe(title_utf16);
 
   #elif defined(USE_GTK_FILECHOOSER)
 
@@ -323,11 +315,7 @@ DECLARE_NATIVE(request_file_p)
 
     UNUSED(REF(filter));  // not implemented in GTK for Atronix R3
 
-    char *title;
-    if (REF(title))
-        title = rebSpell(ARG(title));
-    else
-        title = nullptr;
+    char *title_utf8 = rebSpellMaybe(title);
 
     // !!! Using a null parent causes console to output:
     // "GtkDialog mapped without a transient parent. This is discouraged."
@@ -335,11 +323,11 @@ DECLARE_NATIVE(request_file_p)
     GtkWindow *parent = nullptr;
 
     GtkWidget *dialog = gtk_file_chooser_dialog_new(
-        title == nullptr
-            ? (REF(save) ? "Save file" : "Open File")
-            : title,
+        title_utf8 == nullptr
+            ? (saving ? "Save file" : "Open File")
+            : title_utf8,
         parent,
-        REF(save)
+        saving
             ? GTK_FILE_CHOOSER_ACTION_SAVE
             : GTK_FILE_CHOOSER_ACTION_OPEN,  // [SELECT_FOLDER CREATE_FOLDER]
 
@@ -348,23 +336,19 @@ DECLARE_NATIVE(request_file_p)
         GTK_RESPONSE_CANCEL,
 
         // Second button and button response
-        REF(save) ? "_Save" : "_Open",
+        saving ? "_Save" : "_Open",
         GTK_RESPONSE_ACCEPT,
 
         cast(const char*, nullptr)  // signal no more buttons
     );
 
-    GtkFileChooser *chooser = GTK_FILE_CHOOSER(dialog);
+    GtkFileChooser* chooser = GTK_FILE_CHOOSER(dialog);
 
-    gtk_file_chooser_set_select_multiple(chooser, REF(multi));
+    gtk_file_chooser_set_select_multiple(chooser, multi);
 
-    Byte* name;
-    if (REF(file)) {
-        name = rebSpell(ARG(file));
-        gtk_file_chooser_set_current_folder(chooser, cast(gchar*, name));
-    }
-    else
-        name = nullptr;
+    char* initial_utf8 = rebSpellMaybe(initial);
+    if (initial_utf8)
+        gtk_file_chooser_set_current_folder(chooser, initial_utf8);
 
     if (gtk_dialog_run(GTK_DIALOG(dialog)) != GTK_RESPONSE_ACCEPT) {
         //
@@ -376,8 +360,8 @@ DECLARE_NATIVE(request_file_p)
         // file return convention (a singly linked list of strings) is not the
         // same as the single file return convention (one string).
 
-        if (REF(multi)) {
-            char *folder = gtk_file_chooser_get_current_folder(chooser);
+        if (multi) {
+            char* folder_utf8 = gtk_file_chooser_get_current_folder(chooser);
 
             if (folder == nullptr)
                 error = rebValue(
@@ -396,46 +380,45 @@ DECLARE_NATIVE(request_file_p)
                 }
                 g_slist_free(list);
 
-                g_free(folder);
+                g_free(folder_utf8);
             }
         }
         else {
             // filename is in UTF-8, directory seems to be included.
             //
+            char *name_utf8 = gtk_file_chooser_get_filename(chooser);
             rebElide(
-                "append", files, "as file!",
-                    rebT(gtk_file_chooser_get_filename(chooser)
+                "append", files, "as file!", rebT(name_utf8)
             );
-            g_free(filename);
+            g_free(name_utf8);
         }
     }
 
     gtk_widget_destroy(dialog);
 
-    if (REF(file))
-        rebFree(name);
-    if (REF(title))
-        rebFree(title);
+    rebFreeMaybe(initial_utf8);
+    rebFreeMaybe(title_utf8);
 
     while (gtk_events_pending()) {
         //
         // !!! Commented out code here invoked gtk_main_iteration_do(0),
         // to whom it may concern who might be interested in any of this.
         //
-        gtk_main_iteration ();
+        gtk_main_iteration();
     }
 
   #else
-    UNUSED(REF(save));
-    UNUSED(REF(multi));
-    UNUSED(REF(file));
-    UNUSED(REF(title));
-    UNUSED(REF(filter));
+    UNUSED(saving);
+    UNUSED(multi);
 
     error = rebValue(
         "make error! {REQUEST-FILE only on GTK and Windows at this time}"
     );
   #endif
+
+    rebRelease(initial);
+    rebRelease(title);
+    rebRelease(filter);
 
     // The error is broken out this way so that any allocated strings can
     // be freed before the failure.
@@ -448,7 +431,7 @@ DECLARE_NATIVE(request_file_p)
         return nullptr;
     }
 
-    if (REF(multi)) {
+    if (multi) {
         //
         // For the caller's convenience, return a BLOCK! if they requested
         // /MULTI and there's even just one file.  (An empty block might even
@@ -520,6 +503,9 @@ DECLARE_NATIVE(request_dir_p)
     REBVAL *result = nullptr;
     REBVAL *error = nullptr;
 
+    REBVAL* title = rebArg("title");
+    REBVAL* path = rebArg("path");
+
   #if defined(USE_WINDOWS_DIRCHOOSER)
     //
     // COM must be initialized to use SHBrowseForFolder.  BIF_NEWDIALOGSTYLE
@@ -544,8 +530,9 @@ DECLARE_NATIVE(request_dir_p)
     display[0] = '\0';
     bi.pszDisplayName = display; // assumed length is MAX_PATH
 
-    if (REF(title))
-        bi.lpszTitle = rebSpellWide(ARG(title));
+    WCHAR* title_utf16 = rebSpellWideMaybe(title);
+    if (title_utf8)
+        bi.lpszTitle = title_utf16;
     else
         bi.lpszTitle = L"Please, select a directory...";
 
@@ -564,10 +551,8 @@ DECLARE_NATIVE(request_dir_p)
     // field is called `bi.lParam`, it gets passed as the `lpData`)
     //
     bi.lpfn = ReqDirCallbackProc;
-    if (REF(path))
-        bi.lParam = cast(LPARAM, rebSpellWide(ARG(path)));
-    else
-        bi.lParam = cast(LPARAM, nullptr);
+    WCHAR* path_utf16 = rebSpellWideMaybe(path);
+    bi.lParam = cast(LPARAM, path_utf16);  // nullptr uses default
 
     LPCITEMIDLIST pFolder = SHBrowseForFolder(&bi);
 
@@ -580,18 +565,16 @@ DECLARE_NATIVE(request_dir_p)
         result = rebValue("as file!", rebT(folder));
     }
 
-    if (REF(title))
-        rebFree(cast(WCHAR*, bi.lpszTitle));
-    if (REF(path))
-        rebFree(cast(WCHAR*, bi.lParam));
+    rebFreeMaybe(title_utf16);
+    rebFreeMaybe(path_utf16);
   #else
-    UNUSED(REF(title));
-    UNUSED(REF(path));
-
     error = rebValue(
         "make error {Temporary implementation of REQ-DIR only on Windows}"
     );
   #endif
+
+    rebRelease(title);
+    rebRelease(path);
 
     if (error != nullptr)
         rebJumps ("fail", rebR(error));

@@ -35,3 +35,5 @@ libraries: switch platform-config/os-base [
         []
     ]
 ] else [null]  ; can't use null fallout in bootstrap
+
+use-librebol: true

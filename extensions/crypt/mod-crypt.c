@@ -1487,8 +1487,8 @@ DECLARE_NATIVE(aes_stream)
     result = rebRepossess(output, olen);
 
   cleanup:
-    if (pad_data)
-        rebFree(pad_data);
+
+    rebFreeMaybe(pad_data);
 
     if (error)
         rebJumps ("fail", error);
