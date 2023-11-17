@@ -49,12 +49,13 @@
 
 #if DEBUG_UNREADABLE_TRASH
     //
-    // Debug behavior: `~` with the CELL_FLAG_STALE set
+    // Debug behavior: `~` with the NODE_FLAG_FREE set
+    // If exposure to the user API occurred, it would look like UTF-8
     // Will trip up any access attempts via READABLE(), but is WRITABLE()
 
     inline static Value(*) Init_Trash_Untracked(Cell(*) out) {
         Init_Void_Untracked(out, QUASI_2);
-        Set_Cell_Flag(out, STALE);
+        Set_Node_Free_Bit(out);
         return cast(Value(*), out);
     }
 
@@ -63,7 +64,7 @@
             return false;
         if (QUOTE_BYTE(v) != QUASI_2)
             return false;
-        return Get_Cell_Flag_Unchecked(v, STALE);
+        return Is_Node_Free(v);
     }
 #else
     // Release Build Behavior: Looks just like a meta-none (`~` value)

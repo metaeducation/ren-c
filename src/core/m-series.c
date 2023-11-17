@@ -375,7 +375,7 @@ void Assert_Series_Term_Core(Series(const*) s)
 //
 void Assert_Series_Basics_Core(Series(const*) s)
 {
-    if (Is_Free_Node(s))
+    if (Is_Node_Free(s))
         panic (s);
 
     assert(Series_Flavor(s) != FLAVOR_TRASH);
@@ -412,7 +412,7 @@ ATTRIBUTE_NO_RETURN void Panic_Series_Debug(Series(*) s)
 
   #if DEBUG_COUNT_TICKS
     fprintf(stderr, " was likely ");
-    if (s->leader.bits & SERIES_FLAG_FREE)
+    if (Is_Node_Free(s))
         fprintf(stderr, "freed");
     else
         fprintf(stderr, "created");

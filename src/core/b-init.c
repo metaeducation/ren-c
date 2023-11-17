@@ -199,8 +199,8 @@ static void Startup_Lib(void)
 
   //=//// INITIALIZE LIB PATCHES ///////////////////////////////////////////=//
 
-    assert(NODE_BYTE(&PG_Lib_Patches[SYM_0]) == 0);  // conflates with "\0"
-    NODE_BYTE(&PG_Lib_Patches[SYM_0]) = FREED_SERIES_BYTE;  // invalid UTF-8
+    assert(FIRST_BYTE(PG_Lib_Patches[0].leader.bits) == 0);  // pre-boot state
+    FIRST_BYTE(PG_Lib_Patches[0].leader.bits) = FREE_POOLUNIT_BYTE;
 
     for (REBLEN i = 1; i < LIB_SYMS_MAX; ++i) {  // skip SYM_0
         Array(*) patch = Make_Array_Core_Into(
@@ -272,8 +272,8 @@ static void Shutdown_Lib(void)
     // variables are FRESHEN() and that the patches look empty in case the
     // Startup() gets called again.
     //
-    assert(Is_Free_Node(&PG_Lib_Patches[0]));
-    NODE_BYTE(&PG_Lib_Patches[0]) = 0;
+    assert(Is_Node_Free(&PG_Lib_Patches[0]));
+    FIRST_BYTE(PG_Lib_Patches[0].leader.bits) = 0;  // pre-boot state
 
     for (REBLEN i = 1; i < LIB_SYMS_MAX; ++i) {
         Array(*) patch = &PG_Lib_Patches[i];

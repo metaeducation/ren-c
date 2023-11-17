@@ -413,7 +413,7 @@ union HeaderUnion {
 #define NODE_BYTEMASK_0x80_NODE 0x80
 
 
-//=//// NODE_FLAG_STALE (second-leftmost bit) //////////////////////////////=//
+//=//// NODE_FLAG_FREE (second-leftmost bit) //////////////////////////////=//
 //
 // The second-leftmost bit will be 0 for all HeaderUnion in the system that
 // are "valid".  This completes the plan of making sure all Cell and Stub
@@ -421,14 +421,14 @@ union HeaderUnion {
 // indicates an invalid leading byte in UTF-8.
 //
 // The exception are freed nodes, but they use 11000000 and 110000001 for
-// freed series stubs and "freed" value cells (trash).  These are the bytes
+// freed series stubs and end signal value cells.  These are the bytes
 // 192 and 193, which are specifically illegal in any UTF8 sequence.  So
 // even these cases may be safely distinguished from strings.  See the
 // NODE_FLAG_CELL for why it is chosen to be that 8th bit.
 //
-#define NODE_FLAG_STALE \
+#define NODE_FLAG_FREE \
     FLAG_LEFT_BIT(1)
-#define NODE_BYTEMASK_0x40_STALE 0x40
+#define NODE_BYTEMASK_0x40_FREE 0x40
 
 
 //=//// NODE_FLAG_MANAGED (third-leftmost bit) ////////////////////////////=//
@@ -521,6 +521,13 @@ union HeaderUnion {
 // invalid UTF-8 bytes, hence these two free states are distinguishable from
 // a leading byte of a string.
 //
+// No obvious advantage one way or another has arisen yet for NODE_FLAG_CELL
+// being 1 or NODE_FLAG_STUB being 1.  malloc()'d arrays of data have to have
+// NODE_FLAG_NODE set before they become useful and don't trigger asserts on
+// reading, and as long as you're setting that you can set bit 7 too.  If
+// some clever reason to switch the polarity of this bit came up, it could
+// be done pretty easily.
+//
 #define NODE_FLAG_CELL \
     FLAG_LEFT_BIT(7)
 #define NODE_BYTEMASK_0x01_CELL 0x01
@@ -532,14 +539,14 @@ union HeaderUnion {
 #define PREP_SIGNAL_BYTE 0
 
 // There are two special invalid bytes in UTF8 which have a leading "110"
-// bit pattern, which are freed nodes.  These two patterns are for freed series
-// and "unreadable cells"
+// bit pattern, which are freed nodes.  These two patterns are "freed stubs"
+// and "end signal bytes"
 //
 // At time of writing, the END_SIGNAL_BYTE must always be followed by a zero
-// byte.  This is easy to do with C strings (see rebEND definition).  It's
+// byte.  This is easy to do with C strings (*see rebEND definition*).  It's
 // not strictly necessary--one byte suffices--but it's a good sanity check.
 //
 #define END_SIGNAL_BYTE 192
 STATIC_ASSERT(not (END_SIGNAL_BYTE & NODE_BYTEMASK_0x01_CELL));
 
-#define FREED_SERIES_BYTE 193
+#define FREE_POOLUNIT_BYTE 193

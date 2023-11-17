@@ -89,7 +89,7 @@ void Shutdown_Data_Stack(void)
 //
 void Startup_Feeds(void)
 {
-    PG_Feed_At_End.header.bits = NODE_FLAG_NODE | NODE_FLAG_STALE;
+    PG_Feed_At_End.header.bits = FLAG_FIRST_BYTE(END_SIGNAL_BYTE);
 
     TG_End_Feed = Make_Array_Feed_Core(EMPTY_ARRAY, 0, SPECIFIED);
 }

@@ -472,7 +472,7 @@ inline static Byte* Series_Data(Series(const_if_c*) s) {
 inline static Byte* Series_Data_At(Byte w, Series(const_if_c*) s, REBLEN i) {
   #if !defined(NDEBUG)
     if (w != Series_Wide(s)) {  // will be "unusual" value if free
-        if (Is_Free_Node(s))
+        if (Is_Node_Free(s))
             printf("Series_Data_At asked on freed series\n");
         else
             printf(
@@ -784,12 +784,12 @@ inline static void Untrack_Manual_Series(Series(*) s)
 inline static Series(*) Manage_Series(Series(*) s)  // give manual series to GC
 {
   #if !defined(NDEBUG)
-    if (Get_Series_Flag(s, MANAGED))
+    if (Is_Node_Managed(s))
         panic (s);  // shouldn't manage an already managed series
   #endif
 
     Untrack_Manual_Series(s);
-    Set_Series_Flag(s, MANAGED);
+    Set_Node_Managed_Bit(s);
     return s;
 }
 
@@ -797,13 +797,13 @@ inline static Series(*) Manage_Series(Series(*) s)  // give manual series to GC
     #define Assert_Series_Managed(s) NOOP
 #else
     inline static void Assert_Series_Managed(Series(const*) s) {
-        if (Not_Series_Flag(s, MANAGED))
+        if (Not_Node_Managed(s))
             panic (s);
     }
 #endif
 
 inline static Series(*) Force_Series_Managed(const_if_c Series(*) s) {
-    if (Not_Series_Flag(s, MANAGED))
+    if (Not_Node_Managed(s))
         Manage_Series(m_cast(Series(*), s));
     return m_cast(Series(*), s);
 }
@@ -967,8 +967,8 @@ inline static Cell(const*) Ensure_Mutable(Cell(const*) v) {
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// The garbage collector can run anytime the evaluator runs (and also when
-// ports are used).  So if a series has had Manage_Series() run on it, the
+// The garbage collector can run anytime the trampoline runs (and possibly
+// at certain other times).  So if a series has NODE_FLAG_MANAGED on it, the
 // potential exists that any C pointers that are outstanding may "go bad"
 // if the series wasn't reachable from the root set.  This is important to
 // remember any time a pointer is held across a call that runs arbitrary
@@ -983,7 +983,7 @@ inline static Cell(const*) Ensure_Mutable(Cell(const*) v) {
 // guarding the series AND locking it from resizing.)
 //
 // The guard stack is not meant to accumulate, and must be cleared out
-// before a command ends.
+// before a level returns to the trampoline.
 //
 
 #define Push_GC_Guard(node) \
@@ -1000,6 +1000,17 @@ inline static void Drop_GC_Guard(const Node* node) {
   #endif
 
     g_gc.guarded->content.dynamic.used -= 1;
+}
+
+// Cells memset 0 for speed.  But Push_Guard_Node() expects a Node, where
+// the NODE_BYTE() has NODE_FLAG_NODE set.  Use this with DECLARE_LOCAL().
+//
+inline static void Push_GC_Guard_Erased_Cell(Cell(*) cell) {
+    assert(FIRST_BYTE(cell->header.bits) == 0);
+    FIRST_BYTE(cell->header.bits) =
+        NODE_BYTEMASK_0x80_NODE | NODE_BYTEMASK_0x01_CELL;
+
+    Push_Guard_Node(cell);
 }
 
 
@@ -1116,7 +1127,7 @@ inline static void INIT_SPECIFIER(Cell(*) v, const void *p) {
 
     assert(Is_Bindable(v));  // works on partially formed values
 
-    if (Get_Series_Flag(binding, MANAGED)) {
+    if (Is_Node_Managed(binding)) {
         assert(
             IS_DETAILS(binding)  // relative
             or IS_VARLIST(binding)  // specific
@@ -1142,7 +1153,7 @@ inline static REBVAL *Init_Series_Cell_At_Core(
 ){
   #if !defined(NDEBUG)
     assert(ANY_SERIES_KIND(type) or type == REB_URL);
-    assert(Get_Series_Flag(s, MANAGED));
+    assert(Is_Node_Managed(s));
 
     // Note: a R3-Alpha Make_Binary() comment said:
     //
@@ -1364,7 +1375,7 @@ inline static Series(*) Make_Series_Into(
         Set_Series_Flag(s, DYNAMIC);
 
         if (not Did_Series_Data_Alloc(s, capacity)) {
-            Clear_Series_Flag(s, MANAGED);
+            Clear_Node_Managed_Bit(s);
             Set_Series_Flag(s, INACCESSIBLE);
             GC_Kill_Series(s);  // ^-- needs non-null data unless INACCESSIBLE
 

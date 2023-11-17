@@ -229,7 +229,7 @@ DECLARE_NATIVE(reorder_p)  // see REORDER in %base-defs.r, for inheriting meta
 
     Array(*) partials = Pop_Stack_Values_Core(
         base,
-        SERIES_FLAG_MANAGED | SERIES_MASK_PARTIALS
+        NODE_FLAG_MANAGED | SERIES_MASK_PARTIALS
     );
 
     Phase(*) reordered = Make_Action(

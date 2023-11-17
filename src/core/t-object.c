@@ -210,8 +210,8 @@ void Init_Evars(EVARS *e, NoQuote(Cell(const*)) v) {
         e->visibility = VAR_VISIBILITY_INPUTS;
 
       #if !defined(NDEBUG)
-        e->wordlist = Make_Array_Core(1, SERIES_FLAG_MANAGED);
-        Clear_Series_Flag(e->wordlist, MANAGED);  // dummy series, see [1]
+        e->wordlist = Make_Array_Core(1, NODE_FLAG_MANAGED);
+        Clear_Node_Managed_Bit(e->wordlist);  // dummy series, see [1]
       #endif
 
         e->word = nullptr;
@@ -258,8 +258,8 @@ void Init_Evars(EVARS *e, NoQuote(Cell(const*)) v) {
             }
         }
 
-        e->wordlist = Pop_Stack_Values_Core(base, SERIES_FLAG_MANAGED);
-        Clear_Series_Flag(e->wordlist, MANAGED);  // see [1]
+        e->wordlist = Pop_Stack_Values_Core(base, NODE_FLAG_MANAGED);
+        Clear_Node_Managed_Bit(e->wordlist);  // see [1]
 
         e->word = cast(REBVAL*, Array_Head(e->wordlist)) - 1;
         e->word_tail = cast(REBVAL*, Array_Tail(e->wordlist));
@@ -327,8 +327,8 @@ void Init_Evars(EVARS *e, NoQuote(Cell(const*)) v) {
         }
 
       #if !defined(NDEBUG)
-        e->wordlist = Make_Array_Core(1, SERIES_FLAG_MANAGED);
-        Clear_Series_Flag(e->wordlist, MANAGED);  // see [1]
+        e->wordlist = Make_Array_Core(1, NODE_FLAG_MANAGED);
+        Clear_Node_Managed_Bit(e->wordlist);  // see [1]
       #endif
         e->word = nullptr;
         UNUSED(e->word_tail);

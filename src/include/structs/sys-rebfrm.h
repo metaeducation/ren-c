@@ -32,7 +32,7 @@
 STATIC_ASSERT(LEVEL_FLAG_0_IS_TRUE == NODE_FLAG_NODE);
 
 #define LEVEL_FLAG_1_IS_FALSE FLAG_LEFT_BIT(1)  // is NOT free
-STATIC_ASSERT(LEVEL_FLAG_1_IS_FALSE == NODE_FLAG_STALE);
+STATIC_ASSERT(LEVEL_FLAG_1_IS_FALSE == NODE_FLAG_FREE);
 
 
 //=//// LEVEL_FLAG_ALLOCATED_FEED //////////////////////////////////////////=//
@@ -339,7 +339,7 @@ typedef void (Intrinsic)(Atom(*) out, Phase(*) phase, Value(*) arg);
     // These are LEVEL_FLAG_XXX or'd together--see their documentation above.
     //
     // Note: In order to use the memory pools, this must be in first position,
-    // and it must not have the NODE_FLAG_STALE bit set when in use.
+    // and it must not have the NODE_FLAG_FREE bit set when in use.
     //
     union HeaderUnion flags;
 

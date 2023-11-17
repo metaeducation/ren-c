@@ -38,7 +38,7 @@ Value(*) Try_Init_Any_Sequence_At_Arraylike_Core(
     REBLEN index
 ){
     assert(ANY_SEQUENCE_KIND(kind));
-    assert(Get_Series_Flag(a, MANAGED));
+    assert(Is_Node_Managed(a));
     Assert_Series_Term_If_Needed(a);
     assert(index == 0);  // !!! current rule
     assert(Is_Array_Frozen_Shallow(a));  // must be immutable (may be aliased)

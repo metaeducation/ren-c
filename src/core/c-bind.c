@@ -255,7 +255,7 @@ Array(*) Make_Let_Patch(
 
     if (specifier) {
         assert(IS_LET(specifier) or IS_USE(specifier) or IS_VARLIST(specifier));
-        assert(Get_Series_Flag(specifier, MANAGED));
+        assert(Is_Node_Managed(specifier));
     }
     mutable_LINK(NextLet, let) = specifier;  // linked list, see [1]
 
@@ -433,8 +433,8 @@ DECLARE_NATIVE(let)
 
     REBSPC *bindings = L_specifier;  // specifier chain we may be adding to
 
-    if (bindings and Not_Series_Flag(bindings, MANAGED))
-        Set_Series_Flag(bindings, MANAGED);  // natives don't always manage
+    if (bindings and Not_Node_Managed(bindings))
+        Set_Node_Managed_Bit(bindings);  // natives don't always manage
 
     if (CELL_HEART(vars) == REB_WORD or CELL_HEART(vars) == REB_SET_WORD) {
         Symbol(const*) symbol = VAL_WORD_SYMBOL(vars);
@@ -611,10 +611,11 @@ DECLARE_NATIVE(add_let_binding) {
     INCLUDE_PARAMS_OF_ADD_LET_BINDING;
 
     Level(*) L = CTX_LEVEL_MAY_FAIL(VAL_CONTEXT(ARG(frame)));
-    REBSPC* L_specifier = Level_Specifier(L);
 
+    REBSPC* L_specifier = Level_Specifier(L);
     if (L_specifier)
-        Set_Series_Flag(L_specifier, MANAGED);
+        Set_Node_Managed_Bit(L_specifier);
+
     REBSPC *let = Make_Let_Patch(VAL_WORD_SYMBOL(ARG(word)), L_specifier);
 
     Move_Cell(Array_Single(let), ARG(value));
@@ -648,7 +649,7 @@ DECLARE_NATIVE(add_use_object) {
     Context(*) ctx = VAL_CONTEXT(ARG(object));
 
     if (L_specifier)
-        Set_Series_Flag(L_specifier, MANAGED);
+        Set_Node_Managed_Bit(L_specifier);
 
     REBSPC *use = Make_Or_Reuse_Use(ctx, L_specifier, REB_WORD);
 

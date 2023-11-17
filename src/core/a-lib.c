@@ -174,9 +174,9 @@ void *RL_rebMalloc(size_t size)
             + size  // for the actual data capacity (may be 0, see notes)
             + 1,  // for termination (AS TEXT! of rebRepossess(), see notes)
         FLAG_FLAVOR(BINARY)  // rebRepossess() only creates binary series ATM
+            | NODE_FLAG_ROOT  // indicate this originated from the API
             | SERIES_FLAG_DONT_RELOCATE  // direct data pointer handed back
             | SERIES_FLAG_DYNAMIC  // rebRepossess() needs bias field
-            | SERIES_FLAG_ROOT  // indicate this originated from the API
     );
 
     Byte* ptr = Binary_Head(s) + ALIGN_SIZE;
@@ -254,7 +254,7 @@ void *RL_rebRealloc(void *ptr, size_t new_size)
     Unpoison_Memory_If_Sanitize(ps, sizeof(Binary(*)));  // fetch `s` underruns
 
     Binary(*) s = *ps;
-    assert(Get_Series_Flag(s, ROOT));
+    assert(Is_Node_Root_Bit_Set(s));
 
     REBLEN old_size = Binary_Len(s) - ALIGN_SIZE;
 
@@ -302,17 +302,17 @@ void RL_rebFreeMaybe(void *ptr)
 
     assert(Series_Wide(s) == 1);
 
-    if (g_gc.recycling and Get_Series_Flag(s, MARKED)) {
-        assert(Get_Series_Flag(s, MANAGED));
-        NODE_BYTE(s) &= ~NODE_BYTEMASK_0x10_MARKED;
+    if (g_gc.recycling and Is_Node_Marked(s)) {
+        assert(Is_Node_Managed(s));
+        Clear_Node_Marked_Bit(s);
       #if DEBUG
         g_gc.mark_count -= 1;
       #endif
     }
 
-    Clear_Series_Flag(s, ROOT);
+    Clear_Node_Root_Bit(s);
 
-    if (Get_Series_Flag(s, MANAGED))  // set by rebUnmanageMemory()
+    if (Is_Node_Managed(s))  // set by rebUnmanageMemory()
         GC_Kill_Series(s);
     else
         Free_Unmanaged_Series(s);
@@ -366,13 +366,13 @@ REBVAL *RL_rebRepossess(void *ptr, size_t size)
     Unpoison_Memory_If_Sanitize(ps, sizeof(BinaryT*));  // fetch `s` underruns
 
     Binary(*) s = *ps;
-    assert(Get_Series_Flag(s, ROOT));  // may or may not be managed
+    assert(Is_Node_Root_Bit_Set(s));  // may or may not be managed
     assert(Get_Series_Flag(s, DONT_RELOCATE));
 
     if (size > Binary_Len(s) - ALIGN_SIZE)
         fail ("Attempt to rebRepossess() more than rebMalloc() capacity");
 
-    Clear_Series_Flag(s, ROOT);
+    Clear_Node_Root_Bit(s);
     Clear_Series_Flag(s, DONT_RELOCATE);
 
     if (Get_Series_Flag(s, DYNAMIC)) {
@@ -427,7 +427,7 @@ void* RL_rebUnmanageMemory(void *ptr)
     // garbage collected.
     //
     Binary(*) s = *ps;
-    assert(Get_Series_Flag(s, ROOT));
+    assert(Is_Node_Root_Bit_Set(s));
     Manage_Series(s);  // panics if already unmanaged... should it tolerate?
 
     Poison_Memory_If_Sanitize(ps, sizeof(BinaryT*));  // catch underruns
@@ -1221,7 +1221,7 @@ REBVAL *RL_rebTranscodeInto(
 
     return Init_Block(
         out,
-        Pop_Stack_Values_Core(base, SERIES_FLAG_MANAGED)
+        Pop_Stack_Values_Core(base, NODE_FLAG_MANAGED)
     );
 }
 
@@ -2339,9 +2339,10 @@ const void *RL_rebINLINE(const REBVAL *v)
     ENTER_API;
 
     Array(*) a = Alloc_Singular(
-        FLAG_FLAVOR(INSTRUCTION_SPLICE) | NODE_FLAG_MANAGED
+        FLAG_FLAVOR(INSTRUCTION_SPLICE) | NODE_FLAG_MANAGED  // lie!
     );
-    Clear_Series_Flag(a, MANAGED);  // lying avoided manuals tracking
+    Clear_Node_Managed_Bit(a);  // lying avoided manuals tracking!
+
     if (not (IS_BLOCK(v) or Is_Quoted(v) or IS_BLANK(v)))
         fail ("rebINLINE() requires argument to be a BLOCK!/QUOTED!/BLANK!");
 
@@ -2416,12 +2417,12 @@ REBVAL *RL_rebManage(REBVAL *v)
     assert(Is_Api_Value(v));
 
     Array(*) a = Singular_From_Cell(v);
-    assert(Get_Series_Flag(a, ROOT));
+    assert(Is_Node_Root_Bit_Set(a));
 
-    if (Get_Series_Flag(a, MANAGED))
-        fail ("Attempt to rebManage() a handle that's already managed.");
+    if (Is_Node_Managed(a))
+        fail ("Attempt to rebManage() an API value that's already managed.");
 
-    Set_Series_Flag(a, MANAGED);
+    Set_Node_Managed_Bit(a);
     Link_Api_Handle_To_Level(a, TOP_LEVEL);
 
     return v;
@@ -2445,10 +2446,10 @@ void RL_rebUnmanage(void *p)
     assert(Is_Api_Value(v));
 
     Array(*) a = Singular_From_Cell(v);
-    assert(Get_Series_Flag(a, ROOT));
+    assert(Is_Node_Root_Bit_Set(a));
 
-    if (Not_Series_Flag(a, MANAGED))
-        fail ("Attempt to rebUnmanage() a handle with indefinite lifetime.");
+    if (Not_Node_Managed(a))
+        fail ("Attempt to rebUnmanage() API value with indefinite lifetime.");
 
     // It's not safe to convert the average series that might be referred to
     // from managed to unmanaged, because you don't know how many references
@@ -2456,7 +2457,7 @@ void RL_rebUnmanage(void *p)
     // pointers to its cell being held by client C code only.  It's at their
     // own risk to do this, and not use those pointers after a free.
     //
-    Clear_Series_Flag(a, MANAGED);
+    Clear_Node_Managed_Bit(a);
     Unlink_Api_Handle_From_Level(a);
 
     Trash_Pointer_If_Debug(a->link.trash);

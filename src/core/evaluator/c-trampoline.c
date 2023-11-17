@@ -168,7 +168,7 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
 
     Bounce bounce;
 
-    Update_Tick_If_Enabled();
+    Update_Tick_If_Enabled();  // Do_Signals_Throws() expects tick in sync
 
     if (--g_ts.eval_countdown <= 0) {  // defer total_eval_cycles update, [2]
         //
@@ -604,9 +604,10 @@ void Shutdown_Trampoline(void)
         Byte* unit = cast(Byte*, seg + 1);
 
         for (; n > 0; --n, unit += g_mem.pools[LEVEL_POOL].wide) {
-            Level(*) L = cast(Level(*), unit);  // ^-- pool size may round up
-            if (Is_Free_Node(L))
+            if (unit[0] == FREE_POOLUNIT_BYTE)
                 continue;
+
+            Level(*) L = cast(Level(*), unit);  // ^-- pool size may round up
           #if DEBUG_COUNT_TICKS
             printf(
                 "** FRAME LEAKED at tick %lu\n",
@@ -629,9 +630,10 @@ void Shutdown_Trampoline(void)
         Byte* unit = cast(Byte*, seg + 1);
 
         for (; n > 0; --n, unit += g_mem.pools[FEED_POOL].wide) {
-            Feed(*) feed = cast(Feed(*), unit);
-            if (Is_Free_Node(feed))
+            if (unit[0] == FREE_POOLUNIT_BYTE)
                 continue;
+
+            Feed(*) feed = cast(Feed(*), unit);
           #if DEBUG_COUNT_TICKS
             printf(
                 "** FEED LEAKED at tick %lu\n",

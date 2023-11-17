@@ -34,9 +34,6 @@
 
 #if !defined(NDEBUG)
 
-#define Is_Marked(n) \
-    (did (NODE_BYTE(n) & NODE_BYTEMASK_0x10_MARKED))
-
 
 //
 //  Assert_Cell_Marked_Correctly: C
@@ -69,7 +66,7 @@ void Assert_Cell_Marked_Correctly(Cell(const*) v)
                 ){
                     panic (binding);
                 }
-                if (Not_Series_Flag(SER(keysource), MANAGED))
+                if (Not_Node_Managed(keysource))
                     panic (keysource);
             }
         }
@@ -117,7 +114,7 @@ void Assert_Cell_Marked_Correctly(Cell(const*) v)
 
       case REB_PAIR: {
         REBVAL *paired = VAL(VAL_NODE1(v));
-        assert(Is_Marked(paired));
+        assert(Is_Node_Marked(paired));
         break; }
 
       case REB_TIME:
@@ -126,23 +123,23 @@ void Assert_Cell_Marked_Correctly(Cell(const*) v)
 
       case REB_PARAMETER: {
         if (VAL_PARAMETER_ARRAY(v))
-            assert(Is_Marked(unwrap(VAL_PARAMETER_ARRAY(v))));
+            assert(Is_Node_Marked(unwrap(VAL_PARAMETER_ARRAY(v))));
         break; }
 
       case REB_BITSET: {
         assert(Get_Cell_Flag_Unchecked(v, FIRST_IS_NODE));
         Series(*) s = SER(VAL_NODE1(v));
         Assert_Series_Term_Core(s);
-        if (Get_Series_Flag(s, INACCESSIBLE))
-            assert(Is_Marked(s));  // TBD: clear out reference and GC `s`?
-        else
-            assert(Is_Marked(s));
+        if (Get_Series_Flag(s, INACCESSIBLE)) {
+            // TBD: clear out reference and GC `s`?
+        }
+        assert(Is_Node_Marked(s));
         break; }
 
       case REB_MAP: {
         assert(Get_Cell_Flag_Unchecked(v, FIRST_IS_NODE));
         Map(const*) map = VAL_MAP(v);
-        assert(Is_Marked(map));
+        assert(Is_Node_Marked(map));
         assert(Is_Series_Array(MAP_PAIRLIST(map)));
         break; }
 
@@ -159,7 +156,7 @@ void Assert_Cell_Marked_Correctly(Cell(const*) v)
             // nothing the GC needs to see inside a handle.
             //
             assert(v->header.bits & CELL_FLAG_FIRST_IS_NODE);
-            assert(Is_Marked(a));
+            assert(Is_Node_Marked(a));
 
             Cell(*) single = Array_Single(a);
             assert(IS_HANDLE(single));
@@ -187,7 +184,7 @@ void Assert_Cell_Marked_Correctly(Cell(const*) v)
 
         assert(Series_Wide(s) == sizeof(Byte));
         Assert_Series_Term_If_Needed(s);
-        assert(Is_Marked(s));
+        assert(Is_Node_Marked(s));
         break; }
 
       case REB_TEXT:
@@ -204,7 +201,7 @@ void Assert_Cell_Marked_Correctly(Cell(const*) v)
         Assert_Series_Term_If_Needed(s);
 
         assert(Series_Wide(s) == sizeof(Byte));
-        assert(Is_Marked(s));
+        assert(Is_Node_Marked(s));
 
         if (Is_NonSymbol_String(s)) {
             BookmarkList(*) book = LINK(Bookmarks, s);
@@ -212,12 +209,10 @@ void Assert_Cell_Marked_Correctly(Cell(const*) v)
                 assert(Series_Used(book) == 1);  // just one for now
                 //
                 // The intent is that bookmarks are unmanaged stubs, which
-                // get freed when the string GCs.  This mechanic could be a by
-                // product of noticing SERIES_FLAG_LINK_NODE_NEEDS_MARK is
-                // true but that the managed bit on the node is false.
-
-                assert(not Is_Marked(book));
-                assert(Not_Series_Flag(book, MANAGED));
+                // get freed when the string GCs.
+                //
+                assert(not Is_Node_Marked(book));
+                assert(Not_Node_Managed(book));
             }
         }
         break; }
@@ -231,9 +226,9 @@ void Assert_Cell_Marked_Correctly(Cell(const*) v)
         assert((v->header.bits & CELL_MASK_FRAME) == CELL_MASK_FRAME);
 
         Phase(*) a = cast(Phase(*), VAL_ACTION(v));
-        assert(Is_Marked(a));
+        assert(Is_Node_Marked(a));
         if (VAL_ACTION_PARTIALS_OR_LABEL(v))
-            assert(Is_Marked(VAL_ACTION_PARTIALS_OR_LABEL(v)));
+            assert(Is_Node_Marked(VAL_ACTION_PARTIALS_OR_LABEL(v)));
 
         if (Is_Action_Native(a)) {
             Details(*) details = Phase_Details(a);
@@ -270,7 +265,7 @@ void Assert_Cell_Marked_Correctly(Cell(const*) v)
             == CELL_MASK_ANY_CONTEXT
         );
         Context(*) context = VAL_CONTEXT(v);
-        assert(Is_Marked(context));
+        assert(Is_Node_Marked(context));
 
         // Currently the "binding" in a context is only used by FRAME! to
         // preserve the binding of the ACTION! value that spawned that
@@ -294,7 +289,7 @@ void Assert_Cell_Marked_Correctly(Cell(const*) v)
 
         if (PAYLOAD(Any, v).second.node) {
             assert(heart == REB_FRAME); // may be heap-based frame
-            assert(Is_Marked(PAYLOAD(Any, v).second.node));  // phase or label
+            assert(Is_Node_Marked(PAYLOAD(Any, v).second.node));  // phase or label
         }
 
         if (Get_Series_Flag(CTX_VARLIST(context), INACCESSIBLE))
@@ -314,7 +309,7 @@ void Assert_Cell_Marked_Correctly(Cell(const*) v)
         assert((v->header.bits & CELL_MASK_VARARGS) == CELL_MASK_VARARGS);
         Action(*) phase = VAL_VARARGS_PHASE(v);
         if (phase)  // null if came from MAKE VARARGS!
-            assert(Is_Marked(phase));
+            assert(Is_Node_Marked(phase));
         break; }
 
       case REB_BLOCK:
@@ -336,7 +331,7 @@ void Assert_Cell_Marked_Correctly(Cell(const*) v)
         Assert_Series_Term_If_Needed(a);
 
         assert(Get_Cell_Flag_Unchecked(v, FIRST_IS_NODE));
-        assert(Is_Marked(a));
+        assert(Is_Node_Marked(a));
         break; }
 
       case REB_TUPLE:
@@ -385,7 +380,7 @@ void Assert_Cell_Marked_Correctly(Cell(const*) v)
             Cell(const*) item = Array_Head(a);
             for (; item != tail; ++item)
                 assert(not ANY_PATH_KIND(VAL_TYPE_UNCHECKED(item)));
-            assert(Is_Marked(a));
+            assert(Is_Node_Marked(a));
             break; }
 
           default:
@@ -409,7 +404,7 @@ void Assert_Cell_Marked_Correctly(Cell(const*) v)
         // change from when spellings were always pointed to by the cell.
         //
         if (IS_WORD_UNBOUND(v))
-            assert(Is_Marked(spelling));
+            assert(Is_Node_Marked(spelling));
 
         // GC can't run during bind
         //
@@ -454,7 +449,7 @@ void Assert_Cell_Marked_Correctly(Cell(const*) v)
 // reading back what to mark.  This has been standardized.
 //
 void Assert_Array_Marked_Correctly(Array(const*) a) {
-    assert(Is_Marked(a));
+    assert(Is_Node_Marked(a));
 
     #ifdef HEAVY_CHECKS
         //
@@ -468,7 +463,7 @@ void Assert_Array_Marked_Correctly(Array(const*) a) {
         // For a lighter check, make sure it's marked as a value-bearing array
         // and that it hasn't been freed.
         //
-        assert(not Is_Free_Node(a));
+        assert(not Is_Node_Free(a));
         assert(Is_Series_Array(a));
     #endif
 
@@ -482,7 +477,7 @@ void Assert_Array_Marked_Correctly(Array(const*) a) {
         // to Queue_Mark_Function_Deep.
 
         Details(*) details = cast(Details(*), VAL_ACTION(archetype));
-        assert(Is_Marked(details));
+        assert(Is_Node_Marked(details));
 
         Array(*) list = CTX_VARLIST(ACT_EXEMPLAR(VAL_ACTION(archetype)));
         assert(IS_VARLIST(list));

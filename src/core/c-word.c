@@ -451,8 +451,8 @@ void GC_Kill_Interning(String(*) intern)
     // the case, and remove from the circularly linked list.
     //
     Series(*) patch = intern;
-    while (SER(node_MISC(Hitch, patch)) != intern) {
-        assert(Not_Series_Flag(patch, MARKED));
+    while (node_MISC(Hitch, patch) != intern) {
+        assert(Not_Node_Marked(patch));
         patch = SER(node_MISC(Hitch, patch));
     }
     node_MISC(Hitch, patch) = node_MISC(Hitch, intern);  // may be no-op
@@ -568,8 +568,8 @@ void Startup_Symbols(void)
     // We turn it into a freed series, so Detect_Rebol_Pointer() doesn't
     // confuse the zeroed memory with an empty UTF-8 string.
     //
-    assert(NODE_BYTE(&g_symbols.builtin_canons[SYM_0]) == 0);
-    NODE_BYTE(&g_symbols.builtin_canons[SYM_0]) = FREED_SERIES_BYTE;
+    assert(FIRST_BYTE(g_symbols.builtin_canons[0].leader.bits) == 0);
+    FIRST_BYTE(g_symbols.builtin_canons[0].leader.bits) = FREE_POOLUNIT_BYTE;
 
     SymId id = cast(SymId, cast(REBLEN, SYM_0 + 1));  // SymId for debug watch
 
@@ -622,8 +622,8 @@ void Startup_Symbols(void)
 //
 void Shutdown_Symbols(void)
 {
-    assert(Is_Free_Node(&g_symbols.builtin_canons[SYM_0]));
-    NODE_BYTE(&g_symbols.builtin_canons[SYM_0]) = 0;  // restore to clean state
+    assert(Is_Node_Free(&g_symbols.builtin_canons[SYM_0]));
+    FIRST_BYTE(g_symbols.builtin_canons[0].leader.bits) = 0;  // pre-boot state
 
     // The Shutdown_Interning() code checks for g_symbols.by_hash to be
     // empty...the necessary removal happens in Decay_Series().  (Note that a

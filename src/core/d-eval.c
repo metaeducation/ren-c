@@ -141,7 +141,7 @@ static void Evaluator_Shared_Checks_Debug(Level(*) L)
     assert(Is_Pointer_Trash_Debug(unwrap(L->label)));
 
     if (L->varlist) {
-        assert(Not_Series_Flag(L->varlist, MANAGED));
+        assert(Not_Node_Managed(L->varlist));
         assert(Not_Series_Flag(L->varlist, INACCESSIBLE));
     }
 

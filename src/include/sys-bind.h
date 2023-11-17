@@ -197,7 +197,7 @@ inline static bool Try_Add_Binder_Index(
     Array(*) new_hitch = Alloc_Singular(
         NODE_FLAG_MANAGED | SERIES_FLAG_BLACK | FLAG_FLAVOR(HITCH)
     );
-    Clear_Series_Flag(new_hitch, MANAGED);
+    Clear_Node_Managed_Bit(new_hitch);
     Init_Integer(Array_Single(new_hitch), index);
     node_MISC(Hitch, new_hitch) = old_hitch;
 
@@ -250,7 +250,7 @@ inline static REBINT Remove_Binder_Index_Else_0( // return old value if there
 
     REBINT index = VAL_INT32(Array_Single(hitch));
     mutable_MISC(Hitch, s) = ARR(node_MISC(Hitch, hitch));
-    Set_Series_Flag(hitch, MANAGED);  // we didn't manuals track it
+    Set_Node_Managed_Bit(hitch);  // we didn't manuals track it
     GC_Kill_Series(hitch);
 
   #if defined(NDEBUG)
@@ -323,7 +323,7 @@ inline static void INIT_BINDING_MAY_MANAGE(
 ){
     mutable_BINDING(out) = binding;
 
-    if (not binding or Get_Series_Flag(binding, MANAGED))
+    if (not binding or Is_Node_Managed(binding))
         return;  // unbound or managed already (frame OR object context)
 
     Level(*) L = LVL(BONUS(KeySource, binding));  // unmanaged only frame
@@ -420,7 +420,7 @@ inline static Context(*) VAL_WORD_CONTEXT(const REBVAL *v) {
         fail ("LET variables have no context at this time");
 
     assert(
-        Get_Series_Flag(binding, MANAGED) or
+        Is_Node_Managed(binding) or
         not Is_Level_Fulfilling(LVL(BONUS(KeySource, binding)))
     );
     binding->leader.bits |= NODE_FLAG_MANAGED;  // !!! review managing needs

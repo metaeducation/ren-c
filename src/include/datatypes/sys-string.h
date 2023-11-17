@@ -320,10 +320,11 @@ inline static void Term_String_Len_Size(String(*) s, REBLEN len, Size used) {
 inline static BookmarkList(*) Alloc_BookmarkList(void) {
     BookmarkList(*) books = Make_Series(BookmarkListT,
         1,
-        FLAG_FLAVOR(BOOKMARKLIST) | SERIES_FLAG_MANAGED
+        FLAG_FLAVOR(BOOKMARKLIST)
+            | NODE_FLAG_MANAGED  // lie to be untracked
     );
+    Clear_Node_Managed_Bit(books);  // untracked and indefinite lifetime
     Set_Series_Len(books, 1);
-    Clear_Series_Flag(books, MANAGED);  // untracked (avoid leak error)
     return books;
 }
 

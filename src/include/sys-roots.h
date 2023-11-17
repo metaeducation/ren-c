@@ -156,7 +156,7 @@ inline static void Free_Value(REBVAL *v)
 
     Array(*) a = Singular_From_Cell(v);
 
-    if (Get_Series_Flag(a, MANAGED))
+    if (Is_Node_Managed(a))
         Unlink_Api_Handle_From_Level(a);
 
     Poison_Cell(v);  // has to be last (removes NODE_FLAG_ROOT)
@@ -188,12 +188,12 @@ inline static REBVAL *rebSpecific(Cell(const*) v, REBSPC *specifier)
 // hold thrown returns, and these API handles are elsewhere.
 //
 inline static void Release_Api_Value_If_Unmanaged(const Atom(*) r) {
-    assert(Get_Cell_Flag(r, ROOT));
+    assert(Is_Node_Root_Bit_Set(r));
 
     if (Is_Nulled(r))  // tolerate isotopes
         assert(!"Dispatcher returned nulled cell, not C nullptr for API use");
 
-    if (Not_Cell_Flag(r, MANAGED))
+    if (Not_Node_Managed(r))
         rebRelease(cast(Value(*), r));
 }
 

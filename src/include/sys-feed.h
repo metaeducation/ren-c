@@ -258,7 +258,7 @@ inline static Option(Value(const*)) Try_Reify_Variadic_Feed_Series(
         // needs of API-TRANSIENT are such that a handle which outlives
         // the level is returned as a SINGULAR_API_RELEASE.  Review.
         //
-        /*assert(Get_Series_Flag(inst1, MANAGED));*/
+        /*assert(Is_Node_Managed(inst1));*/
 
         // See notes above (duplicate code, fix!) about how we might like
         // to use the as-is value and wait to free until the next cycle

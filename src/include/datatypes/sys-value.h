@@ -182,7 +182,7 @@
         if ( \
             (FIRST_BYTE((c)->header.bits) & ( \
                 NODE_BYTEMASK_0x01_CELL | NODE_BYTEMASK_0x80_NODE \
-                    | NODE_BYTEMASK_0x40_STALE \
+                    | NODE_BYTEMASK_0x40_FREE \
             )) != 0x81 \
         ){ \
             if (not ((c)->header.bits & NODE_FLAG_CELL)) \
@@ -191,8 +191,7 @@
                 printf("Non-node passed to cell read routine\n"); \
             else \
                 printf( \
-                    "ASSERT_CELL_READABLE() on CELL_FLAG_STALE cell\n" \
-                    "Maybe valid but just has access to it limited\n" \
+                    "ASSERT_CELL_READABLE() on NODE_FLAG_FREE cell\n" \
                 ); \
             panic (c); \
         } \

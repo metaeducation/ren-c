@@ -71,10 +71,7 @@
 
 // The Get_Cell_Flag()/etc. macros splice together CELL_FLAG_ with the text
 // you pass in (token pasting).  Since it does this, alias NODE_FLAG_XXX to
-// CELL_FLAG_XXX so they can be used with those macros.  MARKED is kept in
-// the name to stress you can't have more than one use in effect at a time...
-// so you must know what kind of cell you are dealing with and that it won't
-// conflict with other uses.
+// CELL_FLAG_XXX so they can be used with those macros.
 //
 // IMPORTANT: The marked flag is a property of the cell location and not of
 // the value...so writing a new value into the cell will not update the
@@ -93,12 +90,7 @@
 //   of the bit are in place--like processing an array a routine itself made.
 //
 
-#define CELL_FLAG_STALE NODE_FLAG_STALE
-
-#define CELL_FLAG_MANAGED NODE_FLAG_MANAGED
-#define CELL_FLAG_ROOT NODE_FLAG_ROOT
-
-#define CELL_FLAG_VAR_MARKED_HIDDEN NODE_FLAG_MARKED
+#define CELL_FLAG_VAR_MARKED_HIDDEN     NODE_FLAG_MARKED
 
 
 //=//// CELL_FLAG_FIRST_IS_NODE ///////////////////////////////////////////=//
@@ -156,7 +148,7 @@
 #define QUOTE_BYTE(cell)            THIRD_BYTE((cell)->header.bits)
 
 #define ISOTOPE_0           0  // Also QUASI (e.g. with NONQUASI_BIT is clear)
-#define UNQUOTED_1           1
+#define UNQUOTED_1          1
 #define NONQUASI_BIT        1
 #define QUASI_2             2
 #define ONEQUOTE_3          3  // non-QUASI state of having one quote level
@@ -340,7 +332,7 @@
 // are owned by the cell, plus additional bits that would be reset in the
 // cell if overwritten but not copied.
 //
-// Note that this will clear CELL_FLAG_STALE, so it should be checked by the
+// Note that this will clear NODE_FLAG_FREE, so it should be checked by the
 // debug build before resetting.
 //
 // Notice that NODE_FLAG_MARKED is "sticky"; the mark persists with the cell.

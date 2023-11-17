@@ -646,9 +646,9 @@ bool Get_Var_Push_Refinements_Throws(
 
     if (ANY_PATH(var)) {  // !!! SET-PATH! too?
         DECLARE_LOCAL (safe);
-        Push_GC_Guard(safe);
+        Push_GC_Guard_Erased_Cell(safe);
         DECLARE_LOCAL (result);
-        Push_GC_Guard(result);
+        Push_GC_Guard_Erased_Cell(result);
 
         bool threw = Get_Path_Push_Refinements_Throws(
             result, safe, var, var_specifier  // var may be in `out`
@@ -760,7 +760,7 @@ bool Get_Var_Push_Refinements_Throws(
     ++stackindex;
 
     DECLARE_LOCAL (temp);
-    Push_GC_Guard(temp);
+    Push_GC_Guard_Erased_Cell(temp);
 
     while (stackindex != TOP_INDEX + 1) {
         Move_Cell(temp, out);
@@ -1316,10 +1316,10 @@ bool Set_Var_Core_Updater_Throws(
         fail (var);
 
     DECLARE_STABLE (writeback);
-    Push_GC_Guard(writeback);
-    Finalize_None(writeback);  // needs to be GC safe
+    Push_GC_Guard_Erased_Cell(writeback);
 
-    Push_GC_Guard(temp);
+    Erase_Cell(temp);
+    Push_GC_Guard_Erased_Cell(temp);
 
     StackIndex stackindex_top = TOP_INDEX;
 

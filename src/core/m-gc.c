@@ -93,41 +93,34 @@
 #if DEBUG
     inline static void Remove_GC_Mark(Node* node) {  // stub or cell (pairing)
         assert(Is_Node_Marked(node));
-        NODE_BYTE(node) &= ~NODE_BYTEMASK_0x10_MARKED;
+        Clear_Node_Marked_Bit(node);
         g_gc.mark_count -= 1;
     }
 
     inline static void Remove_GC_Mark_If_Marked(Node* node) {
         if (Is_Node_Marked(node)) {
-            NODE_BYTE(node) &= ~NODE_BYTEMASK_0x10_MARKED;
+            Clear_Node_Marked_Bit(node);
             g_gc.mark_count -= 1;
         }
     }
 
     inline static void Add_GC_Mark(Node* node) {
         assert(not Is_Node_Marked(node));
-        NODE_BYTE(node) |= NODE_BYTEMASK_0x10_MARKED;
+        Set_Node_Marked_Bit(node);
         g_gc.mark_count += 1;
     }
 
     inline static void Add_GC_Mark_If_Not_Already_Marked(Node* node) {
         if (not Is_Node_Marked(node)) {
-            NODE_BYTE(node) |= NODE_BYTEMASK_0x10_MARKED;
+            Set_Node_Marked_Bit(node);
             g_gc.mark_count += 1;
         }
     }
 #else
-    #define Remove_GC_Mark(node) \
-        NODE_BYTE(node) &= ~NODE_BYTEMASK_0x10_MARKED
-
-    #define Remove_GC_Mark_If_Marked(node) \
-        NODE_BYTE(node) &= ~NODE_BYTEMASK_0x10_MARKED
-
-    #define Add_GC_Mark(node) \
-        NODE_BYTE(node) |= NODE_BYTEMASK_0x10_MARKED
-
-    #define Add_GC_Mark_If_Not_Already_Marked(node) \
-        NODE_BYTE(node) |= NODE_BYTEMASK_0x10_MARKED
+    #define Remove_GC_Mark(n)                       Clear_Node_Marked_Bit(n)
+    #define Remove_GC_Mark_If_Marked(n)             Clear_Node_Marked_Bit(n)
+    #define Add_GC_Mark(n)                          Set_Node_Marked_Bit(n)
+    #define Add_GC_Mark_If_Not_Already_Marked(n)    Set_Node_Marked_Bit(n)
 #endif
 
 
@@ -189,7 +182,7 @@ static void Queue_Mark_Node_Deep(const Node** pp) {
 
     if (nodebyte & NODE_BYTEMASK_0x01_CELL) {  // e.g. a pairing
         REBVAL *v = VAL(m_cast(Node*, *pp));
-        if (Get_Cell_Flag(v, MANAGED))
+        if (Is_Node_Managed(v))
             Queue_Mark_Pairing_Deep(v);
         else {
             // !!! It's a frame?  API handle?  Skip frame case (keysource)
@@ -219,10 +212,10 @@ static void Queue_Mark_Node_Deep(const Node** pp) {
     }
 
  #if !defined(NDEBUG)
-    if (Is_Free_Node(s))
+    if (Is_Node_Free(s))
         panic (s);
 
-    if (Not_Series_Flag(s, MANAGED)) {
+    if (Not_Node_Managed(s)) {
         printf("Link to non-MANAGED item reached by GC\n");
         panic (s);
     }
@@ -350,6 +343,8 @@ static void Queue_Mark_Cell_Deep(Cell(const*) cv)
     if (IS_TRASH(cv))  // tolerate unreadable "trash" in debug builds
         return;
   #endif
+
+    assert(not Is_Fresh(cv));
 
     // We mark based on the type of payload in the cell, e.g. its "unescaped"
     // form.  So if '''a fits in a WORD! (despite being a QUOTED!), we want
@@ -505,7 +500,7 @@ void Reify_Variadic_Feed_As_Array_Feed(
 
         Index index = truncated ? 2 : 1;  // skip --optimized-out--
 
-        Array(*) a = Pop_Stack_Values_Core(base, SERIES_FLAG_MANAGED);
+        Array(*) a = Pop_Stack_Values_Core(base, NODE_FLAG_MANAGED);
         Init_Array_Cell_At(FEED_SINGLE(feed), REB_BLOCK, a, index);
 
         // need to be sure feed->p isn't invalid... and not end
@@ -530,7 +525,7 @@ void Reify_Variadic_Feed_As_Array_Feed(
         if (truncated) {
             Init_Quasi_Word(PUSH(), Canon(OPTIMIZED_OUT));
 
-            Array(*) a = Pop_Stack_Values_Core(base, SERIES_FLAG_MANAGED);
+            Array(*) a = Pop_Stack_Values_Core(base, NODE_FLAG_MANAGED);
             Init_Array_Cell_At(FEED_SINGLE(feed), REB_BLOCK, a, 1);
         }
         else
@@ -556,20 +551,20 @@ void Run_All_Handle_Cleaners(void) {
     Segment* seg = g_mem.pools[STUB_POOL].segments;
 
     for (; seg != nullptr; seg = seg->next) {
-        Stub* stub = cast(Stub*, seg + 1);
+        Byte* unit = cast(Byte*, seg + 1);
         Length n = g_mem.pools[STUB_POOL].num_units_per_segment;
-        for (; n > 0; --n, ++stub) {
+        for (; n > 0; --n, unit += sizeof(Stub)) {
             //
             // !!! A smarter switch statement here could do this more
             // optimally...see the sweep code for an example.
             //
-            Byte nodebyte = NODE_BYTE(stub);
-            if (nodebyte & NODE_BYTEMASK_0x40_STALE)
+            if (unit[0] == FREE_POOLUNIT_BYTE)
                 continue;
 
-            if (nodebyte & NODE_BYTEMASK_0x01_CELL)
+            if (unit[0] & NODE_BYTEMASK_0x01_CELL)
                 continue;  // assume no handles in pairings, for now?
 
+            Stub* stub = cast(Stub*, unit);
             if (stub == g_ds.array)
                 continue;
             if (Get_Series_Flag(stub, INACCESSIBLE))
@@ -619,36 +614,36 @@ static void Mark_Root_Series(void)
     Segment* seg = g_mem.pools[STUB_POOL].segments;
 
     for (; seg != nullptr; seg = seg->next) {
-        Byte* stub = cast(Byte*, seg + 1);
+        Byte* unit = cast(Byte*, seg + 1);
         Length n = g_mem.pools[STUB_POOL].num_units_per_segment;
 
-        for (; n > 0; --n, stub += sizeof(Stub)) {
-            Byte nodebyte = stub[0];
-            if (nodebyte & NODE_BYTEMASK_0x40_STALE)
+        for (; n > 0; --n, unit += sizeof(Stub)) {
+            if (unit[0] == FREE_POOLUNIT_BYTE)
                 continue;
 
-            assert(nodebyte & NODE_BYTEMASK_0x80_NODE);
+            assert(unit[0] & NODE_BYTEMASK_0x80_NODE);
 
-            if (nodebyte & NODE_BYTEMASK_0x01_CELL) {  // a "Pairing"
-                REBVAL *paired = VAL(cast(void*, stub));
-                if (paired->header.bits & NODE_FLAG_MANAGED)
+            if (unit[0] & NODE_BYTEMASK_0x01_CELL) {  // a "Pairing"
+                if (unit[0] & NODE_BYTEMASK_0x20_MANAGED)
                     continue; // PAIR! or other value will mark it
 
                 assert(!"unmanaged pairings not believed to exist yet");
+
+                REBVAL *paired = VAL(cast(void*, unit));
                 Queue_Mark_Cell_Deep(paired);
                 Queue_Mark_Cell_Deep(PAIRING_KEY(paired));
                 continue;
             }
 
-            SeriesT* s = cast(SeriesT*, stub);
+            SeriesT* s = cast(SeriesT*, unit);
 
-            if (nodebyte & NODE_BYTEMASK_0x02_ROOT) {
+            if (Is_Node_Root_Bit_Set(s)) {
 
                 // This stub came from Alloc_Value() or rebMalloc(); the only
                 // references should be from the C stack.  So this pass is the
                 // only place where these stubs could be marked.
 
-                if (Not_Series_Flag(s, MANAGED)) {
+                if (Not_Node_Managed(s)) {
                     //
                     // If it's not managed, don't mark it (don't have to)
                     //
@@ -773,18 +768,18 @@ static void Mark_Guarded_Nodes(void)
     const Node* *np = Series_Head(const Node*, g_gc.guarded);
     REBLEN n = Series_Used(g_gc.guarded);
     for (; n > 0; --n, ++np) {
-        if (*cast(const Byte*, *np) == PREP_SIGNAL_BYTE) {
+        if (Is_Node_A_Cell(*np)) {
             //
-            // We allow you to protect a "fresh" cell, e.g. one that's 0 bytes
-            // in its header.
+            // !!! Guarding a cell means keeping its contents alive...the
+            // cell is assumed to not live in a series or pairing.  Marks
+            // on the cell itself are not covered... if this happens, treat
+            // it as a bug.
+            //
+            assert(Not_Node_Marked(*np));
+
+            Queue_Mark_Maybe_Fresh_Cell_Deep(x_cast(REBVAL*, *np));
         }
-        else if (Is_Node_A_Cell(*np)) {
-            //
-            // !!! What if someone tried to GC_GUARD a managed paired Stub?
-            //
-            Queue_Mark_Cell_Deep(cast(const REBVAL*, *np));
-        }
-        else  // a series
+        else  // a series stub
             Queue_Mark_Node_Deep(np);
 
         Propagate_All_GC_Marks();
@@ -861,9 +856,8 @@ static void Mark_Level_Stack_Deep(void)
         Queue_Mark_Maybe_Fresh_Cell_Deep(&L->feed->lookback);
         Queue_Mark_Maybe_Fresh_Cell_Deep(&L->spare);
 
-        if (L->executor == &Evaluator_Executor) {
-            if (not Is_Cell_Erased(&L->u.eval.scratch))  // extra GC-safe cell
-                Queue_Mark_Cell_Deep(cast(Cell(*), &L->u.eval.scratch));
+        if (L->executor == &Evaluator_Executor) {  // has extra GC-safe cell
+            Queue_Mark_Maybe_Fresh_Cell_Deep(cast(Cell(*), &L->u.eval.scratch));
             goto propagate_and_continue;
         }
 
@@ -888,7 +882,7 @@ static void Mark_Level_Stack_Deep(void)
             }
         }
 
-        if (L->varlist and Get_Series_Flag(L->varlist, MANAGED)) {
+        if (L->varlist and Is_Node_Managed(L->varlist)) {
             //
             // If the context is all set up with valid values and managed,
             // then it can just be marked normally...no need to do custom
@@ -974,7 +968,7 @@ static void Mark_Level_Stack_Deep(void)
 //////////////////////////////////////////////////////////////////////////////
 //
 // 1. We use a generic byte pointer (unsigned char*) to dodge the rules for
-//    strict aliases, as the pool contain pairs of cells from Alloc_Pairing(),
+//    strict aliases, as the pool contain pairs of CellT from Alloc_Pairing(),
 //    or a SeriesT from Prep_Stub().  The shared first byte node masks are
 //    defined and explained in %sys-rebnod.h
 //
@@ -992,10 +986,10 @@ Count Sweep_Series(void)
 
     for (; seg != nullptr; seg = seg->next) {
         Count n = g_mem.pools[STUB_POOL].num_units_per_segment;
-        Byte* stub = cast(Byte*, seg + 1);  // byte beats strict alias, see [1]
+        Byte* unit = cast(Byte*, seg + 1);  // byte beats strict alias, see [1]
 
-        for (; n > 0; --n, stub += sizeof(Stub)) {
-            switch (*stub >> 4) {
+        for (; n > 0; --n, unit += sizeof(Stub)) {
+            switch (unit[0] >> 4) {
               case 0:
               case 1:  // 0x1
               case 2:  // 0x2
@@ -1007,9 +1001,12 @@ Count Sweep_Series(void)
                 //
                 // NODE_FLAG_NODE (0x80 => 0x8) is clear.  This signature is
                 // reserved for UTF-8 strings (corresponding to valid ASCII
-                // values in the first byte).
+                // values in the first byte).  There should not be any
+                // UTF-8 strings in the stub pool... although there might be
+                // applications for being able to fit string allocations in
+                // the "hot" stub pool as some kind of optimization.
                 //
-                panic (stub);
+                panic (unit);
 
             // v-- Everything below here has NODE_FLAG_NODE set (0x8)
 
@@ -1026,21 +1023,21 @@ Count Sweep_Series(void)
                 // 0x8 + 0x1: marked but not managed, this can't happen,
                 // because the marking itself asserts nodes are managed.
                 //
-                panic (stub);
+                panic (unit);
 
               case 10:
                 // 0x8 + 0x2: managed but didn't get marked, should be GC'd
                 //
-                // !!! It would be nice if we could have NODE_FLAG_CELL here
+                // (It would be nice if we could have NODE_FLAG_CELL here
                 // as part of the switch, but see its definition for why it
-                // is at position 8 from left and not an earlier bit.
+                // is at position 8 from left and not an earlier bit.)
                 //
-                if (*stub & NODE_BYTEMASK_0x01_CELL) {
-                    assert(not (*stub & NODE_BYTEMASK_0x02_ROOT));
-                    Free_Pooled(STUB_POOL, stub);  // Free_Pairing manual
+                if (unit[0] & NODE_BYTEMASK_0x01_CELL) {
+                    assert(not (unit[0] & NODE_BYTEMASK_0x02_ROOT));
+                    Free_Pooled(STUB_POOL, unit);  // manuals use Free_Pairing
                 }
                 else {
-                    GC_Kill_Series(cast(SeriesT*, stub));
+                    GC_Kill_Series(cast(SeriesT*, unit));
                 }
                 ++sweep_count;
                 break;
@@ -1049,24 +1046,24 @@ Count Sweep_Series(void)
                 // 0x8 + 0x2 + 0x1: managed and marked, so it's still live.
                 // Don't GC it, just clear the mark.
                 //
-                Remove_GC_Mark(cast(Node*, stub));
+                Remove_GC_Mark(cast(Node*, unit));
                 break;
 
             // v-- Everything below this line has the two leftmost bits set
             // in the header.  In the *general* case this could be a valid
             // first byte of a multi-byte sequence in UTF-8...so only the
-            // special bit pattern of the free case uses this.
+            // special bit pattern of the free poolunit uses this for now.
 
               case 12:
                 // 0x8 + 0x4: free node, uses special illegal UTF-8 byte
                 //
-                assert(*stub == FREED_SERIES_BYTE);
+                assert(unit[0] == FREE_POOLUNIT_BYTE);
                 break;
 
               case 13:
               case 14:
               case 15:
-                panic (stub);  // 0x8 + 0x4 + ... reserved for UTF-8
+                panic (unit);  // 0x8 + 0x4 + ... reserved for UTF-8
             }
         }
     }
@@ -1079,22 +1076,21 @@ Count Sweep_Series(void)
     for (; seg != nullptr; seg = seg->next) {
         Length n = g_mem.pools[PAIR_POOL].num_units_per_segment;
 
-        REBVAL *v = cast(REBVAL*, seg + 1);
-        for (; n > 0; --n, v += 2) {
-            if (v->header.bits & SERIES_FLAG_FREE) {
-                assert(FIRST_BYTE(v->header) == FREED_SERIES_BYTE);
+        Byte *unit = cast(Byte*, seg + 1);
+        for (; n > 0; --n, unit += 2 * sizeof(CellT)) {
+            if (unit[0] == FREE_POOLUNIT_BYTE)
                 continue;
-            }
 
-            assert(v->header.bits & NODE_FLAG_CELL);
+            assert(unit[0] & NODE_BYTEMASK_0x01_CELL);
 
+            ValueT* v = cast(ValueT*, unit);
             if (v->header.bits & NODE_FLAG_MANAGED) {
                 assert(not (v->header.bits & NODE_FLAG_ROOT));
                 if (Is_Node_Marked(v)) {
                     Remove_GC_Mark(v);
                 }
                 else {
-                    Free_Pooled(PAIR_POOL, v);  // Free_Pairing is for manuals
+                    Free_Pooled(PAIR_POOL, unit);  // manuals use Free_Pairing
                     ++sweep_count;
                 }
             }
@@ -1211,16 +1207,21 @@ REBLEN Recycle_Core(Series(*) sweeplist)
 
     // Builtin patches for Lib contain variables that can be read by Lib(XXX)
     // in the C code.  Since effectively any of them could become referred
-    // to in code, we need to keep the cells alive.  We also mark the patches
-    // for efficiency--so that references will not try to mark them and go
-    // through the slow process of finding out they're singular arrays and
-    // that the array content is already marked.
+    // to in code, we need to keep the cells alive.
     //
-    assert(Is_Free_Node(&PG_Lib_Patches[0]));  // skip SYM_0
+    // We don't technically need to mark the patches themselves to protect
+    // them from GC--because they're not in the STUB_POOL so Sweep_Series()
+    // wouldn't free them.  But we mark them anyway--for clarity, and it
+    // speeds up references that would mark them to see they're spoken for
+    // (so they don't have to detect it's an array, queue the cell...)
+    //
+    assert(Is_Node_Free(&PG_Lib_Patches[0]));  // skip SYM_0
     for (REBLEN i = 1; i < LIB_SYMS_MAX; ++i) {
         Array(*) patch = &PG_Lib_Patches[i];
-        Queue_Mark_Maybe_Fresh_Cell_Deep(Array_Single(patch));
-        Add_GC_Mark(patch);
+        if (Not_Node_Marked(patch)) {  // the prior loop iterations can mark
+            Add_GC_Mark(patch);
+            Queue_Mark_Maybe_Fresh_Cell_Deep(Array_Single(patch));
+        }
     }
     Propagate_All_GC_Marks();
 
@@ -1310,7 +1311,7 @@ REBLEN Recycle_Core(Series(*) sweeplist)
 
     // Unmark the Lib() fixed patches (not in stub pool, never get swept)
     //
-    assert(Is_Free_Node(&PG_Lib_Patches[0]));  // skip SYM_0
+    assert(Is_Node_Free(&PG_Lib_Patches[0]));  // skip SYM_0
     for (REBLEN i = 1; i < LIB_SYMS_MAX; ++i) {
         Array(*) patch = &PG_Lib_Patches[i];
         Remove_GC_Mark(patch);
@@ -1318,7 +1319,7 @@ REBLEN Recycle_Core(Series(*) sweeplist)
 
     // Unmark the Canon() fixed symbols (not in stub pool, never get swept)
     //
-    assert(Is_Free_Node(&g_symbols.builtin_canons[0]));  // skip SYM_0
+    assert(Is_Node_Free(&g_symbols.builtin_canons[0]));  // skip SYM_0
     for (REBLEN i = 1; i < ALL_SYMS_MAX; ++i) {
         Symbol(*) canon = &g_symbols.builtin_canons[i];
         Remove_GC_Mark_If_Marked(canon);
@@ -1400,16 +1401,10 @@ REBLEN Recycle(void)
 //
 void Push_Guard_Node(const Node* node)
 {
+    assert(Is_Node(cast(void*, node)));
+
   #if !defined(NDEBUG)
     if (Is_Node_A_Cell(node)) {
-        //
-        // It is a value.  Cheap check: require that it already contain valid
-        // data when the guard call is made (even if GC isn't necessarily
-        // going to happen immediately, and value could theoretically become
-        // valid before then.)
-        //
-        const REBVAL* v = cast(const REBVAL*, node);
-        assert(CELL_HEART_UNCHECKED(v) < REB_MAX);
 
       #ifdef STRESS_CHECK_GUARD_VALUE_POINTER
         //
@@ -1424,11 +1419,15 @@ void Push_Guard_Node(const Node* node)
             panic (containing);
       #endif
     }
-    else {
-        // It's a series.  Does not ensure the series being guarded is
-        // managed, since it can be interesting to guard the managed
-        // *contents* of an unmanaged array.  The calling wrappers ensure
-        // managedness or not.
+    else {  // It's a series
+        //
+        // !!! At one time this didn't ensure the series being guarded was
+        // managed, based on the idea of guarding the contents of an unmanaged
+        // array.  That idea didn't get any usage, and allowing unmanaged
+        // guards here just obfuscated errors when they occurred.  So the
+        // assert has been put back.  Review.
+
+        assert(Is_Node_Managed(node));
     }
   #endif
 
@@ -1466,9 +1465,9 @@ void Startup_GC(void)
     //
     ensureNullptr(g_gc.manuals) = Make_Series_Core(
         15,
-        FLAG_FLAVOR(SERIESLIST) | NODE_FLAG_MANAGED
+        FLAG_FLAVOR(SERIESLIST) | NODE_FLAG_MANAGED  // lie!
     );
-    Clear_Series_Flag(g_gc.manuals, MANAGED);
+    Clear_Node_Managed_Bit(g_gc.manuals);  // untracked and indefinite lifetime
 
     // Temporary series and values protected from GC. Holds node pointers.
     //

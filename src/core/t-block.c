@@ -1492,7 +1492,7 @@ DECLARE_NATIVE(glom)
         if (splice)  // it was a non-quoted block initially
             return COPY(result);  // see note: index may be nonzero
 
-        Array(*) a = Make_Array_Core(1, SERIES_FLAG_MANAGED);
+        Array(*) a = Make_Array_Core(1, NODE_FLAG_MANAGED);
         Set_Series_Len(a, 1);
         Copy_Cell(Array_Head(a), result);  // we know it was inert or quoted
         return Init_Block(OUT, a);

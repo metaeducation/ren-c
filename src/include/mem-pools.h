@@ -75,7 +75,7 @@ typedef struct PoolUnitStruct {
     //
     // The first byte should *only* be read through a char*!
     //
-    union HeaderUnion headspot;  // leftmost byte is FREED_SERIES_BYTE if free
+    union HeaderUnion headspot;  // leftmost byte is FREE_POOLUNIT_BYTE if free
 
     struct PoolUnitStruct* next_if_free;  // if not free, full item available
 

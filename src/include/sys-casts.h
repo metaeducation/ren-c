@@ -126,7 +126,7 @@
             return nullptr;
 
         if ((*reinterpret_cast<const Byte*>(p) & (
-            NODE_BYTEMASK_0x80_NODE | NODE_BYTEMASK_0x40_STALE
+            NODE_BYTEMASK_0x80_NODE | NODE_BYTEMASK_0x40_FREE
         )) != (
             NODE_BYTEMASK_0x80_NODE
         )){
@@ -154,8 +154,8 @@
         if (not p)
             return nullptr;
 
-        if ((reinterpret_cast<Series(const*) >(p)->leader.bits & (
-            NODE_FLAG_NODE | SERIES_FLAG_FREE | NODE_FLAG_CELL
+        if ((reinterpret_cast<Series(const*)>(p)->leader.bits & (
+            NODE_FLAG_NODE | NODE_FLAG_FREE | NODE_FLAG_CELL
         )) != (
             NODE_FLAG_NODE
         )){
@@ -185,7 +185,7 @@
             return nullptr;
 
         if ((reinterpret_cast<Series(const*) >(p)->leader.bits & (
-            NODE_FLAG_NODE | SERIES_FLAG_FREE | NODE_FLAG_CELL
+            NODE_FLAG_NODE | NODE_FLAG_FREE | NODE_FLAG_CELL
         )) != (
             NODE_FLAG_NODE
         )){
@@ -217,7 +217,7 @@
 
         if (((reinterpret_cast<Series(const*) >(p)->leader.bits & (
             SERIES_MASK_VARLIST
-                | SERIES_FLAG_FREE
+                | NODE_FLAG_FREE
                 | NODE_FLAG_CELL
                 | FLAG_FLAVOR_BYTE(255)
         ))
@@ -246,7 +246,7 @@
 
         if ((reinterpret_cast<Series(const*) >(p)->leader.bits & (
             SERIES_MASK_DETAILS
-                | SERIES_FLAG_FREE
+                | NODE_FLAG_FREE
                 | NODE_FLAG_CELL
                 | FLAG_FLAVOR_BYTE(255)
         )) !=
@@ -297,7 +297,7 @@
             return nullptr;
 
         if ((*reinterpret_cast<Byte*>(p) & (
-            NODE_BYTEMASK_0x80_NODE | NODE_BYTEMASK_0x40_STALE
+            NODE_BYTEMASK_0x80_NODE | NODE_BYTEMASK_0x40_FREE
                 | NODE_BYTEMASK_0x01_CELL
         )) != (
             NODE_BYTEMASK_0x80_NODE | NODE_BYTEMASK_0x01_CELL

@@ -60,10 +60,10 @@ void Splice_Block_Into_Feed(Feed(*) feed, const REBVAL *splice) {
     //
     if (FEED_IS_VARIADIC(feed) or Not_End(feed->p)) {
         Array(*) saved = Alloc_Singular(
-            FLAG_FLAVOR(FEED) | SERIES_FLAG_MANAGED  // no tracking
+            FLAG_FLAVOR(FEED) | NODE_FLAG_MANAGED  // no tracking
         );
         memcpy(saved, FEED_SINGULAR(feed), sizeof(ArrayT));
-        assert(Not_Series_Flag(saved, MANAGED));
+        assert(Not_Node_Managed(saved));
 
         // old feed data resumes after the splice
         mutable_LINK(Splice, &feed->singular) = saved;

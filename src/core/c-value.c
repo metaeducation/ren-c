@@ -219,7 +219,7 @@ void* Probe_Core_Debug(
             (*cast(const Byte*, p) & NODE_BYTEMASK_0x80_NODE)
             and (*cast(const Byte*, p) & NODE_BYTEMASK_0x01_CELL)
         ){
-            if (not (*cast(const Byte*, p) & NODE_BYTEMASK_0x40_STALE)) {
+            if (not (*cast(const Byte*, p) & NODE_BYTEMASK_0x40_FREE)) {
                 printf("!!! Non-FREE'd alias of cell with UTF-8 !!!");
                 panic (p);  // hopefully you merely debug-probed garbage memory
             }
@@ -248,7 +248,7 @@ void* Probe_Core_Debug(
 
   blockscope {
     Series(*) s = m_cast(SeriesT*, cast(const SeriesT* , p));
-    assert(not Is_Free_Node(s));  // Detect should have caught, above
+    assert(not Is_Node_Free(s));  // Detect should have caught, above
     Flavor flavor = Series_Flavor(s);
     Assert_Series(s);  // if corrupt, gives better info than a print crash
 

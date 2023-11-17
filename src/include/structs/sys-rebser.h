@@ -92,17 +92,24 @@
 
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// SERIES <<NODE>> FLAGS  (SERIES_FLAG_0 - SERIES_FLAG_7 are NODE_FLAG_XXX)
+// SERIES_FLAG_0 - SERIES_FLAG_7 are NODE_FLAG_XXX)
 //
 //=////////////////////////////////////////////////////////////////////////=//
-//
-// While series are nodes, the token-pasting based Get_Series_Flag() macros
-// and their ilk look for flags of the form SERIES_FLAG_##name.  So alias the
-// node flags as series flags.
 
-#define SERIES_FLAG_FREE        NODE_FLAG_STALE
-#define SERIES_FLAG_MANAGED     NODE_FLAG_MANAGED
-#define SERIES_FLAG_ROOT        NODE_FLAG_ROOT
+// At one time all the flags were aliased, like:
+//
+//     #define SERIES_FLAG_MANAGED NODE_FLAG_MANAGED
+//     #define SERIES_FLAG_FREE NODE_FLAG_FREE
+//     ...
+//
+// This created weird inconsistencies where it would make an equal amount of
+// sense to pass SERIES_FLAG_MANAGED or NODE_FLAG_MANAGED, and introduces the
+// risk that the checks might be performed on pointers that don't know if
+// what they point at is a Cell or a Stub.  The duplication was removed, and
+// now you say `Is_Node_Managed(ser)` vs. `Get_Series_Flag(ser, MANAGED)` etc.
+//
+// Aliases for the NODE_FLAG_GC_ONE and NODE_FLAG_GC_TWO are kept, as there
+// is no corresponding ambiguity.
 
 
 //=//// SERIES_FLAG_LINK_NODE_NEEDS_MARK //////////////////////////////////=//

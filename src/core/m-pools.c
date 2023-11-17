@@ -341,16 +341,16 @@ void Shutdown_Pools(void)
 
     for(; seg != nullptr; seg = seg->next) {
         Count n = g_mem.pools[STUB_POOL].num_units_per_segment;
-        Byte* stub = cast(Byte*, seg + 1);
+        Byte* unit = cast(Byte*, seg + 1);
 
-        for (; n > 0; --n, stub += sizeof(Stub)) {
-            if (*stub & NODE_BYTEMASK_0x40_STALE)
+        for (; n > 0; --n, unit += sizeof(Stub)) {
+            if (unit[0] == FREE_POOLUNIT_BYTE)
                 continue;
 
             ++num_leaks;
 
-            Series(*) s = SER(cast(void*, stub));
-            if (Get_Series_Flag(s, MANAGED)) {
+            Series(*) s = SER(cast(void*, unit));
+            if (Is_Node_Managed(s)) {
                 printf("MANAGED series leak, this REALLY shouldn't happen\n");
                 leaked = s;  // report a managed one if found
             }
@@ -358,7 +358,7 @@ void Shutdown_Pools(void)
                 leaked = s;  // first one found
             }
             else if (
-                Not_Series_Flag(leaked, MANAGED)
+                Not_Node_Managed(leaked)
                 and leaked->tick < s->tick
             ){
                 leaked = s;  // update if earlier tick reference
@@ -464,7 +464,7 @@ bool Try_Fill_Pool(Pool* pool)
     }
 
     while (true) {
-        FIRST_BYTE(unit->headspot.bits) = FREED_SERIES_BYTE;
+        FIRST_BYTE(unit->headspot.bits) = FREE_POOLUNIT_BYTE;
 
         if (--num_units == 0) {
             unit->next_if_free = nullptr;
@@ -495,20 +495,20 @@ Node* Try_Find_Containing_Node_Debug(const void *p)
 
     for (; seg != nullptr; seg = seg->next) {
         Count n = g_mem.pools[STUB_POOL].num_units_per_segment;
-        Byte* stub = cast(Byte*, seg + 1);
+        Byte* unit = cast(Byte*, seg + 1);
 
-        for (; n > 0; --n, stub += sizeof(Stub)) {
-            if (*stub & NODE_BYTEMASK_0x40_STALE)
+        for (; n > 0; --n, unit += sizeof(Stub)) {
+            if (unit[0] == FREE_POOLUNIT_BYTE)
                 continue;
 
-            if (*stub & NODE_BYTEMASK_0x01_CELL) {  // a "pairing"
-                REBVAL *pairing = VAL(cast(void*, stub));
+            if (unit[0] & NODE_BYTEMASK_0x01_CELL) {  // a "pairing"
+                REBVAL *pairing = VAL(cast(void*, unit));
                 if (p >= cast(void*, pairing) and p < cast(void*, pairing + 1))
                     return pairing;  // this Stub is actually CellT[2]
                 continue;
             }
 
-            Series(*) s = SER(cast(void*, stub));
+            Series(*) s = SER(cast(void*, unit));
             if (Not_Series_Flag(s, DYNAMIC)) {
                 if (
                     p >= cast(void*, &s->content)
@@ -596,7 +596,8 @@ REBVAL *Alloc_Pairing(void) {
 // paired value) REBVAL header.  API handle REBVALs are all managed.
 //
 void Manage_Pairing(REBVAL *paired) {
-    Set_Cell_Flag(paired, MANAGED);
+    assert(Not_Node_Managed(paired));
+    Set_Node_Managed_Bit(paired);
 }
 
 
@@ -610,8 +611,8 @@ void Manage_Pairing(REBVAL *paired) {
 // their lifetime.
 //
 void Unmanage_Pairing(REBVAL *paired) {
-    assert(Get_Cell_Flag(paired, MANAGED));
-    Clear_Cell_Flag(paired, MANAGED);
+    assert(Is_Node_Managed(paired));
+    Clear_Node_Managed_Bit(paired);
 }
 
 
@@ -619,7 +620,7 @@ void Unmanage_Pairing(REBVAL *paired) {
 //  Free_Pairing: C
 //
 void Free_Pairing(REBVAL *paired) {
-    assert(Not_Cell_Flag(paired, MANAGED));
+    assert(Not_Node_Managed(paired));
     Free_Pooled(STUB_POOL, paired);
 
   #if DEBUG_COUNT_TICKS
@@ -654,8 +655,7 @@ void Free_Unbiased_Series_Data(char *unbiased, Size total)
         //
         // The series data does not honor "node protocol" when it is in use
         // The pools are not swept the way the Stub pool is, so only the
-        // free nodes have significance to their headers.  Use a cast and not
-        // NOD() because that assumes not (SERIES_FLAG_FREE)
+        // free nodes have significance to their headers.
         //
         PoolUnit* unit = cast(PoolUnit*, unbiased);
 
@@ -666,7 +666,7 @@ void Free_Unbiased_Series_Data(char *unbiased, Size total)
         pool->first = unit;
         pool->free++;
 
-        FIRST_BYTE(unit->headspot.bits) = FREED_SERIES_BYTE;
+        cast(Byte*, unit)[0] = FREE_POOLUNIT_BYTE;
     }
     else {
         FREE_N(char, total, unbiased);
@@ -910,7 +910,7 @@ void Expand_Series(Series(*) s, REBLEN index, REBLEN delta)
     g_mem.series_expanded += 1;
   #endif
 
-    assert(Not_Series_Flag(s, MARKED));
+    assert(Not_Node_Marked(s));
     Term_Series_If_Necessary(s);  // code will not copy terminator over
 }
 
@@ -1191,7 +1191,7 @@ void Decay_Series(Series(*) s)
 void GC_Kill_Series(Series(*) s)
 {
   #if !defined(NDEBUG)
-    if (Is_Free_Node(s)) {
+    if (Is_Node_Free(s)) {
         printf("Freeing already freed node.\n");
         panic (s);
     }
@@ -1231,12 +1231,12 @@ void GC_Kill_Series(Series(*) s)
 void Free_Unmanaged_Series(Series(*) s)
 {
   #if !defined(NDEBUG)
-    if (Is_Free_Node(s)) {
+    if (Is_Node_Free(s)) {
         printf("Trying to Free_Umanaged_Series() on already freed series\n");
         panic (s); // erroring here helps not conflate with tracking problems
     }
 
-    if (Get_Series_Flag(s, MANAGED)) {
+    if (Is_Node_Managed(s)) {
         printf("Trying to Free_Unmanaged_Series() on a GC-managed series\n");
         panic (s);
     }
@@ -1268,16 +1268,12 @@ void Assert_Pointer_Detection_Working(void)
     assert(Detect_Rebol_Pointer(EMPTY_ARRAY) == DETECTED_AS_SERIES);
     assert(Detect_Rebol_Pointer(Lib(BLANK)) == DETECTED_AS_CELL);
 
-    // The use of the "free" bit on cells is to mark them as "stale", e.g. not
-    // usable as the left hand side of an enfix operation in the evaluator
-    // (but still a known value that can fall out).  It is not readable, and
-    // detection conflates it with UTF-8 strings.
-    //
-    // But the actual specific "freed series byte" has NODE_FLAG_CELL set
+    // A cell with NODE_FLAG_FREE will appear to be UTF-8.  Be sure not to
+    // pass such cells to the API, as Detect_Rebol_Pointer() will be wrong!
     //
     DECLARE_LOCAL (stale_cell);
     stale_cell->header.bits =
-        NODE_FLAG_NODE | CELL_FLAG_STALE | NODE_FLAG_CELL
+        NODE_FLAG_NODE | NODE_FLAG_FREE | NODE_FLAG_CELL
         | FLAG_HEART_BYTE(REB_BLANK);
     assert(Detect_Rebol_Pointer(WRITABLE(stale_cell)) == DETECTED_AS_UTF8);
 
@@ -1307,16 +1303,16 @@ REBLEN Check_Memory_Debug(void)
 
     for (; seg != nullptr; seg = seg->next) {
         Count n = g_mem.pools[STUB_POOL].num_units_per_segment;
-        Byte* stub = cast(Byte*, seg + 1);
+        Byte* unit = cast(Byte*, seg + 1);
 
-        for (; n > 0; --n, stub += sizeof(Stub)) {
-            if (*stub & NODE_BYTEMASK_0x40_STALE)
+        for (; n > 0; --n, unit += sizeof(Stub)) {
+            if (unit[0] == FREE_POOLUNIT_BYTE)
                 continue;
 
-            if (*stub & NODE_BYTEMASK_0x01_CELL)
+            if (unit[0] & NODE_BYTEMASK_0x01_CELL)
                 continue; // a pairing
 
-            Series(*) s = SER(cast(void*, stub));
+            Series(*) s = SER(cast(void*, unit));
             if (Not_Series_Flag(s, DYNAMIC))
                 continue; // data lives in the series node itself
 
@@ -1340,7 +1336,7 @@ REBLEN Check_Memory_Debug(void)
 
         PoolUnit* unit = g_mem.pools[pool_id].first;
         for (; unit != nullptr; unit = unit->next_if_free) {
-            assert(*cast(const Byte*, unit) & NODE_BYTEMASK_0x40_STALE);
+            assert(cast(const Byte*, unit)[0] == FREE_POOLUNIT_BYTE);
 
             ++pool_free_nodes;
 
@@ -1389,13 +1385,16 @@ void Dump_All_Series_Of_Width(Size wide)
 
     for (; seg != nullptr; seg = seg->next) {
         Count n = g_mem.pools[STUB_POOL].num_units_per_segment;
-        Byte* stub = cast(Byte*, seg + 1);
+        Byte* unit = cast(Byte*, seg + 1);
 
-        for (; n > 0; --n, stub += sizeof(Stub)) {
-            if (*stub & NODE_BYTEMASK_0x40_STALE)
+        for (; n > 0; --n, unit += sizeof(Stub)) {
+            if (unit[0] == FREE_POOLUNIT_BYTE)
                 continue;
 
-            Series(*) s = SER(cast(void*, stub));
+            if (unit[0] & NODE_BYTEMASK_0x01_CELL)  // a pairing
+                continue;
+
+            Series(*) s = SER(cast(void*, unit));
             if (Series_Wide(s) == wide) {
                 ++count;
                 printf(
@@ -1422,17 +1421,16 @@ void Dump_Series_In_Pool(PoolId pool_id)
 
     for (; seg != nullptr; seg = seg->next) {
         Count n = g_mem.pools[STUB_POOL].num_units_per_segment;
-        Byte* stub = cast(Byte*, seg + 1);
+        Byte* unit = cast(Byte*, seg + 1);
 
-        for (; n > 0; --n, stub += sizeof(Stub)) {
-            Byte nodebyte = *stub;
-            if (nodebyte & NODE_BYTEMASK_0x40_STALE)
+        for (; n > 0; --n, unit += sizeof(Stub)) {
+            if (unit[0] == FREE_POOLUNIT_BYTE)
                 continue;
 
-            if (nodebyte & NODE_BYTEMASK_0x01_CELL)
+            if (unit[0] & NODE_BYTEMASK_0x01_CELL)
                 continue;  // pairing
 
-            Series(*) s = SER(cast(void*, stub));
+            Series(*) s = SER(cast(void*, unit));
             if (
                 pool_id == UNLIMITED
                 or (
@@ -1526,21 +1524,20 @@ REBU64 Inspect_Series(bool show)
 
     for (; seg != nullptr; seg = seg->next, seg_size += seg->size, ++segs) {
         Count n = g_mem.pools[STUB_POOL].num_units_per_segment;
-        Byte* stub = cast(Byte*, seg + 1);
+        Byte* unit = cast(Byte*, seg + 1);
 
-        for (; n > 0; --n, stub += sizeof(Stub)) {
-            Byte nodebyte = *stub;
-            if (nodebyte & NODE_BYTEMASK_0x40_STALE) {
+        for (; n > 0; --n, unit += sizeof(Stub)) {
+            if (unit[0] == FREE_POOLUNIT_BYTE) {
                 ++fre;
                 continue;
             }
 
             ++tot;
 
-            if (nodebyte & NODE_BYTEMASK_0x01_CELL)
+            if (unit[0] & NODE_BYTEMASK_0x01_CELL)
                 continue;
 
-            Series(*) s = SER(cast(void*, stub));
+            Series(*) s = SER(cast(void*, unit));
 
             if (Get_Series_Flag(s, DYNAMIC))
                 tot_size += Series_Total(s);

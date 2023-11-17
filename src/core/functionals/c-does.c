@@ -211,7 +211,7 @@ DECLARE_NATIVE(does)
         TOP_INDEX,  // lower dsp would be if we wanted to add refinements
         nullptr  // don't set up a binder; just poke specializee in frame
     );
-    assert(Get_Series_Flag(CTX_VARLIST(exemplar), MANAGED));
+    assert(Is_Node_Managed(CTX_VARLIST(exemplar)));
 
     // Put argument into DO's *second* frame slot (first is RETURN)
     //

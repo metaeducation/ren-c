@@ -1270,7 +1270,7 @@ void Push_Action(
             Copy_Cell(PUSH(), word);
     }
 
-    assert(Not_Series_Flag(L->varlist, MANAGED));
+    assert(Not_Node_Managed(L->varlist));
     assert(Not_Series_Flag(L->varlist, INACCESSIBLE));
 
     ORIGINAL = act;
@@ -1346,7 +1346,7 @@ void Drop_Action(Level(*) L) {
         // therefore useless.  It served a purpose by being non-null during
         // the call, however, up to this moment.
         //
-        if (Get_Series_Flag(L->varlist, MANAGED))
+        if (Is_Node_Managed(L->varlist))
             L->varlist = nullptr; // references exist, let a new one alloc
         else {
             // This node could be reused vs. calling Alloc_Pooled() on the next
@@ -1356,7 +1356,7 @@ void Drop_Action(Level(*) L) {
             L->varlist = nullptr;
         }
     }
-    else if (Get_Series_Flag(L->varlist, MANAGED)) {
+    else if (Is_Node_Managed(L->varlist)) {
         //
         // Varlist wound up getting referenced in a cell that will outlive
         // this Drop_Action().
@@ -1387,7 +1387,7 @@ void Drop_Action(Level(*) L) {
                 ORIGINAL  // degrade keysource from f
             )
         );
-        assert(Not_Series_Flag(L->varlist, MANAGED));
+        assert(Not_Node_Managed(L->varlist));
         INIT_BONUS_KEYSOURCE(L->varlist, L);
       #endif
 
@@ -1414,7 +1414,7 @@ void Drop_Action(Level(*) L) {
   #if !defined(NDEBUG)
     if (L->varlist) {
         assert(Not_Series_Flag(L->varlist, INACCESSIBLE));
-        assert(Not_Series_Flag(L->varlist, MANAGED));
+        assert(Not_Node_Managed(L->varlist));
 
         Cell(*) rootvar = Array_Head(L->varlist);
         assert(CTX_VARLIST(VAL_CONTEXT(rootvar)) == L->varlist);

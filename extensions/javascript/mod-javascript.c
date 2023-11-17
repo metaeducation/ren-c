@@ -379,8 +379,8 @@ EXTERN_C intptr_t RL_rebPromise(void *p, va_list *vaptr)
     RL_rebTranscodeInto(block, p, vaptr);
 
     Array(*) code = VAL_ARRAY_ENSURE_MUTABLE(block);
-    assert(Get_Series_Flag(code, MANAGED));
-    Clear_Series_Flag(code, MANAGED);  // using array as ID, don't GC it
+    assert(Is_Node_Managed(code));
+    Clear_Node_Managed_Bit(code);  // using array as ID, don't GC it
 
     // We singly link the promises such that they will be executed backwards.
     // What's good about that is that it will help people realize that over
@@ -425,8 +425,8 @@ void RunPromise(void)
     info->state = PROMISE_STATE_RUNNING;
 
     Array(*) a = ARR(Pointer_From_Heapaddr(info->promise_id));
-    assert(Not_Series_Flag(a, MANAGED));  // took off so it didn't GC
-    Set_Series_Flag(a, MANAGED);  // but need it back on to execute it
+    assert(Not_Node_Managed(a));  // took off so it didn't GC
+    Set_Node_Managed_Bit(a);  // but need it back on to execute it
 
     DECLARE_LOCAL (code);
     Init_Block(code, a);

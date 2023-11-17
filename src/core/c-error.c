@@ -105,7 +105,7 @@ ATTRIBUTE_NO_RETURN void Fail_Core(const void *p)
         // running native.  (We could theoretically do this with ARG(), or
         // have a nuance of behavior with ARG()...or even for the REBKEY*.)
         //
-        if (Get_Cell_Flag(v, ROOT)) {
+        if (Is_Node_Root_Bit_Set(v)) {
             //
             // If you call the internal fail() function on an API handle, that
             // should be the handle of an error.  If we allowed it to take

@@ -575,21 +575,25 @@ e-lib/emit 'ver {
      * Since a C nullptr (pointer cast of 0) is used to represent the Rebol
      * `null` in the API, something different must be used to indicate the
      * end of variadic input.  So a *pointer to data* is used where the first
-     * byte of that data is 193--illegal in all UTF-8 sequences.  The second
-     * byte is 0, coming from the '\0' terminator of the C string literal.
+     * byte of that data is 192 (END_SIGNAL_BYTE)--illegal in UTF-8 sequences.
      *
      * To Rebol, the first bit being 1 means it's a Rebol node, the second
-     * being 1 mean it is in the "stale" state.  The low bit in the first byte
+     * being 1 mean it is in the "free" state.  The low bit in the first byte
      * set suggests it points to a "series"...though it doesn't (this helps
-     * prevent code from trying to write a cell into a rebEND signal).  But the
-     * SECOND_BYTE() is where the "heart" of a cell is usually stored, and
-     * this being 0 would indicate REB_VOID.
+     * prevent code from trying to write a cell into a rebEND signal).
      *
-     * Note: We use a `void*` for this because it needs to be suitable for
-     * the same alignment as character.  The C++ build checks that void*
-     * are only allowed in the last position.  This isn't foolproof, but it's
-     * better than breaking the standard (e.g. by casting to be a pointer to
-     * something with another alignment).
+     * The second byte is 0, coming from the '\0' terminator of the C string
+     * literal.  This isn't strictly necessary, as the 192 is enough to know
+     * it's not a Cell, Series stub, or UTF8.  But it can guard against
+     * interpreting garbage input as rebEND, as the sequence {192, 0} is less
+     * likely to occur at random than {192, ...}.  And leveraging a literal
+     * form means we don't need to define a single byte somewhere to then
+     * point at it.
+     *
+     * Note: We don't use char* as the type, so that the C++ build can check
+     * for a different type that's only allowed at the end of the variadic.
+     * But the type cast to must have the same alignment as char...so void*
+     * is the natural choice.
      */
     #define rebEND \
         ((const void*)"\xC0")

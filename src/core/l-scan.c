@@ -3384,7 +3384,7 @@ Option(Array(*)) Try_Scan_Variadic_Feed_Utf8_Managed(Feed(*) feed)
         return nullptr;
     }
 
-    Flags flags = SERIES_FLAG_MANAGED;
+    Flags flags = NODE_FLAG_MANAGED;
     Array(*) reified = Pop_Stack_Values_Core(L->baseline.stack_base, flags);
     Drop_Level(L);
     return reified;

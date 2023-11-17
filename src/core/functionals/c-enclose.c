@@ -134,7 +134,7 @@ Bounce Encloser_Dispatcher(Level(*) const L)
     // // allocated through the usual mechanisms, so if unmanaged it's not in
     // // the tracking list Init_Context_Cell() expects.  Just fiddle the bit.
     // //
-    // Set_Series_Flag(CTX_VARLIST(c), MANAGED); */
+    // Set_Node_Managed_Bit(CTX_VARLIST(c)); */
     //-------------------------------------------------------------end-old-code
 
     //-----------------------------------------------------------begin-new-code
@@ -177,7 +177,7 @@ Bounce Encloser_Dispatcher(Level(*) const L)
     // Note that since varlists aren't added to the manual series list, the
     // bit must be tweaked vs. using Force_Series_Managed.
     //
-    Set_Series_Flag(varlist, MANAGED);
+    Set_Node_Managed_Bit(varlist);
 
     // Because the built context is intended to be used with DO, it must be
     // "phaseless".  The property of phaselessness allows detection of when
