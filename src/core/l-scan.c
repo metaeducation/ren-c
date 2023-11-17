@@ -3369,7 +3369,7 @@ Option(Array(*)) Try_Scan_Variadic_Feed_Utf8_Managed(Feed(*) feed)
     Init_Scan_Level(
         level,
         &ss,
-        Intern_Unsized_Managed("-variadic-"),
+        ANONYMOUS,  // %tmp-boot.r name in boot overwritten currently by this
         start_line,
         nullptr  // let scanner fetch feed->p Utf8 as new ss->begin
     );

@@ -820,12 +820,15 @@ void Startup_Core(void)
     // (We could separate the text of the SYS.UTIL portion out, and scan that
     // separately to avoid the extra work.  Not a high priority.)
     //
+    String(const*) tmp_boot = Intern_Unsized_Managed("tmp-boot.r");  // const
+    Push_GC_Guard(tmp_boot);  // recycle torture frees on scanner first push!
     Array(*) boot_array = Scan_UTF8_Managed(
-        Intern_Unsized_Managed("-tmp-boot-"),
+        tmp_boot,
         utf8,
         utf8_size,
         Lib_Context  // used by Base + Mezzanine, overruled in SYS.UTIL
     );
+    Drop_GC_Guard(tmp_boot);
     Push_GC_Guard(boot_array); // managed, so must be guarded
 
     rebFree(utf8); // don't need decompressed text after it's scanned
