@@ -194,7 +194,7 @@ inline static void Release_Api_Value_If_Unmanaged(const Atom(*) r) {
         assert(!"Dispatcher returned nulled cell, not C nullptr for API use");
 
     if (Not_Node_Managed(r))
-        rebRelease(cast(Value(*), r));
+        rebRelease(x_cast(Value(*), r));
 }
 
 

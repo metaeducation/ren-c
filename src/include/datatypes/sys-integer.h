@@ -36,7 +36,7 @@
 
 #if defined(NDEBUG) || (! CPLUSPLUS_11)
     #define VAL_INT64(v) \
-        cast(const REBI64, PAYLOAD(Integer, (v)).i64)
+        cast(REBI64, PAYLOAD(Integer, (v)).i64)
 
     #define mutable_VAL_INT64(v) \
         PAYLOAD(Integer, (v)).i64

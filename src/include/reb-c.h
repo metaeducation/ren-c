@@ -1018,7 +1018,7 @@
 //    like `ensure(const foo*, bar)` and bar is a pointer to a mutable foo,
 //    it will be valid...but pass the mutable bar as-is.
 //
-#if (! CPLUSPLUS_11 || ! DEBUG_CHECK_CASTS)
+#if (! DEBUG_CHECK_CASTS)
     #define ensure(T,v) (v)
     #define ensurer(T)
     #define ensured(T,L,left) (left)

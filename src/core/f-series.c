@@ -93,7 +93,7 @@ Bounce Series_Common_Action_Maybe_Unhandled(
             Series(const*) s = VAL_SERIES(v);
             if (not Is_Series_Array(s))
                 return nullptr;
-            if (Not_Array_Flag(cast(ArrayT*, s), HAS_FILE_LINE_UNMASKED))
+            if (Not_Array_Flag(cast(const ArrayT*, s), HAS_FILE_LINE_UNMASKED))
                 return nullptr;
             return Init_File(OUT, LINK(Filename, s)); }
 
@@ -101,7 +101,7 @@ Bounce Series_Common_Action_Maybe_Unhandled(
             Series(const*) s = VAL_SERIES(v);
             if (not Is_Series_Array(s))
                 return nullptr;
-            if (Not_Array_Flag(cast(ArrayT*, s), HAS_FILE_LINE_UNMASKED))
+            if (Not_Array_Flag(cast(const ArrayT*, s), HAS_FILE_LINE_UNMASKED))
                 return nullptr;
             return Init_Integer(OUT, s->misc.line); }
 
