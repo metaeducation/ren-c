@@ -206,8 +206,8 @@ static void Process_Block_Helper(
         "ensure block! select", config, "as word!", rebT(label)
     );
 
-    Cell(const*) tail;
-    Cell(const*) text = VAL_ARRAY_AT(&tail, block);
+    const Cell* tail;
+    const Cell* text = VAL_ARRAY_AT(&tail, block);
     for (; text != tail; ++text)
         Process_Text_Helper_Core(some_tcc_api, state, SPECIFIC(text), label);
 
@@ -478,8 +478,8 @@ DECLARE_NATIVE(compile_p)
     StackIndex base = TOP_INDEX;  // natives are pushed to the stack
 
     if (REF(files)) {
-        Cell(const*) tail;
-        Cell(const*) item = VAL_ARRAY_AT(&tail, compilables);
+        const Cell* tail;
+        const Cell* item = VAL_ARRAY_AT(&tail, compilables);
         for (; item != tail; ++item) {
             if (not IS_TEXT(item))
                 fail ("If COMPILE*/FILES, compilables must be TEXT! paths");
@@ -506,8 +506,8 @@ DECLARE_NATIVE(compile_p)
         DECLARE_MOLD (mo);  // Note: mold buffer is UTF-8
         Push_Mold(mo);
 
-        Cell(const*) tail;
-        Cell(const*) item = VAL_ARRAY_AT(&tail, compilables);
+        const Cell* tail;
+        const Cell* item = VAL_ARRAY_AT(&tail, compilables);
         for (; item != tail; ++item) {
             if (IS_FRAME(item)) {
                 assert(Is_User_Native(VAL_ACTION(item)));

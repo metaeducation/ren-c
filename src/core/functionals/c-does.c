@@ -77,8 +77,8 @@ Bounce Block_Dispatcher(Level(*) const L)
     Details* details = Phase_Details(PHASE);
     assert(Array_Len(details) == IDX_DOES_MAX);
 
-    Cell(*) block = Array_At(details, IDX_DOES_BLOCK);
-        // ^-- note not a `Cell(const*) block`, may get updated!
+    Cell* block = Array_At(details, IDX_DOES_BLOCK);
+        // ^-- note not a `const Cell* block`, may get updated!
     assert(IS_BLOCK(block) and VAL_INDEX(block) == 0);
 
     const Array* body = VAL_ARRAY(block);
@@ -196,7 +196,7 @@ DECLARE_NATIVE(does)
         // Block_Dispatcher() *may* copy at an indeterminate time, so to keep
         // things invariant we have to lock it.
         //
-        Cell(*) body = Array_At(Phase_Details(doer), IDX_DOES_BLOCK);
+        Cell* body = Array_At(Phase_Details(doer), IDX_DOES_BLOCK);
         Force_Value_Frozen_Deep(source);
         Copy_Cell(body, source);
 

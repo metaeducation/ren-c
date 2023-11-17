@@ -164,7 +164,7 @@ Bounce Chainer_Dispatcher(Level(*) const L)
     Level(*) sub = Push_Downshifted_Level(OUT, L);  // steals varlist, see [1]
     L->executor = &Chainer_Dispatcher;  // so trampoline calls us, see [2]
 
-    Cell(const*) chained = VAL_ARRAY_ITEM_AT(pipeline_at);
+    const Cell* chained = VAL_ARRAY_ITEM_AT(pipeline_at);
     ++VAL_INDEX_RAW(pipeline_at);
 
     INIT_LVL_PHASE(
@@ -198,8 +198,8 @@ Bounce Chainer_Dispatcher(Level(*) const L)
 
     assert(IS_BLOCK(SPARE));
     Value(*) pipeline_at = cast(Value(*), SPARE);
-    Cell(const*) chained_tail;
-    Cell(const*) chained = VAL_ARRAY_AT(&chained_tail, pipeline_at);
+    const Cell* chained_tail;
+    const Cell* chained = VAL_ARRAY_AT(&chained_tail, pipeline_at);
 
     if (chained == chained_tail)
         goto finished;
@@ -243,14 +243,14 @@ DECLARE_NATIVE(chain_p)  // see extended definition CHAIN in %base-defs.r
     Atom(*) out = OUT;  // plan ahead for factoring into Chain_Action(out..
 
     REBVAL *pipeline = ARG(pipeline);
-    Cell(const*) tail;
-    Cell(const*) first = VAL_ARRAY_AT(&tail, pipeline);
+    const Cell* tail;
+    const Cell* first = VAL_ARRAY_AT(&tail, pipeline);
 
     // !!! Current validation is that all are frames.  Should there be other
     // checks?  (That inputs match outputs in the chain?)  Should it be
     // a dialect and allow things other than functions?
     //
-    Cell(const*) check = first;
+    const Cell* check = first;
     for (; check != tail; ++check) {
         if (not IS_FRAME(check)) {
             DECLARE_LOCAL (specific);

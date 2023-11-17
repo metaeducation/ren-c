@@ -128,8 +128,8 @@ DECLARE_NATIVE(generic)
 Array* Startup_Generics(const REBVAL *boot_generics)
 {
     assert(VAL_INDEX(boot_generics) == 0); // should be at head, sanity check
-    Cell(const*) tail;
-    Cell(*) head = VAL_ARRAY_Known_Mutable_AT(&tail, boot_generics);
+    const Cell* tail;
+    Cell* head = VAL_ARRAY_Known_Mutable_AT(&tail, boot_generics);
     REBSPC *specifier = VAL_SPECIFIER(boot_generics);
 
     // Add SET-WORD!s that are top-level in the generics block to the lib
@@ -159,7 +159,7 @@ Array* Startup_Generics(const REBVAL *boot_generics)
 
     StackIndex base = TOP_INDEX;
 
-    Cell(*) item = head;
+    Cell* item = head;
     for (; item != tail; ++item)
         if (IS_SET_WORD(item)) {
             Derelativize(PUSH(), item, specifier);

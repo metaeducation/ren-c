@@ -327,7 +327,7 @@ err:
 // Scan and convert a binary string.
 //
 const Byte* Decode_Binary(
-    Cell(*) out,
+    Cell* out,
     const Byte* src,
     REBLEN len,
     REBINT base,

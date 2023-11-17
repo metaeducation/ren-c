@@ -1378,7 +1378,7 @@ DECLARE_NATIVE(remove_each)
             do {
                 assert(start <= len);
                 Set_Cell_Flag(  // v-- okay to mark despite read only
-                    m_cast(Cell(*), Array_At(VAL_ARRAY(data), start)),
+                    m_cast(Cell*, Array_At(VAL_ARRAY(data), start)),
                     NOTE_REMOVE
                 );
                 ++start;
@@ -1424,8 +1424,8 @@ DECLARE_NATIVE(remove_each)
 
     if (ANY_ARRAY(data)) {
         if (not threw and breaking) {  // clean marks, don't remove
-            Cell(const*) tail;
-            Cell(*) temp = VAL_ARRAY_Known_Mutable_AT(&tail, data);
+            const Cell* tail;
+            Cell* temp = VAL_ARRAY_Known_Mutable_AT(&tail, data);
             for (; temp != tail; ++temp) {
                 if (Get_Cell_Flag(temp, NOTE_REMOVE))
                     Clear_Cell_Flag(temp, NOTE_REMOVE);
@@ -1433,9 +1433,9 @@ DECLARE_NATIVE(remove_each)
             goto done_finalizing;
         }
 
-        Cell(const*) tail;
-        Cell(*) dest = VAL_ARRAY_Known_Mutable_AT(&tail, data);
-        Cell(*) src = dest;
+        const Cell* tail;
+        Cell* dest = VAL_ARRAY_Known_Mutable_AT(&tail, data);
+        Cell* src = dest;
 
         // avoid blitting cells onto themselves by making the first thing we
         // do is to pass up all the unmarked (kept) cells.
@@ -1685,8 +1685,8 @@ DECLARE_NATIVE(map)
 
     if (Is_Splice(SPARE)) {
         Quasify_Isotope(SPARE);
-        Cell(const*) tail;
-        Cell(const*) v = VAL_ARRAY_AT(&tail, SPARE);
+        const Cell* tail;
+        const Cell* v = VAL_ARRAY_AT(&tail, SPARE);
         for (; v != tail; ++v)
             Derelativize(PUSH(), v, VAL_SPECIFIER(SPARE));
     }

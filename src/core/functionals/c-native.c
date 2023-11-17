@@ -43,7 +43,7 @@ Intrinsic* Extract_Intrinsic(Phase* phase)
     Details* details = Phase_Details(phase);
     assert(Array_Len(details) >= IDX_INTRINSIC_MAX);  // typecheck uses more
 
-    Cell(*) handle = DETAILS_AT(details, IDX_INTRINSIC_CFUNC);
+    Cell* handle = DETAILS_AT(details, IDX_INTRINSIC_CFUNC);
     return cast(Intrinsic*, VAL_HANDLE_CFUNC(handle));
 }
 
@@ -281,8 +281,8 @@ Array* Startup_Natives(const REBVAL *boot_natives)
     Init_Action_Adjunct_Shim();
 
     assert(VAL_INDEX(boot_natives) == 0); // should be at head, sanity check
-    Cell(const*) tail;
-    Cell(*) item = VAL_ARRAY_Known_Mutable_AT(&tail, boot_natives);
+    const Cell* tail;
+    Cell* item = VAL_ARRAY_Known_Mutable_AT(&tail, boot_natives);
     assert(VAL_SPECIFIER(boot_natives) == SPECIFIED);
 
     // !!! We could avoid this by making NATIVE a specialization of a NATIVE*

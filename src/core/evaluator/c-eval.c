@@ -83,7 +83,7 @@
 // value of that is.  These macros help make the code less ambiguous.
 //
 #undef At_Level
-#define L_next              cast(const CellT*, L->feed->p)
+#define L_next              cast(const Cell*, L->feed->p)
 #define L_next_gotten       L->feed->gotten
 #define L_current           L->u.eval.current
 #define L_current_gotten    L->u.eval.current_gotten
@@ -963,7 +963,7 @@ Bounce Evaluator_Executor(Level(*) L)
       tuple_common:  /////////////////////////////////////////////////////////
 
       case REB_TUPLE: {
-        Cell(const*) head = VAL_SEQUENCE_AT(SCRATCH, L_current, 0);
+        const Cell* head = VAL_SEQUENCE_AT(SCRATCH, L_current, 0);
         if (IS_BLANK(head) or ANY_INERT(head)) {
             Derelativize(OUT, L_current, L_specifier);
             break;
@@ -1026,7 +1026,7 @@ Bounce Evaluator_Executor(Level(*) L)
     // blank at its head, and it evaluates to itself.
 
       case REB_PATH: {
-        Cell(const*) temp = VAL_SEQUENCE_AT(SPARE, L_current, 0);
+        const Cell* temp = VAL_SEQUENCE_AT(SPARE, L_current, 0);
         if (IS_BLANK(temp) or ANY_INERT(temp)) {
             Derelativize(OUT, L_current, L_specifier);
             break;
@@ -1384,8 +1384,8 @@ Bounce Evaluator_Executor(Level(*) L)
         if (VAL_LEN_AT(L_current) == 0)  // not supported, see [1]
             fail ("SET-BLOCK! must not be empty for now.");
 
-        Cell(const*) tail;
-        Cell(const*) check = VAL_ARRAY_AT(&tail, L_current);
+        const Cell* tail;
+        const Cell* check = VAL_ARRAY_AT(&tail, L_current);
         REBSPC *check_specifier = Derive_Specifier(L_specifier, L_current);
 
         Trash_Pointer_If_Debug(L_current);  // might be SPARE, we use it now
@@ -1521,8 +1521,8 @@ Bounce Evaluator_Executor(Level(*) L)
                 fail ("Lazy Object Reified to Lazy Object: Not Allowed");
         }
 
-        Cell(const*) pack_meta_at = nullptr;  // pack block items are ^META'd
-        Cell(const*) pack_meta_tail = nullptr;
+        const Cell* pack_meta_at = nullptr;  // pack block items are ^META'd
+        const Cell* pack_meta_tail = nullptr;
         REBSPC* pack_specifier = nullptr;
 
         if (Is_Barrier(OUT))  // !!! Hack, wnat ([/foo]: eval) to always work

@@ -64,7 +64,7 @@
 // !!! Note: The FLAVOR_API state can be converted to an instruction for
 // releasing the handle...so beware using FLAVOR_API for detection.
 //
-inline static bool Is_Api_Value(Cell(const*) v) {
+inline static bool Is_Api_Value(const Cell* v) {
     return did (v->header.bits & NODE_FLAG_ROOT);
 }
 
@@ -173,7 +173,7 @@ inline static void Free_Value(REBVAL *v)
 //
 // But assuming errors don't happen that often, it's cleaner to have one call.
 //
-inline static REBVAL *rebSpecific(Cell(const*) v, REBSPC *specifier)
+inline static REBVAL *rebSpecific(const Cell* v, REBSPC *specifier)
     { return Derelativize(Alloc_Value(), v, specifier);}
 
 

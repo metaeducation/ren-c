@@ -130,7 +130,7 @@ inline static void INIT_BONUS_KEYSOURCE(Array* varlist, Node* keysource) {
 // evaluator.
 //
 
-inline static REBVAL *Init_Return_Signal_Untracked(Cell(*) out, char ch) {
+inline static REBVAL *Init_Return_Signal_Untracked(Cell* out, char ch) {
     Reset_Unquoted_Header_Untracked(
         out,
         FLAG_HEART_BYTE(REB_T_RETURN_SIGNAL) | CELL_MASK_NO_NODES
@@ -266,7 +266,7 @@ inline static Phase* ACT_IDENTITY(Action* action) {
     cast(Value(*), Series_Data(ensure(Phase*, phase)))
 
 
-inline static bool Is_Frame_Details(NoQuote(Cell(const*)) v) {
+inline static bool Is_Frame_Details(NoQuote(const Cell*) v) {
     assert(HEART_BYTE(v) == REB_FRAME);
     return IS_DETAILS(cast(Stub*, VAL_NODE1(v)));
 }
@@ -310,13 +310,13 @@ inline static Details* Phase_Details(Phase* a) {
 // a running frame gets re-executed.  More study is needed.
 //
 
-inline static Context* VAL_FRAME_BINDING(NoQuote(Cell(const*)) v) {
+inline static Context* VAL_FRAME_BINDING(NoQuote(const Cell*) v) {
     assert(HEART_BYTE(v) == REB_FRAME);
     return CTX(BINDING(v));
 }
 
 inline static void INIT_VAL_FRAME_BINDING(
-    Cell(*) v,
+    Cell* v,
     Context* binding
 ){
     assert(HEART_BYTE(v) == REB_FRAME);
@@ -389,7 +389,7 @@ inline static REBPAR *ACT_PARAMS_HEAD(Action* a) {
 //
 inline static Value(*) DETAILS_AT(Details* details, Length n) {
     assert(n != 0 and n < details->content.dynamic.used);
-    Cell(*) at = cast(Cell(*), details->content.dynamic.data) + n;
+    Cell* at = cast(Cell*, details->content.dynamic.data) + n;
     assert(Is_Fresh(at) or not IS_RELATIVE(at));
     return cast(Value(*), at);
 }
@@ -457,7 +457,7 @@ inline static void Init_Key(REBKEY *dest, const Symbol* symbol)
 #define ACT_ADJUNCT(a)             MISC(DetailsAdjunct, ACT_IDENTITY(a))
 
 
-inline static Action* VAL_ACTION(NoQuote(Cell(const*)) v) {
+inline static Action* VAL_ACTION(NoQuote(const Cell*) v) {
     assert(HEART_BYTE(v) == REB_FRAME);
     Series* s = SER(VAL_NODE1(v));  // maybe exemplar, maybe details
     if (Get_Series_Flag(s, INACCESSIBLE))
@@ -481,7 +481,7 @@ inline static Action* VAL_ACTION(NoQuote(Cell(const*)) v) {
 // actually make more sense.
 
 inline static void INIT_VAL_ACTION_LABEL(
-    Cell(*) v,
+    Cell* v,
     Option(const Symbol*) label
 ){
     ASSERT_CELL_WRITABLE_EVIL_MACRO(v);  // archetype R/O
@@ -586,7 +586,7 @@ inline static bool Action_Is_Base_Of(Action* base, Action* derived) {
 // no label.
 //
 inline static REBVAL *Init_Frame_Details_Core(
-    Cell(*) out,
+    Cell* out,
     Phase* a,
     Option(const Symbol*) label,  // allowed to be ANONYMOUS
     Context* binding  // allowed to be UNBOUND
@@ -714,14 +714,14 @@ inline static Value(*) Activatify(Value(*) v) {
     return VAL(v);
 }
 
-inline static Cell(*) Deactivate_If_Activation(Cell(*) v) {
+inline static Cell* Deactivate_If_Activation(Cell* v) {
     if (Is_Activation(v))
         QUOTE_BYTE(v) = UNQUOTED_1;
     return v;
 }
 
 
-inline static bool Is_Enfixed(NoQuote(Cell(const*)) v) {
+inline static bool Is_Enfixed(NoQuote(const Cell*) v) {
     assert(HEART_BYTE(v) == REB_FRAME);
     return Get_Cell_Flag_Unchecked(v, ENFIX_FRAME);
 }

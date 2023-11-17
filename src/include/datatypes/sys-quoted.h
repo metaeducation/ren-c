@@ -59,19 +59,19 @@
 // problems in Rebol languages.
 //
 
-inline static Count VAL_QUOTED_DEPTH(Cell(const*) v) {
+inline static Count VAL_QUOTED_DEPTH(const Cell* v) {
     assert(Is_Quoted(v));
     return (QUOTE_BYTE(v) - UNQUOTED_1) >> 1;
 }
 
-inline static Count VAL_NUM_QUOTES(Cell(const*) v) {
+inline static Count VAL_NUM_QUOTES(const Cell* v) {
     assert(QUOTE_BYTE(v) != ISOTOPE_0);
     return (QUOTE_BYTE(v) - UNQUOTED_1) >> 1;
 }
 
 // Turns X into 'X, or '''[1 + 2] into '''''(1 + 2), etc.
 //
-inline static Cell(*) Quotify_Core(Cell(*) v, Count depth) {
+inline static Cell* Quotify_Core(Cell* v, Count depth) {
     if (depth == 0)
         return v;
 
@@ -88,14 +88,14 @@ inline static Cell(*) Quotify_Core(Cell(*) v, Count depth) {
     inline static Value(*) Quotify(Value(*) v, Count depth)
         { return cast(Value(*), Quotify_Core(v, depth)); }
 
-    inline static Cell(*) Quotify(Cell(*) v, Count depth)
+    inline static Cell* Quotify(Cell* v, Count depth)
         { return Quotify_Core(v, depth); }
 #endif
 
 
 // Turns 'X into X, or '''''[1 + 2] into '''(1 + 2), etc.
 //
-inline static Cell(*) Unquotify_Core(Cell(*) v, Count unquotes) {
+inline static Cell* Unquotify_Core(Cell* v, Count unquotes) {
     if (unquotes == 0) {
         assert(QUOTE_BYTE(v) != ISOTOPE_0);
         return v;
@@ -114,16 +114,16 @@ inline static Cell(*) Unquotify_Core(Cell(*) v, Count unquotes) {
     inline static Value(*) Unquotify(Value(*) v, Count depth)
         { return cast(Value(*), Unquotify_Core(v, depth)); }
 
-    inline static Cell(*) Unquotify(Cell(*) v, Count depth)
+    inline static Cell* Unquotify(Cell* v, Count depth)
         { return Unquotify_Core(v, depth); }
 #endif
 
 
 #define VAL_UNESCAPED(v) \
-    cast(NoQuote(Cell(const*)), (v))
+    cast(NoQuote(const Cell*), (v))
 
 
-inline static Count Dequotify(Cell(*) v) {
+inline static Count Dequotify(Cell* v) {
     Count depth = VAL_NUM_QUOTES(v);
     if (QUOTE_BYTE(v) & NONQUASI_BIT)
         QUOTE_BYTE(v) = UNQUOTED_1;

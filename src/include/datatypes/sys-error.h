@@ -71,5 +71,5 @@ inline static Atom(*) Raisify(Atom(*) v) {
     void Raisify(Value(*) v) = delete;
 #endif
 
-inline static bool Is_Meta_Of_Raised(Cell(const*) v)
+inline static bool Is_Meta_Of_Raised(const Cell* v)
   { return HEART_BYTE(v) == REB_ERROR and QUOTE_BYTE(v) == QUASI_2; }

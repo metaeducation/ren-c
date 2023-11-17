@@ -103,8 +103,8 @@ Bounce MAKE_Sequence(
         REBLEN len = 0;
         REBINT n;
 
-        Cell(const*) tail;
-        Cell(const*) item = VAL_ARRAY_AT(&tail, arg);
+        const Cell* tail;
+        const Cell* item = VAL_ARRAY_AT(&tail, arg);
 
         Byte buf[MAX_TUPLE];
         Byte* vp = buf;
@@ -387,7 +387,7 @@ REBTYPE(Sequence)
         INCLUDE_PARAMS_OF_PICK_P;
         UNUSED(ARG(location));
 
-        Cell(const*) picker = ARG(picker);
+        const Cell* picker = ARG(picker);
 
         REBINT n;
         if (IS_INTEGER(picker) or IS_DECIMAL(picker)) { // #2312
@@ -434,7 +434,7 @@ REBTYPE(Sequence)
 //
 //  MF_Sequence: C
 //
-void MF_Sequence(REB_MOLD *mo, NoQuote(Cell(const*)) v, bool form)
+void MF_Sequence(REB_MOLD *mo, NoQuote(const Cell*) v, bool form)
 {
     enum Reb_Kind kind = CELL_HEART(v);
     char interstitial = ANY_TUPLE_KIND(kind) ? '.' : '/';
@@ -454,7 +454,7 @@ void MF_Sequence(REB_MOLD *mo, NoQuote(Cell(const*)) v, bool form)
     REBLEN len = VAL_SEQUENCE_LEN(v);
     REBLEN i;
     for (i = 0; i < len; ++i) {
-        Cell(const*) element = VAL_SEQUENCE_AT(temp, v, i);
+        const Cell* element = VAL_SEQUENCE_AT(temp, v, i);
         enum Reb_Kind element_kind = VAL_TYPE(element);
 
         if (first)

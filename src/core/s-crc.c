@@ -113,7 +113,7 @@ uint32_t Hash_UTF8_Len_Caseless(Utf8(const*) cp, REBLEN len) {
 // Fails if datatype cannot be hashed.  Note that the specifier is not used
 // in hashing, because it is not used in comparisons either.
 //
-uint32_t Hash_Value(Cell(const*) cell)
+uint32_t Hash_Value(const Cell* cell)
 {
     enum Reb_Kind heart = CELL_HEART(cell);
 
@@ -371,7 +371,7 @@ Series* Make_Hash_Series(REBLEN len)
 // A map has an additional hash element hidden in the ->extra field of the
 // Stub which needs to be given to memory management as well.
 //
-Value(*) Init_Map(Cell(*) out, Map* map)
+Value(*) Init_Map(Cell* out, Map* map)
 {
     if (MAP_HASHLIST(map))
         Force_Series_Managed(MAP_HASHLIST(map));
@@ -399,8 +399,8 @@ Series* Hash_Block(const REBVAL *block, REBLEN skip, bool cased)
     // Create the hash array (integer indexes):
     Series* hashlist = Make_Hash_Series(VAL_LEN_AT(block));
 
-    Cell(const*) tail;
-    Cell(const*) value = VAL_ARRAY_AT(&tail, block);
+    const Cell* tail;
+    const Cell* value = VAL_ARRAY_AT(&tail, block);
     if (value == tail)
         return hashlist;
 

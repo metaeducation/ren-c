@@ -68,7 +68,7 @@
 // * For the forward declarations of series subclasses, see %reb-defs.h
 //
 // * Because a series contains a union member that embeds a Cell directly,
-//   `CellT` must be fully defined before this file can compile.  Hence
+//   `Cell` must be fully defined before this file can compile.  Hence
 //   %sys-rebval.h must already be included.
 //
 // * For the API of operations available on Series types, see %sys-series.h
@@ -576,13 +576,13 @@ struct StubDynamicStruct {
     // than the count of "logical" elements, e.g. codepoints.  The actual
     // logical length in such cases will be in the MISC(length) field.
     //
-    REBLEN used;
+    Length used;
 
     // `rest` is the total number of units from bias to end.  Having a
     // slightly weird name draws attention to the idea that it's not really
     // the "capacity", just the "rest of the capacity after the bias".
     //
-    REBLEN rest;
+    Length rest;
 
     // This is the 4th pointer on 32-bit platforms which could be used for
     // something when a series is dynamic.
@@ -605,25 +605,20 @@ union StubContentUnion {
     // arrays is technically available for other purposes.
     //
     union {
-        // Due to strict aliasing requirements, this has to be initialized
-        // as a value to read cell data.  It is a raw cell in order to let
-        // series nodes be memcpy()'d as part of their mechanics, but this
-        // should not be used to actually "move" cells!  Use Copy_Cell()
-        //
-        RawCell cells[1];
+        Cell cell;
 
       #if DEBUG_USE_UNION_PUNS
-        char utf8_pun[sizeof(CellT)];  // debug watchlist insight into UTF-8
-        REBWCHAR ucs2_pun[sizeof(CellT)/sizeof(Codepoint)];  // wchar_t insight
+        char utf8_pun[sizeof(Cell)];  // debug watchlist insight into UTF-8
+        REBWCHAR ucs2_pun[sizeof(Cell)/sizeof(Codepoint)];  // wchar_t insight
       #endif
     } fixed;
 };
 
 #define Stub_Cell(s) \
-    cast(Cell(const*), &(s)->content.fixed.cells[0])  // fast Array_Single()
+    cast(const Cell*, &(s)->content.fixed.cell)  // fast Array_Single()
 
 #define mutable_Stub_Cell(s) \
-    cast(Cell(*), &(s)->content.fixed.cells[0])  // fast Array_Single()
+    cast(Cell*, &(s)->content.fixed.cell)  // fast Array_Single()
 
 
 union StubLinkUnion {

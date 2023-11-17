@@ -56,7 +56,7 @@
 #undef Is_Level_Fulfilling
 
 
-#define L_next              cast(const CellT*, L->feed->p)
+#define L_next              cast(const Cell*, L->feed->p)
 #define L_next_gotten       L->feed->gotten
 #define L_specifier         Level_Specifier(L)
 
@@ -1208,7 +1208,7 @@ void Push_Action(
         Set_Series_Flag(s, INACCESSIBLE);
         GC_Kill_Series(s);  // ^-- needs non-null data unless INACCESSIBLE
         L->varlist = nullptr;
-        fail (Error_No_Memory(sizeof(CellT) * (num_args + 1 + 1)));
+        fail (Error_No_Memory(sizeof(Cell) * (num_args + 1 + 1)));
     }
 
     L->rootvar = cast(REBVAL*, s->content.dynamic.data);
@@ -1231,8 +1231,8 @@ void Push_Action(
     // notion of being able to just memset() to 0 or calloc().  The debug
     // build still wants to initialize the cells with file/line info though.
     //
-    Cell(*) tail = Array_Tail(L->varlist);
-    Cell(*) prep = L->rootvar + 1;
+    Cell* tail = Array_Tail(L->varlist);
+    Cell* prep = L->rootvar + 1;
     if (IS_DETAILS(act)) {
         for (; prep < tail; ++prep)
             USED(Erase_Cell(prep));
@@ -1264,7 +1264,7 @@ void Push_Action(
     //
     Array* partials = try_unwrap(ACT_PARTIALS(act));
     if (partials) {
-        Cell(const*) word_tail = Array_Tail(partials);
+        const Cell* word_tail = Array_Tail(partials);
         const REBVAL *word = SPECIFIC(Array_Head(partials));
         for (; word != word_tail; ++word)
             Copy_Cell(PUSH(), word);
@@ -1416,7 +1416,7 @@ void Drop_Action(Level(*) L) {
         assert(Not_Series_Flag(L->varlist, INACCESSIBLE));
         assert(Not_Node_Managed(L->varlist));
 
-        Cell(*) rootvar = Array_Head(L->varlist);
+        Cell* rootvar = Array_Head(L->varlist);
         assert(CTX_VARLIST(VAL_CONTEXT(rootvar)) == L->varlist);
         INIT_VAL_FRAME_PHASE_OR_LABEL(rootvar, nullptr);  // can't trash ptr
         Trash_Pointer_If_Debug(mutable_BINDING(rootvar));

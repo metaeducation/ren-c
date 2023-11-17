@@ -49,7 +49,7 @@
 // functions specifically take noquote cells, so you can't pass REB_QUOTED to
 // them.  The handling for QUOTED! is in the comparison dispatch itself.
 //
-REBINT CT_Quoted(NoQuote(Cell(const*)) a, NoQuote(Cell(const*)) b, bool strict)
+REBINT CT_Quoted(NoQuote(const Cell*) a, NoQuote(const Cell*) b, bool strict)
 {
     UNUSED(a); UNUSED(b); UNUSED(strict);
     assert(!"CT_Quoted should never be called");
@@ -557,8 +557,8 @@ DECLARE_NATIVE(pack)
         return Unquotify(Copy_Cell(OUT, v), 1);
 
     if (IS_THE_BLOCK(v)) {
-        Cell(const*) tail;
-        Cell(const*) at = VAL_ARRAY_AT(&tail, v);
+        const Cell* tail;
+        const Cell* at = VAL_ARRAY_AT(&tail, v);
         for (; at != tail; ++at)
             Quotify(Derelativize(PUSH(), at, VAL_SPECIFIER(v)), 1);
 

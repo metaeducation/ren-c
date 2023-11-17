@@ -175,7 +175,7 @@ inline static Context* CTX_FRAME_BINDING(Context* c) {
 }
 
 inline static void INIT_VAL_CONTEXT_ROOTVAR_Core(
-    Cell(*) out,
+    Cell* out,
     enum Reb_Kind kind,
     Array* varlist
 ){
@@ -197,7 +197,7 @@ inline static void INIT_VAL_CONTEXT_ROOTVAR_Core(
     INIT_VAL_CONTEXT_ROOTVAR_Core(TRACK(out), (kind), (varlist))
 
 inline static void INIT_VAL_FRAME_ROOTVAR_Core(
-    Cell(*) out,
+    Cell* out,
     Array* varlist,
     Phase* phase,
     Context* binding  // allowed to be UNBOUND
@@ -232,7 +232,7 @@ inline static void INIT_VAL_FRAME_ROOTVAR_Core(
 // Note: Due to the sharing of keylists, features like whether a value in a
 // context is hidden or protected are accomplished using special bits on the
 // var cells, and *not the keys*.  These bits are not copied when the value
-// is moved (see CELL_MASK_COPIED regarding this mechanic)
+// is moved (see CELL_MASK_COPY regarding this mechanic)
 //
 
 inline static KeyList* CTX_KEYLIST(Context* c) {
@@ -289,7 +289,7 @@ inline static const REBKEY *CTX_KEY(Context* c, REBLEN n) {
     return Series_At(const REBKEY, CTX_KEYLIST(c), n - 1);
 }
 
-inline static REBVAR *CTX_VAR(Context* c, REBLEN n) {  // 1-based, no Cell(*)
+inline static REBVAR *CTX_VAR(Context* c, REBLEN n) {  // 1-based, no Cell*
     assert(Not_Series_Flag(CTX_VARLIST(c), INACCESSIBLE));
     assert(n != 0 and n <= CTX_LEN(c));
     return cast(REBVAR*, cast(Series*, c)->content.dynamic.data) + n;
@@ -407,7 +407,7 @@ inline static void FAIL_IF_INACCESSIBLE_CTX(Context* c) {
 // be checked elsewhere...or also check it before use.
 //
 
-inline static Context* VAL_CONTEXT(NoQuote(Cell(const*)) v) {
+inline static Context* VAL_CONTEXT(NoQuote(const Cell*) v) {
     assert(ANY_CONTEXT_KIND(CELL_HEART_UNCHECKED(v)));
     Context* c;
 
@@ -441,25 +441,25 @@ inline static Context* VAL_CONTEXT(NoQuote(Cell(const*)) v) {
 // So extraction of the phase has to be sensitive to this.
 //
 
-inline static void INIT_VAL_FRAME_PHASE(Cell(*) v, Phase* phase) {
+inline static void INIT_VAL_FRAME_PHASE(Cell* v, Phase* phase) {
     assert(IS_FRAME(v));  // may be marked protected (e.g. archetype)
     INIT_VAL_FRAME_PHASE_OR_LABEL(v, phase);
 }
 
-inline static Phase* VAL_FRAME_PHASE(NoQuote(Cell(const*)) v) {
+inline static Phase* VAL_FRAME_PHASE(NoQuote(const Cell*) v) {
     Series* s = VAL_FRAME_PHASE_OR_LABEL(v);
     if (not s or IS_SYMBOL(s))  // ANONYMOUS or label, not a phase
         return CTX_FRAME_PHASE(VAL_CONTEXT(v));  // use archetype
     return cast(Phase*, s);  // cell has its own phase, return it
 }
 
-inline static bool IS_FRAME_PHASED(NoQuote(Cell(const*)) v) {
+inline static bool IS_FRAME_PHASED(NoQuote(const Cell*) v) {
     assert(CELL_HEART(v) == REB_FRAME);
     Series* s = VAL_FRAME_PHASE_OR_LABEL(v);
     return s and not IS_SYMBOL(s);
 }
 
-inline static Option(const Symbol*) VAL_FRAME_LABEL(NoQuote(Cell(const*)) v) {
+inline static Option(const Symbol*) VAL_FRAME_LABEL(NoQuote(const Cell*) v) {
     Series* s = VAL_FRAME_PHASE_OR_LABEL(v);  // VAL_ACTION_PARTIALS_OR_LABEL as well
     if (s and IS_SYMBOL(s))  // label in value
         return SYM(s);
@@ -467,7 +467,7 @@ inline static Option(const Symbol*) VAL_FRAME_LABEL(NoQuote(Cell(const*)) v) {
 }
 
 inline static void INIT_VAL_FRAME_LABEL(
-    Cell(*) v,
+    Cell* v,
     Option(const String*) label
 ){
     assert(IS_FRAME(v));
@@ -485,12 +485,12 @@ inline static void INIT_VAL_FRAME_LABEL(
 //
 // However, this does not mean that all functions should early extract a
 // VAL_CONTEXT() and then do all operations in terms of that...because this
-// potentially loses information present in the Cell(*) cell.  If the value
+// potentially loses information present in the Cell* cell.  If the value
 // is a frame, then the phase information conveys which fields should be
 // visible for that phase of execution and which aren't.
 //
 
-inline static const REBKEY *VAL_CONTEXT_KEYS_HEAD(NoQuote(Cell(const*)) context)
+inline static const REBKEY *VAL_CONTEXT_KEYS_HEAD(NoQuote(const Cell*) context)
 {
     if (CELL_HEART(context) != REB_FRAME)
         return CTX_KEYS_HEAD(VAL_CONTEXT(context));
@@ -510,7 +510,7 @@ inline static const REBKEY *VAL_CONTEXT_KEYS_HEAD(NoQuote(Cell(const*)) context)
 // the 0 slot of the context's varlist.
 //
 inline static REBVAL *Init_Context_Cell(
-    Cell(*) out,
+    Cell* out,
     enum Reb_Kind kind,
     Context* c
 ){
@@ -531,7 +531,7 @@ inline static REBVAL *Init_Context_Cell(
     Init_Context_Cell((out), REB_PORT, (c))
 
 inline static REBVAL *Init_Frame(
-    Cell(*) out,
+    Cell* out,
     Context* c,
     Option(const String*) label  // nullptr (ANONYMOUS) is okay
 ){

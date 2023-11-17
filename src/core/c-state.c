@@ -288,7 +288,7 @@ void Replug_Stack(Level(*) L, Level(*) base, Value(*) plug) {
   blockscope {
 
     Array* array = VAL_ARRAY_KNOWN_MUTABLE(plug);
-    Cell(*) item = Array_Tail(array);
+    Cell* item = Array_Tail(array);
 
     if (Get_Subclass_Flag(PLUG, array, HAS_MOLD)) {  // restore mold from plug
         --item;
@@ -298,7 +298,7 @@ void Replug_Stack(Level(*) L, Level(*) base, Value(*) plug) {
     }
 
     if (Get_Subclass_Flag(PLUG, array, HAS_DATA_STACK)) {
-        Cell(*) stacked = Array_Head(array);
+        Cell* stacked = Array_Head(array);
         for (; stacked != item; ++stacked)
             Move_Cell(PUSH(), SPECIFIC(stacked));
     }

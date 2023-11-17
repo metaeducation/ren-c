@@ -123,7 +123,7 @@ typedef uint_fast32_t Codepoint;
 // inherit.  You have to specify which series you want to extract, e.g.
 // Get_Series_Flag(CTX_VARLIST(context)), not just Get_Series_Flag(context).
 //
-// Note that because the Series structure includes a CellT by value,
+// Note that because the Series structure includes a Cell by value,
 // the %sys-rebser.h must be included *after* %sys-rebval.h; however the
 // higher level definitions in %sys-series.h are *before* %sys-value.h.
 //

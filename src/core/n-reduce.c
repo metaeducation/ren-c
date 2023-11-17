@@ -158,8 +158,8 @@ DECLARE_NATIVE(reduce)
         return RAISE(Error_Need_Non_Null_Raw());  // error enables e.g. CURTAIL
 
     if (Is_Splice(OUT)) {
-        Cell(const*) tail;
-        Cell(const*) at = VAL_ARRAY_AT(&tail, OUT);
+        const Cell* tail;
+        const Cell* at = VAL_ARRAY_AT(&tail, OUT);
         bool newline = Get_Cell_Flag(v, NEWLINE_BEFORE);
         for (; at != tail; ++at) {
             Derelativize(PUSH(), at, VAL_SPECIFIER(OUT));
@@ -335,7 +335,7 @@ DECLARE_NATIVE(reduce_each)
 }}
 
 
-bool Match_For_Compose(NoQuote(Cell(const*)) group, const REBVAL *label) {
+bool Match_For_Compose(NoQuote(const Cell*) group, const REBVAL *label) {
     assert(ANY_GROUP_KIND(CELL_HEART(group)));
 
     if (Is_Nulled(label))
@@ -346,7 +346,7 @@ bool Match_For_Compose(NoQuote(Cell(const*)) group, const REBVAL *label) {
     if (VAL_LEN_AT(group) == 0) // you have a pattern, so leave `()` as-is
         return false;
 
-    Cell(const*) first = VAL_ARRAY_ITEM_AT(group);
+    const Cell* first = VAL_ARRAY_ITEM_AT(group);
     if (VAL_TYPE(first) != VAL_TYPE(label))
         return false;
 
@@ -372,7 +372,7 @@ bool Match_For_Compose(NoQuote(Cell(const*)) group, const REBVAL *label) {
 static void Push_Composer_Level(
     Atom(*) out,
     Level(*) main_level,
-    Cell(const*) arraylike,
+    const Cell* arraylike,
     REBSPC *specifier
 ){
     Value(const*) adjusted = nullptr;
@@ -419,7 +419,7 @@ static void Push_Composer_Level(
 static Atom(*) Finalize_Composer_Level(
     Atom(*) out,
     Level(*) L,
-    Cell(const*) composee  // special handling if the output kind is a sequence
+    const Cell* composee  // special handling if the output kind is a sequence
 ){
     if (Is_Raised(out)) {
         Drop_Data_Stack_To(L->baseline.stack_base);
@@ -562,7 +562,7 @@ Bounce Composer_Executor(Level(*) const L)
     if (Is_Level_At_End(L))
         goto finished;
 
-    Cell(const*) at = At_Level(L);
+    const Cell* at = At_Level(L);
 
     if (not ANY_ARRAYLIKE(at)) {  // won't substitute/recurse
         Derelativize(PUSH(), at, L_specifier);  // keep newline flag
@@ -572,7 +572,7 @@ Bounce Composer_Executor(Level(*) const L)
     enum Reb_Kind heart = CELL_HEART(at);  // quoted groups match, see [1]
 
     REBSPC *match_specifier = nullptr;
-    NoQuote(Cell(const*)) match = nullptr;
+    NoQuote(const Cell*) match = nullptr;
 
     if (not ANY_GROUP_KIND(heart)) {
         //
@@ -604,7 +604,7 @@ Bounce Composer_Executor(Level(*) const L)
     if (Is_Nulled(predicate))
         goto evaluate_group;
 
-    Derelativize(SPARE, cast(Cell(const*), match), match_specifier);
+    Derelativize(SPARE, cast(const Cell*, match), match_specifier);
     Dequotify(SPARE);  // cast was needed because there may have been quotes
     HEART_BYTE(SPARE) = REB_GROUP;  // don't confuse with decoration
     if (not Is_Nulled(label))
@@ -713,8 +713,8 @@ Bounce Composer_Executor(Level(*) const L)
     if (Is_Splice(OUT)) {  // GROUP! at "quoting level -1" means splice
         Quasify_Isotope(OUT);
 
-        Cell(const*) push_tail;
-        Cell(const*) push = VAL_ARRAY_AT(&push_tail, OUT);
+        const Cell* push_tail;
+        const Cell* push = VAL_ARRAY_AT(&push_tail, OUT);
         if (push != push_tail) {
             Derelativize(PUSH(), push, VAL_SPECIFIER(OUT));
             if (Get_Cell_Flag(At_Level(L), NEWLINE_BEFORE))
@@ -853,18 +853,18 @@ enum FLATTEN_LEVEL {
 
 
 static void Flatten_Core(
-    Cell(*) head,
-    Cell(const*) tail,
+    Cell* head,
+    const Cell* tail,
     REBSPC *specifier,
     enum FLATTEN_LEVEL level
 ) {
-    Cell(*) item = head;
+    Cell* item = head;
     for (; item != tail; ++item) {
         if (IS_BLOCK(item) and level != FLATTEN_NOT) {
             REBSPC *derived = Derive_Specifier(specifier, item);
 
-            Cell(const*) sub_tail;
-            Cell(*) sub = VAL_ARRAY_AT_Ensure_Mutable(&sub_tail, item);
+            const Cell* sub_tail;
+            Cell* sub = VAL_ARRAY_AT_Ensure_Mutable(&sub_tail, item);
             Flatten_Core(
                 sub,
                 sub_tail,
@@ -896,8 +896,8 @@ DECLARE_NATIVE(flatten)
 
     StackIndex base = TOP_INDEX;
 
-    Cell(const*) tail;
-    Cell(*) at = VAL_ARRAY_AT_Ensure_Mutable(&tail, ARG(block));
+    const Cell* tail;
+    Cell* at = VAL_ARRAY_AT_Ensure_Mutable(&tail, ARG(block));
     Flatten_Core(
         at,
         tail,

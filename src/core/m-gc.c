@@ -124,9 +124,9 @@
 #endif
 
 
-static void Queue_Mark_Cell_Deep(Cell(const*) v);
+static void Queue_Mark_Cell_Deep(const Cell* v);
 
-inline static void Queue_Mark_Maybe_Fresh_Cell_Deep(Cell(*) v) {
+inline static void Queue_Mark_Maybe_Fresh_Cell_Deep(Cell* v) {
     if (not Is_Fresh(v))
         Queue_Mark_Cell_Deep(v);
 }
@@ -335,9 +335,9 @@ static void Queue_Unmarked_Accessible_Series_Deep(Series* s)
 //
 //  Queue_Mark_Cell_Deep: C
 //
-static void Queue_Mark_Cell_Deep(Cell(const*) cv)
+static void Queue_Mark_Cell_Deep(const Cell* cv)
 {
-    Cell(*) v = m_cast(Cell(*), cv);  // we're the system, we can do this
+    Cell* v = m_cast(Cell*, cv);  // we're the system, we can do this
 
   #if DEBUG_UNREADABLE_TRASH
     if (IS_TRASH(cv))  // tolerate unreadable "trash" in debug builds
@@ -419,8 +419,8 @@ static void Propagate_All_GC_Marks(void)
         //
         assert(Is_Node_Marked(a));
 
-        Cell(*) v = Array_Head(a);
-        Cell(const*) tail = Array_Tail(a);
+        Cell* v = Array_Head(a);
+        const Cell* tail = Array_Tail(a);
         for (; v != tail; ++v) {
           #if DEBUG
             Flavor flavor = Series_Flavor(a);
@@ -572,8 +572,8 @@ void Run_All_Handle_Cleaners(void) {
             if (not Is_Series_Array(stub))
                 continue;
 
-            Cell(const*) item_tail = Array_Tail(cast(Array*, stub));
-            Cell(*) item = Array_Head(cast(Array*, stub));
+            const Cell* item_tail = Array_Tail(cast(Array*, stub));
+            Cell* item = Array_Head(cast(Array*, stub));
             for (; item != item_tail; ++item) {
                 if (CELL_HEART(item) != REB_HANDLE)
                     continue;
@@ -714,8 +714,8 @@ static void Mark_Root_Series(void)
                     if (node_MISC(Node, a))
                         Queue_Mark_Node_Deep(&a->misc.any.node);
 
-                Cell(const*) item_tail = Array_Tail(a);
-                Cell(*) item = Array_Head(a);
+                const Cell* item_tail = Array_Tail(a);
+                Cell* item = Array_Head(a);
                 for (; item != item_tail; ++item)
                     Queue_Mark_Cell_Deep(item);
             }
@@ -739,7 +739,7 @@ static void Mark_Root_Series(void)
 //
 static void Mark_Data_Stack(void)
 {
-    Cell(const*) head = Array_Head(g_ds.array);
+    const Cell* head = Array_Head(g_ds.array);
     assert(Is_Cell_Poisoned(head));  // Data_Stack_At(0) is deliberately invalid
 
     REBVAL *stackval = g_ds.movable_top;
@@ -857,7 +857,7 @@ static void Mark_Level_Stack_Deep(void)
         Queue_Mark_Maybe_Fresh_Cell_Deep(&L->spare);
 
         if (L->executor == &Evaluator_Executor) {  // has extra GC-safe cell
-            Queue_Mark_Maybe_Fresh_Cell_Deep(cast(Cell(*), &L->u.eval.scratch));
+            Queue_Mark_Maybe_Fresh_Cell_Deep(cast(Cell*, &L->u.eval.scratch));
             goto propagate_and_continue;
         }
 
@@ -968,11 +968,11 @@ static void Mark_Level_Stack_Deep(void)
 //////////////////////////////////////////////////////////////////////////////
 //
 // 1. We use a generic byte pointer (unsigned char*) to dodge the rules for
-//    strict aliases, as the pool contain pairs of CellT from Alloc_Pairing(),
+//    strict aliases, as the pool contain pairs of Cell from Alloc_Pairing(),
 //    or a Series from Prep_Stub().  The shared first byte node masks are
 //    defined and explained in %sys-rebnod.h
 //
-// 2. For efficiency of memory use, Stub is nominally 2*sizeof(CellT), and
+// 2. For efficiency of memory use, Stub is nominally 2*sizeof(Cell), and
 //    so pairs can use the same Stub nodes.  But features that might make the
 //    two cells a size greater than Stub size require doing pairings in a
 //    different pool.
@@ -1077,7 +1077,7 @@ Count Sweep_Series(void)
         Length n = g_mem.pools[PAIR_POOL].num_units_per_segment;
 
         Byte *unit = cast(Byte*, seg + 1);
-        for (; n > 0; --n, unit += 2 * sizeof(CellT)) {
+        for (; n > 0; --n, unit += 2 * sizeof(Cell)) {
             if (unit[0] == FREE_POOLUNIT_BYTE)
                 continue;
 

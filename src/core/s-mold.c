@@ -104,7 +104,7 @@ Byte* Prep_Mold_Overestimated(REB_MOLD *mo, REBLEN num_bytes)
 //
 // Emit the initial datatype function, depending on /ALL option
 //
-void Pre_Mold_Core(REB_MOLD *mo, NoQuote(Cell(const*)) v, bool all)
+void Pre_Mold_Core(REB_MOLD *mo, NoQuote(const Cell*) v, bool all)
 {
     if (all)
         Append_Ascii(mo->series, "#[");
@@ -137,7 +137,7 @@ void End_Mold_Core(REB_MOLD *mo, bool all)
 // For series that has an index, add the index for mold/all.
 // Add closing block.
 //
-void Post_Mold(REB_MOLD *mo, NoQuote(Cell(const*)) v)
+void Post_Mold(REB_MOLD *mo, NoQuote(const Cell*) v)
 {
     if (VAL_INDEX(v)) {
         Append_Codepoint(mo->series, ' ');
@@ -261,8 +261,8 @@ void Mold_Array_At(
 
     bool first_item = true;
 
-    Cell(const*) item_tail = Array_Tail(a);
-    Cell(const*) item = Array_At(a, index);
+    const Cell* item_tail = Array_Tail(a);
+    const Cell* item = Array_At(a, index);
     assert(item <= item_tail);
     while (item != item_tail) {
         if (Get_Cell_Flag(item, NEWLINE_BEFORE)) {
@@ -320,7 +320,7 @@ void Form_Array_At(
 
     REBINT n;
     for (n = 0; n < len;) {
-        Cell(const*) item = Array_At(array, index + n);
+        const Cell* item = Array_At(array, index + n);
         Option(Value(*)) wval = nullptr;
         if (context and (IS_WORD(item) or IS_GET_WORD(item))) {
             wval = Select_Symbol_In_Context(
@@ -352,7 +352,7 @@ void Form_Array_At(
 //
 //  MF_Fail: C
 //
-void MF_Fail(REB_MOLD *mo, NoQuote(Cell(const*)) v, bool form)
+void MF_Fail(REB_MOLD *mo, NoQuote(const Cell*) v, bool form)
 {
     UNUSED(form);
     UNUSED(mo);
@@ -369,7 +369,7 @@ void MF_Fail(REB_MOLD *mo, NoQuote(Cell(const*)) v, bool form)
 //
 //  MF_Unhooked: C
 //
-void MF_Unhooked(REB_MOLD *mo, NoQuote(Cell(const*)) v, bool form)
+void MF_Unhooked(REB_MOLD *mo, NoQuote(const Cell*) v, bool form)
 {
     UNUSED(mo);
     UNUSED(form);
@@ -388,7 +388,7 @@ void MF_Unhooked(REB_MOLD *mo, NoQuote(Cell(const*)) v, bool form)
 //
 void Mold_Or_Form_Cell(
     REB_MOLD *mo,
-    NoQuote(Cell(const*)) cell,
+    NoQuote(const Cell*) cell,
     bool form
 ){
     String* s = mo->series;
@@ -424,9 +424,9 @@ void Mold_Or_Form_Cell(
 //
 // Mold or form any value to string series tail.
 //
-void Mold_Or_Form_Value(REB_MOLD *mo, Cell(const*) v, bool form)
+void Mold_Or_Form_Value(REB_MOLD *mo, const Cell* v, bool form)
 {
-    // Mold hooks take a noquote cell and not a Cell(*), so they expect any
+    // Mold hooks take a noquote cell and not a Cell*, so they expect any
     // quotes applied to have already been done.
 
   #if DEBUG_UNREADABLE_TRASH
@@ -462,7 +462,7 @@ void Mold_Or_Form_Value(REB_MOLD *mo, Cell(const*) v, bool form)
 //
 // Form a value based on the mold opts provided.
 //
-String* Copy_Mold_Or_Form_Value(Cell(const*) v, Flags opts, bool form)
+String* Copy_Mold_Or_Form_Value(const Cell* v, Flags opts, bool form)
 {
     DECLARE_MOLD (mo);
     mo->opts = opts;
@@ -478,7 +478,7 @@ String* Copy_Mold_Or_Form_Value(Cell(const*) v, Flags opts, bool form)
 //
 // Form a value based on the mold opts provided.
 //
-String* Copy_Mold_Or_Form_Cell(NoQuote(Cell(const*)) cell, Flags opts, bool form)
+String* Copy_Mold_Or_Form_Cell(NoQuote(const Cell*) cell, Flags opts, bool form)
 {
     DECLARE_MOLD (mo);
     mo->opts = opts;

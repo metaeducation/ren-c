@@ -46,7 +46,7 @@ inline static void Init_For_Vararg_End(Atom(*) out, enum Reb_Vararg_Op op) {
 inline static bool Vararg_Op_If_No_Advance_Handled(
     Atom(*) out,
     enum Reb_Vararg_Op op,
-    Option(Cell(const*)) opt_look, // the first value in the varargs input
+    Option(const Cell*) opt_look, // the first value in the varargs input
     REBSPC *specifier,
     enum Reb_Param_Class pclass
 ){
@@ -55,7 +55,7 @@ inline static bool Vararg_Op_If_No_Advance_Handled(
         return true;
     }
 
-    Cell(const*) look = unwrap(opt_look);
+    const Cell* look = unwrap(opt_look);
 
     if (pclass == PARAM_CLASS_NORMAL and IS_COMMA(look)) {
         Init_For_Vararg_End(out, op);  // non-quoted COMMA!
@@ -136,7 +136,7 @@ inline static bool Vararg_Op_If_No_Advance_Handled(
 bool Do_Vararg_Op_Maybe_End_Throws_Core(
     Atom(*) out,
     enum Reb_Vararg_Op op,
-    Cell(const*) vararg,
+    const Cell* vararg,
     enum Reb_Param_Class pclass  // PARAM_CLASS_0 to use vararg's class
 ){
     FRESHEN(out);
@@ -272,7 +272,7 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
         else
             arg = Level_Arg(L, VAL_VARARGS_SIGNED_PARAM_INDEX(vararg));
 
-        Option(Cell(const*)) look = nullptr;
+        Option(const Cell*) look = nullptr;
         if (not Is_Level_At_End(L))
             look = At_Level(L);
 
@@ -463,7 +463,7 @@ REBTYPE(Varargs)
         INCLUDE_PARAMS_OF_PICK_P;
         UNUSED(ARG(location));
 
-        Cell(const*) picker = ARG(picker);
+        const Cell* picker = ARG(picker);
         if (not IS_INTEGER(picker))
             fail (picker);
 
@@ -546,7 +546,7 @@ REBTYPE(Varargs)
 // Simple comparison function stub (required for every type--rules TBD for
 // levels of "exactness" in equality checking, or sort-stable comparison.)
 //
-REBINT CT_Varargs(NoQuote(Cell(const*)) a, NoQuote(Cell(const*)) b, bool strict)
+REBINT CT_Varargs(NoQuote(const Cell*) a, NoQuote(const Cell*) b, bool strict)
 {
     UNUSED(strict);
 
@@ -570,7 +570,7 @@ REBINT CT_Varargs(NoQuote(Cell(const*)) a, NoQuote(Cell(const*)) b, bool strict)
 // has reached its end, or if the frame the varargs is attached to is no
 // longer on the stack.
 //
-void MF_Varargs(REB_MOLD *mo, NoQuote(Cell(const*)) v, bool form) {
+void MF_Varargs(REB_MOLD *mo, NoQuote(const Cell*) v, bool form) {
     UNUSED(form);
 
     Pre_Mold(mo, v);  // #[varargs! or make varargs!

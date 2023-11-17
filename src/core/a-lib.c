@@ -2245,7 +2245,7 @@ const REBINS *RL_rebQUOTING(const void *p)
 // This is stylized like an API, but actually not exported--it uses internal
 // types.  This makes an cell that will last through a call and be freed.
 //
-const REBINS* rebDERELATIVIZE(Cell(const*) cell, REBSPC* specifier)
+const REBINS* rebDERELATIVIZE(const Cell* cell, REBSPC* specifier)
 {
     Value(*) v = Derelativize(Alloc_Value(), cell, specifier);
     Array* a = Singular_From_Cell(v);
@@ -2288,7 +2288,7 @@ const REBINS *RL_rebUNQUOTING(const void *p)
         fail ("Unknown pointer");
     }
 
-    Cell(*) v = Array_Single(a);
+    Cell* v = Array_Single(a);
     if (
         QUOTE_BYTE(v) == UNQUOTED_1
         or QUOTE_BYTE(v) == QUASI_2

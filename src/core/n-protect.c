@@ -165,7 +165,7 @@ static void Protect_Var(REBVAL *var, Flags flags)
 //
 // Anything that calls this must call Uncolor() when done.
 //
-void Protect_Value(Cell(const*) v, Flags flags)
+void Protect_Value(const Cell* v, Flags flags)
 {
     if (Is_Isotope(v))
         return;
@@ -210,8 +210,8 @@ void Protect_Series(const Series* s_const, REBLEN index, Flags flags)
 
     Flip_Series_To_Black(s); // recursion protection
 
-    Cell(const*) val_tail = Array_Tail(ARR(s));
-    Cell(const*) val = Array_At(ARR(s), index);
+    const Cell* val_tail = Array_Tail(ARR(s));
+    const Cell* val = Array_At(ARR(s), index);
     for (; val != val_tail; val++)
         Protect_Value(val, flags);
 }
@@ -309,8 +309,8 @@ static Bounce Protect_Unprotect_Core(Level(*) level_, Flags flags)
 
     if (IS_BLOCK(value)) {
         if (REF(words)) {
-            Cell(const*) tail;
-            Cell(const*) item = VAL_ARRAY_AT(&tail, value);
+            const Cell* tail;
+            const Cell* item = VAL_ARRAY_AT(&tail, value);
             for (; item != tail; ++item) {
                 DECLARE_STABLE (word); // need binding, can't pass Cell
                 Derelativize(word, item, VAL_SPECIFIER(value));
@@ -320,8 +320,8 @@ static Bounce Protect_Unprotect_Core(Level(*) level_, Flags flags)
         }
         if (REF(values)) {
             REBVAL *var;
-            Cell(const*) tail;
-            Cell(const*) item = VAL_ARRAY_AT(&tail, value);
+            const Cell* tail;
+            const Cell* item = VAL_ARRAY_AT(&tail, value);
 
             DECLARE_STABLE (safe);
 
@@ -476,8 +476,8 @@ DECLARE_NATIVE(unprotect)
 // series will never change in the future.  The frozen requirement is needed
 // in order to do things like use blocks as map keys, etc.
 //
-bool Is_Value_Frozen_Deep(Cell(const*) v) {
-    NoQuote(Cell(const*)) cell = VAL_UNESCAPED(v);
+bool Is_Value_Frozen_Deep(const Cell* v) {
+    NoQuote(const Cell*) cell = VAL_UNESCAPED(v);
     UNUSED(v); // debug build trashes, to avoid accidental usage below
 
     if (Not_Cell_Flag(cell, FIRST_IS_NODE))
@@ -526,7 +526,7 @@ DECLARE_NATIVE(locked_q)
 // that would prevent *them* from later mutating it.
 //
 void Force_Value_Frozen_Core(
-    Cell(const*) v,
+    const Cell* v,
     bool deep,
     Option(Series*) locker
 ){

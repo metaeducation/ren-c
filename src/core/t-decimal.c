@@ -110,7 +110,7 @@ bool almost_equal(REBDEC a, REBDEC b, REBLEN max_diff) {
 //
 //  Init_Decimal_Bits: C
 //
-REBVAL *Init_Decimal_Bits(Cell(*) out, const Byte* bp)
+REBVAL *Init_Decimal_Bits(Cell* out, const Byte* bp)
 {
     Reset_Unquoted_Header_Untracked(TRACK(out), CELL_MASK_DECIMAL);
 
@@ -221,7 +221,7 @@ Bounce MAKE_Decimal(
 
       case REB_BLOCK: {
         REBLEN len;
-        Cell(const*) item = VAL_ARRAY_LEN_AT(&len, arg);
+        const Cell* item = VAL_ARRAY_LEN_AT(&len, arg);
 
         if (len != 2)
             return RAISE(Error_Bad_Make(kind, arg));
@@ -331,8 +331,8 @@ Bounce TO_Decimal(Level(*) level_, enum Reb_Kind kind, const REBVAL *arg)
 
         DECLARE_LOCAL (temp1);  // decompress path from cell into values
         DECLARE_LOCAL (temp2);
-        Cell(const*) numerator = VAL_SEQUENCE_AT(temp1, arg, 0);
-        Cell(const*) denominator = VAL_SEQUENCE_AT(temp2, arg, 1);
+        const Cell* numerator = VAL_SEQUENCE_AT(temp1, arg, 0);
+        const Cell* denominator = VAL_SEQUENCE_AT(temp2, arg, 1);
 
         if (not IS_INTEGER(numerator))
             goto bad_to;
@@ -403,7 +403,7 @@ bool Eq_Decimal2(REBDEC a, REBDEC b)
 //
 //  CT_Decimal: C
 //
-REBINT CT_Decimal(NoQuote(Cell(const*)) a, NoQuote(Cell(const*)) b, bool strict)
+REBINT CT_Decimal(NoQuote(const Cell*) a, NoQuote(const Cell*) b, bool strict)
 {
     if (strict) {
         if (almost_equal(VAL_DECIMAL(a), VAL_DECIMAL(b), 0))
@@ -423,7 +423,7 @@ REBINT CT_Decimal(NoQuote(Cell(const*)) a, NoQuote(Cell(const*)) b, bool strict)
 //
 // Code mostly duplicated in MF_Percent.
 //
-void MF_Decimal(REB_MOLD *mo, NoQuote(Cell(const*)) v, bool form)
+void MF_Decimal(REB_MOLD *mo, NoQuote(const Cell*) v, bool form)
 {
     UNUSED(form);
 
@@ -444,7 +444,7 @@ void MF_Decimal(REB_MOLD *mo, NoQuote(Cell(const*)) v, bool form)
 //
 // Code mostly duplicated in MF_Decimal.
 //
-void MF_Percent(REB_MOLD *mo, NoQuote(Cell(const*)) v, bool form)
+void MF_Percent(REB_MOLD *mo, NoQuote(const Cell*) v, bool form)
 {
     UNUSED(form);
 

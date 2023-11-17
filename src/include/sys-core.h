@@ -374,7 +374,7 @@ typedef struct {
     Array* array;
     StackIndex index;
     Value(*) movable_top;
-    Cell(const*) movable_tail;
+    const Cell* movable_tail;
 
   #if DEBUG_EXTANT_STACK_POINTERS
     Count num_refs_extant;  // # of Data_Stack_At()/TOP refs extant
@@ -546,7 +546,7 @@ extern void reb_qsort_r(void *a, size_t n, size_t es, void *thunk, cmp_t *cmp);
 // Lives in %sys-bind.h, but needed for Copy_Cell() and Derelativize()
 //
 inline static void INIT_BINDING_MAY_MANAGE(
-    Cell(*) out,
+    Cell* out,
     const Series*  binding
 );
 

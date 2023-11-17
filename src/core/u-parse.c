@@ -227,7 +227,7 @@ STATIC_ASSERT((int)AM_FIND_MATCH == (int)PF_FIND_MATCH);
 // !!! This and other efficiency tricks from R3-Alpha should be reviewed to
 // see if they're really the best option.
 //
-inline static Option(SymId) VAL_CMD(Cell(const*) v) {
+inline static Option(SymId) VAL_CMD(const Cell* v) {
     Option(SymId) sym = VAL_WORD_ID(v);
     if (sym >= SYM_SET and sym <= SYM_END)
         return sym;
@@ -251,7 +251,7 @@ inline static Option(SymId) VAL_CMD(Cell(const*) v) {
 static bool Subparse_Throws(
     bool *interrupted_out,
     Sink(Value(*)) out,
-    Cell(const*) input,
+    const Cell* input,
     REBSPC *input_specifier,
     Level(*) const L,
     Option(Array*) collection,
@@ -424,9 +424,9 @@ static void Print_Parse_Index(Level(*) level_) {
 // Gets the value of a word (when not a command) or path.  Returns all other
 // values as-is.
 //
-static Cell(const*) Get_Parse_Value(
+static const Cell* Get_Parse_Value(
     Sink(Value(*)) cell,  // storage for fetched values; must be GC protected
-    Cell(const*) rule,
+    const Cell* rule,
     REBSPC *specifier
 ){
     if (IS_WORD(rule)) {
@@ -461,11 +461,11 @@ static Cell(const*) Get_Parse_Value(
 bool Process_Group_For_Parse_Throws(
     Sink(Value(*)) out,
     Level(*) level_,
-    Cell(const*) group  // may be same as `cell`
+    const Cell* group  // may be same as `cell`
 ){
     USE_PARAMS_OF_SUBPARSE;
 
-    assert(cast(Cell(const*), out) != group);
+    assert(cast(const Cell*, out) != group);
 
     assert(IS_GROUP(group) or IS_GET_GROUP(group));
     REBSPC *derived = (group == P_SAVE)
@@ -508,7 +508,7 @@ bool Process_Group_For_Parse_Throws(
 static REBIXO Parse_One_Rule(
     Level(*) level_,
     REBLEN pos,
-    Cell(const*) rule
+    const Cell* rule
 ){
     USE_PARAMS_OF_SUBPARSE;
 
@@ -614,7 +614,7 @@ static REBIXO Parse_One_Rule(
 
     if (Is_Series_Array(P_INPUT)) {
         const Array* arr = ARR(P_INPUT);
-        Cell(const*) item = Array_At(arr, pos);
+        const Cell* item = Array_At(arr, pos);
 
         switch (VAL_TYPE(rule)) {
           case REB_QUOTED:
@@ -735,7 +735,7 @@ static REBIXO Parse_One_Rule(
 //
 static REBIXO To_Thru_Block_Rule(
     Level(*) level_,
-    Cell(const*) rule_block,
+    const Cell* rule_block,
     bool is_thru
 ){
     USE_PARAMS_OF_SUBPARSE;
@@ -753,13 +753,13 @@ static REBIXO To_Thru_Block_Rule(
         VAL_INDEX_RAW(iter) <= cast(REBIDX, P_INPUT_LEN);
         ++VAL_INDEX_RAW(iter)
     ){  // see note
-        Cell(const*) blk_tail = Array_Tail(VAL_ARRAY(rule_block));
-        Cell(const*) blk = Array_Head(VAL_ARRAY(rule_block));
+        const Cell* blk_tail = Array_Tail(VAL_ARRAY(rule_block));
+        const Cell* blk = Array_Head(VAL_ARRAY(rule_block));
         for (; blk != blk_tail; blk++) {
             if (IS_BAR(blk))
                 fail (Error_Parse_Rule());  // !!! Shouldn't `TO [|]` succeed?
 
-            Cell(const*) rule;
+            const Cell* rule;
             if (not (IS_GROUP(blk) or IS_GET_GROUP(blk)))
                 rule = blk;
             else {
@@ -997,7 +997,7 @@ static REBIXO To_Thru_Block_Rule(
 //
 static REBIXO To_Thru_Non_Block_Rule(
     Level(*) level_,
-    Cell(const*) rule,
+    const Cell* rule,
     bool is_thru
 ){
     USE_PARAMS_OF_SUBPARSE;
@@ -1120,7 +1120,7 @@ static REBIXO To_Thru_Non_Block_Rule(
 //
 static void Handle_Mark_Rule(
     Level(*) level_,
-    Cell(const*) rule,
+    const Cell* rule,
     REBSPC *specifier
 ){
     USE_PARAMS_OF_SUBPARSE;
@@ -1162,7 +1162,7 @@ static void Handle_Mark_Rule(
 
 static void Handle_Seek_Rule_Dont_Update_Begin(
     Level(*) level_,
-    Cell(const*) rule,
+    const Cell* rule,
     REBSPC *specifier
 ){
     USE_PARAMS_OF_SUBPARSE;
@@ -1329,7 +1329,7 @@ DECLARE_NATIVE(subparse)
     //
     assert((P_FLAGS & PF_STATE_MASK) == 0);
 
-    Cell(const*) set_or_copy_word = NULL;
+    const Cell* set_or_copy_word = NULL;
 
     REBINT mincount = 1;  // min pattern count
     REBINT maxcount = 1;  // max pattern count
@@ -1347,7 +1347,7 @@ DECLARE_NATIVE(subparse)
 
   pre_rule: ;  // next line is declaration, need semicolon
 
-    Cell(const*) rule = P_AT_END ? nullptr : P_RULE;
+    const Cell* rule = P_AT_END ? nullptr : P_RULE;
 
     Update_Expression_Start(L);
 
@@ -1441,7 +1441,7 @@ DECLARE_NATIVE(subparse)
     // `[some "a"]`.  Because it is iterated it is only captured the first
     // time through, nullptr indicates it's not been captured yet.
     //
-    Cell(const*) subrule = nullptr;
+    const Cell* subrule = nullptr;
 
     if (rule == nullptr)  // means at end
         goto return_position;  // done all needed to do for end position
@@ -2014,7 +2014,7 @@ DECLARE_NATIVE(subparse)
         }
         else if (IS_WORD(P_RULE)) {
             DECLARE_STABLE (temp);
-            Cell(const*) gotten = Get_Parse_Value(
+            const Cell* gotten = Get_Parse_Value(
                 temp,
                 P_RULE,
                 P_RULE_SPECIFIER
@@ -2177,8 +2177,8 @@ DECLARE_NATIVE(subparse)
                 if (not subrule)  // capture only on iteration #1
                     FETCH_NEXT_RULE_KEEP_LAST(&subrule, L);
 
-                Cell(const*) input_tail = Array_Tail(ARR(P_INPUT));
-                Cell(const*) cmp = Array_At(ARR(P_INPUT), P_POS);
+                const Cell* input_tail = Array_Tail(ARR(P_INPUT));
+                const Cell* cmp = Array_At(ARR(P_INPUT), P_POS);
 
                 if (cmp == input_tail)
                     i = END_FLAG;
@@ -2211,8 +2211,8 @@ DECLARE_NATIVE(subparse)
                 if (not Is_Series_Array(P_INPUT))
                     fail (Error_Parse_Rule());
 
-                Cell(const*) input_tail = Array_Tail(ARR(P_INPUT));
-                Cell(const*) into = Array_At(ARR(P_INPUT), P_POS);
+                const Cell* input_tail = Array_Tail(ARR(P_INPUT));
+                const Cell* into = Array_At(ARR(P_INPUT), P_POS);
                 if (into == input_tail) {
                     i = END_FLAG;  // `parse [] [into [...]]`, rejects
                     break;
@@ -2721,8 +2721,8 @@ DECLARE_NATIVE(parse3)
 
     assert(ANY_SERIES(input));
 
-    Cell(const*) rules_tail;
-    Cell(const*) rules_at = VAL_ARRAY_AT(&rules_tail, rules);
+    const Cell* rules_tail;
+    const Cell* rules_at = VAL_ARRAY_AT(&rules_tail, rules);
 
     // !!! Look for the special pattern `parse ... [collect [x]]` and delegate
     // to a fabricated `parse [temp: collect [x]]` so we can return temp.

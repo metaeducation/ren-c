@@ -34,14 +34,14 @@
 #define VAL_WORD_ID(v) \
     ID_OF_SYMBOL(VAL_WORD_SYMBOL(v))
 
-inline static void INIT_VAL_WORD_INDEX(Cell(*) v, REBLEN i) {
+inline static void INIT_VAL_WORD_INDEX(Cell* v, REBLEN i) {
     assert(ANY_WORDLIKE(v));
     assert(i != 0);
     VAL_WORD_INDEX_U32(v) = i;
 }
 
 inline static REBVAL *Init_Any_Word_Untracked(
-    Cell(*) out,
+    Cell* out,
     enum Reb_Kind kind,
     const Symbol* sym,
     Byte quote_byte
@@ -68,7 +68,7 @@ inline static REBVAL *Init_Any_Word_Untracked(
 #define Init_Meta_Word(out,str)     Init_Any_Word((out), REB_META_WORD, (str))
 
 inline static REBVAL *Init_Any_Word_Bound_Untracked(
-    Cell(*) out,
+    Cell* out,
     enum Reb_Kind type,
     const Symbol* symbol,
     Array* binding,  // spelling determined by linked-to thing
@@ -104,7 +104,7 @@ inline static REBVAL *Init_Any_Word_Bound_Untracked(
             (type), (symbol), CTX_VARLIST(context), (index)))
 
 inline static REBVAL *Init_Any_Word_Patched(  // e.g. LET or MODULE! var
-    Cell(*) out,
+    Cell* out,
     enum Reb_Kind type,
     Array* patch
 ){
@@ -137,23 +137,23 @@ inline static const String* Intern_Unsized_Managed(const char *utf8)
 // !!! The quick check that was here was undermined by words no longer always
 // storing their symbols in the word; this will likely have to hit a keylist.
 //
-inline static bool IS_BAR(Cell(const*) v) {
+inline static bool IS_BAR(const Cell* v) {
     return VAL_TYPE_UNCHECKED(v) == REB_WORD
         and VAL_WORD_SYMBOL(v) == Canon(BAR_1);  // caseless | always canon
 }
 
-inline static bool IS_BAR_BAR(Cell(const*) v) {
+inline static bool IS_BAR_BAR(const Cell* v) {
     return VAL_TYPE_UNCHECKED(v) == REB_WORD
         and VAL_WORD_SYMBOL(v) == Canon(_B_B);  // caseless || always canon
 }
 
-inline static bool IS_META(Cell(const*) v) {
+inline static bool IS_META(const Cell* v) {
     if (not IS_WORD(v))
         return false;
     return VAL_WORD_SYMBOL(v) == Canon(CARET_1);
 }
 
-inline static bool IS_THE(Cell(const*) v) {
+inline static bool IS_THE(const Cell* v) {
     if (not IS_WORD(v))
         return false;
     return VAL_WORD_SYMBOL(v) == Canon(AT_1);
@@ -161,20 +161,20 @@ inline static bool IS_THE(Cell(const*) v) {
 
 // !!! Temporary workaround for what was IS_META_WORD() (now not its own type)
 //
-inline static bool IS_QUOTED_WORD(Cell(const*) v) {
+inline static bool IS_QUOTED_WORD(const Cell* v) {
     return VAL_NUM_QUOTES(v) == 1
         and CELL_HEART(VAL_UNESCAPED(v)) == REB_WORD;
 }
 
 
-inline static bool Is_Word_Isotope(Cell(const*) v) {
+inline static bool Is_Word_Isotope(const Cell* v) {
     ASSERT_CELL_READABLE_EVIL_MACRO(v);
     if (HEART_BYTE(v) != REB_WORD)
         return false;
     return QUOTE_BYTE(v) == ISOTOPE_0;
 }
 
-inline static bool Is_Word_Isotope_With_Id(Cell(const*) v, SymId id) {
+inline static bool Is_Word_Isotope_With_Id(const Cell* v, SymId id) {
     assert(id != 0);
 
     if (not Is_Word_Isotope(v))
@@ -183,5 +183,5 @@ inline static bool Is_Word_Isotope_With_Id(Cell(const*) v, SymId id) {
     return id == VAL_WORD_ID(v);
 }
 
-inline static bool Is_Quasi_Word(Cell(const*) v)
+inline static bool Is_Quasi_Word(const Cell* v)
   { return Is_Quasi(v) and HEART_BYTE(v) == REB_WORD; }

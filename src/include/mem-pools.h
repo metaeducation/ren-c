@@ -102,7 +102,7 @@ typedef struct PoolStruct {
 #define DEF_POOL(size, count) {size, count}
 #define MOD_POOL(size, count) {size * MEM_MIN_SIZE, count}
 
-#define MEM_MIN_SIZE sizeof(CellT)
+#define MEM_MIN_SIZE sizeof(Cell)
 #define MEM_BIG_SIZE 1024
 
 #define POOLS_BY_SIZE_LEN ((4 * MEM_BIG_SIZE) + 1)

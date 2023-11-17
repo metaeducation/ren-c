@@ -45,7 +45,7 @@
 // time zone" would result in determinism problems for this comparison, so
 // date value literals on different machines would compare differently.
 //
-REBINT CT_Date(NoQuote(Cell(const*)) a_in, NoQuote(Cell(const*)) b_in, bool strict)
+REBINT CT_Date(NoQuote(const Cell*) a_in, NoQuote(const Cell*) b_in, bool strict)
 //
 // 1. This comparison doesn't know if it's being asked on behalf of equality or
 //    not.  This is suboptimal, a redesign is needed:
@@ -101,7 +101,7 @@ REBINT CT_Date(NoQuote(Cell(const*)) a_in, NoQuote(Cell(const*)) b_in, bool stri
 //
 //  MF_Date: C
 //
-void MF_Date(REB_MOLD *mo, NoQuote(Cell(const*)) v_orig, bool form)
+void MF_Date(REB_MOLD *mo, NoQuote(const Cell*) v_orig, bool form)
 {
     // We can't/shouldn't modify the incoming date value we are molding, so we
     // make a copy that we can tweak during the emit process
@@ -383,7 +383,7 @@ static REBYMD Normalize_Date(REBINT day, REBINT month, REBINT year, REBINT tz)
 // values would be for the current time zone, then adjust those bits for if
 // the given zone were stored in the date.
 //
-void Adjust_Date_Zone_Core(Cell(*) d, int zone)
+void Adjust_Date_Zone_Core(Cell* d, int zone)
 {
     assert(not Does_Date_Have_Zone(d));
 
@@ -425,7 +425,7 @@ void Adjust_Date_Zone_Core(Cell(*) d, int zone)
 // e.g. it considers itself a "local" time to whatever the time zone had been.
 // The zone should be captured if it was needed.
 //
-void Fold_Zone_Into_Date(Cell(*) d)
+void Fold_Zone_Into_Date(Cell* d)
 {
     if (Does_Date_Have_Zone(d)) {
         int zone = VAL_ZONE(d);
@@ -449,7 +449,7 @@ void Fold_Zone_Into_Date(Cell(*) d)
 // caller and not assumed by the system.  Review this as it is a new concept
 // enabled by differentiating the 0:00 UTC status from "no time zone".
 //
-void Adjust_Date_UTC(Cell(*) d)
+void Adjust_Date_UTC(Cell* d)
 {
     if (not Does_Date_Have_Time(d)) {
         PAYLOAD(Time, d).nanoseconds = 0;
@@ -544,8 +544,8 @@ Bounce MAKE_Date(
 
   make_from_array: {  ////////////////////////////////////////////////////////
 
-    Cell(const*) tail;
-    Cell(const*) item = VAL_ARRAY_AT(&tail, arg);
+    const Cell* tail;
+    const Cell* item = VAL_ARRAY_AT(&tail, arg);
 
     if (item == tail or not IS_INTEGER(item))
         goto bad_make;
@@ -659,7 +659,7 @@ static REBINT Int_From_Date_Arg(const REBVAL *poke) {
 void Pick_Or_Poke_Date(
     Option(Sink(Value(*))) opt_out,
     Value(*) v,
-    Cell(const*) picker,
+    const Cell* picker,
     Option(Value(const*)) opt_poke
 ){
     Option(SymId) sym;
@@ -1002,7 +1002,7 @@ REBTYPE(Date)
         INCLUDE_PARAMS_OF_PICK_P;
         UNUSED(ARG(location));
 
-        Cell(const*) picker = ARG(picker);
+        const Cell* picker = ARG(picker);
 
         Pick_Or_Poke_Date(OUT, v, picker, nullptr);
         return OUT;
@@ -1014,7 +1014,7 @@ REBTYPE(Date)
         INCLUDE_PARAMS_OF_POKE_P;
         UNUSED(ARG(location));
 
-        Cell(const*) picker = ARG(picker);
+        const Cell* picker = ARG(picker);
 
         REBVAL *setval = ARG(value);
 

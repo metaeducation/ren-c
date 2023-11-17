@@ -32,7 +32,7 @@
 // !!! Was never implemented in R3-Alpha; called into raw array comparison,
 // which is clearly incorrect.  Needs to be written.
 //
-REBINT CT_Map(NoQuote(Cell(const*)) a, NoQuote(Cell(const*)) b, bool strict)
+REBINT CT_Map(NoQuote(const Cell*) a, NoQuote(const Cell*) b, bool strict)
 {
     UNUSED(a);
     UNUSED(b);
@@ -58,7 +58,7 @@ Map* Make_Map(REBLEN capacity)
 
 
 static Context* Error_Conflicting_Key(
-    Cell(const*) key,
+    const Cell* key,
     REBSPC *specifier
 ){
     DECLARE_LOCAL (specific);
@@ -83,7 +83,7 @@ static Context* Error_Conflicting_Key(
 REBINT Find_Key_Hashed(
     Array* array,
     Series* hashlist,
-    Cell(const*) key,  // !!! assumes ++key finds the values
+    const Cell* key,  // !!! assumes ++key finds the values
     REBSPC *specifier,
     REBLEN wide,
     bool strict,
@@ -121,7 +121,7 @@ REBINT Find_Key_Hashed(
 
     REBLEN n;
     while ((n = indexes[slot]) != 0) {
-        Cell(*) k = Array_At(array, (n - 1) * wide); // stored key
+        Cell* k = Array_At(array, (n - 1) * wide); // stored key
         if (0 == Cmp_Value(k, key, true)) {
             if (strict)
                 return slot; // don't need to check synonyms, stop looking
@@ -163,7 +163,7 @@ REBINT Find_Key_Hashed(
     }
 
     if (mode > 1) { // append new value to the target series
-        Cell(const*) src = key;
+        const Cell* src = key;
         indexes[slot] = (Array_Len(array) / wide) + 1;
 
         REBLEN index;
@@ -253,9 +253,9 @@ void Expand_Hash(Series* ser)
 //
 REBLEN Find_Map_Entry(
     Map* map,
-    Cell(const*) key,
+    const Cell* key,
     REBSPC *key_specifier,
-    Cell(const*) val,
+    const Cell* val,
     REBSPC *val_specifier,
     bool strict
 ) {
@@ -320,12 +320,12 @@ REBLEN Find_Map_Entry(
 //
 static void Append_Map(
     Map* map,
-    Cell(const*) head,
-    Cell(const*) tail,
+    const Cell* head,
+    const Cell* tail,
     REBSPC *specifier,
     REBLEN len
 ){
-    Cell(const*) item = head;
+    const Cell* item = head;
     REBLEN n = 0;
 
     while (n < len and item != tail) {
@@ -403,7 +403,7 @@ inline static Map* Copy_Map(const Map* map, REBU64 types) {
     //
     assert(Array_Len(copy) % 2 == 0); // should be [key value key value]...
 
-    Cell(const*) tail = Array_Tail(copy);
+    const Cell* tail = Array_Tail(copy);
     REBVAL *key = SPECIFIC(Array_Head(copy));  // keys/vals specified
     for (; key != tail; key += 2) {
         assert(Is_Value_Frozen_Deep(key));  // immutable key
@@ -434,8 +434,8 @@ Bounce TO_Map(Level(*) level_, enum Reb_Kind kind, const REBVAL *arg)
         // make map! [word val word val]
         //
         REBLEN len = VAL_LEN_AT(arg);
-        Cell(const*) tail;
-        Cell(const*) at = VAL_ARRAY_AT(&tail, arg);
+        const Cell* tail;
+        const Cell* at = VAL_ARRAY_AT(&tail, arg);
         REBSPC *specifier = VAL_SPECIFIER(arg);
 
         Map* map = Make_Map(len / 2); // [key value key value...] + END
@@ -469,9 +469,9 @@ Array* Map_To_Array(const Map* map, REBINT what)
     REBLEN count = Length_Map(map);
     Array* a = Make_Array(count * ((what == 0) ? 2 : 1));
 
-    Cell(*) dest = Array_Head(a);
-    Cell(const*) val_tail = Array_Tail(MAP_PAIRLIST(map));
-    Cell(const*) val = Array_Head(MAP_PAIRLIST(map));
+    Cell* dest = Array_Head(a);
+    const Cell* val_tail = Array_Tail(MAP_PAIRLIST(map));
+    const Cell* val = Array_Head(MAP_PAIRLIST(map));
     for (; val != val_tail; val += 2) {
         if (Is_Void(val + 1))  // val + 1 can't be past tail
             continue;  // zombie key, e.g. not actually in map
@@ -505,8 +505,8 @@ Context* Alloc_Context_From_Map(const Map* map)
     REBLEN count = 0;
 
   blockscope {
-    Cell(const*) mval_tail = Array_Tail(MAP_PAIRLIST(map));
-    Cell(const*) mval = Array_Head(MAP_PAIRLIST(map));
+    const Cell* mval_tail = Array_Tail(MAP_PAIRLIST(map));
+    const Cell* mval = Array_Head(MAP_PAIRLIST(map));
     for (; mval != mval_tail; mval += 2) {  // note mval must not be END
         if (ANY_WORD(mval) and not Is_Void(mval + 1))
             ++count;
@@ -517,8 +517,8 @@ Context* Alloc_Context_From_Map(const Map* map)
 
     Context* c = Alloc_Context(REB_OBJECT, count);
 
-    Cell(const*) mval_tail = Array_Tail(MAP_PAIRLIST(map));
-    Cell(const*) mval = Array_Head(MAP_PAIRLIST(map));
+    const Cell* mval_tail = Array_Tail(MAP_PAIRLIST(map));
+    const Cell* mval = Array_Head(MAP_PAIRLIST(map));
 
     for (; mval != mval_tail; mval += 2) {  // note mval must not be END
         if (ANY_WORD(mval) and not Is_Void(mval + 1)) {
@@ -534,7 +534,7 @@ Context* Alloc_Context_From_Map(const Map* map)
 //
 //  MF_Map: C
 //
-void MF_Map(REB_MOLD *mo, NoQuote(Cell(const*)) v, bool form)
+void MF_Map(REB_MOLD *mo, NoQuote(const Cell*) v, bool form)
 {
     const Map* m = VAL_MAP(v);
 
@@ -556,8 +556,8 @@ void MF_Map(REB_MOLD *mo, NoQuote(Cell(const*)) v, bool form)
     //
     mo->indent++;
 
-    Cell(const*) tail = Array_Tail(MAP_PAIRLIST(m));
-    Cell(const*) key = Array_Head(MAP_PAIRLIST(m));
+    const Cell* tail = Array_Tail(MAP_PAIRLIST(m));
+    const Cell* key = Array_Head(MAP_PAIRLIST(m));
     for (; key != tail; key += 2) {  // note value slot must not be END
         assert(key + 1 != tail);
         if (Is_Void(key + 1))
@@ -688,8 +688,8 @@ REBTYPE(Map)
             fail (Error_Bad_Refines_Raw());
 
         REBLEN len = Part_Len_May_Modify_Index(value, ARG(part));
-        Cell(const*) tail;
-        Cell(const*) at = VAL_ARRAY_AT(&tail, value);  // w/modified index
+        const Cell* tail;
+        const Cell* at = VAL_ARRAY_AT(&tail, value);  // w/modified index
 
         Append_Map(m, at, tail, VAL_SPECIFIER(value), len);
 
@@ -727,7 +727,7 @@ REBTYPE(Map)
         INCLUDE_PARAMS_OF_PICK_P;
         UNUSED(ARG(location));
 
-        Cell(const*) picker = ARG(picker);  // isotope pickers not allowed
+        const Cell* picker = ARG(picker);  // isotope pickers not allowed
         if (Is_Isotope(picker))
             return RAISE(Error_Bad_Isotope(picker));
 
@@ -759,7 +759,7 @@ REBTYPE(Map)
         INCLUDE_PARAMS_OF_POKE_P;
         UNUSED(ARG(location));
 
-        Cell(const*) picker = ARG(picker);  // isotope pickers not allowed
+        const Cell* picker = ARG(picker);  // isotope pickers not allowed
         if (Is_Isotope(picker))
             return RAISE(Error_Bad_Isotope(picker));
 

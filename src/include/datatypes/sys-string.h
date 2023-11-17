@@ -405,7 +405,7 @@ inline static Utf8(*) String_At(const_if_c String* s, REBLEN at) {
   #endif
 
     if (at < len / 2) {
-        if (len < sizeof(CellT)) {
+        if (len < sizeof(Cell)) {
             if (Is_NonSymbol_String(s))
                 assert(
                     Get_Series_Flag(s, DYNAMIC)  // e.g. mold buffer
@@ -420,7 +420,7 @@ inline static Utf8(*) String_At(const_if_c String* s, REBLEN at) {
         }
     }
     else {
-        if (len < sizeof(CellT)) {
+        if (len < sizeof(Cell)) {
             if (Is_NonSymbol_String(s))
                 assert(
                     not book  // mutations must ensure this usually but...
@@ -450,7 +450,7 @@ inline static Utf8(*) String_At(const_if_c String* s, REBLEN at) {
     // is positive and bigger than `at`, faster to seek from head.
     //
     if (cast(REBINT, at) < cast(REBINT, booked) - cast(REBINT, at)) {
-        if (at < sizeof(CellT))
+        if (at < sizeof(Cell))
             book = nullptr;  // don't update bookmark for near head search
         goto scan_from_head;
     }
@@ -459,7 +459,7 @@ inline static Utf8(*) String_At(const_if_c String* s, REBLEN at) {
     // it is positive and bigger than `len - at`, faster to seek from tail.
     //
     if (cast(REBINT, len - at) < cast(REBINT, at) - cast(REBINT, booked)) {
-        if (len - at < sizeof(CellT))
+        if (len - at < sizeof(Cell))
             book = nullptr;  // don't update bookmark for near tail search
         goto scan_from_tail;
     }
@@ -543,7 +543,7 @@ inline static Utf8(*) String_At(const_if_c String* s, REBLEN at) {
 #endif
 
 
-inline static const String* VAL_STRING(NoQuote(Cell(const*)) v) {
+inline static const String* VAL_STRING(NoQuote(const Cell*) v) {
     if (ANY_STRINGLIKE(v))
         return STR(VAL_NODE1(v));  // VAL_SERIES() would assert
 
@@ -559,17 +559,17 @@ inline static const String* VAL_STRING(NoQuote(Cell(const*)) v) {
 // that type.  So if the series is a string and not a binary, the special
 // cache of the length in the series node for strings must be used.
 //
-inline static REBLEN VAL_LEN_HEAD(NoQuote(Cell(const*)) v) {
+inline static REBLEN VAL_LEN_HEAD(NoQuote(const Cell*) v) {
     const Series* s = VAL_SERIES(v);
     if (Is_Series_UTF8(s) and CELL_HEART(v) != REB_BINARY)
         return String_Len(STR(s));
     return Series_Used(s);
 }
 
-inline static bool VAL_PAST_END(NoQuote(Cell(const*)) v)
+inline static bool VAL_PAST_END(NoQuote(const Cell*) v)
    { return VAL_INDEX(v) > VAL_LEN_HEAD(v); }
 
-inline static REBLEN VAL_LEN_AT(NoQuote(Cell(const*)) v) {
+inline static REBLEN VAL_LEN_AT(NoQuote(const Cell*) v) {
     //
     // !!! At present, it is considered "less of a lie" to tell people the
     // length of a series is 0 if its index is actually past the end, than
@@ -587,7 +587,7 @@ inline static REBLEN VAL_LEN_AT(NoQuote(Cell(const*)) v) {
     return VAL_LEN_HEAD(v) - i;  // take current index into account
 }
 
-inline static Utf8(const*) VAL_STRING_AT(NoQuote(Cell(const*)) v) {
+inline static Utf8(const*) VAL_STRING_AT(NoQuote(const Cell*) v) {
     const String* str = VAL_STRING(v);  // checks that it's ANY-STRING!
     REBIDX i = VAL_INDEX_RAW(v);
     REBLEN len = String_Len(str);
@@ -597,7 +597,7 @@ inline static Utf8(const*) VAL_STRING_AT(NoQuote(Cell(const*)) v) {
 }
 
 
-inline static Utf8(const*) VAL_STRING_TAIL(NoQuote(Cell(const*)) v) {
+inline static Utf8(const*) VAL_STRING_TAIL(NoQuote(const Cell*) v) {
     const String* s = VAL_STRING(v);  // debug build checks it's ANY-STRING!
     return String_Tail(s);
 }
@@ -613,7 +613,7 @@ inline static Utf8(const*) VAL_STRING_TAIL(NoQuote(Cell(const*)) v) {
 
 inline static Size VAL_SIZE_LIMIT_AT(
     Option(REBLEN*) length_out,  // length in chars to end (including limit)
-    NoQuote(Cell(const*)) v,
+    NoQuote(const Cell*) v,
     REBINT limit  // UNLIMITED (e.g. a very large number) for no limit
 ){
     assert(ANY_STRINGLIKE(v));
@@ -642,12 +642,12 @@ inline static Size VAL_SIZE_LIMIT_AT(
 #define VAL_SIZE_AT(v) \
     VAL_SIZE_LIMIT_AT(nullptr, v, UNLIMITED)
 
-inline static Size VAL_BYTEOFFSET(Cell(const*) v) {
+inline static Size VAL_BYTEOFFSET(const Cell* v) {
     return VAL_STRING_AT(v) - String_Head(VAL_STRING(v));
 }
 
 inline static Size VAL_BYTEOFFSET_FOR_INDEX(
-    NoQuote(Cell(const*)) v,
+    NoQuote(const Cell*) v,
     REBLEN index
 ){
     assert(ANY_STRING_KIND(CELL_HEART(v)));
@@ -777,7 +777,7 @@ inline static REBLEN Num_Codepoints_For_Bytes(
 // initialize, and the C++ build can also validate managed consistent w/const.
 
 inline static REBVAL *Init_Any_String_At(
-    Cell(*) out,
+    Cell* out,
     enum Reb_Kind kind,
     const_if_c String* str,
     REBLEN index
@@ -794,7 +794,7 @@ inline static REBVAL *Init_Any_String_At(
 
 #if CPLUSPLUS_11
     inline static REBVAL *Init_Any_String_At(
-        Cell(*) out,
+        Cell* out,
         enum Reb_Kind kind,
         const String* str,
         REBLEN index

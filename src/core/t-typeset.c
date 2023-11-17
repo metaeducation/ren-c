@@ -28,7 +28,7 @@
 //
 //  CT_Parameter: C
 //
-REBINT CT_Parameter(NoQuote(Cell(const*)) a, NoQuote(Cell(const*)) b, bool strict)
+REBINT CT_Parameter(NoQuote(const Cell*) a, NoQuote(const Cell*) b, bool strict)
 {
     UNUSED(strict);
 
@@ -155,14 +155,14 @@ void Shutdown_Typesets(void)
 Array* Add_Parameter_Bits_Core(
     Flags* flags,
     enum Reb_Param_Class pclass,
-    Cell(const*) head,
-    Cell(const*) tail,
+    const Cell* head,
+    const Cell* tail,
     REBSPC *specifier
 ){
     StackIndex base = TOP_INDEX;
     *flags = 0;
 
-    Cell(const*) item = head;
+    const Cell* item = head;
     for (; item != tail; ++item) {
         if (IS_TAG(item)) {
             bool strict = false;
@@ -260,7 +260,7 @@ Bounce TO_Parameter(Level(*) level_, enum Reb_Kind kind, const REBVAL *arg)
 //
 //  MF_Parameter: C
 //
-void MF_Parameter(REB_MOLD *mo, NoQuote(Cell(const*)) v, bool form)
+void MF_Parameter(REB_MOLD *mo, NoQuote(const Cell*) v, bool form)
 {
     if (not form) {
         Pre_Mold(mo, v);  // #[parameter! or make parameter!

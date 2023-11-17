@@ -323,7 +323,7 @@ inline static bool Reevaluate_In_Sublevel_Throws(
 inline static bool Eval_Step_In_Any_Array_At_Throws(
     Atom(*) out,
     REBLEN *index_out,
-    Cell(const*) any_array,  // Note: legal to have any_array = out
+    const Cell* any_array,  // Note: legal to have any_array = out
     REBSPC *specifier,
     Flags flags
 ){
@@ -358,7 +358,7 @@ inline static bool Eval_Step_In_Any_Array_At_Throws(
 inline static bool Eval_Value_Core_Throws(
     Atom(*) out,
     Flags flags,
-    Cell(const*) value,  // e.g. a BLOCK! here would just evaluate to itself!
+    const Cell* value,  // e.g. a BLOCK! here would just evaluate to itself!
     REBSPC *specifier
 ){
     if (ANY_INERT(value)) {

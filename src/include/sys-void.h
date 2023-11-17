@@ -63,10 +63,10 @@
 // to represent variables that have not been assigned.
 //
 
-inline static bool Is_Void(Cell(const*) v)
+inline static bool Is_Void(const Cell* v)
   { return HEART_BYTE(v) == REB_VOID and QUOTE_BYTE(v) == UNQUOTED_1; }
 
-inline static REBVAL *Init_Void_Untracked(Cell(*) out, Byte quote_byte) {
+inline static REBVAL *Init_Void_Untracked(Cell* out, Byte quote_byte) {
     FRESHEN_CELL_EVIL_MACRO(out);
     out->header.bits |= (
         NODE_FLAG_NODE | NODE_FLAG_CELL
@@ -88,13 +88,13 @@ inline static REBVAL *Init_Void_Untracked(Cell(*) out, Byte quote_byte) {
 #define Init_Quoted_Void(out) \
     TRACK(Init_Void_Untracked((out), ONEQUOTE_3))
 
-inline static bool Is_Quoted_Void(Cell(const*) v)
+inline static bool Is_Quoted_Void(const Cell* v)
   { return QUOTE_BYTE(v) == ONEQUOTE_3 and HEART_BYTE(v) == REB_VOID; }
 
 #define Init_Quasi_Void(out) \
     TRACK(Init_Void_Untracked((out), QUASI_2))
 
-inline static bool Is_Quasi_Void(Cell(const*) v)
+inline static bool Is_Quasi_Void(const Cell* v)
   { return QUOTE_BYTE(v) == QUASI_2 and HEART_BYTE(v) == REB_VOID; }
 
 #define Init_Meta_Of_Void(out)       Init_Quoted_Void(out)
@@ -118,17 +118,17 @@ inline static bool Is_Quasi_Void(Cell(const*) v)
 // Rebol, there are really only so many names to choose from.
 //
 
-inline static bool Is_None(Cell(const*) v)
+inline static bool Is_None(const Cell* v)
   { return HEART_BYTE(v) == REB_VOID and QUOTE_BYTE(v) == ISOTOPE_0; }
 
 #if defined(NDEBUG)
-    inline static bool Is_Fresh_Or_None(Cell(const*) v) {
+    inline static bool Is_Fresh_Or_None(const Cell* v) {
         return 0 == (
             v->header.bits & (FLAG_HEART_BYTE(255) | FLAG_QUOTE_BYTE(255))
         );
     }
 #else
-    inline static bool Is_Fresh_Or_None(Cell(const*) v) {
+    inline static bool Is_Fresh_Or_None(const Cell* v) {
         return Is_Fresh(v) or Is_None(v);
     }
 #endif
@@ -226,18 +226,18 @@ inline static Value(*) Finalize_Void_Untracked(Atom(*) out) {
 #define Init_Heavy_Void(out) \
     Init_Pack((out), PG_1_Quoted_Void_Array)
 
-inline static bool Is_Heavy_Void(Cell(const*) v) {
+inline static bool Is_Heavy_Void(const Cell* v) {
     if (not Is_Pack(v))
         return false;
-    Cell(const*) tail;
-    Cell(const*) at = VAL_ARRAY_AT(&tail, v);
+    const Cell* tail;
+    const Cell* at = VAL_ARRAY_AT(&tail, v);
     return (tail == at + 1) and Is_Meta_Of_Void(at);
 }
 
-inline static bool Is_Meta_Of_Heavy_Void(Cell(const*) v) {
+inline static bool Is_Meta_Of_Heavy_Void(const Cell* v) {
     if (not Is_Meta_Of_Pack(v))
         return false;
-    Cell(const*) tail;
-    Cell(const*) at = VAL_ARRAY_AT(&tail, v);
+    const Cell* tail;
+    const Cell* at = VAL_ARRAY_AT(&tail, v);
     return (tail == at + 1) and Is_Meta_Of_Void(at);
 }

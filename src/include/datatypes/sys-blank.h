@@ -62,7 +62,7 @@
 //   have different behavior, e.g. SPREAD of a ~ is an error
 //
 
-inline static Value(*) Init_Blank_Untracked(Cell(*) out, Byte quote_byte) {
+inline static Value(*) Init_Blank_Untracked(Cell* out, Byte quote_byte) {
     FRESHEN_CELL_EVIL_MACRO(out);
     out->header.bits |= (
         NODE_FLAG_NODE | NODE_FLAG_CELL
@@ -84,5 +84,5 @@ inline static Value(*) Init_Blank_Untracked(Cell(*) out, Byte quote_byte) {
 #define Init_Quasi_Blank(out) \
     TRACK(Init_Blank_Untracked((out), QUASI_2))
 
-inline static bool Is_Quasi_Blank(Cell(const*) v)
+inline static bool Is_Quasi_Blank(const Cell* v)
   { return Is_Quasi(v) and HEART_BYTE(v) == REB_BLANK; }

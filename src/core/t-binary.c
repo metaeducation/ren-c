@@ -40,7 +40,7 @@
 //
 //  CT_Binary: C
 //
-REBINT CT_Binary(NoQuote(Cell(const*)) a, NoQuote(Cell(const*)) b, bool strict)
+REBINT CT_Binary(NoQuote(const Cell*) a, NoQuote(const Cell*) b, bool strict)
 {
     UNUSED(strict);  // no lax form of comparison
 
@@ -262,7 +262,7 @@ static int Compare_Byte(void *thunk, const void *v1, const void *v2)
 //
 //  MF_Binary: C
 //
-void MF_Binary(REB_MOLD *mo, NoQuote(Cell(const*)) v, bool form)
+void MF_Binary(REB_MOLD *mo, NoQuote(const Cell*) v, bool form)
 {
     UNUSED(form);
 
@@ -321,7 +321,7 @@ REBTYPE(Binary)
         INCLUDE_PARAMS_OF_PICK_P;
         UNUSED(ARG(location));
 
-        Cell(const*) picker = ARG(picker);
+        const Cell* picker = ARG(picker);
         REBINT n;
         if (not Did_Get_Series_Index_From_Picker(&n, v, picker))
             return nullptr;
@@ -337,7 +337,7 @@ REBTYPE(Binary)
         INCLUDE_PARAMS_OF_POKE_P;
         UNUSED(ARG(location));
 
-        Cell(const*) picker = ARG(picker);
+        const Cell* picker = ARG(picker);
         REBINT n;
         if (not Did_Get_Series_Index_From_Picker(&n, v, picker))
             fail (Error_Out_Of_Range(picker));

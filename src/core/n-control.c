@@ -1139,7 +1139,7 @@ DECLARE_NATIVE(case)
 
     bool matched = Is_Truthy(SPARE);  // errors on most isotopes
 
-    Cell(const*) branch = Lookback_While_Fetching_Next(SUBLEVEL);
+    const Cell* branch = Lookback_While_Fetching_Next(SUBLEVEL);
 
     if (not matched) {
         if (not IS_GET_GROUP(branch))
@@ -1313,7 +1313,7 @@ DECLARE_NATIVE(switch)
     if (Is_Level_At_End(SUBLEVEL))
         goto reached_end;
 
-    Cell(const*) at = At_Level(SUBLEVEL);
+    const Cell* at = At_Level(SUBLEVEL);
 
     if (IS_BLOCK(at) or IS_FRAME(at)) {  // seen with no match in effect
         Fetch_Next_Forget_Lookback(SUBLEVEL);  // just skip over it
@@ -1366,7 +1366,7 @@ DECLARE_NATIVE(switch)
             goto next_switch_step;
     }
 
-    Cell(const*) at = Try_At_Level(SUBLEVEL);
+    const Cell* at = Try_At_Level(SUBLEVEL);
 
     while (true) {  // skip ahead for BLOCK!/ACTION! to process the match
         if (at == nullptr)
@@ -1571,8 +1571,8 @@ DECLARE_NATIVE(catch)
             //
             // Test all the words in the block for a match to catch
 
-            Cell(const*) tail;
-            Cell(const*) candidate = VAL_ARRAY_AT(&tail, ARG(name));
+            const Cell* tail;
+            const Cell* candidate = VAL_ARRAY_AT(&tail, ARG(name));
             for (; candidate != tail; candidate++) {
                 //
                 // !!! Should we test a typeset for illegal name types?
@@ -1693,7 +1693,7 @@ bool Pushed_Decaying_Level(Atom(*) out, Atom(const*) obj, Flags flags) {
         Copy_Cell(out, obj);
     QUOTE_BYTE(out) = UNQUOTED_1;
     Option(Value(*)) decayer = Select_Symbol_In_Context(
-        cast(Cell(const*), out),
+        cast(const Cell*, out),
         Canon(DECAY)
     );
     if (not decayer)

@@ -170,11 +170,11 @@ DECLARE_NATIVE(load_extension)
     assert(Array_Len(collated) == IDX_COLLATOR_MAX);
     Push_GC_Guard(collated);
 
-    Cell(const*) script_compressed
+    const Cell* script_compressed
         = Array_At(collated, IDX_COLLATOR_SCRIPT);
     REBLEN script_num_codepoints
         = VAL_UINT32(Array_At(collated, IDX_COLLATOR_SCRIPT_NUM_CODEPOINTS));
-    Cell(const*) cfuncs_handle
+    const Cell* cfuncs_handle
         = Array_At(collated, IDX_COLLATOR_CFUNCS);
 
     REBLEN num_natives = VAL_HANDLE_LEN(cfuncs_handle);

@@ -151,11 +151,11 @@ Level(*) Make_Pushed_Level_From_Action_Feed_May_Throw(
 //
 bool Init_Invokable_From_Feed_Throws(
     Sink(Value(*)) out,
-    Option(Cell(const*)) first,  // override first value, vs. At_Feed(feed)
+    Option(const Cell*) first,  // override first value, vs. At_Feed(feed)
     Feed(*) feed,
     bool error_on_deferred  // if not planning to keep running, can't ELSE/THEN
 ){
-    Cell(const*) v = first ? unwrap(first) : Try_At_Feed(feed);
+    const Cell* v = first ? unwrap(first) : Try_At_Feed(feed);
 
     // !!! The case of `([x]: @)` wants to make something which when it
     // evaluates becomes invisible.  There's no QUOTED! value that can do
@@ -259,7 +259,7 @@ bool Init_Invokable_From_Feed_Throws(
 //
 bool Init_Frame_From_Feed_Throws(
     Sink(Value(*)) out,
-    Cell(const*) first,
+    const Cell* first,
     Feed(*) feed,
     bool error_on_deferred
 ){

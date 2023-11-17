@@ -49,8 +49,8 @@ Array* Copy_Array_At_Extra_Shallow(
     Array* copy = Make_Array_For_Copy(len + extra, flags, original);
     Set_Series_Len(copy, len);
 
-    Cell(const*) src = Array_At(original, index);
-    Cell(*) dest = Array_Head(copy);
+    const Cell* src = Array_At(original, index);
+    Cell* dest = Array_Head(copy);
     REBLEN count = 0;
     for (; count < len; ++count, ++dest, ++src)
         Derelativize(dest, src, specifier);
@@ -83,8 +83,8 @@ Array* Copy_Array_At_Max_Shallow(
     Set_Series_Len(copy, max);
 
     REBLEN count = 0;
-    Cell(const*) src = Array_At(original, index);
-    Cell(*) dest = Array_Head(copy);
+    const Cell* src = Array_At(original, index);
+    Cell* dest = Array_Head(copy);
     for (; count < max; ++count, ++src, ++dest)
         Derelativize(dest, src, specifier);
 
@@ -99,7 +99,7 @@ Array* Copy_Array_At_Max_Shallow(
 // hold that many entries, with an optional bit of extra space at the end.
 //
 Array* Copy_Values_Len_Extra_Shallow_Core(
-    Cell(const*) head,
+    const Cell* head,
     REBSPC *specifier,
     REBLEN len,
     REBLEN extra,
@@ -109,8 +109,8 @@ Array* Copy_Values_Len_Extra_Shallow_Core(
     Set_Series_Len(a, len);
 
     REBLEN count = 0;
-    Cell(const*) src = head;
-    Cell(*) dest = Array_Head(a);
+    const Cell* src = head;
+    Cell* dest = Array_Head(a);
     for (; count < len; ++count, ++src, ++dest) {
         if (
             Is_Isotope(src)
@@ -137,7 +137,7 @@ Array* Copy_Values_Len_Extra_Shallow_Core(
 // values we are operating on here live inside of an array.
 //
 void Clonify(
-    Cell(*) v,
+    Cell* v,
     Flags flags,
     REBU64 deep_types
 ){
@@ -214,8 +214,8 @@ void Clonify(
         // copied series and "clonify" the values in it.
         //
         if (would_need_deep and (deep_types & FLAGIT_KIND(heart))) {
-            Cell(const*) sub_tail = Array_Tail(ARR(series));
-            Cell(*) sub = Array_Head(ARR(series));
+            const Cell* sub_tail = Array_Tail(ARR(series));
+            Cell* sub = Array_Head(ARR(series));
             for (; sub != sub_tail; ++sub)
                 Clonify(sub, flags, deep_types);
         }
@@ -267,8 +267,8 @@ Array* Copy_Array_Core_Managed(
     );
     Set_Series_Len(copy, len);
 
-    Cell(const*) src = Array_At(original, index);
-    Cell(*) dest = Array_Head(copy);
+    const Cell* src = Array_At(original, index);
+    Cell* dest = Array_Head(copy);
     REBLEN count = 0;
     for (; count < len; ++count, ++dest, ++src) {
         Clonify(
@@ -307,9 +307,9 @@ Array* Copy_Rerelativized_Array_Deep_Managed(
     const Flags flags = NODE_FLAG_MANAGED;
 
     Array* copy = Make_Array_For_Copy(Array_Len(original), flags, original);
-    Cell(const*) src_tail = Array_Tail(original);
-    Cell(const*) src = Array_Head(original);
-    Cell(*) dest = Array_Head(copy);
+    const Cell* src_tail = Array_Tail(original);
+    const Cell* src = Array_Head(original);
+    Cell* dest = Array_Head(copy);
 
     for (; src != src_tail; ++src, ++dest) {
         if (not IS_RELATIVE(src)) {
@@ -358,11 +358,11 @@ Array* Copy_Rerelativized_Array_Deep_Managed(
 //
 // Note: Updates the termination and tail.
 //
-Cell(*) Alloc_Tail_Array(Array* a)
+Cell* Alloc_Tail_Array(Array* a)
 {
     Expand_Series_Tail(a, 1);
     Set_Series_Len(a, Array_Len(a));
-    Cell(*) last = Array_Last(a);
+    Cell* last = Array_Last(a);
 
   #if DEBUG_ERASE_ALLOC_TAIL_CELLS
     if (not Is_Cell_Erased(last)) {
@@ -385,8 +385,8 @@ void Uncolor_Array(const Array* a)
 
     Flip_Series_To_White(a);
 
-    Cell(const*) tail = Array_Tail(a);
-    Cell(const*) v = Array_Head(a);
+    const Cell* tail = Array_Tail(a);
+    const Cell* v = Array_Head(a);
     for (; v != tail; ++v) {
         if (ANY_PATH(v) or ANY_ARRAY(v) or IS_MAP(v) or ANY_CONTEXT(v))
             Uncolor(v);
@@ -399,7 +399,7 @@ void Uncolor_Array(const Array* a)
 //
 // Clear the recusion markers for series and object trees.
 //
-void Uncolor(Cell(const*) v)
+void Uncolor(const Cell* v)
 {
     if (Is_Isotope(v))
         return;
@@ -411,7 +411,7 @@ void Uncolor(Cell(const*) v)
         REBLEN i;
         DECLARE_LOCAL (temp);
         for (i = 0; i < len; ++i) {
-            Cell(const*) item = VAL_SEQUENCE_AT(temp, v, i);
+            const Cell* item = VAL_SEQUENCE_AT(temp, v, i);
             Uncolor(item);
         }
     }

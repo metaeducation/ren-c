@@ -222,7 +222,7 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
     if (bounce == OUT) {
       result_in_out:
         assert(not Is_Fresh(OUT));
-        assert(IS_SPECIFIC(cast(Cell(*), OUT)));
+        assert(IS_SPECIFIC(cast(Cell*, OUT)));
 
         if (Get_Level_Flag(LEVEL, META_RESULT)) {
             Meta_Quotify(OUT);

@@ -47,7 +47,7 @@ inline static void INIT_BITS_NOT(Series* s, bool negated)
   { s->misc.negated = negated; }
 
 
-inline static Binary* VAL_BITSET(NoQuote(Cell(const*)) v) {
+inline static Binary* VAL_BITSET(NoQuote(const Cell*) v) {
     assert(CELL_HEART(v) == REB_BITSET);
     return BIN(VAL_NODE1(v));
 }
@@ -55,7 +55,7 @@ inline static Binary* VAL_BITSET(NoQuote(Cell(const*)) v) {
 #define VAL_BITSET_Ensure_Mutable(v) \
     m_cast(Binary*, VAL_BITSET(Ensure_Mutable(v)))
 
-inline static REBVAL *Init_Bitset(Cell(*) out, Binary* bits) {
+inline static REBVAL *Init_Bitset(Cell* out, Binary* bits) {
     Reset_Unquoted_Header_Untracked(out, CELL_MASK_BITSET);
     Assert_Series_Managed(bits);
     INIT_VAL_NODE1(out, bits);

@@ -73,7 +73,7 @@
         return cast(REBSPC*, c);
     }
 
-    inline static REBSPC *VAL_SPECIFIER(NoQuote(Cell(const*)) v) {
+    inline static REBSPC *VAL_SPECIFIER(NoQuote(const Cell*) v) {
         assert(ANY_ARRAYLIKE(v));
 
         Array* a = ARR(BINDING(v));

@@ -82,8 +82,8 @@ Value(*) Try_Init_Any_Sequence_At_Arraylike_Core(
         return cast(REBVAL*, out);
     }
 
-    Cell(const*) tail = Array_Tail(a);
-    Cell(const*) v = Array_Head(a);
+    const Cell* tail = Array_Tail(a);
+    const Cell* v = Array_Head(a);
     for (; v != tail; ++v) {
         if (not Is_Valid_Sequence_Element(kind, v)) {
             Derelativize(out, v, specifier);
@@ -329,7 +329,7 @@ Bounce TO_Sequence(Level(*) level_, enum Reb_Kind kind, const REBVAL *arg) {
 
     if (arg_kind != REB_BLOCK) {
         Copy_Cell(OUT, arg);  // move value so we can modify it
-        Dequotify(stable_OUT);  // !!! should TO take NoQuote(Cell(*))?
+        Dequotify(stable_OUT);  // !!! should TO take NoQuote(Cell*)?
         Plainify(stable_OUT);  // remove any decorations like @ or :
         if (not Try_Leading_Blank_Pathify(stable_OUT, kind))
             return RAISE(Error_Bad_Sequence_Init(stable_OUT));
@@ -345,7 +345,7 @@ Bounce TO_Sequence(Level(*) level_, enum Reb_Kind kind, const REBVAL *arg) {
         return RAISE(Error_Sequence_Too_Short_Raw());
 
     if (len == 2) {
-        Cell(const*) at = VAL_ARRAY_ITEM_AT(arg);
+        const Cell* at = VAL_ARRAY_ITEM_AT(arg);
         if (not Try_Init_Any_Sequence_Pairlike_Core(
             OUT,
             kind,
@@ -394,7 +394,7 @@ Bounce TO_Sequence(Level(*) level_, enum Reb_Kind kind, const REBVAL *arg) {
 // This behavior is not preserved in Ren-C, so `same-color?` or something
 // else would be needed to get that intent.
 //
-REBINT CT_Sequence(NoQuote(Cell(const*)) a, NoQuote(Cell(const*)) b, bool strict)
+REBINT CT_Sequence(NoQuote(const Cell*) a, NoQuote(const Cell*) b, bool strict)
 {
     REBLEN len_a = VAL_SEQUENCE_LEN(a);
     REBLEN len_b = VAL_SEQUENCE_LEN(b);

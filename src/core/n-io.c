@@ -158,8 +158,8 @@ DECLARE_NATIVE(new_line)
     bool mark = VAL_LOGIC(ARG(mark));
 
     REBVAL *pos = ARG(position);
-    Cell(const*) tail;
-    Cell(*) item = VAL_ARRAY_AT_Ensure_Mutable(&tail, pos);
+    const Cell* tail;
+    Cell* item = VAL_ARRAY_AT_Ensure_Mutable(&tail, pos);
     Array* a = VAL_ARRAY_KNOWN_MUTABLE(pos);  // need if setting flag at tail
 
     REBINT skip;
@@ -216,8 +216,8 @@ DECLARE_NATIVE(new_line_q)
     REBVAL *pos = ARG(position);
 
     const Array* arr;
-    Cell(const*) item;
-    Cell(const*) tail;
+    const Cell* item;
+    const Cell* tail;
 
     if (IS_VARARGS(pos)) {
         Level(*) L;
@@ -271,7 +271,7 @@ DECLARE_NATIVE(new_line_q)
 //
 // Note that this routine is used by the SLEEP extension, as well as by WAIT.
 //
-REBLEN Milliseconds_From_Value(Cell(const*) v) {
+REBLEN Milliseconds_From_Value(const Cell* v) {
     REBINT msec;
 
     switch (VAL_TYPE(v)) {

@@ -279,8 +279,8 @@ export proto-parser: context [
             | "Option(Sink(" opt [identifier "(" thru ")"] thru "))"
             | "(*)" | "(const*)"
             | "(const *)" (fail "use (const*) not (const *)")
-            | "(Cell(const*))"
-            | "(Cell(const*) )" (fail "use (Cell(const*)) not (Cell(const*) )")
+            | "(const Cell*)"
+            | "(const Cell* )" (fail "use (const Cell*) not (const Cell* )")
         ]
 
         function-proto: [

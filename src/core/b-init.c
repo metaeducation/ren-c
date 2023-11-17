@@ -77,7 +77,7 @@ static void Check_Basics(void)
     // file, line, and tick of their initialization (or last TOUCH_CELL()).
     // Define UNUSUAL_CELL_SIZE to bypass this check.
 
-    Size cell_size = sizeof(CellT);  // in variable avoids warning
+    Size cell_size = sizeof(Cell);  // in variable avoids warning
 
   #if UNUSUAL_CELL_SIZE
     if (cell_size % ALIGN_SIZE != 0)
@@ -86,7 +86,7 @@ static void Check_Basics(void)
     if (cell_size != sizeof(void*) * 4)
         panic ("size of cell is not sizeof(void*) * 4");
 
-    Size series_size = sizeof(CellT) * 2;
+    Size series_size = sizeof(Cell) * 2;
 
     #if DEBUG_SERIES_ORIGINS || DEBUG_COUNT_TICKS
       series_size += sizeof(void*) * 2;
@@ -108,7 +108,7 @@ static void Check_Basics(void)
 
   blockscope {
     Size offset = offsetof(Stub, info.flags);  // variable avoids warning
-    if (offset - offsetof(Stub, content) != sizeof(CellT))
+    if (offset - offsetof(Stub, content) != sizeof(Cell))
         panic ("bad structure alignment for internal array termination"); }
 
     //=//// CHECK BYTE-ORDERING SENSITIVE FLAGS //////////////////////////=//
@@ -539,8 +539,8 @@ static void Init_System_Object(
     Context* errors_catalog
 ) {
     assert(VAL_INDEX(boot_sysobj_spec) == 0);
-    Cell(const*) spec_tail;
-    Cell(*) spec_head
+    const Cell* spec_tail;
+    Cell* spec_head
         = VAL_ARRAY_Known_Mutable_AT(&spec_tail, boot_sysobj_spec);
 
     // Create the system object from the sysobj block (defined in %sysobj.r)

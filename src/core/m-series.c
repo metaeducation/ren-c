@@ -348,7 +348,7 @@ void Assert_Series_Term_Core(const Series* s)
     if (Is_Series_Array(s)) {
       #if DEBUG_POISON_SERIES_TAILS
         if (Get_Series_Flag(s, DYNAMIC)) {
-            Cell(const*) tail = Array_Tail(ARR(s));
+            const Cell* tail = Array_Tail(ARR(s));
             if (not Is_Cell_Poisoned(tail))
                 panic (tail);
         }

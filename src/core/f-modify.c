@@ -43,7 +43,7 @@ REBLEN Modify_Array(
 
     REBLEN tail_idx = Array_Len(dst_arr);
 
-    Cell(const*) src_rel;
+    const Cell* src_rel;
     REBSPC *specifier;
 
     if (op == SYM_CHANGE and Is_Void(src_val)) {
@@ -98,7 +98,7 @@ REBLEN Modify_Array(
             else if (ilen == 0)
                 tail_newline = false;
             else {
-                Cell(const*) tail_cell
+                const Cell* tail_cell
                     = VAL_ARRAY_ITEM_AT(src_val) + ilen;
                 tail_newline = Get_Cell_Flag(tail_cell, NEWLINE_BEFORE);
             }
@@ -472,8 +472,8 @@ REBLEN Modify_String_Or_Binary(
             // between.  There is some rationale to this, though implications
             // for operations like TO TEXT! of a BLOCK! are unclear...
             //
-            Cell(const*) item_tail;
-            Cell(const*) item = VAL_ARRAY_AT(&item_tail, src);
+            const Cell* item_tail;
+            const Cell* item = VAL_ARRAY_AT(&item_tail, src);
             for (; item != item_tail; ++item)
                 Form_Value(mo, item);
             goto use_mold_buffer;
@@ -722,7 +722,7 @@ REBLEN Modify_String_Or_Binary(
             Check_Bookmarks_Debug(dst_str);
           #endif
 
-            if (String_Len(dst_str) < sizeof(CellT))  // not kept if small
+            if (String_Len(dst_str) < sizeof(Cell))  // not kept if small
                 Free_Bookmarks_Maybe_Null(dst_str);
         }
     }

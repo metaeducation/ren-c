@@ -64,7 +64,7 @@ inline static Array* MAP_PAIRLIST(const_if_c Map* map)
     Series_Head(MAP_HASHLIST(m))
 
 
-inline static const Map* VAL_MAP(NoQuote(Cell(const*)) v) {
+inline static const Map* VAL_MAP(NoQuote(const Cell*) v) {
     assert(CELL_HEART(v) == REB_MAP);
 
     Array* a = ARR(VAL_NODE1(v));
@@ -82,7 +82,7 @@ inline static const Map* VAL_MAP(NoQuote(Cell(const*)) v) {
 
 inline static REBLEN Length_Map(const Map* map)
 {
-    Cell(const*) tail = Array_Tail(MAP_PAIRLIST(map));
+    const Cell* tail = Array_Tail(MAP_PAIRLIST(map));
     const REBVAL *v = SPECIFIC(Array_Head(MAP_PAIRLIST(map)));
 
     REBLEN count = 0;

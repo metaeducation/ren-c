@@ -33,7 +33,7 @@
 // escaped VOID was renderable as its ticks, followed by nothing.  This is
 // the "nothing" part, saving on a special-case for that.
 //
-void MF_Void(REB_MOLD *mo, NoQuote(Cell(const*)) v, bool form)
+void MF_Void(REB_MOLD *mo, NoQuote(const Cell*) v, bool form)
 {
     UNUSED(mo);
     UNUSED(form);
@@ -55,7 +55,7 @@ void MF_Void(REB_MOLD *mo, NoQuote(Cell(const*)) v, bool form)
 //    >> append "abc" _
 //    == "abc "
 //
-void MF_Blank(REB_MOLD *mo, NoQuote(Cell(const*)) v, bool form)
+void MF_Blank(REB_MOLD *mo, NoQuote(const Cell*) v, bool form)
 {
     UNUSED(v);
 
@@ -72,7 +72,7 @@ void MF_Blank(REB_MOLD *mo, NoQuote(Cell(const*)) v, bool form)
 // Must have a comparison function, otherwise SORT would not work on arrays
 // with blanks in them.
 //
-REBINT CT_Blank(NoQuote(Cell(const*)) a, NoQuote(Cell(const*)) b, bool strict)
+REBINT CT_Blank(NoQuote(const Cell*) a, NoQuote(const Cell*) b, bool strict)
 {
     UNUSED(strict);  // no strict form of comparison
     UNUSED(a);
@@ -136,7 +136,7 @@ REBTYPE(Blank)
 //
 //  MF_Handle: C
 //
-void MF_Handle(REB_MOLD *mo, NoQuote(Cell(const*)) v, bool form)
+void MF_Handle(REB_MOLD *mo, NoQuote(const Cell*) v, bool form)
 {
     UNUSED(form);  // !!! Handles have "no printable form", what to do here?
     UNUSED(v);
@@ -157,7 +157,7 @@ void MF_Handle(REB_MOLD *mo, NoQuote(Cell(const*)) v, bool form)
 // PORT!s via FIND did not work.  This raises a larger issue about sameness
 // vs. equality that should be studied.
 //
-REBINT CT_Handle(NoQuote(Cell(const*)) a, NoQuote(Cell(const*)) b, bool strict)
+REBINT CT_Handle(NoQuote(const Cell*) a, NoQuote(const Cell*) b, bool strict)
 {
     UNUSED(strict);
 

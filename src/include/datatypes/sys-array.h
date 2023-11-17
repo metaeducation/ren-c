@@ -97,37 +97,37 @@ inline static bool Has_File_Line(const Array* a) {
 // HEAD, TAIL, and LAST refer to specific value pointers in the array.  Since
 // empty arrays have no "last" value Array_Last() should not be called on it.
 
-inline static Cell(*) Array_At(const_if_c Array* a, REBLEN n)
-  { return Series_At(CellT, a, n); }
+inline static Cell* Array_At(const_if_c Array* a, REBLEN n)
+  { return Series_At(Cell, a, n); }
 
-inline static Cell(*) Array_Head(const_if_c Array* a)
-  { return Series_Head(CellT, a); }
+inline static Cell* Array_Head(const_if_c Array* a)
+  { return Series_Head(Cell, a); }
 
-inline static Cell(*) Array_Tail(const_if_c Array* a)
-  { return Series_Tail(CellT, a); }
+inline static Cell* Array_Tail(const_if_c Array* a)
+  { return Series_Tail(Cell, a); }
 
-inline static Cell(*) Array_Last(const_if_c Array* a)
-  { return Series_Last(CellT, a); }
+inline static Cell* Array_Last(const_if_c Array* a)
+  { return Series_Last(Cell, a); }
 
-inline static Cell(*) Array_Single(const_if_c Array* a) {
+inline static Cell* Array_Single(const_if_c Array* a) {
     assert(Not_Series_Flag(a, DYNAMIC));
     return mutable_Stub_Cell(a);
 }
 
 #if CPLUSPLUS_11
-    inline static Cell(const*) Array_At(const Array* a, REBLEN n)
-        { return Series_At(const CellT, a, n); }
+    inline static const Cell* Array_At(const Array* a, REBLEN n)
+        { return Series_At(const Cell, a, n); }
 
-    inline static Cell(const*) Array_Head(const Array* a)
-        { return Series_Head(const CellT, a); }
+    inline static const Cell* Array_Head(const Array* a)
+        { return Series_Head(const Cell, a); }
 
-    inline static Cell(const*) Array_Tail(const Array* a)
-        { return Series_Tail(const CellT, a); }
+    inline static const Cell* Array_Tail(const Array* a)
+        { return Series_Tail(const Cell, a); }
 
-    inline static Cell(const*) Array_Last(const Array* a)
-        { return Series_Last(const CellT, a); }
+    inline static const Cell* Array_Last(const Array* a)
+        { return Series_Last(const Cell, a); }
 
-    inline static Cell(const*) Array_Single(const Array* a) {
+    inline static const Cell* Array_Single(const Array* a) {
         assert(Not_Series_Flag(a, DYNAMIC));
         return Stub_Cell(a);
     }
@@ -137,10 +137,10 @@ inline static Cell(*) Array_Single(const_if_c Array* a) {
 // It's possible to calculate the array from just a cell if you know it's a
 // cell inside a singular array.
 //
-inline static Array* Singular_From_Cell(Cell(const*) v) {
+inline static Array* Singular_From_Cell(const Cell* v) {
     Array* singular = ARR(  // some checking in debug builds is done by ARR()
         cast(void*,
-            cast(Byte*, m_cast(Cell(*), v))
+            cast(Byte*, m_cast(Cell*, v))
             - offsetof(Stub, content)
         )
     );
@@ -161,7 +161,7 @@ inline static void Prep_Array(
 ){
     assert(Get_Series_Flag(a, DYNAMIC));
 
-    Cell(*) prep = Array_Head(a);
+    Cell* prep = Array_Head(a);
 
     if (Not_Series_Flag(a, FIXED_SIZE)) {
         //
@@ -404,7 +404,7 @@ inline static Array* Copy_Array_At_Extra_Deep_Flags_Managed(
 // These operations do not need to take the value's index position into
 // account; they strictly operate on the array series
 //
-inline static const Array* VAL_ARRAY(NoQuote(Cell(const*)) v) {
+inline static const Array* VAL_ARRAY(NoQuote(const Cell*) v) {
     assert(ANY_ARRAYLIKE(v));
 
     const Array* a = ARR(VAL_NODE1(v));
@@ -428,9 +428,9 @@ inline static const Array* VAL_ARRAY(NoQuote(Cell(const*)) v) {
 // of bounds of the data.  If a function can deal with such out of bounds
 // arrays meaningfully, it should work with VAL_INDEX_UNBOUNDED().
 //
-inline static Cell(const*) VAL_ARRAY_LEN_AT(
+inline static const Cell* VAL_ARRAY_LEN_AT(
     Option(REBLEN*) len_at_out,
-    NoQuote(Cell(const*)) v
+    NoQuote(const Cell*) v
 ){
     const Array* arr = VAL_ARRAY(v);
     REBIDX i = VAL_INDEX_RAW(v);  // VAL_ARRAY() already checks it's series
@@ -442,34 +442,34 @@ inline static Cell(const*) VAL_ARRAY_LEN_AT(
     return Array_At(arr, i);
 }
 
-inline static Cell(const*) VAL_ARRAY_AT(
-    Option(Cell(const*)*) tail_out,
-    NoQuote(Cell(const*)) v
+inline static const Cell* VAL_ARRAY_AT(
+    Option(const Cell**) tail_out,
+    NoQuote(const Cell*) v
 ){
     const Array* arr = VAL_ARRAY(v);
     REBIDX i = VAL_INDEX_RAW(v);  // VAL_ARRAY() already checks it's series
     REBLEN len = Array_Len(arr);
     if (i < 0 or i > cast(REBIDX, len))
         fail (Error_Index_Out_Of_Range_Raw());
-    Cell(const*) at = Array_At(arr, i);
+    const Cell* at = Array_At(arr, i);
     if (tail_out)  // inlining should remove this if() for no tail
         *unwrap(tail_out) = at + (len - i);
     return at;
 }
 
-inline static Cell(const*) VAL_ARRAY_ITEM_AT(NoQuote(Cell(const*)) v) {
-    Cell(const*) tail;
-    Cell(const*) item = VAL_ARRAY_AT(&tail, v);
+inline static const Cell* VAL_ARRAY_ITEM_AT(NoQuote(const Cell*) v) {
+    const Cell* tail;
+    const Cell* item = VAL_ARRAY_AT(&tail, v);
     assert(item != tail);  // should be a valid value
     return item;
 }
 
 
 #define VAL_ARRAY_AT_Ensure_Mutable(tail_out,v) \
-    m_cast(Cell(*), VAL_ARRAY_AT((tail_out), Ensure_Mutable(v)))
+    m_cast(Cell*, VAL_ARRAY_AT((tail_out), Ensure_Mutable(v)))
 
 #define VAL_ARRAY_Known_Mutable_AT(tail_out,v) \
-    m_cast(Cell(*), VAL_ARRAY_AT((tail_out), Known_Mutable(v)))
+    m_cast(Cell*, VAL_ARRAY_AT((tail_out), Known_Mutable(v)))
 
 
 // !!! R3-Alpha introduced concepts of immutable series with PROTECT, but
@@ -482,7 +482,7 @@ inline static Cell(const*) VAL_ARRAY_ITEM_AT(NoQuote(Cell(const*)) v) {
 // calls to this function get mutable access on non-mutable series.  :-/
 //
 #define VAL_ARRAY_AT_MUTABLE_HACK(tail_out,v) \
-    m_cast(Cell(*), VAL_ARRAY_AT((tail_out), (v)))
+    m_cast(Cell*, VAL_ARRAY_AT((tail_out), (v)))
 
 #define VAL_ARRAY_TAIL(v) \
   Array_Tail(VAL_ARRAY(v))
@@ -494,7 +494,7 @@ inline static Cell(const*) VAL_ARRAY_ITEM_AT(NoQuote(Cell(const*)) v) {
 // initialize, and the C++ build can also validate managed consistent w/const.
 
 inline static REBVAL *Init_Array_Cell_At_Core(
-    Cell(*) out,
+    Cell* out,
     enum Reb_Kind kind,
     const_if_c Array* array,
     REBLEN index,
@@ -511,7 +511,7 @@ inline static REBVAL *Init_Array_Cell_At_Core(
 
 #if CPLUSPLUS_11
     inline static REBVAL *Init_Array_Cell_At_Core(
-        Cell(*) out,
+        Cell* out,
         enum Reb_Kind kind,
         const Array* array,  // all const arrays should be already managed
         REBLEN index,
@@ -531,8 +531,8 @@ inline static REBVAL *Init_Array_Cell_At_Core(
 #define Init_Group(v,s)     Init_Array_Cell((v), REB_GROUP, (s))
 
 
-inline static Cell(*) Init_Relative_Block_At(
-    Cell(*) out,
+inline static Cell* Init_Relative_Block_At(
+    Cell* out,
     Action* action,  // action to which array has relative bindings
     Array* array,
     REBLEN index
@@ -575,10 +575,10 @@ inline static Cell(*) Init_Relative_Block_At(
 //
 // https://forum.rebol.info/t/doubled-groups-as-a-dialecting-tool/1893
 //
-inline static bool Is_Any_Doubled_Group(NoQuote(Cell(const*)) group) {
+inline static bool Is_Any_Doubled_Group(NoQuote(const Cell*) group) {
     assert(ANY_GROUP_KIND(CELL_HEART(group)));
-    Cell(const*) tail;
-    Cell(const*) inner = VAL_ARRAY_AT(&tail, group);
+    const Cell* tail;
+    const Cell* inner = VAL_ARRAY_AT(&tail, group);
     if (inner + 1 != tail)  // should be exactly one item
         return false;
     return IS_GROUP(inner);  // if true, it's a ((...)) GROUP!
@@ -635,16 +635,16 @@ inline static Value(*) Init_Pack_Untracked(Atom(*) out, Array* a) {
 inline static bool Is_Nihil(Atom(const*) v) {
     if (not Is_Pack(v))
         return false;
-    Cell(const*) tail;
-    Cell(const*) at = VAL_ARRAY_AT(&tail, v);
+    const Cell* tail;
+    const Cell* at = VAL_ARRAY_AT(&tail, v);
     return tail == at;
 }
 
-inline static bool Is_Meta_Of_Nihil(Cell(const*) v) {
+inline static bool Is_Meta_Of_Nihil(const Cell* v) {
     if (not Is_Meta_Of_Pack(v))
         return false;
-    Cell(const*) tail;
-    Cell(const*) at = VAL_ARRAY_AT(&tail, v);
+    const Cell* tail;
+    const Cell* at = VAL_ARRAY_AT(&tail, v);
     return tail == at;
 }
 

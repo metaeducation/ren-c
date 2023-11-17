@@ -106,7 +106,7 @@ Bounce Yielder_Dispatcher(Level(*) const L)
     // If there is no yield, we want a callback so we can mark the
     // generator as finished.
     //
-    Cell(*) body = Array_At(details, IDX_DETAILS_1);  // code to run
+    Cell* body = Array_At(details, IDX_DETAILS_1);  // code to run
 
     Init_Quasi_Void(mode);  // indicate "running"
     STATE = ST_YIELDER_RUNNING_BODY;

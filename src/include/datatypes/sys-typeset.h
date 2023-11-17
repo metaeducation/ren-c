@@ -46,7 +46,7 @@
     FIRST_BYTE(&EXTRA(Parameter, (v)).param_flags)
 
 inline static Option(const Array*) VAL_PARAMETER_ARRAY(
-    NoQuote(Cell(const*)) v
+    NoQuote(const Cell*) v
 ){
     assert(HEART_BYTE(v) == REB_PARAMETER);
 
@@ -67,16 +67,16 @@ inline static bool TYPE_CHECK(Value(const*) typeset, Atom(const*) v) {
 
 // isotopic type matcher (e.g. used by FIND, SWITCH)
 
-inline static bool Is_Matcher(Cell(const*) v) {
+inline static bool Is_Matcher(const Cell* v) {
     if (QUOTE_BYTE(v) != ISOTOPE_0)
         return false;
     return ANY_TYPE_VALUE_KIND(HEART_BYTE(v));
 }
 
 inline static bool Matcher_Matches(
-    Cell(const*) matcher,
+    const Cell* matcher,
     REBSPC *matcher_specifier,
-    Cell(const*) v,
+    const Cell* v,
     REBSPC *v_specifier
 ){
     assert(Is_Matcher(matcher));
@@ -226,7 +226,7 @@ inline static bool Is_Specialized(const REBPAR *param) {
 
 // Parameter class should be PARAM_CLASS_0 unless typeset in func paramlist.
 
-inline static REBVAL *Init_Parameter_Core(Cell(*) out, const Array* array)
+inline static REBVAL *Init_Parameter_Core(Cell* out, const Array* array)
 {
     Reset_Unquoted_Header_Untracked(out, CELL_MASK_PARAMETER);
     if (array)
@@ -241,7 +241,7 @@ inline static REBVAL *Init_Parameter_Core(Cell(*) out, const Array* array)
 
 
 inline static REBPAR *Init_Param_Core(
-    Cell(*) out,
+    Cell* out,
     Flags param_flags,
     const Array* array
 ){
@@ -263,6 +263,6 @@ inline static REBPAR *Init_Param_Core(
     TRACK(Init_Param_Core((out), (param_flags), (bits)))
 
 
-inline static bool Is_Parameter_Unconstrained(NoQuote(Cell(const*)) param) {
+inline static bool Is_Parameter_Unconstrained(NoQuote(const Cell*) param) {
     return VAL_PARAMETER_ARRAY(param) == nullptr;  // e.g. `[/refine]`
 }

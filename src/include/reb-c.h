@@ -1079,8 +1079,11 @@
 #if defined(NDEBUG) || (! CPLUSPLUS_11)
     #include <string.h>
 
+    // See definition of Cell for why casting to void* is needed.
+    // (Mem_Set() macro that does this is not defined for %reb-c.h)
+    //
     #define Trash_If_Debug(x) \
-        memset(&(x), 0xBD, sizeof(x));
+        memset(cast(void*, &(x)), 0xBD, sizeof(x));
 
     #define UNUSED(x) \
         ((void)(x))
@@ -1107,7 +1110,7 @@
         >::type* = nullptr
     >
     void Trash_If_Debug(T && v) {
-        ((void)(v));
+        USED(v);
     }
 
     // For example: if you have an lvalue reference to a pointer, you can
@@ -1178,7 +1181,11 @@
         >::type* = nullptr
     >
     void Trash_If_Debug(T && v) {
-        memset(&v, 123, sizeof(TRR));
+        //
+        // See definition of Cell for why casting to void* is needed.
+        // (Mem_Set() macro that does this is not defined for %reb-c.h)
+        //
+        memset(cast(void*, &v), 123, sizeof(TRR));
     }
 #endif
 

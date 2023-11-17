@@ -31,21 +31,6 @@
 //
 
 
-//=//// "RAW" CELLS ///////////////////////////////////////////////////////=//
-//
-// A raw cell is just the structure, with no additional protections.  This
-// makes it useful for embedding in a Stub, because if it had disablement of
-// things like assignment then it would also carry disablement of memcpy()
-// of containing structures...which would limit that definition.  These
-// cells should not be used for any other purposes.
-//
-#if (! CPLUSPLUS_11)
-    typedef struct ValueStruct RawCell;
-#else
-    typedef struct Reb_Raw RawCell;
-#endif
-
-
 //=//// UNITS OF ARRAYS (CELLS) ///////////////////////////////////////////=//
 //
 // Cells are array units that don't (necessarily) have fully resolved binding.
@@ -61,30 +46,23 @@
 // then #defines REBVAL to that.
 //
 #if (! CPLUSPLUS_11)
-    typedef struct ValueStruct CellT;
-
-    #define Cell(star_maybe_const) \
-        struct ValueStruct star_maybe_const
+    typedef struct ValueStruct Cell;
 #else
-    struct RelativeValue; // won't implicitly downcast to REBVAL
-    typedef struct RelativeValue CellT;
-
-    #define Cell(star_maybe_const) \
-        CellT star_maybe_const
+    struct Cell;  // won't implicitly downcast to REBVAL
 #endif
 
 
 //=//// EXTANT STACK POINTERS /////////////////////////////////////////////=//
 //
 // See %sys-stack.h for a deeper explanation.  This has to be declared in
-// order to put in one of NoQuote(Cell(const*))s implicit constructors.  Because
+// order to put in one of NoQuote(const Cell*)s implicit constructors.  Because
 // having the StackValue(*) have a user-defined conversion to REBVAL* won't
-// get that...and you can't convert to both REBVAL* and NoQuote(Cell(const*)) as
+// get that...and you can't convert to both REBVAL* and NoQuote(const Cell*) as
 // that would be ambiguous.
 //
 // Even with this definition, the intersecting needs of DEBUG_CHECK_CASTS and
 // DEBUG_EXTANT_STACK_POINTERS means there will be some cases where distinct
-// overloads of REBVAL* vs. NoQuote(Cell(const*)) will wind up being ambiguous.
+// overloads of REBVAL* vs. NoQuote(const Cell*) will wind up being ambiguous.
 // For instance, VAL_DECIMAL(StackValue(*)) can't tell which checked overload
 // to use.  In such cases, you have to cast, e.g. VAL_DECIMAL(VAL(stackval)).
 //
@@ -128,37 +106,34 @@
     // time.  But just make sure some C++ builds are possible without
     // using the active pointer class.  Choose debug builds for now.
     //
-    struct Reb_Raw;  // won't implicitly downcast to Cell
     #define NoQuote(const_cell_star) \
-        const struct Reb_Raw*  // not a class instance in %sys-internals.h
+        const Cell*  // not a class instance in %sys-internals.h
 #else
-    // This heavier wrapper form of Reb_Raw() can be costly...empirically
-    // up to 10% of the runtime, since it's called so often.  But it protects
-    // against pointer arithmetic on NoQuote() cells.
+    // This heavier wrapper form of Cell can be costly...empirically
+    // up to 10% of the runtime, since it's called so often.
     //
-    struct Reb_Raw;  // won't implicitly downcast to Cell
     template<typename T>
     struct NoQuoteWrapper {
-        const Reb_Raw *p;
+        const Cell* p;
         static_assert(
-            std::is_same<Cell(const*), T>::value,
-            "Instantiations of `NoQuote()` only work as NoQuote(Cell(const*))"
+            std::is_same<const Cell*, T>::value,
+            "Instantiations of `NoQuote()` only work as NoQuote(const Cell*)"
         );
 
         NoQuoteWrapper () { }
-        NoQuoteWrapper (const Reb_Raw *p) : p (p) { }
+        NoQuoteWrapper (const Cell* p) : p (p) { }
 
-        const Reb_Raw **operator&() { return &p; }
-        const Reb_Raw *operator->() { return p; }
-        const Reb_Raw &operator*() { return *p; }
+        const Cell** operator&() { return &p; }
+        const Cell* operator->() { return p; }
+        const Cell& operator*() { return *p; }
 
-        operator const Reb_Raw* () { return p; }
+        operator const Cell* () { return p; }
 
-        explicit operator const ValueStruct* ()
-          { return reinterpret_cast<const ValueStruct*>(p); }
+        explicit operator const Value* ()
+          { return reinterpret_cast<const Value*>(p); }
 
-        explicit operator const RelativeValue* ()
-          { return reinterpret_cast<const RelativeValue*>(p); }
+        explicit operator const Cell* ()
+          { return reinterpret_cast<const Cell*>(p); }
     };
     #define NoQuote(const_cell_star) \
         struct NoQuoteWrapper<const_cell_star>

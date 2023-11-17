@@ -815,7 +815,7 @@ DECLARE_NATIVE(apply)
     if (Is_Level_At_End(L))
         goto finalize_apply;
 
-    Cell(const*) at = At_Level(L);
+    const Cell* at = At_Level(L);
 
     if (IS_COMMA(at)) {
         Fetch_Next_Forget_Lookback(L);
@@ -844,7 +844,7 @@ DECLARE_NATIVE(apply)
         if (not Is_None(var))
             fail (Error_Bad_Parameter_Raw(rebUnrelativize(at)));
 
-        Cell(const*) lookback = Lookback_While_Fetching_Next(L);  // for error
+        const Cell* lookback = Lookback_While_Fetching_Next(L);  // for error
         at = Try_At_Level(L);
 
         if (at == nullptr or IS_COMMA(at))

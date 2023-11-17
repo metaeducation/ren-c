@@ -39,7 +39,7 @@
 
 // !!! Find a better place for this!
 //
-inline static bool ANY_ESCAPABLE_GET(Cell(const*) v) {
+inline static bool ANY_ESCAPABLE_GET(const Cell* v) {
     //
     // !!! Note: GET-BLOCK! is earmarked for isotope generation.
     //
@@ -264,7 +264,7 @@ inline static void Free_Level_Internal(Level(*) L) {
 }
 
 // * Push_Level() takes an Atom() for the output.  This is important, as
-//   we don't want to evaluate into arbitrary array Cell(*), since the array
+//   we don't want to evaluate into arbitrary array Cell*, since the array
 //   could have its memory moved during an evaluation.  Also we don't want
 //   to take a Value(*) that could be a variable in an object--because the
 //   unstable intermediate states of the evaluation could be exposed by
@@ -275,7 +275,7 @@ inline static void Free_Level_Internal(Level(*) L) {
 //   that local state for a native will never be exposed by a debugger.
 //
 inline static void Push_Level(
-    Atom(*) out,  // typecheck prohibits passing `unstable` Cell(*) for output
+    Atom(*) out,  // typecheck prohibits passing `unstable` Cell* for output
     Level(*) L
 ){
     // All calls through to Eval_Core() are assumed to happen at the same C
@@ -606,7 +606,7 @@ inline static REBVAL *D_ARG_Core(Level(*) L, REBLEN n) {  // 1 for first arg
 inline static bool Eval_Value_Core_Throws(
     Atom(*) out,
     Flags flags,
-    Cell(const*) value,  // e.g. a BLOCK! here would just evaluate to itself!
+    const Cell* value,  // e.g. a BLOCK! here would just evaluate to itself!
     REBSPC *specifier
 );
 
@@ -662,7 +662,7 @@ inline static bool Pushed_Continuation(
     Atom(*) out,
     Flags flags,  // LEVEL_FLAG_BRANCH, etc. for pushed levels
     REBSPC *branch_specifier,  // before branch forces non-empty variadic call
-    Cell(const*) branch,
+    const Cell* branch,
     Option(Atom(const*)) with  // can be same as out or not GC-safe, may copy
 ){
     assert(branch != out);  // it's legal for `with` to be the same as out

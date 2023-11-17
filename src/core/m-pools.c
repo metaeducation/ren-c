@@ -221,8 +221,8 @@ const PoolSpec Mem_Pool_Spec[MAX_POOLS] =
 
     DEF_POOL(sizeof(Series), 4096), // Series headers
 
-  #if UNUSUAL_CELL_SIZE  // sizeof(CellT)*2 != sizeof(Stub)
-    DEF_POOL(sizeof(CellT) * 2, 16),  // Pairings, PAIR_POOL
+  #if UNUSUAL_CELL_SIZE  // sizeof(Cell)*2 != sizeof(Stub)
+    DEF_POOL(sizeof(Cell) * 2, 16),  // Pairings, PAIR_POOL
   #endif
 
     DEF_POOL(ALIGN(sizeof(LevelT), sizeof(REBI64)), 128),  // Levels
@@ -504,7 +504,7 @@ Node* Try_Find_Containing_Node_Debug(const void *p)
             if (unit[0] & NODE_BYTEMASK_0x01_CELL) {  // a "pairing"
                 REBVAL *pairing = VAL(cast(void*, unit));
                 if (p >= cast(void*, pairing) and p < cast(void*, pairing + 1))
-                    return pairing;  // this Stub is actually CellT[2]
+                    return pairing;  // this Stub is actually Cell[2]
                 continue;
             }
 
@@ -570,7 +570,7 @@ Node* Try_Find_Containing_Node_Debug(const void *p)
 //
 //  Alloc_Pairing: C
 //
-// Allocate a paired set of values.  The "key" is in the Cell(*) before* the
+// Allocate a paired set of values.  The "key" is in the Cell* before* the
 // returned pointer.
 //
 // Because pairings are created in large numbers and left outstanding, they
@@ -864,7 +864,7 @@ void Expand_Series(Series* s, REBLEN index, REBLEN delta)
         size_old = Series_Total(s);
     }
     else {
-        content_old = s->content;
+        Mem_Copy(&content_old, &s->content, sizeof(union StubContentUnion));
         data_old = cast(char*, &content_old);
     }
 
@@ -950,9 +950,10 @@ void Swap_Series_Content(Series* a, Series* b)
     USED_BYTE(a) = USED_BYTE(b);
     USED_BYTE(b) = a_len;
 
-    union StubContentUnion a_content = a->content;
-    a->content = b->content;
-    b->content = a_content;
+    union StubContentUnion a_content;
+    Mem_Copy(&a_content, &a->content, sizeof(union StubContentUnion));
+    Mem_Copy(&a->content, &b->content, sizeof(union StubContentUnion));
+    Mem_Copy(&b->content, &a_content, sizeof(union StubContentUnion));
 
     union StubMiscUnion a_misc = a->misc;
     a->misc = b->misc;
@@ -1035,7 +1036,7 @@ void Remake_Series(Series* s, REBLEN units, Flags flags)
         size_old = Series_Total(s);
     }
     else {
-        content_old = s->content;
+        Mem_Copy(&content_old, &s->content, sizeof(union StubContentUnion));
         data_old = cast(char*, &content_old);
     }
 
@@ -1126,7 +1127,7 @@ void Decay_Series(Series* s)
         break;
 
       case FLAVOR_HANDLE: {
-        Cell(*) v = Array_Single(ARR(s));
+        Cell* v = Array_Single(ARR(s));
         assert(CELL_HEART_UNCHECKED(v) == REB_HANDLE);
 
         // Some handles use the managed form just because they want changes to
@@ -1160,7 +1161,7 @@ void Decay_Series(Series* s)
         // possibility exists for the other array with a "canon" [0]
         //
         if (IS_VARLIST(s) or IS_DETAILS(s))
-            s->content.fixed.cells[0] = *Array_Head(ARR(s));
+            Mem_Copy(&s->content.fixed.cell, Array_Head(ARR(s)), sizeof(Cell));
 
         Free_Unbiased_Series_Data(unbiased, total);
 
@@ -1570,7 +1571,7 @@ REBU64 Inspect_Series(bool show)
 
     if (show) {
         printf("Series Memory Info:\n");
-        printf("  Cell size = %lu\n", cast(unsigned long, sizeof(CellT)));
+        printf("  Cell size = %lu\n", cast(unsigned long, sizeof(Cell)));
         printf("  Stub size = %lu\n", cast(unsigned long, sizeof(Stub)));
         printf(
             "  %-6d segs = %-7d bytes - headers\n",

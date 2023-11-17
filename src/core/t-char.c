@@ -72,7 +72,7 @@ const uint_fast8_t g_first_byte_mark_utf8[7] = {
 // no non-strict comparisons.  To compare non-strictly, they must be aliased
 // as TEXT!.
 //
-REBINT CT_Issue(NoQuote(Cell(const*)) a, NoQuote(Cell(const*)) b, bool strict)
+REBINT CT_Issue(NoQuote(const Cell*) a, NoQuote(const Cell*) b, bool strict)
 {
     UNUSED(strict);  // always strict
 
@@ -256,7 +256,7 @@ static REBINT Math_Arg_For_Char(REBVAL *arg, const Symbol* verb)
 //
 //  MF_Issue: C
 //
-void MF_Issue(REB_MOLD *mo, NoQuote(Cell(const*)) v, bool form)
+void MF_Issue(REB_MOLD *mo, NoQuote(const Cell*) v, bool form)
 {
     REBLEN len;
     if (Get_Cell_Flag(v, ISSUE_HAS_NODE))
@@ -376,7 +376,7 @@ REBTYPE(Issue)
         INCLUDE_PARAMS_OF_PICK_P;
         UNUSED(ARG(location));
 
-        Cell(const*) picker = ARG(picker);
+        const Cell* picker = ARG(picker);
         if (not IS_INTEGER(picker))
             fail (PARAM(picker));
 

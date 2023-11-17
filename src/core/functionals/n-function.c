@@ -124,7 +124,7 @@ Bounce Func_Dispatcher(Level(*) const L)
   initial_entry: {  //////////////////////////////////////////////////////////
 
     Details* details = Phase_Details(PHASE);
-    Cell(*) body = Array_At(details, IDX_DETAILS_1);  // code to run
+    Cell* body = Array_At(details, IDX_DETAILS_1);  // code to run
     assert(IS_BLOCK(body) and IS_RELATIVE(body) and VAL_INDEX(body) == 0);
 
     assert(ACT_HAS_RETURN(PHASE));  // all FUNC have RETURN
@@ -277,12 +277,12 @@ Phase* Make_Interpreted_Action_May_Fail(
     }
 
     // Save the relativized body in the action's details block.  Since it is
-    // a Cell(*) and not a REBVAL*, the dispatcher must combine it with a
+    // a Cell* and not a REBVAL*, the dispatcher must combine it with a
     // running frame instance (the Level(*) received by the dispatcher) before
     // executing the interpreted code.
     //
     Details* details = Phase_Details(a);
-    Cell(*) rebound = Init_Relative_Block(
+    Cell* rebound = Init_Relative_Block(
         Array_At(details, IDX_NATIVE_BODY),
         a,
         copy

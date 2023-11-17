@@ -167,11 +167,11 @@ void Push_Paramlist_Quads_May_Fail(
 
     bool refinement_seen = false;
 
-    Cell(const*) tail;
-    Cell(const*) value = VAL_ARRAY_AT(&tail, spec);
+    const Cell* tail;
+    const Cell* value = VAL_ARRAY_AT(&tail, spec);
 
     while (value != tail) {
-        Cell(const*) item = value;  // "faked"
+        const Cell* item = value;  // "faked"
         ++value;  // go ahead and consume next
 
     //=//// STRING! FOR FUNCTION DESCRIPTION OR PARAMETER NOTE ////////////=//
@@ -296,8 +296,8 @@ void Push_Paramlist_Quads_May_Fail(
             );
           }
 
-            Cell(const*) types_tail;
-            Cell(const*) types_at = VAL_ARRAY_AT(&types_tail, item);
+            const Cell* types_tail;
+            const Cell* types_at = VAL_ARRAY_AT(&types_tail, item);
             Flags param_flags;
             Array* a = Add_Parameter_Bits_Core(
                 &param_flags,
@@ -766,11 +766,11 @@ Array* Pop_Paramlist_With_Adjunct_May_Fail(
         mutable_LINK(Patches, types_varlist) = nullptr;
         INIT_CTX_KEYLIST_SHARED(CTX(types_varlist), keylist);
 
-        Cell(*) rootvar = Array_Head(types_varlist);
+        Cell* rootvar = Array_Head(types_varlist);
         INIT_VAL_CONTEXT_ROOTVAR(rootvar, REB_OBJECT, types_varlist);
 
         REBVAL *dest = SPECIFIC(rootvar) + 1;
-        Cell(const*) param = Array_At(paramlist, 1);
+        const Cell* param = Array_At(paramlist, 1);
 
         if (return_stackindex != 0) {
             assert(flags & MKF_RETURN);
@@ -815,10 +815,10 @@ Array* Pop_Paramlist_With_Adjunct_May_Fail(
         mutable_LINK(Patches, notes_varlist) = nullptr;
         INIT_CTX_KEYLIST_SHARED(CTX(notes_varlist), keylist);
 
-        Cell(*) rootvar = Array_Head(notes_varlist);
+        Cell* rootvar = Array_Head(notes_varlist);
         INIT_VAL_CONTEXT_ROOTVAR(rootvar, REB_OBJECT, notes_varlist);
 
-        Cell(const*) param = Array_At(paramlist, 1);
+        const Cell* param = Array_At(paramlist, 1);
         REBVAL *dest = SPECIFIC(rootvar) + 1;
 
         if (return_stackindex != 0) {
@@ -1002,7 +1002,7 @@ Phase* Make_Action(
     );
     Set_Series_Len(details, details_capacity);
 
-    Cell(*) archetype = Array_Head(details);
+    Cell* archetype = Array_Head(details);
     Reset_Unquoted_Header_Untracked(TRACK(archetype), CELL_MASK_FRAME);
     INIT_VAL_ACTION_DETAILS(archetype, details);
     mutable_BINDING(archetype) = UNBOUND;
@@ -1108,7 +1108,7 @@ void Get_Maybe_Fake_Action_Body(Sink(Value(*)) out, Value(const*) action)
         // to the action.
 
         Details* details = Phase_Details(ACT_IDENTITY(a));
-        Cell(*) body = Array_At(details, IDX_DETAILS_1);
+        Cell* body = Array_At(details, IDX_DETAILS_1);
 
         // The PARAMLIST_HAS_RETURN tricks for definitional return make it
         // seem like a generator authored more code in the action's body...but
@@ -1149,7 +1149,7 @@ void Get_Maybe_Fake_Action_Body(Sink(Value(*)) out, Value(const*) action)
             // To give it the appearance of executing code in place, we use
             // a GROUP!.
 
-            Cell(*) slot = Array_At(fake, real_body_index);  // #BODY
+            Cell* slot = Array_At(fake, real_body_index);  // #BODY
             assert(IS_ISSUE(slot));
 
             // Note: clears VAL_FLAG_LINE

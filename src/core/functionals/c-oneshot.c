@@ -56,7 +56,7 @@ Bounce Downshot_Dispatcher(Level(*) const L)  // runs until count is reached
     Details* details = Phase_Details(PHASE);
     assert(Array_Len(details) == IDX_ONESHOT_MAX);
 
-    Cell(*) n = DETAILS_AT(details, IDX_ONESHOT_COUNTER);
+    Cell* n = DETAILS_AT(details, IDX_ONESHOT_COUNTER);
     if (VAL_INT64(n) == 0)
         return nullptr;  // always return null once 0 is reached
     mutable_VAL_INT64(n) -= 1;
@@ -73,7 +73,7 @@ Bounce Upshot_Dispatcher(Level(*) const L)  // won't run until count is reached
     Details* details = Phase_Details(PHASE);
     assert(Array_Len(details) == IDX_ONESHOT_MAX);
 
-    Cell(*) n = DETAILS_AT(details, IDX_ONESHOT_COUNTER);
+    Cell* n = DETAILS_AT(details, IDX_ONESHOT_COUNTER);
     if (VAL_INT64(n) < 0) {
         mutable_VAL_INT64(n) += 1;
         return nullptr;  // return null until 0 is reached

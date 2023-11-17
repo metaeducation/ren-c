@@ -2336,7 +2336,7 @@ Bounce Scanner_Executor(Level(*) const L) {
             HEART_BYTE(TOP) = REB_PERCENT;
 
             // !!! DEBUG_EXTANT_STACK_POINTERS can't resolve if this is
-            // a NoQuote(Cell(const*)) or REBVAL* overload with DEBUG_CHECK_CASTS.
+            // a NoQuote(const Cell*) or REBVAL* overload with DEBUG_CHECK_CASTS.
             // Have to cast explicitly, use VAL()
             //
             VAL_DECIMAL(VAL(TOP)) /= 100.0;
@@ -3300,7 +3300,7 @@ const Byte* Scan_Any_Word(
 // !!! Since this follows the same rules as FILE!, the code should merge,
 // though FILE! will make mutable strings and not have in-cell optimization.
 //
-const Byte* Scan_Issue(Cell(*) out, const Byte* cp, Size size)
+const Byte* Scan_Issue(Cell* out, const Byte* cp, Size size)
 {
     const Byte* bp = cp;
 

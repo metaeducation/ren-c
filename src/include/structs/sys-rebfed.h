@@ -198,7 +198,7 @@ struct FeedStruct {
     // read from transient sources that disappear as they go...if that is
     // the case, and lookback is needed, it is written into this cell.
     //
-    CellT lookback;
+    Cell lookback;
 
     // When feeding cells from a variadic, those cells may wish to mutate the
     // value in some way... e.g. to add a quoting level.  Rather than
@@ -207,7 +207,7 @@ struct FeedStruct {
     // is returned by Fetch_Next_in_Feed(), where arbitrary mutations can
     // be applied without corrupting the value they operate on.
     //
-    CellT fetched;
+    Cell fetched;
 
     // Feed sources are expresesd as Stub-sized "splice" units.  This is big
     // enough for a REBVAL to hold an array and an index, but it also lets
@@ -279,7 +279,7 @@ struct FeedStruct {
     //
     // !!! Test currently leaks on shutdown, review how to not leak.
     //
-    Cell(*) stress;
+    Cell* stress;
   #endif
 
   #if DEBUG_COUNT_TICKS

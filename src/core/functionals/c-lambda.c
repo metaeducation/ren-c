@@ -107,7 +107,7 @@ Bounce Lambda_Dispatcher(Level(*) const L)
 Bounce Lambda_Unoptimized_Dispatcher(Level(*) level_)
 {
     Details* details = Phase_Details(PHASE);
-    Cell(*) body = Array_At(details, IDX_DETAILS_1);  // code to run
+    Cell* body = Array_At(details, IDX_DETAILS_1);  // code to run
     assert(IS_BLOCK(body) and IS_RELATIVE(body) and VAL_INDEX(body) == 0);
 
     return DELEGATE_CORE(
@@ -145,8 +145,8 @@ DECLARE_NATIVE(lambda)
     bool optimizable = true;
 
     REBSPC *item_specifier;
-    Cell(const*) item_tail;
-    Cell(const*) item;
+    const Cell* item_tail;
+    const Cell* item;
     if (IS_BLOCK(spec)) {
         item = VAL_ARRAY_AT(&item_tail, spec);
         item_specifier = VAL_SPECIFIER(spec);

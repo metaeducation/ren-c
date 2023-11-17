@@ -48,7 +48,7 @@ void Startup_Data_Stack(Length capacity)
     Set_Series_Len(g_ds.array, 1);
     assert(Not_Series_Flag(g_ds.array, DYNAMIC));
 
-    Cell(*) head = Array_Head(g_ds.array);
+    Cell* head = Array_Head(g_ds.array);
     assert(Is_Cell_Erased(head));  // non-dynamic array, length 1 indicator
     Init_Trash(head);
 
@@ -174,7 +174,7 @@ void Expand_Data_Stack_May_Fail(REBLEN amount)
     assert(len_old == g_ds.index);
     assert(g_ds.movable_top == Array_Tail(g_ds.array));
     assert(
-        cast(Cell(*), g_ds.movable_top) - Array_Head(g_ds.array)
+        cast(Cell*, g_ds.movable_top) - Array_Head(g_ds.array)
         == cast(int, len_old)
     );
 
@@ -236,7 +236,7 @@ Array* Pop_Stack_Values_Core(StackIndex base, Flags flags)
 
     Count count = 0;
     Value(*) src = Data_Stack_At(base + 1);  // not const, will be FRESHEN()
-    Cell(*) dest = Array_Head(a);
+    Cell* dest = Array_Head(a);
     for (; count < len; ++count, ++src, ++dest) {
       #if DEBUG
         if (Is_Isotope(src)) {

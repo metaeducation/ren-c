@@ -78,8 +78,8 @@
 #define LINK_Splice_CAST        ARR
 #define HAS_LINK_Splice         FLAVOR_FEED
 
-#define MISC_Pending_TYPE       Cell(const*)
-#define MISC_Pending_CAST       (Cell(const*))
+#define MISC_Pending_TYPE       const Cell*
+#define MISC_Pending_CAST       (const Cell*)
 #define HAS_MISC_Pending        FLAVOR_FEED
 
 
@@ -112,15 +112,15 @@
 #define FEED_VAPTR_POINTER(feed)    PAYLOAD(Comma, FEED_SINGLE(feed)).vaptr
 #define FEED_PACKED(feed)           PAYLOAD(Comma, FEED_SINGLE(feed)).packed
 
-inline static Cell(const*) At_Feed(Feed(*) feed) {
+inline static const Cell* At_Feed(Feed(*) feed) {
     assert(Not_Feed_Flag(feed, NEEDS_SYNC));
     assert(feed->p != &PG_Feed_At_End);
-    return cast(Cell(const*), feed->p);
+    return cast(const Cell*, feed->p);
 }
 
-inline static Cell(const*) Try_At_Feed(Feed(*) feed) {
+inline static const Cell* Try_At_Feed(Feed(*) feed) {
     assert(Not_Feed_Flag(feed, NEEDS_SYNC));
-    return cast(Cell(const*), feed->p);
+    return cast(const Cell*, feed->p);
 }
 
 inline static Option(va_list*) FEED_VAPTR(Feed(*) feed) {
@@ -189,12 +189,12 @@ inline static void Finalize_Variadic_Feed(Feed(*) feed) {
 // all such "spliced" cells should be specific.
 //
 inline static Value(const*) Copy_Reified_Variadic_Feed_Cell(
-    Cell(*) out,
+    Cell* out,
     Feed(*) feed
 ){
     assert(FEED_SPECIFIER(feed) == SPECIFIED);  // why?
 
-    Cell(const*) cell = cast(Cell(const*), feed->p);
+    const Cell* cell = cast(const Cell*, feed->p);
     assert(not IS_RELATIVE(cell));
 
     if (Is_Nulled(cell))  // API enforces use of C's nullptr (0) for NULL
@@ -374,7 +374,7 @@ inline static void Force_Variadic_Feed_At_Cell_Or_End_May_Fail(Feed(*) feed)
         panic (feed->p);
     }
 
-    assert(Is_Feed_At_End(feed) or READABLE(cast(const CellT*, feed->p)));
+    assert(Is_Feed_At_End(feed) or READABLE(cast(const Cell*, feed->p)));
     return;
 
 } detect_again: {  ///////////////////////////////////////////////////////////
@@ -395,7 +395,7 @@ inline static void Sync_Feed_At_Cell_Or_End_May_Fail(Feed(*) feed) {
         Force_Variadic_Feed_At_Cell_Or_End_May_Fail(feed);
         Clear_Feed_Flag(feed, NEEDS_SYNC);
     }
-    assert(Is_Feed_At_End(feed) or READABLE(cast(const CellT*, feed->p)));
+    assert(Is_Feed_At_End(feed) or READABLE(cast(const Cell*, feed->p)));
 }
 
 
@@ -463,7 +463,7 @@ inline static void Fetch_Next_In_Feed(Feed(*) feed) {
             // before CLEAR runs.  This subverted the series hold mechanic.
             // Instead we do the drop in Free_Feed(), though drops on splices
             // happen here.  It's not perfect, but holds need systemic review.
-
+            //
             if (FEED_SPLICE(feed)) {  // one or more additional splices to go
                 if (Get_Feed_Flag(feed, TOOK_HOLD)) {  // see note above
                     assert(Get_Series_Info(FEED_ARRAY(feed), HOLD));
@@ -472,7 +472,7 @@ inline static void Fetch_Next_In_Feed(Feed(*) feed) {
                 }
 
                 Array* splice = FEED_SPLICE(feed);
-                memcpy(
+                Mem_Copy(
                     FEED_SINGULAR(feed),
                     FEED_SPLICE(feed),
                     sizeof(Array)
@@ -488,7 +488,7 @@ inline static void Fetch_Next_In_Feed(Feed(*) feed) {
         Set_Cell_Flag(&feed->fetched, PROTECTED);
   #endif
 
-    assert(Is_Feed_At_End(feed) or READABLE(cast(const CellT*, feed->p)));
+    assert(Is_Feed_At_End(feed) or READABLE(cast(const Cell*, feed->p)));
 }
 
 
@@ -498,7 +498,7 @@ inline static void Fetch_Next_In_Feed(Feed(*) feed) {
 // taken when one is interested in that data, because it may have to be
 // moved.  So current can be returned from Fetch_Next_In_Level_Core().
 
-inline static Cell(const*) Lookback_While_Fetching_Next(Level(*) L) {
+inline static const Cell* Lookback_While_Fetching_Next(Level(*) L) {
   #if DEBUG_EXPIRED_LOOKBACK
     if (feed->stress) {
         FRESHEN(feed->stress);
@@ -520,19 +520,19 @@ inline static Cell(const*) Lookback_While_Fetching_Next(Level(*) L) {
     // this is currently kind of an unknown, but in the scheme of things it
     // seems like it must be something favorable to optimization.)
     //
-    Cell(const*) lookback;
+    const Cell* lookback;
     if (L->feed->p == &L->feed->fetched) {
         Copy_Cell(&L->feed->lookback, SPECIFIC(&L->feed->fetched));
         lookback = &L->feed->lookback;
     }
     else
-        lookback = cast(const CellT*, L->feed->p);
+        lookback = cast(const Cell*, L->feed->p);
 
     Fetch_Next_In_Feed(L->feed);
 
   #if DEBUG_EXPIRED_LOOKBACK
     if (preserve) {
-        L->stress = cast(Cell(*), malloc(sizeof(Cell)));
+        L->stress = cast(Cell*, malloc(sizeof(Cell)));
         memcpy(L->stress, *opt_lookback, sizeof(Cell));
         lookback = L->stress;
     }
@@ -560,7 +560,7 @@ inline static Cell(const*) Lookback_While_Fetching_Next(Level(*) L) {
 //
 inline static void Inertly_Derelativize_Inheriting_Const(
     Sink(Value(*)) out,
-    Cell(const*) v,
+    const Cell* v,
     Feed(*) feed
 ){
     assert(not Is_Isotope(v));  // Source should not have isotopes
@@ -652,7 +652,7 @@ inline static Feed(*) Prep_Feed_Common(void* preallocated, Flags flags) {
 
 inline static Feed(*) Prep_Array_Feed(
     void* preallocated,
-    Option(Cell(const*)) first,
+    Option(const Cell*) first,
     const Array* array,
     REBLEN index,
     REBSPC *specifier,
@@ -692,7 +692,7 @@ inline static Feed(*) Prep_Array_Feed(
     if (Is_Feed_At_End(feed))
         assert(FEED_PENDING(feed) == nullptr);
     else
-        assert(READABLE(cast(const CellT*, feed->p)));
+        assert(READABLE(cast(const Cell*, feed->p)));
 
     feed->context = nullptr;  // already has binding
 
@@ -775,7 +775,7 @@ inline static Feed(*) Prep_Variadic_Feed(
 
 inline static Feed(*) Prep_At_Feed(
     void *preallocated,
-    NoQuote(Cell(const*)) any_array,  // array is extracted and HOLD put on
+    NoQuote(const Cell*) any_array,  // array is extracted and HOLD put on
     REBSPC *specifier,
     Flags parent_flags  // only reads FEED_FLAG_CONST out of this
 ){

@@ -295,7 +295,7 @@ Bounce Call_Core(Level(*) level_) {
         assert(argc != 0);  // usermode layer checks this
         argv = rebAllocN(char*, (argc + 1));
 
-        Cell(const*) param = VAL_ARRAY_ITEM_AT(block);
+        const Cell* param = VAL_ARRAY_ITEM_AT(block);
         int i;
         for (i = 0; i < argc; ++param, ++i) {
             if (not IS_TEXT(param))  // usermode layer ensures FILE! converted

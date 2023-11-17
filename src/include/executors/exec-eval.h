@@ -137,9 +137,9 @@ struct EvaluatorExecutorStateStruct {
     // slot to be used.  The GC explicitly checks for Eval_Executor() to know
     // if this needs to be marked.
     //
-    RawCell scratch;  // raw vs. C++ class so memset() can clear the state
+    Cell scratch;  // raw vs. C++ class so memset() can clear the state
 
-    Cell(const*) current;
+    const Cell* current;
     Option(Value(const*)) current_gotten;
 
     char enfix_reevaluate;  // either 'Y' or 'N' (catches bugs)

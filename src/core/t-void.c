@@ -64,7 +64,7 @@ Bounce TO_Quasi(Level(*) level_, enum Reb_Kind kind, const REBVAL *data) {
 //
 //  CT_Quasi: C
 //
-REBINT CT_Quasi(NoQuote(Cell(const*)) a, NoQuote(Cell(const*)) b, bool strict)
+REBINT CT_Quasi(NoQuote(const Cell*) a, NoQuote(const Cell*) b, bool strict)
 {
     UNUSED(a); UNUSED(b); UNUSED(strict);
     assert(!"CT_Quasi should never be called");

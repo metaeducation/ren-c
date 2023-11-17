@@ -313,8 +313,8 @@ struct JumpStruct {
             std::is_same<T, Context>::value
             or std::is_same<T, const char>::value
             or std::is_base_of<const REBVAL, T>::value
-            or std::is_base_of<CellT, T>::value,
-            "fail() works on: Context*, Cell(*), const char*"
+            or std::is_base_of<Cell, T>::value,
+            "fail() works on: Context*, Cell*, const char*"
         );
         Fail_Core(p);
     }

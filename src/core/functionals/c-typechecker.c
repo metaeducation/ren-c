@@ -164,14 +164,14 @@ DECLARE_NATIVE(typechecker)
 // for TYPE-BLOCK! and TYPE-GROUP!.
 //
 bool Typecheck_Value(
-    Cell(const*) tests,  // can be BLOCK!, TYPE-BLOCK!, GROUP!, TYPE-GROUP!
+    const Cell* tests,  // can be BLOCK!, TYPE-BLOCK!, GROUP!, TYPE-GROUP!
     REBSPC *tests_specifier,
     Atom(const*) v
 ){
     DECLARE_LOCAL (spare);  // !!! stackful
 
-    Cell(const*) tail;
-    Cell(const*) item;
+    const Cell* tail;
+    const Cell* item;
     bool match_all;
 
     switch (VAL_TYPE(tests)) {
@@ -233,7 +233,7 @@ bool Typecheck_Value(
         }
 
         enum Reb_Kind kind;
-        Cell(const*) test;
+        const Cell* test;
         if (VAL_TYPE_UNCHECKED(item) == REB_WORD) {
             label = VAL_WORD_SYMBOL(item);
             test = Lookup_Word_May_Fail(item, tests_specifier);

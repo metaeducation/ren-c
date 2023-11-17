@@ -596,7 +596,7 @@ inline static Byte* Series_Data_Last(size_t wide, const_if_c Series* s) {
             }
         }
         else if (Is_Series_Array(s) and Get_Series_Flag(s, DYNAMIC)) {
-            CellT* tail = Series_At(CellT, s, s->content.dynamic.used);
+            Cell* tail = Series_At(Cell, s, s->content.dynamic.used);
             if (poison)
                 Poison_Cell(tail);
             else {
@@ -713,7 +713,7 @@ inline static void Term_Series_If_Necessary(Series* s)
     }
     else if (Get_Series_Flag(s, DYNAMIC) and Is_Series_Array(s)) {
       #if DEBUG_POISON_SERIES_TAILS
-        Poison_Cell(Series_Tail(CellT, s));
+        Poison_Cell(Series_Tail(Cell, s));
       #endif
     }
 }
@@ -935,7 +935,7 @@ inline static void Fail_If_Read_Only_Series(Series* s) {
 #if defined(NDEBUG)
     #define Known_Mutable(v) v
 #else
-    inline static Cell(const*) Known_Mutable(Cell(const*) v) {
+    inline static const Cell* Known_Mutable(const Cell* v) {
         assert(Get_Cell_Flag(v, FIRST_IS_NODE));
         Series* s = SER(VAL_NODE1(v));  // can be pairlist, varlist, etc.
         assert(not Is_Series_Read_Only(s));
@@ -945,9 +945,9 @@ inline static void Fail_If_Read_Only_Series(Series* s) {
 #endif
 
 // Forward declaration needed
-inline static REBVAL* Unrelativize(Cell(*) out, Cell(const*) v);
+inline static REBVAL* Unrelativize(Cell* out, const Cell* v);
 
-inline static Cell(const*) Ensure_Mutable(Cell(const*) v) {
+inline static const Cell* Ensure_Mutable(const Cell* v) {
     assert(Get_Cell_Flag(v, FIRST_IS_NODE));
     Series* s = SER(VAL_NODE1(v));  // can be pairlist, varlist, etc.
 
@@ -1006,7 +1006,7 @@ inline static void Drop_GC_Guard(const Node* node) {
 // Cells memset 0 for speed.  But Push_Guard_Node() expects a Node, where
 // the NODE_BYTE() has NODE_FLAG_NODE set.  Use this with DECLARE_LOCAL().
 //
-inline static void Push_GC_Guard_Erased_Cell(Cell(*) cell) {
+inline static void Push_GC_Guard_Erased_Cell(Cell* cell) {
     assert(FIRST_BYTE(cell) == 0);
     FIRST_BYTE(cell) = NODE_BYTEMASK_0x80_NODE | NODE_BYTEMASK_0x01_CELL;
 
@@ -1023,7 +1023,7 @@ inline static void Push_GC_Guard_Erased_Cell(Cell(*) cell) {
 // Uses "evil macro" variations because it is called so frequently, that in
 // the debug build (which doesn't inline functions) there's a notable cost.
 //
-inline static const Series* VAL_SERIES(NoQuote(Cell(const*)) v) {
+inline static const Series* VAL_SERIES(NoQuote(const Cell*) v) {
   #if !defined(NDEBUG)
     enum Reb_Kind k = CELL_HEART(v);
     assert(
@@ -1059,7 +1059,7 @@ inline static const Series* VAL_SERIES(NoQuote(Cell(const*)) v) {
     // Avoids READABLE() macro, because it's assumed that it was done in the
     // type checking to ensure VAL_INDEX() applied.  (This is called often.)
     //
-    inline static REBIDX VAL_INDEX_UNBOUNDED(NoQuote(Cell(const*)) v) {
+    inline static REBIDX VAL_INDEX_UNBOUNDED(NoQuote(const Cell*) v) {
         enum Reb_Kind k = CELL_HEART_UNCHECKED(v);  // only const if heart!
         assert(
             ANY_SERIES_KIND(k)
@@ -1069,7 +1069,7 @@ inline static const Series* VAL_SERIES(NoQuote(Cell(const*)) v) {
         assert(Get_Cell_Flag_Unchecked(v, FIRST_IS_NODE));
         return VAL_INDEX_RAW(v);
     }
-    inline static REBIDX & VAL_INDEX_UNBOUNDED(Cell(*) v) {
+    inline static REBIDX & VAL_INDEX_UNBOUNDED(Cell* v) {
         ASSERT_CELL_WRITABLE_EVIL_MACRO(v);
         enum Reb_Kind k = CELL_HEART_UNCHECKED(v);
         assert(
@@ -1083,13 +1083,13 @@ inline static const Series* VAL_SERIES(NoQuote(Cell(const*)) v) {
 #endif
 
 
-inline static REBLEN VAL_LEN_HEAD(NoQuote(Cell(const*)) v);  // forward decl
+inline static REBLEN VAL_LEN_HEAD(NoQuote(const Cell*) v);  // forward decl
 
 // Unlike VAL_INDEX_UNBOUNDED() that may give a negative number or past the
 // end of series, VAL_INDEX() does bounds checking and always returns an
 // unsigned REBLEN.
 //
-inline static REBLEN VAL_INDEX(NoQuote(Cell(const*)) v) {
+inline static REBLEN VAL_INDEX(NoQuote(const Cell*) v) {
     enum Reb_Kind k = CELL_HEART(v);  // only const access if heart!
     assert(
         ANY_SERIES_KIND(k)
@@ -1105,7 +1105,7 @@ inline static REBLEN VAL_INDEX(NoQuote(Cell(const*)) v) {
 }
 
 
-inline static const Byte* VAL_DATA_AT(NoQuote(Cell(const*)) v) {
+inline static const Byte* VAL_DATA_AT(NoQuote(const Cell*) v) {
     return Series_Data_At(
         Series_Wide(VAL_SERIES(v)),
         VAL_SERIES(v),
@@ -1114,7 +1114,7 @@ inline static const Byte* VAL_DATA_AT(NoQuote(Cell(const*)) v) {
 }
 
 
-inline static void INIT_SPECIFIER(Cell(*) v, const void *p) {
+inline static void INIT_SPECIFIER(Cell* v, const void *p) {
     //
     // can be called on non-bindable series, but p must be nullptr
 
@@ -1145,7 +1145,7 @@ inline static void INIT_SPECIFIER(Cell(*) v, const void *p) {
 
 
 inline static REBVAL *Init_Series_Cell_At_Core(
-    Cell(*) out,
+    Cell* out,
     enum Reb_Kind type,
     const Series* s,  // ensured managed by calling macro
     REBLEN index,

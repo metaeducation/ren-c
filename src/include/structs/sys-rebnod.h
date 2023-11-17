@@ -23,7 +23,7 @@
 // In order to implement several "tricks", the first pointer-size slots of
 // many datatypes is a `HeaderUnion` union.  Using byte-order-sensitive
 // macros like FLAG_LEFT_BIT(), the layout of this header is chosen in such a
-// way that not only can Rebol cell pointers (Cell(*)) be distinguished from
+// way that not only can Rebol cell pointers (Cell*) be distinguished from
 // Rebol series pointers (Series*), but these can be discerned from a valid
 // UTF-8 string just by looking at the first byte.  That's a safe C operation
 // since reading a `char*` is not subject to "strict aliasing" requirements.
@@ -78,7 +78,7 @@
     // headaches.  So it was decided that so long as they are Series, not
     // Array, that's still abstract enough to block most casual misuses.
     //
-    struct NodeStruct {};  // empty base class for Series, CellT, LevelT...
+    struct NodeStruct {};  // empty base class for Series, Cell, LevelT...
     typedef struct NodeStruct Node;
 #endif
 
@@ -492,7 +492,7 @@ union HeaderUnion {
 // also has NODE_FLAG_CELL, that means the cell must live in a "pairing"
 // Stub-sized structure for two cells.
 //
-// This flag is masked out by CELL_MASK_COPIED, so that when values are moved
+// This flag is masked out by CELL_MASK_COPY, so that when values are moved
 // into or out of API handle cells the flag is left untouched.
 //
 #define NODE_FLAG_ROOT \
@@ -503,7 +503,7 @@ union HeaderUnion {
 //=//// NODE_FLAG_CELL (eighth-leftmost bit) //////////////////////////////=//
 //
 // If this bit is set in the header, it indicates the slot the header is for
-// is `sizeof(CellT)`.
+// is `sizeof(Cell)`.
 //
 // In the debug build, it provides some safety for all value writing routines.
 // In the release build, it distinguishes "pairing" nodes (holders for two

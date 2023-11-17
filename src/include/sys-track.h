@@ -34,7 +34,7 @@
   #if CPLUSPLUS_11
     template<typename T>
     inline static T Track_Cell_Debug(
-        T v,  // polymorphism allows Cell(*) or Value(*) or StackValue(*)
+        T v,  // polymorphism allows Cell* or Value(*) or StackValue(*)
         const char *file,
         int line
     ){
@@ -45,8 +45,8 @@
         return v;
     }
   #else
-    inline static Cell(*) Track_Cell_Debug(
-        Cell(*) v,
+    inline static Cell* Track_Cell_Debug(
+        Cell* v,
         const char *file,
         int line
     ){
@@ -63,7 +63,7 @@
     //
     //    #define Init_Logic(out,flag)  Init_Logic_Core(TRACK(out), (flag))
     //
-    // The tracking information may be put in the Cell(*) before* or *after*
+    // The tracking information may be put in the Cell* before* or *after*
     // the right hand side is evaluated.  So imagine something like:
     //
     //     Init_Logic(OUT, not VAL_LOGIC(OUT));

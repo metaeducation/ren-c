@@ -31,8 +31,8 @@ static void Append_Vars_To_Context_From_Group(REBVAL *context, REBVAL *block)
 
     assert(IS_GROUP(block));
 
-    Cell(const*) tail;
-    Cell(const*) item = VAL_ARRAY_AT(&tail, block);
+    const Cell* tail;
+    const Cell* item = VAL_ARRAY_AT(&tail, block);
 
     struct Reb_Collector collector;
     //
@@ -60,7 +60,7 @@ static void Append_Vars_To_Context_From_Group(REBVAL *context, REBVAL *block)
     // Should it allow ANY-WORD!?  Restrict to just SET-WORD!?
     //
   blockscope {
-    Cell(const*) word;
+    const Cell* word;
     for (word = item; word != tail; word += 2) {
         if (not IS_WORD(word) and not IS_SET_WORD(word)) {
             error = Error_Bad_Value(word);
@@ -92,7 +92,7 @@ static void Append_Vars_To_Context_From_Group(REBVAL *context, REBVAL *block)
   }  // end the non-module part
 
   blockscope {  // Set new values to obj words
-    Cell(const*) word = item;
+    const Cell* word = item;
     for (; word != tail; word += 2) {
         const Symbol* symbol = VAL_WORD_SYMBOL(word);
         REBVAR *var;
@@ -185,7 +185,7 @@ static void Append_Vars_To_Context_From_Group(REBVAL *context, REBVAL *block)
 //    LEVEL_FLAG_ABRUPT_FAILURE.  So we make them "fake unmanaged" so they
 //    are "untracked" by saying they're managed, and taking that flag off.
 //
-void Init_Evars(EVARS *e, NoQuote(Cell(const*)) v) {
+void Init_Evars(EVARS *e, NoQuote(const Cell*) v) {
     enum Reb_Kind kind = CELL_HEART(v);
 
     e->visibility = VAR_VISIBILITY_ALL;  // ensure not uninitialized
@@ -448,7 +448,7 @@ void Shutdown_Evars(EVARS *e)
 //
 //  CT_Context: C
 //
-REBINT CT_Context(NoQuote(Cell(const*)) a, NoQuote(Cell(const*)) b, bool strict)
+REBINT CT_Context(NoQuote(const Cell*) a, NoQuote(const Cell*) b, bool strict)
 {
     assert(ANY_CONTEXT_KIND(CELL_HEART(a)));
     assert(ANY_CONTEXT_KIND(CELL_HEART(b)));
@@ -628,8 +628,8 @@ Bounce MAKE_Context(
         : cast(Context*, nullptr);  // C++98 ambiguous w/o cast
 
     if (IS_BLOCK(arg)) {
-        Cell(const*) tail;
-        Cell(const*) at = VAL_ARRAY_AT(&tail, arg);
+        const Cell* tail;
+        const Cell* at = VAL_ARRAY_AT(&tail, arg);
 
         Context* ctx = Make_Context_Detect_Managed(
             kind,
@@ -809,7 +809,7 @@ Context* Copy_Context_Extra_Managed(
     else
         Set_Series_Len(varlist, CTX_LEN(original) + 1);
 
-    Cell(*) dest = Array_Head(varlist);
+    Cell* dest = Array_Head(varlist);
 
     // The type information and fields in the rootvar (at head of the varlist)
     // get filled in with a copy, but the varlist needs to be updated in the
@@ -928,7 +928,7 @@ Context* Copy_Context_Extra_Managed(
 //
 //  MF_Context: C
 //
-void MF_Context(REB_MOLD *mo, NoQuote(Cell(const*)) v, bool form)
+void MF_Context(REB_MOLD *mo, NoQuote(const Cell*) v, bool form)
 {
     String* s = mo->series;
 
@@ -1051,7 +1051,7 @@ void MF_Context(REB_MOLD *mo, NoQuote(Cell(const*)) v, bool form)
 }
 
 
-const Symbol* Symbol_From_Picker(const REBVAL *context, Cell(const*) picker)
+const Symbol* Symbol_From_Picker(const REBVAL *context, const Cell* picker)
 {
     UNUSED(context);  // Might the picker be context-sensitive?
 
@@ -1122,7 +1122,7 @@ REBTYPE(Context)
         INCLUDE_PARAMS_OF_PICK_P;
         UNUSED(ARG(location));
 
-        Cell(const*) picker = ARG(picker);
+        const Cell* picker = ARG(picker);
         const Symbol* symbol = Symbol_From_Picker(context, picker);
 
         const REBVAL *var = TRY_VAL_CONTEXT_VAR(context, symbol);
@@ -1140,7 +1140,7 @@ REBTYPE(Context)
         INCLUDE_PARAMS_OF_POKE_P;
         UNUSED(ARG(location));
 
-        Cell(const*) picker = ARG(picker);
+        const Cell* picker = ARG(picker);
         const Symbol* symbol = Symbol_From_Picker(context, picker);
 
         REBVAL *setval = ARG(value);
@@ -1160,7 +1160,7 @@ REBTYPE(Context)
         INCLUDE_PARAMS_OF_PROTECT_P;
         UNUSED(ARG(location));
 
-        Cell(const*) picker = ARG(picker);
+        const Cell* picker = ARG(picker);
         const Symbol* symbol = Symbol_From_Picker(context, picker);
 
         REBVAL *setval = ARG(value);
@@ -1623,7 +1623,7 @@ REBTYPE(Frame)
 }
 
 
-static bool Same_Action(NoQuote(Cell(const*)) a, NoQuote(Cell(const*)) b)
+static bool Same_Action(NoQuote(const Cell*) a, NoQuote(const Cell*) b)
 {
     assert(CELL_HEART(a) == REB_FRAME and CELL_HEART(b) == REB_FRAME);
     if (not Is_Frame_Details(a) or not Is_Frame_Details(b))
@@ -1646,7 +1646,7 @@ static bool Same_Action(NoQuote(Cell(const*)) a, NoQuote(Cell(const*)) b)
 //
 //  CT_Frame: C
 //
-REBINT CT_Frame(NoQuote(Cell(const*)) a, NoQuote(Cell(const*)) b, bool strict)
+REBINT CT_Frame(NoQuote(const Cell*) a, NoQuote(const Cell*) b, bool strict)
 {
     UNUSED(strict);  // no lax form of comparison
 
@@ -1669,7 +1669,7 @@ REBINT CT_Frame(NoQuote(Cell(const*)) a, NoQuote(Cell(const*)) b, bool strict)
 //
 //  MF_Frame: C
 //
-void MF_Frame(REB_MOLD *mo, NoQuote(Cell(const*)) v, bool form) {
+void MF_Frame(REB_MOLD *mo, NoQuote(const Cell*) v, bool form) {
 
     if (Is_Frame_Exemplar(v)) {
         MF_Context(mo, v, form);
@@ -1741,8 +1741,8 @@ DECLARE_NATIVE(construct)
     // refinement was passed in.
     //
   blockscope {
-    Cell(const*) tail;
-    Cell(*) at = VAL_ARRAY_AT_MUTABLE_HACK(&tail, spec);
+    const Cell* tail;
+    Cell* at = VAL_ARRAY_AT_MUTABLE_HACK(&tail, spec);
     if (REF(only)) {
         Init_Object(
             OUT,
@@ -1761,8 +1761,8 @@ DECLARE_NATIVE(construct)
     // Scan the object for top-level set words in order to make an
     // appropriately sized context.
     //
-    Cell(const*) tail;
-    Cell(*) at = VAL_ARRAY_AT_Ensure_Mutable(&tail, spec);
+    const Cell* tail;
+    Cell* at = VAL_ARRAY_AT_Ensure_Mutable(&tail, spec);
 
     Context* ctx = Make_Context_Detect_Managed(
         parent ? CTX_TYPE(parent) : REB_OBJECT,  // !!! Presume object?

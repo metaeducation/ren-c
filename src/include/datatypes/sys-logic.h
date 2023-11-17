@@ -48,7 +48,7 @@
 #define Is_True(out)        Is_Word_Isotope_With_Id((out), SYM_TRUE)
 #define Is_False(out)       Is_Word_Isotope_With_Id((out), SYM_FALSE)
 
-inline static bool IS_LOGIC(Cell(const*) v) {
+inline static bool IS_LOGIC(const Cell* v) {
     ASSERT_CELL_READABLE_EVIL_MACRO(v);
 
     if (QUOTE_BYTE(v) != ISOTOPE_0)
@@ -64,7 +64,7 @@ inline static bool IS_LOGIC(Cell(const*) v) {
 #define Init_Logic(out,flag) \
     Init_Word_Isotope((out), (flag) ? Canon(TRUE) : Canon(FALSE))
 
-inline static bool VAL_LOGIC(Cell(const*) v) {
+inline static bool VAL_LOGIC(const Cell* v) {
     assert(Is_Isotope(v));
     Option(SymId) id = VAL_WORD_ID(v);
     if (id == SYM_TRUE)
@@ -75,7 +75,7 @@ inline static bool VAL_LOGIC(Cell(const*) v) {
     fail ("Attempt to test VAL_LOGIC() on non-LOGIC!");  // shouldn't happen
 }
 
-inline static bool Is_Truthy(Cell(const*) v) {
+inline static bool Is_Truthy(const Cell* v) {
     ASSERT_CELL_READABLE_EVIL_MACRO(v);
 
     if (QUOTE_BYTE(v) == ISOTOPE_0) {
@@ -122,7 +122,7 @@ inline static bool Is_Conditional_True(const REBVAL *v) {
     (not Is_Conditional_True(v))
 
 
-inline static bool Is_Meta_Of_False(Cell(const*) v) {
+inline static bool Is_Meta_Of_False(const Cell* v) {
     return (
         QUOTE_BYTE(v) == QUASI_2
         and HEART_BYTE(v) == REB_WORD
@@ -136,8 +136,8 @@ inline static bool Is_Meta_Of_False(Cell(const*) v) {
 inline static bool Is_Heavy_False(Atom(const*) v) {
     if (not Is_Pack(v))
         return false;
-    Cell(const*) tail;
-    Cell(const*) at = VAL_ARRAY_AT(&tail, v);
+    const Cell* tail;
+    const Cell* at = VAL_ARRAY_AT(&tail, v);
     return (tail == at + 1) and Is_Meta_Of_False(at);
 }
 

@@ -371,7 +371,7 @@ typedef void (Intrinsic)(Atom(*) out, Phase* phase, Value(*) arg);
     // legal evaluation targets, although they can be used as GC safe scratch
     // space for things other than evaluation.)
     //
-    CellT spare;
+    Cell spare;
 
     // Each executor subclass can store specialized information in the level.
     // We place it here up top where we've been careful to make sure the

@@ -439,7 +439,7 @@ Bounce File_Actor(Level(*) level_, REBVAL *port, const Symbol* verb)
             Push_Mold(mo);
 
             REBLEN remain = len;  // only want as many items as in the /PART
-            Cell(const*) item = VAL_ARRAY_ITEM_AT(data);
+            const Cell* item = VAL_ARRAY_ITEM_AT(data);
             for (; remain != 0; --remain, ++item) {
                 Form_Value(mo, item);
                 if (REF(lines))

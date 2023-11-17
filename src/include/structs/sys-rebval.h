@@ -69,14 +69,26 @@
 #define CELL_MASK_0 0  // considered "Fresh" but not WRITABLE()/READABLE()
 #define CELL_MASK_0_ROOT NODE_FLAG_ROOT  // same (but for API cells)
 
-// The Get_Cell_Flag()/etc. macros splice together CELL_FLAG_ with the text
-// you pass in (token pasting).  Since it does this, alias NODE_FLAG_XXX to
-// CELL_FLAG_XXX so they can be used with those macros.
+
+//=//// BITS 0-7: NODE FLAGS //////////////////////////////////////////////=//
 //
-// IMPORTANT: The marked flag is a property of the cell location and not of
-// the value...so writing a new value into the cell will not update the
-// status of its mark.  It must be manually turned off once turned on, or
-// the cell must be reformatted entirely with Erase_Cell().
+// See the defininitions of NODE_FLAG_XXX for the design points explaining
+// why the first byte of cells and stubs are engineered with these specific
+// common flags.
+//
+// The use of NODE_FLAG_MARKED in cells is a little unusual, because it is a
+// property of the cell location and not of the value (e.g. it is not included
+// in CELL_MASK_COPY, and is part of CELL_MASK_PERSIST).  So writing a new
+// value into the cell will not update the status of its mark.  It must be
+// manually turned off once turned on, or the cell must be reformatted entirely
+// with Erase_Cell().
+//
+// **IMPORTANT**: This means that a routine being passed an arbitrary value
+//   should not make assumptions about the marked bit.  It should only be
+//   used in circumstances where some understanding of being "in control"
+//   of the bit are in place--like processing an array a routine itself made.
+//
+//=////////////////////////////////////////////////////////////////////////=//
 //
 // * VAR_MARKED_HIDDEN -- This uses the NODE_FLAG_MARKED bit on args in
 //   action frames, and in particular specialization uses it to denote which
@@ -84,12 +96,6 @@
 //   difference during an APPLY of encoded partial refinement specialization
 //   encoding from just a user putting random values in a refinement slot.
 //
-// **IMPORTANT**: This means that a routine being passed an arbitrary value
-//   should not make assumptions about the marked bit.  It should only be
-//   used in circumstances where some understanding of being "in control"
-//   of the bit are in place--like processing an array a routine itself made.
-//
-
 #define CELL_FLAG_VAR_MARKED_HIDDEN     NODE_FLAG_MARKED
 
 
@@ -117,11 +123,8 @@
 
 //=//// BITS 8-15: CELL LAYOUT TYPE BYTE ("HEART") ////////////////////////=//
 //
-// The "heart" of fundamental datatype a cell is lives in the second byte for
-// a very deliberate reason.  This means that the signal for an end can be
-// a zero byte, allow a C string that is one character long (plus zero
-// terminator) to function as an end signal...using only two bytes, while
-// still not conflicting with arbitrary UTF-8 strings (including empty ones).
+// The "heart" is the fundamental datatype a cell, dictating its payload
+// layout and interpretation.
 //
 // Most of the time code wants to check the VAL_TYPE() of a cell and not it's
 // HEART, because that treats QUOTED! cells differently.  If you only check
@@ -147,8 +150,7 @@
 // if the quoting byte is > 1 VAL_TYPE() says it is REB_QUOTED.  This has the
 // potential to cause confusion in the internals.  But the type system is used
 // to check at compile-time so that different views of the same cell don't
-// get conflated.  See `NoQuote(Cell(const*))` for some of that mechanic.
-//
+// get conflated.  See `NoQuote(const Cell*)` for some of that mechanic.
 //
 
 #define FLAG_QUOTE_BYTE(byte)       FLAG_THIRD_BYTE(byte)
@@ -266,7 +268,6 @@
 //   the more ephemeral "note" is used on the stack element and then changed
 //   to the sticky flag on the paramlist when popping.
 //
-
 #define CELL_FLAG_NOTE \
     FLAG_LEFT_BIT(28)
 
@@ -436,8 +437,8 @@ union AnyUnion {  // needed to beat strict aliasing, used in payload
     // are unreliable, and for debug viewing only--in case they help.
     //
   #if DEBUG_USE_UNION_PUNS
-    Series* rebser_pun;
-    REBVAL *rebval_pun;
+    Series* series_pun;
+    Cell* cell_pun;
   #endif
 
     // This should be initialized with ZEROTRASH, which permits optimization in
@@ -554,10 +555,6 @@ union ValuePayloadUnion { //=/////////////// ACTUAL PAYLOAD DEFINITION ////=//
     //     Series* rebser;  // vector/double-ended-queue of equal-sized items
     //     REBLEN index;  // 0-based position (e.g. 0 means Rebol index 1)
     //
-    // QUOTED!  // see %sys-quoted.h
-    //     REBVAL *paired;  // paired value handle
-    //     REBLEN depth;  // how deep quoting level is (> 3 if payload needed)
-    //
     // ACTION!  // see %sys-action.h
     //     Array* paramlist;  // has MISC.meta, LINK.underlying
     //     Details* details;  // has MISC.dispatcher, LINK.specialty
@@ -584,33 +581,38 @@ union ValuePayloadUnion { //=/////////////// ACTUAL PAYLOAD DEFINITION ////=//
 
 //=//// COMPLETED 4-PLATFORM POINTER CELL DEFINITION //////////////////////=//
 //
-// This bundles up the cell into a structure.  The C++ build includes some
-// special checks to make sure that overwriting one cell with another can't
-// be done with direct assignment, such as `*dest = *src;`  Cells contain
-// formatting bits that must be preserved, and some flag bits shouldn't be
-// copied. (See: CELL_MASK_PRESERVE)
+// 1. Regardless of what build is made, the %rebol.h file expects to find
+//    the name `struct ValueStruct` exported as what the API uses.  In the
+//    C build that's the only cell struct, but in the C++ build it's a
+//    derived structure.
 //
-// Also, copying needs to be sensitive to the target slot.  If that slot is
-// at a higher stack level than the source (or persistent in an array) then
-// special handling is necessary to make sure any stack constrained pointers
-// are "reified" and visible to the GC.
+// 2. The DEBUG_TRACK_EXTEND_CELLS option doubles the cell size, but is a
+//    *very* helpful debug option.  See %sys-track.h for explanation.
 //
-// Goal is that the mechanics are managed with low-level C, so the C++ build
-// is just there to notice when you try to use a raw byte copy.  Use functions
-// instead.  (See: Copy_Cell(), Derelativize())
+// 3. The C++ build disables copying and direct assignment of cells, such as:
 //
-// Note: It is annoying that this means any structure that embeds a value cell
-// cannot be assigned.  However, `struct ValueStruct` must be the type exported
-// in both C and C++ under the same name and bit patterns.  Pretty much any
-// attempt to work around this and create a base class that works in C too
-// (e.g. Reb_Raw) would wind up violating strict aliasing.  Think *very hard*
-// before changing!
+//       Cell dest = *src;  // illegal!
+//       *cell1 = *cell2;  // illegal!
 //
-
+//    The reason this is done is because not all flags from the source should
+//    be copied (see CELL_MASK_COPY) and some flags in the destination must
+//    be preserved (see CELL_MASK_PERSIST).  Copy mechanics are handled with
+//    C functions (Copy_Cell(), Derelativize()) so really all the C++ build is
+//    doing here is helping notice if you try to use a raw byte copy.
+//
+// 4. In cases where you do want to copy a Cell (or structure containing a
+//    Cell) in a bytewise fashion, the copy disablement in [2] throws a wrench
+//    into things.  Some compilers will disable memcpy() and memset() under
+//    the assumption that those should count as "copying and assignment".
+//    This is defeated by casting the destination address to a void*, so
+//    Mem_Copy() and Mem_Set() are macros that do that:
+//
+//    https://stackoverflow.com/a/76426676
+//
 #if CPLUSPLUS_11
-    struct alignas(ALIGN_SIZE) Reb_Raw : public Node
+    struct alignas(ALIGN_SIZE) Cell : public Node
 #elif C_11
-    struct alignas(ALIGN_SIZE) ValueStruct
+    struct alignas(ALIGN_SIZE) ValueStruct  // exported name for API, see [1]
 #else
     struct ValueStruct  // ...have to just hope the alignment "works out"
 #endif
@@ -619,32 +621,34 @@ union ValuePayloadUnion { //=/////////////// ACTUAL PAYLOAD DEFINITION ////=//
         union ValueExtraUnion extra;
         union ValuePayloadUnion payload;
 
-      #if DEBUG_TRACK_EXTEND_CELLS
-        //
-        // This doubles the cell size, but is a *very* helpful debug option.
-        // See %sys-track.h for explanation.
-        //
+      #if DEBUG_TRACK_EXTEND_CELLS  // Can be VERY handy, see [2]
         const char *file;  // is Byte (UTF-8), but char* for debug watch
         uintptr_t line;
         uintptr_t tick;  // stored in the ValueExtraUnion for basic tracking
         uintptr_t touch;  // see TOUCH_CELL(), pads out to 4 * sizeof(void*)
       #endif
-    };
 
-#if CPLUSPLUS_11
-    //
-    // A RelativeValue is a point of view on a cell where VAL_TYPE() can
-    // be called and will always give back a value in range < REB_MAX.
-    //
-    struct RelativeValue : public Reb_Raw {
       #if CPLUSPLUS_11
       public:
-        RelativeValue () = default;
-      private:
-        RelativeValue (RelativeValue const & other) = delete;
-        void operator= (RelativeValue const &rhs) = delete;
+        Cell () = default;
+
+      private:  // disable assignment and copying, see [3] above
+        Cell (const Cell& other) = default;
+        constexpr Cell& operator= (const Cell& rhs) = default;
       #endif
     };
+
+#define Mem_Copy(dst,src,size) \
+    memcpy(cast(void*, (dst)), (src), (size))  // see [4] above
+
+#define Mem_Set(dst,val,size) \
+    memset(cast(void*, (dst)), (val), (size))  // see [4] above
+
+#if CPLUSPLUS_11
+    static_assert(
+        std::is_standard_layout<Cell>::value,
+        "C++ Cell must match C Value: http://stackoverflow.com/a/7189821/"
+    );
 #endif
 
 
@@ -668,7 +672,7 @@ union ValuePayloadUnion { //=/////////////// ACTUAL PAYLOAD DEFINITION ////=//
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // A Cell is an equivalent struct layout to to Value, but is allowed to
-// have an Action* as its binding.  A RelativeValue pointer can point to a
+// have an Action* as its binding.  These relative cells can point to a
 // specific Value, but a relative word or array cannot be pointed to by a
 // plain Value(*).  The Cell-vs-Value distinction is purely commentary
 // in the C build, but the C++ build makes Value a type derived from Cell.
@@ -687,16 +691,12 @@ union ValuePayloadUnion { //=/////////////// ACTUAL PAYLOAD DEFINITION ////=//
 //
 
 #if CPLUSPLUS_11
-    static_assert(
-        std::is_standard_layout<struct RelativeValue>::value,
-        "C++ Cell must match C layout: http://stackoverflow.com/a/7189821/"
-    );
 
     // An Atom(*) is able to hold unstable isotope states.  A separate type
     // is used to avoid propagating the concerns of unstable isotopes to
     // routines that shouldn't have to worry about them.
     //
-    struct AtomT : public RelativeValue
+    struct AtomT : public Cell
     {
       #if !defined(NDEBUG)
         AtomT() = default;
@@ -774,7 +774,7 @@ typedef struct ValueStruct ValueT;
 #define Stable_Unchecked(atom) \
     x_cast(Value(*), ensure(Atom(const*), (atom)))
 
-inline static REBVAL* Freshen_Cell_Untracked(Cell(*) v);
+inline static REBVAL* Freshen_Cell_Untracked(Cell* v);
 
 #if CPLUSPLUS_11
     struct ValueSink {
@@ -796,7 +796,11 @@ inline static REBVAL* Freshen_Cell_Untracked(Cell(*) v);
         operator bool () const { return p != nullptr; }
 
         operator Value(*) () const { return p; }
-        operator NoQuote(Cell(const*)) () const { return p; }
+
+      #if DEBUG_CHECK_CASTS
+        operator NoQuote(const Cell*) () const { return p; }
+      #endif
+
         Value(*) operator->() const { return p; }
     };
 

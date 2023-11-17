@@ -421,7 +421,7 @@ const Symbol* Intern_UTF8_Managed_Core(
 // locked strings become interned, and forward pointers to the old series in
 // the background to the interned version?
 //
-const String* Intern_Any_String_Managed(Cell(const*) v) {
+const String* Intern_Any_String_Managed(const Cell* v) {
     Size utf8_size;
     Utf8(const*) utf8 = VAL_UTF8_SIZE_AT(&utf8_size, v);
     return Intern_UTF8_Managed(utf8, utf8_size);

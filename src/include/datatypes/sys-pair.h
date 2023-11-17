@@ -38,7 +38,7 @@ inline static REBVAL *PAIRING_KEY(REBVAL *paired) {
 #define INIT_VAL_PAIR(v,pairing) \
     INIT_VAL_NODE1((v), (pairing))
 
-inline static REBVAL *VAL_PAIRING(NoQuote(Cell(const*)) v) {
+inline static REBVAL *VAL_PAIRING(NoQuote(const Cell*) v) {
     assert(CELL_HEART(v) == REB_PAIR);
     return VAL(VAL_NODE1(v));
 }
@@ -49,34 +49,34 @@ inline static REBVAL *VAL_PAIRING(NoQuote(Cell(const*)) v) {
 #define VAL_PAIR_Y(v) \
     VAL(VAL_PAIRING(v))
 
-inline static REBDEC VAL_PAIR_X_DEC(NoQuote(Cell(const*)) v) {
+inline static REBDEC VAL_PAIR_X_DEC(NoQuote(const Cell*) v) {
     if (IS_INTEGER(VAL_PAIR_X(v)))
         return cast(REBDEC, VAL_INT64(VAL_PAIR_X(v)));
     return VAL_DECIMAL(VAL_PAIR_X(v));
 }
 
-inline static REBDEC VAL_PAIR_Y_DEC(NoQuote(Cell(const*)) v) {
+inline static REBDEC VAL_PAIR_Y_DEC(NoQuote(const Cell*) v) {
     if (IS_INTEGER(VAL_PAIR_Y(v)))
         return cast(REBDEC, VAL_INT64(VAL_PAIR_Y(v)));
     return VAL_DECIMAL(VAL_PAIR_Y(v));
 }
 
-inline static REBI64 VAL_PAIR_X_INT(NoQuote(Cell(const*)) v) {
+inline static REBI64 VAL_PAIR_X_INT(NoQuote(const Cell*) v) {
     if (IS_INTEGER(VAL_PAIR_X(v)))
         return VAL_INT64(VAL_PAIR_X(v));
     return ROUND_TO_INT(VAL_DECIMAL(VAL_PAIR_X(v)));
 }
 
-inline static REBDEC VAL_PAIR_Y_INT(NoQuote(Cell(const*)) v) {
+inline static REBDEC VAL_PAIR_Y_INT(NoQuote(const Cell*) v) {
     if (IS_INTEGER(VAL_PAIR_Y(v)))
         return VAL_INT64(VAL_PAIR_Y(v));
     return ROUND_TO_INT(VAL_DECIMAL(VAL_PAIR_Y(v)));
 }
 
 inline static REBVAL *Init_Pair(
-    Cell(*) out,
-    Cell(const*) x,
-    Cell(const*) y
+    Cell* out,
+    const Cell* x,
+    const Cell* y
 ){
     assert(ANY_NUMBER(x));
     assert(ANY_NUMBER(y));
@@ -90,7 +90,7 @@ inline static REBVAL *Init_Pair(
     return cast(REBVAL*, out);
 }
 
-inline static REBVAL *Init_Pair_Int(Cell(*) out, REBI64 x, REBI64 y) {
+inline static REBVAL *Init_Pair_Int(Cell* out, REBI64 x, REBI64 y) {
     Reset_Unquoted_Header_Untracked(out, CELL_MASK_PAIR);
     REBVAL *p = Alloc_Pairing();
     Init_Integer(PAIRING_KEY(p), x);
@@ -100,7 +100,7 @@ inline static REBVAL *Init_Pair_Int(Cell(*) out, REBI64 x, REBI64 y) {
     return cast(REBVAL*, out);
 }
 
-inline static REBVAL *Init_Pair_Dec(Cell(*) out, REBDEC x, REBDEC y) {
+inline static REBVAL *Init_Pair_Dec(Cell* out, REBDEC x, REBDEC y) {
     Reset_Unquoted_Header_Untracked(out, CELL_MASK_PAIR);
     REBVAL *p = Alloc_Pairing();
     Init_Decimal(PAIRING_KEY(p), x);

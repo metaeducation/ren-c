@@ -74,7 +74,7 @@ REBINT Compare_Spellings(const Symbol* a, const Symbol* b, bool strict)
 // Compare the names of two words and return the difference.
 // Note that words are kept UTF8 encoded.
 //
-REBINT CT_Word(NoQuote(Cell(const*)) a, NoQuote(Cell(const*)) b, bool strict)
+REBINT CT_Word(NoQuote(const Cell*) a, NoQuote(const Cell*) b, bool strict)
 {
     return Compare_Spellings(
         VAL_WORD_SYMBOL(a),
@@ -170,7 +170,7 @@ Bounce TO_Word(Level(*) level_, enum Reb_Kind kind, const REBVAL *arg)
         REBLEN len = VAL_SEQUENCE_LEN(arg);
         REBLEN i;
         for (i = 0; i < len; ++i) {
-            Cell(const*) item = VAL_SEQUENCE_AT(temp, arg, i);
+            const Cell* item = VAL_SEQUENCE_AT(temp, arg, i);
             if (IS_BLANK(item))
                 continue;
             if (not IS_WORD(item))
@@ -210,7 +210,7 @@ inline static void Mold_Word(REB_MOLD *mo, const Symbol* symbol, bool escape)
 //
 //  MF_Word: C
 //
-void MF_Word(REB_MOLD *mo, NoQuote(Cell(const*)) v, bool form) {
+void MF_Word(REB_MOLD *mo, NoQuote(const Cell*) v, bool form) {
     const Symbol* symbol = VAL_WORD_SYMBOL(v);
     bool escape = form
         ? false
@@ -223,7 +223,7 @@ void MF_Word(REB_MOLD *mo, NoQuote(Cell(const*)) v, bool form) {
 //
 //  MF_Set_word: C
 //
-void MF_Set_word(REB_MOLD *mo, NoQuote(Cell(const*)) v, bool form) {
+void MF_Set_word(REB_MOLD *mo, NoQuote(const Cell*) v, bool form) {
     const Symbol* symbol = VAL_WORD_SYMBOL(v);
     bool escape = form
         ? false
@@ -237,7 +237,7 @@ void MF_Set_word(REB_MOLD *mo, NoQuote(Cell(const*)) v, bool form) {
 //
 //  MF_Get_word: C
 //
-void MF_Get_word(REB_MOLD *mo, NoQuote(Cell(const*)) v, bool form) {
+void MF_Get_word(REB_MOLD *mo, NoQuote(const Cell*) v, bool form) {
     const Symbol* symbol = VAL_WORD_SYMBOL(v);
     bool escape = form
         ? false
@@ -251,7 +251,7 @@ void MF_Get_word(REB_MOLD *mo, NoQuote(Cell(const*)) v, bool form) {
 //
 //  MF_Meta_word: C
 //
-void MF_Meta_word(REB_MOLD *mo, NoQuote(Cell(const*)) v, bool form) {
+void MF_Meta_word(REB_MOLD *mo, NoQuote(const Cell*) v, bool form) {
     const Symbol* symbol = VAL_WORD_SYMBOL(v);
     bool escape = form
         ? false
@@ -265,7 +265,7 @@ void MF_Meta_word(REB_MOLD *mo, NoQuote(Cell(const*)) v, bool form) {
 //
 //  MF_The_word: C
 //
-void MF_The_word(REB_MOLD *mo, NoQuote(Cell(const*)) v, bool form) {
+void MF_The_word(REB_MOLD *mo, NoQuote(const Cell*) v, bool form) {
     const Symbol* symbol = VAL_WORD_SYMBOL(v);
     bool escape = form
         ? false
@@ -279,7 +279,7 @@ void MF_The_word(REB_MOLD *mo, NoQuote(Cell(const*)) v, bool form) {
 //
 //  MF_Type_word: C
 //
-void MF_Type_word(REB_MOLD *mo, NoQuote(Cell(const*)) v, bool form) {
+void MF_Type_word(REB_MOLD *mo, NoQuote(const Cell*) v, bool form) {
     const Symbol* symbol = VAL_WORD_SYMBOL(v);
     bool escape = form
         ? false

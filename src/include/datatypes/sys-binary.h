@@ -116,7 +116,7 @@ inline static Binary* Make_Binary_Core(REBLEN capacity, Flags flags)
 
 //=//// BINARY! VALUES ////////////////////////////////////////////////////=//
 
-inline static const Binary* VAL_BINARY(NoQuote(Cell(const*)) v) {
+inline static const Binary* VAL_BINARY(NoQuote(const Cell*) v) {
     assert(CELL_HEART(v) == REB_BINARY);
     return BIN(VAL_SERIES(v));
 }
@@ -130,7 +130,7 @@ inline static const Binary* VAL_BINARY(NoQuote(Cell(const*)) v) {
 
 inline static const Byte* VAL_BINARY_SIZE_AT(
     Option(Size*) size_at_out,
-    NoQuote(Cell(const*)) v
+    NoQuote(const Cell*) v
 ){
     const Binary* bin = VAL_BINARY(v);
     REBIDX i = VAL_INDEX_RAW(v);

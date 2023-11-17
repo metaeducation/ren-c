@@ -50,31 +50,31 @@
 #define VAL_HANDLE_CFUNC_P(v)           EXTRA(Any, (v)).cfunc
 
 
-inline static bool Is_Handle_Cfunc(NoQuote(Cell(const*)) v) {
+inline static bool Is_Handle_Cfunc(NoQuote(const Cell*) v) {
     assert(CELL_HEART_UNCHECKED(v) == REB_HANDLE);
     return VAL_HANDLE_LENGTH_U(v) == 0;
 }
 
-inline static NoQuote(Cell(const*)) VAL_HANDLE_CANON(NoQuote(Cell(const*)) v) {
+inline static NoQuote(const Cell*) VAL_HANDLE_CANON(NoQuote(const Cell*) v) {
     assert(CELL_HEART_UNCHECKED(v) == REB_HANDLE);
     if (Not_Cell_Flag_Unchecked(v, FIRST_IS_NODE))
         return v;  // changing handle instance won't be seen by copies
     return Array_Single(VAL_HANDLE_SINGULAR(v));  // has shared node
 }
 
-inline static Cell(*) mutable_VAL_HANDLE_CANON(Cell(*) v) {
+inline static Cell* mutable_VAL_HANDLE_CANON(Cell* v) {
     assert(CELL_HEART_UNCHECKED(v) == REB_HANDLE);
     if (Not_Cell_Flag_Unchecked(v, FIRST_IS_NODE))
         return v;  // changing handle instance won't be seen by copies
     return Array_Single(VAL_HANDLE_SINGULAR(v));  // has shared node
 }
 
-inline static uintptr_t VAL_HANDLE_LEN(NoQuote(Cell(const*)) v) {
+inline static uintptr_t VAL_HANDLE_LEN(NoQuote(const Cell*) v) {
     assert(not Is_Handle_Cfunc(v));
     return VAL_HANDLE_LENGTH_U(VAL_HANDLE_CANON(v));
 }
 
-inline static void *VAL_HANDLE_VOID_POINTER(NoQuote(Cell(const*)) v) {
+inline static void *VAL_HANDLE_VOID_POINTER(NoQuote(const Cell*) v) {
     assert(not Is_Handle_Cfunc(v));
     return VAL_HANDLE_CDATA_P(VAL_HANDLE_CANON(v));
 }
@@ -82,36 +82,36 @@ inline static void *VAL_HANDLE_VOID_POINTER(NoQuote(Cell(const*)) v) {
 #define VAL_HANDLE_POINTER(T, v) \
     cast(T*, VAL_HANDLE_VOID_POINTER(v))
 
-inline static CFunction* VAL_HANDLE_CFUNC(NoQuote(Cell(const*)) v) {
+inline static CFunction* VAL_HANDLE_CFUNC(NoQuote(const Cell*) v) {
     assert(Is_Handle_Cfunc(v));
     return VAL_HANDLE_CFUNC_P(VAL_HANDLE_CANON(v));
 }
 
-inline static CLEANUP_CFUNC *VAL_HANDLE_CLEANER(NoQuote(Cell(const*)) v) {
+inline static CLEANUP_CFUNC *VAL_HANDLE_CLEANER(NoQuote(const Cell*) v) {
     assert(CELL_HEART_UNCHECKED(v) == REB_HANDLE);
     if (Not_Cell_Flag_Unchecked(v, FIRST_IS_NODE))
         return nullptr;
     return VAL_HANDLE_SINGULAR(v)->misc.cleaner;
 }
 
-inline static void SET_HANDLE_LEN(Cell(*) v, uintptr_t length)
+inline static void SET_HANDLE_LEN(Cell* v, uintptr_t length)
   { VAL_HANDLE_LENGTH_U(mutable_VAL_HANDLE_CANON(v)) = length; }
 
-inline static void SET_HANDLE_CDATA(Cell(*) v, void *cdata) {
-    Cell(*) canon = mutable_VAL_HANDLE_CANON(v);
+inline static void SET_HANDLE_CDATA(Cell* v, void *cdata) {
+    Cell* canon = mutable_VAL_HANDLE_CANON(v);
     assert(VAL_HANDLE_LENGTH_U(canon) != 0);
     VAL_HANDLE_CDATA_P(canon) = cdata;
 }
 
-inline static void SET_HANDLE_CFUNC(Cell(*) v, CFunction* cfunc) {
+inline static void SET_HANDLE_CFUNC(Cell* v, CFunction* cfunc) {
     assert(Is_Handle_Cfunc(v));
-    Cell(*) canon = mutable_VAL_HANDLE_CANON(v);
+    Cell* canon = mutable_VAL_HANDLE_CANON(v);
     assert(VAL_HANDLE_LENGTH_U(canon) == 0);
     VAL_HANDLE_CFUNC_P(canon) = cfunc;
 }
 
 inline static REBVAL *Init_Handle_Cdata(
-    Cell(*) out,
+    Cell* out,
     void *cdata,
     uintptr_t length
 ){
@@ -129,7 +129,7 @@ inline static REBVAL *Init_Handle_Cdata(
 }
 
 inline static REBVAL *Init_Handle_Cfunc(
-    Cell(*) out,
+    Cell* out,
     CFunction* cfunc
 ){
     Reset_Unquoted_Header_Untracked(
@@ -145,14 +145,14 @@ inline static REBVAL *Init_Handle_Cfunc(
 }
 
 inline static void Init_Handle_Managed_Common(
-    Cell(*) out,
+    Cell* out,
     uintptr_t length,
     CLEANUP_CFUNC *cleaner
 ){
     Array* singular = Alloc_Singular(FLAG_FLAVOR(HANDLE) | NODE_FLAG_MANAGED);
     singular->misc.cleaner = cleaner;
 
-    Cell(*) single = Array_Single(singular);
+    Cell* single = Array_Single(singular);
     Reset_Unquoted_Header_Untracked(
         single,
         FLAG_HEART_BYTE(REB_HANDLE) | CELL_FLAG_FIRST_IS_NODE
@@ -176,7 +176,7 @@ inline static void Init_Handle_Managed_Common(
 }
 
 inline static REBVAL *Init_Handle_Cdata_Managed(
-    Cell(*) out,
+    Cell* out,
     void *cdata,
     uintptr_t length,
     CLEANUP_CFUNC *cleaner
@@ -191,7 +191,7 @@ inline static REBVAL *Init_Handle_Cdata_Managed(
 }
 
 inline static REBVAL *Init_Handle_Cdata_Managed_Cfunc(
-    Cell(*) out,
+    Cell* out,
     CFunction* cfunc,
     CLEANUP_CFUNC *cleaner
 ){

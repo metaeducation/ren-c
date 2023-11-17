@@ -1183,14 +1183,14 @@ DECLARE_NATIVE(wait_p)  // See wrapping function WAIT in usermode code
     REBLEN timeout = 0;  // in milliseconds
     REBVAL *ports = nullptr;
 
-    Cell(const*) val;
+    const Cell* val;
     if (not IS_BLOCK(ARG(value)))
         val = ARG(value);
     else {
         ports = ARG(value);
 
         REBLEN num_pending = 0;
-        Cell(const*) tail;
+        const Cell* tail;
         val = VAL_ARRAY_AT(&tail, ports);
         for (; val != tail; ++val) {  // find timeout
             if (IS_PORT(val))

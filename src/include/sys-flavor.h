@@ -194,7 +194,7 @@ typedef enum StubFlavorEnum Flavor;
 inline static size_t Wide_For_Flavor(Flavor flavor) {
     assert(flavor != FLAVOR_TRASH);
     if (flavor <= FLAVOR_MAX_ARRAY)
-        return sizeof(CellT);
+        return sizeof(Cell);
     if (flavor >= FLAVOR_MIN_BYTESIZE)
         return 1;
     if (flavor == FLAVOR_BOOKMARKLIST)

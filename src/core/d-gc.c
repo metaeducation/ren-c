@@ -40,7 +40,7 @@
 //
 // Note: We assume the binding was marked correctly if the type was bindable.
 //
-void Assert_Cell_Marked_Correctly(Cell(const*) v)
+void Assert_Cell_Marked_Correctly(const Cell* v)
 {
     ASSERT_CELL_READABLE_EVIL_MACRO(v);  // then we use unchecked() on v below
 
@@ -158,7 +158,7 @@ void Assert_Cell_Marked_Correctly(Cell(const*) v)
             assert(v->header.bits & CELL_FLAG_FIRST_IS_NODE);
             assert(Is_Node_Marked(a));
 
-            Cell(*) single = Array_Single(a);
+            Cell* single = Array_Single(a);
             assert(IS_HANDLE(single));
             assert(VAL_HANDLE_SINGULAR(single) == a);
             if (v != single) {
@@ -376,8 +376,8 @@ void Assert_Cell_Marked_Correctly(Cell(const*) v)
             assert(Not_Series_Flag(a, INACCESSIBLE));
 
             assert(Array_Len(a) >= 2);
-            Cell(const*) tail = Array_Tail(a);
-            Cell(const*) item = Array_Head(a);
+            const Cell* tail = Array_Tail(a);
+            const Cell* item = Array_Head(a);
             for (; item != tail; ++item)
                 assert(not ANY_PATH_KIND(VAL_TYPE_UNCHECKED(item)));
             assert(Is_Node_Marked(a));
@@ -468,7 +468,7 @@ void Assert_Array_Marked_Correctly(const Array* a) {
     #endif
 
     if (IS_DETAILS(a)) {
-        Cell(const*) archetype = Array_Head(a);
+        const Cell* archetype = Array_Head(a);
         assert(IS_FRAME(archetype));
         assert(VAL_FRAME_BINDING(archetype) == UNBOUND);
 
