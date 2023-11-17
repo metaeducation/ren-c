@@ -162,7 +162,7 @@ inline static Option(Symbol(const*)) Level_Label(Level(*) L) {
 
 #if (! CPLUSPLUS_11)
     #define Level_State_Byte(L) \
-        SECOND_BYTE((L)->flags.bits)
+        SECOND_BYTE(&(L)->flags.bits)  // SECOND_BYTE(L) less type safe
 #else
     // Having a special accessor in the C++ build serves two purposes.  One,
     // it can actually type check that `L` is a level.  But secondly, it also
@@ -171,7 +171,7 @@ inline static Option(Symbol(const*)) Level_Label(Level(*) L) {
     //
     inline static Byte& Level_State_Byte(Level(*) L) {
         assert(Not_Level_Flag(L, ABRUPT_FAILURE));
-        return SECOND_BYTE(L->flags.bits);
+        return SECOND_BYTE(L);
     }
 #endif
 

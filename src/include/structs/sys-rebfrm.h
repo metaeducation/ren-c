@@ -124,6 +124,10 @@ STATIC_ASSERT(LEVEL_FLAG_7_IS_TRUE == NODE_FLAG_CELL);
 #define FLAG_STATE_BYTE(state) \
     FLAG_SECOND_BYTE(state)
 
+inline static Byte State_Byte_From_Flags(Flags flags)
+  { return SECOND_BYTE(&flags); }
+
+
 #define STATE_0 0  // use macro vs. just hardcoding 0 around the system
 
 #undef LEVEL_FLAG_8

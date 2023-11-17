@@ -464,7 +464,7 @@ bool Try_Fill_Pool(Pool* pool)
     }
 
     while (true) {
-        FIRST_BYTE(unit->headspot.bits) = FREE_POOLUNIT_BYTE;
+        FIRST_BYTE(unit) = FREE_POOLUNIT_BYTE;
 
         if (--num_units == 0) {
             unit->next_if_free = nullptr;
@@ -1258,9 +1258,9 @@ void Free_Unmanaged_Series(Series(*) s)
 void Assert_Pointer_Detection_Working(void)
 {
     uintptr_t cell_flag = NODE_FLAG_CELL;
-    assert(FIRST_BYTE(cell_flag) == 0x1);
+    assert(FIRST_BYTE(&cell_flag) == 0x01);
     uintptr_t protected_flag = CELL_FLAG_PROTECTED;
-    assert(FOURTH_BYTE(protected_flag) == 0x80);
+    assert(FOURTH_BYTE(&protected_flag) == 0x80);
 
     assert(Detect_Rebol_Pointer("") == DETECTED_AS_UTF8);
     assert(Detect_Rebol_Pointer("asdf") == DETECTED_AS_UTF8);

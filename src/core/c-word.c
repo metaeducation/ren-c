@@ -361,7 +361,7 @@ Symbol(const*) Intern_UTF8_Managed_Core(
         // didn't follow the published list could cause an error.  This would
         // give more integer values without more strings in the core.
         //
-        assert(SECOND_UINT16(s->info) == 0);
+        assert(SECOND_UINT16(&s->info) == SYM_0);
     }
     else {
         // This is a synonym for an existing canon.  Link it into the synonyms
@@ -373,8 +373,8 @@ Symbol(const*) Intern_UTF8_Managed_Core(
         // If the canon form had a SYM_XXX for quick comparison of %words.r
         // words in C switch statements, the synonym inherits that number.
         //
-        assert(SECOND_UINT16(s->info) == 0);
-        SET_SECOND_UINT16(s->info, ID_OF_SYMBOL(synonym));
+        assert(SECOND_UINT16(&s->info) == SYM_0);
+        SET_SECOND_UINT16(&s->info, ID_OF_SYMBOL(synonym));
     }
 
     // Symbols use their MISC() as a linked list of binding information.  The
@@ -568,8 +568,8 @@ void Startup_Symbols(void)
     // We turn it into a freed series, so Detect_Rebol_Pointer() doesn't
     // confuse the zeroed memory with an empty UTF-8 string.
     //
-    assert(FIRST_BYTE(g_symbols.builtin_canons[0].leader.bits) == 0);
-    FIRST_BYTE(g_symbols.builtin_canons[0].leader.bits) = FREE_POOLUNIT_BYTE;
+    assert(FIRST_BYTE(&g_symbols.builtin_canons[0]) == 0);
+    FIRST_BYTE(&g_symbols.builtin_canons[0]) = FREE_POOLUNIT_BYTE;
 
     SymId id = cast(SymId, cast(REBLEN, SYM_0 + 1));  // SymId for debug watch
 
@@ -592,8 +592,8 @@ void Startup_Symbols(void)
         // Could probably use less than 16 bits, but 8 is insufficient (there
         // are more than 256 SYM_XXX values)
         //
-        assert(SECOND_UINT16(canon->info) == 0);
-        SET_SECOND_UINT16(canon->info, id);
+        assert(SECOND_UINT16(&canon->info) == 0);
+        SET_SECOND_UINT16(&canon->info, id);
         assert(id == unwrap(ID_OF_SYMBOL(canon)));
 
         id = cast(SymId, cast(REBLEN, id) + 1);
@@ -623,7 +623,7 @@ void Startup_Symbols(void)
 void Shutdown_Symbols(void)
 {
     assert(Is_Node_Free(&g_symbols.builtin_canons[SYM_0]));
-    FIRST_BYTE(g_symbols.builtin_canons[0].leader.bits) = 0;  // pre-boot state
+    FIRST_BYTE(&g_symbols.builtin_canons[0]) = 0;  // pre-boot state
 
     // The Shutdown_Interning() code checks for g_symbols.by_hash to be
     // empty...the necessary removal happens in Decay_Series().  (Note that a

@@ -40,10 +40,10 @@
 
 
 #define VAL_PARAMETER_CLASS_BYTE(v) \
-    FIRST_BYTE(EXTRA(Parameter, (v)).param_flags)
+    FIRST_BYTE(&EXTRA(Parameter, (v)).param_flags)
 
 #define mutable_VAL_PARAMETER_CLASS_BYTE(v) \
-    FIRST_BYTE(EXTRA(Parameter, (v)).param_flags)
+    FIRST_BYTE(&EXTRA(Parameter, (v)).param_flags)
 
 inline static Option(Array(const*)) VAL_PARAMETER_ARRAY(
     NoQuote(Cell(const*)) v

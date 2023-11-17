@@ -180,7 +180,7 @@
 
     #define ASSERT_CELL_READABLE_EVIL_MACRO(c) do {  /* EVIL! see above */ \
         if ( \
-            (FIRST_BYTE((c)->header.bits) & ( \
+            (FIRST_BYTE(&(c)->header.bits) & ( \
                 NODE_BYTEMASK_0x01_CELL | NODE_BYTEMASK_0x80_NODE \
                     | NODE_BYTEMASK_0x40_FREE \
             )) != 0x81 \
@@ -199,7 +199,7 @@
 
     #define ASSERT_CELL_WRITABLE_EVIL_MACRO(c) do {  /* EVIL! see above */ \
         if ( \
-            (FIRST_BYTE((c)->header.bits) & ( \
+            (FIRST_BYTE(&(c)->header.bits) & ( \
                 NODE_BYTEMASK_0x01_CELL | NODE_BYTEMASK_0x80_NODE \
                     | CELL_FLAG_PROTECTED \
             )) != 0x81 \

@@ -296,13 +296,19 @@
 // enum which is ordered in a way that offers information (e.g. all the
 // arrays are in a range, all the series with wide size of 1 are together...)
 //
+// 1. FLAVOR_BYTE() is called very frequently, and the overhead of an inline
+//    function for type checking is undesirable.  Picking leader->bits out
+//    of it is type safe enough (cells call their flags "header").
+//
 
 #define FLAG_FLAVOR_BYTE(flavor)        FLAG_THIRD_BYTE(flavor)
 #define FLAG_FLAVOR(name)               FLAG_FLAVOR_BYTE(FLAVOR_##name)
-#define FLAVOR_BYTE(series)             THIRD_BYTE((series)->leader.bits)
 
-inline static Flavor Flavor_From_Flags(uintptr_t flags)
-  { return cast(Flavor, THIRD_BYTE(flags)); }
+#define FLAVOR_BYTE(series) \
+    THIRD_BYTE(&(series)->leader.bits)  // not THIRD_BYTE(series), see [1]
+
+inline static Flavor Flavor_From_Flags(Flags flags)
+  { return cast(Flavor, THIRD_BYTE(&flags)); }
 
 #define Series_Flavor(s) \
     cast(Flavor, FLAVOR_BYTE(s))
@@ -465,7 +471,7 @@ STATIC_ASSERT(SERIES_INFO_0_IS_FALSE == NODE_FLAG_NODE);
 //
 
 #define FLAG_USED_BYTE(len)     FLAG_SECOND_BYTE(len)
-#define USED_BYTE(s)            SECOND_BYTE(SERIES_INFO(s))
+#define USED_BYTE(s)            SECOND_BYTE(&SERIES_INFO(s))
 
 
 //=//// BITS 16-31 ARE SymId FOR SYMBOLS //////////////////////////////////=//

@@ -101,7 +101,7 @@
 
 
 inline static Option(SymId) ID_OF_SYMBOL(Symbol(const*) s)
-  { return cast(SymId, SECOND_UINT16(s->info)); }
+  { return cast(SymId, SECOND_UINT16(&s->info)); }
 
 inline static Symbol(const*) Canon_Symbol(SymId symid) {
     assert(cast(REBLEN, symid) != 0);

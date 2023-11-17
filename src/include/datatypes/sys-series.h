@@ -1006,9 +1006,8 @@ inline static void Drop_GC_Guard(const Node* node) {
 // the NODE_BYTE() has NODE_FLAG_NODE set.  Use this with DECLARE_LOCAL().
 //
 inline static void Push_GC_Guard_Erased_Cell(Cell(*) cell) {
-    assert(FIRST_BYTE(cell->header.bits) == 0);
-    FIRST_BYTE(cell->header.bits) =
-        NODE_BYTEMASK_0x80_NODE | NODE_BYTEMASK_0x01_CELL;
+    assert(FIRST_BYTE(cell) == 0);
+    FIRST_BYTE(cell) = NODE_BYTEMASK_0x80_NODE | NODE_BYTEMASK_0x01_CELL;
 
     Push_Guard_Node(cell);
 }

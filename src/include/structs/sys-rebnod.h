@@ -6,7 +6,7 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Copyright 2012-2021 Ren-C Open Source Contributors
+// Copyright 2012-2023 Ren-C Open Source Contributors
 // Copyright 2012 REBOL Technologies
 // REBOL is a trademark of REBOL Technologies
 //
@@ -95,7 +95,7 @@
 // size of a platform pointer:
 //
 //     uintptr_t flags = FLAG_LEFT_BIT(0);
-//     unsigned char *ch = (unsigned char*)&flags;
+//     Byte byte = *cast(Byte*, &flags);
 //
 // In the code above, the leftmost bit of the flags has been set to 1, giving
 // `ch == 128` on all supported platforms.
@@ -131,32 +131,34 @@
 //
 typedef uintptr_t Flags;
 
-#if defined(ENDIAN_BIG) // Byte w/most significant bit first
+#if defined(ENDIAN_BIG)  // Byte w/most significant bit first
 
+    // 63,62,61...or...31,30,20
     #define FLAG_LEFT_BIT(n) \
-        ((uintptr_t)1 << (PLATFORM_BITS - (n) - 1)) // 63,62,61..or..32,31,30
+        (cast(uintptr_t, 1) << (PLATFORM_BITS - (n) - 1))
 
     #define FLAG_FIRST_BYTE(b) \
-        ((uintptr_t)(b) << (24 + (PLATFORM_BITS - 8)))
+        (cast(uintptr_t, (b)) << (24 + (PLATFORM_BITS - 8)))
 
     #define FLAG_SECOND_BYTE(b) \
-        ((uintptr_t)(b) << (16 + (PLATFORM_BITS - 8)))
+        (cast(uintptr_t, (b)) << (16 + (PLATFORM_BITS - 8)))
 
     #define FLAG_THIRD_BYTE(b) \
-        ((uintptr_t)(b) << (8 + (PLATFORM_BITS - 32)))
+        (cast(uintptr_t, (b)) << (8 + (PLATFORM_BITS - 32)))
 
     #define FLAG_FOURTH_BYTE(b) \
-        ((uintptr_t)(b) << (0 + (PLATFORM_BITS - 32)))
+        (cast(uintptr_t, (b)) << (0 + (PLATFORM_BITS - 32)))
 
-#elif defined(ENDIAN_LITTLE) // Byte w/least significant bit first (e.g. x86)
+#elif defined(ENDIAN_LITTLE)  // Byte w/least significant bit first (e.g. x86)
 
+    // 7,6,..0|15,14..8|..
     #define FLAG_LEFT_BIT(n) \
-        ((uintptr_t)1 << (7 + ((n) / 8) * 8 - (n) % 8)) // 7,6,..0|15,14..8|..
+        (cast(uintptr_t, 1) << (7 + ((n) / 8) * 8 - (n) % 8))
 
-    #define FLAG_FIRST_BYTE(b)      ((uintptr_t)(b))
-    #define FLAG_SECOND_BYTE(b)     ((uintptr_t)(b) << 8)
-    #define FLAG_THIRD_BYTE(b)      ((uintptr_t)(b) << 16)
-    #define FLAG_FOURTH_BYTE(b)     ((uintptr_t)(b) << 24)
+    #define FLAG_FIRST_BYTE(b)      cast(uintptr_t, (b))
+    #define FLAG_SECOND_BYTE(b)     (cast(uintptr_t, (b)) << 8)
+    #define FLAG_THIRD_BYTE(b)      (cast(uintptr_t, (b)) << 16)
+    #define FLAG_FOURTH_BYTE(b)     (cast(uintptr_t, (b)) << 24)
 #else
     // !!! There are macro hacks which can actually make reasonable guesses
     // at endianness, and should possibly be used in the config if nothing is
@@ -168,9 +170,8 @@ typedef uintptr_t Flags;
     #include <stophere>  // https://stackoverflow.com/a/45661130
 #endif
 
-// `unsigned char` is used below, as opposed to `uint8_t`, to coherently
-// access the bytes despite being written via a `uintptr_t`, due to the strict
-// aliasing exemption for character types (some say uint8_t should count...)
+// Byte alias for `unsigned char` is used below vs. `uint8_t`, due to the
+// strict aliasing exemption for char types (some say uint8_t should count...)
 //
 // To make it possible to use these as the left hand side of assignments,
 // the C build throws away the const information in the macro.  But the
@@ -178,35 +179,35 @@ typedef uintptr_t Flags;
 // functions that cost a little in the debug build for these very commonly
 // used functions... so it's only in the DEBUG_CHECK_CASTS builds.
 
-#if (! CPLUSPLUS_11)  // use x_cast and throw away const knowledge
-    #define FIRST_BYTE(u)       x_cast(unsigned char*, &(u))[0]
-    #define SECOND_BYTE(u)      x_cast(unsigned char*, &(u))[1]
-    #define THIRD_BYTE(u)       x_cast(unsigned char*, &(u))[2]
-    #define FOURTH_BYTE(u)      x_cast(unsigned char*, &(u))[3]
+#if (! DEBUG_CHECK_CASTS)  // use x_cast and throw away const knowledge
+    #define FIRST_BYTE(p)       x_cast(Byte*, (p))[0]
+    #define SECOND_BYTE(p)      x_cast(Byte*, (p))[1]
+    #define THIRD_BYTE(p)       x_cast(Byte*, (p))[2]
+    #define FOURTH_BYTE(p)      x_cast(Byte*, (p))[3]
 #else
-    inline static unsigned char FIRST_BYTE(const uintptr_t& u)
-      { return cast(unsigned char*, &u)[0]; }
+    inline static Byte FIRST_BYTE(const void* p)
+      { return cast(const Byte*, p)[0]; }
 
-    inline static unsigned char& FIRST_BYTE(uintptr_t& u)
-      { return cast(unsigned char*, &u)[0]; }
+    inline static Byte& FIRST_BYTE(void* p)
+      { return cast(Byte*, p)[0]; }
 
-    inline static unsigned char SECOND_BYTE(const uintptr_t& u)
-      { return cast(unsigned char*, &u)[1]; }
+    inline static Byte SECOND_BYTE(const void* p)
+      { return cast(const Byte*, p)[1]; }
 
-    inline static unsigned char& SECOND_BYTE(uintptr_t& u)
-      { return cast(unsigned char*, &u)[1]; }
+    inline static Byte& SECOND_BYTE(void* p)
+      { return cast(Byte*, p)[1]; }
 
-    inline static unsigned char THIRD_BYTE(const uintptr_t& u)
-      { return cast(unsigned char*, &u)[2]; }
+    inline static Byte THIRD_BYTE(const void* p)
+      { return cast(const Byte*, p)[2]; }
 
-    inline static unsigned char& THIRD_BYTE(uintptr_t& u)
-      { return cast(unsigned char*, &u)[2]; }
+    inline static Byte& THIRD_BYTE(void *p)
+      { return cast(Byte*, p)[2]; }
 
-    inline static unsigned char FOURTH_BYTE(const uintptr_t& u)
-      { return cast(unsigned char*, &u)[3]; }
+    inline static Byte FOURTH_BYTE(const void* p)
+      { return cast(const Byte*, p)[3]; }
 
-    inline static unsigned char& FOURTH_BYTE(uintptr_t& u)
-      { return cast(unsigned char*, &u)[3]; }
+    inline static Byte& FOURTH_BYTE(void* p)
+      { return cast(Byte*, p)[3]; }
 #endif
 
 
@@ -217,33 +218,27 @@ typedef uintptr_t Flags;
 // these generic (so they work with uint_fast32_t, or uintptr_t, etc.) and
 // as long as there has to be an order, might as well be platform-independent.
 
-inline static uint16_t FIRST_UINT16_helper(const unsigned char *flags)
-  { return ((uint16_t)flags[0] << 8) | flags[1]; }
-
-inline static uint16_t SECOND_UINT16_helper(const unsigned char *flags)
-  { return ((uint16_t)flags[2] << 8) | flags[3]; }
-
-#define FIRST_UINT16(flags) \
-    FIRST_UINT16_helper((const unsigned char*)&flags)
-
-#define SECOND_UINT16(flags) \
-    SECOND_UINT16_helper((const unsigned char*)&flags)
-
-inline static void SET_FIRST_UINT16_helper(unsigned char *flags, uint16_t u) {
-    flags[0] = u / 256;
-    flags[1] = u % 256;
+inline static uint16_t FIRST_UINT16(const void* p) {
+    const Byte* bp = cast(const Byte*, p);
+    return cast(uint16_t, bp[0] << 8) | bp[1];
 }
 
-inline static void SET_SECOND_UINT16_helper(unsigned char *flags, uint16_t u) {
-    flags[2] = u / 256;
-    flags[3] = u % 256;
+inline static uint16_t SECOND_UINT16(const void* p) {
+    const Byte* bp = cast(const Byte*, p);
+    return cast(uint16_t, bp[2] << 8) | bp[3];
 }
 
-#define SET_FIRST_UINT16(flags,u) \
-    SET_FIRST_UINT16_helper((unsigned char*)&(flags), (u))
+inline static void SET_FIRST_UINT16(void *p, uint16_t u) {
+    Byte* bp = cast(Byte*, p);
+    bp[0] = u / 256;
+    bp[1] = u % 256;
+}
 
-#define SET_SECOND_UINT16(flags,u) \
-    SET_SECOND_UINT16_helper((unsigned char*)&(flags), (u))
+inline static void SET_SECOND_UINT16(void* p, uint16_t u) {
+    Byte* bp = cast(Byte*, p);
+    bp[2] = u / 256;
+    bp[3] = u % 256;
+}
 
 inline static uintptr_t FLAG_FIRST_UINT16(uint16_t u)
   { return FLAG_FIRST_BYTE(u / 256) | FLAG_SECOND_BYTE(u % 256); }

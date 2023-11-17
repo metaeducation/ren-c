@@ -52,7 +52,7 @@
     // unsafety than const.  (HEAVY_NODE_BYTE_CHECK checks const also)
 
     #define NODE_BYTE(p) \
-        *x_cast(Byte*, ensure(const Node*, (p)))
+        FIRST_BYTE(ensure(const Node*, (p)))
 #endif
 
 #define FLAG_NODE_BYTE(byte)    FLAG_FIRST_BYTE(byte)
@@ -232,7 +232,7 @@ inline static void *Try_Alloc_Pooled(PoolId pool_id)
     // arbitrary bytes...but if storing `Node`s then they should initialize
     // to not have NODE_FLAG_FREE set.)
     //
-    assert(cast(Byte*, unit)[0] == FREE_POOLUNIT_BYTE);
+    assert(FIRST_BYTE(unit) == FREE_POOLUNIT_BYTE);
     return cast(void*, unit);
 }
 
@@ -269,7 +269,7 @@ inline static void Free_Pooled(PoolId pool_id, void* p)
 
     PoolUnit* unit = cast(PoolUnit*, p);
 
-    FIRST_BYTE(unit->headspot.bits) = FREE_POOLUNIT_BYTE;
+    FIRST_BYTE(unit) = FREE_POOLUNIT_BYTE;
 
     Pool* pool = &g_mem.pools[pool_id];
 

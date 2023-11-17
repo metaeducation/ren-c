@@ -166,7 +166,7 @@ inline static bool Did_Init_Inert_Optimize_Complete(
     Feed(*) feed,
     Flags *flags
 ){
-    assert(SECOND_BYTE(*flags) == 0);  // we might set the STATE byte
+    assert(State_Byte_From_Flags(*flags) == 0);  // we might set the STATE byte
     assert(Not_Feed_At_End(feed));  // would be wasting time to call
     assert(not (*flags & LEVEL_FLAG_BRANCH));  // it's a single step
 
@@ -308,7 +308,7 @@ inline static bool Reevaluate_In_Sublevel_Throws(
     Flags flags,
     bool enfix
 ){
-    assert(SECOND_BYTE(flags) == 0);
+    assert(State_Byte_From_Flags(flags) == 0);
     flags |= FLAG_STATE_BYTE(ST_EVALUATOR_REEVALUATING);
 
     Level(*) sub = Make_Level(L->feed, flags);

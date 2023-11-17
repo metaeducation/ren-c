@@ -123,9 +123,9 @@ static void Check_Basics(void)
     Flags flags
         = FLAG_LEFT_BIT(5) | FLAG_SECOND_BYTE(21) | FLAG_SECOND_UINT16(1975);
 
-    Byte m = FIRST_BYTE(flags);  // 6th bit from left set (0b00000100 is 4)
-    Byte d = SECOND_BYTE(flags);
-    uint16_t y = SECOND_UINT16(flags);
+    Byte m = FIRST_BYTE(&flags);  // 6th bit from left set (0b00000100 is 4)
+    Byte d = SECOND_BYTE(&flags);
+    uint16_t y = SECOND_UINT16(&flags);
     if (m != 4 or d != 21 or y != 1975) {
       #if !defined(NDEBUG)
         printf("m = %u, d = %u, y = %u\n", m, d, y);
@@ -199,8 +199,8 @@ static void Startup_Lib(void)
 
   //=//// INITIALIZE LIB PATCHES ///////////////////////////////////////////=//
 
-    assert(FIRST_BYTE(PG_Lib_Patches[0].leader.bits) == 0);  // pre-boot state
-    FIRST_BYTE(PG_Lib_Patches[0].leader.bits) = FREE_POOLUNIT_BYTE;
+    assert(FIRST_BYTE(&PG_Lib_Patches[0]) == 0);  // pre-boot state
+    FIRST_BYTE(&PG_Lib_Patches[0]) = FREE_POOLUNIT_BYTE;
 
     for (REBLEN i = 1; i < LIB_SYMS_MAX; ++i) {  // skip SYM_0
         Array(*) patch = Make_Array_Core_Into(
@@ -273,7 +273,7 @@ static void Shutdown_Lib(void)
     // Startup() gets called again.
     //
     assert(Is_Node_Free(&PG_Lib_Patches[0]));
-    FIRST_BYTE(PG_Lib_Patches[0].leader.bits) = 0;  // pre-boot state
+    FIRST_BYTE(&PG_Lib_Patches[0]) = 0;  // pre-boot state
 
     for (REBLEN i = 1; i < LIB_SYMS_MAX; ++i) {
         Array(*) patch = &PG_Lib_Patches[i];
