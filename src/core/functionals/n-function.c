@@ -123,7 +123,7 @@ Bounce Func_Dispatcher(Level(*) const L)
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
-    Details(*) details = Phase_Details(PHASE);
+    Details* details = Phase_Details(PHASE);
     Cell(*) body = Array_At(details, IDX_DETAILS_1);  // code to run
     assert(IS_BLOCK(body) and IS_RELATIVE(body) and VAL_INDEX(body) == 0);
 
@@ -223,7 +223,7 @@ Bounce Func_Dispatcher(Level(*) const L)
 //    made these optimizations give diminishing returns, so they were all
 //    eliminated (though they set useful precedent for varying dispatchers).
 //
-Phase(*) Make_Interpreted_Action_May_Fail(
+Phase* Make_Interpreted_Action_May_Fail(
     const REBVAL *spec,
     const REBVAL *body,
     Flags mkf_flags,  // MKF_RETURN, etc.
@@ -233,14 +233,14 @@ Phase(*) Make_Interpreted_Action_May_Fail(
     assert(IS_BLOCK(spec) and IS_BLOCK(body));
     assert(details_capacity >= 1);  // relativized body put in details[0]
 
-    Context(*) meta;
-    Array(*) paramlist = Make_Paramlist_Managed_May_Fail(
+    Context* meta;
+    Array* paramlist = Make_Paramlist_Managed_May_Fail(
         &meta,
         spec,
         &mkf_flags
     );
 
-    Phase(*) a = Make_Action(
+    Phase* a = Make_Action(
         paramlist,
         nullptr,  // no partials
         dispatcher,
@@ -250,7 +250,7 @@ Phase(*) Make_Interpreted_Action_May_Fail(
     assert(ACT_ADJUNCT(a) == nullptr);
     mutable_ACT_ADJUNCT(a) = meta;
 
-    Array(*) copy = Copy_And_Bind_Relative_Deep_Managed(
+    Array* copy = Copy_And_Bind_Relative_Deep_Managed(
         body,  // new copy has locals bound relatively to the new action
         a,
         VAR_VISIBILITY_ALL // we created exemplar, see all!
@@ -281,7 +281,7 @@ Phase(*) Make_Interpreted_Action_May_Fail(
     // running frame instance (the Level(*) received by the dispatcher) before
     // executing the interpreted code.
     //
-    Details(*) details = Phase_Details(a);
+    Details* details = Phase_Details(a);
     Cell(*) rebound = Init_Relative_Block(
         Array_At(details, IDX_NATIVE_BODY),
         a,
@@ -336,7 +336,7 @@ DECLARE_NATIVE(func_p)
     REBVAL *spec = ARG(spec);
     REBVAL *body = ARG(body);
 
-    Phase(*) func = Make_Interpreted_Action_May_Fail(
+    Phase* func = Make_Interpreted_Action_May_Fail(
         spec,
         body,
         MKF_RETURN | MKF_KEYWORDS,
@@ -373,8 +373,8 @@ DECLARE_NATIVE(endable_q)
     if (not IS_FRAME(SPARE))
         fail ("ENDABLE? requires a WORD! bound into a FRAME! at present");
 
-    Context(*) ctx = VAL_CONTEXT(SPARE);
-    Action(*) act = CTX_FRAME_PHASE(ctx);
+    Context* ctx = VAL_CONTEXT(SPARE);
+    Action* act = CTX_FRAME_PHASE(ctx);
 
     REBPAR *param = ACT_PARAM(act, VAL_WORD_INDEX(v));
     bool endable = GET_PARAM_FLAG(param, ENDABLE);
@@ -408,8 +408,8 @@ DECLARE_NATIVE(skippable_q)
     if (not IS_FRAME(SPARE))
         fail ("SKIPPABLE? requires a WORD! bound into a FRAME! at present");
 
-    Context(*) ctx = VAL_CONTEXT(SPARE);
-    Action(*) act = CTX_FRAME_PHASE(ctx);
+    Context* ctx = VAL_CONTEXT(SPARE);
+    Action* act = CTX_FRAME_PHASE(ctx);
 
     REBPAR *param = ACT_PARAM(act, VAL_WORD_INDEX(v));
     bool skippable = GET_PARAM_FLAG(param, SKIPPABLE);
@@ -538,7 +538,7 @@ bool Typecheck_Coerce_Return(
     // Typeset bits for locals in frames are usually ignored, but the RETURN:
     // local uses them for the return types of a function.
     //
-    Phase(*) phase = Level_Phase(L);
+    Phase* phase = Level_Phase(L);
     const REBPAR *param = ACT_PARAMS_HEAD(phase);
     assert(KEY_SYM(ACT_KEYS_HEAD(phase)) == SYM_RETURN);
 
@@ -598,7 +598,7 @@ DECLARE_NATIVE(definitional_return)
     // Level(*).  This generic RETURN dispatcher interprets that binding as the
     // FRAME! which this instance is specifically intended to return from.
     //
-    Context(*) return_binding = Level_Binding(return_level);
+    Context* return_binding = Level_Binding(return_level);
     if (not return_binding)
         fail (Error_Return_Archetype_Raw());  // must have binding to jump to
 
@@ -659,7 +659,7 @@ DECLARE_NATIVE(inherit_adjunct)
 
     UNUSED(ARG(augment));  // !!! not yet implemented
 
-    Context(*) a1 = ACT_ADJUNCT(VAL_ACTION(original));
+    Context* a1 = ACT_ADJUNCT(VAL_ACTION(original));
     if (not a1)  // nothing to copy
         return COPY(ARG(derived));
 
@@ -667,7 +667,7 @@ DECLARE_NATIVE(inherit_adjunct)
     // But if it was created via an AUGMENT, it will have some...only the notes
     // and types for the added parameters, the others will be NULL.
     //
-    Context(*) a2 = ACT_ADJUNCT(VAL_ACTION(derived));
+    Context* a2 = ACT_ADJUNCT(VAL_ACTION(derived));
     if (not a2) {  // doesn't have its own information
         a2 = Copy_Context_Shallow_Managed(VAL_CONTEXT(Root_Action_Adjunct));
         mutable_ACT_ADJUNCT(VAL_ACTION(derived)) = a2;
@@ -702,7 +702,7 @@ DECLARE_NATIVE(inherit_adjunct)
         if (not ANY_CONTEXT(val1))
             fail ("Expected context in original meta information");
 
-        Context(*) ctx1 = VAL_CONTEXT(val1);
+        Context* ctx1 = VAL_CONTEXT(val1);
 
         Value(*) val2 = try_unwrap(Select_Symbol_In_Context(
             CTX_ARCHETYPE(a2),
@@ -711,7 +711,7 @@ DECLARE_NATIVE(inherit_adjunct)
         if (not val2)
             continue;
 
-        Context(*) ctx2;
+        Context* ctx2;
         if (Is_Nulled(val2) or Is_None(val2)) {
             ctx2 = Make_Context_For_Action(
                 derived,  // the action

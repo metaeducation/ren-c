@@ -117,7 +117,7 @@ ATTRIBUTE_NO_RETURN void Panic_Value_Debug(Cell(const*) v) {
 #if DEBUG_HAS_PROBE
 
 inline static void Probe_Print_Helper(
-    const void *p,  // the REBVAL*, Series(*), or UTF-8 char*
+    const void *p,  // the REBVAL*, Series*, or UTF-8 char*
     const char *expr,  // stringified contents of the PROBE() macro
     const char *label,  // detected type of `p` (see %rebnod.h)
     const char *file,  // file where this PROBE() was invoked
@@ -247,7 +247,7 @@ void* Probe_Core_Debug(
     // If we didn't jump to cleanup above, it's a series.  New switch().
 
   blockscope {
-    Series(*) s = m_cast(SeriesT*, cast(const SeriesT* , p));
+    Series* s = m_cast(Series*, cast(const Series* , p));
     assert(not Is_Node_Free(s));  // Detect should have caught, above
     Flavor flavor = Series_Flavor(s);
     Assert_Series(s);  // if corrupt, gives better info than a print crash
@@ -270,7 +270,7 @@ void* Probe_Core_Debug(
         Probe_Print_Helper(p, expr, "Details", file, line);
         MF_Frame(
             mo,
-            Phase_Archetype(cast(Phase(*), ACT(m_cast(void*, p)))),
+            Phase_Archetype(cast(Phase*, ACT(m_cast(void*, p)))),
             false
         );
         break;
@@ -352,7 +352,7 @@ void* Probe_Core_Debug(
         break;
 
       case FLAVOR_SERIESLIST:  // e.g. manually allocated series list
-        Probe_Print_Helper(p, expr, "Series of Series(*)", file, line);
+        Probe_Print_Helper(p, expr, "Series of Series*", file, line);
         break;
 
       case FLAVOR_MOLDSTACK:
@@ -374,7 +374,7 @@ void* Probe_Core_Debug(
     //=//// SERIES WITH ELEMENTS WIDTH 1 ///////////////////////////////////=//
 
       case FLAVOR_BINARY: {
-        Binary(*) bin = BIN(s);
+        Binary* bin = BIN(s);
         Probe_Print_Helper(p, expr, "Byte-Size Series", file, line);
 
         const bool brk = (Binary_Len(bin) > 32);  // !!! duplicates MF_Binary code

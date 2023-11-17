@@ -179,7 +179,7 @@ void Bin_To_Money_May_Fail(Sink(Value(*)) result, Value(const*) val)
 static Value(*) Math_Arg_For_Money(
     Sink(Value(*)) store,
     Value(*) arg,
-    Symbol(const*) verb
+    const Symbol* verb
 ){
     if (IS_MONEY(arg))
         return arg;

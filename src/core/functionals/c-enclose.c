@@ -85,7 +85,7 @@ Bounce Encloser_Dispatcher(Level(*) const L)
 {
     USE_LEVEL_SHORTHANDS (L);
 
-    Details(*) details = Phase_Details(PHASE);
+    Details* details = Phase_Details(PHASE);
     assert(Array_Len(details) == IDX_ENCLOSER_MAX);
 
     REBVAL *inner = DETAILS_AT(details, IDX_ENCLOSER_INNER);
@@ -121,7 +121,7 @@ Bounce Encloser_Dispatcher(Level(*) const L)
     // out to be fundamentally broken for some reason.
     //
     //-----------------------------------------------------------begin-old-code
-    // Context(*) c = Steal_Context_Vars(
+    // Context* c = Steal_Context_Vars(
     //     CTX(L->varlist),
     //     ACT_KEYLIST(Level_Phase(L))
     // );
@@ -138,8 +138,8 @@ Bounce Encloser_Dispatcher(Level(*) const L)
     //-------------------------------------------------------------end-old-code
 
     //-----------------------------------------------------------begin-new-code
-    Array(*) varlist = L->varlist;
-    Context(*) c = CTX(varlist);
+    Array* varlist = L->varlist;
+    Context* c = CTX(varlist);
 
     // Replace the L->varlist with a dead list.
     //
@@ -220,14 +220,14 @@ DECLARE_NATIVE(enclose_p)  // see extended definition ENCLOSE in %base-defs.r
     //
     // !!! Return result may differ; similar issue comes up with CHAIN
     //
-    Phase(*) enclosure = Make_Action(
+    Phase* enclosure = Make_Action(
         ACT_PARAMLIST(VAL_ACTION(inner)),  // same interface as inner
         ACT_PARTIALS(VAL_ACTION(inner)),
         &Encloser_Dispatcher,
         IDX_ENCLOSER_MAX  // details array capacity => [inner, outer]
     );
 
-    Details(*) details = Phase_Details(enclosure);
+    Details* details = Phase_Details(enclosure);
     Copy_Cell(DETAILS_AT(details, IDX_ENCLOSER_INNER), inner);
     Copy_Cell(DETAILS_AT(details, IDX_ENCLOSER_OUTER), outer);
 

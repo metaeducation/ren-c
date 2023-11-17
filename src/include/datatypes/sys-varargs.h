@@ -58,14 +58,14 @@
 #define INIT_VAL_VARARGS_PHASE          INIT_VAL_NODE2
 #define VAL_VARARGS_PHASE(v)            ACT(VAL_NODE2(v))
 
-inline static Array(*) VAL_VARARGS_BINDING(NoQuote(Cell(const*)) v) {
+inline static Array* VAL_VARARGS_BINDING(NoQuote(Cell(const*)) v) {
     assert(CELL_HEART(v) == REB_VARARGS);
     return ARR(BINDING(v));  // may be varlist or plain array
 }
 
 inline static void INIT_VAL_VARARGS_BINDING(
     Cell(*) v,
-    Array(*) binding  // either an array or a frame varlist
+    Array* binding  // either an array or a frame varlist
 ){
     assert(IS_VARARGS(v));
     mutable_BINDING(v) = binding;
@@ -84,11 +84,11 @@ inline static REBVAL *Init_Varargs_Untyped_Enfix(
     Sink(Value(*)) out,
     Option(Value(const*)) left
 ){
-    Array(*) feed;
+    Array* feed;
     if (not left or Is_Void(unwrap(left)))
         feed = EMPTY_ARRAY;
     else {
-        Array(*) singular = Alloc_Singular(NODE_FLAG_MANAGED);
+        Array* singular = Alloc_Singular(NODE_FLAG_MANAGED);
         Copy_Cell(Array_Single(singular), unwrap(left));
 
         feed = Alloc_Singular(FLAG_FLAVOR(FEED) | NODE_FLAG_MANAGED);
@@ -109,7 +109,7 @@ inline static bool Is_Block_Style_Varargs(
 ){
     assert(CELL_HEART(vararg) == REB_VARARGS);
 
-    Array(*) binding = ARR(BINDING(vararg));
+    Array* binding = ARR(BINDING(vararg));
     if (IS_VARLIST(binding)) {
         *shared_out = nullptr;  // avoid compiler warning in -Og build
         return false;  // it's an ordinary vararg, representing a FRAME!
@@ -119,7 +119,7 @@ inline static bool Is_Block_Style_Varargs(
     // filled by the evaluator on a <variadic> parameter.  Should be a singular
     // array with one BLOCK!, that is the actual array and index to advance.
     //
-    Array(*) array1 = binding;
+    Array* array1 = binding;
     *shared_out = cast(REBVAL*, Array_Single(array1));
     assert(
         Is_Cell_Poisoned(*shared_out)
@@ -136,7 +136,7 @@ inline static bool Is_Level_Style_Varargs_Maybe_Null(
 ){
     assert(CELL_HEART(vararg) == REB_VARARGS);
 
-    Array(*) binding = ARR(BINDING(vararg));
+    Array* binding = ARR(BINDING(vararg));
     if (IS_VARLIST(binding)) {
         // "Ordinary" case... use the original level implied by the VARARGS!
         // (so long as it is still live on the stack)
@@ -188,9 +188,9 @@ inline static const REBPAR *Param_For_Varargs_Maybe_Null(
 ){
     assert(CELL_HEART(v) == REB_VARARGS);
 
-    Action(*) phase = VAL_VARARGS_PHASE(v);
+    Action* phase = VAL_VARARGS_PHASE(v);
     if (phase) {
-        Array(*) paramlist = CTX_VARLIST(ACT_EXEMPLAR(phase));
+        Array* paramlist = CTX_VARLIST(ACT_EXEMPLAR(phase));
         if (VAL_VARARGS_SIGNED_PARAM_INDEX(v) < 0) {  // e.g. enfix
             if (key)
                 *key = ACT_KEY(

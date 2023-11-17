@@ -65,9 +65,9 @@ REBVAL *Try_Read_Directory_Entry(FILEREQ *dir);
 //
 // Internal port handler for file directories.
 //
-Bounce Dir_Actor(Level(*) level_, REBVAL *port, Symbol(const*) verb)
+Bounce Dir_Actor(Level(*) level_, REBVAL *port, const Symbol* verb)
 {
-    Context(*) ctx = VAL_CONTEXT(port);
+    Context* ctx = VAL_CONTEXT(port);
 
     REBVAL *state = CTX_VAR(ctx, STD_PORT_STATE);
     FILEREQ *dir;
@@ -101,7 +101,7 @@ Bounce Dir_Actor(Level(*) level_, REBVAL *port, Symbol(const*) verb)
         // structure...which would mean different Rename_Directory() and
         // Rename_File() calls, for instance.
         //
-        Binary(*) bin = Make_Binary(sizeof(FILEREQ));
+        Binary* bin = Make_Binary(sizeof(FILEREQ));
         Init_Binary(state, bin);
         Term_Binary_Len(bin, sizeof(FILEREQ));
 
@@ -112,7 +112,7 @@ Bounce Dir_Actor(Level(*) level_, REBVAL *port, Symbol(const*) verb)
         dir->size_cache = FILESIZE_UNKNOWN;
         dir->offset = FILEOFFSET_UNKNOWN;
 
-        // Generally speaking, you don't want to store REBVAL* or Series(*) in
+        // Generally speaking, you don't want to store REBVAL* or Series* in
         // something like this struct-embedded-in-a-BINARY! as it will be
         // invisible to the GC.  But this pointer is into the port spec, which
         // we will assume is good for the lifetime of the port.  :-/  (Not a

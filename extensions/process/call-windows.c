@@ -739,7 +739,7 @@ Bounce Call_Core(Level(*) level_) {
         rebFail_OS (ret);
 
     if (REF(info)) {
-        Context(*) info = Alloc_Context(REB_OBJECT, 2);
+        Context* info = Alloc_Context(REB_OBJECT, 2);
 
         Init_Integer(Append_Context(info, Canon(ID)), pid);
         if (REF(wait))

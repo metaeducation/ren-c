@@ -91,7 +91,7 @@ static bool Params_Of_Hook(
 //
 // Returns array of function words, unbound.
 //
-Array(*) Make_Action_Parameters_Arr(Action(*) act, bool just_words)
+Array* Make_Action_Parameters_Arr(Action* act, bool just_words)
 {
     struct Params_Of_State s;
     s.just_words = just_words;
@@ -121,7 +121,7 @@ static bool Outputs_Of_Hook(
 //
 // Returns array of function words, unbound.
 //
-Array(*) Make_Action_Outputs_Arr(Action(*) act)
+Array* Make_Action_Outputs_Arr(Action* act)
 {
     StackIndex base = TOP_INDEX;
     For_Each_Unspecialized_Param(act, &Outputs_Of_Hook, nullptr);
@@ -299,7 +299,7 @@ void Push_Paramlist_Quads_May_Fail(
             Cell(const*) types_tail;
             Cell(const*) types_at = VAL_ARRAY_AT(&types_tail, item);
             Flags param_flags;
-            Array(*) a = Add_Parameter_Bits_Core(
+            Array* a = Add_Parameter_Bits_Core(
                 &param_flags,
                 pclass,
                 types_at,
@@ -330,7 +330,7 @@ void Push_Paramlist_Quads_May_Fail(
 
         enum Reb_Kind heart = CELL_HEART(item);
 
-        Symbol(const*) symbol = nullptr;  // avoids compiler warning
+        const Symbol* symbol = nullptr;  // avoids compiler warning
         enum Reb_Param_Class pclass = PARAM_CLASS_0;  // error if not changed
 
         bool local = false;
@@ -519,8 +519,8 @@ void Push_Paramlist_Quads_May_Fail(
 // duplicate parameters on the stack, and the checking via a binder is done
 // as part of this popping process.
 //
-Array(*) Pop_Paramlist_With_Adjunct_May_Fail(
-    Context(*) *adjunct_out,
+Array* Pop_Paramlist_With_Adjunct_May_Fail(
+    Context* *adjunct_out,
     StackIndex base,
     Flags flags,
     StackIndex return_stackindex
@@ -593,13 +593,13 @@ Array(*) Pop_Paramlist_With_Adjunct_May_Fail(
     // !!! This is no longer true, since details is the identity.  Review
     // optimization potential.
     //
-    Array(*) paramlist = Make_Array_Core(
+    Array* paramlist = Make_Array_Core(
         num_slots,
         SERIES_MASK_PARAMLIST
     );
     Set_Series_Len(paramlist, num_slots);
 
-    KeyList(*) keylist = Make_Series(KeyListT,
+    KeyList* keylist = Make_Series(KeyList,
         (num_slots - 1),  // - 1 archetype
         SERIES_MASK_KEYLIST | NODE_FLAG_MANAGED
     );
@@ -618,7 +618,7 @@ Array(*) Pop_Paramlist_With_Adjunct_May_Fail(
     struct Reb_Binder binder;
     INIT_BINDER(&binder);
 
-    Symbol(const*) duplicate = nullptr;
+    const Symbol* duplicate = nullptr;
 
   blockscope {
     REBVAL *param = 1 + Init_Word_Isotope(
@@ -638,7 +638,7 @@ Array(*) Pop_Paramlist_With_Adjunct_May_Fail(
 
     StackIndex stackindex = base + 8;
     for (; stackindex <= TOP_INDEX; stackindex += 4) {
-        Symbol(const*) symbol = VAL_WORD_SYMBOL(KEY_SLOT(stackindex));
+        const Symbol* symbol = VAL_WORD_SYMBOL(KEY_SLOT(stackindex));
 
         StackValue(*) slot = PARAM_SLOT(stackindex);
 
@@ -756,7 +756,7 @@ Array(*) Pop_Paramlist_With_Adjunct_May_Fail(
     // Only make `parameter-types` if there were blocks in the spec
     //
     if (flags & MKF_HAS_TYPES) {
-        Array(*) types_varlist = Make_Array_Core(
+        Array* types_varlist = Make_Array_Core(
             num_slots,
             SERIES_MASK_VARLIST | NODE_FLAG_MANAGED
         );
@@ -805,7 +805,7 @@ Array(*) Pop_Paramlist_With_Adjunct_May_Fail(
     // Only make `parameter-notes` if there were strings (besides description)
     //
     if (flags & MKF_HAS_NOTES) {
-        Array(*) notes_varlist = Make_Array_Core(
+        Array* notes_varlist = Make_Array_Core(
             num_slots,
             SERIES_MASK_VARLIST | NODE_FLAG_MANAGED
         );
@@ -891,8 +891,8 @@ Array(*) Pop_Paramlist_With_Adjunct_May_Fail(
 // You don't have to use it if you don't want to...and may overwrite the
 // variable.  But it won't be a void at the start.
 //
-Array(*) Make_Paramlist_Managed_May_Fail(
-    Context(*) *adjunct_out,
+Array* Make_Paramlist_Managed_May_Fail(
+    Context* *adjunct_out,
     const REBVAL *spec,
     Flags *flags  // flags may be modified to carry additional information
 ){
@@ -923,7 +923,7 @@ Array(*) Make_Paramlist_Managed_May_Fail(
         flags,
         &return_stackindex
     );
-    Array(*) paramlist = Pop_Paramlist_With_Adjunct_May_Fail(
+    Array* paramlist = Pop_Paramlist_With_Adjunct_May_Fail(
         adjunct_out,
         base,
         *flags,
@@ -947,7 +947,7 @@ Array(*) Make_Paramlist_Managed_May_Fail(
 // RETURN is distinguished from another--the binding data stored in the REBVAL
 // identifies the pointer of the FRAME! to exit).
 //
-// Actions have an associated Array(*) of data, accessible via Phase_Details().
+// Actions have an associated Array* of data, accessible via Phase_Details().
 // This is where they can store information that will be available when the
 // dispatcher is called.
 //
@@ -958,9 +958,9 @@ Array(*) Make_Paramlist_Managed_May_Fail(
 // take several forms depending on how much detail there is.  See the
 // ACT_SPECIALTY() definition for more information on how this is laid out.
 //
-Phase(*) Make_Action(
-    Array(*) paramlist,
-    Option(Array(*)) partials,
+Phase* Make_Action(
+    Array* paramlist,
+    Option(Array*) partials,
     Dispatcher* dispatcher,  // native C function called by Action_Executor()
     REBLEN details_capacity  // capacity of Phase_Details (including archetype)
 ){
@@ -981,7 +981,7 @@ Phase(*) Make_Action(
     // a placeholder for more useful consistency checking which might be done.
     //
   blockscope {
-    KeyList(*) keylist = cast(KeyListT*, BONUS(KeySource, paramlist));
+    KeyList* keylist = cast(KeyList*, BONUS(KeySource, paramlist));
 
     Assert_Series_Managed(keylist);  // paramlists/keylists, can be shared
     assert(Series_Used(keylist) + 1 == Array_Len(paramlist));
@@ -996,7 +996,7 @@ Phase(*) Make_Action(
     // the dispatcher understands it to be, by contract.  Terminate it
     // at the given length implicitly.
     //
-    Array(*) details = Make_Array_Core(
+    Array* details = Make_Array_Core(
         details_capacity,  // Note: may be just 1 (so non-dynamic!)
         SERIES_MASK_DETAILS | NODE_FLAG_MANAGED
     );
@@ -1019,7 +1019,7 @@ Phase(*) Make_Action(
 
     mutable_INODE(Exemplar, details) = CTX(paramlist);
 
-    Action(*) act = ACT(details); // now it's a legitimate REBACT
+    Action* act = ACT(details); // now it's a legitimate REBACT
 
     // !!! We may have to initialize the exemplar rootvar.
     //
@@ -1080,8 +1080,8 @@ Phase(*) Make_Action(
 //
 void Get_Maybe_Fake_Action_Body(Sink(Value(*)) out, Value(const*) action)
 {
-    Context(*) binding = VAL_FRAME_BINDING(action);
-    Action(*) a = VAL_ACTION(action);
+    Context* binding = VAL_FRAME_BINDING(action);
+    Action* a = VAL_ACTION(action);
 
     // A Hijacker *might* not need to splice itself in with a dispatcher.
     // But if it does, bypass it to get to the "real" action implementation.
@@ -1107,7 +1107,7 @@ void Get_Maybe_Fake_Action_Body(Sink(Value(*)) out, Value(const*) action)
         // Interpreted code, the body is a block with some bindings relative
         // to the action.
 
-        Details(*) details = Phase_Details(ACT_IDENTITY(a));
+        Details* details = Phase_Details(ACT_IDENTITY(a));
         Cell(*) body = Array_At(details, IDX_DETAILS_1);
 
         // The PARAMLIST_HAS_RETURN tricks for definitional return make it
@@ -1132,14 +1132,14 @@ void Get_Maybe_Fake_Action_Body(Sink(Value(*)) out, Value(const*) action)
             UNUSED(real_body_index);
         }
 
-        Array(const*) maybe_fake_body;
+        const Array* maybe_fake_body;
         if (example == nullptr) {
             maybe_fake_body = VAL_ARRAY(body);
         }
         else {
             // See %sysobj.r for STANDARD/FUNC-BODY
             //
-            Array(*) fake = Copy_Array_Shallow_Flags(
+            Array* fake = Copy_Array_Shallow_Flags(
                 VAL_ARRAY(example),
                 VAL_SPECIFIER(example),
                 NODE_FLAG_MANAGED
@@ -1188,7 +1188,7 @@ void Get_Maybe_Fake_Action_Body(Sink(Value(*)) out, Value(const*) action)
     }
 
     if (ACT_DISPATCHER(a) == &Generic_Dispatcher) {
-        Details(*) details = Phase_Details(ACT_IDENTITY(a));
+        Details* details = Phase_Details(ACT_IDENTITY(a));
         REBVAL *verb = DETAILS_AT(details, 1);
         assert(IS_WORD(verb));
         Copy_Cell(out, verb);
@@ -1237,7 +1237,7 @@ DECLARE_NATIVE(tweak)
 {
     INCLUDE_PARAMS_OF_TWEAK;
 
-    Action(*) act = VAL_ACTION(ARG(frame));
+    Action* act = VAL_ACTION(ARG(frame));
     const REBPAR *first = First_Unspecialized_Param(nullptr, act);
 
     enum Reb_Param_Class pclass = first

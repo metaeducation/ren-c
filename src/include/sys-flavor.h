@@ -93,7 +93,7 @@ enum StubFlavorEnum {
     // series can be reached from it via the LINK() in the series node, which
     // is known as a "keylist".
     //
-    // See notes on ContextT for further details about what a context is.
+    // See notes on Context for further details about what a context is.
     //
     FLAVOR_VARLIST = FLAVOR_MIN_ISOTOPES_OK,
 
@@ -134,7 +134,7 @@ enum StubFlavorEnum {
     // For the moment all series that don't store Cells or or binary data of
     // WIDTH=1 store items of size pointer.
     //
-    FLAVOR_KEYLIST,  // width = sizeof(Symbol(*))
+    FLAVOR_KEYLIST,  // width = sizeof(Symbol*)
     FLAVOR_POINTER,  // generic
     FLAVOR_CANONTABLE,  // for canons table
     FLAVOR_NODELIST,  // e.g. GC protect list

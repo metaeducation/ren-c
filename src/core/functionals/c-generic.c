@@ -54,9 +54,9 @@ enum {
 //
 Bounce Generic_Dispatcher(Level(*) L)
 {
-    Phase(*) phase = Level_Phase(L);
-    Details(*) details = Phase_Details(phase);
-    Symbol(const*) verb = VAL_WORD_SYMBOL(DETAILS_AT(details, IDX_GENERIC_VERB));
+    Phase* phase = Level_Phase(L);
+    Details* details = Phase_Details(phase);
+    const Symbol* verb = VAL_WORD_SYMBOL(DETAILS_AT(details, IDX_GENERIC_VERB));
 
     // !!! It's technically possible to throw in locals or refinements at
     // any point in the sequence.  D_ARG() accounts for this...hackily.
@@ -88,15 +88,15 @@ DECLARE_NATIVE(generic)
     REBVAL *verb = ARG(verb);
     REBVAL *spec = ARG(spec);
 
-    Context(*) meta;
+    Context* meta;
     Flags flags = MKF_KEYWORDS | MKF_RETURN;
-    Array(*) paramlist = Make_Paramlist_Managed_May_Fail(
+    Array* paramlist = Make_Paramlist_Managed_May_Fail(
         &meta,
         spec,
         &flags  // return type checked only in debug build
     );
 
-    Phase(*) generic = Make_Action(
+    Phase* generic = Make_Action(
         paramlist,
         nullptr,  // no partials
         &Generic_Dispatcher,  // return type is only checked in debug build
@@ -108,7 +108,7 @@ DECLARE_NATIVE(generic)
 
     Set_Action_Flag(generic, IS_NATIVE);
 
-    Details(*) details = Phase_Details(generic);
+    Details* details = Phase_Details(generic);
 
     Init_Word(DETAILS_AT(details, IDX_NATIVE_BODY), VAL_WORD_SYMBOL(verb));
     Copy_Cell(DETAILS_AT(details, IDX_NATIVE_CONTEXT), Lib_Context_Value);
@@ -125,7 +125,7 @@ DECLARE_NATIVE(generic)
 //
 // Returns an array of words bound to generics for SYSTEM/CATALOG/ACTIONS
 //
-Array(*) Startup_Generics(const REBVAL *boot_generics)
+Array* Startup_Generics(const REBVAL *boot_generics)
 {
     assert(VAL_INDEX(boot_generics) == 0); // should be at head, sanity check
     Cell(const*) tail;

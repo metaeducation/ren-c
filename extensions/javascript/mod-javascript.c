@@ -230,7 +230,7 @@ static void cleanup_js_object(const REBVAL *v) {
 //
 // !!! Outdated comment, review what happened here:
 //
-// "We go ahead and use the Context(*) instead of the raw Level(*) to act as
+// "We go ahead and use the Context* instead of the raw Level(*) to act as
 //  the unique pointer to identify a level.  That's because if the JavaScript
 //  code throws and that throw needs to make it to a promise higher up the
 //  stack, it uses that pointer as an ID in a mapping table to associate the
@@ -276,7 +276,7 @@ inline static REBVAL *Value_From_Value_Id(heapaddr_t id) {
 // was put in that table at the time of creation (the native_id).
 //
 
-inline static heapaddr_t Native_Id_For_Action(Action(*) act)
+inline static heapaddr_t Native_Id_For_Action(Action* act)
   { return Heapaddr_From_Pointer(ACT_KEYLIST(act)); }
 
 enum {
@@ -378,7 +378,7 @@ EXTERN_C intptr_t RL_rebPromise(void *p, va_list *vaptr)
     DECLARE_STABLE (block);
     RL_rebTranscodeInto(block, p, vaptr);
 
-    Array(*) code = VAL_ARRAY_ENSURE_MUTABLE(block);
+    Array* code = VAL_ARRAY_ENSURE_MUTABLE(block);
     assert(Is_Node_Managed(code));
     Clear_Node_Managed_Bit(code);  // using array as ID, don't GC it
 
@@ -424,7 +424,7 @@ void RunPromise(void)
 
     info->state = PROMISE_STATE_RUNNING;
 
-    Array(*) a = ARR(Pointer_From_Heapaddr(info->promise_id));
+    Array* a = ARR(Pointer_From_Heapaddr(info->promise_id));
     assert(Not_Node_Managed(a));  // took off so it didn't GC
     Set_Node_Managed_Bit(a);  // but need it back on to execute it
 
@@ -446,7 +446,7 @@ void RunPromise(void)
     REBVAL *metaresult;
     if (r == BOUNCE_THROWN) {
         assert(Is_Throwing(TOP_LEVEL));
-        Context(*) error = Error_No_Catch_For_Throw(TOP_LEVEL);
+        Context* error = Error_No_Catch_For_Throw(TOP_LEVEL);
         metaresult = Init_Error(TOP_LEVEL->out, error);
     }
     else
@@ -697,7 +697,7 @@ Bounce JavaScript_Dispatcher(Level(*) const L)
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
-    Details(*) details = Phase_Details(PHASE);
+    Details* details = Phase_Details(PHASE);
     bool is_awaiter = VAL_LOGIC(DETAILS_AT(details, IDX_JS_NATIVE_IS_AWAITER));
 
     struct Reb_Promise_Info *info = PG_Promises;
@@ -779,7 +779,7 @@ Bounce JavaScript_Dispatcher(Level(*) const L)
     }
 
     TRACE("Calling fail() with error context");
-    Context(*) ctx = VAL_CONTEXT(OUT);
+    Context* ctx = VAL_CONTEXT(OUT);
     fail (ctx);  // better than Init_Thrown_With_Label(), gives location
 }}
 
@@ -805,15 +805,15 @@ DECLARE_NATIVE(js_native)
     REBVAL *spec = ARG(spec);
     REBVAL *source = ARG(source);
 
-    Context(*) meta;
+    Context* meta;
     Flags flags = MKF_RETURN | MKF_KEYWORDS;
-    Array(*) paramlist = Make_Paramlist_Managed_May_Fail(
+    Array* paramlist = Make_Paramlist_Managed_May_Fail(
         &meta,
         spec,
         &flags
     );
 
-    Phase(*) native = Make_Action(
+    Phase* native = Make_Action(
         paramlist,
         nullptr,  // no partials
         &JavaScript_Dispatcher,
@@ -826,7 +826,7 @@ DECLARE_NATIVE(js_native)
 
     heapaddr_t native_id = Native_Id_For_Action(native);
 
-    Details(*) details = Phase_Details(native);
+    Details* details = Phase_Details(native);
 
     if (Is_Series_Frozen(VAL_SERIES(source)))
         Copy_Cell(DETAILS_AT(details, IDX_NATIVE_BODY), source);  // no copy
@@ -931,7 +931,7 @@ DECLARE_NATIVE(js_native)
     );
     REBVAL *error = cast(REBVAL*, Pointer_From_Heapaddr(error_addr));
     if (error) {
-        Context(*) ctx = VAL_CONTEXT(error);
+        Context* ctx = VAL_CONTEXT(error);
         rebRelease(error);  // !!! failing, so not actually needed (?)
 
         TRACE("JS-NATIVE had malformed JS, calling fail() w/error context");
@@ -1050,7 +1050,7 @@ DECLARE_NATIVE(js_eval_p)
 
     REBVAL *error = Value_From_Value_Id(addr);
     assert(IS_ERROR(error));
-    Context(*) ctx = VAL_CONTEXT(error);
+    Context* ctx = VAL_CONTEXT(error);
     rebRelease(error);
     fail (ctx);  // better than Init_Thrown_With_Label(), identifies source
 }}

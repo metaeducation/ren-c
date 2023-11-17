@@ -39,14 +39,14 @@
 // ellipses to show they have been cut off.  It does not change the arrays
 // in question, but replaces them with copies.
 //
-void Collapsify_Array(Array(*) array, REBSPC *specifier, REBLEN limit)
+void Collapsify_Array(Array* array, REBSPC *specifier, REBLEN limit)
 {
     Cell(const*) tail = Array_Tail(array);
     Cell(*) item = Array_Head(array);
     for (; item != tail; ++item) {
         if (ANY_ARRAY(item) and VAL_LEN_AT(item) > limit) {
             REBSPC *derived = Derive_Specifier(specifier, item);
-            Array(*) copy = Copy_Array_At_Max_Shallow(
+            Array* copy = Copy_Array_At_Max_Shallow(
                 VAL_ARRAY(item),
                 VAL_INDEX(item),
                 derived,
@@ -154,7 +154,7 @@ REBVAL *Init_Near_For_Level(Cell(*) out, Level(*) L)
     }
     */
 
-    Array(*) near = Pop_Stack_Values_Core(base, NODE_FLAG_MANAGED);
+    Array* near = Pop_Stack_Values_Core(base, NODE_FLAG_MANAGED);
 
     // Simplify overly-deep blocks embedded in the where so they show (...)
     // instead of printing out fully.
@@ -170,7 +170,7 @@ REBVAL *Init_Near_For_Level(Cell(*) out, Level(*) L)
 //
 //  Is_Context_Running_Or_Pending: C
 //
-bool Is_Context_Running_Or_Pending(Context(*) frame_ctx)
+bool Is_Context_Running_Or_Pending(Context* frame_ctx)
 {
     Level(*) L = CTX_LEVEL_IF_ON_STACK(frame_ctx);
     if (not L)
@@ -196,7 +196,7 @@ DECLARE_NATIVE(running_q)
 {
     INCLUDE_PARAMS_OF_RUNNING_Q;
 
-    Context(*) frame_ctx = VAL_CONTEXT(ARG(frame));
+    Context* frame_ctx = VAL_CONTEXT(ARG(frame));
 
     Level(*) L = CTX_LEVEL_MAY_FAIL(frame_ctx);
 
@@ -220,7 +220,7 @@ DECLARE_NATIVE(pending_q)
 {
     INCLUDE_PARAMS_OF_PENDING_Q;
 
-    Context(*) frame_ctx = VAL_CONTEXT(ARG(frame));
+    Context* frame_ctx = VAL_CONTEXT(ARG(frame));
 
     Level(*) L = CTX_LEVEL_MAY_FAIL(frame_ctx);
 

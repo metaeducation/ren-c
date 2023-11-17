@@ -36,11 +36,11 @@
 //
 //  Extract_Intrinsic: C
 //
-Intrinsic* Extract_Intrinsic(Phase(*) phase)
+Intrinsic* Extract_Intrinsic(Phase* phase)
 {
     assert(ACT_DISPATCHER(phase) == &Intrinsic_Dispatcher);
 
-    Details(*) details = Phase_Details(phase);
+    Details* details = Phase_Details(phase);
     assert(Array_Len(details) >= IDX_INTRINSIC_MAX);  // typecheck uses more
 
     Cell(*) handle = DETAILS_AT(details, IDX_INTRINSIC_CFUNC);
@@ -91,11 +91,11 @@ Bounce Intrinsic_Dispatcher(Level(*) const L)
 // native index is being loaded, which is non-obvious.  But these issues
 // could be addressed (e.g. by passing the native index number / DLL in).
 //
-Phase(*) Make_Native(
+Phase* Make_Native(
     REBVAL *spec,
     NativeType native_type,
     CFunction* cfunc,  // may be Dispatcher*, may be Intrinsic*
-    Context(*) module
+    Context* module
 ){
     // There are implicit parameters to both NATIVE/COMBINATOR and usermode
     // COMBINATOR.  The native needs the full spec.
@@ -113,16 +113,16 @@ Phase(*) Make_Native(
     // the Natives table.  The associated C function is provided by a
     // table built in the bootstrap scripts, `Native_C_Funcs`.
 
-    Context(*) meta;
+    Context* meta;
     Flags flags = MKF_KEYWORDS | MKF_RETURN;
-    Array(*) paramlist = Make_Paramlist_Managed_May_Fail(
+    Array* paramlist = Make_Paramlist_Managed_May_Fail(
         &meta,
         spec,
         &flags  // return type checked only in debug build
     );
     Assert_Series_Term_If_Needed(paramlist);
 
-    Phase(*) native;
+    Phase* native;
     if (native_type == NATIVE_INTRINSIC) {
         native = Make_Action(
             paramlist,
@@ -131,7 +131,7 @@ Phase(*) Make_Native(
             IDX_INTRINSIC_MAX  // details array capacity
         );
 
-        Details(*) details = Phase_Details(native);
+        Details* details = Phase_Details(native);
         Init_Handle_Cfunc(DETAILS_AT(details, IDX_INTRINSIC_CFUNC), cfunc);
     }
     else {
@@ -142,7 +142,7 @@ Phase(*) Make_Native(
             IDX_NATIVE_MAX  // details array capacity
         );
 
-        Details(*) details = Phase_Details(native);
+        Details* details = Phase_Details(native);
 
         Init_Blank(DETAILS_AT(details, IDX_NATIVE_BODY));
         Copy_Cell(
@@ -159,7 +159,7 @@ Phase(*) Make_Native(
     // that the actual "native" in that case.
     //
     if (native_type == NATIVE_COMBINATOR) {
-        Phase(*) native_combinator = native;
+        Phase* native_combinator = native;
         native = Make_Action(
             ACT_PARAMLIST(native_combinator),
             nullptr,  // no partials
@@ -226,7 +226,7 @@ DECLARE_NATIVE(native)
     CFunction* cfunc = *PG_Next_Native_Cfunc;
     ++PG_Next_Native_Cfunc;
 
-    Phase(*) native = Make_Native(
+    Phase* native = Make_Native(
         spec,
         native_type,
         cfunc,
@@ -253,7 +253,7 @@ static void Init_Action_Adjunct_Shim(void) {
     SymId field_syms[3] = {
         SYM_DESCRIPTION, SYM_PARAMETER_TYPES, SYM_PARAMETER_NOTES
     };
-    Context(*) adjunct = Alloc_Context_Core(REB_OBJECT, 4, NODE_FLAG_MANAGED);
+    Context* adjunct = Alloc_Context_Core(REB_OBJECT, 4, NODE_FLAG_MANAGED);
     REBLEN i = 1;
     for (; i != 4; ++i)
         Init_Nulled(Append_Context(adjunct, Canon_Symbol(field_syms[i - 1])));
@@ -272,9 +272,9 @@ static void Shutdown_Action_Adjunct_Shim(void) {
 //
 // Returns an array of words bound to natives for SYSTEM.CATALOG.NATIVES
 //
-Array(*) Startup_Natives(const REBVAL *boot_natives)
+Array* Startup_Natives(const REBVAL *boot_natives)
 {
-    Array(*) catalog = Make_Array(Num_Natives);
+    Array* catalog = Make_Array(Num_Natives);
 
     // Must be called before first use of Make_Paramlist_Managed_May_Fail()
     //
@@ -306,7 +306,7 @@ Array(*) Startup_Natives(const REBVAL *boot_natives)
     REBVAL *spec = SPECIFIC(item);
     ++item;
 
-    Phase(*) the_native_action = Make_Native(
+    Phase* the_native_action = Make_Native(
         spec,
         NATIVE_NORMAL,  // not a combinator or intrinsic
         *PG_Next_Native_Cfunc,

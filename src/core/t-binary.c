@@ -71,9 +71,9 @@ REBINT CT_Binary(NoQuote(Cell(const*)) a, NoQuote(Cell(const*)) b, bool strict)
 ***********************************************************************/
 
 
-static Binary(*) Make_Binary_BE64(const REBVAL *arg)
+static Binary* Make_Binary_BE64(const REBVAL *arg)
 {
-    Binary(*) bin = Make_Binary(8);
+    Binary* bin = Make_Binary(8);
     Byte* bp = Binary_Head(bin);
 
     REBI64 i;
@@ -141,19 +141,19 @@ static Bounce MAKE_TO_Binary_Common(Level(*) level_, const REBVAL *arg)
         Size utf8_size;
         Utf8(const*) utf8 = VAL_UTF8_SIZE_AT(&utf8_size, arg);
 
-        Binary(*) bin = Make_Binary(utf8_size);
+        Binary* bin = Make_Binary(utf8_size);
         memcpy(Binary_Head(bin), utf8, utf8_size);
         Term_Binary_Len(bin, utf8_size);
         return Init_Binary(OUT, bin); }
 
       case REB_BLOCK: {
         Join_Binary_In_Byte_Buf(arg, -1);
-        Binary(*) bin = BIN(Copy_Series_Core(BYTE_BUF, SERIES_FLAGS_NONE));
+        Binary* bin = BIN(Copy_Series_Core(BYTE_BUF, SERIES_FLAGS_NONE));
         return Init_Binary(OUT, bin); }
 
       case REB_TUPLE: {
         REBLEN len = VAL_SEQUENCE_LEN(arg);
-        Binary(*) bin = Make_Binary(len);
+        Binary* bin = Make_Binary(len);
         if (Did_Get_Sequence_Bytes(Binary_Head(bin), arg, len)) {
             Term_Binary_Len(bin, len);
             return Init_Binary(OUT, bin);
@@ -167,7 +167,7 @@ static Bounce MAKE_TO_Binary_Common(Level(*) level_, const REBVAL *arg)
         );
 
       case REB_MONEY: {
-        Binary(*) bin = Make_Binary(12);
+        Binary* bin = Make_Binary(12);
         deci_to_binary(Binary_Head(bin), VAL_MONEY_AMOUNT(arg));
         Term_Binary_Len(bin, 12);
         return Init_Binary(OUT, bin); }
@@ -361,10 +361,10 @@ REBTYPE(Binary)
         if (i > 0xff)
             fail (Error_Out_Of_Range(setval));
 
-        Binary(*) bin = VAL_BINARY_Ensure_Mutable(v);
+        Binary* bin = VAL_BINARY_Ensure_Mutable(v);
         Binary_Head(bin)[n] = cast(Byte, i);
 
-        return nullptr; }  // caller's Binary(*) is not stale, no update needed
+        return nullptr; }  // caller's Binary* is not stale, no update needed
 
 
       case SYM_UNIQUE:
@@ -500,7 +500,7 @@ REBTYPE(Binary)
       case SYM_TAKE: {
         INCLUDE_PARAMS_OF_TAKE;
 
-        Binary(*) bin = VAL_BINARY_Ensure_Mutable(v);
+        Binary* bin = VAL_BINARY_Ensure_Mutable(v);
 
         UNUSED(PARAM(series));
 
@@ -550,7 +550,7 @@ REBTYPE(Binary)
         return OUT; }
 
       case SYM_CLEAR: {
-        Binary(*) bin = VAL_BINARY_Ensure_Mutable(v);
+        Binary* bin = VAL_BINARY_Ensure_Mutable(v);
 
         REBINT tail = cast(REBINT, VAL_LEN_HEAD(v));
         REBINT index = cast(REBINT, VAL_INDEX(v));
@@ -603,7 +603,7 @@ REBTYPE(Binary)
         Size smaller = MIN(t0, t1);  // smaller array size
         Size larger = MAX(t0, t1);
 
-        Binary(*) series = Make_Binary(larger);
+        Binary* series = Make_Binary(larger);
         Term_Binary_Len(series, larger);
 
         Byte* dest = Binary_Head(series);
@@ -648,7 +648,7 @@ REBTYPE(Binary)
         Size size;
         const Byte* bp = VAL_BINARY_SIZE_AT(&size, v);
 
-        Binary(*) bin = Make_Binary(size);
+        Binary* bin = Make_Binary(size);
         Term_Binary_Len(bin, size);  // !!! size is decremented, must set now
 
         Byte* dp = Binary_Head(bin);
@@ -682,7 +682,7 @@ REBTYPE(Binary)
       case SYM_SUBTRACT:
       case SYM_ADD: {
         REBVAL *arg = D_ARG(2);
-        Binary(*) bin = VAL_BINARY_Ensure_Mutable(v);
+        Binary* bin = VAL_BINARY_Ensure_Mutable(v);
 
         REBINT amount;
         if (IS_INTEGER(arg))
@@ -846,11 +846,11 @@ REBTYPE(Binary)
 
             index += cast(REBLEN, Random_Int(REF(secure)))
                 % (tail - index);
-            Binary(const*) bin = VAL_BINARY(v);
+            const Binary* bin = VAL_BINARY(v);
             return Init_Integer(OUT, *Binary_At(bin, index));  // PICK
         }
 
-        Binary(*) bin = VAL_BINARY_Ensure_Mutable(v);
+        Binary* bin = VAL_BINARY_Ensure_Mutable(v);
 
         bool secure = REF(secure);
         REBLEN n;
@@ -920,7 +920,7 @@ DECLARE_NATIVE(enbin)
     // with BigNum conversions as well).  Improvements welcome, but trying
     // to be correct for starters...
 
-    Binary(*) bin = Make_Binary(num_bytes);
+    Binary* bin = Make_Binary(num_bytes);
 
     REBINT delta = little ? 1 : -1;
     Byte* bp = Binary_Head(bin);

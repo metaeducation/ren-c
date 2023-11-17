@@ -45,16 +45,16 @@
 
 // See LINK() macro for how this is used.
 //
-#define LINK_Hashlist_TYPE          Series(*)
+#define LINK_Hashlist_TYPE          Series*
 #define LINK_Hashlist_CAST          SER
 #define HAS_LINK_Hashlist           FLAVOR_PAIRLIST
 
-inline static Array(*) MAP_PAIRLIST(Map(const_if_c*) map)
-  { return x_cast(Array(*), map); }
+inline static Array* MAP_PAIRLIST(const_if_c Map* map)
+  { return x_cast(Array*, map); }
 
 #if CPLUSPLUS_11
-    inline static Array(const*) MAP_PAIRLIST(Map(const*) map)
-      { return cast(Array(const*), map); }
+    inline static const Array* MAP_PAIRLIST(const Map* map)
+      { return cast(const Array*, map); }
 #endif
 
 #define MAP_HASHLIST(m) \
@@ -64,10 +64,10 @@ inline static Array(*) MAP_PAIRLIST(Map(const_if_c*) map)
     Series_Head(MAP_HASHLIST(m))
 
 
-inline static Map(const*) VAL_MAP(NoQuote(Cell(const*)) v) {
+inline static const Map* VAL_MAP(NoQuote(Cell(const*)) v) {
     assert(CELL_HEART(v) == REB_MAP);
 
-    Array(*) a = ARR(VAL_NODE1(v));
+    Array* a = ARR(VAL_NODE1(v));
     if (Get_Series_Flag(a, INACCESSIBLE))
         fail (Error_Series_Data_Freed_Raw());
 
@@ -75,12 +75,12 @@ inline static Map(const*) VAL_MAP(NoQuote(Cell(const*)) v) {
 }
 
 #define VAL_MAP_Ensure_Mutable(v) \
-    m_cast(Map(*), VAL_MAP(Ensure_Mutable(v)))
+    m_cast(Map*, VAL_MAP(Ensure_Mutable(v)))
 
 #define VAL_MAP_Known_Mutable(v) \
-    m_cast(Map(*), VAL_MAP(Known_Mutable(v)))
+    m_cast(Map*, VAL_MAP(Known_Mutable(v)))
 
-inline static REBLEN Length_Map(Map(const*) map)
+inline static REBLEN Length_Map(const Map* map)
 {
     Cell(const*) tail = Array_Tail(MAP_PAIRLIST(map));
     const REBVAL *v = SPECIFIC(Array_Head(MAP_PAIRLIST(map)));

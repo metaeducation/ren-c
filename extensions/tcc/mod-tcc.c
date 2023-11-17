@@ -105,11 +105,11 @@ int tcc_set_lib_path_i(TCCState *s, const char *path)
 // their source in Phase_Details [0] and their context in Phase_Details [1], so
 // for the moment just assume if the source is text it's a user native.
 //
-bool Is_User_Native(Action(*) act) {
+bool Is_User_Native(Action* act) {
     if (not Is_Action_Native(act))
         return false;
 
-    Details(*) details = Phase_Details(act);
+    Details* details = Phase_Details(act);
     assert(Array_Len(details) >= 2); // ACTION_FLAG_NATIVE needs source+context
     return IS_TEXT(DETAILS_AT(details, IDX_NATIVE_BODY));
 }
@@ -260,7 +260,7 @@ static void cleanup(const REBVAL *val)
 // simple COMPILE for just that one function, using default options.
 //
 Bounce Pending_Native_Dispatcher(Level(*) L) {
-    Phase(*) phase = Level_Phase(L);
+    Phase* phase = Level_Phase(L);
     assert(ACT_DISPATCHER(phase) == &Pending_Native_Dispatcher);
 
     Value(*) action = Phase_Archetype(phase);  // this action's value
@@ -309,14 +309,14 @@ DECLARE_NATIVE(make_native)
 
     REBVAL *source = ARG(source);
 
-    Context(*) meta;
+    Context* meta;
     Flags flags = MKF_MASK_NONE;  // natives can't use <none>, <void>
-    Array(*) paramlist = Make_Paramlist_Managed_May_Fail(
+    Array* paramlist = Make_Paramlist_Managed_May_Fail(
         &meta,
         ARG(spec),
         &flags
     );
-    Phase(*) native = Make_Action(
+    Phase* native = Make_Action(
         paramlist,
         nullptr,  // no partials
         &Pending_Native_Dispatcher,  // will be replaced e.g. by COMPILE
@@ -326,7 +326,7 @@ DECLARE_NATIVE(make_native)
     assert(ACT_ADJUNCT(native) == nullptr);
     mutable_ACT_ADJUNCT(native) = meta;
 
-    Details(*) details = Phase_Details(native);
+    Details* details = Phase_Details(native);
 
     if (Is_Series_Frozen(VAL_SERIES(source)))
         Copy_Cell(DETAILS_AT(details, IDX_NATIVE_BODY), source); // no copy
@@ -518,7 +518,7 @@ DECLARE_NATIVE(compile_p)
                 //
                 Copy_Cell(PUSH(), SPECIFIC(item));
 
-                Details(*) details = Phase_Details(VAL_ACTION(item));
+                Details* details = Phase_Details(VAL_ACTION(item));
                 Value(*) source = DETAILS_AT(details, IDX_NATIVE_BODY);
                 Value(*) linkname = DETAILS_AT(details, IDX_TCC_NATIVE_LINKNAME);
 
@@ -657,10 +657,10 @@ DECLARE_NATIVE(compile_p)
     // their function pointers to substitute in for the dispatcher.
     //
     while (TOP_INDEX != base) {
-        Action(*) action = VAL_ACTION(TOP);  // stack will hold action live
+        Action* action = VAL_ACTION(TOP);  // stack will hold action live
         assert(Is_User_Native(action));  // can't cache stack pointer, extract
 
-        Details(*) details = Phase_Details(action);
+        Details* details = Phase_Details(action);
         REBVAL *linkname = DETAILS_AT(details, IDX_TCC_NATIVE_LINKNAME);
 
         char *name_utf8 = rebSpell("ensure text!", linkname);

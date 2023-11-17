@@ -84,16 +84,16 @@
 
 // Context types use this field of their varlist (which is the identity of
 // an ANY-CONTEXT!) to find their "keylist".  It is stored in the Stub
-// node of the varlist Array(*) vs. in the Cell of the ANY-CONTEXT! so
+// node of the varlist Array* vs. in the Cell of the ANY-CONTEXT! so
 // that the keylist can be changed without needing to update all the
 // REBVALs for that object.
 //
-// It may be a simple Series(*) -or- in the case of the varlist of a running
+// It may be a simple Series* -or- in the case of the varlist of a running
 // FRAME! on the stack, it points to a Level(*).  If it's a FRAME! that
 // is not running on the stack, it will be the function paramlist of the
 // actual phase that function is for.  Since Level(*) all start with a
 // REBVAL cell, this means NODE_FLAG_CELL can be used on the node to
-// discern the case where it can be cast to a Level(*) vs. Array(*).
+// discern the case where it can be cast to a Level(*) vs. Array*.
 //
 // (Note: FRAME!s used to use a field `misc.L` to track the associated
 // level...but that prevented the ability to SET-ADJUNCT on a frame.  While
@@ -112,7 +112,7 @@
 #define BONUS_KeySource_CAST        // none, just use node (NOD() complains)
 #define HAS_BONUS_KeySource         FLAVOR_VARLIST
 
-inline static void INIT_BONUS_KEYSOURCE(Array(*) varlist, Node* keysource) {
+inline static void INIT_BONUS_KEYSOURCE(Array* varlist, Node* keysource) {
     if (keysource != nullptr and Is_Node_A_Stub(keysource))
         assert(IS_KEYLIST(SER(keysource)));
     mutable_BONUS(KeySource, varlist) = keysource;
@@ -241,12 +241,12 @@ inline static bool Is_Throwing(Level(*) level_) {
 #define INIT_VAL_ACTION_PARTIALS_OR_LABEL               INIT_VAL_NODE2
 
 
-inline static Phase(*) CTX_FRAME_PHASE(Context(*) c);
+inline static Phase* CTX_FRAME_PHASE(Context* c);
 
-inline static Phase(*) ACT_IDENTITY(Action(*) action) {
+inline static Phase* ACT_IDENTITY(Action* action) {
     if (IS_DETAILS(action))
-        return cast(Phase(*), action);  // don't want hijacked archetype details
-    return CTX_FRAME_PHASE(cast(Context(*), action));  // always ACT_IDENTITY()
+        return cast(Phase*, action);  // don't want hijacked archetype details
+    return CTX_FRAME_PHASE(cast(Context*, action));  // always ACT_IDENTITY()
 }
 
 
@@ -263,7 +263,7 @@ inline static Phase(*) ACT_IDENTITY(Action(*) action) {
     cast(Value(*), Series_Data(ACT_IDENTITY(action)))
 
 #define Phase_Archetype(phase) \
-    cast(Value(*), Series_Data(ensure(Phase(*), phase)))
+    cast(Value(*), Series_Data(ensure(Phase*, phase)))
 
 
 inline static bool Is_Frame_Details(NoQuote(Cell(const*)) v) {
@@ -292,9 +292,9 @@ inline static bool Is_Frame_Details(NoQuote(Cell(const*)) v) {
 // So consequently, all phases have to look in the archetype, in case they
 // are running the implementation of a copy or are spliced in as a hijacker.
 //
-inline static Details(*) Phase_Details(Phase(*) a) {
+inline static Details* Phase_Details(Phase* a) {
     assert(IS_DETAILS(a));
-    return x_cast(Details(*), Phase_Archetype(a)->payload.Any.first.node);
+    return x_cast(Details*, Phase_Archetype(a)->payload.Any.first.node);
 }
 
 
@@ -310,14 +310,14 @@ inline static Details(*) Phase_Details(Phase(*) a) {
 // a running frame gets re-executed.  More study is needed.
 //
 
-inline static Context(*) VAL_FRAME_BINDING(NoQuote(Cell(const*)) v) {
+inline static Context* VAL_FRAME_BINDING(NoQuote(Cell(const*)) v) {
     assert(HEART_BYTE(v) == REB_FRAME);
     return CTX(BINDING(v));
 }
 
 inline static void INIT_VAL_FRAME_BINDING(
     Cell(*) v,
-    Context(*) binding
+    Context* binding
 ){
     assert(HEART_BYTE(v) == REB_FRAME);
     mutable_BINDING(v) = binding;
@@ -337,28 +337,28 @@ inline static void INIT_VAL_FRAME_BINDING(
 // before the place where the exemplar is to be found.
 //
 
-#define INODE_Exemplar_TYPE     Context(*)
+#define INODE_Exemplar_TYPE     Context*
 #define INODE_Exemplar_CAST     CTX
 #define HAS_INODE_Exemplar      FLAVOR_DETAILS
 
 
-inline static Option(Array(*)) ACT_PARTIALS(Action(*) a) {
+inline static Option(Array*) ACT_PARTIALS(Action* a) {
     if (IS_DETAILS(a))
         return ARR(VAL_NODE2(ACT_ARCHETYPE(a)));
     return nullptr;  // !!! how to preserve partials in exemplars?
 }
 
-inline static Context(*) ACT_EXEMPLAR(Action(*) a) {
+inline static Context* ACT_EXEMPLAR(Action* a) {
     if (IS_DETAILS(a))
         return INODE(Exemplar, a);
-    return cast(Context(*), a);
+    return cast(Context*, a);
 }
 
 // Note: This is a more optimized version of CTX_KEYLIST(ACT_EXEMPLAR(a)),
 // and also forward declared.
 //
 #define ACT_KEYLIST(a) \
-    cast(KeyListT*, BONUS(KeySource, ACT_EXEMPLAR(a)))
+    cast(KeyList*, BONUS(KeySource, ACT_EXEMPLAR(a)))
 
 #define ACT_KEYS_HEAD(a) \
     Series_Head(const REBKEY, ACT_KEYLIST(a))
@@ -368,8 +368,8 @@ inline static Context(*) ACT_EXEMPLAR(Action(*) a) {
 
 #define ACT_PARAMLIST(a)            CTX_VARLIST(ACT_EXEMPLAR(a))
 
-inline static REBPAR *ACT_PARAMS_HEAD(Action(*) a) {
-    Array(*) list = CTX_VARLIST(ACT_EXEMPLAR(a));
+inline static REBPAR *ACT_PARAMS_HEAD(Action* a) {
+    Array* list = CTX_VARLIST(ACT_EXEMPLAR(a));
     return cast(REBPAR*, list->content.dynamic.data) + 1;  // skip archetype
 }
 
@@ -387,7 +387,7 @@ inline static REBPAR *ACT_PARAMS_HEAD(Action(*) a) {
 // only the archetype, e.g. with a specialized function).  *BUT* if you are
 // asking for elements in the details array, you must know it is dynamic.
 //
-inline static Value(*) DETAILS_AT(Details(*) details, Length n) {
+inline static Value(*) DETAILS_AT(Details* details, Length n) {
     assert(n != 0 and n < details->content.dynamic.used);
     Cell(*) at = cast(Cell(*), details->content.dynamic.data) + n;
     assert(Is_Fresh(at) or not IS_RELATIVE(at));
@@ -430,11 +430,11 @@ enum {
     do { PUSH(); PUSH(); PUSH(); PUSH(); } while (0)
 
 
-inline static Symbol(const*) KEY_SYMBOL(const REBKEY *key)
+inline static const Symbol* KEY_SYMBOL(const REBKEY *key)
   { return *key; }
 
 
-inline static void Init_Key(REBKEY *dest, const SymbolT* symbol)
+inline static void Init_Key(REBKEY *dest, const Symbol* symbol)
   { *dest = symbol; }
 
 #define KEY_SYM(key) \
@@ -457,9 +457,9 @@ inline static void Init_Key(REBKEY *dest, const SymbolT* symbol)
 #define ACT_ADJUNCT(a)             MISC(DetailsAdjunct, ACT_IDENTITY(a))
 
 
-inline static Action(*) VAL_ACTION(NoQuote(Cell(const*)) v) {
+inline static Action* VAL_ACTION(NoQuote(Cell(const*)) v) {
     assert(HEART_BYTE(v) == REB_FRAME);
-    Series(*) s = SER(VAL_NODE1(v));  // maybe exemplar, maybe details
+    Series* s = SER(VAL_NODE1(v));  // maybe exemplar, maybe details
     if (Get_Series_Flag(s, INACCESSIBLE))
         fail (Error_Series_Data_Freed_Raw());
     return ACT(s);
@@ -482,7 +482,7 @@ inline static Action(*) VAL_ACTION(NoQuote(Cell(const*)) v) {
 
 inline static void INIT_VAL_ACTION_LABEL(
     Cell(*) v,
-    Option(Symbol(const*)) label
+    Option(const Symbol*) label
 ){
     ASSERT_CELL_WRITABLE_EVIL_MACRO(v);  // archetype R/O
     if (label)
@@ -516,24 +516,24 @@ inline static void INIT_VAL_ACTION_LABEL(
 // The code for processing derivation is slightly different; it should be
 // unified more if possible.
 
-#define LINK_Ancestor_TYPE              KeyListT*
+#define LINK_Ancestor_TYPE              KeyList*
 #define LINK_Ancestor_CAST              KEYS
 #define HAS_LINK_Ancestor               FLAVOR_KEYLIST
 
-inline static bool Action_Is_Base_Of(Action(*) base, Action(*) derived) {
+inline static bool Action_Is_Base_Of(Action* base, Action* derived) {
     if (derived == base)
         return true;  // fast common case (review how common)
 
     if (ACT_IDENTITY(derived) == ACT_IDENTITY(base))
         return true;  // Covers COPY + HIJACK cases (seemingly)
 
-    Series(*) keylist_test = ACT_KEYLIST(derived);
-    Series(*) keylist_base = ACT_KEYLIST(base);
+    Series* keylist_test = ACT_KEYLIST(derived);
+    Series* keylist_base = ACT_KEYLIST(base);
     while (true) {
         if (keylist_test == keylist_base)
             return true;
 
-        Series(*) ancestor = LINK(Ancestor, keylist_test);
+        Series* ancestor = LINK(Ancestor, keylist_test);
         if (ancestor == keylist_test)
             return false;  // signals end of the chain, no match found
 
@@ -587,9 +587,9 @@ inline static bool Action_Is_Base_Of(Action(*) base, Action(*) derived) {
 //
 inline static REBVAL *Init_Frame_Details_Core(
     Cell(*) out,
-    Phase(*) a,
-    Option(Symbol(const*)) label,  // allowed to be ANONYMOUS
-    Context(*) binding  // allowed to be UNBOUND
+    Phase* a,
+    Option(const Symbol*) label,  // allowed to be ANONYMOUS
+    Context* binding  // allowed to be UNBOUND
 ){
   #if !defined(NDEBUG)
     Extra_Init_Frame_Details_Checks_Debug(a);

@@ -72,7 +72,7 @@ void Rollback_Globals_To_State(struct Reb_State *s)
     assert(Series_Used(g_gc.manuals) >= s->manuals_len);
     while (Series_Used(g_gc.manuals) != s->manuals_len) {
         Free_Unmanaged_Series(
-            *Series_At(Series(*), g_gc.manuals, Series_Used(g_gc.manuals) - 1)
+            *Series_At(Series*, g_gc.manuals, Series_Used(g_gc.manuals) - 1)
         );  // ^-- Free_Unmanaged_Series will decrement Series_Used(g_gc.manuals)
     }
 
@@ -287,7 +287,7 @@ void Replug_Stack(Level(*) L, Level(*) base, Value(*) plug) {
 
   blockscope {
 
-    Array(*) array = VAL_ARRAY_KNOWN_MUTABLE(plug);
+    Array* array = VAL_ARRAY_KNOWN_MUTABLE(plug);
     Cell(*) item = Array_Tail(array);
 
     if (Get_Subclass_Flag(PLUG, array, HAS_MOLD)) {  // restore mold from plug
@@ -366,8 +366,8 @@ void Assert_State_Balanced_Debug(
             "Make_Series()x%d w/o Free_Unmanaged_Series or Manage_Series\n",
             cast(int, Series_Used(g_gc.manuals) - s->manuals_len)
         );
-        Series(*) manual = *(Series_At(
-            Series(*),
+        Series* manual = *(Series_At(
+            Series*,
             g_gc.manuals,
             Series_Used(g_gc.manuals) - 1
         ));

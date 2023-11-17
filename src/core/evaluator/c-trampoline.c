@@ -355,7 +355,7 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
             Clear_Level_Flag(LEVEL, NOTIFY_ON_ABRUPT_FAILURE);
             Clear_Level_Flag(LEVEL, ABRUPT_FAILURE);
             assert(IS_ERROR(VAL_THROWN_LABEL(LEVEL)));
-            Context(*) ctx = VAL_CONTEXT(VAL_THROWN_LABEL(LEVEL));
+            Context* ctx = VAL_CONTEXT(VAL_THROWN_LABEL(LEVEL));
             CATCH_THROWN(SPARE, LEVEL);
             fail (ctx);
         }
@@ -390,7 +390,7 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
     assert(!"executor(L) not OUT, BOUNCE_THROWN, or BOUNCE_CONTINUE");
     panic (cast(void*, bounce));
 
-} ON_ABRUPT_FAILURE(Context(*) e) {  /////////////////////////////////////////
+} ON_ABRUPT_FAILURE(Context* e) {  /////////////////////////////////////////
 
   // A fail() can happen at any moment--even due to something like a failed
   // memory allocation requested by an executor itself.  These are called

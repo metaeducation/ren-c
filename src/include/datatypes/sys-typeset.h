@@ -45,12 +45,12 @@
 #define mutable_VAL_PARAMETER_CLASS_BYTE(v) \
     FIRST_BYTE(&EXTRA(Parameter, (v)).param_flags)
 
-inline static Option(Array(const*)) VAL_PARAMETER_ARRAY(
+inline static Option(const Array*) VAL_PARAMETER_ARRAY(
     NoQuote(Cell(const*)) v
 ){
     assert(HEART_BYTE(v) == REB_PARAMETER);
 
-    Array(const*) a = ARR(VAL_NODE1(v));
+    const Array* a = ARR(VAL_NODE1(v));
     if (a != nullptr and Get_Series_Flag(a, INACCESSIBLE))
         fail (Error_Series_Data_Freed_Raw());
     return a;
@@ -226,7 +226,7 @@ inline static bool Is_Specialized(const REBPAR *param) {
 
 // Parameter class should be PARAM_CLASS_0 unless typeset in func paramlist.
 
-inline static REBVAL *Init_Parameter_Core(Cell(*) out, Array(const*) array)
+inline static REBVAL *Init_Parameter_Core(Cell(*) out, const Array* array)
 {
     Reset_Unquoted_Header_Untracked(out, CELL_MASK_PARAMETER);
     if (array)
@@ -243,7 +243,7 @@ inline static REBVAL *Init_Parameter_Core(Cell(*) out, Array(const*) array)
 inline static REBPAR *Init_Param_Core(
     Cell(*) out,
     Flags param_flags,
-    Array(const*) array
+    const Array* array
 ){
     Reset_Unquoted_Header_Untracked(out, CELL_MASK_PARAMETER);
     if (array)

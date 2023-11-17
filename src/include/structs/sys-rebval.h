@@ -39,7 +39,7 @@
 // (at least until they become arbitrary precision) but it's not enough for
 // a generic BLOCK! or an ACTION! (for instance).  So the remaining bits
 // often will point to one or more Rebol "nodes" (see %sys-series.h for an
-// explanation of Series(*), Array(*), Context(*), and Map(*).)
+// explanation of Series*, Array*, Context*, and Map*.)
 //
 // So the next part of the structure is the "Extra".  This is the size of one
 // pointer, which sits immediately after the header (that's also the size of
@@ -436,7 +436,7 @@ union AnyUnion {  // needed to beat strict aliasing, used in payload
     // are unreliable, and for debug viewing only--in case they help.
     //
   #if DEBUG_USE_UNION_PUNS
-    Series(*) rebser_pun;
+    Series* rebser_pun;
     REBVAL *rebval_pun;
   #endif
 
@@ -543,15 +543,15 @@ union ValuePayloadUnion { //=/////////////// ACTUAL PAYLOAD DEFINITION ////=//
     // mutability (beyond CONST, which the cell encodes itself)
     //
     // ANY-WORD!  // see %sys-word.h
-    //     String(*) spelling;  // word's non-canonized spelling, UTF-8 string
+    //     String* spelling;  // word's non-canonized spelling, UTF-8 string
     //     REBINT index;  // index of word in context (if binding is not null)
     //
     // ANY-CONTEXT!  // see %sys-context.h
-    //     Array(*) varlist;  // has MISC.meta, LINK.keysource
-    //     Action(*) phase;  // used by FRAME! contexts, see %sys-frame.h
+    //     Array* varlist;  // has MISC.meta, LINK.keysource
+    //     Action* phase;  // used by FRAME! contexts, see %sys-frame.h
     //
     // ANY-SERIES!  // see %sys-series.h
-    //     Series(*) rebser;  // vector/double-ended-queue of equal-sized items
+    //     Series* rebser;  // vector/double-ended-queue of equal-sized items
     //     REBLEN index;  // 0-based position (e.g. 0 means Rebol index 1)
     //
     // QUOTED!  // see %sys-quoted.h
@@ -559,12 +559,12 @@ union ValuePayloadUnion { //=/////////////// ACTUAL PAYLOAD DEFINITION ////=//
     //     REBLEN depth;  // how deep quoting level is (> 3 if payload needed)
     //
     // ACTION!  // see %sys-action.h
-    //     Array(*) paramlist;  // has MISC.meta, LINK.underlying
-    //     Details(*) details;  // has MISC.dispatcher, LINK.specialty
+    //     Array* paramlist;  // has MISC.meta, LINK.underlying
+    //     Details* details;  // has MISC.dispatcher, LINK.specialty
     //
     // VARARGS!  // see %sys-varargs.h
     //     REBINT signed_param_index;  // if negative, consider arg enfixed
-    //     Action(*) phase;  // where to look up parameter by its offset
+    //     Action* phase;  // where to look up parameter by its offset
 
     struct AnyUnion_Payload Any;
 
@@ -658,7 +658,7 @@ union ValuePayloadUnion { //=/////////////// ACTUAL PAYLOAD DEFINITION ////=//
     (v)->extra.Binding
 
 #define BINDING(v) \
-    x_cast(Series(*), (v)->extra.Binding)  // binding const (why?), need x_cast
+    x_cast(Series*, (v)->extra.Binding)  // binding const (why?), need x_cast
 
 
 //=////////////////////////////////////////////////////////////////////////=//
@@ -668,7 +668,7 @@ union ValuePayloadUnion { //=/////////////// ACTUAL PAYLOAD DEFINITION ////=//
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // A Cell is an equivalent struct layout to to Value, but is allowed to
-// have an Action(*) as its binding.  A RelativeValue pointer can point to a
+// have an Action* as its binding.  A RelativeValue pointer can point to a
 // specific Value, but a relative word or array cannot be pointed to by a
 // plain Value(*).  The Cell-vs-Value distinction is purely commentary
 // in the C build, but the C++ build makes Value a type derived from Cell.

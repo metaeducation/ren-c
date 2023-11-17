@@ -50,7 +50,7 @@
 //
 // The PROBE macro can be used in debug builds to mold a REBVAL much like the
 // Rebol `probe` operation.  But it's actually polymorphic, and if you have
-// a Series(*), Context(*), or Array(*) it can be used with those as well.  In C++,
+// a Series*, Context*, or Array* it can be used with those as well.  In C++,
 // you can even get the same value and type out as you put in...just like in
 // Rebol, permitting things like `return PROBE(Make_Some_Series(...));`
 //
@@ -484,7 +484,7 @@ inline static bool IS_RELATIVE(Cell(const*) v) {
     if (not Is_Bindable(v))
         return false;  // may use extra for non-GC-marked uintptr_t-size data
 
-    Series(*) binding = BINDING(v);
+    Series* binding = BINDING(v);
     if (not binding)
         return false;  // INTEGER! and other types are inherently "specific"
 
@@ -576,7 +576,7 @@ inline static Value(*) SPECIFIC(Cell(const_if_c*) v) {
 #define SPECIFIED \
     ((REBSPC*)nullptr)  // cast() doesn't like nullptr, fix
 
-#define UNBOUND nullptr  // not always a Node* (sometimes Context(*))
+#define UNBOUND nullptr  // not always a Node* (sometimes Context*)
 #define UNSPECIFIED nullptr
 
 
@@ -620,10 +620,10 @@ inline static bool ANY_STRINGLIKE(NoQuote(Cell(const*)) v) {
 }
 
 
-inline static void INIT_VAL_WORD_SYMBOL(Cell(*) v, Symbol(const*) symbol)
+inline static void INIT_VAL_WORD_SYMBOL(Cell(*) v, const Symbol* symbol)
   { INIT_VAL_NODE1(v, symbol); }
 
-inline static Symbol(const*) VAL_WORD_SYMBOL(NoQuote(Cell(const*)) cell) {
+inline static const Symbol* VAL_WORD_SYMBOL(NoQuote(Cell(const*)) cell) {
     assert(ANY_WORDLIKE(cell));  // no _UNCHECKED variant :-(
     return SYM(VAL_NODE1(cell));
 }

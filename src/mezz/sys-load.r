@@ -424,7 +424,7 @@ import*: func [
         [any-value!]
     /only "Do not catch quits...propagate them"
         [logic!]
-    /into "e.g. reuse Context(*) already made for NATIVEs loading from extension"
+    /into "e.g. reuse Context* already made for NATIVEs loading from extension"
         [module!]
     <static>
         importing-remotely (false)

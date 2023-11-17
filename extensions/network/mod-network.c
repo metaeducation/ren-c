@@ -327,7 +327,7 @@ REBVAL *Request_Connect_Socket(const REBVAL *port)
 // Accept an inbound connection on a TCP listen socket.
 //
 void on_new_connection(uv_stream_t *server, int status) {
-    Context(*) listener_port_ctx = cast(Context(*), server->data);
+    Context* listener_port_ctx = cast(Context*, server->data);
     const REBVAL *listening_port = CTX_ARCHETYPE(listener_port_ctx);
     SOCKREQ *listening_sock = Sock_Of_Port(listening_port);
     UNUSED(listening_sock);
@@ -339,7 +339,7 @@ void on_new_connection(uv_stream_t *server, int status) {
     if (status < 0)
         fail (rebError_UV(status));
 
-    Context(*) client = Copy_Context_Shallow_Managed(listener_port_ctx);
+    Context* client = Copy_Context_Shallow_Managed(listener_port_ctx);
     Push_GC_Guard(client);
 
     Init_Nulled(CTX_VAR(client, STD_PORT_DATA));  // just to be sure
@@ -463,7 +463,7 @@ void on_read_alloc(uv_handle_t *handle, size_t suggested_size, uv_buf_t *buf)
 
     Reb_Read_Request *rebreq = cast(Reb_Read_Request*, handle->data);
 
-    Context(*) port_ctx = rebreq->port_ctx;
+    Context* port_ctx = rebreq->port_ctx;
     REBVAL *port_data = CTX_VAR(port_ctx, STD_PORT_DATA);
 
     size_t bufsize;
@@ -472,7 +472,7 @@ void on_read_alloc(uv_handle_t *handle, size_t suggested_size, uv_buf_t *buf)
     else
         bufsize = rebreq->length - rebreq->actual;  // !!! use suggestion here?
 
-    Binary(*) bin;
+    Binary* bin;
     if (Is_Nulled(port_data)) {
         bin = Make_Binary(bufsize);
         Init_Binary(port_data, bin);
@@ -507,11 +507,11 @@ void on_read_alloc(uv_handle_t *handle, size_t suggested_size, uv_buf_t *buf)
 void on_read(uv_stream_t *stream, ssize_t nread, const uv_buf_t *buf)
 {
     Reb_Read_Request *rebreq = cast(Reb_Read_Request*, stream->data);
-    Context(*) port_ctx = rebreq->port_ctx;
+    Context* port_ctx = rebreq->port_ctx;
 
     REBVAL *port_data = CTX_VAR(port_ctx, STD_PORT_DATA);
 
-    Binary(*) bin;
+    Binary* bin;
     if (Is_Nulled(port_data)) {
         //
         // An error like "connection reset by peer" can occur before a call to
@@ -663,13 +663,13 @@ void on_write_finished(uv_write_t *req, int status)
 static Bounce Transport_Actor(
     Level(*) level_,
     REBVAL *port,
-    Symbol(const*) verb,
+    const Symbol* verb,
     enum Transport_Type transport
 ){
     if (transport == TRANSPORT_UDP)  // disabled for now
         fail ("https://forum.rebol.info/t/fringe-udp-support-archiving/1730");
 
-    Context(*) ctx = VAL_CONTEXT(port);
+    Context* ctx = VAL_CONTEXT(port);
     REBVAL *spec = CTX_VAR(ctx, STD_PORT_SPEC);
 
     // If a transfer is in progress, the port_data is a BINARY!.  Its index
@@ -962,7 +962,7 @@ static Bounce Transport_Actor(
             "copy ensure object! (@", port, ").scheme.info"
         );  // shallow copy
 
-        Context(*) info = VAL_CONTEXT(result);
+        Context* info = VAL_CONTEXT(result);
 
         Init_Tuple_Bytes(
             CTX_VAR(info, STD_NET_INFO_LOCAL_IP),
@@ -1018,7 +1018,7 @@ static Bounce Transport_Actor(
 //
 //  TCP_Actor: C
 //
-static Bounce TCP_Actor(Level(*) level_, REBVAL *port, Symbol(const*) verb)
+static Bounce TCP_Actor(Level(*) level_, REBVAL *port, const Symbol* verb)
 {
     return Transport_Actor(level_, port, verb, TRANSPORT_TCP);
 }
@@ -1027,7 +1027,7 @@ static Bounce TCP_Actor(Level(*) level_, REBVAL *port, Symbol(const*) verb)
 //
 //  UDP_Actor: C
 //
-static Bounce UDP_Actor(Level(*) level_, REBVAL *port, Symbol(const*) verb)
+static Bounce UDP_Actor(Level(*) level_, REBVAL *port, const Symbol* verb)
 {
     return Transport_Actor(level_, port, verb, TRANSPORT_UDP);
 }
@@ -1216,7 +1216,7 @@ DECLARE_NATIVE(wait_p)  // See wrapping function WAIT in usermode code
             break;
 
           case REB_PORT: {
-            Array(*) single = Make_Array(1);
+            Array* single = Make_Array(1);
             Append_Value(single, SPECIFIC(val));
             Init_Block(ARG(value), single);
             ports = ARG(value);

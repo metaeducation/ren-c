@@ -94,7 +94,7 @@
 //
 void Push_Redo_Action_Level(Atom(*) out, Level(*) L1, const REBVAL *run)
 {
-    Array(*) normals = Make_Array(Level_Num_Args(L1));  // max, e.g. no refines
+    Array* normals = Make_Array(Level_Num_Args(L1));  // max, e.g. no refines
 
     StackIndex base = TOP_INDEX;  // we push refinements as we find them
 
@@ -170,14 +170,14 @@ Bounce Hijacker_Dispatcher(Level(*) level_)
     // The PHASE here is the *identity that the hijacker has overtaken*
     // But the actual hijacker is in the archetype.
 
-    Action(*) hijacker = VAL_ACTION(Phase_Archetype(PHASE));
+    Action* hijacker = VAL_ACTION(Phase_Archetype(PHASE));
 
     // If the hijacked function was called directly -or- by an adaptation or
     // specalization etc. which was made *after* the hijack, the frame should
     // be compatible.  Check by seeing if the keylists are derived.
     //
-    KeyList(*) exemplar_keylist = CTX_KEYLIST(ACT_EXEMPLAR(hijacker));
-    KeyList(*) keylist = CTX_KEYLIST(CTX(LEVEL->varlist));
+    KeyList* exemplar_keylist = CTX_KEYLIST(ACT_EXEMPLAR(hijacker));
+    KeyList* keylist = CTX_KEYLIST(CTX(LEVEL->varlist));
     while (true) {
         if (keylist == exemplar_keylist)
             return ACT_DISPATCHER(hijacker)(LEVEL);
@@ -241,14 +241,14 @@ DECLARE_NATIVE(hijack)
 {
     INCLUDE_PARAMS_OF_HIJACK;
 
-    Action(*) victim = VAL_ACTION(ARG(victim));
-    Action(*) hijacker = VAL_ACTION(ARG(hijacker));
+    Action* victim = VAL_ACTION(ARG(victim));
+    Action* hijacker = VAL_ACTION(ARG(hijacker));
 
     if (victim == hijacker)
         return nullptr;  // permitting no-op hijack has some practical uses
 
-    Phase(*) victim_identity = ACT_IDENTITY(victim);
-    Phase(*) hijacker_identity = ACT_IDENTITY(hijacker);
+    Phase* victim_identity = ACT_IDENTITY(victim);
+    Phase* hijacker_identity = ACT_IDENTITY(hijacker);
 
     if (Action_Is_Base_Of(victim, hijacker)) {  // no shim needed, see [1]
         mutable_LINK_DISPATCHER(victim_identity)

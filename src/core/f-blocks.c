@@ -32,8 +32,8 @@
 // Additional capacity beyond what is required can be added
 // by giving an `extra` count of how many value cells one needs.
 //
-Array(*) Copy_Array_At_Extra_Shallow(
-    Array(const*) original,
+Array* Copy_Array_At_Extra_Shallow(
+    const Array* original,
     REBLEN index,
     REBSPC *specifier,
     REBLEN extra,
@@ -46,7 +46,7 @@ Array(*) Copy_Array_At_Extra_Shallow(
 
     len -= index;
 
-    Array(*) copy = Make_Array_For_Copy(len + extra, flags, original);
+    Array* copy = Make_Array_For_Copy(len + extra, flags, original);
     Set_Series_Len(copy, len);
 
     Cell(const*) src = Array_At(original, index);
@@ -65,8 +65,8 @@ Array(*) Copy_Array_At_Extra_Shallow(
 // Shallow copy an array from the given index for given maximum
 // length (clipping if it exceeds the array length)
 //
-Array(*) Copy_Array_At_Max_Shallow(
-    Array(const*) original,
+Array* Copy_Array_At_Max_Shallow(
+    const Array* original,
     REBLEN index,
     REBSPC *specifier,
     REBLEN max
@@ -79,7 +79,7 @@ Array(*) Copy_Array_At_Max_Shallow(
     if (index + max > Array_Len(original))
         max = Array_Len(original) - index;
 
-    Array(*) copy = Make_Array_For_Copy(max, flags, original);
+    Array* copy = Make_Array_For_Copy(max, flags, original);
     Set_Series_Len(copy, max);
 
     REBLEN count = 0;
@@ -98,14 +98,14 @@ Array(*) Copy_Array_At_Max_Shallow(
 // Shallow copy the first 'len' values of `head` into a new series created to
 // hold that many entries, with an optional bit of extra space at the end.
 //
-Array(*) Copy_Values_Len_Extra_Shallow_Core(
+Array* Copy_Values_Len_Extra_Shallow_Core(
     Cell(const*) head,
     REBSPC *specifier,
     REBLEN len,
     REBLEN extra,
     Flags flags
 ){
-    Array(*) a = Make_Array_Core(len + extra, flags);
+    Array* a = Make_Array_Core(len + extra, flags);
     Set_Series_Len(a, len);
 
     REBLEN count = 0;
@@ -165,7 +165,7 @@ void Clonify(
         //
         // Objects and series get shallow copied at minimum
         //
-        Series(*) series;
+        Series* series;
         bool would_need_deep;
 
         if (ANY_CONTEXT_KIND(heart)) {
@@ -239,8 +239,8 @@ void Clonify(
 // the resulting array will already be deeply under GC management, and hence
 // cannot be freed with Free_Unmanaged_Series().
 //
-Array(*) Copy_Array_Core_Managed(
-    Array(const*) original,
+Array* Copy_Array_Core_Managed(
+    const Array* original,
     REBLEN index,
     REBSPC *specifier,
     REBLEN tail,
@@ -260,7 +260,7 @@ Array(*) Copy_Array_Core_Managed(
 
     // Currently we start by making a shallow copy and then adjust it
 
-    Array(*) copy = Make_Array_For_Copy(
+    Array* copy = Make_Array_For_Copy(
         len + extra,
         flags | NODE_FLAG_MANAGED,
         original
@@ -299,14 +299,14 @@ Array(*) Copy_Array_Core_Managed(
 // and change all the relative binding information from one function's
 // paramlist to another.
 //
-Array(*) Copy_Rerelativized_Array_Deep_Managed(
-    Array(const*) original,
-    Action(*) before, // references to `before` will be changed to `after`
-    Action(*) after
+Array* Copy_Rerelativized_Array_Deep_Managed(
+    const Array* original,
+    Action* before, // references to `before` will be changed to `after`
+    Action* after
 ){
     const Flags flags = NODE_FLAG_MANAGED;
 
-    Array(*) copy = Make_Array_For_Copy(Array_Len(original), flags, original);
+    Array* copy = Make_Array_For_Copy(Array_Len(original), flags, original);
     Cell(const*) src_tail = Array_Tail(original);
     Cell(const*) src = Array_Head(original);
     Cell(*) dest = Array_Head(copy);
@@ -358,7 +358,7 @@ Array(*) Copy_Rerelativized_Array_Deep_Managed(
 //
 // Note: Updates the termination and tail.
 //
-Cell(*) Alloc_Tail_Array(Array(*) a)
+Cell(*) Alloc_Tail_Array(Array* a)
 {
     Expand_Series_Tail(a, 1);
     Set_Series_Len(a, Array_Len(a));
@@ -378,7 +378,7 @@ Cell(*) Alloc_Tail_Array(Array(*) a)
 //
 //  Uncolor_Array: C
 //
-void Uncolor_Array(Array(const*) a)
+void Uncolor_Array(const Array* a)
 {
     if (Is_Series_White(a))
         return; // avoid loop

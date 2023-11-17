@@ -125,7 +125,7 @@
 
 #define P_COLLECTION \
     (Is_Nulled(ARG(collection)) \
-        ? cast(Array(*), nullptr) \
+        ? cast(Array*, nullptr) \
         : VAL_ARRAY_KNOWN_MUTABLE(ARG(collection)) \
     )
 
@@ -254,7 +254,7 @@ static bool Subparse_Throws(
     Cell(const*) input,
     REBSPC *input_specifier,
     Level(*) const L,
-    Option(Array(*)) collection,
+    Option(Array*) collection,
     Flags flags
 ){
     assert(ANY_SERIES_KIND(CELL_HEART(input)));
@@ -360,19 +360,19 @@ static bool Subparse_Throws(
 // question, but now the `where` at the time of failure will indicate the
 // location in the parse dialect that's the problem.
 
-inline static Context(*) Error_Parse_Rule(void) {
+inline static Context* Error_Parse_Rule(void) {
     return Error_Parse_Rule_Raw();
 }
 
-inline static Context(*) Error_Parse_End(void) {
+inline static Context* Error_Parse_End(void) {
     return Error_Parse_End_Raw();
 }
 
-inline static Context(*) Error_Parse_Command(Level(*) level_) {
+inline static Context* Error_Parse_Command(Level(*) level_) {
     return Error_Parse_Command_Raw(P_RULE);
 }
 
-inline static Context(*) Error_Parse_Variable(Level(*) level_) {
+inline static Context* Error_Parse_Variable(Level(*) level_) {
     return Error_Parse_Variable_Raw(P_RULE);
 }
 
@@ -613,7 +613,7 @@ static REBIXO Parse_One_Rule(
     }
 
     if (Is_Series_Array(P_INPUT)) {
-        Array(const*) arr = ARR(P_INPUT);
+        const Array* arr = ARR(P_INPUT);
         Cell(const*) item = Array_At(arr, pos);
 
         switch (VAL_TYPE(rule)) {
@@ -1704,7 +1704,7 @@ DECLARE_NATIVE(subparse)
 
                     assert(pos_after >= pos_before);  // 0 or more matches
 
-                    Array(*) target;
+                    Array* target;
                     if (pos_after == pos_before and spread) {
                         target = nullptr;
                     }
@@ -1972,7 +1972,7 @@ DECLARE_NATIVE(subparse)
         ){
             FETCH_NEXT_RULE(L);
 
-            Array(*) collection = Make_Array_Core(
+            Array* collection = Make_Array_Core(
                 10,  // !!! how big?
                 NODE_FLAG_MANAGED
             );
@@ -2581,7 +2581,7 @@ DECLARE_NATIVE(subparse)
                     // last minute that allows protects or unprotects
                     // to happen in rule processing if GROUP!s execute.
                     //
-                    Array(*) a = VAL_ARRAY_ENSURE_MUTABLE(ARG(position));
+                    Array* a = VAL_ARRAY_ENSURE_MUTABLE(ARG(position));
                     P_POS = Modify_Array(
                         a,
                         begin,
@@ -2735,7 +2735,7 @@ DECLARE_NATIVE(parse3)
         and IS_WORD(rules_at) and VAL_WORD_ID(rules_at) == SYM_COLLECT
         and IS_BLOCK(rules_at + 1)
     ){
-        Context(*) frame_ctx = Context_For_Level_May_Manage(level_);
+        Context* frame_ctx = Context_For_Level_May_Manage(level_);
         DECLARE_LOCAL (specific);
         Derelativize(specific, rules_at + 1, P_RULE_SPECIFIER);
         return rebValue(

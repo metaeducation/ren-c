@@ -84,8 +84,8 @@ enum {
 //
 Bounce Combinator_Dispatcher(Level(*) L)
 {
-    Phase(*) phase = Level_Phase(L);
-    Details(*) details = Phase_Details(phase);
+    Phase* phase = Level_Phase(L);
+    Details* details = Phase_Details(phase);
     Cell(*) body = Array_At(details, IDX_DETAILS_1);  // code to run
 
     Bounce b;
@@ -177,7 +177,7 @@ Bounce Combinator_Dispatcher(Level(*) L)
 // and the rebValue("...") function won't work, so it had to be hacked up as
 // a handcoded routine.  Review.
 //
-Array(*) Expanded_Combinator_Spec(const REBVAL *original)
+Array* Expanded_Combinator_Spec(const REBVAL *original)
 {
     StackIndex base = TOP_INDEX;
 
@@ -228,7 +228,7 @@ Array(*) Expanded_Combinator_Spec(const REBVAL *original)
     // Lib_Context initially.  Hack around the issue by repeating that binding
     // on the product.
     //
-    Array(*) expanded = Pop_Stack_Values(base);
+    Array* expanded = Pop_Stack_Values(base);
     Bind_Values_Deep(
         Array_Head(expanded),
         Array_Tail(expanded),
@@ -263,15 +263,15 @@ DECLARE_NATIVE(combinator)
     DECLARE_STABLE (expanded_spec);
     Init_Block(expanded_spec, Expanded_Combinator_Spec(spec));
 
-    Context(*) meta;
+    Context* meta;
     Flags flags = MKF_KEYWORDS | MKF_RETURN;
-    Array(*) paramlist = Make_Paramlist_Managed_May_Fail(
+    Array* paramlist = Make_Paramlist_Managed_May_Fail(
         &meta,
         expanded_spec,
         &flags
     );
 
-    Phase(*) combinator = Make_Action(
+    Phase* combinator = Make_Action(
         paramlist,
         nullptr,  // no partials
         &Combinator_Dispatcher,
@@ -283,7 +283,7 @@ DECLARE_NATIVE(combinator)
     // we might as well mutably bind it--there's no incentive to virtual
     // bind things that are copied.
     //
-    Array(*) relativized = Copy_And_Bind_Relative_Deep_Managed(
+    Array* relativized = Copy_And_Bind_Relative_Deep_Managed(
         body,
         combinator,
         VAR_VISIBILITY_ALL
@@ -327,7 +327,7 @@ void Push_Parser_Sublevel(
     assert(ANY_SERIES(input));
     assert(IS_FRAME(parser));
 
-    Context(*) ctx = Make_Context_For_Action(parser, TOP_INDEX, nullptr);
+    Context* ctx = Make_Context_For_Action(parser, TOP_INDEX, nullptr);
 
     const REBKEY* remainder_key = CTX_KEY(ctx, IDX_COMBINATOR_PARAM_REMAINDER);
     const REBKEY* input_key = CTX_KEY(ctx, IDX_COMBINATOR_PARAM_INPUT);
@@ -422,7 +422,7 @@ DECLARE_NATIVE(text_x_combinator)
 {
     INCLUDE_PARAMS_OF_TEXT_X_COMBINATOR;
 
-    Context(*) state = VAL_CONTEXT(ARG(state));
+    Context* state = VAL_CONTEXT(ARG(state));
     bool cased = Is_Truthy(CTX_VAR(state, IDX_UPARSE_PARAM_CASE));
 
     Value(*) v = ARG(value);
@@ -500,7 +500,7 @@ DECLARE_NATIVE(some_combinator)
     Value(*) input = ARG(input);
 
     Value(*) state = ARG(state);
-    Array(*) loops = VAL_ARRAY_ENSURE_MUTABLE(
+    Array* loops = VAL_ARRAY_ENSURE_MUTABLE(
         CTX_VAR(VAL_CONTEXT(state), IDX_UPARSE_PARAM_LOOPS)
     );
 
@@ -624,7 +624,7 @@ DECLARE_NATIVE(further_combinator)
 
 
 struct Combinator_Param_State {
-    Context(*) ctx;
+    Context* ctx;
     Level(*) level_;
     Value(*) rule_end;
 };
@@ -806,9 +806,9 @@ DECLARE_NATIVE(combinatorize)
 {
     INCLUDE_PARAMS_OF_COMBINATORIZE;
 
-    Action(*) act = VAL_ACTION(ARG(c));
-    Option(Symbol(const*)) label = VAL_FRAME_LABEL(ARG(c));
-    Context(*) binding = VAL_FRAME_BINDING(ARG(c));
+    Action* act = VAL_ACTION(ARG(c));
+    Option(const Symbol*) label = VAL_FRAME_LABEL(ARG(c));
+    Context* binding = VAL_FRAME_BINDING(ARG(c));
 
     Value(*) rule_start = ARG(rule_start);
     Copy_Cell(rule_start, ARG(rules));
@@ -843,7 +843,7 @@ DECLARE_NATIVE(combinatorize)
     //
     Copy_Cell(s.rule_end, ARG(rules));
 
-    Phase(*) parser = Make_Action_From_Exemplar(s.ctx, label);
+    Phase* parser = Make_Action_From_Exemplar(s.ctx, label);
     Drop_GC_Guard(s.ctx);
 
     Activatify(Init_Frame_Details(

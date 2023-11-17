@@ -106,7 +106,7 @@ Bounce MAKE_Issue(
       case REB_INTEGER:
       case REB_DECIMAL: {
         REBINT n = Int32(arg);
-        Context(*) error = Maybe_Init_Char(OUT, n);
+        Context* error = Maybe_Init_Char(OUT, n);
         if (error)
             return RAISE(error);
         return OUT; }
@@ -132,7 +132,7 @@ Bounce MAKE_Issue(
             if (size != 0)
                 return MAKE_String(level_, kind, nullptr, arg);
         }
-        Context(*) error = Maybe_Init_Char(OUT, c);
+        Context* error = Maybe_Init_Char(OUT, c);
         if (error)
             return RAISE(error);
         return OUT; }
@@ -235,7 +235,7 @@ Bounce TO_Issue(Level(*) level_, enum Reb_Kind kind, const REBVAL *arg)
 }
 
 
-static REBINT Math_Arg_For_Char(REBVAL *arg, Symbol(const*) verb)
+static REBINT Math_Arg_For_Char(REBVAL *arg, const Symbol* verb)
 {
     switch (VAL_TYPE(arg)) {
       case REB_ISSUE:
@@ -493,7 +493,7 @@ REBTYPE(Issue)
     if (chr < 0)
         return RAISE(Error_Type_Limit_Raw(Datatype_From_Kind(REB_ISSUE)));
 
-    Context(*) error = Maybe_Init_Char(OUT, cast(Codepoint, chr));
+    Context* error = Maybe_Init_Char(OUT, cast(Codepoint, chr));
     if (error)
         return RAISE(error);
     return OUT;

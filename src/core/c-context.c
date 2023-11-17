@@ -33,16 +33,16 @@
 // Create context with capacity, allocating space for both words and values.
 // Context will report actual CTX_LEN() of 0 after this call.
 //
-Context(*) Alloc_Context_Core(enum Reb_Kind kind, REBLEN capacity, Flags flags)
+Context* Alloc_Context_Core(enum Reb_Kind kind, REBLEN capacity, Flags flags)
 {
-    KeyList(*) keylist = Make_Series(KeyListT,
+    KeyList* keylist = Make_Series(KeyList,
         capacity,  // no terminator
         SERIES_MASK_KEYLIST | NODE_FLAG_MANAGED  // always shareable
     );
     mutable_LINK(Ancestor, keylist) = keylist;  // default to keylist itself
     assert(Series_Used(keylist) == 0);
 
-    Array(*) varlist = Make_Array_Core(
+    Array* varlist = Make_Array_Core(
         capacity + 1,  // size + room for rootvar (array terminator implicit)
         SERIES_MASK_VARLIST  // includes assurance of dynamic allocation
             | flags  // e.g. NODE_FLAG_MANAGED
@@ -63,9 +63,9 @@ Context(*) Alloc_Context_Core(enum Reb_Kind kind, REBLEN capacity, Flags flags)
 //
 // Returns whether or not the expansion invalidated existing keys.
 //
-bool Expand_Context_KeyList_Core(Context(*) context, REBLEN delta)
+bool Expand_Context_KeyList_Core(Context* context, REBLEN delta)
 {
-    KeyList(*) keylist = CTX_KEYLIST(context);
+    KeyList* keylist = CTX_KEYLIST(context);
     assert(IS_KEYLIST(keylist));
 
     if (Get_Subclass_Flag(KEYLIST, keylist, SHARED)) {
@@ -78,7 +78,7 @@ bool Expand_Context_KeyList_Core(Context(*) context, REBLEN delta)
         // (If all shared copies break away in this fashion, then the last
         // copy of the dangling keylist will be GC'd.)
 
-        KeyList(*) copy = cast(KeyListT*, Copy_Series_At_Len_Extra(
+        KeyList* copy = cast(KeyList*, Copy_Series_At_Len_Extra(
             keylist,
             0,
             Series_Used(keylist),
@@ -124,7 +124,7 @@ bool Expand_Context_KeyList_Core(Context(*) context, REBLEN delta)
 //
 // Expand a context. Copy words if keylist is not unique.
 //
-void Expand_Context(Context(*) context, REBLEN delta)
+void Expand_Context(Context* context, REBLEN delta)
 {
     // varlist is unique to each object--expand without making a copy.
     //
@@ -142,8 +142,8 @@ void Expand_Context(Context(*) context, REBLEN delta)
 // to this context after the operation.
 //
 static REBVAR* Append_Context_Core(
-    Context(*) context,
-    Symbol(const*) symbol,
+    Context* context,
+    const Symbol* symbol,
     Option(Cell(*)) any_word  // binding modified (Note: quoted words allowed)
 ) {
     if (CTX_TYPE(context) == REB_MODULE) {
@@ -161,7 +161,7 @@ static REBVAR* Append_Context_Core(
         else
             id = SYM_0;
 
-        Array(*) patch;
+        Array* patch;
         if (id and id < LIB_SYMS_MAX) {
             //
             // Low symbol IDs are all in PG_Lib_Patches for fast access, and
@@ -202,7 +202,7 @@ static REBVAR* Append_Context_Core(
 
         // skip over binding-related hitches
         //
-        Series(*) updating = m_cast(Symbol(*), symbol);
+        Series* updating = m_cast(Symbol*, symbol);
         while (Get_Series_Flag(SER(node_MISC(Hitch, updating)), BLACK))
             updating = SER(node_MISC(Hitch, updating));
 
@@ -218,7 +218,7 @@ static REBVAR* Append_Context_Core(
         return cast(REBVAR*, Array_Single(patch));
     }
 
-    KeyList(*) keylist = CTX_KEYLIST(context);
+    KeyList* keylist = CTX_KEYLIST(context);
 
     // Add the key to key list
     //
@@ -250,7 +250,7 @@ static REBVAR* Append_Context_Core(
 //  Append_Context_Bind_Word: C
 //
 REBVAR* Append_Context_Bind_Word(
-    Context(*) context,
+    Context* context,
     Cell(*) any_word  // binding modified (Note: quoted words allowed)
 ){
     return Append_Context_Core(context, VAL_WORD_SYMBOL(any_word), any_word);
@@ -259,7 +259,7 @@ REBVAR* Append_Context_Bind_Word(
 //
 //  Apend_Context: C
 //
-REBVAR* Append_Context(Context(*) context, Symbol(const*) symbol)
+REBVAR* Append_Context(Context* context, const Symbol* symbol)
 {
     return Append_Context_Core(context, symbol, nullptr);
 }
@@ -290,7 +290,7 @@ void Collect_End(struct Reb_Collector *cl)
 {
     StackIndex index = TOP_INDEX;
     for (; index != cl->stack_base; --index) {
-        Symbol(const*) symbol = VAL_WORD_SYMBOL(TOP);
+        const Symbol* symbol = VAL_WORD_SYMBOL(TOP);
         Remove_Binder_Index(&cl->binder, symbol);
         DROP();
     }
@@ -306,9 +306,9 @@ void Collect_End(struct Reb_Collector *cl)
 // If requested, it will return the first duplicate found (or null).
 //
 void Collect_Context_Keys(
-    Option(Symbol(const*)*) duplicate,
+    Option(const Symbol**) duplicate,
     struct Reb_Collector *cl,
-    Context(*) context
+    Context* context
 ){
     const REBKEY *tail;
     const REBKEY *key = CTX_KEYS(&tail, context);
@@ -317,7 +317,7 @@ void Collect_Context_Keys(
         *unwrap(duplicate) = nullptr;
 
     for (; key != tail; ++key) {
-        Symbol(const*) symbol = KEY_SYMBOL(key);
+        const Symbol* symbol = KEY_SYMBOL(key);
         if (not Try_Add_Binder_Index(
             &cl->binder,
             symbol,
@@ -351,7 +351,7 @@ static void Collect_Inner_Loop(
             if (kind != REB_SET_WORD and not (cl->flags & COLLECT_ANY_WORD))
                 continue;  // kind of word we're not interested in collecting
 
-            Symbol(const*) symbol = VAL_WORD_SYMBOL(v);
+            const Symbol* symbol = VAL_WORD_SYMBOL(v);
 
             if (not Try_Add_Binder_Index(
                 &cl->binder,
@@ -402,10 +402,10 @@ static void Collect_Inner_Loop(
 // in prior) then then `prior`'s keylist may be returned.  The result is
 // always pre-managed, because it may not be legal to free prior's keylist.
 //
-KeyList(*) Collect_KeyList_Managed(
+KeyList* Collect_KeyList_Managed(
     Option(Cell(const*)) head,
     Option(Cell(const*)) tail,
-    Option(Context(*)) prior,
+    Option(Context*) prior,
     Flags flags  // see %sys-core.h for COLLECT_ANY_WORD, etc.
 ){
     struct Reb_Collector collector;
@@ -414,7 +414,7 @@ KeyList(*) Collect_KeyList_Managed(
     Collect_Start(cl, flags);
 
     if (prior) {
-        Symbol(const*) duplicate;
+        const Symbol* duplicate;
         Collect_Context_Keys(&duplicate, cl, unwrap(prior));
         assert(not duplicate);  // context should have had all unique keys
     }
@@ -430,11 +430,11 @@ KeyList(*) Collect_KeyList_Managed(
     // collect buffer than the original keylist) then make a new keylist
     // array, otherwise reuse the original
     //
-    KeyList(*) keylist;
+    KeyList* keylist;
     if (prior and CTX_LEN(unwrap(prior)) == num_collected)
         keylist = CTX_KEYLIST(unwrap(prior));
     else {
-        keylist = Make_Series(KeyListT,
+        keylist = Make_Series(KeyList,
             num_collected,  // no terminator
             SERIES_MASK_KEYLIST | NODE_FLAG_MANAGED
         );
@@ -457,7 +457,7 @@ KeyList(*) Collect_KeyList_Managed(
 //
 // Collect unique words from a block, possibly deeply...maybe just SET-WORD!s.
 //
-Array(*) Collect_Unique_Words_Managed(
+Array* Collect_Unique_Words_Managed(
     Cell(const*) head,
     Cell(const*) tail,
     Flags flags,  // See COLLECT_XXX
@@ -493,7 +493,7 @@ Array(*) Collect_Unique_Words_Managed(
         Cell(const*) ignore = VAL_ARRAY_AT(&ignore_tail, ignorables);
         for (; ignore != ignore_tail; ++ignore) {
             NoQuote(Cell(const*)) cell = VAL_UNESCAPED(ignore);
-            Symbol(const*) symbol = VAL_WORD_SYMBOL(cell);
+            const Symbol* symbol = VAL_WORD_SYMBOL(cell);
 
             // A block may have duplicate words in it (this situation could
             // arise when `function [/test /test] []` calls COLLECT-WORDS
@@ -529,7 +529,7 @@ Array(*) Collect_Unique_Words_Managed(
     // We don't use Pop_Stack_Values_Core() because we want to keep the values
     // on the stack so that Collect_End() can remove them from the binder.
     //
-    Array(*) array = Copy_Values_Len_Shallow_Core(
+    Array* array = Copy_Values_Len_Shallow_Core(
         Data_Stack_At(cl->stack_base + 1),
         SPECIFIED,
         TOP_INDEX - cl->stack_base,
@@ -541,7 +541,7 @@ Array(*) Collect_Unique_Words_Managed(
         Cell(const*) ignore = VAL_ARRAY_AT(&ignore_tail, ignorables);
         for (; ignore != ignore_tail; ++ignore) {
             NoQuote(Cell(const*)) cell = VAL_UNESCAPED(ignore);
-            Symbol(const*) symbol = VAL_WORD_SYMBOL(cell);
+            const Symbol* symbol = VAL_WORD_SYMBOL(cell);
 
           #if !defined(NDEBUG)
             REBINT i = Get_Binder_Index_Else_0(&cl->binder, symbol);
@@ -577,8 +577,8 @@ Array(*) Collect_Unique_Words_Managed(
 // which types of values need to be copied, deep copied, and rebound.
 //
 void Rebind_Context_Deep(
-    Context(*) source,
-    Context(*) dest,
+    Context* source,
+    Context* dest,
     Option(struct Reb_Binder*) binder
 ){
     Cell(const*) tail = Array_Tail(CTX_VARLIST(dest));
@@ -597,15 +597,15 @@ void Rebind_Context_Deep(
 // Optionally a parent context may be passed in, which will contribute its
 // keylist of words to the result if provided.
 //
-Context(*) Make_Context_Detect_Managed(
+Context* Make_Context_Detect_Managed(
     enum Reb_Kind kind,
     Option(Cell(const*)) head,
     Option(Cell(const*)) tail,
-    Option(Context(*)) parent
+    Option(Context*) parent
 ) {
     assert(kind != REB_MODULE);
 
-    KeyList(*) keylist = Collect_KeyList_Managed(
+    KeyList* keylist = Collect_KeyList_Managed(
         head,
         tail,
         parent,
@@ -613,7 +613,7 @@ Context(*) Make_Context_Detect_Managed(
     );
 
     REBLEN len = Series_Used(keylist);
-    Array(*) varlist = Make_Array_Core(
+    Array* varlist = Make_Array_Core(
         1 + len,  // needs room for rootvar
         SERIES_MASK_VARLIST
             | NODE_FLAG_MANAGED // Note: Rebind below requires managed context
@@ -622,7 +622,7 @@ Context(*) Make_Context_Detect_Managed(
     mutable_MISC(VarlistAdjunct, varlist) = nullptr;
     mutable_LINK(Patches, varlist) = nullptr;  // start w/no virtual binds
 
-    Context(*) context = CTX(varlist);
+    Context* context = CTX(varlist);
 
     // This isn't necessarily the clearest way to determine if the keylist is
     // shared.  Note Collect_KeyList_Managed() isn't called from anywhere
@@ -709,14 +709,14 @@ Context(*) Make_Context_Detect_Managed(
 // !!! Because this is a work in progress, set-words would be gathered if
 // they were used as values, so they are not currently permitted.
 //
-Context(*) Construct_Context_Managed(
+Context* Construct_Context_Managed(
     enum Reb_Kind kind,
     Cell(*) head,  // !!! Warning: modified binding
     Cell(const*) tail,
     REBSPC *specifier,
-    Option(Context(*)) parent
+    Option(Context*) parent
 ){
-    Context(*) context = Make_Context_Detect_Managed(
+    Context* context = Make_Context_Detect_Managed(
         kind, // type
         head, // values to scan for toplevel set-words
         tail,
@@ -762,7 +762,7 @@ Context(*) Construct_Context_Managed(
 //     2 for value
 //     3 for words and values
 //
-Array(*) Context_To_Array(Cell(const*) context, REBINT mode)
+Array* Context_To_Array(Cell(const*) context, REBINT mode)
 {
     assert(!(mode & 4));
 
@@ -819,7 +819,7 @@ Array(*) Context_To_Array(Cell(const*) context, REBINT mode)
 //
 REBLEN Find_Symbol_In_Context(
     Cell(const*) context,
-    Symbol(const*) symbol,
+    const Symbol* symbol,
     bool strict
 ){
     Byte heart = HEART_BYTE(context);
@@ -829,7 +829,7 @@ REBLEN Find_Symbol_In_Context(
         // Modules hang their variables off the symbol itself, in a linked
         // list with other modules who also have variables of that name.
         //
-        Context(*) c = VAL_CONTEXT(context);
+        Context* c = VAL_CONTEXT(context);
         return MOD_VAR(c, symbol, strict) ? INDEX_ATTACHED : 0;
     }
 
@@ -863,7 +863,7 @@ REBLEN Find_Symbol_In_Context(
 //
 Option(Value(*)) Select_Symbol_In_Context(
     Cell(const*) context,
-    Symbol(const*) symbol
+    const Symbol* symbol
 ){
     const bool strict = false;
     REBLEN n = Find_Symbol_In_Context(context, symbol, strict);
@@ -886,7 +886,7 @@ Option(Value(*)) Select_Symbol_In_Context(
 //
 REBVAL *Obj_Value(REBVAL *value, REBLEN index)
 {
-    Context(*) context = VAL_CONTEXT(value);
+    Context* context = VAL_CONTEXT(value);
 
     if (index > CTX_LEN(context)) return 0;
     return CTX_VAR(context, index);
@@ -914,9 +914,9 @@ void Shutdown_Collector(void)
 //
 //  Assert_Context_Core: C
 //
-void Assert_Context_Core(Context(*) c)
+void Assert_Context_Core(Context* c)
 {
-    Array(*) varlist = CTX_VARLIST(c);
+    Array* varlist = CTX_VARLIST(c);
 
     if (
         (varlist->leader.bits & SERIES_MASK_VARLIST) != SERIES_MASK_VARLIST
@@ -928,7 +928,7 @@ void Assert_Context_Core(Context(*) c)
     if (not ANY_CONTEXT(rootvar) or VAL_CONTEXT(rootvar) != c)
         panic (rootvar);
 
-    KeyList(*) keylist = CTX_KEYLIST(c);
+    KeyList* keylist = CTX_KEYLIST(c);
 
     REBLEN keys_len = Series_Used(keylist);
     REBLEN vars_len = Array_Len(varlist);

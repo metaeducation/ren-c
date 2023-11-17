@@ -37,7 +37,7 @@
 // CONTINUE, RETURN, LEAVE, HALT...)
 //
 // The function will auto-detect if the pointer it is given is an ERROR!'s
-// Context(*) or a UTF-8 char *.  If it's UTF-8, an error will be created from
+// Context* or a UTF-8 char *.  If it's UTF-8, an error will be created from
 // it automatically (but with no ID...the string becomes the "ID")
 //
 // If the pointer is to a function parameter of the current native (e.g. what
@@ -82,7 +82,7 @@ ATTRIBUTE_NO_RETURN void Fail_Core(const void *p)
     //
     assert(Not_Level_Flag(TOP_LEVEL, ABRUPT_FAILURE));
 
-    Context(*) error;
+    Context* error;
     if (p == nullptr) {
         error = Error_Unknown_Error_Raw();
     }
@@ -92,7 +92,7 @@ ATTRIBUTE_NO_RETURN void Fail_Core(const void *p)
         break;
 
       case DETECTED_AS_SERIES: {
-        Series(*) s = m_cast(SeriesT*, cast(const SeriesT* , p));  // don't mutate
+        Series* s = m_cast(Series*, cast(const Series* , p));  // don't mutate
         if (not IS_VARLIST(s))
             panic (s);  // only kind of series allowed are contexts of ERROR!
         error = CTX(s);
@@ -265,13 +265,13 @@ REBLEN Stack_Depth(void)
 //
 const REBVAL *Find_Error_For_Sym(SymId id)
 {
-    Symbol(const*) canon = Canon_Symbol(id);
+    const Symbol* canon = Canon_Symbol(id);
 
-    Context(*) categories = VAL_CONTEXT(Get_System(SYS_CATALOG, CAT_ERRORS));
+    Context* categories = VAL_CONTEXT(Get_System(SYS_CATALOG, CAT_ERRORS));
 
     REBLEN ncat = 1;
     for (; ncat <= CTX_LEN(categories); ++ncat) {
-        Context(*) category = VAL_CONTEXT(CTX_VAR(categories, ncat));
+        Context* category = VAL_CONTEXT(CTX_VAR(categories, ncat));
 
         REBLEN n = 1;
         for (; n != CTX_LEN(category) + 1; ++n) {
@@ -301,7 +301,7 @@ const REBVAL *Find_Error_For_Sym(SymId id)
 // file and line information can be captured in the debug build.
 //
 void Set_Location_Of_Error(
-    Context(*) error,
+    Context* error,
     Level(*) where  // must be valid and executing on the stack
 ) {
     while (Get_Level_Flag(where, BLAME_PARENT))  // e.g. Apply_Only_Throws()
@@ -368,7 +368,7 @@ void Set_Location_Of_Error(
     }
 
     if (L != BOTTOM_LEVEL) {  // found a level with file and line information
-        String(const*) file = LINK(Filename, Level_Array(L));
+        const String* file = LINK(Filename, Level_Array(L));
         LineNumber line = Level_Array(L)->misc.line;
 
         if (file)
@@ -407,9 +407,9 @@ Bounce MAKE_Error(
 
     // Frame from the error object template defined in %sysobj.r
     //
-    Context(*) root_error = VAL_CONTEXT(Get_System(SYS_STANDARD, STD_ERROR));
+    Context* root_error = VAL_CONTEXT(Get_System(SYS_STANDARD, STD_ERROR));
 
-    Context(*) e;
+    Context* e;
     ERROR_VARS *vars; // C struct mirroring fixed portion of error fields
 
     if (IS_BLOCK(arg)) {
@@ -488,7 +488,7 @@ Bounce MAKE_Error(
         // this may overlap a combination used by Rebol where we wish to
         // fill in the code.  (No fast lookup for this, must search.)
 
-        Context(*) categories = VAL_CONTEXT(Get_System(SYS_CATALOG, CAT_ERRORS));
+        Context* categories = VAL_CONTEXT(Get_System(SYS_CATALOG, CAT_ERRORS));
 
         // Find correct category for TYPE: (if any)
         Option(Value(*)) category = Select_Symbol_In_Context(
@@ -588,7 +588,7 @@ Bounce TO_Error(Level(*) level_, enum Reb_Kind kind, const REBVAL *arg)
 // %errors.r has not been loaded).  Hence the caller can assume it will
 // regain control to properly call va_end with no longjmp to skip it.
 //
-Context(*) Make_Error_Managed_Core(
+Context* Make_Error_Managed_Core(
     SymId cat_id,
     SymId id,
     va_list *vaptr
@@ -607,7 +607,7 @@ Context(*) Make_Error_Managed_Core(
         panic (id_value);
     }
 
-    Context(*) root_error = VAL_CONTEXT(Get_System(SYS_STANDARD, STD_ERROR));
+    Context* root_error = VAL_CONTEXT(Get_System(SYS_STANDARD, STD_ERROR));
 
     DECLARE_LOCAL (id_value);
     DECLARE_LOCAL (type);
@@ -651,7 +651,7 @@ Context(*) Make_Error_Managed_Core(
     // the "standard format" error as a meta object instead.
     //
     REBU64 types = 0;
-    Context(*) error = Copy_Context_Extra_Managed(
+    Context* error = Copy_Context_Extra_Managed(
         root_error,
         expected_args,  // Note: won't make new keylist if expected_args is 0
         types
@@ -668,7 +668,7 @@ Context(*) Make_Error_Managed_Core(
             if (not IS_GET_WORD(msg_item))
                 continue;
 
-            Symbol(const*) symbol = VAL_WORD_SYMBOL(msg_item);
+            const Symbol* symbol = VAL_WORD_SYMBOL(msg_item);
             REBVAL *var = Append_Context(error, symbol);
 
             const void *p = va_arg(*vaptr, const void*);
@@ -742,7 +742,7 @@ Context(*) Make_Error_Managed_Core(
 //
 //     fail (Error_Something(arg1, thing_processed_to_make_arg2));
 //
-Context(*) Error(
+Context* Error(
     int cat_id,
     int id, // can't be SymId, see note below
     ... /* REBVAL *arg1, REBVAL *arg2, ... */
@@ -754,7 +754,7 @@ Context(*) Error(
     //
     va_start(va, id);
 
-    Context(*) error = Make_Error_Managed_Core(
+    Context* error = Make_Error_Managed_Core(
         cast(SymId, cat_id),
         cast(SymId, id),
         &va
@@ -772,7 +772,7 @@ Context(*) Error(
 // "user error" since MAKE ERROR! of a STRING! would produce them in usermode
 // without any error template in %errors.r)
 //
-Context(*) Error_User(const char *utf8) {
+Context* Error_User(const char *utf8) {
     DECLARE_LOCAL (message);
     Init_Text(message, Make_String_UTF8(utf8));
     return Error(SYM_0, SYM_0, message, rebEND);
@@ -782,7 +782,7 @@ Context(*) Error_User(const char *utf8) {
 //
 //  Error_Need_Non_End: C
 //
-Context(*) Error_Need_Non_End(Cell(const*) target) {
+Context* Error_Need_Non_End(Cell(const*) target) {
     assert(
         IS_SET_WORD(target) or IS_SET_TUPLE(target) or IS_SET_GROUP(target)
         or IS_SET_PATH(target)  // only needed in legacy Redbol
@@ -794,7 +794,7 @@ Context(*) Error_Need_Non_End(Cell(const*) target) {
 //
 //  Error_Bad_Word_Get: C
 //
-Context(*) Error_Bad_Word_Get(
+Context* Error_Bad_Word_Get(
     Cell(const*) target,
     Value(const*) isotope
 ){
@@ -822,12 +822,12 @@ Context(*) Error_Bad_Word_Get(
 //
 //  Error_Bad_Func_Def: C
 //
-Context(*) Error_Bad_Func_Def(const REBVAL *spec, const REBVAL *body)
+Context* Error_Bad_Func_Def(const REBVAL *spec, const REBVAL *body)
 {
     // !!! Improve this error; it's simply a direct emulation of arity-1
     // error that existed before refactoring code out of MAKE_Function().
 
-    Array(*) a = Make_Array(2);
+    Array* a = Make_Array(2);
     Append_Value(a, spec);
     Append_Value(a, body);
 
@@ -841,7 +841,7 @@ Context(*) Error_Bad_Func_Def(const REBVAL *spec, const REBVAL *body)
 //
 //  Error_No_Arg: C
 //
-Context(*) Error_No_Arg(Option(Symbol(const*)) label, Symbol(const*) symbol)
+Context* Error_No_Arg(Option(const Symbol*) label, const Symbol* symbol)
 {
     DECLARE_LOCAL (param_word);
     Init_Word(param_word, symbol);
@@ -864,7 +864,7 @@ Context(*) Error_No_Arg(Option(Symbol(const*)) label, Symbol(const*) symbol)
 // same needs to apply to out of memory errors--they shouldn't be allocating
 // a new error object.
 //
-Context(*) Error_No_Memory(REBLEN bytes)
+Context* Error_No_Memory(REBLEN bytes)
 {
     UNUSED(bytes);  // !!! Revisit how this information could be tunneled
     return VAL_CONTEXT(Root_No_Memory_Error);
@@ -874,7 +874,7 @@ Context(*) Error_No_Memory(REBLEN bytes)
 //
 //  Error_No_Relative_Core: C
 //
-Context(*) Error_No_Relative_Core(NoQuote(Cell(const*)) any_word)
+Context* Error_No_Relative_Core(NoQuote(Cell(const*)) any_word)
 {
     DECLARE_LOCAL (unbound);
     Init_Any_Word(
@@ -890,7 +890,7 @@ Context(*) Error_No_Relative_Core(NoQuote(Cell(const*)) any_word)
 //
 //  Error_Not_Varargs: C
 //
-Context(*) Error_Not_Varargs(
+Context* Error_Not_Varargs(
     Level(*) L,
     const REBKEY *key,
     const REBPAR *param,
@@ -919,7 +919,7 @@ Context(*) Error_Not_Varargs(
 //
 //  Error_Invalid_Arg: C
 //
-Context(*) Error_Invalid_Arg(Level(*) L, const REBPAR *param)
+Context* Error_Invalid_Arg(Level(*) L, const REBPAR *param)
 {
     assert(IS_PARAMETER(param));
 
@@ -949,7 +949,7 @@ Context(*) Error_Invalid_Arg(Level(*) L, const REBPAR *param)
 // This directs the user that they can't take isotopes as an argument to a
 // function unless the ^META parameter convention is used.
 //
-Context(*) Error_Isotope_Arg(Level(*) L, const REBPAR *param)
+Context* Error_Isotope_Arg(Level(*) L, const REBPAR *param)
 {
     assert(IS_PARAMETER(param));
 
@@ -990,7 +990,7 @@ Context(*) Error_Isotope_Arg(Level(*) L, const REBPAR *param)
 // distinguished from `fail (some_context)` meaning that the context iss for
 // an actual intended error.
 //
-Context(*) Error_Bad_Value(Cell(const*) value)
+Context* Error_Bad_Value(Cell(const*) value)
 {
     if (Is_Isotope(value))
         return Error_Bad_Isotope(value);
@@ -1002,7 +1002,7 @@ Context(*) Error_Bad_Value(Cell(const*) value)
 //
 //  Error_Bad_Null: C
 //
-Context(*) Error_Bad_Null(Cell(const*) target) {
+Context* Error_Bad_Null(Cell(const*) target) {
     return Error_Bad_Null_Raw(target);
 }
 
@@ -1010,7 +1010,7 @@ Context(*) Error_Bad_Null(Cell(const*) target) {
 //
 //  Error_No_Catch_For_Throw: C
 //
-Context(*) Error_No_Catch_For_Throw(Level(*) level_)
+Context* Error_No_Catch_For_Throw(Level(*) level_)
 {
     DECLARE_LOCAL (label);
     Copy_Cell(label, VAL_THROWN_LABEL(level_));
@@ -1032,7 +1032,7 @@ Context(*) Error_No_Catch_For_Throw(Level(*) level_)
 //
 // <type> type is not allowed here.
 //
-Context(*) Error_Invalid_Type(enum Reb_Kind kind)
+Context* Error_Invalid_Type(enum Reb_Kind kind)
 {
     return Error_Invalid_Type_Raw(Datatype_From_Kind(kind));
 }
@@ -1043,7 +1043,7 @@ Context(*) Error_Invalid_Type(enum Reb_Kind kind)
 //
 // value out of range: <value>
 //
-Context(*) Error_Out_Of_Range(Cell(const*) arg)
+Context* Error_Out_Of_Range(Cell(const*) arg)
 {
     return Error_Out_Of_Range_Raw(arg);
 }
@@ -1052,7 +1052,7 @@ Context(*) Error_Out_Of_Range(Cell(const*) arg)
 //
 //  Error_Protected_Key: C
 //
-Context(*) Error_Protected_Key(Symbol(const*) sym)
+Context* Error_Protected_Key(const Symbol* sym)
 {
     DECLARE_LOCAL (key_name);
     Init_Word(key_name, sym);
@@ -1064,7 +1064,7 @@ Context(*) Error_Protected_Key(Symbol(const*) sym)
 //
 //  Error_Math_Args: C
 //
-Context(*) Error_Math_Args(enum Reb_Kind type, Symbol(const*) verb)
+Context* Error_Math_Args(enum Reb_Kind type, const Symbol* verb)
 {
     DECLARE_LOCAL (verb_cell);
     Init_Word(verb_cell, verb);
@@ -1074,7 +1074,7 @@ Context(*) Error_Math_Args(enum Reb_Kind type, Symbol(const*) verb)
 //
 //  Error_Cannot_Use: C
 //
-Context(*) Error_Cannot_Use(Symbol(const*) verb, Cell(const*) first_arg)
+Context* Error_Cannot_Use(const Symbol* verb, Cell(const*) first_arg)
 {
     DECLARE_LOCAL (verb_cell);
     Init_Word(verb_cell, verb);
@@ -1089,7 +1089,7 @@ Context(*) Error_Cannot_Use(Symbol(const*) verb, Cell(const*) first_arg)
 //
 //  Error_Unexpected_Type: C
 //
-Context(*) Error_Unexpected_Type(enum Reb_Kind expected, enum Reb_Kind actual)
+Context* Error_Unexpected_Type(enum Reb_Kind expected, enum Reb_Kind actual)
 {
     assert(expected < REB_MAX);
     assert(actual < REB_MAX);
@@ -1111,8 +1111,8 @@ Context(*) Error_Unexpected_Type(enum Reb_Kind expected, enum Reb_Kind actual)
 // potentially lead to some big molding, and the error machinery isn't
 // really equipped to handle it.
 //
-Context(*) Error_Arg_Type(
-    Option(Symbol(const*)) name,
+Context* Error_Arg_Type(
+    Option(const Symbol*) name,
     const REBKEY *key,
     const REBPAR *param,
     const REBVAL *arg
@@ -1130,7 +1130,7 @@ Context(*) Error_Arg_Type(
         Init_Nulled(label);
 
     DECLARE_LOCAL (spec);
-    Option(Array(const*)) param_array = VAL_PARAMETER_ARRAY(param);
+    Option(const Array*) param_array = VAL_PARAMETER_ARRAY(param);
     if (param_array)
         Init_Block(spec, unwrap(param_array));
     else
@@ -1153,7 +1153,7 @@ Context(*) Error_Arg_Type(
 // interface.  A different message is helpful, so this does that by coercing
 // the ordinary error into one making it clear it's an internal phase.
 //
-Context(*) Error_Phase_Arg_Type(
+Context* Error_Phase_Arg_Type(
     Level(*) L,
     const REBKEY *key,
     const REBPAR *param,
@@ -1165,7 +1165,7 @@ Context(*) Error_Phase_Arg_Type(
     if (VAL_PARAM_CLASS(param) == PARAM_CLASS_META and Is_Meta_Of_Raised(arg))
         return VAL_CONTEXT(arg);
 
-    Context(*) error = Error_Arg_Type(L->label, key, param, arg);
+    Context* error = Error_Arg_Type(L->label, key, param, arg);
     ERROR_VARS* vars = ERR_VARS(error);
     assert(IS_WORD(&vars->id));
     assert(VAL_WORD_ID(&vars->id) == SYM_EXPECT_ARG);
@@ -1177,7 +1177,7 @@ Context(*) Error_Phase_Arg_Type(
 //
 //  Error_No_Logic_Typecheck: C
 //
-Context(*) Error_No_Logic_Typecheck(Option(Symbol(const*)) label)
+Context* Error_No_Logic_Typecheck(Option(const Symbol*) label)
 {
     DECLARE_LOCAL (name);
     if (label)
@@ -1192,7 +1192,7 @@ Context(*) Error_No_Logic_Typecheck(Option(Symbol(const*)) label)
 //
 //  Error_No_Arg_Typecheck: C
 //
-Context(*) Error_No_Arg_Typecheck(Option(Symbol(const*)) label)
+Context* Error_No_Arg_Typecheck(Option(const Symbol*) label)
 {
     DECLARE_LOCAL (name);
     if (label)
@@ -1210,7 +1210,7 @@ Context(*) Error_No_Arg_Typecheck(Option(Symbol(const*)) label)
 // is concerned.  (Some higher level mechanisms like APPLY will editorialize
 // and translate true => # and false => NULL, but the core mechanics don't.)
 //
-Context(*) Error_Bad_Argless_Refine(const REBKEY *key)
+Context* Error_Bad_Argless_Refine(const REBKEY *key)
 {
     DECLARE_LOCAL (word);
     Refinify(Init_Word(word, KEY_SYMBOL(key)));
@@ -1221,7 +1221,7 @@ Context(*) Error_Bad_Argless_Refine(const REBKEY *key)
 //
 //  Error_Bad_Return_Type: C
 //
-Context(*) Error_Bad_Return_Type(Level(*) L, Atom(*) atom) {
+Context* Error_Bad_Return_Type(Level(*) L, Atom(*) atom) {
     DECLARE_STABLE (label);
     Get_Level_Label_Or_Nulled(label, L);
 
@@ -1239,7 +1239,7 @@ Context(*) Error_Bad_Return_Type(Level(*) L, Atom(*) atom) {
 //
 //  Error_Bad_Make: C
 //
-Context(*) Error_Bad_Make(enum Reb_Kind type, Cell(const*) spec)
+Context* Error_Bad_Make(enum Reb_Kind type, Cell(const*) spec)
 {
     return Error_Bad_Make_Arg_Raw(Datatype_From_Kind(type), spec);
 }
@@ -1248,7 +1248,7 @@ Context(*) Error_Bad_Make(enum Reb_Kind type, Cell(const*) spec)
 //
 //  Error_Bad_Make_Parent: C
 //
-Context(*) Error_Bad_Make_Parent(enum Reb_Kind type, Cell(const*) parent)
+Context* Error_Bad_Make_Parent(enum Reb_Kind type, Cell(const*) parent)
 {
     assert(parent != nullptr);
     return Error_Bad_Make_Parent_Raw(Datatype_From_Kind(type), parent);
@@ -1258,7 +1258,7 @@ Context(*) Error_Bad_Make_Parent(enum Reb_Kind type, Cell(const*) parent)
 //
 //  Error_Cannot_Reflect: C
 //
-Context(*) Error_Cannot_Reflect(enum Reb_Kind type, const REBVAL *arg)
+Context* Error_Cannot_Reflect(enum Reb_Kind type, const REBVAL *arg)
 {
     return Error_Cannot_Use_Raw(arg, Datatype_From_Kind(type));
 }
@@ -1267,11 +1267,11 @@ Context(*) Error_Cannot_Reflect(enum Reb_Kind type, const REBVAL *arg)
 //
 //  Error_On_Port: C
 //
-Context(*) Error_On_Port(SymId id, REBVAL *port, REBINT err_code)
+Context* Error_On_Port(SymId id, REBVAL *port, REBINT err_code)
 {
     FAIL_IF_BAD_PORT(port);
 
-    Context(*) ctx = VAL_CONTEXT(port);
+    Context* ctx = VAL_CONTEXT(port);
     REBVAL *spec = CTX_VAR(ctx, STD_PORT_SPEC);
 
     REBVAL *val = CTX_VAR(VAL_CONTEXT(spec), STD_PORT_SPEC_HEAD_REF);
@@ -1288,7 +1288,7 @@ Context(*) Error_On_Port(SymId id, REBVAL *port, REBINT err_code)
 //
 //  Error_Bad_Isotope: C
 //
-Context(*) Error_Bad_Isotope(Cell(const*) isotope) {
+Context* Error_Bad_Isotope(Cell(const*) isotope) {
     assert(Is_Isotope(isotope));
 
     DECLARE_STABLE (reified);
@@ -1302,7 +1302,7 @@ Context(*) Error_Bad_Isotope(Cell(const*) isotope) {
 //
 //  Error_Bad_Void: C
 //
-Context(*) Error_Bad_Void(void) {
+Context* Error_Bad_Void(void) {
     DECLARE_LOCAL (void_word);
     Init_Meta_Of_Void(void_word);
 
@@ -1315,7 +1315,7 @@ Context(*) Error_Bad_Void(void) {
 //
 // Create error objects and error type objects
 //
-Context(*) Startup_Errors(const REBVAL *boot_errors)
+Context* Startup_Errors(const REBVAL *boot_errors)
 {
   #if DEBUG_HAS_PROBE
     const char *env_probe_failures = getenv("R3_PROBE_FAILURES");
@@ -1336,7 +1336,7 @@ Context(*) Startup_Errors(const REBVAL *boot_errors)
         = VAL_ARRAY_Known_Mutable_AT(&errors_tail, boot_errors);
 
     assert(VAL_INDEX(boot_errors) == 0);
-    Context(*) catalog = Construct_Context_Managed(
+    Context* catalog = Construct_Context_Managed(
         REB_OBJECT,
         errors_head,  // modifies bindings
         errors_tail,
@@ -1351,7 +1351,7 @@ Context(*) Startup_Errors(const REBVAL *boot_errors)
     for (; category != category_tail; ++category) {
         Cell(const*) tail = VAL_ARRAY_TAIL(category);
         Cell(*) head = Array_Head(VAL_ARRAY_KNOWN_MUTABLE(category));
-        Context(*) error = Construct_Context_Managed(
+        Context* error = Construct_Context_Managed(
             REB_OBJECT,
             head,  // modifies bindings
             tail,
@@ -1411,7 +1411,7 @@ void Shutdown_Stackoverflow(void)
 //
 static void Mold_Value_Limit(REB_MOLD *mo, Cell(*) v, REBLEN limit)
 {
-    String(*) str = mo->series;
+    String* str = mo->series;
 
     REBLEN start_len = String_Len(str);
     Size start_size = String_Size(str);
@@ -1448,7 +1448,7 @@ void MF_Error(REB_MOLD *mo, NoQuote(Cell(const*)) v, bool form)
         return;
     }
 
-    Context(*) error = VAL_CONTEXT(v);
+    Context* error = VAL_CONTEXT(v);
     ERROR_VARS *vars = ERR_VARS(error);
 
     // Form: ** <type> Error:

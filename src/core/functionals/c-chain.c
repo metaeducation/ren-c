@@ -153,7 +153,7 @@ Bounce Chainer_Dispatcher(Level(*) const L)
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
-    Details(*) details = Phase_Details(PHASE);
+    Details* details = Phase_Details(PHASE);
     assert(Array_Len(details) == IDX_CHAINER_MAX);
 
     Value(*) pipeline_at = Init_Block(
@@ -266,7 +266,7 @@ DECLARE_NATIVE(chain_p)  // see extended definition CHAIN in %base-defs.r
     // general, possibly that all actions put the return slot in a separate
     // sliver that includes the partials?
     //
-    Phase(*) chain = Make_Action(
+    Phase* chain = Make_Action(
         ACT_PARAMLIST(VAL_ACTION(first)),  // same interface as first action
         ACT_PARTIALS(VAL_ACTION(first)),
         &Chainer_Dispatcher,

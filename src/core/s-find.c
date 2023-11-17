@@ -441,7 +441,7 @@ REBINT Find_Bitset_In_Binstr(
     NoQuote(Cell(const*)) binstr,
     REBLEN end_unsigned,
     REBINT skip,
-    Binary(const*) bset,
+    const Binary* bset,
     Flags flags
 ){
   #if !defined(NDEBUG)
@@ -552,7 +552,7 @@ REBLEN Find_Value_In_Binstr(
         // bit tricky as it is.  Let it settle down before trying that--and
         // for now just form the tag into a temporary alternate series.
 
-        StringT* formed = nullptr;
+        String* formed = nullptr;
         if (
             CELL_HEART(pattern) != REB_ISSUE
             and CELL_HEART(pattern) != REB_TEXT

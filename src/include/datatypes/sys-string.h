@@ -51,10 +51,10 @@
 
 // Some places permit an optional label (such as the names of function
 // invocations, which may not have an associated name).  To make the callsite
-// intent clearer for passing in a null String(*), use ANONYMOUS instead.
+// intent clearer for passing in a null String*, use ANONYMOUS instead.
 //
 #define ANONYMOUS \
-    cast(Symbol(const*), nullptr)
+    cast(const Symbol*, nullptr)
 
 
 // For a writable REBSTR, a list of entities that cache the mapping from
@@ -66,8 +66,8 @@
 // should be reigned in proportionally to the length of the series.  As
 // a first try of this strategy, singular arrays are being used.
 //
-#define LINK_Bookmarks_TYPE     BookmarkListT*  // alias for SeriesT for now
-#define LINK_Bookmarks_CAST     (BookmarkListT*)SER
+#define LINK_Bookmarks_TYPE     BookmarkList*  // alias for Series for now
+#define LINK_Bookmarks_CAST     (BookmarkList*)SER
 #define HAS_LINK_Bookmarks      FLAVOR_STRING
 
 
@@ -200,32 +200,32 @@ inline static Utf8(*) Write_Codepoint(Utf8(*) cp, Codepoint c) {
 
 #define Is_Definitely_Ascii(s) false
 
-inline static bool Is_String_Definitely_ASCII(String(const*) str) {
+inline static bool Is_String_Definitely_ASCII(const String* str) {
     UNUSED(str);
     return false;
 }
 
 #define String_UTF8(s) \
-    Series_Head(const char, ensure(String(const*), s))
+    Series_Head(const char, ensure(const String*, s))
 
 #define String_Size(s) \
-    Series_Used(ensure(String(const*), s))  // UTF-8 byte count, not codepoints
+    Series_Used(ensure(const String*, s))  // UTF-8 byte count, not codepoints
 
-inline static Utf8(*) String_Head(const_if_c StringT* s)
+inline static Utf8(*) String_Head(const_if_c String* s)
   { return cast(Utf8(*), Series_Head(Byte, s)); }
 
-inline static Utf8(*) String_Tail(const_if_c StringT* s)
+inline static Utf8(*) String_Tail(const_if_c String* s)
   { return cast(Utf8(*), Series_Tail(Byte, s)); }
 
 #if CPLUSPLUS_11
-    inline static Utf8(const*) String_Head(const StringT* s)
-      { return String_Head(m_cast(StringT*, s)); }
+    inline static Utf8(const*) String_Head(const String* s)
+      { return String_Head(m_cast(String*, s)); }
 
-    inline static Utf8(const*) String_Tail(const StringT* s)
-      { return String_Tail(m_cast(StringT*, s)); }
+    inline static Utf8(const*) String_Tail(const String* s)
+      { return String_Tail(m_cast(String*, s)); }
 #endif
 
-inline static Length String_Len(String(const*) s) {
+inline static Length String_Len(const String* s) {
     if (Is_Definitely_Ascii(s))
         return String_Size(s);
 
@@ -250,7 +250,7 @@ inline static Length String_Len(String(const*) s) {
     return len;
 }
 
-inline static REBLEN String_Index_At(String(const*) s, Size byteoffset) {
+inline static REBLEN String_Index_At(const String* s, Size byteoffset) {
     if (Is_Definitely_Ascii(s))
         return byteoffset;
 
@@ -281,7 +281,7 @@ inline static REBLEN String_Index_At(String(const*) s, Size byteoffset) {
     return index;
 }
 
-inline static void Set_String_Len_Size(String(*) s, REBLEN len, Size used) {
+inline static void Set_String_Len_Size(String* s, REBLEN len, Size used) {
     assert(Is_NonSymbol_String(s));
     assert(len <= used);
     assert(used == Series_Used(s));
@@ -290,7 +290,7 @@ inline static void Set_String_Len_Size(String(*) s, REBLEN len, Size used) {
     UNUSED(used);
 }
 
-inline static void Term_String_Len_Size(String(*) s, REBLEN len, Size used) {
+inline static void Term_String_Len_Size(String* s, REBLEN len, Size used) {
     assert(Is_NonSymbol_String(s));
     assert(len <= used);
     Set_Series_Used(s, used);
@@ -317,8 +317,8 @@ inline static void Term_String_Len_Size(String(*) s, REBLEN len, Size used) {
 #define BMK_OFFSET(b) \
     Series_Head(BookmarkT, (b))->offset
 
-inline static BookmarkList(*) Alloc_BookmarkList(void) {
-    BookmarkList(*) books = Make_Series(BookmarkListT,
+inline static BookmarkList* Alloc_BookmarkList(void) {
+    BookmarkList* books = Make_Series(BookmarkList,
         1,
         FLAG_FLAVOR(BOOKMARKLIST)
             | NODE_FLAG_MANAGED  // lie to be untracked
@@ -328,7 +328,7 @@ inline static BookmarkList(*) Alloc_BookmarkList(void) {
     return books;
 }
 
-inline static void Free_Bookmarks_Maybe_Null(String(*) str) {
+inline static void Free_Bookmarks_Maybe_Null(String* str) {
     assert(Is_NonSymbol_String(str));
     if (LINK(Bookmarks, str)) {
         GC_Kill_Series(LINK(Bookmarks, str));
@@ -337,8 +337,8 @@ inline static void Free_Bookmarks_Maybe_Null(String(*) str) {
 }
 
 #if !defined(NDEBUG)
-    inline static void Check_Bookmarks_Debug(String(*) s) {
-        BookmarkList(*) book = LINK(Bookmarks, s);
+    inline static void Check_Bookmarks_Debug(String* s) {
+        BookmarkList* book = LINK(Bookmarks, s);
         if (not book)
             return;
 
@@ -373,7 +373,7 @@ inline static void Free_Bookmarks_Maybe_Null(String(*) str) {
 // to iterate much faster, and most of the strings in the system might be able
 // to get away with not having any bookmarks at all.
 //
-inline static Utf8(*) String_At(String(const_if_c*) s, REBLEN at) {
+inline static Utf8(*) String_At(const_if_c String* s, REBLEN at) {
     assert(s != g_mold.buffer);  // String_At() makes bookmarks, don't want!
 
     assert(at <= String_Len(s));
@@ -386,7 +386,7 @@ inline static Utf8(*) String_At(String(const_if_c*) s, REBLEN at) {
     Utf8(*) cp;  // can be used to calculate offset (relative to String_Head())
     REBLEN index;
 
-    BookmarkList(*) book = nullptr;  // updated at end if not nulled out
+    BookmarkList* book = nullptr;  // updated at end if not nulled out
     if (Is_NonSymbol_String(s))
         book = LINK(Bookmarks, s);
 
@@ -415,7 +415,7 @@ inline static Utf8(*) String_At(String(const_if_c*) s, REBLEN at) {
         }
         if (not book and Is_NonSymbol_String(s)) {
             book = Alloc_BookmarkList();
-            mutable_LINK(Bookmarks, m_cast(StringT*, s)) = book;
+            mutable_LINK(Bookmarks, m_cast(String*, s)) = book;
             goto scan_from_head;  // will fill in bookmark
         }
     }
@@ -430,7 +430,7 @@ inline static Utf8(*) String_At(String(const_if_c*) s, REBLEN at) {
         }
         if (not book and Is_NonSymbol_String(s)) {
             book = Alloc_BookmarkList();
-            mutable_LINK(Bookmarks, m_cast(StringT*, s)) = book;
+            mutable_LINK(Bookmarks, m_cast(String*, s)) = book;
             goto scan_from_tail;  // will fill in bookmark
         }
     }
@@ -538,12 +538,12 @@ inline static Utf8(*) String_At(String(const_if_c*) s, REBLEN at) {
 }
 
 #if CPLUSPLUS_11
-    inline static Utf8(const*) String_At(String(const*) s, REBLEN at)
-      { return String_At(m_cast(String(*), s), at); }
+    inline static Utf8(const*) String_At(const String* s, REBLEN at)
+      { return String_At(m_cast(String*, s), at); }
 #endif
 
 
-inline static String(const*) VAL_STRING(NoQuote(Cell(const*)) v) {
+inline static const String* VAL_STRING(NoQuote(Cell(const*)) v) {
     if (ANY_STRINGLIKE(v))
         return STR(VAL_NODE1(v));  // VAL_SERIES() would assert
 
@@ -551,7 +551,7 @@ inline static String(const*) VAL_STRING(NoQuote(Cell(const*)) v) {
 }
 
 #define VAL_STRING_ENSURE_MUTABLE(v) \
-    m_cast(String(*), VAL_STRING(Ensure_Mutable(v)))
+    m_cast(String*, VAL_STRING(Ensure_Mutable(v)))
 
 // This routine works with the notion of "length" that corresponds to the
 // idea of the datatype which the series index is for.  Notably, a BINARY!
@@ -560,7 +560,7 @@ inline static String(const*) VAL_STRING(NoQuote(Cell(const*)) v) {
 // cache of the length in the series node for strings must be used.
 //
 inline static REBLEN VAL_LEN_HEAD(NoQuote(Cell(const*)) v) {
-    Series(const*) s = VAL_SERIES(v);
+    const Series* s = VAL_SERIES(v);
     if (Is_Series_UTF8(s) and CELL_HEART(v) != REB_BINARY)
         return String_Len(STR(s));
     return Series_Used(s);
@@ -588,7 +588,7 @@ inline static REBLEN VAL_LEN_AT(NoQuote(Cell(const*)) v) {
 }
 
 inline static Utf8(const*) VAL_STRING_AT(NoQuote(Cell(const*)) v) {
-    String(const*) str = VAL_STRING(v);  // checks that it's ANY-STRING!
+    const String* str = VAL_STRING(v);  // checks that it's ANY-STRING!
     REBIDX i = VAL_INDEX_RAW(v);
     REBLEN len = String_Len(str);
     if (i < 0 or i > cast(REBIDX, len))
@@ -598,7 +598,7 @@ inline static Utf8(const*) VAL_STRING_AT(NoQuote(Cell(const*)) v) {
 
 
 inline static Utf8(const*) VAL_STRING_TAIL(NoQuote(Cell(const*)) v) {
-    String(const*) s = VAL_STRING(v);  // debug build checks it's ANY-STRING!
+    const String* s = VAL_STRING(v);  // debug build checks it's ANY-STRING!
     return String_Tail(s);
 }
 
@@ -679,7 +679,7 @@ inline static Size VAL_BYTEOFFSET_FOR_INDEX(
 // should probably lock the input series against modification...or at least
 // hold a cache that it throws away whenever it runs a GROUP!.
 
-inline static Codepoint Get_Char_At(String(const*) s, REBLEN n) {
+inline static Codepoint Get_Char_At(const String* s, REBLEN n) {
     Utf8(const*) up = String_At(s, n);
     Codepoint c;
     Utf8_Next(&c, up);
@@ -691,7 +691,7 @@ inline static Codepoint Get_Char_At(String(const*) s, REBLEN n) {
 // it is an optimization that may-or-may-not be worth the added complexity of
 // having more than one way of doing a CHANGE to a character.  Review.
 //
-inline static void Set_Char_At(String(*) s, REBLEN n, Codepoint c) {
+inline static void Set_Char_At(String* s, REBLEN n, Codepoint c) {
     //
     // We are maintaining the same length, but DEBUG_UTF8_EVERYWHERE will
     // corrupt the length every time the Series_Used() changes.  Workaround that
@@ -745,7 +745,7 @@ inline static void Set_Char_At(String(*) s, REBLEN n, Codepoint c) {
         // dealing with.  Only update bookmark if it's an offset *after*
         // that character position...
         //
-        BookmarkList(*) book = LINK(Bookmarks, s);
+        BookmarkList* book = LINK(Bookmarks, s);
         if (book and BMK_OFFSET(book) > cp_offset)
             BMK_OFFSET(book) += delta;
     }
@@ -773,13 +773,13 @@ inline static REBLEN Num_Codepoints_For_Bytes(
 
 //=//// ANY-STRING! CONVENIENCE MACROS ////////////////////////////////////=//
 //
-// Declaring as inline with type signature ensures you use a String(*) to
+// Declaring as inline with type signature ensures you use a String* to
 // initialize, and the C++ build can also validate managed consistent w/const.
 
 inline static REBVAL *Init_Any_String_At(
     Cell(*) out,
     enum Reb_Kind kind,
-    String(const_if_c*) str,
+    const_if_c String* str,
     REBLEN index
 ){
     Init_Series_Cell_At_Core(
@@ -796,7 +796,7 @@ inline static REBVAL *Init_Any_String_At(
     inline static REBVAL *Init_Any_String_At(
         Cell(*) out,
         enum Reb_Kind kind,
-        String(const*) str,
+        const String* str,
         REBLEN index
     ){
         // Init will assert if str is not managed...
@@ -823,11 +823,11 @@ inline static REBVAL *Init_Any_String_At(
 #define Make_String(encoded_capacity) \
     Make_String_Core((encoded_capacity), SERIES_FLAGS_NONE)
 
-inline static String(*) Make_String_UTF8(const char *utf8) {
+inline static String* Make_String_UTF8(const char *utf8) {
     return Append_UTF8_May_Fail(nullptr, utf8, strsize(utf8), STRMODE_NO_CR);
 }
 
-inline static String(*) Make_Sized_String_UTF8(const char *utf8, size_t size) {
+inline static String* Make_Sized_String_UTF8(const char *utf8, size_t size) {
     return Append_UTF8_May_Fail(nullptr, utf8, size, STRMODE_NO_CR);
 }
 
@@ -840,7 +840,7 @@ inline static String(*) Make_Sized_String_UTF8(const char *utf8, size_t size) {
 
 //=//// REBSTR HASHING ////////////////////////////////////////////////////=//
 
-inline static REBINT Hash_String(String(const*) str)
+inline static REBINT Hash_String(const String* str)
     { return Hash_UTF8_Len_Caseless(String_Head(str), String_Len(str)); }
 
 inline static REBINT First_Hash_Candidate_Slot(
@@ -860,8 +860,8 @@ inline static REBINT First_Hash_Candidate_Slot(
 #define Copy_String_At(v) \
     Copy_String_At_Limit((v), -1)
 
-inline static Series(*) Copy_Binary_At_Len(
-    Series(const*) s,
+inline static Series* Copy_Binary_At_Len(
+    const Series* s,
     REBLEN index,
     REBLEN len
 ){
@@ -880,7 +880,7 @@ inline static Series(*) Copy_Binary_At_Len(
 // not been checked to see if they are valid UTF-8.  We assume all the bytes
 // *prior* are known to be valid.
 //
-inline static Context(*) Error_Illegal_Cr(const Byte* at, const Byte* start)
+inline static Context* Error_Illegal_Cr(const Byte* at, const Byte* start)
 {
     assert(*at == CR);
     REBLEN back_len = 0;
@@ -893,7 +893,7 @@ inline static Context(*) Error_Illegal_Cr(const Byte* at, const Byte* start)
         cast(const char*, back),
         at - cast(const Byte*, back) + 1  // include CR (escaped, e.g. ^M)
     );
-    Context(*) error = Error_Illegal_Cr_Raw(str);
+    Context* error = Error_Illegal_Cr_Raw(str);
     rebRelease(str);
     return error;
 }

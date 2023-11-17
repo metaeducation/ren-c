@@ -181,7 +181,7 @@ static void Evaluator_Shared_Checks_Debug(Level(*) L)
 //     write L's *own* arg slots to fulfill them.
 //
 //     L->feed
-//     Contains the Array(*) or C va_list of subsequent values to fetch...as
+//     Contains the Array* or C va_list of subsequent values to fetch...as
 //     well as the specifier.  The current value, its cached "gotten" value if
 //     it is a WORD!, and other information is stored here through a level of
 //     indirection so it may be shared and updated between recursions.
@@ -235,7 +235,7 @@ void Do_After_Action_Checks_Debug(Level(*) L) {
     // so native return types are checked instead of just trusting the C.
     //
   #if DEBUG_NATIVE_RETURNS
-    Action(*) phase = Level_Phase(L);
+    Action* phase = Level_Phase(L);
 
     if (ACT_HAS_RETURN(phase) and Is_Stable(L->out)) {
         if (not Typecheck_Coerce_Return(L, L->out)) {

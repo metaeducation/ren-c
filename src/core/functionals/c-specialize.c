@@ -57,7 +57,7 @@ enum {
 //
 Bounce Specializer_Dispatcher(Level(*) L)
 {
-    Context(*) exemplar = ACT_EXEMPLAR(Level_Phase(L));
+    Context* exemplar = ACT_EXEMPLAR(Level_Phase(L));
 
     INIT_LVL_PHASE(L, CTX_FRAME_PHASE(exemplar));
     INIT_LVL_BINDING(L, CTX_FRAME_BINDING(exemplar));
@@ -83,18 +83,18 @@ Bounce Specializer_Dispatcher(Level(*) L)
 // refinements added on the stack) we go ahead and collect bindings from the
 // frame if needed.
 //
-Context(*) Make_Context_For_Action_Push_Partials(
-    const REBVAL *action,  // need ->binding, so can't just be a Action(*)
+Context* Make_Context_For_Action_Push_Partials(
+    const REBVAL *action,  // need ->binding, so can't just be a Action*
     StackIndex lowest_ordered_stackindex,  // caller can add refinements
     Option(struct Reb_Binder*) binder,
     const REBVAL *unspecialized  // what to put in unspecialized slots
 ){
     StackIndex highest_ordered_stackindex = TOP_INDEX;
 
-    Action(*) act = VAL_ACTION(action);
+    Action* act = VAL_ACTION(action);
 
     REBLEN num_slots = ACT_NUM_PARAMS(act) + 1;  // +1 is for CTX_ARCHETYPE()
-    Array(*) varlist = Make_Array_Core(num_slots, SERIES_MASK_VARLIST);
+    Array* varlist = Make_Array_Core(num_slots, SERIES_MASK_VARLIST);
     Set_Series_Len(varlist, num_slots);
 
     INIT_CTX_KEYLIST_SHARED(CTX(varlist), ACT_KEYLIST(act));
@@ -109,7 +109,7 @@ Context(*) Make_Context_For_Action_Push_Partials(
 
     // If there is a PARTIALS list, then push its refinements.
     //
-    Array(*) partials = try_unwrap(ACT_PARTIALS(act));
+    Array* partials = try_unwrap(ACT_PARTIALS(act));
     if (partials) {
         Cell(const*) word_tail = Array_Tail(partials);
         Cell(const*) word = Array_Head(partials);
@@ -138,7 +138,7 @@ Context(*) Make_Context_For_Action_Push_Partials(
             continue;
         }
 
-        Symbol(const*) symbol = KEY_SYMBOL(key);  // added to binding
+        const Symbol* symbol = KEY_SYMBOL(key);  // added to binding
         if (NOT_PARAM_FLAG(param, REFINEMENT)) {  // nothing to push
 
           continue_unspecialized:
@@ -208,12 +208,12 @@ Context(*) Make_Context_For_Action_Push_Partials(
 // which to make it usable should be relative to the lowest ordered StackIndex
 // and not absolute.
 //
-Context(*) Make_Context_For_Action(
-    const REBVAL *action, // need ->binding, so can't just be a Action(*)
+Context* Make_Context_For_Action(
+    const REBVAL *action, // need ->binding, so can't just be a Action*
     StackIndex lowest_ordered_stackindex,
     Option(struct Reb_Binder*) binder
 ){
-    Context(*) exemplar = Make_Context_For_Action_Push_Partials(
+    Context* exemplar = Make_Context_For_Action_Push_Partials(
         action,
         lowest_ordered_stackindex,
         binder,
@@ -251,13 +251,13 @@ bool Specialize_Action_Throws(
     if (def)
         INIT_BINDER(&binder);
 
-    Action(*) unspecialized = VAL_ACTION(specializee);
+    Action* unspecialized = VAL_ACTION(specializee);
 
     // This produces a context where partially specialized refinement slots
     // will be on the stack (including any we are adding "virtually", from
     // the current TOP_INDEX down to the lowest_ordered_dsp).
     //
-    Context(*) exemplar = Make_Context_For_Action_Push_Partials(
+    Context* exemplar = Make_Context_For_Action_Push_Partials(
         specializee,
         lowest_ordered_stackindex,
         def ?
@@ -362,7 +362,7 @@ bool Specialize_Action_Throws(
             fail ("Cannot currently SPECIALIZE variadic arguments.");
 
         if (not Typecheck_Coerce_Argument(param, arg)) {
-            Option(Symbol(const*)) label = VAL_FRAME_LABEL(specializee);
+            Option(const Symbol*) label = VAL_FRAME_LABEL(specializee);
             fail (Error_Arg_Type(label, key, param, arg));
         }
 
@@ -375,7 +375,7 @@ bool Specialize_Action_Throws(
     // Everything should have balanced out for a valid specialization.
     // Turn partial refinements into an array of things to push.
     //
-    Array(*) partials;
+    Array* partials;
     if (ordered_stackindex == TOP_INDEX)
         partials = nullptr;
     else {
@@ -426,7 +426,7 @@ bool Specialize_Action_Throws(
         }
     }
 
-    Phase(*) specialized = Make_Action(
+    Phase* specialized = Make_Action(
         CTX_VARLIST(exemplar),
         partials,
         &Specializer_Dispatcher,
@@ -502,11 +502,11 @@ DECLARE_NATIVE(specialize_p)  // see extended SPECIALIZE in %base-defs.r
 // Unspecialized parameters are visited in two passes: unsorted, then sorted.
 //
 void For_Each_Unspecialized_Param(
-    Action(*) act,
+    Action* act,
     PARAM_HOOK hook,
     void *opaque
 ){
-    Option(Array(*)) partials = ACT_PARTIALS(act);
+    Option(Array*) partials = ACT_PARTIALS(act);
 
     // Walking the parameters in a potentially "unsorted" fashion.  Offer them
     // to the passed-in hook in case it has a use for this first pass (e.g.
@@ -660,7 +660,7 @@ static bool Last_Param_Hook(
 //
 // This means that the last parameter (D) is actually the first of FOO-D.
 //
-const REBPAR *First_Unspecialized_Param(const REBKEY ** key, Action(*) act)
+const REBPAR *First_Unspecialized_Param(const REBKEY ** key, Action* act)
 {
     struct Find_Param_State s;
     s.key = nullptr;
@@ -679,7 +679,7 @@ const REBPAR *First_Unspecialized_Param(const REBKEY ** key, Action(*) act)
 //
 // See notes on First_Unspecialized_Param() regarding complexity
 //
-const REBPAR *Last_Unspecialized_Param(const REBKEY ** key, Action(*) act)
+const REBPAR *Last_Unspecialized_Param(const REBKEY ** key, Action* act)
 {
     struct Find_Param_State s;
     s.key = nullptr;
@@ -699,7 +699,7 @@ const REBPAR *Last_Unspecialized_Param(const REBKEY ** key, Action(*) act)
 //
 REBVAL *First_Unspecialized_Arg(Option(const REBPAR **) param_out, Level(*) L)
 {
-    Phase(*) phase = Level_Phase(L);
+    Phase* phase = Level_Phase(L);
     const REBPAR *param = First_Unspecialized_Param(nullptr, phase);
     if (param_out)
         *unwrap(param_out) = param;
@@ -717,13 +717,13 @@ REBVAL *First_Unspecialized_Arg(Option(const REBPAR **) param_out, Level(*) L)
 //
 // Leaves details blank, and lets you specify the dispatcher.
 //
-Phase(*) Alloc_Action_From_Exemplar(
-    Context(*) exemplar,
-    Option(Symbol(const*)) label,
+Phase* Alloc_Action_From_Exemplar(
+    Context* exemplar,
+    Option(const Symbol*) label,
     Dispatcher* dispatcher,
     REBLEN details_capacity
 ){
-    Action(*) unspecialized = CTX_FRAME_PHASE(exemplar);
+    Action* unspecialized = CTX_FRAME_PHASE(exemplar);
 
     const REBKEY *tail;
     const REBKEY *key = ACT_KEYS(&tail, unspecialized);
@@ -752,7 +752,7 @@ Phase(*) Alloc_Action_From_Exemplar(
 
     // This code parallels Specialize_Action_Throws(), see comments there
 
-    Phase(*) action = Make_Action(
+    Phase* action = Make_Action(
         CTX_VARLIST(exemplar),
         nullptr,  // no partials
         dispatcher,
@@ -768,11 +768,11 @@ Phase(*) Alloc_Action_From_Exemplar(
 //
 // Assumes you want a Specializer_Dispatcher with the exemplar in details.
 //
-Phase(*) Make_Action_From_Exemplar(
-    Context(*) exemplar,
-    Option(Symbol(const*)) label
+Phase* Make_Action_From_Exemplar(
+    Context* exemplar,
+    Option(const Symbol*) label
 ){
-    Phase(*) action = Alloc_Action_From_Exemplar(
+    Phase* action = Alloc_Action_From_Exemplar(
         exemplar,
         label,
         &Specializer_Dispatcher,

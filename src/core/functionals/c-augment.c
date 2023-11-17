@@ -73,8 +73,8 @@ DECLARE_NATIVE(augment_p)  // see extended definition AUGMENT in %base-defs.r
 {
     INCLUDE_PARAMS_OF_AUGMENT_P;
 
-    Action(*) augmentee = VAL_ACTION(ARG(original));
-    Option(Symbol(const*)) label = VAL_FRAME_LABEL(ARG(original));
+    Action* augmentee = VAL_ACTION(ARG(original));
+    Option(const Symbol*) label = VAL_FRAME_LABEL(ARG(original));
 
     // We reuse the process from Make_Paramlist_Managed_May_Fail(), which
     // pushes descriptors to the stack in groups for each parameter.
@@ -130,8 +130,8 @@ DECLARE_NATIVE(augment_p)  // see extended definition AUGMENT in %base-defs.r
         &return_stackindex
     );
 
-    Context(*) adjunct;
-    Array(*) paramlist = Pop_Paramlist_With_Adjunct_May_Fail(
+    Context* adjunct;
+    Array* paramlist = Pop_Paramlist_With_Adjunct_May_Fail(
         &adjunct,
         base,
         flags,
@@ -155,7 +155,7 @@ DECLARE_NATIVE(augment_p)  // see extended definition AUGMENT in %base-defs.r
         VAL_FRAME_BINDING(ARG(original))
     );
 
-    Phase(*) augmentated = Make_Action(
+    Phase* augmentated = Make_Action(
         paramlist,
         ACT_PARTIALS(augmentee),  // partials should still work
         &Augmenter_Dispatcher,

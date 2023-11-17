@@ -31,18 +31,18 @@ PVAR REBINT PG_Boot_Phase;  // To know how far in the boot we are.
 // This is a series that holds 8-platform-pointer Array nodes, arranged in
 // canon order.  It provides fast access to lib entries by symbol.
 //
-PVAR ArrayT PG_Lib_Patches[LIB_SYMS_MAX];
+PVAR Array PG_Lib_Patches[LIB_SYMS_MAX];
 
 PVAR REBVAL *Lib_Context_Value;
 PVAR REBVAL *Sys_Util_Module;
 PVAR REBVAL *User_Context_Value;
 
-PVAR Context(*) Lib_Context;
-PVAR Context(*) Sys_Context;
-PVAR Context(*) User_Context;
+PVAR Context* Lib_Context;
+PVAR Context* Sys_Context;
+PVAR Context* User_Context;
 
 PVAR CFunction* const* PG_Next_Native_Cfunc;
-PVAR Context(*) PG_Currently_Loading_Module;
+PVAR Context* PG_Currently_Loading_Module;
 
 PVAR REBVAL Datatypes[REB_MAX];  // just the TYPE-WORD!s, like &integer
 
@@ -103,17 +103,17 @@ PVAR REBVAL *Root_Empty_Text; // read-only ""
 PVAR REBVAL *Root_Empty_Binary; // read-only #{}
 PVAR REBVAL *Root_Empty_Block; // read-only []
 PVAR REBVAL *Root_2_Blanks_Block;  // read-only [_ _]
-PVAR Array(*) PG_Empty_Array; // optimization of VAL_ARRAY(Root_Empty_Block)
-PVAR Array(*) PG_1_Quasi_Null_Array;  // used by heavy nulls ~[~null~]~
-PVAR Array(*) PG_1_Quoted_Void_Array;  // used by heavy voids ~[']~
-PVAR Array(*) PG_1_Meta_False_Array;  // used by heavy false ~[~false~]~
-PVAR Array(*) PG_2_Blanks_Array;  // surrogate array used by `/` paths
+PVAR Array* PG_Empty_Array; // optimization of VAL_ARRAY(Root_Empty_Block)
+PVAR Array* PG_1_Quasi_Null_Array;  // used by heavy nulls ~[~null~]~
+PVAR Array* PG_1_Quoted_Void_Array;  // used by heavy voids ~[']~
+PVAR Array* PG_1_Meta_False_Array;  // used by heavy false ~[~false~]~
+PVAR Array* PG_2_Blanks_Array;  // surrogate array used by `/` paths
 
 PVAR REBVAL *Root_Heavy_Null;  // isotopic block containing a blank
 PVAR REBVAL *Root_Heavy_Void;  // isotopic block containing a quasi null
 PVAR REBVAL *Root_Heavy_False;  // isotopic block containing a meta false
 
-PVAR ArrayT PG_Inaccessible_Series;  // singular inaccessible varlist
+PVAR Array PG_Inaccessible_Series;  // singular inaccessible varlist
 
 PVAR REBVAL *Root_Action_Adjunct;
 
@@ -122,7 +122,7 @@ PVAR REBVAL *Root_No_Memory_Error;  // also must be made in advance
 
 TVAR Feed(*) TG_End_Feed;
 
-TVAR Binary(*) TG_Byte_Buf;  // byte buffer used in various spots (as BYTE_BUF)
+TVAR Binary* TG_Byte_Buf;  // byte buffer used in various spots (as BYTE_BUF)
 
 
 /***********************************************************************

@@ -31,7 +31,7 @@
 // Returns new dst_idx
 //
 REBLEN Modify_Array(
-    Array(*) dst_arr,  // target
+    Array* dst_arr,  // target
     REBLEN dst_idx,  // position
     SymId op,  // INSERT, APPEND, CHANGE
     const REBVAL *src_val,  // source
@@ -106,7 +106,7 @@ REBLEN Modify_Array(
 
         // Are we modifying ourselves? If so, copy src_val block first:
         if (dst_arr == VAL_ARRAY(src_val)) {
-            Array(*) copy = Copy_Array_At_Extra_Shallow(
+            Array* copy = Copy_Array_At_Extra_Shallow(
                 VAL_ARRAY(src_val),
                 VAL_INDEX(src_val),
                 VAL_SPECIFIER(src_val),
@@ -240,7 +240,7 @@ REBLEN Modify_String_Or_Binary(
 
     Ensure_Mutable(dst);  // note this also rules out ANY-WORD!s
 
-    Binary(*) dst_ser = BIN(VAL_SERIES_ENSURE_MUTABLE(dst));
+    Binary* dst_ser = BIN(VAL_SERIES_ENSURE_MUTABLE(dst));
     assert(not IS_SYMBOL(dst_ser));  // would be immutable
 
     REBLEN dst_idx = VAL_INDEX(dst);
@@ -373,7 +373,7 @@ REBLEN Modify_String_Or_Binary(
         src_len_raw = src_size_raw = 1;
     }
     else if (IS_BINARY(src)) {
-        Binary(const*) bin = VAL_BINARY(src);
+        const Binary* bin = VAL_BINARY(src);
         REBLEN offset = VAL_INDEX(src);
 
         src_ptr = Binary_At(bin, offset);
@@ -386,7 +386,7 @@ REBLEN Modify_String_Or_Binary(
         }
         else {
             if (Is_NonSymbol_String(bin)) {  // guaranteed valid UTF-8
-                String(const*) str = STR(bin);
+                const String* str = STR(bin);
                 if (Is_Continuation_Byte(*src_ptr))
                     fail (Error_Bad_Utf8_Bin_Edit_Raw());
 
@@ -536,7 +536,7 @@ REBLEN Modify_String_Or_Binary(
     // functions like VAL_UTF8_SIZE_AT() etc. that leverage bookmarks after
     // the extraction occurs.
 
-    BookmarkList(*) book = nullptr;
+    BookmarkList* book = nullptr;
 
     // For strings, we should have generated a bookmark in the process of this
     // modification in most cases where the size is notable.  If we had not,
@@ -712,7 +712,7 @@ REBLEN Modify_String_Or_Binary(
     // unified with the mold buffer?)
 
     if (book) {
-        String(*) dst_str = STR(dst_ser);
+        String* dst_str = STR(dst_ser);
         if (BMK_INDEX(book) > String_Len(dst_str)) {  // past active
             assert(op == SYM_CHANGE);  // only change removes material
             Free_Bookmarks_Maybe_Null(dst_str);

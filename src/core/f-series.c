@@ -40,7 +40,7 @@
 //
 Bounce Series_Common_Action_Maybe_Unhandled(
     Level(*) level_,
-    Symbol(const*) verb
+    const Symbol* verb
 ){
     REBVAL *v = D_ARG(1);
 
@@ -90,18 +90,18 @@ Bounce Series_Common_Action_Maybe_Unhandled(
             );
 
           case SYM_FILE: {
-            Series(const*) s = VAL_SERIES(v);
+            const Series* s = VAL_SERIES(v);
             if (not Is_Series_Array(s))
                 return nullptr;
-            if (Not_Array_Flag(cast(const ArrayT*, s), HAS_FILE_LINE_UNMASKED))
+            if (Not_Array_Flag(cast(const Array*, s), HAS_FILE_LINE_UNMASKED))
                 return nullptr;
             return Init_File(OUT, LINK(Filename, s)); }
 
           case SYM_LINE: {
-            Series(const*) s = VAL_SERIES(v);
+            const Series* s = VAL_SERIES(v);
             if (not Is_Series_Array(s))
                 return nullptr;
-            if (Not_Array_Flag(cast(const ArrayT*, s), HAS_FILE_LINE_UNMASKED))
+            if (Not_Array_Flag(cast(const Array*, s), HAS_FILE_LINE_UNMASKED))
                 return nullptr;
             return Init_Integer(OUT, s->misc.line); }
 
@@ -249,9 +249,9 @@ Bounce Series_Common_Action_Maybe_Unhandled(
 // Compare_Arrays_At_Indexes: C
 //
 REBINT Compare_Arrays_At_Indexes(
-    Array(const*) s_array,
+    const Array* s_array,
     REBLEN s_index,
-    Array(const*) t_array,
+    const Array* t_array,
     REBLEN t_index,
     bool is_case
 ){
@@ -465,7 +465,7 @@ REBINT Cmp_Value(Cell(const*) sval, Cell(const*) tval, bool strict)
 // the value or the TAIL index if not found.
 //
 REBLEN Find_In_Array_Simple(
-    Array(const*) array,
+    const Array* array,
     REBLEN index,
     Cell(const*) target
 ){

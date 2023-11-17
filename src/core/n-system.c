@@ -152,7 +152,7 @@ DECLARE_NATIVE(recycle)
       #if defined(NDEBUG)
         fail (Error_Debug_Only_Raw());
       #else
-        Series(*) sweeplist = Make_Series_Core(100, FLAG_FLAVOR(NODELIST));
+        Series* sweeplist = Make_Series_Core(100, FLAG_FLAVOR(NODELIST));
         count = Recycle_Core(sweeplist);
         assert(count == Series_Used(sweeplist));
 

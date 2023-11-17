@@ -135,7 +135,7 @@ Bounce MAKE_Sequence(
         Byte buf[MAX_TUPLE];
         Byte* vp = buf;
 
-        String(const*) spelling = VAL_STRING(arg);
+        const String* spelling = VAL_STRING(arg);
         const Byte* ap = String_Head(spelling);
         size_t size = String_Size(spelling); // UTF-8 len
         if (size & 1)
@@ -466,7 +466,7 @@ void MF_Sequence(REB_MOLD *mo, NoQuote(Cell(const*)) v, bool form)
             // no blank molding; implicit
         }
         else if (element_kind == REB_WORD) {
-            Symbol(const*) sym = VAL_WORD_SYMBOL(element);
+            const Symbol* sym = VAL_WORD_SYMBOL(element);
             if (
                 not form
                 and Get_Subclass_Flag(SYMBOL, sym, ESCAPE_IN_SEQUENCE)

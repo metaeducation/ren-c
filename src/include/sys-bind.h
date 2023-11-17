@@ -44,7 +44,7 @@
 // matches the set count.
 //
 // The binding will be either a REBACT (relative to a function) or a
-// Context(*) (specific to a context), or simply a plain Array(*) such as
+// Context* (specific to a context), or simply a plain Array* such as
 // EMPTY_ARRAY which indicates UNBOUND.  The FLAVOR_BYTE() says what it is
 //
 //     ANY-WORD!: binding is the word's binding
@@ -90,7 +90,7 @@
 // is at MAKE-time, o3 put its binding into any functions bound to o2 or o1,
 // thus getting its overriding behavior.
 //
-inline static bool Is_Overriding_Context(Context(*) stored, Context(*) override)
+inline static bool Is_Overriding_Context(Context* stored, Context* override)
 {
     Node* stored_source = BONUS(KeySource, CTX_VARLIST(stored));
     Node* temp = BONUS(KeySource, CTX_VARLIST(override));
@@ -182,19 +182,19 @@ inline static void SHUTDOWN_BINDER(struct Reb_Binder *binder) {
 //
 inline static bool Try_Add_Binder_Index(
     struct Reb_Binder *binder,
-    Symbol(const*) sym,
+    const Symbol* sym,
     REBINT index
 ){
-    Symbol(*) s = m_cast(Symbol(*), sym);
+    Symbol* s = m_cast(Symbol*, sym);
     assert(index != 0);
-    Series(*) old_hitch = MISC(Hitch, s);
+    Series* old_hitch = MISC(Hitch, s);
     if (old_hitch != s and Get_Series_Flag(old_hitch, BLACK))
         return false;  // already has a mapping
 
     // Not actually managed...but GC doesn't run while binders are active,
     // and we don't want to pay for putting this in the manual tracking list.
     //
-    Array(*) new_hitch = Alloc_Singular(
+    Array* new_hitch = Alloc_Singular(
         NODE_FLAG_MANAGED | SERIES_FLAG_BLACK | FLAG_FLAVOR(HITCH)
     );
     Clear_Node_Managed_Bit(new_hitch);
@@ -214,7 +214,7 @@ inline static bool Try_Add_Binder_Index(
 
 inline static void Add_Binder_Index(
     struct Reb_Binder *binder,
-    Symbol(const*) s,
+    const Symbol* s,
     REBINT index
 ){
     bool success = Try_Add_Binder_Index(binder, s, index);
@@ -225,10 +225,10 @@ inline static void Add_Binder_Index(
 
 inline static REBINT Get_Binder_Index_Else_0( // 0 if not present
     struct Reb_Binder *binder,
-    Symbol(const*) s
+    const Symbol* s
 ){
     UNUSED(binder);
-    Series(*) hitch = MISC(Hitch, s);
+    Series* hitch = MISC(Hitch, s);
 
     // Only unmanaged hitches are used for binding.
     //
@@ -240,13 +240,13 @@ inline static REBINT Get_Binder_Index_Else_0( // 0 if not present
 
 inline static REBINT Remove_Binder_Index_Else_0( // return old value if there
     struct Reb_Binder *binder,
-    Symbol(const*) str
+    const Symbol* str
 ){
-    Symbol(*) s = m_cast(Symbol(*), str);
+    Symbol* s = m_cast(Symbol*, str);
     if (MISC(Hitch, s) == s or Not_Series_Flag(MISC(Hitch, s), BLACK))
         return 0;
 
-    Array(*) hitch = ARR(MISC(Hitch, s));
+    Array* hitch = ARR(MISC(Hitch, s));
 
     REBINT index = VAL_INT32(Array_Single(hitch));
     mutable_MISC(Hitch, s) = ARR(node_MISC(Hitch, hitch));
@@ -265,7 +265,7 @@ inline static REBINT Remove_Binder_Index_Else_0( // return old value if there
 
 inline static void Remove_Binder_Index(
     struct Reb_Binder *binder,
-    Symbol(const*) s
+    const Symbol* s
 ){
     REBINT old_index = Remove_Binder_Index_Else_0(binder, s);
     assert(old_index != 0);
@@ -303,7 +303,7 @@ struct Reb_Collector {
 // would fail later, but given that the frame's captured binding can outlive
 // the frame that might lose important functionality.
 //
-inline static Series(*) SPC_BINDING(REBSPC *specifier)
+inline static Series* SPC_BINDING(REBSPC *specifier)
 {
     assert(specifier != UNBOUND);
     const REBVAL *rootvar = CTX_ARCHETYPE(CTX(specifier));  // ok if Decay()'d
@@ -319,7 +319,7 @@ inline static Series(*) SPC_BINDING(REBSPC *specifier)
 //
 inline static void INIT_BINDING_MAY_MANAGE(
     Cell(*) out,
-    Series(const*)  binding
+    const Series*  binding
 ){
     mutable_BINDING(out) = binding;
 
@@ -330,7 +330,7 @@ inline static void INIT_BINDING_MAY_MANAGE(
     assert(not Is_Level_Fulfilling(L));
     UNUSED(L);
 
-    m_cast(Series(*), binding)->leader.bits |= NODE_FLAG_MANAGED;  // GC sees...
+    m_cast(Series*, binding)->leader.bits |= NODE_FLAG_MANAGED;  // GC sees...
 }
 
 
@@ -355,12 +355,12 @@ inline static REBLEN VAL_WORD_INDEX(Cell(const*) v) {
     return cast(REBLEN, i);
 }
 
-inline static Array(*) VAL_WORD_BINDING(Cell(const*) v) {
+inline static Array* VAL_WORD_BINDING(Cell(const*) v) {
     assert(ANY_WORDLIKE(v));
     return ARR(BINDING(v));  // could be nullptr / UNBOUND
 }
 
-inline static void INIT_VAL_WORD_BINDING(Cell(*) v, Series(const*) binding) {
+inline static void INIT_VAL_WORD_BINDING(Cell(*) v, const Series* binding) {
     assert(ANY_WORDLIKE(v));
 
     mutable_BINDING(v) = binding;
@@ -411,9 +411,9 @@ inline static void Unbind_Any_Word(Cell(*) v) {
     mutable_BINDING(v) = nullptr;
 }
 
-inline static Context(*) VAL_WORD_CONTEXT(const REBVAL *v) {
+inline static Context* VAL_WORD_CONTEXT(const REBVAL *v) {
     assert(IS_WORD_BOUND(v));
-    Array(*) binding = VAL_WORD_BINDING(v);
+    Array* binding = VAL_WORD_BINDING(v);
     if (IS_PATCH(binding))
         binding = CTX_VARLIST(INODE(PatchContext, binding));
     else if (IS_LET(binding))
@@ -424,7 +424,7 @@ inline static Context(*) VAL_WORD_CONTEXT(const REBVAL *v) {
         not Is_Level_Fulfilling(LVL(BONUS(KeySource, binding)))
     );
     binding->leader.bits |= NODE_FLAG_MANAGED;  // !!! review managing needs
-    Context(*) c = CTX(binding);
+    Context* c = CTX(binding);
     FAIL_IF_INACCESSIBLE_CTX(c);
     return c;
 }
@@ -480,7 +480,7 @@ enum Reb_Attach_Mode {
 // failure mode while it's running...even if the context is inaccessible or
 // the word is unbound.  Errors should be raised by callers if applicable.
 //
-inline static Option(Series(*)) Get_Word_Container(
+inline static Option(Series*) Get_Word_Container(
     REBLEN *index_out,
     Cell(const*) any_word,
     REBSPC *specifier,
@@ -490,7 +490,7 @@ inline static Option(Series(*)) Get_Word_Container(
     *index_out = 0xDECAFBAD;  // trash index to make sure it gets set
   #endif
 
-    Series(*) binding = VAL_WORD_BINDING(any_word);
+    Series* binding = VAL_WORD_BINDING(any_word);
 
     if (specifier == SPECIFIED or not (IS_LET(specifier) or IS_USE(specifier)))
         goto not_virtually_bound;
@@ -502,7 +502,7 @@ inline static Option(Series(*)) Get_Word_Container(
     // this word is overridden without doing a linear search.  Do it
     // and then save the hit or miss information in the word for next use.
     //
-    Symbol(const*) symbol = VAL_WORD_SYMBOL(VAL_UNESCAPED(any_word));
+    const Symbol* symbol = VAL_WORD_SYMBOL(VAL_UNESCAPED(any_word));
 
     // !!! Virtual binding could use the bind table as a kind of next
     // level cache if it encounters a large enough object to make it
@@ -518,7 +518,7 @@ inline static Option(Series(*)) Get_Word_Container(
         }
 
         if (IS_MODULE(Array_Single(specifier))) {
-            Context(*) mod = VAL_CONTEXT(Array_Single(specifier));
+            Context* mod = VAL_CONTEXT(Array_Single(specifier));
             REBVAL *var = MOD_VAR(mod, symbol, true);
             if (var) {
                 *index_out = INDEX_PATCHED;
@@ -527,7 +527,7 @@ inline static Option(Series(*)) Get_Word_Container(
             goto skip_miss_patch;
         }
 
-        Array(*) overbind;  // avoid goto-past-initialization warning
+        Array* overbind;  // avoid goto-past-initialization warning
         overbind = ARR(BINDING(Array_Single(specifier)));
         if (not IS_VARLIST(overbind)) {  // a patch-formed LET overload
             if (INODE(LetSymbol, overbind) == symbol) {
@@ -545,7 +545,7 @@ inline static Option(Series(*)) Get_Word_Container(
         }
 
       blockscope {
-        Context(*) overload = CTX(overbind);
+        Context* overload = CTX(overbind);
 
         // !!! At one time, this would enumerate up to a "cached_len" which
         // was the length of the object at the time of the virtual bind.
@@ -588,7 +588,7 @@ inline static Option(Series(*)) Get_Word_Container(
 
   not_virtually_bound: {
 
-    Context(*) c;
+    Context* c;
 
     if (binding == UNBOUND)
         return nullptr;  // once no virtual bind found, no binding is unbound
@@ -606,8 +606,8 @@ inline static Option(Series(*)) Get_Word_Container(
         // lookup would say "I want that but be willing to make it."
         //
         if (CTX_TYPE(CTX(binding)) == REB_MODULE) {
-            Symbol(const*) symbol = VAL_WORD_SYMBOL(VAL_UNESCAPED(any_word));
-            Series(*) patch = MISC(Hitch, symbol);
+            const Symbol* symbol = VAL_WORD_SYMBOL(VAL_UNESCAPED(any_word));
+            Series* patch = MISC(Hitch, symbol);
             while (Get_Series_Flag(patch, BLACK))  // binding temps
                 patch = SER(node_MISC(Hitch, patch));
 
@@ -693,7 +693,7 @@ inline static Option(Series(*)) Get_Word_Container(
             //
         }
         else {
-            Series(*) f_binding = SPC_BINDING(specifier); // can't fail()
+            Series* f_binding = SPC_BINDING(specifier); // can't fail()
             if (f_binding and Is_Overriding_Context(c, CTX(f_binding))) {
                 //
                 // The specifier binding overrides--because what's happening
@@ -744,7 +744,7 @@ inline static Value(const*) Lookup_Word_May_Fail(
     REBSPC *specifier
 ){
     REBLEN index;
-    Series(*) s = try_unwrap(
+    Series* s = try_unwrap(
         Get_Word_Container(&index, any_word, specifier, ATTACH_READ)
     );
     if (not s) {
@@ -754,7 +754,7 @@ inline static Value(const*) Lookup_Word_May_Fail(
     }
     if (IS_LET(s) or IS_PATCH(s))
         return SPECIFIC(Array_Single(ARR(s)));
-    Context(*) c = CTX(s);
+    Context* c = CTX(s);
     if (Get_Series_Flag(CTX_VARLIST(c), INACCESSIBLE))
         fail (Error_No_Relative_Core(any_word));
 
@@ -766,14 +766,14 @@ inline static Option(Value(const*)) Lookup_Word(
     REBSPC *specifier
 ){
     REBLEN index;
-    Series(*) s = try_unwrap(
+    Series* s = try_unwrap(
         Get_Word_Container(&index, any_word, specifier, ATTACH_READ)
     );
     if (not s)
         return nullptr;
     if (IS_LET(s) or IS_PATCH(s))
         return SPECIFIC(Array_Single(ARR(s)));
-    Context(*) c = CTX(s);
+    Context* c = CTX(s);
     if (Get_Series_Flag(CTX_VARLIST(c), INACCESSIBLE))
         return nullptr;
 
@@ -797,7 +797,7 @@ inline static REBVAL *Lookup_Mutable_Word_May_Fail(
     REBSPC *specifier
 ){
     REBLEN index;
-    Series(*) s = try_unwrap(
+    Series* s = try_unwrap(
         Get_Word_Container(&index, any_word, specifier, ATTACH_WRITE)
     );
     if (not s)
@@ -807,7 +807,7 @@ inline static REBVAL *Lookup_Mutable_Word_May_Fail(
     if (IS_LET(s) or IS_PATCH(s))
         var = SPECIFIC(Array_Single(ARR(s)));
     else {
-        Context(*) c = CTX(s);
+        Context* c = CTX(s);
 
         // A context can be permanently frozen (`lock obj`) or temporarily
         // protected, e.g. `protect obj | unprotect obj`.  A native will
@@ -896,7 +896,7 @@ inline static REBVAL *Derelativize_Untracked(
     //
     if (ANY_WORDLIKE(v)) {
         REBLEN index;
-        Series(*) s = try_unwrap(
+        Series* s = try_unwrap(
             Get_Word_Container(&index, v, specifier, ATTACH_COPY)
         );
         if (not s) {
@@ -995,7 +995,7 @@ inline static Node** SPC_FRAME_CTX_ADDRESS(REBSPC *specifier)
     return &node_LINK(NextLet, specifier);
 }
 
-inline static Option(Context(*)) SPC_FRAME_CTX(REBSPC *specifier)
+inline static Option(Context*) SPC_FRAME_CTX(REBSPC *specifier)
 {
     if (specifier == UNBOUND)  // !!! have caller check?
         return nullptr;
@@ -1014,9 +1014,9 @@ inline static Option(Context(*)) SPC_FRAME_CTX(REBSPC *specifier)
 // whether it's worth searching their patchlist or not...as newly created
 // patches can't appear in their prior create list.
 //
-inline static Array(*) Merge_Patches_May_Reuse(
-    Array(*) parent,
-    Array(*) child
+inline static Array* Merge_Patches_May_Reuse(
+    Array* parent,
+    Array* child
 ){
     assert(IS_USE(parent) or IS_LET(parent));
     assert(IS_USE(child) or IS_LET(child));
@@ -1037,7 +1037,7 @@ inline static Array(*) Merge_Patches_May_Reuse(
     // If we get to the end of the merge chain and don't find the child, then
     // we're going to need a patch that incorporates it.
     //
-    Array(*) next;
+    Array* next;
     bool was_next_reused;
     if (NextVirtual(parent) == nullptr or IS_VARLIST(NextVirtual(parent))) {
         next = child;
@@ -1064,7 +1064,7 @@ inline static Array(*) Merge_Patches_May_Reuse(
     // So we have to make a new patch that points to the LET, or promote it
     // (using node-identity magic) into an object.  We point at the LET.
     //
-    Array(*) binding;
+    Array* binding;
     enum Reb_Kind kind;
     if (IS_LET(parent)) {
         binding = parent;
@@ -1111,7 +1111,7 @@ inline static REBSPC *Derive_Specifier_Core(
     REBSPC *specifier,  // merge this specifier...
     NoQuote(Cell(const*)) any_array  // ...onto the one in this array
 ){
-    Array(*) old = ARR(BINDING(any_array));
+    Array* old = ARR(BINDING(any_array));
 
     // If any specifiers in a chain are inaccessible, the whole thing is.
     //
@@ -1160,7 +1160,7 @@ inline static REBSPC *Derive_Specifier_Core(
         // but breaks the "black box" quality of function composition.
         //
       #if !defined(NDEBUG)
-        Context(*) frame_ctx = try_unwrap(SPC_FRAME_CTX(specifier));
+        Context* frame_ctx = try_unwrap(SPC_FRAME_CTX(specifier));
         if (
             frame_ctx == nullptr
             or (
@@ -1262,24 +1262,24 @@ inline static REBSPC *Derive_Specifier_Core(
         NoQuote(Cell(const*)) any_array
     ){
         REBSPC *derived = Derive_Specifier_Core(specifier, any_array);
-        Array(*) old = ARR(BINDING(any_array));
+        Array* old = ARR(BINDING(any_array));
         if (old == UNSPECIFIED or IS_VARLIST(old)) {
             // no special invariant to check, anything goes for derived
         }
         else if (IS_DETAILS(old)) {  // relative
-            Context(*) derived_ctx = try_unwrap(SPC_FRAME_CTX(derived));
-            Context(*) specifier_ctx = try_unwrap(SPC_FRAME_CTX(specifier));
+            Context* derived_ctx = try_unwrap(SPC_FRAME_CTX(derived));
+            Context* specifier_ctx = try_unwrap(SPC_FRAME_CTX(specifier));
             assert(derived_ctx == specifier_ctx);
         }
         else {
             assert(IS_LET(old) or IS_USE(old));
 
-            Context(*) binding_ctx = try_unwrap(SPC_FRAME_CTX(old));
+            Context* binding_ctx = try_unwrap(SPC_FRAME_CTX(old));
             if (binding_ctx == UNSPECIFIED) {
                 // anything goes for the frame in the derived specifier
             }
             else {
-                Context(*) derived_ctx = try_unwrap(SPC_FRAME_CTX(derived));
+                Context* derived_ctx = try_unwrap(SPC_FRAME_CTX(derived));
                 assert(derived_ctx == binding_ctx);
             }
         }

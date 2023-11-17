@@ -254,7 +254,7 @@ DECLARE_NATIVE(reduce_each)
         flags |= LEVEL_FLAG_META_RESULT | LEVEL_FLAG_RAISED_RESULT_OK;
     }
 
-    Context(*) context = Virtual_Bind_Deep_To_New_Context(
+    Context* context = Virtual_Bind_Deep_To_New_Context(
         ARG(body),  // may be updated, will still be GC safe
         ARG(vars)
     );

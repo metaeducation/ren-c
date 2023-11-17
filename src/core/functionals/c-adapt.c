@@ -74,7 +74,7 @@ Bounce Adapter_Dispatcher(Level(*) const L)
 {
     USE_LEVEL_SHORTHANDS (L);
 
-    Details(*) details = Phase_Details(PHASE);
+    Details* details = Phase_Details(PHASE);
     assert(Array_Len(details) == IDX_ADAPTER_MAX);
 
     enum {
@@ -138,7 +138,7 @@ DECLARE_NATIVE(adapt_p)  // see extended definition ADAPT in %base-defs.r
     // access to the locals.  That requires creating a new paramlist.  Is
     // there a better way to do that with phasing?
 
-    Phase(*) adaptation = Make_Action(
+    Phase* adaptation = Make_Action(
         ACT_PARAMLIST(VAL_ACTION(adaptee)),  // reuse partials/exemplar/etc.
         ACT_PARTIALS(VAL_ACTION(adaptee)),
         &Adapter_Dispatcher,
@@ -150,7 +150,7 @@ DECLARE_NATIVE(adapt_p)  // see extended definition ADAPT in %base-defs.r
     // we might as well mutably bind it--there's no incentive to virtual
     // bind things that are copied.
     //
-    Array(*) prelude = Copy_And_Bind_Relative_Deep_Managed(
+    Array* prelude = Copy_And_Bind_Relative_Deep_Managed(
         ARG(prelude),
         adaptation,
         VAR_VISIBILITY_INPUTS
@@ -161,7 +161,7 @@ DECLARE_NATIVE(adapt_p)  // see extended definition ADAPT in %base-defs.r
     // Adapter_Dispatcher() must combine it with the FRAME! instance before
     // it can be executed (e.g. the `Level(*) L` it is dispatching).
     //
-    Details(*) details = Phase_Details(adaptation);
+    Details* details = Phase_Details(adaptation);
     Init_Relative_Block(
         Array_At(details, IDX_ADAPTER_PRELUDE),
         adaptation,

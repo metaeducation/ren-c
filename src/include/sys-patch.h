@@ -65,7 +65,7 @@
     inline static REBSPC* SPC(void *p) {
         assert(p != SPECIFIED); // use SPECIFIED, not SPC(SPECIFIED)
 
-        Context(*) c = CTX(p);
+        Context* c = CTX(p);
         assert(CTX_TYPE(c) == REB_FRAME);
 
         // Note: May be managed or unamanged.
@@ -76,7 +76,7 @@
     inline static REBSPC *VAL_SPECIFIER(NoQuote(Cell(const*)) v) {
         assert(ANY_ARRAYLIKE(v));
 
-        Array(*) a = ARR(BINDING(v));
+        Array* a = ARR(BINDING(v));
         if (not a)
             return SPECIFIED;
 
@@ -98,8 +98,8 @@
 // Shared routine that handles linking the patch into the context's variant
 // list, and bumping the meta out of the misc into the misc if needed.
 //
-inline static Array(*) Make_Use_Core(
-    Array(*) binding,  // must be a varlist or a LET patch
+inline static Array* Make_Use_Core(
+    Array* binding,  // must be a varlist or a LET patch
     REBSPC *next,
     enum Reb_Kind kind,
     bool reuse
@@ -146,7 +146,7 @@ inline static Array(*) Make_Use_Core(
     //   because the standard error object starts life as an object.  (This
     //   mechanism needs revisiting, but it's just another reason.)
     //
-    Array(*) use = Alloc_Singular(
+    Array* use = Alloc_Singular(
         //
         // INODE is not used yet (likely application: symbol for patches that
         // represent lets).  Consider uses in patches that represent objects.
@@ -231,7 +231,7 @@ inline static Array(*) Make_Use_Core(
 //
 inline static void Virtual_Bind_Patchify(
     REBVAL *any_array,
-    Context(*) ctx,
+    Context* ctx,
     enum Reb_Kind kind
 ){
     // Update array's binding.  Note that once virtually bound, mutating BIND

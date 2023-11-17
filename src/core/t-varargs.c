@@ -391,7 +391,7 @@ Bounce MAKE_Varargs(
         // By protocol, if the array is exhausted then the shared element
         // should be an END marker (not an array at its end)
         //
-        Array(*) array1 = Alloc_Singular(NODE_FLAG_MANAGED);
+        Array* array1 = Alloc_Singular(NODE_FLAG_MANAGED);
         if (VAL_LEN_AT(arg) == 0)
             Poison_Cell(Array_Single(array1));
         else
@@ -665,7 +665,7 @@ DECLARE_NATIVE(variadic_q)
 {
     INCLUDE_PARAMS_OF_VARIADIC_Q;
 
-    Action(*) action = VAL_ACTION(ARG(frame));
+    Action* action = VAL_ACTION(ARG(frame));
 
     const REBKEY *key_tail;
     const REBKEY *key = ACT_KEYS(&key_tail, action);

@@ -51,10 +51,10 @@ REBINT CT_Bitset(NoQuote(Cell(const*)) a, NoQuote(Cell(const*)) b, bool strict)
 //
 //  Make_Bitset: C
 //
-Binary(*) Make_Bitset(REBLEN num_bits)
+Binary* Make_Bitset(REBLEN num_bits)
 {
     REBLEN num_bytes = (num_bits + 7) / 8;
-    Binary(*) bin = Make_Binary(num_bytes);
+    Binary* bin = Make_Binary(num_bytes);
     Clear_Series(bin);
     Term_Binary_Len(bin, num_bytes);
     INIT_BITS_NOT(bin, false);
@@ -71,7 +71,7 @@ void MF_Bitset(REB_MOLD *mo, NoQuote(Cell(const*)) v, bool form)
 
     Pre_Mold(mo, v); // #[bitset! or make bitset!
 
-    Binary(const*) s = VAL_BITSET(v);
+    const Binary* s = VAL_BITSET(v);
 
     if (BITS_NOT(s))
         Append_Ascii(mo->series, "[not bits ");
@@ -104,7 +104,7 @@ Bounce MAKE_Bitset(
     if (len == NOT_FOUND)
         return RAISE(arg);
 
-    Binary(*) bin = Make_Bitset(cast(REBLEN, len));
+    Binary* bin = Make_Bitset(cast(REBLEN, len));
     Manage_Series(bin);
     Init_Bitset(OUT, bin);
 
@@ -199,7 +199,7 @@ REBINT Find_Max_Bit(Cell(const*) val)
 // Check bit indicated. Returns true if set.
 // If uncased is true, try to match either upper or lower case.
 //
-bool Check_Bit(Binary(const*) bset, REBLEN c, bool uncased)
+bool Check_Bit(const Binary* bset, REBLEN c, bool uncased)
 {
     REBLEN i, n = c;
     REBLEN tail = Binary_Len(bset);
@@ -237,7 +237,7 @@ retry:
 //
 // Set/clear a single bit. Expand if needed.
 //
-void Set_Bit(Binary(*) bset, REBLEN n, bool set)
+void Set_Bit(Binary* bset, REBLEN n, bool set)
 {
     REBLEN i = n >> 3;
     REBLEN tail = Binary_Len(bset);
@@ -264,7 +264,7 @@ void Set_Bit(Binary(*) bset, REBLEN n, bool set)
 //
 // Set/clear bits indicated by strings and chars and ranges.
 //
-bool Set_Bits(Binary(*) bset, Cell(const*) val, bool set)
+bool Set_Bits(Binary* bset, Cell(const*) val, bool set)
 {
     if (IS_INTEGER(val)) {
         REBLEN n = Int32s(val, 0);
@@ -411,7 +411,7 @@ bool Set_Bits(Binary(*) bset, Cell(const*) val, bool set)
 // Check bits indicated by strings and chars and ranges.
 // If uncased is true, try to match either upper or lower case.
 //
-bool Check_Bits(Binary(const*) bset, Cell(const*) val, bool uncased)
+bool Check_Bits(const Binary* bset, Cell(const*) val, bool uncased)
 {
     if (IS_CHAR(val))
         return Check_Bit(bset, VAL_CHAR(val), uncased);
@@ -529,7 +529,7 @@ bool Check_Bits(Binary(const*) bset, Cell(const*) val, bool uncased)
 //
 // Remove extra zero bytes from end of byte string.
 //
-void Trim_Tail_Zeros(Binary(*) ser)
+void Trim_Tail_Zeros(Binary* ser)
 {
     REBLEN len = Binary_Len(ser);
     Byte* bp = Binary_Head(ser);
@@ -575,7 +575,7 @@ REBTYPE(Bitset)
 
         REBVAL *setval = ARG(value);
 
-        Binary(*) bset = BIN(VAL_BITSET_Ensure_Mutable(v));
+        Binary* bset = BIN(VAL_BITSET_Ensure_Mutable(v));
         if (not Set_Bits(
             bset,
             picker,
@@ -623,7 +623,7 @@ REBTYPE(Bitset)
         return Init_True(OUT); }
 
       case SYM_COMPLEMENT: {
-        Binary(*) copy = BIN(Copy_Series_Core(VAL_BITSET(v), NODE_FLAG_MANAGED));
+        Binary* copy = BIN(Copy_Series_Core(VAL_BITSET(v), NODE_FLAG_MANAGED));
         INIT_BITS_NOT(copy, not BITS_NOT(VAL_BITSET(v)));
         return Init_Bitset(OUT, copy); }
 
@@ -636,7 +636,7 @@ REBTYPE(Bitset)
         if (Is_Isotope(arg))
             fail (arg);
 
-        Binary(*) bin = VAL_BITSET_Ensure_Mutable(v);
+        Binary* bin = VAL_BITSET_Ensure_Mutable(v);
 
         bool diff;
         if (BITS_NOT(VAL_BITSET(v)))
@@ -652,7 +652,7 @@ REBTYPE(Bitset)
         INCLUDE_PARAMS_OF_REMOVE;
         UNUSED(PARAM(series));  // covered by `v`
 
-        Binary(*) bin = VAL_BITSET_Ensure_Mutable(v);
+        Binary* bin = VAL_BITSET_Ensure_Mutable(v);
 
         if (not REF(part))
             fail (Error_Missing_Arg_Raw());
@@ -669,12 +669,12 @@ REBTYPE(Bitset)
         if (REF(part) or REF(deep))
             fail (Error_Bad_Refines_Raw());
 
-        Binary(*) copy = BIN(Copy_Series_Core(VAL_BITSET(v), NODE_FLAG_MANAGED));
+        Binary* copy = BIN(Copy_Series_Core(VAL_BITSET(v), NODE_FLAG_MANAGED));
         INIT_BITS_NOT(copy, BITS_NOT(VAL_BITSET(v)));
         return Init_Bitset(OUT, copy); }
 
       case SYM_CLEAR: {
-        Binary(*) bin = VAL_BITSET_Ensure_Mutable(v);
+        Binary* bin = VAL_BITSET_Ensure_Mutable(v);
         INIT_BITS_NOT(bin, false);
         Clear_Series(bin);
         return COPY(v); }
@@ -688,7 +688,7 @@ REBTYPE(Bitset)
             if (BITS_NOT(VAL_BITSET(arg))) {  // !!! see #2365
                 fail ("Bitset negation not handled by set operations");
             }
-            Binary(const*) bin = VAL_BITSET(arg);
+            const Binary* bin = VAL_BITSET(arg);
             Init_Binary(arg, bin);
         }
         else if (not IS_BINARY(arg))
@@ -710,7 +710,7 @@ REBTYPE(Bitset)
                 fail ("Bitset negation not handled by (most) set operations");
         }
 
-        Binary(const*) bin = VAL_BITSET(v);
+        const Binary* bin = VAL_BITSET(v);
         Init_Binary(v, bin);
 
         // !!! Until the replacement implementation with Roaring Bitmaps, the
@@ -741,7 +741,7 @@ REBTYPE(Bitset)
 
         REBVAL *processed = rebValue(rebR(action), rebQ(v), rebQ(arg));
 
-        Binary(*) bits = VAL_BINARY_Known_Mutable(processed);
+        Binary* bits = VAL_BINARY_Known_Mutable(processed);
         rebRelease(processed);
 
         INIT_BITS_NOT(bits, negated_result);

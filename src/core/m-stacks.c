@@ -116,10 +116,10 @@ void Shutdown_Feeds(void) {
 // This is used to an advantage in the APIs like rebValue(), to be able to get
 // a notion of a "current context" applicable *only* to when natives run.
 //
-Context(*) Get_Context_From_Stack(void)
+Context* Get_Context_From_Stack(void)
 {
     Level(*) L = TOP_LEVEL;
-    Phase(*) phase = nullptr;  // avoid uninitialized variable warning
+    Phase* phase = nullptr;  // avoid uninitialized variable warning
 
     for (; L != BOTTOM_LEVEL; L = L->prior) {
         if (not Is_Action_Level(L))
@@ -146,7 +146,7 @@ Context(*) Get_Context_From_Stack(void)
     if (not Is_Action_Native(phase))
         return Lib_Context;
 
-    Details(*) details = Phase_Details(phase);
+    Details* details = Phase_Details(phase);
     REBVAL *context = DETAILS_AT(details, IDX_NATIVE_CONTEXT);
     return VAL_CONTEXT(context);
 }
@@ -222,12 +222,12 @@ void Expand_Data_Stack_May_Fail(REBLEN amount)
 //
 // !!! How can we pass in callsite file/line for tracking info?
 //
-Array(*) Pop_Stack_Values_Core(StackIndex base, Flags flags)
+Array* Pop_Stack_Values_Core(StackIndex base, Flags flags)
 {
     Assert_No_DataStack_Pointers_Extant();  // in the future, pop may disrupt
 
     Length len = TOP_INDEX - base;
-    Array(*) a = Make_Array_Core(len, flags);
+    Array* a = Make_Array_Core(len, flags);
     Set_Series_Len(a, len);
 
   #if DEBUG

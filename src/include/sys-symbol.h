@@ -53,14 +53,14 @@
 // One synonym need not keep another alive, because the process of freeing
 // string nodes unlinks them from the list.  (Hence the canon can change!)
 //
-#define LINK_Synonym_TYPE       Symbol(const*)
+#define LINK_Synonym_TYPE       const Symbol*
 #define LINK_Synonym_CAST       SYM
 #define HAS_LINK_Synonym        FLAVOR_SYMBOL
 
 // Hitches are a circularly linked list that includes transient binding info
 // for the word, as well as declared variables in "sea" contexts.
 //
-#define MISC_Hitch_TYPE         Series(*)
+#define MISC_Hitch_TYPE         Series*
 #define MISC_Hitch_CAST         SER
 #define HAS_MISC_Hitch          FLAVOR_SYMBOL
 
@@ -100,10 +100,10 @@
     SERIES_FLAG_26
 
 
-inline static Option(SymId) ID_OF_SYMBOL(Symbol(const*) s)
+inline static Option(SymId) ID_OF_SYMBOL(const Symbol* s)
   { return cast(SymId, SECOND_UINT16(&s->info)); }
 
-inline static Symbol(const*) Canon_Symbol(SymId symid) {
+inline static const Symbol* Canon_Symbol(SymId symid) {
     assert(cast(REBLEN, symid) != 0);
     assert(cast(REBLEN, symid) < ALL_SYMS_MAX);
     return &g_symbols.builtin_canons[symid];
@@ -112,8 +112,8 @@ inline static Symbol(const*) Canon_Symbol(SymId symid) {
 #define Canon(name) \
     Canon_Symbol(SYM_##name)
 
-inline static bool Are_Synonyms(Symbol(const*) s1, Symbol(const*) s2) {
-    Symbol(const*) temp = s1;
+inline static bool Are_Synonyms(const Symbol* s1, const Symbol* s2) {
+    const Symbol* temp = s1;
     do {
         if (temp == s2)
             return true;

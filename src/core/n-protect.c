@@ -184,9 +184,9 @@ void Protect_Value(Cell(const*) v, Flags flags)
 //
 // Anything that calls this must call Uncolor() when done.
 //
-void Protect_Series(Series(const*) s_const, REBLEN index, Flags flags)
+void Protect_Series(const Series* s_const, REBLEN index, Flags flags)
 {
-    Series(*) s = m_cast(Series(*), s_const);  // mutate flags only
+    Series* s = m_cast(Series*, s_const);  // mutate flags only
 
     if (Is_Series_Black(s))
         return; // avoid loop
@@ -222,9 +222,9 @@ void Protect_Series(Series(const*) s_const, REBLEN index, Flags flags)
 //
 // Anything that calls this must call Uncolor() when done.
 //
-void Protect_Context(Context(*) c, Flags flags)
+void Protect_Context(Context* c, Flags flags)
 {
-    Array(*) varlist = m_cast(Array(*), CTX_VARLIST(c));  // mutate flags only
+    Array* varlist = m_cast(Array*, CTX_VARLIST(c));  // mutate flags only
 
     if (Is_Series_Black(varlist))
         return; // avoid loop
@@ -528,7 +528,7 @@ DECLARE_NATIVE(locked_q)
 void Force_Value_Frozen_Core(
     Cell(const*) v,
     bool deep,
-    Option(Series(*)) locker
+    Option(Series*) locker
 ){
     if (Is_Value_Frozen_Deep(v))
         return;
@@ -539,7 +539,7 @@ void Force_Value_Frozen_Core(
         return;  // special form, immutable
 
     if (ANY_ARRAY_KIND(heart)) {
-        Array(*) a = m_cast(Array(*), VAL_ARRAY(v));  // mutate flags only
+        Array* a = m_cast(Array*, VAL_ARRAY(v));  // mutate flags only
         if (deep)
             Freeze_Array_Deep(a);
         else
@@ -548,16 +548,16 @@ void Force_Value_Frozen_Core(
             Set_Series_Info(a, AUTO_LOCKED);
     }
     else if (ANY_CONTEXT_KIND(heart)) {
-        Context(*) c = VAL_CONTEXT(v);
+        Context* c = VAL_CONTEXT(v);
         if (deep)
             Deep_Freeze_Context(c);
         else
             fail ("What does a shallow freeze of a context mean?");
         if (locker)
-            Set_Series_Info(m_cast(Array(*), CTX_VARLIST(c)), AUTO_LOCKED);
+            Set_Series_Info(m_cast(Array*, CTX_VARLIST(c)), AUTO_LOCKED);
     }
     else if (ANY_SERIES_KIND(heart)) {
-        Series(*) s = m_cast(Series(*), VAL_SERIES(v));  // mutate flags only
+        Series* s = m_cast(Series*, VAL_SERIES(v));  // mutate flags only
         Freeze_Series(s);
         UNUSED(deep);
         if (locker)
@@ -594,7 +594,7 @@ DECLARE_NATIVE(freeze)
     // to deliver a message that the system locked something implicitly.  We
     // don't want to say that here, so hold off on the feature.
     //
-    Series(*) locker = nullptr;
+    Series* locker = nullptr;
     Force_Value_Frozen_Core(ARG(value), REF(deep), locker);
 
     return COPY(ARG(value));

@@ -68,7 +68,7 @@ inline static bool Level_Is_Variadic(Level(*) L) {
     return FEED_IS_VARIADIC(L->feed);
 }
 
-inline static Array(const*) Level_Array(Level(*) L) {
+inline static const Array* Level_Array(Level(*) L) {
     assert(not Level_Is_Variadic(L));
     return FEED_ARRAY(L->feed);
 }
@@ -96,7 +96,7 @@ inline static REBLEN Level_Expression_Index(Level(*) L) {
     return L->expr_index - 1;
 }
 
-inline static String(const*) File_Of_Level(Level(*) L) {
+inline static const String* File_Of_Level(Level(*) L) {
     if (Level_Is_Variadic(L))
         return nullptr;
     if (Not_Array_Flag(Level_Array(L), HAS_FILE_LINE_UNMASKED))
@@ -108,7 +108,7 @@ inline static const char* File_UTF8_Of_Level(Level(*) L) {
     //
     // !!! Note: Too early in boot at the moment to use Canon(ANONYMOUS).
     //
-    String(const*) str = File_Of_Level(L);
+    const String* str = File_Of_Level(L);
     return str ? String_UTF8(str) : "~anonymous~";
 }
 
@@ -129,32 +129,32 @@ inline static LineNumber LineNumber_Of_Level(Level(*) L) {
 // ID ran.  Consider when reviewing the future of ACTION!.
 //
 #define Level_Num_Args(L) \
-    (cast(Series(*), (L)->varlist)->content.dynamic.used - 1)  // minus rootvar
+    (cast(Series*, (L)->varlist)->content.dynamic.used - 1)  // minus rootvar
 
 #define Level_Spare(L) \
     cast(Atom(*), &(L)->spare)
 
 
 // The "phase" slot of a FRAME! value is the second node pointer in PAYLOAD().
-// If a frame value is non-archetypal, this slot may be occupied by a String(*)
+// If a frame value is non-archetypal, this slot may be occupied by a String*
 // which represents the cached name of the action from which the frame
 // was created.  This FRAME! value is archetypal, however...which never holds
 // such a cache.  For performance (even in the debug build, where this is
 // called *a lot*) this is a macro and is unchecked.
 //
 #define Level_Phase(L) \
-    cast(Phase(*), VAL_FRAME_PHASE_OR_LABEL_NODE((L)->rootvar))
+    cast(Phase*, VAL_FRAME_PHASE_OR_LABEL_NODE((L)->rootvar))
 
-inline static void INIT_LVL_PHASE(Level(*) L, Phase(*) phase)  // check types
+inline static void INIT_LVL_PHASE(Level(*) L, Phase* phase)  // check types
   { INIT_VAL_FRAME_PHASE_OR_LABEL(L->rootvar, phase); }  // ...only
 
-inline static void INIT_LVL_BINDING(Level(*) L, Context(*) binding)
+inline static void INIT_LVL_BINDING(Level(*) L, Context* binding)
   { mutable_BINDING(L->rootvar) = binding; }  // also fast
 
 #define Level_Binding(L) \
-    cast(Context(*), BINDING((L)->rootvar))
+    cast(Context*, BINDING((L)->rootvar))
 
-inline static Option(Symbol(const*)) Level_Label(Level(*) L) {
+inline static Option(const Symbol*) Level_Label(Level(*) L) {
     assert(Is_Action_Level(L));
     return L->label;
 }
@@ -200,7 +200,7 @@ inline static Option(Symbol(const*)) Level_Label(Level(*) L) {
 #define Not_Level_At_End(L)         Not_Feed_At_End((L)->feed)
 
 
-inline static Context(*) Context_For_Level_May_Manage(Level(*) L) {
+inline static Context* Context_For_Level_May_Manage(Level(*) L) {
     assert(not Is_Level_Fulfilling(L));
     Set_Node_Managed_Bit(L->varlist);  // may already be managed
     return CTX(L->varlist);
@@ -339,7 +339,7 @@ inline static void Drop_Level_Core(Level(*) L) {
         //
         Node* n = L->alloc_value_list;
         while (n != L) {
-            ArrayT* a = ARR(n);
+            Array* a = ARR(n);
             n = LINK(ApiNext, a);
             FRESHEN(Array_Single(a));
             GC_Kill_Series(a);
@@ -355,7 +355,7 @@ inline static void Drop_Level_Core(Level(*) L) {
       #if !defined(NDEBUG)
         Node* n = L->alloc_value_list;
         while (n != L) {
-            ArrayT* a = ARR(n);
+            Array* a = ARR(n);
             printf("API handle was allocated but not freed, panic'ing leak\n");
             panic (a);
         }
@@ -780,7 +780,7 @@ inline static bool Pushed_Continuation(
         if (IS_FRAME_PHASED(branch))  // see REDO for tail-call recursion
             fail ("Use REDO to restart a running FRAME! (not DO)");
 
-        Context(*) c = VAL_CONTEXT(branch);  // checks for INACCESSIBLE
+        Context* c = VAL_CONTEXT(branch);  // checks for INACCESSIBLE
 
         if (Get_Subclass_Flag(VARLIST, CTX_VARLIST(c), FRAME_HAS_BEEN_INVOKED))
             fail (Error_Stale_Frame_Raw());
@@ -790,7 +790,7 @@ inline static bool Pushed_Continuation(
         );
         L->executor = &Action_Executor;  // usually done by Push_Action()s
 
-        Array(*) varlist = CTX_VARLIST(c);
+        Array* varlist = CTX_VARLIST(c);
         L->varlist = varlist;
         L->rootvar = CTX_ROOTVAR(c);
         INIT_BONUS_KEYSOURCE(varlist, L);

@@ -22,13 +22,13 @@
 //
 // API cells live in singular arrays (which fit inside an array Stub, that
 // is the size of 2 REBVALs).  But they aren't kept alive by references from
-// other values, like the way that an Array(*) used by a BLOCK! is kept alive.
+// other values, like the way that an Array* used by a BLOCK! is kept alive.
 // They are kept alive by being roots (currently implemented with a flag
 // NODE_FLAG_ROOT, but it could also mean living in a distinct pool from
 // other series nodes).
 //
 // The API value content is in the single cell, with LINK().owner holding
-// a Context(*) of the FRAME! that controls its lifetime, or EMPTY_ARRAY.  This
+// a Context* of the FRAME! that controls its lifetime, or EMPTY_ARRAY.  This
 // link field exists in the pointer immediately prior to the REBVAL*, which
 // means it can be sniffed as NODE_FLAG_CELL, distinguished from handles that
 // were given back with rebMalloc(), so routines can discern them.
@@ -68,7 +68,7 @@ inline static bool Is_Api_Value(Cell(const*) v) {
     return did (v->header.bits & NODE_FLAG_ROOT);
 }
 
-inline static void Link_Api_Handle_To_Level(Array(*) a, Level(*) L)
+inline static void Link_Api_Handle_To_Level(Array* a, Level(*) L)
 {
     // The head of the list isn't null, but points at the level, so that
     // API freeing operations can update the head of the list in the level
@@ -87,7 +87,7 @@ inline static void Link_Api_Handle_To_Level(Array(*) a, Level(*) L)
     L->alloc_value_list = a;
 }
 
-inline static void Unlink_Api_Handle_From_Level(Array(*) a)
+inline static void Unlink_Api_Handle_From_Level(Array* a)
 {
     bool at_head = did (
         *cast(Byte*, MISC(ApiPrev, a)) & NODE_BYTEMASK_0x01_CELL
@@ -126,7 +126,7 @@ inline static void Unlink_Api_Handle_From_Level(Array(*) a)
 //
 inline static REBVAL *Alloc_Value(void)
 {
-    Array(*) a = Make_Array_Core(
+    Array* a = Make_Array_Core(
         1,
         FLAG_FLAVOR(API)
             |  NODE_FLAG_ROOT | NODE_FLAG_MANAGED | SERIES_FLAG_FIXED_SIZE
@@ -154,7 +154,7 @@ inline static void Free_Value(REBVAL *v)
 {
     assert(Is_Api_Value(v));
 
-    Array(*) a = Singular_From_Cell(v);
+    Array* a = Singular_From_Cell(v);
 
     if (Is_Node_Managed(a))
         Unlink_Api_Handle_From_Level(a);

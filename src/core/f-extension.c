@@ -95,7 +95,7 @@ DECLARE_NATIVE(builtin_extensions)
     // all the collated information that would be needed to initialize and
     // use the extension (but don't act on the information yet!)
 
-    Array(*) list = Make_Array(NUM_BUILTIN_EXTENSIONS);
+    Array* list = Make_Array(NUM_BUILTIN_EXTENSIONS);
     REBLEN i;
     for (i = 0; i != NUM_BUILTIN_EXTENSIONS; ++i) {
         COLLATE_CFUNC *collator = Builtin_Extension_Collators[i];
@@ -142,7 +142,7 @@ DECLARE_NATIVE(load_extension)
     // and shutdown functions, as well as Rebol script source, plus Dispatcher
     // functions for each native.
     //
-    Array(*) collated;
+    Array* collated;
 
     if (IS_BLOCK(ARG(where))) {  // It's one of the BUILTIN-EXTENSIONS
         collated = VAL_ARRAY_ENSURE_MUTABLE(ARG(where));  // already "collated"
@@ -185,7 +185,7 @@ DECLARE_NATIVE(load_extension)
 
     // !!! used to use STD_EXT_CTX, now this would go in META OF
 
-    Context(*) module_ctx = Alloc_Context_Core(REB_MODULE, 1, NODE_FLAG_MANAGED);
+    Context* module_ctx = Alloc_Context_Core(REB_MODULE, 1, NODE_FLAG_MANAGED);
 
     PG_Next_Native_Cfunc = cfuncs;
     PG_Currently_Loading_Module = module_ctx;
@@ -220,14 +220,14 @@ DECLARE_NATIVE(load_extension)
     // this *should* make no difference.
     //
     if (SPORADICALLY(2)) {
-        Binary(*) bin = VAL_BINARY_Ensure_Mutable(script);
+        Binary* bin = VAL_BINARY_Ensure_Mutable(script);
         FLAVOR_BYTE(bin) = FLAVOR_STRING;
         Term_String_Len_Size(
-            cast(String(*), bin),  // legal for tweaking cached data
+            cast(String*, bin),  // legal for tweaking cached data
             script_num_codepoints,
             Binary_Len(bin)
         );
-        mutable_LINK(Bookmarks, m_cast(Binary(*), bin)) = nullptr;
+        mutable_LINK(Bookmarks, m_cast(Binary*, bin)) = nullptr;
 
         if (SPORADICALLY(2))
             Init_Text(script, STR(bin));

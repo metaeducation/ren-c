@@ -46,7 +46,7 @@ void Assert_Cell_Marked_Correctly(Cell(const*) v)
 
     enum Reb_Kind heart = CELL_HEART_UNCHECKED(v);
 
-    Series(*) binding;
+    Series* binding;
     if (
         IS_BINDABLE_KIND(heart)
         and (binding = BINDING(v))
@@ -94,7 +94,7 @@ void Assert_Cell_Marked_Correctly(Cell(const*) v)
 
       case REB_ISSUE: {
         if (Get_Cell_Flag_Unchecked(v, ISSUE_HAS_NODE)) {
-            Series(const*) s = VAL_STRING(v);
+            const Series* s = VAL_STRING(v);
             assert(Is_Series_Frozen(s));
 
             // We do not want ISSUE!s to use series if the payload fits in
@@ -128,7 +128,7 @@ void Assert_Cell_Marked_Correctly(Cell(const*) v)
 
       case REB_BITSET: {
         assert(Get_Cell_Flag_Unchecked(v, FIRST_IS_NODE));
-        Series(*) s = SER(VAL_NODE1(v));
+        Series* s = SER(VAL_NODE1(v));
         Assert_Series_Term_Core(s);
         if (Get_Series_Flag(s, INACCESSIBLE)) {
             // TBD: clear out reference and GC `s`?
@@ -138,7 +138,7 @@ void Assert_Cell_Marked_Correctly(Cell(const*) v)
 
       case REB_MAP: {
         assert(Get_Cell_Flag_Unchecked(v, FIRST_IS_NODE));
-        Map(const*) map = VAL_MAP(v);
+        const Map* map = VAL_MAP(v);
         assert(Is_Node_Marked(map));
         assert(Is_Series_Array(MAP_PAIRLIST(map)));
         break; }
@@ -148,7 +148,7 @@ void Assert_Cell_Marked_Correctly(Cell(const*) v)
             // simple handle, no GC interaction
         }
         else {
-            Array(*) a = VAL_HANDLE_SINGULAR(v);
+            Array* a = VAL_HANDLE_SINGULAR(v);
 
             // Handle was created with Init_Handle_XXX_Managed.  It holds a
             // singular array containing exactly one handle, and the actual
@@ -178,7 +178,7 @@ void Assert_Cell_Marked_Correctly(Cell(const*) v)
 
       case REB_BINARY: {
         assert(Get_Cell_Flag_Unchecked(v, FIRST_IS_NODE));
-        Binary(*) s = BIN(VAL_NODE1(v));
+        Binary* s = BIN(VAL_NODE1(v));
         if (Get_Series_Flag(s, INACCESSIBLE))
             break;
 
@@ -197,14 +197,14 @@ void Assert_Cell_Marked_Correctly(Cell(const*) v)
             break;
 
         assert(Get_Cell_Flag_Unchecked(v, FIRST_IS_NODE));
-        Series(const*) s = VAL_SERIES(v);
+        const Series* s = VAL_SERIES(v);
         Assert_Series_Term_If_Needed(s);
 
         assert(Series_Wide(s) == sizeof(Byte));
         assert(Is_Node_Marked(s));
 
         if (Is_NonSymbol_String(s)) {
-            BookmarkList(*) book = LINK(Bookmarks, s);
+            BookmarkList* book = LINK(Bookmarks, s);
             if (book) {
                 assert(Series_Used(book) == 1);  // just one for now
                 //
@@ -225,13 +225,13 @@ void Assert_Cell_Marked_Correctly(Cell(const*) v)
         {
         assert((v->header.bits & CELL_MASK_FRAME) == CELL_MASK_FRAME);
 
-        Phase(*) a = cast(Phase(*), VAL_ACTION(v));
+        Phase* a = cast(Phase*, VAL_ACTION(v));
         assert(Is_Node_Marked(a));
         if (VAL_ACTION_PARTIALS_OR_LABEL(v))
             assert(Is_Node_Marked(VAL_ACTION_PARTIALS_OR_LABEL(v)));
 
         if (Is_Action_Native(a)) {
-            Details(*) details = Phase_Details(a);
+            Details* details = Phase_Details(a);
             assert(Array_Len(details) >= IDX_NATIVE_MAX);
             Value(*) body = DETAILS_AT(details, IDX_NATIVE_BODY);
             Value(*) context = DETAILS_AT(details, IDX_NATIVE_CONTEXT);
@@ -264,7 +264,7 @@ void Assert_Cell_Marked_Correctly(Cell(const*) v)
             (v->header.bits & CELL_MASK_ANY_CONTEXT)
             == CELL_MASK_ANY_CONTEXT
         );
-        Context(*) context = VAL_CONTEXT(v);
+        Context* context = VAL_CONTEXT(v);
         assert(Is_Node_Marked(context));
 
         // Currently the "binding" in a context is only used by FRAME! to
@@ -307,7 +307,7 @@ void Assert_Cell_Marked_Correctly(Cell(const*) v)
 
       case REB_VARARGS: {
         assert((v->header.bits & CELL_MASK_VARARGS) == CELL_MASK_VARARGS);
-        Action(*) phase = VAL_VARARGS_PHASE(v);
+        Action* phase = VAL_VARARGS_PHASE(v);
         if (phase)  // null if came from MAKE VARARGS!
             assert(Is_Node_Marked(phase));
         break; }
@@ -324,7 +324,7 @@ void Assert_Cell_Marked_Correctly(Cell(const*) v)
       case REB_GET_GROUP:
       case REB_META_GROUP:
       case REB_TYPE_GROUP: {
-        Array(*) a = ARR(VAL_NODE1(v));
+        Array* a = ARR(VAL_NODE1(v));
         if (Get_Series_Flag(a, INACCESSIBLE))
             break;
 
@@ -372,7 +372,7 @@ void Assert_Cell_Marked_Correctly(Cell(const*) v)
           // !!! Optimization abandoned
           //
           case FLAVOR_ARRAY : {
-            Array(*) a = ARR(VAL_NODE1(v));
+            Array* a = ARR(VAL_NODE1(v));
             assert(Not_Series_Flag(a, INACCESSIBLE));
 
             assert(Array_Len(a) >= 2);
@@ -396,7 +396,7 @@ void Assert_Cell_Marked_Correctly(Cell(const*) v)
       case REB_TYPE_WORD: {
         assert(Get_Cell_Flag_Unchecked(v, FIRST_IS_NODE));
 
-        const StringT *spelling = VAL_WORD_SYMBOL(v);
+        const String *spelling = VAL_WORD_SYMBOL(v);
         assert(Is_Series_Frozen(spelling));
 
         // !!! Whether you can count at this point on a spelling being GC
@@ -448,7 +448,7 @@ void Assert_Cell_Marked_Correctly(Cell(const*) v)
 // LINK() or MISC(), or which fields had been assigned to correctly use for
 // reading back what to mark.  This has been standardized.
 //
-void Assert_Array_Marked_Correctly(Array(const*) a) {
+void Assert_Array_Marked_Correctly(const Array* a) {
     assert(Is_Node_Marked(a));
 
     #ifdef HEAVY_CHECKS
@@ -476,14 +476,14 @@ void Assert_Array_Marked_Correctly(Array(const*) a) {
         // because of the potential for overflowing the C stack with calls
         // to Queue_Mark_Function_Deep.
 
-        Details(*) details = cast(Details(*), VAL_ACTION(archetype));
+        Details* details = cast(Details*, VAL_ACTION(archetype));
         assert(Is_Node_Marked(details));
 
-        Array(*) list = CTX_VARLIST(ACT_EXEMPLAR(VAL_ACTION(archetype)));
+        Array* list = CTX_VARLIST(ACT_EXEMPLAR(VAL_ACTION(archetype)));
         assert(IS_VARLIST(list));
     }
     else if (IS_VARLIST(a)) {
-        const REBVAL *archetype = CTX_ARCHETYPE(CTX(m_cast(Array(*), a)));
+        const REBVAL *archetype = CTX_ARCHETYPE(CTX(m_cast(Array*, a)));
 
         // Currently only FRAME! archetypes use binding
         //
@@ -513,7 +513,7 @@ void Assert_Array_Marked_Correctly(Array(const*) a) {
             assert(IS_FRAME(archetype));
         }
         else {
-            KeyList(*) keylist = cast(KeyListT*, keysource);
+            KeyList* keylist = cast(KeyList*, keysource);
             assert(IS_KEYLIST(keylist));
 
             if (IS_FRAME(archetype)) {
@@ -521,7 +521,7 @@ void Assert_Array_Marked_Correctly(Array(const*) a) {
                 // place to put an ancestor link.
             }
             else {
-                KeyList(*) ancestor = LINK(Ancestor, keylist);
+                KeyList* ancestor = LINK(Ancestor, keylist);
                 UNUSED(ancestor);  // maybe keylist
             }
         }
@@ -534,7 +534,7 @@ void Assert_Array_Marked_Correctly(Array(const*) a) {
         // seemed to be a source of bugs, but it may be added again...in
         // which case the hashlist may be NULL.
         //
-        Series(*) hashlist = LINK(Hashlist, a);
+        Series* hashlist = LINK(Hashlist, a);
         assert(Series_Flavor(hashlist) == FLAVOR_HASHLIST);
         UNUSED(hashlist);
     }

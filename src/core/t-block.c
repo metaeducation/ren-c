@@ -57,7 +57,7 @@ DECLARE_NATIVE(only_p)  // https://forum.rebol.info/t/1182/11
 
     Value(*) v = ARG(value);
 
-    Array(*) a = Alloc_Singular(NODE_FLAG_MANAGED);  // semi-efficient, see [1]
+    Array* a = Alloc_Singular(NODE_FLAG_MANAGED);  // semi-efficient, see [1]
     if (Is_Nulled(v))
         Set_Series_Len(a, 0);  // singulars initialize at length 1
     else
@@ -123,8 +123,8 @@ Bounce MAKE_Array(
         Size size;
         Utf8(const*) utf8 = VAL_UTF8_SIZE_AT(&size, arg);
 
-        String(const*) file = ANONYMOUS;
-        Option(Context(*)) context = nullptr;
+        const String* file = ANONYMOUS;
+        Option(Context*) context = nullptr;
         Init_Array_Cell(
             OUT,
             kind,
@@ -212,8 +212,8 @@ Bounce MAKE_Array(
         //
         Size utf8_size;
         Utf8(const*) utf8 = VAL_UTF8_SIZE_AT(&utf8_size, arg);
-        String(const*) file = ANONYMOUS;
-        Option(Context(*)) context = nullptr;
+        const String* file = ANONYMOUS;
+        Option(Context*) context = nullptr;
         return Init_Array_Cell(
             OUT,
             kind,
@@ -225,11 +225,11 @@ Bounce MAKE_Array(
         // `to block! #{00BDAE....}` assumes the binary data is UTF8, and
         // goes directly to the scanner to make an unbound code array.
         //
-        String(const*) file = ANONYMOUS;
+        const String* file = ANONYMOUS;
 
         Size size;
         const Byte* at = VAL_BINARY_SIZE_AT(&size, arg);
-        Option(Context(*)) context = nullptr;
+        Option(Context*) context = nullptr;
         return Init_Array_Cell(
             OUT,
             kind,
@@ -282,7 +282,7 @@ Bounce MAKE_Array(
             assert(not IS_VARLIST(VAL_VARARGS_BINDING(arg)));
         }
         else {
-            Context(*) context = CTX(VAL_VARARGS_BINDING(arg));
+            Context* context = CTX(VAL_VARARGS_BINDING(arg));
             Level(*) param_level = CTX_LEVEL_MAY_FAIL(context);
 
             REBVAL *param = SPECIFIC(Array_Head(
@@ -354,7 +354,7 @@ Bounce TO_Array(Level(*) level_, enum Reb_Kind kind, const REBVAL *arg) {
     else {
         // !!! Review handling of making a 1-element PATH!, e.g. TO PATH! 10
         //
-        Array(*) single = Alloc_Singular(NODE_FLAG_MANAGED);
+        Array* single = Alloc_Singular(NODE_FLAG_MANAGED);
         Copy_Cell(Array_Single(single), arg);
         return Init_Array_Cell(OUT, kind, single);
     }
@@ -374,7 +374,7 @@ Bounce TO_Array(Level(*) level_, enum Reb_Kind kind, const REBVAL *arg) {
 //
 REBINT Find_In_Array(
     Length* len,
-    Array(const*) array,
+    const Array* array,
     REBSPC *array_specifier,
     REBLEN index_unsigned, // index to start search
     REBLEN end_unsigned, // ending position
@@ -472,7 +472,7 @@ REBINT Find_In_Array(
     if (ANY_WORD(pattern)) {
         for (; index >= start and index < end; index += skip) {
             Cell(const*) item = Array_At(array, index);
-            Symbol(const*) pattern_symbol = VAL_WORD_SYMBOL(pattern);
+            const Symbol* pattern_symbol = VAL_WORD_SYMBOL(pattern);
             if (ANY_WORD(item)) {
                 if (flags & AM_FIND_CASE) { // Must be same type and spelling
                     if (
@@ -590,7 +590,7 @@ static int Compare_Val_Custom(void *arg, const void *v1, const void *v2)
 //
 //  Shuffle_Array: C
 //
-void Shuffle_Array(Array(*) arr, REBLEN idx, bool secure)
+void Shuffle_Array(Array* arr, REBLEN idx, bool secure)
 {
     REBLEN n;
     REBLEN k;
@@ -641,7 +641,7 @@ static REBINT Try_Get_Array_Index_From_Picker(
         //
         n = -1;
 
-        Symbol(const*) symbol = VAL_WORD_SYMBOL(picker);
+        const Symbol* symbol = VAL_WORD_SYMBOL(picker);
         Cell(const*) tail;
         Cell(const*) item = VAL_ARRAY_AT(&tail, v);
         REBLEN index = VAL_INDEX(v);
@@ -714,7 +714,7 @@ void MF_Array(REB_MOLD *mo, NoQuote(Cell(const*)) v, bool form)
     enum Reb_Kind kind = CELL_HEART(v);
 
     if (form) {
-        Option(Context(*)) context = nullptr;
+        Option(Context*) context = nullptr;
         Form_Array_At(mo, VAL_ARRAY(v), VAL_INDEX(v), context);
         return;
     }
@@ -863,11 +863,11 @@ REBTYPE(Array)
         if (n < 0 or n >= cast(REBINT, VAL_LEN_HEAD(array)))
             fail (Error_Out_Of_Range(picker));
 
-        Array(*) mut_arr = VAL_ARRAY_ENSURE_MUTABLE(array);
+        Array* mut_arr = VAL_ARRAY_ENSURE_MUTABLE(array);
         Cell(*) at = Array_At(mut_arr, n);
         Copy_Cell(at, setval);
 
-        return nullptr; }  // Array(*) is still fine, caller need not update
+        return nullptr; }  // Array* is still fine, caller need not update
 
 
       case SYM_UNIQUE:
@@ -889,7 +889,7 @@ REBTYPE(Array)
         if (REF(deep))
             fail (Error_Bad_Refines_Raw());
 
-        Array(*) arr = VAL_ARRAY_ENSURE_MUTABLE(array);
+        Array* arr = VAL_ARRAY_ENSURE_MUTABLE(array);
 
         REBLEN len;
         if (REF(part)) {
@@ -941,7 +941,7 @@ REBTYPE(Array)
 
         REBLEN limit = Part_Tail_May_Modify_Index(array, ARG(part));
 
-        Array(const*) arr = VAL_ARRAY(array);
+        const Array* arr = VAL_ARRAY(array);
         REBLEN index = VAL_INDEX(array);
 
         REBINT skip;
@@ -1016,7 +1016,7 @@ REBTYPE(Array)
             return COPY(array);  // don't fail on read only if would be a no-op
         }
 
-        Array(*) arr = VAL_ARRAY_ENSURE_MUTABLE(array);
+        Array* arr = VAL_ARRAY_ENSURE_MUTABLE(array);
         REBLEN index = VAL_INDEX(array);
 
         Flags flags = 0;
@@ -1050,7 +1050,7 @@ REBTYPE(Array)
         return OUT; }
 
       case SYM_CLEAR: {
-        Array(*) arr = VAL_ARRAY_ENSURE_MUTABLE(array);
+        Array* arr = VAL_ARRAY_ENSURE_MUTABLE(array);
         REBLEN index = VAL_INDEX(array);
 
         if (index < VAL_LEN_HEAD(array)) {
@@ -1071,7 +1071,7 @@ REBTYPE(Array)
         REBU64 types = 0;
         REBLEN tail = Part_Tail_May_Modify_Index(array, ARG(part));
 
-        Array(const*) arr = VAL_ARRAY(array);
+        const Array* arr = VAL_ARRAY(array);
         REBLEN index = VAL_INDEX(array);
 
         if (REF(deep))
@@ -1085,7 +1085,7 @@ REBTYPE(Array)
         //
         flags |= (array->header.bits & ARRAY_FLAG_CONST_SHALLOW);
 
-        Array(*) copy = Copy_Array_Core_Managed(
+        Array* copy = Copy_Array_Core_Managed(
             arr,
             index, // at
             specifier,
@@ -1127,7 +1127,7 @@ REBTYPE(Array)
         INCLUDE_PARAMS_OF_REVERSE;
         UNUSED(ARG(series));  // covered by `v`
 
-        Array(*) arr = VAL_ARRAY_ENSURE_MUTABLE(array);
+        Array* arr = VAL_ARRAY_ENSURE_MUTABLE(array);
         REBLEN index = VAL_INDEX(array);
 
         REBLEN len = Part_Len_May_Modify_Index(array, ARG(part));
@@ -1204,7 +1204,7 @@ REBTYPE(Array)
         INCLUDE_PARAMS_OF_SORT;
         UNUSED(PARAM(series));  // covered by `v`
 
-        Array(*) arr = VAL_ARRAY_ENSURE_MUTABLE(array);
+        Array* arr = VAL_ARRAY_ENSURE_MUTABLE(array);
 
         struct sort_flags flags;
         flags.cased = REF(case);
@@ -1278,7 +1278,7 @@ REBTYPE(Array)
             return Inherit_Const(stable_OUT, array);
         }
 
-        Array(*) arr = VAL_ARRAY_ENSURE_MUTABLE(array);
+        Array* arr = VAL_ARRAY_ENSURE_MUTABLE(array);
         Shuffle_Array(arr, VAL_INDEX(array), REF(secure));
         return COPY(array); }
 
@@ -1335,7 +1335,7 @@ DECLARE_NATIVE(blockify)
     if (IS_BLOCK(v))
         return COPY(v);
 
-    Array(*) a = Make_Array_Core(
+    Array* a = Make_Array_Core(
         1,
         NODE_FLAG_MANAGED | ARRAY_MASK_HAS_FILE_LINE
     );
@@ -1368,7 +1368,7 @@ DECLARE_NATIVE(groupify)
     if (IS_GROUP(v))
         return COPY(v);
 
-    Array(*) a = Make_Array_Core(
+    Array* a = Make_Array_Core(
         1,
         NODE_FLAG_MANAGED | ARRAY_MASK_HAS_FILE_LINE
     );
@@ -1399,7 +1399,7 @@ DECLARE_NATIVE(enblock)
 
     REBVAL *v = ARG(value);
 
-    Array(*) a = Make_Array_Core(
+    Array* a = Make_Array_Core(
         1,
         NODE_FLAG_MANAGED | ARRAY_MASK_HAS_FILE_LINE
     );
@@ -1430,7 +1430,7 @@ DECLARE_NATIVE(engroup)
 
     REBVAL *v = ARG(value);
 
-    Array(*) a = Make_Array_Core(
+    Array* a = Make_Array_Core(
         1,
         NODE_FLAG_MANAGED | ARRAY_MASK_HAS_FILE_LINE
     );
@@ -1492,14 +1492,14 @@ DECLARE_NATIVE(glom)
         if (splice)  // it was a non-quoted block initially
             return COPY(result);  // see note: index may be nonzero
 
-        Array(*) a = Make_Array_Core(1, NODE_FLAG_MANAGED);
+        Array* a = Make_Array_Core(1, NODE_FLAG_MANAGED);
         Set_Series_Len(a, 1);
         Copy_Cell(Array_Head(a), result);  // we know it was inert or quoted
         return Init_Block(OUT, a);
     }
 
     assert(IS_BLOCK(accumulator));
-    Array(*) a = VAL_ARRAY_ENSURE_MUTABLE(accumulator);
+    Array* a = VAL_ARRAY_ENSURE_MUTABLE(accumulator);
 
     if (not splice) {
         //
@@ -1520,7 +1520,7 @@ DECLARE_NATIVE(glom)
         // But in the interests of time, just expand the target array for now
         // if necessary--work on other details later.
         //
-        Array(*) r = VAL_ARRAY_ENSURE_MUTABLE(result);
+        Array* r = VAL_ARRAY_ENSURE_MUTABLE(result);
         REBSPC *r_specifier = VAL_SPECIFIER(result);
         REBLEN a_len = Array_Len(a);
         REBLEN r_len = Array_Len(r);
@@ -1555,7 +1555,7 @@ DECLARE_NATIVE(glom)
 //
 //  Assert_Array_Core: C
 //
-void Assert_Array_Core(Array(const*) a)
+void Assert_Array_Core(const Array* a)
 {
     assert(Series_Flavor(a) != FLAVOR_DATASTACK);  // has special handling
 

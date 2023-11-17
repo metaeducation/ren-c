@@ -256,7 +256,7 @@ DECLARE_NATIVE(set_location_of_error)
 
     REBVAL *location = ARG(location);
 
-    Context(*) context;
+    Context* context;
     if (IS_WORD(location)) {
         if (not IS_WORD_BOUND(location))
             fail ("SET-LOCATION-OF-ERROR requires bound WORD!");
@@ -269,7 +269,7 @@ DECLARE_NATIVE(set_location_of_error)
 
     Level(*) where = CTX_LEVEL_MAY_FAIL(context);
 
-    Context(*) error = VAL_CONTEXT(ARG(error));
+    Context* error = VAL_CONTEXT(ARG(error));
     Set_Location_Of_Error(error, where);
 
     return nullptr;

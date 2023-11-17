@@ -292,9 +292,9 @@ REBVAL *Read_Line(STD_TERM *t)
 //
 //  Console_Actor: C
 //
-Bounce Console_Actor(Level(*) level_, REBVAL *port, Symbol(const*) verb)
+Bounce Console_Actor(Level(*) level_, REBVAL *port, const Symbol* verb)
 {
-    Context(*) ctx = VAL_CONTEXT(port);
+    Context* ctx = VAL_CONTEXT(port);
 
     switch (ID_OF_SYMBOL(verb)) {
       case SYM_REFLECT: {
@@ -366,7 +366,7 @@ Bounce Console_Actor(Level(*) level_, REBVAL *port, Symbol(const*) verb)
             Init_Binary(data, Make_Binary(readbuf_size));
         }
         else if (Series_Rest(VAL_BINARY(data)) < readbuf_size) {
-            Binary(*) bin = VAL_BINARY_Ensure_Mutable(data);
+            Binary* bin = VAL_BINARY_Ensure_Mutable(data);
             Expand_Series_Tail(bin, readbuf_size - Series_Rest(bin));
         }
 
@@ -390,7 +390,7 @@ Bounce Console_Actor(Level(*) level_, REBVAL *port, Symbol(const*) verb)
             // Windows data as text with lines will thus have to deline it (!)
             //
             size_t size = readbuf_size - VAL_LEN_AT(data);
-            Binary(*) bin = VAL_BINARY_Ensure_Mutable(data);
+            Binary* bin = VAL_BINARY_Ensure_Mutable(data);
             REBLEN orig_len = VAL_LEN_AT(data);
 
             assert(Series_Available_Space(bin) >= size);

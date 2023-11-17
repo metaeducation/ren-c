@@ -34,7 +34,7 @@
 // There are important technical reasons for favoring the label as the output:
 //
 // * RETURN is implemented as a throw whose label is a FRAME!.  That FRAME!
-//   value can store either a Level(*) which costs nothing extra, or Context(*)
+//   value can store either a Level(*) which costs nothing extra, or Context*
 //   which requires "reifying" the frame and making it GC-visible.  Reifying
 //   would happen unconditionally if the level is put into a global variable,
 //   but so long as the FRAME! value bubbles up no higher than the Level(*)

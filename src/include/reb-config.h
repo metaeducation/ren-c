@@ -676,20 +676,6 @@ Special internal defines used by RT, not Host-Kit developers:
 #endif
 
 
-// The DEBUG_COUNT_LOCALS switch is an experimental application of SeriesHolder
-// to determine when a GC_Kill_Series happens to a series with references still
-// outstanding on the stack.  The mechanism may evolve to permit things like
-// the C++ build being able to GC at arbitrary moments.
-//
-#if !defined(DEBUG_COUNT_LOCALS)
-    #define DEBUG_COUNT_LOCALS 0
-#endif
-#if DEBUG_COUNT_LOCALS && (! CPLUSPLUS_11)
-    #error "DEBUG_COUNT_LOCALS requires C++11 or higher"
-    #include <stophere>  // https://stackoverflow.com/a/45661130
-#endif
-
-
 // Option(TYPE*) is a poor-man's implementation of optionals that lets you
 // mark when a pointer is supposed to be passable as a nullptr.  It has some
 // runtime costs because it will assert if you unwrap() the pointer and it is

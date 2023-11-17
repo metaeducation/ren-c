@@ -74,7 +74,7 @@ enum {
 // tweak them (e.g. ADAPT).
 //
 Bounce Reorderer_Dispatcher(Level(*) L) {
-    Details(*) details = Phase_Details(Level_Phase(L));
+    Details* details = Phase_Details(Level_Phase(L));
     assert(Array_Len(details) == IDX_REORDERER_MAX);
 
     REBVAL *reorderee = DETAILS_AT(details, IDX_REORDERER_REORDEREE);
@@ -101,14 +101,14 @@ DECLARE_NATIVE(reorder_p)  // see REORDER in %base-defs.r, for inheriting meta
 {
     INCLUDE_PARAMS_OF_REORDER_P;
 
-    Action(*) reorderee = VAL_ACTION(ARG(original));
-    Option(Symbol(const*)) label  = VAL_FRAME_LABEL(ARG(original));
+    Action* reorderee = VAL_ACTION(ARG(original));
+    Option(const Symbol*) label  = VAL_FRAME_LABEL(ARG(original));
 
     // Working with just the exemplar means we will lose the partials ordering
     // information from the interface.  But that's what we want, as the
     // caller is to specify a complete ordering.
     //
-    Context(*) exemplar = ACT_EXEMPLAR(reorderee);
+    Context* exemplar = ACT_EXEMPLAR(reorderee);
 
     // We need a binder to efficiently map arguments to their position in
     // the parameters array, and track which parameters are mentioned.
@@ -132,7 +132,7 @@ DECLARE_NATIVE(reorder_p)  // see REORDER in %base-defs.r, for inheriting meta
     // without cleaning the binder up first, balancing it all out to zeros.
     // Errors must be stored and reported after the cleanup.
     //
-    Option(Context(*)) error = nullptr;
+    Option(Context*) error = nullptr;
 
     StackIndex base = TOP_INDEX;
 
@@ -147,7 +147,7 @@ DECLARE_NATIVE(reorder_p)  // see REORDER in %base-defs.r, for inheriting meta
     Cell(const*) item;  // starts as tail
     Cell(const*) at = VAL_ARRAY_AT(&item, ARG(ordering));
     for (; at != item--; ) {
-        Symbol(const*) symbol = VAL_WORD_SYMBOL(item);
+        const Symbol* symbol = VAL_WORD_SYMBOL(item);
 
         // !!! As a bit of a weird demo of a potential future direction, we
         // don't just allow WORD!s but allow you to do things like pass the
@@ -206,7 +206,7 @@ DECLARE_NATIVE(reorder_p)  // see REORDER in %base-defs.r, for inheriting meta
         if (Is_Specialized(param))
             continue;
 
-        Symbol(const*) symbol = KEY_SYMBOL(key);
+        const Symbol* symbol = KEY_SYMBOL(key);
 
         // If we saw the parameter, we removed its index from the binder.
         //
@@ -227,19 +227,19 @@ DECLARE_NATIVE(reorder_p)  // see REORDER in %base-defs.r, for inheriting meta
     if (error)  // *now* it's safe to fail...
         fail (unwrap(error));
 
-    Array(*) partials = Pop_Stack_Values_Core(
+    Array* partials = Pop_Stack_Values_Core(
         base,
         NODE_FLAG_MANAGED | SERIES_MASK_PARTIALS
     );
 
-    Phase(*) reordered = Make_Action(
+    Phase* reordered = Make_Action(
         CTX_VARLIST(exemplar),
         partials,
         &Reorderer_Dispatcher,
         IDX_REORDERER_MAX
     );
 
-    Details(*) details = Phase_Details(reordered);
+    Details* details = Phase_Details(reordered);
     Copy_Cell(DETAILS_AT(details, IDX_REORDERER_REORDEREE), ARG(original));
 
     return Init_Activation(OUT, reordered, label, UNBOUND);

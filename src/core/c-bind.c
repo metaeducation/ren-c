@@ -39,7 +39,7 @@ void Bind_Values_Inner_Loop(
     struct Reb_Binder *binder,
     Cell(*) head,
     Cell(const*) tail,
-    Context(*) context,
+    Context* context,
     REBU64 bind_types, // !!! REVIEW: force word types low enough for 32-bit?
     REBU64 add_midstream_types,
     Flags flags
@@ -56,7 +56,7 @@ void Bind_Values_Inner_Loop(
         REBU64 type_bit = FLAGIT_KIND(heart);
 
         if (type_bit & bind_types) {
-            Symbol(const*) symbol = VAL_WORD_SYMBOL(cell);
+            const Symbol* symbol = VAL_WORD_SYMBOL(cell);
 
           if (CTX_TYPE(context) == REB_MODULE) {
             bool strict = true;
@@ -138,7 +138,7 @@ void Bind_Values_Core(
     struct Reb_Binder binder;
     INIT_BINDER(&binder);
 
-    Context(*) c = VAL_CONTEXT(context);
+    Context* c = VAL_CONTEXT(context);
 
     // Associate the canon of a word with an index number.  (This association
     // is done by poking the index into the stub of the series behind the
@@ -185,7 +185,7 @@ void Bind_Values_Core(
 void Unbind_Values_Core(
     Cell(*) head,
     Cell(const*) tail,
-    Option(Context(*)) context,
+    Option(Context*) context,
     bool deep
 ){
     Cell(*) v = head;
@@ -240,11 +240,11 @@ REBLEN Try_Bind_Word(Cell(const*) context, REBVAL *word)
 //    So we can simply point to the existing specifier...whether it is a let,
 //    a use, a frame context, or nullptr.
 //
-Array(*) Make_Let_Patch(
-    Symbol(const*) symbol,
+Array* Make_Let_Patch(
+    const Symbol* symbol,
     REBSPC *specifier
 ){
-    Array(*) let = Alloc_Singular(  // payload is one variable
+    Array* let = Alloc_Singular(  // payload is one variable
         FLAG_FLAVOR(LET)
             | NODE_FLAG_MANAGED
             | SERIES_FLAG_LINK_NODE_NEEDS_MARK  // link to next virtual bind
@@ -437,7 +437,7 @@ DECLARE_NATIVE(let)
         Set_Node_Managed_Bit(bindings);  // natives don't always manage
 
     if (CELL_HEART(vars) == REB_WORD or CELL_HEART(vars) == REB_SET_WORD) {
-        Symbol(const*) symbol = VAL_WORD_SYMBOL(vars);
+        const Symbol* symbol = VAL_WORD_SYMBOL(vars);
         bindings = Make_Let_Patch(symbol, bindings);
 
         REBVAL *where;
@@ -498,7 +498,7 @@ DECLARE_NATIVE(let)
               case REB_META_WORD:
               case REB_THE_WORD: {
                 Derelativize(PUSH(), temp, temp_specifier);
-                Symbol(const*) symbol = VAL_WORD_SYMBOL(temp);
+                const Symbol* symbol = VAL_WORD_SYMBOL(temp);
                 bindings = Make_Let_Patch(symbol, bindings);
                 break; }
 
@@ -646,7 +646,7 @@ DECLARE_NATIVE(add_use_object) {
     Level(*) L = CTX_LEVEL_MAY_FAIL(VAL_CONTEXT(ARG(frame)));
     REBSPC* L_specifier = Level_Specifier(L);
 
-    Context(*) ctx = VAL_CONTEXT(ARG(object));
+    Context* ctx = VAL_CONTEXT(ARG(object));
 
     if (L_specifier)
         Set_Node_Managed_Bit(L_specifier);
@@ -676,7 +676,7 @@ static void Clonify_And_Bind_Relative(
     Flags flags,
     REBU64 deep_types,
     struct Reb_Binder *binder,
-    Action(*) relative
+    Action* relative
 ){
     if (C_STACK_OVERFLOWING(&relative))
         Fail_Stack_Overflow();
@@ -699,7 +699,7 @@ static void Clonify_And_Bind_Relative(
         //
         // Objects and series get shallow copied at minimum
         //
-        Series(*) series;
+        Series* series;
         bool would_need_deep;
 
         if (ANY_CONTEXT_KIND(heart)) {
@@ -804,9 +804,9 @@ static void Clonify_And_Bind_Relative(
 // these relative words...so that they refer to the archetypal function
 // to which they should be relative.
 //
-Array(*) Copy_And_Bind_Relative_Deep_Managed(
+Array* Copy_And_Bind_Relative_Deep_Managed(
     const REBVAL *body,
-    Action(*) relative,
+    Action* relative,
     enum Reb_Var_Visibility visibility
 ){
     struct Reb_Binder binder;
@@ -827,10 +827,10 @@ Array(*) Copy_And_Bind_Relative_Deep_Managed(
     Shutdown_Evars(&e);
   }
 
-    Array(*) copy;
+    Array* copy;
 
   blockscope {
-    Array(const*) original = VAL_ARRAY(body);
+    const Array* original = VAL_ARRAY(body);
     REBLEN index = VAL_INDEX(body);
     REBSPC *specifier = VAL_SPECIFIER(body);
     REBLEN tail = VAL_LEN_AT(body);
@@ -886,8 +886,8 @@ Array(*) Copy_And_Bind_Relative_Deep_Managed(
 void Rebind_Values_Deep(
     Cell(*) head,
     Cell(const*) tail,
-    Context(*) from,
-    Context(*) to,
+    Context* from,
+    Context* to,
     Option(struct Reb_Binder*) binder
 ) {
     Cell(*) v = head;
@@ -901,7 +901,7 @@ void Rebind_Values_Deep(
             // binding pointer (in the function's value cell) is changed to
             // be this object.
             //
-            Context(*) stored = VAL_FRAME_BINDING(v);
+            Context* stored = VAL_FRAME_BINDING(v);
             if (stored == UNBOUND) {
                 //
                 // Leave NULL bindings alone.  Hence, unlike in R3-Alpha, an
@@ -978,7 +978,7 @@ void Rebind_Values_Deep(
 //
 // !!! Loops should probably free their objects by default when finished
 //
-Context(*) Virtual_Bind_Deep_To_New_Context(
+Context* Virtual_Bind_Deep_To_New_Context(
     REBVAL *body_in_out, // input *and* output parameter
     REBVAL *spec
 ){
@@ -1036,7 +1036,7 @@ Context(*) Virtual_Bind_Deep_To_New_Context(
     // KeyLists are always managed, but varlist is unmanaged by default (so
     // it can be freed if there is a problem)
     //
-    Context(*) c = Alloc_Context(REB_OBJECT, num_vars);
+    Context* c = Alloc_Context(REB_OBJECT, num_vars);
 
     // We want to check for duplicates and a Binder can be used for that
     // purpose--but note that a fail() cannot happen while binders are
@@ -1047,13 +1047,13 @@ Context(*) Virtual_Bind_Deep_To_New_Context(
     if (rebinding)
         INIT_BINDER(&binder);
 
-    Symbol(const*) duplicate = nullptr;
+    const Symbol* duplicate = nullptr;
 
     SymId dummy_sym = SYM_DUMMY1;
 
     REBLEN index = 1;
     while (index <= num_vars) {
-        Symbol(const*) symbol;
+        const Symbol* symbol;
 
         if (IS_BLANK(item)) {
             if (dummy_sym == SYM_DUMMY9)
@@ -1236,7 +1236,7 @@ Context(*) Virtual_Bind_Deep_To_New_Context(
 //
 void Virtual_Bind_Deep_To_Existing_Context(
     REBVAL *any_array,
-    Context(*) context,
+    Context* context,
     struct Reb_Binder *binder,
     enum Reb_Kind kind
 ){
@@ -1267,7 +1267,7 @@ void Virtual_Bind_Deep_To_Existing_Context(
 }
 
 
-void Bind_Nonspecifically(Cell(*) head, Cell(const*) tail, Context(*) context)
+void Bind_Nonspecifically(Cell(*) head, Cell(const*) tail, Context* context)
 {
     Cell(*) v = head;
     for (; v != tail; ++v) {

@@ -1,6 +1,6 @@
 //
 //  File: %sys-array.h
-//  Summary: {Definitions for ArrayT}
+//  Summary: {Definitions for Array}
 //  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
 //  Homepage: https://github.com/metaeducation/ren-c/
 //
@@ -21,7 +21,7 @@
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // A "Rebol Array" is a series of value cells.  Every BLOCK! or GROUP! points
-// at an array node, which you see in the source as Array(*).
+// at an array node, which you see in the source as Array*.
 //
 // While many Array operations are shared in common with Series, there is a
 // (deliberate) type incompatibility introduced.  The type compatibility is
@@ -53,16 +53,16 @@
 // (like you'd find in a BLOCK!)
 
 #define Get_Array_Flag(a,flag) \
-    Get_Subclass_Flag(ARRAY, ensure(Array(const*), (a)), flag)
+    Get_Subclass_Flag(ARRAY, ensure(const Array*, (a)), flag)
 
 #define Not_Array_Flag(a,flag) \
-    Not_Subclass_Flag(ARRAY, ensure(Array(const*), (a)), flag)
+    Not_Subclass_Flag(ARRAY, ensure(const Array*, (a)), flag)
 
 #define Set_Array_Flag(a,flag) \
-    Set_Subclass_Flag(ARRAY, ensure(Array(*), (a)), flag)
+    Set_Subclass_Flag(ARRAY, ensure(Array*, (a)), flag)
 
 #define Clear_Array_Flag(a,flag) \
-    Clear_Subclass_Flag(ARRAY, ensure(Array(*), (a)), flag)
+    Clear_Subclass_Flag(ARRAY, ensure(Array*, (a)), flag)
 
 
 // !!! We generally want to use LINK(Filename, x) but that uses the STR()
@@ -72,10 +72,10 @@
 // lot of this central code inlinable.
 //
 #define LINK_FILENAME_HACK(s) \
-    cast(String(const*), s->link.any.node)
+    cast(const String*, s->link.any.node)
 
 
-inline static bool Has_Newline_At_Tail(Array(const*) a) {
+inline static bool Has_Newline_At_Tail(const Array* a) {
     if (Series_Flavor(a) != FLAVOR_ARRAY)
         return false;  // only plain arrays can have newlines
 
@@ -84,7 +84,7 @@ inline static bool Has_Newline_At_Tail(Array(const*) a) {
     return did (a->leader.bits & ARRAY_FLAG_NEWLINE_AT_TAIL);
 }
 
-inline static bool Has_File_Line(Array(const*) a) {
+inline static bool Has_File_Line(const Array* a) {
     if (Series_Flavor(a) != FLAVOR_ARRAY)
         return false;  // only plain arrays can have newlines
 
@@ -97,37 +97,37 @@ inline static bool Has_File_Line(Array(const*) a) {
 // HEAD, TAIL, and LAST refer to specific value pointers in the array.  Since
 // empty arrays have no "last" value Array_Last() should not be called on it.
 
-inline static Cell(*) Array_At(Array(const_if_c*) a, REBLEN n)
+inline static Cell(*) Array_At(const_if_c Array* a, REBLEN n)
   { return Series_At(CellT, a, n); }
 
-inline static Cell(*) Array_Head(Array(const_if_c*) a)
+inline static Cell(*) Array_Head(const_if_c Array* a)
   { return Series_Head(CellT, a); }
 
-inline static Cell(*) Array_Tail(Array(const_if_c*) a)
+inline static Cell(*) Array_Tail(const_if_c Array* a)
   { return Series_Tail(CellT, a); }
 
-inline static Cell(*) Array_Last(Array(const_if_c*) a)
+inline static Cell(*) Array_Last(const_if_c Array* a)
   { return Series_Last(CellT, a); }
 
-inline static Cell(*) Array_Single(Array(const_if_c*) a) {
+inline static Cell(*) Array_Single(const_if_c Array* a) {
     assert(Not_Series_Flag(a, DYNAMIC));
     return mutable_Stub_Cell(a);
 }
 
 #if CPLUSPLUS_11
-    inline static Cell(const*) Array_At(Array(const*) a, REBLEN n)
+    inline static Cell(const*) Array_At(const Array* a, REBLEN n)
         { return Series_At(const CellT, a, n); }
 
-    inline static Cell(const*) Array_Head(Array(const*) a)
+    inline static Cell(const*) Array_Head(const Array* a)
         { return Series_Head(const CellT, a); }
 
-    inline static Cell(const*) Array_Tail(Array(const*) a)
+    inline static Cell(const*) Array_Tail(const Array* a)
         { return Series_Tail(const CellT, a); }
 
-    inline static Cell(const*) Array_Last(Array(const*) a)
+    inline static Cell(const*) Array_Last(const Array* a)
         { return Series_Last(const CellT, a); }
 
-    inline static Cell(const*) Array_Single(Array(const*) a) {
+    inline static Cell(const*) Array_Single(const Array* a) {
         assert(Not_Series_Flag(a, DYNAMIC));
         return Stub_Cell(a);
     }
@@ -137,8 +137,8 @@ inline static Cell(*) Array_Single(Array(const_if_c*) a) {
 // It's possible to calculate the array from just a cell if you know it's a
 // cell inside a singular array.
 //
-inline static Array(*) Singular_From_Cell(Cell(const*) v) {
-    Array(*) singular = ARR(  // some checking in debug builds is done by ARR()
+inline static Array* Singular_From_Cell(Cell(const*) v) {
+    Array* singular = ARR(  // some checking in debug builds is done by ARR()
         cast(void*,
             cast(Byte*, m_cast(Cell(*), v))
             - offsetof(Stub, content)
@@ -149,14 +149,14 @@ inline static Array(*) Singular_From_Cell(Cell(const*) v) {
 }
 
 #define Array_Len(a) \
-    Series_Used(ensure(Array(const*), (a)))
+    Series_Used(ensure(const Array*, (a)))
 
 
 // See READABLE(), WRITABLE() and related functions for an explanation of the
 // bits that have to be formatted in cell headers to be legal to use.
 //
 inline static void Prep_Array(
-    Array(*) a,
+    Array* a,
     REBLEN capacity  // Expand_Series passes 0 on dynamic reallocation
 ){
     assert(Get_Series_Flag(a, DYNAMIC));
@@ -197,7 +197,7 @@ inline static void Prep_Array(
 // Make a series that is the right size to store REBVALs (and marked for the
 // garbage collector to look into recursively).  Array_Len() will be 0.
 //
-inline static Array(*) Make_Array_Core_Into(
+inline static Array* Make_Array_Core_Into(
     void* preallocated,
     REBLEN capacity,
     Flags flags
@@ -207,7 +207,7 @@ inline static Array(*) Make_Array_Core_Into(
         capacity += 1;  // account for space needed for poison cell
   #endif
 
-    Series(*) s = Make_Series_Into(preallocated, capacity, flags);
+    Series* s = Make_Series_Into(preallocated, capacity, flags);
     assert(Is_Series_Array(s));  // flavor should have been an array flavor
 
     if (Get_Series_Flag(s, DYNAMIC)) {
@@ -237,8 +237,8 @@ inline static Array(*) Make_Array_Core_Into(
             s->misc.line = Level_Array(TOP_LEVEL)->misc.line;
         }
         else {
-            Clear_Array_Flag(cast(ArrayT*, s), HAS_FILE_LINE_UNMASKED);
-            Clear_Series_Flag(cast(ArrayT*, s), LINK_NODE_NEEDS_MARK);
+            Clear_Array_Flag(cast(Array*, s), HAS_FILE_LINE_UNMASKED);
+            Clear_Series_Flag(cast(Array*, s), LINK_NODE_NEEDS_MARK);
         }
     }
 
@@ -246,8 +246,8 @@ inline static Array(*) Make_Array_Core_Into(
     g_mem.blocks_made += 1;
   #endif
 
-    assert(Array_Len(cast(Array(*), s)) == 0);
-    return cast(Array(*), s);
+    assert(Array_Len(cast(Array*, s)) == 0);
+    return cast(Array*, s);
 }
 
 #define Make_Array_Core(capacity,flags) \
@@ -263,10 +263,10 @@ inline static Array(*) Make_Array_Core_Into(
 // compete with the usage of the ->misc and ->link fields of the series node
 // for internal arrays.
 //
-inline static Array(*) Make_Array_For_Copy(
+inline static Array* Make_Array_For_Copy(
     REBLEN capacity,
     Flags flags,
-    Array(const*) original
+    const Array* original
 ){
     if (original and Has_Newline_At_Tail(original)) {
         //
@@ -281,7 +281,7 @@ inline static Array(*) Make_Array_For_Copy(
         and (flags & ARRAY_FLAG_HAS_FILE_LINE_UNMASKED)
         and (original and Has_File_Line(original))
     ){
-        Array(*) a = Make_Array_Core(
+        Array* a = Make_Array_Core(
             capacity,
             flags & ~ARRAY_FLAG_HAS_FILE_LINE_UNMASKED
         );
@@ -303,9 +303,9 @@ inline static Array(*) Make_Array_For_Copy(
 //
 // For `flags`, be sure to consider if you need ARRAY_FLAG_HAS_FILE_LINE.
 //
-inline static Array(*) Alloc_Singular(Flags flags) {
+inline static Array* Alloc_Singular(Flags flags) {
     assert(not (flags & SERIES_FLAG_DYNAMIC));
-    Array(*) a = Make_Array_Core(1, flags | SERIES_FLAG_FIXED_SIZE);
+    Array* a = Make_Array_Core(1, flags | SERIES_FLAG_FIXED_SIZE);
     Erase_Cell(mutable_Stub_Cell(a));  // poison means length 0, erased length 1
     return a;
 }
@@ -366,8 +366,8 @@ enum {
 
 // See TS_NOT_COPIED for the default types excluded from being deep copied
 //
-inline static Array(*) Copy_Array_At_Extra_Deep_Flags_Managed(
-    Array(const*) original, // ^-- not macro because original mentioned twice
+inline static Array* Copy_Array_At_Extra_Deep_Flags_Managed(
+    const Array* original, // ^-- not macro because original mentioned twice
     REBLEN index,
     REBSPC *specifier,
     REBLEN extra,
@@ -404,20 +404,20 @@ inline static Array(*) Copy_Array_At_Extra_Deep_Flags_Managed(
 // These operations do not need to take the value's index position into
 // account; they strictly operate on the array series
 //
-inline static Array(const*) VAL_ARRAY(NoQuote(Cell(const*)) v) {
+inline static const Array* VAL_ARRAY(NoQuote(Cell(const*)) v) {
     assert(ANY_ARRAYLIKE(v));
 
-    Array(const*) a = ARR(VAL_NODE1(v));
+    const Array* a = ARR(VAL_NODE1(v));
     if (Get_Series_Flag(a, INACCESSIBLE))
         fail (Error_Series_Data_Freed_Raw());
     return a;
 }
 
 #define VAL_ARRAY_ENSURE_MUTABLE(v) \
-    m_cast(Array(*), VAL_ARRAY(Ensure_Mutable(v)))
+    m_cast(Array*, VAL_ARRAY(Ensure_Mutable(v)))
 
 #define VAL_ARRAY_KNOWN_MUTABLE(v) \
-    m_cast(Array(*), VAL_ARRAY(Known_Mutable(v)))
+    m_cast(Array*, VAL_ARRAY(Known_Mutable(v)))
 
 
 // These array operations take the index position into account.  The use
@@ -432,7 +432,7 @@ inline static Cell(const*) VAL_ARRAY_LEN_AT(
     Option(REBLEN*) len_at_out,
     NoQuote(Cell(const*)) v
 ){
-    Array(const*) arr = VAL_ARRAY(v);
+    const Array* arr = VAL_ARRAY(v);
     REBIDX i = VAL_INDEX_RAW(v);  // VAL_ARRAY() already checks it's series
     REBLEN len = Array_Len(arr);
     if (i < 0 or i > cast(REBIDX, len))
@@ -446,7 +446,7 @@ inline static Cell(const*) VAL_ARRAY_AT(
     Option(Cell(const*)*) tail_out,
     NoQuote(Cell(const*)) v
 ){
-    Array(const*) arr = VAL_ARRAY(v);
+    const Array* arr = VAL_ARRAY(v);
     REBIDX i = VAL_INDEX_RAW(v);  // VAL_ARRAY() already checks it's series
     REBLEN len = Array_Len(arr);
     if (i < 0 or i > cast(REBIDX, len))
@@ -490,15 +490,15 @@ inline static Cell(const*) VAL_ARRAY_ITEM_AT(NoQuote(Cell(const*)) v) {
 
 //=//// ANY-ARRAY! INITIALIZER HELPERS ////////////////////////////////////=//
 //
-// Declaring as inline with type signature ensures you use a Array(*) to
+// Declaring as inline with type signature ensures you use a Array* to
 // initialize, and the C++ build can also validate managed consistent w/const.
 
 inline static REBVAL *Init_Array_Cell_At_Core(
     Cell(*) out,
     enum Reb_Kind kind,
-    const_if_c Array(*) array,
+    const_if_c Array* array,
     REBLEN index,
-    Array(*) binding
+    Array* binding
 ){
     return Init_Series_Cell_At_Core(
         out,
@@ -513,9 +513,9 @@ inline static REBVAL *Init_Array_Cell_At_Core(
     inline static REBVAL *Init_Array_Cell_At_Core(
         Cell(*) out,
         enum Reb_Kind kind,
-        Array(const*) array,  // all const arrays should be already managed
+        const Array* array,  // all const arrays should be already managed
         REBLEN index,
-        Array(*) binding
+        Array* binding
     ){
         return Init_Series_Cell_At_Core(out, kind, array, index, binding);
     }
@@ -533,8 +533,8 @@ inline static REBVAL *Init_Array_Cell_At_Core(
 
 inline static Cell(*) Init_Relative_Block_At(
     Cell(*) out,
-    Action(*) action,  // action to which array has relative bindings
-    Array(*) array,
+    Action* action,  // action to which array has relative bindings
+    Array* array,
     REBLEN index
 ){
     Reset_Unquoted_Header_Untracked(out, CELL_MASK_BLOCK);
@@ -555,7 +555,7 @@ inline static Cell(*) Init_Relative_Block_At(
     #define Assert_Array(s) \
         Assert_Array_Core(s)
 
-    inline static void Assert_Series(Series(const*) s) {
+    inline static void Assert_Series(const Series* s) {
         if (Is_Series_Array(s))
             Assert_Array_Core(ARR(s));  // calls Assert_Series_Basics_Core()
         else
@@ -608,7 +608,7 @@ inline static bool Is_Any_Doubled_Group(NoQuote(Cell(const*)) group) {
 //      == <b>
 //
 
-inline static Value(*) Init_Pack_Untracked(Atom(*) out, Array(*) a) {
+inline static Value(*) Init_Pack_Untracked(Atom(*) out, Array* a) {
     Init_Block(out, a);
     QUOTE_BYTE(out) = ISOTOPE_0;
     return cast(Value(*), out);  // Note: Is_Isotope_Unstable(out)
@@ -673,7 +673,7 @@ inline static Value(*) Splicify(Value(*) v) {
     return VAL(v);
 }
 
-inline static Value(*) Init_Splice_Untracked(Value(*) out, Array(*) a) {
+inline static Value(*) Init_Splice_Untracked(Value(*) out, Array* a) {
     Init_Group(out, a);
     QUOTE_BYTE(out) = ISOTOPE_0;
     return out;

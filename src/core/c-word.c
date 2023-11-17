@@ -137,15 +137,15 @@ static void Expand_Word_Table(void)
     // Hold onto it while creating the new hash table.
 
     REBLEN old_num_slots = Series_Used(g_symbols.by_hash);
-    SymbolT** old_symbols_by_hash = Series_Head(
-        SymbolT*,
+    Symbol** old_symbols_by_hash = Series_Head(
+        Symbol*,
         g_symbols.by_hash
     );
 
     REBLEN num_slots = Get_Hash_Prime_May_Fail(old_num_slots + 1);
-    assert(Series_Wide(g_symbols.by_hash) == sizeof(SymbolT*));
+    assert(Series_Wide(g_symbols.by_hash) == sizeof(Symbol*));
 
-    Series(*) ser = Make_Series_Core(
+    Series* ser = Make_Series_Core(
         num_slots, FLAG_FLAVOR(CANONTABLE) | SERIES_FLAG_POWER_OF_2
     );
     Clear_Series(ser);
@@ -153,11 +153,11 @@ static void Expand_Word_Table(void)
 
     // Rehash all the symbols:
 
-    SymbolT** new_symbols_by_hash = Series_Head(SymbolT*, ser);
+    Symbol** new_symbols_by_hash = Series_Head(Symbol*, ser);
 
     REBLEN old_slot;
     for (old_slot = 0; old_slot != old_num_slots; ++old_slot) {
-        Symbol(*) symbol = old_symbols_by_hash[old_slot];
+        Symbol* symbol = old_symbols_by_hash[old_slot];
         if (not symbol)
             continue;
 
@@ -208,7 +208,7 @@ static void Expand_Word_Table(void)
 // clear contract on the return result--as it wouldn't be possible to know if a
 // shared instance had been managed by someone else or not.
 //
-Symbol(const*) Intern_UTF8_Managed_Core(
+const Symbol* Intern_UTF8_Managed_Core(
     Option(void*) preallocated,  // most calls don't know if allocation needed
     const Byte* utf8,
     size_t size
@@ -228,7 +228,7 @@ Symbol(const*) Intern_UTF8_Managed_Core(
         num_slots = Series_Used(g_symbols.by_hash);  // got larger
     }
 
-    SymbolT** symbols_by_hash = Series_Head(SymbolT*, g_symbols.by_hash);
+    Symbol** symbols_by_hash = Series_Head(Symbol*, g_symbols.by_hash);
 
     REBLEN skip; // how many slots to skip when occupied candidates found
     REBLEN slot = First_Hash_Candidate_Slot(
@@ -242,9 +242,9 @@ Symbol(const*) Intern_UTF8_Managed_Core(
     // be skipped to try again) the search uses a comparison that is
     // case-insensitive...but reports if synonyms via > 0 results.
     //
-    Symbol(*) synonym = nullptr;
-    SymbolT** deleted_slot = nullptr;
-    Symbol(*) symbol;
+    Symbol* synonym = nullptr;
+    Symbol** deleted_slot = nullptr;
+    Symbol* symbol;
     while ((symbol = symbols_by_hash[slot])) {
         if (symbol == DELETED_SYMBOL) {
             deleted_slot = &symbols_by_hash[slot];
@@ -279,7 +279,7 @@ Symbol(const*) Intern_UTF8_Managed_Core(
 
   new_interning: {
 
-    Binary(*) s = BIN(Make_Series_Into(
+    Binary* s = BIN(Make_Series_Into(
         preallocated ? unwrap(preallocated) : Alloc_Stub(),
         size + 1,  // if small, fits in a Series stub (no dynamic allocation)
         FLAG_FLAVOR(SYMBOL) | SERIES_FLAG_FIXED_SIZE | NODE_FLAG_MANAGED
@@ -421,7 +421,7 @@ Symbol(const*) Intern_UTF8_Managed_Core(
 // locked strings become interned, and forward pointers to the old series in
 // the background to the interned version?
 //
-String(const*) Intern_Any_String_Managed(Cell(const*) v) {
+const String* Intern_Any_String_Managed(Cell(const*) v) {
     Size utf8_size;
     Utf8(const*) utf8 = VAL_UTF8_SIZE_AT(&utf8_size, v);
     return Intern_UTF8_Managed(utf8, utf8_size);
@@ -435,13 +435,13 @@ String(const*) Intern_Any_String_Managed(Cell(const*) v) {
 // Further, if it happens to be canon, we need to re-point everything in the
 // chain to a new entry.  Choose the synonym as a new canon if so.
 //
-void GC_Kill_Interning(String(*) intern)
+void GC_Kill_Interning(String* intern)
 {
-    Symbol(*) synonym = LINK(Synonym, intern);
+    Symbol* synonym = LINK(Synonym, intern);
 
     // Note synonym and intern may be the same here.
     //
-    Symbol(*) temp = synonym;
+    Symbol* temp = synonym;
     while (LINK(Synonym, temp) != intern)
         temp = LINK(Synonym, temp);
     mutable_LINK(Synonym, temp) = synonym;  // cut the intern out (or no-op)
@@ -450,7 +450,7 @@ void GC_Kill_Interning(String(*) intern)
     // variables referring to it are also being freed.  Make sure that is
     // the case, and remove from the circularly linked list.
     //
-    Series(*) patch = intern;
+    Series* patch = intern;
     while (node_MISC(Hitch, patch) != intern) {
         assert(Not_Node_Marked(patch));
         patch = SER(node_MISC(Hitch, patch));
@@ -458,7 +458,7 @@ void GC_Kill_Interning(String(*) intern)
     node_MISC(Hitch, patch) = node_MISC(Hitch, intern);  // may be no-op
 
     REBLEN num_slots = Series_Used(g_symbols.by_hash);
-    SymbolT** symbols_by_hash = Series_Head(SymbolT*, g_symbols.by_hash);
+    Symbol** symbols_by_hash = Series_Head(Symbol*, g_symbols.by_hash);
 
     REBLEN skip;
     REBLEN slot = First_Hash_Candidate_Slot(
@@ -504,8 +504,8 @@ void GC_Kill_Interning(String(*) intern)
 //  Startup_Interning: C
 //
 // Get the engine ready to do Intern_UTF8_Managed(), which is required to
-// get String(*) pointers generated during a scan of ANY-WORD!s.  Words of the
-// same spelling currently look up and share the same String(*), this process
+// get String* pointers generated during a scan of ANY-WORD!s.  Words of the
+// same spelling currently look up and share the same String*, this process
 // is referred to as "string interning":
 //
 // https://en.wikipedia.org/wiki/String_interning
@@ -584,7 +584,7 @@ void Startup_Symbols(void)
         size_t size = *at;  // length prefix byte
         ++at;
 
-        SymbolT* canon = &g_symbols.builtin_canons[id];  // not valid Symbol(*)
+        Symbol* canon = &g_symbols.builtin_canons[id];  // not valid Symbol*
         Intern_UTF8_Managed_Core(canon, at, size);
         at += size;
 
@@ -630,7 +630,7 @@ void Shutdown_Symbols(void)
     // "dirty" shutdown--typically used--avoids all these balancing checks!)
     //
     for (REBLEN i = 1; i < ALL_SYMS_MAX; ++i) {
-        Symbol(*) canon = &g_symbols.builtin_canons[i];
+        Symbol* canon = &g_symbols.builtin_canons[i];
         Decay_Series(canon);
     }
 }
@@ -659,7 +659,7 @@ void Shutdown_Interning(void)
 
         REBLEN slot;
         for (slot = 0; slot < Series_Used(g_symbols.by_hash); ++slot) {
-            Symbol(*) symbol = *Series_At(SymbolT*, g_symbols.by_hash, slot);
+            Symbol* symbol = *Series_At(Symbol*, g_symbols.by_hash, slot);
             if (symbol and symbol != DELETED_SYMBOL)
                 panic (symbol);
         }

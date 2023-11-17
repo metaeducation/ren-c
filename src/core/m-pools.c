@@ -219,7 +219,7 @@ const PoolSpec Mem_Pool_Spec[MAX_POOLS] =
     DEF_POOL(MEM_BIG_SIZE*3, 4),    // 3K
     DEF_POOL(MEM_BIG_SIZE*4, 4),    // 4K
 
-    DEF_POOL(sizeof(SeriesT), 4096), // Series headers
+    DEF_POOL(sizeof(Series), 4096), // Series headers
 
   #if UNUSUAL_CELL_SIZE  // sizeof(CellT)*2 != sizeof(Stub)
     DEF_POOL(sizeof(CellT) * 2, 16),  // Pairings, PAIR_POOL
@@ -320,9 +320,9 @@ void Startup_Pools(REBINT scale)
     assert(g_mem.objects_made == 0);
   #endif
 
-    g_mem.prior_expand = TRY_ALLOC_N(Series(*), MAX_EXPAND_LIST);
-    memset(g_mem.prior_expand, 0, sizeof(Series(*)) * MAX_EXPAND_LIST);
-    g_mem.prior_expand[0] = (Series(*))1;
+    g_mem.prior_expand = TRY_ALLOC_N(Series*, MAX_EXPAND_LIST);
+    memset(g_mem.prior_expand, 0, sizeof(Series*) * MAX_EXPAND_LIST);
+    g_mem.prior_expand[0] = (Series*)1;
 }
 
 
@@ -336,7 +336,7 @@ void Shutdown_Pools(void)
   #if !defined(NDEBUG)
   blockscope {
     Count num_leaks = 0;
-    Series(*) leaked = nullptr;
+    Series* leaked = nullptr;
     Segment* seg = g_mem.pools[STUB_POOL].segments;
 
     for(; seg != nullptr; seg = seg->next) {
@@ -349,7 +349,7 @@ void Shutdown_Pools(void)
 
             ++num_leaks;
 
-            Series(*) s = SER(cast(void*, unit));
+            Series* s = SER(cast(void*, unit));
             if (Is_Node_Managed(s)) {
                 printf("MANAGED series leak, this REALLY shouldn't happen\n");
                 leaked = s;  // report a managed one if found
@@ -392,7 +392,7 @@ void Shutdown_Pools(void)
     FREE_N(Byte, POOLS_BY_SIZE_LEN, g_mem.pools_by_size);
 
     // !!! Revisit location (just has to be after all series are freed)
-    FREE_N(Series(*), MAX_EXPAND_LIST, g_mem.prior_expand);
+    FREE_N(Series*, MAX_EXPAND_LIST, g_mem.prior_expand);
 
   #if DEBUG_COLLECT_STATS
     g_mem.series_memory = 0;
@@ -508,7 +508,7 @@ Node* Try_Find_Containing_Node_Debug(const void *p)
                 continue;
             }
 
-            Series(*) s = SER(cast(void*, unit));
+            Series* s = SER(cast(void*, unit));
             if (Not_Series_Flag(s, DYNAMIC)) {
                 if (
                     p >= cast(void*, &s->content)
@@ -625,7 +625,7 @@ void Free_Pairing(REBVAL *paired) {
 
   #if DEBUG_COUNT_TICKS
     //
-    // This wasn't actually a SeriesT, so can't cast with SER().  But poke the
+    // This wasn't actually a Series, so can't cast with SER().  But poke the
     // tick where the node was freed into the memory spot so panic finds it.
     //
     cast(Stub*, paired)->tick = TG_tick;
@@ -718,7 +718,7 @@ void Free_Unbiased_Series_Data(char *unbiased, Size total)
 // WARNING: never use direct pointers into the series data, as the
 // series data can be relocated in memory.
 //
-void Expand_Series(Series(*) s, REBLEN index, REBLEN delta)
+void Expand_Series(Series* s, REBLEN index, REBLEN delta)
 {
     Assert_Series_Term_If_Needed(s);
 
@@ -927,7 +927,7 @@ void Expand_Series(Series(*) s, REBLEN index, REBLEN delta)
 // a risky operation that should only be called when the client is sure it
 // is safe to do so (more asserts would probably help).
 //
-void Swap_Series_Content(Series(*) a, Series(*) b)
+void Swap_Series_Content(Series* a, Series* b)
 {
     // Can't think of any reasonable case for mutating an array node into a
     // non-array or vice versa.  Cases haven't come up for swapping series
@@ -989,8 +989,8 @@ DECLARE_NATIVE(swap_contents)
     if (IS_BINARY(ARG(series1)) != IS_BINARY(ARG(series2)))
         fail ("Can only SWAP-CONTENTS of binaries with other binaries");
 
-    Series(*) s1 = VAL_SERIES_ENSURE_MUTABLE(ARG(series1));
-    Series(*) s2 = VAL_SERIES_ENSURE_MUTABLE(ARG(series2));
+    Series* s1 = VAL_SERIES_ENSURE_MUTABLE(ARG(series1));
+    Series* s2 = VAL_SERIES_ENSURE_MUTABLE(ARG(series2));
     Swap_Series_Content(s1, s2);
 
     return NONE;
@@ -1003,7 +1003,7 @@ DECLARE_NATIVE(swap_contents)
 // Reallocate a series as a given maximum size.  Content in the retained
 // portion of the length will be preserved if NODE_FLAG_NODE is passed in.
 //
-void Remake_Series(Series(*) s, REBLEN units, Flags flags)
+void Remake_Series(Series* s, REBLEN units, Flags flags)
 {
     // !!! This routine is being scaled back in terms of what it's allowed to
     // do for the moment; so the method of passing in flags is a bit strange.
@@ -1085,7 +1085,7 @@ void Remake_Series(Series(*) s, REBLEN units, Flags flags)
 //
 //  Decay_Series: C
 //
-void Decay_Series(Series(*) s)
+void Decay_Series(Series* s)
 {
     assert(Not_Series_Flag(s, INACCESSIBLE));
 
@@ -1105,7 +1105,7 @@ void Decay_Series(Series(*) s)
         // same name in other modules...with the name itself as a symbol
         // being in that circular list.  Remove this patch from that list.
         //
-        Series(*) temp = MISC(PatchHitch, s);
+        Series* temp = MISC(PatchHitch, s);
         while (node_MISC(Hitch, temp) != s) {
             temp = SER(node_MISC(Hitch, temp));
             assert(IS_PATCH(temp) or IS_SYMBOL(temp));
@@ -1188,7 +1188,7 @@ void Decay_Series(Series(*) s)
 // It frees a series even though it is under GC management,
 // because the GC has figured out no references exist.
 //
-void GC_Kill_Series(Series(*) s)
+void GC_Kill_Series(Series* s)
 {
   #if !defined(NDEBUG)
     if (Is_Node_Free(s)) {
@@ -1228,7 +1228,7 @@ void GC_Kill_Series(Series(*) s)
 //
 // Returns series node and data to memory pools for reuse.
 //
-void Free_Unmanaged_Series(Series(*) s)
+void Free_Unmanaged_Series(Series* s)
 {
   #if !defined(NDEBUG)
     if (Is_Node_Free(s)) {
@@ -1279,7 +1279,7 @@ void Assert_Pointer_Detection_Working(void)
 
     assert(Detect_Rebol_Pointer(rebEND) == DETECTED_AS_END);
 
-    Binary(*) bin = Make_Series(BinaryT, 1, FLAG_FLAVOR(BINARY));
+    Binary* bin = Make_Series(Binary, 1, FLAG_FLAVOR(BINARY));
     assert(Detect_Rebol_Pointer(bin) == DETECTED_AS_SERIES);
     Free_Unmanaged_Series(bin);
 }
@@ -1312,7 +1312,7 @@ REBLEN Check_Memory_Debug(void)
             if (unit[0] & NODE_BYTEMASK_0x01_CELL)
                 continue; // a pairing
 
-            Series(*) s = SER(cast(void*, unit));
+            Series* s = SER(cast(void*, unit));
             if (Not_Series_Flag(s, DYNAMIC))
                 continue; // data lives in the series node itself
 
@@ -1394,7 +1394,7 @@ void Dump_All_Series_Of_Width(Size wide)
             if (unit[0] & NODE_BYTEMASK_0x01_CELL)  // a pairing
                 continue;
 
-            Series(*) s = SER(cast(void*, unit));
+            Series* s = SER(cast(void*, unit));
             if (Series_Wide(s) == wide) {
                 ++count;
                 printf(
@@ -1430,7 +1430,7 @@ void Dump_Series_In_Pool(PoolId pool_id)
             if (unit[0] & NODE_BYTEMASK_0x01_CELL)
                 continue;  // pairing
 
-            Series(*) s = SER(cast(void*, unit));
+            Series* s = SER(cast(void*, unit));
             if (
                 pool_id == UNLIMITED
                 or (
@@ -1537,7 +1537,7 @@ REBU64 Inspect_Series(bool show)
             if (unit[0] & NODE_BYTEMASK_0x01_CELL)
                 continue;
 
-            Series(*) s = SER(cast(void*, unit));
+            Series* s = SER(cast(void*, unit));
 
             if (Get_Series_Flag(s, DYNAMIC))
                 tot_size += Series_Total(s);

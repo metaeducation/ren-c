@@ -30,7 +30,7 @@
 //
 // Used in CT_Word() and CT_Bad_Word()
 //
-REBINT Compare_Spellings(Symbol(const*) a, Symbol(const*) b, bool strict)
+REBINT Compare_Spellings(const Symbol* a, const Symbol* b, bool strict)
 {
     if (strict) {
         if (a == b)
@@ -195,7 +195,7 @@ Bounce TO_Word(Level(*) level_, enum Reb_Kind kind, const REBVAL *arg)
 }
 
 
-inline static void Mold_Word(REB_MOLD *mo, Symbol(const*) symbol, bool escape)
+inline static void Mold_Word(REB_MOLD *mo, const Symbol* symbol, bool escape)
 {
     if (escape) {
         Append_Codepoint(mo->series, '|');
@@ -211,7 +211,7 @@ inline static void Mold_Word(REB_MOLD *mo, Symbol(const*) symbol, bool escape)
 //  MF_Word: C
 //
 void MF_Word(REB_MOLD *mo, NoQuote(Cell(const*)) v, bool form) {
-    Symbol(const*) symbol = VAL_WORD_SYMBOL(v);
+    const Symbol* symbol = VAL_WORD_SYMBOL(v);
     bool escape = form
         ? false
         : Get_Subclass_Flag(SYMBOL, symbol, ESCAPE_PLAIN);
@@ -224,7 +224,7 @@ void MF_Word(REB_MOLD *mo, NoQuote(Cell(const*)) v, bool form) {
 //  MF_Set_word: C
 //
 void MF_Set_word(REB_MOLD *mo, NoQuote(Cell(const*)) v, bool form) {
-    Symbol(const*) symbol = VAL_WORD_SYMBOL(v);
+    const Symbol* symbol = VAL_WORD_SYMBOL(v);
     bool escape = form
         ? false
         : Get_Subclass_Flag(SYMBOL, symbol, ESCAPE_WITH_SIGIL);
@@ -238,7 +238,7 @@ void MF_Set_word(REB_MOLD *mo, NoQuote(Cell(const*)) v, bool form) {
 //  MF_Get_word: C
 //
 void MF_Get_word(REB_MOLD *mo, NoQuote(Cell(const*)) v, bool form) {
-    Symbol(const*) symbol = VAL_WORD_SYMBOL(v);
+    const Symbol* symbol = VAL_WORD_SYMBOL(v);
     bool escape = form
         ? false
         : Get_Subclass_Flag(SYMBOL, symbol, ESCAPE_WITH_SIGIL);
@@ -252,7 +252,7 @@ void MF_Get_word(REB_MOLD *mo, NoQuote(Cell(const*)) v, bool form) {
 //  MF_Meta_word: C
 //
 void MF_Meta_word(REB_MOLD *mo, NoQuote(Cell(const*)) v, bool form) {
-    Symbol(const*) symbol = VAL_WORD_SYMBOL(v);
+    const Symbol* symbol = VAL_WORD_SYMBOL(v);
     bool escape = form
         ? false
         : Get_Subclass_Flag(SYMBOL, symbol, ESCAPE_WITH_SIGIL);
@@ -266,7 +266,7 @@ void MF_Meta_word(REB_MOLD *mo, NoQuote(Cell(const*)) v, bool form) {
 //  MF_The_word: C
 //
 void MF_The_word(REB_MOLD *mo, NoQuote(Cell(const*)) v, bool form) {
-    Symbol(const*) symbol = VAL_WORD_SYMBOL(v);
+    const Symbol* symbol = VAL_WORD_SYMBOL(v);
     bool escape = form
         ? false
         : Get_Subclass_Flag(SYMBOL, symbol, ESCAPE_WITH_SIGIL);
@@ -280,7 +280,7 @@ void MF_The_word(REB_MOLD *mo, NoQuote(Cell(const*)) v, bool form) {
 //  MF_Type_word: C
 //
 void MF_Type_word(REB_MOLD *mo, NoQuote(Cell(const*)) v, bool form) {
-    Symbol(const*) symbol = VAL_WORD_SYMBOL(v);
+    const Symbol* symbol = VAL_WORD_SYMBOL(v);
     bool escape = form
         ? false
         : Get_Subclass_Flag(SYMBOL, symbol, ESCAPE_WITH_SIGIL);
@@ -312,7 +312,7 @@ REBTYPE(Word)
 
         switch (property) {
           case SYM_LENGTH: {  // byte size stored, but not # of codepoints
-            String(const*) spelling = VAL_WORD_SYMBOL(v);
+            const String* spelling = VAL_WORD_SYMBOL(v);
             Utf8(const*) cp = String_Head(spelling);
             Size size = String_Size(spelling);
             Length len = 0;

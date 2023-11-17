@@ -62,7 +62,7 @@ Bounce Yielder_Dispatcher(Level(*) const L)
 {
     USE_LEVEL_SHORTHANDS (L);
 
-    Details(*) details = Phase_Details(PHASE);
+    Details* details = Phase_Details(PHASE);
     Value(*) mode = DETAILS_AT(details, IDX_YIELDER_MODE);
 
     switch (STATE) {
@@ -130,7 +130,7 @@ Bounce Yielder_Dispatcher(Level(*) const L)
     // the identity for this new yielder frame for the YIELD to find it
     // in the stack walk.
     //
-    Context(*) last_yielder_context = VAL_CONTEXT(
+    Context* last_yielder_context = VAL_CONTEXT(
         DETAILS_AT(details, IDX_YIELDER_LAST_YIELDER_CONTEXT)
     );
 
@@ -278,7 +278,7 @@ DECLARE_NATIVE(yielder)
         "(as group!", ARG(body), ")",  // GROUP! so it can't backquote 'YIELD
     "]");
 
-    Phase(*) yielder = Make_Interpreted_Action_May_Fail(
+    Phase* yielder = Make_Interpreted_Action_May_Fail(
         ARG(spec),
         body,
         MKF_KEYWORDS | MKF_RETURN,  // give it a RETURN
@@ -287,7 +287,7 @@ DECLARE_NATIVE(yielder)
     );
     rebRelease(body);
 
-    Details(*) details = Phase_Details(yielder);
+    Details* details = Phase_Details(yielder);
 
     assert(IS_BLOCK(Array_At(details, IDX_YIELDER_BODY)));
     Init_Blank(DETAILS_AT(details, IDX_YIELDER_MODE));  // starting
@@ -358,12 +358,12 @@ DECLARE_NATIVE(yield)
     if (not yield_binding)
         fail ("Must have yielder to jump to");
 
-    Context(*) yielder_context = CTX(yield_binding);
+    Context* yielder_context = CTX(yield_binding);
     Level(*) yielder_level = CTX_LEVEL_MAY_FAIL(yielder_context);
     if (not yielder_level)
         fail ("Cannot yield to generator that has completed");
 
-    Phase(*) yielder_phase = Level_Phase(yielder_level);
+    Phase* yielder_phase = Level_Phase(yielder_level);
     assert(ACT_DISPATCHER(yielder_phase) == &Yielder_Dispatcher);
 
     // !!! How much sanity checking should be done before doing the passing
@@ -373,7 +373,7 @@ DECLARE_NATIVE(yield)
     if (Is_Nulled(ARG(value)))
         return nullptr;
 
-    Details(*) yielder_details = Phase_Details(yielder_phase);
+    Details* yielder_details = Phase_Details(yielder_phase);
 
     // Evaluations will frequently use the L->out to accrue state, perhaps
     // preloading with something (like NULL) that is expected to be there.

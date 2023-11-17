@@ -92,11 +92,7 @@ static void Check_Basics(void)
       series_size += sizeof(void*) * 2;
     #endif
 
-    #if DEBUG_COUNT_LOCALS
-      series_size += sizeof(void*) * 2;
-    #endif
-
-    assert(sizeof(SeriesT) == series_size);
+    assert(sizeof(Series) == series_size);
     UNUSED(series_size);
   #endif
 
@@ -192,7 +188,7 @@ void Set_Stack_Limit(void *base, uintptr_t bounds) {
 //
 static void Startup_Lib(void)
 {
-    Context(*) lib = Alloc_Context_Core(REB_MODULE, 1, NODE_FLAG_MANAGED);
+    Context* lib = Alloc_Context_Core(REB_MODULE, 1, NODE_FLAG_MANAGED);
     ensureNullptr(Lib_Context_Value) = Alloc_Value();
     Init_Context_Cell(Lib_Context_Value, REB_MODULE, lib);
     ensureNullptr(Lib_Context) = VAL_CONTEXT(Lib_Context_Value);
@@ -203,7 +199,7 @@ static void Startup_Lib(void)
     FIRST_BYTE(&PG_Lib_Patches[0]) = FREE_POOLUNIT_BYTE;
 
     for (REBLEN i = 1; i < LIB_SYMS_MAX; ++i) {  // skip SYM_0
-        Array(*) patch = Make_Array_Core_Into(
+        Array* patch = Make_Array_Core_Into(
             &PG_Lib_Patches[i],
             1,
             FLAG_FLAVOR(PATCH)  // checked when setting INODE(PatchContext)
@@ -276,7 +272,7 @@ static void Shutdown_Lib(void)
     FIRST_BYTE(&PG_Lib_Patches[0]) = 0;  // pre-boot state
 
     for (REBLEN i = 1; i < LIB_SYMS_MAX; ++i) {
-        Array(*) patch = &PG_Lib_Patches[i];
+        Array* patch = &PG_Lib_Patches[i];
 
         if (INODE(PatchContext, patch) == nullptr)
             continue;  // was never initialized !!! should it not be in lib?
@@ -362,7 +358,7 @@ static void Startup_Empty_Arrays(void)
     Freeze_Array_Deep(PG_Empty_Array);
 
   blockscope {
-    Array(*) a = Make_Array_Core(1, NODE_FLAG_MANAGED);
+    Array* a = Make_Array_Core(1, NODE_FLAG_MANAGED);
     Set_Series_Len(a, 1);
     Init_Quasi_Null(Array_At(a, 0));
     Freeze_Array_Deep(a);
@@ -370,7 +366,7 @@ static void Startup_Empty_Arrays(void)
   }
 
   blockscope {
-    Array(*) a = Make_Array_Core(1, NODE_FLAG_MANAGED);
+    Array* a = Make_Array_Core(1, NODE_FLAG_MANAGED);
     Set_Series_Len(a, 1);
     Init_Quoted_Void(Array_At(a, 0));
     Freeze_Array_Deep(a);
@@ -383,7 +379,7 @@ static void Startup_Empty_Arrays(void)
     // are accessed as an array, they give two blanks `[_ _]`.
     //
   blockscope {
-    Array(*) a = Make_Array_Core(2, NODE_FLAG_MANAGED);
+    Array* a = Make_Array_Core(2, NODE_FLAG_MANAGED);
     Set_Series_Len(a, 2);
     Init_Blank(Array_At(a, 0));
     Init_Blank(Array_At(a, 1));
@@ -490,7 +486,7 @@ static void Init_Root_Vars(void)
 
     // Note: rebText() can't run yet, review.
     //
-    String(*) nulled_uni = Make_String(1);
+    String* nulled_uni = Make_String(1);
 
   #if !defined(NDEBUG)
     Codepoint test_nul;
@@ -502,7 +498,7 @@ static void Init_Root_Vars(void)
     ensureNullptr(Root_Empty_Text) = Init_Text(Alloc_Value(), nulled_uni);
     Force_Value_Frozen_Deep(Root_Empty_Text);
 
-    Binary(*) bzero = Make_Binary(0);
+    Binary* bzero = Make_Binary(0);
     ensureNullptr(Root_Empty_Binary) = Init_Binary(Alloc_Value(), bzero);
     Force_Value_Frozen_Deep(Root_Empty_Binary);
 }
@@ -537,10 +533,10 @@ static void Shutdown_Root_Vars(void)
 //
 static void Init_System_Object(
     const REBVAL *boot_sysobj_spec,
-    Array(*) datatypes_catalog,
-    Array(*) natives_catalog,
-    Array(*) generics_catalog,
-    Context(*) errors_catalog
+    Array* datatypes_catalog,
+    Array* natives_catalog,
+    Array* generics_catalog,
+    Context* errors_catalog
 ) {
     assert(VAL_INDEX(boot_sysobj_spec) == 0);
     Cell(const*) spec_tail;
@@ -549,7 +545,7 @@ static void Init_System_Object(
 
     // Create the system object from the sysobj block (defined in %sysobj.r)
     //
-    Context(*) system = Make_Context_Detect_Managed(
+    Context* system = Make_Context_Detect_Managed(
         REB_OBJECT, // type
         spec_head, // scan for toplevel set-words
         spec_tail,
@@ -616,7 +612,7 @@ static void Init_System_Object(
     //
   blockscope {
     REBVAL *std_error = Get_System(SYS_STANDARD, STD_ERROR);
-    Context(*) c = VAL_CONTEXT(std_error);
+    Context* c = VAL_CONTEXT(std_error);
     HEART_BYTE(std_error) = REB_ERROR;
 
     REBVAL *rootvar = CTX_ROOTVAR(c);
@@ -773,7 +769,7 @@ void Startup_Core(void)
     Startup_Symbols();
 
   blockscope {
-    Array(*) a = Make_Array_Core(1, NODE_FLAG_MANAGED);
+    Array* a = Make_Array_Core(1, NODE_FLAG_MANAGED);
     Set_Series_Len(a, 1);
     Init_Quasi_Word(Array_At(a, 0), Canon(FALSE));
     Freeze_Array_Deep(a);
@@ -820,9 +816,9 @@ void Startup_Core(void)
     // (We could separate the text of the SYS.UTIL portion out, and scan that
     // separately to avoid the extra work.  Not a high priority.)
     //
-    String(const*) tmp_boot = Intern_Unsized_Managed("tmp-boot.r");  // const
+    const String* tmp_boot = Intern_Unsized_Managed("tmp-boot.r");  // const
     Push_GC_Guard(tmp_boot);  // recycle torture frees on scanner first push!
-    Array(*) boot_array = Scan_UTF8_Managed(
+    Array* boot_array = Scan_UTF8_Managed(
         tmp_boot,
         utf8,
         utf8_size,
@@ -850,7 +846,7 @@ void Startup_Core(void)
     // definition of natives, things like the <opt> tag are needed as a basis
     // for comparison to see if a usage matches that.
 
-    Array(*) datatypes_catalog = Startup_Datatypes(
+    Array* datatypes_catalog = Startup_Datatypes(
         VAL_ARRAY_KNOWN_MUTABLE(&boot->typespecs)
     );
     Manage_Series(datatypes_catalog);
@@ -866,19 +862,19 @@ void Startup_Core(void)
     // boot->natives is from the automatically gathered list of natives found
     // by scanning comments in the C sources for `native: ...` declarations.
     //
-    Array(*) natives_catalog = Startup_Natives(SPECIFIC(&boot->natives));
+    Array* natives_catalog = Startup_Natives(SPECIFIC(&boot->natives));
     Manage_Series(natives_catalog);
     Push_GC_Guard(natives_catalog);
 
     // boot->generics is the list in %generics.r
     //
-    Array(*) generics_catalog = Startup_Generics(SPECIFIC(&boot->generics));
+    Array* generics_catalog = Startup_Generics(SPECIFIC(&boot->generics));
     Manage_Series(generics_catalog);
     Push_GC_Guard(generics_catalog);
 
     // boot->errors is the error definition list from %errors.r
     //
-    Context(*) errors_catalog = Startup_Errors(SPECIFIC(&boot->errors));
+    Context* errors_catalog = Startup_Errors(SPECIFIC(&boot->errors));
     Push_GC_Guard(errors_catalog);
 
     Init_System_Object(
@@ -963,7 +959,7 @@ void Startup_Core(void)
     //  being confused with "the system object", which is a different thing.
     //  Better was to say SYS was just an abbreviation for SYSTEM.)
 
-    Context(*) util = Alloc_Context_Core(REB_MODULE, 1, NODE_FLAG_MANAGED);
+    Context* util = Alloc_Context_Core(REB_MODULE, 1, NODE_FLAG_MANAGED);
     ensureNullptr(Sys_Util_Module) = Alloc_Value();
     Init_Context_Cell(Sys_Util_Module, REB_MODULE, util);
     ensureNullptr(Sys_Context) = VAL_CONTEXT(Sys_Util_Module);

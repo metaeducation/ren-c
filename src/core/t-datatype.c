@@ -32,12 +32,12 @@
 // the integer datatype value).  Returns an array of words for the added
 // datatypes to use in SYSTEM/CATALOG/DATATYPES.  See %boot/types.r
 //
-Array(*) Startup_Datatypes(Array(*) boot_typespecs)
+Array* Startup_Datatypes(Array* boot_typespecs)
 {
     if (Array_Len(boot_typespecs) != REB_MAX - 1)  // exclude REB_VOID
         panic (boot_typespecs);
 
-    Array(*) catalog = Make_Array(REB_MAX - 1);
+    Array* catalog = Make_Array(REB_MAX - 1);
 
     REBINT n = 1;
 

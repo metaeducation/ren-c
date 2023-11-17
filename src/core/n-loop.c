@@ -409,7 +409,7 @@ DECLARE_NATIVE(cfor)
 {
     INCLUDE_PARAMS_OF_CFOR;
 
-    Context(*) context = Virtual_Bind_Deep_To_New_Context(
+    Context* context = Virtual_Bind_Deep_To_New_Context(
         ARG(body),  // may be updated, will still be GC safe
         ARG(word)
     );
@@ -494,7 +494,7 @@ DECLARE_NATIVE(for_skip)
         return VOID;
     }
 
-    Context(*) context = Virtual_Bind_Deep_To_New_Context(
+    Context* context = Virtual_Bind_Deep_To_New_Context(
         ARG(body),  // may be updated, will still be GC safe
         ARG(word)
     );
@@ -680,7 +680,7 @@ typedef struct Reb_Enum_Series ESER;
 
 struct Loop_Each_State {
     REBVAL *data;  // possibly API handle if converted from sequence
-    Series(const*) series;  // series data being enumerated (if applicable)
+    const Series* series;  // series data being enumerated (if applicable)
     union {
         EVARS evars;
         ESER eser;
@@ -743,7 +743,7 @@ void Init_Loop_Each(Value(*) iterator, Value(*) data)
 
         les->took_hold = Not_Series_Flag(les->series, FIXED_SIZE);
         if (les->took_hold)
-            Set_Series_Flag(m_cast(Series(*), les->series), FIXED_SIZE);
+            Set_Series_Flag(m_cast(Series*, les->series), FIXED_SIZE);
 
         if (ANY_CONTEXT(data)) {
             les->more_data = Did_Advance_Evars(&les->u.evars);
@@ -774,7 +774,7 @@ void Init_Loop_Each(Value(*) iterator, Value(*) data)
 //
 // It's possible to opt out of variable slots using BLANK!.
 //
-static bool Try_Loop_Each_Next(Value(const*) iterator, Context(*) vars_ctx)
+static bool Try_Loop_Each_Next(Value(const*) iterator, Context* vars_ctx)
 {
     struct Loop_Each_State *les;
     les = VAL_HANDLE_POINTER(struct Loop_Each_State, iterator);
@@ -918,7 +918,7 @@ static bool Try_Loop_Each_Next(Value(const*) iterator, Context(*) vars_ctx)
             break; }
 
           case REB_BINARY: {
-            Binary(const*) bin = BIN(les->series);
+            const Binary* bin = BIN(les->series);
             if (var)
                 Init_Integer(var, Binary_Head(bin)[les->u.eser.index]);
             if (++les->u.eser.index == les->u.eser.len)
@@ -958,7 +958,7 @@ void Shutdown_Loop_Each(Value(*) iterator)
     les = VAL_HANDLE_POINTER(struct Loop_Each_State, iterator);
 
     if (les->took_hold)  // release read-only lock
-        Clear_Series_Flag(m_cast(Series(*), les->series), FIXED_SIZE);
+        Clear_Series_Flag(m_cast(Series*, les->series), FIXED_SIZE);
 
     if (ANY_CONTEXT(les->data))
         Shutdown_Evars(&les->u.evars);
@@ -1018,7 +1018,7 @@ DECLARE_NATIVE(for_each)
     if (IS_BLANK(data))  // same response as to empty series
         return VOID;
 
-    Context(*) pseudo_vars_ctx = Virtual_Bind_Deep_To_New_Context(
+    Context* pseudo_vars_ctx = Virtual_Bind_Deep_To_New_Context(
         ARG(body),  // may be updated, will still be GC safe
         ARG(vars)
     );
@@ -1128,7 +1128,7 @@ DECLARE_NATIVE(every)
     if (IS_BLANK(data))  // same response as to empty series
         return VOID;
 
-    Context(*) pseudo_vars_ctx = Virtual_Bind_Deep_To_New_Context(
+    Context* pseudo_vars_ctx = Virtual_Bind_Deep_To_New_Context(
         ARG(body),  // may be updated, will still be GC safe
         ARG(vars)
     );
@@ -1257,12 +1257,12 @@ DECLARE_NATIVE(remove_each)
     Value(*) data = ARG(data);
     Value(*) body = ARG(body);
 
-    Series(*) series = VAL_SERIES_ENSURE_MUTABLE(data);  // check even if empty
+    Series* series = VAL_SERIES_ENSURE_MUTABLE(data);  // check even if empty
 
     if (VAL_INDEX(data) >= VAL_LEN_AT(data))  // past series end
         return Init_Integer(OUT, 0);
 
-    Context(*) context = Virtual_Bind_Deep_To_New_Context(
+    Context* context = Virtual_Bind_Deep_To_New_Context(
         body,  // may be updated, will still be GC safe
         ARG(vars)
     );
@@ -1313,7 +1313,7 @@ DECLARE_NATIVE(remove_each)
                     VAL_SPECIFIER(data)
                 );
             else if (IS_BINARY(data)) {
-                Binary(*) bin = BIN(series);
+                Binary* bin = BIN(series);
                 Init_Integer(var, cast(REBI64, Binary_Head(bin)[index]));
             }
             else {
@@ -1393,7 +1393,7 @@ DECLARE_NATIVE(remove_each)
             do {
                 assert(start <= len);
                 if (IS_BINARY(data)) {
-                    Binary(*) bin = BIN(series);
+                    Binary* bin = BIN(series);
                     Append_Ascii_Len(
                         mo->series,
                         cs_cast(Binary_At(bin, start)),
@@ -1469,7 +1469,7 @@ DECLARE_NATIVE(remove_each)
             goto done_finalizing;
         }
 
-        Binary(*) bin = BIN(series);
+        Binary* bin = BIN(series);
 
         // If there was a THROW, or fail() we need the remaining data
         //
@@ -1481,7 +1481,7 @@ DECLARE_NATIVE(remove_each)
             orig_len - start
         );
 
-        Binary(*) popped = Pop_Molded_Binary(mo);  // not UTF-8 if binary, see [7]
+        Binary* popped = Pop_Molded_Binary(mo);  // not UTF-8 if binary, see [7]
 
         assert(Binary_Len(popped) <= VAL_LEN_HEAD(data));
         removals = VAL_LEN_HEAD(data) - Binary_Len(popped);
@@ -1509,7 +1509,7 @@ DECLARE_NATIVE(remove_each)
             );
         }
 
-        StringT* popped = Pop_Molded_String(mo);
+        String* popped = Pop_Molded_String(mo);
 
         assert(String_Len(popped) <= VAL_LEN_HEAD(data));
         removals = VAL_LEN_HEAD(data) - String_Len(popped);
@@ -1646,7 +1646,7 @@ DECLARE_NATIVE(map)
         fail ("MAP only supports one-level QUOTED! series/path/context ATM");
     }
 
-    Context(*) pseudo_vars_ctx = Virtual_Bind_Deep_To_New_Context(
+    Context* pseudo_vars_ctx = Virtual_Bind_Deep_To_New_Context(
         ARG(body),  // may be updated, will still be GC safe
         ARG(vars)
     );
@@ -1877,7 +1877,7 @@ DECLARE_NATIVE(for)
     if (n < 1)  // Loop_Integer from 1 to 0 with bump of 1 is infinite
         return VOID;
 
-    Context(*) context = Virtual_Bind_Deep_To_New_Context(body, vars);
+    Context* context = Virtual_Bind_Deep_To_New_Context(body, vars);
     Init_Object(ARG(vars), context);  // keep GC safe
 
     assert(CTX_LEN(context) == 1);

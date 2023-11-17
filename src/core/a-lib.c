@@ -26,7 +26,7 @@
 // comments and notes which will help understand it.
 //
 // What characterizes the external API is that it is not necessary to #include
-// the extensive definitions of `struct SeriesT` or the APIs for dealing with
+// the extensive definitions of `struct Series` or the APIs for dealing with
 // all the internal details (e.g. Push_GC_Guard(), which are easy to get
 // wrong).  Not only does this simplify the interface, but it also means that
 // the C code using the library isn't competing as much for definitions in
@@ -136,7 +136,7 @@ inline static const REBVAL *NULLIFY_NULLED(const REBVAL *cell) {
 // It also has the benefit of helping interface with client code that has
 // been stylized to use malloc()-ish hooks to produce data, when the eventual
 // target of that data is a Rebol series.  It does this without exposing
-// Series(*) internals to the external API, by allowing one to "rebRepossess()"
+// Series* internals to the external API, by allowing one to "rebRepossess()"
 // the underlying series as a BINARY! REBVAL*.
 //
 
@@ -162,15 +162,15 @@ inline static const REBVAL *NULLIFY_NULLED(const REBVAL *cell) {
 //   for the size of any fundamental type".  See notes on ALIGN_SIZE.
 //
 // !!! rebAlignedMalloc() could exist to take an alignment, which could save
-// on wasted bytes when ALIGN_SIZE > sizeof(Series(*))...or work with "weird"
+// on wasted bytes when ALIGN_SIZE > sizeof(Series*)...or work with "weird"
 // large fundamental types that need more alignment than ALIGN_SIZE.
 //
 void *RL_rebMalloc(size_t size)
 {
     ENTER_API;
 
-    Binary(*) s = Make_Series(BinaryT,
-        ALIGN_SIZE  // stores Series(*) (must be at least big enough for void*)
+    Binary* s = Make_Series(Binary,
+        ALIGN_SIZE  // stores Series* (must be at least big enough for void*)
             + size  // for the actual data capacity (may be 0, see notes)
             + 1,  // for termination (AS TEXT! of rebRepossess(), see notes)
         FLAG_FLAVOR(BINARY)  // rebRepossess() only creates binary series ATM
@@ -181,9 +181,9 @@ void *RL_rebMalloc(size_t size)
 
     Byte* ptr = Binary_Head(s) + ALIGN_SIZE;
 
-    BinaryT** ps = (cast(BinaryT**, ptr) - 1);
+    Binary** ps = (cast(Binary**, ptr) - 1);
     *ps = s;  // save self in bytes that appear immediately before the data
-    Poison_Memory_If_Sanitize(ps, sizeof(BinaryT*));  // catch underruns
+    Poison_Memory_If_Sanitize(ps, sizeof(Binary*));  // catch underruns
 
     // !!! The data is uninitialized, and if it is turned into a BINARY! via
     // rebRepossess() before all bytes are assigned initialized, it could be
@@ -217,7 +217,7 @@ void *RL_rebTryMalloc(size_t size)
         p = RL_rebMalloc(size);
         CLEANUP_BEFORE_EXITING_RESCUE_SCOPE;
         return p;
-    } ON_ABRUPT_FAILURE (Context(*) e) {
+    } ON_ABRUPT_FAILURE (Context* e) {
         UNUSED(e);
         return nullptr;
     }
@@ -250,10 +250,10 @@ void *RL_rebRealloc(void *ptr, size_t new_size)
     if (not ptr)  // C realloc() accepts null
         return RL_rebMalloc(new_size);
 
-    BinaryT** ps = cast(BinaryT**, ptr) - 1;
-    Unpoison_Memory_If_Sanitize(ps, sizeof(Binary(*)));  // fetch `s` underruns
+    Binary** ps = cast(Binary**, ptr) - 1;
+    Unpoison_Memory_If_Sanitize(ps, sizeof(Binary*));  // fetch `s` underruns
 
-    Binary(*) s = *ps;
+    Binary* s = *ps;
     assert(Is_Node_Root_Bit_Set(s));
 
     REBLEN old_size = Binary_Len(s) - ALIGN_SIZE;
@@ -286,10 +286,10 @@ void RL_rebFreeMaybe(void *ptr)
     if (not ptr)
         return;
 
-    BinaryT** ps = cast(BinaryT**, ptr) - 1;
-    Unpoison_Memory_If_Sanitize(ps, sizeof(BinaryT*));  // fetch `s` underruns
+    Binary** ps = cast(Binary**, ptr) - 1;
+    Unpoison_Memory_If_Sanitize(ps, sizeof(Binary*));  // fetch `s` underruns
 
-    Binary(*) s = *ps;
+    Binary* s = *ps;
 
     if (Is_Node_A_Cell(s) or not (NODE_BYTE(s) & NODE_BYTEMASK_0x02_ROOT)) {
         rebJumps(
@@ -362,10 +362,10 @@ REBVAL *RL_rebRepossess(void *ptr, size_t size)
 {
     ENTER_API;
 
-    BinaryT** ps = cast(BinaryT**, ptr) - 1;
-    Unpoison_Memory_If_Sanitize(ps, sizeof(BinaryT*));  // fetch `s` underruns
+    Binary** ps = cast(Binary**, ptr) - 1;
+    Unpoison_Memory_If_Sanitize(ps, sizeof(Binary*));  // fetch `s` underruns
 
-    Binary(*) s = *ps;
+    Binary* s = *ps;
     assert(Is_Node_Root_Bit_Set(s));  // may or may not be managed
     assert(Get_Series_Flag(s, DONT_RELOCATE));
 
@@ -379,7 +379,7 @@ REBVAL *RL_rebRepossess(void *ptr, size_t size)
         //
         // Dynamic series have the concept of a "bias", which is unused
         // allocated capacity at the head of a series.  Bump the "bias" to
-        // treat the embedded Series(*) (aligned to REBI64) as unused capacity.
+        // treat the embedded Series* (aligned to REBI64) as unused capacity.
         //
         Set_Series_Bias(s, ALIGN_SIZE);
         s->content.dynamic.data += ALIGN_SIZE;
@@ -419,18 +419,18 @@ void* RL_rebUnmanageMemory(void *ptr)
 {
     ENTER_API;
 
-    BinaryT** ps = cast(BinaryT**, ptr) - 1;
-    Unpoison_Memory_If_Sanitize(ps, sizeof(BinaryT*));  // fetch `s` underruns
+    Binary** ps = cast(Binary**, ptr) - 1;
+    Unpoison_Memory_If_Sanitize(ps, sizeof(Binary*));  // fetch `s` underruns
 
     // We "manage" the series to remove it from the tracked manuals list.
     // But the fact that it still has NODE_FLAG_ROOT means it should not be
     // garbage collected.
     //
-    Binary(*) s = *ps;
+    Binary* s = *ps;
     assert(Is_Node_Root_Bit_Set(s));
     Manage_Series(s);  // panics if already unmanaged... should it tolerate?
 
-    Poison_Memory_If_Sanitize(ps, sizeof(BinaryT*));  // catch underruns
+    Poison_Memory_If_Sanitize(ps, sizeof(Binary*));  // catch underruns
 
     return ptr;
 }
@@ -621,7 +621,7 @@ REBVAL *RL_rebChar(uint32_t codepoint)
     ENTER_API;
 
     REBVAL* v = Alloc_Value();
-    Context(*) error = Maybe_Init_Char(v, codepoint);
+    Context* error = Maybe_Init_Char(v, codepoint);
     if (error) {
         rebRelease(v);
         fail (error);
@@ -667,7 +667,7 @@ REBVAL *RL_rebSizedBinary(const void *bytes, size_t size)
 {
     ENTER_API;
 
-    Binary(*) bin = Make_Binary(size);
+    Binary* bin = Make_Binary(size);
     memcpy(Binary_Head(bin), bytes, size);
     Term_Binary_Len(bin, size);
 
@@ -698,7 +698,7 @@ REBVAL *RL_rebUninitializedBinary_internal(size_t size)
 {
     ENTER_API;
 
-    Binary(*) bin = Make_Binary(size);
+    Binary* bin = Make_Binary(size);
 
     // !!! Caution, unfilled bytes, access or molding may be *worse* than
     // random by the rules of C if they don't get written!  Must be filled
@@ -922,7 +922,7 @@ const void *RL_rebArgR(const void *p, va_list *vaptr)
     ENTER_API;
 
     Level(*) L = TOP_LEVEL;
-    Phase(*) act = Level_Phase(L);
+    Phase* act = Level_Phase(L);
 
     // !!! Currently the JavaScript wrappers do not do the right thing for
     // taking just a `const char*`, so this falsely is a variadic to get the
@@ -942,7 +942,7 @@ const void *RL_rebArgR(const void *p, va_list *vaptr)
     if (Detect_Rebol_Pointer(p2) != DETECTED_AS_END)
         fail ("rebArg() isn't actually variadic, it's arity-1");
 
-    Symbol(const*) symbol = Intern_UTF8_Managed(cb_cast(name), strsize(name));
+    const Symbol* symbol = Intern_UTF8_Managed(cb_cast(name), strsize(name));
 
     const REBKEY *tail;
     const REBKEY *key = ACT_KEYS(&tail, act);
@@ -982,7 +982,7 @@ REBVAL *RL_rebArg(const void *p, va_list *vaptr)
 //
 // - a REBVAL*
 // - a UTF-8 string to be scanned as one or more values in the sequence
-// - a Series(*) that represents an "API instruction"
+// - a Series* that represents an "API instruction"
 //
 // There isn't a separate concept of routines that perform evaluations and
 // ones that extract C fundamental types out of Rebol values.  Hence you
@@ -1663,7 +1663,7 @@ CLEANUP_CFUNC *RL_rebExtractHandleCleaner(
     if (VAL_TYPE(v) != REB_HANDLE)
         fail ("rebUnboxHandleCleaner() called on non-HANDLE!");
 
-    Array(*) singular = VAL_HANDLE_SINGULAR(v);
+    Array* singular = VAL_HANDLE_SINGULAR(v);
     return singular->misc.cleaner;
 }
 
@@ -2106,7 +2106,7 @@ REBVAL *RL_rebRescueWith(
             // state) won't be covered by this, and must be unmanaged.
 
           proxy_result: {
-            Array(*) a = Singular_From_Cell(result);
+            Array* a = Singular_From_Cell(result);
             Unlink_Api_Handle_From_Level(a);  // e.g. linked to f
             Link_Api_Handle_To_Level(a, dummy->prior);  // link to caller
           }
@@ -2118,7 +2118,7 @@ REBVAL *RL_rebRescueWith(
     CLEANUP_BEFORE_EXITING_RESCUE_SCOPE;
     return result;
 
-} ON_ABRUPT_FAILURE(Context(*) e) {  /////////////////////////////////////////
+} ON_ABRUPT_FAILURE(Context* e) {  /////////////////////////////////////////
 
     Drop_Level(dummy);
 
@@ -2208,11 +2208,11 @@ const REBINS *RL_rebQUOTING(const void *p)
     if (p == nullptr)
         return FEED_NULL_SUBSTITUTE_CELL;  // precooked meta null
 
-    Array(*) a;
+    Array* a;
 
     switch (Detect_Rebol_Pointer(p)) {
       case DETECTED_AS_SERIES: {
-        a = m_cast(Array(*), cast(Array(const*), p));
+        a = m_cast(Array*, cast(const Array*, p));
         if (Not_Subclass_Flag(API, a, RELEASE))
             fail ("Can't quote instructions (besides rebR())");
         break; }
@@ -2248,7 +2248,7 @@ const REBINS *RL_rebQUOTING(const void *p)
 const REBINS* rebDERELATIVIZE(Cell(const*) cell, REBSPC* specifier)
 {
     Value(*) v = Derelativize(Alloc_Value(), cell, specifier);
-    Array(*) a = Singular_From_Cell(v);
+    Array* a = Singular_From_Cell(v);
     Set_Subclass_Flag(API, a, RELEASE);
     return a;
 }
@@ -2269,11 +2269,11 @@ const REBINS *RL_rebUNQUOTING(const void *p)
     if (p == nullptr)
         fail ("Cannot unquote NULL");
 
-    Array(*) a;
+    Array* a;
 
     switch (Detect_Rebol_Pointer(p)) {
       case DETECTED_AS_SERIES: {
-        a = m_cast(Array(*), cast(Array(const*), p));
+        a = m_cast(Array*, cast(const Array*, p));
         if (Not_Subclass_Flag(API, a, RELEASE))
             fail ("Can't unquote instructions (besides rebR())");
         break; }
@@ -2320,7 +2320,7 @@ const REBINS *RL_rebRELEASING(REBVAL *v)
     if (not Is_Api_Value(v))
         fail ("Cannot apply rebR() to non-API value");
 
-    Array(*) a = Singular_From_Cell(v);
+    Array* a = Singular_From_Cell(v);
     if (Get_Subclass_Flag(API, a, RELEASE))
         fail ("Cannot apply rebR() more than once to the same API value");
 
@@ -2338,7 +2338,7 @@ const void *RL_rebINLINE(const REBVAL *v)
 {
     ENTER_API;
 
-    Array(*) a = Alloc_Singular(
+    Array* a = Alloc_Singular(
         FLAG_FLAVOR(INSTRUCTION_SPLICE) | NODE_FLAG_MANAGED  // lie!
     );
     Clear_Node_Managed_Bit(a);  // lying avoided manuals tracking!
@@ -2367,11 +2367,11 @@ const REBINS *RL_rebRUN(const void *p)
     if (p == nullptr)
         fail ("rebRUN() received nullptr");
 
-    Array(*) a;
+    Array* a;
 
     switch (Detect_Rebol_Pointer(p)) {
       case DETECTED_AS_SERIES: {
-        a = m_cast(Array(*), cast(Array(const*), p));
+        a = m_cast(Array*, cast(const Array*, p));
         if (Not_Subclass_Flag(API, a, RELEASE))
             fail ("Can't quote instructions (besides rebR())");
         break; }
@@ -2416,7 +2416,7 @@ REBVAL *RL_rebManage(REBVAL *v)
 
     assert(Is_Api_Value(v));
 
-    Array(*) a = Singular_From_Cell(v);
+    Array* a = Singular_From_Cell(v);
     assert(Is_Node_Root_Bit_Set(a));
 
     if (Is_Node_Managed(a))
@@ -2445,7 +2445,7 @@ void RL_rebUnmanage(void *p)
     REBVAL *v = cast(REBVAL*, n);
     assert(Is_Api_Value(v));
 
-    Array(*) a = Singular_From_Cell(v);
+    Array* a = Singular_From_Cell(v);
     assert(Is_Node_Root_Bit_Set(a));
 
     if (Not_Node_Managed(a))
@@ -2568,7 +2568,7 @@ REBVAL *RL_rebError_OS(int errnum)  // see also convenience macro rebFail_OS()
 {
     ENTER_API;
 
-    Context(*) error;
+    Context* error;
 
   #if TO_WINDOWS
     if (errnum == 0)
@@ -2733,7 +2733,7 @@ DECLARE_NATIVE(api_transient)
 
     REBVAL *v = Copy_Cell(Alloc_Value(), ARG(value));
     rebUnmanage(v);  // has to survive the API-TRANSIENT's frame
-    Array(*) a = Singular_From_Cell(v);
+    Array* a = Singular_From_Cell(v);
     Set_Subclass_Flag(API, a, RELEASE);
 
     // Regarding adddresses in WASM:
@@ -2794,7 +2794,7 @@ REBVAL *RL_rebCollateExtension_internal(
     void *cfuncs,  // Dispatcher* or Intrinsic* (not in API either way)
     int cfuncs_len
 ){
-    Array(*) a = Make_Array(IDX_COLLATOR_MAX);  // details
+    Array* a = Make_Array(IDX_COLLATOR_MAX);  // details
     Set_Series_Len(a, IDX_COLLATOR_MAX);
 
     Init_Handle_Cdata(

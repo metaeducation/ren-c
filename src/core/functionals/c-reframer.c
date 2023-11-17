@@ -210,7 +210,7 @@ bool Init_Invokable_From_Feed_Throws(
     Move_Cell(action, out);
     Push_GC_Guard(action);
 
-    Option(String(const*)) label = VAL_FRAME_LABEL(action);
+    Option(const String*) label = VAL_FRAME_LABEL(action);
 
     Level(*) L = Make_Pushed_Level_From_Action_Feed_May_Throw(
         out,
@@ -230,12 +230,12 @@ bool Init_Invokable_From_Feed_Throws(
     // managed, but Push_Action() does not use ordinary series creation to
     // make its nodes, so manual ones don't wind up in the tracking list.
     //
-    Action(*) act = VAL_ACTION(action);
+    Action* act = VAL_ACTION(action);
     assert(Level_Binding(L) == VAL_FRAME_BINDING(action));
 
     assert(Not_Node_Managed(L->varlist));
 
-    Array(*) varlist = L->varlist;
+    Array* varlist = L->varlist;
     L->varlist = nullptr;  // don't let Drop_Level() free varlist (we want it)
     INIT_BONUS_KEYSOURCE(varlist, ACT_KEYLIST(act));  // disconnect from f
     Drop_Level(L);
@@ -270,7 +270,7 @@ bool Init_Frame_From_Feed_Throws(
         return false;
 
     assert(Is_Quoted(out));
-    Context(*) exemplar = Make_Context_For_Action(
+    Context* exemplar = Make_Context_For_Action(
         Lib(IDENTITY),
         TOP_INDEX,
         nullptr
@@ -281,7 +281,7 @@ bool Init_Frame_From_Feed_Throws(
     // Should we save the WORD! from a variable access to use as the name of
     // the identity alias?
     //
-    Option(Symbol(const*)) label = nullptr;
+    Option(const Symbol*) label = nullptr;
     Init_Frame(out, exemplar, label);
     return false;
 }
@@ -301,7 +301,7 @@ Bounce Reframer_Dispatcher(Level(*) const L)
 {
     USE_LEVEL_SHORTHANDS (L);
 
-    Details(*) details = Phase_Details(PHASE);
+    Details* details = Phase_Details(PHASE);
     assert(Array_Len(details) == IDX_REFRAMER_MAX);
 
     REBVAL* shim = DETAILS_AT(details, IDX_REFRAMER_SHIM);
@@ -357,21 +357,21 @@ DECLARE_NATIVE(reframer_p)
 
     QUOTE_BYTE(ARG(shim)) = UNQUOTED_1;  // remove isotope if present
 
-    Action(*) shim = VAL_ACTION(ARG(shim));
-    Option(Symbol(const*)) label = VAL_FRAME_LABEL(ARG(shim));
+    Action* shim = VAL_ACTION(ARG(shim));
+    Option(const Symbol*) label = VAL_FRAME_LABEL(ARG(shim));
 
     StackIndex base = TOP_INDEX;
 
     struct Reb_Binder binder;
     INIT_BINDER(&binder);
-    Context(*) exemplar = Make_Context_For_Action_Push_Partials(
+    Context* exemplar = Make_Context_For_Action_Push_Partials(
         ARG(shim),
         base,
         &binder,
         NONE_CELL
     );
 
-    Option(Context(*)) error = nullptr;  // can't fail() with binder in effect
+    Option(Context*) error = nullptr;  // can't fail() with binder in effect
 
     REBLEN param_index = 0;
 
@@ -385,7 +385,7 @@ DECLARE_NATIVE(reframer_p)
     const REBPAR *param;
 
     if (REF(parameter)) {
-        Symbol(const*) symbol = VAL_WORD_SYMBOL(ARG(parameter));
+        const Symbol* symbol = VAL_WORD_SYMBOL(ARG(parameter));
         param_index = Get_Binder_Index_Else_0(&binder, symbol);
         if (param_index == 0) {
             error = Error_No_Arg(label, symbol);
@@ -436,7 +436,7 @@ DECLARE_NATIVE(reframer_p)
         if (Is_Specialized(param))
             continue;
 
-        Symbol(const*) symbol = KEY_SYMBOL(key);
+        const Symbol* symbol = KEY_SYMBOL(key);
         REBLEN index = Remove_Binder_Index_Else_0(&binder, symbol);
         assert(index != 0);
         UNUSED(index);
@@ -464,14 +464,14 @@ DECLARE_NATIVE(reframer_p)
     // which parameter to fill with the *real* frame instance.
     //
     Manage_Series(CTX_VARLIST(exemplar));
-    Phase(*) reframer = Alloc_Action_From_Exemplar(
+    Phase* reframer = Alloc_Action_From_Exemplar(
         exemplar,  // shim minus the frame argument
         label,
         &Reframer_Dispatcher,
         IDX_REFRAMER_MAX  // details array capacity => [shim, param_index]
     );
 
-    Details(*) details = Phase_Details(reframer);
+    Details* details = Phase_Details(reframer);
     Copy_Cell(DETAILS_AT(details, IDX_REFRAMER_SHIM), ARG(shim));
     Init_Integer(DETAILS_AT(details, IDX_REFRAMER_PARAM_INDEX), param_index);
 

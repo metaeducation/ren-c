@@ -160,7 +160,7 @@ e-funcs/emit {
      * But libRebol has become good enough that it is likely going to be the
      * required interface for extensions, and the features enabled by C++ may
      * become too good to ignore.  So the internal API does permit the passing
-     * of things like Utf8(*) and String(*) for now.
+     * of things like Utf8(*) and String* for now.
      *
      * This may be revisited in the future.
      */

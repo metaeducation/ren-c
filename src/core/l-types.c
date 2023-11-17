@@ -1010,7 +1010,7 @@ const Byte* Scan_Email(
     const Byte* cp,
     REBLEN len
 ){
-    String(*) s = Make_String(len * 2);  // !!! guess...use mold buffer instead?
+    String* s = Make_String(len * 2);  // !!! guess...use mold buffer instead?
     Utf8(*) up = String_Head(s);
 
     REBLEN num_chars = 0;
@@ -1203,7 +1203,7 @@ const Byte* Scan_Any(
     // being left open to make the scanner flexible in this respect...to
     // either convert CR LF sequences to just LF, or to preserve the CR.
     //
-    String(*) s = Append_UTF8_May_Fail(
+    String* s = Append_UTF8_May_Fail(
         nullptr,
         cs_cast(cp),
         num_bytes,
@@ -1237,7 +1237,7 @@ DECLARE_NATIVE(scan_net_header)
 {
     INCLUDE_PARAMS_OF_SCAN_NET_HEADER;
 
-    Array(*) result = Make_Array(10); // Just a guess at size (use STD_BUF?)
+    Array* result = Make_Array(10); // Just a guess at size (use STD_BUF?)
 
     REBVAL *header = ARG(header);
     Size size;
@@ -1269,7 +1269,7 @@ DECLARE_NATIVE(scan_net_header)
 
         Cell(*) val = nullptr;  // suppress maybe uninitialized warning
 
-        Symbol(const*) name = Intern_UTF8_Managed(start, cp - start);
+        const Symbol* name = Intern_UTF8_Managed(start, cp - start);
 
         cp++;
         // Search if word already present:
@@ -1287,7 +1287,7 @@ DECLARE_NATIVE(scan_net_header)
                 }
                 else {
                     // Create new block for values:
-                    Array(*) a = Make_Array(2);
+                    Array* a = Make_Array(2);
                     Derelativize(
                         Alloc_Tail_Array(a),
                         item + 1, // prior value
@@ -1335,7 +1335,7 @@ DECLARE_NATIVE(scan_net_header)
         // correctly, it would need to use Utf8_Next to count the characters
         // in the loop above.  Better to convert to usermode.
 
-        String(*) string = Make_String(len * 2);
+        String* string = Make_String(len * 2);
         Utf8(*) str = String_Head(string);
         cp = start;
 

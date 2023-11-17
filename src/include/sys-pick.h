@@ -84,7 +84,7 @@
 //
 inline static Bounce Run_Pickpoke_Dispatch(
     Level(*) level_,
-    Symbol(const*) verb,
+    const Symbol* verb,
     const REBVAL *new_location
 ){
     Copy_Cell(PUSH(), D_ARG(1));

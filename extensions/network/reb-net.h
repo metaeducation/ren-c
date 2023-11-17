@@ -79,7 +79,7 @@ inline static SOCKREQ *Sock_Of_Port(const REBVAL *port)
 typedef struct {
     uv_write_t req;  // make first member of struct so we can cast the address
 
-    Context(*) port_ctx;
+    Context* port_ctx;
     REBVAL *binary;
     REBVAL *result;
 } Reb_Write_Request;
@@ -91,13 +91,13 @@ typedef struct {
 typedef struct {
     uv_connect_t req;  // make first member of struct so we can cast the address
 
-    Context(*) port_ctx;
+    Context* port_ctx;
     REBVAL *result;
 } Reb_Connect_Request;
 
 
 typedef struct {
-    Context(*) port_ctx;
+    Context* port_ctx;
 
     ssize_t length;  // length to transfer (or -1 for UNLIMITED)
     size_t actual;  // length actually transferred

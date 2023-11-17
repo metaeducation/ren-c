@@ -22,7 +22,7 @@
 // C++ debug build provides.  But it's also some of the most vital.
 //
 // It is often the case that a stored pointer for a series or node is the
-// base class, e.g. a Series(*) when it is actually the varlist of a Context(*).
+// base class, e.g. a Series* when it is actually the varlist of a Context*.
 // The process for casting something from a base class to a subclass is
 // referred to as "downcasting":
 //
@@ -36,10 +36,10 @@
 // In the C++ build we can do better:
 //
 // * Templates can stop illegal downcasting (e.g. keep you from trying to turn
-//   an `int*` into a `Array(*)`, but allow you to do it for `Series(*)`).
+//   an `int*` into a `Array*`, but allow you to do it for `Series*`).
 //
-// * They can also stop unnecessary downcasting...such as casting a Series(*)
-//   to a Series(*).
+// * They can also stop unnecessary downcasting...such as casting a Series*
+//   to a Series*.
 //
 // * Bit patterns can be checked in the node to make sure that the cast is
 //   actually legal at runtime.  While this can be done in C too, the nature
@@ -66,21 +66,21 @@
     // Note: x_cast's fast method vaporizing at compile time in C++ will not
     // work on smart pointer types, so don't try writing:
     //
-    //    #define SER(p)    x_cast(Series(*), (p))
+    //    #define SER(p)    x_cast(Series*, (p))
     //
     // It may work when none of the macros actually resolve to smart pointer
     // classes, but will break when they are.
 
     #define NOD(p)          x_cast(Node*, (p))
 
-    #define SER(p)          cast(Series(*), x_cast(SeriesT*, (p)))
-    #define ARR(p)          cast(Array(*), x_cast(ArrayT*, (p)))
-    #define ACT(p)          cast(Action(*), x_cast(ActionT*, (p)))
-    #define CTX(p)          cast(Context(*), x_cast(ContextT*, (p)))
+    #define SER(p)          cast(Series*, x_cast(Series*, (p)))
+    #define ARR(p)          cast(Array*, x_cast(Array*, (p)))
+    #define ACT(p)          cast(Action*, x_cast(Action*, (p)))
+    #define CTX(p)          cast(Context*, x_cast(Context*, (p)))
 
-    #define STR(p)          cast(String(*), x_cast(StringT*, (p)))
+    #define STR(p)          cast(String*, x_cast(String*, (p)))
 
-    #define SYM(p)          cast(Symbol(*), x_cast(SymbolT*, (p)))
+    #define SYM(p)          cast(Symbol*, x_cast(Symbol*, (p)))
 
     #define VAL(p)          cast(Value(*), x_cast(ValueT*, (p)))
 
@@ -141,8 +141,8 @@
         typename T0 = typename std::remove_const<T>::type,
         typename S = typename std::conditional<
             std::is_const<T>::value,  // boolean
-            const SeriesT,  // true branch
-            SeriesT  // false branch
+            const Series,  // true branch
+            Series  // false branch
         >::type
     >
     inline S *SER(T *p) {
@@ -154,7 +154,7 @@
         if (not p)
             return nullptr;
 
-        if ((reinterpret_cast<Series(const*)>(p)->leader.bits & (
+        if ((reinterpret_cast<const Series*>(p)->leader.bits & (
             NODE_FLAG_NODE | NODE_FLAG_FREE | NODE_FLAG_CELL
         )) != (
             NODE_FLAG_NODE
@@ -170,21 +170,21 @@
         typename T0 = typename std::remove_const<T>::type,
         typename A = typename std::conditional<
             std::is_const<T>::value,  // boolean
-            const ArrayT,  // true branch
-            ArrayT  // false branch
+            const Array,  // true branch
+            Array  // false branch
         >::type
     >
     inline A *ARR(T *p) {
         static_assert(
             std::is_same<T0, void>::value
                 or std::is_same<T0, Node>::value
-                or std::is_same<T0, SeriesT>::value,
+                or std::is_same<T0, Series>::value,
             "ARR() works on [void* Node* Series*]"
         );
         if (not p)
             return nullptr;
 
-        if ((reinterpret_cast<Series(const*) >(p)->leader.bits & (
+        if ((reinterpret_cast<const Series* >(p)->leader.bits & (
             NODE_FLAG_NODE | NODE_FLAG_FREE | NODE_FLAG_CELL
         )) != (
             NODE_FLAG_NODE
@@ -200,22 +200,22 @@
         typename T0 = typename std::remove_const<T>::type,
         typename C = typename std::conditional<
             std::is_const<T>::value,  // boolean
-            const ContextT,  // true branch
-            ContextT  // false branch
+            const Context,  // true branch
+            Context  // false branch
         >::type
     >
     inline static C *CTX(T *p) {
         static_assert(
             std::is_same<T0, void>::value
                 or std::is_same<T0, Node>::value
-                or std::is_same<T0, SeriesT>::value
-                or std::is_same<T0, ArrayT>::value,
+                or std::is_same<T0, Series>::value
+                or std::is_same<T0, Array>::value,
             "CTX() works on [void* Node* Series* Array*]"
         );
         if (not p)
             return nullptr;
 
-        if (((reinterpret_cast<Series(const*) >(p)->leader.bits & (
+        if (((reinterpret_cast<const Series* >(p)->leader.bits & (
             SERIES_MASK_VARLIST
                 | NODE_FLAG_FREE
                 | NODE_FLAG_CELL
@@ -232,19 +232,19 @@
     }
 
     template <typename P>
-    inline Action(*) ACT(P p) {
+    inline Action* ACT(P p) {
         static_assert(
             std::is_same<P, void*>::value
                 or std::is_same<P, Node*>::value
-                or std::is_same<P, SeriesT*>::value
-                or std::is_same<P, ArrayT*>::value,
+                or std::is_same<P, Series*>::value
+                or std::is_same<P, Array*>::value,
             "ACT() works on [void* Node* Series* Array*]"
         );
 
         if (not p)
             return nullptr;
 
-        if ((reinterpret_cast<Series(const*) >(p)->leader.bits & (
+        if ((reinterpret_cast<const Series* >(p)->leader.bits & (
             SERIES_MASK_DETAILS
                 | NODE_FLAG_FREE
                 | NODE_FLAG_CELL
@@ -255,26 +255,26 @@
             panic (p);
         }
 
-        return reinterpret_cast<Action(*)>(p);
+        return reinterpret_cast<Action*>(p);
     }
 
     // !!! STR() and SYM() casts should be updated to do more than const
 
-    inline static String(*) STR(void *p)
-      { return cast(String(*), p); }
+    inline static String* STR(void *p)
+      { return cast(String*, p); }
 
-    inline static String(const*) STR(const void *p)
-      { return cast(String(const*), p); }
+    inline static const String* STR(const void *p)
+      { return cast(const String*, p); }
 
     // The only time a SYM should be mutable is at its creation time, or
     // when bits are being tweaked in binding slots.  Stored or external
     // pointers should always be const if downcasting.
 
-    inline static Symbol(*) SYM(void *p)
-      { return cast(Symbol(*), p); }
+    inline static Symbol* SYM(void *p)
+      { return cast(Symbol*, p); }
 
-    inline static Symbol(const*) SYM(const void *p)
-      { return cast(Symbol(const*), p); }
+    inline static const Symbol* SYM(const void *p)
+      { return cast(const Symbol*, p); }
 
     // !!! There aren't currently that many VAL() casts in the system.  When
     // some arise, consider beefing up this cast.
@@ -310,10 +310,10 @@
 #endif
 
 
-inline static Map(*) MAP(void *p) {  // not a fancy cast ATM.
-    Array(*) a = ARR(p);
+inline static Map* MAP(void *p) {  // not a fancy cast ATM.
+    Array* a = ARR(p);
     assert(IS_PAIRLIST(a));
-    return cast(Map(*), a);
+    return cast(Map*, a);
 }
 
-#define KEYS(p)         x_cast(KeyListT*, (p))
+#define KEYS(p)         x_cast(KeyList*, (p))

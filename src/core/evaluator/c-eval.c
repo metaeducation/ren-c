@@ -362,19 +362,19 @@ Bounce Evaluator_Executor(Level(*) L)
 
       intrinsic_in_scratch_arg_in_spare:
       case ST_EVALUATOR_CALCULATING_INTRINSIC_ARG : {
-        Action(*) action = VAL_ACTION(SCRATCH);
+        Action* action = VAL_ACTION(SCRATCH);
         assert(IS_DETAILS(action));
-        Intrinsic* intrinsic = Extract_Intrinsic(cast(Phase(*), action));
+        Intrinsic* intrinsic = Extract_Intrinsic(cast(Phase*, action));
         REBPAR* param = ACT_PARAM(action, 2);
 
         if (VAL_PARAM_CLASS(param) == PARAM_CLASS_META)
             Meta_Quotify(SPARE);
         if (not Typecheck_Coerce_Argument(param, SPARE)) {
-            Option(Symbol(const*)) label = VAL_FRAME_LABEL(SCRATCH);
+            Option(const Symbol*) label = VAL_FRAME_LABEL(SCRATCH);
             const REBKEY* key = ACT_KEY(action, 2);
             fail (Error_Arg_Type(label, key, param, stable_SPARE));
         }
-        (*intrinsic)(OUT, cast(Phase(*), action), stable_SPARE);
+        (*intrinsic)(OUT, cast(Phase*, action), stable_SPARE);
         goto lookahead; }
 
       case REB_GROUP :
@@ -456,8 +456,8 @@ Bounce Evaluator_Executor(Level(*) L)
         goto give_up_backward_quote_priority;
 
   blockscope {
-    Action(*) enfixed = VAL_ACTION(unwrap(L_next_gotten));
-    Array(*) paramlist = ACT_PARAMLIST(enfixed);
+    Action* enfixed = VAL_ACTION(unwrap(L_next_gotten));
+    Array* paramlist = ACT_PARAMLIST(enfixed);
 
     if (Not_Subclass_Flag(VARLIST, paramlist, PARAMLIST_QUOTES_FIRST))
         goto give_up_backward_quote_priority;
@@ -710,7 +710,7 @@ Bounce Evaluator_Executor(Level(*) L)
       word_common: ///////////////////////////////////////////////////////////
 
         if (Is_Activation(unwrap(L_current_gotten))) {
-            Action(*) action = VAL_ACTION(unwrap(L_current_gotten));
+            Action* action = VAL_ACTION(unwrap(L_current_gotten));
 
             if (Is_Enfixed(unwrap(L_current_gotten))) {
                 if (
@@ -726,8 +726,8 @@ Bounce Evaluator_Executor(Level(*) L)
                 }
             }
 
-            Context(*) binding = VAL_FRAME_BINDING(unwrap(L_current_gotten));
-            Symbol(const*) label = VAL_WORD_SYMBOL(L_current);  // use WORD!
+            Context* binding = VAL_FRAME_BINDING(unwrap(L_current_gotten));
+            const Symbol* label = VAL_WORD_SYMBOL(L_current);  // use WORD!
             bool enfixed = Is_Enfixed(unwrap(L_current_gotten));
             if (Get_Eval_Executor_Flag(L, DIDNT_LEFT_QUOTE_TUPLE)) {
                 if (enfixed) {
@@ -1931,8 +1931,8 @@ Bounce Evaluator_Executor(Level(*) L)
   //=//// IS WORD ENFIXEDLY TIED TO A FUNCTION (MAY BE "INVISIBLE") ///////=//
 
   blockscope {
-    Action(*) enfixed = VAL_ACTION(unwrap(L_next_gotten));
-    Array(*) paramlist = ACT_PARAMLIST(enfixed);
+    Action* enfixed = VAL_ACTION(unwrap(L_next_gotten));
+    Array* paramlist = ACT_PARAMLIST(enfixed);
 
     if (Get_Subclass_Flag(VARLIST, paramlist, PARAMLIST_QUOTES_FIRST)) {
         //

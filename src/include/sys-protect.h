@@ -43,10 +43,10 @@ enum {
     PROT_FREEZE = 1 << 4
 };
 
-inline static bool Is_Array_Frozen_Shallow(Array(const*) a)
+inline static bool Is_Array_Frozen_Shallow(const Array* a)
   { return Get_Series_Info(a, FROZEN_SHALLOW); }
 
-inline static bool Is_Array_Frozen_Deep(Array(const*) a) {
+inline static bool Is_Array_Frozen_Deep(const Array* a) {
     if (Not_Series_Info(a, FROZEN_DEEP))
         return false;
 
@@ -54,7 +54,7 @@ inline static bool Is_Array_Frozen_Deep(Array(const*) a) {
     return true;
 }
 
-inline static Array(*) Freeze_Array_Deep(Array(*) a) {
+inline static Array* Freeze_Array_Deep(Array* a) {
     Protect_Series(
         a,
         0, // start protection at index 0
@@ -64,7 +64,7 @@ inline static Array(*) Freeze_Array_Deep(Array(*) a) {
     return a;
 }
 
-inline static Array(*) Freeze_Array_Shallow(Array(*) a) {
+inline static Array* Freeze_Array_Shallow(Array* a) {
     Set_Series_Info(a, FROZEN_SHALLOW);
     return a;
 }

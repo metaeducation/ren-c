@@ -47,7 +47,7 @@ extern void Write_IO(const REBVAL *data, REBLEN len);
 extern bool Read_Stdin_Byte_Interrupted(bool *eof, Byte* out);
 
 
-extern Bounce Console_Actor(Level(*) level_, REBVAL *port, Symbol(const*) verb);
+extern Bounce Console_Actor(Level(*) level_, REBVAL *port, const Symbol* verb);
 
 
 //
@@ -205,7 +205,7 @@ DECLARE_NATIVE(read_stdin)
         bool eof = false;
 
         Size max = VAL_UINT32(ARG(size));
-        Binary(*) bin = Make_Binary(max);
+        Binary* bin = Make_Binary(max);
         REBLEN i = 0;
         while (Binary_Len(bin) < max) {
             if (Read_Stdin_Byte_Interrupted(&eof, Binary_At(bin, i))) {  // Ctrl-C

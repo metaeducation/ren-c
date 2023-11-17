@@ -59,7 +59,7 @@ void Startup_Typesets(void)
         //
         DECLARE_STABLE (typeset_index);
         Init_Integer(typeset_index, n);
-        Phase(*) typechecker = Make_Typechecker(typeset_index);
+        Phase* typechecker = Make_Typechecker(typeset_index);
 
         Init_Activation(
             Force_Lib_Var(cast(SymId, id)),
@@ -71,7 +71,7 @@ void Startup_Typesets(void)
         // Make e.g. ANY-VALUE! a TYPE-GROUP! with the bound question mark
         // form inside it, e.g. any-value!: &(any-value?)
         //
-        Array(*) a = Alloc_Singular(NODE_FLAG_MANAGED);
+        Array* a = Alloc_Singular(NODE_FLAG_MANAGED);
         Init_Any_Word_Bound(
             Array_Single(a),
             REB_WORD,
@@ -88,7 +88,7 @@ void Startup_Typesets(void)
 
     // Make the NULL! type checker
   {
-    Array(*) a = Alloc_Singular(NODE_FLAG_MANAGED);
+    Array* a = Alloc_Singular(NODE_FLAG_MANAGED);
     Init_Any_Word_Bound(
         Array_Single(a),
         REB_WORD,
@@ -101,7 +101,7 @@ void Startup_Typesets(void)
 
     // Make the ACTIVATION! type checker
   {
-    Array(*) a = Alloc_Singular(NODE_FLAG_MANAGED);
+    Array* a = Alloc_Singular(NODE_FLAG_MANAGED);
     Init_Any_Word_Bound(
         Array_Single(a),
         REB_WORD,
@@ -114,7 +114,7 @@ void Startup_Typesets(void)
 
     // Make the ANY-MATCHER! type checker
   {
-    Array(*) a = Alloc_Singular(NODE_FLAG_MANAGED);
+    Array* a = Alloc_Singular(NODE_FLAG_MANAGED);
     Init_Any_Word_Bound(
         Array_Single(a),
         REB_WORD,
@@ -152,7 +152,7 @@ void Shutdown_Typesets(void)
 // will act as WORD!.  Also, is essentially having "keywords" and should be
 // reviewed to see if anything actually used it.
 //
-Array(*) Add_Parameter_Bits_Core(
+Array* Add_Parameter_Bits_Core(
     Flags* flags,
     enum Reb_Param_Class pclass,
     Cell(const*) head,
@@ -267,7 +267,7 @@ void MF_Parameter(REB_MOLD *mo, NoQuote(Cell(const*)) v, bool form)
     }
 
     DECLARE_LOCAL(temp);
-    Option(Array(const*)) param_array = VAL_PARAMETER_ARRAY(v);
+    Option(const Array*) param_array = VAL_PARAMETER_ARRAY(v);
     if (param_array)
         Init_Block(temp, unwrap(param_array));
     else

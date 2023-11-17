@@ -10,7 +10,7 @@ efficiency at the cost of needing to worry about details, as well as being
 more likely to need to change the code if the internals change.
 
 Code written to the external API in Ren-C operates on REBVAL pointers only,
-and has no API for extracting Series(*) or Context(*).  Values created by this API
+and has no API for extracting Series* or Context*.  Values created by this API
 cannot live on the stack, and they will be garbage collected.
 
 Each of the `reb-xxx.h` files is included by %reb-host.h, and each of the

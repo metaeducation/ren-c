@@ -34,7 +34,7 @@
 //
 // * Though lighter-weight than a plain FUNC, lambdas still have to pay for
 //   a DETAILS array (minimum length 2), a paramlist (also minimum length 2),
-//   and a keylist (which may be optimizable to just a String(*) in the single
+//   and a keylist (which may be optimizable to just a String* in the single
 //   variable case...which is in the works).  Further optimizations would
 //   need to weigh in the question of how AS FRAME! SOME-LAMBDA could work,
 //   and if it would be worth it in the scheme of things.
@@ -74,7 +74,7 @@ Bounce Lambda_Dispatcher(Level(*) const L)
 {
     USE_LEVEL_SHORTHANDS (L);
 
-    Details(*) details = Phase_Details(PHASE);
+    Details* details = Phase_Details(PHASE);
     assert(Array_Len(details) == IDX_LAMBDA_MAX);
 
     const REBVAL *block = DETAILS_AT(details, IDX_LAMBDA_BLOCK);
@@ -106,7 +106,7 @@ Bounce Lambda_Dispatcher(Level(*) const L)
 //
 Bounce Lambda_Unoptimized_Dispatcher(Level(*) level_)
 {
-    Details(*) details = Phase_Details(PHASE);
+    Details* details = Phase_Details(PHASE);
     Cell(*) body = Array_At(details, IDX_DETAILS_1);  // code to run
     assert(IS_BLOCK(body) and IS_RELATIVE(body) and VAL_INDEX(body) == 0);
 
@@ -204,7 +204,7 @@ DECLARE_NATIVE(lambda)
         }
         else if (IS_PATH(key_slot) and IS_REFINEMENT(key_slot)) {
             pclass = PARAM_CLASS_NORMAL;
-            Symbol(const*) symbol = VAL_REFINEMENT_SYMBOL(key_slot);
+            const Symbol* symbol = VAL_REFINEMENT_SYMBOL(key_slot);
             Init_Word(key_slot, symbol);
             param_flags |= PARAM_FLAG_REFINEMENT;
         }
@@ -232,7 +232,7 @@ DECLARE_NATIVE(lambda)
     if (not optimizable) {
         Drop_Data_Stack_To(STACK_BASE);
 
-        Phase(*) lambda = Make_Interpreted_Action_May_Fail(
+        Phase* lambda = Make_Interpreted_Action_May_Fail(
             spec,
             body,
             MKF_KEYWORDS,  // no MKF_RETURN
@@ -243,15 +243,15 @@ DECLARE_NATIVE(lambda)
         return Init_Activation(OUT, lambda, ANONYMOUS, UNBOUND);
     }
 
-    Context(*) adjunct;  // reuses Pop_Paramlist(), see [1]
-    Array(*) paramlist = Pop_Paramlist_With_Adjunct_May_Fail(
+    Context* adjunct;  // reuses Pop_Paramlist(), see [1]
+    Array* paramlist = Pop_Paramlist_With_Adjunct_May_Fail(
         &adjunct,
         STACK_BASE,
         MKF_KEYWORDS,
         0  // no return_stackindex
     );
 
-    Phase(*) lambda = Make_Action(
+    Phase* lambda = Make_Action(
         paramlist,
         nullptr,  // no partials
         &Lambda_Dispatcher,
@@ -260,7 +260,7 @@ DECLARE_NATIVE(lambda)
 
     assert(ACT_ADJUNCT(lambda) == nullptr);
 
-    Details(*) details = Phase_Details(lambda);
+    Details* details = Phase_Details(lambda);
     Copy_Cell(Array_At(details, IDX_LAMBDA_BLOCK), body);
 
     return Init_Activation(OUT, lambda, ANONYMOUS, UNBOUND);

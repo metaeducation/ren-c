@@ -295,8 +295,8 @@ STATIC_ASSERT(31 < 32);  // otherwise LEVEL_FLAG_XXX too high
 
 
 // These definitions are needed in %sys-rebval.h, and can't be put in
-// %sys-rebact.h because that depends on ArrayT, which depends on
-// SeriesT, which depends on values... :-/
+// %sys-rebact.h because that depends on Array, which depends on
+// Series, which depends on values... :-/
 
 // C function implementing a native ACTION!
 //
@@ -306,7 +306,7 @@ typedef Executor Dispatcher;  // sub-dispatched in Action_Executor()
 // Intrinsics are a special form of implementing natives that do not need
 // to instantiate a frame.  See Intrinsic_Dispatcher().
 //
-typedef void (Intrinsic)(Atom(*) out, Phase(*) phase, Value(*) arg);
+typedef void (Intrinsic)(Atom(*) out, Phase* phase, Value(*) arg);
 
 // This is for working around pedantic C and C++ errors, when an extension
 // that doesn't use %sys-core.h tries to redefine dispatcher in terms of
@@ -429,7 +429,7 @@ typedef void (Intrinsic)(Atom(*) out, Phase(*) phase, Value(*) arg);
     // The evaluator only enforces that the symbol be set during function
     // calls--in the release build, it is allowed to be garbage otherwise.
     //
-    Option(const SymbolT*) label;
+    Option(const Symbol*) label;
 
     // The varlist is where arguments for FRAME! are kept.  Though it is
     // ultimately usable as an ordinary CTX_VARLIST() for a FRAME! value, it
@@ -438,7 +438,7 @@ typedef void (Intrinsic)(Atom(*) out, Phase(*) phase, Value(*) arg);
     // which limits its marking up to the progress point of `key`.
     //
     // It starts out unmanaged, so that if no usages by the user specifically
-    // ask for a FRAME! value, and the Context(*) isn't needed to store in a
+    // ask for a FRAME! value, and the Context* isn't needed to store in a
     // Derelativize()'d or Move_Cell()'d value as a binding, it can be
     // reused or freed.  See Push_Action() and Drop_Action() for the logic.
     //
@@ -446,7 +446,7 @@ typedef void (Intrinsic)(Atom(*) out, Phase(*) phase, Value(*) arg);
     // grow to be able to capture evaluator state as a reified notion to
     // automate in debugging.  That's very speculative, but, possible.
     //
-    Array(*) varlist;
+    Array* varlist;
     Value(*) rootvar;  // cached CTX_ARCHETYPE(varlist) if varlist is not null
 
     // The "baseline" is a digest of the state of global variables at the
@@ -520,7 +520,7 @@ typedef void (Intrinsic)(Atom(*) out, Phase(*) phase, Value(*) arg);
 // and line numbers into arrays based on the frame in effect at their time
 // of allocation.
 
-inline static Array(const*) Level_Array(Level(*) L);
+inline static const Array* Level_Array(Level(*) L);
 inline static bool Level_Is_Variadic(Level(*) L);
 
 #define TOP_LEVEL (g_ts.top_level + 0)  // avoid assign to TOP_LEVEL via + 0

@@ -193,7 +193,7 @@ struct ActionExecutorStateStruct {
     // as a frame field is because specifiers use it.  Similarly, that is
     // where the binding is stored.
     //
-    Action(*) original;
+    Action* original;
 
     // When enumerating across the key/arg/param trios in unison, the length
     // of the keylist is used to dictate how far to go.

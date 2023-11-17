@@ -43,7 +43,7 @@ inline static void INIT_VAL_WORD_INDEX(Cell(*) v, REBLEN i) {
 inline static REBVAL *Init_Any_Word_Untracked(
     Cell(*) out,
     enum Reb_Kind kind,
-    Symbol(const*) sym,
+    const Symbol* sym,
     Byte quote_byte
 ){
     FRESHEN_CELL_EVIL_MACRO(out);
@@ -70,8 +70,8 @@ inline static REBVAL *Init_Any_Word_Untracked(
 inline static REBVAL *Init_Any_Word_Bound_Untracked(
     Cell(*) out,
     enum Reb_Kind type,
-    Symbol(const*) symbol,
-    Array(*) binding,  // spelling determined by linked-to thing
+    const Symbol* symbol,
+    Array* binding,  // spelling determined by linked-to thing
     REBLEN index  // must be 1 if LET patch (INDEX_ATTACHED)
 ){
     assert(index != 0);
@@ -106,7 +106,7 @@ inline static REBVAL *Init_Any_Word_Bound_Untracked(
 inline static REBVAL *Init_Any_Word_Patched(  // e.g. LET or MODULE! var
     Cell(*) out,
     enum Reb_Kind type,
-    Array(*) patch
+    Array* patch
 ){
     return Init_Any_Word_Bound_Untracked(
         out,
@@ -124,7 +124,7 @@ inline static REBVAL *Init_Any_Word_Patched(  // e.g. LET or MODULE! var
 // Helper calls strsize() so you can more easily use literals at callsite.
 // (Better to call Intern_UTF8_Managed() with the size if you know it.)
 //
-inline static String(const*) Intern_Unsized_Managed(const char *utf8)
+inline static const String* Intern_Unsized_Managed(const char *utf8)
   { return Intern_UTF8_Managed(cb_cast(utf8), strsize(utf8)); }
 
 

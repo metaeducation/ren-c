@@ -166,7 +166,7 @@ static void Queue_Mark_Pairing_Deep(REBVAL *paired)
   #endif
 }
 
-static void Queue_Unmarked_Accessible_Series_Deep(Series(*) s);
+static void Queue_Unmarked_Accessible_Series_Deep(Series* s);
 
 
 // This routine is given the *address* of the node to mark, so that if the
@@ -191,7 +191,7 @@ static void Queue_Mark_Node_Deep(const Node** pp) {
         return;  // it's 2 cells, sizeof(Stub), but no room for a Stub's data
     }
 
-    Series(*) s = SER(m_cast(Node*, *pp));
+    Series* s = SER(m_cast(Node*, *pp));
     if (Get_Series_Flag(s, INACCESSIBLE)) {
         //
         // All inaccessible nodes are collapsed and canonized into a universal
@@ -239,7 +239,7 @@ static void Queue_Mark_Node_Deep(const Node** pp) {
 // that to generate some deep stacks...even without any cells being marked.
 // It hasn't caused any crashes yet, but is something that bears scrutiny.
 //
-static void Queue_Unmarked_Accessible_Series_Deep(Series(*) s)
+static void Queue_Unmarked_Accessible_Series_Deep(Series* s)
 {
     Add_GC_Mark(s);
 
@@ -274,17 +274,17 @@ static void Queue_Unmarked_Accessible_Series_Deep(Series(*) s)
         REBKEY *key = Series_Head(REBKEY, s);
         for (; key != tail; ++key) {
             //
-            // Symbol(*) are not available to the user to free out from under
+            // Symbol* are not available to the user to free out from under
             // a keylist (can't use FREE on them) and shouldn't vanish.
             //
             assert(Not_Series_Flag(*key, INACCESSIBLE));
             if (Is_Node_Marked(*key))
                 continue;
-            Queue_Unmarked_Accessible_Series_Deep(m_cast(SymbolT*, *key));
+            Queue_Unmarked_Accessible_Series_Deep(m_cast(Symbol*, *key));
         }
     }
     else if (Is_Series_Array(s)) {
-        Array(*) a = ARR(s);
+        Array* a = ARR(s);
 
     //=//// MARK BONUS (if not using slot for `bias`) /////////////////////=//
 
@@ -323,7 +323,7 @@ static void Queue_Unmarked_Accessible_Series_Deep(Series(*) s)
         //
         if (Is_Series_Full(g_gc.mark_stack))
             Extend_Series_If_Necessary(g_gc.mark_stack, 8);
-        *Series_At(Array(*), g_gc.mark_stack, Series_Used(g_gc.mark_stack)) = a;
+        *Series_At(Array*, g_gc.mark_stack, Series_Used(g_gc.mark_stack)) = a;
         Set_Series_Used(  // doesn't add a terminator
             g_gc.mark_stack,
             Series_Used(g_gc.mark_stack) + 1
@@ -358,7 +358,7 @@ static void Queue_Mark_Cell_Deep(Cell(const*) cv)
   #endif
 
     if (IS_BINDABLE_KIND(heart)) {
-        Series(*) binding = BINDING(v);
+        Series* binding = BINDING(v);
         if (binding != UNBOUND)
             if (NODE_BYTE(binding) & NODE_BYTEMASK_0x20_MANAGED)
                 Queue_Mark_Node_Deep(&v->extra.Binding);
@@ -397,8 +397,8 @@ static void Propagate_All_GC_Marks(void)
         // Data pointer may change in response to an expansion during
         // Mark_Array_Deep_Core(), so must be refreshed on each loop.
         //
-        Array(*) a = *Series_At(
-            ArrayT*,
+        Array* a = *Series_At(
+            Array*,
             g_gc.mark_stack,
             Series_Used(g_gc.mark_stack)
         );
@@ -408,7 +408,7 @@ static void Propagate_All_GC_Marks(void)
         //
         Trash_Pointer_If_Debug(
             *Series_At(
-                ArrayT*,
+                Array*,
                 g_gc.mark_stack,
                 Series_Used(g_gc.mark_stack)
             )
@@ -500,7 +500,7 @@ void Reify_Variadic_Feed_As_Array_Feed(
 
         Index index = truncated ? 2 : 1;  // skip --optimized-out--
 
-        Array(*) a = Pop_Stack_Values_Core(base, NODE_FLAG_MANAGED);
+        Array* a = Pop_Stack_Values_Core(base, NODE_FLAG_MANAGED);
         Init_Array_Cell_At(FEED_SINGLE(feed), REB_BLOCK, a, index);
 
         // need to be sure feed->p isn't invalid... and not end
@@ -516,7 +516,7 @@ void Reify_Variadic_Feed_As_Array_Feed(
         // level...so safe to say we're holding it.
         //
         assert(Not_Feed_Flag(feed, TOOK_HOLD));
-        Set_Series_Info(m_cast(Array(*), FEED_ARRAY(feed)), HOLD);
+        Set_Series_Info(m_cast(Array*, FEED_ARRAY(feed)), HOLD);
         Set_Feed_Flag(feed, TOOK_HOLD);
     }
     else {
@@ -525,7 +525,7 @@ void Reify_Variadic_Feed_As_Array_Feed(
         if (truncated) {
             Init_Quasi_Word(PUSH(), Canon(OPTIMIZED_OUT));
 
-            Array(*) a = Pop_Stack_Values_Core(base, NODE_FLAG_MANAGED);
+            Array* a = Pop_Stack_Values_Core(base, NODE_FLAG_MANAGED);
             Init_Array_Cell_At(FEED_SINGLE(feed), REB_BLOCK, a, 1);
         }
         else
@@ -572,14 +572,14 @@ void Run_All_Handle_Cleaners(void) {
             if (not Is_Series_Array(stub))
                 continue;
 
-            Cell(const*) item_tail = Array_Tail(cast(ArrayT*, stub));
-            Cell(*) item = Array_Head(cast(ArrayT*, stub));
+            Cell(const*) item_tail = Array_Tail(cast(Array*, stub));
+            Cell(*) item = Array_Head(cast(Array*, stub));
             for (; item != item_tail; ++item) {
                 if (CELL_HEART(item) != REB_HANDLE)
                     continue;
                 if (Not_Cell_Flag(item, FIRST_IS_NODE))
                     continue;
-                ArrayT* singular = VAL_HANDLE_SINGULAR(item);
+                Array* singular = VAL_HANDLE_SINGULAR(item);
                 if (Get_Series_Flag(singular, INACCESSIBLE))
                     continue;
                 Decay_Series(singular);
@@ -635,7 +635,7 @@ static void Mark_Root_Series(void)
                 continue;
             }
 
-            SeriesT* s = cast(SeriesT*, unit);
+            Series* s = cast(Series*, unit);
 
             if (Is_Node_Root_Bit_Set(s)) {
 
@@ -661,7 +661,7 @@ static void Mark_Root_Series(void)
                     // (They should only be fresh if they are targeted by some
                     // Level's L->out...could we verify that?)
                     //
-                    ArrayT* a = cast(ArrayT*, s);
+                    Array* a = cast(Array*, s);
                     Queue_Mark_Maybe_Fresh_Cell_Deep(Array_Single(a));  // [2]
                 }
                 else {  // It's a rebMalloc()
@@ -685,7 +685,7 @@ static void Mark_Root_Series(void)
                 if (s->leader.bits & NODE_FLAG_MANAGED)
                     continue;  // BLOCK! or OBJECT! etc. holding it should mark
 
-                ArrayT* a = cast(ArrayT*, s);
+                Array* a = cast(Array*, s);
 
                 if (IS_VARLIST(a))
                     if (CTX_TYPE(CTX(a)) == REB_FRAME)
@@ -811,7 +811,7 @@ static void Mark_Level_Stack_Deep(void)
         // Note: MISC_PENDING() should either live in FEED_ARRAY(), or
         // it may be trash (e.g. if it's an apply).  GC can ignore it.
         //
-        Array(*) singular = FEED_SINGULAR(L->feed);
+        Array* singular = FEED_SINGULAR(L->feed);
         do {
             Queue_Mark_Cell_Deep(Array_Single(singular));
             singular = LINK(Splice, singular);
@@ -871,14 +871,14 @@ static void Mark_Level_Stack_Deep(void)
         }
 
         Queue_Mark_Node_Deep(  // L->u.action.original is never nullptr
-            cast(const Node**, m_cast(const Action(*)*, &L->u.action.original))
+            cast(const Node**, m_cast(const Action**, &L->u.action.original))
         );
 
         if (L->label) { // nullptr if anonymous
-            Symbol(const*) sym = unwrap(L->label);
+            const Symbol* sym = unwrap(L->label);
             if (not Is_Node_Marked(sym)) {
                 assert(Not_Series_Flag(sym, INACCESSIBLE));  // can't happen
-                Queue_Unmarked_Accessible_Series_Deep(m_cast(Symbol(*), sym));
+                Queue_Unmarked_Accessible_Series_Deep(m_cast(Symbol*, sym));
             }
         }
 
@@ -896,7 +896,7 @@ static void Mark_Level_Stack_Deep(void)
             // "may not pass CTX() test"
             //
             Queue_Mark_Node_Deep(
-                cast(const Node**, m_cast(Array(const*)*, &L->varlist))
+                cast(const Node**, m_cast(const Array**, &L->varlist))
             );
             goto propagate_and_continue;
         }
@@ -919,7 +919,7 @@ static void Mark_Level_Stack_Deep(void)
         // this is the "doing pickups" or not.  If doing pickups then skip the
         // cells for pending refinement arguments.
         //
-        Phase(*) phase; // goto would cross initialization
+        Phase* phase; // goto would cross initialization
         phase = Level_Phase(L);
         const REBKEY *key;
         const REBKEY *tail;
@@ -969,7 +969,7 @@ static void Mark_Level_Stack_Deep(void)
 //
 // 1. We use a generic byte pointer (unsigned char*) to dodge the rules for
 //    strict aliases, as the pool contain pairs of CellT from Alloc_Pairing(),
-//    or a SeriesT from Prep_Stub().  The shared first byte node masks are
+//    or a Series from Prep_Stub().  The shared first byte node masks are
 //    defined and explained in %sys-rebnod.h
 //
 // 2. For efficiency of memory use, Stub is nominally 2*sizeof(CellT), and
@@ -1037,7 +1037,7 @@ Count Sweep_Series(void)
                     Free_Pooled(STUB_POOL, unit);  // manuals use Free_Pairing
                 }
                 else {
-                    GC_Kill_Series(cast(SeriesT*, unit));
+                    GC_Kill_Series(cast(Series*, unit));
                 }
                 ++sweep_count;
                 break;
@@ -1108,7 +1108,7 @@ Count Sweep_Series(void)
 //
 //  Fill_Sweeplist: C
 //
-REBLEN Fill_Sweeplist(Series(*) sweeplist)
+REBLEN Fill_Sweeplist(Series* sweeplist)
 {
     assert(Series_Wide(sweeplist) == sizeof(Node*));
     assert(Series_Used(sweeplist) == 0);
@@ -1124,7 +1124,7 @@ REBLEN Fill_Sweeplist(Series(*) sweeplist)
         for (; n > 0; --n, stub += sizeof(Stub)) {
             switch (*stub >> 4) {
               case 9: {  // 0x8 + 0x1
-                Series(*) s = SER(cast(void*, stub));
+                Series* s = SER(cast(void*, stub));
                 Assert_Series_Managed(s);
                 if (Is_Node_Marked(s)) {
                     Remove_GC_Mark(s);
@@ -1171,7 +1171,7 @@ REBLEN Fill_Sweeplist(Series(*) sweeplist)
 // to be a series whose width is sizeof(Stub), and it will be filled with
 // the list of series that *would* be recycled.
 //
-REBLEN Recycle_Core(Series(*) sweeplist)
+REBLEN Recycle_Core(Series* sweeplist)
 {
     // Ordinarily, it should not be possible to spawn a recycle during a
     // recycle.  But when debug code is added into the recycling code, it
@@ -1217,7 +1217,7 @@ REBLEN Recycle_Core(Series(*) sweeplist)
     //
     assert(Is_Node_Free(&PG_Lib_Patches[0]));  // skip SYM_0
     for (REBLEN i = 1; i < LIB_SYMS_MAX; ++i) {
-        Array(*) patch = &PG_Lib_Patches[i];
+        Array* patch = &PG_Lib_Patches[i];
         if (Not_Node_Marked(patch)) {  // the prior loop iterations can mark
             Add_GC_Mark(patch);
             Queue_Mark_Maybe_Fresh_Cell_Deep(Array_Single(patch));
@@ -1257,14 +1257,14 @@ REBLEN Recycle_Core(Series(*) sweeplist)
     while (true) {
         bool added_marks = false;
 
-        SymbolT** psym = Series_Head(SymbolT*, g_symbols.by_hash);
-        SymbolT** psym_tail = Series_Tail(SymbolT*, g_symbols.by_hash);
+        Symbol** psym = Series_Head(Symbol*, g_symbols.by_hash);
+        Symbol** psym_tail = Series_Tail(Symbol*, g_symbols.by_hash);
         for (; psym != psym_tail; ++psym) {
             if (*psym == nullptr or *psym == &g_symbols.deleted_symbol)
                 continue;
-            Series(*) patch = MISC(Hitch, *psym);
+            Series* patch = MISC(Hitch, *psym);
             for (; patch != *psym; patch = SER(node_MISC(Hitch, patch))) {
-                Context(*) context = INODE(PatchContext, patch);
+                Context* context = INODE(PatchContext, patch);
                 if (Is_Node_Marked(patch)) {
                     assert(Is_Node_Marked(CTX_VARLIST(context)));
                     continue;
@@ -1313,7 +1313,7 @@ REBLEN Recycle_Core(Series(*) sweeplist)
     //
     assert(Is_Node_Free(&PG_Lib_Patches[0]));  // skip SYM_0
     for (REBLEN i = 1; i < LIB_SYMS_MAX; ++i) {
-        Array(*) patch = &PG_Lib_Patches[i];
+        Array* patch = &PG_Lib_Patches[i];
         Remove_GC_Mark(patch);
     }
 
@@ -1321,7 +1321,7 @@ REBLEN Recycle_Core(Series(*) sweeplist)
     //
     assert(Is_Node_Free(&g_symbols.builtin_canons[0]));  // skip SYM_0
     for (REBLEN i = 1; i < ALL_SYMS_MAX; ++i) {
-        Symbol(*) canon = &g_symbols.builtin_canons[i];
+        Symbol* canon = &g_symbols.builtin_canons[i];
         Remove_GC_Mark_If_Marked(canon);
     }
 

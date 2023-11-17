@@ -74,14 +74,14 @@ Bounce Block_Dispatcher(Level(*) const L)
 {
     USE_LEVEL_SHORTHANDS (L);
 
-    Details(*) details = Phase_Details(PHASE);
+    Details* details = Phase_Details(PHASE);
     assert(Array_Len(details) == IDX_DOES_MAX);
 
     Cell(*) block = Array_At(details, IDX_DOES_BLOCK);
         // ^-- note not a `Cell(const*) block`, may get updated!
     assert(IS_BLOCK(block) and VAL_INDEX(block) == 0);
 
-    Array(const*) body = VAL_ARRAY(block);
+    const Array* body = VAL_ARRAY(block);
 
     if (IS_SPECIFIC(block)) {
         if (Level_Binding(L) == UNBOUND)
@@ -104,7 +104,7 @@ Bounce Block_Dispatcher(Level(*) const L)
         // Derelativize()'d out to make it specific, and then re-relativized
         // through a copy on behalf of o2/b.
 
-        Array(*) relativized = Copy_And_Bind_Relative_Deep_Managed(
+        Array* relativized = Copy_And_Bind_Relative_Deep_Managed(
             SPECIFIC(block),
             PHASE,
             VAR_VISIBILITY_INPUTS  // no locals, does not matter
@@ -186,7 +186,7 @@ DECLARE_NATIVE(does)
     REBVAL *source = ARG(source);
 
     if (IS_BLOCK(source)) {
-        Phase(*) doer = Make_Action(
+        Phase* doer = Make_Action(
             ACT_PARAMLIST(VAL_ACTION(Lib(SURPRISE))),  // same, no args
             nullptr,  // no partials
             &Block_Dispatcher,  // **SEE COMMENTS**, not quite like plain DO!
@@ -206,7 +206,7 @@ DECLARE_NATIVE(does)
     // On all other types, we just make it act like a specialized call to
     // DO for that value.
 
-    Context(*) exemplar = Make_Context_For_Action(
+    Context* exemplar = Make_Context_For_Action(
         Lib(DO),
         TOP_INDEX,  // lower dsp would be if we wanted to add refinements
         nullptr  // don't set up a binder; just poke specializee in frame
@@ -218,8 +218,8 @@ DECLARE_NATIVE(does)
     assert(KEY_SYM(CTX_KEY(exemplar, 1)) == SYM_RETURN);
     Copy_Cell(CTX_VAR(exemplar, 2), source);
 
-    Symbol(const*) label = Canon(DO);  // !!! Better answer?
+    const Symbol* label = Canon(DO);  // !!! Better answer?
 
-    Phase(*) doer = Make_Action_From_Exemplar(exemplar, label);
+    Phase* doer = Make_Action_From_Exemplar(exemplar, label);
     return Init_Activation(OUT, doer, label, UNBOUND);
 }

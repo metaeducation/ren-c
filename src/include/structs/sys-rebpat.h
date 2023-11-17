@@ -50,15 +50,15 @@
 //    the symbol in a WORD!.  It also means the spelling can be found in
 //    that list looking for the symbol.
 
-#define INODE_PatchContext_TYPE          Context(*)
+#define INODE_PatchContext_TYPE          Context*
 #define INODE_PatchContext_CAST          CTX
 #define HAS_INODE_PatchContext           FLAVOR_PATCH
 
-#define LINK_PatchReserved_TYPE           Array(*)
+#define LINK_PatchReserved_TYPE           Array*
 #define LINK_PatchReserved_CAST           ARR
 #define HAS_LINK_PatchReserved            FLAVOR_PATCH
 
-#define MISC_PatchHitch_TYPE              Array(*)  // circular list, see [1]
+#define MISC_PatchHitch_TYPE              Array*  // circular list, see [1]
 #define MISC_PatchHitch_CAST              ARR
 #define HAS_MISC_PatchHitch               FLAVOR_PATCH
 
@@ -68,15 +68,15 @@
 // Next node is either to another let, a frame specifier context, or nullptr.
 //
 
-#define INODE_LetSymbol_TYPE           Symbol(const*)
+#define INODE_LetSymbol_TYPE           const Symbol*
 #define INODE_LetSymbol_CAST           SYM
 #define HAS_INODE_LetSymbol            FLAVOR_LET
 
-#define LINK_NextLet_TYPE              Array(*)
+#define LINK_NextLet_TYPE              Array*
 #define LINK_NextLet_CAST              ARR
 #define HAS_LINK_NextLet               FLAVOR_LET
 
-#define MISC_LetReserved_TYPE          Array(*)
+#define MISC_LetReserved_TYPE          Array*
 #define MISC_LetReserved_CAST          ARR
 #define HAS_MISC_LetReserved           FLAVOR_LET
 
@@ -90,15 +90,15 @@
 // all that often in practice.  It was removed for now.
 //
 
-#define INODE_UseReserved_TYPE          Array(*)  // no use yet
+#define INODE_UseReserved_TYPE          Array*  // no use yet
 #define INODE_UseReserved_CAST          ARR
 #define HAS_INODE_UseReserved           FLAVOR_USE
 
-#define LINK_NextUse_TYPE               Array(*)
+#define LINK_NextUse_TYPE               Array*
 #define LINK_NextUse_CAST               ARR
 #define HAS_LINK_NextUse                FLAVOR_USE
 
-#define MISC_Variant_TYPE               Array(*)  // see note
+#define MISC_Variant_TYPE               Array*  // see note
 #define MISC_Variant_CAST               ARR
 #define HAS_MISC_Variant                FLAVOR_USE
 

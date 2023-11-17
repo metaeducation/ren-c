@@ -48,16 +48,16 @@ REBINT CT_Map(NoQuote(Cell(const*)) a, NoQuote(Cell(const*)) b, bool strict)
 // Capacity is measured in key-value pairings.
 // A hash series is also created.
 //
-Map(*) Make_Map(REBLEN capacity)
+Map* Make_Map(REBLEN capacity)
 {
-    Array(*) pairlist = Make_Array_Core(capacity * 2, SERIES_MASK_PAIRLIST);
+    Array* pairlist = Make_Array_Core(capacity * 2, SERIES_MASK_PAIRLIST);
     mutable_LINK(Hashlist, pairlist) = Make_Hash_Series(capacity);
 
     return MAP(pairlist);
 }
 
 
-static Context(*) Error_Conflicting_Key(
+static Context* Error_Conflicting_Key(
     Cell(const*) key,
     REBSPC *specifier
 ){
@@ -81,8 +81,8 @@ static Context(*) Error_Conflicting_Key(
 //     2 - search, return hash, else append value and return -1
 //
 REBINT Find_Key_Hashed(
-    Array(*) array,
-    Series(*) hashlist,
+    Array* array,
+    Series* hashlist,
     Cell(const*) key,  // !!! assumes ++key finds the values
     REBSPC *specifier,
     REBLEN wide,
@@ -180,14 +180,14 @@ REBINT Find_Key_Hashed(
 //
 // Recompute the entire hash table for a map. Table must be large enough.
 //
-static void Rehash_Map(Map(*) map)
+static void Rehash_Map(Map* map)
 {
-    Series(*) hashlist = MAP_HASHLIST(map);
+    Series* hashlist = MAP_HASHLIST(map);
 
     if (!hashlist) return;
 
     REBLEN *hashes = Series_Head(REBLEN, hashlist);
-    Array(*) pairlist = MAP_PAIRLIST(map);
+    Array* pairlist = MAP_PAIRLIST(map);
 
     REBVAL *key = SPECIFIC(Array_Head(pairlist));
     REBLEN n;
@@ -227,7 +227,7 @@ static void Rehash_Map(Map(*) map)
 //
 // Expand hash series. Clear it but set its tail.
 //
-void Expand_Hash(Series(*) ser)
+void Expand_Hash(Series* ser)
 {
     assert(not Is_Series_Array(ser));
 
@@ -252,7 +252,7 @@ void Expand_Hash(Series(*) ser)
 // RETURNS: the index to the VALUE or zero if there is none.
 //
 REBLEN Find_Map_Entry(
-    Map(*) map,
+    Map* map,
     Cell(const*) key,
     REBSPC *key_specifier,
     Cell(const*) val,
@@ -261,8 +261,8 @@ REBLEN Find_Map_Entry(
 ) {
     assert(not Is_Isotope(key));
 
-    Series(*) hashlist = MAP_HASHLIST(map); // can be null
-    Array(*) pairlist = MAP_PAIRLIST(map);
+    Series* hashlist = MAP_HASHLIST(map); // can be null
+    Array* pairlist = MAP_PAIRLIST(map);
 
     assert(hashlist);
 
@@ -319,7 +319,7 @@ REBLEN Find_Map_Entry(
 //  Append_Map: C
 //
 static void Append_Map(
-    Map(*) map,
+    Map* map,
     Cell(const*) head,
     Cell(const*) tail,
     REBSPC *specifier,
@@ -376,8 +376,8 @@ Bounce MAKE_Map(
 }
 
 
-inline static Map(*) Copy_Map(Map(const*) map, REBU64 types) {
-    Array(*) copy = Copy_Array_Shallow_Flags(
+inline static Map* Copy_Map(const Map* map, REBU64 types) {
+    Array* copy = Copy_Array_Shallow_Flags(
         MAP_PAIRLIST(map),
         SPECIFIED,
         SERIES_MASK_PAIRLIST
@@ -387,7 +387,7 @@ inline static Map(*) Copy_Map(Map(const*) map, REBU64 types) {
     // a literal copy of the hashlist can still be used, as a start (needs
     // its own copy so new map's hashes will reflect its own mutations)
     //
-    Series(*) hashlist = Copy_Series_Core(
+    Series* hashlist = Copy_Series_Core(
         MAP_HASHLIST(map),
         SERIES_FLAGS_NONE | FLAG_FLAVOR(HASHLIST)
             // ^-- !!! No NODE_FLAG_MANAGED?
@@ -438,7 +438,7 @@ Bounce TO_Map(Level(*) level_, enum Reb_Kind kind, const REBVAL *arg)
         Cell(const*) at = VAL_ARRAY_AT(&tail, arg);
         REBSPC *specifier = VAL_SPECIFIER(arg);
 
-        Map(*) map = Make_Map(len / 2); // [key value key value...] + END
+        Map* map = Make_Map(len / 2); // [key value key value...] + END
         Append_Map(map, at, tail, specifier, len);
         Rehash_Map(map);
         return Init_Map(OUT, map);
@@ -464,10 +464,10 @@ Bounce TO_Map(Level(*) level_, enum Reb_Kind kind, const REBVAL *arg)
 //
 // what: -1 - words, +1 - values, 0 -both
 //
-Array(*) Map_To_Array(Map(const*) map, REBINT what)
+Array* Map_To_Array(const Map* map, REBINT what)
 {
     REBLEN count = Length_Map(map);
-    Array(*) a = Make_Array(count * ((what == 0) ? 2 : 1));
+    Array* a = Make_Array(count * ((what == 0) ? 2 : 1));
 
     Cell(*) dest = Array_Head(a);
     Cell(const*) val_tail = Array_Tail(MAP_PAIRLIST(map));
@@ -494,7 +494,7 @@ Array(*) Map_To_Array(Map(const*) map, REBINT what)
 //
 //  Alloc_Context_From_Map: C
 //
-Context(*) Alloc_Context_From_Map(Map(const*) map)
+Context* Alloc_Context_From_Map(const Map* map)
 {
     // Doesn't use Length_Map because it only wants to consider words.
     //
@@ -515,7 +515,7 @@ Context(*) Alloc_Context_From_Map(Map(const*) map)
 
     // See Alloc_Context() - cannot use it directly because no Collect_Words
 
-    Context(*) c = Alloc_Context(REB_OBJECT, count);
+    Context* c = Alloc_Context(REB_OBJECT, count);
 
     Cell(const*) mval_tail = Array_Tail(MAP_PAIRLIST(map));
     Cell(const*) mval = Array_Head(MAP_PAIRLIST(map));
@@ -536,7 +536,7 @@ Context(*) Alloc_Context_From_Map(Map(const*) map)
 //
 void MF_Map(REB_MOLD *mo, NoQuote(Cell(const*)) v, bool form)
 {
-    Map(const*) m = VAL_MAP(v);
+    const Map* m = VAL_MAP(v);
 
     // Prevent endless mold loop:
     if (Find_Pointer_In_Series(g_mold.stack, m) != NOT_FOUND) {
@@ -596,7 +596,7 @@ REBTYPE(Map)
         INCLUDE_PARAMS_OF_REFLECT;
         UNUSED(ARG(value));  // covered by `v`
 
-        Map(const*) m = VAL_MAP(map);
+        const Map* m = VAL_MAP(map);
 
         REBVAL *property = ARG(property);
         switch (VAL_WORD_ID(property)) {
@@ -631,10 +631,10 @@ REBTYPE(Map)
         if (REF(part) or REF(skip) or REF(match))
             fail (Error_Bad_Refines_Raw());
 
-        Map(const*) m = VAL_MAP(map);
+        const Map* m = VAL_MAP(map);
 
         REBINT n = Find_Map_Entry(
-            m_cast(Map(*), VAL_MAP(map)),  // should not modify, see below
+            m_cast(Map*, VAL_MAP(map)),  // should not modify, see below
             ARG(value),
             SPECIFIED,
             nullptr,  // nullptr indicates it will only search, not modify
@@ -682,7 +682,7 @@ REBTYPE(Map)
 
         QUOTE_BYTE(value) = UNQUOTED_1;
 
-        Map(*) m = VAL_MAP_Ensure_Mutable(map);
+        Map* m = VAL_MAP_Ensure_Mutable(map);
 
         if (REF(line) or REF(dup))
             fail (Error_Bad_Refines_Raw());
@@ -710,7 +710,7 @@ REBTYPE(Map)
         return Init_Map(OUT, Copy_Map(VAL_MAP(map), types)); }
 
       case SYM_CLEAR: {
-        Map(*) m = VAL_MAP_Ensure_Mutable(map);
+        Map* m = VAL_MAP_Ensure_Mutable(map);
 
         Reset_Array(MAP_PAIRLIST(m));
 
@@ -734,7 +734,7 @@ REBTYPE(Map)
         bool strict = false;
 
         REBINT n = Find_Map_Entry(
-            m_cast(Map(*), VAL_MAP(map)),  // not modified
+            m_cast(Map*, VAL_MAP(map)),  // not modified
             picker,
             SPECIFIED,
             nullptr,  // no value, so map not changed
@@ -789,7 +789,7 @@ REBTYPE(Map)
         assert(n != 0);
         UNUSED(n);
 
-        return nullptr; }  // no upstream changes needed for Map(*) reference
+        return nullptr; }  // no upstream changes needed for Map* reference
 
       default:
         break;

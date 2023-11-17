@@ -590,7 +590,7 @@ DECLARE_NATIVE(deline)
         return OUT;
     }
 
-    String(*) s = VAL_STRING_ENSURE_MUTABLE(input);
+    String* s = VAL_STRING_ENSURE_MUTABLE(input);
     REBLEN len_head = String_Len(s);
 
     REBLEN len_at = VAL_LEN_AT(input);
@@ -657,7 +657,7 @@ DECLARE_NATIVE(enline)
 
     REBVAL *val = ARG(string);
 
-    String(*) s = VAL_STRING_ENSURE_MUTABLE(val);
+    String* s = VAL_STRING_ENSURE_MUTABLE(val);
     REBLEN idx = VAL_INDEX(val);
 
     Length len;

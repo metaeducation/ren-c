@@ -33,7 +33,7 @@
 Value(*) Try_Init_Any_Sequence_At_Arraylike_Core(
     Sink(Value(*)) out,  // NULL if array too short, violating value otherwise
     enum Reb_Kind kind,
-    Array(const*) a,
+    const Array* a,
     REBSPC *specifier,
     REBLEN index
 ){
@@ -361,7 +361,7 @@ Bounce TO_Sequence(Level(*) level_, enum Reb_Kind kind, const REBVAL *arg) {
         // if it knows other compressions (if there's no index, it could have
         // "head blank" and "tail blank" bits, for instance).
 
-        Array(*) a = Copy_Array_At_Shallow(
+        Array* a = Copy_Array_At_Shallow(
             VAL_ARRAY(arg),
             VAL_INDEX(arg),
             VAL_SPECIFIER(arg)

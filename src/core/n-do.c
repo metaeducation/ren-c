@@ -132,7 +132,7 @@ DECLARE_NATIVE(shove)
     // with refinements *at all* before, this is a step up.
 
     REBVAL *shovee = ARG(right); // reuse arg cell for the shoved-into
-    Option(Symbol(const*)) label = nullptr;
+    Option(const Symbol*) label = nullptr;
 
     if (IS_WORD(At_Level(L)) or IS_PATH(At_Level(L)) or IS_TUPLE(At_Level(L))) {
         //
@@ -583,7 +583,7 @@ DECLARE_NATIVE(redo)
         Move_Cell(restartee, OUT);
     }
 
-    Context(*) c = VAL_CONTEXT(restartee);
+    Context* c = VAL_CONTEXT(restartee);
 
     Level(*) L = CTX_LEVEL_IF_ON_STACK(c);
     if (L == NULL)
@@ -671,7 +671,7 @@ DECLARE_NATIVE(applique)
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
-    Context(*) exemplar = Make_Context_For_Action_Push_Partials(  // see [1]
+    Context* exemplar = Make_Context_For_Action_Push_Partials(  // see [1]
         op,
         STACK_BASE,  // lowest_ordered_dsp of refinements to weave in
         nullptr,  // no binder needed
@@ -784,7 +784,7 @@ DECLARE_NATIVE(apply)
 
     /*struct Reb_Binder binder;  // see [1]
     INIT_BINDER(&binder);*/
-    Context(*) exemplar = Make_Context_For_Action_Push_Partials(  // see [2]
+    Context* exemplar = Make_Context_For_Action_Push_Partials(  // see [2]
         op,
         STACK_BASE, // lowest_ordered_dsp of refinements to weave in
         nullptr /* &binder */,
@@ -832,7 +832,7 @@ DECLARE_NATIVE(apply)
     if (IS_PATH(at) and IS_REFINEMENT(at)) {
         STATE = ST_APPLY_LABELED_EVAL_STEP;
 
-        Symbol(const*) symbol = VAL_REFINEMENT_SYMBOL(At_Level(L));
+        const Symbol* symbol = VAL_REFINEMENT_SYMBOL(At_Level(L));
 
         REBLEN index = Find_Symbol_In_Context(frame, symbol, false);
         if (index == 0)

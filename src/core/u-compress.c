@@ -24,7 +24,7 @@
 // The Rebol executable includes a version of zlib which has been extracted
 // from the GitHub archive and pared down into a single .h and .c file.
 // This wraps that functionality into functions that compress and decompress
-// Binary(*) series.
+// Binary* series.
 //
 // Options are offered for using zlib envelope, gzip envelope, or raw deflate.
 //
@@ -107,7 +107,7 @@ static void zfree(void *opaque, void *addr)
 // Zlib gives back string error messages.  We use them or fall back on the
 // integer code if there is no message.
 //
-static Context(*) Error_Compression(const z_stream *strm, int ret)
+static Context* Error_Compression(const z_stream *strm, int ret)
 {
     // rebMalloc() fails vs. returning nullptr, so as long as zalloc() is used
     // then Z_MEM_ERROR should never happen.
@@ -426,7 +426,7 @@ DECLARE_NATIVE(checksum_core)
         fail ("METHOD for CHECKSUM-CORE must be CRC32 or ADLER32");
     }
 
-    Binary(*) bin = Make_Binary(4);
+    Binary* bin = Make_Binary(4);
     Byte* bp = Binary_Head(bin);
 
     // Returning as a BINARY! avoids signedness issues (R3-Alpha CRC-32 was a

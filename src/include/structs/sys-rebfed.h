@@ -261,7 +261,7 @@ struct FeedStruct {
     // If a feed contains text portions, we offer the ability to say where
     // those text portions should be "interned".
     //
-    Option(Context(*)) context;
+    Option(Context*) context;
 
   #if DEBUG_EXPIRED_LOOKBACK
     //

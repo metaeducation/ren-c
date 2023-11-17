@@ -20,8 +20,8 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// In the C build, a Array(*) and Series(*) are the same type.  The C++ build
-// derives ArrayT from SeriesT...meaning you can pass an array to a
+// In the C build, a Array* and Series* are the same type.  The C++ build
+// derives Array from Series...meaning you can pass an array to a
 // function that expects a series, but not vice-versa.
 //
 // There are several subclasses (FLAVOR_XXX) whose elements are value cells,
@@ -33,19 +33,13 @@
 //
 
 #if CPLUSPLUS_11
-    struct ArrayT : public SeriesT {};
+    struct Array : public Series {};
 
-    struct DetailsT : public ArrayT {};
+    struct Details : public Array {};
 #else
-    typedef SeriesT ArrayT;
-    typedef ArrayT DetailsT;
+    typedef Series Array;
+    typedef Array Details;
 #endif
-
-#define Array(star_maybe_const) \
-    ArrayT star_maybe_const
-
-#define Details(star_maybe_const) \
-    DetailsT star_maybe_const
 
 
 // It may become interesting to say that a specifier can be a pairing or
@@ -55,7 +49,7 @@
 // the interests of making the code strict-aliasing-safe for starters, assume
 // all specifiers are arrays.
 //
-typedef ArrayT REBSPC;
+typedef Array REBSPC;
 
 
 //=//// TYPE HOOK ACCESS //////////////////////////////////////////////////=//
@@ -84,7 +78,7 @@ enum Reb_Type_Hook_Index {
 
 //=//// ARRAY_FLAG_HAS_FILE_LINE_UNMASKED /////////////////////////////////=//
 //
-// The SeriesT node has two pointers in it, ->link and ->misc, which are
+// The Series node has two pointers in it, ->link and ->misc, which are
 // used for a variety of purposes (pointing to the keylist for an object,
 // the C code that runs as the dispatcher for a function, etc.)  But for
 // regular source series, they can be used to store the filename and line
@@ -160,6 +154,6 @@ STATIC_ASSERT(ARRAY_FLAG_CONST_SHALLOW == CELL_FLAG_CONST);
 // !!! LINK_FILENAME_HACK is needed in %sys-array.h due to dependencies not
 // having STR() available.
 //
-#define LINK_Filename_TYPE          String(const*)
-#define LINK_Filename_CAST          (String(const*))STR
+#define LINK_Filename_TYPE          const String*
+#define LINK_Filename_CAST          (const String*)STR
 #define HAS_LINK_Filename           FLAVOR_ARRAY

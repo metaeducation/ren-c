@@ -47,7 +47,7 @@
 static Bounce Clipboard_Actor(
     Level(*) level_,
     REBVAL *port,
-    Symbol(const*) verb
+    const Symbol* verb
 ){
     switch (ID_OF_SYMBOL(verb)) {
       case SYM_REFLECT: {

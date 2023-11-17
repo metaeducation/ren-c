@@ -642,7 +642,7 @@ static const Byte* Skip_Tag(const Byte* cp)
 // clear that this is what's happening for the moment.
 //
 static void Update_Error_Near_For_Line(
-    Context(*) error,
+    Context* error,
     SCAN_STATE *ss,
     REBLEN line,
     const Byte* line_head
@@ -708,7 +708,7 @@ static void Update_Error_Near_For_Line(
 // code size in some way, but having lots of calls help esp. when scanning
 // during boot and getting error line numbers printf'd in the Wasm build.
 //
-static Context(*) Error_Syntax(SCAN_STATE *ss, enum Reb_Token token) {
+static Context* Error_Syntax(SCAN_STATE *ss, enum Reb_Token token) {
     //
     // The scanner code has `bp` and `ep` locals which mirror ss->begin and
     // ss->end.  However, they get out of sync.  If they are updated, they
@@ -734,7 +734,7 @@ static Context(*) Error_Syntax(SCAN_STATE *ss, enum Reb_Token token) {
         )
     );
 
-    Context(*) error = Error_Scan_Invalid_Raw(token_name, token_text);
+    Context* error = Error_Scan_Invalid_Raw(token_name, token_text);
     Update_Error_Near_For_Line(error, ss, ss->line, ss->line_head);
     return error;
 }
@@ -750,11 +750,11 @@ static Context(*) Error_Syntax(SCAN_STATE *ss, enum Reb_Token token) {
 // better form of this error would walk the scan state stack and be able to
 // report all the unclosed terms.
 //
-static Context(*) Error_Missing(SCAN_LEVEL *level, char wanted) {
+static Context* Error_Missing(SCAN_LEVEL *level, char wanted) {
     DECLARE_LOCAL (expected);
     Init_Text(expected, Make_Codepoint_String(wanted));
 
-    Context(*) error = Error_Scan_Missing_Raw(expected);
+    Context* error = Error_Scan_Missing_Raw(expected);
 
     // We have two options of where to implicate the error...either the start
     // of the thing being scanned, or where we are now (or, both).  But we
@@ -785,11 +785,11 @@ static Context(*) Error_Missing(SCAN_LEVEL *level, char wanted) {
 //
 // For instance, `load "abc ]"`
 //
-static Context(*) Error_Extra(SCAN_STATE *ss, char seen) {
+static Context* Error_Extra(SCAN_STATE *ss, char seen) {
     DECLARE_LOCAL (unexpected);
     Init_Text(unexpected, Make_Codepoint_String(seen));
 
-    Context(*) error = Error_Scan_Extra_Raw(unexpected);
+    Context* error = Error_Scan_Extra_Raw(unexpected);
     Update_Error_Near_For_Line(error, ss, ss->line, ss->line_head);
     return error;
 }
@@ -804,8 +804,8 @@ static Context(*) Error_Extra(SCAN_STATE *ss, char seen) {
 // applications if it would point out the locations of both points.  R3-Alpha
 // only pointed out the location of the start token.
 //
-static Context(*) Error_Mismatch(SCAN_LEVEL *level, char wanted, char seen) {
-    Context(*) error = Error_Scan_Mismatch_Raw(rebChar(wanted), rebChar(seen));
+static Context* Error_Mismatch(SCAN_LEVEL *level, char wanted, char seen) {
+    Context* error = Error_Scan_Mismatch_Raw(rebChar(wanted), rebChar(seen));
     Update_Error_Near_For_Line(
         error,
         level->ss,
@@ -993,7 +993,7 @@ static LEXFLAGS Prescan_Token(SCAN_STATE *ss)
 // are currently in the ASCII range (< 128).
 //
 static enum Reb_Token Maybe_Locate_Token_May_Push_Mold(
-    Context(*)* error,
+    Context** error,
     REB_MOLD *mo,
     Level(*) L
 ){
@@ -1845,7 +1845,7 @@ static enum Reb_Token Maybe_Locate_Token_May_Push_Mold(
 void Init_Scan_Level(
     SCAN_LEVEL *level,
     SCAN_STATE *ss,
-    String(const*) file,
+    const String* file,
     LineNumber line,
     Option(const Byte*) bp
 ){
@@ -1943,7 +1943,7 @@ Bounce Scanner_Executor(Level(*) const L) {
 } loop: {  //////////////////////////////////////////////////////////////////
 
     Drop_Mold_If_Pushed(mo);
-    Context(*) locate_error;
+    Context* locate_error;
     level->token = Maybe_Locate_Token_May_Push_Mold(&locate_error, mo, L);
 
     if (level->token == TOKEN_0) {  // error signal
@@ -2185,7 +2185,7 @@ Bounce Scanner_Executor(Level(*) const L) {
         if (Get_Scan_Executor_Flag(SUBLEVEL, NEWLINE_PENDING))
             flags |= ARRAY_FLAG_NEWLINE_AT_TAIL;
 
-        Array(*) a = Pop_Stack_Values_Core(
+        Array* a = Pop_Stack_Values_Core(
             SUBLEVEL->baseline.stack_base,
             flags
         );
@@ -2388,7 +2388,7 @@ Bounce Scanner_Executor(Level(*) const L) {
         if (ep - 1 != Scan_UTF8_Char_Escapable(&uni, bp))
             return RAISE(Error_Syntax(ss, level->token));
 
-        Context(*) error = Maybe_Init_Char(PUSH(), uni);
+        Context* error = Maybe_Init_Char(PUSH(), uni);
         if (error)
             return DROP(), RAISE(error);
         break; }
@@ -2469,7 +2469,7 @@ Bounce Scanner_Executor(Level(*) const L) {
         if (Get_Scan_Executor_Flag(L, NEWLINE_PENDING))
             flags |= ARRAY_FLAG_NEWLINE_AT_TAIL;
 
-        Array(*) array = Pop_Stack_Values_Core(
+        Array* array = Pop_Stack_Values_Core(
             SUBLEVEL->baseline.stack_base,
             flags
         );
@@ -2489,7 +2489,7 @@ Bounce Scanner_Executor(Level(*) const L) {
             return RAISE(Error_Malconstruct_Raw(temp));
         }
 
-        Symbol(const*) symbol = VAL_WORD_SYMBOL(Array_Head(array));
+        const Symbol* symbol = VAL_WORD_SYMBOL(Array_Head(array));
 
         if (Array_Len(array) == 1) {
             //
@@ -2683,7 +2683,7 @@ Bounce Scanner_Executor(Level(*) const L) {
         StackValue(*) cleanup = head + 1;
         for (; cleanup <= TOP; ++cleanup) {
             if (IS_GET_WORD(cleanup)) {
-                Array(*) a = Alloc_Singular(NODE_FLAG_MANAGED);
+                Array* a = Alloc_Singular(NODE_FLAG_MANAGED);
                 HEART_BYTE(cleanup) = REB_GET_WORD;
 
                 Move_Cell(Array_Single(a), cleanup);
@@ -2795,7 +2795,7 @@ Bounce Scanner_Executor(Level(*) const L) {
             and VAL_NODE1(TOP) != nullptr  // null legal in node slots ATM
             and Is_Series_Array(SER(VAL_NODE1(TOP)))
         ){
-            Array(*) a = ARR(VAL_NODE1(TOP));
+            Array* a = ARR(VAL_NODE1(TOP));
             a->misc.line = ss->line;
             mutable_LINK(Filename, a) = ss->file;
             Set_Array_Flag(a, HAS_FILE_LINE_UNMASKED);
@@ -2962,11 +2962,11 @@ Bounce Scanner_Executor(Level(*) const L) {
 //    an array, vs. using the va_arg() stack.  So vaptr is nullptr to signal
 //    the `p` pointer is this packed array, vs. the first item of a va_list.)
 //
-Array(*) Scan_UTF8_Managed(
-    String(const*) file,
+Array* Scan_UTF8_Managed(
+    const String* file,
     const Byte* utf8,
     Size size,
-    Option(Context(*)) context
+    Option(Context*) context
 ){
     assert(utf8[size] == '\0');
     UNUSED(size);  // scanner stops at `\0` (no size limit functionality)
@@ -2993,7 +2993,7 @@ Array(*) Scan_UTF8_Managed(
 
     Free_Feed(feed);  // feeds are dynamically allocated and must be freed
 
-    Array(*) a = Pop_Stack_Values_Core(base, flags);
+    Array* a = Pop_Stack_Values_Core(base, flags);
 
     a->misc.line = 1;
     mutable_LINK(Filename, a) = file;
@@ -3099,9 +3099,9 @@ DECLARE_NATIVE(transcode)
   //    !!! Should the base name and extension be stored, or whole path?
 
     if (IS_BINARY(source))  // scanner needs data to end in '\0', see [1]
-        Term_Binary(m_cast(Binary(*), VAL_BINARY(source)));
+        Term_Binary(m_cast(Binary*, VAL_BINARY(source)));
 
-    String(const*) file;
+    const String* file;
     if (REF(file)) {
         file = VAL_STRING(ARG(file));
         Freeze_Series(file);  // freezes vs. interning, see [2]
@@ -3137,7 +3137,7 @@ DECLARE_NATIVE(transcode)
     Feed(*) feed = Make_Array_Feed_Core(EMPTY_ARRAY, 0, SPECIFIED);
     feed->context = REF(where)
         ? VAL_CONTEXT(ARG(where))
-        : cast(Context(*), nullptr);  // C++98 ambiguous w/o cast
+        : cast(Context*, nullptr);  // C++98 ambiguous w/o cast
 
     Flags flags =
         LEVEL_FLAG_TRAMPOLINE_KEEPALIVE  // query pending newline
@@ -3151,7 +3151,7 @@ DECLARE_NATIVE(transcode)
     sub->executor = &Scanner_Executor;
     SCAN_LEVEL *level = &sub->u.scan;
 
-    Binary(*) bin = Make_Binary(sizeof(SCAN_STATE));
+    Binary* bin = Make_Binary(sizeof(SCAN_STATE));
     ss = cast(SCAN_STATE*, Binary_Head(bin));
 
     UNUSED(size);  // currently we don't use this information
@@ -3191,7 +3191,7 @@ DECLARE_NATIVE(transcode)
         if (Get_Scan_Executor_Flag(SUBLEVEL, NEWLINE_PENDING))
             flags |= ARRAY_FLAG_NEWLINE_AT_TAIL;
 
-        Array(*) a = Pop_Stack_Values_Core(STACK_BASE, flags);
+        Array* a = Pop_Stack_Values_Core(STACK_BASE, flags);
 
         a->misc.line = ss->line;
         mutable_LINK(Filename, a) = ss->file;
@@ -3216,7 +3216,7 @@ DECLARE_NATIVE(transcode)
     Copy_Cell(rest, source);
 
     if (IS_BINARY(source)) {
-        Binary(const*) bin = VAL_BINARY(source);
+        const Binary* bin = VAL_BINARY(source);
         if (ss->begin)
             VAL_INDEX_UNBOUNDED(rest) = ss->begin - Binary_Head(bin);
         else
@@ -3262,7 +3262,7 @@ const Byte* Scan_Any_Word(
     Size size
 ) {
     SCAN_STATE ss;
-    String(const*) file = ANONYMOUS;
+    const String* file = ANONYMOUS;
     const LineNumber start_line = 1;
 
     Level(*) L = Make_End_Level(LEVEL_MASK_NONE);  // note: no feed `context`
@@ -3272,7 +3272,7 @@ const Byte* Scan_Any_Word(
 
     DECLARE_MOLD (mo);
 
-    Context(*) error;
+    Context* error;
     enum Reb_Token token = Maybe_Locate_Token_May_Push_Mold(&error, mo, L);
     if (token != TOKEN_WORD)
         return nullptr;
@@ -3356,7 +3356,7 @@ const Byte* Scan_Issue(Cell(*) out, const Byte* cp, Size size)
 //
 //  Try_Scan_Variadic_Feed_Utf8_Managed: C
 //
-Option(Array(*)) Try_Scan_Variadic_Feed_Utf8_Managed(Feed(*) feed)
+Option(Array*) Try_Scan_Variadic_Feed_Utf8_Managed(Feed(*) feed)
 {
     assert(Detect_Rebol_Pointer(feed->p) == DETECTED_AS_UTF8);
 
@@ -3385,7 +3385,7 @@ Option(Array(*)) Try_Scan_Variadic_Feed_Utf8_Managed(Feed(*) feed)
     }
 
     Flags flags = NODE_FLAG_MANAGED;
-    Array(*) reified = Pop_Stack_Values_Core(L->baseline.stack_base, flags);
+    Array* reified = Pop_Stack_Values_Core(L->baseline.stack_base, flags);
     Drop_Level(L);
     return reified;
 }

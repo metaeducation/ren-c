@@ -38,8 +38,8 @@
 
 #include "tmp-mod-filesystem.h"
 
-extern Bounce File_Actor(Level(*) level_, REBVAL *port, Symbol(const*) verb);
-extern Bounce Dir_Actor(Level(*) level_, REBVAL *port, Symbol(const*) verb);
+extern Bounce File_Actor(Level(*) level_, REBVAL *port, const Symbol* verb);
+extern Bounce Dir_Actor(Level(*) level_, REBVAL *port, const Symbol* verb);
 
 
 #if TO_WINDOWS
@@ -146,7 +146,7 @@ inline static bool Last_In_Mold_Is_Slash(REB_MOLD *mo) {
 // volume when no root slash was provided.  It was an odd case to support
 // the MSDOS convention of `c:file`.  That is not done here.
 //
-String(*) To_REBOL_Path(Cell(const*) string, Flags flags)
+String* To_REBOL_Path(Cell(const*) string, Flags flags)
 {
     assert(IS_TEXT(string));
 
@@ -471,7 +471,7 @@ void Mold_File_To_Local(REB_MOLD *mo, Cell(const*) file, Flags flags) {
 // Convert Rebol-format filename to a local-format filename.  This is the
 // opposite operation of To_REBOL_Path.
 //
-String(*) To_Local_Path(Cell(const*) file, Flags flags) {
+String* To_Local_Path(Cell(const*) file, Flags flags) {
     DECLARE_MOLD (mo);
     Push_Mold(mo);
 

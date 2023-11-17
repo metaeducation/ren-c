@@ -293,7 +293,7 @@ standard: make object! [
 
         ; !!! Native ports typically used raw C structs stored in a BINARY!
         ; as the `state`.  This makes that state opaque to the garbage
-        ; collector, so it is a problem if REBVAL*/Series(*) are stored in it.
+        ; collector, so it is a problem if REBVAL*/Series* are stored in it.
         ;
         state: null    ; internal state values (private)
 

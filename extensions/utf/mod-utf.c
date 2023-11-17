@@ -84,13 +84,13 @@ REBINT What_UTF(const Byte* bp, REBLEN len)
 // Returns length in chars (negative if all chars are ASCII).
 // No terminator is added.
 //
-String(*) Decode_UTF16(
+String* Decode_UTF16(
     const Byte* src,
     REBLEN len,
     bool little_endian,
     bool crlf_to_lf
 ){
-    String(*) s = Make_String(len * 2);  // !!! conservative, 4 bytes per 2...
+    String* s = Make_String(len * 2);  // !!! conservative, 4 bytes per 2...
 
     bool expect_lf = false;
     bool ascii = true;
@@ -215,14 +215,14 @@ DECLARE_NATIVE(encode_text)
 }
 
 
-static Series(*) Encode_Utf16(
+static Series* Encode_Utf16(
     Utf8(const*) data,
     REBLEN len,
     bool little_endian
 ){
     Utf8(const*) cp = data;
 
-    Binary(*) bin = Make_Binary(sizeof(uint16_t) * len);
+    Binary* bin = Make_Binary(sizeof(uint16_t) * len);
     uint16_t* up = cast(uint16_t*, Binary_Head(bin));
 
     REBLEN i = 0;

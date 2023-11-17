@@ -27,7 +27,7 @@
 
 
 
-#define MISC_DetailsAdjunct_TYPE      Context(*)
+#define MISC_DetailsAdjunct_TYPE      Context*
 #define MISC_DetailsAdjunct_CAST      CTX
 #define HAS_MISC_DetailsAdjunct       FLAVOR_DETAILS
 

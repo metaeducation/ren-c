@@ -20,7 +20,7 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// SeriesT is actually just a "Stub"... a small-ish fixed-size descriptor for
+// Series is actually just a "Stub"... a small-ish fixed-size descriptor for
 // series data.  Usually it contains a pointer to a larger allocation for the
 // actual contents.  But if the series is small enough, the contents are
 // embedded into the stub structure itself.
@@ -40,7 +40,7 @@
 // must be subtracted completely to free the pointer using the address
 // originally given by the allocator.
 //
-// The SeriesT is fixed-size, and is allocated as a "stub" from a memory pool.
+// The Series is fixed-size, and is allocated as a "stub" from a memory pool.
 // That pool quickly grants and releases memory ranges that are sizeof(Stub)
 // without needing to use malloc() and free() for each individual allocation.
 // These nodes can also be enumerated in the pool without needing the series
@@ -73,11 +73,11 @@
 //
 // * For the API of operations available on Series types, see %sys-series.h
 //
-// * Array(*) is a series that contains Rebol cells.  It has many concerns
+// * Array* is a series that contains Rebol cells.  It has many concerns
 //   specific to special treatment and handling, in interaction with the
 //   garbage collector as well as handling "relative vs specific" values.
 //
-// * Several related types (Action(*) for function, Context(*) for context) are
+// * Several related types (Action* for function, Context* for context) are
 //   actually stylized arrays.  They are laid out with special values in their
 //   content (e.g. at the [0] index), or by links to other series in their
 //   `->misc` field of the series stub.  Hence series are the basic building
@@ -641,7 +641,7 @@ union StubLinkUnion {
     // library is not loaded.
     //
     // !!! As with some other types, this may not need the optimization of
-    // being in the SeriesT node--but be handled via user defined types
+    // being in the Series node--but be handled via user defined types
     //
     void *fd;
 
@@ -779,96 +779,56 @@ union StubInfoUnion {
     intptr_t* guard;  // intentionally alloc'd and freed for use by panic()
     uintptr_t tick;  // also maintains sizeof(Stub) % sizeof(REBI64) == 0
   #endif
-
-  #if DEBUG_COUNT_LOCALS
-    uintptr_t num_locals;  // count how many local references
-    uintptr_t unused;
-  #endif
 };
 
 
-// In C++, String(*) and Array(*) are derived from SeriesT.  This gives
+// In C++, String* and Array* are derived from Series.  This gives
 // desirable type checking properties (like being able to pass an array to
 // a routine that needs a series, but not vice versa).  And it also means
 // that the fields are available.
 //
 // In order for the inheritance to be known, these definitions cannot occur
-// until SeriesT is fully defined.  So this is the earliest it can be done:
+// until Series is fully defined.  So this is the earliest it can be done:
 //
 // https://stackoverflow.com/q/2159390/
 //
 #if CPLUSPLUS_11
-    struct BinaryT : public SeriesT {};
+    struct Binary : public Series {};
+    struct String : public Binary {};  // strings can act as binaries
+    struct Symbol : public String {};  // word-constrained strings
 
-    struct StringT : public BinaryT {};  // strings can act as binaries
+    struct BookmarkList : public Series {};
 
-    struct SymbolT : public StringT {};  // word-constrained strings
+    struct Action : public Series {};
+    struct Phase : public Action {};
 
-    struct BookmarkListT : public SeriesT {};
+    struct Context : public Series {};
 
-    struct ActionT : public SeriesT {};
+    struct Map : public Series {};  // the "pairlist" is the identity
 
-    struct PhaseT : public ActionT {};
-
-    struct ContextT : public SeriesT {};
-
-    struct MapT : public SeriesT {};  // the "pairlist" is the identity
-
-    struct KeyListT : public SeriesT {};
+    struct KeyList : public Series {};
 #else
-    typedef SeriesT BinaryT;
-    typedef SeriesT StringT;
-    typedef SeriesT SymbolT;
-    typedef SeriesT BookmarkListT;
-    typedef SeriesT ActionT;
-    typedef SeriesT PhaseT;
-    typedef SeriesT ContextT;
-    typedef SeriesT MapT;
-    typedef SeriesT KeyListT;
+    typedef Series Binary;
+    typedef Series String;
+    typedef Series Symbol;
+
+    typedef Series BookmarkList;
+
+    typedef Series Action;
+    typedef Series Phase;
+
+    typedef Series Context;
+
+    typedef Series Map;
+
+    typedef Series KeyList;
 #endif
-
-#define Binary(star_maybe_const) \
-    BinaryT star_maybe_const
-
-#if DEBUG_COUNT_LOCALS
-    #include "sys-holder.hpp"
-
-    #define String(star_maybe_const) \
-        SeriesHolder<StringT star_maybe_const>
-
-    #define Symbol(star_maybe_const) \
-        SeriesHolder<SymbolT star_maybe_const>
-#else
-    #define String(star_maybe_const) \
-        StringT star_maybe_const
-
-    #define Symbol(star_maybe_const) \
-        SymbolT star_maybe_const
-#endif
-
-#define BookmarkList(star_maybe_const) \
-    BookmarkListT star_maybe_const
-
-#define Action(star_maybe_const) \
-    ActionT star_maybe_const
-
-#define Phase(star_maybe_const) \
-    PhaseT star_maybe_const
-
-#define Context(star_maybe_const) \
-    ContextT star_maybe_const
-
-#define KeyList(star_maybe_const) \
-    KeyListT star_maybe_const
-
-#define Map(star_maybe_const) \
-    MapT star_maybe_const
 
 // We want to be able to enumerate keys by incrementing across them.  The
 // things we increment across aren't Symbol stubs, but pointers to Symbol
 // stubs... so a Key* is a pointer to a pointer.
 //
-typedef const SymbolT* REBKEY;
+typedef const Symbol* REBKEY;
 
 
 //=//// DON'T PUT ANY CODE (OR MACROS THAT MAY NEED CODE) IN THIS FILE! ///=//

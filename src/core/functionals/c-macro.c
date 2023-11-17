@@ -49,7 +49,7 @@ void Splice_Block_Into_Feed(Feed(*) feed, const REBVAL *splice) {
     //
     if (Get_Feed_Flag(feed, TOOK_HOLD)) {
         assert(Get_Series_Info(FEED_ARRAY(feed), HOLD));
-        Clear_Series_Info(m_cast(Array(*), FEED_ARRAY(feed)), HOLD);
+        Clear_Series_Info(m_cast(Array*, FEED_ARRAY(feed)), HOLD);
         Clear_Feed_Flag(feed, TOOK_HOLD);
     }
 
@@ -59,10 +59,10 @@ void Splice_Block_Into_Feed(Feed(*) feed, const REBVAL *splice) {
     // be used once the splice runs out.
     //
     if (FEED_IS_VARIADIC(feed) or Not_End(feed->p)) {
-        Array(*) saved = Alloc_Singular(
+        Array* saved = Alloc_Singular(
             FLAG_FLAVOR(FEED) | NODE_FLAG_MANAGED  // no tracking
         );
-        memcpy(saved, FEED_SINGULAR(feed), sizeof(ArrayT));
+        memcpy(saved, FEED_SINGULAR(feed), sizeof(Array));
         assert(Not_Node_Managed(saved));
 
         // old feed data resumes after the splice
@@ -84,7 +84,7 @@ void Splice_Block_Into_Feed(Feed(*) feed, const REBVAL *splice) {
     // per-splice hold logic.  Pending whole system review of iteration.
     //
     if (Not_Feed_At_End(feed) and Not_Series_Info(FEED_ARRAY(feed), HOLD)) {
-        Set_Series_Info(m_cast(Array(*), FEED_ARRAY(feed)), HOLD);
+        Set_Series_Info(m_cast(Array*, FEED_ARRAY(feed)), HOLD);
         Set_Feed_Flag(feed, TOOK_HOLD);
     }
 }
@@ -97,7 +97,7 @@ Bounce Macro_Dispatcher(Level(*) const L)
 {
     USE_LEVEL_SHORTHANDS (L);
 
-    Details(*) details = Phase_Details(PHASE);
+    Details* details = Phase_Details(PHASE);
     Cell(*) body = Array_At(details, IDX_DETAILS_1);  // code to run
     assert(IS_BLOCK(body) and IS_RELATIVE(body) and VAL_INDEX(body) == 0);
 
@@ -168,7 +168,7 @@ DECLARE_NATIVE(macro)
 {
     INCLUDE_PARAMS_OF_MACRO;
 
-    Phase(*) macro = Make_Interpreted_Action_May_Fail(
+    Phase* macro = Make_Interpreted_Action_May_Fail(
         ARG(spec),
         ARG(body),
         MKF_RETURN | MKF_KEYWORDS,
@@ -203,7 +203,7 @@ DECLARE_NATIVE(inline)
         // This could probably be done more efficiently, but for now just
         // turn it into a block.
         //
-        Array(*) a = Alloc_Singular(SERIES_FLAGS_NONE);
+        Array* a = Alloc_Singular(SERIES_FLAGS_NONE);
         Unquotify(Move_Cell(Array_Single(a), splice), 1);
         Init_Block(splice, a);
         Splice_Block_Into_Feed(level_->feed, ARG(splice));

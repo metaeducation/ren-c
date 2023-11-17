@@ -22,12 +22,12 @@
 //
 // The word "Series" is overloaded in Rebol to refer to two related concepts:
 //
-// 1. The internal system type of Series(*) (or SeriesT).  It's a low-level
-//    implementation of something similar to a vector or an array in other
-//    languages.  It is an abstraction which represents a contiguous region
-//    of memory containing equally-sized elements.
+// 1. The internal system type of Series.  It's a low-level implementation of
+//    something similar to a vector or an array in other languages.  It is an
+//    abstraction which represents a contiguous region of memory containing
+//    equally-sized elements.
 //
-//   (For the struct definition of SeriesT, see %sys-rebser.h)
+//   (For the struct definition of Series, see %sys-rebser.h)
 //
 // 2. The user-level value type ANY-SERIES!.  This might be more accurately
 //    called ITERATOR!, because it includes both a pointer to a Series of
@@ -51,11 +51,12 @@
 //
 // * It is desirable to have series subclasses be different types, even though
 //   there are some common routines for processing them.  e.g. not every
-//   function that would take a Series(*) would actually be handled in the same
-//   way for a Array(*).  Plus, just because a Context(*) is implemented as a
-//   Array(*) with a link to another Array(*) doesn't mean most clients should
-//   be accessing the array--in a C++ build this would mean it would have some
-//   kind of protected inheritance scheme.
+//   function that would take a Series* would actually be handled in the same
+//   way for a Array*.  Plus, just because a Context* is implemented as a
+//   Array* with a link to another Array* doesn't mean most clients should
+//   be accessing the array.  In a C++ build, very simple inheritance is used
+//   to implement these type safeties--but in a C build, all the sublcass
+//   names are just aliases for Series, so there's less checking.
 //
 // * !!! It doesn't seem like index-out-of-range checks on the cells are being
 //   done in a systemic way.  VAL_LEN_AT() bounds the length at the index
@@ -94,22 +95,22 @@
 #if defined(NDEBUG)
     #define ensure_flavor(flavor,s) (s)  // no-op in release build
 #else
-    inline static Series(*) ensure_flavor(
+    inline static Series* ensure_flavor(
         Flavor flavor,
-        Series(const_if_c*) s
+        const_if_c Series* s
     ){
         if (Series_Flavor(s) != flavor) {
             Flavor actual_flavor = Series_Flavor(s);
             USED(actual_flavor);
             panic (s);
         }
-        return m_cast(Series(*), s);
+        return m_cast(Series*, s);
     }
 
     #if CPLUSPLUS_11
-        inline static Series(const*) ensure_flavor(
+        inline static const Series* ensure_flavor(
             Flavor flavor,
-            Series(const*) s
+            const Series* s
         ){
             if (Series_Flavor(s) != flavor) {
                 Flavor actual_flavor = Series_Flavor(s);
@@ -157,10 +158,10 @@
 // A C program could typically deal with this using a union, to name the same
 // memory offset in different ways.  Here `link` would be a union {}:
 //
-//      BookmarkList(*) books = string.link.bookmarks;
+//      BookmarkList* books = string.link.bookmarks;
 //      string.link.bookmarks = books;
 //
-//      Symbol(const*) synonym = symbol.link.synonym;
+//      const Symbol* synonym = symbol.link.synonym;
 //      symbol.link.synonym = synonym;
 //
 // The GC could then read a generic field like `series.link.node` when doing
@@ -179,10 +180,10 @@
 // field.  e.g. the following assigns and reads the same field ("node"), but
 // the instances document it is for "bookmarks" or "synonym":
 //
-//      BookmarkList(*) books = LINK(Bookmarks, string);  // reads `node`
+//      BookmarkList* books = LINK(Bookmarks, string);  // reads `node`
 //      mutable_LINK(Bookmarks, string) = books;
 //
-//      Symbol(const*) synonym = LINK(Synonym, symbol);  // also reads `node`
+//      const Symbol* synonym = LINK(Synonym, symbol);  // also reads `node`
 //      mutable_LINK(Synonym, symbol) = synonym;
 //
 // The syntax is *almost* as readable, but throws in benefits of offering some
@@ -192,8 +193,8 @@
 //
 // To use the LINK() and MISC(), you must define three macros, like this:
 //
-//      #define LINK_Bookmarks_TYPE     BookmarkListT*
-//      #define LINK_Bookmarks_CAST     (BookmarkListT*)SER
+//      #define LINK_Bookmarks_TYPE     BookmarkList*
+//      #define LINK_Bookmarks_CAST     (BookmarkList*)SER
 //      #define HAS_LINK_Bookmarks      FLAVOR_STRING
 //
 // You get the desired properties of being easy to find cases of a particular
@@ -250,12 +251,12 @@
     // !!! A checking SER_INODE() is overkill, given that the INODE() accessors
     // check the flavor.  Assume flavor has INFO_NODE_NEEDS_MARK right.
 #else
-    inline static const uintptr_t& SERIES_INFO(Series(const*) s) {
+    inline static const uintptr_t &SERIES_INFO(const Series* s) {
         assert(Not_Series_Flag(s, INFO_NODE_NEEDS_MARK));
         return s->info.flags.bits;
     }
 
-    inline static uintptr_t& SERIES_INFO(Series(*) s) {
+    inline static uintptr_t &SERIES_INFO(Series* s) {
         assert(Not_Series_Flag(s, INFO_NODE_NEEDS_MARK));
         return s->info.flags.bits;
     }
@@ -290,12 +291,12 @@
 // See documentation of `bias` and `rest` in %sys-rebser.h
 //
 
-inline static bool Is_Series_Biased(Series(const*) s) {
+inline static bool Is_Series_Biased(const Series* s) {
     assert(Get_Series_Flag(s, DYNAMIC));
     return not IS_VARLIST(s);
 }
 
-inline static REBLEN Series_Bias(Series(const*) s) {
+inline static REBLEN Series_Bias(const Series* s) {
     if (not Is_Series_Biased(s))
         return 0;
     return cast(REBLEN, ((s)->content.dynamic.bonus.bias >> 16) & 0xffff);
@@ -303,23 +304,23 @@ inline static REBLEN Series_Bias(Series(const*) s) {
 
 #define MAX_SERIES_BIAS 0x1000
 
-inline static void Set_Series_Bias(Series(*) s, REBLEN bias) {
+inline static void Set_Series_Bias(Series* s, REBLEN bias) {
     assert(Is_Series_Biased(s));
     s->content.dynamic.bonus.bias =
         (s->content.dynamic.bonus.bias & 0xffff) | (bias << 16);
 }
 
-inline static void SER_ADD_BIAS(Series(*) s, REBLEN b) {
+inline static void SER_ADD_BIAS(Series* s, REBLEN b) {
     assert(Is_Series_Biased(s));
     s->content.dynamic.bonus.bias += b << 16;
 }
 
-inline static void SER_SUB_BIAS(Series(*) s, REBLEN b) {
+inline static void SER_SUB_BIAS(Series* s, REBLEN b) {
     assert(Is_Series_Biased(s));
     s->content.dynamic.bonus.bias -= b << 16;
 }
 
-inline static Length Series_Rest(Series(const*) s) {
+inline static Length Series_Rest(const Series* s) {
     if (Get_Series_Flag(s, DYNAMIC))
         return s->content.dynamic.rest;
 
@@ -330,7 +331,7 @@ inline static Length Series_Rest(Series(const*) s) {
     return sizeof(s->content) / Series_Wide(s);
 }
 
-inline static size_t Series_Total(Series(const*) s) {
+inline static size_t Series_Total(const Series* s) {
     return (Series_Rest(s) + Series_Bias(s)) * Series_Wide(s);
 }
 
@@ -346,11 +347,11 @@ inline static size_t Series_Total(Series(const*) s) {
     #define Series_Bonus(s) \
         (s)->content.dynamic.bonus.node
 #else
-    inline static const struct NodeStruct* const &Series_Bonus(Series(const*) s) {
+    inline static const struct NodeStruct* const &Series_Bonus(const Series* s) {
         assert(s->leader.bits & SERIES_FLAG_DYNAMIC);
         return s->content.dynamic.bonus.node;
     }
-    inline static const struct NodeStruct* &Series_Bonus(Series(*) s) {
+    inline static const struct NodeStruct* &Series_Bonus(Series* s) {
         assert(s->leader.bits & SERIES_FLAG_DYNAMIC);
         return s->content.dynamic.bonus.node;
     }
@@ -435,7 +436,7 @@ inline static size_t Series_Total(Series(const*) s) {
 // "content", there's room for a length in the stub.
 //
 
-inline static Length Series_Used(Series(const*) s) {
+inline static Length Series_Used(const Series* s) {
     if (Get_Series_Flag(s, DYNAMIC))
         return s->content.dynamic.used;
     if (Is_Series_Array(s)) {
@@ -457,7 +458,7 @@ inline static Length Series_Used(Series(const*) s) {
 //
 // Note: if updating, also update manual inlining in Series_Data_At()
 //
-inline static Byte* Series_Data(Series(const_if_c*) s) {
+inline static Byte* Series_Data(const_if_c Series* s) {
 
     // The VAL_CONTEXT(), VAL_SERIES(), VAL_ARRAY() extractors do the failing
     // upon extraction--that's meant to catch it before it gets this far.
@@ -469,7 +470,7 @@ inline static Byte* Series_Data(Series(const_if_c*) s) {
         : cast(Byte*, &s->content);
 }
 
-inline static Byte* Series_Data_At(Byte w, Series(const_if_c*) s, REBLEN i) {
+inline static Byte* Series_Data_At(Byte w, const_if_c Series* s, REBLEN i) {
   #if !defined(NDEBUG)
     if (w != Series_Wide(s)) {  // will be "unusual" value if free
         if (Is_Node_Free(s))
@@ -499,15 +500,15 @@ inline static Byte* Series_Data_At(Byte w, Series(const_if_c*) s, REBLEN i) {
 }
 
 #if CPLUSPLUS_11
-    inline static const Byte* Series_Data(Series(const*) s)  // head of data
-      { return Series_Data(m_cast(Series(*), s)); }
+    inline static const Byte* Series_Data(const Series* s)  // head of data
+      { return Series_Data(m_cast(Series*, s)); }
 
     inline static const Byte* Series_Data_At(
         Byte w,
-        Series(const*) s,
+        const Series* s,
         REBLEN i
     ){
-        return Series_Data_At(w, m_cast(Series(*), s), i);
+        return Series_Data_At(w, m_cast(Series*, s), i);
     }
 #endif
 
@@ -545,24 +546,24 @@ inline static Byte* Series_Data_At(Byte w, Series(const_if_c*) s, REBLEN i) {
 #endif
 
 
-inline static Byte* Series_Data_Tail(size_t w, Series(const_if_c*) s)
+inline static Byte* Series_Data_Tail(size_t w, const_if_c Series* s)
   { return Series_Data_At(w, s, Series_Used(s)); }
 
 #if CPLUSPLUS_11
-    inline static const Byte* Series_Data_Tail(size_t w, Series(const*) s)
+    inline static const Byte* Series_Data_Tail(size_t w, const Series* s)
       { return Series_Data_At(w, s, Series_Used(s)); }
 #endif
 
 #define Series_Tail(t,s) \
     cast(t*, Series_Data_Tail(sizeof(t), (s)))
 
-inline static Byte* Series_Data_Last(size_t wide, Series(const_if_c*) s) {
+inline static Byte* Series_Data_Last(size_t wide, const_if_c Series* s) {
     assert(Series_Used(s) != 0);
     return Series_Data_At(wide, s, Series_Used(s) - 1);
 }
 
 #if CPLUSPLUS_11
-    inline static const Byte* Series_Data_Last(size_t wide, Series(const*) s) {
+    inline static const Byte* Series_Data_Last(size_t wide, const Series* s) {
         assert(Series_Used(s) != 0);
         return Series_Data_At(wide, s, Series_Used(s) - 1);
     }
@@ -583,7 +584,7 @@ inline static Byte* Series_Data_Last(size_t wide, Series(const_if_c*) s) {
 
 
 #if DEBUG_POISON_SERIES_TAILS
-    inline static void Poison_Or_Unpoison_Tail_Debug(Series(*) s, bool poison) {
+    inline static void Poison_Or_Unpoison_Tail_Debug(Series* s, bool poison) {
         if (Series_Wide(s) == 1) {  // presume BINARY! or ANY-STRING! (?)
             Byte* tail = Series_Tail(Byte, s);
             if (poison)
@@ -616,7 +617,7 @@ inline static Byte* Series_Data_Last(size_t wide, Series(const_if_c*) s) {
 // the moment, fixed size series merely can't expand, but it might be more
 // efficient if they didn't use any "appending" operators to get built.
 //
-inline static void Set_Series_Used_Internal(Series(*) s, REBLEN used) {
+inline static void Set_Series_Used_Internal(Series* s, REBLEN used) {
     if (Get_Series_Flag(s, DYNAMIC))
         s->content.dynamic.used = used;
     else {
@@ -650,7 +651,7 @@ inline static void Set_Series_Used_Internal(Series(*) s, REBLEN used) {
   #endif
 }
 
-inline static void Set_Series_Used(Series(*) s, REBLEN used) {
+inline static void Set_Series_Used(Series* s, REBLEN used) {
     UNPOISON_SERIES_TAIL(s);
     Set_Series_Used_Internal(s, used);
     POISON_SERIES_TAIL(s);
@@ -660,13 +661,13 @@ inline static void Set_Series_Used(Series(*) s, REBLEN used) {
 // including the '\0' termination (this routine will corrupt the tail byte
 // in the debug build to catch violators.)
 //
-inline static void Set_Series_Len(Series(*) s, REBLEN len) {
+inline static void Set_Series_Len(Series* s, REBLEN len) {
     assert(not Is_Series_UTF8(s));  // use _Len_Size() instead
     Set_Series_Used(s, len);
 }
 
-#if CPLUSPLUS_11  // catch cases when calling on String(*) directly
-    inline static void Set_Series_Len(String(*) s, REBLEN len) = delete;
+#if CPLUSPLUS_11  // catch cases when calling on String* directly
+    inline static void Set_Series_Len(String* s, REBLEN len) = delete;
 #endif
 
 
@@ -674,7 +675,7 @@ inline static void Set_Series_Len(Series(*) s, REBLEN len) {
 // Optimized expand when at tail (but, does not reterminate)
 //
 
-inline static void Expand_Series_Tail(Series(*) s, REBLEN delta) {
+inline static void Expand_Series_Tail(Series* s, REBLEN delta) {
     if (Series_Fits(s, delta))
         Set_Series_Used(s, Series_Used(s) + delta);  // no termination implied
     else
@@ -699,7 +700,7 @@ inline static void Expand_Series_Tail(Series(*) s, REBLEN delta) {
 // maintains the invariant that the higher level routines want.
 //
 
-inline static void Term_Series_If_Necessary(Series(*) s)
+inline static void Term_Series_If_Necessary(Series* s)
 {
     if (Series_Wide(s) == 1) {
         if (Is_Series_UTF8(s))
@@ -746,10 +747,10 @@ inline static void Term_Series_If_Necessary(Series(*) s)
 // build hierarchical structures (like the scanner) only return managed
 // results, since they can manage it as they build them.
 
-inline static void Untrack_Manual_Series(Series(*) s)
+inline static void Untrack_Manual_Series(Series* s)
 {
-    Series(*) * const last_ptr
-        = &cast(Series(*)*, g_gc.manuals->content.dynamic.data)[
+    Series* * const last_ptr
+        = &cast(Series**, g_gc.manuals->content.dynamic.data)[
             g_gc.manuals->content.dynamic.used - 1
         ];
 
@@ -761,12 +762,12 @@ inline static void Untrack_Manual_Series(Series(*) s)
         // to that position to preserve it when we chop off the tail
         // (instead of keeping the series we want to free).
         //
-        Series(*) *current_ptr = last_ptr - 1;
+        Series* *current_ptr = last_ptr - 1;
         for (; *current_ptr != s; --current_ptr) {
           #if !defined(NDEBUG)
             if (
                 current_ptr
-                <= cast(Series(*)*, g_gc.manuals->content.dynamic.data)
+                <= cast(Series**, g_gc.manuals->content.dynamic.data)
             ){
                 printf("Series not in list of last manually added series\n");
                 panic(s);
@@ -781,7 +782,7 @@ inline static void Untrack_Manual_Series(Series(*) s)
     --g_gc.manuals->content.dynamic.used;
 }
 
-inline static Series(*) Manage_Series(Series(*) s)  // give manual series to GC
+inline static Series* Manage_Series(Series* s)  // give manual series to GC
 {
   #if !defined(NDEBUG)
     if (Is_Node_Managed(s))
@@ -796,27 +797,27 @@ inline static Series(*) Manage_Series(Series(*) s)  // give manual series to GC
 #ifdef NDEBUG
     #define Assert_Series_Managed(s) NOOP
 #else
-    inline static void Assert_Series_Managed(Series(const*) s) {
+    inline static void Assert_Series_Managed(const Series* s) {
         if (Not_Node_Managed(s))
             panic (s);
     }
 #endif
 
-inline static Series(*) Force_Series_Managed(const_if_c Series(*) s) {
+inline static Series* Force_Series_Managed(const_if_c Series* s) {
     if (Not_Node_Managed(s))
-        Manage_Series(m_cast(Series(*), s));
-    return m_cast(Series(*), s);
+        Manage_Series(m_cast(Series*, s));
+    return m_cast(Series*, s);
 }
 
 #if (! CPLUSPLUS_11)
     #define Force_Series_Managed_Core Force_Series_Managed
 #else
-    inline static Series(*) Force_Series_Managed_Core(Series(*) s)
+    inline static Series* Force_Series_Managed_Core(Series* s)
       { return Force_Series_Managed(s); }  // mutable series may be unmanaged
 
-    inline static Series(*) Force_Series_Managed_Core(Series(const*) s) {
+    inline static Series* Force_Series_Managed_Core(const Series* s) {
         Assert_Series_Managed(s);  // const series should already be managed
-        return m_cast(Series(*), s);
+        return m_cast(Series*, s);
     }
 #endif
 
@@ -847,25 +848,25 @@ inline static Series(*) Force_Series_Managed(const_if_c Series(*) s) {
 // are and asserts it's 0 by the time each evaluation ends, to ensure balance.
 //
 
-inline static bool Is_Series_Black(Series(const*) s) {
+inline static bool Is_Series_Black(const Series* s) {
     return Get_Series_Flag(s, BLACK);
 }
 
-inline static bool Is_Series_White(Series(const*) s) {
+inline static bool Is_Series_White(const Series* s) {
     return Not_Series_Flag(s, BLACK);
 }
 
-inline static void Flip_Series_To_Black(Series(const*) s) {
+inline static void Flip_Series_To_Black(const Series* s) {
     assert(Not_Series_Flag(s, BLACK));
-    Set_Series_Flag(m_cast(Series(*), s), BLACK);
+    Set_Series_Flag(m_cast(Series*, s), BLACK);
   #if !defined(NDEBUG)
     g_mem.num_black_series += 1;
   #endif
 }
 
-inline static void Flip_Series_To_White(Series(const*) s) {
+inline static void Flip_Series_To_White(const Series* s) {
     assert(Get_Series_Flag(s, BLACK));
-    Clear_Series_Flag(m_cast(Series(*), s), BLACK);
+    Clear_Series_Flag(m_cast(Series*, s), BLACK);
   #if !defined(NDEBUG)
     g_mem.num_black_series -= 1;
   #endif
@@ -876,18 +877,18 @@ inline static void Flip_Series_To_White(Series(const*) s) {
 // Freezing and Locking
 //
 
-inline static void Freeze_Series(Series(const*) s) {  // there is no unfreeze
+inline static void Freeze_Series(const Series* s) {  // there is no unfreeze
     assert(not Is_Series_Array(s)); // use Deep_Freeze_Array
 
     // Mutable cast is all right for this bit.  We set the FROZEN_DEEP flag
     // even though there is no structural depth here, so that the generic
     // test for deep-frozenness can be faster.
     //
-    Set_Series_Info(m_cast(Series(*), s), FROZEN_SHALLOW);
-    Set_Series_Info(m_cast(Series(*), s), FROZEN_DEEP);
+    Set_Series_Info(m_cast(Series*, s), FROZEN_SHALLOW);
+    Set_Series_Info(m_cast(Series*, s), FROZEN_DEEP);
 }
 
-inline static bool Is_Series_Frozen(Series(const*) s) {
+inline static bool Is_Series_Frozen(const Series* s) {
     assert(not Is_Series_Array(s));  // use Is_Array_Deeply_Frozen
     if (Not_Series_Info(s, FROZEN_SHALLOW))
         return false;
@@ -895,7 +896,7 @@ inline static bool Is_Series_Frozen(Series(const*) s) {
     return true;
 }
 
-inline static bool Is_Series_Read_Only(Series(const*) s) {  // may be temporary
+inline static bool Is_Series_Read_Only(const Series* s) {  // may be temporary
     return 0 != (SERIES_INFO(s) &
         (SERIES_INFO_HOLD | SERIES_INFO_PROTECTED
         | SERIES_INFO_FROZEN_SHALLOW | SERIES_INFO_FROZEN_DEEP)
@@ -911,7 +912,7 @@ inline static bool Is_Series_Read_Only(Series(const*) s) {  // may be temporary
 // priority ordering.
 //
 
-inline static void Fail_If_Read_Only_Series(Series(*) s) {
+inline static void Fail_If_Read_Only_Series(Series* s) {
     if (not Is_Series_Read_Only(s))
         return;
 
@@ -936,7 +937,7 @@ inline static void Fail_If_Read_Only_Series(Series(*) s) {
 #else
     inline static Cell(const*) Known_Mutable(Cell(const*) v) {
         assert(Get_Cell_Flag(v, FIRST_IS_NODE));
-        Series(*) s = SER(VAL_NODE1(v));  // can be pairlist, varlist, etc.
+        Series* s = SER(VAL_NODE1(v));  // can be pairlist, varlist, etc.
         assert(not Is_Series_Read_Only(s));
         assert(Not_Cell_Flag(v, CONST));
         return v;
@@ -948,7 +949,7 @@ inline static REBVAL* Unrelativize(Cell(*) out, Cell(const*) v);
 
 inline static Cell(const*) Ensure_Mutable(Cell(const*) v) {
     assert(Get_Cell_Flag(v, FIRST_IS_NODE));
-    Series(*) s = SER(VAL_NODE1(v));  // can be pairlist, varlist, etc.
+    Series* s = SER(VAL_NODE1(v));  // can be pairlist, varlist, etc.
 
     Fail_If_Read_Only_Series(s);
 
@@ -1022,7 +1023,7 @@ inline static void Push_GC_Guard_Erased_Cell(Cell(*) cell) {
 // Uses "evil macro" variations because it is called so frequently, that in
 // the debug build (which doesn't inline functions) there's a notable cost.
 //
-inline static Series(const*) VAL_SERIES(NoQuote(Cell(const*)) v) {
+inline static const Series* VAL_SERIES(NoQuote(Cell(const*)) v) {
   #if !defined(NDEBUG)
     enum Reb_Kind k = CELL_HEART(v);
     assert(
@@ -1031,17 +1032,17 @@ inline static Series(const*) VAL_SERIES(NoQuote(Cell(const*)) v) {
         or ANY_ARRAYLIKE(v)
     );
   #endif
-    Series(const*) s = SER(VAL_NODE1(v));
+    const Series* s = SER(VAL_NODE1(v));
     if (Get_Series_Flag(s, INACCESSIBLE))
         fail (Error_Series_Data_Freed_Raw());
     return s;
 }
 
 #define VAL_SERIES_ENSURE_MUTABLE(v) \
-    m_cast(Series(*), VAL_SERIES(Ensure_Mutable(v)))
+    m_cast(Series*, VAL_SERIES(Ensure_Mutable(v)))
 
 #define VAL_SERIES_KNOWN_MUTABLE(v) \
-    m_cast(Series(*), VAL_SERIES(Known_Mutable(v)))
+    m_cast(Series*, VAL_SERIES(Known_Mutable(v)))
 
 
 #define VAL_INDEX_RAW(v) \
@@ -1117,7 +1118,7 @@ inline static void INIT_SPECIFIER(Cell(*) v, const void *p) {
     //
     // can be called on non-bindable series, but p must be nullptr
 
-    Series(const*) binding = SER(p);  // can't (currently) be a cell/pairing
+    const Series* binding = SER(p);  // can't (currently) be a cell/pairing
     mutable_BINDING(v) = binding;
 
   #if !defined(NDEBUG)
@@ -1146,9 +1147,9 @@ inline static void INIT_SPECIFIER(Cell(*) v, const void *p) {
 inline static REBVAL *Init_Series_Cell_At_Core(
     Cell(*) out,
     enum Reb_Kind type,
-    Series(const*) s,  // ensured managed by calling macro
+    const Series* s,  // ensured managed by calling macro
     REBLEN index,
-    Array(*) specifier
+    Array* specifier
 ){
   #if !defined(NDEBUG)
     assert(ANY_SERIES_KIND(type) or type == REB_URL);
@@ -1220,10 +1221,6 @@ inline static Stub* Prep_Stub(void *preallocated, Flags flags) {
     g_mem.series_made += 1;
   #endif
 
-  #if DEBUG_COUNT_LOCALS
-    s->num_locals = 0;
-  #endif
-
     return s;
 }
 
@@ -1241,7 +1238,7 @@ inline static PoolId Pool_Id_For_Size(Size size) {
 }
 
 
-// Allocates the data array for an already allocated SeriesT stub structure.
+// Allocates the data array for an already allocated Series stub structure.
 // Resets the bias and tail to zero, and sets the new width.  Flags like
 // SERIES_FLAG_FIXED_SIZE are left as they were, and other fields in the
 // series structure are untouched.
@@ -1249,7 +1246,7 @@ inline static PoolId Pool_Id_For_Size(Size size) {
 // This routine can thus be used for an initial construction or an operation
 // like expansion.
 //
-inline static bool Did_Series_Data_Alloc(Series(*) s, REBLEN capacity) {
+inline static bool Did_Series_Data_Alloc(Series* s, REBLEN capacity) {
     //
     // Currently once a series becomes dynamic, it never goes back.  There is
     // no shrinking process that will pare it back to fit completely inside
@@ -1343,7 +1340,7 @@ inline static bool Did_Series_Data_Alloc(Series(*) s, REBLEN capacity) {
 // Small series will be allocated from a memory pool.
 // Large series will be allocated from system memory.
 //
-inline static Series(*) Make_Series_Into(
+inline static Series* Make_Series_Into(
     void* preallocated,
     REBLEN capacity,
     Flags flags
@@ -1396,7 +1393,7 @@ inline static Series(*) Make_Series_Into(
         if (Is_Series_Full(g_gc.manuals))
             Extend_Series_If_Necessary(g_gc.manuals, 8);
 
-        cast(Series(*)*, g_gc.manuals->content.dynamic.data)[
+        cast(Series**, g_gc.manuals->content.dynamic.data)[
             g_gc.manuals->content.dynamic.used++
         ] = s; // start out managed to not need to find/remove from this later
     }

@@ -354,10 +354,10 @@ uint32_t Hash_Value(Cell(const*) cell)
 // (Review making them non-managed, and freed in Decay_Series(), since they
 // are not shared in maps.  Consider impacts on the set operations.)
 //
-Series(*) Make_Hash_Series(REBLEN len)
+Series* Make_Hash_Series(REBLEN len)
 {
     REBLEN n = Get_Hash_Prime_May_Fail(len * 2);  // best when 2X # of keys
-    Series(*) ser = Make_Series_Core(n + 1, FLAG_FLAVOR(HASHLIST));
+    Series* ser = Make_Series_Core(n + 1, FLAG_FLAVOR(HASHLIST));
     Clear_Series(ser);
     Set_Series_Len(ser, n);
 
@@ -371,7 +371,7 @@ Series(*) Make_Hash_Series(REBLEN len)
 // A map has an additional hash element hidden in the ->extra field of the
 // Stub which needs to be given to memory management as well.
 //
-Value(*) Init_Map(Cell(*) out, Map(*) map)
+Value(*) Init_Map(Cell(*) out, Map* map)
 {
     if (MAP_HASHLIST(map))
         Force_Series_Managed(MAP_HASHLIST(map));
@@ -394,10 +394,10 @@ Value(*) Init_Map(Cell(*) out, Map(*) map)
 //
 // Note: hash array contents (indexes) are 1-based!
 //
-Series(*) Hash_Block(const REBVAL *block, REBLEN skip, bool cased)
+Series* Hash_Block(const REBVAL *block, REBLEN skip, bool cased)
 {
     // Create the hash array (integer indexes):
-    Series(*) hashlist = Make_Hash_Series(VAL_LEN_AT(block));
+    Series* hashlist = Make_Hash_Series(VAL_LEN_AT(block));
 
     Cell(const*) tail;
     Cell(const*) value = VAL_ARRAY_AT(&tail, block);
@@ -406,14 +406,14 @@ Series(*) Hash_Block(const REBVAL *block, REBLEN skip, bool cased)
 
     REBLEN *hashes = Series_Head(REBLEN, hashlist);
 
-    Array(const*) array = VAL_ARRAY(block);
+    const Array* array = VAL_ARRAY(block);
     REBLEN n = VAL_INDEX(block);
 
     while (true) {
         REBLEN skip_index = skip;
 
         REBLEN hash = Find_Key_Hashed(
-            m_cast(Array(*), array),  // mode == 0, no modification, cast ok
+            m_cast(Array*, array),  // mode == 0, no modification, cast ok
             hashlist,
             value,
             VAL_SPECIFIER(block),

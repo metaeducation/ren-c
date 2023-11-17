@@ -74,7 +74,7 @@
 #define FEED_SINGULAR(feed)     ARR(&(feed)->singular)
 #define FEED_SINGLE(feed)       mutable_Stub_Cell(&(feed)->singular)
 
-#define LINK_Splice_TYPE        Array(*)
+#define LINK_Splice_TYPE        Array*
 #define LINK_Splice_CAST        ARR
 #define HAS_LINK_Splice         FLAVOR_FEED
 
@@ -221,11 +221,11 @@ inline static Value(const*) Copy_Reified_Variadic_Feed_Cell(
 inline static Option(Value(const*)) Try_Reify_Variadic_Feed_Series(
     Feed(*) feed
 ){
-    Series(*) s = SER(m_cast(void*, feed->p));
+    Series* s = SER(m_cast(void*, feed->p));
 
     switch (Series_Flavor(s)) {
       case FLAVOR_INSTRUCTION_SPLICE: {
-        Array(*) inst1 = ARR(s);
+        Array* inst1 = ARR(s);
         REBVAL *single = SPECIFIC(Array_Single(inst1));
         if (IS_BLANK(single)) {
             GC_Kill_Series(inst1);
@@ -245,7 +245,7 @@ inline static Option(Value(const*)) Try_Reify_Variadic_Feed_Series(
         break; }
 
       case FLAVOR_API: {
-        Array(*) inst1 = ARR(s);
+        Array* inst1 = ARR(s);
 
         // We usually get the API *cells* passed to us, not the singular
         // array holding them.  But the rebR() function will actually
@@ -295,7 +295,7 @@ inline static Option(Value(const*)) Try_Reify_Variadic_Feed_Series(
         //
         // Besides instructions, other series types aren't currenlty
         // supported...though it was considered that you could use
-        // Context(*) or Action(*) directly instead of their archtypes.  This
+        // Context* or Action* directly instead of their archtypes.  This
         // was considered when thinking about ditching value archetypes
         // altogether (e.g. no usable cell pattern guaranteed at the head)
         // but it's important in several APIs to emphasize a value gives
@@ -352,7 +352,7 @@ inline static void Force_Variadic_Feed_At_Cell_Or_End_May_Fail(Feed(*) feed)
         // !!! Scans that produce only one value (which are likely very
         // common) can go into feed->fetched and not make an array at all.
         //
-        Array(*) reified = try_unwrap(Try_Scan_Variadic_Feed_Utf8_Managed(feed));
+        Array* reified = try_unwrap(Try_Scan_Variadic_Feed_Utf8_Managed(feed));
 
         if (not reified) {  // rebValue("", ...), see [1]
             if (Is_Feed_At_End(feed))
@@ -467,17 +467,17 @@ inline static void Fetch_Next_In_Feed(Feed(*) feed) {
             if (FEED_SPLICE(feed)) {  // one or more additional splices to go
                 if (Get_Feed_Flag(feed, TOOK_HOLD)) {  // see note above
                     assert(Get_Series_Info(FEED_ARRAY(feed), HOLD));
-                    Clear_Series_Info(m_cast(Array(*), FEED_ARRAY(feed)), HOLD);
+                    Clear_Series_Info(m_cast(Array*, FEED_ARRAY(feed)), HOLD);
                     Clear_Feed_Flag(feed, TOOK_HOLD);
                 }
 
-                ArrayT* splice = FEED_SPLICE(feed);
+                Array* splice = FEED_SPLICE(feed);
                 memcpy(
                     FEED_SINGULAR(feed),
                     FEED_SPLICE(feed),
-                    sizeof(ArrayT)
+                    sizeof(Array)
                 );
-                GC_Kill_Series(splice);  // Array(*) would hold reference
+                GC_Kill_Series(splice);  // Array* would hold reference
                 goto retry_splice;
             }
         }
@@ -617,7 +617,7 @@ inline static void Free_Feed(Feed(*) feed) {
     }
     else if (Get_Feed_Flag(feed, TOOK_HOLD)) {
         assert(Get_Series_Info(FEED_ARRAY(feed), HOLD));
-        Clear_Series_Info(m_cast(Array(*), FEED_ARRAY(feed)), HOLD);
+        Clear_Series_Info(m_cast(Array*, FEED_ARRAY(feed)), HOLD);
         Clear_Feed_Flag(feed, TOOK_HOLD);
     }
 
@@ -653,7 +653,7 @@ inline static Feed(*) Prep_Feed_Common(void* preallocated, Flags flags) {
 inline static Feed(*) Prep_Array_Feed(
     void* preallocated,
     Option(Cell(const*)) first,
-    Array(const*) array,
+    const Array* array,
     REBLEN index,
     REBSPC *specifier,
     Flags flags
@@ -684,7 +684,7 @@ inline static Feed(*) Prep_Array_Feed(
     if (Is_Feed_At_End(feed) or Get_Series_Info(array, HOLD))
         NOOP;  // already temp-locked
     else {
-        Set_Series_Info(m_cast(Array(*), array), HOLD);
+        Set_Series_Info(m_cast(Array*, array), HOLD);
         Set_Feed_Flag(feed, TOOK_HOLD);
     }
 
@@ -729,7 +729,7 @@ inline static Feed(*) Prep_Variadic_Feed(
     void* preallocated,
     const void *p,
     Option(va_list*) vaptr,
-    Option(Context(*)) context,
+    Option(Context*) context,
     Flags flags
 ){
     Feed(*) feed = Prep_Feed_Common(preallocated, flags | FEED_FLAG_NEEDS_SYNC);

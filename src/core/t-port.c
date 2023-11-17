@@ -83,7 +83,7 @@ Bounce TO_Port(Level(*) level_, enum Reb_Kind kind, const REBVAL *arg)
     // vs. making it as a port to begin with (?)  Look into why
     // system.standard.port is made with CONTEXT and not with MAKE PORT!
     //
-    Context(*) context = Copy_Context_Shallow_Managed(VAL_CONTEXT(arg));
+    Context* context = Copy_Context_Shallow_Managed(VAL_CONTEXT(arg));
     REBVAL *rootvar = CTX_ROOTVAR(context);
     HEART_BYTE(rootvar) = REB_PORT;
 
@@ -127,7 +127,7 @@ REBTYPE(Port)
     if (id == SYM_PICK_P or id == SYM_POKE_P)
         return T_Context(level_, verb);
 
-    Context(*) ctx = VAL_CONTEXT(port);
+    Context* ctx = VAL_CONTEXT(port);
     REBVAL *actor = CTX_VAR(ctx, STD_PORT_ACTOR);
 
     // If actor is a HANDLE!, it should be a PAF
@@ -198,7 +198,7 @@ REBTYPE(Port)
 
             Size size;
             const Byte* data = VAL_BINARY_SIZE_AT(&size, OUT);
-            String(*) decoded = Make_Sized_String_UTF8(cs_cast(data), size);
+            String* decoded = Make_Sized_String_UTF8(cs_cast(data), size);
             Init_Text(OUT, decoded);
         }
 

@@ -86,7 +86,7 @@ DECLARE_NATIVE(mold)
 
     Mold_Value(mo, v);
 
-    String(*) popped = Pop_Molded_String(mo);  // sets MOLD_FLAG_TRUNCATED
+    String* popped = Pop_Molded_String(mo);  // sets MOLD_FLAG_TRUNCATED
 
     Init_Logic(ARG(truncated), did (mo->opts & MOLD_FLAG_WAS_TRUNCATED));
 
@@ -160,7 +160,7 @@ DECLARE_NATIVE(new_line)
     REBVAL *pos = ARG(position);
     Cell(const*) tail;
     Cell(*) item = VAL_ARRAY_AT_Ensure_Mutable(&tail, pos);
-    Array(*) a = VAL_ARRAY_KNOWN_MUTABLE(pos);  // need if setting flag at tail
+    Array* a = VAL_ARRAY_KNOWN_MUTABLE(pos);  // need if setting flag at tail
 
     REBINT skip;
     if (REF(all))
@@ -215,7 +215,7 @@ DECLARE_NATIVE(new_line_q)
 
     REBVAL *pos = ARG(position);
 
-    Array(const*) arr;
+    const Array* arr;
     Cell(const*) item;
     Cell(const*) tail;
 
@@ -329,7 +329,7 @@ DECLARE_NATIVE(basic_read)
     UNUSED(ARG(file));
     fail ("BASIC-READ is a simple demo used in WASI only");
   #else
-    String(const*) filename = VAL_STRING(ARG(file));
+    const String* filename = VAL_STRING(ARG(file));
     FILE* f = fopen(String_UTF8(filename), "rb");
     if (f == nullptr)
         fail (rebError_OS(errno));
@@ -337,7 +337,7 @@ DECLARE_NATIVE(basic_read)
     Size size = ftell(f);
     fseek(f, 0, SEEK_SET);
 
-    Binary(*) bin = Make_Binary(size);
+    Binary* bin = Make_Binary(size);
     fread(Binary_Head(bin), size, 1, f);
     Term_Binary_Len(bin, size);
     fclose(f);
@@ -368,7 +368,7 @@ DECLARE_NATIVE(basic_write)
     UNUSED(ARG(data));
     fail ("BASIC-WRITE is a simple demo used in WASI only");
   #else
-    String(const*) filename = VAL_STRING(ARG(file));
+    const String* filename = VAL_STRING(ARG(file));
     FILE* f = fopen(String_UTF8(filename), "wb");
     if (f == nullptr)
         fail (rebError_OS(errno));

@@ -1001,7 +1001,7 @@
 // This introduces some tools that are no-ops in C.  One is a simple type
 // `ensure` construct:
 //
-//      void *p = ensure(Series(*), s);
+//      void *p = ensure(Series*, s);
 //
 // Another called `ensurer` lets you put it in the stream of execution without
 // being inside parentheses (it does this with operator `<<` magic):

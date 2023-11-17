@@ -24,7 +24,7 @@
 // This file just defines basic structures and flags.
 //
 
-#define MISC_VarlistAdjunct_TYPE      Context(*)
+#define MISC_VarlistAdjunct_TYPE      Context*
 #define MISC_VarlistAdjunct_CAST      CTX
 #define HAS_MISC_VarlistAdjunct       FLAVOR_VARLIST
 
@@ -122,4 +122,4 @@
 
 
 #define CTX_VARLIST(ctx) \
-    cast(Array(*), ensure(Context(*), ctx))
+    cast(Array*, ensure(Context*, ctx))

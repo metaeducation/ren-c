@@ -53,7 +53,7 @@
 // Do set operations on a series.  Case-sensitive if `cased` is TRUE.
 // `skip` is the record size.
 //
-Series(*) Make_Set_Operation_Series(
+Series* Make_Set_Operation_Series(
     const REBVAL *val1,
     const REBVAL *val2,
     Flags flags,
@@ -104,17 +104,17 @@ Series(*) Make_Set_Operation_Series(
 
     REBINT h = 1; // used for both logic true/false and hash check
     bool first_pass = true; // are we in the first pass over the series?
-    Series(*) out_ser;
+    Series* out_ser;
 
     if (ANY_ARRAY(val1)) {
-        Series(*) hser = 0;   // hash table for series
-        Series(*) hret;       // hash table for return series
+        Series* hser = 0;   // hash table for series
+        Series* hret;       // hash table for return series
 
         // The buffer used for building the return series.  This creates
         // a new buffer every time, but reusing one might be slightly more
         // efficient.
         //
-        Series(*) buffer = Make_Array(i);
+        Series* buffer = Make_Array(i);
         hret = Make_Hash_Series(i);   // allocated
 
         // Optimization note: !!
@@ -124,7 +124,7 @@ Series(*) Make_Set_Operation_Series(
         do {
             // Note: val1 and val2 swapped 2nd pass!
             //
-            Array(const*) array1 = VAL_ARRAY(val1);
+            const Array* array1 = VAL_ARRAY(val1);
 
             // Check what is in series1 but not in series2
             //
@@ -138,7 +138,7 @@ Series(*) Make_Set_Operation_Series(
                 Cell(const*) item = Array_At(array1, i);
                 if (flags & SOP_FLAG_CHECK) {
                     h = Find_Key_Hashed(
-                        m_cast(Array(*), VAL_ARRAY(val2)),  // mode 1 unchanged
+                        m_cast(Array*, VAL_ARRAY(val2)),  // mode 1 unchanged
                         hser,
                         item,
                         VAL_SPECIFIER(val1),
@@ -208,7 +208,7 @@ Series(*) Make_Set_Operation_Series(
         do {
             // Note: val1 and val2 swapped 2nd pass!
             //
-            String(const*) str = VAL_STRING(val1);
+            const String* str = VAL_STRING(val1);
 
             DECLARE_LOCAL (iter);
             Copy_Cell(iter, val1);
@@ -275,7 +275,7 @@ Series(*) Make_Set_Operation_Series(
     else {
         assert(IS_BINARY(val1) and IS_BINARY(val2));
 
-        Binary(*) buf = BYTE_BUF;
+        Binary* buf = BYTE_BUF;
         REBLEN buf_start_len = Binary_Len(buf);
         Expand_Series_Tail(buf, i);  // ask for at least `i` capacity
         REBLEN buf_at = buf_start_len;
@@ -283,7 +283,7 @@ Series(*) Make_Set_Operation_Series(
         do {
             // Note: val1 and val2 swapped 2nd pass!
             //
-            Binary(const*) bin = VAL_BINARY(val1);
+            const Binary* bin = VAL_BINARY(val1);
 
             // Iterate over first series
             //
@@ -354,7 +354,7 @@ Series(*) Make_Set_Operation_Series(
         } while (true);
 
         REBLEN out_len = buf_at - buf_start_len;
-        Binary(*) out_bin = Make_Binary(out_len);
+        Binary* out_bin = Make_Binary(out_len);
         memcpy(Binary_Head(out_bin), Binary_At(buf, buf_start_len), out_len);
         Term_Binary_Len(out_bin, out_len);
         out_ser = out_bin;

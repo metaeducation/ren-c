@@ -54,11 +54,11 @@ enum {
 //
 // Intrinsic used by TYPECHECKER generator for when argument is a datatype.
 //
-void Datatype_Checker_Intrinsic(Value(*) out, Phase(*) phase, Value(*) arg)
+void Datatype_Checker_Intrinsic(Value(*) out, Phase* phase, Value(*) arg)
 {
     assert(ACT_DISPATCHER(phase) == &Intrinsic_Dispatcher);
 
-    Details(*) details = Phase_Details(phase);
+    Details* details = Phase_Details(phase);
     assert(Array_Len(details) == IDX_TYPECHECKER_MAX);
 
     REBVAL *datatype = DETAILS_AT(details, IDX_TYPECHECKER_TYPE);
@@ -72,11 +72,11 @@ void Datatype_Checker_Intrinsic(Value(*) out, Phase(*) phase, Value(*) arg)
 //
 // Intrinsic used by TYPECHECKER generator for when argument is a typeset.
 //
-void Typeset_Checker_Intrinsic(Value(*) out, Phase(*) phase, Value(*) arg)
+void Typeset_Checker_Intrinsic(Value(*) out, Phase* phase, Value(*) arg)
 {
     assert(ACT_DISPATCHER(phase) == &Intrinsic_Dispatcher);
 
-    Details(*) details = Phase_Details(phase);
+    Details* details = Phase_Details(phase);
     assert(Array_Len(details) == IDX_TYPECHECKER_MAX);
 
     REBVAL *typeset_index = DETAILS_AT(details, IDX_TYPECHECKER_TYPE);
@@ -95,7 +95,7 @@ void Typeset_Checker_Intrinsic(Value(*) out, Phase(*) phase, Value(*) arg)
 // Bootstrap creates typechecker functions before functions like TYPECHECKER
 // are allowed to run to create them.  So this is factored out.
 //
-Phase(*) Make_Typechecker(Value(const*) type) {
+Phase* Make_Typechecker(Value(const*) type) {
     assert(
         IS_TYPE_WORD(type)  // datatype
         or IS_INTEGER(type)  // typeset index (for finding bitset)
@@ -105,27 +105,27 @@ Phase(*) Make_Typechecker(Value(const*) type) {
     // with no type restrictions.
     //
     DECLARE_STABLE (spec);
-    Array(*) spec_array = Alloc_Singular(NODE_FLAG_MANAGED);
+    Array* spec_array = Alloc_Singular(NODE_FLAG_MANAGED);
     Init_Word(Array_Single(spec_array), Canon(VALUE));
     Init_Block(spec, spec_array);
 
-    Context(*) meta;
+    Context* meta;
     Flags flags = MKF_KEYWORDS | MKF_RETURN;
-    Array(*) paramlist = Make_Paramlist_Managed_May_Fail(
+    Array* paramlist = Make_Paramlist_Managed_May_Fail(
         &meta,
         spec,
         &flags  // return type checked only in debug build
     );
     Assert_Series_Term_If_Needed(paramlist);
 
-    Phase(*) typechecker = Make_Action(
+    Phase* typechecker = Make_Action(
         paramlist,
         nullptr,  // no partials
         &Intrinsic_Dispatcher,  // leverage Intrinsic's optimized calls
         IDX_TYPECHECKER_MAX  // details array capacity
     );
 
-    Details(*) details = Phase_Details(typechecker);
+    Details* details = Phase_Details(typechecker);
 
     Init_Handle_Cfunc(
         DETAILS_AT(details, IDX_TYPECHECKER_CFUNC),
@@ -152,7 +152,7 @@ DECLARE_NATIVE(typechecker)
 {
     INCLUDE_PARAMS_OF_TYPECHECKER;
 
-    Phase(*) typechecker = Make_Typechecker(ARG(type));
+    Phase* typechecker = Make_Typechecker(ARG(type));
     return Init_Activation(OUT, typechecker, ANONYMOUS, UNBOUND);
 }
 
@@ -188,7 +188,7 @@ bool Typecheck_Value(
         break;
 
       case REB_PARAMETER: {
-        Array(const*) array = try_unwrap(VAL_PARAMETER_ARRAY(tests));
+        const Array* array = try_unwrap(VAL_PARAMETER_ARRAY(tests));
         if (array == nullptr)
             return true;  // implicitly all is permitted
         item = Array_Head(array);
@@ -210,7 +210,7 @@ bool Typecheck_Value(
     for (; item != tail; ++item) {
         ASSERT_CELL_READABLE_EVIL_MACRO(item);
 
-        Option(Symbol(const*)) label = nullptr;  // so goto doesn't cross
+        Option(const Symbol*) label = nullptr;  // so goto doesn't cross
 
         // !!! Ultimately, we'll enable literal comparison for quoted/quasi
         // items.  For the moment just try quasi-words for isotopes.
@@ -261,11 +261,11 @@ bool Typecheck_Value(
 
         switch (kind) {
           run_activation: {
-            Action(*) action = VAL_ACTION(test);
+            Action* action = VAL_ACTION(test);
 
             if (ACT_DISPATCHER(action) == &Intrinsic_Dispatcher) {
                 assert(IS_DETAILS(action));
-                Intrinsic* intrinsic = Extract_Intrinsic(cast(Phase(*), action));
+                Intrinsic* intrinsic = Extract_Intrinsic(cast(Phase*, action));
 
                 REBPAR* param = ACT_PARAM(action, 2);
                 DECLARE_LOCAL (arg);
@@ -276,7 +276,7 @@ bool Typecheck_Value(
                     goto test_failed;
 
                 DECLARE_LOCAL (out);
-                (*intrinsic)(out, cast(Phase(*), action), Stable_Unchecked(arg));
+                (*intrinsic)(out, cast(Phase*, action), Stable_Unchecked(arg));
                 if (not IS_LOGIC(out))
                     fail (Error_No_Logic_Typecheck(label));
                 if (VAL_LOGIC(out))

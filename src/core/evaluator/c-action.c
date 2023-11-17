@@ -320,7 +320,7 @@ Bounce Action_Executor(Level(*) L)
         if (TOP_INDEX != BASELINE->stack_base) {  // reorderings/refinements
             StackValue(*) ordered = TOP;
             StackValue(*) lowest_ordered = Data_Stack_At(BASELINE->stack_base);
-            Symbol(const*) param_symbol = KEY_SYMBOL(KEY);
+            const Symbol* param_symbol = KEY_SYMBOL(KEY);
 
             for (; ordered != lowest_ordered; --ordered) {
                 assert(Is_Pushed_Refinement(ordered));
@@ -929,7 +929,7 @@ Bounce Action_Executor(Level(*) L)
     assert(Not_Action_Executor_Flag(L, IN_DISPATCH));
     Set_Action_Executor_Flag(L, IN_DISPATCH);
 
-    Action(*) save_original = L->u.action.original;
+    Action* save_original = L->u.action.original;
     Trash_If_Debug(L->u);  // freed for dispatcher use...
     L->u.action.original = save_original;  // ...er, mostly.  see [1]
     L->u.action.dispatcher_base = TOP_INDEX;
@@ -985,7 +985,7 @@ Bounce Action_Executor(Level(*) L)
     assert(Not_Action_Executor_Flag(LEVEL, DELEGATE_CONTROL));  // delegated!
     Clear_Action_Executor_Flag(LEVEL, DISPATCHER_CATCHES);  // see [1]
 
-    Action(*) phase = Level_Phase(L);
+    Action* phase = Level_Phase(L);
 
     /*STATIC_ASSERT(DETAILS_FLAG_IS_NATIVE == SERIES_INFO_HOLD);*/
     if (Is_Action_Native(phase))
@@ -1126,7 +1126,7 @@ Bounce Action_Executor(Level(*) L)
             CATCH_THROWN(OUT, level_);
             assert(IS_FRAME(OUT));
 
-            Action(*) redo_phase = VAL_FRAME_PHASE(OUT);  // earlier?  see [2]
+            Action* redo_phase = VAL_FRAME_PHASE(OUT);  // earlier?  see [2]
             KEY = ACT_KEYS(&KEY_TAIL, redo_phase);
             PARAM = ACT_PARAMS_HEAD(redo_phase);
             ARG = Level_Args_Head(L);
@@ -1181,8 +1181,8 @@ Bounce Action_Executor(Level(*) L)
 //
 void Push_Action(
     Level(*) L,
-    Action(*) act,
-    Context(*) binding  // actions may only be bound to contexts ATM
+    Action* act,
+    Context* binding  // actions may only be bound to contexts ATM
 ){
     L->executor = &Action_Executor;
 
@@ -1262,7 +1262,7 @@ void Push_Action(
     // specialization together.  This means only the outermost specialization
     // is needed to fill the specialized slots contributed by later phases.
     //
-    Array(*) partials = try_unwrap(ACT_PARTIALS(act));
+    Array* partials = try_unwrap(ACT_PARTIALS(act));
     if (partials) {
         Cell(const*) word_tail = Array_Tail(partials);
         const REBVAL *word = SPECIFIC(Array_Head(partials));
@@ -1282,7 +1282,7 @@ void Push_Action(
 //
 void Begin_Action_Core(
     Level(*) L,
-    Option(Symbol(const*)) label,
+    Option(const Symbol*) label,
     bool enfix
 ){
     // These assertions were blocking code sharing with SET-BLOCK! mechanics.

@@ -32,7 +32,7 @@
 //
 // Extend a series at its end without affecting its tail index.
 //
-void Extend_Series_If_Necessary(Series(*) s, REBLEN delta)
+void Extend_Series_If_Necessary(Series* s, REBLEN delta)
 {
     REBLEN used_old = Series_Used(s);
     Expand_Series_Tail(s, delta);
@@ -54,12 +54,12 @@ void Extend_Series_If_Necessary(Series(*) s, REBLEN delta)
 // middle of a UTF-8 codepoint, hence a string series aliased as a binary
 // could only have its copy used in a BINARY!.
 //
-Series(*) Copy_Series_Core(Series(const*) s, Flags flags)
+Series* Copy_Series_Core(const Series* s, Flags flags)
 {
     assert(not Is_Series_Array(s));
 
     REBLEN used = Series_Used(s);
-    Series(*) copy;
+    Series* copy;
 
     // !!! Semantics of copying hasn't really covered how flags will be
     // propagated.  This includes locks, etc.  But the string flag needs
@@ -112,8 +112,8 @@ Series(*) Copy_Series_Core(Series(const*) s, Flags flags)
 // boundary.  This is a low-level routine, so the caller must fix up the
 // length information, or Init_Any_String() will complain.
 //
-Series(*) Copy_Series_At_Len_Extra(
-    Series(const*) s,
+Series* Copy_Series_At_Len_Extra(
+    const Series* s,
     REBLEN index,
     REBLEN len,
     REBLEN extra,
@@ -124,7 +124,7 @@ Series(*) Copy_Series_At_Len_Extra(
     REBLEN capacity = len + extra;
     if (Series_Wide(s) == 1)
         ++capacity;
-    Series(*) copy = Make_Series_Core(capacity, flags);
+    Series* copy = Make_Series_Core(capacity, flags);
     assert(Series_Wide(s) == Series_Wide(copy));
     memcpy(
         Series_Data(copy),
@@ -143,7 +143,7 @@ Series(*) Copy_Series_At_Len_Extra(
 // Remove a series of values (bytes, longs, reb-vals) from the
 // series at the given index.
 //
-void Remove_Series_Units(Series(*) s, Size byteoffset, REBLEN quantity)
+void Remove_Series_Units(Series* s, Size byteoffset, REBLEN quantity)
 {
     if (quantity == 0)
         return;
@@ -265,7 +265,7 @@ void Remove_Any_Series_Len(REBVAL *v, REBLEN index, REBINT len)
 //
 // Reset series bias.
 //
-void Unbias_Series(Series(*) s, bool keep)
+void Unbias_Series(Series* s, bool keep)
 {
     REBLEN bias = Series_Bias(s);
     if (bias == 0)
@@ -290,7 +290,7 @@ void Unbias_Series(Series(*) s, bool keep)
 // Reset series to empty. Reset bias, tail, and termination.
 // The tail is reset to zero.
 //
-void Reset_Array(Array(*) a)
+void Reset_Array(Array* a)
 {
     if (Get_Series_Flag(a, DYNAMIC))
         Unbias_Series(a, false);
@@ -304,7 +304,7 @@ void Reset_Array(Array(*) a)
 // Clear an entire series to zero. Resets bias and tail.
 // The tail is reset to zero.
 //
-void Clear_Series(Series(*) s)
+void Clear_Series(Series* s)
 {
     assert(!Is_Series_Read_Only(s));
 
@@ -325,7 +325,7 @@ void Clear_Series(Series(*) s)
 // NOTE: The length will be set to the supplied value, but the series will
 // not be terminated.
 //
-Byte* Reset_Buffer(Series(*) buf, REBLEN len)
+Byte* Reset_Buffer(Series* buf, REBLEN len)
 {
     if (buf == NULL)
         panic ("buffer not yet allocated");
@@ -343,7 +343,7 @@ Byte* Reset_Buffer(Series(*) buf, REBLEN len)
 //
 //  Assert_Series_Term_Core: C
 //
-void Assert_Series_Term_Core(Series(const*) s)
+void Assert_Series_Term_Core(const Series* s)
 {
     if (Is_Series_Array(s)) {
       #if DEBUG_POISON_SERIES_TAILS
@@ -373,7 +373,7 @@ void Assert_Series_Term_Core(Series(const*) s)
 //
 //  Assert_Series_Basics_Core: C
 //
-void Assert_Series_Basics_Core(Series(const*) s)
+void Assert_Series_Basics_Core(const Series* s)
 {
     if (Is_Node_Free(s))
         panic (s);
@@ -398,7 +398,7 @@ void Assert_Series_Basics_Core(Series(const*) s)
 // risky in an unstable state...though it is ideal if it can run to the end
 // so it can trigger Address Sanitizer or Valgrind's internal stack dump.
 //
-ATTRIBUTE_NO_RETURN void Panic_Series_Debug(Series(*) s)
+ATTRIBUTE_NO_RETURN void Panic_Series_Debug(Series* s)
 {
     fflush(stdout);
     fflush(stderr);

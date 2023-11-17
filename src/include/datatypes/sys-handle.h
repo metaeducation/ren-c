@@ -149,7 +149,7 @@ inline static void Init_Handle_Managed_Common(
     uintptr_t length,
     CLEANUP_CFUNC *cleaner
 ){
-    Array(*) singular = Alloc_Singular(FLAG_FLAVOR(HANDLE) | NODE_FLAG_MANAGED);
+    Array* singular = Alloc_Singular(FLAG_FLAVOR(HANDLE) | NODE_FLAG_MANAGED);
     singular->misc.cleaner = cleaner;
 
     Cell(*) single = Array_Single(singular);
@@ -185,7 +185,7 @@ inline static REBVAL *Init_Handle_Cdata_Managed(
 
     // Leave the non-singular cfunc as trash; clients should not be using
 
-    Array(*) a = VAL_HANDLE_SINGULAR(out);
+    Array* a = VAL_HANDLE_SINGULAR(out);
     VAL_HANDLE_CDATA_P(Array_Single(a)) = cdata;
     return cast(REBVAL*, out);
 }
@@ -199,7 +199,7 @@ inline static REBVAL *Init_Handle_Cdata_Managed_Cfunc(
 
     // Leave the non-singular cfunc as trash; clients should not be using
 
-    Array(*) a = VAL_HANDLE_SINGULAR(out);
+    Array* a = VAL_HANDLE_SINGULAR(out);
     VAL_HANDLE_CFUNC_P(Array_Single(a)) = cfunc;
     return cast(REBVAL*, out);
 }

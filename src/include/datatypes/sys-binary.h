@@ -39,53 +39,53 @@
 
 
 #if CPLUSPLUS_11  // !!! Make fancier checks, as with SER() and ARR()
-    inline static Binary(*) BIN(void *p)
-        { return reinterpret_cast<Binary(*)>(p); }
-    inline static Binary(const*) BIN(const void *p)
-        { return reinterpret_cast<Binary(const*)>(p); }
+    inline static Binary* BIN(void *p)
+        { return reinterpret_cast<Binary*>(p); }
+    inline static const Binary* BIN(const void *p)
+        { return reinterpret_cast<const Binary*>(p); }
 #else
-    #define BIN(p) cast(Binary(*), (p))
+    #define BIN(p) cast(Binary*, (p))
 #endif
 
 
 //=//// BINARY! SERIES ////////////////////////////////////////////////////=//
 
-inline static Byte* Binary_At(Binary(const_if_c*) bin, REBLEN n)
+inline static Byte* Binary_At(const_if_c Binary* bin, REBLEN n)
   { return Series_At(Byte, bin, n); }
 
-inline static Byte* Binary_Head(Binary(const_if_c*) bin)
+inline static Byte* Binary_Head(const_if_c Binary* bin)
   { return Series_Head(Byte, bin); }
 
-inline static Byte* Binary_Tail(Binary(const_if_c*) bin)
+inline static Byte* Binary_Tail(const_if_c Binary* bin)
   { return Series_Tail(Byte, bin); }
 
-inline static Byte* Binary_Last(Binary(const_if_c*) bin)
+inline static Byte* Binary_Last(const_if_c Binary* bin)
   { return Series_Last(Byte, bin); }
 
 #if CPLUSPLUS_11
-    inline static const Byte* Binary_At(Binary(const*) bin, REBLEN n)
+    inline static const Byte* Binary_At(const Binary* bin, REBLEN n)
       { return Series_At(const Byte, bin, n); }
 
-    inline static const Byte* Binary_Head(Binary(const*) bin)
+    inline static const Byte* Binary_Head(const Binary* bin)
       { return Series_Head(const Byte, bin); }
 
-    inline static const Byte* Binary_Tail(Binary(const*) bin)
+    inline static const Byte* Binary_Tail(const Binary* bin)
       { return Series_Tail(const Byte, bin); }
 
-    inline static const Byte* Binary_Last(Binary(const*) bin)
+    inline static const Byte* Binary_Last(const Binary* bin)
       { return Series_Last(const Byte, bin); }
 #endif
 
-inline static REBLEN Binary_Len(Binary(const*) s) {
+inline static REBLEN Binary_Len(const Binary* s) {
     assert(Series_Wide(s) == 1);
     return Series_Used(s);
 }
 
-inline static void Term_Binary(Binary(*) s) {
+inline static void Term_Binary(Binary* s) {
     *Binary_Tail(s) = '\0';
 }
 
-inline static void Term_Binary_Len(Binary(*) s, REBLEN len) {
+inline static void Term_Binary_Len(Binary* s, REBLEN len) {
     assert(Series_Wide(s) == 1);
     Set_Series_Used(s, len);
     *Binary_Tail(s) = '\0';
@@ -96,11 +96,11 @@ inline static void Term_Binary_Len(Binary(*) s, REBLEN len) {
 // terminator in case they are aliased as UTF-8 later, e.g. `as word! binary`,
 // since it could be costly to give them that capacity after-the-fact.
 //
-inline static Binary(*) Make_Binary_Core(REBLEN capacity, Flags flags)
+inline static Binary* Make_Binary_Core(REBLEN capacity, Flags flags)
 {
     assert(Flavor_From_Flags(flags) == 0);  // shouldn't pass in a flavor
 
-    Binary(*) bin = Make_Series(BinaryT,
+    Binary* bin = Make_Series(Binary,
         capacity + 1,
         FLAG_FLAVOR(BINARY) | flags
     );
@@ -116,23 +116,23 @@ inline static Binary(*) Make_Binary_Core(REBLEN capacity, Flags flags)
 
 //=//// BINARY! VALUES ////////////////////////////////////////////////////=//
 
-inline static Binary(const*) VAL_BINARY(NoQuote(Cell(const*)) v) {
+inline static const Binary* VAL_BINARY(NoQuote(Cell(const*)) v) {
     assert(CELL_HEART(v) == REB_BINARY);
     return BIN(VAL_SERIES(v));
 }
 
 #define VAL_BINARY_Ensure_Mutable(v) \
-    m_cast(Binary(*), VAL_BINARY(Ensure_Mutable(v)))
+    m_cast(Binary*, VAL_BINARY(Ensure_Mutable(v)))
 
 #define VAL_BINARY_Known_Mutable(v) \
-    m_cast(Binary(*), VAL_BINARY(Known_Mutable(v)))
+    m_cast(Binary*, VAL_BINARY(Known_Mutable(v)))
 
 
 inline static const Byte* VAL_BINARY_SIZE_AT(
     Option(Size*) size_at_out,
     NoQuote(Cell(const*)) v
 ){
-    Binary(const*) bin = VAL_BINARY(v);
+    const Binary* bin = VAL_BINARY(v);
     REBIDX i = VAL_INDEX_RAW(v);
     Size size = Binary_Len(bin);
     if (i < 0 or i > cast(REBIDX, size))

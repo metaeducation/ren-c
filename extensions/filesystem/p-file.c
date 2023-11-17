@@ -100,9 +100,9 @@ inline static uint64_t File_Size_Cacheable_May_Fail(const REBVAL *port)
 //
 // Internal port handler for files.
 //
-Bounce File_Actor(Level(*) level_, REBVAL *port, Symbol(const*) verb)
+Bounce File_Actor(Level(*) level_, REBVAL *port, const Symbol* verb)
 {
-    Context(*) ctx = VAL_CONTEXT(port);
+    Context* ctx = VAL_CONTEXT(port);
 
     // The first time the port code gets entered the state field will be NULL.
     // This code reacts to that by capturing the path out of the spec.  If the
@@ -152,7 +152,7 @@ Bounce File_Actor(Level(*) level_, REBVAL *port, Symbol(const*) verb)
         // was seen as having another benefit in making the internal state
         // opaque to users, so they didn't depend on it or fiddle with it.
         //
-        Binary(*) bin = Make_Binary(sizeof(FILEREQ));
+        Binary* bin = Make_Binary(sizeof(FILEREQ));
         Init_Binary(state, bin);
         Term_Binary_Len(bin, sizeof(FILEREQ));
 
@@ -162,7 +162,7 @@ Bounce File_Actor(Level(*) level_, REBVAL *port, Symbol(const*) verb)
         file->size_cache = FILESIZE_UNKNOWN;
         file->offset = FILEOFFSET_UNKNOWN;
 
-        // Generally speaking, you don't want to store REBVAL* or Series(*) in
+        // Generally speaking, you don't want to store REBVAL* or Series* in
         // something like this struct-embedded-in-a-BINARY! as it will be
         // invisible to the GC.  But this pointer is into the port spec, which
         // we will assume is good for the lifetime of the port.  :-/  (Not a

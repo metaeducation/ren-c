@@ -267,7 +267,7 @@ REBINT Get_System_Int(REBLEN i1, REBLEN i2, REBINT default_int)
 //
 // !!! Overlaps with Assert_Context, review folding them together.
 //
-void Extra_Init_Context_Cell_Checks_Debug(enum Reb_Kind kind, Context(*) c) {
+void Extra_Init_Context_Cell_Checks_Debug(enum Reb_Kind kind, Context* c) {
     assert(
         (CTX_VARLIST(c)->leader.bits & SERIES_MASK_VARLIST)
         == SERIES_MASK_VARLIST
@@ -289,7 +289,7 @@ void Extra_Init_Context_Cell_Checks_Debug(enum Reb_Kind kind, Context(*) c) {
     // "sometimes managed, sometimes not" keylists...a bad invariant.
     //
     if (CTX_TYPE(c) != REB_MODULE) {  // keylist is global symbol table
-        KeyList(*) keylist = CTX_KEYLIST(c);
+        KeyList* keylist = CTX_KEYLIST(c);
         Assert_Series_Managed(keylist);
     }
 
@@ -312,7 +312,7 @@ void Extra_Init_Context_Cell_Checks_Debug(enum Reb_Kind kind, Context(*) c) {
 //
 // !!! Overlaps with ASSERT_ACTION, review folding them together.
 //
-void Extra_Init_Frame_Details_Checks_Debug(Phase(*) a) {
+void Extra_Init_Frame_Details_Checks_Debug(Phase* a) {
     Value(*) archetype = Phase_Archetype(a);
 
     // Once it was true that `VAL_ACTION(archetype) == a`.  That's no longer
@@ -320,7 +320,7 @@ void Extra_Init_Frame_Details_Checks_Debug(Phase(*) a) {
     //
     UNUSED(archetype);
 
-    KeyList(*) keylist = ACT_KEYLIST(a);
+    KeyList* keylist = ACT_KEYLIST(a);
     assert(
         (keylist->leader.bits & SERIES_MASK_KEYLIST)
         == SERIES_MASK_KEYLIST

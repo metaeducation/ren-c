@@ -102,7 +102,7 @@ inline static bool Do_Branch_Throws(  // !!! Legacy code, should be phased out
 inline static Bounce Run_Generic_Dispatch_Core(
     const REBVAL *first_arg,  // !!! Is this always same as Level_Arg(L, 1)?
     Level(*) L,
-    Symbol(const*) verb
+    const Symbol* verb
 ){
     GENERIC_HOOK *hook;
     switch (QUOTE_BYTE(first_arg)) {
@@ -131,7 +131,7 @@ inline static Bounce Run_Generic_Dispatch_Core(
 inline static bool Run_Generic_Dispatch_Throws(
     const REBVAL *first_arg,  // !!! Is this always same as Level_Arg(L, 1)?
     Level(*) L,
-    Symbol(const*) verb
+    const Symbol* verb
 ){
     Bounce b = Run_Generic_Dispatch_Core(first_arg, L, verb);
 

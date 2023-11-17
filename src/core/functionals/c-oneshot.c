@@ -53,7 +53,7 @@ Bounce Downshot_Dispatcher(Level(*) const L)  // runs until count is reached
 {
     USE_LEVEL_SHORTHANDS (L);
 
-    Details(*) details = Phase_Details(PHASE);
+    Details* details = Phase_Details(PHASE);
     assert(Array_Len(details) == IDX_ONESHOT_MAX);
 
     Cell(*) n = DETAILS_AT(details, IDX_ONESHOT_COUNTER);
@@ -70,7 +70,7 @@ Bounce Upshot_Dispatcher(Level(*) const L)  // won't run until count is reached
 {
     USE_LEVEL_SHORTHANDS (L);
 
-    Details(*) details = Phase_Details(PHASE);
+    Details* details = Phase_Details(PHASE);
     assert(Array_Len(details) == IDX_ONESHOT_MAX);
 
     Cell(*) n = DETAILS_AT(details, IDX_ONESHOT_COUNTER);
@@ -124,7 +124,7 @@ DECLARE_NATIVE(n_shot)
 
     REBI64 n = VAL_INT64(ARG(n));
 
-    Phase(*) n_shot = Make_Action(
+    Phase* n_shot = Make_Action(
         ACT_PARAMLIST(VAL_ACTION(Lib(DO_BRANCH))),
         nullptr,  // no partials
         n >= 0 ? &Downshot_Dispatcher : &Upshot_Dispatcher,

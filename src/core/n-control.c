@@ -1670,7 +1670,7 @@ void Debranch_Output(Atom(*) out) {
         // We don't have to fully reify the object, we just need to make sure
         // its THEN and ELSE fields are unset.
         //
-        Symbol(const*) syms[2] = {Canon(ELSE), Canon(THEN)};
+        const Symbol* syms[2] = {Canon(ELSE), Canon(THEN)};
         int i;
         for (i = 0; i < 2; ++i) {
             Option(Value(*)) hook = Select_Symbol_In_Context(out, syms[i]);

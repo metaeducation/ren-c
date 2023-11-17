@@ -45,7 +45,7 @@ static bool panicking = false;
 //
 // Abnormal termination of Rebol.  The debug build is designed to present
 // as much diagnostic information as it can on the passed-in pointer, which
-// includes where a Series(*) was allocated or freed.  Or if a REBVAL* is
+// includes where a Series* was allocated or freed.  Or if a REBVAL* is
 // passed in it tries to say what tick it was initialized on and what series
 // it lives in.  If the pointer is a simple UTF-8 string pointer, then that
 // is delivered as a message.
@@ -58,7 +58,7 @@ static bool panicking = false;
 // coverity[+kill]
 //
 ATTRIBUTE_NO_RETURN void Panic_Core(
-    const void *p,  // Series(*), REBVAL*, or UTF-8 char*
+    const void *p,  // Series*, REBVAL*, or UTF-8 char*
     Tick tick,
     const char *file, // UTF8
     int line
@@ -135,7 +135,7 @@ ATTRIBUTE_NO_RETURN void Panic_Core(
         break;
 
       case DETECTED_AS_SERIES: {
-        Series(*) s = m_cast(SeriesT*, cast(const SeriesT*, p)); // don't mutate
+        Series* s = m_cast(Series*, cast(const Series*, p)); // don't mutate
       #if DEBUG_FANCY_PANIC
         #if 0
             //
@@ -148,14 +148,14 @@ ATTRIBUTE_NO_RETURN void Panic_Core(
 
         if (IS_VARLIST(s)) {
             printf("Series VARLIST detected.\n");
-            Context(*) context = cast(ContextT*, s);  // CTX() does too much checking!
+            Context* context = cast(Context*, s);  // CTX() does too much checking!
             if (HEART_BYTE(CTX_ARCHETYPE(context)) == REB_ERROR) {
                 printf("...and that VARLIST is of an ERROR!...");
                 Force_Location_Of_Error(context, TOP_LEVEL);
                 PROBE(context);
             }
         }
-        Panic_Series_Debug(cast(Series(*), s));
+        Panic_Series_Debug(cast(Series*, s));
       #else
         UNUSED(s);
         strncat(buf, "valid series", PANIC_BUF_SIZE - strsize(buf));

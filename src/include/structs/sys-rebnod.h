@@ -24,7 +24,7 @@
 // many datatypes is a `HeaderUnion` union.  Using byte-order-sensitive
 // macros like FLAG_LEFT_BIT(), the layout of this header is chosen in such a
 // way that not only can Rebol cell pointers (Cell(*)) be distinguished from
-// Rebol series pointers (Series(*)), but these can be discerned from a valid
+// Rebol series pointers (Series*), but these can be discerned from a valid
 // UTF-8 string just by looking at the first byte.  That's a safe C operation
 // since reading a `char*` is not subject to "strict aliasing" requirements.
 //
@@ -34,7 +34,7 @@
 //     REBVAL *value = ...;
 //     panic (value);  // can tell this is a value
 //
-//     Series(*) series = ...;
+//     Series* series = ...;
 //     panic (series)  // can tell this is a series
 //
 //     panic ("Ḧéllŏ");  // can tell this is UTF-8 data (not series or value)
@@ -56,7 +56,7 @@
 #if (! CPLUSPLUS_11)
     //
     // In plain C builds, there's no such thing as "base classes".  So the
-    // only way to make a function that can accept either a Series(*) or a
+    // only way to make a function that can accept either a Series* or a
     // REBVAL* without knowing which is to use a `void*`.  So the Node is
     // defined as `void`, and the C++ build is trusted to do the more strict
     // type checking.
@@ -73,12 +73,12 @@
     // https://en.cppreference.com/w/cpp/language/ebo
     //
     // At one time there was an attempt to make Context/Action/Map derive
-    // from Node, but not SeriesT.  Facilitating that through multiple
+    // from Node, but not Series.  Facilitating that through multiple
     // inheritance foils the Empty Base Class optimization, and creates other
-    // headaches.  So it was decided that so long as they are SeriesT, not
-    // ArrayT, that's still abstract enough to block most casual misuses.
+    // headaches.  So it was decided that so long as they are Series, not
+    // Array, that's still abstract enough to block most casual misuses.
     //
-    struct NodeStruct {};  // empty base class for SeriesT, CellT, LevelT...
+    struct NodeStruct {};  // empty base class for Series, CellT, LevelT...
     typedef struct NodeStruct Node;
 #endif
 
@@ -468,7 +468,7 @@ union HeaderUnion {
 
 //=//// NODE_FLAG_GC_ONE / NODE_FLAG_GC_TWO (fifth/sixth-leftmost bit) ////=//
 //
-// Both REBVAL* and Series(*) nodes have two slots in them which can be called
+// Both REBVAL* and Series* nodes have two slots in them which can be called
 // out for attention from the GC.  Though these bits are scarce, sacrificing
 // them means not needing to do a switch() on the REB_TYPE of the cell to
 // know how to mark them.

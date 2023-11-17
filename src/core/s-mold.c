@@ -111,7 +111,7 @@ void Pre_Mold_Core(REB_MOLD *mo, NoQuote(Cell(const*)) v, bool all)
     else
         Append_Ascii(mo->series, "make ");
 
-    String(const*) type_name = Canon_Symbol(SYM_FROM_KIND(CELL_HEART(v)));
+    const String* type_name = Canon_Symbol(SYM_FROM_KIND(CELL_HEART(v)));
     Append_Spelling(mo->series, type_name);
     Append_Codepoint(mo->series, '!');  // !!! `make object!` not `make object`
 
@@ -196,7 +196,7 @@ void New_Indented_Line(REB_MOLD *mo)
 //
 //  Find_Pointer_In_Series: C
 //
-REBINT Find_Pointer_In_Series(Series(*) s, const void *p)
+REBINT Find_Pointer_In_Series(Series* s, const void *p)
 {
     REBLEN index = 0;
     for (; index < Series_Used(s); ++index) {
@@ -209,7 +209,7 @@ REBINT Find_Pointer_In_Series(Series(*) s, const void *p)
 //
 //  Push_Pointer_To_Series: C
 //
-void Push_Pointer_To_Series(Series(*) s, const void *p)
+void Push_Pointer_To_Series(Series* s, const void *p)
 {
     if (Is_Series_Full(s))
         Extend_Series_If_Necessary(s, 8);
@@ -220,7 +220,7 @@ void Push_Pointer_To_Series(Series(*) s, const void *p)
 //
 //  Drop_Pointer_From_Series: C
 //
-void Drop_Pointer_From_Series(Series(*) s, const void *p)
+void Drop_Pointer_From_Series(Series* s, const void *p)
 {
     assert(p == *Series_At(void*, s, Series_Used(s) - 1));
     UNUSED(p);
@@ -238,7 +238,7 @@ void Drop_Pointer_From_Series(Series(*) s, const void *p)
 //
 void Mold_Array_At(
     REB_MOLD *mo,
-    Array(const*) a,
+    const Array* a,
     REBLEN index,
     const char *sep
 ){
@@ -309,9 +309,9 @@ void Mold_Array_At(
 //
 void Form_Array_At(
     REB_MOLD *mo,
-    Array(const*) array,
+    const Array* array,
     REBLEN index,
-    Option(Context(*)) context
+    Option(Context*) context
 ){
     // Form a series (part_mold means mold non-string values):
     REBINT len = Array_Len(array) - index;
@@ -391,7 +391,7 @@ void Mold_Or_Form_Cell(
     NoQuote(Cell(const*)) cell,
     bool form
 ){
-    String(*) s = mo->series;
+    String* s = mo->series;
     Assert_Series_Term_If_Needed(s);
 
     if (C_STACK_OVERFLOWING(&s))
@@ -462,7 +462,7 @@ void Mold_Or_Form_Value(REB_MOLD *mo, Cell(const*) v, bool form)
 //
 // Form a value based on the mold opts provided.
 //
-String(*) Copy_Mold_Or_Form_Value(Cell(const*) v, Flags opts, bool form)
+String* Copy_Mold_Or_Form_Value(Cell(const*) v, Flags opts, bool form)
 {
     DECLARE_MOLD (mo);
     mo->opts = opts;
@@ -478,7 +478,7 @@ String(*) Copy_Mold_Or_Form_Value(Cell(const*) v, Flags opts, bool form)
 //
 // Form a value based on the mold opts provided.
 //
-String(*) Copy_Mold_Or_Form_Cell(NoQuote(Cell(const*)) cell, Flags opts, bool form)
+String* Copy_Mold_Or_Form_Cell(NoQuote(Cell(const*)) cell, Flags opts, bool form)
 {
     DECLARE_MOLD (mo);
     mo->opts = opts;
@@ -506,7 +506,7 @@ void Push_Mold(REB_MOLD *mo)
 
     assert(mo->series == nullptr);  // Indicates not pushed, see DECLARE_MOLD
 
-    String(*) s = g_mold.buffer;
+    String* s = g_mold.buffer;
     assert(LINK(Bookmarks, s) == nullptr);  // should never bookmark buffer
 
     Assert_Series_Term_If_Needed(s);
@@ -614,12 +614,12 @@ void Throttle_Mold(REB_MOLD *mo) {
 //
 //  Pop_Molded_String_Core: C
 //
-String(*) Pop_Molded_String_Core(String(*) buf, Size offset, Index index)
+String* Pop_Molded_String_Core(String* buf, Size offset, Index index)
 {
     Size size = String_Size(buf) - offset;
     Length len = String_Len(buf) - index;
 
-    String(*) popped = Make_String(size);
+    String* popped = Make_String(size);
     memcpy(Binary_Head(popped), Binary_At(buf, offset), size);
     Term_String_Len_Size(popped, len, size);
 
@@ -644,7 +644,7 @@ String(*) Pop_Molded_String_Core(String(*) buf, Size offset, Index index)
 // is a helper that extracts the data as a string series.  It resets the
 // buffer to its length at the time when the last push began.
 //
-String(*) Pop_Molded_String(REB_MOLD *mo)
+String* Pop_Molded_String(REB_MOLD *mo)
 {
     assert(mo->series != nullptr);  // if null, there was no Push_Mold()
     Assert_Series_Term_If_Needed(mo->series);
@@ -654,7 +654,7 @@ String(*) Pop_Molded_String(REB_MOLD *mo)
     //
     Throttle_Mold(mo);
 
-    String(*) popped = Pop_Molded_String_Core(
+    String* popped = Pop_Molded_String_Core(
         mo->series,
         mo->base.size,
         mo->base.index
@@ -671,7 +671,7 @@ String(*) Pop_Molded_String(REB_MOLD *mo)
 // !!! This particular use of the mold buffer might undermine tricks which
 // could be used with invalid UTF-8 bytes--for instance.  Review.
 //
-Binary(*) Pop_Molded_Binary(REB_MOLD *mo)
+Binary* Pop_Molded_Binary(REB_MOLD *mo)
 {
     assert(String_Len(mo->series) >= mo->base.size);
 
@@ -679,7 +679,7 @@ Binary(*) Pop_Molded_Binary(REB_MOLD *mo)
     Throttle_Mold(mo);
 
     Size size = String_Size(mo->series) - mo->base.size;
-    Binary(*) bin = Make_Binary(size);
+    Binary* bin = Make_Binary(size);
     memcpy(Binary_Head(bin), Binary_At(mo->series, mo->base.size), size);
     Term_Binary_Len(bin, size);
 

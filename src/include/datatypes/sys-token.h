@@ -96,7 +96,7 @@ inline static REBVAL *Init_Issue_Utf8(
         EXTRA(Bytes, out).exactly_4[IDX_EXTRA_LEN] = len;
     }
     else {
-        String(*) str = Make_Sized_String_UTF8(cs_cast(utf8), size);
+        String* str = Make_Sized_String_UTF8(cs_cast(utf8), size);
         assert(String_Len(str) == len);  // ^-- revalidates :-/ should match
         Freeze_Series(str);
         Init_Text(out, str);
@@ -143,7 +143,7 @@ inline static REBVAL *Init_Char_Unchecked_Untracked(Cell(*) out, Codepoint c) {
 #define Init_Char_Unchecked(out,c) \
     TRACK(Init_Char_Unchecked_Untracked((out), (c)))
 
-inline static Context(*) Maybe_Init_Char_Untracked(Cell(*) out, uint32_t c) {
+inline static Context* Maybe_Init_Char_Untracked(Cell(*) out, uint32_t c) {
     if (c > MAX_UNI) {
         DECLARE_LOCAL (temp);
         return Error_Codepoint_Too_High_Raw(Init_Integer(temp, c));
@@ -256,7 +256,7 @@ inline static const Byte* VAL_BYTES_LIMIT_AT(
     assert(ANY_WORD(v));
     assert(cast(REBLEN, limit) == VAL_LEN_AT(v));
 
-    String(const*) spelling = VAL_WORD_SYMBOL(v);
+    const String* spelling = VAL_WORD_SYMBOL(v);
     *size_out = String_Size(spelling);
     return String_Head(spelling);
 }
@@ -322,7 +322,7 @@ inline static Utf8(const*) VAL_UTF8_LEN_SIZE_AT_LIMIT(
     else {
         assert(ANY_WORDLIKE(v));
 
-        String(const*) spelling = VAL_WORD_SYMBOL(v);
+        const String* spelling = VAL_WORD_SYMBOL(v);
         utf8 = String_Head(spelling);
 
         if (size_out or length_out) {

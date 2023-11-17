@@ -126,7 +126,7 @@ inline static bool Is_Valid_Sequence_Element(
 // the output cell passed in will be either a null (if the data was
 // too short) or it will be the first badly-typed value that was problematic.
 //
-inline static Context(*) Error_Bad_Sequence_Init(const REBVAL *v) {
+inline static Context* Error_Bad_Sequence_Init(const REBVAL *v) {
     if (Is_Nulled(v))
         return Error_Sequence_Too_Short_Raw();
     fail (Error_Bad_Sequence_Item_Raw(v));
@@ -197,7 +197,7 @@ inline static REBVAL *Try_Leading_Blank_Pathify(
         return v;
     }
 
-    Array(*) a = Make_Array_Core(
+    Array* a = Make_Array_Core(
         2,  // TBD: optimize "pairlike" to use a pairing node
         NODE_FLAG_MANAGED
     );
@@ -241,7 +241,7 @@ inline static REBVAL *Init_Any_Sequence_Bytes(
     mutable_BINDING(out) = nullptr;  // paths are bindable, can't have garbage
 
     if (size > sizeof(PAYLOAD(Bytes, out).at_least_8) - 1) {  // too big
-        Array(*) a = Make_Array_Core(size, NODE_FLAG_MANAGED);
+        Array* a = Make_Array_Core(size, NODE_FLAG_MANAGED);
         for (; size > 0; --size, ++data)
             Init_Integer(Alloc_Tail_Array(a), *data);
 
@@ -348,7 +348,7 @@ inline static REBVAL *Try_Init_Any_Sequence_Pairlike_Core(
         return nullptr;
     }
 
-    Array(*) a = Make_Array_Core(
+    Array* a = Make_Array_Core(
         2,
         NODE_FLAG_MANAGED  // optimize "pairlike"
     );
@@ -449,7 +449,7 @@ inline static Value(*) Try_Pop_Sequence_Or_Element_Or_Nulled(
         return out;
     }
 
-    Array(*) a = Pop_Stack_Values_Core(base, NODE_FLAG_MANAGED);
+    Array* a = Pop_Stack_Values_Core(base, NODE_FLAG_MANAGED);
     Freeze_Array_Shallow(a);
     if (not Try_Init_Any_Sequence_Arraylike(out, kind, a))
         return nullptr;
@@ -481,7 +481,7 @@ inline static REBLEN VAL_SEQUENCE_LEN(NoQuote(Cell(const*)) sequence) {
         return 2;
 
       case FLAVOR_ARRAY : {  // uncompressed sequence
-        Array(*) a = ARR(VAL_NODE1(sequence));
+        Array* a = ARR(VAL_NODE1(sequence));
         assert(Array_Len(a) >= 2);
         assert(Is_Array_Frozen_Shallow(a));
         return Array_Len(a); }
@@ -537,7 +537,7 @@ inline static Cell(const*) VAL_SEQUENCE_AT(
         return store; }
 
       case FLAVOR_ARRAY : {  // uncompressed sequence
-        Array(const*) a = ARR(VAL_NODE1(sequence));
+        const Array* a = ARR(VAL_NODE1(sequence));
         assert(Array_Len(a) >= 2);
         assert(Is_Array_Frozen_Shallow(a));
         return Array_At(a, n); }  // array is read only
@@ -583,7 +583,7 @@ inline static Value(*) GET_SEQUENCE_AT(
         return out; }
 
       case FLAVOR_ARRAY : {  // uncompressed sequence
-        Array(const*) a = ARR(VAL_NODE1(sequence));
+        const Array* a = ARR(VAL_NODE1(sequence));
         assert(Array_Len(a) >= 2);
         assert(Is_Array_Frozen_Shallow(a));
         return Derelativize(out, Array_At(a, n), specifier); }  // aread only
@@ -731,7 +731,7 @@ inline static bool IS_PREDICATE1_CELL(NoQuote(Cell(const*)) v) {
     return Get_Cell_Flag(v, REFINEMENT_LIKE);  // !!! Review: test this first?
 }
 
-inline static Symbol(const*) VAL_REFINEMENT_SYMBOL(
+inline static const Symbol* VAL_REFINEMENT_SYMBOL(
     NoQuote(Cell(const*)) v
 ){
     assert(IS_REFINEMENT_CELL(v));

@@ -32,7 +32,7 @@
 //        //
 //        // code that may trigger a fail() ...
 //        //
-//     } ON_ABRUPT_FAILURE(Context(*) e) {
+//     } ON_ABRUPT_FAILURE(Context* e) {
 //        //
 //        // code that handles the error in `e`
 //        //
@@ -102,7 +102,7 @@ struct JumpStruct {
         jmp_buf cpu_state;
     #endif
 
-    Context(*) error;  // longjmp() case tunnels pointer back via this, see [2]
+    Context* error;  // longjmp() case tunnels pointer back via this, see [2]
   #endif
 
     struct JumpStruct* last_jump;
@@ -119,7 +119,7 @@ struct JumpStruct {
 //
 // (See: https://en.wikipedia.org/wiki/Setjmp.h#Exception_handling)
 //
-// Jump buffers contain a pointer-to-a-Context(*) which represents an error.
+// Jump buffers contain a pointer-to-a-Context* which represents an error.
 // Using the tricky mechanisms of setjmp/longjmp, there will be a first pass
 // of execution where setjmp() returns 0 and it will fall through to the
 // code afterward.  When the longjmp() happens, the CPU will be teleported
@@ -310,11 +310,11 @@ struct JumpStruct {
     template <class T>
     inline static ATTRIBUTE_NO_RETURN void Fail_Macro_Helper(T *p) {
         static_assert(
-            std::is_same<T, ContextT>::value
+            std::is_same<T, Context>::value
             or std::is_same<T, const char>::value
             or std::is_base_of<const REBVAL, T>::value
             or std::is_base_of<CellT, T>::value,
-            "fail() works on: Context(*), Cell(*), const char*"
+            "fail() works on: Context*, Cell(*), const char*"
         );
         Fail_Core(p);
     }

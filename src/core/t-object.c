@@ -27,7 +27,7 @@
 
 static void Append_Vars_To_Context_From_Group(REBVAL *context, REBVAL *block)
 {
-    Context(*) c = VAL_CONTEXT(context);
+    Context* c = VAL_CONTEXT(context);
 
     assert(IS_GROUP(block));
 
@@ -39,13 +39,13 @@ static void Append_Vars_To_Context_From_Group(REBVAL *context, REBVAL *block)
     // Can't actually fail() during a collect, so make sure any errors are
     // set and then jump to a Collect_End()
     //
-    Context(*) error = nullptr;
+    Context* error = nullptr;
 
   if (not IS_MODULE(context)) {
     Collect_Start(&collector, COLLECT_ANY_WORD);
 
   blockscope {  // Start out binding table with words already in context
-    Symbol(const*) duplicate;
+    const Symbol* duplicate;
     Collect_Context_Keys(&duplicate, &collector, c);
     assert(not duplicate);  // context should have all unique keys
   }
@@ -67,7 +67,7 @@ static void Append_Vars_To_Context_From_Group(REBVAL *context, REBVAL *block)
             goto collect_end;
         }
 
-        Symbol(const*) symbol = VAL_WORD_SYMBOL(word);
+        const Symbol* symbol = VAL_WORD_SYMBOL(word);
 
         if (Try_Add_Binder_Index(
             &collector.binder,
@@ -94,7 +94,7 @@ static void Append_Vars_To_Context_From_Group(REBVAL *context, REBVAL *block)
   blockscope {  // Set new values to obj words
     Cell(const*) word = item;
     for (; word != tail; word += 2) {
-        Symbol(const*) symbol = VAL_WORD_SYMBOL(word);
+        const Symbol* symbol = VAL_WORD_SYMBOL(word);
         REBVAR *var;
         if (IS_MODULE(context)) {
             bool strict = true;
@@ -195,7 +195,7 @@ void Init_Evars(EVARS *e, NoQuote(Cell(const*)) v) {
 
         Trash_Pointer_If_Debug(e->ctx);
 
-        Action(*) act = VAL_ACTION(v);
+        Action* act = VAL_ACTION(v);
         e->key = ACT_KEYS(&e->key_tail, act) - 1;
         e->var = nullptr;
         e->param = ACT_PARAMS_HEAD(act) - 1;
@@ -231,17 +231,17 @@ void Init_Evars(EVARS *e, NoQuote(Cell(const*)) v) {
 
         StackIndex base = TOP_INDEX;
 
-        SymbolT** psym = Series_Head(SymbolT*, g_symbols.by_hash);
-        SymbolT** psym_tail = Series_Tail(SymbolT*, g_symbols.by_hash);
+        Symbol** psym = Series_Head(Symbol*, g_symbols.by_hash);
+        Symbol** psym_tail = Series_Tail(Symbol*, g_symbols.by_hash);
         for (; psym != psym_tail; ++psym) {
             if (*psym == nullptr or *psym == &g_symbols.deleted_symbol)
                 continue;
 
-            Series(*) patch = MISC(Hitch, *psym);
+            Series* patch = MISC(Hitch, *psym);
             while (Get_Series_Flag(patch, BLACK))  // binding temps
                 patch = SER(node_MISC(Hitch, patch));
 
-            Series(*) found = nullptr;
+            Series* found = nullptr;
 
             for (; patch != *psym; patch = SER(node_MISC(Hitch, patch))) {
                 if (e->ctx == INODE(PatchContext, patch)) {
@@ -290,7 +290,7 @@ void Init_Evars(EVARS *e, NoQuote(Cell(const*)) v) {
             // on the public interface.  Or it can be running, in which case
             // the phase determines which additional fields should be seen.
             //
-            Phase(*) phase;
+            Phase* phase;
             if (not IS_FRAME_PHASED(v)) {
                 phase = CTX_FRAME_PHASE(e->ctx);
 
@@ -298,7 +298,7 @@ void Init_Evars(EVARS *e, NoQuote(Cell(const*)) v) {
                 // to make sure archetypal frame views do not DO a frame after
                 // being run where the action could've tainted the arguments.
                 //
-                Array(*) varlist = CTX_VARLIST(e->ctx);
+                Array* varlist = CTX_VARLIST(e->ctx);
                 if (Get_Subclass_Flag(VARLIST, varlist, FRAME_HAS_BEEN_INVOKED))
                     e->visibility = VAR_VISIBILITY_NONE;
                 else
@@ -313,14 +313,14 @@ void Init_Evars(EVARS *e, NoQuote(Cell(const*)) v) {
                 // a function that reuses its exemplar, but should not be able
                 // to see the locals (for instance).
                 //
-                Context(*) exemplar = ACT_EXEMPLAR(phase);
+                Context* exemplar = ACT_EXEMPLAR(phase);
                 if (CTX_FRAME_PHASE(exemplar) == phase)
                     e->visibility = VAR_VISIBILITY_ALL;
                 else
                     e->visibility = VAR_VISIBILITY_INPUTS;
             }
 
-            Action(*) action = phase;
+            Action* action = phase;
             e->param = ACT_PARAMS_HEAD(action) - 1;
             e->key = ACT_KEYS(&e->key_tail, action) - 1;
             assert(Series_Used(ACT_KEYLIST(action)) <= ACT_NUM_PARAMS(action));
@@ -456,8 +456,8 @@ REBINT CT_Context(NoQuote(Cell(const*)) a, NoQuote(Cell(const*)) b, bool strict)
     if (CELL_HEART(a) != CELL_HEART(b))  // e.g. ERROR! won't equal OBJECT!
         return CELL_HEART(a) > CELL_HEART(b) ? 1 : 0;
 
-    Context(*) c1 = VAL_CONTEXT(a);
-    Context(*) c2 = VAL_CONTEXT(b);
+    Context* c1 = VAL_CONTEXT(a);
+    Context* c2 = VAL_CONTEXT(b);
     if (c1 == c2)
         return 0;  // short-circuit, always equal if same context pointer
 
@@ -493,8 +493,8 @@ REBINT CT_Context(NoQuote(Cell(const*)) a, NoQuote(Cell(const*)) b, bool strict)
             }
         }
 
-        Symbol(const*) symbol1 = KEY_SYMBOL(e1.key);
-        Symbol(const*) symbol2 = KEY_SYMBOL(e2.key);
+        const Symbol* symbol1 = KEY_SYMBOL(e1.key);
+        const Symbol* symbol2 = KEY_SYMBOL(e2.key);
         diff = Compare_Spellings(symbol1, symbol2, strict);
         if (diff != 0)
             goto finished;
@@ -573,7 +573,7 @@ Bounce MAKE_Frame(
     if (not IS_FRAME(arg))
         return RAISE(Error_Bad_Make(kind, arg));
 
-    Context(*) exemplar = Make_Context_For_Action(
+    Context* exemplar = Make_Context_For_Action(
         arg, // being used here as input (e.g. the ACTION!)
         lowest_ordered_stackindex, // will weave in any refinements pushed
         nullptr // no binder needed, not running any code
@@ -619,19 +619,19 @@ Bounce MAKE_Context(
 
         assert(not parent);
 
-        Context(*) ctx = Alloc_Context_Core(REB_MODULE, 1, NODE_FLAG_MANAGED);
+        Context* ctx = Alloc_Context_Core(REB_MODULE, 1, NODE_FLAG_MANAGED);
         return Init_Context_Cell(OUT, REB_MODULE, ctx);
     }
 
-    Option(Context(*)) parent_ctx = parent
+    Option(Context*) parent_ctx = parent
         ? VAL_CONTEXT(unwrap(parent))
-        : cast(Context(*), nullptr);  // C++98 ambiguous w/o cast
+        : cast(Context*, nullptr);  // C++98 ambiguous w/o cast
 
     if (IS_BLOCK(arg)) {
         Cell(const*) tail;
         Cell(const*) at = VAL_ARRAY_AT(&tail, arg);
 
-        Context(*) ctx = Make_Context_Detect_Managed(
+        Context* ctx = Make_Context_Detect_Managed(
             kind,
             at,
             tail,
@@ -659,7 +659,7 @@ Bounce MAKE_Context(
     // `make object! 10` - currently not prohibited for any context type
     //
     if (ANY_NUMBER(arg)) {
-        Context(*) context = Make_Context_Detect_Managed(
+        Context* context = Make_Context_Detect_Managed(
             kind,
             nullptr,  // values to scan for toplevel set-words (empty)
             nullptr,
@@ -674,7 +674,7 @@ Bounce MAKE_Context(
 
     // make object! map!
     if (IS_MAP(arg)) {
-        Context(*) c = Alloc_Context_From_Map(VAL_MAP(arg));
+        Context* c = Alloc_Context_From_Map(VAL_MAP(arg));
         return Init_Context_Cell(OUT, kind, c);
     }
 
@@ -718,7 +718,7 @@ DECLARE_NATIVE(adjunct_of)
 
     REBVAL *v = ARG(value);
 
-    Context(*) meta;
+    Context* meta;
     if (IS_FRAME(v)) {
         if (not Is_Frame_Details(v))
             return nullptr;
@@ -755,7 +755,7 @@ DECLARE_NATIVE(set_adjunct)
 
     REBVAL *adjunct = ARG(adjunct);
 
-    Context(*) ctx;
+    Context* ctx;
     if (ANY_CONTEXT(adjunct)) {
         if (IS_FRAME(adjunct))
             fail ("SET-ADJUNCT can't store bindings, FRAME! disallowed");
@@ -790,8 +790,8 @@ DECLARE_NATIVE(set_adjunct)
 // in cells gets duplicated (so new context has the same VAR_MARKED_HIDDEN
 // settings on its variables).  Review if the copying can be cohered better.
 //
-Context(*) Copy_Context_Extra_Managed(
-    Context(*) original,
+Context* Copy_Context_Extra_Managed(
+    Context* original,
     REBLEN extra,
     REBU64 types
 ){
@@ -799,7 +799,7 @@ Context(*) Copy_Context_Extra_Managed(
 
     REBLEN len = (CTX_TYPE(original) == REB_MODULE) ? 0 : CTX_LEN(original);
 
-    Array(*) varlist = Make_Array_For_Copy(
+    Array* varlist = Make_Array_For_Copy(
         len + extra + 1,
         SERIES_MASK_VARLIST | NODE_FLAG_MANAGED,
         nullptr // original_array, N/A because LINK()/MISC() used otherwise
@@ -839,16 +839,16 @@ Context(*) Copy_Context_Extra_Managed(
         INIT_BONUS_KEYSOURCE(varlist, nullptr);
         mutable_LINK(Patches, varlist) = nullptr;
 
-        Context(*) copy = CTX(varlist); // now a well-formed context
+        Context* copy = CTX(varlist); // now a well-formed context
         assert(Get_Series_Flag(varlist, DYNAMIC));
 
-        SymbolT** psym = Series_Head(SymbolT*, g_symbols.by_hash);
-        SymbolT** psym_tail = Series_Tail(SymbolT*, g_symbols.by_hash);
+        Symbol** psym = Series_Head(Symbol*, g_symbols.by_hash);
+        Symbol** psym_tail = Series_Tail(Symbol*, g_symbols.by_hash);
         for (; psym != psym_tail; ++psym) {
             if (*psym == nullptr or *psym == &g_symbols.deleted_symbol)
                 continue;
 
-            Series(*) patch = MISC(Hitch, *psym);
+            Series* patch = MISC(Hitch, *psym);
             while (Get_Series_Flag(patch, BLACK))  // binding temps
                 patch = SER(node_MISC(Hitch, patch));
 
@@ -886,14 +886,14 @@ Context(*) Copy_Context_Extra_Managed(
 
     varlist->leader.bits |= SERIES_MASK_VARLIST;
 
-    Context(*) copy = CTX(varlist); // now a well-formed context
+    Context* copy = CTX(varlist); // now a well-formed context
 
     if (extra == 0)
         INIT_CTX_KEYLIST_SHARED(copy, CTX_KEYLIST(original));  // ->link field
     else {
         assert(CTX_TYPE(original) != REB_FRAME);  // can't expand FRAME!s
 
-        KeyList(*) keylist = cast(KeyListT*, Copy_Series_At_Len_Extra(
+        KeyList* keylist = cast(KeyList*, Copy_Series_At_Len_Extra(
             CTX_KEYLIST(original),
             0,
             CTX_LEN(original),
@@ -930,9 +930,9 @@ Context(*) Copy_Context_Extra_Managed(
 //
 void MF_Context(REB_MOLD *mo, NoQuote(Cell(const*)) v, bool form)
 {
-    String(*) s = mo->series;
+    String* s = mo->series;
 
-    Context(*) c = VAL_CONTEXT(v);
+    Context* c = VAL_CONTEXT(v);
 
     // Prevent endless mold loop:
     //
@@ -952,7 +952,7 @@ void MF_Context(REB_MOLD *mo, NoQuote(Cell(const*)) v, bool form)
     Push_Pointer_To_Series(g_mold.stack, c);
 
     if (CELL_HEART(v) == REB_FRAME and not IS_FRAME_PHASED(v)) {
-        Array(*) varlist = CTX_VARLIST(VAL_CONTEXT(v));
+        Array* varlist = CTX_VARLIST(VAL_CONTEXT(v));
         if (Get_Subclass_Flag(VARLIST, varlist, FRAME_HAS_BEEN_INVOKED)) {
             Append_Ascii(s, "make frame! [...invoked frame...]\n");
             Drop_Pointer_From_Series(g_mold.stack, c);
@@ -1006,7 +1006,7 @@ void MF_Context(REB_MOLD *mo, NoQuote(Cell(const*)) v, bool form)
     while (Did_Advance_Evars(&e)) {
         New_Indented_Line(mo);
 
-        Symbol(const*) spelling = KEY_SYMBOL(e.key);
+        const Symbol* spelling = KEY_SYMBOL(e.key);
 
         DECLARE_LOCAL (set_word);
         Init_Set_Word(set_word, spelling);  // want escaping, e.g `|::|: 10`
@@ -1051,7 +1051,7 @@ void MF_Context(REB_MOLD *mo, NoQuote(Cell(const*)) v, bool form)
 }
 
 
-Symbol(const*) Symbol_From_Picker(const REBVAL *context, Cell(const*) picker)
+const Symbol* Symbol_From_Picker(const REBVAL *context, Cell(const*) picker)
 {
     UNUSED(context);  // Might the picker be context-sensitive?
 
@@ -1070,7 +1070,7 @@ Symbol(const*) Symbol_From_Picker(const REBVAL *context, Cell(const*) picker)
 REBTYPE(Context)
 {
     REBVAL *context = D_ARG(1);
-    Context(*) c = VAL_CONTEXT(context);
+    Context* c = VAL_CONTEXT(context);
 
     Option(SymId) symid = ID_OF_SYMBOL(verb);
 
@@ -1123,7 +1123,7 @@ REBTYPE(Context)
         UNUSED(ARG(location));
 
         Cell(const*) picker = ARG(picker);
-        Symbol(const*) symbol = Symbol_From_Picker(context, picker);
+        const Symbol* symbol = Symbol_From_Picker(context, picker);
 
         const REBVAL *var = TRY_VAL_CONTEXT_VAR(context, symbol);
         if (not var)
@@ -1141,7 +1141,7 @@ REBTYPE(Context)
         UNUSED(ARG(location));
 
         Cell(const*) picker = ARG(picker);
-        Symbol(const*) symbol = Symbol_From_Picker(context, picker);
+        const Symbol* symbol = Symbol_From_Picker(context, picker);
 
         REBVAL *setval = ARG(value);
 
@@ -1151,7 +1151,7 @@ REBTYPE(Context)
 
         assert(Not_Cell_Flag(var, PROTECTED));
         Copy_Cell(var, setval);
-        return nullptr; }  // caller's Context(*) is not stale, no update needed
+        return nullptr; }  // caller's Context* is not stale, no update needed
 
 
     //=//// PROTECT* ///////////////////////////////////////////////////////=//
@@ -1161,7 +1161,7 @@ REBTYPE(Context)
         UNUSED(ARG(location));
 
         Cell(const*) picker = ARG(picker);
-        Symbol(const*) symbol = Symbol_From_Picker(context, picker);
+        const Symbol* symbol = Symbol_From_Picker(context, picker);
 
         REBVAL *setval = ARG(value);
 
@@ -1189,7 +1189,7 @@ REBTYPE(Context)
             fail (var);
         }
 
-        return nullptr; }  // caller's Context(*) is not stale, no update needed
+        return nullptr; }  // caller's Context* is not stale, no update needed
 
       case SYM_APPEND: {
         REBVAL *arg = D_ARG(2);
@@ -1297,7 +1297,7 @@ REBTYPE(Context)
 REBTYPE(Frame)
 {
     REBVAL *frame = D_ARG(1);
-    Context(*) c = VAL_CONTEXT(frame);
+    Context* c = VAL_CONTEXT(frame);
 
     Option(SymId) symid = ID_OF_SYMBOL(verb);
 
@@ -1317,7 +1317,7 @@ REBTYPE(Frame)
             // Can be answered for frames that have no execution phase, if
             // they were initialized with a label.
             //
-            Option(Symbol(const*)) label = VAL_FRAME_LABEL(frame);
+            Option(const Symbol*) label = VAL_FRAME_LABEL(frame);
             if (label)
                 return Init_Word(OUT, unwrap(label));
 
@@ -1337,7 +1337,7 @@ REBTYPE(Frame)
             //
             return Init_Frame_Details(
                 OUT,
-                VAL_FRAME_PHASE(frame),  // just a Action(*), no binding
+                VAL_FRAME_PHASE(frame),  // just a Action*, no binding
                 VAL_FRAME_LABEL(frame),
                 VAL_FRAME_BINDING(frame)  // e.g. where RETURN returns to
             );
@@ -1360,7 +1360,7 @@ REBTYPE(Frame)
 
         switch (prop) {
           case SYM_FILE: {
-            String(const*) file = File_Of_Level(L);
+            const String* file = File_Of_Level(L);
             if (not file)
                 return nullptr;
             return Init_File(OUT, file); }
@@ -1388,7 +1388,7 @@ REBTYPE(Frame)
                 if (not Is_Action_Level(parent))
                     continue;
 
-                Context(*) ctx_parent = Context_For_Level_May_Manage(parent);
+                Context* ctx_parent = Context_For_Level_May_Manage(parent);
                 return COPY(CTX_ARCHETYPE(ctx_parent));
             }
             return nullptr; }
@@ -1402,7 +1402,7 @@ REBTYPE(Frame)
         INCLUDE_PARAMS_OF_REFLECT;
         UNUSED(ARG(value));
 
-        Phase(*) act = cast(Phase(*), VAL_ACTION(frame));
+        Phase* act = cast(Phase*, VAL_ACTION(frame));
         assert(IS_DETAILS(act));
 
         REBVAL *property = ARG(property);
@@ -1414,7 +1414,7 @@ REBTYPE(Frame)
             return nullptr; }
 
           case SYM_LABEL: {
-            Option(Symbol(const*)) label = VAL_FRAME_LABEL(frame);
+            Option(const Symbol*) label = VAL_FRAME_LABEL(frame);
             if (not label)
                 return nullptr;
             return Init_Word(OUT, unwrap(label)); }
@@ -1464,11 +1464,11 @@ REBTYPE(Frame)
             // is a series with the file and line bits set, then that's what
             // it returns for FILE OF and LINE OF.
 
-            Details(*) details = Phase_Details(act);
+            Details* details = Phase_Details(act);
             if (Array_Len(details) < 1 or not ANY_ARRAY(Array_Head(details)))
                 return nullptr;
 
-            Array(const*) a = VAL_ARRAY(Array_Head(details));
+            const Array* a = VAL_ARRAY(Array_Head(details));
             if (Not_Array_Flag(a, HAS_FILE_LINE_UNMASKED))
                 return nullptr;
 
@@ -1533,7 +1533,7 @@ REBTYPE(Frame)
             // !!! always "deep", allow it?
         }
 
-        Phase(*) act = cast(Phase(*), VAL_ACTION(frame));
+        Phase* act = cast(Phase*, VAL_ACTION(frame));
 
         // If the function had code, then that code will be bound relative
         // to the original paramlist that's getting hijacked.  So when the
@@ -1541,14 +1541,14 @@ REBTYPE(Frame)
         // whatever underlied the function...even if it was foundational
         // so `underlying = VAL_ACTION(value)`
 
-        Phase(*) proxy = Make_Action(
+        Phase* proxy = Make_Action(
             ACT_PARAMLIST(act),  // not changing the interface
             ACT_PARTIALS(act),  // keeping partial specializations
             ACT_DISPATCHER(act),  // have to preserve in case original hijacked
             1  // copy doesn't need details of its own, just archetype
         );
 
-        Context(*) meta = ACT_ADJUNCT(act);
+        Context* meta = ACT_ADJUNCT(act);
         assert(ACT_ADJUNCT(proxy) == nullptr);
         mutable_ACT_ADJUNCT(proxy) = meta;  // !!! Note: not a copy of meta
 
@@ -1600,7 +1600,7 @@ REBTYPE(Frame)
         if (IS_BLANK(picker))
             return COPY(frame);
 
-        Symbol(const*) symbol;
+        const Symbol* symbol;
         if (IS_WORD(picker))
             symbol = VAL_WORD_SYMBOL(picker);
         else if (IS_PATH(picker) and IS_REFINEMENT(picker))
@@ -1678,7 +1678,7 @@ void MF_Frame(REB_MOLD *mo, NoQuote(Cell(const*)) v, bool form) {
 
     Append_Ascii(mo->series, "#[frame! ");
 
-    Option(Symbol(const*)) label = VAL_FRAME_LABEL(v);
+    Option(const Symbol*) label = VAL_FRAME_LABEL(v);
     if (label) {
         Append_Codepoint(mo->series, '{');
         Append_Spelling(mo->series, unwrap(label));
@@ -1691,7 +1691,7 @@ void MF_Frame(REB_MOLD *mo, NoQuote(Cell(const*)) v, bool form) {
     // drops types)
     //
     const bool just_words = false;
-    Array(*) parameters = Make_Action_Parameters_Arr(VAL_ACTION(v), just_words);
+    Array* parameters = Make_Action_Parameters_Arr(VAL_ACTION(v), just_words);
     Mold_Array_At(mo, parameters, 0, "[]");
     Free_Unmanaged_Series(parameters);
 
@@ -1733,9 +1733,9 @@ DECLARE_NATIVE(construct)
     INCLUDE_PARAMS_OF_CONSTRUCT;
 
     REBVAL *spec = ARG(spec);
-    Context(*) parent = REF(with)
+    Context* parent = REF(with)
         ? VAL_CONTEXT(ARG(with))
-        : cast(Context(*), nullptr);  // C++98 ambiguous w/o cast
+        : cast(Context*, nullptr);  // C++98 ambiguous w/o cast
 
     // This parallels the code originally in CONSTRUCT.  Run it if the /ONLY
     // refinement was passed in.
@@ -1764,7 +1764,7 @@ DECLARE_NATIVE(construct)
     Cell(const*) tail;
     Cell(*) at = VAL_ARRAY_AT_Ensure_Mutable(&tail, spec);
 
-    Context(*) ctx = Make_Context_Detect_Managed(
+    Context* ctx = Make_Context_Detect_Managed(
         parent ? CTX_TYPE(parent) : REB_OBJECT,  // !!! Presume object?
         at,
         tail,

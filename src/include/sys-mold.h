@@ -22,7 +22,7 @@
 //
 
 struct rebol_mold {
-    String(*) series;     // destination series (utf8)
+    String* series;     // destination series (utf8)
     struct {
         REBLEN index;       // codepoint index where mold starts within series
         Size size;      // byte offset where mold starts within series

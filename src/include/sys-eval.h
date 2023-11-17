@@ -26,7 +26,7 @@
 // written such that a longjmp up to a failure handler above it can run
 // safely and clean up even though intermediate stacks have vanished.
 //
-// Ren-C can run the evaluator across an Array(*)-style input series based on
+// Ren-C can run the evaluator across an Array*-style input series based on
 // index.  It can also enumerate through C's `va_list`, providing the ability
 // to pass pointers as REBVAL* to comma-separated input at the source level.
 //
@@ -54,7 +54,7 @@
     // a tick breakpoint that way with `--breakpoint NNN`
     //
     // The debug build carries ticks many other places.  Series contain the
-    // `SeriesT.tick` where they were created, levels have a `LevelT.tick`,
+    // `Series.tick` where they were created, levels have a `LevelT.tick`,
     // and the DEBUG_TRACK_EXTEND_CELLS switch will double the size of cells
     // so they can carry the tick, file, and line where they were initialized.
     // (Even without TRACK_EXTEND, cells that don't have their EXTRA() field
@@ -193,7 +193,7 @@ inline static bool Did_Init_Inert_Optimize_Complete(
             goto optimized;  // not enfixed
         }
 
-        Action(*) action = VAL_ACTION(unwrap(feed->gotten));
+        Action* action = VAL_ACTION(unwrap(feed->gotten));
         if (Get_Subclass_Flag(
             VARLIST,
             ACT_PARAMLIST(action),
@@ -387,7 +387,7 @@ inline static bool Eval_Value_Core_Throws(
 inline static Bounce Native_Raised_Result(Level(*) level_, const void *p) {
     assert(not THROWING);
 
-    Context(*) error;
+    Context* error;
     switch (Detect_Rebol_Pointer(p)) {
       case DETECTED_AS_UTF8:
         error = Error_User(cast(const char*, p));

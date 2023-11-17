@@ -191,7 +191,7 @@ DECLARE_NATIVE(bind)
     Cell(*) at;
     Cell(const*) tail;
     if (REF(copy)) {
-        Array(*) copy = Copy_Array_Core_Managed(
+        Array* copy = Copy_Array_Core_Managed(
             VAL_ARRAY(v),
             VAL_INDEX(v), // at
             VAL_SPECIFIER(v),
@@ -237,7 +237,7 @@ DECLARE_NATIVE(in)
 {
     INCLUDE_PARAMS_OF_IN;
 
-    Context(*) ctx = VAL_CONTEXT(ARG(context));
+    Context* ctx = VAL_CONTEXT(ARG(context));
     REBVAL *v = ARG(value);
 
     // !!! Note that BIND of a WORD! in historical Rebol/Red would return the
@@ -246,7 +246,7 @@ DECLARE_NATIVE(in)
     // here in IN, but BIND's behavior on words may need revisiting.
     //
     if (ANY_WORD(v)) {
-        Symbol(const*) symbol = VAL_WORD_SYMBOL(v);
+        const Symbol* symbol = VAL_WORD_SYMBOL(v);
         const bool strict = true;
         REBLEN index = Find_Symbol_In_Context(ARG(context), symbol, strict);
         if (index == 0)
@@ -275,7 +275,7 @@ DECLARE_NATIVE(without)
 {
     INCLUDE_PARAMS_OF_WITHOUT;
 
-    Context(*) ctx = VAL_CONTEXT(ARG(context));
+    Context* ctx = VAL_CONTEXT(ARG(context));
     REBVAL *v = ARG(value);
 
     // !!! Note that BIND of a WORD! in historical Rebol/Red would return the
@@ -284,7 +284,7 @@ DECLARE_NATIVE(without)
     // here in IN, but BIND's behavior on words may need revisiting.
     //
     if (ANY_WORD(v)) {
-        Symbol(const*) symbol = VAL_WORD_SYMBOL(v);
+        const Symbol* symbol = VAL_WORD_SYMBOL(v);
         const bool strict = true;
         REBLEN index = Find_Symbol_In_Context(ARG(context), symbol, strict);
         if (index == 0)
@@ -330,7 +330,7 @@ DECLARE_NATIVE(use)
     Value(*) vars = ARG(vars);
     Value(*) body = ARG(body);
 
-    Context(*) context = Virtual_Bind_Deep_To_New_Context(
+    Context* context = Virtual_Bind_Deep_To_New_Context(
         body,  // may be replaced with rebound copy, or left the same
         vars  // similar to the "spec" of a loop: WORD!/LIT-WORD!/BLOCK!
     );
@@ -350,7 +350,7 @@ bool Did_Get_Binding_Of(Sink(Value(*)) out, const REBVAL *v)
 {
     switch (VAL_TYPE(v)) {
     case REB_FRAME: {
-        Context(*) binding = VAL_FRAME_BINDING(v); // e.g. METHOD, RETURNs
+        Context* binding = VAL_FRAME_BINDING(v); // e.g. METHOD, RETURNs
         if (not binding)
             return false;
 
@@ -369,7 +369,7 @@ bool Did_Get_Binding_Of(Sink(Value(*)) out, const REBVAL *v)
         // result in that word having a FRAME! incarnated as a Stub (if
         // it was not already reified.)
         //
-        Context(*) c = VAL_WORD_CONTEXT(v);
+        Context* c = VAL_WORD_CONTEXT(v);
 
         // If it's a FRAME! we want the phase to match the execution phase at
         // the current moment of execution.
@@ -404,7 +404,7 @@ bool Did_Get_Binding_Of(Sink(Value(*)) out, const REBVAL *v)
     // practice...keep an eye out for counterexamples.
     //
     if (IS_FRAME(out)) {
-        Context(*) c = VAL_CONTEXT(out);
+        Context* c = VAL_CONTEXT(out);
         Level(*) L = CTX_LEVEL_IF_ON_STACK(c);
         if (L) {
             INIT_VAL_FRAME_PHASE(out, Level_Phase(L));
@@ -553,7 +553,7 @@ DECLARE_NATIVE(unbind)
 
         Cell(const*) tail;
         Cell(*) at = VAL_ARRAY_AT_Ensure_Mutable(&tail, word);
-        Option(Context(*)) context = nullptr;
+        Option(Context*) context = nullptr;
         Unbind_Values_Core(at, tail, context, REF(deep));
     }
 
@@ -780,7 +780,7 @@ bool Get_Var_Push_Refinements_Throws(
     Drop_GC_Guard(temp);
 
     if (steps_out and steps_out != GROUPS_OK) {
-        Array(*) a = Pop_Stack_Values(base);
+        Array* a = Pop_Stack_Values(base);
         Init_Array_Cell(unwrap(steps_out), REB_THE_BLOCK, a);
     }
     else
@@ -1573,8 +1573,8 @@ DECLARE_NATIVE(proxy_exports)
 {
     INCLUDE_PARAMS_OF_PROXY_EXPORTS;
 
-    Context(*) where = VAL_CONTEXT(ARG(where));
-    Context(*) source = VAL_CONTEXT(ARG(source));
+    Context* where = VAL_CONTEXT(ARG(where));
+    Context* source = VAL_CONTEXT(ARG(source));
 
     Cell(const*) tail;
     Cell(const*) v = VAL_ARRAY_AT(&tail, ARG(exports));
@@ -1582,7 +1582,7 @@ DECLARE_NATIVE(proxy_exports)
         if (not IS_WORD(v))
             fail (ARG(exports));
 
-        Symbol(const*) symbol = VAL_WORD_SYMBOL(v);
+        const Symbol* symbol = VAL_WORD_SYMBOL(v);
 
         bool strict = true;
 
@@ -1726,7 +1726,7 @@ DECLARE_NATIVE(free)
     if (ANY_CONTEXT(v) or IS_HANDLE(v))
         fail ("FREE only implemented for ANY-SERIES! at the moment");
 
-    Series(*) s = VAL_SERIES_ENSURE_MUTABLE(v);
+    Series* s = VAL_SERIES_ENSURE_MUTABLE(v);
     if (Get_Series_Flag(s, INACCESSIBLE))
         fail ("Cannot FREE already freed series");
 
@@ -1793,7 +1793,7 @@ bool Try_As_String(
         Inherit_Const(Quotify(out, quotes), v);
     }
     else if (IS_BINARY(v)) {  // If valid UTF-8, BINARY! aliases as ANY-STRING!
-        Binary(const*) bin = VAL_BINARY(v);
+        const Binary* bin = VAL_BINARY(v);
         Size byteoffset = VAL_INDEX(v);
 
         // The position in the binary must correspond to an actual
@@ -1808,7 +1808,7 @@ bool Try_As_String(
         if (Is_Continuation_Byte(*at_ptr))
             fail ("Index at codepoint to convert binary to ANY-STRING!");
 
-        String(const*) str;
+        const String* str;
         REBLEN index;
         if (
             not Is_Series_UTF8(bin)
@@ -1851,15 +1851,15 @@ bool Try_As_String(
 
                 ++num_codepoints;
             }
-            FLAVOR_BYTE(m_cast(Binary(*), bin)) = FLAVOR_STRING;
+            FLAVOR_BYTE(m_cast(Binary*, bin)) = FLAVOR_STRING;
             str = STR(bin);
 
             Term_String_Len_Size(
-                m_cast(String(*), str),  // legal for tweaking cached data
+                m_cast(String*, str),  // legal for tweaking cached data
                 num_codepoints,
                 Binary_Len(bin)
             );
-            mutable_LINK(Bookmarks, m_cast(Binary(*), bin)) = nullptr;
+            mutable_LINK(Bookmarks, m_cast(Binary*, bin)) = nullptr;
 
             // !!! TBD: cache index/offset
 
@@ -1900,7 +1900,7 @@ bool Try_As_String(
         Utf8(const*) utf8 = VAL_UTF8_LEN_SIZE_AT(&len, &size, v);
         assert(size + 1 <= sizeof(PAYLOAD(Bytes, v).at_least_8));  // must fit
 
-        String(*) str = Make_String_Core(size, SERIES_FLAGS_NONE);
+        String* str = Make_String_Core(size, SERIES_FLAGS_NONE);
         memcpy(Series_Data(str), utf8, size + 1);  // +1 to include '\0'
         Term_String_Len_Size(str, len, size);
         Freeze_Series(str);
@@ -1967,7 +1967,7 @@ DECLARE_NATIVE(as)
 
             switch (Series_Flavor(SER(node1))) {
               case FLAVOR_SYMBOL: {
-                Array(*) a = Make_Array_Core(2, NODE_FLAG_MANAGED);
+                Array* a = Make_Array_Core(2, NODE_FLAG_MANAGED);
                 Set_Series_Len(a, 2);
                 if (Get_Cell_Flag(v, REFINEMENT_LIKE)) {
                     Init_Blank(Array_At(a, 0));
@@ -2038,7 +2038,7 @@ DECLARE_NATIVE(as)
 
       case REB_ISSUE: {
         if (IS_INTEGER(v)) {
-            Context(*) error = Maybe_Init_Char(OUT, VAL_UINT32(v));
+            Context* error = Maybe_Init_Char(OUT, VAL_UINT32(v));
             if (error)
                 return RAISE(error);
             return OUT;
@@ -2136,7 +2136,7 @@ DECLARE_NATIVE(as)
 
         if (ANY_STRING(v)) {  // aliasing data as an ANY-WORD! freezes data
           any_string: {
-            String(const*) s = VAL_STRING(v);
+            const String* s = VAL_STRING(v);
 
             if (not Is_Series_Frozen(s)) {
                 //
@@ -2179,12 +2179,12 @@ DECLARE_NATIVE(as)
             // We have to permanently freeze the underlying series from any
             // mutation to use it in a WORD! (and also, may add STRING flag);
             //
-            Binary(const*) bin = VAL_BINARY(v);
+            const Binary* bin = VAL_BINARY(v);
             if (not Is_Series_Frozen(bin))
                 if (Get_Cell_Flag(v, CONST))  // can't freeze or add IS_STRING
                     fail (Error_Alias_Constrains_Raw());
 
-            String(const*) str;
+            const String* str;
             if (IS_SYMBOL(bin))
                 str = STR(bin);
             else {
@@ -2204,7 +2204,7 @@ DECLARE_NATIVE(as)
                 // Constrain the input in the way it would be if we were doing
                 // the more efficient reuse.
                 //
-                FLAVOR_BYTE(m_cast(Binary(*), bin)) = FLAVOR_STRING;
+                FLAVOR_BYTE(m_cast(Binary*, bin)) = FLAVOR_STRING;
                 Freeze_Series(bin);
             }
 
@@ -2224,7 +2224,7 @@ DECLARE_NATIVE(as)
 
             Size size;
             Utf8(const*) utf8 = VAL_UTF8_SIZE_AT(&size, v);
-            Binary(*) bin = Make_Binary_Core(size, NODE_FLAG_MANAGED);
+            Binary* bin = Make_Binary_Core(size, NODE_FLAG_MANAGED);
             memcpy(Binary_Head(bin), utf8, size + 1);
             Set_Series_Used(bin, size);
             Freeze_Series(bin);

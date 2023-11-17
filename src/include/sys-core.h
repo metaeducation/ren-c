@@ -23,7 +23,7 @@
 // This is the main include file used in the implementation of the core.
 //
 // * It defines all the data types and structures used by the auto-generated
-//   function prototypes.  Includes the obvious REBINT, Value(*), Series(*).
+//   function prototypes.  Includes the obvious REBINT, Value(*), Series*.
 //   It also includes any enumerated type parameters to functions which are
 //   shared between various C files.
 //
@@ -260,11 +260,11 @@ struct Reb_Enum_Vars {
     // enumerating the array is the easiest near-term option.  This is a list
     // of the bound words.
     //
-    Context(*) ctx;
-    Array(*) wordlist;
+    Context* ctx;
+    Array* wordlist;
     REBVAL *word;
     REBVAL *word_tail;
-    const SymbolT* keybuf;  // backing store for key
+    const Symbol* keybuf;  // backing store for key
 };
 
 typedef struct Reb_Enum_Vars EVARS;
@@ -303,7 +303,7 @@ typedef struct {
     bool always_malloc;   // For memory-related troubleshooting
   #endif
 
-    Series(*)* prior_expand;  // Track prior series expansions (acceleration)
+    Series** prior_expand;  // Track prior series expansions (acceleration)
 
     uintptr_t usage;  // Overall memory used
     Option(uintptr_t) usage_limit;  // Memory limit set by SECURE
@@ -335,14 +335,14 @@ typedef struct {
 } MemoryState;
 
 typedef struct {
-    SymbolT builtin_canons[ALL_SYMS_MAX + 1];
+    Symbol builtin_canons[ALL_SYMS_MAX + 1];
 
-    Series(*) by_hash;  // Symbol REBSTR pointers indexed by hash
+    Series* by_hash;  // Symbol REBSTR pointers indexed by hash
     REBLEN num_slots_in_use;  // Total symbol hash slots (+deleteds)
   #if !defined(NDEBUG)
     REBLEN num_deleteds;  // Deleted symbol hash slots "in use"
   #endif
-    SymbolT deleted_symbol;  // pointer used to indicate a deletion
+    Symbol deleted_symbol;  // pointer used to indicate a deletion
 } SymbolState;
 
 typedef struct {
@@ -350,9 +350,9 @@ typedef struct {
     intptr_t depletion;  // bytes left to allocate until automatic GC is forced
     intptr_t ballast;  // what depletion is reset to after a GC
     bool disabled;  // true when RECYCLE/OFF is run
-    Series(*) guarded;  // stack of GC protected series and values
-    Series(*) mark_stack;  // series pending to mark their reachables as live
-    Series(*) manuals;  // Manually memory managed (not by GC)
+    Series* guarded;  // stack of GC protected series and values
+    Series* mark_stack;  // series pending to mark their reachables as live
+    Series* manuals;  // Manually memory managed (not by GC)
 
   #if DEBUG
     intptr_t mark_count;  // Count of stubs with NODE_FLAG_MARKED, must balance
@@ -371,7 +371,7 @@ typedef struct {
 
 
 typedef struct {
-    Array(*) array;
+    Array* array;
     StackIndex index;
     Value(*) movable_top;
     Cell(const*) movable_tail;
@@ -405,9 +405,9 @@ typedef struct {
 } TrampolineState;
 
 typedef struct {
-    Series(*) stack;  // tracked to prevent infinite loop in cyclical molds
+    Series* stack;  // tracked to prevent infinite loop in cyclical molds
 
-    String(*) buffer;  // temporary UTF8 buffer
+    String* buffer;  // temporary UTF8 buffer
 
   #if DEBUG
     bool currently_pushing;  // Push_Mold() should not directly recurse
@@ -547,7 +547,7 @@ extern void reb_qsort_r(void *a, size_t n, size_t es, void *thunk, cmp_t *cmp);
 //
 inline static void INIT_BINDING_MAY_MANAGE(
     Cell(*) out,
-    Series(const*)  binding
+    const Series*  binding
 );
 
 #include "sys-track.h"
@@ -610,7 +610,7 @@ inline static void SET_SIGNAL(Flags f) { // used in %sys-series.h
 
 
 #include "datatypes/sys-series.h"
-#include "datatypes/sys-array.h"  // Array(*) used by UTF-8 string bookmarks
+#include "datatypes/sys-array.h"  // Array* used by UTF-8 string bookmarks
 
 
 //=//// LIB BUILTINS ACCESS MACRO //////////////////////////////////////////=//

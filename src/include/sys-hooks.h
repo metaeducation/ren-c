@@ -48,7 +48,7 @@ typedef REBINT (COMPARE_HOOK)(
 // Helper for declaring an intrinsic native (can be dispatched w/o a frame)
 //
 #define DECLARE_INTRINSIC(n) \
-    void N_##n(Value(*) out, Phase(*) phase, Value(*) arg)
+    void N_##n(Value(*) out, Phase* phase, Value(*) arg)
 
 
 // PER-TYPE MAKE HOOKS: for `make datatype def`
@@ -92,7 +92,7 @@ typedef void (MOLD_HOOK)(REB_MOLD *mo, NoQuote(Cell(const*)) v, bool form);
 
 // Just requests what symbol a custom datatype wants to use for its type
 //
-typedef Symbol(const*) (SYMBOL_HOOK)(void);
+typedef const Symbol* (SYMBOL_HOOK)(void);
 
 
 //
@@ -107,14 +107,14 @@ typedef Symbol(const*) (SYMBOL_HOOK)(void);
 // any behavior for a specific type can still be accomplished by testing
 // the type passed into that common hook!
 //
-typedef Bounce (GENERIC_HOOK)(Level(*) level_, Symbol(const*) verb);
+typedef Bounce (GENERIC_HOOK)(Level(*) level_, const Symbol* verb);
 #define REBTYPE(n) \
-    Bounce T_##n(Level(*) level_, Symbol(const*) verb)
+    Bounce T_##n(Level(*) level_, const Symbol* verb)
 
 
 // Port hook: for implementing generic ACTION!s on a PORT! class
 //
-typedef Bounce (PORT_HOOK)(Level(*) level_, REBVAL *port, Symbol(const*) verb);
+typedef Bounce (PORT_HOOK)(Level(*) level_, REBVAL *port, const Symbol* verb);
 
 
 //=//// PARAMETER ENUMERATION /////////////////////////////////////////////=//
