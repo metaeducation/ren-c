@@ -180,7 +180,7 @@ DECLARE_NATIVE(bind)
     // binding pointer is also used in cases like RETURN to link them to the
     // FRAME! that they intend to return from.)
     //
-    if (REB_FRAME == CELL_HEART(v)) {
+    if (REB_FRAME == Cell_Heart(v)) {
         INIT_VAL_FRAME_BINDING(v, VAL_CONTEXT(context));
         return COPY(v);
     }
@@ -669,7 +669,7 @@ bool Get_Var_Push_Refinements_Throws(
         if (Not_Cell_Flag(var, SEQUENCE_HAS_NODE))  // byte compressed
             fail (var);
 
-        const Node* node1 = VAL_NODE1(var);
+        const Node* node1 = Cell_Node1(var);
         if (NODE_BYTE(node1) & NODE_BYTEMASK_0x01_CELL) { // pair compressed
             assert(false);  // these don't exist yet
             fail (var);
@@ -860,7 +860,7 @@ bool Get_Path_Push_Refinements_Throws(
         return false;
     }
 
-    const Node* node1 = VAL_NODE1(path);
+    const Node* node1 = Cell_Node1(path);
     if (NODE_BYTE(node1) & NODE_BYTEMASK_0x01_CELL) {
         assert(false);  // none of these exist yet
         return false;
@@ -1179,7 +1179,7 @@ bool Set_Var_Core_Updater_Throws(
 
     DECLARE_LOCAL (temp);  // target might be same as out (e.g. spare)
 
-    enum Reb_Kind varheart = CELL_HEART(var);
+    enum Reb_Kind varheart = Cell_Heart(var);
 
     if (ANY_GROUP_KIND(varheart)) {  // !!! maybe SET-GROUP!, but GET-GROUP!?
         if (not steps_out)
@@ -1251,7 +1251,7 @@ bool Set_Var_Core_Updater_Throws(
         if (Not_Cell_Flag(var, SEQUENCE_HAS_NODE))  // compressed byte form
             fail (var);
 
-        const Node* node1 = VAL_NODE1(var);
+        const Node* node1 = Cell_Node1(var);
         if (Is_Node_A_Cell(node1)) {  // pair optimization
             assert(false);  // these don't exist yet
             fail (var);
@@ -1759,7 +1759,7 @@ DECLARE_NATIVE(free_q)
     if (Not_Cell_Flag(v, FIRST_IS_NODE))
         return Init_False(OUT);
 
-    Node* n = VAL_NODE1(v);
+    Node* n = Cell_Node1(v);
 
     // If the node is not a series (e.g. a pairing), it cannot be freed (as
     // a freed version of a pairing is the same size as the pairing).
@@ -1962,7 +1962,7 @@ DECLARE_NATIVE(as)
             if (Not_Cell_Flag(v, SEQUENCE_HAS_NODE))
                 fail ("Array Conversions of byte-oriented sequences TBD");
 
-            const Node* node1 = VAL_NODE1(v);
+            const Node* node1 = Cell_Node1(v);
             assert(not (NODE_BYTE(node1) & NODE_BYTEMASK_0x01_CELL));
 
             switch (Series_Flavor(SER(node1))) {

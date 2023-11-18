@@ -116,11 +116,11 @@
 
 // ANY-CONTEXT! value cell schematic
 //
-#define VAL_CONTEXT_VARLIST(v)                  ARR(VAL_NODE1(v))
-#define INIT_VAL_CONTEXT_VARLIST                INIT_VAL_NODE1
-#define VAL_FRAME_PHASE_OR_LABEL_NODE           VAL_NODE2  // faster in debug
-#define VAL_FRAME_PHASE_OR_LABEL(v)             SER(VAL_NODE2(v))
-#define INIT_VAL_FRAME_PHASE_OR_LABEL           INIT_VAL_NODE2
+#define VAL_CONTEXT_VARLIST(v)                  ARR(Cell_Node1(v))
+#define INIT_VAL_CONTEXT_VARLIST                Init_Cell_Node1
+#define VAL_FRAME_PHASE_OR_LABEL_NODE           Cell_Node2  // faster in debug
+#define VAL_FRAME_PHASE_OR_LABEL(v)             SER(Cell_Node2(v))
+#define INIT_VAL_FRAME_PHASE_OR_LABEL           Init_Cell_Node2
 
 
 //=//// CONTEXT ARCHETYPE VALUE CELL (ROOTVAR)  ///////////////////////////=//
@@ -408,16 +408,16 @@ inline static void FAIL_IF_INACCESSIBLE_CTX(Context* c) {
 //
 
 inline static Context* VAL_CONTEXT(NoQuote(const Cell*) v) {
-    assert(ANY_CONTEXT_KIND(CELL_HEART_UNCHECKED(v)));
+    assert(ANY_CONTEXT_KIND(Cell_Heart_Unchecked(v)));
     Context* c;
 
-    if (IS_VARLIST(cast(Stub*, VAL_NODE1(v)))) {
-        c = CTX(VAL_NODE1(v));
+    if (IS_VARLIST(cast(Stub*, Cell_Node1(v)))) {
+        c = CTX(Cell_Node1(v));
     }
     else {
-        assert(CELL_HEART_UNCHECKED(v) == REB_FRAME);
-        assert(IS_DETAILS(cast(Stub*, VAL_NODE1(v))));
-        c = INODE(Exemplar, cast(Array*, VAL_NODE1(v)));
+        assert(Cell_Heart_Unchecked(v) == REB_FRAME);
+        assert(IS_DETAILS(cast(Stub*, Cell_Node1(v))));
+        c = INODE(Exemplar, cast(Array*, Cell_Node1(v)));
     }
     FAIL_IF_INACCESSIBLE_CTX(c);
     return c;
@@ -454,7 +454,7 @@ inline static Phase* VAL_FRAME_PHASE(NoQuote(const Cell*) v) {
 }
 
 inline static bool IS_FRAME_PHASED(NoQuote(const Cell*) v) {
-    assert(CELL_HEART(v) == REB_FRAME);
+    assert(Cell_Heart(v) == REB_FRAME);
     Series* s = VAL_FRAME_PHASE_OR_LABEL(v);
     return s and not IS_SYMBOL(s);
 }
@@ -492,7 +492,7 @@ inline static void INIT_VAL_FRAME_LABEL(
 
 inline static const REBKEY *VAL_CONTEXT_KEYS_HEAD(NoQuote(const Cell*) context)
 {
-    if (CELL_HEART(context) != REB_FRAME)
+    if (Cell_Heart(context) != REB_FRAME)
         return CTX_KEYS_HEAD(VAL_CONTEXT(context));
 
     Phase* phase = VAL_FRAME_PHASE(context);

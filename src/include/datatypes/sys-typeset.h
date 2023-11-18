@@ -50,14 +50,14 @@ inline static Option(const Array*) VAL_PARAMETER_ARRAY(
 ){
     assert(HEART_BYTE(v) == REB_PARAMETER);
 
-    const Array* a = ARR(VAL_NODE1(v));
+    const Array* a = ARR(Cell_Node1(v));
     if (a != nullptr and Get_Series_Flag(a, INACCESSIBLE))
         fail (Error_Series_Data_Freed_Raw());
     return a;
 }
 
 #define INIT_VAL_PARAMETER_ARRAY(v, a) \
-    INIT_VAL_NODE1((v), (a))
+    Init_Cell_Node1((v), (a))
 
 
 inline static bool TYPE_CHECK(Value(const*) typeset, Atom(const*) v) {

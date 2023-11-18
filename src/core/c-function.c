@@ -328,7 +328,7 @@ void Push_Paramlist_Quads_May_Fail(
             quoted = true;
         }
 
-        enum Reb_Kind heart = CELL_HEART(item);
+        enum Reb_Kind heart = Cell_Heart(item);
 
         const Symbol* symbol = nullptr;  // avoids compiler warning
         enum Reb_Param_Class pclass = PARAM_CLASS_0;  // error if not changed
@@ -1155,7 +1155,7 @@ void Get_Maybe_Fake_Action_Body(Sink(Value(*)) out, Value(const*) action)
             // Note: clears VAL_FLAG_LINE
             //
             Reset_Unquoted_Header_Untracked(TRACK(slot), CELL_MASK_GROUP);
-            INIT_VAL_NODE1(slot, VAL_ARRAY(body));
+            Init_Cell_Node1(slot, VAL_ARRAY(body));
             VAL_INDEX_RAW(slot) = 0;
             INIT_SPECIFIER(slot, a);  // relative binding
 
@@ -1166,7 +1166,7 @@ void Get_Maybe_Fake_Action_Body(Sink(Value(*)) out, Value(const*) action)
         // body specific to a fabricated expired frame.  See #2221
 
         Reset_Unquoted_Header_Untracked(TRACK(out), CELL_MASK_BLOCK);
-        INIT_VAL_NODE1(out, maybe_fake_body);
+        Init_Cell_Node1(out, maybe_fake_body);
         VAL_INDEX_RAW(out) = 0;
 
         // Don't use INIT_SPECIFIER(), because it does not expect to get an

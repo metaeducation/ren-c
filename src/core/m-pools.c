@@ -1128,7 +1128,7 @@ void Decay_Series(Series* s)
 
       case FLAVOR_HANDLE: {
         Cell* v = Array_Single(ARR(s));
-        assert(CELL_HEART_UNCHECKED(v) == REB_HANDLE);
+        assert(Cell_Heart_Unchecked(v) == REB_HANDLE);
 
         // Some handles use the managed form just because they want changes to
         // the pointer in one instance to be seen by other instances...there

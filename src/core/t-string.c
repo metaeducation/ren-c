@@ -55,14 +55,14 @@ enum {
 REBINT CT_String(NoQuote(const Cell*) a, NoQuote(const Cell*) b, bool strict)
 {
     assert(
-        ANY_STRING_KIND(CELL_HEART(a))
-        or REB_ISSUE == CELL_HEART(a)
-        or REB_URL == CELL_HEART(a)
+        ANY_STRING_KIND(Cell_Heart(a))
+        or REB_ISSUE == Cell_Heart(a)
+        or REB_URL == Cell_Heart(a)
     );
     assert(
-        ANY_STRING_KIND(CELL_HEART(b))
-        or REB_ISSUE == CELL_HEART(b)
-        or REB_URL == CELL_HEART(a)
+        ANY_STRING_KIND(Cell_Heart(b))
+        or REB_ISSUE == Cell_Heart(b)
+        or REB_URL == Cell_Heart(a)
     );
 
     REBLEN l1;
@@ -661,7 +661,7 @@ void MF_String(REB_MOLD *mo, NoQuote(const Cell*) v, bool form)
 
     assert(ANY_STRINGLIKE(v));
 
-    enum Reb_Kind kind = CELL_HEART(v);
+    enum Reb_Kind kind = Cell_Heart(v);
 
     // Special format for MOLD/ALL string series when not at head
     //

@@ -482,8 +482,8 @@ REBINT Compare_Modify_Values(Cell* a, Cell* b, bool strict)
     QUOTE_BYTE(a) = UNQUOTED_1;
     QUOTE_BYTE(b) = UNQUOTED_1;
 
-    enum Reb_Kind ta = CELL_HEART(a);
-    enum Reb_Kind tb = CELL_HEART(b);
+    enum Reb_Kind ta = Cell_Heart(a);
+    enum Reb_Kind tb = Cell_Heart(b);
 
     assert(ta < REB_MAX);  // we dequoted it
     assert(tb < REB_MAX);  // we dequoted this as well

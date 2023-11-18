@@ -483,7 +483,7 @@ bool Is_Value_Frozen_Deep(const Cell* v) {
     if (Not_Cell_Flag(cell, FIRST_IS_NODE))
         return true;  // payloads that live in cell are immutable
 
-    Node* node = VAL_NODE1(cell);
+    Node* node = Cell_Node1(cell);
     if (node == nullptr or Is_Node_A_Cell(node))
         return true;  // !!! Will all non-quoted Pairings be frozen?
 
@@ -533,7 +533,7 @@ void Force_Value_Frozen_Core(
     if (Is_Value_Frozen_Deep(v))
         return;
 
-    enum Reb_Kind heart = CELL_HEART(v);
+    enum Reb_Kind heart = Cell_Heart(v);
 
     if (heart == REB_FRAME and Is_Frame_Details(v))
         return;  // special form, immutable

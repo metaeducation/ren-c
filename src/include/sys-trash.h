@@ -60,7 +60,7 @@
     }
 
     inline static bool IS_TRASH(const Cell* v) {
-        if (CELL_HEART(v) != REB_VOID)
+        if (Cell_Heart(v) != REB_VOID)
             return false;
         if (QUOTE_BYTE(v) != QUASI_2)
             return false;

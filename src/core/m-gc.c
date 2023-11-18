@@ -348,9 +348,9 @@ static void Queue_Mark_Cell_Deep(const Cell* cv)
 
     // We mark based on the type of payload in the cell, e.g. its "unescaped"
     // form.  So if '''a fits in a WORD! (despite being a QUOTED!), we want
-    // to mark the cell as if it were a plain word.  Use the CELL_HEART().
+    // to mark the cell as if it were a plain word.  Use the Cell_Heart().
     //
-    enum Reb_Kind heart = CELL_HEART(v);
+    enum Reb_Kind heart = Cell_Heart(v);
 
   #if !defined(NDEBUG)  // see Queue_Mark_Node_Deep() for notes on recursion
     assert(not in_mark);
@@ -364,10 +364,10 @@ static void Queue_Mark_Cell_Deep(const Cell* cv)
                 Queue_Mark_Node_Deep(&v->extra.Binding);
     }
 
-    if (Get_Cell_Flag_Unchecked(v, FIRST_IS_NODE) and VAL_NODE1(v))
+    if (Get_Cell_Flag_Unchecked(v, FIRST_IS_NODE) and Cell_Node1(v))
         Queue_Mark_Node_Deep(&PAYLOAD(Any, v).first.node);
 
-    if (Get_Cell_Flag_Unchecked(v, SECOND_IS_NODE) and VAL_NODE2(v))
+    if (Get_Cell_Flag_Unchecked(v, SECOND_IS_NODE) and Cell_Node2(v))
         Queue_Mark_Node_Deep(&PAYLOAD(Any, v).second.node);
 
   #if !defined(NDEBUG)
@@ -575,7 +575,7 @@ void Run_All_Handle_Cleaners(void) {
             const Cell* item_tail = Array_Tail(cast(Array*, stub));
             Cell* item = Array_Head(cast(Array*, stub));
             for (; item != item_tail; ++item) {
-                if (CELL_HEART(item) != REB_HANDLE)
+                if (Cell_Heart(item) != REB_HANDLE)
                     continue;
                 if (Not_Cell_Flag(item, FIRST_IS_NODE))
                     continue;

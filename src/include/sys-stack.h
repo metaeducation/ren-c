@@ -95,25 +95,25 @@
                 assert(!"PUSH() while StackValue(*) pointers are extant"); \
         } } while (0)
 
-    struct Reb_Stack_Value_Ptr {
+    struct StackValuePointer {
         REBVAL *v;
 
       public:
-        Reb_Stack_Value_Ptr () : v (nullptr) {}
-        Reb_Stack_Value_Ptr (REBVAL *v) : v (v) {
+        StackValuePointer () : v (nullptr) {}
+        StackValuePointer (REBVAL *v) : v (v) {
             if (v != nullptr)
                 ++g_ds.num_refs_extant;
         }
-        Reb_Stack_Value_Ptr (const Reb_Stack_Value_Ptr &stk) : v (stk.v) {
+        StackValuePointer (const StackValuePointer &stk) : v (stk.v) {
             if (v != nullptr)
                 ++g_ds.num_refs_extant;
         }
-        ~Reb_Stack_Value_Ptr() {
+        ~StackValuePointer() {
             if (v != nullptr)
                 --g_ds.num_refs_extant;
         }
 
-        Reb_Stack_Value_Ptr& operator=(const Reb_Stack_Value_Ptr& other) {
+        StackValuePointer& operator=(const StackValuePointer& other) {
             if (v != nullptr)
                 --g_ds.num_refs_extant;
             v = other.v;
@@ -131,42 +131,42 @@
 
         REBVAL* operator->() { return v; }
 
-        bool operator==(const Reb_Stack_Value_Ptr &other)
+        bool operator==(const StackValuePointer &other)
             { return this->v == other.v; }
-        bool operator!=(const Reb_Stack_Value_Ptr &other)
+        bool operator!=(const StackValuePointer &other)
             { return this->v != other.v; }
-        bool operator<(const Reb_Stack_Value_Ptr &other)
+        bool operator<(const StackValuePointer &other)
             { return this->v < other.v; }
-        bool operator<=(const Reb_Stack_Value_Ptr &other)
+        bool operator<=(const StackValuePointer &other)
             { return this->v <= other.v; }
-       bool operator>(const Reb_Stack_Value_Ptr &other)
+       bool operator>(const StackValuePointer &other)
             { return this->v > other.v; }
-        bool operator>=(const Reb_Stack_Value_Ptr &other)
+        bool operator>=(const StackValuePointer &other)
             { return this->v >= other.v; }
 
-        Reb_Stack_Value_Ptr operator+(ptrdiff_t diff)
+        StackValuePointer operator+(ptrdiff_t diff)
             { return this->v + diff; }
-        Reb_Stack_Value_Ptr& operator+=(ptrdiff_t diff)
+        StackValuePointer& operator+=(ptrdiff_t diff)
             { this->v += diff; return *this; }
-        Reb_Stack_Value_Ptr operator-(ptrdiff_t diff)
+        StackValuePointer operator-(ptrdiff_t diff)
             { return this->v - diff; }
-        Reb_Stack_Value_Ptr& operator-=(ptrdiff_t diff)
+        StackValuePointer& operator-=(ptrdiff_t diff)
             { this->v -= diff; return *this; }
 
-        Reb_Stack_Value_Ptr& operator--()  // prefix decrement
+        StackValuePointer& operator--()  // prefix decrement
             { --this->v; return *this; }
-        Reb_Stack_Value_Ptr operator--(int)  // postfix decrement
+        StackValuePointer operator--(int)  // postfix decrement
         {
-           Reb_Stack_Value_Ptr temp = *this;
+           StackValuePointer temp = *this;
            --*this;
            return temp;
         }
 
-        Reb_Stack_Value_Ptr& operator++()  // prefix increment
+        StackValuePointer& operator++()  // prefix increment
             { ++this->v; return *this; }
-        Reb_Stack_Value_Ptr operator++(int)  // postfix increment
+        StackValuePointer operator++(int)  // postfix increment
         {
-           Reb_Stack_Value_Ptr temp = *this;
+           StackValuePointer temp = *this;
            ++*this;
            return temp;
         }

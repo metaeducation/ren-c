@@ -422,7 +422,7 @@ union AnyUnion {  // needed to beat strict aliasing, used in payload
     CFunction* cfunc;  // C function/data pointers pointers may differ in size
 
     // The NODE_FLAG_GC_ONE and NODE_FLAG_GC_TWO are used by Cells (for
-    // VAL_NODE1() and VAL_NODE2()) and by Stubs (for LINK() and MISC()) to
+    // Cell_Node1() and Cell_Node2()) and by Stubs (for LINK() and MISC()) to
     // be able to signal the GC to mark those slots if this node field
     // is in use.
     //

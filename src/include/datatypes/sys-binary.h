@@ -117,7 +117,7 @@ inline static Binary* Make_Binary_Core(REBLEN capacity, Flags flags)
 //=//// BINARY! VALUES ////////////////////////////////////////////////////=//
 
 inline static const Binary* VAL_BINARY(NoQuote(const Cell*) v) {
-    assert(CELL_HEART(v) == REB_BINARY);
+    assert(Cell_Heart(v) == REB_BINARY);
     return BIN(VAL_SERIES(v));
 }
 

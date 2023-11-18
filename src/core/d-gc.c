@@ -44,7 +44,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
 {
     ASSERT_CELL_READABLE_EVIL_MACRO(v);  // then we use unchecked() on v below
 
-    enum Reb_Kind heart = CELL_HEART_UNCHECKED(v);
+    enum Reb_Kind heart = Cell_Heart_Unchecked(v);
 
     Series* binding;
     if (
@@ -113,7 +113,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
         break; }
 
       case REB_PAIR: {
-        REBVAL *paired = VAL(VAL_NODE1(v));
+        REBVAL *paired = VAL(Cell_Node1(v));
         assert(Is_Node_Marked(paired));
         break; }
 
@@ -128,7 +128,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
 
       case REB_BITSET: {
         assert(Get_Cell_Flag_Unchecked(v, FIRST_IS_NODE));
-        Series* s = SER(VAL_NODE1(v));
+        Series* s = SER(Cell_Node1(v));
         Assert_Series_Term_Core(s);
         if (Get_Series_Flag(s, INACCESSIBLE)) {
             // TBD: clear out reference and GC `s`?
@@ -178,7 +178,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
 
       case REB_BINARY: {
         assert(Get_Cell_Flag_Unchecked(v, FIRST_IS_NODE));
-        Binary* s = BIN(VAL_NODE1(v));
+        Binary* s = BIN(Cell_Node1(v));
         if (Get_Series_Flag(s, INACCESSIBLE))
             break;
 
@@ -193,7 +193,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
       case REB_URL:
       case REB_TAG: {
         assert(Get_Cell_Flag_Unchecked(v, FIRST_IS_NODE));
-        if (Get_Series_Flag(STR(VAL_NODE1(v)), INACCESSIBLE))
+        if (Get_Series_Flag(STR(Cell_Node1(v)), INACCESSIBLE))
             break;
 
         assert(Get_Cell_Flag_Unchecked(v, FIRST_IS_NODE));
@@ -257,7 +257,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
       case REB_MODULE:
       case REB_ERROR:
       case REB_PORT: {
-        if (Get_Series_Flag(SER(VAL_NODE1(v)), INACCESSIBLE))
+        if (Get_Series_Flag(SER(Cell_Node1(v)), INACCESSIBLE))
             break;
 
         assert(
@@ -324,7 +324,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
       case REB_GET_GROUP:
       case REB_META_GROUP:
       case REB_TYPE_GROUP: {
-        Array* a = ARR(VAL_NODE1(v));
+        Array* a = ARR(Cell_Node1(v));
         if (Get_Series_Flag(a, INACCESSIBLE))
             break;
 
@@ -354,7 +354,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
         if (Not_Cell_Flag_Unchecked(v, SEQUENCE_HAS_NODE))
             break;  // should be just bytes
 
-        const Node* node1 = VAL_NODE1(v);
+        const Node* node1 = Cell_Node1(v);
         assert(not (NODE_BYTE(node1) & NODE_BYTEMASK_0x01_CELL));
 
         switch (Series_Flavor(SER(node1))) {
@@ -372,7 +372,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
           // !!! Optimization abandoned
           //
           case FLAVOR_ARRAY : {
-            Array* a = ARR(VAL_NODE1(v));
+            Array* a = ARR(Cell_Node1(v));
             assert(Not_Series_Flag(a, INACCESSIBLE));
 
             assert(Array_Len(a) >= 2);

@@ -76,7 +76,7 @@ REBLEN Modify_Array(
 
     // Check /PART, compute LEN:
     if (flags & AM_SPLICE) {
-        assert(ANY_ARRAY_KIND(CELL_HEART(src_val)));
+        assert(ANY_ARRAY_KIND(Cell_Heart(src_val)));
 
         REBLEN len_at = VAL_LEN_AT(src_val);
         ilen = len_at;

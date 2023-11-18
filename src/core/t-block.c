@@ -711,7 +711,7 @@ void MF_Array(REB_MOLD *mo, NoQuote(const Cell*) v, bool form)
     // the type could be avoided if each type had its own dispatcher, but
     // this routine seems to need to be generic.
     //
-    enum Reb_Kind kind = CELL_HEART(v);
+    enum Reb_Kind kind = Cell_Heart(v);
 
     if (form) {
         Option(Context*) context = nullptr;

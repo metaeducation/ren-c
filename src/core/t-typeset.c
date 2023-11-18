@@ -32,8 +32,8 @@ REBINT CT_Parameter(NoQuote(const Cell*) a, NoQuote(const Cell*) b, bool strict)
 {
     UNUSED(strict);
 
-    assert(CELL_HEART(a) == REB_PARAMETER);
-    assert(CELL_HEART(b) == REB_PARAMETER);
+    assert(Cell_Heart(a) == REB_PARAMETER);
+    assert(Cell_Heart(b) == REB_PARAMETER);
     UNUSED(a);
     UNUSED(b);
 

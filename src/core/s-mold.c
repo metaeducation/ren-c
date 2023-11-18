@@ -111,7 +111,7 @@ void Pre_Mold_Core(REB_MOLD *mo, NoQuote(const Cell*) v, bool all)
     else
         Append_Ascii(mo->series, "make ");
 
-    const String* type_name = Canon_Symbol(SYM_FROM_KIND(CELL_HEART(v)));
+    const String* type_name = Canon_Symbol(SYM_FROM_KIND(Cell_Heart(v)));
     Append_Spelling(mo->series, type_name);
     Append_Codepoint(mo->series, '!');  // !!! `make object!` not `make object`
 
@@ -374,7 +374,7 @@ void MF_Unhooked(REB_MOLD *mo, NoQuote(const Cell*) v, bool form)
     UNUSED(mo);
     UNUSED(form);
 
-    const REBVAL *type = Datatype_From_Kind(CELL_HEART(v));
+    const REBVAL *type = Datatype_From_Kind(Cell_Heart(v));
     UNUSED(type); // !!! put in error message?
 
     fail ("Datatype does not have extension with a MOLD handler registered");

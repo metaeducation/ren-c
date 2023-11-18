@@ -937,7 +937,7 @@ inline static void Fail_If_Read_Only_Series(Series* s) {
 #else
     inline static const Cell* Known_Mutable(const Cell* v) {
         assert(Get_Cell_Flag(v, FIRST_IS_NODE));
-        Series* s = SER(VAL_NODE1(v));  // can be pairlist, varlist, etc.
+        Series* s = SER(Cell_Node1(v));  // can be pairlist, varlist, etc.
         assert(not Is_Series_Read_Only(s));
         assert(Not_Cell_Flag(v, CONST));
         return v;
@@ -949,7 +949,7 @@ inline static REBVAL* Unrelativize(Cell* out, const Cell* v);
 
 inline static const Cell* Ensure_Mutable(const Cell* v) {
     assert(Get_Cell_Flag(v, FIRST_IS_NODE));
-    Series* s = SER(VAL_NODE1(v));  // can be pairlist, varlist, etc.
+    Series* s = SER(Cell_Node1(v));  // can be pairlist, varlist, etc.
 
     Fail_If_Read_Only_Series(s);
 
@@ -1025,14 +1025,14 @@ inline static void Push_GC_Guard_Erased_Cell(Cell* cell) {
 //
 inline static const Series* VAL_SERIES(NoQuote(const Cell*) v) {
   #if !defined(NDEBUG)
-    enum Reb_Kind k = CELL_HEART(v);
+    enum Reb_Kind k = Cell_Heart(v);
     assert(
         ANY_SERIES_KIND(k)
         or k == REB_ISSUE or k == REB_URL
         or ANY_ARRAYLIKE(v)
     );
   #endif
-    const Series* s = SER(VAL_NODE1(v));
+    const Series* s = SER(Cell_Node1(v));
     if (Get_Series_Flag(s, INACCESSIBLE))
         fail (Error_Series_Data_Freed_Raw());
     return s;
@@ -1060,7 +1060,7 @@ inline static const Series* VAL_SERIES(NoQuote(const Cell*) v) {
     // type checking to ensure VAL_INDEX() applied.  (This is called often.)
     //
     inline static REBIDX VAL_INDEX_UNBOUNDED(NoQuote(const Cell*) v) {
-        enum Reb_Kind k = CELL_HEART_UNCHECKED(v);  // only const if heart!
+        enum Reb_Kind k = Cell_Heart_Unchecked(v);  // only const if heart!
         assert(
             ANY_SERIES_KIND(k)
             or k == REB_ISSUE or k == REB_URL
@@ -1071,7 +1071,7 @@ inline static const Series* VAL_SERIES(NoQuote(const Cell*) v) {
     }
     inline static REBIDX & VAL_INDEX_UNBOUNDED(Cell* v) {
         ASSERT_CELL_WRITABLE_EVIL_MACRO(v);
-        enum Reb_Kind k = CELL_HEART_UNCHECKED(v);
+        enum Reb_Kind k = Cell_Heart_Unchecked(v);
         assert(
             ANY_SERIES_KIND(k)
             or k == REB_ISSUE or k == REB_URL
@@ -1090,7 +1090,7 @@ inline static REBLEN VAL_LEN_HEAD(NoQuote(const Cell*) v);  // forward decl
 // unsigned REBLEN.
 //
 inline static REBLEN VAL_INDEX(NoQuote(const Cell*) v) {
-    enum Reb_Kind k = CELL_HEART(v);  // only const access if heart!
+    enum Reb_Kind k = Cell_Heart(v);  // only const access if heart!
     assert(
         ANY_SERIES_KIND(k)
         or k == REB_ISSUE or k == REB_URL
@@ -1179,7 +1179,7 @@ inline static REBVAL *Init_Series_Cell_At_Core(
         out,
         FLAG_HEART_BYTE(type) | CELL_FLAG_FIRST_IS_NODE
     );
-    INIT_VAL_NODE1(out, s);
+    Init_Cell_Node1(out, s);
     VAL_INDEX_RAW(out) = index;
     INIT_SPECIFIER(out, specifier);  // asserts if unbindable type tries to bind
     return cast(REBVAL*, out);

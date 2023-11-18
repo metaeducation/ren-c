@@ -240,7 +240,7 @@ Series* Make_Set_Operation_Series(
 
                 DECLARE_LOCAL (mo_value);
                 Reset_Unquoted_Header_Untracked(TRACK(mo_value), CELL_MASK_TEXT);
-                INIT_VAL_NODE1(mo_value, mo->series);
+                Init_Cell_Node1(mo_value, mo->series);
                 VAL_INDEX_RAW(mo_value) = mo->base.index;
 
                 if (
@@ -318,7 +318,7 @@ Series* Make_Set_Operation_Series(
                     TRACK(buf_value),
                     CELL_MASK_BINARY
                 );
-                INIT_VAL_NODE1(buf_value, buf);
+                Init_Cell_Node1(buf_value, buf);
                 VAL_INDEX_RAW(buf_value) = buf_start_len;
 
                 if (

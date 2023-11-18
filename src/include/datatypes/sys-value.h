@@ -238,28 +238,28 @@
 // flag bits of the node.  This could have a runtime check in debug build
 // with a C++ variation that only takes mutable pointers.
 //
-inline static void INIT_VAL_NODE1(Cell* v, Option(const Node*) node) {
+inline static void Init_Cell_Node1(Cell* v, Option(const Node*) node) {
     assert(v->header.bits & CELL_FLAG_FIRST_IS_NODE);
     PAYLOAD(Any, v).first.node = try_unwrap(node);
 }
 
-inline static void INIT_VAL_NODE2(Cell* v, Option(const Node*) node) {
+inline static void Init_Cell_Node2(Cell* v, Option(const Node*) node) {
     assert(v->header.bits & CELL_FLAG_SECOND_IS_NODE);
     PAYLOAD(Any, v).second.node = try_unwrap(node);
 }
 
-#define VAL_NODE1(v) \
+#define Cell_Node1(v) \
     m_cast(Node*, PAYLOAD(Any, (v)).first.node)
 
-#define VAL_NODE2(v) \
+#define Cell_Node2(v) \
     m_cast(Node*, PAYLOAD(Any, (v)).second.node)
 
 
-#define CELL_HEART_UNCHECKED(cell) \
+#define Cell_Heart_Unchecked(cell) \
     cast(enum Reb_Kind, HEART_BYTE(cell))
 
-#define CELL_HEART(cell) \
-    CELL_HEART_UNCHECKED(READABLE(cell))
+#define Cell_Heart(cell) \
+    Cell_Heart_Unchecked(READABLE(cell))
 
 
 // Sometimes you have a noquote and need to pass a REBVAL* to something.  It
@@ -281,7 +281,7 @@ inline static const Cell* CELL_TO_VAL(NoQuote(const Cell*) cell)
 // When asking about a value's "type", you want to see something like a
 // double-quoted WORD! as a QUOTED! value...though it's a WORD! underneath.
 //
-// (Instead of VAL_TYPE(), use CELL_HEART() if you wish to know that the cell
+// (Instead of VAL_TYPE(), use Cell_Heart() if you wish to know that the cell
 // pointer you pass in is carrying a word payload.  It disregards the quotes.)
 //
 
@@ -582,13 +582,13 @@ inline static Value(*) SPECIFIC(const_if_c Cell* v) {
 
 inline static bool ANY_ARRAYLIKE(NoQuote(const Cell*) v) {
     // called by core code, sacrifice READABLE() checks
-    if (ANY_ARRAY_KIND(CELL_HEART_UNCHECKED(v)))
+    if (ANY_ARRAY_KIND(Cell_Heart_Unchecked(v)))
         return true;
-    if (not ANY_SEQUENCE_KIND(CELL_HEART_UNCHECKED(v)))
+    if (not ANY_SEQUENCE_KIND(Cell_Heart_Unchecked(v)))
         return false;
     if (Not_Cell_Flag_Unchecked(v, FIRST_IS_NODE))
         return false;
-    const Node* node1 = VAL_NODE1(v);
+    const Node* node1 = Cell_Node1(v);
     if (Is_Node_A_Cell(node1))
         return false;
     return Series_Flavor(SER(node1)) == FLAVOR_ARRAY;
@@ -596,13 +596,13 @@ inline static bool ANY_ARRAYLIKE(NoQuote(const Cell*) v) {
 
 inline static bool ANY_WORDLIKE(NoQuote(const Cell*) v) {
     // called by core code, sacrifice READABLE() checks
-    if (ANY_WORD_KIND(CELL_HEART_UNCHECKED(v)))
+    if (ANY_WORD_KIND(Cell_Heart_Unchecked(v)))
         return true;
-    if (not ANY_SEQUENCE_KIND(CELL_HEART_UNCHECKED(v)))
+    if (not ANY_SEQUENCE_KIND(Cell_Heart_Unchecked(v)))
         return false;
     if (Not_Cell_Flag_Unchecked(v, FIRST_IS_NODE))
         return false;
-    const Node* node1 = VAL_NODE1(v);
+    const Node* node1 = Cell_Node1(v);
     if (Is_Node_A_Cell(node1))
         return false;
     return Series_Flavor(SER(node1)) == FLAVOR_SYMBOL;
@@ -610,22 +610,22 @@ inline static bool ANY_WORDLIKE(NoQuote(const Cell*) v) {
 
 inline static bool ANY_STRINGLIKE(NoQuote(const Cell*) v) {
     // called by core code, sacrifice READABLE() checks
-    if (ANY_STRING_KIND(CELL_HEART_UNCHECKED(v)))
+    if (ANY_STRING_KIND(Cell_Heart_Unchecked(v)))
         return true;
-    if (CELL_HEART(v) == REB_URL)
+    if (Cell_Heart(v) == REB_URL)
         return true;
-    if (CELL_HEART(v) != REB_ISSUE)
+    if (Cell_Heart(v) != REB_ISSUE)
         return false;
     return Get_Cell_Flag_Unchecked(v, ISSUE_HAS_NODE);
 }
 
 
 inline static void INIT_VAL_WORD_SYMBOL(Cell* v, const Symbol* symbol)
-  { INIT_VAL_NODE1(v, symbol); }
+  { Init_Cell_Node1(v, symbol); }
 
 inline static const Symbol* VAL_WORD_SYMBOL(NoQuote(const Cell*) cell) {
     assert(ANY_WORDLIKE(cell));  // no _UNCHECKED variant :-(
-    return SYM(VAL_NODE1(cell));
+    return SYM(Cell_Node1(cell));
 }
 
 #define INDEX_PATCHED 1  // Make it easier to find patch (LET) index settings

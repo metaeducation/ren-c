@@ -38,7 +38,7 @@
     // allows an assert, but also lvalue: `VAL_DECIMAL(v) = xxx`
     //
     inline static REBDEC VAL_DECIMAL(NoQuote(const Cell*) v) {
-        assert(CELL_HEART(v) == REB_DECIMAL or CELL_HEART(v) == REB_PERCENT);
+        assert(Cell_Heart(v) == REB_DECIMAL or Cell_Heart(v) == REB_PERCENT);
         return PAYLOAD(Decimal, v).dec;
     }
     inline static REBDEC & VAL_DECIMAL(Cell* v) {

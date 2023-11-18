@@ -374,7 +374,7 @@ REBTYPE(Sequence)
         HEART_BYTE(sequence) = REB_BLOCK;
 
         Atom(*) r = Atom_From_Bounce(T_Array(level_, verb));
-        assert(CELL_HEART(r) == REB_BLOCK);
+        assert(Cell_Heart(r) == REB_BLOCK);
 
         if (r != OUT)
             Copy_Cell(OUT, r);
@@ -436,7 +436,7 @@ REBTYPE(Sequence)
 //
 void MF_Sequence(REB_MOLD *mo, NoQuote(const Cell*) v, bool form)
 {
-    enum Reb_Kind kind = CELL_HEART(v);
+    enum Reb_Kind kind = Cell_Heart(v);
     char interstitial = ANY_TUPLE_KIND(kind) ? '.' : '/';
 
     if (kind == REB_GET_PATH or kind == REB_GET_TUPLE)

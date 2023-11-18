@@ -159,7 +159,7 @@ void Clonify(
     // !!! This used to have a distinguished `kind` but that was taken after
     // it had been dequoted, so effectively it was the `heart`.
     //
-    enum Reb_Kind heart = CELL_HEART(v);
+    enum Reb_Kind heart = Cell_Heart(v);
 
     if (deep_types & FLAGIT_KIND(heart) & TS_SERIES_OBJ) {
         //
@@ -193,7 +193,7 @@ void Clonify(
             if (ANY_SEQUENCE_KIND(heart))
                 Freeze_Array_Shallow(ARR(series));
 
-            INIT_VAL_NODE1(v, series);
+            Init_Cell_Node1(v, series);
             INIT_SPECIFIER(v, UNBOUND);  // copying w/specifier makes specific
             would_need_deep = true;
         }
@@ -202,7 +202,7 @@ void Clonify(
                 VAL_SERIES(v),
                 NODE_FLAG_MANAGED
             );
-            INIT_VAL_NODE1(v, series);
+            Init_Cell_Node1(v, series);
             would_need_deep = false;
         }
         else {
@@ -325,7 +325,7 @@ Array* Copy_Rerelativized_Array_Deep_Managed(
         Copy_Cell_Header(dest, src);
 
         if (ANY_ARRAYLIKE(src)) {
-            INIT_VAL_NODE1(
+            Init_Cell_Node1(
                 dest,
                 Copy_Rerelativized_Array_Deep_Managed(
                     VAL_ARRAY(src), before, after

@@ -48,8 +48,8 @@ inline static void INIT_BITS_NOT(Series* s, bool negated)
 
 
 inline static Binary* VAL_BITSET(NoQuote(const Cell*) v) {
-    assert(CELL_HEART(v) == REB_BITSET);
-    return BIN(VAL_NODE1(v));
+    assert(Cell_Heart(v) == REB_BITSET);
+    return BIN(Cell_Node1(v));
 }
 
 #define VAL_BITSET_Ensure_Mutable(v) \
@@ -58,7 +58,7 @@ inline static Binary* VAL_BITSET(NoQuote(const Cell*) v) {
 inline static REBVAL *Init_Bitset(Cell* out, Binary* bits) {
     Reset_Unquoted_Header_Untracked(out, CELL_MASK_BITSET);
     Assert_Series_Managed(bits);
-    INIT_VAL_NODE1(out, bits);
+    Init_Cell_Node1(out, bits);
     return cast(REBVAL*, out);
 }
 

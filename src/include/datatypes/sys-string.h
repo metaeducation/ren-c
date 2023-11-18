@@ -545,7 +545,7 @@ inline static Utf8(*) String_At(const_if_c String* s, REBLEN at) {
 
 inline static const String* VAL_STRING(NoQuote(const Cell*) v) {
     if (ANY_STRINGLIKE(v))
-        return STR(VAL_NODE1(v));  // VAL_SERIES() would assert
+        return STR(Cell_Node1(v));  // VAL_SERIES() would assert
 
     return VAL_WORD_SYMBOL(v);  // asserts ANY_WORD_KIND() for heart
 }
@@ -561,7 +561,7 @@ inline static const String* VAL_STRING(NoQuote(const Cell*) v) {
 //
 inline static REBLEN VAL_LEN_HEAD(NoQuote(const Cell*) v) {
     const Series* s = VAL_SERIES(v);
-    if (Is_Series_UTF8(s) and CELL_HEART(v) != REB_BINARY)
+    if (Is_Series_UTF8(s) and Cell_Heart(v) != REB_BINARY)
         return String_Len(STR(s));
     return Series_Used(s);
 }
@@ -650,7 +650,7 @@ inline static Size VAL_BYTEOFFSET_FOR_INDEX(
     NoQuote(const Cell*) v,
     REBLEN index
 ){
-    assert(ANY_STRING_KIND(CELL_HEART(v)));
+    assert(ANY_STRING_KIND(Cell_Heart(v)));
 
     Utf8(const*) at;
 

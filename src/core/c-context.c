@@ -345,7 +345,7 @@ static void Collect_Inner_Loop(
 ){
     const Cell* v = head;
     for (; v != tail; ++v) {
-        enum Reb_Kind kind = CELL_HEART(v);
+        enum Reb_Kind kind = Cell_Heart(v);
 
         if (ANY_WORD_KIND(kind)) {
             if (kind != REB_SET_WORD and not (cl->flags & COLLECT_ANY_WORD))
@@ -473,7 +473,7 @@ Array* Collect_Unique_Words_Managed(
         const Cell* check_tail;
         const Cell* check = VAL_ARRAY_AT(&check_tail, ignorables);
         for (; check != check_tail; ++check) {
-            if (not ANY_WORD_KIND(CELL_HEART(check)))
+            if (not ANY_WORD_KIND(Cell_Heart(check)))
                 fail (Error_Bad_Value(check));
         }
     }

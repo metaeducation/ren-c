@@ -101,7 +101,7 @@ inline static bool Is_Valid_Sequence_Element(
 
     // QUASI! cases are legal, to support e.g. `~/home/Projects/ren-c/README.md`
     //
-    enum Reb_Kind k = Is_Quasi(v) ? CELL_HEART(v) : VAL_TYPE(v);
+    enum Reb_Kind k = Is_Quasi(v) ? Cell_Heart(v) : VAL_TYPE(v);
     if (
         k == REB_BLANK
         or k == REB_INTEGER
@@ -463,14 +463,14 @@ inline static Value(*) Try_Pop_Sequence_Or_Element_Or_Nulled(
 // optimized fashion using Refinify()
 
 inline static REBLEN VAL_SEQUENCE_LEN(NoQuote(const Cell*) sequence) {
-    assert(ANY_SEQUENCE_KIND(CELL_HEART(sequence)));
+    assert(ANY_SEQUENCE_KIND(Cell_Heart(sequence)));
 
     if (Not_Cell_Flag(sequence, SEQUENCE_HAS_NODE)) {  // compressed bytes
         assert(Not_Cell_Flag(sequence, SECOND_IS_NODE));
         return PAYLOAD(Bytes, sequence).at_least_8[IDX_SEQUENCE_USED];
     }
 
-    const Node* node1 = VAL_NODE1(sequence);
+    const Node* node1 = Cell_Node1(sequence);
     if (Is_Node_A_Cell(node1)) {  // see if it's a pairing
         assert(false);  // these don't exist yet
         return 2;  // compressed 2-element sequence
@@ -481,7 +481,7 @@ inline static REBLEN VAL_SEQUENCE_LEN(NoQuote(const Cell*) sequence) {
         return 2;
 
       case FLAVOR_ARRAY : {  // uncompressed sequence
-        Array* a = ARR(VAL_NODE1(sequence));
+        Array* a = ARR(Cell_Node1(sequence));
         assert(Array_Len(a) >= 2);
         assert(Is_Array_Frozen_Shallow(a));
         return Array_Len(a); }
@@ -508,14 +508,14 @@ inline static const Cell* VAL_SEQUENCE_AT(
     REBLEN n
 ){
     assert(store != sequence);
-    assert(ANY_SEQUENCE_KIND(CELL_HEART(sequence)));
+    assert(ANY_SEQUENCE_KIND(Cell_Heart(sequence)));
 
     if (Not_Cell_Flag(sequence, SEQUENCE_HAS_NODE)) {  // compressed bytes
         assert(n < PAYLOAD(Bytes, sequence).at_least_8[IDX_SEQUENCE_USED]);
         return Init_Integer(store, PAYLOAD(Bytes, sequence).at_least_8[n + 1]);
     }
 
-    const Node* node1 = VAL_NODE1(sequence);
+    const Node* node1 = Cell_Node1(sequence);
     if (Is_Node_A_Cell(node1)) {  // test if it's a pairing
         assert(false);  // these don't exist yet
         return nullptr;  // compressed 2-element sequence
@@ -537,7 +537,7 @@ inline static const Cell* VAL_SEQUENCE_AT(
         return store; }
 
       case FLAVOR_ARRAY : {  // uncompressed sequence
-        const Array* a = ARR(VAL_NODE1(sequence));
+        const Array* a = ARR(Cell_Node1(sequence));
         assert(Array_Len(a) >= 2);
         assert(Is_Array_Frozen_Shallow(a));
         return Array_At(a, n); }  // array is read only
@@ -555,14 +555,14 @@ inline static Value(*) GET_SEQUENCE_AT(
     REBLEN n
 ){
     assert(out != sequence);
-    assert(ANY_SEQUENCE_KIND(CELL_HEART(sequence)));
+    assert(ANY_SEQUENCE_KIND(Cell_Heart(sequence)));
 
     if (Not_Cell_Flag(sequence, SEQUENCE_HAS_NODE)) {  // compressed bytes
         assert(n < PAYLOAD(Bytes, sequence).at_least_8[IDX_SEQUENCE_USED]);
         return Init_Integer(out, PAYLOAD(Bytes, sequence).at_least_8[n + 1]);
     }
 
-    const Node* node1 = VAL_NODE1(sequence);
+    const Node* node1 = Cell_Node1(sequence);
     if (Is_Node_A_Cell(node1)) {  // test if it's a pairing
         assert(false);  // these don't exist yet
         return nullptr;  // compressed 2-element sequence
@@ -583,7 +583,7 @@ inline static Value(*) GET_SEQUENCE_AT(
         return out; }
 
       case FLAVOR_ARRAY : {  // uncompressed sequence
-        const Array* a = ARR(VAL_NODE1(sequence));
+        const Array* a = ARR(Cell_Node1(sequence));
         assert(Array_Len(a) >= 2);
         assert(Is_Array_Frozen_Shallow(a));
         return Derelativize(out, Array_At(a, n), specifier); }  // aread only
@@ -608,7 +608,7 @@ inline static Byte VAL_SEQUENCE_BYTE_AT(
 inline static REBSPC *VAL_SEQUENCE_SPECIFIER(
     NoQuote(const Cell*) sequence
 ){
-    assert(ANY_SEQUENCE_KIND(CELL_HEART(sequence)));
+    assert(ANY_SEQUENCE_KIND(Cell_Heart(sequence)));
 
     // Getting the specifier for any of the optimized types means getting
     // the specifier for *that item in the sequence*; the sequence itself
@@ -618,7 +618,7 @@ inline static REBSPC *VAL_SEQUENCE_SPECIFIER(
     if (Not_Cell_Flag(sequence, SEQUENCE_HAS_NODE))  // compressed bytes
         return SPECIFIED;
 
-    const Node* node1 = VAL_NODE1(sequence);
+    const Node* node1 = Cell_Node1(sequence);
     if (Is_Node_A_Cell(node1)) {  // see if it's a pairing
         assert(false);  // these don't exist yet
         return SPECIFIED;  // compressed 2-element sequence
@@ -695,11 +695,11 @@ inline static REBVAL *Refinify(REBVAL *v) {
 }
 
 inline static bool IS_REFINEMENT_CELL(NoQuote(const Cell*) v) {
-    assert(ANY_PATH_KIND(CELL_HEART(v)));
+    assert(ANY_PATH_KIND(Cell_Heart(v)));
     if (Not_Cell_Flag(v, SEQUENCE_HAS_NODE))
         return false;
 
-    const Node* node1 = VAL_NODE1(v);
+    const Node* node1 = Cell_Node1(v);
     if (Is_Node_A_Cell(node1))
         return false;
 
@@ -715,13 +715,13 @@ inline static bool IS_REFINEMENT(const Cell* v) {
 }
 
 inline static bool IS_PREDICATE1_CELL(NoQuote(const Cell*) v) {
-    if (CELL_HEART(v) != REB_TUPLE)
+    if (Cell_Heart(v) != REB_TUPLE)
         return false;
 
     if (Not_Cell_Flag(v, SEQUENCE_HAS_NODE))
         return false;
 
-    const Node* node1 = VAL_NODE1(v);
+    const Node* node1 = Cell_Node1(v);
     if (Is_Node_A_Cell(node1))
         return false;
 
@@ -735,12 +735,12 @@ inline static const Symbol* VAL_REFINEMENT_SYMBOL(
     NoQuote(const Cell*) v
 ){
     assert(IS_REFINEMENT_CELL(v));
-    return SYM(VAL_NODE1(v));
+    return SYM(Cell_Node1(v));
 }
 
 // !!! Temporary workaround for what was IS_META_PATH() (now not its own type)
 //
 inline static bool IS_QUOTED_PATH(const Cell* v) {
     return VAL_NUM_QUOTES(v) == 1
-        and CELL_HEART(v) == REB_PATH;
+        and Cell_Heart(v) == REB_PATH;
 }

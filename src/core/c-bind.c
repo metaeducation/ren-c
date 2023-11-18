@@ -47,7 +47,7 @@ void Bind_Values_Inner_Loop(
     Cell* v = head;
     for (; v != tail; ++v) {
         NoQuote(const Cell*) cell = VAL_UNESCAPED(v);
-        enum Reb_Kind heart = CELL_HEART(cell);
+        enum Reb_Kind heart = Cell_Heart(cell);
 
         // !!! Review use of `heart` bit here, e.g. when a REB_PATH has an
         // REB_BLOCK heart, why would it be bound?  Problem is that if we
@@ -404,7 +404,7 @@ DECLARE_NATIVE(let)
         if (Is_Quoted(SPARE))  // should (let 'x: <whatever>) be legal? see [3]
             fail ("QUOTED! escapes not supported at top level of LET");
 
-        switch (CELL_HEART(SPARE)) {  // QUASI! states mean isotopes ok
+        switch (Cell_Heart(SPARE)) {  // QUASI! states mean isotopes ok
           case REB_WORD:
           case REB_BLOCK:
             if (IS_SET_GROUP(vars))
@@ -436,12 +436,12 @@ DECLARE_NATIVE(let)
     if (bindings and Not_Node_Managed(bindings))
         Set_Node_Managed_Bit(bindings);  // natives don't always manage
 
-    if (CELL_HEART(vars) == REB_WORD or CELL_HEART(vars) == REB_SET_WORD) {
+    if (Cell_Heart(vars) == REB_WORD or Cell_Heart(vars) == REB_SET_WORD) {
         const Symbol* symbol = VAL_WORD_SYMBOL(vars);
         bindings = Make_Let_Patch(symbol, bindings);
 
         REBVAL *where;
-        if (CELL_HEART(vars) == REB_SET_WORD) {
+        if (Cell_Heart(vars) == REB_SET_WORD) {
             STATE = ST_LET_EVAL_STEP;
             where = stable_SPARE;
         }
@@ -487,7 +487,7 @@ DECLARE_NATIVE(let)
                 altered = true;
             }
 
-            switch (CELL_HEART(temp)) {  // permit QUASI!
+            switch (Cell_Heart(temp)) {  // permit QUASI!
               case REB_ISSUE:  // is multi-return opt-in for dialect, passthru
               case REB_BLANK:  // is multi-return opt-out for dialect, passthru
                 Derelativize(PUSH(), temp, temp_specifier);
@@ -551,7 +551,7 @@ DECLARE_NATIVE(let)
         goto update_feed_binding;
     }
 
-    assert(CELL_HEART(SPARE) == REB_SET_WORD or IS_SET_BLOCK(SPARE));
+    assert(Cell_Heart(SPARE) == REB_SET_WORD or IS_SET_BLOCK(SPARE));
 
     Flags flags =
         FLAG_STATE_BYTE(ST_EVALUATOR_REEVALUATING)
@@ -693,7 +693,7 @@ static void Clonify_And_Bind_Relative(
     // means if `deep_types` is passed in with something like REB_PATH it
     // will get paths at arbitrary levels of quoting too.  Review.
     //
-    enum Reb_Kind heart = CELL_HEART_UNCHECKED(v);
+    enum Reb_Kind heart = Cell_Heart_Unchecked(v);
 
     if (deep_types & FLAGIT_KIND(heart) & TS_SERIES_OBJ) {
         //
@@ -720,7 +720,7 @@ static void Clonify_And_Bind_Relative(
                 NODE_FLAG_MANAGED
             );
 
-            INIT_VAL_NODE1(v, series);  // copies args
+            Init_Cell_Node1(v, series);  // copies args
             INIT_SPECIFIER(v, UNBOUND);  // copied w/specifier--not relative
 
             // See notes in Clonify()...need to copy immutable paths so that
@@ -736,7 +736,7 @@ static void Clonify_And_Bind_Relative(
                 VAL_SERIES(v),
                 NODE_FLAG_MANAGED
             );
-            INIT_VAL_NODE1(v, series);
+            Init_Cell_Node1(v, series);
 
             would_need_deep = false;
         }

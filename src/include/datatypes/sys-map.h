@@ -65,9 +65,9 @@ inline static Array* MAP_PAIRLIST(const_if_c Map* map)
 
 
 inline static const Map* VAL_MAP(NoQuote(const Cell*) v) {
-    assert(CELL_HEART(v) == REB_MAP);
+    assert(Cell_Heart(v) == REB_MAP);
 
-    Array* a = ARR(VAL_NODE1(v));
+    Array* a = ARR(Cell_Node1(v));
     if (Get_Series_Flag(a, INACCESSIBLE))
         fail (Error_Series_Data_Freed_Raw());
 

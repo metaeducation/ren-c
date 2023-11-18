@@ -58,15 +58,15 @@ Node* Dump_Value_Debug(const Cell* v)
 
     printf("kind_byte=%d\n", cast(int, VAL_TYPE_UNCHECKED(v)));
 
-    enum Reb_Kind heart = CELL_HEART(VAL_UNESCAPED(v));
+    enum Reb_Kind heart = Cell_Heart(VAL_UNESCAPED(v));
     const char *type = String_UTF8(Canon_Symbol(SYM_FROM_KIND(heart)));
     printf("cell_heart=%s\n", type);
     fflush(stdout);
 
     if (Get_Cell_Flag(v, FIRST_IS_NODE))
-        printf("has first node: %p\n", cast(void*, VAL_NODE1(v)));
+        printf("has first node: %p\n", cast(void*, Cell_Node1(v)));
     if (Get_Cell_Flag(v, SECOND_IS_NODE))
-        printf("has second node: %p\n", cast(void*, VAL_NODE2(v)));
+        printf("has second node: %p\n", cast(void*, Cell_Node2(v)));
 
     if (not containing)
         return nullptr;

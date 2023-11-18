@@ -879,7 +879,7 @@ Context* Error_No_Relative_Core(NoQuote(const Cell*) any_word)
     DECLARE_LOCAL (unbound);
     Init_Any_Word(
         unbound,
-        CELL_HEART(any_word),
+        Cell_Heart(any_word),
         VAL_WORD_SYMBOL(any_word)
     );
 

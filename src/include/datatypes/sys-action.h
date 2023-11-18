@@ -236,9 +236,9 @@ inline static bool Is_Throwing(Level(*) level_) {
     cast(Bounce, &PG_R_Suspend)
 
 
-#define INIT_VAL_ACTION_DETAILS                         INIT_VAL_NODE1
-#define VAL_ACTION_PARTIALS_OR_LABEL(v)                 SER(VAL_NODE2(v))
-#define INIT_VAL_ACTION_PARTIALS_OR_LABEL               INIT_VAL_NODE2
+#define INIT_VAL_ACTION_DETAILS                         Init_Cell_Node1
+#define VAL_ACTION_PARTIALS_OR_LABEL(v)                 SER(Cell_Node2(v))
+#define INIT_VAL_ACTION_PARTIALS_OR_LABEL               Init_Cell_Node2
 
 
 inline static Phase* CTX_FRAME_PHASE(Context* c);
@@ -268,7 +268,7 @@ inline static Phase* ACT_IDENTITY(Action* action) {
 
 inline static bool Is_Frame_Details(NoQuote(const Cell*) v) {
     assert(HEART_BYTE(v) == REB_FRAME);
-    return IS_DETAILS(cast(Stub*, VAL_NODE1(v)));
+    return IS_DETAILS(cast(Stub*, Cell_Node1(v)));
 }
 
 #define Is_Frame_Exemplar(v) (not Is_Frame_Details(v))
@@ -344,7 +344,7 @@ inline static void INIT_VAL_FRAME_BINDING(
 
 inline static Option(Array*) ACT_PARTIALS(Action* a) {
     if (IS_DETAILS(a))
-        return ARR(VAL_NODE2(ACT_ARCHETYPE(a)));
+        return ARR(Cell_Node2(ACT_ARCHETYPE(a)));
     return nullptr;  // !!! how to preserve partials in exemplars?
 }
 
@@ -459,7 +459,7 @@ inline static void Init_Key(REBKEY *dest, const Symbol* symbol)
 
 inline static Action* VAL_ACTION(NoQuote(const Cell*) v) {
     assert(HEART_BYTE(v) == REB_FRAME);
-    Series* s = SER(VAL_NODE1(v));  // maybe exemplar, maybe details
+    Series* s = SER(Cell_Node1(v));  // maybe exemplar, maybe details
     if (Get_Series_Flag(s, INACCESSIBLE))
         fail (Error_Series_Data_Freed_Raw());
     return ACT(s);

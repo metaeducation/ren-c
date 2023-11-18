@@ -407,7 +407,7 @@ inline static Array* Copy_Array_At_Extra_Deep_Flags_Managed(
 inline static const Array* VAL_ARRAY(NoQuote(const Cell*) v) {
     assert(ANY_ARRAYLIKE(v));
 
-    const Array* a = ARR(VAL_NODE1(v));
+    const Array* a = ARR(Cell_Node1(v));
     if (Get_Series_Flag(a, INACCESSIBLE))
         fail (Error_Series_Data_Freed_Raw());
     return a;
@@ -538,7 +538,7 @@ inline static Cell* Init_Relative_Block_At(
     REBLEN index
 ){
     Reset_Unquoted_Header_Untracked(out, CELL_MASK_BLOCK);
-    INIT_VAL_NODE1(out, array);
+    Init_Cell_Node1(out, array);
     VAL_INDEX_RAW(out) = index;
     INIT_SPECIFIER(out, action);
     return out;
@@ -576,7 +576,7 @@ inline static Cell* Init_Relative_Block_At(
 // https://forum.rebol.info/t/doubled-groups-as-a-dialecting-tool/1893
 //
 inline static bool Is_Any_Doubled_Group(NoQuote(const Cell*) group) {
-    assert(ANY_GROUP_KIND(CELL_HEART(group)));
+    assert(ANY_GROUP_KIND(Cell_Heart(group)));
     const Cell* tail;
     const Cell* inner = VAL_ARRAY_AT(&tail, group);
     if (inner + 1 != tail)  // should be exactly one item

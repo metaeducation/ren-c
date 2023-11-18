@@ -336,7 +336,7 @@ DECLARE_NATIVE(reduce_each)
 
 
 bool Match_For_Compose(NoQuote(const Cell*) group, const REBVAL *label) {
-    assert(ANY_GROUP_KIND(CELL_HEART(group)));
+    assert(ANY_GROUP_KIND(Cell_Heart(group)));
 
     if (Is_Nulled(label))
         return true;
@@ -426,13 +426,13 @@ static Atom(*) Finalize_Composer_Level(
         return out;
     }
 
-    enum Reb_Kind heart = CELL_HEART(composee);
+    enum Reb_Kind heart = Cell_Heart(composee);
     REBLEN quotes = VAL_NUM_QUOTES(composee);
 
     if (ANY_SEQUENCE_KIND(heart)) {
         if (not Try_Pop_Sequence_Or_Element_Or_Nulled(
             out,
-            CELL_HEART(composee),
+            Cell_Heart(composee),
             L->baseline.stack_base
         )){
             if (Is_Valid_Sequence_Element(heart, out))
@@ -569,7 +569,7 @@ Bounce Composer_Executor(Level(*) const L)
         goto handle_next_item;
     }
 
-    enum Reb_Kind heart = CELL_HEART(at);  // quoted groups match, see [1]
+    enum Reb_Kind heart = Cell_Heart(at);  // quoted groups match, see [1]
 
     REBSPC *match_specifier = nullptr;
     NoQuote(const Cell*) match = nullptr;
@@ -639,7 +639,7 @@ Bounce Composer_Executor(Level(*) const L)
         or STATE == ST_COMPOSER_RUNNING_PREDICATE
     );
 
-    enum Reb_Kind group_heart = CELL_HEART(At_Level(L));
+    enum Reb_Kind group_heart = Cell_Heart(At_Level(L));
     Byte group_quote_byte = QUOTE_BYTE(At_Level(L));
 
     if (Is_Splice(OUT))

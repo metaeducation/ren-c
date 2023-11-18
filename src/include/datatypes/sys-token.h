@@ -37,7 +37,7 @@
 //
 
 inline static bool IS_CHAR_CELL(NoQuote(const Cell*) v) {
-    if (CELL_HEART(v) != REB_ISSUE)
+    if (Cell_Heart(v) != REB_ISSUE)
         return false;
 
     if (Get_Cell_Flag(v, ISSUE_HAS_NODE))
@@ -74,7 +74,7 @@ inline static Byte VAL_CHAR_ENCODED_SIZE(NoQuote(const Cell*) v)
   { return Encoded_Size_For_Codepoint(VAL_CHAR(v)); }
 
 inline static const Byte* VAL_CHAR_ENCODED(NoQuote(const Cell*) v) {
-    assert(CELL_HEART(v) == REB_ISSUE and Not_Cell_Flag(v, ISSUE_HAS_NODE));
+    assert(Cell_Heart(v) == REB_ISSUE and Not_Cell_Flag(v, ISSUE_HAS_NODE));
     assert(EXTRA(Bytes, v).exactly_4[IDX_EXTRA_LEN] <= 1);  // e.g. codepoint
     return PAYLOAD(Bytes, v).at_least_8;  // !!! '\0' terminated or not?
 }
@@ -281,7 +281,7 @@ inline static Utf8(const*) VAL_UTF8_LEN_SIZE_AT_LIMIT(
         size_out = &dummy_size;  // force size calculation for debug check
   #endif
 
-    if (CELL_HEART(v) == REB_ISSUE and Not_Cell_Flag(v, ISSUE_HAS_NODE)) {
+    if (Cell_Heart(v) == REB_ISSUE and Not_Cell_Flag(v, ISSUE_HAS_NODE)) {
         REBLEN len;
         Size size;
         //

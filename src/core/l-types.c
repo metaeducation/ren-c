@@ -254,7 +254,7 @@ Bounce Reflect_Core(Level(*) level_)
         // operate on SYMs in a switch().  Longer term, a more extensible
         // idea will be necessary.
         //
-        fail (Error_Cannot_Reflect(CELL_HEART(v), ARG(property)));
+        fail (Error_Cannot_Reflect(Cell_Heart(v), ARG(property)));
     }
 
     switch (id) {

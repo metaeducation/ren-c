@@ -115,7 +115,7 @@ uint32_t Hash_UTF8_Len_Caseless(Utf8(const*) cp, REBLEN len) {
 //
 uint32_t Hash_Value(const Cell* cell)
 {
-    enum Reb_Kind heart = CELL_HEART(cell);
+    enum Reb_Kind heart = Cell_Heart(cell);
 
     uint32_t hash;
 
@@ -213,7 +213,7 @@ uint32_t Hash_Value(const Cell* cell)
             break;
         }
 
-        const Node* node1 = VAL_NODE1(cell);
+        const Node* node1 = Cell_Node1(cell);
         assert(not (NODE_BYTE(node1) & NODE_BYTEMASK_0x01_CELL));
 
         switch (Series_Flavor(SER(node1))) {
@@ -379,7 +379,7 @@ Value(*) Init_Map(Cell* out, Map* map)
     Force_Series_Managed(MAP_PAIRLIST(map));
 
     Reset_Unquoted_Header_Untracked(TRACK(out), CELL_MASK_MAP);
-    INIT_VAL_NODE1(out, MAP_PAIRLIST(map));
+    Init_Cell_Node1(out, MAP_PAIRLIST(map));
     // second payload pointer not used
 
     return cast(ValueT*, out);

@@ -705,7 +705,7 @@ inline static bool Pushed_Continuation(
       case REB_META_BLOCK:
       case REB_BLOCK: {
         Level(*) L = Make_Level_At_Core(branch, branch_specifier, flags);
-        if (CELL_HEART_UNCHECKED(branch) == REB_META_BLOCK) {
+        if (Cell_Heart_Unchecked(branch) == REB_META_BLOCK) {
             Set_Level_Flag(L, META_RESULT);
             Set_Level_Flag(L, RAISED_RESULT_OK);
         }

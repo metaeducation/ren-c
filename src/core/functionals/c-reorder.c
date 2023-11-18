@@ -164,7 +164,7 @@ DECLARE_NATIVE(reorder_p)  // see REORDER in %base-defs.r, for inheriting meta
         else if (Is_Quoted(item)) {
             if (
                 VAL_QUOTED_DEPTH(item) != 1
-                or not ANY_WORD_KIND(CELL_HEART(item))
+                or not ANY_WORD_KIND(Cell_Heart(item))
             ) {
                 error = Error_User("REORDER allows single quoted ANY-WORD!");
                 goto cleanup_binder;

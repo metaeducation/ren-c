@@ -69,8 +69,8 @@
 #if (! DEBUG_EXTANT_STACK_POINTERS)
     #define StackValue(p) REBVAL*
 #else
-    struct Reb_Stack_Value_Ptr;
-    #define StackValue(p) Reb_Stack_Value_Ptr
+    struct StackValuePointer;
+    #define StackValue(p) StackValuePointer
 #endif
 
 
@@ -84,7 +84,7 @@
 // Most of the time, routines want to see these as QUOTED!/QUASI!/ISOTOPE!.
 // But some lower-level routines (like molding or comparison) want to act
 // on them in-place without making a copy.  To ensure they see the value for
-// the "type that it is" and use CELL_HEART() and not VAL_TYPE(), this alias
+// the "type that it is" and use Cell_Heart() and not VAL_TYPE(), this alias
 // for Cell prevents VAL_TYPE() operations.
 //
 // Note: This needs special handling in %make-headers.r to recognize the

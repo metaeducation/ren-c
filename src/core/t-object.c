@@ -186,7 +186,7 @@ static void Append_Vars_To_Context_From_Group(REBVAL *context, REBVAL *block)
 //    are "untracked" by saying they're managed, and taking that flag off.
 //
 void Init_Evars(EVARS *e, NoQuote(const Cell*) v) {
-    enum Reb_Kind kind = CELL_HEART(v);
+    enum Reb_Kind kind = Cell_Heart(v);
 
     e->visibility = VAR_VISIBILITY_ALL;  // ensure not uninitialized
 
@@ -450,11 +450,11 @@ void Shutdown_Evars(EVARS *e)
 //
 REBINT CT_Context(NoQuote(const Cell*) a, NoQuote(const Cell*) b, bool strict)
 {
-    assert(ANY_CONTEXT_KIND(CELL_HEART(a)));
-    assert(ANY_CONTEXT_KIND(CELL_HEART(b)));
+    assert(ANY_CONTEXT_KIND(Cell_Heart(a)));
+    assert(ANY_CONTEXT_KIND(Cell_Heart(b)));
 
-    if (CELL_HEART(a) != CELL_HEART(b))  // e.g. ERROR! won't equal OBJECT!
-        return CELL_HEART(a) > CELL_HEART(b) ? 1 : 0;
+    if (Cell_Heart(a) != Cell_Heart(b))  // e.g. ERROR! won't equal OBJECT!
+        return Cell_Heart(a) > Cell_Heart(b) ? 1 : 0;
 
     Context* c1 = VAL_CONTEXT(a);
     Context* c2 = VAL_CONTEXT(b);
@@ -951,7 +951,7 @@ void MF_Context(REB_MOLD *mo, NoQuote(const Cell*) v, bool form)
     }
     Push_Pointer_To_Series(g_mold.stack, c);
 
-    if (CELL_HEART(v) == REB_FRAME and not IS_FRAME_PHASED(v)) {
+    if (Cell_Heart(v) == REB_FRAME and not IS_FRAME_PHASED(v)) {
         Array* varlist = CTX_VARLIST(VAL_CONTEXT(v));
         if (Get_Subclass_Flag(VARLIST, varlist, FRAME_HAS_BEEN_INVOKED)) {
             Append_Ascii(s, "make frame! [...invoked frame...]\n");
@@ -1625,7 +1625,7 @@ REBTYPE(Frame)
 
 static bool Same_Action(NoQuote(const Cell*) a, NoQuote(const Cell*) b)
 {
-    assert(CELL_HEART(a) == REB_FRAME and CELL_HEART(b) == REB_FRAME);
+    assert(Cell_Heart(a) == REB_FRAME and Cell_Heart(b) == REB_FRAME);
     if (not Is_Frame_Details(a) or not Is_Frame_Details(b))
         return false;
 

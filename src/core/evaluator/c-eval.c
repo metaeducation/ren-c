@@ -1397,7 +1397,7 @@ Bounce Evaluator_Executor(Level(*) L)
                 fail ("QUOTED! not currently permitted in SET-BLOCK!s");
 
             bool raised_ok = Is_Quasi(check);  // quasi has meaning
-            enum Reb_Kind heart = CELL_HEART(check);
+            enum Reb_Kind heart = Cell_Heart(check);
 
             bool is_optional;
             if (
@@ -1414,7 +1414,7 @@ Bounce Evaluator_Executor(Level(*) L)
                 );
                 if (heart == REB_META_PATH)
                     Metafy(SCRATCH);
-                heart = CELL_HEART(SCRATCH);
+                heart = Cell_Heart(SCRATCH);
             }
             else {
                 is_optional = false;  // no leading slash means required
@@ -1438,7 +1438,7 @@ Bounce Evaluator_Executor(Level(*) L)
                 else if (heart == REB_GROUP and Is_Void(SPARE))
                     Init_Blank(SPARE);  // [(void)]: ... opts out of return
 
-                heart = CELL_HEART(SPARE);
+                heart = Cell_Heart(SPARE);
                 Copy_Cell(PUSH(), SPARE);
             }
             else
@@ -1558,7 +1558,7 @@ Bounce Evaluator_Executor(Level(*) L)
 
             assert(not Is_Quoted(var));
             bool raised_ok = Is_Quasi(var);  // quasi has meaning
-            enum Reb_Kind var_heart = CELL_HEART(var);
+            enum Reb_Kind var_heart = Cell_Heart(var);
 
             if (pack_meta_at == pack_meta_tail) {
                 if (not is_optional)

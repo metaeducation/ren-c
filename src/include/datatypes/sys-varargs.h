@@ -55,11 +55,11 @@
 #define VAL_VARARGS_SIGNED_PARAM_INDEX(v) \
     PAYLOAD(Any, (v)).first.i
 
-#define INIT_VAL_VARARGS_PHASE          INIT_VAL_NODE2
-#define VAL_VARARGS_PHASE(v)            ACT(VAL_NODE2(v))
+#define INIT_VAL_VARARGS_PHASE          Init_Cell_Node2
+#define VAL_VARARGS_PHASE(v)            ACT(Cell_Node2(v))
 
 inline static Array* VAL_VARARGS_BINDING(NoQuote(const Cell*) v) {
-    assert(CELL_HEART(v) == REB_VARARGS);
+    assert(Cell_Heart(v) == REB_VARARGS);
     return ARR(BINDING(v));  // may be varlist or plain array
 }
 
@@ -107,7 +107,7 @@ inline static bool Is_Block_Style_Varargs(
     REBVAL **shared_out,
     NoQuote(const Cell*) vararg
 ){
-    assert(CELL_HEART(vararg) == REB_VARARGS);
+    assert(Cell_Heart(vararg) == REB_VARARGS);
 
     Array* binding = ARR(BINDING(vararg));
     if (IS_VARLIST(binding)) {
@@ -134,7 +134,7 @@ inline static bool Is_Level_Style_Varargs_Maybe_Null(
     Level(*) *L_out,
     NoQuote(const Cell*) vararg
 ){
-    assert(CELL_HEART(vararg) == REB_VARARGS);
+    assert(Cell_Heart(vararg) == REB_VARARGS);
 
     Array* binding = ARR(BINDING(vararg));
     if (IS_VARLIST(binding)) {
@@ -186,7 +186,7 @@ inline static const REBPAR *Param_For_Varargs_Maybe_Null(
     const REBKEY **key,
     NoQuote(const Cell*) v
 ){
-    assert(CELL_HEART(v) == REB_VARARGS);
+    assert(Cell_Heart(v) == REB_VARARGS);
 
     Action* phase = VAL_VARARGS_PHASE(v);
     if (phase) {

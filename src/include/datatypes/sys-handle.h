@@ -41,8 +41,8 @@
 //   the spec and has different forms for functions and data.
 //
 
-#define INIT_VAL_HANDLE_SINGULAR        INIT_VAL_NODE1
-#define VAL_HANDLE_SINGULAR(v)          ARR(VAL_NODE1(v))
+#define INIT_VAL_HANDLE_SINGULAR        Init_Cell_Node1
+#define VAL_HANDLE_SINGULAR(v)          ARR(Cell_Node1(v))
 
 #define VAL_HANDLE_LENGTH_U(v)          PAYLOAD(Any, (v)).second.u
 
@@ -51,19 +51,19 @@
 
 
 inline static bool Is_Handle_Cfunc(NoQuote(const Cell*) v) {
-    assert(CELL_HEART_UNCHECKED(v) == REB_HANDLE);
+    assert(Cell_Heart_Unchecked(v) == REB_HANDLE);
     return VAL_HANDLE_LENGTH_U(v) == 0;
 }
 
 inline static NoQuote(const Cell*) VAL_HANDLE_CANON(NoQuote(const Cell*) v) {
-    assert(CELL_HEART_UNCHECKED(v) == REB_HANDLE);
+    assert(Cell_Heart_Unchecked(v) == REB_HANDLE);
     if (Not_Cell_Flag_Unchecked(v, FIRST_IS_NODE))
         return v;  // changing handle instance won't be seen by copies
     return Array_Single(VAL_HANDLE_SINGULAR(v));  // has shared node
 }
 
 inline static Cell* mutable_VAL_HANDLE_CANON(Cell* v) {
-    assert(CELL_HEART_UNCHECKED(v) == REB_HANDLE);
+    assert(Cell_Heart_Unchecked(v) == REB_HANDLE);
     if (Not_Cell_Flag_Unchecked(v, FIRST_IS_NODE))
         return v;  // changing handle instance won't be seen by copies
     return Array_Single(VAL_HANDLE_SINGULAR(v));  // has shared node
@@ -88,7 +88,7 @@ inline static CFunction* VAL_HANDLE_CFUNC(NoQuote(const Cell*) v) {
 }
 
 inline static CLEANUP_CFUNC *VAL_HANDLE_CLEANER(NoQuote(const Cell*) v) {
-    assert(CELL_HEART_UNCHECKED(v) == REB_HANDLE);
+    assert(Cell_Heart_Unchecked(v) == REB_HANDLE);
     if (Not_Cell_Flag_Unchecked(v, FIRST_IS_NODE))
         return nullptr;
     return VAL_HANDLE_SINGULAR(v)->misc.cleaner;

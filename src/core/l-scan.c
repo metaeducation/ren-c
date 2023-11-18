@@ -2792,10 +2792,10 @@ Bounce Scanner_Executor(Level(*) const L) {
         //
         if (
             Get_Cell_Flag(TOP, FIRST_IS_NODE)
-            and VAL_NODE1(TOP) != nullptr  // null legal in node slots ATM
-            and Is_Series_Array(SER(VAL_NODE1(TOP)))
+            and Cell_Node1(TOP) != nullptr  // null legal in node slots ATM
+            and Is_Series_Array(SER(Cell_Node1(TOP)))
         ){
-            Array* a = ARR(VAL_NODE1(TOP));
+            Array* a = ARR(Cell_Node1(TOP));
             a->misc.line = ss->line;
             mutable_LINK(Filename, a) = ss->file;
             Set_Array_Flag(a, HAS_FILE_LINE_UNMASKED);

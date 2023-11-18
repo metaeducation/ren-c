@@ -257,7 +257,7 @@ static bool Subparse_Throws(
     Option(Array*) collection,
     Flags flags
 ){
-    assert(ANY_SERIES_KIND(CELL_HEART(input)));
+    assert(ANY_SERIES_KIND(Cell_Heart(input)));
 
     Push_Level(out, L);  // checks for C stack overflow
     assert(Is_Fresh(out));
@@ -672,7 +672,7 @@ static REBIXO Parse_One_Rule(
         // !!! The concept is based somewhat on what was legal in FIND for
         // Rebol2, and leverages quoting.  It's being experimented with.
         //
-        enum Reb_Kind rule_heart = CELL_HEART(rule);
+        enum Reb_Kind rule_heart = Cell_Heart(rule);
         if (
             (ANY_WORD_KIND(rule_heart) and VAL_NUM_QUOTES(rule) == 1)
             or (ANY_STRING_KIND(rule_heart) and VAL_NUM_QUOTES(rule) <= 1)
@@ -2217,7 +2217,7 @@ DECLARE_NATIVE(subparse)
                     i = END_FLAG;  // `parse [] [into [...]]`, rejects
                     break;
                 }
-                else if (ANY_PATH_KIND(CELL_HEART(into))) {
+                else if (ANY_PATH_KIND(Cell_Heart(into))) {
                     //
                     // Can't PARSE an ANY-PATH! because it has no position
                     // But would be inconvenient if INTO did not support.
@@ -2229,7 +2229,7 @@ DECLARE_NATIVE(subparse)
                     into = rebValue("as block! @", SPARE);
                 }
                 else if (
-                    not ANY_SERIES_KIND(CELL_HEART(into))
+                    not ANY_SERIES_KIND(Cell_Heart(into))
                 ){
                     i = END_FLAG;  // `parse [1] [into [...]`, rejects
                     break;
@@ -2747,7 +2747,7 @@ DECLARE_NATIVE(parse3)
         );
     }
 
-    if (not ANY_SERIES_KIND(CELL_HEART(input)))
+    if (not ANY_SERIES_KIND(Cell_Heart(input)))
         fail ("PARSE input must be an ANY-SERIES! (use AS BLOCK! for PATH!)");
 
     Level(*) sub = Make_Level_At(rules, LEVEL_MASK_NONE);

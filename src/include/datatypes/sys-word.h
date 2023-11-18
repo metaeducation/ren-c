@@ -163,7 +163,7 @@ inline static bool IS_THE(const Cell* v) {
 //
 inline static bool IS_QUOTED_WORD(const Cell* v) {
     return VAL_NUM_QUOTES(v) == 1
-        and CELL_HEART(VAL_UNESCAPED(v)) == REB_WORD;
+        and Cell_Heart(VAL_UNESCAPED(v)) == REB_WORD;
 }
 
 

@@ -539,7 +539,7 @@ inline static Option(Series*) Get_Word_Container(
 
         if (
             IS_SET_WORD(Array_Single(specifier))
-            and REB_SET_WORD != CELL_HEART(any_word)
+            and REB_SET_WORD != Cell_Heart(any_word)
         ){
             goto skip_miss_patch;
         }

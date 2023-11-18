@@ -169,10 +169,10 @@ REBINT CT_Handle(NoQuote(const Cell*) a, NoQuote(const Cell*) b, bool strict)
         if (Not_Cell_Flag(b, FIRST_IS_NODE))
             return 1;
 
-        if (VAL_NODE1(a) == VAL_NODE1(b))
+        if (Cell_Node1(a) == Cell_Node1(b))
             return 0;
 
-        return VAL_NODE1(a) > VAL_NODE1(b) ? 1 : -1;
+        return Cell_Node1(a) > Cell_Node1(b) ? 1 : -1;
     }
     else if (Get_Cell_Flag(b, FIRST_IS_NODE))
         return -1;
