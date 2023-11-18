@@ -68,12 +68,12 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// NOTE: Use TRY_ALLOC and TRY_ALLOC_N instead of Try_Alloc_Mem to ensure the
+// NOTE: Use Try_Alloc and Try_Alloc_N instead of Try_Alloc_Mem to ensure the
 // memory matches the size for the type, and that the code builds as C++.
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Try_Alloc_Mem() is a basic memory allocator, which clients must call with
+// Try_Alloc_Core() is a basic memory allocator, which clients must call with
 // the correct size of memory block to be freed.  This differs from malloc(),
 // whose clients do not need to remember the size of the allocation to pass
 // into free().
@@ -86,10 +86,10 @@
 //     http://stackoverflow.com/questions/1229241/
 //
 // Finer-grained allocations are done with memory pooling.  But the blocks of
-// memory used by the pools are still acquired using TRY_ALLOC_N and FREE_N,
-// which are interfaces to the Try_Alloc_Mem() and Free_Mem() routines.
+// memory used by the pools are still acquired using Try_Alloc_N and FREE_N,
+// which are interfaces to the Try_Alloc_Core() and Free_Core() routines.
 //
-void *Try_Alloc_Mem(size_t size)
+void *Try_Alloc_Core(size_t size)
 {
     // notice memory usage limit exceeded *before* the allocation is performed
 
@@ -114,13 +114,13 @@ void *Try_Alloc_Mem(size_t size)
 
     // malloc() internally remembers the size of the allocation, and is hence
     // "overkill" for this operation.  Yet the current implementations on all
-    // C platforms use malloc() and free() anyway.
+    // C platforms use malloc() and Free() anyway.
 
   #ifdef NDEBUG
     void *p = malloc(size);
   #else
     // Cache size at the head of the allocation in debug builds for checking.
-    // Also catches free() use with Try_Alloc_Mem() instead of Free_Mem().
+    // Also catches Free() use with Try_Alloc_Core() instead of Free_Core().
     //
     // Use a 64-bit quantity to preserve DEBUG_MEMORY_ALIGN invariant.
 
@@ -151,12 +151,12 @@ void *Try_Alloc_Mem(size_t size)
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Free_Mem is a wrapper over free(), that subtracts from a total count that
+// Free_Mem is a wrapper over Free(), that subtracts from a total count that
 // Rebol can see how much memory was released.  This information assists in
 // deciding when it is necessary to run a garbage collection, or when to
 // impose a quota.
 //
-void Free_Mem(void *mem, size_t size)
+void Free_Core(void *mem, size_t size)
 {
   #ifdef NDEBUG
     free(mem);
@@ -268,7 +268,7 @@ void Startup_Pools(REBINT scale)
         scale = 1;
     }
 
-    g_mem.pools = TRY_ALLOC_N(Pool, MAX_POOLS);
+    g_mem.pools = Try_Alloc_N(Pool, MAX_POOLS);
 
     // Copy pool sizes to new pool structure:
     //
@@ -298,7 +298,7 @@ void Startup_Pools(REBINT scale)
         g_mem.pools[n].has = 0;
     }
 
-    g_mem.pools_by_size = TRY_ALLOC_N(Byte, POOLS_BY_SIZE_LEN);
+    g_mem.pools_by_size = Try_Alloc_N(Byte, POOLS_BY_SIZE_LEN);
 
     // sizes 0 - 8 are pool 0
     for (n = 0; n <= 8; n++) g_mem.pools_by_size[n] = 0;
@@ -320,7 +320,7 @@ void Startup_Pools(REBINT scale)
     assert(g_mem.objects_made == 0);
   #endif
 
-    g_mem.prior_expand = TRY_ALLOC_N(Series*, MAX_EXPAND_LIST);
+    g_mem.prior_expand = Try_Alloc_N(Series*, MAX_EXPAND_LIST);
     memset(g_mem.prior_expand, 0, sizeof(Series*) * MAX_EXPAND_LIST);
     g_mem.prior_expand[0] = (Series*)1;
 }
@@ -382,17 +382,17 @@ void Shutdown_Pools(void)
         Segment* seg = pool->segments;
         while (seg) {
             Segment* next = seg->next;
-            FREE_N(char, mem_size, cast(char*, seg));
+            Free_N(char, mem_size, cast(char*, seg));
             seg = next;
         }
     }
 
-    FREE_N(Pool, MAX_POOLS, g_mem.pools);
+    Free_N(Pool, MAX_POOLS, g_mem.pools);
 
-    FREE_N(Byte, POOLS_BY_SIZE_LEN, g_mem.pools_by_size);
+    Free_N(Byte, POOLS_BY_SIZE_LEN, g_mem.pools_by_size);
 
     // !!! Revisit location (just has to be after all series are freed)
-    FREE_N(Series*, MAX_EXPAND_LIST, g_mem.prior_expand);
+    Free_N(Series*, MAX_EXPAND_LIST, g_mem.prior_expand);
 
   #if DEBUG_COLLECT_STATS
     g_mem.series_memory = 0;
@@ -440,7 +440,7 @@ bool Try_Fill_Pool(Pool* pool)
     REBLEN num_units = pool->num_units_per_segment;
     REBLEN mem_size = pool->wide * num_units + sizeof(Segment);
 
-    Segment* seg = cast(Segment*, TRY_ALLOC_N(char, mem_size));
+    Segment* seg = cast(Segment*, Try_Alloc_N(char, mem_size));
     if (seg == nullptr)
         return false;
 
@@ -669,7 +669,7 @@ void Free_Unbiased_Series_Data(char *unbiased, Size total)
         cast(Byte*, unit)[0] = FREE_POOLUNIT_BYTE;
     }
     else {
-        FREE_N(char, total, unbiased);
+        Free_N(char, total, unbiased);
         g_mem.pools[SYSTEM_POOL].has -= total;
         g_mem.pools[SYSTEM_POOL].free++;
     }
@@ -1169,7 +1169,7 @@ void Decay_Series(Series* s)
         // nodes themselves...have they never been accounted for, e.g. in
         // R3-Alpha?  If not, they should be...additional sizeof(Stub),
         // also tracking overhead for that.  Review the question of how
-        // the GC watermarks interact with Try_Alloc_Mem() and the "higher
+        // the GC watermarks interact with Try_Alloc_Core() and the "higher
         // level" allocations.
 
         int tmp;

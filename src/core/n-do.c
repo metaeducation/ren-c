@@ -801,7 +801,7 @@ DECLARE_NATIVE(apply)
     );
     Push_Level(SPARE, L);
 
-    EVARS *e = TRY_ALLOC(EVARS);
+    EVARS *e = Try_Alloc(EVARS);
     Init_Evars(e, frame);  // CTX_ARCHETYPE(exemplar) is phased, sees locals
     Init_Handle_Cdata(iterator, e, sizeof(EVARS));
 
@@ -869,7 +869,7 @@ DECLARE_NATIVE(apply)
                 if (not REF(relax))
                     fail (Error_Apply_Too_Many_Raw());
 
-                FREE(EVARS, e);
+                Free(EVARS, e);
                 Init_None(iterator);
                 param = nullptr;  // we're throwing away the evaluated product
                 break;
@@ -946,7 +946,7 @@ DECLARE_NATIVE(apply)
     else {
         EVARS *e = VAL_HANDLE_POINTER(EVARS, iterator);
         Shutdown_Evars(e);
-        FREE(EVARS, e);
+        Free(EVARS, e);
         Init_None(iterator);
     }
 

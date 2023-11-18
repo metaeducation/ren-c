@@ -141,7 +141,7 @@
  *  if memory is available and otherwise does something you deem
  *  appropriate.  If MALLOC is undefined, malloc will be invoked
  *  directly -- and assumed always to succeed.  Similarly, if you
- *  want something other than the system's free() to be called to
+ *  want something other than the system's Free() to be called to
  *  recycle memory acquired from MALLOC, #define FREE to be the
  *  name of the alternate routine.  (FREE or free is only called in
  *  pathological cases, e.g., in a dtoa call after a dtoa return in
@@ -1662,7 +1662,7 @@ Bfree(Bigint *v MTd)
 #endif
     if (v) {
         if (v->k > Kmax)
-            FREE((void*)v);
+            free((void*)v);
         else {
 #ifdef MULTIPLE_THREADS
             if (!(TI = *PTI))

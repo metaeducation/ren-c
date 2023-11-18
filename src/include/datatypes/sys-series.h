@@ -1296,7 +1296,7 @@ inline static bool Did_Series_Data_Alloc(Series* s, REBLEN capacity) {
                 Clear_Series_Flag(s, POWER_OF_2);
         }
 
-        s->content.dynamic.data = TRY_ALLOC_N(char, size);
+        s->content.dynamic.data = Try_Alloc_N(char, size);
         if (not s->content.dynamic.data)
             return false;
 
