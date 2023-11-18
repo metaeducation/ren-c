@@ -140,7 +140,7 @@ inline static bool Is_None(const Cell* v)
 #define Is_Meta_Of_None(v)          Is_Quasi_Void(v)
 
 #define NONE_CELL \
-    c_cast(const REBVAL*, &PG_None_Cell)  // !!! Could we just use Lib(NONE) ?
+    cast(const REBVAL*, &PG_None_Cell)  // !!! Could we just use Lib(NONE) ?
 
 
 //=//// EFFICIENT VOID AND NONE "FINALIZATION" ////////////////////////////=//

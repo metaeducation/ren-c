@@ -86,7 +86,7 @@ inline static Cell* Quotify_Core(Cell* v, Count depth) {
     #define Quotify Quotify_Core
 #else
     inline static Value(*) Quotify(Value(*) v, Count depth)
-        { return cast(Value(*), Quotify_Core(v, depth)); }
+        { return c_cast(Value(*), Quotify_Core(v, depth)); }
 
     inline static Cell* Quotify(Cell* v, Count depth)
         { return Quotify_Core(v, depth); }

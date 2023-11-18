@@ -40,45 +40,23 @@
 
 //=//// BINARY! SERIES ////////////////////////////////////////////////////=//
 
-inline static Byte* Binary_At(const_if_c Binary* bin, REBLEN n)
-  { return Series_At(Byte, bin, n); }
+#define Binary_At(bin,i)        Series_At(Byte, (bin), (i))
+#define Binary_Head(bin)        Series_Head(Byte, (bin))
+#define Binary_Tail(bin)        Series_Tail(Byte, (bin))
+#define Binary_Last(bin)        Series_Last(Byte, (bin))
 
-inline static Byte* Binary_Head(const_if_c Binary* bin)
-  { return Series_Head(Byte, bin); }
-
-inline static Byte* Binary_Tail(const_if_c Binary* bin)
-  { return Series_Tail(Byte, bin); }
-
-inline static Byte* Binary_Last(const_if_c Binary* bin)
-  { return Series_Last(Byte, bin); }
-
-#if CPLUSPLUS_11
-    inline static const Byte* Binary_At(const Binary* bin, REBLEN n)
-      { return Series_At(const Byte, bin, n); }
-
-    inline static const Byte* Binary_Head(const Binary* bin)
-      { return Series_Head(const Byte, bin); }
-
-    inline static const Byte* Binary_Tail(const Binary* bin)
-      { return Series_Tail(const Byte, bin); }
-
-    inline static const Byte* Binary_Last(const Binary* bin)
-      { return Series_Last(const Byte, bin); }
-#endif
-
-inline static REBLEN Binary_Len(const Binary* s) {
+inline static Length Binary_Len(const Binary* s) {
     assert(Series_Wide(s) == 1);
     return Series_Used(s);
 }
 
-inline static void Term_Binary(Binary* s) {
-    *Binary_Tail(s) = '\0';
-}
+#define Term_Binary(bin) \
+    *Binary_Tail(bin) = '\0'
 
-inline static void Term_Binary_Len(Binary* s, REBLEN len) {
-    assert(Series_Wide(s) == 1);
-    Set_Series_Used(s, len);
-    *Binary_Tail(s) = '\0';
+inline static void Term_Binary_Len(Binary* bin, Length len) {
+    assert(Series_Wide(bin) == 1);
+    Set_Series_Used(bin, len);
+    Term_Binary(bin);
 }
 
 // Make a byte series of length 0 with the given capacity (plus 1, to permit
@@ -86,7 +64,7 @@ inline static void Term_Binary_Len(Binary* s, REBLEN len) {
 // terminator in case they are aliased as UTF-8 later, e.g. `as word! binary`,
 // since it could be costly to give them that capacity after-the-fact.
 //
-inline static Binary* Make_Binary_Core(REBLEN capacity, Flags flags)
+inline static Binary* Make_Binary_Core(Length capacity, Flags flags)
 {
     assert(Flavor_From_Flags(flags) == 0);  // shouldn't pass in a flavor
 

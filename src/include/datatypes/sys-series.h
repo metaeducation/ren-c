@@ -521,17 +521,17 @@ inline static Byte* Series_Data_At(Byte w, const_if_c Series* s, REBLEN i) {
 // to that type.
 //
 // Note that series indexing in C is zero based.  So as far as SERIES is
-// concerned, `Series_Head(t, s)` is the same as `Series_At(t, s, 0)`
+// concerned, `Series_Head(T, s)` is the same as `Series_At(T, s, 0)`
 
 #define Series_At(T,s,i) \
-    cast(T*, Series_Data_At(sizeof(T), (s), (i)))
+    c_cast(T*, Series_Data_At(sizeof(T), (s), (i)))
 
 #if DEBUG
     #define Series_Head(T,s) \
         Series_At(T, (s), 0)  // Series_Data() doesn't check width, _At() does
 #else
     #define Series_Head(T,s) \
-        cast(T*, Series_Data(s))
+        c_cast(T*, Series_Data(s))
 #endif
 
 
@@ -557,8 +557,8 @@ inline static Byte* Series_Data_Tail(size_t w, const_if_c Series* s)
       { return Series_Data_At(w, s, Series_Used(s)); }
 #endif
 
-#define Series_Tail(t,s) \
-    cast(t*, Series_Data_Tail(sizeof(t), (s)))
+#define Series_Tail(T,s) \
+    c_cast(T*, Series_Data_Tail(sizeof(T), (s)))
 
 inline static Byte* Series_Data_Last(size_t wide, const_if_c Series* s) {
     assert(Series_Used(s) != 0);
@@ -572,8 +572,8 @@ inline static Byte* Series_Data_Last(size_t wide, const_if_c Series* s) {
     }
 #endif
 
-#define Series_Last(t,s) \
-    cast(t*, Series_Data_Last(sizeof(t), (s)))
+#define Series_Last(T,s) \
+    c_cast(T*, Series_Data_Last(sizeof(T), (s)))
 
 
 #define Is_Series_Full(s) \

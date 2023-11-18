@@ -412,16 +412,32 @@
 // pointer
 //
 #if (! CPLUSPLUS_11)
-    #define cast(T,v)       ((T)(v))
-
-    #define c_cast(T,v)     ((T)(v))
-    #define m_cast(T,v)     ((T)(v))
-
-    #define p_cast(T,v)     ((T)(v))
-    #define i_cast(T,v)     ((T)(v))
-
-    #define x_cast(T,v)     ((T)(v))
+    #define cast(T,v)       ((T)(v))  /* pointer-to-ptr, integral-to-int */
+    #define m_cast(T,v)     ((T)(v))  /* add mutability to pointer type only */
+    #define x_cast(T,v)     ((T)(v))  /* pointer cast that drops mutaiblity */
+    #define c_cast(T,v)     ((T)(v))  /* mirror constness of input on output */
+    #define p_cast(T,v)     ((T)(v))  /* non-pointer to pointer */
+    #define i_cast(T,v)     ((T)(v))  /* non-integral to integral */
 #else
+    template<typename T, typename V,
+        typename std::enable_if<
+            std::is_pointer<V>::value
+            and std::is_pointer<T>::value
+        >::type* = nullptr>
+    constexpr T cast_helper(V v)
+      { return reinterpret_cast<T>(v); }
+
+    template<typename T, typename V,
+        typename std::enable_if< ! (
+            std::is_pointer<V>::value
+            and std::is_pointer<T>::value
+        )>::type* = nullptr>
+    constexpr T cast_helper(V v)
+      { return static_cast<T>(v); }
+
+    #define cast(T, v) \
+        cast_helper<T>(v)
+
     template<typename T, typename V>
     constexpr T m_cast_helper(V v) {
         static_assert(!std::is_const<T>::value,
@@ -430,53 +446,9 @@
             "invalid m_cast() - input and output have mismatched volatility");
         return const_cast<T>(v);
     }
-    #define m_cast(T, v)    m_cast_helper<T>(v)
 
-    template<typename T, typename V,
-        typename std::enable_if<
-            std::is_pointer<V>::value
-            and std::is_pointer<T>::value
-        >::type* = nullptr>
-    constexpr T cast_helper(V v) { return reinterpret_cast<T>(v); }
-
-    template<typename T, typename V,
-        typename std::enable_if< ! (
-            std::is_pointer<V>::value
-            and std::is_pointer<T>::value
-        )>::type* = nullptr>
-    constexpr T cast_helper(V v) { return static_cast<T>(v); }
-
-    #define cast(T, v)      cast_helper<T>(v)
-
-    template<typename T, typename V>
-    constexpr T c_cast_helper(V v) {
-        static_assert(!std::is_const<T>::value,
-            "invalid c_cast() - did not request const type for output result");
-        static_assert(std::is_volatile<T>::value == std::is_volatile<V>::value,
-            "invalid c_cast() - input and output have mismatched volatility");
-        return const_cast<T>(v);
-    }
-    #define c_cast(T,v)    c_cast_helper<T>(v)
-
-    template<typename T, typename V>
-    constexpr T p_cast_helper(V v) {
-        static_assert(std::is_pointer<T>::value,
-            "invalid p_cast() - target type must be pointer");
-        static_assert(!std::is_pointer<V>::value,
-            "invalid p_cast() - source type can't be pointer");
-        return reinterpret_cast<T>(v);
-    }
-    #define p_cast(T,v)    p_cast_helper<T>(v)
-
-    template<typename T, typename V>
-    constexpr T i_cast_helper(V v) {
-        static_assert(std::is_integral<T>::value,
-            "invalid p_cast() - target type must be integral");
-        static_assert(!std::is_integral<V>::value,
-            "invalid p_cast() - source type can't be integral");
-        return reinterpret_cast<T>(v);
-    }
-    #define i_cast(T,v)    i_cast_helper<T>(v)
+    #define m_cast(T, v) \
+        m_cast_helper<T>(v)
 
     /* We build an arbitrary pointer cast out of two steps: one which adds
      * a const if it wasn't already there, and then a const_cast to the
@@ -493,6 +465,54 @@
                 >::type \
             )(v) /* old-style parentheses cast, "everything but" the const */ \
         ))
+
+    template<typename TP, typename V,
+        typename std::enable_if<
+            std::is_pointer<V>::value
+            and std::is_const<typename std::remove_pointer<V>::type>::value
+        >::type* = nullptr,
+        typename T = typename std::remove_pointer<TP>::type
+    >
+    constexpr const T* c_cast_helper(V v) {
+        return cast(const T*, v);
+    }
+
+    template<typename TP, typename V,
+        typename std::enable_if<
+            std::is_pointer<V>::value
+            and ! std::is_const<typename std::remove_pointer<V>::type>::value
+        >::type* = nullptr
+    >
+    constexpr TP c_cast_helper(V v) {
+        return cast(TP, v);
+    }
+
+    #define c_cast(TP,v) \
+        c_cast_helper<TP>(v)
+
+    template<typename TP, typename V>
+    constexpr TP p_cast_helper(V v) {
+        static_assert(std::is_pointer<TP>::value,
+            "invalid p_cast() - target type must be pointer");
+        static_assert(! std::is_pointer<V>::value,
+            "invalid p_cast() - source type can't be pointer");
+        return reinterpret_cast<TP>(v);
+    }
+
+    #define p_cast(TP,v) \
+        p_cast_helper<TP>(v)
+
+    template<typename T, typename V>
+    constexpr T i_cast_helper(V v) {
+        static_assert(std::is_integral<T>::value,
+            "invalid p_cast() - target type must be integral");
+        static_assert(! std::is_integral<V>::value,
+            "invalid p_cast() - source type can't be integral");
+        return reinterpret_cast<T>(v);
+    }
+
+    #define i_cast(T,v) \
+        i_cast_helper<T>(v)
 #endif
 
 
@@ -1031,12 +1051,12 @@
         template<typename U>
         constexpr T operator<< (U u) { return u; }
 
-        template<typename U>
-        constexpr static U check(U u) {
+        template<typename V>
+        constexpr static V const& check(V const& v) {
             static_assert(
-                std::is_convertible<U,T>::value, "ensure() failed"
+                std::is_convertible<V,T>::value, "ensure() failed"
             );
-            return u;  // doesn't coerce to type T, same as unchecked, see [1]
+            return v;  // doesn't coerce to type T, same as unchecked, see [1]
         }
     };
     #define ensure(T,v) EnsureReader<T>::check(v)

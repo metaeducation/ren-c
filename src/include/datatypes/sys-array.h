@@ -97,17 +97,10 @@ inline static bool Has_File_Line(const Array* a) {
 // HEAD, TAIL, and LAST refer to specific value pointers in the array.  Since
 // empty arrays have no "last" value Array_Last() should not be called on it.
 
-inline static Cell* Array_At(const_if_c Array* a, REBLEN n)
-  { return Series_At(Cell, a, n); }
-
-inline static Cell* Array_Head(const_if_c Array* a)
-  { return Series_Head(Cell, a); }
-
-inline static Cell* Array_Tail(const_if_c Array* a)
-  { return Series_Tail(Cell, a); }
-
-inline static Cell* Array_Last(const_if_c Array* a)
-  { return Series_Last(Cell, a); }
+#define Array_At(a,n)           Series_At(Cell, (a), (n))
+#define Array_Head(a)           Series_Head(Cell, (a))
+#define Array_Tail(a)           Series_Tail(Cell, (a))
+#define Array_Last(a)           Series_Last(Cell, (a))
 
 inline static Cell* Array_Single(const_if_c Array* a) {
     assert(Not_Series_Flag(a, DYNAMIC));
@@ -115,18 +108,6 @@ inline static Cell* Array_Single(const_if_c Array* a) {
 }
 
 #if CPLUSPLUS_11
-    inline static const Cell* Array_At(const Array* a, REBLEN n)
-        { return Series_At(const Cell, a, n); }
-
-    inline static const Cell* Array_Head(const Array* a)
-        { return Series_Head(const Cell, a); }
-
-    inline static const Cell* Array_Tail(const Array* a)
-        { return Series_Tail(const Cell, a); }
-
-    inline static const Cell* Array_Last(const Array* a)
-        { return Series_Last(const Cell, a); }
-
     inline static const Cell* Array_Single(const Array* a) {
         assert(Not_Series_Flag(a, DYNAMIC));
         return Stub_Cell(a);

@@ -178,37 +178,14 @@ typedef uintptr_t Flags;
 // C++11 build can use references to accomplish it.  This requires inline
 // functions that cost a little in the debug build for these very commonly
 // used functions... so it's only in the DEBUG_CHECK_CASTS builds.
+//
+// c_cast() is used so that if the input pointer is const, the output will
+// be a `const Byte*` and not a `Byte*`.
 
-#if (! DEBUG_CHECK_CASTS)  // use x_cast and throw away const knowledge
-    #define FIRST_BYTE(p)       x_cast(Byte*, (p))[0]
-    #define SECOND_BYTE(p)      x_cast(Byte*, (p))[1]
-    #define THIRD_BYTE(p)       x_cast(Byte*, (p))[2]
-    #define FOURTH_BYTE(p)      x_cast(Byte*, (p))[3]
-#else
-    inline static Byte FIRST_BYTE(const void* p)
-      { return cast(const Byte*, p)[0]; }
-
-    inline static Byte& FIRST_BYTE(void* p)
-      { return cast(Byte*, p)[0]; }
-
-    inline static Byte SECOND_BYTE(const void* p)
-      { return cast(const Byte*, p)[1]; }
-
-    inline static Byte& SECOND_BYTE(void* p)
-      { return cast(Byte*, p)[1]; }
-
-    inline static Byte THIRD_BYTE(const void* p)
-      { return cast(const Byte*, p)[2]; }
-
-    inline static Byte& THIRD_BYTE(void *p)
-      { return cast(Byte*, p)[2]; }
-
-    inline static Byte FOURTH_BYTE(const void* p)
-      { return cast(const Byte*, p)[3]; }
-
-    inline static Byte& FOURTH_BYTE(void* p)
-      { return cast(Byte*, p)[3]; }
-#endif
+#define FIRST_BYTE(p)       c_cast(Byte*, (p))[0]
+#define SECOND_BYTE(p)      c_cast(Byte*, (p))[1]
+#define THIRD_BYTE(p)       c_cast(Byte*, (p))[2]
+#define FOURTH_BYTE(p)      c_cast(Byte*, (p))[3]
 
 
 // There might not seem to be a good reason to keep the uint16_t variant in

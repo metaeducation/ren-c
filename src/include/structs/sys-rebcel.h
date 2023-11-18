@@ -698,10 +698,10 @@ union ValuePayloadUnion { //=/////////////// ACTUAL PAYLOAD DEFINITION ////=//
 
 //=//// ESCAPE-ALIASABLE CELLS ////////////////////////////////////////////=//
 //
-// The system uses a trick in which the header byte contains a quote level
-// that can be up to 127 levels of quoting (and an extra bit for being a
-// quasiform, or an isotope).  This is independent of the cell's "heart", or
-// underlying layout for its unquoted type.
+// The header contains a QUOTE_BYTE() that can encode up to 126 levels of
+// quoting (with an extra bit for being a quasiform, and an isotope if the
+// byte is 0).  This is independent of the cell's "heart", or underlying
+// layout for its unquoted type.
 //
 // Most of the time, routines want to see these as QUOTED!/QUASI!/ISOTOPE!.
 // But some lower-level routines (like molding or comparison) want to act
@@ -709,31 +709,17 @@ union ValuePayloadUnion { //=/////////////// ACTUAL PAYLOAD DEFINITION ////=//
 // the "type that it is" and use Cell_Heart() and not VAL_TYPE(), this alias
 // for Cell prevents VAL_TYPE() operations.
 //
+// 1. The heavier wrapper form of Cell can be costly...empirically up to 10%
+//    of the runtime, since it's called so often.  It also changes the "ABI"
+//    of %sys-core.h to be incompatible with other builds.
+//
 // Note: This needs special handling in %make-headers.r to recognize the
 // format.  See the `typemacro_parentheses` rule.
 //
-#if (! CPLUSPLUS_11)
-
+#if (! DEBUG_CHECK_CASTS)  // disabled by default, see [1]
     #define NoQuote(const_cell_star) \
-        const struct ValueStruct*  // same as Cell, no checking in C build
-
-#elif (! DEBUG_CHECK_CASTS)
-    //
-    // The %sys-internals.h API is used by core extensions, and we may want
-    // to build the executable with C++ but an extension with C.  If there
-    // are "trick" pointer types that are classes with methods passed in
-    // the API, that would inhibit such an implementation.
-    //
-    // Making it easy to configure such a mixture isn't a priority at this
-    // time.  But just make sure some C++ builds are possible without
-    // using the active pointer class.  Choose debug builds for now.
-    //
-    #define NoQuote(const_cell_star) \
-        const Cell*  // not a class instance in %sys-internals.h
+        const Cell*
 #else
-    // This heavier wrapper form of Cell can be costly...empirically
-    // up to 10% of the runtime, since it's called so often.
-    //
     template<typename T>
     struct NoQuoteWrapper {
         const Cell* p;
@@ -752,12 +738,17 @@ union ValuePayloadUnion { //=/////////////// ACTUAL PAYLOAD DEFINITION ////=//
         explicit operator const struct ValueStruct* ()
           { return cast(const ValueStruct*, p); }
 
-        explicit operator const Cell* ()
-          { return p; }
-
-        operator const Node* ()
-          { return p; }
+        operator const Node* () const { return p; }
+        explicit operator const Cell* () const { return p; }
+        explicit operator const Byte* () const { return c_cast(Byte*, p); }
     };
     #define NoQuote(const_cell_star) \
         struct NoQuoteWrapper<const_cell_star>
+
+    template<
+        typename T = const Byte*,
+        typename V = NoQuote(const Cell*) const&
+    >
+    constexpr const Byte* c_cast_helper(NoQuote(const Cell*) const& v)
+        { return cast(const Byte*, v.p); }
 #endif

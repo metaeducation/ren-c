@@ -160,7 +160,7 @@ inline static REBVAL* Freshen_Cell_Untracked(Cell* v);
 
         operator Value(*) () const { return p; }
 
-        explicit operator const Byte* () { return cast(const Byte*, p); }
+        explicit operator Byte* () { return cast(Byte*, p); }
 
       #if DEBUG_CHECK_CASTS
         operator NoQuote(const Cell*) () const { return p; }
@@ -169,7 +169,14 @@ inline static REBVAL* Freshen_Cell_Untracked(Cell* v);
         Value(*) operator->() const { return p; }
     };
 
-    #define Sink(x) const ValueSink  // TBD: generalize?
+    #define Sink(x) ValueSink  // TBD: generalize?
+
+    template<
+        typename T = Byte*,
+        typename V = Sink(Value(*)) const&
+    >
+    constexpr Byte* c_cast_helper(Sink(Value(*)) const& v)
+        { return cast(Byte*, v.p); }
 #else
     #define Sink(x) x
 #endif

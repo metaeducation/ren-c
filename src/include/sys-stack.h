@@ -96,66 +96,66 @@
         } } while (0)
 
     struct StackValuePointer {
-        REBVAL *v;
+        REBVAL *p;
 
       public:
-        StackValuePointer () : v (nullptr) {}
-        StackValuePointer (REBVAL *v) : v (v) {
-            if (v != nullptr)
+        StackValuePointer () : p (nullptr) {}
+        StackValuePointer (REBVAL *v) : p (v) {
+            if (p != nullptr)
                 ++g_ds.num_refs_extant;
         }
-        StackValuePointer (const StackValuePointer &stk) : v (stk.v) {
-            if (v != nullptr)
+        StackValuePointer (const StackValuePointer &stk) : p (stk.p) {
+            if (p != nullptr)
                 ++g_ds.num_refs_extant;
         }
         ~StackValuePointer() {
-            if (v != nullptr)
+            if (p != nullptr)
                 --g_ds.num_refs_extant;
         }
 
         StackValuePointer& operator=(const StackValuePointer& other) {
-            if (v != nullptr)
+            if (p != nullptr)
                 --g_ds.num_refs_extant;
-            v = other.v;
-            if (v != nullptr)
+            p = other.p;
+            if (p != nullptr)
                 ++g_ds.num_refs_extant;
             return *this;
         }
 
-        operator REBVAL* () const { return v; }
-        operator Sink(Value(*)) () const { return v; }
-        explicit operator Byte* () const { return cast(Byte*, v); }
+        operator REBVAL* () const { return p; }
+        operator Sink(Value(*)) () const { return p; }
+        explicit operator Byte* () const { return cast(Byte*, p); }
 
       #if DEBUG_CHECK_CASTS
-        operator NoQuote(const Cell*) () { return v; }
+        operator NoQuote(const Cell*) () { return p; }
       #endif
 
-        REBVAL* operator->() { return v; }
+        REBVAL* operator->() { return p; }
 
         bool operator==(const StackValuePointer &other)
-            { return this->v == other.v; }
+            { return this->p == other.p; }
         bool operator!=(const StackValuePointer &other)
-            { return this->v != other.v; }
+            { return this->p != other.p; }
         bool operator<(const StackValuePointer &other)
-            { return this->v < other.v; }
+            { return this->p < other.p; }
         bool operator<=(const StackValuePointer &other)
-            { return this->v <= other.v; }
+            { return this->p <= other.p; }
        bool operator>(const StackValuePointer &other)
-            { return this->v > other.v; }
+            { return this->p > other.p; }
         bool operator>=(const StackValuePointer &other)
-            { return this->v >= other.v; }
+            { return this->p >= other.p; }
 
         StackValuePointer operator+(ptrdiff_t diff)
-            { return this->v + diff; }
+            { return this->p + diff; }
         StackValuePointer& operator+=(ptrdiff_t diff)
-            { this->v += diff; return *this; }
+            { this->p += diff; return *this; }
         StackValuePointer operator-(ptrdiff_t diff)
-            { return this->v - diff; }
+            { return this->p - diff; }
         StackValuePointer& operator-=(ptrdiff_t diff)
-            { this->v -= diff; return *this; }
+            { this->p -= diff; return *this; }
 
         StackValuePointer& operator--()  // prefix decrement
-            { --this->v; return *this; }
+            { --this->p; return *this; }
         StackValuePointer operator--(int)  // postfix decrement
         {
            StackValuePointer temp = *this;
@@ -164,7 +164,7 @@
         }
 
         StackValuePointer& operator++()  // prefix increment
-            { ++this->v; return *this; }
+            { ++this->p; return *this; }
         StackValuePointer operator++(int)  // postfix increment
         {
            StackValuePointer temp = *this;
@@ -173,9 +173,12 @@
         }
     };
 
-    template<>
-    inline StackValue(*) cast_helper<StackValue(*)>(Value(*) v)
-      { return v; }
+    template<
+        typename T = Byte*,
+        typename V = StackValue(*) const&
+    >
+    constexpr Byte* c_cast_helper(StackValue(*) const& v)
+        { return cast(Byte*, v.p); }
 #endif
 
 #define TOP_INDEX \
