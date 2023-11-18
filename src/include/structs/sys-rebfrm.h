@@ -263,35 +263,18 @@ STATIC_ASSERT(31 < 32);  // otherwise LEVEL_FLAG_XXX too high
     ((LVL(f)->flags.bits & LEVEL_FLAG_##name) == 0)
 
 
-// !!! It was thought that a standard layout struct with just {Atom(*) p} in
-// it would be compatible as a return result with plain Atom(*) p.  That does
-// not seem to be the case...because when an extension-defined dispatcher is
-// defined to return REBVAL*, it is incompatible with callers expecting a
-// Bounce struct as defined below.
+// An attempt was made for Bounce to be a smart pointer class, with the idea
+// that if it was `struct Bounce { Node* node; }` that it would be able to
+// do checks on the types it received while being compatible with a void*
+// in the dispatchers using %rebol.h.  So these would be compatible:
 //
-// It would be nice to have the added typechecking on the Bounce types; this
-// would prevent states like BOUNCE_THROWN from accidentally being passed
-// somewhere that took REBVAL* only.  But not so important to hold up the idea
-// of extensions that only speak in REBVAL*.  Review when there's time.
+//    typedef Bounce (Dispatcher)(Level(*) level_);  // %sys-core.h clients
+//    typedef void* (Dispatcher)(void* level_);      // %rebol.h clients
 //
-#if 1  /* CPLUSPLUS_11 == 0 || defined(NDEBUG) */
-    typedef Atom(*) Bounce;
-#else
-    struct Bounce {
-        Atom(*) p;
-        Bounce () {}
-        Bounce (Atom(*) v) : p (v) {}
-
-        bool operator==(Atom(*) v) { return v == p; }
-        bool operator!=(Atom(*) v) { return v != p; }
-
-        bool operator==(const Bounce& other) { return other.p == p; }
-        bool operator!=(const Bounce& other) { return other.p != p; }
-
-        explicit operator Atom(*) () { return p; }
-        explicit operator void* () { return p; }
-    };
-#endif
+// As it turns out the compiler doesn't generate compatible output, even
+// with Bounce being a standard_layout struct.  :-/  So it's just Node*.
+//
+typedef Node* Bounce;
 
 
 // These definitions are needed in %sys-rebval.h, and can't be put in

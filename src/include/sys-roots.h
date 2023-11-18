@@ -206,7 +206,7 @@ inline static void Release_Api_Value_If_Unmanaged(const Atom(*) r) {
 // in the dispatcher because it's too easy to think that will work for an
 // arbitrary local variable, which would be dead after the return.
 //
-inline static Bounce Native_Copy_Result_Untracked(
+inline static Atom(*) Native_Copy_Result_Untracked(
     Atom(*) out,  // have to pass; comma at callsite -> "operand has no effect"
     Level(*) level_,
     Atom(const*) v
@@ -214,7 +214,7 @@ inline static Bounce Native_Copy_Result_Untracked(
     assert(out == level_->out);
     UNUSED(out);
     assert(v != level_->out);   // Copy_Cell() would fail; don't tolerate
-    assert(not Is_Api_Value(v)); // too easy to not release()
+    assert(not Is_Api_Value(v));  // too easy to not release()
     Copy_Cell_Untracked(level_->out, v, CELL_MASK_COPY);
     return level_->out;
 }
