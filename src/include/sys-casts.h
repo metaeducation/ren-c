@@ -113,12 +113,9 @@
         >::type
     >
     inline static N *NOD(T *p) {
-        constexpr bool base =
-            std::is_same<T0, void>::value
-            or std::is_same<T0, Byte>::value;
-
         static_assert(
-            base,
+            std::is_same<T0, void>::value
+                or std::is_same<T0, Byte>::value,
             "NOD() works on void* or Byte*"
         );
 
@@ -287,11 +284,11 @@
 
     template <class T>
     inline Level(*) LVL(T *p) {
-        constexpr bool base = std::is_same<T, void>::value
-            or std::is_same<T, Node>::value
-            or std::is_same<T, LevelT>::value;
-
-        static_assert(base, "LVL() works on void* Node* Level*");
+        static_assert(
+            std::is_same<T, void>::value
+                or std::is_same<T, Node>::value,
+                "LVL() works on [void* Node*]"
+        );
 
         if (not p)
             return nullptr;

@@ -250,17 +250,17 @@ STATIC_ASSERT(31 < 32);  // otherwise LEVEL_FLAG_XXX too high
     FLAG_STATE_BYTE(STATE_0)  // note that the 0 state is implicit most places
 
 
-#define Set_Level_Flag(f,name) \
-    (LVL(f)->flags.bits |= LEVEL_FLAG_##name)
+#define Set_Level_Flag(L,name) \
+    ((L)->flags.bits |= LEVEL_FLAG_##name)
 
-#define Get_Level_Flag(f,name) \
-    ((LVL(f)->flags.bits & LEVEL_FLAG_##name) != 0)
+#define Get_Level_Flag(L,name) \
+    (((L)->flags.bits & LEVEL_FLAG_##name) != 0)
 
-#define Clear_Level_Flag(f,name) \
-    (LVL(f)->flags.bits &= ~LEVEL_FLAG_##name)
+#define Clear_Level_Flag(L,name) \
+    ((L)->flags.bits &= ~LEVEL_FLAG_##name)
 
-#define Not_Level_Flag(f,name) \
-    ((LVL(f)->flags.bits & LEVEL_FLAG_##name) == 0)
+#define Not_Level_Flag(L,name) \
+    (((L)->flags.bits & LEVEL_FLAG_##name) == 0)
 
 
 // An attempt was made for Bounce to be a smart pointer class, with the idea
