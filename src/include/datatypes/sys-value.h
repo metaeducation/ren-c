@@ -214,7 +214,7 @@
         } \
     } while (0)
 
-    inline static const Cell* READABLE(const Cell* c) {
+    inline static const Cell* READABLE(NoQuote(const Cell*) c) {
         ASSERT_CELL_READABLE_EVIL_MACRO(c);  // ^-- should this be a template?
         return cast(const Cell*, c);
     }
