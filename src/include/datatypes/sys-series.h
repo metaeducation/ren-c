@@ -1206,12 +1206,8 @@ inline static Stub* Prep_Stub(void *preallocated, Flags flags) {
 
   #if !defined(NDEBUG)
     SafeTrash_Pointer_If_Debug(s->link.trash);  // #2
-    memset(  // https://stackoverflow.com/q/57721104/
-        cast(char*, &s->content.fixed),
-        0xBD,
-        sizeof(s->content)
-    );  // #3 - #6
-    memset(&s->info, 0xAE, sizeof(s->info));  // #7
+    Mem_Fill(&s->content.fixed, 0xBD, sizeof(s->content));  // #3 - #6
+    Mem_Fill(&s->info, 0xAE, sizeof(s->info));  // #7
     SafeTrash_Pointer_If_Debug(s->link.trash);  // #8
 
     Touch_Stub_If_Debug(s);  // tag current C stack as series origin in ASAN

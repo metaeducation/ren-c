@@ -640,7 +640,7 @@ union ValuePayloadUnion { //=/////////////// ACTUAL PAYLOAD DEFINITION ////=//
 //    into things.  Some compilers will disable memcpy() and memset() under
 //    the assumption that those should count as "copying and assignment".
 //    This is defeated by casting the destination address to a void*, so
-//    Mem_Copy() and Mem_Set() are macros that do that:
+//    Mem_Copy() and Mem_Fill() are macros that do that:
 //
 //    https://stackoverflow.com/a/76426676
 //
@@ -676,7 +676,7 @@ union ValuePayloadUnion { //=/////////////// ACTUAL PAYLOAD DEFINITION ////=//
 #define Mem_Copy(dst,src,size) \
     memcpy(cast(void*, (dst)), (src), (size))  // see [4] above
 
-#define Mem_Set(dst,val,size) \
+#define Mem_Fill(dst,val,size) \
     memset(cast(void*, (dst)), (val), (size))  // see [4] above
 
 #if CPLUSPLUS_11

@@ -674,11 +674,7 @@ inline static Context* Steal_Context_Vars(Context* c, Node* keysource) {
     );
     SERIES_INFO(copy) = SERIES_INFO_MASK_NONE;
     Trash_Pointer_If_Debug(node_BONUS(KeySource, copy)); // needs update
-    memcpy(  // https://stackoverflow.com/q/57721104/
-        cast(char*, &copy->content),
-        cast(char*, &stub->content),
-        sizeof(union StubContentUnion)
-    );
+    Mem_Copy(&copy->content, &stub->content, sizeof(union StubContentUnion));
     mutable_MISC(VarlistAdjunct, copy) = nullptr;  // let stub have the meta
     mutable_LINK(Patches, copy) = nullptr;  // don't carry forward patches
 
