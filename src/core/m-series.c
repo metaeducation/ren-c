@@ -403,7 +403,7 @@ ATTRIBUTE_NO_RETURN void Panic_Series_Debug(Series* s)
     fflush(stdout);
     fflush(stderr);
 
-    if (s->leader.bits & NODE_FLAG_MANAGED)
+    if (Is_Node_Managed(s))
         fprintf(stderr, "managed");
     else
         fprintf(stderr, "unmanaged");
@@ -427,7 +427,7 @@ ATTRIBUTE_NO_RETURN void Panic_Series_Debug(Series* s)
     fflush(stderr);
 
   #if DEBUG_SERIES_ORIGINS
-    if (*s->guard == 1020)  // should make valgrind or asan alert
+    if (*s->guard == FREE_POOLUNIT_BYTE)  // should make valgrind or asan alert
         panic ("series guard didn't trigger ASAN/valgrind alert");
 
     panic (

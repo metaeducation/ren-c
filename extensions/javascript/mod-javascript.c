@@ -102,7 +102,7 @@
     static char PG_Silent_Trace_Buf[64000] = "";
 
     EXTERN_C intptr_t RL_rebGetSilentTrace_internal(void) {
-      { return cast(intptr_t, cast(void*, PG_Silent_Trace_Buf)); }
+      { return i_cast(intptr_t, PG_Silent_Trace_Buf); }
 #endif
 
 #if DEBUG_JAVASCRIPT_EXTENSION
@@ -203,13 +203,13 @@
 typedef unsigned int heapaddr_t;
 
 inline static heapaddr_t Heapaddr_From_Pointer(void *p) {
-    intptr_t i = cast(intptr_t, cast(void*, p));
-    assert(i < UINT_MAX);
-    return i;
+    uintptr_t u = i_cast(uintptr_t, p);
+    assert(u < UINT_MAX);
+    return u;
 }
 
 inline static void* Pointer_From_Heapaddr(heapaddr_t addr)
-  { return cast(void*, cast(intptr_t, addr)); }
+  { return p_cast(void*, cast(uintptr_t, addr)); }
 
 static void cleanup_js_object(const REBVAL *v) {
     heapaddr_t id = Heapaddr_From_Pointer(VAL_HANDLE_VOID_POINTER(v));
@@ -389,7 +389,7 @@ EXTERN_C intptr_t RL_rebPromise(void *p, va_list *vaptr)
 
     struct Reb_Promise_Info *info = TRY_ALLOC(struct Reb_Promise_Info);
     info->state = PROMISE_STATE_QUEUEING;
-    info->promise_id = cast(intptr_t, code);
+    info->promise_id = Heapaddr_From_Pointer(code);
     info->next = PG_Promises;
     PG_Promises = info;
 
@@ -1125,8 +1125,8 @@ DECLARE_NATIVE(js_stacklimit)
 
     StackIndex base = TOP_INDEX;
 
-    Init_Integer(PUSH(), cast(uintptr_t, &base));  // local pointer
-    Init_Integer(PUSH(), g_ts.C_stack_address_limit);
+    Init_Integer(PUSH(), i_cast(intptr_t, &base));  // local pointer
+    Init_Integer(PUSH(), g_ts.C_stack_limit_addr);
     return Init_Block(OUT, Pop_Stack_Values(base));
 }
 

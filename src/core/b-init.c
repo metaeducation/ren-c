@@ -167,15 +167,15 @@ static void Check_Basics(void)
 //
 void Set_Stack_Limit(void *base, uintptr_t bounds) {
   #if defined(OS_STACK_GROWS_UP)
-    g_ts.C_stack_address_limit = cast(uintptr_t, base) + bounds;
+    g_ts.C_stack_limit_addr = i_cast(uintptr_t, base) + bounds;
   #elif defined(OS_STACK_GROWS_DOWN)
-    g_ts.C_stack_address_limit = cast(uintptr_t, base) - bounds;
+    g_ts.C_stack_limit_addr = i_cast(uintptr_t, base) - bounds;
   #else
     g_ts.C_stack_grows_up = Guess_If_Stack_Grows_Up(NULL);
     if (g_ts.C_stack_grows_up)
-        g_ts.C_stack_address_limit = cast(uintptr_t, base) + bounds;
+        g_ts.C_stack_limit_addr = i_cast(uintptr_t, base) + bounds;
     else
-        g_ts.C_stack_address_limit = cast(uintptr_t, base) - bounds;
+        g_ts.C_stack_limit_addr = i_cast(uintptr_t, base) - bounds;
   #endif
 }
 

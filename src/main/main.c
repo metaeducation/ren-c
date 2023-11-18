@@ -113,7 +113,7 @@
     //
     //     http://stackoverflow.com/q/493536/
     //
-    void Determine_Hinstance_May_Respawn(WCHAR *this_exe_path) {
+    void Determine_Hinstance_May_Respawn(WCHAR* this_exe_path) {
         if (GetStdHandle(STD_OUTPUT_HANDLE) == 0) {
             //
             // No console to attach to, we must be the DETACHED_PROCESS which
@@ -127,7 +127,7 @@
             // In "Core" mode, use a console but do not initialize graphics.
             // (stdio redirection works, blinking console window during start)
             //
-            App_Instance = cast(HINSTANCE,
+            App_Instance = p_cast(HINSTANCE,
                 GetWindowLongPtr(GetConsoleWindow(), GWLP_HINSTANCE)
             );
             UNUSED(this_exe_path);
@@ -136,8 +136,8 @@
             // In the "GUI app" mode, stdio redirection doesn't work properly,
             // but no blinking console window during start.
             //
-            if (not this_exe_path) { // argc was > 1
-                App_Instance = cast(HINSTANCE,
+            if (not this_exe_path) {  // argc was > 1
+                App_Instance = p_cast(HINSTANCE,
                     GetWindowLongPtr(GetConsoleWindow(), GWLP_HINSTANCE)
                 );
             }
@@ -151,21 +151,21 @@
 
                 PROCESS_INFORMATION procinfo;
                 if (not CreateProcess(
-                    nullptr, // lpApplicationName
-                    this_exe_path, // lpCommandLine
-                    nullptr, // lpProcessAttributes
-                    nullptr, // lpThreadAttributes
-                    FALSE, // bInheritHandles
+                    nullptr,  // lpApplicationName
+                    this_exe_path,  // lpCommandLine
+                    nullptr,  // lpProcessAttributes
+                    nullptr,  // lpThreadAttributes
+                    FALSE,  // bInheritHandles
                     CREATE_DEFAULT_ERROR_MODE | DETACHED_PROCESS,
-                    nullptr, // lpEnvironment
-                    nullptr, // lpCurrentDirectory
+                    nullptr,  // lpEnvironment
+                    nullptr,  // lpCurrentDirectory
                     &startinfo,
                     &procinfo
                 )){
                     MessageBox(
-                        nullptr, // owner window
+                        nullptr,  // owner window
                         L"CreateProcess() failed in %host-main.c",
-                        this_exe_path, // title
+                        this_exe_path,  // title
                         MB_ICONEXCLAMATION | MB_OK
                     );
                 }

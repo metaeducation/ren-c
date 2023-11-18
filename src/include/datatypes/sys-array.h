@@ -81,7 +81,7 @@ inline static bool Has_Newline_At_Tail(const Array* a) {
 
     // Using Get_Subclass_Flag() would redundantly check it's a plain array.
     //
-    return did (a->leader.bits & ARRAY_FLAG_NEWLINE_AT_TAIL);
+    return did (a->header.bits & ARRAY_FLAG_NEWLINE_AT_TAIL);
 }
 
 inline static bool Has_File_Line(const Array* a) {
@@ -90,7 +90,7 @@ inline static bool Has_File_Line(const Array* a) {
 
     // Using Get_Subclass_Flag() would redundantly check it's a plain array.
     //
-    return did (a->leader.bits & ARRAY_FLAG_HAS_FILE_LINE_UNMASKED);
+    return did (a->header.bits & ARRAY_FLAG_HAS_FILE_LINE_UNMASKED);
 }
 
 

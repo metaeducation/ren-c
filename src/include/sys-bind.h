@@ -319,7 +319,7 @@ inline static Series* SPC_BINDING(REBSPC *specifier)
 //
 inline static void INIT_BINDING_MAY_MANAGE(
     Cell* out,
-    const Series*  binding
+    const Series* binding
 ){
     mutable_BINDING(out) = binding;
 
@@ -330,7 +330,7 @@ inline static void INIT_BINDING_MAY_MANAGE(
     assert(not Is_Level_Fulfilling(L));
     UNUSED(L);
 
-    m_cast(Series*, binding)->leader.bits |= NODE_FLAG_MANAGED;  // GC sees...
+    Set_Node_Managed_Bit(binding);  // GC sees...
 }
 
 
@@ -369,7 +369,7 @@ inline static void INIT_VAL_WORD_BINDING(Cell* v, const Series* binding) {
     if (binding == nullptr)
         return;  // e.g. UNBOUND (words use strings to indicate unbounds)
 
-    if (binding->leader.bits & NODE_FLAG_MANAGED) {
+    if (Is_Node_Managed(binding)) {
         assert(
             IS_DETAILS(binding)  // relative
             or IS_VARLIST(binding)  // specific
@@ -423,7 +423,7 @@ inline static Context* VAL_WORD_CONTEXT(const REBVAL *v) {
         Is_Node_Managed(binding) or
         not Is_Level_Fulfilling(LVL(BONUS(KeySource, binding)))
     );
-    binding->leader.bits |= NODE_FLAG_MANAGED;  // !!! review managing needs
+    Set_Node_Managed_Bit(binding);  // !!! review managing needs
     Context* c = CTX(binding);
     FAIL_IF_INACCESSIBLE_CTX(c);
     return c;

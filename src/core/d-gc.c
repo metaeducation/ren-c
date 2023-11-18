@@ -61,7 +61,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
             Node* keysource = BONUS(KeySource, ARR(binding));
             if (Is_Node_A_Stub(keysource)) {
                 if (
-                    (SER(keysource)->leader.bits & SERIES_MASK_KEYLIST)
+                    (SER(keysource)->header.bits & SERIES_MASK_KEYLIST)
                     != SERIES_MASK_KEYLIST
                 ){
                     panic (binding);

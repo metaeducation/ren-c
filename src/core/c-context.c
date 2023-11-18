@@ -169,7 +169,7 @@ static REBVAR* Append_Context_Core(
             //
             patch = &PG_Lib_Patches[id];
             assert(INODE(PatchContext, patch) == nullptr);  // don't double add
-            // patch->leader.bits should be already set
+            // patch->header.bits should be already set
         }
         else patch = Alloc_Singular(
             NODE_FLAG_MANAGED
@@ -919,7 +919,7 @@ void Assert_Context_Core(Context* c)
     Array* varlist = CTX_VARLIST(c);
 
     if (
-        (varlist->leader.bits & SERIES_MASK_VARLIST) != SERIES_MASK_VARLIST
+        (varlist->header.bits & SERIES_MASK_VARLIST) != SERIES_MASK_VARLIST
     ){
         panic (varlist);
     }

@@ -80,6 +80,14 @@
         std::is_standard_layout<struct ValueStruct>::value,
         "C++ REBVAL must match C layout: http://stackoverflow.com/a/7189821/"
     );
+
+    template<>
+    inline AtomT* cast_helper<AtomT*>(ValueStruct* v)
+      { return reinterpret_cast<AtomT*>(v); }
+
+    template<>
+    inline const AtomT* cast_helper<const AtomT*>(const ValueStruct* v)
+      { return reinterpret_cast<const AtomT*>(v); }
 #else
     typedef struct ValueStruct AtomT;
 #endif
@@ -151,6 +159,8 @@ inline static REBVAL* Freshen_Cell_Untracked(Cell* v);
         operator bool () const { return p != nullptr; }
 
         operator Value(*) () const { return p; }
+
+        explicit operator const Byte* () { return cast(const Byte*, p); }
 
       #if DEBUG_CHECK_CASTS
         operator NoQuote(const Cell*) () const { return p; }

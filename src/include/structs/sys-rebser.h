@@ -296,16 +296,11 @@
 // enum which is ordered in a way that offers information (e.g. all the
 // arrays are in a range, all the series with wide size of 1 are together...)
 //
-// 1. FLAVOR_BYTE() is called very frequently, and the overhead of an inline
-//    function for type checking is undesirable.  Picking leader->bits out
-//    of it is type safe enough (cells call their flags "header").
-//
+#define FLAVOR_BYTE(stub) \
+    THIRD_BYTE(ensure(const Stub*, stub))
 
 #define FLAG_FLAVOR_BYTE(flavor)        FLAG_THIRD_BYTE(flavor)
 #define FLAG_FLAVOR(name)               FLAG_FLAVOR_BYTE(FLAVOR_##name)
-
-#define FLAVOR_BYTE(series) \
-    THIRD_BYTE(&(series)->leader.bits)  // not THIRD_BYTE(series), see [1]
 
 inline static Flavor Flavor_From_Flags(Flags flags)
   { return cast(Flavor, THIRD_BYTE(&flags)); }
@@ -469,9 +464,10 @@ STATIC_ASSERT(SERIES_INFO_0_IS_FALSE == NODE_FLAG_NODE);
 // kept as a redundancy with the length.  It is costly to update and takes
 // additional space from rounding up.
 //
+#define USED_BYTE(s) \
+    SECOND_BYTE(&SERIES_INFO(s))
 
 #define FLAG_USED_BYTE(len)     FLAG_SECOND_BYTE(len)
-#define USED_BYTE(s)            SECOND_BYTE(&SERIES_INFO(s))
 
 
 //=//// BITS 16-31 ARE SymId FOR SYMBOLS //////////////////////////////////=//
@@ -503,12 +499,10 @@ STATIC_ASSERT(SERIES_INFO_0_IS_FALSE == NODE_FLAG_NODE);
 // Stub to be distinguished from a Cell or a UTF-8 string and not run
 // afoul of strict aliasing requirements.
 //
-// There are 3 basic layouts which can be overlaid inside the union (the
-// "leader" is the "header" with a different name to avoid uses which might
-// alias with bits initialized through Cell->header):
+// There are 3 basic layouts which can be overlaid inside the union:
 //
-//      Dynamic: [leader link [allocation tracking] info misc]
-//     Singular: [leader link [cell] info misc]
+//      Dynamic: [header link [allocation tracking] info misc]
+//     Singular: [header link [cell] info misc]
 //      Pairing: [[cell] [cell]]
 //
 // The singular form has space the *size* of a cell, but can be addressed as
@@ -720,16 +714,9 @@ union StubInfoUnion {
 {
     // See the description of SERIES_FLAG_XXX for the bits in this header.
     // It is in the same position as a Cell header, and the first byte
-    // can be read via NODE_BYTE() to determine which it is.  However, it is
-    // not called `header` because that would suggest you could have a pointer
-    // and not know if it was a Cell* or Stub* and read/write it safely...
-    // you cannot do that because of "strict aliasing":
+    // can be read via NODE_BYTE() to determine which it is.
     //
-    // https://stackoverflow.com/q/51846048/
-    //
-    // So the header is called "leader" to make accidents less likely.
-    //
-    union HeaderUnion leader;
+    union HeaderUnion header;
 
     // The `link` field is generally used for pointers to something that
     // when updated, all references to this series would want to be able
@@ -771,7 +758,7 @@ union StubInfoUnion {
     union StubMiscUnion misc;
 
   #if DEBUG_SERIES_ORIGINS || DEBUG_COUNT_TICKS
-    intptr_t* guard;  // intentionally alloc'd and freed for use by panic()
+    Byte* guard;  // intentionally alloc'd and freed for use by panic()
     uintptr_t tick;  // also maintains sizeof(Stub) % sizeof(REBI64) == 0
   #endif
 };

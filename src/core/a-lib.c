@@ -2638,11 +2638,15 @@ REBVAL *RL_rebError_OS(int errnum)  // see also convenience macro rebFail_OS()
     // lower-level `sys_errlist` directly--which may not include all errors,
     // or using function overloading that only works on C++).  This takes a
     // different tactic in pure C by capturing either result cast to intptr_t.
+    //
+    // 1. Use old-style parentheses cast to get past ambiguity of whether the
+    //    strerr_r function returns a char* or an int.  (The "casts for the
+    //    masses) casts like c_cast/x_cast etc. don't support this scenario.)
 
     char buf[MAX_POSIX_ERROR_LEN];
     buf[0] = cast(char, 255);  // never valid in UTF-8 sequences
     int old_errno = errno;
-    intptr_t r = cast(intptr_t, strerror_r(errnum, buf, MAX_POSIX_ERROR_LEN));
+    intptr_t r = (intptr_t)strerror_r(errnum, buf, MAX_POSIX_ERROR_LEN);  // [1]
 
     // !!! TCC appears to use the `int` returning form of strerror_r().  But
     // it appears to return a random positive or negative value.  It simply
@@ -2651,7 +2655,7 @@ REBVAL *RL_rebError_OS(int errnum)  // see also convenience macro rebFail_OS()
     // show that it's there...and it links in TCC.
     //
   #if defined(__TINYC__)
-    r = cast(intptr_t, strerror(errnum));
+    r = (intptr_t)strerror(errnum); // see [1] for why old-style cast used
   #endif
 
     int new_errno = errno;
@@ -2682,7 +2686,7 @@ REBVAL *RL_rebError_OS(int errnum)  // see also convenience macro rebFail_OS()
         error = Error_User("EINVAL: bad errno passed to strerror_r()");
     else if (r == ERANGE)  // documented result from POSIX strerror_r
         error = Error_User("ERANGE: insufficient buffer size for error");
-    else if (r == cast(intptr_t, buf)) {
+    else if (r == i_cast(intptr_t, buf)) {
         //
         // The POSIX version gives us our error back as a pointer if it
         // filled the buffer successfully.  Sanity check that's what happened.
@@ -2709,7 +2713,7 @@ REBVAL *RL_rebError_OS(int errnum)  // see also convenience macro rebFail_OS()
         // (This is the risky part, if `r` is not a valid pointer but some
         // weird large int return result from POSIX strerror_r.)
         //
-        error = Error_User(cast(const char*, r));
+        error = Error_User(p_cast(const char*, r));
     }
   #endif
 
@@ -2748,7 +2752,7 @@ DECLARE_NATIVE(api_transient)
     // :-/  Well, which is it?  R3-Alpha integers were signed 64-bit, Ren-C is
     // targeting arbitrary precision...use signed as status quo for now.
     //
-    return Init_Integer(level_->out, cast(intptr_t, a));  // or, `uintptr_t` ??
+    return Init_Integer(level_->out, i_cast(intptr_t, a));
 }
 
 

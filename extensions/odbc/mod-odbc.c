@@ -388,7 +388,7 @@ DECLARE_NATIVE(open_connection)
         rc = SQLSetEnvAttr(
             henv,
             SQL_ATTR_ODBC_VERSION,
-            cast(SQLPOINTER, cast(uintptr_t, SQL_OV_ODBC3)),
+            p_cast(SQLPOINTER, SQL_OV_ODBC3),
             0  // StringLength (ignored for this attribute)
         );
         if (not SQL_SUCCEEDED(rc)) {
@@ -412,7 +412,7 @@ DECLARE_NATIVE(open_connection)
     rc = SQLSetConnectAttr(
         hdbc,
         SQL_LOGIN_TIMEOUT,
-        cast(SQLPOINTER, cast(uintptr_t, 5)),
+        p_cast(SQLPOINTER, 5),
         0
     );
     if (not SQL_SUCCEEDED(rc)) {
@@ -1785,8 +1785,9 @@ DECLARE_NATIVE(update_odbc)
     rc = SQLSetConnectAttr(
         hdbc,
         SQL_ATTR_ACCESS_MODE,
-        cast(SQLPOINTER*,
-            cast(uintptr_t, access ? SQL_MODE_READ_WRITE : SQL_MODE_READ_ONLY)
+        p_cast(
+            SQLPOINTER*,
+            access ? SQL_MODE_READ_WRITE : SQL_MODE_READ_ONLY
         ),
         SQL_IS_UINTEGER
     );
@@ -1798,8 +1799,9 @@ DECLARE_NATIVE(update_odbc)
     rc = SQLSetConnectAttr(
         hdbc,
         SQL_ATTR_AUTOCOMMIT,
-        cast(SQLPOINTER*,
-            cast(uintptr_t, commit ? SQL_AUTOCOMMIT_ON : SQL_AUTOCOMMIT_OFF)
+        p_cast(
+            SQLPOINTER*,
+            commit ? SQL_AUTOCOMMIT_ON : SQL_AUTOCOMMIT_OFF
         ),
         SQL_IS_UINTEGER
     );

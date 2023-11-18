@@ -296,7 +296,7 @@ uint32_t Hash_Value(const Cell* cell)
         //
         if (Is_Frame_Exemplar(cell))
             goto hash_object;
-        hash = cast(REBLEN, cast(uintptr_t, VAL_ACTION(cell)) >> 4);
+        hash = cast(REBLEN, i_cast(uintptr_t, VAL_ACTION(cell)) >> 4);
         break;
 
       hash_object:
@@ -316,7 +316,7 @@ uint32_t Hash_Value(const Cell* cell)
         // However, since it was historically allowed it is allowed for
         // all ANY-CONTEXT! types at the moment.
         //
-        hash = cast(uint32_t, cast(uintptr_t, VAL_CONTEXT(cell)) >> 4);
+        hash = cast(uint32_t, i_cast(uintptr_t, VAL_CONTEXT(cell)) >> 4);
         break;
 
       case REB_MAP:
@@ -326,7 +326,7 @@ uint32_t Hash_Value(const Cell* cell)
         // (Again this will just find the map by identity, not by comparing
         // the values of one against the values of the other...)
         //
-        hash = cast(uint32_t, cast(uintptr_t, VAL_MAP(cell)) >> 4);
+        hash = cast(uint32_t, i_cast(uintptr_t, VAL_MAP(cell)) >> 4);
         break;
 
       case REB_HANDLE:

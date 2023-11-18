@@ -38,16 +38,6 @@
 //   like `as text! as binary! make bitset! [...]`)
 
 
-#if CPLUSPLUS_11  // !!! Make fancier checks, as with SER() and ARR()
-    inline static Binary* BIN(void *p)
-        { return reinterpret_cast<Binary*>(p); }
-    inline static const Binary* BIN(const void *p)
-        { return reinterpret_cast<const Binary*>(p); }
-#else
-    #define BIN(p) cast(Binary*, (p))
-#endif
-
-
 //=//// BINARY! SERIES ////////////////////////////////////////////////////=//
 
 inline static Byte* Binary_At(const_if_c Binary* bin, REBLEN n)

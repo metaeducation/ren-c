@@ -226,7 +226,7 @@ DECLARE_NATIVE(request_file_p)
     // Currently unused stuff.
     //
     ofn.lpstrDefExt = nullptr;
-    ofn.lCustData = cast(LPARAM, nullptr);
+    ofn.lCustData = i_cast(LPARAM, nullptr);
     ofn.lpfnHook = nullptr;
     ofn.lpTemplateName = nullptr;
 
@@ -453,20 +453,20 @@ int CALLBACK ReqDirCallbackProc(
 ){
     UNUSED(lParam);
 
-    const WCHAR* dir = cast(WCHAR*, lpData);
+    const WCHAR* dir = p_cast(const WCHAR*, lpData);
 
     static bool inited = false;
     switch (uMsg) {
     case BFFM_INITIALIZED:
         if (dir)
-            SendMessage(hWnd, BFFM_SETSELECTION, TRUE, cast(LPARAM, dir));
+            SendMessage(hWnd, BFFM_SETSELECTION, TRUE, i_cast(LPARAM, dir));
         SetForegroundWindow(hWnd);
         inited = true;
         break;
 
     case BFFM_SELCHANGED:
         if (inited and dir) {
-            SendMessage(hWnd, BFFM_SETSELECTION, TRUE, cast(LPARAM, dir));
+            SendMessage(hWnd, BFFM_SETSELECTION, TRUE, i_cast(LPARAM, dir));
             inited = false;
         }
         break;
@@ -552,7 +552,7 @@ DECLARE_NATIVE(request_dir_p)
     //
     bi.lpfn = ReqDirCallbackProc;
     WCHAR* path_utf16 = rebSpellWideMaybe(path);
-    bi.lParam = cast(LPARAM, path_utf16);  // nullptr uses default
+    bi.lParam = i_cast(LPARAM, path_utf16);  // nullptr uses default
 
     LPCITEMIDLIST pFolder = SHBrowseForFolder(&bi);
 

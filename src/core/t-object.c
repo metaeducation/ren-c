@@ -884,7 +884,7 @@ Context* Copy_Context_Extra_Managed(
         Clonify(dest, flags, types);
     }
 
-    varlist->leader.bits |= SERIES_MASK_VARLIST;
+    varlist->header.bits |= SERIES_MASK_VARLIST;
 
     Context* copy = CTX(varlist); // now a well-formed context
 

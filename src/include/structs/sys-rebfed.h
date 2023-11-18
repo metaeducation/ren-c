@@ -141,23 +141,19 @@ STATIC_ASSERT(FEED_FLAG_1_IS_FALSE == NODE_FLAG_FREE);
 STATIC_ASSERT(FEED_FLAG_CONST == CELL_FLAG_CONST);
 
 
-#if (! CPLUSPLUS_11)
-    #define FEED(f) f
-#else
-    #define FEED(f) static_cast<Feed(*)>(f)
-#endif
-
-#define Set_Feed_Flag(f,name) \
-    (FEED(f)->flags.bits |= FEED_FLAG_##name)
+#define FEED(f) cast(Feed(*), (f))
 
 #define Get_Feed_Flag(f,name) \
-    ((FEED(f)->flags.bits & FEED_FLAG_##name) != 0)
-
-#define Clear_Feed_Flag(f,name) \
-    (FEED(f)->flags.bits &= ~FEED_FLAG_##name)
+    ((ensure(Feed(*), (f))->flags.bits & FEED_FLAG_##name) != 0)
 
 #define Not_Feed_Flag(f,name) \
-    ((FEED(f)->flags.bits & FEED_FLAG_##name) == 0)
+    ((ensure(Feed(*), (f))->flags.bits & FEED_FLAG_##name) == 0)
+
+#define Set_Feed_Flag(f,name) \
+    (ensure(Feed(*), (f))->flags.bits |= FEED_FLAG_##name)
+
+#define Clear_Feed_Flag(f,name) \
+    ensure(Feed(*), (f))->flags.bits &= ~FEED_FLAG_##name
 
 
 #define TRASHED_INDEX ((REBLEN)(-3))

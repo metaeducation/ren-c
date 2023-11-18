@@ -91,7 +91,7 @@
         Utf8Ptr (nullptr_t n) : bp (n) {}
         explicit Utf8Ptr (const Byte* bp) : bp (bp) {}
         explicit Utf8Ptr (const char *cstr)
-            : bp (reinterpret_cast<const Byte*>(cstr)) {}
+            : bp (cast(const Byte*, cstr)) {}
 
         Size operator-(const Byte* rhs)
           { return bp - rhs; }

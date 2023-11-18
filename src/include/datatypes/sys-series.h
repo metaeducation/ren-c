@@ -71,17 +71,18 @@
 // Using token pasting macros helps avoid mixups with SERIES_INFO_XXX!
 //
 
-#define Set_Series_Flag(s,name) \
-    ((s)->leader.bits |= SERIES_FLAG_##name)
-
 #define Get_Series_Flag(s,name) \
-    (((s)->leader.bits & SERIES_FLAG_##name) != 0)
-
-#define Clear_Series_Flag(s,name) \
-    ((s)->leader.bits &= ~SERIES_FLAG_##name)
+    ((ensure(const Series*, (s))->header.bits & SERIES_FLAG_##name) != 0)
 
 #define Not_Series_Flag(s,name) \
-    (((s)->leader.bits & SERIES_FLAG_##name) == 0)
+    ((ensure(const Series*, (s))->header.bits & SERIES_FLAG_##name) == 0)
+
+#define Set_Series_Flag(s,name) \
+    ensure(Series*, (s))->header.bits |= SERIES_FLAG_##name
+
+#define Clear_Series_Flag(s,name) \
+    ensure(Series*, (s))->header.bits &= ~SERIES_FLAG_##name
+
 
 
 //=//// SERIES SUBCLASS FLAGS //////////////////////////////////////////////=//
@@ -93,7 +94,8 @@
 //
 
 #if defined(NDEBUG)
-    #define ensure_flavor(flavor,s) (s)  // no-op in release build
+    #define ensure_flavor(flavor,s) \
+        ensure(const Series*, (s))  // no-op in release build
 #else
     inline static Series* ensure_flavor(
         Flavor flavor,
@@ -123,19 +125,19 @@
 #endif
 
 #define Get_Subclass_Flag(subclass,s,name) \
-    ((ensure_flavor(FLAVOR_##subclass, (s))->leader.bits \
+    ((ensure_flavor(FLAVOR_##subclass, (s))->header.bits \
         & subclass##_FLAG_##name) != 0)
 
 #define Not_Subclass_Flag(subclass,s,name) \
-    ((ensure_flavor(FLAVOR_##subclass, (s))->leader.bits \
+    ((ensure_flavor(FLAVOR_##subclass, (s))->header.bits \
         & subclass##_FLAG_##name) == 0)
 
 #define Set_Subclass_Flag(subclass,s,name) \
-    (ensure_flavor(FLAVOR_##subclass, (s))->leader.bits \
+    (ensure_flavor(FLAVOR_##subclass, (s))->header.bits \
         |= subclass##_FLAG_##name)
 
 #define Clear_Subclass_Flag(subclass,s,name) \
-    (ensure_flavor(FLAVOR_##subclass, (s))->leader.bits \
+    (ensure_flavor(FLAVOR_##subclass, (s))->header.bits \
         &= ~subclass##_FLAG_##name)
 
 
@@ -348,11 +350,11 @@ inline static size_t Series_Total(const Series* s) {
         (s)->content.dynamic.bonus.node
 #else
     inline static const struct NodeStruct* const &Series_Bonus(const Series* s) {
-        assert(s->leader.bits & SERIES_FLAG_DYNAMIC);
+        assert(s->header.bits & SERIES_FLAG_DYNAMIC);
         return s->content.dynamic.bonus.node;
     }
     inline static const struct NodeStruct* &Series_Bonus(Series* s) {
-        assert(s->leader.bits & SERIES_FLAG_DYNAMIC);
+        assert(s->header.bits & SERIES_FLAG_DYNAMIC);
         return s->content.dynamic.bonus.node;
     }
 #endif
@@ -389,7 +391,8 @@ inline static size_t Series_Total(const Series* s) {
         // not, as that's in the info.
 
       #if DEBUG_SERIES_ORIGINS
-        s->guard = cast(intptr_t*, malloc(sizeof(*s->guard)));
+        s->guard = cast(Byte*, malloc(sizeof(Byte)));  // smallest allocation
+        *s->guard = FREE_POOLUNIT_BYTE;  // irrelevant, but disruptive choice
         free(s->guard);
       #endif
 
@@ -1202,7 +1205,7 @@ inline static Stub* Prep_Stub(void *preallocated, Flags flags) {
 
     Stub *s = cast(Stub*, preallocated);
 
-    s->leader.bits = NODE_FLAG_NODE | flags;  // #1
+    s->header.bits = NODE_FLAG_NODE | flags;  // #1
 
   #if !defined(NDEBUG)
     SafeTrash_Pointer_If_Debug(s->link.trash);  // #2

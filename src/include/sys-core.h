@@ -385,10 +385,13 @@ typedef struct {
     Level(*) top_level;
     Level(*) bottom_level;
 
+    // !!! Outdated idea which is outside of the standard spec, see notes on
+    // C_STACK_OVERFLOWING() for plans on eliminating it fully.
+    //
   #if !defined(OS_STACK_GROWS_UP) && !defined(OS_STACK_GROWS_DOWN)
     bool C_stack_grows_up;  // will be detected via questionable method
   #endif
-    uintptr_t C_stack_address_limit;  // past this, raise a CPU stack overflow
+    uintptr_t C_stack_limit_addr;  // past this, raise a CPU stack overflow
 
     Jump* jump_list;  // Saved state for RESCUE_SCOPE
 

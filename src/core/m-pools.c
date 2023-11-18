@@ -134,7 +134,7 @@ void *Try_Alloc_Mem(size_t size)
   #endif
 
   #if DEBUG_MEMORY_ALIGN
-    assert(cast(uintptr_t, p) % ALIGN_SIZE == 0);
+    assert(i_cast(uintptr_t, p) % ALIGN_SIZE == 0);
   #endif
 
     return p;
@@ -1040,7 +1040,7 @@ void Remake_Series(Series* s, REBLEN units, Flags flags)
         data_old = cast(char*, &content_old);
     }
 
-    s->leader.bits |= flags;
+    s->header.bits |= flags;
 
     // !!! Currently the remake won't make a series that fits entirely inside
     // a Stub (so always SERIES_FLAG_DYNAMIC).  All series code needs a general
@@ -1337,7 +1337,7 @@ REBLEN Check_Memory_Debug(void)
 
         PoolUnit* unit = g_mem.pools[pool_id].first;
         for (; unit != nullptr; unit = unit->next_if_free) {
-            assert(cast(const Byte*, unit)[0] == FREE_POOLUNIT_BYTE);
+            assert(FIRST_BYTE(unit) == FREE_POOLUNIT_BYTE);
 
             ++pool_free_nodes;
 
@@ -1345,11 +1345,8 @@ REBLEN Check_Memory_Debug(void)
             seg = g_mem.pools[pool_id].segments;
             for (; seg != nullptr; seg = seg->next) {
                 if (
-                    cast(uintptr_t, unit) > cast(uintptr_t, seg)
-                    and (
-                        cast(uintptr_t, unit)
-                        < cast(uintptr_t, seg) + cast(uintptr_t, seg->size)
-                    )
+                    cast(Byte*, unit) > cast(Byte*, seg)
+                    and (cast(Byte*, unit) < cast(Byte*, seg) + seg->size)
                 ){
                     if (found) {
                         printf("unit belongs to more than one segment\n");

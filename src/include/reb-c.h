@@ -85,10 +85,6 @@
 // interest to get 64-bit integers, then patches should be made there.
 //
 
-#if !defined(DEBUG_CHECK_CASTS)
-    #define DEBUG_CHECK_CASTS 0
-#endif
-
 #if !defined(DEBUG_CHECK_OPTIONALS)
     #define DEBUG_CHECK_OPTIONALS 0
 #endif
@@ -394,10 +390,16 @@
 
 //=//// CASTING MACROS ////////////////////////////////////////////////////=//
 //
-// These macros are easier-to-spot variants of the parentheses cast.
+// This code is based on ideas in "Casts for the Masses (in C)":
 //
+//   http://blog.hostilefork.com/c-casts-for-the-masses/
+//
+// It provides easier-to-spot variants of the parentheses cast, which when
+// built under C++ can be made to implement the macros with safer and
+// narrower implementations:
+//
+//   * Plain 'cast' is reinterpret_cast for pointers, static_cast otherwise
 //   * The 'm_cast' is when getting [M]utablity on a const is okay
-//   * Plain 'cast' can do everything else (except remove const/volatile)
 //   * The 'c_cast' helper ensures you're ONLY adding [C]onst to a value
 //
 // Additionally there is x_cast(), for cases where you don't know if your
@@ -405,29 +407,77 @@
 // C++ doesn't let you use old-style casts to accomplish this, so it has to
 // be done using two casts and type_traits magic.
 //
-// (This code is based on ideas in "Casts for the Masses (in C)":
+// Due to the constexpr feature of C++, these casts should not cost anything
+// at runtime--even in the debug build--unless the helpers are using smart
+// pointer
 //
-//   http://blog.hostilefork.com/c-casts-for-the-masses/
-//
-// However, due to the runtime costs of the "helper" functions in debug
-// builds where inlining is not done...they have been simplified so as to
-// compile away completely, whenever possible.)
-//
-// See also: DEBUG_CHECK_CASTS
-
-#define cast(T,v)       ((T)(v))
-
 #if (! CPLUSPLUS_11)
-    #define x_cast(T,v)     ((T)(v))  /* pointer casts different in C++11 */
+    #define cast(T,v)       ((T)(v))
+
     #define c_cast(T,v)     ((T)(v))
     #define m_cast(T,v)     ((T)(v))
-    /*
-     * Q: Why divide roles?  A: Frequently, input to cast is const but you
-     * "just forget" to include const in the result type, gaining mutable
-     * access.  Stray writes to that can cause even time-traveling bugs, with
-     * effects *before* that write is made...due to "undefined behavior".
-     */
+
+    #define p_cast(T,v)     ((T)(v))
+    #define i_cast(T,v)     ((T)(v))
+
+    #define x_cast(T,v)     ((T)(v))
 #else
+    template<typename T, typename V>
+    constexpr T m_cast_helper(V v) {
+        static_assert(!std::is_const<T>::value,
+            "invalid m_cast() - requested a const type for output result");
+        static_assert(std::is_volatile<T>::value == std::is_volatile<V>::value,
+            "invalid m_cast() - input and output have mismatched volatility");
+        return const_cast<T>(v);
+    }
+    #define m_cast(T, v)    m_cast_helper<T>(v)
+
+    template<typename T, typename V,
+        typename std::enable_if<
+            std::is_pointer<V>::value
+            and std::is_pointer<T>::value
+        >::type* = nullptr>
+    constexpr T cast_helper(V v) { return reinterpret_cast<T>(v); }
+
+    template<typename T, typename V,
+        typename std::enable_if< ! (
+            std::is_pointer<V>::value
+            and std::is_pointer<T>::value
+        )>::type* = nullptr>
+    constexpr T cast_helper(V v) { return static_cast<T>(v); }
+
+    #define cast(T, v)      cast_helper<T>(v)
+
+    template<typename T, typename V>
+    constexpr T c_cast_helper(V v) {
+        static_assert(!std::is_const<T>::value,
+            "invalid c_cast() - did not request const type for output result");
+        static_assert(std::is_volatile<T>::value == std::is_volatile<V>::value,
+            "invalid c_cast() - input and output have mismatched volatility");
+        return const_cast<T>(v);
+    }
+    #define c_cast(T,v)    c_cast_helper<T>(v)
+
+    template<typename T, typename V>
+    constexpr T p_cast_helper(V v) {
+        static_assert(std::is_pointer<T>::value,
+            "invalid p_cast() - target type must be pointer");
+        static_assert(!std::is_pointer<V>::value,
+            "invalid p_cast() - source type can't be pointer");
+        return reinterpret_cast<T>(v);
+    }
+    #define p_cast(T,v)    p_cast_helper<T>(v)
+
+    template<typename T, typename V>
+    constexpr T i_cast_helper(V v) {
+        static_assert(std::is_integral<T>::value,
+            "invalid p_cast() - target type must be integral");
+        static_assert(!std::is_integral<V>::value,
+            "invalid p_cast() - source type can't be integral");
+        return reinterpret_cast<T>(v);
+    }
+    #define i_cast(T,v)    i_cast_helper<T>(v)
+
     /* We build an arbitrary pointer cast out of two steps: one which adds
      * a const if it wasn't already there, and then a const_cast to the
      * desired type (which will remove the const if target type isn't const).
@@ -443,40 +493,6 @@
                 >::type \
             )(v) /* old-style parentheses cast, "everything but" the const */ \
         ))
-
-    #define c_cast(T,v) \
-        (const_cast<std::conditional< \
-            std::is_const<std::remove_pointer<T>::type>::value, \
-            T, /* success case */ \
-            void /* failure case--you get this if c_cast to mutable type */ \
-        >::type>(v))
-
-    /*
-     * NOTE: m_cast_helper() is needed vs. plain const_cast<> in all C++ builds
-     * as a hook point to overload casting with smart pointer types, e.g.
-     * `m_cast(Utf8(*), some_const_rebchr)`.  Search for overloads of the
-     * m_cast_helper() in certain builds before deciding to simplify this.
-     * Use x_cast() wherever this causes performance problems in dbeug builds.
-     */
-    template<
-        typename TP,
-        typename std::enable_if<
-            std::is_pointer<TP>::value
-        >::type* = nullptr,
-        typename T = typename std::remove_pointer<TP>::type,
-        typename CT = typename std::add_const<T>::type,
-        typename CTP = typename std::add_pointer<CT>::type
-    >
-    TP m_cast_helper(CTP v) {
-        static_assert(
-            !std::is_const<typename std::remove_pointer<TP>::type>::value,
-            "invalid m_cast() - requested a const type for output result"
-        );
-        /* ignore volatile, we don't use it */
-        return const_cast<TP>(v);
-    }
-
-    #define m_cast(TP,v)     m_cast_helper<TP>(v)
 #endif
 
 
@@ -780,7 +796,11 @@
 // 4. While the combinatorics may seem excessive with repeating the equality
 //    and inequality operators, this is the way std::optional does it too.
 //
-#if DEBUG_CHECK_OPTIONALS
+#if (! DEBUG_CHECK_OPTIONALS)
+    #define Option(T) T
+    #define unwrap(v) (v)
+    #define try_unwrap(v) (v)
+#else
     template<typename T>
     struct OptionWrapper {
         T wrapped;
@@ -806,7 +826,7 @@
 
         explicit operator bool() {
            // explicit exception in if https://stackoverflow.com/q/39995573/
-           return cast(bool, wrapped);
+           return wrapped ? true : false;
         }
     };
 
@@ -837,10 +857,6 @@
     #define Option(T) OptionWrapper<T>
     #define unwrap(v) (v).unwrap_helper()
     #define try_unwrap(v) (v).wrapped
-#else
-    #define Option(T) T
-    #define unwrap(v) (v)
-    #define try_unwrap(v) (v)
 #endif
 
 
@@ -898,46 +914,33 @@
 #else
     #if defined(__cplusplus) // needed even if not C++11
         template<class T>
-        inline static void Trash_Pointer_If_Debug(T* &p) {
-            p = reinterpret_cast<T*>(static_cast<uintptr_t>(0xDECAFBAD));
-        }
+        inline static void Trash_Pointer_If_Debug(T* &p)
+          { p = p_cast(T*, cast(uintptr_t, 0xDECAFBAD)); }
 
         template<class T>
-        inline static void SafeTrash_Pointer_If_Debug(T* &p) {
-            p = reinterpret_cast<T*>(static_cast<uintptr_t>(0x5AFE5AFE));
-        }
+        inline static void SafeTrash_Pointer_If_Debug(T* &p)
+          { p = p_cast(T*, cast(uintptr_t, 0x5AFE5AFE)); }
 
         template<class T>
-        inline static void FreeTrash_Pointer_If_Debug(T* &p) {
-            p = reinterpret_cast<T*>(static_cast<uintptr_t>(0xF4EEF4EEE));
-        }
+        inline static void FreeTrash_Pointer_If_Debug(T* &p)
+          { p = p_cast(T*, cast(uintptr_t, 0xF4EEF4EEE)); }
 
         template<class T>
-        inline static bool Is_Pointer_Trash_Debug(T* p) {
-            return (
-                p == reinterpret_cast<T*>(static_cast<uintptr_t>(0xDECAFBAD))
-            );
-        }
+        inline static bool Is_Pointer_Trash_Debug(T* p)
+          { return (p == p_cast(T*, cast(uintptr_t, 0xDECAFBAD))); }
 
         template<class T>
-        inline static bool Is_Pointer_SafeTrash_Debug(T* p) {
-            return (
-                p == reinterpret_cast<T*>(static_cast<uintptr_t>(0x5AFE5AFE))
-            );
-        }
+        inline static bool Is_Pointer_SafeTrash_Debug(T* p)
+          { return (p == p_cast(T*, cast(uintptr_t, 0x5AFE5AFE))); }
 
         template<class T>
-        inline static bool Is_Pointer_FreeTrash_Debug(T* p) {
-            return (
-                p == reinterpret_cast<T*>(static_cast<uintptr_t>(0xF4EEF4EE))
-            );
-        }
+        inline static bool Is_Pointer_FreeTrash_Debug(T* p)
+          { return (p == p_cast(T*, cast(uintptr_t, 0xF4EEF4EE))); }
 
     #if DEBUG_CHECK_OPTIONALS
         template<class P>
-        inline static void Trash_Pointer_If_Debug(OptionWrapper<P> &option) {
-            Trash_Pointer_If_Debug(option.wrapped);
-        }
+        inline static void Trash_Pointer_If_Debug(Option(P) &option)
+          { Trash_Pointer_If_Debug(option.wrapped); }
 
         template<class P>
         inline static bool Is_Pointer_Trash_Debug(OptionWrapper<P> &option) {
@@ -958,31 +961,31 @@
       #endif
     #else
         #define Trash_Pointer_If_Debug(p) \
-            ((p) = cast(void*, cast(uintptr_t, 0xDECAFBAD)))
+            ((p) = p_cast(void*, cast(uintptr_t, 0xDECAFBAD)))
 
         #define SafeTrash_Pointer_If_Debug(p) \
-            ((p) = cast(void*, cast(uintptr_t, 0x5AFE5AFE)))
+            ((p) = p_cast(void*, cast(uintptr_t, 0x5AFE5AFE)))
 
         #define FreeTrash_Pointer_If_Debug(p) \
-            ((p) = cast(void*, cast(uintptr_t, 0xF4EEF4EE)))
+            ((p) = p_cast(void*, cast(uintptr_t, 0xF4EEF4EE)))
 
         #define Is_Pointer_Trash_Debug(p) \
-            ((p) == cast(void*, cast(uintptr_t, 0xDECAFBAD)))
+            ((p) == p_cast(void*, cast(uintptr_t, 0xDECAFBAD)))
 
         #define Is_Pointer_SafeTrash_Debug(p) \
-            ((p) == cast(void*, cast(uintptr_t, 0x5AFE5AFE)))
+            ((p) == p_cast(void*, cast(uintptr_t, 0x5AFE5AFE)))
 
         #define Is_Pointer_FreeTrash_Debug(p) \
-            ((p) == cast(void*, cast(uintptr_t, 0xF4EEF4EE)))
+            ((p) == p_cast(void*, cast(uintptr_t, 0xF4EEF4EE)))
     #endif
 
     // C functions must be cast to the right type, even in C (no void*)
 
     #define Trash_Cfunc_If_Debug(T,p) \
-        ((p) = cast(T, cast(uintptr_t, 0xDECAFBAD)))
+        ((p) = p_cast(T, cast(uintptr_t, 0xDECAFBAD)))
 
     #define IS_CFUNC_TRASH_DEBUG(T,p) \
-        ((p) == cast(T, cast(uintptr_t, 0xDECAFBAD)))
+        ((p) == p_cast(T, cast(uintptr_t, 0xDECAFBAD)))
 #endif
 
 
@@ -1018,7 +1021,7 @@
 //    like `ensure(const foo*, bar)` and bar is a pointer to a mutable foo,
 //    it will be valid...but pass the mutable bar as-is.
 //
-#if (! DEBUG_CHECK_CASTS)
+#if (! CPLUSPLUS_11)
     #define ensure(T,v) (v)
     #define ensurer(T)
     #define ensured(T,L,left) (left)
@@ -1026,11 +1029,13 @@
     template<typename T>
     struct EnsureReader {
         template<typename U>
-        T operator<< (U u) { return u; }
+        constexpr T operator<< (U u) { return u; }
 
         template<typename U>
-        static U check(U u) {
-            static_assert(std::is_convertible<U,T>::value, "ensure() failed");
+        constexpr static U check(U u) {
+            static_assert(
+                std::is_convertible<U,T>::value, "ensure() failed"
+            );
             return u;  // doesn't coerce to type T, same as unchecked, see [1]
         }
     };

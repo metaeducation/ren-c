@@ -353,7 +353,7 @@ inline static enum Reb_Kind VAL_TYPE_UNCHECKED(const Cell* v) {
     #define ALIGN_CHECK_CELL_EVIL_MACRO(c)    NOOP
 #else
     #define ALIGN_CHECK_CELL_EVIL_MACRO(c) \
-        if (cast(uintptr_t, (c)) % ALIGN_SIZE != 0) { \
+        if (i_cast(uintptr_t, (c)) % ALIGN_SIZE != 0) { \
             printf( \
                 "Cell address %p not aligned to %d bytes\n", \
                 cast(const void*, (c)), \

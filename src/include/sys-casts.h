@@ -66,25 +66,30 @@
     // Note: x_cast's fast method vaporizing at compile time in C++ will not
     // work on smart pointer types, so don't try writing:
     //
-    //    #define SER(p)    x_cast(Series*, (p))
+    //    #define VAL(p)    x_cast(ValueT*, (p))
     //
     // It may work when none of the macros actually resolve to smart pointer
     // classes, but will break when they are.
 
     #define NOD(p)          x_cast(Node*, (p))
 
-    #define SER(p)          cast(Series*, x_cast(Series*, (p)))
-    #define ARR(p)          cast(Array*, x_cast(Array*, (p)))
-    #define ACT(p)          cast(Action*, x_cast(Action*, (p)))
-    #define CTX(p)          cast(Context*, x_cast(Context*, (p)))
+    #define SER(p)          x_cast(Series*, (p))
+    #define ARR(p)          x_cast(Array*, (p))
+    #define ACT(p)          x_cast(Action*, (p))
+    #define CTX(p)          x_cast(Context*, (p))
 
-    #define STR(p)          cast(String*, x_cast(String*, (p)))
+    #define STR(p)          x_cast(String*, (p))
 
-    #define SYM(p)          cast(Symbol*, x_cast(Symbol*, (p)))
+    #define SYM(p)          x_cast(Symbol*, (p))
 
-    #define VAL(p)          cast(Value(*), x_cast(ValueT*, (p)))
+    #define VAL(p)          x_cast(ValueT*, (p))
 
-    #define LVL(p)          cast(Level(*), x_cast(LevelT*, (p)))
+    #define LVL(p)          x_cast(LevelT*, (p))
+
+    #define BIN(p)          x_cast(Binary*, (p))
+
+    #define MAP(p)          x_cast(Map*, (p))
+    #define KEYS(p)         x_cast(KeyList*, (p))
 #else
 
   #if (! CPLUSPLUS_11)
@@ -122,7 +127,7 @@
         if (not p)
             return nullptr;
 
-        if ((*reinterpret_cast<const Byte*>(p) & (
+        if ((FIRST_BYTE(p) & (
             NODE_BYTEMASK_0x80_NODE | NODE_BYTEMASK_0x40_FREE
         )) != (
             NODE_BYTEMASK_0x80_NODE
@@ -130,7 +135,7 @@
             panic (p);
         }
 
-        return reinterpret_cast<N*>(p);
+        return cast(N*, p);
     }
 
     template <
@@ -151,7 +156,7 @@
         if (not p)
             return nullptr;
 
-        if ((reinterpret_cast<const Series*>(p)->leader.bits & (
+        if ((cast(const Stub*, p)->header.bits & (
             NODE_FLAG_NODE | NODE_FLAG_FREE | NODE_FLAG_CELL
         )) != (
             NODE_FLAG_NODE
@@ -159,7 +164,7 @@
             panic (p);
         }
 
-        return reinterpret_cast<S*>(p);
+        return cast(S*, p);
     }
 
     template <
@@ -181,7 +186,7 @@
         if (not p)
             return nullptr;
 
-        if ((reinterpret_cast<const Series* >(p)->leader.bits & (
+        if ((cast(const Stub*, p)->header.bits & (
             NODE_FLAG_NODE | NODE_FLAG_FREE | NODE_FLAG_CELL
         )) != (
             NODE_FLAG_NODE
@@ -189,7 +194,7 @@
             panic (p);
         }
 
-        return reinterpret_cast<A*>(p);
+        return cast(A*, p);
     }
 
     template <
@@ -201,7 +206,7 @@
             Context  // false branch
         >::type
     >
-    inline static C *CTX(T *p) {
+    inline static C* CTX(T *p) {
         static_assert(
             std::is_same<T0, void>::value
                 or std::is_same<T0, Node>::value
@@ -212,7 +217,7 @@
         if (not p)
             return nullptr;
 
-        if (((reinterpret_cast<const Series* >(p)->leader.bits & (
+        if (((cast(const Stub*, p)->header.bits & (
             SERIES_MASK_VARLIST
                 | NODE_FLAG_FREE
                 | NODE_FLAG_CELL
@@ -225,7 +230,7 @@
             panic (p);
         }
 
-        return reinterpret_cast<C*>(p);
+        return cast(C*, p);
     }
 
     template <typename P>
@@ -241,7 +246,7 @@
         if (not p)
             return nullptr;
 
-        if ((reinterpret_cast<const Series* >(p)->leader.bits & (
+        if ((cast(const Stub*, p)->header.bits & (
             SERIES_MASK_DETAILS
                 | NODE_FLAG_FREE
                 | NODE_FLAG_CELL
@@ -252,7 +257,7 @@
             panic (p);
         }
 
-        return reinterpret_cast<Action*>(p);
+        return cast(Action*, p);
     }
 
     // !!! STR() and SYM() casts should be updated to do more than const
@@ -293,7 +298,7 @@
         if (not p)
             return nullptr;
 
-        if ((*reinterpret_cast<Byte*>(p) & (
+        if ((FIRST_BYTE(p) & (
             NODE_BYTEMASK_0x80_NODE | NODE_BYTEMASK_0x40_FREE
                 | NODE_BYTEMASK_0x01_CELL
         )) != (
@@ -302,15 +307,19 @@
             panic (p);
         }
 
-        return reinterpret_cast<Level(*)>(p);
+        return cast(Level(*), p);
     }
+
+    inline static Map* MAP(void *p) {  // not a fancy cast ATM.
+        Array* a = ARR(p);
+        assert(IS_PAIRLIST(a));
+        return cast(Map*, a);
+    }
+
+    inline static Binary* BIN(void *p)
+        { return cast(Binary*, p); }
+    inline static const Binary* BIN(const void *p)
+        { return cast(const Binary*, p); }
+
+    #define KEYS(p)         x_cast(KeyList*, (p))
 #endif
-
-
-inline static Map* MAP(void *p) {  // not a fancy cast ATM.
-    Array* a = ARR(p);
-    assert(IS_PAIRLIST(a));
-    return cast(Map*, a);
-}
-
-#define KEYS(p)         x_cast(KeyList*, (p))

@@ -28,31 +28,27 @@
 //
 
 
-#ifdef HEAVY_NODE_BYTE_CHECK
-    //
-    // Just checking that the NODE_FLAG_NODE bit is set is quite costly to
-    // be doing on *every* NODE_BYTE() operation.  But, sometimes it comes in
-    // handy when tracing down misunderstandings.  A build that enables this
-    // should be run every so often.
-
-    inline static Byte& NODE_BYTE(Node* node) {
-        assert(cast(Byte*, node)[0] & NODE_BYTEMASK_0x80_NODE);
-        return cast(Byte*, node)[0];
-    }
-
-    inline static const Byte& NODE_BYTE(const Node* node) {
-        assert(cast(const Byte*, node)[0] & NODE_BYTEMASK_0x80_NODE);
-        return cast(const Byte*, node)[0];
-    }
-#else
-    // Fast version.  Losing const information for fetching NODE_BYTE() isn't
-    // much of an issue.  GC can fiddle with the marked flag even on const
-    // series, for example.  If you're changing something from a Cell to a
-    // Stub--or otherwise--you have much bigger concerns regarding safety and
-    // unsafety than const.  (HEAVY_NODE_BYTE_CHECK checks const also)
-
+// 1. Just checking that the NODE_FLAG_NODE bit is set is quite costly to
+//    be doing on *every* NODE_BYTE() operation.  But, sometimes it comes in
+//    handy when tracing down misunderstandings.  A build that enables this
+//    should be run every so often.
+//
+// 2. Losing const information for fetching NODE_BYTE() is intentional.  GC
+//    needs to fiddle with the marked flag bit even on series that are
+//    conceptually immutable, and the managed bit needs to be set on bindings
+//    where the reference is const.  If you're changing something from a Cell
+//    to a  Stub--or otherwise--you have much bigger concerns regarding safety
+//    and unsafety than C-level constness!
+//
+#if !defined(HEAVY_NODE_BYTE_CHECK)  // see [1]
     #define NODE_BYTE(p) \
-        FIRST_BYTE(ensure(const Node*, (p)))
+        FIRST_BYTE(x_cast(Node*, ensure(const Node*, (p))))  // x_cast, see [2]
+
+#else
+    inline static Byte& NODE_BYTE(const Node* node) {
+        assert(cast(Byte*, node)[0] & NODE_BYTEMASK_0x80_NODE);
+        return x_cast(Byte*, node)[0];   // cast away constness, see [2]
+    }
 #endif
 
 #define FLAG_NODE_BYTE(byte)    FLAG_FIRST_BYTE(byte)
@@ -213,7 +209,7 @@ inline static void *Try_Alloc_Pooled(PoolId pool_id)
     pool->free--;
 
   #if DEBUG_MEMORY_ALIGN
-    if (cast(uintptr_t, unit) % sizeof(REBI64) != 0) {
+    if (i_cast(uintptr_t, unit) % sizeof(REBI64) != 0) {
         printf(
             "Pool Unit address %p not aligned to %d bytes\n",
             cast(void*, unit),

@@ -682,7 +682,7 @@ static void Mark_Root_Series(void)
                 Is_Series_Array(s)
                 and s != g_ds.array  // !!! Review g_ds.array exemption!
             ){
-                if (s->leader.bits & NODE_FLAG_MANAGED)
+                if (s->header.bits & NODE_FLAG_MANAGED)
                     continue;  // BLOCK! or OBJECT! etc. holding it should mark
 
                 Array* a = cast(Array*, s);
@@ -834,7 +834,7 @@ static void Mark_Level_Stack_Deep(void)
 
         if (
             L_specifier != SPECIFIED
-            and (L_specifier->leader.bits & NODE_FLAG_MANAGED)
+            and (L_specifier->header.bits & NODE_FLAG_MANAGED)
         ){
             // Expand L_specifier.
             //
@@ -1401,7 +1401,7 @@ REBLEN Recycle(void)
 //
 void Push_Guard_Node(const Node* node)
 {
-    assert(Is_Node(cast(void*, node)));
+    assert(Is_Node(cast(const void*, node)));
 
   #if !defined(NDEBUG)
     if (Is_Node_A_Cell(node)) {

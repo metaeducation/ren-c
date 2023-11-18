@@ -203,7 +203,7 @@ inline static bool Is_Stable(Atom(const*) v) {  // repeat for non-inlined speed
 
 #if !defined(NDEBUG)
     #define ASSERT_STABLE(v) \
-        assert(Is_Stable(cast(Atom(*), (v))));
+        assert(Is_Stable(cast(Atom(const*), (v))));
 #else
     #define ASSERT_STABLE(v)
 #endif

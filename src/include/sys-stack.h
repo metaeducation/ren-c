@@ -124,6 +124,7 @@
 
         operator REBVAL* () const { return v; }
         operator Sink(Value(*)) () const { return v; }
+        explicit operator Byte* () const { return cast(Byte*, v); }
 
       #if DEBUG_CHECK_CASTS
         operator NoQuote(const Cell*) () { return v; }
@@ -171,8 +172,11 @@
            return temp;
         }
     };
-#endif
 
+    template<>
+    inline StackValue(*) cast_helper<StackValue(*)>(Value(*) v)
+      { return v; }
+#endif
 
 #define TOP_INDEX \
     cast(StackIndex, g_ds.index)  // cast helps stop ++TOP_INDEX, etc.
@@ -346,19 +350,19 @@ inline static void Drop_Data_Stack_To(StackIndex i) {
 #elif defined(OS_STACK_GROWS_UP)
 
     #define C_STACK_OVERFLOWING(address_of_local_var) \
-        (cast(uintptr_t, (address_of_local_var)) >= g_ts.C_stack_address_limit)
+        (i_cast(uintptr_t, (address_of_local_var)) >= g_ts.C_stack_limit_addr)
 
 #elif defined(OS_STACK_GROWS_DOWN)
 
     #define C_STACK_OVERFLOWING(address_of_local_var) \
-        (cast(uintptr_t, (address_of_local_var)) <= g_ts.C_stack_address_limit)
+        (i_cast(uintptr_t, (address_of_local_var)) <= g_ts.C_stack_limit_addr)
 
 #else
 
     #define C_STACK_OVERFLOWING(local_var_addr) \
         (g_ts.C_stack_grows_up \
-            ? cast(uintptr_t, (local_var_addr)) >= g_ts.C_stack_address_limit \
-            : cast(uintptr_t, (local_var_addr)) <= g_ts.C_stack_address_limit)
+            ? i_cast(uintptr_t, (local_var_addr)) >= g_ts.C_stack_limit_addr \
+            : i_cast(uintptr_t, (local_var_addr)) <= g_ts.C_stack_limit_addr)
 #endif
 
 

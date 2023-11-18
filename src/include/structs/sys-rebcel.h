@@ -141,14 +141,10 @@
 // HEART, because that treats QUOTED! cells differently.  If you only check
 // the heart, then (''''x) will equal (x) because both hearts are WORD!.
 //
-// 1. For performance in debug builds, we don't want to call an inline
-//    function here.  Fairly adequate protection results from picking
-//    ->header.bits out (it's why series stubs call the header `leader`)
+#define HEART_BYTE(cell) \
+    SECOND_BYTE(ensure(NoQuote(const Cell*), cell))
 
 #define FLAG_HEART_BYTE(kind)       FLAG_SECOND_BYTE(kind)
-
-#define HEART_BYTE(cell) \
-    SECOND_BYTE(&(cell)->header.bits)  // SECOND_BYTE(cell) less safe, see [1]
 
 
 //=//// BITS 16-23: QUOTING DEPTH BYTE ("QUOTE") //////////////////////////=//
@@ -163,11 +159,11 @@
 // to check at compile-time so that different views of the same cell don't
 // get conflated.  See `NoQuote(const Cell*)` for some of that mechanic.
 //
+#define QUOTE_BYTE(cell) \
+    THIRD_BYTE(ensure(const Cell*, cell))
 
 #define FLAG_QUOTE_BYTE(byte)       FLAG_THIRD_BYTE(byte)
 
-#define QUOTE_BYTE(cell) \
-    THIRD_BYTE(&(cell)->header.bits)  // not THIRD_BYTE(cell), see HEART_BYTE()
 
 #define ISOTOPE_0           0  // Also QUASI (e.g. with NONQUASI_BIT is clear)
 #define UNQUOTED_1          1
@@ -669,7 +665,7 @@ union ValuePayloadUnion { //=/////////////// ACTUAL PAYLOAD DEFINITION ////=//
 
       private:  // disable assignment and copying, see [3] above
         Cell (const Cell& other) = default;
-        constexpr Cell& operator= (const Cell& rhs) = default;
+        Cell& operator= (const Cell& rhs) = default;
       #endif
     };
 

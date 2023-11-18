@@ -788,7 +788,7 @@ Special internal defines used by RT, not Host-Kit developers:
 #if DEBUG
     #define ZEROTRASH nullptr
 #else
-    #define ZEROTRASH cast(void*, cast(intptr_t, 0xDECAFBAD))
+    #define ZEROTRASH p_cast(void*, cast(intptr_t, 0xDECAFBAD))
 #endif
 
 #define ZERO_UNUSED_CELL_FIELDS 1

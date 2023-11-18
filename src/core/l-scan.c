@@ -3195,7 +3195,7 @@ DECLARE_NATIVE(transcode)
 
         a->misc.line = ss->line;
         mutable_LINK(Filename, a) = ss->file;
-        a->leader.bits |= ARRAY_MASK_HAS_FILE_LINE;
+        a->header.bits |= ARRAY_MASK_HAS_FILE_LINE;
 
         Init_Block(OUT, a);
     }
