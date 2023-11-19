@@ -369,3 +369,10 @@ typedef struct rebol_time_fields {
 } REB_TIMEF;
 
 #include "sys-deci.h"
+
+
+enum Reb_Attach_Mode {
+    ATTACH_READ,
+    ATTACH_WRITE,
+    ATTACH_COPY
+};

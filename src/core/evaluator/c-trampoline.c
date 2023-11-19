@@ -647,3 +647,54 @@ void Shutdown_Trampoline(void)
   }
   #endif
 }
+
+
+//
+//  Drop_Level_Core: C
+//
+void Drop_Level_Core(Level(*) L) {
+  #if DEBUG_EXPIRED_LOOKBACK
+    free(L->stress);
+  #endif
+
+    assert(TOP_LEVEL == L);
+
+    if (Is_Throwing(L) or (L->out and Is_Raised(L->out))) {
+        //
+        // On normal completion with a return result, we do not allow API
+        // handles attached to a level to leak--you are expected to release
+        // everything.  But definitional failure and throw cases are exempt.
+        //
+        Node* n = L->alloc_value_list;
+        while (n != L) {
+            Array* a = ARR(n);
+            n = LINK(ApiNext, a);
+            FRESHEN(Array_Single(a));
+            GC_Kill_Series(a);
+        }
+        Trash_Pointer_If_Debug(L->alloc_value_list);
+
+        // There could be outstanding values on the data stack, or data in the
+        // mold buffer...we clean it up automatically in these cases.
+        //
+        Rollback_Globals_To_State(&L->baseline);
+    }
+    else {
+      #if !defined(NDEBUG)
+        Node* n = L->alloc_value_list;
+        while (n != L) {
+            Array* a = ARR(n);
+            printf("API handle was allocated but not freed, panic'ing leak\n");
+            panic (a);
+        }
+        Trash_Pointer_If_Debug(L->alloc_value_list);
+      #endif
+    }
+
+    g_ts.top_level = L->prior;
+
+    // Note: Free_Feed() will handle feeding a feed through to its end (which
+    // may release handles/etc), so no requirement Level_At(L) be at END.
+
+    Free_Level_Internal(L);
+}

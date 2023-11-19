@@ -50,6 +50,180 @@ enum {
 
 
 //
+//  String_At: C
+//
+// Note that we only ever create caches for strings that have had String_At()
+// run on them.  So the more operations that avoid String_At(), the better!
+// Using String_Head() and String_Tail() will give a Utf8(*) that can be used
+// to iterate much faster, and most of the strings in the system might be able
+// to get away with not having any bookmarks at all.
+//
+Utf8(*) String_At(const_if_c String* s, REBLEN at) {
+    assert(s != g_mold.buffer);  // String_At() makes bookmarks, don't want!
+
+    assert(at <= String_Len(s));
+
+    if (Is_Definitely_Ascii(s)) {  // can't have any false positives
+        assert(not LINK(Bookmarks, s));  // mutations must ensure this
+        return cast(Utf8(*), cast(Byte*, String_Head(s)) + at);
+    }
+
+    Utf8(*) cp;  // can be used to calculate offset (relative to String_Head())
+    REBLEN index;
+
+    BookmarkList* book = nullptr;  // updated at end if not nulled out
+    if (Is_NonSymbol_String(s))
+        book = LINK(Bookmarks, s);
+
+  #if DEBUG_SPORADICALLY_DROP_BOOKMARKS
+    if (book and SPORADICALLY(100)) {
+        Free_Bookmarks_Maybe_Null(s);
+        book = nullptr;
+    }
+  #endif
+
+    REBLEN len = String_Len(s);
+
+  #if DEBUG_TRACE_BOOKMARKS
+    BOOKMARK_TRACE("len %ld @ %ld ", len, at);
+    BOOKMARK_TRACE("%s", bookmark ? "bookmarked" : "no bookmark");
+  #endif
+
+    if (at < len / 2) {
+        if (len < sizeof(Cell)) {
+            if (Is_NonSymbol_String(s))
+                assert(
+                    Get_Series_Flag(s, DYNAMIC)  // e.g. mold buffer
+                    or not book  // mutations must ensure this
+                );
+            goto scan_from_head;  // good locality, avoid bookmark logic
+        }
+        if (not book and Is_NonSymbol_String(s)) {
+            book = Alloc_BookmarkList();
+            mutable_LINK(Bookmarks, m_cast(String*, s)) = book;
+            goto scan_from_head;  // will fill in bookmark
+        }
+    }
+    else {
+        if (len < sizeof(Cell)) {
+            if (Is_NonSymbol_String(s))
+                assert(
+                    not book  // mutations must ensure this usually but...
+                    or Get_Series_Flag(s, DYNAMIC)  // !!! mold buffer?
+                );
+            goto scan_from_tail;  // good locality, avoid bookmark logic
+        }
+        if (not book and Is_NonSymbol_String(s)) {
+            book = Alloc_BookmarkList();
+            mutable_LINK(Bookmarks, m_cast(String*, s)) = book;
+            goto scan_from_tail;  // will fill in bookmark
+        }
+    }
+
+    // Theoretically, a large UTF-8 string could have multiple "bookmarks".
+    // That would complicate this logic by having to decide which one was
+    // closest to be using.  For simplicity we just use one right now to
+    // track the last access--which speeds up the most common case of an
+    // iteration.  Improve as time permits!
+    //
+    assert(not book or Series_Used(book) == 1);  // only one
+
+  blockscope {
+    REBLEN booked = book ? BMK_INDEX(book) : 0;
+
+    // `at` is always positive.  `booked - at` may be negative, but if it
+    // is positive and bigger than `at`, faster to seek from head.
+    //
+    if (cast(REBINT, at) < cast(REBINT, booked) - cast(REBINT, at)) {
+        if (at < sizeof(Cell))
+            book = nullptr;  // don't update bookmark for near head search
+        goto scan_from_head;
+    }
+
+    // `len - at` is always positive.  `at - booked` may be negative, but if
+    // it is positive and bigger than `len - at`, faster to seek from tail.
+    //
+    if (cast(REBINT, len - at) < cast(REBINT, at) - cast(REBINT, booked)) {
+        if (len - at < sizeof(Cell))
+            book = nullptr;  // don't update bookmark for near tail search
+        goto scan_from_tail;
+    }
+
+    index = booked;
+    if (book)
+        cp = cast(Utf8(*), Series_Data(s) + BMK_OFFSET(book));
+    else
+        cp = cast(Utf8(*), Series_Data(s));
+  }
+
+    if (index > at) {
+      #if DEBUG_TRACE_BOOKMARKS
+        BOOKMARK_TRACE("backward scan %ld", index - at);
+      #endif
+        goto scan_backward;
+    }
+
+  #if DEBUG_TRACE_BOOKMARKS
+    BOOKMARK_TRACE("forward scan %ld", at - index);
+  #endif
+    goto scan_forward;
+
+  scan_from_head:
+  #if DEBUG_TRACE_BOOKMARKS
+    BOOKMARK_TRACE("scan from head");
+  #endif
+    cp = String_Head(s);
+    index = 0;
+
+  scan_forward:
+    assert(index <= at);
+    for (; index != at; ++index)
+        cp = Skip_Codepoint(cp);
+
+    if (not book)
+        return cp;
+
+    goto update_bookmark;
+
+  scan_from_tail:
+  #if DEBUG_TRACE_BOOKMARKS
+    BOOKMARK_TRACE("scan from tail");
+  #endif
+    cp = String_Tail(s);
+    index = len;
+
+  scan_backward:
+    assert(index >= at);
+    for (; index != at; --index)
+        cp = Step_Back_Codepoint(cp);
+
+    if (not book) {
+      #if DEBUG_TRACE_BOOKMARKS
+        BOOKMARK_TRACE("not cached\n");
+      #endif
+        return cp;
+    }
+
+  update_bookmark:
+  #if DEBUG_TRACE_BOOKMARKS
+    BOOKMARK_TRACE("caching %ld\n", index);
+  #endif
+    BMK_INDEX(book) = index;
+    BMK_OFFSET(book) = cp - String_Head(s);
+
+  #if DEBUG_VERIFY_STR_AT
+    Utf8(*) check_cp = String_Head(s);
+    REBLEN check_index = 0;
+    for (; check_index != at; ++check_index)
+        check_cp = Skip_Codepoint(check_cp);
+    assert(check_cp == cp);
+  #endif
+
+    return cp;
+}
+
+
+//
 //  CT_String: C
 //
 REBINT CT_String(NoQuote(const Cell*) a, NoQuote(const Cell*) b, bool strict)
