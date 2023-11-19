@@ -210,8 +210,8 @@ void Protect_Series(const Series* s_const, REBLEN index, Flags flags)
 
     Flip_Series_To_Black(s); // recursion protection
 
-    const Cell* val_tail = Array_Tail(ARR(s));
-    const Cell* val = Array_At(ARR(s), index);
+    const Cell* val_tail = Array_Tail(x_cast(Array*, s));
+    const Cell* val = Array_At(x_cast(Array*, s), index);
     for (; val != val_tail; val++)
         Protect_Value(val, flags);
 }
@@ -490,7 +490,7 @@ bool Is_Value_Frozen_Deep(const Cell* v) {
     // Frozen deep should be set even on non-arrays, e.g. all frozen shallow
     // strings should also have SERIES_INFO_FROZEN_DEEP.
     //
-    return Get_Series_Info(SER(node), FROZEN_DEEP);
+    return Get_Series_Info(x_cast(Series*, node), FROZEN_DEEP);
 }
 
 

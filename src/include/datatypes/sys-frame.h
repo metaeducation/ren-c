@@ -203,7 +203,7 @@ inline static Option(const Symbol*) Level_Label(Level(*) L) {
 inline static Context* Context_For_Level_May_Manage(Level(*) L) {
     assert(not Is_Level_Fulfilling(L));
     Set_Node_Managed_Bit(L->varlist);  // may already be managed
-    return CTX(L->varlist);
+    return cast(Context*, L->varlist);
 }
 
 
@@ -399,7 +399,7 @@ inline static Level(*) Prep_Level_Core(
 }
 
 #define Make_Level(feed,flags) \
-    Prep_Level_Core(cast(Level(*), Alloc_Pooled(LEVEL_POOL)), (feed), (flags))
+    Prep_Level_Core(u_cast(Level(*), Alloc_Pooled(LEVEL_POOL)), (feed), (flags))
 
 #define Make_Level_At_Core(any_array,specifier,level_flags) \
     Make_Level( \

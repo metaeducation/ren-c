@@ -49,12 +49,15 @@ Context* Alloc_Context_Core(enum Reb_Kind kind, REBLEN capacity, Flags flags)
     );
     mutable_MISC(VarlistAdjunct, varlist) = nullptr;
     mutable_LINK(Patches, varlist) = nullptr;
-    INIT_CTX_KEYLIST_UNIQUE(CTX(varlist), keylist);  // starts out unique
+    INIT_CTX_KEYLIST_UNIQUE(  // hasn't been shared yet...
+        cast(Context*, varlist),
+        keylist
+    );
 
     Cell* rootvar = Alloc_Tail_Array(varlist);
     INIT_VAL_CONTEXT_ROOTVAR(rootvar, kind, varlist);
 
-    return CTX(varlist);  // varlist pointer is context handle
+    return cast(Context*, varlist);  // varlist pointer is context handle
 }
 
 
@@ -203,8 +206,8 @@ static REBVAR* Append_Context_Core(
         // skip over binding-related hitches
         //
         Series* updating = m_cast(Symbol*, symbol);
-        while (Get_Series_Flag(SER(node_MISC(Hitch, updating)), BLACK))
-            updating = SER(node_MISC(Hitch, updating));
+        while (Get_Series_Flag(cast(Stub*, node_MISC(Hitch, updating)), BLACK))
+            updating = cast(Stub*, node_MISC(Hitch, updating));
 
         node_MISC(Hitch, patch) = node_MISC(Hitch, updating);
         mutable_INODE(PatchContext, patch) = context;
@@ -622,7 +625,7 @@ Context* Make_Context_Detect_Managed(
     mutable_MISC(VarlistAdjunct, varlist) = nullptr;
     mutable_LINK(Patches, varlist) = nullptr;  // start w/no virtual binds
 
-    Context* context = CTX(varlist);
+    Context* context = cast(Context*, varlist);
 
     // This isn't necessarily the clearest way to determine if the keylist is
     // shared.  Note Collect_KeyList_Managed() isn't called from anywhere
@@ -648,7 +651,7 @@ Context* Make_Context_Detect_Managed(
         }
     }
 
-    Value(*) var = VAL(Array_Head(varlist));
+    Value(*) var = cast(Value(*), Array_Head(varlist));
     INIT_VAL_CONTEXT_ROOTVAR(var, kind, varlist);
 
     ++var;

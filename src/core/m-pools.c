@@ -349,7 +349,7 @@ void Shutdown_Pools(void)
 
             ++num_leaks;
 
-            Series* s = SER(cast(void*, unit));
+            Series* s = x_cast(Series*, unit);
             if (Is_Node_Managed(s)) {
                 printf("MANAGED series leak, this REALLY shouldn't happen\n");
                 leaked = s;  // report a managed one if found
@@ -502,13 +502,13 @@ Node* Try_Find_Containing_Node_Debug(const void *p)
                 continue;
 
             if (unit[0] & NODE_BYTEMASK_0x01_CELL) {  // a "pairing"
-                REBVAL *pairing = VAL(cast(void*, unit));
+                REBVAL *pairing = x_cast(Value(*), unit);
                 if (p >= cast(void*, pairing) and p < cast(void*, pairing + 1))
                     return pairing;  // this Stub is actually Cell[2]
                 continue;
             }
 
-            Series* s = SER(cast(void*, unit));
+            Series* s = x_cast(Series*, unit);
             if (Not_Series_Flag(s, DYNAMIC)) {
                 if (
                     p >= cast(void*, &s->content)
@@ -625,10 +625,10 @@ void Free_Pairing(REBVAL *paired) {
 
   #if DEBUG_COUNT_TICKS
     //
-    // This wasn't actually a Series, so can't cast with SER().  But poke the
-    // tick where the node was freed into the memory spot so panic finds it.
+    // This wasn't actually a Series, but poke the tick where the node was
+    // freed into the memory spot so panic finds it.
     //
-    cast(Stub*, paired)->tick = TG_tick;
+    x_cast(Stub*, paired)->tick = TG_tick;
   #endif
 }
 
@@ -756,7 +756,7 @@ void Expand_Series(Series* s, REBLEN index, REBLEN delta)
             // but when it is this will be useful.
             //
             for (index = 0; index < delta; index++)
-                Erase_Cell(Array_At(ARR(s), index));
+                Erase_Cell(Array_At(x_cast(Array*, s), index));
         }
       #endif
         Assert_Series_Term_If_Needed(s);
@@ -803,7 +803,7 @@ void Expand_Series(Series* s, REBLEN index, REBLEN delta)
             //
             while (delta != 0) {
                 --delta;
-                Erase_Cell(Array_At(ARR(s), index + delta));
+                Erase_Cell(Array_At(x_cast(Array*, s), index + delta));
             }
         }
       #endif
@@ -878,7 +878,7 @@ void Expand_Series(Series* s, REBLEN index, REBLEN delta)
 
     assert(Get_Series_Flag(s, DYNAMIC));
     if (Is_Series_Array(s))
-        Prep_Array(ARR(s), 0); // capacity doesn't matter it will prep
+        Prep_Array(x_cast(Array*, s), 0); // capacity doesn't matter to prep
 
     // If necessary, add series to the recently expanded list
     //
@@ -1055,7 +1055,7 @@ void Remake_Series(Series* s, REBLEN units, Flags flags)
     }
     assert(Get_Series_Flag(s, DYNAMIC));
     if (Is_Series_Array(s))
-        Prep_Array(ARR(s), 0); // capacity doesn't matter, it will prep
+        Prep_Array(x_cast(Array*, s), 0); // capacity doesn't matter to prep
 
     if (preserve) {
         // Preserve as much data as possible (if it was requested, some
@@ -1092,11 +1092,11 @@ void Decay_Series(Series* s)
 
     switch (Series_Flavor(s)) {
       case FLAVOR_STRING:
-        Free_Bookmarks_Maybe_Null(STR(s));
+        Free_Bookmarks_Maybe_Null(cast(String*, s));
         break;
 
       case FLAVOR_SYMBOL:
-        GC_Kill_Interning(STR(s));  // special handling can adjust canons
+        GC_Kill_Interning(cast(Symbol*, s));  // special handling adjust canons
         break;
 
       case FLAVOR_PATCH: {
@@ -1106,9 +1106,9 @@ void Decay_Series(Series* s)
         // same name in other modules...with the name itself as a symbol
         // being in that circular list.  Remove this patch from that list.
         //
-        Series* temp = MISC(PatchHitch, s);
+        Stub* temp = MISC(PatchHitch, s);
         while (node_MISC(Hitch, temp) != s) {
-            temp = SER(node_MISC(Hitch, temp));
+            temp = cast(Stub*, node_MISC(Hitch, temp));
             assert(IS_PATCH(temp) or IS_SYMBOL(temp));
         }
         node_MISC(Hitch, temp) = node_MISC(Hitch, s);
@@ -1127,7 +1127,7 @@ void Decay_Series(Series* s)
         break;
 
       case FLAVOR_HANDLE: {
-        Cell* v = Array_Single(ARR(s));
+        Cell* v = Array_Single(x_cast(Array*, s));
         assert(Cell_Heart_Unchecked(v) == REB_HANDLE);
 
         // Some handles use the managed form just because they want changes to
@@ -1161,7 +1161,11 @@ void Decay_Series(Series* s)
         // possibility exists for the other array with a "canon" [0]
         //
         if (IS_VARLIST(s) or IS_DETAILS(s))
-            Mem_Copy(&s->content.fixed.cell, Array_Head(ARR(s)), sizeof(Cell));
+            Mem_Copy(
+                &s->content.fixed.cell,
+                Array_Head(c_cast(Array*, s)),
+                sizeof(Cell)
+            );
 
         Free_Unbiased_Series_Data(unbiased, total);
 
@@ -1313,7 +1317,7 @@ REBLEN Check_Memory_Debug(void)
             if (unit[0] & NODE_BYTEMASK_0x01_CELL)
                 continue; // a pairing
 
-            Series* s = SER(cast(void*, unit));
+            Series* s = x_cast(Series*, unit);
             if (Not_Series_Flag(s, DYNAMIC))
                 continue; // data lives in the series node itself
 
@@ -1392,7 +1396,7 @@ void Dump_All_Series_Of_Width(Size wide)
             if (unit[0] & NODE_BYTEMASK_0x01_CELL)  // a pairing
                 continue;
 
-            Series* s = SER(cast(void*, unit));
+            Series* s = x_cast(Series*, unit);
             if (Series_Wide(s) == wide) {
                 ++count;
                 printf(
@@ -1428,7 +1432,7 @@ void Dump_Series_In_Pool(PoolId pool_id)
             if (unit[0] & NODE_BYTEMASK_0x01_CELL)
                 continue;  // pairing
 
-            Series* s = SER(cast(void*, unit));
+            Series* s = x_cast(Series*, unit);
             if (
                 pool_id == UNLIMITED
                 or (
@@ -1535,7 +1539,7 @@ REBU64 Inspect_Series(bool show)
             if (unit[0] & NODE_BYTEMASK_0x01_CELL)
                 continue;
 
-            Series* s = SER(cast(void*, unit));
+            Series* s = x_cast(Series*, unit);
 
             if (Get_Series_Flag(s, DYNAMIC))
                 tot_size += Series_Total(s);

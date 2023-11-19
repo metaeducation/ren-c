@@ -56,11 +56,11 @@
     PAYLOAD(Any, (v)).first.i
 
 #define INIT_VAL_VARARGS_PHASE          Init_Cell_Node2
-#define VAL_VARARGS_PHASE(v)            ACT(Cell_Node2(v))
+#define VAL_VARARGS_PHASE(v)            cast(Action*, Cell_Node2(v))
 
 inline static Array* VAL_VARARGS_BINDING(NoQuote(const Cell*) v) {
     assert(Cell_Heart(v) == REB_VARARGS);
-    return ARR(BINDING(v));  // may be varlist or plain array
+    return cast(Array*, BINDING(v));  // may be varlist or plain array
 }
 
 inline static void INIT_VAL_VARARGS_BINDING(
@@ -109,7 +109,7 @@ inline static bool Is_Block_Style_Varargs(
 ){
     assert(Cell_Heart(vararg) == REB_VARARGS);
 
-    Array* binding = ARR(BINDING(vararg));
+    Array* binding = cast(Array*, BINDING(vararg));
     if (IS_VARLIST(binding)) {
         *shared_out = nullptr;  // avoid compiler warning in -Og build
         return false;  // it's an ordinary vararg, representing a FRAME!
@@ -136,12 +136,12 @@ inline static bool Is_Level_Style_Varargs_Maybe_Null(
 ){
     assert(Cell_Heart(vararg) == REB_VARARGS);
 
-    Array* binding = ARR(BINDING(vararg));
+    Array* binding = cast(Array*, BINDING(vararg));
     if (IS_VARLIST(binding)) {
         // "Ordinary" case... use the original level implied by the VARARGS!
         // (so long as it is still live on the stack)
 
-        *L_out = CTX_LEVEL_IF_ON_STACK(CTX(binding));
+        *L_out = CTX_LEVEL_IF_ON_STACK(cast(Context*, binding));
         return true;
     }
 

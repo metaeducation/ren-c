@@ -688,7 +688,7 @@ static void Update_Error_Near_For_Line(
     if (ss->file)
         Init_File(&vars->file, ss->file);
     else
-        Init_Nulled(VAL(&vars->file));
+        Init_Nulled(x_cast(Value(*), &vars->file));
 
     Init_Integer(&vars->line, ss->line);
 }
@@ -2337,9 +2337,9 @@ Bounce Scanner_Executor(Level(*) const L) {
 
             // !!! DEBUG_EXTANT_STACK_POINTERS can't resolve if this is
             // a NoQuote(const Cell*) or REBVAL* overload with DEBUG_CHECK_CASTS.
-            // Have to cast explicitly, use VAL()
+            // Have to cast explicitly.
             //
-            VAL_DECIMAL(VAL(TOP)) /= 100.0;
+            VAL_DECIMAL(x_cast(Value(*), TOP)) /= 100.0;
         }
         break;
 
@@ -2793,9 +2793,9 @@ Bounce Scanner_Executor(Level(*) const L) {
         if (
             Get_Cell_Flag(TOP, FIRST_IS_NODE)
             and Cell_Node1(TOP) != nullptr  // null legal in node slots ATM
-            and Is_Series_Array(SER(Cell_Node1(TOP)))
+            and Is_Series_Array(cast(Series*, Cell_Node1(TOP)))
         ){
-            Array* a = ARR(Cell_Node1(TOP));
+            Array* a = cast(Array*, Cell_Node1(TOP));
             a->misc.line = ss->line;
             mutable_LINK(Filename, a) = ss->file;
             Set_Array_Flag(a, HAS_FILE_LINE_UNMASKED);
@@ -3137,7 +3137,7 @@ DECLARE_NATIVE(transcode)
     Feed(*) feed = Make_Array_Feed_Core(EMPTY_ARRAY, 0, SPECIFIED);
     feed->context = REF(where)
         ? VAL_CONTEXT(ARG(where))
-        : cast(Context*, nullptr);  // C++98 ambiguous w/o cast
+        : nullptr;
 
     Flags flags =
         LEVEL_FLAG_TRAMPOLINE_KEEPALIVE  // query pending newline

@@ -230,7 +230,7 @@ DECLARE_NATIVE(load_extension)
         mutable_LINK(Bookmarks, m_cast(Binary*, bin)) = nullptr;
 
         if (SPORADICALLY(2))
-            Init_Text(script, STR(bin));
+            Init_Text(script, cast(String*, bin));
     }
 
     // !!! We currently are pushing all extensions into the lib context so

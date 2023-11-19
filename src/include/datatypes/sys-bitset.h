@@ -49,7 +49,7 @@ inline static void INIT_BITS_NOT(Series* s, bool negated)
 
 inline static Binary* VAL_BITSET(NoQuote(const Cell*) v) {
     assert(Cell_Heart(v) == REB_BITSET);
-    return BIN(Cell_Node1(v));
+    return cast(Binary*, Cell_Node1(v));
 }
 
 #define VAL_BITSET_Ensure_Mutable(v) \

@@ -23,10 +23,10 @@
 // A "Rebol Array" is a series of value cells.  Every BLOCK! or GROUP! points
 // at an array node, which you see in the source as Array*.
 //
-// While many Array operations are shared in common with Series, there is a
-// (deliberate) type incompatibility introduced.  The type compatibility is
-// only present when building as C++.  To cast as the underlying series, use
-// he SER() operation.
+// While many Array operations are shared in common with Series, there are a
+// few (deliberate) type incompatibilities introduced.  This incompatibility
+// is only noticed when building as C++, and draws attention to operations
+// that make sense on things like string but maybe not on array.
 //
 // An Array is the main place in the system where "relative" values come
 // from, because all relative words are created during the copy of the
@@ -65,16 +65,6 @@
     Clear_Subclass_Flag(ARRAY, ensure(Array*, (a)), flag)
 
 
-// !!! We generally want to use LINK(Filename, x) but that uses the STR()
-// macro which is not defined in this file.  There's a bit of a circular
-// dependency since %sys-string.h uses arrays for bookmarks; so having a
-// special operation here is an easy workaround that still lets us make a
-// lot of this central code inlinable.
-//
-#define LINK_FILENAME_HACK(s) \
-    cast(const String*, s->link.any.node)
-
-
 inline static bool Has_Newline_At_Tail(const Array* a) {
     if (Series_Flavor(a) != FLAVOR_ARRAY)
         return false;  // only plain arrays can have newlines
@@ -104,7 +94,7 @@ inline static bool Has_File_Line(const Array* a) {
 
 inline static Cell* Array_Single(const_if_c Array* a) {
     assert(Not_Series_Flag(a, DYNAMIC));
-    return mutable_Stub_Cell(a);
+    return Stub_Cell(a);
 }
 
 #if CPLUSPLUS_11
@@ -119,7 +109,7 @@ inline static Cell* Array_Single(const_if_c Array* a) {
 // cell inside a singular array.
 //
 inline static Array* Singular_From_Cell(const Cell* v) {
-    Array* singular = ARR(  // some checking in debug builds is done by ARR()
+    Array* singular = cast(Array*,  // DEBUG_CHECK_CASTS checks Array
         cast(void*,
             cast(Byte*, m_cast(Cell*, v))
             - offsetof(Stub, content)
@@ -192,14 +182,14 @@ inline static Array* Make_Array_Core_Into(
     assert(Is_Series_Array(s));  // flavor should have been an array flavor
 
     if (Get_Series_Flag(s, DYNAMIC)) {
-        Prep_Array(ARR(s), capacity);
+        Prep_Array(x_cast(Array*, s), capacity);
 
       #if DEBUG_POISON_SERIES_TAILS
-        Poison_Cell(Array_Head(ARR(s)));
+        Poison_Cell(Array_Head(x_cast(Array*, s)));
       #endif
     }
     else {
-        Poison_Cell(mutable_Stub_Cell(s));  // optimized prep for 0 length
+        Poison_Cell(Stub_Cell(s));  // optimized prep for 0 length
     }
 
     // Arrays created at runtime default to inheriting the file and line
@@ -214,7 +204,7 @@ inline static Array* Make_Array_Core_Into(
             not Level_Is_Variadic(TOP_LEVEL) and
             Get_Array_Flag(Level_Array(TOP_LEVEL), HAS_FILE_LINE_UNMASKED)
         ){
-            mutable_LINK(Filename, s) = LINK_FILENAME_HACK(Level_Array(TOP_LEVEL));
+            mutable_LINK(Filename, s) = LINK(Filename, Level_Array(TOP_LEVEL));
             s->misc.line = Level_Array(TOP_LEVEL)->misc.line;
         }
         else {
@@ -266,7 +256,7 @@ inline static Array* Make_Array_For_Copy(
             capacity,
             flags & ~ARRAY_FLAG_HAS_FILE_LINE_UNMASKED
         );
-        mutable_LINK(Filename, a) = LINK_FILENAME_HACK(original);
+        mutable_LINK(Filename, a) = LINK(Filename, original);
         a->misc.line = original->misc.line;
         Set_Array_Flag(a, HAS_FILE_LINE_UNMASKED);
         return a;
@@ -287,7 +277,7 @@ inline static Array* Make_Array_For_Copy(
 inline static Array* Alloc_Singular(Flags flags) {
     assert(not (flags & SERIES_FLAG_DYNAMIC));
     Array* a = Make_Array_Core(1, flags | SERIES_FLAG_FIXED_SIZE);
-    Erase_Cell(mutable_Stub_Cell(a));  // poison means length 0, erased length 1
+    Erase_Cell(Stub_Cell(a));  // poison means length 0, erased length 1
     return a;
 }
 
@@ -388,7 +378,7 @@ inline static Array* Copy_Array_At_Extra_Deep_Flags_Managed(
 inline static const Array* VAL_ARRAY(NoQuote(const Cell*) v) {
     assert(ANY_ARRAYLIKE(v));
 
-    const Array* a = ARR(Cell_Node1(v));
+    const Array* a = cast(Array*, Cell_Node1(v));
     if (Get_Series_Flag(a, INACCESSIBLE))
         fail (Error_Series_Data_Freed_Raw());
     return a;
@@ -538,7 +528,7 @@ inline static Cell* Init_Relative_Block_At(
 
     inline static void Assert_Series(const Series* s) {
         if (Is_Series_Array(s))
-            Assert_Array_Core(ARR(s));  // calls Assert_Series_Basics_Core()
+            Assert_Array_Core(c_cast(Array*, s));  // calls _Series_Basics()
         else
             Assert_Series_Basics_Core(s);
     }
@@ -546,9 +536,6 @@ inline static Cell* Init_Relative_Block_At(
     #define IS_VALUE_IN_ARRAY_DEBUG(a,v) \
         (Array_Len(a) != 0 and (v) >= Array_Head(a) and (v) < Array_Tail(a))
 #endif
-
-
-#undef LINK_FILENAME_HACK  // later files shoul use LINK(Filename, x)
 
 
 // Checks if ANY-GROUP! is like ((...)), useful for dialects--though the
@@ -651,7 +638,7 @@ inline static Value(*) Splicify(Value(*) v) {
     assert(ANY_ARRAY(v) and QUOTE_BYTE(v) == UNQUOTED_1);
     QUOTE_BYTE(v) = ISOTOPE_0;
     HEART_BYTE(v) = REB_GROUP;
-    return VAL(v);
+    return v;
 }
 
 inline static Value(*) Init_Splice_Untracked(Value(*) out, Array* a) {

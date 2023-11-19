@@ -65,18 +65,18 @@
     inline static REBSPC* SPC(void *p) {
         assert(p != SPECIFIED); // use SPECIFIED, not SPC(SPECIFIED)
 
-        Context* c = CTX(p);
+        Context* c = cast(Context*, p);
         assert(CTX_TYPE(c) == REB_FRAME);
 
         // Note: May be managed or unamanged.
 
-        return cast(REBSPC*, c);
+        return x_cast(REBSPC*, c);
     }
 
     inline static REBSPC *VAL_SPECIFIER(NoQuote(const Cell*) v) {
         assert(ANY_ARRAYLIKE(v));
 
-        Array* a = ARR(BINDING(v));
+        Array* a = cast(Array*, BINDING(v));
         if (not a)
             return SPECIFIED;
 
@@ -88,7 +88,9 @@
         // The keylist for a frame's context should come from a function's
         // paramlist, which should have an ACTION! value in keylist[0]
         //
-        assert(CTX_TYPE(CTX(a)) == REB_FRAME);  // may be inaccessible
+        // The context may be inaccessible here.
+        //
+        assert(CTX_TYPE(cast(Context*, a)) == REB_FRAME);
         return cast(REBSPC*, a);
     }
 #endif
@@ -109,8 +111,8 @@ inline static Array* Make_Use_Core(
     assert(kind == REB_WORD or kind == REB_SET_WORD);
     if (IS_VARLIST(binding)) {
         if (
-            REB_MODULE != CTX_TYPE(CTX(binding))
-            and CTX_LEN(CTX(binding)) == 0  // nothing to bind to
+            REB_MODULE != CTX_TYPE(cast(Context*, binding))
+            and CTX_LEN(cast(Context*, binding)) == 0  // nothing to bind to
         ){
             return next;
         }
@@ -161,21 +163,28 @@ inline static Array* Make_Use_Core(
             | SERIES_FLAG_LINK_NODE_NEEDS_MARK
     );
 
-    if (IS_VARLIST(binding) and CTX_TYPE(CTX(binding)) == REB_MODULE) {
+    if (
+        IS_VARLIST(binding)
+        and CTX_TYPE(cast(Context*, binding)) == REB_MODULE
+    ){
         //
         // Modules have a hash table so they can be searched somewhat quickly
         // for keys.  But keys can be added and removed without a good way
         // of telling the historical order.  Punt on figuring out the answer
         // for it and just let virtual binds see the latest situation.
         //
-        Init_Context_Cell(Array_Single(use), REB_MODULE, CTX(binding));
+        Init_Context_Cell(
+            Array_Single(use),
+            REB_MODULE,
+            cast(Context*, binding)
+        );
     }
     else {
-        Init_Any_Word_Bound_Untracked(
+        Init_Any_Word_Bound_Untracked(  // arbitrary word
             TRACK(Array_Single(use)),
             kind,
             IS_VARLIST(binding)
-                ? KEY_SYMBOL(CTX_KEY(CTX(binding), 1))  // arbitrary word
+                ? KEY_SYMBOL(CTX_KEY(cast(Context*, binding), 1))
                 : INODE(LetSymbol, binding),
             binding,
             1  // arbitrary word (used to use CTX_LEN())

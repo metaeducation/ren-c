@@ -29,7 +29,7 @@
 //
 // So for instance: instead of simply saying:
 //
-//     Codepoint *ptr = String_Head(string_series);
+//     Codepoint* ptr = String_Head(string_series);
 //     Codepoint c = *ptr++;  // !!! invalid, treating UTF-8 like it's ASCII!
 //
 // ...one must instead write:

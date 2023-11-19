@@ -740,15 +740,14 @@ union ValuePayloadUnion { //=/////////////// ACTUAL PAYLOAD DEFINITION ////=//
 
         operator const Node* () const { return p; }
         explicit operator const Cell* () const { return p; }
-        explicit operator const Byte* () const { return c_cast(Byte*, p); }
+        explicit operator const Byte* () const
+          { return reinterpret_cast<const Byte*>(p); }
     };
     #define NoQuote(const_cell_star) \
         struct NoQuoteWrapper<const_cell_star>
 
-    template<
-        typename T = const Byte*,
-        typename V = NoQuote(const Cell*) const&
-    >
-    constexpr const Byte* c_cast_helper(NoQuote(const Cell*) const& v)
-        { return cast(const Byte*, v.p); }
+    template<>
+    struct c_cast_helper<Byte*, NoQuote(const Cell*)> {
+        typedef const Byte* type;
+    };
 #endif

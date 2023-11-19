@@ -459,7 +459,12 @@ typedef struct {
 
 
 #include "sys-panic.h"  // "blue screen of death"-style termination
-#include "sys-casts.h"  // coercion macros like SER(), uses panic() to alert
+
+#if DEBUG_CHECK_CASTS
+    #include "sys-casts.h"
+#else
+    #define MAP(p)          x_cast(Map*, (p))
+#endif
 
 #include "sys-mold.h"
 

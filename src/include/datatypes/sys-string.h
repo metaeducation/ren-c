@@ -54,7 +54,7 @@
 // intent clearer for passing in a null String*, use ANONYMOUS instead.
 //
 #define ANONYMOUS \
-    cast(const Symbol*, nullptr)
+    x_cast(const Symbol*, nullptr)
 
 
 // For a writable REBSTR, a list of entities that cache the mapping from
@@ -67,7 +67,6 @@
 // a first try of this strategy, singular arrays are being used.
 //
 #define LINK_Bookmarks_TYPE     BookmarkList*  // alias for Series for now
-#define LINK_Bookmarks_CAST     (BookmarkList*)SER
 #define HAS_LINK_Bookmarks      FLAVOR_STRING
 
 
@@ -375,7 +374,7 @@ inline static void Free_Bookmarks_Maybe_Null(String* str) {
 
 inline static const String* VAL_STRING(NoQuote(const Cell*) v) {
     if (ANY_STRINGLIKE(v))
-        return STR(Cell_Node1(v));  // VAL_SERIES() would assert
+        return c_cast(String*, VAL_SERIES(v));
 
     return VAL_WORD_SYMBOL(v);  // asserts ANY_WORD_KIND() for heart
 }
@@ -392,7 +391,7 @@ inline static const String* VAL_STRING(NoQuote(const Cell*) v) {
 inline static REBLEN VAL_LEN_HEAD(NoQuote(const Cell*) v) {
     const Series* s = VAL_SERIES(v);
     if (Is_Series_UTF8(s) and Cell_Heart(v) != REB_BINARY)
-        return String_Len(STR(s));
+        return String_Len(c_cast(String*, s));
     return Series_Used(s);
 }
 

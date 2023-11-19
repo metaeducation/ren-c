@@ -42,7 +42,7 @@
 //
 
 #define INIT_VAL_HANDLE_SINGULAR        Init_Cell_Node1
-#define VAL_HANDLE_SINGULAR(v)          ARR(Cell_Node1(v))
+#define VAL_HANDLE_SINGULAR(v)          cast(Array*, Cell_Node1(v))
 
 #define VAL_HANDLE_LENGTH_U(v)          PAYLOAD(Any, (v)).second.u
 

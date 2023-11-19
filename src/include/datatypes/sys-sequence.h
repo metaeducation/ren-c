@@ -476,12 +476,12 @@ inline static REBLEN VAL_SEQUENCE_LEN(NoQuote(const Cell*) sequence) {
         return 2;  // compressed 2-element sequence
     }
 
-    switch (Series_Flavor(SER(node1))) {
+    switch (Series_Flavor(c_cast(Series*, node1))) {
       case FLAVOR_SYMBOL :  // compressed single WORD! sequence
         return 2;
 
       case FLAVOR_ARRAY : {  // uncompressed sequence
-        Array* a = ARR(Cell_Node1(sequence));
+        const Array* a = c_cast(Array*, Cell_Node1(sequence));
         assert(Array_Len(a) >= 2);
         assert(Is_Array_Frozen_Shallow(a));
         return Array_Len(a); }
@@ -521,7 +521,7 @@ inline static const Cell* VAL_SEQUENCE_AT(
         return nullptr;  // compressed 2-element sequence
     }
 
-    switch (Series_Flavor(SER(node1))) {
+    switch (Series_Flavor(x_cast(Series*, node1))) {
       case FLAVOR_SYMBOL : {  // compressed single WORD! sequence
         assert(n < 2);
         if (Get_Cell_Flag(sequence, REFINEMENT_LIKE) ? n == 0 : n != 0)
@@ -537,7 +537,7 @@ inline static const Cell* VAL_SEQUENCE_AT(
         return store; }
 
       case FLAVOR_ARRAY : {  // uncompressed sequence
-        const Array* a = ARR(Cell_Node1(sequence));
+        const Array* a = c_cast(Array*, Cell_Node1(sequence));
         assert(Array_Len(a) >= 2);
         assert(Is_Array_Frozen_Shallow(a));
         return Array_At(a, n); }  // array is read only
@@ -568,7 +568,7 @@ inline static Value(*) GET_SEQUENCE_AT(
         return nullptr;  // compressed 2-element sequence
     }
 
-    switch (Series_Flavor(SER(node1))) {
+    switch (Series_Flavor(c_cast(Series*, node1))) {
       case FLAVOR_SYMBOL : {  // compressed single WORD! sequence
         assert(n < 2);
         if (Get_Cell_Flag(sequence, REFINEMENT_LIKE) ? n == 0 : n != 0)
@@ -583,7 +583,7 @@ inline static Value(*) GET_SEQUENCE_AT(
         return out; }
 
       case FLAVOR_ARRAY : {  // uncompressed sequence
-        const Array* a = ARR(Cell_Node1(sequence));
+        const Array* a = c_cast(Array*, Cell_Node1(sequence));
         assert(Array_Len(a) >= 2);
         assert(Is_Array_Frozen_Shallow(a));
         return Derelativize(out, Array_At(a, n), specifier); }  // aread only
@@ -624,7 +624,7 @@ inline static REBSPC *VAL_SEQUENCE_SPECIFIER(
         return SPECIFIED;  // compressed 2-element sequence
     }
 
-    switch (Series_Flavor(SER(node1))) {
+    switch (Series_Flavor(c_cast(Series*, node1))) {
       case FLAVOR_SYMBOL :  // compressed single WORD! sequence
         return SPECIFIED;
 
@@ -703,7 +703,7 @@ inline static bool IS_REFINEMENT_CELL(NoQuote(const Cell*) v) {
     if (Is_Node_A_Cell(node1))
         return false;
 
-    if (Series_Flavor(SER(node1)) != FLAVOR_SYMBOL)
+    if (Series_Flavor(c_cast(Series*, node1)) != FLAVOR_SYMBOL)
         return false;
 
     return Get_Cell_Flag(v, REFINEMENT_LIKE);  // !!! Review: test this first?
@@ -725,7 +725,7 @@ inline static bool IS_PREDICATE1_CELL(NoQuote(const Cell*) v) {
     if (Is_Node_A_Cell(node1))
         return false;
 
-    if (Series_Flavor(SER(node1)) != FLAVOR_SYMBOL)
+    if (Series_Flavor(c_cast(Series*, node1)) != FLAVOR_SYMBOL)
         return false;
 
     return Get_Cell_Flag(v, REFINEMENT_LIKE);  // !!! Review: test this first?
@@ -735,7 +735,7 @@ inline static const Symbol* VAL_REFINEMENT_SYMBOL(
     NoQuote(const Cell*) v
 ){
     assert(IS_REFINEMENT_CELL(v));
-    return SYM(Cell_Node1(v));
+    return c_cast(Symbol*, Cell_Node1(v));
 }
 
 // !!! Temporary workaround for what was IS_META_PATH() (now not its own type)

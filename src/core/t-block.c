@@ -282,7 +282,7 @@ Bounce MAKE_Array(
             assert(not IS_VARLIST(VAL_VARARGS_BINDING(arg)));
         }
         else {
-            Context* context = CTX(VAL_VARARGS_BINDING(arg));
+            Context* context = cast(Context*, VAL_VARARGS_BINDING(arg));
             Level(*) param_level = CTX_LEVEL_MAY_FAIL(context);
 
             REBVAL *param = SPECIFIC(Array_Head(

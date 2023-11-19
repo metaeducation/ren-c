@@ -191,7 +191,7 @@ void Clonify(
             // nested blocks or groups need to be copied deeply.)
             //
             if (ANY_SEQUENCE_KIND(heart))
-                Freeze_Array_Shallow(ARR(series));
+                Freeze_Array_Shallow(cast(Array*, series));
 
             Init_Cell_Node1(v, series);
             INIT_SPECIFIER(v, UNBOUND);  // copying w/specifier makes specific
@@ -214,8 +214,8 @@ void Clonify(
         // copied series and "clonify" the values in it.
         //
         if (would_need_deep and (deep_types & FLAGIT_KIND(heart))) {
-            const Cell* sub_tail = Array_Tail(ARR(series));
-            Cell* sub = Array_Head(ARR(series));
+            const Cell* sub_tail = Array_Tail(cast(Array*, series));
+            Cell* sub = Array_Head(cast(Array*, series));
             for (; sub != sub_tail; ++sub)
                 Clonify(sub, flags, deep_types);
         }
@@ -320,7 +320,7 @@ Array* Copy_Rerelativized_Array_Deep_Managed(
         // All relative values under a sub-block must be relative to the
         // same function.
         //
-        assert(ACT(BINDING(src)) == before);
+        assert(cast(Action*, BINDING(src)) == before);
 
         Copy_Cell_Header(dest, src);
 

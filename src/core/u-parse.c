@@ -117,6 +117,9 @@
 
 #define P_TYPE              VAL_TYPE(ARG(input))
 #define P_INPUT             VAL_SERIES(ARG(input))
+#define P_INPUT_BINARY      VAL_BINARY(ARG(input))
+#define P_INPUT_STRING      VAL_STRING(ARG(input))
+#define P_INPUT_ARRAY       VAL_ARRAY(ARG(input))
 #define P_INPUT_SPECIFIER   VAL_SPECIFIER(ARG(input))
 #define P_INPUT_IDX         VAL_INDEX_UNBOUNDED(ARG(input))
 #define P_INPUT_LEN         VAL_LEN_HEAD(ARG(input))
@@ -125,7 +128,7 @@
 
 #define P_COLLECTION \
     (Is_Nulled(ARG(collection)) \
-        ? cast(Array*, nullptr) \
+        ? nullptr \
         : VAL_ARRAY_KNOWN_MUTABLE(ARG(collection)) \
     )
 
@@ -349,7 +352,7 @@ static bool Subparse_Throws(
 
     Drop_Level(L);
 
-    assert(b == cast(Bounce, out));
+    assert(b == out);
 
     *interrupted_out = false;
     return false;
@@ -613,8 +616,7 @@ static REBIXO Parse_One_Rule(
     }
 
     if (Is_Series_Array(P_INPUT)) {
-        const Array* arr = ARR(P_INPUT);
-        const Cell* item = Array_At(arr, pos);
+        const Cell* item = Array_At(P_INPUT_ARRAY, pos);
 
         switch (VAL_TYPE(rule)) {
           case REB_QUOTED:
@@ -702,11 +704,11 @@ static REBIXO Parse_One_Rule(
             bool uncased;
             Codepoint uni;
             if (P_TYPE == REB_BINARY) {
-                uni = *Binary_At(BIN(P_INPUT), P_POS);
+                uni = *Binary_At(P_INPUT_BINARY, P_POS);
                 uncased = false;
             }
             else {
-                uni = Get_Char_At(STR(P_INPUT), P_POS);
+                uni = Get_Char_At(c_cast(String*, P_INPUT), P_POS);
                 uncased = not (P_FLAGS & AM_FIND_CASE);
             }
 
@@ -909,7 +911,10 @@ static REBIXO To_Thru_Block_Rule(
             else {
                 assert(ANY_STRING_KIND(P_TYPE));
 
-                Codepoint unadjusted = Get_Char_At(STR(P_INPUT), VAL_INDEX(iter));
+                Codepoint unadjusted = Get_Char_At(
+                    P_INPUT_STRING,
+                    VAL_INDEX(iter)
+                );
                 if (unadjusted == '\0') {  // cannot be passed to UP_CASE()
                     assert(VAL_INDEX(iter) == P_INPUT_LEN);
 
@@ -1066,10 +1071,10 @@ static REBIXO To_Thru_Non_Block_Rule(
         Length len;
         REBINT i = Find_In_Array(
             &len,
-            ARR(P_INPUT),
+            P_INPUT_ARRAY,
             P_INPUT_SPECIFIER,
             P_POS,
-            Array_Len(ARR(P_INPUT)),
+            Array_Len(P_INPUT_ARRAY),
             rule,
             SPECIFIED,  // !!! is it specific?
             find_flags,
@@ -1746,7 +1751,7 @@ DECLARE_NATIVE(subparse)
                         for (n = pos_before; n < pos_after; ++n) {
                             Derelativize(
                                 Alloc_Tail_Array(target),
-                                Array_At(ARR(P_INPUT), n),
+                                Array_At(P_INPUT_ARRAY, n),
                                 P_INPUT_SPECIFIER
                             );
                         }
@@ -2177,8 +2182,8 @@ DECLARE_NATIVE(subparse)
                 if (not subrule)  // capture only on iteration #1
                     FETCH_NEXT_RULE_KEEP_LAST(&subrule, L);
 
-                const Cell* input_tail = Array_Tail(ARR(P_INPUT));
-                const Cell* cmp = Array_At(ARR(P_INPUT), P_POS);
+                const Cell* input_tail = Array_Tail(P_INPUT_ARRAY);
+                const Cell* cmp = Array_At(P_INPUT_ARRAY, P_POS);
 
                 if (cmp == input_tail)
                     i = END_FLAG;
@@ -2211,8 +2216,8 @@ DECLARE_NATIVE(subparse)
                 if (not Is_Series_Array(P_INPUT))
                     fail (Error_Parse_Rule());
 
-                const Cell* input_tail = Array_Tail(ARR(P_INPUT));
-                const Cell* into = Array_At(ARR(P_INPUT), P_POS);
+                const Cell* input_tail = Array_Tail(P_INPUT_ARRAY);
+                const Cell* into = Array_At(P_INPUT_ARRAY, P_POS);
                 if (into == input_tail) {
                     i = END_FLAG;  // `parse [] [into [...]]`, rejects
                     break;
@@ -2418,7 +2423,7 @@ DECLARE_NATIVE(subparse)
                         sink,
                         ANY_GROUP_KIND(P_TYPE) ? REB_GROUP : REB_BLOCK,
                         Copy_Array_At_Max_Shallow(
-                            ARR(P_INPUT),
+                            P_INPUT_ARRAY,
                             begin,
                             P_INPUT_SPECIFIER,
                             count
@@ -2482,7 +2487,7 @@ DECLARE_NATIVE(subparse)
 
                     Derelativize(
                         Sink_Word_May_Fail(set_or_copy_word, P_RULE_SPECIFIER),
-                        Array_At(ARR(P_INPUT), begin),
+                        Array_At(P_INPUT_ARRAY, begin),
                         P_INPUT_SPECIFIER
                     );
                 }
@@ -2509,11 +2514,11 @@ DECLARE_NATIVE(subparse)
                     */
 
                     if (P_TYPE == REB_BINARY)
-                        Init_Integer(var, *Binary_At(BIN(P_INPUT), begin));
+                        Init_Integer(var, *Binary_At(P_INPUT_BINARY, begin));
                     else
                         Init_Char_Unchecked(
                             var,
-                            Get_Char_At(STR(P_INPUT), begin)
+                            Get_Char_At(P_INPUT_STRING, begin)
                         );
                 }
             }

@@ -83,7 +83,7 @@ Bounce Lambda_Dispatcher(Level(*) const L)
     Set_Node_Managed_Bit(L->varlist);  // not manually tracked...
 
     REBSPC *specifier = Make_Or_Reuse_Use(  // may reuse, see [1]
-        CTX(L->varlist),
+        cast(Context*, L->varlist),
         VAL_SPECIFIER(block),  // redundant with feed, see [2]
         REB_WORD
     );

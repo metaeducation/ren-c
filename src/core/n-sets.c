@@ -151,7 +151,7 @@ Series* Make_Set_Operation_Series(
                 }
                 if (h) {
                     Find_Key_Hashed(
-                        ARR(buffer),
+                        cast(Array*, buffer),
                         hret,
                         item,
                         VAL_SPECIFIER(val1),
@@ -193,8 +193,8 @@ Series* Make_Set_Operation_Series(
         // The buffer may have been allocated too large, so copy it at the
         // used capacity size
         //
-        out_ser = Copy_Array_Shallow(ARR(buffer), SPECIFIED);
-        Free_Unmanaged_Series(ARR(buffer));
+        out_ser = Copy_Array_Shallow(x_cast(Array*, buffer), SPECIFIED);
+        Free_Unmanaged_Series(x_cast(Array*, buffer));
     }
     else if (ANY_STRING(val1)) {
         DECLARE_MOLD (mo);

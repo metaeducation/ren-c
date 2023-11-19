@@ -43,11 +43,7 @@
 
 
 // It may become interesting to say that a specifier can be a pairing or
-// a REBVAL* of some kind.  But for the moment, that just complicates the
-// issue of not being able to check the ->header bits safely (it would require
-// checking the NODE_BYTE() first, then casting to a VAL() or SER()).  In
-// the interests of making the code strict-aliasing-safe for starters, assume
-// all specifiers are arrays.
+// a REBVAL* of some kind, but currently all instances are array-derived.
 //
 typedef Array REBSPC;
 
@@ -151,9 +147,5 @@ STATIC_ASSERT(ARRAY_FLAG_CONST_SHALLOW == CELL_FLAG_CONST);
 // was not created from a file, then the information from the source that was
 // running at the time is propagated into the new second-generation series.
 //
-// !!! LINK_FILENAME_HACK is needed in %sys-array.h due to dependencies not
-// having STR() available.
-//
 #define LINK_Filename_TYPE          const String*
-#define LINK_Filename_CAST          (const String*)STR
 #define HAS_LINK_Filename           FLAVOR_ARRAY

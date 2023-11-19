@@ -136,7 +136,7 @@ Bounce Func_Dispatcher(Level(*) const L)
         cell,
         ACT_IDENTITY(VAL_ACTION(Lib(DEFINITIONAL_RETURN))),
         Canon(RETURN),  // relabel (the RETURN in lib is a dummy action)
-        CTX(L->varlist)  // bind this return to know where to return from
+        cast(Context*, L->varlist)  // so RETURN knows where to return from
     );
 
     STATE = ST_FUNC_BODY_EXECUTING;

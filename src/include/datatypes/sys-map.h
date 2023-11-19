@@ -46,7 +46,6 @@
 // See LINK() macro for how this is used.
 //
 #define LINK_Hashlist_TYPE          Series*
-#define LINK_Hashlist_CAST          SER
 #define HAS_LINK_Hashlist           FLAVOR_PAIRLIST
 
 inline static Array* MAP_PAIRLIST(const_if_c Map* map)
@@ -54,7 +53,7 @@ inline static Array* MAP_PAIRLIST(const_if_c Map* map)
 
 #if CPLUSPLUS_11
     inline static const Array* MAP_PAIRLIST(const Map* map)
-      { return cast(const Array*, map); }
+      { return x_cast(const Array*, map); }
 #endif
 
 #define MAP_HASHLIST(m) \
@@ -67,11 +66,11 @@ inline static Array* MAP_PAIRLIST(const_if_c Map* map)
 inline static const Map* VAL_MAP(NoQuote(const Cell*) v) {
     assert(Cell_Heart(v) == REB_MAP);
 
-    Array* a = ARR(Cell_Node1(v));
+    Array* a = cast(Array*, Cell_Node1(v));
     if (Get_Series_Flag(a, INACCESSIBLE))
         fail (Error_Series_Data_Freed_Raw());
 
-    return MAP(a);
+    return cast(Map*, a);
 }
 
 #define VAL_MAP_Ensure_Mutable(v) \

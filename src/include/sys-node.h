@@ -244,7 +244,7 @@ inline static void *Alloc_Pooled(PoolId pool_id) {
 
 #define Alloc_Stub() ( \
     (g_gc.depletion -= sizeof(Stub)) <= 0 ? SET_SIGNAL(SIG_RECYCLE) : NOOP, \
-    Alloc_Pooled(STUB_POOL))  // won't pass SER() yet, don't cast it
+    Alloc_Pooled(STUB_POOL))  // not a formed stub yet, don't cast it
 
 
 // Free a node, returning it to its pool.  Once it is freed, its header will

@@ -237,13 +237,17 @@ void Init_Evars(EVARS *e, NoQuote(const Cell*) v) {
             if (*psym == nullptr or *psym == &g_symbols.deleted_symbol)
                 continue;
 
-            Series* patch = MISC(Hitch, *psym);
+            Stub* patch = MISC(Hitch, *psym);
             while (Get_Series_Flag(patch, BLACK))  // binding temps
-                patch = SER(node_MISC(Hitch, patch));
+                patch = cast(Stub*, node_MISC(Hitch, patch));
 
             Series* found = nullptr;
 
-            for (; patch != *psym; patch = SER(node_MISC(Hitch, patch))) {
+            for (
+                ;
+                patch != *psym;
+                patch = cast(Stub*, node_MISC(Hitch, patch))
+            ){
                 if (e->ctx == INODE(PatchContext, patch)) {
                     found = patch;
                     break;
@@ -625,7 +629,7 @@ Bounce MAKE_Context(
 
     Option(Context*) parent_ctx = parent
         ? VAL_CONTEXT(unwrap(parent))
-        : cast(Context*, nullptr);  // C++98 ambiguous w/o cast
+        : nullptr;
 
     if (IS_BLOCK(arg)) {
         const Cell* tail;
@@ -839,7 +843,7 @@ Context* Copy_Context_Extra_Managed(
         INIT_BONUS_KEYSOURCE(varlist, nullptr);
         mutable_LINK(Patches, varlist) = nullptr;
 
-        Context* copy = CTX(varlist); // now a well-formed context
+        Context* copy = cast(Context*, varlist); // now a well-formed context
         assert(Get_Series_Flag(varlist, DYNAMIC));
 
         Symbol** psym = Series_Head(Symbol*, g_symbols.by_hash);
@@ -848,14 +852,18 @@ Context* Copy_Context_Extra_Managed(
             if (*psym == nullptr or *psym == &g_symbols.deleted_symbol)
                 continue;
 
-            Series* patch = MISC(Hitch, *psym);
+            Stub* patch = MISC(Hitch, *psym);
             while (Get_Series_Flag(patch, BLACK))  // binding temps
-                patch = SER(node_MISC(Hitch, patch));
+                patch = cast(Stub*, node_MISC(Hitch, patch));
 
-            for (; patch != *psym; patch = SER(node_MISC(Hitch, patch))) {
+            for (
+                ;
+                patch != *psym;
+                patch = cast(Stub*, node_MISC(Hitch, patch))
+            ){
                 if (original == INODE(PatchContext, patch)) {
                     REBVAL *var = Append_Context(copy, *psym);
-                    Copy_Cell(var, SPECIFIC(Array_Single(ARR(patch))));
+                    Copy_Cell(var, SPECIFIC(Stub_Cell(patch)));
                     break;
                 }
             }
@@ -886,7 +894,7 @@ Context* Copy_Context_Extra_Managed(
 
     varlist->header.bits |= SERIES_MASK_VARLIST;
 
-    Context* copy = CTX(varlist); // now a well-formed context
+    Context* copy = cast(Context*, varlist); // now a well-formed context
 
     if (extra == 0)
         INIT_CTX_KEYLIST_SHARED(copy, CTX_KEYLIST(original));  // ->link field
@@ -1735,7 +1743,7 @@ DECLARE_NATIVE(construct)
     REBVAL *spec = ARG(spec);
     Context* parent = REF(with)
         ? VAL_CONTEXT(ARG(with))
-        : cast(Context*, nullptr);  // C++98 ambiguous w/o cast
+        : nullptr;
 
     // This parallels the code originally in CONSTRUCT.  Run it if the /ONLY
     // refinement was passed in.

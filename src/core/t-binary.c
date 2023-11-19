@@ -148,7 +148,10 @@ static Bounce MAKE_TO_Binary_Common(Level(*) level_, const REBVAL *arg)
 
       case REB_BLOCK: {
         Join_Binary_In_Byte_Buf(arg, -1);
-        Binary* bin = BIN(Copy_Series_Core(BYTE_BUF, SERIES_FLAGS_NONE));
+        Binary* bin = cast(
+            Binary*,
+            Copy_Series_Core(BYTE_BUF, SERIES_FLAGS_NONE)
+        );
         return Init_Binary(OUT, bin); }
 
       case REB_TUPLE: {

@@ -80,14 +80,6 @@
         std::is_standard_layout<struct ValueStruct>::value,
         "C++ REBVAL must match C layout: http://stackoverflow.com/a/7189821/"
     );
-
-    template<>
-    inline AtomT* cast_helper<AtomT*>(ValueStruct* v)
-      { return reinterpret_cast<AtomT*>(v); }
-
-    template<>
-    inline const AtomT* cast_helper<const AtomT*>(const ValueStruct* v)
-      { return reinterpret_cast<const AtomT*>(v); }
 #else
     typedef struct ValueStruct AtomT;
 #endif
@@ -159,8 +151,9 @@ inline static REBVAL* Freshen_Cell_Untracked(Cell* v);
         operator bool () const { return p != nullptr; }
 
         operator Value(*) () const { return p; }
+        operator Node* () const { return p; }
 
-        explicit operator Byte* () { return cast(Byte*, p); }
+        explicit operator Byte* () { return reinterpret_cast<Byte*>(p); }
 
       #if DEBUG_CHECK_CASTS
         operator NoQuote(const Cell*) () const { return p; }
@@ -171,12 +164,16 @@ inline static REBVAL* Freshen_Cell_Untracked(Cell* v);
 
     #define Sink(x) ValueSink  // TBD: generalize?
 
-    template<
-        typename T = Byte*,
-        typename V = Sink(Value(*)) const&
-    >
-    constexpr Byte* c_cast_helper(Sink(Value(*)) const& v)
-        { return cast(Byte*, v.p); }
+    template<>
+    struct c_cast_helper<Byte*, Sink(Value(*)) const&> {
+        typedef Byte* type;
+    };
+
+/*    template<>
+    struct cast_helper<Sink(Value(*) const&),Node*> {
+        static constexpr Node* convert(Sink(Value(*)) const& v)
+          { return v.p; }
+    }; */
 #else
     #define Sink(x) x
 #endif
@@ -194,7 +191,7 @@ inline static REBVAL* Freshen_Cell_Untracked(Cell* v);
 // DEBUG_EXTANT_STACK_POINTERS means there will be some cases where distinct
 // overloads of REBVAL* vs. NoQuote(const Cell*) will wind up being ambiguous.
 // For instance, VAL_DECIMAL(StackValue(*)) can't tell which checked overload
-// to use.  In such cases, you have to cast, e.g. VAL_DECIMAL(VAL(stackval)).
+// to use.  Then you have to cast, e.g. VAL_DECIMAL(cast(Value(*), stackval)).
 //
 #if (! DEBUG_EXTANT_STACK_POINTERS)
     #define StackValue(p) REBVAL*

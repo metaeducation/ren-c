@@ -526,7 +526,7 @@ DECLARE_NATIVE(some_combinator)
   initial_entry: {  //////////////////////////////////////////////////////////
 
     Cell* loop_last = Alloc_Tail_Array(loops);
-    Init_Frame(loop_last, CTX(level_->varlist), Canon(SOME));
+    Init_Frame(loop_last, cast(Context*, level_->varlist), Canon(SOME));
     INIT_VAL_FRAME_PHASE(loop_last, Level_Phase(level_));  // need phase, see [1]
 
     Push_Parser_Sublevel(OUT, remainder, parser, input);

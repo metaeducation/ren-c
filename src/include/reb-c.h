@@ -411,32 +411,39 @@
 // at runtime--even in the debug build--unless the helpers are using smart
 // pointer
 //
+// 1. The C preprocessor doesn't know about templates, so it parses things
+//    like FOO(something<a,b>) as taking "something<a" and "b>".  This is a
+//    headache for implementing the macros, but also if a macro produces a
+//    comma and gets passed to another macro.  To work around it, we wrap
+//    the product of the macro containing commas in parentheses.
+//
+#define u_cast(T,v) \
+    ((T)(v))  // unchecked cast, use e.g. when casting a fresh allocation
+
 #if (! CPLUSPLUS_11)
     #define cast(T,v)       ((T)(v))  /* pointer-to-ptr, integral-to-int */
     #define m_cast(T,v)     ((T)(v))  /* add mutability to pointer type only */
-    #define x_cast(T,v)     ((T)(v))  /* pointer cast that drops mutaiblity */
+    #define x_cast(T,v)     ((T)(v))  /* pointer cast that drops mutability */
     #define c_cast(T,v)     ((T)(v))  /* mirror constness of input on output */
     #define p_cast(T,v)     ((T)(v))  /* non-pointer to pointer */
     #define i_cast(T,v)     ((T)(v))  /* non-integral to integral */
+    #define rr_cast(T,v)    ((T)(v))  /* simplifying remove-reference cast */
 #else
-    template<typename T, typename V,
-        typename std::enable_if<
-            std::is_pointer<V>::value
-            and std::is_pointer<T>::value
-        >::type* = nullptr>
-    constexpr T cast_helper(V v)
-      { return reinterpret_cast<T>(v); }
+    template<typename V, typename T = void>
+    struct cast_helper {
+        template<typename V_ = V, typename T_ = T>
+        static constexpr typename std::enable_if<
+            !(std::is_pointer<V_>::value and std::is_pointer<T_>::value),
+        T>::type convert(V_ v) { return static_cast<T>(v); }
 
-    template<typename T, typename V,
-        typename std::enable_if< ! (
-            std::is_pointer<V>::value
-            and std::is_pointer<T>::value
-        )>::type* = nullptr>
-    constexpr T cast_helper(V v)
-      { return static_cast<T>(v); }
+        template<typename V_ = V, typename T_ = T>
+        static constexpr typename std::enable_if<
+            std::is_pointer<V_>::value and std::is_pointer<T_>::value,
+        T>::type convert(V_ v) { return reinterpret_cast<T>(v); }
+    };
 
-    #define cast(T, v) \
-        cast_helper<T>(v)
+    #define cast(T,v) \
+        (cast_helper<decltype(v), T>::convert(v))  // outer parens, [1]
 
     template<typename T, typename V>
     constexpr T m_cast_helper(V v) {
@@ -447,7 +454,7 @@
         return const_cast<T>(v);
     }
 
-    #define m_cast(T, v) \
+    #define m_cast(T,v) \
         m_cast_helper<T>(v)
 
     /* We build an arbitrary pointer cast out of two steps: one which adds
@@ -466,29 +473,24 @@
             )(v) /* old-style parentheses cast, "everything but" the const */ \
         ))
 
-    template<typename TP, typename V,
-        typename std::enable_if<
-            std::is_pointer<V>::value
-            and std::is_const<typename std::remove_pointer<V>::type>::value
-        >::type* = nullptr,
-        typename T = typename std::remove_pointer<TP>::type
-    >
-    constexpr const T* c_cast_helper(V v) {
-        return cast(const T*, v);
-    }
-
-    template<typename TP, typename V,
-        typename std::enable_if<
-            std::is_pointer<V>::value
-            and ! std::is_const<typename std::remove_pointer<V>::type>::value
-        >::type* = nullptr
-    >
-    constexpr TP c_cast_helper(V v) {
-        return cast(TP, v);
-    }
+    template<typename TP, typename VQPR>
+    struct c_cast_helper {
+        typedef typename std::remove_reference<VQPR>::type VQP;
+        typedef typename std::remove_pointer<VQP>::type VQ;
+        typedef typename std::remove_pointer<TP>::type T;
+        typedef typename std::add_const<T>::type TC;
+        typedef typename std::add_pointer<TC>::type TCP;
+        typedef typename std::conditional<
+            std::is_const<VQ>::value,
+            TCP,
+            TP
+        >::type type;
+    };
 
     #define c_cast(TP,v) \
-        c_cast_helper<TP>(v)
+        (cast_helper< \
+            decltype(v), typename c_cast_helper<TP,decltype(v) \
+        >::type>::convert(v))  // outer parens, see [1]
 
     template<typename TP, typename V>
     constexpr TP p_cast_helper(V v) {
@@ -505,14 +507,26 @@
     template<typename T, typename V>
     constexpr T i_cast_helper(V v) {
         static_assert(std::is_integral<T>::value,
-            "invalid p_cast() - target type must be integral");
+            "invalid i_cast() - target type must be integral");
         static_assert(! std::is_integral<V>::value,
-            "invalid p_cast() - source type can't be integral");
+            "invalid i_cast() - source type can't be integral");
         return reinterpret_cast<T>(v);
     }
 
     #define i_cast(T,v) \
         i_cast_helper<T>(v)
+
+    template<typename V>
+    struct rr_cast_helper {
+        typedef typename std::conditional<
+            std::is_reference<V>::value,
+            typename std::remove_reference<V>::type,
+            V
+        >::type type;
+    };
+
+    #define rr_cast(v) \
+        static_cast<typename rr_cast_helper<decltype(v)>::type>(v)
 #endif
 
 

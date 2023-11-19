@@ -2233,7 +2233,7 @@ const REBINS *RL_rebQUOTING(const void *p)
         fail ("Unknown pointer");
     }
 
-    Value(*) v = VAL(Array_Single(a));
+    Value(*) v = x_cast(Value(*), Array_Single(a));
     Meta_Quotify(v);
     return a;
 }
@@ -2390,7 +2390,7 @@ const REBINS *RL_rebRUN(const void *p)
         fail ("Unknown pointer");
     }
 
-    Value(*) v = VAL(Array_Single(a));
+    Value(*) v = SPECIFIC(Array_Single(a));
     if (Is_Activation(v))
         QUOTE_BYTE(v) = UNQUOTED_1;
     else if (not IS_FRAME(v))
@@ -2438,7 +2438,7 @@ void RL_rebUnmanage(void *p)
 {
     ENTER_API;
 
-    Node* n = NOD(p);
+    Node* n = cast(Node*, p);
     if (Is_Node_A_Stub(n))
         fail ("rebUnmanage() not yet implemented for rebMalloc() data");
 

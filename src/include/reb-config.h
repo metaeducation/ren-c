@@ -645,16 +645,27 @@ Special internal defines used by RT, not Host-Kit developers:
 #endif
 
 
-// Cast checks in SER(), NOD(), ARR() are expensive--they ensure that when you
-// cast a void pointer to a Series, that the header actually is for a Series
-// (etc.)  Disable this by default unless you are using address sanitizer,
-// where you expect things to be slow.
+// Due to using the `cast(...)` operator instead of a plain cast, the fact
+// that it goes through a helper template means that it can be hooked with
+// code in diagnostic builds.  This is taken advantage of by the build
+// setting DEBUG_CHECK_CASTS.
+//
+// Currently disable this by default unless you are using address sanitizer,
+// which is the build you'd be using if there were unexpected problems (and
+// you'd expect things to be slow anyway.)
 //
 #if !defined(DEBUG_CHECK_CASTS)
   #if defined(__SANITIZE_ADDRESS__) && CPLUSPLUS_11
     #define DEBUG_CHECK_CASTS DEBUG
   #else
     #define DEBUG_CHECK_CASTS 0  // requires C++
+  #endif
+#endif
+
+#if DEBUG_CHECK_CASTS
+  #if (! CPLUSPLUS_11)
+    #error "DEBUG_CHECK_CASTS requires C++11 (or later)"
+    #include <stophere>  // https://stackoverflow.com/a/45661130
   #endif
 #endif
 

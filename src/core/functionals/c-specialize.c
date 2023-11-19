@@ -97,7 +97,7 @@ Context* Make_Context_For_Action_Push_Partials(
     Array* varlist = Make_Array_Core(num_slots, SERIES_MASK_VARLIST);
     Set_Series_Len(varlist, num_slots);
 
-    INIT_CTX_KEYLIST_SHARED(CTX(varlist), ACT_KEYLIST(act));
+    INIT_CTX_KEYLIST_SHARED(cast(Context*, varlist), ACT_KEYLIST(act));
 
     Cell* rootvar = Array_Head(varlist);
     INIT_VAL_FRAME_ROOTVAR(
@@ -189,7 +189,7 @@ Context* Make_Context_For_Action_Push_Partials(
     mutable_MISC(VarlistAdjunct, varlist) = nullptr;
     mutable_LINK(Patches, varlist) = nullptr;
 
-    return CTX(varlist);
+    return cast(Context*, varlist);
 }
 
 

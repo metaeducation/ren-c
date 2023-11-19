@@ -670,12 +670,12 @@ bool Get_Var_Push_Refinements_Throws(
             fail (var);
 
         const Node* node1 = Cell_Node1(var);
-        if (NODE_BYTE(node1) & NODE_BYTEMASK_0x01_CELL) { // pair compressed
+        if (Is_Node_A_Cell(node1)) { // pair compressed
             assert(false);  // these don't exist yet
             fail (var);
         }
 
-        switch (Series_Flavor(SER(node1))) {
+        switch (Series_Flavor(x_cast(Series*, node1))) {
           case FLAVOR_SYMBOL:
             if (Get_Cell_Flag(var, REFINEMENT_LIKE))  // `/a` or `.a`
                 goto get_source;
@@ -861,12 +861,12 @@ bool Get_Path_Push_Refinements_Throws(
     }
 
     const Node* node1 = Cell_Node1(path);
-    if (NODE_BYTE(node1) & NODE_BYTEMASK_0x01_CELL) {
+    if (Is_Node_A_Cell(node1)) {
         assert(false);  // none of these exist yet
         return false;
     }
 
-    switch (Series_Flavor(SER(node1))) {
+    switch (Series_Flavor(c_cast(Series*, node1))) {
       case FLAVOR_SYMBOL : {
         if (Get_Cell_Flag(path, REFINEMENT_LIKE)) {  // `/a` - should these GET?
             Get_Word_May_Fail(out, path, path_specifier);
@@ -1257,7 +1257,7 @@ bool Set_Var_Core_Updater_Throws(
             fail (var);
         }
 
-        switch (Series_Flavor(SER(node1))) {
+        switch (Series_Flavor(c_cast(Series*, node1))) {
           case FLAVOR_SYMBOL: {
             if (Get_Cell_Flag(var, REFINEMENT_LIKE))  // `/a` or `.a`
                goto set_target;
@@ -1770,7 +1770,7 @@ DECLARE_NATIVE(free_q)
     if (n == nullptr or Is_Node_A_Cell(n))
         return Init_False(OUT);
 
-    return Init_Logic(OUT, Get_Series_Flag(SER(n), INACCESSIBLE));
+    return Init_Logic(OUT, Get_Series_Flag(cast(Series*, n), INACCESSIBLE));
 }
 
 
@@ -1852,7 +1852,7 @@ bool Try_As_String(
                 ++num_codepoints;
             }
             FLAVOR_BYTE(m_cast(Binary*, bin)) = FLAVOR_STRING;
-            str = STR(bin);
+            str = c_cast(String*, bin);
 
             Term_String_Len_Size(
                 m_cast(String*, str),  // legal for tweaking cached data
@@ -1870,7 +1870,7 @@ bool Try_As_String(
             // from index to offset... not offset to index.  Recalculate
             // the slow way for now.
 
-            str = STR(bin);
+            str = c_cast(String*, bin);
             index = 0;
 
             Utf8(const*) cp = String_Head(str);
@@ -1965,7 +1965,7 @@ DECLARE_NATIVE(as)
             const Node* node1 = Cell_Node1(v);
             assert(not (NODE_BYTE(node1) & NODE_BYTEMASK_0x01_CELL));
 
-            switch (Series_Flavor(SER(node1))) {
+            switch (Series_Flavor(c_cast(Series*, node1))) {
               case FLAVOR_SYMBOL: {
                 Array* a = Make_Array_Core(2, NODE_FLAG_MANAGED);
                 Set_Series_Len(a, 2);
@@ -2167,7 +2167,7 @@ DECLARE_NATIVE(as)
                 goto intern_utf8;
             }
 
-            Init_Any_Word(OUT, new_kind, SYM(s));
+            Init_Any_Word(OUT, new_kind, c_cast(Symbol*, s));
             return Inherit_Const(stable_OUT, v);
           }
         }
@@ -2186,7 +2186,7 @@ DECLARE_NATIVE(as)
 
             const String* str;
             if (IS_SYMBOL(bin))
-                str = STR(bin);
+                str = c_cast(String*, bin);
             else {
                 // !!! There isn't yet a mechanic for interning an existing
                 // string series.  That requires refactoring.  It would need
@@ -2208,7 +2208,8 @@ DECLARE_NATIVE(as)
                 Freeze_Series(bin);
             }
 
-            return Inherit_Const(Init_Any_Word(OUT, new_kind, SYM(str)), v);
+            Init_Any_Word(OUT, new_kind, c_cast(Symbol*, str));
+            return Inherit_Const(OUT, v);
         }
 
         if (not ANY_WORD(v))

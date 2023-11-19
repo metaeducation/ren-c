@@ -293,9 +293,7 @@ inline static Utf8(const*) VAL_UTF8_LEN_SIZE_AT_LIMIT(
         }
         else {
             len = 0;
-            Utf8(const*) at = cast(Utf8(const*),
-                PAYLOAD(Bytes, v).at_least_8
-            );
+            Utf8(const*) at = cast(Utf8(const*), PAYLOAD(Bytes, v).at_least_8);
             for (; limit != 0; --limit, ++len)
                 at = Skip_Codepoint(at);
             size = at - PAYLOAD(Bytes, v).at_least_8;

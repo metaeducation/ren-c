@@ -57,11 +57,15 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
             panic(binding);
 
         assert(Is_Series_Array(binding));
-        if (IS_VARLIST(binding) and CTX_TYPE(CTX(binding)) == REB_FRAME) {
-            Node* keysource = BONUS(KeySource, ARR(binding));
+        if (
+            IS_VARLIST(binding)
+            and CTX_TYPE(cast(Context*, binding)) == REB_FRAME
+        ){
+            Node* keysource = BONUS(KeySource, x_cast(Array*, binding));
             if (Is_Node_A_Stub(keysource)) {
+                KeyList* keylist = cast(KeyList*, keysource);
                 if (
-                    (SER(keysource)->header.bits & SERIES_MASK_KEYLIST)
+                    (keylist->header.bits & SERIES_MASK_KEYLIST)
                     != SERIES_MASK_KEYLIST
                 ){
                     panic (binding);
@@ -113,7 +117,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
         break; }
 
       case REB_PAIR: {
-        REBVAL *paired = VAL(Cell_Node1(v));
+        REBVAL *paired = x_cast(Value(*), Cell_Node1(v));
         assert(Is_Node_Marked(paired));
         break; }
 
@@ -128,7 +132,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
 
       case REB_BITSET: {
         assert(Get_Cell_Flag_Unchecked(v, FIRST_IS_NODE));
-        Series* s = SER(Cell_Node1(v));
+        Series* s = cast(Series*, Cell_Node1(v));
         Assert_Series_Term_Core(s);
         if (Get_Series_Flag(s, INACCESSIBLE)) {
             // TBD: clear out reference and GC `s`?
@@ -178,7 +182,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
 
       case REB_BINARY: {
         assert(Get_Cell_Flag_Unchecked(v, FIRST_IS_NODE));
-        Binary* s = BIN(Cell_Node1(v));
+        Binary* s = cast(Binary*, Cell_Node1(v));
         if (Get_Series_Flag(s, INACCESSIBLE))
             break;
 
@@ -193,11 +197,10 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
       case REB_URL:
       case REB_TAG: {
         assert(Get_Cell_Flag_Unchecked(v, FIRST_IS_NODE));
-        if (Get_Series_Flag(STR(Cell_Node1(v)), INACCESSIBLE))
+        const String* s = c_cast(String*, Cell_Node1(v));
+        if (Get_Series_Flag(s, INACCESSIBLE))
             break;
 
-        assert(Get_Cell_Flag_Unchecked(v, FIRST_IS_NODE));
-        const Series* s = VAL_SERIES(v);
         Assert_Series_Term_If_Needed(s);
 
         assert(Series_Wide(s) == sizeof(Byte));
@@ -257,7 +260,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
       case REB_MODULE:
       case REB_ERROR:
       case REB_PORT: {
-        if (Get_Series_Flag(SER(Cell_Node1(v)), INACCESSIBLE))
+        if (Get_Series_Flag(cast(Series*, Cell_Node1(v)), INACCESSIBLE))
             break;
 
         assert(
@@ -324,7 +327,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
       case REB_GET_GROUP:
       case REB_META_GROUP:
       case REB_TYPE_GROUP: {
-        Array* a = ARR(Cell_Node1(v));
+        Array* a = cast(Array*, Cell_Node1(v));
         if (Get_Series_Flag(a, INACCESSIBLE))
             break;
 
@@ -355,9 +358,9 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
             break;  // should be just bytes
 
         const Node* node1 = Cell_Node1(v);
-        assert(not (NODE_BYTE(node1) & NODE_BYTEMASK_0x01_CELL));
+        assert(Is_Node_A_Stub(node1));
 
-        switch (Series_Flavor(SER(node1))) {
+        switch (Series_Flavor(x_cast(Stub*, node1))) {
           case FLAVOR_SYMBOL :
             break;
 
@@ -372,7 +375,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
           // !!! Optimization abandoned
           //
           case FLAVOR_ARRAY : {
-            Array* a = ARR(Cell_Node1(v));
+            Array* a = x_cast(Array*, node1);
             assert(Not_Series_Flag(a, INACCESSIBLE));
 
             assert(Array_Len(a) >= 2);
@@ -413,7 +416,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
         REBLEN index = VAL_WORD_INDEX_U32(v);
         if (IS_WORD_BOUND(v)) {
             if (IS_VARLIST(BINDING(v))) {
-                if (CTX_TYPE(CTX(BINDING(v))) == REB_MODULE)
+                if (CTX_TYPE(cast(Context*, BINDING(v))) == REB_MODULE)
                     assert(index != 0);
                 else
                     assert(index != 0 and index != INDEX_ATTACHED);
@@ -483,7 +486,9 @@ void Assert_Array_Marked_Correctly(const Array* a) {
         assert(IS_VARLIST(list));
     }
     else if (IS_VARLIST(a)) {
-        const REBVAL *archetype = CTX_ARCHETYPE(CTX(m_cast(Array*, a)));
+        const REBVAL *archetype = CTX_ARCHETYPE(
+            cast(Context*, m_cast(Array*, a))
+        );
 
         // Currently only FRAME! archetypes use binding
         //

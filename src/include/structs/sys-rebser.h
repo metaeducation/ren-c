@@ -609,10 +609,7 @@ union StubContentUnion {
 };
 
 #define Stub_Cell(s) \
-    cast(const Cell*, &(s)->content.fixed.cell)  // fast Array_Single()
-
-#define mutable_Stub_Cell(s) \
-    cast(Cell*, &(s)->content.fixed.cell)  // fast Array_Single()
+    x_cast(Cell*, &(s)->content.fixed.cell)  // fast Array_Single()
 
 
 union StubLinkUnion {
@@ -805,6 +802,14 @@ union StubInfoUnion {
 
     typedef Series KeyList;
 #endif
+
+
+#define SERIES_MASK_SYMBOL \
+    (NODE_FLAG_NODE \
+        | FLAG_FLAVOR(SYMBOL) \
+        | SERIES_FLAG_FIXED_SIZE \
+        | NODE_FLAG_MANAGED)
+
 
 // We want to be able to enumerate keys by incrementing across them.  The
 // things we increment across aren't Symbol stubs, but pointers to Symbol

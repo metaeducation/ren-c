@@ -622,7 +622,7 @@ Array* Pop_Paramlist_With_Adjunct_May_Fail(
 
   blockscope {
     REBVAL *param = 1 + Init_Word_Isotope(
-        VAL(Array_Head(paramlist)), Canon(ROOTVAR)
+        x_cast(Value(*), Array_Head(paramlist)), Canon(ROOTVAR)
     );
     REBKEY *key = Series_Head(REBKEY, keylist);
 
@@ -764,7 +764,7 @@ Array* Pop_Paramlist_With_Adjunct_May_Fail(
 
         mutable_MISC(VarlistAdjunct, types_varlist) = nullptr;
         mutable_LINK(Patches, types_varlist) = nullptr;
-        INIT_CTX_KEYLIST_SHARED(CTX(types_varlist), keylist);
+        INIT_CTX_KEYLIST_SHARED(cast(Context*, types_varlist), keylist);
 
         Cell* rootvar = Array_Head(types_varlist);
         INIT_VAL_CONTEXT_ROOTVAR(rootvar, REB_OBJECT, types_varlist);
@@ -796,7 +796,7 @@ Array* Pop_Paramlist_With_Adjunct_May_Fail(
 
         Init_Object(
             CTX_VAR(*adjunct_out, STD_ACTION_ADJUNCT_PARAMETER_TYPES),
-            CTX(types_varlist)
+            cast(Context*, types_varlist)
         );
 
         USED(param);
@@ -813,7 +813,7 @@ Array* Pop_Paramlist_With_Adjunct_May_Fail(
 
         mutable_MISC(VarlistAdjunct, notes_varlist) = nullptr;
         mutable_LINK(Patches, notes_varlist) = nullptr;
-        INIT_CTX_KEYLIST_SHARED(CTX(notes_varlist), keylist);
+        INIT_CTX_KEYLIST_SHARED(cast(Context*, notes_varlist), keylist);
 
         Cell* rootvar = Array_Head(notes_varlist);
         INIT_VAL_CONTEXT_ROOTVAR(rootvar, REB_OBJECT, notes_varlist);
@@ -845,7 +845,7 @@ Array* Pop_Paramlist_With_Adjunct_May_Fail(
 
         Init_Object(
             CTX_VAR(*adjunct_out, STD_ACTION_ADJUNCT_PARAMETER_NOTES),
-            CTX(notes_varlist)
+            cast(Context*, notes_varlist)
         );
 
         USED(param);
@@ -969,7 +969,7 @@ Phase* Make_Action(
     assert(Is_Node_Managed(paramlist));
     assert(
         Is_Word_Isotope_With_Id(Array_Head(paramlist), SYM_ROOTVAR)  // fills in
-        or CTX_TYPE(CTX(paramlist)) == REB_FRAME
+        or CTX_TYPE(cast(Context*, paramlist)) == REB_FRAME
     );
 
     // !!! There used to be more validation code needed here when it was
@@ -1017,9 +1017,9 @@ Phase* Make_Action(
     mutable_LINK_DISPATCHER(details) = cast(CFunction*, dispatcher);
     mutable_MISC(DetailsAdjunct, details) = nullptr;  // caller can fill in
 
-    mutable_INODE(Exemplar, details) = CTX(paramlist);
+    mutable_INODE(Exemplar, details) = cast(Context*, paramlist);
 
-    Action* act = ACT(details); // now it's a legitimate REBACT
+    Action* act = cast(Action*, details);  // now it's a legitimate Action
 
     // !!! We may have to initialize the exemplar rootvar.
     //

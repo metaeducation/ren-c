@@ -40,14 +40,14 @@ inline static REBVAL *PAIRING_KEY(REBVAL *paired) {
 
 inline static REBVAL *VAL_PAIRING(NoQuote(const Cell*) v) {
     assert(Cell_Heart(v) == REB_PAIR);
-    return VAL(Cell_Node1(v));
+    return x_cast(Value(*), Cell_Node1(v));
 }
 
 #define VAL_PAIR_X(v) \
-    PAIRING_KEY(VAL(VAL_PAIRING(v)))
+    PAIRING_KEY(VAL_PAIRING(v))
 
 #define VAL_PAIR_Y(v) \
-    VAL(VAL_PAIRING(v))
+    VAL_PAIRING(v)
 
 inline static REBDEC VAL_PAIR_X_DEC(NoQuote(const Cell*) v) {
     if (IS_INTEGER(VAL_PAIR_X(v)))

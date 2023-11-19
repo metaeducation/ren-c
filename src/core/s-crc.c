@@ -214,9 +214,9 @@ uint32_t Hash_Value(const Cell* cell)
         }
 
         const Node* node1 = Cell_Node1(cell);
-        assert(not (NODE_BYTE(node1) & NODE_BYTEMASK_0x01_CELL));
+        assert(Is_Node_A_Stub(node1));
 
-        switch (Series_Flavor(SER(node1))) {
+        switch (Series_Flavor(c_cast(Series*, node1))) {
           case FLAVOR_SYMBOL:
             goto hash_any_word;
 

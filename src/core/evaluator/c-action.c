@@ -1121,7 +1121,7 @@ Bounce Action_Executor(Level(*) L)
     if (IS_FRAME(label)) {
         if (
             VAL_ACTION(label) == VAL_ACTION(Lib(REDO))  // REDO, see [1]
-            and VAL_FRAME_BINDING(label) == CTX(L->varlist)
+            and VAL_FRAME_BINDING(label) == cast(Context*, L->varlist)
         ){
             CATCH_THROWN(OUT, level_);
             assert(IS_FRAME(OUT));
@@ -1199,10 +1199,10 @@ void Push_Action(
             | SERIES_FLAG_FIXED_SIZE // FRAME!s don't expand ATM
     );
     SERIES_INFO(s) = SERIES_INFO_MASK_NONE;
-    INIT_BONUS_KEYSOURCE(ARR(s), L);  // maps varlist back to L
+    INIT_BONUS_KEYSOURCE(x_cast(Array*, s), L);  // maps varlist back to L
     mutable_MISC(VarlistAdjunct, s) = nullptr;
     mutable_LINK(Patches, s) = nullptr;
-    L->varlist = ARR(s);
+    L->varlist = x_cast(Array*, s);
 
     if (not Did_Series_Data_Alloc(s, num_args + 1 + 1)) {  // +rootvar, +end
         Set_Series_Flag(s, INACCESSIBLE);
@@ -1383,7 +1383,7 @@ void Drop_Action(Level(*) L) {
       #if 0
         L->varlist = CTX_VARLIST(
             Steal_Context_Vars(
-                CTX(L->varlist),
+                cast(Context*, L->varlist),
                 ORIGINAL  // degrade keysource from f
             )
         );

@@ -181,7 +181,7 @@ static void Queue_Mark_Node_Deep(const Node** pp) {
         return;  // may not be finished marking yet, but has been queued
 
     if (nodebyte & NODE_BYTEMASK_0x01_CELL) {  // e.g. a pairing
-        REBVAL *v = VAL(m_cast(Node*, *pp));
+        REBVAL *v = x_cast(Value(*), m_cast(Node*, *pp));
         if (Is_Node_Managed(v))
             Queue_Mark_Pairing_Deep(v);
         else {
@@ -191,7 +191,7 @@ static void Queue_Mark_Node_Deep(const Node** pp) {
         return;  // it's 2 cells, sizeof(Stub), but no room for a Stub's data
     }
 
-    Series* s = SER(m_cast(Node*, *pp));
+    Series* s = x_cast(Series*, *pp);
     if (Get_Series_Flag(s, INACCESSIBLE)) {
         //
         // All inaccessible nodes are collapsed and canonized into a universal
@@ -284,7 +284,7 @@ static void Queue_Unmarked_Accessible_Series_Deep(Series* s)
         }
     }
     else if (Is_Series_Array(s)) {
-        Array* a = ARR(s);
+        Array* a = x_cast(Array*, s);
 
     //=//// MARK BONUS (if not using slot for `bias`) /////////////////////=//
 
@@ -301,7 +301,7 @@ static void Queue_Unmarked_Accessible_Series_Deep(Series* s)
             if (Is_Node_A_Cell(node_BONUS(Node, s)))
                 goto skip_mark_frame_bonus;
 
-            assert(IS_KEYLIST(SER(node_BONUS(Node, a))));
+            assert(IS_KEYLIST(cast(Series*, node_BONUS(Node, a))));
 
             Queue_Mark_Node_Deep(&s->content.dynamic.bonus.node);
         }
@@ -629,7 +629,7 @@ static void Mark_Root_Series(void)
 
                 assert(!"unmanaged pairings not believed to exist yet");
 
-                REBVAL *paired = VAL(cast(void*, unit));
+                REBVAL *paired = x_cast(Value(*), cast(void*, unit));
                 Queue_Mark_Cell_Deep(paired);
                 Queue_Mark_Cell_Deep(PAIRING_KEY(paired));
                 continue;
@@ -688,7 +688,7 @@ static void Mark_Root_Series(void)
                 Array* a = cast(Array*, s);
 
                 if (IS_VARLIST(a))
-                    if (CTX_TYPE(CTX(a)) == REB_FRAME)
+                    if (CTX_TYPE(cast(Context*, a)) == REB_FRAME)
                         continue;  // Mark_Level_Stack_Deep() etc. mark it
 
                 // This means someone did something like Make_Array() and then
@@ -893,7 +893,7 @@ static void Mark_Level_Stack_Deep(void)
                 or Level_State_Byte(L) == ST_ACTION_TYPECHECKING  // filled/safe
             );
 
-            // "may not pass CTX() test"
+            // "may not pass cast(Context*) test in DEBUG_CHECK_CASTS"
             //
             Queue_Mark_Node_Deep(
                 cast(const Node**, m_cast(const Array**, &L->varlist))
@@ -1124,7 +1124,7 @@ REBLEN Fill_Sweeplist(Series* sweeplist)
         for (; n > 0; --n, stub += sizeof(Stub)) {
             switch (*stub >> 4) {
               case 9: {  // 0x8 + 0x1
-                Series* s = SER(cast(void*, stub));
+                Series* s = x_cast(Series*, stub);
                 Assert_Series_Managed(s);
                 if (Is_Node_Marked(s)) {
                     Remove_GC_Mark(s);
@@ -1143,7 +1143,7 @@ REBLEN Fill_Sweeplist(Series* sweeplist)
                 //
                 // !!! It is a Stub Node, but *not* a "series".
                 //
-                REBVAL *pairing = VAL(cast(void*, stub));
+                REBVAL *pairing = x_cast(Value(*), cast(void*, stub));
                 assert(pairing->header.bits & NODE_FLAG_MANAGED);
                 if (Is_Node_Marked(pairing)) {
                     Remove_GC_Mark(pairing);
@@ -1262,8 +1262,12 @@ REBLEN Recycle_Core(Series* sweeplist)
         for (; psym != psym_tail; ++psym) {
             if (*psym == nullptr or *psym == &g_symbols.deleted_symbol)
                 continue;
-            Series* patch = MISC(Hitch, *psym);
-            for (; patch != *psym; patch = SER(node_MISC(Hitch, patch))) {
+            Stub* patch = MISC(Hitch, *psym);
+            for (
+                ;
+                patch != *psym;
+                patch = cast(Stub*, node_MISC(Hitch, patch))
+            ){
                 Context* context = INODE(PatchContext, patch);
                 if (Is_Node_Marked(patch)) {
                     assert(Is_Node_Marked(CTX_VARLIST(context)));
@@ -1273,7 +1277,7 @@ REBLEN Recycle_Core(Series* sweeplist)
                     Add_GC_Mark(patch);
                     added_marks = true;
 
-                    Queue_Mark_Cell_Deep(Array_Single(ARR(patch)));
+                    Queue_Mark_Cell_Deep(Stub_Cell(patch));
 
                     // We also have to keep the word alive, but not necessarily
                     // keep all the other declarations in other modules alive.

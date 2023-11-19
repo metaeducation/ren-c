@@ -240,7 +240,7 @@ REBLEN Modify_String_Or_Binary(
 
     Ensure_Mutable(dst);  // note this also rules out ANY-WORD!s
 
-    Binary* dst_ser = BIN(VAL_SERIES_ENSURE_MUTABLE(dst));
+    Binary* dst_ser = cast(Binary*, VAL_SERIES_ENSURE_MUTABLE(dst));
     assert(not IS_SYMBOL(dst_ser));  // would be immutable
 
     REBLEN dst_idx = VAL_INDEX(dst);
@@ -253,7 +253,7 @@ REBLEN Modify_String_Or_Binary(
             Byte at = *Binary_At(dst_ser, dst_idx);
             if (Is_Continuation_Byte(at))
                 fail (Error_Bad_Utf8_Bin_Edit_Raw());
-            dst_len_old = String_Len(STR(dst_ser));
+            dst_len_old = String_Len(cast(String*, dst_ser));
         }
         dst_off = dst_idx;
     }
@@ -262,7 +262,7 @@ REBLEN Modify_String_Or_Binary(
         assert(Is_NonSymbol_String(dst_ser));
 
         dst_off = VAL_BYTEOFFSET_FOR_INDEX(dst, dst_idx);  // !!! review for speed
-        dst_len_old = String_Len(STR(dst_ser));
+        dst_len_old = String_Len(cast(String*, dst_ser));
     }
 
     if (Is_Void(src)) {  // no-op, unless CHANGE, where it means delete
@@ -295,7 +295,7 @@ REBLEN Modify_String_Or_Binary(
         dst_idx = dst_len_old;
     }
     else if (IS_BINARY(dst) and Is_NonSymbol_String(dst_ser)) {
-        dst_idx = String_Index_At(STR(dst_ser), dst_off);
+        dst_idx = String_Index_At(cast(String*, dst_ser), dst_off);
     }
 
     // If the src is not an ANY-STRING!, then we need to create string data
@@ -386,7 +386,7 @@ REBLEN Modify_String_Or_Binary(
         }
         else {
             if (Is_NonSymbol_String(bin)) {  // guaranteed valid UTF-8
-                const String* str = STR(bin);
+                const String* str = c_cast(String*, bin);
                 if (Is_Continuation_Byte(*src_ptr))
                     fail (Error_Bad_Utf8_Bin_Edit_Raw());
 
@@ -570,7 +570,10 @@ REBLEN Modify_String_Or_Binary(
         if (Is_NonSymbol_String(dst_ser)) {
             if (IS_BINARY(dst)) {
                 dst_size_at = VAL_LEN_AT(dst);  // byte count
-                dst_len_at = String_Index_At(STR(dst_ser), dst_size_at);
+                dst_len_at = String_Index_At(
+                    cast(String*, dst_ser),
+                    dst_size_at
+                );
             }
             else
                 dst_size_at = VAL_SIZE_LIMIT_AT(&dst_len_at, dst, UNLIMITED);
@@ -712,7 +715,7 @@ REBLEN Modify_String_Or_Binary(
     // unified with the mold buffer?)
 
     if (book) {
-        String* dst_str = STR(dst_ser);
+        String* dst_str = cast(String*, dst_ser);
         if (BMK_INDEX(book) > String_Len(dst_str)) {  // past active
             assert(op == SYM_CHANGE);  // only change removes material
             Free_Bookmarks_Maybe_Null(dst_str);

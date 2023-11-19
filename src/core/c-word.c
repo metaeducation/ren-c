@@ -279,10 +279,10 @@ const Symbol* Intern_UTF8_Managed_Core(
 
   new_interning: {
 
-    Binary* s = BIN(Make_Series_Into(
+    Binary* s = cast(Binary*, Make_Series_Into(
         preallocated ? unwrap(preallocated) : Alloc_Stub(),
         size + 1,  // if small, fits in a Series stub (no dynamic allocation)
-        FLAG_FLAVOR(SYMBOL) | SERIES_FLAG_FIXED_SIZE | NODE_FLAG_MANAGED
+        SERIES_MASK_SYMBOL
     ));
 
     // Cache whether this is an arrow word.
@@ -345,7 +345,7 @@ const Symbol* Intern_UTF8_Managed_Core(
     Freeze_Series(s);
 
     if (not synonym) {
-        mutable_LINK(Synonym, s) = SYM(s);  // 1-item in circular list
+        mutable_LINK(Synonym, s) = c_cast(Symbol*, s);  // 1-item circular list
 
         // leave header.bits as 0 for SYM_0 as answer to VAL_WORD_ID()
         // Startup_Lib() tags values from %words.r after the fact.
@@ -368,7 +368,7 @@ const Symbol* Intern_UTF8_Managed_Core(
         // circularly linked list, and direct link the canon form.
         //
         mutable_LINK(Synonym, s) = LINK(Synonym, synonym);
-        mutable_LINK(Synonym, synonym) = SYM(s);
+        mutable_LINK(Synonym, synonym) = c_cast(Symbol*, s);
 
         // If the canon form had a SYM_XXX for quick comparison of %words.r
         // words in C switch statements, the synonym inherits that number.
@@ -386,17 +386,17 @@ const Symbol* Intern_UTF8_Managed_Core(
     mutable_MISC(Hitch, s) = s;
 
     if (deleted_slot) {
-        *deleted_slot = SYM(s);  // reuse the deleted slot
+        *deleted_slot = cast(Symbol*, s);  // reuse the deleted slot
       #if !defined(NDEBUG)
         g_symbols.num_deleteds -= 1;  // note slot usage count stays constant
       #endif
     }
     else {
-        symbols_by_hash[slot] = SYM(s);
+        symbols_by_hash[slot] = cast(Symbol*, s);
         ++g_symbols.num_slots_in_use;
     }
 
-    return SYM(s);
+    return cast(Symbol*, s);
   }
 }
 
@@ -437,23 +437,23 @@ const String* Intern_Any_String_Managed(const Cell* v) {
 //
 void GC_Kill_Interning(String* intern)
 {
-    Symbol* synonym = LINK(Synonym, intern);
+    Symbol* synonym = m_cast(Symbol*, LINK(Synonym, intern));
 
     // Note synonym and intern may be the same here.
     //
     Symbol* temp = synonym;
     while (LINK(Synonym, temp) != intern)
-        temp = LINK(Synonym, temp);
+        temp = m_cast(Symbol*, LINK(Synonym, temp));
     mutable_LINK(Synonym, temp) = synonym;  // cut the intern out (or no-op)
 
     // We should only be GC'ing a symbol if all the sea-of-words module
     // variables referring to it are also being freed.  Make sure that is
     // the case, and remove from the circularly linked list.
     //
-    Series* patch = intern;
+    Stub* patch = intern;
     while (node_MISC(Hitch, patch) != intern) {
         assert(Not_Node_Marked(patch));
-        patch = SER(node_MISC(Hitch, patch));
+        patch = cast(Stub*, node_MISC(Hitch, patch));
     }
     node_MISC(Hitch, patch) = node_MISC(Hitch, intern);  // may be no-op
 

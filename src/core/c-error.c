@@ -95,7 +95,7 @@ ATTRIBUTE_NO_RETURN void Fail_Core(const void *p)
         Series* s = m_cast(Series*, cast(const Series* , p));  // don't mutate
         if (not IS_VARLIST(s))
             panic (s);  // only kind of series allowed are contexts of ERROR!
-        error = CTX(s);
+        error = cast(Context*, s);
         break; }
 
       case DETECTED_AS_CELL: {

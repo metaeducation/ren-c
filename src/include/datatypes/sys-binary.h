@@ -86,7 +86,7 @@ inline static Binary* Make_Binary_Core(Length capacity, Flags flags)
 
 inline static const Binary* VAL_BINARY(NoQuote(const Cell*) v) {
     assert(Cell_Heart(v) == REB_BINARY);
-    return BIN(VAL_SERIES(v));
+    return c_cast(Binary*, VAL_SERIES(v));
 }
 
 #define VAL_BINARY_Ensure_Mutable(v) \

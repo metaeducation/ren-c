@@ -177,7 +177,7 @@ Bounce Hijacker_Dispatcher(Level(*) level_)
     // be compatible.  Check by seeing if the keylists are derived.
     //
     KeyList* exemplar_keylist = CTX_KEYLIST(ACT_EXEMPLAR(hijacker));
-    KeyList* keylist = CTX_KEYLIST(CTX(LEVEL->varlist));
+    KeyList* keylist = CTX_KEYLIST(cast(Context*, LEVEL->varlist));
     while (true) {
         if (keylist == exemplar_keylist)
             return ACT_DISPATCHER(hijacker)(LEVEL);

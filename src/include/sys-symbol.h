@@ -54,14 +54,12 @@
 // string nodes unlinks them from the list.  (Hence the canon can change!)
 //
 #define LINK_Synonym_TYPE       const Symbol*
-#define LINK_Synonym_CAST       SYM
 #define HAS_LINK_Synonym        FLAVOR_SYMBOL
 
 // Hitches are a circularly linked list that includes transient binding info
 // for the word, as well as declared variables in "sea" contexts.
 //
 #define MISC_Hitch_TYPE         Series*
-#define MISC_Hitch_CAST         SER
 #define HAS_MISC_Hitch          FLAVOR_SYMBOL
 
 

@@ -148,7 +148,7 @@ ATTRIBUTE_NO_RETURN void Panic_Core(
 
         if (IS_VARLIST(s)) {
             printf("Series VARLIST detected.\n");
-            Context* context = cast(Context*, s);  // CTX() does too much checking!
+            Context* context = u_cast(Context*, s);  // avoid plain cast checks
             if (HEART_BYTE(CTX_ARCHETYPE(context)) == REB_ERROR) {
                 printf("...and that VARLIST is of an ERROR!...");
                 Force_Location_Of_Error(context, TOP_LEVEL);

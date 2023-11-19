@@ -251,7 +251,7 @@ Array* Make_Let_Patch(
             | SERIES_FLAG_INFO_NODE_NEEDS_MARK  // inode of symbol
     );
 
-    Finalize_None(VAL(Array_Single(let)));  // start variable as unset
+    Finalize_None(x_cast(Value(*), Array_Single(let)));  // start as unset
 
     if (specifier) {
         assert(IS_LET(specifier) or IS_USE(specifier) or IS_VARLIST(specifier));
@@ -346,7 +346,7 @@ Array* Merge_Patches_May_Reuse(
         kind = REB_WORD;
     }
     else {
-        binding = ARR(BINDING(Array_Single(parent)));
+        binding = cast(Array*, BINDING(Array_Single(parent)));
         kind = VAL_TYPE(Array_Single(parent));
     }
 
@@ -423,7 +423,7 @@ Option(Series*) Get_Word_Container(
         }
 
         Array* overbind;  // avoid goto-past-initialization warning
-        overbind = ARR(BINDING(Array_Single(specifier)));
+        overbind = cast(Array*, BINDING(Array_Single(specifier)));
         if (not IS_VARLIST(overbind)) {  // a patch-formed LET overload
             if (INODE(LetSymbol, overbind) == symbol) {
                 *index_out = 1;
@@ -440,7 +440,7 @@ Option(Series*) Get_Word_Container(
         }
 
       blockscope {
-        Context* overload = CTX(overbind);
+        Context* overload = cast(Context*, overbind);
 
         // !!! At one time, this would enumerate up to a "cached_len" which
         // was the length of the object at the time of the virtual bind.
@@ -500,13 +500,17 @@ Option(Series*) Get_Word_Container(
         // concept.  Idea would be (I guess) that a special form of mutable
         // lookup would say "I want that but be willing to make it."
         //
-        if (CTX_TYPE(CTX(binding)) == REB_MODULE) {
+        if (CTX_TYPE(cast(Context*, binding)) == REB_MODULE) {
             const Symbol* symbol = VAL_WORD_SYMBOL(VAL_UNESCAPED(any_word));
-            Series* patch = MISC(Hitch, symbol);
+            Stub* patch = MISC(Hitch, symbol);
             while (Get_Series_Flag(patch, BLACK))  // binding temps
-                patch = SER(node_MISC(Hitch, patch));
+                patch = cast(Stub*, node_MISC(Hitch, patch));
 
-            for (; patch != symbol; patch = SER(node_MISC(Hitch, patch))) {
+            for (
+                ;
+                patch != symbol;
+                patch = cast(Stub*, node_MISC(Hitch, patch))
+            ){
                 if (INODE(PatchContext, patch) != binding)
                     continue;
 
@@ -538,9 +542,9 @@ Option(Series*) Get_Word_Container(
                 and binding != Sys_Context
             ){
                 *index_out = INDEX_ATTACHED;
-                return Singular_From_Cell(
-                    Finalize_None(Append_Context(CTX(binding), symbol))
-                );
+                REBVAR *var = Append_Context(cast(Context*, binding), symbol);
+                Finalize_None(var);
+                return Singular_From_Cell(var);
             }
 
             // non generic inheritance; inherit only from Lib for now
@@ -550,9 +554,13 @@ Option(Series*) Get_Word_Container(
 
             patch = MISC(Hitch, symbol);
             while (Get_Series_Flag(patch, BLACK))  // binding temps
-                patch = SER(node_MISC(Hitch, patch));
+                patch = cast(Stub*, node_MISC(Hitch, patch));
 
-            for (; patch != symbol; patch = SER(node_MISC(Hitch, patch))) {
+            for (
+                ;
+                patch != symbol;
+                patch = cast(Stub*, node_MISC(Hitch, patch))
+            ){
                 if (INODE(PatchContext, patch) != Lib_Context)
                     continue;
 
@@ -580,7 +588,7 @@ Option(Series*) Get_Word_Container(
         // the frame stores that pointer, and we take it into account when
         // looking up `a` here, instead of using a's stored binding directly.
 
-        c = CTX(binding); // start with stored binding
+        c = cast(Context*, binding); // start with stored binding
 
         if (specifier == SPECIFIED) {
             //
@@ -589,15 +597,17 @@ Option(Series*) Get_Word_Container(
         }
         else {
             Series* f_binding = SPC_BINDING(specifier); // can't fail()
-            if (f_binding and Is_Overriding_Context(c, CTX(f_binding))) {
-                //
+            if (
+                f_binding
+                and Is_Overriding_Context(c, cast(Context*, f_binding))
+            ){
                 // The specifier binding overrides--because what's happening
                 // is that this cell came from a METHOD's body, where the
                 // particular ACTION! value cell triggering it held a binding
                 // of a more derived version of the object to which the
                 // instance in the method body refers.
                 //
-                c = CTX(f_binding);
+                c = cast(Context*, f_binding);
             }
         }
     }
@@ -617,7 +627,7 @@ Option(Series*) Get_Word_Container(
         }
       #endif
 
-        c = CTX(specifier);
+        c = cast(Context*, specifier);
 
         // We can only check for a match of the underlying function.  If we
         // checked for an exact match, then the same function body could not
@@ -625,7 +635,7 @@ Option(Series*) Get_Word_Container(
         // code, because the identity of the derived function would not match
         // up with the body it intended to reuse.
         //
-        assert(Action_Is_Base_Of(ACT(binding), CTX_FRAME_PHASE(c)));
+        assert(Action_Is_Base_Of(cast(Action*, binding), CTX_FRAME_PHASE(c)));
     }
 
     *index_out = VAL_WORD_INDEX(any_word);
@@ -1094,7 +1104,7 @@ static void Clonify_And_Bind_Relative(
             // binding pointers can be changed in the "immutable" copy.
             //
             if (ANY_SEQUENCE_KIND(heart))
-                Freeze_Array_Shallow(ARR(series));
+                Freeze_Array_Shallow(cast(Array*, series));
 
             would_need_deep = true;
         }
@@ -1116,8 +1126,8 @@ static void Clonify_And_Bind_Relative(
         // copied series and "clonify" the values in it.
         //
         if (would_need_deep and (deep_types & FLAGIT_KIND(heart))) {
-            Cell* sub = Array_Head(ARR(series));
-            Cell* sub_tail = Array_Tail(ARR(series));
+            Cell* sub = Array_Head(cast(Array*, series));
+            Cell* sub_tail = Array_Tail(cast(Array*, series));
             for (; sub != sub_tail; ++sub)
                 Clonify_And_Bind_Relative(
                     SPECIFIC(sub),

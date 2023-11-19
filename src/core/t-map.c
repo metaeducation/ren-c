@@ -53,7 +53,7 @@ Map* Make_Map(REBLEN capacity)
     Array* pairlist = Make_Array_Core(capacity * 2, SERIES_MASK_PAIRLIST);
     mutable_LINK(Hashlist, pairlist) = Make_Hash_Series(capacity);
 
-    return MAP(pairlist);
+    return cast(Map*, pairlist);
 }
 
 
@@ -395,7 +395,7 @@ inline static Map* Copy_Map(const Map* map, REBU64 types) {
     mutable_LINK(Hashlist, copy) = hashlist;
 
     if (types == 0)
-        return MAP(copy); // no types have deep copy requested, shallow is OK
+        return cast(Map*, copy); // no types request deep copy, shallow is ok
 
     // Even if the type flags request deep copies of series, none of the keys
     // need to be copied deeply.  This is because they are immutable at the
@@ -417,7 +417,7 @@ inline static Map* Copy_Map(const Map* map, REBU64 types) {
         Clonify(v, flags, types);
     }
 
-    return MAP(copy);
+    return cast(Map*, copy);
 }
 
 

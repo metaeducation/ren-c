@@ -243,7 +243,7 @@ bool Init_Invokable_From_Feed_Throws(
 
     Set_Node_Managed_Bit(varlist);  // can't use Manage_Series
 
-    Init_Frame(out, CTX(varlist), label);
+    Init_Frame(out, cast(Context*, varlist), label);
     return false;  // didn't throw
 }
 

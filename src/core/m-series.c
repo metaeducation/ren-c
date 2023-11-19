@@ -348,14 +348,14 @@ void Assert_Series_Term_Core(const Series* s)
     if (Is_Series_Array(s)) {
       #if DEBUG_POISON_SERIES_TAILS
         if (Get_Series_Flag(s, DYNAMIC)) {
-            const Cell* tail = Array_Tail(ARR(s));
+            const Cell* tail = Array_Tail(x_cast(Array*, s));
             if (not Is_Cell_Poisoned(tail))
                 panic (tail);
         }
       #endif
     }
     else if (Series_Wide(s) == 1) {
-        const Byte* tail = Binary_Tail(BIN(s));
+        const Byte* tail = Binary_Tail(c_cast(Binary*, s));
         if (Is_Series_UTF8(s)) {
             if (*tail != '\0')
                 panic (s);

@@ -71,15 +71,13 @@
     (not Is_End(p))
 
 
-#define FEED_SINGULAR(feed)     ARR(&(feed)->singular)
-#define FEED_SINGLE(feed)       mutable_Stub_Cell(&(feed)->singular)
+#define FEED_SINGULAR(feed)     x_cast(Array*, &(feed)->singular)
+#define FEED_SINGLE(feed)       Stub_Cell(&(feed)->singular)
 
 #define LINK_Splice_TYPE        Array*
-#define LINK_Splice_CAST        ARR
 #define HAS_LINK_Splice         FLAVOR_FEED
 
 #define MISC_Pending_TYPE       const Cell*
-#define MISC_Pending_CAST       (const Cell*)
 #define HAS_MISC_Pending        FLAVOR_FEED
 
 
@@ -137,7 +135,7 @@ inline static Option(va_list*) FEED_VAPTR(Feed(*) feed) {
 // we sneak past that by accessing the node directly.
 //
 #define FEED_SPECIFIER(feed) \
-    ARR(BINDING(FEED_SINGLE(feed)))
+    cast(Array*, BINDING(FEED_SINGLE(feed)))
 
 #define FEED_ARRAY(feed) \
     VAL_ARRAY(FEED_SINGLE(feed))
@@ -203,7 +201,7 @@ inline static Value(const*) Copy_Reified_Variadic_Feed_Cell(
     if (Is_Isotope(cell)) {  // @ will turn these back into isotopes
         Copy_Cell(out, SPECIFIC(cell));
         QUOTE_BYTE(out) = QUASI_2;
-        return VAL(out);
+        return cast(Value(*), out);
     }
 
     return Copy_Cell(out, cast(Value(const*), cell));
@@ -221,11 +219,11 @@ inline static Value(const*) Copy_Reified_Variadic_Feed_Cell(
 inline static Option(Value(const*)) Try_Reify_Variadic_Feed_Series(
     Feed(*) feed
 ){
-    Series* s = SER(m_cast(void*, feed->p));
+    const Series* s = c_cast(Series*, feed->p);
 
     switch (Series_Flavor(s)) {
       case FLAVOR_INSTRUCTION_SPLICE: {
-        Array* inst1 = ARR(s);
+        Array* inst1 = x_cast(Array*, s);
         REBVAL *single = SPECIFIC(Array_Single(inst1));
         if (IS_BLANK(single)) {
             GC_Kill_Series(inst1);
@@ -245,7 +243,7 @@ inline static Option(Value(const*)) Try_Reify_Variadic_Feed_Series(
         break; }
 
       case FLAVOR_API: {
-        Array* inst1 = ARR(s);
+        Array* inst1 = x_cast(Array*, s);
 
         // We usually get the API *cells* passed to us, not the singular
         // array holding them.  But the rebR() function will actually
@@ -281,12 +279,15 @@ inline static Option(Value(const*)) Try_Reify_Variadic_Feed_Series(
         if (feed->context) {
             assert(CTX_TYPE(unwrap(feed->context)) == REB_MODULE);
             Init_Any_Word_Attached(
-                &feed->fetched, REB_WORD, SYM(s), unwrap(feed->context)
+                &feed->fetched,
+                REB_WORD,
+                c_cast(Symbol*, s),
+                unwrap(feed->context)
             );
             // !!! Should we speed it up by setting feed->gotten here, if it's
             // bound into Lib?  Would it be overwritten by nullptr?
         } else
-            Init_Any_Word(&feed->fetched, REB_WORD, SYM(s));
+            Init_Any_Word(&feed->fetched, REB_WORD, c_cast(Symbol*, s));
 
         feed->p = &feed->fetched;
         break; }

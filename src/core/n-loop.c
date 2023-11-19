@@ -838,7 +838,10 @@ static bool Try_Loop_Each_Next(Value(const*) iterator, Context* vars_ctx)
             if (var)
                 Derelativize(
                     var,
-                    Array_At(ARR(les->series), les->u.eser.index),
+                    Array_At(
+                        c_cast(Array*, les->series),
+                        les->u.eser.index
+                    ),
                     les->specifier
                 );
             if (++les->u.eser.index == les->u.eser.len)
@@ -885,9 +888,13 @@ static bool Try_Loop_Each_Next(Value(const*) iterator, Context* vars_ctx)
             const REBVAL *key;
             const REBVAL *val;
             while (true) {  // pass over the unused map slots
-                key = SPECIFIC(Array_At(ARR(les->series), les->u.eser.index));
+                key = SPECIFIC(
+                    Array_At(c_cast(Array*, les->series), les->u.eser.index)
+                );
                 ++les->u.eser.index;
-                val = SPECIFIC(Array_At(ARR(les->series), les->u.eser.index));
+                val = SPECIFIC(
+                    Array_At(c_cast(Array*, les->series), les->u.eser.index)
+                );
                 ++les->u.eser.index;
                 if (les->u.eser.index == les->u.eser.len)
                     les->more_data = false;
@@ -918,7 +925,7 @@ static bool Try_Loop_Each_Next(Value(const*) iterator, Context* vars_ctx)
             break; }
 
           case REB_BINARY: {
-            const Binary* bin = BIN(les->series);
+            const Binary* bin = c_cast(Binary*, les->series);
             if (var)
                 Init_Integer(var, Binary_Head(bin)[les->u.eser.index]);
             if (++les->u.eser.index == les->u.eser.len)
@@ -933,7 +940,7 @@ static bool Try_Loop_Each_Next(Value(const*) iterator, Context* vars_ctx)
             if (var)
                 Init_Char_Unchecked(
                     var,
-                    Get_Char_At(STR(les->series), les->u.eser.index)
+                    Get_Char_At(c_cast(String*, les->series), les->u.eser.index)
                 );
             if (++les->u.eser.index == les->u.eser.len)
                 les->more_data = false;
@@ -1288,7 +1295,7 @@ DECLARE_NATIVE(remove_each)
     Set_Series_Info(series, HOLD);  // disallow mutations until finalize
 
     REBLEN len = ANY_STRING(data)
-        ? String_Len(STR(series))
+        ? String_Len(cast(String*, series))
         : Series_Used(series);  // temp read-only, this won't change
 
     bool threw = false;
@@ -1313,14 +1320,14 @@ DECLARE_NATIVE(remove_each)
                     VAL_SPECIFIER(data)
                 );
             else if (IS_BINARY(data)) {
-                Binary* bin = BIN(series);
+                Binary* bin = cast(Binary*, series);
                 Init_Integer(var, cast(REBI64, Binary_Head(bin)[index]));
             }
             else {
                 assert(ANY_STRING(data));
                 Init_Char_Unchecked(
                     var,
-                    Get_Char_At(STR(series), index)
+                    Get_Char_At(cast(String*, series), index)
                 );
             }
             ++index;
@@ -1393,7 +1400,7 @@ DECLARE_NATIVE(remove_each)
             do {
                 assert(start <= len);
                 if (IS_BINARY(data)) {
-                    Binary* bin = BIN(series);
+                    Binary* bin = cast(Binary*, series);
                     Append_Ascii_Len(
                         mo->series,
                         cs_cast(Binary_At(bin, start)),
@@ -1403,7 +1410,7 @@ DECLARE_NATIVE(remove_each)
                 else {
                     Append_Codepoint(
                         mo->series,
-                        Get_Char_At(STR(series), start)
+                        Get_Char_At(cast(String*, series), start)
                     );
                 }
                 ++start;
@@ -1469,7 +1476,7 @@ DECLARE_NATIVE(remove_each)
             goto done_finalizing;
         }
 
-        Binary* bin = BIN(series);
+        Binary* bin = cast(Binary*, series);
 
         // If there was a THROW, or fail() we need the remaining data
         //
@@ -1505,7 +1512,7 @@ DECLARE_NATIVE(remove_each)
         for (; start != orig_len; ++start) {
             Append_Codepoint(
                 mo->series,
-                Get_Char_At(STR(series), start)
+                Get_Char_At(cast(String*, series), start)
             );
         }
 

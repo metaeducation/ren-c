@@ -70,7 +70,7 @@ inline static Array* Freeze_Array_Shallow(Array* a) {
 }
 
 #define Is_Array_Shallow_Read_Only(a) \
-    Is_Series_Read_Only(SER(a))
+    Is_Series_Read_Only(a)
 
 #define Force_Value_Frozen_Deep(v) \
     Force_Value_Frozen_Core((v), true, EMPTY_ARRAY)  // auto-locked

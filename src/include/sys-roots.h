@@ -43,11 +43,9 @@
 
 
 #define LINK_ApiNext_TYPE       Node*
-#define LINK_ApiNext_CAST       // none, just use node (NOD() complains)
 #define HAS_LINK_ApiNext        FLAVOR_API
 
 #define MISC_ApiPrev_TYPE       Node*
-#define MISC_ApiPrev_CAST       // none, just use node (NOD() complains)
 #define HAS_MISC_ApiPrev        FLAVOR_API
 
 
@@ -79,8 +77,9 @@ inline static void Link_Api_Handle_To_Level(Array* a, Level(*) L)
     bool empty_list = L->alloc_value_list == L;
 
     if (not empty_list) {  // head of list exists, take its spot at the head
-        assert(Is_Api_Value(Array_Single(ARR(L->alloc_value_list))));
-        mutable_MISC(ApiPrev, SER(L->alloc_value_list)) = a;  // link back
+        Array* head = cast(Array*, L->alloc_value_list);
+        assert(Is_Api_Value(Stub_Cell(head)));
+        mutable_MISC(ApiPrev, head) = a;  // link back
     }
 
     mutable_LINK(ApiNext, a) = L->alloc_value_list;  // forward pointer
@@ -97,22 +96,25 @@ inline static void Unlink_Api_Handle_From_Level(Array* a)
     );
 
     if (at_head) {
-        Level(*) L = LVL(MISC(ApiPrev, a));
+        Level(*) L = cast(Level(*), MISC(ApiPrev, a));
         L->alloc_value_list = LINK(ApiNext, a);
 
         if (not at_tail) {  // only set next item's backlink if it exists
-            assert(Is_Api_Value(Array_Single(ARR(LINK(ApiNext, a)))));
-            mutable_MISC(ApiPrev, SER(LINK(ApiNext, a))) = L;
+            Array* next = cast(Array*, LINK(ApiNext, a));
+            assert(Is_Api_Value(Array_Single(next)));
+            mutable_MISC(ApiPrev, next) = L;
         }
     }
     else {
         // we're not at the head, so there is a node before us, set its "next"
-        assert(Is_Api_Value(Array_Single(ARR(MISC(ApiPrev, a)))));
-        mutable_LINK(ApiNext, SER(MISC(ApiPrev, a))) = LINK(ApiNext, a);
+        Array* prev = cast(Array*, MISC(ApiPrev, a));
+        assert(Is_Api_Value(Array_Single(prev)));
+        mutable_LINK(ApiNext, prev) = LINK(ApiNext, a);
 
         if (not at_tail) {  // only set next item's backlink if it exists
-            assert(Is_Api_Value(Array_Single(ARR(LINK(ApiNext, a)))));
-            mutable_MISC(ApiPrev, SER(LINK(ApiNext, a))) = MISC(ApiPrev, a);
+            Array* next = cast(Array*, LINK(ApiNext, a));
+            assert(Is_Api_Value(Array_Single(next)));
+            mutable_MISC(ApiPrev, next) = MISC(ApiPrev, a);
         }
     }
 }

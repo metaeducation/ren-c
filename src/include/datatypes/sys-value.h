@@ -591,7 +591,7 @@ inline static bool ANY_ARRAYLIKE(NoQuote(const Cell*) v) {
     const Node* node1 = Cell_Node1(v);
     if (Is_Node_A_Cell(node1))
         return false;
-    return Series_Flavor(SER(node1)) == FLAVOR_ARRAY;
+    return Series_Flavor(c_cast(Series*, node1)) == FLAVOR_ARRAY;
 }
 
 inline static bool ANY_WORDLIKE(NoQuote(const Cell*) v) {
@@ -605,7 +605,7 @@ inline static bool ANY_WORDLIKE(NoQuote(const Cell*) v) {
     const Node* node1 = Cell_Node1(v);
     if (Is_Node_A_Cell(node1))
         return false;
-    return Series_Flavor(SER(node1)) == FLAVOR_SYMBOL;
+    return Series_Flavor(c_cast(Series*, node1)) == FLAVOR_SYMBOL;
 }
 
 inline static bool ANY_STRINGLIKE(NoQuote(const Cell*) v) {
@@ -625,7 +625,7 @@ inline static void INIT_VAL_WORD_SYMBOL(Cell* v, const Symbol* symbol)
 
 inline static const Symbol* VAL_WORD_SYMBOL(NoQuote(const Cell*) cell) {
     assert(ANY_WORDLIKE(cell));  // no _UNCHECKED variant :-(
-    return SYM(Cell_Node1(cell));
+    return cast(Symbol*, Cell_Node1(cell));
 }
 
 #define INDEX_PATCHED 1  // Make it easier to find patch (LET) index settings
@@ -802,7 +802,7 @@ inline static REBVAL *Move_Cell_Untracked(
 // gets you const output, but mutable input will get you const output if
 // the value itself is const (so it inherits).
 //
-inline static REBVAL *Inherit_Const(REBVAL *out, const Cell* influencer) {
+inline static Atom(*) Inherit_Const(Atom(*) out, const Cell* influencer) {
     out->header.bits |= (influencer->header.bits & CELL_FLAG_CONST);
     return out;
 }

@@ -575,7 +575,7 @@ REBTYPE(Bitset)
 
         REBVAL *setval = ARG(value);
 
-        Binary* bset = BIN(VAL_BITSET_Ensure_Mutable(v));
+        Binary* bset = cast(Binary*, VAL_BITSET_Ensure_Mutable(v));
         if (not Set_Bits(
             bset,
             picker,
@@ -623,7 +623,10 @@ REBTYPE(Bitset)
         return Init_True(OUT); }
 
       case SYM_COMPLEMENT: {
-        Binary* copy = BIN(Copy_Series_Core(VAL_BITSET(v), NODE_FLAG_MANAGED));
+        Binary* copy = cast(
+            Binary*,
+            Copy_Series_Core(VAL_BITSET(v), NODE_FLAG_MANAGED)
+        );
         INIT_BITS_NOT(copy, not BITS_NOT(VAL_BITSET(v)));
         return Init_Bitset(OUT, copy); }
 
@@ -669,7 +672,10 @@ REBTYPE(Bitset)
         if (REF(part) or REF(deep))
             fail (Error_Bad_Refines_Raw());
 
-        Binary* copy = BIN(Copy_Series_Core(VAL_BITSET(v), NODE_FLAG_MANAGED));
+        Binary* copy = cast(
+            Binary*,
+            Copy_Series_Core(VAL_BITSET(v), NODE_FLAG_MANAGED)
+        );
         INIT_BITS_NOT(copy, BITS_NOT(VAL_BITSET(v)));
         return Init_Bitset(OUT, copy); }
 

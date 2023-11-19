@@ -122,7 +122,7 @@ Bounce Encloser_Dispatcher(Level(*) const L)
     //
     //-----------------------------------------------------------begin-old-code
     // Context* c = Steal_Context_Vars(
-    //     CTX(L->varlist),
+    //     cast(Context*, L->varlist),
     //     ACT_KEYLIST(Level_Phase(L))
     // );
     //
@@ -139,7 +139,7 @@ Bounce Encloser_Dispatcher(Level(*) const L)
 
     //-----------------------------------------------------------begin-new-code
     Array* varlist = L->varlist;
-    Context* c = CTX(varlist);
+    Context* c = cast(Context*, varlist);
 
     // Replace the L->varlist with a dead list.
     //

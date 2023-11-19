@@ -104,7 +104,7 @@ ATTRIBUTE_NO_RETURN void Panic_Value_Debug(const Cell* v) {
 
     if (containing) {
         printf("Panicking the containing series...\n");
-        Panic_Series_Debug(SER(containing));
+        Panic_Series_Debug(cast(Series*, containing));
     }
 
     printf("No containing series for value, panicking for stack dump:\n");
@@ -258,19 +258,19 @@ void* Probe_Core_Debug(
 
       case FLAVOR_ARRAY:
         Probe_Print_Helper(p, expr, "Generic Array", file, line);
-        Mold_Array_At(mo, ARR(s), 0, "[]"); // not necessarily BLOCK!
+        Mold_Array_At(mo, cast(Array*, s), 0, "[]"); // not necessarily BLOCK!
         break;
 
       case FLAVOR_VARLIST:  // currently same as FLAVOR_PARAMLIST
         Probe_Print_Helper(p, expr, "Varlist (or Paramlist)", file, line);
-        Probe_Molded_Value(CTX_ARCHETYPE(CTX(s)));
+        Probe_Molded_Value(CTX_ARCHETYPE(cast(Context*, s)));
         break;
 
       case FLAVOR_DETAILS:
         Probe_Print_Helper(p, expr, "Details", file, line);
         MF_Frame(
             mo,
-            Phase_Archetype(cast(Phase*, ACT(m_cast(void*, p)))),
+            Phase_Archetype(cast(Phase*, cast(Action*, m_cast(void*, p)))),
             false
         );
         break;
@@ -374,7 +374,7 @@ void* Probe_Core_Debug(
     //=//// SERIES WITH ELEMENTS WIDTH 1 ///////////////////////////////////=//
 
       case FLAVOR_BINARY: {
-        Binary* bin = BIN(s);
+        Binary* bin = cast(Binary*, s);
         Probe_Print_Helper(p, expr, "Byte-Size Series", file, line);
 
         const bool brk = (Binary_Len(bin) > 32);  // !!! duplicates MF_Binary code
@@ -387,12 +387,12 @@ void* Probe_Core_Debug(
 
       case FLAVOR_STRING: {
         Probe_Print_Helper(p, expr, "String series", file, line);
-        Mold_Text_Series_At(mo, STR(s), 0);  // or could be TAG!, etc.
+        Mold_Text_Series_At(mo, c_cast(String*, s), 0);  // could be TAG!, etc.
         break; }
 
       case FLAVOR_SYMBOL: {
         Probe_Print_Helper(p, expr, "Interned (Symbol) series", file, line);
-        Mold_Text_Series_At(mo, STR(s), 0);
+        Mold_Text_Series_At(mo, c_cast(Symbol*, s), 0);
         break; }
 
       case FLAVOR_THE_GLOBAL_INACCESSIBLE: {

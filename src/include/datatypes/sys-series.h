@@ -196,7 +196,6 @@
 // To use the LINK() and MISC(), you must define three macros, like this:
 //
 //      #define LINK_Bookmarks_TYPE     BookmarkList*
-//      #define LINK_Bookmarks_CAST     (BookmarkList*)SER
 //      #define HAS_LINK_Bookmarks      FLAVOR_STRING
 //
 // You get the desired properties of being easy to find cases of a particular
@@ -204,19 +203,17 @@
 // and a cast operation that does potentially heavy debug checks on the
 // extraction.
 //
-// (See DEBUG_CHECK_CASTS for the C++ versions of SER(), ARR(), CTX()...)
-//
 // Note: C casts are used here to gloss the `const` status of the node.  The
 // caller is responsible for storing reads in the right constness for what
 // they know to be stored in the node.
 //
 
 #define LINK(Field, s) \
-    LINK_##Field##_CAST(m_cast(Node*, \
+    cast(LINK_##Field##_TYPE, m_cast(Node*, \
         ensure_flavor(HAS_LINK_##Field, (s))->link.any.node))
 
 #define MISC(Field, s) \
-    MISC_##Field##_CAST(m_cast(Node*, \
+    cast(MISC_##Field##_TYPE, m_cast(Node*, \
         ensure_flavor(HAS_MISC_##Field, (s))->misc.any.node))
 
 #define mutable_LINK(Field, s) \
@@ -277,7 +274,7 @@
     ((SERIES_INFO(s) & SERIES_INFO_##name) == 0)
 
 #define INODE(Field, s) \
-    INODE_##Field##_CAST(m_cast(Node*, \
+    cast(INODE_##Field##_TYPE, m_cast(Node*, \
         ensure_flavor(HAS_INODE_##Field, (s))->info.node))
 
 #define mutable_INODE(Field, s) \
@@ -360,7 +357,7 @@ inline static size_t Series_Total(const Series* s) {
 #endif
 
 #define BONUS(Field, s) \
-    BONUS_##Field##_CAST(m_cast(Node*, \
+    cast(BONUS_##Field##_TYPE, m_cast(Node*, \
         Series_Bonus(ensure_flavor(HAS_BONUS_##Field, (s)))))
 
 #define mutable_BONUS(Field, s) \
@@ -423,7 +420,7 @@ inline static size_t Series_Total(const Series* s) {
     inline static void Debug_Monitor_Series(void *p) {
         printf("Adding monitor to %p on tick #%d\n", p, cast(int, TG_tick));
         fflush(stdout);
-        g_mem.monitor_node = SER(cast(Node*, p));
+        g_mem.monitor_node = cast(Series*, p);
     }
 #endif
 
@@ -628,13 +625,13 @@ inline static void Set_Series_Used_Internal(Series* s, REBLEN used) {
 
         if (Is_Series_Array(s)) {  // content taken up by cell, no room for length
             if (used == 0)
-                Poison_Cell(mutable_Stub_Cell(s));  // poison cell means 0 used
+                Poison_Cell(Stub_Cell(s));  // poison cell means 0 used
             else {
                 assert(used == 1);  // any non-poison will mean length 1
                 if (not Is_Cell_Poisoned(Stub_Cell(s))) {
                     // it was already length 1, leave the cell alone
                 } else
-                    Erase_Cell(mutable_Stub_Cell(s));
+                    Erase_Cell(Stub_Cell(s));
             }
         }
         else
@@ -915,7 +912,7 @@ inline static bool Is_Series_Read_Only(const Series* s) {  // may be temporary
 // priority ordering.
 //
 
-inline static void Fail_If_Read_Only_Series(Series* s) {
+inline static void Fail_If_Read_Only_Series(const Series* s) {
     if (not Is_Series_Read_Only(s))
         return;
 
@@ -940,7 +937,7 @@ inline static void Fail_If_Read_Only_Series(Series* s) {
 #else
     inline static const Cell* Known_Mutable(const Cell* v) {
         assert(Get_Cell_Flag(v, FIRST_IS_NODE));
-        Series* s = SER(Cell_Node1(v));  // can be pairlist, varlist, etc.
+        const Series* s = c_cast(Series*, Cell_Node1(v));  // varlist, etc.
         assert(not Is_Series_Read_Only(s));
         assert(Not_Cell_Flag(v, CONST));
         return v;
@@ -952,7 +949,7 @@ inline static REBVAL* Unrelativize(Cell* out, const Cell* v);
 
 inline static const Cell* Ensure_Mutable(const Cell* v) {
     assert(Get_Cell_Flag(v, FIRST_IS_NODE));
-    Series* s = SER(Cell_Node1(v));  // can be pairlist, varlist, etc.
+    const Series* s = c_cast(Series*, Cell_Node1(v));  // varlist, etc.
 
     Fail_If_Read_Only_Series(s);
 
@@ -1035,7 +1032,7 @@ inline static const Series* VAL_SERIES(NoQuote(const Cell*) v) {
         or ANY_ARRAYLIKE(v)
     );
   #endif
-    const Series* s = SER(Cell_Node1(v));
+    const Series* s = c_cast(Series*, Cell_Node1(v));
     if (Get_Series_Flag(s, INACCESSIBLE))
         fail (Error_Series_Data_Freed_Raw());
     return s;
@@ -1121,7 +1118,7 @@ inline static void INIT_SPECIFIER(Cell* v, const void *p) {
     //
     // can be called on non-bindable series, but p must be nullptr
 
-    const Series* binding = SER(p);  // can't (currently) be a cell/pairing
+    const Series* binding = c_cast(Series*, p);  // can't be a cell/pairing
     mutable_BINDING(v) = binding;
 
   #if !defined(NDEBUG)
@@ -1203,7 +1200,7 @@ inline static REBVAL *Init_Series_Cell_At_Core(
 inline static Stub* Prep_Stub(void *preallocated, Flags flags) {
     assert(not (flags & NODE_FLAG_CELL));
 
-    Stub *s = cast(Stub*, preallocated);
+    Stub *s = u_cast(Stub*, preallocated);
 
     s->header.bits = NODE_FLAG_NODE | flags;  // #1
 

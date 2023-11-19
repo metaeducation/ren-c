@@ -173,12 +173,10 @@
         }
     };
 
-    template<
-        typename T = Byte*,
-        typename V = StackValue(*) const&
-    >
-    constexpr Byte* c_cast_helper(StackValue(*) const& v)
-        { return cast(Byte*, v.p); }
+    template<>
+    struct c_cast_helper<Byte*, StackValue(*) const&> {
+        typedef Byte* type;
+    };
 #endif
 
 #define TOP_INDEX \

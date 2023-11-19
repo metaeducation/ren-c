@@ -110,17 +110,16 @@
 #define CTX_ADJUNCT(c)     MISC(VarlistAdjunct, CTX_VARLIST(c))
 
 #define LINK_Patches_TYPE       Array*
-#define LINK_Patches_CAST       ARR
 #define HAS_LINK_Patches        FLAVOR_VARLIST
 
 
 // ANY-CONTEXT! value cell schematic
 //
-#define VAL_CONTEXT_VARLIST(v)                  ARR(Cell_Node1(v))
-#define INIT_VAL_CONTEXT_VARLIST                Init_Cell_Node1
-#define VAL_FRAME_PHASE_OR_LABEL_NODE           Cell_Node2  // faster in debug
-#define VAL_FRAME_PHASE_OR_LABEL(v)             SER(Cell_Node2(v))
-#define INIT_VAL_FRAME_PHASE_OR_LABEL           Init_Cell_Node2
+#define VAL_CONTEXT_VARLIST(v)              cast(Array*, Cell_Node1(v))
+#define INIT_VAL_CONTEXT_VARLIST            Init_Cell_Node1
+#define VAL_FRAME_PHASE_OR_LABEL_NODE       Cell_Node2  // faster in debug
+#define VAL_FRAME_PHASE_OR_LABEL(v)         cast(Series*, Cell_Node2(v))
+#define INIT_VAL_FRAME_PHASE_OR_LABEL       Init_Cell_Node2
 
 
 //=//// CONTEXT ARCHETYPE VALUE CELL (ROOTVAR)  ///////////////////////////=//
@@ -171,7 +170,7 @@ inline static Phase* CTX_FRAME_PHASE(Context* c) {
 inline static Context* CTX_FRAME_BINDING(Context* c) {
     const REBVAL *archetype = CTX_ARCHETYPE(c);
     assert(VAL_TYPE(archetype) == REB_FRAME);
-    return CTX(BINDING(archetype));
+    return cast(Context*, BINDING(archetype));
 }
 
 inline static void INIT_VAL_CONTEXT_ROOTVAR_Core(
@@ -317,13 +316,13 @@ inline static REBVAR *MOD_VAR(Context* c, const Symbol* sym, bool strict) {
 
     const Symbol* synonym = sym;
     do {
-        Series* patch = MISC(Hitch, sym);
+        Stub* patch = MISC(Hitch, sym);
         while (Get_Series_Flag(patch, BLACK))  // binding temps
-            patch = SER(node_MISC(Hitch, patch));
+            patch = cast(Stub*, node_MISC(Hitch, patch));
 
-        for (; patch != sym; patch = SER(node_MISC(Hitch, patch))) {
+        for (; patch != sym; patch = cast(Stub*, node_MISC(Hitch, patch))) {
             if (INODE(PatchContext, patch) == c)
-                return cast(REBVAR*, Array_Single(ARR(patch)));
+                return cast(REBVAR*, Stub_Cell(patch));
         }
         if (strict)
             return nullptr;
@@ -340,7 +339,7 @@ inline static REBVAR *MOD_VAR(Context* c, const Symbol* sym, bool strict) {
     Series_At(REBKEY, CTX_KEYLIST(c), 0)  // 0-based
 
 #define CTX_VARS_HEAD(c) \
-    (cast(REBVAR*, cast(Series*, (c))->content.dynamic.data) + 1)
+    (cast(REBVAR*, x_cast(Series*, (c))->content.dynamic.data) + 1)
 
 inline static const REBKEY *CTX_KEYS(const REBKEY ** tail, Context* c) {
     Series* keylist = CTX_KEYLIST(c);
@@ -350,7 +349,7 @@ inline static const REBKEY *CTX_KEYS(const REBKEY ** tail, Context* c) {
 
 inline static REBVAR *CTX_VARS(const REBVAR ** tail, Context* c) {
     REBVAR *head = CTX_VARS_HEAD(c);
-    *tail = head + cast(Series*, (c))->content.dynamic.used - 1;
+    *tail = head + x_cast(Series*, (c))->content.dynamic.used - 1;
     return head;
 }
 
@@ -377,7 +376,7 @@ inline static Level(*) CTX_LEVEL_IF_ON_STACK(Context* c) {
     assert(Not_Series_Flag(CTX_VARLIST(c), INACCESSIBLE));
     assert(IS_FRAME(CTX_ARCHETYPE(c)));
 
-    Level(*) L = LVL(keysource);
+    Level(*) L = cast(Level(*), keysource);
     assert(L->executor == &Action_Executor);
     return L;
 }
@@ -412,7 +411,7 @@ inline static Context* VAL_CONTEXT(NoQuote(const Cell*) v) {
     Context* c;
 
     if (IS_VARLIST(cast(Stub*, Cell_Node1(v)))) {
-        c = CTX(Cell_Node1(v));
+        c = cast(Context*, Cell_Node1(v));
     }
     else {
         assert(Cell_Heart_Unchecked(v) == REB_FRAME);
@@ -462,7 +461,7 @@ inline static bool IS_FRAME_PHASED(NoQuote(const Cell*) v) {
 inline static Option(const Symbol*) VAL_FRAME_LABEL(NoQuote(const Cell*) v) {
     Series* s = VAL_FRAME_PHASE_OR_LABEL(v);  // VAL_ACTION_PARTIALS_OR_LABEL as well
     if (s and IS_SYMBOL(s))  // label in value
-        return SYM(s);
+        return cast(Symbol*, s);
     return ANONYMOUS;  // has a phase (or partials), so no label (maybe findable if running)
 }
 
@@ -661,7 +660,7 @@ inline static const REBVAR *TRY_VAL_CONTEXT_VAR_CORE(
 // instead of needing to push a redundant run of stack-based memory cells.
 //
 inline static Context* Steal_Context_Vars(Context* c, Node* keysource) {
-    Series* stub = CTX_VARLIST(c);
+    Stub* stub = CTX_VARLIST(c);
 
     // Rather than memcpy() and touch up the header and info to remove
     // SERIES_INFO_HOLD from DETAILS_FLAG_IS_NATIVE, or NODE_FLAG_MANAGED,
@@ -694,21 +693,21 @@ inline static Context* Steal_Context_Vars(Context* c, Node* keysource) {
     single->header.bits =
         NODE_FLAG_NODE | NODE_FLAG_CELL
             | CELL_MASK_FRAME;
-    INIT_VAL_CONTEXT_VARLIST(single, ARR(stub));
+    INIT_VAL_CONTEXT_VARLIST(single, x_cast(Array*, stub));
     INIT_VAL_FRAME_BINDING(single, VAL_FRAME_BINDING(rootvar));
 
   #if !defined(NDEBUG)
     INIT_VAL_FRAME_PHASE_OR_LABEL(single, nullptr);  // can't trash
   #endif
 
-    INIT_VAL_CONTEXT_VARLIST(rootvar, ARR(copy));
+    INIT_VAL_CONTEXT_VARLIST(rootvar, x_cast(Array*, copy));
 
     // Disassociate the stub from the frame, by degrading the link field
     // to a keylist.  !!! Review why this was needed, vs just nullptr
     //
-    INIT_BONUS_KEYSOURCE(ARR(stub), keysource);
+    INIT_BONUS_KEYSOURCE(cast(Array*, stub), keysource);
 
     Clear_Series_Flag(stub, DYNAMIC);  // mark stub as no longer dynamic
 
-    return CTX(copy);
+    return cast(Context*, copy);
 }

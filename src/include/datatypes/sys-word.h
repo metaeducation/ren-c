@@ -30,7 +30,6 @@
 // For routines that manage binding, see %sys-bind.h.
 //
 
-
 #define VAL_WORD_ID(v) \
     ID_OF_SYMBOL(VAL_WORD_SYMBOL(v))
 
@@ -85,10 +84,10 @@ inline static REBVAL *Init_Any_Word_Bound_Untracked(
     INIT_VAL_WORD_SYMBOL(out, symbol);
 
     if (IS_VARLIST(binding)) {
-        if (CTX_TYPE(CTX(binding)) == REB_MODULE)
+        if (CTX_TYPE(cast(Context*, binding)) == REB_MODULE)
             assert(index == INDEX_ATTACHED);
         else
-            assert(symbol == *CTX_KEY(CTX(binding), index));
+            assert(symbol == *CTX_KEY(cast(Context*, binding), index));
     }
     else {
         assert(IS_LET(binding) or IS_PATCH(binding));

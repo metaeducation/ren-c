@@ -202,7 +202,7 @@
 
 typedef unsigned int heapaddr_t;
 
-inline static heapaddr_t Heapaddr_From_Pointer(void *p) {
+inline static heapaddr_t Heapaddr_From_Pointer(const void *p) {
     uintptr_t u = i_cast(uintptr_t, p);
     assert(u < UINT_MAX);
     return u;
@@ -247,14 +247,14 @@ inline static heapaddr_t Level_Id_For_Level(Level(*) L) {
 }
 
 inline static Level(*) Level_From_Level_Id(heapaddr_t id) {
-    return LVL(Pointer_From_Heapaddr(id));
+    return cast(Level(*), Pointer_From_Heapaddr(id));
 }
 
 inline static REBVAL *Value_From_Value_Id(heapaddr_t id) {
     if (id == 0)
         return nullptr;
 
-    REBVAL *v = VAL(Pointer_From_Heapaddr(id));
+    REBVAL *v = cast(REBVAL*, Pointer_From_Heapaddr(id));
     assert(not Is_Nulled(v));  // API speaks in nullptr only
     return v;
 }
@@ -424,7 +424,7 @@ void RunPromise(void)
 
     info->state = PROMISE_STATE_RUNNING;
 
-    Array* a = ARR(Pointer_From_Heapaddr(info->promise_id));
+    Array* a = cast(Array*, Pointer_From_Heapaddr(info->promise_id));
     assert(Not_Node_Managed(a));  // took off so it didn't GC
     Set_Node_Managed_Bit(a);  // but need it back on to execute it
 
@@ -506,7 +506,7 @@ void RunPromise(void)
         // Note: Expired, can't use VAL_CONTEXT
         //
         assert(IS_FRAME(result));
-        Node* frame_ctx = Cell_Node1(result);
+        const Node* frame_ctx = Cell_Node1(result);
         heapaddr_t throw_id = Heapaddr_From_Pointer(frame_ctx);
 
         EM_ASM(
@@ -982,7 +982,7 @@ DECLARE_NATIVE(js_eval_p)
 
     REBVAL *source = ARG(source);
 
-    const char *utf8 = s_cast(VAL_UTF8_AT(source));
+    const char *utf8 = c_cast(char*, VAL_UTF8_AT(source));
     heapaddr_t addr;
 
     // Methods for global evaluation:

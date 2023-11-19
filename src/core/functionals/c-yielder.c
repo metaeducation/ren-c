@@ -163,7 +163,7 @@ Bounce Yielder_Dispatcher(Level(*) const L)
         //
         LINK(yielder_level->varlist).custom.node = nullptr;
 
-        GC_Kill_Series(SER(yielder_level->varlist));  // Note: no tracking
+        GC_Kill_Series(yielder_level->varlist);  // Note: no tracking
     } */
 
     // When the last yielder dropped from the frame stack, it should have
@@ -175,7 +175,7 @@ Bounce Yielder_Dispatcher(Level(*) const L)
     // Now we have a new REBFRM*, so we can reattach the context to that.
     //
 /*    assert(
-        ACT_UNDERLYING(ACT(BONUS(KeySource, last_yielder_context)))
+        ACT_UNDERLYING(cast(Action*, BONUS(KeySource, last_yielder_context)))
         == ACT_UNDERLYING(yielder_level->u.action.original)
     ); */
     INIT_BONUS_KEYSOURCE(CTX_VARLIST(last_yielder_context), yielder_level);
@@ -358,7 +358,7 @@ DECLARE_NATIVE(yield)
     if (not yield_binding)
         fail ("Must have yielder to jump to");
 
-    Context* yielder_context = CTX(yield_binding);
+    Context* yielder_context = cast(Context*, yield_binding);
     Level(*) yielder_level = CTX_LEVEL_MAY_FAIL(yielder_context);
     if (not yielder_level)
         fail ("Cannot yield to generator that has completed");

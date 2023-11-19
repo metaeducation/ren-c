@@ -301,7 +301,7 @@ void Extra_Init_Context_Cell_Checks_Debug(enum Reb_Kind kind, Context* c) {
     //
     Node* archetype_phase = VAL_FRAME_PHASE_OR_LABEL_NODE(archetype);
     if (CTX_TYPE(c) == REB_FRAME)
-        assert(IS_DETAILS(ARR(archetype_phase)));
+        assert(IS_DETAILS(cast(Array*, archetype_phase)));
     else
         assert(archetype_phase == nullptr);
 }

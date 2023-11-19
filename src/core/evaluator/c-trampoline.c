@@ -326,8 +326,9 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
   //    overwrite the result verbatim.
   //
   // 2. Note LEVEL->varlist may be SERIES_FLAG_INACCESSIBLE here.  This can
-  //    happen with RETURN during ENCLOSE.  So don't use CTX(LEVEL->varlist)
-  //    here, as that would try to validate it as not being inaccessible.
+  //    happen in RETURN during ENCLOSE.  Don't cast(Context*, LEVEL->varlist)
+  //    here, as that would try to validate it as not being inaccessible
+  //    in the DEBUG_CHECK_CASTS build.
   //
   // 3. Constructs like REDUCE-EACH keep a sublevel pushed to do evaluation,
   //    but then want to keep that state while doing another evaluation
@@ -667,7 +668,7 @@ void Drop_Level_Core(Level(*) L) {
         //
         Node* n = L->alloc_value_list;
         while (n != L) {
-            Array* a = ARR(n);
+            Array* a = cast(Array*, n);
             n = LINK(ApiNext, a);
             FRESHEN(Array_Single(a));
             GC_Kill_Series(a);
@@ -683,7 +684,7 @@ void Drop_Level_Core(Level(*) L) {
       #if !defined(NDEBUG)
         Node* n = L->alloc_value_list;
         while (n != L) {
-            Array* a = ARR(n);
+            Array* a = cast(Array*, n);
             printf("API handle was allocated but not freed, panic'ing leak\n");
             panic (a);
         }

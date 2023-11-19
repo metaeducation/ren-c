@@ -115,10 +115,10 @@ inline static bool Is_Overriding_Context(Context* stored, Context* override)
         if (temp == stored_source)
             return true;
 
-        if (LINK(Ancestor, SER(temp)) == temp)
+        if (LINK(Ancestor, x_cast(Series*, temp)) == temp)
             break;
 
-        temp = LINK(Ancestor, SER(temp));
+        temp = LINK(Ancestor, x_cast(Series*, temp));
     }
 
     return false;
@@ -234,7 +234,7 @@ inline static REBINT Get_Binder_Index_Else_0( // 0 if not present
     //
     if (hitch == s or Not_Series_Flag(hitch, BLACK))
         return 0;
-    return VAL_INT32(Array_Single(ARR(hitch)));
+    return VAL_INT32(Array_Single(cast(Array*, hitch)));
 }
 
 
@@ -246,10 +246,10 @@ inline static REBINT Remove_Binder_Index_Else_0( // return old value if there
     if (MISC(Hitch, s) == s or Not_Series_Flag(MISC(Hitch, s), BLACK))
         return 0;
 
-    Array* hitch = ARR(MISC(Hitch, s));
+    Array* hitch = cast(Array*, MISC(Hitch, s));
 
     REBINT index = VAL_INT32(Array_Single(hitch));
-    mutable_MISC(Hitch, s) = ARR(node_MISC(Hitch, hitch));
+    mutable_MISC(Hitch, s) = cast(Array*, node_MISC(Hitch, hitch));
     Set_Node_Managed_Bit(hitch);  // we didn't manuals track it
     GC_Kill_Series(hitch);
 
@@ -303,10 +303,13 @@ struct Reb_Collector {
 // would fail later, but given that the frame's captured binding can outlive
 // the frame that might lose important functionality.
 //
+// 1. It is okay if the context has been decayed, because the rootvar will
+//    still be accessible in the decayed stub.
+//
 inline static Series* SPC_BINDING(REBSPC *specifier)
 {
     assert(specifier != UNBOUND);
-    const REBVAL *rootvar = CTX_ARCHETYPE(CTX(specifier));  // ok if Decay()'d
+    const REBVAL *rootvar = CTX_ARCHETYPE(cast(Context*, specifier));  // [1]
     assert(IS_FRAME(rootvar));
     return BINDING(rootvar);
 }
@@ -326,7 +329,7 @@ inline static void INIT_BINDING_MAY_MANAGE(
     if (not binding or Is_Node_Managed(binding))
         return;  // unbound or managed already (frame OR object context)
 
-    Level(*) L = LVL(BONUS(KeySource, binding));  // unmanaged only frame
+    Level(*) L = cast(Level(*), BONUS(KeySource, binding));  // unmanaged only
     assert(not Is_Level_Fulfilling(L));
     UNUSED(L);
 
@@ -357,7 +360,7 @@ inline static REBLEN VAL_WORD_INDEX(const Cell* v) {
 
 inline static Array* VAL_WORD_BINDING(const Cell* v) {
     assert(ANY_WORDLIKE(v));
-    return ARR(BINDING(v));  // could be nullptr / UNBOUND
+    return cast(Array*, BINDING(v));  // could be nullptr / UNBOUND
 }
 
 inline static void INIT_VAL_WORD_BINDING(Cell* v, const Series* binding) {
@@ -421,10 +424,10 @@ inline static Context* VAL_WORD_CONTEXT(const REBVAL *v) {
 
     assert(
         Is_Node_Managed(binding) or
-        not Is_Level_Fulfilling(LVL(BONUS(KeySource, binding)))
+        not Is_Level_Fulfilling(cast(Level(*), BONUS(KeySource, binding)))
     );
     Set_Node_Managed_Bit(binding);  // !!! review managing needs
-    Context* c = CTX(binding);
+    Context* c = cast(Context*, binding);
     FAIL_IF_INACCESSIBLE_CTX(c);
     return c;
 }
@@ -474,8 +477,8 @@ inline static Value(const*) Lookup_Word_May_Fail(
         fail (Error_Unassigned_Attach_Raw(any_word));
     }
     if (IS_LET(s) or IS_PATCH(s))
-        return SPECIFIC(Array_Single(ARR(s)));
-    Context* c = CTX(s);
+        return SPECIFIC(Stub_Cell(s));
+    Context* c = cast(Context*, s);
     if (Get_Series_Flag(CTX_VARLIST(c), INACCESSIBLE))
         fail (Error_No_Relative_Core(any_word));
 
@@ -493,8 +496,8 @@ inline static Option(Value(const*)) Lookup_Word(
     if (not s)
         return nullptr;
     if (IS_LET(s) or IS_PATCH(s))
-        return SPECIFIC(Array_Single(ARR(s)));
-    Context* c = CTX(s);
+        return SPECIFIC(Stub_Cell(s));
+    Context* c = cast(Context*, s);
     if (Get_Series_Flag(CTX_VARLIST(c), INACCESSIBLE))
         return nullptr;
 
@@ -526,9 +529,9 @@ inline static REBVAL *Lookup_Mutable_Word_May_Fail(
 
     REBVAL *var;
     if (IS_LET(s) or IS_PATCH(s))
-        var = SPECIFIC(Array_Single(ARR(s)));
+        var = SPECIFIC(Stub_Cell(s));
     else {
-        Context* c = CTX(s);
+        Context* c = cast(Context*, s);
 
         // A context can be permanently frozen (`lock obj`) or temporarily
         // protected, e.g. `protect obj | unprotect obj`.  A native will
@@ -721,8 +724,8 @@ inline static Option(Context*) SPC_FRAME_CTX(REBSPC *specifier)
     if (specifier == UNBOUND)  // !!! have caller check?
         return nullptr;
     if (IS_VARLIST(specifier))
-        return CTX(specifier);
-    return CTX(*SPC_FRAME_CTX_ADDRESS(specifier));
+        return cast(Context*, specifier);
+    return cast(Context*, x_cast(Node*, *SPC_FRAME_CTX_ADDRESS(specifier)));
 }
 
 
@@ -743,7 +746,7 @@ inline static REBSPC *Derive_Specifier_Core(
     REBSPC *specifier,  // merge this specifier...
     NoQuote(const Cell*) any_array  // ...onto the one in this array
 ){
-    Array* old = ARR(BINDING(any_array));
+    Array* old = cast(Array*, BINDING(any_array));
 
     // If any specifiers in a chain are inaccessible, the whole thing is.
     //
@@ -798,13 +801,13 @@ inline static REBSPC *Derive_Specifier_Core(
             or (
                 Not_Series_Flag(CTX_VARLIST(frame_ctx), INACCESSIBLE) and
                 not Action_Is_Base_Of(
-                    ACT(old),
+                    cast(Action*, old),
                     CTX_FRAME_PHASE(frame_ctx)
                 )
             )
         ){
             printf("Function mismatch in specific binding, expected:\n");
-            PROBE(ACT_ARCHETYPE(ACT(old)));
+            PROBE(ACT_ARCHETYPE(cast(Action*, old)));
             printf("Panic on relative value\n");
             panic (any_array);
         }
@@ -894,7 +897,7 @@ inline static REBSPC *Derive_Specifier_Core(
         NoQuote(const Cell*) any_array
     ){
         REBSPC *derived = Derive_Specifier_Core(specifier, any_array);
-        Array* old = ARR(BINDING(any_array));
+        Array* old = cast(Array*, BINDING(any_array));
         if (old == UNSPECIFIED or IS_VARLIST(old)) {
             // no special invariant to check, anything goes for derived
         }
