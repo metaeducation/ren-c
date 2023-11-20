@@ -641,7 +641,7 @@ union ValuePayloadUnion { //=/////////////// ACTUAL PAYLOAD DEFINITION ////=//
 //    https://stackoverflow.com/a/76426676
 //
 #if CPLUSPLUS_11
-    struct alignas(ALIGN_SIZE) Cell : public Node
+    struct alignas(ALIGN_SIZE) CellBase : public Node  // VAL_TYPE() illegal
 #elif C_11
     struct alignas(ALIGN_SIZE) ValueStruct  // exported name for API, see [1]
 #else
@@ -661,11 +661,11 @@ union ValuePayloadUnion { //=/////////////// ACTUAL PAYLOAD DEFINITION ////=//
 
       #if CPLUSPLUS_11
       public:
-        Cell () = default;
+        CellBase () = default;
 
       private:  // disable assignment and copying, see [3] above
-        Cell (const Cell& other) = default;
-        Cell& operator= (const Cell& rhs) = default;
+        CellBase (const CellBase& other) = default;
+        CellBase& operator= (const CellBase& rhs) = default;
       #endif
     };
 
@@ -676,6 +676,8 @@ union ValuePayloadUnion { //=/////////////// ACTUAL PAYLOAD DEFINITION ////=//
     memset(cast(void*, (dst)), (val), (size))  // see [4] above
 
 #if CPLUSPLUS_11
+    struct Cell : public CellBase {};  // VAL_TYPE() legal
+
     static_assert(
         std::is_standard_layout<Cell>::value,
         "C++ Cell must match C Value: http://stackoverflow.com/a/7189821/"
@@ -706,48 +708,24 @@ union ValuePayloadUnion { //=/////////////// ACTUAL PAYLOAD DEFINITION ////=//
 // Most of the time, routines want to see these as QUOTED!/QUASI!/ISOTOPE!.
 // But some lower-level routines (like molding or comparison) want to act
 // on them in-place without making a copy.  To ensure they see the value for
-// the "type that it is" and use Cell_Heart() and not VAL_TYPE(), this alias
-// for Cell prevents VAL_TYPE() operations.
+// the "type that it is" and use Cell_Heart() and not VAL_TYPE(), this subtype
+// prevents VAL_TYPE() operations.
 //
-// 1. The heavier wrapper form of Cell can be costly...empirically up to 10%
-//    of the runtime, since it's called so often.  It also changes the "ABI"
-//    of %sys-core.h to be incompatible with other builds.
+// The way it works is simply to be CellBase...base class of a regular Cell.
+// Because a Cell can be passed anywhere a CellBase can, but not vice-versa.
+// Then overloading is used to turn off functions like VAL_TYPE() when used
+// on a CellBase.
+//
+// Notationally, the choice is to make it appear that the NoQuote modifies
+// the type as `NoQuote(const cell*)`.
 //
 // Note: This needs special handling in %make-headers.r to recognize the
 // format.  See the `typemacro_parentheses` rule.
 //
-#if (! DEBUG_CHECK_CASTS)  // disabled by default, see [1]
+#if (! CPLUSPLUS_11)
     #define NoQuote(const_cell_star) \
-        const Cell*
+        const struct ValueStruct*
 #else
-    template<typename T>
-    struct NoQuoteWrapper {
-        const Cell* p;
-        static_assert(
-            std::is_same<const Cell*, T>::value,
-            "Instantiations of `NoQuote()` only work as NoQuote(const Cell*)"
-        );
-
-        NoQuoteWrapper () { }
-        NoQuoteWrapper (const Cell* p) : p (p) { }
-
-        const Cell** operator&() { return &p; }
-        const Cell* operator->() { return p; }
-        const Cell& operator*() { return *p; }
-
-        explicit operator const struct ValueStruct* ()
-          { return cast(const ValueStruct*, p); }
-
-        operator const Node* () const { return p; }
-        explicit operator const Cell* () const { return p; }
-        explicit operator const Byte* () const
-          { return reinterpret_cast<const Byte*>(p); }
-    };
     #define NoQuote(const_cell_star) \
-        struct NoQuoteWrapper<const_cell_star>
-
-    template<>
-    struct c_cast_helper<Byte*, NoQuote(const Cell*)> {
-        typedef const Byte* type;
-    };
+        const CellBase*
 #endif
