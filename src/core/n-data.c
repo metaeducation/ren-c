@@ -605,7 +605,7 @@ bool Get_Var_Push_Refinements_Throws(
     const Cell* var,
     REBSPC *var_specifier
 ){
-    assert(var != cast(const Cell*, out));
+    assert(var != cast(Cell*, out));
     assert(steps_out != out);  // Legal for SET, not for GET
 
     if (ANY_GROUP(var)) {  // !!! GET-GROUP! makes sense, but SET-GROUP!?

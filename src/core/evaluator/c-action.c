@@ -1302,7 +1302,7 @@ void Begin_Action_Core(
     assert(not label or IS_SYMBOL(unwrap(label)));
     L->label = label;
   #if DEBUG_LEVEL_LABELS  // helpful for looking in the debugger
-    L->label_utf8 = cast(const char*, Level_Label_Or_Anonymous_UTF8(L));
+    L->label_utf8 = Level_Label_Or_Anonymous_UTF8(L);
   #endif
 
     if (enfix) {

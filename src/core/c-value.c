@@ -140,7 +140,7 @@ inline static void Probe_Molded_Value(const REBVAL *v)
     Push_Mold(mo);
     Mold_Value(mo, v);
 
-    printf("%s\n", cast(const char*, Binary_At(mo->series, mo->base.size)));
+    printf("%s\n", c_cast(char*, Binary_At(mo->series, mo->base.size)));
     fflush(stdout);
 
     Drop_Mold(mo);
@@ -155,7 +155,7 @@ void Probe_Cell_Print_Helper(
 ){
     Probe_Print_Helper(p, expr, "Value", file, line);
 
-    const REBVAL *v = cast(const REBVAL*, p);
+    const REBVAL *v = c_cast(REBVAL*, p);
 
   #if DEBUG_UNREADABLE_TRASH
     if (IS_TRASH(v)) {  // Is_Nulled() asserts on trash
@@ -208,7 +208,7 @@ void* Probe_Core_Debug(
     }
     else switch (Detect_Rebol_Pointer(p)) {
       case DETECTED_AS_UTF8:
-        if (*cast(const Byte*, p) == '\0')
+        if (*c_cast(Byte*, p) == '\0')
             Probe_Print_Helper(
                 p,
                 expr,
@@ -216,19 +216,19 @@ void* Probe_Core_Debug(
                 file, line
               );
         else if (
-            (*cast(const Byte*, p) & NODE_BYTEMASK_0x80_NODE)
-            and (*cast(const Byte*, p) & NODE_BYTEMASK_0x01_CELL)
+            (*c_cast(Byte*, p) & NODE_BYTEMASK_0x80_NODE)
+            and (*c_cast(Byte*, p) & NODE_BYTEMASK_0x01_CELL)
         ){
-            if (not (*cast(const Byte*, p) & NODE_BYTEMASK_0x40_FREE)) {
+            if (not (*c_cast(Byte*, p) & NODE_BYTEMASK_0x40_FREE)) {
                 printf("!!! Non-FREE'd alias of cell with UTF-8 !!!");
                 panic (p);  // hopefully you merely debug-probed garbage memory
             }
             Probe_Print_Helper(p, expr, "C String (or free cell)", file, line);
-            printf("\"%s\"\n", cast(const char*, p));
+            printf("\"%s\"\n", c_cast(char*, p));
         }
         else {
             Probe_Print_Helper(p, expr, "C String", file, line);
-            printf("\"%s\"\n", cast(const char*, p));
+            printf("\"%s\"\n", c_cast(char*, p));
         }
         goto cleanup;
 
@@ -247,7 +247,7 @@ void* Probe_Core_Debug(
     // If we didn't jump to cleanup above, it's a series.  New switch().
 
   blockscope {
-    Series* s = m_cast(Series*, cast(const Series* , p));
+    Series* s = m_cast(Series*, c_cast(Series* , p));
     assert(not Is_Node_Free(s));  // Detect should have caught, above
     Flavor flavor = Series_Flavor(s);
     Assert_Series(s);  // if corrupt, gives better info than a print crash
@@ -414,7 +414,7 @@ void* Probe_Core_Debug(
   cleanup:
 
     if (mo->base.size != String_Size(mo->series))
-        printf("%s\n", cast(const char*, Binary_At(mo->series, mo->base.size)));
+        printf("%s\n", c_cast(char*, Binary_At(mo->series, mo->base.size)));
     fflush(stdout);
 
     Drop_Mold(mo);

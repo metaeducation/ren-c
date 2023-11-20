@@ -390,13 +390,13 @@ inline static Bounce Native_Raised_Result(Level* level_, const void *p) {
     Context* error;
     switch (Detect_Rebol_Pointer(p)) {
       case DETECTED_AS_UTF8:
-        error = Error_User(cast(const char*, p));
+        error = Error_User(c_cast(char*, p));
         break;
       case DETECTED_AS_SERIES: {
         error = cast(Context*, m_cast(void*, p));
         break; }
       case DETECTED_AS_CELL: {  // note: can be Is_Raised()
-        Value(const*) cell = cast(const REBVAL*, p);
+        Value(const*) cell = c_cast(REBVAL*, p);
         assert(IS_ERROR(cell));
         error = VAL_CONTEXT(cell);
         break; }

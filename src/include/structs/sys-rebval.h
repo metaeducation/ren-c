@@ -105,7 +105,7 @@ typedef struct ValueStruct ValueT;
     struct REBPAR : public REBVAR {};
 
     inline static const REBPAR* cast_PAR(const REBVAL *v)
-        { return cast(const REBPAR*, v); }
+        { return c_cast(REBPAR*, v); }
 
     inline static REBPAR* cast_PAR(REBVAL *v)
         { return cast(REBPAR*, v); }

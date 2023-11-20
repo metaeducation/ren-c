@@ -468,7 +468,7 @@ bool Process_Group_For_Parse_Throws(
 ){
     USE_PARAMS_OF_SUBPARSE;
 
-    assert(cast(const Cell*, out) != group);
+    assert(cast(Cell*, out) != group);
 
     assert(IS_GROUP(group) or IS_GET_GROUP(group));
     REBSPC *derived = (group == P_SAVE)

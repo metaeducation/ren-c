@@ -121,7 +121,7 @@ DECLARE_NATIVE(write_stdout)
     fail ("Boot WRITE-STDOUT needs DEBUG_HAS_PROBE or loaded I/O module");
   #else
     if (IS_TEXT(v)) {
-        printf("WRITE-STDOUT: %s\n", cast(const char*, String_Head(VAL_STRING(v))));
+        printf("WRITE-STDOUT: %s\n", c_cast(char*, String_Head(VAL_STRING(v))));
         fflush(stdout);
     }
     else if (IS_CHAR(v)) {

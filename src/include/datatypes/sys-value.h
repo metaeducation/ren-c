@@ -214,10 +214,22 @@
         } \
     } while (0)
 
+  #if (! CPLUSPLUS_11)
     inline static const Cell* READABLE(NoQuote(const Cell*) c) {
-        ASSERT_CELL_READABLE_EVIL_MACRO(c);  // ^-- should this be a template?
-        return cast(const Cell*, c);
+        ASSERT_CELL_READABLE_EVIL_MACRO(c);
+        return c_cast(Cell*, c);
     }
+  #else
+    inline static NoQuote(const Cell*) READABLE(NoQuote(const Cell*) c) {
+        ASSERT_CELL_READABLE_EVIL_MACRO(c);
+        return c;
+    }
+
+    inline static const Cell* READABLE(const Cell* c) {
+        ASSERT_CELL_READABLE_EVIL_MACRO(c);
+        return c;
+    }
+  #endif
 
     inline static Cell* WRITABLE(Cell* c) {
         ASSERT_CELL_WRITABLE_EVIL_MACRO(c);
@@ -269,7 +281,7 @@ inline static void Init_Cell_Node2(Cell* v, Option(const Node*) node) {
 // necessarily get the original value you had back.
 //
 inline static const Cell* CELL_TO_VAL(NoQuote(const Cell*) cell)
-  { return cast(const Cell*, cell); }
+  { return c_cast(Cell*, cell); }
 
 #if DEBUG_CHECK_CASTS
     inline static const Cell* CELL_TO_VAL(const Cell* cell) = delete;
@@ -356,7 +368,7 @@ inline static enum Reb_Kind VAL_TYPE_UNCHECKED(const Cell* v) {
         if (i_cast(uintptr_t, (c)) % ALIGN_SIZE != 0) { \
             printf( \
                 "Cell address %p not aligned to %d bytes\n", \
-                cast(const void*, (c)), \
+                c_cast(void*, (c)), \
                 cast(int, ALIGN_SIZE) \
             ); \
             panic (c); \
@@ -530,7 +542,7 @@ inline static Value(*) SPECIFIC(const_if_c Cell* v) {
 #if CPLUSPLUS_11
     inline static Value(const*) SPECIFIC(const Cell* v) {
         assert(IS_SPECIFIC(v));
-        return cast(const ValueT*, v);
+        return c_cast(ValueT*, v);
     }
 
     inline static void SPECIFIC(Value(const*) v) = delete;
@@ -717,7 +729,7 @@ inline static bool Is_Stable(Atom(const*) v);
     ){
         return cast(Value(*), Copy_Cell_Untracked(
             out,
-            cast(const Cell*, v),
+            c_cast(Cell*, v),
             copy_mask
         ));
     }
@@ -729,7 +741,7 @@ inline static bool Is_Stable(Atom(const*) v);
     ){
         return cast(Value(*), Copy_Cell_Untracked(
             cast(Cell*, out),
-            cast(const Cell*, v),
+            c_cast(Cell*, v),
             copy_mask
         ));
     }
@@ -742,7 +754,7 @@ inline static bool Is_Stable(Atom(const*) v);
         assert(Is_Stable(v));
         return cast(Value(*), Copy_Cell_Untracked(
             cast(Cell*, out),
-            cast(const Cell*, v),
+            c_cast(Cell*, v),
             copy_mask
         ));
     }

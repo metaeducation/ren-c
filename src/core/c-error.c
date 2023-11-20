@@ -88,18 +88,18 @@ ATTRIBUTE_NO_RETURN void Fail_Core(const void *p)
     }
     else switch (Detect_Rebol_Pointer(p)) {
       case DETECTED_AS_UTF8:
-        error = Error_User(cast(const char*, p));
+        error = Error_User(c_cast(char*, p));
         break;
 
       case DETECTED_AS_SERIES: {
-        Series* s = m_cast(Series*, cast(const Series* , p));  // don't mutate
+        Series* s = m_cast(Series*, c_cast(Series* , p));  // don't mutate
         if (not IS_VARLIST(s))
             panic (s);  // only kind of series allowed are contexts of ERROR!
         error = cast(Context*, s);
         break; }
 
       case DETECTED_AS_CELL: {
-        const Cell* v = cast(const Cell*, p);
+        const Cell* v = c_cast(Cell*, p);
 
         // Check to see if the REBVAL* cell is in the paramlist of the current
         // running native.  (We could theoretically do this with ARG(), or
@@ -120,7 +120,7 @@ ATTRIBUTE_NO_RETURN void Fail_Core(const void *p)
                 assert(!"fail() given API handle that is not an ERROR!");
                 error = Error_Bad_Value(v);
             }
-            rebRelease(cast(const REBVAL*, v));  // released even if we didn't
+            rebRelease(c_cast(REBVAL*, v));  // released even if we didn't
         }
         else if (not Is_Action_Level(TOP_LEVEL))
             error = Error_Bad_Value(v);
@@ -129,7 +129,7 @@ ATTRIBUTE_NO_RETURN void Fail_Core(const void *p)
             REBLEN num_params = ACT_NUM_PARAMS(Level_Phase(TOP_LEVEL));
 
             if (v >= head and v < head + num_params) {
-                const REBPAR *param = cast_PAR(cast(const REBVAL*, v));
+                const REBPAR *param = cast_PAR(c_cast(REBVAL*, v));
                 error = Error_Invalid_Arg(TOP_LEVEL, param);
             }
             else
@@ -694,7 +694,7 @@ Context* Make_Error_Managed_Core(
                 // in those cases it was specified, but that could set up
                 // the wrong expectations that the system is trying.)
                 //
-                const Cell* v = cast(const Cell*, p);
+                const Cell* v = c_cast(Cell*, p);
                 Unrelativize(var, v);
                 break; }
 
@@ -1422,7 +1422,7 @@ static void Mold_Value_Limit(REB_MOLD *mo, Cell* v, REBLEN limit)
 
     if (end_len - start_len > limit) {
         Utf8(const*) at = cast(Utf8(const*),
-            cast(const Byte*, String_Head(str)) + start_size
+            c_cast(Byte*, String_Head(str)) + start_size
         );
         REBLEN n = 0;
         for (; n < limit; ++n)

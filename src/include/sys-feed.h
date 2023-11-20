@@ -57,7 +57,7 @@
             std::is_same<T, const void>::value,
             "Is_End() is not designed to operate on Cell(), Series(), etc."
         );
-        const Byte* bp = cast(const Byte*, p);
+        const Byte* bp = c_cast(Byte*, p);
         if (*bp != END_SIGNAL_BYTE) {
             assert(*bp & NODE_BYTEMASK_0x01_CELL);
             return false;
@@ -113,12 +113,12 @@
 inline static const Cell* At_Feed(Feed* feed) {
     assert(Not_Feed_Flag(feed, NEEDS_SYNC));
     assert(feed->p != &PG_Feed_At_End);
-    return cast(const Cell*, feed->p);
+    return c_cast(Cell*, feed->p);
 }
 
 inline static const Cell* Try_At_Feed(Feed* feed) {
     assert(Not_Feed_Flag(feed, NEEDS_SYNC));
-    return cast(const Cell*, feed->p);
+    return c_cast(Cell*, feed->p);
 }
 
 inline static Option(va_list*) FEED_VAPTR(Feed* feed) {
@@ -192,7 +192,7 @@ inline static Value(const*) Copy_Reified_Variadic_Feed_Cell(
 ){
     assert(FEED_SPECIFIER(feed) == SPECIFIED);  // why?
 
-    const Cell* cell = cast(const Cell*, feed->p);
+    const Cell* cell = c_cast(Cell*, feed->p);
     assert(not IS_RELATIVE(cell));
 
     if (Is_Nulled(cell))  // API enforces use of C's nullptr (0) for NULL
@@ -305,7 +305,7 @@ inline static Option(Value(const*)) Try_Reify_Variadic_Feed_Series(
         panic (feed->p);
     }
 
-    return cast(const REBVAL*, feed->p);
+    return c_cast(REBVAL*, feed->p);
 }
 
 
@@ -375,7 +375,7 @@ inline static void Force_Variadic_Feed_At_Cell_Or_End_May_Fail(Feed* feed)
         panic (feed->p);
     }
 
-    assert(Is_Feed_At_End(feed) or READABLE(cast(const Cell*, feed->p)));
+    assert(Is_Feed_At_End(feed) or READABLE(c_cast(Cell*, feed->p)));
     return;
 
 } detect_again: {  ///////////////////////////////////////////////////////////
@@ -396,7 +396,7 @@ inline static void Sync_Feed_At_Cell_Or_End_May_Fail(Feed* feed) {
         Force_Variadic_Feed_At_Cell_Or_End_May_Fail(feed);
         Clear_Feed_Flag(feed, NEEDS_SYNC);
     }
-    assert(Is_Feed_At_End(feed) or READABLE(cast(const Cell*, feed->p)));
+    assert(Is_Feed_At_End(feed) or READABLE(c_cast(Cell*, feed->p)));
 }
 
 
@@ -489,7 +489,7 @@ inline static void Fetch_Next_In_Feed(Feed* feed) {
         Set_Cell_Flag(&feed->fetched, PROTECTED);
   #endif
 
-    assert(Is_Feed_At_End(feed) or READABLE(cast(const Cell*, feed->p)));
+    assert(Is_Feed_At_End(feed) or READABLE(c_cast(Cell*, feed->p)));
 }
 
 
@@ -527,7 +527,7 @@ inline static const Cell* Lookback_While_Fetching_Next(Level* L) {
         lookback = &L->feed->lookback;
     }
     else
-        lookback = cast(const Cell*, L->feed->p);
+        lookback = c_cast(Cell*, L->feed->p);
 
     Fetch_Next_In_Feed(L->feed);
 
@@ -693,7 +693,7 @@ inline static Feed* Prep_Array_Feed(
     if (Is_Feed_At_End(feed))
         assert(FEED_PENDING(feed) == nullptr);
     else
-        assert(READABLE(cast(const Cell*, feed->p)));
+        assert(READABLE(c_cast(Cell*, feed->p)));
 
     feed->context = nullptr;  // already has binding
 
@@ -742,7 +742,7 @@ inline static Feed* Prep_Variadic_Feed(
 
     if (not vaptr) {  // `p` should be treated as a packed void* array
         FEED_VAPTR_POINTER(feed) = nullptr;
-        FEED_PACKED(feed) = cast(const void* const*, p);
+        FEED_PACKED(feed) = cast(const void* const*, p);  // can't use c_cast()
         feed->p = *FEED_PACKED(feed)++;
     }
     else {

@@ -129,13 +129,13 @@ ATTRIBUTE_NO_RETURN void Panic_Core(
       case DETECTED_AS_UTF8: // string might be empty...handle specially?
         strncat(
             buf,
-            cast(const char*, p),
+            c_cast(char*, p),
             PANIC_BUF_SIZE - strsize(buf)
         );
         break;
 
       case DETECTED_AS_SERIES: {
-        Series* s = m_cast(Series*, cast(const Series*, p)); // don't mutate
+        Series* s = m_cast(Series*, c_cast(Series*, p)); // don't mutate
       #if DEBUG_FANCY_PANIC
         #if 0
             //
@@ -164,7 +164,7 @@ ATTRIBUTE_NO_RETURN void Panic_Core(
 
       case DETECTED_AS_CELL:
       case DETECTED_AS_END: {
-        const REBVAL *v = cast(const REBVAL*, p);
+        const REBVAL *v = c_cast(REBVAL*, p);
       #if DEBUG_FANCY_PANIC
         if (HEART_BYTE(v) == REB_ERROR) {
             printf("...panicking on an ERROR! value...");

@@ -91,7 +91,7 @@
         Utf8Ptr (nullptr_t n) : bp (n) {}
         explicit Utf8Ptr (const Byte* bp) : bp (bp) {}
         explicit Utf8Ptr (const char *cstr)
-            : bp (cast(const Byte*, cstr)) {}
+            : bp (c_cast(Byte*, cstr)) {}
 
         Size operator-(const Byte* rhs)
           { return bp - rhs; }
@@ -126,7 +126,7 @@
         operator bool() { return bp != nullptr; }  // implicit
         operator const void*() { return bp; }  // implicit
         operator const Byte*() { return bp; }  // implicit
-        operator const char*() { return cast(const char*, bp); }  // implicit
+        operator const char*() { return c_cast(char*, bp); }  // implicit
 
         explicit operator Byte*() {  // explicit, does not require m_cast
             return m_cast(Byte*, bp);

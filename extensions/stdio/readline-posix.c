@@ -192,7 +192,7 @@ STD_TERM *Init_Terminal(void)
         // style to show it wasn't normal output.
         //
         const char *msg = "[rebuffering]\n";
-        WRITE_UTF8(cast(const unsigned char *, msg), strsize(msg));
+        WRITE_UTF8(c_cast(unsigned char*, msg), strsize(msg));
     }
     UNUSED(interrupted);  // !!! should we react to Ctrl-C here?
 

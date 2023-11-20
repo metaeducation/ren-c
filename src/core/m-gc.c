@@ -1405,7 +1405,7 @@ REBLEN Recycle(void)
 //
 void Push_Guard_Node(const Node* node)
 {
-    assert(Is_Node(cast(const void*, node)));
+    assert(Is_Node(node));
 
   #if !defined(NDEBUG)
     if (Is_Node_A_Cell(node)) {

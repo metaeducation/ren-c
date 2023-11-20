@@ -162,7 +162,7 @@ REBINT Find_Binstr_In_Binstr(
         // in BINARY!.
         //
         assert(Cell_Heart(binstr1) == REB_BINARY);
-        head2 = cast(const Byte*, "\0");
+        head2 = c_cast(Byte*, "\0");
         size2 = 1;
         if (limit2 < size2)
             size2 = limit2;

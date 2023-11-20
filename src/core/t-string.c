@@ -539,8 +539,8 @@ static int Compare_Chr(void *thunk, const void *v1, const void *v2)
 {
     REBLEN * const flags = cast(REBLEN*, thunk);
 
-    Byte b1 = *cast(const Byte*, v1);
-    Byte b2 = *cast(const Byte*, v2);
+    Byte b1 = *c_cast(Byte*, v1);
+    Byte b2 = *c_cast(Byte*, v2);
 
     assert(b1 < 0x80 and b2 < 0x80);
 

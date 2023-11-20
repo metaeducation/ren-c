@@ -572,7 +572,7 @@ Bounce Composer_Executor(Level* const L)
     enum Reb_Kind heart = Cell_Heart(at);  // quoted groups match, see [1]
 
     REBSPC *match_specifier = nullptr;
-    NoQuote(const Cell*) match = nullptr;
+    const Cell* match = nullptr;
 
     if (not ANY_GROUP_KIND(heart)) {
         //
@@ -604,7 +604,7 @@ Bounce Composer_Executor(Level* const L)
     if (Is_Nulled(predicate))
         goto evaluate_group;
 
-    Derelativize(SPARE, cast(const Cell*, match), match_specifier);
+    Derelativize(SPARE, match, match_specifier);
     Dequotify(SPARE);  // cast was needed because there may have been quotes
     HEART_BYTE(SPARE) = REB_GROUP;  // don't confuse with decoration
     if (not Is_Nulled(label))

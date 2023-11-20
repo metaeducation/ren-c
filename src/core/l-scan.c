@@ -1046,7 +1046,7 @@ static enum Reb_Token Maybe_Locate_Token_May_Push_Mold(
             break; }
 
           case DETECTED_AS_UTF8: {  // String segment, scan it ordinarily.
-            ss->begin = cast(const Byte*, L->feed->p);  // breaks the loop...
+            ss->begin = c_cast(Byte*, L->feed->p);  // breaks the loop...
 
             // If we're using a va_list, we start the scan with no C string
             // pointer to serve as the beginning of line for an error message.

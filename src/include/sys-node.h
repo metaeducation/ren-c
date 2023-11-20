@@ -54,7 +54,7 @@
 #define FLAG_NODE_BYTE(byte)    FLAG_FIRST_BYTE(byte)
 
 #define Is_Node(p) \
-    (cast(const Byte*, (p))[0] & NODE_BYTEMASK_0x80_NODE)
+    (c_cast(Byte*, (p))[0] & NODE_BYTEMASK_0x80_NODE)
 
 #define Is_Node_A_Cell(n)   (did (NODE_BYTE(n) & NODE_BYTEMASK_0x01_CELL))
 #define Is_Node_A_Stub(n)   (not Is_Node_A_Cell(n))
@@ -132,21 +132,21 @@ typedef enum PointerDetectEnum PointerDetect;
 
 inline static PointerDetect Detect_Rebol_Pointer(const void *p)
 {
-    const Byte* bp = cast(const Byte*, p);
+    Byte b = FIRST_BYTE(p);
 
-    if (*bp == END_SIGNAL_BYTE) {  // reserved illegal UTF-8 byte 192
-        assert(bp[1] == '\0');  // rebEND C string "\xC0", terminates with '\0'
+    if (b == END_SIGNAL_BYTE) {  // reserved illegal UTF-8 byte 192
+        assert(SECOND_BYTE(p) == '\0');  // rebEND C string "\xC0", '\0' term
         return DETECTED_AS_END;
     }
 
     if (
-        (*bp & (NODE_BYTEMASK_0x80_NODE | NODE_BYTEMASK_0x40_FREE))
+        (b & (NODE_BYTEMASK_0x80_NODE | NODE_BYTEMASK_0x40_FREE))
         == NODE_BYTEMASK_0x80_NODE  // e.g. leading bit pattern is 10xxxxxx
     ){
         // In UTF-8 these are all continuation bytes, so not a legal way to
         // start a string.  We leverage that to distinguish cells and series.
         //
-        if (*bp & NODE_BYTEMASK_0x01_CELL)
+        if (b & NODE_BYTEMASK_0x01_CELL)
             return DETECTED_AS_CELL;
 
         // Clients of this function should not be passing in series in mid-GC.

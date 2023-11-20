@@ -83,8 +83,8 @@ inline static REBVAL *Init_Pair(
 
     Reset_Unquoted_Header_Untracked(out, CELL_MASK_PAIR);
     REBVAL *p = Alloc_Pairing();
-    Copy_Cell(PAIRING_KEY(p), cast(const REBVAL*, x));
-    Copy_Cell(p, cast(const REBVAL*, y));
+    Copy_Cell(PAIRING_KEY(p), c_cast(REBVAL*, x));
+    Copy_Cell(p, c_cast(REBVAL*, y));
     Manage_Pairing(p);
     INIT_VAL_PAIR(out, p);
     return cast(REBVAL*, out);

@@ -719,8 +719,8 @@ inline static Context* Error_Illegal_Cr(const Byte* at, const Byte* start)
         ++back_len;
     }
     REBVAL *str = rebSizedText(
-        cast(const char*, back),
-        at - cast(const Byte*, back) + 1  // include CR (escaped, e.g. ^M)
+        c_cast(char*, back),
+        at - c_cast(Byte*, back) + 1  // include CR (escaped, e.g. ^M)
     );
     Context* error = Error_Illegal_Cr_Raw(str);
     rebRelease(str);

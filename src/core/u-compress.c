@@ -178,7 +178,7 @@ Byte* Compress_Alloc_Core(
     REBLEN buf_size = deflateBound(&strm, size_in);
 
     strm.avail_in = size_in;
-    strm.next_in = cast(const z_Bytef*, input);
+    strm.next_in = c_cast(z_Bytef*, input);
 
     Byte* output = rebAllocN(Byte, buf_size);
     strm.avail_out = buf_size;
@@ -236,7 +236,7 @@ Byte* Decompress_Alloc_Core(
     strm.total_out = 0;
 
     strm.avail_in = size_in;
-    strm.next_in = cast(const z_Bytef*, input);
+    strm.next_in = c_cast(z_Bytef*, input);
 
     int window_bits = window_bits_gzip;
     if (not envelope) {
@@ -281,7 +281,7 @@ Byte* Decompress_Alloc_Core(
         // (compared to the input data) is actually wrong.
         //
         buf_size = Bytes_To_U32_BE(
-            cast(const Byte*, input) + size_in - sizeof(uint32_t)
+            c_cast(Byte*, input) + size_in - sizeof(uint32_t)
         );
     }
     else {

@@ -577,7 +577,7 @@ inline static Value(*) GET_SEQUENCE_AT(
         // Because the cell is being viewed as a PATH!, we cannot view it as
         // a WORD! also unless we fiddle the bits at a new location.
         //
-        Derelativize(out, cast(const Cell*, sequence), specifier);
+        Derelativize(out, c_cast(Cell*, sequence), specifier);
         HEART_BYTE(out) = REB_WORD;
         QUOTE_BYTE(out) = UNQUOTED_1;  // quote is "on" the sequence
         return out; }

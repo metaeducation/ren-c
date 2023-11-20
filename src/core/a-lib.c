@@ -931,12 +931,12 @@ const void *RL_rebArgR(const void *p, va_list *vaptr)
     const char *name;
     const void *p2;
     if (vaptr) {
-        name = cast(const char*, p);
+        name = c_cast(char*, p);
         p2 = va_arg(*vaptr, const void*);
     }
     else {
         const void* const *packed = cast(const void* const*, p);
-        name = cast(const char*, *packed++);
+        name = c_cast(char*, *packed++);
         p2 = *packed++;
     }
     if (Detect_Rebol_Pointer(p2) != DETECTED_AS_END)
@@ -970,7 +970,7 @@ REBVAL *RL_rebArg(const void *p, va_list *vaptr)
     if (not argR)
         return nullptr;
 
-    const REBVAL *arg = cast(const REBVAL*, argR);  // sneaky, but we know!
+    const REBVAL *arg = c_cast(REBVAL*, argR);  // sneaky, but we know!
     return Copy_Cell(Alloc_Value(), arg);  // don't give REBVAL* arg directly
 }
 
@@ -2212,7 +2212,7 @@ const REBINS *RL_rebQUOTING(const void *p)
 
     switch (Detect_Rebol_Pointer(p)) {
       case DETECTED_AS_SERIES: {
-        a = m_cast(Array*, cast(const Array*, p));
+        a = m_cast(Array*, c_cast(Array*, p));
         if (Not_Subclass_Flag(API, a, RELEASE))
             fail ("Can't quote instructions (besides rebR())");
         break; }
@@ -2273,13 +2273,13 @@ const REBINS *RL_rebUNQUOTING(const void *p)
 
     switch (Detect_Rebol_Pointer(p)) {
       case DETECTED_AS_SERIES: {
-        a = m_cast(Array*, cast(const Array*, p));
+        a = m_cast(Array*, c_cast(Array*, p));
         if (Not_Subclass_Flag(API, a, RELEASE))
             fail ("Can't unquote instructions (besides rebR())");
         break; }
 
       case DETECTED_AS_CELL: {
-        REBVAL *v = Copy_Cell(Alloc_Value(), cast(const REBVAL*, p));
+        REBVAL *v = Copy_Cell(Alloc_Value(), c_cast(REBVAL*, p));
         a = Singular_From_Cell(v);
         Set_Subclass_Flag(API, a, RELEASE);
         break; }
@@ -2371,7 +2371,7 @@ const REBINS *RL_rebRUN(const void *p)
 
     switch (Detect_Rebol_Pointer(p)) {
       case DETECTED_AS_SERIES: {
-        a = m_cast(Array*, cast(const Array*, p));
+        a = m_cast(Array*, c_cast(Array*, p));
         if (Not_Subclass_Flag(API, a, RELEASE))
             fail ("Can't quote instructions (besides rebR())");
         break; }

@@ -150,9 +150,9 @@ inline static const REBVAL *CTX_ARCHETYPE(Context* c) {  // read-only form
     const Series* varlist = CTX_VARLIST(c);
     if (Get_Series_Flag(varlist, INACCESSIBLE)) {  // a freed stub
         assert(Not_Series_Flag(varlist, DYNAMIC));  // variables are gone
-        return cast(const REBVAL*, &varlist->content.fixed);
+        return c_cast(REBVAL*, &varlist->content.fixed);
     }
-    return cast(const REBVAL*, varlist->content.dynamic.data);
+    return c_cast(REBVAL*, varlist->content.dynamic.data);
 }
 
 #define CTX_TYPE(c) \

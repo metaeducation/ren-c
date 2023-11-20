@@ -316,7 +316,7 @@ String* Append_UTF8_May_Fail(
         else if (Should_Skip_Ascii_Byte_May_Fail(
             bp,
             strmode,
-            cast(const Byte*, utf8)
+            c_cast(Byte*, utf8)
         )){
             continue;
         }

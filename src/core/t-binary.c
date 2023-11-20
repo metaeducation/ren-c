@@ -82,12 +82,12 @@ static Binary* Make_Binary_BE64(const REBVAL *arg)
     if (IS_INTEGER(arg)) {
         assert(sizeof(REBI64) == 8);
         i = VAL_INT64(arg);
-        cp = cast(const Byte*, &i);
+        cp = c_cast(Byte*, &i);
     }
     else {
         assert(sizeof(REBDEC) == 8);
         d = VAL_DECIMAL(arg);
-        cp = cast(const Byte*, &d);
+        cp = c_cast(Byte*, &d);
     }
 
   #ifdef ENDIAN_LITTLE
@@ -252,8 +252,8 @@ static int Compare_Byte(void *thunk, const void *v1, const void *v2)
 {
     Flags * const flags = cast(Flags*, thunk);
 
-    Byte b1 = *cast(const Byte*, v1);
-    Byte b2 = *cast(const Byte*, v2);
+    Byte b1 = *c_cast(Byte*, v1);
+    Byte b2 = *c_cast(Byte*, v2);
 
     if (*flags & CC_FLAG_REVERSE)
         return b2 - b1;

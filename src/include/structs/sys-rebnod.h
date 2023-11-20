@@ -196,12 +196,12 @@ typedef uintptr_t Flags;
 // as long as there has to be an order, might as well be platform-independent.
 
 inline static uint16_t FIRST_UINT16(const void* p) {
-    const Byte* bp = cast(const Byte*, p);
+    const Byte* bp = c_cast(Byte*, p);
     return cast(uint16_t, bp[0] << 8) | bp[1];
 }
 
 inline static uint16_t SECOND_UINT16(const void* p) {
-    const Byte* bp = cast(const Byte*, p);
+    const Byte* bp = c_cast(Byte*, p);
     return cast(uint16_t, bp[2] << 8) | bp[3];
 }
 
