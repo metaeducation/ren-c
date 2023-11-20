@@ -64,7 +64,7 @@
 bool Pushed_Continuation(
     Atom(*) out,
     Flags flags,  // LEVEL_FLAG_BRANCH, etc. for pushed levels
-    REBSPC *branch_specifier,  // before branch forces non-empty variadic call
+    Specifier* branch_specifier,  // before branch forces non-empty variadic call
     const Cell* branch,
     Option(Atom(const*)) with  // can be same as out or not GC-safe, may copy
 ){

@@ -716,7 +716,7 @@ Context* Construct_Context_Managed(
     enum Reb_Kind kind,
     Cell* head,  // !!! Warning: modified binding
     const Cell* tail,
-    REBSPC *specifier,
+    Specifier* specifier,
     Option(Context*) parent
 ){
     Context* context = Make_Context_Detect_Managed(

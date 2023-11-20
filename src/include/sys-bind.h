@@ -306,7 +306,7 @@ struct Reb_Collector {
 // 1. It is okay if the context has been decayed, because the rootvar will
 //    still be accessible in the decayed stub.
 //
-inline static Series* SPC_BINDING(REBSPC *specifier)
+inline static Series* SPC_BINDING(Specifier* specifier)
 {
     assert(specifier != UNBOUND);
     const REBVAL *rootvar = CTX_ARCHETYPE(cast(Context*, specifier));  // [1]
@@ -465,7 +465,7 @@ inline static Context* VAL_WORD_CONTEXT(const REBVAL *v) {
 
 inline static Value(const*) Lookup_Word_May_Fail(
     const Cell* any_word,
-    REBSPC *specifier
+    Specifier* specifier
 ){
     REBLEN index;
     Series* s = try_unwrap(
@@ -487,7 +487,7 @@ inline static Value(const*) Lookup_Word_May_Fail(
 
 inline static Option(Value(const*)) Lookup_Word(
     const Cell* any_word,
-    REBSPC *specifier
+    Specifier* specifier
 ){
     REBLEN index;
     Series* s = try_unwrap(
@@ -507,7 +507,7 @@ inline static Option(Value(const*)) Lookup_Word(
 inline static const REBVAL *Get_Word_May_Fail(
     Cell* out,
     const Cell* any_word,
-    REBSPC *specifier
+    Specifier* specifier
 ){
     const REBVAL *var = Lookup_Word_May_Fail(any_word, specifier);
     if (Is_Isotope(var) and not IS_LOGIC(var))
@@ -518,7 +518,7 @@ inline static const REBVAL *Get_Word_May_Fail(
 
 inline static REBVAL *Lookup_Mutable_Word_May_Fail(
     const Cell* any_word,
-    REBSPC *specifier
+    Specifier* specifier
 ){
     REBLEN index;
     Series* s = try_unwrap(
@@ -559,7 +559,7 @@ inline static REBVAL *Lookup_Mutable_Word_May_Fail(
 
 inline static REBVAL *Sink_Word_May_Fail(
     const Cell* any_word,
-    REBSPC *specifier
+    Specifier* specifier
 ){
     REBVAL *var = Lookup_Mutable_Word_May_Fail(any_word, specifier);
     return FRESHEN(var);
@@ -591,14 +591,14 @@ inline static REBVAL *Sink_Word_May_Fail(
 // a mechanic between both...TBD.
 //
 
-inline static REBSPC *Derive_Specifier(
-    REBSPC *parent,
+inline static Specifier* Derive_Specifier(
+    Specifier* parent,
     NoQuote(const Cell*) any_array
 );
 
 #if CPLUSPLUS_11
-    inline static REBSPC *Derive_Specifier(
-        REBSPC *parent,
+    inline static Specifier* Derive_Specifier(
+        Specifier* parent,
         const REBVAL* any_array
     ) = delete;
 #endif
@@ -606,7 +606,7 @@ inline static REBSPC *Derive_Specifier(
 inline static REBVAL *Derelativize_Untracked(
     Cell* out,  // relative dest overwritten w/specific value
     const Cell* v,
-    REBSPC *specifier
+    Specifier* specifier
 ){
     Copy_Cell_Header(out, v);
     out->payload = v->payload;
@@ -669,7 +669,7 @@ inline static REBVAL *Derelativize_Untracked(
 //
 #if CPLUSPLUS_11
     REBVAL *Derelativize_Untracked(
-        Cell* dest, const REBVAL *v, REBSPC *specifier
+        Cell* dest, const REBVAL *v, Specifier* specifier
     );
 #endif
 
@@ -707,7 +707,7 @@ inline static REBVAL *Derelativize_Untracked(
 // top of each other, the chain always bottoms out on the same FRAME! that
 // the original specifier was pointing to.
 //
-inline static Node** SPC_FRAME_CTX_ADDRESS(REBSPC *specifier)
+inline static Node** SPC_FRAME_CTX_ADDRESS(Specifier* specifier)
 {
     assert(IS_LET(specifier) or IS_USE(specifier));
     while (
@@ -719,7 +719,7 @@ inline static Node** SPC_FRAME_CTX_ADDRESS(REBSPC *specifier)
     return &node_LINK(NextLet, specifier);
 }
 
-inline static Option(Context*) SPC_FRAME_CTX(REBSPC *specifier)
+inline static Option(Context*) SPC_FRAME_CTX(Specifier* specifier)
 {
     if (specifier == UNBOUND)  // !!! have caller check?
         return nullptr;
@@ -742,8 +742,8 @@ inline static Option(Context*) SPC_FRAME_CTX(REBSPC *specifier)
 // The returned specifier must not lose the ability to resolve relative
 // values, so it has to remember what frame relative values are for.
 //
-inline static REBSPC *Derive_Specifier_Core(
-    REBSPC *specifier,  // merge this specifier...
+inline static Specifier* Derive_Specifier_Core(
+    Specifier* specifier,  // merge this specifier...
     NoQuote(const Cell*) any_array  // ...onto the one in this array
 ){
     Array* old = cast(Array*, BINDING(any_array));
@@ -885,18 +885,18 @@ inline static REBSPC *Derive_Specifier_Core(
 
 
 #if (! DEBUG_VIRTUAL_BINDING)
-    inline static REBSPC *Derive_Specifier(
-        REBSPC *specifier,
+    inline static Specifier* Derive_Specifier(
+        Specifier* specifier,
         NoQuote(const Cell*) any_array
     ){
         return Derive_Specifier_Core(specifier, any_array);
     }
 #else
-    inline static REBSPC *Derive_Specifier(
-        REBSPC *specifier,
+    inline static Specifier* Derive_Specifier(
+        Specifier* specifier,
         NoQuote(const Cell*) any_array
     ){
-        REBSPC *derived = Derive_Specifier_Core(specifier, any_array);
+        Specifier* derived = Derive_Specifier_Core(specifier, any_array);
         Array* old = cast(Array*, BINDING(any_array));
         if (old == UNSPECIFIED or IS_VARLIST(old)) {
             // no special invariant to check, anything goes for derived

@@ -39,13 +39,13 @@
 // ellipses to show they have been cut off.  It does not change the arrays
 // in question, but replaces them with copies.
 //
-void Collapsify_Array(Array* array, REBSPC *specifier, REBLEN limit)
+void Collapsify_Array(Array* array, Specifier* specifier, REBLEN limit)
 {
     const Cell* tail = Array_Tail(array);
     Cell* item = Array_Head(array);
     for (; item != tail; ++item) {
         if (ANY_ARRAY(item) and VAL_LEN_AT(item) > limit) {
-            REBSPC *derived = Derive_Specifier(specifier, item);
+            Specifier* derived = Derive_Specifier(specifier, item);
             Array* copy = Copy_Array_At_Max_Shallow(
                 VAL_ARRAY(item),
                 VAL_INDEX(item),

@@ -182,7 +182,7 @@ Bounce MAKE_Array(
         // paths should be part of the MOLDing logic -or- a path with embedded
         // line markers should use construction syntax to preserve them.
 
-        REBSPC *derived = Derive_Specifier(VAL_SPECIFIER(arg), any_array);
+        Specifier* derived = Derive_Specifier(VAL_SPECIFIER(arg), any_array);
         return Init_Series_Cell_At_Core(
             OUT,
             kind,
@@ -375,11 +375,11 @@ Bounce TO_Array(Level* level_, enum Reb_Kind kind, const REBVAL *arg) {
 REBINT Find_In_Array(
     Length* len,
     const Array* array,
-    REBSPC *array_specifier,
+    Specifier* array_specifier,
     REBLEN index_unsigned, // index to start search
     REBLEN end_unsigned, // ending position
     const Cell* pattern,
-    REBSPC *pattern_specifier,
+    Specifier* pattern_specifier,
     Flags flags, // see AM_FIND_XXX
     REBINT skip // skip factor
 ){
@@ -814,7 +814,7 @@ REBTYPE(Array)
 {
     REBVAL *array = D_ARG(1);
 
-    REBSPC *specifier = VAL_SPECIFIER(array);
+    Specifier* specifier = VAL_SPECIFIER(array);
 
     Option(SymId) id = ID_OF_SYMBOL(verb);
 
@@ -1521,7 +1521,7 @@ DECLARE_NATIVE(glom)
         // if necessary--work on other details later.
         //
         Array* r = VAL_ARRAY_ENSURE_MUTABLE(result);
-        REBSPC *r_specifier = VAL_SPECIFIER(result);
+        Specifier* r_specifier = VAL_SPECIFIER(result);
         REBLEN a_len = Array_Len(a);
         REBLEN r_len = Array_Len(r);
         Expand_Series_Tail(a, r_len);  // can move memory, get `at` after

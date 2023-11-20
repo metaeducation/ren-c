@@ -175,7 +175,7 @@ inline static void Free_Value(REBVAL *v)
 //
 // But assuming errors don't happen that often, it's cleaner to have one call.
 //
-inline static REBVAL *rebSpecific(const Cell* v, REBSPC *specifier)
+inline static REBVAL *rebSpecific(const Cell* v, Specifier* specifier)
     { return Derelativize(Alloc_Value(), v, specifier);}
 
 

@@ -183,7 +183,7 @@ Array* Expanded_Combinator_Spec(const REBVAL *original)
 
     const Cell* tail;
     const Cell* item = VAL_ARRAY_AT(&tail, original);
-    REBSPC *specifier = VAL_SPECIFIER(original);
+    Specifier* specifier = VAL_SPECIFIER(original);
 
     if (IS_TEXT(item)) {
         Derelativize(PUSH(), item, specifier);  // {combinator description}

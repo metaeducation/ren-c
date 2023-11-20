@@ -45,7 +45,7 @@
 // It may become interesting to say that a specifier can be a pairing or
 // a REBVAL* of some kind, but currently all instances are array-derived.
 //
-typedef Array REBSPC;
+typedef Array Specifier;
 
 
 //=//// TYPE HOOK ACCESS //////////////////////////////////////////////////=//

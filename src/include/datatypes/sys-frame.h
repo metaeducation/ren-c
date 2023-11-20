@@ -560,7 +560,7 @@ inline static bool Eval_Value_Core_Throws(
     Atom(*) out,
     Flags flags,
     const Cell* value,  // e.g. a BLOCK! here would just evaluate to itself!
-    REBSPC *specifier
+    Specifier* specifier
 );
 
 enum {

@@ -246,7 +246,7 @@ void Push_Paramlist_Quads_May_Fail(
             if (Is_Word_Isotope_With_Id(KEY_SLOT(TOP_INDEX), SYM_KEY))
                 fail (Error_Bad_Func_Def_Raw(item));   // `func [[integer!]]`
 
-            REBSPC* derived = Derive_Specifier(VAL_SPECIFIER(spec), item);
+            Specifier* derived = Derive_Specifier(VAL_SPECIFIER(spec), item);
 
             bool was_refinement;
             enum Reb_Param_Class pclass;

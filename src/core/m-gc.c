@@ -822,7 +822,7 @@ static void Mark_Level_Stack_Deep(void)
         // using va_copy, but probably not worth it).  All values in feed
         // should be covered in terms of GC protection.
 
-        REBSPC* L_specifier = Level_Specifier(L);
+        Specifier* L_specifier = Level_Specifier(L);
 
         // If ->gotten is set, it usually shouldn't need markeding because
         // it's fetched via L->value and so would be kept alive by it.  Any

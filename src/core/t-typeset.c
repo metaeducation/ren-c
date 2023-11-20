@@ -157,7 +157,7 @@ Array* Add_Parameter_Bits_Core(
     enum Reb_Param_Class pclass,
     const Cell* head,
     const Cell* tail,
-    REBSPC *specifier
+    Specifier* specifier
 ){
     StackIndex base = TOP_INDEX;
     *flags = 0;

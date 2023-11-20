@@ -1386,7 +1386,7 @@ Bounce Evaluator_Executor(Level* L)
 
         const Cell* tail;
         const Cell* check = VAL_ARRAY_AT(&tail, L_current);
-        REBSPC *check_specifier = Derive_Specifier(L_specifier, L_current);
+        Specifier* check_specifier = Derive_Specifier(L_specifier, L_current);
 
         Trash_Pointer_If_Debug(L_current);  // might be SPARE, we use it now
 
@@ -1523,7 +1523,7 @@ Bounce Evaluator_Executor(Level* L)
 
         const Cell* pack_meta_at = nullptr;  // pack block items are ^META'd
         const Cell* pack_meta_tail = nullptr;
-        REBSPC* pack_specifier = nullptr;
+        Specifier* pack_specifier = nullptr;
 
         if (Is_Barrier(OUT))  // !!! Hack, wnat ([/foo]: eval) to always work
             Init_Nihil(OUT);

@@ -538,7 +538,7 @@ DECLARE_NATIVE(evaluate)
 
 } single_step_result_in_out: {  //////////////////////////////////////////////
 
-    REBSPC *specifier = Level_Specifier(SUBLEVEL);
+    Specifier* specifier = Level_Specifier(SUBLEVEL);
     VAL_INDEX_UNBOUNDED(source) = Level_Array_Index(SUBLEVEL);  // new index
     Drop_Level(SUBLEVEL);
 

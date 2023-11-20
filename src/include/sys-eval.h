@@ -324,7 +324,7 @@ inline static bool Eval_Step_In_Any_Array_At_Throws(
     Atom(*) out,
     REBLEN *index_out,
     const Cell* any_array,  // Note: legal to have any_array = out
-    REBSPC *specifier,
+    Specifier* specifier,
     Flags flags
 ){
     assert(Is_Cell_Erased(out));
@@ -359,7 +359,7 @@ inline static bool Eval_Value_Core_Throws(
     Atom(*) out,
     Flags flags,
     const Cell* value,  // e.g. a BLOCK! here would just evaluate to itself!
-    REBSPC *specifier
+    Specifier* specifier
 ){
     if (ANY_INERT(value)) {
         Derelativize(out, value, specifier);

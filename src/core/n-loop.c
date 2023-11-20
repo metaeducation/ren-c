@@ -687,7 +687,7 @@ struct Loop_Each_State {
     } u;
     bool took_hold;
     bool more_data;
-    REBSPC *specifier;  // specifier (if applicable)
+    Specifier* specifier;  // specifier (if applicable)
 };
 
 //

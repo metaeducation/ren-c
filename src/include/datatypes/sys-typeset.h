@@ -75,9 +75,9 @@ inline static bool Is_Matcher(const Cell* v) {
 
 inline static bool Matcher_Matches(
     const Cell* matcher,
-    REBSPC *matcher_specifier,
+    Specifier* matcher_specifier,
     const Cell* v,
-    REBSPC *v_specifier
+    Specifier* v_specifier
 ){
     assert(Is_Matcher(matcher));
     DECLARE_LOCAL (plain);

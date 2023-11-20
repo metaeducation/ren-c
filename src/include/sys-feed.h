@@ -656,7 +656,7 @@ inline static Feed* Prep_Array_Feed(
     Option(const Cell*) first,
     const Array* array,
     REBLEN index,
-    REBSPC *specifier,
+    Specifier* specifier,
     Flags flags
 ){
     Feed* feed = Prep_Feed_Common(preallocated, flags);
@@ -777,7 +777,7 @@ inline static Feed* Prep_Variadic_Feed(
 inline static Feed* Prep_At_Feed(
     void *preallocated,
     NoQuote(const Cell*) any_array,  // array is extracted and HOLD put on
-    REBSPC *specifier,
+    Specifier* specifier,
     Flags parent_flags  // only reads FEED_FLAG_CONST out of this
 ){
     STATIC_ASSERT(CELL_FLAG_CONST == FEED_FLAG_CONST);

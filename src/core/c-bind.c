@@ -242,7 +242,7 @@ REBLEN Try_Bind_Word(const Cell* context, REBVAL *word)
 //
 Array* Make_Let_Patch(
     const Symbol* symbol,
-    REBSPC *specifier
+    Specifier* specifier
 ){
     Array* let = Alloc_Singular(  // payload is one variable
         FLAG_FLAVOR(LET)
@@ -378,7 +378,7 @@ Array* Merge_Patches_May_Reuse(
 Option(Series*) Get_Word_Container(
     REBLEN *index_out,
     const Cell* any_word,
-    REBSPC *specifier,
+    Specifier* specifier,
     enum Reb_Attach_Mode mode
 ){
   #if !defined(NDEBUG)
@@ -744,7 +744,7 @@ DECLARE_NATIVE(let)
 
     UNUSED(ARG(expression));
     Level* L = level_;  // fake variadic, see [1]
-    REBSPC* L_specifier = Level_Specifier(L);
+    Specifier* L_specifier = Level_Specifier(L);
 
     REBVAL *bindings_holder = ARG(return);
 
@@ -808,7 +808,7 @@ DECLARE_NATIVE(let)
     // so it can be used in a reevaluation.  For WORD!/BLOCK! forms of LET it
     // just writes the rebound copy into the OUT cell.
 
-    REBSPC *bindings = L_specifier;  // specifier chain we may be adding to
+    Specifier* bindings = L_specifier;  // specifier chain we may be adding to
 
     if (bindings and Not_Node_Managed(bindings))
         Set_Node_Managed_Bit(bindings);  // natives don't always manage
@@ -837,7 +837,7 @@ DECLARE_NATIVE(let)
 
         const Cell* tail;
         const Cell* item = VAL_ARRAY_AT(&tail, vars);
-        REBSPC *item_specifier = VAL_SPECIFIER(vars);
+        Specifier* item_specifier = VAL_SPECIFIER(vars);
 
         StackIndex base = TOP_INDEX;
 
@@ -845,7 +845,7 @@ DECLARE_NATIVE(let)
 
         for (; item != tail; ++item) {
             const Cell* temp = item;
-            REBSPC *temp_specifier = item_specifier;
+            Specifier* temp_specifier = item_specifier;
 
             if (Is_Quoted(temp)) {
                 Derelativize(PUSH(), temp, temp_specifier);
@@ -947,7 +947,7 @@ DECLARE_NATIVE(let)
 
 } integrate_eval_bindings: {  ////////////////////////////////////////////////
 
-    REBSPC *bindings = VAL_SPECIFIER(bindings_holder);
+    Specifier* bindings = VAL_SPECIFIER(bindings_holder);
 
     if (L_specifier and IS_LET(L_specifier)) { // add bindings, see [7]
         bindings = Merge_Patches_May_Reuse(L_specifier, bindings);
@@ -963,7 +963,7 @@ DECLARE_NATIVE(let)
     // that this can create the problem of applying the binding twice; this
     // needs systemic review.
 
-    REBSPC *bindings = VAL_SPECIFIER(bindings_holder);
+    Specifier* bindings = VAL_SPECIFIER(bindings_holder);
     mutable_BINDING(FEED_SINGLE(L->feed)) = bindings;
 
     if (Is_Pack(OUT))
@@ -989,11 +989,11 @@ DECLARE_NATIVE(add_let_binding) {
 
     Level* L = CTX_LEVEL_MAY_FAIL(VAL_CONTEXT(ARG(frame)));
 
-    REBSPC* L_specifier = Level_Specifier(L);
+    Specifier* L_specifier = Level_Specifier(L);
     if (L_specifier)
         Set_Node_Managed_Bit(L_specifier);
 
-    REBSPC *let = Make_Let_Patch(VAL_WORD_SYMBOL(ARG(word)), L_specifier);
+    Specifier* let = Make_Let_Patch(VAL_WORD_SYMBOL(ARG(word)), L_specifier);
 
     Move_Cell(Array_Single(let), ARG(value));
 
@@ -1021,14 +1021,14 @@ DECLARE_NATIVE(add_use_object) {
     INCLUDE_PARAMS_OF_ADD_USE_OBJECT;
 
     Level* L = CTX_LEVEL_MAY_FAIL(VAL_CONTEXT(ARG(frame)));
-    REBSPC* L_specifier = Level_Specifier(L);
+    Specifier* L_specifier = Level_Specifier(L);
 
     Context* ctx = VAL_CONTEXT(ARG(object));
 
     if (L_specifier)
         Set_Node_Managed_Bit(L_specifier);
 
-    REBSPC *use = Make_Or_Reuse_Use(ctx, L_specifier, REB_WORD);
+    Specifier* use = Make_Or_Reuse_Use(ctx, L_specifier, REB_WORD);
 
     mutable_BINDING(FEED_SINGLE(L->feed)) = use;
 
@@ -1209,7 +1209,7 @@ Array* Copy_And_Bind_Relative_Deep_Managed(
   blockscope {
     const Array* original = VAL_ARRAY(body);
     REBLEN index = VAL_INDEX(body);
-    REBSPC *specifier = VAL_SPECIFIER(body);
+    Specifier* specifier = VAL_SPECIFIER(body);
     REBLEN tail = VAL_LEN_AT(body);
     assert(tail <= Array_Len(original));
 
@@ -1377,7 +1377,7 @@ Context* Virtual_Bind_Deep_To_New_Context(
     const Cell* tail;
     const Cell* item;
 
-    REBSPC *specifier;
+    Specifier* specifier;
     bool rebinding;
     if (IS_BLOCK(spec)) {  // walk the block for errors BEFORE making binder
         specifier = VAL_SPECIFIER(spec);

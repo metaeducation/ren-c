@@ -82,7 +82,7 @@ Bounce Lambda_Dispatcher(Level* const L)
 
     Set_Node_Managed_Bit(L->varlist);  // not manually tracked...
 
-    REBSPC *specifier = Make_Or_Reuse_Use(  // may reuse, see [1]
+    Specifier* specifier = Make_Or_Reuse_Use(  // may reuse, see [1]
         cast(Context*, L->varlist),
         VAL_SPECIFIER(block),  // redundant with feed, see [2]
         REB_WORD
@@ -144,7 +144,7 @@ DECLARE_NATIVE(lambda)
 
     bool optimizable = true;
 
-    REBSPC *item_specifier;
+    Specifier* item_specifier;
     const Cell* item_tail;
     const Cell* item;
     if (IS_BLOCK(spec)) {

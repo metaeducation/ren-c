@@ -59,7 +59,7 @@ Map* Make_Map(REBLEN capacity)
 
 static Context* Error_Conflicting_Key(
     const Cell* key,
-    REBSPC *specifier
+    Specifier* specifier
 ){
     DECLARE_LOCAL (specific);
     Derelativize(specific, key, specifier);
@@ -84,7 +84,7 @@ REBINT Find_Key_Hashed(
     Array* array,
     Series* hashlist,
     const Cell* key,  // !!! assumes ++key finds the values
-    REBSPC *specifier,
+    Specifier* specifier,
     REBLEN wide,
     bool strict,
     Byte mode
@@ -254,9 +254,9 @@ void Expand_Hash(Series* ser)
 REBLEN Find_Map_Entry(
     Map* map,
     const Cell* key,
-    REBSPC *key_specifier,
+    Specifier* key_specifier,
     const Cell* val,
-    REBSPC *val_specifier,
+    Specifier* val_specifier,
     bool strict
 ) {
     assert(not Is_Isotope(key));
@@ -322,7 +322,7 @@ static void Append_Map(
     Map* map,
     const Cell* head,
     const Cell* tail,
-    REBSPC *specifier,
+    Specifier* specifier,
     REBLEN len
 ){
     const Cell* item = head;
@@ -436,7 +436,7 @@ Bounce TO_Map(Level* level_, enum Reb_Kind kind, const REBVAL *arg)
         REBLEN len = VAL_LEN_AT(arg);
         const Cell* tail;
         const Cell* at = VAL_ARRAY_AT(&tail, arg);
-        REBSPC *specifier = VAL_SPECIFIER(arg);
+        Specifier* specifier = VAL_SPECIFIER(arg);
 
         Map* map = Make_Map(len / 2); // [key value key value...] + END
         Append_Map(map, at, tail, specifier, len);

@@ -57,12 +57,12 @@
 
 #ifdef NDEBUG
     #define SPC(p) \
-        cast(REBSPC*, (p)) // makes UNBOUND look like SPECIFIED
+        cast(Specifier*, (p)) // makes UNBOUND look like SPECIFIED
 
     #define VAL_SPECIFIER(v) \
         SPC(BINDING(v))
 #else
-    inline static REBSPC* SPC(void *p) {
+    inline static Specifier* SPC(void *p) {
         assert(p != SPECIFIED); // use SPECIFIED, not SPC(SPECIFIED)
 
         Context* c = cast(Context*, p);
@@ -70,10 +70,10 @@
 
         // Note: May be managed or unamanged.
 
-        return x_cast(REBSPC*, c);
+        return x_cast(Specifier*, c);
     }
 
-    inline static REBSPC *VAL_SPECIFIER(NoQuote(const Cell*) v) {
+    inline static Specifier* VAL_SPECIFIER(NoQuote(const Cell*) v) {
         assert(ANY_ARRAYLIKE(v));
 
         Array* a = cast(Array*, BINDING(v));
@@ -81,7 +81,7 @@
             return SPECIFIED;
 
         if (IS_LET(a) or IS_USE(a))
-            return cast(REBSPC*, a);  // virtual bind
+            return cast(Specifier*, a);  // virtual bind
 
         // While an ANY-WORD! can be bound specifically to an arbitrary
         // object, an ANY-ARRAY! only becomes bound specifically to frames.
@@ -91,7 +91,7 @@
         // The context may be inaccessible here.
         //
         assert(CTX_TYPE(cast(Context*, a)) == REB_FRAME);
-        return cast(REBSPC*, a);
+        return cast(Specifier*, a);
     }
 #endif
 
@@ -102,7 +102,7 @@
 //
 inline static Array* Make_Use_Core(
     Array* binding,  // must be a varlist or a LET patch
-    REBSPC *next,
+    Specifier* next,
     enum Reb_Kind kind,
     bool reuse
 ){

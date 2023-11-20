@@ -373,7 +373,7 @@ static void Push_Composer_Level(
     Atom(*) out,
     Level* main_level,
     const Cell* arraylike,
-    REBSPC *specifier
+    Specifier* specifier
 ){
     Value(const*) adjusted = nullptr;
     if (ANY_PATH(arraylike)) {  // allow sequences, see [1]
@@ -571,7 +571,7 @@ Bounce Composer_Executor(Level* const L)
 
     enum Reb_Kind heart = Cell_Heart(at);  // quoted groups match, see [1]
 
-    REBSPC *match_specifier = nullptr;
+    Specifier* match_specifier = nullptr;
     const Cell* match = nullptr;
 
     if (not ANY_GROUP_KIND(heart)) {
@@ -855,13 +855,13 @@ enum FLATTEN_LEVEL {
 static void Flatten_Core(
     Cell* head,
     const Cell* tail,
-    REBSPC *specifier,
+    Specifier* specifier,
     enum FLATTEN_LEVEL level
 ) {
     Cell* item = head;
     for (; item != tail; ++item) {
         if (IS_BLOCK(item) and level != FLATTEN_NOT) {
-            REBSPC *derived = Derive_Specifier(specifier, item);
+            Specifier* derived = Derive_Specifier(specifier, item);
 
             const Cell* sub_tail;
             Cell* sub = VAL_ARRAY_AT_Ensure_Mutable(&sub_tail, item);

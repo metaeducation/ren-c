@@ -603,7 +603,7 @@ bool Get_Var_Push_Refinements_Throws(
     Sink(Value(*)) out,
     Option(Value(*)) steps_out,  // if NULL, then GROUP!s not legal
     const Cell* var,
-    REBSPC *var_specifier
+    Specifier* var_specifier
 ){
     assert(var != cast(Cell*, out));
     assert(steps_out != out);  // Legal for SET, not for GET
@@ -697,7 +697,7 @@ bool Get_Var_Push_Refinements_Throws(
         const Cell* tail;
         const Cell* head = VAL_ARRAY_AT(&tail, var);
         const Cell* at;
-        REBSPC *at_specifier = Derive_Specifier(var_specifier, var);
+        Specifier* at_specifier = Derive_Specifier(var_specifier, var);
         for (at = head; at != tail; ++at) {
             if (IS_GROUP(at)) {
                 if (not steps_out)
@@ -728,7 +728,7 @@ bool Get_Var_Push_Refinements_Throws(
         }
     }
     else if (IS_THE_BLOCK(var)) {
-        REBSPC *at_specifier = Derive_Specifier(var_specifier, var);
+        Specifier* at_specifier = Derive_Specifier(var_specifier, var);
         const Cell* tail;
         const Cell* head = VAL_ARRAY_AT(&tail, var);
         const Cell* at;
@@ -797,7 +797,7 @@ bool Get_Var_Core_Throws(
     Sink(Value(*)) out,
     Option(Value(*)) steps_out,  // if NULL, then GROUP!s not legal
     const Cell* var,
-    REBSPC *var_specifier
+    Specifier* var_specifier
 ){
     StackIndex base = TOP_INDEX;
     bool threw = Get_Var_Push_Refinements_Throws(
@@ -826,7 +826,7 @@ bool Get_Var_Core_Throws(
 void Get_Var_May_Fail(
     Sink(Value(*)) out,  // variables never store unstable Atom(*) values
     const Cell* source,
-    REBSPC *specifier,
+    Specifier* specifier,
     bool any
 ){
     REBVAL *steps_out = nullptr;
@@ -853,7 +853,7 @@ bool Get_Path_Push_Refinements_Throws(
     Sink(Value(*)) out,
     Sink(Value(*)) safe,
     const Cell* path,
-    REBSPC *path_specifier
+    Specifier* path_specifier
 ){
     if (Not_Cell_Flag(path, SEQUENCE_HAS_NODE)) {  // byte compressed, inert
         Derelativize(out, path, path_specifier);  // inert
@@ -914,7 +914,7 @@ bool Get_Path_Push_Refinements_Throws(
         // Note: Historical Rebol did not allow GROUP! at the head of path.
         // We can thus restrict head-of-path evaluations to ACTION!.
         //
-        REBSPC *derived = Derive_Specifier(path_specifier, path);
+        Specifier* derived = Derive_Specifier(path_specifier, path);
         if (Eval_Value_Throws(out, head, derived))
             return true;
 
@@ -942,7 +942,7 @@ bool Get_Path_Push_Refinements_Throws(
             return false;
         }
 
-        REBSPC *derived = Derive_Specifier(path_specifier, path);
+        Specifier* derived = Derive_Specifier(path_specifier, path);
 
         DECLARE_STABLE (steps);
         if (Get_Var_Core_Throws(out, steps, head, derived))
@@ -959,7 +959,7 @@ bool Get_Path_Push_Refinements_Throws(
             fail ("TUPLE! must resolve to an action isotope if head of PATH!");
     }
     else if (IS_WORD(head)) {
-        REBSPC *derived = Derive_Specifier(path_specifier, path);
+        Specifier* derived = Derive_Specifier(path_specifier, path);
         const REBVAL *lookup = Lookup_Word_May_Fail(
             head,
             derived
@@ -1028,7 +1028,7 @@ bool Get_Path_Push_Refinements_Throws(
         const Cell* at = VAL_SEQUENCE_AT(safe, path, len);
         DECLARE_LOCAL (temp);
         if (IS_GROUP(at)) {
-            REBSPC *derived = Derive_Specifier(
+            Specifier* derived = Derive_Specifier(
                 path_specifier,
                 at
             );
@@ -1167,7 +1167,7 @@ bool Set_Var_Core_Updater_Throws(
     Sink(Value(*)) out,  // GC-safe cell to write steps to, or put thrown value
     Option(Value(*)) steps_out,  // no GROUP!s if nulled
     const Cell* var,  // e.g. v
-    REBSPC *var_specifier,  // e.g. v_specifier
+    Specifier* var_specifier,  // e.g. v_specifier
     const REBVAL *setval,  // e.g. L->out (in the evaluator, right hand side)
     const REBVAL *updater
 ){
@@ -1279,7 +1279,7 @@ bool Set_Var_Core_Updater_Throws(
         const Cell* tail;
         const Cell* head = VAL_ARRAY_AT(&tail, var);
         const Cell* at;
-        REBSPC *at_specifier = Derive_Specifier(var_specifier, var);
+        Specifier* at_specifier = Derive_Specifier(var_specifier, var);
         for (at = head; at != tail; ++at) {
             if (IS_GROUP(at)) {
                 if (not steps_out)
@@ -1308,7 +1308,7 @@ bool Set_Var_Core_Updater_Throws(
         const Cell* tail;
         const Cell* head = VAL_ARRAY_AT(&tail, var);
         const Cell* at;
-        REBSPC *at_specifier = Derive_Specifier(var_specifier, var);
+        Specifier* at_specifier = Derive_Specifier(var_specifier, var);
         for (at = head; at != tail; ++at)
             Derelativize(PUSH(), at, at_specifier);
     }
@@ -1422,7 +1422,7 @@ bool Set_Var_Core_Throws(
     Sink(Value(*)) out,  // GC-safe cell to write steps to, or put thrown value
     Option(Value(*)) steps_out,  // no GROUP!s if nulled
     const Cell* var,  // e.g. v
-    REBSPC *var_specifier,  // e.g. v_specifier
+    Specifier* var_specifier,  // e.g. v_specifier
     const REBVAL *setval  // e.g. L->out (in the evaluator, right hand side)
 ){
     return Set_Var_Core_Updater_Throws(
@@ -1444,7 +1444,7 @@ bool Set_Var_Core_Throws(
 //
 void Set_Var_May_Fail(
     const Cell* target,
-    REBSPC *target_specifier,
+    Specifier* target_specifier,
     const REBVAL *setval
 ){
     Option(Value(*)) steps_out = nullptr;

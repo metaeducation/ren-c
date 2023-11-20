@@ -35,7 +35,7 @@
 Array* Copy_Array_At_Extra_Shallow(
     const Array* original,
     REBLEN index,
-    REBSPC *specifier,
+    Specifier* specifier,
     REBLEN extra,
     Flags flags
 ){
@@ -68,7 +68,7 @@ Array* Copy_Array_At_Extra_Shallow(
 Array* Copy_Array_At_Max_Shallow(
     const Array* original,
     REBLEN index,
-    REBSPC *specifier,
+    Specifier* specifier,
     REBLEN max
 ){
     const Flags flags = 0;
@@ -100,7 +100,7 @@ Array* Copy_Array_At_Max_Shallow(
 //
 Array* Copy_Values_Len_Extra_Shallow_Core(
     const Cell* head,
-    REBSPC *specifier,
+    Specifier* specifier,
     REBLEN len,
     REBLEN extra,
     Flags flags
@@ -242,7 +242,7 @@ void Clonify(
 Array* Copy_Array_Core_Managed(
     const Array* original,
     REBLEN index,
-    REBSPC *specifier,
+    Specifier* specifier,
     REBLEN tail,
     REBLEN extra,
     Flags flags,

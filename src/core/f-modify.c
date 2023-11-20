@@ -44,7 +44,7 @@ REBLEN Modify_Array(
     REBLEN tail_idx = Array_Len(dst_arr);
 
     const Cell* src_rel;
-    REBSPC *specifier;
+    Specifier* specifier;
 
     if (op == SYM_CHANGE and Is_Void(src_val)) {
         flags |= AM_SPLICE;

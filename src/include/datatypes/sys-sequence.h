@@ -308,7 +308,7 @@ inline static REBVAL *Try_Init_Any_Sequence_Pairlike_Core(
     enum Reb_Kind kind,
     const Cell* v1,
     const Cell* v2,
-    REBSPC *specifier  // assumed to apply to both v1 and v2
+    Specifier* specifier  // assumed to apply to both v1 and v2
 ){
     if (IS_BLANK(v1))
         return Try_Leading_Blank_Pathify(
@@ -551,7 +551,7 @@ inline static const Cell* VAL_SEQUENCE_AT(
 inline static Value(*) GET_SEQUENCE_AT(
     Sink(Value(*)) out,
     NoQuote(const Cell*) sequence,
-    REBSPC* specifier,
+    Specifier* specifier,
     REBLEN n
 ){
     assert(out != sequence);
@@ -605,7 +605,7 @@ inline static Byte VAL_SEQUENCE_BYTE_AT(
     return VAL_UINT8(at);  // !!! All callers of this routine need vetting
 }
 
-inline static REBSPC *VAL_SEQUENCE_SPECIFIER(
+inline static Specifier* VAL_SEQUENCE_SPECIFIER(
     NoQuote(const Cell*) sequence
 ){
     assert(ANY_SEQUENCE_KIND(Cell_Heart(sequence)));

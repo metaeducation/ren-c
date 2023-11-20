@@ -165,7 +165,7 @@ DECLARE_NATIVE(typechecker)
 //
 bool Typecheck_Value(
     const Cell* tests,  // can be BLOCK!, TYPE-BLOCK!, GROUP!, TYPE-GROUP!
-    REBSPC *tests_specifier,
+    Specifier* tests_specifier,
     Atom(const*) v
 ){
     DECLARE_LOCAL (spare);  // !!! stackful
@@ -334,7 +334,7 @@ bool Typecheck_Value(
 
           case REB_TYPE_BLOCK:
           case REB_TYPE_GROUP: {
-            REBSPC *subspecifier = Derive_Specifier(tests_specifier, test);
+            Specifier* subspecifier = Derive_Specifier(tests_specifier, test);
             if (not Typecheck_Value(test, subspecifier, v))
                 goto test_failed;
             break; }

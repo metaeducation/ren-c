@@ -255,7 +255,7 @@ static bool Subparse_Throws(
     bool *interrupted_out,
     Sink(Value(*)) out,
     const Cell* input,
-    REBSPC *input_specifier,
+    Specifier* input_specifier,
     Level* const L,
     Option(Array*) collection,
     Flags flags
@@ -430,7 +430,7 @@ static void Print_Parse_Index(Level* level_) {
 static const Cell* Get_Parse_Value(
     Sink(Value(*)) cell,  // storage for fetched values; must be GC protected
     const Cell* rule,
-    REBSPC *specifier
+    Specifier* specifier
 ){
     if (IS_WORD(rule)) {
         if (VAL_CMD(rule))  // includes IS_BAR()...also a "command"
@@ -471,7 +471,7 @@ bool Process_Group_For_Parse_Throws(
     assert(cast(Cell*, out) != group);
 
     assert(IS_GROUP(group) or IS_GET_GROUP(group));
-    REBSPC *derived = (group == P_SAVE)
+    Specifier* derived = (group == P_SAVE)
         ? SPECIFIED
         : Derive_Specifier(P_RULE_SPECIFIER, group);
 
@@ -1126,7 +1126,7 @@ static REBIXO To_Thru_Non_Block_Rule(
 static void Handle_Mark_Rule(
     Level* level_,
     const Cell* rule,
-    REBSPC *specifier
+    Specifier* specifier
 ){
     USE_PARAMS_OF_SUBPARSE;
 
@@ -1168,7 +1168,7 @@ static void Handle_Mark_Rule(
 static void Handle_Seek_Rule_Dont_Update_Begin(
     Level* level_,
     const Cell* rule,
-    REBSPC *specifier
+    Specifier* specifier
 ){
     USE_PARAMS_OF_SUBPARSE;
 
@@ -2558,7 +2558,7 @@ DECLARE_NATIVE(subparse)
                     fail ("Only (...) or ^(...) in old PARSE's CHANGE/INSERT");
 
                 DECLARE_STABLE (evaluated);
-                REBSPC *derived = Derive_Specifier(
+                Specifier* derived = Derive_Specifier(
                     P_RULE_SPECIFIER,
                     rule
                 );

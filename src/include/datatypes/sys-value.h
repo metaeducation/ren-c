@@ -586,7 +586,7 @@ inline static Value(*) SPECIFIC(const_if_c Cell* v) {
 //
 
 #define SPECIFIED \
-    ((REBSPC*)nullptr)  // cast() doesn't like nullptr, fix
+    x_cast(Specifier*, nullptr)  // x_cast (don't want DEBUG_CHECK_CASTS)
 
 #define UNBOUND nullptr  // not always a Node* (sometimes Context*)
 #define UNSPECIFIED nullptr

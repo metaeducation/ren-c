@@ -34,7 +34,7 @@ Value(*) Try_Init_Any_Sequence_At_Arraylike_Core(
     Sink(Value(*)) out,  // NULL if array too short, violating value otherwise
     enum Reb_Kind kind,
     const Array* a,
-    REBSPC *specifier,
+    Specifier* specifier,
     REBLEN index
 ){
     assert(ANY_SEQUENCE_KIND(kind));

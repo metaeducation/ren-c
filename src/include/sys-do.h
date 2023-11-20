@@ -68,7 +68,7 @@ inline static bool Do_Any_Array_At_Core_Throws(
     Atom(*) out,
     Flags flags,
     NoQuote(const Cell*) any_array,
-    REBSPC *specifier
+    Specifier* specifier
 ){
     Level* L = Make_Level_At_Core(any_array, specifier, flags);
     L->executor = &Array_Executor;
