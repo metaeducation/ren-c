@@ -89,6 +89,10 @@
     #define DEBUG_CHECK_OPTIONALS 0
 #endif
 
+#if !defined(DEBUG_CHECK_NEVERNULL)
+    #define DEBUG_CHECK_NEVERNULL 0
+#endif
+
 
 //=//// EXPECTS <stdbool.h> OR "pstdbool.h" SHIM INCLUDED /////////////////=//
 //
@@ -619,7 +623,6 @@
 // No-op in C builds, but in C++ build helps to ensure the given variable is
 // null, while still allowing the reference to be used as an lvalue.
 //
-//
 #if CPLUSPLUS_11
     template<class TP>
     inline static TP& ensureNullptr(TP& p) {
@@ -759,7 +762,7 @@
 // on types that depend on that (like Cell pointers).
 //
 
-#if (! CPLUSPLUS_11) || defined(NDEBUG)
+#if (! DEBUG_CHECK_NEVERNULL)
     #define NeverNull(type) \
         type
 #else
@@ -942,34 +945,38 @@
         NOOP
 #endif
 
+
 #ifdef NDEBUG
     #define Trash_Pointer_If_Debug(p)       NOOP
     #define Trash_Cfunc_If_Debug(T,p)       NOOP
+#elif (! CPLUSPLUS_11)
+    #define Trash_Pointer_If_Debug(p) \
+        ((p) = p_cast(void*, cast(uintptr_t, 0xDECAFBAD)))
+
+    #define SafeTrash_Pointer_If_Debug(p) \
+        ((p) = p_cast(void*, cast(uintptr_t, 0x5AFE5AFE)))
+
+    #define FreeTrash_Pointer_If_Debug(p) \
+        ((p) = p_cast(void*, cast(uintptr_t, 0xF4EEF4EE)))
+
+    #define Is_Pointer_Trash_Debug(p) \
+        ((p) == p_cast(void*, cast(uintptr_t, 0xDECAFBAD)))
 #else
-    #if defined(__cplusplus) // needed even if not C++11
-        template<class T>
-        inline static void Trash_Pointer_If_Debug(T* &p)
-          { p = p_cast(T*, cast(uintptr_t, 0xDECAFBAD)); }
+    template<class T>
+    inline static void Trash_Pointer_If_Debug(T* &p)
+      { p = p_cast(T*, cast(uintptr_t, 0xDECAFBAD)); }
 
-        template<class T>
-        inline static void SafeTrash_Pointer_If_Debug(T* &p)
-          { p = p_cast(T*, cast(uintptr_t, 0x5AFE5AFE)); }
+    template<class T>
+    inline static void SafeTrash_Pointer_If_Debug(T* &p)
+      { p = p_cast(T*, cast(uintptr_t, 0x5AFE5AFE)); }
 
-        template<class T>
-        inline static void FreeTrash_Pointer_If_Debug(T* &p)
-          { p = p_cast(T*, cast(uintptr_t, 0xF4EEF4EEE)); }
+    template<class T>
+    inline static void FreeTrash_Pointer_If_Debug(T* &p)
+      { p = p_cast(T*, cast(uintptr_t, 0xF4EEF4EEE)); }
 
-        template<class T>
-        inline static bool Is_Pointer_Trash_Debug(T* p)
-          { return (p == p_cast(T*, cast(uintptr_t, 0xDECAFBAD))); }
-
-        template<class T>
-        inline static bool Is_Pointer_SafeTrash_Debug(T* p)
-          { return (p == p_cast(T*, cast(uintptr_t, 0x5AFE5AFE))); }
-
-        template<class T>
-        inline static bool Is_Pointer_FreeTrash_Debug(T* p)
-          { return (p == p_cast(T*, cast(uintptr_t, 0xF4EEF4EE))); }
+    template<class T>
+    inline static bool Is_Pointer_Trash_Debug(T* p)
+      { return (p == p_cast(T*, cast(uintptr_t, 0xDECAFBAD))); }
 
     #if DEBUG_CHECK_OPTIONALS
         template<class P>
@@ -977,49 +984,17 @@
           { Trash_Pointer_If_Debug(option.wrapped); }
 
         template<class P>
-        inline static bool Is_Pointer_Trash_Debug(OptionWrapper<P> &option) {
-            return Is_Pointer_Trash_Debug(option.wrapped);
-        }
+        inline static bool Is_Pointer_Trash_Debug(Option(P) &option)
+          { return Is_Pointer_Trash_Debug(option.wrapped); }
     #endif
 
-    #if CPLUSPLUS_11
-        template<class P>
-        inline static void Trash_Pointer_If_Debug(NeverNullEnforcer<P> &nn) {
-            Trash_Pointer_If_Debug(nn.p);
-        }
+    template<class P>
+    inline static void Trash_Pointer_If_Debug(NeverNull(P) &nn)
+      { Trash_Pointer_If_Debug(nn.p); }
 
-        template<class P>
-        inline static bool Is_Pointer_Trash_Debug(NeverNullEnforcer<P> &nn) {
-            return Is_Pointer_Trash_Debug(nn.p);
-        }
-      #endif
-    #else
-        #define Trash_Pointer_If_Debug(p) \
-            ((p) = p_cast(void*, cast(uintptr_t, 0xDECAFBAD)))
-
-        #define SafeTrash_Pointer_If_Debug(p) \
-            ((p) = p_cast(void*, cast(uintptr_t, 0x5AFE5AFE)))
-
-        #define FreeTrash_Pointer_If_Debug(p) \
-            ((p) = p_cast(void*, cast(uintptr_t, 0xF4EEF4EE)))
-
-        #define Is_Pointer_Trash_Debug(p) \
-            ((p) == p_cast(void*, cast(uintptr_t, 0xDECAFBAD)))
-
-        #define Is_Pointer_SafeTrash_Debug(p) \
-            ((p) == p_cast(void*, cast(uintptr_t, 0x5AFE5AFE)))
-
-        #define Is_Pointer_FreeTrash_Debug(p) \
-            ((p) == p_cast(void*, cast(uintptr_t, 0xF4EEF4EE)))
-    #endif
-
-    // C functions must be cast to the right type, even in C (no void*)
-
-    #define Trash_Cfunc_If_Debug(T,p) \
-        ((p) = p_cast(T, cast(uintptr_t, 0xDECAFBAD)))
-
-    #define IS_CFUNC_TRASH_DEBUG(T,p) \
-        ((p) == p_cast(T, cast(uintptr_t, 0xDECAFBAD)))
+    template<class P>
+    inline static bool Is_Pointer_Trash_Debug(NeverNull(P) &nn)
+      { return Is_Pointer_Trash_Debug(nn.p); }
 #endif
 
 

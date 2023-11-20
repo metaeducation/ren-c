@@ -76,7 +76,7 @@ Level* Push_Downshifted_Level(Atom(*) out, Level* L) {
     //
     L->varlist = &PG_Inaccessible_Series;  // trash?  nullptr?
     L->rootvar = nullptr;
-    Trash_Cfunc_If_Debug(Executor*, L->executor);  // caller must set
+    Trash_Pointer_If_Debug(L->executor);  // caller must set
     Trash_Pointer_If_Debug(L->label);
 
     sub->u.action.dispatcher_base = L->u.action.dispatcher_base;

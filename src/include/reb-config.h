@@ -700,6 +700,14 @@ Special internal defines used by RT, not Host-Kit developers:
   #endif
 #endif
 
+#if !defined(DEBUG_CHECK_NEVERNULL)
+  #if defined(__SANITIZE_ADDRESS__)
+    #define DEBUG_CHECK_NEVERNULL (DEBUG && CPLUSPLUS_11)
+  #else
+    #define DEBUG_CHECK_NEVERNULL 0
+  #endif
+#endif
+
 #if !defined(DEBUG_PROTECT_FEED_CELLS)
     #define DEBUG_PROTECT_FEED_CELLS DEBUG
 #endif
