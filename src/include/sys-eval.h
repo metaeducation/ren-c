@@ -213,7 +213,7 @@ inline static bool Did_Init_Inert_Optimize_Complete(
 
             // !!! Cache this test?
             //
-            const REBPAR *first = First_Unspecialized_Param(nullptr, action);
+            const Param* first = First_Unspecialized_Param(nullptr, action);
             if (VAL_PARAM_CLASS(first) == PARAM_CLASS_SOFT)
                 goto optimized;  // don't look back, yield the lookahead
 
@@ -237,7 +237,7 @@ inline static bool Did_Init_Inert_Optimize_Complete(
             ACT_PARAMLIST(action),
             PARAMLIST_SKIPPABLE_FIRST
         )) {
-            const REBPAR *first = First_Unspecialized_Param(nullptr, action);
+            const Param* first = First_Unspecialized_Param(nullptr, action);
             if (not Typecheck_Coerce_Argument(first, out))
                 goto optimized;  // didn't actually want this parameter type
         }

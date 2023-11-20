@@ -276,7 +276,7 @@ inline static REBLEN CTX_LEN(Context* c) {
     return CTX_VARLIST(c)->content.dynamic.used - 1;  // -1 for archetype
 }
 
-inline static const REBKEY *CTX_KEY(Context* c, REBLEN n) {
+inline static const Key* CTX_KEY(Context* c, REBLEN n) {
     //
     // !!! Inaccessible contexts have to retain their keylists, at least
     // until all words bound to them have been adjusted somehow, because the
@@ -285,7 +285,7 @@ inline static const REBKEY *CTX_KEY(Context* c, REBLEN n) {
     /* assert(Not_Series_Flag(c, INACCESSIBLE)); */
 
     assert(n != 0 and n <= CTX_LEN(c));
-    return Series_At(const REBKEY, CTX_KEYLIST(c), n - 1);
+    return Series_At(const Key, CTX_KEYLIST(c), n - 1);
 }
 
 inline static REBVAR *CTX_VAR(Context* c, REBLEN n) {  // 1-based, no Cell*
@@ -336,15 +336,15 @@ inline static REBVAR *MOD_VAR(Context* c, const Symbol* sym, bool strict) {
 // CTX_VAR() does not.  Also, CTX_KEYS_HEAD() gives back a mutable slot.
 
 #define CTX_KEYS_HEAD(c) \
-    Series_At(REBKEY, CTX_KEYLIST(c), 0)  // 0-based
+    Series_At(Key, CTX_KEYLIST(c), 0)  // 0-based
 
 #define CTX_VARS_HEAD(c) \
     (cast(REBVAR*, x_cast(Series*, (c))->content.dynamic.data) + 1)
 
-inline static const REBKEY *CTX_KEYS(const REBKEY ** tail, Context* c) {
+inline static const Key* CTX_KEYS(const Key* * tail, Context* c) {
     Series* keylist = CTX_KEYLIST(c);
-    *tail = Series_Tail(REBKEY, keylist);
-    return Series_Head(REBKEY, keylist);
+    *tail = Series_Tail(Key, keylist);
+    return Series_Head(Key, keylist);
 }
 
 inline static REBVAR *CTX_VARS(const REBVAR ** tail, Context* c) {
@@ -489,7 +489,7 @@ inline static void INIT_VAL_FRAME_LABEL(
 // visible for that phase of execution and which aren't.
 //
 
-inline static const REBKEY *VAL_CONTEXT_KEYS_HEAD(NoQuote(const Cell*) context)
+inline static const Key* VAL_CONTEXT_KEYS_HEAD(NoQuote(const Cell*) context)
 {
     if (Cell_Heart(context) != REB_FRAME)
         return CTX_KEYS_HEAD(VAL_CONTEXT(context));

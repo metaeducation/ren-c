@@ -98,9 +98,9 @@ DECLARE_NATIVE(augment_p)  // see extended definition AUGMENT in %base-defs.r
     // For each parameter in the original function, push a "quad"
     //
   blockscope {
-    const REBKEY *tail;
-    const REBKEY *key = ACT_KEYS(&tail, augmentee);
-    const REBPAR *param = ACT_PARAMS_HEAD(augmentee);
+    const Key* tail;
+    const Key* key = ACT_KEYS(&tail, augmentee);
+    const Param* param = ACT_PARAMS_HEAD(augmentee);
     for (; key != tail; ++key, ++param) {
         Init_Word(PUSH(), KEY_SYMBOL(key));
 

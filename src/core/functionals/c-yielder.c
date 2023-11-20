@@ -140,9 +140,9 @@ Bounce Yielder_Dispatcher(Level* const L)
     // those into the old varlist before replacing this varlist with that
     // prior identity.
     //
-    const REBKEY *key_tail;
-    const REBKEY *key = CTX_KEYS(&key_tail, last_yielder_context);
-    REBPAR* param = ACT_PARAMS_HEAD(Level_Phase(yielder_level));
+    const Key* key_tail;
+    const Key* key = CTX_KEYS(&key_tail, last_yielder_context);
+    Param* param = ACT_PARAMS_HEAD(Level_Phase(yielder_level));
     Value(*) dest = CTX_VARS_HEAD(last_yielder_context);
     Value(*) src = Level_Args_Head(yielder_level);
     for (; key != key_tail; ++key, ++param, ++dest, ++src) {

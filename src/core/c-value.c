@@ -327,10 +327,10 @@ void* Probe_Core_Debug(
     //=//// SERIES WITH ELEMENTS sizeof(void*) /////////////////////////////=//
 
       case FLAVOR_KEYLIST: {
-        assert(Series_Wide(s) == sizeof(REBKEY));  // ^-- or is byte size
+        assert(Series_Wide(s) == sizeof(Key));  // ^-- or is byte size
         Probe_Print_Helper(p, expr, "KeyList Series", file, line);
-        const REBKEY *tail = Series_Tail(REBKEY, s);
-        const REBKEY *key = Series_Head(REBKEY, s);
+        const Key* tail = Series_Tail(Key, s);
+        const Key* key = Series_Head(Key, s);
         Append_Ascii(mo->series, "<< ");
         for (; key != tail; ++key) {
             Mold_Text_Series_At(mo, KEY_SYMBOL(key), 0);

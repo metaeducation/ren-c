@@ -381,8 +381,8 @@ DECLARE_NATIVE(reframer_p)
     }
 
   blockscope {
-    const REBKEY *key;
-    const REBPAR *param;
+    const Key* key;
+    const Param* param;
 
     if (REF(parameter)) {
         const Symbol* symbol = VAL_WORD_SYMBOL(ARG(parameter));
@@ -429,9 +429,9 @@ DECLARE_NATIVE(reframer_p)
   }
 
   cleanup_binder: {
-    const REBKEY *tail;
-    const REBKEY *key = ACT_KEYS(&tail, shim);
-    const REBPAR *param = ACT_PARAMS_HEAD(shim);
+    const Key* tail;
+    const Key* key = ACT_KEYS(&tail, shim);
+    const Param* param = ACT_PARAMS_HEAD(shim);
     for (; key != tail; ++key, ++param) {
         if (Is_Specialized(param))
             continue;

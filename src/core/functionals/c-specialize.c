@@ -119,9 +119,9 @@ Context* Make_Context_For_Action_Push_Partials(
         }
     }
 
-    const REBKEY *tail;
-    const REBKEY *key = ACT_KEYS(&tail, act);
-    const REBPAR *param = ACT_PARAMS_HEAD(act);
+    const Key* tail;
+    const Key* key = ACT_KEYS(&tail, act);
+    const Param* param = ACT_PARAMS_HEAD(act);
 
     REBVAL *arg = SPECIFIC(rootvar) + 1;
 
@@ -285,9 +285,9 @@ bool Specialize_Action_Throws(
         // !!! Only one binder can be in effect, and we're calling arbitrary
         // code.  Must clean up now vs. in loop we do at the end.  :-(
         //
-        const REBKEY *tail;
-        const REBKEY *key = ACT_KEYS(&tail, unspecialized);
-        const REBPAR *param = ACT_PARAMS_HEAD(unspecialized);
+        const Key* tail;
+        const Key* key = ACT_KEYS(&tail, unspecialized);
+        const Param* param = ACT_PARAMS_HEAD(unspecialized);
         for (; key != tail; ++key, ++param) {
             if (Is_Specialized(param))
                 continue;  // maybe refinement from stack, now specialized out
@@ -310,9 +310,9 @@ bool Specialize_Action_Throws(
         FRESHEN(out);
     }
 
-    const REBKEY *tail;
-    const REBKEY *key = ACT_KEYS(&tail, unspecialized);
-    const REBPAR *param = ACT_PARAMS_HEAD(unspecialized);
+    const Key* tail;
+    const Key* key = ACT_KEYS(&tail, unspecialized);
+    const Param* param = ACT_PARAMS_HEAD(unspecialized);
 
     REBVAL *arg = CTX_VARS_HEAD(exemplar);
 
@@ -402,7 +402,7 @@ bool Specialize_Action_Throws(
             }
 
             REBVAL *slot = CTX_VAR(exemplar, VAL_WORD_INDEX(ordered));
-            if (not Is_Specialized(cast(REBPAR*, slot))) {
+            if (not Is_Specialized(cast(Param*, slot))) {
                 //
                 // It's still partial...
                 //
@@ -514,9 +514,9 @@ void For_Each_Unspecialized_Param(
     // given to it in the second pass.
     //
   blockscope {
-    const REBKEY *tail;
-    const REBKEY *key = ACT_KEYS(&tail, act);
-    const REBPAR *param = ACT_PARAMS_HEAD(act);
+    const Key* tail;
+    const Key* key = ACT_KEYS(&tail, act);
+    const Param* param = ACT_PARAMS_HEAD(act);
 
     // Loop through and pass just the normal args.
     //
@@ -563,8 +563,8 @@ void For_Each_Unspecialized_Param(
         Cell* partial = Array_Tail(unwrap(partials));
         Cell* head = Array_Head(unwrap(partials));
         for (; partial-- != head; ) {
-            const REBKEY *key = ACT_KEY(act, VAL_WORD_INDEX(partial));
-            const REBPAR *param = ACT_PARAM(act, VAL_WORD_INDEX(partial));
+            const Key* key = ACT_KEY(act, VAL_WORD_INDEX(partial));
+            const Param* param = ACT_PARAM(act, VAL_WORD_INDEX(partial));
 
             if (not hook(key, param, PHF_UNREFINED, opaque))
                 return;
@@ -574,9 +574,9 @@ void For_Each_Unspecialized_Param(
     // Finally, output any fully unspecialized refinements
 
   blockscope {
-    const REBKEY *key_tail;
-    const REBKEY *key = ACT_KEYS(&key_tail, act);
-    const REBPAR *param = ACT_PARAMS_HEAD(act);
+    const Key* key_tail;
+    const Key* key = ACT_KEYS(&key_tail, act);
+    const Param* param = ACT_PARAMS_HEAD(act);
 
     for (; key != key_tail; ++key, ++param) {
         if (Is_Specialized(param))
@@ -613,13 +613,13 @@ void For_Each_Unspecialized_Param(
 
 
 struct Find_Param_State {
-    const REBKEY *key;
-    const REBPAR *param;
+    const Key* key;
+    const Param* param;
 };
 
 static bool First_Param_Hook(
-    const REBKEY *key,
-    const REBPAR *param,
+    const Key* key,
+    const Param* param,
     Flags flags,
     void *opaque
 ){
@@ -635,8 +635,8 @@ static bool First_Param_Hook(
 }
 
 static bool Last_Param_Hook(
-    const REBKEY *key,
-    const REBPAR *param,
+    const Key* key,
+    const Param* param,
     Flags flags,
     void *opaque
 ){
@@ -660,7 +660,7 @@ static bool Last_Param_Hook(
 //
 // This means that the last parameter (D) is actually the first of FOO-D.
 //
-const REBPAR *First_Unspecialized_Param(const REBKEY ** key, Action* act)
+const Param* First_Unspecialized_Param(const Key* * key, Action* act)
 {
     struct Find_Param_State s;
     s.key = nullptr;
@@ -679,7 +679,7 @@ const REBPAR *First_Unspecialized_Param(const REBKEY ** key, Action* act)
 //
 // See notes on First_Unspecialized_Param() regarding complexity
 //
-const REBPAR *Last_Unspecialized_Param(const REBKEY ** key, Action* act)
+const Param* Last_Unspecialized_Param(const Key* * key, Action* act)
 {
     struct Find_Param_State s;
     s.key = nullptr;
@@ -697,10 +697,10 @@ const REBPAR *Last_Unspecialized_Param(const REBKEY ** key, Action* act)
 //
 // Helper built on First_Unspecialized_Param(), can also give you the param.
 //
-REBVAL *First_Unspecialized_Arg(Option(const REBPAR **) param_out, Level* L)
+REBVAL *First_Unspecialized_Arg(Option(const Param* *) param_out, Level* L)
 {
     Phase* phase = Level_Phase(L);
-    const REBPAR *param = First_Unspecialized_Param(nullptr, phase);
+    const Param* param = First_Unspecialized_Param(nullptr, phase);
     if (param_out)
         *unwrap(param_out) = param;
 
@@ -725,9 +725,9 @@ Phase* Alloc_Action_From_Exemplar(
 ){
     Action* unspecialized = CTX_FRAME_PHASE(exemplar);
 
-    const REBKEY *tail;
-    const REBKEY *key = ACT_KEYS(&tail, unspecialized);
-    const REBPAR *param = ACT_PARAMS_HEAD(unspecialized);
+    const Key* tail;
+    const Key* key = ACT_KEYS(&tail, unspecialized);
+    const Param* param = ACT_PARAMS_HEAD(unspecialized);
     REBVAL *arg = CTX_VARS_HEAD(exemplar);
     for (; key != tail; ++key, ++arg, ++param) {
         if (Is_Specialized(param))

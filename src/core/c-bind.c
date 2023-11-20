@@ -146,8 +146,8 @@ void Bind_Values_Core(
     //
   if (not IS_MODULE(context)) {
     REBLEN index = 1;
-    const REBKEY *key_tail;
-    const REBKEY *key = CTX_KEYS(&key_tail, c);
+    const Key* key_tail;
+    const Key* key = CTX_KEYS(&key_tail, c);
     const REBVAR *var = CTX_VARS_HEAD(c);
     for (; key != key_tail; key++, var++, index++)
         Add_Binder_Index(&binder, KEY_SYMBOL(key), index);
@@ -164,8 +164,8 @@ void Bind_Values_Core(
     );
 
   if (not IS_MODULE(context)) {  // Reset all the binder indices to zero
-    const REBKEY *key_tail;
-    const REBKEY *key = CTX_KEYS(&key_tail, c);
+    const Key* key_tail;
+    const Key* key = CTX_KEYS(&key_tail, c);
     const REBVAR *var = CTX_VARS_HEAD(c);
     for (; key != key_tail; ++key, ++var)
         Remove_Binder_Index(&binder, KEY_SYMBOL(key));
@@ -451,8 +451,8 @@ Option(Series*) Get_Word_Container(
         /* REBLEN cached_len = VAL_WORD_INDEX(Array_Single(specifier)); */
 
         REBLEN index = 1;
-        const REBKEY *key_tail;
-        const REBKEY *key = CTX_KEYS(&key_tail, overload);
+        const Key* key_tail;
+        const Key* key = CTX_KEYS(&key_tail, overload);
         for (; key != key_tail; ++key, ++index) {
             if (KEY_SYMBOL(key) != symbol)
                 continue;
@@ -1574,8 +1574,8 @@ Context* Virtual_Bind_Deep_To_New_Context(
     // Must remove binder indexes for all words, even if about to fail
     //
   blockscope {
-    const REBKEY *key_tail;
-    const REBKEY *key = CTX_KEYS(&key_tail, c);
+    const Key* key_tail;
+    const Key* key = CTX_KEYS(&key_tail, c);
     REBVAL *var = CTX_VARS_HEAD(c); // only needed for debug, optimized out
     for (; key != key_tail; ++key, ++var) {
         REBINT stored = Remove_Binder_Index_Else_0(

@@ -365,13 +365,13 @@ Bounce Evaluator_Executor(Level* L)
         Action* action = VAL_ACTION(SCRATCH);
         assert(IS_DETAILS(action));
         Intrinsic* intrinsic = Extract_Intrinsic(cast(Phase*, action));
-        REBPAR* param = ACT_PARAM(action, 2);
+        Param* param = ACT_PARAM(action, 2);
 
         if (VAL_PARAM_CLASS(param) == PARAM_CLASS_META)
             Meta_Quotify(SPARE);
         if (not Typecheck_Coerce_Argument(param, SPARE)) {
             Option(const Symbol*) label = VAL_FRAME_LABEL(SCRATCH);
-            const REBKEY* key = ACT_KEY(action, 2);
+            const Key* key = ACT_KEY(action, 2);
             fail (Error_Arg_Type(label, key, param, stable_SPARE));
         }
         (*intrinsic)(OUT, cast(Phase*, action), stable_SPARE);
@@ -475,7 +475,7 @@ Bounce Evaluator_Executor(Level* L)
     ){
         // !!! cache this test?
         //
-        const REBPAR *first = First_Unspecialized_Param(nullptr, enfixed);
+        const Param* first = First_Unspecialized_Param(nullptr, enfixed);
         if (
             VAL_PARAM_CLASS(first) == PARAM_CLASS_SOFT
             or VAL_PARAM_CLASS(first) == PARAM_CLASS_META
@@ -497,7 +497,7 @@ Bounce Evaluator_Executor(Level* L)
     // with the BLOCK! on the left, but `x: default [...]` gets the SET-WORD!
     //
     if (Get_Subclass_Flag(VARLIST, paramlist, PARAMLIST_SKIPPABLE_FIRST)) {
-        const REBPAR *first = First_Unspecialized_Param(nullptr, enfixed);
+        const Param* first = First_Unspecialized_Param(nullptr, enfixed);
         if (not TYPE_CHECK(first, OUT)) {  // left's kind
             FRESHEN(OUT);
             goto give_up_backward_quote_priority;
@@ -749,7 +749,7 @@ Bounce Evaluator_Executor(Level* L)
             ){
                 Copy_Cell(SCRATCH, unwrap(L_current_gotten));
                 INIT_VAL_ACTION_LABEL(SCRATCH, label);  // use the word
-                REBPAR* param = ACT_PARAM(action, 2);
+                Param* param = ACT_PARAM(action, 2);
                 Flags flags = EVAL_EXECUTOR_FLAG_FULFILLING_ARG;
                 if (VAL_PARAM_CLASS(param) == PARAM_CLASS_META)
                     flags |= LEVEL_FLAG_RAISED_RESULT_OK;
@@ -1950,7 +1950,7 @@ Bounce Evaluator_Executor(Level* L)
         if (Get_Eval_Executor_Flag(L, DIDNT_LEFT_QUOTE_TUPLE))
             fail (Error_Literal_Left_Tuple_Raw());
 
-        const REBPAR *first = First_Unspecialized_Param(nullptr, enfixed);
+        const Param* first = First_Unspecialized_Param(nullptr, enfixed);
         if (VAL_PARAM_CLASS(first) == PARAM_CLASS_SOFT) {
             if (Get_Feed_Flag(L->feed, NO_LOOKAHEAD)) {
                 Clear_Feed_Flag(L->feed, NO_LOOKAHEAD);

@@ -748,7 +748,7 @@ DECLARE_NATIVE(apply)
     Value(*) iterator = ARG(return);  // reuse to hold Evars iterator
 
     REBVAR *var;  // may come from evars iterator or found by index
-    REBPAR *param;  // (same)
+    Param* param;  // (same)
 
     enum {
         ST_APPLY_INITIAL_ENTRY = STATE_0,

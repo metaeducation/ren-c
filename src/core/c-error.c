@@ -103,7 +103,7 @@ ATTRIBUTE_NO_RETURN void Fail_Core(const void *p)
 
         // Check to see if the REBVAL* cell is in the paramlist of the current
         // running native.  (We could theoretically do this with ARG(), or
-        // have a nuance of behavior with ARG()...or even for the REBKEY*.)
+        // have a nuance of behavior with ARG()...or even for the Key* .)
         //
         if (Is_Node_Root_Bit_Set(v)) {
             //
@@ -125,11 +125,11 @@ ATTRIBUTE_NO_RETURN void Fail_Core(const void *p)
         else if (not Is_Action_Level(TOP_LEVEL))
             error = Error_Bad_Value(v);
         else {
-            const REBPAR *head = ACT_PARAMS_HEAD(Level_Phase(TOP_LEVEL));
+            const Param* head = ACT_PARAMS_HEAD(Level_Phase(TOP_LEVEL));
             REBLEN num_params = ACT_NUM_PARAMS(Level_Phase(TOP_LEVEL));
 
             if (v >= head and v < head + num_params) {
-                const REBPAR *param = cast_PAR(c_cast(REBVAL*, v));
+                const Param* param = cast_PAR(c_cast(REBVAL*, v));
                 error = Error_Invalid_Arg(TOP_LEVEL, param);
             }
             else
@@ -892,8 +892,8 @@ Context* Error_No_Relative_Core(NoQuote(const Cell*) any_word)
 //
 Context* Error_Not_Varargs(
     Level* L,
-    const REBKEY *key,
-    const REBPAR *param,
+    const Key* key,
+    const Param* param,
     const REBVAL *arg
 ){
     assert(GET_PARAM_FLAG(param, VARIADIC));
@@ -919,11 +919,11 @@ Context* Error_Not_Varargs(
 //
 //  Error_Invalid_Arg: C
 //
-Context* Error_Invalid_Arg(Level* L, const REBPAR *param)
+Context* Error_Invalid_Arg(Level* L, const Param* param)
 {
     assert(IS_PARAMETER(param));
 
-    const REBPAR *headparam = ACT_PARAMS_HEAD(Level_Phase(L));
+    const Param* headparam = ACT_PARAMS_HEAD(Level_Phase(L));
     assert(param >= headparam);
     assert(param <= headparam + Level_Num_Args(L));
 
@@ -949,11 +949,11 @@ Context* Error_Invalid_Arg(Level* L, const REBPAR *param)
 // This directs the user that they can't take isotopes as an argument to a
 // function unless the ^META parameter convention is used.
 //
-Context* Error_Isotope_Arg(Level* L, const REBPAR *param)
+Context* Error_Isotope_Arg(Level* L, const Param* param)
 {
     assert(IS_PARAMETER(param));
 
-    const REBPAR *headparam = ACT_PARAMS_HEAD(Level_Phase(L));
+    const Param* headparam = ACT_PARAMS_HEAD(Level_Phase(L));
     assert(param >= headparam);
     assert(param <= headparam + Level_Num_Args(L));
 
@@ -1113,8 +1113,8 @@ Context* Error_Unexpected_Type(enum Reb_Kind expected, enum Reb_Kind actual)
 //
 Context* Error_Arg_Type(
     Option(const Symbol*) name,
-    const REBKEY *key,
-    const REBPAR *param,
+    const Key* key,
+    const Param* param,
     const REBVAL *arg
 ){
     if (VAL_PARAM_CLASS(param) == PARAM_CLASS_META and Is_Meta_Of_Raised(arg))
@@ -1155,8 +1155,8 @@ Context* Error_Arg_Type(
 //
 Context* Error_Phase_Arg_Type(
     Level* L,
-    const REBKEY *key,
-    const REBPAR *param,
+    const Key* key,
+    const Param* param,
     const REBVAL *arg
 ){
     if (Level_Phase(L) == L->u.action.original)  // not an internal phase
@@ -1210,7 +1210,7 @@ Context* Error_No_Arg_Typecheck(Option(const Symbol*) label)
 // is concerned.  (Some higher level mechanisms like APPLY will editorialize
 // and translate true => # and false => NULL, but the core mechanics don't.)
 //
-Context* Error_Bad_Argless_Refine(const REBKEY *key)
+Context* Error_Bad_Argless_Refine(const Key* key)
 {
     DECLARE_LOCAL (word);
     Refinify(Init_Word(word, KEY_SYMBOL(key)));

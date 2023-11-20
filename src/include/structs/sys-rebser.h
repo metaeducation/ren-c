@@ -815,7 +815,7 @@ union StubInfoUnion {
 // things we increment across aren't Symbol stubs, but pointers to Symbol
 // stubs... so a Key* is a pointer to a pointer.
 //
-typedef const Symbol* REBKEY;
+typedef const Symbol* Key;
 
 
 //=//// DON'T PUT ANY CODE (OR MACROS THAT MAY NEED CODE) IN THIS FILE! ///=//

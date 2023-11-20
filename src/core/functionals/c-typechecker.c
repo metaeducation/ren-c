@@ -267,7 +267,7 @@ bool Typecheck_Value(
                 assert(IS_DETAILS(action));
                 Intrinsic* intrinsic = Extract_Intrinsic(cast(Phase*, action));
 
-                REBPAR* param = ACT_PARAM(action, 2);
+                Param* param = ACT_PARAM(action, 2);
                 DECLARE_LOCAL (arg);
                 Copy_Cell(arg, v);
                 if (VAL_PARAM_CLASS(param) == PARAM_CLASS_META)
@@ -291,8 +291,8 @@ bool Typecheck_Value(
             Push_Action(L, VAL_ACTION(test), VAL_FRAME_BINDING(test));
             Begin_Prefix_Action(L, VAL_FRAME_LABEL(test));
 
-            const REBKEY *key = L->u.action.key;
-            const REBPAR *param = L->u.action.param;
+            const Key* key = L->u.action.key;
+            const Param* param = L->u.action.param;
             Atom(*) arg = L->u.action.arg;
             for (; key != L->u.action.key_tail; ++key, ++param, ++arg) {
                 if (Is_Specialized(param))
@@ -404,7 +404,7 @@ bool Typecheck_Value(
 //    contract of the function hasn't been "tweaked" with reskinning.
 //
 bool Typecheck_Coerce_Argument(
-    const REBPAR *param,
+    const Param* param,
     Atom(*) arg  // need mutability for coercion
 ){
     if (GET_PARAM_FLAG(param, CONST))

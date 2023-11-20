@@ -378,7 +378,7 @@ bool Did_Advance_Evars(EVARS *e) {
         ;
         e->key != e->key_tail;
         (++e->index, ++e->key,
-            e->param ? ++e->param : cast(REBPAR*, nullptr),
+            e->param ? ++e->param : cast(Param*, nullptr),
             e->var ? ++e->var : cast(REBVAR*, nullptr)
         )
     ){

@@ -35,8 +35,8 @@ struct Params_Of_State {
 // !!! Review why caller isn't filtering locals.
 //
 static bool Params_Of_Hook(
-    const REBKEY *key,
-    const REBPAR *param,
+    const Key* key,
+    const Param* param,
     Flags flags,
     void *opaque
 ){
@@ -104,8 +104,8 @@ Array* Make_Action_Parameters_Arr(Action* act, bool just_words)
 
 
 static bool Outputs_Of_Hook(
-    const REBKEY *key,
-    const REBPAR *param,
+    const Key* key,
+    const Param* param,
     Flags flags,
     void *opaque
 ){
@@ -280,7 +280,7 @@ void Push_Paramlist_Quads_May_Fail(
 
             StackValue(*) param = PARAM_SLOT(TOP_INDEX);
 
-            if (Is_Specialized(cast(REBPAR*, cast(REBVAL*, param))))
+            if (Is_Specialized(cast(Param*, cast(REBVAL*, param))))
                 continue;
 
             was_refinement = GET_PARAM_FLAG(param, REFINEMENT);
@@ -624,7 +624,7 @@ Array* Pop_Paramlist_With_Adjunct_May_Fail(
     REBVAL *param = 1 + Init_Word_Isotope(
         x_cast(Value(*), Array_Head(paramlist)), Canon(ROOTVAR)
     );
-    REBKEY *key = Series_Head(REBKEY, keylist);
+    Key* key = Series_Head(Key, keylist);
 
     if (return_stackindex != 0) {
         assert(flags & MKF_RETURN);
@@ -650,7 +650,7 @@ Array* Pop_Paramlist_With_Adjunct_May_Fail(
         //
         bool hidden;
         if (Get_Cell_Flag(slot, STACK_NOTE_SEALED)) {
-            assert(Is_Specialized(cast(REBPAR*, cast(REBVAL*, slot))));
+            assert(Is_Specialized(cast(Param*, cast(REBVAL*, slot))));
 
             // !!! This flag was being set on an uninitialized param, with the
             // remark "survives copy over".  But the copy puts the flag on
@@ -659,7 +659,7 @@ Array* Pop_Paramlist_With_Adjunct_May_Fail(
             hidden = true;
         }
         else {
-            if (not Is_Specialized(cast(REBPAR*, cast(REBVAL*, slot))))
+            if (not Is_Specialized(cast(Param*, cast(REBVAL*, slot))))
                 Finalize_Param(cast(REBVAL*, slot));
 
             if (not Try_Add_Binder_Index(&binder, symbol, 1020))
@@ -700,9 +700,9 @@ Array* Pop_Paramlist_With_Adjunct_May_Fail(
     // Must remove binder indexes for all words, even if about to fail
     //
   blockscope {
-    const REBKEY *tail = Series_Tail(REBKEY, keylist);
-    const REBKEY *key = Series_Head(REBKEY, keylist);
-    const REBPAR *param = Series_At(REBPAR, paramlist, 1);
+    const Key* tail = Series_Tail(Key, keylist);
+    const Key* key = Series_Head(Key, keylist);
+    const Param* param = Series_At(Param, paramlist, 1);
     for (; key != tail; ++key, ++param) {
         //
         // See notes in AUGMENT on why we don't do binder indices on "sealed"
@@ -986,7 +986,7 @@ Phase* Make_Action(
     Assert_Series_Managed(keylist);  // paramlists/keylists, can be shared
     assert(Series_Used(keylist) + 1 == Array_Len(paramlist));
     if (Get_Subclass_Flag(VARLIST, paramlist, PARAMLIST_HAS_RETURN)) {
-        const REBKEY *key = Series_At(const REBKEY, keylist, 0);
+        const Key* key = Series_At(const Key, keylist, 0);
         assert(KEY_SYM(key) == SYM_RETURN);
         UNUSED(key);
     }
@@ -1034,7 +1034,7 @@ Phase* Make_Action(
     // the work of doing that is factored into a routine (`PARAMETERS OF`
     // uses it as well).
 
-    const REBPAR *first = First_Unspecialized_Param(nullptr, act);
+    const Param* first = First_Unspecialized_Param(nullptr, act);
     if (first) {
         enum Reb_Param_Class pclass = VAL_PARAM_CLASS(first);
         switch (pclass) {
@@ -1238,7 +1238,7 @@ DECLARE_NATIVE(tweak)
     INCLUDE_PARAMS_OF_TWEAK;
 
     Action* act = VAL_ACTION(ARG(frame));
-    const REBPAR *first = First_Unspecialized_Param(nullptr, act);
+    const Param* first = First_Unspecialized_Param(nullptr, act);
 
     enum Reb_Param_Class pclass = first
         ? VAL_PARAM_CLASS(first)

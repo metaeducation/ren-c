@@ -150,7 +150,7 @@ Bounce Func_Dispatcher(Level* const L)
 
 } body_finished_without_returning: {  ////////////////////////////////////////
 
-    const REBPAR *param = ACT_PARAMS_HEAD(Level_Phase(L));
+    const Param* param = ACT_PARAMS_HEAD(Level_Phase(L));
 
     if (NOT_PARAM_FLAG(param, RETURN_TYPECHECKED)) {
         Init_None(OUT);  // none falls out of FUNC by default
@@ -376,7 +376,7 @@ DECLARE_NATIVE(endable_q)
     Context* ctx = VAL_CONTEXT(SPARE);
     Action* act = CTX_FRAME_PHASE(ctx);
 
-    REBPAR *param = ACT_PARAM(act, VAL_WORD_INDEX(v));
+    Param* param = ACT_PARAM(act, VAL_WORD_INDEX(v));
     bool endable = GET_PARAM_FLAG(param, ENDABLE);
 
     return Init_Logic(OUT, endable);
@@ -411,7 +411,7 @@ DECLARE_NATIVE(skippable_q)
     Context* ctx = VAL_CONTEXT(SPARE);
     Action* act = CTX_FRAME_PHASE(ctx);
 
-    REBPAR *param = ACT_PARAM(act, VAL_WORD_INDEX(v));
+    Param* param = ACT_PARAM(act, VAL_WORD_INDEX(v));
     bool skippable = GET_PARAM_FLAG(param, SKIPPABLE);
 
     return Init_Logic(OUT, skippable);
@@ -539,7 +539,7 @@ bool Typecheck_Coerce_Return(
     // local uses them for the return types of a function.
     //
     Phase* phase = Level_Phase(L);
-    const REBPAR *param = ACT_PARAMS_HEAD(phase);
+    const Param* param = ACT_PARAMS_HEAD(phase);
     assert(KEY_SYM(ACT_KEYS_HEAD(phase)) == SYM_RETURN);
 
     if (GET_PARAM_FLAG(param, RETURN_NONE) and not Is_None(atom))

@@ -132,8 +132,8 @@ typedef enum {
 } Reb_Param_Hook_Flags;
 #define PHF_MASK_NONE 0
 typedef bool (PARAM_HOOK)(
-    const REBKEY *key,
-    const REBPAR *param,
+    const Key* key,
+    const Param* param,
     Flags flags,
     void *opaque
 );

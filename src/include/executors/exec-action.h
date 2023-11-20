@@ -201,8 +201,8 @@ struct ActionExecutorStateStruct {
     // If key and key_tail are equal, then that means the frame has been
     // fulfilled and its arguments are valid for use.
     //
-    const REBKEY *key;
-    const REBKEY *key_tail;
+    const Key* key;
+    const Key* key_tail;
 
     // `arg is the "actual argument"...which holds the pointer to the
     // REBVAL slot in the `arglist` for that corresponding `param`.  These
@@ -224,7 +224,7 @@ struct ActionExecutorStateStruct {
     // be fulfilled, or if it has been specialized with a value already then
     // that space is used to hold the specialized value cell.
     //
-    const REBPAR *param;
+    const Param* param;
 
     StackIndex dispatcher_base;
 };

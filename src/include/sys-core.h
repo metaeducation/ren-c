@@ -242,9 +242,9 @@ enum Reb_Var_Visibility {
 };
 
 struct Reb_Enum_Vars {
-    const REBKEY *key;
-    const REBKEY *key_tail;
-    REBPAR *param;
+    const Key* key;
+    const Key* key_tail;
+    Param* param;
     enum Reb_Var_Visibility visibility;
     REBVAR *var;
     REBLEN index;  // important for enumerations that are binding

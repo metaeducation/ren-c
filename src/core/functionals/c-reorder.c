@@ -117,9 +117,9 @@ DECLARE_NATIVE(reorder_p)  // see REORDER in %base-defs.r, for inheriting meta
     INIT_BINDER(&binder);
 
   blockscope {
-    const REBKEY *tail;
-    const REBKEY *key = ACT_KEYS(&tail, reorderee);
-    const REBPAR *param = ACT_PARAMS_HEAD(reorderee);
+    const Key* tail;
+    const Key* key = ACT_KEYS(&tail, reorderee);
+    const Param* param = ACT_PARAMS_HEAD(reorderee);
     REBLEN index = 1;
     for (; key != tail; ++key, ++param, ++index) {
         if (Is_Specialized(param))
@@ -198,9 +198,9 @@ DECLARE_NATIVE(reorder_p)  // see REORDER in %base-defs.r, for inheriting meta
     // ordering list.
 
   cleanup_binder: {
-    const REBKEY *tail;
-    const REBKEY *key = ACT_KEYS(&tail, reorderee);
-    const REBPAR *param = ACT_PARAMS_HEAD(reorderee);
+    const Key* tail;
+    const Key* key = ACT_KEYS(&tail, reorderee);
+    const Param* param = ACT_PARAMS_HEAD(reorderee);
     REBLEN index = 1;
     for (; key != tail; ++key, ++param, ++index) {
         if (Is_Specialized(param))

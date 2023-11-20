@@ -944,8 +944,8 @@ const void *RL_rebArgR(const void *p, va_list *vaptr)
 
     const Symbol* symbol = Intern_UTF8_Managed(cb_cast(name), strsize(name));
 
-    const REBKEY *tail;
-    const REBKEY *key = ACT_KEYS(&tail, act);
+    const Key* tail;
+    const Key* key = ACT_KEYS(&tail, act);
     REBVAL *arg = Level_Args_Head(L);
     for (; key != tail; ++key, ++arg) {
         if (Are_Synonyms(KEY_SYMBOL(key), symbol))

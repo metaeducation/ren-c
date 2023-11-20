@@ -135,7 +135,7 @@ DECLARE_NATIVE(reduce)
         goto next_reduce_step;
 
     if (Is_Void(OUT) or Is_Nihil(OUT)) {
-        const REBPAR* param = First_Unspecialized_Param(
+        const Param* param = First_Unspecialized_Param(
             nullptr,
             VAL_ACTION(predicate)
         );

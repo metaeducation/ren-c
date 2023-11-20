@@ -196,7 +196,7 @@ inline static bool Matcher_Matches(
 
 
 
-inline static enum Reb_Param_Class VAL_PARAM_CLASS(const REBPAR *param) {
+inline static enum Reb_Param_Class VAL_PARAM_CLASS(const Param* param) {
     assert(HEART_BYTE(param) == REB_PARAMETER);
     enum Reb_Param_Class pclass = cast(enum Reb_Param_Class,
         VAL_PARAMETER_CLASS_BYTE(param)
@@ -211,7 +211,7 @@ inline static enum Reb_Param_Class VAL_PARAM_CLASS(const REBPAR *param) {
 // A parameter can be any value (including isotopes) if it is specialized.
 // But a typeset that does not have param class 0 is unspecialized.
 //
-inline static bool Is_Specialized(const REBPAR *param) {
+inline static bool Is_Specialized(const Param* param) {
     if (
         HEART_BYTE(param) == REB_PARAMETER  // no assert on isotope
         and VAL_PARAM_CLASS(param) != PARAM_CLASS_0  // non-parameter typeset
@@ -240,7 +240,7 @@ inline static REBVAL *Init_Parameter_Core(Cell* out, const Array* array)
     TRACK(Init_Parameter_Core((out), (bits)))
 
 
-inline static REBPAR *Init_Param_Core(
+inline static Param* Init_Param_Core(
     Cell* out,
     Flags param_flags,
     const Array* array
@@ -252,7 +252,7 @@ inline static REBPAR *Init_Param_Core(
     VAL_PARAM_FLAGS(out) = param_flags;
     INIT_VAL_PARAMETER_ARRAY(out, array);
 
-    REBPAR *param = cast(REBPAR*, cast(REBVAL*, out));
+    Param* param = cast(Param*, cast(REBVAL*, out));
     assert(VAL_PARAM_CLASS(param) != PARAM_CLASS_0);  // must set
 
     assert(Not_Cell_Flag(param, VAR_MARKED_HIDDEN));

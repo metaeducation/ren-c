@@ -270,8 +270,8 @@ static void Queue_Unmarked_Accessible_Series_Deep(Series* s)
         // !!! KeyLists may not be the only category that are just a straight
         // list of node pointers.
         //
-        REBKEY *tail = Series_Tail(REBKEY, s);
-        REBKEY *key = Series_Head(REBKEY, s);
+        Key* tail = Series_Tail(Key, s);
+        Key* key = Series_Head(Key, s);
         for (; key != tail; ++key) {
             //
             // Symbol* are not available to the user to free out from under
@@ -921,8 +921,8 @@ static void Mark_Level_Stack_Deep(void)
         //
         Phase* phase; // goto would cross initialization
         phase = Level_Phase(L);
-        const REBKEY *key;
-        const REBKEY *tail;
+        const Key* key;
+        const Key* tail;
         key = ACT_KEYS(&tail, phase);
 
         REBVAL *arg;

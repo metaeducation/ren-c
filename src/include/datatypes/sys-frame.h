@@ -540,7 +540,7 @@ inline static Level* Prep_Level_Core(
 // measure, we just sense whether the phase has a return or not.
 //
 inline static REBVAL *D_ARG_Core(Level* L, REBLEN n) {  // 1 for first arg
-    REBPAR *param = ACT_PARAMS_HEAD(Level_Phase(L));
+    Param* param = ACT_PARAMS_HEAD(Level_Phase(L));
     REBVAL *arg = Level_Arg(L, 1);
     while (
         Is_Specialized(param)  // e.g. slots for saving multi-return variables

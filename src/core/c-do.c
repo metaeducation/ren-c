@@ -124,8 +124,8 @@ bool Pushed_Continuation(
         Push_Action(L, VAL_ACTION(action), VAL_FRAME_BINDING(action));
         Begin_Prefix_Action(L, VAL_FRAME_LABEL(action));
 
-        const REBKEY *key = L->u.action.key;
-        const REBPAR *param = L->u.action.param;
+        const Key* key = L->u.action.key;
+        const Param* param = L->u.action.param;
         Atom(*) arg = L->u.action.arg;
         for (; key != L->u.action.key_tail; ++key, ++param, ++arg) {
             if (Is_Specialized(param))
@@ -148,8 +148,8 @@ bool Pushed_Continuation(
         Push_Action(L, VAL_ACTION(branch), VAL_FRAME_BINDING(branch));
         Begin_Prefix_Action(L, VAL_FRAME_LABEL(branch));
 
-        const REBKEY *key = L->u.action.key;
-        const REBPAR *param = L->u.action.param;
+        const Key* key = L->u.action.key;
+        const Param* param = L->u.action.param;
         Atom(*) arg = L->u.action.arg;
         for (; key != L->u.action.key_tail; ++key, ++param, ++arg) {
             if (Is_Specialized(param))

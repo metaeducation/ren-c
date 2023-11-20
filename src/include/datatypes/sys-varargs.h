@@ -182,8 +182,8 @@ inline static bool Is_Level_Style_Varargs_May_Fail(
     (VAL_VARARGS_SIGNED_PARAM_INDEX(v) < 0)
 
 
-inline static const REBPAR *Param_For_Varargs_Maybe_Null(
-    const REBKEY **key,
+inline static const Param* Param_For_Varargs_Maybe_Null(
+    const Key* *key,
     NoQuote(const Cell*) v
 ){
     assert(Cell_Heart(v) == REB_VARARGS);
@@ -197,7 +197,7 @@ inline static const REBPAR *Param_For_Varargs_Maybe_Null(
                     phase,
                     (- VAL_VARARGS_SIGNED_PARAM_INDEX(v))
                 );
-            return cast(REBPAR*, Array_At(
+            return cast(Param*, Array_At(
                 paramlist,
                 - VAL_VARARGS_SIGNED_PARAM_INDEX(v)
             ));
@@ -207,7 +207,7 @@ inline static const REBPAR *Param_For_Varargs_Maybe_Null(
             phase,
             VAL_VARARGS_SIGNED_PARAM_INDEX(v)
         );
-        return cast(REBPAR*, Array_At(
+        return cast(Param*, Array_At(
             paramlist,
             VAL_VARARGS_SIGNED_PARAM_INDEX(v)
         ));

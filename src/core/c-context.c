@@ -231,7 +231,7 @@ static REBVAR* Append_Context_Core(
     // also check that redundant keys aren't getting added here.
     //
     Expand_Series_Tail(keylist, 1);  // updates the used count
-    Init_Key(Series_Last(REBKEY, keylist), symbol);
+    Init_Key(Series_Last(Key, keylist), symbol);
 
     // Add a slot to the var list
     //
@@ -313,8 +313,8 @@ void Collect_Context_Keys(
     struct Reb_Collector *cl,
     Context* context
 ){
-    const REBKEY *tail;
-    const REBKEY *key = CTX_KEYS(&tail, context);
+    const Key* tail;
+    const Key* key = CTX_KEYS(&tail, context);
 
     if (duplicate)
         *unwrap(duplicate) = nullptr;
@@ -443,7 +443,7 @@ KeyList* Collect_KeyList_Managed(
         );
 
         StackValue(*) word = Data_Stack_At(cl->stack_base) + 1;
-        REBKEY* key = Series_Head(REBKEY, keylist);
+        Key* key = Series_Head(Key, keylist);
         for (; word != TOP + 1; ++word, ++key)
             Init_Key(key, VAL_WORD_SYMBOL(word));
 
@@ -514,8 +514,8 @@ Array* Collect_Unique_Words_Managed(
         }
     }
     else if (ANY_CONTEXT(ignorables)) {
-        const REBKEY *key_tail;
-        const REBKEY *key = CTX_KEYS(&key_tail, VAL_CONTEXT(ignorables));
+        const Key* key_tail;
+        const Key* key = CTX_KEYS(&key_tail, VAL_CONTEXT(ignorables));
         for (; key != key_tail; ++key) {
             //
             // Shouldn't be possible to have an object with duplicate keys,
@@ -560,8 +560,8 @@ Array* Collect_Unique_Words_Managed(
         }
     }
     else if (ANY_CONTEXT(ignorables)) {
-        const REBKEY *key_tail;
-        const REBKEY *key = CTX_KEYS(&key_tail, VAL_CONTEXT(ignorables));
+        const Key* key_tail;
+        const Key* key = CTX_KEYS(&key_tail, VAL_CONTEXT(ignorables));
         for (; key != key_tail; ++key)
             Remove_Binder_Index(&cl->binder, KEY_SYMBOL(key));
     }
@@ -951,7 +951,7 @@ void Assert_Context_Core(Context* c)
         return;
     }
 
-    const REBKEY *key = CTX_KEYS_HEAD(c);
+    const Key* key = CTX_KEYS_HEAD(c);
     REBVAL *var = CTX_VARS_HEAD(c);
 
     REBLEN n;

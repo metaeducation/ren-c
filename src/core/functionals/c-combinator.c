@@ -329,8 +329,8 @@ void Push_Parser_Sublevel(
 
     Context* ctx = Make_Context_For_Action(parser, TOP_INDEX, nullptr);
 
-    const REBKEY* remainder_key = CTX_KEY(ctx, IDX_COMBINATOR_PARAM_REMAINDER);
-    const REBKEY* input_key = CTX_KEY(ctx, IDX_COMBINATOR_PARAM_INPUT);
+    const Key* remainder_key = CTX_KEY(ctx, IDX_COMBINATOR_PARAM_REMAINDER);
+    const Key* input_key = CTX_KEY(ctx, IDX_COMBINATOR_PARAM_INPUT);
     if (
         KEY_SYM(remainder_key) != SYM_REMAINDER
         or KEY_SYM(input_key) != SYM_INPUT
@@ -630,8 +630,8 @@ struct Combinator_Param_State {
 };
 
 static bool Combinator_Param_Hook(
-    const REBKEY *key,
-    const REBPAR *param,
+    const Key* key,
+    const Param* param,
     Flags flags,
     void *opaque
 ){

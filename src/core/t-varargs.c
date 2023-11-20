@@ -141,8 +141,8 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
 ){
     FRESHEN(out);
 
-    const REBKEY *key;
-    const REBPAR *param = Param_For_Varargs_Maybe_Null(&key, vararg);
+    const Key* key;
+    const Param* param = Param_For_Varargs_Maybe_Null(&key, vararg);
     if (pclass == PARAM_CLASS_0)
         pclass = VAL_PARAM_CLASS(param);
 
@@ -578,8 +578,8 @@ void MF_Varargs(REB_MOLD *mo, NoQuote(const Cell*) v, bool form) {
     Append_Codepoint(mo->series, '[');
 
     enum Reb_Param_Class pclass;
-    const REBKEY *key;
-    const REBPAR *param = Param_For_Varargs_Maybe_Null(&key, v);
+    const Key* key;
+    const Param* param = Param_For_Varargs_Maybe_Null(&key, v);
     if (param == NULL) {
         pclass = PARAM_CLASS_HARD;
         Append_Ascii(mo->series, "???"); // never bound to an argument
@@ -667,8 +667,8 @@ DECLARE_NATIVE(variadic_q)
 
     Action* action = VAL_ACTION(ARG(frame));
 
-    const REBKEY *key_tail;
-    const REBKEY *key = ACT_KEYS(&key_tail, action);
+    const Key* key_tail;
+    const Key* key = ACT_KEYS(&key_tail, action);
     const REBVAL *param = ACT_PARAMS_HEAD(action);
     for (; key != key_tail; ++param, ++key) {
         if (GET_PARAM_FLAG(param, VARIADIC))

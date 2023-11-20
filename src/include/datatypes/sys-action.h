@@ -360,16 +360,16 @@ inline static Context* ACT_EXEMPLAR(Action* a) {
     cast(KeyList*, BONUS(KeySource, ACT_EXEMPLAR(a)))
 
 #define ACT_KEYS_HEAD(a) \
-    Series_Head(const REBKEY, ACT_KEYLIST(a))
+    Series_Head(const Key, ACT_KEYLIST(a))
 
 #define ACT_KEYS(tail,a) \
     CTX_KEYS((tail), ACT_EXEMPLAR(a))
 
 #define ACT_PARAMLIST(a)            CTX_VARLIST(ACT_EXEMPLAR(a))
 
-inline static REBPAR *ACT_PARAMS_HEAD(Action* a) {
+inline static Param* ACT_PARAMS_HEAD(Action* a) {
     Array* list = CTX_VARLIST(ACT_EXEMPLAR(a));
-    return cast(REBPAR*, list->content.dynamic.data) + 1;  // skip archetype
+    return cast(Param*, list->content.dynamic.data) + 1;  // skip archetype
 }
 
 #define LINK_DISPATCHER(a)              cast(Dispatcher*, (a)->link.any.cfunc)
@@ -429,11 +429,11 @@ enum {
     do { PUSH(); PUSH(); PUSH(); PUSH(); } while (0)
 
 
-inline static const Symbol* KEY_SYMBOL(const REBKEY *key)
+inline static const Symbol* KEY_SYMBOL(const Key* key)
   { return *key; }
 
 
-inline static void Init_Key(REBKEY *dest, const Symbol* symbol)
+inline static void Init_Key(Key* dest, const Symbol* symbol)
   { *dest = symbol; }
 
 #define KEY_SYM(key) \
