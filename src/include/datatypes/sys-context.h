@@ -49,7 +49,7 @@
 //  |      <opt> ANY-VALUE! ...    |        |     Symbol* key symbol ...  |
 //  +------------------------------+        +-------------------------------+
 //
-// (For executing frames, the ---Link--> is actually to its Level(*) structure
+// (For executing frames, the ---Link--> is actually to its Level* structure
 // so the paramlist of the CTX_FRAME_PHASE() must be consulted.  When the
 // frame stops running, the paramlist is written back to the link again.)
 //
@@ -222,8 +222,8 @@ inline static void INIT_VAL_FRAME_ROOTVAR_Core(
 //=//// CONTEXT KEYLISTS //////////////////////////////////////////////////=//
 //
 // If a context represents a FRAME! that is currently executing, one often
-// needs to quickly navigate to the Level(*) structure for the corresponding
-// stack level.  This is sped up by swapping the Level(*) into the LINK() of
+// needs to quickly navigate to the Level* structure for the corresponding
+// stack level.  This is sped up by swapping the Level* into the LINK() of
 // the varlist until the frame is finished.  In this state, the paramlist of
 // the FRAME! action is consulted. When the action is finished, this is put
 // back in BONUS_KEYSOURCE().
@@ -238,7 +238,7 @@ inline static KeyList* CTX_KEYLIST(Context* c) {
     assert(CTX_TYPE(c) != REB_MODULE);
     if (Is_Node_A_Cell(BONUS(KeySource, CTX_VARLIST(c)))) {
         //
-        // running frame, KeySource is Level(*), so use action's paramlist.
+        // running frame, KeySource is Level*, so use action's paramlist.
         //
         return ACT_KEYLIST(CTX_FRAME_PHASE(c));
     }
@@ -354,13 +354,13 @@ inline static REBVAR *CTX_VARS(const REBVAR ** tail, Context* c) {
 }
 
 
-//=//// FRAME! Context* <-> Level(*) STRUCTURE //////////////////////////=//
+//=//// FRAME! Context* <-> Level* STRUCTURE //////////////////////////=//
 //
 // For a FRAME! context, the keylist is redundant with the paramlist of the
 // CTX_FRAME_PHASE() that the frame is for.  That is taken advantage of when
 // a frame is executing in order to use the LINK() keysource to point at the
-// running Level(*) structure for that stack level.  This provides a cheap
-// way to navigate from a Context* to the Level(*) that's running it.
+// running Level* structure for that stack level.  This provides a cheap
+// way to navigate from a Context* to the Level* that's running it.
 //
 
 inline static bool Is_Frame_On_Stack(Context* c) {
@@ -368,7 +368,7 @@ inline static bool Is_Frame_On_Stack(Context* c) {
     return Is_Node_A_Cell(BONUS(KeySource, CTX_VARLIST(c)));
 }
 
-inline static Level(*) CTX_LEVEL_IF_ON_STACK(Context* c) {
+inline static Level* CTX_LEVEL_IF_ON_STACK(Context* c) {
     Node* keysource = BONUS(KeySource, CTX_VARLIST(c));
     if (not Is_Node_A_Cell(keysource))
         return nullptr; // e.g. came from MAKE FRAME! or Encloser_Dispatcher
@@ -376,13 +376,13 @@ inline static Level(*) CTX_LEVEL_IF_ON_STACK(Context* c) {
     assert(Not_Series_Flag(CTX_VARLIST(c), INACCESSIBLE));
     assert(IS_FRAME(CTX_ARCHETYPE(c)));
 
-    Level(*) L = cast(Level(*), keysource);
+    Level* L = cast(Level*, keysource);
     assert(L->executor == &Action_Executor);
     return L;
 }
 
-inline static Level(*) CTX_LEVEL_MAY_FAIL(Context* c) {
-    Level(*) L = CTX_LEVEL_IF_ON_STACK(c);
+inline static Level* CTX_LEVEL_MAY_FAIL(Context* c) {
+    Level* L = CTX_LEVEL_IF_ON_STACK(c);
     if (not L)
         fail (Error_Frame_Not_On_Stack_Raw());
     return L;

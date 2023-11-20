@@ -287,7 +287,7 @@ static void Protect_Word_Value(REBVAL *word, Flags flags)
 //
 // Common arguments between protect and unprotect:
 //
-static Bounce Protect_Unprotect_Core(Level(*) level_, Flags flags)
+static Bounce Protect_Unprotect_Core(Level* level_, Flags flags)
 {
     INCLUDE_PARAMS_OF_PROTECT;
 

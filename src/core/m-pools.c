@@ -225,8 +225,8 @@ const PoolSpec Mem_Pool_Spec[MAX_POOLS] =
     DEF_POOL(sizeof(Cell) * 2, 16),  // Pairings, PAIR_POOL
   #endif
 
-    DEF_POOL(ALIGN(sizeof(LevelT), sizeof(REBI64)), 128),  // Levels
-    DEF_POOL(ALIGN(sizeof(FeedT), sizeof(REBI64)), 128),  // Feeds
+    DEF_POOL(ALIGN(sizeof(Level), sizeof(REBI64)), 128),  // Levels
+    DEF_POOL(ALIGN(sizeof(Feed), sizeof(REBI64)), 128),  // Feeds
 
     DEF_POOL(sizeof(REBI64), 1), // Just used for tracking main memory
 };

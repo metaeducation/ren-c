@@ -237,7 +237,7 @@ Array* Add_Parameter_Bits_Core(
 //  MAKE_Parameter: C
 //
 Bounce MAKE_Parameter(
-    Level(*) level_,
+    Level* level_,
     enum Reb_Kind kind,
     Option(Value(const*)) parent,
     const REBVAL *arg
@@ -251,7 +251,7 @@ Bounce MAKE_Parameter(
 //
 //  TO_Parameter: C
 //
-Bounce TO_Parameter(Level(*) level_, enum Reb_Kind kind, const REBVAL *arg)
+Bounce TO_Parameter(Level* level_, enum Reb_Kind kind, const REBVAL *arg)
 {
     return MAKE_Parameter(level_, kind, nullptr, arg);
 }

@@ -76,7 +76,7 @@ bool Pushed_Continuation(
 
     if (IS_GROUP(branch) or IS_GET_GROUP(branch)) {  // see [2] for GET-GROUP!
         assert(flags & LEVEL_FLAG_BRANCH);  // needed for trick
-        Level(*) grouper = Make_Level_At_Core(
+        Level* grouper = Make_Level_At_Core(
             branch,
             branch_specifier,
             (flags & (~ LEVEL_FLAG_BRANCH))
@@ -107,7 +107,7 @@ bool Pushed_Continuation(
 
       case REB_META_BLOCK:
       case REB_BLOCK: {
-        Level(*) L = Make_Level_At_Core(branch, branch_specifier, flags);
+        Level* L = Make_Level_At_Core(branch, branch_specifier, flags);
         if (Cell_Heart_Unchecked(branch) == REB_META_BLOCK) {
             Set_Level_Flag(L, META_RESULT);
             Set_Level_Flag(L, RAISED_RESULT_OK);
@@ -118,7 +118,7 @@ bool Pushed_Continuation(
         goto pushed_continuation; }  // trampoline handles LEVEL_FLAG_BRANCH
 
       case REB_GET_BLOCK: {  // effectively REDUCE
-        Level(*) L = Make_End_Level(FLAG_STATE_BYTE(ST_ACTION_TYPECHECKING));
+        Level* L = Make_End_Level(FLAG_STATE_BYTE(ST_ACTION_TYPECHECKING));
 
         const REBVAL *action = Lib(REDUCE);
         Push_Action(L, VAL_ACTION(action), VAL_FRAME_BINDING(action));
@@ -142,7 +142,7 @@ bool Pushed_Continuation(
         goto pushed_continuation; }
 
       handle_action: {
-        Level(*) L = Make_End_Level(
+        Level* L = Make_End_Level(
             FLAG_STATE_BYTE(ST_ACTION_TYPECHECKING) | flags
         );
         Push_Action(L, VAL_ACTION(branch), VAL_FRAME_BINDING(branch));
@@ -188,7 +188,7 @@ bool Pushed_Continuation(
         if (Get_Subclass_Flag(VARLIST, CTX_VARLIST(c), FRAME_HAS_BEEN_INVOKED))
             fail (Error_Stale_Frame_Raw());
 
-        Level(*) L = Make_End_Level(
+        Level* L = Make_End_Level(
             FLAG_STATE_BYTE(ST_ACTION_TYPECHECKING) | flags
         );
         L->executor = &Action_Executor;  // usually done by Push_Action()s

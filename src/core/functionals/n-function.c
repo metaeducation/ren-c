@@ -106,7 +106,7 @@
 //    a hassle to force people to put RETURN NONE or RETURN at the end.  So
 //    this is the compromise chosen.
 //
-Bounce Func_Dispatcher(Level(*) const L)
+Bounce Func_Dispatcher(Level* const L)
 {
     USE_LEVEL_SHORTHANDS (L);
 
@@ -278,7 +278,7 @@ Phase* Make_Interpreted_Action_May_Fail(
 
     // Save the relativized body in the action's details block.  Since it is
     // a Cell* and not a REBVAL*, the dispatcher must combine it with a
-    // running frame instance (the Level(*) received by the dispatcher) before
+    // running frame instance (the Level* received by the dispatcher) before
     // executing the interpreted code.
     //
     Details* details = Phase_Details(a);
@@ -428,10 +428,10 @@ DECLARE_NATIVE(skippable_q)
 // See notes is %sys-frame.h about how there is no actual REB_THROWN type.
 //
 Bounce Init_Thrown_Unwind_Value(
-    Level(*) level_,
+    Level* level_,
     const REBVAL *seek, // FRAME!, ACTION! (or INTEGER! relative to frame)
     Atom(const*) value,
-    Level(*) target // required if level is INTEGER! or ACTION!
+    Level* target // required if level is INTEGER! or ACTION!
 ) {
     DECLARE_STABLE (label);
     Copy_Cell(label, Lib(UNWIND));
@@ -440,7 +440,7 @@ Bounce Init_Thrown_Unwind_Value(
         g_ts.unwind_level = CTX_LEVEL_IF_ON_STACK(VAL_CONTEXT(seek));
     }
     else if (IS_FRAME(seek)) {
-        Level(*) L = target->prior;
+        Level* L = target->prior;
         for (; true; L = L->prior) {
             if (L == BOTTOM_LEVEL)
                 fail (Error_Invalid_Exit_Raw());
@@ -464,7 +464,7 @@ Bounce Init_Thrown_Unwind_Value(
         if (count <= 0)
             fail (Error_Invalid_Exit_Raw());
 
-        Level(*) L = target->prior;
+        Level* L = target->prior;
         for (; true; L = L->prior) {
             if (L == BOTTOM_LEVEL)
                 fail (Error_Invalid_Exit_Raw());
@@ -529,7 +529,7 @@ DECLARE_NATIVE(unwind)
 //  Typecheck_Coerce_Return: C
 //
 bool Typecheck_Coerce_Return(
-    Level(*) L,
+    Level* L,
     Atom(*) atom  // coercion needs mutability
 ){
     if (Is_Raised(atom))
@@ -591,18 +591,18 @@ DECLARE_NATIVE(definitional_return)
     Atom(*) atom = Copy_Cell(SPARE, ARG(value));  // SPARE for unstable atoms
     Meta_Unquotify_Undecayed(atom);
 
-    Level(*) return_level = LEVEL;  // Level of this RETURN call
+    Level* return_level = LEVEL;  // Level of this RETURN call
 
     // Each ACTION! cell for RETURN has a piece of information in it that can
     // can be unique (the binding).  When invoked, that binding is held in the
-    // Level(*).  This generic RETURN dispatcher interprets that binding as the
+    // Level*.  This generic RETURN dispatcher interprets that binding as the
     // FRAME! which this instance is specifically intended to return from.
     //
     Context* return_binding = Level_Binding(return_level);
     if (not return_binding)
         fail (Error_Return_Archetype_Raw());  // must have binding to jump to
 
-    Level(*) target_level = CTX_LEVEL_MAY_FAIL(return_binding);
+    Level* target_level = CTX_LEVEL_MAY_FAIL(return_binding);
 
     // Check type NOW instead of waiting and letting Eval_Core()
     // check it.  Reasoning is that the error can indicate the callsite,

@@ -128,7 +128,7 @@ DECLARE_NATIVE(entrap)  // wrapped as TRAP and ATTEMPT
         LEVEL_FLAG_TRAMPOLINE_KEEPALIVE  // reused for each step
         | LEVEL_FLAG_RAISED_RESULT_OK;  // we're trapping it
 
-    Level(*) sub;
+    Level* sub;
     if (IS_BLOCK(code)) {
         sub = Make_Level_At(
             code,  // REB_BLOCK or REB_GROUP
@@ -267,7 +267,7 @@ DECLARE_NATIVE(set_location_of_error)
         context = VAL_CONTEXT(location);
     }
 
-    Level(*) where = CTX_LEVEL_MAY_FAIL(context);
+    Level* where = CTX_LEVEL_MAY_FAIL(context);
 
     Context* error = VAL_CONTEXT(ARG(error));
     Set_Location_Of_Error(error, where);

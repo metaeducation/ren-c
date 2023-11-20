@@ -256,7 +256,7 @@ static bool Subparse_Throws(
     Sink(Value(*)) out,
     const Cell* input,
     REBSPC *input_specifier,
-    Level(*) const L,
+    Level* const L,
     Option(Array*) collection,
     Flags flags
 ){
@@ -371,16 +371,16 @@ inline static Context* Error_Parse_End(void) {
     return Error_Parse_End_Raw();
 }
 
-inline static Context* Error_Parse_Command(Level(*) level_) {
+inline static Context* Error_Parse_Command(Level* level_) {
     return Error_Parse_Command_Raw(P_RULE);
 }
 
-inline static Context* Error_Parse_Variable(Level(*) level_) {
+inline static Context* Error_Parse_Variable(Level* level_) {
     return Error_Parse_Variable_Raw(P_RULE);
 }
 
 
-static void Print_Parse_Index(Level(*) level_) {
+static void Print_Parse_Index(Level* level_) {
     USE_PARAMS_OF_SUBPARSE;
 
     DECLARE_LOCAL (input);
@@ -463,7 +463,7 @@ static const Cell* Get_Parse_Value(
 //
 bool Process_Group_For_Parse_Throws(
     Sink(Value(*)) out,
-    Level(*) level_,
+    Level* level_,
     const Cell* group  // may be same as `cell`
 ){
     USE_PARAMS_OF_SUBPARSE;
@@ -509,7 +509,7 @@ bool Process_Group_For_Parse_Throws(
 // Otherwise, it should exit the routine as an END marker (as it started);
 //
 static REBIXO Parse_One_Rule(
-    Level(*) level_,
+    Level* level_,
     REBLEN pos,
     const Cell* rule
 ){
@@ -580,7 +580,7 @@ static REBIXO Parse_One_Rule(
         REBLEN pos_before = P_POS;
         P_POS = pos;  // modify input position
 
-        Level(*) sub = Make_Level_At_Core(
+        Level* sub = Make_Level_At_Core(
             rule, rule_specifier(),
             LEVEL_MASK_NONE
         );
@@ -736,7 +736,7 @@ static REBIXO Parse_One_Rule(
 // the code, it gets clarified in small steps.
 //
 static REBIXO To_Thru_Block_Rule(
-    Level(*) level_,
+    Level* level_,
     const Cell* rule_block,
     bool is_thru
 ){
@@ -1001,7 +1001,7 @@ static REBIXO To_Thru_Block_Rule(
 // as blocks are the common case.
 //
 static REBIXO To_Thru_Non_Block_Rule(
-    Level(*) level_,
+    Level* level_,
     const Cell* rule,
     bool is_thru
 ){
@@ -1124,7 +1124,7 @@ static REBIXO To_Thru_Non_Block_Rule(
 // or the newer `mark pos` rule.  Handles WORD! and PATH!.
 //
 static void Handle_Mark_Rule(
-    Level(*) level_,
+    Level* level_,
     const Cell* rule,
     REBSPC *specifier
 ){
@@ -1166,7 +1166,7 @@ static void Handle_Mark_Rule(
 
 
 static void Handle_Seek_Rule_Dont_Update_Begin(
-    Level(*) level_,
+    Level* level_,
     const Cell* rule,
     REBSPC *specifier
 ){
@@ -1265,7 +1265,7 @@ DECLARE_NATIVE(subparse)
 
     UNUSED(ARG(flags));  // used via P_FLAGS
 
-    Level(*) L = level_;  // nice alias of implicit native parameter
+    Level* L = level_;  // nice alias of implicit native parameter
 
     // If the input is quoted, e.g. `parse just ''''[...] [rules]`, we dequote
     // it while we are processing the ARG().  This is because we are trying
@@ -1680,7 +1680,7 @@ DECLARE_NATIVE(subparse)
                 }
                 else {  // Ordinary rule (may be block, may not be)
 
-                    Level(*) sub = Make_Level(L->feed, LEVEL_MASK_NONE);
+                    Level* sub = Make_Level(L->feed, LEVEL_MASK_NONE);
 
                     bool interrupted;
                     assert(Is_Fresh(OUT));  // invariant until finished
@@ -1983,7 +1983,7 @@ DECLARE_NATIVE(subparse)
             );
             Push_GC_Guard(collection);
 
-            Level(*) sub = Make_Level(L->feed, LEVEL_MASK_NONE);
+            Level* sub = Make_Level(L->feed, LEVEL_MASK_NONE);
 
             bool interrupted;
             assert(Is_Fresh(OUT));  // invariant until finished
@@ -2240,7 +2240,7 @@ DECLARE_NATIVE(subparse)
                     break;
                 }
 
-                Level(*) sub = Make_Level_At_Core(
+                Level* sub = Make_Level_At_Core(
                     subrule, P_RULE_SPECIFIER,
                     LEVEL_MASK_NONE
                 );
@@ -2283,7 +2283,7 @@ DECLARE_NATIVE(subparse)
         }
         else if (IS_BLOCK(rule)) {  // word fetched block, or inline block
 
-            Level(*) sub = Make_Level_At_Core(
+            Level* sub = Make_Level_At_Core(
                 rule, rule_specifier(),
                 LEVEL_MASK_NONE
             );
@@ -2755,7 +2755,7 @@ DECLARE_NATIVE(parse3)
     if (not ANY_SERIES_KIND(Cell_Heart(input)))
         fail ("PARSE input must be an ANY-SERIES! (use AS BLOCK! for PATH!)");
 
-    Level(*) sub = Make_Level_At(rules, LEVEL_MASK_NONE);
+    Level* sub = Make_Level_At(rules, LEVEL_MASK_NONE);
 
     bool interrupted;
     if (Subparse_Throws(

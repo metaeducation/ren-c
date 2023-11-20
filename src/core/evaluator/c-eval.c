@@ -109,7 +109,7 @@
     (STATE == ST_EVALUATOR_REEVALUATING ? SPECIFIED : Level_Specifier(L))
 
 
-// !!! In earlier development, the Level(*) for evaluating across a block was
+// !!! In earlier development, the Level* for evaluating across a block was
 // reused for each action invocation.  Since no more than one action was
 // running at a time, this seemed to work.  However, because "Levels" and
 // "Frames" were conflated, there was concern that this would not give enough
@@ -195,7 +195,7 @@ STATIC_ASSERT(
 //    hand side.  The old stackless build wrote current into the spare and
 //    restored it in the state switch().  Did this ever happen?
 //
-inline static Level(*) Maybe_Rightward_Continuation_Needed(Level(*) L)
+inline static Level* Maybe_Rightward_Continuation_Needed(Level* L)
 {
     if (Is_Feed_At_End(L->feed))  // `do [x:]`, `do [o.x:]`, etc. are illegal
         fail (Error_Need_Non_End(L_current));
@@ -209,7 +209,7 @@ inline static Level(*) Maybe_Rightward_Continuation_Needed(Level(*) L)
     if (Did_Init_Inert_Optimize_Complete(OUT, L->feed, &flags))
         return nullptr;  // If eval not hooked, ANY-INERT! may not need a frame
 
-    Level(*) sub = Make_Level(
+    Level* sub = Make_Level(
         L->feed,
         flags  // inert optimize adjusted the flags to jump in mid-eval
     );
@@ -233,7 +233,7 @@ inline static Level(*) Maybe_Rightward_Continuation_Needed(Level(*) L)
 //    a raised error and the error could still fall out.  But this meant that
 //    errors could not prevent a next step from happening.
 //
-Bounce Array_Executor(Level(*) L)
+Bounce Array_Executor(Level* L)
 {
     if (THROWING)
         return THROWN;  // no state to clean up
@@ -258,7 +258,7 @@ Bounce Array_Executor(Level(*) L)
     if (Is_Feed_At_End(L->feed))
         return OUT;
 
-    Level(*) sub = Make_Level(
+    Level* sub = Make_Level(
         L->feed,
         LEVEL_FLAG_RAISED_RESULT_OK
             | LEVEL_FLAG_TRAMPOLINE_KEEPALIVE
@@ -297,7 +297,7 @@ Bounce Array_Executor(Level(*) L)
 //
 // It is possible to preload states and start an evaluator at any of these.
 //
-Bounce Evaluator_Executor(Level(*) L)
+Bounce Evaluator_Executor(Level* L)
 {
     if (THROWING)
         return THROWN;  // no state to clean up
@@ -341,7 +341,7 @@ Bounce Evaluator_Executor(Level(*) L)
         else {
             assert(L->u.eval.enfix_reevaluate == 'Y');
 
-            Level(*) sub = Make_Action_Sublevel(L);
+            Level* sub = Make_Action_Sublevel(L);
             Push_Level(OUT, sub);
             Push_Action(
                 sub,
@@ -547,7 +547,7 @@ Bounce Evaluator_Executor(Level(*) L)
     // Wasn't the at-end exception, so run normal enfix with right winning.
     //
   blockscope {
-    Level(*) sub = Make_Action_Sublevel(L);
+    Level* sub = Make_Action_Sublevel(L);
     Push_Level(OUT, sub);
     Push_Action(
         sub,
@@ -651,7 +651,7 @@ Bounce Evaluator_Executor(Level(*) L)
     //    hand side argument.
 
       case REB_FRAME: {
-        Level(*) sub = Make_Action_Sublevel(L);
+        Level* sub = Make_Action_Sublevel(L);
         Push_Level(OUT, sub);
         Push_Action(
             sub,
@@ -759,13 +759,13 @@ Bounce Evaluator_Executor(Level(*) L)
                 if (Did_Init_Inert_Optimize_Complete(SPARE, L->feed, &flags))
                     goto intrinsic_in_scratch_arg_in_spare;
 
-                Level(*) sub = Make_Level(L->feed, flags);
+                Level* sub = Make_Level(L->feed, flags);
                 Push_Level(SPARE, sub);
                 STATE = ST_EVALUATOR_CALCULATING_INTRINSIC_ARG;
                 return CATCH_CONTINUE_SUBLEVEL(sub);
             }
 
-            Level(*) sub = Make_Action_Sublevel(L);
+            Level* sub = Make_Action_Sublevel(L);
             Push_Level(OUT, sub);
             Push_Action(sub, action, binding);
             Begin_Action_Core(sub, label, enfixed);
@@ -824,7 +824,7 @@ Bounce Evaluator_Executor(Level(*) L)
       case REB_SET_WORD: {
         assert(STATE == REB_SET_WORD);
 
-        Level(*) right = Maybe_Rightward_Continuation_Needed(L);
+        Level* right = Maybe_Rightward_Continuation_Needed(L);
         if (not right)
             goto set_word_rightside_in_out;
 
@@ -927,7 +927,7 @@ Bounce Evaluator_Executor(Level(*) L)
         if (STATE == REB_META_GROUP)
             flags |= LEVEL_FLAG_META_RESULT;
 
-        Level(*) sub = Make_Level_At_Core(
+        Level* sub = Make_Level_At_Core(
             L_current,
             L_specifier,
             flags
@@ -984,7 +984,7 @@ Bounce Evaluator_Executor(Level(*) L)
             if (Is_Enfixed(SCRATCH))
                 fail ("Use `>-` to shove left enfix operands into PATH!s");
 
-            Level(*) sub = Make_Action_Sublevel(L);
+            Level* sub = Make_Action_Sublevel(L);
             Push_Level(OUT, sub);
             Push_Action(
                 sub,
@@ -1072,7 +1072,7 @@ Bounce Evaluator_Executor(Level(*) L)
         }
 
         if (not applying) {
-            Level(*) sub = Make_Action_Sublevel(L);
+            Level* sub = Make_Action_Sublevel(L);
             sub->baseline.stack_base = BASELINE->stack_base;  // refinements
 
             Push_Level(OUT, sub);
@@ -1169,7 +1169,7 @@ Bounce Evaluator_Executor(Level(*) L)
       case REB_SET_TUPLE: {
         assert(STATE == REB_SET_TUPLE or STATE == REB_SET_PATH);
 
-        Level(*) right = Maybe_Rightward_Continuation_Needed(L);
+        Level* right = Maybe_Rightward_Continuation_Needed(L);
         if (not right)
             goto set_generic_rightside_in_out;
 
@@ -1216,7 +1216,7 @@ Bounce Evaluator_Executor(Level(*) L)
       case REB_SET_GROUP: {
         L_next_gotten = nullptr;  // arbitrary code changes fetched variables
 
-        Level(*) sub = Make_Level_At_Core(
+        Level* sub = Make_Level_At_Core(
             L_current,
             L_specifier,
             LEVEL_MASK_NONE
@@ -1483,7 +1483,7 @@ Bounce Evaluator_Executor(Level(*) L)
 
         level_->u.eval.stackindex_circled = stackindex_circled;  // remember it
 
-        Level(*) sub = Maybe_Rightward_Continuation_Needed(L);
+        Level* sub = Maybe_Rightward_Continuation_Needed(L);
         if (not sub)
             goto set_block_rightside_result_in_out;
 
@@ -2058,7 +2058,7 @@ Bounce Evaluator_Executor(Level(*) L)
     // of parameter fulfillment.  We want to reuse the OUT value and get it
     // into the new function's frame.
 
-    Level(*) sub = Make_Action_Sublevel(L);
+    Level* sub = Make_Action_Sublevel(L);
     Push_Level(OUT, sub);
     Push_Action(sub, enfixed, VAL_FRAME_BINDING(unwrap(L_next_gotten)));
     Begin_Enfix_Action(

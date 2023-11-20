@@ -52,7 +52,7 @@ enum {
 //
 //  Generic_Dispatcher: C
 //
-Bounce Generic_Dispatcher(Level(*) L)
+Bounce Generic_Dispatcher(Level* L)
 {
     Phase* phase = Level_Phase(L);
     Details* details = Phase_Details(phase);

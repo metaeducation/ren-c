@@ -66,7 +66,7 @@ REBINT CT_Quoted(NoQuote(const Cell*) a, NoQuote(const Cell*) b, bool strict)
 // take a BLOCK! with an INTEGER! and the value.  :-/
 //
 Bounce MAKE_Quoted(
-    Level(*) level_,
+    Level* level_,
     enum Reb_Kind kind,
     Option(Value(const*)) parent,
     const REBVAL *arg
@@ -85,7 +85,7 @@ Bounce MAKE_Quoted(
 // TO is disallowed at the moment, as there is no clear equivalence of things
 // "to" a literal.  (to quoted! [[a]] => \\a, for instance?)
 //
-Bounce TO_Quoted(Level(*) level_, enum Reb_Kind kind, const REBVAL *data) {
+Bounce TO_Quoted(Level* level_, enum Reb_Kind kind, const REBVAL *data) {
     return RAISE(Error_Bad_Make(kind, data));
 }
 

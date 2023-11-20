@@ -64,17 +64,17 @@ inline static bool ANY_ESCAPABLE_GET(const Cell* v) {
     ((L)->executor == &Action_Executor)
 
 
-inline static bool Level_Is_Variadic(Level(*) L) {
+inline static bool Level_Is_Variadic(Level* L) {
     return FEED_IS_VARIADIC(L->feed);
 }
 
-inline static const Array* Level_Array(Level(*) L) {
+inline static const Array* Level_Array(Level* L) {
     assert(not Level_Is_Variadic(L));
     return FEED_ARRAY(L->feed);
 }
 
 #define Level_Specifier(L) \
-    FEED_SPECIFIER(ensure(Level(*), (L))->feed)
+    FEED_SPECIFIER(ensure(Level*, (L))->feed)
 
 
 // !!! Though the evaluator saves its `index`, the index is not meaningful
@@ -83,7 +83,7 @@ inline static const Array* Level_Array(Level(*) L) {
 // convert these cases to ordinary arrays before running them, in order
 // to accurately present any errors.
 //
-inline static REBLEN Level_Array_Index(Level(*) L) {
+inline static REBLEN Level_Array_Index(Level* L) {
     if (Is_Feed_At_End(L->feed))
         return Array_Len(Level_Array(L));
 
@@ -91,12 +91,12 @@ inline static REBLEN Level_Array_Index(Level(*) L) {
     return FEED_INDEX(L->feed) - 1;
 }
 
-inline static REBLEN Level_Expression_Index(Level(*) L) {
+inline static REBLEN Level_Expression_Index(Level* L) {
     assert(not Level_Is_Variadic(L));
     return L->expr_index - 1;
 }
 
-inline static const String* File_Of_Level(Level(*) L) {
+inline static const String* File_Of_Level(Level* L) {
     if (Level_Is_Variadic(L))
         return nullptr;
     if (Not_Array_Flag(Level_Array(L), HAS_FILE_LINE_UNMASKED))
@@ -104,7 +104,7 @@ inline static const String* File_Of_Level(Level(*) L) {
     return LINK(Filename, Level_Array(L));
 }
 
-inline static const char* File_UTF8_Of_Level(Level(*) L) {
+inline static const char* File_UTF8_Of_Level(Level* L) {
     //
     // !!! Note: Too early in boot at the moment to use Canon(ANONYMOUS).
     //
@@ -112,7 +112,7 @@ inline static const char* File_UTF8_Of_Level(Level(*) L) {
     return str ? String_UTF8(str) : "~anonymous~";
 }
 
-inline static LineNumber LineNumber_Of_Level(Level(*) L) {
+inline static LineNumber LineNumber_Of_Level(Level* L) {
     if (Level_Is_Variadic(L))
         return 0;
     if (Not_Array_Flag(Level_Array(L), HAS_FILE_LINE_UNMASKED))
@@ -145,16 +145,16 @@ inline static LineNumber LineNumber_Of_Level(Level(*) L) {
 #define Level_Phase(L) \
     cast(Phase*, VAL_FRAME_PHASE_OR_LABEL_NODE((L)->rootvar))
 
-inline static void INIT_LVL_PHASE(Level(*) L, Phase* phase)  // check types
+inline static void INIT_LVL_PHASE(Level* L, Phase* phase)  // check types
   { INIT_VAL_FRAME_PHASE_OR_LABEL(L->rootvar, phase); }  // ...only
 
-inline static void INIT_LVL_BINDING(Level(*) L, Context* binding)
+inline static void INIT_LVL_BINDING(Level* L, Context* binding)
   { mutable_BINDING(L->rootvar) = binding; }  // also fast
 
 #define Level_Binding(L) \
     cast(Context*, BINDING((L)->rootvar))
 
-inline static Option(const Symbol*) Level_Label(Level(*) L) {
+inline static Option(const Symbol*) Level_Label(Level* L) {
     assert(Is_Action_Level(L));
     return L->label;
 }
@@ -169,7 +169,7 @@ inline static Option(const Symbol*) Level_Label(Level(*) L) {
     // is a good place to inject an assertion that you're not ignoring the
     // fact that a level "self-errored" and was notified of an abrupt failure.
     //
-    inline static Byte& Level_State_Byte(Level(*) L) {
+    inline static Byte& Level_State_Byte(Level* L) {
         assert(Not_Level_Flag(L, ABRUPT_FAILURE));
         return SECOND_BYTE(L);
     }
@@ -187,7 +187,7 @@ inline static Option(const Symbol*) Level_Label(Level(*) L) {
     #define Level_Arg(L,n) \
         ((L)->rootvar + (n))
 #else
-    inline static REBVAL *Level_Arg(Level(*) L, REBLEN n) {
+    inline static REBVAL *Level_Arg(Level* L, REBLEN n) {
         assert(n != 0 and n <= Level_Num_Args(L));
         return L->rootvar + n;  // 1-indexed
     }
@@ -200,7 +200,7 @@ inline static Option(const Symbol*) Level_Label(Level(*) L) {
 #define Not_Level_At_End(L)         Not_Feed_At_End((L)->feed)
 
 
-inline static Context* Context_For_Level_May_Manage(Level(*) L) {
+inline static Context* Context_For_Level_May_Manage(Level* L) {
     assert(not Is_Level_Fulfilling(L));
     Set_Node_Managed_Bit(L->varlist);  // may already be managed
     return cast(Context*, L->varlist);
@@ -209,7 +209,7 @@ inline static Context* Context_For_Level_May_Manage(Level(*) L) {
 
 //=//// FRAME LABELING ////////////////////////////////////////////////////=//
 
-inline static void Get_Level_Label_Or_Nulled(Sink(Value(*)) out, Level(*) L) {
+inline static void Get_Level_Label_Or_Nulled(Sink(Value(*)) out, Level* L) {
     assert(Is_Action_Level(L));
     if (L->label)
         Init_Word(out, unwrap(L->label));  // WORD!, PATH!, or stored invoke
@@ -217,7 +217,7 @@ inline static void Get_Level_Label_Or_Nulled(Sink(Value(*)) out, Level(*) L) {
         Init_Nulled(out);  // anonymous invocation
 }
 
-inline static const char* Level_Label_Or_Anonymous_UTF8(Level(*) L) {
+inline static const char* Level_Label_Or_Anonymous_UTF8(Level* L) {
     assert(Is_Action_Level(L));
     if (L->label)
         return String_UTF8(unwrap(L->label));
@@ -250,7 +250,7 @@ inline static const char* Level_Label_Or_Anonymous_UTF8(Level(*) L) {
 // This privileged level of access can be used by natives that feel they can
 // optimize performance by working with the evaluator directly.
 
-inline static void Free_Level_Internal(Level(*) L) {
+inline static void Free_Level_Internal(Level* L) {
     if (Get_Level_Flag(L, ALLOCATED_FEED))
         Free_Feed(L->feed);  // didn't inherit from parent, and not END_FRAME
 
@@ -276,7 +276,7 @@ inline static void Free_Level_Internal(Level(*) L) {
 //
 inline static void Push_Level(
     Atom(*) out,  // typecheck prohibits passing `unstable` Cell* for output
-    Level(*) L
+    Level* L
 ){
     // All calls through to Eval_Core() are assumed to happen at the same C
     // stack level for a pushed Level (though this is not currently enforced).
@@ -318,17 +318,17 @@ inline static void Push_Level(
 }
 
 
-inline static void Update_Expression_Start(Level(*) L) {
+inline static void Update_Expression_Start(Level* L) {
     if (not Level_Is_Variadic(L))
         L->expr_index = Level_Array_Index(L);
 }
 
 
-inline static void Drop_Level_Unbalanced(Level(*) L) {
+inline static void Drop_Level_Unbalanced(Level* L) {
     Drop_Level_Core(L);
 }
 
-inline static void Drop_Level(Level(*) L)
+inline static void Drop_Level(Level* L)
 {
     if (
         not Is_Throwing(L)
@@ -350,13 +350,13 @@ inline static void Drop_Level(Level(*) L)
 }
 
 
-inline static Level(*) Prep_Level_Core(
-    Level(*) L,
-    Feed(*) feed,
+inline static Level* Prep_Level_Core(
+    Level* L,
+    Feed* feed,
     Flags flags
 ){
    if (L == nullptr)  // e.g. a failed allocation
-       fail (Error_No_Memory(sizeof(LevelT)));
+       fail (Error_No_Memory(sizeof(Level)));
 
     L->flags.bits = flags | LEVEL_FLAG_0_IS_TRUE | LEVEL_FLAG_7_IS_TRUE;
 
@@ -389,7 +389,7 @@ inline static Level(*) Prep_Level_Core(
     // out, but some clients do depend on the StackIndex being captured before
     // Push_Level() is called, so this snaps the whole baseline here.
     //
-    Snap_State(&L->baseline);  // see notes on `baseline` in LevelT
+    Snap_State(&L->baseline);  // see notes on `baseline` in Level
 
   #if DEBUG_COUNT_TICKS
     L->tick = TG_tick;
@@ -399,7 +399,7 @@ inline static Level(*) Prep_Level_Core(
 }
 
 #define Make_Level(feed,flags) \
-    Prep_Level_Core(u_cast(Level(*), Alloc_Pooled(LEVEL_POOL)), (feed), (flags))
+    Prep_Level_Core(u_cast(Level*, Alloc_Pooled(LEVEL_POOL)), (feed), (flags))
 
 #define Make_Level_At_Core(any_array,specifier,level_flags) \
     Make_Level( \
@@ -429,7 +429,7 @@ inline static Level(*) Prep_Level_Core(
 //=//// ARGUMENT AND PARAMETER ACCESS HELPERS ////=///////////////////////////
 //
 // These accessors are what is behind the INCLUDE_PARAMS_OF_XXX macros that
-// are used in natives.  They capture the implicit Level(*) passed to every
+// are used in natives.  They capture the implicit Level* passed to every
 // DECLARE_NATIVE ('level_') and read the information out cleanly, like this:
 //
 //     DECLARE_PARAM(1, foo);
@@ -475,7 +475,7 @@ inline static Level(*) Prep_Level_Core(
 
 
 // Quick access functions from natives (or compatible functions that name a
-// Level(*) pointer `level_`) to get some of the common public fields.
+// Level* pointer `level_`) to get some of the common public fields.
 //
 // There is an option to not define them due to conflicts with OUT as defined
 // by the Windows.h headers.  This makes it easier for people who don't want
@@ -493,10 +493,10 @@ inline static Level(*) Prep_Level_Core(
   #if CPLUSPLUS_11
     #define USE_LEVEL_SHORTHANDS(L) \
         static_assert(std::is_const<decltype(L)>::value, "L must be const"); \
-        Level(*) const level_ = L
+        Level* const level_ = L
   #else
     #define USE_LEVEL_SHORTHANDS(L) \
-        Level(*) const level_ = L
+        Level* const level_ = L
   #endif
 
     #define LEVEL   level_
@@ -539,7 +539,7 @@ inline static Level(*) Prep_Level_Core(
 // more important to use the named ARG() and REF() macros.  As a stopgap
 // measure, we just sense whether the phase has a return or not.
 //
-inline static REBVAL *D_ARG_Core(Level(*) L, REBLEN n) {  // 1 for first arg
+inline static REBVAL *D_ARG_Core(Level* L, REBLEN n) {  // 1 for first arg
     REBPAR *param = ACT_PARAMS_HEAD(Level_Phase(L));
     REBVAL *arg = Level_Arg(L, 1);
     while (
@@ -622,9 +622,9 @@ enum {
     CONTINUE_CORE((out), LEVEL_FLAG_BRANCH, SPECIFIED, __VA_ARGS__))
 
 inline static Bounce Continue_Sublevel_Helper(
-    Level(*) L,
+    Level* L,
     bool catches,
-    Level(*) sub
+    Level* sub
 ){
     if (catches) {  // all executors catch, but action may or may not delegate
         if (Is_Action_Level(L) and not Is_Level_Fulfilling(L))

@@ -118,7 +118,7 @@ void Shutdown_Feeds(void) {
 //
 Context* Get_Context_From_Stack(void)
 {
-    Level(*) L = TOP_LEVEL;
+    Level* L = TOP_LEVEL;
     Phase* phase = nullptr;  // avoid uninitialized variable warning
 
     for (; L != BOTTOM_LEVEL; L = L->prior) {

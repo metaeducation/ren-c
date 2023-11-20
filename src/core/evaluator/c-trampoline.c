@@ -80,7 +80,7 @@
 //
 // Optimized builds could use nullptr instead.
 //
-Bounce Just_Use_Out_Executor(Level(*) L)
+Bounce Just_Use_Out_Executor(Level* L)
   { panic (L->out); }
 
 
@@ -91,7 +91,7 @@ Bounce Just_Use_Out_Executor(Level(*) L)
 // replaced as the executor when DELEGATE() is used outside of Action_Executor.
 // (When actions run, it wants a call back to check the return type.)
 //
-Bounce Delegated_Executor(Level(*) L)
+Bounce Delegated_Executor(Level* L)
 {
     if (Is_Throwing(L))
         return BOUNCE_THROWN;
@@ -198,7 +198,7 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
     // it receives.  The LEVEL may not match TOP_LEVEL at this moment.
 
   #if DEBUG
-    Level(*) check = LEVEL;  // make sure LEVEL doesn't change during executor
+    Level* check = LEVEL;  // make sure LEVEL doesn't change during executor
   #endif
 
     Maybe_DebugBreak_On_Tick();
@@ -455,7 +455,7 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
 //
 bool Trampoline_With_Top_As_Root_Throws(void)
 {
-    Level(*) root = TOP_LEVEL;
+    Level* root = TOP_LEVEL;
 
   #if !defined(NDEBUG)
     Jump* check = g_ts.jump_list;
@@ -505,7 +505,7 @@ bool Trampoline_With_Top_As_Root_Throws(void)
 //
 //  Trampoline_Throws: C
 //
-bool Trampoline_Throws(Atom(*) out, Level(*) root)
+bool Trampoline_Throws(Atom(*) out, Level* root)
 {
     Push_Level(out, root);
     bool threw = Trampoline_With_Top_As_Root_Throws();
@@ -548,7 +548,7 @@ void Startup_Trampoline(void)
     assert(TOP_LEVEL == nullptr);
     assert(BOTTOM_LEVEL == nullptr);
 
-    Level(*) L = Make_End_Level(LEVEL_MASK_NONE);  // ensure L->prior, see [1]
+    Level* L = Make_End_Level(LEVEL_MASK_NONE);  // ensure L->prior, see [1]
     Push_Level(nullptr, L);  // global API handles attach here, see [2]
 
     Trash_Pointer_If_Debug(L->prior);  // catches enumeration past bottom_level
@@ -588,7 +588,7 @@ void Shutdown_Trampoline(void)
     BOTTOM_LEVEL->prior = nullptr;
 
   blockscope {
-    Level(*) L = TOP_LEVEL;
+    Level* L = TOP_LEVEL;
     Drop_Level_Core(L);  // can't Drop_Level()/Drop_Level_Unbalanced(), see [2]
     assert(not TOP_LEVEL);
   }
@@ -608,7 +608,7 @@ void Shutdown_Trampoline(void)
             if (unit[0] == FREE_POOLUNIT_BYTE)
                 continue;
 
-            Level(*) L = cast(Level(*), unit);  // ^-- pool size may round up
+            Level* L = cast(Level*, unit);  // ^-- pool size may round up
           #if DEBUG_COUNT_TICKS
             printf(
                 "** FRAME LEAKED at tick %lu\n",
@@ -634,7 +634,7 @@ void Shutdown_Trampoline(void)
             if (unit[0] == FREE_POOLUNIT_BYTE)
                 continue;
 
-            Feed(*) feed = cast(Feed(*), unit);
+            Feed* feed = cast(Feed*, unit);
           #if DEBUG_COUNT_TICKS
             printf(
                 "** FEED LEAKED at tick %lu\n",
@@ -653,7 +653,7 @@ void Shutdown_Trampoline(void)
 //
 //  Drop_Level_Core: C
 //
-void Drop_Level_Core(Level(*) L) {
+void Drop_Level_Core(Level* L) {
   #if DEBUG_EXPIRED_LOOKBACK
     free(L->stress);
   #endif

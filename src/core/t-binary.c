@@ -124,7 +124,7 @@ static Binary* Make_Binary_BE64(const REBVAL *arg)
 // Note also the existence of AS and storing strings as UTF-8 should reduce
 // copying, e.g. `as binary! some-string` will be cheaper than TO or MAKE.
 //
-static Bounce MAKE_TO_Binary_Common(Level(*) level_, const REBVAL *arg)
+static Bounce MAKE_TO_Binary_Common(Level* level_, const REBVAL *arg)
 {
     switch (VAL_TYPE(arg)) {
     case REB_BINARY: {
@@ -187,7 +187,7 @@ static Bounce MAKE_TO_Binary_Common(Level(*) level_, const REBVAL *arg)
 // See also: MAKE_String, which is similar.
 //
 Bounce MAKE_Binary(
-    Level(*) level_,
+    Level* level_,
     enum Reb_Kind kind,
     Option(Value(const*)) parent,
     const REBVAL *def
@@ -222,7 +222,7 @@ Bounce MAKE_Binary(
 //
 //  TO_Binary: C
 //
-Bounce TO_Binary(Level(*) level_, enum Reb_Kind kind, const REBVAL *arg)
+Bounce TO_Binary(Level* level_, enum Reb_Kind kind, const REBVAL *arg)
 {
     assert(kind == REB_BINARY);
     UNUSED(kind);

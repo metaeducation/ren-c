@@ -66,7 +66,7 @@ inline static bool Is_Api_Value(const Cell* v) {
     return did (v->header.bits & NODE_FLAG_ROOT);
 }
 
-inline static void Link_Api_Handle_To_Level(Array* a, Level(*) L)
+inline static void Link_Api_Handle_To_Level(Array* a, Level* L)
 {
     // The head of the list isn't null, but points at the level, so that
     // API freeing operations can update the head of the list in the level
@@ -96,7 +96,7 @@ inline static void Unlink_Api_Handle_From_Level(Array* a)
     );
 
     if (at_head) {
-        Level(*) L = cast(Level(*), MISC(ApiPrev, a));
+        Level* L = cast(Level*, MISC(ApiPrev, a));
         L->alloc_value_list = LINK(ApiNext, a);
 
         if (not at_tail) {  // only set next item's backlink if it exists
@@ -210,7 +210,7 @@ inline static void Release_Api_Value_If_Unmanaged(const Atom(*) r) {
 //
 inline static Atom(*) Native_Copy_Result_Untracked(
     Atom(*) out,  // have to pass; comma at callsite -> "operand has no effect"
-    Level(*) level_,
+    Level* level_,
     Atom(const*) v
 ){
     assert(out == level_->out);

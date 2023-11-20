@@ -78,7 +78,7 @@
     // headaches.  So it was decided that so long as they are Series, not
     // Array, that's still abstract enough to block most casual misuses.
     //
-    struct NodeStruct {};  // empty base class for Series, Cell, LevelT...
+    struct NodeStruct {};  // empty base class for Series, Cell, Level...
     typedef struct NodeStruct Node;
 #endif
 

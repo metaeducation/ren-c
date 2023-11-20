@@ -661,7 +661,7 @@ void on_write_finished(uv_write_t *req, int status)
 //  Transport_Actor: C
 //
 static Bounce Transport_Actor(
-    Level(*) level_,
+    Level* level_,
     REBVAL *port,
     const Symbol* verb,
     enum Transport_Type transport
@@ -1018,7 +1018,7 @@ static Bounce Transport_Actor(
 //
 //  TCP_Actor: C
 //
-static Bounce TCP_Actor(Level(*) level_, REBVAL *port, const Symbol* verb)
+static Bounce TCP_Actor(Level* level_, REBVAL *port, const Symbol* verb)
 {
     return Transport_Actor(level_, port, verb, TRANSPORT_TCP);
 }
@@ -1027,7 +1027,7 @@ static Bounce TCP_Actor(Level(*) level_, REBVAL *port, const Symbol* verb)
 //
 //  UDP_Actor: C
 //
-static Bounce UDP_Actor(Level(*) level_, REBVAL *port, const Symbol* verb)
+static Bounce UDP_Actor(Level* level_, REBVAL *port, const Symbol* verb)
 {
     return Transport_Actor(level_, port, verb, TRANSPORT_UDP);
 }

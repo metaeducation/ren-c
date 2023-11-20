@@ -55,7 +55,7 @@ enum {
 // does is change the phase and binding to match the function this layer was
 // specializing.
 //
-Bounce Specializer_Dispatcher(Level(*) L)
+Bounce Specializer_Dispatcher(Level* L)
 {
     Context* exemplar = ACT_EXEMPLAR(Level_Phase(L));
 
@@ -697,7 +697,7 @@ const REBPAR *Last_Unspecialized_Param(const REBKEY ** key, Action* act)
 //
 // Helper built on First_Unspecialized_Param(), can also give you the param.
 //
-REBVAL *First_Unspecialized_Arg(Option(const REBPAR **) param_out, Level(*) L)
+REBVAL *First_Unspecialized_Arg(Option(const REBPAR **) param_out, Level* L)
 {
     Phase* phase = Level_Phase(L);
     const REBPAR *param = First_Unspecialized_Param(nullptr, phase);

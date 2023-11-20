@@ -58,7 +58,7 @@ enum {
 // Each time a function created with ADAPT is executed, this code runs to
 // invoke the "prelude" before passing control to the "adaptee" function.
 //
-Bounce Adapter_Dispatcher(Level(*) const L)
+Bounce Adapter_Dispatcher(Level* const L)
 //
 // 1. When an ADAPT is done, it does not leave its product in the output
 //    cell.  This means ADAPT of COMMENT will still be invisible.
@@ -159,7 +159,7 @@ DECLARE_NATIVE(adapt_p)  // see extended definition ADAPT in %base-defs.r
     // We can't use a simple Init_Block() here, because the prelude has been
     // relativized.  It is thus not a REBVAL*, but a Cell*...so the
     // Adapter_Dispatcher() must combine it with the FRAME! instance before
-    // it can be executed (e.g. the `Level(*) L` it is dispatching).
+    // it can be executed (e.g. the `Level* L` it is dispatching).
     //
     Details* details = Phase_Details(adaptation);
     Init_Relative_Block(

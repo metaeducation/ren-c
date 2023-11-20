@@ -743,7 +743,7 @@ DECLARE_NATIVE(let)
     REBVAL *vars = ARG(vars);
 
     UNUSED(ARG(expression));
-    Level(*) L = level_;  // fake variadic, see [1]
+    Level* L = level_;  // fake variadic, see [1]
     REBSPC* L_specifier = Level_Specifier(L);
 
     REBVAL *bindings_holder = ARG(return);
@@ -935,7 +935,7 @@ DECLARE_NATIVE(let)
         | (L->flags.bits & EVAL_EXECUTOR_FLAG_FULFILLING_ARG)
         | (L->flags.bits & LEVEL_FLAG_RAISED_RESULT_OK);
 
-    Level(*) sub = Make_Level(LEVEL->feed, flags);
+    Level* sub = Make_Level(LEVEL->feed, flags);
     sub->u.eval.current = SPARE;
     sub->u.eval.current_gotten = nullptr;
     sub->u.eval.enfix_reevaluate = 'N';  // detect?
@@ -987,7 +987,7 @@ DECLARE_NATIVE(let)
 DECLARE_NATIVE(add_let_binding) {
     INCLUDE_PARAMS_OF_ADD_LET_BINDING;
 
-    Level(*) L = CTX_LEVEL_MAY_FAIL(VAL_CONTEXT(ARG(frame)));
+    Level* L = CTX_LEVEL_MAY_FAIL(VAL_CONTEXT(ARG(frame)));
 
     REBSPC* L_specifier = Level_Specifier(L);
     if (L_specifier)
@@ -1020,7 +1020,7 @@ DECLARE_NATIVE(add_let_binding) {
 DECLARE_NATIVE(add_use_object) {
     INCLUDE_PARAMS_OF_ADD_USE_OBJECT;
 
-    Level(*) L = CTX_LEVEL_MAY_FAIL(VAL_CONTEXT(ARG(frame)));
+    Level* L = CTX_LEVEL_MAY_FAIL(VAL_CONTEXT(ARG(frame)));
     REBSPC* L_specifier = Level_Specifier(L);
 
     Context* ctx = VAL_CONTEXT(ARG(object));

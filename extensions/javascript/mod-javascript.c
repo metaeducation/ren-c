@@ -230,7 +230,7 @@ static void cleanup_js_object(const REBVAL *v) {
 //
 // !!! Outdated comment, review what happened here:
 //
-// "We go ahead and use the Context* instead of the raw Level(*) to act as
+// "We go ahead and use the Context* instead of the raw Level* to act as
 //  the unique pointer to identify a level.  That's because if the JavaScript
 //  code throws and that throw needs to make it to a promise higher up the
 //  stack, it uses that pointer as an ID in a mapping table to associate the
@@ -242,12 +242,12 @@ static void cleanup_js_object(const REBVAL *v) {
 //  from JavaScript code may only be caught by JavaScript code."
 //
 
-inline static heapaddr_t Level_Id_For_Level(Level(*) L) {
+inline static heapaddr_t Level_Id_For_Level(Level* L) {
     return Heapaddr_From_Pointer(L);
 }
 
-inline static Level(*) Level_From_Level_Id(heapaddr_t id) {
-    return cast(Level(*), Pointer_From_Heapaddr(id));
+inline static Level* Level_From_Level_Id(heapaddr_t id) {
+    return cast(Level*, Pointer_From_Heapaddr(id));
 }
 
 inline static REBVAL *Value_From_Value_Id(heapaddr_t id) {
@@ -286,7 +286,7 @@ enum {
     IDX_JS_NATIVE_MAX
 };
 
-Bounce JavaScript_Dispatcher(Level(*) L);
+Bounce JavaScript_Dispatcher(Level* L);
 
 
 //=//// GLOBAL PROMISE STATE //////////////////////////////////////////////=//
@@ -431,7 +431,7 @@ void RunPromise(void)
     DECLARE_LOCAL (code);
     Init_Block(code, a);
 
-    Level(*) L = Make_Level_At(code, LEVEL_FLAG_ROOT_LEVEL);
+    Level* L = Make_Level_At(code, LEVEL_FLAG_ROOT_LEVEL);
     Push_Level(Alloc_Value(), L);
     goto run_promise;
 
@@ -560,7 +560,7 @@ EXTERN_C void RL_rebResolveNative_internal(
     intptr_t level_id,
     intptr_t result_id
 ){
-    Level(*) const L = Level_From_Level_Id(level_id);
+    Level* const L = Level_From_Level_Id(level_id);
     USE_LEVEL_SHORTHANDS (L);
 
     TRACE("reb.ResolveNative_internal(%s)", Level_Label_Or_Anonymous_UTF8(L));
@@ -595,7 +595,7 @@ EXTERN_C void RL_rebRejectNative_internal(
     intptr_t level_id,
     intptr_t error_id
 ){
-    Level(*) const L = Level_From_Level_Id(level_id);
+    Level* const L = Level_From_Level_Id(level_id);
     USE_LEVEL_SHORTHANDS (L);
 
     TRACE("reb.RejectNative_internal(%s)", Level_Label_Or_Anonymous_UTF8(L));
@@ -665,7 +665,7 @@ EXTERN_C void RL_rebRejectNative_internal(
 //    convert it to a throw.  For now, the halt signal is communicated
 //    uniquely back to us as 0.
 //
-Bounce JavaScript_Dispatcher(Level(*) const L)
+Bounce JavaScript_Dispatcher(Level* const L)
 {
     USE_LEVEL_SHORTHANDS (L);
 

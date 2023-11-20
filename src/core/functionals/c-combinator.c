@@ -82,7 +82,7 @@ enum {
 // for verbose debugging, as well as to record the furthest point reached.
 // At the moment we focus on the furthest point reached.
 //
-Bounce Combinator_Dispatcher(Level(*) L)
+Bounce Combinator_Dispatcher(Level* L)
 {
     Phase* phase = Level_Phase(L);
     Details* details = Phase_Details(phase);
@@ -113,7 +113,7 @@ Bounce Combinator_Dispatcher(Level(*) L)
     //
     REBVAL *state = Level_Arg(L, IDX_COMBINATOR_PARAM_STATE);
     assert(IS_FRAME(state));  // combinators *must* have this as the UPARSE.
-    Level(*) level_ = CTX_LEVEL_MAY_FAIL(VAL_CONTEXT(state));
+    Level* level_ = CTX_LEVEL_MAY_FAIL(VAL_CONTEXT(state));
     REBVAL *furthest_word = Level_Arg(level_, IDX_UPARSE_PARAM_FURTHEST);
     if (Is_Nulled(furthest_word))
         return r;
@@ -209,7 +209,7 @@ Array* Expanded_Combinator_Spec(const REBVAL *original)
 
     const void* packed[2] = {utf8, rebEND};  // BEWARE: Stack, can't Trampoline!
 
-    Feed(*) feed = Make_Variadic_Feed(packed, nullptr, nullptr, FEED_MASK_DEFAULT);
+    Feed* feed = Make_Variadic_Feed(packed, nullptr, nullptr, FEED_MASK_DEFAULT);
     Sync_Feed_At_Cell_Or_End_May_Fail(feed);
 
     while (Not_Feed_At_End(feed)) {
@@ -625,7 +625,7 @@ DECLARE_NATIVE(further_combinator)
 
 struct Combinator_Param_State {
     Context* ctx;
-    Level(*) level_;
+    Level* level_;
     Value(*) rule_end;
 };
 
@@ -640,7 +640,7 @@ static bool Combinator_Param_Hook(
     struct Combinator_Param_State *s
         = cast(struct Combinator_Param_State*, opaque);
 
-    Level(*) level_ = s->level_;
+    Level* level_ = s->level_;
     INCLUDE_PARAMS_OF_COMBINATORIZE;
 
     UNUSED(REF(path));  // used by caller of hook

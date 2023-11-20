@@ -120,7 +120,7 @@ PVAR REBVAL *Root_Action_Adjunct;
 PVAR REBVAL *Root_Stackoverflow_Error;  // made in advance, avoids extra calls
 PVAR REBVAL *Root_No_Memory_Error;  // also must be made in advance
 
-TVAR Feed(*) TG_End_Feed;
+TVAR Feed* TG_End_Feed;
 
 TVAR Binary* TG_Byte_Buf;  // byte buffer used in various spots (as BYTE_BUF)
 

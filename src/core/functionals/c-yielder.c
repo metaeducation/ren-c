@@ -58,7 +58,7 @@ enum {
 // restartable way and unwinds it, allowing the continuation to request
 // that be the frame that gets executed in the continuation.
 //
-Bounce Yielder_Dispatcher(Level(*) const L)
+Bounce Yielder_Dispatcher(Level* const L)
 {
     USE_LEVEL_SHORTHANDS (L);
 
@@ -121,8 +121,8 @@ Bounce Yielder_Dispatcher(Level(*) const L)
 
     assert(IS_FRAME(mode));
 
-    Level(*) yielder_level = L;  // alias for clarity
-    Level(*) yield_level = CTX_LEVEL_IF_ON_STACK(VAL_CONTEXT(mode));
+    Level* yielder_level = L;  // alias for clarity
+    Level* yield_level = CTX_LEVEL_IF_ON_STACK(VAL_CONTEXT(mode));
     assert(yield_level != nullptr);
 
     // The YIELD binding pointed to the context varlist we used in the
@@ -352,14 +352,14 @@ DECLARE_NATIVE(yield)
 
     assert(level_ == TOP_LEVEL);  // level_ is an implicit arg to natives
     assert(Level_Phase(level_) == ACT_IDENTITY(VAL_ACTION(Lib(YIELD))));
-    Level(*) yield_level = level_;  // ...make synonyms more obvious
+    Level* yield_level = level_;  // ...make synonyms more obvious
 
     Node* yield_binding = Level_Binding(yield_level);
     if (not yield_binding)
         fail ("Must have yielder to jump to");
 
     Context* yielder_context = cast(Context*, yield_binding);
-    Level(*) yielder_level = CTX_LEVEL_MAY_FAIL(yielder_context);
+    Level* yielder_level = CTX_LEVEL_MAY_FAIL(yielder_context);
     if (not yielder_level)
         fail ("Cannot yield to generator that has completed");
 

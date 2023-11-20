@@ -88,14 +88,14 @@ enum {
 //    can theoretically just be put back into the reuse list, or managed
 //    and handed out for other purposes.  Caller's choice.
 //
-Level(*) Make_Pushed_Level_From_Action_Feed_May_Throw(
+Level* Make_Pushed_Level_From_Action_Feed_May_Throw(
     REBVAL *out,
     Value(*) action,
-    Feed(*) feed,
+    Feed* feed,
     StackIndex base,
     bool error_on_deferred
 ){
-    Level(*) L = Make_Level(
+    Level* L = Make_Level(
         feed,
         LEVEL_MASK_NONE  // FULFILL_ONLY added after Push_Action()
     );
@@ -152,7 +152,7 @@ Level(*) Make_Pushed_Level_From_Action_Feed_May_Throw(
 bool Init_Invokable_From_Feed_Throws(
     Sink(Value(*)) out,
     Option(const Cell*) first,  // override first value, vs. At_Feed(feed)
-    Feed(*) feed,
+    Feed* feed,
     bool error_on_deferred  // if not planning to keep running, can't ELSE/THEN
 ){
     const Cell* v = first ? unwrap(first) : Try_At_Feed(feed);
@@ -212,7 +212,7 @@ bool Init_Invokable_From_Feed_Throws(
 
     Option(const String*) label = VAL_FRAME_LABEL(action);
 
-    Level(*) L = Make_Pushed_Level_From_Action_Feed_May_Throw(
+    Level* L = Make_Pushed_Level_From_Action_Feed_May_Throw(
         out,
         action,
         feed,
@@ -260,7 +260,7 @@ bool Init_Invokable_From_Feed_Throws(
 bool Init_Frame_From_Feed_Throws(
     Sink(Value(*)) out,
     const Cell* first,
-    Feed(*) feed,
+    Feed* feed,
     bool error_on_deferred
 ){
     if (Init_Invokable_From_Feed_Throws(out, first, feed, error_on_deferred))
@@ -297,7 +297,7 @@ bool Init_Frame_From_Feed_Throws(
 // !!! As a first cut we build on top of specialize, and look for the
 // parameter by means of a particular labeled void.
 //
-Bounce Reframer_Dispatcher(Level(*) const L)
+Bounce Reframer_Dispatcher(Level* const L)
 {
     USE_LEVEL_SHORTHANDS (L);
 

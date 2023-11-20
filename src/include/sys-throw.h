@@ -34,10 +34,10 @@
 // There are important technical reasons for favoring the label as the output:
 //
 // * RETURN is implemented as a throw whose label is a FRAME!.  That FRAME!
-//   value can store either a Level(*) which costs nothing extra, or Context*
+//   value can store either a Level* which costs nothing extra, or Context*
 //   which requires "reifying" the frame and making it GC-visible.  Reifying
 //   would happen unconditionally if the level is put into a global variable,
-//   but so long as the FRAME! value bubbles up no higher than the Level(*)
+//   but so long as the FRAME! value bubbles up no higher than the Level*
 //   it points to, it can be used as-is.  With RETURN, it will be exactly the
 //   right lifetime--since the originating level is right where it stops.
 //
@@ -61,14 +61,14 @@
 //   more checking that thrown values aren't being dropped or misused.
 //
 
-inline static Value(const*) VAL_THROWN_LABEL(Level(*) level_) {
+inline static Value(const*) VAL_THROWN_LABEL(Level* level_) {
     UNUSED(level_);
     assert(not Is_Cell_Erased(&g_ts.thrown_label));
     return &g_ts.thrown_label;
 }
 
 inline static Bounce Init_Thrown_With_Label(  // assumes `arg` in g_ts.thrown_arg
-    Level(*) level_,
+    Level* level_,
     Atom(const*) arg,
     const REBVAL *label  // Note: is allowed to be same as `out`
 ){
@@ -89,14 +89,14 @@ inline static Bounce Init_Thrown_With_Label(  // assumes `arg` in g_ts.thrown_ar
 
 // When failures are put in the throw state, they are the label--not the value.
 //
-inline static Bounce Init_Thrown_Failure(Level(*) L, Value(const*) error) {
+inline static Bounce Init_Thrown_Failure(Level* L, Value(const*) error) {
     assert(IS_ERROR(error));
     return Init_Thrown_With_Label(L, Lib(NULL), error);
 }
 
 inline static void CATCH_THROWN(
     Cell* arg_out,
-    Level(*) level_
+    Level* level_
 ){
     UNUSED(level_);
 
@@ -113,7 +113,7 @@ inline static void CATCH_THROWN(
 }
 
 
-inline static void Drop_Level(Level(*) L);
+inline static void Drop_Level(Level* L);
 
 // When you're sure that the value isn't going to be consumed by a multireturn
 // then use this to get the first value unmeta'd

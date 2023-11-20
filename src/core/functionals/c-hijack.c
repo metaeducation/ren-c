@@ -92,7 +92,7 @@
 //     foo: func [a /b c] [...]  =>  bar: func [/b d e] [...]
 //                    foo/b 1 2  =>  bar/b 1 2
 //
-void Push_Redo_Action_Level(Atom(*) out, Level(*) L1, const REBVAL *run)
+void Push_Redo_Action_Level(Atom(*) out, Level* L1, const REBVAL *run)
 {
     Array* normals = Make_Array(Level_Num_Args(L1));  // max, e.g. no refines
 
@@ -141,7 +141,7 @@ void Push_Redo_Action_Level(Atom(*) out, Level(*) L1, const REBVAL *run)
 
     DECLARE_LOCAL (block);
     Init_Block(block, normals);
-    Level(*) L2 = Make_Level_At(block, flags);
+    Level* L2 = Make_Level_At(block, flags);
     L2->baseline.stack_base = base;
 
     Push_Level(out, L2);
@@ -165,7 +165,7 @@ void Push_Redo_Action_Level(Atom(*) out, Level(*) L1, const REBVAL *run)
 // an ADAPT or SPECIALIZE or a MAKE FRAME! might depend on the existing
 // paramlist shape of the identity.)  Those cases need this "shim" dispatcher.
 //
-Bounce Hijacker_Dispatcher(Level(*) level_)
+Bounce Hijacker_Dispatcher(Level* level_)
 {
     // The PHASE here is the *identity that the hijacker has overtaken*
     // But the actual hijacker is in the archetype.

@@ -39,7 +39,7 @@
 // a series as containing fixed-size units.
 //
 Bounce Series_Common_Action_Maybe_Unhandled(
-    Level(*) level_,
+    Level* level_,
     const Symbol* verb
 ){
     REBVAL *v = D_ARG(1);

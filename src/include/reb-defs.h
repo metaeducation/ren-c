@@ -153,12 +153,9 @@ struct Reb_Collector;
 // level variables is uppercase L.
 //
 
-typedef struct LevelStruct LevelT;
+typedef struct LevelStruct Level;
 
-#define Level(star) \
-    LevelT star
-
-typedef struct FeedStruct FeedT;
+typedef struct FeedStruct Feed;
 
 struct Reb_State;
 typedef struct JumpStruct Jump;

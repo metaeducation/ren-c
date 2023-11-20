@@ -234,7 +234,7 @@ REBINT CT_Time(NoQuote(const Cell*) a, NoQuote(const Cell*) b, bool strict)
 //  MAKE_Time: C
 //
 Bounce MAKE_Time(
-    Level(*) level_,
+    Level* level_,
     enum Reb_Kind kind,
     Option(Value(const*)) parent,
     const REBVAL *arg
@@ -359,7 +359,7 @@ Bounce MAKE_Time(
 //
 //  TO_Time: C
 //
-Bounce TO_Time(Level(*) level_, enum Reb_Kind kind, const REBVAL *arg)
+Bounce TO_Time(Level* level_, enum Reb_Kind kind, const REBVAL *arg)
 {
     return MAKE_Time(level_, kind, nullptr, arg);
 }

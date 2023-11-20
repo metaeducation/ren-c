@@ -108,7 +108,7 @@ void Rollback_Globals_To_State(struct Reb_State *s)
 // (instead of BOTTOM_LEVEL).  You can then replug with Replug_Stack, e.g.
 // the following should be a no-op:
 //
-//      Level(*) base = level_->prior->prior;
+//      Level* base = level_->prior->prior;
 //      assert(level_->prior != nullptr);
 //
 //      Unplug_Stack(SPARE, level_, base);
@@ -127,12 +127,12 @@ void Rollback_Globals_To_State(struct Reb_State *s)
 //
 void Unplug_Stack(
     Value(*) plug,  // cell where global state differentials can be stored
-    Level(*) L,  // level to unplug (currently can only unplug topmost level)
-    Level(*) base  // base level to unplug relative to
+    Level* L,  // level to unplug (currently can only unplug topmost level)
+    Level* base  // base level to unplug relative to
 ){
     assert(L == TOP_LEVEL);
 
-    Level(*) temp = L;
+    Level* temp = L;
     while (true) {
         if (Get_Level_Flag(temp, ROOT_LEVEL)) {
             //
@@ -256,10 +256,10 @@ void Unplug_Stack(
 //    of that sublevel to match the output of the current level (see assert in
 //    Unplug_Stack() proving sublevel had same L->out).
 //
-void Replug_Stack(Level(*) L, Level(*) base, Value(*) plug) {
+void Replug_Stack(Level* L, Level* base, Value(*) plug) {
     assert(base == TOP_LEVEL);  // currently can only plug atop topmost frame
 
-    Level(*) temp = L;
+    Level* temp = L;
     while (true) {
         if (temp->out == Lib(TRUE))  // replace output placeholder, see [1]
             temp->out = base->out;

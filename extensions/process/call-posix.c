@@ -134,7 +134,7 @@ inline static bool Set_Nonblocking_Fails(int fd) {
 // POSIX previous simple version was just 'return system(call);'
 // This uses 'execvp' which is "POSIX.1 conforming, UNIX compatible"
 //
-Bounce Call_Core(Level(*) level_) {
+Bounce Call_Core(Level* level_) {
     PROCESS_INCLUDE_PARAMS_OF_CALL_INTERNAL_P;
 
     UNUSED(REF(console));  // !!! actually not paid attention to, why?

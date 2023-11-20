@@ -144,7 +144,7 @@ REBVAL *Init_Decimal_Bits(Cell* out, const Byte* bp)
 // or MAKE as a rough idea of how these rules might be followed.
 //
 Bounce MAKE_Decimal(
-    Level(*) level_,
+    Level* level_,
     enum Reb_Kind kind,
     Option(Value(const*)) parent,
     const REBVAL *arg
@@ -290,7 +290,7 @@ Bounce MAKE_Decimal(
 // conversions, with MAKE used for less obvious (e.g. make decimal [1 5]
 // giving you 100000).
 //
-Bounce TO_Decimal(Level(*) level_, enum Reb_Kind kind, const REBVAL *arg)
+Bounce TO_Decimal(Level* level_, enum Reb_Kind kind, const REBVAL *arg)
 {
     assert(kind == REB_DECIMAL or kind == REB_PERCENT);
 

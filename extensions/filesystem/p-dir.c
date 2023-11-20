@@ -65,7 +65,7 @@ REBVAL *Try_Read_Directory_Entry(FILEREQ *dir);
 //
 // Internal port handler for file directories.
 //
-Bounce Dir_Actor(Level(*) level_, REBVAL *port, const Symbol* verb)
+Bounce Dir_Actor(Level* level_, REBVAL *port, const Symbol* verb)
 {
     Context* ctx = VAL_CONTEXT(port);
 

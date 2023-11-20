@@ -73,7 +73,7 @@ enum {
 // was created for; exemplars can be reused by functions that don't need to
 // tweak them (e.g. ADAPT).
 //
-Bounce Reorderer_Dispatcher(Level(*) L) {
+Bounce Reorderer_Dispatcher(Level* L) {
     Details* details = Phase_Details(Level_Phase(L));
     assert(Array_Len(details) == IDX_REORDERER_MAX);
 

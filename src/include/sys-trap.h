@@ -107,7 +107,7 @@ struct JumpStruct {
 
     struct JumpStruct* last_jump;
 
-    Level(*) level;  // trampoline caches level here for flexibility, see [3]
+    Level* level;  // trampoline caches level here for flexibility, see [3]
 };
 
 

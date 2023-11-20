@@ -75,7 +75,7 @@ REBINT CT_Money(NoQuote(const Cell*) a, NoQuote(const Cell*) b, bool strict)
 //  MAKE_Money: C
 //
 Bounce MAKE_Money(
-    Level(*) level_,
+    Level* level_,
     enum Reb_Kind kind,
     Option(Value(const*)) parent,
     const REBVAL *arg
@@ -129,7 +129,7 @@ Bounce MAKE_Money(
 //
 //  TO_Money: C
 //
-Bounce TO_Money(Level(*) level_, enum Reb_Kind kind, const REBVAL *arg)
+Bounce TO_Money(Level* level_, enum Reb_Kind kind, const REBVAL *arg)
 {
     return MAKE_Money(level_, kind, nullptr, arg);
 }

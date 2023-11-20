@@ -58,4 +58,4 @@ inline static void Fail_No_Process(const REBVAL *arg) {
 //
 #define BUF_SIZE_CHUNK 4096
 
-Bounce Call_Core(Level(*) level_);
+Bounce Call_Core(Level* level_);

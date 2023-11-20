@@ -921,7 +921,7 @@ const void *RL_rebArgR(const void *p, va_list *vaptr)
 {
     ENTER_API;
 
-    Level(*) L = TOP_LEVEL;
+    Level* L = TOP_LEVEL;
     Phase* act = Level_Phase(L);
 
     // !!! Currently the JavaScript wrappers do not do the right thing for
@@ -1046,13 +1046,13 @@ static bool Run_Va_Throws(
     else
         g_ts.eval_sigmask &= ~SIG_HALT;  // disable
 
-    Feed(*) feed = Make_Variadic_Feed(
+    Feed* feed = Make_Variadic_Feed(
         p, vaptr,
         Get_Context_From_Stack(),
         FEED_MASK_DEFAULT
     );
 
-    Level(*) L = Make_Level(
+    Level* L = Make_Level(
         feed,
         LEVEL_FLAG_ALLOCATED_FEED | flags
     );
@@ -1134,13 +1134,13 @@ bool RL_rebRunCoreThrows(
     uintptr_t flags,  // Flags not exported in API
     const void *p, va_list *vaptr
 ){
-    Feed(*) feed = Make_Variadic_Feed(
+    Feed* feed = Make_Variadic_Feed(
         p, vaptr,
         Get_Context_From_Stack(),
         FEED_MASK_DEFAULT
     );
 
-    Level(*) L = Make_Level(
+    Level* L = Make_Level(
         feed,
         flags | LEVEL_FLAG_ALLOCATED_FEED
     );
@@ -1203,7 +1203,7 @@ REBVAL *RL_rebTranscodeInto(
 ){
     ENTER_API;
 
-    Feed(*) feed = Make_Variadic_Feed(
+    Feed* feed = Make_Variadic_Feed(
         p, vaptr,
         Get_Context_From_Stack(),  // No context parameter, see [1]
         FEED_MASK_DEFAULT
@@ -1247,7 +1247,7 @@ void RL_rebPushContinuation(
     DECLARE_LOCAL (block);
     RL_rebTranscodeInto(cast(REBVAL*, block), p, vaptr);  // use "RL_", see [1]
 
-    Level(*) L = Make_Level_At(block, flags);
+    Level* L = Make_Level_At(block, flags);
     Push_Level(out, L);
     L->executor = &Array_Executor;
 }
@@ -2068,7 +2068,7 @@ REBVAL *RL_rebRescueWith(
 ){
     ENTER_API;
 
-    Level(*) dummy = Make_End_Level(LEVEL_MASK_NONE);
+    Level* dummy = Make_End_Level(LEVEL_MASK_NONE);
     Push_Level(nullptr, dummy);  // for owning API cells, see [1]
 
   RESCUE_SCOPE_IN_CASE_OF_ABRUPT_FAILURE {  //////////////////////////////////

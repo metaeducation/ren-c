@@ -436,7 +436,7 @@ void Probe(const void *p)
 //
 //  Where_Core_Debug: C
 //
-void Where_Core_Debug(Level(*) L) {
+void Where_Core_Debug(Level* L) {
     if (FEED_IS_VARIADIC(L->feed))
         Reify_Variadic_Feed_As_Array_Feed(L->feed, false);
 
@@ -467,7 +467,7 @@ void Where_Core_Debug(Level(*) L) {
     Drop_Mold(mo);
 }
 
-void Where(Level(*) L)
+void Where(Level* L)
   { Where_Core_Debug(L); }
 
 #endif  // DEBUG_HAS_PROBE

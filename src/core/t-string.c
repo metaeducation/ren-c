@@ -343,7 +343,7 @@ static void reverse_string(String* str, REBLEN index, REBLEN len)
 //  MAKE_String: C
 //
 Bounce MAKE_String(
-    Level(*) level_,
+    Level* level_,
     enum Reb_Kind kind,
     Option(Value(const*)) parent,
     const REBVAL *def
@@ -432,7 +432,7 @@ Bounce MAKE_String(
 //
 //  TO_String: C
 //
-Bounce TO_String(Level(*) level_, enum Reb_Kind kind, const REBVAL *arg)
+Bounce TO_String(Level* level_, enum Reb_Kind kind, const REBVAL *arg)
 {
     if (kind == REB_ISSUE) {  // encompasses what would have been TO CHAR!
         if (IS_INTEGER(arg)) {

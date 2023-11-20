@@ -112,7 +112,7 @@ DECLARE_NATIVE(shove)
 {
     INCLUDE_PARAMS_OF_SHOVE;
 
-    Level(*) L;
+    Level* L;
     if (not Is_Level_Style_Varargs_May_Fail(&L, ARG(right)))
         fail ("SHOVE (>-) not implemented for MAKE VARARGS! [...] yet");
 
@@ -202,7 +202,7 @@ DECLARE_NATIVE(shove)
 
     Flags flags = FLAG_STATE_BYTE(ST_ACTION_FULFILLING_ENFIX_FROM_OUT);
 
-    Level(*) sub = Make_Level(level_->feed, flags);
+    Level* sub = Make_Level(level_->feed, flags);
     Push_Action(sub, VAL_ACTION(shovee), VAL_FRAME_BINDING(shovee));
     Begin_Action_Core(sub, label, enfix);
 
@@ -293,7 +293,7 @@ DECLARE_NATIVE(do)
             return OUT;
         }
 
-        Level(*) L;
+        Level* L;
         if (not Is_Level_Style_Varargs_May_Fail(&L, source))
             panic (source); // Frame is the only other type
 
@@ -304,7 +304,7 @@ DECLARE_NATIVE(do)
         if (Is_Level_At_End(L))
             return VOID;
 
-        Level(*) sub = Make_Level(
+        Level* sub = Make_Level(
             L->feed,
             LEVEL_MASK_NONE
         );
@@ -433,7 +433,7 @@ DECLARE_NATIVE(evaluate)
             return Proxy_Multi_Returns(level_);
         }
 
-        Feed(*) feed = Make_At_Feed_Core(  // use feed, see [2]
+        Feed* feed = Make_At_Feed_Core(  // use feed, see [2]
             source,
             SPECIFIED
         );
@@ -446,7 +446,7 @@ DECLARE_NATIVE(evaluate)
             Init_Nihil(OUT);  // heeded by array executor
         }
 
-        Level(*) sub = Make_Level(feed, flags);
+        Level* sub = Make_Level(feed, flags);
         Push_Level(OUT, sub);
 
         if (not REF(next)) {  // plain evaluation to end, maybe invisible
@@ -510,7 +510,7 @@ DECLARE_NATIVE(evaluate)
             VAL_INDEX_UNBOUNDED(position) = index;
         }
         else {
-            Level(*) L;
+            Level* L;
             if (not Is_Level_Style_Varargs_May_Fail(&L, source))
                 panic (source); // Frame is the only other type
 
@@ -585,7 +585,7 @@ DECLARE_NATIVE(redo)
 
     Context* c = VAL_CONTEXT(restartee);
 
-    Level(*) L = CTX_LEVEL_IF_ON_STACK(c);
+    Level* L = CTX_LEVEL_IF_ON_STACK(c);
     if (L == NULL)
         fail ("Use DO to start a not-currently running FRAME! (not REDO)");
 
@@ -795,7 +795,7 @@ DECLARE_NATIVE(apply)
 
     Drop_Data_Stack_To(STACK_BASE);  // partials ordering unimportant
 
-    Level(*) L = Make_Level_At(
+    Level* L = Make_Level_At(
         args,
         LEVEL_FLAG_TRAMPOLINE_KEEPALIVE
     );
@@ -810,7 +810,7 @@ DECLARE_NATIVE(apply)
 
 } handle_next_item: {  ///////////////////////////////////////////////////////
 
-    Level(*) L = SUBLEVEL;
+    Level* L = SUBLEVEL;
 
     if (Is_Level_At_End(L))
         goto finalize_apply;
@@ -987,7 +987,7 @@ DECLARE_NATIVE(run)
     Value(*) action = ARG(frame);
     UNUSED(ARG(args));  // uses internal mechanisms to act variadic
 
-    Level(*) sub = Make_Action_Sublevel(level_);
+    Level* sub = Make_Action_Sublevel(level_);
     Push_Level(OUT, sub);
     Push_Action(
         sub,

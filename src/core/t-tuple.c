@@ -33,7 +33,7 @@
 // unique behavior which might be interesting for numeric MAKEs.
 //
 Bounce MAKE_Sequence(
-    Level(*) level_,
+    Level* level_,
     enum Reb_Kind kind,
     Option(Value(const*)) parent,
     const REBVAL *arg

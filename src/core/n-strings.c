@@ -113,7 +113,7 @@ DECLARE_NATIVE(delimit)
     else
         assert(IS_BLOCK(line));
 
-    Level(*) L = Make_Level_At(line, flags);
+    Level* L = Make_Level_At(line, flags);
     Push_Level(OUT, L);
 
     DECLARE_MOLD (mo);

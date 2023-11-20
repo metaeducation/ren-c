@@ -220,7 +220,7 @@ DECLARE_NATIVE(new_line_q)
     const Cell* tail;
 
     if (IS_VARARGS(pos)) {
-        Level(*) L;
+        Level* L;
         REBVAL *shared;
         if (Is_Level_Style_Varargs_May_Fail(&L, pos)) {
             if (Level_Is_Variadic(L)) {

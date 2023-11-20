@@ -25,7 +25,7 @@
 //
 
 
-// !!! A Level(*) answers that it is a node, and a cell.  This is questionable
+// !!! A Level* answers that it is a node, and a cell.  This is questionable
 // and should be reviewed now that many features no longer depend on it.
 
 #define LEVEL_FLAG_0_IS_TRUE FLAG_LEFT_BIT(0)  // IS a node
@@ -268,7 +268,7 @@ STATIC_ASSERT(31 < 32);  // otherwise LEVEL_FLAG_XXX too high
 // do checks on the types it received while being compatible with a void*
 // in the dispatchers using %rebol.h.  So these would be compatible:
 //
-//    typedef Bounce (Dispatcher)(Level(*) level_);  // %sys-core.h clients
+//    typedef Bounce (Dispatcher)(Level* level_);  // %sys-core.h clients
 //    typedef void* (Dispatcher)(void* level_);      // %rebol.h clients
 //
 // As it turns out the compiler doesn't generate compatible output, even
@@ -283,7 +283,7 @@ typedef Node* Bounce;
 
 // C function implementing a native ACTION!
 //
-typedef Bounce (Executor)(Level(*) level_);
+typedef Bounce (Executor)(Level* level_);
 typedef Executor Dispatcher;  // sub-dispatched in Action_Executor()
 
 // Intrinsics are a special form of implementing natives that do not need
@@ -340,7 +340,7 @@ typedef void (Intrinsic)(Atom(*) out, Phase* phase, Value(*) arg);
     // Since levels may share source information, this needs to be done with
     // a dereference.
     //
-    Feed(*) feed;
+    Feed* feed;
 
     // The level's "spare" is used for different purposes.  PARSE uses it as a
     // scratch storage space.  Path evaluation uses it as where the calculated
@@ -368,7 +368,7 @@ typedef void (Intrinsic)(Atom(*) out, Phase* phase, Value(*) arg);
     struct ActionExecutorStateStruct action;
 
     struct {
-        Level(*) main_level;
+        Level* main_level;
         bool changed;
     } compose;
 
@@ -388,7 +388,7 @@ typedef void (Intrinsic)(Atom(*) out, Phase* phase, Value(*) arg);
     // because the bottom of the stack is BOTTOM_LEVEL which is allocated at
     // startup and never used to run code.
     //
-    Level(*) prior;
+    Level* prior;
 
     // This is where to write the result of the evaluation.  It should not be
     // in "movable" memory, hence not in a series data array.  Often it is
@@ -463,7 +463,7 @@ typedef void (Intrinsic)(Atom(*) out, Phase* phase, Value(*) arg);
     //
     // In order to make a handle able to find the level whose linked list it
     // belongs to (in order to update the head of the list) the terminator on
-    // the ends is not nullptr, but a pointer to the Level(*) itself (which
+    // the ends is not nullptr, but a pointer to the Level* itself (which
     // can be noticed as not being an API handle).
     //
     Node* alloc_value_list;
@@ -503,8 +503,8 @@ typedef void (Intrinsic)(Atom(*) out, Phase* phase, Value(*) arg);
 // and line numbers into arrays based on the frame in effect at their time
 // of allocation.
 
-inline static const Array* Level_Array(Level(*) L);
-inline static bool Level_Is_Variadic(Level(*) L);
+inline static const Array* Level_Array(Level* L);
+inline static bool Level_Is_Variadic(Level* L);
 
 #define TOP_LEVEL (g_ts.top_level + 0)  // avoid assign to TOP_LEVEL via + 0
 #define BOTTOM_LEVEL (g_ts.bottom_level + 0)  // avoid assign to BOTTOM_LEVEL
@@ -528,7 +528,7 @@ inline static bool Level_Is_Variadic(Level(*) L);
 #if DEBUG_ENSURE_EXECUTOR_FLAGS
     #define ensure_executor(executor,f) (f)  // no-op in release build
 #else
-    inline static Level(*) ensure_executor(Executor *executor, Level(*) L) {
+    inline static Level* ensure_executor(Executor *executor, Level* L) {
         if (L->executor != executor)
             assert(!"Wrong executor for flag tested");
         return L;

@@ -105,7 +105,7 @@
 //
 // Returns TRUE if it set the flag.
 //
-bool Lookahead_To_Sync_Enfix_Defer_Flag(Feed(*) feed) {
+bool Lookahead_To_Sync_Enfix_Defer_Flag(Feed* feed) {
     assert(Not_Feed_Flag(feed, DEFERRING_ENFIX));
     assert(not feed->gotten);
 
@@ -149,7 +149,7 @@ bool Lookahead_To_Sync_Enfix_Defer_Flag(Feed(*) feed) {
 //    of multi-return proxying via RETURN/ONLY.  Hence natives now need to
 //    take that responsibility of choosing whether or not to proxy.
 //
-Bounce Proxy_Multi_Returns_Core(Level(*) L, Atom(*) v)
+Bounce Proxy_Multi_Returns_Core(Level* L, Atom(*) v)
 {
     assert(not Is_Raised(v));
 
@@ -187,7 +187,7 @@ Bounce Proxy_Multi_Returns_Core(Level(*) L, Atom(*) v)
 //
 //  Action_Executor: C
 //
-Bounce Action_Executor(Level(*) L)
+Bounce Action_Executor(Level* L)
 {
     if (THROWING) {
         if (Get_Action_Executor_Flag(L, DISPATCHER_CATCHES))
@@ -599,7 +599,7 @@ Bounce Action_Executor(Level(*) L)
             if (Did_Init_Inert_Optimize_Complete(ARG, L->feed, &flags))
                 break;  // no sublevel needed
 
-            Level(*) sub = Make_Level(L->feed, flags);
+            Level* sub = Make_Level(L->feed, flags);
             Push_Level(ARG, sub);
 
             return CATCH_CONTINUE_SUBLEVEL(sub); }
@@ -693,7 +693,7 @@ Bounce Action_Executor(Level(*) L)
                     | EVAL_EXECUTOR_FLAG_FULFILLING_ARG
                     | EVAL_EXECUTOR_FLAG_INERT_OPTIMIZATION;
 
-                Level(*) sub = Make_Level(L->feed, flags);
+                Level* sub = Make_Level(L->feed, flags);
                 Push_Level(ARG, sub);
                 return CATCH_CONTINUE_SUBLEVEL(sub);
             }
@@ -1180,7 +1180,7 @@ Bounce Action_Executor(Level(*) L)
 // cached during the creation process.
 //
 void Push_Action(
-    Level(*) L,
+    Level* L,
     Action* act,
     Context* binding  // actions may only be bound to contexts ATM
 ){
@@ -1281,7 +1281,7 @@ void Push_Action(
 //  Begin_Action_Core: C
 //
 void Begin_Action_Core(
-    Level(*) L,
+    Level* L,
     Option(const Symbol*) label,
     bool enfix
 ){
@@ -1327,7 +1327,7 @@ void Begin_Action_Core(
 //
 //  Drop_Action: C
 //
-void Drop_Action(Level(*) L) {
+void Drop_Action(Level* L) {
     assert(not L->label or IS_SYMBOL(unwrap(L->label)));
 
     Clear_Action_Executor_Flag(L, RUNNING_ENFIX);

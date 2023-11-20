@@ -44,7 +44,7 @@
 #define Init_Error(v,c) \
     Init_Context_Cell((v), REB_ERROR, (c))
 
-inline static void Force_Location_Of_Error(Context* error, Level(*) where) {
+inline static void Force_Location_Of_Error(Context* error, Level* where) {
     ERROR_VARS *vars = ERR_VARS(error);
     if (Is_Nulled(&vars->where))
         Set_Location_Of_Error(error, where);

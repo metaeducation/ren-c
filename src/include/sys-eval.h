@@ -54,7 +54,7 @@
     // a tick breakpoint that way with `--breakpoint NNN`
     //
     // The debug build carries ticks many other places.  Series contain the
-    // `Series.tick` where they were created, levels have a `LevelT.tick`,
+    // `Series.tick` where they were created, levels have a `Level.tick`,
     // and the DEBUG_TRACK_EXTEND_CELLS switch will double the size of cells
     // so they can carry the tick, file, and line where they were initialized.
     // (Even without TRACK_EXTEND, cells that don't have their EXTRA() field
@@ -137,7 +137,7 @@ enum {
     ST_ARRAY_STEPPING
 };
 
-inline static void Restart_Evaluator_Level(Level(*) L) {
+inline static void Restart_Evaluator_Level(Level* L) {
     assert(L->executor == &Evaluator_Executor);
     Level_State_Byte(L) = STATE_0;
 }
@@ -163,7 +163,7 @@ inline static REBVAL *Refinify_Pushed_Refinement(REBVAL *v) {
 //
 inline static bool Did_Init_Inert_Optimize_Complete(
     Atom(*) out,
-    Feed(*) feed,
+    Feed* feed,
     Flags *flags
 ){
     assert(State_Byte_From_Flags(*flags) == 0);  // we might set the STATE byte
@@ -267,7 +267,7 @@ inline static bool Did_Init_Inert_Optimize_Complete(
 //
 inline static bool Eval_Step_Throws(
     Atom(*) out,
-    Level(*) L
+    Level* L
 ){
     assert(Not_Feed_Flag(L->feed, NO_LOOKAHEAD));
 
@@ -289,13 +289,13 @@ inline static bool Eval_Step_Throws(
 //
 inline static bool Eval_Step_In_Sublevel_Throws(
     Atom(*) out,
-    Level(*) L,
+    Level* L,
     Flags flags
 ){
     if (Did_Init_Inert_Optimize_Complete(out, L->feed, &flags))
         return false;  // If eval not hooked, ANY-INERT! may not need a level
 
-    Level(*) sub = Make_Level(L->feed, flags);
+    Level* sub = Make_Level(L->feed, flags);
 
     return Trampoline_Throws(out, sub);
 }
@@ -303,7 +303,7 @@ inline static bool Eval_Step_In_Sublevel_Throws(
 
 inline static bool Reevaluate_In_Sublevel_Throws(
     Atom(*) out,
-    Level(*) L,
+    Level* L,
     Value(const*) reval,
     Flags flags,
     bool enfix
@@ -311,7 +311,7 @@ inline static bool Reevaluate_In_Sublevel_Throws(
     assert(State_Byte_From_Flags(flags) == 0);
     flags |= FLAG_STATE_BYTE(ST_EVALUATOR_REEVALUATING);
 
-    Level(*) sub = Make_Level(L->feed, flags);
+    Level* sub = Make_Level(L->feed, flags);
     sub->u.eval.current = reval;
     sub->u.eval.current_gotten = nullptr;
     sub->u.eval.enfix_reevaluate = enfix ? 'Y' : 'N';
@@ -329,14 +329,14 @@ inline static bool Eval_Step_In_Any_Array_At_Throws(
 ){
     assert(Is_Cell_Erased(out));
 
-    Feed(*) feed = Make_At_Feed_Core(any_array, specifier);
+    Feed* feed = Make_At_Feed_Core(any_array, specifier);
 
     if (Is_Feed_At_End(feed)) {
         *index_out = 0xDECAFBAD;  // avoid compiler warning
         return false;
     }
 
-    Level(*) L = Make_Level(
+    Level* L = Make_Level(
         feed,
         flags | LEVEL_FLAG_ALLOCATED_FEED
     );
@@ -366,7 +366,7 @@ inline static bool Eval_Value_Core_Throws(
         return false;  // fast things that don't need levels (should inline)
     }
 
-    Feed(*) feed = Prep_Array_Feed(
+    Feed* feed = Prep_Array_Feed(
         Alloc_Feed(),
         value,  // first--in this case, the only value in the feed...
         EMPTY_ARRAY,  // ...because we're using the empty array after that
@@ -375,7 +375,7 @@ inline static bool Eval_Value_Core_Throws(
         FEED_MASK_DEFAULT | (value->header.bits & FEED_FLAG_CONST)
     );
 
-    Level(*) L = Make_Level(feed, flags | LEVEL_FLAG_ALLOCATED_FEED);
+    Level* L = Make_Level(feed, flags | LEVEL_FLAG_ALLOCATED_FEED);
 
     return Trampoline_Throws(out, L);
 }
@@ -384,7 +384,7 @@ inline static bool Eval_Value_Core_Throws(
     Eval_Value_Core_Throws(out, LEVEL_MASK_NONE, (value), (specifier))
 
 
-inline static Bounce Native_Raised_Result(Level(*) level_, const void *p) {
+inline static Bounce Native_Raised_Result(Level* level_, const void *p) {
     assert(not THROWING);
 
     Context* error;

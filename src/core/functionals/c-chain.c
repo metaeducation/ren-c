@@ -49,18 +49,18 @@ enum {
 //
 // When a derived function dispatcher receives a frame built for the function
 // it derived from, sometimes it can do some work...update the phase...and
-// keep running in that same Level(*) allocation.
+// keep running in that same Level* allocation.
 //
 // But if it wants to stay in control and do post-processing (as CHAIN does)
 // then it needs to remain linked into the stack.  This function helps to
 // move the built level into a new level that can be executed with a new
 // entry to Process_Action().  The ability is also used by RESKINNED.
 //
-Level(*) Push_Downshifted_Level(Atom(*) out, Level(*) L) {
+Level* Push_Downshifted_Level(Atom(*) out, Level* L) {
     Flags flags = ACTION_EXECUTOR_FLAG_IN_DISPATCH;
     flags |= L->flags.bits & LEVEL_FLAG_RAISED_RESULT_OK;
 
-    Level(*) sub = Make_Level(L->feed, flags);
+    Level* sub = Make_Level(L->feed, flags);
     Push_Level(out, sub);
     assert(sub->varlist == nullptr);
     sub->varlist = L->varlist;
@@ -104,7 +104,7 @@ Level(*) Push_Downshifted_Level(Atom(*) out, Level(*) L) {
 //
 // Handling it inside the dispatcher means the Chainer_Dispatcher() stays on
 // the stack and in control.  This means either unhooking the current `L` and
-// putting a new Level(*) above it, or stealing the content of the `L` into a
+// putting a new Level* above it, or stealing the content of the `L` into a
 // new level to put beneath it.  The latter is chosen to avoid disrupting
 // existing pointers to `L`.
 //
@@ -113,7 +113,7 @@ Level(*) Push_Downshifted_Level(Atom(*) out, Level(*) L) {
 // user invoked in the stack trace...instead of just the chained item that
 // causes an error.)
 //
-Bounce Chainer_Dispatcher(Level(*) const L)
+Bounce Chainer_Dispatcher(Level* const L)
 //
 // 1. Stealing the varlist leaves the actual chainer frame with no varlist
 //    content.  That means debuggers introspecting the stack may see a
@@ -161,7 +161,7 @@ Bounce Chainer_Dispatcher(Level(*) const L)
         VAL_ARRAY(DETAILS_AT(details, IDX_CHAINER_PIPELINE))
     );
 
-    Level(*) sub = Push_Downshifted_Level(OUT, L);  // steals varlist, see [1]
+    Level* sub = Push_Downshifted_Level(OUT, L);  // steals varlist, see [1]
     L->executor = &Chainer_Dispatcher;  // so trampoline calls us, see [2]
 
     const Cell* chained = VAL_ARRAY_ITEM_AT(pipeline_at);
@@ -187,7 +187,7 @@ Bounce Chainer_Dispatcher(Level(*) const L)
 
 } run_next_in_chain: {  //////////////////////////////////////////////////////
 
-    Level(*) sub = SUBLEVEL;
+    Level* sub = SUBLEVEL;
     if (Get_Level_Flag(L, RAISED_RESULT_OK))
         assert(Get_Level_Flag(sub, RAISED_RESULT_OK));
 

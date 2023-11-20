@@ -292,7 +292,7 @@ REBVAL *Read_Line(STD_TERM *t)
 //
 //  Console_Actor: C
 //
-Bounce Console_Actor(Level(*) level_, REBVAL *port, const Symbol* verb)
+Bounce Console_Actor(Level* level_, REBVAL *port, const Symbol* verb)
 {
     Context* ctx = VAL_CONTEXT(port);
 

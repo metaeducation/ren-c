@@ -45,7 +45,7 @@ REBINT CT_Integer(NoQuote(const Cell*) a, NoQuote(const Cell*) b, bool strict)
 //  MAKE_Integer: C
 //
 Bounce MAKE_Integer(
-    Level(*) level_,
+    Level* level_,
     enum Reb_Kind kind,
     Option(Value(const*)) parent,
     const REBVAL *arg
@@ -87,7 +87,7 @@ Bounce MAKE_Integer(
 //
 //  TO_Integer: C
 //
-Bounce TO_Integer(Level(*) level_, enum Reb_Kind kind, const REBVAL *arg)
+Bounce TO_Integer(Level* level_, enum Reb_Kind kind, const REBVAL *arg)
 {
     assert(kind == REB_INTEGER);
     UNUSED(kind);

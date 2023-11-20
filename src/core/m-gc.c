@@ -293,7 +293,7 @@ static void Queue_Unmarked_Accessible_Series_Deep(Series* s)
         //
         if (IS_VARLIST(a) and node_BONUS(Node, s)) {
             //
-            // !!! The keysource for varlists can be set to a Level(*), which
+            // !!! The keysource for varlists can be set to a Level*, which
             // at the moment pretends to be a cell to distinguish itself.
             // This makes less sense than pretending to be a series that is
             // already marked, and has a detectable FLAVOR_XXX.  Review.
@@ -476,7 +476,7 @@ static void Propagate_All_GC_Marks(void)
 // before any items are consumed).
 //
 void Reify_Variadic_Feed_As_Array_Feed(
-    Feed(*) feed,
+    Feed* feed,
     bool truncated
 ){
     assert(FEED_IS_VARIADIC(feed));
@@ -804,7 +804,7 @@ static void Mark_Guarded_Nodes(void)
 //
 static void Mark_Level_Stack_Deep(void)
 {
-    Level(*) L = TOP_LEVEL;
+    Level* L = TOP_LEVEL;
 
     while (true) {  // mark all levels (even BOTTOM_LEVEL)
         //

@@ -1088,7 +1088,7 @@ e-boot/emit 'fields {
     EXTERN_C const Byte Boot_Block_Compressed[];
 
     /*
-     * Raw C function pointers for natives, take Level(*) and return Bounce.
+     * Raw C function pointers for natives, take Level* and return Bounce.
      */
     EXTERN_C const REBLEN Num_Natives;
     EXTERN_C CFunction* const Native_C_Funcs[];

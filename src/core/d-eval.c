@@ -54,7 +54,7 @@
 //
 //  Dump_Level_Location: C
 //
-void Dump_Level_Location(Level(*) L)
+void Dump_Level_Location(Level* L)
 {
     DECLARE_LOCAL (dump);
 
@@ -113,7 +113,7 @@ void Dump_Level_Location(Level(*) L)
 // These are checks common to Expression and Exit checks (hence also common
 // to the "end of Start" checks, since that runs on the first expression)
 //
-static void Evaluator_Shared_Checks_Debug(Level(*) L)
+static void Evaluator_Shared_Checks_Debug(Level* L)
 {
     // The state isn't actually guaranteed to balance overall until a level
     // is completely dropped.  This is because a level may be reused over
@@ -189,7 +189,7 @@ static void Evaluator_Shared_Checks_Debug(Level(*) L)
 // This routine attempts to "trash" a lot of level state variables to help
 // make sure one evaluation does not leak data into the next.
 //
-void Evaluator_Expression_Checks_Debug(Level(*) L)
+void Evaluator_Expression_Checks_Debug(Level* L)
 {
     assert(L == TOP_LEVEL); // should be topmost level, still
 
@@ -223,7 +223,7 @@ void Evaluator_Expression_Checks_Debug(Level(*) L)
 //
 //  Do_After_Action_Checks_Debug: C
 //
-void Do_After_Action_Checks_Debug(Level(*) L) {
+void Do_After_Action_Checks_Debug(Level* L) {
     assert(not Is_Throwing(L));
 
     if (Get_Series_Flag(L->varlist, INACCESSIBLE))  // e.g. ENCLOSE
@@ -250,7 +250,7 @@ void Do_After_Action_Checks_Debug(Level(*) L) {
 //
 //  Evaluator_Exit_Checks_Debug: C
 //
-void Evaluator_Exit_Checks_Debug(Level(*) L) {
+void Evaluator_Exit_Checks_Debug(Level* L) {
     Evaluator_Shared_Checks_Debug(L);
 
     if (Not_Level_At_End(L) and not Level_Is_Variadic(L)) {

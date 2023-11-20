@@ -42,7 +42,7 @@
 //  MAKE_Fail: C
 //
 Bounce MAKE_Fail(
-    Level(*) level_,
+    Level* level_,
     enum Reb_Kind kind,
     Option(Value(const*)) parent,
     const REBVAL *arg
@@ -63,7 +63,7 @@ Bounce MAKE_Fail(
 // dispatch table when the extension loads.
 //
 Bounce MAKE_Unhooked(
-    Level(*) level_,
+    Level* level_,
     enum Reb_Kind kind,
     Option(Value(const*)) parent,
     const REBVAL *arg
@@ -240,7 +240,7 @@ REBTYPE(Unhooked)
 // The series common code is in Series_Common_Action_Maybe_Unhandled(), but
 // that is only called from series.  Handle a few extra cases here.
 //
-Bounce Reflect_Core(Level(*) level_)
+Bounce Reflect_Core(Level* level_)
 {
     INCLUDE_PARAMS_OF_REFLECT;
 

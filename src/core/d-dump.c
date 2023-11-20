@@ -108,7 +108,7 @@ void Dump_Info(void)
 // Simple debug routine to list the function names on the stack and what the
 // current feed value is.
 //
-void Dump_Stack(Level(*) L)
+void Dump_Stack(Level* L)
 {
     if (L == nullptr)
         L = TOP_LEVEL;

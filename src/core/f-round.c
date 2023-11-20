@@ -36,7 +36,7 @@
 // Identical to ROUND mezzanine function.
 // Note: scale arg only valid if RF_TO is set
 //
-REBDEC Round_Dec(REBDEC dec, Level(*) level_, REBDEC scale)
+REBDEC Round_Dec(REBDEC dec, Level* level_, REBDEC scale)
 {
     INCLUDE_PARAMS_OF_ROUND;
     UNUSED(ARG(value));  // was extracted for `dec`
@@ -145,7 +145,7 @@ REBDEC Round_Dec(REBDEC dec, Level(*) level_, REBDEC scale)
 // Identical to ROUND mezzanine function.
 // Note: scale arg only valid if RF_TO is set
 //
-REBI64 Round_Int(REBI64 num, Level(*) level_, REBI64 scale)
+REBI64 Round_Int(REBI64 num, Level* level_, REBI64 scale)
 {
     INCLUDE_PARAMS_OF_ROUND;
     UNUSED(ARG(value));  // was extracted as `num`
@@ -192,7 +192,7 @@ REBI64 Round_Int(REBI64 num, Level(*) level_, REBI64 scale)
 // Identical to ROUND mezzanine function.
 // Note: scale arg only valid if REF(to) is set
 //
-deci Round_Deci(deci num, Level(*) level_, deci scale)
+deci Round_Deci(deci num, Level* level_, deci scale)
 {
     INCLUDE_PARAMS_OF_ROUND;
     UNUSED(ARG(value));  // was extracted as `num`

@@ -141,19 +141,17 @@ STATIC_ASSERT(FEED_FLAG_1_IS_FALSE == NODE_FLAG_FREE);
 STATIC_ASSERT(FEED_FLAG_CONST == CELL_FLAG_CONST);
 
 
-#define FEED(f) cast(Feed(*), (f))
-
 #define Get_Feed_Flag(f,name) \
-    ((ensure(Feed(*), (f))->flags.bits & FEED_FLAG_##name) != 0)
+    ((ensure(Feed*, (f))->flags.bits & FEED_FLAG_##name) != 0)
 
 #define Not_Feed_Flag(f,name) \
-    ((ensure(Feed(*), (f))->flags.bits & FEED_FLAG_##name) == 0)
+    ((ensure(Feed*, (f))->flags.bits & FEED_FLAG_##name) == 0)
 
 #define Set_Feed_Flag(f,name) \
-    (ensure(Feed(*), (f))->flags.bits |= FEED_FLAG_##name)
+    (ensure(Feed*, (f))->flags.bits |= FEED_FLAG_##name)
 
 #define Clear_Feed_Flag(f,name) \
-    ensure(Feed(*), (f))->flags.bits &= ~FEED_FLAG_##name
+    ensure(Feed*, (f))->flags.bits &= ~FEED_FLAG_##name
 
 
 #define TRASHED_INDEX ((REBLEN)(-3))
@@ -282,6 +280,3 @@ struct FeedStruct {
     Tick tick;
   #endif
 };
-
-#define Feed(star_maybe_const) \
-    FeedT star_maybe_const

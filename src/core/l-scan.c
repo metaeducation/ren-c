@@ -995,7 +995,7 @@ static LEXFLAGS Prescan_Token(SCAN_STATE *ss)
 static enum Reb_Token Maybe_Locate_Token_May_Push_Mold(
     Context** error,
     REB_MOLD *mo,
-    Level(*) L
+    Level* L
 ){
     SCAN_LEVEL *level = &L->u.scan;
     SCAN_STATE *ss = level->ss;
@@ -1888,7 +1888,7 @@ void Init_Scan_Level(
 // prior element was a GET-WORD!, the scan becomes a GET-PATH!...if the final
 // element is a SET-WORD!, the scan becomes a SET-PATH!)
 //
-Bounce Scanner_Executor(Level(*) const L) {
+Bounce Scanner_Executor(Level* const L) {
     USE_LEVEL_SHORTHANDS (L);
 
     if (THROWING)
@@ -2155,7 +2155,7 @@ Bounce Scanner_Executor(Level(*) const L) {
 
       case TOKEN_GROUP_BEGIN:
       case TOKEN_BLOCK_BEGIN: {
-        Level(*) sub = Make_Level(
+        Level* sub = Make_Level(
             L->feed,
             LEVEL_FLAG_TRAMPOLINE_KEEPALIVE  // we want accrued stack
                 | (L->flags.bits & SCAN_EXECUTOR_MASK_RECURSE)
@@ -2439,7 +2439,7 @@ Bounce Scanner_Executor(Level(*) const L) {
         break;
 
       case TOKEN_CONSTRUCT: {
-        Level(*) sub = Make_Level(
+        Level* sub = Make_Level(
             L->feed,
             LEVEL_FLAG_TRAMPOLINE_KEEPALIVE  // we want accrued stack
                 | (L->flags.bits & SCAN_EXECUTOR_MASK_RECURSE)
@@ -2631,7 +2631,7 @@ Bounce Scanner_Executor(Level(*) const L) {
             // Note we still might come up empty (e.g. `foo/)`)
         }
         else {
-            Level(*) sub = Make_Level(
+            Level* sub = Make_Level(
                 L->feed,
                 LEVEL_FLAG_RAISED_RESULT_OK
             );
@@ -2972,7 +2972,7 @@ Array* Scan_UTF8_Managed(
     UNUSED(size);  // scanner stops at `\0` (no size limit functionality)
 
     const void* packed[2] = {utf8, rebEND};  // BEWARE: Stack, can't trampoline!
-    Feed(*) feed = Make_Variadic_Feed(  // scanner requires variadic, see [1]
+    Feed* feed = Make_Variadic_Feed(  // scanner requires variadic, see [1]
         packed, nullptr,  // va_list* as nullptr means `p` is packed, see [2]
         context,
         FEED_MASK_DEFAULT
@@ -3134,7 +3134,7 @@ DECLARE_NATIVE(transcode)
     //
     // Note: Could reuse global TG_End_Feed if context was null.
 
-    Feed(*) feed = Make_Array_Feed_Core(EMPTY_ARRAY, 0, SPECIFIED);
+    Feed* feed = Make_Array_Feed_Core(EMPTY_ARRAY, 0, SPECIFIED);
     feed->context = REF(where)
         ? VAL_CONTEXT(ARG(where))
         : nullptr;
@@ -3147,7 +3147,7 @@ DECLARE_NATIVE(transcode)
     if (REF(one))
         flags |= SCAN_EXECUTOR_FLAG_JUST_ONCE;
 
-    Level(*) sub = Make_Level(feed, flags);
+    Level* sub = Make_Level(feed, flags);
     sub->executor = &Scanner_Executor;
     SCAN_LEVEL *level = &sub->u.scan;
 
@@ -3265,7 +3265,7 @@ const Byte* Scan_Any_Word(
     const String* file = ANONYMOUS;
     const LineNumber start_line = 1;
 
-    Level(*) L = Make_End_Level(LEVEL_MASK_NONE);  // note: no feed `context`
+    Level* L = Make_End_Level(LEVEL_MASK_NONE);  // note: no feed `context`
     SCAN_LEVEL *level = &L->u.scan;
 
     Init_Scan_Level(level, &ss, file, start_line, utf8);
@@ -3356,11 +3356,11 @@ const Byte* Scan_Issue(Cell* out, const Byte* cp, Size size)
 //
 //  Try_Scan_Variadic_Feed_Utf8_Managed: C
 //
-Option(Array*) Try_Scan_Variadic_Feed_Utf8_Managed(Feed(*) feed)
+Option(Array*) Try_Scan_Variadic_Feed_Utf8_Managed(Feed* feed)
 {
     assert(Detect_Rebol_Pointer(feed->p) == DETECTED_AS_UTF8);
 
-    Level(*) L = Make_Level(feed, LEVEL_MASK_NONE);
+    Level* L = Make_Level(feed, LEVEL_MASK_NONE);
     L->executor = &Scanner_Executor;
 
     SCAN_LEVEL *level = &L->u.scan;

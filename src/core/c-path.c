@@ -208,7 +208,7 @@ DECLARE_NATIVE(poke)
 // MAKE OBJECT!--which evaluates the object body block.
 //
 Bounce MAKE_Path(
-    Level(*) level_,
+    Level* level_,
     enum Reb_Kind kind,
     Option(Value(const*)) parent,
     const REBVAL *arg
@@ -219,7 +219,7 @@ Bounce MAKE_Path(
     if (not IS_BLOCK(arg))
         fail (Error_Bad_Make(kind, arg)); // "make path! 0" has no meaning
 
-    Level(*) L = Make_Level_At(arg, LEVEL_MASK_NONE);
+    Level* L = Make_Level_At(arg, LEVEL_MASK_NONE);
 
     Push_Level(OUT, L);
 
@@ -290,7 +290,7 @@ Bounce MAKE_Path(
 //     >> to path! ^[a b c]
 //     == /[a b c]
 //
-Bounce TO_Sequence(Level(*) level_, enum Reb_Kind kind, const REBVAL *arg) {
+Bounce TO_Sequence(Level* level_, enum Reb_Kind kind, const REBVAL *arg) {
     enum Reb_Kind arg_kind = VAL_TYPE(arg);
 
     if (IS_TEXT(arg)) {

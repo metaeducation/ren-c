@@ -49,7 +49,7 @@ enum {
 };
 
 
-Bounce Downshot_Dispatcher(Level(*) const L)  // runs until count is reached
+Bounce Downshot_Dispatcher(Level* const L)  // runs until count is reached
 {
     USE_LEVEL_SHORTHANDS (L);
 
@@ -66,7 +66,7 @@ Bounce Downshot_Dispatcher(Level(*) const L)  // runs until count is reached
 }
 
 
-Bounce Upshot_Dispatcher(Level(*) const L)  // won't run until count is reached
+Bounce Upshot_Dispatcher(Level* const L)  // won't run until count is reached
 {
     USE_LEVEL_SHORTHANDS (L);
 

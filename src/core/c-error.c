@@ -232,7 +232,7 @@ REBLEN Stack_Depth(void)
 {
     REBLEN depth = 0;
 
-    Level(*) L = TOP_LEVEL;
+    Level* L = TOP_LEVEL;
     while (L) {
         if (Is_Action_Level(L))
             if (not Is_Level_Fulfilling(L)) {
@@ -302,7 +302,7 @@ const REBVAL *Find_Error_For_Sym(SymId id)
 //
 void Set_Location_Of_Error(
     Context* error,
-    Level(*) where  // must be valid and executing on the stack
+    Level* where  // must be valid and executing on the stack
 ) {
     while (Get_Level_Flag(where, BLAME_PARENT))  // e.g. Apply_Only_Throws()
         where = where->prior;
@@ -314,7 +314,7 @@ void Set_Location_Of_Error(
     // WHERE is a backtrace in the form of a block of label words, that start
     // from the top of stack and go downward.
     //
-    Level(*) L = where;
+    Level* L = where;
     for (; L != BOTTOM_LEVEL; L = L->prior) {
         //
         // Only invoked functions (not pending functions, groups, etc.)
@@ -394,7 +394,7 @@ void Set_Location_Of_Error(
 // exactly what is changing.
 //
 Bounce MAKE_Error(
-    Level(*) level_,
+    Level* level_,
     enum Reb_Kind kind,
     Option(Value(const*)) parent,
     const REBVAL *arg
@@ -568,7 +568,7 @@ Bounce MAKE_Error(
 // !!! Historically this was identical to MAKE ERROR!, but MAKE and TO are
 // being rethought.
 //
-Bounce TO_Error(Level(*) level_, enum Reb_Kind kind, const REBVAL *arg)
+Bounce TO_Error(Level* level_, enum Reb_Kind kind, const REBVAL *arg)
 {
     return MAKE_Error(level_, kind, nullptr, arg);
 }
@@ -891,7 +891,7 @@ Context* Error_No_Relative_Core(NoQuote(const Cell*) any_word)
 //  Error_Not_Varargs: C
 //
 Context* Error_Not_Varargs(
-    Level(*) L,
+    Level* L,
     const REBKEY *key,
     const REBPAR *param,
     const REBVAL *arg
@@ -919,7 +919,7 @@ Context* Error_Not_Varargs(
 //
 //  Error_Invalid_Arg: C
 //
-Context* Error_Invalid_Arg(Level(*) L, const REBPAR *param)
+Context* Error_Invalid_Arg(Level* L, const REBPAR *param)
 {
     assert(IS_PARAMETER(param));
 
@@ -949,7 +949,7 @@ Context* Error_Invalid_Arg(Level(*) L, const REBPAR *param)
 // This directs the user that they can't take isotopes as an argument to a
 // function unless the ^META parameter convention is used.
 //
-Context* Error_Isotope_Arg(Level(*) L, const REBPAR *param)
+Context* Error_Isotope_Arg(Level* L, const REBPAR *param)
 {
     assert(IS_PARAMETER(param));
 
@@ -1010,7 +1010,7 @@ Context* Error_Bad_Null(const Cell* target) {
 //
 //  Error_No_Catch_For_Throw: C
 //
-Context* Error_No_Catch_For_Throw(Level(*) level_)
+Context* Error_No_Catch_For_Throw(Level* level_)
 {
     DECLARE_LOCAL (label);
     Copy_Cell(label, VAL_THROWN_LABEL(level_));
@@ -1154,7 +1154,7 @@ Context* Error_Arg_Type(
 // the ordinary error into one making it clear it's an internal phase.
 //
 Context* Error_Phase_Arg_Type(
-    Level(*) L,
+    Level* L,
     const REBKEY *key,
     const REBPAR *param,
     const REBVAL *arg
@@ -1221,7 +1221,7 @@ Context* Error_Bad_Argless_Refine(const REBKEY *key)
 //
 //  Error_Bad_Return_Type: C
 //
-Context* Error_Bad_Return_Type(Level(*) L, Atom(*) atom) {
+Context* Error_Bad_Return_Type(Level* L, Atom(*) atom) {
     DECLARE_STABLE (label);
     Get_Level_Label_Or_Nulled(label, L);
 

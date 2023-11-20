@@ -282,7 +282,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
         //
         if (BINDING(v) != UNBOUND) {
             if (CTX_TYPE(context) == REB_FRAME) {
-                Level(*) L = CTX_LEVEL_IF_ON_STACK(context);
+                Level* L = CTX_LEVEL_IF_ON_STACK(context);
                 if (L)  // comes from execution, not MAKE FRAME!
                     assert(VAL_FRAME_BINDING(v) == Level_Binding(L));
             }

@@ -578,7 +578,7 @@ struct cast_helper<VP,const Action*> {
 //=//// cast(Level*, ...) /////////////////////////////////////////////////=//
 
 template<typename VP>  // [1]
-struct cast_helper<VP,Level(*)> {  // [2]
+struct cast_helper<VP,Level*> {  // [2]
     typedef typename std::remove_pointer<VP>::type V;
     typedef typename std::remove_const<V>::type V0;
 
@@ -586,7 +586,7 @@ struct cast_helper<VP,Level(*)> {  // [2]
     static typename std::enable_if<
         std::is_same<VP_, VP>::value &&  // [3]
         !(std::is_const<V>::value),
-    Level(*)>::type convert(VP_ p) {
+    Level*>::type convert(VP_ p) {
         static_assert(
             std::is_same<V0, void>::value
                 or std::is_same<V0, Byte>::value
@@ -606,16 +606,16 @@ struct cast_helper<VP,Level(*)> {  // [2]
             panic (p);
         }
 
-        return reinterpret_cast<Level(*)>(p);
+        return reinterpret_cast<Level*>(p);
     }
 };
 
 template<typename VP>
-struct cast_helper<VP,const Level(*)> {
+struct cast_helper<VP,const Level*> {
     template<typename VP_ = VP>
     static constexpr typename std::enable_if<
         std::is_same<VP_, VP>::value,  // need VP_ reference for SFINAE
-    const Level(*)>::type convert(VP_ p) {
+    const Level*>::type convert(VP_ p) {
         static_assert(
             !std::is_same<VP_,VP>::value,
             "const Level* pointers currently shouldn't exist, can't cast to"

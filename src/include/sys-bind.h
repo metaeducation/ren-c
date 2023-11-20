@@ -329,7 +329,7 @@ inline static void INIT_BINDING_MAY_MANAGE(
     if (not binding or Is_Node_Managed(binding))
         return;  // unbound or managed already (frame OR object context)
 
-    Level(*) L = cast(Level(*), BONUS(KeySource, binding));  // unmanaged only
+    Level* L = cast(Level*, BONUS(KeySource, binding));  // unmanaged only
     assert(not Is_Level_Fulfilling(L));
     UNUSED(L);
 
@@ -424,7 +424,7 @@ inline static Context* VAL_WORD_CONTEXT(const REBVAL *v) {
 
     assert(
         Is_Node_Managed(binding) or
-        not Is_Level_Fulfilling(cast(Level(*), BONUS(KeySource, binding)))
+        not Is_Level_Fulfilling(cast(Level*, BONUS(KeySource, binding)))
     );
     Set_Node_Managed_Bit(binding);  // !!! review managing needs
     Context* c = cast(Context*, binding);

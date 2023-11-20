@@ -55,7 +55,7 @@ Intrinsic* Extract_Intrinsic(Phase* phase)
 // run intrinsics using this thin wrapper of a dispatcher as if they were
 // ordinary natives.
 //
-Bounce Intrinsic_Dispatcher(Level(*) const L)
+Bounce Intrinsic_Dispatcher(Level* const L)
 {
     USE_LEVEL_SHORTHANDS (L);
 

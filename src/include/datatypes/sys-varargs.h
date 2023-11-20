@@ -72,7 +72,7 @@ inline static void INIT_VAL_VARARGS_BINDING(
 }
 
 
-inline static REBVAL *Init_Varargs_Untyped_Normal(Cell* out, Level(*) L) {
+inline static REBVAL *Init_Varargs_Untyped_Normal(Cell* out, Level* L) {
     Reset_Unquoted_Header_Untracked(out, CELL_MASK_VARARGS);
     mutable_BINDING(out) = L->varlist;  // frame-based VARARGS!
     UNUSED(VAL_VARARGS_SIGNED_PARAM_INDEX(out));
@@ -131,7 +131,7 @@ inline static bool Is_Block_Style_Varargs(
 
 
 inline static bool Is_Level_Style_Varargs_Maybe_Null(
-    Level(*) *L_out,
+    Level* *L_out,
     NoQuote(const Cell*) vararg
 ){
     assert(Cell_Heart(vararg) == REB_VARARGS);
@@ -151,7 +151,7 @@ inline static bool Is_Level_Style_Varargs_Maybe_Null(
 
 
 inline static bool Is_Level_Style_Varargs_May_Fail(
-    Level(*) *L_out,
+    Level* *L_out,
     const Cell* vararg
 ){
     if (not Is_Level_Style_Varargs_Maybe_Null(L_out, vararg))

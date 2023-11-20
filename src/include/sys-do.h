@@ -70,7 +70,7 @@ inline static bool Do_Any_Array_At_Core_Throws(
     NoQuote(const Cell*) any_array,
     REBSPC *specifier
 ){
-    Level(*) L = Make_Level_At_Core(any_array, specifier, flags);
+    Level* L = Make_Level_At_Core(any_array, specifier, flags);
     L->executor = &Array_Executor;
 
     return Trampoline_Throws(out, L);
@@ -101,7 +101,7 @@ inline static bool Do_Branch_Throws(  // !!! Legacy code, should be phased out
 
 inline static Bounce Run_Generic_Dispatch_Core(
     const REBVAL *first_arg,  // !!! Is this always same as Level_Arg(L, 1)?
-    Level(*) L,
+    Level* L,
     const Symbol* verb
 ){
     GENERIC_HOOK *hook;
@@ -130,7 +130,7 @@ inline static Bounce Run_Generic_Dispatch_Core(
 //
 inline static bool Run_Generic_Dispatch_Throws(
     const REBVAL *first_arg,  // !!! Is this always same as Level_Arg(L, 1)?
-    Level(*) L,
+    Level* L,
     const Symbol* verb
 ){
     Bounce b = Run_Generic_Dispatch_Core(first_arg, L, verb);

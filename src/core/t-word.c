@@ -88,7 +88,7 @@ REBINT CT_Word(NoQuote(const Cell*) a, NoQuote(const Cell*) b, bool strict)
 //  MAKE_Word: C
 //
 Bounce MAKE_Word(
-    Level(*) level_,
+    Level* level_,
     enum Reb_Kind kind,
     Option(Value(const*)) parent,
     const REBVAL *arg
@@ -152,7 +152,7 @@ Bounce MAKE_Word(
 //
 //  TO_Word: C
 //
-Bounce TO_Word(Level(*) level_, enum Reb_Kind kind, const REBVAL *arg)
+Bounce TO_Word(Level* level_, enum Reb_Kind kind, const REBVAL *arg)
 {
     // This is here to convert `to word! /a` into `a`.  It also allows
     // `to word! ////a////` and variants, because it seems interesting to try

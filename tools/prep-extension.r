@@ -259,7 +259,7 @@ else [
         */
         #undef DECLARE_NATIVE
         #define DECLARE_NATIVE(n) \
-            Bounce N_${MOD}_##n(Level(*) level_)
+            Bounce N_${MOD}_##n(Level* level_)
     }
 ]
 

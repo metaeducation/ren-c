@@ -89,11 +89,11 @@
 // REBVALs for that object.
 //
 // It may be a simple Series* -or- in the case of the varlist of a running
-// FRAME! on the stack, it points to a Level(*).  If it's a FRAME! that
+// FRAME! on the stack, it points to a Level*.  If it's a FRAME! that
 // is not running on the stack, it will be the function paramlist of the
-// actual phase that function is for.  Since Level(*) all start with a
+// actual phase that function is for.  Since Level* all start with a
 // REBVAL cell, this means NODE_FLAG_CELL can be used on the node to
-// discern the case where it can be cast to a Level(*) vs. Array*.
+// discern the case where it can be cast to a Level* vs. Array*.
 //
 // (Note: FRAME!s used to use a field `misc.L` to track the associated
 // level...but that prevented the ability to SET-ADJUNCT on a frame.  While
@@ -166,7 +166,7 @@ inline static Atom(*) Atom_From_Bounce(Bounce b) {
 #define BOUNCE_THROWN \
     cast(Bounce, &PG_R_Thrown)
 
-inline static bool Is_Throwing(Level(*) level_) {
+inline static bool Is_Throwing(Level* level_) {
     //
     // !!! An original constraint on asking if something was throwing was
     // that only the top frame could be asked about.  But Action_Executor()
@@ -649,7 +649,7 @@ inline static REBVAL *Maybe_Move_Cell(REBVAL *out, REBVAL *v) {
     return Move_Cell(out, v);
 }
 
-inline static Bounce Native_Thrown_Result(Level(*) level_) {
+inline static Bounce Native_Thrown_Result(Level* level_) {
     assert(THROWING);
     FRESHEN(level_->out);
     return BOUNCE_THROWN;
@@ -658,7 +658,7 @@ inline static Bounce Native_Thrown_Result(Level(*) level_) {
 
 inline static Bounce Native_Void_Result_Untracked(
     Atom(*) out,  // have to pass; comma at callsite -> "operand has no effect"
-    Level(*) level_
+    Level* level_
 ){
     assert(out == level_->out);
     UNUSED(out);
@@ -666,14 +666,14 @@ inline static Bounce Native_Void_Result_Untracked(
     return Init_Void_Untracked(level_->out, UNQUOTED_1);
 }
 
-inline static Bounce Native_Unmeta_Result(Level(*) level_, const REBVAL *v) {
+inline static Bounce Native_Unmeta_Result(Level* level_, const REBVAL *v) {
     assert(not THROWING);
     return Meta_Unquotify_Undecayed(Copy_Cell(level_->out, v));
 }
 
 inline static Bounce Native_None_Result_Untracked(
     Atom(*) out,  // have to pass; comma at callsite -> "operand has no effect"
-    Level(*) level_
+    Level* level_
 ){
     assert(out == level_->out);
     UNUSED(out);

@@ -47,7 +47,7 @@ REBINT CT_Pair(NoQuote(const Cell*) a, NoQuote(const Cell*) b, bool strict)
 //  MAKE_Pair: C
 //
 Bounce MAKE_Pair(
-    Level(*) level_,
+    Level* level_,
     enum Reb_Kind kind,
     Option(Value(const*)) parent,
     const REBVAL *arg
@@ -116,7 +116,7 @@ Bounce MAKE_Pair(
 //
 //  TO_Pair: C
 //
-Bounce TO_Pair(Level(*) level_, enum Reb_Kind kind, const REBVAL *arg)
+Bounce TO_Pair(Level* level_, enum Reb_Kind kind, const REBVAL *arg)
 {
     return MAKE_Pair(level_, kind, nullptr, arg);
 }

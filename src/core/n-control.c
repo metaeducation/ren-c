@@ -86,7 +86,7 @@
 //    from making mistakes.  Because this does something weird to use the
 //    OUT cell as `with` the LEVEL_FLAG_BRANCH was taken off at the callsite.
 //
-Bounce Group_Branch_Executor(Level(*) level_)
+Bounce Group_Branch_Executor(Level* level_)
 {
     if (THROWING)
         return THROWN;
@@ -103,7 +103,7 @@ Bounce Group_Branch_Executor(Level(*) level_)
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
-    Level(*) sub = Make_Level(
+    Level* sub = Make_Level(
         LEVEL->feed,
         ((LEVEL->flags.bits & (~ FLAG_STATE_BYTE(255)))  // take out state 1
             | LEVEL_FLAG_BRANCH)
@@ -254,7 +254,7 @@ enum {
 };
 
 static Bounce Then_Else_Isotopic_Object_Helper(
-    Level(*) level_,
+    Level* level_,
     bool then  // true when doing a THEN
 ){
     INCLUDE_PARAMS_OF_THEN;  // assume frame compatibility w/ELSE
@@ -794,7 +794,7 @@ DECLARE_NATIVE(all)
     if (IS_THE_BLOCK(block))
         flags |= EVAL_EXECUTOR_FLAG_NO_EVALUATIONS;
 
-    Level(*) sub = Make_Level_At(block, flags);
+    Level* sub = Make_Level_At(block, flags);
     Push_Level(SPARE, sub);
 
     STATE = ST_ALL_EVAL_STEP;
@@ -927,7 +927,7 @@ DECLARE_NATIVE(any)
     if (IS_THE_BLOCK(block))
         flags |= EVAL_EXECUTOR_FLAG_NO_EVALUATIONS;
 
-    Level(*) sub = Make_Level_At(block, flags);
+    Level* sub = Make_Level_At(block, flags);
     Push_Level(OUT, sub);
 
     STATE = ST_ANY_EVAL_STEP;
@@ -1089,7 +1089,7 @@ DECLARE_NATIVE(case)
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
-    Level(*) L = Make_Level_At(
+    Level* L = Make_Level_At(
         cases,
         LEVEL_FLAG_TRAMPOLINE_KEEPALIVE
     );
@@ -1148,7 +1148,7 @@ DECLARE_NATIVE(case)
             // GET-GROUP! run even on no-match (see IF), but result discarded
         }
 
-        Level(*) sub = Make_Level_At_Core(
+        Level* sub = Make_Level_At_Core(
             branch,  // turning into feed drops cell type, :(...) not special
             Level_Specifier(SUBLEVEL),
             LEVEL_MASK_NONE
@@ -1299,7 +1299,7 @@ DECLARE_NATIVE(switch)
     if (IS_BLOCK(left) and Get_Cell_Flag(left, UNEVALUATED))
         fail (Error_Block_Switch_Raw(left));  // `switch [x] [...]` safeguard
 
-    Level(*) sub = Make_Level_At(
+    Level* sub = Make_Level_At(
         cases,
         LEVEL_FLAG_TRAMPOLINE_KEEPALIVE
     );

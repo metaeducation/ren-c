@@ -270,7 +270,7 @@ DECLARE_NATIVE(load_extension)
 // This will be the dispatcher for the natives in an extension after the
 // extension is unloaded.
 //
-static const REBVAL *Unloaded_Dispatcher(Level(*) L)
+static const REBVAL *Unloaded_Dispatcher(Level* L)
 {
     UNUSED(L);
 

@@ -382,8 +382,8 @@ typedef struct {
 } DataStackState;
 
 typedef struct {
-    Level(*) top_level;
-    Level(*) bottom_level;
+    Level* top_level;
+    Level* bottom_level;
 
     // !!! Outdated idea which is outside of the standard spec, see notes on
     // C_STACK_OVERFLOWING() for plans on eliminating it fully.
@@ -397,7 +397,7 @@ typedef struct {
 
     AtomT thrown_arg;
     ValueT thrown_label;
-    Level(*) unwind_level;
+    Level* unwind_level;
 
     Flags eval_signals;  // signal flags (Rebol signals, not unix ones!)
     Flags eval_sigmask;  // masking out signal flags

@@ -525,7 +525,7 @@ REBINT CT_Context(NoQuote(const Cell*) a, NoQuote(const Cell*) b, bool strict)
 // For now just support ACTION! (or path/word to specify an action)
 //
 Bounce MAKE_Frame(
-    Level(*) level_,
+    Level* level_,
     enum Reb_Kind kind,
     Option(Value(const*)) parent,
     const REBVAL *arg
@@ -539,8 +539,8 @@ Bounce MAKE_Frame(
     // really cost that much to keep around.  Use it sparingly (if at all).
     //
     if (IS_VARARGS(arg)) {
-        Level(*) L_varargs;
-        Feed(*) feed;
+        Level* L_varargs;
+        Feed* feed;
         bool allocated_feed;
         if (Is_Level_Style_Varargs_May_Fail(&L_varargs, arg)) {
             assert(Is_Action_Level(L_varargs));
@@ -598,7 +598,7 @@ Bounce MAKE_Frame(
 // to have an equivalent representation (an OBJECT! could be an expired frame
 // perhaps, but still would have no ACTION OF property)
 //
-Bounce TO_Frame(Level(*) level_, enum Reb_Kind kind, const REBVAL *arg)
+Bounce TO_Frame(Level* level_, enum Reb_Kind kind, const REBVAL *arg)
 {
     return RAISE(Error_Bad_Make(kind, arg));
 }
@@ -608,7 +608,7 @@ Bounce TO_Frame(Level(*) level_, enum Reb_Kind kind, const REBVAL *arg)
 //  MAKE_Context: C
 //
 Bounce MAKE_Context(
-    Level(*) level_,
+    Level* level_,
     enum Reb_Kind kind,
     Option(Value(const*)) parent,
     const REBVAL *arg
@@ -689,7 +689,7 @@ Bounce MAKE_Context(
 //
 //  TO_Context: C
 //
-Bounce TO_Context(Level(*) level_, enum Reb_Kind kind, const REBVAL *arg)
+Bounce TO_Context(Level* level_, enum Reb_Kind kind, const REBVAL *arg)
 {
     // Other context kinds (LEVEL!, ERROR!, PORT!) have their own hooks.
     //
@@ -1330,7 +1330,7 @@ REBTYPE(Frame)
                 return Init_Word(OUT, unwrap(label));
 
             // If the frame is executing, we can look at the label in the
-            // Level(*), which will tell us what the overall execution label
+            // Level*, which will tell us what the overall execution label
             // would be.  This might be confusing, however...if the phase
             // is drastically different.  Review.
         }
@@ -1364,7 +1364,7 @@ REBTYPE(Frame)
             goto handle_reflect_action;
         }
 
-        Level(*) L = CTX_LEVEL_MAY_FAIL(c);
+        Level* L = CTX_LEVEL_MAY_FAIL(c);
 
         switch (prop) {
           case SYM_FILE: {
@@ -1391,7 +1391,7 @@ REBTYPE(Frame)
             //
             // Only want action levels (though `pending? = true` ones count).
             //
-            Level(*) parent = L;
+            Level* parent = L;
             while ((parent = parent->prior) != BOTTOM_LEVEL) {
                 if (not Is_Action_Level(parent))
                     continue;

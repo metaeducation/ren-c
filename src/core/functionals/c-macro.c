@@ -40,7 +40,7 @@
 //
 //  Splice_Block_Into_Feed: C
 //
-void Splice_Block_Into_Feed(Feed(*) feed, const REBVAL *splice) {
+void Splice_Block_Into_Feed(Feed* feed, const REBVAL *splice) {
     //
     // !!! The mechanics for taking and releasing holds on arrays needs work,
     // but this effectively releases the hold on the code array while the
@@ -93,7 +93,7 @@ void Splice_Block_Into_Feed(Feed(*) feed, const REBVAL *splice) {
 //
 //  Macro_Dispatcher: C
 //
-Bounce Macro_Dispatcher(Level(*) const L)
+Bounce Macro_Dispatcher(Level* const L)
 {
     USE_LEVEL_SHORTHANDS (L);
 
@@ -142,7 +142,7 @@ Bounce Macro_Dispatcher(Level(*) const L)
 
     Splice_Block_Into_Feed(L->feed, stable_SPARE);
 
-    Level(*) sub = Make_Level(
+    Level* sub = Make_Level(
         L->feed,
         LEVEL_MASK_NONE
     );
@@ -213,7 +213,7 @@ DECLARE_NATIVE(inline)
         Splice_Block_Into_Feed(level_->feed, ARG(splice));
     }
 
-    Level(*) sub = Make_Level(
+    Level* sub = Make_Level(
         level_->feed,
         LEVEL_MASK_NONE
     );

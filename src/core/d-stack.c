@@ -91,7 +91,7 @@ void Collapsify_Array(Array* array, REBSPC *specifier, REBLEN limit)
 // onto these values for the purposes of better error messages (at the cost
 // of performance).
 //
-REBVAL *Init_Near_For_Level(Cell* out, Level(*) L)
+REBVAL *Init_Near_For_Level(Cell* out, Level* L)
 {
     StackIndex base = TOP_INDEX;
 
@@ -172,7 +172,7 @@ REBVAL *Init_Near_For_Level(Cell* out, Level(*) L)
 //
 bool Is_Context_Running_Or_Pending(Context* frame_ctx)
 {
-    Level(*) L = CTX_LEVEL_IF_ON_STACK(frame_ctx);
+    Level* L = CTX_LEVEL_IF_ON_STACK(frame_ctx);
     if (not L)
         return false;
 
@@ -198,7 +198,7 @@ DECLARE_NATIVE(running_q)
 
     Context* frame_ctx = VAL_CONTEXT(ARG(frame));
 
-    Level(*) L = CTX_LEVEL_MAY_FAIL(frame_ctx);
+    Level* L = CTX_LEVEL_MAY_FAIL(frame_ctx);
 
     if (Is_Level_Fulfilling(L))
         return Init_False(OUT);
@@ -222,7 +222,7 @@ DECLARE_NATIVE(pending_q)
 
     Context* frame_ctx = VAL_CONTEXT(ARG(frame));
 
-    Level(*) L = CTX_LEVEL_MAY_FAIL(frame_ctx);
+    Level* L = CTX_LEVEL_MAY_FAIL(frame_ctx);
 
     if (Is_Level_Fulfilling(L))
         return Init_True(OUT);

@@ -375,7 +375,7 @@ bool Did_Get_Binding_Of(Sink(Value(*)) out, const REBVAL *v)
         // the current moment of execution.
         //
         if (CTX_TYPE(c) == REB_FRAME) {
-            Level(*) L = CTX_LEVEL_IF_ON_STACK(c);
+            Level* L = CTX_LEVEL_IF_ON_STACK(c);
             if (L == nullptr)
                 Copy_Cell(out, CTX_ARCHETYPE(c));
             else
@@ -405,7 +405,7 @@ bool Did_Get_Binding_Of(Sink(Value(*)) out, const REBVAL *v)
     //
     if (IS_FRAME(out)) {
         Context* c = VAL_CONTEXT(out);
-        Level(*) L = CTX_LEVEL_IF_ON_STACK(c);
+        Level* L = CTX_LEVEL_IF_ON_STACK(c);
         if (L) {
             INIT_VAL_FRAME_PHASE(out, Level_Phase(L));
             INIT_VAL_FRAME_BINDING(out, Level_Binding(L));

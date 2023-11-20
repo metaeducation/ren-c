@@ -90,7 +90,7 @@ DECLARE_NATIVE(reduce)
     if (ANY_INERT(v))
         return COPY(v);  // save time if it's something like a TEXT!
 
-    Level(*) sub = Make_End_Level(
+    Level* sub = Make_End_Level(
         FLAG_STATE_BYTE(ST_EVALUATOR_REEVALUATING)
     );
     Push_Level(OUT, sub);
@@ -103,7 +103,7 @@ DECLARE_NATIVE(reduce)
 
 } initial_entry_any_array: {  ////////////////////////////////////////////////
 
-    Level(*) sub = Make_Level_At(
+    Level* sub = Make_Level_At(
         v,  // REB_BLOCK or REB_GROUP
         LEVEL_FLAG_ALLOCATED_FEED
             | LEVEL_FLAG_TRAMPOLINE_KEEPALIVE  // reused for each step
@@ -263,7 +263,7 @@ DECLARE_NATIVE(reduce_each)
     if (IS_THE_BLOCK(block))
         flags |= EVAL_EXECUTOR_FLAG_NO_EVALUATIONS;
 
-    Level(*) sub = Make_Level_At(block, flags);
+    Level* sub = Make_Level_At(block, flags);
     Push_Level(SPARE, sub);
     goto reduce_next;
 
@@ -371,7 +371,7 @@ bool Match_For_Compose(NoQuote(const Cell*) group, const REBVAL *label) {
 //
 static void Push_Composer_Level(
     Atom(*) out,
-    Level(*) main_level,
+    Level* main_level,
     const Cell* arraylike,
     REBSPC *specifier
 ){
@@ -381,7 +381,7 @@ static void Push_Composer_Level(
         adjusted = rebValue(Canon(AS), Canon(BLOCK_X), rebQ(out));
     }
 
-    Level(*) sub = Make_Level_At_Core(
+    Level* sub = Make_Level_At_Core(
         adjusted ? adjusted : arraylike,
         adjusted ? SPECIFIED : specifier,
         EVAL_EXECUTOR_FLAG_NO_EVALUATIONS
@@ -418,7 +418,7 @@ static void Push_Composer_Level(
 //
 static Atom(*) Finalize_Composer_Level(
     Atom(*) out,
-    Level(*) L,
+    Level* L,
     const Cell* composee  // special handling if the output kind is a sequence
 ){
     if (Is_Raised(out)) {
@@ -508,7 +508,7 @@ static Atom(*) Finalize_Composer_Level(
 //    also means the caller can decide if they want the accrued items or not
 //    depending on the `changed` field in the level.
 //
-Bounce Composer_Executor(Level(*) const L)
+Bounce Composer_Executor(Level* const L)
 {
     USE_LEVEL_SHORTHANDS (L);
 
@@ -521,7 +521,7 @@ Bounce Composer_Executor(Level(*) const L)
     DECLARE_PARAM(4, deep);
     DECLARE_PARAM(5, predicate);
 
-    Level(*) main_level = L->u.compose.main_level;  // the invoked COMPOSE native
+    Level* main_level = L->u.compose.main_level;  // the invoked COMPOSE native
 
     UNUSED(Level_Arg(main_level, p_return_));
     Value(*) label = Level_Arg(main_level, p_label_);
@@ -617,11 +617,11 @@ Bounce Composer_Executor(Level(*) const L)
 
     // If <*> is the label and (<*> 1 + 2) is found, run just (1 + 2).
     //
-    Feed(*) subfeed = Make_At_Feed_Core(match, match_specifier);
+    Feed* subfeed = Make_At_Feed_Core(match, match_specifier);
     if (not Is_Nulled(label))
         Fetch_Next_In_Feed(subfeed);  // wasn't possibly at END
 
-    Level(*) sublevel = Make_Level(
+    Level* sublevel = Make_Level(
         subfeed,  // used subfeed so we could skip the label if there was one
         LEVEL_FLAG_ALLOCATED_FEED
     );

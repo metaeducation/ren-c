@@ -148,9 +148,9 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
 
     REBVAL *arg; // for updating CELL_FLAG_UNEVALUATED
 
-    Option(Level(*)) vararg_level;
+    Option(Level*) vararg_level;
 
-    Level(*) L;
+    Level* L;
     REBVAL *shared;
     if (Is_Block_Style_Varargs(&shared, vararg)) {
         //
@@ -185,7 +185,7 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
             fail ("Variadic literal parameters not yet implemented");
 
         case PARAM_CLASS_NORMAL: {
-            Level(*) L_temp = Make_Level_At(
+            Level* L_temp = Make_Level_At(
                 shared,
                 EVAL_EXECUTOR_FLAG_FULFILLING_ARG
             );
@@ -340,7 +340,7 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
             //
             // !!! Array-based varargs only store the parameter list they are
             // stamped with, not the level.  This is because storing non-reified
-            // types in payloads is unsafe...only safe to store Level(*) in a
+            // types in payloads is unsafe...only safe to store Level* in a
             // binding.  So that means only one level can be pointed to per
             // vararg.  Revisit the question of how to give better errors.
             //
@@ -370,7 +370,7 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
 //  MAKE_Varargs: C
 //
 Bounce MAKE_Varargs(
-    Level(*) level_,
+    Level* level_,
     enum Reb_Kind kind,
     Option(Value(const*)) parent,
     const REBVAL *arg
@@ -414,7 +414,7 @@ Bounce MAKE_Varargs(
 //
 //  TO_Varargs: C
 //
-Bounce TO_Varargs(Level(*) level_, enum Reb_Kind kind, const REBVAL *arg)
+Bounce TO_Varargs(Level* level_, enum Reb_Kind kind, const REBVAL *arg)
 {
     assert(kind == REB_VARARGS);
     UNUSED(kind);
@@ -619,7 +619,7 @@ void MF_Varargs(REB_MOLD *mo, NoQuote(const Cell*) v, bool form) {
 
     Append_Ascii(mo->series, " => ");
 
-    Level(*) L;
+    Level* L;
     REBVAL *shared;
     if (Is_Block_Style_Varargs(&shared, v)) {
         if (Is_Cell_Poisoned(shared))

@@ -259,7 +259,7 @@ static void cleanup(const REBVAL *val)
 // However, as a convenience, calling a pending user native will trigger a
 // simple COMPILE for just that one function, using default options.
 //
-Bounce Pending_Native_Dispatcher(Level(*) L) {
+Bounce Pending_Native_Dispatcher(Level* L) {
     Phase* phase = Level_Phase(L);
     assert(ACT_DISPATCHER(phase) == &Pending_Native_Dispatcher);
 
@@ -522,7 +522,7 @@ DECLARE_NATIVE(compile_p)
                 Value(*) source = DETAILS_AT(details, IDX_NATIVE_BODY);
                 Value(*) linkname = DETAILS_AT(details, IDX_TCC_NATIVE_LINKNAME);
 
-                // !!! Level(*) is not exported by libRebol, though it could be
+                // !!! Level* is not exported by libRebol, though it could be
                 // opaquely...and there could be some very narrow routines for
                 // interacting with it (such as picking arguments directly by
                 // value).  But transformations would be needed for Rebol arg

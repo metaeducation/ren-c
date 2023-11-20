@@ -48,7 +48,7 @@
 //
 bool Try_Catch_Break_Or_Continue(
     Sink(Value(*)) out,
-    Level(*) level_,
+    Level* level_,
     bool* breaking
 ){
     Value(const*) label = VAL_THROWN_LABEL(level_);
@@ -132,7 +132,7 @@ DECLARE_NATIVE(continue)
 //  Loop_Series_Common: C
 //
 static Bounce Loop_Series_Common(
-    Level(*) level_,
+    Level* level_,
     REBVAL *var, // Must not be movable from context expansion, see #2274
     const REBVAL *body,
     REBVAL *start,
@@ -218,7 +218,7 @@ static Bounce Loop_Series_Common(
 //  Loop_Integer_Common: C
 //
 static Bounce Loop_Integer_Common(
-    Level(*) level_,
+    Level* level_,
     REBVAL *var,  // Must not be movable from context expansion, see #2274
     const REBVAL *body,
     REBI64 start,
@@ -280,7 +280,7 @@ static Bounce Loop_Integer_Common(
 //  Loop_Number_Common: C
 //
 static Bounce Loop_Number_Common(
-    Level(*) level_,
+    Level* level_,
     REBVAL *var,  // Must not be movable from context expansion, see #2274
     const REBVAL *body,
     REBVAL *start,

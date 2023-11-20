@@ -70,7 +70,7 @@ enum {
 // (Luckily these copies are often not needed, such as when the DOES is not
 // used in a method... -AND- it only needs to be made once.)
 //
-Bounce Block_Dispatcher(Level(*) const L)
+Bounce Block_Dispatcher(Level* const L)
 {
     USE_LEVEL_SHORTHANDS (L);
 

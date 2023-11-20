@@ -42,7 +42,7 @@ typedef REBINT (COMPARE_HOOK)(
 // Helper for declaring a native dispatcher function
 //
 #define DECLARE_NATIVE(n) \
-    Bounce N_##n(Level(*) level_)
+    Bounce N_##n(Level* level_)
 
 
 // Helper for declaring an intrinsic native (can be dispatched w/o a frame)
@@ -58,7 +58,7 @@ typedef REBINT (COMPARE_HOOK)(
 // BOUNCE_THROWN if they throw.  (e.g. `make object! [return ...]` can throw)
 //
 typedef Bounce (MAKE_HOOK)(
-    Level(*) level_,
+    Level* level_,
     enum Reb_Kind kind,
     Option(Value(const*)) opt_parent,
     const REBVAL *def
@@ -77,7 +77,7 @@ typedef Bounce (MAKE_HOOK)(
 // and decided by the source type.  For now, the destination decides both,
 // which means TO-ness and MAKE-ness are a bit too similar.
 //
-typedef Bounce (TO_HOOK)(Level(*) level_, enum Reb_Kind, const REBVAL*);
+typedef Bounce (TO_HOOK)(Level* level_, enum Reb_Kind, const REBVAL*);
 
 
 // PER-TYPE MOLD HOOKS: for `mold value` and `form value`
@@ -107,14 +107,14 @@ typedef const Symbol* (SYMBOL_HOOK)(void);
 // any behavior for a specific type can still be accomplished by testing
 // the type passed into that common hook!
 //
-typedef Bounce (GENERIC_HOOK)(Level(*) level_, const Symbol* verb);
+typedef Bounce (GENERIC_HOOK)(Level* level_, const Symbol* verb);
 #define REBTYPE(n) \
-    Bounce T_##n(Level(*) level_, const Symbol* verb)
+    Bounce T_##n(Level* level_, const Symbol* verb)
 
 
 // Port hook: for implementing generic ACTION!s on a PORT! class
 //
-typedef Bounce (PORT_HOOK)(Level(*) level_, REBVAL *port, const Symbol* verb);
+typedef Bounce (PORT_HOOK)(Level* level_, REBVAL *port, const Symbol* verb);
 
 
 //=//// PARAMETER ENUMERATION /////////////////////////////////////////////=//

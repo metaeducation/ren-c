@@ -44,7 +44,7 @@ REBINT CT_Port(NoQuote(const Cell*) a, NoQuote(const Cell*) b, bool strict)
 // function stored in the system/intrinsic object.
 //
 Bounce MAKE_Port(
-    Level(*) level_,
+    Level* level_,
     enum Reb_Kind kind,
     Option(Value(const*)) parent,
     const REBVAL *arg
@@ -70,7 +70,7 @@ Bounce MAKE_Port(
 //
 //  TO_Port: C
 //
-Bounce TO_Port(Level(*) level_, enum Reb_Kind kind, const REBVAL *arg)
+Bounce TO_Port(Level* level_, enum Reb_Kind kind, const REBVAL *arg)
 {
     assert(kind == REB_PORT);
     UNUSED(kind);

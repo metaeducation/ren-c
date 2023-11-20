@@ -60,7 +60,7 @@ enum {
 // doing any virtual binding.  However, there's some difference w.r.t. the
 // "derived binding" that need a going-over.
 //
-Bounce Lambda_Dispatcher(Level(*) const L)
+Bounce Lambda_Dispatcher(Level* const L)
 //
 // 1. We have to use Make_Or_Reuse_Use() here, because it could be the case
 //    that a higher level wrapper used the frame and virtually bound it.
@@ -104,7 +104,7 @@ Bounce Lambda_Dispatcher(Level(*) const L)
 // like function dispatch, except there's no RETURN to catch.  So it can
 // execute directly into the output cell.
 //
-Bounce Lambda_Unoptimized_Dispatcher(Level(*) level_)
+Bounce Lambda_Unoptimized_Dispatcher(Level* level_)
 {
     Details* details = Phase_Details(PHASE);
     Cell* body = Array_At(details, IDX_DETAILS_1);  // code to run

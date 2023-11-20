@@ -102,7 +102,7 @@ REBINT CT_Array(NoQuote(const Cell*) a, NoQuote(const Cell*) b, bool strict)
 //     MAKE_Lit_Path
 //
 Bounce MAKE_Array(
-    Level(*) level_,
+    Level* level_,
     enum Reb_Kind kind,
     Option(Value(const*)) parent,
     const REBVAL *arg
@@ -283,7 +283,7 @@ Bounce MAKE_Array(
         }
         else {
             Context* context = cast(Context*, VAL_VARARGS_BINDING(arg));
-            Level(*) param_level = CTX_LEVEL_MAY_FAIL(context);
+            Level* param_level = CTX_LEVEL_MAY_FAIL(context);
 
             REBVAL *param = SPECIFIC(Array_Head(
                 CTX_VARLIST(ACT_EXEMPLAR(Level_Phase(param_level)))
@@ -327,7 +327,7 @@ Bounce MAKE_Array(
 //
 //  TO_Array: C
 //
-Bounce TO_Array(Level(*) level_, enum Reb_Kind kind, const REBVAL *arg) {
+Bounce TO_Array(Level* level_, enum Reb_Kind kind, const REBVAL *arg) {
     if (ANY_SEQUENCE(arg)) {
         StackIndex base = TOP_INDEX;
         REBLEN len = VAL_SEQUENCE_LEN(arg);

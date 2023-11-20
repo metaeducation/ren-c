@@ -64,7 +64,7 @@
 // breakpoints.  The RESUME instruction is able to execute code with /DO,
 // and that code may escape from a debug interrupt signal (like Ctrl-C).
 //
-bool Do_Signals_Throws(Level(*) level_)
+bool Do_Signals_Throws(Level* level_)
 {
     if (g_ts.eval_countdown >= 0) {  // natural countdown or invocation
         //

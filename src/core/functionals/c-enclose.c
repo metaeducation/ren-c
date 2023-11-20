@@ -81,7 +81,7 @@ enum {
 //
 // Note: Not static because it's checked for by pointer in RESKIN.
 //
-Bounce Encloser_Dispatcher(Level(*) const L)
+Bounce Encloser_Dispatcher(Level* const L)
 {
     USE_LEVEL_SHORTHANDS (L);
 
@@ -98,7 +98,7 @@ Bounce Encloser_Dispatcher(Level(*) const L)
     // call to the encloser.  (The encloser can run the frame multiple times
     // via DO COPY of the frame if they like.)
     //
-    // Since we are unplugging the varlist from the Level(*) in which it is
+    // Since we are unplugging the varlist from the Level* in which it is
     // running, we at one time would actually `Steal_Context_Vars()` on it...
     // which would mean all outstanding FRAME! that had been pointing at
     // the varlist would go stale.  This hampered tricks like:
