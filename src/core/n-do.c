@@ -747,7 +747,7 @@ DECLARE_NATIVE(apply)
     Value(*) frame = ARG(frame);  // local variable for holding GC-safe frame
     Value(*) iterator = ARG(return);  // reuse to hold Evars iterator
 
-    REBVAR *var;  // may come from evars iterator or found by index
+    Value(*) var;  // may come from evars iterator or found by index
     Param* param;  // (same)
 
     enum {

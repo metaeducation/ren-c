@@ -343,7 +343,7 @@ DECLARE_NATIVE(unload_extension)
         OS_CLOSE_LIBRARY(VAL_LIBRARY_FD(lib));
     */
 
-   REBVAR *shutdown_action = MOD_VAR(
+   Value(*) shutdown_action = MOD_VAR(
        VAL_CONTEXT(extension),
        Canon(SHUTDOWN_P),
        true

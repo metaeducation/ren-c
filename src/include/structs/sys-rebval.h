@@ -101,8 +101,7 @@ typedef struct ValueStruct ValueT;
 //
 
 #if CPLUSPLUS_11
-    struct REBVAR : public REBVAL {};
-    struct Param : public REBVAR {};
+    struct Param : public REBVAL {};
 
     inline static const Param* cast_PAR(const REBVAL *v)
         { return c_cast(Param*, v); }
@@ -110,7 +109,6 @@ typedef struct ValueStruct ValueT;
     inline static Param* cast_PAR(REBVAL *v)
         { return cast(Param*, v); }
 #else
-    #define REBVAR REBVAL
     #define Param REBVAL
 
     #define cast_PAR(v) (v)

@@ -1309,7 +1309,7 @@ DECLARE_NATIVE(subparse)
 
   #if !defined(NDEBUG)
     //
-    // These parse state variables live in chunk-stack REBVARs, which can be
+    // These parse state variables live in frame varlists, which can be
     // annoying to find to inspect in the debugger.  This makes pointers into
     // the value payloads so they can be seen more easily.
     //

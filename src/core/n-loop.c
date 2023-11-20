@@ -782,7 +782,7 @@ static bool Try_Loop_Each_Next(Value(const*) iterator, Context* vars_ctx)
     if (not les->more_data)
         return false;
 
-    const REBVAR *pseudo_tail;
+    Value(const*) pseudo_tail;
     REBVAL *pseudo_var = CTX_VARS(&pseudo_tail, vars_ctx);
     for (; pseudo_var != pseudo_tail; ++pseudo_var) {
         REBVAL *var = Real_Var_From_Pseudo(pseudo_var);
@@ -1305,7 +1305,7 @@ DECLARE_NATIVE(remove_each)
     while (index < len) {
         assert(start == index);
 
-        const REBVAR *var_tail;
+        Value(const*) var_tail;
         REBVAL *var = CTX_VARS(&var_tail, context);  // fixed (#2274)
         for (; var != var_tail; ++var) {
             if (index == len) {

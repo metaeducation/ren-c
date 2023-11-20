@@ -248,7 +248,7 @@ void Protect_Context(Context* c, Flags flags)
 
     Flip_Series_To_Black(varlist); // for recursion
 
-    const REBVAR *var_tail;
+    Value(const*) var_tail;
     REBVAL *var = CTX_VARS(&var_tail, c);
     for (; var != var_tail; ++var)
         Protect_Value(var, flags);

@@ -148,7 +148,7 @@ void Bind_Values_Core(
     REBLEN index = 1;
     const Key* key_tail;
     const Key* key = CTX_KEYS(&key_tail, c);
-    const REBVAR *var = CTX_VARS_HEAD(c);
+    Value(const*) var = CTX_VARS_HEAD(c);
     for (; key != key_tail; key++, var++, index++)
         Add_Binder_Index(&binder, KEY_SYMBOL(key), index);
   }
@@ -166,7 +166,7 @@ void Bind_Values_Core(
   if (not IS_MODULE(context)) {  // Reset all the binder indices to zero
     const Key* key_tail;
     const Key* key = CTX_KEYS(&key_tail, c);
-    const REBVAR *var = CTX_VARS_HEAD(c);
+    Value(const*) var = CTX_VARS_HEAD(c);
     for (; key != key_tail; ++key, ++var)
         Remove_Binder_Index(&binder, KEY_SYMBOL(key));
   }
@@ -542,7 +542,7 @@ Option(Series*) Get_Word_Container(
                 and binding != Sys_Context
             ){
                 *index_out = INDEX_ATTACHED;
-                REBVAR *var = Append_Context(cast(Context*, binding), symbol);
+                Value(*) var = Append_Context(cast(Context*, binding), symbol);
                 Finalize_None(var);
                 return Singular_From_Cell(var);
             }
@@ -1439,7 +1439,7 @@ Context* Virtual_Bind_Deep_To_New_Context(
             symbol = Canon_Symbol(dummy_sym);
             dummy_sym = cast(SymId, cast(int, dummy_sym) + 1);
 
-            REBVAR *var = Append_Context(c, symbol);
+            Value(*) var = Append_Context(c, symbol);
             Init_Blank(var);
             Set_Cell_Flag(var, BIND_NOTE_REUSE);
             Set_Cell_Flag(var, PROTECTED);
@@ -1448,7 +1448,7 @@ Context* Virtual_Bind_Deep_To_New_Context(
         }
         else if (IS_WORD(item) or IS_META_WORD(item)) {
             symbol = VAL_WORD_SYMBOL(item);
-            REBVAR *var = Append_Context(c, symbol);
+            Value(*) var = Append_Context(c, symbol);
 
             // !!! For loops, nothing should be able to be aware of this
             // synthesized variable until the loop code has initialized it

@@ -246,7 +246,7 @@ struct Reb_Enum_Vars {
     const Key* key_tail;
     Param* param;
     enum Reb_Var_Visibility visibility;
-    REBVAR *var;
+    Value(*) var;
     REBLEN index;  // important for enumerations that are binding
 
     // !!! Enumerating key/val pairs in modules in the "sea of words" model is
@@ -625,7 +625,7 @@ inline static void SET_SIGNAL(Flags f) { // used in %sys-series.h
 
 #include "sys-symbol.h"
 
-inline static const REBVAR *Try_Lib_Var(SymId id) {
+inline static Value(const*) Try_Lib_Var(SymId id) {
     assert(id < LIB_SYMS_MAX);
 
     // !!! We allow a "removed state", in case modules implement a
@@ -634,14 +634,14 @@ inline static const REBVAR *Try_Lib_Var(SymId id) {
     if (INODE(PatchContext, &PG_Lib_Patches[id]) == nullptr)
         return nullptr;
 
-    return cast(REBVAR*, Array_Single(&PG_Lib_Patches[id]));
+    return cast(Value(*), Array_Single(&PG_Lib_Patches[id]));
 }
 
 #define Lib(name) \
     Try_Lib_Var(SYM_##name)
 
-inline static REBVAR *Force_Lib_Var(SymId id) {
-    REBVAR *var = m_cast(REBVAR*, Try_Lib_Var(id));
+inline static Value(*) Force_Lib_Var(SymId id) {
+    Value(*) var = m_cast(Value(*), Try_Lib_Var(id));
     if (var)
         return var;
     return Append_Context(Lib_Context, Canon_Symbol(id));
@@ -651,7 +651,7 @@ inline static REBVAR *Force_Lib_Var(SymId id) {
     Force_Lib_Var(SYM_##name)
 
 #define SysUtil(name) \
-    cast(const REBVAR*, MOD_VAR(Sys_Context, Canon_Symbol(SYM_##name), true))
+    cast(const Value(*), MOD_VAR(Sys_Context, Canon_Symbol(SYM_##name), true))
 
 
 //=//// CONTINUE VALUE TYPES ///////////////////////////////////////////////=//

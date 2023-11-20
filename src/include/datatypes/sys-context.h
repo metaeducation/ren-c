@@ -288,13 +288,13 @@ inline static const Key* CTX_KEY(Context* c, REBLEN n) {
     return Series_At(const Key, CTX_KEYLIST(c), n - 1);
 }
 
-inline static REBVAR *CTX_VAR(Context* c, REBLEN n) {  // 1-based, no Cell*
+inline static Value(*) CTX_VAR(Context* c, REBLEN n) {  // 1-based, no Cell*
     assert(Not_Series_Flag(CTX_VARLIST(c), INACCESSIBLE));
     assert(n != 0 and n <= CTX_LEN(c));
-    return cast(REBVAR*, cast(Series*, c)->content.dynamic.data) + n;
+    return cast(Value(*), cast(Series*, c)->content.dynamic.data) + n;
 }
 
-inline static REBVAR *MOD_VAR(Context* c, const Symbol* sym, bool strict) {
+inline static Value(*) MOD_VAR(Context* c, const Symbol* sym, bool strict) {
     //
     // Optimization for Lib_Context for datatypes + natives + generics; use
     // tailored order of SYM_XXX constants to beeline for the storage.  The
@@ -310,7 +310,7 @@ inline static REBVAR *MOD_VAR(Context* c, const Symbol* sym, bool strict) {
             // binding we can't be sure it's a match.  :-/  For this moment
             // hope lib doesn't have two-cased variations of anything.
             //
-            return m_cast(REBVAR*, Try_Lib_Var(unwrap(id)));
+            return m_cast(Value(*), Try_Lib_Var(unwrap(id)));
         }
     }
 
@@ -322,7 +322,7 @@ inline static REBVAR *MOD_VAR(Context* c, const Symbol* sym, bool strict) {
 
         for (; patch != sym; patch = cast(Stub*, node_MISC(Hitch, patch))) {
             if (INODE(PatchContext, patch) == c)
-                return cast(REBVAR*, Stub_Cell(patch));
+                return cast(Value(*), Stub_Cell(patch));
         }
         if (strict)
             return nullptr;
@@ -339,7 +339,7 @@ inline static REBVAR *MOD_VAR(Context* c, const Symbol* sym, bool strict) {
     Series_At(Key, CTX_KEYLIST(c), 0)  // 0-based
 
 #define CTX_VARS_HEAD(c) \
-    (cast(REBVAR*, x_cast(Series*, (c))->content.dynamic.data) + 1)
+    (cast(Value(*), x_cast(Series*, (c))->content.dynamic.data) + 1)
 
 inline static const Key* CTX_KEYS(const Key* * tail, Context* c) {
     Series* keylist = CTX_KEYLIST(c);
@@ -347,8 +347,8 @@ inline static const Key* CTX_KEYS(const Key* * tail, Context* c) {
     return Series_Head(Key, keylist);
 }
 
-inline static REBVAR *CTX_VARS(const REBVAR ** tail, Context* c) {
-    REBVAR *head = CTX_VARS_HEAD(c);
+inline static Value(*) CTX_VARS(Value(const*) * tail, Context* c) {
+    Value(*) head = CTX_VARS_HEAD(c);
     *tail = head + x_cast(Series*, (c))->content.dynamic.used - 1;
     return head;
 }
@@ -619,13 +619,13 @@ inline static bool Is_Native_Port_Actor(const REBVAL *actor) {
 }
 
 
-inline static const REBVAR *TRY_VAL_CONTEXT_VAR_CORE(
+inline static Value(const*) TRY_VAL_CONTEXT_VAR_CORE(
     const REBVAL *context,
     const Symbol* symbol,
     bool writable
 ){
     bool strict = false;
-    REBVAR *var;
+    Value(*) var;
     if (IS_MODULE(context)) {
         var = MOD_VAR(VAL_CONTEXT(context), symbol, strict);
     }
@@ -645,7 +645,7 @@ inline static const REBVAR *TRY_VAL_CONTEXT_VAR_CORE(
     TRY_VAL_CONTEXT_VAR_CORE((context), (symbol), false)
 
 #define TRY_VAL_CONTEXT_MUTABLE_VAR(context,symbol) \
-    m_cast(REBVAR*, TRY_VAL_CONTEXT_VAR_CORE((context), (symbol), true))
+    m_cast(Value(*), TRY_VAL_CONTEXT_VAR_CORE((context), (symbol), true))
 
 
 //

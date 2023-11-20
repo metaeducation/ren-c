@@ -149,10 +149,10 @@ void Unplug_Stack(
             // still GC safe.  When the stack gets patched back in, it will
             // be recognized and reset to the new base's out.
             //
-            temp->out = m_cast(REBVAR*, Lib(TRUE));
+            temp->out = m_cast(Value(*), Lib(TRUE));
         }
         else if (temp->out == &base->spare) {
-            temp->out = m_cast(REBVAR*, Lib(FALSE));
+            temp->out = m_cast(Value(*), Lib(FALSE));
         }
 
         // We make the baseline stack pointers in each level relative to the

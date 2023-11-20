@@ -662,7 +662,7 @@ static bool Combinator_Param_Hook(
     // done based on the offset of the param from the head.
 
     REBLEN offset = param - ACT_PARAMS_HEAD(VAL_ACTION(ARG(c)));
-    REBVAR *var = CTX_VARS_HEAD(s->ctx) + offset;
+    Value(*) var = CTX_VARS_HEAD(s->ctx) + offset;
 
     if (symid == SYM_STATE) {  // the "state" is currently the UPARSE frame
         Copy_Cell(var, ARG(state));
