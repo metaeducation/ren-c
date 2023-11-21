@@ -986,7 +986,7 @@ Count Sweep_Series(void)
 
     for (; seg != nullptr; seg = seg->next) {
         Count n = g_mem.pools[STUB_POOL].num_units_per_segment;
-        Byte* unit = cast(Byte*, seg + 1);  // byte beats strict alias, see [1]
+        Byte* unit = cast(Byte*, seg + 1);  // byte beats strict alias [1]
 
         for (; n > 0; --n, unit += sizeof(Stub)) {
             switch (unit[0] >> 4) {
@@ -1069,7 +1069,7 @@ Count Sweep_Series(void)
     }
   }
 
-  #if UNUSUAL_CELL_SIZE  // pairing pool is separate in this case, see [2]
+  #if UNUSUAL_CELL_SIZE  // pairing pool is separate in this case [2]
   blockscope {
     Segment* seg = g_mem.pools[PAIR_POOL].segments;
 

@@ -122,7 +122,7 @@ Bounce Group_Branch_Executor(Level* level_)
     if (ANY_GROUP(SPARE))
         fail (Error_Bad_Branch_Type_Raw());  // stop infinite recursion (good?)
 
-    Atom(const*) with = Is_Fresh(OUT) ? nullptr : OUT;  // with here, see [1]
+    Atom(const*) with = Is_Fresh(OUT) ? nullptr : OUT;  // with here [1]
 
     assert(Is_Level_At_End(LEVEL));
     return DELEGATE_BRANCH(OUT, SPARE, with);  // couldn't do (OUT, OUT, SPARE)
@@ -160,10 +160,10 @@ DECLARE_NATIVE(if)
     Value(*) condition = ARG(condition);
     Value(*) branch = ARG(branch);
 
-    if (Is_Conditional_False(condition))  // errors on literal block, see [1]
+    if (Is_Conditional_False(condition))  // errors on literal block [1]
         return VOID;
 
-    return DELEGATE_BRANCH(OUT, branch, condition);  // no callback, see [2]
+    return DELEGATE_BRANCH(OUT, branch, condition);  // no callback [2]
 }
 
 
@@ -187,11 +187,11 @@ DECLARE_NATIVE(either)
 
     Value(*) condition = ARG(condition);
 
-    Value(*) branch = Is_Conditional_True(condition)  // see [1] on IF native
+    Value(*) branch = Is_Conditional_True(condition)  // [1] on IF native
         ? ARG(true_branch)
         : ARG(false_branch);
 
-    return DELEGATE_BRANCH(OUT, branch, condition);  // see [2] on IF native
+    return DELEGATE_BRANCH(OUT, branch, condition);  // [2] on IF native
 }
 
 
@@ -265,7 +265,7 @@ static Bounce Then_Else_Isotopic_Object_Helper(
     if (Is_Meta_Of_Nihil(in))
         fail ("THEN/ELSE cannot operate on empty pack! input (e.g. NIHIL)");
 
-    Meta_Unquotify_Undecayed(in);  // see [1]
+    Meta_Unquotify_Undecayed(in);  // [1]
 
     if (Is_Raised(in)) {  // definitional failure, skip
         STATE = ST_THENABLE_REJECTING_INPUT;
@@ -273,7 +273,7 @@ static Bounce Then_Else_Isotopic_Object_Helper(
         return OUT;
     }
 
-    if (not Is_Lazy(in))  // Packs run THEN, including ~[~null~]~ and ~[~]~, see [3]
+    if (not Is_Lazy(in))  // Packs run THEN, including ~[~null~]~ and ~[~]~ [3]
         goto test_not_lazy;
 
     goto handle_lazy_object;
@@ -289,13 +289,13 @@ static Bounce Then_Else_Isotopic_Object_Helper(
         else_hook = nullptr;  // can be unset by Debranch_Output()
 
     if (not then_hook and not else_hook) {  // !!! should it always take THEN?
-        if (not Pushed_Decaying_Level(  // fails if no reify method, see [4]
+        if (not Pushed_Decaying_Level(  // fails if no reify method [4]
             SPARE,
             in,
             LEVEL_FLAG_META_RESULT
         )){
             Copy_Cell(in, SPARE);  // cheap reification... (e.g. quoted)
-            Meta_Unquotify_Known_Stable(Stable_Unchecked(in));  // see [1]
+            Meta_Unquotify_Known_Stable(Stable_Unchecked(in));  // [1]
             assert(STATE == ST_THENABLE_INITIAL_ENTRY);
             assert(not Is_Isotope(in));
             goto test_not_lazy;
@@ -326,12 +326,12 @@ static Bounce Then_Else_Isotopic_Object_Helper(
     STATE = ST_THENABLE_RUNNING_BRANCH;
 
     if (then_hook and else_hook)  // THEN is likely passthru if both
-        return DELEGATE(OUT, hook, branch);  // not DELEGATE_BRANCH, see [5]
+        return DELEGATE(OUT, hook, branch);  // not DELEGATE_BRANCH [5]
 
     if (not IS_FRAME(hook))  // if not full control, assume must use BRANCH
         fail ("non-FRAME! found in THEN or ELSE method of lazy object");
 
-    return DELEGATE_BRANCH(OUT, hook, branch);  // BRANCH for safety, see [6]
+    return DELEGATE_BRANCH(OUT, hook, branch);  // BRANCH for safety [6]
 
 } test_not_lazy: {  //////////////////////////////////////////////////////////
 
@@ -362,7 +362,7 @@ static Bounce Then_Else_Isotopic_Object_Helper(
 
     if (not then) {
         STATE = ST_THENABLE_REJECTING_INPUT;
-        Copy_Cell(OUT, in);  // passthru, see [4]
+        Copy_Cell(OUT, in);  // passthru [4]
         return OUT;
     }
     STATE = ST_THENABLE_RUNNING_BRANCH;
@@ -426,7 +426,7 @@ DECLARE_NATIVE(did_1)  // see TO-C-NAME for why the "_1" is needed
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
-    Quotify(Quasify(Init_Word(ARG(branch), Canon(DID_1))), 1);  // see [1]
+    Quotify(Quasify(Init_Word(ARG(branch), Canon(DID_1))), 1);  // [1]
 
     goto reifying_input;
 
@@ -460,7 +460,7 @@ DECLARE_NATIVE(did_1)  // see TO-C-NAME for why the "_1" is needed
 
 } return_true: {  ////////////////////////////////////////////////////////////
 
-    return Init_True(OUT);  // can't trust branch product, see [1]
+    return Init_True(OUT);  // can't trust branch product [1]
 }}
 
 
@@ -819,7 +819,7 @@ DECLARE_NATIVE(all)
     Decay_If_Unstable(SPARE);
 
     if (not Is_Nulled(predicate)) {
-        SUBLEVEL->executor = &Just_Use_Out_Executor;  // tunnel thru, see [2]
+        SUBLEVEL->executor = &Just_Use_Out_Executor;  // tunnel thru [2]
 
         STATE = ST_ALL_PREDICATE;
         return CONTINUE(scratch, predicate, SPARE);
@@ -833,9 +833,9 @@ DECLARE_NATIVE(all)
     if (Is_Void(scratch))  // !!! Should void predicate results signal opt-out?
         fail (Error_Bad_Void());
 
-    Isotopify_If_Falsey(SPARE);  // predicates can approve "falseys", see [3]
+    Isotopify_If_Falsey(SPARE);  // predicates can approve "falseys" [3]
 
-    SUBLEVEL->executor = &Evaluator_Executor;  // done tunneling, see [2]
+    SUBLEVEL->executor = &Evaluator_Executor;  // done tunneling [2]
     STATE = ST_ALL_EVAL_STEP;
 
     condition = scratch;
@@ -949,7 +949,7 @@ DECLARE_NATIVE(any)
     Decay_If_Unstable(OUT);
 
     if (not Is_Nulled(predicate)) {
-        SUBLEVEL->executor = &Just_Use_Out_Executor;  // tunnel thru, see [2]
+        SUBLEVEL->executor = &Just_Use_Out_Executor;  // tunnel thru [2]
 
         STATE = ST_ANY_PREDICATE;
         return CONTINUE(SPARE, predicate, OUT);
@@ -963,9 +963,9 @@ DECLARE_NATIVE(any)
     if (Is_Void(SPARE))  // !!! Should void predicate results signal opt-out?
         fail (Error_Bad_Void());
 
-    Isotopify_If_Falsey(OUT);  // predicates can approve "falseys", see [3]
+    Isotopify_If_Falsey(OUT);  // predicates can approve "falseys" [3]
 
-    SUBLEVEL->executor = &Evaluator_Executor;  // done tunneling, see [2]
+    SUBLEVEL->executor = &Evaluator_Executor;  // done tunneling [2]
     STATE = ST_ANY_EVAL_STEP;
 
     condition = stable_SPARE;
@@ -1109,11 +1109,11 @@ DECLARE_NATIVE(case)
     STATE = ST_CASE_CONDITION_EVAL_STEP;
     SUBLEVEL->executor = &Evaluator_Executor;
     Restart_Evaluator_Level(SUBLEVEL);
-    return CONTINUE_SUBLEVEL(SUBLEVEL);  // one step to pass predicate, see [1]
+    return CONTINUE_SUBLEVEL(SUBLEVEL);  // one step to pass predicate [1]
 
 } condition_result_in_spare: {  //////////////////////////////////////////////
 
-    if (Is_Elision(SPARE))  // skip nihils, e.g. ELIDE, see [2]
+    if (Is_Elision(SPARE))  // skip nihils, e.g. ELIDE [2]
         goto handle_next_clause;
 
     Decay_If_Unstable(SPARE);
@@ -1173,7 +1173,7 @@ DECLARE_NATIVE(case)
 } check_discarded_product_was_branch: {  /////////////////////////////////////
 
     if (not (FLAGIT_KIND(VAL_TYPE(discarded)) & TS_BRANCH))
-        fail (Error_Bad_Value_Raw(discarded));  // like IF, see [3]
+        fail (Error_Bad_Value_Raw(discarded));  // like IF [3]
 
     goto handle_next_clause;
 
@@ -1192,7 +1192,7 @@ DECLARE_NATIVE(case)
 
     Drop_Level(SUBLEVEL);
 
-    if (not Is_Fresh(SPARE)) {  // prioritize fallout result, see [4]
+    if (not Is_Fresh(SPARE)) {  // prioritize fallout result [4]
         Move_Cell(OUT, SPARE);
         return BRANCHED(OUT);
     }
@@ -1323,7 +1323,7 @@ DECLARE_NATIVE(switch)
     STATE = ST_SWITCH_EVALUATING_RIGHT;
     SUBLEVEL->executor = &Evaluator_Executor;
     Restart_Evaluator_Level(SUBLEVEL);
-    return CONTINUE_SUBLEVEL(SUBLEVEL);  // no direct predicate call, see [1]
+    return CONTINUE_SUBLEVEL(SUBLEVEL);  // no direct predicate call [1]
 
 } right_result_in_spare: {  //////////////////////////////////////////////////
 
@@ -1438,7 +1438,7 @@ DECLARE_NATIVE(default)
     REBVAL *branch = ARG(branch);
     REBVAL *predicate = ARG(predicate);
 
-    REBVAL *steps = ARG(return);  // reuse slot to save resolved steps, see [1]
+    REBVAL *steps = ARG(return);  // reuse slot to save resolved steps [1]
 
     enum {
         ST_DEFAULT_INITIAL_ENTRY = STATE_0,
@@ -1457,7 +1457,7 @@ DECLARE_NATIVE(default)
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
-    if (Get_Var_Core_Throws(OUT, steps, target, SPECIFIED))  // see [1]
+    if (Get_Var_Core_Throws(OUT, steps, target, SPECIFIED))  // [1]
         return THROWN;
 
     if (not Is_Nulled(predicate)) {
@@ -1466,7 +1466,7 @@ DECLARE_NATIVE(default)
     }
 
     if (not Is_None(OUT) and not Is_Nulled(OUT))
-        return OUT;  // consider it a "value", see [2]
+        return OUT;  // consider it a "value" [2]
 
     STATE = ST_DEFAULT_EVALUATING_BRANCH;
     return CONTINUE(SPARE, branch, OUT);

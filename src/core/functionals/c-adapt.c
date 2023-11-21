@@ -97,10 +97,10 @@ Bounce Adapter_Dispatcher(Level* const L)
         and VAL_INDEX(prelude) == 0
     );
 
-    STATE = ST_ADAPTER_RUNNING_PRELUDE;  // no definitional RETURN, see [2]
+    STATE = ST_ADAPTER_RUNNING_PRELUDE;  // no definitional RETURN [2]
 
     return CONTINUE_CORE(  // Note: we won't catch throws or errors
-        SPARE,  // Evaluate prelude into SPARE cell (result discarded, see [1])
+        SPARE,  // Evaluate prelude into SPARE cell (result discarded [1])
         LEVEL_MASK_NONE,  // plain result
         SPC(L->varlist), prelude
     );
@@ -112,7 +112,7 @@ Bounce Adapter_Dispatcher(Level* const L)
     INIT_LVL_PHASE(L, ACT_IDENTITY(VAL_ACTION(adaptee)));
     INIT_LVL_BINDING(L, VAL_FRAME_BINDING(adaptee));
 
-    return BOUNCE_REDO_CHECKED;  // redo uses updated phase & binding, see [3]
+    return BOUNCE_REDO_CHECKED;  // redo uses updated phase & binding [3]
 }}
 
 

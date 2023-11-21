@@ -74,7 +74,7 @@ bool Pushed_Continuation(
     if (Is_Activation(branch))
         goto handle_action;
 
-    if (IS_GROUP(branch) or IS_GET_GROUP(branch)) {  // see [2] for GET-GROUP!
+    if (IS_GROUP(branch) or IS_GET_GROUP(branch)) {  // [2] for GET-GROUP!
         assert(flags & LEVEL_FLAG_BRANCH);  // needed for trick
         Level* grouper = Make_Level_At_Core(
             branch,
@@ -164,7 +164,7 @@ bool Pushed_Continuation(
             if (not arg)
                 break;
 
-            Copy_Cell(arg, unwrap(with));  // do not decay, see [4]
+            Copy_Cell(arg, unwrap(with));  // do not decay [4]
 
             if (VAL_PARAM_CLASS(param) == PARAM_CLASS_META)
                 Meta_Quotify(arg);
@@ -212,7 +212,7 @@ bool Pushed_Continuation(
         break;
     }
 
-    fail (Error_Bad_Branch_Type_Raw());  // narrow input types? see [3]
+    fail (Error_Bad_Branch_Type_Raw());  // narrow input types? [3]
 
   pushed_continuation:
     return true;

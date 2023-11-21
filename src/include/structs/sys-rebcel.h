@@ -643,7 +643,7 @@ union ValuePayloadUnion { //=/////////////// ACTUAL PAYLOAD DEFINITION ////=//
 #if CPLUSPLUS_11
     struct alignas(ALIGN_SIZE) CellBase : public Node  // VAL_TYPE() illegal
 #elif C_11
-    struct alignas(ALIGN_SIZE) ValueStruct  // exported name for API, see [1]
+    struct alignas(ALIGN_SIZE) ValueStruct  // exported name for API [1]
 #else
     struct ValueStruct  // ...have to just hope the alignment "works out"
 #endif
@@ -652,7 +652,7 @@ union ValuePayloadUnion { //=/////////////// ACTUAL PAYLOAD DEFINITION ////=//
         union ValueExtraUnion extra;
         union ValuePayloadUnion payload;
 
-      #if DEBUG_TRACK_EXTEND_CELLS  // Can be VERY handy, see [2]
+      #if DEBUG_TRACK_EXTEND_CELLS  // can be VERY handy [2]
         const char *file;  // is Byte (UTF-8), but char* for debug watch
         uintptr_t line;
         uintptr_t tick;  // stored in the ValueExtraUnion for basic tracking
@@ -663,17 +663,17 @@ union ValuePayloadUnion { //=/////////////// ACTUAL PAYLOAD DEFINITION ////=//
       public:
         CellBase () = default;
 
-      private:  // disable assignment and copying, see [3] above
+      private:  // disable assignment and copying [3]
         CellBase (const CellBase& other) = default;
         CellBase& operator= (const CellBase& rhs) = default;
       #endif
     };
 
 #define Mem_Copy(dst,src,size) \
-    memcpy(cast(void*, (dst)), (src), (size))  // see [4] above
+    memcpy(cast(void*, (dst)), (src), (size))  // [4]
 
 #define Mem_Fill(dst,val,size) \
-    memset(cast(void*, (dst)), (val), (size))  // see [4] above
+    memset(cast(void*, (dst)), (val), (size))  // [4]
 
 #if CPLUSPLUS_11
     struct Cell : public CellBase {};  // VAL_TYPE() legal

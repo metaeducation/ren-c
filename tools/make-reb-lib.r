@@ -439,7 +439,7 @@ e-lib/emit 'ver {
         #elif defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L
             #define ATTRIBUTE_NO_RETURN _Noreturn
         #elif defined(__TINYC__)
-            #define ATTRIBUTE_NO_RETURN  /* _Noreturn unreliable, see [1] */
+            #define ATTRIBUTE_NO_RETURN  /* _Noreturn unreliable [1] */
         #elif defined(_MSC_VER)
             #define ATTRIBUTE_NO_RETURN __declspec(noreturn)
         #else

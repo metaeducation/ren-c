@@ -126,7 +126,7 @@ print: lib3/print: lib3/func [value <local> pos] [
 ;    and this means that we have to tolerate IF and FIND having a double
 ;    meaning.  Also, having to type IF3 everywhere would be annoying.
 
-aliases: lib/eval func [:item [any-value! <...>]] [  ; very weird, see [1]
+aliases: lib/eval func [:item [any-value! <...>]] [  ; very weird [1]
     collect [while [item/1 != #end] [keep/only take item]]
     ]
     null3?: null?: *
@@ -134,7 +134,7 @@ aliases: lib/eval func [:item [any-value! <...>]] [  ; very weird, see [1]
     void3?: void?: *
     void3: void: *
     find3: find: *
-    if3: if: <conflated>  ; see [2]
+    if3: if: <conflated>  ; [2]
     the3: quote: *
     reeval3: eval: *
     func3: func: *

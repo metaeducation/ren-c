@@ -471,7 +471,7 @@ DECLARE_NATIVE(specialize_p)  // see extended SPECIALIZE in %base-defs.r
         OUT,
         specializee,
         def,
-        STACK_BASE  // lowest ordered stackindex, see [1]
+        STACK_BASE  // lowest ordered stackindex [1]
     )){
         return THROWN;  // e.g. `specialize :append/dup [value: throw 10]`
     }

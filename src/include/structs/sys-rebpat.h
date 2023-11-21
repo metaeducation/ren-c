@@ -56,7 +56,7 @@
 #define LINK_PatchReserved_TYPE           Array*
 #define HAS_LINK_PatchReserved            FLAVOR_PATCH
 
-#define MISC_PatchHitch_TYPE              Array*  // circular list, see [1]
+#define MISC_PatchHitch_TYPE              Array*  // circular list [1]
 #define HAS_MISC_PatchHitch               FLAVOR_PATCH
 
 

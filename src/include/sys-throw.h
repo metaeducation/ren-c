@@ -135,7 +135,7 @@ INLINE Value(*) Decay_If_Unstable(Atom(*) v) {
         assert(not Is_Lazy(v));
     }
 
-    if (Is_Pack(v)) {  // iterate until result is not multi-return, see [1]
+    if (Is_Pack(v)) {  // iterate until result is not multi-return [1]
         const Cell* pack_meta_tail;
         const Cell* pack_meta_at = VAL_ARRAY_AT(&pack_meta_tail, v);
         if (pack_meta_at == pack_meta_tail)

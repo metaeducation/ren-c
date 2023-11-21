@@ -97,17 +97,17 @@
 struct JumpStruct {
   #if REBOL_FAIL_USES_LONGJMP
     #ifdef HAS_POSIX_SIGNAL
-        sigjmp_buf cpu_state;  // jmp_buf as first field of struct, see [1]
+        sigjmp_buf cpu_state;  // jmp_buf as first field of struct [1]
     #else
         jmp_buf cpu_state;
     #endif
 
-    Context* error;  // longjmp() case tunnels pointer back via this, see [2]
+    Context* error;  // longjmp() case tunnels pointer back via this [2]
   #endif
 
     struct JumpStruct* last_jump;
 
-    Level* level;  // trampoline caches level here for flexibility, see [3]
+    Level* level;  // trampoline caches level here for flexibility [3]
 };
 
 
@@ -194,10 +194,10 @@ struct JumpStruct {
     STATIC_ASSERT(REBOL_FAIL_USES_TRY_CATCH == 0);
     STATIC_ASSERT(REBOL_FAIL_JUST_ABORTS == 0);
 
-    #if defined(__MINGW64__) && (__GNUC__ < 5)  // see [1]
+    #if defined(__MINGW64__) && (__GNUC__ < 5)  // [1]
         #define SET_JUMP(s)     __builtin_setjmp(s)
         #define LONG_JUMP(s,v)  __builtin_longjmp((s), (v))
-    #elif defined(HAS_POSIX_SIGNAL)  // see [2]
+    #elif defined(HAS_POSIX_SIGNAL)  // [2]
         #define SET_JUMP(s)     sigsetjmp((s), 1)
         #define LONG_JUMP(s,v)  siglongjmp((s), (v))
     #else
@@ -212,11 +212,11 @@ struct JumpStruct {
         jump.level = TOP_LEVEL; \
         jump.error = nullptr; \
         g_ts.jump_list = &jump; \
-        if (1 == SET_JUMP(jump.cpu_state))  /* beware return value, see [3] */ \
+        if (1 == SET_JUMP(jump.cpu_state))  /* beware return value [3] */ \
             goto longjmp_happened; /* jump.error will be set */ \
         /* fall through to subsequent block, happens on first SET_JUMP() */
 
-    #define CLEANUP_BEFORE_EXITING_RESCUE_SCOPE /* can't avoid, see [5] */ \
+    #define CLEANUP_BEFORE_EXITING_RESCUE_SCOPE /* can't avoid [5] */ \
         assert(jump.error == nullptr); \
         g_ts.jump_list = jump.last_jump
 
@@ -239,7 +239,7 @@ struct JumpStruct {
         g_ts.jump_list = &jump; \
         try /* picks up subsequent {...} block */
 
-    #define CLEANUP_BEFORE_EXITING_RESCUE_SCOPE /* can't avoid, see [5] */ \
+    #define CLEANUP_BEFORE_EXITING_RESCUE_SCOPE /* can't avoid [5] */ \
         g_ts.jump_list = jump.last_jump
 
     #define ON_ABRUPT_FAILURE(decl) \
@@ -258,7 +258,7 @@ struct JumpStruct {
         if (false) \
             goto abrupt_failure;  /* avoids unreachable code warning */
 
-    #define CLEANUP_BEFORE_EXITING_RESCUE_SCOPE /* can't avoid, see [5] */ \
+    #define CLEANUP_BEFORE_EXITING_RESCUE_SCOPE /* can't avoid [5] */ \
         g_ts.jump_list = jump.last_jump
 
     #define ON_ABRUPT_FAILURE(decl) \

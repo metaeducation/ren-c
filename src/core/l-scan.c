@@ -2972,8 +2972,8 @@ Array* Scan_UTF8_Managed(
     UNUSED(size);  // scanner stops at `\0` (no size limit functionality)
 
     const void* packed[2] = {utf8, rebEND};  // BEWARE: Stack, can't trampoline!
-    Feed* feed = Make_Variadic_Feed(  // scanner requires variadic, see [1]
-        packed, nullptr,  // va_list* as nullptr means `p` is packed, see [2]
+    Feed* feed = Make_Variadic_Feed(  // scanner requires variadic [1]
+        packed, nullptr,  // va_list* as nullptr means `p` is packed [2]
         context,
         FEED_MASK_DEFAULT
     );
@@ -3098,13 +3098,13 @@ DECLARE_NATIVE(transcode)
   //
   //    !!! Should the base name and extension be stored, or whole path?
 
-    if (IS_BINARY(source))  // scanner needs data to end in '\0', see [1]
+    if (IS_BINARY(source))  // scanner needs data to end in '\0' [1]
         Term_Binary(m_cast(Binary*, VAL_BINARY(source)));
 
     const String* file;
     if (REF(file)) {
         file = VAL_STRING(ARG(file));
-        Freeze_Series(file);  // freezes vs. interning, see [2]
+        Freeze_Series(file);  // freezes vs. interning [2]
     }
     else
         file = ANONYMOUS;

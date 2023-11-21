@@ -174,7 +174,7 @@ INLINE void Finalize_Variadic_Feed(Feed* feed) {
     assert(Is_Feed_At_End(feed));  // must spool, regardless of throw/fail!
 
     if (FEED_VAPTR(feed))
-        va_end(*unwrap(FEED_VAPTR(feed)));  // *ALL* valist get here, see [1]
+        va_end(*unwrap(FEED_VAPTR(feed)));  // *ALL* valist get here [1]
     else
         assert(FEED_PACKED(feed));
 
@@ -355,7 +355,7 @@ INLINE void Force_Variadic_Feed_At_Cell_Or_End_May_Fail(Feed* feed)
         //
         Array* reified = try_unwrap(Try_Scan_Variadic_Feed_Utf8_Managed(feed));
 
-        if (not reified) {  // rebValue("", ...), see [1]
+        if (not reified) {  // rebValue("", ...) [1]
             if (Is_Feed_At_End(feed))
                 break;
             goto detect_again;

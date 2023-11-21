@@ -104,10 +104,10 @@ extensions: make map! compose [
     Console +
     Debugger -
     DNS -
-    Filesystem -  ; libuv-based, see [1]
-    JavaScript -  ; emscripten only (embed QuickJS? see [2])
+    Filesystem -  ; libuv-based [1]
+    JavaScript -  ; emscripten only (embed QuickJS? [2])
     Locale -
-    Network -  ; libuv-based, see [1]
+    Network -  ; libuv-based [1]
     ODBC -
     Process -  ; no pipe2, separate out Call extension?
     Stdio +

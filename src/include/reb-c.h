@@ -534,7 +534,7 @@
     #define c_cast(TP,v) \
         (cast_helper< \
             decltype(v), typename c_cast_helper<TP,decltype(v) \
-        >::type>::convert(v))  // outer parens, see [1]
+        >::type>::convert(v))  // outer parens [1]
 
     template<typename TP, typename V>
     constexpr TP p_cast_helper(V v) {
@@ -882,7 +882,7 @@
     struct OptionWrapper {
         T wrapped;
 
-        OptionWrapper () = default;  // garbage, or 0 if global, see [2]
+        OptionWrapper () = default;  // garbage, or 0 if global [2]
 
         template <typename U>
         OptionWrapper (U something) : wrapped (something) {}
@@ -1085,7 +1085,7 @@
             static_assert(
                 std::is_convertible<V,T>::value, "ensure() failed"
             );
-            return v;  // doesn't coerce to type T, same as unchecked, see [1]
+            return v;  // doesn't coerce to type T, same as unchecked [1]
         }
     };
     #define ensure(T,v) EnsureReader<T>::check(v)

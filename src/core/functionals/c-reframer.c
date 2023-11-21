@@ -103,7 +103,7 @@ Level* Make_Pushed_Level_From_Action_Feed_May_Throw(
     FRESHEN(out);
     Push_Level(out, L);
 
-    if (error_on_deferred)  // can't deal with ELSE/THEN, see [1]
+    if (error_on_deferred)  // can't deal with ELSE/THEN [1]
         L->flags.bits |= ACTION_EXECUTOR_FLAG_ERROR_ON_DEFERRED_ENFIX;
 
     Push_Action(L, VAL_ACTION(action), VAL_FRAME_BINDING(action));
@@ -118,7 +118,7 @@ Level* Make_Pushed_Level_From_Action_Feed_May_Throw(
 
     assert(Is_None(L->out));  // should only have gathered arguments
 
-    assert(  // !!! new flag, see [2]
+    assert(  // !!! new flag [2]
         Not_Subclass_Flag(VARLIST, L->varlist, FRAME_HAS_BEEN_INVOKED)
     );
 
@@ -131,7 +131,7 @@ Level* Make_Pushed_Level_From_Action_Feed_May_Throw(
     );
     INIT_LVL_BINDING(L, VAL_FRAME_BINDING(action));
 
-    assert(Not_Node_Managed(L->varlist));  // shouldn't be, see [3]
+    assert(Not_Node_Managed(L->varlist));  // shouldn't be [3]
 
     return L;  // may not be at end or thrown, e.g. (x: does+ just y x = 'y)
 }

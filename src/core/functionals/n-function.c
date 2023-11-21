@@ -143,8 +143,8 @@ Bounce Func_Dispatcher(Level* const L)
 
     assert(Is_Fresh(SPARE));
     return CONTINUE_CORE(
-        SPARE,  // body evaluative result discarded, see [1]
-        LEVEL_MASK_NONE,  // no DISPATCHER_CATCHES, so RETURN skips, see [2]
+        SPARE,  // body evaluative result discarded [1]
+        LEVEL_MASK_NONE,  // no DISPATCHER_CATCHES, so RETURN skips [2]
         SPC(L->varlist), body
     );
 
@@ -158,13 +158,13 @@ Bounce Func_Dispatcher(Level* const L)
     }
 
     if (GET_PARAM_FLAG(param, RETURN_VOID)) {
-        // void, regardless of body result, see [3]
+        // void, regardless of body result [3]
         Init_Void(OUT);
         return Proxy_Multi_Returns(L);
     }
 
     if (GET_PARAM_FLAG(param, RETURN_NONE)) {
-        Init_None(OUT);  // none, regardless of body result, see [3]
+        Init_None(OUT);  // none, regardless of body result [3]
         return Proxy_Multi_Returns(L);
     }
 

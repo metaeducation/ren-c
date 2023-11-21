@@ -200,7 +200,7 @@ inline static Level* Maybe_Rightward_Continuation_Needed(Level* L)
     if (Is_Feed_At_End(L->feed))  // `do [x:]`, `do [o.x:]`, etc. are illegal
         fail (Error_Need_Non_End(L_current));
 
-    Clear_Feed_Flag(L->feed, NO_LOOKAHEAD);  // always >= 2 elements, see [2]
+    Clear_Feed_Flag(L->feed, NO_LOOKAHEAD);  // always >= 2 elements [2]
 
     Flags flags =  // v-- if f was fulfilling, we are
         (L->flags.bits & EVAL_EXECUTOR_FLAG_FULFILLING_ARG)
@@ -215,7 +215,7 @@ inline static Level* Maybe_Rightward_Continuation_Needed(Level* L)
     );
     Push_Level(OUT, sub);
 
-    assert(L_current != &L->feed->lookback);  // are these possible?  see [4]
+    assert(L_current != &L->feed->lookback);  // are these possible?  [4]
     assert(L_current != &L->feed->fetched);
 
     return sub;
@@ -273,7 +273,7 @@ Bounce Array_Executor(Level* L)
         Move_Cell(OUT, SPARE);
 
     if (Not_Level_At_End(SUBLEVEL)) {
-        if (Is_Raised(OUT))  // promote errors to failure on step, see [1]
+        if (Is_Raised(OUT))  // promote errors to failure on step [1]
             fail (VAL_CONTEXT(OUT));
 
         Restart_Evaluator_Level(SUBLEVEL);
@@ -581,9 +581,9 @@ Bounce Evaluator_Executor(Level* L)
     //    of processed values.  Using the state byte to stor
     //
 
-    assert(Is_Fresh(OUT));  // except see [1]
+    assert(Is_Fresh(OUT));  // except [1]
 
-    switch ((STATE = VAL_TYPE(L_current))) {  // type doubles as state, see [2]
+    switch ((STATE = VAL_TYPE(L_current))) {  // type doubles as state [2]
 
     //=//// NULL //////////////////////////////////////////////////////////=//
     //
@@ -659,7 +659,7 @@ Bounce Evaluator_Executor(Level* L)
             VAL_FRAME_BINDING(L_current)
         );
         bool enfix = Is_Enfixed(L_current);
-        assert(Is_Fresh(OUT));  // so nothing on left, see [1]
+        assert(Is_Fresh(OUT));  // so nothing on left [1]
         Begin_Action_Core(sub, VAL_FRAME_LABEL(L_current), enfix);
 
         goto process_action; }
@@ -859,7 +859,7 @@ Bounce Evaluator_Executor(Level* L)
                 OUT
             );
 
-            if (L_next_gotten) {  // cache can tamper with lookahead, see [2]
+            if (L_next_gotten) {  // cache can tamper with lookahead [2]
                 if (VAL_TYPE_UNCHECKED(L_next) == REB_FRAME) {
                     // not a cache
                 }
@@ -899,7 +899,7 @@ Bounce Evaluator_Executor(Level* L)
     // Groups simply evaluate their contents, and can evaluate to nihil if
     // the contents completely disappear.
     //
-    // GET-GROUP! currently acts as a synonym for group, see [1].
+    // GET-GROUP! currently acts as a synonym for group [1].
     //
     //////////////////////////////////////////////////////////////////////////
     //
@@ -916,13 +916,13 @@ Bounce Evaluator_Executor(Level* L)
     //        >> 1 + 2 (comment "hi")
     //        == 3  ; e.g. not void
 
-      case REB_GET_GROUP:  // synonym for GROUP!, see [1]
+      case REB_GET_GROUP:  // synonym for GROUP! [1]
       case REB_GROUP:
       case REB_META_GROUP: {
         L_next_gotten = nullptr;  // arbitrary code changes fetched variables
 
         Flags flags = LEVEL_FLAG_RAISED_RESULT_OK
-            | FLAG_STATE_BYTE(ST_ARRAY_PRELOADED_ENTRY);  // see [2]
+            | FLAG_STATE_BYTE(ST_ARRAY_PRELOADED_ENTRY);  // [2]
 
         if (STATE == REB_META_GROUP)
             flags |= LEVEL_FLAG_META_RESULT;
@@ -933,7 +933,7 @@ Bounce Evaluator_Executor(Level* L)
             flags
         );
         Push_Level(OUT, sub);
-        Init_Nihil(OUT);  // the ST_ARRAY_PRELOADED_ENTRY, see [2]
+        Init_Nihil(OUT);  // the ST_ARRAY_PRELOADED_ENTRY [2]
         sub->executor = &Array_Executor;
 
         return CATCH_CONTINUE_SUBLEVEL(sub); }
@@ -1381,7 +1381,7 @@ Bounce Evaluator_Executor(Level* L)
       case REB_SET_BLOCK: {
         assert(STATE == REB_SET_BLOCK);
 
-        if (VAL_LEN_AT(L_current) == 0)  // not supported, see [1]
+        if (VAL_LEN_AT(L_current) == 0)  // not supported [1]
             fail ("SET-BLOCK! must not be empty for now.");
 
         const Cell* tail;
@@ -1392,7 +1392,7 @@ Bounce Evaluator_Executor(Level* L)
 
         StackIndex stackindex_circled = 0;
 
-        for (; check != tail; ++check) {  // push variables first, see [2]
+        for (; check != tail; ++check) {  // push variables first [2]
             if (Is_Quoted(check))
                 fail ("QUOTED! not currently permitted in SET-BLOCK!s");
 
@@ -1451,7 +1451,7 @@ Bounce Evaluator_Executor(Level* L)
                 Quasify(TOP);  // keep this as signal for raised ok
 
             if (
-                // @xxx is indicator of circled result, see [3]
+                // @xxx is indicator of circled result [3]
                 //
                 (heart == REB_WORD and VAL_WORD_SYMBOL(TOP) == Canon(AT_1))
                 or heart == REB_THE_WORD
@@ -1463,7 +1463,7 @@ Bounce Evaluator_Executor(Level* L)
                 continue;
             }
             if (
-                // ^xxx is indicator of a ^META result, see [4]
+                // ^xxx is indicator of a ^META result [4]
                 //
                 (heart == REB_WORD and VAL_WORD_SYMBOL(check) == Canon(CARET_1))
                 or heart == REB_META_WORD
@@ -1479,7 +1479,7 @@ Bounce Evaluator_Executor(Level* L)
         }
 
         if (stackindex_circled == 0)
-            stackindex_circled = BASELINE->stack_base + 1;  // main, see [3]
+            stackindex_circled = BASELINE->stack_base + 1;  // main [3]
 
         level_->u.eval.stackindex_circled = stackindex_circled;  // remember it
 
@@ -1502,7 +1502,7 @@ Bounce Evaluator_Executor(Level* L)
       //    overwrite of the returned OUT for the whole evaluation will happen
       //    *after* the original OUT was captured into any desired variable.
 
-        if (Is_Raised(OUT))  // don't assign variables, see [1]
+        if (Is_Raised(OUT))  // don't assign variables [1]
             goto set_block_drop_stack_and_continue;
 
         if (Is_Lazy(OUT)) {
@@ -1540,7 +1540,7 @@ Bounce Evaluator_Executor(Level* L)
             pack_specifier = nullptr;
         }
 
-        StackIndex stackindex_var = BASELINE->stack_base + 1;  // see [2]
+        StackIndex stackindex_var = BASELINE->stack_base + 1;  // [2]
         StackIndex stackindex_circled = level_->u.eval.stackindex_circled;
 
         for (

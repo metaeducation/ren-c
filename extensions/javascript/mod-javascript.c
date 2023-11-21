@@ -427,7 +427,7 @@ void RunPromise(void)
 
     Bounce r = Trampoline_From_Top_Maybe_Root();
 
-    if (r == BOUNCE_SUSPEND) {  // cooperative suspension, see [1]
+    if (r == BOUNCE_SUSPEND) {  // cooperative suspension [1]
         return;  // the setTimeout() on resolve/reject will queue us back
     }
 
@@ -590,7 +590,7 @@ EXTERN_C void RL_rebRejectNative_internal(
 
     REBVAL *error = Value_From_Value_Id(error_id);
 
-    if (error == nullptr) {  // Signals halt...not normal error, see [3]
+    if (error == nullptr) {  // Signals halt...not normal error [3]
         TRACE("JavaScript_Dispatcher() => throwing a halt");
 
         Init_Nulled(OUT);
@@ -708,7 +708,7 @@ Bounce JavaScript_Dispatcher(Level* const L)
         level_id  // => $1, how it knows to find this frame to update STATE
     );
 
-    if (not is_awaiter)  // same tactic for non-awaiter, see [1]
+    if (not is_awaiter)  // same tactic for non-awaiter [1]
         assert(STATE != ST_JS_NATIVE_RUNNING);
     else {
         if (STATE == ST_JS_NATIVE_RUNNING) {

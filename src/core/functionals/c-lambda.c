@@ -82,9 +82,9 @@ Bounce Lambda_Dispatcher(Level* const L)
 
     Set_Node_Managed_Bit(L->varlist);  // not manually tracked...
 
-    Specifier* specifier = Make_Or_Reuse_Use(  // may reuse, see [1]
+    Specifier* specifier = Make_Or_Reuse_Use(  // may reuse [1]
         cast(Context*, L->varlist),
-        VAL_SPECIFIER(block),  // redundant with feed, see [2]
+        VAL_SPECIFIER(block),  // redundant with feed [2]
         REB_WORD
     );
 
@@ -243,7 +243,7 @@ DECLARE_NATIVE(lambda)
         return Init_Activation(OUT, lambda, ANONYMOUS, UNBOUND);
     }
 
-    Context* adjunct;  // reuses Pop_Paramlist(), see [1]
+    Context* adjunct;  // reuses Pop_Paramlist() [1]
     Array* paramlist = Pop_Paramlist_With_Adjunct_May_Fail(
         &adjunct,
         STACK_BASE,

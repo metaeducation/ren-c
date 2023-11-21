@@ -257,7 +257,7 @@ Array* Make_Let_Patch(
         assert(IS_LET(specifier) or IS_USE(specifier) or IS_VARLIST(specifier));
         assert(Is_Node_Managed(specifier));
     }
-    mutable_LINK(NextLet, let) = specifier;  // linked list, see [1]
+    mutable_LINK(NextLet, let) = specifier;  // linked list [1]
 
     node_MISC(LetReserved, let) = nullptr;  // not currently used
 
@@ -743,7 +743,7 @@ DECLARE_NATIVE(let)
     REBVAL *vars = ARG(vars);
 
     UNUSED(ARG(expression));
-    Level* L = level_;  // fake variadic, see [1]
+    Level* L = level_;  // fake variadic [1]
     Specifier* L_specifier = Level_Specifier(L);
 
     REBVAL *bindings_holder = ARG(return);
@@ -778,7 +778,7 @@ DECLARE_NATIVE(let)
         if (Do_Any_Array_At_Throws(SPARE, vars, SPECIFIED))
             return THROWN;
 
-        if (Is_Quoted(SPARE))  // should (let 'x: <whatever>) be legal? see [3]
+        if (Is_Quoted(SPARE))  // should (let 'x: <whatever>) be legal? [3]
             fail ("QUOTED! escapes not supported at top level of LET");
 
         switch (Cell_Heart(SPARE)) {  // QUASI! states mean isotopes ok
@@ -791,12 +791,12 @@ DECLARE_NATIVE(let)
           case REB_SET_WORD:
           case REB_SET_BLOCK:
             if (IS_SET_GROUP(vars)) {
-                // Allow `(set-word):` to ignore "redundant colon", see [2]
+                // Allow `(set-word):` to ignore "redundant colon" [2]
             }
             break;
 
           default:
-            fail ("LET GROUP! limited to WORD! and BLOCK!");  // see [4]
+            fail ("LET GROUP! limited to WORD! and BLOCK!");  // [4]
         }
 
         vars = stable_SPARE;
@@ -849,7 +849,7 @@ DECLARE_NATIVE(let)
 
             if (Is_Quoted(temp)) {
                 Derelativize(PUSH(), temp, temp_specifier);
-                Unquotify(TOP, 1);  // drop quote in output block, see [5]
+                Unquotify(TOP, 1);  // drop quote in output block [5]
                 altered = true;
                 continue;  // do not make binding
             }
@@ -880,7 +880,7 @@ DECLARE_NATIVE(let)
                 break; }
 
               default:
-                fail (rebUnrelativize(temp));  // default to passthru, see [6]
+                fail (rebUnrelativize(temp));  // default to passthru [6]
             }
         }
 
@@ -949,12 +949,12 @@ DECLARE_NATIVE(let)
 
     Specifier* bindings = VAL_SPECIFIER(bindings_holder);
 
-    if (L_specifier and IS_LET(L_specifier)) { // add bindings, see [7]
+    if (L_specifier and IS_LET(L_specifier)) { // add bindings [7]
         bindings = Merge_Patches_May_Reuse(L_specifier, bindings);
         mutable_BINDING(bindings_holder) = bindings;
     }
 
-    L->feed->gotten = nullptr;  // invalidate next word's cache, see [8]
+    L->feed->gotten = nullptr;  // invalidate next word's cache [8]
     goto update_feed_binding;
 
 } update_feed_binding: {  /////////////////////////////////////////////////////

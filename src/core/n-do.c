@@ -261,7 +261,7 @@ DECLARE_NATIVE(do)
     Deactivate_If_Activation(source);
 
     switch (VAL_TYPE(source)) {
-      case REB_BLOCK :  // no REB_GROUP, etc...EVAL does that.  see [1]
+      case REB_BLOCK :  // no REB_GROUP, etc...EVAL does that.  [1]
         return DELEGATE(OUT, source);
 
       case REB_VARARGS : {
@@ -333,12 +333,12 @@ DECLARE_NATIVE(do)
         return BOUNCE_DELEGATE; }
 
       case REB_ERROR :
-        fail (VAL_CONTEXT(source));  // would fail anyway, see [2]
+        fail (VAL_CONTEXT(source));  // would fail anyway [2]
 
       case REB_FRAME : {
         if (Is_Frame_Details(source))
             if (First_Unspecialized_Param(nullptr, VAL_ACTION(source)))
-                fail (Error_Do_Arity_Non_Zero_Raw());  // specific error?  see [3]
+                fail (Error_Do_Arity_Non_Zero_Raw());  // specific error?  [3]
 
         return DELEGATE(OUT, source); }
 
@@ -433,7 +433,7 @@ DECLARE_NATIVE(evaluate)
             return Proxy_Multi_Returns(level_);
         }
 
-        Feed* feed = Make_At_Feed_Core(  // use feed, see [2]
+        Feed* feed = Make_At_Feed_Core(  // use feed [2]
             source,
             SPECIFIED
         );
@@ -542,7 +542,7 @@ DECLARE_NATIVE(evaluate)
     VAL_INDEX_UNBOUNDED(source) = Level_Array_Index(SUBLEVEL);  // new index
     Drop_Level(SUBLEVEL);
 
-    INIT_BINDING_MAY_MANAGE(source, specifier);  // integrate LETs, see [6]
+    INIT_BINDING_MAY_MANAGE(source, specifier);  // integrate LETs [6]
 
     if (REF(next))
         rebElide(Canon(SET), rebQ(rest_var), source);
@@ -671,7 +671,7 @@ DECLARE_NATIVE(applique)
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
-    Context* exemplar = Make_Context_For_Action_Push_Partials(  // see [1]
+    Context* exemplar = Make_Context_For_Action_Push_Partials(  // [1]
         op,
         STACK_BASE,  // lowest_ordered_dsp of refinements to weave in
         nullptr,  // no binder needed
@@ -782,9 +782,9 @@ DECLARE_NATIVE(apply)
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
-    /*struct Reb_Binder binder;  // see [1]
+    /*struct Reb_Binder binder;  // [1]
     INIT_BINDER(&binder);*/
-    Context* exemplar = Make_Context_For_Action_Push_Partials(  // see [2]
+    Context* exemplar = Make_Context_For_Action_Push_Partials(  // [2]
         op,
         STACK_BASE, // lowest_ordered_dsp of refinements to weave in
         nullptr /* &binder */,
@@ -850,7 +850,7 @@ DECLARE_NATIVE(apply)
         if (at == nullptr or IS_COMMA(at))
             fail (Error_Need_Non_End_Raw(rebUnrelativize(lookback)));
 
-        if (IS_PATH(at) and IS_REFINEMENT(at))  // see [3]
+        if (IS_PATH(at) and IS_REFINEMENT(at))  // [3]
             fail (Error_Need_Non_End_Raw(rebUnrelativize(lookback)));
 
         Init_Integer(ARG(index), index);
@@ -882,7 +882,7 @@ DECLARE_NATIVE(apply)
                 or GET_PARAM_FLAG(e->param, SKIPPABLE)
             ){
                 Init_None(e->var);  // TBD: RETURN will be a pure local
-                continue;  // skippable only requested by name, see [4]
+                continue;  // skippable only requested by name [4]
             }
             if (Is_None(e->var)) {
                 param = e->param;
@@ -921,7 +921,7 @@ DECLARE_NATIVE(apply)
 
 } copy_spare_to_var_in_frame: {  /////////////////////////////////////////////
 
-    if (  // help convert logic for no-arg refinement, see [5]
+    if (  // help convert logic for no-arg refinement [5]
         IS_LOGIC(SPARE)
         and GET_PARAM_FLAG(param, REFINEMENT)
         and Is_Parameter_Unconstrained(param)

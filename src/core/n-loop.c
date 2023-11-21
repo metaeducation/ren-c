@@ -656,13 +656,13 @@ DECLARE_NATIVE(cycle)
         IS_FRAME(label)
         and ACT_DISPATCHER(VAL_ACTION(label)) == &N_stop
     ){
-        CATCH_THROWN(OUT, LEVEL);  // Unlike BREAK, STOP takes an arg--see [1]
+        CATCH_THROWN(OUT, LEVEL);  // Unlike BREAK, STOP takes an arg--[1]
 
-        if (Is_Void(OUT))  // STOP with no arg, void usually reserved, see [2]
+        if (Is_Void(OUT))  // STOP with no arg, void usually reserved [2]
             return Init_Heavy_Void(OUT);
 
         if (Is_Nulled(OUT))
-            return Init_Heavy_Null(OUT);  // NULL usually for BREAK, see [2]
+            return Init_Heavy_Null(OUT);  // NULL usually for BREAK [2]
 
         return OUT;
     }
@@ -1172,7 +1172,7 @@ DECLARE_NATIVE(every)
         or Is_Heavy_Void(SPARE)
         or (IS_META_BLOCK(body) and Is_Meta_Of_Void(SPARE))
     ){
-        Init_Heavy_Void(OUT);  // forget OUT for loop composition, see [1]
+        Init_Heavy_Void(OUT);  // forget OUT for loop composition [1]
         goto next_iteration;  // ...but void does not NULL-lock output
     }
 
@@ -1281,13 +1281,13 @@ DECLARE_NATIVE(remove_each)
     if (ANY_ARRAY(data)) {
         //
         // We're going to use NODE_FLAG_MARKED on the elements of data's
-        // array for those items we wish to remove later.  See [2]
+        // array for those items we wish to remove later.  [2]
         //
         Trash_Pointer_If_Debug(mo);
     }
     else {
         // Generate a new data allocation, but then swap its underlying content
-        // to back the series we were given.  See [3]
+        // to back the series we were given.  [3]
         //
         Push_Mold(mo);
     }
@@ -1339,7 +1339,7 @@ DECLARE_NATIVE(remove_each)
                 goto finalize_remove_each;
             }
 
-            if (breaking) {  // break semantics are no-op, see [4]
+            if (breaking) {  // break semantics are no-op [4]
                 assert(start < len);
                 goto finalize_remove_each;
             }
@@ -1350,14 +1350,14 @@ DECLARE_NATIVE(remove_each)
         if (Is_Void(OUT)) {
             keep = true;  // treat same as logic false (e.g. don't remove)
         }
-        else if (IS_LOGIC(OUT)) {  // pure logic required, see [6]
+        else if (IS_LOGIC(OUT)) {  // pure logic required [6]
             keep = not VAL_LOGIC(OUT);
         }
         else if (Is_Nulled(OUT)) {  // don't remove
             keep = true;
             Init_Heavy_Null(OUT);  // NULL reserved for BREAK signal
         }
-        else if (Is_Isotope(OUT)) {  // don't decay isotopes, see [5]
+        else if (Is_Isotope(OUT)) {  // don't decay isotopes [5]
             threw = true;
             Init_Error(SPARE, Error_Bad_Isotope(OUT));
             Init_Thrown_With_Label(LEVEL, Lib(NULL), stable_SPARE);
@@ -1485,12 +1485,12 @@ DECLARE_NATIVE(remove_each)
             orig_len - start
         );
 
-        Binary* popped = Pop_Molded_Binary(mo);  // not UTF-8 if binary, see [7]
+        Binary* popped = Pop_Molded_Binary(mo);  // not UTF-8 if binary [7]
 
         assert(Binary_Len(popped) <= VAL_LEN_HEAD(data));
         removals = VAL_LEN_HEAD(data) - Binary_Len(popped);
 
-        Swap_Series_Content(popped, series);  // swap series identity, see [3]
+        Swap_Series_Content(popped, series);  // swap series identity [3]
 
         Free_Unmanaged_Series(popped);  // now frees incoming series's data
     }
@@ -1518,7 +1518,7 @@ DECLARE_NATIVE(remove_each)
         assert(String_Len(popped) <= VAL_LEN_HEAD(data));
         removals = VAL_LEN_HEAD(data) - String_Len(popped);
 
-        Swap_Series_Content(popped, series);  // swap series identity, see [3]
+        Swap_Series_Content(popped, series);  // swap series identity [3]
 
         Free_Unmanaged_Series(popped);  // frees incoming series's data
     }
@@ -1720,7 +1720,7 @@ DECLARE_NATIVE(map)
         return nullptr;
     }
 
-    return Init_Block(  // always returns block unless break, see [3]
+    return Init_Block(  // always returns block unless break [3]
         OUT,
         Pop_Stack_Values(STACK_BASE)
     );
@@ -1772,7 +1772,7 @@ DECLARE_NATIVE(repeat)
             return VOID;  // treat false as "don't run"
 
         STATE = ST_REPEAT_EVALUATING_BODY;  // true is "infinite loop"
-        return CATCH_CONTINUE_BRANCH(OUT, body);  // no index, see [1]
+        return CATCH_CONTINUE_BRANCH(OUT, body);  // no index [1]
     }
 
     if (VAL_INT64(count) <= 0)
@@ -1984,7 +1984,7 @@ DECLARE_NATIVE(until)
         if (breaking)
             return nullptr;
 
-        // continue acts like body evaluated to its argument, see [1]
+        // continue acts like body evaluated to its argument [1]
     }
 
     if (Is_Nulled(predicate)) {
@@ -2002,9 +2002,9 @@ DECLARE_NATIVE(until)
 
 } test_condition: {  /////////////////////////////////////////////////////////
 
-    Decay_If_Unstable(condition);  // must decay for truth test, see [2]
+    Decay_If_Unstable(condition);  // must decay for truth test [2]
 
-    if (not Is_Void(condition)) {  // skip voids, see [3]
+    if (not Is_Void(condition)) {  // skip voids [3]
         if (Is_Truthy(condition))
             return BRANCHED(OUT);  // truthy result, return value!
     }
@@ -2057,7 +2057,7 @@ DECLARE_NATIVE(while)
 {
     INCLUDE_PARAMS_OF_WHILE;
 
-    Value(*) condition = ARG(condition);  // condition is BLOCK! only, see [1]
+    Value(*) condition = ARG(condition);  // condition is BLOCK! only [1]
     Value(*) body = ARG(body);
 
     enum {
@@ -2076,18 +2076,18 @@ DECLARE_NATIVE(while)
   evaluate_condition: {  /////////////////////////////////////////////////////
 
     STATE = ST_WHILE_EVALUATING_CONDITION;
-    return CONTINUE(SPARE, condition);  // ignore BREAKs, see [2]
+    return CONTINUE(SPARE, condition);  // ignore BREAKs [2]
 
 } condition_was_evaluated: {  ////////////////////////////////////////////////
 
     if (Is_Void(SPARE))
-        goto evaluate_condition;  // skip body, see [3]
+        goto evaluate_condition;  // skip body [3]
 
     if (Is_Falsey(SPARE)) {  // falsey condition => return last body result
         if (Is_Fresh(OUT))
             return VOID;  // body never ran, so no result to return!
 
-        return BRANCHED(OUT);  // see [4]
+        return BRANCHED(OUT);  // [4]
     }
 
     STATE = ST_WHILE_EVALUATING_BODY;  // body result => OUT

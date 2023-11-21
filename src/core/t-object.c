@@ -211,7 +211,7 @@ void Init_Evars(EVARS *e, NoQuote(const Cell*) v) {
 
       #if !defined(NDEBUG)
         e->wordlist = Make_Array_Core(1, NODE_FLAG_MANAGED);
-        Clear_Node_Managed_Bit(e->wordlist);  // dummy series, see [1]
+        Clear_Node_Managed_Bit(e->wordlist);  // dummy series [1]
       #endif
 
         e->word = nullptr;
@@ -263,7 +263,7 @@ void Init_Evars(EVARS *e, NoQuote(const Cell*) v) {
         }
 
         e->wordlist = Pop_Stack_Values_Core(base, NODE_FLAG_MANAGED);
-        Clear_Node_Managed_Bit(e->wordlist);  // see [1]
+        Clear_Node_Managed_Bit(e->wordlist);  // [1]
 
         e->word = cast(REBVAL*, Array_Head(e->wordlist)) - 1;
         e->word_tail = cast(REBVAL*, Array_Tail(e->wordlist));
@@ -332,7 +332,7 @@ void Init_Evars(EVARS *e, NoQuote(const Cell*) v) {
 
       #if !defined(NDEBUG)
         e->wordlist = Make_Array_Core(1, NODE_FLAG_MANAGED);
-        Clear_Node_Managed_Bit(e->wordlist);  // see [1]
+        Clear_Node_Managed_Bit(e->wordlist);  // [1]
       #endif
         e->word = nullptr;
         UNUSED(e->word_tail);

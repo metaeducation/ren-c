@@ -143,22 +143,22 @@ DECLARE_NATIVE(delimit)
         if (Is_Void(OUT))  // spaced [maybe null], spaced [if false [<a>]], etc
             continue;  // vaporize
 
-        if (Is_Nulled(OUT))  // catches bugs in practice, see [1]
+        if (Is_Nulled(OUT))  // catches bugs in practice [1]
             return RAISE(Error_Need_Non_Null_Raw());
 
         if (Is_Isotope(OUT))
             return RAISE(Error_Bad_Isotope(OUT));
 
-        if (ANY_ARRAY(OUT))  // guessing a behavior is bad, see [2]
+        if (ANY_ARRAY(OUT))  // guessing a behavior is bad [2]
             fail ("Desired array rendering in DELIMIT not known");
 
         nothing = false;
 
-        if (IS_BLANK(OUT)) {  // BLANK! acts as space, see [3]
+        if (IS_BLANK(OUT)) {  // BLANK! acts as space [3]
             Append_Codepoint(mo->series, ' ');
             pending = false;
         }
-        else if (IS_ISSUE(OUT)) {  // do not delimit (unified w/char), see [4]
+        else if (IS_ISSUE(OUT)) {  // do not delimit (unified w/char) [4]
             Form_Value(mo, OUT);
             pending = false;
         }
@@ -173,7 +173,7 @@ DECLARE_NATIVE(delimit)
             else
                 Form_Value(mo, OUT);
 
-            pending = true;  // note this includes empty strings, see [5]
+            pending = true;  // note this includes empty strings [5]
         }
     } while (Not_Level_At_End(L));
 

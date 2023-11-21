@@ -424,11 +424,11 @@ Bounce Action_Executor(Level* L)
         if (STATE == ST_ACTION_FULFILLING_ENFIX_FROM_OUT) {
             STATE = ST_ACTION_FULFILLING_ARGS;
 
-            if (Is_Fresh(OUT)) {  // "nothing" to left, but see [1]
+            if (Is_Fresh(OUT)) {  // "nothing" to left, but [1]
                 if (Get_Action_Executor_Flag(L, DIDNT_LEFT_QUOTE_TUPLE))
-                    fail (Error_Literal_Left_Tuple_Raw());  // see [2]
+                    fail (Error_Literal_Left_Tuple_Raw());  // [2]
 
-                if (GET_PARAM_FLAG(PARAM, VARIADIC)) {  // empty is ok, see [3]
+                if (GET_PARAM_FLAG(PARAM, VARIADIC)) {  // empty is ok [3]
                     Init_Varargs_Untyped_Enfix(ARG, nullptr);
                     goto continue_fulfilling;
                 }
@@ -440,7 +440,7 @@ Bounce Action_Executor(Level* L)
                 goto continue_fulfilling;
             }
 
-            if (GET_PARAM_FLAG(PARAM, VARIADIC)) {  // non-empty is ok, see [4]
+            if (GET_PARAM_FLAG(PARAM, VARIADIC)) {  // non-empty is ok [4]
                 assert(not Is_None(OUT));
                 Decay_If_Unstable(OUT);  // !!! ^META variadics?
                 Init_Varargs_Untyped_Enfix(ARG, stable_OUT);
@@ -459,16 +459,16 @@ Bounce Action_Executor(Level* L)
 
               case PARAM_CLASS_HARD:  // PARAM_FLAG_SKIPPABLE in pre-lookback
                 if (Not_Cell_Flag(OUT, UNEVALUATED))  // `x: 10 | x >- the`
-                    fail (Error_Evaluative_Quote_Raw());  // see [5]
+                    fail (Error_Evaluative_Quote_Raw());  // [5]
 
                 Move_Cell(ARG, OUT);
                 assert(Get_Cell_Flag(ARG, UNEVALUATED));  // move preserves
                 break;
 
-              case PARAM_CLASS_SOFT:  // can carry UNEVALUATED, see [6]
+              case PARAM_CLASS_SOFT:  // can carry UNEVALUATED [6]
                 goto escapable;
 
-              case PARAM_CLASS_MEDIUM:  // must carry UNEVALUATED, see [7]
+              case PARAM_CLASS_MEDIUM:  // must carry UNEVALUATED [7]
                 assert(Get_Cell_Flag(OUT, UNEVALUATED));
                 goto escapable;
 
@@ -846,7 +846,7 @@ Bounce Action_Executor(Level* L)
     for (; KEY != KEY_TAIL; ++KEY, ++PARAM, ++ARG) {
         assert(Is_Stable(ARG));  // implicitly asserts READABLE(ARG)
 
-        if (Is_Specialized(PARAM))  // checked when specialized, see [1]
+        if (Is_Specialized(PARAM))  // checked when specialized [1]
             continue;
 
         if (
@@ -857,7 +857,7 @@ Bounce Action_Executor(Level* L)
             continue;  // typeset is its legal return types, wants to be unset
         }
 
-        if (Is_None(ARG)) {  // e.g. (~) isotope, unspecialized, see [2]
+        if (Is_None(ARG)) {  // e.g. (~) isotope, unspecialized [2]
             if (GET_PARAM_FLAG(PARAM, REFINEMENT)) {
                 Init_Nulled(ARG);
                 continue;
@@ -885,14 +885,14 @@ Bounce Action_Executor(Level* L)
             continue;
         }
 
-        if (GET_PARAM_FLAG(PARAM, VARIADIC)) {  // can't check now, see [3]
+        if (GET_PARAM_FLAG(PARAM, VARIADIC)) {  // can't check now [3]
             if (not IS_VARARGS(ARG))  // argument itself is always VARARGS!
                 fail (Error_Not_Varargs(L, KEY, PARAM, stable_ARG));
 
             INIT_VAL_VARARGS_PHASE(ARG, Level_Phase(L));
 
             bool enfix = false;  // !!! how does enfix matter?
-            VAL_VARARGS_SIGNED_PARAM_INDEX(ARG) =  // store offset, see [4]
+            VAL_VARARGS_SIGNED_PARAM_INDEX(ARG) =  // store offset [4]
                 enfix
                     ? -(ARG - cast(Atom(*), Level_Args_Head(L)) + 1)
                     : ARG - cast(Atom(*), Level_Args_Head(L)) + 1;
@@ -931,10 +931,10 @@ Bounce Action_Executor(Level* L)
 
     Action* save_original = L->u.action.original;
     Trash_If_Debug(L->u);  // freed for dispatcher use...
-    L->u.action.original = save_original;  // ...er, mostly.  see [1]
+    L->u.action.original = save_original;  // ...er, mostly.  [1]
     L->u.action.dispatcher_base = TOP_INDEX;
 
-    if (STATE == ST_ACTION_FULFILLING_ENFIX_FROM_OUT) {  // can happen, see [2]
+    if (STATE == ST_ACTION_FULFILLING_ENFIX_FROM_OUT) {  // can happen [2]
         if (Get_Action_Executor_Flag(L, DIDNT_LEFT_QUOTE_TUPLE))  // see notes
             fail (Error_Literal_Left_Tuple_Raw());
 
@@ -954,7 +954,7 @@ Bounce Action_Executor(Level* L)
         goto skip_output_check;
     }
 
-    FRESHEN(SPARE);  // tiny cost (one bit clear) but worth it, see [3]
+    FRESHEN(SPARE);  // tiny cost (one bit clear) but worth it [3]
     STATE = STATE_0;  // reset to zero for each phase
 
     L_next_gotten = nullptr;  // arbitrary code changes fetched variables
@@ -983,13 +983,13 @@ Bounce Action_Executor(Level* L)
   //    which gives back a distinct `Bounce` signal to know it's purposeful.)
 
     assert(Not_Action_Executor_Flag(LEVEL, DELEGATE_CONTROL));  // delegated!
-    Clear_Action_Executor_Flag(LEVEL, DISPATCHER_CATCHES);  // see [1]
+    Clear_Action_Executor_Flag(LEVEL, DISPATCHER_CATCHES);  // [1]
 
     Action* phase = Level_Phase(L);
 
     /*STATIC_ASSERT(DETAILS_FLAG_IS_NATIVE == SERIES_INFO_HOLD);*/
     if (Is_Action_Native(phase))
-        SERIES_INFO(L->varlist) |= SERIES_INFO_HOLD;  // prevents crashes, see [2]
+        SERIES_INFO(L->varlist) |= SERIES_INFO_HOLD;  // prevents crashes [2]
 
     Dispatcher* dispatcher = ACT_DISPATCHER(phase);
 
@@ -1077,10 +1077,10 @@ Bounce Action_Executor(Level* L)
   //      o: make object! [f: does [1]]
   //      o.f left-the  ; want error suggesting -> here, need flag for that
 
-    if (STATE == ST_ACTION_FULFILLING_ENFIX_FROM_OUT)  // see [1]
+    if (STATE == ST_ACTION_FULFILLING_ENFIX_FROM_OUT)  // [1]
         fail ("Left lookback toward thing that took no args, look at later");
 
-    Clear_Action_Executor_Flag(L, DIDNT_LEFT_QUOTE_TUPLE);  // see [2]
+    Clear_Action_Executor_Flag(L, DIDNT_LEFT_QUOTE_TUPLE);  // [2]
 
     Drop_Action(L);  // must fail before Drop_Action()
 
@@ -1120,19 +1120,19 @@ Bounce Action_Executor(Level* L)
     const REBVAL *label = VAL_THROWN_LABEL(level_);
     if (IS_FRAME(label)) {
         if (
-            VAL_ACTION(label) == VAL_ACTION(Lib(REDO))  // REDO, see [1]
+            VAL_ACTION(label) == VAL_ACTION(Lib(REDO))  // REDO [1]
             and VAL_FRAME_BINDING(label) == cast(Context*, L->varlist)
         ){
             CATCH_THROWN(OUT, level_);
             assert(IS_FRAME(OUT));
 
-            Action* redo_phase = VAL_FRAME_PHASE(OUT);  // earlier?  see [2]
+            Action* redo_phase = VAL_FRAME_PHASE(OUT);  // earlier?  [2]
             KEY = ACT_KEYS(&KEY_TAIL, redo_phase);
             PARAM = ACT_PARAMS_HEAD(redo_phase);
             ARG = Level_Args_Head(L);
             for (; KEY != KEY_TAIL; ++KEY, ++ARG, ++PARAM) {
                 if (Is_Specialized(PARAM))
-                    Copy_Cell(ARG, PARAM);  // must reset, see [3]
+                    Copy_Cell(ARG, PARAM);  // must reset [3]
                 else if (VAL_PARAM_CLASS(PARAM) == PARAM_CLASS_RETURN)
                     Init_None(ARG);  // dispatcher expects unset
             }
@@ -1147,7 +1147,7 @@ Bounce Action_Executor(Level* L)
         }
     }
 
-    while (TOP_LEVEL != L)  // convenient for natives pushing SUBLEVEL, see [4]
+    while (TOP_LEVEL != L)  // convenient for natives pushing SUBLEVEL [4]
         Drop_Level(TOP_LEVEL);  // !!! Should all inert levels be aborted?
 
     Drop_Action(L);

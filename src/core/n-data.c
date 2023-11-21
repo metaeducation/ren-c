@@ -334,7 +334,7 @@ DECLARE_NATIVE(use)
         body,  // may be replaced with rebound copy, or left the same
         vars  // similar to the "spec" of a loop: WORD!/LIT-WORD!/BLOCK!
     );
-    UNUSED(context);  // managed, but see [1]
+    UNUSED(context);  // managed, but [1]
 
     if (Do_Any_Array_At_Throws(OUT, body, SPECIFIED))
         return THROWN;
@@ -1123,7 +1123,7 @@ DECLARE_NATIVE(get)
         steps = nullptr;  // no GROUP! evals
 
     if (Get_Var_Core_Throws(OUT, steps, source, SPECIFIED)) {
-        assert(steps or IS_ERROR(VAL_THROWN_LABEL(level_)));  // see [1]
+        assert(steps or IS_ERROR(VAL_THROWN_LABEL(level_)));  // [1]
         return THROWN;
     }
 
@@ -1500,7 +1500,7 @@ DECLARE_NATIVE(set)
     }
 
     if (Set_Var_Core_Throws(SPARE, steps, target, SPECIFIED, v)) {
-        assert(steps or IS_ERROR(VAL_THROWN_LABEL(level_)));  // see [1]
+        assert(steps or IS_ERROR(VAL_THROWN_LABEL(level_)));  // [1]
         return THROWN;
     }
 
@@ -2466,7 +2466,7 @@ DECLARE_INTRINSIC(void_q)
 //
 //      return: [logic?]
 //      ^value "Parameter must be ^META, none usually means unspecialized"
-//          [void? any-value?] ; see [1]
+//          [void? any-value?] ; [1]
 //  ]
 //
 DECLARE_INTRINSIC(none_q)
@@ -2579,7 +2579,7 @@ DECLARE_INTRINSIC(decay)
     UNUSED(phase);
 
     ASSERT_STABLE(arg);  // paranoid check...Value(*) should always be stable
-    Copy_Cell(out, arg);  // pre-decayed by non-^META argument, see [1]
+    Copy_Cell(out, arg);  // pre-decayed by non-^META argument [1]
 }
 
 

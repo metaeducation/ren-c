@@ -57,7 +57,7 @@ DECLARE_NATIVE(only_p)  // https://forum.rebol.info/t/1182/11
 
     Value(*) v = ARG(value);
 
-    Array* a = Alloc_Singular(NODE_FLAG_MANAGED);  // semi-efficient, see [1]
+    Array* a = Alloc_Singular(NODE_FLAG_MANAGED);  // semi-efficient [1]
     if (Is_Nulled(v))
         Set_Series_Len(a, 0);  // singulars initialize at length 1
     else
@@ -398,7 +398,7 @@ REBINT Find_In_Array(
 
     if (Is_Splice(pattern)) {
         *len = VAL_LEN_AT(pattern);
-        if (*len == 0)  // empty block matches any position, see [1]
+        if (*len == 0)  // empty block matches any position [1]
             return index_unsigned;
 
         for (; index >= start and index < end; index += skip) {
@@ -460,7 +460,7 @@ REBINT Find_In_Array(
             " see https://forum.rebol.info/t/1881"
         );
 
-    if (Is_Nulled(pattern)) {  // never match, see [1]
+    if (Is_Nulled(pattern)) {  // never match [1]
         *len = 0;
         return NOT_FOUND;
     }

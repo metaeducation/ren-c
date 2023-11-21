@@ -472,16 +472,16 @@ DECLARE_INTRINSIC(spread)
     UNUSED(phase);
 
     if (Is_Void(arg)) {
-        Init_Void(out);  // pass through, see [1]
+        Init_Void(out);  // pass through [1]
     }
     else if (Is_Nulled(arg)) {
-        Init_Nulled(out);  // pass through, see [1]
+        Init_Nulled(out);  // pass through [1]
     }
     else if (IS_BLANK(arg)) {
-        Init_Splice(out, EMPTY_ARRAY);  // treat blank as if it was [], see [2]
+        Init_Splice(out, EMPTY_ARRAY);  // treat blank as if it was [] [2]
     }
     else if (Is_Quoted(arg)) {
-        Unquotify(Copy_Cell(out, arg), 1);  // !!! good idea or not?  see [3]
+        Unquotify(Copy_Cell(out, arg), 1);  // !!! good idea or not?  [3]
     }
     else {
         assert(ANY_ARRAY(arg));

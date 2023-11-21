@@ -461,10 +461,10 @@ jobs:
         browser: chrome
         config-file: cypress.config.js
         record: true
-      env:  # see [1]
-        CYPRESS_RECORD_KEY: ${{ secrets.CYPRESS_RECORD_KEY }}  # see [2]
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # see [3]
-        CYPRESS_GIT_COMMIT_SHORT: ${{ env.GIT_COMMIT_SHORT }}  # see [4]
+      env:  # [1]
+        CYPRESS_RECORD_KEY: ${{ secrets.CYPRESS_RECORD_KEY }}  # [2]
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # [3]
+        CYPRESS_GIT_COMMIT_SHORT: ${{ env.GIT_COMMIT_SHORT }}  # [4]
         # DEBUG: '@cypress/github-action'  # verbose debug output
 
 

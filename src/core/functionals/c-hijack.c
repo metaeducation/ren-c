@@ -250,11 +250,11 @@ DECLARE_NATIVE(hijack)
     Phase* victim_identity = ACT_IDENTITY(victim);
     Phase* hijacker_identity = ACT_IDENTITY(hijacker);
 
-    if (Action_Is_Base_Of(victim, hijacker)) {  // no shim needed, see [1]
+    if (Action_Is_Base_Of(victim, hijacker)) {  // no shim needed [1]
         mutable_LINK_DISPATCHER(victim_identity)
             = cast(CFunction*, LINK_DISPATCHER(hijacker_identity));
     }
-    else {  // mismatch, so shim required, see [2]
+    else {  // mismatch, so shim required [2]
         mutable_LINK_DISPATCHER(victim_identity)
             = cast(CFunction*, &Hijacker_Dispatcher);
     }
@@ -272,10 +272,10 @@ DECLARE_NATIVE(hijack)
         PROTECTED
     );
 
-    return Init_Activation(  // don't bother returning copy of original, see [3]
+    return Init_Activation(  // don't bother returning copy of original [3]
         OUT,
         victim_identity,
-        VAL_FRAME_LABEL(ARG(victim)),  // MISC(victim_paramlist).meta? see [4]
+        VAL_FRAME_LABEL(ARG(victim)),  // MISC(victim_paramlist).meta? [4]
         VAL_FRAME_BINDING(ARG(hijacker))
     );
 }

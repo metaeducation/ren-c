@@ -124,7 +124,7 @@ Bounce Macro_Dispatcher(Level* const L)
     if (Do_Any_Array_At_Throws(SPARE, body, SPC(L->varlist))) {
         const REBVAL *label = VAL_THROWN_LABEL(L);
         if (
-            IS_FRAME(label)  // catch UNWIND here, see [2]
+            IS_FRAME(label)  // catch UNWIND here [2]
             and VAL_ACTION(label) == VAL_ACTION(Lib(UNWIND))
             and g_ts.unwind_level == L
         ){

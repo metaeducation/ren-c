@@ -207,7 +207,7 @@ INLINE StackValue(*) Data_Stack_At(StackIndex i) {
             ASSERT_CELL_READABLE_EVIL_MACRO(at);
     }
     else {
-        assert(i == TOP_INDEX + 1);  // allow getting tail's address, see [3]
+        assert(i == TOP_INDEX + 1);  // allow getting tail's address [3]
 
       #if DEBUG_POISON_DROPPED_STACK_CELLS
         assert(Is_Cell_Poisoned(at));

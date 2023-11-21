@@ -439,13 +439,13 @@ INLINE Cell* Erase_Cell_Untracked(Cell* c) {
 //    over the "hot potato" of the error.
 
 #define FRESHEN_CELL_EVIL_MACRO(v) do { \
-    if (HEART_BYTE(v) == REB_ERROR)  /* must suppress, see [1] */ \
+    if (HEART_BYTE(v) == REB_ERROR)  /* must suppress [1] */ \
         assert(QUOTE_BYTE(v) != ISOTOPE_0);\
     assert(not ((v)->header.bits & CELL_FLAG_PROTECTED)); \
     (v)->header.bits &= CELL_MASK_PERSIST;  /* Note: no CELL or NODE flags */ \
 } while (0)
 
-#define FRESHEN_MOVED_CELL_EVIL_MACRO(v) do {  /* no suppress, see [2] */ \
+#define FRESHEN_MOVED_CELL_EVIL_MACRO(v) do {  /* no suppress [2] */ \
     assert(not ((v)->header.bits & CELL_FLAG_PROTECTED)); \
     (v)->header.bits &= CELL_MASK_PERSIST;  /* Note: no CELL or NODE flags */ \
 } while (0)

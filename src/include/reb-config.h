@@ -490,7 +490,7 @@ Special internal defines used by RT, not Host-Kit developers:
         && !defined(REBOL_FAIL_USES_TRY_CATCH) \
         && !defined(REBOL_FAIL_JUST_ABORTS)
 
-    #define REBOL_FAIL_USES_LONGJMP 1  // often simplest, not always: see [1]
+    #define REBOL_FAIL_USES_LONGJMP 1  // often simplest, not always: [1]
     #define REBOL_FAIL_USES_TRY_CATCH 0
     #define REBOL_FAIL_JUST_ABORTS 0
 

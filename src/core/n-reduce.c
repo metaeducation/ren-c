@@ -61,7 +61,7 @@ DECLARE_NATIVE(reduce)
 {
     INCLUDE_PARAMS_OF_REDUCE;
 
-    Value(*) v = ARG(value);  // newline flag on `v` cell is leveraged, see [2]
+    Value(*) v = ARG(value);  // newline flag on `v` cell is leveraged [2]
     Value(*) predicate = ARG(predicate);
 
     enum {
@@ -74,7 +74,7 @@ DECLARE_NATIVE(reduce)
       case ST_REDUCE_INITIAL_ENTRY:
         if (ANY_ARRAY(v))
             goto initial_entry_any_array;
-        goto initial_entry_non_array;  // semantics in question, see [1]
+        goto initial_entry_non_array;  // semantics in question [1]
 
       case ST_REDUCE_EVAL_STEP:
         goto reduce_step_result_in_out;
@@ -117,7 +117,7 @@ DECLARE_NATIVE(reduce)
         goto finished;
 
     if (Get_Cell_Flag(At_Feed(SUBLEVEL->feed), NEWLINE_BEFORE))
-        Set_Cell_Flag(v, NEWLINE_BEFORE);  // cache newline flag, see [2]
+        Set_Cell_Flag(v, NEWLINE_BEFORE);  // cache newline flag [2]
     else
         Clear_Cell_Flag(v, NEWLINE_BEFORE);
 
@@ -163,9 +163,9 @@ DECLARE_NATIVE(reduce)
         bool newline = Get_Cell_Flag(v, NEWLINE_BEFORE);
         for (; at != tail; ++at) {
             Derelativize(PUSH(), at, VAL_SPECIFIER(OUT));
-            SUBLEVEL->baseline.stack_base += 1;  // see [3]
+            SUBLEVEL->baseline.stack_base += 1;  // [3]
             if (newline) {
-                Set_Cell_Flag(TOP, NEWLINE_BEFORE);  // see [2]
+                Set_Cell_Flag(TOP, NEWLINE_BEFORE);  // [2]
                 newline = false;
             }
         }
@@ -174,9 +174,9 @@ DECLARE_NATIVE(reduce)
         return RAISE(Error_Bad_Isotope(OUT));
     else {
         Move_Cell(PUSH(), OUT);
-        SUBLEVEL->baseline.stack_base += 1;  // see [3]
+        SUBLEVEL->baseline.stack_base += 1;  // [3]
 
-        if (Get_Cell_Flag(v, NEWLINE_BEFORE))  // see [2]
+        if (Get_Cell_Flag(v, NEWLINE_BEFORE))  // [2]
             Set_Cell_Flag(TOP, NEWLINE_BEFORE);
     }
 
@@ -299,7 +299,7 @@ DECLARE_NATIVE(reduce_each)
         goto reduce_next;  // cull voids and nihils if not ^META
     }
 
-    Move_Cell(CTX_VAR(VAL_CONTEXT(vars), 1), SPARE);  // do multiple? see [1]
+    Move_Cell(CTX_VAR(VAL_CONTEXT(vars), 1), SPARE);  // do multiple? [1]
 
     SUBLEVEL->executor = &Just_Use_Out_Executor;  // pass through sublevel
 
@@ -376,7 +376,7 @@ static void Push_Composer_Level(
     Specifier* specifier
 ){
     Value(const*) adjusted = nullptr;
-    if (ANY_PATH(arraylike)) {  // allow sequences, see [1]
+    if (ANY_PATH(arraylike)) {  // allow sequences [1]
         Derelativize(out, arraylike, specifier);
         adjusted = rebValue(Canon(AS), Canon(BLOCK_X), rebQ(out));
     }
@@ -395,7 +395,7 @@ static void Push_Composer_Level(
 
     sub->executor = &Composer_Executor;
 
-    sub->u.compose.main_level = main_level;   // pass options, see [2]
+    sub->u.compose.main_level = main_level;   // pass options [2]
     sub->u.compose.changed = false;
 }
 
@@ -436,18 +436,18 @@ static Atom(*) Finalize_Composer_Level(
             L->baseline.stack_base
         )){
             if (Is_Valid_Sequence_Element(heart, out))
-                fail (Error_Cant_Decorate_Type_Raw(out));  // no `3:`, see [1]
+                fail (Error_Cant_Decorate_Type_Raw(out));  // no `3:` [1]
 
             fail (Error_Bad_Sequence_Init(Stable_Unchecked(out)));
         }
 
-        Quotify(Stable_Unchecked(out), quotes);  // may not be sequence, see [2]
+        Quotify(Stable_Unchecked(out), quotes);  // may not be sequence [2]
         return out;
     }
 
     Flags flags = NODE_FLAG_MANAGED | ARRAY_MASK_HAS_FILE_LINE;
     if (Get_Array_Flag(VAL_ARRAY(composee), NEWLINE_AT_TAIL))
-        flags |= ARRAY_FLAG_NEWLINE_AT_TAIL;  // proxy newline flag, see [3]
+        flags |= ARRAY_FLAG_NEWLINE_AT_TAIL;  // proxy newline flag [3]
 
     Init_Array_Cell(
         out,
@@ -569,7 +569,7 @@ Bounce Composer_Executor(Level* const L)
         goto handle_next_item;
     }
 
-    enum Reb_Kind heart = Cell_Heart(at);  // quoted groups match, see [1]
+    enum Reb_Kind heart = Cell_Heart(at);  // quoted groups match [1]
 
     Specifier* match_specifier = nullptr;
     const Cell* match = nullptr;
@@ -705,7 +705,7 @@ Bounce Composer_Executor(Level* const L)
 
   push_out_spliced:  /////////////////////////////////////////////////////////
 
-    // compose [(spread [a b]) merges] => [a b merges]... see [3]
+    // compose [(spread [a b]) merges] => [a b merges]... [3]
 
     if (group_quote_byte != UNQUOTED_1 or group_heart != REB_GROUP)
         return RAISE("Currently can only splice plain unquoted GROUP!s");
@@ -718,7 +718,7 @@ Bounce Composer_Executor(Level* const L)
         if (push != push_tail) {
             Derelativize(PUSH(), push, VAL_SPECIFIER(OUT));
             if (Get_Cell_Flag(At_Level(L), NEWLINE_BEFORE))
-                Set_Cell_Flag(TOP, NEWLINE_BEFORE);  // first, see [4]
+                Set_Cell_Flag(TOP, NEWLINE_BEFORE);  // first [4]
             else
                 Clear_Cell_Flag(TOP, NEWLINE_BEFORE);
 
@@ -772,7 +772,7 @@ Bounce Composer_Executor(Level* const L)
 
 } finished: {  ///////////////////////////////////////////////////////////////
 
-    assert(Get_Level_Flag(L, TRAMPOLINE_KEEPALIVE));  // caller needs, see [5]
+    assert(Get_Level_Flag(L, TRAMPOLINE_KEEPALIVE));  // caller needs [5]
 
     return Init_Void(OUT);  // signal finished, avoid leaking temp evaluations
 }}

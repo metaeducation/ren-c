@@ -164,7 +164,7 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
 
     Assert_No_DataStack_Pointers_Extant();
 
-    assert(LEVEL->executor != &Just_Use_Out_Executor);  // drops skip, see [1]
+    assert(LEVEL->executor != &Just_Use_Out_Executor);  // drops skip [1]
 
     Bounce bounce;
 
@@ -284,8 +284,8 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
   //    to be reserved to mean something else.)
 
     if (bounce == BOUNCE_CONTINUE) {
-        if (LEVEL != TOP_LEVEL)  // continuing self ok, see [1]
-            assert(STATE != 0);  // otherwise state enforced nonzero, see [2]
+        if (LEVEL != TOP_LEVEL)  // continuing self ok [1]
+            assert(STATE != 0);  // otherwise state enforced nonzero [2]
 
         LEVEL = TOP_LEVEL;
         goto bounce_on_trampoline_skip_just_use_out;
@@ -361,11 +361,11 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
             fail (ctx);
         }
 
-        const REBVAL *label = VAL_THROWN_LABEL(LEVEL);  // unwind, see [1]
+        const REBVAL *label = VAL_THROWN_LABEL(LEVEL);  // unwind [1]
         if (
             IS_FRAME(label)
             and VAL_ACTION(label) == VAL_ACTION(Lib(UNWIND))
-            and g_ts.unwind_level == LEVEL  // may be inaccessible, see [2]
+            and g_ts.unwind_level == LEVEL  // may be inaccessible [2]
         ){
             CATCH_THROWN(OUT, LEVEL);
             goto result_in_out;
@@ -382,7 +382,7 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
 
         if (LEVEL->executor == &Just_Use_Out_Executor) {
             if (Get_Level_Flag(LEVEL, TRAMPOLINE_KEEPALIVE))
-                LEVEL = LEVEL->prior;  // don't let it be aborted, see [3]
+                LEVEL = LEVEL->prior;  // don't let it be aborted [3]
         }
 
         goto bounce_on_trampoline;  // executor will see the throw
@@ -420,9 +420,9 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
     Set_Level_Flag(LEVEL, ABRUPT_FAILURE);
 
     FRESHEN_MOVED_CELL_EVIL_MACRO(OUT);  // avoid sweep error under rug assert
-    Init_Thrown_Failure(LEVEL, CTX_ARCHETYPE(e));  // non-definitional, see [1]
+    Init_Thrown_Failure(LEVEL, CTX_ARCHETYPE(e));  // non-definitional [1]
 
-    while (TOP_LEVEL != LEVEL) {  // drop idle levels above the fail, see [2]
+    while (TOP_LEVEL != LEVEL) {  // drop idle levels above the fail [2]
         assert(Not_Level_Flag(TOP_LEVEL, NOTIFY_ON_ABRUPT_FAILURE));
         assert(Not_Level_Flag(TOP_LEVEL, ROOT_LEVEL));
 
@@ -464,7 +464,7 @@ bool Trampoline_With_Top_As_Root_Throws(void)
 
     // !!! More efficient if caller sets this, but set it ourselves for now.
     //
-    Set_Level_Flag(root, ROOT_LEVEL);  // can't unwind across, see [1]
+    Set_Level_Flag(root, ROOT_LEVEL);  // can't unwind across [1]
 
     Bounce r = Trampoline_From_Top_Maybe_Root();
 
@@ -548,8 +548,8 @@ void Startup_Trampoline(void)
     assert(TOP_LEVEL == nullptr);
     assert(BOTTOM_LEVEL == nullptr);
 
-    Level* L = Make_End_Level(LEVEL_MASK_NONE);  // ensure L->prior, see [1]
-    Push_Level(nullptr, L);  // global API handles attach here, see [2]
+    Level* L = Make_End_Level(LEVEL_MASK_NONE);  // ensure L->prior [1]
+    Push_Level(nullptr, L);  // global API handles attach here [2]
 
     Trash_Pointer_If_Debug(L->prior);  // catches enumeration past bottom_level
     g_ts.bottom_level = L;
@@ -584,12 +584,12 @@ void Shutdown_Trampoline(void)
 {
     assert(TOP_LEVEL == BOTTOM_LEVEL);
 
-    assert(Is_Pointer_Trash_Debug(BOTTOM_LEVEL->prior));  // trash, see [1]
+    assert(Is_Pointer_Trash_Debug(BOTTOM_LEVEL->prior));  // trash [1]
     BOTTOM_LEVEL->prior = nullptr;
 
   blockscope {
     Level* L = TOP_LEVEL;
-    Drop_Level_Core(L);  // can't Drop_Level()/Drop_Level_Unbalanced(), see [2]
+    Drop_Level_Core(L);  // can't Drop_Level()/Drop_Level_Unbalanced() [2]
     assert(not TOP_LEVEL);
   }
 

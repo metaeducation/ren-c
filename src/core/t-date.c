@@ -74,7 +74,7 @@ REBINT CT_Date(NoQuote(const Cell*) a_in, NoQuote(const Cell*) b_in, bool strict
     if (days_diff != 0)  // all comparison modes consider this unequal
         return days_diff > 0 ? 1 : -1;
 
-    if (not strict and (not a_had_time or not b_had_time))  // see [2]
+    if (not strict and (not a_had_time or not b_had_time))  // [2]
         return 0;  // non strict says (26-Jul-2021/7:41:45.314 = 26-Jul-2021)
 
     if (strict) {

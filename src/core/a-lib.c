@@ -1205,7 +1205,7 @@ REBVAL *RL_rebTranscodeInto(
 
     Feed* feed = Make_Variadic_Feed(
         p, vaptr,
-        Get_Context_From_Stack(),  // No context parameter, see [1]
+        Get_Context_From_Stack(),  // No context parameter [1]
         FEED_MASK_DEFAULT
     );
     Sync_Feed_At_Cell_Or_End_May_Fail(feed);
@@ -1245,7 +1245,7 @@ void RL_rebPushContinuation(
     ENTER_API;
 
     DECLARE_LOCAL (block);
-    RL_rebTranscodeInto(cast(REBVAL*, block), p, vaptr);  // use "RL_", see [1]
+    RL_rebTranscodeInto(cast(REBVAL*, block), p, vaptr);  // use "RL_" [1]
 
     Level* L = Make_Level_At(block, flags);
     Push_Level(out, L);
@@ -2069,7 +2069,7 @@ REBVAL *RL_rebRescueWith(
     ENTER_API;
 
     Level* dummy = Make_End_Level(LEVEL_MASK_NONE);
-    Push_Level(nullptr, dummy);  // for owning API cells, see [1]
+    Push_Level(nullptr, dummy);  // for owning API cells [1]
 
   RESCUE_SCOPE_IN_CASE_OF_ABRUPT_FAILURE {  //////////////////////////////////
 
@@ -2655,7 +2655,7 @@ REBVAL *RL_rebError_OS(int errnum)  // see also convenience macro rebFail_OS()
     // show that it's there...and it links in TCC.
     //
   #if defined(__TINYC__)
-    r = (intptr_t)strerror(errnum); // see [1] for why old-style cast used
+    r = (intptr_t)strerror(errnum); // [1] for why old-style cast used
   #endif
 
     int new_errno = errno;

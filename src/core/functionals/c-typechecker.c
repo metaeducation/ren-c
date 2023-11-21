@@ -306,7 +306,7 @@ bool Typecheck_Value(
             if (not arg)
                 fail (Error_No_Arg_Typecheck(label));  // must take argument
 
-            Copy_Cell(arg, v);  // do not decay, see [4]
+            Copy_Cell(arg, v);  // do not decay [4]
 
             if (VAL_PARAM_CLASS(param) == PARAM_CLASS_META)
                 Meta_Quotify(arg);
@@ -408,7 +408,7 @@ bool Typecheck_Coerce_Argument(
     Atom(*) arg  // need mutability for coercion
 ){
     if (GET_PARAM_FLAG(param, CONST))
-        Set_Cell_Flag(arg, CONST);  // mutability override?  see [1]
+        Set_Cell_Flag(arg, CONST);  // mutability override?  [1]
 
     if (
         GET_PARAM_FLAG(param, REFINEMENT)

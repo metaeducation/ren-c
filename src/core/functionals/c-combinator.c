@@ -527,12 +527,12 @@ DECLARE_NATIVE(some_combinator)
 
     Cell* loop_last = Alloc_Tail_Array(loops);
     Init_Frame(loop_last, cast(Context*, level_->varlist), Canon(SOME));
-    INIT_VAL_FRAME_PHASE(loop_last, Level_Phase(level_));  // need phase, see [1]
+    INIT_VAL_FRAME_PHASE(loop_last, Level_Phase(level_));  // need phase [1]
 
     Push_Parser_Sublevel(OUT, remainder, parser, input);
 
     STATE = ST_SOME_COMBINATOR_FIRST_PARSER_RUN;
-    return CONTINUE_SUBLEVEL(SUBLEVEL);  // mirror usermode, see [2]
+    return CONTINUE_SUBLEVEL(SUBLEVEL);  // mirror usermode [2]
 
 } first_parse_result_in_out: {  //////////////////////////////////////////////
 
@@ -558,7 +558,7 @@ DECLARE_NATIVE(some_combinator)
 } later_parse_result_in_spare: {  ////////////////////////////////////////////
 
     if (Is_Nulled(SPARE)) {  // first still succeeded, so we're okay.
-        Set_Var_May_Fail(remainder, SPECIFIED, input);  // put back, see [3]
+        Set_Var_May_Fail(remainder, SPECIFIED, input);  // put back [3]
         Remove_Series_Units(loops, Array_Len(loops) - 1, 1);  // drop loop
         return OUT;  // return previous successful parser result
     }

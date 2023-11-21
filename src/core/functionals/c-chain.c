@@ -137,7 +137,7 @@ Bounce Chainer_Dispatcher(Level* const L)
 {
     USE_LEVEL_SHORTHANDS (L);
 
-    if (THROWING)  // this routine is both dispatcher and executor, see [2]
+    if (THROWING)  // this routine is both dispatcher and executor [2]
         return THROWN;
 
     enum {
@@ -161,15 +161,15 @@ Bounce Chainer_Dispatcher(Level* const L)
         VAL_ARRAY(DETAILS_AT(details, IDX_CHAINER_PIPELINE))
     );
 
-    Level* sub = Push_Downshifted_Level(OUT, L);  // steals varlist, see [1]
-    L->executor = &Chainer_Dispatcher;  // so trampoline calls us, see [2]
+    Level* sub = Push_Downshifted_Level(OUT, L);  // steals varlist [1]
+    L->executor = &Chainer_Dispatcher;  // so trampoline calls us [2]
 
     const Cell* chained = VAL_ARRAY_ITEM_AT(pipeline_at);
     ++VAL_INDEX_RAW(pipeline_at);
 
     INIT_LVL_PHASE(
         sub,
-        ACT_IDENTITY(VAL_ACTION(chained))  // has varlist already, see [3]
+        ACT_IDENTITY(VAL_ACTION(chained))  // has varlist already [3]
     );
     INIT_LVL_BINDING(sub, VAL_FRAME_BINDING(chained));
 
@@ -210,7 +210,7 @@ Bounce Chainer_Dispatcher(Level* const L)
 
     Begin_Prefix_Action(sub, VAL_FRAME_LABEL(chained));
 
-    Level_State_Byte(sub) = ST_ACTION_FULFILLING_ENFIX_FROM_OUT;  // see [4]
+    Level_State_Byte(sub) = ST_ACTION_FULFILLING_ENFIX_FROM_OUT;  // [4]
     Clear_Executor_Flag(ACTION, sub, DISPATCHER_CATCHES);
     Clear_Executor_Flag(ACTION, sub, IN_DISPATCH);
     Clear_Level_Flag(sub, NOTIFY_ON_ABRUPT_FAILURE);
