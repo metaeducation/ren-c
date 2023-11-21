@@ -40,14 +40,14 @@
 //    to a  Stub--or otherwise--you have much bigger concerns regarding safety
 //    and unsafety than C-level constness!
 //
-#if !defined(HEAVY_NODE_BYTE_CHECK)  // see [1]
+#if !defined(HEAVY_NODE_BYTE_CHECK)  // [1]
     #define NODE_BYTE(p) \
-        FIRST_BYTE(x_cast(Node*, ensure(const Node*, (p))))  // x_cast, see [2]
+        FIRST_BYTE(x_cast(Node*, ensure(const Node*, (p))))  // x_cast [2]
 
 #else
     INLINE Byte& NODE_BYTE(const Node* node) {
         assert(cast(Byte*, node)[0] & NODE_BYTEMASK_0x80_NODE);
-        return x_cast(Byte*, node)[0];   // cast away constness, see [2]
+        return x_cast(Byte*, node)[0];   // cast away constness [2]
     }
 #endif
 

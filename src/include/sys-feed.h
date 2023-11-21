@@ -410,7 +410,8 @@ INLINE void Fetch_Next_In_Feed(Feed* feed) {
     assert(Not_Feed_Flag(feed, NEEDS_SYNC));
 
   #if DEBUG_PROTECT_FEED_CELLS
-    feed->fetched.header.bits &= (~ CELL_FLAG_PROTECTED);  // temp unprotect
+    if (not Is_Cell_Erased(&feed->fetched))
+        Clear_Cell_Flag(&feed->fetched, PROTECTED);  // temp unprotect
   #endif
 
     assert(Not_End(feed->p));  // should test for end before fetching again
@@ -468,7 +469,7 @@ INLINE void Fetch_Next_In_Feed(Feed* feed) {
             if (FEED_SPLICE(feed)) {  // one or more additional splices to go
                 if (Get_Feed_Flag(feed, TOOK_HOLD)) {  // see note above
                     assert(Get_Series_Info(FEED_ARRAY(feed), HOLD));
-                    Clear_Series_Info(m_cast(Array*, FEED_ARRAY(feed)), HOLD);
+                    Clear_Series_Info(FEED_ARRAY(feed), HOLD);
                     Clear_Feed_Flag(feed, TOOK_HOLD);
                 }
 
@@ -618,7 +619,7 @@ INLINE void Free_Feed(Feed* feed) {
     }
     else if (Get_Feed_Flag(feed, TOOK_HOLD)) {
         assert(Get_Series_Info(FEED_ARRAY(feed), HOLD));
-        Clear_Series_Info(m_cast(Array*, FEED_ARRAY(feed)), HOLD);
+        Clear_Series_Info(FEED_ARRAY(feed), HOLD);
         Clear_Feed_Flag(feed, TOOK_HOLD);
     }
 
@@ -685,7 +686,7 @@ INLINE Feed* Prep_Array_Feed(
     if (Is_Feed_At_End(feed) or Get_Series_Info(array, HOLD))
         NOOP;  // already temp-locked
     else {
-        Set_Series_Info(m_cast(Array*, array), HOLD);
+        Set_Series_Info(array, HOLD);
         Set_Feed_Flag(feed, TOOK_HOLD);
     }
 

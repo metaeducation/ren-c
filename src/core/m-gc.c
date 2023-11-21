@@ -91,26 +91,26 @@
 // To avoid the cost of incrementing and decrementing, only in debug builds.
 //
 #if DEBUG
-    inline static void Remove_GC_Mark(Node* node) {  // stub or cell (pairing)
+    inline static void Remove_GC_Mark(const Node* node) {  // stub or pairing
         assert(Is_Node_Marked(node));
         Clear_Node_Marked_Bit(node);
         g_gc.mark_count -= 1;
     }
 
-    inline static void Remove_GC_Mark_If_Marked(Node* node) {
+    inline static void Remove_GC_Mark_If_Marked(const Node* node) {
         if (Is_Node_Marked(node)) {
             Clear_Node_Marked_Bit(node);
             g_gc.mark_count -= 1;
         }
     }
 
-    inline static void Add_GC_Mark(Node* node) {
+    inline static void Add_GC_Mark(const Node* node) {
         assert(not Is_Node_Marked(node));
         Set_Node_Marked_Bit(node);
         g_gc.mark_count += 1;
     }
 
-    inline static void Add_GC_Mark_If_Not_Already_Marked(Node* node) {
+    inline static void Add_GC_Mark_If_Not_Already_Marked(const Node* node) {
         if (not Is_Node_Marked(node)) {
             Set_Node_Marked_Bit(node);
             g_gc.mark_count += 1;
@@ -126,7 +126,7 @@
 
 static void Queue_Mark_Cell_Deep(const Cell* v);
 
-inline static void Queue_Mark_Maybe_Fresh_Cell_Deep(Cell* v) {
+inline static void Queue_Mark_Maybe_Fresh_Cell_Deep(const Cell* v) {
     if (not Is_Fresh(v))
         Queue_Mark_Cell_Deep(v);
 }
@@ -147,7 +147,7 @@ inline static void Queue_Mark_Maybe_Fresh_Cell_Deep(Cell* v) {
 //
 // Hence we cheat and don't actually queue, for now.
 //
-static void Queue_Mark_Pairing_Deep(REBVAL *paired)
+static void Queue_Mark_Pairing_Deep(const Cell* paired)
 {
     // !!! Hack doesn't work generically, review
 
@@ -166,7 +166,7 @@ static void Queue_Mark_Pairing_Deep(REBVAL *paired)
   #endif
 }
 
-static void Queue_Unmarked_Accessible_Series_Deep(Series* s);
+static void Queue_Unmarked_Accessible_Series_Deep(const Series* s);
 
 
 // This routine is given the *address* of the node to mark, so that if the
@@ -181,7 +181,7 @@ static void Queue_Mark_Node_Deep(const Node** pp) {
         return;  // may not be finished marking yet, but has been queued
 
     if (nodebyte & NODE_BYTEMASK_0x01_CELL) {  // e.g. a pairing
-        REBVAL *v = x_cast(Value(*), m_cast(Node*, *pp));
+        const REBVAL *v = x_cast(Value(const*), *pp);
         if (Is_Node_Managed(v))
             Queue_Mark_Pairing_Deep(v);
         else {
@@ -191,7 +191,7 @@ static void Queue_Mark_Node_Deep(const Node** pp) {
         return;  // it's 2 cells, sizeof(Stub), but no room for a Stub's data
     }
 
-    Series* s = x_cast(Series*, *pp);
+    const Series* s = x_cast(const Series*, *pp);
     if (Get_Series_Flag(s, INACCESSIBLE)) {
         //
         // All inaccessible nodes are collapsed and canonized into a universal
@@ -239,7 +239,7 @@ static void Queue_Mark_Node_Deep(const Node** pp) {
 // that to generate some deep stacks...even without any cells being marked.
 // It hasn't caused any crashes yet, but is something that bears scrutiny.
 //
-static void Queue_Unmarked_Accessible_Series_Deep(Series* s)
+static void Queue_Unmarked_Accessible_Series_Deep(const Series* s)
 {
     Add_GC_Mark(s);
 
@@ -251,10 +251,10 @@ static void Queue_Unmarked_Accessible_Series_Deep(Series* s)
     // flags control whether the marking is done or not.
 
     if (Get_Series_Flag(s, LINK_NODE_NEEDS_MARK) and s->link.any.node)
-        Queue_Mark_Node_Deep(&s->link.any.node);
+        Queue_Mark_Node_Deep(&m_cast(Series*, s)->link.any.node);
 
     if (Get_Series_Flag(s, MISC_NODE_NEEDS_MARK) and s->misc.any.node)
-        Queue_Mark_Node_Deep(&s->misc.any.node);
+        Queue_Mark_Node_Deep(&m_cast(Series*, s)->misc.any.node);
 
   //=//// MARK INODE IF NOT USED FOR INFO //////////////////////////////////=//
 
@@ -263,15 +263,15 @@ static void Queue_Unmarked_Accessible_Series_Deep(Series* s)
     // if it's available for non-info uses, it is always a live marked node.
 
     if (Get_Series_Flag(s, INFO_NODE_NEEDS_MARK) and node_INODE(Node, s))
-        Queue_Mark_Node_Deep(&s->info.node);
+        Queue_Mark_Node_Deep(&m_cast(Series*, s)->info.node);
 
     if (IS_KEYLIST(s)) {
         //
         // !!! KeyLists may not be the only category that are just a straight
         // list of node pointers.
         //
-        Key* tail = Series_Tail(Key, s);
-        Key* key = Series_Head(Key, s);
+        const Key* tail = Series_Tail(Key, s);
+        const Key* key = Series_Head(Key, s);
         for (; key != tail; ++key) {
             //
             // Symbol* are not available to the user to free out from under
@@ -280,7 +280,7 @@ static void Queue_Unmarked_Accessible_Series_Deep(Series* s)
             assert(Not_Series_Flag(*key, INACCESSIBLE));
             if (Is_Node_Marked(*key))
                 continue;
-            Queue_Unmarked_Accessible_Series_Deep(m_cast(Symbol*, *key));
+            Queue_Unmarked_Accessible_Series_Deep(*key);
         }
     }
     else if (Is_Series_Array(s)) {
@@ -303,7 +303,9 @@ static void Queue_Unmarked_Accessible_Series_Deep(Series* s)
 
             assert(IS_KEYLIST(cast(Series*, node_BONUS(Node, a))));
 
-            Queue_Mark_Node_Deep(&s->content.dynamic.bonus.node);
+            Queue_Mark_Node_Deep(
+                &m_cast(Series*, s)->content.dynamic.bonus.node
+            );
         }
 
         skip_mark_frame_bonus:
@@ -335,22 +337,20 @@ static void Queue_Unmarked_Accessible_Series_Deep(Series* s)
 //
 //  Queue_Mark_Cell_Deep: C
 //
-static void Queue_Mark_Cell_Deep(const Cell* cv)
+static void Queue_Mark_Cell_Deep(const Cell* c)
 {
-    Cell* v = m_cast(Cell*, cv);  // we're the system, we can do this
-
   #if DEBUG_UNREADABLE_TRASH
-    if (IS_TRASH(cv))  // tolerate unreadable "trash" in debug builds
+    if (IS_TRASH(c))  // tolerate unreadable "trash" in debug builds
         return;
   #endif
 
-    assert(not Is_Fresh(cv));
+    assert(not Is_Fresh(c));
 
     // We mark based on the type of payload in the cell, e.g. its "unescaped"
     // form.  So if '''a fits in a WORD! (despite being a QUOTED!), we want
     // to mark the cell as if it were a plain word.  Use the Cell_Heart().
     //
-    enum Reb_Kind heart = Cell_Heart(v);
+    enum Reb_Kind heart = Cell_Heart(c);
 
   #if !defined(NDEBUG)  // see Queue_Mark_Node_Deep() for notes on recursion
     assert(not in_mark);
@@ -358,21 +358,21 @@ static void Queue_Mark_Cell_Deep(const Cell* cv)
   #endif
 
     if (IS_BINDABLE_KIND(heart)) {
-        Series* binding = BINDING(v);
+        Series* binding = BINDING(c);
         if (binding != UNBOUND)
             if (NODE_BYTE(binding) & NODE_BYTEMASK_0x20_MANAGED)
-                Queue_Mark_Node_Deep(&v->extra.Binding);
+                Queue_Mark_Node_Deep(&m_cast(Cell*, c)->extra.Binding);
     }
 
-    if (Get_Cell_Flag_Unchecked(v, FIRST_IS_NODE) and Cell_Node1(v))
-        Queue_Mark_Node_Deep(&PAYLOAD(Any, v).first.node);
+    if (Get_Cell_Flag_Unchecked(c, FIRST_IS_NODE) and Cell_Node1(c))
+        Queue_Mark_Node_Deep(&PAYLOAD(Any, m_cast(Cell*, c)).first.node);
 
-    if (Get_Cell_Flag_Unchecked(v, SECOND_IS_NODE) and Cell_Node2(v))
-        Queue_Mark_Node_Deep(&PAYLOAD(Any, v).second.node);
+    if (Get_Cell_Flag_Unchecked(c, SECOND_IS_NODE) and Cell_Node2(c))
+        Queue_Mark_Node_Deep(&PAYLOAD(Any, m_cast(Cell*, c)).second.node);
 
   #if !defined(NDEBUG)
     in_mark = false;
-    Assert_Cell_Marked_Correctly(v);
+    Assert_Cell_Marked_Correctly(c);
   #endif
 }
 
@@ -516,7 +516,7 @@ void Reify_Variadic_Feed_As_Array_Feed(
         // level...so safe to say we're holding it.
         //
         assert(Not_Feed_Flag(feed, TOOK_HOLD));
-        Set_Series_Info(m_cast(Array*, FEED_ARRAY(feed)), HOLD);
+        Set_Series_Info(FEED_ARRAY(feed), HOLD);
         Set_Feed_Flag(feed, TOOK_HOLD);
     }
     else {
@@ -777,7 +777,7 @@ static void Mark_Guarded_Nodes(void)
             //
             assert(Not_Node_Marked(*np));
 
-            Queue_Mark_Maybe_Fresh_Cell_Deep(x_cast(REBVAL*, *np));
+            Queue_Mark_Maybe_Fresh_Cell_Deep(x_cast(const REBVAL*, *np));
         }
         else  // a series stub
             Queue_Mark_Node_Deep(np);
@@ -878,7 +878,7 @@ static void Mark_Level_Stack_Deep(void)
             const Symbol* sym = unwrap(L->label);
             if (not Is_Node_Marked(sym)) {
                 assert(Not_Series_Flag(sym, INACCESSIBLE));  // can't happen
-                Queue_Unmarked_Accessible_Series_Deep(m_cast(Symbol*, sym));
+                Queue_Unmarked_Accessible_Series_Deep(sym);
             }
         }
 

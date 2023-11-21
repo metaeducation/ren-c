@@ -1103,7 +1103,7 @@ const Byte* Scan_Pair(
     if (*ep != 'x' && *ep != 'X')
         return_NULL;
 
-    REBVAL *paired = Alloc_Pairing();
+    Cell* paired = Alloc_Pairing();
 
     // X is in the key pairing cell
     if (is_integral)

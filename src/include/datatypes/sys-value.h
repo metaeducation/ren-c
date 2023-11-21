@@ -335,6 +335,7 @@ INLINE enum Reb_Kind VAL_TYPE_UNCHECKED(const Cell* v) {
 // as well as some flags that are reserved for system purposes.  These are
 // the NODE_FLAG_XXX and CELL_FLAG_XXX flags, that work on any cell.
 //
+// 1. See Set_Series_Flag()/Clear_Series_Flag() for why const ignored here.
 
 #define Get_Cell_Flag(v,name) \
     ((READABLE(v)->header.bits & CELL_FLAG_##name) != 0)
@@ -349,10 +350,12 @@ INLINE enum Reb_Kind VAL_TYPE_UNCHECKED(const Cell* v) {
     (((v)->header.bits & CELL_FLAG_##name) == 0)
 
 #define Set_Cell_Flag(v,name) \
-    (WRITABLE(v)->header.bits |= CELL_FLAG_##name)
+    (x_cast(Cell*, READABLE(v))->header.bits \
+        |= CELL_FLAG_##name)  // [1]
 
 #define Clear_Cell_Flag(v,name) \
-    (WRITABLE(v)->header.bits &= ~CELL_FLAG_##name)
+    (x_cast(Cell*, READABLE(v))->header.bits \
+        &= ~CELL_FLAG_##name)  // [1]
 
 
 // See notes on ALIGN_SIZE regarding why we check this, and when it does and

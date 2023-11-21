@@ -136,14 +136,13 @@ DECLARE_NATIVE(mutable_q) {
 // Derelativize() vs. just blitting the raw bits of a cell around.  (The C++
 // build enforces this by disallowing direct bit assignment via `=`).
 //
-static void Protect_Var(REBVAL *var, Flags flags)
+static void Protect_Var(const REBVAL *var, Flags flags)
 {
     if (flags & PROT_WORD) {
-        assert(READABLE(var));
         if (flags & PROT_SET)
-            var->header.bits |= CELL_FLAG_PROTECTED;
+            Set_Cell_Flag(var, PROTECTED);
         else
-            var->header.bits &= ~CELL_FLAG_PROTECTED; // can't Clear_Cell_Flag
+            Clear_Cell_Flag(var, PROTECTED);
     }
 
     if (flags & PROT_HIDE) {
@@ -153,7 +152,7 @@ static void Protect_Var(REBVAL *var, Flags flags)
         // in the cell of the variable.
 
         if (flags & PROT_SET)
-            var->header.bits |= CELL_FLAG_VAR_MARKED_HIDDEN;
+            Set_Cell_Flag(var, VAR_MARKED_HIDDEN);
         else
             fail ("Un-hiding is not supported");
     }
@@ -184,12 +183,10 @@ void Protect_Value(const Cell* v, Flags flags)
 //
 // Anything that calls this must call Uncolor() when done.
 //
-void Protect_Series(const Series* s_const, REBLEN index, Flags flags)
+void Protect_Series(const Series* s, REBLEN index, Flags flags)
 {
-    Series* s = m_cast(Series*, s_const);  // mutate flags only
-
     if (Is_Series_Black(s))
-        return; // avoid loop
+        return;  // avoid loop
 
     if (flags & PROT_SET) {
         if (flags & PROT_FREEZE) {
@@ -224,7 +221,7 @@ void Protect_Series(const Series* s_const, REBLEN index, Flags flags)
 //
 void Protect_Context(Context* c, Flags flags)
 {
-    Array* varlist = m_cast(Array*, CTX_VARLIST(c));  // mutate flags only
+    const Array* varlist = CTX_VARLIST(c);
 
     if (Is_Series_Black(varlist))
         return; // avoid loop
@@ -261,14 +258,7 @@ void Protect_Context(Context* c, Flags flags)
 static void Protect_Word_Value(REBVAL *word, Flags flags)
 {
     if (ANY_WORD(word) and IS_WORD_BOUND(word)) {
-        //
-        // Ignore existing mutability state so that it may be modified.
-        // Most routines should NOT do this!
-        //
-        REBVAL *var = m_cast(
-            REBVAL*,
-            Lookup_Word_May_Fail(word, SPECIFIED)
-        );
+        const REBVAL* var = Lookup_Word_May_Fail(word, SPECIFIED);
 
         Protect_Var(var, flags);
         if (flags & PROT_DEEP) {
@@ -539,7 +529,7 @@ void Force_Value_Frozen_Core(
         return;  // special form, immutable
 
     if (ANY_ARRAY_KIND(heart)) {
-        Array* a = m_cast(Array*, VAL_ARRAY(v));  // mutate flags only
+        const Array* a = VAL_ARRAY(v);
         if (deep)
             Freeze_Array_Deep(a);
         else
@@ -554,10 +544,10 @@ void Force_Value_Frozen_Core(
         else
             fail ("What does a shallow freeze of a context mean?");
         if (locker)
-            Set_Series_Info(m_cast(Array*, CTX_VARLIST(c)), AUTO_LOCKED);
+            Set_Series_Info(CTX_VARLIST(c), AUTO_LOCKED);
     }
     else if (ANY_SERIES_KIND(heart)) {
-        Series* s = m_cast(Series*, VAL_SERIES(v));  // mutate flags only
+        const Series* s = VAL_SERIES(v);
         Freeze_Series(s);
         UNUSED(deep);
         if (locker)

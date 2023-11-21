@@ -138,16 +138,6 @@
             (snprintf(js_trace_buf_debug, JS_TRACE_BUF_SIZE, __VA_ARGS__), \
                 js_trace_buf_debug))
 
-    // Trash_Pointer_If_Debug() is defined in release builds as a no-op, but
-    // it's kind of complicated.  For the purposes in this file these END
-    // macros work just as well and don't collide.
-
-    #define ENDIFY_POINTER_IF_DEBUG(p) \
-        p = m_cast(REBVAL*, END)
-
-    #define IS_POINTER_END_DEBUG(p) \
-        (p == m_cast(REBVAL*, END))
-
     // One of the best pieces of information to follow for a TRACE() is what
     // the EM_ASM() calls.  So printing the JavaScript sent to execute is
     // very helpful.  But it's not possible to "hook" EM_ASM() in terms of
@@ -179,8 +169,6 @@
     // assert() is defined as a noop in release builds already
 
     #define TRACE(...)                      NOOP
-    #define ENDIFY_POINTER_IF_DEBUG(p)      NOOP
-    #define IS_POINTER_END_DEBUG(p)         NOOP
 #endif
 
 

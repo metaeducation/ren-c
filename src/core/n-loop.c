@@ -743,7 +743,7 @@ void Init_Loop_Each(Value(*) iterator, Value(*) data)
 
         les->took_hold = Not_Series_Flag(les->series, FIXED_SIZE);
         if (les->took_hold)
-            Set_Series_Flag(m_cast(Series*, les->series), FIXED_SIZE);
+            Set_Series_Flag(les->series, FIXED_SIZE);
 
         if (ANY_CONTEXT(data)) {
             les->more_data = Did_Advance_Evars(&les->u.evars);
@@ -965,7 +965,7 @@ void Shutdown_Loop_Each(Value(*) iterator)
     les = VAL_HANDLE_POINTER(struct Loop_Each_State, iterator);
 
     if (les->took_hold)  // release read-only lock
-        Clear_Series_Flag(m_cast(Series*, les->series), FIXED_SIZE);
+        Clear_Series_Flag(les->series, FIXED_SIZE);
 
     if (ANY_CONTEXT(les->data))
         Shutdown_Evars(&les->u.evars);
@@ -1384,10 +1384,7 @@ DECLARE_NATIVE(remove_each)
 
             do {
                 assert(start <= len);
-                Set_Cell_Flag(  // v-- okay to mark despite read only
-                    m_cast(Cell*, Array_At(VAL_ARRAY(data), start)),
-                    NOTE_REMOVE
-                );
+                Set_Cell_Flag(Array_At(VAL_ARRAY(data), start), NOTE_REMOVE);
                 ++start;
             } while (start != index);
         }

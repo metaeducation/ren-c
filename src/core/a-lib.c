@@ -2208,11 +2208,11 @@ const REBINS *RL_rebQUOTING(const void *p)
     if (p == nullptr)
         return FEED_NULL_SUBSTITUTE_CELL;  // precooked meta null
 
-    Array* a;
+    const Array* a;
 
     switch (Detect_Rebol_Pointer(p)) {
       case DETECTED_AS_SERIES: {
-        a = m_cast(Array*, c_cast(Array*, p));
+        a = c_cast(Array*, p);
         if (Not_Subclass_Flag(API, a, RELEASE))
             fail ("Can't quote instructions (besides rebR())");
         break; }

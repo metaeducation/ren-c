@@ -578,11 +578,11 @@ Node* Try_Find_Containing_Node_Debug(const void *p)
 // is a fail(), they will leak--unless whichever API client that is using
 // them ensures they are cleaned up.
 //
-REBVAL *Alloc_Pairing(void) {
-    REBVAL *paired = cast(REBVAL*, Alloc_Pooled(PAIR_POOL));  // 2x REBVAL size
+Cell* Alloc_Pairing(void) {
+    Cell* paired = cast(Cell*, Alloc_Pooled(PAIR_POOL));  // 2x cell size
     Erase_Cell(paired);
 
-    REBVAL *key = PAIRING_KEY(paired);
+    Cell* key = PAIRING_KEY(paired);
     Erase_Cell(key);
 
     return paired;
@@ -593,9 +593,9 @@ REBVAL *Alloc_Pairing(void) {
 //  Manage_Pairing: C
 //
 // The paired management status is handled by bits directly in the first (the
-// paired value) REBVAL header.  API handle REBVALs are all managed.
+// paired value) header.
 //
-void Manage_Pairing(REBVAL *paired) {
+void Manage_Pairing(Cell* paired) {
     assert(Not_Node_Managed(paired));
     Set_Node_Managed_Bit(paired);
 }
@@ -619,7 +619,7 @@ void Unmanage_Pairing(REBVAL *paired) {
 //
 //  Free_Pairing: C
 //
-void Free_Pairing(REBVAL *paired) {
+void Free_Pairing(Cell* paired) {
     assert(Not_Node_Managed(paired));
     Free_Pooled(STUB_POOL, paired);
 

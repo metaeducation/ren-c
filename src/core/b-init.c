@@ -616,14 +616,8 @@ static void Init_System_Object(
     HEART_BYTE(std_error) = REB_ERROR;
 
     REBVAL *rootvar = CTX_ROOTVAR(c);
-  #if !defined(NDEBUG)
-    assert(rootvar->header.bits & CELL_FLAG_PROTECTED);
-    rootvar->header.bits &= ~CELL_FLAG_PROTECTED;
-  #endif
+    assert(Get_Cell_Flag(rootvar, PROTECTED));
     HEART_BYTE(rootvar) = REB_ERROR;
-  #if !defined(NDEBUG)
-    rootvar->header.bits |= CELL_FLAG_PROTECTED;
-  #endif
   }
 }
 

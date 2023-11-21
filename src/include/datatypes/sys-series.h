@@ -70,6 +70,13 @@
 //
 // Using token pasting macros helps avoid mixups with SERIES_INFO_XXX!
 //
+// 1. It's not worth it to enforce constness on the series flags, because
+//    they're fairly decoupled from "conceptual immutability" of the data
+//    in the series.  Doing things like Set_Series_Flag(s, BLACK) is not
+//    dependent on whether the series is const or not.  If the system
+//    wished to compact a 1-element array to not use a dynamic allocation
+//    in the garbage collector, Clear_Series_Flag(s, DYNAMIC) should be
+//    legal even if the array is const.  etc.
 
 #define Get_Series_Flag(s,name) \
     ((ensure(const Series*, (s))->header.bits & SERIES_FLAG_##name) != 0)
@@ -78,10 +85,12 @@
     ((ensure(const Series*, (s))->header.bits & SERIES_FLAG_##name) == 0)
 
 #define Set_Series_Flag(s,name) \
-    ensure(Series*, (s))->header.bits |= SERIES_FLAG_##name
+    (x_cast(Series*, ensure(const Series*, (s)))->header.bits \
+        |= SERIES_FLAG_##name)  // [1]
 
 #define Clear_Series_Flag(s,name) \
-    ensure(Series*, (s))->header.bits &= ~SERIES_FLAG_##name
+    (x_cast(Series*, ensure(const Series*, (s)))->header.bits \
+        &= ~SERIES_FLAG_##name)  // [1]
 
 
 
@@ -92,6 +101,7 @@
 // subclass testing macros as a check that you are testing the flag for the
 // flavor that you expect.
 //
+// 1. See Set_Series_Flag()/Clear_Series_Flag() for why implicit mutability.
 
 #if defined(NDEBUG)
     #define ensure_flavor(flavor,s) \
@@ -133,11 +143,11 @@
         & subclass##_FLAG_##name) == 0)
 
 #define Set_Subclass_Flag(subclass,s,name) \
-    (ensure_flavor(FLAVOR_##subclass, (s))->header.bits \
+    (x_cast(Series*, ensure_flavor(FLAVOR_##subclass, (s)))->header.bits \
         |= subclass##_FLAG_##name)
 
 #define Clear_Subclass_Flag(subclass,s,name) \
-    (ensure_flavor(FLAVOR_##subclass, (s))->header.bits \
+    (x_cast(Series*, ensure_flavor(FLAVOR_##subclass, (s)))->header.bits \
         &= ~subclass##_FLAG_##name)
 
 
@@ -242,36 +252,34 @@
 // markable node.  This "INODE" is accessed via macros in the same way as the
 // LINK() and MISC() macros (described in the section above):
 //
-
+// 1. See mutability notes on Set_Series_Flag()/Get_Series_Flag().  The same
+//    applies to the info flags.
+//
+// 2. We check that the info is being used for bits, not an "INODE".  (A
+//    checking SER_INODE() is overkill, given that the INODE() accessors
+//    check the flavor.  Assume flavor has INFO_NODE_NEEDS_MARK right.)
+//
 #if (! CPLUSPLUS_11)
     #define SERIES_INFO(s) \
-        (s)->info.flags.bits
-
-    // !!! A checking SER_INODE() is overkill, given that the INODE() accessors
-    // check the flavor.  Assume flavor has INFO_NODE_NEEDS_MARK right.
+        x_cast(Series*, ensure(const Series*, (s)))->info.flags.bits  // [1]
 #else
-    INLINE const uintptr_t &SERIES_INFO(const Series* s) {
-        assert(Not_Series_Flag(s, INFO_NODE_NEEDS_MARK));
-        return s->info.flags.bits;
-    }
-
-    INLINE uintptr_t &SERIES_INFO(Series* s) {
-        assert(Not_Series_Flag(s, INFO_NODE_NEEDS_MARK));
-        return s->info.flags.bits;
+    INLINE uintptr_t &SERIES_INFO(const Series* s) {
+        assert(Not_Series_Flag(s, INFO_NODE_NEEDS_MARK));  // [2]
+        return m_cast(Series*, s)->info.flags.bits;  // [1]
     }
 #endif
-
-#define Set_Series_Info(s,name) \
-    (SERIES_INFO(s) |= SERIES_INFO_##name)
 
 #define Get_Series_Info(s,name) \
     ((SERIES_INFO(s) & SERIES_INFO_##name) != 0)
 
-#define Clear_Series_Info(s,name) \
-    (SERIES_INFO(s) &= ~SERIES_INFO_##name)
-
 #define Not_Series_Info(s,name) \
     ((SERIES_INFO(s) & SERIES_INFO_##name) == 0)
+
+#define Set_Series_Info(s,name) \
+    SERIES_INFO(s) |= SERIES_INFO_##name
+
+#define Clear_Series_Info(s,name) \
+    SERIES_INFO(s) &= ~SERIES_INFO_##name
 
 #define INODE(Field, s) \
     cast(INODE_##Field##_TYPE, m_cast(Node*, \
@@ -858,7 +866,7 @@ INLINE bool Is_Series_White(const Series* s) {
 
 INLINE void Flip_Series_To_Black(const Series* s) {
     assert(Not_Series_Flag(s, BLACK));
-    Set_Series_Flag(m_cast(Series*, s), BLACK);
+    Set_Series_Flag(s, BLACK);
   #if !defined(NDEBUG)
     g_mem.num_black_series += 1;
   #endif
@@ -866,7 +874,7 @@ INLINE void Flip_Series_To_Black(const Series* s) {
 
 INLINE void Flip_Series_To_White(const Series* s) {
     assert(Get_Series_Flag(s, BLACK));
-    Clear_Series_Flag(m_cast(Series*, s), BLACK);
+    Clear_Series_Flag(s, BLACK);
   #if !defined(NDEBUG)
     g_mem.num_black_series -= 1;
   #endif
@@ -880,12 +888,11 @@ INLINE void Flip_Series_To_White(const Series* s) {
 INLINE void Freeze_Series(const Series* s) {  // there is no unfreeze
     assert(not Is_Series_Array(s)); // use Deep_Freeze_Array
 
-    // Mutable cast is all right for this bit.  We set the FROZEN_DEEP flag
-    // even though there is no structural depth here, so that the generic
-    // test for deep-frozenness can be faster.
+    // We set the FROZEN_DEEP flag even though there is no structural depth
+    // here, so that the generic test for deep-frozenness can be faster.
     //
-    Set_Series_Info(m_cast(Series*, s), FROZEN_SHALLOW);
-    Set_Series_Info(m_cast(Series*, s), FROZEN_DEEP);
+    Set_Series_Info(s, FROZEN_SHALLOW);
+    Set_Series_Info(s, FROZEN_DEEP);
 }
 
 INLINE bool Is_Series_Frozen(const Series* s) {
@@ -1207,7 +1214,7 @@ INLINE Stub* Prep_Stub(void *preallocated, Flags flags) {
   #if !defined(NDEBUG)
     SafeTrash_Pointer_If_Debug(s->link.trash);  // #2
     Mem_Fill(&s->content.fixed, 0xBD, sizeof(s->content));  // #3 - #6
-    Mem_Fill(&s->info, 0xAE, sizeof(s->info));  // #7
+    SafeTrash_Pointer_If_Debug(s->info.trash);  // #7
     SafeTrash_Pointer_If_Debug(s->link.trash);  // #8
 
     Touch_Stub_If_Debug(s);  // tag current C stack as series origin in ASAN

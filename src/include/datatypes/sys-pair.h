@@ -30,9 +30,15 @@
 // accepted for now in the PAIR! type.
 //
 
-INLINE REBVAL *PAIRING_KEY(REBVAL *paired) {
-    return paired + 1;
+INLINE Cell* PAIRING_KEY(const_if_c Cell* paired) {
+    return m_cast(Cell*, paired + 1);
 }
+
+#ifdef CPLUSPLUS_11
+    INLINE const Cell* PAIRING_KEY(const Cell* paired) {
+        return paired + 1;
+    }
+#endif
 
 
 #define INIT_VAL_PAIR(v,pairing) \
@@ -44,7 +50,7 @@ INLINE REBVAL *VAL_PAIRING(NoQuote(const Cell*) v) {
 }
 
 #define VAL_PAIR_X(v) \
-    PAIRING_KEY(VAL_PAIRING(v))
+    SPECIFIC(PAIRING_KEY(VAL_PAIRING(v)))
 
 #define VAL_PAIR_Y(v) \
     VAL_PAIRING(v)
@@ -73,7 +79,7 @@ INLINE REBDEC VAL_PAIR_Y_INT(NoQuote(const Cell*) v) {
     return ROUND_TO_INT(VAL_DECIMAL(VAL_PAIR_Y(v)));
 }
 
-INLINE REBVAL *Init_Pair(
+INLINE Value(*) Init_Pair(
     Cell* out,
     const Cell* x,
     const Cell* y
@@ -82,30 +88,30 @@ INLINE REBVAL *Init_Pair(
     assert(ANY_NUMBER(y));
 
     Reset_Unquoted_Header_Untracked(out, CELL_MASK_PAIR);
-    REBVAL *p = Alloc_Pairing();
+    Cell* p = Alloc_Pairing();
     Copy_Cell(PAIRING_KEY(p), c_cast(REBVAL*, x));
     Copy_Cell(p, c_cast(REBVAL*, y));
     Manage_Pairing(p);
     INIT_VAL_PAIR(out, p);
-    return cast(REBVAL*, out);
+    return SPECIFIC(out);
 }
 
-INLINE REBVAL *Init_Pair_Int(Cell* out, REBI64 x, REBI64 y) {
+INLINE Value(*) Init_Pair_Int(Cell* out, REBI64 x, REBI64 y) {
     Reset_Unquoted_Header_Untracked(out, CELL_MASK_PAIR);
-    REBVAL *p = Alloc_Pairing();
+    Cell* p = Alloc_Pairing();
     Init_Integer(PAIRING_KEY(p), x);
     Init_Integer(p, y);
     Manage_Pairing(p);
     INIT_VAL_PAIR(out, p);
-    return cast(REBVAL*, out);
+    return SPECIFIC(out);
 }
 
-INLINE REBVAL *Init_Pair_Dec(Cell* out, REBDEC x, REBDEC y) {
+INLINE Value(*) Init_Pair_Dec(Cell* out, REBDEC x, REBDEC y) {
     Reset_Unquoted_Header_Untracked(out, CELL_MASK_PAIR);
-    REBVAL *p = Alloc_Pairing();
+    Cell* p = Alloc_Pairing();
     Init_Decimal(PAIRING_KEY(p), x);
     Init_Decimal(p, y);
     Manage_Pairing(p);
     INIT_VAL_PAIR(out, p);
-    return cast(REBVAL*, out);
+    return SPECIFIC(out);
 }

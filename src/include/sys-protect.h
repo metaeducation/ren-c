@@ -54,7 +54,7 @@ INLINE bool Is_Array_Frozen_Deep(const Array* a) {
     return true;
 }
 
-INLINE Array* Freeze_Array_Deep(Array* a) {
+INLINE const Array* Freeze_Array_Deep(const Array* a) {
     Protect_Series(
         a,
         0, // start protection at index 0
@@ -64,7 +64,7 @@ INLINE Array* Freeze_Array_Deep(Array* a) {
     return a;
 }
 
-INLINE Array* Freeze_Array_Shallow(Array* a) {
+INLINE const Array* Freeze_Array_Shallow(const Array* a) {
     Set_Series_Info(a, FROZEN_SHALLOW);
     return a;
 }

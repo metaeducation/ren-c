@@ -700,6 +700,8 @@ union StubInfoUnion {
     union HeaderUnion flags;
 
     const Node* node;
+
+    void* trash;
 };
 
 

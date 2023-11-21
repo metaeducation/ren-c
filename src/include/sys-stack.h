@@ -126,10 +126,6 @@
         operator Sink(Value(*)) () const { return p; }
         explicit operator Byte* () const { return cast(Byte*, p); }
 
-      #if DEBUG_CHECK_CASTS
-        operator NoQuote(const Cell*) () { return p; }
-      #endif
-
         REBVAL* operator->() { return p; }
 
         bool operator==(const StackValuePointer &other)

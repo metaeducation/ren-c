@@ -51,6 +51,8 @@
 // These flags are only for checking "plain" array flags...so not varlists
 // or paramlists or anything that isn't just an ordinary source-level array
 // (like you'd find in a BLOCK!)
+//
+// 1. See mutability notes on Set_Series_Flag() / Clear_Series_Flag()
 
 #define Get_Array_Flag(a,flag) \
     Get_Subclass_Flag(ARRAY, ensure(const Array*, (a)), flag)
@@ -59,10 +61,10 @@
     Not_Subclass_Flag(ARRAY, ensure(const Array*, (a)), flag)
 
 #define Set_Array_Flag(a,flag) \
-    Set_Subclass_Flag(ARRAY, ensure(Array*, (a)), flag)
+    Set_Subclass_Flag(ARRAY, m_cast(Array*, (a)), flag)  // [1]
 
 #define Clear_Array_Flag(a,flag) \
-    Clear_Subclass_Flag(ARRAY, ensure(Array*, (a)), flag)
+    Clear_Subclass_Flag(ARRAY, m_cast(Array*, (a)), flag)  // [1]
 
 
 INLINE bool Has_Newline_At_Tail(const Array* a) {
@@ -178,18 +180,18 @@ INLINE Array* Make_Array_Core_Into(
         capacity += 1;  // account for space needed for poison cell
   #endif
 
-    Series* s = Make_Series_Into(preallocated, capacity, flags);
-    assert(Is_Series_Array(s));  // flavor should have been an array flavor
+    Array* a = x_cast(Array*, Make_Series_Into(preallocated, capacity, flags));
+    assert(Is_Series_Array(a));  // flavor should have been an array flavor
 
-    if (Get_Series_Flag(s, DYNAMIC)) {
-        Prep_Array(x_cast(Array*, s), capacity);
+    if (Get_Series_Flag(a, DYNAMIC)) {
+        Prep_Array(a, capacity);
 
       #if DEBUG_POISON_SERIES_TAILS
-        Poison_Cell(Array_Head(x_cast(Array*, s)));
+        Poison_Cell(Array_Head(a));
       #endif
     }
     else {
-        Poison_Cell(Stub_Cell(s));  // optimized prep for 0 length
+        Poison_Cell(Stub_Cell(a));  // optimized prep for 0 length
     }
 
     // Arrays created at runtime default to inheriting the file and line
@@ -204,12 +206,12 @@ INLINE Array* Make_Array_Core_Into(
             not Level_Is_Variadic(TOP_LEVEL) and
             Get_Array_Flag(Level_Array(TOP_LEVEL), HAS_FILE_LINE_UNMASKED)
         ){
-            mutable_LINK(Filename, s) = LINK(Filename, Level_Array(TOP_LEVEL));
-            s->misc.line = Level_Array(TOP_LEVEL)->misc.line;
+            mutable_LINK(Filename, a) = LINK(Filename, Level_Array(TOP_LEVEL));
+            a->misc.line = Level_Array(TOP_LEVEL)->misc.line;
         }
         else {
-            Clear_Array_Flag(cast(Array*, s), HAS_FILE_LINE_UNMASKED);
-            Clear_Series_Flag(cast(Array*, s), LINK_NODE_NEEDS_MARK);
+            Clear_Array_Flag(a, HAS_FILE_LINE_UNMASKED);
+            Clear_Series_Flag(a, LINK_NODE_NEEDS_MARK);
         }
     }
 
@@ -217,8 +219,8 @@ INLINE Array* Make_Array_Core_Into(
     g_mem.blocks_made += 1;
   #endif
 
-    assert(Array_Len(cast(Array*, s)) == 0);
-    return cast(Array*, s);
+    assert(Array_Len(a) == 0);
+    return a;
 }
 
 #define Make_Array_Core(capacity,flags) \

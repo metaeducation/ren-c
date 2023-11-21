@@ -153,10 +153,6 @@ INLINE REBVAL* Freshen_Cell_Untracked(Cell* v);
 
         explicit operator Byte* () { return reinterpret_cast<Byte*>(p); }
 
-      #if DEBUG_CHECK_CASTS
-        operator NoQuote(const Cell*) () const { return p; }
-      #endif
-
         Value(*) operator->() const { return p; }
     };
 

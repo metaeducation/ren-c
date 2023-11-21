@@ -247,7 +247,7 @@ void* Probe_Core_Debug(
     // If we didn't jump to cleanup above, it's a series.  New switch().
 
   blockscope {
-    Series* s = m_cast(Series*, c_cast(Series* , p));
+    const Series* s = c_cast(Series* , p);
     assert(not Is_Node_Free(s));  // Detect should have caught, above
     Flavor flavor = Series_Flavor(s);
     Assert_Series(s);  // if corrupt, gives better info than a print crash
@@ -258,12 +258,12 @@ void* Probe_Core_Debug(
 
       case FLAVOR_ARRAY:
         Probe_Print_Helper(p, expr, "Generic Array", file, line);
-        Mold_Array_At(mo, cast(Array*, s), 0, "[]"); // not necessarily BLOCK!
+        Mold_Array_At(mo, cast(const Array*, s), 0, "[]");
         break;
 
       case FLAVOR_VARLIST:  // currently same as FLAVOR_PARAMLIST
         Probe_Print_Helper(p, expr, "Varlist (or Paramlist)", file, line);
-        Probe_Molded_Value(CTX_ARCHETYPE(cast(Context*, s)));
+        Probe_Molded_Value(CTX_ARCHETYPE(x_cast(Context*, s)));
         break;
 
       case FLAVOR_DETAILS:
@@ -374,7 +374,7 @@ void* Probe_Core_Debug(
     //=//// SERIES WITH ELEMENTS WIDTH 1 ///////////////////////////////////=//
 
       case FLAVOR_BINARY: {
-        Binary* bin = cast(Binary*, s);
+        const Binary* bin = cast(const Binary*, s);
         Probe_Print_Helper(p, expr, "Byte-Size Series", file, line);
 
         const bool brk = (Binary_Len(bin) > 32);  // !!! duplicates MF_Binary code
