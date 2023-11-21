@@ -124,7 +124,7 @@ STATIC_ASSERT(LEVEL_FLAG_7_IS_TRUE == NODE_FLAG_CELL);
 #define FLAG_STATE_BYTE(state) \
     FLAG_SECOND_BYTE(state)
 
-inline static Byte State_Byte_From_Flags(Flags flags)
+INLINE Byte State_Byte_From_Flags(Flags flags)
   { return SECOND_BYTE(&flags); }
 
 
@@ -503,8 +503,8 @@ typedef void (Intrinsic)(Atom(*) out, Phase* phase, Value(*) arg);
 // and line numbers into arrays based on the frame in effect at their time
 // of allocation.
 
-inline static const Array* Level_Array(Level* L);
-inline static bool Level_Is_Variadic(Level* L);
+INLINE const Array* Level_Array(Level* L);
+INLINE bool Level_Is_Variadic(Level* L);
 
 #define TOP_LEVEL (g_ts.top_level + 0)  // avoid assign to TOP_LEVEL via + 0
 #define BOTTOM_LEVEL (g_ts.bottom_level + 0)  // avoid assign to BOTTOM_LEVEL
@@ -528,7 +528,7 @@ inline static bool Level_Is_Variadic(Level* L);
 #if DEBUG_ENSURE_EXECUTOR_FLAGS
     #define ensure_executor(executor,f) (f)  // no-op in release build
 #else
-    inline static Level* ensure_executor(Executor *executor, Level* L) {
+    INLINE Level* ensure_executor(Executor *executor, Level* L) {
         if (L->executor != executor)
             assert(!"Wrong executor for flag tested");
         return L;

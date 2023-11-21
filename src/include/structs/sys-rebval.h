@@ -103,10 +103,10 @@ typedef struct ValueStruct ValueT;
 #if CPLUSPLUS_11
     struct Param : public REBVAL {};
 
-    inline static const Param* cast_PAR(const REBVAL *v)
+    INLINE const Param* cast_PAR(const REBVAL *v)
         { return c_cast(Param*, v); }
 
-    inline static Param* cast_PAR(REBVAL *v)
+    INLINE Param* cast_PAR(REBVAL *v)
         { return cast(Param*, v); }
 #else
     #define Param REBVAL
@@ -127,7 +127,7 @@ typedef struct ValueStruct ValueT;
 #define Stable_Unchecked(atom) \
     x_cast(Value(*), ensure(Atom(const*), (atom)))
 
-inline static REBVAL* Freshen_Cell_Untracked(Cell* v);
+INLINE REBVAL* Freshen_Cell_Untracked(Cell* v);
 
 #if CPLUSPLUS_11
     struct ValueSink {

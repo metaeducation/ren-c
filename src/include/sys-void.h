@@ -63,10 +63,10 @@
 // to represent variables that have not been assigned.
 //
 
-inline static bool Is_Void(const Cell* v)
+INLINE bool Is_Void(const Cell* v)
   { return HEART_BYTE(v) == REB_VOID and QUOTE_BYTE(v) == UNQUOTED_1; }
 
-inline static REBVAL *Init_Void_Untracked(Cell* out, Byte quote_byte) {
+INLINE REBVAL *Init_Void_Untracked(Cell* out, Byte quote_byte) {
     FRESHEN_CELL_EVIL_MACRO(out);
     out->header.bits |= (
         NODE_FLAG_NODE | NODE_FLAG_CELL
@@ -88,13 +88,13 @@ inline static REBVAL *Init_Void_Untracked(Cell* out, Byte quote_byte) {
 #define Init_Quoted_Void(out) \
     TRACK(Init_Void_Untracked((out), ONEQUOTE_3))
 
-inline static bool Is_Quoted_Void(const Cell* v)
+INLINE bool Is_Quoted_Void(const Cell* v)
   { return QUOTE_BYTE(v) == ONEQUOTE_3 and HEART_BYTE(v) == REB_VOID; }
 
 #define Init_Quasi_Void(out) \
     TRACK(Init_Void_Untracked((out), QUASI_2))
 
-inline static bool Is_Quasi_Void(const Cell* v)
+INLINE bool Is_Quasi_Void(const Cell* v)
   { return QUOTE_BYTE(v) == QUASI_2 and HEART_BYTE(v) == REB_VOID; }
 
 #define Init_Meta_Of_Void(out)       Init_Quoted_Void(out)
@@ -118,17 +118,17 @@ inline static bool Is_Quasi_Void(const Cell* v)
 // Rebol, there are really only so many names to choose from.
 //
 
-inline static bool Is_None(const Cell* v)
+INLINE bool Is_None(const Cell* v)
   { return HEART_BYTE(v) == REB_VOID and QUOTE_BYTE(v) == ISOTOPE_0; }
 
 #if defined(NDEBUG)
-    inline static bool Is_Fresh_Or_None(const Cell* v) {
+    INLINE bool Is_Fresh_Or_None(const Cell* v) {
         return 0 == (
             v->header.bits & (FLAG_HEART_BYTE(255) | FLAG_QUOTE_BYTE(255))
         );
     }
 #else
-    inline static bool Is_Fresh_Or_None(const Cell* v) {
+    INLINE bool Is_Fresh_Or_None(const Cell* v) {
         return Is_Fresh(v) or Is_None(v);
     }
 #endif
@@ -167,7 +167,7 @@ inline static bool Is_None(const Cell* v)
 STATIC_ASSERT(REB_VOID == 0);  // the optimization depends on this
 STATIC_ASSERT(ISOTOPE_0 == 0);  // QUOTE_BYTE() of 0 means it's an isotope
 
-inline static Value(*) Finalize_None_Untracked(Atom(*) out) {
+INLINE Value(*) Finalize_None_Untracked(Atom(*) out) {
     ASSERT_CELL_FRESH_EVIL_MACRO(out);  // can bitwise OR, need node+cell flags
 
     assert(HEART_BYTE(out) == 0 and QUOTE_BYTE(out) == 0);
@@ -184,7 +184,7 @@ inline static Value(*) Finalize_None_Untracked(Atom(*) out) {
 #define Finalize_None(out) \
     TRACK(Finalize_None_Untracked(out))
 
-inline static Value(*) Finalize_Void_Untracked(Atom(*) out) {
+INLINE Value(*) Finalize_Void_Untracked(Atom(*) out) {
     ASSERT_CELL_FRESH_EVIL_MACRO(out);  // can bitwise OR, need node+cell flags
 
     assert(HEART_BYTE(out) == 0 and QUOTE_BYTE(out) == 0);
@@ -226,7 +226,7 @@ inline static Value(*) Finalize_Void_Untracked(Atom(*) out) {
 #define Init_Heavy_Void(out) \
     Init_Pack((out), PG_1_Quoted_Void_Array)
 
-inline static bool Is_Heavy_Void(const Cell* v) {
+INLINE bool Is_Heavy_Void(const Cell* v) {
     if (not Is_Pack(v))
         return false;
     const Cell* tail;
@@ -234,7 +234,7 @@ inline static bool Is_Heavy_Void(const Cell* v) {
     return (tail == at + 1) and Is_Meta_Of_Void(at);
 }
 
-inline static bool Is_Meta_Of_Heavy_Void(const Cell* v) {
+INLINE bool Is_Meta_Of_Heavy_Void(const Cell* v) {
     if (not Is_Meta_Of_Pack(v))
         return false;
     const Cell* tail;

@@ -40,14 +40,14 @@
 
 #define MAX_BITSET 0x7fffffff
 
-inline static bool BITS_NOT(const Series* s)
+INLINE bool BITS_NOT(const Series* s)
   { return s->misc.negated; }
 
-inline static void INIT_BITS_NOT(Series* s, bool negated)
+INLINE void INIT_BITS_NOT(Series* s, bool negated)
   { s->misc.negated = negated; }
 
 
-inline static Binary* VAL_BITSET(NoQuote(const Cell*) v) {
+INLINE Binary* VAL_BITSET(NoQuote(const Cell*) v) {
     assert(Cell_Heart(v) == REB_BITSET);
     return cast(Binary*, Cell_Node1(v));
 }
@@ -55,7 +55,7 @@ inline static Binary* VAL_BITSET(NoQuote(const Cell*) v) {
 #define VAL_BITSET_Ensure_Mutable(v) \
     m_cast(Binary*, VAL_BITSET(Ensure_Mutable(v)))
 
-inline static REBVAL *Init_Bitset(Cell* out, Binary* bits) {
+INLINE REBVAL *Init_Bitset(Cell* out, Binary* bits) {
     Reset_Unquoted_Header_Untracked(out, CELL_MASK_BITSET);
     Assert_Series_Managed(bits);
     Init_Cell_Node1(out, bits);

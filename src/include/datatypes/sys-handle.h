@@ -50,31 +50,31 @@
 #define VAL_HANDLE_CFUNC_P(v)           EXTRA(Any, (v)).cfunc
 
 
-inline static bool Is_Handle_Cfunc(NoQuote(const Cell*) v) {
+INLINE bool Is_Handle_Cfunc(NoQuote(const Cell*) v) {
     assert(Cell_Heart_Unchecked(v) == REB_HANDLE);
     return VAL_HANDLE_LENGTH_U(v) == 0;
 }
 
-inline static NoQuote(const Cell*) VAL_HANDLE_CANON(NoQuote(const Cell*) v) {
+INLINE NoQuote(const Cell*) VAL_HANDLE_CANON(NoQuote(const Cell*) v) {
     assert(Cell_Heart_Unchecked(v) == REB_HANDLE);
     if (Not_Cell_Flag_Unchecked(v, FIRST_IS_NODE))
         return v;  // changing handle instance won't be seen by copies
     return Array_Single(VAL_HANDLE_SINGULAR(v));  // has shared node
 }
 
-inline static Cell* mutable_VAL_HANDLE_CANON(Cell* v) {
+INLINE Cell* mutable_VAL_HANDLE_CANON(Cell* v) {
     assert(Cell_Heart_Unchecked(v) == REB_HANDLE);
     if (Not_Cell_Flag_Unchecked(v, FIRST_IS_NODE))
         return v;  // changing handle instance won't be seen by copies
     return Array_Single(VAL_HANDLE_SINGULAR(v));  // has shared node
 }
 
-inline static uintptr_t VAL_HANDLE_LEN(NoQuote(const Cell*) v) {
+INLINE uintptr_t VAL_HANDLE_LEN(NoQuote(const Cell*) v) {
     assert(not Is_Handle_Cfunc(v));
     return VAL_HANDLE_LENGTH_U(VAL_HANDLE_CANON(v));
 }
 
-inline static void *VAL_HANDLE_VOID_POINTER(NoQuote(const Cell*) v) {
+INLINE void *VAL_HANDLE_VOID_POINTER(NoQuote(const Cell*) v) {
     assert(not Is_Handle_Cfunc(v));
     return VAL_HANDLE_CDATA_P(VAL_HANDLE_CANON(v));
 }
@@ -82,35 +82,35 @@ inline static void *VAL_HANDLE_VOID_POINTER(NoQuote(const Cell*) v) {
 #define VAL_HANDLE_POINTER(T, v) \
     cast(T*, VAL_HANDLE_VOID_POINTER(v))
 
-inline static CFunction* VAL_HANDLE_CFUNC(NoQuote(const Cell*) v) {
+INLINE CFunction* VAL_HANDLE_CFUNC(NoQuote(const Cell*) v) {
     assert(Is_Handle_Cfunc(v));
     return VAL_HANDLE_CFUNC_P(VAL_HANDLE_CANON(v));
 }
 
-inline static CLEANUP_CFUNC *VAL_HANDLE_CLEANER(NoQuote(const Cell*) v) {
+INLINE CLEANUP_CFUNC *VAL_HANDLE_CLEANER(NoQuote(const Cell*) v) {
     assert(Cell_Heart_Unchecked(v) == REB_HANDLE);
     if (Not_Cell_Flag_Unchecked(v, FIRST_IS_NODE))
         return nullptr;
     return VAL_HANDLE_SINGULAR(v)->misc.cleaner;
 }
 
-inline static void SET_HANDLE_LEN(Cell* v, uintptr_t length)
+INLINE void SET_HANDLE_LEN(Cell* v, uintptr_t length)
   { VAL_HANDLE_LENGTH_U(mutable_VAL_HANDLE_CANON(v)) = length; }
 
-inline static void SET_HANDLE_CDATA(Cell* v, void *cdata) {
+INLINE void SET_HANDLE_CDATA(Cell* v, void *cdata) {
     Cell* canon = mutable_VAL_HANDLE_CANON(v);
     assert(VAL_HANDLE_LENGTH_U(canon) != 0);
     VAL_HANDLE_CDATA_P(canon) = cdata;
 }
 
-inline static void SET_HANDLE_CFUNC(Cell* v, CFunction* cfunc) {
+INLINE void SET_HANDLE_CFUNC(Cell* v, CFunction* cfunc) {
     assert(Is_Handle_Cfunc(v));
     Cell* canon = mutable_VAL_HANDLE_CANON(v);
     assert(VAL_HANDLE_LENGTH_U(canon) == 0);
     VAL_HANDLE_CFUNC_P(canon) = cfunc;
 }
 
-inline static REBVAL *Init_Handle_Cdata(
+INLINE REBVAL *Init_Handle_Cdata(
     Cell* out,
     void *cdata,
     uintptr_t length
@@ -128,7 +128,7 @@ inline static REBVAL *Init_Handle_Cdata(
     return cast(REBVAL*, out);
 }
 
-inline static REBVAL *Init_Handle_Cfunc(
+INLINE REBVAL *Init_Handle_Cfunc(
     Cell* out,
     CFunction* cfunc
 ){
@@ -144,7 +144,7 @@ inline static REBVAL *Init_Handle_Cfunc(
     return cast(REBVAL*, out);
 }
 
-inline static void Init_Handle_Managed_Common(
+INLINE void Init_Handle_Managed_Common(
     Cell* out,
     uintptr_t length,
     CLEANUP_CFUNC *cleaner
@@ -175,7 +175,7 @@ inline static void Init_Handle_Managed_Common(
     VAL_HANDLE_CDATA_P(out) = nullptr;  // or complains about not initializing
 }
 
-inline static REBVAL *Init_Handle_Cdata_Managed(
+INLINE REBVAL *Init_Handle_Cdata_Managed(
     Cell* out,
     void *cdata,
     uintptr_t length,
@@ -190,7 +190,7 @@ inline static REBVAL *Init_Handle_Cdata_Managed(
     return cast(REBVAL*, out);
 }
 
-inline static REBVAL *Init_Handle_Cdata_Managed_Cfunc(
+INLINE REBVAL *Init_Handle_Cdata_Managed_Cfunc(
     Cell* out,
     CFunction* cfunc,
     CLEANUP_CFUNC *cleaner

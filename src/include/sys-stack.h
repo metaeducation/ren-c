@@ -200,7 +200,7 @@
 //    position after top.  This is used by things like Pop_Stack() which want
 //    to know the address after the content.
 //
-inline static StackValue(*) Data_Stack_At(StackIndex i) {
+INLINE StackValue(*) Data_Stack_At(StackIndex i) {
     REBVAL *at = cast(REBVAL*, g_ds.array->content.dynamic.data) + i;  // [1]
 
     if (i == 0) {
@@ -242,7 +242,7 @@ inline static StackValue(*) Data_Stack_At(StackIndex i) {
 
 // Note: g_ds.movable_top is just TOP, but accessing TOP asserts on ENDs
 //
-inline static StackValue(*) PUSH(void) {
+INLINE StackValue(*) PUSH(void) {
     Assert_No_DataStack_Pointers_Extant();
 
     ++g_ds.index;
@@ -266,7 +266,7 @@ inline static StackValue(*) PUSH(void) {
 // use with an Init_Xxx() routine on the next push.
 //
 
-inline static void DROP(void) {
+INLINE void DROP(void) {
     Assert_No_DataStack_Pointers_Extant();
 
   #if DEBUG_POISON_DROPPED_STACK_CELLS
@@ -277,7 +277,7 @@ inline static void DROP(void) {
     --g_ds.movable_top;
 }
 
-inline static void Drop_Data_Stack_To(StackIndex i) {
+INLINE void Drop_Data_Stack_To(StackIndex i) {
     Assert_No_DataStack_Pointers_Extant();
 
     assert(TOP_INDEX >= i);

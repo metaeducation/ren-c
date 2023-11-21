@@ -392,6 +392,46 @@
 #endif
 
 
+//=//// INLINE MACRO FOR LEVERAGING C++ OPTIMIZATIONS /////////////////////=//
+//
+// "inline" has a long history in C/C++ of being different on different
+// compilers, and took a long time to get into the standard.  Once it was in
+// the standard it essentially didn't mean anything in particular about
+// inlining--just "this function is legal to appear in a header file and be
+// included in multiple source files without generating conflicts."  The
+// compiler makes no particular promises about actually inlining the code.
+//
+// R3-Alpha had few inline functions, but mostly used macros--in unsafe ways
+// (repeating arguments, risking double evaluations, lacking typechecking.)
+// Ren-C reworked the code to use inline functions fairly liberally, even
+// putting fairly large functions in header files to give the compiler the
+// opportunity to not need to push or pop registers to make a call.
+//
+// However, GCC in C99 mode requires you to say `static inline` or else you'll
+// get errors at link time.  This means that every translation unit has its
+// own copy of the code.  A study of the pathology of putting larger functions
+// in headers as inline with `static inline` on them found that about five
+// functions were getting inlined often enough to add 400K to the executable.
+// Moving them out of .h files and into .c files dropped that size, and was
+// only about *0.4%* slower (!) making it an obvious win to un-inline them.
+//
+// This led to experimentation with C++ builds just using `inline`, which
+// saved a not-insignificant 8% of space in an -O2 build, as well as being ever
+// so slightly faster.  Even if link-time-optimization was used, it still
+// saved 3% on space.
+//
+// The long story short here is that plain `inline` is better if you can use
+// it, but you can't use it in gcc in C99 mode (and probably not other places
+// like TinyC compiler or variants).  So this clunky INLINE macro actually
+// isn't some pre-standards anachronism...it has concrete benefits.
+//
+#if CPLUSPLUS_11
+    #define INLINE inline
+#else
+    #define INLINE static inline
+#endif
+
+
 //=//// CASTING MACROS ////////////////////////////////////////////////////=//
 //
 // This code is based on ideas in "Casts for the Masses (in C)":
@@ -625,7 +665,7 @@
 //
 #if CPLUSPLUS_11
     template<class TP>
-    inline static TP& ensureNullptr(TP& p) {
+    INLINE TP& ensureNullptr(TP& p) {
         assert(p == nullptr);
         return p;
     }
@@ -963,37 +1003,37 @@
         ((p) == p_cast(void*, cast(uintptr_t, 0xDECAFBAD)))
 #else
     template<class T>
-    inline static void Trash_Pointer_If_Debug(T* &p)
+    INLINE void Trash_Pointer_If_Debug(T* &p)
       { p = p_cast(T*, cast(uintptr_t, 0xDECAFBAD)); }
 
     template<class T>
-    inline static void SafeTrash_Pointer_If_Debug(T* &p)
+    INLINE void SafeTrash_Pointer_If_Debug(T* &p)
       { p = p_cast(T*, cast(uintptr_t, 0x5AFE5AFE)); }
 
     template<class T>
-    inline static void FreeTrash_Pointer_If_Debug(T* &p)
+    INLINE void FreeTrash_Pointer_If_Debug(T* &p)
       { p = p_cast(T*, cast(uintptr_t, 0xF4EEF4EEE)); }
 
     template<class T>
-    inline static bool Is_Pointer_Trash_Debug(T* p)
+    INLINE bool Is_Pointer_Trash_Debug(T* p)
       { return (p == p_cast(T*, cast(uintptr_t, 0xDECAFBAD))); }
 
     #if DEBUG_CHECK_OPTIONALS
         template<class P>
-        inline static void Trash_Pointer_If_Debug(Option(P) &option)
+        INLINE void Trash_Pointer_If_Debug(Option(P) &option)
           { Trash_Pointer_If_Debug(option.wrapped); }
 
         template<class P>
-        inline static bool Is_Pointer_Trash_Debug(Option(P) &option)
+        INLINE bool Is_Pointer_Trash_Debug(Option(P) &option)
           { return Is_Pointer_Trash_Debug(option.wrapped); }
     #endif
 
     template<class P>
-    inline static void Trash_Pointer_If_Debug(NeverNull(P) &nn)
+    INLINE void Trash_Pointer_If_Debug(NeverNull(P) &nn)
       { Trash_Pointer_If_Debug(nn.p); }
 
     template<class P>
-    inline static bool Is_Pointer_Trash_Debug(NeverNull(P) &nn)
+    INLINE bool Is_Pointer_Trash_Debug(NeverNull(P) &nn)
       { return Is_Pointer_Trash_Debug(nn.p); }
 #endif
 
@@ -1003,7 +1043,7 @@
 // It's useful when building macros to make inline functions that just check
 // a type, for example:
 //
-//      inline static Foo* ensure_foo(Foo* f) { return f; }
+//      INLINE Foo* ensure_foo(Foo* f) { return f; }
 //
 // This has the annoying property that you have to write that function and
 // put it somewhere.  But also, there's a problem with constness... if you
@@ -1244,10 +1284,10 @@
 #include <string.h>  // for strlen() etc, but also defines `size_t`
 
 #if CPLUSPLUS_11
-    inline static size_t strsize(const char *cp)
+    INLINE size_t strsize(const char *cp)
         { return strlen(cp); }
 
-    inline static size_t strsize(const unsigned char *bp)
+    INLINE size_t strsize(const unsigned char *bp)
         { return strlen((const char*)bp); }
 #else
     #define strsize(bp) \
@@ -1268,16 +1308,16 @@
      * particularly not the already-flipped type.  Instead of type_traits, 4
      * functions check in both C and C++ (here only during Debug builds):
      */
-    inline static unsigned char *b_cast(char *s)
+    INLINE unsigned char *b_cast(char *s)
         { return (unsigned char*)s; }
 
-    inline static const unsigned char *cb_cast(const char *s)
+    INLINE const unsigned char *cb_cast(const char *s)
         { return (const unsigned char*)s; }
 
-    inline static char *s_cast(unsigned char *s)
+    INLINE char *s_cast(unsigned char *s)
         { return (char*)s; }
 
-    inline static const char *cs_cast(const unsigned char *s)
+    INLINE const char *cs_cast(const unsigned char *s)
         { return (const char*)s; }
 #endif
 

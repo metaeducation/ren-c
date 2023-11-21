@@ -45,7 +45,7 @@
         FIRST_BYTE(x_cast(Node*, ensure(const Node*, (p))))  // x_cast, see [2]
 
 #else
-    inline static Byte& NODE_BYTE(const Node* node) {
+    INLINE Byte& NODE_BYTE(const Node* node) {
         assert(cast(Byte*, node)[0] & NODE_BYTEMASK_0x80_NODE);
         return x_cast(Byte*, node)[0];   // cast away constness, see [2]
     }
@@ -130,7 +130,7 @@ enum PointerDetectEnum {
 
 typedef enum PointerDetectEnum PointerDetect;
 
-inline static PointerDetect Detect_Rebol_Pointer(const void *p)
+INLINE PointerDetect Detect_Rebol_Pointer(const void *p)
 {
     Byte b = FIRST_BYTE(p);
 
@@ -176,7 +176,7 @@ inline static PointerDetect Detect_Rebol_Pointer(const void *p)
 // is required for correct functioning of some types.  (See notes on
 // alignment in %sys-rebval.h.)
 //
-inline static void *Try_Alloc_Pooled(PoolId pool_id)
+INLINE void *Try_Alloc_Pooled(PoolId pool_id)
 {
     Pool* pool = &g_mem.pools[pool_id];
     if (not pool->first) {  // pool has run out of nodes
@@ -233,7 +233,7 @@ inline static void *Try_Alloc_Pooled(PoolId pool_id)
 }
 
 
-inline static void *Alloc_Pooled(PoolId pool_id) {
+INLINE void *Alloc_Pooled(PoolId pool_id) {
     void *node = Try_Alloc_Pooled(pool_id);
     if (node)
         return node;
@@ -251,7 +251,7 @@ inline static void *Alloc_Pooled(PoolId pool_id) {
 // have NODE_FLAG_FREE...which will identify the node as not in use to anyone
 // who enumerates the nodes in the pool (such as the garbage collector).
 //
-inline static void Free_Pooled(PoolId pool_id, void* p)
+INLINE void Free_Pooled(PoolId pool_id, void* p)
 {
   #if DEBUG_MONITOR_SERIES
     if (p == g_mem.monitor_node) {

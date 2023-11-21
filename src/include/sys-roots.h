@@ -62,11 +62,11 @@
 // !!! Note: The FLAVOR_API state can be converted to an instruction for
 // releasing the handle...so beware using FLAVOR_API for detection.
 //
-inline static bool Is_Api_Value(const Cell* v) {
+INLINE bool Is_Api_Value(const Cell* v) {
     return did (v->header.bits & NODE_FLAG_ROOT);
 }
 
-inline static void Link_Api_Handle_To_Level(Array* a, Level* L)
+INLINE void Link_Api_Handle_To_Level(Array* a, Level* L)
 {
     // The head of the list isn't null, but points at the level, so that
     // API freeing operations can update the head of the list in the level
@@ -86,7 +86,7 @@ inline static void Link_Api_Handle_To_Level(Array* a, Level* L)
     L->alloc_value_list = a;
 }
 
-inline static void Unlink_Api_Handle_From_Level(Array* a)
+INLINE void Unlink_Api_Handle_From_Level(Array* a)
 {
     bool at_head = did (
         *cast(Byte*, MISC(ApiPrev, a)) & NODE_BYTEMASK_0x01_CELL
@@ -126,7 +126,7 @@ inline static void Unlink_Api_Handle_From_Level(Array* a)
 // Low-level allocation already pulled off making it VOID with just three
 // assignments, see Prep_Stub() for that magic.
 //
-inline static REBVAL *Alloc_Value(void)
+INLINE REBVAL *Alloc_Value(void)
 {
     Array* a = Make_Array_Core(
         1,
@@ -152,7 +152,7 @@ inline static REBVAL *Alloc_Value(void)
     return v;
 }
 
-inline static void Free_Value(REBVAL *v)
+INLINE void Free_Value(REBVAL *v)
 {
     assert(Is_Api_Value(v));
 
@@ -175,7 +175,7 @@ inline static void Free_Value(REBVAL *v)
 //
 // But assuming errors don't happen that often, it's cleaner to have one call.
 //
-inline static REBVAL *rebSpecific(const Cell* v, Specifier* specifier)
+INLINE REBVAL *rebSpecific(const Cell* v, Specifier* specifier)
     { return Derelativize(Alloc_Value(), v, specifier);}
 
 
@@ -189,7 +189,7 @@ inline static REBVAL *rebSpecific(const Cell* v, Specifier* specifier)
 // so that is something to think about.  At the moment, only L->out can
 // hold thrown returns, and these API handles are elsewhere.
 //
-inline static void Release_Api_Value_If_Unmanaged(const Atom(*) r) {
+INLINE void Release_Api_Value_If_Unmanaged(const Atom(*) r) {
     assert(Is_Node_Root_Bit_Set(r));
 
     if (Is_Nulled(r))  // tolerate isotopes
@@ -208,7 +208,7 @@ inline static void Release_Api_Value_If_Unmanaged(const Atom(*) r) {
 // in the dispatcher because it's too easy to think that will work for an
 // arbitrary local variable, which would be dead after the return.
 //
-inline static Atom(*) Native_Copy_Result_Untracked(
+INLINE Atom(*) Native_Copy_Result_Untracked(
     Atom(*) out,  // have to pass; comma at callsite -> "operand has no effect"
     Level* level_,
     Atom(const*) v

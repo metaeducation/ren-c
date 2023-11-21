@@ -45,7 +45,7 @@
 #define Binary_Tail(bin)        Series_Tail(Byte, (bin))
 #define Binary_Last(bin)        Series_Last(Byte, (bin))
 
-inline static Length Binary_Len(const Binary* s) {
+INLINE Length Binary_Len(const Binary* s) {
     assert(Series_Wide(s) == 1);
     return Series_Used(s);
 }
@@ -53,7 +53,7 @@ inline static Length Binary_Len(const Binary* s) {
 #define Term_Binary(bin) \
     *Binary_Tail(bin) = '\0'
 
-inline static void Term_Binary_Len(Binary* bin, Length len) {
+INLINE void Term_Binary_Len(Binary* bin, Length len) {
     assert(Series_Wide(bin) == 1);
     Set_Series_Used(bin, len);
     Term_Binary(bin);
@@ -64,7 +64,7 @@ inline static void Term_Binary_Len(Binary* bin, Length len) {
 // terminator in case they are aliased as UTF-8 later, e.g. `as word! binary`,
 // since it could be costly to give them that capacity after-the-fact.
 //
-inline static Binary* Make_Binary_Core(Length capacity, Flags flags)
+INLINE Binary* Make_Binary_Core(Length capacity, Flags flags)
 {
     assert(Flavor_From_Flags(flags) == 0);  // shouldn't pass in a flavor
 
@@ -84,7 +84,7 @@ inline static Binary* Make_Binary_Core(Length capacity, Flags flags)
 
 //=//// BINARY! VALUES ////////////////////////////////////////////////////=//
 
-inline static const Binary* VAL_BINARY(NoQuote(const Cell*) v) {
+INLINE const Binary* VAL_BINARY(NoQuote(const Cell*) v) {
     assert(Cell_Heart(v) == REB_BINARY);
     return c_cast(Binary*, VAL_SERIES(v));
 }
@@ -96,7 +96,7 @@ inline static const Binary* VAL_BINARY(NoQuote(const Cell*) v) {
     m_cast(Binary*, VAL_BINARY(Known_Mutable(v)))
 
 
-inline static const Byte* VAL_BINARY_SIZE_AT(
+INLINE const Byte* VAL_BINARY_SIZE_AT(
     Option(Size*) size_at_out,
     NoQuote(const Cell*) v
 ){

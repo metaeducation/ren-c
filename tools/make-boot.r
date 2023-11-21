@@ -467,7 +467,7 @@ for-each-typerange tr [
 
     e-types/emit newline
     e-types/emit 'tr {
-        inline static bool ANY_${TR/NAME}_KIND(Byte k)
+        INLINE bool ANY_${TR/NAME}_KIND(Byte k)
           { return k >= $<TR/START> and k < $<TR/END>; }
 
         #define ANY_${TR/NAME}(v) \
@@ -885,7 +885,7 @@ for-each [sw-cat list] boot-errors [
 
         e-errfuncs/emit [message cat id f-name params args] {
             /* $<Mold Message> */
-            inline static Context* Error_${F-Name}_Raw($<Delimit ", " Params>) {
+            INLINE Context* Error_${F-Name}_Raw($<Delimit ", " Params>) {
                 return Error(SYM_${CAT}, SYM_${ID}, $<Delimit ", " Args>);
             }
         }

@@ -111,7 +111,7 @@ extern const uint_fast32_t g_offsets_from_utf8[6];  // defined in %t-char.c
 
 #define MAX_UNI UNI_MAX_LEGAL_UTF32  // https://stackoverflow.com/a/20883643
 
-inline static uint_fast8_t Encoded_Size_For_Codepoint(Codepoint c) {
+INLINE uint_fast8_t Encoded_Size_For_Codepoint(Codepoint c) {
     if (c < cast(uint32_t, 0x80))
         return 1;
     if (c < cast(uint32_t, 0x800))
@@ -130,7 +130,7 @@ inline static uint_fast8_t Encoded_Size_For_Codepoint(Codepoint c) {
 // Encodes a single codepoint with known size (see Write_Codepoint() wrapper)
 // Be sure dst has at least `encoded_size` bytes available.
 //
-inline static void Encode_UTF8_Char(
+INLINE void Encode_UTF8_Char(
     Byte* dst,
     Codepoint c,
     uint_fast8_t encoded_size  // must match Encoded_Size_For_Codepoint(c)
@@ -155,7 +155,7 @@ inline static void Encode_UTF8_Char(
     }
 }
 
-inline static void Encode_UTF16_Pair(Codepoint codepoint, REBWCHAR *units)
+INLINE void Encode_UTF16_Pair(Codepoint codepoint, REBWCHAR *units)
 {
     uint32_t adjusted;
     assert(0x10000 <= codepoint and codepoint <= UNI_MAX_UTF16);
@@ -164,7 +164,7 @@ inline static void Encode_UTF16_Pair(Codepoint codepoint, REBWCHAR *units)
     units[1] = UNI_SUR_LOW_START | (adjusted & 0x3FF);
 }
 
-inline static Codepoint Decode_UTF16_Pair(const REBWCHAR *units)
+INLINE Codepoint Decode_UTF16_Pair(const REBWCHAR *units)
 {
     uint32_t adjusted;
     assert(UNI_SUR_HIGH_START <= units[0] and units[0] <= UNI_SUR_HIGH_END);
@@ -193,16 +193,16 @@ enum {
 //
 // Unicode "case folding" is more complex than this table used by R3-Alpha.
 
-inline static Codepoint UP_CASE(Codepoint c)
+INLINE Codepoint UP_CASE(Codepoint c)
   { assert(c != '\0'); return c < UNICODE_CASES ? Upper_Cases[c] : c; }
 
-inline static Codepoint LO_CASE(Codepoint c)
+INLINE Codepoint LO_CASE(Codepoint c)
   { assert(c != '\0'); return c < UNICODE_CASES ? Lower_Cases[c] : c; }
 
-inline static bool IS_WHITE(Codepoint c)
+INLINE bool IS_WHITE(Codepoint c)
   { assert(c != '\0'); return c <= 32 and ((White_Chars[c] & 1) != 0); }
 
-inline static bool IS_SPACE(Codepoint c)
+INLINE bool IS_SPACE(Codepoint c)
   { assert(c != '\0'); return c <= 32 and ((White_Chars[c] & 2) != 0); }
 
 
@@ -218,7 +218,7 @@ inline static bool IS_SPACE(Codepoint c)
 // If presented with a length > 4, this returns false.  The Unicode
 // definition of UTF-8 goes up to 4-byte sequences.
 //
-inline static bool Is_Legal_UTF8(const Byte* source, int length) {
+INLINE bool Is_Legal_UTF8(const Byte* source, int length) {
     Byte a;
     const Byte* srcptr = source + length;
 
@@ -291,7 +291,7 @@ inline static bool Is_Legal_UTF8(const Byte* source, int length) {
 // If failure due to insufficient data or malformed bytes, then NULL is
 // returned (size is not advanced).
 //
-inline static const Byte* Back_Scan_UTF8_Char(
+INLINE const Byte* Back_Scan_UTF8_Char(
     Codepoint *out,
     const Byte* bp,
     Option(Size*) size
@@ -380,7 +380,7 @@ inline static const Byte* Back_Scan_UTF8_Char(
 // strategy that splits ASCII codes to basic incrementation...otherwise it
 // would try to read continuation bytes past a `\0` string terminator.  :-/
 //
-inline static const Byte* Back_Scan_UTF8_Char_Unchecked(
+INLINE const Byte* Back_Scan_UTF8_Char_Unchecked(
     Codepoint *out,
     const Byte* bp
 ){

@@ -553,7 +553,7 @@ extern void reb_qsort_r(void *a, size_t n, size_t es, void *thunk, cmp_t *cmp);
 
 // Lives in %sys-bind.h, but needed for Copy_Cell() and Derelativize()
 //
-inline static void INIT_BINDING_MAY_MANAGE(
+INLINE void INIT_BINDING_MAY_MANAGE(
     Cell* out,
     const Series*  binding
 );
@@ -586,7 +586,7 @@ enum rebol_signals {
     SIG_INTERRUPT = 1 << 2
 };
 
-inline static void SET_SIGNAL(Flags f) { // used in %sys-series.h
+INLINE void SET_SIGNAL(Flags f) { // used in %sys-series.h
     g_ts.eval_signals |= f;
 
     if (g_ts.eval_countdown == -1)  // already set to trigger on next tick...
@@ -625,7 +625,7 @@ inline static void SET_SIGNAL(Flags f) { // used in %sys-series.h
 
 #include "sys-symbol.h"
 
-inline static Value(const*) Try_Lib_Var(SymId id) {
+INLINE Value(const*) Try_Lib_Var(SymId id) {
     assert(id < LIB_SYMS_MAX);
 
     // !!! We allow a "removed state", in case modules implement a
@@ -640,7 +640,7 @@ inline static Value(const*) Try_Lib_Var(SymId id) {
 #define Lib(name) \
     Try_Lib_Var(SYM_##name)
 
-inline static Value(*) Force_Lib_Var(SymId id) {
+INLINE Value(*) Force_Lib_Var(SymId id) {
     Value(*) var = m_cast(Value(*), Try_Lib_Var(id));
     if (var)
         return var;

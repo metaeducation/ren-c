@@ -195,32 +195,32 @@ typedef uintptr_t Flags;
 // these generic (so they work with uint_fast32_t, or uintptr_t, etc.) and
 // as long as there has to be an order, might as well be platform-independent.
 
-inline static uint16_t FIRST_UINT16(const void* p) {
+INLINE uint16_t FIRST_UINT16(const void* p) {
     const Byte* bp = c_cast(Byte*, p);
     return cast(uint16_t, bp[0] << 8) | bp[1];
 }
 
-inline static uint16_t SECOND_UINT16(const void* p) {
+INLINE uint16_t SECOND_UINT16(const void* p) {
     const Byte* bp = c_cast(Byte*, p);
     return cast(uint16_t, bp[2] << 8) | bp[3];
 }
 
-inline static void SET_FIRST_UINT16(void *p, uint16_t u) {
+INLINE void SET_FIRST_UINT16(void *p, uint16_t u) {
     Byte* bp = cast(Byte*, p);
     bp[0] = u / 256;
     bp[1] = u % 256;
 }
 
-inline static void SET_SECOND_UINT16(void* p, uint16_t u) {
+INLINE void SET_SECOND_UINT16(void* p, uint16_t u) {
     Byte* bp = cast(Byte*, p);
     bp[2] = u / 256;
     bp[3] = u % 256;
 }
 
-inline static uintptr_t FLAG_FIRST_UINT16(uint16_t u)
+INLINE uintptr_t FLAG_FIRST_UINT16(uint16_t u)
   { return FLAG_FIRST_BYTE(u / 256) | FLAG_SECOND_BYTE(u % 256); }
 
-inline static uintptr_t FLAG_SECOND_UINT16(uint16_t u)
+INLINE uintptr_t FLAG_SECOND_UINT16(uint16_t u)
   { return FLAG_THIRD_BYTE(u / 256) | FLAG_FOURTH_BYTE(u % 256); }
 
 

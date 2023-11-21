@@ -146,7 +146,7 @@
 // For the moment that is done with the CTX_ADJUNCT() field instead.
 //
 
-inline static const REBVAL *CTX_ARCHETYPE(Context* c) {  // read-only form
+INLINE const REBVAL *CTX_ARCHETYPE(Context* c) {  // read-only form
     const Series* varlist = CTX_VARLIST(c);
     if (Get_Series_Flag(varlist, INACCESSIBLE)) {  // a freed stub
         assert(Not_Series_Flag(varlist, DYNAMIC));  // variables are gone
@@ -158,22 +158,22 @@ inline static const REBVAL *CTX_ARCHETYPE(Context* c) {  // read-only form
 #define CTX_TYPE(c) \
     VAL_TYPE(CTX_ARCHETYPE(c))
 
-inline static REBVAL *CTX_ROOTVAR(Context* c)  // mutable archetype access
+INLINE REBVAL *CTX_ROOTVAR(Context* c)  // mutable archetype access
   { return m_cast(REBVAL*, CTX_ARCHETYPE(c)); }  // inline checks mutability
 
-inline static Phase* CTX_FRAME_PHASE(Context* c) {
+INLINE Phase* CTX_FRAME_PHASE(Context* c) {
     const REBVAL *archetype = CTX_ARCHETYPE(c);
     assert(VAL_TYPE(archetype) == REB_FRAME);
     return cast(Phase*, VAL_FRAME_PHASE_OR_LABEL_NODE(archetype));
 }
 
-inline static Context* CTX_FRAME_BINDING(Context* c) {
+INLINE Context* CTX_FRAME_BINDING(Context* c) {
     const REBVAL *archetype = CTX_ARCHETYPE(c);
     assert(VAL_TYPE(archetype) == REB_FRAME);
     return cast(Context*, BINDING(archetype));
 }
 
-inline static void INIT_VAL_CONTEXT_ROOTVAR_Core(
+INLINE void INIT_VAL_CONTEXT_ROOTVAR_Core(
     Cell* out,
     enum Reb_Kind kind,
     Array* varlist
@@ -195,7 +195,7 @@ inline static void INIT_VAL_CONTEXT_ROOTVAR_Core(
 #define INIT_VAL_CONTEXT_ROOTVAR(out,kind,varlist) \
     INIT_VAL_CONTEXT_ROOTVAR_Core(TRACK(out), (kind), (varlist))
 
-inline static void INIT_VAL_FRAME_ROOTVAR_Core(
+INLINE void INIT_VAL_FRAME_ROOTVAR_Core(
     Cell* out,
     Array* varlist,
     Phase* phase,
@@ -234,7 +234,7 @@ inline static void INIT_VAL_FRAME_ROOTVAR_Core(
 // is moved (see CELL_MASK_COPY regarding this mechanic)
 //
 
-inline static KeyList* CTX_KEYLIST(Context* c) {
+INLINE KeyList* CTX_KEYLIST(Context* c) {
     assert(CTX_TYPE(c) != REB_MODULE);
     if (Is_Node_A_Cell(BONUS(KeySource, CTX_VARLIST(c)))) {
         //
@@ -245,12 +245,12 @@ inline static KeyList* CTX_KEYLIST(Context* c) {
     return cast(KeyList*, BONUS(KeySource, CTX_VARLIST(c)));  // not Level
 }
 
-inline static void INIT_CTX_KEYLIST_SHARED(Context* c, Series* keylist) {
+INLINE void INIT_CTX_KEYLIST_SHARED(Context* c, Series* keylist) {
     Set_Subclass_Flag(KEYLIST, keylist, SHARED);
     INIT_BONUS_KEYSOURCE(CTX_VARLIST(c), keylist);
 }
 
-inline static void INIT_CTX_KEYLIST_UNIQUE(Context* c, KeyList *keylist) {
+INLINE void INIT_CTX_KEYLIST_UNIQUE(Context* c, KeyList *keylist) {
     assert(Not_Subclass_Flag(KEYLIST, keylist, SHARED));
     INIT_BONUS_KEYSOURCE(CTX_VARLIST(c), keylist);
 }
@@ -271,12 +271,12 @@ inline static void INIT_CTX_KEYLIST_UNIQUE(Context* c, KeyList *keylist) {
 // as it is valid.
 //
 
-inline static REBLEN CTX_LEN(Context* c) {
+INLINE REBLEN CTX_LEN(Context* c) {
     assert(CTX_TYPE(c) != REB_MODULE);
     return CTX_VARLIST(c)->content.dynamic.used - 1;  // -1 for archetype
 }
 
-inline static const Key* CTX_KEY(Context* c, REBLEN n) {
+INLINE const Key* CTX_KEY(Context* c, REBLEN n) {
     //
     // !!! Inaccessible contexts have to retain their keylists, at least
     // until all words bound to them have been adjusted somehow, because the
@@ -288,13 +288,13 @@ inline static const Key* CTX_KEY(Context* c, REBLEN n) {
     return Series_At(const Key, CTX_KEYLIST(c), n - 1);
 }
 
-inline static Value(*) CTX_VAR(Context* c, REBLEN n) {  // 1-based, no Cell*
+INLINE Value(*) CTX_VAR(Context* c, REBLEN n) {  // 1-based, no Cell*
     assert(Not_Series_Flag(CTX_VARLIST(c), INACCESSIBLE));
     assert(n != 0 and n <= CTX_LEN(c));
     return cast(Value(*), cast(Series*, c)->content.dynamic.data) + n;
 }
 
-inline static Value(*) MOD_VAR(Context* c, const Symbol* sym, bool strict) {
+INLINE Value(*) MOD_VAR(Context* c, const Symbol* sym, bool strict) {
     //
     // Optimization for Lib_Context for datatypes + natives + generics; use
     // tailored order of SYM_XXX constants to beeline for the storage.  The
@@ -341,13 +341,13 @@ inline static Value(*) MOD_VAR(Context* c, const Symbol* sym, bool strict) {
 #define CTX_VARS_HEAD(c) \
     (cast(Value(*), x_cast(Series*, (c))->content.dynamic.data) + 1)
 
-inline static const Key* CTX_KEYS(const Key* * tail, Context* c) {
+INLINE const Key* CTX_KEYS(const Key* * tail, Context* c) {
     Series* keylist = CTX_KEYLIST(c);
     *tail = Series_Tail(Key, keylist);
     return Series_Head(Key, keylist);
 }
 
-inline static Value(*) CTX_VARS(Value(const*) * tail, Context* c) {
+INLINE Value(*) CTX_VARS(Value(const*) * tail, Context* c) {
     Value(*) head = CTX_VARS_HEAD(c);
     *tail = head + x_cast(Series*, (c))->content.dynamic.used - 1;
     return head;
@@ -363,12 +363,12 @@ inline static Value(*) CTX_VARS(Value(const*) * tail, Context* c) {
 // way to navigate from a Context* to the Level* that's running it.
 //
 
-inline static bool Is_Frame_On_Stack(Context* c) {
+INLINE bool Is_Frame_On_Stack(Context* c) {
     assert(IS_FRAME(CTX_ARCHETYPE(c)));
     return Is_Node_A_Cell(BONUS(KeySource, CTX_VARLIST(c)));
 }
 
-inline static Level* CTX_LEVEL_IF_ON_STACK(Context* c) {
+INLINE Level* CTX_LEVEL_IF_ON_STACK(Context* c) {
     Node* keysource = BONUS(KeySource, CTX_VARLIST(c));
     if (not Is_Node_A_Cell(keysource))
         return nullptr; // e.g. came from MAKE FRAME! or Encloser_Dispatcher
@@ -381,14 +381,14 @@ inline static Level* CTX_LEVEL_IF_ON_STACK(Context* c) {
     return L;
 }
 
-inline static Level* CTX_LEVEL_MAY_FAIL(Context* c) {
+INLINE Level* CTX_LEVEL_MAY_FAIL(Context* c) {
     Level* L = CTX_LEVEL_IF_ON_STACK(c);
     if (not L)
         fail (Error_Frame_Not_On_Stack_Raw());
     return L;
 }
 
-inline static void FAIL_IF_INACCESSIBLE_CTX(Context* c) {
+INLINE void FAIL_IF_INACCESSIBLE_CTX(Context* c) {
     if (Get_Series_Flag(CTX_VARLIST(c), INACCESSIBLE)) {
         if (CTX_TYPE(c) == REB_FRAME)
             fail (Error_Expired_Frame_Raw()); // !!! different error?
@@ -406,7 +406,7 @@ inline static void FAIL_IF_INACCESSIBLE_CTX(Context* c) {
 // be checked elsewhere...or also check it before use.
 //
 
-inline static Context* VAL_CONTEXT(NoQuote(const Cell*) v) {
+INLINE Context* VAL_CONTEXT(NoQuote(const Cell*) v) {
     assert(ANY_CONTEXT_KIND(Cell_Heart_Unchecked(v)));
     Context* c;
 
@@ -440,32 +440,32 @@ inline static Context* VAL_CONTEXT(NoQuote(const Cell*) v) {
 // So extraction of the phase has to be sensitive to this.
 //
 
-inline static void INIT_VAL_FRAME_PHASE(Cell* v, Phase* phase) {
+INLINE void INIT_VAL_FRAME_PHASE(Cell* v, Phase* phase) {
     assert(IS_FRAME(v));  // may be marked protected (e.g. archetype)
     INIT_VAL_FRAME_PHASE_OR_LABEL(v, phase);
 }
 
-inline static Phase* VAL_FRAME_PHASE(NoQuote(const Cell*) v) {
+INLINE Phase* VAL_FRAME_PHASE(NoQuote(const Cell*) v) {
     Series* s = VAL_FRAME_PHASE_OR_LABEL(v);
     if (not s or IS_SYMBOL(s))  // ANONYMOUS or label, not a phase
         return CTX_FRAME_PHASE(VAL_CONTEXT(v));  // use archetype
     return cast(Phase*, s);  // cell has its own phase, return it
 }
 
-inline static bool IS_FRAME_PHASED(NoQuote(const Cell*) v) {
+INLINE bool IS_FRAME_PHASED(NoQuote(const Cell*) v) {
     assert(Cell_Heart(v) == REB_FRAME);
     Series* s = VAL_FRAME_PHASE_OR_LABEL(v);
     return s and not IS_SYMBOL(s);
 }
 
-inline static Option(const Symbol*) VAL_FRAME_LABEL(NoQuote(const Cell*) v) {
+INLINE Option(const Symbol*) VAL_FRAME_LABEL(NoQuote(const Cell*) v) {
     Series* s = VAL_FRAME_PHASE_OR_LABEL(v);  // VAL_ACTION_PARTIALS_OR_LABEL as well
     if (s and IS_SYMBOL(s))  // label in value
         return cast(Symbol*, s);
     return ANONYMOUS;  // has a phase (or partials), so no label (maybe findable if running)
 }
 
-inline static void INIT_VAL_FRAME_LABEL(
+INLINE void INIT_VAL_FRAME_LABEL(
     Cell* v,
     Option(const String*) label
 ){
@@ -489,7 +489,7 @@ inline static void INIT_VAL_FRAME_LABEL(
 // visible for that phase of execution and which aren't.
 //
 
-inline static const Key* VAL_CONTEXT_KEYS_HEAD(NoQuote(const Cell*) context)
+INLINE const Key* VAL_CONTEXT_KEYS_HEAD(NoQuote(const Cell*) context)
 {
     if (Cell_Heart(context) != REB_FRAME)
         return CTX_KEYS_HEAD(VAL_CONTEXT(context));
@@ -508,7 +508,7 @@ inline static const Key* VAL_CONTEXT_KEYS_HEAD(NoQuote(const Cell*) context)
 // that is its canon form from a single pointer...the REBVAL sitting in
 // the 0 slot of the context's varlist.
 //
-inline static REBVAL *Init_Context_Cell(
+INLINE REBVAL *Init_Context_Cell(
     Cell* out,
     enum Reb_Kind kind,
     Context* c
@@ -529,7 +529,7 @@ inline static REBVAL *Init_Context_Cell(
 #define Init_Port(out,c) \
     Init_Context_Cell((out), REB_PORT, (c))
 
-inline static REBVAL *Init_Frame(
+INLINE REBVAL *Init_Frame(
     Cell* out,
     Context* c,
     Option(const String*) label  // nullptr (ANONYMOUS) is okay
@@ -556,7 +556,7 @@ inline static REBVAL *Init_Frame(
 // Make sure a context's keylist is not shared.  Note any CTX_KEY() values
 // may go stale from this context after this call.
 //
-inline static Context* Force_KeyList_Unique(Context* context) {
+INLINE Context* Force_KeyList_Unique(Context* context) {
     bool was_changed = Expand_Context_KeyList_Core(context, 0);
     UNUSED(was_changed);  // keys wouldn't go stale if this was false
     return context;
@@ -576,7 +576,7 @@ inline static Context* Force_KeyList_Unique(Context* context) {
 //
 //=////////////////////////////////////////////////////////////////////////=//
 
-inline static void Deep_Freeze_Context(Context* c) {
+INLINE void Deep_Freeze_Context(Context* c) {
     Protect_Context(
         c,
         PROT_SET | PROT_DEEP | PROT_FREEZE
@@ -595,7 +595,7 @@ inline static void Deep_Freeze_Context(Context* c) {
 // was some validation checking.  This factors out that check instead of
 // repeating the code.
 //
-inline static void FAIL_IF_BAD_PORT(REBVAL *port) {
+INLINE void FAIL_IF_BAD_PORT(REBVAL *port) {
     if (not ANY_CONTEXT(port))
         fail (Error_Invalid_Port_Raw());
 
@@ -611,7 +611,7 @@ inline static void FAIL_IF_BAD_PORT(REBVAL *port) {
 // It's helpful to show when a test for a native port actor is being done,
 // rather than just having the code say IS_HANDLE().
 //
-inline static bool Is_Native_Port_Actor(const REBVAL *actor) {
+INLINE bool Is_Native_Port_Actor(const REBVAL *actor) {
     if (IS_HANDLE(actor))
         return true;
     assert(IS_OBJECT(actor));
@@ -619,7 +619,7 @@ inline static bool Is_Native_Port_Actor(const REBVAL *actor) {
 }
 
 
-inline static Value(const*) TRY_VAL_CONTEXT_VAR_CORE(
+INLINE Value(const*) TRY_VAL_CONTEXT_VAR_CORE(
     const REBVAL *context,
     const Symbol* symbol,
     bool writable
@@ -659,7 +659,7 @@ inline static Value(const*) TRY_VAL_CONTEXT_VAR_CORE(
 // filled-in heap memory can be directly used as the args for the invocation,
 // instead of needing to push a redundant run of stack-based memory cells.
 //
-inline static Context* Steal_Context_Vars(Context* c, Node* keysource) {
+INLINE Context* Steal_Context_Vars(Context* c, Node* keysource) {
     Stub* stub = CTX_VARLIST(c);
 
     // Rather than memcpy() and touch up the header and info to remove

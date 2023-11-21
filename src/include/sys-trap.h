@@ -308,7 +308,7 @@ struct JumpStruct {
 
 #if CPLUSPLUS_11  // add checking
     template <class T>
-    inline static ATTRIBUTE_NO_RETURN void Fail_Macro_Helper(T *p) {
+    INLINE ATTRIBUTE_NO_RETURN void Fail_Macro_Helper(T *p) {
         static_assert(
             std::is_same<T, Context>::value
             or std::is_same<T, const char>::value

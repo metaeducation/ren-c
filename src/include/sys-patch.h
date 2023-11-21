@@ -62,7 +62,7 @@
     #define VAL_SPECIFIER(v) \
         SPC(BINDING(v))
 #else
-    inline static Specifier* SPC(void *p) {
+    INLINE Specifier* SPC(void *p) {
         assert(p != SPECIFIED); // use SPECIFIED, not SPC(SPECIFIED)
 
         Context* c = cast(Context*, p);
@@ -73,7 +73,7 @@
         return x_cast(Specifier*, c);
     }
 
-    inline static Specifier* VAL_SPECIFIER(NoQuote(const Cell*) v) {
+    INLINE Specifier* VAL_SPECIFIER(NoQuote(const Cell*) v) {
         assert(ANY_ARRAYLIKE(v));
 
         Array* a = cast(Array*, BINDING(v));
@@ -100,7 +100,7 @@
 // Shared routine that handles linking the patch into the context's variant
 // list, and bumping the meta out of the misc into the misc if needed.
 //
-inline static Array* Make_Use_Core(
+INLINE Array* Make_Use_Core(
     Array* binding,  // must be a varlist or a LET patch
     Specifier* next,
     enum Reb_Kind kind,
@@ -238,7 +238,7 @@ inline static Array* Make_Use_Core(
 // be looked up with this specifier).  But if the binding chain contains very
 // large objects the linear searches might be expensive enough to be worth it.
 //
-inline static void Virtual_Bind_Patchify(
+INLINE void Virtual_Bind_Patchify(
     REBVAL *any_array,
     Context* ctx,
     enum Reb_Kind kind

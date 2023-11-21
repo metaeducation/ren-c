@@ -36,7 +36,7 @@
 // polymorphically access const data across ANY-STRING!, ANY-WORD!, and ISSUE!
 //
 
-inline static bool IS_CHAR_CELL(NoQuote(const Cell*) v) {
+INLINE bool IS_CHAR_CELL(NoQuote(const Cell*) v) {
     if (Cell_Heart(v) != REB_ISSUE)
         return false;
 
@@ -46,13 +46,13 @@ inline static bool IS_CHAR_CELL(NoQuote(const Cell*) v) {
     return EXTRA(Bytes, v).exactly_4[IDX_EXTRA_LEN] <= 1;  // codepoint
 }
 
-inline static bool IS_CHAR(const Cell* v) {
+INLINE bool IS_CHAR(const Cell* v) {
     if (not IS_ISSUE(v))
         return false;
     return IS_CHAR_CELL(v);
 }
 
-inline static Codepoint VAL_CHAR(NoQuote(const Cell*) v) {
+INLINE Codepoint VAL_CHAR(NoQuote(const Cell*) v) {
     assert(Not_Cell_Flag(v, ISSUE_HAS_NODE));
 
     if (EXTRA(Bytes, v).exactly_4[IDX_EXTRA_LEN] == 0)
@@ -70,16 +70,16 @@ inline static Codepoint VAL_CHAR(NoQuote(const Cell*) v) {
 // seems like a bad idea for something so cheap to calculate.  But keep a
 // separate entry point in case that cache comes back.
 //
-inline static Byte VAL_CHAR_ENCODED_SIZE(NoQuote(const Cell*) v)
+INLINE Byte VAL_CHAR_ENCODED_SIZE(NoQuote(const Cell*) v)
   { return Encoded_Size_For_Codepoint(VAL_CHAR(v)); }
 
-inline static const Byte* VAL_CHAR_ENCODED(NoQuote(const Cell*) v) {
+INLINE const Byte* VAL_CHAR_ENCODED(NoQuote(const Cell*) v) {
     assert(Cell_Heart(v) == REB_ISSUE and Not_Cell_Flag(v, ISSUE_HAS_NODE));
     assert(EXTRA(Bytes, v).exactly_4[IDX_EXTRA_LEN] <= 1);  // e.g. codepoint
     return PAYLOAD(Bytes, v).at_least_8;  // !!! '\0' terminated or not?
 }
 
-inline static REBVAL *Init_Issue_Utf8(
+INLINE REBVAL *Init_Issue_Utf8(
     Cell* out,
     Utf8(const*) utf8,  // previously validated UTF-8 (maybe not null term?)
     Size size,
@@ -109,7 +109,7 @@ inline static REBVAL *Init_Issue_Utf8(
 // If you know that a codepoint is good (e.g. it came from an ANY-STRING!)
 // this routine can be used.
 //
-inline static REBVAL *Init_Char_Unchecked_Untracked(Cell* out, Codepoint c) {
+INLINE REBVAL *Init_Char_Unchecked_Untracked(Cell* out, Codepoint c) {
     Reset_Unquoted_Header_Untracked(
         out,
         FLAG_HEART_BYTE(REB_ISSUE) | CELL_MASK_NO_NODES
@@ -143,7 +143,7 @@ inline static REBVAL *Init_Char_Unchecked_Untracked(Cell* out, Codepoint c) {
 #define Init_Char_Unchecked(out,c) \
     TRACK(Init_Char_Unchecked_Untracked((out), (c)))
 
-inline static Context* Maybe_Init_Char_Untracked(Cell* out, uint32_t c) {
+INLINE Context* Maybe_Init_Char_Untracked(Cell* out, uint32_t c) {
     if (c > MAX_UNI) {
         DECLARE_LOCAL (temp);
         return Error_Codepoint_Too_High_Raw(Init_Integer(temp, c));
@@ -209,7 +209,7 @@ inline static Context* Maybe_Init_Char_Untracked(Cell* out, uint32_t c) {
 #define Init_Blackhole(out) \
     Init_Char_Unchecked((out), 0)
 
-inline static bool Is_Blackhole(const Cell* v) {
+INLINE bool Is_Blackhole(const Cell* v) {
     if (not IS_CHAR(v))
         return false;
 
@@ -235,7 +235,7 @@ inline static bool Is_Blackhole(const Cell* v) {
 // !!! With the existence of AS, this might not be as useful as leaving
 // STRING! open for a different meaning (or an error as a sanity check).
 //
-inline static const Byte* VAL_BYTES_LIMIT_AT(
+INLINE const Byte* VAL_BYTES_LIMIT_AT(
     Size* size_out,
     const Cell* v,
     REBINT limit
@@ -269,7 +269,7 @@ inline static const Byte* VAL_BYTES_LIMIT_AT(
 // ANY-WORD! or an ANY-STRING! to get UTF-8 data.  This is a convenience
 // routine for handling that.
 //
-inline static Utf8(const*) VAL_UTF8_LEN_SIZE_AT_LIMIT(
+INLINE Utf8(const*) VAL_UTF8_LEN_SIZE_AT_LIMIT(
     Option(REBLEN*) length_out,
     Option(Size*) size_out,
     NoQuote(const Cell*) v,

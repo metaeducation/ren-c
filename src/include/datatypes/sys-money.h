@@ -55,7 +55,7 @@
 //     unsigned m0:32; /* significand, lowest part */
 //
 
-inline static deci VAL_MONEY_AMOUNT(NoQuote(const Cell*) v) {
+INLINE deci VAL_MONEY_AMOUNT(NoQuote(const Cell*) v) {
     deci amount;
 
     uintptr_t u = EXTRA(Any, v).u;
@@ -80,7 +80,7 @@ inline static deci VAL_MONEY_AMOUNT(NoQuote(const Cell*) v) {
     return amount;
 }
 
-inline static REBVAL *Init_Money(Cell* out, deci amount) {
+INLINE REBVAL *Init_Money(Cell* out, deci amount) {
     Reset_Unquoted_Header_Untracked(out, CELL_MASK_MONEY);
 
     EXTRA(Any, out).u = amount.m0;  // "significand, lowest part"

@@ -247,7 +247,7 @@ for-each api api-objects [do in api [
         return cscape/with {
             template <typename... Ts>
             $<MAYBE OPT-NORETURN>
-            inline static $<Returns> $<Name>($<Wrapper-Params>) {
+            inline $<Returns> $<Name>($<Wrapper-Params>) {
                 LIBREBOL_PACK_CPP_ARGS;
                 $<maybe opt-return_>LIBREBOL_PREFIX($<Name>)($<Proxied-Args>);
                 $<MAYBE OPT-DEAD-END>
@@ -450,6 +450,12 @@ e-lib/emit 'ver {
     /*
      * !!! Same story for DEAD_END as for ATTRIBUTE_NO_RETURN.  Necessary to
      * suppress spurious warnings.
+     *
+     * We use `inline static` here in the C function vs plain `inline` due to
+     * pragmatic issues.  See the comments on the INLINE macro in %reb-c.h for
+     * why C builds of the core define INLINE as `static inline` in C builds
+     * and `inline` in C++ builds.  That macro is avoided in this header to
+     * avoid potential conflicts with INLINE definitions in the utilizing code.
      */
     #if !defined(DEAD_END)  /* !!! duplicated in %reb-config.h */
         #if __has_builtin(__builtin_unreachable) || GCC_VERSION_AT_LEAST(4, 5)
@@ -778,34 +784,34 @@ e-lib/emit 'ver {
         #include <string>
         #include <type_traits>
 
-        inline static const void *to_rebarg(std::nullptr_t val)
+        inline const void *to_rebarg(std::nullptr_t val)
           { return val; }
 
-        inline static const void *to_rebarg(const REBVAL *val)
+        inline const void *to_rebarg(const REBVAL *val)
           { return val; }
 
-        inline static const void *to_rebarg(const REBINS *ins)
+        inline const void *to_rebarg(const REBINS *ins)
           { return ins; }
 
-        inline static const void *to_rebarg(const char *source)
+        inline const void *to_rebarg(const char *source)
           { return source; }  /* not TEXT!, but LOADable source code */
 
-        inline static const void *to_rebarg(bool b)
+        inline const void *to_rebarg(bool b)
           { return rebL(b); }
 
-        inline static const void *to_rebarg(int i)
+        inline const void *to_rebarg(int i)
           { return rebI(i); }
 
-        inline static const void *to_rebarg(double d)
+        inline const void *to_rebarg(double d)
           { return rebR(rebDecimal(d)); }
 
-        inline static const void *to_rebarg(const std::string &text)
+        inline const void *to_rebarg(const std::string &text)
           { return rebT(text.c_str()); }  /* std::string acts as TEXT! */
 
         /* !!! ideally this would not be included, but rebEND has to be
          * handled, and it needs to be a void* (any alignment).  See remarks.
          */
-        inline static const void *to_rebarg(const void *end)
+        inline const void *to_rebarg(const void *end)
           { return end; }
 
         /*

@@ -93,7 +93,7 @@
 // form.  But this is really low priority.
 //
 
-inline static bool Is_Valid_Sequence_Element(
+INLINE bool Is_Valid_Sequence_Element(
     enum Reb_Kind sequence_kind,
     const Cell* v
 ){
@@ -126,7 +126,7 @@ inline static bool Is_Valid_Sequence_Element(
 // the output cell passed in will be either a null (if the data was
 // too short) or it will be the first badly-typed value that was problematic.
 //
-inline static Context* Error_Bad_Sequence_Init(const REBVAL *v) {
+INLINE Context* Error_Bad_Sequence_Init(const REBVAL *v) {
     if (Is_Nulled(v))
         return Error_Sequence_Too_Short_Raw();
     fail (Error_Bad_Sequence_Item_Raw(v));
@@ -156,7 +156,7 @@ inline static Context* Error_Bad_Sequence_Init(const REBVAL *v) {
 // mechanics that optimized as a word were just changed to make a real WORD!
 // with SYMBOL_FLAG_ESCAPE_IN_SEQUENCE.
 //
-inline static REBVAL *Init_Any_Sequence_1(Cell* out, enum Reb_Kind kind) {
+INLINE REBVAL *Init_Any_Sequence_1(Cell* out, enum Reb_Kind kind) {
     if (ANY_PATH_KIND(kind))
         Init_Word(out, Canon(SLASH_1));
     else {
@@ -176,7 +176,7 @@ inline static REBVAL *Init_Any_Sequence_1(Cell* out, enum Reb_Kind kind) {
 // R3-Alpha, the underlying representation of `/foo` in the cell is the same
 // as an ANY-WORD!.
 
-inline static REBVAL *Try_Leading_Blank_Pathify(
+INLINE REBVAL *Try_Leading_Blank_Pathify(
     REBVAL *v,
     enum Reb_Kind kind
 ){
@@ -228,7 +228,7 @@ inline static REBVAL *Try_Leading_Blank_Pathify(
 // This will likely be easy to reuse in an ISSUE!+CHAR! unification, so
 // revisit this low-priority idea at that time.
 
-inline static REBVAL *Init_Any_Sequence_Bytes(
+INLINE REBVAL *Init_Any_Sequence_Bytes(
     Cell* out,
     enum Reb_Kind kind,
     const Byte* data,
@@ -260,7 +260,7 @@ inline static REBVAL *Init_Any_Sequence_Bytes(
 #define Init_Tuple_Bytes(out,data,len) \
     Init_Any_Sequence_Bytes((out), REB_TUPLE, (data), (len));
 
-inline static REBVAL *Try_Init_Any_Sequence_All_Integers(
+INLINE REBVAL *Try_Init_Any_Sequence_All_Integers(
     Cell* out,
     enum Reb_Kind kind,
     const Cell* head,  // NOTE: Can't use PUSH() or evaluation
@@ -303,7 +303,7 @@ inline static REBVAL *Try_Init_Any_Sequence_All_Integers(
 // using the "pairing" nodes.  This should eliminate the need for a separate
 // REB_PAIR type, making PAIR! just a type constraint on TUPLE!s.
 
-inline static REBVAL *Try_Init_Any_Sequence_Pairlike_Core(
+INLINE REBVAL *Try_Init_Any_Sequence_Pairlike_Core(
     Sink(Value(*)) out,
     enum Reb_Kind kind,
     const Cell* v1,
@@ -384,7 +384,7 @@ inline static REBVAL *Try_Init_Any_Sequence_Pairlike_Core(
 // it's not a PATH!...because the optimizations on special cases are all
 // in this code.
 //
-inline static Value(*) Try_Pop_Sequence_Or_Element_Or_Nulled(
+INLINE Value(*) Try_Pop_Sequence_Or_Element_Or_Nulled(
     Sink(Value(*)) out,  // the error-triggering value if nullptr returned
     enum Reb_Kind kind,
     StackIndex base
@@ -462,7 +462,7 @@ inline static Value(*) Try_Pop_Sequence_Or_Element_Or_Nulled(
 // take as immutable...or you can create a `/foo`-style path in a more
 // optimized fashion using Refinify()
 
-inline static REBLEN VAL_SEQUENCE_LEN(NoQuote(const Cell*) sequence) {
+INLINE REBLEN VAL_SEQUENCE_LEN(NoQuote(const Cell*) sequence) {
     assert(ANY_SEQUENCE_KIND(Cell_Heart(sequence)));
 
     if (Not_Cell_Flag(sequence, SEQUENCE_HAS_NODE)) {  // compressed bytes
@@ -502,7 +502,7 @@ inline static REBLEN VAL_SEQUENCE_LEN(NoQuote(const Cell*) sequence) {
 // just that...it also assures that the caller isn't passing in a REBVAL*
 // and then using it as if it were fully specified.  It serves two purposes.
 //
-inline static const Cell* VAL_SEQUENCE_AT(
+INLINE const Cell* VAL_SEQUENCE_AT(
     Cell* store,  // return may not point at this cell, ^-- SEE WHY!
     NoQuote(const Cell*) sequence,
     REBLEN n
@@ -548,7 +548,7 @@ inline static const Cell* VAL_SEQUENCE_AT(
     }
 }
 
-inline static Value(*) GET_SEQUENCE_AT(
+INLINE Value(*) GET_SEQUENCE_AT(
     Sink(Value(*)) out,
     NoQuote(const Cell*) sequence,
     Specifier* specifier,
@@ -594,7 +594,7 @@ inline static Value(*) GET_SEQUENCE_AT(
     }
 }
 
-inline static Byte VAL_SEQUENCE_BYTE_AT(
+INLINE Byte VAL_SEQUENCE_BYTE_AT(
     NoQuote(const Cell*) sequence,
     REBLEN n
 ){
@@ -605,7 +605,7 @@ inline static Byte VAL_SEQUENCE_BYTE_AT(
     return VAL_UINT8(at);  // !!! All callers of this routine need vetting
 }
 
-inline static Specifier* VAL_SEQUENCE_SPECIFIER(
+INLINE Specifier* VAL_SEQUENCE_SPECIFIER(
     NoQuote(const Cell*) sequence
 ){
     assert(ANY_SEQUENCE_KIND(Cell_Heart(sequence)));
@@ -643,7 +643,7 @@ inline static Specifier* VAL_SEQUENCE_SPECIFIER(
 // tuples could only contain byte-sized integers.  All callsites referring
 // to it are transitional.
 //
-inline static bool Did_Get_Sequence_Bytes(
+INLINE bool Did_Get_Sequence_Bytes(
     void* buf,
     const Cell* sequence,
     Size buf_size
@@ -670,7 +670,7 @@ inline static bool Did_Get_Sequence_Bytes(
     return true;
 }
 
-inline static void Get_Tuple_Bytes(
+INLINE void Get_Tuple_Bytes(
     void *buf,
     const Cell* tuple,
     Size buf_size
@@ -687,14 +687,14 @@ inline static void Get_Tuple_Bytes(
 
 //=//// REFINEMENTS AND PREDICATES ////////////////////////////////////////=//
 
-inline static REBVAL *Refinify(REBVAL *v) {
+INLINE REBVAL *Refinify(REBVAL *v) {
     bool success = (Try_Leading_Blank_Pathify(v, REB_PATH) != nullptr);
     assert(success);
     UNUSED(success);
     return v;
 }
 
-inline static bool IS_REFINEMENT_CELL(NoQuote(const Cell*) v) {
+INLINE bool IS_REFINEMENT_CELL(NoQuote(const Cell*) v) {
     assert(ANY_PATH_KIND(Cell_Heart(v)));
     if (Not_Cell_Flag(v, SEQUENCE_HAS_NODE))
         return false;
@@ -709,12 +709,12 @@ inline static bool IS_REFINEMENT_CELL(NoQuote(const Cell*) v) {
     return Get_Cell_Flag(v, REFINEMENT_LIKE);  // !!! Review: test this first?
 }
 
-inline static bool IS_REFINEMENT(const Cell* v) {
+INLINE bool IS_REFINEMENT(const Cell* v) {
     assert(ANY_PATH(v));
     return IS_REFINEMENT_CELL(v);
 }
 
-inline static bool IS_PREDICATE1_CELL(NoQuote(const Cell*) v) {
+INLINE bool IS_PREDICATE1_CELL(NoQuote(const Cell*) v) {
     if (Cell_Heart(v) != REB_TUPLE)
         return false;
 
@@ -731,7 +731,7 @@ inline static bool IS_PREDICATE1_CELL(NoQuote(const Cell*) v) {
     return Get_Cell_Flag(v, REFINEMENT_LIKE);  // !!! Review: test this first?
 }
 
-inline static const Symbol* VAL_REFINEMENT_SYMBOL(
+INLINE const Symbol* VAL_REFINEMENT_SYMBOL(
     NoQuote(const Cell*) v
 ){
     assert(IS_REFINEMENT_CELL(v));
@@ -740,7 +740,7 @@ inline static const Symbol* VAL_REFINEMENT_SYMBOL(
 
 // !!! Temporary workaround for what was IS_META_PATH() (now not its own type)
 //
-inline static bool IS_QUOTED_PATH(const Cell* v) {
+INLINE bool IS_QUOTED_PATH(const Cell* v) {
     return VAL_NUM_QUOTES(v) == 1
         and Cell_Heart(v) == REB_PATH;
 }

@@ -48,7 +48,7 @@
 #define Is_True(out)        Is_Word_Isotope_With_Id((out), SYM_TRUE)
 #define Is_False(out)       Is_Word_Isotope_With_Id((out), SYM_FALSE)
 
-inline static bool IS_LOGIC(const Cell* v) {
+INLINE bool IS_LOGIC(const Cell* v) {
     ASSERT_CELL_READABLE_EVIL_MACRO(v);
 
     if (QUOTE_BYTE(v) != ISOTOPE_0)
@@ -64,7 +64,7 @@ inline static bool IS_LOGIC(const Cell* v) {
 #define Init_Logic(out,flag) \
     Init_Word_Isotope((out), (flag) ? Canon(TRUE) : Canon(FALSE))
 
-inline static bool VAL_LOGIC(const Cell* v) {
+INLINE bool VAL_LOGIC(const Cell* v) {
     assert(Is_Isotope(v));
     Option(SymId) id = VAL_WORD_ID(v);
     if (id == SYM_TRUE)
@@ -75,7 +75,7 @@ inline static bool VAL_LOGIC(const Cell* v) {
     fail ("Attempt to test VAL_LOGIC() on non-LOGIC!");  // shouldn't happen
 }
 
-inline static bool Is_Truthy(const Cell* v) {
+INLINE bool Is_Truthy(const Cell* v) {
     ASSERT_CELL_READABLE_EVIL_MACRO(v);
 
     if (QUOTE_BYTE(v) == ISOTOPE_0) {
@@ -109,7 +109,7 @@ inline static bool Is_Truthy(const Cell* v) {
 // evaluations safe would be limiting, e.g. `foo: any [false-thing []]`...
 // So ANY and ALL use Is_Truthy() directly
 //
-inline static bool Is_Conditional_True(const REBVAL *v) {
+INLINE bool Is_Conditional_True(const REBVAL *v) {
     if (Is_Falsey(v))
         return false;
     if (IS_BLOCK(v))
@@ -122,7 +122,7 @@ inline static bool Is_Conditional_True(const REBVAL *v) {
     (not Is_Conditional_True(v))
 
 
-inline static bool Is_Meta_Of_False(const Cell* v) {
+INLINE bool Is_Meta_Of_False(const Cell* v) {
     return (
         QUOTE_BYTE(v) == QUASI_2
         and HEART_BYTE(v) == REB_WORD
@@ -133,7 +133,7 @@ inline static bool Is_Meta_Of_False(const Cell* v) {
 #define Init_Heavy_False(out) \
     Init_Pack((out), PG_1_Meta_False_Array)
 
-inline static bool Is_Heavy_False(Atom(const*) v) {
+INLINE bool Is_Heavy_False(Atom(const*) v) {
     if (not Is_Pack(v))
         return false;
     const Cell* tail;
@@ -141,7 +141,7 @@ inline static bool Is_Heavy_False(Atom(const*) v) {
     return (tail == at + 1) and Is_Meta_Of_False(at);
 }
 
-inline static Atom(*) Isotopify_If_Falsey(Atom(*) v) {
+INLINE Atom(*) Isotopify_If_Falsey(Atom(*) v) {
     if (Is_Nulled(v))
         Init_Heavy_Null(v);
     else if (IS_LOGIC(v) and VAL_LOGIC(v) == false)
@@ -151,7 +151,7 @@ inline static Atom(*) Isotopify_If_Falsey(Atom(*) v) {
 
 // Turns voids and nulls into boxed form to be THEN-reactive, vs ELSE
 //
-inline static Bounce Native_Branched_Result(Level* level_, Atom(*) v) {
+INLINE Bounce Native_Branched_Result(Level* level_, Atom(*) v) {
     assert(v == level_->out);  // would not be zero cost if we supported copy
     if (Is_Void(v))
         Init_Heavy_Void(v);

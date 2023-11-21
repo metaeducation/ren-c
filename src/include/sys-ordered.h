@@ -62,7 +62,7 @@
 //
 // All the inert types are grouped together to make this test fast.
 
-inline static bool ANY_INERT_KIND(Byte k) {
+INLINE bool ANY_INERT_KIND(Byte k) {
     assert(k != REB_VOID);  // don't call on void (0 in enum, breaks pattern)
     return k <= REB_BLOCK and k != REB_FRAME;  // hack for frame
 }
@@ -92,42 +92,42 @@ inline static bool ANY_INERT_KIND(Byte k) {
 // putting blocks/paths/words/tuples/groups together.  It means ANY_ARRAY() is
 // slower but these tests can be faster.
 
-inline static enum Reb_Kind PLAINIFY_ANY_GET_KIND(Byte k) {
+INLINE enum Reb_Kind PLAINIFY_ANY_GET_KIND(Byte k) {
     assert(ANY_GET_KIND(k));
     return cast(enum Reb_Kind, k - 10);
 }
 
-inline static enum Reb_Kind PLAINIFY_ANY_SET_KIND(Byte k) {
+INLINE enum Reb_Kind PLAINIFY_ANY_SET_KIND(Byte k) {
     assert(ANY_SET_KIND(k));
     return cast(enum Reb_Kind, k - 5);
 }
 
-inline static enum Reb_Kind PLAINIFY_ANY_META_KIND(Byte k) {
+INLINE enum Reb_Kind PLAINIFY_ANY_META_KIND(Byte k) {
     assert(ANY_META_KIND(k));
     return cast(enum Reb_Kind, k - 15);
 }
 
-inline static enum Reb_Kind SETIFY_ANY_PLAIN_KIND(Byte k) {
+INLINE enum Reb_Kind SETIFY_ANY_PLAIN_KIND(Byte k) {
     assert(ANY_PLAIN_KIND(k));
     return cast(enum Reb_Kind, k + 5);
 }
 
-inline static enum Reb_Kind GETIFY_ANY_PLAIN_KIND(Byte k) {
+INLINE enum Reb_Kind GETIFY_ANY_PLAIN_KIND(Byte k) {
     assert(ANY_PLAIN_KIND(k));
     return cast(enum Reb_Kind, k + 10);
 }
 
-inline static enum Reb_Kind METAFY_ANY_PLAIN_KIND(Byte k) {
+INLINE enum Reb_Kind METAFY_ANY_PLAIN_KIND(Byte k) {
     assert(ANY_PLAIN_KIND(k));
     return cast(enum Reb_Kind, k + 15);
 }
 
-inline static enum Reb_Kind THEIFY_ANY_PLAIN_KIND(Byte k) {
+INLINE enum Reb_Kind THEIFY_ANY_PLAIN_KIND(Byte k) {
     assert(ANY_PLAIN_KIND(k));
     return cast(enum Reb_Kind, k - 10);
 }
 
-inline static enum Reb_Kind TYPEIFY_ANY_PLAIN_KIND(Byte k) {
+INLINE enum Reb_Kind TYPEIFY_ANY_PLAIN_KIND(Byte k) {
     assert(ANY_PLAIN_KIND(k));
     return cast(enum Reb_Kind, k - 5);
 }
@@ -139,7 +139,7 @@ inline static enum Reb_Kind TYPEIFY_ANY_PLAIN_KIND(Byte k) {
 //
 // Order is: block, group, path, word.
 
-inline static enum Reb_Kind WORDIFY_KIND(Byte k) {
+INLINE enum Reb_Kind WORDIFY_KIND(Byte k) {
     if (ANY_BLOCK_KIND(k))
         return cast(enum Reb_Kind, k + 3);
     if (ANY_GROUP_KIND(k))
@@ -150,7 +150,7 @@ inline static enum Reb_Kind WORDIFY_KIND(Byte k) {
     return cast(enum Reb_Kind, k);
 }
 
-inline static enum Reb_Kind PATHIFY_KIND(Byte k) {
+INLINE enum Reb_Kind PATHIFY_KIND(Byte k) {
     if (ANY_BLOCK_KIND(k))
         return cast(enum Reb_Kind, k + 2);
     if (ANY_GROUP_KIND(k))
@@ -161,7 +161,7 @@ inline static enum Reb_Kind PATHIFY_KIND(Byte k) {
     return cast(enum Reb_Kind, k - 1);
 }
 
-inline static enum Reb_Kind GROUPIFY_KIND(Byte k) {
+INLINE enum Reb_Kind GROUPIFY_KIND(Byte k) {
     if (ANY_BLOCK_KIND(k))
         return cast(enum Reb_Kind, k + 1);
     if (ANY_GROUP_KIND(k))
@@ -172,7 +172,7 @@ inline static enum Reb_Kind GROUPIFY_KIND(Byte k) {
     return cast(enum Reb_Kind, k - 2);
 }
 
-inline static enum Reb_Kind BLOCKIFY_KIND(Byte k) {
+INLINE enum Reb_Kind BLOCKIFY_KIND(Byte k) {
     if (ANY_BLOCK_KIND(k))
         return cast(enum Reb_Kind, k);
     if (ANY_GROUP_KIND(k))

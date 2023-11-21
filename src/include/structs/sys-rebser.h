@@ -302,7 +302,7 @@
 #define FLAG_FLAVOR_BYTE(flavor)        FLAG_THIRD_BYTE(flavor)
 #define FLAG_FLAVOR(name)               FLAG_FLAVOR_BYTE(FLAVOR_##name)
 
-inline static Flavor Flavor_From_Flags(Flags flags)
+INLINE Flavor Flavor_From_Flags(Flags flags)
   { return cast(Flavor, THIRD_BYTE(&flags)); }
 
 #define Series_Flavor(s) \

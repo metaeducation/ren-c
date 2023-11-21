@@ -59,12 +59,12 @@
 // bias to having to do this or Do_XXX() versions explode into passing
 // mutability parameters all over the place.  This is better.)
 //
-inline static void Tweak_Non_Const_To_Explicitly_Mutable(Value(*) source) {
+INLINE void Tweak_Non_Const_To_Explicitly_Mutable(Value(*) source) {
     if (Not_Cell_Flag(source, CONST))
         Set_Cell_Flag(source, EXPLICITLY_MUTABLE);
 }
 
-inline static bool Do_Any_Array_At_Core_Throws(
+INLINE bool Do_Any_Array_At_Core_Throws(
     Atom(*) out,
     Flags flags,
     NoQuote(const Cell*) any_array,
@@ -80,7 +80,7 @@ inline static bool Do_Any_Array_At_Core_Throws(
     Do_Any_Array_At_Core_Throws(out, LEVEL_MASK_NONE, (any_array), (specifier))
 
 
-inline static bool Do_Branch_Throws(  // !!! Legacy code, should be phased out
+INLINE bool Do_Branch_Throws(  // !!! Legacy code, should be phased out
     Atom(*) out,
     const REBVAL *branch
 ){
@@ -99,7 +99,7 @@ inline static bool Do_Branch_Throws(  // !!! Legacy code, should be phased out
 }
 
 
-inline static Bounce Run_Generic_Dispatch_Core(
+INLINE Bounce Run_Generic_Dispatch_Core(
     const REBVAL *first_arg,  // !!! Is this always same as Level_Arg(L, 1)?
     Level* L,
     const Symbol* verb
@@ -128,7 +128,7 @@ inline static Bounce Run_Generic_Dispatch_Core(
 // cases they have to look at by moving any ordinary outputs into L->out, and
 // make throwing the only exceptional case they have to handle.
 //
-inline static bool Run_Generic_Dispatch_Throws(
+INLINE bool Run_Generic_Dispatch_Throws(
     const REBVAL *first_arg,  // !!! Is this always same as Level_Arg(L, 1)?
     Level* L,
     const Symbol* verb

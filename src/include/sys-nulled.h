@@ -63,7 +63,7 @@
 //   frame output.
 //
 
-inline static bool Is_Nulled(const Cell* v) {
+INLINE bool Is_Nulled(const Cell* v) {
     ASSERT_CELL_READABLE_EVIL_MACRO(v);
     return QUOTE_BYTE(v) == 0
         and HEART_BYTE(v) == REB_WORD
@@ -83,7 +83,7 @@ inline static bool Is_Nulled(const Cell* v) {
 #define Init_Quasi_Null(out) \
     Init_Quasi_Word((out), Canon(NULL))
 
-inline static bool Is_Quasi_Null(const Cell* v) {
+INLINE bool Is_Quasi_Null(const Cell* v) {
     if (not Is_Quasi(v))
         return false;
     if (HEART_BYTE(v) != REB_WORD)
@@ -122,7 +122,7 @@ inline static bool Is_Quasi_Null(const Cell* v) {
 #define Init_Meta_Of_Heavy_Null(out) \
     TRACK(Init_Pack_Untracked((out), QUASI_2, (a)))
 
-inline static bool Is_Heavy_Null(const Cell* v) {
+INLINE bool Is_Heavy_Null(const Cell* v) {
     if (not Is_Pack(v))
         return false;
     const Cell* tail;
@@ -130,7 +130,7 @@ inline static bool Is_Heavy_Null(const Cell* v) {
     return (tail == at + 1) and Is_Meta_Of_Null(at);
 }
 
-inline static bool Is_Meta_Of_Heavy_Null(const Cell* v) {
+INLINE bool Is_Meta_Of_Heavy_Null(const Cell* v) {
     if (not Is_Meta_Of_Pack(v))
         return false;
     const Cell* tail;
@@ -138,7 +138,7 @@ inline static bool Is_Meta_Of_Heavy_Null(const Cell* v) {
     return (tail == at + 1) and Is_Meta_Of_Null(at);
 }
 
-inline static Atom(*) Isotopify_If_Nulled(Atom(*) v) {
+INLINE Atom(*) Isotopify_If_Nulled(Atom(*) v) {
     if (Is_Nulled(v))
         Init_Heavy_Null(v);
     return v;

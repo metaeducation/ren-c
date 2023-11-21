@@ -90,7 +90,7 @@
 // is at MAKE-time, o3 put its binding into any functions bound to o2 or o1,
 // thus getting its overriding behavior.
 //
-inline static bool Is_Overriding_Context(Context* stored, Context* override)
+INLINE bool Is_Overriding_Context(Context* stored, Context* override)
 {
     Node* stored_source = BONUS(KeySource, CTX_VARLIST(stored));
     Node* temp = BONUS(KeySource, CTX_VARLIST(override));
@@ -152,7 +152,7 @@ struct Reb_Binder {
 };
 
 
-inline static void INIT_BINDER(struct Reb_Binder *binder) {
+INLINE void INIT_BINDER(struct Reb_Binder *binder) {
   #if defined(NDEBUG)
     UNUSED(binder);
   #else
@@ -165,7 +165,7 @@ inline static void INIT_BINDER(struct Reb_Binder *binder) {
 }
 
 
-inline static void SHUTDOWN_BINDER(struct Reb_Binder *binder) {
+INLINE void SHUTDOWN_BINDER(struct Reb_Binder *binder) {
   #if !defined(NDEBUG)
     assert(binder->count == 0);
 
@@ -180,7 +180,7 @@ inline static void SHUTDOWN_BINDER(struct Reb_Binder *binder) {
 
 // Tries to set the binder index, but return false if already there.
 //
-inline static bool Try_Add_Binder_Index(
+INLINE bool Try_Add_Binder_Index(
     struct Reb_Binder *binder,
     const Symbol* sym,
     REBINT index
@@ -212,7 +212,7 @@ inline static bool Try_Add_Binder_Index(
 }
 
 
-inline static void Add_Binder_Index(
+INLINE void Add_Binder_Index(
     struct Reb_Binder *binder,
     const Symbol* s,
     REBINT index
@@ -223,7 +223,7 @@ inline static void Add_Binder_Index(
 }
 
 
-inline static REBINT Get_Binder_Index_Else_0( // 0 if not present
+INLINE REBINT Get_Binder_Index_Else_0( // 0 if not present
     struct Reb_Binder *binder,
     const Symbol* s
 ){
@@ -238,7 +238,7 @@ inline static REBINT Get_Binder_Index_Else_0( // 0 if not present
 }
 
 
-inline static REBINT Remove_Binder_Index_Else_0( // return old value if there
+INLINE REBINT Remove_Binder_Index_Else_0( // return old value if there
     struct Reb_Binder *binder,
     const Symbol* str
 ){
@@ -263,7 +263,7 @@ inline static REBINT Remove_Binder_Index_Else_0( // return old value if there
 }
 
 
-inline static void Remove_Binder_Index(
+INLINE void Remove_Binder_Index(
     struct Reb_Binder *binder,
     const Symbol* s
 ){
@@ -306,7 +306,7 @@ struct Reb_Collector {
 // 1. It is okay if the context has been decayed, because the rootvar will
 //    still be accessible in the decayed stub.
 //
-inline static Series* SPC_BINDING(Specifier* specifier)
+INLINE Series* SPC_BINDING(Specifier* specifier)
 {
     assert(specifier != UNBOUND);
     const REBVAL *rootvar = CTX_ARCHETYPE(cast(Context*, specifier));  // [1]
@@ -320,7 +320,7 @@ inline static Series* SPC_BINDING(Specifier* specifier)
 //
 // Payload and header should be valid prior to making this call.
 //
-inline static void INIT_BINDING_MAY_MANAGE(
+INLINE void INIT_BINDING_MAY_MANAGE(
     Cell* out,
     const Series* binding
 ){
@@ -342,7 +342,7 @@ inline static void INIT_BINDING_MAY_MANAGE(
 // bound directly to a context) or into the paramlist (if relative to an
 // action, requiring a frame specifier to fully resolve).
 //
-inline static bool IS_WORD_UNBOUND(const Cell* v) {
+INLINE bool IS_WORD_UNBOUND(const Cell* v) {
     assert(ANY_WORDLIKE(v));
     return BINDING(v) == UNBOUND;
 }
@@ -351,19 +351,19 @@ inline static bool IS_WORD_UNBOUND(const Cell* v) {
     (not IS_WORD_UNBOUND(v))
 
 
-inline static REBLEN VAL_WORD_INDEX(const Cell* v) {
+INLINE REBLEN VAL_WORD_INDEX(const Cell* v) {
     assert(IS_WORD_BOUND(v));
     uint32_t i = VAL_WORD_INDEX_U32(v);
     assert(i > 0);
     return cast(REBLEN, i);
 }
 
-inline static Array* VAL_WORD_BINDING(const Cell* v) {
+INLINE Array* VAL_WORD_BINDING(const Cell* v) {
     assert(ANY_WORDLIKE(v));
     return cast(Array*, BINDING(v));  // could be nullptr / UNBOUND
 }
 
-inline static void INIT_VAL_WORD_BINDING(Cell* v, const Series* binding) {
+INLINE void INIT_VAL_WORD_BINDING(Cell* v, const Series* binding) {
     assert(ANY_WORDLIKE(v));
 
     mutable_BINDING(v) = binding;
@@ -391,7 +391,7 @@ inline static void INIT_VAL_WORD_BINDING(Cell* v, const Series* binding) {
 // can overcomplicate code.  We'd break too many invariants to just say a
 // relativized value is "unbound", so make an expired frame if necessary.
 //
-inline static REBVAL* Unrelativize(Cell* out, const Cell* v) {
+INLINE REBVAL* Unrelativize(Cell* out, const Cell* v) {
     if (not Is_Bindable(v) or IS_SPECIFIC(v))
         Copy_Cell(out, SPECIFIC(v));
     else {
@@ -408,13 +408,13 @@ inline static REBVAL* Unrelativize(Cell* out, const Cell* v) {
 #define rebUnrelativize(v) \
     Unrelativize(Alloc_Value(), (v))
 
-inline static void Unbind_Any_Word(Cell* v) {
+INLINE void Unbind_Any_Word(Cell* v) {
     assert(ANY_WORDLIKE(v));
     VAL_WORD_INDEX_U32(v) = 0;
     mutable_BINDING(v) = nullptr;
 }
 
-inline static Context* VAL_WORD_CONTEXT(const REBVAL *v) {
+INLINE Context* VAL_WORD_CONTEXT(const REBVAL *v) {
     assert(IS_WORD_BOUND(v));
     Array* binding = VAL_WORD_BINDING(v);
     if (IS_PATCH(binding))
@@ -463,7 +463,7 @@ inline static Context* VAL_WORD_CONTEXT(const REBVAL *v) {
 // -or- marked with OPT_TYPESET_LOCKED to protect against modification.
 //
 
-inline static Value(const*) Lookup_Word_May_Fail(
+INLINE Value(const*) Lookup_Word_May_Fail(
     const Cell* any_word,
     Specifier* specifier
 ){
@@ -485,7 +485,7 @@ inline static Value(const*) Lookup_Word_May_Fail(
     return CTX_VAR(c, index);
 }
 
-inline static Option(Value(const*)) Lookup_Word(
+INLINE Option(Value(const*)) Lookup_Word(
     const Cell* any_word,
     Specifier* specifier
 ){
@@ -504,7 +504,7 @@ inline static Option(Value(const*)) Lookup_Word(
     return CTX_VAR(c, index);
 }
 
-inline static const REBVAL *Get_Word_May_Fail(
+INLINE const REBVAL *Get_Word_May_Fail(
     Cell* out,
     const Cell* any_word,
     Specifier* specifier
@@ -516,7 +516,7 @@ inline static const REBVAL *Get_Word_May_Fail(
     return Copy_Cell(out, var);
 }
 
-inline static REBVAL *Lookup_Mutable_Word_May_Fail(
+INLINE REBVAL *Lookup_Mutable_Word_May_Fail(
     const Cell* any_word,
     Specifier* specifier
 ){
@@ -557,7 +557,7 @@ inline static REBVAL *Lookup_Mutable_Word_May_Fail(
     return var;
 }
 
-inline static REBVAL *Sink_Word_May_Fail(
+INLINE REBVAL *Sink_Word_May_Fail(
     const Cell* any_word,
     Specifier* specifier
 ){
@@ -591,19 +591,19 @@ inline static REBVAL *Sink_Word_May_Fail(
 // a mechanic between both...TBD.
 //
 
-inline static Specifier* Derive_Specifier(
+INLINE Specifier* Derive_Specifier(
     Specifier* parent,
     NoQuote(const Cell*) any_array
 );
 
 #if CPLUSPLUS_11
-    inline static Specifier* Derive_Specifier(
+    INLINE Specifier* Derive_Specifier(
         Specifier* parent,
         const REBVAL* any_array
     ) = delete;
 #endif
 
-inline static REBVAL *Derelativize_Untracked(
+INLINE REBVAL *Derelativize_Untracked(
     Cell* out,  // relative dest overwritten w/specific value
     const Cell* v,
     Specifier* specifier
@@ -707,7 +707,7 @@ inline static REBVAL *Derelativize_Untracked(
 // top of each other, the chain always bottoms out on the same FRAME! that
 // the original specifier was pointing to.
 //
-inline static Node** SPC_FRAME_CTX_ADDRESS(Specifier* specifier)
+INLINE Node** SPC_FRAME_CTX_ADDRESS(Specifier* specifier)
 {
     assert(IS_LET(specifier) or IS_USE(specifier));
     while (
@@ -719,7 +719,7 @@ inline static Node** SPC_FRAME_CTX_ADDRESS(Specifier* specifier)
     return &node_LINK(NextLet, specifier);
 }
 
-inline static Option(Context*) SPC_FRAME_CTX(Specifier* specifier)
+INLINE Option(Context*) SPC_FRAME_CTX(Specifier* specifier)
 {
     if (specifier == UNBOUND)  // !!! have caller check?
         return nullptr;
@@ -742,7 +742,7 @@ inline static Option(Context*) SPC_FRAME_CTX(Specifier* specifier)
 // The returned specifier must not lose the ability to resolve relative
 // values, so it has to remember what frame relative values are for.
 //
-inline static Specifier* Derive_Specifier_Core(
+INLINE Specifier* Derive_Specifier_Core(
     Specifier* specifier,  // merge this specifier...
     NoQuote(const Cell*) any_array  // ...onto the one in this array
 ){
@@ -885,14 +885,14 @@ inline static Specifier* Derive_Specifier_Core(
 
 
 #if (! DEBUG_VIRTUAL_BINDING)
-    inline static Specifier* Derive_Specifier(
+    INLINE Specifier* Derive_Specifier(
         Specifier* specifier,
         NoQuote(const Cell*) any_array
     ){
         return Derive_Specifier_Core(specifier, any_array);
     }
 #else
-    inline static Specifier* Derive_Specifier(
+    INLINE Specifier* Derive_Specifier(
         Specifier* specifier,
         NoQuote(const Cell*) any_array
     ){

@@ -45,7 +45,7 @@
 #define mutable_VAL_PARAMETER_CLASS_BYTE(v) \
     FIRST_BYTE(&EXTRA(Parameter, (v)).param_flags)
 
-inline static Option(const Array*) VAL_PARAMETER_ARRAY(
+INLINE Option(const Array*) VAL_PARAMETER_ARRAY(
     NoQuote(const Cell*) v
 ){
     assert(HEART_BYTE(v) == REB_PARAMETER);
@@ -60,20 +60,20 @@ inline static Option(const Array*) VAL_PARAMETER_ARRAY(
     Init_Cell_Node1((v), (a))
 
 
-inline static bool TYPE_CHECK(Value(const*) typeset, Atom(const*) v) {
+INLINE bool TYPE_CHECK(Value(const*) typeset, Atom(const*) v) {
     return Typecheck_Value(typeset, SPECIFIED, v);
 }
 
 
 // isotopic type matcher (e.g. used by FIND, SWITCH)
 
-inline static bool Is_Matcher(const Cell* v) {
+INLINE bool Is_Matcher(const Cell* v) {
     if (QUOTE_BYTE(v) != ISOTOPE_0)
         return false;
     return ANY_TYPE_VALUE_KIND(HEART_BYTE(v));
 }
 
-inline static bool Matcher_Matches(
+INLINE bool Matcher_Matches(
     const Cell* matcher,
     Specifier* matcher_specifier,
     const Cell* v,
@@ -196,7 +196,7 @@ inline static bool Matcher_Matches(
 
 
 
-inline static enum Reb_Param_Class VAL_PARAM_CLASS(const Param* param) {
+INLINE enum Reb_Param_Class VAL_PARAM_CLASS(const Param* param) {
     assert(HEART_BYTE(param) == REB_PARAMETER);
     enum Reb_Param_Class pclass = cast(enum Reb_Param_Class,
         VAL_PARAMETER_CLASS_BYTE(param)
@@ -211,7 +211,7 @@ inline static enum Reb_Param_Class VAL_PARAM_CLASS(const Param* param) {
 // A parameter can be any value (including isotopes) if it is specialized.
 // But a typeset that does not have param class 0 is unspecialized.
 //
-inline static bool Is_Specialized(const Param* param) {
+INLINE bool Is_Specialized(const Param* param) {
     if (
         HEART_BYTE(param) == REB_PARAMETER  // no assert on isotope
         and VAL_PARAM_CLASS(param) != PARAM_CLASS_0  // non-parameter typeset
@@ -226,7 +226,7 @@ inline static bool Is_Specialized(const Param* param) {
 
 // Parameter class should be PARAM_CLASS_0 unless typeset in func paramlist.
 
-inline static REBVAL *Init_Parameter_Core(Cell* out, const Array* array)
+INLINE REBVAL *Init_Parameter_Core(Cell* out, const Array* array)
 {
     Reset_Unquoted_Header_Untracked(out, CELL_MASK_PARAMETER);
     if (array)
@@ -240,7 +240,7 @@ inline static REBVAL *Init_Parameter_Core(Cell* out, const Array* array)
     TRACK(Init_Parameter_Core((out), (bits)))
 
 
-inline static Param* Init_Param_Core(
+INLINE Param* Init_Param_Core(
     Cell* out,
     Flags param_flags,
     const Array* array
@@ -263,6 +263,6 @@ inline static Param* Init_Param_Core(
     TRACK(Init_Param_Core((out), (param_flags), (bits)))
 
 
-inline static bool Is_Parameter_Unconstrained(NoQuote(const Cell*) param) {
+INLINE bool Is_Parameter_Unconstrained(NoQuote(const Cell*) param) {
     return VAL_PARAMETER_ARRAY(param) == nullptr;  // e.g. `[/refine]`
 }

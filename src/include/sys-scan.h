@@ -161,7 +161,7 @@ typedef uint16_t LEXFLAGS;  // 16 flags per lex class
 #define IS_LEX_NOT_DELIMIT(c)           (Lex_Map[(Byte)c] >= LEX_SPECIAL)
 #define IS_LEX_WORD_OR_NUMBER(c)        (Lex_Map[(Byte)c] >= LEX_WORD)
 
-inline static bool IS_LEX_DELIMIT_HARD(Byte c) {
+INLINE bool IS_LEX_DELIMIT_HARD(Byte c) {
     assert(IS_LEX_DELIMIT(c));
     return GET_LEX_VALUE(c) <= LEX_DELIMIT_HARD;
 }
@@ -289,7 +289,7 @@ enum rebol_esc_codes {
 // Skip to the specified byte but not past the provided end pointer of bytes.
 // nullptr if byte is not found.
 //
-inline static const Byte* Skip_To_Byte(
+INLINE const Byte* Skip_To_Byte(
     const Byte* cp,
     const Byte* ep,
     Byte b

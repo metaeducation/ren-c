@@ -82,7 +82,7 @@
 // may need to be updated for some immediate types, as their storage is
 // actually in the container.
 //
-inline static Bounce Run_Pickpoke_Dispatch(
+INLINE Bounce Run_Pickpoke_Dispatch(
     Level* level_,
     const Symbol* verb,
     const REBVAL *new_location

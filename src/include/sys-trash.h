@@ -53,13 +53,13 @@
     // If exposure to the user API occurred, it would look like UTF-8
     // Will trip up any access attempts via READABLE(), but is WRITABLE()
 
-    inline static Value(*) Init_Trash_Untracked(Cell* out) {
+    INLINE Value(*) Init_Trash_Untracked(Cell* out) {
         Init_Void_Untracked(out, QUASI_2);
         Set_Node_Free_Bit(out);
         return cast(Value(*), out);
     }
 
-    inline static bool IS_TRASH(const Cell* v) {
+    INLINE bool IS_TRASH(const Cell* v) {
         if (Cell_Heart(v) != REB_VOID)
             return false;
         if (QUOTE_BYTE(v) != QUASI_2)

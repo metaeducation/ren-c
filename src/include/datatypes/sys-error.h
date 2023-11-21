@@ -44,7 +44,7 @@
 #define Init_Error(v,c) \
     Init_Context_Cell((v), REB_ERROR, (c))
 
-inline static void Force_Location_Of_Error(Context* error, Level* where) {
+INLINE void Force_Location_Of_Error(Context* error, Level* where) {
     ERROR_VARS *vars = ERR_VARS(error);
     if (Is_Nulled(&vars->where))
         Set_Location_Of_Error(error, where);
@@ -56,10 +56,10 @@ inline static void Force_Location_Of_Error(Context* error, Level* where) {
 // pipeline doesn't ask to ^META it.  While it's in the ^META state it can
 // also be passed around normally until it's UNMETA'd back to a failure again.
 
-inline static bool Is_Raised(Atom(const*) v)
+INLINE bool Is_Raised(Atom(const*) v)
   { return HEART_BYTE(v) == REB_ERROR and QUOTE_BYTE(v) == ISOTOPE_0; }
 
-inline static Atom(*) Raisify(Atom(*) v) {
+INLINE Atom(*) Raisify(Atom(*) v) {
     assert(IS_ERROR(v) and QUOTE_BYTE(v) == UNQUOTED_1);
     Force_Location_Of_Error(VAL_CONTEXT(v), TOP_LEVEL);  // ideally already set
     QUOTE_BYTE(v) = ISOTOPE_0;
@@ -71,5 +71,5 @@ inline static Atom(*) Raisify(Atom(*) v) {
     void Raisify(Value(*) v) = delete;
 #endif
 
-inline static bool Is_Meta_Of_Raised(const Cell* v)
+INLINE bool Is_Meta_Of_Raised(const Cell* v)
   { return HEART_BYTE(v) == REB_ERROR and QUOTE_BYTE(v) == QUASI_2; }

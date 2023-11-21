@@ -38,12 +38,12 @@
 #else
     // C++ has reference types--use them and add extra assert it's a date
 
-    inline static const REBYMD & VAL_DATE(NoQuote(const Cell*) v) {
+    INLINE const REBYMD & VAL_DATE(NoQuote(const Cell*) v) {
         assert(Cell_Heart(v) == REB_DATE);
         return EXTRA(Date, v).ymdz;
     }
 
-    inline static REBYMD & VAL_DATE(Cell* v) {
+    INLINE REBYMD & VAL_DATE(Cell* v) {
         assert(VAL_TYPE(v) == REB_DATE);
         return EXTRA(Date, v).ymdz; // const reference
     }
@@ -79,7 +79,7 @@
 //
 #define NO_DATE_ZONE -64
 
-inline static bool Does_Date_Have_Time(NoQuote(const Cell*) v)
+INLINE bool Does_Date_Have_Time(NoQuote(const Cell*) v)
 {
     assert(Cell_Heart(v) == REB_DATE);
     if (PAYLOAD(Time, v).nanoseconds == NO_DATE_TIME) {
@@ -89,7 +89,7 @@ inline static bool Does_Date_Have_Time(NoQuote(const Cell*) v)
     return true;
 }
 
-inline static bool Does_Date_Have_Zone(NoQuote(const Cell*) v)
+INLINE bool Does_Date_Have_Zone(NoQuote(const Cell*) v)
 {
     assert(Cell_Heart(v) == REB_DATE);
     if (VAL_DATE(v).zone == NO_DATE_ZONE)  // out of band of 7-bit field
@@ -98,7 +98,7 @@ inline static bool Does_Date_Have_Zone(NoQuote(const Cell*) v)
     return true;
 }
 
-inline static int VAL_ZONE(NoQuote(const Cell*) v) {
+INLINE int VAL_ZONE(NoQuote(const Cell*) v) {
     assert(Does_Date_Have_Zone(v));
     return VAL_DATE(v).zone;
 }
@@ -110,7 +110,7 @@ inline static int VAL_ZONE(NoQuote(const Cell*) v) {
 //
 //=////////////////////////////////////////////////////////////////////////=//
 
-inline static REBI64 VAL_NANO(NoQuote(const Cell*) v) {
+INLINE REBI64 VAL_NANO(NoQuote(const Cell*) v) {
     assert(Cell_Heart(v) == REB_TIME or Does_Date_Have_Time(v));
     return PAYLOAD(Time, v).nanoseconds;
 }
@@ -161,7 +161,7 @@ inline static REBI64 VAL_NANO(NoQuote(const Cell*) v) {
 #define TIME_IN_DAY \
     SEC_TIME(cast(REBI64, SECS_IN_DAY))
 
-inline static REBVAL *Init_Time_Nanoseconds(
+INLINE REBVAL *Init_Time_Nanoseconds(
     Cell* v,
     REBI64 nanoseconds
 ){

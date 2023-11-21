@@ -48,11 +48,11 @@
 #define LINK_Hashlist_TYPE          Series*
 #define HAS_LINK_Hashlist           FLAVOR_PAIRLIST
 
-inline static Array* MAP_PAIRLIST(const_if_c Map* map)
+INLINE Array* MAP_PAIRLIST(const_if_c Map* map)
   { return x_cast(Array*, map); }
 
 #if CPLUSPLUS_11
-    inline static const Array* MAP_PAIRLIST(const Map* map)
+    INLINE const Array* MAP_PAIRLIST(const Map* map)
       { return x_cast(const Array*, map); }
 #endif
 
@@ -63,7 +63,7 @@ inline static Array* MAP_PAIRLIST(const_if_c Map* map)
     Series_Head(MAP_HASHLIST(m))
 
 
-inline static const Map* VAL_MAP(NoQuote(const Cell*) v) {
+INLINE const Map* VAL_MAP(NoQuote(const Cell*) v) {
     assert(Cell_Heart(v) == REB_MAP);
 
     Array* a = cast(Array*, Cell_Node1(v));
@@ -79,7 +79,7 @@ inline static const Map* VAL_MAP(NoQuote(const Cell*) v) {
 #define VAL_MAP_Known_Mutable(v) \
     m_cast(Map*, VAL_MAP(Known_Mutable(v)))
 
-inline static REBLEN Length_Map(const Map* map)
+INLINE REBLEN Length_Map(const Map* map)
 {
     const Cell* tail = Array_Tail(MAP_PAIRLIST(map));
     const REBVAL *v = SPECIFIC(Array_Head(MAP_PAIRLIST(map)));

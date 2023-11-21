@@ -121,13 +121,13 @@ enum {
 #define MAX_HEX_LEN     16
 
 
-inline static void Pre_Mold(REB_MOLD *mo, NoQuote(const Cell*) v)
+INLINE void Pre_Mold(REB_MOLD *mo, NoQuote(const Cell*) v)
   { Pre_Mold_Core((mo), (v), GET_MOLD_FLAG(mo, MOLD_FLAG_ALL)); }
 
 #define Pre_Mold_All(mo,v) \
     Pre_Mold_Core((mo), (v), true)
 
-inline static void End_Mold(REB_MOLD *mo)
+INLINE void End_Mold(REB_MOLD *mo)
   { End_Mold_Core((mo), GET_MOLD_FLAG(mo, MOLD_FLAG_ALL)); }
 
 #define End_Mold_All(mo) \

@@ -111,7 +111,7 @@
 #define BONUS_KeySource_TYPE        Node*
 #define HAS_BONUS_KeySource         FLAVOR_VARLIST
 
-inline static void INIT_BONUS_KEYSOURCE(Array* varlist, Node* keysource) {
+INLINE void INIT_BONUS_KEYSOURCE(Array* varlist, Node* keysource) {
     if (keysource != nullptr and Is_Node_A_Stub(keysource))
         assert(IS_KEYLIST(cast(Series*, keysource)));
     mutable_BONUS(KeySource, varlist) = keysource;
@@ -129,7 +129,7 @@ inline static void INIT_BONUS_KEYSOURCE(Array* varlist, Node* keysource) {
 // evaluator.
 //
 
-inline static REBVAL *Init_Return_Signal_Untracked(Cell* out, char ch) {
+INLINE REBVAL *Init_Return_Signal_Untracked(Cell* out, char ch) {
     Reset_Unquoted_Header_Untracked(
         out,
         FLAG_HEART_BYTE(REB_T_RETURN_SIGNAL) | CELL_MASK_NO_NODES
@@ -146,15 +146,15 @@ inline static REBVAL *Init_Return_Signal_Untracked(Cell* out, char ch) {
 #define Init_Return_Signal(out,ch) \
     TRACK(Init_Return_Signal_Untracked((out), (ch)))
 
-inline static bool Is_Bounce_An_Atom(Bounce b)
+INLINE bool Is_Bounce_An_Atom(Bounce b)
   { return HEART_BYTE(cast(REBVAL*, b)) != REB_T_RETURN_SIGNAL; }
 
-inline static char VAL_RETURN_SIGNAL(Bounce b) {
+INLINE char VAL_RETURN_SIGNAL(Bounce b) {
     assert(not Is_Bounce_An_Atom(b));
     return PAYLOAD(Any, cast(REBVAL*, b)).first.u;
 }
 
-inline static Atom(*) Atom_From_Bounce(Bounce b) {
+INLINE Atom(*) Atom_From_Bounce(Bounce b) {
     assert(Is_Bounce_An_Atom(b));
     return cast(Atom(*), b);
 }
@@ -166,7 +166,7 @@ inline static Atom(*) Atom_From_Bounce(Bounce b) {
 #define BOUNCE_THROWN \
     cast(Bounce, &PG_R_Thrown)
 
-inline static bool Is_Throwing(Level* level_) {
+INLINE bool Is_Throwing(Level* level_) {
     //
     // !!! An original constraint on asking if something was throwing was
     // that only the top frame could be asked about.  But Action_Executor()
@@ -240,9 +240,9 @@ inline static bool Is_Throwing(Level* level_) {
 #define INIT_VAL_ACTION_PARTIALS_OR_LABEL       Init_Cell_Node2
 
 
-inline static Phase* CTX_FRAME_PHASE(Context* c);
+INLINE Phase* CTX_FRAME_PHASE(Context* c);
 
-inline static Phase* ACT_IDENTITY(Action* action) {
+INLINE Phase* ACT_IDENTITY(Action* action) {
     if (IS_DETAILS(action))
         return cast(Phase*, action);  // don't want hijacked archetype details
     return CTX_FRAME_PHASE(x_cast(Context*, action));  // always ACT_IDENTITY()
@@ -265,7 +265,7 @@ inline static Phase* ACT_IDENTITY(Action* action) {
     cast(Value(*), Series_Data(ensure(Phase*, phase)))
 
 
-inline static bool Is_Frame_Details(NoQuote(const Cell*) v) {
+INLINE bool Is_Frame_Details(NoQuote(const Cell*) v) {
     assert(HEART_BYTE(v) == REB_FRAME);
     return IS_DETAILS(cast(Stub*, Cell_Node1(v)));
 }
@@ -291,7 +291,7 @@ inline static bool Is_Frame_Details(NoQuote(const Cell*) v) {
 // So consequently, all phases have to look in the archetype, in case they
 // are running the implementation of a copy or are spliced in as a hijacker.
 //
-inline static Details* Phase_Details(Phase* a) {
+INLINE Details* Phase_Details(Phase* a) {
     assert(IS_DETAILS(a));
     return x_cast(Details*, Phase_Archetype(a)->payload.Any.first.node);
 }
@@ -309,12 +309,12 @@ inline static Details* Phase_Details(Phase* a) {
 // a running frame gets re-executed.  More study is needed.
 //
 
-inline static Context* VAL_FRAME_BINDING(NoQuote(const Cell*) v) {
+INLINE Context* VAL_FRAME_BINDING(NoQuote(const Cell*) v) {
     assert(HEART_BYTE(v) == REB_FRAME);
     return cast(Context*, BINDING(v));
 }
 
-inline static void INIT_VAL_FRAME_BINDING(
+INLINE void INIT_VAL_FRAME_BINDING(
     Cell* v,
     Context* binding
 ){
@@ -341,13 +341,13 @@ inline static void INIT_VAL_FRAME_BINDING(
 #define HAS_INODE_Exemplar      FLAVOR_DETAILS
 
 
-inline static Option(Array*) ACT_PARTIALS(Action* a) {
+INLINE Option(Array*) ACT_PARTIALS(Action* a) {
     if (IS_DETAILS(a))
         return x_cast(Array*, Cell_Node2(ACT_ARCHETYPE(a)));
     return nullptr;  // !!! how to preserve partials in exemplars?
 }
 
-inline static Context* ACT_EXEMPLAR(Action* a) {
+INLINE Context* ACT_EXEMPLAR(Action* a) {
     if (IS_DETAILS(a))
         return INODE(Exemplar, a);
     return x_cast(Context*, a);
@@ -367,7 +367,7 @@ inline static Context* ACT_EXEMPLAR(Action* a) {
 
 #define ACT_PARAMLIST(a)            CTX_VARLIST(ACT_EXEMPLAR(a))
 
-inline static Param* ACT_PARAMS_HEAD(Action* a) {
+INLINE Param* ACT_PARAMS_HEAD(Action* a) {
     Array* list = CTX_VARLIST(ACT_EXEMPLAR(a));
     return cast(Param*, list->content.dynamic.data) + 1;  // skip archetype
 }
@@ -386,7 +386,7 @@ inline static Param* ACT_PARAMS_HEAD(Action* a) {
 // only the archetype, e.g. with a specialized function).  *BUT* if you are
 // asking for elements in the details array, you must know it is dynamic.
 //
-inline static Value(*) DETAILS_AT(Details* details, Length n) {
+INLINE Value(*) DETAILS_AT(Details* details, Length n) {
     assert(n != 0 and n < details->content.dynamic.used);
     Cell* at = cast(Cell*, details->content.dynamic.data) + n;
     assert(Is_Fresh(at) or not IS_RELATIVE(at));
@@ -429,11 +429,11 @@ enum {
     do { PUSH(); PUSH(); PUSH(); PUSH(); } while (0)
 
 
-inline static const Symbol* KEY_SYMBOL(const Key* key)
+INLINE const Symbol* KEY_SYMBOL(const Key* key)
   { return *key; }
 
 
-inline static void Init_Key(Key* dest, const Symbol* symbol)
+INLINE void Init_Key(Key* dest, const Symbol* symbol)
   { *dest = symbol; }
 
 #define KEY_SYM(key) \
@@ -456,7 +456,7 @@ inline static void Init_Key(Key* dest, const Symbol* symbol)
 #define ACT_ADJUNCT(a)             MISC(DetailsAdjunct, ACT_IDENTITY(a))
 
 
-inline static Action* VAL_ACTION(NoQuote(const Cell*) v) {
+INLINE Action* VAL_ACTION(NoQuote(const Cell*) v) {
     assert(HEART_BYTE(v) == REB_FRAME);
     Series* s = cast(Series*, Cell_Node1(v));  // maybe exemplar, maybe details
     if (Get_Series_Flag(s, INACCESSIBLE))
@@ -479,7 +479,7 @@ inline static Action* VAL_ACTION(NoQuote(const Cell*) v) {
 // the words, you get the currently executing label instead...which may
 // actually make more sense.
 
-inline static void INIT_VAL_ACTION_LABEL(
+INLINE void INIT_VAL_ACTION_LABEL(
     Cell* v,
     Option(const Symbol*) label
 ){
@@ -518,7 +518,7 @@ inline static void INIT_VAL_ACTION_LABEL(
 #define LINK_Ancestor_TYPE              KeyList*
 #define HAS_LINK_Ancestor               FLAVOR_KEYLIST
 
-inline static bool Action_Is_Base_Of(Action* base, Action* derived) {
+INLINE bool Action_Is_Base_Of(Action* base, Action* derived) {
     if (derived == base)
         return true;  // fast common case (review how common)
 
@@ -583,7 +583,7 @@ inline static bool Action_Is_Base_Of(Action* base, Action* derived) {
 // the 0 slot of the action's details.  That action has no binding and
 // no label.
 //
-inline static REBVAL *Init_Frame_Details_Core(
+INLINE REBVAL *Init_Frame_Details_Core(
     Cell* out,
     Phase* a,
     Option(const Symbol*) label,  // allowed to be ANONYMOUS
@@ -643,20 +643,20 @@ enum {
 };
 
 
-inline static REBVAL *Maybe_Move_Cell(REBVAL *out, REBVAL *v) {
+INLINE REBVAL *Maybe_Move_Cell(REBVAL *out, REBVAL *v) {
     if (v == out)
         return out;
     return Move_Cell(out, v);
 }
 
-inline static Bounce Native_Thrown_Result(Level* level_) {
+INLINE Bounce Native_Thrown_Result(Level* level_) {
     assert(THROWING);
     FRESHEN(level_->out);
     return BOUNCE_THROWN;
 }
 
 
-inline static Bounce Native_Void_Result_Untracked(
+INLINE Bounce Native_Void_Result_Untracked(
     Atom(*) out,  // have to pass; comma at callsite -> "operand has no effect"
     Level* level_
 ){
@@ -666,12 +666,12 @@ inline static Bounce Native_Void_Result_Untracked(
     return Init_Void_Untracked(level_->out, UNQUOTED_1);
 }
 
-inline static Bounce Native_Unmeta_Result(Level* level_, const REBVAL *v) {
+INLINE Bounce Native_Unmeta_Result(Level* level_, const REBVAL *v) {
     assert(not THROWING);
     return Meta_Unquotify_Undecayed(Copy_Cell(level_->out, v));
 }
 
-inline static Bounce Native_None_Result_Untracked(
+INLINE Bounce Native_None_Result_Untracked(
     Atom(*) out,  // have to pass; comma at callsite -> "operand has no effect"
     Level* level_
 ){
@@ -706,20 +706,20 @@ inline static Bounce Native_None_Result_Untracked(
 #define Init_Activation(out,a,label,binding) \
     Activatify(Init_Frame_Details_Core(TRACK(out), (a), (label), (binding)))
 
-inline static Value(*) Activatify(Value(*) v) {
+INLINE Value(*) Activatify(Value(*) v) {
     assert(IS_FRAME(v) and QUOTE_BYTE(v) == UNQUOTED_1);
     QUOTE_BYTE(v) = ISOTOPE_0;
     return v;
 }
 
-inline static Cell* Deactivate_If_Activation(Cell* v) {
+INLINE Cell* Deactivate_If_Activation(Cell* v) {
     if (Is_Activation(v))
         QUOTE_BYTE(v) = UNQUOTED_1;
     return v;
 }
 
 
-inline static bool Is_Enfixed(NoQuote(const Cell*) v) {
+INLINE bool Is_Enfixed(NoQuote(const Cell*) v) {
     assert(HEART_BYTE(v) == REB_FRAME);
     return Get_Cell_Flag_Unchecked(v, ENFIX_FRAME);
 }

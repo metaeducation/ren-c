@@ -49,7 +49,7 @@
 //   evaluated to a COMMA! isotope (for instance).
 //
 
-inline static Value(*) Init_Comma(Cell* out) {
+INLINE Value(*) Init_Comma(Cell* out) {
     Reset_Unquoted_Header_Untracked(out, CELL_MASK_COMMA);
 
     // Although COMMA! carries no data, it is not inert.  To make ANY_INERT()
@@ -67,13 +67,13 @@ inline static Value(*) Init_Comma(Cell* out) {
     return cast(Value(*), out);
 }
 
-inline static Value(*) Init_Barrier(Cell* out) {
+INLINE Value(*) Init_Barrier(Cell* out) {
     Init_Comma(out);
     QUOTE_BYTE(out) = ISOTOPE_0;
     return cast(Value(*), out);
 }
 
-inline static bool Is_Elision(Atom(*) v) {
+INLINE bool Is_Elision(Atom(*) v) {
     return Is_Barrier(v) or Is_Nihil(v);
 }
 
@@ -81,6 +81,6 @@ inline static bool Is_Elision(Atom(*) v) {
     void Is_Elision(Value(*) v) = delete;
 #endif
 
-inline static bool Is_Meta_Of_Elision(Cell* v) {
+INLINE bool Is_Meta_Of_Elision(Cell* v) {
     return Is_Meta_Of_Barrier(v) or Is_Meta_Of_Nihil(v);
 }

@@ -52,7 +52,7 @@
         (((const Byte*)(p))[0] == END_SIGNAL_BYTE)  // Note: needs (p) parens!
 #else
     template<typename T>  // should only test const void* for ends
-    inline static bool Is_End(T* p) {
+    INLINE bool Is_End(T* p) {
         static_assert(
             std::is_same<T, const void>::value,
             "Is_End() is not designed to operate on Cell(), Series(), etc."
@@ -110,18 +110,18 @@
 #define FEED_VAPTR_POINTER(feed)    PAYLOAD(Comma, FEED_SINGLE(feed)).vaptr
 #define FEED_PACKED(feed)           PAYLOAD(Comma, FEED_SINGLE(feed)).packed
 
-inline static const Cell* At_Feed(Feed* feed) {
+INLINE const Cell* At_Feed(Feed* feed) {
     assert(Not_Feed_Flag(feed, NEEDS_SYNC));
     assert(feed->p != &PG_Feed_At_End);
     return c_cast(Cell*, feed->p);
 }
 
-inline static const Cell* Try_At_Feed(Feed* feed) {
+INLINE const Cell* Try_At_Feed(Feed* feed) {
     assert(Not_Feed_Flag(feed, NEEDS_SYNC));
     return c_cast(Cell*, feed->p);
 }
 
-inline static Option(va_list*) FEED_VAPTR(Feed* feed) {
+INLINE Option(va_list*) FEED_VAPTR(Feed* feed) {
     assert(FEED_IS_VARIADIC(feed));
     return FEED_VAPTR_POINTER(feed);
 }
@@ -167,7 +167,7 @@ inline static Option(va_list*) FEED_VAPTR(Feed* feed) {
 //    from the beginning, else there's not going to be a way to present
 //    errors in context.  Fake an empty array for now.
 //
-inline static void Finalize_Variadic_Feed(Feed* feed) {
+INLINE void Finalize_Variadic_Feed(Feed* feed) {
     assert(FEED_IS_VARIADIC(feed));
     assert(FEED_PENDING(feed) == nullptr);
 
@@ -186,7 +186,7 @@ inline static void Finalize_Variadic_Feed(Feed* feed) {
 // A cell pointer in a variadic feed should be fine to use directly, because
 // all such "spliced" cells should be specific.
 //
-inline static Value(const*) Copy_Reified_Variadic_Feed_Cell(
+INLINE Value(const*) Copy_Reified_Variadic_Feed_Cell(
     Cell* out,
     Feed* feed
 ){
@@ -216,7 +216,7 @@ inline static Value(const*) Copy_Reified_Variadic_Feed_Cell(
 // !!! Actually, THIS CODE CAN'T FAIL.  :-/  It is part of the implementation
 // of fail's cleanup itself.
 //
-inline static Option(Value(const*)) Try_Reify_Variadic_Feed_Series(
+INLINE Option(Value(const*)) Try_Reify_Variadic_Feed_Series(
     Feed* feed
 ){
     const Series* s = c_cast(Series*, feed->p);
@@ -312,7 +312,7 @@ inline static Option(Value(const*)) Try_Reify_Variadic_Feed_Series(
 // Ordinary Rebol internals deal with REBVAL* that are resident in arrays.
 // But a va_list can contain UTF-8 string components or special instructions
 //
-inline static void Force_Variadic_Feed_At_Cell_Or_End_May_Fail(Feed* feed)
+INLINE void Force_Variadic_Feed_At_Cell_Or_End_May_Fail(Feed* feed)
 {
     assert(FEED_IS_VARIADIC(feed));
     assert(FEED_PENDING(feed) == nullptr);
@@ -391,7 +391,7 @@ inline static void Force_Variadic_Feed_At_Cell_Or_End_May_Fail(Feed* feed)
 
 // This is higher-level, and should be called by non-internal feed mechanics.
 //
-inline static void Sync_Feed_At_Cell_Or_End_May_Fail(Feed* feed) {
+INLINE void Sync_Feed_At_Cell_Or_End_May_Fail(Feed* feed) {
     if (Get_Feed_Flag(feed, NEEDS_SYNC)) {
         Force_Variadic_Feed_At_Cell_Or_End_May_Fail(feed);
         Clear_Feed_Flag(feed, NEEDS_SYNC);
@@ -406,7 +406,7 @@ inline static void Sync_Feed_At_Cell_Or_End_May_Fail(Feed* feed) {
 // Once a va_list is "fetched", it cannot be "un-fetched".  Hence only one
 // unit of fetch is done at a time, into L->value.
 //
-inline static void Fetch_Next_In_Feed(Feed* feed) {
+INLINE void Fetch_Next_In_Feed(Feed* feed) {
     assert(Not_Feed_Flag(feed, NEEDS_SYNC));
 
   #if DEBUG_PROTECT_FEED_CELLS
@@ -499,7 +499,7 @@ inline static void Fetch_Next_In_Feed(Feed* feed) {
 // taken when one is interested in that data, because it may have to be
 // moved.  So current can be returned from Fetch_Next_In_Level_Core().
 
-inline static const Cell* Lookback_While_Fetching_Next(Level* L) {
+INLINE const Cell* Lookback_While_Fetching_Next(Level* L) {
   #if DEBUG_EXPIRED_LOOKBACK
     if (feed->stress) {
         FRESHEN(feed->stress);
@@ -559,7 +559,7 @@ inline static const Cell* Lookback_While_Fetching_Next(Level* L) {
 //       which moves the value here.  If the block wasn't made explicitly
 //       mutable (e.g. with MUTABLE) it takes the flag from the feed.
 //
-inline static void Inertly_Derelativize_Inheriting_Const(
+INLINE void Inertly_Derelativize_Inheriting_Const(
     Sink(Value(*)) out,
     const Cell* v,
     Feed* feed
@@ -573,7 +573,7 @@ inline static void Inertly_Derelativize_Inheriting_Const(
         out->header.bits |= (feed->flags.bits & FEED_FLAG_CONST);
 }
 
-inline static void Literal_Next_In_Feed(Sink(Value(*)) out, Feed* feed) {
+INLINE void Literal_Next_In_Feed(Sink(Value(*)) out, Feed* feed) {
     Inertly_Derelativize_Inheriting_Const(out, At_Feed(feed), feed);
     Fetch_Next_In_Feed(feed);
 }
@@ -582,7 +582,7 @@ inline static void Literal_Next_In_Feed(Sink(Value(*)) out, Feed* feed) {
 #define Alloc_Feed() \
     Alloc_Pooled(FEED_POOL)
 
-inline static void Free_Feed(Feed* feed) {
+INLINE void Free_Feed(Feed* feed) {
     //
     // Aborting valist feeds is done by just feeding all the values
     // through until the end.  This is assumed to do any work, such
@@ -625,7 +625,7 @@ inline static void Free_Feed(Feed* feed) {
     Free_Pooled(FEED_POOL, feed);
 }
 
-inline static Feed* Prep_Feed_Common(void* preallocated, Flags flags) {
+INLINE Feed* Prep_Feed_Common(void* preallocated, Flags flags) {
    Feed* feed = u_cast(Feed*, preallocated);
 
   #if DEBUG_COUNT_TICKS
@@ -651,7 +651,7 @@ inline static Feed* Prep_Feed_Common(void* preallocated, Flags flags) {
     return feed;
 }
 
-inline static Feed* Prep_Array_Feed(
+INLINE Feed* Prep_Array_Feed(
     void* preallocated,
     Option(const Cell*) first,
     const Array* array,
@@ -726,7 +726,7 @@ inline static Feed* Prep_Array_Feed(
 // scanner leaves all spliced values with whatever bindings they have (even
 // if that is none).
 //
-inline static Feed* Prep_Variadic_Feed(
+INLINE Feed* Prep_Variadic_Feed(
     void* preallocated,
     const void *p,
     Option(va_list*) vaptr,
@@ -774,7 +774,7 @@ inline static Feed* Prep_Variadic_Feed(
 #define Make_Variadic_Feed(p,vaptr,context,flags) \
     Prep_Variadic_Feed(Alloc_Feed(), (p), (vaptr), (context), (flags))
 
-inline static Feed* Prep_At_Feed(
+INLINE Feed* Prep_At_Feed(
     void *preallocated,
     NoQuote(const Cell*) any_array,  // array is extracted and HOLD put on
     Specifier* specifier,

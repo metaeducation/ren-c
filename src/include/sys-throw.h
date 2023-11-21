@@ -61,13 +61,13 @@
 //   more checking that thrown values aren't being dropped or misused.
 //
 
-inline static Value(const*) VAL_THROWN_LABEL(Level* level_) {
+INLINE Value(const*) VAL_THROWN_LABEL(Level* level_) {
     UNUSED(level_);
     assert(not Is_Cell_Erased(&g_ts.thrown_label));
     return &g_ts.thrown_label;
 }
 
-inline static Bounce Init_Thrown_With_Label(  // assumes `arg` in g_ts.thrown_arg
+INLINE Bounce Init_Thrown_With_Label(  // assumes `arg` in g_ts.thrown_arg
     Level* level_,
     Atom(const*) arg,
     const REBVAL *label  // Note: is allowed to be same as `out`
@@ -89,12 +89,12 @@ inline static Bounce Init_Thrown_With_Label(  // assumes `arg` in g_ts.thrown_ar
 
 // When failures are put in the throw state, they are the label--not the value.
 //
-inline static Bounce Init_Thrown_Failure(Level* L, Value(const*) error) {
+INLINE Bounce Init_Thrown_Failure(Level* L, Value(const*) error) {
     assert(IS_ERROR(error));
     return Init_Thrown_With_Label(L, Lib(NULL), error);
 }
 
-inline static void CATCH_THROWN(
+INLINE void CATCH_THROWN(
     Cell* arg_out,
     Level* level_
 ){
@@ -113,12 +113,12 @@ inline static void CATCH_THROWN(
 }
 
 
-inline static void Drop_Level(Level* L);
+INLINE void Drop_Level(Level* L);
 
 // When you're sure that the value isn't going to be consumed by a multireturn
 // then use this to get the first value unmeta'd
 //
-inline static Value(*) Decay_If_Unstable(Atom(*) v) {
+INLINE Value(*) Decay_If_Unstable(Atom(*) v) {
     if (not Is_Isotope(v))
         return cast(Value(*), v);
 
@@ -163,7 +163,7 @@ inline static Value(*) Decay_If_Unstable(Atom(*) v) {
 // to be decayed.  Type checking has to be aware of this, and know that such
 // packs shouldn't raise errors.
 //
-inline static bool Is_Pack_Undecayable(Atom(*) pack)
+INLINE bool Is_Pack_Undecayable(Atom(*) pack)
 {
     assert(Is_Pack(pack));
     if (Is_Nihil(pack))

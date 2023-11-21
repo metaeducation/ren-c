@@ -215,23 +215,23 @@
     } while (0)
 
   #if (! CPLUSPLUS_11)
-    inline static const Cell* READABLE(NoQuote(const Cell*) c) {
+    INLINE const Cell* READABLE(NoQuote(const Cell*) c) {
         ASSERT_CELL_READABLE_EVIL_MACRO(c);
         return c_cast(Cell*, c);
     }
   #else
-    inline static NoQuote(const Cell*) READABLE(NoQuote(const Cell*) c) {
+    INLINE NoQuote(const Cell*) READABLE(NoQuote(const Cell*) c) {
         ASSERT_CELL_READABLE_EVIL_MACRO(c);
         return c;
     }
 
-    inline static const Cell* READABLE(const Cell* c) {
+    INLINE const Cell* READABLE(const Cell* c) {
         ASSERT_CELL_READABLE_EVIL_MACRO(c);
         return c;
     }
   #endif
 
-    inline static Cell* WRITABLE(Cell* c) {
+    INLINE Cell* WRITABLE(Cell* c) {
         ASSERT_CELL_WRITABLE_EVIL_MACRO(c);
         return c;
     }
@@ -250,12 +250,12 @@
 // flag bits of the node.  This could have a runtime check in debug build
 // with a C++ variation that only takes mutable pointers.
 //
-inline static void Init_Cell_Node1(Cell* v, Option(const Node*) node) {
+INLINE void Init_Cell_Node1(Cell* v, Option(const Node*) node) {
     assert(v->header.bits & CELL_FLAG_FIRST_IS_NODE);
     PAYLOAD(Any, v).first.node = try_unwrap(node);
 }
 
-inline static void Init_Cell_Node2(Cell* v, Option(const Node*) node) {
+INLINE void Init_Cell_Node2(Cell* v, Option(const Node*) node) {
     assert(v->header.bits & CELL_FLAG_SECOND_IS_NODE);
     PAYLOAD(Any, v).second.node = try_unwrap(node);
 }
@@ -280,11 +280,11 @@ inline static void Init_Cell_Node2(Cell* v, Option(const Node*) node) {
 // cell then it won't be quoted at all.  Main thing to know is that you don't
 // necessarily get the original value you had back.
 //
-inline static const Cell* CELL_TO_VAL(NoQuote(const Cell*) cell)
+INLINE const Cell* CELL_TO_VAL(NoQuote(const Cell*) cell)
   { return c_cast(Cell*, cell); }
 
 #if DEBUG_CHECK_CASTS
-    inline static const Cell* CELL_TO_VAL(const Cell* cell) = delete;
+    INLINE const Cell* CELL_TO_VAL(const Cell* cell) = delete;
 #endif
 
 
@@ -297,7 +297,7 @@ inline static const Cell* CELL_TO_VAL(NoQuote(const Cell*) cell)
 // pointer you pass in is carrying a word payload.  It disregards the quotes.)
 //
 
-inline static enum Reb_Kind VAL_TYPE_UNCHECKED(const Cell* v) {
+INLINE enum Reb_Kind VAL_TYPE_UNCHECKED(const Cell* v) {
     switch (QUOTE_BYTE(v)) {
       case ISOTOPE_0: {
         Byte heart = HEART_BYTE(v);
@@ -388,7 +388,7 @@ inline static enum Reb_Kind VAL_TYPE_UNCHECKED(const Cell* v) {
 //
 // Note that an erased cell Is_Fresh(), but not READABLE() or WRITABLE().
 
-inline static Cell* Erase_Cell_Untracked(Cell* c) {
+INLINE Cell* Erase_Cell_Untracked(Cell* c) {
     ALIGN_CHECK_CELL_EVIL_MACRO(c);
     c->header.bits = CELL_MASK_0;
     return cast(Cell*, c);
@@ -448,7 +448,7 @@ inline static Cell* Erase_Cell_Untracked(Cell* c) {
 } while (0)
 
 
-inline static void Reset_Unquoted_Header_Untracked(Cell* v, uintptr_t flags)
+INLINE void Reset_Unquoted_Header_Untracked(Cell* v, uintptr_t flags)
 {
     assert((flags & FLAG_QUOTE_BYTE(255)) == FLAG_QUOTE_BYTE(ISOTOPE_0));
     FRESHEN_CELL_EVIL_MACRO(v);
@@ -456,7 +456,7 @@ inline static void Reset_Unquoted_Header_Untracked(Cell* v, uintptr_t flags)
         | flags | FLAG_QUOTE_BYTE(UNQUOTED_1));
 }
 
-inline static REBVAL* Freshen_Cell_Untracked(Cell* v) {
+INLINE REBVAL* Freshen_Cell_Untracked(Cell* v) {
     FRESHEN_CELL_EVIL_MACRO(v);
     return cast(REBVAL*, v);
 }
@@ -492,7 +492,7 @@ inline static REBVAL* Freshen_Cell_Untracked(Cell* v) {
 // An ANY-ARRAY! in the deep copy of a function body must be relative also to
 // the same function if it contains any instances of such relative words.
 //
-inline static bool IS_RELATIVE(const Cell* v) {
+INLINE bool IS_RELATIVE(const Cell* v) {
     if (not Is_Bindable(v))
         return false;  // may use extra for non-GC-marked uintptr_t-size data
 
@@ -534,18 +534,18 @@ inline static bool IS_RELATIVE(const Cell* v) {
 //     Value(*) head = SPECIFIC(Array_Head(a));  // a might be at tail !!!
 //
 
-inline static Value(*) SPECIFIC(const_if_c Cell* v) {
+INLINE Value(*) SPECIFIC(const_if_c Cell* v) {
     assert(IS_SPECIFIC(v));
     return x_cast(ValueT*, v);
 }
 
 #if CPLUSPLUS_11
-    inline static Value(const*) SPECIFIC(const Cell* v) {
+    INLINE Value(const*) SPECIFIC(const Cell* v) {
         assert(IS_SPECIFIC(v));
         return c_cast(ValueT*, v);
     }
 
-    inline static void SPECIFIC(Value(const*) v) = delete;
+    INLINE void SPECIFIC(Value(const*) v) = delete;
 #endif
 
 
@@ -592,7 +592,7 @@ inline static Value(*) SPECIFIC(const_if_c Cell* v) {
 #define UNSPECIFIED nullptr
 
 
-inline static bool ANY_ARRAYLIKE(NoQuote(const Cell*) v) {
+INLINE bool ANY_ARRAYLIKE(NoQuote(const Cell*) v) {
     // called by core code, sacrifice READABLE() checks
     if (ANY_ARRAY_KIND(Cell_Heart_Unchecked(v)))
         return true;
@@ -606,7 +606,7 @@ inline static bool ANY_ARRAYLIKE(NoQuote(const Cell*) v) {
     return Series_Flavor(c_cast(Series*, node1)) == FLAVOR_ARRAY;
 }
 
-inline static bool ANY_WORDLIKE(NoQuote(const Cell*) v) {
+INLINE bool ANY_WORDLIKE(NoQuote(const Cell*) v) {
     // called by core code, sacrifice READABLE() checks
     if (ANY_WORD_KIND(Cell_Heart_Unchecked(v)))
         return true;
@@ -620,7 +620,7 @@ inline static bool ANY_WORDLIKE(NoQuote(const Cell*) v) {
     return Series_Flavor(c_cast(Series*, node1)) == FLAVOR_SYMBOL;
 }
 
-inline static bool ANY_STRINGLIKE(NoQuote(const Cell*) v) {
+INLINE bool ANY_STRINGLIKE(NoQuote(const Cell*) v) {
     // called by core code, sacrifice READABLE() checks
     if (ANY_STRING_KIND(Cell_Heart_Unchecked(v)))
         return true;
@@ -632,10 +632,10 @@ inline static bool ANY_STRINGLIKE(NoQuote(const Cell*) v) {
 }
 
 
-inline static void INIT_VAL_WORD_SYMBOL(Cell* v, const Symbol* symbol)
+INLINE void INIT_VAL_WORD_SYMBOL(Cell* v, const Symbol* symbol)
   { Init_Cell_Node1(v, symbol); }
 
-inline static const Symbol* VAL_WORD_SYMBOL(NoQuote(const Cell*) cell) {
+INLINE const Symbol* VAL_WORD_SYMBOL(NoQuote(const Cell*) cell) {
     assert(ANY_WORDLIKE(cell));  // no _UNCHECKED variant :-(
     return cast(Symbol*, Cell_Node1(cell));
 }
@@ -651,7 +651,7 @@ inline static const Symbol* VAL_WORD_SYMBOL(NoQuote(const Cell*) cell) {
 #define VAL_WORD_INDEX_U32(v)         PAYLOAD(Any, (v)).second.u32
 
 
-inline static void Copy_Cell_Header(
+INLINE void Copy_Cell_Header(
     Cell* out,
     const Cell* v
 ){
@@ -678,7 +678,7 @@ inline static void Copy_Cell_Header(
 //
 // Interface designed to line up with Derelativize()
 //
-inline static Cell* Copy_Cell_Untracked(
+INLINE Cell* Copy_Cell_Untracked(
     Cell* out,
     const Cell* v,
     Flags copy_mask  // typically you don't copy UNEVALUATED, PROTECTED, etc
@@ -719,10 +719,10 @@ inline static Cell* Copy_Cell_Untracked(
     return out;
 }
 
-inline static bool Is_Stable(Atom(const*) v);
+INLINE bool Is_Stable(Atom(const*) v);
 
 #if CPLUSPLUS_11  // REBVAL and Cell are checked distinctly
-    inline static Value(*) Copy_Cell_Untracked(
+    INLINE Value(*) Copy_Cell_Untracked(
         Cell* out,
         Value(const*) v,
         Flags copy_mask
@@ -734,7 +734,7 @@ inline static bool Is_Stable(Atom(const*) v);
         ));
     }
 
-    inline static Value(*) Copy_Cell_Untracked(
+    INLINE Value(*) Copy_Cell_Untracked(
         Value(*) out,
         Value(const*) v,
         Flags copy_mask
@@ -746,7 +746,7 @@ inline static bool Is_Stable(Atom(const*) v);
         ));
     }
 
-    inline static Value(*) Copy_Cell_Untracked(
+    INLINE Value(*) Copy_Cell_Untracked(
         Value(*) out,
         Atom(const*) v,
         Flags copy_mask
@@ -759,7 +759,7 @@ inline static bool Is_Stable(Atom(const*) v);
         ));
     }
 
-    inline static void Copy_Cell_Untracked(
+    INLINE void Copy_Cell_Untracked(
         Value(*) out,
         const Cell* v,
         Flags copy_mask
@@ -782,7 +782,7 @@ inline static bool Is_Stable(Atom(const*) v);
 //
 // In the meantime, this just does a Copy + RESET.
 
-inline static REBVAL *Move_Cell_Untracked(
+INLINE REBVAL *Move_Cell_Untracked(
     Cell* out,
     Atom(*) v,
     Flags copy_mask
@@ -814,14 +814,14 @@ inline static REBVAL *Move_Cell_Untracked(
 // gets you const output, but mutable input will get you const output if
 // the value itself is const (so it inherits).
 //
-inline static Atom(*) Inherit_Const(Atom(*) out, const Cell* influencer) {
+INLINE Atom(*) Inherit_Const(Atom(*) out, const Cell* influencer) {
     out->header.bits |= (influencer->header.bits & CELL_FLAG_CONST);
     return out;
 }
 #define Trust_Const(value) \
     (value) // just a marking to say the const is accounted for already
 
-inline static REBVAL *Constify(REBVAL *v) {
+INLINE REBVAL *Constify(REBVAL *v) {
     Set_Cell_Flag(v, CONST);
     return v;
 }

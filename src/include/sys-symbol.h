@@ -98,10 +98,10 @@
     SERIES_FLAG_26
 
 
-inline static Option(SymId) ID_OF_SYMBOL(const Symbol* s)
+INLINE Option(SymId) ID_OF_SYMBOL(const Symbol* s)
   { return cast(SymId, SECOND_UINT16(&s->info)); }
 
-inline static const Symbol* Canon_Symbol(SymId symid) {
+INLINE const Symbol* Canon_Symbol(SymId symid) {
     assert(cast(REBLEN, symid) != 0);
     assert(cast(REBLEN, symid) < ALL_SYMS_MAX);
     return &g_symbols.builtin_canons[symid];
@@ -110,7 +110,7 @@ inline static const Symbol* Canon_Symbol(SymId symid) {
 #define Canon(name) \
     Canon_Symbol(SYM_##name)
 
-inline static bool Are_Synonyms(const Symbol* s1, const Symbol* s2) {
+INLINE bool Are_Synonyms(const Symbol* s1, const Symbol* s2) {
     const Symbol* temp = s1;
     do {
         if (temp == s2)

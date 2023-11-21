@@ -191,7 +191,7 @@ typedef enum StubFlavorEnum Flavor;
 // This doesn't need to be particularly fast...so a lookup table is probably
 // not needed.  Still, the common cases (array and strings) are put first.
 //
-inline static size_t Wide_For_Flavor(Flavor flavor) {
+INLINE size_t Wide_For_Flavor(Flavor flavor) {
     assert(flavor != FLAVOR_TRASH);
     if (flavor <= FLAVOR_MAX_ARRAY)
         return sizeof(Cell);

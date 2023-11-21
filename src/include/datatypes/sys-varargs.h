@@ -58,12 +58,12 @@
 #define INIT_VAL_VARARGS_PHASE          Init_Cell_Node2
 #define VAL_VARARGS_PHASE(v)            cast(Action*, Cell_Node2(v))
 
-inline static Array* VAL_VARARGS_BINDING(NoQuote(const Cell*) v) {
+INLINE Array* VAL_VARARGS_BINDING(NoQuote(const Cell*) v) {
     assert(Cell_Heart(v) == REB_VARARGS);
     return cast(Array*, BINDING(v));  // may be varlist or plain array
 }
 
-inline static void INIT_VAL_VARARGS_BINDING(
+INLINE void INIT_VAL_VARARGS_BINDING(
     Cell* v,
     Array* binding  // either an array or a frame varlist
 ){
@@ -72,7 +72,7 @@ inline static void INIT_VAL_VARARGS_BINDING(
 }
 
 
-inline static REBVAL *Init_Varargs_Untyped_Normal(Cell* out, Level* L) {
+INLINE REBVAL *Init_Varargs_Untyped_Normal(Cell* out, Level* L) {
     Reset_Unquoted_Header_Untracked(out, CELL_MASK_VARARGS);
     mutable_BINDING(out) = L->varlist;  // frame-based VARARGS!
     UNUSED(VAL_VARARGS_SIGNED_PARAM_INDEX(out));
@@ -80,7 +80,7 @@ inline static REBVAL *Init_Varargs_Untyped_Normal(Cell* out, Level* L) {
     return cast(REBVAL*, out);
 }
 
-inline static REBVAL *Init_Varargs_Untyped_Enfix(
+INLINE REBVAL *Init_Varargs_Untyped_Enfix(
     Sink(Value(*)) out,
     Option(Value(const*)) left
 ){
@@ -103,7 +103,7 @@ inline static REBVAL *Init_Varargs_Untyped_Enfix(
 }
 
 
-inline static bool Is_Block_Style_Varargs(
+INLINE bool Is_Block_Style_Varargs(
     REBVAL **shared_out,
     NoQuote(const Cell*) vararg
 ){
@@ -130,7 +130,7 @@ inline static bool Is_Block_Style_Varargs(
 }
 
 
-inline static bool Is_Level_Style_Varargs_Maybe_Null(
+INLINE bool Is_Level_Style_Varargs_Maybe_Null(
     Level* *L_out,
     NoQuote(const Cell*) vararg
 ){
@@ -150,7 +150,7 @@ inline static bool Is_Level_Style_Varargs_Maybe_Null(
 }
 
 
-inline static bool Is_Level_Style_Varargs_May_Fail(
+INLINE bool Is_Level_Style_Varargs_May_Fail(
     Level* *L_out,
     const Cell* vararg
 ){
@@ -182,7 +182,7 @@ inline static bool Is_Level_Style_Varargs_May_Fail(
     (VAL_VARARGS_SIGNED_PARAM_INDEX(v) < 0)
 
 
-inline static const Param* Param_For_Varargs_Maybe_Null(
+INLINE const Param* Param_For_Varargs_Maybe_Null(
     const Key* *key,
     NoQuote(const Cell*) v
 ){

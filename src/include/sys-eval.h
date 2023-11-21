@@ -93,7 +93,7 @@
 // to also permit the void state to assign easily was made as well--so that
 // a variable could easily be unset with (var: ~)
 //
-inline static bool Is_Isotope_Set_Friendly(Value(const*) v) {
+INLINE bool Is_Isotope_Set_Friendly(Value(const*) v) {
     assert(QUOTE_BYTE(v) == ISOTOPE_0);
     UNUSED(v);
     return true;
@@ -105,7 +105,7 @@ inline static bool Is_Isotope_Set_Friendly(Value(const*) v) {
 // is opened up to the entire class of isotopic words.  But unlike in
 // assignment, isotopic voids are not get-friendly.
 //
-inline static bool Is_Isotope_Get_Friendly(Value(const*) v) {
+INLINE bool Is_Isotope_Get_Friendly(Value(const*) v) {
     assert(QUOTE_BYTE(v) == ISOTOPE_0);
     return HEART_BYTE(v) != REB_VOID;
 }
@@ -137,7 +137,7 @@ enum {
     ST_ARRAY_STEPPING
 };
 
-inline static void Restart_Evaluator_Level(Level* L) {
+INLINE void Restart_Evaluator_Level(Level* L) {
     assert(L->executor == &Evaluator_Executor);
     Level_State_Byte(L) = STATE_0;
 }
@@ -150,7 +150,7 @@ inline static void Restart_Evaluator_Level(Level* L) {
 
 #define Is_Pushed_Refinement IS_THE_WORD
 
-inline static REBVAL *Refinify_Pushed_Refinement(REBVAL *v) {
+INLINE REBVAL *Refinify_Pushed_Refinement(REBVAL *v) {
     assert(Is_Pushed_Refinement(v));
     return Refinify(Plainify(v));
 }
@@ -161,7 +161,7 @@ inline static REBVAL *Refinify_Pushed_Refinement(REBVAL *v) {
 // so advancing the feed past an inert item to find an enfix function means
 // you have to enter the level specially with ST_EVALUATOR_LOOKING_AHEAD.
 //
-inline static bool Did_Init_Inert_Optimize_Complete(
+INLINE bool Did_Init_Inert_Optimize_Complete(
     Atom(*) out,
     Feed* feed,
     Flags *flags
@@ -265,7 +265,7 @@ inline static bool Did_Init_Inert_Optimize_Complete(
 // operations like ANY or REDUCE that wish to perform several successive
 // operations on an array, without creating a new level each time.
 //
-inline static bool Eval_Step_Throws(
+INLINE bool Eval_Step_Throws(
     Atom(*) out,
     Level* L
 ){
@@ -287,7 +287,7 @@ inline static bool Eval_Step_Throws(
 // that only happens if a function call is in effect -or- if a SET-WORD! or
 // SET-PATH! are running with an expiring `current` in effect.
 //
-inline static bool Eval_Step_In_Sublevel_Throws(
+INLINE bool Eval_Step_In_Sublevel_Throws(
     Atom(*) out,
     Level* L,
     Flags flags
@@ -301,7 +301,7 @@ inline static bool Eval_Step_In_Sublevel_Throws(
 }
 
 
-inline static bool Reevaluate_In_Sublevel_Throws(
+INLINE bool Reevaluate_In_Sublevel_Throws(
     Atom(*) out,
     Level* L,
     Value(const*) reval,
@@ -320,7 +320,7 @@ inline static bool Reevaluate_In_Sublevel_Throws(
 }
 
 
-inline static bool Eval_Step_In_Any_Array_At_Throws(
+INLINE bool Eval_Step_In_Any_Array_At_Throws(
     Atom(*) out,
     REBLEN *index_out,
     const Cell* any_array,  // Note: legal to have any_array = out
@@ -355,7 +355,7 @@ inline static bool Eval_Step_In_Any_Array_At_Throws(
 }
 
 
-inline static bool Eval_Value_Core_Throws(
+INLINE bool Eval_Value_Core_Throws(
     Atom(*) out,
     Flags flags,
     const Cell* value,  // e.g. a BLOCK! here would just evaluate to itself!
@@ -384,7 +384,7 @@ inline static bool Eval_Value_Core_Throws(
     Eval_Value_Core_Throws(out, LEVEL_MASK_NONE, (value), (specifier))
 
 
-inline static Bounce Native_Raised_Result(Level* level_, const void *p) {
+INLINE Bounce Native_Raised_Result(Level* level_, const void *p) {
     assert(not THROWING);
 
     Context* error;

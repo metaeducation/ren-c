@@ -57,10 +57,10 @@
 //   start of the enumeration.
 //
 
-inline static bool IS_KIND_SYM(Option(SymId) id)
+INLINE bool IS_KIND_SYM(Option(SymId) id)
   { return id != 0 and id < cast(SymId, REB_MAX); }
 
-inline static enum Reb_Kind KIND_FROM_SYM(SymId s) {
+INLINE enum Reb_Kind KIND_FROM_SYM(SymId s) {
     assert(IS_KIND_SYM(s));
     return cast(enum Reb_Kind, cast(int, (s)));
 }
@@ -72,7 +72,7 @@ inline static enum Reb_Kind KIND_FROM_SYM(SymId s) {
 #define VAL_TYPE_SYMBOL(v) \
     VAL_WORD_SYMBOL(v)
 
-inline static enum Reb_Kind VAL_TYPE_KIND(NoQuote(const Cell*) v) {
+INLINE enum Reb_Kind VAL_TYPE_KIND(NoQuote(const Cell*) v) {
     assert(Cell_Heart(v) == REB_TYPE_WORD);
     Option(SymId) id = ID_OF_SYMBOL(VAL_WORD_SYMBOL(v));
     assert(unwrap(id) < cast(SymId, REB_MAX));
@@ -82,7 +82,7 @@ inline static enum Reb_Kind VAL_TYPE_KIND(NoQuote(const Cell*) v) {
 
 // Ren-C just uses TYPE-WORD! for built in datatypes
 //
-inline static REBVAL *Init_Builtin_Datatype_Untracked(
+INLINE REBVAL *Init_Builtin_Datatype_Untracked(
     Cell* out,
     enum Reb_Kind kind
 ){
@@ -119,14 +119,14 @@ extern CFunction* Builtin_Type_Hooks[REB_MAX][IDX_HOOKS_MAX];
 // The datatype only knows a symbol.  Have to look that symbol up to get the
 // list of hooks registered by the extension providing the custom type.
 //
-inline static CFunction** VAL_TYPE_HOOKS(NoQuote(const Cell*) type) {
+INLINE CFunction** VAL_TYPE_HOOKS(NoQuote(const Cell*) type) {
     assert(Cell_Heart(type) == REB_TYPE_WORD);
     enum Reb_Kind k = VAL_TYPE_KIND(type);
     assert(k < REB_MAX);
     return Builtin_Type_Hooks[k];
 }
 
-inline static CFunction** HOOKS_FOR_TYPE_OF(NoQuote(const Cell*) v) {
+INLINE CFunction** HOOKS_FOR_TYPE_OF(NoQuote(const Cell*) v) {
     enum Reb_Kind k = Cell_Heart(v);
     assert(k < REB_MAX);
     return Builtin_Type_Hooks[k];
