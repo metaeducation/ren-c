@@ -331,7 +331,7 @@ INLINE void Free_Bookmarks_Maybe_Null(String* str) {
     assert(Is_NonSymbol_String(str));
     if (LINK(Bookmarks, str)) {
         GC_Kill_Series(LINK(Bookmarks, str));
-        mutable_LINK(Bookmarks, str) = nullptr;
+        LINK(Bookmarks, str) = nullptr;
     }
 }
 

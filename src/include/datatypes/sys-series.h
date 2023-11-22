@@ -193,17 +193,17 @@
 // the instances document it is for "bookmarks" or "synonym":
 //
 //      BookmarkList* books = LINK(Bookmarks, string);  // reads `node`
-//      mutable_LINK(Bookmarks, string) = books;
+//      LINK(Bookmarks, string) = books;
 //
 //      const Symbol* synonym = LINK(Synonym, symbol);  // also reads `node`
-//      mutable_LINK(Synonym, symbol) = synonym;
+//      LINK(Synonym, symbol) = synonym;
 //
 // The syntax is *almost* as readable, but throws in benefits of offering some
 // helpful debug runtime checks that you're accessing what the series holds.
 // It has yet another advantage because it allows new "members" to be "added"
 // by extension code that wouldn't be able to edit a union in a core header.
 //
-// To use the LINK() and MISC(), you must define three macros, like this:
+// To use the LINK() and MISC(), you must define two macros, like this:
 //
 //      #define LINK_Bookmarks_TYPE     BookmarkList*
 //      #define HAS_LINK_Bookmarks      FLAVOR_STRING
@@ -213,33 +213,29 @@
 // and a cast operation that does potentially heavy debug checks on the
 // extraction.
 //
-// Note: C casts are used here to gloss the `const` status of the node.  The
-// caller is responsible for storing reads in the right constness for what
-// they know to be stored in the node.
-//
 
-#define LINK(Field, s) \
-    cast(LINK_##Field##_TYPE, m_cast(Node*, \
-        ensure_flavor(HAS_LINK_##Field, (s))->link.any.node))
+#if (! CPLUSPLUS_11) || (! DEBUG)
+    #define LINK(Field, s) \
+        *x_cast(LINK_##Field##_TYPE*, m_cast(Node**, &(s)->link.any.node))
 
-#define MISC(Field, s) \
-    cast(MISC_##Field##_TYPE, m_cast(Node*, \
-        ensure_flavor(HAS_MISC_##Field, (s))->misc.any.node))
+    #define MISC(Field, s) \
+        *x_cast(MISC_##Field##_TYPE*, m_cast(Node**, &(s)->misc.any.node))
 
-#define mutable_LINK(Field, s) \
-    ensured(LINK_##Field##_TYPE, const Node*, \
-        ensure_flavor(HAS_LINK_##Field, (s))->link.any.node)
+#else
+    #define LINK(Field, s) \
+        NodeHolder<LINK_##Field##_TYPE>( \
+            ensure_flavor(HAS_LINK_##Field, (s))->link.any.node)
 
-#define mutable_MISC(Field, s) \
-    ensured(MISC_##Field##_TYPE, const Node*, \
-        ensure_flavor(HAS_MISC_##Field, (s))->misc.any.node)
+    #define MISC(Field, s) \
+        NodeHolder<MISC_##Field##_TYPE>( \
+            ensure_flavor(HAS_MISC_##Field, (s))->misc.any.node)
+#endif
 
 #define node_LINK(Field, s) \
     *m_cast(Node**, &(s)->link.any.node)  // const ok for strict alias
 
 #define node_MISC(Field, s) \
     *m_cast(Node**, &(s)->misc.any.node)  // const ok for strict alias
-
 
 
 //=//// SERIES "INFO" BITS (or INODE) //////////////////////////////////////=//
@@ -281,13 +277,14 @@
 #define Clear_Series_Info(s,name) \
     SERIES_INFO(s) &= ~SERIES_INFO_##name
 
-#define INODE(Field, s) \
-    cast(INODE_##Field##_TYPE, m_cast(Node*, \
-        ensure_flavor(HAS_INODE_##Field, (s))->info.node))
-
-#define mutable_INODE(Field, s) \
-    ensured(INODE_##Field##_TYPE, const Node*, \
-        ensure_flavor(HAS_INODE_##Field, (s))->info.node)
+#if (! DEBUG) || (! CPLUSPLUS_11)
+    #define INODE(Field, s) \
+        *x_cast(INODE_##Field##_TYPE*, m_cast(Node**, &(s)->info.node))
+#else
+    #define INODE(Field, s) \
+        NodeHolder<INODE_##Field##_TYPE>( \
+            ensure_flavor(HAS_INODE_##Field, (s))->info.node)
+#endif
 
 #define node_INODE(Field, s) \
     *m_cast(Node**, &(s)->info.node)  // const ok for strict alias
@@ -364,13 +361,14 @@ INLINE size_t Series_Total(const Series* s) {
     }
 #endif
 
-#define BONUS(Field, s) \
-    cast(BONUS_##Field##_TYPE, m_cast(Node*, \
-        Series_Bonus(ensure_flavor(HAS_BONUS_##Field, (s)))))
-
-#define mutable_BONUS(Field, s) \
-    ensured(BONUS_##Field##_TYPE, const Node*, \
-        Series_Bonus(ensure_flavor(HAS_BONUS_##Field, (s))))
+#if (! DEBUG) || (! CPLUSPLUS_11)
+    #define BONUS(Field, s) \
+        *x_cast(BONUS_##Field##_TYPE*, m_cast(Node**, &Series_Bonus(s)))
+#else
+    #define BONUS(Field, s) \
+        NodeHolder<BONUS_##Field##_TYPE>( \
+            Series_Bonus(ensure_flavor(HAS_BONUS_##Field, (s))))
+#endif
 
 #define node_BONUS(Field, s) \
     *m_cast(Node**, &Series_Bonus(s))  // const ok for strict alias

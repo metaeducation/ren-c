@@ -206,7 +206,7 @@ INLINE Array* Make_Array_Core_Into(
             not Level_Is_Variadic(TOP_LEVEL) and
             Get_Array_Flag(Level_Array(TOP_LEVEL), HAS_FILE_LINE_UNMASKED)
         ){
-            mutable_LINK(Filename, a) = LINK(Filename, Level_Array(TOP_LEVEL));
+            LINK(Filename, a) = LINK(Filename, Level_Array(TOP_LEVEL));
             a->misc.line = Level_Array(TOP_LEVEL)->misc.line;
         }
         else {
@@ -258,7 +258,7 @@ INLINE Array* Make_Array_For_Copy(
             capacity,
             flags & ~ARRAY_FLAG_HAS_FILE_LINE_UNMASKED
         );
-        mutable_LINK(Filename, a) = LINK(Filename, original);
+        LINK(Filename, a) = LINK(Filename, original);
         a->misc.line = original->misc.line;
         Set_Array_Flag(a, HAS_FILE_LINE_UNMASKED);
         return a;

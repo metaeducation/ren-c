@@ -242,7 +242,7 @@ INLINE KeyList* CTX_KEYLIST(Context* c) {
         //
         return ACT_KEYLIST(CTX_FRAME_PHASE(c));
     }
-    return cast(KeyList*, BONUS(KeySource, CTX_VARLIST(c)));  // not Level
+    return cast(KeyList*, node_BONUS(KeySource, CTX_VARLIST(c)));  // not Level
 }
 
 INLINE void INIT_CTX_KEYLIST_SHARED(Context* c, Series* keylist) {
@@ -672,10 +672,10 @@ INLINE Context* Steal_Context_Vars(Context* c, Node* keysource) {
             | SERIES_FLAG_FIXED_SIZE
     );
     SERIES_INFO(copy) = SERIES_INFO_MASK_NONE;
-    Trash_Pointer_If_Debug(node_BONUS(KeySource, copy)); // needs update
+    Trash_Pointer_If_Debug(BONUS(KeySource, copy)); // needs update
     Mem_Copy(&copy->content, &stub->content, sizeof(union StubContentUnion));
-    mutable_MISC(VarlistAdjunct, copy) = nullptr;  // let stub have the meta
-    mutable_LINK(Patches, copy) = nullptr;  // don't carry forward patches
+    MISC(VarlistAdjunct, copy) = nullptr;  // let stub have the meta
+    LINK(Patches, copy) = nullptr;  // don't carry forward patches
 
     REBVAL *rootvar = cast(REBVAL*, copy->content.dynamic.data);
 

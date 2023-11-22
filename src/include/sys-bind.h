@@ -344,7 +344,7 @@ INLINE bool Try_Add_Binder_Index(
     Init_Integer(Array_Single(new_hitch), index);
     node_MISC(Hitch, new_hitch) = old_hitch;
 
-    mutable_MISC(Hitch, s) = new_hitch;
+    MISC(Hitch, s) = new_hitch;
 
   #if defined(NDEBUG)
     UNUSED(binder);
@@ -385,14 +385,14 @@ INLINE REBINT Remove_Binder_Index_Else_0( // return old value if there
     struct Reb_Binder *binder,
     const Symbol* str
 ){
-    Symbol* s = m_cast(Symbol*, str);
+    Series* s = m_cast(Symbol*, str);
     if (MISC(Hitch, s) == s or Not_Series_Flag(MISC(Hitch, s), BLACK))
         return 0;
 
-    Array* hitch = cast(Array*, MISC(Hitch, s));
+    Stub* hitch = MISC(Hitch, s);
 
-    REBINT index = VAL_INT32(Array_Single(hitch));
-    mutable_MISC(Hitch, s) = cast(Array*, node_MISC(Hitch, hitch));
+    REBINT index = VAL_INT32(Stub_Cell(hitch));
+    MISC(Hitch, s) = cast(Array*, node_MISC(Hitch, hitch));
     Set_Node_Managed_Bit(hitch);  // we didn't manuals track it
     GC_Kill_Series(hitch);
 
@@ -472,7 +472,7 @@ INLINE void INIT_BINDING_MAY_MANAGE(
     if (not binding or Is_Node_Managed(binding))
         return;  // unbound or managed already (frame OR object context)
 
-    Level* L = cast(Level*, BONUS(KeySource, binding));  // unmanaged only
+    Level* L = cast(Level*, node_BONUS(KeySource, binding));  // unmanaged only
     assert(not Is_Level_Fulfilling(L));
     UNUSED(L);
 
@@ -560,14 +560,16 @@ INLINE void Unbind_Any_Word(Cell* v) {
 INLINE Context* VAL_WORD_CONTEXT(const REBVAL *v) {
     assert(IS_WORD_BOUND(v));
     Array* binding = VAL_WORD_BINDING(v);
-    if (IS_PATCH(binding))
-        binding = CTX_VARLIST(INODE(PatchContext, binding));
+    if (IS_PATCH(binding)) {
+        Context* patch_context = INODE(PatchContext, binding);
+        binding = CTX_VARLIST(patch_context);
+    }
     else if (IS_LET(binding))
         fail ("LET variables have no context at this time");
 
     assert(
         Is_Node_Managed(binding) or
-        not Is_Level_Fulfilling(cast(Level*, BONUS(KeySource, binding)))
+        not Is_Level_Fulfilling(cast(Level*, node_BONUS(KeySource, binding)))
     );
     Set_Node_Managed_Bit(binding);  // !!! review managing needs
     Context* c = cast(Context*, binding);

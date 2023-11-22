@@ -51,7 +51,7 @@ REBINT CT_Map(NoQuote(const Cell*) a, NoQuote(const Cell*) b, bool strict)
 Map* Make_Map(REBLEN capacity)
 {
     Array* pairlist = Make_Array_Core(capacity * 2, SERIES_MASK_PAIRLIST);
-    mutable_LINK(Hashlist, pairlist) = Make_Hash_Series(capacity);
+    LINK(Hashlist, pairlist) = Make_Hash_Series(capacity);
 
     return cast(Map*, pairlist);
 }
@@ -392,7 +392,7 @@ inline static Map* Copy_Map(const Map* map, REBU64 types) {
         SERIES_FLAGS_NONE | FLAG_FLAVOR(HASHLIST)
             // ^-- !!! No NODE_FLAG_MANAGED?
     );
-    mutable_LINK(Hashlist, copy) = hashlist;
+    LINK(Hashlist, copy) = hashlist;
 
     if (types == 0)
         return cast(Map*, copy); // no types request deep copy, shallow is ok

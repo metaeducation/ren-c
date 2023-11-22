@@ -180,12 +180,15 @@ INLINE Array* Make_Use_Core(
         );
     }
     else {
+        const Symbol* symbol;  // can't use ?: with INODE
+        if (IS_VARLIST(binding))
+            symbol = KEY_SYMBOL(CTX_KEY(cast(Context*, binding), 1));
+        else
+            symbol = INODE(LetSymbol, binding);
         Init_Any_Word_Bound_Untracked(  // arbitrary word
             TRACK(Array_Single(use)),
             kind,
-            IS_VARLIST(binding)
-                ? KEY_SYMBOL(CTX_KEY(cast(Context*, binding), 1))
-                : INODE(LetSymbol, binding),
+            symbol,
             binding,
             1  // arbitrary word (used to use CTX_LEN())
         );
@@ -196,7 +199,7 @@ INLINE Array* Make_Use_Core(
     // the chain.  So we can simply point to the existing specifier...whether
     // it is a use, a let, a frame context, or nullptr.
     //
-    mutable_LINK(NextUse, use) = next;
+    LINK(NextUse, use) = next;
 
     // A circularly linked list of variations of this use with different
     // NextVirtual() data is maintained, to assist in avoiding creating
@@ -205,9 +208,9 @@ INLINE Array* Make_Use_Core(
     //
     // !!! This feature was removed for the moment, see notes on Variant.
     //
-    mutable_MISC(Variant, use) = nullptr;
+    MISC(Variant, use) = nullptr;
 
-    mutable_INODE(UseReserved, use) = nullptr;  // no application yet
+    INODE(UseReserved, use) = nullptr;  // no application yet
 
     return use;
 }

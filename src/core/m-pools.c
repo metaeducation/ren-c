@@ -1126,7 +1126,6 @@ void Decay_Series(Series* s)
         break; }
 
       case FLAVOR_LET:
-        assert(IS_SYMBOL(INODE(LetSymbol, s)));
         break;
 
       case FLAVOR_USE:

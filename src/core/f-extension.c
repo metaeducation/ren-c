@@ -227,7 +227,7 @@ DECLARE_NATIVE(load_extension)
             script_num_codepoints,
             Binary_Len(bin)
         );
-        mutable_LINK(Bookmarks, m_cast(Binary*, bin)) = nullptr;
+        LINK(Bookmarks, m_cast(Binary*, bin)) = nullptr;
 
         if (SPORADICALLY(2))
             Init_Text(script, cast(String*, bin));

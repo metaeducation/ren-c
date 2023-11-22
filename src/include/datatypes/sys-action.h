@@ -114,7 +114,7 @@
 INLINE void INIT_BONUS_KEYSOURCE(Array* varlist, Node* keysource) {
     if (keysource != nullptr and Is_Node_A_Stub(keysource))
         assert(IS_KEYLIST(cast(Series*, keysource)));
-    mutable_BONUS(KeySource, varlist) = keysource;
+    BONUS(KeySource, varlist) = keysource;
 }
 
 
@@ -357,7 +357,7 @@ INLINE Context* ACT_EXEMPLAR(Action* a) {
 // and also forward declared.
 //
 #define ACT_KEYLIST(a) \
-    cast(KeyList*, BONUS(KeySource, ACT_EXEMPLAR(a)))
+    cast(KeyList*, node_BONUS(KeySource, ACT_EXEMPLAR(a)))
 
 #define ACT_KEYS_HEAD(a) \
     Series_Head(const Key, ACT_KEYLIST(a))
@@ -452,7 +452,7 @@ INLINE void Init_Key(Key* dest, const Symbol* symbol)
 // where information for HELP is saved, and it's how modules store out-of-band
 // information that doesn't appear in their body.
 
-#define mutable_ACT_ADJUNCT(a)     mutable_MISC(DetailsAdjunct, ACT_IDENTITY(a))
+#define mutable_ACT_ADJUNCT(a)     MISC(DetailsAdjunct, ACT_IDENTITY(a))
 #define ACT_ADJUNCT(a)             MISC(DetailsAdjunct, ACT_IDENTITY(a))
 
 

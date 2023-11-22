@@ -253,11 +253,11 @@ Array* Make_Let_Patch(
         assert(IS_LET(specifier) or IS_USE(specifier) or IS_VARLIST(specifier));
         assert(Is_Node_Managed(specifier));
     }
-    mutable_LINK(NextLet, let) = specifier;  // linked list [1]
+    LINK(NextLet, let) = specifier;  // linked list [1]
 
-    node_MISC(LetReserved, let) = nullptr;  // not currently used
+    MISC(LetReserved, let) = nullptr;  // not currently used
 
-    mutable_INODE(LetSymbol, let) = symbol;  // surrogate for context "key"
+    INODE(LetSymbol, let) = symbol;  // surrogate for context "key"
 
     return let;
 }

@@ -2194,7 +2194,7 @@ Bounce Scanner_Executor(Level* const L) {
         // Tag array with line where the beginning bracket/group/etc. was found
         //
         a->misc.line = ss->line;
-        mutable_LINK(Filename, a) = ss->file;
+        LINK(Filename, a) = ss->file;
         Set_Array_Flag(a, HAS_FILE_LINE_UNMASKED);
         Set_Series_Flag(a, LINK_NODE_NEEDS_MARK);
 
@@ -2479,7 +2479,7 @@ Bounce Scanner_Executor(Level* const L) {
         // Tag array with line where the beginning bracket/group/etc. was found
         //
         array->misc.line = ss->line;
-        mutable_LINK(Filename, array) = ss->file;
+        LINK(Filename, array) = ss->file;
         Set_Array_Flag(array, HAS_FILE_LINE_UNMASKED);
         Set_Series_Flag(array, LINK_NODE_NEEDS_MARK);
 
@@ -2798,7 +2798,7 @@ Bounce Scanner_Executor(Level* const L) {
         ){
             Array* a = cast(Array*, Cell_Node1(TOP));
             a->misc.line = ss->line;
-            mutable_LINK(Filename, a) = ss->file;
+            LINK(Filename, a) = ss->file;
             Set_Array_Flag(a, HAS_FILE_LINE_UNMASKED);
             Set_Series_Flag(a, LINK_NODE_NEEDS_MARK);
 
@@ -2997,7 +2997,7 @@ Array* Scan_UTF8_Managed(
     Array* a = Pop_Stack_Values_Core(base, flags);
 
     a->misc.line = 1;
-    mutable_LINK(Filename, a) = file;
+    LINK(Filename, a) = file;
     Set_Array_Flag(a, HAS_FILE_LINE_UNMASKED);
     Set_Series_Flag(a, LINK_NODE_NEEDS_MARK);
 
@@ -3195,7 +3195,7 @@ DECLARE_NATIVE(transcode)
         Array* a = Pop_Stack_Values_Core(STACK_BASE, flags);
 
         a->misc.line = ss->line;
-        mutable_LINK(Filename, a) = ss->file;
+        LINK(Filename, a) = ss->file;
         a->header.bits |= ARRAY_MASK_HAS_FILE_LINE;
 
         Init_Block(OUT, a);

@@ -775,10 +775,10 @@ DECLARE_NATIVE(set_adjunct)
 
     if (Is_Frame(v)) {
         if (Is_Frame_Details(v))
-            mutable_MISC(DetailsAdjunct, ACT_IDENTITY(VAL_ACTION(v))) = ctx;
+            MISC(DetailsAdjunct, ACT_IDENTITY(VAL_ACTION(v))) = ctx;
     }
     else
-        mutable_MISC(VarlistAdjunct, CTX_VARLIST(VAL_CONTEXT(v))) = ctx;
+        MISC(VarlistAdjunct, CTX_VARLIST(VAL_CONTEXT(v))) = ctx;
 
     return COPY(adjunct);
 }
@@ -833,15 +833,15 @@ Context* Copy_Context_Extra_Managed(
         assert(extra == 0);
 
         if (CTX_ADJUNCT(original)) {
-            mutable_MISC(VarlistAdjunct, varlist) = Copy_Context_Shallow_Managed(
+            MISC(VarlistAdjunct, varlist) = Copy_Context_Shallow_Managed(
                 CTX_ADJUNCT(original)
             );
         }
         else {
-            mutable_MISC(VarlistAdjunct, varlist) = nullptr;
+            MISC(VarlistAdjunct, varlist) = nullptr;
         }
         INIT_BONUS_KEYSOURCE(varlist, nullptr);
-        mutable_LINK(Patches, varlist) = nullptr;
+        LINK(Patches, varlist) = nullptr;
 
         Context* copy = cast(Context*, varlist); // now a well-formed context
         assert(Get_Series_Flag(varlist, DYNAMIC));
@@ -854,7 +854,7 @@ Context* Copy_Context_Extra_Managed(
 
             Stub* patch = MISC(Hitch, *psym);
             while (Get_Series_Flag(patch, BLACK))  // binding temps
-                patch = cast(Stub*, node_MISC(Hitch, patch));
+                patch = MISC(Hitch, patch);
 
             for (
                 ;
@@ -909,7 +909,7 @@ Context* Copy_Context_Extra_Managed(
             SERIES_MASK_KEYLIST | NODE_FLAG_MANAGED
         ));
 
-        mutable_LINK(Ancestor, keylist) = CTX_KEYLIST(original);
+        LINK(Ancestor, keylist) = CTX_KEYLIST(original);
 
         INIT_CTX_KEYLIST_UNIQUE(copy, keylist);  // ->link field
     }
@@ -919,15 +919,15 @@ Context* Copy_Context_Extra_Managed(
     // If we're copying a frame here, we know it's not running.
     //
     if (CTX_TYPE(original) == REB_FRAME)
-        mutable_MISC(VarlistAdjunct, varlist) = nullptr;
+        MISC(VarlistAdjunct, varlist) = nullptr;
     else {
         // !!! Should the meta object be copied for other context types?
         // Deep copy?  Shallow copy?  Just a reference to the same object?
         //
-        mutable_MISC(VarlistAdjunct, varlist) = nullptr;
+        MISC(VarlistAdjunct, varlist) = nullptr;
     }
 
-    mutable_LINK(Patches, varlist) = nullptr;  // no virtual bind patches yet
+    LINK(Patches, varlist) = nullptr;  // no virtual bind patches yet
 
     return copy;
 }

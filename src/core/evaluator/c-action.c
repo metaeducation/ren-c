@@ -1200,8 +1200,8 @@ void Push_Action(
     );
     SERIES_INFO(s) = SERIES_INFO_MASK_NONE;
     INIT_BONUS_KEYSOURCE(x_cast(Array*, s), L);  // maps varlist back to L
-    mutable_MISC(VarlistAdjunct, s) = nullptr;
-    mutable_LINK(Patches, s) = nullptr;
+    MISC(VarlistAdjunct, s) = nullptr;
+    LINK(Patches, s) = nullptr;
     L->varlist = x_cast(Array*, s);
 
     if (not Did_Series_Data_Alloc(s, num_args + 1 + 1)) {  // +rootvar, +end

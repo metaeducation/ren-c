@@ -431,7 +431,7 @@ INLINE void Fetch_Next_In_Feed(Feed* feed) {
         assert(FEED_PENDING(feed) != nullptr);
 
         feed->p = FEED_PENDING(feed);
-        mutable_MISC(Pending, &feed->singular) = nullptr;
+        MISC(Pending, &feed->singular) = nullptr;
     }
     else if (FEED_IS_VARIADIC(feed)) {
         //
@@ -641,8 +641,8 @@ INLINE Feed* Prep_Feed_Common(void* preallocated, Flags flags) {
         NODE_FLAG_NODE | FLAG_FLAVOR(FEED)
     );
     Erase_Cell(FEED_SINGLE(feed));
-    mutable_LINK(Splice, s) = nullptr;
-    mutable_MISC(Pending, s) = nullptr;
+    LINK(Splice, s) = nullptr;
+    MISC(Pending, s) = nullptr;
 
     feed->flags.bits = flags;
     Trash_Pointer_If_Debug(feed->p);

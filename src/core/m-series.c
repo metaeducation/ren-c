@@ -73,7 +73,7 @@ Series* Copy_Series_Core(const Series* s, Flags flags)
         copy = Make_String_Core(used, flags);
         Set_Series_Used(copy, used);
         *Series_Tail(Byte, copy) = '\0';
-        mutable_LINK(Bookmarks, copy) = nullptr;  // !!! Review: copy these?
+        LINK(Bookmarks, copy) = nullptr;  // !!! Review: copy these?
         copy->misc.length = s->misc.length;
     }
     else if (Series_Wide(s) == 1) {  // non-string BINARY!

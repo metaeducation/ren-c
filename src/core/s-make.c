@@ -42,7 +42,7 @@ String* Make_String_Core(Size encoded_capacity, Flags flags)
         FLAG_FLAVOR(STRING) | flags
     );
     str->misc.length = 0;
-    mutable_LINK(Bookmarks, str) = nullptr;  // generated on demand
+    LINK(Bookmarks, str) = nullptr;  // generated on demand
     *Binary_Head(str) = '\0';  // zero length, so head = tail
     return str;
 }

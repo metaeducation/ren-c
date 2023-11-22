@@ -72,7 +72,7 @@ INLINE void Link_Api_Handle_To_Level(Array* a, Level* L)
     // API freeing operations can update the head of the list in the level
     // when given only the node pointer.
 
-    mutable_MISC(ApiPrev, a) = L;  // back pointer for doubly linked list
+    MISC(ApiPrev, a) = L;  // back pointer for doubly linked list
 
     bool empty_list = L->alloc_value_list == L;
 
@@ -80,45 +80,42 @@ INLINE void Link_Api_Handle_To_Level(Array* a, Level* L)
         Array* head = cast(Array*, L->alloc_value_list);
         if (Is_Api_Value(Stub_Cell(head)))
             assert(not Is_Nulled(Stub_Cell(head)));
-        mutable_MISC(ApiPrev, head) = a;  // link back
+        MISC(ApiPrev, head) = a;  // link back
     }
 
-    mutable_LINK(ApiNext, a) = L->alloc_value_list;  // forward pointer
+    LINK(ApiNext, a) = L->alloc_value_list;  // forward pointer
     L->alloc_value_list = a;
 }
 
 INLINE void Unlink_Api_Handle_From_Level(Stub* stub)
 {
-    bool at_head = did (
-        *cast(Byte*, MISC(ApiPrev, stub)) & NODE_BYTEMASK_0x01_CELL
-    );
-    bool at_tail = did (
-        *cast(Byte*, LINK(ApiNext, stub)) & NODE_BYTEMASK_0x01_CELL
-    );
+    Node* prev_node = MISC(ApiPrev, stub);
+    Node* next_node = LINK(ApiNext, stub);
+    bool at_head = Is_Node_A_Cell(prev_node);
+    bool at_tail = Is_Node_A_Cell(next_node);
 
     if (at_head) {
-        Level* L = cast(Level*, MISC(ApiPrev, stub));
-        L->alloc_value_list = LINK(ApiNext, stub);
+        Level* L = cast(Level*, prev_node);
+        L->alloc_value_list = next_node;
 
         if (not at_tail) {  // only set next item's backlink if it exists
-            Stub* next = cast(Stub*, LINK(ApiNext, stub));
+            Stub* next = cast(Stub*, next_node);
             if (Is_Api_Value(Stub_Cell(next)))
                 assert(not Is_Nulled(Stub_Cell(next)));
-            mutable_MISC(ApiPrev, next) = L;
+            MISC(ApiPrev, next) = L;
         }
     }
     else {
-        // we're not at the head, so there is a node before us, set its "next"
-        Stub* prev = cast(Stub*, MISC(ApiPrev, stub));
+        Stub* prev = cast(Stub*, prev_node);  // not at head, api val before us
         if (Is_Api_Value(Stub_Cell(prev)))
             assert(not Is_Nulled(Stub_Cell(prev)));
-        mutable_LINK(ApiNext, prev) = LINK(ApiNext, stub);
+        LINK(ApiNext, prev) = next_node;  // forward prev's next to our next
 
         if (not at_tail) {  // only set next item's backlink if it exists
-            Stub* next = cast(Stub*, LINK(ApiNext, stub));
+            Stub* next = cast(Stub*, next_node);
             if (Is_Api_Value(Stub_Cell(next)))
                 assert(not Is_Nulled(Stub_Cell(next)));
-            mutable_MISC(ApiPrev, next) = MISC(ApiPrev, stub);
+            MISC(ApiPrev, next) = prev_node;
         }
     }
 }

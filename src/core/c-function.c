@@ -604,7 +604,7 @@ Array* Pop_Paramlist_With_Adjunct_May_Fail(
         SERIES_MASK_KEYLIST | NODE_FLAG_MANAGED
     );
     Set_Series_Used(keylist, num_slots - 1);  // no terminator
-    mutable_LINK(Ancestor, keylist) = keylist;  // chain ends with self
+    LINK(Ancestor, keylist) = keylist;  // chain ends with self
 
     if (flags & MKF_HAS_RETURN)
         paramlist->header.bits |= VARLIST_FLAG_PARAMLIST_HAS_RETURN;
@@ -693,8 +693,8 @@ Array* Pop_Paramlist_With_Adjunct_May_Fail(
     Manage_Series(paramlist);
 
     INIT_BONUS_KEYSOURCE(paramlist, keylist);
-    mutable_MISC(VarlistAdjunct, paramlist) = nullptr;
-    mutable_LINK(Patches, paramlist) = nullptr;
+    MISC(VarlistAdjunct, paramlist) = nullptr;
+    LINK(Patches, paramlist) = nullptr;
   }
 
     // Must remove binder indexes for all words, even if about to fail
@@ -762,8 +762,8 @@ Array* Pop_Paramlist_With_Adjunct_May_Fail(
         );
         Set_Series_Len(types_varlist, num_slots);
 
-        mutable_MISC(VarlistAdjunct, types_varlist) = nullptr;
-        mutable_LINK(Patches, types_varlist) = nullptr;
+        MISC(VarlistAdjunct, types_varlist) = nullptr;
+        LINK(Patches, types_varlist) = nullptr;
         INIT_CTX_KEYLIST_SHARED(cast(Context*, types_varlist), keylist);
 
         Cell* rootvar = Array_Head(types_varlist);
@@ -811,8 +811,8 @@ Array* Pop_Paramlist_With_Adjunct_May_Fail(
         );
         Set_Series_Len(notes_varlist, num_slots);
 
-        mutable_MISC(VarlistAdjunct, notes_varlist) = nullptr;
-        mutable_LINK(Patches, notes_varlist) = nullptr;
+        MISC(VarlistAdjunct, notes_varlist) = nullptr;
+        LINK(Patches, notes_varlist) = nullptr;
         INIT_CTX_KEYLIST_SHARED(cast(Context*, notes_varlist), keylist);
 
         Cell* rootvar = Array_Head(notes_varlist);
@@ -981,7 +981,7 @@ Phase* Make_Action(
     // a placeholder for more useful consistency checking which might be done.
     //
   blockscope {
-    KeyList* keylist = cast(KeyList*, BONUS(KeySource, paramlist));
+    KeyList* keylist = cast(KeyList*, node_BONUS(KeySource, paramlist));
 
     Assert_Series_Managed(keylist);  // paramlists/keylists, can be shared
     assert(Series_Used(keylist) + 1 == Array_Len(paramlist));
@@ -1015,9 +1015,9 @@ Phase* Make_Action(
     // Leave rest of the cells in the capacity uninitialized (caller fills in)
 
     mutable_LINK_DISPATCHER(details) = cast(CFunction*, dispatcher);
-    mutable_MISC(DetailsAdjunct, details) = nullptr;  // caller can fill in
+    MISC(DetailsAdjunct, details) = nullptr;  // caller can fill in
 
-    mutable_INODE(Exemplar, details) = cast(Context*, paramlist);
+    INODE(Exemplar, details) = cast(Context*, paramlist);
 
     Action* act = cast(Action*, details);  // now it's a legitimate Action
 

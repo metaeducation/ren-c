@@ -100,7 +100,7 @@ Utf8(*) String_At(const_if_c String* s, REBLEN at) {
         }
         if (not book and Is_NonSymbol_String(s)) {
             book = Alloc_BookmarkList();
-            mutable_LINK(Bookmarks, m_cast(String*, s)) = book;
+            LINK(Bookmarks, m_cast(String*, s)) = book;
             goto scan_from_head;  // will fill in bookmark
         }
     }
@@ -115,7 +115,7 @@ Utf8(*) String_At(const_if_c String* s, REBLEN at) {
         }
         if (not book and Is_NonSymbol_String(s)) {
             book = Alloc_BookmarkList();
-            mutable_LINK(Bookmarks, m_cast(String*, s)) = book;
+            LINK(Bookmarks, m_cast(String*, s)) = book;
             goto scan_from_tail;  // will fill in bookmark
         }
     }

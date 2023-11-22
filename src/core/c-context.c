@@ -39,7 +39,7 @@ Context* Alloc_Context_Core(enum Reb_Kind kind, REBLEN capacity, Flags flags)
         capacity,  // no terminator
         SERIES_MASK_KEYLIST | NODE_FLAG_MANAGED  // always shareable
     );
-    mutable_LINK(Ancestor, keylist) = keylist;  // default to keylist itself
+    LINK(Ancestor, keylist) = keylist;  // default to keylist itself
     assert(Series_Used(keylist) == 0);
 
     Array* varlist = Make_Array_Core(
@@ -47,8 +47,8 @@ Context* Alloc_Context_Core(enum Reb_Kind kind, REBLEN capacity, Flags flags)
         SERIES_MASK_VARLIST  // includes assurance of dynamic allocation
             | flags  // e.g. NODE_FLAG_MANAGED
     );
-    mutable_MISC(VarlistAdjunct, varlist) = nullptr;
-    mutable_LINK(Patches, varlist) = nullptr;
+    MISC(VarlistAdjunct, varlist) = nullptr;
+    LINK(Patches, varlist) = nullptr;
     INIT_CTX_KEYLIST_UNIQUE(  // hasn't been shared yet...
         cast(Context*, varlist),
         keylist
@@ -99,9 +99,9 @@ bool Expand_Context_KeyList_Core(Context* context, REBLEN delta)
         // concerned, though they can still run against ancestor methods.
         //
         if (LINK(Ancestor, keylist) == keylist)
-            mutable_LINK(Ancestor, copy) = copy;
+            LINK(Ancestor, copy) = copy;
         else
-            mutable_LINK(Ancestor, copy) = LINK(Ancestor, keylist);
+            LINK(Ancestor, copy) = LINK(Ancestor, keylist);
 
         Manage_Series(copy);
         INIT_CTX_KEYLIST_UNIQUE(context, copy);
@@ -210,8 +210,8 @@ static Value(*) Append_Context_Core(
             updating = cast(Stub*, node_MISC(Hitch, updating));
 
         node_MISC(Hitch, patch) = node_MISC(Hitch, updating);
-        mutable_INODE(PatchContext, patch) = context;
-        node_MISC(Hitch, updating) = patch;
+        INODE(PatchContext, patch) = context;
+        MISC(Hitch, updating) = patch;
 
         if (any_word) {  // bind word while we're at it
             INIT_VAL_WORD_BINDING(unwrap(any_word), patch);
@@ -620,8 +620,8 @@ Context* Make_Context_Detect_Managed(
             | NODE_FLAG_MANAGED // Note: Rebind below requires managed context
     );
     Set_Series_Len(varlist, 1 + len);
-    mutable_MISC(VarlistAdjunct, varlist) = nullptr;
-    mutable_LINK(Patches, varlist) = nullptr;  // start w/no virtual binds
+    MISC(VarlistAdjunct, varlist) = nullptr;
+    LINK(Patches, varlist) = nullptr;  // start w/no virtual binds
 
     Context* context = cast(Context*, varlist);
 
@@ -632,7 +632,7 @@ Context* Make_Context_Detect_Managed(
     //
     if (not parent) {
         INIT_CTX_KEYLIST_UNIQUE(context, keylist);
-        mutable_LINK(Ancestor, keylist) = keylist;
+        LINK(Ancestor, keylist) = keylist;
     }
     else {
         if (keylist == CTX_KEYLIST(unwrap(parent))) {
@@ -645,7 +645,7 @@ Context* Make_Context_Detect_Managed(
         }
         else {
             INIT_CTX_KEYLIST_UNIQUE(context, keylist);
-            mutable_LINK(Ancestor, keylist) = CTX_KEYLIST(unwrap(parent));
+            LINK(Ancestor, keylist) = CTX_KEYLIST(unwrap(parent));
         }
     }
 

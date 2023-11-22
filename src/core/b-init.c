@@ -214,9 +214,9 @@ static void Startup_Lib(void)
             | SERIES_FLAG_INFO_NODE_NEEDS_MARK
         );
 
-        mutable_INODE(PatchContext, patch) = nullptr;  // signals unused
-        mutable_LINK(PatchReserved, patch) = nullptr;
-        mutable_MISC(PatchHitch, patch) = nullptr;
+        INODE(PatchContext, patch) = nullptr;  // signals unused
+        LINK(PatchReserved, patch) = nullptr;
+        MISC(PatchHitch, patch) = nullptr;
         assert(Is_Cell_Poisoned(Array_Single(patch)));
         TRACK(Erase_Cell(Array_Single(patch)));  // Lib(XXX) starts unreadable
     }
@@ -284,9 +284,9 @@ static void Shutdown_Lib(void)
         // this one is a global, it is set to nullptr just to indicate that
         // the freeing process happened.  Should all nodes be zeroed?
         //
-        mutable_INODE(PatchContext, patch) = nullptr;
-        mutable_LINK(PatchReserved, patch) = nullptr;
-        mutable_MISC(PatchHitch, patch) = nullptr;
+        INODE(PatchContext, patch) = nullptr;
+        LINK(PatchReserved, patch) = nullptr;
+        MISC(PatchHitch, patch) = nullptr;
     }
 
     rebReleaseAndNull(&Lib_Context_Value);

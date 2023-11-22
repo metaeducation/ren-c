@@ -1853,7 +1853,7 @@ bool Try_As_String(
                 num_codepoints,
                 Binary_Len(bin)
             );
-            mutable_LINK(Bookmarks, m_cast(Binary*, bin)) = nullptr;
+            LINK(Bookmarks, m_cast(Binary*, bin)) = nullptr;
 
             // !!! TBD: cache index/offset
 

@@ -169,7 +169,7 @@ DECLARE_NATIVE(augment_p)  // see extended definition AUGMENT in %base-defs.r
     // that it's possible to tell a frame built for the augmented function is
     // compatible with the original function (and its ancestors, too)
     //
-    mutable_LINK(Ancestor, ACT_KEYLIST(augmentated)) = ACT_KEYLIST(augmentee);
+    LINK(Ancestor, ACT_KEYLIST(augmentated)) = ACT_KEYLIST(augmentee);
 
     return Init_Activation(OUT, augmentated, label, UNBOUND);
 }

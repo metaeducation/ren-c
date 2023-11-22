@@ -186,8 +186,8 @@ Context* Make_Context_For_Action_Push_Partials(
         goto continue_unspecialized;
     }
 
-    mutable_MISC(VarlistAdjunct, varlist) = nullptr;
-    mutable_LINK(Patches, varlist) = nullptr;
+    MISC(VarlistAdjunct, varlist) = nullptr;
+    LINK(Patches, varlist) = nullptr;
 
     return cast(Context*, varlist);
 }

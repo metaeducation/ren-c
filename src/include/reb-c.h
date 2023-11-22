@@ -487,7 +487,8 @@
     };
 
     #define cast(T,v) \
-        (cast_helper<decltype(v), T>::convert(v))  // outer parens, [1]
+        (cast_helper<typename std::remove_reference< \
+            decltype(v)>::type, T>::convert(v))  // outer parens [1]
 
     template<typename T, typename V>
     constexpr T m_cast_helper(V v) {

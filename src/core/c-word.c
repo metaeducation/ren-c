@@ -345,7 +345,7 @@ const Symbol* Intern_UTF8_Managed_Core(
     Freeze_Series(s);
 
     if (not synonym) {
-        mutable_LINK(Synonym, s) = c_cast(Symbol*, s);  // 1-item circular list
+        LINK(Synonym, s) = c_cast(Symbol*, s);  // 1-item circular list
 
         // leave header.bits as 0 for SYM_0 as answer to VAL_WORD_ID()
         // Startup_Lib() tags values from %words.r after the fact.
@@ -367,8 +367,8 @@ const Symbol* Intern_UTF8_Managed_Core(
         // This is a synonym for an existing canon.  Link it into the synonyms
         // circularly linked list, and direct link the canon form.
         //
-        mutable_LINK(Synonym, s) = LINK(Synonym, synonym);
-        mutable_LINK(Synonym, synonym) = c_cast(Symbol*, s);
+        LINK(Synonym, s) = LINK(Synonym, synonym);
+        LINK(Synonym, synonym) = c_cast(Symbol*, s);
 
         // If the canon form had a SYM_XXX for quick comparison of %words.r
         // words in C switch statements, the synonym inherits that number.
@@ -383,7 +383,7 @@ const Symbol* Intern_UTF8_Managed_Core(
     // !!! This is expected to grow into a list that will include statically
     // the list of declared variables in things like `user` and `lib`.
     //
-    mutable_MISC(Hitch, s) = s;
+    MISC(Hitch, s) = s;
 
     if (deleted_slot) {
         *deleted_slot = cast(Symbol*, s);  // reuse the deleted slot
@@ -435,27 +435,27 @@ const String* Intern_Any_String_Managed(const Cell* v) {
 // Further, if it happens to be canon, we need to re-point everything in the
 // chain to a new entry.  Choose the synonym as a new canon if so.
 //
-void GC_Kill_Interning(String* intern)
+void GC_Kill_Interning(const Symbol* intern)
 {
-    Symbol* synonym = m_cast(Symbol*, LINK(Synonym, intern));
+    const Symbol* synonym = LINK(Synonym, intern);
 
     // Note synonym and intern may be the same here.
     //
-    Symbol* temp = synonym;
+    const Symbol* temp = synonym;
     while (LINK(Synonym, temp) != intern)
-        temp = m_cast(Symbol*, LINK(Synonym, temp));
-    mutable_LINK(Synonym, temp) = synonym;  // cut the intern out (or no-op)
+        temp = LINK(Synonym, temp);
+    LINK(Synonym, m_cast(Symbol*, temp)) = synonym;  // cut the intern out (or no-op)
 
     // We should only be GC'ing a symbol if all the sea-of-words module
     // variables referring to it are also being freed.  Make sure that is
     // the case, and remove from the circularly linked list.
     //
-    Stub* patch = intern;
+    const Stub* patch = intern;
     while (node_MISC(Hitch, patch) != intern) {
         assert(Not_Node_Marked(patch));
         patch = cast(Stub*, node_MISC(Hitch, patch));
     }
-    node_MISC(Hitch, patch) = node_MISC(Hitch, intern);  // may be no-op
+    node_MISC(Hitch, m_cast(Stub*, patch)) = node_MISC(Hitch, intern);  // may be no-op
 
     REBLEN num_slots = Series_Used(g_symbols.by_hash);
     Symbol** symbols_by_hash = Series_Head(Symbol*, g_symbols.by_hash);

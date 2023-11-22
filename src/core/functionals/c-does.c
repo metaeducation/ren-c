@@ -113,7 +113,7 @@ Bounce Block_Dispatcher(Level* const L)
         // Preserve file and line information from the original, if present.
         //
         if (Get_Array_Flag(body, HAS_FILE_LINE_UNMASKED)) {
-            mutable_LINK(Filename, relativized) = LINK(Filename, body);
+            LINK(Filename, relativized) = LINK(Filename, body);
             relativized->misc.line = body->misc.line;
             Set_Array_Flag(relativized, HAS_FILE_LINE_UNMASKED);
         }
