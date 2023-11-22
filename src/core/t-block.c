@@ -333,7 +333,7 @@ Bounce TO_Array(Level* level_, enum Reb_Kind kind, const REBVAL *arg) {
         REBLEN len = VAL_SEQUENCE_LEN(arg);
         REBLEN i;
         for (i = 0; i < len; ++i) {
-            GET_SEQUENCE_AT(
+            Copy_Sequence_At(
                 PUSH(),
                 arg,
                 VAL_SEQUENCE_SPECIFIER(arg),

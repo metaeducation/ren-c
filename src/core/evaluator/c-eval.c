@@ -1406,7 +1406,7 @@ Bounce Evaluator_Executor(Level* L)
                 and Is_Blank(VAL_SEQUENCE_AT(SCRATCH, check, 0))
             ){
                 is_optional = true;  // leading slash means optional
-                GET_SEQUENCE_AT(
+                Copy_Sequence_At(
                     SCRATCH,
                     check,
                     check_specifier,

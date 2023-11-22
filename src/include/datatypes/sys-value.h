@@ -274,20 +274,6 @@ INLINE void Init_Cell_Node2(Cell* v, Option(const Node*) node) {
     Cell_Heart_Unchecked(READABLE(cell))
 
 
-// Sometimes you have a noquote and need to pass a REBVAL* to something.  It
-// doesn't seem there's too much bad that can happen if you do; you'll get
-// back something that might be quoted up to 3 levels...if it's an escaped
-// cell then it won't be quoted at all.  Main thing to know is that you don't
-// necessarily get the original value you had back.
-//
-INLINE const Cell* CELL_TO_VAL(NoQuote(const Cell*) cell)
-  { return c_cast(Cell*, cell); }
-
-#if DEBUG_CHECK_CASTS
-    INLINE const Cell* CELL_TO_VAL(const Cell* cell) = delete;
-#endif
-
-
 //=//// VALUE TYPE (always REB_XXX <= REB_MAX) ////////////////////////////=//
 //
 // When asking about a value's "type", you want to see something like a
@@ -774,6 +760,13 @@ INLINE bool Is_Stable(Atom(const*) v);
 
 #define Copy_Cell_Core(out,v,copy_mask) \
     TRACK(Copy_Cell_Untracked((out), (v), (copy_mask)))
+
+INLINE Cell* Copy_Relative_internal(Cell* out, const Cell* in) {  // dangerous!
+    Copy_Cell_Header(out, in);
+    out->payload = in->payload;
+    out->extra = in->extra;
+    return out;
+}
 
 
 //=//// CELL MOVEMENT //////////////////////////////////////////////////////=//

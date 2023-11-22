@@ -399,7 +399,7 @@ REBTYPE(Sequence)
         if (n < 0 or n >= cast(REBINT, VAL_SEQUENCE_LEN(sequence)))
             return nullptr;
 
-        GET_SEQUENCE_AT(OUT, sequence, VAL_SEQUENCE_SPECIFIER(sequence), n);
+        Copy_Sequence_At(OUT, sequence, VAL_SEQUENCE_SPECIFIER(sequence), n);
         return OUT; }
 
       case SYM_REVERSE: {

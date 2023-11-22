@@ -70,6 +70,149 @@
 // so that locations using them may avoid overhead in invocation.
 
 
+//=////////////////////////////////////////////////////////////////////////=//
+//
+//  COPYING RELATIVE VALUES TO SPECIFIC
+//
+//=////////////////////////////////////////////////////////////////////////=//
+//
+// This can be used to turn a Cell into a REBVAL.  If the Cell is indeed
+// relative and needs to be made specific to be put into the target, then the
+// specifier is used to do that.
+//
+// It is nearly as fast as just assigning the value directly in the release
+// build, though debug builds assert that the function in the specifier
+// indeed matches the target in the relative value (because relative values
+// in an array may only be relative to the function that deep copied them, and
+// that is the only kind of specifier you can use with them).
+//
+// Interface designed to line up with Copy_Cell()
+//
+// !!! At the moment, there is a fair amount of overlap in this code with
+// Get_Context_Core().  One of them resolves a value's real binding and then
+// fetches it, while the other resolves a value's real binding but then stores
+// that back into another value without fetching it.  This suggests sharing
+// a mechanic between both...TBD.
+//
+
+INLINE Specifier* Derive_Specifier(
+    Specifier* parent,
+    NoQuote(const Cell*) any_array
+);
+
+#if CPLUSPLUS_11
+    INLINE Specifier* Derive_Specifier(
+        Specifier* parent,
+        const REBVAL* any_array
+    ) = delete;
+#endif
+
+INLINE REBVAL *Derelativize_Untracked(
+    Cell* out,  // relative dest overwritten w/specific value
+    const Cell* v,
+    Specifier* specifier
+){
+    Copy_Cell_Header(out, v);
+    out->payload = v->payload;
+    if (not Is_Bindable(v)) {
+        out->extra = v->extra;
+        return cast(REBVAL*, out);
+    }
+
+    // The specifier is not going to have a say in the derelativized cell.
+    // This means any information it encodes must be taken into account now.
+    //
+    if (Any_Wordlike(v)) {
+        REBLEN index;
+        Series* s = try_unwrap(
+            Get_Word_Container(&index, v, specifier, ATTACH_COPY)
+        );
+        if (not s) {
+            // Getting back NULL here could mean that it's actually unbound,
+            // or that it's bound to a "sea" context like User or Lib and
+            // there's nothing there...yet.
+            //
+            out->extra = v->extra;
+        }
+        else {
+            INIT_BINDING_MAY_MANAGE(out, s);
+            INIT_VAL_WORD_INDEX(out, index);
+        }
+
+        return cast(REBVAL*, out);
+    }
+    else if (Any_Arraylike(v)) {
+        //
+        // The job of an array in a derelativize operation is to carry along
+        // the specifier.  However, it cannot lose any prior existing info
+        // that's in the specifier it holds.
+        //
+        // THE BINDING IN ARRAYS MAY BE UNMANAGED...due to an optimization
+        // for passing things to natives that is probably not needed any
+        // longer.  Review.
+        //
+        // The mechanism otherwise is shared with specifier derivation.
+        // That includes the case of if specifier==SPECIFIED.
+        //
+        INIT_BINDING_MAY_MANAGE(out, Derive_Specifier(specifier, v));
+    }
+    else {
+        // Things like contexts and varargs are not affected by specifiers,
+        // at least not currently.
+        //
+        out->extra = v->extra;
+    }
+
+    return cast(REBVAL*, out);
+}
+
+
+// In the C++ build, defining this overload that takes a REBVAL* instead of
+// a Cell*, and then not defining it...will tell you that you do not need
+// to use Derelativize.  Juse Copy_Cell() if your source is a REBVAL!
+//
+#if CPLUSPLUS_11
+    REBVAL *Derelativize_Untracked(
+        Cell* dest, const REBVAL *v, Specifier* specifier
+    );
+#endif
+
+#define Derelativize(dest,v,specifier) \
+    TRACK(Derelativize_Untracked((dest), (v), (specifier)))
+
+#define Dequoted_Derelativize(out,in,specifier) \
+    Dequotify(Derelativize((out), \
+        cast(const Cell*, ensure(NoQuote(*), (in))), (specifier)))
+
+// These integer accessors depend on Dequoted_Derelativize() for their error
+// messages (they take in potentially quoted values).
+
+INLINE int32_t VAL_INT32(NoQuote(const Cell*) v) {
+    if (VAL_INT64(v) > INT32_MAX or VAL_INT64(v) < INT32_MIN) {
+        DECLARE_STABLE (unquoted);
+        Dequoted_Derelativize(unquoted, v, SPECIFIED);
+        fail (Error_Out_Of_Range(unquoted));
+    }
+    return cast(int32_t, VAL_INT64(v));
+}
+
+INLINE uint32_t VAL_UINT32(NoQuote(const Cell*) v) {
+    if (VAL_INT64(v) < 0 or VAL_INT64(v) > UINT32_MAX) {
+        DECLARE_STABLE (unquoted);
+        Dequoted_Derelativize(unquoted, v, SPECIFIED);
+        fail (Error_Out_Of_Range(unquoted));
+    }
+    return cast(uint32_t, VAL_INT64(v));
+}
+
+INLINE Byte VAL_UINT8(NoQuote(const Cell*) v) {
+    if (VAL_INT64(v) > 255 or VAL_INT64(v) < 0) {
+        DECLARE_STABLE (unquoted);
+        Dequoted_Derelativize(unquoted, v, SPECIFIED);
+        fail (Error_Out_Of_Range(unquoted));
+    }
+    return cast(Byte, VAL_INT32(v));
+}
 
 
 // Tells whether when an ACTION! has a binding to a context, if that binding
@@ -564,117 +707,6 @@ INLINE REBVAL *Sink_Word_May_Fail(
     REBVAL *var = Lookup_Mutable_Word_May_Fail(any_word, specifier);
     return FRESHEN(var);
 }
-
-
-//=////////////////////////////////////////////////////////////////////////=//
-//
-//  COPYING RELATIVE VALUES TO SPECIFIC
-//
-//=////////////////////////////////////////////////////////////////////////=//
-//
-// This can be used to turn a Cell into a REBVAL.  If the Cell is indeed
-// relative and needs to be made specific to be put into the target, then the
-// specifier is used to do that.
-//
-// It is nearly as fast as just assigning the value directly in the release
-// build, though debug builds assert that the function in the specifier
-// indeed matches the target in the relative value (because relative values
-// in an array may only be relative to the function that deep copied them, and
-// that is the only kind of specifier you can use with them).
-//
-// Interface designed to line up with Copy_Cell()
-//
-// !!! At the moment, there is a fair amount of overlap in this code with
-// Get_Context_Core().  One of them resolves a value's real binding and then
-// fetches it, while the other resolves a value's real binding but then stores
-// that back into another value without fetching it.  This suggests sharing
-// a mechanic between both...TBD.
-//
-
-INLINE Specifier* Derive_Specifier(
-    Specifier* parent,
-    NoQuote(const Cell*) any_array
-);
-
-#if CPLUSPLUS_11
-    INLINE Specifier* Derive_Specifier(
-        Specifier* parent,
-        const REBVAL* any_array
-    ) = delete;
-#endif
-
-INLINE REBVAL *Derelativize_Untracked(
-    Cell* out,  // relative dest overwritten w/specific value
-    const Cell* v,
-    Specifier* specifier
-){
-    Copy_Cell_Header(out, v);
-    out->payload = v->payload;
-    if (not Is_Bindable(v)) {
-        out->extra = v->extra;
-        return cast(REBVAL*, out);
-    }
-
-    // The specifier is not going to have a say in the derelativized cell.
-    // This means any information it encodes must be taken into account now.
-    //
-    if (Any_Wordlike(v)) {
-        REBLEN index;
-        Series* s = try_unwrap(
-            Get_Word_Container(&index, v, specifier, ATTACH_COPY)
-        );
-        if (not s) {
-            // Getting back NULL here could mean that it's actually unbound,
-            // or that it's bound to a "sea" context like User or Lib and
-            // there's nothing there...yet.
-            //
-            out->extra = v->extra;
-        }
-        else {
-            INIT_BINDING_MAY_MANAGE(out, s);
-            INIT_VAL_WORD_INDEX(out, index);
-        }
-
-        return cast(REBVAL*, out);
-    }
-    else if (Any_Arraylike(v)) {
-        //
-        // The job of an array in a derelativize operation is to carry along
-        // the specifier.  However, it cannot lose any prior existing info
-        // that's in the specifier it holds.
-        //
-        // THE BINDING IN ARRAYS MAY BE UNMANAGED...due to an optimization
-        // for passing things to natives that is probably not needed any
-        // longer.  Review.
-        //
-        // The mechanism otherwise is shared with specifier derivation.
-        // That includes the case of if specifier==SPECIFIED.
-        //
-        INIT_BINDING_MAY_MANAGE(out, Derive_Specifier(specifier, v));
-    }
-    else {
-        // Things like contexts and varargs are not affected by specifiers,
-        // at least not currently.
-        //
-        out->extra = v->extra;
-    }
-
-    return cast(REBVAL*, out);
-}
-
-
-// In the C++ build, defining this overload that takes a REBVAL* instead of
-// a Cell*, and then not defining it...will tell you that you do not need
-// to use Derelativize.  Juse Copy_Cell() if your source is a REBVAL!
-//
-#if CPLUSPLUS_11
-    REBVAL *Derelativize_Untracked(
-        Cell* dest, const REBVAL *v, Specifier* specifier
-    );
-#endif
-
-#define Derelativize(dest,v,specifier) \
-    TRACK(Derelativize_Untracked((dest), (v), (specifier)))
 
 
 //=////////////////////////////////////////////////////////////////////////=//

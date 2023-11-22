@@ -496,14 +496,21 @@ INLINE REBLEN VAL_SEQUENCE_LEN(NoQuote(const Cell*) sequence) {
 // be used to read the pointers.  If the value is not in an array, it may
 // need to be written to a passed-in storage location.
 //
-// NOTE: It's important that the return result from this routine be a Cell*
-// and not a REBVAL*, because path ATs are relative values.  Hence the
-// seemingly minor optimization of not copying out array cells is more than
-// just that...it also assures that the caller isn't passing in a REBVAL*
-// and then using it as if it were fully specified.  It serves two purposes.
+// 1. It's important that the return result from this routine be a Cell* and
+//    not a REBVAL*, because path ATs are relative values.  Hence the
+//    seemingly minor optimization of not copying out array cells is more than
+//    just that...it also assures that the caller isn't passing in a REBVAL*
+//    then using it as if it were fully specified.  It serves two purposes.
+//
+// 2. Because the cell is being viewed as a PATH! or TUPLE!, we cannot view
+//    it as a WORD! unless we fiddle the bits at a new location.  The cell
+//    is relative and may be at a quote level.
+//
+// 3. The quotes must be removed because the quotes are intended to be "on"
+//    the path or tuple.  If implemented as a pseudo-WORD!
 //
 INLINE const Cell* VAL_SEQUENCE_AT(
-    Cell* store,  // return may not point at this cell, ^-- SEE WHY!
+    Cell* store,  // relative value, return may not point at this cell [1]
     NoQuote(const Cell*) sequence,
     REBLEN n
 ){
@@ -527,13 +534,9 @@ INLINE const Cell* VAL_SEQUENCE_AT(
         if (Get_Cell_Flag(sequence, REFINEMENT_LIKE) ? n == 0 : n != 0)
             return Lib(BLANK);
 
-        // Because the cell is being viewed as a PATH!, we cannot view it as
-        // a WORD! also unless we fiddle the bits at a new location.
-        //
-        if (sequence != store)
-            Copy_Cell(store, CELL_TO_VAL(sequence));
+        Copy_Relative_internal(store, x_cast(const Cell*, sequence));  // [2]
         HEART_BYTE(store) = REB_WORD;
-        QUOTE_BYTE(store) = UNQUOTED_1;  // quote is "on" the sequence
+        QUOTE_BYTE(store) = UNQUOTED_1;  // [3]
         return store; }
 
       case FLAVOR_ARRAY : {  // uncompressed sequence
@@ -548,50 +551,15 @@ INLINE const Cell* VAL_SEQUENCE_AT(
     }
 }
 
-INLINE Value(*) GET_SEQUENCE_AT(
+INLINE Value(*) Copy_Sequence_At(
     Sink(Value(*)) out,
     NoQuote(const Cell*) sequence,
     Specifier* specifier,
     REBLEN n
 ){
-    assert(out != sequence);
-    assert(Any_Sequence_Kind(Cell_Heart(sequence)));
-
-    if (Not_Cell_Flag(sequence, SEQUENCE_HAS_NODE)) {  // compressed bytes
-        assert(n < PAYLOAD(Bytes, sequence).at_least_8[IDX_SEQUENCE_USED]);
-        return Init_Integer(out, PAYLOAD(Bytes, sequence).at_least_8[n + 1]);
-    }
-
-    const Node* node1 = Cell_Node1(sequence);
-    if (Is_Node_A_Cell(node1)) {  // test if it's a pairing
-        assert(false);  // these don't exist yet
-        return nullptr;  // compressed 2-element sequence
-    }
-
-    switch (Series_Flavor(c_cast(Series*, node1))) {
-      case FLAVOR_SYMBOL : {  // compressed single WORD! sequence
-        assert(n < 2);
-        if (Get_Cell_Flag(sequence, REFINEMENT_LIKE) ? n == 0 : n != 0)
-            return Init_Blank(out);
-
-        // Because the cell is being viewed as a PATH!, we cannot view it as
-        // a WORD! also unless we fiddle the bits at a new location.
-        //
-        Derelativize(out, c_cast(Cell*, sequence), specifier);
-        HEART_BYTE(out) = REB_WORD;
-        QUOTE_BYTE(out) = UNQUOTED_1;  // quote is "on" the sequence
-        return out; }
-
-      case FLAVOR_ARRAY : {  // uncompressed sequence
-        const Array* a = c_cast(Array*, Cell_Node1(sequence));
-        assert(Array_Len(a) >= 2);
-        assert(Is_Array_Frozen_Shallow(a));
-        return Derelativize(out, Array_At(a, n), specifier); }  // aread only
-
-      default :
-        assert(false);
-        DEAD_END;
-    }
+    DECLARE_STABLE (store);
+    const Cell* at = VAL_SEQUENCE_AT(store, sequence, n);
+    return Derelativize(out, at, specifier);
 }
 
 INLINE Byte VAL_SEQUENCE_BYTE_AT(

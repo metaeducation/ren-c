@@ -65,24 +65,6 @@ INLINE REBVAL *Init_Integer_Untracked(Cell* out, REBI64 i64) {
 #define Init_Integer(out,i64) \
     TRACK(Init_Integer_Untracked((out), (i64)))
 
-INLINE int32_t VAL_INT32(NoQuote(const Cell*) v) {
-    if (VAL_INT64(v) > INT32_MAX or VAL_INT64(v) < INT32_MIN)
-        fail (Error_Out_Of_Range(CELL_TO_VAL(v)));
-    return cast(int32_t, VAL_INT64(v));
-}
-
-INLINE uint32_t VAL_UINT32(NoQuote(const Cell*) v) {
-    if (VAL_INT64(v) < 0 or VAL_INT64(v) > UINT32_MAX)
-        fail (Error_Out_Of_Range(CELL_TO_VAL(v)));
-    return cast(uint32_t, VAL_INT64(v));
-}
-
-INLINE Byte VAL_UINT8(NoQuote(const Cell*) v) {
-    if (VAL_INT64(v) > 255 or VAL_INT64(v) < 0)
-        fail (Error_Out_Of_Range(CELL_TO_VAL(v)));
-    return cast(Byte, VAL_INT32(v));
-}
-
 
 #define ROUND_TO_INT(d) \
     cast(int32_t, floor((MAX(INT32_MIN, MIN(INT32_MAX, d))) + 0.5))

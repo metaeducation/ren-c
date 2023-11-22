@@ -64,8 +64,8 @@ REBINT CT_Date(NoQuote(const Cell*) a_in, NoQuote(const Cell*) b_in, bool strict
 
     DECLARE_STABLE (a);
     DECLARE_STABLE (b);
-    Dequotify(Copy_Cell(a, SPECIFIC(CELL_TO_VAL(a_in))));
-    Dequotify(Copy_Cell(b, SPECIFIC(CELL_TO_VAL(b_in))));
+    Dequoted_Derelativize(a, a_in, SPECIFIED);
+    Dequoted_Derelativize(b, b_in, SPECIFIED);
 
     Adjust_Date_UTC(a);  // gets 00:00:00+0:00 filled in if no time info
     Adjust_Date_UTC(b);
@@ -107,8 +107,7 @@ void MF_Date(REB_MOLD *mo, NoQuote(const Cell*) v_orig, bool form)
     // make a copy that we can tweak during the emit process
 
     DECLARE_LOCAL (v);
-    Copy_Cell(v, SPECIFIC(CELL_TO_VAL(v_orig)));
-    Dequotify(v);  // accessors expect it to not be quoted
+    Dequoted_Derelativize(v, v_orig, SPECIFIED);
 
     if (
         VAL_MONTH(v) == 0

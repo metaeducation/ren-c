@@ -198,8 +198,8 @@ Bounce MAKE_Decimal(
 
         DECLARE_STABLE (numerator);
         DECLARE_STABLE (denominator);
-        GET_SEQUENCE_AT(numerator, arg, VAL_SEQUENCE_SPECIFIER(arg), 0);
-        GET_SEQUENCE_AT(denominator, arg, VAL_SEQUENCE_SPECIFIER(arg), 1);
+        Copy_Sequence_At(numerator, arg, VAL_SEQUENCE_SPECIFIER(arg), 0);
+        Copy_Sequence_At(denominator, arg, VAL_SEQUENCE_SPECIFIER(arg), 1);
         Push_GC_Guard(numerator);  // might be GROUP!, so (1.2)/4
         Push_GC_Guard(denominator);
 
