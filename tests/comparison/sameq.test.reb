@@ -115,7 +115,8 @@
     (
         a-value: first [a/b]
         parse as block! :a-value [b-value: <here>, to <end>]
-        same? as block! :a-value :b-value
+        equal? as block! :a-value :b-value
+        not same? as block! :a-value :b-value  ; !!! as makes new array, review
     )
 ]
 

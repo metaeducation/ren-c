@@ -6,7 +6,7 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Copyright 2012-2022 Ren-C Open Source Contributors
+// Copyright 2012-2023 Ren-C Open Source Contributors
 // Copyright 2012 REBOL Technologies
 // REBOL is a trademark of REBOL Technologies
 //
@@ -20,7 +20,7 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// A "Sequence" is a constrained type of item list, with elements separated by
+// A "Sequence" is a constrained type of array, with elements separated by
 // interstitial delimiters.  The two basic forms are PATH! (separated by `/`)
 // and TUPLE! (separated by `.`)
 //
@@ -28,12 +28,12 @@
 //     192.168.0.1       ; a 4-element TUPLE!
 //
 // Because they are defined by separators *between* elements, sequences of
-// zero or one item are not legal.  This is one reason why they are immutable:
+// zero or one item are not legal.  (This is one reason why they are immutable:
 // so the constraint of having at least two items can be validated at the time
-// of creation.
+// of creation.)
 //
 // Both forms are allowed to contain WORD!, INTEGER!, GROUP!, BLOCK!, TEXT!,
-// QUASI-WORD!, and TAG!.  There are SET-, GET-, META-, THE-, and TPYPE- forms:
+// QUASI-WORD!, and TAG!.  There are SET-, GET-, META-, THE-, and TYPE- forms:
 //
 //     <abc>/(d e f)/[g h i]:   ; a 3-element SET-PATH!
 //     :foo.1.bar               ; a 3-element GET-TUPLE!
@@ -44,8 +44,9 @@
 // invisibly, allowing you to begin or terminate sequences with the delimiter:
 //
 //     .foo.bar     ; a 3-element TUPLE! with BLANK! in the first slot
-//     1/2/3/:      ; a 4-element PATH! with BLANK! in the last slot
+//     1/2/3/:      ; a 4-element SET-PATH! with BLANK! in the last slot
 //     /            ; a 2-element PATH! with BLANK! in the first and last slot
+//     a////b       ; a 5-element PATH! with BLANK! in the middle 3 slots
 //
 // PATH!s may contain TUPLE!s, but not vice versa.  This means that mixed
 // usage can be interpreted unambiguously:
@@ -69,7 +70,10 @@
 // * The immutability of sequences allows important optimizations in the
 //   implementation that minimize allocations.  For instance, the 2-element
 //   PATH! of `/foo` can be specially encoded to use no more space
-//   than a plain WORD!.
+//   than a plain WORD!.  And a 2-element TUPLE! like `a.b` bypasses the need
+//   to create an Array tracking entity by pointing directly at a managed
+//   "pairing" of 2 cells--the same code that is used to compress two INTEGER!
+//   into a PAIR!.
 //
 //   (There are also optimizations for encoding short numeric sequences like IP
 //   addresses or colors into single cells...which aren't as important but
@@ -79,18 +83,13 @@
 //
 //   - Byte compressed forms do not have CELL_FLAG_SEQUENCE_HAS_NODE
 //
-//   - Pair compression (TBD) would have the first node with NODE_FLAG_CELL
+//   - Pair compression has the first node with NODE_FLAG_CELL
 //
 //   - Single WORD! forms have the first node as FLAVOR_SYMBOL
 //        If CELL_FLAG_REFINEMENT_LIKE it is either a `/foo` or `.foo` case
 //        Without the flag, it is either a `foo/` or `foo.` case
 //
 //   - Uncompressed forms have the first node as FLAVOR_ARRAY
-//
-// !!! More ambitious compression could be pursued, especially since once an
-// array form is aliased to a path it can no longer be mutated.  So any slots
-// pertinent to mutation properties could be reused to indicate a compressed
-// form.  But this is really low priority.
 //
 
 INLINE bool Is_Valid_Sequence_Element(
@@ -197,15 +196,11 @@ INLINE REBVAL *Try_Leading_Blank_Pathify(
         return v;
     }
 
-    Array* a = Make_Array_Core(
-        2,  // TBD: optimize "pairlike" to use a pairing node
-        NODE_FLAG_MANAGED
-    );
-    Init_Blank(Alloc_Tail_Array(a));
-    Copy_Cell(Alloc_Tail_Array(a), v);
-    Freeze_Array_Shallow(a);
+    Cell* p = Alloc_Pairing(NODE_FLAG_MANAGED);
+    Init_Blank(p);
+    Copy_Cell(Pairing_Second(p), v);
 
-    Init_Block(v, a);
+    Init_Pair(v, p);
     HEART_BYTE(v) = kind;
 
     return v;
@@ -298,10 +293,6 @@ INLINE REBVAL *Try_Init_Any_Sequence_All_Integers(
 
 
 //=//// 2-Element "PAIR" SEQUENCE OPTIMIZATION ////////////////////////////=//
-//
-// !!! Making paths out of two items is intended to be optimized as well,
-// using the "pairing" nodes.  This should eliminate the need for a separate
-// REB_PAIR type, making PAIR! just a type constraint on TUPLE!s.
 
 INLINE REBVAL *Try_Init_Any_Sequence_Pairlike_Core(
     Sink(Value(*)) out,
@@ -348,17 +339,12 @@ INLINE REBVAL *Try_Init_Any_Sequence_Pairlike_Core(
         return nullptr;
     }
 
-    Array* a = Make_Array_Core(
-        2,
-        NODE_FLAG_MANAGED  // optimize "pairlike"
-    );
-    Set_Series_Len(a, 2);
-    Derelativize(Array_At(a, 0), v1, specifier);
-    Derelativize(Array_At(a, 1), v2, specifier);
-    Freeze_Array_Shallow(a);
-
-    Init_Block(out, a);
+    Cell* pairing = Alloc_Pairing(NODE_FLAG_MANAGED);
+    Derelativize(pairing, v1, specifier);
+    Derelativize(Pairing_Second(pairing), v2, specifier);
+    Init_Pair(out, pairing);
     HEART_BYTE(out) = kind;
+
     return cast(REBVAL*, out);
 }
 
@@ -471,10 +457,8 @@ INLINE REBLEN VAL_SEQUENCE_LEN(NoQuote(const Cell*) sequence) {
     }
 
     const Node* node1 = Cell_Node1(sequence);
-    if (Is_Node_A_Cell(node1)) {  // see if it's a pairing
-        assert(false);  // these don't exist yet
-        return 2;  // compressed 2-element sequence
-    }
+    if (Is_Node_A_Cell(node1))  // see if it's a pairing
+        return 2;  // compressed 2-element sequence, sizeof(Stub)
 
     switch (Series_Flavor(c_cast(Series*, node1))) {
       case FLAVOR_SYMBOL :  // compressed single WORD! sequence
@@ -524,8 +508,11 @@ INLINE const Cell* VAL_SEQUENCE_AT(
 
     const Node* node1 = Cell_Node1(sequence);
     if (Is_Node_A_Cell(node1)) {  // test if it's a pairing
-        assert(false);  // these don't exist yet
-        return nullptr;  // compressed 2-element sequence
+        const Cell* pairing = c_cast(Cell*, node1);  // 2 elements compressed
+        if (n == 0)
+            return pairing;
+        assert(n == 1);
+        return Pairing_Second(pairing);
     }
 
     switch (Series_Flavor(x_cast(Series*, node1))) {
@@ -587,10 +574,8 @@ INLINE Specifier* VAL_SEQUENCE_SPECIFIER(
         return SPECIFIED;
 
     const Node* node1 = Cell_Node1(sequence);
-    if (Is_Node_A_Cell(node1)) {  // see if it's a pairing
-        assert(false);  // these don't exist yet
+    if (Is_Node_A_Cell(node1))  // see if it's a pairing
         return SPECIFIED;  // compressed 2-element sequence
-    }
 
     switch (Series_Flavor(c_cast(Series*, node1))) {
       case FLAVOR_SYMBOL :  // compressed single WORD! sequence

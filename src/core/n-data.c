@@ -671,11 +671,9 @@ bool Get_Var_Push_Refinements_Throws(
 
         const Node* node1 = Cell_Node1(var);
         if (Is_Node_A_Cell(node1)) { // pair compressed
-            assert(false);  // these don't exist yet
-            fail (var);
+            // is considered "arraylike", can answer VAL_ARRAY_AT()
         }
-
-        switch (Series_Flavor(x_cast(Series*, node1))) {
+        else switch (Series_Flavor(x_cast(Series*, node1))) {
           case FLAVOR_SYMBOL:
             if (Get_Cell_Flag(var, REFINEMENT_LIKE))  // `/a` or `.a`
                 goto get_source;
@@ -862,11 +860,9 @@ bool Get_Path_Push_Refinements_Throws(
 
     const Node* node1 = Cell_Node1(path);
     if (Is_Node_A_Cell(node1)) {
-        assert(false);  // none of these exist yet
-        return false;
+        // pairing, but "arraylike", so VAL_ARRAY_AT() will work on it
     }
-
-    switch (Series_Flavor(c_cast(Series*, node1))) {
+    else switch (Series_Flavor(c_cast(Series*, node1))) {
       case FLAVOR_SYMBOL : {
         if (Get_Cell_Flag(path, REFINEMENT_LIKE)) {  // `/a` - should these GET?
             Get_Word_May_Fail(out, path, path_specifier);
@@ -1253,11 +1249,9 @@ bool Set_Var_Core_Updater_Throws(
 
         const Node* node1 = Cell_Node1(var);
         if (Is_Node_A_Cell(node1)) {  // pair optimization
-            assert(false);  // these don't exist yet
-            fail (var);
+            // pairings considered "arraylike", handled by VAL_ARRAY_AT()
         }
-
-        switch (Series_Flavor(c_cast(Series*, node1))) {
+        else switch (Series_Flavor(c_cast(Series*, node1))) {
           case FLAVOR_SYMBOL: {
             if (Get_Cell_Flag(var, REFINEMENT_LIKE))  // `/a` or `.a`
                goto set_target;
@@ -1940,6 +1934,15 @@ bool Try_As_String(
 //  ]
 //
 DECLARE_NATIVE(as)
+//
+// 1. Pairings are usually the same size as stubs...but not always.  If the
+//    UNUSUAL_CELL_SIZE flag is set, then pairings will be in their own pool.
+//    Were there a strong incentive to have separate code for that case,
+//    we could reuse the node...but the case is not that strong.  It may be
+//    that AS should not be willing to alias sequences since compressed
+//    cases will force new allocations (e.g. aliasing a refinement has to
+//    make a new array, since the symbol absolutely can't be mutated into
+//    an array node).  Review.
 {
     INCLUDE_PARAMS_OF_AS;
 
@@ -1963,9 +1966,17 @@ DECLARE_NATIVE(as)
                 fail ("Array Conversions of byte-oriented sequences TBD");
 
             const Node* node1 = Cell_Node1(v);
-            assert(not (NODE_BYTE(node1) & NODE_BYTEMASK_0x01_CELL));
-
-            switch (Series_Flavor(c_cast(Series*, node1))) {
+            if (Is_Node_A_Cell(node1)) {  // reusing node complicated [1]
+                const Cell* paired = c_cast(Cell*, node1);
+                Specifier *specifier = VAL_SPECIFIER(v);
+                Array* a = Make_Array_Core(2, NODE_FLAG_MANAGED);
+                Set_Series_Len(a, 2);
+                Derelativize(Array_At(a, 0), paired, specifier);
+                Derelativize(Array_At(a, 1), Pairing_Second(paired), specifier);
+                Freeze_Array_Shallow(a);
+                Init_Block(v, a);
+            }
+            else switch (Series_Flavor(c_cast(Series*, node1))) {
               case FLAVOR_SYMBOL: {
                 Array* a = Make_Array_Core(2, NODE_FLAG_MANAGED);
                 Set_Series_Len(a, 2);
@@ -1979,6 +1990,7 @@ DECLARE_NATIVE(as)
                     HEART_BYTE(Array_At(a, 0)) = REB_WORD;
                     Init_Blank(Array_At(a, 1));
                 }
+                Freeze_Array_Shallow(a);
                 Init_Block(v, a);
                 break; }
 

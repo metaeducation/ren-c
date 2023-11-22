@@ -379,6 +379,7 @@ INLINE Array* Copy_Array_At_Extra_Deep_Flags_Managed(
 //
 INLINE const Array* VAL_ARRAY(NoQuote(const Cell*) v) {
     assert(Any_Arraylike(v));
+    assert(Is_Node_A_Stub(Cell_Node1(v)));  // not a pairing arraylike!
 
     const Array* a = cast(Array*, Cell_Node1(v));
     if (Get_Series_Flag(a, INACCESSIBLE))
@@ -393,6 +394,15 @@ INLINE const Array* VAL_ARRAY(NoQuote(const Cell*) v) {
     m_cast(Array*, VAL_ARRAY(Known_Mutable(v)))
 
 
+#define PAIRING_LEN 2
+
+#define Pairing_Second(paired) \
+    (ensure(const Cell*, (paired)) + 1)
+
+#define Pairing_Tail(paired) \
+    (ensure(const Cell*, (paired)) + 2)
+
+
 // These array operations take the index position into account.  The use
 // of the word AT with a missing index is a hint that the index is coming
 // from the VAL_INDEX() of the value itself.
@@ -405,7 +415,15 @@ INLINE const Cell* VAL_ARRAY_LEN_AT(
     Option(REBLEN*) len_at_out,
     NoQuote(const Cell*) v
 ){
-    const Array* arr = VAL_ARRAY(v);
+    const Node* node = Cell_Node1(v);
+    if (Is_Node_A_Cell(node)) {
+        assert(Any_Sequence_Kind(Cell_Heart(v)));
+        assert(VAL_INDEX_RAW(v) == 0);
+        if (len_at_out)
+            *unwrap(len_at_out) = PAIRING_LEN;
+        return c_cast(Cell*, node);
+    }
+    const Array* arr = c_cast(Array*, node);
     REBIDX i = VAL_INDEX_RAW(v);  // VAL_ARRAY() already checks it's series
     REBLEN len = Array_Len(arr);
     if (i < 0 or i > cast(REBIDX, len))
@@ -419,8 +437,17 @@ INLINE const Cell* VAL_ARRAY_AT(
     Option(const Cell**) tail_out,
     NoQuote(const Cell*) v
 ){
-    const Array* arr = VAL_ARRAY(v);
-    REBIDX i = VAL_INDEX_RAW(v);  // VAL_ARRAY() already checks it's series
+    const Node* node = Cell_Node1(v);
+    if (Is_Node_A_Cell(node)) {
+        assert(Any_Sequence_Kind(Cell_Heart(v)));
+        assert(VAL_INDEX_RAW(v) == 0);
+        const Cell* cell = c_cast(Cell*, node);
+        if (tail_out)
+            *unwrap(tail_out) = Pairing_Tail(cell);
+        return cell;
+    }
+    const Array* arr = c_cast(Array*, node);
+    REBIDX i = VAL_INDEX_RAW(v);  // VAL_ARRAY() already checks it's arraylike
     REBLEN len = Array_Len(arr);
     if (i < 0 or i > cast(REBIDX, len))
         fail (Error_Index_Out_Of_Range_Raw());

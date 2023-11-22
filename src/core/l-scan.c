@@ -2793,6 +2793,7 @@ Bounce Scanner_Executor(Level* const L) {
         if (
             Get_Cell_Flag(TOP, FIRST_IS_NODE)
             and Cell_Node1(TOP) != nullptr  // null legal in node slots ATM
+            and not Is_Node_A_Cell(Cell_Node1(TOP))
             and Is_Series_Array(cast(Series*, Cell_Node1(TOP)))
         ){
             Array* a = cast(Array*, Cell_Node1(TOP));

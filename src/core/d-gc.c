@@ -358,9 +358,11 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
             break;  // should be just bytes
 
         const Node* node1 = Cell_Node1(v);
-        assert(Is_Node_A_Stub(node1));
 
-        switch (Series_Flavor(x_cast(Stub*, node1))) {
+        if (Is_Node_A_Cell(node1)) {
+            // it's a pairing
+        }
+        else switch (Series_Flavor(x_cast(Stub*, node1))) {
           case FLAVOR_SYMBOL :
             break;
 

@@ -30,22 +30,12 @@
 // accepted for now in the PAIR! type.
 //
 
-INLINE Cell* Pairing_Second(const_if_c Cell* paired) {
-    return m_cast(Cell*, paired + 1);
-}
-
-#ifdef CPLUSPLUS_11
-    INLINE const Cell* Pairing_Second(const Cell* paired) {
-        return paired + 1;
-    }
-#endif
-
 
 #define INIT_VAL_PAIR(v,pairing) \
     Init_Cell_Node1((v), (pairing))
 
 INLINE Cell* VAL_PAIRING(NoQuote(const Cell*) v) {
-    assert(Cell_Heart(v) == REB_PAIR);
+    assert(Any_Pairlike(v));
     return x_cast(Value(*), Cell_Node1(v));
 }
 
@@ -67,23 +57,24 @@ INLINE REBDEC VAL_PAIR_Y_INT(NoQuote(const Cell*) v) {
     return ROUND_TO_INT(VAL_DECIMAL(VAL_PAIR_Y(v)));
 }
 
-INLINE Value(*) Init_Pair(Cell* out, Cell* pairing) {
+INLINE Value(*) Init_Pair_Untracked(Cell* out, Cell* pairing) {
+    assert(Is_Node_Managed(pairing));
     Reset_Unquoted_Header_Untracked(out, CELL_MASK_PAIR);
-    Manage_Pairing(pairing);
     INIT_VAL_PAIR(out, pairing);
     VAL_INDEX_RAW(out) = 0;  // "arraylike", needs an index
     mutable_BINDING(out) = UNBOUND;  // "arraylike", needs binding
     return SPECIFIC(out);
 }
 
-INLINE Value(*) Init_Pair_Int(Cell* out, REBI64 x, REBI64 y) {
-    Reset_Unquoted_Header_Untracked(out, CELL_MASK_PAIR);
-    Cell* p = Alloc_Pairing();
+#define Init_Pair(out,pairing) \
+    TRACK(Init_Pair_Untracked((out), (pairing)))
+
+INLINE Value(*) Init_Pair_Int_Untracked(Cell* out, REBI64 x, REBI64 y) {
+    Cell* p = Alloc_Pairing(NODE_FLAG_MANAGED);
     Init_Integer(p, x);
     Init_Integer(Pairing_Second(p), y);
-    Manage_Pairing(p);
-    INIT_VAL_PAIR(out, p);
-    VAL_INDEX_RAW(out) = 0;  // "arraylike", needs an index
-    mutable_BINDING(out) = UNBOUND;  // "arraylike", needs binding
-    return SPECIFIC(out);
+    return Init_Pair_Untracked(out, p);
 }
+
+#define Init_Pair_Int(out,x,y) \
+    TRACK(Init_Pair_Int_Untracked((out), (x), (y)))

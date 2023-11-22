@@ -446,11 +446,11 @@ void Mold_Or_Form_Value(REB_MOLD *mo, const Cell* v, bool form)
         Append_Ascii(mo->series, "'");
 
     if (QUOTE_BYTE(v) & NONQUASI_BIT)
-        Mold_Or_Form_Cell(mo, VAL_UNESCAPED(v), form);
+        Mold_Or_Form_Cell(mo, v, form);
     else {
         Append_Codepoint(mo->series, '~');
         if (HEART_BYTE(v) != REB_VOID) {
-            Mold_Or_Form_Cell(mo, VAL_UNESCAPED(v), form);
+            Mold_Or_Form_Cell(mo, v, form);
             Append_Codepoint(mo->series, '~');
         }
     }

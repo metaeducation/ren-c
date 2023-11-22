@@ -1039,6 +1039,7 @@ INLINE const Series* VAL_SERIES(NoQuote(const Cell*) v) {
         or Any_Arraylike(v)
     );
   #endif
+    assert(not Is_Node_A_Cell(Cell_Node1(v)));  // not a pairing arraylike
     const Series* s = c_cast(Series*, Cell_Node1(v));
     if (Get_Series_Flag(s, INACCESSIBLE))
         fail (Error_Series_Data_Freed_Raw());

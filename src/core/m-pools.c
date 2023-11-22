@@ -574,13 +574,29 @@ Node* Try_Find_Containing_Node_Debug(const void *p)
 // leak if not freed or managed.  This shouldn't be hard to fix--it just
 // means the GC manuals list needs to be Node* and not just Series*.
 //
-Cell* Alloc_Pairing(void) {
+Cell* Alloc_Pairing(Flags flags) {
+    assert(flags == 0 or flags == NODE_FLAG_MANAGED);
     Cell* paired = cast(Cell*, Alloc_Pooled(PAIR_POOL));  // 2x cell size
 
     Erase_Cell(paired);
     Erase_Cell(Pairing_Second(paired));
 
+    if (flags)
+        Manage_Pairing(paired);
     return paired;
+}
+
+
+//
+//  Copy_Pairing: C
+//
+Value(*) Copy_Pairing(const Cell* paired, Specifier* specifier, Flags flags) {
+    Cell* copy = Alloc_Pairing(flags);
+
+    Derelativize(copy, paired, specifier);
+    Derelativize(Pairing_Second(copy), Pairing_Second(paired), specifier);
+
+    return SPECIFIC(copy);
 }
 
 

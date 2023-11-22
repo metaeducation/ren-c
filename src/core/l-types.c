@@ -1103,7 +1103,7 @@ const Byte* Scan_Pair(
     if (*ep != 'x' && *ep != 'X')
         return_NULL;
 
-    Cell* paired = Alloc_Pairing();
+    Cell* paired = Alloc_Pairing(CELL_MASK_0);
 
     // X is in the first pairing cell
     if (is_integral)
@@ -1131,9 +1131,7 @@ const Byte* Scan_Pair(
     }
 
     Manage_Pairing(paired);
-
-    Reset_Unquoted_Header_Untracked(TRACK(out), CELL_MASK_PAIR);
-    INIT_VAL_PAIR(out, paired);
+    Init_Pair(out, paired);
     return xp;
 }
 

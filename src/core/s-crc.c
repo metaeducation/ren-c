@@ -153,9 +153,11 @@ uint32_t Hash_Value(const Cell* cell)
         hash ^= EXTRA(Any, cell).u;
         break; }
 
+      hash_pair:
+        //
       case REB_PAIR:
-        hash = Hash_Value(VAL_PAIR_X(cell));
-        hash ^= Hash_Value(VAL_PAIR_Y(cell));
+        hash = Hash_Value(VAL_PAIRING(cell));
+        hash ^= Hash_Value(Pairing_Second(VAL_PAIRING(cell)));
         break;
 
       case REB_TIME:
@@ -214,7 +216,9 @@ uint32_t Hash_Value(const Cell* cell)
         }
 
         const Node* node1 = Cell_Node1(cell);
-        assert(Is_Node_A_Stub(node1));
+
+        if (Is_Node_A_Cell(node1))
+            goto hash_pair;
 
         switch (Series_Flavor(c_cast(Series*, node1))) {
           case FLAVOR_SYMBOL:

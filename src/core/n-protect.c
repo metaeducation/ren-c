@@ -467,13 +467,10 @@ DECLARE_NATIVE(unprotect)
 // in order to do things like use blocks as map keys, etc.
 //
 bool Is_Value_Frozen_Deep(const Cell* v) {
-    NoQuote(const Cell*) cell = VAL_UNESCAPED(v);
-    UNUSED(v); // debug build trashes, to avoid accidental usage below
+    if (Not_Cell_Flag(v, FIRST_IS_NODE))
+        return true;  // payloads that live in cell are already immutable
 
-    if (Not_Cell_Flag(cell, FIRST_IS_NODE))
-        return true;  // payloads that live in cell are immutable
-
-    Node* node = Cell_Node1(cell);
+    Node* node = Cell_Node1(v);
     if (node == nullptr or Is_Node_A_Cell(node))
         return true;  // !!! Will all non-quoted Pairings be frozen?
 

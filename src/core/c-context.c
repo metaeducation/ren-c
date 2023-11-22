@@ -495,8 +495,7 @@ Array* Collect_Unique_Words_Managed(
         const Cell* ignore_tail;
         const Cell* ignore = VAL_ARRAY_AT(&ignore_tail, ignorables);
         for (; ignore != ignore_tail; ++ignore) {
-            NoQuote(const Cell*) cell = VAL_UNESCAPED(ignore);
-            const Symbol* symbol = VAL_WORD_SYMBOL(cell);
+            const Symbol* symbol = VAL_WORD_SYMBOL(ignore);
 
             // A block may have duplicate words in it (this situation could
             // arise when `function [/test /test] []` calls COLLECT-WORDS
@@ -543,8 +542,7 @@ Array* Collect_Unique_Words_Managed(
         const Cell* ignore_tail;
         const Cell* ignore = VAL_ARRAY_AT(&ignore_tail, ignorables);
         for (; ignore != ignore_tail; ++ignore) {
-            NoQuote(const Cell*) cell = VAL_UNESCAPED(ignore);
-            const Symbol* symbol = VAL_WORD_SYMBOL(cell);
+            const Symbol* symbol = VAL_WORD_SYMBOL(ignore);
 
           #if !defined(NDEBUG)
             REBINT i = Get_Binder_Index_Else_0(&cl->binder, symbol);

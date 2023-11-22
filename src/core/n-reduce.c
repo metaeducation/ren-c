@@ -376,7 +376,7 @@ static void Push_Composer_Level(
     Specifier* specifier
 ){
     Value(const*) adjusted = nullptr;
-    if (Any_Path(arraylike)) {  // allow sequences [1]
+    if (Any_Sequence(arraylike)) {  // allow sequences [1]
         Derelativize(out, arraylike, specifier);
         adjusted = rebValue(Canon(AS), Canon(BLOCK_X), rebQ(out));
     }

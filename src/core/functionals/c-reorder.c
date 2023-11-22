@@ -169,7 +169,7 @@ DECLARE_NATIVE(reorder_p)  // see REORDER in %base-defs.r, for inheriting meta
                 error = Error_User("REORDER allows single quoted ANY-WORD!");
                 goto cleanup_binder;
             }
-            symbol = VAL_WORD_SYMBOL(VAL_UNESCAPED(item));
+            symbol = VAL_WORD_SYMBOL(item);
         }
         else {
             error = Error_User("Unknown REORDER element");

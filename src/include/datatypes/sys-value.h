@@ -591,7 +591,7 @@ INLINE bool Any_Arraylike(NoQuote(const Cell*) v) {
         return false;
     const Node* node1 = Cell_Node1(v);
     if (Is_Node_A_Cell(node1))
-        return false;
+        return true;  // VAL_ARRAY_AT() works, but VAL_ARRAY() won't work!
     return Series_Flavor(c_cast(Series*, node1)) == FLAVOR_ARRAY;
 }
 
@@ -618,6 +618,15 @@ INLINE bool Any_Stringlike(NoQuote(const Cell*) v) {
     if (Cell_Heart(v) != REB_ISSUE)
         return false;
     return Get_Cell_Flag_Unchecked(v, ISSUE_HAS_NODE);
+}
+
+INLINE bool Any_Pairlike(NoQuote(const Cell*) v) {
+    // called by core code, sacrifice READABLE() checks
+    if (Cell_Heart_Unchecked(v) == REB_PAIR)
+        return true;
+    if (not Any_Sequence_Kind(Cell_Heart_Unchecked(v)))
+        return false;
+    return Is_Node_A_Cell(Cell_Node1(v));
 }
 
 

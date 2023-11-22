@@ -1270,9 +1270,7 @@ DECLARE_NATIVE(subparse)
     // If the input is quoted, e.g. `parse just ''''[...] [rules]`, we dequote
     // it while we are processing the ARG().  This is because we are trying
     // to update and maintain the value as we work in a way that can be shown
-    // in the debug stack frame.  Calling VAL_UNESCAPED() constantly would be
-    // slower, and also gives back a const value which may be shared with
-    // other quoted instances, so we couldn't update the VAL_INDEX() directly.
+    // in the debug stack frame.
     //
     // But we save the number of quotes in a local variable.  This way we can
     // put the quotes back on whenever doing a COPY etc.

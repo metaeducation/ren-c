@@ -118,11 +118,6 @@ INLINE Cell* Unquotify_Core(Cell* v, Count unquotes) {
         { return Unquotify_Core(v, depth); }
 #endif
 
-
-#define VAL_UNESCAPED(v) \
-    cast(NoQuote(const Cell*), (v))
-
-
 INLINE Count Dequotify(Cell* v) {
     Count depth = VAL_NUM_QUOTES(v);
     if (QUOTE_BYTE(v) & NONQUASI_BIT)

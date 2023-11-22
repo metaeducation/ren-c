@@ -398,7 +398,7 @@ void Assert_Series_Basics_Core(const Series* s)
 // risky in an unstable state...though it is ideal if it can run to the end
 // so it can trigger Address Sanitizer or Valgrind's internal stack dump.
 //
-ATTRIBUTE_NO_RETURN void Panic_Series_Debug(Series* s)
+ATTRIBUTE_NO_RETURN void Panic_Series_Debug(const Series* s)
 {
     fflush(stdout);
     fflush(stderr);

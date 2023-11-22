@@ -314,8 +314,8 @@ REBINT Cmp_Value(const Cell* sval, const Cell* tval, bool strict)
     if (squotes != tquotes)
         return squotes > tquotes ? 1 : -1;
 
-    NoQuote(const Cell*) s = VAL_UNESCAPED(sval);
-    NoQuote(const Cell*) t = VAL_UNESCAPED(tval);
+    NoQuote(const Cell*) s = sval;
+    NoQuote(const Cell*) t = tval;
     enum Reb_Kind s_kind = Cell_Heart(s);
     enum Reb_Kind t_kind = Cell_Heart(t);
 

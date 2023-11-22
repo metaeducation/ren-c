@@ -46,8 +46,7 @@ void Bind_Values_Inner_Loop(
 ){
     Cell* v = head;
     for (; v != tail; ++v) {
-        NoQuote(const Cell*) cell = VAL_UNESCAPED(v);
-        enum Reb_Kind heart = Cell_Heart(cell);
+        enum Reb_Kind heart = Cell_Heart(v);
 
         // !!! Review use of `heart` bit here, e.g. when a REB_PATH has an
         // REB_BLOCK heart, why would it be bound?  Problem is that if we
@@ -56,7 +55,7 @@ void Bind_Values_Inner_Loop(
         REBU64 type_bit = FLAGIT_KIND(heart);
 
         if (type_bit & bind_types) {
-            const Symbol* symbol = VAL_WORD_SYMBOL(cell);
+            const Symbol* symbol = VAL_WORD_SYMBOL(v);
 
           if (CTX_TYPE(context) == REB_MODULE) {
             bool strict = true;
@@ -98,10 +97,7 @@ void Bind_Values_Inner_Loop(
         else if (flags & BIND_DEEP) {
             if (Any_Arraylike(v)) {
                 const Cell* sub_tail;
-                Cell* sub_at = VAL_ARRAY_AT_MUTABLE_HACK(
-                    &sub_tail,
-                    VAL_UNESCAPED(v)
-                );
+                Cell* sub_at = VAL_ARRAY_AT_MUTABLE_HACK(&sub_tail, v);
                 Bind_Values_Inner_Loop(
                     binder,
                     sub_at,
@@ -397,7 +393,7 @@ Option(Series*) Get_Word_Container(
     // this word is overridden without doing a linear search.  Do it
     // and then save the hit or miss information in the word for next use.
     //
-    const Symbol* symbol = VAL_WORD_SYMBOL(VAL_UNESCAPED(any_word));
+    const Symbol* symbol = VAL_WORD_SYMBOL(any_word);
 
     // !!! Virtual binding could use the bind table as a kind of next
     // level cache if it encounters a large enough object to make it
@@ -501,7 +497,7 @@ Option(Series*) Get_Word_Container(
         // lookup would say "I want that but be willing to make it."
         //
         if (CTX_TYPE(cast(Context*, binding)) == REB_MODULE) {
-            const Symbol* symbol = VAL_WORD_SYMBOL(VAL_UNESCAPED(any_word));
+            const Symbol* symbol = VAL_WORD_SYMBOL(any_word);
             Stub* patch = MISC(Hitch, symbol);
             while (Get_Series_Flag(patch, BLACK))  // binding temps
                 patch = cast(Stub*, node_MISC(Hitch, patch));
@@ -1039,24 +1035,27 @@ DECLARE_NATIVE(add_use_object) {
 //
 //  Clonify_And_Bind_Relative: C
 //
-// Recursive function for relative function word binding.  The code for
-// Clonify() is merged in for efficiency, because it recurses...and we want
-// to do the binding in the same pass.
+// Clone the series embedded in a value *if* it's in the given set of types
+// (and if "cloning" makes sense for them, e.g. they are not simple scalars).
 //
-// !!! Since the ultimate desire is to factor out common code, try not to
-// constant-fold the Clonify implementation here--to make the factoring clear.
+// Note: The resulting clones will be managed.  The model for lists only
+// allows the topmost level to contain unmanaged values...and we *assume* the
+// values we are operating on here live inside of an array.
 //
 // !!! Should this return true if any relative bindings were made?
 //
-static void Clonify_And_Bind_Relative(
-    REBVAL *v,  // Note: incoming value is not relative
+void Clonify_And_Bind_Relative(
+    Cell* v,
     Flags flags,
     REBU64 deep_types,
-    struct Reb_Binder *binder,
-    Action* relative
+    Option(struct Reb_Binder*) binder,
+    Option(Action*) relative
 ){
     if (C_STACK_OVERFLOWING(&relative))
         Fail_Stack_Overflow();
+
+    if (relative)
+        assert(not IS_RELATIVE(v));  // when relativizing, v is not relative
 
     assert(flags & NODE_FLAG_MANAGED);
 
@@ -1065,72 +1064,85 @@ static void Clonify_And_Bind_Relative(
     //
     assert(not (deep_types & FLAGIT_KIND(REB_FRAME)));
 
-    // !!! This used to use KIND3Q_BYTE_UNCHECKED to get a "kind", but it
-    // applied it on a dequoted form.  This was effectively the heart.  That
-    // means if `deep_types` is passed in with something like REB_PATH it
-    // will get paths at arbitrary levels of quoting too.  Review.
-    //
     enum Reb_Kind heart = Cell_Heart_Unchecked(v);
 
-    if (deep_types & FLAGIT_KIND(heart) & TS_SERIES_OBJ) {
+    if (relative and Any_Wordlike(v)) {
+        REBINT n = Get_Binder_Index_Else_0(unwrap(binder), VAL_WORD_SYMBOL(v));
+        if (n != 0) {
+            //
+            // Word' symbol is in frame.  Relatively bind it.  Note that the
+            // action bound to can be "incomplete" (LETs still gathering)
+            //
+            INIT_VAL_WORD_BINDING(v, unwrap(relative));
+            INIT_VAL_WORD_INDEX(v, n);
+        }
+    }
+    else if (deep_types & FLAGIT_KIND(heart) & TS_SERIES_OBJ) {
         //
         // Objects and series get shallow copied at minimum
         //
-        Series* series;
-        bool would_need_deep;
+        Cell* deep = nullptr;
+        Cell* deep_tail = nullptr;
 
         if (Any_Context_Kind(heart)) {
-            INIT_VAL_CONTEXT_VARLIST(
-                v,
-                CTX_VARLIST(Copy_Context_Shallow_Managed(VAL_CONTEXT(v)))
-            );
-            series = CTX_VARLIST(VAL_CONTEXT(v));
-
-            would_need_deep = true;
+            Context* copy = Copy_Context_Shallow_Managed(VAL_CONTEXT(v));
+            Array* varlist = CTX_VARLIST(copy);
+            INIT_VAL_CONTEXT_VARLIST(v, varlist);
+            deep = Array_Head(varlist);
+            deep_tail = Array_Tail(varlist);
         }
-        else if (Any_Arraylike(v)) {
-            series = Copy_Array_At_Extra_Shallow(
+        else if (Any_Pairlike(v)) {
+            Value(*) copy = Copy_Pairing(
+                VAL_PAIRING(v),
+                VAL_SPECIFIER(v),
+                NODE_FLAG_MANAGED
+            );
+            Init_Cell_Node1(v, copy);
+            INIT_SPECIFIER(v, try_unwrap(relative));
+
+            deep = copy;
+            deep_tail = Pairing_Tail(copy);
+        }
+        else if (Any_Arraylike(v)) {  // ruled out pairlike sequences above...
+            Array* copy = Copy_Array_At_Extra_Shallow(
                 VAL_ARRAY(v),
-                0, // !!! what if VAL_INDEX() is nonzero?
+                0,  // !!! what if VAL_INDEX() is nonzero?
                 VAL_SPECIFIER(v),
                 0,
                 NODE_FLAG_MANAGED
             );
 
-            Init_Cell_Node1(v, series);  // copies args
-            INIT_SPECIFIER(v, UNBOUND);  // copied w/specifier--not relative
+            Init_Cell_Node1(v, copy);
 
             // See notes in Clonify()...need to copy immutable paths so that
             // binding pointers can be changed in the "immutable" copy.
             //
             if (Any_Sequence_Kind(heart))
-                Freeze_Array_Shallow(cast(Array*, series));
+                Freeze_Array_Shallow(copy);
 
-            would_need_deep = true;
+            // !!! Technically speaking it is not necessary for an array to
+            // be marked relative if it doesn't contain any relative words
+            // under it.  However, for uniformity in the near term, it's
+            // easiest to debug if there is a clear mark on arrays that are
+            // part of a deep copy of a function body either way.
+            //
+            INIT_SPECIFIER(v, try_unwrap(relative));
+
+            deep = Array_Head(copy);
+            deep_tail = Array_Tail(copy);
         }
         else if (Any_Series_Kind(heart)) {
-            series = Copy_Series_Core(
-                VAL_SERIES(v),
-                NODE_FLAG_MANAGED
-            );
-            Init_Cell_Node1(v, series);
-
-            would_need_deep = false;
-        }
-        else {
-            would_need_deep = false;
-            series = nullptr;
+            Series* copy = Copy_Series_Core(VAL_SERIES(v), NODE_FLAG_MANAGED);
+            Init_Cell_Node1(v, copy);
         }
 
         // If we're going to copy deeply, we go back over the shallow
         // copied series and "clonify" the values in it.
         //
-        if (would_need_deep and (deep_types & FLAGIT_KIND(heart))) {
-            Cell* sub = Array_Head(cast(Array*, series));
-            Cell* sub_tail = Array_Tail(cast(Array*, series));
-            for (; sub != sub_tail; ++sub)
+        if (deep and (deep_types & FLAGIT_KIND(heart))) {
+            for (; deep != deep_tail; ++deep)
                 Clonify_And_Bind_Relative(
-                    SPECIFIC(sub),
+                    SPECIFIC(deep),
                     flags,
                     deep_types,
                     binder,
@@ -1144,28 +1156,6 @@ static void Clonify_And_Bind_Relative(
         //
         if (Not_Cell_Flag(v, EXPLICITLY_MUTABLE))
             v->header.bits |= (flags & ARRAY_FLAG_CONST_SHALLOW);
-    }
-
-    if (Any_Wordlike(v)) {
-        REBINT n = Get_Binder_Index_Else_0(binder, VAL_WORD_SYMBOL(v));
-        if (n != 0) {
-            //
-            // Word' symbol is in frame.  Relatively bind it.  Note that the
-            // action bound to can be "incomplete" (LETs still gathering)
-            //
-            INIT_VAL_WORD_BINDING(v, relative);
-            INIT_VAL_WORD_INDEX(v, n);
-        }
-    }
-    else if (Any_Arraylike(v)) {
-
-        // !!! Technically speaking it is not necessary for an array to
-        // be marked relative if it doesn't contain any relative words
-        // under it.  However, for uniformity in the near term, it's
-        // easiest to debug if there is a clear mark on arrays that are
-        // part of a deep copy of a function body either way.
-        //
-        INIT_SPECIFIER(v, relative);  // "incomplete func" (LETs gathering?)
     }
 }
 
@@ -1484,7 +1474,7 @@ Context* Virtual_Bind_Deep_To_New_Context(
             // itself into the slot, and give it NODE_FLAG_MARKED...then
             // hide it from the context and binding.
             //
-            symbol = VAL_WORD_SYMBOL(VAL_UNESCAPED(item));
+            symbol = VAL_WORD_SYMBOL(item);
 
           blockscope {
             REBVAL *var = Append_Context(c, symbol);

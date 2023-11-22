@@ -129,104 +129,12 @@ Array* Copy_Values_Len_Extra_Shallow_Core(
 //
 //  Clonify: C
 //
-// Clone the series embedded in a value *if* it's in the given set of types
-// (and if "cloning" makes sense for them, e.g. they are not simple scalars).
-//
-// Note: The resulting clones will be managed.  The model for lists only
-// allows the topmost level to contain unmanaged values...and we *assume* the
-// values we are operating on here live inside of an array.
-//
 void Clonify(
     Cell* v,
     Flags flags,
     REBU64 deep_types
 ){
-    if (C_STACK_OVERFLOWING(&deep_types))
-        Fail_Stack_Overflow();
-
-    assert(flags & NODE_FLAG_MANAGED);
-
-    // !!! Could theoretically do what COPY does and generate a new hijackable
-    // identity.  There's no obvious use for this; hence not implemented.
-    //
-    assert(not (deep_types & FLAGIT_KIND(REB_FRAME)));
-
-  #if DEBUG_UNREADABLE_TRASH
-    if (IS_TRASH(v))  // running code below would assert
-        return;
-  #endif
-
-    // !!! This used to have a distinguished `kind` but that was taken after
-    // it had been dequoted, so effectively it was the `heart`.
-    //
-    enum Reb_Kind heart = Cell_Heart(v);
-
-    if (deep_types & FLAGIT_KIND(heart) & TS_SERIES_OBJ) {
-        //
-        // Objects and series get shallow copied at minimum
-        //
-        Series* series;
-        bool would_need_deep;
-
-        if (Any_Context_Kind(heart)) {
-            INIT_VAL_CONTEXT_VARLIST(
-                v,
-                CTX_VARLIST(Copy_Context_Shallow_Managed(VAL_CONTEXT(v)))
-            );
-            series = CTX_VARLIST(VAL_CONTEXT(v));
-            would_need_deep = true;
-        }
-        else if (Any_Arraylike(v)) {
-            series = Copy_Array_At_Extra_Shallow(
-                VAL_ARRAY(v),
-                0,  // index
-                VAL_SPECIFIER(v),
-                0,  // extra
-                NODE_FLAG_MANAGED
-            );
-
-            // Despite their immutability, new instances of PATH! need to be
-            // able to bind their word components differently from the path
-            // they are copied from...which requires new cells.  (Also any
-            // nested blocks or groups need to be copied deeply.)
-            //
-            if (Any_Sequence_Kind(heart))
-                Freeze_Array_Shallow(cast(Array*, series));
-
-            Init_Cell_Node1(v, series);
-            INIT_SPECIFIER(v, UNBOUND);  // copying w/specifier makes specific
-            would_need_deep = true;
-        }
-        else if (Any_Series_Kind(heart)) {
-            series = Copy_Series_Core(
-                VAL_SERIES(v),
-                NODE_FLAG_MANAGED
-            );
-            Init_Cell_Node1(v, series);
-            would_need_deep = false;
-        }
-        else {
-            series = nullptr;
-            would_need_deep = false;
-        }
-
-        // If we're going to copy deeply, we go back over the shallow
-        // copied series and "clonify" the values in it.
-        //
-        if (would_need_deep and (deep_types & FLAGIT_KIND(heart))) {
-            const Cell* sub_tail = Array_Tail(cast(Array*, series));
-            Cell* sub = Array_Head(cast(Array*, series));
-            for (; sub != sub_tail; ++sub)
-                Clonify(sub, flags, deep_types);
-        }
-    }
-    else {
-        // We're not copying the value, so inherit the const bit from the
-        // original value's point of view, if applicable.
-        //
-        if (Not_Cell_Flag(v, EXPLICITLY_MUTABLE))
-            v->header.bits |= (flags & ARRAY_FLAG_CONST_SHALLOW);
-    }
+    Clonify_And_Bind_Relative(v, flags, deep_types, nullptr, nullptr);
 }
 
 
@@ -277,72 +185,6 @@ Array* Copy_Array_Core_Managed(
             deep_types
         );
     }
-
-    return copy;
-}
-
-
-//
-//  Copy_Rerelativized_Array_Deep_Managed: C
-//
-// The invariant of copying in general is that when you are done with the
-// copy, there are no relative values in that copy.  One exception to this
-// is the deep copy required to make a relative function body in the first
-// place (which it currently does in two passes--a normal deep copy followed
-// by a relative binding).  The other exception is when a relativized
-// function body is copied to make another relativized function body.
-//
-// This is specialized logic for the latter case.  It's constrained enough
-// to be simple (all relative values are known to be relative to the same
-// function), and the feature is questionable anyway.  So it's best not to
-// further complicate ordinary copying with a parameterization to copy
-// and change all the relative binding information from one function's
-// paramlist to another.
-//
-Array* Copy_Rerelativized_Array_Deep_Managed(
-    const Array* original,
-    Action* before, // references to `before` will be changed to `after`
-    Action* after
-){
-    const Flags flags = NODE_FLAG_MANAGED;
-
-    Array* copy = Make_Array_For_Copy(Array_Len(original), flags, original);
-    const Cell* src_tail = Array_Tail(original);
-    const Cell* src = Array_Head(original);
-    Cell* dest = Array_Head(copy);
-
-    for (; src != src_tail; ++src, ++dest) {
-        if (not IS_RELATIVE(src)) {
-            Copy_Cell(dest, SPECIFIC(src));
-            continue;
-        }
-
-        // All relative values under a sub-block must be relative to the
-        // same function.
-        //
-        assert(cast(Action*, BINDING(src)) == before);
-
-        Copy_Cell_Header(dest, src);
-
-        if (Any_Arraylike(src)) {
-            Init_Cell_Node1(
-                dest,
-                Copy_Rerelativized_Array_Deep_Managed(
-                    VAL_ARRAY(src), before, after
-                )
-            );
-            PAYLOAD(Any, dest).second = PAYLOAD(Any, src).second;
-            INIT_SPECIFIER(dest, after); // relative binding
-        }
-        else {
-            assert(Any_Word(src));
-            PAYLOAD(Any, dest) = PAYLOAD(Any, src);
-            INIT_SPECIFIER(dest, after);
-        }
-
-    }
-
-    Set_Series_Len(copy, Array_Len(original));
 
     return copy;
 }
