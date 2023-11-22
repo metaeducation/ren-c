@@ -70,7 +70,7 @@ INLINE bool TYPE_CHECK(Value(const*) typeset, Atom(const*) v) {
 INLINE bool Is_Matcher(const Cell* v) {
     if (QUOTE_BYTE(v) != ISOTOPE_0)
         return false;
-    return ANY_TYPE_VALUE_KIND(HEART_BYTE(v));
+    return Any_Type_Value_Kind(HEART_BYTE(v));
 }
 
 INLINE bool Matcher_Matches(

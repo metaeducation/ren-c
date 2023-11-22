@@ -279,7 +279,7 @@ void Replug_Stack(Level* L, Level* base, Value(*) plug) {
     // Now add in all the residual elements from the plug to global buffers
     // like the mold buffer and data stack.
 
-    assert(IS_BLOCK(plug));  // restore data stack from plug's block
+    assert(Is_Block(plug));  // restore data stack from plug's block
     assert(VAL_INDEX(plug) == 0);  // could store some number (?)
 
     if (VAL_ARRAY(plug) == EMPTY_ARRAY)
@@ -292,7 +292,7 @@ void Replug_Stack(Level* L, Level* base, Value(*) plug) {
 
     if (Get_Subclass_Flag(PLUG, array, HAS_MOLD)) {  // restore mold from plug
         --item;
-        assert(IS_TEXT(item));
+        assert(Is_Text(item));
         assert(VAL_INDEX(item) == 0);
         Append_String(g_mold.buffer, item);
     }

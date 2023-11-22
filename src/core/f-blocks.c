@@ -168,7 +168,7 @@ void Clonify(
         Series* series;
         bool would_need_deep;
 
-        if (ANY_CONTEXT_KIND(heart)) {
+        if (Any_Context_Kind(heart)) {
             INIT_VAL_CONTEXT_VARLIST(
                 v,
                 CTX_VARLIST(Copy_Context_Shallow_Managed(VAL_CONTEXT(v)))
@@ -176,7 +176,7 @@ void Clonify(
             series = CTX_VARLIST(VAL_CONTEXT(v));
             would_need_deep = true;
         }
-        else if (ANY_ARRAYLIKE(v)) {
+        else if (Any_Arraylike(v)) {
             series = Copy_Array_At_Extra_Shallow(
                 VAL_ARRAY(v),
                 0,  // index
@@ -190,14 +190,14 @@ void Clonify(
             // they are copied from...which requires new cells.  (Also any
             // nested blocks or groups need to be copied deeply.)
             //
-            if (ANY_SEQUENCE_KIND(heart))
+            if (Any_Sequence_Kind(heart))
                 Freeze_Array_Shallow(cast(Array*, series));
 
             Init_Cell_Node1(v, series);
             INIT_SPECIFIER(v, UNBOUND);  // copying w/specifier makes specific
             would_need_deep = true;
         }
-        else if (ANY_SERIES_KIND(heart)) {
+        else if (Any_Series_Kind(heart)) {
             series = Copy_Series_Core(
                 VAL_SERIES(v),
                 NODE_FLAG_MANAGED
@@ -324,7 +324,7 @@ Array* Copy_Rerelativized_Array_Deep_Managed(
 
         Copy_Cell_Header(dest, src);
 
-        if (ANY_ARRAYLIKE(src)) {
+        if (Any_Arraylike(src)) {
             Init_Cell_Node1(
                 dest,
                 Copy_Rerelativized_Array_Deep_Managed(
@@ -335,7 +335,7 @@ Array* Copy_Rerelativized_Array_Deep_Managed(
             INIT_SPECIFIER(dest, after); // relative binding
         }
         else {
-            assert(ANY_WORD(src));
+            assert(Any_Word(src));
             PAYLOAD(Any, dest) = PAYLOAD(Any, src);
             INIT_SPECIFIER(dest, after);
         }
@@ -388,7 +388,7 @@ void Uncolor_Array(const Array* a)
     const Cell* tail = Array_Tail(a);
     const Cell* v = Array_Head(a);
     for (; v != tail; ++v) {
-        if (ANY_PATH(v) or ANY_ARRAY(v) or IS_MAP(v) or ANY_CONTEXT(v))
+        if (Any_Path(v) or Any_Array(v) or Is_Map(v) or Any_Context(v))
             Uncolor(v);
     }
 }
@@ -404,9 +404,9 @@ void Uncolor(const Cell* v)
     if (Is_Isotope(v))
         return;
 
-    if (ANY_ARRAY(v))
+    if (Any_Array(v))
         Uncolor_Array(VAL_ARRAY(v));
-    else if (ANY_PATH(v)) {
+    else if (Any_Path(v)) {
         REBLEN len = VAL_SEQUENCE_LEN(v);
         REBLEN i;
         DECLARE_LOCAL (temp);
@@ -415,15 +415,15 @@ void Uncolor(const Cell* v)
             Uncolor(item);
         }
     }
-    else if (IS_MAP(v))
+    else if (Is_Map(v))
         Uncolor_Array(MAP_PAIRLIST(VAL_MAP(v)));
-    else if (ANY_CONTEXT(v))
+    else if (Any_Context(v))
         Uncolor_Array(CTX_VARLIST(VAL_CONTEXT(v)));
     else {
         // Shouldn't have marked recursively any non-array series (no need)
         //
         assert(
-            not ANY_SERIES(v)
+            not Any_Series(v)
             or Is_Series_White(VAL_SERIES(v))
         );
     }

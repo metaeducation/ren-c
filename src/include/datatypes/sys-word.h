@@ -34,7 +34,7 @@
     ID_OF_SYMBOL(VAL_WORD_SYMBOL(v))
 
 INLINE void INIT_VAL_WORD_INDEX(Cell* v, REBLEN i) {
-    assert(ANY_WORDLIKE(v));
+    assert(Any_Wordlike(v));
     assert(i != 0);
     VAL_WORD_INDEX_U32(v) = i;
 }
@@ -129,7 +129,7 @@ INLINE const String* Intern_Unsized_Managed(const char *utf8)
 
 // It's fundamental to PARSE to recognize `|` and skip ahead to it to the end.
 // The debug build has enough checks on things like VAL_WORD_SYMBOL() that
-// it adds up when you already tested someting IS_WORD().  This reaches a
+// it adds up when you already tested someting Is_Word().  This reaches a
 // bit lower level to try and still have protections but speed up some--and
 // since there's no inlining in the debug build, FETCH_TO_BAR_OR_END=>macro
 //
@@ -147,18 +147,18 @@ INLINE bool IS_BAR_BAR(const Cell* v) {
 }
 
 INLINE bool IS_META(const Cell* v) {
-    if (not IS_WORD(v))
+    if (not Is_Word(v))
         return false;
     return VAL_WORD_SYMBOL(v) == Canon(CARET_1);
 }
 
 INLINE bool IS_THE(const Cell* v) {
-    if (not IS_WORD(v))
+    if (not Is_Word(v))
         return false;
     return VAL_WORD_SYMBOL(v) == Canon(AT_1);
 }
 
-// !!! Temporary workaround for what was IS_META_WORD() (now not its own type)
+// !!! Temporary workaround for what was Is_Meta_Word() (now not its own type)
 //
 INLINE bool IS_QUOTED_WORD(const Cell* v) {
     return VAL_NUM_QUOTES(v) == 1

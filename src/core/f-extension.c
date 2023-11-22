@@ -100,7 +100,7 @@ DECLARE_NATIVE(builtin_extensions)
     for (i = 0; i != NUM_BUILTIN_EXTENSIONS; ++i) {
         COLLATE_CFUNC *collator = Builtin_Extension_Collators[i];
         REBVAL *details = (*collator)(&Ext_Lib);
-        assert(IS_BLOCK(details) and VAL_LEN_AT(details) == IDX_COLLATOR_MAX);
+        assert(Is_Block(details) and VAL_LEN_AT(details) == IDX_COLLATOR_MAX);
         Copy_Cell(Alloc_Tail_Array(list), details);
         rebRelease(details);
     }
@@ -144,11 +144,11 @@ DECLARE_NATIVE(load_extension)
     //
     Array* collated;
 
-    if (IS_BLOCK(ARG(where))) {  // It's one of the BUILTIN-EXTENSIONS
+    if (Is_Block(ARG(where))) {  // It's one of the BUILTIN-EXTENSIONS
         collated = VAL_ARRAY_ENSURE_MUTABLE(ARG(where));  // already "collated"
     }
     else {  // It's a DLL, must locate and call its RX_Collate() function
-        assert(IS_FILE(ARG(where)));
+        assert(Is_File(ARG(where)));
 
         REBVAL *lib_api = rebValue("make library!", ARG(where));
 
@@ -156,7 +156,7 @@ DECLARE_NATIVE(load_extension)
             "run-library-collator", lib_api, "{RX_Collate}"
         );
 
-        if (not collated_block or not IS_BLOCK(collated_block)) {
+        if (not collated_block or not Is_Block(collated_block)) {
             rebElide("close", lib_api);
             fail (Error_Bad_Extension_Raw(ARG(where)));
         }

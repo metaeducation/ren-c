@@ -225,12 +225,12 @@ INLINE Option(Value(const*)) Try_Reify_Variadic_Feed_Series(
       case FLAVOR_INSTRUCTION_SPLICE: {
         Array* inst1 = x_cast(Array*, s);
         REBVAL *single = SPECIFIC(Array_Single(inst1));
-        if (IS_BLANK(single)) {
+        if (Is_Blank(single)) {
             GC_Kill_Series(inst1);
             return nullptr;
         }
 
-        if (IS_BLOCK(single)) {
+        if (Is_Block(single)) {
             feed->p = &PG_Feed_At_End;  // will become FEED_PENDING(), ignored
             Splice_Block_Into_Feed(feed, single);
         }

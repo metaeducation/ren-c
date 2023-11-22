@@ -493,7 +493,7 @@ void RunPromise(void)
 
         // Note: Expired, can't use VAL_CONTEXT
         //
-        assert(IS_FRAME(result));
+        assert(Is_Frame(result));
         const Node* frame_ctx = Cell_Node1(result);
         heapaddr_t throw_id = Heapaddr_From_Pointer(frame_ctx);
 
@@ -596,7 +596,7 @@ EXTERN_C void RL_rebRejectNative_internal(
         Init_Nulled(OUT);
     }
     else {
-        assert(IS_ERROR(error));
+        assert(Is_Error(error));
         Copy_Cell(OUT, error);
         rebRelease(error);
     }
@@ -1029,7 +1029,7 @@ DECLARE_NATIVE(js_eval_p)
         );
     }
     REBVAL *value = Value_From_Value_Id(addr);
-    if (not value or not IS_ERROR(value))
+    if (not value or not Is_Error(value))
         return value;  // evaluator takes ownership of handle
 
     goto handle_error;
@@ -1037,7 +1037,7 @@ DECLARE_NATIVE(js_eval_p)
 } handle_error: {  ///////////////////////////////////////////////////////////
 
     REBVAL *error = Value_From_Value_Id(addr);
-    assert(IS_ERROR(error));
+    assert(Is_Error(error));
     Context* ctx = VAL_CONTEXT(error);
     rebRelease(error);
     fail (ctx);  // better than Init_Thrown_With_Label(), identifies source

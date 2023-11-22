@@ -119,7 +119,7 @@ Bounce Series_Common_Action_Maybe_Unhandled(
         // from R3-Alpha and Rebol2, which skipped when false)
         //
         REBI64 i;
-        if (IS_LOGIC(ARG(offset))) {
+        if (Is_Logic(ARG(offset))) {
             if (VAL_LOGIC(ARG(offset)))
                 i = cast(REBI64, VAL_INDEX_RAW(v)) + 1;
             else
@@ -271,7 +271,7 @@ REBINT Compare_Arrays_At_Indexes(
 
     while (
         VAL_TYPE(s) == VAL_TYPE(t)
-        or (ANY_NUMBER(s) and ANY_NUMBER(t))
+        or (Any_Number(s) and Any_Number(t))
     ){
         REBINT diff;
         if ((diff = Cmp_Value(s, t, is_case)) != 0)
@@ -321,7 +321,7 @@ REBINT Cmp_Value(const Cell* sval, const Cell* tval, bool strict)
 
     if (
         s_kind != t_kind
-        and not (ANY_NUMBER_KIND(s_kind) and ANY_NUMBER_KIND(t_kind))
+        and not (Any_Number_Kind(s_kind) and Any_Number_Kind(t_kind))
     ){
         return s_kind > t_kind ? 1 : -1;
     }

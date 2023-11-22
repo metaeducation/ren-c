@@ -49,7 +49,6 @@
 
 #include "uv.h"  // includes windows.h
 #if TO_WINDOWS
-    #undef IS_ERROR  // windows.h defines, contentious with IS_ERROR in Ren-C
     #undef OUT  // %minwindef.h defines this, we have a better use for it
     #undef VOID  // %winnt.h defines this, we have a better use for it
 #endif
@@ -352,7 +351,7 @@ REBVAL *Write_File(const REBVAL *port, const REBVAL *value, REBLEN limit)
     const Byte* data;
     size_t size;
 
-    if (IS_TEXT(value) or IS_ISSUE(value)) {
+    if (Is_Text(value) or Is_Issue(value)) {
         Utf8(const*) utf8 = VAL_UTF8_LEN_SIZE_AT_LIMIT(
             nullptr,
             &size,
@@ -374,7 +373,7 @@ REBVAL *Write_File(const REBVAL *port, const REBVAL *value, REBLEN limit)
         data = utf8;
     }
     else {
-        if (not IS_BINARY(value))
+        if (not Is_Binary(value))
             return rebValue("make error! {ISSUE!, TEXT!, BINARY! for WRITE}");
 
         data = VAL_BINARY_AT(value);

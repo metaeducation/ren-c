@@ -229,12 +229,12 @@ Utf8(*) String_At(const_if_c String* s, REBLEN at) {
 REBINT CT_String(NoQuote(const Cell*) a, NoQuote(const Cell*) b, bool strict)
 {
     assert(
-        ANY_STRING_KIND(Cell_Heart(a))
+        Any_String_Kind(Cell_Heart(a))
         or REB_ISSUE == Cell_Heart(a)
         or REB_URL == Cell_Heart(a)
     );
     assert(
-        ANY_STRING_KIND(Cell_Heart(b))
+        Any_String_Kind(Cell_Heart(b))
         or REB_ISSUE == Cell_Heart(b)
         or REB_URL == Cell_Heart(a)
     );
@@ -351,7 +351,7 @@ Bounce MAKE_String(
     if (parent)
         return RAISE(Error_Bad_Make_Parent(kind, unwrap(parent)));
 
-    if (IS_INTEGER(def)) {  // new string with given integer capacity
+    if (Is_Integer(def)) {  // new string with given integer capacity
         //
         // !!! We can't really know how many bytes to allocate for a certain
         // number of codepoints.  UTF-8 may take up to UNI_ENCODED_MAX bytes
@@ -365,7 +365,7 @@ Bounce MAKE_String(
         return Init_Any_String(OUT, kind, Make_String(Int32s(def, 0)));
     }
 
-    if (ANY_UTF8(def)) {  // new type for the UTF-8 data with new allocation
+    if (Any_Utf8(def)) {  // new type for the UTF-8 data with new allocation
         Length len;
         Size size;
         const Byte* utf8 = VAL_UTF8_LEN_SIZE_AT(&len, &size, def);
@@ -382,7 +382,7 @@ Bounce MAKE_String(
         );
     }
 
-    if (IS_BINARY(def)) {  // not necessarily valid UTF-8, so must check
+    if (Is_Binary(def)) {  // not necessarily valid UTF-8, so must check
         Size size;
         const Byte* at = VAL_BINARY_SIZE_AT(&size, def);
         return Init_Any_String(
@@ -392,7 +392,7 @@ Bounce MAKE_String(
         );
     }
 
-    if (IS_BLOCK(def)) {
+    if (Is_Block(def)) {
         //
         // The construction syntax for making strings that are preloaded with
         // an offset into the data is #[string ["abcd" 2]].
@@ -409,11 +409,11 @@ Bounce MAKE_String(
         if (len != 2)
             goto bad_make;
 
-        if (not ANY_STRING(first))
+        if (not Any_String(first))
             goto bad_make;
 
         const Cell* index = first + 1;
-        if (!IS_INTEGER(index))
+        if (!Is_Integer(index))
             goto bad_make;
 
         REBINT i = Int32(index) - 1 + VAL_INDEX(first);
@@ -435,7 +435,7 @@ Bounce MAKE_String(
 Bounce TO_String(Level* level_, enum Reb_Kind kind, const REBVAL *arg)
 {
     if (kind == REB_ISSUE) {  // encompasses what would have been TO CHAR!
-        if (IS_INTEGER(arg)) {
+        if (Is_Integer(arg)) {
             //
             // `to issue! 1` is slated to keep the visual consistency intact,
             // so that you'd get #1 back.  With issue! and char! unified,
@@ -449,7 +449,7 @@ Bounce TO_String(Level* level_, enum Reb_Kind kind, const REBVAL *arg)
         // Fall through
     }
 
-    if (IS_BINARY(arg)) {
+    if (Is_Binary(arg)) {
         //
         // !!! Historically TO would convert binaries to strings.  But as
         // the definition of TO has been questioned and evolving, that no
@@ -476,7 +476,7 @@ Bounce TO_String(Level* level_, enum Reb_Kind kind, const REBVAL *arg)
     // be covered by `make text!` or `copy as text!`.  For the present
     // moment, it is kept as-is to avoid disruption.
     //
-    if (IS_TAG(arg))
+    if (Is_Tag(arg))
         return MAKE_String(level_, kind, nullptr, arg);
 
     return Init_Any_String(
@@ -500,7 +500,7 @@ DECLARE_NATIVE(to_text)
 {
     INCLUDE_PARAMS_OF_TO_TEXT;
 
-    if (IS_BINARY(ARG(value)) and REF(relax)) {
+    if (Is_Binary(ARG(value)) and REF(relax)) {
         Size size;
         const Byte* at = VAL_BINARY_SIZE_AT(&size, ARG(value));
         return Init_Any_String(
@@ -833,7 +833,7 @@ void MF_String(REB_MOLD *mo, NoQuote(const Cell*) v, bool form)
 {
     String* buf = mo->series;
 
-    assert(ANY_STRINGLIKE(v));
+    assert(Any_Stringlike(v));
 
     enum Reb_Kind kind = Cell_Heart(v);
 
@@ -893,7 +893,7 @@ bool Did_Get_Series_Index_From_Picker(
     const REBVAL *v,
     const Cell* picker
 ){
-    if (not (IS_INTEGER(picker) or IS_DECIMAL(picker)))  // !!! why DECIMAL! ?
+    if (not (Is_Integer(picker) or Is_Decimal(picker)))  // !!! why DECIMAL! ?
         fail (Error_Bad_Pick_Raw(picker));
 
     REBINT n = Int32(picker);
@@ -921,7 +921,7 @@ bool Did_Get_Series_Index_From_Picker(
 REBTYPE(String)
 {
     REBVAL *v = D_ARG(1);
-    assert(ANY_STRING(v));
+    assert(Any_String(v));
 
     Option(SymId) id = ID_OF_SYMBOL(verb);
 
@@ -960,7 +960,7 @@ REBTYPE(String)
         if (IS_CHAR(setval)) {
             c = VAL_CHAR(setval);
         }
-        else if (IS_INTEGER(setval)) {
+        else if (Is_Integer(setval)) {
             c = Int32(setval);
         }
         else  // CHANGE is a better route for splicing/removal/etc.
@@ -1076,7 +1076,7 @@ REBTYPE(String)
         else if (Is_Isotope(arg)) {  // only SPLICE! in typecheck
             fail (Error_Bad_Isotope(arg));  // ...but that doesn't filter yet
         }
-        else if (ANY_ARRAY(arg))
+        else if (Any_Array(arg))
             fail (ARG(value));  // error on `append "abc" [d e]` w/o SPREAD
 
         VAL_INDEX_RAW(v) = Modify_String_Or_Binary(  // does read-only check
@@ -1340,7 +1340,7 @@ REBTYPE(String)
         UNUSED(PARAM(value));
 
         if (REF(seed)) { // string/binary contents are the seed
-            assert(ANY_STRING(v));
+            assert(Any_String(v));
 
             Size utf8_size;
             Utf8(const*) utf8 = VAL_UTF8_SIZE_AT(&utf8_size, v);
@@ -1383,9 +1383,9 @@ REBTYPE(String)
       default:
         // Let the port system try the action, e.g. OPEN %foo.txt
         //
-        if ((IS_FILE(v) or IS_URL(v))) {
+        if ((Is_File(v) or Is_Url(v))) {
             const REBVAL *made = rebValue("make port! @", D_ARG(1));
-            assert(IS_PORT(made));
+            assert(Is_Port(made));
             Copy_Cell(D_ARG(1), made);
             rebRelease(made);
             return BOUNCE_CONTINUE;

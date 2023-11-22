@@ -37,7 +37,7 @@ Value(*) Try_Init_Any_Sequence_At_Arraylike_Core(
     Specifier* specifier,
     REBLEN index
 ){
-    assert(ANY_SEQUENCE_KIND(kind));
+    assert(Any_Sequence_Kind(kind));
     assert(Is_Node_Managed(a));
     Assert_Series_Term_If_Needed(a);
     assert(index == 0);  // !!! current rule
@@ -216,7 +216,7 @@ Bounce MAKE_Path(
     if (parent)
         return RAISE(Error_Bad_Make_Parent(kind, unwrap(parent)));
 
-    if (not IS_BLOCK(arg))
+    if (not Is_Block(arg))
         fail (Error_Bad_Make(kind, arg)); // "make path! 0" has no meaning
 
     Level* L = Make_Level_At(arg, LEVEL_MASK_NONE);
@@ -248,7 +248,7 @@ Bounce MAKE_Path(
     if (not p)
         fail (Error_Bad_Sequence_Init(stable_OUT));
 
-    if (not ANY_PATH(OUT))  // e.g. `make path! ['x]` giving us the WORD! `x`
+    if (not Any_Path(OUT))  // e.g. `make path! ['x]` giving us the WORD! `x`
         return RAISE(Error_Sequence_Too_Short_Raw());
 
     return OUT;
@@ -293,7 +293,7 @@ Bounce MAKE_Path(
 Bounce TO_Sequence(Level* level_, enum Reb_Kind kind, const REBVAL *arg) {
     enum Reb_Kind arg_kind = VAL_TYPE(arg);
 
-    if (IS_TEXT(arg)) {
+    if (Is_Text(arg)) {
         //
         // R3-Alpha considered `to tuple! "1.2.3"` to be 1.2.3, consistent with
         // `to path! "a/b/c"` being `a/b/c`...but it allowed `to path! "a b c"`
@@ -316,7 +316,7 @@ Bounce TO_Sequence(Level* level_, enum Reb_Kind kind, const REBVAL *arg) {
         );
     }
 
-    if (ANY_SEQUENCE_KIND(arg_kind)) {  // e.g. `to set-path! 'a/b/c`
+    if (Any_Sequence_Kind(arg_kind)) {  // e.g. `to set-path! 'a/b/c`
         assert(kind != arg_kind);  // TO should have called COPY
 
         // !!! If we don't copy an array, we don't get a new form to use for

@@ -364,7 +364,7 @@ INLINE Value(*) CTX_VARS(Value(const*) * tail, Context* c) {
 //
 
 INLINE bool Is_Frame_On_Stack(Context* c) {
-    assert(IS_FRAME(CTX_ARCHETYPE(c)));
+    assert(Is_Frame(CTX_ARCHETYPE(c)));
     return Is_Node_A_Cell(BONUS(KeySource, CTX_VARLIST(c)));
 }
 
@@ -374,7 +374,7 @@ INLINE Level* CTX_LEVEL_IF_ON_STACK(Context* c) {
         return nullptr; // e.g. came from MAKE FRAME! or Encloser_Dispatcher
 
     assert(Not_Series_Flag(CTX_VARLIST(c), INACCESSIBLE));
-    assert(IS_FRAME(CTX_ARCHETYPE(c)));
+    assert(Is_Frame(CTX_ARCHETYPE(c)));
 
     Level* L = cast(Level*, keysource);
     assert(L->executor == &Action_Executor);
@@ -407,7 +407,7 @@ INLINE void FAIL_IF_INACCESSIBLE_CTX(Context* c) {
 //
 
 INLINE Context* VAL_CONTEXT(NoQuote(const Cell*) v) {
-    assert(ANY_CONTEXT_KIND(Cell_Heart_Unchecked(v)));
+    assert(Any_Context_Kind(Cell_Heart_Unchecked(v)));
     Context* c;
 
     if (IS_VARLIST(cast(Stub*, Cell_Node1(v)))) {
@@ -441,7 +441,7 @@ INLINE Context* VAL_CONTEXT(NoQuote(const Cell*) v) {
 //
 
 INLINE void INIT_VAL_FRAME_PHASE(Cell* v, Phase* phase) {
-    assert(IS_FRAME(v));  // may be marked protected (e.g. archetype)
+    assert(Is_Frame(v));  // may be marked protected (e.g. archetype)
     INIT_VAL_FRAME_PHASE_OR_LABEL(v, phase);
 }
 
@@ -469,7 +469,7 @@ INLINE void INIT_VAL_FRAME_LABEL(
     Cell* v,
     Option(const String*) label
 ){
-    assert(IS_FRAME(v));
+    assert(Is_Frame(v));
     ASSERT_CELL_WRITABLE_EVIL_MACRO(v);  // No label in archetype
     INIT_VAL_FRAME_PHASE_OR_LABEL(v, try_unwrap(label));
 }
@@ -596,25 +596,25 @@ INLINE void Deep_Freeze_Context(Context* c) {
 // repeating the code.
 //
 INLINE void FAIL_IF_BAD_PORT(REBVAL *port) {
-    if (not ANY_CONTEXT(port))
+    if (not Any_Context(port))
         fail (Error_Invalid_Port_Raw());
 
     Context* ctx = VAL_CONTEXT(port);
     if (
         CTX_LEN(ctx) < (STD_PORT_MAX - 1)
-        or not IS_OBJECT(CTX_VAR(ctx, STD_PORT_SPEC))
+        or not Is_Object(CTX_VAR(ctx, STD_PORT_SPEC))
     ){
         fail (Error_Invalid_Port_Raw());
     }
 }
 
 // It's helpful to show when a test for a native port actor is being done,
-// rather than just having the code say IS_HANDLE().
+// rather than just having the code say Is_Handle().
 //
 INLINE bool Is_Native_Port_Actor(const REBVAL *actor) {
-    if (IS_HANDLE(actor))
+    if (Is_Handle(actor))
         return true;
-    assert(IS_OBJECT(actor));
+    assert(Is_Object(actor));
     return false;
 }
 
@@ -626,7 +626,7 @@ INLINE Value(const*) TRY_VAL_CONTEXT_VAR_CORE(
 ){
     bool strict = false;
     Value(*) var;
-    if (IS_MODULE(context)) {
+    if (Is_Module(context)) {
         var = MOD_VAR(VAL_CONTEXT(context), symbol, strict);
     }
     else {

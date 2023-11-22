@@ -978,7 +978,7 @@ DECLARE_NATIVE(swap_contents)
 {
     INCLUDE_PARAMS_OF_SWAP_CONTENTS;
 
-    if (ANY_ARRAY(ARG(series1)) != ANY_ARRAY(ARG(series2)))
+    if (Any_Array(ARG(series1)) != Any_Array(ARG(series2)))
         fail ("Can only SWAP-CONTENTS of arrays with other arrays");
 
     // !!! This is a conservative check, as some binaries could be swapped
@@ -987,7 +987,7 @@ DECLARE_NATIVE(swap_contents)
     // Let the user do their own aliasing for now, since the checks are
     // annoying to write.
     //
-    if (IS_BINARY(ARG(series1)) != IS_BINARY(ARG(series2)))
+    if (Is_Binary(ARG(series1)) != Is_Binary(ARG(series2)))
         fail ("Can only SWAP-CONTENTS of binaries with other binaries");
 
     Series* s1 = VAL_SERIES_ENSURE_MUTABLE(ARG(series1));

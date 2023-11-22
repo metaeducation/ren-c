@@ -72,7 +72,7 @@ DECLARE_NATIVE(reduce)
 
     switch (STATE) {
       case ST_REDUCE_INITIAL_ENTRY:
-        if (ANY_ARRAY(v))
+        if (Any_Array(v))
             goto initial_entry_any_array;
         goto initial_entry_non_array;  // semantics in question [1]
 
@@ -87,7 +87,7 @@ DECLARE_NATIVE(reduce)
 
   initial_entry_non_array: {  /////////////////////////////////////////////////
 
-    if (ANY_INERT(v))
+    if (Any_Inert(v))
         return COPY(v);  // save time if it's something like a TEXT!
 
     Level* sub = Make_End_Level(
@@ -250,7 +250,7 @@ DECLARE_NATIVE(reduce_each)
 
     Flags flags = LEVEL_FLAG_TRAMPOLINE_KEEPALIVE;
 
-    if (IS_META_WORD(vars)) {  // Note: gets converted to object in next step
+    if (Is_Meta_Word(vars)) {  // Note: gets converted to object in next step
         flags |= LEVEL_FLAG_META_RESULT | LEVEL_FLAG_RAISED_RESULT_OK;
     }
 
@@ -260,7 +260,7 @@ DECLARE_NATIVE(reduce_each)
     );
     Init_Object(ARG(vars), context);  // keep GC safe
 
-    if (IS_THE_BLOCK(block))
+    if (Is_The_Block(block))
         flags |= EVAL_EXECUTOR_FLAG_NO_EVALUATIONS;
 
     Level* sub = Make_Level_At(block, flags);
@@ -336,12 +336,12 @@ DECLARE_NATIVE(reduce_each)
 
 
 bool Match_For_Compose(NoQuote(const Cell*) group, const REBVAL *label) {
-    assert(ANY_GROUP_KIND(Cell_Heart(group)));
+    assert(Any_Group_Kind(HEART_BYTE(group)));
 
     if (Is_Nulled(label))
         return true;
 
-    assert(IS_TAG(label) or IS_FILE(label));
+    assert(Is_Tag(label) or Is_File(label));
 
     if (VAL_LEN_AT(group) == 0) // you have a pattern, so leave `()` as-is
         return false;
@@ -376,7 +376,7 @@ static void Push_Composer_Level(
     Specifier* specifier
 ){
     Value(const*) adjusted = nullptr;
-    if (ANY_PATH(arraylike)) {  // allow sequences [1]
+    if (Any_Path(arraylike)) {  // allow sequences [1]
         Derelativize(out, arraylike, specifier);
         adjusted = rebValue(Canon(AS), Canon(BLOCK_X), rebQ(out));
     }
@@ -429,7 +429,7 @@ static Atom(*) Finalize_Composer_Level(
     enum Reb_Kind heart = Cell_Heart(composee);
     REBLEN quotes = VAL_NUM_QUOTES(composee);
 
-    if (ANY_SEQUENCE_KIND(heart)) {
+    if (Any_Sequence_Kind(heart)) {
         if (not Try_Pop_Sequence_Or_Element_Or_Nulled(
             out,
             Cell_Heart(composee),
@@ -529,7 +529,7 @@ Bounce Composer_Executor(Level* const L)
     bool deep = not Is_Nulled(Level_Arg(main_level, p_deep_));
     Value(*) predicate = Level_Arg(main_level, p_predicate_);
 
-    assert(Is_Nulled(predicate) or IS_FRAME(predicate));
+    assert(Is_Nulled(predicate) or Is_Frame(predicate));
 
     enum {
         ST_COMPOSER_INITIAL_ENTRY = STATE_0,
@@ -564,7 +564,7 @@ Bounce Composer_Executor(Level* const L)
 
     const Cell* at = At_Level(L);
 
-    if (not ANY_ARRAYLIKE(at)) {  // won't substitute/recurse
+    if (not Any_Arraylike(at)) {  // won't substitute/recurse
         Derelativize(PUSH(), at, L_specifier);  // keep newline flag
         goto handle_next_item;
     }
@@ -574,7 +574,7 @@ Bounce Composer_Executor(Level* const L)
     Specifier* match_specifier = nullptr;
     const Cell* match = nullptr;
 
-    if (not ANY_GROUP_KIND(heart)) {
+    if (not Any_Group_Kind(heart)) {
         //
         // Don't compose at this level, but may need to walk deeply to
         // find compositions inside it if /DEEP and it's an array
@@ -727,7 +727,7 @@ Bounce Composer_Executor(Level* const L)
         }
     }
     else {
-        assert(not ANY_ARRAY(OUT));
+        assert(not Any_Array(OUT));
         Copy_Cell(PUSH(), OUT);
     }
 
@@ -825,7 +825,7 @@ DECLARE_NATIVE(compose)
     if (Is_Blackhole(v))
         return COPY(v);  // sink locations composed to avoid double eval
 
-    if (ANY_WORD(v) or Is_Activation(v))
+    if (Any_Word(v) or Is_Activation(v))
         return COPY(v);  // makes it easier to `set compose target`
 
     Push_Composer_Level(OUT, level_, v, VAL_SPECIFIER(v));
@@ -860,7 +860,7 @@ static void Flatten_Core(
 ) {
     Cell* item = head;
     for (; item != tail; ++item) {
-        if (IS_BLOCK(item) and level != FLATTEN_NOT) {
+        if (Is_Block(item) and level != FLATTEN_NOT) {
             Specifier* derived = Derive_Specifier(specifier, item);
 
             const Cell* sub_tail;

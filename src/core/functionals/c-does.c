@@ -79,7 +79,7 @@ Bounce Block_Dispatcher(Level* const L)
 
     Cell* block = Array_At(details, IDX_DOES_BLOCK);
         // ^-- note not a `const Cell* block`, may get updated!
-    assert(IS_BLOCK(block) and VAL_INDEX(block) == 0);
+    assert(Is_Block(block) and VAL_INDEX(block) == 0);
 
     const Array* body = VAL_ARRAY(block);
 
@@ -185,7 +185,7 @@ DECLARE_NATIVE(does)
 
     REBVAL *source = ARG(source);
 
-    if (IS_BLOCK(source)) {
+    if (Is_Block(source)) {
         Phase* doer = Make_Action(
             ACT_PARAMLIST(VAL_ACTION(Lib(SURPRISE))),  // same, no args
             nullptr,  // no partials

@@ -175,12 +175,12 @@ bool Init_Invokable_From_Feed_Throws(
     // that can only work when interacting with one function, and even plain
     // groups break that guarantee.  Do meta values with e.g. `[^x y]: do f`.
     //
-    if (ANY_GROUP(v))  // `requote (append [a b c] #d, <can't-work>)`
+    if (Any_Group(v))  // `requote (append [a b c] #d, <can't-work>)`
         fail ("Actions made with REFRAMER cannot work with GROUP!s");
 
     StackIndex base = TOP_INDEX;
 
-    if (IS_WORD(v) or IS_TUPLE(v) or IS_PATH(v)) {
+    if (Is_Word(v) or Is_Tuple(v) or Is_Path(v)) {
         DECLARE_STABLE (steps);
         if (Get_Var_Push_Refinements_Throws(
             out,
@@ -266,7 +266,7 @@ bool Init_Frame_From_Feed_Throws(
     if (Init_Invokable_From_Feed_Throws(out, first, feed, error_on_deferred))
         return true;
 
-    if (IS_FRAME(out))
+    if (Is_Frame(out))
         return false;
 
     assert(Is_Quoted(out));
@@ -305,10 +305,10 @@ Bounce Reframer_Dispatcher(Level* const L)
     assert(Array_Len(details) == IDX_REFRAMER_MAX);
 
     REBVAL* shim = DETAILS_AT(details, IDX_REFRAMER_SHIM);
-    assert(IS_FRAME(shim));
+    assert(Is_Frame(shim));
 
     REBVAL* param_index = DETAILS_AT(details, IDX_REFRAMER_PARAM_INDEX);
-    assert(IS_INTEGER(param_index));
+    assert(Is_Integer(param_index));
 
     // First run ahead and make the frame we want from the feed.
     //

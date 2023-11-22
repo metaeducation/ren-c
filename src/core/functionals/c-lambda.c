@@ -78,7 +78,7 @@ Bounce Lambda_Dispatcher(Level* const L)
     assert(Array_Len(details) == IDX_LAMBDA_MAX);
 
     const REBVAL *block = DETAILS_AT(details, IDX_LAMBDA_BLOCK);
-    assert(IS_BLOCK(block));
+    assert(Is_Block(block));
 
     Set_Node_Managed_Bit(L->varlist);  // not manually tracked...
 
@@ -108,7 +108,7 @@ Bounce Lambda_Unoptimized_Dispatcher(Level* level_)
 {
     Details* details = Phase_Details(PHASE);
     Cell* body = Array_At(details, IDX_DETAILS_1);  // code to run
-    assert(IS_BLOCK(body) and IS_RELATIVE(body) and VAL_INDEX(body) == 0);
+    assert(Is_Block(body) and IS_RELATIVE(body) and VAL_INDEX(body) == 0);
 
     return DELEGATE_CORE(
         OUT,  // output
@@ -147,16 +147,16 @@ DECLARE_NATIVE(lambda)
     Specifier* item_specifier;
     const Cell* item_tail;
     const Cell* item;
-    if (IS_BLOCK(spec)) {
+    if (Is_Block(spec)) {
         item = VAL_ARRAY_AT(&item_tail, spec);
         item_specifier = VAL_SPECIFIER(spec);
     }
     else if (
-        IS_WORD(spec)
-        or IS_GET_WORD(spec)
-        or IS_META_WORD(spec)
+        Is_Word(spec)
+        or Is_Get_Word(spec)
+        or Is_Meta_Word(spec)
         or Is_Quoted(spec)
-        or (IS_PATH(spec) and IS_REFINEMENT(spec))
+        or (Is_Path(spec) and Is_Refinement(spec))
     ){
         item = spec;
         item_specifier = SPECIFIED;
@@ -186,33 +186,33 @@ DECLARE_NATIVE(lambda)
         //
         Flags param_flags = 0;
         enum Reb_Param_Class pclass;
-        if (IS_WORD(key_slot))
+        if (Is_Word(key_slot))
             pclass = PARAM_CLASS_NORMAL;
-        else if (IS_META_WORD(key_slot)) {
+        else if (Is_Meta_Word(key_slot)) {
             pclass = PARAM_CLASS_META;
             HEART_BYTE(key_slot) = REB_WORD;
         }
-        else if (IS_GET_WORD(key_slot)) {
+        else if (Is_Get_Word(key_slot)) {
             pclass = PARAM_CLASS_SOFT;
             HEART_BYTE(key_slot) = REB_WORD;
         }
         else if (Is_Quoted(key_slot)) {
             Unquotify(key_slot, 1);
-            if (not IS_WORD(key_slot))
+            if (not Is_Word(key_slot))
                 fail (item);
             pclass = PARAM_CLASS_HARD;
         }
-        else if (IS_PATH(key_slot) and IS_REFINEMENT(key_slot)) {
+        else if (Is_Path(key_slot) and Is_Refinement(key_slot)) {
             pclass = PARAM_CLASS_NORMAL;
             const Symbol* symbol = VAL_REFINEMENT_SYMBOL(key_slot);
             Init_Word(key_slot, symbol);
             param_flags |= PARAM_FLAG_REFINEMENT;
         }
-        else if (IS_SET_WORD(item) and VAL_WORD_ID(item) == SYM_RETURN) {
+        else if (Is_Set_Word(item) and VAL_WORD_ID(item) == SYM_RETURN) {
             fail ("LAMBDA (->) does not offer RETURN facilities, use FUNCTION");
         }
         else {
-            if (not IS_BLOCK(spec))
+            if (not Is_Block(spec))
                 fail ("Invalid LAMBDA specification");
 
             optimizable = false;

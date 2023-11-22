@@ -537,7 +537,7 @@ DECLARE_NATIVE(inflate)
 
     const Byte* data;
     Size size;
-    if (IS_BINARY(ARG(data))) {
+    if (Is_Binary(ARG(data))) {
         size = Part_Len_May_Modify_Index(ARG(data), ARG(part));
         data = VAL_BINARY_AT(ARG(data));  // after (in case index modified)
     }

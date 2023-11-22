@@ -42,7 +42,6 @@
 
 #include "uv.h"  // includes windows.h
 #ifdef TO_WINDOWS
-    #undef IS_ERROR  // windows.h defines, contentious with IS_ERROR in Ren-C
     #undef OUT  // %minwindef.h defines this, we have a better use for it
     #undef VOID  // %winnt.h defines this, we have a better use for it
 #endif
@@ -179,7 +178,7 @@ REBVAL *Lookup_Socket_Synchronously(
 ){
     SOCKREQ *sock = Sock_Of_Port(port);
 
-    assert(IS_TEXT(hostname));
+    assert(Is_Text(hostname));
     const char *hostname_utf8 = cs_cast(VAL_UTF8_AT(hostname));
     char *port_number_utf8 = rebSpell(
         Canon(FORM), rebI(sock->remote_port_number)
@@ -313,7 +312,7 @@ REBVAL *Request_Connect_Socket(const REBVAL *port)
         uv_run(uv_default_loop(), UV_RUN_ONCE);
     } while (rebreq->result == nullptr);
 
-    if (not IS_BLANK(rebreq->result))
+    if (not Is_Blank(rebreq->result))
         fail (rebreq->result);
     rebRelease(rebreq->result);
 
@@ -680,11 +679,11 @@ static Bounce Transport_Actor(
     // characters, a likely oversight from the addition of unicode).
     //
     REBVAL *port_data = CTX_VAR(ctx, STD_PORT_DATA);
-    assert(IS_BINARY(port_data) or Is_Nulled(port_data));
+    assert(Is_Binary(port_data) or Is_Nulled(port_data));
 
     SOCKREQ *sock;
     REBVAL *state = CTX_VAR(ctx, STD_PORT_STATE);
-    if (IS_HANDLE(state)) {
+    if (Is_Handle(state)) {
         sock = Sock_Of_Port(port);
         assert(sock->transport == transport);
     }
@@ -741,7 +740,7 @@ static Bounce Transport_Actor(
             REBVAL *local_id = Obj_Value(spec, STD_PORT_SPEC_NET_LOCAL_ID);
             if (Is_Nulled(local_id))
                 sock->local_port_number = 0;  // let the system pick
-            else if (IS_INTEGER(local_id))
+            else if (Is_Integer(local_id))
                 sock->local_port_number = VAL_INT32(local_id);
             else
                 fail ("local-id field of PORT! spec must be NULL or INTEGER!");
@@ -752,10 +751,10 @@ static Bounce Transport_Actor(
             // of socket to create (e.g. IPv4 vs IPv6, for instance).
 
             bool listen;
-            if (IS_TEXT(arg)) {
+            if (Is_Text(arg)) {
                 listen = false;
                 sock->remote_port_number =
-                    IS_INTEGER(port_id) ? VAL_INT32(port_id) : 80;
+                    Is_Integer(port_id) ? VAL_INT32(port_id) : 80;
 
                 // Note: sets remote_ip field
                 //
@@ -763,17 +762,17 @@ static Bounce Transport_Actor(
                 if (lookup_error)
                     fail (lookup_error);
             }
-            else if (IS_TUPLE(arg)) {  // Host IP specified:
+            else if (Is_Tuple(arg)) {  // Host IP specified:
                 listen = false;
                 sock->remote_port_number =
-                    IS_INTEGER(port_id) ? VAL_INT32(port_id) : 80;
+                    Is_Integer(port_id) ? VAL_INT32(port_id) : 80;
 
                 Get_Tuple_Bytes(&sock->remote_ip, arg, 4);
             }
             else if (Is_Nulled(arg)) {  // No host, must be a LISTEN socket:
                 listen = true;
                 sock->local_port_number =
-                    IS_INTEGER(port_id) ? VAL_INT32(port_id) : 8000;
+                    Is_Integer(port_id) ? VAL_INT32(port_id) : 8000;
             }
             else
                 fail (Error_On_Port(SYM_INVALID_SPEC, port, -10));
@@ -811,7 +810,7 @@ static Bounce Transport_Actor(
           case SYM_LENGTH: {
             return Init_Integer(
                 OUT,
-                IS_BINARY(port_data) ? VAL_LEN_HEAD(port_data) : 0
+                Is_Binary(port_data) ? VAL_LEN_HEAD(port_data) : 0
             ); }
 
           case SYM_OPEN_Q:
@@ -849,7 +848,7 @@ static Bounce Transport_Actor(
         rebreq->result = nullptr;
 
         if (REF(part)) {
-            if (not IS_INTEGER(ARG(part)))
+            if (not Is_Integer(ARG(part)))
                 fail (ARG(part));
 
             rebreq->length = VAL_INT32(ARG(part));
@@ -876,7 +875,7 @@ static Bounce Transport_Actor(
             uv_run(uv_default_loop(), UV_RUN_ONCE);
         } while (rebreq->result == nullptr);
 
-        if (not IS_BLANK(rebreq->result))
+        if (not Is_Blank(rebreq->result))
             return RAISE(rebreq->result);  // e.g. "broken pipe" ?
         rebRelease(rebreq->result);
 
@@ -945,7 +944,7 @@ static Bounce Transport_Actor(
             uv_run(uv_default_loop(), UV_RUN_ONCE);
         } while (rebreq->result == nullptr);
 
-        if (not IS_BLANK(rebreq->result))
+        if (not Is_Blank(rebreq->result))
             return RAISE(rebreq->result);  // e.g. "broken pipe" ?
         rebRelease(rebreq->result);
 
@@ -1184,7 +1183,7 @@ DECLARE_NATIVE(wait_p)  // See wrapping function WAIT in usermode code
     REBVAL *ports = nullptr;
 
     const Cell* val;
-    if (not IS_BLOCK(ARG(value)))
+    if (not Is_Block(ARG(value)))
         val = ARG(value);
     else {
         ports = ARG(value);
@@ -1193,10 +1192,10 @@ DECLARE_NATIVE(wait_p)  // See wrapping function WAIT in usermode code
         const Cell* tail;
         val = VAL_ARRAY_AT(&tail, ports);
         for (; val != tail; ++val) {  // find timeout
-            if (IS_PORT(val))
+            if (Is_Port(val))
                 ++num_pending;
 
-            if (IS_INTEGER(val) or IS_DECIMAL(val) or IS_TIME(val))
+            if (Is_Integer(val) or Is_Decimal(val) or Is_Time(val))
                 break;
         }
         if (val == tail) {

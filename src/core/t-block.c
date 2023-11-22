@@ -110,13 +110,13 @@ Bounce MAKE_Array(
     if (parent)
         return RAISE(Error_Bad_Make_Parent(kind, unwrap(parent)));
 
-    if (IS_INTEGER(arg) or IS_DECIMAL(arg)) {
+    if (Is_Integer(arg) or Is_Decimal(arg)) {
         //
         // `make block! 10` => creates array with certain initial capacity
         //
         return Init_Array_Cell(OUT, kind, Make_Array(Int32s(arg, 0)));
     }
-    else if (IS_TEXT(arg)) {
+    else if (Is_Text(arg)) {
         //
         // `make block! "a <b> #c"` => `[a <b> #c]`, scans as code (unbound)
         //
@@ -132,7 +132,7 @@ Bounce MAKE_Array(
         );
         return OUT;
     }
-    else if (ANY_ARRAY(arg)) {
+    else if (Any_Array(arg)) {
         //
         // !!! Ren-C unified MAKE and construction syntax, see #2263.  This is
         // now a questionable idea, as MAKE and TO have their roles defined
@@ -166,7 +166,7 @@ Bounce MAKE_Array(
         REBLEN len;
         const Cell* at = VAL_ARRAY_LEN_AT(&len, arg);
 
-        if (len != 2 or not ANY_ARRAY(at) or not IS_INTEGER(at + 1))
+        if (len != 2 or not Any_Array(at) or not Is_Integer(at + 1))
             goto bad_make;
 
         const Cell* any_array = at;
@@ -191,7 +191,7 @@ Bounce MAKE_Array(
             derived
         );
     }
-    else if (ANY_ARRAY(arg)) {
+    else if (Any_Array(arg)) {
         //
         // `to group! [1 2 3]` etc. -- copy the array data at the index
         // position and change the type.  (Note: MAKE does not copy the
@@ -205,7 +205,7 @@ Bounce MAKE_Array(
             Copy_Values_Len_Shallow(at, VAL_SPECIFIER(arg), len)
         );
     }
-    else if (IS_TEXT(arg)) {
+    else if (Is_Text(arg)) {
         //
         // `to block! "some string"` historically scans the source, so you
         // get an unbound code array.
@@ -220,7 +220,7 @@ Bounce MAKE_Array(
             Scan_UTF8_Managed(file, utf8, utf8_size, context)
         );
     }
-    else if (IS_BINARY(arg)) {
+    else if (Is_Binary(arg)) {
         //
         // `to block! #{00BDAE....}` assumes the binary data is UTF8, and
         // goes directly to the scanner to make an unbound code array.
@@ -236,10 +236,10 @@ Bounce MAKE_Array(
             Scan_UTF8_Managed(file, at, size, context)
         );
     }
-    else if (IS_MAP(arg)) {
+    else if (Is_Map(arg)) {
         return Init_Array_Cell(OUT, kind, Map_To_Array(VAL_MAP(arg), 0));
     }
-    else if (IS_FRAME(arg)) {
+    else if (Is_Frame(arg)) {
         //
         // !!! Experimental behavior; if action can run as arity-0, then
         // invoke it so long as it doesn't return null, collecting values.
@@ -254,10 +254,10 @@ Bounce MAKE_Array(
         }
         return Init_Array_Cell(OUT, kind, Pop_Stack_Values(base));
     }
-    else if (ANY_CONTEXT(arg)) {
+    else if (Any_Context(arg)) {
         return Init_Array_Cell(OUT, kind, Context_To_Array(arg, 3));
     }
-    else if (IS_VARARGS(arg)) {
+    else if (Is_Varargs(arg)) {
         //
         // Converting a VARARGS! to an ANY-ARRAY! involves spooling those
         // varargs to the end and making an array out of that.  It's not known
@@ -328,7 +328,7 @@ Bounce MAKE_Array(
 //  TO_Array: C
 //
 Bounce TO_Array(Level* level_, enum Reb_Kind kind, const REBVAL *arg) {
-    if (ANY_SEQUENCE(arg)) {
+    if (Any_Sequence(arg)) {
         StackIndex base = TOP_INDEX;
         REBLEN len = VAL_SEQUENCE_LEN(arg);
         REBLEN i;
@@ -342,7 +342,7 @@ Bounce TO_Array(Level* level_, enum Reb_Kind kind, const REBVAL *arg) {
         }
         return Init_Array_Cell(OUT, kind, Pop_Stack_Values(base));
     }
-    else if (ANY_ARRAY(arg)) {
+    else if (Any_Array(arg)) {
         REBLEN len;
         const Cell* at = VAL_ARRAY_LEN_AT(&len, arg);
         return Init_Array_Cell(
@@ -454,7 +454,7 @@ REBINT Find_In_Array(
     if (Is_Isotope(pattern))
         fail ("Only Isotopes Supported by FIND are MATCHES and SPREAD");
 
-    if (ANY_TYPE_VALUE(pattern) and not (flags & AM_FIND_CASE))
+    if (Any_Type_Value(pattern) and not (flags & AM_FIND_CASE))
         fail (
             "FIND without /CASE temporarily not taking TYPE-XXX! use MATCHES"
             " see https://forum.rebol.info/t/1881"
@@ -469,11 +469,11 @@ REBINT Find_In_Array(
 
     // Optimized find word in block
 
-    if (ANY_WORD(pattern)) {
+    if (Any_Word(pattern)) {
         for (; index >= start and index < end; index += skip) {
             const Cell* item = Array_At(array, index);
             const Symbol* pattern_symbol = VAL_WORD_SYMBOL(pattern);
-            if (ANY_WORD(item)) {
+            if (Any_Word(item)) {
                 if (flags & AM_FIND_CASE) { // Must be same type and spelling
                     if (
                         VAL_WORD_SYMBOL(item) == pattern_symbol
@@ -564,17 +564,17 @@ static int Compare_Val_Custom(void *arg, const void *v1, const void *v2)
 
     REBINT tristate = -1;
 
-    if (IS_LOGIC(result)) {
+    if (Is_Logic(result)) {
         if (VAL_LOGIC(result))
             tristate = 1;
     }
-    else if (IS_INTEGER(result)) {
+    else if (Is_Integer(result)) {
         if (VAL_INT64(result) > 0)
             tristate = 1;
         else if (VAL_INT64(result) == 0)
             tristate = 0;
     }
-    else if (IS_DECIMAL(result)) {
+    else if (Is_Decimal(result)) {
         if (VAL_DECIMAL(result) > 0)
             tristate = 1;
         else if (VAL_DECIMAL(result) == 0)
@@ -626,7 +626,7 @@ static REBINT Try_Get_Array_Index_From_Picker(
 ){
     REBINT n;
 
-    if (IS_INTEGER(picker) or IS_DECIMAL(picker)) { // #2312
+    if (Is_Integer(picker) or Is_Decimal(picker)) { // #2312
         n = Int32(picker);
         if (n == 0)
             return -1;  // Rebol2/Red convention: 0 is not a pick
@@ -634,7 +634,7 @@ static REBINT Try_Get_Array_Index_From_Picker(
             ++n; // Rebol2/Red convention: `pick tail [a b c] -1` is `c`
         n += VAL_INDEX(v) - 1;
     }
-    else if (IS_WORD(picker)) {
+    else if (Is_Word(picker)) {
         //
         // Linear search to case-insensitive find ANY-WORD! matching the canon
         // and return the item after it.  Default to out of range.
@@ -646,13 +646,13 @@ static REBINT Try_Get_Array_Index_From_Picker(
         const Cell* item = VAL_ARRAY_AT(&tail, v);
         REBLEN index = VAL_INDEX(v);
         for (; item != tail; ++item, ++index) {
-            if (ANY_WORD(item) and Are_Synonyms(symbol, VAL_WORD_SYMBOL(item))) {
+            if (Any_Word(item) and Are_Synonyms(symbol, VAL_WORD_SYMBOL(item))) {
                 n = index + 1;
                 break;
             }
         }
     }
-    else if (IS_LOGIC(picker)) {
+    else if (Is_Logic(picker)) {
         //
         // !!! PICK in R3-Alpha historically would use a logic TRUE to get
         // the first element in an array, and a logic FALSE to get the second.
@@ -1101,7 +1101,7 @@ REBTYPE(Array)
 
       case SYM_SWAP: {
         REBVAL *arg = D_ARG(2);
-        if (not ANY_ARRAY(arg))
+        if (not Any_Array(arg))
             fail (arg);
 
         REBLEN index = VAL_INDEX(array);
@@ -1213,11 +1213,11 @@ REBTYPE(Array)
 
         REBVAL *cmp = ARG(compare);  // null if no /COMPARE
         Deactivate_If_Activation(cmp);
-        if (IS_FRAME(cmp)) {
+        if (Is_Frame(cmp)) {
             flags.comparator = cmp;
             flags.offset = 0;
         }
-        else if (IS_INTEGER(cmp)) {
+        else if (Is_Integer(cmp)) {
             flags.comparator = nullptr;
             flags.offset = Int32(cmp) - 1;
         }
@@ -1304,7 +1304,7 @@ REBTYPE(Array)
         // what value points to.
         //
         const REBVAL *made = rebValue("make port! @", D_ARG(1));
-        assert(IS_PORT(made));
+        assert(Is_Port(made));
         Copy_Cell(D_ARG(1), made);
         rebRelease(made);
         return BOUNCE_CONTINUE; }  // should dispatch to the PORT!
@@ -1332,7 +1332,7 @@ DECLARE_NATIVE(blockify)
     INCLUDE_PARAMS_OF_BLOCKIFY;
 
     REBVAL *v = ARG(value);
-    if (IS_BLOCK(v))
+    if (Is_Block(v))
         return COPY(v);
 
     Array* a = Make_Array_Core(
@@ -1365,7 +1365,7 @@ DECLARE_NATIVE(groupify)
     INCLUDE_PARAMS_OF_GROUPIFY;
 
     REBVAL *v = ARG(value);
-    if (IS_GROUP(v))
+    if (Is_Group(v))
         return COPY(v);
 
     Array* a = Make_Array_Core(
@@ -1498,7 +1498,7 @@ DECLARE_NATIVE(glom)
         return Init_Block(OUT, a);
     }
 
-    assert(IS_BLOCK(accumulator));
+    assert(Is_Block(accumulator));
     Array* a = VAL_ARRAY_ENSURE_MUTABLE(accumulator);
 
     if (not splice) {

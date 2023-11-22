@@ -83,7 +83,7 @@ DECLARE_NATIVE(delimit)
     REBVAL *delimiter = ARG(delimiter);
     REBVAL *line = ARG(line);
 
-    if (IS_TEXT(line) or IS_ISSUE(line)) {  // can shortcut, no evals needed
+    if (Is_Text(line) or Is_Issue(line)) {  // can shortcut, no evals needed
         //
         // Note: It's hard to unify this mold with code below that uses a level
         // due to the asserts on states balancing.  Easiest to repeat a small
@@ -108,10 +108,10 @@ DECLARE_NATIVE(delimit)
     }
 
     Flags flags = LEVEL_MASK_NONE;
-    if (IS_THE_BLOCK(ARG(line)))
+    if (Is_The_Block(ARG(line)))
         flags |= EVAL_EXECUTOR_FLAG_NO_EVALUATIONS;
     else
-        assert(IS_BLOCK(line));
+        assert(Is_Block(line));
 
     Level* L = Make_Level_At(line, flags);
     Push_Level(OUT, L);
@@ -149,16 +149,16 @@ DECLARE_NATIVE(delimit)
         if (Is_Isotope(OUT))
             return RAISE(Error_Bad_Isotope(OUT));
 
-        if (ANY_ARRAY(OUT))  // guessing a behavior is bad [2]
+        if (Any_Array(OUT))  // guessing a behavior is bad [2]
             fail ("Desired array rendering in DELIMIT not known");
 
         nothing = false;
 
-        if (IS_BLANK(OUT)) {  // BLANK! acts as space [3]
+        if (Is_Blank(OUT)) {  // BLANK! acts as space [3]
             Append_Codepoint(mo->series, ' ');
             pending = false;
         }
-        else if (IS_ISSUE(OUT)) {  // do not delimit (unified w/char) [4]
+        else if (Is_Issue(OUT)) {  // do not delimit (unified w/char) [4]
             Form_Value(mo, OUT);
             pending = false;
         }
@@ -933,13 +933,13 @@ DECLARE_NATIVE(to_hex)
     DECLARE_MOLD (mo);
     Push_Mold(mo);
 
-    if (IS_INTEGER(arg)) {
+    if (Is_Integer(arg)) {
         if (len == cast(REBLEN, UNLIMITED) || len > MAX_HEX_LEN)
             len = MAX_HEX_LEN;
 
         Form_Hex_Pad(mo, VAL_INT64(arg), len);
     }
-    else if (IS_TUPLE(arg)) {
+    else if (Is_Tuple(arg)) {
         REBLEN n;
         if (
             len == cast(REBLEN, UNLIMITED)

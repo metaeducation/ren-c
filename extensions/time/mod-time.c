@@ -58,7 +58,7 @@ DECLARE_NATIVE(now)
     // However OS-level date and time is plugged into the system, it needs to
     // have enough granularity to give back date, time, and time zone.
     //
-    assert(IS_DATE(timestamp));
+    assert(Is_Date(timestamp));
     assert(Does_Date_Have_Time(timestamp));
     assert(Does_Date_Have_Zone(timestamp));
 

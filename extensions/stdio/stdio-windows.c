@@ -26,7 +26,6 @@
 
 #define WIN32_LEAN_AND_MEAN  // trim down the Win32 headers
 #include <windows.h>
-#undef IS_ERROR
 #undef OUT  // %minwindef.h defines this, we have a better use for it
 #undef VOID  // %winnt.h defines this, we have a better use for it
 
@@ -222,7 +221,7 @@ bool Read_Stdin_Byte_Interrupted(bool *eof, Byte* out) {
 //
 void Write_IO(const REBVAL *data, REBLEN len)
 {
-    assert(IS_BINARY(data) or IS_TEXT(data) or IS_ISSUE(data));
+    assert(Is_Binary(data) or Is_Text(data) or Is_Issue(data));
 
     if (Stdout_Handle == nullptr)
         return;
@@ -233,7 +232,7 @@ void Write_IO(const REBVAL *data, REBLEN len)
             assert(len == 1);
             Term_Insert(Term_IO, data);
         }
-        else if (IS_TEXT(data)) {
+        else if (Is_Text(data)) {
             //
             // !!! Having to subset the string is wasteful, so Term_Insert()
             // should take a length -or- series slicing needs to be solved.
@@ -333,7 +332,7 @@ void Write_IO(const REBVAL *data, REBLEN len)
 
         const Byte* bp;
         Size size;
-        if (IS_BINARY(data)) {
+        if (Is_Binary(data)) {
             bp = VAL_DATA_AT(data);
             size = len;
         }

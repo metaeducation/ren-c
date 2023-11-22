@@ -357,7 +357,7 @@ static void Queue_Mark_Cell_Deep(const Cell* c)
     in_mark = true;
   #endif
 
-    if (IS_BINDABLE_KIND(heart)) {
+    if (Is_Bindable_Kind(heart)) {
         Series* binding = BINDING(c);
         if (binding != UNBOUND)
             if (NODE_BYTE(binding) & NODE_BYTEMASK_0x20_MANAGED)

@@ -66,7 +66,7 @@ bool Do_Breakpoint_Throws(
 
     REBVAL *inst = rebValue("debug-console");
 
-    if (IS_INTEGER(inst)) {
+    if (Is_Integer(inst)) {
         Init_Thrown_With_Label(TOP_LEVEL, inst, Lib(QUIT));
         rebRelease(inst);
         return true;
@@ -77,7 +77,7 @@ bool Do_Breakpoint_Throws(
     // it does not want to do so until it is at the point of resuming the
     // code that was executing when the breakpoint hit.
     //
-    if (IS_HANDLE(inst)) {
+    if (Is_Handle(inst)) {
         CFunction* cfunc = VAL_HANDLE_CFUNC(inst);
         rebRelease(inst);
         UNUSED(cfunc);
@@ -94,7 +94,7 @@ bool Do_Breakpoint_Throws(
     // the console's sandbox and return its result.  It's possible to use
     // quoting to return simple values, like ^('x)
 
-    assert(IS_META_GROUP(inst));
+    assert(Is_Meta_Group(inst));
 
     bool threw = Do_Any_Array_At_Throws(out, inst, SPECIFIED);
 
@@ -200,7 +200,7 @@ DECLARE_NATIVE(resume)
     if (Is_Nulled(expr))  // e.g. <end> (actuall null not legal)
         Init_Array_Cell(expr, REB_META_GROUP, EMPTY_ARRAY);
     else {
-        assert(IS_BLOCK(expr));
+        assert(Is_Block(expr));
         HEART_BYTE(expr) = REB_META_GROUP;
     }
 

@@ -60,13 +60,13 @@ Series* Make_Set_Operation_Series(
     bool cased,
     REBLEN skip
 ){
-    assert(ANY_SERIES(val1));
+    assert(Any_Series(val1));
 
     if (val2) {
-        assert(ANY_SERIES(val2));
+        assert(Any_Series(val2));
 
-        if (ANY_ARRAY(val1)) {
-            if (!ANY_ARRAY(val2))
+        if (Any_Array(val1)) {
+            if (!Any_Array(val2))
                 fail (Error_Unexpected_Type(VAL_TYPE(val1), VAL_TYPE(val2)));
 
             // As long as they're both arrays, we're willing to do:
@@ -76,20 +76,20 @@ Series* Make_Set_Operation_Series(
             //
             // The type of the result will match the first value.
         }
-        else if (ANY_STRING(val1)) {
+        else if (Any_String(val1)) {
 
             // We will similarly do any two ANY-STRING! types:
             //
             //      >> union <abc> "bde"
             //      <abcde>
 
-            if (not ANY_STRING((val2)))
+            if (not Any_String((val2)))
                 fail (Error_Unexpected_Type(VAL_TYPE(val1), VAL_TYPE(val2)));
         }
         else {
             // Binaries only operate with other binaries
-            assert(IS_BINARY(val1));
-            if (not IS_BINARY(val2))
+            assert(Is_Binary(val1));
+            if (not Is_Binary(val2))
                 fail (Error_Unexpected_Type(VAL_TYPE(val1), VAL_TYPE(val2)));
         }
     }
@@ -106,7 +106,7 @@ Series* Make_Set_Operation_Series(
     bool first_pass = true; // are we in the first pass over the series?
     Series* out_ser;
 
-    if (ANY_ARRAY(val1)) {
+    if (Any_Array(val1)) {
         Series* hser = 0;   // hash table for series
         Series* hret;       // hash table for return series
 
@@ -196,7 +196,7 @@ Series* Make_Set_Operation_Series(
         out_ser = Copy_Array_Shallow(x_cast(Array*, buffer), SPECIFIED);
         Free_Unmanaged_Series(x_cast(Array*, buffer));
     }
-    else if (ANY_STRING(val1)) {
+    else if (Any_String(val1)) {
         DECLARE_MOLD (mo);
 
         // ask mo->series to have at least `i` capacity beyond mo->base.size
@@ -273,7 +273,7 @@ Series* Make_Set_Operation_Series(
         out_ser = Pop_Molded_String(mo);
     }
     else {
-        assert(IS_BINARY(val1) and IS_BINARY(val2));
+        assert(Is_Binary(val1) and Is_Binary(val2));
 
         Binary* buf = BYTE_BUF;
         REBLEN buf_start_len = Binary_Len(buf);

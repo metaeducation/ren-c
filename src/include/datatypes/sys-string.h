@@ -373,10 +373,10 @@ INLINE void Free_Bookmarks_Maybe_Null(String* str) {
 
 
 INLINE const String* VAL_STRING(NoQuote(const Cell*) v) {
-    if (ANY_STRINGLIKE(v))
+    if (Any_Stringlike(v))
         return c_cast(String*, VAL_SERIES(v));
 
-    return VAL_WORD_SYMBOL(v);  // asserts ANY_WORD_KIND() for heart
+    return VAL_WORD_SYMBOL(v);  // asserts Any_Word_Kind() for heart
 }
 
 #define VAL_STRING_ENSURE_MUTABLE(v) \
@@ -445,7 +445,7 @@ INLINE Size VAL_SIZE_LIMIT_AT(
     NoQuote(const Cell*) v,
     REBINT limit  // UNLIMITED (e.g. a very large number) for no limit
 ){
-    assert(ANY_STRINGLIKE(v));
+    assert(Any_Stringlike(v));
 
     Utf8(const*) at = VAL_STRING_AT(v);  // !!! update cache if needed
     Utf8(const*) tail;
@@ -479,7 +479,7 @@ INLINE Size VAL_BYTEOFFSET_FOR_INDEX(
     NoQuote(const Cell*) v,
     REBLEN index
 ){
-    assert(ANY_STRING_KIND(Cell_Heart(v)));
+    assert(Any_String_Kind(Cell_Heart(v)));
 
     Utf8(const*) at;
 

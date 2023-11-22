@@ -99,7 +99,7 @@ Bounce Macro_Dispatcher(Level* const L)
 
     Details* details = Phase_Details(PHASE);
     Cell* body = Array_At(details, IDX_DETAILS_1);  // code to run
-    assert(IS_BLOCK(body) and IS_RELATIVE(body) and VAL_INDEX(body) == 0);
+    assert(Is_Block(body) and IS_RELATIVE(body) and VAL_INDEX(body) == 0);
 
     assert(ACT_HAS_RETURN(PHASE));
     assert(KEY_SYM(ACT_KEYS_HEAD(PHASE)) == SYM_RETURN);
@@ -124,7 +124,7 @@ Bounce Macro_Dispatcher(Level* const L)
     if (Do_Any_Array_At_Throws(SPARE, body, SPC(L->varlist))) {
         const REBVAL *label = VAL_THROWN_LABEL(L);
         if (
-            IS_FRAME(label)  // catch UNWIND here [2]
+            Is_Frame(label)  // catch UNWIND here [2]
             and VAL_ACTION(label) == VAL_ACTION(Lib(UNWIND))
             and g_ts.unwind_level == L
         ){
@@ -137,7 +137,7 @@ Bounce Macro_Dispatcher(Level* const L)
     if (Is_Void(SPARE))
         return Init_Nihil(OUT);
 
-    if (not IS_BLOCK(SPARE))
+    if (not Is_Block(SPARE))
         fail ("MACRO must return VOID or BLOCK! for the moment");
 
     Splice_Block_Into_Feed(L->feed, stable_SPARE);
@@ -195,7 +195,7 @@ DECLARE_NATIVE(inline)
     INCLUDE_PARAMS_OF_INLINE;
 
     REBVAL *splice = ARG(splice);
-    if (IS_BLANK(splice)) {
+    if (Is_Blank(splice)) {
         // do nothing, just return invisibly
     }
     else if (Is_Quoted(splice)) {
@@ -209,7 +209,7 @@ DECLARE_NATIVE(inline)
         Splice_Block_Into_Feed(level_->feed, ARG(splice));
     }
     else {
-        assert(IS_BLOCK(splice));
+        assert(Is_Block(splice));
         Splice_Block_Into_Feed(level_->feed, ARG(splice));
     }
 

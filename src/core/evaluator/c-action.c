@@ -292,7 +292,7 @@ Bounce Action_Executor(Level* L)
         if (not Is_Fresh_Or_None(ARG))
             goto continue_fulfilling;
 
-        assert(IS_PARAMETER(PARAM));
+        assert(Is_Parameter(PARAM));
 
   //=//// CHECK FOR ORDER OVERRIDE ////////////////////////////////////////=//
 
@@ -886,7 +886,7 @@ Bounce Action_Executor(Level* L)
         }
 
         if (GET_PARAM_FLAG(PARAM, VARIADIC)) {  // can't check now [3]
-            if (not IS_VARARGS(ARG))  // argument itself is always VARARGS!
+            if (not Is_Varargs(ARG))  // argument itself is always VARARGS!
                 fail (Error_Not_Varargs(L, KEY, PARAM, stable_ARG));
 
             INIT_VAL_VARARGS_PHASE(ARG, Level_Phase(L));
@@ -1118,13 +1118,13 @@ Bounce Action_Executor(Level* L)
   //    seems like make-work.
 
     const REBVAL *label = VAL_THROWN_LABEL(level_);
-    if (IS_FRAME(label)) {
+    if (Is_Frame(label)) {
         if (
             VAL_ACTION(label) == VAL_ACTION(Lib(REDO))  // REDO [1]
             and VAL_FRAME_BINDING(label) == cast(Context*, L->varlist)
         ){
             CATCH_THROWN(OUT, level_);
-            assert(IS_FRAME(OUT));
+            assert(Is_Frame(OUT));
 
             Action* redo_phase = VAL_FRAME_PHASE(OUT);  // earlier?  [2]
             KEY = ACT_KEYS(&KEY_TAIL, redo_phase);
@@ -1240,7 +1240,7 @@ void Push_Action(
     else {
         Value(*) arg = CTX_VARS_HEAD(ACT_EXEMPLAR(act));
         for (; prep < tail; ++prep, ++arg) {
-            if (IS_PARAMETER(arg))
+            if (Is_Parameter(arg))
                 USED(Erase_Cell(prep));
             else
                 Copy_Cell(Erase_Cell(prep), arg);

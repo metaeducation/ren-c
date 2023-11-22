@@ -89,9 +89,9 @@ Bounce Encloser_Dispatcher(Level* const L)
     assert(Array_Len(details) == IDX_ENCLOSER_MAX);
 
     REBVAL *inner = DETAILS_AT(details, IDX_ENCLOSER_INNER);
-    assert(IS_FRAME(inner));  // same args as f
+    assert(Is_Frame(inner));  // same args as f
     REBVAL *outer = DETAILS_AT(details, IDX_ENCLOSER_OUTER);
-    assert(IS_FRAME(outer));  // takes 1 arg (a FRAME!)
+    assert(Is_Frame(outer));  // takes 1 arg (a FRAME!)
 
     // We want to call OUTER with a FRAME! value that will dispatch to INNER
     // when (and if) it runs DO on it.  That frame is the one built for this

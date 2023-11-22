@@ -56,10 +56,10 @@ Bounce MAKE_Pair(
     if (parent)
         return RAISE(Error_Bad_Make_Parent(kind, unwrap(parent)));
 
-    if (IS_PAIR(arg))
+    if (Is_Pair(arg))
         return Copy_Cell(OUT, arg);
 
-    if (IS_TEXT(arg)) {
+    if (Is_Text(arg)) {
         //
         // -1234567890x-1234567890
         //
@@ -76,15 +76,15 @@ Bounce MAKE_Pair(
     const Cell* x;
     const Cell* y;
 
-    if (ANY_NUMBER(arg)) {
+    if (Any_Number(arg)) {
         x = arg;
         y = arg;
     }
-    else if (IS_BLOCK(arg)) {
+    else if (Is_Block(arg)) {
         const Cell* tail;
         const Cell* item = VAL_ARRAY_AT(&tail, arg);
 
-        if (ANY_NUMBER(item))
+        if (Any_Number(item))
             x = item;
         else
             goto bad_make;
@@ -93,7 +93,7 @@ Bounce MAKE_Pair(
         if (item == tail)
             goto bad_make;
 
-        if (ANY_NUMBER(item))
+        if (Any_Number(item))
             y = item;
         else
             goto bad_make;
@@ -170,7 +170,7 @@ REBINT Index_From_Picker_For_Pair(
     UNUSED(pair); // Might the picker be pair-sensitive?
 
     REBINT n;
-    if (IS_WORD(picker)) {
+    if (Is_Word(picker)) {
         if (VAL_WORD_ID(picker) == SYM_X)
             n = 1;
         else if (VAL_WORD_ID(picker) == SYM_Y)
@@ -178,7 +178,7 @@ REBINT Index_From_Picker_For_Pair(
         else
             fail (picker);
     }
-    else if (IS_INTEGER(picker)) {
+    else if (Is_Integer(picker)) {
         n = Int32(picker);
         if (n != 1 and n != 2)
             fail (picker);
@@ -241,7 +241,7 @@ REBTYPE(Pair)
 
         REBVAL *setval = ARG(value);
 
-        if (not IS_INTEGER(setval) and not IS_DECIMAL(setval))
+        if (not Is_Integer(setval) and not Is_Decimal(setval))
             fail (PARAM(value));
 
         REBVAL *which = (n == 1) ? VAL_PAIR_X(v) : VAL_PAIR_Y(v);
@@ -257,7 +257,7 @@ REBTYPE(Pair)
       case SYM_SUBTRACT:
       case SYM_DIVIDE:
       case SYM_MULTIPLY:
-        if (IS_PAIR(D_ARG(2))) {
+        if (Is_Pair(D_ARG(2))) {
             x2 = VAL_PAIR_X(D_ARG(2));
             y2 = VAL_PAIR_Y(D_ARG(2));
         }

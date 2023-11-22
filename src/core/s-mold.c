@@ -322,7 +322,7 @@ void Form_Array_At(
     for (n = 0; n < len;) {
         const Cell* item = Array_At(array, index + n);
         Option(Value(*)) wval = nullptr;
-        if (context and (IS_WORD(item) or IS_GET_WORD(item))) {
+        if (context and (Is_Word(item) or Is_Get_Word(item))) {
             wval = Select_Symbol_In_Context(
                 CTX_ARCHETYPE(unwrap(context)),
                 VAL_WORD_SYMBOL(item)

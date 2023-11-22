@@ -125,7 +125,7 @@ Bounce Func_Dispatcher(Level* const L)
 
     Details* details = Phase_Details(PHASE);
     Cell* body = Array_At(details, IDX_DETAILS_1);  // code to run
-    assert(IS_BLOCK(body) and IS_RELATIVE(body) and VAL_INDEX(body) == 0);
+    assert(Is_Block(body) and IS_RELATIVE(body) and VAL_INDEX(body) == 0);
 
     assert(ACT_HAS_RETURN(PHASE));  // all FUNC have RETURN
     assert(KEY_SYM(ACT_KEYS_HEAD(PHASE)) == SYM_RETURN);
@@ -230,7 +230,7 @@ Phase* Make_Interpreted_Action_May_Fail(
     Dispatcher* dispatcher,
     REBLEN details_capacity
 ){
-    assert(IS_BLOCK(spec) and IS_BLOCK(body));
+    assert(Is_Block(spec) and Is_Block(body));
     assert(details_capacity >= 1);  // relativized body put in details[0]
 
     Context* meta;
@@ -370,7 +370,7 @@ DECLARE_NATIVE(endable_q)
     if (not Did_Get_Binding_Of(SPARE, v))
         fail (PARAM(parameter));
 
-    if (not IS_FRAME(SPARE))
+    if (not Is_Frame(SPARE))
         fail ("ENDABLE? requires a WORD! bound into a FRAME! at present");
 
     Context* ctx = VAL_CONTEXT(SPARE);
@@ -405,7 +405,7 @@ DECLARE_NATIVE(skippable_q)
     if (not Did_Get_Binding_Of(SPARE, v))
         fail (PARAM(parameter));
 
-    if (not IS_FRAME(SPARE))
+    if (not Is_Frame(SPARE))
         fail ("SKIPPABLE? requires a WORD! bound into a FRAME! at present");
 
     Context* ctx = VAL_CONTEXT(SPARE);
@@ -436,10 +436,10 @@ Bounce Init_Thrown_Unwind_Value(
     DECLARE_STABLE (label);
     Copy_Cell(label, Lib(UNWIND));
 
-    if (IS_FRAME(seek) and Is_Frame_On_Stack(VAL_CONTEXT(seek))) {
+    if (Is_Frame(seek) and Is_Frame_On_Stack(VAL_CONTEXT(seek))) {
         g_ts.unwind_level = CTX_LEVEL_IF_ON_STACK(VAL_CONTEXT(seek));
     }
-    else if (IS_FRAME(seek)) {
+    else if (Is_Frame(seek)) {
         Level* L = target->prior;
         for (; true; L = L->prior) {
             if (L == BOTTOM_LEVEL)
@@ -458,7 +458,7 @@ Bounce Init_Thrown_Unwind_Value(
         }
     }
     else {
-        assert(IS_INTEGER(seek));
+        assert(Is_Integer(seek));
 
         REBLEN count = VAL_INT32(seek);
         if (count <= 0)
@@ -699,7 +699,7 @@ DECLARE_NATIVE(inherit_adjunct)
         ));
         if (not val1 or Is_Nulled(val1) or Is_None(val1))
             continue;  // nothing to inherit from
-        if (not ANY_CONTEXT(val1))
+        if (not Any_Context(val1))
             fail ("Expected context in original meta information");
 
         Context* ctx1 = VAL_CONTEXT(val1);
@@ -720,7 +720,7 @@ DECLARE_NATIVE(inherit_adjunct)
             );
             Init_Frame(val2, ctx2, ANONYMOUS);
         }
-        else if (ANY_CONTEXT(val2)) {  // already had context (e.g. augment)
+        else if (Any_Context(val2)) {  // already had context (e.g. augment)
             ctx2 = VAL_CONTEXT(val2);
         }
         else

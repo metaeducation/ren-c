@@ -204,7 +204,7 @@ null3-to-blank: func3 [x [<opt> any-value!]] [
 ; so one must use the more limited `switch kind of` pattern.
 ;
 of: enfix adapt :of [
-    if property = 'type [fail "Use KIND OF not kind of"]
+    if property = 'type [fail "Use KIND OF not type of"]
     if property = 'kind [property: 'type]
 ]
 

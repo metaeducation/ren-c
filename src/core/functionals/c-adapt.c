@@ -92,7 +92,7 @@ Bounce Adapter_Dispatcher(Level* const L)
 
     Cell* prelude = Array_At(details, IDX_ADAPTER_PRELUDE);  // code to run
     assert(
-        IS_BLOCK(prelude)
+        Is_Block(prelude)
         and IS_RELATIVE(prelude)
         and VAL_INDEX(prelude) == 0
     );

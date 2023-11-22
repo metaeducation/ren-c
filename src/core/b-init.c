@@ -235,7 +235,7 @@ static void Startup_Lib(void)
     assert(Is_Truthy(Lib(QUOTED_VOID)));
 
     Set_Cell_Flag(Init_Blank(force_Lib(BLANK)), PROTECTED);
-    assert(Is_Truthy(Lib(BLANK)) and IS_BLANK(Lib(BLANK)));
+    assert(Is_Truthy(Lib(BLANK)) and Is_Blank(Lib(BLANK)));
 
     Set_Cell_Flag(
         Init_Quasi_Null(force_Lib(QUASI_NULL)),

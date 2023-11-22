@@ -48,7 +48,7 @@
 #define Is_True(out)        Is_Word_Isotope_With_Id((out), SYM_TRUE)
 #define Is_False(out)       Is_Word_Isotope_With_Id((out), SYM_FALSE)
 
-INLINE bool IS_LOGIC(const Cell* v) {
+INLINE bool Is_Logic(const Cell* v) {
     ASSERT_CELL_READABLE_EVIL_MACRO(v);
 
     if (QUOTE_BYTE(v) != ISOTOPE_0)
@@ -112,7 +112,7 @@ INLINE bool Is_Truthy(const Cell* v) {
 INLINE bool Is_Conditional_True(const REBVAL *v) {
     if (Is_Falsey(v))
         return false;
-    if (IS_BLOCK(v))
+    if (Is_Block(v))
         if (Get_Cell_Flag(v, UNEVALUATED))
             fail (Error_Block_Conditional_Raw(v));  // !!! Unintended_Literal?
     return true;
@@ -144,7 +144,7 @@ INLINE bool Is_Heavy_False(Atom(const*) v) {
 INLINE Atom(*) Isotopify_If_Falsey(Atom(*) v) {
     if (Is_Nulled(v))
         Init_Heavy_Null(v);
-    else if (IS_LOGIC(v) and VAL_LOGIC(v) == false)
+    else if (Is_Logic(v) and VAL_LOGIC(v) == false)
         Init_Heavy_False(v);
     return v;
 }

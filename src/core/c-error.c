@@ -113,7 +113,7 @@ ATTRIBUTE_NO_RETURN void Fail_Core(const void *p)
             // the error as an error and not erroring on "some value"
             //
             assert(not IS_RELATIVE(v));
-            if (IS_ERROR(v)) {
+            if (Is_Error(v)) {
                 error = VAL_CONTEXT(v);
             }
             else {
@@ -277,7 +277,7 @@ const REBVAL *Find_Error_For_Sym(SymId id)
         for (; n != CTX_LEN(category) + 1; ++n) {
             if (Are_Synonyms(KEY_SYMBOL(CTX_KEY(category, n)), canon)) {
                 REBVAL *message = CTX_VAR(category, n);
-                assert(IS_BLOCK(message) or IS_TEXT(message));
+                assert(Is_Block(message) or Is_Text(message));
                 return message;
             }
         }
@@ -412,7 +412,7 @@ Bounce MAKE_Error(
     Context* e;
     ERROR_VARS *vars; // C struct mirroring fixed portion of error fields
 
-    if (IS_BLOCK(arg)) {
+    if (Is_Block(arg)) {
         // If a block, then effectively MAKE OBJECT! on it.  Afterward,
         // apply the same logic as if an OBJECT! had been passed in above.
 
@@ -451,7 +451,7 @@ Bounce MAKE_Error(
 
         vars = ERR_VARS(e);
     }
-    else if (IS_TEXT(arg)) {
+    else if (Is_Text(arg)) {
         //
         // String argument to MAKE ERROR! makes a custom error from user:
         //
@@ -483,7 +483,7 @@ Bounce MAKE_Error(
     // traffic cones to make it easy to pick and choose what parts to excise
     // or tighten in an error enhancement upgrade.
 
-    if (IS_WORD(&vars->type) and IS_WORD(&vars->id)) {
+    if (Is_Word(&vars->type) and Is_Word(&vars->id)) {
         // If there was no CODE: supplied but there was a TYPE: and ID: then
         // this may overlap a combination used by Rebol where we wish to
         // fill in the code.  (No fast lookup for this, must search.)
@@ -497,7 +497,7 @@ Bounce MAKE_Error(
         );
 
         if (category) {
-            assert(IS_OBJECT(unwrap(category)));
+            assert(Is_Object(unwrap(category)));
 
             // Find correct message for ID: (if any)
 
@@ -507,7 +507,7 @@ Bounce MAKE_Error(
             );
 
             if (message) {
-                assert(IS_TEXT(unwrap(message)) or IS_BLOCK(unwrap(message)));
+                assert(Is_Text(unwrap(message)) or Is_Block(unwrap(message)));
 
                 if (not Is_Nulled(&vars->message))
                     return RAISE(Error_Invalid_Error_Raw(arg));
@@ -545,11 +545,11 @@ Bounce MAKE_Error(
         // good for general purposes.
 
         if (not (
-            (IS_WORD(&vars->id) or Is_Nulled(&vars->id))
-            and (IS_WORD(&vars->type) or Is_Nulled(&vars->type))
+            (Is_Word(&vars->id) or Is_Nulled(&vars->id))
+            and (Is_Word(&vars->type) or Is_Nulled(&vars->type))
             and (
-                IS_BLOCK(&vars->message)
-                or IS_TEXT(&vars->message)
+                Is_Block(&vars->message)
+                or Is_Text(&vars->message)
                 or Is_Nulled(&vars->message)
             )
         )){
@@ -557,7 +557,7 @@ Bounce MAKE_Error(
         }
     }
 
-    assert(IS_ERROR(OUT));
+    assert(Is_Error(OUT));
     return OUT;
 }
 
@@ -632,18 +632,18 @@ Context* Make_Error_Managed_Core(
     assert(message);
 
     REBLEN expected_args = 0;
-    if (IS_BLOCK(message)) { // GET-WORD!s in template should match va_list
+    if (Is_Block(message)) { // GET-WORD!s in template should match va_list
         const Cell* tail;
         const Cell* temp = VAL_ARRAY_AT(&tail, message);
         for (; temp != tail; ++temp) {
-            if (IS_GET_WORD(temp))
+            if (Is_Get_Word(temp))
                 ++expected_args;
             else
-                assert(IS_TEXT(temp));
+                assert(Is_Text(temp));
         }
     }
     else // Just a string, no arguments expected.
-        assert(IS_TEXT(message));
+        assert(Is_Text(message));
 
     // !!! Should things like NEAR and WHERE be in the META and not in the
     // object for the ERROR! itself, so the error could have arguments with
@@ -660,12 +660,12 @@ Context* Make_Error_Managed_Core(
     // Arrays from errors.r look like `["The value" :arg1 "is not" :arg2]`
     // They can also be a single TEXT! (which will just bypass this loop).
     //
-    if (not IS_TEXT(message)) {
+    if (not Is_Text(message)) {
         const Cell* msg_tail;
         const Cell* msg_item = VAL_ARRAY_AT(&msg_tail, message);
 
         for (; msg_item != msg_tail; ++msg_item) {
-            if (not IS_GET_WORD(msg_item))
+            if (not Is_Get_Word(msg_item))
                 continue;
 
             const Symbol* symbol = VAL_WORD_SYMBOL(msg_item);
@@ -784,8 +784,8 @@ Context* Error_User(const char *utf8) {
 //
 Context* Error_Need_Non_End(const Cell* target) {
     assert(
-        IS_SET_WORD(target) or IS_SET_TUPLE(target) or IS_SET_GROUP(target)
-        or IS_SET_PATH(target)  // only needed in legacy Redbol
+        Is_Set_Word(target) or Is_Set_Tuple(target) or Is_Set_Group(target)
+        or Is_Set_Path(target)  // only needed in legacy Redbol
     );
     return Error_Need_Non_End_Raw(target);
 }
@@ -801,10 +801,10 @@ Context* Error_Bad_Word_Get(
     // SET calls this, and doesn't work on just SET-WORD! and SET-PATH!
     //
     assert(
-        ANY_WORD(target)
-        or ANY_SEQUENCE(target)
-        or ANY_BLOCK(target)
-        or ANY_GROUP(target)
+        Any_Word(target)
+        or Any_Sequence(target)
+        or Any_Block(target)
+        or Any_Group(target)
     );
     assert(Is_Isotope(isotope));
 
@@ -897,7 +897,7 @@ Context* Error_Not_Varargs(
     const REBVAL *arg
 ){
     assert(GET_PARAM_FLAG(param, VARIADIC));
-    assert(not IS_VARARGS(arg));
+    assert(not Is_Varargs(arg));
 
     // Since the "types accepted" are a lie (an [integer! <variadic>] takes
     // VARARGS! when fulfilled in a frame directly, not INTEGER!) then
@@ -921,7 +921,7 @@ Context* Error_Not_Varargs(
 //
 Context* Error_Invalid_Arg(Level* L, const Param* param)
 {
-    assert(IS_PARAMETER(param));
+    assert(Is_Parameter(param));
 
     const Param* headparam = ACT_PARAMS_HEAD(Level_Phase(L));
     assert(param >= headparam);
@@ -951,7 +951,7 @@ Context* Error_Invalid_Arg(Level* L, const Param* param)
 //
 Context* Error_Isotope_Arg(Level* L, const Param* param)
 {
-    assert(IS_PARAMETER(param));
+    assert(Is_Parameter(param));
 
     const Param* headparam = ACT_PARAMS_HEAD(Level_Phase(L));
     assert(param >= headparam);
@@ -1018,7 +1018,7 @@ Context* Error_No_Catch_For_Throw(Level* level_)
     DECLARE_LOCAL (arg);
     CATCH_THROWN(arg, level_);
 
-    if (IS_ERROR(label)) {  // what would have been fail()
+    if (Is_Error(label)) {  // what would have been fail()
         assert(Is_Nulled(arg));
         return VAL_CONTEXT(label);
     }
@@ -1167,7 +1167,7 @@ Context* Error_Phase_Arg_Type(
 
     Context* error = Error_Arg_Type(L->label, key, param, arg);
     ERROR_VARS* vars = ERR_VARS(error);
-    assert(IS_WORD(&vars->id));
+    assert(Is_Word(&vars->id));
     assert(VAL_WORD_ID(&vars->id) == SYM_EXPECT_ARG);
     Init_Word(&vars->id, Canon(PHASE_EXPECT_ARG));
     return error;
@@ -1275,7 +1275,7 @@ Context* Error_On_Port(SymId id, REBVAL *port, REBINT err_code)
     REBVAL *spec = CTX_VAR(ctx, STD_PORT_SPEC);
 
     REBVAL *val = CTX_VAR(VAL_CONTEXT(spec), STD_PORT_SPEC_HEAD_REF);
-    if (IS_BLANK(val))
+    if (Is_Blank(val))
         val = CTX_VAR(VAL_CONTEXT(spec), STD_PORT_SPEC_HEAD_TITLE);  // less
 
     DECLARE_LOCAL (err_code_value);
@@ -1454,7 +1454,7 @@ void MF_Error(REB_MOLD *mo, NoQuote(const Cell*) v, bool form)
     // Form: ** <type> Error:
     //
     Append_Ascii(mo->series, "** ");
-    if (IS_WORD(&vars->type)) {  // has a <type>
+    if (Is_Word(&vars->type)) {  // has a <type>
         Append_Spelling(mo->series, VAL_WORD_SYMBOL(&vars->type));
         Append_Codepoint(mo->series, ' ');
     }
@@ -1463,9 +1463,9 @@ void MF_Error(REB_MOLD *mo, NoQuote(const Cell*) v, bool form)
     Append_Ascii(mo->series, RM_ERROR_LABEL);  // "Error:"
 
     // Append: error message ARG1, ARG2, etc.
-    if (IS_BLOCK(&vars->message))
+    if (Is_Block(&vars->message))
         Form_Array_At(mo, VAL_ARRAY(&vars->message), 0, error);
-    else if (IS_TEXT(&vars->message))
+    else if (Is_Text(&vars->message))
         Form_Value(mo, &vars->message);
     else
         Append_Ascii(mo->series, RM_BAD_ERROR_FORMAT);
@@ -1474,7 +1474,7 @@ void MF_Error(REB_MOLD *mo, NoQuote(const Cell*) v, bool form)
     REBVAL *where = SPECIFIC(&vars->where);
     if (
         not Is_Nulled(where)
-        and not (IS_BLOCK(where) and VAL_LEN_AT(where) == 0)
+        and not (Is_Block(where) and VAL_LEN_AT(where) == 0)
     ){
         Append_Codepoint(mo->series, '\n');
         Append_Ascii(mo->series, RM_ERROR_WHERE);
@@ -1487,7 +1487,7 @@ void MF_Error(REB_MOLD *mo, NoQuote(const Cell*) v, bool form)
         Append_Codepoint(mo->series, '\n');
         Append_Ascii(mo->series, RM_ERROR_NEAR);
 
-        if (IS_TEXT(nearest)) {
+        if (Is_Text(nearest)) {
             //
             // !!! The scanner puts strings into the near information in order
             // to say where the file and line of the scan problem was.  This
@@ -1497,7 +1497,7 @@ void MF_Error(REB_MOLD *mo, NoQuote(const Cell*) v, bool form)
             //
             Append_String(mo->series, nearest);
         }
-        else if (ANY_ARRAY(nearest) or ANY_PATH(nearest))
+        else if (Any_Array(nearest) or Any_Path(nearest))
             Mold_Value_Limit(mo, nearest, 60);
         else
             Append_Ascii(mo->series, RM_BAD_ERROR_FORMAT);
@@ -1514,7 +1514,7 @@ void MF_Error(REB_MOLD *mo, NoQuote(const Cell*) v, bool form)
     if (not Is_Nulled(file)) {
         Append_Codepoint(mo->series, '\n');
         Append_Ascii(mo->series, RM_ERROR_FILE);
-        if (IS_FILE(file))
+        if (Is_File(file))
             Form_Value(mo, file);
         else
             Append_Ascii(mo->series, RM_BAD_ERROR_FORMAT);
@@ -1525,7 +1525,7 @@ void MF_Error(REB_MOLD *mo, NoQuote(const Cell*) v, bool form)
     if (not Is_Nulled(line)) {
         Append_Codepoint(mo->series, '\n');
         Append_Ascii(mo->series, RM_ERROR_LINE);
-        if (IS_INTEGER(line))
+        if (Is_Integer(line))
             Form_Value(mo, line);
         else
             Append_Ascii(mo->series, RM_BAD_ERROR_FORMAT);

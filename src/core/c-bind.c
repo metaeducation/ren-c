@@ -96,7 +96,7 @@ void Bind_Values_Inner_Loop(
           }
         }
         else if (flags & BIND_DEEP) {
-            if (ANY_ARRAYLIKE(v)) {
+            if (Any_Arraylike(v)) {
                 const Cell* sub_tail;
                 Cell* sub_at = VAL_ARRAY_AT_MUTABLE_HACK(
                     &sub_tail,
@@ -144,7 +144,7 @@ void Bind_Values_Core(
     // is done by poking the index into the stub of the series behind the
     // ANY-WORD!, so it must be cleaned up to not break future bindings.)
     //
-  if (not IS_MODULE(context)) {
+  if (not Is_Module(context)) {
     REBLEN index = 1;
     const Key* key_tail;
     const Key* key = CTX_KEYS(&key_tail, c);
@@ -163,7 +163,7 @@ void Bind_Values_Core(
         flags
     );
 
-  if (not IS_MODULE(context)) {  // Reset all the binder indices to zero
+  if (not Is_Module(context)) {  // Reset all the binder indices to zero
     const Key* key_tail;
     const Key* key = CTX_KEYS(&key_tail, c);
     Value(const*) var = CTX_VARS_HEAD(c);
@@ -191,12 +191,12 @@ void Unbind_Values_Core(
     Cell* v = head;
     for (; v != tail; ++v) {
         if (
-            ANY_WORDLIKE(v)
+            Any_Wordlike(v)
             and (not context or BINDING(v) == unwrap(context))
         ){
             Unbind_Any_Word(v);
         }
-        else if (ANY_ARRAYLIKE(v) and deep) {
+        else if (Any_Arraylike(v) and deep) {
             const Cell* sub_tail;
             Cell* sub_at = VAL_ARRAY_AT_MUTABLE_HACK(&sub_tail, v);
             Unbind_Values_Core(sub_at, sub_tail, context, true);
@@ -412,7 +412,7 @@ Option(Series*) Get_Word_Container(
             goto skip_miss_patch;
         }
 
-        if (IS_MODULE(Array_Single(specifier))) {
+        if (Is_Module(Array_Single(specifier))) {
             Context* mod = VAL_CONTEXT(Array_Single(specifier));
             REBVAL *var = MOD_VAR(mod, symbol, true);
             if (var) {
@@ -433,7 +433,7 @@ Option(Series*) Get_Word_Container(
         }
 
         if (
-            IS_SET_WORD(Array_Single(specifier))
+            Is_Set_Word(Array_Single(specifier))
             and REB_SET_WORD != Cell_Heart(any_word)
         ){
             goto skip_miss_patch;
@@ -773,7 +773,7 @@ DECLARE_NATIVE(let)
     // that it updates `At_Level(L)` itself to reflect the group product.
 
     if (
-        IS_GROUP(vars) or IS_SET_GROUP(vars)
+        Is_Group(vars) or Is_Set_Group(vars)
     ){
         if (Do_Any_Array_At_Throws(SPARE, vars, SPECIFIED))
             return THROWN;
@@ -784,13 +784,13 @@ DECLARE_NATIVE(let)
         switch (Cell_Heart(SPARE)) {  // QUASI! states mean isotopes ok
           case REB_WORD:
           case REB_BLOCK:
-            if (IS_SET_GROUP(vars))
+            if (Is_Set_Group(vars))
                 Setify(stable_SPARE);  // convert `(word):` to be SET-WORD!
             break;
 
           case REB_SET_WORD:
           case REB_SET_BLOCK:
-            if (IS_SET_GROUP(vars)) {
+            if (Is_Set_Group(vars)) {
                 // Allow `(set-word):` to ignore "redundant colon" [2]
             }
             break;
@@ -833,7 +833,7 @@ DECLARE_NATIVE(let)
         Trash_Pointer_If_Debug(vars);  // if in spare, we may have overwritten
     }
     else {
-        assert(IS_BLOCK(vars) or IS_SET_BLOCK(vars));
+        assert(Is_Block(vars) or Is_Set_Block(vars));
 
         const Cell* tail;
         const Cell* item = VAL_ARRAY_AT(&tail, vars);
@@ -854,7 +854,7 @@ DECLARE_NATIVE(let)
                 continue;  // do not make binding
             }
 
-            if (IS_GROUP(temp)) {  // evaluate non-QUOTED! groups in LET block
+            if (Is_Group(temp)) {  // evaluate non-QUOTED! groups in LET block
                 if (Do_Any_Array_At_Throws(OUT, temp, item_specifier))
                     return THROWN;
 
@@ -885,7 +885,7 @@ DECLARE_NATIVE(let)
         }
 
         REBVAL *where;
-        if (IS_SET_BLOCK(vars)) {
+        if (Is_Set_Block(vars)) {
             STATE = ST_LET_EVAL_STEP;
             where = stable_SPARE;
         }
@@ -924,11 +924,11 @@ DECLARE_NATIVE(let)
     Trash_Pointer_If_Debug(bindings);  // catch uses after this point in scope
 
     if (STATE != ST_LET_EVAL_STEP) {
-        assert(IS_WORD(OUT) or IS_BLOCK(OUT));  // should have written output
+        assert(Is_Word(OUT) or Is_Block(OUT));  // should have written output
         goto update_feed_binding;
     }
 
-    assert(Cell_Heart(SPARE) == REB_SET_WORD or IS_SET_BLOCK(SPARE));
+    assert(Cell_Heart(SPARE) == REB_SET_WORD or Is_Set_Block(SPARE));
 
     Flags flags =
         FLAG_STATE_BYTE(ST_EVALUATOR_REEVALUATING)
@@ -1079,7 +1079,7 @@ static void Clonify_And_Bind_Relative(
         Series* series;
         bool would_need_deep;
 
-        if (ANY_CONTEXT_KIND(heart)) {
+        if (Any_Context_Kind(heart)) {
             INIT_VAL_CONTEXT_VARLIST(
                 v,
                 CTX_VARLIST(Copy_Context_Shallow_Managed(VAL_CONTEXT(v)))
@@ -1088,7 +1088,7 @@ static void Clonify_And_Bind_Relative(
 
             would_need_deep = true;
         }
-        else if (ANY_ARRAYLIKE(v)) {
+        else if (Any_Arraylike(v)) {
             series = Copy_Array_At_Extra_Shallow(
                 VAL_ARRAY(v),
                 0, // !!! what if VAL_INDEX() is nonzero?
@@ -1103,12 +1103,12 @@ static void Clonify_And_Bind_Relative(
             // See notes in Clonify()...need to copy immutable paths so that
             // binding pointers can be changed in the "immutable" copy.
             //
-            if (ANY_SEQUENCE_KIND(heart))
+            if (Any_Sequence_Kind(heart))
                 Freeze_Array_Shallow(cast(Array*, series));
 
             would_need_deep = true;
         }
-        else if (ANY_SERIES_KIND(heart)) {
+        else if (Any_Series_Kind(heart)) {
             series = Copy_Series_Core(
                 VAL_SERIES(v),
                 NODE_FLAG_MANAGED
@@ -1146,7 +1146,7 @@ static void Clonify_And_Bind_Relative(
             v->header.bits |= (flags & ARRAY_FLAG_CONST_SHALLOW);
     }
 
-    if (ANY_WORDLIKE(v)) {
+    if (Any_Wordlike(v)) {
         REBINT n = Get_Binder_Index_Else_0(binder, VAL_WORD_SYMBOL(v));
         if (n != 0) {
             //
@@ -1157,7 +1157,7 @@ static void Clonify_And_Bind_Relative(
             INIT_VAL_WORD_INDEX(v, n);
         }
     }
-    else if (ANY_ARRAYLIKE(v)) {
+    else if (Any_Arraylike(v)) {
 
         // !!! Technically speaking it is not necessary for an array to
         // be marked relative if it doesn't contain any relative words
@@ -1304,12 +1304,12 @@ void Rebind_Values_Deep(
         }
         else if (Is_Isotope(v))
             NOOP;
-        else if (ANY_ARRAYLIKE(v)) {
+        else if (Any_Arraylike(v)) {
             const Cell* sub_tail;
             Cell* sub_at = VAL_ARRAY_AT_MUTABLE_HACK(&sub_tail, v);
             Rebind_Values_Deep(sub_at, sub_tail, from, to, binder);
         }
-        else if (ANY_WORDLIKE(v) and BINDING(v) == from) {
+        else if (Any_Wordlike(v) and BINDING(v) == from) {
             INIT_VAL_WORD_BINDING(v, to);
 
             if (binder) {
@@ -1363,14 +1363,14 @@ Context* Virtual_Bind_Deep_To_New_Context(
     // does not support groups and gives GROUP! by value.  In the stackless
     // build the preprocessing would most easily be done in usermode.
     //
-    if (IS_GROUP(spec)) {
+    if (Is_Group(spec)) {
         DECLARE_LOCAL (temp);
         if (Do_Any_Array_At_Throws(temp, spec, SPECIFIED))
             fail (Error_No_Catch_For_Throw(TOP_LEVEL));
         Move_Cell(spec, temp);
     }
 
-    REBLEN num_vars = IS_BLOCK(spec) ? VAL_LEN_AT(spec) : 1;
+    REBLEN num_vars = Is_Block(spec) ? VAL_LEN_AT(spec) : 1;
     if (num_vars == 0)
         fail (spec);  // !!! should fail() take unstable?
 
@@ -1379,7 +1379,7 @@ Context* Virtual_Bind_Deep_To_New_Context(
 
     Specifier* specifier;
     bool rebinding;
-    if (IS_BLOCK(spec)) {  // walk the block for errors BEFORE making binder
+    if (Is_Block(spec)) {  // walk the block for errors BEFORE making binder
         specifier = VAL_SPECIFIER(spec);
         item = VAL_ARRAY_AT(&tail, spec);
 
@@ -1387,10 +1387,10 @@ Context* Virtual_Bind_Deep_To_New_Context(
 
         rebinding = false;
         for (; check != tail; ++check) {
-            if (IS_BLANK(check)) {
+            if (Is_Blank(check)) {
                 // Will be transformed into dummy item, no rebinding needed
             }
-            else if (IS_WORD(check) or IS_META_WORD(check))
+            else if (Is_Word(check) or Is_Meta_Word(check))
                 rebinding = true;
             else if (not IS_QUOTED_WORD(check)) {
                 //
@@ -1407,7 +1407,7 @@ Context* Virtual_Bind_Deep_To_New_Context(
         item = spec;
         tail = spec;
         specifier = SPECIFIED;
-        rebinding = IS_WORD(item) or IS_META_WORD(item);
+        rebinding = Is_Word(item) or Is_Meta_Word(item);
     }
 
     // KeyLists are always managed, but varlist is unmanaged by default (so
@@ -1432,7 +1432,7 @@ Context* Virtual_Bind_Deep_To_New_Context(
     while (index <= num_vars) {
         const Symbol* symbol;
 
-        if (IS_BLANK(item)) {
+        if (Is_Blank(item)) {
             if (dummy_sym == SYM_DUMMY9)
                 fail ("Current limitation: only up to 9 BLANK! keys");
 
@@ -1446,7 +1446,7 @@ Context* Virtual_Bind_Deep_To_New_Context(
 
             goto add_binding_for_check;
         }
-        else if (IS_WORD(item) or IS_META_WORD(item)) {
+        else if (Is_Word(item) or Is_Meta_Word(item)) {
             symbol = VAL_WORD_SYMBOL(item);
             Value(*) var = Append_Context(c, symbol);
 
@@ -1648,12 +1648,12 @@ void Bind_Nonspecifically(Cell* head, const Cell* tail, Context* context)
 {
     Cell* v = head;
     for (; v != tail; ++v) {
-        if (ANY_ARRAYLIKE(v)) {
+        if (Any_Arraylike(v)) {
             const Cell* sub_tail;
             Cell* sub_head = VAL_ARRAY_AT_MUTABLE_HACK(&sub_tail, v);
             Bind_Nonspecifically(sub_head, sub_tail, context);
         }
-        else if (ANY_WORDLIKE(v)) {
+        else if (Any_Wordlike(v)) {
             //
             // Give context but no index; this is how we attach to modules.
             //
@@ -1677,7 +1677,7 @@ DECLARE_NATIVE(intern_p)
 {
     INCLUDE_PARAMS_OF_INTERN_P;
 
-    assert(IS_BLOCK(ARG(data)));
+    assert(Is_Block(ARG(data)));
 
     const Cell* tail;
     Cell* head = VAL_ARRAY_AT_MUTABLE_HACK(&tail, ARG(data));

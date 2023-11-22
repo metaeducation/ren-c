@@ -142,9 +142,9 @@ Bounce Call_Core(Level* level_) {
     // Make sure that if the output or error series are STRING! or BINARY!,
     // they are not read-only, before we try appending to them.
     //
-    if (IS_TEXT(ARG(output)) or IS_BINARY(ARG(output)))
+    if (Is_Text(ARG(output)) or Is_Binary(ARG(output)))
         Ensure_Mutable(ARG(output));
-    if (IS_TEXT(ARG(error)) or IS_BINARY(ARG(error)))
+    if (Is_Text(ARG(error)) or Is_Binary(ARG(error)))
         Ensure_Mutable(ARG(error));
 
     char *inbuf;
@@ -155,7 +155,7 @@ Bounce Call_Core(Level* level_) {
         inbuf = nullptr;
         inbuf_size = 0;
     }
-    else if (IS_LOGIC(ARG(input))) {
+    else if (Is_Logic(ARG(input))) {
         goto null_input_buffer;
     }
     else switch (VAL_TYPE(ARG(input))) {
@@ -185,9 +185,9 @@ Bounce Call_Core(Level* level_) {
     }
 
     bool flag_wait = REF(wait) or (
-        IS_TEXT(ARG(input)) or IS_BINARY(ARG(input))
-        or IS_TEXT(ARG(output)) or IS_BINARY(ARG(output))
-        or IS_TEXT(ARG(error)) or IS_BINARY(ARG(error))
+        Is_Text(ARG(input)) or Is_Binary(ARG(input))
+        or Is_Text(ARG(output)) or Is_Binary(ARG(output))
+        or Is_Text(ARG(error)) or Is_Binary(ARG(error))
     );  // I/O redirection implies /WAIT
 
     // We synthesize the argc and argv from the "command", and in the process
@@ -205,10 +205,10 @@ Bounce Call_Core(Level* level_) {
 
         char *shcmd;  // we'll be calling `$SHELL -c "your \"command\" here"`
 
-        if (IS_TEXT(command)) {
+        if (Is_Text(command)) {
             shcmd = rebSpell(command);  // already a string, just use it as is
         }
-        else if (IS_BLOCK(command)) {
+        else if (Is_Block(command)) {
             //
             // There is some nuance in the translation of a BLOCK! into a
             // string for the bash shell.  For example, if you write:
@@ -282,12 +282,12 @@ Bounce Call_Core(Level* level_) {
         // a single string.  (That code is reused in the shell case for POSIX
         // up above.)
         //
-        if (IS_TEXT(command)) {
+        if (Is_Text(command)) {
             REBVAL *parsed = rebValue("parse-command-to-argv*", command);
             Copy_Cell(command, parsed);
             rebRelease(parsed);
         }
-        else if (not IS_BLOCK(command))
+        else if (not Is_Block(command))
             fail (PARAM(command));
 
         const REBVAL *block = ARG(command);
@@ -298,7 +298,7 @@ Bounce Call_Core(Level* level_) {
         const Cell* param = VAL_ARRAY_ITEM_AT(block);
         int i;
         for (i = 0; i < argc; ++param, ++i) {
-            if (not IS_TEXT(param))  // usermode layer ensures FILE! converted
+            if (not Is_Text(param))  // usermode layer ensures FILE! converted
                 fail (PARAM(command));
             argv[i] = rebSpell(SPECIFIC(param));
         }
@@ -345,17 +345,17 @@ Bounce Call_Core(Level* level_) {
 
     pid_t forked_pid = -1;
 
-    if (IS_TEXT(ARG(input)) or IS_BINARY(ARG(input))) {
+    if (Is_Text(ARG(input)) or Is_Binary(ARG(input))) {
         if (Open_Pipe_Fails(stdin_pipe))
             goto stdin_pipe_err;
     }
 
-    if (IS_TEXT(ARG(output)) or IS_BINARY(ARG(output))) {
+    if (Is_Text(ARG(output)) or Is_Binary(ARG(output))) {
         if (Open_Pipe_Fails(stdout_pipe))
             goto stdout_pipe_err;
     }
 
-    if (IS_TEXT(ARG(error)) or IS_BINARY(ARG(error))) {
+    if (Is_Text(ARG(error)) or Is_Binary(ARG(error))) {
         if (Open_Pipe_Fails(stderr_pipe))
             goto stdout_pipe_err;
     }
@@ -383,13 +383,13 @@ Bounce Call_Core(Level* level_) {
           inherit_stdin_from_parent:
             NOOP;  // it's the default
         }
-        else if (IS_TEXT(ARG(input)) or IS_BINARY(ARG(input))) {
+        else if (Is_Text(ARG(input)) or Is_Binary(ARG(input))) {
             close(stdin_pipe[W]);
             if (dup2(stdin_pipe[R], STDIN_FILENO) < 0)
                 goto child_error;
             close(stdin_pipe[R]);
         }
-        else if (IS_FILE(ARG(input))) {
+        else if (Is_File(ARG(input))) {
             char *local_utf8 = rebSpell("file-to-local", ARG(input));
 
             int fd = open(local_utf8, O_RDONLY);
@@ -402,7 +402,7 @@ Bounce Call_Core(Level* level_) {
                 goto child_error;
             close(fd);
         }
-        else if (IS_LOGIC(ARG(input))) {
+        else if (Is_Logic(ARG(input))) {
             if (VAL_LOGIC(ARG(input)))
                 goto inherit_stdin_from_parent;
 
@@ -420,13 +420,13 @@ Bounce Call_Core(Level* level_) {
           inherit_stdout_from_parent:
             NOOP;  // it's the default
         }
-        else if (IS_TEXT(ARG(output)) or IS_BINARY(ARG(output))) {
+        else if (Is_Text(ARG(output)) or Is_Binary(ARG(output))) {
             close(stdout_pipe[R]);
             if (dup2(stdout_pipe[W], STDOUT_FILENO) < 0)
                 goto child_error;
             close(stdout_pipe[W]);
         }
-        else if (IS_FILE(ARG(output))) {
+        else if (Is_File(ARG(output))) {
             char *local_utf8 = rebSpell("file-to-local", ARG(output));
 
             int fd = open(local_utf8, O_CREAT | O_WRONLY, 0666);
@@ -439,7 +439,7 @@ Bounce Call_Core(Level* level_) {
                 goto child_error;
             close(fd);
         }
-        else if (IS_LOGIC(ARG(output))) {
+        else if (Is_Logic(ARG(output))) {
             if (VAL_LOGIC(ARG(output)))
                 goto inherit_stdout_from_parent;
 
@@ -455,13 +455,13 @@ Bounce Call_Core(Level* level_) {
           inherit_stderr_from_parent:
             NOOP;  // it's the default
         }
-        else if (IS_TEXT(ARG(error)) or IS_BINARY(ARG(error))) {
+        else if (Is_Text(ARG(error)) or Is_Binary(ARG(error))) {
             close(stderr_pipe[R]);
             if (dup2(stderr_pipe[W], STDERR_FILENO) < 0)
                 goto child_error;
             close(stderr_pipe[W]);
         }
-        else if (IS_FILE(ARG(error))) {
+        else if (Is_File(ARG(error))) {
             char *local_utf8 = rebSpell("file-to-local", ARG(error));
 
             int fd = open(local_utf8, O_CREAT | O_WRONLY, 0666);
@@ -474,7 +474,7 @@ Bounce Call_Core(Level* level_) {
                 goto child_error;
             close(fd);
         }
-        else if (IS_LOGIC(ARG(error))) {
+        else if (Is_Logic(ARG(error))) {
             if (VAL_LOGIC(ARG(error)))
                 goto inherit_stderr_from_parent;
 
@@ -920,12 +920,12 @@ Bounce Call_Core(Level* level_) {
 
     rebFree(argv);
 
-    if (IS_TEXT(ARG(output))) {
+    if (Is_Text(ARG(output))) {
         REBVAL *output_val = rebRepossess(outbuf, outbuf_used);
         rebElide("insert", ARG(output), output_val);
         rebRelease(output_val);
     }
-    else if (IS_BINARY(ARG(output))) {  // same (but could be different...)
+    else if (Is_Binary(ARG(output))) {  // same (but could be different...)
         REBVAL *output_val = rebRepossess(outbuf, outbuf_used);
         rebElide("insert", ARG(output), output_val);
         rebRelease(output_val);
@@ -933,12 +933,12 @@ Bounce Call_Core(Level* level_) {
     else
         assert(outbuf == nullptr);
 
-    if (IS_TEXT(ARG(error))) {
+    if (Is_Text(ARG(error))) {
         REBVAL *error_val = rebRepossess(errbuf, errbuf_used);
         rebElide("insert", ARG(error), error_val);
         rebRelease(error_val);
     }
-    else if (IS_BINARY(ARG(error))) {  // same (but could be different...)
+    else if (Is_Binary(ARG(error))) {  // same (but could be different...)
         REBVAL *error_val = rebRepossess(errbuf, errbuf_used);
         rebElide("insert", ARG(error), error_val);
         rebRelease(error_val);

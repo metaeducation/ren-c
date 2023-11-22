@@ -51,27 +51,27 @@
 // cell payload and extra actually are *for*.  QUOTED! and QUASI! indicators
 // in the quote byte do not affect it.
 
-#define IS_BINDABLE_KIND(k) \
+#define Is_Bindable_Kind(k) \
     ((k) >= REB_OBJECT)
 
 #define Is_Bindable(v) \
-    IS_BINDABLE_KIND(HEART_BYTE(v))  // READABLE() checked elsewhere
+    Is_Bindable_Kind(HEART_BYTE(v))  // READABLE() checked elsewhere
 
 
 //=//// INERTNESS ////////////////////////////////////////////////////////=//
 //
 // All the inert types are grouped together to make this test fast.
 
-INLINE bool ANY_INERT_KIND(Byte k) {
+INLINE bool Any_Inert_Kind(Byte k) {
     assert(k != REB_VOID);  // don't call on void (0 in enum, breaks pattern)
     return k <= REB_BLOCK and k != REB_FRAME;  // hack for frame
 }
 
-#define ANY_INERT(v) \
-    ANY_INERT_KIND(VAL_TYPE(v))
+#define Any_Inert(v) \
+    Any_Inert_Kind(VAL_TYPE(v))
 
-#define ANY_EVALUATIVE(v) \
-    (not ANY_INERT_KIND(VAL_TYPE(v)))
+#define Any_Evaluative(v) \
+    (not Any_Inert_Kind(VAL_TYPE(v)))
 
 
 //=//// SHORTHANDS ////////////////////////////////////////////////////////=//
@@ -80,55 +80,55 @@ INLINE bool ANY_INERT_KIND(Byte k) {
 // you want them (sometimes you want `value`, sometimes you don't)
 //
 
-#define ANY_GET_KIND ANY_GET_VALUE_KIND
-#define ANY_SET_KIND ANY_SET_VALUE_KIND
-#define ANY_META_KIND ANY_META_VALUE_KIND
-#define ANY_PLAIN_KIND ANY_PLAIN_VALUE_KIND
+#define Any_Get_Kind Any_Get_Value_Kind
+#define Any_Set_Kind Any_Set_Value_Kind
+#define Any_Meta_Kind Any_Meta_Value_Kind
+#define Any_Plain_Kind Any_Plain_Value_Kind
 
 
 //=//// XXX <=> SET-XXX! <=> GET-XXX! TRANSFORMATION //////////////////////=//
 //
 // See reasoning in %types.r on why ANY-INERT! optimization is favored over
-// putting blocks/paths/words/tuples/groups together.  It means ANY_ARRAY() is
+// putting blocks/paths/words/tuples/groups together.  It means Any_Array() is
 // slower but these tests can be faster.
 
-INLINE enum Reb_Kind PLAINIFY_ANY_GET_KIND(Byte k) {
-    assert(ANY_GET_KIND(k));
+INLINE enum Reb_Kind Plainify_Any_Get_Kind(Byte k) {
+    assert(Any_Get_Kind(k));
     return cast(enum Reb_Kind, k - 10);
 }
 
-INLINE enum Reb_Kind PLAINIFY_ANY_SET_KIND(Byte k) {
-    assert(ANY_SET_KIND(k));
+INLINE enum Reb_Kind Plainify_Any_Set_Kind(Byte k) {
+    assert(Any_Set_Kind(k));
     return cast(enum Reb_Kind, k - 5);
 }
 
-INLINE enum Reb_Kind PLAINIFY_ANY_META_KIND(Byte k) {
-    assert(ANY_META_KIND(k));
+INLINE enum Reb_Kind Plainify_Any_Meta_Kind(Byte k) {
+    assert(Any_Meta_Kind(k));
     return cast(enum Reb_Kind, k - 15);
 }
 
-INLINE enum Reb_Kind SETIFY_ANY_PLAIN_KIND(Byte k) {
-    assert(ANY_PLAIN_KIND(k));
+INLINE enum Reb_Kind Setify_Any_Plain_Kind(Byte k) {
+    assert(Any_Plain_Kind(k));
     return cast(enum Reb_Kind, k + 5);
 }
 
-INLINE enum Reb_Kind GETIFY_ANY_PLAIN_KIND(Byte k) {
-    assert(ANY_PLAIN_KIND(k));
+INLINE enum Reb_Kind Getify_Any_Plain_Kind(Byte k) {
+    assert(Any_Plain_Kind(k));
     return cast(enum Reb_Kind, k + 10);
 }
 
 INLINE enum Reb_Kind METAFY_ANY_PLAIN_KIND(Byte k) {
-    assert(ANY_PLAIN_KIND(k));
+    assert(Any_Plain_Kind(k));
     return cast(enum Reb_Kind, k + 15);
 }
 
-INLINE enum Reb_Kind THEIFY_ANY_PLAIN_KIND(Byte k) {
-    assert(ANY_PLAIN_KIND(k));
+INLINE enum Reb_Kind Theify_Any_Plain_Kind(Byte k) {
+    assert(Any_Plain_Kind(k));
     return cast(enum Reb_Kind, k - 10);
 }
 
-INLINE enum Reb_Kind TYPEIFY_ANY_PLAIN_KIND(Byte k) {
-    assert(ANY_PLAIN_KIND(k));
+INLINE enum Reb_Kind Typeify_Any_Plain_Kind(Byte k) {
+    assert(Any_Plain_Kind(k));
     return cast(enum Reb_Kind, k - 5);
 }
 
@@ -139,46 +139,46 @@ INLINE enum Reb_Kind TYPEIFY_ANY_PLAIN_KIND(Byte k) {
 //
 // Order is: block, group, path, word.
 
-INLINE enum Reb_Kind WORDIFY_KIND(Byte k) {
-    if (ANY_BLOCK_KIND(k))
+INLINE enum Reb_Kind Wordify_Kind(Byte k) {
+    if (Any_Block_Kind(k))
         return cast(enum Reb_Kind, k + 3);
-    if (ANY_GROUP_KIND(k))
+    if (Any_Group_Kind(k))
         return cast(enum Reb_Kind, k + 2);
-    if (ANY_PATH_KIND(k))
+    if (Any_Path_Kind(k))
         return cast(enum Reb_Kind, k + 1);
-    assert(ANY_WORD_KIND(k));
+    assert(Any_Word_Kind(k));
     return cast(enum Reb_Kind, k);
 }
 
-INLINE enum Reb_Kind PATHIFY_KIND(Byte k) {
-    if (ANY_BLOCK_KIND(k))
+INLINE enum Reb_Kind Pathify_Kind(Byte k) {
+    if (Any_Block_Kind(k))
         return cast(enum Reb_Kind, k + 2);
-    if (ANY_GROUP_KIND(k))
+    if (Any_Group_Kind(k))
         return cast(enum Reb_Kind, k + 1);
-    if (ANY_PATH_KIND(k))
+    if (Any_Path_Kind(k))
         return cast(enum Reb_Kind, k);
-    assert(ANY_WORD_KIND(k));
+    assert(Any_Word_Kind(k));
     return cast(enum Reb_Kind, k - 1);
 }
 
-INLINE enum Reb_Kind GROUPIFY_KIND(Byte k) {
-    if (ANY_BLOCK_KIND(k))
+INLINE enum Reb_Kind Groupify_Kind(Byte k) {
+    if (Any_Block_Kind(k))
         return cast(enum Reb_Kind, k + 1);
-    if (ANY_GROUP_KIND(k))
+    if (Any_Group_Kind(k))
         return cast(enum Reb_Kind, k);
-    if (ANY_PATH_KIND(k))
+    if (Any_Path_Kind(k))
         return cast(enum Reb_Kind, k - 1);
-    assert(ANY_WORD_KIND(k));
+    assert(Any_Word_Kind(k));
     return cast(enum Reb_Kind, k - 2);
 }
 
-INLINE enum Reb_Kind BLOCKIFY_KIND(Byte k) {
-    if (ANY_BLOCK_KIND(k))
+INLINE enum Reb_Kind Blockify_Kind(Byte k) {
+    if (Any_Block_Kind(k))
         return cast(enum Reb_Kind, k);
-    if (ANY_GROUP_KIND(k))
+    if (Any_Group_Kind(k))
         return cast(enum Reb_Kind, k - 1);
-    if (ANY_PATH_KIND(k))
+    if (Any_Path_Kind(k))
         return cast(enum Reb_Kind, k - 2);
-    assert(ANY_WORD_KIND(k));
+    assert(Any_Word_Kind(k));
     return cast(enum Reb_Kind, k - 3);
 }

@@ -162,7 +162,7 @@ DECLARE_NATIVE(dump)
 
     PROBE(v);
     printf("=> ");
-    if (IS_WORD(v)) {
+    if (Is_Word(v)) {
         const REBVAL* var = try_unwrap(Lookup_Word(v, SPECIFIED));
         if (not var) {
             PROBE("\\unbound\\");

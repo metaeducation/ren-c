@@ -46,7 +46,6 @@
 //
 //     /* #include any non-Rebol windows dependencies here */
 //
-//     #undef IS_ERROR // means something different
 //     #undef max // same
 //     #undef min // same
 //     #undef OUT  // %minwindef.h defines this, we have a better use for it

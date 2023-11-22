@@ -44,8 +44,8 @@ REBOL [
         bytes.  Though there are some issues related to relative ordering;
         all such dependencies should be in %sys-ordered.h
 
-      * There's no particularly fast test for ANY_ARRAY(), ANY_PATH(), or
-        ANY_WORD(), as they're less common than testing for ANY_INERT().
+      * There's no particularly fast test for Any_Array(), Any_Path(), or
+        Any_Word(), as they're less common than testing for Any_Inert().
 
       * ANY-SCALAR! is weird at this point, because TUPLE! may or may not be
         fully numeric (1.2.3 vs alpha.beta.gamma).  What the typeset was for
@@ -277,7 +277,7 @@ varargs     "evaluator position for variable numbers of arguments"
 </ANY-TYPE-VALUE!>
 
 
-<ANY-PLAIN-VALUE!>  ; (order matters, e.g. SETIFY_ANY_PLAIN_KIND())
+<ANY-PLAIN-VALUE!>  ; (order matters, e.g. Setify_Any_Plain_Kind())
 
     block       "array of values that blocks evaluation unless DO is used"
     ~pack~      (CELL_FLAG_FIRST_IS_NODE)
@@ -285,7 +285,7 @@ varargs     "evaluator position for variable numbers of arguments"
                 [array       *       *]
 
   ; ==========================================================================
-  ; BEGIN EVALUATOR ACTIVE TYPES, SEE ANY_EVALUATIVE()
+  ; BEGIN EVALUATOR ACTIVE TYPES, SEE Any_Evaluative()
   ; ==========================================================================
 
     group       "array that evaluates expressions as an isolated group"
@@ -402,7 +402,7 @@ varargs     "evaluator position for variable numbers of arguments"
 
 
 ; COMMA! needs to be evaluative, so it is past the non-bindable types.  We
-; want the ANY_INERT() test to be fast with a single comparison, so it has
+; want the Any_Inert() test to be fast with a single comparison, so it has
 ; to null out the binding field in order to avoid crashing the processing
 ; since it reports Is_Bindable()
 

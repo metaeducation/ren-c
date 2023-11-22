@@ -29,7 +29,7 @@ static void Append_Vars_To_Context_From_Group(REBVAL *context, REBVAL *block)
 {
     Context* c = VAL_CONTEXT(context);
 
-    assert(IS_GROUP(block));
+    assert(Is_Group(block));
 
     const Cell* tail;
     const Cell* item = VAL_ARRAY_AT(&tail, block);
@@ -41,7 +41,7 @@ static void Append_Vars_To_Context_From_Group(REBVAL *context, REBVAL *block)
     //
     Context* error = nullptr;
 
-  if (not IS_MODULE(context)) {
+  if (not Is_Module(context)) {
     Collect_Start(&collector, COLLECT_ANY_WORD);
 
   blockscope {  // Start out binding table with words already in context
@@ -62,7 +62,7 @@ static void Append_Vars_To_Context_From_Group(REBVAL *context, REBVAL *block)
   blockscope {
     const Cell* word;
     for (word = item; word != tail; word += 2) {
-        if (not IS_WORD(word) and not IS_SET_WORD(word)) {
+        if (not Is_Word(word) and not Is_Set_Word(word)) {
             error = Error_Bad_Value(word);
             goto collect_end;
         }
@@ -96,7 +96,7 @@ static void Append_Vars_To_Context_From_Group(REBVAL *context, REBVAL *block)
     for (; word != tail; word += 2) {
         const Symbol* symbol = VAL_WORD_SYMBOL(word);
         Value(*) var;
-        if (IS_MODULE(context)) {
+        if (Is_Module(context)) {
             bool strict = true;
             var = MOD_VAR(c, symbol, strict);
             if (not var) {
@@ -140,7 +140,7 @@ static void Append_Vars_To_Context_From_Group(REBVAL *context, REBVAL *block)
   }
 
   collect_end:
-    if (not IS_MODULE(context))
+    if (not Is_Module(context))
         Collect_End(&collector);
 
     if (error)
@@ -454,8 +454,8 @@ void Shutdown_Evars(EVARS *e)
 //
 REBINT CT_Context(NoQuote(const Cell*) a, NoQuote(const Cell*) b, bool strict)
 {
-    assert(ANY_CONTEXT_KIND(Cell_Heart(a)));
-    assert(ANY_CONTEXT_KIND(Cell_Heart(b)));
+    assert(Any_Context_Kind(Cell_Heart(a)));
+    assert(Any_Context_Kind(Cell_Heart(b)));
 
     if (Cell_Heart(a) != Cell_Heart(b))  // e.g. ERROR! won't equal OBJECT!
         return Cell_Heart(a) > Cell_Heart(b) ? 1 : 0;
@@ -538,7 +538,7 @@ Bounce MAKE_Frame(
     // but has had its functionality unified with reframer, so that it doesn't
     // really cost that much to keep around.  Use it sparingly (if at all).
     //
-    if (IS_VARARGS(arg)) {
+    if (Is_Varargs(arg)) {
         Level* L_varargs;
         Feed* feed;
         bool allocated_feed;
@@ -574,7 +574,7 @@ Bounce MAKE_Frame(
 
     StackIndex lowest_ordered_stackindex = TOP_INDEX;  // for refinements
 
-    if (not IS_FRAME(arg))
+    if (not Is_Frame(arg))
         return RAISE(Error_Bad_Make(kind, arg));
 
     Context* exemplar = Make_Context_For_Action(
@@ -631,7 +631,7 @@ Bounce MAKE_Context(
         ? VAL_CONTEXT(unwrap(parent))
         : nullptr;
 
-    if (IS_BLOCK(arg)) {
+    if (Is_Block(arg)) {
         const Cell* tail;
         const Cell* at = VAL_ARRAY_AT(&tail, arg);
 
@@ -662,7 +662,7 @@ Bounce MAKE_Context(
 
     // `make object! 10` - currently not prohibited for any context type
     //
-    if (ANY_NUMBER(arg)) {
+    if (Any_Number(arg)) {
         Context* context = Make_Context_Detect_Managed(
             kind,
             nullptr,  // values to scan for toplevel set-words (empty)
@@ -677,7 +677,7 @@ Bounce MAKE_Context(
         return RAISE(Error_Bad_Make_Parent(kind, unwrap(parent)));
 
     // make object! map!
-    if (IS_MAP(arg)) {
+    if (Is_Map(arg)) {
         Context* c = Alloc_Context_From_Map(VAL_MAP(arg));
         return Init_Context_Cell(OUT, kind, c);
     }
@@ -723,14 +723,14 @@ DECLARE_NATIVE(adjunct_of)
     REBVAL *v = ARG(value);
 
     Context* meta;
-    if (IS_FRAME(v)) {
+    if (Is_Frame(v)) {
         if (not Is_Frame_Details(v))
             return nullptr;
 
         meta = ACT_ADJUNCT(VAL_ACTION(v));
     }
     else {
-        assert(ANY_CONTEXT(v));
+        assert(Any_Context(v));
         meta = CTX_ADJUNCT(VAL_CONTEXT(v));
     }
 
@@ -760,8 +760,8 @@ DECLARE_NATIVE(set_adjunct)
     REBVAL *adjunct = ARG(adjunct);
 
     Context* ctx;
-    if (ANY_CONTEXT(adjunct)) {
-        if (IS_FRAME(adjunct))
+    if (Any_Context(adjunct)) {
+        if (Is_Frame(adjunct))
             fail ("SET-ADJUNCT can't store bindings, FRAME! disallowed");
 
         ctx = VAL_CONTEXT(adjunct);
@@ -773,7 +773,7 @@ DECLARE_NATIVE(set_adjunct)
 
     REBVAL *v = ARG(value);
 
-    if (IS_FRAME(v)) {
+    if (Is_Frame(v)) {
         if (Is_Frame_Details(v))
             mutable_MISC(DetailsAdjunct, ACT_IDENTITY(VAL_ACTION(v))) = ctx;
     }
@@ -986,7 +986,7 @@ void MF_Context(REB_MOLD *mo, NoQuote(const Cell*) v, bool form)
             if (Is_Isotope(e.var)) {
                 fail (Error_Bad_Isotope(e.var));  // can't FORM isotopes
             }
-            else if (not Is_Nulled(e.var) and not IS_BLANK(e.var))
+            else if (not Is_Nulled(e.var) and not Is_Blank(e.var))
                 Mold_Value(mo, e.var);
 
             Append_Codepoint(mo->series, LF);
@@ -1042,7 +1042,7 @@ void MF_Context(REB_MOLD *mo, NoQuote(const Cell*) v, bool form)
             //
             // https://forum.rebol.info/t/997
             //
-            if (not ANY_INERT(e.var))
+            if (not Any_Inert(e.var))
                 Append_Ascii(s, "'");
             Mold_Value(mo, e.var);
         }
@@ -1063,7 +1063,7 @@ const Symbol* Symbol_From_Picker(const REBVAL *context, const Cell* picker)
 {
     UNUSED(context);  // Might the picker be context-sensitive?
 
-    if (not IS_WORD(picker))
+    if (not Is_Word(picker))
         fail (picker);
 
     return VAL_WORD_SYMBOL(picker);
@@ -1090,7 +1090,7 @@ REBTYPE(Context)
     //
     // At the moment only PICK* and POKE* are routed here.
     //
-    if (IS_PORT(context))
+    if (Is_Port(context))
         assert(symid == SYM_PICK_P or symid == SYM_POKE_P);
 
     switch (symid) {
@@ -1177,7 +1177,7 @@ REBTYPE(Context)
         if (not var)
             fail (Error_Bad_Pick_Raw(picker));
 
-        if (not IS_WORD(setval))
+        if (not Is_Word(setval))
             fail ("PROTECT* currently takes just WORD!");
 
         switch (VAL_WORD_ID(setval)) {
@@ -1205,13 +1205,13 @@ REBTYPE(Context)
             return COPY(context);  // don't fail on R/O if it would be a no-op
 
         Ensure_Mutable(context);
-        if (not IS_OBJECT(context) and not IS_MODULE(context))
+        if (not Is_Object(context) and not Is_Module(context))
             fail ("APPEND only works on OBJECT! and MODULE! contexts");
 
         if (Is_Splice(arg)) {
             QUOTE_BYTE(arg) = UNQUOTED_1;  // make plain group
         }
-        else if (ANY_WORD(arg)) {
+        else if (Any_Word(arg)) {
             // Add an unset word: `append context 'some-word`
             const bool strict = true;
             if (0 == Find_Symbol_In_Context(
@@ -1246,7 +1246,7 @@ REBTYPE(Context)
         // of this is still evolving, but we don't want archetypal values
         // otherwise we could not `do copy f`, so initialize with label.
         //
-        if (IS_FRAME(context)) {
+        if (Is_Frame(context)) {
             return Init_Frame(
                 OUT,
                 Copy_Context_Extra_Managed(c, 0, types),
@@ -1272,7 +1272,7 @@ REBTYPE(Context)
         if (Is_Isotope(pattern))
             fail (pattern);
 
-        if (not IS_WORD(pattern))
+        if (not Is_Word(pattern))
             return nullptr;
 
         REBLEN n = Find_Symbol_In_Context(
@@ -1473,7 +1473,7 @@ REBTYPE(Frame)
             // it returns for FILE OF and LINE OF.
 
             Details* details = Phase_Details(act);
-            if (Array_Len(details) < 1 or not ANY_ARRAY(Array_Head(details)))
+            if (Array_Len(details) < 1 or not Any_Array(Array_Head(details)))
                 return nullptr;
 
             const Array* a = VAL_ARRAY(Array_Head(details));
@@ -1597,7 +1597,7 @@ REBTYPE(Frame)
         UNUSED(ARG(location));
 
         REBVAL *redbol = Get_System(SYS_OPTIONS, OPTIONS_REDBOL_PATHS);
-        if (not IS_LOGIC(redbol) or VAL_LOGIC(redbol) == false) {
+        if (not Is_Logic(redbol) or VAL_LOGIC(redbol) == false) {
             fail (
                 "SYSTEM.OPTIONS.REDBOL-PATHS is false, so you can't"
                 " use paths to do ordinary picking.  Use TUPLE!"
@@ -1605,13 +1605,13 @@ REBTYPE(Frame)
           }
 
         REBVAL *picker = ARG(picker);
-        if (IS_BLANK(picker))
+        if (Is_Blank(picker))
             return COPY(frame);
 
         const Symbol* symbol;
-        if (IS_WORD(picker))
+        if (Is_Word(picker))
             symbol = VAL_WORD_SYMBOL(picker);
-        else if (IS_PATH(picker) and IS_REFINEMENT(picker))
+        else if (Is_Path(picker) and Is_Refinement(picker))
             symbol = VAL_REFINEMENT_SYMBOL(picker);
         else
             fail (picker);

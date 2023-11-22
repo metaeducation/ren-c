@@ -38,14 +38,14 @@ Bounce MAKE_Sequence(
     Option(Value(const*)) parent,
     const REBVAL *arg
 ){
-    if (kind == REB_TEXT or ANY_PATH_KIND(kind))  // delegate for now
+    if (kind == REB_TEXT or Any_Path_Kind(kind))  // delegate for now
         return MAKE_Path(level_, kind, parent, arg);
 
     assert(kind == REB_TUPLE);
     if (parent)
         return RAISE(Error_Bad_Make_Parent(kind, unwrap(parent)));
 
-    if (IS_TUPLE(arg))
+    if (Is_Tuple(arg))
         return Copy_Cell(OUT, arg);
 
     // !!! Net lookup parses IP addresses out of `tcp://93.184.216.34` or
@@ -58,7 +58,7 @@ Bounce MAKE_Sequence(
     // All attempts to convert a URL!-flavored IP address failed.  Taking
     // URL! here fixes it, though there are still open questions.
     //
-    if (IS_URL(arg)) {
+    if (Is_Url(arg)) {
         Size len;
         const Byte* cp
             = Analyze_String_For_Scan(&len, arg, MAX_SCAN_TUPLE);
@@ -99,7 +99,7 @@ Bounce MAKE_Sequence(
         return Init_Tuple_Bytes(OUT, buf, size);
     }
 
-    if (ANY_ARRAY(arg)) {
+    if (Any_Array(arg)) {
         REBLEN len = 0;
         REBINT n;
 
@@ -112,7 +112,7 @@ Bounce MAKE_Sequence(
         for (; item != tail; ++item, ++vp, ++len) {
             if (len >= MAX_TUPLE)
                 goto bad_make;
-            if (IS_INTEGER(item)) {
+            if (Is_Integer(item)) {
                 n = Int32(item);
             }
             else if (IS_CHAR(item)) {
@@ -131,7 +131,7 @@ Bounce MAKE_Sequence(
 
     REBLEN alen;
 
-    if (IS_ISSUE(arg)) {
+    if (Is_Issue(arg)) {
         Byte buf[MAX_TUPLE];
         Byte* vp = buf;
 
@@ -151,7 +151,7 @@ Bounce MAKE_Sequence(
         }
         Init_Tuple_Bytes(OUT, buf, size);
     }
-    else if (IS_BINARY(arg)) {
+    else if (Is_Binary(arg)) {
         Size size;
         const Byte* at = VAL_BINARY_SIZE_AT(&size, arg);
         if (size > MAX_TUPLE)
@@ -220,17 +220,17 @@ REBTYPE(Sequence)
 
         REBVAL *arg = D_ARG(2);
 
-        if (IS_INTEGER(arg)) {
+        if (Is_Integer(arg)) {
             dec = -207.6382; // unused but avoid maybe uninitialized warning
             a = VAL_INT32(arg);
             ap = nullptr;
         }
-        else if (IS_DECIMAL(arg) || IS_PERCENT(arg)) {
+        else if (Is_Decimal(arg) || Is_Percent(arg)) {
             dec = VAL_DECIMAL(arg);
             a = cast(REBINT, dec);
             ap = nullptr;
         }
-        else if (IS_TUPLE(arg)) {
+        else if (Is_Tuple(arg)) {
             dec = -251.8517; // unused but avoid maybe uninitialized warning
             alen = VAL_SEQUENCE_LEN(arg);
             Get_Tuple_Bytes(abuf, arg, alen);
@@ -254,14 +254,14 @@ REBTYPE(Sequence)
             case SYM_SUBTRACT: v -= a; break;
 
             case SYM_MULTIPLY:
-                if (IS_DECIMAL(arg) || IS_PERCENT(arg))
+                if (Is_Decimal(arg) || Is_Percent(arg))
                     v = cast(REBINT, v * dec);
                 else
                     v *= a;
                 break;
 
             case SYM_DIVIDE:
-                if (IS_DECIMAL(arg) || IS_PERCENT(arg)) {
+                if (Is_Decimal(arg) || Is_Percent(arg)) {
                     if (dec == 0.0)
                         fail (Error_Zero_Divide_Raw());
 
@@ -367,7 +367,7 @@ REBTYPE(Sequence)
         // /DEEP copy of a path may copy groups that are mutable.
         //
       case SYM_COPY: {
-        if (not ANY_ARRAYLIKE(sequence))
+        if (not Any_Arraylike(sequence))
             return Copy_Cell(level_->out, sequence);
 
         enum Reb_Kind kind = VAL_TYPE(sequence);
@@ -390,7 +390,7 @@ REBTYPE(Sequence)
         const Cell* picker = ARG(picker);
 
         REBINT n;
-        if (IS_INTEGER(picker) or IS_DECIMAL(picker)) { // #2312
+        if (Is_Integer(picker) or Is_Decimal(picker)) { // #2312
             n = Int32(picker) - 1;
         }
         else
@@ -437,7 +437,7 @@ REBTYPE(Sequence)
 void MF_Sequence(REB_MOLD *mo, NoQuote(const Cell*) v, bool form)
 {
     enum Reb_Kind kind = Cell_Heart(v);
-    char interstitial = ANY_TUPLE_KIND(kind) ? '.' : '/';
+    char interstitial = Any_Tuple_Kind(kind) ? '.' : '/';
 
     if (kind == REB_GET_PATH or kind == REB_GET_TUPLE)
         Append_Codepoint(mo->series, ':');

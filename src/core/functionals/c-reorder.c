@@ -154,17 +154,17 @@ DECLARE_NATIVE(reorder_p)  // see REORDER in %base-defs.r, for inheriting meta
         // full `parameters of`, e.g. reversed.
         //
         bool ignore = false;
-        if (ANY_WORD(item)) {  // on the record, we only just allow WORD!...
+        if (Any_Word(item)) {  // on the record, we only just allow WORD!...
             symbol = VAL_WORD_SYMBOL(item);
         }
-        else if (IS_REFINEMENT(item)) {
+        else if (Is_Refinement(item)) {
             symbol = VAL_REFINEMENT_SYMBOL(item);
             ignore = true;  // to use a refinement, don't /refine it
         }
         else if (Is_Quoted(item)) {
             if (
                 VAL_QUOTED_DEPTH(item) != 1
-                or not ANY_WORD_KIND(Cell_Heart(item))
+                or not Any_Word_Kind(Cell_Heart(item))
             ) {
                 error = Error_User("REORDER allows single quoted ANY-WORD!");
                 goto cleanup_binder;

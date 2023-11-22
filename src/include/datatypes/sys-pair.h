@@ -56,25 +56,25 @@ INLINE REBVAL *VAL_PAIRING(NoQuote(const Cell*) v) {
     VAL_PAIRING(v)
 
 INLINE REBDEC VAL_PAIR_X_DEC(NoQuote(const Cell*) v) {
-    if (IS_INTEGER(VAL_PAIR_X(v)))
+    if (Is_Integer(VAL_PAIR_X(v)))
         return cast(REBDEC, VAL_INT64(VAL_PAIR_X(v)));
     return VAL_DECIMAL(VAL_PAIR_X(v));
 }
 
 INLINE REBDEC VAL_PAIR_Y_DEC(NoQuote(const Cell*) v) {
-    if (IS_INTEGER(VAL_PAIR_Y(v)))
+    if (Is_Integer(VAL_PAIR_Y(v)))
         return cast(REBDEC, VAL_INT64(VAL_PAIR_Y(v)));
     return VAL_DECIMAL(VAL_PAIR_Y(v));
 }
 
 INLINE REBI64 VAL_PAIR_X_INT(NoQuote(const Cell*) v) {
-    if (IS_INTEGER(VAL_PAIR_X(v)))
+    if (Is_Integer(VAL_PAIR_X(v)))
         return VAL_INT64(VAL_PAIR_X(v));
     return ROUND_TO_INT(VAL_DECIMAL(VAL_PAIR_X(v)));
 }
 
 INLINE REBDEC VAL_PAIR_Y_INT(NoQuote(const Cell*) v) {
-    if (IS_INTEGER(VAL_PAIR_Y(v)))
+    if (Is_Integer(VAL_PAIR_Y(v)))
         return VAL_INT64(VAL_PAIR_Y(v));
     return ROUND_TO_INT(VAL_DECIMAL(VAL_PAIR_Y(v)));
 }
@@ -84,8 +84,8 @@ INLINE Value(*) Init_Pair(
     const Cell* x,
     const Cell* y
 ){
-    assert(ANY_NUMBER(x));
-    assert(ANY_NUMBER(y));
+    assert(Any_Number(x));
+    assert(Any_Number(y));
 
     Reset_Unquoted_Header_Untracked(out, CELL_MASK_PAIR);
     Cell* p = Alloc_Pairing();

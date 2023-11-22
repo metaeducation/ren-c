@@ -46,9 +46,6 @@
 #include <process.h>
 #include <shlobj.h>
 
-#ifdef IS_ERROR
-    #undef IS_ERROR  // %winerror.h defines, Rebol has a different meaning
-#endif
 #ifdef OUT
     #undef OUT  // %minwindef.h defines this, we have a better use for it
 #endif
@@ -90,7 +87,7 @@ static bool Try_Init_Startupinfo_Sink(
     if (Is_Nulled(arg)) {  // write normally (usually to console)
         *hsink = GetStdHandle(std_handle_id);
     }
-    else if (IS_LOGIC(arg)) {
+    else if (Is_Logic(arg)) {
         if (VAL_LOGIC(arg)) {
             //
             // !!! This said true was "inherit", but hwrite was not being
@@ -200,18 +197,18 @@ Bounce Call_Core(Level* level_) {
     // Make sure that if the output or error series are STRING! or BINARY!,
     // they are not read-only, before we try appending to them.
     //
-    if (IS_TEXT(ARG(output)) or IS_BINARY(ARG(output)))
+    if (Is_Text(ARG(output)) or Is_Binary(ARG(output)))
         Ensure_Mutable(ARG(output));
-    if (IS_TEXT(ARG(error)) or IS_BINARY(ARG(error)))
+    if (Is_Text(ARG(error)) or Is_Binary(ARG(error)))
         Ensure_Mutable(ARG(error));
 
     bool flag_wait;
     if (
         REF(wait)
         or (
-            IS_TEXT(ARG(input)) or IS_BINARY(ARG(input))
-            or IS_TEXT(ARG(output)) or IS_BINARY(ARG(output))
-            or IS_TEXT(ARG(error)) or IS_BINARY(ARG(error))
+            Is_Text(ARG(input)) or Is_Binary(ARG(input))
+            or Is_Text(ARG(output)) or Is_Binary(ARG(output))
+            or Is_Text(ARG(error)) or Is_Binary(ARG(error))
         )  // I/O redirection implies /WAIT
     ){
         flag_wait = true;
@@ -227,7 +224,7 @@ Bounce Call_Core(Level* level_) {
     int argc;
     const REBWCHAR **argv;
 
-    if (IS_TEXT(ARG(command))) {  // Windows takes command-lines by default
+    if (Is_Text(ARG(command))) {  // Windows takes command-lines by default
 
       text_command:
 
@@ -255,7 +252,7 @@ Bounce Call_Core(Level* level_) {
         argv[0] = rebSpellWide(ARG(command));
         argv[1] = nullptr;
     }
-    else if (IS_BLOCK(ARG(command))) {
+    else if (Is_Block(ARG(command))) {
         //
         // In order for argv-call to work with Windows reliably, it has to do
         // proper escaping of its arguments when forming a string.  We
@@ -319,7 +316,7 @@ Bounce Call_Core(Level* level_) {
     if (not REF(input)) {  // get stdin normally (usually from user console)
         si.hStdInput = GetStdHandle(STD_INPUT_HANDLE);
     }
-    else if (IS_LOGIC(ARG(input))) {
+    else if (Is_Logic(ARG(input))) {
         if (VAL_LOGIC(ARG(input))) {  // !!! make inheritable (correct?)
             if (not SetHandleInformation(
                 hInputRead,
@@ -676,17 +673,17 @@ Bounce Call_Core(Level* level_) {
     if (hErrorRead != nullptr)
         CloseHandle(hErrorRead);
 
-    if (IS_FILE(ARG(error)))
+    if (Is_File(ARG(error)))
         CloseHandle(si.hStdError);
 
   stderr_error:
 
-    if (IS_FILE(ARG(output)))
+    if (Is_File(ARG(output)))
         CloseHandle(si.hStdOutput);
 
   stdout_error:
 
-    if (IS_FILE(ARG(input)))
+    if (Is_File(ARG(input)))
         CloseHandle(si.hStdInput);
 
   stdin_error:
@@ -707,12 +704,12 @@ Bounce Call_Core(Level* level_) {
     // remarks at the top of file about how piped data is not generally
     // assumed to be UCS-2.
     //
-    if (IS_TEXT(ARG(output))) {
+    if (Is_Text(ARG(output))) {
         REBVAL *output_val = rebRepossess(outbuf, outbuf_used);
         rebElide("insert", ARG(output), "deline", output_val);
         rebRelease(output_val);
     }
-    else if (IS_BINARY(ARG(output))) {
+    else if (Is_Binary(ARG(output))) {
         REBVAL *output_val = rebRepossess(outbuf, outbuf_used);
         rebElide("insert", ARG(output), output_val);
         rebRelease(output_val);
@@ -720,12 +717,12 @@ Bounce Call_Core(Level* level_) {
     else
         assert(outbuf == nullptr);
 
-    if (IS_TEXT(ARG(error))) {
+    if (Is_Text(ARG(error))) {
         REBVAL *error_val = rebRepossess(errbuf, errbuf_used);
         rebElide("insert", ARG(error), "deline", error_val);
         rebRelease(error_val);
     }
-    else if (IS_BINARY(ARG(error))) {
+    else if (Is_Binary(ARG(error))) {
         REBVAL *error_val = rebRepossess(errbuf, errbuf_used);
         rebElide("append", ARG(error), error_val);
         rebRelease(error_val);

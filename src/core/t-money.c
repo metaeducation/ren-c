@@ -84,7 +84,7 @@ Bounce MAKE_Money(
     if (parent)
         return RAISE(Error_Bad_Make_Parent(kind, unwrap(parent)));
 
-    if (IS_LOGIC(arg)) {
+    if (Is_Logic(arg)) {
         return Init_Money(OUT, int_to_deci(VAL_LOGIC(arg) ? 1 : 0));
     }
     else switch (VAL_TYPE(arg)) {
@@ -160,7 +160,7 @@ void MF_Money(REB_MOLD *mo, NoQuote(const Cell*) v, bool form)
 //
 void Bin_To_Money_May_Fail(Sink(Value(*)) result, Value(const*) val)
 {
-    if (not IS_BINARY(val))
+    if (not Is_Binary(val))
         fail (val);
 
     Size size;
@@ -181,15 +181,15 @@ static Value(*) Math_Arg_For_Money(
     Value(*) arg,
     const Symbol* verb
 ){
-    if (IS_MONEY(arg))
+    if (Is_Money(arg))
         return arg;
 
-    if (IS_INTEGER(arg)) {
+    if (Is_Integer(arg)) {
         Init_Money(store, int_to_deci(VAL_INT64(arg)));
         return store;
     }
 
-    if (IS_DECIMAL(arg) or IS_PERCENT(arg)) {
+    if (Is_Decimal(arg) or Is_Percent(arg)) {
         Init_Money(store, decimal_to_deci(VAL_DECIMAL(arg)));
         return store;
     }
@@ -259,11 +259,11 @@ REBTYPE(Money)
 
         DECLARE_LOCAL (temp);
         if (REF(to)) {
-            if (IS_INTEGER(to))
+            if (Is_Integer(to))
                 Init_Money(temp, int_to_deci(VAL_INT64(to)));
-            else if (IS_DECIMAL(to) or IS_PERCENT(to))
+            else if (Is_Decimal(to) or Is_Percent(to))
                 Init_Money(temp, decimal_to_deci(VAL_DECIMAL(to)));
-            else if (IS_MONEY(to))
+            else if (Is_Money(to))
                 Copy_Cell(temp, to);
             else
                 fail (PARAM(to));
@@ -277,7 +277,7 @@ REBTYPE(Money)
         );
 
         if (REF(to)) {
-            if (IS_DECIMAL(to) or IS_PERCENT(to)) {
+            if (Is_Decimal(to) or Is_Percent(to)) {
                 REBDEC dec = deci_to_decimal(VAL_MONEY_AMOUNT(OUT));
                 Reset_Unquoted_Header_Untracked(
                     TRACK(OUT),
@@ -286,7 +286,7 @@ REBTYPE(Money)
                 VAL_DECIMAL(OUT) = dec;
                 return OUT;
             }
-            if (IS_INTEGER(to)) {
+            if (Is_Integer(to)) {
                 REBI64 i64 = deci_to_int(VAL_MONEY_AMOUNT(OUT));
                 return Init_Integer(OUT, i64);
             }

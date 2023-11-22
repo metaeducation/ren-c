@@ -148,7 +148,7 @@ inline static bool Last_In_Mold_Is_Slash(REB_MOLD *mo) {
 //
 String* To_REBOL_Path(const Cell* string, Flags flags)
 {
-    assert(IS_TEXT(string));
+    assert(Is_Text(string));
 
     DECLARE_MOLD (mo);
     Push_Mold(mo);
@@ -248,7 +248,7 @@ enum {
 // buffer (e.g. for further appending or just counting the number of bytes)
 //
 void Mold_File_To_Local(REB_MOLD *mo, const Cell* file, Flags flags) {
-    assert(IS_FILE(file));
+    assert(Is_File(file));
 
     REBLEN len;
     Utf8(const*) up = VAL_UTF8_LEN_SIZE_AT(&len, nullptr, file);
@@ -500,7 +500,7 @@ DECLARE_NATIVE(local_to_file)
     FILESYSTEM_INCLUDE_PARAMS_OF_LOCAL_TO_FILE;
 
     REBVAL *path = ARG(path);
-    if (IS_FILE(path)) {
+    if (Is_File(path)) {
         if (not REF(pass))
             fail ("LOCAL-TO-FILE only passes through FILE! if /PASS used");
 
@@ -536,7 +536,7 @@ DECLARE_NATIVE(file_to_local)
     FILESYSTEM_INCLUDE_PARAMS_OF_FILE_TO_LOCAL;
 
     REBVAL *path = ARG(path);
-    if (IS_TEXT(path)) {
+    if (Is_Text(path)) {
         if (not REF(pass))
             fail ("FILE-TO-LOCAL only passes through STRING! if /PASS used");
 
@@ -569,7 +569,7 @@ DECLARE_NATIVE(what_dir)
 
     REBVAL *current_path = Get_System(SYS_OPTIONS, OPTIONS_CURRENT_PATH);
 
-    if (IS_FILE(current_path) || Is_Nulled(current_path)) {
+    if (Is_File(current_path) || Is_Nulled(current_path)) {
         //
         // !!! Because of the need to track a notion of "current path" which
         // could be a URL! as well as a FILE!, the state is stored in the
@@ -583,7 +583,7 @@ DECLARE_NATIVE(what_dir)
         Copy_Cell(current_path, refresh);
         rebRelease(refresh);
     }
-    else if (not IS_URL(current_path)) {
+    else if (not Is_Url(current_path)) {
         //
         // Lousy error, but ATM the user can directly edit system/options.
         // They shouldn't be able to (or if they can, it should be validated)
@@ -611,7 +611,7 @@ DECLARE_NATIVE(change_dir)
     REBVAL *arg = ARG(path);
     REBVAL *current_path = Get_System(SYS_OPTIONS, OPTIONS_CURRENT_PATH);
 
-    if (IS_URL(arg)) {
+    if (Is_Url(arg)) {
         // There is no directory listing protocol for HTTP (although this
         // needs to be methodized to work for SFTP etc.)  So this takes
         // your word for it for the moment that it's a valid "directory".
@@ -619,7 +619,7 @@ DECLARE_NATIVE(change_dir)
         // !!! Should it at least check for a trailing `/`?
     }
     else {
-        assert(IS_FILE(arg));
+        assert(Is_File(arg));
 
         bool success = Set_Current_Dir_Value(arg);
 

@@ -859,7 +859,7 @@ void RL_rebModifyHandleCData(
 ){
     ENTER_API;
 
-    if (not IS_HANDLE(v))
+    if (not Is_Handle(v))
         fail ("rebModifyHandleCData() called on non-HANDLE!");
 
     assert(Get_Cell_Flag(v, FIRST_IS_NODE));  // api only sees managed handles
@@ -874,7 +874,7 @@ void RL_rebModifyHandleCData(
 void RL_rebModifyHandleLength(REBVAL *v, size_t length) {
     ENTER_API;
 
-    if (not IS_HANDLE(v))
+    if (not Is_Handle(v))
         fail ("rebModifyHandleLength() called on non-HANDLE!");
 
     assert(Get_Cell_Flag(v, FIRST_IS_NODE));  // api only sees managed handles
@@ -889,7 +889,7 @@ void RL_rebModifyHandleLength(REBVAL *v, size_t length) {
 void RL_rebModifyHandleCleaner(REBVAL *v, CLEANUP_CFUNC *cleaner) {
     ENTER_API;
 
-    if (not IS_HANDLE(v))
+    if (not Is_Handle(v))
         fail ("rebModifyHandleCleaner() called on non-HANDLE!");
 
     assert(Get_Cell_Flag(v, FIRST_IS_NODE));  // api only sees managed handles
@@ -1541,7 +1541,7 @@ intptr_t RL_rebUnbox(const void *p, va_list *vaptr)
     DECLARE_STABLE (result);
     Run_Va_Decay_May_Fail_Calls_Va_End(result, p, vaptr);
 
-    if (IS_LOGIC(result)) {
+    if (Is_Logic(result)) {
         return VAL_LOGIC(result) ? 1 : 0;
     }
     else switch (VAL_TYPE(result)) {
@@ -1569,7 +1569,7 @@ bool RL_rebUnboxLogic(
     DECLARE_STABLE (result);
     Run_Va_Decay_May_Fail_Calls_Va_End(result, p, vaptr);
 
-    if (not IS_LOGIC(result))
+    if (not Is_Logic(result))
         fail ("rebUnboxLogic() called on non-LOGIC!");
 
     return VAL_LOGIC(result);
@@ -1588,7 +1588,7 @@ intptr_t RL_rebUnboxInteger(
     DECLARE_STABLE (result);
     Run_Va_Decay_May_Fail_Calls_Va_End(result, p, vaptr);
 
-    if (not IS_INTEGER(result))
+    if (not Is_Integer(result))
         fail ("rebUnboxInteger() called on non-INTEGER!");
 
     return VAL_INT64(result);
@@ -1606,10 +1606,10 @@ double RL_rebUnboxDecimal(
     DECLARE_STABLE (result);
     Run_Va_Decay_May_Fail_Calls_Va_End(result, p, vaptr);
 
-    if (IS_DECIMAL(result))
+    if (Is_Decimal(result))
         return VAL_DECIMAL(result);
 
-    if (IS_INTEGER(result))
+    if (Is_Integer(result))
         return cast(double, VAL_INT64(result));
 
     fail ("rebUnboxDecimal() called on non-DECIMAL! or non-INTEGER!");
@@ -1675,7 +1675,7 @@ static size_t Spell_Into(
     size_t buf_size,  // number of bytes
     const REBVAL *v
 ){
-    if (not ANY_UTF8(v))
+    if (not Any_Utf8(v))
         fail ("rebSpell() APIs require UTF-8 types (strings, words, tokens)");
 
     Size utf8_size;
@@ -1766,7 +1766,7 @@ static unsigned int Spell_Into_Wide(
     unsigned int buf_wchars,  // chars buf can hold (not including terminator)
     const REBVAL *v
 ){
-    if (not ANY_UTF8(v))
+    if (not Any_Utf8(v))
         fail ("rebSpell() APIs require UTF-8 types (strings, words, tokens)");
 
     if (not buf)  // querying for size
@@ -1889,7 +1889,7 @@ static size_t Bytes_Into(
     size_t buf_size,
     const REBVAL *v
 ){
-    if (IS_BINARY(v)) {
+    if (Is_Binary(v)) {
         Size size;
         const Byte* data = VAL_BINARY_SIZE_AT(&size, v);
         if (buf == nullptr) {
@@ -1914,7 +1914,7 @@ static size_t Bytes_Into(
         return size;
     }
 
-    if (ANY_WORD(v) or ANY_STRING(v)) {
+    if (Any_Word(v) or Any_String(v)) {
         Size size = Spell_Into(nullptr, 0, v);
         if (buf == nullptr) {
             assert(buf_size == 0);
@@ -2343,7 +2343,7 @@ const void *RL_rebINLINE(const REBVAL *v)
     );
     Clear_Node_Managed_Bit(a);  // lying avoided manuals tracking!
 
-    if (not (IS_BLOCK(v) or Is_Quoted(v) or IS_BLANK(v)))
+    if (not (Is_Block(v) or Is_Quoted(v) or Is_Blank(v)))
         fail ("rebINLINE() requires argument to be a BLOCK!/QUOTED!/BLANK!");
 
     Copy_Cell(Array_Single(a), v);
@@ -2393,7 +2393,7 @@ const REBINS *RL_rebRUN(const void *p)
     Value(*) v = SPECIFIC(Array_Single(a));
     if (Is_Activation(v))
         QUOTE_BYTE(v) = UNQUOTED_1;
-    else if (not IS_FRAME(v))
+    else if (not Is_Frame(v))
         fail ("rebRUN() only accepts FRAME! or actions (aka FRAME! isotopes)");
 
     return a;
@@ -2542,7 +2542,6 @@ void *RL_rebZinflateAlloc(
 // wide availability.
 //
 #if TO_WINDOWS
-    #undef IS_ERROR // windows has its own meaning for this.
     #define WIN32_LEAN_AND_MEAN  // trim down the Win32 headers
     #include <windows.h>
 #else

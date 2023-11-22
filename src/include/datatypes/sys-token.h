@@ -47,7 +47,7 @@ INLINE bool IS_CHAR_CELL(NoQuote(const Cell*) v) {
 }
 
 INLINE bool IS_CHAR(const Cell* v) {
-    if (not IS_ISSUE(v))
+    if (not Is_Issue(v))
         return false;
     return IS_CHAR_CELL(v);
 }
@@ -243,17 +243,17 @@ INLINE const Byte* VAL_BYTES_LIMIT_AT(
     if (limit == UNLIMITED or limit > cast(REBINT, VAL_LEN_AT(v)))
         limit = VAL_LEN_AT(v);
 
-    if (IS_BINARY(v)) {
+    if (Is_Binary(v)) {
         *size_out = limit;
         return VAL_BINARY_AT(v);
     }
 
-    if (ANY_STRING(v)) {
+    if (Any_String(v)) {
         *size_out = VAL_SIZE_LIMIT_AT(nullptr, v, limit);
         return VAL_STRING_AT(v);
     }
 
-    assert(ANY_WORD(v));
+    assert(Any_Word(v));
     assert(cast(REBLEN, limit) == VAL_LEN_AT(v));
 
     const String* spelling = VAL_WORD_SYMBOL(v);
@@ -307,7 +307,7 @@ INLINE Utf8(const*) VAL_UTF8_LEN_SIZE_AT_LIMIT(
     }
 
     Utf8(const*) utf8;
-    if (ANY_STRINGLIKE(v)) {
+    if (Any_Stringlike(v)) {
         utf8 = VAL_STRING_AT(v);
 
         if (size_out or length_out) {
@@ -318,7 +318,7 @@ INLINE Utf8(const*) VAL_UTF8_LEN_SIZE_AT_LIMIT(
         }
     }
     else {
-        assert(ANY_WORDLIKE(v));
+        assert(Any_Wordlike(v));
 
         const String* spelling = VAL_WORD_SYMBOL(v);
         utf8 = String_Head(spelling);

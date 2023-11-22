@@ -81,7 +81,7 @@ DECLARE_NATIVE(mold)
 
     Push_Mold(mo);
 
-    if (REF(only) and IS_BLOCK(v))
+    if (REF(only) and Is_Block(v))
         SET_MOLD_FLAG(mo, MOLD_FLAG_ONLY);
 
     Mold_Value(mo, v);
@@ -120,7 +120,7 @@ DECLARE_NATIVE(write_stdout)
     UNUSED(v);
     fail ("Boot WRITE-STDOUT needs DEBUG_HAS_PROBE or loaded I/O module");
   #else
-    if (IS_TEXT(v)) {
+    if (Is_Text(v)) {
         printf("WRITE-STDOUT: %s\n", c_cast(char*, String_Head(VAL_STRING(v))));
         fflush(stdout);
     }
@@ -128,7 +128,7 @@ DECLARE_NATIVE(write_stdout)
         printf("WRITE-STDOUT: char %lu\n", cast(unsigned long, VAL_CHAR(v)));
     }
     else {
-        assert(IS_BINARY(v));
+        assert(Is_Binary(v));
         PROBE(v);
     }
     return NONE;
@@ -219,7 +219,7 @@ DECLARE_NATIVE(new_line_q)
     const Cell* item;
     const Cell* tail;
 
-    if (IS_VARARGS(pos)) {
+    if (Is_Varargs(pos)) {
         Level* L;
         REBVAL *shared;
         if (Is_Level_Style_Varargs_May_Fail(&L, pos)) {
@@ -254,7 +254,7 @@ DECLARE_NATIVE(new_line_q)
             panic ("Bad VARARGS!");
     }
     else {
-        assert(IS_GROUP(pos) or IS_BLOCK(pos));
+        assert(Is_Group(pos) or Is_Block(pos));
         arr = VAL_ARRAY(pos);
         item = VAL_ARRAY_AT(&tail, pos);
     }

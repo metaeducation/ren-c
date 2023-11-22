@@ -41,7 +41,6 @@
 
 #if TO_WINDOWS
     #include <winsock2.h>
-    #undef IS_ERROR  // Windows defines this, so does %sys-core.h
     #undef OUT  // %minwindef.h defines this, we have a better use for it
     #undef VOID  // %winnt.h defines this, we have a better use for it
 
@@ -193,7 +192,7 @@ static Bounce DNS_Actor(Level* level_, REBVAL *port, const Symbol* verb)
             return OUT;
           #endif
         }
-        else if (IS_TUPLE(host)) {
+        else if (Is_Tuple(host)) {
             //
             // DNS read e.g. of `read dns://66.249.66.140` should do a reverse
             // lookup.  Scheme handler may pass in either a TUPLE! or a string
@@ -212,7 +211,7 @@ static Bounce DNS_Actor(Level* level_, REBVAL *port, const Symbol* verb)
 
             // ...else fall through to error handling...
         }
-        else if (IS_TEXT(host)) {
+        else if (Is_Text(host)) {
             REBVAL *tuple = rebValue(
                 "match tuple! first transcode", host
             );  // W3C says non-IP hosts can't end with number in tuple

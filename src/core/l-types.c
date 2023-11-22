@@ -116,7 +116,7 @@ DECLARE_NATIVE(make)
 
     Option(Value(const*)) parent;
     enum Reb_Kind kind;
-    if (IS_TYPE_WORD(type)) {
+    if (Is_Type_Word(type)) {
         kind = VAL_TYPE_KIND(type);
         parent = nullptr;
     }
@@ -343,7 +343,7 @@ DECLARE_NATIVE(of)
         if (Eval_Value_Throws(SPARE, prop, SPECIFIED))
             return THROWN;
 
-        if (not IS_WORD(SPARE)) {
+        if (not Is_Word(SPARE)) {
             Move_Cell(prop, SPARE);
             fail (Error_Invalid_Arg(level_, PARAM(property)));
         }
@@ -882,7 +882,7 @@ const Byte* Scan_Date(
         cp = Scan_Time(out, cp, 0); // writes PAYLOAD(Time, out).nanoseconds
         if (
             cp == NULL
-            or not IS_TIME(out)
+            or not Is_Time(out)
             or VAL_NANO(out) < 0
             or VAL_NANO(out) >= SECS_TO_NANO(24 * 60 * 60)
         ){
@@ -1278,10 +1278,10 @@ DECLARE_NATIVE(scan_net_header)
         Cell* item = Array_Head(result);
 
         for (; item != item_tail; item += 2) {
-            assert(IS_TEXT(item + 1) || IS_BLOCK(item + 1));
+            assert(Is_Text(item + 1) || Is_Block(item + 1));
             if (Are_Synonyms(VAL_WORD_SYMBOL(item), name)) {
                 // Does it already use a block?
-                if (IS_BLOCK(item + 1)) {
+                if (Is_Block(item + 1)) {
                     // Block of values already exists:
                     val = Alloc_Tail_Array(VAL_ARRAY_ENSURE_MUTABLE(item + 1));
                 }

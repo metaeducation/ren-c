@@ -56,7 +56,7 @@ bool Try_Catch_Break_Or_Continue(
     // Throw /NAME-s used by CONTINUE and BREAK are the actual native
     // function values of the routines themselves.
     //
-    if (not IS_FRAME(label))
+    if (not Is_Frame(label))
         return false;
 
     if (ACT_DISPATCHER(VAL_ACTION(label)) == &N_break) {
@@ -265,7 +265,7 @@ static Bounce Loop_Integer_Common(
                 return nullptr;
         }
 
-        if (not IS_INTEGER(var))
+        if (not Is_Integer(var))
             fail (Error_Invalid_Type(VAL_TYPE(var)));
 
         if (REB_I64_ADD_OF(*state, bump, state))
@@ -288,25 +288,25 @@ static Bounce Loop_Number_Common(
     REBVAL *bump
 ){
     REBDEC s;
-    if (IS_INTEGER(start))
+    if (Is_Integer(start))
         s = cast(REBDEC, VAL_INT64(start));
-    else if (IS_DECIMAL(start) or IS_PERCENT(start))
+    else if (Is_Decimal(start) or Is_Percent(start))
         s = VAL_DECIMAL(start);
     else
         fail (start);
 
     REBDEC e;
-    if (IS_INTEGER(end))
+    if (Is_Integer(end))
         e = cast(REBDEC, VAL_INT64(end));
-    else if (IS_DECIMAL(end) or IS_PERCENT(end))
+    else if (Is_Decimal(end) or Is_Percent(end))
         e = VAL_DECIMAL(end);
     else
         fail (end);
 
     REBDEC b;
-    if (IS_INTEGER(bump))
+    if (Is_Integer(bump))
         b = cast(REBDEC, VAL_INT64(bump));
-    else if (IS_DECIMAL(bump) or IS_PERCENT(bump))
+    else if (Is_Decimal(bump) or Is_Percent(bump))
         b = VAL_DECIMAL(bump);
     else
         fail (bump);
@@ -348,7 +348,7 @@ static Bounce Loop_Number_Common(
                 return nullptr;
         }
 
-        if (not IS_DECIMAL(var))
+        if (not Is_Decimal(var))
             fail (Error_Invalid_Type(VAL_TYPE(var)));
 
         *state += b;
@@ -374,7 +374,7 @@ static Bounce Loop_Number_Common(
 REBVAL *Real_Var_From_Pseudo(REBVAL *pseudo_var) {
     if (Not_Cell_Flag(pseudo_var, BIND_NOTE_REUSE))
         return pseudo_var;
-    if (IS_BLANK(pseudo_var))  // e.g. `for-each _ [1 2 3] [...]`
+    if (Is_Blank(pseudo_var))  // e.g. `for-each _ [1 2 3] [...]`
         return nullptr;  // signal to throw generated quantity away
 
     // Note: these variables are fetched across running arbitrary user code.
@@ -418,24 +418,24 @@ DECLARE_NATIVE(cfor)
     REBVAL *var = CTX_VAR(context, 1);  // not movable, see #2274
 
     if (
-        IS_INTEGER(ARG(start))
-        and IS_INTEGER(ARG(end))
-        and IS_INTEGER(ARG(bump))
+        Is_Integer(ARG(start))
+        and Is_Integer(ARG(end))
+        and Is_Integer(ARG(bump))
     ){
         return Loop_Integer_Common(
             level_,
             var,
             ARG(body),
             VAL_INT64(ARG(start)),
-            IS_DECIMAL(ARG(end))
+            Is_Decimal(ARG(end))
                 ? cast(REBI64, VAL_DECIMAL(ARG(end)))
                 : VAL_INT64(ARG(end)),
             VAL_INT64(ARG(bump))
         );
     }
 
-    if (ANY_SERIES(ARG(start))) {
-        if (ANY_SERIES(ARG(end))) {
+    if (Any_Series(ARG(start))) {
+        if (Any_Series(ARG(end))) {
             return Loop_Series_Common(
                 level_,
                 var,
@@ -547,7 +547,7 @@ DECLARE_NATIVE(for_skip)
 
         if (Is_Nulled(var))
             fail (PARAM(word));
-        if (not ANY_SERIES(var))
+        if (not Any_Series(var))
             fail (var);
 
         // Increment via skip, which may go before 0 or after the tail of
@@ -653,7 +653,7 @@ DECLARE_NATIVE(cycle)
 
     const REBVAL *label = VAL_THROWN_LABEL(LEVEL);
     if (
-        IS_FRAME(label)
+        Is_Frame(label)
         and ACT_DISPATCHER(VAL_ACTION(label)) == &N_stop
     ){
         CATCH_THROWN(OUT, LEVEL);  // Unlike BREAK, STOP takes an arg--[1]
@@ -702,7 +702,7 @@ void Init_Loop_Each(Value(*) iterator, Value(*) data)
     // an overall vetting of "generic iteration" (is a poor substitute for).
     //
     assert(not Is_Api_Value(data));  // we will free API handles
-    if (ANY_SEQUENCE(data)) {
+    if (Any_Sequence(data)) {
         data = rebValue(Canon(AS), Canon(BLOCK_X), rebQ(data));
         rebUnmanage(data);
     }
@@ -719,19 +719,19 @@ void Init_Loop_Each(Value(*) iterator, Value(*) data)
         les->series = nullptr;
     }
     else {
-        if (ANY_SERIES(data)) {
+        if (Any_Series(data)) {
             les->series = VAL_SERIES(data);
             les->u.eser.index = VAL_INDEX(data);
             les->u.eser.len = VAL_LEN_HEAD(data);  // has HOLD, won't change
 
-            if (ANY_ARRAY(data))
+            if (Any_Array(data))
                 les->specifier = VAL_SPECIFIER(data);
         }
-        else if (ANY_CONTEXT(data)) {
+        else if (Any_Context(data)) {
             les->series = CTX_VARLIST(VAL_CONTEXT(data));
             Init_Evars(&les->u.evars, data);
         }
-        else if (IS_MAP(data)) {
+        else if (Is_Map(data)) {
             les->series = MAP_PAIRLIST(VAL_MAP(data));
             les->u.eser.index = 0;
             les->u.eser.len = Series_Used(les->series);  // immutable--has HOLD
@@ -745,7 +745,7 @@ void Init_Loop_Each(Value(*) iterator, Value(*) data)
         if (les->took_hold)
             Set_Series_Flag(les->series, FIXED_SIZE);
 
-        if (ANY_CONTEXT(data)) {
+        if (Any_Context(data)) {
             les->more_data = Did_Advance_Evars(&les->u.evars);
         }
         else {
@@ -967,7 +967,7 @@ void Shutdown_Loop_Each(Value(*) iterator)
     if (les->took_hold)  // release read-only lock
         Clear_Series_Flag(les->series, FIXED_SIZE);
 
-    if (ANY_CONTEXT(les->data))
+    if (Any_Context(les->data))
         Shutdown_Evars(&les->u.evars);
 
     if (Is_Api_Value(les->data))  // free data last (used above)
@@ -1022,7 +1022,7 @@ DECLARE_NATIVE(for_each)
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
-    if (IS_BLANK(data))  // same response as to empty series
+    if (Is_Blank(data))  // same response as to empty series
         return VOID;
 
     Context* pseudo_vars_ctx = Virtual_Bind_Deep_To_New_Context(
@@ -1132,7 +1132,7 @@ DECLARE_NATIVE(every)
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
-    if (IS_BLANK(data))  // same response as to empty series
+    if (Is_Blank(data))  // same response as to empty series
         return VOID;
 
     Context* pseudo_vars_ctx = Virtual_Bind_Deep_To_New_Context(
@@ -1170,7 +1170,7 @@ DECLARE_NATIVE(every)
     if (
         Is_Void(SPARE)
         or Is_Heavy_Void(SPARE)
-        or (IS_META_BLOCK(body) and Is_Meta_Of_Void(SPARE))
+        or (Is_Meta_Block(body) and Is_Meta_Of_Void(SPARE))
     ){
         Init_Heavy_Void(OUT);  // forget OUT for loop composition [1]
         goto next_iteration;  // ...but void does not NULL-lock output
@@ -1278,7 +1278,7 @@ DECLARE_NATIVE(remove_each)
     REBLEN start = VAL_INDEX(data);
 
     DECLARE_MOLD (mo);
-    if (ANY_ARRAY(data)) {
+    if (Any_Array(data)) {
         //
         // We're going to use NODE_FLAG_MARKED on the elements of data's
         // array for those items we wish to remove later.  [2]
@@ -1294,7 +1294,7 @@ DECLARE_NATIVE(remove_each)
 
     Set_Series_Info(series, HOLD);  // disallow mutations until finalize
 
-    REBLEN len = ANY_STRING(data)
+    REBLEN len = Any_String(data)
         ? String_Len(cast(String*, series))
         : Series_Used(series);  // temp read-only, this won't change
 
@@ -1313,18 +1313,18 @@ DECLARE_NATIVE(remove_each)
                 continue;  // the `for` loop setting variables
             }
 
-            if (ANY_ARRAY(data))
+            if (Any_Array(data))
                 Derelativize(
                     var,
                     Array_At(VAL_ARRAY(data), index),
                     VAL_SPECIFIER(data)
                 );
-            else if (IS_BINARY(data)) {
+            else if (Is_Binary(data)) {
                 Binary* bin = cast(Binary*, series);
                 Init_Integer(var, cast(REBI64, Binary_Head(bin)[index]));
             }
             else {
-                assert(ANY_STRING(data));
+                assert(Any_String(data));
                 Init_Char_Unchecked(
                     var,
                     Get_Char_At(cast(String*, series), index)
@@ -1350,7 +1350,7 @@ DECLARE_NATIVE(remove_each)
         if (Is_Void(OUT)) {
             keep = true;  // treat same as logic false (e.g. don't remove)
         }
-        else if (IS_LOGIC(OUT)) {  // pure logic required [6]
+        else if (Is_Logic(OUT)) {  // pure logic required [6]
             keep = not VAL_LOGIC(OUT);
         }
         else if (Is_Nulled(OUT)) {  // don't remove
@@ -1376,7 +1376,7 @@ DECLARE_NATIVE(remove_each)
             goto finalize_remove_each;
         }
 
-        if (ANY_ARRAY(data)) {
+        if (Any_Array(data)) {
             if (keep) {
                 start = index;
                 continue;  // keeping, don't mark for culling
@@ -1396,7 +1396,7 @@ DECLARE_NATIVE(remove_each)
 
             do {
                 assert(start <= len);
-                if (IS_BINARY(data)) {
+                if (Is_Binary(data)) {
                     Binary* bin = cast(Binary*, series);
                     Append_Ascii_Len(
                         mo->series,
@@ -1426,7 +1426,7 @@ DECLARE_NATIVE(remove_each)
     assert(Get_Series_Info(series, HOLD));
     Clear_Series_Info(series, HOLD);
 
-    if (ANY_ARRAY(data)) {
+    if (Any_Array(data)) {
         if (not threw and breaking) {  // clean marks, don't remove
             const Cell* tail;
             Cell* temp = VAL_ARRAY_Known_Mutable_AT(&tail, data);
@@ -1467,7 +1467,7 @@ DECLARE_NATIVE(remove_each)
 
         assert(removals == 0);  // didn't goto, so no removals
     }
-    else if (IS_BINARY(data)) {
+    else if (Is_Binary(data)) {
         if (not threw and breaking) {  // leave data unchanged
             Drop_Mold(mo);
             goto done_finalizing;
@@ -1495,7 +1495,7 @@ DECLARE_NATIVE(remove_each)
         Free_Unmanaged_Series(popped);  // now frees incoming series's data
     }
     else {
-        assert(ANY_STRING(data));
+        assert(Any_String(data));
         if (not threw and breaking) {  // leave data unchanged
             Drop_Mold(mo);
             goto done_finalizing;
@@ -1567,7 +1567,7 @@ DECLARE_NATIVE(map_each)
     // iterator does not exist yet (and would not be cheap) a QUOTED! BLOCK!
     // is used temporarily as a substitute for passing a block iterator.
     //
-    if (not IS_BLANK(ARG(data)))
+    if (not Is_Blank(ARG(data)))
         Quotify(ARG(data), 1);
 
     INIT_LVL_PHASE(LEVEL, ACT_IDENTITY(VAL_ACTION(Lib(MAP))));
@@ -1632,7 +1632,7 @@ DECLARE_NATIVE(map)
 
     assert(Is_Fresh(OUT));  // output only written during MAP if BREAK hit
 
-    if (IS_BLANK(data))  // same response as to empty series
+    if (Is_Blank(data))  // same response as to empty series
         return Init_Block(OUT, Make_Array(0));
 
     if (Is_Activation(data)) {
@@ -1642,9 +1642,9 @@ DECLARE_NATIVE(map)
         not Is_Quoted(data)
         or VAL_QUOTED_DEPTH(data) != 1
         or not (
-            ANY_SERIES(Unquotify(data, 1))
-            or ANY_PATH(data)  // has been unquoted
-            or ANY_CONTEXT(data)
+            Any_Series(Unquotify(data, 1))
+            or Any_Path(data)  // has been unquoted
+            or Any_Context(data)
         )
     ){
         fail ("MAP only supports one-level QUOTED! series/path/context ATM");
@@ -1767,7 +1767,7 @@ DECLARE_NATIVE(repeat)
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
-    if (IS_LOGIC(count)) {
+    if (Is_Logic(count)) {
         if (VAL_LOGIC(count) == false)
             return VOID;  // treat false as "don't run"
 
@@ -1794,7 +1794,7 @@ DECLARE_NATIVE(repeat)
             return nullptr;
     }
 
-    if (IS_LOGIC(count)) {
+    if (Is_Logic(count)) {
         assert(VAL_LOGIC(count) == true);  // false already returned
         return CATCH_CONTINUE_BRANCH(OUT, body);  // true infinite loops
     }
@@ -1848,19 +1848,19 @@ DECLARE_NATIVE(for)
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
-    if (IS_GROUP(body)) {
+    if (Is_Group(body)) {
         if (Eval_Value_Throws(SPARE, body, SPECIFIED))
             return THROWN;
         Move_Cell(body, SPARE);
     }
 
-    if (not IS_BLOCK(body))
+    if (not Is_Block(body))
         fail ("FOR has a new syntax, use CFOR for old arity-5 behavior.");
 
     if (Is_Quoted(value)) {
         Unquotify(value, 1);
 
-        if (not (ANY_SERIES(value) or ANY_SEQUENCE(value)))
+        if (not (Any_Series(value) or Any_Sequence(value)))
             fail (PARAM(value));
 
         // Delegate to FOR-EACH (note: in the future this will be the other
@@ -1874,7 +1874,7 @@ DECLARE_NATIVE(for)
         return BOUNCE_DELEGATE;
     }
 
-    if (IS_DECIMAL(value) or IS_PERCENT(value))
+    if (Is_Decimal(value) or Is_Percent(value))
         Init_Integer(value, Int64(value));
 
     REBI64 n = VAL_INT64(value);
@@ -1905,7 +1905,7 @@ DECLARE_NATIVE(for)
 
     REBVAL *var = CTX_VAR(VAL_CONTEXT(vars), 1);  // not movable, see #2274
 
-    if (not IS_INTEGER(var))
+    if (not Is_Integer(var))
         fail (Error_Invalid_Type(VAL_TYPE(var)));
 
     if (VAL_INT64(var) == VAL_INT64(value))

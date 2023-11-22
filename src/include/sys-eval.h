@@ -148,7 +148,7 @@ INLINE void Restart_Evaluator_Level(Level* L) {
 #define Init_Pushable_Refinement_Bound(out,symbol,context,index) \
     Init_Any_Word_Bound((out), REB_THE_WORD, (symbol), (context), (index))
 
-#define Is_Pushed_Refinement IS_THE_WORD
+#define Is_Pushed_Refinement Is_The_Word
 
 INLINE REBVAL *Refinify_Pushed_Refinement(REBVAL *v) {
     assert(Is_Pushed_Refinement(v));
@@ -156,7 +156,7 @@ INLINE REBVAL *Refinify_Pushed_Refinement(REBVAL *v) {
 }
 
 
-// Even though ANY_INERT() is a quick test, you can't skip the cost of level
+// Even though Any_Inert() is a quick test, you can't skip the cost of level
 // processing--due to enfix.  But a feed only looks ahead one unit at a time,
 // so advancing the feed past an inert item to find an enfix function means
 // you have to enter the level specially with ST_EVALUATOR_LOOKING_AHEAD.
@@ -170,7 +170,7 @@ INLINE bool Did_Init_Inert_Optimize_Complete(
     assert(Not_Feed_At_End(feed));  // would be wasting time to call
     assert(not (*flags & LEVEL_FLAG_BRANCH));  // it's a single step
 
-    if (not ANY_INERT(At_Feed(feed)))
+    if (not Any_Inert(At_Feed(feed)))
         return false;  // general case evaluation requires a level
 
     Literal_Next_In_Feed(out, feed);
@@ -361,7 +361,7 @@ INLINE bool Eval_Value_Core_Throws(
     const Cell* value,  // e.g. a BLOCK! here would just evaluate to itself!
     Specifier* specifier
 ){
-    if (ANY_INERT(value)) {
+    if (Any_Inert(value)) {
         Derelativize(out, value, specifier);
         return false;  // fast things that don't need levels (should inline)
     }
@@ -397,7 +397,7 @@ INLINE Bounce Native_Raised_Result(Level* level_, const void *p) {
         break; }
       case DETECTED_AS_CELL: {  // note: can be Is_Raised()
         Value(const*) cell = c_cast(REBVAL*, p);
-        assert(IS_ERROR(cell));
+        assert(Is_Error(cell));
         error = VAL_CONTEXT(cell);
         break; }
       default:

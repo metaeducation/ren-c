@@ -220,7 +220,7 @@ Bounce TO_Issue(Level* level_, enum Reb_Kind kind, const REBVAL *arg)
 {
     assert(VAL_TYPE(arg) != REB_ISSUE);  // !!! should call COPY?
 
-    if (ANY_STRING(arg) or ANY_WORD(arg)) {
+    if (Any_String(arg) or Any_Word(arg)) {
         Length len;
         Size size;
         Utf8(const*) utf8 = VAL_UTF8_LEN_SIZE_AT(&len, &size, arg);
@@ -377,7 +377,7 @@ REBTYPE(Issue)
         UNUSED(ARG(location));
 
         const Cell* picker = ARG(picker);
-        if (not IS_INTEGER(picker))
+        if (not Is_Integer(picker))
             fail (PARAM(picker));
 
         REBI64 n = VAL_INT64(picker);

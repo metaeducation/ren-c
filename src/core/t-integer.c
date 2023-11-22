@@ -54,7 +54,7 @@ Bounce MAKE_Integer(
     if (parent)
         return RAISE(Error_Bad_Make_Parent(kind, unwrap(parent)));
 
-    if (IS_LOGIC(arg)) {
+    if (Is_Logic(arg)) {
         //
         // !!! Due to Rebol's policies on conditional truth and falsehood,
         // it refuses to say TO FALSE is 0.  MAKE has shades of meaning
@@ -92,7 +92,7 @@ Bounce TO_Integer(Level* level_, enum Reb_Kind kind, const REBVAL *arg)
     assert(kind == REB_INTEGER);
     UNUSED(kind);
 
-    if (IS_ISSUE(arg))
+    if (Is_Issue(arg))
         return RAISE(
             "Use CODEPOINT OF for INTEGER! from single-character ISSUE!"
         );
@@ -155,22 +155,22 @@ Context* Maybe_Value_To_Int64(
     // !!! Code extracted from REBTYPE(Integer)'s A_MAKE and A_TO cases
     // Use SWITCH instead of IF chain? (was written w/ANY_STR test)
 
-    if (IS_INTEGER(value)) {
+    if (Is_Integer(value)) {
         Copy_Cell(out, value);
         goto check_sign;
     }
-    if (IS_DECIMAL(value) || IS_PERCENT(value)) {
+    if (Is_Decimal(value) || Is_Percent(value)) {
         if (VAL_DECIMAL(value) < MIN_D64 || VAL_DECIMAL(value) >= MAX_D64)
             return Error_Overflow_Raw();
 
         Init_Integer(out, cast(REBI64, VAL_DECIMAL(value)));
         goto check_sign;
     }
-    else if (IS_MONEY(value)) {
+    else if (Is_Money(value)) {
         Init_Integer(out, deci_to_int(VAL_MONEY_AMOUNT(value)));
         goto check_sign;
     }
-    else if (IS_BINARY(value)) { // must be before ANY_STRING() test...
+    else if (Is_Binary(value)) { // must be before Any_String() test...
 
         // !!! While historical Rebol TO INTEGER! of BINARY! would interpret
         // the bytes as a big-endian form of their internal representations,
@@ -199,7 +199,7 @@ Context* Maybe_Value_To_Int64(
         rebRelease(result);
         return nullptr;
     }
-    else if (IS_ISSUE(value) or ANY_STRING(value)) {
+    else if (Is_Issue(value) or Any_String(value)) {
         Size size;
         const Length max_len = VAL_LEN_AT(value);  // e.g. "no maximum"
         const Byte* bp = Analyze_String_For_Scan(&size, value, max_len);
@@ -226,7 +226,7 @@ Context* Maybe_Value_To_Int64(
 
         return Error_Bad_Make(REB_INTEGER, value);
     }
-    else if (IS_LOGIC(value)) {
+    else if (Is_Logic(value)) {
         //
         // Rebol's choice is that no integer is uniquely representative of
         // "falsehood" condition, e.g. `if 0 [print "this prints"]`.  So to
@@ -234,7 +234,7 @@ Context* Maybe_Value_To_Int64(
         //
         return Error_Bad_Make(REB_INTEGER, value);
     }
-    else if (IS_TIME(value)) {
+    else if (Is_Time(value)) {
         Init_Integer(out, SECS_FROM_NANO(VAL_NANO(value))); // always unsigned
         return nullptr;
     }
@@ -292,7 +292,7 @@ REBTYPE(Integer)
     ){
         REBVAL *val2 = D_ARG(2);
 
-        if (IS_INTEGER(val2))
+        if (Is_Integer(val2))
             arg = VAL_INT64(val2);
         else if (IS_CHAR(val2))
             arg = VAL_CHAR(val2);
@@ -316,20 +316,20 @@ REBTYPE(Integer)
             case SYM_DIVIDE:
             case SYM_REMAINDER:
             case SYM_POWER:
-                if (IS_DECIMAL(val2) || IS_PERCENT(val2)) {
+                if (Is_Decimal(val2) || Is_Percent(val2)) {
                     Init_Decimal(val, cast(REBDEC, num));  // convert
                     return T_Decimal(level_, verb);
                 }
-                if (IS_MONEY(val2)) {
+                if (Is_Money(val2)) {
                     Init_Money(val, int_to_deci(VAL_INT64(val)));
                     return T_Money(level_, verb);
                 }
                 if (n > 0) {
-                    if (IS_TIME(val2)) {
+                    if (Is_Time(val2)) {
                         Init_Time_Nanoseconds(val, SEC_TIME(VAL_INT64(val)));
                         return T_Time(level_, verb);
                     }
-                    if (IS_DATE(val2))
+                    if (Is_Date(val2))
                         return T_Date(level_, verb);
                 }
 
@@ -428,7 +428,7 @@ REBTYPE(Integer)
 
         REBVAL *to = ARG(to);
 
-        if (IS_MONEY(to))
+        if (Is_Money(to))
             return Init_Money(
                 OUT,
                 Round_Deci(
@@ -436,7 +436,7 @@ REBTYPE(Integer)
                 )
             );
 
-        if (IS_DECIMAL(to) || IS_PERCENT(to)) {
+        if (Is_Decimal(to) || Is_Percent(to)) {
             REBDEC dec = Round_Dec(
                 cast(REBDEC, num), level_, VAL_DECIMAL(to)
             );
@@ -448,7 +448,7 @@ REBTYPE(Integer)
             return OUT;
         }
 
-        if (IS_TIME(ARG(to)))
+        if (Is_Time(ARG(to)))
             fail (PARAM(to));
 
         return Init_Integer(OUT, Round_Int(num, level_, VAL_INT64(to))); }

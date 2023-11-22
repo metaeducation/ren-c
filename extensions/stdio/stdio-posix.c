@@ -102,7 +102,7 @@ bool Read_Stdin_Byte_Interrupted(bool *eof, Byte* out) {
 //
 void Write_IO(const REBVAL *data, REBLEN len)
 {
-    assert(IS_TEXT(data) or IS_BINARY(data));
+    assert(Is_Text(data) or Is_Binary(data));
 
     if (STDOUT_FILENO < 0)
         return;  // !!! This used to do nothing (?)
@@ -113,7 +113,7 @@ void Write_IO(const REBVAL *data, REBLEN len)
             assert(len == 1);
             Term_Insert(Term_IO, data);
         }
-        else if (IS_TEXT(data)) {
+        else if (Is_Text(data)) {
             if (cast(REBLEN, rebUnbox("length of", data)) == len)
                 Term_Insert(Term_IO, data);
             else {
@@ -154,7 +154,7 @@ void Write_IO(const REBVAL *data, REBLEN len)
     {
         const Byte* bp;
         Size size;
-        if (IS_BINARY(data)) {
+        if (Is_Binary(data)) {
             bp = VAL_DATA_AT(data);
             size = len;
         }

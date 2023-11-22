@@ -74,7 +74,7 @@
     }
 
     INLINE Specifier* VAL_SPECIFIER(NoQuote(const Cell*) v) {
-        assert(ANY_ARRAYLIKE(v));
+        assert(Any_Arraylike(v));
 
         Array* a = cast(Array*, BINDING(v));
         if (not a)

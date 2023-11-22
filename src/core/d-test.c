@@ -166,7 +166,7 @@ DECLARE_NATIVE(fuzz)
     UNUSED(ARG(factor));
     fail ("FUZZ is only availble in DEBUG builds");
   #else
-    if (IS_INTEGER(ARG(factor))) {
+    if (Is_Integer(ARG(factor))) {
         g_mem.fuzz_factor = - VAL_INT32(ARG(factor));  // negative counts ticks
     }
     else {
@@ -175,7 +175,7 @@ DECLARE_NATIVE(fuzz)
         // amount it's a hit.  1.0 is thus 10000, which will always trigger.
         // 0.0 is thus 0, which never will.
         //
-        assert(IS_PERCENT(ARG(factor)));
+        assert(Is_Percent(ARG(factor)));
         g_mem.fuzz_factor = 10000 * VAL_DECIMAL(ARG(factor));
     }
     return NONE;

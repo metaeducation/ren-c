@@ -169,11 +169,11 @@ void Protect_Value(const Cell* v, Flags flags)
     if (Is_Isotope(v))
         return;
 
-    if (ANY_SERIES(v))
+    if (Any_Series(v))
         Protect_Series(VAL_SERIES(v), VAL_INDEX(v), flags);
-    else if (IS_MAP(v))
+    else if (Is_Map(v))
         Protect_Series(MAP_PAIRLIST(VAL_MAP(v)), 0, flags);
-    else if (ANY_CONTEXT(v))
+    else if (Any_Context(v))
         Protect_Context(VAL_CONTEXT(v), flags);
 }
 
@@ -257,7 +257,7 @@ void Protect_Context(Context* c, Flags flags)
 //
 static void Protect_Word_Value(REBVAL *word, Flags flags)
 {
-    if (ANY_WORD(word) and IS_WORD_BOUND(word)) {
+    if (Any_Word(word) and IS_WORD_BOUND(word)) {
         const REBVAL* var = Lookup_Word_May_Fail(word, SPECIFIED);
 
         Protect_Var(var, flags);
@@ -266,7 +266,7 @@ static void Protect_Word_Value(REBVAL *word, Flags flags)
             Uncolor(var);
         }
     }
-    else if (ANY_SEQUENCE(word)) {
+    else if (Any_Sequence(word)) {
         fail ("Sequences no longer handled in Protect_Unprotect");
     }
 }
@@ -292,12 +292,12 @@ static Bounce Protect_Unprotect_Core(Level* level_, Flags flags)
     //if (REF(words))
     //  flags |= PROT_WORDS;
 
-    if (ANY_WORD(value) || ANY_SEQUENCE(value)) {
+    if (Any_Word(value) || Any_Sequence(value)) {
         Protect_Word_Value(value, flags); // will unmark if deep
         return COPY(ARG(value));
     }
 
-    if (IS_BLOCK(value)) {
+    if (Is_Block(value)) {
         if (REF(words)) {
             const Cell* tail;
             const Cell* item = VAL_ARRAY_AT(&tail, value);
@@ -316,7 +316,7 @@ static Bounce Protect_Unprotect_Core(Level* level_, Flags flags)
             DECLARE_STABLE (safe);
 
             for (; item != tail; ++item) {
-                if (IS_WORD(item)) {
+                if (Is_Word(item)) {
                     //
                     // Since we *are* PROTECT we allow ourselves to get mutable
                     // references to even protected values to protect them.
@@ -326,7 +326,7 @@ static Bounce Protect_Unprotect_Core(Level* level_, Flags flags)
                         Lookup_Word_May_Fail(item, VAL_SPECIFIER(value))
                     );
                 }
-                else if (IS_PATH(value)) {
+                else if (Is_Path(value)) {
                     fail ("PATH! handling no longer in Protect_Unprotect");
                 }
                 else {
@@ -376,7 +376,7 @@ DECLARE_NATIVE(protect)
     INCLUDE_PARAMS_OF_PROTECT;
 
     REBVAL *v = ARG(value);
-    if (ANY_WORD(v) or ANY_TUPLE(v)) {
+    if (Any_Word(v) or Any_Tuple(v)) {
         if (REF(hide))
             Init_Word(SPARE, Canon(HIDE));
         else
@@ -439,7 +439,7 @@ DECLARE_NATIVE(unprotect)
         fail ("Cannot un-hide an object field once hidden");
 
     REBVAL *v = ARG(value);
-    if (ANY_WORD(v) or ANY_TUPLE(v)) {
+    if (Any_Word(v) or Any_Tuple(v)) {
         Init_Word(SPARE, Canon(UNPROTECT));
         if (Set_Var_Core_Updater_Throws(
             OUT,
@@ -528,7 +528,7 @@ void Force_Value_Frozen_Core(
     if (heart == REB_FRAME and Is_Frame_Details(v))
         return;  // special form, immutable
 
-    if (ANY_ARRAY_KIND(heart)) {
+    if (Any_Array_Kind(heart)) {
         const Array* a = VAL_ARRAY(v);
         if (deep)
             Freeze_Array_Deep(a);
@@ -537,7 +537,7 @@ void Force_Value_Frozen_Core(
         if (locker)
             Set_Series_Info(a, AUTO_LOCKED);
     }
-    else if (ANY_CONTEXT_KIND(heart)) {
+    else if (Any_Context_Kind(heart)) {
         Context* c = VAL_CONTEXT(v);
         if (deep)
             Deep_Freeze_Context(c);
@@ -546,14 +546,14 @@ void Force_Value_Frozen_Core(
         if (locker)
             Set_Series_Info(CTX_VARLIST(c), AUTO_LOCKED);
     }
-    else if (ANY_SERIES_KIND(heart)) {
+    else if (Any_Series_Kind(heart)) {
         const Series* s = VAL_SERIES(v);
         Freeze_Series(s);
         UNUSED(deep);
         if (locker)
             Set_Series_Info(s, AUTO_LOCKED);
     }
-    else if (ANY_SEQUENCE_KIND(heart)) {
+    else if (Any_Sequence_Kind(heart)) {
         // No freezing needed
     }
     else

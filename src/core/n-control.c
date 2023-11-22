@@ -119,7 +119,7 @@ Bounce Group_Branch_Executor(Level* level_)
 
 } group_result_in_spare: {  //////////////////////////////////////////////////
 
-    if (ANY_GROUP(SPARE))
+    if (Any_Group(SPARE))
         fail (Error_Bad_Branch_Type_Raw());  // stop infinite recursion (good?)
 
     Atom(const*) with = Is_Fresh(OUT) ? nullptr : OUT;  // with here [1]
@@ -328,7 +328,7 @@ static Bounce Then_Else_Isotopic_Object_Helper(
     if (then_hook and else_hook)  // THEN is likely passthru if both
         return DELEGATE(OUT, hook, branch);  // not DELEGATE_BRANCH [5]
 
-    if (not IS_FRAME(hook))  // if not full control, assume must use BRANCH
+    if (not Is_Frame(hook))  // if not full control, assume must use BRANCH
         fail ("non-FRAME! found in THEN or ELSE method of lazy object");
 
     return DELEGATE_BRANCH(OUT, hook, branch);  // BRANCH for safety [6]
@@ -667,7 +667,7 @@ DECLARE_NATIVE(match)
         if (not Is_Nulled(v))
             return nullptr;
     }
-    else if (IS_LOGIC(test)) {
+    else if (Is_Logic(test)) {
         if (Is_Truthy(v) != VAL_LOGIC(test))
             return nullptr;
     }
@@ -791,7 +791,7 @@ DECLARE_NATIVE(all)
 
     Flags flags = LEVEL_FLAG_TRAMPOLINE_KEEPALIVE;
 
-    if (IS_THE_BLOCK(block))
+    if (Is_The_Block(block))
         flags |= EVAL_EXECUTOR_FLAG_NO_EVALUATIONS;
 
     Level* sub = Make_Level_At(block, flags);
@@ -924,7 +924,7 @@ DECLARE_NATIVE(any)
 
     Flags flags = LEVEL_FLAG_TRAMPOLINE_KEEPALIVE;
 
-    if (IS_THE_BLOCK(block))
+    if (Is_The_Block(block))
         flags |= EVAL_EXECUTOR_FLAG_NO_EVALUATIONS;
 
     Level* sub = Make_Level_At(block, flags);
@@ -1142,7 +1142,7 @@ DECLARE_NATIVE(case)
     const Cell* branch = Lookback_While_Fetching_Next(SUBLEVEL);
 
     if (not matched) {
-        if (not IS_GET_GROUP(branch))
+        if (not Is_Get_Group(branch))
             goto handle_next_clause;
         else {
             // GET-GROUP! run even on no-match (see IF), but result discarded
@@ -1296,7 +1296,7 @@ DECLARE_NATIVE(switch)
     if (REF(type) and REF(predicate))
         fail (Error_Bad_Refines_Raw());
 
-    if (IS_BLOCK(left) and Get_Cell_Flag(left, UNEVALUATED))
+    if (Is_Block(left) and Get_Cell_Flag(left, UNEVALUATED))
         fail (Error_Block_Switch_Raw(left));  // `switch [x] [...]` safeguard
 
     Level* sub = Make_Level_At(
@@ -1315,7 +1315,7 @@ DECLARE_NATIVE(switch)
 
     const Cell* at = At_Level(SUBLEVEL);
 
-    if (IS_BLOCK(at) or IS_FRAME(at)) {  // seen with no match in effect
+    if (Is_Block(at) or Is_Frame(at)) {  // seen with no match in effect
         Fetch_Next_Forget_Lookback(SUBLEVEL);  // just skip over it
         goto next_switch_step;
     }
@@ -1336,7 +1336,7 @@ DECLARE_NATIVE(switch)
     if (REF(type)) {
         Decay_If_Unstable(SPARE);
 
-        if (not ANY_TYPE_VALUE(SPARE))
+        if (not Any_Type_Value(SPARE))
             fail ("SWITCH/TYPE requires comparisons to TYPE-XXX!");
 
         if (not TYPE_CHECK(stable_SPARE, left))
@@ -1372,7 +1372,7 @@ DECLARE_NATIVE(switch)
         if (at == nullptr)
             goto reached_end;
 
-        if (IS_BLOCK(at) or IS_META_BLOCK(at) or IS_FRAME(at))
+        if (Is_Block(at) or Is_Meta_Block(at) or Is_Frame(at))
             break;
 
         Fetch_Next_Forget_Lookback(SUBLEVEL);
@@ -1546,14 +1546,14 @@ DECLARE_NATIVE(catch)
     const REBVAL *label = VAL_THROWN_LABEL(LEVEL);
 
     if (REF(any) and not (
-        IS_FRAME(label)
+        Is_Frame(label)
         and ACT_DISPATCHER(VAL_ACTION(label)) == &N_quit
     )){
         goto was_caught;
     }
 
     if (REF(quit) and (
-        IS_FRAME(label)
+        Is_Frame(label)
         and ACT_DISPATCHER(VAL_ACTION(label)) == &N_quit
     )){
         goto was_caught;
@@ -1567,7 +1567,7 @@ DECLARE_NATIVE(catch)
         REBVAL *temp1 = ARG(quit);
         REBVAL *temp2 = ARG(any);
 
-        if (IS_BLOCK(ARG(name))) {
+        if (Is_Block(ARG(name))) {
             //
             // Test all the words in the block for a match to catch
 
@@ -1577,7 +1577,7 @@ DECLARE_NATIVE(catch)
                 //
                 // !!! Should we test a typeset for illegal name types?
                 //
-                if (IS_BLOCK(candidate))
+                if (Is_Block(candidate))
                     fail (PARAM(name));
 
                 Derelativize(temp1, candidate, VAL_SPECIFIER(ARG(name)));

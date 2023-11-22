@@ -111,7 +111,7 @@ bool Is_User_Native(Action* act) {
 
     Details* details = Phase_Details(act);
     assert(Array_Len(details) >= 2); // ACTION_FLAG_NATIVE needs source+context
-    return IS_TEXT(DETAILS_AT(details, IDX_NATIVE_BODY));
+    return Is_Text(DETAILS_AT(details, IDX_NATIVE_BODY));
 }
 
 
@@ -163,7 +163,7 @@ static void Process_Text_Helper_Core(
     const REBVAL *text,
     const char *label
 ){
-    assert(IS_TEXT(text));
+    assert(Is_Text(text));
 
     char* utf8 = rebSpell(text);
     int status = some_tcc_api(state, utf8);
@@ -481,7 +481,7 @@ DECLARE_NATIVE(compile_p)
         const Cell* tail;
         const Cell* item = VAL_ARRAY_AT(&tail, compilables);
         for (; item != tail; ++item) {
-            if (not IS_TEXT(item))
+            if (not Is_Text(item))
                 fail ("If COMPILE*/FILES, compilables must be TEXT! paths");
 
             char *filename_utf8 = rebSpell(SPECIFIC(item));
@@ -509,7 +509,7 @@ DECLARE_NATIVE(compile_p)
         const Cell* tail;
         const Cell* item = VAL_ARRAY_AT(&tail, compilables);
         for (; item != tail; ++item) {
-            if (IS_FRAME(item)) {
+            if (Is_Frame(item)) {
                 assert(Is_User_Native(VAL_ACTION(item)));
 
                 // Remember this function, because we're going to need to come
@@ -541,7 +541,7 @@ DECLARE_NATIVE(compile_p)
 
                 Append_Ascii(mo->series, "}\n\n");
             }
-            else if (IS_TEXT(item)) {
+            else if (Is_Text(item)) {
                 //
                 // A string passed to COMPILE in the list of things-to-compile
                 // is treated as just a fragment of code.  This allows writing

@@ -153,7 +153,7 @@ inline static bool Do_Logic_Right_Side_Throws(
     Sink(Value(*)) out,
     const REBVAL *right
 ){
-    if (IS_GROUP(right)) {
+    if (Is_Group(right)) {
         Atom(*) atom_out = out;
         if (Do_Any_Array_At_Throws(atom_out, right, SPECIFIED))
             return true;
@@ -161,7 +161,7 @@ inline static bool Do_Logic_Right_Side_Throws(
         return false;
     }
 
-    assert(IS_WORD(right) or IS_TUPLE(right));
+    assert(Is_Word(right) or Is_Tuple(right));
 
     Get_Var_May_Fail(out, right, SPECIFIED, false);
 
@@ -297,10 +297,10 @@ DECLARE_NATIVE(unless)
 
 inline static bool Math_Arg_For_Logic(REBVAL *arg)
 {
-    if (IS_LOGIC(arg))
+    if (Is_Logic(arg))
         return VAL_LOGIC(arg);
 
-    if (IS_BLANK(arg))
+    if (Is_Blank(arg))
         return false;
 
     fail (Error_Unexpected_Type(REB_ISOTOPE, VAL_TYPE(arg)));
@@ -337,7 +337,7 @@ Bounce TO_Isotope(Level* level_, enum Reb_Kind kind, const REBVAL *data) {
 //
 REBTYPE(Isotope)
 {
-    if (not IS_LOGIC(D_ARG(1))) {
+    if (not Is_Logic(D_ARG(1))) {
         //
         // Need a special exemption for COPY on ACTION! isotopes.
         //

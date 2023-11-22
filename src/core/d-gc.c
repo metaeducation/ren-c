@@ -48,7 +48,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
 
     Series* binding;
     if (
-        IS_BINDABLE_KIND(heart)
+        Is_Bindable_Kind(heart)
         and (binding = BINDING(v))
         and not IS_SYMBOL(binding)
         and Not_Series_Flag(binding, INACCESSIBLE)
@@ -163,7 +163,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
             assert(Is_Node_Marked(a));
 
             Cell* single = Array_Single(a);
-            assert(IS_HANDLE(single));
+            assert(Is_Handle(single));
             assert(VAL_HANDLE_SINGULAR(single) == a);
             if (v != single) {
                 //
@@ -239,12 +239,12 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
             Value(*) body = DETAILS_AT(details, IDX_NATIVE_BODY);
             Value(*) context = DETAILS_AT(details, IDX_NATIVE_CONTEXT);
             assert(
-                IS_BLANK(body)
-                or IS_HANDLE(body)  // Intrinsics use the slot for Intrinsic*
-                or IS_TEXT(body)  // TCC uses the slot for "source"
-                or IS_WORD(body)  // GENERIC uses the slot for the "verb"
+                Is_Blank(body)
+                or Is_Handle(body)  // Intrinsics use the slot for Intrinsic*
+                or Is_Text(body)  // TCC uses the slot for "source"
+                or Is_Word(body)  // GENERIC uses the slot for the "verb"
             );
-            assert(ANY_CONTEXT(context));
+            assert(Any_Context(context));
         }
 
         // We used to check the [0] slot of the details holds an archetype
@@ -252,7 +252,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
         // (by design), see HIJACK and COPY of actions for why.
         //
         REBVAL *archetype = Phase_Archetype(a);
-        assert(IS_FRAME(archetype));
+        assert(Is_Frame(archetype));
         break; }
 
       mark_object:
@@ -382,7 +382,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
             const Cell* tail = Array_Tail(a);
             const Cell* item = Array_Head(a);
             for (; item != tail; ++item)
-                assert(not ANY_PATH_KIND(VAL_TYPE_UNCHECKED(item)));
+                assert(not Any_Path_Kind(VAL_TYPE_UNCHECKED(item)));
             assert(Is_Node_Marked(a));
             break; }
 
@@ -472,7 +472,7 @@ void Assert_Array_Marked_Correctly(const Array* a) {
 
     if (IS_DETAILS(a)) {
         const Cell* archetype = Array_Head(a);
-        assert(IS_FRAME(archetype));
+        assert(Is_Frame(archetype));
         assert(VAL_FRAME_BINDING(archetype) == UNBOUND);
 
         // These queueings cannot be done in Queue_Mark_Function_Deep
@@ -492,7 +492,7 @@ void Assert_Array_Marked_Correctly(const Array* a) {
 
         // Currently only FRAME! archetypes use binding
         //
-        assert(ANY_CONTEXT(archetype));
+        assert(Any_Context(archetype));
         assert(
             BINDING(archetype) == UNBOUND
             or VAL_TYPE(archetype) == REB_FRAME
@@ -515,13 +515,13 @@ void Assert_Array_Marked_Correctly(const Array* a) {
             // There's nothing to mark for GC since the frame is on the
             // stack, which should preserve the function paramlist.
             //
-            assert(IS_FRAME(archetype));
+            assert(Is_Frame(archetype));
         }
         else {
             KeyList* keylist = cast(KeyList*, keysource);
             assert(IS_KEYLIST(keylist));
 
-            if (IS_FRAME(archetype)) {
+            if (Is_Frame(archetype)) {
                 // Frames use paramlists as their "keylist", there is no
                 // place to put an ancestor link.
             }

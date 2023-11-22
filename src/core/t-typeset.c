@@ -164,7 +164,7 @@ Array* Add_Parameter_Bits_Core(
 
     const Cell* item = head;
     for (; item != tail; ++item) {
-        if (IS_TAG(item)) {
+        if (Is_Tag(item)) {
             bool strict = false;
 
             if (

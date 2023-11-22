@@ -310,7 +310,7 @@ INLINE Series* SPC_BINDING(Specifier* specifier)
 {
     assert(specifier != UNBOUND);
     const REBVAL *rootvar = CTX_ARCHETYPE(cast(Context*, specifier));  // [1]
-    assert(IS_FRAME(rootvar));
+    assert(Is_Frame(rootvar));
     return BINDING(rootvar);
 }
 
@@ -343,7 +343,7 @@ INLINE void INIT_BINDING_MAY_MANAGE(
 // action, requiring a frame specifier to fully resolve).
 //
 INLINE bool IS_WORD_UNBOUND(const Cell* v) {
-    assert(ANY_WORDLIKE(v));
+    assert(Any_Wordlike(v));
     return BINDING(v) == UNBOUND;
 }
 
@@ -359,12 +359,12 @@ INLINE REBLEN VAL_WORD_INDEX(const Cell* v) {
 }
 
 INLINE Array* VAL_WORD_BINDING(const Cell* v) {
-    assert(ANY_WORDLIKE(v));
+    assert(Any_Wordlike(v));
     return cast(Array*, BINDING(v));  // could be nullptr / UNBOUND
 }
 
 INLINE void INIT_VAL_WORD_BINDING(Cell* v, const Series* binding) {
-    assert(ANY_WORDLIKE(v));
+    assert(Any_Wordlike(v));
 
     mutable_BINDING(v) = binding;
 
@@ -409,7 +409,7 @@ INLINE REBVAL* Unrelativize(Cell* out, const Cell* v) {
     Unrelativize(Alloc_Value(), (v))
 
 INLINE void Unbind_Any_Word(Cell* v) {
-    assert(ANY_WORDLIKE(v));
+    assert(Any_Wordlike(v));
     VAL_WORD_INDEX_U32(v) = 0;
     mutable_BINDING(v) = nullptr;
 }
@@ -510,7 +510,7 @@ INLINE const REBVAL *Get_Word_May_Fail(
     Specifier* specifier
 ){
     const REBVAL *var = Lookup_Word_May_Fail(any_word, specifier);
-    if (Is_Isotope(var) and not IS_LOGIC(var))
+    if (Is_Isotope(var) and not Is_Logic(var))
         fail (Error_Bad_Word_Get(any_word, var));
 
     return Copy_Cell(out, var);
@@ -618,7 +618,7 @@ INLINE REBVAL *Derelativize_Untracked(
     // The specifier is not going to have a say in the derelativized cell.
     // This means any information it encodes must be taken into account now.
     //
-    if (ANY_WORDLIKE(v)) {
+    if (Any_Wordlike(v)) {
         REBLEN index;
         Series* s = try_unwrap(
             Get_Word_Container(&index, v, specifier, ATTACH_COPY)
@@ -637,7 +637,7 @@ INLINE REBVAL *Derelativize_Untracked(
 
         return cast(REBVAL*, out);
     }
-    else if (ANY_ARRAYLIKE(v)) {
+    else if (Any_Arraylike(v)) {
         //
         // The job of an array in a derelativize operation is to carry along
         // the specifier.  However, it cannot lose any prior existing info

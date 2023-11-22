@@ -330,7 +330,7 @@ bool Specialize_Action_Throws(
         if (Is_Specialized(param))
             continue;
 
-        assert(IS_PARAMETER(param));
+        assert(Is_Parameter(param));
 
         // !!! Current entanglements of wanting to get help information for
         // return and output parameters means they are exposed to the user
@@ -741,7 +741,7 @@ Phase* Alloc_Action_From_Exemplar(
         // https://forum.rebol.info/t/1413
         //
         if (Is_None(arg)) {
-            assert(IS_PARAMETER(param));
+            assert(Is_Parameter(param));
             Copy_Cell(arg, param);
             continue;
         }

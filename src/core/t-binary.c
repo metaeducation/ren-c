@@ -79,7 +79,7 @@ static Binary* Make_Binary_BE64(const REBVAL *arg)
     REBI64 i;
     REBDEC d;
     const Byte* cp;
-    if (IS_INTEGER(arg)) {
+    if (Is_Integer(arg)) {
         assert(sizeof(REBI64) == 8);
         i = VAL_INT64(arg);
         cp = c_cast(Byte*, &i);
@@ -197,7 +197,7 @@ Bounce MAKE_Binary(
     if (parent)
         fail (Error_Bad_Make_Parent(kind, unwrap(parent)));
 
-    if (IS_INTEGER(def)) {
+    if (Is_Integer(def)) {
         //
         // !!! R3-Alpha tolerated decimal, e.g. `make string! 3.14`, which
         // is semantically nebulous (round up, down?) and generally bad.
@@ -205,7 +205,7 @@ Bounce MAKE_Binary(
         return Init_Binary(OUT, Make_Binary(Int32s(def, 0)));
     }
 
-    if (IS_BLOCK(def)) {  // was construction syntax, #[binary [#{0001} 2]]
+    if (Is_Block(def)) {  // was construction syntax, #[binary [#{0001} 2]]
         rebPushContinuation(
             cast(REBVAL*, OUT),
             LEVEL_MASK_NONE,
@@ -227,7 +227,7 @@ Bounce TO_Binary(Level* level_, enum Reb_Kind kind, const REBVAL *arg)
     assert(kind == REB_BINARY);
     UNUSED(kind);
 
-    if (IS_INTEGER(arg) or IS_DECIMAL(arg))
+    if (Is_Integer(arg) or Is_Decimal(arg))
         return Init_Series_Cell(OUT, REB_BINARY, Make_Binary_BE64(arg));
 
     return MAKE_TO_Binary_Common(level_, arg);
@@ -312,7 +312,7 @@ void MF_Binary(REB_MOLD *mo, NoQuote(const Cell*) v, bool form)
 REBTYPE(Binary)
 {
     REBVAL *v = D_ARG(1);
-    assert(IS_BINARY(v));
+    assert(Is_Binary(v));
 
     Option(SymId) id = ID_OF_SYMBOL(verb);
 
@@ -351,7 +351,7 @@ REBTYPE(Binary)
         if (IS_CHAR(setval)) {
             i = VAL_CHAR(setval);
         }
-        else if (IS_INTEGER(setval)) {
+        else if (Is_Integer(setval)) {
             i = Int32(setval);
         }
         else {
@@ -434,7 +434,7 @@ REBTYPE(Binary)
         else if (Is_Isotope(arg)) {  // only SPLICE! in typecheck
             fail (Error_Bad_Isotope(arg));  // ...but that doesn't filter yet
         }
-        else if (ANY_ARRAY(arg) or ANY_SEQUENCE(arg))
+        else if (Any_Array(arg) or Any_Sequence(arg))
             fail (ARG(value));
 
         VAL_INDEX_RAW(v) = Modify_String_Or_Binary(
@@ -594,7 +594,7 @@ REBTYPE(Binary)
       case SYM_BITWISE_XOR:
       case SYM_BITWISE_AND_NOT: {
         REBVAL *arg = D_ARG(2);
-        if (not IS_BINARY(arg))
+        if (not Is_Binary(arg))
             fail (Error_Math_Args(VAL_TYPE(arg), verb));
 
         Size t0;
@@ -688,9 +688,9 @@ REBTYPE(Binary)
         Binary* bin = VAL_BINARY_Ensure_Mutable(v);
 
         REBINT amount;
-        if (IS_INTEGER(arg))
+        if (Is_Integer(arg))
             amount = VAL_INT32(arg);
-        else if (IS_BINARY(arg))
+        else if (Is_Binary(arg))
             fail (arg); // should work
         else
             fail (arg); // what about other types?

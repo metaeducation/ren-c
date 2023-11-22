@@ -707,7 +707,7 @@ INLINE Bounce Native_None_Result_Untracked(
     Activatify(Init_Frame_Details_Core(TRACK(out), (a), (label), (binding)))
 
 INLINE Value(*) Activatify(Value(*) v) {
-    assert(IS_FRAME(v) and QUOTE_BYTE(v) == UNQUOTED_1);
+    assert(Is_Frame(v) and QUOTE_BYTE(v) == UNQUOTED_1);
     QUOTE_BYTE(v) = ISOTOPE_0;
     return v;
 }

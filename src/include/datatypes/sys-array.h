@@ -378,7 +378,7 @@ INLINE Array* Copy_Array_At_Extra_Deep_Flags_Managed(
 // account; they strictly operate on the array series
 //
 INLINE const Array* VAL_ARRAY(NoQuote(const Cell*) v) {
-    assert(ANY_ARRAYLIKE(v));
+    assert(Any_Arraylike(v));
 
     const Array* a = cast(Array*, Cell_Node1(v));
     if (Get_Series_Flag(a, INACCESSIBLE))
@@ -546,12 +546,12 @@ INLINE Cell* Init_Relative_Block_At(
 // https://forum.rebol.info/t/doubled-groups-as-a-dialecting-tool/1893
 //
 INLINE bool Is_Any_Doubled_Group(NoQuote(const Cell*) group) {
-    assert(ANY_GROUP_KIND(Cell_Heart(group)));
+    assert(Any_Group_Kind(Cell_Heart(group)));
     const Cell* tail;
     const Cell* inner = VAL_ARRAY_AT(&tail, group);
     if (inner + 1 != tail)  // should be exactly one item
         return false;
-    return IS_GROUP(inner);  // if true, it's a ((...)) GROUP!
+    return Is_Group(inner);  // if true, it's a ((...)) GROUP!
 }
 
 
@@ -637,7 +637,7 @@ INLINE bool Is_Meta_Of_Nihil(const Cell* v) {
 //
 
 INLINE Value(*) Splicify(Value(*) v) {
-    assert(ANY_ARRAY(v) and QUOTE_BYTE(v) == UNQUOTED_1);
+    assert(Any_Array(v) and QUOTE_BYTE(v) == UNQUOTED_1);
     QUOTE_BYTE(v) = ISOTOPE_0;
     HEART_BYTE(v) = REB_GROUP;
     return v;

@@ -42,7 +42,7 @@
     #define DBL_EPSILON 2.2204460492503131E-16
 #endif
 
-#define AS_DECIMAL(n) (IS_INTEGER(n) ? (REBDEC)VAL_INT64(n) : VAL_DECIMAL(n))
+#define AS_DECIMAL(n) (Is_Integer(n) ? (REBDEC)VAL_INT64(n) : VAL_DECIMAL(n))
 
 
 //
@@ -538,7 +538,7 @@ REBINT Compare_Modify_Values(Cell* a, Cell* b, bool strict)
           case REB_SET_WORD:
           case REB_GET_WORD:
           case REB_META_WORD:
-            if (ANY_WORD(b)) goto compare;
+            if (Any_Word(b)) goto compare;
             break;
 
           case REB_TEXT:
@@ -546,7 +546,7 @@ REBINT Compare_Modify_Values(Cell* a, Cell* b, bool strict)
           case REB_EMAIL:
           case REB_URL:
           case REB_TAG:
-            if (ANY_STRING(b)) goto compare;
+            if (Any_String(b)) goto compare;
             break;
 
           default:
@@ -694,30 +694,30 @@ DECLARE_NATIVE(same_q)
     if (VAL_TYPE(v1) != VAL_TYPE(v2))
         return Init_False(OUT);  // can't be "same" value if not same type
 
-    if (IS_BITSET(v1))  // same if binaries are same
+    if (Is_Bitset(v1))  // same if binaries are same
         return Init_Logic(OUT, VAL_BITSET(v1) == VAL_BITSET(v2));
 
-    if (ANY_SERIES(v1))  // pointers -and- indices must match
+    if (Any_Series(v1))  // pointers -and- indices must match
         return Init_Logic(
             OUT,
             VAL_SERIES(v1) == VAL_SERIES(v2)
                 and VAL_INDEX_RAW(v1) == VAL_INDEX_RAW(v2)  // permissive
         );
 
-    if (ANY_CONTEXT(v1))  // same if varlists match
+    if (Any_Context(v1))  // same if varlists match
         return Init_Logic(OUT, VAL_CONTEXT(v1) == VAL_CONTEXT(v2));
 
-    if (IS_MAP(v1))  // same if map pointer matches
+    if (Is_Map(v1))  // same if map pointer matches
         return Init_Logic(OUT, VAL_MAP(v1) == VAL_MAP(v2));
 
-    if (ANY_WORD(v1))  // !!! "same" was spelling -and- binding in R3-Alpha
+    if (Any_Word(v1))  // !!! "same" was spelling -and- binding in R3-Alpha
         return Init_Logic(
             OUT,
             VAL_WORD_SYMBOL(v1) == VAL_WORD_SYMBOL(v2)
                 and VAL_WORD_BINDING(v1) == VAL_WORD_BINDING(v2)
         );
 
-    if (IS_DECIMAL(v1) or IS_PERCENT(v1)) {
+    if (Is_Decimal(v1) or Is_Percent(v1)) {
         //
         // !!! R3-Alpha's STRICT-EQUAL? for DECIMAL! did not require *exactly*
         // the same bits, but SAME? did.  :-/
@@ -728,7 +728,7 @@ DECLARE_NATIVE(same_q)
         );
     }
 
-    if (IS_MONEY(v1)) {
+    if (Is_Money(v1)) {
         //
         // There is apparently a distinction between "strict equal" and "same"
         // when it comes to the MONEY! type:
@@ -871,7 +871,7 @@ DECLARE_NATIVE(maximum)
     Value(const*) value1 = ARG(value1);
     Value(const*) value2 = ARG(value2);
 
-    if (IS_PAIR(value1) || IS_PAIR(value2)) {
+    if (Is_Pair(value1) || Is_Pair(value2)) {
         Min_Max_Pair(OUT, value1, value2, true);
     }
     else {
@@ -910,7 +910,7 @@ DECLARE_NATIVE(minimum)
     const REBVAL *value1 = ARG(value1);
     const REBVAL *value2 = ARG(value2);
 
-    if (IS_PAIR(ARG(value1)) || IS_PAIR(ARG(value2))) {
+    if (Is_Pair(ARG(value1)) || Is_Pair(ARG(value2))) {
         Min_Max_Pair(OUT, ARG(value1), ARG(value2), false);
     }
     else {
@@ -1015,7 +1015,7 @@ DECLARE_NATIVE(zero_q)
     if (type == REB_ISSUE)  // special case, `#` represents the '\0' codepoint
         return Init_Logic(OUT, IS_CHAR(v) and VAL_CHAR(v) == 0);
 
-    if (not ANY_SCALAR_KIND(type))
+    if (not Any_Scalar_Kind(type))
         return Init_False(OUT);
 
     if (type == REB_TUPLE) {
@@ -1023,7 +1023,7 @@ DECLARE_NATIVE(zero_q)
         REBLEN i;
         for (i = 0; i < len; ++i) {
             const Cell* item = VAL_SEQUENCE_AT(SPARE, v, i);
-            if (not IS_INTEGER(item) or VAL_INT64(item) != 0)
+            if (not Is_Integer(item) or VAL_INT64(item) != 0)
                 return Init_False(OUT);
         }
         return Init_True(OUT);

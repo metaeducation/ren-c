@@ -234,7 +234,7 @@ void Remove_Series_Units(Series* s, Size byteoffset, REBLEN quantity)
 //
 void Remove_Any_Series_Len(REBVAL *v, REBLEN index, REBINT len)
 {
-    if (ANY_STRING(v) or IS_BINARY(v)) {
+    if (Any_String(v) or Is_Binary(v)) {
         //
         // The complicated logic in Modify_String_Or_Binary() handles many
         // aspects of the removal; e.g. updating "bookmarks" that help find

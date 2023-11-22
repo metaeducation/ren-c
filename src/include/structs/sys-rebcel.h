@@ -546,7 +546,7 @@ union Reb_Bytes_Payload  // IMPORTANT: Do not cast, use `Pointers` instead
 };
 
 // COMMA! is evaluative, but you wouldn't usually think of it as being
-// bindable because of its "inert-seeming" content.  To make the ANY_INERT()
+// bindable because of its "inert-seeming" content.  To make the Any_Inert()
 // test fast, REB_COMMA is pushed to a high value, making it bindable.  That
 // is exploited by feeds, which use it to store va_list information along
 // with a specifier in a value cell slot.  (Most commas don't have this.)

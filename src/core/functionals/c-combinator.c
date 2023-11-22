@@ -89,13 +89,13 @@ Bounce Combinator_Dispatcher(Level* L)
     Cell* body = Array_At(details, IDX_DETAILS_1);  // code to run
 
     Bounce b;
-    if (IS_FRAME(body)) {  // NATIVE-COMBINATOR
+    if (Is_Frame(body)) {  // NATIVE-COMBINATOR
         Set_Series_Info(L->varlist, HOLD);  // mandatory for natives.
         Dispatcher* dispatcher = ACT_DISPATCHER(VAL_ACTION(body));
         b = dispatcher(L);
     }
     else {  // usermode COMBINATOR
-        assert(IS_BLOCK(body));
+        assert(Is_Block(body));
         b = Func_Dispatcher(L);
     }
 
@@ -112,7 +112,7 @@ Bounce Combinator_Dispatcher(Level* L)
     // matters if there was a request to know the furthest point...
     //
     REBVAL *state = Level_Arg(L, IDX_COMBINATOR_PARAM_STATE);
-    assert(IS_FRAME(state));  // combinators *must* have this as the UPARSE.
+    assert(Is_Frame(state));  // combinators *must* have this as the UPARSE.
     Level* level_ = CTX_LEVEL_MAY_FAIL(VAL_CONTEXT(state));
     REBVAL *furthest_word = Level_Arg(level_, IDX_UPARSE_PARAM_FURTHEST);
     if (Is_Nulled(furthest_word))
@@ -185,7 +185,7 @@ Array* Expanded_Combinator_Spec(const REBVAL *original)
     const Cell* item = VAL_ARRAY_AT(&tail, original);
     Specifier* specifier = VAL_SPECIFIER(original);
 
-    if (IS_TEXT(item)) {
+    if (Is_Text(item)) {
         Derelativize(PUSH(), item, specifier);  // {combinator description}
         if (item == tail) fail("too few combinator args");
         ++item;
@@ -193,7 +193,7 @@ Array* Expanded_Combinator_Spec(const REBVAL *original)
     Derelativize(PUSH(), item, specifier);  // return:
     if (item == tail) fail("too few combinator args");
     ++item;
-    if (IS_TEXT(item)) {
+    if (Is_Text(item)) {
         Derelativize(PUSH(), item, specifier);  // "return description"
         if (item == tail) fail("too few combinator args");
     }
@@ -324,8 +324,8 @@ void Push_Parser_Sublevel(
     const REBVAL *parser,
     const REBVAL *input
 ){
-    assert(ANY_SERIES(input));
-    assert(IS_FRAME(parser));
+    assert(Any_Series(input));
+    assert(Is_Frame(parser));
 
     Context* ctx = Make_Context_For_Action(parser, TOP_INDEX, nullptr);
 
@@ -428,7 +428,7 @@ DECLARE_NATIVE(text_x_combinator)
     Value(*) v = ARG(value);
     Value(*) input = ARG(input);
 
-    if (ANY_ARRAY(input)) {
+    if (Any_Array(input)) {
         const Cell* tail;
         const Cell* at = VAL_ARRAY_AT(&tail, input);
         if (at == tail)  // no item to match against
@@ -443,7 +443,7 @@ DECLARE_NATIVE(text_x_combinator)
         return OUT;  // Note: returns item in array, not rule, when an array!
     }
 
-    assert(ANY_STRING(input) or IS_BINARY(input));
+    assert(Any_String(input) or Is_Binary(input));
 
     REBLEN len;
     REBINT index = Find_Value_In_Binstr(
@@ -704,7 +704,7 @@ static bool Combinator_Param_Hook(
 
         if (
             item == tail
-            or (IS_COMMA(item) or IS_BAR(item) or IS_BAR_BAR(item))
+            or (Is_Comma(item) or IS_BAR(item) or IS_BAR_BAR(item))
         ){
             if (NOT_PARAM_FLAG(param, ENDABLE))
                 fail ("Too few parameters for combinator");  // !!! Error_No_Arg
@@ -732,7 +732,7 @@ static bool Combinator_Param_Hook(
         const Cell* item = VAL_ARRAY_AT(&tail, ARG(rules));
         if (
             item == tail
-            or (IS_COMMA(item) or IS_BAR(item) or IS_BAR_BAR(item))
+            or (Is_Comma(item) or IS_BAR(item) or IS_BAR_BAR(item))
         ){
             if (NOT_PARAM_FLAG(param, ENDABLE))
                 fail ("Too few parameters for combinator");  // !!! Error_No_Arg

@@ -350,7 +350,7 @@ static void Collect_Inner_Loop(
     for (; v != tail; ++v) {
         enum Reb_Kind kind = Cell_Heart(v);
 
-        if (ANY_WORD_KIND(kind)) {
+        if (Any_Word_Kind(kind)) {
             if (kind != REB_SET_WORD and not (cl->flags & COLLECT_ANY_WORD))
                 continue;  // kind of word we're not interested in collecting
 
@@ -383,7 +383,7 @@ static void Collect_Inner_Loop(
         // given stepping away from SET-WORD! gathering as locals.
         // https://github.com/rebol/rebol-issues/issues/2276
         //
-        if (ANY_ARRAY_KIND(kind)) {
+        if (Any_Array_Kind(kind)) {
             const Cell* sub_tail;
             const Cell* sub_at = VAL_ARRAY_AT(&sub_tail, v);
             Collect_Inner_Loop(cl, sub_at, sub_tail);
@@ -476,7 +476,7 @@ Array* Collect_Unique_Words_Managed(
         const Cell* check_tail;
         const Cell* check = VAL_ARRAY_AT(&check_tail, ignorables);
         for (; check != check_tail; ++check) {
-            if (not ANY_WORD_KIND(Cell_Heart(check)))
+            if (not Any_Word_Kind(Cell_Heart(check)))
                 fail (Error_Bad_Value(check));
         }
     }
@@ -491,7 +491,7 @@ Array* Collect_Unique_Words_Managed(
     // not actually add them to the collection.  Then, duplicates don't cause
     // an error...so they will just be skipped when encountered.
     //
-    if (IS_BLOCK(ignorables)) {
+    if (Is_Block(ignorables)) {
         const Cell* ignore_tail;
         const Cell* ignore = VAL_ARRAY_AT(&ignore_tail, ignorables);
         for (; ignore != ignore_tail; ++ignore) {
@@ -513,7 +513,7 @@ Array* Collect_Unique_Words_Managed(
             }
         }
     }
-    else if (ANY_CONTEXT(ignorables)) {
+    else if (Any_Context(ignorables)) {
         const Key* key_tail;
         const Key* key = CTX_KEYS(&key_tail, VAL_CONTEXT(ignorables));
         for (; key != key_tail; ++key) {
@@ -539,7 +539,7 @@ Array* Collect_Unique_Words_Managed(
         NODE_FLAG_MANAGED
     );
 
-    if (IS_BLOCK(ignorables)) {
+    if (Is_Block(ignorables)) {
         const Cell* ignore_tail;
         const Cell* ignore = VAL_ARRAY_AT(&ignore_tail, ignorables);
         for (; ignore != ignore_tail; ++ignore) {
@@ -559,7 +559,7 @@ Array* Collect_Unique_Words_Managed(
             Remove_Binder_Index(&cl->binder, symbol);
         }
     }
-    else if (ANY_CONTEXT(ignorables)) {
+    else if (Any_Context(ignorables)) {
         const Key* key_tail;
         const Key* key = CTX_KEYS(&key_tail, VAL_CONTEXT(ignorables));
         for (; key != key_tail; ++key)
@@ -733,13 +733,13 @@ Context* Construct_Context_Managed(
 
     const Cell* value = head;
     for (; value != tail; value += 2) {
-        if (not IS_SET_WORD(value))
+        if (not Is_Set_Word(value))
             fail (Error_Invalid_Type(VAL_TYPE(value)));
 
         if (value + 1 == tail)
             fail ("Unexpected end in context spec block.");
 
-        if (IS_SET_WORD(value + 1))
+        if (Is_Set_Word(value + 1))
             fail (Error_Invalid_Type(VAL_TYPE(value + 1))); // TBD: support
 
         REBVAL *var = Sink_Word_May_Fail(value, specifier);
@@ -928,7 +928,7 @@ void Assert_Context_Core(Context* c)
     }
 
     REBVAL *rootvar = CTX_ROOTVAR(c);
-    if (not ANY_CONTEXT(rootvar) or VAL_CONTEXT(rootvar) != c)
+    if (not Any_Context(rootvar) or VAL_CONTEXT(rootvar) != c)
         panic (rootvar);
 
     KeyList* keylist = CTX_KEYLIST(c);

@@ -110,7 +110,7 @@ DECLARE_NATIVE(write_stdout)
     // !!! We want to make the chunking easier, by having a position in the
     // cell...but ISSUE! has no position.  Alias it as a read-only TEXT!.
     //
-    if (IS_ISSUE(v)) {
+    if (Is_Issue(v)) {
         bool threw = rebRunThrows(
             cast(REBVAL*, SPARE),  // <-- output cell
             Canon(AS), Canon(TEXT_X), v
@@ -363,7 +363,7 @@ DECLARE_NATIVE(read_line)
 
   #if !defined(NDEBUG)
     if (line) {
-        assert(IS_TEXT(line));
+        assert(Is_Text(line));
 
         // READ-LINE is textual, and enforces the rules of Ren-C TEXT!.  So
         // there should be no CR.  It may be that the /RAW mode permits reading
@@ -420,7 +420,7 @@ DECLARE_NATIVE(read_char)
         // timeout" in the quick and dirty implementation added for POSIX, but
         // this may change.
         //
-        if (IS_DECIMAL(ARG(timeout)))
+        if (Is_Decimal(ARG(timeout)))
             timeout_msec = VAL_DECIMAL(ARG(timeout)) * 1000;
         else
             timeout_msec = VAL_INT32(ARG(timeout)) * 1000;

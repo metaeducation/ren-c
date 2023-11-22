@@ -2205,7 +2205,7 @@ Bounce Scanner_Executor(Level* const L) {
             *ss->end == ':'  // `...(foo):` or `...[bar]:`
             and not Is_Dot_Or_Slash(level->mode)  // leave `:` for SET-PATH!
         ){
-            Init_Array_Cell(PUSH(), SETIFY_ANY_PLAIN_KIND(kind), a);
+            Init_Array_Cell(PUSH(), Setify_Any_Plain_Kind(kind), a);
             ++ss->begin;
             ++ss->end;
         }
@@ -2483,7 +2483,7 @@ Bounce Scanner_Executor(Level* const L) {
         Set_Array_Flag(array, HAS_FILE_LINE_UNMASKED);
         Set_Series_Flag(array, LINK_NODE_NEEDS_MARK);
 
-        if (Array_Len(array) == 0 or not IS_WORD(Array_Head(array))) {
+        if (Array_Len(array) == 0 or not Is_Word(Array_Head(array))) {
             DECLARE_LOCAL (temp);
             Init_Block(temp, array);
             return RAISE(Error_Malconstruct_Raw(temp));
@@ -2552,7 +2552,7 @@ Bounce Scanner_Executor(Level* const L) {
     // object, it would be more complex...only for efficiency, and nothing
     // like it existed before.
     //
-    if (L->feed->context and ANY_WORD(TOP)) {
+    if (L->feed->context and Any_Word(TOP)) {
         INIT_VAL_WORD_BINDING(TOP, CTX_VARLIST(unwrap(L->feed->context)));
         INIT_VAL_WORD_INDEX(TOP, INDEX_ATTACHED);
     }
@@ -2682,7 +2682,7 @@ Bounce Scanner_Executor(Level* const L) {
         StackValue(*) head = Data_Stack_At(stackindex_path_head);
         StackValue(*) cleanup = head + 1;
         for (; cleanup <= TOP; ++cleanup) {
-            if (IS_GET_WORD(cleanup)) {
+            if (Is_Get_Word(cleanup)) {
                 Array* a = Alloc_Singular(NODE_FLAG_MANAGED);
                 HEART_BYTE(cleanup) = REB_GET_WORD;
 
@@ -2709,7 +2709,7 @@ Bounce Scanner_Executor(Level* const L) {
             bool any_email = false;
             StackIndex stackindex = TOP_INDEX;
             for (; stackindex != stackindex_path_head - 1; --stackindex) {
-                if (IS_EMAIL(Data_Stack_At(stackindex))) {
+                if (Is_Email(Data_Stack_At(stackindex))) {
                     if (any_email)
                         return RAISE(Error_Syntax(ss, level->token));
                     any_email = true;
@@ -2747,7 +2747,7 @@ Bounce Scanner_Executor(Level* const L) {
             return RAISE(Error_Syntax(ss, level->token));
       }
 
-        assert(IS_WORD(temp) or ANY_SEQUENCE(temp));  // `/` and `...` decay
+        assert(Is_Word(temp) or Any_Sequence(temp));  // `/` and `...` decay
 
       push_temp:
         Copy_Cell(PUSH(), temp);
@@ -2759,7 +2759,7 @@ Bounce Scanner_Executor(Level* const L) {
         // word attachment code above.
         //
         if (L->feed->context) {
-            if (ANY_WORD(TOP)) {
+            if (Any_Word(TOP)) {
                 INIT_VAL_WORD_BINDING(TOP, CTX_VARLIST(unwrap(L->feed->context)));
                 INIT_VAL_WORD_INDEX(TOP, INDEX_ATTACHED);
             }
@@ -2771,17 +2771,17 @@ Bounce Scanner_Executor(Level* const L) {
         // including the zero.  This doesn't put any decision in stone, but
         // reserves the right to make a decision at a later time.
         //
-        if (IS_TUPLE(TOP) and VAL_SEQUENCE_LEN(TOP) == 2) {
+        if (Is_Tuple(TOP) and VAL_SEQUENCE_LEN(TOP) == 2) {
             if (
-                IS_INTEGER(VAL_SEQUENCE_AT(temp, TOP, 0))
-                and IS_BLANK(VAL_SEQUENCE_AT(temp, TOP, 1))
+                Is_Integer(VAL_SEQUENCE_AT(temp, TOP, 0))
+                and Is_Blank(VAL_SEQUENCE_AT(temp, TOP, 1))
             ){
                 DROP();
                 return RAISE("`5.` currently reserved, please use 5.0");
             }
             if (
-                IS_BLANK(VAL_SEQUENCE_AT(temp, TOP, 0))
-                and IS_INTEGER(VAL_SEQUENCE_AT(temp, TOP, 1))
+                Is_Blank(VAL_SEQUENCE_AT(temp, TOP, 0))
+                and Is_Integer(VAL_SEQUENCE_AT(temp, TOP, 1))
             ){
                 DROP();
                 return RAISE("`.5` currently reserved, please use 0.5");
@@ -2854,21 +2854,21 @@ Bounce Scanner_Executor(Level* const L) {
             return RAISE(Error_Syntax(ss, level->token));
 
         enum Reb_Kind kind = VAL_TYPE(TOP);
-        if (not ANY_PLAIN_KIND(kind))
+        if (not Any_Plain_Value_Kind(kind))
             return RAISE(Error_Syntax(ss, level->token));
 
-        HEART_BYTE(TOP) = SETIFY_ANY_PLAIN_KIND(kind);
+        HEART_BYTE(TOP) = Setify_Any_Plain_Kind(kind);
 
         ss->begin = ++ss->end;  // !!! ?
     }
     else if (level->prefix_pending != TOKEN_0) {
         enum Reb_Kind kind = VAL_TYPE(TOP);
-        if (not ANY_PLAIN_KIND(kind))
+        if (not Any_Plain_Kind(kind))
             return DROP(), RAISE(Error_Syntax(ss, level->token));
 
         switch (level->prefix_pending) {
           case TOKEN_COLON:
-            HEART_BYTE(TOP) = GETIFY_ANY_PLAIN_KIND(kind);
+            HEART_BYTE(TOP) = Getify_Any_Plain_Kind(kind);
             break;
 
           case TOKEN_CARET:
@@ -2876,11 +2876,11 @@ Bounce Scanner_Executor(Level* const L) {
             break;
 
           case TOKEN_AT:
-            HEART_BYTE(TOP) = THEIFY_ANY_PLAIN_KIND(kind);
+            HEART_BYTE(TOP) = Theify_Any_Plain_Kind(kind);
             break;
 
           case TOKEN_AMPERSAND:
-            HEART_BYTE(TOP) = TYPEIFY_ANY_PLAIN_KIND(kind);
+            HEART_BYTE(TOP) = Typeify_Any_Plain_Kind(kind);
             break;
 
           default:
@@ -3098,7 +3098,7 @@ DECLARE_NATIVE(transcode)
   //
   //    !!! Should the base name and extension be stored, or whole path?
 
-    if (IS_BINARY(source))  // scanner needs data to end in '\0' [1]
+    if (Is_Binary(source))  // scanner needs data to end in '\0' [1]
         Term_Binary(m_cast(Binary*, VAL_BINARY(source)));
 
     const String* file;
@@ -3110,7 +3110,7 @@ DECLARE_NATIVE(transcode)
         file = ANONYMOUS;
 
     const REBVAL *line_number;
-    if (ANY_WORD(ARG(line)))
+    if (Any_Word(ARG(line)))
         line_number = Lookup_Word_May_Fail(ARG(line), SPECIFIED);
     else
         line_number = ARG(line);
@@ -3119,7 +3119,7 @@ DECLARE_NATIVE(transcode)
     if (Is_Nulled(line_number)) {
         start_line = 1;
     }
-    else if (IS_INTEGER(line_number)) {
+    else if (Is_Integer(line_number)) {
         start_line = VAL_INT32(line_number);
         if (start_line <= 0)
             fail (PARAM(line));  // definitional?
@@ -3202,7 +3202,7 @@ DECLARE_NATIVE(transcode)
 
     Drop_Level(SUBLEVEL);
 
-    if (REF(line) and IS_WORD(ARG(line))) {  // wanted the line number updated
+    if (REF(line) and Is_Word(ARG(line))) {  // wanted the line number updated
         REBVAL *line_int = ARG(return);  // use return as scratch slot
         Init_Integer(line_int, ss->line);
         if (Set_Var_Core_Throws(SPARE, nullptr, ARG(line), SPECIFIED, line_int))
@@ -3215,7 +3215,7 @@ DECLARE_NATIVE(transcode)
     REBVAL *rest = ARG(rest);
     Copy_Cell(rest, source);
 
-    if (IS_BINARY(source)) {
+    if (Is_Binary(source)) {
         const Binary* bin = VAL_BINARY(source);
         if (ss->begin)
             VAL_INDEX_UNBOUNDED(rest) = ss->begin - Binary_Head(bin);
@@ -3223,7 +3223,7 @@ DECLARE_NATIVE(transcode)
             VAL_INDEX_UNBOUNDED(rest) = Binary_Len(bin);
     }
     else {
-        assert(IS_TEXT(source));
+        assert(Is_Text(source));
 
         // !!! The scanner does not currently keep track of how many
         // codepoints it went past, it only advances bytes.  But the TEXT!

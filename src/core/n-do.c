@@ -134,7 +134,7 @@ DECLARE_NATIVE(shove)
     REBVAL *shovee = ARG(right); // reuse arg cell for the shoved-into
     Option(const Symbol*) label = nullptr;
 
-    if (IS_WORD(At_Level(L)) or IS_PATH(At_Level(L)) or IS_TUPLE(At_Level(L))) {
+    if (Is_Word(At_Level(L)) or Is_Path(At_Level(L)) or Is_Tuple(At_Level(L))) {
         //
         // !!! should get label from word
         //
@@ -146,7 +146,7 @@ DECLARE_NATIVE(shove)
         );
         Move_Cell(shovee, OUT);
     }
-    else if (IS_GROUP(At_Level(L))) {
+    else if (Is_Group(At_Level(L))) {
         if (Do_Any_Array_At_Throws(OUT, At_Level(L), Level_Specifier(L)))
             return THROWN;
 
@@ -157,7 +157,7 @@ DECLARE_NATIVE(shove)
 
     Deactivate_If_Activation(shovee);  // allow ACTION! to be run
 
-    if (not IS_FRAME(shovee))
+    if (not Is_Frame(shovee))
         fail ("SHOVE's immediate right must be ACTION! or SET-XXX! type");
 
     if (not label)
@@ -170,7 +170,7 @@ DECLARE_NATIVE(shove)
     bool enfix;
     if (REF(prefix))
         enfix = not VAL_LOGIC(ARG(prefix));
-    else if (IS_FRAME(shovee))
+    else if (Is_Frame(shovee))
         enfix = Is_Enfixed(shovee);
     else
         enfix = false;
@@ -424,7 +424,7 @@ DECLARE_NATIVE(evaluate)
     Set_Cell_Flag(ARG(source), PROTECTED);
   #endif
 
-    if (ANY_ARRAY(source)) {
+    if (Any_Array(source)) {
         if (VAL_LEN_AT(source) == 0) {  // `evaluate []` is invisible intent
             if (REF(next))
                 rebElide(Canon(SET), rebQ(rest_var), nullptr);
@@ -478,7 +478,7 @@ DECLARE_NATIVE(evaluate)
         return DELEGATE(OUT, source); }
 
       case REB_VARARGS : {
-        assert(IS_VARARGS(source));
+        assert(Is_Varargs(source));
 
         REBVAL *position;
         if (Is_Block_Style_Varargs(&position, source)) {
@@ -573,11 +573,11 @@ DECLARE_NATIVE(redo)
     INCLUDE_PARAMS_OF_REDO;
 
     REBVAL *restartee = ARG(restartee);
-    if (not IS_FRAME(restartee)) {
+    if (not Is_Frame(restartee)) {
         if (not Did_Get_Binding_Of(OUT, restartee))
             fail ("No context found from restartee in REDO");
 
-        if (not IS_FRAME(OUT))
+        if (not Is_Frame(OUT))
             fail ("Context of restartee in REDO is not a FRAME!");
 
         Move_Cell(restartee, OUT);
@@ -817,7 +817,7 @@ DECLARE_NATIVE(apply)
 
     const Cell* at = At_Level(L);
 
-    if (IS_COMMA(at)) {
+    if (Is_Comma(at)) {
         Fetch_Next_Forget_Lookback(L);
         goto handle_next_item;
     }
@@ -829,7 +829,7 @@ DECLARE_NATIVE(apply)
     Trash_Pointer_If_Debug(param);
   #endif
 
-    if (IS_PATH(at) and IS_REFINEMENT(at)) {
+    if (Is_Path(at) and Is_Refinement(at)) {
         STATE = ST_APPLY_LABELED_EVAL_STEP;
 
         const Symbol* symbol = VAL_REFINEMENT_SYMBOL(At_Level(L));
@@ -847,10 +847,10 @@ DECLARE_NATIVE(apply)
         const Cell* lookback = Lookback_While_Fetching_Next(L);  // for error
         at = Try_At_Level(L);
 
-        if (at == nullptr or IS_COMMA(at))
+        if (at == nullptr or Is_Comma(at))
             fail (Error_Need_Non_End_Raw(rebUnrelativize(lookback)));
 
-        if (IS_PATH(at) and IS_REFINEMENT(at))  // [3]
+        if (Is_Path(at) and Is_Refinement(at))  // [3]
             fail (Error_Need_Non_End_Raw(rebUnrelativize(lookback)));
 
         Init_Integer(ARG(index), index);
@@ -922,7 +922,7 @@ DECLARE_NATIVE(apply)
 } copy_spare_to_var_in_frame: {  /////////////////////////////////////////////
 
     if (  // help convert logic for no-arg refinement [5]
-        IS_LOGIC(SPARE)
+        Is_Logic(SPARE)
         and GET_PARAM_FLAG(param, REFINEMENT)
         and Is_Parameter_Unconstrained(param)
     ){

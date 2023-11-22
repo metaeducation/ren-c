@@ -96,7 +96,7 @@ Bounce MAKE_Word(
     if (parent)
         fail (Error_Bad_Make_Parent(kind, unwrap(parent)));
 
-    if (ANY_WORD(arg)) {
+    if (Any_Word(arg)) {
         //
         // !!! This only reset the type, not header bits...as it used to be
         // that header bits related to the binding state.  That's no longer
@@ -108,7 +108,7 @@ Bounce MAKE_Word(
         return OUT;
     }
 
-    if (ANY_STRING(arg)) {
+    if (Any_String(arg)) {
         if (Is_Series_Frozen(VAL_STRING(arg)))
             goto as_word;  // just reuse AS mechanics on frozen strings
 
@@ -125,7 +125,7 @@ Bounce MAKE_Word(
 
         return OUT;
     }
-    else if (IS_ISSUE(arg)) {
+    else if (Is_Issue(arg)) {
         //
         // Run the same mechanics that AS WORD! would, since it's immutable.
         //
@@ -137,7 +137,7 @@ Bounce MAKE_Word(
         return OUT;
       }
     }
-    else if (IS_LOGIC(arg)) {
+    else if (Is_Logic(arg)) {
         return Init_Any_Word(
             OUT,
             kind,
@@ -162,7 +162,7 @@ Bounce TO_Word(Level* level_, enum Reb_Kind kind, const REBVAL *arg)
     // `to integer! /"10"` making 10.  We might call these "solo paths" as
     // a generalization of "refinement paths"
     //
-    if (IS_PATH(arg) or IS_TUPLE(arg)) {
+    if (Is_Path(arg) or Is_Tuple(arg)) {
         FRESHEN(OUT);
 
         DECLARE_LOCAL (temp);
@@ -171,9 +171,9 @@ Bounce TO_Word(Level* level_, enum Reb_Kind kind, const REBVAL *arg)
         REBLEN i;
         for (i = 0; i < len; ++i) {
             const Cell* item = VAL_SEQUENCE_AT(temp, arg, i);
-            if (IS_BLANK(item))
+            if (Is_Blank(item))
                 continue;
-            if (not IS_WORD(item))
+            if (not Is_Word(item))
                 return RAISE(
                     "Can't make ANY-WORD! from path unless it's one WORD!"
                 );
@@ -221,9 +221,9 @@ void MF_Word(REB_MOLD *mo, NoQuote(const Cell*) v, bool form) {
 
 
 //
-//  MF_Set_word: C
+//  MF_Set_Word: C
 //
-void MF_Set_word(REB_MOLD *mo, NoQuote(const Cell*) v, bool form) {
+void MF_Set_Word(REB_MOLD *mo, NoQuote(const Cell*) v, bool form) {
     const Symbol* symbol = VAL_WORD_SYMBOL(v);
     bool escape = form
         ? false
@@ -235,9 +235,9 @@ void MF_Set_word(REB_MOLD *mo, NoQuote(const Cell*) v, bool form) {
 
 
 //
-//  MF_Get_word: C
+//  MF_Get_Word: C
 //
-void MF_Get_word(REB_MOLD *mo, NoQuote(const Cell*) v, bool form) {
+void MF_Get_Word(REB_MOLD *mo, NoQuote(const Cell*) v, bool form) {
     const Symbol* symbol = VAL_WORD_SYMBOL(v);
     bool escape = form
         ? false
@@ -249,9 +249,9 @@ void MF_Get_word(REB_MOLD *mo, NoQuote(const Cell*) v, bool form) {
 
 
 //
-//  MF_Meta_word: C
+//  MF_Meta_Word: C
 //
-void MF_Meta_word(REB_MOLD *mo, NoQuote(const Cell*) v, bool form) {
+void MF_Meta_Word(REB_MOLD *mo, NoQuote(const Cell*) v, bool form) {
     const Symbol* symbol = VAL_WORD_SYMBOL(v);
     bool escape = form
         ? false
@@ -263,9 +263,9 @@ void MF_Meta_word(REB_MOLD *mo, NoQuote(const Cell*) v, bool form) {
 
 
 //
-//  MF_The_word: C
+//  MF_The_Word: C
 //
-void MF_The_word(REB_MOLD *mo, NoQuote(const Cell*) v, bool form) {
+void MF_The_Word(REB_MOLD *mo, NoQuote(const Cell*) v, bool form) {
     const Symbol* symbol = VAL_WORD_SYMBOL(v);
     bool escape = form
         ? false
@@ -277,9 +277,9 @@ void MF_The_word(REB_MOLD *mo, NoQuote(const Cell*) v, bool form) {
 
 
 //
-//  MF_Type_word: C
+//  MF_Type_Word: C
 //
-void MF_Type_word(REB_MOLD *mo, NoQuote(const Cell*) v, bool form) {
+void MF_Type_Word(REB_MOLD *mo, NoQuote(const Cell*) v, bool form) {
     const Symbol* symbol = VAL_WORD_SYMBOL(v);
     bool escape = form
         ? false
@@ -301,7 +301,7 @@ void MF_Type_word(REB_MOLD *mo, NoQuote(const Cell*) v, bool form) {
 REBTYPE(Word)
 {
     REBVAL *v = D_ARG(1);
-    assert(ANY_WORD(v));
+    assert(Any_Word(v));
 
     switch (ID_OF_SYMBOL(verb)) {
       case SYM_REFLECT: {
@@ -326,7 +326,7 @@ REBTYPE(Word)
             if (not Did_Get_Binding_Of(OUT, v))
                 return nullptr;
 
-            if (not IS_MODULE(OUT))  // ordinary contexts don't have "attach"
+            if (not Is_Module(OUT))  // ordinary contexts don't have "attach"
                 return OUT;
 
             if (VAL_CONTEXT(OUT) == Lib_Context)

@@ -30,10 +30,10 @@ static bool Check_Char_Range(const REBVAL *val, REBLEN limit)
     if (IS_CHAR(val))
         return VAL_CHAR(val) <= limit;
 
-    if (IS_INTEGER(val))
+    if (Is_Integer(val))
         return VAL_INT64(val) <= cast(REBI64, limit);
 
-    assert(ANY_STRING(val));
+    assert(Any_String(val));
 
     REBLEN len;
     Utf8(const*) up = VAL_UTF8_LEN_SIZE_AT(&len, nullptr, val);
@@ -143,14 +143,14 @@ DECLARE_NATIVE(bind)
 
     // !!! For now, force reification before doing any binding.
 
-    if (ANY_CONTEXT(target)) {
+    if (Any_Context(target)) {
         //
         // Get target from an OBJECT!, ERROR!, PORT!, MODULE!, FRAME!
         //
         context = target;
     }
     else {
-        assert(ANY_WORD(target));
+        assert(Any_Word(target));
 
         if (not Did_Get_Binding_Of(SPARE, target))
             fail (Error_Not_Bound_Raw(target));
@@ -158,7 +158,7 @@ DECLARE_NATIVE(bind)
         context = stable_SPARE;
     }
 
-    if (ANY_WORDLIKE(v)) {
+    if (Any_Wordlike(v)) {
         //
         // Bind a single word (also works on refinements, `/a` ...or `a.`, etc.
 
@@ -167,7 +167,7 @@ DECLARE_NATIVE(bind)
 
         // not in context, bind/new means add it if it's not.
         //
-        if (REF(new) or (IS_SET_WORD(v) and REF(set))) {
+        if (REF(new) or (Is_Set_Word(v) and REF(set))) {
             Finalize_None(Append_Context_Bind_Word(VAL_CONTEXT(context), v));
             return COPY(v);
         }
@@ -185,7 +185,7 @@ DECLARE_NATIVE(bind)
         return COPY(v);
     }
 
-    if (not ANY_ARRAYLIKE(v))  // QUOTED! could have wrapped any type
+    if (not Any_Arraylike(v))  // QUOTED! could have wrapped any type
         fail (Error_Invalid_Arg(level_, PARAM(value)));
 
     Cell* at;
@@ -245,7 +245,7 @@ DECLARE_NATIVE(in)
     // IN would return NONE! on failure.  We carry forward the NULL-failing
     // here in IN, but BIND's behavior on words may need revisiting.
     //
-    if (ANY_WORD(v)) {
+    if (Any_Word(v)) {
         const Symbol* symbol = VAL_WORD_SYMBOL(v);
         const bool strict = true;
         REBLEN index = Find_Symbol_In_Context(ARG(context), symbol, strict);
@@ -254,7 +254,7 @@ DECLARE_NATIVE(in)
         return Init_Any_Word_Bound(OUT, VAL_TYPE(v), symbol, ctx, index);
     }
 
-    assert(ANY_ARRAY(v));
+    assert(Any_Array(v));
     Virtual_Bind_Deep_To_Existing_Context(v, ctx, nullptr, REB_WORD);
     return COPY(v);
 }
@@ -283,7 +283,7 @@ DECLARE_NATIVE(without)
     // IN would return NONE! on failure.  We carry forward the NULL-failing
     // here in IN, but BIND's behavior on words may need revisiting.
     //
-    if (ANY_WORD(v)) {
+    if (Any_Word(v)) {
         const Symbol* symbol = VAL_WORD_SYMBOL(v);
         const bool strict = true;
         REBLEN index = Find_Symbol_In_Context(ARG(context), symbol, strict);
@@ -298,7 +298,7 @@ DECLARE_NATIVE(without)
         );
     }
 
-    assert(ANY_ARRAY(v));
+    assert(Any_Array(v));
     Virtual_Bind_Deep_To_Existing_Context(v, ctx, nullptr, REB_WORD);
     return COPY(v);
 }
@@ -403,7 +403,7 @@ bool Did_Get_Binding_Of(Sink(Value(*)) out, const REBVAL *v)
     // !!! This may not be the correct answer, but it seems to work in
     // practice...keep an eye out for counterexamples.
     //
-    if (IS_FRAME(out)) {
+    if (Is_Frame(out)) {
         Context* c = VAL_CONTEXT(out);
         Level* L = CTX_LEVEL_IF_ON_STACK(c);
         if (L) {
@@ -434,7 +434,7 @@ DECLARE_INTRINSIC(refinement_q)
 {
     UNUSED(phase);
 
-    Init_Logic(out, IS_PATH(arg) and IS_REFINEMENT(arg));
+    Init_Logic(out, Is_Path(arg) and Is_Refinement(arg));
 }
 
 
@@ -524,7 +524,7 @@ DECLARE_NATIVE(any_inert_q)
 
     REBVAL *v = ARG(optional);
 
-    return Init_Logic(OUT, not Is_Nulled(v) and ANY_INERT(v));
+    return Init_Logic(OUT, not Is_Nulled(v) and Any_Inert(v));
 }
 
 
@@ -546,10 +546,10 @@ DECLARE_NATIVE(unbind)
 
     REBVAL *word = ARG(word);
 
-    if (ANY_WORD(word))
+    if (Any_Word(word))
         Unbind_Any_Word(word);
     else {
-        assert(IS_BLOCK(word));
+        assert(Is_Block(word));
 
         const Cell* tail;
         Cell* at = VAL_ARRAY_AT_Ensure_Mutable(&tail, word);
@@ -608,7 +608,7 @@ bool Get_Var_Push_Refinements_Throws(
     assert(var != cast(Cell*, out));
     assert(steps_out != out);  // Legal for SET, not for GET
 
-    if (ANY_GROUP(var)) {  // !!! GET-GROUP! makes sense, but SET-GROUP!?
+    if (Any_Group(var)) {  // !!! GET-GROUP! makes sense, but SET-GROUP!?
         if (not steps_out)
             fail (Error_Bad_Get_Group_Raw(var));
 
@@ -628,7 +628,7 @@ bool Get_Var_Push_Refinements_Throws(
         return false;
     }
 
-    if (ANY_WORD(var)) {
+    if (Any_Word(var)) {
 
       get_source:  // Note: source may be `out`, due to GROUP fetch above!
 
@@ -644,7 +644,7 @@ bool Get_Var_Push_Refinements_Throws(
         return false;
     }
 
-    if (ANY_PATH(var)) {  // !!! SET-PATH! too?
+    if (Any_Path(var)) {  // !!! SET-PATH! too?
         DECLARE_LOCAL (safe);
         Push_GC_Guard_Erased_Cell(safe);
         DECLARE_LOCAL (result);
@@ -665,7 +665,7 @@ bool Get_Var_Push_Refinements_Throws(
 
     StackIndex base = TOP_INDEX;
 
-    if (ANY_SEQUENCE(var)) {
+    if (Any_Sequence(var)) {
         if (Not_Cell_Flag(var, SEQUENCE_HAS_NODE))  // byte compressed
             fail (var);
 
@@ -699,7 +699,7 @@ bool Get_Var_Push_Refinements_Throws(
         const Cell* at;
         Specifier* at_specifier = Derive_Specifier(var_specifier, var);
         for (at = head; at != tail; ++at) {
-            if (IS_GROUP(at)) {
+            if (Is_Group(at)) {
                 if (not steps_out)
                     fail (Error_Bad_Get_Group_Raw(var));
 
@@ -727,7 +727,7 @@ bool Get_Var_Push_Refinements_Throws(
                 Derelativize(PUSH(), at, at_specifier);
         }
     }
-    else if (IS_THE_BLOCK(var)) {
+    else if (Is_The_Block(var)) {
         Specifier* at_specifier = Derive_Specifier(var_specifier, var);
         const Cell* tail;
         const Cell* head = VAL_ARRAY_AT(&tail, var);
@@ -746,7 +746,7 @@ bool Get_Var_Push_Refinements_Throws(
         Copy_Cell(out, at);
         Unquotify(out, 1);
     }
-    else if (IS_WORD(at)) {
+    else if (Is_Word(at)) {
         Copy_Cell(
             out,
             Lookup_Word_May_Fail(at, SPECIFIED)
@@ -882,7 +882,7 @@ bool Get_Path_Push_Refinements_Throws(
             Copy_Cell(out, val);
         }
         else {
-            if (not IS_FRAME(val))
+            if (not Is_Frame(val))
                 fail (Error_Inert_With_Slashed_Raw());
             Copy_Cell(out, val);
             Activatify(out);
@@ -898,18 +898,18 @@ bool Get_Path_Push_Refinements_Throws(
 
     const Cell* tail;
     const Cell* head = VAL_ARRAY_AT(&tail, path);
-    while (IS_BLANK(head)) {
+    while (Is_Blank(head)) {
         ++head;
         if (head == tail)
             fail ("Empty PATH!");
     }
 
-    if (ANY_INERT(head)) {
+    if (Any_Inert(head)) {
         Derelativize(out, path, path_specifier);
         return false;
     }
 
-    if (IS_GROUP(head)) {
+    if (Is_Group(head)) {
         //
         // Note: Historical Rebol did not allow GROUP! at the head of path.
         // We can thus restrict head-of-path evaluations to ACTION!.
@@ -922,12 +922,12 @@ bool Get_Path_Push_Refinements_Throws(
             NOOP;  // it's good
         else if (Is_Isotope(out))
             fail (Error_Bad_Isotope(out));
-        else if (IS_FRAME(out))
+        else if (Is_Frame(out))
             Activatify(out);
         else
             fail ("Head of PATH! did not evaluate to an ACTION!");
     }
-    else if (IS_TUPLE(head)) {
+    else if (Is_Tuple(head)) {
         //
         // Note: Historical Rebol didn't have WORD!-bearing TUPLE!s at all.
         // We can thus restrict head-of-path evaluations to ACTION!, or
@@ -937,7 +937,7 @@ bool Get_Path_Push_Refinements_Throws(
         //    >> .a.b/c/d
         //    == .a.b/c/d
         //
-        if (IS_BLANK(VAL_SEQUENCE_AT(safe, head, 0))) {
+        if (Is_Blank(VAL_SEQUENCE_AT(safe, head, 0))) {
             Derelativize(out, path, path_specifier);
             return false;
         }
@@ -952,13 +952,13 @@ bool Get_Path_Push_Refinements_Throws(
             if (not Is_Activation(out))
                 fail (Error_Bad_Isotope(out));
         }
-        else if (IS_FRAME(out)) {
+        else if (Is_Frame(out)) {
             Activatify(out);
         }
         else
             fail ("TUPLE! must resolve to an action isotope if head of PATH!");
     }
-    else if (IS_WORD(head)) {
+    else if (Is_Word(head)) {
         Specifier* derived = Derive_Specifier(path_specifier, path);
         const REBVAL *lookup = Lookup_Word_May_Fail(
             head,
@@ -984,7 +984,7 @@ bool Get_Path_Push_Refinements_Throws(
         // actions (though it's slower because it does specialization)
         //
         REBVAL *redbol = Get_System(SYS_OPTIONS, OPTIONS_REDBOL_PATHS);
-        if (not IS_LOGIC(redbol) or VAL_LOGIC(redbol) == false) {
+        if (not Is_Logic(redbol) or VAL_LOGIC(redbol) == false) {
             Derelativize(out, path, path_specifier);
             rebElide(
                 "echo [The PATH!", cast(REBVAL*, out), "doesn't evaluate to",
@@ -1027,7 +1027,7 @@ bool Get_Path_Push_Refinements_Throws(
     for (; len != 0; --len) {
         const Cell* at = VAL_SEQUENCE_AT(safe, path, len);
         DECLARE_LOCAL (temp);
-        if (IS_GROUP(at)) {
+        if (Is_Group(at)) {
             Specifier* derived = Derive_Specifier(
                 path_specifier,
                 at
@@ -1046,12 +1046,12 @@ bool Get_Path_Push_Refinements_Throws(
         // Note: NULL not supported intentionally, could represent an accident
         // User is expected to do `maybe var` to show they know it's null
 
-        if (IS_BLANK(at)) {
+        if (Is_Blank(at)) {
             // This is needed e.g. for append/dup/ to work, just skip it
         }
-        else if (IS_WORD(at))
+        else if (Is_Word(at))
             Init_Pushed_Refinement(PUSH(), VAL_WORD_SYMBOL(at));
-        else if (IS_PATH(at) and IS_REFINEMENT(at)) {
+        else if (Is_Path(at) and Is_Refinement(at)) {
             // Not strictly necessary, but kind of neat to allow
             Init_Pushed_Refinement(PUSH(), VAL_REFINEMENT_SYMBOL(at));
         }
@@ -1123,7 +1123,7 @@ DECLARE_NATIVE(get)
         steps = nullptr;  // no GROUP! evals
 
     if (Get_Var_Core_Throws(OUT, steps, source, SPECIFIED)) {
-        assert(steps or IS_ERROR(VAL_THROWN_LABEL(level_)));  // [1]
+        assert(steps or Is_Error(VAL_THROWN_LABEL(level_)));  // [1]
         return THROWN;
     }
 
@@ -1181,7 +1181,7 @@ bool Set_Var_Core_Updater_Throws(
 
     enum Reb_Kind varheart = Cell_Heart(var);
 
-    if (ANY_GROUP_KIND(varheart)) {  // !!! maybe SET-GROUP!, but GET-GROUP!?
+    if (Any_Group_Kind(varheart)) {  // !!! maybe SET-GROUP!, but GET-GROUP!?
         if (not steps_out)
             fail (Error_Bad_Get_Group_Raw(var));
 
@@ -1199,7 +1199,7 @@ bool Set_Var_Core_Updater_Throws(
         return false;
     }
 
-    if (ANY_WORD_KIND(varheart)) {
+    if (Any_Word_Kind(varheart)) {
 
       set_target:
 
@@ -1247,7 +1247,7 @@ bool Set_Var_Core_Updater_Throws(
     // GROUP! by value).  These evaluations should only be allowed if the
     // caller has asked us to return steps.
 
-    if (ANY_SEQUENCE_KIND(varheart)) {
+    if (Any_Sequence_Kind(varheart)) {
         if (Not_Cell_Flag(var, SEQUENCE_HAS_NODE))  // compressed byte form
             fail (var);
 
@@ -1281,7 +1281,7 @@ bool Set_Var_Core_Updater_Throws(
         const Cell* at;
         Specifier* at_specifier = Derive_Specifier(var_specifier, var);
         for (at = head; at != tail; ++at) {
-            if (IS_GROUP(at)) {
+            if (Is_Group(at)) {
                 if (not steps_out)
                     fail (Error_Bad_Get_Group_Raw(var));
 
@@ -1304,7 +1304,7 @@ bool Set_Var_Core_Updater_Throws(
                 Derelativize(PUSH(), at, at_specifier);
         }
     }
-    else if (IS_THE_BLOCK(var)) {
+    else if (Is_The_Block(var)) {
         const Cell* tail;
         const Cell* head = VAL_ARRAY_AT(&tail, var);
         const Cell* at;
@@ -1333,7 +1333,7 @@ bool Set_Var_Core_Updater_Throws(
         Copy_Cell(out, at);
         Unquotify(out, 1);
     }
-    else if (IS_WORD(at)) {
+    else if (Is_Word(at)) {
         Copy_Cell(
             out,
             Lookup_Word_May_Fail(at, SPECIFIED)
@@ -1393,7 +1393,7 @@ bool Set_Var_Core_Updater_Throws(
             goto poke_again;
 
         // can't use POKE, need to use SET
-        if (not IS_WORD(Data_Stack_At(base + 1)))
+        if (not Is_Word(Data_Stack_At(base + 1)))
             fail ("Can't POKE back immediate value unless it's to a WORD!");
 
         Copy_Cell(
@@ -1500,7 +1500,7 @@ DECLARE_NATIVE(set)
     }
 
     if (Set_Var_Core_Throws(SPARE, steps, target, SPECIFIED, v)) {
-        assert(steps or IS_ERROR(VAL_THROWN_LABEL(level_)));  // [1]
+        assert(steps or Is_Error(VAL_THROWN_LABEL(level_)));  // [1]
         return THROWN;
     }
 
@@ -1579,7 +1579,7 @@ DECLARE_NATIVE(proxy_exports)
     const Cell* tail;
     const Cell* v = VAL_ARRAY_AT(&tail, ARG(exports));
     for (; v != tail; ++v) {
-        if (not IS_WORD(v))
+        if (not Is_Word(v))
             fail (ARG(exports));
 
         const Symbol* symbol = VAL_WORD_SYMBOL(v);
@@ -1723,7 +1723,7 @@ DECLARE_NATIVE(free)
 
     REBVAL *v = ARG(memory);
 
-    if (ANY_CONTEXT(v) or IS_HANDLE(v))
+    if (Any_Context(v) or Is_Handle(v))
         fail ("FREE only implemented for ANY-SERIES! at the moment");
 
     Series* s = VAL_SERIES_ENSURE_MUTABLE(v);
@@ -1788,11 +1788,11 @@ bool Try_As_String(
 ){
     assert(strmode == STRMODE_ALL_CODEPOINTS or strmode == STRMODE_NO_CR);
 
-    if (ANY_WORD(v)) {  // ANY-WORD! can alias as a read only ANY-STRING!
+    if (Any_Word(v)) {  // ANY-WORD! can alias as a read only ANY-STRING!
         Init_Any_String(out, new_kind, VAL_WORD_SYMBOL(v));
         Inherit_Const(Quotify(out, quotes), v);
     }
-    else if (IS_BINARY(v)) {  // If valid UTF-8, BINARY! aliases as ANY-STRING!
+    else if (Is_Binary(v)) {  // If valid UTF-8, BINARY! aliases as ANY-STRING!
         const Binary* bin = VAL_BINARY(v);
         Size byteoffset = VAL_INDEX(v);
 
@@ -1884,7 +1884,7 @@ bool Try_As_String(
         Init_Any_String_At(out, new_kind, str, index);
         Inherit_Const(Quotify(out, quotes), v);
     }
-    else if (IS_ISSUE(v)) {
+    else if (Is_Issue(v)) {
         if (Get_Cell_Flag(v, ISSUE_HAS_NODE)) {
             assert(Is_Series_Frozen(VAL_STRING(v)));
             goto any_string;  // ISSUE! series must be immutable
@@ -1906,7 +1906,7 @@ bool Try_As_String(
         Freeze_Series(str);
         Init_Any_String(out, new_kind, str);
     }
-    else if (ANY_STRING(v) or IS_URL(v)) {
+    else if (Any_String(v) or Is_Url(v)) {
       any_string:
         Copy_Cell(out, v);
         HEART_BYTE(out) = new_kind;
@@ -1958,7 +1958,7 @@ DECLARE_NATIVE(as)
 
       case REB_BLOCK:
       case REB_GROUP:
-        if (ANY_SEQUENCE(v)) {  // internals vary based on optimization
+        if (Any_Sequence(v)) {  // internals vary based on optimization
             if (Not_Cell_Flag(v, SEQUENCE_HAS_NODE))
                 fail ("Array Conversions of byte-oriented sequences TBD");
 
@@ -1992,7 +1992,7 @@ DECLARE_NATIVE(as)
                 assert(false);
             }
         }
-        else if (not ANY_ARRAY(v))
+        else if (not Any_Array(v))
             goto bad_cast;
 
         goto adjust_v_kind;
@@ -2007,7 +2007,7 @@ DECLARE_NATIVE(as)
       case REB_SET_PATH:
       case REB_META_PATH:
       case REB_THE_PATH:
-        if (ANY_ARRAY(v)) {
+        if (Any_Array(v)) {
             //
             // Even if we optimize the array, we don't want to give the
             // impression that we would not have frozen it.
@@ -2028,7 +2028,7 @@ DECLARE_NATIVE(as)
             fail (Error_Bad_Sequence_Init(stable_OUT));
         }
 
-        if (ANY_SEQUENCE(v)) {
+        if (Any_Sequence(v)) {
             Copy_Cell(OUT, v);
             HEART_BYTE(OUT) = new_kind;
             return Trust_Const(OUT);
@@ -2037,14 +2037,14 @@ DECLARE_NATIVE(as)
         goto bad_cast;
 
       case REB_ISSUE: {
-        if (IS_INTEGER(v)) {
+        if (Is_Integer(v)) {
             Context* error = Maybe_Init_Char(OUT, VAL_UINT32(v));
             if (error)
                 return RAISE(error);
             return OUT;
         }
 
-        if (ANY_STRING(v)) {
+        if (Any_String(v)) {
             REBLEN len;
             Size utf8_size = VAL_SIZE_LIMIT_AT(&len, v, UNLIMITED);
 
@@ -2103,7 +2103,7 @@ DECLARE_NATIVE(as)
       case REB_SET_WORD:
       case REB_META_WORD:
       case REB_THE_WORD: {
-        if (IS_ISSUE(v)) {
+        if (Is_Issue(v)) {
             if (Get_Cell_Flag(v, ISSUE_HAS_NODE)) {
                 //
                 // Handle the same way we'd handle any other read-only text
@@ -2134,7 +2134,7 @@ DECLARE_NATIVE(as)
           }
         }
 
-        if (ANY_STRING(v)) {  // aliasing data as an ANY-WORD! freezes data
+        if (Any_String(v)) {  // aliasing data as an ANY-WORD! freezes data
           any_string: {
             const String* s = VAL_STRING(v);
 
@@ -2172,7 +2172,7 @@ DECLARE_NATIVE(as)
           }
         }
 
-        if (IS_BINARY(v)) {
+        if (Is_Binary(v)) {
             if (VAL_INDEX(v) != 0)  // ANY-WORD! stores binding, not position
                 fail ("Cannot convert BINARY! to WORD! unless at the head");
 
@@ -2212,12 +2212,12 @@ DECLARE_NATIVE(as)
             return Inherit_Const(OUT, v);
         }
 
-        if (not ANY_WORD(v))
+        if (not Any_Word(v))
             goto bad_cast;
         goto adjust_v_kind; }
 
       case REB_BINARY: {
-        if (IS_ISSUE(v)) {
+        if (Is_Issue(v)) {
             if (Get_Cell_Flag(v, ISSUE_HAS_NODE))
                 goto any_string_as_binary;  // had a series allocation
 
@@ -2233,12 +2233,12 @@ DECLARE_NATIVE(as)
             return Inherit_Const(stable_OUT, v);
         }
 
-        if (ANY_WORD(v) or ANY_STRING(v)) {
+        if (Any_Word(v) or Any_String(v)) {
           any_string_as_binary:
             Init_Binary_At(
                 OUT,
                 VAL_STRING(v),
-                ANY_WORD(v) ? 0 : VAL_BYTEOFFSET(v)
+                Any_Word(v) ? 0 : VAL_BYTEOFFSET(v)
             );
             return Inherit_Const(stable_OUT, v);
         }
@@ -2246,7 +2246,7 @@ DECLARE_NATIVE(as)
         fail (v); }
 
     case REB_FRAME: {
-      if (IS_FRAME(v)) {
+      if (Is_Frame(v)) {
         //
         // We want AS ACTION! AS FRAME! of an action to be basically a no-op.
         // So that means that it uses the dispatcher and details it encoded
@@ -2299,7 +2299,7 @@ DECLARE_NATIVE(as_text)
 
     REBVAL *v = ARG(value);
     Dequotify(v);  // number of incoming quotes not relevant
-    if (not ANY_SERIES(v) and not ANY_WORD(v) and not ANY_PATH(v))
+    if (not Any_Series(v) and not Any_Word(v) and not Any_Path(v))
         fail (PARAM(value));
 
     const REBLEN quotes = 0;  // constant folding (see AS behavior)
@@ -2371,7 +2371,7 @@ DECLARE_INTRINSIC(logic_q)
 {
     UNUSED(phase);
 
-    Init_Logic(out, IS_LOGIC(arg));
+    Init_Logic(out, Is_Logic(arg));
 }
 
 

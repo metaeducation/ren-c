@@ -63,7 +63,6 @@
 
 #include "uv.h"  // includes windows.h
 #if TO_WINDOWS
-    #undef IS_ERROR  // windows.h defines, contentious with IS_ERROR in Ren-C
     #undef OUT  // %minwindef.h defines this, we have a better use for it
     #undef VOID  // %winnt.h defines this, we have a better use for it
 #endif
@@ -111,7 +110,7 @@ Bounce File_Actor(Level* level_, REBVAL *port, const Symbol* verb)
     //
     REBVAL *state = CTX_VAR(ctx, STD_PORT_STATE);
     FILEREQ *file;
-    if (IS_BINARY(state)) {
+    if (Is_Binary(state)) {
         file = File_Of_Port(port);
 
       #if !defined(NDEBUG)
@@ -134,16 +133,16 @@ Bounce File_Actor(Level* level_, REBVAL *port, const Symbol* verb)
         assert(Is_Nulled(state));
 
         REBVAL *spec = CTX_VAR(ctx, STD_PORT_SPEC);
-        if (not IS_OBJECT(spec))
+        if (not Is_Object(spec))
             fail (Error_Invalid_Spec_Raw(spec));
 
         REBVAL *path = Obj_Value(spec, STD_PORT_SPEC_HEAD_REF);
         if (path == NULL)
             fail (Error_Invalid_Spec_Raw(spec));
 
-        if (IS_URL(path))
+        if (Is_Url(path))
             path = Obj_Value(spec, STD_PORT_SPEC_HEAD_PATH);
-        else if (not IS_FILE(path))
+        else if (not Is_File(path))
             fail (Error_Invalid_Spec_Raw(path));
 
         // Historically the native ports would store a C structure of data
@@ -306,16 +305,16 @@ Bounce File_Actor(Level* level_, REBVAL *port, const Symbol* verb)
      cleanup_read:
         if (opened_temporarily) {
             REBVAL *close_error = Close_File(port);
-            if (result and IS_ERROR(result))
+            if (result and Is_Error(result))
                 fail (result);
             if (close_error)
                 fail (close_error);
         }
 
-        if (result and IS_ERROR(result))
+        if (result and Is_Error(result))
             return RAISE(result);
 
-        assert(result == nullptr or IS_BINARY(result));
+        assert(result == nullptr or Is_Binary(result));
         return result; }
 
     //=//// APPEND ////////////////////////////////////////////////////////=//
@@ -335,7 +334,7 @@ Bounce File_Actor(Level* level_, REBVAL *port, const Symbol* verb)
         if (REF(part) or REF(dup) or REF(line))
             fail (Error_Bad_Refines_Raw());
 
-        assert(IS_PORT(ARG(series)));  // !!! poorly named
+        assert(Is_Port(ARG(series)));  // !!! poorly named
         return rebValue("write/append @", ARG(series), "@", ARG(value)); }
 
     //=//// WRITE //////////////////////////////////////////////////////////=//
@@ -429,7 +428,7 @@ Bounce File_Actor(Level* level_, REBVAL *port, const Symbol* verb)
 
         REBLEN len = Part_Len_May_Modify_Index(ARG(data), ARG(part));
 
-        if (IS_BLOCK(data)) {  // will produce TEXT! from the data
+        if (Is_Block(data)) {  // will produce TEXT! from the data
             //
             // The conclusion drawn after much thinking about "foundational"
             // behavior is that this would not introduce spaces, e.g. it is
@@ -654,7 +653,7 @@ Bounce File_Actor(Level* level_, REBVAL *port, const Symbol* verb)
         UNUSED(PARAM(target));
 
         REBVAL *info = Query_File_Or_Directory(port);
-        if (IS_ERROR(info)) {
+        if (Is_Error(info)) {
             rebRelease(info);  // !!! R3-Alpha just returned "none"
             return nullptr;
         }

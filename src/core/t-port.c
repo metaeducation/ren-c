@@ -60,7 +60,7 @@ Bounce MAKE_Port(
         fail (Error_No_Catch_For_Throw(TOP_LEVEL));
     }
 
-    if (not IS_PORT(OUT))  // should always create a port
+    if (not Is_Port(OUT))  // should always create a port
         return RAISE(OUT);
 
     return OUT;
@@ -75,7 +75,7 @@ Bounce TO_Port(Level* level_, enum Reb_Kind kind, const REBVAL *arg)
     assert(kind == REB_PORT);
     UNUSED(kind);
 
-    if (not IS_OBJECT(arg))
+    if (not Is_Object(arg))
         return RAISE(Error_Bad_Make(REB_PORT, arg));
 
     // !!! cannot convert TO a PORT! without copying the whole context...
@@ -100,7 +100,7 @@ Bounce TO_Port(Level* level_, enum Reb_Kind kind, const REBVAL *arg)
 REBTYPE(Port)
 {
     REBVAL *port = D_ARG(1);
-    assert(IS_PORT(port));
+    assert(Is_Port(port));
 
     Option(SymId) id = ID_OF_SYMBOL(verb);
 
@@ -150,7 +150,7 @@ REBTYPE(Port)
         goto post_process_output;
     }
 
-    if (not IS_OBJECT(actor))
+    if (not Is_Object(actor))
         fail (Error_Invalid_Actor_Raw());
 
     // Dispatch object function:
@@ -192,8 +192,8 @@ REBTYPE(Port)
         if (Is_Nulled(OUT))
             return nullptr;  // !!! `read dns://` returns nullptr on failure
 
-        if ((REF(string) or REF(lines)) and not IS_TEXT(OUT)) {
-            if (not IS_BINARY(OUT))
+        if ((REF(string) or REF(lines)) and not Is_Text(OUT)) {
+            if (not Is_Binary(OUT))
                 fail ("/STRING or /LINES used on a non-BINARY!/STRING! read");
 
             Size size;
@@ -203,7 +203,7 @@ REBTYPE(Port)
         }
 
         if (REF(lines)) { // caller wants a BLOCK! of STRING!s, not one string
-            assert(IS_TEXT(OUT));
+            assert(Is_Text(OUT));
 
             DECLARE_STABLE (temp);
             Move_Cell(temp, OUT);
@@ -277,7 +277,7 @@ REBTYPE(Url)
     }
 
     REBVAL *port = rebValue("make port!", url);
-    assert(IS_PORT(port));
+    assert(Is_Port(port));
 
     // The frame was built for the verb we want to apply, so tweak it so that
     // it has the PORT! in the argument slot, and run the action.

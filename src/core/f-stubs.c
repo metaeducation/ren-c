@@ -38,17 +38,17 @@ REBINT Get_Num_From_Arg(const Cell* val)
 {
     REBINT n;
 
-    if (IS_INTEGER(val)) {
+    if (Is_Integer(val)) {
         if (VAL_INT64(val) > INT32_MAX or VAL_INT64(val) < INT32_MIN)
             fail (Error_Out_Of_Range(val));
         n = VAL_INT32(val);
     }
-    else if (IS_DECIMAL(val) or IS_PERCENT(val)) {
+    else if (Is_Decimal(val) or Is_Percent(val)) {
         if (VAL_DECIMAL(val) > INT32_MAX or VAL_DECIMAL(val) < INT32_MIN)
             fail (Error_Out_Of_Range(val));
         n = cast(REBINT, VAL_DECIMAL(val));
     }
-    else if (IS_LOGIC(val))
+    else if (Is_Logic(val))
         n = (VAL_LOGIC(val) ? 1 : 2);
     else
         fail (val);
@@ -77,14 +77,14 @@ REBINT Float_Int16(REBD32 f)
 //
 REBINT Int32(const Cell* val)
 {
-    if (IS_DECIMAL(val)) {
+    if (Is_Decimal(val)) {
         if (VAL_DECIMAL(val) > INT32_MAX or VAL_DECIMAL(val) < INT32_MIN)
             goto out_of_range;
 
         return cast(REBINT, VAL_DECIMAL(val));
     }
 
-    assert(IS_INTEGER(val));
+    assert(Is_Integer(val));
 
     if (VAL_INT64(val) > INT32_MAX or VAL_INT64(val) < INT32_MIN)
         goto out_of_range;
@@ -109,14 +109,14 @@ REBINT Int32s(const Cell* val, REBINT sign)
 {
     REBINT n;
 
-    if (IS_DECIMAL(val)) {
+    if (Is_Decimal(val)) {
         if (VAL_DECIMAL(val) > INT32_MAX or VAL_DECIMAL(val) < INT32_MIN)
             goto out_of_range;
 
         n = cast(REBINT, VAL_DECIMAL(val));
     }
     else {
-        assert(IS_INTEGER(val));
+        assert(Is_Integer(val));
 
         if (VAL_INT64(val) > INT32_MAX)
             goto out_of_range;
@@ -143,11 +143,11 @@ out_of_range:
 //
 REBI64 Int64(const REBVAL *val)
 {
-    if (IS_INTEGER(val))
+    if (Is_Integer(val))
         return VAL_INT64(val);
-    if (IS_DECIMAL(val) or IS_PERCENT(val))
+    if (Is_Decimal(val) or Is_Percent(val))
         return cast(REBI64, VAL_DECIMAL(val));
-    if (IS_MONEY(val))
+    if (Is_Money(val))
         return deci_to_int(VAL_MONEY_AMOUNT(val));
 
     fail (val);
@@ -159,11 +159,11 @@ REBI64 Int64(const REBVAL *val)
 //
 REBDEC Dec64(const REBVAL *val)
 {
-    if (IS_DECIMAL(val) or IS_PERCENT(val))
+    if (Is_Decimal(val) or Is_Percent(val))
         return VAL_DECIMAL(val);
-    if (IS_INTEGER(val))
+    if (Is_Integer(val))
         return cast(REBDEC, VAL_INT64(val));
-    if (IS_MONEY(val))
+    if (Is_Money(val))
         return deci_to_decimal(VAL_MONEY_AMOUNT(val));
 
     fail (val);
@@ -182,7 +182,7 @@ REBDEC Dec64(const REBVAL *val)
 REBI64 Int64s(const REBVAL *val, REBINT sign)
 {
     REBI64 n;
-    if (IS_DECIMAL(val)) {
+    if (Is_Decimal(val)) {
         if (VAL_DECIMAL(val) > INT64_MAX or VAL_DECIMAL(val) < INT64_MIN)
             fail (Error_Out_Of_Range(val));
 
@@ -214,7 +214,7 @@ const REBVAL *Datatype_From_Kind(enum Reb_Kind kind)
 {
     assert(kind < REB_MAX);
     REBVAL *type = &Datatypes[kind];
-    assert(IS_TYPE_WORD(type));
+    assert(Is_Type_Word(type));
     return type;
 }
 
@@ -242,7 +242,7 @@ REBVAL *Get_System(REBLEN i1, REBLEN i2)
     if (i2 == 0)
         return obj;
 
-    assert(IS_OBJECT(obj));
+    assert(Is_Object(obj));
     return CTX_VAR(VAL_CONTEXT(obj), i2);
 }
 
@@ -255,7 +255,7 @@ REBVAL *Get_System(REBLEN i1, REBLEN i2)
 REBINT Get_System_Int(REBLEN i1, REBLEN i2, REBINT default_int)
 {
     REBVAL *val = Get_System(i1, i2);
-    if (IS_INTEGER(val)) return VAL_INT32(val);
+    if (Is_Integer(val)) return VAL_INT32(val);
     return default_int;
 }
 
@@ -293,7 +293,7 @@ void Extra_Init_Context_Cell_Checks_Debug(enum Reb_Kind kind, Context* c) {
         Assert_Series_Managed(keylist);
     }
 
-    assert(not CTX_ADJUNCT(c) or ANY_CONTEXT_KIND(CTX_TYPE(CTX_ADJUNCT(c))));
+    assert(not CTX_ADJUNCT(c) or Any_Context_Kind(CTX_TYPE(CTX_ADJUNCT(c))));
 
     // FRAME!s must always fill in the phase slot, but that piece of the
     // REBVAL is reserved for future use in other context types...so make
@@ -329,7 +329,7 @@ void Extra_Init_Frame_Details_Checks_Debug(Phase* a) {
     // !!! Currently only a context can serve as the "meta" information,
     // though the interface may expand.
     //
-    assert(not ACT_ADJUNCT(a) or ANY_CONTEXT_KIND(CTX_TYPE(ACT_ADJUNCT(a))));
+    assert(not ACT_ADJUNCT(a) or Any_Context_Kind(CTX_TYPE(ACT_ADJUNCT(a))));
 }
 
 #endif
@@ -351,17 +351,17 @@ REBLEN Part_Len_May_Modify_Index(
     REBVAL *series,  // ANY-SERIES! value whose index may be modified
     const REBVAL *part  // /PART (number, position in value, or BLANK! cell)
 ){
-    if (ANY_SEQUENCE(series)) {
+    if (Any_Sequence(series)) {
         if (not Is_Nulled(part))
             fail ("/PART cannot be used with ANY-SEQUENCE");
 
         return VAL_SEQUENCE_LEN(series);
     }
 
-    assert(IS_ISSUE(series) or ANY_SERIES(series));
+    assert(Is_Issue(series) or Any_Series(series));
 
     if (Is_Nulled(part)) {  // indicates /PART refinement unused
-        if (not IS_ISSUE(series))
+        if (not Is_Issue(series))
             return VAL_LEN_AT(series);  // leave index alone, use plain length
 
         Size size;
@@ -371,14 +371,14 @@ REBLEN Part_Len_May_Modify_Index(
 
     // VAL_INDEX() checks to make sure it's for in-bounds
     //
-    REBLEN iseries = IS_ISSUE(series) ? 0 : VAL_INDEX(series);
+    REBLEN iseries = Is_Issue(series) ? 0 : VAL_INDEX(series);
 
     REBI64 len;
-    if (IS_INTEGER(part) or IS_DECIMAL(part))
+    if (Is_Integer(part) or Is_Decimal(part))
         len = Int32(part);  // may be positive or negative
     else {  // must be same series
         if (
-            IS_ISSUE(part)
+            Is_Issue(part)
             or VAL_TYPE(series) != VAL_TYPE(part)  // !!! allow AS aliases?
             or VAL_SERIES(series) != VAL_SERIES(part)
         ){
@@ -396,7 +396,7 @@ REBLEN Part_Len_May_Modify_Index(
             len = maxlen;
     }
     else {
-        if (IS_ISSUE(part))
+        if (Is_Issue(part))
             fail (Error_Invalid_Part_Raw(part));
 
         len = -len;
@@ -415,7 +415,7 @@ REBLEN Part_Len_May_Modify_Index(
     }
 
     assert(len >= 0);
-    assert(IS_ISSUE(series) or VAL_LEN_HEAD(series) >= cast(REBLEN, len));
+    assert(Is_Issue(series) or VAL_LEN_HEAD(series) >= cast(REBLEN, len));
     return cast(REBLEN, len);
 }
 
@@ -452,7 +452,7 @@ REBLEN Part_Limit_Append_Insert(const REBVAL *part) {
     if (Is_Nulled(part))
         return UINT32_MAX;  // treat as no limit
 
-    if (IS_INTEGER(part)) {
+    if (Is_Integer(part)) {
         REBINT i = Int32(part);
         if (i < 0)  // Clip negative numbers to mean 0
             return 0;  // !!! Would it be better to error?
@@ -499,19 +499,19 @@ int64_t Mul_Max(enum Reb_Kind type, int64_t n, int64_t m, int64_t maxi)
 //
 REBVAL *Setify(REBVAL *out) {  // called on stack values; can't call evaluator
     enum Reb_Kind heart = Cell_Heart(out);
-    if (ANY_WORD_KIND(heart)) {
+    if (Any_Word_Kind(heart)) {
         HEART_BYTE(out) = REB_SET_WORD;
     }
-    else if (ANY_PATH_KIND(heart)) {
+    else if (Any_Path_Kind(heart)) {
         HEART_BYTE(out) = REB_SET_PATH;
     }
-    else if (ANY_TUPLE_KIND(heart)) {
+    else if (Any_Tuple_Kind(heart)) {
         HEART_BYTE(out) = REB_SET_TUPLE;
     }
-    else if (ANY_BLOCK_KIND(heart)) {
+    else if (Any_Block_Kind(heart)) {
         HEART_BYTE(out) = REB_SET_BLOCK;
     }
-    else if (ANY_GROUP_KIND(heart)) {
+    else if (Any_Group_Kind(heart)) {
         HEART_BYTE(out) = REB_SET_GROUP;
     }
     else
@@ -545,19 +545,19 @@ DECLARE_NATIVE(setify)
 //
 REBVAL *Getify(REBVAL *out) {  // called on stack values; can't call evaluator
     enum Reb_Kind heart = Cell_Heart(out);
-    if (ANY_BLOCK_KIND(heart)) {
+    if (Any_Block_Kind(heart)) {
         HEART_BYTE(out) = REB_GET_BLOCK;
     }
-    else if (ANY_GROUP_KIND(heart)) {
+    else if (Any_Group_Kind(heart)) {
         HEART_BYTE(out) = REB_GET_GROUP;
     }
-    else if (ANY_PATH_KIND(heart)) {
+    else if (Any_Path_Kind(heart)) {
         HEART_BYTE(out) = REB_GET_PATH;
     }
-    else if (ANY_TUPLE_KIND(heart)) {
+    else if (Any_Tuple_Kind(heart)) {
         HEART_BYTE(out) = REB_GET_TUPLE;
     }
-    else if (ANY_WORD_KIND(heart)) {
+    else if (Any_Word_Kind(heart)) {
         HEART_BYTE(out) = REB_GET_WORD;
     }
     else
@@ -591,19 +591,19 @@ DECLARE_NATIVE(getify)
 //
 REBVAL *Metafy(REBVAL *out) {  // called on stack values; can't call evaluator
     enum Reb_Kind heart = Cell_Heart(out);
-    if (ANY_WORD_KIND(heart)) {
+    if (Any_Word_Kind(heart)) {
         HEART_BYTE(out) = REB_META_WORD;
     }
-    else if (ANY_PATH_KIND(heart)) {
+    else if (Any_Path_Kind(heart)) {
         HEART_BYTE(out) = REB_META_PATH;
     }
-    else if (ANY_TUPLE_KIND(heart)) {
+    else if (Any_Tuple_Kind(heart)) {
         HEART_BYTE(out) = REB_META_TUPLE;
     }
-    else if (ANY_BLOCK_KIND(heart)) {
+    else if (Any_Block_Kind(heart)) {
         HEART_BYTE(out) = REB_META_BLOCK;
     }
-    else if (ANY_GROUP_KIND(heart)) {
+    else if (Any_Group_Kind(heart)) {
         HEART_BYTE(out) = REB_META_GROUP;
     }
     else if (heart == REB_VOID) {
@@ -640,19 +640,19 @@ DECLARE_NATIVE(metafy)
 //
 REBVAL *Theify(REBVAL *out) {  // called on stack values; can't call evaluator
     enum Reb_Kind heart = Cell_Heart(out);
-    if (ANY_WORD_KIND(heart)) {
+    if (Any_Word_Kind(heart)) {
         HEART_BYTE(out) = REB_THE_WORD;
     }
-    else if (ANY_PATH_KIND(heart)) {
+    else if (Any_Path_Kind(heart)) {
         HEART_BYTE(out) = REB_THE_PATH;
     }
-    else if (ANY_TUPLE_KIND(heart)) {
+    else if (Any_Tuple_Kind(heart)) {
         HEART_BYTE(out) = REB_THE_TUPLE;
     }
-    else if (ANY_BLOCK_KIND(heart)) {
+    else if (Any_Block_Kind(heart)) {
         HEART_BYTE(out) = REB_THE_BLOCK;
     }
-    else if (ANY_GROUP_KIND(heart)) {
+    else if (Any_Group_Kind(heart)) {
         HEART_BYTE(out) = REB_THE_GROUP;
     }
     else if (heart == REB_VOID) {
@@ -693,19 +693,19 @@ DECLARE_NATIVE(inert)
 //
 REBVAL *Plainify(REBVAL *out) {
     enum Reb_Kind heart = Cell_Heart(out);
-    if (ANY_WORD_KIND(heart)) {
+    if (Any_Word_Kind(heart)) {
         HEART_BYTE(out) = REB_WORD;
     }
-    else if (ANY_PATH_KIND(heart)) {
+    else if (Any_Path_Kind(heart)) {
         HEART_BYTE(out) = REB_PATH;
     }
-    else if (ANY_TUPLE_KIND(heart)) {
+    else if (Any_Tuple_Kind(heart)) {
         HEART_BYTE(out) = REB_TUPLE;
     }
-    else if (ANY_BLOCK_KIND(heart)) {
+    else if (Any_Block_Kind(heart)) {
         HEART_BYTE(out) = REB_BLOCK;
     }
-    else if (ANY_GROUP_KIND(heart)) {
+    else if (Any_Group_Kind(heart)) {
         HEART_BYTE(out) = REB_GROUP;
     }
 

@@ -477,14 +477,14 @@ DECLARE_INTRINSIC(spread)
     else if (Is_Nulled(arg)) {
         Init_Nulled(out);  // pass through [1]
     }
-    else if (IS_BLANK(arg)) {
+    else if (Is_Blank(arg)) {
         Init_Splice(out, EMPTY_ARRAY);  // treat blank as if it was [] [2]
     }
     else if (Is_Quoted(arg)) {
         Unquotify(Copy_Cell(out, arg), 1);  // !!! good idea or not?  [3]
     }
     else {
-        assert(ANY_ARRAY(arg));
+        assert(Any_Array(arg));
         Copy_Cell(out, arg);
         HEART_BYTE(out) = REB_GROUP;
         QUOTE_BYTE(out) = ISOTOPE_0;
@@ -516,14 +516,14 @@ DECLARE_NATIVE(lazy)
     if (Is_Quoted(v))
         return Unquotify(Copy_Cell(OUT, v), 1);
 
-    if (IS_BLOCK(v)) {
+    if (Is_Block(v)) {
         if (rebRunThrows(cast(REBVAL*, OUT), Canon(MAKE), Canon(OBJECT_X), v))
             return THROWN;
     }
     else
         Copy_Cell(OUT, v);
 
-    assert(IS_OBJECT(OUT));
+    assert(Is_Object(OUT));
     QUOTE_BYTE(OUT) = ISOTOPE_0;
     return OUT;
 }
@@ -556,7 +556,7 @@ DECLARE_NATIVE(pack)
     if (Is_Quoted(v))
         return Unquotify(Copy_Cell(OUT, v), 1);
 
-    if (IS_THE_BLOCK(v)) {
+    if (Is_The_Block(v)) {
         const Cell* tail;
         const Cell* at = VAL_ARRAY_AT(&tail, v);
         for (; at != tail; ++at)
@@ -565,7 +565,7 @@ DECLARE_NATIVE(pack)
         return Init_Pack(OUT, Pop_Stack_Values(BASELINE->stack_base));
     }
 
-    assert(IS_BLOCK(v));
+    assert(Is_Block(v));
 
     if (rebRunThrows(
         cast(REBVAL*, SPARE),  // output cell
@@ -597,10 +597,10 @@ DECLARE_NATIVE(matches)
     if (Is_Nulled(v))
         return nullptr;  // Put TRY on the FIND or whatever, not MATCHES
 
-    if (ANY_TYPE_VALUE(v))
+    if (Any_Type_Value(v))
         return UNMETA(Quasify(v));
 
-    assert(IS_BLOCK(v));
+    assert(Is_Block(v));
     Copy_Cell(OUT, v);
     HEART_BYTE(OUT) = REB_TYPE_BLOCK;
     QUOTE_BYTE(OUT) = ISOTOPE_0;
@@ -639,7 +639,7 @@ DECLARE_INTRINSIC(any_matcher_q)
 {
     UNUSED(phase);
 
-    if (Is_Quasi(arg) and ANY_TYPE_VALUE_KIND(HEART_BYTE(arg)))
+    if (Is_Quasi(arg) and Any_Type_Value_Kind(HEART_BYTE(arg)))
         Init_True(out);
     else
         Init_False(out);

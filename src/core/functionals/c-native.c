@@ -298,11 +298,11 @@ Array* Startup_Natives(const REBVAL *boot_natives)
     // create NATIVE itself that way.  So the prep process should have moved
     // it to be the first native in the list, and we make it manually.
     //
-    assert(IS_SET_WORD(item) and VAL_WORD_ID(item) == SYM_NATIVE);
+    assert(Is_Set_Word(item) and VAL_WORD_ID(item) == SYM_NATIVE);
     ++item;
-    assert(IS_WORD(item) and VAL_WORD_ID(item) == SYM_NATIVE);
+    assert(Is_Word(item) and VAL_WORD_ID(item) == SYM_NATIVE);
     ++item;
-    assert(IS_BLOCK(item));
+    assert(Is_Block(item));
     REBVAL *spec = SPECIFIC(item);
     ++item;
 

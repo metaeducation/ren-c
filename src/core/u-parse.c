@@ -93,7 +93,7 @@
 //
 // (Note: when arguments to natives are viewed under the debugger, the
 // debug frames are read only.  So it's not possible for the user to change
-// the ANY_SERIES! of the current parse position sitting in slot 0 into
+// the Any_Series! of the current parse position sitting in slot 0 into
 // a DECIMAL! and crash the parse, for instance.  They are able to change
 // usermode authored function arguments only.)
 //
@@ -260,7 +260,7 @@ static bool Subparse_Throws(
     Option(Array*) collection,
     Flags flags
 ){
-    assert(ANY_SERIES_KIND(Cell_Heart(input)));
+    assert(Any_Series_Kind(Cell_Heart(input)));
 
     Push_Level(out, L);  // checks for C stack overflow
     assert(Is_Fresh(out));
@@ -332,7 +332,7 @@ static bool Subparse_Throws(
         // ignored by most callers, but makes that fact more apparent.
         //
         const REBVAL *label = VAL_THROWN_LABEL(LEVEL);
-        if (IS_FRAME(label)) {
+        if (Is_Frame(label)) {
             if (VAL_ACTION(label) == VAL_ACTION(Lib(PARSE_REJECT))) {
                 CATCH_THROWN(out, LEVEL);
                 *interrupted_out = true;
@@ -341,7 +341,7 @@ static bool Subparse_Throws(
 
             if (VAL_ACTION(label) == VAL_ACTION(Lib(PARSE_BREAK))) {
                 CATCH_THROWN(out, LEVEL);
-                assert(IS_INTEGER(out));
+                assert(Is_Integer(out));
                 *interrupted_out = true;
                 return false;
             }
@@ -432,13 +432,13 @@ static const Cell* Get_Parse_Value(
     const Cell* rule,
     Specifier* specifier
 ){
-    if (IS_WORD(rule)) {
+    if (Is_Word(rule)) {
         if (VAL_CMD(rule))  // includes IS_BAR()...also a "command"
             return rule;
 
         Get_Word_May_Fail(cell, rule, specifier);
     }
-    else if (IS_TUPLE(rule)) {
+    else if (Is_Tuple(rule)) {
         Get_Var_May_Fail(cell, rule, specifier, false);
     }
     else
@@ -447,7 +447,7 @@ static const Cell* Get_Parse_Value(
     if (Is_Nulled(cell))
         fail (Error_Bad_Null(rule));
 
-    if (IS_INTEGER(cell))
+    if (Is_Integer(cell))
         fail ("Use REPEAT on integers https://forum.rebol.info/t/1578/6");
 
     return cell;
@@ -470,7 +470,7 @@ bool Process_Group_For_Parse_Throws(
 
     assert(cast(Cell*, out) != group);
 
-    assert(IS_GROUP(group) or IS_GET_GROUP(group));
+    assert(Is_Group(group) or Is_Get_Group(group));
     Specifier* derived = (group == P_SAVE)
         ? SPECIFIED
         : Derive_Specifier(P_RULE_SPECIFIER, group);
@@ -517,8 +517,8 @@ static REBIXO Parse_One_Rule(
 
     assert(Is_Fresh(OUT));
 
-    if (IS_GROUP(rule) or IS_GET_GROUP(rule)) {
-        bool inject = IS_GET_GROUP(rule);  // rule may be SPARE
+    if (Is_Group(rule) or Is_Get_Group(rule)) {
+        bool inject = Is_Get_Group(rule);  // rule may be SPARE
         if (Process_Group_For_Parse_Throws(SPARE, level_, rule))
             return THROWN_FLAG;
 
@@ -531,14 +531,14 @@ static REBIXO Parse_One_Rule(
     }
 
     if (pos == P_INPUT_LEN) {  // at end of input
-        if (IS_LOGIC(rule) or IS_BLOCK(rule) or Is_Void(rule)) {
+        if (Is_Logic(rule) or Is_Block(rule) or Is_Void(rule)) {
             //
             // Only these types can *potentially* handle an END input.
         }
         else if (
-            (IS_TEXT(rule) or IS_BINARY(rule))
+            (Is_Text(rule) or Is_Binary(rule))
             and (VAL_LEN_AT(rule) == 0)
-            and (ANY_STRING_KIND(P_TYPE) or P_TYPE == REB_BINARY)
+            and (Any_String_Kind(P_TYPE) or P_TYPE == REB_BINARY)
         ){
             // !!! The way this old R3-Alpha code was structured is now very
             // archaic (compared to UPARSE).  But while that design stabilizes,
@@ -561,7 +561,7 @@ static REBIXO Parse_One_Rule(
     if (Is_Void(rule)) {
         return pos;  // void matches always
     }
-    else if (IS_LOGIC(rule)) {
+    else if (Is_Logic(rule)) {
         if (VAL_LOGIC(rule))
             return pos;  // true matches always
         return END_FLAG;  // false matches never
@@ -652,9 +652,9 @@ static REBIXO Parse_One_Rule(
         return END_FLAG;
     }
     else {
-        assert(ANY_STRING_KIND(P_TYPE) or P_TYPE == REB_BINARY);
+        assert(Any_String_Kind(P_TYPE) or P_TYPE == REB_BINARY);
 
-        if (IS_THE_WORD(rule)) {
+        if (Is_The_Word(rule)) {
             bool any = false;
             Get_Var_May_Fail(SPARE, rule, P_RULE_SPECIFIER, any);
             rule = SPARE;
@@ -676,8 +676,8 @@ static REBIXO Parse_One_Rule(
         //
         enum Reb_Kind rule_heart = Cell_Heart(rule);
         if (
-            (ANY_WORD_KIND(rule_heart) and VAL_NUM_QUOTES(rule) == 1)
-            or (ANY_STRING_KIND(rule_heart) and VAL_NUM_QUOTES(rule) <= 1)
+            (Any_Word_Kind(rule_heart) and VAL_NUM_QUOTES(rule) == 1)
+            or (Any_String_Kind(rule_heart) and VAL_NUM_QUOTES(rule) <= 1)
             or (rule_heart == REB_ISSUE and VAL_NUM_QUOTES(rule) <= 1)
             or (rule_heart == REB_BINARY and VAL_NUM_QUOTES(rule) == 0)
             or (rule_heart == REB_INTEGER and VAL_NUM_QUOTES(rule) == 1)
@@ -689,7 +689,7 @@ static REBIXO Parse_One_Rule(
                 VAL_LEN_HEAD(ARG(position)),
                 rule,
                 (P_FLAGS & PF_FIND_MASK) | AM_FIND_MATCH
-                    | (IS_ISSUE(rule) ? AM_FIND_CASE : 0),
+                    | (Is_Issue(rule) ? AM_FIND_CASE : 0),
                 1  // skip
             );
             if (index == NOT_FOUND)
@@ -762,10 +762,10 @@ static REBIXO To_Thru_Block_Rule(
                 fail (Error_Parse_Rule());  // !!! Shouldn't `TO [|]` succeed?
 
             const Cell* rule;
-            if (not (IS_GROUP(blk) or IS_GET_GROUP(blk)))
+            if (not (Is_Group(blk) or Is_Get_Group(blk)))
                 rule = blk;
             else {
-                bool inject = IS_GET_GROUP(blk);
+                bool inject = Is_Get_Group(blk);
                 if (Process_Group_For_Parse_Throws(cell, level_, blk))
                     return THROWN_FLAG;
 
@@ -775,7 +775,7 @@ static REBIXO To_Thru_Block_Rule(
                 rule = cell;
             }
 
-            if (IS_WORD(rule)) {
+            if (Is_Word(rule)) {
                 Option(SymId) cmd = VAL_CMD(rule);
 
                 if (cmd) {
@@ -812,7 +812,7 @@ static REBIXO To_Thru_Block_Rule(
                     rule = cell;
                 }
             }
-            else if (IS_TAG(rule) and not (P_FLAGS & PF_REDBOL)) {
+            else if (Is_Tag(rule) and not (P_FLAGS & PF_REDBOL)) {
                 bool strict = true;
                 if (0 == CT_String(rule, Root_End_Tag, strict)) {
                     if (VAL_INDEX(iter) >= P_INPUT_LEN)
@@ -825,14 +825,14 @@ static REBIXO To_Thru_Block_Rule(
                 else
                     fail ("TAG! combinator must be <here> or <end> ATM");
             }
-            else if (IS_TUPLE(rule))
+            else if (Is_Tuple(rule))
                 rule = Get_Parse_Value(cell, rule, P_RULE_SPECIFIER);
-            else if (IS_PATH(rule))
+            else if (Is_Path(rule))
                 fail ("Use TUPLE! a.b.c instead of PATH! a/b/c");
 
             // Try to match it:
-            if (ANY_ARRAY_KIND(P_TYPE) or ANY_SEQUENCE_KIND(P_TYPE)) {
-                if (ANY_ARRAY(rule))
+            if (Any_Array_Kind(P_TYPE) or Any_Sequence_Kind(P_TYPE)) {
+                if (Any_Array(rule))
                     fail (Error_Parse_Rule());
 
                 REBIXO ixo = Parse_One_Rule(level_, VAL_INDEX(iter), rule);
@@ -860,7 +860,7 @@ static REBIXO To_Thru_Block_Rule(
                     // terminator is implementation detail.
                     //
                     assert(ch1 == '\0');  // internal BINARY! terminator
-                    if (IS_BINARY(rule) and VAL_LEN_AT(rule) == 0)
+                    if (Is_Binary(rule) and VAL_LEN_AT(rule) == 0)
                         return VAL_INDEX(iter);
                 }
                 else if (IS_CHAR(rule)) {
@@ -873,7 +873,7 @@ static REBIXO To_Thru_Block_Rule(
                         return VAL_INDEX(iter);
                     }
                 }
-                else if (IS_BINARY(rule)) {
+                else if (Is_Binary(rule)) {
                     Size rule_size;
                     const Byte* rule_data = VAL_BINARY_SIZE_AT(
                         &rule_size,
@@ -895,7 +895,7 @@ static REBIXO To_Thru_Block_Rule(
                         return VAL_INDEX_RAW(iter);
                     }
                 }
-                else if (IS_INTEGER(rule)) {
+                else if (Is_Integer(rule)) {
                     if (VAL_INT64(rule) > 0xff)
                         fail (Error_Parse_Rule());
 
@@ -909,7 +909,7 @@ static REBIXO To_Thru_Block_Rule(
                     fail (Error_Parse_Rule());
             }
             else {
-                assert(ANY_STRING_KIND(P_TYPE));
+                assert(Any_String_Kind(P_TYPE));
 
                 Codepoint unadjusted = Get_Char_At(
                     P_INPUT_STRING,
@@ -918,7 +918,7 @@ static REBIXO To_Thru_Block_Rule(
                 if (unadjusted == '\0') {  // cannot be passed to UP_CASE()
                     assert(VAL_INDEX(iter) == P_INPUT_LEN);
 
-                    if (IS_TEXT(rule) and VAL_LEN_AT(rule) == 0)
+                    if (Is_Text(rule) and VAL_LEN_AT(rule) == 0)
                         return VAL_INDEX(iter);  // empty string can match end
 
                     goto next_alternate_rule;  // other match is END (above)
@@ -943,7 +943,7 @@ static REBIXO To_Thru_Block_Rule(
                         return VAL_INDEX(iter);
                     }
                 }
-                else if (IS_BITSET(rule)) {
+                else if (Is_Bitset(rule)) {
                     bool uncased = not (P_FLAGS & AM_FIND_CASE);
                     if (Check_Bit(VAL_BITSET(rule), ch, uncased)) {
                         if (is_thru)
@@ -951,7 +951,7 @@ static REBIXO To_Thru_Block_Rule(
                         return VAL_INDEX(iter);
                     }
                 }
-                else if (ANY_STRING(rule)) {
+                else if (Any_String(rule)) {
                     REBLEN len = VAL_LEN_AT(rule);
                     REBINT i = Find_Value_In_Binstr(
                         &len,
@@ -968,7 +968,7 @@ static REBIXO To_Thru_Block_Rule(
                         return cast(REBLEN, i);
                     }
                 }
-                else if (IS_INTEGER(rule)) {
+                else if (Is_Integer(rule)) {
                     if (unadjusted == cast(Codepoint, VAL_INT32(rule))) {
                         if (is_thru)
                             return VAL_INDEX(iter) + 1;
@@ -1007,7 +1007,7 @@ static REBIXO To_Thru_Non_Block_Rule(
 ){
     USE_PARAMS_OF_SUBPARSE;
 
-    if (IS_LOGIC(rule))  // no-op if true, match failure if false
+    if (Is_Logic(rule))  // no-op if true, match failure if false
         return VAL_LOGIC(rule) ? cast(REBLEN, P_POS) : END_FLAG;
 
     enum Reb_Kind kind = VAL_TYPE(rule);
@@ -1056,12 +1056,12 @@ static REBIXO To_Thru_Non_Block_Rule(
             Derelativize(temp, rule, P_RULE_SPECIFIER);
             rule = Unquotify(temp, 1);
         }
-        else if (IS_THE_WORD(rule)) {
+        else if (Is_The_Word(rule)) {
             bool any = false;
             Get_Var_May_Fail(temp, rule, P_RULE_SPECIFIER, any);
             rule = temp;
         }
-        else if (IS_TYPE_WORD(rule) or IS_TYPE_GROUP(rule)) {
+        else if (Is_Type_Word(rule) or Is_Type_Group(rule)) {
             Derelativize(temp, rule, P_RULE_SPECIFIER);
             Quasify(temp);
             Meta_Unquotify_Known_Stable(temp);
@@ -1091,7 +1091,7 @@ static REBIXO To_Thru_Non_Block_Rule(
         return cast(REBLEN, i);
     }
     else {
-        if (IS_THE_WORD(rule)) {
+        if (Is_The_Word(rule)) {
             bool any = false;
             Get_Var_May_Fail(SPARE, rule, P_RULE_SPECIFIER, any);
             rule = SPARE;
@@ -1186,7 +1186,7 @@ static void Handle_Seek_Rule_Dont_Update_Begin(
             fail ("Cannot SEEK a negative integer position");
         --index;  // Rebol is 1-based, C is 0 based...
     }
-    else if (ANY_SERIES_KIND(k)) {
+    else if (Any_Series_Kind(k)) {
         if (VAL_SERIES(rule) != P_INPUT)
             fail ("Switching PARSE series is not allowed");
         index = VAL_INDEX(rule);
@@ -1387,7 +1387,7 @@ DECLARE_NATIVE(subparse)
     // BAR! there's no scan skipping that *requires* commas to be at source
     // level, so this could be relaxed if there was a good reason to.
 
-    if (IS_COMMA(rule)) {
+    if (Is_Comma(rule)) {
         if (mincount != 1 or maxcount != 1 or (P_FLAGS & PF_STATE_MASK))
             fail (Error_Expression_Barrier_Raw());
         FETCH_NEXT_RULE(L);
@@ -1396,7 +1396,7 @@ DECLARE_NATIVE(subparse)
 
     //=//// (GROUP!) AND :(GET-GROUP!) PROCESSING /////////////////////////=//
 
-    if (IS_GROUP(rule) or IS_GET_GROUP(rule)) {
+    if (Is_Group(rule) or Is_Get_Group(rule)) {
 
         // Code below may jump here to re-process groups, consider:
         //
@@ -1409,7 +1409,7 @@ DECLARE_NATIVE(subparse)
 
       process_group: {
 
-        bool inject = IS_GET_GROUP(rule);
+        bool inject = Is_Get_Group(rule);
         if (Process_Group_For_Parse_Throws(SPARE, L, rule))
             return THROWN;
 
@@ -1453,10 +1453,10 @@ DECLARE_NATIVE(subparse)
 
     //=//// ANY-WORD!/ANY-PATH! PROCESSING ////////////////////////////////=//
 
-    if (IS_WORD(rule) or IS_GET_WORD(rule) or IS_SET_WORD(rule)) {
+    if (Is_Word(rule) or Is_Get_Word(rule) or Is_Set_Word(rule)) {
         Option(SymId) cmd = VAL_CMD(rule);
         if (cmd) {
-            if (not IS_WORD(rule)) {
+            if (not Is_Word(rule)) {
                 //
                 // Command but not WORD! (COPY:, :THRU)
                 //
@@ -1525,23 +1525,23 @@ DECLARE_NATIVE(subparse)
                     );
 
                 FETCH_NEXT_RULE(L);
-                if (not IS_GROUP(P_RULE))
+                if (not Is_Group(P_RULE))
                     fail ("Old PARSE REPEAT requires GROUP! for times count");
 
                 assert(Is_Fresh(OUT));
                 if (Eval_Value_Throws(OUT, P_RULE, P_RULE_SPECIFIER))
                     goto return_thrown;
 
-                if (IS_INTEGER(OUT)) {
+                if (Is_Integer(OUT)) {
                     mincount = Int32s(OUT, 0);
                     maxcount = Int32s(OUT, 0);
                 } else {
                     if (
-                        not IS_BLOCK(OUT)
+                        not Is_Block(OUT)
                         or not (
                             VAL_LEN_AT(OUT) == 2
-                            and IS_INTEGER(VAL_ARRAY_ITEM_AT(OUT))
-                            and IS_INTEGER(VAL_ARRAY_ITEM_AT(OUT) + 1)
+                            and Is_Integer(VAL_ARRAY_ITEM_AT(OUT))
+                            and Is_Integer(VAL_ARRAY_ITEM_AT(OUT) + 1)
                         )
                     ){
                         fail ("REPEAT takes INTEGER! or length 2 BLOCK! range");
@@ -1593,7 +1593,7 @@ DECLARE_NATIVE(subparse)
 
                 FETCH_NEXT_RULE(L);
 
-                if (not (IS_WORD(P_RULE) or IS_SET_WORD(P_RULE)))
+                if (not (Is_Word(P_RULE) or Is_Set_Word(P_RULE)))
                     fail (Error_Parse_Variable(L));
 
                 if (VAL_CMD(P_RULE))  // set set [...]
@@ -1607,7 +1607,7 @@ DECLARE_NATIVE(subparse)
                         VAL_WORD_SYMBOL(P_RULE),
                         P_RULE_SPECIFIER
                     );
-                    if (IS_WORD(P_RULE)) {  // no further action
+                    if (Is_Word(P_RULE)) {  // no further action
                         FETCH_NEXT_RULE(L);
                         goto pre_rule;
                     }
@@ -1634,7 +1634,7 @@ DECLARE_NATIVE(subparse)
                 // and KEEP SPREAD (whatever) will splice
                 //
                 bool spread;
-                if (IS_WORD(rule) and VAL_WORD_ID(rule) == SYM_SPREAD) {
+                if (Is_Word(rule) and VAL_WORD_ID(rule) == SYM_SPREAD) {
                     spread = true;
                     FETCH_NEXT_RULE(L);  // e.g. skip the SPREAD
                     rule = Get_Parse_Value(P_SAVE, P_RULE, P_RULE_SPECIFIER);
@@ -1642,7 +1642,7 @@ DECLARE_NATIVE(subparse)
                 else
                     spread = false;
 
-                if (IS_GROUP(rule)) {
+                if (Is_Group(rule)) {
                     //
                     // !!! GROUP! means ordinary evaluation of material
                     // that is not matched as a PARSE rule; this is an idea
@@ -1660,7 +1660,7 @@ DECLARE_NATIVE(subparse)
                         fail (Error_Bad_Void());
 
                     if (spread) {
-                        if (not IS_BLOCK(OUT))
+                        if (not Is_Block(OUT))
                             fail ("SPREAD only works with BLOCK! in PARSE3");
 
                         rebElide(
@@ -1713,7 +1713,7 @@ DECLARE_NATIVE(subparse)
                     if (pos_after == pos_before and spread) {
                         target = nullptr;
                     }
-                    else if (ANY_STRING_KIND(P_TYPE)) {
+                    else if (Any_String_Kind(P_TYPE)) {
                         target = nullptr;
                         Init_Any_String(
                             Alloc_Tail_Array(P_COLLECTION),
@@ -1804,7 +1804,7 @@ DECLARE_NATIVE(subparse)
                 if (P_AT_END)
                     fail (Error_Parse_End());
 
-                if (not IS_GROUP(P_RULE))
+                if (not Is_Group(P_RULE))
                     fail (Error_Parse_Rule());
 
                 DECLARE_LOCAL (condition);
@@ -1837,13 +1837,13 @@ DECLARE_NATIVE(subparse)
                 FETCH_NEXT_RULE(L);
 
                 DECLARE_LOCAL (thrown_arg);
-                if (IS_TAG(P_RULE)) {
+                if (Is_Tag(P_RULE)) {
                     if (rebDid(rebR(rebUnrelativize(P_RULE)), "= <here>"))
                         Copy_Cell(thrown_arg, ARG(position));
                     else
                         fail ("PARSE3 ACCEPT TAG! only works with <here>");
                 }
-                else if (IS_GROUP(P_RULE)) {
+                else if (Is_Group(P_RULE)) {
                     if (Eval_Value_Throws(thrown_arg, P_RULE, P_RULE_SPECIFIER))
                         goto return_thrown;
                 }
@@ -1917,7 +1917,7 @@ DECLARE_NATIVE(subparse)
             // UPARSE2 should be used with code that wants the old semantics.
             // The performance on that should increase with time.
             //
-            if (IS_SET_WORD(rule)) {
+            if (Is_Set_Word(rule)) {
                 //
                 // !!! Review meaning of marking the parse in a slot that
                 // is a target of a rule, e.g. `thru pos: xxx`
@@ -1932,7 +1932,7 @@ DECLARE_NATIVE(subparse)
 
                 goto handle_set;
             }
-            else if (IS_GET_WORD(rule)) {
+            else if (Is_Get_Word(rule)) {
                 //
                 // :word - change the index for the series to a new position
                 //
@@ -1944,7 +1944,7 @@ DECLARE_NATIVE(subparse)
                 fail ("GET-WORD! in PARSE is reserved (unless using PARSE2)");
             }
             else {
-                assert(IS_WORD(rule));  // word - some other variable
+                assert(Is_Word(rule));  // word - some other variable
 
                 if (rule != P_SAVE) {
                     Get_Parse_Value(P_SAVE, rule, P_RULE_SPECIFIER);
@@ -1953,11 +1953,11 @@ DECLARE_NATIVE(subparse)
             }
         }
     }
-    else if (IS_TUPLE(rule)) {
+    else if (Is_Tuple(rule)) {
         Get_Var_May_Fail(SPARE, rule, P_RULE_SPECIFIER, false);
         rule = Copy_Cell(P_SAVE, SPARE);
     }
-    else if (IS_SET_TUPLE(rule)) {
+    else if (Is_Set_Tuple(rule)) {
       handle_set:
         FETCH_NEXT_RULE_KEEP_LAST(&set_or_copy_word, L);
 
@@ -1966,13 +1966,13 @@ DECLARE_NATIVE(subparse)
         // This will change to be generic SET after this has had some
         // time to settle.  Allows also `here: <here>` with `pos: here`
         //
-        if (IS_WORD(P_RULE) and VAL_WORD_ID(P_RULE) == SYM_ACROSS) {
+        if (Is_Word(P_RULE) and VAL_WORD_ID(P_RULE) == SYM_ACROSS) {
             FETCH_NEXT_RULE(L);
             P_FLAGS |= PF_COPY;
             goto pre_rule;
         }
         else if (
-            IS_WORD(P_RULE)
+            Is_Word(P_RULE)
             and VAL_WORD_ID(P_RULE) == SYM_COLLECT
         ){
             FETCH_NEXT_RULE(L);
@@ -2017,7 +2017,7 @@ DECLARE_NATIVE(subparse)
             );
             goto pre_rule;
         }
-        else if (IS_WORD(P_RULE)) {
+        else if (Is_Word(P_RULE)) {
             DECLARE_STABLE (temp);
             const Cell* gotten = Get_Parse_Value(
                 temp,
@@ -2026,14 +2026,14 @@ DECLARE_NATIVE(subparse)
             );
             bool strict = true;
             if (
-                IS_TAG(gotten)
+                Is_Tag(gotten)
                 and 0 == CT_String(gotten, Root_Here_Tag, strict)
             ){
                 FETCH_NEXT_RULE(L);
             }
             // fall through
         }
-        else if (IS_TAG(P_RULE)) {
+        else if (Is_Tag(P_RULE)) {
             bool strict = true;
             if (0 == CT_String(P_RULE, Root_Here_Tag, strict))
                 FETCH_NEXT_RULE(L);
@@ -2046,7 +2046,7 @@ DECLARE_NATIVE(subparse)
         Handle_Mark_Rule(L, set_or_copy_word, P_RULE_SPECIFIER);
         goto pre_rule;
     }
-    else if (ANY_PATH(rule)) {
+    else if (Any_Path(rule)) {
         fail ("Use TUPLE! a.b.c instead of PATH! a/b/c");
     }
 
@@ -2056,7 +2056,7 @@ DECLARE_NATIVE(subparse)
     if (Is_Nulled(rule))
         fail ("NULL rules are not allowed in PARSE");
 
-    if (IS_LOGIC(rule)) {  // true is a no-op, false causes match failure
+    if (Is_Logic(rule)) {  // true is a no-op, false causes match failure
         if (VAL_LOGIC(rule)) {
             FETCH_NEXT_RULE(L);
             goto pre_rule;
@@ -2078,7 +2078,7 @@ DECLARE_NATIVE(subparse)
 
         rule = Get_Parse_Value(P_SAVE, P_RULE, P_RULE_SPECIFIER);
 
-        if (IS_INTEGER(rule)) {
+        if (Is_Integer(rule)) {
             if (P_FLAGS & PF_REDBOL)
                 maxcount = Int32s(rule, 0);
             else
@@ -2129,14 +2129,14 @@ DECLARE_NATIVE(subparse)
     while (count < maxcount) {
         assert(
             not IS_BAR(rule)
-            and not IS_LOGIC(rule)
-            and not IS_INTEGER(rule)
-            and not IS_GROUP(rule)
+            and not Is_Logic(rule)
+            and not Is_Integer(rule)
+            and not Is_Group(rule)
         );  // these should all have been handled before iterated section
 
         REBIXO i;  // temp index point
 
-        if (IS_WORD(rule)) {  // could be literal BLANK!, now SYM_SKIP
+        if (Is_Word(rule)) {  // could be literal BLANK!, now SYM_SKIP
             Option(SymId) cmd = VAL_CMD(rule);
 
             switch (cmd) {
@@ -2165,7 +2165,7 @@ DECLARE_NATIVE(subparse)
 
                 bool is_thru = (cmd == SYM_THRU);
 
-                if (IS_BLOCK(subrule))
+                if (Is_Block(subrule))
                     i = To_Thru_Block_Rule(L, subrule, is_thru);
                 else
                     i = To_Thru_Non_Block_Rule(L, subrule, is_thru);
@@ -2207,7 +2207,7 @@ DECLARE_NATIVE(subparse)
                     FETCH_NEXT_RULE(L);
                 }
 
-                if (not IS_BLOCK(subrule))
+                if (not Is_Block(subrule))
                     fail (Error_Parse_Rule());
 
                 // parse ["aa"] [into ["a" "a"]] ; is legal
@@ -2222,7 +2222,7 @@ DECLARE_NATIVE(subparse)
                     i = END_FLAG;  // `parse [] [into [...]]`, rejects
                     break;
                 }
-                else if (ANY_PATH_KIND(Cell_Heart(into))) {
+                else if (Any_Path_Kind(Cell_Heart(into))) {
                     //
                     // Can't PARSE an ANY-PATH! because it has no position
                     // But would be inconvenient if INTO did not support.
@@ -2234,7 +2234,7 @@ DECLARE_NATIVE(subparse)
                     into = rebValue("as block! @", SPARE);
                 }
                 else if (
-                    not ANY_SERIES_KIND(Cell_Heart(into))
+                    not Any_Series_Kind(Cell_Heart(into))
                 ){
                     i = END_FLAG;  // `parse [1] [into [...]`, rejects
                     break;
@@ -2281,7 +2281,7 @@ DECLARE_NATIVE(subparse)
                 fail (Error_Parse_Rule());
             }
         }
-        else if (IS_BLOCK(rule)) {  // word fetched block, or inline block
+        else if (Is_Block(rule)) {  // word fetched block, or inline block
 
             Level* sub = Make_Level_At_Core(
                 rule, rule_specifier(),
@@ -2307,7 +2307,7 @@ DECLARE_NATIVE(subparse)
             if (Is_Nulled(SPARE))
                 i = END_FLAG;
             else {
-                assert(IS_INTEGER(SPARE));
+                assert(Is_Integer(SPARE));
                 i = VAL_INT32(SPARE);
             }
 
@@ -2413,7 +2413,7 @@ DECLARE_NATIVE(subparse)
                     set_or_copy_word,
                     P_RULE_SPECIFIER
                 );
-                if (ANY_ARRAY_KIND(P_TYPE)) {
+                if (Any_Array_Kind(P_TYPE)) {
                     //
                     // Act like R3-Alpha in preserving GROUP! vs. BLOCK!
                     // distinction (which Rebol2 did not).  But don't keep
@@ -2421,7 +2421,7 @@ DECLARE_NATIVE(subparse)
                     //
                     Init_Array_Cell(
                         sink,
-                        ANY_GROUP_KIND(P_TYPE) ? REB_GROUP : REB_BLOCK,
+                        Any_Group_Kind(P_TYPE) ? REB_GROUP : REB_BLOCK,
                         Copy_Array_At_Max_Shallow(
                             P_INPUT_ARRAY,
                             begin,
@@ -2437,7 +2437,7 @@ DECLARE_NATIVE(subparse)
                     );
                 }
                 else {
-                    assert(ANY_STRING_KIND(P_TYPE));
+                    assert(Any_String_Kind(P_TYPE));
 
                     DECLARE_LOCAL (begin_val);
                     Init_Series_Cell_At(begin_val, P_TYPE, P_INPUT, begin);
@@ -2543,7 +2543,7 @@ DECLARE_NATIVE(subparse)
                 // and KEEP (spread whatever) will splice
                 //
                 bool only;
-                if (ANY_META_KIND(VAL_TYPE(rule))) {
+                if (Any_Meta_Kind(VAL_TYPE(rule))) {
                     if (rule != P_SAVE) {  // move to mutable location
                         Derelativize(P_SAVE, rule, P_RULE_SPECIFIER);
                         rule = P_SAVE;
@@ -2554,7 +2554,7 @@ DECLARE_NATIVE(subparse)
                 else
                     only = false;
 
-                if (not IS_GROUP(rule))
+                if (not Is_Group(rule))
                     fail ("Only (...) or ^(...) in old PARSE's CHANGE/INSERT");
 
                 DECLARE_STABLE (evaluated);
@@ -2578,7 +2578,7 @@ DECLARE_NATIVE(subparse)
 
                 if (Is_Series_Array(P_INPUT)) {
                     REBLEN mod_flags = (P_FLAGS & PF_INSERT) ? 0 : AM_PART;
-                    if (not only and ANY_ARRAY(evaluated))
+                    if (not only and Any_Array(evaluated))
                         mod_flags |= AM_SPLICE;
 
                     // Note: We could check for mutability at the start
@@ -2705,7 +2705,7 @@ DECLARE_NATIVE(parse3)
     REBVAL *input = ARG(input);
     REBVAL *rules = ARG(rules);
 
-    if (ANY_SEQUENCE(input)) {
+    if (Any_Sequence(input)) {
         if (rebRunThrows(
             cast(REBVAL*, SPARE),  // <-- output cell
             Canon(AS), Canon(BLOCK_X), rebQ(input)
@@ -2714,7 +2714,7 @@ DECLARE_NATIVE(parse3)
         }
         Move_Cell(input, SPARE);
     }
-    else if (IS_URL(input)) {
+    else if (Is_Url(input)) {
         if (rebRunThrows(
             cast(REBVAL*, SPARE),  // <-- output cell
             Canon(AS), Canon(TEXT_X), input
@@ -2724,7 +2724,7 @@ DECLARE_NATIVE(parse3)
         Move_Cell(input, SPARE);
     }
 
-    assert(ANY_SERIES(input));
+    assert(Any_Series(input));
 
     const Cell* rules_tail;
     const Cell* rules_at = VAL_ARRAY_AT(&rules_tail, rules);
@@ -2737,8 +2737,8 @@ DECLARE_NATIVE(parse3)
         rules_at != rules_tail
         and rules_at + 1 != rules_tail
         and rules_at + 2 == rules_tail
-        and IS_WORD(rules_at) and VAL_WORD_ID(rules_at) == SYM_COLLECT
-        and IS_BLOCK(rules_at + 1)
+        and Is_Word(rules_at) and VAL_WORD_ID(rules_at) == SYM_COLLECT
+        and Is_Block(rules_at + 1)
     ){
         Context* frame_ctx = Context_For_Level_May_Manage(level_);
         DECLARE_LOCAL (specific);
@@ -2752,7 +2752,7 @@ DECLARE_NATIVE(parse3)
         );
     }
 
-    if (not ANY_SERIES_KIND(Cell_Heart(input)))
+    if (not Any_Series_Kind(Cell_Heart(input)))
         fail ("PARSE input must be an ANY-SERIES! (use AS BLOCK! for PATH!)");
 
     Level* sub = Make_Level_At(rules, LEVEL_MASK_NONE);
@@ -2773,7 +2773,7 @@ DECLARE_NATIVE(parse3)
         // stack) should be handled here.  ACCEPT is one example.
 
         Value(const*) label = VAL_THROWN_LABEL(LEVEL);
-        if (IS_FRAME(label)) {
+        if (Is_Frame(label)) {
             if (VAL_ACTION(label) == VAL_ACTION(Lib(PARSE_ACCEPT))) {
                 CATCH_THROWN(OUT, LEVEL);
                 return OUT;
@@ -2806,7 +2806,7 @@ DECLARE_NATIVE(parse3)
     bool strict = true;
     if (
         rules_at != rules_tail  // position on input wasn't []
-        and IS_TAG(rules_tail - 1)  // last element processed was a TAG!
+        and Is_Tag(rules_tail - 1)  // last element processed was a TAG!
         and 0 == CT_String(rules_tail - 1, Root_Here_Tag, strict)  // <here>
     ){
         Copy_Cell(OUT, ARG(input));

@@ -533,8 +533,8 @@ REBLEN Find_Value_In_Binstr(
     }
 
     if (
-        ANY_STRING_KIND(pattern_kind)
-        or ANY_WORD_KIND(pattern_kind)
+        Any_String_Kind(pattern_kind)
+        or Any_Word_Kind(pattern_kind)
         or REB_INTEGER == pattern_kind  // `find "ab10cd" 10` -> "10cd"
         or REB_ISSUE == pattern_kind
         or REB_URL == pattern_kind

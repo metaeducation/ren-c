@@ -62,7 +62,6 @@
 #endif
 
 #if DEBUG_OVERLAY_SYS_CORE
-    #undef IS_ERROR
     #undef min
     #undef max
     #undef RL_API  // hack :-/

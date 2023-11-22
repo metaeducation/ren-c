@@ -161,7 +161,7 @@ void Push_Paramlist_Quads_May_Fail(
     Flags *flags,
     StackIndex *return_stackindex
 ){
-    assert(IS_BLOCK(spec));
+    assert(Is_Block(spec));
 
     enum Reb_Spec_Mode mode = SPEC_MODE_NORMAL;
 
@@ -176,7 +176,7 @@ void Push_Paramlist_Quads_May_Fail(
 
     //=//// STRING! FOR FUNCTION DESCRIPTION OR PARAMETER NOTE ////////////=//
 
-        if (IS_TEXT(item)) {
+        if (Is_Text(item)) {
             //
             // Consider `[<with> some-extern "description of that extern"]` to
             // be purely commentary for the implementation, and don't include
@@ -188,7 +188,7 @@ void Push_Paramlist_Quads_May_Fail(
             StackValue(*) notes = NOTES_SLOT(TOP_INDEX);
             assert(
                 Is_Nulled(notes)  // hasn't been written to yet
-                or IS_TEXT(notes)  // !!! we overwrite, but should we append?
+                or Is_Text(notes)  // !!! we overwrite, but should we append?
             );
 
             if (Is_Word_Isotope_With_Id(KEY_SLOT(TOP_INDEX), SYM_KEY)) {
@@ -197,7 +197,7 @@ void Push_Paramlist_Quads_May_Fail(
                 *flags |= MKF_HAS_DESCRIPTION;
             }
             else {
-                assert(IS_WORD(KEY_SLOT(TOP_INDEX)));
+                assert(Is_Word(KEY_SLOT(TOP_INDEX)));
                 Init_Text(notes, Copy_String_At(item));
                 *flags |= MKF_HAS_NOTES;
             }
@@ -208,7 +208,7 @@ void Push_Paramlist_Quads_May_Fail(
     //=//// TOP-LEVEL SPEC TAGS LIKE <local>, <with> etc. /////////////////=//
 
         bool strict = false;
-        if (IS_TAG(item) and (*flags & MKF_KEYWORDS)) {
+        if (Is_Tag(item) and (*flags & MKF_KEYWORDS)) {
             if (0 == CT_String(item, Root_With_Tag, strict)) {
                 mode = SPEC_MODE_WITH;
                 continue;
@@ -242,7 +242,7 @@ void Push_Paramlist_Quads_May_Fail(
 
     //=//// BLOCK! OF TYPES TO MAKE TYPESET FROM (PLUS PARAMETER TAGS) ////=//
 
-        if (IS_BLOCK(item)) {
+        if (Is_Block(item)) {
             if (Is_Word_Isotope_With_Id(KEY_SLOT(TOP_INDEX), SYM_KEY))
                 fail (Error_Bad_Func_Def_Raw(item));   // `func [[integer!]]`
 
@@ -254,7 +254,7 @@ void Push_Paramlist_Quads_May_Fail(
           blockscope {
             StackValue(*) types = TYPES_SLOT(TOP_INDEX);
 
-            if (IS_BLOCK(types))  // too many, `func [x [integer!] [blank!]]`
+            if (Is_Block(types))  // too many, `func [x [integer!] [blank!]]`
                 fail (Error_Bad_Func_Def_Raw(item));
 
             assert(Is_Nulled(types));
@@ -335,7 +335,7 @@ void Push_Paramlist_Quads_May_Fail(
 
         bool local = false;
         bool refinement = false;  // paths with blanks at head are refinements
-        if (ANY_PATH_KIND(heart)) {
+        if (Any_Path_Kind(heart)) {
             if (not IS_REFINEMENT_CELL(item))
                 fail (Error_Bad_Func_Def_Raw(item));
 
@@ -351,7 +351,7 @@ void Push_Paramlist_Quads_May_Fail(
 
             symbol = VAL_REFINEMENT_SYMBOL(item);
             if (ID_OF_SYMBOL(symbol) == SYM_LOCAL) {  // /LOCAL
-                if (item + 1 != tail and ANY_WORD(item + 1))
+                if (item + 1 != tail and Any_Word(item + 1))
                     fail (Error_Legacy_Local_Raw(spec));  // -> <local>
             }
 
@@ -371,7 +371,7 @@ void Push_Paramlist_Quads_May_Fail(
                 pclass = PARAM_CLASS_META;
             }
         }
-        else if (ANY_TUPLE_KIND(heart)) {
+        else if (Any_Tuple_Kind(heart)) {
             //
             // !!! Tuples are theorized as a way to "name parameters out of
             // the way" so there can be an interface name, but then a local
@@ -382,7 +382,7 @@ void Push_Paramlist_Quads_May_Fail(
             //
             fail ("TUPLE! behavior in func spec not defined at present");
         }
-        else if (ANY_WORD_KIND(heart)) {
+        else if (Any_Word_Kind(heart)) {
             symbol = VAL_WORD_SYMBOL(item);
 
             if (heart == REB_SET_WORD) {
@@ -746,7 +746,7 @@ Array* Pop_Paramlist_With_Adjunct_May_Fail(
     //
     if (flags & MKF_HAS_DESCRIPTION) {
         StackValue(*) description = NOTES_SLOT(base + 4);
-        assert(IS_TEXT(description));
+        assert(Is_Text(description));
         Copy_Cell(
             CTX_VAR(*adjunct_out, STD_ACTION_ADJUNCT_DESCRIPTION),
             description
@@ -783,7 +783,7 @@ Array* Pop_Paramlist_With_Adjunct_May_Fail(
         StackIndex stackindex = base + 8;
         for (; stackindex <= TOP_INDEX; stackindex += 4) {
             StackValue(*) types = TYPES_SLOT(stackindex);
-            assert(Is_Nulled(types) or IS_BLOCK(types));
+            assert(Is_Nulled(types) or Is_Block(types));
 
             if (stackindex == return_stackindex)
                 continue;  // was added to the head of the list already
@@ -832,7 +832,7 @@ Array* Pop_Paramlist_With_Adjunct_May_Fail(
         StackIndex stackindex = base + 8;
         for (; stackindex <= TOP_INDEX; stackindex += 4) {
             StackValue(*) notes = NOTES_SLOT(stackindex);
-            assert(IS_TEXT(notes) or Is_Nulled(notes));
+            assert(Is_Text(notes) or Is_Nulled(notes));
 
             if (stackindex == return_stackindex)
                 continue;  // was added to the head of the list already
@@ -1150,7 +1150,7 @@ void Get_Maybe_Fake_Action_Body(Sink(Value(*)) out, Value(const*) action)
             // a GROUP!.
 
             Cell* slot = Array_At(fake, real_body_index);  // #BODY
-            assert(IS_ISSUE(slot));
+            assert(Is_Issue(slot));
 
             // Note: clears VAL_FLAG_LINE
             //
@@ -1182,7 +1182,7 @@ void Get_Maybe_Fake_Action_Body(Sink(Value(*)) out, Value(const*) action)
         // which is actually the function to be run.
         //
         const REBVAL *frame = CTX_ARCHETYPE(ACT_EXEMPLAR(a));
-        assert(IS_FRAME(frame));
+        assert(Is_Frame(frame));
         Copy_Cell(out, frame);
         return;
     }
@@ -1190,7 +1190,7 @@ void Get_Maybe_Fake_Action_Body(Sink(Value(*)) out, Value(const*) action)
     if (ACT_DISPATCHER(a) == &Generic_Dispatcher) {
         Details* details = Phase_Details(ACT_IDENTITY(a));
         REBVAL *verb = DETAILS_AT(details, 1);
-        assert(IS_WORD(verb));
+        assert(Is_Word(verb));
         Copy_Cell(out, verb);
         return;
     }

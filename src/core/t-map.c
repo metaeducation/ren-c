@@ -364,7 +364,7 @@ Bounce MAKE_Map(
     if (parent)
         return RAISE(Error_Bad_Make_Parent(kind, unwrap(parent)));
 
-    if (ANY_NUMBER(arg)) {
+    if (Any_Number(arg)) {
         return Init_Map(OUT, Make_Map(Int32s(arg, 0)));
     }
     else {
@@ -429,7 +429,7 @@ Bounce TO_Map(Level* level_, enum Reb_Kind kind, const REBVAL *arg)
     assert(kind == REB_MAP);
     UNUSED(kind);
 
-    if (IS_BLOCK(arg) || IS_GROUP(arg)) {
+    if (Is_Block(arg) || Is_Group(arg)) {
         //
         // make map! [word val word val]
         //
@@ -443,7 +443,7 @@ Bounce TO_Map(Level* level_, enum Reb_Kind kind, const REBVAL *arg)
         Rehash_Map(map);
         return Init_Map(OUT, map);
     }
-    else if (IS_MAP(arg)) {
+    else if (Is_Map(arg)) {
         //
         // Values are not copied deeply by default.
         //
@@ -508,7 +508,7 @@ Context* Alloc_Context_From_Map(const Map* map)
     const Cell* mval_tail = Array_Tail(MAP_PAIRLIST(map));
     const Cell* mval = Array_Head(MAP_PAIRLIST(map));
     for (; mval != mval_tail; mval += 2) {  // note mval must not be END
-        if (ANY_WORD(mval) and not Is_Void(mval + 1))
+        if (Any_Word(mval) and not Is_Void(mval + 1))
             ++count;
     }
   }
@@ -521,7 +521,7 @@ Context* Alloc_Context_From_Map(const Map* map)
     const Cell* mval = Array_Head(MAP_PAIRLIST(map));
 
     for (; mval != mval_tail; mval += 2) {  // note mval must not be END
-        if (ANY_WORD(mval) and not Is_Void(mval + 1)) {
+        if (Any_Word(mval) and not Is_Void(mval + 1)) {
             REBVAL *var = Append_Context(c, VAL_WORD_SYMBOL(mval));
             Copy_Cell(var, SPECIFIC(mval + 1));
         }

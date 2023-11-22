@@ -60,7 +60,7 @@ INLINE bool Is_Raised(Atom(const*) v)
   { return HEART_BYTE(v) == REB_ERROR and QUOTE_BYTE(v) == ISOTOPE_0; }
 
 INLINE Atom(*) Raisify(Atom(*) v) {
-    assert(IS_ERROR(v) and QUOTE_BYTE(v) == UNQUOTED_1);
+    assert(Is_Error(v) and QUOTE_BYTE(v) == UNQUOTED_1);
     Force_Location_Of_Error(VAL_CONTEXT(v), TOP_LEVEL);  // ideally already set
     QUOTE_BYTE(v) = ISOTOPE_0;
     return v;

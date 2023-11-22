@@ -470,7 +470,7 @@ Bounce Evaluator_Executor(Level* L)
         Get_Action_Flag(enfixed, POSTPONES_ENTIRELY)
         or (
             Get_Feed_Flag(L->feed, NO_LOOKAHEAD)
-            and not ANY_SET_KIND(kind_current)  // not SET-WORD!, SET-PATH!...
+            and not Any_Set_Kind(kind_current)  // not SET-WORD!, SET-PATH!...
         )
     ){
         // !!! cache this test?
@@ -533,12 +533,12 @@ Bounce Evaluator_Executor(Level* L)
 
         Set_Eval_Executor_Flag(L, DIDNT_LEFT_QUOTE_TUPLE);
 
-        if (IS_WORD(SPARE)) {
+        if (Is_Word(SPARE)) {
             STATE = REB_WORD;
             goto word_in_spare;
         }
 
-        assert(IS_TUPLE(SPARE));
+        assert(Is_Tuple(SPARE));
         STATE = REB_TUPLE;
         goto tuple_in_spare;
     }
@@ -554,7 +554,7 @@ Bounce Evaluator_Executor(Level* L)
         VAL_ACTION(unwrap(L_current_gotten)),
         VAL_FRAME_BINDING(unwrap(L_current_gotten))
     );
-    if (IS_WORD(L_current))
+    if (Is_Word(L_current))
         Begin_Enfix_Action(sub, VAL_WORD_SYMBOL(L_current));
     else
         Begin_Enfix_Action(sub, VAL_FRAME_LABEL(L_current));
@@ -571,7 +571,7 @@ Bounce Evaluator_Executor(Level* L)
     // http://stackoverflow.com/questions/17061967/c-switch-and-jump-tables
     //
     // Subverting the jump table optimization with specialized branches for
-    // fast tests like ANY_INERT() and IS_NULLED_OR_VOID_OR_END() has shown
+    // fast tests like Any_Inert() and IS_NULLED_OR_VOID_OR_END() has shown
     // to reduce performance in practice.  The compiler does the right thing.
     //
     // 1. Left quoting constructs may jump to `word_common:` or `tuple_common:`
@@ -964,7 +964,7 @@ Bounce Evaluator_Executor(Level* L)
 
       case REB_TUPLE: {
         const Cell* head = VAL_SEQUENCE_AT(SCRATCH, L_current, 0);
-        if (IS_BLANK(head) or ANY_INERT(head)) {
+        if (Is_Blank(head) or Any_Inert(head)) {
             Derelativize(OUT, L_current, L_specifier);
             break;
         }
@@ -1027,7 +1027,7 @@ Bounce Evaluator_Executor(Level* L)
 
       case REB_PATH: {
         const Cell* temp = VAL_SEQUENCE_AT(SPARE, L_current, 0);
-        if (IS_BLANK(temp) or ANY_INERT(temp)) {
+        if (Is_Blank(temp) or Any_Inert(temp)) {
             Derelativize(OUT, L_current, L_specifier);
             break;
         }
@@ -1037,7 +1037,7 @@ Bounce Evaluator_Executor(Level* L)
             L_current,
             VAL_SEQUENCE_LEN(L_current) - 1
         );
-        bool applying = IS_BLANK(temp);  // terminal slash is APPLY
+        bool applying = Is_Blank(temp);  // terminal slash is APPLY
 
 
         if (Get_Path_Push_Refinements_Throws(
@@ -1120,7 +1120,7 @@ Bounce Evaluator_Executor(Level* L)
 
       case REB_SET_PATH: {
         REBVAL *redbol = Get_System(SYS_OPTIONS, OPTIONS_REDBOL_PATHS);
-        if (not IS_LOGIC(redbol) or VAL_LOGIC(redbol) == false) {
+        if (not Is_Logic(redbol) or VAL_LOGIC(redbol) == false) {
             Derelativize(OUT, L_current, L_specifier);
             HEART_BYTE(OUT) = REB_SET_TUPLE;
 
@@ -1178,7 +1178,7 @@ Bounce Evaluator_Executor(Level* L)
       } set_generic_rightside_in_out: {  /////////////////////////////////////
 
         /*  // !!! Should we figure out how to cache a label in the cell?
-        if (IS_FRAME(OUT))
+        if (Is_Frame(OUT))
             INIT_VAL_ACTION_LABEL(OUT, VAL_WORD_SYMBOL(v));
         */
 
@@ -1403,7 +1403,7 @@ Bounce Evaluator_Executor(Level* L)
             if (
                 (heart == REB_PATH or heart == REB_META_PATH)
                 and VAL_SEQUENCE_LEN(check) == 2
-                and IS_BLANK(VAL_SEQUENCE_AT(SCRATCH, check, 0))
+                and Is_Blank(VAL_SEQUENCE_AT(SCRATCH, check, 0))
             ){
                 is_optional = true;  // leading slash means optional
                 GET_SEQUENCE_AT(
@@ -1794,7 +1794,7 @@ Bounce Evaluator_Executor(Level* L)
     // !!! This check requires caching the kind of `v` at the start of switch.
     // Is it worth it to do so?
     //
-    /*if (ANY_INERT_KIND(kind_current)) {  // if() to check which part failed
+    /*if (Any_Inert_Kind(kind_current)) {  // if() to check which part failed
         assert(Get_Cell_Flag(OUT, UNEVALUATED));
     }
     else if (Get_Cell_Flag(OUT, UNEVALUATED)) {
@@ -1806,7 +1806,7 @@ Bounce Evaluator_Executor(Level* L)
         // don't have the word anymore to look up (and even if we did, what
         // it looks up to may have changed).
         //
-        assert(kind_current == REB_WORD or ANY_INERT(OUT));
+        assert(kind_current == REB_WORD or Any_Inert(OUT));
     }*/
 
     // We're sitting at what "looks like the end" of an evaluation step.
@@ -1912,8 +1912,8 @@ Bounce Evaluator_Executor(Level* L)
     if (
         not L_next_gotten
         or (
-            not (IS_WORD(L_next) and Is_Activation(unwrap(L_next_gotten)))
-            and not IS_FRAME(L_next)
+            not (Is_Word(L_next) and Is_Activation(unwrap(L_next_gotten)))
+            and not Is_Frame(L_next)
         )
         or Not_Enfixed(unwrap(L_next_gotten))
     ){
@@ -2063,7 +2063,7 @@ Bounce Evaluator_Executor(Level* L)
     Push_Action(sub, enfixed, VAL_FRAME_BINDING(unwrap(L_next_gotten)));
     Begin_Enfix_Action(
         sub,
-        IS_FRAME(L_next) ? VAL_FRAME_LABEL(L_next) : VAL_WORD_SYMBOL(L_next)
+        Is_Frame(L_next) ? VAL_FRAME_LABEL(L_next) : VAL_WORD_SYMBOL(L_next)
     );
 
     Fetch_Next_Forget_Lookback(L);  // advances next

@@ -97,7 +97,7 @@ INLINE bool Is_Valid_Sequence_Element(
     enum Reb_Kind sequence_kind,
     const Cell* v
 ){
-    assert(ANY_SEQUENCE_KIND(sequence_kind));
+    assert(Any_Sequence_Kind(sequence_kind));
 
     // QUASI! cases are legal, to support e.g. `~/home/Projects/ren-c/README.md`
     //
@@ -115,7 +115,7 @@ INLINE bool Is_Valid_Sequence_Element(
     }
 
     if (k == REB_TUPLE)  // PATH! can have TUPLE!, not vice-versa
-        return ANY_PATH_KIND(sequence_kind);
+        return Any_Path_Kind(sequence_kind);
 
     return false;
 }
@@ -157,10 +157,10 @@ INLINE Context* Error_Bad_Sequence_Init(const REBVAL *v) {
 // with SYMBOL_FLAG_ESCAPE_IN_SEQUENCE.
 //
 INLINE REBVAL *Init_Any_Sequence_1(Cell* out, enum Reb_Kind kind) {
-    if (ANY_PATH_KIND(kind))
+    if (Any_Path_Kind(kind))
         Init_Word(out, Canon(SLASH_1));
     else {
-        assert(ANY_TUPLE_KIND(kind));
+        assert(Any_Tuple_Kind(kind));
         Init_Word(out, Canon(DOT_1));
     }
     return cast(REBVAL*, out);
@@ -180,9 +180,9 @@ INLINE REBVAL *Try_Leading_Blank_Pathify(
     REBVAL *v,
     enum Reb_Kind kind
 ){
-    assert(ANY_SEQUENCE_KIND(kind));
+    assert(Any_Sequence_Kind(kind));
 
-    if (IS_BLANK(v))
+    if (Is_Blank(v))
         return Init_Any_Sequence_1(v, kind);
 
     if (not Is_Valid_Sequence_Element(kind, v))
@@ -285,7 +285,7 @@ INLINE REBVAL *Try_Init_Any_Sequence_All_Integers(
     const Cell* item = head;
     REBLEN n;
     for (n = 0; n < len; ++n, ++item, ++bp) {
-        if (not IS_INTEGER(item))
+        if (not Is_Integer(item))
             return nullptr;
         REBI64 i64 = VAL_INT64(item);
         if (i64 < 0 or i64 > 255)
@@ -310,7 +310,7 @@ INLINE REBVAL *Try_Init_Any_Sequence_Pairlike_Core(
     const Cell* v2,
     Specifier* specifier  // assumed to apply to both v1 and v2
 ){
-    if (IS_BLANK(v1))
+    if (Is_Blank(v1))
         return Try_Leading_Blank_Pathify(
             Derelativize(out, v2, specifier),
             kind
@@ -324,13 +324,13 @@ INLINE REBVAL *Try_Init_Any_Sequence_Pairlike_Core(
     // See notes at top of file regarding optimizing `/a` and `.a`
     //
     enum Reb_Kind inner = VAL_TYPE(v1);
-    if (IS_BLANK(v2) and inner == REB_WORD) {
+    if (Is_Blank(v2) and inner == REB_WORD) {
         Derelativize(out, v1, specifier);
         HEART_BYTE(out) = kind;
         return cast(REBVAL*, out);
     }
 
-    if (IS_INTEGER(v1) and IS_INTEGER(v2)) {
+    if (Is_Integer(v1) and Is_Integer(v2)) {
         Byte buf[2];
         REBI64 i1 = VAL_INT64(v1);
         REBI64 i2 = VAL_INT64(v2);
@@ -401,11 +401,11 @@ INLINE Value(*) Try_Pop_Sequence_Or_Element_Or_Nulled(
 
         if (kind != REB_PATH) {  // carry over : or ^ decoration (if possible)
             if (
-                not IS_WORD(out)
-                and not IS_BLOCK(out)
-                and not IS_GROUP(out)
-                and not IS_BLOCK(out)
-                and not IS_TUPLE(out)  // !!! TBD, will support decoration
+                not Is_Word(out)
+                and not Is_Block(out)
+                and not Is_Group(out)
+                and not Is_Block(out)
+                and not Is_Tuple(out)  // !!! TBD, will support decoration
             ){
                 // !!! `out` is reported as the erroring element for why the
                 // path is invalid, but this would be valid in a path if we
@@ -463,7 +463,7 @@ INLINE Value(*) Try_Pop_Sequence_Or_Element_Or_Nulled(
 // optimized fashion using Refinify()
 
 INLINE REBLEN VAL_SEQUENCE_LEN(NoQuote(const Cell*) sequence) {
-    assert(ANY_SEQUENCE_KIND(Cell_Heart(sequence)));
+    assert(Any_Sequence_Kind(Cell_Heart(sequence)));
 
     if (Not_Cell_Flag(sequence, SEQUENCE_HAS_NODE)) {  // compressed bytes
         assert(Not_Cell_Flag(sequence, SECOND_IS_NODE));
@@ -508,7 +508,7 @@ INLINE const Cell* VAL_SEQUENCE_AT(
     REBLEN n
 ){
     assert(store != sequence);
-    assert(ANY_SEQUENCE_KIND(Cell_Heart(sequence)));
+    assert(Any_Sequence_Kind(Cell_Heart(sequence)));
 
     if (Not_Cell_Flag(sequence, SEQUENCE_HAS_NODE)) {  // compressed bytes
         assert(n < PAYLOAD(Bytes, sequence).at_least_8[IDX_SEQUENCE_USED]);
@@ -555,7 +555,7 @@ INLINE Value(*) GET_SEQUENCE_AT(
     REBLEN n
 ){
     assert(out != sequence);
-    assert(ANY_SEQUENCE_KIND(Cell_Heart(sequence)));
+    assert(Any_Sequence_Kind(Cell_Heart(sequence)));
 
     if (Not_Cell_Flag(sequence, SEQUENCE_HAS_NODE)) {  // compressed bytes
         assert(n < PAYLOAD(Bytes, sequence).at_least_8[IDX_SEQUENCE_USED]);
@@ -600,7 +600,7 @@ INLINE Byte VAL_SEQUENCE_BYTE_AT(
 ){
     DECLARE_LOCAL (temp);
     const Cell* at = VAL_SEQUENCE_AT(temp, sequence, n);
-    if (not IS_INTEGER(at))
+    if (not Is_Integer(at))
         fail ("VAL_SEQUENCE_BYTE_AT() used on non-byte ANY-SEQUENCE!");
     return VAL_UINT8(at);  // !!! All callers of this routine need vetting
 }
@@ -608,7 +608,7 @@ INLINE Byte VAL_SEQUENCE_BYTE_AT(
 INLINE Specifier* VAL_SEQUENCE_SPECIFIER(
     NoQuote(const Cell*) sequence
 ){
-    assert(ANY_SEQUENCE_KIND(Cell_Heart(sequence)));
+    assert(Any_Sequence_Kind(Cell_Heart(sequence)));
 
     // Getting the specifier for any of the optimized types means getting
     // the specifier for *that item in the sequence*; the sequence itself
@@ -659,7 +659,7 @@ INLINE bool Did_Get_Sequence_Bytes(
             continue;
         }
         const Cell* at = VAL_SEQUENCE_AT(temp, sequence, i);
-        if (not IS_INTEGER(at))
+        if (not Is_Integer(at))
             return false;
         REBI64 i64 = VAL_INT64(at);
         if (i64 < 0 or i64 > 255)
@@ -675,7 +675,7 @@ INLINE void Get_Tuple_Bytes(
     const Cell* tuple,
     Size buf_size
 ){
-    assert(IS_TUPLE(tuple));
+    assert(Is_Tuple(tuple));
     if (not Did_Get_Sequence_Bytes(buf, tuple, buf_size))
         fail ("non-INTEGER! found used with Get_Tuple_Bytes()");
 }
@@ -695,7 +695,7 @@ INLINE REBVAL *Refinify(REBVAL *v) {
 }
 
 INLINE bool IS_REFINEMENT_CELL(NoQuote(const Cell*) v) {
-    assert(ANY_PATH_KIND(Cell_Heart(v)));
+    assert(Any_Path_Kind(Cell_Heart(v)));
     if (Not_Cell_Flag(v, SEQUENCE_HAS_NODE))
         return false;
 
@@ -709,8 +709,8 @@ INLINE bool IS_REFINEMENT_CELL(NoQuote(const Cell*) v) {
     return Get_Cell_Flag(v, REFINEMENT_LIKE);  // !!! Review: test this first?
 }
 
-INLINE bool IS_REFINEMENT(const Cell* v) {
-    assert(ANY_PATH(v));
+INLINE bool Is_Refinement(const Cell* v) {
+    assert(Any_Path(v));
     return IS_REFINEMENT_CELL(v);
 }
 

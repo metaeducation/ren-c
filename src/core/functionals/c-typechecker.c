@@ -80,7 +80,7 @@ void Typeset_Checker_Intrinsic(Value(*) out, Phase* phase, Value(*) arg)
     assert(Array_Len(details) == IDX_TYPECHECKER_MAX);
 
     REBVAL *typeset_index = DETAILS_AT(details, IDX_TYPECHECKER_TYPE);
-    assert(IS_INTEGER(typeset_index));
+    assert(Is_Integer(typeset_index));
     Index n = VAL_INT32(typeset_index);
 
     REBU64 typeset = Typesets[n];
@@ -97,8 +97,8 @@ void Typeset_Checker_Intrinsic(Value(*) out, Phase* phase, Value(*) arg)
 //
 Phase* Make_Typechecker(Value(const*) type) {
     assert(
-        IS_TYPE_WORD(type)  // datatype
-        or IS_INTEGER(type)  // typeset index (for finding bitset)
+        Is_Type_Word(type)  // datatype
+        or Is_Integer(type)  // typeset index (for finding bitset)
     );
 
     // We need a spec for our typecheckers, which is really just `value`
@@ -129,7 +129,7 @@ Phase* Make_Typechecker(Value(const*) type) {
 
     Init_Handle_Cfunc(
         DETAILS_AT(details, IDX_TYPECHECKER_CFUNC),
-        IS_TYPE_WORD(type)
+        Is_Type_Word(type)
             ? cast(CFunction*, &Datatype_Checker_Intrinsic)
             : cast(CFunction*, &Typeset_Checker_Intrinsic)
     );
@@ -277,7 +277,7 @@ bool Typecheck_Value(
 
                 DECLARE_LOCAL (out);
                 (*intrinsic)(out, cast(Phase*, action), Stable_Unchecked(arg));
-                if (not IS_LOGIC(out))
+                if (not Is_Logic(out))
                     fail (Error_No_Logic_Typecheck(label));
                 if (VAL_LOGIC(out))
                     goto test_succeeded;
@@ -325,7 +325,7 @@ bool Typecheck_Value(
 
             Drop_Level(L);
 
-            if (not IS_LOGIC(spare))
+            if (not Is_Logic(spare))
                 fail (Error_No_Logic_Typecheck(label));
 
             if (not VAL_LOGIC(spare))

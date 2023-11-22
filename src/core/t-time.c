@@ -278,7 +278,7 @@ Bounce MAKE_Time(
         if (item == tail)
             goto bad_make;  // must have at least hours
 
-        if (not IS_INTEGER(item))
+        if (not Is_Integer(item))
             goto bad_make;  // hours must be integer
 
         bool neg;
@@ -295,7 +295,7 @@ Bounce MAKE_Time(
             goto bad_make;
 
         if (tail != ++item) {  // minutes
-            if (not IS_INTEGER(item))
+            if (not Is_Integer(item))
                 goto bad_make;
 
             if ((i = Int32(item)) < 0)
@@ -307,7 +307,7 @@ Bounce MAKE_Time(
         }
 
         if (item != tail and tail != ++item) {  // seconds
-            if (IS_INTEGER(item)) {
+            if (Is_Integer(item)) {
                 if ((i = Int32(item)) < 0)
                     goto bad_make;
 
@@ -315,7 +315,7 @@ Bounce MAKE_Time(
                 if (secs > MAX_SECONDS)
                     goto bad_make;
             }
-            else if (IS_DECIMAL(item)) {
+            else if (Is_Decimal(item)) {
                 if (
                     secs + cast(REBI64, VAL_DECIMAL(item)) + 1
                     > MAX_SECONDS
@@ -332,7 +332,7 @@ Bounce MAKE_Time(
         REBI64 nano = secs * SEC_SEC;
 
         if (item != tail and tail != ++item) {
-            if (not IS_DECIMAL(item))
+            if (not Is_Decimal(item))
                 goto bad_make;
 
             nano += DEC_TO_SECS(VAL_DECIMAL(item));
@@ -371,7 +371,7 @@ Bounce TO_Time(Level* level_, enum Reb_Kind kind, const REBVAL *arg)
 void Pick_Time(Sink(Value(*)) out, const Cell* value, const Cell* picker)
 {
     REBINT i;
-    if (IS_WORD(picker)) {
+    if (Is_Word(picker)) {
         switch (VAL_WORD_ID(picker)) {
         case SYM_HOUR:   i = 0; break;
         case SYM_MINUTE: i = 1; break;
@@ -380,7 +380,7 @@ void Pick_Time(Sink(Value(*)) out, const Cell* value, const Cell* picker)
             fail (picker);
         }
     }
-    else if (IS_INTEGER(picker))
+    else if (Is_Integer(picker))
         i = VAL_INT32(picker) - 1;
     else
         fail (picker);
@@ -416,7 +416,7 @@ void Poke_Time_Immediate(
     const REBVAL *poke
 ) {
     REBINT i;
-    if (IS_WORD(picker)) {
+    if (Is_Word(picker)) {
         switch (VAL_WORD_ID(picker)) {
         case SYM_HOUR:   i = 0; break;
         case SYM_MINUTE: i = 1; break;
@@ -425,7 +425,7 @@ void Poke_Time_Immediate(
             fail (picker);
         }
     }
-    else if (IS_INTEGER(picker))
+    else if (Is_Integer(picker))
         i = VAL_INT32(picker) - 1;
     else
         fail (picker);
@@ -434,9 +434,9 @@ void Poke_Time_Immediate(
     Split_Time(VAL_NANO(value), &tf); // loses sign
 
     REBINT n;
-    if (IS_INTEGER(poke) || IS_DECIMAL(poke))
+    if (Is_Integer(poke) || Is_Decimal(poke))
         n = Int32s(poke, 0);
-    else if (IS_BLANK(poke))
+    else if (Is_Blank(poke))
         n = 0;
     else
         fail (poke);
@@ -449,7 +449,7 @@ void Poke_Time_Immediate(
         tf.m = n;
         break;
     case 2:
-        if (IS_DECIMAL(poke)) {
+        if (Is_Decimal(poke)) {
             REBDEC f = VAL_DECIMAL(poke);
             if (f < 0.0)
                 fail (Error_Out_Of_Range(poke));
@@ -671,11 +671,11 @@ REBTYPE(Time)
             }
 
             REBVAL *to = ARG(to);
-            if (IS_TIME(to)) {
+            if (Is_Time(to)) {
                 secs = Round_Int(secs, level_, VAL_NANO(to));
                 return Init_Time_Nanoseconds(OUT, secs);
             }
-            else if (IS_DECIMAL(to)) {
+            else if (Is_Decimal(to)) {
                 VAL_DECIMAL(to) = Round_Dec(
                     cast(REBDEC, secs),
                     level_,
@@ -684,7 +684,7 @@ REBTYPE(Time)
                 VAL_DECIMAL(to) /= SEC_SEC;
                 return COPY(to);
             }
-            else if (IS_INTEGER(to)) {
+            else if (Is_Integer(to)) {
                 mutable_VAL_INT64(to)
                     = Round_Int(secs, level_, Int32(to) * SEC_SEC) / SEC_SEC;
                 return COPY(to);

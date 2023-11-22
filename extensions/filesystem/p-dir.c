@@ -42,7 +42,6 @@
 
 #include "uv.h"  // includes windows.h
 #if TO_WINDOWS
-    #undef IS_ERROR  // windows.h defines, contentious with IS_ERROR in Ren-C
     #undef OUT  // %minwindef.h defines this, we have a better use for it
     #undef VOID  // %winnt.h defines this, we have a better use for it
 #endif
@@ -71,23 +70,23 @@ Bounce Dir_Actor(Level* level_, REBVAL *port, const Symbol* verb)
 
     REBVAL *state = CTX_VAR(ctx, STD_PORT_STATE);
     FILEREQ *dir;
-    if (IS_BINARY(state)) {
+    if (Is_Binary(state)) {
         dir = File_Of_Port(port);
     }
     else {
         assert(Is_Nulled(state));
 
         REBVAL *spec = CTX_VAR(ctx, STD_PORT_SPEC);
-        if (not IS_OBJECT(spec))
+        if (not Is_Object(spec))
             fail (Error_Invalid_Spec_Raw(spec));
 
         REBVAL *path = Obj_Value(spec, STD_PORT_SPEC_HEAD_REF);
         if (path == NULL)
             fail (Error_Invalid_Spec_Raw(spec));
 
-        if (IS_URL(path))
+        if (Is_Url(path))
             path = Obj_Value(spec, STD_PORT_SPEC_HEAD_PATH);
-        else if (not IS_FILE(path))
+        else if (not Is_File(path))
             fail (Error_Invalid_Spec_Raw(path));
 
         // !!! In R3-Alpha, there were manipulations on the name representing
@@ -173,10 +172,10 @@ Bounce Dir_Actor(Level* level_, REBVAL *port, const Symbol* verb)
             // Put together the filename and the error (vs. a generic "cannot
             // find the file specified" message that doesn't say the name)
             //
-            if (IS_ERROR(result))
+            if (Is_Error(result))
                 fail (Error_Cannot_Open_Raw(dir->path, result));
 
-            assert(IS_FILE(result));
+            assert(Is_File(result));
             Copy_Cell(PUSH(), result);
             rebRelease(result);
         }
@@ -187,7 +186,7 @@ Bounce Dir_Actor(Level* level_, REBVAL *port, const Symbol* verb)
     //=//// CREATE /////////////////////////////////////////////////////////=//
 
       case SYM_CREATE: {
-        if (IS_BLOCK(state))
+        if (Is_Block(state))
             fail (Error_Already_Open_Raw(dir->path));
 
         REBVAL *error = Create_Directory(port);
@@ -269,7 +268,7 @@ Bounce Dir_Actor(Level* level_, REBVAL *port, const Symbol* verb)
 
       case SYM_QUERY: {
         REBVAL *info = Query_File_Or_Directory(port);
-        if (IS_ERROR(info)) {
+        if (Is_Error(info)) {
             rebRelease(info);  // !!! R3-Alpha threw out error, returns null
             return nullptr;
         }

@@ -57,12 +57,12 @@ inline static bool Vararg_Op_If_No_Advance_Handled(
 
     const Cell* look = unwrap(opt_look);
 
-    if (pclass == PARAM_CLASS_NORMAL and IS_COMMA(look)) {
+    if (pclass == PARAM_CLASS_NORMAL and Is_Comma(look)) {
         Init_For_Vararg_End(out, op);  // non-quoted COMMA!
         return true;
     }
 
-    if (pclass == PARAM_CLASS_NORMAL and IS_WORD(look)) {
+    if (pclass == PARAM_CLASS_NORMAL and Is_Word(look)) {
         //
         // When a variadic argument is being TAKE-n, deferred left hand side
         // argument needs to be seen as end of variadic input.  Otherwise,
@@ -331,7 +331,7 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
         return false;
 
     if (op == VARARG_OP_TAIL_Q) {
-        assert(IS_LOGIC(out));
+        assert(Is_Logic(out));
         return false;
     }
 
@@ -383,7 +383,7 @@ Bounce MAKE_Varargs(
     // (shared) that the varargs interface cannot affect, but changes to
     // the array will change the varargs.
     //
-    if (ANY_ARRAY(arg)) {
+    if (Any_Array(arg)) {
         //
         // Make a single-element array to hold a reference+index to the
         // incoming ANY-ARRAY!.  This level of indirection means all
@@ -450,7 +450,7 @@ REBTYPE(Varargs)
                 assert(false);
                 return THROWN;
             }
-            assert(IS_LOGIC(OUT));
+            assert(Is_Logic(OUT));
             return OUT; }
 
         default:
@@ -464,7 +464,7 @@ REBTYPE(Varargs)
         UNUSED(ARG(location));
 
         const Cell* picker = ARG(picker);
-        if (not IS_INTEGER(picker))
+        if (not Is_Integer(picker))
             fail (picker);
 
         if (VAL_INT32(picker) != 1)
@@ -508,7 +508,7 @@ REBTYPE(Varargs)
 
         StackIndex base = TOP_INDEX;
 
-        if (not IS_INTEGER(ARG(part)))
+        if (not Is_Integer(ARG(part)))
             fail (PARAM(part));
 
         REBINT limit = VAL_INT32(ARG(part));

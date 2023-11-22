@@ -382,7 +382,7 @@ e-types/emit newline
 
 e-types/emit {
     /*
-     * SINGLE TYPE CHECK MACROS, e.g. IS_BLOCK() or IS_TAG()
+     * SINGLE TYPE CHECK MACROS, e.g. Is_Block) or Is_Tag()
      */
 }
 e-types/emit newline
@@ -391,7 +391,7 @@ for-each-datatype t [
     ;
     ; Pseudotypes don't make macros or cell masks.
     ;
-    if find [quoted quasi isotope] t/name  [
+    if find ["quoted" "quasi" "isotope"] ensure text! t/name  [
         continue
     ]
 
@@ -404,7 +404,7 @@ for-each-datatype t [
     ]
 
     e-types/emit 't {
-        #define IS_${T/NAME}(v) \
+        #define Is_${propercase-of T/name}(v) \
             (VAL_TYPE(v) == REB_${T/NAME})  /* $<T/HEART> */
     }
     e-types/emit newline
@@ -448,11 +448,11 @@ for-each-datatype t [
 
         e-types/emit newline
         e-types/emit 'ts-name {
-            #define ANY_${TS-NAME}_KIND(k) \
+            #define Any_${propercase-of Ts-Name}_Kind(k) \
                (did (FLAGIT_KIND(k) & TS_${TS-NAME}))
 
-            #define ANY_${TS-NAME}(v) \
-                ANY_${TS-NAME}_KIND(VAL_TYPE(v))
+            #define Any_${propercase-of Ts-Name}(v) \
+                Any_${propercase-of Ts-Name}_Kind(VAL_TYPE(v))
         }
     ]
 ]
@@ -467,11 +467,11 @@ for-each-typerange tr [
 
     e-types/emit newline
     e-types/emit 'tr {
-        INLINE bool ANY_${TR/NAME}_KIND(Byte k)
+        INLINE bool Any_${propercase-of Tr/Name}_Kind(Byte k)
           { return k >= $<TR/START> and k < $<TR/END>; }
 
-        #define ANY_${TR/NAME}(v) \
-            ANY_${TR/NAME}_KIND(VAL_TYPE(v))
+        #define Any_${propercase-of Tr/Name}(v) \
+            Any_${propercase-of Tr/Name}_Kind(VAL_TYPE(v))
     }
 ]
 
@@ -549,7 +549,7 @@ hookname: enfix func [
     prefix: uppercase copy prefix
 
     return unspaced [prefix propercase-of (switch ensure word! t/(column) [
-        '+ [as text! t/name]  ; type has its own unique hook
+        '+ [propercase-of t/name]  ; type has its own unique hook
         '* [t/class]        ; type uses common hook for class
         '? ['unhooked]      ; datatype provided by extension
         '- ['fail]          ; service unavailable for type

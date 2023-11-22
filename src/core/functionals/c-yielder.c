@@ -83,17 +83,17 @@ Bounce Yielder_Dispatcher(Level* const L)
     if (Is_Quasi_Void(mode))  // currently on the stack and running
         fail ("Yielder was re-entered");
 
-    if (IS_LOGIC(mode)) {  // terminated due to finishing the body or error
+    if (Is_Logic(mode)) {  // terminated due to finishing the body or error
         if (VAL_LOGIC(mode))  // terminated due to finishing the body
             return nullptr;
 
         fail ("Yielder called again after raising an error");
     }
 
-    if (IS_FRAME(mode))  // we were suspended by YIELD, and want to resume
+    if (Is_Frame(mode))  // we were suspended by YIELD, and want to resume
         goto resume_body;
 
-    assert(IS_BLANK(mode));  // set by the YIELDER creation routine
+    assert(Is_Blank(mode));  // set by the YIELDER creation routine
     goto first_run;
 
 } first_run: {  //////////////////////////////////////////////////////////////
@@ -119,7 +119,7 @@ Bounce Yielder_Dispatcher(Level* const L)
 
 } resume_body: {  ////////////////////////////////////////////////////////////
 
-    assert(IS_FRAME(mode));
+    assert(Is_Frame(mode));
 
     Level* yielder_level = L;  // alias for clarity
     Level* yield_level = CTX_LEVEL_IF_ON_STACK(VAL_CONTEXT(mode));
@@ -233,7 +233,7 @@ Bounce Yielder_Dispatcher(Level* const L)
     Init_Trash(DETAILS_AT(details, IDX_YIELDER_OUT));
 
  /*   if (Is_Throwing(L)) {
-        if (IS_ERROR(VAL_THROWN_LABEL(L->out))) {
+        if (Is_Error(VAL_THROWN_LABEL(L->out))) {
             //
             // We treat a failure as if it was an invalid termination of the
             // yielder.  Future calls will raise an error.
@@ -289,7 +289,7 @@ DECLARE_NATIVE(yielder)
 
     Details* details = Phase_Details(yielder);
 
-    assert(IS_BLOCK(Array_At(details, IDX_YIELDER_BODY)));
+    assert(Is_Block(Array_At(details, IDX_YIELDER_BODY)));
     Init_Blank(DETAILS_AT(details, IDX_YIELDER_MODE));  // starting
     Init_Trash(DETAILS_AT(details, IDX_YIELDER_LAST_YIELDER_CONTEXT));
     Init_Trash(DETAILS_AT(details, IDX_YIELDER_LAST_YIELD_RESULT));

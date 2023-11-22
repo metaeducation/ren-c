@@ -67,7 +67,7 @@ INLINE void INIT_VAL_VARARGS_BINDING(
     Cell* v,
     Array* binding  // either an array or a frame varlist
 ){
-    assert(IS_VARARGS(v));
+    assert(Is_Varargs(v));
     mutable_BINDING(v) = binding;
 }
 
@@ -123,7 +123,7 @@ INLINE bool Is_Block_Style_Varargs(
     *shared_out = cast(REBVAL*, Array_Single(array1));
     assert(
         Is_Cell_Poisoned(*shared_out)
-        or (IS_SPECIFIC(cast(Cell*, *shared_out)) and IS_BLOCK(*shared_out))
+        or (IS_SPECIFIC(cast(Cell*, *shared_out)) and Is_Block(*shared_out))
     );
 
     return true;

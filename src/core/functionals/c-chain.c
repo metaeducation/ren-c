@@ -196,7 +196,7 @@ Bounce Chainer_Dispatcher(Level* const L)
 
     sub->varlist = nullptr;
 
-    assert(IS_BLOCK(SPARE));
+    assert(Is_Block(SPARE));
     Value(*) pipeline_at = cast(Value(*), SPARE);
     const Cell* chained_tail;
     const Cell* chained = VAL_ARRAY_AT(&chained_tail, pipeline_at);
@@ -252,7 +252,7 @@ DECLARE_NATIVE(chain_p)  // see extended definition CHAIN in %base-defs.r
     //
     const Cell* check = first;
     for (; check != tail; ++check) {
-        if (not IS_FRAME(check)) {
+        if (not Is_Frame(check)) {
             DECLARE_LOCAL (specific);
             Derelativize(specific, check, VAL_SPECIFIER(pipeline));
             fail (specific);

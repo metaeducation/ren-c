@@ -74,7 +74,7 @@ bool Pushed_Continuation(
     if (Is_Activation(branch))
         goto handle_action;
 
-    if (IS_GROUP(branch) or IS_GET_GROUP(branch)) {  // [2] for GET-GROUP!
+    if (Is_Group(branch) or Is_Get_Group(branch)) {  // [2] for GET-GROUP!
         assert(flags & LEVEL_FLAG_BRANCH);  // needed for trick
         Level* grouper = Make_Level_At_Core(
             branch,

@@ -239,10 +239,10 @@ DECLARE_NATIVE(panic)
       if (Is_Word_Isotope(v)) {
             p = String_UTF8(VAL_WORD_SYMBOL(v));
         }
-        else if (IS_TEXT(v)) {
+        else if (Is_Text(v)) {
             p = VAL_UTF8_AT(v);
         }
-        else if (IS_ERROR(v)) {
+        else if (Is_Error(v)) {
             p = VAL_CONTEXT(v);
         }
         else {

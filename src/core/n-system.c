@@ -257,14 +257,14 @@ DECLARE_NATIVE(check)
 
     // !!! Should call generic Assert_Value() macro with more cases
     //
-    if (ANY_SERIES(value)) {
+    if (Any_Series(value)) {
         Assert_Series(VAL_SERIES(value));
     }
-    else if (IS_FRAME(value)) {
+    else if (Is_Frame(value)) {
         Assert_Series(VAL_ACTION_KEYLIST(value));
         Assert_Array(Phase_Details(ACT_IDENTITY(VAL_ACTION(value))));
     }
-    else if (ANY_CONTEXT(value)) {
+    else if (Any_Context(value)) {
         Assert_Context(VAL_CONTEXT(value));
     }
 

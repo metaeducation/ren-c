@@ -155,7 +155,7 @@ Bounce MAKE_Decimal(
 
     REBDEC d;
 
-    if (IS_LOGIC(arg)) {
+    if (Is_Logic(arg)) {
         d = VAL_LOGIC(arg) ? 1.0 : 0.0;
         goto dont_divide_if_percent;
     }
@@ -208,9 +208,9 @@ Bounce MAKE_Decimal(
         Drop_GC_Guard(denominator);
         Drop_GC_Guard(numerator);
 
-        if (IS_INTEGER(quotient))
+        if (Is_Integer(quotient))
             d = cast(REBDEC, VAL_INT64(quotient));
-        else if (IS_DECIMAL(quotient) or IS_PERCENT(quotient))
+        else if (Is_Decimal(quotient) or Is_Percent(quotient))
             d = VAL_DECIMAL(quotient);
         else {
             rebRelease(quotient);
@@ -226,9 +226,9 @@ Bounce MAKE_Decimal(
         if (len != 2)
             return RAISE(Error_Bad_Make(kind, arg));
 
-        if (IS_INTEGER(item))
+        if (Is_Integer(item))
             d = cast(REBDEC, VAL_INT64(item));
-        else if (IS_DECIMAL(item) || IS_PERCENT(item))
+        else if (Is_Decimal(item) || Is_Percent(item))
             d = VAL_DECIMAL(item);
         else
             return RAISE(Error_Bad_Value(item));
@@ -236,9 +236,9 @@ Bounce MAKE_Decimal(
         ++item;
 
         REBDEC exp;
-        if (IS_INTEGER(item))
+        if (Is_Integer(item))
             exp = cast(REBDEC, VAL_INT64(item));
-        else if (IS_DECIMAL(item) || IS_PERCENT(item))
+        else if (Is_Decimal(item) || Is_Percent(item))
             exp = VAL_DECIMAL(item);
         else
             return RAISE(Error_Bad_Value(item));
@@ -334,9 +334,9 @@ Bounce TO_Decimal(Level* level_, enum Reb_Kind kind, const REBVAL *arg)
         const Cell* numerator = VAL_SEQUENCE_AT(temp1, arg, 0);
         const Cell* denominator = VAL_SEQUENCE_AT(temp2, arg, 1);
 
-        if (not IS_INTEGER(numerator))
+        if (not Is_Integer(numerator))
             goto bad_to;
-        if (not IS_INTEGER(denominator))
+        if (not Is_Integer(denominator))
             goto bad_to;
 
         if (VAL_INT64(denominator) == 0)
@@ -516,7 +516,7 @@ REBTYPE(Decimal)
                 d2 = VAL_DECIMAL(arg);
                 if (id == SYM_DIVIDE)
                     type = REB_DECIMAL;
-                else if (not IS_PERCENT(val))
+                else if (not Is_Percent(val))
                     type = VAL_TYPE(val);
             }
             else if (type == REB_MONEY) {
@@ -614,19 +614,19 @@ REBTYPE(Decimal)
         USED(ARG(floor)); USED(ARG(ceiling)); USED(ARG(half_ceiling));
 
         if (REF(to)) {
-            if (IS_MONEY(ARG(to)))
+            if (Is_Money(ARG(to)))
                 return Init_Money(OUT, Round_Deci(
                     decimal_to_deci(d1), level_, VAL_MONEY_AMOUNT(ARG(to))
                 ));
 
-            if (IS_TIME(ARG(to)))
+            if (Is_Time(ARG(to)))
                 fail (PARAM(to));
 
             d1 = Round_Dec(d1, level_, Dec64(ARG(to)));
-            if (IS_INTEGER(ARG(to)))
+            if (Is_Integer(ARG(to)))
                 return Init_Integer(OUT, cast(REBI64, d1));
 
-            if (IS_PERCENT(ARG(to)))
+            if (Is_Percent(ARG(to)))
                 type = REB_PERCENT;
         }
         else {

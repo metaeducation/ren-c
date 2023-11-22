@@ -362,7 +362,7 @@ Bounce Console_Actor(Level* level_, REBVAL *port, const Symbol* verb)
         const REBLEN readbuf_size = 30 * 1024;  // may back off to smaller size
 
         REBVAL *data = CTX_VAR(ctx, STD_PORT_DATA);
-        if (not IS_BINARY(data)) {
+        if (not Is_Binary(data)) {
             Init_Binary(data, Make_Binary(readbuf_size));
         }
         else if (Series_Rest(VAL_BINARY(data)) < readbuf_size) {

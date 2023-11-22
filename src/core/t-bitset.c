@@ -108,10 +108,10 @@ Bounce MAKE_Bitset(
     Manage_Series(bin);
     Init_Bitset(OUT, bin);
 
-    if (IS_INTEGER(arg))
+    if (Is_Integer(arg))
         return OUT; // allocated at a size, no contents.
 
-    if (IS_BINARY(arg)) {
+    if (Is_Binary(arg)) {
         Size size;
         const Byte* at = VAL_BINARY_SIZE_AT(&size, arg);
         memcpy(Binary_Head(bin), at, (size / 8) + 1);
@@ -266,7 +266,7 @@ void Set_Bit(Binary* bset, REBLEN n, bool set)
 //
 bool Set_Bits(Binary* bset, const Cell* val, bool set)
 {
-    if (IS_INTEGER(val)) {
+    if (Is_Integer(val)) {
         REBLEN n = Int32s(val, 0);
         if (n > MAX_BITSET)
             return false;
@@ -274,7 +274,7 @@ bool Set_Bits(Binary* bset, const Cell* val, bool set)
         return true;
     }
 
-    if (IS_BINARY(val)) {
+    if (Is_Binary(val)) {
         REBLEN i = VAL_INDEX(val);
 
         const Byte* bp = Binary_Head(VAL_BINARY(val));
@@ -284,7 +284,7 @@ bool Set_Bits(Binary* bset, const Cell* val, bool set)
         return true;
     }
 
-    if (IS_ISSUE(val) or ANY_STRING(val)) {
+    if (Is_Issue(val) or Any_String(val)) {
         REBLEN len;
         Utf8(const*) up = VAL_UTF8_LEN_SIZE_AT(&len, nullptr, val);
         for (; len > 0; --len) {
@@ -296,7 +296,7 @@ bool Set_Bits(Binary* bset, const Cell* val, bool set)
         return true;
     }
 
-    if (!ANY_ARRAY(val))
+    if (!Any_Array(val))
         fail (Error_Invalid_Type(VAL_TYPE(val)));
 
     const Cell* tail;
@@ -304,7 +304,7 @@ bool Set_Bits(Binary* bset, const Cell* val, bool set)
 
     if (
         item != tail
-        && IS_WORD(item)
+        && Is_Word(item)
         && VAL_WORD_ID(item) == SYM_NOT_1  // see TO-C-NAME
     ){
         INIT_BITS_NOT(bset, true);
@@ -324,7 +324,7 @@ bool Set_Bits(Binary* bset, const Cell* val, bool set)
             Codepoint c = VAL_CHAR(item);
             if (
                 item + 1 != tail
-                && IS_WORD(item + 1)
+                && Is_Word(item + 1)
                 && VAL_WORD_SYMBOL(item + 1) == Canon(HYPHEN_1)
             ){
                 item += 2;
@@ -349,12 +349,12 @@ bool Set_Bits(Binary* bset, const Cell* val, bool set)
                 return false;
             if (
                 item + 1 != tail
-                && IS_WORD(item + 1)
+                && Is_Word(item + 1)
                 && VAL_WORD_SYMBOL(item + 1) == Canon(HYPHEN_1)
             ){
                 Codepoint c = n;
                 item += 2;
-                if (IS_INTEGER(item)) {
+                if (Is_Integer(item)) {
                     n = Int32s(SPECIFIC(item), 0);
                     if (n < c)
                         fail (Error_Index_Out_Of_Range_Raw());
@@ -379,10 +379,10 @@ bool Set_Bits(Binary* bset, const Cell* val, bool set)
 
         case REB_WORD: {
             // Special: BITS #{000...}
-            if (not IS_WORD(item) or VAL_WORD_ID(item) != SYM_BITS)
+            if (not Is_Word(item) or VAL_WORD_ID(item) != SYM_BITS)
                 return false;
             item++;
-            if (not IS_BINARY(item))
+            if (not Is_Binary(item))
                 return false;
 
             Size n;
@@ -416,10 +416,10 @@ bool Check_Bits(const Binary* bset, const Cell* val, bool uncased)
     if (IS_CHAR(val))
         return Check_Bit(bset, VAL_CHAR(val), uncased);
 
-    if (IS_INTEGER(val))
+    if (Is_Integer(val))
         return Check_Bit(bset, Int32s(val, 0), uncased);
 
-    if (IS_BINARY(val)) {
+    if (Is_Binary(val)) {
         REBLEN i = VAL_INDEX(val);
         const Byte* bp = Binary_Head(VAL_BINARY(val));
         for (; i != VAL_LEN_HEAD(val); ++i)
@@ -428,7 +428,7 @@ bool Check_Bits(const Binary* bset, const Cell* val, bool uncased)
         return false;
     }
 
-    if (ANY_STRING(val)) {
+    if (Any_String(val)) {
         REBLEN len;
         Utf8(const*) up = VAL_UTF8_LEN_SIZE_AT(&len, nullptr, val);
         for (; len > 0; --len) {
@@ -441,7 +441,7 @@ bool Check_Bits(const Binary* bset, const Cell* val, bool uncased)
         return false;
     }
 
-    if (!ANY_ARRAY(val))
+    if (!Any_Array(val))
         fail (Error_Invalid_Type(VAL_TYPE(val)));
 
     // Loop through block of bit specs
@@ -459,7 +459,7 @@ bool Check_Bits(const Binary* bset, const Cell* val, bool uncased)
             }
             Codepoint c = VAL_CHAR(item);
             if (
-                IS_WORD(item + 1)
+                Is_Word(item + 1)
                 && VAL_WORD_SYMBOL(item + 1) == Canon(HYPHEN_1)
             ){
                 item += 2;
@@ -484,12 +484,12 @@ bool Check_Bits(const Binary* bset, const Cell* val, bool uncased)
             if (n > 0xffff)
                 return false;
             if (
-                IS_WORD(item + 1)
+                Is_Word(item + 1)
                 && VAL_WORD_SYMBOL(item + 1) == Canon(HYPHEN_1)
             ){
                 Codepoint c = n;
                 item += 2;
-                if (IS_INTEGER(item)) {
+                if (Is_Integer(item)) {
                     n = Int32s(SPECIFIC(item), 0);
                     if (n < c)
                         fail (Error_Index_Out_Of_Range_Raw());
@@ -690,14 +690,14 @@ REBTYPE(Bitset)
       case SYM_DIFFERENCE:
       case SYM_EXCLUDE: {
         REBVAL *arg = D_ARG(2);
-        if (IS_BITSET(arg)) {
+        if (Is_Bitset(arg)) {
             if (BITS_NOT(VAL_BITSET(arg))) {  // !!! see #2365
                 fail ("Bitset negation not handled by set operations");
             }
             const Binary* bin = VAL_BITSET(arg);
             Init_Binary(arg, bin);
         }
-        else if (not IS_BINARY(arg))
+        else if (not Is_Binary(arg))
             fail (Error_Math_Args(VAL_TYPE(arg), verb));
 
         bool negated_result = false;

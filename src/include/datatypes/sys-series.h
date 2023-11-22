@@ -1034,9 +1034,9 @@ INLINE const Series* VAL_SERIES(NoQuote(const Cell*) v) {
   #if !defined(NDEBUG)
     enum Reb_Kind k = Cell_Heart(v);
     assert(
-        ANY_SERIES_KIND(k)
+        Any_Series_Kind(k)
         or k == REB_ISSUE or k == REB_URL
-        or ANY_ARRAYLIKE(v)
+        or Any_Arraylike(v)
     );
   #endif
     const Series* s = c_cast(Series*, Cell_Node1(v));
@@ -1061,7 +1061,7 @@ INLINE const Series* VAL_SERIES(NoQuote(const Cell*) v) {
 #else
     // allows an assert, but uses C++ reference for lvalue:
     //
-    //     VAL_INDEX_UNBOUNDED(v) = xxx;  // ensures v is ANY_SERIES!
+    //     VAL_INDEX_UNBOUNDED(v) = xxx;  // ensures v is Any_Series!
     //
     // Avoids READABLE() macro, because it's assumed that it was done in the
     // type checking to ensure VAL_INDEX() applied.  (This is called often.)
@@ -1069,9 +1069,9 @@ INLINE const Series* VAL_SERIES(NoQuote(const Cell*) v) {
     INLINE REBIDX VAL_INDEX_UNBOUNDED(NoQuote(const Cell*) v) {
         enum Reb_Kind k = Cell_Heart_Unchecked(v);  // only const if heart!
         assert(
-            ANY_SERIES_KIND(k)
+            Any_Series_Kind(k)
             or k == REB_ISSUE or k == REB_URL
-            or ANY_ARRAYLIKE(v)
+            or Any_Arraylike(v)
         );
         assert(Get_Cell_Flag_Unchecked(v, FIRST_IS_NODE));
         return VAL_INDEX_RAW(v);
@@ -1080,9 +1080,9 @@ INLINE const Series* VAL_SERIES(NoQuote(const Cell*) v) {
         ASSERT_CELL_WRITABLE_EVIL_MACRO(v);
         enum Reb_Kind k = Cell_Heart_Unchecked(v);
         assert(
-            ANY_SERIES_KIND(k)
+            Any_Series_Kind(k)
             or k == REB_ISSUE or k == REB_URL
-            or ANY_ARRAYLIKE(v)
+            or Any_Arraylike(v)
         );
         assert(Get_Cell_Flag_Unchecked(v, FIRST_IS_NODE));
         return VAL_INDEX_RAW(v);  // returns a C++ reference
@@ -1099,9 +1099,9 @@ INLINE REBLEN VAL_LEN_HEAD(NoQuote(const Cell*) v);  // forward decl
 INLINE REBLEN VAL_INDEX(NoQuote(const Cell*) v) {
     enum Reb_Kind k = Cell_Heart(v);  // only const access if heart!
     assert(
-        ANY_SERIES_KIND(k)
+        Any_Series_Kind(k)
         or k == REB_ISSUE or k == REB_URL
-        or ANY_ARRAYLIKE(v)
+        or Any_Arraylike(v)
     );
     UNUSED(k);
     assert(Get_Cell_Flag(v, FIRST_IS_NODE));
@@ -1139,9 +1139,9 @@ INLINE void INIT_SPECIFIER(Cell* v, const void *p) {
             IS_DETAILS(binding)  // relative
             or IS_VARLIST(binding)  // specific
             or (
-                ANY_ARRAY(v) and (IS_LET(binding) or IS_USE(binding)) // virtual
+                Any_Array(v) and (IS_LET(binding) or IS_USE(binding)) // virtual
             ) or (
-                IS_VARARGS(v) and Not_Series_Flag(binding, DYNAMIC)
+                Is_Varargs(v) and Not_Series_Flag(binding, DYNAMIC)
             )  // varargs from MAKE VARARGS! [...], else is a varlist
         );
     }
@@ -1159,7 +1159,7 @@ INLINE REBVAL *Init_Series_Cell_At_Core(
     Array* specifier
 ){
   #if !defined(NDEBUG)
-    assert(ANY_SERIES_KIND(type) or type == REB_URL);
+    assert(Any_Series_Kind(type) or type == REB_URL);
     assert(Is_Node_Managed(s));
 
     // Note: a R3-Alpha Make_Binary() comment said:
@@ -1173,9 +1173,9 @@ INLINE REBVAL *Init_Series_Cell_At_Core(
     //
     Assert_Series_Term_If_Needed(s);
 
-    if (ANY_ARRAY_KIND(type))
+    if (Any_Array_Kind(type))
         assert(Is_Series_Array(s));
-    else if (ANY_STRING_KIND(type))
+    else if (Any_String_Kind(type))
         assert(Is_Series_UTF8(s));
     else {
         // Note: Binaries are allowed to alias strings

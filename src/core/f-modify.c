@@ -76,7 +76,7 @@ REBLEN Modify_Array(
 
     // Check /PART, compute LEN:
     if (flags & AM_SPLICE) {
-        assert(ANY_ARRAY_KIND(Cell_Heart(src_val)));
+        assert(Any_Array(src_val));
 
         REBLEN len_at = VAL_LEN_AT(src_val);
         ilen = len_at;
@@ -248,7 +248,7 @@ REBLEN Modify_String_Or_Binary(
 
     REBLEN dst_len_old = 0xDECAFBAD;  // only if IS_SER_STRING(dst_ser)
     Size dst_off;
-    if (IS_BINARY(dst)) {  // check invariants up front even if NULL / no-op
+    if (Is_Binary(dst)) {  // check invariants up front even if NULL / no-op
         if (Is_NonSymbol_String(dst_ser)) {
             Byte at = *Binary_At(dst_ser, dst_idx);
             if (Is_Continuation_Byte(at))
@@ -258,7 +258,7 @@ REBLEN Modify_String_Or_Binary(
         dst_off = dst_idx;
     }
     else {
-        assert(ANY_STRING(dst));
+        assert(Any_String(dst));
         assert(Is_NonSymbol_String(dst_ser));
 
         dst_off = VAL_BYTEOFFSET_FOR_INDEX(dst, dst_idx);  // !!! review for speed
@@ -294,7 +294,7 @@ REBLEN Modify_String_Or_Binary(
         dst_off = Series_Used(dst_ser);
         dst_idx = dst_len_old;
     }
-    else if (IS_BINARY(dst) and Is_NonSymbol_String(dst_ser)) {
+    else if (Is_Binary(dst) and Is_NonSymbol_String(dst_ser)) {
         dst_idx = String_Index_At(cast(String*, dst_ser), dst_off);
     }
 
@@ -309,7 +309,7 @@ REBLEN Modify_String_Or_Binary(
 
     Byte src_byte;  // only used by BINARY! (mold buffer is UTF-8 legal)
 
-    if (IS_ISSUE(src)) {  // characters store their encoding in their payload
+    if (Is_Issue(src)) {  // characters store their encoding in their payload
         //
         // !!! We pass in UNLIMITED for the limit of how long the input is
         // because currently /PART speaks in terms of the destination series.
@@ -335,8 +335,8 @@ REBLEN Modify_String_Or_Binary(
         }
     }
     else if (
-        ANY_STRING(src)
-        and not IS_TAG(src)  // tags need `<` and `>` to render
+        Any_String(src)
+        and not Is_Tag(src)  // tags need `<` and `>` to render
     ){
         // !!! Branch is very similar to the one for ISSUE! above (merge?)
 
@@ -359,8 +359,8 @@ REBLEN Modify_String_Or_Binary(
         if (not Is_NonSymbol_String(dst_ser))
             src_len_raw = src_size_raw;
     }
-    else if (IS_INTEGER(src)) {
-        if (not IS_BINARY(dst))
+    else if (Is_Integer(src)) {
+        if (not Is_Binary(dst))
             goto form;  // e.g. `append "abc" 10` is "abc10"
 
         // otherwise `append #{123456} 10` is #{1234560A}, just the byte
@@ -372,7 +372,7 @@ REBLEN Modify_String_Or_Binary(
         src_ptr = &src_byte;
         src_len_raw = src_size_raw = 1;
     }
-    else if (IS_BINARY(src)) {
+    else if (Is_Binary(src)) {
         const Binary* bin = VAL_BINARY(src);
         REBLEN offset = VAL_INDEX(src);
 
@@ -447,12 +447,12 @@ REBLEN Modify_String_Or_Binary(
 
         goto binary_limit_accounted_for;
     }
-    else if (IS_GROUP(src)) {
+    else if (Is_Group(src)) {
         //
         // !!! For APPEND and INSERT, the /PART should apply to *block* units,
         // and not character units from the generated string.
 
-        if (IS_BINARY(dst)) {
+        if (Is_Binary(dst)) {
             //
             // !!! R3-Alpha had the notion of joining a binary into a global
             // buffer that was cleared out and reused.  This was not geared
@@ -568,7 +568,7 @@ REBLEN Modify_String_Or_Binary(
         REBLEN dst_len_at;
         Size dst_size_at;
         if (Is_NonSymbol_String(dst_ser)) {
-            if (IS_BINARY(dst)) {
+            if (Is_Binary(dst)) {
                 dst_size_at = VAL_LEN_AT(dst);  // byte count
                 dst_len_at = String_Index_At(
                     cast(String*, dst_ser),
@@ -603,7 +603,7 @@ REBLEN Modify_String_Or_Binary(
 
         Size part_size;
         if (Is_NonSymbol_String(dst_ser)) {
-            if (IS_BINARY(dst)) {
+            if (Is_Binary(dst)) {
                 //
                 // The calculations on the new length depend on `part` being
                 // in terms of codepoint count.  Transform it from byte count,
@@ -739,7 +739,7 @@ REBLEN Modify_String_Or_Binary(
     if (op == SYM_APPEND)
         return 0;
 
-    if (IS_BINARY(dst))
+    if (Is_Binary(dst))
         return dst_off + src_size_total;
 
     return dst_idx + src_len_total;

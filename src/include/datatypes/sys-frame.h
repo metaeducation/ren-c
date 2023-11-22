@@ -48,8 +48,8 @@ INLINE bool ANY_ESCAPABLE_GET(const Cell* v) {
     //
     // Makes more sense than "escaping a block", whatever that would be.
     //
-    return IS_GET_GROUP(v) or IS_GET_WORD(v)
-        or IS_GET_PATH(v) or IS_GET_TUPLE(v);
+    return Is_Get_Group(v) or Is_Get_Word(v)
+        or Is_Get_Path(v) or Is_Get_Tuple(v);
 }
 
 
@@ -435,7 +435,7 @@ INLINE Level* Prep_Level_Core(
 //     DECLARE_PARAM(1, foo);
 //     DECLARE_PARAM(2, bar);
 //
-//     if (IS_INTEGER(ARG(foo)) and REF(bar)) { ... }
+//     if (Is_Integer(ARG(foo)) and REF(bar)) { ... }
 //
 // The DECLARE_PARAM macro uses token pasting to name indexes being declared as
 // `p_name` instead of just `name`.  This prevents collisions with C/C++

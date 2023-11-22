@@ -595,11 +595,11 @@ INLINE Value(*) SPECIFIC(const_if_c Cell* v) {
 #define UNSPECIFIED nullptr
 
 
-INLINE bool ANY_ARRAYLIKE(NoQuote(const Cell*) v) {
+INLINE bool Any_Arraylike(NoQuote(const Cell*) v) {
     // called by core code, sacrifice READABLE() checks
-    if (ANY_ARRAY_KIND(Cell_Heart_Unchecked(v)))
+    if (Any_Array_Kind(Cell_Heart_Unchecked(v)))
         return true;
-    if (not ANY_SEQUENCE_KIND(Cell_Heart_Unchecked(v)))
+    if (not Any_Sequence_Kind(Cell_Heart_Unchecked(v)))
         return false;
     if (Not_Cell_Flag_Unchecked(v, FIRST_IS_NODE))
         return false;
@@ -609,11 +609,11 @@ INLINE bool ANY_ARRAYLIKE(NoQuote(const Cell*) v) {
     return Series_Flavor(c_cast(Series*, node1)) == FLAVOR_ARRAY;
 }
 
-INLINE bool ANY_WORDLIKE(NoQuote(const Cell*) v) {
+INLINE bool Any_Wordlike(NoQuote(const Cell*) v) {
     // called by core code, sacrifice READABLE() checks
-    if (ANY_WORD_KIND(Cell_Heart_Unchecked(v)))
+    if (Any_Word_Kind(Cell_Heart_Unchecked(v)))
         return true;
-    if (not ANY_SEQUENCE_KIND(Cell_Heart_Unchecked(v)))
+    if (not Any_Sequence_Kind(Cell_Heart_Unchecked(v)))
         return false;
     if (Not_Cell_Flag_Unchecked(v, FIRST_IS_NODE))
         return false;
@@ -623,9 +623,9 @@ INLINE bool ANY_WORDLIKE(NoQuote(const Cell*) v) {
     return Series_Flavor(c_cast(Series*, node1)) == FLAVOR_SYMBOL;
 }
 
-INLINE bool ANY_STRINGLIKE(NoQuote(const Cell*) v) {
+INLINE bool Any_Stringlike(NoQuote(const Cell*) v) {
     // called by core code, sacrifice READABLE() checks
-    if (ANY_STRING_KIND(Cell_Heart_Unchecked(v)))
+    if (Any_String_Kind(Cell_Heart_Unchecked(v)))
         return true;
     if (Cell_Heart(v) == REB_URL)
         return true;
@@ -639,7 +639,7 @@ INLINE void INIT_VAL_WORD_SYMBOL(Cell* v, const Symbol* symbol)
   { Init_Cell_Node1(v, symbol); }
 
 INLINE const Symbol* VAL_WORD_SYMBOL(NoQuote(const Cell*) cell) {
-    assert(ANY_WORDLIKE(cell));  // no _UNCHECKED variant :-(
+    assert(Any_Wordlike(cell));  // no _UNCHECKED variant :-(
     return cast(Symbol*, Cell_Node1(cell));
 }
 

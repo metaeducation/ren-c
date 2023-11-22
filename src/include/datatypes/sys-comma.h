@@ -52,7 +52,7 @@
 INLINE Value(*) Init_Comma(Cell* out) {
     Reset_Unquoted_Header_Untracked(out, CELL_MASK_COMMA);
 
-    // Although COMMA! carries no data, it is not inert.  To make ANY_INERT()
+    // Although COMMA! carries no data, it is not inert.  To make Any_Inert()
     // fast, it's in the part of the list of bindable evaluative types.
     // This means the binding has to be nulled out in the cell to keep the
     // GC from crashing on it.

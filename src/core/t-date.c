@@ -526,10 +526,10 @@ Bounce MAKE_Date(
     if (parent)
         return RAISE(Error_Bad_Make_Parent(kind, unwrap(parent)));
 
-    if (IS_DATE(arg))
+    if (Is_Date(arg))
         return Copy_Cell(OUT, arg);
 
-    if (IS_TEXT(arg)) {
+    if (Is_Text(arg)) {
         Size size;
         const Byte* bp = Analyze_String_For_Scan(&size, arg, MAX_SCAN_DATE);
         if (NULL == Scan_Date(OUT, bp, size))
@@ -537,7 +537,7 @@ Bounce MAKE_Date(
         return OUT;
     }
 
-    if (ANY_ARRAY(arg))
+    if (Any_Array(arg))
         goto make_from_array;
 
     goto bad_make;
@@ -547,19 +547,19 @@ Bounce MAKE_Date(
     const Cell* tail;
     const Cell* item = VAL_ARRAY_AT(&tail, arg);
 
-    if (item == tail or not IS_INTEGER(item))
+    if (item == tail or not Is_Integer(item))
         goto bad_make;
 
     REBLEN day = Int32s(item, 1);
 
     ++item;
-    if (item == tail or not IS_INTEGER(item))
+    if (item == tail or not Is_Integer(item))
         goto bad_make;
 
     REBLEN month = Int32s(item, 1);
 
     ++item;
-    if (item == tail or not IS_INTEGER(item))
+    if (item == tail or not Is_Integer(item))
         goto bad_make;
 
     REBLEN year;
@@ -596,7 +596,7 @@ Bounce MAKE_Date(
         tz = NO_DATE_ZONE;
     }
     else {
-        if (not IS_TIME(item))
+        if (not Is_Time(item))
             goto bad_make;
 
         secs = VAL_NANO(item);
@@ -605,7 +605,7 @@ Bounce MAKE_Date(
         if (item == tail)
             tz = NO_DATE_ZONE;
         else {
-            if (not IS_TIME(item))
+            if (not Is_Time(item))
                 goto bad_make;
 
             tz = cast(REBINT, VAL_NANO(item) / (ZONE_MINS * MIN_SEC));
@@ -643,10 +643,10 @@ Bounce TO_Date(Level* level_, enum Reb_Kind kind, const REBVAL *arg) {
 
 
 static REBINT Int_From_Date_Arg(const REBVAL *poke) {
-    if (IS_INTEGER(poke) or IS_DECIMAL(poke))
+    if (Is_Integer(poke) or Is_Decimal(poke))
         return Int32s(poke, 0);
 
-    if (IS_BLANK(poke))
+    if (Is_Blank(poke))
         return 0;
 
     fail (poke);
@@ -663,10 +663,10 @@ void Pick_Or_Poke_Date(
     Option(Value(const*)) opt_poke
 ){
     Option(SymId) sym;
-    if (IS_WORD(picker)) {
+    if (Is_Word(picker)) {
         sym = VAL_WORD_ID(picker); // error later if SYM_0 or not a match
     }
-    else if (IS_INTEGER(picker)) {
+    else if (Is_Integer(picker)) {
         switch (Int32(picker)) {
         case 1: sym = SYM_YEAR; break;
         case 2: sym = SYM_MONTH; break;
@@ -845,11 +845,11 @@ void Pick_Or_Poke_Date(
                 nano = NO_DATE_TIME;
                 zone = NO_DATE_ZONE;
             }
-            else if (IS_TIME(poke) or IS_DATE(poke))
+            else if (Is_Time(poke) or Is_Date(poke))
                 nano = VAL_NANO(poke);
-            else if (IS_INTEGER(poke))
+            else if (Is_Integer(poke))
                 nano = Int_From_Date_Arg(poke) * SEC_SEC;
-            else if (IS_DECIMAL(poke))
+            else if (Is_Decimal(poke))
                 nano = DEC_TO_SECS(VAL_DECIMAL(poke));
             else
                 fail (poke);
@@ -877,9 +877,9 @@ void Pick_Or_Poke_Date(
                 if (not Does_Date_Have_Time(v))
                     nano = 0;
 
-                if (IS_TIME(poke))
+                if (Is_Time(poke))
                     zone = cast(REBINT, VAL_NANO(poke) / (ZONE_MINS * MIN_SEC));
-                else if (IS_DATE(poke))
+                else if (Is_Date(poke))
                     zone = VAL_ZONE(poke);
                 else
                     zone = Int_From_Date_Arg(poke) * (60 / ZONE_MINS);
@@ -894,7 +894,7 @@ void Pick_Or_Poke_Date(
             fail (picker);
 
           case SYM_DATE: {
-            if (not IS_DATE(poke))
+            if (not Is_Date(poke))
                 fail (poke);
 
             // We want to adjust the date being poked, so the year/month/day
@@ -940,7 +940,7 @@ void Pick_Or_Poke_Date(
 
             REB_TIMEF time;
             Split_Time(nano, &time);
-            if (IS_INTEGER(poke)) {
+            if (Is_Integer(poke)) {
                 time.s = Int_From_Date_Arg(poke);
                 time.n = 0;
             }
@@ -985,7 +985,7 @@ void Pick_Or_Poke_Date(
 REBTYPE(Date)
 {
     REBVAL *v = D_ARG(1);
-    assert(IS_DATE(v));
+    assert(Is_Date(v));
 
     Option(SymId) id = ID_OF_SYMBOL(verb);
 
@@ -1140,7 +1140,7 @@ REBTYPE(Date)
             //
             // https://forum.rebol.info/t/486
             //
-            if (not IS_DATE(val2))
+            if (not Is_Date(val2))
                 fail (Error_Unexpected_Type(VAL_TYPE(val1), VAL_TYPE(val2)));
 
             return Time_Between_Dates(OUT, val1, val2); }

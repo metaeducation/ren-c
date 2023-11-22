@@ -63,7 +63,6 @@
 #if (! DEBUG_MAIN_USING_SYS_CORE)
     #include "rebol.h"  // note: includes pstdint.h and pstdbool.h by default
 #else
-    #undef IS_ERROR  // windows.h has its own definition of this macro
     #undef OUT  // %minwindef.h defines this, we have a better use for it
     #undef VOID  // %winnt.h defines this, we have a better use for it
     #include "sys-core.h"

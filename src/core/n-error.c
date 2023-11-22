@@ -73,7 +73,7 @@ DECLARE_NATIVE(enrescue)
     if (not THROWING)  // successful result
         return Meta_Quotify(OUT);
 
-    if (not IS_ERROR(VAL_THROWN_LABEL(LEVEL)))  // non-ERROR! throws
+    if (not Is_Error(VAL_THROWN_LABEL(LEVEL)))  // non-ERROR! throws
         return BOUNCE_THROWN;
 
     Copy_Cell(OUT, VAL_THROWN_LABEL(LEVEL));
@@ -129,7 +129,7 @@ DECLARE_NATIVE(entrap)  // wrapped as TRAP and ATTEMPT
         | LEVEL_FLAG_RAISED_RESULT_OK;  // we're trapping it
 
     Level* sub;
-    if (IS_BLOCK(code)) {
+    if (Is_Block(code)) {
         sub = Make_Level_At(
             code,  // REB_BLOCK or REB_GROUP
             flags
@@ -257,13 +257,13 @@ DECLARE_NATIVE(set_location_of_error)
     REBVAL *location = ARG(location);
 
     Context* context;
-    if (IS_WORD(location)) {
+    if (Is_Word(location)) {
         if (not IS_WORD_BOUND(location))
             fail ("SET-LOCATION-OF-ERROR requires bound WORD!");
         context = VAL_WORD_CONTEXT(location);
     }
     else {
-        assert(IS_FRAME(location));
+        assert(Is_Frame(location));
         context = VAL_CONTEXT(location);
     }
 
