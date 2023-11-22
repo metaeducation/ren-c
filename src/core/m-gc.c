@@ -157,7 +157,7 @@ static void Queue_Mark_Pairing_Deep(const Cell* paired)
   #endif
 
     Queue_Mark_Cell_Deep(paired);
-    Queue_Mark_Cell_Deep(PAIRING_KEY(paired));  // QUOTED! uses void
+    Queue_Mark_Cell_Deep(Pairing_Second(paired));  // QUOTED! uses void
 
     Add_GC_Mark(paired);
 
@@ -631,7 +631,7 @@ static void Mark_Root_Series(void)
 
                 REBVAL *paired = x_cast(Value(*), cast(void*, unit));
                 Queue_Mark_Cell_Deep(paired);
-                Queue_Mark_Cell_Deep(PAIRING_KEY(paired));
+                Queue_Mark_Cell_Deep(Pairing_Second(paired));
                 continue;
             }
 

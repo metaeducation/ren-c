@@ -100,11 +100,6 @@ integer     "64 bit integer"
             [any-number! any-scalar!]
             [integer     +       +]
 
-pair        "two dimensional point or size"
-            (CELL_FLAG_FIRST_IS_NODE)
-            [any-scalar!]
-            [pair        +       +]
-
 parameter   "function parameter description"
             (CELL_FLAG_FIRST_IS_NODE)
             []
@@ -212,6 +207,10 @@ varargs     "evaluator position for variable numbers of arguments"
             []
             [varargs     +       +]
 
+pair        "two dimensional point or size"
+            (CELL_FLAG_FIRST_IS_NODE)
+            [any-scalar!]
+            [pair        +       +]
 
 <ANY-THE-VALUE!>  ; (order matters, e.g. UNTHEIFY_ANY_XXX_KIND())
 

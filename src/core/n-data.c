@@ -90,15 +90,15 @@ DECLARE_NATIVE(latin1_q)
 //  "Combine X and Y values into a pair."
 //
 //      return: [pair!]
-//      x [any-number!]
-//      y [any-number!]
+//      x [integer!]
+//      y [integer!]
 //  ]
 //
 DECLARE_NATIVE(as_pair)
 {
     INCLUDE_PARAMS_OF_AS_PAIR;
 
-    return Init_Pair(OUT, ARG(x), ARG(y));
+    return Init_Pair_Int(OUT, VAL_INT64(ARG(x)), VAL_INT64(ARG(y)));
 }
 
 

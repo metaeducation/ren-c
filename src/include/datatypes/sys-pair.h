@@ -30,12 +30,12 @@
 // accepted for now in the PAIR! type.
 //
 
-INLINE Cell* PAIRING_KEY(const_if_c Cell* paired) {
+INLINE Cell* Pairing_Second(const_if_c Cell* paired) {
     return m_cast(Cell*, paired + 1);
 }
 
 #ifdef CPLUSPLUS_11
-    INLINE const Cell* PAIRING_KEY(const Cell* paired) {
+    INLINE const Cell* Pairing_Second(const Cell* paired) {
         return paired + 1;
     }
 #endif
@@ -44,28 +44,16 @@ INLINE Cell* PAIRING_KEY(const_if_c Cell* paired) {
 #define INIT_VAL_PAIR(v,pairing) \
     Init_Cell_Node1((v), (pairing))
 
-INLINE REBVAL *VAL_PAIRING(NoQuote(const Cell*) v) {
+INLINE Cell* VAL_PAIRING(NoQuote(const Cell*) v) {
     assert(Cell_Heart(v) == REB_PAIR);
     return x_cast(Value(*), Cell_Node1(v));
 }
 
 #define VAL_PAIR_X(v) \
-    SPECIFIC(PAIRING_KEY(VAL_PAIRING(v)))
+    SPECIFIC(VAL_PAIRING(v))
 
 #define VAL_PAIR_Y(v) \
-    VAL_PAIRING(v)
-
-INLINE REBDEC VAL_PAIR_X_DEC(NoQuote(const Cell*) v) {
-    if (Is_Integer(VAL_PAIR_X(v)))
-        return cast(REBDEC, VAL_INT64(VAL_PAIR_X(v)));
-    return VAL_DECIMAL(VAL_PAIR_X(v));
-}
-
-INLINE REBDEC VAL_PAIR_Y_DEC(NoQuote(const Cell*) v) {
-    if (Is_Integer(VAL_PAIR_Y(v)))
-        return cast(REBDEC, VAL_INT64(VAL_PAIR_Y(v)));
-    return VAL_DECIMAL(VAL_PAIR_Y(v));
-}
+    SPECIFIC(Pairing_Second(VAL_PAIRING(v)))
 
 INLINE REBI64 VAL_PAIR_X_INT(NoQuote(const Cell*) v) {
     if (Is_Integer(VAL_PAIR_X(v)))
@@ -79,39 +67,23 @@ INLINE REBDEC VAL_PAIR_Y_INT(NoQuote(const Cell*) v) {
     return ROUND_TO_INT(VAL_DECIMAL(VAL_PAIR_Y(v)));
 }
 
-INLINE Value(*) Init_Pair(
-    Cell* out,
-    const Cell* x,
-    const Cell* y
-){
-    assert(Any_Number(x));
-    assert(Any_Number(y));
-
+INLINE Value(*) Init_Pair(Cell* out, Cell* pairing) {
     Reset_Unquoted_Header_Untracked(out, CELL_MASK_PAIR);
-    Cell* p = Alloc_Pairing();
-    Copy_Cell(PAIRING_KEY(p), c_cast(REBVAL*, x));
-    Copy_Cell(p, c_cast(REBVAL*, y));
-    Manage_Pairing(p);
-    INIT_VAL_PAIR(out, p);
+    Manage_Pairing(pairing);
+    INIT_VAL_PAIR(out, pairing);
+    VAL_INDEX_RAW(out) = 0;  // "arraylike", needs an index
+    mutable_BINDING(out) = UNBOUND;  // "arraylike", needs binding
     return SPECIFIC(out);
 }
 
 INLINE Value(*) Init_Pair_Int(Cell* out, REBI64 x, REBI64 y) {
     Reset_Unquoted_Header_Untracked(out, CELL_MASK_PAIR);
     Cell* p = Alloc_Pairing();
-    Init_Integer(PAIRING_KEY(p), x);
-    Init_Integer(p, y);
+    Init_Integer(p, x);
+    Init_Integer(Pairing_Second(p), y);
     Manage_Pairing(p);
     INIT_VAL_PAIR(out, p);
-    return SPECIFIC(out);
-}
-
-INLINE Value(*) Init_Pair_Dec(Cell* out, REBDEC x, REBDEC y) {
-    Reset_Unquoted_Header_Untracked(out, CELL_MASK_PAIR);
-    Cell* p = Alloc_Pairing();
-    Init_Decimal(PAIRING_KEY(p), x);
-    Init_Decimal(p, y);
-    Manage_Pairing(p);
-    INIT_VAL_PAIR(out, p);
+    VAL_INDEX_RAW(out) = 0;  // "arraylike", needs an index
+    mutable_BINDING(out) = UNBOUND;  // "arraylike", needs binding
     return SPECIFIC(out);
 }

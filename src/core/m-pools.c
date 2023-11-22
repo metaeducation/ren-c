@@ -570,20 +570,15 @@ Node* Try_Find_Containing_Node_Debug(const void *p)
 //
 //  Alloc_Pairing: C
 //
-// Allocate a paired set of values.  The "key" is in the Cell* before* the
-// returned pointer.
-//
-// Because pairings are created in large numbers and left outstanding, they
-// are not put into any tracking lists by default.  This means that if there
-// is a fail(), they will leak--unless whichever API client that is using
-// them ensures they are cleaned up.
+// !!! Pairings are not currently put into any tracking lists, so they'll
+// leak if not freed or managed.  This shouldn't be hard to fix--it just
+// means the GC manuals list needs to be Node* and not just Series*.
 //
 Cell* Alloc_Pairing(void) {
     Cell* paired = cast(Cell*, Alloc_Pooled(PAIR_POOL));  // 2x cell size
-    Erase_Cell(paired);
 
-    Cell* key = PAIRING_KEY(paired);
-    Erase_Cell(key);
+    Erase_Cell(paired);
+    Erase_Cell(Pairing_Second(paired));
 
     return paired;
 }

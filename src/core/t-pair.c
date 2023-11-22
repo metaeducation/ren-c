@@ -35,10 +35,10 @@ REBINT CT_Pair(NoQuote(const Cell*) a, NoQuote(const Cell*) b, bool strict)
 {
     UNUSED(strict);  // !!! Should this be heeded for the decimal?
 
-    REBDEC diff;
+    REBI64 diff;
 
-    if ((diff = VAL_PAIR_Y_DEC(a) - VAL_PAIR_Y_DEC(b)) == 0)
-        diff = VAL_PAIR_X_DEC(a) - VAL_PAIR_X_DEC(b);
+    if ((diff = VAL_PAIR_Y_INT(a) - VAL_PAIR_Y_INT(b)) == 0)
+        diff = VAL_PAIR_X_INT(a) - VAL_PAIR_X_INT(b);
     return (diff > 0.0) ? 1 : ((diff < 0.0) ? -1 : 0);
 }
 
@@ -76,7 +76,7 @@ Bounce MAKE_Pair(
     const Cell* x;
     const Cell* y;
 
-    if (Any_Number(arg)) {
+    if (Is_Integer(arg)) {
         x = arg;
         y = arg;
     }
@@ -84,7 +84,7 @@ Bounce MAKE_Pair(
         const Cell* tail;
         const Cell* item = VAL_ARRAY_AT(&tail, arg);
 
-        if (Any_Number(item))
+        if (Is_Integer(item))
             x = item;
         else
             goto bad_make;
@@ -93,7 +93,7 @@ Bounce MAKE_Pair(
         if (item == tail)
             goto bad_make;
 
-        if (Any_Number(item))
+        if (Is_Integer(item))
             y = item;
         else
             goto bad_make;
@@ -105,7 +105,7 @@ Bounce MAKE_Pair(
     else
         goto bad_make;
 
-    return Init_Pair(OUT, x, y);
+    return Init_Pair_Int(OUT, VAL_INT64(x), VAL_INT64(y));
 
   bad_make:
 
@@ -125,28 +125,25 @@ Bounce TO_Pair(Level* level_, enum Reb_Kind kind, const REBVAL *arg)
 //
 //  Min_Max_Pair: C
 //
-// Note: compares on the basis of decimal value, but preserves the DECIMAL!
-// or INTEGER! state of the element it kept.  This may or may not be useful.
-//
 void Min_Max_Pair(
     Sink(Value(*)) out,
     Value(const*) a,
     Value(const*) b,
     bool maxed
 ){
-    const REBVAL* x;
-    if (VAL_PAIR_X_DEC(a) > VAL_PAIR_X_DEC(b))
-        x = maxed ? VAL_PAIR_X(a) : VAL_PAIR_X(b);
+    REBI64 x;
+    if (VAL_PAIR_X_INT(a) > VAL_PAIR_X_INT(b))
+        x = maxed ? VAL_PAIR_X_INT(a) : VAL_PAIR_X_INT(b);
     else
-        x = maxed ? VAL_PAIR_X(b) : VAL_PAIR_X(a);
+        x = maxed ? VAL_PAIR_X_INT(b) : VAL_PAIR_X_INT(a);
 
-    const REBVAL* y;
-    if (VAL_PAIR_Y_DEC(a) > VAL_PAIR_Y_DEC(b))
-        y = maxed ? VAL_PAIR_Y(a) : VAL_PAIR_Y(b);
+    REBI64 y;
+    if (VAL_PAIR_Y_INT(a) > VAL_PAIR_Y_INT(b))
+        y = maxed ? VAL_PAIR_Y_INT(a) : VAL_PAIR_Y_INT(b);
     else
-        y = maxed ? VAL_PAIR_Y(b) : VAL_PAIR_Y(a);
+        y = maxed ? VAL_PAIR_Y_INT(b) : VAL_PAIR_Y_INT(a);
 
-    Init_Pair(out, x, y);
+    Init_Pair_Int(out, x, y);
 }
 
 
@@ -241,17 +238,17 @@ REBTYPE(Pair)
 
         REBVAL *setval = ARG(value);
 
-        if (not Is_Integer(setval) and not Is_Decimal(setval))
+        if (not Is_Integer(setval))
             fail (PARAM(value));
 
-        REBVAL *which = (n == 1) ? VAL_PAIR_X(v) : VAL_PAIR_Y(v);
-
+        REBVAL* which = (n == 1) ? VAL_PAIR_X(v) : VAL_PAIR_Y(v);
         Copy_Cell(which, setval);
+
         return nullptr; }
 
 
       case SYM_REVERSE:
-        return Init_Pair(OUT, VAL_PAIR_Y(v), VAL_PAIR_X(v));
+        return Init_Pair_Int(OUT, VAL_PAIR_Y_INT(v), VAL_PAIR_X_INT(v));
 
       case SYM_ADD:
       case SYM_SUBTRACT:
@@ -292,8 +289,8 @@ REBTYPE(Pair)
 
     return rebValue(
         "make pair! reduce [",
-            "do @", rebR(x_frame),
-            "do @", rebR(y_frame),
+            "to integer! do @", rebR(x_frame),
+            "to integer! do @", rebR(y_frame),
         "]"
     );
 }

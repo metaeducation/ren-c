@@ -1105,11 +1105,11 @@ const Byte* Scan_Pair(
 
     Cell* paired = Alloc_Pairing();
 
-    // X is in the key pairing cell
+    // X is in the first pairing cell
     if (is_integral)
-        Init_Integer(PAIRING_KEY(paired), atoi(cast(char*, &buf[0])));
+        Init_Integer(paired, atoi(cast(char*, &buf[0])));
     else
-        Init_Decimal(PAIRING_KEY(paired), atof(cast(char*, &buf[0])));
+        Init_Decimal(paired, atof(cast(char*, &buf[0])));
 
     ep++;
 
@@ -1119,11 +1119,11 @@ const Byte* Scan_Pair(
         return_NULL;
     }
 
-    // Y is in the non-key pairing cell
+    // Y is in the second pairing cell
     if (is_integral)
-        Init_Integer(paired, atoi(cast(char*, &buf[0])));
+        Init_Integer(Pairing_Second(paired), atoi(cast(char*, &buf[0])));
     else
-        Init_Decimal(paired, atof(cast(char*, &buf[0])));
+        Init_Decimal(Pairing_Second(paired), atof(cast(char*, &buf[0])));
 
     if (len > cast(REBLEN, xp - cp)) {
         Free_Pairing(paired);
