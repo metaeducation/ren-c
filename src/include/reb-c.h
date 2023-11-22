@@ -1078,7 +1078,7 @@
     template<typename T>
     struct EnsureReader {
         template<typename U>
-        constexpr T operator<< (U u) { return u; }
+        constexpr T operator<< (U u) const { return u; }
 
         template<typename V>
         constexpr static V const& check(V const& v) {

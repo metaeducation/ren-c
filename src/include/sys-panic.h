@@ -117,6 +117,7 @@
           #endif
             while (1) { ++x; }
             x = 0; // set next statement in debugger to here
+            UNUSED(x);
         }
     #else
         #include "debugbreak.h"
