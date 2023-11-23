@@ -686,7 +686,7 @@ static void Update_Error_Near_For_Line(
     Init_Text(&vars->nearest, Pop_Molded_String(mo));
 
     if (ss->file)
-        Init_File(&vars->file, ss->file);
+        Init_File(&vars->file, unwrap(ss->file));
     else
         Init_Nulled(x_cast(Value(*), &vars->file));
 
@@ -1845,7 +1845,7 @@ static enum Reb_Token Maybe_Locate_Token_May_Push_Mold(
 void Init_Scan_Level(
     SCAN_LEVEL *level,
     SCAN_STATE *ss,
-    const String* file,
+    Option(const String*) file,
     LineNumber line,
     Option(const Byte*) bp
 ){
@@ -2194,7 +2194,7 @@ Bounce Scanner_Executor(Level* const L) {
         // Tag array with line where the beginning bracket/group/etc. was found
         //
         a->misc.line = ss->line;
-        LINK(Filename, a) = ss->file;
+        LINK(Filename, a) = try_unwrap(ss->file);
         Set_Array_Flag(a, HAS_FILE_LINE_UNMASKED);
         Set_Series_Flag(a, LINK_NODE_NEEDS_MARK);
 
@@ -2479,7 +2479,7 @@ Bounce Scanner_Executor(Level* const L) {
         // Tag array with line where the beginning bracket/group/etc. was found
         //
         array->misc.line = ss->line;
-        LINK(Filename, array) = ss->file;
+        LINK(Filename, array) = try_unwrap(ss->file);
         Set_Array_Flag(array, HAS_FILE_LINE_UNMASKED);
         Set_Series_Flag(array, LINK_NODE_NEEDS_MARK);
 
@@ -2798,7 +2798,7 @@ Bounce Scanner_Executor(Level* const L) {
         ){
             Array* a = cast(Array*, Cell_Node1(TOP));
             a->misc.line = ss->line;
-            LINK(Filename, a) = ss->file;
+            LINK(Filename, a) = try_unwrap(ss->file);
             Set_Array_Flag(a, HAS_FILE_LINE_UNMASKED);
             Set_Series_Flag(a, LINK_NODE_NEEDS_MARK);
 
@@ -2964,7 +2964,7 @@ Bounce Scanner_Executor(Level* const L) {
 //    the `p` pointer is this packed array, vs. the first item of a va_list.)
 //
 Array* Scan_UTF8_Managed(
-    const String* file,
+    Option(const String*) file,
     const Byte* utf8,
     Size size,
     Option(Context*) context
@@ -2997,7 +2997,7 @@ Array* Scan_UTF8_Managed(
     Array* a = Pop_Stack_Values_Core(base, flags);
 
     a->misc.line = 1;
-    LINK(Filename, a) = file;
+    LINK(Filename, a) = try_unwrap(file);
     Set_Array_Flag(a, HAS_FILE_LINE_UNMASKED);
     Set_Series_Flag(a, LINK_NODE_NEEDS_MARK);
 
@@ -3102,10 +3102,10 @@ DECLARE_NATIVE(transcode)
     if (Is_Binary(source))  // scanner needs data to end in '\0' [1]
         Term_Binary(m_cast(Binary*, Cell_Binary(source)));
 
-    const String* file;
+    Option(const String*) file;
     if (REF(file)) {
         file = Cell_String(ARG(file));
-        Freeze_Series(file);  // freezes vs. interning [2]
+        Freeze_Series(unwrap(file));  // freezes vs. interning [2]
     }
     else
         file = ANONYMOUS;
@@ -3195,7 +3195,7 @@ DECLARE_NATIVE(transcode)
         Array* a = Pop_Stack_Values_Core(STACK_BASE, flags);
 
         a->misc.line = ss->line;
-        LINK(Filename, a) = ss->file;
+        LINK(Filename, a) = try_unwrap(ss->file);
         a->header.bits |= ARRAY_MASK_HAS_FILE_LINE;
 
         Init_Block(OUT, a);
@@ -3263,7 +3263,7 @@ const Byte* Scan_Any_Word(
     Size size
 ) {
     SCAN_STATE ss;
-    const String* file = ANONYMOUS;
+    Option(const String*) file = ANONYMOUS;
     const LineNumber start_line = 1;
 
     Level* L = Make_End_Level(LEVEL_MASK_NONE);  // note: no feed `context`

@@ -1368,10 +1368,10 @@ REBTYPE(Frame)
 
         switch (prop) {
           case SYM_FILE: {
-            const String* file = File_Of_Level(L);
+            Option(const String*) file = File_Of_Level(L);
             if (not file)
                 return nullptr;
-            return Init_File(OUT, file); }
+            return Init_File(OUT, unwrap(file)); }
 
           case SYM_LINE: {
             LineNumber line = LineNumber_Of_Level(L);

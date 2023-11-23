@@ -49,14 +49,6 @@
 //
 
 
-// Some places permit an optional label (such as the names of function
-// invocations, which may not have an associated name).  To make the callsite
-// intent clearer for passing in a null String*, use ANONYMOUS instead.
-//
-#define ANONYMOUS \
-    x_cast(const Symbol*, nullptr)
-
-
 // For a writable REBSTR, a list of entities that cache the mapping from
 // index to character offset is maintained.  Without some help, it would
 // be necessary to search from the head or tail of the string, character

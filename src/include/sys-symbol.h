@@ -6,7 +6,7 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Copyright 2012-2021 Ren-C Open Source Contributors
+// Copyright 2012-2023 Ren-C Open Source Contributors
 // Copyright 2012 REBOL Technologies
 // REBOL is a trademark of REBOL Technologies
 //
@@ -38,11 +38,16 @@
 // name or canon-name pointers.  A non-built-in symbol will return SYM_0 as
 // its symbol ID, allowing it to fall through to defaults in case statements.
 //
-// Though it works fine for switch statements, it creates a problem if someone
-// writes `VAL_WORD_ID(a) == VAL_WORD_ID(b)`, because all non-built-ins
-// will appear to be equal.  It's a tricky enough bug to catch to warrant an
-// extra check in C++ that disallows comparing SYMIDs with ==
+
+// Some places permit an optional label (such as the names of function
+// invocations, which may not have an associated name).  To make the callsite
+// intent clearer for passing in a null Symbol*, use ANONYMOUS instead.
 //
+#if DEBUG_CHECK_OPTIONALS
+    #define ANONYMOUS   Option(const Symbol*){nullptr}
+#else
+    #define ANONYMOUS   nullptr
+#endif
 
 
 // For a *read-only* Symbol, circularly linked list of othEr-CaSed string
@@ -102,8 +107,8 @@ INLINE Option(SymId) Symbol_Id(const Symbol* s)
   { return cast(SymId, SECOND_UINT16(&s->info)); }
 
 INLINE const Symbol* Canon_Symbol(SymId symid) {
-    assert(cast(REBLEN, symid) != 0);
-    assert(cast(REBLEN, symid) < ALL_SYMS_MAX);
+    assert(cast(uint16_t, symid) != 0);
+    assert(cast(uint16_t, symid) < ALL_SYMS_MAX);
     return &g_symbols.builtin_canons[symid];
 }
 

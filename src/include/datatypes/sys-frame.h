@@ -108,8 +108,8 @@ INLINE const char* File_UTF8_Of_Level(Level* L) {
     //
     // !!! Note: Too early in boot at the moment to use Canon(ANONYMOUS).
     //
-    const String* str = File_Of_Level(L);
-    return str ? String_UTF8(str) : "~anonymous~";
+    Option(const String*) str = File_Of_Level(L);
+    return str ? String_UTF8(unwrap(str)) : "~anonymous~";
 }
 
 INLINE LineNumber LineNumber_Of_Level(Level* L) {

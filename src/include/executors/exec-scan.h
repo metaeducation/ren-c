@@ -114,7 +114,7 @@ typedef struct rebol_scan_state {  // shared across all levels of a scan
     const Byte* begin;
     const Byte* end;
 
-    const String* file;  // currently scanning (or anonymous)
+    Option(const String*) file;  // currently scanning (or anonymous)
 
     LineNumber line;  // line number where current scan position is
     const Byte* line_head;  // pointer to head of current line (for errors)

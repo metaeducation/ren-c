@@ -58,7 +58,7 @@
 //
 
 INLINE bool IS_KIND_SYM(Option(SymId) id)
-  { return id != 0 and id < cast(SymId, REB_MAX); }
+  { return id != 0 and id < cast(uint16_t, REB_MAX); }
 
 INLINE enum Reb_Kind KIND_FROM_SYM(SymId s) {
     assert(IS_KIND_SYM(s));

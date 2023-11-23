@@ -275,6 +275,10 @@ enum Reb_Param_Class {
 //
 //     if (VAL_WORD_ID(a) == VAL_WORD_ID(b)) { ... }
 //
+// If you were allowed to do that, then all non-built-ins would give back
+// SYM_) and appear to be equal.  It's a tricky enough bug to catch to warrant
+// an extra check in C++ that disallows comparing SYMIDs with ==
+//
 // So we wrap the enum into an Option(), which the C++ build is able to do
 // added type checking on.  It also prohibits comparisons unless you unwrap
 // the values, which in debug builds has a runtime check of non-zeroness.

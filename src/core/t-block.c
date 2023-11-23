@@ -123,7 +123,7 @@ Bounce MAKE_Array(
         Size size;
         Utf8(const*) utf8 = Cell_Utf8_Size_At(&size, arg);
 
-        const String* file = ANONYMOUS;
+        Option(const String*) file = ANONYMOUS;
         Option(Context*) context = nullptr;
         Init_Array_Cell(
             OUT,
@@ -212,7 +212,7 @@ Bounce MAKE_Array(
         //
         Size utf8_size;
         Utf8(const*) utf8 = Cell_Utf8_Size_At(&utf8_size, arg);
-        const String* file = ANONYMOUS;
+        Option(const String*) file = ANONYMOUS;
         Option(Context*) context = nullptr;
         return Init_Array_Cell(
             OUT,
@@ -225,7 +225,7 @@ Bounce MAKE_Array(
         // `to block! #{00BDAE....}` assumes the binary data is UTF8, and
         // goes directly to the scanner to make an unbound code array.
         //
-        const String* file = ANONYMOUS;
+        Option(const String*) file = ANONYMOUS;
 
         Size size;
         const Byte* at = Cell_Binary_Size_At(&size, arg);
