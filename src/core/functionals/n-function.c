@@ -651,8 +651,8 @@ DECLARE_NATIVE(inherit_adjunct)
     const REBVAL *original = ARG(original);
 
     if (
-        not IS_DETAILS(VAL_ACTION(original))
-        or not IS_DETAILS(VAL_ACTION(derived))
+        not Is_Frame_Details(original)
+        or not Is_Frame_Details(derived)
     ){
         return COPY(ARG(derived));  // !!! temporary (?) weakness
     }

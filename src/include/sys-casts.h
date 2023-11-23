@@ -544,15 +544,31 @@ struct cast_helper<VP,Action*> {  // [2]
         if (not p)
             return nullptr;
 
-        if ((reinterpret_cast<const Stub*>(p)->header.bits & (
-            SERIES_MASK_DETAILS
-                | NODE_FLAG_FREE
-                | NODE_FLAG_CELL
-                | FLAG_FLAVOR_BYTE(255)
-        )) !=
-            SERIES_MASK_DETAILS
-        ){
-            panic (p);
+        if (reinterpret_cast<Byte*>(p)[2] == FLAVOR_DETAILS) {
+            if ((reinterpret_cast<const Stub*>(p)->header.bits & (
+                SERIES_MASK_DETAILS
+                    | NODE_FLAG_FREE
+                    | NODE_FLAG_CELL
+                    | FLAG_FLAVOR_BYTE(255)
+            )) !=
+                SERIES_MASK_DETAILS
+            ){
+                panic (p);
+            }
+        }
+        else {
+            if (((reinterpret_cast<Stub*>(p)->header.bits & (
+                      SERIES_MASK_VARLIST
+                      | NODE_FLAG_FREE
+                      | NODE_FLAG_CELL
+                      | FLAG_FLAVOR_BYTE(255)
+                      ))
+                 | SERIES_FLAG_DYNAMIC  // permit non-dynamic (e.g. inaccessible
+                 ) !=
+                SERIES_MASK_VARLIST
+            ){
+                panic (p);
+            }
         }
 
         return reinterpret_cast<Action*>(p);
