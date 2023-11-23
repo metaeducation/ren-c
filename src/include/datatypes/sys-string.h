@@ -62,114 +62,110 @@
 #define HAS_LINK_Bookmarks      FLAVOR_STRING
 
 
-INLINE Utf8(*) Skip_Codepoint(Utf8(const_if_c*) cp) {
-    Byte* t = x_cast(Byte*, cp);
+INLINE Utf8(*) Skip_Codepoint(Utf8(const_if_c*) utf8) {
+    Byte* bp = x_cast(Byte*, utf8);
     do {
-        ++t;
-    } while (Is_Continuation_Byte(*t));
-    return cast(Utf8(*), t);
+        ++bp;
+    } while (Is_Continuation_Byte(*bp));
+    return cast(Utf8(*), bp);
 }
 
-INLINE Utf8(*) Step_Back_Codepoint(Utf8(const_if_c*) cp) {
-    const_if_c Byte* t = cp;
+INLINE Utf8(*) Step_Back_Codepoint(Utf8(const_if_c*) utf8) {
+    Byte* bp = x_cast(Byte*, utf8);
     do {
-        --t;
-    } while (Is_Continuation_Byte(*t));
-    return cast(Utf8(*), t);
+        --bp;
+    } while (Is_Continuation_Byte(*bp));
+    return cast(Utf8(*), bp);
 }
 
 INLINE Utf8(*) Utf8_Next(
     Codepoint* codepoint_out,
-    Utf8(const_if_c*) cp
+    Utf8(const_if_c*) utf8
 ){
-    Byte* t = x_cast(Byte*, cp);
-    if (*t < 0x80)
-        *codepoint_out = *t;
+    Byte* bp = x_cast(Byte*, utf8);
+    if (*bp < 0x80)
+        *codepoint_out = *bp;
     else
-        t = m_cast(Byte*, Back_Scan_UTF8_Char_Unchecked(codepoint_out, t));
-    return cast(Utf8(*), t + 1);
+        bp = m_cast(Byte*, Back_Scan_UTF8_Char_Unchecked(codepoint_out, bp));
+    return cast(Utf8(*), bp + 1);  // see definition of Back_Scan() for why +1
 }
 
 INLINE Utf8(*) Utf8_Back(
     Codepoint* codepoint_out,
-    Utf8(const_if_c*) cp
+    Utf8(const_if_c*) utf8
 ){
-    Byte* t = x_cast(Byte*, cp);
-    --t;
-    while (Is_Continuation_Byte(*t))
-        --t;
-    Utf8_Next(codepoint_out, cast(Utf8(*), t));
-    return cast(Utf8(*), t);
+    Byte* bp = x_cast(Byte*, utf8);
+    --bp;
+    while (Is_Continuation_Byte(*bp))
+        --bp;
+    Utf8_Next(codepoint_out, cast(Utf8(*), bp));
+    return cast(Utf8(*), bp);
 }
 
 INLINE Utf8(*) Utf8_Skip(
     Codepoint* codepoint_out,
-    Utf8(const_if_c*) cp,
+    Utf8(const_if_c*) utf8,
     REBINT delta
 ){
     if (delta > 0) {
         while (delta != 0) {
-            cp = Skip_Codepoint(cp);
+            utf8 = Skip_Codepoint(utf8);
             --delta;
         }
     }
     else {
         while (delta != 0) {
-            cp = Step_Back_Codepoint(cp);
+            utf8 = Step_Back_Codepoint(utf8);
             ++delta;
         }
     }
-    Utf8_Next(codepoint_out, cp);
-    return cast(Utf8(*), x_cast(Byte*, cp));
+    Utf8_Next(codepoint_out, utf8);
+    return m_cast(Utf8(*), utf8);
 }
 
 #if CPLUSPLUS_11
     // See the definition of `const_if_c` for the explanation of why this
     // overloading technique is needed to make output constness match input.
 
-    INLINE Utf8(const*) Skip_Codepoint(Utf8(const*) cp)
-      { return Skip_Codepoint(cast(Utf8(*), x_cast(Byte*, cp))); }
+    INLINE Utf8(const*) Skip_Codepoint(Utf8(const*) utf8)
+      { return Skip_Codepoint(m_cast(Utf8(*), utf8)); }
 
-    INLINE Utf8(const*) Step_Back_Codepoint(Utf8(const*) cp)
-      { return Step_Back_Codepoint(cast(Utf8(*), x_cast(Byte*, cp))); }
+    INLINE Utf8(const*) Step_Back_Codepoint(Utf8(const*) utf8)
+      { return Step_Back_Codepoint(m_cast(Utf8(*), utf8)); }
 
     INLINE Utf8(const*) Utf8_Next(
         Codepoint* codepoint_out,
-        Utf8(const*) cp
+        Utf8(const*) utf8
     ){
-        return Utf8_Next(codepoint_out, cast(Utf8(*), x_cast(Byte*, cp)));
+        return Utf8_Next(codepoint_out, m_cast(Utf8(*), utf8));
     }
 
     INLINE Utf8(const*) Utf8_Back(
         Codepoint* codepoint_out,
-        Utf8(const*) cp
+        Utf8(const*) utf8
     ){
-        return Utf8_Back(codepoint_out, cast(Utf8(*), x_cast(Byte*, cp)));
+        return Utf8_Back(codepoint_out, m_cast(Utf8(*), utf8));
     }
 
     INLINE Utf8(const*) Utf8_Skip(
         Codepoint* codepoint_out,
-        Utf8(const*) cp,
+        Utf8(const*) utf8,
         REBINT delta
     ){
-        return Utf8_Skip(
-            codepoint_out,
-            cast(Utf8(*), x_cast(Byte*, cp)),
-            delta
-        );
+        return Utf8_Skip(codepoint_out, m_cast(Utf8(*), utf8), delta);
     }
 #endif
 
-INLINE Codepoint Codepoint_At(Utf8(const*) cp) {
+INLINE Codepoint Codepoint_At(Utf8(const*) utf8) {
     Codepoint codepoint;
-    Utf8_Next(&codepoint, cp);
+    Utf8_Next(&codepoint, utf8);
     return codepoint;
 }
 
-INLINE Utf8(*) Write_Codepoint(Utf8(*) cp, Codepoint c) {
+INLINE Utf8(*) Write_Codepoint(Utf8(*) utf8, Codepoint c) {
     Size size = Encoded_Size_For_Codepoint(c);
-    Encode_UTF8_Char(cp, c, size);
-    return cast(Utf8(*), cast(Byte*, cp) + size);
+    Encode_UTF8_Char(utf8, c, size);
+    return cast(Utf8(*), cast(Byte*, utf8) + size);
 }
 
 
@@ -196,57 +192,43 @@ INLINE bool Is_String_Definitely_ASCII(const String* str) {
     return false;
 }
 
-#define String_UTF8(s) \
-    Series_Head(const char, ensure(const String*, s))
+#define String_UTF8(s)      Series_Head(char, ensure(const String*, s))
+#define String_Head(s)      c_cast(Utf8(*), Series_Head(Byte, s))
+#define String_Tail(s)      c_cast(Utf8(*), Series_Tail(Byte, s))
 
 #define String_Size(s) \
-    Series_Used(ensure(const String*, s))  // UTF-8 byte count, not codepoints
-
-INLINE Utf8(*) String_Head(const_if_c String* s)
-  { return cast(Utf8(*), Series_Head(Byte, s)); }
-
-INLINE Utf8(*) String_Tail(const_if_c String* s)
-  { return cast(Utf8(*), Series_Tail(Byte, s)); }
-
-#if CPLUSPLUS_11
-    INLINE Utf8(const*) String_Head(const String* s)
-      { return String_Head(m_cast(String*, s)); }
-
-    INLINE Utf8(const*) String_Tail(const String* s)
-      { return String_Tail(m_cast(String*, s)); }
-#endif
+    Series_Used(ensure(const String*, s))  // encoded byte size, not codepoints
 
 INLINE Length String_Len(const String* s) {
     if (Is_Definitely_Ascii(s))
         return String_Size(s);
 
-    if (Is_String_NonSymbol(s)) {  // length is cached for non-ANY-WORD!
-      #if DEBUG_UTF8_EVERYWHERE
-        if (s->misc.length > Series_Used(s))  // includes 0xDECAFBAD
-            panic(s);
-      #endif
-        return s->misc.length;
+    if (Is_String_Symbol(s)) {  // no length cache; hope symbol is short!
+        REBLEN len = 0;
+        Utf8(const*) ep = String_Tail(s);
+        Utf8(const*) cp = String_Head(s);
+        while (cp != ep) {
+            cp = Skip_Codepoint(cp);
+            ++len;
+        }
+        return len;
     }
 
-    // Have to do it the slow way if it's a symbol series...but hopefully
-    // they're not too long (since spaces and newlines are illegal.)
-    //
-    REBLEN len = 0;
-    Utf8(const*) ep = String_Tail(s);
-    Utf8(const*) cp = String_Head(s);
-    while (cp != ep) {
-        cp = Skip_Codepoint(cp);
-        ++len;
-    }
-    return len;
+  #if DEBUG_UTF8_EVERYWHERE
+    if (s->misc.length > Series_Used(s))  // includes 0xDECAFBAD
+        panic(s);
+  #endif
+
+    return s->misc.length;  // length cached in misc for non-ANY-WORD!
 }
 
-INLINE REBLEN String_Index_At(const String* s, Size byteoffset) {
+INLINE REBLEN String_Index_At(
+    const String* s,
+    Size byteoffset  // offset must be at an encoded codepoint start
+){
     if (Is_Definitely_Ascii(s))
         return byteoffset;
 
-    // The position `offset` describes must be a codepoint boundary.
-    //
     assert(not Is_Continuation_Byte(*Binary_At(s, byteoffset)));
 
     if (Is_String_NonSymbol(s)) {  // length is cached for non-ANY-WORD!
@@ -426,10 +408,10 @@ INLINE Utf8(const*) Cell_String_Tail(NoQuote(const Cell*) v) {
 
 
 #define Cell_String_At_Ensure_Mutable(v) \
-    cast(Utf8(*), x_cast(Byte*, Cell_String_At(Ensure_Mutable(v))))
+    m_cast(Utf8(*), Cell_String_At(Ensure_Mutable(v)))
 
 #define Cell_String_At_Known_Mutable(v) \
-    cast(Utf8(*), x_cast(Byte*, Cell_String_At(Known_Mutable(v))))
+    m_cast(Utf8(*), Cell_String_At(Known_Mutable(v)))
 
 
 INLINE Size Cell_String_Size_Limit_At(

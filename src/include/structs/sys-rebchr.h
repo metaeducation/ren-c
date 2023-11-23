@@ -6,7 +6,7 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Copyright 2012-2022 Ren-C Open Source Contributors
+// Copyright 2012-2023 Ren-C Open Source Contributors
 //
 // See README.md and CREDITS.md for more information
 //
@@ -74,76 +74,130 @@
     // the C version.  That allows for the compile-time type checking but no
     // added runtime overhead.
     //
-    template<typename T> struct Utf8Ptr;
+    template<typename T> struct ValidatedUtf8;
     #define Utf8(star_or_const_star) \
-        Utf8Ptr<Byte star_or_const_star>
+        ValidatedUtf8<Byte star_or_const_star>
 
-    // Primary purpose of the classes is to disable the ability to directly
-    // increment or decrement pointers to Byte* without going through helper
-    // routines that do decoding.  But we still want to do pointer comparison,
-    // and C++ sadly makes us write this all out.
+    // 1. These constructors are explicit because we want conversions from
+    //    char* and Byte* to require an explicit cast, to convey that "yes,
+    //    I'm sure these bytes are valid UTF-8".
+    //
+    // 2. Conversion operators from Utf8(*) are implicit, because there's no
+    //    harm in passing already validated UTF-8 to functions that are
+    //    expecting char* or Byte*.
+    //
+    // 3. Wrapping the pointer in a class means incrementing or decrementing
+    //    that pointer is disabled by default.  That's a good thing--since
+    //    we want clients to go through helper routines that do decoding.
+    //    But we still want to do pointer comparison without needing to cast,
+    //    and C++ sadly makes us write this all out.
+    //
+    // 4. These helpers assist in `const-preserving casts` where the input
+    //    type can be either Utf8(*) or Utf8(const*), and it picks the
+    //    result char or Byte constness that is appropriate.  This allows
+    //    for more brevity and means macros can be made that "do the right
+    //    thing" with const without having to write overloaded functions.
+    //
+    // 5. Wrapper classes don't know how to do `const_cast<>`, so things
+    //    like std::shared_ptr<> have std::const_cast_pointer.  Ren-C's
+    //    m_cast() is smart enough to delegate to m_cast_helper so that
+    //    m_cast(Utf8(*)) of a Utf8(const*) can be made to work.
 
     template<>
-    struct Utf8Ptr<const Byte*> {
-        const Byte* bp;  // will actually be mutable if constructed mutable
+    struct ValidatedUtf8<const Byte*> {
+        const Byte* p;  // underlying pointer mutable if constructed mutable
 
-        Utf8Ptr () {}
-        Utf8Ptr (nullptr_t n) : bp (n) {}
-        explicit Utf8Ptr (const Byte* bp) : bp (bp) {}
-        explicit Utf8Ptr (const char *cstr)
-            : bp (c_cast(Byte*, cstr)) {}
+        ValidatedUtf8 () = default;
+        constexpr ValidatedUtf8 (nullptr_t n) : p (n) {}
+
+        explicit constexpr ValidatedUtf8 (const Byte* p)  // [1]
+            : p (p) {}
+        explicit constexpr ValidatedUtf8 (const char *cstr)  // [1]
+            : p (c_cast(Byte*, cstr)) {}
+
+        constexpr operator const void*() { return p; }  // [2]
+        constexpr operator const Byte*() { return p; }  // [2]
+        constexpr operator const char*() { return c_cast(char*, p); }  // [2]
+
+        explicit operator bool() { return p != nullptr; }  // if() uses
 
         Size operator-(const Byte* rhs)
-          { return bp - rhs; }
+          { return p - rhs; }
 
-        Size operator-(Utf8Ptr rhs)
-          { return bp - rhs.bp; }
+        Size operator-(Utf8(const*) rhs)
+          { return p - rhs.p; }
 
-        bool operator==(const Utf8Ptr<const Byte*> &other)
-          { return bp == other.bp; }
+        bool operator==(Utf8(const*) &other)  // [3]
+          { return p == other.p; }
 
-        bool operator==(const Byte* other)
-          { return bp == other; }
+        bool operator==(const Byte* other)  // [3]
+          { return p == other; }
 
-        bool operator!=(const Utf8Ptr<const Byte*> &other)
-          { return bp != other.bp; }
+        bool operator!=(Utf8(const*) &other)  // [3]
+          { return p != other.p; }
 
-        bool operator!=(const Byte* other)
-          { return bp != other; }
+        bool operator!=(const Byte* other)  // [3]
+          { return p != other; }
 
-        bool operator>(const Utf8Ptr<const Byte*> &other)
-          { return bp > other.bp; }
+        bool operator>(const Utf8(const*) &other)  // [3]
+          { return p > other.p; }
 
-        bool operator<(const Byte* other)
-          { return bp < other; }
+        bool operator<(const Byte* other)  // [3]
+          { return p < other; }
 
-        bool operator<=(const Utf8Ptr<const Byte*> &other)
-          { return bp <= other.bp; }
+        bool operator<=(Utf8(const*) &other)  // [3]
+          { return p <= other.p; }
 
-        bool operator>=(const Byte* other)
-          { return bp >= other; }
-
-        operator bool() { return bp != nullptr; }  // implicit
-        operator const void*() { return bp; }  // implicit
-        operator const Byte*() { return bp; }  // implicit
-        operator const char*() { return c_cast(char*, bp); }  // implicit
-
-        explicit operator Byte*() {  // explicit, does not require m_cast
-            return m_cast(Byte*, bp);
-        }
+        bool operator>=(const Byte* other)  // [3]
+          { return p >= other; }
     };
 
     template<>
-    struct Utf8Ptr<Byte*> : public Utf8Ptr<const Byte*> {
-        Utf8Ptr () : Utf8Ptr<const Byte*>() {}
-        Utf8Ptr (nullptr_t n) : Utf8Ptr<const Byte*>(n) {}
-        explicit Utf8Ptr (Byte* bp)
-            : Utf8Ptr<const Byte*> (bp) {}
-        explicit Utf8Ptr (char *cstr)
-            : Utf8Ptr<const Byte*> (cast(Byte*, cstr)) {}
+    struct ValidatedUtf8<Byte*> : public ValidatedUtf8<const Byte*> {
+        ValidatedUtf8 () = default;
+        constexpr ValidatedUtf8 (nullptr_t n)
+            : ValidatedUtf8<const Byte*>(n) {}
 
-        operator void*() { return m_cast(Byte*, bp); }  // implicit
-        operator Byte*() { return m_cast(Byte*, bp); }  // implicit
-        operator char*() { return x_cast(char*, bp); }  // implicit
+        explicit ValidatedUtf8 (Byte* bp)  // [1]
+            : ValidatedUtf8<const Byte*> (bp) {}
+        explicit ValidatedUtf8 (char *cstr)  // [1]
+            : ValidatedUtf8<const Byte*> (cast(Byte*, cstr)) {}
+
+        constexpr operator void*() { return m_cast(Byte*, p); }  // [2]
+        constexpr operator Byte*() { return m_cast(Byte*, p); }  // [2]
+        constexpr operator char*()  // [2]
+          { return m_cast(char*, c_cast(char*, p)); }
     };
+
+    template<>
+    struct c_cast_helper<char*, Utf8(const*)>  // [4]
+      { typedef const char* type; };
+
+    template<>
+    struct c_cast_helper<char*, Utf8(*)>  // [4]
+      { typedef char* type; };
+
+    template<>
+    struct c_cast_helper<Byte*, Utf8(const*)>  // [4]
+      { typedef const Byte* type; };
+
+    template<>
+    struct c_cast_helper<Byte*, Utf8(*)>  // [4]
+      { typedef Byte* type; };
+
+    template<>
+    struct c_cast_helper<Utf8(*), const Byte*>  // [4]
+      { typedef Utf8(const*) type; };
+
+    template<>
+    struct c_cast_helper<Utf8(*), Byte*>  // [4]
+      { typedef Utf8(*) type; };
+
+    template<>
+    inline Utf8(*) m_cast_helper(Utf8(const*) utf8)  // [5]
+      { return cast(Utf8(*), m_cast(Byte*, utf8.p)); }
+
+    template<>
+    constexpr inline Utf8(*) m_cast_helper(Utf8(*) utf8)  // [5]
+      { return utf8; }
 #endif

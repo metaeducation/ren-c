@@ -381,10 +381,10 @@
 //        const Member* Get_Member(const Object *o) {...}
 //    #endif
 //
-// Along with the general philosophy that there is only the minimum special
-// handling for C++ builds prior to C++11 (e.g. extern "C" stuff), this is
-// only geared to use with C++11.
-
+// Note: If writing a simple wrapper like this whose only purpose is to
+// pipe the const-correct output result from the input's constness, another
+// trick is to use `c_cast()` which is a "const-preserving cast".
+//
 #if CPLUSPLUS_11
     #define const_if_c
 #else
@@ -510,9 +510,9 @@
     #define x_cast(T,v) \
        (const_cast<T>( \
             ( \
-                std::add_pointer< \
-                    std::add_const< \
-                        std::remove_pointer<T>::type \
+                typename std::add_pointer< \
+                    typename std::add_const< \
+                        typename std::remove_pointer<T>::type \
                     >::type \
                 >::type \
             )(v) /* old-style parentheses cast, "everything but" the const */ \
@@ -534,8 +534,8 @@
 
     #define c_cast(TP,v) \
         (cast_helper< \
-            decltype(v), typename c_cast_helper<TP,decltype(v) \
-        >::type>::convert(v))  // outer parens [1]
+            decltype(v), typename c_cast_helper<TP,decltype(v)>::type \
+        >::convert(v))  // outer parens [1]
 
     template<typename TP, typename V>
     constexpr TP p_cast_helper(V v) {

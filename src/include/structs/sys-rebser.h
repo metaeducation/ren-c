@@ -662,10 +662,10 @@ union StubMiscUnion {
 
     // Under UTF-8 everywhere, strings are byte-sized...so the series "used"
     // is actually counting *bytes*, not logical character codepoint units.
-    // Series_Used() and String_Len() can therefore be different...where String_Len()
+    // Series_Used() and String_Len() can therefore be different...String_Len()
     // on a string series comes from here, vs. just report the used units.
     //
-    REBLEN length;
+    Length length;
 
     // some HANDLE!s use this for GC finalization
     //

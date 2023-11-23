@@ -162,12 +162,6 @@ INLINE REBVAL* Freshen_Cell_Untracked(Cell* v);
     struct c_cast_helper<Byte*, Sink(Value(*)) const&> {
         typedef Byte* type;
     };
-
-/*    template<>
-    struct cast_helper<Sink(Value(*) const&),Node*> {
-        static constexpr Node* convert(Sink(Value(*)) const& v)
-          { return v.p; }
-    }; */
 #else
     #define Sink(x) x
 #endif
