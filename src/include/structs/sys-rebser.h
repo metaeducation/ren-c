@@ -167,7 +167,7 @@
 //
 // It would be costly if all series access operations had to check the
 // accessibility bit.  Instead, the general pattern is that code that extracts
-// series from values, e.g. VAL_ARRAY(), performs a check to make sure that
+// series from values, e.g. Cell_Array(), performs a check to make sure that
 // the series is accessible at the time of extraction.  Subsequent access of
 // the extracted series is then unchecked.
 //

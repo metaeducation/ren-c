@@ -121,11 +121,11 @@ DECLARE_NATIVE(write_stdout)
     fail ("Boot WRITE-STDOUT needs DEBUG_HAS_PROBE or loaded I/O module");
   #else
     if (Is_Text(v)) {
-        printf("WRITE-STDOUT: %s\n", c_cast(char*, String_Head(VAL_STRING(v))));
+        printf("WRITE-STDOUT: %s\n", c_cast(char*, String_Head(Cell_String(v))));
         fflush(stdout);
     }
     else if (IS_CHAR(v)) {
-        printf("WRITE-STDOUT: char %lu\n", cast(unsigned long, VAL_CHAR(v)));
+        printf("WRITE-STDOUT: char %lu\n", cast(unsigned long, Cell_Codepoint(v)));
     }
     else {
         assert(Is_Binary(v));
@@ -159,8 +159,8 @@ DECLARE_NATIVE(new_line)
 
     REBVAL *pos = ARG(position);
     const Cell* tail;
-    Cell* item = VAL_ARRAY_AT_Ensure_Mutable(&tail, pos);
-    Array* a = VAL_ARRAY_KNOWN_MUTABLE(pos);  // need if setting flag at tail
+    Cell* item = Cell_Array_At_Ensure_Mutable(&tail, pos);
+    Array* a = Cell_Array_Known_Mutable(pos);  // need if setting flag at tail
 
     REBINT skip;
     if (REF(all))
@@ -247,16 +247,16 @@ DECLARE_NATIVE(new_line_q)
             }
         }
         else if (Is_Block_Style_Varargs(&shared, pos)) {
-            arr = VAL_ARRAY(shared);
-            item = VAL_ARRAY_AT(&tail, shared);
+            arr = Cell_Array(shared);
+            item = Cell_Array_At(&tail, shared);
         }
         else
             panic ("Bad VARARGS!");
     }
     else {
         assert(Is_Group(pos) or Is_Block(pos));
-        arr = VAL_ARRAY(pos);
-        item = VAL_ARRAY_AT(&tail, pos);
+        arr = Cell_Array(pos);
+        item = Cell_Array_At(&tail, pos);
     }
 
     if (item != tail)
@@ -329,7 +329,7 @@ DECLARE_NATIVE(basic_read)
     UNUSED(ARG(file));
     fail ("BASIC-READ is a simple demo used in WASI only");
   #else
-    const String* filename = VAL_STRING(ARG(file));
+    const String* filename = Cell_String(ARG(file));
     FILE* f = fopen(String_UTF8(filename), "rb");
     if (f == nullptr)
         fail (rebError_OS(errno));
@@ -368,13 +368,13 @@ DECLARE_NATIVE(basic_write)
     UNUSED(ARG(data));
     fail ("BASIC-WRITE is a simple demo used in WASI only");
   #else
-    const String* filename = VAL_STRING(ARG(file));
+    const String* filename = Cell_String(ARG(file));
     FILE* f = fopen(String_UTF8(filename), "wb");
     if (f == nullptr)
         fail (rebError_OS(errno));
 
     Size size;
-    const Byte* data = VAL_BYTES_AT(&size, ARG(data));
+    const Byte* data = Cell_Bytes_At(&size, ARG(data));
     fwrite(data, size, 1, f);
     fclose(f);
 

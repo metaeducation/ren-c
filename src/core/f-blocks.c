@@ -247,7 +247,7 @@ void Uncolor(const Cell* v)
         return;
 
     if (Any_Array(v))
-        Uncolor_Array(VAL_ARRAY(v));
+        Uncolor_Array(Cell_Array(v));
     else if (Any_Path(v)) {
         REBLEN len = VAL_SEQUENCE_LEN(v);
         REBLEN i;
@@ -266,7 +266,7 @@ void Uncolor(const Cell* v)
         //
         assert(
             not Any_Series(v)
-            or Is_Series_White(VAL_SERIES(v))
+            or Is_Series_White(Cell_Series(v))
         );
     }
 }

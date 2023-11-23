@@ -74,7 +74,7 @@ void Splice_Block_Into_Feed(Feed* feed, const REBVAL *splice) {
         MISC(Pending, saved) = At_Feed(feed);
     }
 
-    feed->p = VAL_ARRAY_ITEM_AT(splice);
+    feed->p = Cell_Array_Item_At(splice);
     Copy_Cell(FEED_SINGLE(feed), splice);
     ++VAL_INDEX_UNBOUNDED(FEED_SINGLE(feed));
 

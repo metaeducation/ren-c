@@ -168,7 +168,7 @@ void Push_Paramlist_Quads_May_Fail(
     bool refinement_seen = false;
 
     const Cell* tail;
-    const Cell* value = VAL_ARRAY_AT(&tail, spec);
+    const Cell* value = Cell_Array_At(&tail, spec);
 
     while (value != tail) {
         const Cell* item = value;  // "faked"
@@ -289,7 +289,7 @@ void Push_Paramlist_Quads_May_Fail(
             Init_Block(
                 types,
                 Copy_Array_At_Deep_Managed(
-                    VAL_ARRAY(item),
+                    Cell_Array(item),
                     VAL_INDEX(item),
                     derived
                 )
@@ -297,7 +297,7 @@ void Push_Paramlist_Quads_May_Fail(
           }
 
             const Cell* types_tail;
-            const Cell* types_at = VAL_ARRAY_AT(&types_tail, item);
+            const Cell* types_at = Cell_Array_At(&types_tail, item);
             Flags param_flags;
             Array* a = Add_Parameter_Bits_Core(
                 &param_flags,
@@ -1134,13 +1134,13 @@ void Get_Maybe_Fake_Action_Body(Sink(Value(*)) out, Value(const*) action)
 
         const Array* maybe_fake_body;
         if (example == nullptr) {
-            maybe_fake_body = VAL_ARRAY(body);
+            maybe_fake_body = Cell_Array(body);
         }
         else {
             // See %sysobj.r for STANDARD/FUNC-BODY
             //
             Array* fake = Copy_Array_Shallow_Flags(
-                VAL_ARRAY(example),
+                Cell_Array(example),
                 VAL_SPECIFIER(example),
                 NODE_FLAG_MANAGED
             );
@@ -1155,7 +1155,7 @@ void Get_Maybe_Fake_Action_Body(Sink(Value(*)) out, Value(const*) action)
             // Note: clears VAL_FLAG_LINE
             //
             Reset_Unquoted_Header_Untracked(TRACK(slot), CELL_MASK_GROUP);
-            Init_Cell_Node1(slot, VAL_ARRAY(body));
+            Init_Cell_Node1(slot, Cell_Array(body));
             VAL_INDEX_RAW(slot) = 0;
             INIT_SPECIFIER(slot, a);  // relative binding
 

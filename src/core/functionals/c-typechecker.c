@@ -177,13 +177,13 @@ bool Typecheck_Value(
     switch (VAL_TYPE(tests)) {
       case REB_BLOCK:
       case REB_TYPE_BLOCK:
-        item = VAL_ARRAY_AT(&tail, tests);
+        item = Cell_Array_At(&tail, tests);
         match_all = false;
         break;
 
       case REB_GROUP:
       case REB_TYPE_GROUP:
-        item = VAL_ARRAY_AT(&tail, tests);
+        item = Cell_Array_At(&tail, tests);
         match_all = true;
         break;
 

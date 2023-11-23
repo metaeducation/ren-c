@@ -77,7 +77,7 @@ REBINT CT_Issue(NoQuote(const Cell*) a, NoQuote(const Cell*) b, bool strict)
     UNUSED(strict);  // always strict
 
     if (IS_CHAR_CELL(a) and IS_CHAR_CELL(b)) {
-        REBINT num = VAL_CHAR(a) - VAL_CHAR(b);
+        REBINT num = Cell_Codepoint(a) - Cell_Codepoint(b);
         if (num == 0)
             return 0;
         return (num > 0) ? 1 : -1;
@@ -113,7 +113,7 @@ Bounce MAKE_Issue(
 
       case REB_BINARY: {
         Size size;
-        const Byte* bp = VAL_BINARY_SIZE_AT(&size, arg);
+        const Byte* bp = Cell_Binary_Size_At(&size, arg);
         if (size == 0)
             goto bad_make;
 
@@ -138,10 +138,10 @@ Bounce MAKE_Issue(
         return OUT; }
 
       case REB_TEXT:
-        if (VAL_LEN_AT(arg) == 0)
+        if (Cell_Series_Len_At(arg) == 0)
             fail ("Empty ISSUE! is zero codepoint, unlike empty TEXT!");
-        if (VAL_LEN_AT(arg) == 1)
-            return Init_Char_Unchecked(OUT, Codepoint_At(VAL_UTF8_AT(arg)));
+        if (Cell_Series_Len_At(arg) == 1)
+            return Init_Char_Unchecked(OUT, Codepoint_At(Cell_Utf8_At(arg)));
         return MAKE_String(level_, kind, nullptr, arg);
 
       default:
@@ -188,7 +188,7 @@ DECLARE_NATIVE(utf8_to_char)
     INCLUDE_PARAMS_OF_UTF8_TO_CHAR;
 
     Size size;
-    const Byte *encoded = VAL_BINARY_SIZE_AT(&size, ARG(utf8));
+    const Byte *encoded = Cell_Binary_Size_At(&size, ARG(utf8));
 
     if (size == 0)
         fail ("Empty binary passed to UTF8-TO-CHAR");
@@ -223,7 +223,7 @@ Bounce TO_Issue(Level* level_, enum Reb_Kind kind, const REBVAL *arg)
     if (Any_String(arg) or Any_Word(arg)) {
         Length len;
         Size size;
-        Utf8(const*) utf8 = VAL_UTF8_LEN_SIZE_AT(&len, &size, arg);
+        Utf8(const*) utf8 = Cell_Utf8_Len_Size_At(&len, &size, arg);
 
         if (len == 0)  // don't "accidentally" create zero-codepoint `#`
             return RAISE(Error_Illegal_Zero_Byte_Raw());
@@ -239,7 +239,7 @@ static REBINT Math_Arg_For_Char(REBVAL *arg, const Symbol* verb)
 {
     switch (VAL_TYPE(arg)) {
       case REB_ISSUE:
-        return VAL_CHAR(arg);
+        return Cell_Codepoint(arg);
 
       case REB_INTEGER:
         return VAL_INT32(arg);
@@ -260,12 +260,12 @@ void MF_Issue(REB_MOLD *mo, NoQuote(const Cell*) v, bool form)
 {
     REBLEN len;
     if (Get_Cell_Flag(v, ISSUE_HAS_NODE))
-        len = VAL_LEN_AT(v);
+        len = Cell_Series_Len_At(v);
     else
         len = EXTRA(Bytes, v).exactly_4[IDX_EXTRA_LEN];
 
     if (form) {
-        if (IS_CHAR_CELL(v) and VAL_CHAR(v) == 0)
+        if (IS_CHAR_CELL(v) and Cell_Codepoint(v) == 0)
             fail (Error_Illegal_Zero_Byte_Raw());  // don't form #, only mold
 
         Append_String_Limit(mo->series, v, len);
@@ -283,7 +283,7 @@ void MF_Issue(REB_MOLD *mo, NoQuote(const Cell*) v, bool form)
     // of what that logic *should* do.
 
     bool no_quotes = true;
-    Utf8(const*) cp = VAL_UTF8_AT(v);
+    Utf8(const*) cp = Cell_Utf8_At(v);
     Codepoint c = Codepoint_At(cp);
     for (; c != '\0'; cp = Utf8_Next(&c, cp)) {
         if (
@@ -307,13 +307,13 @@ void MF_Issue(REB_MOLD *mo, NoQuote(const Cell*) v, bool form)
             bool parened = GET_MOLD_FLAG(mo, MOLD_FLAG_ALL);
 
             Append_Codepoint(mo->series, '"');
-            Mold_Uni_Char(mo, VAL_CHAR(v), parened);
+            Mold_Uni_Char(mo, Cell_Codepoint(v), parened);
             Append_Codepoint(mo->series, '"');
         }
         else
             Append_String_Limit(mo->series, v, len);
     } else
-        Mold_Text_Series_At(mo, VAL_STRING(v), 0);
+        Mold_Text_Series_At(mo, Cell_String(v), 0);
 }
 
 
@@ -335,16 +335,16 @@ REBTYPE(Issue)
           case SYM_CODEPOINT:
             if (not IS_CHAR(issue))
                 break;  // must be a single codepoint to use this reflector
-            return Init_Integer(OUT, VAL_CHAR(issue));
+            return Init_Integer(OUT, Cell_Codepoint(issue));
 
           case SYM_SIZE: {
             Size size;
-            VAL_UTF8_SIZE_AT(&size, issue);
+            Cell_Utf8_Size_At(&size, issue);
             return Init_Integer(OUT, size); }
 
           case SYM_LENGTH: {
             REBLEN len;
-            VAL_UTF8_LEN_SIZE_AT(&len, nullptr, issue);
+            Cell_Utf8_Len_Size_At(&len, nullptr, issue);
             return Init_Integer(OUT, len); }
 
           default:
@@ -368,7 +368,7 @@ REBTYPE(Issue)
     // Don't use a Codepoint for chr, because it does signed math and then will
     // detect overflow.
     //
-    REBI64 chr = cast(REBI64, VAL_CHAR(issue));
+    REBI64 chr = cast(REBI64, Cell_Codepoint(issue));
     REBI64 arg;
 
     switch (sym) {
@@ -385,7 +385,7 @@ REBTYPE(Issue)
             return nullptr;
 
         REBLEN len;
-        Utf8(const*) cp = VAL_UTF8_LEN_SIZE_AT(&len, nullptr, issue);
+        Utf8(const*) cp = Cell_Utf8_Len_Size_At(&len, nullptr, issue);
         if (cast(REBLEN, n) > len)
             return nullptr;
 

@@ -129,7 +129,7 @@ Bounce Combinator_Dispatcher(Level* L)
         SPECIFIED
     );
 
-    assert(VAL_SERIES(remainder_var) == VAL_SERIES(furthest_var));
+    assert(Cell_Series(remainder_var) == Cell_Series(furthest_var));
 
     if (VAL_INDEX(remainder_var) > VAL_INDEX(furthest_var))
         Copy_Cell(furthest_var, remainder_var);
@@ -182,7 +182,7 @@ Array* Expanded_Combinator_Spec(const REBVAL *original)
     StackIndex base = TOP_INDEX;
 
     const Cell* tail;
-    const Cell* item = VAL_ARRAY_AT(&tail, original);
+    const Cell* item = Cell_Array_At(&tail, original);
     Specifier* specifier = VAL_SPECIFIER(original);
 
     if (Is_Text(item)) {
@@ -430,7 +430,7 @@ DECLARE_NATIVE(text_x_combinator)
 
     if (Any_Array(input)) {
         const Cell* tail;
-        const Cell* at = VAL_ARRAY_AT(&tail, input);
+        const Cell* at = Cell_Array_At(&tail, input);
         if (at == tail)  // no item to match against
             return nullptr;
         if (Cmp_Value(at, v, true) != 0)  // not case-insensitive equal
@@ -449,7 +449,7 @@ DECLARE_NATIVE(text_x_combinator)
     REBINT index = Find_Value_In_Binstr(
         &len,
         input,
-        VAL_LEN_HEAD(input),
+        Cell_Series_Len_Head(input),
         v,
         AM_FIND_MATCH | (cased ? AM_FIND_CASE : 0),
         1  // skip
@@ -500,7 +500,7 @@ DECLARE_NATIVE(some_combinator)
     Value(*) input = ARG(input);
 
     Value(*) state = ARG(state);
-    Array* loops = VAL_ARRAY_ENSURE_MUTABLE(
+    Array* loops = Cell_Array_Ensure_Mutable(
         CTX_VAR(VAL_CONTEXT(state), IDX_UPARSE_PARAM_LOOPS)
     );
 
@@ -700,7 +700,7 @@ static bool Combinator_Param_Hook(
         // !!! <skip>-able parameters would be useful as well.
         //
         const Cell* tail;
-        const Cell* item = VAL_ARRAY_AT(&tail, ARG(rules));
+        const Cell* item = Cell_Array_At(&tail, ARG(rules));
 
         if (
             item == tail
@@ -729,7 +729,7 @@ static bool Combinator_Param_Hook(
         // Need to make PARSIFY a native!  Work around it for now...
         //
         const Cell* tail;
-        const Cell* item = VAL_ARRAY_AT(&tail, ARG(rules));
+        const Cell* item = Cell_Array_At(&tail, ARG(rules));
         if (
             item == tail
             or (Is_Comma(item) or IS_BAR(item) or IS_BAR_BAR(item))

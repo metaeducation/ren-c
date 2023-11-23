@@ -352,7 +352,7 @@ REBVAL *Write_File(const REBVAL *port, const REBVAL *value, REBLEN limit)
     size_t size;
 
     if (Is_Text(value) or Is_Issue(value)) {
-        Utf8(const*) utf8 = VAL_UTF8_LEN_SIZE_AT_LIMIT(
+        Utf8(const*) utf8 = Cell_Utf8_Len_Size_At_Limit(
             nullptr,
             &size,
             value,
@@ -376,7 +376,7 @@ REBVAL *Write_File(const REBVAL *port, const REBVAL *value, REBLEN limit)
         if (not Is_Binary(value))
             return rebValue("make error! {ISSUE!, TEXT!, BINARY! for WRITE}");
 
-        data = VAL_BINARY_AT(value);
+        data = Cell_Binary_At(value);
         size = limit;
     }
 

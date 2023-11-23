@@ -541,7 +541,7 @@ static void Init_System_Object(
     assert(VAL_INDEX(boot_sysobj_spec) == 0);
     const Cell* spec_tail;
     Cell* spec_head
-        = VAL_ARRAY_Known_Mutable_AT(&spec_tail, boot_sysobj_spec);
+        = Cell_Array_At_Known_Mutable(&spec_tail, boot_sysobj_spec);
 
     // Create the system object from the sysobj block (defined in %sysobj.r)
     //
@@ -824,7 +824,7 @@ void Startup_Core(void)
     rebFree(utf8); // don't need decompressed text after it's scanned
 
     BOOT_BLK *boot = cast(BOOT_BLK*,
-        Array_Head(VAL_ARRAY_KNOWN_MUTABLE(Array_Head(boot_array)))
+        Array_Head(Cell_Array_Known_Mutable(Array_Head(boot_array)))
     );
 
     // ID_OF_SYMBOL(), VAL_WORD_ID() and Canon(XXX) now available
@@ -841,7 +841,7 @@ void Startup_Core(void)
     // for comparison to see if a usage matches that.
 
     Array* datatypes_catalog = Startup_Datatypes(
-        VAL_ARRAY_KNOWN_MUTABLE(&boot->typespecs)
+        Cell_Array_Known_Mutable(&boot->typespecs)
     );
     Manage_Series(datatypes_catalog);
     Push_GC_Guard(datatypes_catalog);

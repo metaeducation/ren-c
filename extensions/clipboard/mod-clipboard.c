@@ -132,7 +132,7 @@ static Bounce Clipboard_Actor(
 
         // Handle /part refinement:
         //
-        REBINT len = VAL_LEN_AT(data);
+        REBINT len = Cell_Series_Len_At(data);
         if (REF(part) and VAL_INT32(ARG(part)) < len)
             len = VAL_INT32(ARG(part));
 

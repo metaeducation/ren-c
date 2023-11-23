@@ -164,7 +164,7 @@ void Bin_To_Money_May_Fail(Sink(Value(*)) result, Value(const*) val)
         fail (val);
 
     Size size;
-    const Byte* at = VAL_BINARY_SIZE_AT(&size, val);
+    const Byte* at = Cell_Binary_Size_At(&size, val);
     if (size > 12)
         size = 12;
 

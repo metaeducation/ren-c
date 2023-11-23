@@ -52,7 +52,7 @@ INLINE bool IS_CHAR(const Cell* v) {
     return IS_CHAR_CELL(v);
 }
 
-INLINE Codepoint VAL_CHAR(NoQuote(const Cell*) v) {
+INLINE Codepoint Cell_Codepoint(NoQuote(const Cell*) v) {
     assert(Not_Cell_Flag(v, ISSUE_HAS_NODE));
 
     if (EXTRA(Bytes, v).exactly_4[IDX_EXTRA_LEN] == 0)
@@ -70,8 +70,8 @@ INLINE Codepoint VAL_CHAR(NoQuote(const Cell*) v) {
 // seems like a bad idea for something so cheap to calculate.  But keep a
 // separate entry point in case that cache comes back.
 //
-INLINE Byte VAL_CHAR_ENCODED_SIZE(NoQuote(const Cell*) v)
-  { return Encoded_Size_For_Codepoint(VAL_CHAR(v)); }
+INLINE Byte Cell_Char_Encoded_Size(NoQuote(const Cell*) v)
+  { return Encoded_Size_For_Codepoint(Cell_Codepoint(v)); }
 
 INLINE const Byte* VAL_CHAR_ENCODED(NoQuote(const Cell*) v) {
     assert(Cell_Heart(v) == REB_ISSUE and Not_Cell_Flag(v, ISSUE_HAS_NODE));
@@ -136,7 +136,7 @@ INLINE REBVAL *Init_Char_Unchecked_Untracked(Cell* out, Codepoint c) {
     }
 
     HEART_BYTE(out) = REB_ISSUE;  // heart is TEXT, presents as issue
-    assert(VAL_CHAR(out) == c);
+    assert(Cell_Codepoint(out) == c);
     return cast(REBVAL*, out);
 }
 
@@ -213,7 +213,7 @@ INLINE bool Is_Blackhole(const Cell* v) {
     if (not IS_CHAR(v))
         return false;
 
-    if (VAL_CHAR(v) == 0)
+    if (Cell_Codepoint(v) == 0)
         return true;
 
     // Anything that accepts "blackholes" should not have broader meaning for
@@ -235,41 +235,41 @@ INLINE bool Is_Blackhole(const Cell* v) {
 // !!! With the existence of AS, this might not be as useful as leaving
 // STRING! open for a different meaning (or an error as a sanity check).
 //
-INLINE const Byte* VAL_BYTES_LIMIT_AT(
+INLINE const Byte* Cell_Bytes_Limit_At(
     Size* size_out,
     const Cell* v,
     REBINT limit
 ){
-    if (limit == UNLIMITED or limit > cast(REBINT, VAL_LEN_AT(v)))
-        limit = VAL_LEN_AT(v);
+    if (limit == UNLIMITED or limit > cast(REBINT, Cell_Series_Len_At(v)))
+        limit = Cell_Series_Len_At(v);
 
     if (Is_Binary(v)) {
         *size_out = limit;
-        return VAL_BINARY_AT(v);
+        return Cell_Binary_At(v);
     }
 
     if (Any_String(v)) {
-        *size_out = VAL_SIZE_LIMIT_AT(nullptr, v, limit);
-        return VAL_STRING_AT(v);
+        *size_out = Cell_String_Size_Limit_At(nullptr, v, limit);
+        return Cell_String_At(v);
     }
 
     assert(Any_Word(v));
-    assert(cast(REBLEN, limit) == VAL_LEN_AT(v));
+    assert(cast(REBLEN, limit) == Cell_Series_Len_At(v));
 
     const String* spelling = VAL_WORD_SYMBOL(v);
     *size_out = String_Size(spelling);
     return String_Head(spelling);
 }
 
-#define VAL_BYTES_AT(size_out,v) \
-    VAL_BYTES_LIMIT_AT((size_out), (v), UNLIMITED)
+#define Cell_Bytes_At(size_out,v) \
+    Cell_Bytes_Limit_At((size_out), (v), UNLIMITED)
 
 
 // Analogous to VAL_BYTES_AT, some routines were willing to accept either an
 // ANY-WORD! or an ANY-STRING! to get UTF-8 data.  This is a convenience
 // routine for handling that.
 //
-INLINE Utf8(const*) VAL_UTF8_LEN_SIZE_AT_LIMIT(
+INLINE Utf8(const*) Cell_Utf8_Len_Size_At_Limit(
     Option(REBLEN*) length_out,
     Option(Size*) size_out,
     NoQuote(const Cell*) v,
@@ -308,13 +308,13 @@ INLINE Utf8(const*) VAL_UTF8_LEN_SIZE_AT_LIMIT(
 
     Utf8(const*) utf8;
     if (Any_Stringlike(v)) {
-        utf8 = VAL_STRING_AT(v);
+        utf8 = Cell_String_At(v);
 
         if (size_out or length_out) {
-            Size utf8_size = VAL_SIZE_LIMIT_AT(length_out, v, limit);
+            Size utf8_size = Cell_String_Size_Limit_At(length_out, v, limit);
             if (size_out)
                 *unwrap(size_out) = utf8_size;
-            // length_out handled by VAL_SIZE_LIMIT_AT, even if nullptr
+            // length_out handled by Cell_String_Size_Limit_At, even if nullptr
         }
     }
     else {
@@ -333,7 +333,11 @@ INLINE Utf8(const*) VAL_UTF8_LEN_SIZE_AT_LIMIT(
                 //
                 Utf8(const*) cp = utf8;
                 REBLEN index = 0;
-                for (; index < cast(REBLEN, limit); ++index, cp = Skip_Codepoint(cp)) {
+                for (
+                    ;
+                    index < cast(REBLEN, limit);
+                    ++index, cp = Skip_Codepoint(cp)
+                ){
                     if (Codepoint_At(cp) == '\0')
                         break;
                 }
@@ -348,11 +352,11 @@ INLINE Utf8(const*) VAL_UTF8_LEN_SIZE_AT_LIMIT(
     return utf8;
 }
 
-#define VAL_UTF8_LEN_SIZE_AT(length_out,size_out,v) \
-    VAL_UTF8_LEN_SIZE_AT_LIMIT((length_out), (size_out), (v), UNLIMITED)
+#define Cell_Utf8_Len_Size_At(length_out,size_out,v) \
+    Cell_Utf8_Len_Size_At_Limit((length_out), (size_out), (v), UNLIMITED)
 
-#define VAL_UTF8_SIZE_AT(size_out,v) \
-    VAL_UTF8_LEN_SIZE_AT_LIMIT(nullptr, (size_out), (v), UNLIMITED)
+#define Cell_Utf8_Size_At(size_out,v) \
+    Cell_Utf8_Len_Size_At_Limit(nullptr, (size_out), (v), UNLIMITED)
 
-#define VAL_UTF8_AT(v) \
-    VAL_UTF8_LEN_SIZE_AT_LIMIT(nullptr, nullptr, (v), UNLIMITED)
+#define Cell_Utf8_At(v) \
+    Cell_Utf8_Len_Size_At_Limit(nullptr, nullptr, (v), UNLIMITED)

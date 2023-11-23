@@ -258,16 +258,16 @@ Phase* Make_Interpreted_Action_May_Fail(
 
     // Favor the spec first, then the body, for file and line information.
     //
-    if (Get_Array_Flag(VAL_ARRAY(spec), HAS_FILE_LINE_UNMASKED)) {
-        LINK(Filename, copy) = LINK(Filename, VAL_ARRAY(spec));
-        copy->misc.line = VAL_ARRAY(spec)->misc.line;
+    if (Get_Array_Flag(Cell_Array(spec), HAS_FILE_LINE_UNMASKED)) {
+        LINK(Filename, copy) = LINK(Filename, Cell_Array(spec));
+        copy->misc.line = Cell_Array(spec)->misc.line;
         Set_Array_Flag(copy, HAS_FILE_LINE_UNMASKED);
     }
     else if (
-        Get_Array_Flag(VAL_ARRAY(body), HAS_FILE_LINE_UNMASKED)
+        Get_Array_Flag(Cell_Array(body), HAS_FILE_LINE_UNMASKED)
     ){
-        LINK(Filename, copy) = LINK(Filename, VAL_ARRAY(body));
-        copy->misc.line = VAL_ARRAY(body)->misc.line;
+        LINK(Filename, copy) = LINK(Filename, Cell_Array(body));
+        copy->misc.line = Cell_Array(body)->misc.line;
         Set_Array_Flag(copy, HAS_FILE_LINE_UNMASKED);
     }
     else {

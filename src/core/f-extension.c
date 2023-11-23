@@ -100,7 +100,7 @@ DECLARE_NATIVE(builtin_extensions)
     for (i = 0; i != NUM_BUILTIN_EXTENSIONS; ++i) {
         COLLATE_CFUNC *collator = Builtin_Extension_Collators[i];
         REBVAL *details = (*collator)(&Ext_Lib);
-        assert(Is_Block(details) and VAL_LEN_AT(details) == IDX_COLLATOR_MAX);
+        assert(Is_Block(details) and Cell_Series_Len_At(details) == IDX_COLLATOR_MAX);
         Copy_Cell(Alloc_Tail_Array(list), details);
         rebRelease(details);
     }
@@ -145,7 +145,7 @@ DECLARE_NATIVE(load_extension)
     Array* collated;
 
     if (Is_Block(ARG(where))) {  // It's one of the BUILTIN-EXTENSIONS
-        collated = VAL_ARRAY_ENSURE_MUTABLE(ARG(where));  // already "collated"
+        collated = Cell_Array_Ensure_Mutable(ARG(where));  // already "collated"
     }
     else {  // It's a DLL, must locate and call its RX_Collate() function
         assert(Is_File(ARG(where)));
@@ -161,7 +161,7 @@ DECLARE_NATIVE(load_extension)
             fail (Error_Bad_Extension_Raw(ARG(where)));
         }
 
-        collated = VAL_ARRAY_ENSURE_MUTABLE(collated_block);
+        collated = Cell_Array_Ensure_Mutable(collated_block);
         rebRelease(collated_block);
 
         rebRelease(lib_api);  // should we hang onto lib to pass along?
@@ -220,7 +220,7 @@ DECLARE_NATIVE(load_extension)
     // this *should* make no difference.
     //
     if (SPORADICALLY(2)) {
-        Binary* bin = VAL_BINARY_Ensure_Mutable(script);
+        Binary* bin = Cell_Binary_Ensure_Mutable(script);
         FLAVOR_BYTE(bin) = FLAVOR_STRING;
         Term_String_Len_Size(
             cast(String*, bin),  // legal for tweaking cached data

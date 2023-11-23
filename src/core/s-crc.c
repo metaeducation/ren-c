@@ -179,7 +179,7 @@ uint32_t Hash_Value(const Cell* cell)
 
       case REB_BINARY: {
         Size size;
-        const Byte* data = VAL_BINARY_SIZE_AT(&size, cell);
+        const Byte* data = Cell_Binary_Size_At(&size, cell);
         hash = Hash_Bytes(data, size);
         break; }
 
@@ -190,7 +190,7 @@ uint32_t Hash_Value(const Cell* cell)
       case REB_TAG:
       case REB_ISSUE: {  // ISSUE! may or may not have CELL_FLAG_ISSUE_HAS_NODE
         REBLEN len;
-        Utf8(const*) utf8 = VAL_UTF8_LEN_SIZE_AT(&len, nullptr, cell);
+        Utf8(const*) utf8 = Cell_Utf8_Len_Size_At(&len, nullptr, cell);
         hash = Hash_UTF8_Len_Caseless(utf8, len);
         break; }
 
@@ -260,7 +260,7 @@ uint32_t Hash_Value(const Cell* cell)
         // problems.  Do not hash mutable arrays unless you are sure hashings
         // won't cross a mutation.
         //
-        hash = Array_Len(VAL_ARRAY(cell));
+        hash = Array_Len(Cell_Array(cell));
         break;
 
       case REB_BITSET:
@@ -401,16 +401,16 @@ Value(*) Init_Map(Cell* out, Map* map)
 Series* Hash_Block(const REBVAL *block, REBLEN skip, bool cased)
 {
     // Create the hash array (integer indexes):
-    Series* hashlist = Make_Hash_Series(VAL_LEN_AT(block));
+    Series* hashlist = Make_Hash_Series(Cell_Series_Len_At(block));
 
     const Cell* tail;
-    const Cell* value = VAL_ARRAY_AT(&tail, block);
+    const Cell* value = Cell_Array_At(&tail, block);
     if (value == tail)
         return hashlist;
 
     REBLEN *hashes = Series_Head(REBLEN, hashlist);
 
-    const Array* array = VAL_ARRAY(block);
+    const Array* array = Cell_Array(block);
     REBLEN n = VAL_INDEX(block);
 
     while (true) {

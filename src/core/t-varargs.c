@@ -165,7 +165,7 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
         if (Vararg_Op_If_No_Advance_Handled(
             out,
             op,
-            Is_Cell_Poisoned(shared) ? nullptr : VAL_ARRAY_ITEM_AT(shared),
+            Is_Cell_Poisoned(shared) ? nullptr : Cell_Array_Item_At(shared),
             Is_Cell_Poisoned(shared) ? SPECIFIED : VAL_SPECIFIER(shared),
             pclass
         )){
@@ -216,7 +216,7 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
         case PARAM_CLASS_HARD:
             Derelativize(
                 out,
-                VAL_ARRAY_ITEM_AT(shared),
+                Cell_Array_Item_At(shared),
                 VAL_SPECIFIER(shared)
             );
             Set_Cell_Flag(out, UNEVALUATED);
@@ -227,9 +227,9 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
             fail ("Variadic medium parameters not yet implemented");
 
         case PARAM_CLASS_SOFT:
-            if (ANY_ESCAPABLE_GET(VAL_ARRAY_ITEM_AT(shared))) {
+            if (ANY_ESCAPABLE_GET(Cell_Array_Item_At(shared))) {
                 if (Eval_Value_Throws(
-                    out, VAL_ARRAY_ITEM_AT(shared), VAL_SPECIFIER(shared)
+                    out, Cell_Array_Item_At(shared), VAL_SPECIFIER(shared)
                 )){
                     return true;
                 }
@@ -237,7 +237,7 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
             else { // not a soft-"exception" case, quote ordinarily
                 Derelativize(
                     out,
-                    VAL_ARRAY_ITEM_AT(shared),
+                    Cell_Array_Item_At(shared),
                     VAL_SPECIFIER(shared)
                 );
                 Set_Cell_Flag(out, UNEVALUATED);
@@ -251,7 +251,7 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
 
         if (
             not Is_Cell_Poisoned(shared)
-            and VAL_INDEX(shared) >= VAL_LEN_HEAD(shared)
+            and VAL_INDEX(shared) >= Cell_Series_Len_Head(shared)
         ){
             Poison_Cell(shared);  // signal end to all varargs sharing value
         }
@@ -392,7 +392,7 @@ Bounce MAKE_Varargs(
         // should be an END marker (not an array at its end)
         //
         Array* array1 = Alloc_Singular(NODE_FLAG_MANAGED);
-        if (VAL_LEN_AT(arg) == 0)
+        if (Cell_Series_Len_At(arg) == 0)
             Poison_Cell(Array_Single(array1));
         else
             Copy_Cell(Array_Single(array1), arg);

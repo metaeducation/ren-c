@@ -112,5 +112,5 @@ typedef struct Reb_File_Port_State FILEREQ;
 inline static FILEREQ *File_Of_Port(const REBVAL *port)
 {
     REBVAL *state = CTX_VAR(VAL_CONTEXT(port), STD_PORT_STATE);
-    return cast(FILEREQ*, VAL_BINARY_AT_Ensure_Mutable(state));
+    return cast(FILEREQ*, Cell_Binary_At_Ensure_Mutable(state));
 }

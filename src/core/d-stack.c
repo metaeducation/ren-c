@@ -44,10 +44,10 @@ void Collapsify_Array(Array* array, Specifier* specifier, REBLEN limit)
     const Cell* tail = Array_Tail(array);
     Cell* item = Array_Head(array);
     for (; item != tail; ++item) {
-        if (Any_Array(item) and VAL_LEN_AT(item) > limit) {
+        if (Any_Array(item) and Cell_Series_Len_At(item) > limit) {
             Specifier* derived = Derive_Specifier(specifier, item);
             Array* copy = Copy_Array_At_Max_Shallow(
-                VAL_ARRAY(item),
+                Cell_Array(item),
                 VAL_INDEX(item),
                 derived,
                 limit + 1

@@ -133,7 +133,7 @@ DECLARE_NATIVE(write_stdout)
     // long write can be canceled with this.
     //
     REBLEN remaining;
-    while ((remaining = VAL_LEN_AT(v)) > 0) {
+    while ((remaining = Cell_Series_Len_At(v)) > 0) {
         //
         // Yield to signals processing for cancellation requests.
         //

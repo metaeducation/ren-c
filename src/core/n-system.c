@@ -258,7 +258,7 @@ DECLARE_NATIVE(check)
     // !!! Should call generic Assert_Value() macro with more cases
     //
     if (Any_Series(value)) {
-        Assert_Series(VAL_SERIES(value));
+        Assert_Series(Cell_Series(value));
     }
     else if (Is_Frame(value)) {
         Assert_Series(VAL_ACTION_KEYLIST(value));

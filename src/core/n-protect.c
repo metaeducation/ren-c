@@ -170,7 +170,7 @@ void Protect_Value(const Cell* v, Flags flags)
         return;
 
     if (Any_Series(v))
-        Protect_Series(VAL_SERIES(v), VAL_INDEX(v), flags);
+        Protect_Series(Cell_Series(v), VAL_INDEX(v), flags);
     else if (Is_Map(v))
         Protect_Series(MAP_PAIRLIST(VAL_MAP(v)), 0, flags);
     else if (Any_Context(v))
@@ -300,7 +300,7 @@ static Bounce Protect_Unprotect_Core(Level* level_, Flags flags)
     if (Is_Block(value)) {
         if (REF(words)) {
             const Cell* tail;
-            const Cell* item = VAL_ARRAY_AT(&tail, value);
+            const Cell* item = Cell_Array_At(&tail, value);
             for (; item != tail; ++item) {
                 DECLARE_STABLE (word); // need binding, can't pass Cell
                 Derelativize(word, item, VAL_SPECIFIER(value));
@@ -311,7 +311,7 @@ static Bounce Protect_Unprotect_Core(Level* level_, Flags flags)
         if (REF(values)) {
             REBVAL *var;
             const Cell* tail;
-            const Cell* item = VAL_ARRAY_AT(&tail, value);
+            const Cell* item = Cell_Array_At(&tail, value);
 
             DECLARE_STABLE (safe);
 
@@ -526,7 +526,7 @@ void Force_Value_Frozen_Core(
         return;  // special form, immutable
 
     if (Any_Array_Kind(heart)) {
-        const Array* a = VAL_ARRAY(v);
+        const Array* a = Cell_Array(v);
         if (deep)
             Freeze_Array_Deep(a);
         else
@@ -544,7 +544,7 @@ void Force_Value_Frozen_Core(
             Set_Series_Info(CTX_VARLIST(c), AUTO_LOCKED);
     }
     else if (Any_Series_Kind(heart)) {
-        const Series* s = VAL_SERIES(v);
+        const Series* s = Cell_Series(v);
         Freeze_Series(s);
         UNUSED(deep);
         if (locker)

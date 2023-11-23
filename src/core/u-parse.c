@@ -116,20 +116,20 @@
 #define P_RULE_SPECIFIER    Level_Specifier(level_)
 
 #define P_TYPE              VAL_TYPE(ARG(input))
-#define P_INPUT             VAL_SERIES(ARG(input))
-#define P_INPUT_BINARY      VAL_BINARY(ARG(input))
-#define P_INPUT_STRING      VAL_STRING(ARG(input))
-#define P_INPUT_ARRAY       VAL_ARRAY(ARG(input))
+#define P_INPUT             Cell_Series(ARG(input))
+#define P_INPUT_BINARY      Cell_Binary(ARG(input))
+#define P_INPUT_STRING      Cell_String(ARG(input))
+#define P_INPUT_ARRAY       Cell_Array(ARG(input))
 #define P_INPUT_SPECIFIER   VAL_SPECIFIER(ARG(input))
 #define P_INPUT_IDX         VAL_INDEX_UNBOUNDED(ARG(input))
-#define P_INPUT_LEN         VAL_LEN_HEAD(ARG(input))
+#define P_INPUT_LEN         Cell_Series_Len_Head(ARG(input))
 
 #define P_FLAGS             mutable_VAL_INT64(ARG(flags))
 
 #define P_COLLECTION \
     (Is_Nulled(ARG(collection)) \
         ? nullptr \
-        : VAL_ARRAY_KNOWN_MUTABLE(ARG(collection)) \
+        : Cell_Array_Known_Mutable(ARG(collection)) \
     )
 
 #define P_NUM_QUOTES        VAL_INT32(ARG(num_quotes))
@@ -537,7 +537,7 @@ static REBIXO Parse_One_Rule(
         }
         else if (
             (Is_Text(rule) or Is_Binary(rule))
-            and (VAL_LEN_AT(rule) == 0)
+            and (Cell_Series_Len_At(rule) == 0)
             and (Any_String_Kind(P_TYPE) or P_TYPE == REB_BINARY)
         ){
             // !!! The way this old R3-Alpha code was structured is now very
@@ -686,7 +686,7 @@ static REBIXO Parse_One_Rule(
             REBINT index = Find_Value_In_Binstr(
                 &len,
                 ARG(position),
-                VAL_LEN_HEAD(ARG(position)),
+                Cell_Series_Len_Head(ARG(position)),
                 rule,
                 (P_FLAGS & PF_FIND_MASK) | AM_FIND_MATCH
                     | (Is_Issue(rule) ? AM_FIND_CASE : 0),
@@ -755,8 +755,8 @@ static REBIXO To_Thru_Block_Rule(
         VAL_INDEX_RAW(iter) <= cast(REBIDX, P_INPUT_LEN);
         ++VAL_INDEX_RAW(iter)
     ){  // see note
-        const Cell* blk_tail = Array_Tail(VAL_ARRAY(rule_block));
-        const Cell* blk = Array_Head(VAL_ARRAY(rule_block));
+        const Cell* blk_tail = Array_Tail(Cell_Array(rule_block));
+        const Cell* blk = Array_Head(Cell_Array(rule_block));
         for (; blk != blk_tail; blk++) {
             if (IS_BAR(blk))
                 fail (Error_Parse_Rule());  // !!! Shouldn't `TO [|]` succeed?
@@ -850,7 +850,7 @@ static REBIXO To_Thru_Block_Rule(
                 }
             }
             else if (P_TYPE == REB_BINARY) {
-                Byte ch1 = *VAL_BINARY_AT(iter);
+                Byte ch1 = *Cell_Binary_At(iter);
 
                 if (VAL_INDEX(iter) == P_INPUT_LEN) {
                     //
@@ -860,14 +860,14 @@ static REBIXO To_Thru_Block_Rule(
                     // terminator is implementation detail.
                     //
                     assert(ch1 == '\0');  // internal BINARY! terminator
-                    if (Is_Binary(rule) and VAL_LEN_AT(rule) == 0)
+                    if (Is_Binary(rule) and Cell_Series_Len_At(rule) == 0)
                         return VAL_INDEX(iter);
                 }
                 else if (IS_CHAR(rule)) {
-                    if (VAL_CHAR(rule) > 0xff)
+                    if (Cell_Codepoint(rule) > 0xff)
                         fail (Error_Parse_Rule());
 
-                    if (ch1 == VAL_CHAR(rule)) {
+                    if (ch1 == Cell_Codepoint(rule)) {
                         if (is_thru)
                             return VAL_INDEX(iter) + 1;
                         return VAL_INDEX(iter);
@@ -875,13 +875,13 @@ static REBIXO To_Thru_Block_Rule(
                 }
                 else if (Is_Binary(rule)) {
                     Size rule_size;
-                    const Byte* rule_data = VAL_BINARY_SIZE_AT(
+                    const Byte* rule_data = Cell_Binary_Size_At(
                         &rule_size,
                         rule
                     );
 
                     Size iter_size;
-                    const Byte* iter_data = VAL_BINARY_SIZE_AT(
+                    const Byte* iter_data = Cell_Binary_Size_At(
                         &iter_size,
                         iter
                     );
@@ -918,7 +918,7 @@ static REBIXO To_Thru_Block_Rule(
                 if (unadjusted == '\0') {  // cannot be passed to UP_CASE()
                     assert(VAL_INDEX(iter) == P_INPUT_LEN);
 
-                    if (Is_Text(rule) and VAL_LEN_AT(rule) == 0)
+                    if (Is_Text(rule) and Cell_Series_Len_At(rule) == 0)
                         return VAL_INDEX(iter);  // empty string can match end
 
                     goto next_alternate_rule;  // other match is END (above)
@@ -931,7 +931,7 @@ static REBIXO To_Thru_Block_Rule(
                     ch = UP_CASE(unadjusted);
 
                 if (IS_CHAR(rule)) {
-                    Codepoint ch2 = VAL_CHAR(rule);
+                    Codepoint ch2 = Cell_Codepoint(rule);
                     if (ch2 == 0)
                         goto next_alternate_rule;  // no 0 char in ANY-STRING!
 
@@ -952,11 +952,11 @@ static REBIXO To_Thru_Block_Rule(
                     }
                 }
                 else if (Any_String(rule)) {
-                    REBLEN len = VAL_LEN_AT(rule);
+                    REBLEN len = Cell_Series_Len_At(rule);
                     REBINT i = Find_Value_In_Binstr(
                         &len,
                         iter,
-                        VAL_LEN_HEAD(iter),
+                        Cell_Series_Len_Head(iter),
                         rule,
                         (P_FLAGS & PF_FIND_MASK) | AM_FIND_MATCH,
                         1  // skip
@@ -1104,7 +1104,7 @@ static REBIXO To_Thru_Non_Block_Rule(
     REBINT i = Find_Value_In_Binstr(
         &len,
         ARG(position),
-        VAL_LEN_HEAD(ARG(position)),
+        Cell_Series_Len_Head(ARG(position)),
         rule,
         (P_FLAGS & PF_FIND_MASK),
         1  // skip
@@ -1187,7 +1187,7 @@ static void Handle_Seek_Rule_Dont_Update_Begin(
         --index;  // Rebol is 1-based, C is 0 based...
     }
     else if (Any_Series_Kind(k)) {
-        if (VAL_SERIES(rule) != P_INPUT)
+        if (Cell_Series(rule) != P_INPUT)
             fail ("Switching PARSE series is not allowed");
         index = VAL_INDEX(rule);
     }
@@ -1282,9 +1282,9 @@ DECLARE_NATIVE(subparse)
     // Make sure index position is not past END
     if (
         VAL_INDEX_UNBOUNDED(ARG(input))
-        > cast(REBIDX, VAL_LEN_HEAD(ARG(input)))
+        > cast(REBIDX, Cell_Series_Len_Head(ARG(input)))
     ){
-        VAL_INDEX_RAW(ARG(input)) = VAL_LEN_HEAD(ARG(input));
+        VAL_INDEX_RAW(ARG(input)) = Cell_Series_Len_Head(ARG(input));
     }
 
     assert(Is_None(ARG(position)));
@@ -1537,16 +1537,16 @@ DECLARE_NATIVE(subparse)
                     if (
                         not Is_Block(OUT)
                         or not (
-                            VAL_LEN_AT(OUT) == 2
-                            and Is_Integer(VAL_ARRAY_ITEM_AT(OUT))
-                            and Is_Integer(VAL_ARRAY_ITEM_AT(OUT) + 1)
+                            Cell_Series_Len_At(OUT) == 2
+                            and Is_Integer(Cell_Array_Item_At(OUT))
+                            and Is_Integer(Cell_Array_Item_At(OUT) + 1)
                         )
                     ){
                         fail ("REPEAT takes INTEGER! or length 2 BLOCK! range");
                     }
 
-                    mincount = Int32s(VAL_ARRAY_ITEM_AT(OUT), 0);
-                    maxcount = Int32s(VAL_ARRAY_ITEM_AT(OUT) + 1, 0);
+                    mincount = Int32s(Cell_Array_Item_At(OUT), 0);
+                    maxcount = Int32s(Cell_Array_Item_At(OUT) + 1, 0);
 
                     if (maxcount < mincount)
                         fail ("REPEAT range can't have lower max than minimum");
@@ -2263,7 +2263,7 @@ DECLARE_NATIVE(subparse)
                     i = END_FLAG;
                 }
                 else {
-                    if (VAL_UINT32(OUT) != VAL_LEN_HEAD(into))
+                    if (VAL_UINT32(OUT) != Cell_Series_Len_Head(into))
                         i = END_FLAG;
                     else
                         i = P_POS + 1;
@@ -2584,7 +2584,7 @@ DECLARE_NATIVE(subparse)
                     // last minute that allows protects or unprotects
                     // to happen in rule processing if GROUP!s execute.
                     //
-                    Array* a = VAL_ARRAY_ENSURE_MUTABLE(ARG(position));
+                    Array* a = Cell_Array_Ensure_Mutable(ARG(position));
                     P_POS = Modify_Array(
                         a,
                         begin,
@@ -2725,7 +2725,7 @@ DECLARE_NATIVE(parse3)
     assert(Any_Series(input));
 
     const Cell* rules_tail;
-    const Cell* rules_at = VAL_ARRAY_AT(&rules_tail, rules);
+    const Cell* rules_at = Cell_Array_At(&rules_tail, rules);
 
     // !!! Look for the special pattern `parse ... [collect [x]]` and delegate
     // to a fabricated `parse [temp: collect [x]]` so we can return temp.
@@ -2788,9 +2788,9 @@ DECLARE_NATIVE(parse3)
     }
 
     REBLEN index = VAL_UINT32(OUT);
-    assert(index <= VAL_LEN_HEAD(input));
+    assert(index <= Cell_Series_Len_Head(input));
 
-    if (index != VAL_LEN_HEAD(input)) {  // didn't reach end of input
+    if (index != Cell_Series_Len_Head(input)) {  // didn't reach end of input
         if (REF(redbol))
             return nullptr;
         return RAISE(Error_Parse_Incomplete_Raw());

@@ -141,7 +141,7 @@ REBINT Find_Binstr_In_Binstr(
     NoQuote(const Cell*) binstr1,
     REBLEN end1_unsigned,  // end binstr1 *index* (not a limiting *length*)
     NoQuote(const Cell*) binstr2,  // pattern to be found
-    REBLEN limit2,  // in units of binstr2 (usually VAL_LEN_AT(binstr2))
+    REBLEN limit2,  // in units of binstr2 (usually Cell_Series_Len_At(binstr2))
     Flags flags,  // AM_FIND_CASE, AM_FIND_MATCH
     REBINT skip1  // in length units of binstr1 (bytes or codepoints)
 ){
@@ -155,7 +155,7 @@ REBINT Find_Binstr_In_Binstr(
     Size size2;
     Length len2;
     const Byte* head2;
-    if (IS_CHAR_CELL(binstr2) and VAL_CHAR(binstr2) == 0) {
+    if (IS_CHAR_CELL(binstr2) and Cell_Codepoint(binstr2) == 0) {
         //
         // !!! Inelegant handling of `find #{00} #`, which should work, while
         // `find "" #` should not happen as NUL cannot exist in TEXT!, only
@@ -170,7 +170,7 @@ REBINT Find_Binstr_In_Binstr(
         is_2_str = false;
     }
     else if (is_2_str) {
-        head2 = VAL_UTF8_LEN_SIZE_AT_LIMIT(
+        head2 = Cell_Utf8_Len_Size_At_Limit(
             &len2,
             &size2,
             binstr2,
@@ -178,7 +178,7 @@ REBINT Find_Binstr_In_Binstr(
         );
     }
     else {
-        head2 = VAL_BINARY_SIZE_AT(&size2, binstr2);
+        head2 = Cell_Binary_Size_At(&size2, binstr2);
         if (limit2 < size2)
             size2 = limit2;
         len2 = size2;
@@ -230,15 +230,15 @@ REBINT Find_Binstr_In_Binstr(
     const Byte* cp1;  // binstr1 position that is current test head of match
     Length len_head1;
     Size size_at1;
-    if (Cell_Heart(binstr1) == REB_ISSUE)  // no VAL_LEN_HEAD() atm
-        cp1 = VAL_UTF8_LEN_SIZE_AT(&len_head1, &size_at1, binstr1);
+    if (Cell_Heart(binstr1) == REB_ISSUE)  // no Cell_Series_Len_Head() atm
+        cp1 = Cell_Utf8_Len_Size_At(&len_head1, &size_at1, binstr1);
     else if (Cell_Heart(binstr1) != REB_BINARY) {
-        len_head1 = VAL_LEN_HEAD(binstr1);
-        cp1 = VAL_UTF8_SIZE_AT(&size_at1, binstr1);
+        len_head1 = Cell_Series_Len_Head(binstr1);
+        cp1 = Cell_Utf8_Size_At(&size_at1, binstr1);
     }
     else {
-        cp1 = VAL_BINARY_SIZE_AT(&size_at1, binstr1);
-        len_head1 = VAL_LEN_HEAD(binstr1);
+        cp1 = Cell_Binary_Size_At(&size_at1, binstr1);
+        len_head1 = Cell_Series_Len_Head(binstr1);
     }
 
     // The size of binary that can be used for checked UTF8 scans needs to
@@ -388,17 +388,17 @@ REBINT Find_Binstr_In_Binstr(
                 return NOT_FOUND;
 
             if (is_1_str)
-                assert(cp1 >= String_At(VAL_STRING(binstr1), - skip1));
+                assert(cp1 >= String_At(Cell_String(binstr1), - skip1));
             else
-                assert(cp1 >= Binary_At(VAL_BINARY(binstr1), - skip1));
+                assert(cp1 >= Binary_At(Cell_Binary(binstr1), - skip1));
         } else {
             if (index1 > end1)
                 return NOT_FOUND;
 
             if (is_1_str)
-                assert(cp1 <= String_At(VAL_STRING(binstr1), len_head1 - skip1));
+                assert(cp1 <= String_At(Cell_String(binstr1), len_head1 - skip1));
             else
-                assert(cp1 <= Binary_At(VAL_BINARY(binstr1), len_head1 - skip1));
+                assert(cp1 <= Binary_At(Cell_Binary(binstr1), len_head1 - skip1));
         }
 
         // Regardless of whether we are searching in binstr1 as a string even
@@ -461,7 +461,7 @@ REBINT Find_Bitset_In_Binstr(
 
     bool is_str = (Cell_Heart(binstr) != REB_BINARY);
 
-    const Byte* cp1 = is_str ? VAL_STRING_AT(binstr) : VAL_BINARY_AT(binstr);
+    const Byte* cp1 = is_str ? Cell_String_At(binstr) : Cell_Binary_At(binstr);
     Codepoint c1;
     if (skip > 0) {  // skip 1 will pass over cp1, so leave as is
         if (is_str)
@@ -540,7 +540,7 @@ REBLEN Find_Value_In_Binstr(
         or REB_URL == pattern_kind
     ){
         if (binstr_kind != REB_BINARY and (
-            IS_CHAR_CELL(pattern) and VAL_CHAR(pattern) == 0
+            IS_CHAR_CELL(pattern) and Cell_Codepoint(pattern) == 0
         )){
             return NOT_FOUND;  // can't find NUL # in strings, only BINARY!
         }

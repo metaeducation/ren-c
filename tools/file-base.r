@@ -74,7 +74,7 @@ core: [
         ; 9.3.0-10 at -O2 optimization level in the C++ build...it pertained
         ; to:
         ;
-        ;   const String* s = VAL_STRING(v);
+        ;   const String* s = Cell_String(v);
         ;
         ; <gnu:-Wno-array-bounds>
     ][

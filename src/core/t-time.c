@@ -273,7 +273,7 @@ Bounce MAKE_Time(
 
     case REB_BLOCK: { // [hh mm ss]
         const Cell* tail;
-        const Cell* item = VAL_ARRAY_AT(&tail, arg);
+        const Cell* item = Cell_Array_At(&tail, arg);
 
         if (item == tail)
             goto bad_make;  // must have at least hours

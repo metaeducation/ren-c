@@ -340,12 +340,12 @@ Bounce TO_Sequence(Level* level_, enum Reb_Kind kind, const REBVAL *arg) {
     // Paths are not allowed... use MAKE PATH! for that.  Not all paths
     // will be valid here, so the initializatoinmay fail
 
-    REBLEN len = VAL_LEN_AT(arg);
+    REBLEN len = Cell_Series_Len_At(arg);
     if (len < 2)
         return RAISE(Error_Sequence_Too_Short_Raw());
 
     if (len == 2) {
-        const Cell* at = VAL_ARRAY_ITEM_AT(arg);
+        const Cell* at = Cell_Array_Item_At(arg);
         if (not Try_Init_Any_Sequence_Pairlike_Core(
             OUT,
             kind,
@@ -362,7 +362,7 @@ Bounce TO_Sequence(Level* level_, enum Reb_Kind kind, const REBVAL *arg) {
         // "head blank" and "tail blank" bits, for instance).
 
         Array* a = Copy_Array_At_Shallow(
-            VAL_ARRAY(arg),
+            Cell_Array(arg),
             VAL_INDEX(arg),
             VAL_SPECIFIER(arg)
         );

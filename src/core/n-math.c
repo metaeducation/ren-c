@@ -700,7 +700,7 @@ DECLARE_NATIVE(same_q)
     if (Any_Series(v1))  // pointers -and- indices must match
         return Init_Logic(
             OUT,
-            VAL_SERIES(v1) == VAL_SERIES(v2)
+            Cell_Series(v1) == Cell_Series(v2)
                 and VAL_INDEX_RAW(v1) == VAL_INDEX_RAW(v2)  // permissive
         );
 
@@ -1013,7 +1013,7 @@ DECLARE_NATIVE(zero_q)
     enum Reb_Kind type = VAL_TYPE(v);
 
     if (type == REB_ISSUE)  // special case, `#` represents the '\0' codepoint
-        return Init_Logic(OUT, IS_CHAR(v) and VAL_CHAR(v) == 0);
+        return Init_Logic(OUT, IS_CHAR(v) and Cell_Codepoint(v) == 0);
 
     if (not Any_Scalar_Kind(type))
         return Init_False(OUT);

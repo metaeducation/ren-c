@@ -243,7 +243,7 @@ void Remove_Any_Series_Len(REBVAL *v, REBLEN index, REBINT len)
         // invalid UTF-8.  Factor better...but don't repeat that work here.
         //
         DECLARE_STABLE (temp);
-        Init_Series_Cell_At(temp, VAL_TYPE(v), VAL_SERIES(v), index);
+        Init_Series_Cell_At(temp, VAL_TYPE(v), Cell_Series(v), index);
         Modify_String_Or_Binary(
             temp,
             SYM_CHANGE,
@@ -254,9 +254,9 @@ void Remove_Any_Series_Len(REBVAL *v, REBLEN index, REBINT len)
         );
     }
     else  // ANY-ARRAY! is more straightforward
-        Remove_Series_Units(VAL_SERIES_ENSURE_MUTABLE(v), index, len);
+        Remove_Series_Units(Cell_Series_Ensure_Mutable(v), index, len);
 
-    Assert_Series_Term_If_Needed(VAL_SERIES(v));
+    Assert_Series_Term_If_Needed(Cell_Series(v));
 }
 
 

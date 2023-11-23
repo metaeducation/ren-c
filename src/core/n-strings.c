@@ -210,7 +210,7 @@ DECLARE_NATIVE(debase)
     INCLUDE_PARAMS_OF_DEBASE;
 
     Size size;
-    const Byte* bp = VAL_BYTES_AT(&size, ARG(value));
+    const Byte* bp = Cell_Bytes_At(&size, ARG(value));
 
     REBINT base = 64;
     if (REF(base))
@@ -248,7 +248,7 @@ DECLARE_NATIVE(enbase)
         base = 64;
 
     Size size;
-    const Byte* bp = VAL_BYTES_AT(&size, ARG(value));
+    const Byte* bp = Cell_Bytes_At(&size, ARG(value));
 
     DECLARE_MOLD (mo);
     Push_Mold(mo);
@@ -307,7 +307,7 @@ DECLARE_NATIVE(enhex)
     Push_Mold (mo);
 
     REBLEN len;
-    Utf8(const*) cp = VAL_UTF8_LEN_SIZE_AT(&len, nullptr, ARG(string));
+    Utf8(const*) cp = Cell_Utf8_Len_Size_At(&len, nullptr, ARG(string));
 
     Codepoint c;
     cp = Utf8_Next(&c, cp);
@@ -460,7 +460,7 @@ DECLARE_NATIVE(dehex)
     Size scan_size = 0;
 
     REBLEN len;
-    Utf8(const*) cp = VAL_UTF8_LEN_SIZE_AT(&len, nullptr, ARG(string));
+    Utf8(const*) cp = Cell_Utf8_Len_Size_At(&len, nullptr, ARG(string));
 
     Codepoint c;
     cp = Utf8_Next(&c, cp);
@@ -590,12 +590,12 @@ DECLARE_NATIVE(deline)
         return OUT;
     }
 
-    String* s = VAL_STRING_ENSURE_MUTABLE(input);
+    String* s = Cell_String_Ensure_Mutable(input);
     REBLEN len_head = String_Len(s);
 
-    REBLEN len_at = VAL_LEN_AT(input);
+    REBLEN len_at = Cell_Series_Len_At(input);
 
-    Utf8(*) dest = VAL_STRING_AT_KNOWN_MUTABLE(input);
+    Utf8(*) dest = Cell_String_At_Known_Mutable(input);
     Utf8(const*) src = dest;
 
     // DELINE tolerates either LF or CR LF, in order to avoid disincentivizing
@@ -636,7 +636,7 @@ DECLARE_NATIVE(deline)
         dest = Write_Codepoint(dest, c);
     }
 
-    Term_String_Len_Size(s, len_head, dest - VAL_STRING_AT(input));
+    Term_String_Len_Size(s, len_head, dest - Cell_String_At(input));
 
     return input;
 }
@@ -657,11 +657,11 @@ DECLARE_NATIVE(enline)
 
     REBVAL *val = ARG(string);
 
-    String* s = VAL_STRING_ENSURE_MUTABLE(val);
+    String* s = Cell_String_Ensure_Mutable(val);
     REBLEN idx = VAL_INDEX(val);
 
     Length len;
-    Size size = VAL_SIZE_LIMIT_AT(&len, val, UNLIMITED);
+    Size size = Cell_String_Size_Limit_At(&len, val, UNLIMITED);
 
     REBLEN delta = 0;
 
@@ -755,9 +755,9 @@ DECLARE_NATIVE(entab)
     DECLARE_MOLD (mo);
     Push_Mold(mo);
 
-    REBLEN len = VAL_LEN_AT(ARG(string));
+    REBLEN len = Cell_Series_Len_At(ARG(string));
 
-    Utf8(const*) up = VAL_STRING_AT(ARG(string));
+    Utf8(const*) up = Cell_String_At(ARG(string));
     REBLEN index = VAL_INDEX(ARG(string));
 
     REBINT n = 0;
@@ -822,7 +822,7 @@ DECLARE_NATIVE(detab)
 {
     INCLUDE_PARAMS_OF_DETAB;
 
-    REBLEN len = VAL_LEN_AT(ARG(string));
+    REBLEN len = Cell_Series_Len_At(ARG(string));
 
     REBINT tabsize;
     if (REF(size))
@@ -835,7 +835,7 @@ DECLARE_NATIVE(detab)
 
     // Estimate new length based on tab expansion:
 
-    Utf8(const*) cp = VAL_STRING_AT(ARG(string));
+    Utf8(const*) cp = Cell_String_At(ARG(string));
     REBLEN index = VAL_INDEX(ARG(string));
 
     REBLEN n = 0;
@@ -996,7 +996,7 @@ DECLARE_NATIVE(invalid_utf8_q)
     REBVAL *arg = ARG(data);
 
     Size size;
-    const Byte* utf8 = VAL_BINARY_SIZE_AT(&size, arg);
+    const Byte* utf8 = Cell_Binary_Size_At(&size, arg);
 
     const Byte* end = utf8 + size;
 
@@ -1005,7 +1005,7 @@ DECLARE_NATIVE(invalid_utf8_q)
         trail = g_trailing_bytes_for_utf8[*utf8] + 1;
         if (utf8 + trail > end or not Is_Legal_UTF8(utf8, trail)) {
             Copy_Cell(OUT, arg);
-            VAL_INDEX_RAW(OUT) = utf8 - Binary_Head(VAL_BINARY(arg));
+            VAL_INDEX_RAW(OUT) = utf8 - Binary_Head(Cell_Binary(arg));
             return OUT;
         }
     }

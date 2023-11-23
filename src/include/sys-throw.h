@@ -124,7 +124,7 @@ INLINE Value(*) Decay_If_Unstable(Atom(*) v) {
 
     if (Is_Pack(v)) {  // iterate until result is not multi-return [1]
         const Cell* pack_meta_tail;
-        const Cell* pack_meta_at = VAL_ARRAY_AT(&pack_meta_tail, v);
+        const Cell* pack_meta_at = Cell_Array_At(&pack_meta_tail, v);
         if (pack_meta_at == pack_meta_tail)
             fail (Error_No_Value_Raw());  // treat as void?
         Derelativize(v, pack_meta_at, VAL_SPECIFIER(v));
@@ -155,7 +155,7 @@ INLINE bool Is_Pack_Undecayable(Atom(*) pack)
     assert(Is_Pack(pack));
     if (Is_Nihil(pack))
         return true;
-    const Cell* at = VAL_ARRAY_AT(nullptr, pack);
+    const Cell* at = Cell_Array_At(nullptr, pack);
     if (Is_Meta_Of_Raised(at))
         return true;
     if (Is_Meta_Of_Pack(at))

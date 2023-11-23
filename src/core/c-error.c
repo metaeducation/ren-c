@@ -420,7 +420,7 @@ Bounce MAKE_Error(
         // code in REBTYPE(Context) and code in DECLARE_NATIVE(construct))
 
         const Cell* tail;
-        const Cell* head = VAL_ARRAY_AT(&tail, arg);
+        const Cell* head = Cell_Array_At(&tail, arg);
 
         e = Make_Context_Detect_Managed(
             REB_ERROR, // type
@@ -634,7 +634,7 @@ Context* Make_Error_Managed_Core(
     REBLEN expected_args = 0;
     if (Is_Block(message)) { // GET-WORD!s in template should match va_list
         const Cell* tail;
-        const Cell* temp = VAL_ARRAY_AT(&tail, message);
+        const Cell* temp = Cell_Array_At(&tail, message);
         for (; temp != tail; ++temp) {
             if (Is_Get_Word(temp))
                 ++expected_args;
@@ -662,7 +662,7 @@ Context* Make_Error_Managed_Core(
     //
     if (not Is_Text(message)) {
         const Cell* msg_tail;
-        const Cell* msg_item = VAL_ARRAY_AT(&msg_tail, message);
+        const Cell* msg_item = Cell_Array_At(&msg_tail, message);
 
         for (; msg_item != msg_tail; ++msg_item) {
             if (not Is_Get_Word(msg_item))
@@ -1333,7 +1333,7 @@ Context* Startup_Errors(const REBVAL *boot_errors)
 
     const Cell* errors_tail;
     Cell* errors_head
-        = VAL_ARRAY_Known_Mutable_AT(&errors_tail, boot_errors);
+        = Cell_Array_At_Known_Mutable(&errors_tail, boot_errors);
 
     assert(VAL_INDEX(boot_errors) == 0);
     Context* catalog = Construct_Context_Managed(
@@ -1349,8 +1349,8 @@ Context* Startup_Errors(const REBVAL *boot_errors)
     const Cell* category_tail = Array_Tail(CTX_VARLIST(catalog));
     REBVAL *category = CTX_VARS_HEAD(catalog);
     for (; category != category_tail; ++category) {
-        const Cell* tail = VAL_ARRAY_TAIL(category);
-        Cell* head = Array_Head(VAL_ARRAY_KNOWN_MUTABLE(category));
+        const Cell* tail;
+        Cell* head = Cell_Array_At_Known_Mutable(&tail, category);
         Context* error = Construct_Context_Managed(
             REB_OBJECT,
             head,  // modifies bindings
@@ -1464,7 +1464,7 @@ void MF_Error(REB_MOLD *mo, NoQuote(const Cell*) v, bool form)
 
     // Append: error message ARG1, ARG2, etc.
     if (Is_Block(&vars->message))
-        Form_Array_At(mo, VAL_ARRAY(&vars->message), 0, error);
+        Form_Array_At(mo, Cell_Array(&vars->message), 0, error);
     else if (Is_Text(&vars->message))
         Form_Value(mo, &vars->message);
     else
@@ -1474,7 +1474,7 @@ void MF_Error(REB_MOLD *mo, NoQuote(const Cell*) v, bool form)
     REBVAL *where = SPECIFIC(&vars->where);
     if (
         not Is_Nulled(where)
-        and not (Is_Block(where) and VAL_LEN_AT(where) == 0)
+        and not (Is_Block(where) and Cell_Series_Len_At(where) == 0)
     ){
         Append_Codepoint(mo->series, '\n');
         Append_Ascii(mo->series, RM_ERROR_WHERE);

@@ -365,8 +365,8 @@ Bounce Console_Actor(Level* level_, REBVAL *port, const Symbol* verb)
         if (not Is_Binary(data)) {
             Init_Binary(data, Make_Binary(readbuf_size));
         }
-        else if (Series_Rest(VAL_BINARY(data)) < readbuf_size) {
-            Binary* bin = VAL_BINARY_Ensure_Mutable(data);
+        else if (Series_Rest(Cell_Binary(data)) < readbuf_size) {
+            Binary* bin = Cell_Binary_Ensure_Mutable(data);
             Expand_Series_Tail(bin, readbuf_size - Series_Rest(bin));
         }
 
@@ -389,9 +389,9 @@ Bounce Console_Actor(Level* level_, REBVAL *port, const Symbol* verb)
             // be able to go byte level, however.  Those wishing to interpret
             // Windows data as text with lines will thus have to deline it (!)
             //
-            size_t size = readbuf_size - VAL_LEN_AT(data);
-            Binary* bin = VAL_BINARY_Ensure_Mutable(data);
-            REBLEN orig_len = VAL_LEN_AT(data);
+            size_t size = readbuf_size - Cell_Series_Len_At(data);
+            Binary* bin = Cell_Binary_Ensure_Mutable(data);
+            REBLEN orig_len = Cell_Series_Len_At(data);
 
             assert(Series_Available_Space(bin) >= size);
 

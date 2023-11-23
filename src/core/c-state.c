@@ -282,12 +282,12 @@ void Replug_Stack(Level* L, Level* base, Value(*) plug) {
     assert(Is_Block(plug));  // restore data stack from plug's block
     assert(VAL_INDEX(plug) == 0);  // could store some number (?)
 
-    if (VAL_ARRAY(plug) == EMPTY_ARRAY)
+    if (Cell_Array(plug) == EMPTY_ARRAY)
         goto finished;
 
   blockscope {
 
-    Array* array = VAL_ARRAY_KNOWN_MUTABLE(plug);
+    Array* array = Cell_Array_Known_Mutable(plug);
     Cell* item = Array_Tail(array);
 
     if (Get_Subclass_Flag(PLUG, array, HAS_MOLD)) {  // restore mold from plug

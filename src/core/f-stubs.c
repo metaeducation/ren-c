@@ -362,10 +362,10 @@ REBLEN Part_Len_May_Modify_Index(
 
     if (Is_Nulled(part)) {  // indicates /PART refinement unused
         if (not Is_Issue(series))
-            return VAL_LEN_AT(series);  // leave index alone, use plain length
+            return Cell_Series_Len_At(series);  // leave index alone, use plain length
 
         Size size;
-        VAL_UTF8_SIZE_AT(&size, series);
+        Cell_Utf8_Size_At(&size, series);
         return size;
     }
 
@@ -380,7 +380,7 @@ REBLEN Part_Len_May_Modify_Index(
         if (
             Is_Issue(part)
             or VAL_TYPE(series) != VAL_TYPE(part)  // !!! allow AS aliases?
-            or VAL_SERIES(series) != VAL_SERIES(part)
+            or Cell_Series(series) != Cell_Series(part)
         ){
             fail (Error_Invalid_Part_Raw(part));
         }
@@ -391,7 +391,7 @@ REBLEN Part_Len_May_Modify_Index(
     // Restrict length to the size available
     //
     if (len >= 0) {
-        REBINT maxlen = cast(REBINT, VAL_LEN_AT(series));
+        REBINT maxlen = cast(REBINT, Cell_Series_Len_At(series));
         if (len > maxlen)
             len = maxlen;
     }
@@ -415,7 +415,8 @@ REBLEN Part_Len_May_Modify_Index(
     }
 
     assert(len >= 0);
-    assert(Is_Issue(series) or VAL_LEN_HEAD(series) >= cast(REBLEN, len));
+    if (not Is_Issue(series))
+        assert(Cell_Series_Len_Head(series) >= cast(REBLEN, len));
     return cast(REBLEN, len);
 }
 

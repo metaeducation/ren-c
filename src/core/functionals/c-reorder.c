@@ -145,7 +145,7 @@ DECLARE_NATIVE(reorder_p)  // see REORDER in %base-defs.r, for inheriting meta
     // be pushed.
     //
     const Cell* item;  // starts as tail
-    const Cell* at = VAL_ARRAY_AT(&item, ARG(ordering));
+    const Cell* at = Cell_Array_At(&item, ARG(ordering));
     for (; at != item--; ) {
         const Symbol* symbol = VAL_WORD_SYMBOL(item);
 

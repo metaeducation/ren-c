@@ -291,11 +291,11 @@ Bounce Call_Core(Level* level_) {
             fail (PARAM(command));
 
         const REBVAL *block = ARG(command);
-        argc = VAL_LEN_AT(block);
+        argc = Cell_Series_Len_At(block);
         assert(argc != 0);  // usermode layer checks this
         argv = rebAllocN(char*, (argc + 1));
 
-        const Cell* param = VAL_ARRAY_ITEM_AT(block);
+        const Cell* param = Cell_Array_Item_At(block);
         int i;
         for (i = 0; i < argc; ++param, ++i) {
             if (not Is_Text(param))  // usermode layer ensures FILE! converted

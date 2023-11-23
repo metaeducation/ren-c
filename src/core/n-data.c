@@ -28,7 +28,7 @@
 static bool Check_Char_Range(const REBVAL *val, REBLEN limit)
 {
     if (IS_CHAR(val))
-        return VAL_CHAR(val) <= limit;
+        return Cell_Codepoint(val) <= limit;
 
     if (Is_Integer(val))
         return VAL_INT64(val) <= cast(REBI64, limit);
@@ -36,7 +36,7 @@ static bool Check_Char_Range(const REBVAL *val, REBLEN limit)
     assert(Any_String(val));
 
     REBLEN len;
-    Utf8(const*) up = VAL_UTF8_LEN_SIZE_AT(&len, nullptr, val);
+    Utf8(const*) up = Cell_Utf8_Len_Size_At(&len, nullptr, val);
 
     for (; len > 0; len--) {
         Codepoint c;
@@ -192,10 +192,10 @@ DECLARE_NATIVE(bind)
     const Cell* tail;
     if (REF(copy)) {
         Array* copy = Copy_Array_Core_Managed(
-            VAL_ARRAY(v),
+            Cell_Array(v),
             VAL_INDEX(v), // at
             VAL_SPECIFIER(v),
-            Array_Len(VAL_ARRAY(v)), // tail
+            Array_Len(Cell_Array(v)), // tail
             0, // extra
             ARRAY_MASK_HAS_FILE_LINE, // flags
             TS_ARRAY // types to copy deeply
@@ -206,7 +206,7 @@ DECLARE_NATIVE(bind)
     }
     else {
         Ensure_Mutable(v);  // use IN for virtual binding
-        at = VAL_ARRAY_AT_MUTABLE_HACK(&tail, v);  // !!! only *after* index!
+        at = Cell_Array_At_Mutable_Hack(&tail, v);  // !!! only *after* index!
         Copy_Cell(OUT, v);
     }
 
@@ -552,7 +552,7 @@ DECLARE_NATIVE(unbind)
         assert(Is_Block(word));
 
         const Cell* tail;
-        Cell* at = VAL_ARRAY_AT_Ensure_Mutable(&tail, word);
+        Cell* at = Cell_Array_At_Ensure_Mutable(&tail, word);
         Option(Context*) context = nullptr;
         Unbind_Values_Core(at, tail, context, REF(deep));
     }
@@ -588,7 +588,7 @@ DECLARE_NATIVE(collect_words)
         flags |= COLLECT_DEEP;
 
     const Cell* tail;
-    const Cell* at = VAL_ARRAY_AT(&tail, ARG(block));
+    const Cell* at = Cell_Array_At(&tail, ARG(block));
     return Init_Block(
         OUT,
         Collect_Unique_Words_Managed(at, tail, flags, ARG(ignore))
@@ -671,7 +671,7 @@ bool Get_Var_Push_Refinements_Throws(
 
         const Node* node1 = Cell_Node1(var);
         if (Is_Node_A_Cell(node1)) { // pair compressed
-            // is considered "arraylike", can answer VAL_ARRAY_AT()
+            // is considered "arraylike", can answer Cell_Array_At()
         }
         else switch (Series_Flavor(x_cast(Series*, node1))) {
           case FLAVOR_SYMBOL:
@@ -693,7 +693,7 @@ bool Get_Var_Push_Refinements_Throws(
         }
 
         const Cell* tail;
-        const Cell* head = VAL_ARRAY_AT(&tail, var);
+        const Cell* head = Cell_Array_At(&tail, var);
         const Cell* at;
         Specifier* at_specifier = Derive_Specifier(var_specifier, var);
         for (at = head; at != tail; ++at) {
@@ -728,7 +728,7 @@ bool Get_Var_Push_Refinements_Throws(
     else if (Is_The_Block(var)) {
         Specifier* at_specifier = Derive_Specifier(var_specifier, var);
         const Cell* tail;
-        const Cell* head = VAL_ARRAY_AT(&tail, var);
+        const Cell* head = Cell_Array_At(&tail, var);
         const Cell* at;
         for (at = head; at != tail; ++at)
             Derelativize(PUSH(), at, at_specifier);
@@ -860,7 +860,7 @@ bool Get_Path_Push_Refinements_Throws(
 
     const Node* node1 = Cell_Node1(path);
     if (Is_Node_A_Cell(node1)) {
-        // pairing, but "arraylike", so VAL_ARRAY_AT() will work on it
+        // pairing, but "arraylike", so Cell_Array_At() will work on it
     }
     else switch (Series_Flavor(c_cast(Series*, node1))) {
       case FLAVOR_SYMBOL : {
@@ -893,7 +893,7 @@ bool Get_Path_Push_Refinements_Throws(
     }
 
     const Cell* tail;
-    const Cell* head = VAL_ARRAY_AT(&tail, path);
+    const Cell* head = Cell_Array_At(&tail, path);
     while (Is_Blank(head)) {
         ++head;
         if (head == tail)
@@ -1249,7 +1249,7 @@ bool Set_Var_Core_Updater_Throws(
 
         const Node* node1 = Cell_Node1(var);
         if (Is_Node_A_Cell(node1)) {  // pair optimization
-            // pairings considered "arraylike", handled by VAL_ARRAY_AT()
+            // pairings considered "arraylike", handled by Cell_Array_At()
         }
         else switch (Series_Flavor(c_cast(Series*, node1))) {
           case FLAVOR_SYMBOL: {
@@ -1271,7 +1271,7 @@ bool Set_Var_Core_Updater_Throws(
         }
 
         const Cell* tail;
-        const Cell* head = VAL_ARRAY_AT(&tail, var);
+        const Cell* head = Cell_Array_At(&tail, var);
         const Cell* at;
         Specifier* at_specifier = Derive_Specifier(var_specifier, var);
         for (at = head; at != tail; ++at) {
@@ -1300,7 +1300,7 @@ bool Set_Var_Core_Updater_Throws(
     }
     else if (Is_The_Block(var)) {
         const Cell* tail;
-        const Cell* head = VAL_ARRAY_AT(&tail, var);
+        const Cell* head = Cell_Array_At(&tail, var);
         const Cell* at;
         Specifier* at_specifier = Derive_Specifier(var_specifier, var);
         for (at = head; at != tail; ++at)
@@ -1571,7 +1571,7 @@ DECLARE_NATIVE(proxy_exports)
     Context* source = VAL_CONTEXT(ARG(source));
 
     const Cell* tail;
-    const Cell* v = VAL_ARRAY_AT(&tail, ARG(exports));
+    const Cell* v = Cell_Array_At(&tail, ARG(exports));
     for (; v != tail; ++v) {
         if (not Is_Word(v))
             fail (ARG(exports));
@@ -1720,7 +1720,7 @@ DECLARE_NATIVE(free)
     if (Any_Context(v) or Is_Handle(v))
         fail ("FREE only implemented for ANY-SERIES! at the moment");
 
-    Series* s = VAL_SERIES_ENSURE_MUTABLE(v);
+    Series* s = Cell_Series_Ensure_Mutable(v);
     if (Get_Series_Flag(s, INACCESSIBLE))
         fail ("Cannot FREE already freed series");
 
@@ -1787,7 +1787,7 @@ bool Try_As_String(
         Inherit_Const(Quotify(out, quotes), v);
     }
     else if (Is_Binary(v)) {  // If valid UTF-8, BINARY! aliases as ANY-STRING!
-        const Binary* bin = VAL_BINARY(v);
+        const Binary* bin = Cell_Binary(v);
         Size byteoffset = VAL_INDEX(v);
 
         // The position in the binary must correspond to an actual
@@ -1880,7 +1880,7 @@ bool Try_As_String(
     }
     else if (Is_Issue(v)) {
         if (Get_Cell_Flag(v, ISSUE_HAS_NODE)) {
-            assert(Is_Series_Frozen(VAL_STRING(v)));
+            assert(Is_Series_Frozen(Cell_String(v)));
             goto any_string;  // ISSUE! series must be immutable
         }
 
@@ -1891,7 +1891,7 @@ bool Try_As_String(
 
         REBLEN len;
         Size size;
-        Utf8(const*) utf8 = VAL_UTF8_LEN_SIZE_AT(&len, &size, v);
+        Utf8(const*) utf8 = Cell_Utf8_Len_Size_At(&len, &size, v);
         assert(size + 1 <= sizeof(PAYLOAD(Bytes, v).at_least_8));  // must fit
 
         String* str = Make_String_Core(size, SERIES_FLAGS_NONE);
@@ -1957,7 +1957,7 @@ DECLARE_NATIVE(as)
       case REB_INTEGER: {
         if (not IS_CHAR(v))
             fail ("AS INTEGER! only supports what-were-CHAR! issues ATM");
-        return Init_Integer(OUT, VAL_CHAR(v)); }
+        return Init_Integer(OUT, Cell_Codepoint(v)); }
 
       case REB_BLOCK:
       case REB_GROUP:
@@ -1995,7 +1995,7 @@ DECLARE_NATIVE(as)
                 break; }
 
               case FLAVOR_ARRAY:
-                assert(Is_Array_Frozen_Shallow(VAL_ARRAY(v)));
+                assert(Is_Array_Frozen_Shallow(Cell_Array(v)));
                 assert(VAL_INDEX(v) == 0);
                 HEART_BYTE(v) = REB_BLOCK;
                 break;
@@ -2024,13 +2024,13 @@ DECLARE_NATIVE(as)
             // Even if we optimize the array, we don't want to give the
             // impression that we would not have frozen it.
             //
-            if (not Is_Array_Frozen_Shallow(VAL_ARRAY(v)))
-                Freeze_Array_Shallow(VAL_ARRAY_ENSURE_MUTABLE(v));
+            if (not Is_Array_Frozen_Shallow(Cell_Array(v)))
+                Freeze_Array_Shallow(Cell_Array_Ensure_Mutable(v));
 
             if (Try_Init_Any_Sequence_At_Arraylike_Core(
                 OUT,  // if failure, nulled if too short...else bad element
                 new_kind,
-                VAL_ARRAY(v),
+                Cell_Array(v),
                 VAL_SPECIFIER(v),
                 VAL_INDEX(v)
             )){
@@ -2058,7 +2058,7 @@ DECLARE_NATIVE(as)
 
         if (Any_String(v)) {
             REBLEN len;
-            Size utf8_size = VAL_SIZE_LIMIT_AT(&len, v, UNLIMITED);
+            Size utf8_size = Cell_String_Size_Limit_At(&len, v, UNLIMITED);
 
             if (utf8_size + 1 <= sizeof(PAYLOAD(Bytes, v).at_least_8)) {
                 //
@@ -2070,7 +2070,7 @@ DECLARE_NATIVE(as)
                 );
                 memcpy(
                     PAYLOAD(Bytes, OUT).at_least_8,
-                    VAL_STRING_AT(v),
+                    Cell_String_At(v),
                     utf8_size + 1  // copy the '\0' terminator
                 );
                 EXTRA(Bytes, OUT).exactly_4[IDX_EXTRA_USED] = utf8_size;
@@ -2086,7 +2086,7 @@ DECLARE_NATIVE(as)
                 )){
                     goto bad_cast;
                 }
-                Freeze_Series(VAL_SERIES(OUT));  // must be frozen
+                Freeze_Series(Cell_Series(OUT));  // must be frozen
             }
             HEART_BYTE(OUT) = REB_ISSUE;
             return OUT;
@@ -2138,7 +2138,7 @@ DECLARE_NATIVE(as)
             // through the same validation.  Review efficiency.
             //
             Size size;
-            Utf8(const*) utf8 = VAL_UTF8_SIZE_AT(&size, v);
+            Utf8(const*) utf8 = Cell_Utf8_Size_At(&size, v);
             if (nullptr == Scan_Any_Word(OUT, new_kind, utf8, size))
                 fail (Error_Bad_Char_Raw(v));
 
@@ -2148,7 +2148,7 @@ DECLARE_NATIVE(as)
 
         if (Any_String(v)) {  // aliasing data as an ANY-WORD! freezes data
           any_string: {
-            const String* s = VAL_STRING(v);
+            const String* s = Cell_String(v);
 
             if (not Is_Series_Frozen(s)) {
                 //
@@ -2159,7 +2159,7 @@ DECLARE_NATIVE(as)
                 if (Get_Cell_Flag(v, CONST))
                     fail (Error_Alias_Constrains_Raw());
 
-                Freeze_Series(VAL_SERIES(v));
+                Freeze_Series(Cell_Series(v));
             }
 
             if (VAL_INDEX(v) != 0)  // can't reuse non-head series AS WORD!
@@ -2191,7 +2191,7 @@ DECLARE_NATIVE(as)
             // We have to permanently freeze the underlying series from any
             // mutation to use it in a WORD! (and also, may add STRING flag);
             //
-            const Binary* bin = VAL_BINARY(v);
+            const Binary* bin = Cell_Binary(v);
             if (not Is_Series_Frozen(bin))
                 if (Get_Cell_Flag(v, CONST))  // can't freeze or add IS_STRING
                     fail (Error_Alias_Constrains_Raw());
@@ -2210,7 +2210,7 @@ DECLARE_NATIVE(as)
                 // error converting we don't add any constraints to the input.
                 //
                 Size size;
-                const Byte* data = VAL_BINARY_SIZE_AT(&size, v);
+                const Byte* data = Cell_Binary_Size_At(&size, v);
                 str = Intern_UTF8_Managed(data, size);
 
                 // Constrain the input in the way it would be if we were doing
@@ -2236,7 +2236,7 @@ DECLARE_NATIVE(as)
             // Data lives in payload--make new frozen series for BINARY!
 
             Size size;
-            Utf8(const*) utf8 = VAL_UTF8_SIZE_AT(&size, v);
+            Utf8(const*) utf8 = Cell_Utf8_Size_At(&size, v);
             Binary* bin = Make_Binary_Core(size, NODE_FLAG_MANAGED);
             memcpy(Binary_Head(bin), utf8, size + 1);
             Set_Series_Used(bin, size);
@@ -2249,7 +2249,7 @@ DECLARE_NATIVE(as)
           any_string_as_binary:
             Init_Binary_At(
                 OUT,
-                VAL_STRING(v),
+                Cell_String(v),
                 Any_Word(v) ? 0 : VAL_BYTEOFFSET(v)
             );
             return Inherit_Const(stable_OUT, v);
@@ -2348,7 +2348,7 @@ DECLARE_NATIVE(aliases_q)
 {
     INCLUDE_PARAMS_OF_ALIASES_Q;
 
-    return Init_Logic(OUT, VAL_SERIES(ARG(value1)) == VAL_SERIES(ARG(value2)));
+    return Init_Logic(OUT, Cell_Series(ARG(value1)) == Cell_Series(ARG(value2)));
 }
 
 

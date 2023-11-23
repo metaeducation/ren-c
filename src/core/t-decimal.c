@@ -161,7 +161,7 @@ Bounce MAKE_Decimal(
     }
     else switch (VAL_TYPE(arg)) {
       case REB_ISSUE:
-        d = cast(REBDEC, VAL_CHAR(arg));
+        d = cast(REBDEC, Cell_Codepoint(arg));
         goto dont_divide_if_percent;
 
       case REB_TIME:
@@ -170,7 +170,7 @@ Bounce MAKE_Decimal(
 
       case REB_BINARY: {
         Size size;
-        const Byte* at = VAL_BINARY_SIZE_AT(&size, arg);
+        const Byte* at = Cell_Binary_Size_At(&size, arg);
         if (size < 8)
             return RAISE(arg);
 
@@ -221,7 +221,7 @@ Bounce MAKE_Decimal(
 
       case REB_BLOCK: {
         REBLEN len;
-        const Cell* item = VAL_ARRAY_LEN_AT(&len, arg);
+        const Cell* item = Cell_Array_Len_At(&len, arg);
 
         if (len != 2)
             return RAISE(Error_Bad_Make(kind, arg));
@@ -524,7 +524,7 @@ REBTYPE(Decimal)
                 return T_Money(level_, verb);
             }
             else if (type == REB_ISSUE) {
-                d2 = cast(REBDEC, VAL_CHAR(arg));
+                d2 = cast(REBDEC, Cell_Codepoint(arg));
                 type = REB_DECIMAL;
             }
             else {

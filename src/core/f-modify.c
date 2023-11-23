@@ -78,7 +78,7 @@ REBLEN Modify_Array(
     if (flags & AM_SPLICE) {
         assert(Any_Array(src_val));
 
-        REBLEN len_at = VAL_LEN_AT(src_val);
+        REBLEN len_at = Cell_Series_Len_At(src_val);
         ilen = len_at;
 
         // Adjust length of insertion if changing /PART:
@@ -91,7 +91,7 @@ REBLEN Modify_Array(
             if (ilen == len_at) {
                 tail_newline = Get_Subclass_Flag(
                     ARRAY,
-                    VAL_ARRAY(src_val),
+                    Cell_Array(src_val),
                     NEWLINE_AT_TAIL
                 );
             }
@@ -99,15 +99,15 @@ REBLEN Modify_Array(
                 tail_newline = false;
             else {
                 const Cell* tail_cell
-                    = VAL_ARRAY_ITEM_AT(src_val) + ilen;
+                    = Cell_Array_Item_At(src_val) + ilen;
                 tail_newline = Get_Cell_Flag(tail_cell, NEWLINE_BEFORE);
             }
         }
 
         // Are we modifying ourselves? If so, copy src_val block first:
-        if (dst_arr == VAL_ARRAY(src_val)) {
+        if (dst_arr == Cell_Array(src_val)) {
             Array* copy = Copy_Array_At_Extra_Shallow(
-                VAL_ARRAY(src_val),
+                Cell_Array(src_val),
                 VAL_INDEX(src_val),
                 VAL_SPECIFIER(src_val),
                 0, // extra
@@ -117,7 +117,7 @@ REBLEN Modify_Array(
             specifier = SPECIFIED; // copy already specified it
         }
         else {
-            src_rel = VAL_ARRAY_AT(nullptr, src_val);  // may be tail
+            src_rel = Cell_Array_At(nullptr, src_val);  // may be tail
             specifier = VAL_SPECIFIER(src_val);
         }
     }
@@ -240,7 +240,7 @@ REBLEN Modify_String_Or_Binary(
 
     Ensure_Mutable(dst);  // note this also rules out ANY-WORD!s
 
-    Binary* dst_ser = cast(Binary*, VAL_SERIES_ENSURE_MUTABLE(dst));
+    Binary* dst_ser = cast(Binary*, Cell_Series_Ensure_Mutable(dst));
     assert(not IS_SYMBOL(dst_ser));  // would be immutable
 
     REBLEN dst_idx = VAL_INDEX(dst);
@@ -316,7 +316,7 @@ REBLEN Modify_String_Or_Binary(
         // However, if that were changed to /LIMIT then we would want to
         // be cropping the /PART of the input via passing a parameter here.
         //
-        src_ptr = VAL_UTF8_LEN_SIZE_AT_LIMIT(
+        src_ptr = Cell_Utf8_Len_Size_At_Limit(
             &src_len_raw,
             &src_size_raw,
             src,
@@ -345,17 +345,17 @@ REBLEN Modify_String_Or_Binary(
         //
         // !!! It may be possible to optimize special cases like append.
         //
-        if (VAL_SERIES(dst) == VAL_SERIES(src))
+        if (Cell_Series(dst) == Cell_Series(src))
             goto form;
 
-        src_ptr = VAL_STRING_AT(src);
+        src_ptr = Cell_String_At(src);
 
         // !!! We pass in UNLIMITED for the limit of how long the input is
         // because currently /PART speaks in terms of the destination series.
         // However, if that were changed to /LIMIT then we would want to
         // be cropping the /PART of the input via passing a parameter here.
         //
-        src_size_raw = VAL_SIZE_LIMIT_AT(&src_len_raw, src, UNLIMITED);
+        src_size_raw = Cell_String_Size_Limit_At(&src_len_raw, src, UNLIMITED);
         if (not Is_NonSymbol_String(dst_ser))
             src_len_raw = src_size_raw;
     }
@@ -373,7 +373,7 @@ REBLEN Modify_String_Or_Binary(
         src_len_raw = src_size_raw = 1;
     }
     else if (Is_Binary(src)) {
-        const Binary* bin = VAL_BINARY(src);
+        const Binary* bin = Cell_Binary(src);
         REBLEN offset = VAL_INDEX(src);
 
         src_ptr = Binary_At(bin, offset);
@@ -473,7 +473,7 @@ REBLEN Modify_String_Or_Binary(
             // for operations like TO TEXT! of a BLOCK! are unclear...
             //
             const Cell* item_tail;
-            const Cell* item = VAL_ARRAY_AT(&item_tail, src);
+            const Cell* item = Cell_Array_At(&item_tail, src);
             for (; item != item_tail; ++item)
                 Form_Value(mo, item);
             goto use_mold_buffer;
@@ -533,7 +533,7 @@ REBLEN Modify_String_Or_Binary(
 
     // We extract the destination's bookmarks for updating.  This may conflict
     // with other updating functions.  Be careful not to use any of the
-    // functions like VAL_UTF8_SIZE_AT() etc. that leverage bookmarks after
+    // functions like Cell_Utf8_Size_At() etc. that leverage bookmarks after
     // the extraction occurs.
 
     BookmarkList* book = nullptr;
@@ -569,21 +569,25 @@ REBLEN Modify_String_Or_Binary(
         Size dst_size_at;
         if (Is_NonSymbol_String(dst_ser)) {
             if (Is_Binary(dst)) {
-                dst_size_at = VAL_LEN_AT(dst);  // byte count
+                dst_size_at = Cell_Series_Len_At(dst);  // byte count
                 dst_len_at = String_Index_At(
                     cast(String*, dst_ser),
                     dst_size_at
                 );
             }
             else
-                dst_size_at = VAL_SIZE_LIMIT_AT(&dst_len_at, dst, UNLIMITED);
+                dst_size_at = Cell_String_Size_Limit_At(
+                    &dst_len_at,
+                    dst,
+                    UNLIMITED
+                );
 
             // Note: above functions may update the bookmarks --^
             //
             book = LINK(Bookmarks, dst_ser);
         }
         else {
-            dst_len_at = VAL_LEN_AT(dst);
+            dst_len_at = Cell_Series_Len_At(dst);
             dst_size_at = dst_len_at;
         }
 
@@ -635,7 +639,7 @@ REBLEN Modify_String_Or_Binary(
                 }
                 else {
                     REBLEN check;  // v-- !!! This call uses bookmark, review
-                    part_size = VAL_SIZE_LIMIT_AT(&check, dst, part);
+                    part_size = Cell_String_Size_Limit_At(&check, dst, part);
                     assert(check == part);
                     UNUSED(check);
                 }

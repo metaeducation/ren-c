@@ -372,15 +372,15 @@ INLINE void Free_Bookmarks_Maybe_Null(String* str) {
 #endif
 
 
-INLINE const String* VAL_STRING(NoQuote(const Cell*) v) {
+INLINE const String* Cell_String(NoQuote(const Cell*) v) {
     if (Any_Stringlike(v))
-        return c_cast(String*, VAL_SERIES(v));
+        return c_cast(String*, Cell_Series(v));
 
     return VAL_WORD_SYMBOL(v);  // asserts Any_Word_Kind() for heart
 }
 
-#define VAL_STRING_ENSURE_MUTABLE(v) \
-    m_cast(String*, VAL_STRING(Ensure_Mutable(v)))
+#define Cell_String_Ensure_Mutable(v) \
+    m_cast(String*, Cell_String(Ensure_Mutable(v)))
 
 // This routine works with the notion of "length" that corresponds to the
 // idea of the datatype which the series index is for.  Notably, a BINARY!
@@ -388,17 +388,17 @@ INLINE const String* VAL_STRING(NoQuote(const Cell*) v) {
 // that type.  So if the series is a string and not a binary, the special
 // cache of the length in the series node for strings must be used.
 //
-INLINE REBLEN VAL_LEN_HEAD(NoQuote(const Cell*) v) {
-    const Series* s = VAL_SERIES(v);
+INLINE REBLEN Cell_Series_Len_Head(NoQuote(const Cell*) v) {
+    const Series* s = Cell_Series(v);
     if (Is_Series_UTF8(s) and Cell_Heart(v) != REB_BINARY)
         return String_Len(c_cast(String*, s));
     return Series_Used(s);
 }
 
 INLINE bool VAL_PAST_END(NoQuote(const Cell*) v)
-   { return VAL_INDEX(v) > VAL_LEN_HEAD(v); }
+   { return VAL_INDEX(v) > Cell_Series_Len_Head(v); }
 
-INLINE REBLEN VAL_LEN_AT(NoQuote(const Cell*) v) {
+INLINE REBLEN Cell_Series_Len_At(NoQuote(const Cell*) v) {
     //
     // !!! At present, it is considered "less of a lie" to tell people the
     // length of a series is 0 if its index is actually past the end, than
@@ -408,16 +408,16 @@ INLINE REBLEN VAL_LEN_AT(NoQuote(const Cell*) v) {
     // This is a longstanding historical Rebol issue that needs review.
     //
     REBIDX i = VAL_INDEX(v);
-    if (i > cast(REBIDX, VAL_LEN_HEAD(v)))
+    if (i > cast(REBIDX, Cell_Series_Len_Head(v)))
         fail ("Index past end of series");
     if (i < 0)
         fail ("Index before beginning of series");
 
-    return VAL_LEN_HEAD(v) - i;  // take current index into account
+    return Cell_Series_Len_Head(v) - i;  // take current index into account
 }
 
-INLINE Utf8(const*) VAL_STRING_AT(NoQuote(const Cell*) v) {
-    const String* str = VAL_STRING(v);  // checks that it's ANY-STRING!
+INLINE Utf8(const*) Cell_String_At(NoQuote(const Cell*) v) {
+    const String* str = Cell_String(v);  // checks that it's ANY-STRING!
     REBIDX i = VAL_INDEX_RAW(v);
     REBLEN len = String_Len(str);
     if (i < 0 or i > cast(REBIDX, len))
@@ -426,35 +426,35 @@ INLINE Utf8(const*) VAL_STRING_AT(NoQuote(const Cell*) v) {
 }
 
 
-INLINE Utf8(const*) VAL_STRING_TAIL(NoQuote(const Cell*) v) {
-    const String* s = VAL_STRING(v);  // debug build checks it's ANY-STRING!
+INLINE Utf8(const*) Cell_String_Tail(NoQuote(const Cell*) v) {
+    const String* s = Cell_String(v);  // debug build checks it's ANY-STRING!
     return String_Tail(s);
 }
 
 
 
-#define VAL_STRING_AT_ENSURE_MUTABLE(v) \
-    cast(Utf8(*), x_cast(Byte*, VAL_STRING_AT(Ensure_Mutable(v))))
+#define Cell_String_At_Ensure_Mutable(v) \
+    cast(Utf8(*), x_cast(Byte*, Cell_String_At(Ensure_Mutable(v))))
 
-#define VAL_STRING_AT_KNOWN_MUTABLE(v) \
-    cast(Utf8(*), x_cast(Byte*, VAL_STRING_AT(Known_Mutable(v))))
+#define Cell_String_At_Known_Mutable(v) \
+    cast(Utf8(*), x_cast(Byte*, Cell_String_At(Known_Mutable(v))))
 
 
-INLINE Size VAL_SIZE_LIMIT_AT(
+INLINE Size Cell_String_Size_Limit_At(
     Option(REBLEN*) length_out,  // length in chars to end (including limit)
     NoQuote(const Cell*) v,
     REBINT limit  // UNLIMITED (e.g. a very large number) for no limit
 ){
     assert(Any_Stringlike(v));
 
-    Utf8(const*) at = VAL_STRING_AT(v);  // !!! update cache if needed
+    Utf8(const*) at = Cell_String_At(v);  // !!! update cache if needed
     Utf8(const*) tail;
 
-    REBLEN len_at = VAL_LEN_AT(v);
+    REBLEN len_at = Cell_Series_Len_At(v);
     if (cast(REBLEN, limit) >= len_at) {  // UNLIMITED casts to large unsigned
         if (length_out)
             *unwrap(length_out) = len_at;
-        tail = VAL_STRING_TAIL(v);  // byte count known (fast)
+        tail = Cell_String_Tail(v);  // byte count known (fast)
     }
     else {
         assert(limit >= 0);
@@ -468,11 +468,11 @@ INLINE Size VAL_SIZE_LIMIT_AT(
     return tail - at;
 }
 
-#define VAL_SIZE_AT(v) \
-    VAL_SIZE_LIMIT_AT(nullptr, v, UNLIMITED)
+#define Cell_String_Size_At(v) \
+    Cell_String_Size_Limit_At(nullptr, v, UNLIMITED)
 
 INLINE Size VAL_BYTEOFFSET(const Cell* v) {
-    return VAL_STRING_AT(v) - String_Head(VAL_STRING(v));
+    return Cell_String_At(v) - String_Head(Cell_String(v));
 }
 
 INLINE Size VAL_BYTEOFFSET_FOR_INDEX(
@@ -484,17 +484,17 @@ INLINE Size VAL_BYTEOFFSET_FOR_INDEX(
     Utf8(const*) at;
 
     if (index == VAL_INDEX(v))
-        at = VAL_STRING_AT(v); // !!! update cache if needed
-    else if (index == VAL_LEN_HEAD(v))
-        at = String_Tail(VAL_STRING(v));
+        at = Cell_String_At(v); // !!! update cache if needed
+    else if (index == Cell_Series_Len_Head(v))
+        at = String_Tail(Cell_String(v));
     else {
         // !!! arbitrary seeking...this technique needs to be tuned, e.g.
         // to look from the head or the tail depending on what's closer
         //
-        at = String_At(VAL_STRING(v), index);
+        at = String_At(Cell_String(v), index);
     }
 
-    return at - String_Head(VAL_STRING(v));
+    return at - String_Head(Cell_String(v));
 }
 
 

@@ -726,7 +726,7 @@ unsigned char *RL_rebBinaryHead_internal(const REBVAL *binary)
 {
     ENTER_API;
 
-    return Binary_Head(VAL_BINARY_Known_Mutable(binary));
+    return Binary_Head(Cell_Binary_Known_Mutable(binary));
 }
 
 
@@ -737,7 +737,7 @@ unsigned char *RL_rebBinaryAt_internal(const REBVAL *binary)
 {
     ENTER_API;
 
-    return VAL_BINARY_AT_Known_Mutable(binary);
+    return Cell_Binary_At_Known_Mutable(binary);
 }
 
 
@@ -748,7 +748,7 @@ unsigned int RL_rebBinarySizeAt_internal(const REBVAL *binary)
 {
     ENTER_API;
 
-    return VAL_LEN_AT(binary);
+    return Cell_Series_Len_At(binary);
 }
 
 
@@ -1553,7 +1553,7 @@ intptr_t RL_rebUnbox(const void *p, va_list *vaptr)
         return VAL_INT64(result);
 
       case REB_ISSUE:
-        return VAL_CHAR(result);
+        return Cell_Codepoint(result);
 
       default:
         fail ("C-based rebUnbox() only supports INTEGER!, CHAR!, and LOGIC!");
@@ -1634,7 +1634,7 @@ uint32_t RL_rebUnboxChar(
     if (not IS_CHAR(result))
         fail ("rebUnboxChar() called on non-CHAR");
 
-    return VAL_CHAR(result);
+    return Cell_Codepoint(result);
 }
 
 
@@ -1683,7 +1683,7 @@ static size_t Spell_Into(
         fail ("rebSpell() APIs require UTF-8 types (strings, words, tokens)");
 
     Size utf8_size;
-    Utf8(const*) utf8 = VAL_UTF8_SIZE_AT(&utf8_size, v);
+    Utf8(const*) utf8 = Cell_Utf8_Size_At(&utf8_size, v);
 
     if (not buf) {
         assert(buf_size == 0);
@@ -1778,7 +1778,7 @@ static unsigned int Spell_Into_Wide(
 
     unsigned int num_wchars = 0;  // some codepoints need 2 wchars
 
-    Utf8(const*) cp = VAL_UTF8_AT(v);
+    Utf8(const*) cp = Cell_Utf8_At(v);
 
     Codepoint c;
     cp = Utf8_Next(&c, cp);
@@ -1895,7 +1895,7 @@ static size_t Bytes_Into(
 ){
     if (Is_Binary(v)) {
         Size size;
-        const Byte* data = VAL_BINARY_SIZE_AT(&size, v);
+        const Byte* data = Cell_Binary_Size_At(&size, v);
         if (buf == nullptr) {
             assert(buf_size == 0);
             return size;
@@ -1907,7 +1907,7 @@ static size_t Bytes_Into(
     }
 
     if (IS_CHAR(v)) {  // Note: CHAR! caches its UTF-8 encoding in the cell
-        Size size = VAL_CHAR_ENCODED_SIZE(v);
+        Size size = Cell_Char_Encoded_Size(v);
         if (buf == nullptr) {
             assert(buf_size == 0);
             return size;

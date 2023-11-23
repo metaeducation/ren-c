@@ -65,7 +65,7 @@ Bounce MAKE_Pair(
         //
         Size size;
         const Byte* bp
-            = Analyze_String_For_Scan(&size, arg, VAL_LEN_AT(arg));
+            = Analyze_String_For_Scan(&size, arg, Cell_Series_Len_At(arg));
 
         if (NULL == Scan_Pair(OUT, bp, size))
             goto bad_make;
@@ -82,7 +82,7 @@ Bounce MAKE_Pair(
     }
     else if (Is_Block(arg)) {
         const Cell* tail;
-        const Cell* item = VAL_ARRAY_AT(&tail, arg);
+        const Cell* item = Cell_Array_At(&tail, arg);
 
         if (Is_Integer(item))
             x = item;

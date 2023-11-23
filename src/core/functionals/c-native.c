@@ -282,7 +282,7 @@ Array* Startup_Natives(const REBVAL *boot_natives)
 
     assert(VAL_INDEX(boot_natives) == 0); // should be at head, sanity check
     const Cell* tail;
-    Cell* item = VAL_ARRAY_Known_Mutable_AT(&tail, boot_natives);
+    Cell* item = Cell_Array_At_Known_Mutable(&tail, boot_natives);
     assert(VAL_SPECIFIER(boot_natives) == SPECIFIED);
 
     // !!! We could avoid this by making NATIVE a specialization of a NATIVE*
@@ -337,7 +337,7 @@ Array* Startup_Natives(const REBVAL *boot_natives)
     Bind_Values_Set_Midstream_Shallow(item, tail, Lib_Context_Value);
 
     DECLARE_LOCAL (skipped);
-    Init_Array_Cell_At(skipped, REB_BLOCK, VAL_ARRAY(boot_natives), 3);
+    Init_Array_Cell_At(skipped, REB_BLOCK, Cell_Array(boot_natives), 3);
 
     DECLARE_LOCAL (discarded);
     if (Do_Any_Array_At_Throws(discarded, skipped, SPECIFIED))

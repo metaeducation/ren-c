@@ -976,7 +976,7 @@ INLINE Specifier* Derive_Specifier_Core(
 //
 // Instead write:
 //
-//     Bind_Values_Deep(Array_Head(VAL_ARRAY(block)), context);
+//     Bind_Values_Deep(Array_Head(Cell_Array(block)), context);
 //
 // That will pass the address of the first value element of the block's
 // contents.  You could use a later value element, but note that the interface

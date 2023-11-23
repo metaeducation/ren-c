@@ -138,7 +138,7 @@ INLINE Option(va_list*) FEED_VAPTR(Feed* feed) {
     cast(Array*, BINDING(FEED_SINGLE(feed)))
 
 #define FEED_ARRAY(feed) \
-    VAL_ARRAY(FEED_SINGLE(feed))
+    Cell_Array(FEED_SINGLE(feed))
 
 #define FEED_INDEX(feed) \
     VAL_INDEX_UNBOUNDED(FEED_SINGLE(feed))
@@ -794,7 +794,7 @@ INLINE Feed* Prep_At_Feed(
     return Prep_Array_Feed(
         preallocated,
         nullptr,  // `first` = nullptr, don't inject arbitrary 1st element
-        VAL_ARRAY(any_array),
+        Cell_Array(any_array),
         VAL_INDEX(any_array),
         Derive_Specifier(specifier, any_array),
         flags

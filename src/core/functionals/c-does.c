@@ -81,7 +81,7 @@ Bounce Block_Dispatcher(Level* const L)
         // ^-- note not a `const Cell* block`, may get updated!
     assert(Is_Block(block) and VAL_INDEX(block) == 0);
 
-    const Array* body = VAL_ARRAY(block);
+    const Array* body = Cell_Array(block);
 
     if (IS_SPECIFIC(block)) {
         if (Level_Binding(L) == UNBOUND)

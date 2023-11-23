@@ -104,7 +104,7 @@ Bounce MAKE_Sequence(
         REBINT n;
 
         const Cell* tail;
-        const Cell* item = VAL_ARRAY_AT(&tail, arg);
+        const Cell* item = Cell_Array_At(&tail, arg);
 
         Byte buf[MAX_TUPLE];
         Byte* vp = buf;
@@ -116,7 +116,7 @@ Bounce MAKE_Sequence(
                 n = Int32(item);
             }
             else if (IS_CHAR(item)) {
-                n = VAL_CHAR(item);
+                n = Cell_Codepoint(item);
             }
             else
                 goto bad_make;
@@ -135,7 +135,7 @@ Bounce MAKE_Sequence(
         Byte buf[MAX_TUPLE];
         Byte* vp = buf;
 
-        const String* spelling = VAL_STRING(arg);
+        const String* spelling = Cell_String(arg);
         const Byte* ap = String_Head(spelling);
         size_t size = String_Size(spelling); // UTF-8 len
         if (size & 1)
@@ -153,7 +153,7 @@ Bounce MAKE_Sequence(
     }
     else if (Is_Binary(arg)) {
         Size size;
-        const Byte* at = VAL_BINARY_SIZE_AT(&size, arg);
+        const Byte* at = Cell_Binary_Size_At(&size, arg);
         if (size > MAX_TUPLE)
             size = MAX_TUPLE;
         Init_Tuple_Bytes(OUT, at, size);
@@ -379,7 +379,7 @@ REBTYPE(Sequence)
         if (r != OUT)
             Copy_Cell(OUT, r);
 
-        Freeze_Array_Shallow(VAL_ARRAY_KNOWN_MUTABLE(OUT));
+        Freeze_Array_Shallow(Cell_Array_Known_Mutable(OUT));
         HEART_BYTE(OUT) = kind;
         return OUT; }
 

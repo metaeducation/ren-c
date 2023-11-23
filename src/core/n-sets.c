@@ -98,9 +98,9 @@ Series* Make_Set_Operation_Series(
     // will be allocated at this size, but copied out at the exact size of
     // the actual result.
     //
-    REBLEN i = VAL_LEN_AT(val1);
+    REBLEN i = Cell_Series_Len_At(val1);
     if (flags & SOP_FLAG_BOTH)
-        i += VAL_LEN_AT(val2);
+        i += Cell_Series_Len_At(val2);
 
     REBINT h = 1; // used for both logic true/false and hash check
     bool first_pass = true; // are we in the first pass over the series?
@@ -124,7 +124,7 @@ Series* Make_Set_Operation_Series(
         do {
             // Note: val1 and val2 swapped 2nd pass!
             //
-            const Array* array1 = VAL_ARRAY(val1);
+            const Array* array1 = Cell_Array(val1);
 
             // Check what is in series1 but not in series2
             //
@@ -138,7 +138,7 @@ Series* Make_Set_Operation_Series(
                 const Cell* item = Array_At(array1, i);
                 if (flags & SOP_FLAG_CHECK) {
                     h = Find_Key_Hashed(
-                        m_cast(Array*, VAL_ARRAY(val2)),  // mode 1 unchanged
+                        m_cast(Array*, Cell_Array(val2)),  // mode 1 unchanged
                         hser,
                         item,
                         VAL_SPECIFIER(val1),
@@ -208,7 +208,7 @@ Series* Make_Set_Operation_Series(
         do {
             // Note: val1 and val2 swapped 2nd pass!
             //
-            const String* str = VAL_STRING(val1);
+            const String* str = Cell_String(val1);
 
             DECLARE_LOCAL (iter);
             Copy_Cell(iter, val1);
@@ -226,7 +226,7 @@ Series* Make_Set_Operation_Series(
                     h = (NOT_FOUND != Find_Binstr_In_Binstr(
                         &len_match,
                         val2,
-                        VAL_LEN_HEAD(val2),
+                        Cell_Series_Len_Head(val2),
                         iter,
                         1,  // single codepoint length
                         cased ? AM_FIND_CASE : 0,
@@ -283,7 +283,7 @@ Series* Make_Set_Operation_Series(
         do {
             // Note: val1 and val2 swapped 2nd pass!
             //
-            const Binary* bin = VAL_BINARY(val1);
+            const Binary* bin = Cell_Binary(val1);
 
             // Iterate over first series
             //
@@ -301,7 +301,7 @@ Series* Make_Set_Operation_Series(
                     h = (NOT_FOUND != Find_Binstr_In_Binstr(
                         &len_match,
                         val2,  // searched
-                        VAL_LEN_HEAD(val2),  // limit (highest index)
+                        Cell_Series_Len_Head(val2),  // limit (highest index)
                         iter,  // pattern
                         1,  // "part", e.g. matches only 1 byte
                         cased ? AM_FIND_CASE : 0,
@@ -325,7 +325,7 @@ Series* Make_Set_Operation_Series(
                     NOT_FOUND == Find_Binstr_In_Binstr(
                         &len_match,
                         buf_value,  // searched
-                        VAL_LEN_HEAD(buf_value),  // limit (highest index)
+                        Cell_Series_Len_Head(buf_value),  // limit (highest index)
                         iter,  // pattern
                         1,  // "part", e.g. matches only 1 byte
                         cased ? AM_FIND_CASE : 0,  // flags
@@ -334,7 +334,7 @@ Series* Make_Set_Operation_Series(
                 ){
                     Expand_Series_Tail(buf, skip);
                     Size size_at;
-                    const Byte* iter_at = VAL_BINARY_SIZE_AT(&size_at, iter);
+                    const Byte* iter_at = Cell_Binary_Size_At(&size_at, iter);
                     REBLEN min = MIN(size_at, skip);
                     memcpy(Binary_At(buf, buf_at), iter_at, min);
                     buf_at += min;

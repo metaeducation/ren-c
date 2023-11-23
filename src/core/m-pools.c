@@ -1001,8 +1001,8 @@ DECLARE_NATIVE(swap_contents)
     if (Is_Binary(ARG(series1)) != Is_Binary(ARG(series2)))
         fail ("Can only SWAP-CONTENTS of binaries with other binaries");
 
-    Series* s1 = VAL_SERIES_ENSURE_MUTABLE(ARG(series1));
-    Series* s2 = VAL_SERIES_ENSURE_MUTABLE(ARG(series2));
+    Series* s1 = Cell_Series_Ensure_Mutable(ARG(series1));
+    Series* s2 = Cell_Series_Ensure_Mutable(ARG(series2));
     Swap_Series_Content(s1, s2);
 
     return NONE;

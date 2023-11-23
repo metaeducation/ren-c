@@ -275,8 +275,8 @@ void Write_IO(const REBVAL *data, REBLEN len)
             // Write out one byte at a time, by translating it into two hex
             // digits and sending them to WriteConsole().
             //
-            const Byte* tail = Binary_Tail(VAL_BINARY(data));
-            const Byte* bp = VAL_BINARY_AT(data);
+            const Byte* tail = Binary_Tail(Cell_Binary(data));
+            const Byte* bp = Cell_Binary_At(data);
             for (; bp != tail; ++bp) {
                 WCHAR digits[2];
                 digits[0] = Hex_Digits[*bp / 16];
@@ -333,11 +333,11 @@ void Write_IO(const REBVAL *data, REBLEN len)
         const Byte* bp;
         Size size;
         if (Is_Binary(data)) {
-            bp = VAL_DATA_AT(data);
+            bp = Cell_Binary_At(data);
             size = len;
         }
         else {
-            bp = VAL_UTF8_SIZE_AT(&size, data);
+            bp = Cell_Utf8_Size_At(&size, data);
         }
 
         DWORD total_bytes;

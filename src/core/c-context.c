@@ -385,7 +385,7 @@ static void Collect_Inner_Loop(
         //
         if (Any_Array_Kind(kind)) {
             const Cell* sub_tail;
-            const Cell* sub_at = VAL_ARRAY_AT(&sub_tail, v);
+            const Cell* sub_at = Cell_Array_At(&sub_tail, v);
             Collect_Inner_Loop(cl, sub_at, sub_tail);
         }
     }
@@ -474,7 +474,7 @@ Array* Collect_Unique_Words_Managed(
     //
     if (not Is_Nulled(ignorables)) {
         const Cell* check_tail;
-        const Cell* check = VAL_ARRAY_AT(&check_tail, ignorables);
+        const Cell* check = Cell_Array_At(&check_tail, ignorables);
         for (; check != check_tail; ++check) {
             if (not Any_Word_Kind(Cell_Heart(check)))
                 fail (Error_Bad_Value(check));
@@ -493,7 +493,7 @@ Array* Collect_Unique_Words_Managed(
     //
     if (Is_Block(ignorables)) {
         const Cell* ignore_tail;
-        const Cell* ignore = VAL_ARRAY_AT(&ignore_tail, ignorables);
+        const Cell* ignore = Cell_Array_At(&ignore_tail, ignorables);
         for (; ignore != ignore_tail; ++ignore) {
             const Symbol* symbol = VAL_WORD_SYMBOL(ignore);
 
@@ -540,7 +540,7 @@ Array* Collect_Unique_Words_Managed(
 
     if (Is_Block(ignorables)) {
         const Cell* ignore_tail;
-        const Cell* ignore = VAL_ARRAY_AT(&ignore_tail, ignorables);
+        const Cell* ignore = Cell_Array_At(&ignore_tail, ignorables);
         for (; ignore != ignore_tail; ++ignore) {
             const Symbol* symbol = VAL_WORD_SYMBOL(ignore);
 

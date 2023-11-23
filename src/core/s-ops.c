@@ -66,7 +66,7 @@ const Byte* Analyze_String_For_Scan(
     REBLEN max_len  // maximum length in *codepoints*
 ){
     REBLEN len;
-    Utf8(const*) up = VAL_UTF8_LEN_SIZE_AT(&len, nullptr, any_string);
+    Utf8(const*) up = Cell_Utf8_Len_Size_At(&len, nullptr, any_string);
     if (len == 0)
         fail (Error_Index_Out_Of_Range_Raw());
 
@@ -149,7 +149,7 @@ void Change_Case(
     bool upper
 ){
     if (IS_CHAR(val)) {
-        Codepoint c = VAL_CHAR(val);
+        Codepoint c = Cell_Codepoint(val);
         Init_Char_Unchecked(out, upper ? UP_CASE(c) : LO_CASE(c));
         return;
     }
@@ -173,7 +173,7 @@ void Change_Case(
     // be possible, only contractions (is that true?)  Review when UTF-8
     // Everywhere is more mature to the point this is worth worrying about.
     //
-    Utf8(*) up = VAL_STRING_AT_ENSURE_MUTABLE(val);
+    Utf8(*) up = Cell_String_At_Ensure_Mutable(val);
     Utf8(*) dp;
     if (upper) {
         REBLEN n;
@@ -224,7 +224,7 @@ Array* Split_Lines(const REBVAL *str)
 {
     StackIndex base = TOP_INDEX;
 
-    REBLEN len = VAL_LEN_AT(str);
+    REBLEN len = Cell_Series_Len_At(str);
     REBLEN i = VAL_INDEX(str);
     if (i == len)
         return Make_Array(0);
@@ -232,7 +232,7 @@ Array* Split_Lines(const REBVAL *str)
     DECLARE_MOLD (mo);
     Push_Mold(mo);
 
-    Utf8(const*) cp = VAL_STRING_AT(str);
+    Utf8(const*) cp = Cell_String_At(str);
 
     Codepoint c;
     cp = Utf8_Next(&c, cp);

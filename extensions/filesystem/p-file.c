@@ -438,7 +438,7 @@ Bounce File_Actor(Level* level_, REBVAL *port, const Symbol* verb)
             Push_Mold(mo);
 
             REBLEN remain = len;  // only want as many items as in the /PART
-            const Cell* item = VAL_ARRAY_ITEM_AT(data);
+            const Cell* item = Cell_Array_Item_At(data);
             for (; remain != 0; --remain, ++item) {
                 Form_Value(mo, item);
                 if (REF(lines))
@@ -450,7 +450,7 @@ Bounce File_Actor(Level* level_, REBVAL *port, const Symbol* verb)
             // REPEND" mechanic of GET-BLOCK! and reduce as it went.
             //
             Init_Text(data, Pop_Molded_String(mo));
-            len = VAL_LEN_HEAD(data);
+            len = Cell_Series_Len_Head(data);
         }
 
         result = Write_File(port, data, len);

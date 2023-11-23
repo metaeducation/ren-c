@@ -109,7 +109,7 @@ Bounce MAKE_Word(
     }
 
     if (Any_String(arg)) {
-        if (Is_Series_Frozen(VAL_STRING(arg)))
+        if (Is_Series_Frozen(Cell_String(arg)))
             goto as_word;  // just reuse AS mechanics on frozen strings
 
         // Otherwise, we'll have to copy the data for a TO conversion

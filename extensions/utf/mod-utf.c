@@ -191,7 +191,7 @@ DECLARE_NATIVE(decode_text)
     // having wider format support might be a good thing.
 
     Size size;
-    const Byte* data = VAL_BINARY_SIZE_AT(&size, ARG(data));
+    const Byte* data = Cell_Binary_Size_At(&size, ARG(data));
     return rebSizedText(cs_cast(data), size);
 }
 
@@ -293,7 +293,7 @@ DECLARE_NATIVE(decode_utf16le)
     UTF_INCLUDE_PARAMS_OF_DECODE_UTF16LE;
 
     Size size;
-    const Byte* data = VAL_BINARY_SIZE_AT(&size, ARG(data));
+    const Byte* data = Cell_Binary_Size_At(&size, ARG(data));
 
     const bool little_endian = true;
     Init_Text(OUT, Decode_UTF16(data, size, little_endian, false));
@@ -322,7 +322,7 @@ DECLARE_NATIVE(encode_utf16le)
     UTF_INCLUDE_PARAMS_OF_ENCODE_UTF16LE;
 
     REBLEN len;
-    Utf8(const*) utf8 = VAL_UTF8_LEN_SIZE_AT(&len, nullptr, ARG(text));
+    Utf8(const*) utf8 = Cell_Utf8_Len_Size_At(&len, nullptr, ARG(text));
 
     const bool little_endian = true;
     Init_Binary(OUT, Encode_Utf16(utf8, len, little_endian));
@@ -373,7 +373,7 @@ DECLARE_NATIVE(decode_utf16be)
     UTF_INCLUDE_PARAMS_OF_DECODE_UTF16BE;
 
     Size size;
-    const Byte* data = VAL_BINARY_SIZE_AT(&size, ARG(data));
+    const Byte* data = Cell_Binary_Size_At(&size, ARG(data));
 
     const bool little_endian = false;
     Init_Text(OUT, Decode_UTF16(data, size, little_endian, false));
@@ -402,7 +402,7 @@ DECLARE_NATIVE(encode_utf16be)
     UTF_INCLUDE_PARAMS_OF_ENCODE_UTF16BE;
 
     REBLEN len;
-    Utf8(const*) utf8 = VAL_UTF8_LEN_SIZE_AT(&len, nullptr, ARG(text));
+    Utf8(const*) utf8 = Cell_Utf8_Len_Size_At(&len, nullptr, ARG(text));
 
     const bool little_endian = false;
     Init_Binary(OUT, Encode_Utf16(utf8, len, little_endian));

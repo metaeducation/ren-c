@@ -159,7 +159,7 @@ String* To_REBOL_Path(const Cell* string, Flags flags)
 
 restart:;
     REBLEN len;
-    Utf8(const*) up = VAL_UTF8_LEN_SIZE_AT(&len, nullptr, string);
+    Utf8(const*) up = Cell_Utf8_Len_Size_At(&len, nullptr, string);
 
     Codepoint c = '\0'; // for test after loop (in case loop does not run)
 
@@ -251,7 +251,7 @@ void Mold_File_To_Local(REB_MOLD *mo, const Cell* file, Flags flags) {
     assert(Is_File(file));
 
     REBLEN len;
-    Utf8(const*) up = VAL_UTF8_LEN_SIZE_AT(&len, nullptr, file);
+    Utf8(const*) up = Cell_Utf8_Len_Size_At(&len, nullptr, file);
 
     REBLEN i = 0;
 

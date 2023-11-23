@@ -80,9 +80,9 @@ REBINT CT_Array(NoQuote(const Cell*) a, NoQuote(const Cell*) b, bool strict)
         Fail_Stack_Overflow();
 
     return Compare_Arrays_At_Indexes(
-        VAL_ARRAY(a),
+        Cell_Array(a),
         VAL_INDEX(a),
-        VAL_ARRAY(b),
+        Cell_Array(b),
         VAL_INDEX(b),
         strict
     );
@@ -121,7 +121,7 @@ Bounce MAKE_Array(
         // `make block! "a <b> #c"` => `[a <b> #c]`, scans as code (unbound)
         //
         Size size;
-        Utf8(const*) utf8 = VAL_UTF8_SIZE_AT(&size, arg);
+        Utf8(const*) utf8 = Cell_Utf8_Size_At(&size, arg);
 
         const String* file = ANONYMOUS;
         Option(Context*) context = nullptr;
@@ -164,7 +164,7 @@ Bounce MAKE_Array(
         // instead of just [a b c] as the construction spec.
         //
         REBLEN len;
-        const Cell* at = VAL_ARRAY_LEN_AT(&len, arg);
+        const Cell* at = Cell_Array_Len_At(&len, arg);
 
         if (len != 2 or not Any_Array(at) or not Is_Integer(at + 1))
             goto bad_make;
@@ -172,7 +172,7 @@ Bounce MAKE_Array(
         const Cell* any_array = at;
         REBINT index = VAL_INDEX(any_array) + Int32(at + 1) - 1;
 
-        if (index < 0 or index > cast(REBINT, VAL_LEN_HEAD(any_array)))
+        if (index < 0 or index > cast(REBINT, Cell_Series_Len_Head(any_array)))
             goto bad_make;
 
         // !!! Previously this code would clear line break options on path
@@ -186,7 +186,7 @@ Bounce MAKE_Array(
         return Init_Series_Cell_At_Core(
             OUT,
             kind,
-            VAL_ARRAY(any_array),
+            Cell_Array(any_array),
             index,
             derived
         );
@@ -198,7 +198,7 @@ Bounce MAKE_Array(
         // data, but aliases it under a new kind.)
         //
         REBLEN len;
-        const Cell* at = VAL_ARRAY_LEN_AT(&len, arg);
+        const Cell* at = Cell_Array_Len_At(&len, arg);
         return Init_Array_Cell(
             OUT,
             kind,
@@ -211,7 +211,7 @@ Bounce MAKE_Array(
         // get an unbound code array.
         //
         Size utf8_size;
-        Utf8(const*) utf8 = VAL_UTF8_SIZE_AT(&utf8_size, arg);
+        Utf8(const*) utf8 = Cell_Utf8_Size_At(&utf8_size, arg);
         const String* file = ANONYMOUS;
         Option(Context*) context = nullptr;
         return Init_Array_Cell(
@@ -228,7 +228,7 @@ Bounce MAKE_Array(
         const String* file = ANONYMOUS;
 
         Size size;
-        const Byte* at = VAL_BINARY_SIZE_AT(&size, arg);
+        const Byte* at = Cell_Binary_Size_At(&size, arg);
         Option(Context*) context = nullptr;
         return Init_Array_Cell(
             OUT,
@@ -344,7 +344,7 @@ Bounce TO_Array(Level* level_, enum Reb_Kind kind, const REBVAL *arg) {
     }
     else if (Any_Array(arg)) {
         REBLEN len;
-        const Cell* at = VAL_ARRAY_LEN_AT(&len, arg);
+        const Cell* at = Cell_Array_Len_At(&len, arg);
         return Init_Array_Cell(
             OUT,
             kind,
@@ -397,7 +397,7 @@ REBINT Find_In_Array(
     // match a block against a block
 
     if (Is_Splice(pattern)) {
-        *len = VAL_LEN_AT(pattern);
+        *len = Cell_Series_Len_At(pattern);
         if (*len == 0)  // empty block matches any position [1]
             return index_unsigned;
 
@@ -407,7 +407,7 @@ REBINT Find_In_Array(
 
             REBLEN count = 0;
             const Cell* other_tail;
-            const Cell* other = VAL_ARRAY_AT(&other_tail, pattern);
+            const Cell* other = Cell_Array_At(&other_tail, pattern);
             for (; other != other_tail; ++other, ++item) {
                 if (
                     item == item_tail or
@@ -643,7 +643,7 @@ static REBINT Try_Get_Array_Index_From_Picker(
 
         const Symbol* symbol = VAL_WORD_SYMBOL(picker);
         const Cell* tail;
-        const Cell* item = VAL_ARRAY_AT(&tail, v);
+        const Cell* item = Cell_Array_At(&tail, v);
         REBLEN index = VAL_INDEX(v);
         for (; item != tail; ++item, ++index) {
             if (Any_Word(item) and Are_Synonyms(symbol, VAL_WORD_SYMBOL(item))) {
@@ -670,7 +670,7 @@ static REBINT Try_Get_Array_Index_From_Picker(
         // so adding one will be out of bounds.)
 
         n = 1 + Find_In_Array_Simple(
-            VAL_ARRAY(v),
+            Cell_Array(v),
             VAL_INDEX(v),
             picker
         );
@@ -692,10 +692,10 @@ bool Did_Pick_Block(
 ){
     REBINT n = Get_Num_From_Arg(picker);
     n += VAL_INDEX(block) - 1;
-    if (n < 0 or cast(REBLEN, n) >= VAL_LEN_HEAD(block))
+    if (n < 0 or cast(REBLEN, n) >= Cell_Series_Len_Head(block))
         return false;
 
-    const Cell* slot = Array_At(VAL_ARRAY(block), n);
+    const Cell* slot = Array_At(Cell_Array(block), n);
     Derelativize(out, slot, VAL_SPECIFIER(block));
     return true;
 }
@@ -715,7 +715,7 @@ void MF_Array(REB_MOLD *mo, NoQuote(const Cell*) v, bool form)
 
     if (form) {
         Option(Context*) context = nullptr;
-        Form_Array_At(mo, VAL_ARRAY(v), VAL_INDEX(v), context);
+        Form_Array_At(mo, Cell_Array(v), VAL_INDEX(v), context);
         return;
     }
 
@@ -729,14 +729,14 @@ void MF_Array(REB_MOLD *mo, NoQuote(const Cell*) v, bool form)
     else
         all = GET_MOLD_FLAG(mo, MOLD_FLAG_ALL);
 
-    assert(VAL_INDEX(v) <= VAL_LEN_HEAD(v));
+    assert(VAL_INDEX(v) <= Cell_Series_Len_Head(v));
 
     if (all) {
         SET_MOLD_FLAG(mo, MOLD_FLAG_ALL);
         Pre_Mold(mo, v); // #[block! part
 
         Append_Codepoint(mo->series, '[');
-        Mold_Array_At(mo, VAL_ARRAY(v), 0, "[]");
+        Mold_Array_At(mo, Cell_Array(v), 0, "[]");
         Post_Mold(mo, v);
         Append_Codepoint(mo->series, ']');
     }
@@ -797,7 +797,7 @@ void MF_Array(REB_MOLD *mo, NoQuote(const Cell*) v, bool form)
             panic ("Unknown array kind passed to MF_Array");
         }
 
-        Mold_Array_At(mo, VAL_ARRAY(v), VAL_INDEX(v), sep);
+        Mold_Array_At(mo, Cell_Array(v), VAL_INDEX(v), sep);
 
         if (kind == REB_SET_GROUP or kind == REB_SET_BLOCK)
             Append_Codepoint(mo->series, ':');
@@ -828,10 +828,10 @@ REBTYPE(Array)
 
         const Cell* picker = ARG(picker);
         REBINT n = Try_Get_Array_Index_From_Picker(array, picker);
-        if (n < 0 or n >= cast(REBINT, VAL_LEN_HEAD(array)))
+        if (n < 0 or n >= cast(REBINT, Cell_Series_Len_Head(array)))
             return nullptr;
 
-        const Cell* at = Array_At(VAL_ARRAY(array), n);
+        const Cell* at = Array_At(Cell_Array(array), n);
 
         Derelativize(OUT, at, VAL_SPECIFIER(array));
         Inherit_Const(stable_OUT, array);
@@ -860,10 +860,10 @@ REBTYPE(Array)
         // of an update if we don't lock the array for the poke duration.
         //
         REBINT n = Try_Get_Array_Index_From_Picker(array, picker);
-        if (n < 0 or n >= cast(REBINT, VAL_LEN_HEAD(array)))
+        if (n < 0 or n >= cast(REBINT, Cell_Series_Len_Head(array)))
             fail (Error_Out_Of_Range(picker));
 
-        Array* mut_arr = VAL_ARRAY_ENSURE_MUTABLE(array);
+        Array* mut_arr = Cell_Array_Ensure_Mutable(array);
         Cell* at = Array_At(mut_arr, n);
         Copy_Cell(at, setval);
 
@@ -889,7 +889,7 @@ REBTYPE(Array)
         if (REF(deep))
             fail (Error_Bad_Refines_Raw());
 
-        Array* arr = VAL_ARRAY_ENSURE_MUTABLE(array);
+        Array* arr = Cell_Array_Ensure_Mutable(array);
 
         REBLEN len;
         if (REF(part)) {
@@ -903,9 +903,9 @@ REBTYPE(Array)
         REBLEN index = VAL_INDEX(array); // Partial() can change index
 
         if (REF(last))
-            index = VAL_LEN_HEAD(array) - len;
+            index = Cell_Series_Len_Head(array) - len;
 
-        if (index >= VAL_LEN_HEAD(array)) {
+        if (index >= Cell_Series_Len_Head(array)) {
             if (not REF(part))
                 return RAISE(Error_Nothing_To_Take_Raw());
 
@@ -941,7 +941,7 @@ REBTYPE(Array)
 
         REBLEN limit = Part_Tail_May_Modify_Index(array, ARG(part));
 
-        const Array* arr = VAL_ARRAY(array);
+        const Array* arr = Cell_Array(array);
         REBLEN index = VAL_INDEX(array);
 
         REBINT skip;
@@ -1016,7 +1016,7 @@ REBTYPE(Array)
             return COPY(array);  // don't fail on read only if would be a no-op
         }
 
-        Array* arr = VAL_ARRAY_ENSURE_MUTABLE(array);
+        Array* arr = Cell_Array_Ensure_Mutable(array);
         REBLEN index = VAL_INDEX(array);
 
         Flags flags = 0;
@@ -1050,10 +1050,10 @@ REBTYPE(Array)
         return OUT; }
 
       case SYM_CLEAR: {
-        Array* arr = VAL_ARRAY_ENSURE_MUTABLE(array);
+        Array* arr = Cell_Array_Ensure_Mutable(array);
         REBLEN index = VAL_INDEX(array);
 
-        if (index < VAL_LEN_HEAD(array)) {
+        if (index < Cell_Series_Len_Head(array)) {
             if (index == 0)
                 Reset_Array(arr);
             else
@@ -1071,7 +1071,7 @@ REBTYPE(Array)
         REBU64 types = 0;
         REBLEN tail = Part_Tail_May_Modify_Index(array, ARG(part));
 
-        const Array* arr = VAL_ARRAY(array);
+        const Array* arr = Cell_Array(array);
         REBLEN index = VAL_INDEX(array);
 
         if (REF(deep))
@@ -1107,13 +1107,13 @@ REBTYPE(Array)
         REBLEN index = VAL_INDEX(array);
 
         if (
-            index < VAL_LEN_HEAD(array)
-            and VAL_INDEX(arg) < VAL_LEN_HEAD(arg)
+            index < Cell_Series_Len_Head(array)
+            and VAL_INDEX(arg) < Cell_Series_Len_Head(arg)
         ){
             // Cell bits can be copied within the same array
             //
-            Cell* a = VAL_ARRAY_AT_Ensure_Mutable(nullptr, array);
-            Cell* b = VAL_ARRAY_AT_Ensure_Mutable(nullptr, arg);
+            Cell* a = Cell_Array_At_Ensure_Mutable(nullptr, array);
+            Cell* b = Cell_Array_At_Ensure_Mutable(nullptr, arg);
             Cell temp;
             temp.header = a->header;
             temp.payload = a->payload;
@@ -1127,7 +1127,7 @@ REBTYPE(Array)
         INCLUDE_PARAMS_OF_REVERSE;
         UNUSED(ARG(series));  // covered by `v`
 
-        Array* arr = VAL_ARRAY_ENSURE_MUTABLE(array);
+        Array* arr = Cell_Array_Ensure_Mutable(array);
         REBLEN index = VAL_INDEX(array);
 
         REBLEN len = Part_Len_May_Modify_Index(array, ARG(part));
@@ -1204,7 +1204,7 @@ REBTYPE(Array)
         INCLUDE_PARAMS_OF_SORT;
         UNUSED(PARAM(series));  // covered by `v`
 
-        Array* arr = VAL_ARRAY_ENSURE_MUTABLE(array);
+        Array* arr = Cell_Array_Ensure_Mutable(array);
 
         struct sort_flags flags;
         flags.cased = REF(case);
@@ -1264,13 +1264,13 @@ REBTYPE(Array)
             fail (Error_Bad_Refines_Raw());
 
         if (REF(only)) { // pick an element out of the array
-            if (index >= VAL_LEN_HEAD(array))
+            if (index >= Cell_Series_Len_Head(array))
                 return nullptr;
 
             Init_Integer(
                 ARG(seed),
                 1 + (Random_Int(REF(secure))
-                    % (VAL_LEN_HEAD(array) - index))
+                    % (Cell_Series_Len_Head(array) - index))
             );
 
             if (not Did_Pick_Block(OUT, array, ARG(seed)))
@@ -1278,7 +1278,7 @@ REBTYPE(Array)
             return Inherit_Const(stable_OUT, array);
         }
 
-        Array* arr = VAL_ARRAY_ENSURE_MUTABLE(array);
+        Array* arr = Cell_Array_Ensure_Mutable(array);
         Shuffle_Array(arr, VAL_INDEX(array), REF(secure));
         return COPY(array); }
 
@@ -1499,7 +1499,7 @@ DECLARE_NATIVE(glom)
     }
 
     assert(Is_Block(accumulator));
-    Array* a = VAL_ARRAY_ENSURE_MUTABLE(accumulator);
+    Array* a = Cell_Array_Ensure_Mutable(accumulator);
 
     if (not splice) {
         //
@@ -1520,7 +1520,7 @@ DECLARE_NATIVE(glom)
         // But in the interests of time, just expand the target array for now
         // if necessary--work on other details later.
         //
-        Array* r = VAL_ARRAY_ENSURE_MUTABLE(result);
+        Array* r = Cell_Array_Ensure_Mutable(result);
         Specifier* r_specifier = VAL_SPECIFIER(result);
         REBLEN a_len = Array_Len(a);
         REBLEN r_len = Array_Len(r);

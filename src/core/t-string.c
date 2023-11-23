@@ -240,10 +240,10 @@ REBINT CT_String(NoQuote(const Cell*) a, NoQuote(const Cell*) b, bool strict)
     );
 
     REBLEN l1;
-    Utf8(const*) cp1 = VAL_UTF8_LEN_SIZE_AT(&l1, nullptr, a);
+    Utf8(const*) cp1 = Cell_Utf8_Len_Size_At(&l1, nullptr, a);
 
     REBLEN l2;
-    Utf8(const*) cp2 = VAL_UTF8_LEN_SIZE_AT(&l2, nullptr, b);
+    Utf8(const*) cp2 = Cell_Utf8_Len_Size_At(&l2, nullptr, b);
 
     REBLEN len = MIN(l1, l2);
 
@@ -333,7 +333,7 @@ static void reverse_string(String* str, REBLEN index, REBLEN len)
         // Regardless of whether the whole string was reversed or just some
         // part from the index to the tail, the length shouldn't change.
         //
-        assert(VAL_LEN_HEAD(string) == val_len_head);
+        assert(Cell_Series_Len_Head(string) == val_len_head);
         UNUSED(val_len_head);
     }
 }
@@ -368,7 +368,7 @@ Bounce MAKE_String(
     if (Any_Utf8(def)) {  // new type for the UTF-8 data with new allocation
         Length len;
         Size size;
-        const Byte* utf8 = VAL_UTF8_LEN_SIZE_AT(&len, &size, def);
+        const Byte* utf8 = Cell_Utf8_Len_Size_At(&len, &size, def);
         UNUSED(len);  // !!! Data already valid and checked, should leverage
         return Init_Any_String(
             OUT,
@@ -384,7 +384,7 @@ Bounce MAKE_String(
 
     if (Is_Binary(def)) {  // not necessarily valid UTF-8, so must check
         Size size;
-        const Byte* at = VAL_BINARY_SIZE_AT(&size, def);
+        const Byte* at = Cell_Binary_Size_At(&size, def);
         return Init_Any_String(
             OUT,
             kind,
@@ -404,7 +404,7 @@ Bounce MAKE_String(
         // to produce #{abcd2}.  That behavior is not available in Ren-C.
 
         REBLEN len;
-        const Cell* first = VAL_ARRAY_LEN_AT(&len, def);
+        const Cell* first = Cell_Array_Len_At(&len, def);
 
         if (len != 2)
             goto bad_make;
@@ -417,10 +417,10 @@ Bounce MAKE_String(
             goto bad_make;
 
         REBINT i = Int32(index) - 1 + VAL_INDEX(first);
-        if (i < 0 or i > cast(REBINT, VAL_LEN_AT(first)))
+        if (i < 0 or i > cast(REBINT, Cell_Series_Len_At(first)))
             goto bad_make;
 
-        return Init_Series_Cell_At(OUT, kind, VAL_SERIES(first), i);
+        return Init_Series_Cell_At(OUT, kind, Cell_Series(first), i);
     }
 
   bad_make:
@@ -443,7 +443,7 @@ Bounce TO_String(Level* level_, enum Reb_Kind kind, const REBVAL *arg)
             //
             return RAISE("Use CODEPOINT-TO-CHAR for codepoint to ISSUE!");
         }
-        if (IS_CHAR(arg) and VAL_CHAR(arg) == 0)
+        if (IS_CHAR(arg) and Cell_Codepoint(arg) == 0)
             return RAISE(Error_Illegal_Zero_Byte_Raw());  // `#` as codepoint 0
 
         // Fall through
@@ -459,7 +459,7 @@ Bounce TO_String(Level* level_, enum Reb_Kind kind, const REBVAL *arg)
         // used for this.
         //
         Size size;
-        const Byte* at = VAL_BINARY_SIZE_AT(&size, arg);
+        const Byte* at = Cell_Binary_Size_At(&size, arg);
         return Init_Any_String(
             OUT,
             kind,
@@ -502,7 +502,7 @@ DECLARE_NATIVE(to_text)
 
     if (Is_Binary(ARG(value)) and REF(relax)) {
         Size size;
-        const Byte* at = VAL_BINARY_SIZE_AT(&size, ARG(value));
+        const Byte* at = Cell_Binary_Size_At(&size, ARG(value));
         return Init_Any_String(
             OUT,
             REB_TEXT,
@@ -803,7 +803,7 @@ static void Mold_File(REB_MOLD *mo, NoQuote(const Cell*) v)
     Append_Codepoint(mo->series, '%');
 
     REBLEN len;
-    Utf8(const*) cp = VAL_UTF8_LEN_SIZE_AT(&len, nullptr, v);
+    Utf8(const*) cp = Cell_Utf8_Len_Size_At(&len, nullptr, v);
 
     REBLEN n;
     for (n = 0; n < len; ++n) {
@@ -841,7 +841,7 @@ void MF_String(REB_MOLD *mo, NoQuote(const Cell*) v, bool form)
     //
     if (GET_MOLD_FLAG(mo, MOLD_FLAG_ALL) and VAL_INDEX(v) != 0) {
         Pre_Mold(mo, v); // e.g. #[file! part
-        Mold_Text_Series_At(mo, VAL_STRING(v), 0);
+        Mold_Text_Series_At(mo, Cell_String(v), 0);
         Post_Mold(mo, v);
         return;
     }
@@ -856,11 +856,11 @@ void MF_String(REB_MOLD *mo, NoQuote(const Cell*) v, bool form)
 
     switch (kind) {
       case REB_TEXT:
-        Mold_Text_Series_At(mo, VAL_STRING(v), VAL_INDEX(v));
+        Mold_Text_Series_At(mo, Cell_String(v), VAL_INDEX(v));
         break;
 
       case REB_FILE:
-        if (VAL_LEN_AT(v) == 0) {
+        if (Cell_Series_Len_At(v) == 0) {
             Append_Ascii(buf, "%\"\"");
             break;
         }
@@ -905,7 +905,7 @@ bool Did_Get_Series_Index_From_Picker(
 
     n += VAL_INDEX(v) - 1;
 
-    if (n < 0 or cast(REBLEN, n) >= VAL_LEN_HEAD(v))
+    if (n < 0 or cast(REBLEN, n) >= Cell_Series_Len_Head(v))
         return false;  // out of range, null unless POKE or more PICK-ing
 
     *out = n;
@@ -938,7 +938,7 @@ REBTYPE(String)
         if (not Did_Get_Series_Index_From_Picker(&n, v, picker))
             return nullptr;
 
-        Codepoint c = Get_Char_At(VAL_STRING(v), n);
+        Codepoint c = Get_Char_At(Cell_String(v), n);
 
         return Init_Char_Unchecked(OUT, c); }
 
@@ -958,7 +958,7 @@ REBTYPE(String)
 
         Codepoint c;
         if (IS_CHAR(setval)) {
-            c = VAL_CHAR(setval);
+            c = Cell_Codepoint(setval);
         }
         else if (Is_Integer(setval)) {
             c = Int32(setval);
@@ -969,7 +969,7 @@ REBTYPE(String)
         if (c == 0)
             fail (Error_Illegal_Zero_Byte_Raw());
 
-        String* s = VAL_STRING_ENSURE_MUTABLE(v);
+        String* s = Cell_String_Ensure_Mutable(v);
         Set_Char_At(s, n, c);
 
         return nullptr; }  // Array* is still fine, caller need not update
@@ -981,7 +981,7 @@ REBTYPE(String)
 
         if (VAL_WORD_ID(ARG(property)) == SYM_SIZE) {
             Size size;
-            VAL_UTF8_SIZE_AT(&size, v);
+            Cell_Utf8_Size_At(&size, v);
             return Init_Integer(OUT, size);
         }
         return Series_Common_Action_Maybe_Unhandled(level_, verb); }
@@ -1001,7 +1001,7 @@ REBTYPE(String)
 
         UNUSED(PARAM(series)); // already accounted for
 
-        String* s = VAL_STRING_ENSURE_MUTABLE(v);
+        String* s = Cell_String_Ensure_Mutable(v);
 
         REBINT limit;
         if (REF(part))
@@ -1010,13 +1010,13 @@ REBTYPE(String)
             limit = 1;
 
         REBLEN index = VAL_INDEX(v);  // Part calculation may have changed!
-        REBLEN tail = VAL_LEN_HEAD(v);
+        REBLEN tail = Cell_Series_Len_Head(v);
 
         if (index >= tail or limit == 0)
             return COPY(v);
 
         REBLEN len;
-        Size size = VAL_SIZE_LIMIT_AT(&len, v, limit);
+        Size size = Cell_String_Size_Limit_At(&len, v, limit);
 
         Size offset = VAL_BYTEOFFSET_FOR_INDEX(v, index);
         Size size_old = String_Size(s);
@@ -1130,13 +1130,13 @@ REBTYPE(String)
             Init_Series_Cell_At(
                 ARG(tail),
                 VAL_TYPE(v),
-                VAL_SERIES(v),
+                Cell_Series(v),
                 ret + len
             );
             Init_Series_Cell_At(
                 OUT,
                 VAL_TYPE(v),
-                VAL_SERIES(v),
+                Cell_Series(v),
                 ret
             );
             return Proxy_Multi_Returns(level_);
@@ -1150,7 +1150,7 @@ REBTYPE(String)
 
         return Init_Char_Unchecked(
             OUT,
-            Codepoint_At(String_At(VAL_STRING(v), ret))
+            Codepoint_At(String_At(Cell_String(v), ret))
         ); }
 
       case SYM_TAKE: {
@@ -1173,7 +1173,7 @@ REBTYPE(String)
 
         // Note that /PART can change index
 
-        REBLEN tail = VAL_LEN_HEAD(v);
+        REBLEN tail = Cell_Series_Len_Head(v);
 
         if (REF(last)) {
             if (len > tail) {
@@ -1195,16 +1195,16 @@ REBTYPE(String)
         if (REF(part))
             Init_Any_String(OUT, VAL_TYPE(v), Copy_String_At_Limit(v, len));
         else
-            Init_Char_Unchecked(OUT, Codepoint_At(VAL_STRING_AT(v)));
+            Init_Char_Unchecked(OUT, Codepoint_At(Cell_String_At(v)));
 
         Remove_Any_Series_Len(v, VAL_INDEX(v), len);
         return OUT; }
 
       case SYM_CLEAR: {
-        String* s = VAL_STRING_ENSURE_MUTABLE(v);
+        String* s = Cell_String_Ensure_Mutable(v);
 
         REBLEN index = VAL_INDEX(v);
-        REBLEN tail = VAL_LEN_HEAD(v);
+        REBLEN tail = Cell_Series_Len_Head(v);
 
         if (index >= tail)
             return COPY(v);  // clearing after available data has no effect
@@ -1247,13 +1247,13 @@ REBTYPE(String)
         if (VAL_TYPE(v) != VAL_TYPE(arg))
             fail (Error_Not_Same_Type_Raw());
 
-        String* v_str = VAL_STRING_ENSURE_MUTABLE(v);
-        String* arg_str = VAL_STRING_ENSURE_MUTABLE(arg);
+        String* v_str = Cell_String_Ensure_Mutable(v);
+        String* arg_str = Cell_String_Ensure_Mutable(arg);
 
         REBLEN index = VAL_INDEX(v);
-        REBLEN tail = VAL_LEN_HEAD(v);
+        REBLEN tail = Cell_Series_Len_Head(v);
 
-        if (index < tail and VAL_INDEX(arg) < VAL_LEN_HEAD(arg)) {
+        if (index < tail and VAL_INDEX(arg) < Cell_Series_Len_Head(arg)) {
             Codepoint v_c = Get_Char_At(v_str, VAL_INDEX(v));
             Codepoint arg_c = Get_Char_At(arg_str, VAL_INDEX(arg));
 
@@ -1266,7 +1266,7 @@ REBTYPE(String)
         INCLUDE_PARAMS_OF_REVERSE;
         UNUSED(ARG(series));
 
-        String* str = VAL_STRING_ENSURE_MUTABLE(v);
+        String* str = Cell_String_Ensure_Mutable(v);
 
         Copy_Cell(OUT, v);  // save before index adjustment
         REBINT len = Part_Len_May_Modify_Index(v, ARG(part));
@@ -1279,8 +1279,8 @@ REBTYPE(String)
 
         UNUSED(PARAM(series));
 
-        String* str = VAL_STRING_ENSURE_MUTABLE(v);  // just ensure mutability
-        UNUSED(str);  // we use the VAL_UTF8_AT() accessor, which is const
+        String* str = Cell_String_Ensure_Mutable(v);  // just ensure mutability
+        UNUSED(str);  // we use the Cell_Utf8_At() accessor, which is const
 
         if (REF(all))
             fail (Error_Bad_Refines_Raw());
@@ -1295,7 +1295,7 @@ REBTYPE(String)
 
         Length len;
         Size size;
-        const Byte* utf8 = VAL_UTF8_LEN_SIZE_AT_LIMIT(&len, &size, v, limit);
+        const Byte* utf8 = Cell_Utf8_Len_Size_At_Limit(&len, &size, v, limit);
 
         // Test for if the range is all ASCII can just be if (len == size)...
         // that means every codepoint is one byte.
@@ -1326,7 +1326,7 @@ REBTYPE(String)
             thunk |= CC_FLAG_REVERSE;
 
         reb_qsort_r(
-            m_cast(Byte*, utf8),  // ok due to VAL_STRING_MUTABLE()
+            m_cast(Byte*, utf8),  // ok due to cell mutability check
             len,
             span * sizeof(Byte),
             &thunk,
@@ -1343,13 +1343,13 @@ REBTYPE(String)
             assert(Any_String(v));
 
             Size utf8_size;
-            Utf8(const*) utf8 = VAL_UTF8_SIZE_AT(&utf8_size, v);
+            Utf8(const*) utf8 = Cell_Utf8_Size_At(&utf8_size, v);
             Set_Random(crc32_z(0L, utf8, utf8_size));
             return NONE;
         }
 
         REBLEN index = VAL_INDEX(v);
-        REBLEN tail = VAL_LEN_HEAD(v);
+        REBLEN tail = Cell_Series_Len_Head(v);
 
         if (REF(only)) {
             if (index >= tail)
@@ -1359,11 +1359,11 @@ REBTYPE(String)
 
             return Init_Char_Unchecked(
                 OUT,
-                Get_Char_At(VAL_STRING(v), index)
+                Get_Char_At(Cell_String(v), index)
             );
         }
 
-        String* str = VAL_STRING_ENSURE_MUTABLE(v);
+        String* str = Cell_String_Ensure_Mutable(v);
 
         if (not Is_String_Definitely_ASCII(str))
             fail ("UTF-8 Everywhere: String shuffle temporarily unavailable");

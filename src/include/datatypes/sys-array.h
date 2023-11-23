@@ -329,7 +329,7 @@ enum {
 
 #define COPY_ANY_ARRAY_AT_DEEP_MANAGED(v) \
     Copy_Array_At_Extra_Deep_Flags_Managed( \
-        VAL_ARRAY(v), VAL_INDEX(v), VAL_SPECIFIER(v), 0, SERIES_FLAGS_NONE)
+        Cell_Array(v), VAL_INDEX(v), VAL_SPECIFIER(v), 0, SERIES_FLAGS_NONE)
 
 #define Copy_Array_At_Shallow(a,i,s) \
     Copy_Array_At_Extra_Shallow((a), (i), (s), 0, SERIES_FLAGS_NONE)
@@ -371,13 +371,13 @@ INLINE Array* Copy_Array_At_Extra_Deep_Flags_Managed(
     Root_Empty_Block
 
 #define EMPTY_ARRAY \
-    PG_Empty_Array // Note: initialized from VAL_ARRAY(Root_Empty_Block)
+    PG_Empty_Array // Note: initialized from Cell_Array(Root_Empty_Block)
 
 
 // These operations do not need to take the value's index position into
 // account; they strictly operate on the array series
 //
-INLINE const Array* VAL_ARRAY(NoQuote(const Cell*) v) {
+INLINE const Array* Cell_Array(NoQuote(const Cell*) v) {
     assert(Any_Arraylike(v));
     assert(Is_Node_A_Stub(Cell_Node1(v)));  // not a pairing arraylike!
 
@@ -387,11 +387,11 @@ INLINE const Array* VAL_ARRAY(NoQuote(const Cell*) v) {
     return a;
 }
 
-#define VAL_ARRAY_ENSURE_MUTABLE(v) \
-    m_cast(Array*, VAL_ARRAY(Ensure_Mutable(v)))
+#define Cell_Array_Ensure_Mutable(v) \
+    m_cast(Array*, Cell_Array(Ensure_Mutable(v)))
 
-#define VAL_ARRAY_KNOWN_MUTABLE(v) \
-    m_cast(Array*, VAL_ARRAY(Known_Mutable(v)))
+#define Cell_Array_Known_Mutable(v) \
+    m_cast(Array*, Cell_Array(Known_Mutable(v)))
 
 
 #define PAIRING_LEN 2
@@ -411,7 +411,7 @@ INLINE const Array* VAL_ARRAY(NoQuote(const Cell*) v) {
 // of bounds of the data.  If a function can deal with such out of bounds
 // arrays meaningfully, it should work with VAL_INDEX_UNBOUNDED().
 //
-INLINE const Cell* VAL_ARRAY_LEN_AT(
+INLINE const Cell* Cell_Array_Len_At(
     Option(REBLEN*) len_at_out,
     NoQuote(const Cell*) v
 ){
@@ -424,16 +424,16 @@ INLINE const Cell* VAL_ARRAY_LEN_AT(
         return c_cast(Cell*, node);
     }
     const Array* arr = c_cast(Array*, node);
-    REBIDX i = VAL_INDEX_RAW(v);  // VAL_ARRAY() already checks it's series
+    REBIDX i = VAL_INDEX_RAW(v);  // Cell_Array() already checks it's series
     REBLEN len = Array_Len(arr);
     if (i < 0 or i > cast(REBIDX, len))
         fail (Error_Index_Out_Of_Range_Raw());
-    if (len_at_out)  // inlining should remove this if() for VAL_ARRAY_AT()
+    if (len_at_out)  // inlining should remove this if() for Cell_Array_At()
         *unwrap(len_at_out) = len - i;
     return Array_At(arr, i);
 }
 
-INLINE const Cell* VAL_ARRAY_AT(
+INLINE const Cell* Cell_Array_At(
     Option(const Cell**) tail_out,
     NoQuote(const Cell*) v
 ){
@@ -447,7 +447,7 @@ INLINE const Cell* VAL_ARRAY_AT(
         return cell;
     }
     const Array* arr = c_cast(Array*, node);
-    REBIDX i = VAL_INDEX_RAW(v);  // VAL_ARRAY() already checks it's arraylike
+    REBIDX i = VAL_INDEX_RAW(v);  // Cell_Array() already checks it's arraylike
     REBLEN len = Array_Len(arr);
     if (i < 0 or i > cast(REBIDX, len))
         fail (Error_Index_Out_Of_Range_Raw());
@@ -457,19 +457,19 @@ INLINE const Cell* VAL_ARRAY_AT(
     return at;
 }
 
-INLINE const Cell* VAL_ARRAY_ITEM_AT(NoQuote(const Cell*) v) {
+INLINE const Cell* Cell_Array_Item_At(NoQuote(const Cell*) v) {
     const Cell* tail;
-    const Cell* item = VAL_ARRAY_AT(&tail, v);
+    const Cell* item = Cell_Array_At(&tail, v);
     assert(item != tail);  // should be a valid value
     return item;
 }
 
 
-#define VAL_ARRAY_AT_Ensure_Mutable(tail_out,v) \
-    m_cast(Cell*, VAL_ARRAY_AT((tail_out), Ensure_Mutable(v)))
+#define Cell_Array_At_Ensure_Mutable(tail_out,v) \
+    m_cast(Cell*, Cell_Array_At((tail_out), Ensure_Mutable(v)))
 
-#define VAL_ARRAY_Known_Mutable_AT(tail_out,v) \
-    m_cast(Cell*, VAL_ARRAY_AT((tail_out), Known_Mutable(v)))
+#define Cell_Array_At_Known_Mutable(tail_out,v) \
+    m_cast(Cell*, Cell_Array_At((tail_out), Known_Mutable(v)))
 
 
 // !!! R3-Alpha introduced concepts of immutable series with PROTECT, but
@@ -481,11 +481,8 @@ INLINE const Cell* VAL_ARRAY_ITEM_AT(NoQuote(const Cell*) v) {
 // some of the thinking on this topic.  Until it's solved, binding-related
 // calls to this function get mutable access on non-mutable series.  :-/
 //
-#define VAL_ARRAY_AT_MUTABLE_HACK(tail_out,v) \
-    m_cast(Cell*, VAL_ARRAY_AT((tail_out), (v)))
-
-#define VAL_ARRAY_TAIL(v) \
-  Array_Tail(VAL_ARRAY(v))
+#define Cell_Array_At_Mutable_Hack(tail_out,v) \
+    m_cast(Cell*, Cell_Array_At((tail_out), (v)))
 
 
 //=//// ANY-ARRAY! INITIALIZER HELPERS ////////////////////////////////////=//
@@ -575,7 +572,7 @@ INLINE Cell* Init_Relative_Block_At(
 INLINE bool Is_Any_Doubled_Group(NoQuote(const Cell*) group) {
     assert(Any_Group_Kind(Cell_Heart(group)));
     const Cell* tail;
-    const Cell* inner = VAL_ARRAY_AT(&tail, group);
+    const Cell* inner = Cell_Array_At(&tail, group);
     if (inner + 1 != tail)  // should be exactly one item
         return false;
     return Is_Group(inner);  // if true, it's a ((...)) GROUP!
@@ -633,7 +630,7 @@ INLINE bool Is_Nihil(Atom(const*) v) {
     if (not Is_Pack(v))
         return false;
     const Cell* tail;
-    const Cell* at = VAL_ARRAY_AT(&tail, v);
+    const Cell* at = Cell_Array_At(&tail, v);
     return tail == at;
 }
 
@@ -641,7 +638,7 @@ INLINE bool Is_Meta_Of_Nihil(const Cell* v) {
     if (not Is_Meta_Of_Pack(v))
         return false;
     const Cell* tail;
-    const Cell* at = VAL_ARRAY_AT(&tail, v);
+    const Cell* at = Cell_Array_At(&tail, v);
     return tail == at;
 }
 

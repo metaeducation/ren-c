@@ -3052,7 +3052,7 @@ DECLARE_NATIVE(transcode)
     REBVAL *source = ARG(source);
 
     Size size;
-    const Byte* bp = VAL_BYTES_AT(&size, source);
+    const Byte* bp = Cell_Bytes_At(&size, source);
 
     SCAN_STATE *ss;
     REBVAL *ss_buffer = ARG(return);  // kept as a BINARY!, gets GC'd
@@ -3069,7 +3069,7 @@ DECLARE_NATIVE(transcode)
       case ST_TRANSCODE_SCANNING :
         ss = cast(
             SCAN_STATE*,
-            Binary_Head(VAL_BINARY_Known_Mutable(ss_buffer))
+            Binary_Head(Cell_Binary_Known_Mutable(ss_buffer))
         );
         goto scan_to_stack_maybe_failed;
     }
@@ -3100,11 +3100,11 @@ DECLARE_NATIVE(transcode)
   //    !!! Should the base name and extension be stored, or whole path?
 
     if (Is_Binary(source))  // scanner needs data to end in '\0' [1]
-        Term_Binary(m_cast(Binary*, VAL_BINARY(source)));
+        Term_Binary(m_cast(Binary*, Cell_Binary(source)));
 
     const String* file;
     if (REF(file)) {
-        file = VAL_STRING(ARG(file));
+        file = Cell_String(ARG(file));
         Freeze_Series(file);  // freezes vs. interning [2]
     }
     else
@@ -3217,7 +3217,7 @@ DECLARE_NATIVE(transcode)
     Copy_Cell(rest, source);
 
     if (Is_Binary(source)) {
-        const Binary* bin = VAL_BINARY(source);
+        const Binary* bin = Cell_Binary(source);
         if (ss->begin)
             VAL_INDEX_UNBOUNDED(rest) = ss->begin - Binary_Head(bin);
         else
@@ -3239,7 +3239,7 @@ DECLARE_NATIVE(transcode)
         if (ss->begin)
             VAL_INDEX_RAW(rest) += Num_Codepoints_For_Bytes(bp, ss->begin);
         else
-            VAL_INDEX_RAW(rest) += Binary_Tail(VAL_STRING(source)) - bp;
+            VAL_INDEX_RAW(rest) += Binary_Tail(Cell_String(source)) - bp;
     }
 
     if (Is_Nulled(OUT))

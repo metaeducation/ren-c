@@ -433,9 +433,9 @@ Bounce TO_Map(Level* level_, enum Reb_Kind kind, const REBVAL *arg)
         //
         // make map! [word val word val]
         //
-        REBLEN len = VAL_LEN_AT(arg);
+        REBLEN len = Cell_Series_Len_At(arg);
         const Cell* tail;
-        const Cell* at = VAL_ARRAY_AT(&tail, arg);
+        const Cell* at = Cell_Array_At(&tail, arg);
         Specifier* specifier = VAL_SPECIFIER(arg);
 
         Map* map = Make_Map(len / 2); // [key value key value...] + END
@@ -689,7 +689,7 @@ REBTYPE(Map)
 
         REBLEN len = Part_Len_May_Modify_Index(value, ARG(part));
         const Cell* tail;
-        const Cell* at = VAL_ARRAY_AT(&tail, value);  // w/modified index
+        const Cell* at = Cell_Array_At(&tail, value);  // w/modified index
 
         Append_Map(m, at, tail, VAL_SPECIFIER(value), len);
 

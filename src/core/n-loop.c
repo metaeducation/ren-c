@@ -141,8 +141,8 @@ static Bounce Loop_Series_Common(
 ){
     // !!! This bounds incoming `end` inside the array.  Should it assert?
     //
-    if (end >= cast(REBINT, VAL_LEN_HEAD(start)))
-        end = cast(REBINT, VAL_LEN_HEAD(start));
+    if (end >= cast(REBINT, Cell_Series_Len_Head(start)))
+        end = cast(REBINT, Cell_Series_Len_Head(start));
     if (end < 0)
         end = 0;
 
@@ -192,7 +192,7 @@ static Bounce Loop_Series_Common(
 
         if (
             VAL_TYPE(var) != VAL_TYPE(start)
-            or VAL_SERIES(var) != VAL_SERIES(start)
+            or Cell_Series(var) != Cell_Series(start)
         ){
             fail ("Can only change series index, not series to iterate");
         }
@@ -201,8 +201,8 @@ static Bounce Loop_Series_Common(
         // can be mutated during the loop body, so the end has to be refreshed
         // on each iteration.  Review ramifications of HOLD-ing it.
         //
-        if (end >= cast(REBINT, VAL_LEN_HEAD(start)))
-            end = cast(REBINT, VAL_LEN_HEAD(start));
+        if (end >= cast(REBINT, Cell_Series_Len_Head(start)))
+            end = cast(REBINT, Cell_Series_Len_Head(start));
 
         *state += bump;
     }
@@ -508,13 +508,13 @@ DECLARE_NATIVE(for_skip)
     //
     if (
         skip < 0
-        and VAL_INDEX_UNBOUNDED(var) >= cast(REBIDX, VAL_LEN_HEAD(var))
+        and VAL_INDEX_UNBOUNDED(var) >= cast(REBIDX, Cell_Series_Len_Head(var))
     ){
-        VAL_INDEX_UNBOUNDED(var) = VAL_LEN_HEAD(var) + skip;
+        VAL_INDEX_UNBOUNDED(var) = Cell_Series_Len_Head(var) + skip;
     }
 
     while (true) {
-        REBINT len = VAL_LEN_HEAD(var);  // VAL_LEN_HEAD() always >= 0
+        REBINT len = Cell_Series_Len_Head(var);  // always >= 0
         REBINT index = VAL_INDEX_RAW(var);  // may have been set to < 0 below
 
         if (index < 0)
@@ -720,9 +720,9 @@ void Init_Loop_Each(Value(*) iterator, Value(*) data)
     }
     else {
         if (Any_Series(data)) {
-            les->series = VAL_SERIES(data);
+            les->series = Cell_Series(data);
             les->u.eser.index = VAL_INDEX(data);
-            les->u.eser.len = VAL_LEN_HEAD(data);  // has HOLD, won't change
+            les->u.eser.len = Cell_Series_Len_Head(data);  // has HOLD, won't change
 
             if (Any_Array(data))
                 les->specifier = VAL_SPECIFIER(data);
@@ -1264,9 +1264,9 @@ DECLARE_NATIVE(remove_each)
     Value(*) data = ARG(data);
     Value(*) body = ARG(body);
 
-    Series* series = VAL_SERIES_ENSURE_MUTABLE(data);  // check even if empty
+    Series* series = Cell_Series_Ensure_Mutable(data);  // check even if empty
 
-    if (VAL_INDEX(data) >= VAL_LEN_AT(data))  // past series end
+    if (VAL_INDEX(data) >= Cell_Series_Len_At(data))  // past series end
         return Init_Integer(OUT, 0);
 
     Context* context = Virtual_Bind_Deep_To_New_Context(
@@ -1316,7 +1316,7 @@ DECLARE_NATIVE(remove_each)
             if (Any_Array(data))
                 Derelativize(
                     var,
-                    Array_At(VAL_ARRAY(data), index),
+                    Array_At(Cell_Array(data), index),
                     VAL_SPECIFIER(data)
                 );
             else if (Is_Binary(data)) {
@@ -1384,7 +1384,7 @@ DECLARE_NATIVE(remove_each)
 
             do {
                 assert(start <= len);
-                Set_Cell_Flag(Array_At(VAL_ARRAY(data), start), NOTE_REMOVE);
+                Set_Cell_Flag(Array_At(Cell_Array(data), start), NOTE_REMOVE);
                 ++start;
             } while (start != index);
         }
@@ -1429,7 +1429,7 @@ DECLARE_NATIVE(remove_each)
     if (Any_Array(data)) {
         if (not threw and breaking) {  // clean marks, don't remove
             const Cell* tail;
-            Cell* temp = VAL_ARRAY_Known_Mutable_AT(&tail, data);
+            Cell* temp = Cell_Array_At_Known_Mutable(&tail, data);
             for (; temp != tail; ++temp) {
                 if (Get_Cell_Flag(temp, NOTE_REMOVE))
                     Clear_Cell_Flag(temp, NOTE_REMOVE);
@@ -1438,7 +1438,7 @@ DECLARE_NATIVE(remove_each)
         }
 
         const Cell* tail;
-        Cell* dest = VAL_ARRAY_Known_Mutable_AT(&tail, data);
+        Cell* dest = Cell_Array_At_Known_Mutable(&tail, data);
         Cell* src = dest;
 
         // avoid blitting cells onto themselves by making the first thing we
@@ -1459,7 +1459,7 @@ DECLARE_NATIVE(remove_each)
                 ++removals;
             }
             if (src == tail) {
-                Set_Series_Len(VAL_ARRAY_KNOWN_MUTABLE(data), len);
+                Set_Series_Len(Cell_Array_Known_Mutable(data), len);
                 goto done_finalizing;
             }
             Copy_Cell(dest, src);  // same array, so we can do this
@@ -1477,7 +1477,7 @@ DECLARE_NATIVE(remove_each)
 
         // If there was a THROW, or fail() we need the remaining data
         //
-        REBLEN orig_len = VAL_LEN_HEAD(data);
+        REBLEN orig_len = Cell_Series_Len_Head(data);
         assert(start <= orig_len);
         Append_Ascii_Len(
             mo->series,
@@ -1487,8 +1487,8 @@ DECLARE_NATIVE(remove_each)
 
         Binary* popped = Pop_Molded_Binary(mo);  // not UTF-8 if binary [7]
 
-        assert(Binary_Len(popped) <= VAL_LEN_HEAD(data));
-        removals = VAL_LEN_HEAD(data) - Binary_Len(popped);
+        assert(Binary_Len(popped) <= Cell_Series_Len_Head(data));
+        removals = Cell_Series_Len_Head(data) - Binary_Len(popped);
 
         Swap_Series_Content(popped, series);  // swap series identity [3]
 
@@ -1503,7 +1503,7 @@ DECLARE_NATIVE(remove_each)
 
         // If there was a THROW, or fail() we need the remaining data
         //
-        REBLEN orig_len = VAL_LEN_HEAD(data);
+        REBLEN orig_len = Cell_Series_Len_Head(data);
         assert(start <= orig_len);
 
         for (; start != orig_len; ++start) {
@@ -1515,8 +1515,8 @@ DECLARE_NATIVE(remove_each)
 
         String* popped = Pop_Molded_String(mo);
 
-        assert(String_Len(popped) <= VAL_LEN_HEAD(data));
-        removals = VAL_LEN_HEAD(data) - String_Len(popped);
+        assert(String_Len(popped) <= Cell_Series_Len_Head(data));
+        removals = Cell_Series_Len_Head(data) - String_Len(popped);
 
         Swap_Series_Content(popped, series);  // swap series identity [3]
 
@@ -1690,7 +1690,7 @@ DECLARE_NATIVE(map)
     if (Is_Splice(SPARE)) {
         Quasify_Isotope(SPARE);
         const Cell* tail;
-        const Cell* v = VAL_ARRAY_AT(&tail, SPARE);
+        const Cell* v = Cell_Array_At(&tail, SPARE);
         for (; v != tail; ++v)
             Derelativize(PUSH(), v, VAL_SPECIFIER(SPARE));
     }

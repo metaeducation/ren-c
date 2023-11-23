@@ -113,7 +113,7 @@ Bounce TO_Integer(Level* level_, enum Reb_Kind kind, const REBVAL *arg)
 void Hex_String_To_Integer(REBVAL *out, const REBVAL *value)
 {
     Size utf8_size;
-    Utf8(const*) bp = VAL_UTF8_SIZE_AT(&utf8_size, value);
+    Utf8(const*) bp = Cell_Utf8_Size_At(&utf8_size, value);
 
     if (utf8_size > MAX_HEX_LEN) {
         // Lacks BINARY!'s accommodation of leading 00s or FFs
@@ -184,7 +184,7 @@ Context* Maybe_Value_To_Int64(
         // preserves the old behavior in the TO INTEGER! case.
         //
         Size n;
-        const Byte* bp = VAL_BINARY_SIZE_AT(&n, value);
+        const Byte* bp = Cell_Binary_Size_At(&n, value);
         if (n == 0) {
             Init_Integer(out, 0);
             return nullptr;
@@ -201,7 +201,7 @@ Context* Maybe_Value_To_Int64(
     }
     else if (Is_Issue(value) or Any_String(value)) {
         Size size;
-        const Length max_len = VAL_LEN_AT(value);  // e.g. "no maximum"
+        const Length max_len = Cell_Series_Len_At(value);  // e.g. "no maximum"
         const Byte* bp = Analyze_String_For_Scan(&size, value, max_len);
         if (
             memchr(bp, '.', size)
@@ -295,7 +295,7 @@ REBTYPE(Integer)
         if (Is_Integer(val2))
             arg = VAL_INT64(val2);
         else if (IS_CHAR(val2))
-            arg = VAL_CHAR(val2);
+            arg = Cell_Codepoint(val2);
         else {
             // Decimal or other numeric second argument:
             REBLEN n = 0; // use to flag special case

@@ -423,7 +423,7 @@ const Symbol* Intern_UTF8_Managed_Core(
 //
 const String* Intern_Any_String_Managed(const Cell* v) {
     Size utf8_size;
-    Utf8(const*) utf8 = VAL_UTF8_SIZE_AT(&utf8_size, v);
+    Utf8(const*) utf8 = Cell_Utf8_Size_At(&utf8_size, v);
     return Intern_UTF8_Managed(utf8, utf8_size);
 }
 

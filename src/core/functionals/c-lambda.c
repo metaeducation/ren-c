@@ -148,7 +148,7 @@ DECLARE_NATIVE(lambda)
     const Cell* item_tail;
     const Cell* item;
     if (Is_Block(spec)) {
-        item = VAL_ARRAY_AT(&item_tail, spec);
+        item = Cell_Array_At(&item_tail, spec);
         item_specifier = VAL_SPECIFIER(spec);
     }
     else if (

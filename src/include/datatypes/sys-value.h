@@ -591,7 +591,7 @@ INLINE bool Any_Arraylike(NoQuote(const Cell*) v) {
         return false;
     const Node* node1 = Cell_Node1(v);
     if (Is_Node_A_Cell(node1))
-        return true;  // VAL_ARRAY_AT() works, but VAL_ARRAY() won't work!
+        return true;  // Cell_Array_At() works, but Cell_Array() won't work!
     return Series_Flavor(c_cast(Series*, node1)) == FLAVOR_ARRAY;
 }
 

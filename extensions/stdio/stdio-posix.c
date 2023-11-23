@@ -130,8 +130,8 @@ void Write_IO(const REBVAL *data, REBLEN len)
             //
             bool ok = true;
 
-            const Byte* tail = Binary_Tail(VAL_BINARY(data));
-            const Byte* bp = VAL_BINARY_AT(data);
+            const Byte* tail = Binary_Tail(Cell_Binary(data));
+            const Byte* bp = Cell_Binary_At(data);
             for (; bp != tail; ++bp) {
                 char digits[2];
                 digits[0] = Hex_Digits[*bp / 16];
@@ -155,12 +155,12 @@ void Write_IO(const REBVAL *data, REBLEN len)
         const Byte* bp;
         Size size;
         if (Is_Binary(data)) {
-            bp = VAL_DATA_AT(data);
+            bp = Cell_Binary_At(data);
             size = len;
         }
         else {
             REBLEN len_check;
-            bp = VAL_UTF8_LEN_SIZE_AT_LIMIT(&len_check, &size, data, len);
+            bp = Cell_Utf8_Len_Size_At_Limit(&len_check, &size, data, len);
             assert(len_check == len);
             UNUSED(len_check);
         }

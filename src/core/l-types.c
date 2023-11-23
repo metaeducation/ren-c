@@ -1239,7 +1239,7 @@ DECLARE_NATIVE(scan_net_header)
 
     REBVAL *header = ARG(header);
     Size size;
-    const Byte* cp = VAL_BYTES_AT(&size, header);
+    const Byte* cp = Cell_Bytes_At(&size, header);
     UNUSED(size);  // !!! Review semantics
 
     while (IS_LEX_ANY_SPACE(*cp)) cp++; // skip white space
@@ -1281,7 +1281,7 @@ DECLARE_NATIVE(scan_net_header)
                 // Does it already use a block?
                 if (Is_Block(item + 1)) {
                     // Block of values already exists:
-                    val = Alloc_Tail_Array(VAL_ARRAY_ENSURE_MUTABLE(item + 1));
+                    val = Alloc_Tail_Array(Cell_Array_Ensure_Mutable(item + 1));
                 }
                 else {
                     // Create new block for values:

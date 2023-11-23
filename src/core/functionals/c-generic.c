@@ -129,7 +129,7 @@ Array* Startup_Generics(const REBVAL *boot_generics)
 {
     assert(VAL_INDEX(boot_generics) == 0); // should be at head, sanity check
     const Cell* tail;
-    Cell* head = VAL_ARRAY_Known_Mutable_AT(&tail, boot_generics);
+    Cell* head = Cell_Array_At_Known_Mutable(&tail, boot_generics);
     Specifier* specifier = VAL_SPECIFIER(boot_generics);
 
     // Add SET-WORD!s that are top-level in the generics block to the lib

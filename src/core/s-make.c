@@ -77,7 +77,7 @@ String* Copy_String_At_Limit(const Cell* src, REBINT limit)
 {
     Size limited_size;
     Length limited_length;
-    Utf8(const*) utf8 = VAL_UTF8_LEN_SIZE_AT_LIMIT(
+    Utf8(const*) utf8 = Cell_Utf8_Len_Size_At_Limit(
         &limited_length,
         &limited_size,
         src,
@@ -228,7 +228,7 @@ void Append_String_Limit(String* dst, NoQuote(const Cell*) src, REBLEN limit)
 
     Length len;
     Size size;
-    Utf8(const*) utf8 = VAL_UTF8_LEN_SIZE_AT_LIMIT(&len, &size, src, limit);
+    Utf8(const*) utf8 = Cell_Utf8_Len_Size_At_Limit(&len, &size, src, limit);
 
     Length old_len = String_Len(dst);
     Size old_used = String_Size(dst);
@@ -379,11 +379,11 @@ void Join_Binary_In_Byte_Buf(const REBVAL *blk, REBINT limit)
     REBLEN tail = 0;
 
     if (limit < 0)
-        limit = VAL_LEN_AT(blk);
+        limit = Cell_Series_Len_At(blk);
 
     Set_Series_Len(buf, 0);
 
-    const Cell* val = VAL_ARRAY_ITEM_AT(blk);
+    const Cell* val = Cell_Array_Item_At(blk);
     for (; limit > 0; val++, limit--) {
         switch (VAL_TYPE(val)) {
           case REB_BLANK:
@@ -399,7 +399,7 @@ void Join_Binary_In_Byte_Buf(const REBVAL *blk, REBINT limit)
 
           case REB_BINARY: {
             Size size;
-            const Byte* data = VAL_BINARY_SIZE_AT(&size, val);
+            const Byte* data = Cell_Binary_Size_At(&size, val);
             Expand_Series_Tail(buf, size);
             memcpy(Binary_At(buf, tail), data, size);
             break; }
@@ -411,7 +411,7 @@ void Join_Binary_In_Byte_Buf(const REBVAL *blk, REBINT limit)
           case REB_URL:
           case REB_TAG: {
             Size utf8_size;
-            Utf8(const*) utf8 = VAL_UTF8_SIZE_AT(&utf8_size, val);
+            Utf8(const*) utf8 = Cell_Utf8_Size_At(&utf8_size, val);
 
             Expand_Series_Tail(buf, utf8_size);
             memcpy(Binary_At(buf, tail), utf8, utf8_size);

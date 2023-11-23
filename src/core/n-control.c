@@ -783,7 +783,7 @@ DECLARE_NATIVE(all)
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
-    if (VAL_LEN_AT(block) == 0)
+    if (Cell_Series_Len_At(block) == 0)
         return VOID;
 
     assert(Not_Level_Flag(LEVEL, ALL_VOIDS));
@@ -916,7 +916,7 @@ DECLARE_NATIVE(any)
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
-    if (VAL_LEN_AT(block) == 0)
+    if (Cell_Series_Len_At(block) == 0)
         return VOID;
 
     assert(Not_Level_Flag(LEVEL, ALL_VOIDS));
@@ -1572,7 +1572,7 @@ DECLARE_NATIVE(catch)
             // Test all the words in the block for a match to catch
 
             const Cell* tail;
-            const Cell* candidate = VAL_ARRAY_AT(&tail, ARG(name));
+            const Cell* candidate = Cell_Array_At(&tail, ARG(name));
             for (; candidate != tail; candidate++) {
                 //
                 // !!! Should we test a typeset for illegal name types?

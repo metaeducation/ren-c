@@ -113,7 +113,7 @@ Bounce MAKE_Bitset(
 
     if (Is_Binary(arg)) {
         Size size;
-        const Byte* at = VAL_BINARY_SIZE_AT(&size, arg);
+        const Byte* at = Cell_Binary_Size_At(&size, arg);
         memcpy(Binary_Head(bin), at, (size / 8) + 1);
         return OUT;
     }
@@ -155,7 +155,7 @@ REBINT Find_Max_Bit(const Cell* val)
     case REB_ISSUE:
     case REB_TAG: {
         REBLEN len;
-        Utf8(const*) up = VAL_UTF8_LEN_SIZE_AT(&len, nullptr, val);
+        Utf8(const*) up = Cell_Utf8_Len_Size_At(&len, nullptr, val);
         for (; len > 0; --len) {
             Codepoint c;
             up = Utf8_Next(&c, up);
@@ -166,13 +166,13 @@ REBINT Find_Max_Bit(const Cell* val)
         break; }
 
     case REB_BINARY:
-        if (VAL_LEN_AT(val) != 0)
-            maxi = VAL_LEN_AT(val) * 8 - 1;
+        if (Cell_Series_Len_At(val) != 0)
+            maxi = Cell_Series_Len_At(val) * 8 - 1;
         break;
 
     case REB_BLOCK: {
         const Cell* tail;
-        const Cell* item = VAL_ARRAY_AT(&tail, val);
+        const Cell* item = Cell_Array_At(&tail, val);
         for (; item != tail; ++item) {
             REBINT n = Find_Max_Bit(item);
             if (n != NOT_FOUND and cast(REBLEN, n) > maxi)
@@ -277,8 +277,8 @@ bool Set_Bits(Binary* bset, const Cell* val, bool set)
     if (Is_Binary(val)) {
         REBLEN i = VAL_INDEX(val);
 
-        const Byte* bp = Binary_Head(VAL_BINARY(val));
-        for (; i != VAL_LEN_HEAD(val); i++)
+        const Byte* bp = Binary_Head(Cell_Binary(val));
+        for (; i != Cell_Series_Len_Head(val); i++)
             Set_Bit(bset, bp[i], set);
 
         return true;
@@ -286,7 +286,7 @@ bool Set_Bits(Binary* bset, const Cell* val, bool set)
 
     if (Is_Issue(val) or Any_String(val)) {
         REBLEN len;
-        Utf8(const*) up = VAL_UTF8_LEN_SIZE_AT(&len, nullptr, val);
+        Utf8(const*) up = Cell_Utf8_Len_Size_At(&len, nullptr, val);
         for (; len > 0; --len) {
             Codepoint c;
             up = Utf8_Next(&c, up);
@@ -300,7 +300,7 @@ bool Set_Bits(Binary* bset, const Cell* val, bool set)
         fail (Error_Invalid_Type(VAL_TYPE(val)));
 
     const Cell* tail;
-    const Cell* item = VAL_ARRAY_AT(&tail, val);
+    const Cell* item = Cell_Array_At(&tail, val);
 
     if (
         item != tail
@@ -321,7 +321,7 @@ bool Set_Bits(Binary* bset, const Cell* val, bool set)
                 Set_Bits(bset, SPECIFIC(item), set);
                 break;
             }
-            Codepoint c = VAL_CHAR(item);
+            Codepoint c = Cell_Codepoint(item);
             if (
                 item + 1 != tail
                 && Is_Word(item + 1)
@@ -329,7 +329,7 @@ bool Set_Bits(Binary* bset, const Cell* val, bool set)
             ){
                 item += 2;
                 if (IS_CHAR(item)) {
-                    REBLEN n = VAL_CHAR(item);
+                    REBLEN n = Cell_Codepoint(item);
                     if (n < c)
                         fail (Error_Index_Out_Of_Range_Raw());
                     do {
@@ -386,7 +386,7 @@ bool Set_Bits(Binary* bset, const Cell* val, bool set)
                 return false;
 
             Size n;
-            const Byte* at = VAL_BINARY_SIZE_AT(&n, item);
+            const Byte* at = Cell_Binary_Size_At(&n, item);
 
             Codepoint c = Binary_Len(bset);
             if (n >= c) {
@@ -414,15 +414,15 @@ bool Set_Bits(Binary* bset, const Cell* val, bool set)
 bool Check_Bits(const Binary* bset, const Cell* val, bool uncased)
 {
     if (IS_CHAR(val))
-        return Check_Bit(bset, VAL_CHAR(val), uncased);
+        return Check_Bit(bset, Cell_Codepoint(val), uncased);
 
     if (Is_Integer(val))
         return Check_Bit(bset, Int32s(val, 0), uncased);
 
     if (Is_Binary(val)) {
         REBLEN i = VAL_INDEX(val);
-        const Byte* bp = Binary_Head(VAL_BINARY(val));
-        for (; i != VAL_LEN_HEAD(val); ++i)
+        const Byte* bp = Binary_Head(Cell_Binary(val));
+        for (; i != Cell_Series_Len_Head(val); ++i)
             if (Check_Bit(bset, bp[i], uncased))
                 return true;
         return false;
@@ -430,7 +430,7 @@ bool Check_Bits(const Binary* bset, const Cell* val, bool uncased)
 
     if (Any_String(val)) {
         REBLEN len;
-        Utf8(const*) up = VAL_UTF8_LEN_SIZE_AT(&len, nullptr, val);
+        Utf8(const*) up = Cell_Utf8_Len_Size_At(&len, nullptr, val);
         for (; len > 0; --len) {
             Codepoint c;
             up = Utf8_Next(&c, up);
@@ -447,7 +447,7 @@ bool Check_Bits(const Binary* bset, const Cell* val, bool uncased)
     // Loop through block of bit specs
 
     const Cell* tail;
-    const Cell* item = VAL_ARRAY_AT(&tail, val);
+    const Cell* item = Cell_Array_At(&tail, val);
     for (; item != tail; item++) {
 
         switch (VAL_TYPE(item)) {
@@ -457,14 +457,14 @@ bool Check_Bits(const Binary* bset, const Cell* val, bool uncased)
                 if (Check_Bits(bset, SPECIFIC(item), uncased))
                     return true;
             }
-            Codepoint c = VAL_CHAR(item);
+            Codepoint c = Cell_Codepoint(item);
             if (
                 Is_Word(item + 1)
                 && VAL_WORD_SYMBOL(item + 1) == Canon(HYPHEN_1)
             ){
                 item += 2;
                 if (IS_CHAR(item)) {
-                    REBLEN n = VAL_CHAR(item);
+                    REBLEN n = Cell_Codepoint(item);
                     if (n < c)
                         fail (Error_Index_Out_Of_Range_Raw());
                     for (; c <= n; c++)
@@ -747,7 +747,7 @@ REBTYPE(Bitset)
 
         REBVAL *processed = rebValue(rebR(action), rebQ(v), rebQ(arg));
 
-        Binary* bits = VAL_BINARY_Known_Mutable(processed);
+        Binary* bits = Cell_Binary_Known_Mutable(processed);
         rebRelease(processed);
 
         INIT_BITS_NOT(bits, negated_result);

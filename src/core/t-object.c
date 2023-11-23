@@ -32,7 +32,7 @@ static void Append_Vars_To_Context_From_Group(REBVAL *context, REBVAL *block)
     assert(Is_Group(block));
 
     const Cell* tail;
-    const Cell* item = VAL_ARRAY_AT(&tail, block);
+    const Cell* item = Cell_Array_At(&tail, block);
 
     struct Reb_Collector collector;
     //
@@ -633,7 +633,7 @@ Bounce MAKE_Context(
 
     if (Is_Block(arg)) {
         const Cell* tail;
-        const Cell* at = VAL_ARRAY_AT(&tail, arg);
+        const Cell* at = Cell_Array_At(&tail, arg);
 
         Context* ctx = Make_Context_Detect_Managed(
             kind,
@@ -1476,7 +1476,7 @@ REBTYPE(Frame)
             if (Array_Len(details) < 1 or not Any_Array(Array_Head(details)))
                 return nullptr;
 
-            const Array* a = VAL_ARRAY(Array_Head(details));
+            const Array* a = Cell_Array(Array_Head(details));
             if (Not_Array_Flag(a, HAS_FILE_LINE_UNMASKED))
                 return nullptr;
 
@@ -1750,7 +1750,7 @@ DECLARE_NATIVE(construct)
     //
   blockscope {
     const Cell* tail;
-    Cell* at = VAL_ARRAY_AT_MUTABLE_HACK(&tail, spec);
+    Cell* at = Cell_Array_At_Mutable_Hack(&tail, spec);
     if (REF(only)) {
         Init_Object(
             OUT,
@@ -1770,7 +1770,7 @@ DECLARE_NATIVE(construct)
     // appropriately sized context.
     //
     const Cell* tail;
-    Cell* at = VAL_ARRAY_AT_Ensure_Mutable(&tail, spec);
+    Cell* at = Cell_Array_At_Ensure_Mutable(&tail, spec);
 
     Context* ctx = Make_Context_Detect_Managed(
         parent ? CTX_TYPE(parent) : REB_OBJECT,  // !!! Presume object?

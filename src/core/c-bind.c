@@ -97,7 +97,7 @@ void Bind_Values_Inner_Loop(
         else if (flags & BIND_DEEP) {
             if (Any_Arraylike(v)) {
                 const Cell* sub_tail;
-                Cell* sub_at = VAL_ARRAY_AT_MUTABLE_HACK(&sub_tail, v);
+                Cell* sub_at = Cell_Array_At_Mutable_Hack(&sub_tail, v);
                 Bind_Values_Inner_Loop(
                     binder,
                     sub_at,
@@ -194,7 +194,7 @@ void Unbind_Values_Core(
         }
         else if (Any_Arraylike(v) and deep) {
             const Cell* sub_tail;
-            Cell* sub_at = VAL_ARRAY_AT_MUTABLE_HACK(&sub_tail, v);
+            Cell* sub_at = Cell_Array_At_Mutable_Hack(&sub_tail, v);
             Unbind_Values_Core(sub_at, sub_tail, context, true);
         }
     }
@@ -832,7 +832,7 @@ DECLARE_NATIVE(let)
         assert(Is_Block(vars) or Is_Set_Block(vars));
 
         const Cell* tail;
-        const Cell* item = VAL_ARRAY_AT(&tail, vars);
+        const Cell* item = Cell_Array_At(&tail, vars);
         Specifier* item_specifier = VAL_SPECIFIER(vars);
 
         StackIndex base = TOP_INDEX;
@@ -1105,7 +1105,7 @@ void Clonify_And_Bind_Relative(
         }
         else if (Any_Arraylike(v)) {  // ruled out pairlike sequences above...
             Array* copy = Copy_Array_At_Extra_Shallow(
-                VAL_ARRAY(v),
+                Cell_Array(v),
                 0,  // !!! what if VAL_INDEX() is nonzero?
                 VAL_SPECIFIER(v),
                 0,
@@ -1132,7 +1132,7 @@ void Clonify_And_Bind_Relative(
             deep_tail = Array_Tail(copy);
         }
         else if (Any_Series_Kind(heart)) {
-            Series* copy = Copy_Series_Core(VAL_SERIES(v), NODE_FLAG_MANAGED);
+            Series* copy = Copy_Series_Core(Cell_Series(v), NODE_FLAG_MANAGED);
             Init_Cell_Node1(v, copy);
         }
 
@@ -1197,10 +1197,10 @@ Array* Copy_And_Bind_Relative_Deep_Managed(
     Array* copy;
 
   blockscope {
-    const Array* original = VAL_ARRAY(body);
+    const Array* original = Cell_Array(body);
     REBLEN index = VAL_INDEX(body);
     Specifier* specifier = VAL_SPECIFIER(body);
-    REBLEN tail = VAL_LEN_AT(body);
+    REBLEN tail = Cell_Series_Len_At(body);
     assert(tail <= Array_Len(original));
 
     if (index > tail)  // !!! should this be asserted?
@@ -1296,7 +1296,7 @@ void Rebind_Values_Deep(
             NOOP;
         else if (Any_Arraylike(v)) {
             const Cell* sub_tail;
-            Cell* sub_at = VAL_ARRAY_AT_MUTABLE_HACK(&sub_tail, v);
+            Cell* sub_at = Cell_Array_At_Mutable_Hack(&sub_tail, v);
             Rebind_Values_Deep(sub_at, sub_tail, from, to, binder);
         }
         else if (Any_Wordlike(v) and BINDING(v) == from) {
@@ -1360,7 +1360,7 @@ Context* Virtual_Bind_Deep_To_New_Context(
         Move_Cell(spec, temp);
     }
 
-    REBLEN num_vars = Is_Block(spec) ? VAL_LEN_AT(spec) : 1;
+    REBLEN num_vars = Is_Block(spec) ? Cell_Series_Len_At(spec) : 1;
     if (num_vars == 0)
         fail (spec);  // !!! should fail() take unstable?
 
@@ -1371,7 +1371,7 @@ Context* Virtual_Bind_Deep_To_New_Context(
     bool rebinding;
     if (Is_Block(spec)) {  // walk the block for errors BEFORE making binder
         specifier = VAL_SPECIFIER(spec);
-        item = VAL_ARRAY_AT(&tail, spec);
+        item = Cell_Array_At(&tail, spec);
 
         const Cell* check = item;
 
@@ -1622,7 +1622,7 @@ void Virtual_Bind_Deep_To_Existing_Context(
     //
     Bind_Values_Inner_Loop(
         &binder,
-        VAL_ARRAY_AT_MUTABLE_HACK(ARG(def)),  // mutates bindings
+        Cell_Array_At_Mutable_Hack(ARG(def)),  // mutates bindings
         exemplar,
         FLAGIT_KIND(REB_SET_WORD),  // types to bind (just set-word!),
         0,  // types to "add midstream" to binding as we go (nothing)
@@ -1640,7 +1640,7 @@ void Bind_Nonspecifically(Cell* head, const Cell* tail, Context* context)
     for (; v != tail; ++v) {
         if (Any_Arraylike(v)) {
             const Cell* sub_tail;
-            Cell* sub_head = VAL_ARRAY_AT_MUTABLE_HACK(&sub_tail, v);
+            Cell* sub_head = Cell_Array_At_Mutable_Hack(&sub_tail, v);
             Bind_Nonspecifically(sub_head, sub_tail, context);
         }
         else if (Any_Wordlike(v)) {
@@ -1670,7 +1670,7 @@ DECLARE_NATIVE(intern_p)
     assert(Is_Block(ARG(data)));
 
     const Cell* tail;
-    Cell* head = VAL_ARRAY_AT_MUTABLE_HACK(&tail, ARG(data));
+    Cell* head = Cell_Array_At_Mutable_Hack(&tail, ARG(data));
     Bind_Nonspecifically(head, tail, VAL_CONTEXT(ARG(where)));
 
     return COPY(ARG(data));

@@ -45,10 +45,10 @@ REBINT CT_Binary(NoQuote(const Cell*) a, NoQuote(const Cell*) b, bool strict)
     UNUSED(strict);  // no lax form of comparison
 
     Size size1;
-    const Byte* data1 = VAL_BINARY_SIZE_AT(&size1, a);
+    const Byte* data1 = Cell_Binary_Size_At(&size1, a);
 
     Size size2;
-    const Byte* data2 = VAL_BINARY_SIZE_AT(&size2, b);
+    const Byte* data2 = Cell_Binary_Size_At(&size2, b);
 
     REBLEN size = MIN(size1, size2);
 
@@ -129,7 +129,7 @@ static Bounce MAKE_TO_Binary_Common(Level* level_, const REBVAL *arg)
     switch (VAL_TYPE(arg)) {
     case REB_BINARY: {
         Size size;
-        const Byte* data = VAL_BINARY_SIZE_AT(&size, arg);
+        const Byte* data = Cell_Binary_Size_At(&size, arg);
         return Init_Binary(OUT, Copy_Bytes(data, size)); }
 
       case REB_TEXT:
@@ -139,7 +139,7 @@ static Bounce MAKE_TO_Binary_Common(Level* level_, const REBVAL *arg)
       case REB_TAG:
       case REB_ISSUE: {
         Size utf8_size;
-        Utf8(const*) utf8 = VAL_UTF8_SIZE_AT(&utf8_size, arg);
+        Utf8(const*) utf8 = Cell_Utf8_Size_At(&utf8_size, arg);
 
         Binary* bin = Make_Binary(utf8_size);
         memcpy(Binary_Head(bin), utf8, utf8_size);
@@ -166,7 +166,7 @@ static Bounce MAKE_TO_Binary_Common(Level* level_, const REBVAL *arg)
       case REB_BITSET:
         return Init_Binary(
             OUT,
-            Copy_Bytes(Binary_Head(VAL_BINARY(arg)), VAL_LEN_HEAD(arg))
+            Copy_Bytes(Binary_Head(Cell_Binary(arg)), Cell_Series_Len_Head(arg))
         );
 
       case REB_MONEY: {
@@ -273,7 +273,7 @@ void MF_Binary(REB_MOLD *mo, NoQuote(const Cell*) v, bool form)
         Pre_Mold(mo, v); // #[binary!
 
     Size size;
-    const Byte* data = VAL_BINARY_SIZE_AT(&size, v);
+    const Byte* data = Cell_Binary_Size_At(&size, v);
 
     switch (Get_System_Int(SYS_OPTIONS, OPTIONS_BINARY_BASE, 16)) {
       default:
@@ -329,7 +329,7 @@ REBTYPE(Binary)
         if (not Did_Get_Series_Index_From_Picker(&n, v, picker))
             return nullptr;
 
-        Byte b = *Binary_At(VAL_BINARY(v), n);
+        Byte b = *Binary_At(Cell_Binary(v), n);
 
         return Init_Integer(OUT, b);
       }
@@ -349,7 +349,7 @@ REBTYPE(Binary)
 
         REBINT i;
         if (IS_CHAR(setval)) {
-            i = VAL_CHAR(setval);
+            i = Cell_Codepoint(setval);
         }
         else if (Is_Integer(setval)) {
             i = Int32(setval);
@@ -364,7 +364,7 @@ REBTYPE(Binary)
         if (i > 0xff)
             fail (Error_Out_Of_Range(setval));
 
-        Binary* bin = VAL_BINARY_Ensure_Mutable(v);
+        Binary* bin = Cell_Binary_Ensure_Mutable(v);
         Binary_Head(bin)[n] = cast(Byte, i);
 
         return nullptr; }  // caller's Binary* is not stale, no update needed
@@ -482,13 +482,13 @@ REBTYPE(Binary)
             Init_Series_Cell_At(
                 ARG(tail),
                 REB_BINARY,
-                VAL_BINARY(v),
+                Cell_Binary(v),
                 ret + size
             );
             Init_Series_Cell_At(
                 OUT,
                 REB_BINARY,
-                VAL_BINARY(v),
+                Cell_Binary(v),
                 ret
             );
             return Proxy_Multi_Returns(level_);
@@ -498,12 +498,12 @@ REBTYPE(Binary)
         if (ret >= cast(REBLEN, tail))
             return nullptr;
 
-        return Init_Integer(OUT, *Binary_At(VAL_BINARY(v), ret)); }
+        return Init_Integer(OUT, *Binary_At(Cell_Binary(v), ret)); }
 
       case SYM_TAKE: {
         INCLUDE_PARAMS_OF_TAKE;
 
-        Binary* bin = VAL_BINARY_Ensure_Mutable(v);
+        Binary* bin = Cell_Binary_Ensure_Mutable(v);
 
         UNUSED(PARAM(series));
 
@@ -520,7 +520,7 @@ REBTYPE(Binary)
 
         // Note that /PART can change index
 
-        REBINT tail = cast(REBINT, VAL_LEN_HEAD(v));
+        REBINT tail = cast(REBINT, Cell_Series_Len_Head(v));
 
         if (REF(last)) {
             if (tail - len < 0) {
@@ -541,7 +541,7 @@ REBTYPE(Binary)
         // if no /PART, just return value, else return string
         //
         if (not REF(part)) {
-            Init_Integer(OUT, *VAL_BINARY_AT(v));
+            Init_Integer(OUT, *Cell_Binary_At(v));
         }
         else {
             Init_Binary(
@@ -553,9 +553,9 @@ REBTYPE(Binary)
         return OUT; }
 
       case SYM_CLEAR: {
-        Binary* bin = VAL_BINARY_Ensure_Mutable(v);
+        Binary* bin = Cell_Binary_Ensure_Mutable(v);
 
-        REBINT tail = cast(REBINT, VAL_LEN_HEAD(v));
+        REBINT tail = cast(REBINT, Cell_Series_Len_Head(v));
         REBINT index = cast(REBINT, VAL_INDEX(v));
 
         if (index >= tail)
@@ -584,7 +584,7 @@ REBTYPE(Binary)
         return Init_Series_Cell(
             OUT,
             REB_BINARY,
-            Copy_Binary_At_Len(VAL_SERIES(v), VAL_INDEX(v), len)
+            Copy_Binary_At_Len(Cell_Series(v), VAL_INDEX(v), len)
         ); }
 
     //-- Bitwise:
@@ -598,10 +598,10 @@ REBTYPE(Binary)
             fail (Error_Math_Args(VAL_TYPE(arg), verb));
 
         Size t0;
-        const Byte* p0 = VAL_BINARY_SIZE_AT(&t0, v);
+        const Byte* p0 = Cell_Binary_Size_At(&t0, v);
 
         Size t1;
-        const Byte* p1 = VAL_BINARY_SIZE_AT(&t1, arg);
+        const Byte* p1 = Cell_Binary_Size_At(&t1, arg);
 
         Size smaller = MIN(t0, t1);  // smaller array size
         Size larger = MAX(t0, t1);
@@ -649,7 +649,7 @@ REBTYPE(Binary)
 
       case SYM_BITWISE_NOT: {
         Size size;
-        const Byte* bp = VAL_BINARY_SIZE_AT(&size, v);
+        const Byte* bp = Cell_Binary_Size_At(&size, v);
 
         Binary* bin = Make_Binary(size);
         Term_Binary_Len(bin, size);  // !!! size is decremented, must set now
@@ -685,7 +685,7 @@ REBTYPE(Binary)
       case SYM_SUBTRACT:
       case SYM_ADD: {
         REBVAL *arg = D_ARG(2);
-        Binary* bin = VAL_BINARY_Ensure_Mutable(v);
+        Binary* bin = Cell_Binary_Ensure_Mutable(v);
 
         REBINT amount;
         if (Is_Integer(arg))
@@ -701,11 +701,11 @@ REBTYPE(Binary)
         if (amount == 0) // adding or subtracting 0 works, even #{} + 0
             return COPY(v);
 
-        if (VAL_LEN_AT(v) == 0) // add/subtract to #{} otherwise
+        if (Cell_Series_Len_At(v) == 0) // add/subtract to #{} otherwise
             fail (Error_Overflow_Raw());
 
         while (amount != 0) {
-            REBLEN wheel = VAL_LEN_HEAD(v) - 1;
+            REBLEN wheel = Cell_Series_Len_Head(v) - 1;
             while (true) {
                 Byte* b = Binary_At(bin, wheel);
                 if (amount > 0) {
@@ -746,13 +746,13 @@ REBTYPE(Binary)
         if (VAL_TYPE(v) != VAL_TYPE(arg))
             fail (Error_Not_Same_Type_Raw());
 
-        Byte* v_at = VAL_BINARY_AT_Ensure_Mutable(v);
-        Byte* arg_at = VAL_BINARY_AT_Ensure_Mutable(arg);
+        Byte* v_at = Cell_Binary_At_Ensure_Mutable(v);
+        Byte* arg_at = Cell_Binary_At_Ensure_Mutable(arg);
 
-        REBINT tail = cast(REBINT, VAL_LEN_HEAD(v));
+        REBINT tail = cast(REBINT, Cell_Series_Len_Head(v));
         REBINT index = cast(REBINT, VAL_INDEX(v));
 
-        if (index < tail and VAL_INDEX(arg) < VAL_LEN_HEAD(arg)) {
+        if (index < tail and VAL_INDEX(arg) < Cell_Series_Len_Head(arg)) {
             Byte temp = *v_at;
             *v_at = *arg_at;
             *arg_at = temp;
@@ -764,7 +764,7 @@ REBTYPE(Binary)
         UNUSED(ARG(series));
 
         REBLEN len = Part_Len_May_Modify_Index(v, ARG(part));
-        Byte* bp = VAL_BINARY_AT_Ensure_Mutable(v);  // index may've changed
+        Byte* bp = Cell_Binary_At_Ensure_Mutable(v);  // index may've changed
 
         if (len > 0) {
             REBLEN n = 0;
@@ -796,7 +796,7 @@ REBTYPE(Binary)
         Copy_Cell(OUT, v);  // copy to output before index adjustment
 
         REBLEN len = Part_Len_May_Modify_Index(v, ARG(part));
-        Byte* data_at = VAL_BINARY_AT_Ensure_Mutable(v);  // ^ index changes
+        Byte* data_at = Cell_Binary_At_Ensure_Mutable(v);  // ^ index changes
 
         if (len <= 1)
             return OUT;
@@ -835,12 +835,12 @@ REBTYPE(Binary)
 
         if (REF(seed)) { // binary contents are the seed
             Size size;
-            const Byte* data = VAL_BINARY_SIZE_AT(&size, v);
+            const Byte* data = Cell_Binary_Size_At(&size, v);
             Set_Random(crc32_z(0L, data, size));
             return NONE;
         }
 
-        REBINT tail = cast(REBINT, VAL_LEN_HEAD(v));
+        REBINT tail = cast(REBINT, Cell_Series_Len_Head(v));
         REBINT index = cast(REBINT, VAL_INDEX(v));
 
         if (REF(only)) {
@@ -849,11 +849,11 @@ REBTYPE(Binary)
 
             index += cast(REBLEN, Random_Int(REF(secure)))
                 % (tail - index);
-            const Binary* bin = VAL_BINARY(v);
+            const Binary* bin = Cell_Binary(v);
             return Init_Integer(OUT, *Binary_At(bin, index));  // PICK
         }
 
-        Binary* bin = VAL_BINARY_Ensure_Mutable(v);
+        Binary* bin = Cell_Binary_Ensure_Mutable(v);
 
         bool secure = REF(secure);
         REBLEN n;
@@ -895,7 +895,7 @@ DECLARE_NATIVE(enbin)
     INCLUDE_PARAMS_OF_ENBIN;
 
     REBVAL *settings = rebValue("compose", ARG(settings));
-    if (VAL_LEN_AT(settings) != 3)
+    if (Cell_Series_Len_At(settings) != 3)
         fail ("ENBIN requires array of length 3 for settings for now");
     bool little = rebUnboxLogic(
         "switch first", settings, "[",
@@ -999,11 +999,11 @@ DECLARE_NATIVE(debin)
     INCLUDE_PARAMS_OF_DEBIN;
 
     Size bin_size;
-    const Byte* bin_data = VAL_BINARY_SIZE_AT(&bin_size, ARG(binary));
+    const Byte* bin_data = Cell_Binary_Size_At(&bin_size, ARG(binary));
 
     REBVAL* settings = rebValue("compose", ARG(settings));
 
-    REBLEN arity = VAL_LEN_AT(settings);
+    REBLEN arity = Cell_Series_Len_At(settings);
     if (arity != 2 and arity != 3)
         fail("DEBIN requires array of length 2 or 3 for settings for now");
     bool little = rebUnboxLogic(

@@ -179,7 +179,7 @@ REBVAL *Lookup_Socket_Synchronously(
     SOCKREQ *sock = Sock_Of_Port(port);
 
     assert(Is_Text(hostname));
-    const char *hostname_utf8 = cs_cast(VAL_UTF8_AT(hostname));
+    const char *hostname_utf8 = cs_cast(Cell_Utf8_At(hostname));
     char *port_number_utf8 = rebSpell(
         Canon(FORM), rebI(sock->remote_port_number)
     );
@@ -477,7 +477,7 @@ void on_read_alloc(uv_handle_t *handle, size_t suggested_size, uv_buf_t *buf)
         Init_Binary(port_data, bin);
     }
     else {
-        bin = VAL_BINARY_Known_Mutable(port_data);
+        bin = Cell_Binary_Known_Mutable(port_data);
 
         // !!! Port code doesn't skip the index, but what if user does?
         //
@@ -521,7 +521,7 @@ void on_read(uv_stream_t *stream, ssize_t nread, const uv_buf_t *buf)
         bin = nullptr;
     }
     else
-        bin = VAL_BINARY_Known_Mutable(port_data);
+        bin = Cell_Binary_Known_Mutable(port_data);
 
     if (nread == 0) {  // Zero bytes read
         //
@@ -810,7 +810,7 @@ static Bounce Transport_Actor(
           case SYM_LENGTH: {
             return Init_Integer(
                 OUT,
-                Is_Binary(port_data) ? VAL_LEN_HEAD(port_data) : 0
+                Is_Binary(port_data) ? Cell_Series_Len_Head(port_data) : 0
             ); }
 
           case SYM_OPEN_Q:
@@ -934,8 +934,8 @@ static Bounce Transport_Actor(
         rebUnmanage(rebreq->binary);  // otherwise would be seen as a leak
 
         uv_buf_t buf;
-        buf.base = s_cast(m_cast(Byte*, VAL_BINARY_AT(rebreq->binary)));
-        buf.len = VAL_LEN_AT(rebreq->binary);
+        buf.base = s_cast(m_cast(Byte*, Cell_Binary_At(rebreq->binary)));
+        buf.len = Cell_Series_Len_At(rebreq->binary);
         int r = uv_write(&rebreq->req, sock->stream, &buf, 1, on_write_finished);
         if (r < 0)
             return RAISE(rebError_UV(r));  // e.g. "broken pipe" ?
@@ -1190,7 +1190,7 @@ DECLARE_NATIVE(wait_p)  // See wrapping function WAIT in usermode code
 
         REBLEN num_pending = 0;
         const Cell* tail;
-        val = VAL_ARRAY_AT(&tail, ports);
+        val = Cell_Array_At(&tail, ports);
         for (; val != tail; ++val) {  // find timeout
             if (Is_Port(val))
                 ++num_pending;

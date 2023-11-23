@@ -1381,11 +1381,11 @@ Bounce Evaluator_Executor(Level* L)
       case REB_SET_BLOCK: {
         assert(STATE == REB_SET_BLOCK);
 
-        if (VAL_LEN_AT(L_current) == 0)  // not supported [1]
+        if (Cell_Series_Len_At(L_current) == 0)  // not supported [1]
             fail ("SET-BLOCK! must not be empty for now.");
 
         const Cell* tail;
-        const Cell* check = VAL_ARRAY_AT(&tail, L_current);
+        const Cell* check = Cell_Array_At(&tail, L_current);
         Specifier* check_specifier = Derive_Specifier(L_specifier, L_current);
 
         Trash_Pointer_If_Debug(L_current);  // might be SPARE, we use it now
@@ -1529,7 +1529,7 @@ Bounce Evaluator_Executor(Level* L)
             Init_Nihil(OUT);
 
         if (Is_Pack(OUT)) {  // isotopic block
-            pack_meta_at = VAL_ARRAY_AT(&pack_meta_tail, OUT);
+            pack_meta_at = Cell_Array_At(&pack_meta_tail, OUT);
             pack_specifier = VAL_SPECIFIER(OUT);
         }
         else {

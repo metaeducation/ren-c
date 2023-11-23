@@ -366,7 +366,7 @@ EXTERN_C intptr_t RL_rebPromise(void *p, va_list *vaptr)
     DECLARE_STABLE (block);
     RL_rebTranscodeInto(block, p, vaptr);
 
-    Array* code = VAL_ARRAY_ENSURE_MUTABLE(block);
+    Array* code = Cell_Array_Ensure_Mutable(block);
     assert(Is_Node_Managed(code));
     Clear_Node_Managed_Bit(code);  // using array as ID, don't GC it
 
@@ -821,7 +821,7 @@ DECLARE_NATIVE(js_native)
 
     Details* details = Phase_Details(native);
 
-    if (Is_Series_Frozen(VAL_SERIES(source)))
+    if (Is_Series_Frozen(Cell_Series(source)))
         Copy_Cell(DETAILS_AT(details, IDX_NATIVE_BODY), source);  // no copy
     else {
         Init_Text(
@@ -975,7 +975,7 @@ DECLARE_NATIVE(js_eval_p)
 
     REBVAL *source = ARG(source);
 
-    const char *utf8 = c_cast(char*, VAL_UTF8_AT(source));
+    const char *utf8 = c_cast(char*, Cell_Utf8_At(source));
     heapaddr_t addr;
 
     // Methods for global evaluation:

@@ -137,7 +137,7 @@ INLINE bool Is_Heavy_False(Atom(const*) v) {
     if (not Is_Pack(v))
         return false;
     const Cell* tail;
-    const Cell* at = VAL_ARRAY_AT(&tail, v);
+    const Cell* at = Cell_Array_At(&tail, v);
     return (tail == at + 1) and Is_Meta_Of_False(at);
 }
 

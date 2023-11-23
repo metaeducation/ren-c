@@ -240,7 +240,7 @@ DECLARE_NATIVE(panic)
             p = String_UTF8(VAL_WORD_SYMBOL(v));
         }
         else if (Is_Text(v)) {
-            p = VAL_UTF8_AT(v);
+            p = Cell_Utf8_At(v);
         }
         else if (Is_Error(v)) {
             p = VAL_CONTEXT(v);

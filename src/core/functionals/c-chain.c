@@ -158,13 +158,13 @@ Bounce Chainer_Dispatcher(Level* const L)
 
     Value(*) pipeline_at = Init_Block(
         SPARE,  // index of BLOCK! is current step
-        VAL_ARRAY(DETAILS_AT(details, IDX_CHAINER_PIPELINE))
+        Cell_Array(DETAILS_AT(details, IDX_CHAINER_PIPELINE))
     );
 
     Level* sub = Push_Downshifted_Level(OUT, L);  // steals varlist [1]
     L->executor = &Chainer_Dispatcher;  // so trampoline calls us [2]
 
-    const Cell* chained = VAL_ARRAY_ITEM_AT(pipeline_at);
+    const Cell* chained = Cell_Array_Item_At(pipeline_at);
     ++VAL_INDEX_RAW(pipeline_at);
 
     INIT_LVL_PHASE(
@@ -199,7 +199,7 @@ Bounce Chainer_Dispatcher(Level* const L)
     assert(Is_Block(SPARE));
     Value(*) pipeline_at = cast(Value(*), SPARE);
     const Cell* chained_tail;
-    const Cell* chained = VAL_ARRAY_AT(&chained_tail, pipeline_at);
+    const Cell* chained = Cell_Array_At(&chained_tail, pipeline_at);
 
     if (chained == chained_tail)
         goto finished;
@@ -244,7 +244,7 @@ DECLARE_NATIVE(chain_p)  // see extended definition CHAIN in %base-defs.r
 
     REBVAL *pipeline = ARG(pipeline);
     const Cell* tail;
-    const Cell* first = VAL_ARRAY_AT(&tail, pipeline);
+    const Cell* first = Cell_Array_At(&tail, pipeline);
 
     // !!! Current validation is that all are frames.  Should there be other
     // checks?  (That inputs match outputs in the chain?)  Should it be

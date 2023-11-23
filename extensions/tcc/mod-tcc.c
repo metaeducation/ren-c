@@ -207,7 +207,7 @@ static void Process_Block_Helper(
     );
 
     const Cell* tail;
-    const Cell* text = VAL_ARRAY_AT(&tail, block);
+    const Cell* text = Cell_Array_At(&tail, block);
     for (; text != tail; ++text)
         Process_Text_Helper_Core(some_tcc_api, state, SPECIFIC(text), label);
 
@@ -328,7 +328,7 @@ DECLARE_NATIVE(make_native)
 
     Details* details = Phase_Details(native);
 
-    if (Is_Series_Frozen(VAL_SERIES(source)))
+    if (Is_Series_Frozen(Cell_Series(source)))
         Copy_Cell(DETAILS_AT(details, IDX_NATIVE_BODY), source); // no copy
     else {
         Init_Text(
@@ -346,7 +346,7 @@ DECLARE_NATIVE(make_native)
     if (REF(linkname)) {
         REBVAL *linkname = ARG(linkname);
 
-        if (Is_Series_Frozen(VAL_SERIES(linkname)))
+        if (Is_Series_Frozen(Cell_Series(linkname)))
             Copy_Cell(DETAILS_AT(details, IDX_TCC_NATIVE_LINKNAME), linkname);
         else {
             Init_Text(
@@ -479,7 +479,7 @@ DECLARE_NATIVE(compile_p)
 
     if (REF(files)) {
         const Cell* tail;
-        const Cell* item = VAL_ARRAY_AT(&tail, compilables);
+        const Cell* item = Cell_Array_At(&tail, compilables);
         for (; item != tail; ++item) {
             if (not Is_Text(item))
                 fail ("If COMPILE*/FILES, compilables must be TEXT! paths");
@@ -507,7 +507,7 @@ DECLARE_NATIVE(compile_p)
         Push_Mold(mo);
 
         const Cell* tail;
-        const Cell* item = VAL_ARRAY_AT(&tail, compilables);
+        const Cell* item = Cell_Array_At(&tail, compilables);
         for (; item != tail; ++item) {
             if (Is_Frame(item)) {
                 assert(Is_User_Native(VAL_ACTION(item)));

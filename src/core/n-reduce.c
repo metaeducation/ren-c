@@ -159,7 +159,7 @@ DECLARE_NATIVE(reduce)
 
     if (Is_Splice(OUT)) {
         const Cell* tail;
-        const Cell* at = VAL_ARRAY_AT(&tail, OUT);
+        const Cell* at = Cell_Array_At(&tail, OUT);
         bool newline = Get_Cell_Flag(v, NEWLINE_BEFORE);
         for (; at != tail; ++at) {
             Derelativize(PUSH(), at, VAL_SPECIFIER(OUT));
@@ -187,7 +187,7 @@ DECLARE_NATIVE(reduce)
     Drop_Level_Unbalanced(SUBLEVEL);  // Drop_Level() asserts on accumulation
 
     Flags pop_flags = NODE_FLAG_MANAGED | ARRAY_MASK_HAS_FILE_LINE;
-    if (Get_Array_Flag(VAL_ARRAY(v), NEWLINE_AT_TAIL))
+    if (Get_Array_Flag(Cell_Array(v), NEWLINE_AT_TAIL))
         pop_flags |= ARRAY_FLAG_NEWLINE_AT_TAIL;
 
     return Init_Array_Cell(
@@ -343,10 +343,10 @@ bool Match_For_Compose(NoQuote(const Cell*) group, const REBVAL *label) {
 
     assert(Is_Tag(label) or Is_File(label));
 
-    if (VAL_LEN_AT(group) == 0) // you have a pattern, so leave `()` as-is
+    if (Cell_Series_Len_At(group) == 0) // you have a pattern, so leave `()` as-is
         return false;
 
-    const Cell* first = VAL_ARRAY_ITEM_AT(group);
+    const Cell* first = Cell_Array_Item_At(group);
     if (VAL_TYPE(first) != VAL_TYPE(label))
         return false;
 
@@ -446,7 +446,7 @@ static Atom(*) Finalize_Composer_Level(
     }
 
     Flags flags = NODE_FLAG_MANAGED | ARRAY_MASK_HAS_FILE_LINE;
-    if (Get_Array_Flag(VAL_ARRAY(composee), NEWLINE_AT_TAIL))
+    if (Get_Array_Flag(Cell_Array(composee), NEWLINE_AT_TAIL))
         flags |= ARRAY_FLAG_NEWLINE_AT_TAIL;  // proxy newline flag [3]
 
     Init_Array_Cell(
@@ -714,7 +714,7 @@ Bounce Composer_Executor(Level* const L)
         Quasify_Isotope(OUT);
 
         const Cell* push_tail;
-        const Cell* push = VAL_ARRAY_AT(&push_tail, OUT);
+        const Cell* push = Cell_Array_At(&push_tail, OUT);
         if (push != push_tail) {
             Derelativize(PUSH(), push, VAL_SPECIFIER(OUT));
             if (Get_Cell_Flag(At_Level(L), NEWLINE_BEFORE))
@@ -864,7 +864,7 @@ static void Flatten_Core(
             Specifier* derived = Derive_Specifier(specifier, item);
 
             const Cell* sub_tail;
-            Cell* sub = VAL_ARRAY_AT_Ensure_Mutable(&sub_tail, item);
+            Cell* sub = Cell_Array_At_Ensure_Mutable(&sub_tail, item);
             Flatten_Core(
                 sub,
                 sub_tail,
@@ -897,7 +897,7 @@ DECLARE_NATIVE(flatten)
     StackIndex base = TOP_INDEX;
 
     const Cell* tail;
-    Cell* at = VAL_ARRAY_AT_Ensure_Mutable(&tail, ARG(block));
+    Cell* at = Cell_Array_At_Ensure_Mutable(&tail, ARG(block));
     Flatten_Core(
         at,
         tail,

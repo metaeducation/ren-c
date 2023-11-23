@@ -58,10 +58,6 @@
 //   to implement these type safeties--but in a C build, all the sublcass
 //   names are just aliases for Series, so there's less checking.
 //
-// * !!! It doesn't seem like index-out-of-range checks on the cells are being
-//   done in a systemic way.  VAL_LEN_AT() bounds the length at the index
-//   position by the physical length, but VAL_ARRAY_AT() doesn't check.
-//
 
 
 //=//// SERIES "FLAG" BITS /////////////////////////////////////////////////=//
@@ -466,7 +462,7 @@ INLINE Length Series_Used(const Series* s) {
 //
 INLINE Byte* Series_Data(const_if_c Series* s) {
 
-    // The VAL_CONTEXT(), VAL_SERIES(), VAL_ARRAY() extractors do the failing
+    // The VAL_CONTEXT(), Cell_Series(), Cell_Array() extractors do the failing
     // upon extraction--that's meant to catch it before it gets this far.
     //
     assert(Not_Series_Flag(s, INACCESSIBLE));
@@ -491,7 +487,7 @@ INLINE Byte* Series_Data_At(Byte w, const_if_c Series* s, REBLEN i) {
     }
   #endif
 
-    // The VAL_CONTEXT(), VAL_SERIES(), VAL_ARRAY() extractors do the failing
+    // The VAL_CONTEXT(), Cell_Series(), Cell_Array() extractors do the failing
     // upon extraction--that's meant to catch it before it gets this far.
     //
     assert(Not_Series_Flag(s, INACCESSIBLE));
@@ -1028,7 +1024,7 @@ INLINE void Push_GC_Guard_Erased_Cell(Cell* cell) {
 // Uses "evil macro" variations because it is called so frequently, that in
 // the debug build (which doesn't inline functions) there's a notable cost.
 //
-INLINE const Series* VAL_SERIES(NoQuote(const Cell*) v) {
+INLINE const Series* Cell_Series(NoQuote(const Cell*) v) {
   #if !defined(NDEBUG)
     enum Reb_Kind k = Cell_Heart(v);
     assert(
@@ -1044,11 +1040,11 @@ INLINE const Series* VAL_SERIES(NoQuote(const Cell*) v) {
     return s;
 }
 
-#define VAL_SERIES_ENSURE_MUTABLE(v) \
-    m_cast(Series*, VAL_SERIES(Ensure_Mutable(v)))
+#define Cell_Series_Ensure_Mutable(v) \
+    m_cast(Series*, Cell_Series(Ensure_Mutable(v)))
 
-#define VAL_SERIES_KNOWN_MUTABLE(v) \
-    m_cast(Series*, VAL_SERIES(Known_Mutable(v)))
+#define Cell_Series_Known_Mutable(v) \
+    m_cast(Series*, Cell_Series(Known_Mutable(v)))
 
 
 #define VAL_INDEX_RAW(v) \
@@ -1089,7 +1085,7 @@ INLINE const Series* VAL_SERIES(NoQuote(const Cell*) v) {
 #endif
 
 
-INLINE REBLEN VAL_LEN_HEAD(NoQuote(const Cell*) v);  // forward decl
+INLINE REBLEN Cell_Series_Len_Head(NoQuote(const Cell*) v);  // forward decl
 
 // Unlike VAL_INDEX_UNBOUNDED() that may give a negative number or past the
 // end of series, VAL_INDEX() does bounds checking and always returns an
@@ -1105,18 +1101,9 @@ INLINE REBLEN VAL_INDEX(NoQuote(const Cell*) v) {
     UNUSED(k);
     assert(Get_Cell_Flag(v, FIRST_IS_NODE));
     REBIDX i = VAL_INDEX_RAW(v);
-    if (i < 0 or i > cast(REBIDX, VAL_LEN_HEAD(v)))
+    if (i < 0 or i > cast(REBIDX, Cell_Series_Len_Head(v)))
         fail (Error_Index_Out_Of_Range_Raw());
     return i;
-}
-
-
-INLINE const Byte* VAL_DATA_AT(NoQuote(const Cell*) v) {
-    return Series_Data_At(
-        Series_Wide(VAL_SERIES(v)),
-        VAL_SERIES(v),
-        VAL_INDEX(v)
-    );
 }
 
 

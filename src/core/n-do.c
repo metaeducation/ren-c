@@ -425,7 +425,7 @@ DECLARE_NATIVE(evaluate)
   #endif
 
     if (Any_Array(source)) {
-        if (VAL_LEN_AT(source) == 0) {  // `evaluate []` is invisible intent
+        if (Cell_Series_Len_At(source) == 0) {  // `evaluate []` is invisible intent
             if (REF(next))
                 rebElide(Canon(SET), rebQ(rest_var), nullptr);
 
