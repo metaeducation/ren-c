@@ -155,7 +155,7 @@ DECLARE_NATIVE(new_line)
 {
     INCLUDE_PARAMS_OF_NEW_LINE;
 
-    bool mark = VAL_LOGIC(ARG(mark));
+    bool mark = Cell_Logic(ARG(mark));
 
     REBVAL *pos = ARG(position);
     const Cell* tail;

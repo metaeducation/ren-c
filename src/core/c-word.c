@@ -374,7 +374,7 @@ const Symbol* Intern_UTF8_Managed_Core(
         // words in C switch statements, the synonym inherits that number.
         //
         assert(SECOND_UINT16(&s->info) == SYM_0);
-        SET_SECOND_UINT16(&s->info, ID_OF_SYMBOL(synonym));
+        SET_SECOND_UINT16(&s->info, Symbol_Id(synonym));
     }
 
     // Symbols use their MISC() as a linked list of binding information.  The
@@ -594,7 +594,7 @@ void Startup_Symbols(void)
         //
         assert(SECOND_UINT16(&canon->info) == 0);
         SET_SECOND_UINT16(&canon->info, id);
-        assert(id == unwrap(ID_OF_SYMBOL(canon)));
+        assert(id == unwrap(Symbol_Id(canon)));
 
         id = cast(SymId, cast(REBLEN, id) + 1);
     }

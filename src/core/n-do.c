@@ -169,7 +169,7 @@ DECLARE_NATIVE(shove)
     //
     bool enfix;
     if (REF(prefix))
-        enfix = not VAL_LOGIC(ARG(prefix));
+        enfix = not Cell_Logic(ARG(prefix));
     else if (Is_Frame(shovee))
         enfix = Is_Enfixed(shovee);
     else
@@ -926,7 +926,7 @@ DECLARE_NATIVE(apply)
         and GET_PARAM_FLAG(param, REFINEMENT)
         and Is_Parameter_Unconstrained(param)
     ){
-        if (VAL_LOGIC(SPARE))
+        if (Cell_Logic(SPARE))
             Init_Blackhole(var);
         else
             Init_Nulled(var);

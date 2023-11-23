@@ -162,7 +162,7 @@ DECLARE_NATIVE(reduce)
         const Cell* at = Cell_Array_At(&tail, OUT);
         bool newline = Get_Cell_Flag(v, NEWLINE_BEFORE);
         for (; at != tail; ++at) {
-            Derelativize(PUSH(), at, VAL_SPECIFIER(OUT));
+            Derelativize(PUSH(), at, Cell_Specifier(OUT));
             SUBLEVEL->baseline.stack_base += 1;  // [3]
             if (newline) {
                 Set_Cell_Flag(TOP, NEWLINE_BEFORE);  // [2]
@@ -427,7 +427,7 @@ static Atom(*) Finalize_Composer_Level(
     }
 
     enum Reb_Kind heart = Cell_Heart(composee);
-    REBLEN quotes = VAL_NUM_QUOTES(composee);
+    REBLEN quotes = Cell_Num_Quotes(composee);
 
     if (Any_Sequence_Kind(heart)) {
         if (not Try_Pop_Sequence_Or_Element_Or_Nulled(
@@ -716,14 +716,14 @@ Bounce Composer_Executor(Level* const L)
         const Cell* push_tail;
         const Cell* push = Cell_Array_At(&push_tail, OUT);
         if (push != push_tail) {
-            Derelativize(PUSH(), push, VAL_SPECIFIER(OUT));
+            Derelativize(PUSH(), push, Cell_Specifier(OUT));
             if (Get_Cell_Flag(At_Level(L), NEWLINE_BEFORE))
                 Set_Cell_Flag(TOP, NEWLINE_BEFORE);  // first [4]
             else
                 Clear_Cell_Flag(TOP, NEWLINE_BEFORE);
 
             while (++push, push != push_tail)
-                Derelativize(PUSH(), push, VAL_SPECIFIER(OUT));
+                Derelativize(PUSH(), push, Cell_Specifier(OUT));
         }
     }
     else {
@@ -828,7 +828,7 @@ DECLARE_NATIVE(compose)
     if (Any_Word(v) or Is_Activation(v))
         return COPY(v);  // makes it easier to `set compose target`
 
-    Push_Composer_Level(OUT, level_, v, VAL_SPECIFIER(v));
+    Push_Composer_Level(OUT, level_, v, Cell_Specifier(v));
 
     STATE = ST_COMPOSE_COMPOSING;
     return CONTINUE_SUBLEVEL(SUBLEVEL);
@@ -901,7 +901,7 @@ DECLARE_NATIVE(flatten)
     Flatten_Core(
         at,
         tail,
-        VAL_SPECIFIER(ARG(block)),
+        Cell_Specifier(ARG(block)),
         REF(deep) ? FLATTEN_DEEP : FLATTEN_ONCE
     );
 

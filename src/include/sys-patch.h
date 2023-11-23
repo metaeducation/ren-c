@@ -59,7 +59,7 @@
     #define SPC(p) \
         cast(Specifier*, (p)) // makes UNBOUND look like SPECIFIED
 
-    #define VAL_SPECIFIER(v) \
+    #define Cell_Specifier(v) \
         SPC(BINDING(v))
 #else
     INLINE Specifier* SPC(void *p) {
@@ -73,7 +73,7 @@
         return x_cast(Specifier*, c);
     }
 
-    INLINE Specifier* VAL_SPECIFIER(NoQuote(const Cell*) v) {
+    INLINE Specifier* Cell_Specifier(NoQuote(const Cell*) v) {
         assert(Any_Arraylike(v));
 
         Array* a = cast(Array*, BINDING(v));
@@ -254,7 +254,7 @@ INLINE void Virtual_Bind_Patchify(
     //
     INIT_BINDING_MAY_MANAGE(
         any_array,
-        Make_Or_Reuse_Use(ctx, VAL_SPECIFIER(any_array), kind)
+        Make_Or_Reuse_Use(ctx, Cell_Specifier(any_array), kind)
     );
     Constify(any_array);
 }

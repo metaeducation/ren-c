@@ -46,7 +46,7 @@ Bounce Series_Common_Action_Maybe_Unhandled(
 
     Flags sop_flags;  // "SOP_XXX" Set Operation Flags
 
-    Option(SymId) id = ID_OF_SYMBOL(verb);
+    Option(SymId) id = Symbol_Id(verb);
     switch (id) {
       case SYM_REFLECT: {
         INCLUDE_PARAMS_OF_REFLECT;
@@ -120,7 +120,7 @@ Bounce Series_Common_Action_Maybe_Unhandled(
         //
         REBI64 i;
         if (Is_Logic(ARG(offset))) {
-            if (VAL_LOGIC(ARG(offset)))
+            if (Cell_Logic(ARG(offset)))
                 i = cast(REBI64, VAL_INDEX_RAW(v)) + 1;
             else
                 i = cast(REBI64, VAL_INDEX_RAW(v));

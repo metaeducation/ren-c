@@ -265,7 +265,7 @@ Bounce Reflect_Core(Level* level_)
         return Init_Builtin_Datatype(OUT, VAL_TYPE(v));
 
       case SYM_QUOTES:
-        return Init_Integer(OUT, VAL_NUM_QUOTES(v));
+        return Init_Integer(OUT, Cell_Num_Quotes(v));
 
       default:
         // !!! Are there any other universal reflectors?
@@ -1277,7 +1277,7 @@ DECLARE_NATIVE(scan_net_header)
 
         for (; item != item_tail; item += 2) {
             assert(Is_Text(item + 1) || Is_Block(item + 1));
-            if (Are_Synonyms(VAL_WORD_SYMBOL(item), name)) {
+            if (Are_Synonyms(Cell_Word_Symbol(item), name)) {
                 // Does it already use a block?
                 if (Is_Block(item + 1)) {
                     // Block of values already exists:

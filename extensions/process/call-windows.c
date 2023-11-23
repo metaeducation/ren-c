@@ -88,7 +88,7 @@ static bool Try_Init_Startupinfo_Sink(
         *hsink = GetStdHandle(std_handle_id);
     }
     else if (Is_Logic(arg)) {
-        if (VAL_LOGIC(arg)) {
+        if (Cell_Logic(arg)) {
             //
             // !!! This said true was "inherit", but hwrite was not being
             // set to anything...?  So is this supposed to be able to deal
@@ -317,7 +317,7 @@ Bounce Call_Core(Level* level_) {
         si.hStdInput = GetStdHandle(STD_INPUT_HANDLE);
     }
     else if (Is_Logic(ARG(input))) {
-        if (VAL_LOGIC(ARG(input))) {  // !!! make inheritable (correct?)
+        if (Cell_Logic(ARG(input))) {  // !!! make inheritable (correct?)
             if (not SetHandleInformation(
                 hInputRead,
                 HANDLE_FLAG_INHERIT,

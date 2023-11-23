@@ -646,7 +646,7 @@ INLINE void Set_Series_Used_Internal(Series* s, REBLEN used) {
     // at the byte level.  The higher level string mechanics must be used on
     // strings.
     //
-    if (Is_NonSymbol_String(s)) {
+    if (Is_String_NonSymbol(s)) {
         s->misc.length = 0xDECAFBAD;
         Touch_Stub_If_Debug(s);
     }

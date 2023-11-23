@@ -61,7 +61,7 @@ void Datatype_Checker_Intrinsic(Value(*) out, Phase* phase, Value(*) arg)
     Details* details = Phase_Details(phase);
     assert(Array_Len(details) == IDX_TYPECHECKER_MAX);
 
-    REBVAL *datatype = DETAILS_AT(details, IDX_TYPECHECKER_TYPE);
+    REBVAL *datatype = Details_At(details, IDX_TYPECHECKER_TYPE);
 
     Init_Logic(out, VAL_TYPE(arg) == VAL_TYPE_KIND(datatype));
 }
@@ -79,7 +79,7 @@ void Typeset_Checker_Intrinsic(Value(*) out, Phase* phase, Value(*) arg)
     Details* details = Phase_Details(phase);
     assert(Array_Len(details) == IDX_TYPECHECKER_MAX);
 
-    REBVAL *typeset_index = DETAILS_AT(details, IDX_TYPECHECKER_TYPE);
+    REBVAL *typeset_index = Details_At(details, IDX_TYPECHECKER_TYPE);
     assert(Is_Integer(typeset_index));
     Index n = VAL_INT32(typeset_index);
 
@@ -128,12 +128,12 @@ Phase* Make_Typechecker(Value(const*) type) {
     Details* details = Phase_Details(typechecker);
 
     Init_Handle_Cfunc(
-        DETAILS_AT(details, IDX_TYPECHECKER_CFUNC),
+        Details_At(details, IDX_TYPECHECKER_CFUNC),
         Is_Type_Word(type)
             ? cast(CFunction*, &Datatype_Checker_Intrinsic)
             : cast(CFunction*, &Typeset_Checker_Intrinsic)
     );
-    Copy_Cell(DETAILS_AT(details, IDX_TYPECHECKER_TYPE), type);
+    Copy_Cell(Details_At(details, IDX_TYPECHECKER_TYPE), type);
 
     return typechecker;
 }
@@ -227,7 +227,7 @@ bool Typecheck_Value(
 
             if (not Is_Isoword(v))
                 continue;
-            if (VAL_WORD_SYMBOL(v) == VAL_WORD_SYMBOL(item))
+            if (Cell_Word_Symbol(v) == Cell_Word_Symbol(item))
                 goto test_succeeded;
             goto test_failed;
         }
@@ -235,7 +235,7 @@ bool Typecheck_Value(
         enum Reb_Kind kind;
         const Cell* test;
         if (VAL_TYPE_UNCHECKED(item) == REB_WORD) {
-            label = VAL_WORD_SYMBOL(item);
+            label = Cell_Word_Symbol(item);
             test = Lookup_Word_May_Fail(item, tests_specifier);
             kind = VAL_TYPE(test);  // e.g. TYPE-BLOCK! <> BLOCK!
         }
@@ -279,7 +279,7 @@ bool Typecheck_Value(
                 (*intrinsic)(out, cast(Phase*, action), Stable_Unchecked(arg));
                 if (not Is_Logic(out))
                     fail (Error_No_Logic_Typecheck(label));
-                if (VAL_LOGIC(out))
+                if (Cell_Logic(out))
                     goto test_succeeded;
                 goto test_failed;
             }
@@ -328,7 +328,7 @@ bool Typecheck_Value(
             if (not Is_Logic(spare))
                 fail (Error_No_Logic_Typecheck(label));
 
-            if (not VAL_LOGIC(spare))
+            if (not Cell_Logic(spare))
                 goto test_failed;
             break; }
 

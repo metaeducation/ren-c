@@ -386,10 +386,10 @@ INLINE Param* ACT_PARAMS_HEAD(Action* a) {
 // only the archetype, e.g. with a specialized function).  *BUT* if you are
 // asking for elements in the details array, you must know it is dynamic.
 //
-INLINE Value(*) DETAILS_AT(Details* details, Length n) {
+INLINE Value(*) Details_At(Details* details, Length n) {
     assert(n != 0 and n < details->content.dynamic.used);
     Cell* at = cast(Cell*, details->content.dynamic.data) + n;
-    assert(Is_Fresh(at) or not IS_RELATIVE(at));
+    assert(Is_Fresh(at) or not Is_Relative(at));
     return cast(Value(*), at);
 }
 
@@ -437,7 +437,7 @@ INLINE void Init_Key(Key* dest, const Symbol* symbol)
   { *dest = symbol; }
 
 #define KEY_SYM(key) \
-    ID_OF_SYMBOL(KEY_SYMBOL(key))
+    Symbol_Id(KEY_SYMBOL(key))
 
 #define ACT_KEY(a,n)            CTX_KEY(ACT_EXEMPLAR(a), (n))
 #define ACT_PARAM(a,n)          cast_PAR(CTX_VAR(ACT_EXEMPLAR(a), (n)))

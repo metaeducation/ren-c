@@ -481,7 +481,7 @@ INLINE REBVAL* Freshen_Cell_Untracked(Cell* v) {
 // An ANY-ARRAY! in the deep copy of a function body must be relative also to
 // the same function if it contains any instances of such relative words.
 //
-INLINE bool IS_RELATIVE(const Cell* v) {
+INLINE bool Is_Relative(const Cell* v) {
     if (not Is_Bindable(v))
         return false;  // may use extra for non-GC-marked uintptr_t-size data
 
@@ -496,11 +496,11 @@ INLINE bool IS_RELATIVE(const Cell* v) {
 }
 
 #if CPLUSPLUS_11
-    bool IS_RELATIVE(Value(const*) v) = delete;  // error on superfluous check
+    bool Is_Relative(Value(const*) v) = delete;  // error on superfluous check
 #endif
 
-#define IS_SPECIFIC(v) \
-    (not IS_RELATIVE(v))
+#define Is_Specific(v) \
+    (not Is_Relative(v))
 
 
 // When you have a Cell* (e.g. from a array) that you KNOW to be specific,
@@ -524,13 +524,13 @@ INLINE bool IS_RELATIVE(const Cell* v) {
 //
 
 INLINE Value(*) SPECIFIC(const_if_c Cell* v) {
-    assert(IS_SPECIFIC(v));
+    assert(Is_Specific(v));
     return x_cast(ValueT*, v);
 }
 
 #if CPLUSPLUS_11
     INLINE Value(const*) SPECIFIC(const Cell* v) {
-        assert(IS_SPECIFIC(v));
+        assert(Is_Specific(v));
         return c_cast(ValueT*, v);
     }
 
@@ -632,10 +632,10 @@ INLINE bool Any_Pairlike(NoQuote(const Cell*) v) {
 }
 
 
-INLINE void INIT_VAL_WORD_SYMBOL(Cell* v, const Symbol* symbol)
+INLINE void INIT_Cell_Word_Symbol(Cell* v, const Symbol* symbol)
   { Init_Cell_Node1(v, symbol); }
 
-INLINE const Symbol* VAL_WORD_SYMBOL(NoQuote(const Cell*) cell) {
+INLINE const Symbol* Cell_Word_Symbol(NoQuote(const Cell*) cell) {
     assert(Any_Wordlike(cell));  // no _UNCHECKED variant :-(
     return cast(Symbol*, Cell_Node1(cell));
 }
@@ -703,7 +703,7 @@ INLINE Cell* Copy_Cell_Untracked(
     else
         out->extra = v->extra;  // extra inert bits
 
-    if (IS_RELATIVE(v)) {
+    if (Is_Relative(v)) {
         //
         // You shouldn't be getting relative values out of cells that are
         // actually API handles.

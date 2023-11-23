@@ -93,7 +93,7 @@ Bounce Adapter_Dispatcher(Level* const L)
     Cell* prelude = Array_At(details, IDX_ADAPTER_PRELUDE);  // code to run
     assert(
         Is_Block(prelude)
-        and IS_RELATIVE(prelude)
+        and Is_Relative(prelude)
         and VAL_INDEX(prelude) == 0
     );
 
@@ -107,7 +107,7 @@ Bounce Adapter_Dispatcher(Level* const L)
 
 } run_adaptee_in_same_frame: {  //////////////////////////////////////////////
 
-    REBVAL* adaptee = DETAILS_AT(details, IDX_ADAPTER_ADAPTEE);
+    REBVAL* adaptee = Details_At(details, IDX_ADAPTER_ADAPTEE);
 
     INIT_LVL_PHASE(L, ACT_IDENTITY(VAL_ACTION(adaptee)));
     INIT_LVL_BINDING(L, VAL_FRAME_BINDING(adaptee));
@@ -167,7 +167,7 @@ DECLARE_NATIVE(adapt_p)  // see extended definition ADAPT in %base-defs.r
         adaptation,
         prelude
     );
-    Copy_Cell(DETAILS_AT(details, IDX_ADAPTER_ADAPTEE), adaptee);
+    Copy_Cell(Details_At(details, IDX_ADAPTER_ADAPTEE), adaptee);
 
     return Init_Activation(OUT, adaptation, VAL_FRAME_LABEL(adaptee), UNBOUND);
 }

@@ -325,7 +325,7 @@ bool Set_Bits(Binary* bset, const Cell* val, bool set)
             if (
                 item + 1 != tail
                 && Is_Word(item + 1)
-                && VAL_WORD_SYMBOL(item + 1) == Canon(HYPHEN_1)
+                && Cell_Word_Symbol(item + 1) == Canon(HYPHEN_1)
             ){
                 item += 2;
                 if (IS_CHAR(item)) {
@@ -350,7 +350,7 @@ bool Set_Bits(Binary* bset, const Cell* val, bool set)
             if (
                 item + 1 != tail
                 && Is_Word(item + 1)
-                && VAL_WORD_SYMBOL(item + 1) == Canon(HYPHEN_1)
+                && Cell_Word_Symbol(item + 1) == Canon(HYPHEN_1)
             ){
                 Codepoint c = n;
                 item += 2;
@@ -460,7 +460,7 @@ bool Check_Bits(const Binary* bset, const Cell* val, bool uncased)
             Codepoint c = Cell_Codepoint(item);
             if (
                 Is_Word(item + 1)
-                && VAL_WORD_SYMBOL(item + 1) == Canon(HYPHEN_1)
+                && Cell_Word_Symbol(item + 1) == Canon(HYPHEN_1)
             ){
                 item += 2;
                 if (IS_CHAR(item)) {
@@ -485,7 +485,7 @@ bool Check_Bits(const Binary* bset, const Cell* val, bool uncased)
                 return false;
             if (
                 Is_Word(item + 1)
-                && VAL_WORD_SYMBOL(item + 1) == Canon(HYPHEN_1)
+                && Cell_Word_Symbol(item + 1) == Canon(HYPHEN_1)
             ){
                 Codepoint c = n;
                 item += 2;
@@ -551,7 +551,7 @@ REBTYPE(Bitset)
 {
     REBVAL *v = D_ARG(1);
 
-    Option(SymId) sym = ID_OF_SYMBOL(verb);
+    Option(SymId) sym = Symbol_Id(verb);
     switch (sym) {
 
     //=//// PICK* (see %sys-pick.h for explanation) ////////////////////////=//

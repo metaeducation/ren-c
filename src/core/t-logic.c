@@ -298,7 +298,7 @@ DECLARE_NATIVE(unless)
 inline static bool Math_Arg_For_Logic(REBVAL *arg)
 {
     if (Is_Logic(arg))
-        return VAL_LOGIC(arg);
+        return Cell_Logic(arg);
 
     if (Is_Blank(arg))
         return false;
@@ -341,7 +341,7 @@ REBTYPE(Isotope)
         //
         // Need a special exemption for COPY on ACTION! isotopes.
         //
-        if (Is_Activation(D_ARG(1)) and ID_OF_SYMBOL(verb) == SYM_COPY) {
+        if (Is_Activation(D_ARG(1)) and Symbol_Id(verb) == SYM_COPY) {
             Deactivate_If_Activation(D_ARG(1));
             return rebValue(Canon(RUNS), Canon(COPY), rebQ(D_ARG(1)));
         }
@@ -349,10 +349,10 @@ REBTYPE(Isotope)
         fail ("Isotope handler only supports LOGIC! (legacy workaround)");
     }
 
-    bool b1 = VAL_LOGIC(D_ARG(1));
+    bool b1 = Cell_Logic(D_ARG(1));
     bool b2;
 
-    switch (ID_OF_SYMBOL(verb)) {
+    switch (Symbol_Id(verb)) {
 
     case SYM_BITWISE_AND:
         b2 = Math_Arg_For_Logic(D_ARG(2));

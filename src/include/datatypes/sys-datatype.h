@@ -70,11 +70,11 @@ INLINE enum Reb_Kind KIND_FROM_SYM(SymId s) {
 
 
 #define VAL_TYPE_SYMBOL(v) \
-    VAL_WORD_SYMBOL(v)
+    Cell_Word_Symbol(v)
 
 INLINE enum Reb_Kind VAL_TYPE_KIND(NoQuote(const Cell*) v) {
     assert(Cell_Heart(v) == REB_TYPE_WORD);
-    Option(SymId) id = ID_OF_SYMBOL(VAL_WORD_SYMBOL(v));
+    Option(SymId) id = Symbol_Id(Cell_Word_Symbol(v));
     assert(unwrap(id) < cast(SymId, REB_MAX));
     return cast(enum Reb_Kind, unwrap(id));
 }

@@ -120,7 +120,7 @@
 #define P_INPUT_BINARY      Cell_Binary(ARG(input))
 #define P_INPUT_STRING      Cell_String(ARG(input))
 #define P_INPUT_ARRAY       Cell_Array(ARG(input))
-#define P_INPUT_SPECIFIER   VAL_SPECIFIER(ARG(input))
+#define P_INPUT_SPECIFIER   Cell_Specifier(ARG(input))
 #define P_INPUT_IDX         VAL_INDEX_UNBOUNDED(ARG(input))
 #define P_INPUT_LEN         Cell_Series_Len_Head(ARG(input))
 
@@ -171,7 +171,7 @@
 #define FETCH_TO_BAR_OR_END(L) \
     while (not P_AT_END and not ( \
         VAL_TYPE_UNCHECKED(P_RULE) == REB_WORD \
-        and VAL_WORD_SYMBOL(P_RULE) == Canon(BAR_1) \
+        and Cell_Word_Symbol(P_RULE) == Canon(BAR_1) \
     )){ \
         FETCH_NEXT_RULE(L); \
     }
@@ -562,7 +562,7 @@ static REBIXO Parse_One_Rule(
         return pos;  // void matches always
     }
     else if (Is_Logic(rule)) {
-        if (VAL_LOGIC(rule))
+        if (Cell_Logic(rule))
             return pos;  // true matches always
         return END_FLAG;  // false matches never
     }
@@ -676,11 +676,11 @@ static REBIXO Parse_One_Rule(
         //
         enum Reb_Kind rule_heart = Cell_Heart(rule);
         if (
-            (Any_Word_Kind(rule_heart) and VAL_NUM_QUOTES(rule) == 1)
-            or (Any_String_Kind(rule_heart) and VAL_NUM_QUOTES(rule) <= 1)
-            or (rule_heart == REB_ISSUE and VAL_NUM_QUOTES(rule) <= 1)
-            or (rule_heart == REB_BINARY and VAL_NUM_QUOTES(rule) == 0)
-            or (rule_heart == REB_INTEGER and VAL_NUM_QUOTES(rule) == 1)
+            (Any_Word_Kind(rule_heart) and Cell_Num_Quotes(rule) == 1)
+            or (Any_String_Kind(rule_heart) and Cell_Num_Quotes(rule) <= 1)
+            or (rule_heart == REB_ISSUE and Cell_Num_Quotes(rule) <= 1)
+            or (rule_heart == REB_BINARY and Cell_Num_Quotes(rule) == 0)
+            or (rule_heart == REB_INTEGER and Cell_Num_Quotes(rule) == 1)
         ){
             REBLEN len;
             REBINT index = Find_Value_In_Binstr(
@@ -1008,7 +1008,7 @@ static REBIXO To_Thru_Non_Block_Rule(
     USE_PARAMS_OF_SUBPARSE;
 
     if (Is_Logic(rule))  // no-op if true, match failure if false
-        return VAL_LOGIC(rule) ? cast(REBLEN, P_POS) : END_FLAG;
+        return Cell_Logic(rule) ? cast(REBLEN, P_POS) : END_FLAG;
 
     enum Reb_Kind kind = VAL_TYPE(rule);
     assert(kind != REB_BLOCK);
@@ -1276,7 +1276,7 @@ DECLARE_NATIVE(subparse)
     // put the quotes back on whenever doing a COPY etc.
     //
     assert(Is_None(ARG(num_quotes)));
-    Init_Integer(ARG(num_quotes), VAL_NUM_QUOTES(ARG(input)));
+    Init_Integer(ARG(num_quotes), Cell_Num_Quotes(ARG(input)));
     Dequotify(ARG(input));
 
     // Make sure index position is not past END
@@ -1420,7 +1420,7 @@ DECLARE_NATIVE(subparse)
         // was a GET-GROUP!, e.g. :(...), fall through so its result will
         // act as a rule in its own right.
         //
-        assert(IS_SPECIFIC(rule));  // can use w/P_RULE_SPECIFIER, harmless
+        assert(Is_Specific(rule));  // can use w/P_RULE_SPECIFIER, harmless
     }}
     else {
         // If we ran the GROUP! then that invokes the evaluator, and so
@@ -1602,7 +1602,7 @@ DECLARE_NATIVE(subparse)
                 //
                 if (cmd == SYM_LET) {
                     mutable_BINDING(FEED_SINGLE(L->feed)) = Make_Let_Patch(
-                        VAL_WORD_SYMBOL(P_RULE),
+                        Cell_Word_Symbol(P_RULE),
                         P_RULE_SPECIFIER
                     );
                     if (Is_Word(P_RULE)) {  // no further action
@@ -2055,7 +2055,7 @@ DECLARE_NATIVE(subparse)
         fail ("NULL rules are not allowed in PARSE");
 
     if (Is_Logic(rule)) {  // true is a no-op, false causes match failure
-        if (VAL_LOGIC(rule)) {
+        if (Cell_Logic(rule)) {
             FETCH_NEXT_RULE(L);
             goto pre_rule;
         }

@@ -986,7 +986,7 @@ REBTYPE(Date)
     REBVAL *v = D_ARG(1);
     assert(Is_Date(v));
 
-    Option(SymId) id = ID_OF_SYMBOL(verb);
+    Option(SymId) id = Symbol_Id(verb);
 
     REBYMD date = VAL_DATE(v);
     REBLEN day = VAL_DAY(v) - 1;

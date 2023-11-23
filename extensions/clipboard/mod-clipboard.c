@@ -48,7 +48,7 @@ static Bounce Clipboard_Actor(
     REBVAL *port,
     const Symbol* verb
 ){
-    switch (ID_OF_SYMBOL(verb)) {
+    switch (Symbol_Id(verb)) {
       case SYM_REFLECT: {
         INCLUDE_PARAMS_OF_REFLECT;
         UNUSED(ARG(value));  // implied by `port`

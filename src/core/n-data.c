@@ -194,7 +194,7 @@ DECLARE_NATIVE(bind)
         Array* copy = Copy_Array_Core_Managed(
             Cell_Array(v),
             VAL_INDEX(v), // at
-            VAL_SPECIFIER(v),
+            Cell_Specifier(v),
             Array_Len(Cell_Array(v)), // tail
             0, // extra
             ARRAY_MASK_HAS_FILE_LINE, // flags
@@ -246,7 +246,7 @@ DECLARE_NATIVE(in)
     // here in IN, but BIND's behavior on words may need revisiting.
     //
     if (Any_Word(v)) {
-        const Symbol* symbol = VAL_WORD_SYMBOL(v);
+        const Symbol* symbol = Cell_Word_Symbol(v);
         const bool strict = true;
         REBLEN index = Find_Symbol_In_Context(ARG(context), symbol, strict);
         if (index == 0)
@@ -284,7 +284,7 @@ DECLARE_NATIVE(without)
     // here in IN, but BIND's behavior on words may need revisiting.
     //
     if (Any_Word(v)) {
-        const Symbol* symbol = VAL_WORD_SYMBOL(v);
+        const Symbol* symbol = Cell_Word_Symbol(v);
         const bool strict = true;
         REBLEN index = Find_Symbol_In_Context(ARG(context), symbol, strict);
         if (index == 0)
@@ -980,7 +980,7 @@ bool Get_Path_Push_Refinements_Throws(
         // actions (though it's slower because it does specialization)
         //
         REBVAL *redbol = Get_System(SYS_OPTIONS, OPTIONS_REDBOL_PATHS);
-        if (not Is_Logic(redbol) or VAL_LOGIC(redbol) == false) {
+        if (not Is_Logic(redbol) or Cell_Logic(redbol) == false) {
             Derelativize(out, path, path_specifier);
             rebElide(
                 "echo [The PATH!", cast(REBVAL*, out), "doesn't evaluate to",
@@ -1046,7 +1046,7 @@ bool Get_Path_Push_Refinements_Throws(
             // This is needed e.g. for append/dup/ to work, just skip it
         }
         else if (Is_Word(at))
-            Init_Pushed_Refinement(PUSH(), VAL_WORD_SYMBOL(at));
+            Init_Pushed_Refinement(PUSH(), Cell_Word_Symbol(at));
         else if (Is_Path(at) and Is_Refinement(at)) {
             // Not strictly necessary, but kind of neat to allow
             Init_Pushed_Refinement(PUSH(), VAL_REFINEMENT_SYMBOL(at));
@@ -1169,7 +1169,7 @@ bool Set_Var_Core_Updater_Throws(
 ){
     // Note: `steps_out` can be equal to `out` can be equal to `target`
 
-    ASSERT_STABLE(setval);
+    Assert_Cell_Stable(setval);
 
     assert(Is_Activation(updater));  // we will use rebM() on it
 
@@ -1576,7 +1576,7 @@ DECLARE_NATIVE(proxy_exports)
         if (not Is_Word(v))
             fail (ARG(exports));
 
-        const Symbol* symbol = VAL_WORD_SYMBOL(v);
+        const Symbol* symbol = Cell_Word_Symbol(v);
 
         bool strict = true;
 
@@ -1783,7 +1783,7 @@ bool Try_As_String(
     assert(strmode == STRMODE_ALL_CODEPOINTS or strmode == STRMODE_NO_CR);
 
     if (Any_Word(v)) {  // ANY-WORD! can alias as a read only ANY-STRING!
-        Init_Any_String(out, new_kind, VAL_WORD_SYMBOL(v));
+        Init_Any_String(out, new_kind, Cell_Word_Symbol(v));
         Inherit_Const(Quotify(out, quotes), v);
     }
     else if (Is_Binary(v)) {  // If valid UTF-8, BINARY! aliases as ANY-STRING!
@@ -1968,7 +1968,7 @@ DECLARE_NATIVE(as)
             const Node* node1 = Cell_Node1(v);
             if (Is_Node_A_Cell(node1)) {  // reusing node complicated [1]
                 const Cell* paired = c_cast(Cell*, node1);
-                Specifier *specifier = VAL_SPECIFIER(v);
+                Specifier *specifier = Cell_Specifier(v);
                 Array* a = Make_Array_Core(2, NODE_FLAG_MANAGED);
                 Set_Series_Len(a, 2);
                 Derelativize(Array_At(a, 0), paired, specifier);
@@ -2031,7 +2031,7 @@ DECLARE_NATIVE(as)
                 OUT,  // if failure, nulled if too short...else bad element
                 new_kind,
                 Cell_Array(v),
-                VAL_SPECIFIER(v),
+                Cell_Specifier(v),
                 VAL_INDEX(v)
             )){
                 return OUT;
@@ -2165,7 +2165,7 @@ DECLARE_NATIVE(as)
             if (VAL_INDEX(v) != 0)  // can't reuse non-head series AS WORD!
                 goto intern_utf8;
 
-            if (IS_SYMBOL(s)) {
+            if (Is_String_Symbol(s)) {
                 //
                 // This string's content was already frozen and checked, e.g.
                 // the string came from something like `as text! 'some-word`
@@ -2197,7 +2197,7 @@ DECLARE_NATIVE(as)
                     fail (Error_Alias_Constrains_Raw());
 
             const String* str;
-            if (IS_SYMBOL(bin))
+            if (Is_String_Symbol(bin))
                 str = c_cast(String*, bin);
             else {
                 // !!! There isn't yet a mechanic for interning an existing
@@ -2590,7 +2590,7 @@ DECLARE_INTRINSIC(decay)
 {
     UNUSED(phase);
 
-    ASSERT_STABLE(arg);  // paranoid check...Value(*) should always be stable
+    Assert_Cell_Stable(arg);  // paranoid check...Value(*) should always be stable
     Copy_Cell(out, arg);  // pre-decayed by non-^META argument [1]
 }
 

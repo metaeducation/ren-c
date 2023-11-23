@@ -63,7 +63,7 @@ void Collapsify_Array(Array* array, Specifier* specifier, REBLEN limit)
 
             enum Reb_Kind kind = VAL_TYPE(item);
             Init_Array_Cell_At(item, kind, copy, 0);  // at 0 now
-            assert(IS_SPECIFIC(item));
+            assert(Is_Specific(item));
             assert(Not_Cell_Flag(item, NEWLINE_BEFORE));  // gets cleared
         }
     }

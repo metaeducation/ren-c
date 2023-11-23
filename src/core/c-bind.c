@@ -55,7 +55,7 @@ void Bind_Values_Inner_Loop(
         REBU64 type_bit = FLAGIT_KIND(heart);
 
         if (type_bit & bind_types) {
-            const Symbol* symbol = VAL_WORD_SYMBOL(v);
+            const Symbol* symbol = Cell_Word_Symbol(v);
 
           if (CTX_TYPE(context) == REB_MODULE) {
             bool strict = true;
@@ -212,7 +212,7 @@ REBLEN Try_Bind_Word(const Cell* context, REBVAL *word)
     const bool strict = true;
     REBLEN n = Find_Symbol_In_Context(
         context,
-        VAL_WORD_SYMBOL(word),
+        Cell_Word_Symbol(word),
         strict
     );
     if (n != 0) {
@@ -393,7 +393,7 @@ Option(Series*) Get_Word_Container(
     // this word is overridden without doing a linear search.  Do it
     // and then save the hit or miss information in the word for next use.
     //
-    const Symbol* symbol = VAL_WORD_SYMBOL(any_word);
+    const Symbol* symbol = Cell_Word_Symbol(any_word);
 
     // !!! Virtual binding could use the bind table as a kind of next
     // level cache if it encounters a large enough object to make it
@@ -497,7 +497,7 @@ Option(Series*) Get_Word_Container(
         // lookup would say "I want that but be willing to make it."
         //
         if (CTX_TYPE(cast(Context*, binding)) == REB_MODULE) {
-            const Symbol* symbol = VAL_WORD_SYMBOL(any_word);
+            const Symbol* symbol = Cell_Word_Symbol(any_word);
             Stub* patch = MISC(Hitch, symbol);
             while (Get_Series_Flag(patch, BLACK))  // binding temps
                 patch = cast(Stub*, node_MISC(Hitch, patch));
@@ -810,7 +810,7 @@ DECLARE_NATIVE(let)
         Set_Node_Managed_Bit(bindings);  // natives don't always manage
 
     if (Cell_Heart(vars) == REB_WORD or Cell_Heart(vars) == REB_SET_WORD) {
-        const Symbol* symbol = VAL_WORD_SYMBOL(vars);
+        const Symbol* symbol = Cell_Word_Symbol(vars);
         bindings = Make_Let_Patch(symbol, bindings);
 
         REBVAL *where;
@@ -822,7 +822,7 @@ DECLARE_NATIVE(let)
             where = stable_OUT;
 
         Copy_Cell_Header(where, vars);  // keep QUASI! state and word/setword
-        INIT_VAL_WORD_SYMBOL(where, symbol);
+        INIT_Cell_Word_Symbol(where, symbol);
         INIT_VAL_WORD_BINDING(where, bindings);
         INIT_VAL_WORD_INDEX(where, INDEX_ATTACHED);
 
@@ -833,7 +833,7 @@ DECLARE_NATIVE(let)
 
         const Cell* tail;
         const Cell* item = Cell_Array_At(&tail, vars);
-        Specifier* item_specifier = VAL_SPECIFIER(vars);
+        Specifier* item_specifier = Cell_Specifier(vars);
 
         StackIndex base = TOP_INDEX;
 
@@ -871,7 +871,7 @@ DECLARE_NATIVE(let)
               case REB_META_WORD:
               case REB_THE_WORD: {
                 Derelativize(PUSH(), temp, temp_specifier);
-                const Symbol* symbol = VAL_WORD_SYMBOL(temp);
+                const Symbol* symbol = Cell_Word_Symbol(temp);
                 bindings = Make_Let_Patch(symbol, bindings);
                 break; }
 
@@ -943,7 +943,7 @@ DECLARE_NATIVE(let)
 
 } integrate_eval_bindings: {  ////////////////////////////////////////////////
 
-    Specifier* bindings = VAL_SPECIFIER(bindings_holder);
+    Specifier* bindings = Cell_Specifier(bindings_holder);
 
     if (L_specifier and IS_LET(L_specifier)) { // add bindings [7]
         bindings = Merge_Patches_May_Reuse(L_specifier, bindings);
@@ -959,7 +959,7 @@ DECLARE_NATIVE(let)
     // that this can create the problem of applying the binding twice; this
     // needs systemic review.
 
-    Specifier* bindings = VAL_SPECIFIER(bindings_holder);
+    Specifier* bindings = Cell_Specifier(bindings_holder);
     mutable_BINDING(FEED_SINGLE(L->feed)) = bindings;
 
     if (Is_Pack(OUT))
@@ -989,7 +989,7 @@ DECLARE_NATIVE(add_let_binding) {
     if (L_specifier)
         Set_Node_Managed_Bit(L_specifier);
 
-    Specifier* let = Make_Let_Patch(VAL_WORD_SYMBOL(ARG(word)), L_specifier);
+    Specifier* let = Make_Let_Patch(Cell_Word_Symbol(ARG(word)), L_specifier);
 
     Move_Cell(Array_Single(let), ARG(value));
 
@@ -1055,7 +1055,7 @@ void Clonify_And_Bind_Relative(
         Fail_Stack_Overflow();
 
     if (relative)
-        assert(not IS_RELATIVE(v));  // when relativizing, v is not relative
+        assert(not Is_Relative(v));  // when relativizing, v is not relative
 
     assert(flags & NODE_FLAG_MANAGED);
 
@@ -1067,7 +1067,7 @@ void Clonify_And_Bind_Relative(
     enum Reb_Kind heart = Cell_Heart_Unchecked(v);
 
     if (relative and Any_Wordlike(v)) {
-        REBINT n = Get_Binder_Index_Else_0(unwrap(binder), VAL_WORD_SYMBOL(v));
+        REBINT n = Get_Binder_Index_Else_0(unwrap(binder), Cell_Word_Symbol(v));
         if (n != 0) {
             //
             // Word' symbol is in frame.  Relatively bind it.  Note that the
@@ -1094,7 +1094,7 @@ void Clonify_And_Bind_Relative(
         else if (Any_Pairlike(v)) {
             Value(*) copy = Copy_Pairing(
                 VAL_PAIRING(v),
-                VAL_SPECIFIER(v),
+                Cell_Specifier(v),
                 NODE_FLAG_MANAGED
             );
             Init_Cell_Node1(v, copy);
@@ -1107,7 +1107,7 @@ void Clonify_And_Bind_Relative(
             Array* copy = Copy_Array_At_Extra_Shallow(
                 Cell_Array(v),
                 0,  // !!! what if VAL_INDEX() is nonzero?
-                VAL_SPECIFIER(v),
+                Cell_Specifier(v),
                 0,
                 NODE_FLAG_MANAGED
             );
@@ -1164,7 +1164,7 @@ void Clonify_And_Bind_Relative(
 //  Copy_And_Bind_Relative_Deep_Managed: C
 //
 // This routine is called by Make_Action in order to take the raw material
-// given as a function body, and de-relativize any IS_RELATIVE(value)s that
+// given as a function body, and de-relativize any Is_Relative(value)s that
 // happen to be in it already (as any Copy does).  But it also needs to make
 // new relative references to ANY-WORD! that are referencing function
 // parameters, as well as to relativize the copies of ANY-ARRAY! that contain
@@ -1199,7 +1199,7 @@ Array* Copy_And_Bind_Relative_Deep_Managed(
   blockscope {
     const Array* original = Cell_Array(body);
     REBLEN index = VAL_INDEX(body);
-    Specifier* specifier = VAL_SPECIFIER(body);
+    Specifier* specifier = Cell_Specifier(body);
     REBLEN tail = Cell_Series_Len_At(body);
     assert(tail <= Array_Len(original));
 
@@ -1305,7 +1305,7 @@ void Rebind_Values_Deep(
             if (binder) {
                 REBLEN index = Get_Binder_Index_Else_0(
                     unwrap(binder),
-                    VAL_WORD_SYMBOL(v)
+                    Cell_Word_Symbol(v)
                 );
                 assert(index != 0);
                 INIT_VAL_WORD_INDEX(v, index);
@@ -1370,7 +1370,7 @@ Context* Virtual_Bind_Deep_To_New_Context(
     Specifier* specifier;
     bool rebinding;
     if (Is_Block(spec)) {  // walk the block for errors BEFORE making binder
-        specifier = VAL_SPECIFIER(spec);
+        specifier = Cell_Specifier(spec);
         item = Cell_Array_At(&tail, spec);
 
         const Cell* check = item;
@@ -1437,7 +1437,7 @@ Context* Virtual_Bind_Deep_To_New_Context(
             goto add_binding_for_check;
         }
         else if (Is_Word(item) or Is_Meta_Word(item)) {
-            symbol = VAL_WORD_SYMBOL(item);
+            symbol = Cell_Word_Symbol(item);
             Value(*) var = Append_Context(c, symbol);
 
             // !!! For loops, nothing should be able to be aware of this
@@ -1474,7 +1474,7 @@ Context* Virtual_Bind_Deep_To_New_Context(
             // itself into the slot, and give it NODE_FLAG_MARKED...then
             // hide it from the context and binding.
             //
-            symbol = VAL_WORD_SYMBOL(item);
+            symbol = Cell_Word_Symbol(item);
 
           blockscope {
             REBVAL *var = Append_Context(c, symbol);

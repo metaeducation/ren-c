@@ -120,7 +120,7 @@ Bounce Dir_Actor(Level* level_, REBVAL *port, const Symbol* verb)
         dir->path = path;
     }
 
-    switch (ID_OF_SYMBOL(verb)) {
+    switch (Symbol_Id(verb)) {
 
     //=//// REFLECT ////////////////////////////////////////////////////////=//
 

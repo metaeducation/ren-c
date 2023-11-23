@@ -31,7 +31,7 @@
 //
 
 #define VAL_WORD_ID(v) \
-    ID_OF_SYMBOL(VAL_WORD_SYMBOL(v))
+    Symbol_Id(Cell_Word_Symbol(v))
 
 INLINE void INIT_VAL_WORD_INDEX(Cell* v, REBLEN i) {
     assert(Any_Wordlike(v));
@@ -53,7 +53,7 @@ INLINE REBVAL *Init_Any_Word_Untracked(
     );
     VAL_WORD_INDEX_U32(out) = 0;
     mutable_BINDING(out) = nullptr;
-    INIT_VAL_WORD_SYMBOL(out, sym);
+    INIT_Cell_Word_Symbol(out, sym);
 
     return cast(REBVAL*, out);
 }
@@ -81,7 +81,7 @@ INLINE REBVAL *Init_Any_Word_Bound_Untracked(
     );
     mutable_BINDING(out) = binding;
     VAL_WORD_INDEX_U32(out) = index;
-    INIT_VAL_WORD_SYMBOL(out, symbol);
+    INIT_Cell_Word_Symbol(out, symbol);
 
     if (IS_VARLIST(binding)) {
         if (CTX_TYPE(cast(Context*, binding)) == REB_MODULE)
@@ -128,7 +128,7 @@ INLINE const String* Intern_Unsized_Managed(const char *utf8)
 
 
 // It's fundamental to PARSE to recognize `|` and skip ahead to it to the end.
-// The debug build has enough checks on things like VAL_WORD_SYMBOL() that
+// The debug build has enough checks on things like Cell_Word_Symbol() that
 // it adds up when you already tested someting Is_Word().  This reaches a
 // bit lower level to try and still have protections but speed up some--and
 // since there's no inlining in the debug build, FETCH_TO_BAR_OR_END=>macro
@@ -138,30 +138,30 @@ INLINE const String* Intern_Unsized_Managed(const char *utf8)
 //
 INLINE bool IS_BAR(const Cell* v) {
     return VAL_TYPE_UNCHECKED(v) == REB_WORD
-        and VAL_WORD_SYMBOL(v) == Canon(BAR_1);  // caseless | always canon
+        and Cell_Word_Symbol(v) == Canon(BAR_1);  // caseless | always canon
 }
 
 INLINE bool IS_BAR_BAR(const Cell* v) {
     return VAL_TYPE_UNCHECKED(v) == REB_WORD
-        and VAL_WORD_SYMBOL(v) == Canon(_B_B);  // caseless || always canon
+        and Cell_Word_Symbol(v) == Canon(_B_B);  // caseless || always canon
 }
 
 INLINE bool IS_META(const Cell* v) {
     if (not Is_Word(v))
         return false;
-    return VAL_WORD_SYMBOL(v) == Canon(CARET_1);
+    return Cell_Word_Symbol(v) == Canon(CARET_1);
 }
 
 INLINE bool IS_THE(const Cell* v) {
     if (not Is_Word(v))
         return false;
-    return VAL_WORD_SYMBOL(v) == Canon(AT_1);
+    return Cell_Word_Symbol(v) == Canon(AT_1);
 }
 
 // !!! Temporary workaround for what was Is_Meta_Word() (now not its own type)
 //
 INLINE bool IS_QUOTED_WORD(const Cell* v) {
-    return VAL_NUM_QUOTES(v) == 1
+    return Cell_Num_Quotes(v) == 1
         and Cell_Heart(v) == REB_WORD;
 }
 

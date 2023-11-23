@@ -67,14 +67,14 @@ static void Append_Vars_To_Context_From_Group(REBVAL *context, REBVAL *block)
             goto collect_end;
         }
 
-        const Symbol* symbol = VAL_WORD_SYMBOL(word);
+        const Symbol* symbol = Cell_Word_Symbol(word);
 
         if (Try_Add_Binder_Index(
             &collector.binder,
             symbol,
             Collector_Index_If_Pushed(&collector)
         )){
-            Init_Word(PUSH(), VAL_WORD_SYMBOL(word));
+            Init_Word(PUSH(), Cell_Word_Symbol(word));
         }
         if (word + 1 == tail)  // catch malformed case with no value (#708)
             break;
@@ -87,14 +87,14 @@ static void Append_Vars_To_Context_From_Group(REBVAL *context, REBVAL *block)
 
     StackValue(*) new_word = Data_Stack_At(collector.stack_base) + first_new_index;
     for (; new_word != TOP + 1; ++new_word)
-        Finalize_None(Append_Context(c, VAL_WORD_SYMBOL(new_word)));
+        Finalize_None(Append_Context(c, Cell_Word_Symbol(new_word)));
   }
   }  // end the non-module part
 
   blockscope {  // Set new values to obj words
     const Cell* word = item;
     for (; word != tail; word += 2) {
-        const Symbol* symbol = VAL_WORD_SYMBOL(word);
+        const Symbol* symbol = Cell_Word_Symbol(word);
         Value(*) var;
         if (Is_Module(context)) {
             bool strict = true;
@@ -135,7 +135,7 @@ static void Append_Vars_To_Context_From_Group(REBVAL *context, REBVAL *block)
             break;  // fix bug#708
         }
         else
-            Derelativize(var, &word[1], VAL_SPECIFIER(block));
+            Derelativize(var, &word[1], Cell_Specifier(block));
     }
   }
 
@@ -357,10 +357,10 @@ bool Did_Advance_Evars(EVARS *e) {
 
     if (e->word) {
         while (++e->word != e->word_tail) {
-            e->var = MOD_VAR(e->ctx, VAL_WORD_SYMBOL(e->word), true);
+            e->var = MOD_VAR(e->ctx, Cell_Word_Symbol(e->word), true);
             if (Get_Cell_Flag(e->var, VAR_MARKED_HIDDEN))
                 continue;
-            e->keybuf = VAL_WORD_SYMBOL(e->word);
+            e->keybuf = Cell_Word_Symbol(e->word);
             e->key = &e->keybuf;
             return true;
         }
@@ -1066,7 +1066,7 @@ const Symbol* Symbol_From_Picker(const REBVAL *context, const Cell* picker)
     if (not Is_Word(picker))
         fail (picker);
 
-    return VAL_WORD_SYMBOL(picker);
+    return Cell_Word_Symbol(picker);
 }
 
 
@@ -1080,7 +1080,7 @@ REBTYPE(Context)
     REBVAL *context = D_ARG(1);
     Context* c = VAL_CONTEXT(context);
 
-    Option(SymId) symid = ID_OF_SYMBOL(verb);
+    Option(SymId) symid = Symbol_Id(verb);
 
     // !!! The PORT! datatype wants things like LENGTH OF to give answers
     // based on the content of the port, not the number of fields in the
@@ -1216,10 +1216,10 @@ REBTYPE(Context)
             const bool strict = true;
             if (0 == Find_Symbol_In_Context(
                 context,
-                VAL_WORD_SYMBOL(arg),
+                Cell_Word_Symbol(arg),
                 strict
             )){
-                Finalize_None(Append_Context(c, VAL_WORD_SYMBOL(arg)));
+                Finalize_None(Append_Context(c, Cell_Word_Symbol(arg)));
             }
             return COPY(context);
         }
@@ -1277,13 +1277,13 @@ REBTYPE(Context)
 
         REBLEN n = Find_Symbol_In_Context(
             context,
-            VAL_WORD_SYMBOL(pattern),
+            Cell_Word_Symbol(pattern),
             REF(case)
         );
         if (n == 0)
             return nullptr;
 
-        if (ID_OF_SYMBOL(verb) == SYM_FIND)
+        if (Symbol_Id(verb) == SYM_FIND)
             return Init_True(OUT); // !!! obscures non-LOGIC! result?
 
         return COPY(CTX_VAR(c, n)); }
@@ -1307,7 +1307,7 @@ REBTYPE(Frame)
     REBVAL *frame = D_ARG(1);
     Context* c = VAL_CONTEXT(frame);
 
-    Option(SymId) symid = ID_OF_SYMBOL(verb);
+    Option(SymId) symid = Symbol_Id(verb);
 
     switch (symid) {
 
@@ -1597,7 +1597,7 @@ REBTYPE(Frame)
         UNUSED(ARG(location));
 
         REBVAL *redbol = Get_System(SYS_OPTIONS, OPTIONS_REDBOL_PATHS);
-        if (not Is_Logic(redbol) or VAL_LOGIC(redbol) == false) {
+        if (not Is_Logic(redbol) or Cell_Logic(redbol) == false) {
             fail (
                 "SYSTEM.OPTIONS.REDBOL-PATHS is false, so you can't"
                 " use paths to do ordinary picking.  Use TUPLE!"
@@ -1610,7 +1610,7 @@ REBTYPE(Frame)
 
         const Symbol* symbol;
         if (Is_Word(picker))
-            symbol = VAL_WORD_SYMBOL(picker);
+            symbol = Cell_Word_Symbol(picker);
         else if (Is_Path(picker) and Is_Refinement(picker))
             symbol = VAL_REFINEMENT_SYMBOL(picker);
         else
@@ -1758,7 +1758,7 @@ DECLARE_NATIVE(construct)
                 REB_OBJECT,
                 at,  // warning: modifies binding!
                 tail,
-                VAL_SPECIFIER(spec),
+                Cell_Specifier(spec),
                 parent
             )
         );

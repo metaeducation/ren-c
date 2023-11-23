@@ -691,7 +691,7 @@ Bounce JavaScript_Dispatcher(Level* const L)
   initial_entry: {  //////////////////////////////////////////////////////////
 
     Details* details = Phase_Details(PHASE);
-    bool is_awaiter = VAL_LOGIC(DETAILS_AT(details, IDX_JS_NATIVE_IS_AWAITER));
+    bool is_awaiter = Cell_Logic(Details_At(details, IDX_JS_NATIVE_IS_AWAITER));
 
     struct Reb_Promise_Info *info = PG_Promises;
     if (is_awaiter) {
@@ -822,10 +822,10 @@ DECLARE_NATIVE(js_native)
     Details* details = Phase_Details(native);
 
     if (Is_Series_Frozen(Cell_Series(source)))
-        Copy_Cell(DETAILS_AT(details, IDX_NATIVE_BODY), source);  // no copy
+        Copy_Cell(Details_At(details, IDX_NATIVE_BODY), source);  // no copy
     else {
         Init_Text(
-            DETAILS_AT(details, IDX_NATIVE_BODY),
+            Details_At(details, IDX_NATIVE_BODY),
             Copy_String_At(source)  // might change
         );
     }
@@ -833,7 +833,7 @@ DECLARE_NATIVE(js_native)
     // !!! A bit wasteful to use a whole cell for this--could just be whether
     // the ID is positive or negative.  Keep things clear, optimize later.
     //
-    Init_Logic(DETAILS_AT(details, IDX_JS_NATIVE_IS_AWAITER), REF(awaiter));
+    Init_Logic(Details_At(details, IDX_JS_NATIVE_IS_AWAITER), REF(awaiter));
 
     // The generation of the function called by JavaScript.  It takes no
     // arguments, as giving it arguments would make calling it more complex
@@ -937,7 +937,7 @@ DECLARE_NATIVE(js_native)
     // look for bindings.  For the moment, set user natives to use the user
     // context...it could be a parameter of some kind (?)
     //
-    Copy_Cell(DETAILS_AT(details, IDX_NATIVE_CONTEXT), User_Context_Value);
+    Copy_Cell(Details_At(details, IDX_NATIVE_CONTEXT), User_Context_Value);
 
     // We want this native and its JS Object to GC in the same step--because
     // if the native GC'd without removing its identity from the table, then
@@ -946,7 +946,7 @@ DECLARE_NATIVE(js_native)
     // native and a HANDLE! resident in its details will GC in the same step.
     //
     Init_Handle_Cdata_Managed(
-        DETAILS_AT(details, IDX_JS_NATIVE_OBJECT),
+        Details_At(details, IDX_JS_NATIVE_OBJECT),
         ACT_IDENTITY(native),
         1,  // 0 size interpreted to mean it's a C function
         &cleanup_js_object
@@ -1101,7 +1101,7 @@ DECLARE_NATIVE(js_trace)
     JAVASCRIPT_INCLUDE_PARAMS_OF_JS_TRACE;
 
   #if DEBUG_JAVASCRIPT_EXTENSION
-    PG_Probe_Failures = PG_JS_Trace = VAL_LOGIC(ARG(enable));
+    PG_Probe_Failures = PG_JS_Trace = Cell_Logic(ARG(enable));
   #else
     fail ("JS-TRACE only if DEBUG_JAVASCRIPT_EXTENSION set in %emscripten.r");
   #endif

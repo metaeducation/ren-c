@@ -110,7 +110,7 @@ String* Append_Codepoint(String* dst, Codepoint c)
     }
 
     assert(c <= MAX_UNI);
-    assert(not IS_SYMBOL(dst));
+    assert(not Is_String_Symbol(dst));
 
     Length old_len = String_Len(dst);
 
@@ -223,7 +223,7 @@ void Append_Spelling(String* dst, const String* spelling)
 //
 void Append_String_Limit(String* dst, NoQuote(const Cell*) src, REBLEN limit)
 {
-    assert(not IS_SYMBOL(dst));
+    assert(not Is_String_Symbol(dst));
     assert(Any_Utf8_Kind(Cell_Heart(src)));
 
     Length len;

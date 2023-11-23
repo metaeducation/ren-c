@@ -256,7 +256,7 @@ INLINE const Byte* Cell_Bytes_Limit_At(
     assert(Any_Word(v));
     assert(cast(REBLEN, limit) == Cell_Series_Len_At(v));
 
-    const String* spelling = VAL_WORD_SYMBOL(v);
+    const String* spelling = Cell_Word_Symbol(v);
     *size_out = String_Size(spelling);
     return String_Head(spelling);
 }
@@ -320,7 +320,7 @@ INLINE Utf8(const*) Cell_Utf8_Len_Size_At_Limit(
     else {
         assert(Any_Wordlike(v));
 
-        const String* spelling = VAL_WORD_SYMBOL(v);
+        const String* spelling = Cell_Word_Symbol(v);
         utf8 = String_Head(spelling);
 
         if (size_out or length_out) {

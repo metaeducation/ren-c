@@ -112,7 +112,7 @@ ATTRIBUTE_NO_RETURN void Fail_Core(const void *p)
             // any value, then it would call into question the treatment of
             // the error as an error and not erroring on "some value"
             //
-            assert(not IS_RELATIVE(v));
+            assert(not Is_Relative(v));
             if (Is_Error(v)) {
                 error = VAL_CONTEXT(v);
             }
@@ -493,7 +493,7 @@ Bounce MAKE_Error(
         // Find correct category for TYPE: (if any)
         Option(Value(*)) category = Select_Symbol_In_Context(
             CTX_ARCHETYPE(categories),
-            VAL_WORD_SYMBOL(&vars->type)
+            Cell_Word_Symbol(&vars->type)
         );
 
         if (category) {
@@ -503,7 +503,7 @@ Bounce MAKE_Error(
 
             Option(Value(*)) message = Select_Symbol_In_Context(
                 unwrap(category),
-                VAL_WORD_SYMBOL(&vars->id)
+                Cell_Word_Symbol(&vars->id)
             );
 
             if (message) {
@@ -668,7 +668,7 @@ Context* Make_Error_Managed_Core(
             if (not Is_Get_Word(msg_item))
                 continue;
 
-            const Symbol* symbol = VAL_WORD_SYMBOL(msg_item);
+            const Symbol* symbol = Cell_Word_Symbol(msg_item);
             REBVAL *var = Append_Context(error, symbol);
 
             const void *p = va_arg(*vaptr, const void*);
@@ -880,7 +880,7 @@ Context* Error_No_Relative_Core(NoQuote(const Cell*) any_word)
     Init_Any_Word(
         unbound,
         Cell_Heart(any_word),
-        VAL_WORD_SYMBOL(any_word)
+        Cell_Word_Symbol(any_word)
     );
 
     return Error_No_Relative_Raw(unbound);
@@ -1340,7 +1340,7 @@ Context* Startup_Errors(const REBVAL *boot_errors)
         REB_OBJECT,
         errors_head,  // modifies bindings
         errors_tail,
-        VAL_SPECIFIER(boot_errors),
+        Cell_Specifier(boot_errors),
         nullptr
     );
 
@@ -1455,7 +1455,7 @@ void MF_Error(REB_MOLD *mo, NoQuote(const Cell*) v, bool form)
     //
     Append_Ascii(mo->series, "** ");
     if (Is_Word(&vars->type)) {  // has a <type>
-        Append_Spelling(mo->series, VAL_WORD_SYMBOL(&vars->type));
+        Append_Spelling(mo->series, Cell_Word_Symbol(&vars->type));
         Append_Codepoint(mo->series, ' ');
     }
     else

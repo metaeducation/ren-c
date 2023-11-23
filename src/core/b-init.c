@@ -251,8 +251,8 @@ static void Startup_Lib(void)
 
     Init_True(force_Lib(TRUE));
     Init_False(force_Lib(FALSE));
-    assert(Is_Truthy(Lib(TRUE)) and VAL_LOGIC(Lib(TRUE)) == true);
-    assert(Is_Falsey(Lib(FALSE)) and VAL_LOGIC(Lib(FALSE)) == false);
+    assert(Is_Truthy(Lib(TRUE)) and Cell_Logic(Lib(TRUE)) == true);
+    assert(Is_Falsey(Lib(FALSE)) and Cell_Logic(Lib(FALSE)) == false);
 
     // !!! Other constants are just initialized as part of Startup_Base().
 }
@@ -827,7 +827,7 @@ void Startup_Core(void)
         Array_Head(Cell_Array_Known_Mutable(Array_Head(boot_array)))
     );
 
-    // ID_OF_SYMBOL(), VAL_WORD_ID() and Canon(XXX) now available
+    // Symbol_Id(), VAL_WORD_ID() and Canon(XXX) now available
 
     PG_Boot_Phase = BOOT_LOADED;
 

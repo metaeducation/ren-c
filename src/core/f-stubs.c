@@ -49,7 +49,7 @@ REBINT Get_Num_From_Arg(const Cell* val)
         n = cast(REBINT, VAL_DECIMAL(val));
     }
     else if (Is_Logic(val))
-        n = (VAL_LOGIC(val) ? 1 : 2);
+        n = (Cell_Logic(val) ? 1 : 2);
     else
         fail (val);
 

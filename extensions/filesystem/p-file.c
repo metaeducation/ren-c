@@ -170,7 +170,7 @@ Bounce File_Actor(Level* level_, REBVAL *port, const Symbol* verb)
         file->path = path;
     }
 
-    switch (ID_OF_SYMBOL(verb)) {
+    switch (Symbol_Id(verb)) {
 
     //=//// REFLECT ////////////////////////////////////////////////////////=//
 

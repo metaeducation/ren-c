@@ -77,8 +77,8 @@ REBINT Compare_Spellings(const Symbol* a, const Symbol* b, bool strict)
 REBINT CT_Word(NoQuote(const Cell*) a, NoQuote(const Cell*) b, bool strict)
 {
     return Compare_Spellings(
-        VAL_WORD_SYMBOL(a),
-        VAL_WORD_SYMBOL(b),
+        Cell_Word_Symbol(a),
+        Cell_Word_Symbol(b),
         strict
     );
 }
@@ -141,7 +141,7 @@ Bounce MAKE_Word(
         return Init_Any_Word(
             OUT,
             kind,
-            VAL_LOGIC(arg) ? Canon(TRUE) : Canon(FALSE)
+            Cell_Logic(arg) ? Canon(TRUE) : Canon(FALSE)
         );
     }
 
@@ -211,7 +211,7 @@ inline static void Mold_Word(REB_MOLD *mo, const Symbol* symbol, bool escape)
 //  MF_Word: C
 //
 void MF_Word(REB_MOLD *mo, NoQuote(const Cell*) v, bool form) {
-    const Symbol* symbol = VAL_WORD_SYMBOL(v);
+    const Symbol* symbol = Cell_Word_Symbol(v);
     bool escape = form
         ? false
         : Get_Subclass_Flag(SYMBOL, symbol, ESCAPE_PLAIN);
@@ -224,7 +224,7 @@ void MF_Word(REB_MOLD *mo, NoQuote(const Cell*) v, bool form) {
 //  MF_Set_Word: C
 //
 void MF_Set_Word(REB_MOLD *mo, NoQuote(const Cell*) v, bool form) {
-    const Symbol* symbol = VAL_WORD_SYMBOL(v);
+    const Symbol* symbol = Cell_Word_Symbol(v);
     bool escape = form
         ? false
         : Get_Subclass_Flag(SYMBOL, symbol, ESCAPE_WITH_SIGIL);
@@ -238,7 +238,7 @@ void MF_Set_Word(REB_MOLD *mo, NoQuote(const Cell*) v, bool form) {
 //  MF_Get_Word: C
 //
 void MF_Get_Word(REB_MOLD *mo, NoQuote(const Cell*) v, bool form) {
-    const Symbol* symbol = VAL_WORD_SYMBOL(v);
+    const Symbol* symbol = Cell_Word_Symbol(v);
     bool escape = form
         ? false
         : Get_Subclass_Flag(SYMBOL, symbol, ESCAPE_WITH_SIGIL);
@@ -252,7 +252,7 @@ void MF_Get_Word(REB_MOLD *mo, NoQuote(const Cell*) v, bool form) {
 //  MF_Meta_Word: C
 //
 void MF_Meta_Word(REB_MOLD *mo, NoQuote(const Cell*) v, bool form) {
-    const Symbol* symbol = VAL_WORD_SYMBOL(v);
+    const Symbol* symbol = Cell_Word_Symbol(v);
     bool escape = form
         ? false
         : Get_Subclass_Flag(SYMBOL, symbol, ESCAPE_WITH_SIGIL);
@@ -266,7 +266,7 @@ void MF_Meta_Word(REB_MOLD *mo, NoQuote(const Cell*) v, bool form) {
 //  MF_The_Word: C
 //
 void MF_The_Word(REB_MOLD *mo, NoQuote(const Cell*) v, bool form) {
-    const Symbol* symbol = VAL_WORD_SYMBOL(v);
+    const Symbol* symbol = Cell_Word_Symbol(v);
     bool escape = form
         ? false
         : Get_Subclass_Flag(SYMBOL, symbol, ESCAPE_WITH_SIGIL);
@@ -280,7 +280,7 @@ void MF_The_Word(REB_MOLD *mo, NoQuote(const Cell*) v, bool form) {
 //  MF_Type_Word: C
 //
 void MF_Type_Word(REB_MOLD *mo, NoQuote(const Cell*) v, bool form) {
-    const Symbol* symbol = VAL_WORD_SYMBOL(v);
+    const Symbol* symbol = Cell_Word_Symbol(v);
     bool escape = form
         ? false
         : Get_Subclass_Flag(SYMBOL, symbol, ESCAPE_WITH_SIGIL);
@@ -303,7 +303,7 @@ REBTYPE(Word)
     REBVAL *v = D_ARG(1);
     assert(Any_Word(v));
 
-    switch (ID_OF_SYMBOL(verb)) {
+    switch (Symbol_Id(verb)) {
       case SYM_REFLECT: {
         INCLUDE_PARAMS_OF_REFLECT;
 
@@ -312,7 +312,7 @@ REBTYPE(Word)
 
         switch (property) {
           case SYM_LENGTH: {  // byte size stored, but not # of codepoints
-            const String* spelling = VAL_WORD_SYMBOL(v);
+            const String* spelling = Cell_Word_Symbol(v);
             Utf8(const*) cp = String_Head(spelling);
             Size size = String_Size(spelling);
             Length len = 0;
@@ -338,13 +338,13 @@ REBTYPE(Word)
             //
             REBVAL *var = MOD_VAR(
                 VAL_CONTEXT(OUT),
-                VAL_WORD_SYMBOL(v),
+                Cell_Word_Symbol(v),
                 true
             );
             if (var)
                 return OUT;  // found variable actually in module.
 
-            if (MOD_VAR(Lib_Context, VAL_WORD_SYMBOL(v), true))
+            if (MOD_VAR(Lib_Context, Cell_Word_Symbol(v), true))
                 return Init_Quasi_Word(OUT, Canon(INHERITED));
 
             return Init_Quasi_Word(OUT, Canon(ATTACHED)); }
@@ -354,7 +354,7 @@ REBTYPE(Word)
                 return nullptr;
 
             if (CTX_TYPE(VAL_WORD_CONTEXT(v)) == REB_MODULE) {
-                if (MOD_VAR(VAL_WORD_CONTEXT(v), VAL_WORD_SYMBOL(v), true))
+                if (MOD_VAR(VAL_WORD_CONTEXT(v), Cell_Word_Symbol(v), true))
                     return Copy_Cell(OUT, CTX_ARCHETYPE(VAL_WORD_CONTEXT(v)));
             }
 

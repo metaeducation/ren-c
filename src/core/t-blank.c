@@ -87,7 +87,7 @@ REBINT CT_Blank(NoQuote(const Cell*) a, NoQuote(const Cell*) b, bool strict)
 //
 REBTYPE(Blank)
 {
-    switch (ID_OF_SYMBOL(verb)) {
+    switch (Symbol_Id(verb)) {
       case SYM_REFLECT: {
         INCLUDE_PARAMS_OF_REFLECT;
         UNUSED(ARG(value)); // taken care of by `unit` above.

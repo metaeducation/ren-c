@@ -63,7 +63,7 @@ Bounce Yielder_Dispatcher(Level* const L)
     USE_LEVEL_SHORTHANDS (L);
 
     Details* details = Phase_Details(PHASE);
-    Value(*) mode = DETAILS_AT(details, IDX_YIELDER_MODE);
+    Value(*) mode = Details_At(details, IDX_YIELDER_MODE);
 
     switch (STATE) {
       case ST_YIELDER_WAS_INVOKED: goto invoked;
@@ -84,7 +84,7 @@ Bounce Yielder_Dispatcher(Level* const L)
         fail ("Yielder was re-entered");
 
     if (Is_Logic(mode)) {  // terminated due to finishing the body or error
-        if (VAL_LOGIC(mode))  // terminated due to finishing the body
+        if (Cell_Logic(mode))  // terminated due to finishing the body
             return nullptr;
 
         fail ("Yielder called again after raising an error");
@@ -131,7 +131,7 @@ Bounce Yielder_Dispatcher(Level* const L)
     // in the stack walk.
     //
     Context* last_yielder_context = VAL_CONTEXT(
-        DETAILS_AT(details, IDX_YIELDER_LAST_YIELDER_CONTEXT)
+        Details_At(details, IDX_YIELDER_LAST_YIELDER_CONTEXT)
     );
 
     // We want the identity of the old varlist to replace this yielder's
@@ -188,7 +188,7 @@ Bounce Yielder_Dispatcher(Level* const L)
     L->varlist = CTX_VARLIST(last_yielder_context);  // rootvar must match
     L->rootvar = m_cast(REBVAL*, CTX_ARCHETYPE(last_yielder_context));
 
-    Value(*) plug = DETAILS_AT(details, IDX_YIELDER_PLUG);
+    Value(*) plug = Details_At(details, IDX_YIELDER_PLUG);
     Replug_Stack(yield_level, yielder_level, plug);
     assert(IS_TRASH(plug));  // Replug trashes, make GC safe
 
@@ -198,7 +198,7 @@ Bounce Yielder_Dispatcher(Level* const L)
     // Note special trick used to encode END inside an array by means of
     // using the hidden identity of the details array itself.
     //
-    Value(*) out_copy = DETAILS_AT(details, IDX_YIELDER_OUT);
+    Value(*) out_copy = Details_At(details, IDX_YIELDER_OUT);
     Move_Cell(yielder_level->out, out_copy);
 
     // We could make YIELD appear to return a VOID! when we jump back in
@@ -207,7 +207,7 @@ Bounce Yielder_Dispatcher(Level* const L)
     //
     Move_Cell(
         yield_level->out,
-        DETAILS_AT(details, IDX_YIELDER_LAST_YIELD_RESULT)
+        Details_At(details, IDX_YIELDER_LAST_YIELD_RESULT)
     );
 
     // If the yielder actually reaches its end (instead of YIELD-ing)
@@ -227,10 +227,10 @@ Bounce Yielder_Dispatcher(Level* const L)
 
     // Clean up all the details fields so the GC can reclaim the memory
     //
-    Init_Trash(DETAILS_AT(details, IDX_YIELDER_LAST_YIELDER_CONTEXT));
-    Init_Trash(DETAILS_AT(details, IDX_YIELDER_LAST_YIELD_RESULT));
-    Init_Trash(DETAILS_AT(details, IDX_YIELDER_PLUG));
-    Init_Trash(DETAILS_AT(details, IDX_YIELDER_OUT));
+    Init_Trash(Details_At(details, IDX_YIELDER_LAST_YIELDER_CONTEXT));
+    Init_Trash(Details_At(details, IDX_YIELDER_LAST_YIELD_RESULT));
+    Init_Trash(Details_At(details, IDX_YIELDER_PLUG));
+    Init_Trash(Details_At(details, IDX_YIELDER_OUT));
 
  /*   if (Is_Throwing(L)) {
         if (Is_Throwing_Failure(L)) {
@@ -290,11 +290,11 @@ DECLARE_NATIVE(yielder)
     Details* details = Phase_Details(yielder);
 
     assert(Is_Block(Array_At(details, IDX_YIELDER_BODY)));
-    Init_Blank(DETAILS_AT(details, IDX_YIELDER_MODE));  // starting
-    Init_Trash(DETAILS_AT(details, IDX_YIELDER_LAST_YIELDER_CONTEXT));
-    Init_Trash(DETAILS_AT(details, IDX_YIELDER_LAST_YIELD_RESULT));
-    Init_Trash(DETAILS_AT(details, IDX_YIELDER_PLUG));
-    Init_Trash(DETAILS_AT(details, IDX_YIELDER_OUT));
+    Init_Blank(Details_At(details, IDX_YIELDER_MODE));  // starting
+    Init_Trash(Details_At(details, IDX_YIELDER_LAST_YIELDER_CONTEXT));
+    Init_Trash(Details_At(details, IDX_YIELDER_LAST_YIELD_RESULT));
+    Init_Trash(Details_At(details, IDX_YIELDER_PLUG));
+    Init_Trash(Details_At(details, IDX_YIELDER_OUT));
 
     return Init_Activation(OUT, yielder, ANONYMOUS, UNBOUND);
 }
@@ -381,10 +381,10 @@ DECLARE_NATIVE(yield)
     // of that evaluative product.  It must be preserved.  But since we can't
     // put END values in blocks, use the hidden block to indicate that
     //
-    Value(*) out_copy = DETAILS_AT(yielder_details, IDX_YIELDER_OUT);
+    Value(*) out_copy = Details_At(yielder_details, IDX_YIELDER_OUT);
     Move_Cell(out_copy, yielder_level->out);
 
-    Value(*) plug = DETAILS_AT(yielder_details, IDX_YIELDER_PLUG);
+    Value(*) plug = Details_At(yielder_details, IDX_YIELDER_PLUG);
     assert(IS_TRASH(plug));
     Unplug_Stack(plug, yield_level, yielder_level);
 
@@ -393,7 +393,7 @@ DECLARE_NATIVE(yield)
     // The garbage collector should notice it is there, and mark it live up
     // until the nullptr that we put at the root.
     //
-    Value(*) mode = DETAILS_AT(yielder_details, IDX_YIELDER_MODE);
+    Value(*) mode = Details_At(yielder_details, IDX_YIELDER_MODE);
     assert(Is_Quasi_Void(mode));  // should be signal for "currently running"
     Init_Frame(mode, Context_For_Level_May_Manage(yield_level), ANONYMOUS);
     Assert_Series_Managed(VAL_CONTEXT(mode));
@@ -403,7 +403,7 @@ DECLARE_NATIVE(yield)
     // GC of the ACTION's details will keep it alive.
     //
     Init_Frame(
-        DETAILS_AT(yielder_details, IDX_YIELDER_LAST_YIELDER_CONTEXT),
+        Details_At(yielder_details, IDX_YIELDER_LAST_YIELDER_CONTEXT),
         yielder_context,
         ANONYMOUS
     );
@@ -426,7 +426,7 @@ DECLARE_NATIVE(yield)
     //
     Copy_Cell(yielder_level->out, ARG(value));
     Move_Cell(
-        DETAILS_AT(yielder_details, IDX_YIELDER_LAST_YIELD_RESULT),
+        Details_At(yielder_details, IDX_YIELDER_LAST_YIELD_RESULT),
         ARG(value)
     );
 

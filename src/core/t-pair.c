@@ -212,7 +212,7 @@ REBTYPE(Pair)
     REBVAL *x2 = nullptr;
     REBVAL *y2 = nullptr;
 
-    switch (ID_OF_SYMBOL(verb)) {
+    switch (Symbol_Id(verb)) {
 
     //=//// PICK* (see %sys-pick.h for explanation) ////////////////////////=//
 

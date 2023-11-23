@@ -166,7 +166,7 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
             out,
             op,
             Is_Cell_Poisoned(shared) ? nullptr : Cell_Array_Item_At(shared),
-            Is_Cell_Poisoned(shared) ? SPECIFIED : VAL_SPECIFIER(shared),
+            Is_Cell_Poisoned(shared) ? SPECIFIED : Cell_Specifier(shared),
             pclass
         )){
             goto type_check_and_return;
@@ -217,7 +217,7 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
             Derelativize(
                 out,
                 Cell_Array_Item_At(shared),
-                VAL_SPECIFIER(shared)
+                Cell_Specifier(shared)
             );
             Set_Cell_Flag(out, UNEVALUATED);
             VAL_INDEX_UNBOUNDED(shared) += 1;
@@ -229,7 +229,7 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
         case PARAM_CLASS_SOFT:
             if (ANY_ESCAPABLE_GET(Cell_Array_Item_At(shared))) {
                 if (Eval_Value_Throws(
-                    out, Cell_Array_Item_At(shared), VAL_SPECIFIER(shared)
+                    out, Cell_Array_Item_At(shared), Cell_Specifier(shared)
                 )){
                     return true;
                 }
@@ -238,7 +238,7 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
                 Derelativize(
                     out,
                     Cell_Array_Item_At(shared),
-                    VAL_SPECIFIER(shared)
+                    Cell_Specifier(shared)
                 );
                 Set_Cell_Flag(out, UNEVALUATED);
             }
@@ -433,7 +433,7 @@ REBTYPE(Varargs)
 {
     REBVAL *value = D_ARG(1);
 
-    switch (ID_OF_SYMBOL(verb)) {
+    switch (Symbol_Id(verb)) {
     case SYM_REFLECT: {
         INCLUDE_PARAMS_OF_REFLECT;
 

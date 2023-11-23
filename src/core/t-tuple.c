@@ -193,7 +193,7 @@ REBTYPE(Sequence)
     UNUSED(all_byte_sized_ints);
     Byte* vp = buf;
 
-    Option(SymId) id = ID_OF_SYMBOL(verb);
+    Option(SymId) id = Symbol_Id(verb);
 
     // !!! This used to depend on "IS_BINARY_ACT", a concept that does not
     // exist any longer with symbol-based action dispatch.  Patch with more
@@ -466,7 +466,7 @@ void MF_Sequence(REB_MOLD *mo, NoQuote(const Cell*) v, bool form)
             // no blank molding; implicit
         }
         else if (element_kind == REB_WORD) {
-            const Symbol* sym = VAL_WORD_SYMBOL(element);
+            const Symbol* sym = Cell_Word_Symbol(element);
             if (
                 not form
                 and Get_Subclass_Flag(SYMBOL, sym, ESCAPE_IN_SEQUENCE)

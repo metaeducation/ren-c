@@ -83,7 +83,7 @@ Bounce Block_Dispatcher(Level* const L)
 
     const Array* body = Cell_Array(block);
 
-    if (IS_SPECIFIC(block)) {
+    if (Is_Specific(block)) {
         if (Level_Binding(L) == UNBOUND)
             return DELEGATE(OUT, block);
 
@@ -123,7 +123,7 @@ Bounce Block_Dispatcher(Level* const L)
         Init_Relative_Block(block, PHASE, relativized);
     }
 
-    assert(IS_RELATIVE(block));
+    assert(Is_Relative(block));
 
     return DELEGATE_CORE(
         OUT,  // output

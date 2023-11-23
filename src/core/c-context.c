@@ -160,7 +160,7 @@ static Value(*) Append_Context_Core(
 
         Option(SymId) id;
         if (context == Lib_Context)
-            id = ID_OF_SYMBOL(symbol);
+            id = Symbol_Id(symbol);
         else
             id = SYM_0;
 
@@ -256,7 +256,7 @@ Value(*) Append_Context_Bind_Word(
     Context* context,
     Cell* any_word  // binding modified (Note: quoted words allowed)
 ){
-    return Append_Context_Core(context, VAL_WORD_SYMBOL(any_word), any_word);
+    return Append_Context_Core(context, Cell_Word_Symbol(any_word), any_word);
 }
 
 //
@@ -293,7 +293,7 @@ void Collect_End(struct Reb_Collector *cl)
 {
     StackIndex index = TOP_INDEX;
     for (; index != cl->stack_base; --index) {
-        const Symbol* symbol = VAL_WORD_SYMBOL(TOP);
+        const Symbol* symbol = Cell_Word_Symbol(TOP);
         Remove_Binder_Index(&cl->binder, symbol);
         DROP();
     }
@@ -354,7 +354,7 @@ static void Collect_Inner_Loop(
             if (kind != REB_SET_WORD and not (cl->flags & COLLECT_ANY_WORD))
                 continue;  // kind of word we're not interested in collecting
 
-            const Symbol* symbol = VAL_WORD_SYMBOL(v);
+            const Symbol* symbol = Cell_Word_Symbol(v);
 
             if (not Try_Add_Binder_Index(
                 &cl->binder,
@@ -445,7 +445,7 @@ KeyList* Collect_KeyList_Managed(
         StackValue(*) word = Data_Stack_At(cl->stack_base) + 1;
         Key* key = Series_Head(Key, keylist);
         for (; word != TOP + 1; ++word, ++key)
-            Init_Key(key, VAL_WORD_SYMBOL(word));
+            Init_Key(key, Cell_Word_Symbol(word));
 
         Set_Series_Used(keylist, num_collected);  // no terminator
     }
@@ -495,7 +495,7 @@ Array* Collect_Unique_Words_Managed(
         const Cell* ignore_tail;
         const Cell* ignore = Cell_Array_At(&ignore_tail, ignorables);
         for (; ignore != ignore_tail; ++ignore) {
-            const Symbol* symbol = VAL_WORD_SYMBOL(ignore);
+            const Symbol* symbol = Cell_Word_Symbol(ignore);
 
             // A block may have duplicate words in it (this situation could
             // arise when `function [/test /test] []` calls COLLECT-WORDS
@@ -542,7 +542,7 @@ Array* Collect_Unique_Words_Managed(
         const Cell* ignore_tail;
         const Cell* ignore = Cell_Array_At(&ignore_tail, ignorables);
         for (; ignore != ignore_tail; ++ignore) {
-            const Symbol* symbol = VAL_WORD_SYMBOL(ignore);
+            const Symbol* symbol = Cell_Word_Symbol(ignore);
 
           #if !defined(NDEBUG)
             REBINT i = Get_Binder_Index_Else_0(&cl->binder, symbol);
@@ -954,7 +954,7 @@ void Assert_Context_Core(Context* c)
 
     REBLEN n;
     for (n = 1; n < vars_len; n++, var++, key++) {
-        if (not IS_SYMBOL(*key))
+        if (not Is_String_Symbol(*key))
             panic (*key);
 
       #if DEBUG_POISON_SERIES_TAILS

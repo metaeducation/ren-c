@@ -50,7 +50,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
     if (
         Is_Bindable_Kind(heart)
         and (binding = BINDING(v))
-        and not IS_SYMBOL(binding)
+        and not Is_String_Symbol(binding)
         and Not_Series_Flag(binding, INACCESSIBLE)
     ){
         if (not Is_Series_Array(binding))
@@ -206,7 +206,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
         assert(Series_Wide(s) == sizeof(Byte));
         assert(Is_Node_Marked(s));
 
-        if (Is_NonSymbol_String(s)) {
+        if (Is_String_NonSymbol(s)) {
             BookmarkList* book = LINK(Bookmarks, s);
             if (book) {
                 assert(Series_Used(book) == 1);  // just one for now
@@ -236,8 +236,8 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
         if (Is_Action_Native(a)) {
             Details* details = Phase_Details(a);
             assert(Array_Len(details) >= IDX_NATIVE_MAX);
-            Value(*) body = DETAILS_AT(details, IDX_NATIVE_BODY);
-            Value(*) context = DETAILS_AT(details, IDX_NATIVE_CONTEXT);
+            Value(*) body = Details_At(details, IDX_NATIVE_BODY);
+            Value(*) context = Details_At(details, IDX_NATIVE_CONTEXT);
             assert(
                 Is_Blank(body)
                 or Is_Handle(body)  // Intrinsics use the slot for Intrinsic*
@@ -401,7 +401,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
       case REB_TYPE_WORD: {
         assert(Get_Cell_Flag_Unchecked(v, FIRST_IS_NODE));
 
-        const String *spelling = VAL_WORD_SYMBOL(v);
+        const String *spelling = Cell_Word_Symbol(v);
         assert(Is_Series_Frozen(spelling));
 
         // !!! Whether you can count at this point on a spelling being GC

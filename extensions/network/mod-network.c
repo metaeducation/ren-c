@@ -711,7 +711,7 @@ static Bounce Transport_Actor(
         //
         // Actions for an unopened socket
         //
-        switch (ID_OF_SYMBOL(verb)) {
+        switch (Symbol_Id(verb)) {
           case SYM_REFLECT: {
             INCLUDE_PARAMS_OF_REFLECT;
 
@@ -799,7 +799,7 @@ static Bounce Transport_Actor(
 
   //=//// ACTIONS ON "OPEN" SOCKETS ////////////////////////////////////////=//
 
-    switch (ID_OF_SYMBOL(verb)) { // Ordered by frequency
+    switch (Symbol_Id(verb)) { // Ordered by frequency
       case SYM_REFLECT: {
         INCLUDE_PARAMS_OF_REFLECT;
 

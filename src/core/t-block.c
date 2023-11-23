@@ -182,7 +182,7 @@ Bounce MAKE_Array(
         // paths should be part of the MOLDing logic -or- a path with embedded
         // line markers should use construction syntax to preserve them.
 
-        Specifier* derived = Derive_Specifier(VAL_SPECIFIER(arg), any_array);
+        Specifier* derived = Derive_Specifier(Cell_Specifier(arg), any_array);
         return Init_Series_Cell_At_Core(
             OUT,
             kind,
@@ -202,7 +202,7 @@ Bounce MAKE_Array(
         return Init_Array_Cell(
             OUT,
             kind,
-            Copy_Values_Len_Shallow(at, VAL_SPECIFIER(arg), len)
+            Copy_Values_Len_Shallow(at, Cell_Specifier(arg), len)
         );
     }
     else if (Is_Text(arg)) {
@@ -348,7 +348,7 @@ Bounce TO_Array(Level* level_, enum Reb_Kind kind, const REBVAL *arg) {
         return Init_Array_Cell(
             OUT,
             kind,
-            Copy_Values_Len_Shallow(at, VAL_SPECIFIER(arg), len)
+            Copy_Values_Len_Shallow(at, Cell_Specifier(arg), len)
         );
     }
     else {
@@ -472,18 +472,18 @@ REBINT Find_In_Array(
     if (Any_Word(pattern)) {
         for (; index >= start and index < end; index += skip) {
             const Cell* item = Array_At(array, index);
-            const Symbol* pattern_symbol = VAL_WORD_SYMBOL(pattern);
+            const Symbol* pattern_symbol = Cell_Word_Symbol(pattern);
             if (Any_Word(item)) {
                 if (flags & AM_FIND_CASE) { // Must be same type and spelling
                     if (
-                        VAL_WORD_SYMBOL(item) == pattern_symbol
+                        Cell_Word_Symbol(item) == pattern_symbol
                         and VAL_TYPE(item) == VAL_TYPE(pattern)
                     ){
                         return index;
                     }
                 }
                 else { // Can be different type or differently cased spelling
-                    if (Are_Synonyms(VAL_WORD_SYMBOL(item), pattern_symbol))
+                    if (Are_Synonyms(Cell_Word_Symbol(item), pattern_symbol))
                         return index;
                 }
             }
@@ -565,7 +565,7 @@ static int Compare_Val_Custom(void *arg, const void *v1, const void *v2)
     REBINT tristate = -1;
 
     if (Is_Logic(result)) {
-        if (VAL_LOGIC(result))
+        if (Cell_Logic(result))
             tristate = 1;
     }
     else if (Is_Integer(result)) {
@@ -641,12 +641,12 @@ static REBINT Try_Get_Array_Index_From_Picker(
         //
         n = -1;
 
-        const Symbol* symbol = VAL_WORD_SYMBOL(picker);
+        const Symbol* symbol = Cell_Word_Symbol(picker);
         const Cell* tail;
         const Cell* item = Cell_Array_At(&tail, v);
         REBLEN index = VAL_INDEX(v);
         for (; item != tail; ++item, ++index) {
-            if (Any_Word(item) and Are_Synonyms(symbol, VAL_WORD_SYMBOL(item))) {
+            if (Any_Word(item) and Are_Synonyms(symbol, Cell_Word_Symbol(item))) {
                 n = index + 1;
                 break;
             }
@@ -659,7 +659,7 @@ static REBINT Try_Get_Array_Index_From_Picker(
         // It did this regardless of how many elements were in the array.
         // (For safety, it has been suggested arrays > length 2 should fail).
         //
-        if (VAL_LOGIC(picker))
+        if (Cell_Logic(picker))
             n = VAL_INDEX(v);
         else
             n = VAL_INDEX(v) + 1;
@@ -696,7 +696,7 @@ bool Did_Pick_Block(
         return false;
 
     const Cell* slot = Array_At(Cell_Array(block), n);
-    Derelativize(out, slot, VAL_SPECIFIER(block));
+    Derelativize(out, slot, Cell_Specifier(block));
     return true;
 }
 
@@ -814,9 +814,9 @@ REBTYPE(Array)
 {
     REBVAL *array = D_ARG(1);
 
-    Specifier* specifier = VAL_SPECIFIER(array);
+    Specifier* specifier = Cell_Specifier(array);
 
-    Option(SymId) id = ID_OF_SYMBOL(verb);
+    Option(SymId) id = Symbol_Id(verb);
 
     switch (id) {
 
@@ -833,7 +833,7 @@ REBTYPE(Array)
 
         const Cell* at = Array_At(Cell_Array(array), n);
 
-        Derelativize(OUT, at, VAL_SPECIFIER(array));
+        Derelativize(OUT, at, Cell_Specifier(array));
         Inherit_Const(stable_OUT, array);
         return OUT; }
 
@@ -957,7 +957,7 @@ REBTYPE(Array)
         REBINT find = Find_In_Array(
             &len,
             arr,
-            VAL_SPECIFIER(array),
+            Cell_Specifier(array),
             index,
             limit,
             pattern,
@@ -1521,7 +1521,7 @@ DECLARE_NATIVE(glom)
         // if necessary--work on other details later.
         //
         Array* r = Cell_Array_Ensure_Mutable(result);
-        Specifier* r_specifier = VAL_SPECIFIER(result);
+        Specifier* r_specifier = Cell_Specifier(result);
         REBLEN a_len = Array_Len(a);
         REBLEN r_len = Array_Len(r);
         Expand_Series_Tail(a, r_len);  // can move memory, get `at` after

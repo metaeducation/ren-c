@@ -56,7 +56,7 @@ Bounce Generic_Dispatcher(Level* L)
 {
     Phase* phase = Level_Phase(L);
     Details* details = Phase_Details(phase);
-    const Symbol* verb = VAL_WORD_SYMBOL(DETAILS_AT(details, IDX_GENERIC_VERB));
+    const Symbol* verb = Cell_Word_Symbol(Details_At(details, IDX_GENERIC_VERB));
 
     // !!! It's technically possible to throw in locals or refinements at
     // any point in the sequence.  D_ARG() accounts for this...hackily.
@@ -110,11 +110,11 @@ DECLARE_NATIVE(generic)
 
     Details* details = Phase_Details(generic);
 
-    Init_Word(DETAILS_AT(details, IDX_NATIVE_BODY), VAL_WORD_SYMBOL(verb));
-    Copy_Cell(DETAILS_AT(details, IDX_NATIVE_CONTEXT), Lib_Context_Value);
+    Init_Word(Details_At(details, IDX_NATIVE_BODY), Cell_Word_Symbol(verb));
+    Copy_Cell(Details_At(details, IDX_NATIVE_CONTEXT), Lib_Context_Value);
 
     REBVAL *verb_var = Sink_Word_May_Fail(verb, SPECIFIED);
-    Init_Activation(verb_var, generic, VAL_WORD_SYMBOL(verb), UNBOUND);
+    Init_Activation(verb_var, generic, Cell_Word_Symbol(verb), UNBOUND);
 
     return NONE;
 }
@@ -130,7 +130,7 @@ Array* Startup_Generics(const REBVAL *boot_generics)
     assert(VAL_INDEX(boot_generics) == 0); // should be at head, sanity check
     const Cell* tail;
     Cell* head = Cell_Array_At_Known_Mutable(&tail, boot_generics);
-    Specifier* specifier = VAL_SPECIFIER(boot_generics);
+    Specifier* specifier = Cell_Specifier(boot_generics);
 
     // Add SET-WORD!s that are top-level in the generics block to the lib
     // context, so there is a variable for each action.  This means that the

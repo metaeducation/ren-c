@@ -351,7 +351,7 @@ Bounce TO_Sequence(Level* level_, enum Reb_Kind kind, const REBVAL *arg) {
             kind,
             at,
             at + 1,
-            VAL_SPECIFIER(arg)
+            Cell_Specifier(arg)
         )){
             return RAISE(Error_Bad_Sequence_Init(stable_OUT));
         }
@@ -364,7 +364,7 @@ Bounce TO_Sequence(Level* level_, enum Reb_Kind kind, const REBVAL *arg) {
         Array* a = Copy_Array_At_Shallow(
             Cell_Array(arg),
             VAL_INDEX(arg),
-            VAL_SPECIFIER(arg)
+            Cell_Specifier(arg)
         );
         Freeze_Array_Shallow(a);
         Force_Series_Managed(a);

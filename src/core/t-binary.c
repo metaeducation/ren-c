@@ -314,7 +314,7 @@ REBTYPE(Binary)
     REBVAL *v = D_ARG(1);
     assert(Is_Binary(v));
 
-    Option(SymId) id = ID_OF_SYMBOL(verb);
+    Option(SymId) id = Symbol_Id(verb);
 
     switch (id) {
 

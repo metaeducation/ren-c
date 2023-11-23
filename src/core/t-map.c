@@ -256,7 +256,7 @@ REBLEN Find_Map_Entry(
     const Cell* key,
     Specifier* key_specifier,
     const Cell* val,
-    Specifier* val_specifier,
+    Specifier* Cell_Specifier,
     bool strict
 ) {
     assert(not Is_Isotope(key));
@@ -298,7 +298,7 @@ REBLEN Find_Map_Entry(
         Derelativize(
             Array_At(pairlist, ((n - 1) * 2) + 1),
             val,
-            val_specifier
+            Cell_Specifier
         );
         return n;
     }
@@ -309,7 +309,7 @@ REBLEN Find_Map_Entry(
     // the data of a string), which is why the immutability test is necessary
     //
     Append_Value_Core(pairlist, key, key_specifier);
-    Append_Value_Core(pairlist, val, val_specifier);
+    Append_Value_Core(pairlist, val, Cell_Specifier);
 
     return (indexes[slot] = (Array_Len(pairlist) / 2));
 }
@@ -436,7 +436,7 @@ Bounce TO_Map(Level* level_, enum Reb_Kind kind, const REBVAL *arg)
         REBLEN len = Cell_Series_Len_At(arg);
         const Cell* tail;
         const Cell* at = Cell_Array_At(&tail, arg);
-        Specifier* specifier = VAL_SPECIFIER(arg);
+        Specifier* specifier = Cell_Specifier(arg);
 
         Map* map = Make_Map(len / 2); // [key value key value...] + END
         Append_Map(map, at, tail, specifier, len);
@@ -522,7 +522,7 @@ Context* Alloc_Context_From_Map(const Map* map)
 
     for (; mval != mval_tail; mval += 2) {  // note mval must not be END
         if (Any_Word(mval) and not Is_Void(mval + 1)) {
-            REBVAL *var = Append_Context(c, VAL_WORD_SYMBOL(mval));
+            REBVAL *var = Append_Context(c, Cell_Word_Symbol(mval));
             Copy_Cell(var, SPECIFIC(mval + 1));
         }
     }
@@ -591,7 +591,7 @@ REBTYPE(Map)
 {
     REBVAL *map = D_ARG(1);
 
-    switch (ID_OF_SYMBOL(verb)) {
+    switch (Symbol_Id(verb)) {
       case SYM_REFLECT: {
         INCLUDE_PARAMS_OF_REFLECT;
         UNUSED(ARG(value));  // covered by `v`
@@ -691,7 +691,7 @@ REBTYPE(Map)
         const Cell* tail;
         const Cell* at = Cell_Array_At(&tail, value);  // w/modified index
 
-        Append_Map(m, at, tail, VAL_SPECIFIER(value), len);
+        Append_Map(m, at, tail, Cell_Specifier(value), len);
 
         return Init_Map(OUT, m); }
 

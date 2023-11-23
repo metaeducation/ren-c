@@ -212,8 +212,8 @@ INLINE size_t Wide_For_Flavor(Flavor flavor) {
 #define Is_Series_Array(s)         (Series_Flavor(s) <= FLAVOR_MAX_ARRAY)
 #define Is_Series_UTF8(s)          (Series_Flavor(s) >= FLAVOR_MIN_UTF8)
 
-#define Is_NonSymbol_String(s)  (Series_Flavor(s) == FLAVOR_STRING)
-#define IS_SYMBOL(s)            (Series_Flavor(s) == FLAVOR_SYMBOL)
+#define Is_String_NonSymbol(s)  (Series_Flavor(s) == FLAVOR_STRING)
+#define Is_String_Symbol(s)            (Series_Flavor(s) == FLAVOR_SYMBOL)
 
 #define IS_KEYLIST(s)           (Series_Flavor(s) == FLAVOR_KEYLIST)
 

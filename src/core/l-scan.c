@@ -2489,14 +2489,14 @@ Bounce Scanner_Executor(Level* const L) {
             return RAISE(Error_Malconstruct_Raw(temp));
         }
 
-        const Symbol* symbol = VAL_WORD_SYMBOL(Array_Head(array));
+        const Symbol* symbol = Cell_Word_Symbol(Array_Head(array));
 
         if (Array_Len(array) == 1) {
             //
             // #[none], #[true], #[false], #[unset]
             // !!! These should be under a LEGACY flag...
             //
-            switch (ID_OF_SYMBOL(symbol)) {
+            switch (Symbol_Id(symbol)) {
               case SYM_NONE:  // !!! Should be under a LEGACY flag...
                 Init_Blank(PUSH());
                 break;

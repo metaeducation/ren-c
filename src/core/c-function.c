@@ -246,7 +246,7 @@ void Push_Paramlist_Quads_May_Fail(
             if (Is_Word_Isotope_With_Id(KEY_SLOT(TOP_INDEX), SYM_KEY))
                 fail (Error_Bad_Func_Def_Raw(item));   // `func [[integer!]]`
 
-            Specifier* derived = Derive_Specifier(VAL_SPECIFIER(spec), item);
+            Specifier* derived = Derive_Specifier(Cell_Specifier(spec), item);
 
             bool was_refinement;
             enum Reb_Param_Class pclass;
@@ -322,8 +322,8 @@ void Push_Paramlist_Quads_May_Fail(
     //=//// ANY-WORD! PARAMETERS THEMSELVES (MAKE TYPESETS w/SYMBOL) //////=//
 
         bool quoted = false;  // single quoting level used as signal in spec
-        if (VAL_NUM_QUOTES(item) > 0) {
-            if (VAL_NUM_QUOTES(item) > 1)
+        if (Cell_Num_Quotes(item) > 0) {
+            if (Cell_Num_Quotes(item) > 1)
                 fail (Error_Bad_Func_Def_Raw(item));
             quoted = true;
         }
@@ -350,7 +350,7 @@ void Push_Paramlist_Quads_May_Fail(
             mode = SPEC_MODE_NORMAL;
 
             symbol = VAL_REFINEMENT_SYMBOL(item);
-            if (ID_OF_SYMBOL(symbol) == SYM_LOCAL) {  // /LOCAL
+            if (Symbol_Id(symbol) == SYM_LOCAL) {  // /LOCAL
                 if (item + 1 != tail and Any_Word(item + 1))
                     fail (Error_Legacy_Local_Raw(spec));  // -> <local>
             }
@@ -383,7 +383,7 @@ void Push_Paramlist_Quads_May_Fail(
             fail ("TUPLE! behavior in func spec not defined at present");
         }
         else if (Any_Word_Kind(heart)) {
-            symbol = VAL_WORD_SYMBOL(item);
+            symbol = Cell_Word_Symbol(item);
 
             if (heart == REB_SET_WORD) {
                 if (VAL_WORD_ID(item) == SYM_RETURN and not quoted) {
@@ -447,7 +447,7 @@ void Push_Paramlist_Quads_May_Fail(
 
         if (
             (*flags & MKF_RETURN)
-            and ID_OF_SYMBOL(symbol) == SYM_RETURN
+            and Symbol_Id(symbol) == SYM_RETURN
             and pclass != PARAM_CLASS_RETURN
         ){
             fail ("Generator provides RETURN:, use LAMBDA if not desired");
@@ -628,7 +628,7 @@ Array* Pop_Paramlist_With_Adjunct_May_Fail(
 
     if (return_stackindex != 0) {
         assert(flags & MKF_RETURN);
-        Init_Key(key, VAL_WORD_SYMBOL(KEY_SLOT(return_stackindex)));
+        Init_Key(key, Cell_Word_Symbol(KEY_SLOT(return_stackindex)));
         ++key;
 
         Finalize_Param(cast(REBVAL*, PARAM_SLOT(return_stackindex)));
@@ -638,7 +638,7 @@ Array* Pop_Paramlist_With_Adjunct_May_Fail(
 
     StackIndex stackindex = base + 8;
     for (; stackindex <= TOP_INDEX; stackindex += 4) {
-        const Symbol* symbol = VAL_WORD_SYMBOL(KEY_SLOT(stackindex));
+        const Symbol* symbol = Cell_Word_Symbol(KEY_SLOT(stackindex));
 
         StackValue(*) slot = PARAM_SLOT(stackindex);
 
@@ -1141,7 +1141,7 @@ void Get_Maybe_Fake_Action_Body(Sink(Value(*)) out, Value(const*) action)
             //
             Array* fake = Copy_Array_Shallow_Flags(
                 Cell_Array(example),
-                VAL_SPECIFIER(example),
+                Cell_Specifier(example),
                 NODE_FLAG_MANAGED
             );
 
@@ -1189,7 +1189,7 @@ void Get_Maybe_Fake_Action_Body(Sink(Value(*)) out, Value(const*) action)
 
     if (ACT_DISPATCHER(a) == &Generic_Dispatcher) {
         Details* details = Phase_Details(ACT_IDENTITY(a));
-        REBVAL *verb = DETAILS_AT(details, 1);
+        REBVAL *verb = Details_At(details, 1);
         assert(Is_Word(verb));
         Copy_Cell(out, verb);
         return;
@@ -1268,7 +1268,7 @@ DECLARE_NATIVE(tweak)
         fail ("TWEAK currently only supports [barrier defer postpone]");
     }
 
-    if (VAL_LOGIC(ARG(enable)))
+    if (Cell_Logic(ARG(enable)))
         ACT_IDENTITY(act)->header.bits |= flag;
     else
         ACT_IDENTITY(act)->header.bits &= ~flag;

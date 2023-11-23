@@ -59,12 +59,7 @@
 // problems in Rebol languages.
 //
 
-INLINE Count VAL_QUOTED_DEPTH(const Cell* v) {
-    assert(Is_Quoted(v));
-    return (QUOTE_BYTE(v) - UNQUOTED_1) >> 1;
-}
-
-INLINE Count VAL_NUM_QUOTES(const Cell* v) {
+INLINE Count Cell_Num_Quotes(const Cell* v) {
     assert(QUOTE_BYTE(v) != ISOTOPE_0);
     return (QUOTE_BYTE(v) - UNQUOTED_1) >> 1;
 }
@@ -75,7 +70,7 @@ INLINE Cell* Quotify_Core(Cell* v, Count depth) {
     if (depth == 0)
         return v;
 
-    if (VAL_NUM_QUOTES(v) + depth >  MAX_QUOTE_DEPTH)
+    if (Cell_Num_Quotes(v) + depth >  MAX_QUOTE_DEPTH)
         fail ("Quoting Depth of 126 Exceeded");
 
     QUOTE_BYTE(v) += (depth << 1);
@@ -101,7 +96,7 @@ INLINE Cell* Unquotify_Core(Cell* v, Count unquotes) {
         return v;
     }
 
-    if (unquotes > VAL_NUM_QUOTES(v))
+    if (unquotes > Cell_Num_Quotes(v))
         fail ("Attempt to set quoting level of value to less than 0");
 
     QUOTE_BYTE(v) -= (unquotes << 1);
@@ -119,7 +114,7 @@ INLINE Cell* Unquotify_Core(Cell* v, Count unquotes) {
 #endif
 
 INLINE Count Dequotify(Cell* v) {
-    Count depth = VAL_NUM_QUOTES(v);
+    Count depth = Cell_Num_Quotes(v);
     if (QUOTE_BYTE(v) & NONQUASI_BIT)
         QUOTE_BYTE(v) = UNQUOTED_1;
     else
@@ -197,10 +192,10 @@ INLINE bool Is_Stable(Atom(const*) v) {  // repeat for non-inlined speed
 #endif
 
 #if !defined(NDEBUG)
-    #define ASSERT_STABLE(v) \
+    #define Assert_Cell_Stable(v) \
         assert(Is_Stable(cast(Atom(const*), (v))));
 #else
-    #define ASSERT_STABLE(v)
+    #define Assert_Cell_Stable(v)
 #endif
 
 
@@ -282,7 +277,7 @@ INLINE Atom(*) Meta_Unquotify_Undecayed(Atom(*) v) {
 
 INLINE Value(*) Meta_Unquotify_Known_Stable(Value(*) v) {
     Meta_Unquotify_Undecayed(v);
-    ASSERT_STABLE(v);
+    Assert_Cell_Stable(v);
     return v;
 }
 

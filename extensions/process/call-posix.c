@@ -403,7 +403,7 @@ Bounce Call_Core(Level* level_) {
             close(fd);
         }
         else if (Is_Logic(ARG(input))) {
-            if (VAL_LOGIC(ARG(input)))
+            if (Cell_Logic(ARG(input)))
                 goto inherit_stdin_from_parent;
 
             int fd = open("/dev/null", O_RDONLY);
@@ -440,7 +440,7 @@ Bounce Call_Core(Level* level_) {
             close(fd);
         }
         else if (Is_Logic(ARG(output))) {
-            if (VAL_LOGIC(ARG(output)))
+            if (Cell_Logic(ARG(output)))
                 goto inherit_stdout_from_parent;
 
             int fd = open("/dev/null", O_WRONLY);
@@ -475,7 +475,7 @@ Bounce Call_Core(Level* level_) {
             close(fd);
         }
         else if (Is_Logic(ARG(error))) {
-            if (VAL_LOGIC(ARG(error)))
+            if (Cell_Logic(ARG(error)))
                 goto inherit_stderr_from_parent;
 
             int fd = open("/dev/null", O_WRONLY);

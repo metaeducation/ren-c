@@ -1083,7 +1083,7 @@ void Remake_Series(Series* s, REBLEN units, Flags flags)
         s->content.dynamic.used = 0;
 
   #if DEBUG_UTF8_EVERYWHERE
-    if (Is_NonSymbol_String(s)) {
+    if (Is_String_NonSymbol(s)) {
         s->misc.length = 0xDECAFBAD;
         Touch_Stub_If_Debug(s);
     }
@@ -1120,7 +1120,7 @@ void Decay_Series(Series* s)
         Stub* temp = MISC(PatchHitch, s);
         while (node_MISC(Hitch, temp) != s) {
             temp = cast(Stub*, node_MISC(Hitch, temp));
-            assert(IS_PATCH(temp) or IS_SYMBOL(temp));
+            assert(IS_PATCH(temp) or Is_String_Symbol(temp));
         }
         node_MISC(Hitch, temp) = node_MISC(Hitch, s);
         break; }

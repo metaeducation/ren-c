@@ -66,7 +66,7 @@
     // The tracking information may be put in the Cell* before* or *after*
     // the right hand side is evaluated.  So imagine something like:
     //
-    //     Init_Logic(OUT, not VAL_LOGIC(OUT));
+    //     Init_Logic(OUT, not Cell_Logic(OUT));
     //
     // So TRACK() can't do anything that would corrupt the release-build-bits
     // of `out`, since it might run first.  This is why the tracking info is

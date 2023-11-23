@@ -303,7 +303,7 @@ INLINE Value(*) MOD_VAR(Context* c, const Symbol* sym, bool strict) {
     // Note: Call Lib() macro directly if you have a SYM in hand vs. a canon.
     //
     if (c == Lib_Context) {
-        Option(SymId) id = ID_OF_SYMBOL(sym);
+        Option(SymId) id = Symbol_Id(sym);
         if (id != 0 and id < LIB_SYMS_MAX) {
             //
             // !!! We need to consider the strictness here, with case sensitive
@@ -447,7 +447,7 @@ INLINE void INIT_VAL_FRAME_PHASE(Cell* v, Phase* phase) {
 
 INLINE Phase* VAL_FRAME_PHASE(NoQuote(const Cell*) v) {
     Series* s = VAL_FRAME_PHASE_OR_LABEL(v);
-    if (not s or IS_SYMBOL(s))  // ANONYMOUS or label, not a phase
+    if (not s or Is_String_Symbol(s))  // ANONYMOUS or label, not a phase
         return CTX_FRAME_PHASE(VAL_CONTEXT(v));  // use archetype
     return cast(Phase*, s);  // cell has its own phase, return it
 }
@@ -455,12 +455,12 @@ INLINE Phase* VAL_FRAME_PHASE(NoQuote(const Cell*) v) {
 INLINE bool IS_FRAME_PHASED(NoQuote(const Cell*) v) {
     assert(Cell_Heart(v) == REB_FRAME);
     Series* s = VAL_FRAME_PHASE_OR_LABEL(v);
-    return s and not IS_SYMBOL(s);
+    return s and not Is_String_Symbol(s);
 }
 
 INLINE Option(const Symbol*) VAL_FRAME_LABEL(NoQuote(const Cell*) v) {
     Series* s = VAL_FRAME_PHASE_OR_LABEL(v);  // VAL_ACTION_PARTIALS_OR_LABEL as well
-    if (s and IS_SYMBOL(s))  // label in value
+    if (s and Is_String_Symbol(s))  // label in value
         return cast(Symbol*, s);
     return ANONYMOUS;  // has a phase (or partials), so no label (maybe findable if running)
 }

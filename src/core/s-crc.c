@@ -289,7 +289,7 @@ uint32_t Hash_Value(const Cell* cell)
         // !!! Should this hash be cached on the words somehow, e.g. in the
         // data payload before the actual string?
         //
-        hash = Hash_String(VAL_WORD_SYMBOL(cell));
+        hash = Hash_String(Cell_Word_Symbol(cell));
         break; }
 
       case REB_FRAME:
@@ -420,7 +420,7 @@ Series* Hash_Block(const REBVAL *block, REBLEN skip, bool cased)
             m_cast(Array*, array),  // mode == 0, no modification, cast ok
             hashlist,
             value,
-            VAL_SPECIFIER(block),
+            Cell_Specifier(block),
             1,
             cased,
             0  // mode

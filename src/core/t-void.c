@@ -79,7 +79,7 @@ REBTYPE(Quasi)
 {
     REBVAL *quasi = D_ARG(1);
 
-    switch (ID_OF_SYMBOL(verb)) {
+    switch (Symbol_Id(verb)) {
       case SYM_COPY: { // since `copy/deep [1 ~ 2]` is legal, allow `copy ~`
         INCLUDE_PARAMS_OF_COPY;
         UNUSED(ARG(value)); // already referenced as `unit`

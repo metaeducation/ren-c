@@ -329,7 +329,7 @@ enum {
 
 #define COPY_ANY_ARRAY_AT_DEEP_MANAGED(v) \
     Copy_Array_At_Extra_Deep_Flags_Managed( \
-        Cell_Array(v), VAL_INDEX(v), VAL_SPECIFIER(v), 0, SERIES_FLAGS_NONE)
+        Cell_Array(v), VAL_INDEX(v), Cell_Specifier(v), 0, SERIES_FLAGS_NONE)
 
 #define Copy_Array_At_Shallow(a,i,s) \
     Copy_Array_At_Extra_Shallow((a), (i), (s), 0, SERIES_FLAGS_NONE)

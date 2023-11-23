@@ -127,7 +127,7 @@ INLINE Value(*) Decay_If_Unstable(Atom(*) v) {
         const Cell* pack_meta_at = Cell_Array_At(&pack_meta_tail, v);
         if (pack_meta_at == pack_meta_tail)
             fail (Error_No_Value_Raw());  // treat as void?
-        Derelativize(v, pack_meta_at, VAL_SPECIFIER(v));
+        Derelativize(v, pack_meta_at, Cell_Specifier(v));
         Meta_Unquotify_Undecayed(v);
         if (Is_Pack(v) or Is_Lazy(v))
             fail (Error_Bad_Isotope(v));  // need more granular unpacking

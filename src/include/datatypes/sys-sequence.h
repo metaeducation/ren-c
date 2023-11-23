@@ -582,7 +582,7 @@ INLINE Specifier* VAL_SEQUENCE_SPECIFIER(
         return SPECIFIED;
 
       case FLAVOR_ARRAY :  // uncompressed sequence
-        return VAL_SPECIFIER(sequence);
+        return Cell_Specifier(sequence);
 
       default :
         assert(false);
@@ -694,6 +694,6 @@ INLINE const Symbol* VAL_REFINEMENT_SYMBOL(
 // !!! Temporary workaround for what was IS_META_PATH() (now not its own type)
 //
 INLINE bool IS_QUOTED_PATH(const Cell* v) {
-    return VAL_NUM_QUOTES(v) == 1
+    return Cell_Num_Quotes(v) == 1
         and Cell_Heart(v) == REB_PATH;
 }

@@ -325,7 +325,7 @@ void Form_Array_At(
         if (context and (Is_Word(item) or Is_Get_Word(item))) {
             wval = Select_Symbol_In_Context(
                 CTX_ARCHETYPE(unwrap(context)),
-                VAL_WORD_SYMBOL(item)
+                Cell_Word_Symbol(item)
             );
             if (wval)
                 item = unwrap(wval);
@@ -439,7 +439,7 @@ void Mold_Or_Form_Value(REB_MOLD *mo, const Cell* v, bool form)
     if (Is_Isotope(v))
         fail (Error_Bad_Isotope(v));
 
-    REBLEN depth = VAL_NUM_QUOTES(v);
+    REBLEN depth = Cell_Num_Quotes(v);
 
     REBLEN i;
     for (i = 0; i < depth; ++i)

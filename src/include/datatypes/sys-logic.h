@@ -64,7 +64,7 @@ INLINE bool Is_Logic(const Cell* v) {
 #define Init_Logic(out,flag) \
     Init_Word_Isotope((out), (flag) ? Canon(TRUE) : Canon(FALSE))
 
-INLINE bool VAL_LOGIC(const Cell* v) {
+INLINE bool Cell_Logic(const Cell* v) {
     assert(Is_Isotope(v));
     Option(SymId) id = VAL_WORD_ID(v);
     if (id == SYM_TRUE)
@@ -72,7 +72,7 @@ INLINE bool VAL_LOGIC(const Cell* v) {
     if (id == SYM_FALSE)
         return false;
     assert(false);
-    fail ("Attempt to test VAL_LOGIC() on non-LOGIC!");  // shouldn't happen
+    fail ("Attempt to test Cell_Logic() on non-LOGIC!");  // shouldn't happen
 }
 
 INLINE bool Is_Truthy(const Cell* v) {
@@ -144,7 +144,7 @@ INLINE bool Is_Heavy_False(Atom(const*) v) {
 INLINE Atom(*) Isotopify_If_Falsey(Atom(*) v) {
     if (Is_Nulled(v))
         Init_Heavy_Null(v);
-    else if (Is_Logic(v) and VAL_LOGIC(v) == false)
+    else if (Is_Logic(v) and Cell_Logic(v) == false)
         Init_Heavy_False(v);
     return v;
 }

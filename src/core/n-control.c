@@ -668,7 +668,7 @@ DECLARE_NATIVE(match)
             return nullptr;
     }
     else if (Is_Logic(test)) {
-        if (Is_Truthy(v) != VAL_LOGIC(test))
+        if (Is_Truthy(v) != Cell_Logic(test))
             return nullptr;
     }
     else if (Is_Activation(test)) {
@@ -1580,7 +1580,7 @@ DECLARE_NATIVE(catch)
                 if (Is_Block(candidate))
                     fail (PARAM(name));
 
-                Derelativize(temp1, candidate, VAL_SPECIFIER(ARG(name)));
+                Derelativize(temp1, candidate, Cell_Specifier(ARG(name)));
                 Copy_Cell(temp2, label);
 
                 // Return the THROW/NAME's arg if the names match

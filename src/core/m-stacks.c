@@ -147,7 +147,7 @@ Context* Get_Context_From_Stack(void)
         return Lib_Context;
 
     Details* details = Phase_Details(phase);
-    REBVAL *context = DETAILS_AT(details, IDX_NATIVE_CONTEXT);
+    REBVAL *context = Details_At(details, IDX_NATIVE_CONTEXT);
     return VAL_CONTEXT(context);
 }
 
@@ -240,7 +240,7 @@ Array* Pop_Stack_Values_Core(StackIndex base, Flags flags)
     for (; count < len; ++count, ++src, ++dest) {
       #if DEBUG
         if (Is_Isotope(src)) {
-            ASSERT_STABLE(src);
+            Assert_Cell_Stable(src);
             assert(flavor >= FLAVOR_MIN_ISOTOPES_OK);
         }
         if (VAL_TYPE_UNCHECKED(src) == REB_VOID)  // allow unreadable trash

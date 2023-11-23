@@ -131,7 +131,7 @@ INLINE Option(va_list*) FEED_VAPTR(Feed* feed) {
 // For performance, we always get the specifier from the same location, even
 // if we're not using an array.  So for the moment, that means using a
 // COMMA! (which for technical reasons has a nullptr binding and is thus
-// always SPECIFIED).  However, VAL_SPECIFIER() only runs on arrays, so
+// always SPECIFIED).  However, Cell_Specifier() only runs on arrays, so
 // we sneak past that by accessing the node directly.
 //
 #define FEED_SPECIFIER(feed) \
@@ -193,7 +193,7 @@ INLINE Value(const*) Copy_Reified_Variadic_Feed_Cell(
     assert(FEED_SPECIFIER(feed) == SPECIFIED);  // why?
 
     const Cell* cell = c_cast(Cell*, feed->p);
-    assert(not IS_RELATIVE(cell));
+    assert(not Is_Relative(cell));
 
     if (Is_Nulled(cell))  // API enforces use of C's nullptr (0) for NULL
         assert(not Is_Api_Value(cell));  // but internal cells can be nulled

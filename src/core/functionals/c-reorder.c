@@ -77,7 +77,7 @@ Bounce Reorderer_Dispatcher(Level* L) {
     Details* details = Phase_Details(Level_Phase(L));
     assert(Array_Len(details) == IDX_REORDERER_MAX);
 
-    REBVAL *reorderee = DETAILS_AT(details, IDX_REORDERER_REORDEREE);
+    REBVAL *reorderee = Details_At(details, IDX_REORDERER_REORDEREE);
 
     INIT_LVL_PHASE(L, ACT_IDENTITY(VAL_ACTION(reorderee)));
     INIT_LVL_BINDING(L, VAL_FRAME_BINDING(reorderee));
@@ -147,7 +147,7 @@ DECLARE_NATIVE(reorder_p)  // see REORDER in %base-defs.r, for inheriting meta
     const Cell* item;  // starts as tail
     const Cell* at = Cell_Array_At(&item, ARG(ordering));
     for (; at != item--; ) {
-        const Symbol* symbol = VAL_WORD_SYMBOL(item);
+        const Symbol* symbol = Cell_Word_Symbol(item);
 
         // !!! As a bit of a weird demo of a potential future direction, we
         // don't just allow WORD!s but allow you to do things like pass the
@@ -155,7 +155,7 @@ DECLARE_NATIVE(reorder_p)  // see REORDER in %base-defs.r, for inheriting meta
         //
         bool ignore = false;
         if (Any_Word(item)) {  // on the record, we only just allow WORD!...
-            symbol = VAL_WORD_SYMBOL(item);
+            symbol = Cell_Word_Symbol(item);
         }
         else if (Is_Refinement(item)) {
             symbol = VAL_REFINEMENT_SYMBOL(item);
@@ -163,13 +163,13 @@ DECLARE_NATIVE(reorder_p)  // see REORDER in %base-defs.r, for inheriting meta
         }
         else if (Is_Quoted(item)) {
             if (
-                VAL_QUOTED_DEPTH(item) != 1
+                Cell_Num_Quotes(item) != 1
                 or not Any_Word_Kind(Cell_Heart(item))
             ) {
                 error = Error_User("REORDER allows single quoted ANY-WORD!");
                 goto cleanup_binder;
             }
-            symbol = VAL_WORD_SYMBOL(item);
+            symbol = Cell_Word_Symbol(item);
         }
         else {
             error = Error_User("Unknown REORDER element");
@@ -240,7 +240,7 @@ DECLARE_NATIVE(reorder_p)  // see REORDER in %base-defs.r, for inheriting meta
     );
 
     Details* details = Phase_Details(reordered);
-    Copy_Cell(DETAILS_AT(details, IDX_REORDERER_REORDEREE), ARG(original));
+    Copy_Cell(Details_At(details, IDX_REORDERER_REORDEREE), ARG(original));
 
     return Init_Activation(OUT, reordered, label, UNBOUND);
 }

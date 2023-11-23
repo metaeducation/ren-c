@@ -183,7 +183,7 @@ Array* Expanded_Combinator_Spec(const REBVAL *original)
 
     const Cell* tail;
     const Cell* item = Cell_Array_At(&tail, original);
-    Specifier* specifier = VAL_SPECIFIER(original);
+    Specifier* specifier = Cell_Specifier(original);
 
     if (Is_Text(item)) {
         Derelativize(PUSH(), item, specifier);  // {combinator description}
@@ -439,7 +439,7 @@ DECLARE_NATIVE(text_x_combinator)
         ++VAL_INDEX_UNBOUNDED(input);
         Set_Var_May_Fail(ARG(remainder), SPECIFIED, input);
 
-        Derelativize(OUT, at, VAL_SPECIFIER(input));
+        Derelativize(OUT, at, Cell_Specifier(input));
         return OUT;  // Note: returns item in array, not rule, when an array!
     }
 
@@ -711,7 +711,7 @@ static bool Combinator_Param_Hook(
             Init_Nulled(var);
         }
         else {
-            Derelativize(var, item, VAL_SPECIFIER(ARG(rules)));
+            Derelativize(var, item, Cell_Specifier(ARG(rules)));
             if (
                 GET_PARAM_FLAG(param, SKIPPABLE)
                 and not TYPE_CHECK(param, var)

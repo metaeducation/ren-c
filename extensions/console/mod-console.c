@@ -330,7 +330,7 @@ DECLARE_NATIVE(console)
         // crash.  Pass it back something that looks like an instruction
         // it might have generated (a BLOCK!) asking itself to crash.
 
-        if (VAL_LOGIC(ARG(no_recover)))
+        if (Cell_Logic(ARG(no_recover)))
             rebJumps("panic @", metacode);
 
         code = rebValue("[#host-console-error]");
@@ -413,7 +413,7 @@ DECLARE_NATIVE(console)
 
     // Exit code is now an INTEGER! or a resume instruction PATH!
 
-    if (VAL_LOGIC(ARG(was_halting_enabled)))
+    if (Cell_Logic(ARG(was_halting_enabled)))
         Enable_Halting();
 
     rebElide("system.console: @", ARG(old_console));

@@ -64,7 +64,7 @@ Bounce MAKE_Integer(
         // that it will make an integer 0 out of FALSE due to it having
         // fewer seeming "rules" than TO would.
 
-        if (VAL_LOGIC(arg))
+        if (Cell_Logic(arg))
             Init_Integer(OUT, 1);
         else
             Init_Integer(OUT, 0);
@@ -273,7 +273,7 @@ REBTYPE(Integer)
 
     REBI64 arg;
 
-    Option(SymId) id = ID_OF_SYMBOL(verb);
+    Option(SymId) id = Symbol_Id(verb);
 
     // !!! This used to rely on IS_BINARY_ACT, which is no longer available
     // in the symbol based dispatch.  Consider doing another way.

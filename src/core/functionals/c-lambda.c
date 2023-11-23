@@ -67,7 +67,7 @@ Bounce Lambda_Dispatcher(Level* const L)
 //
 // 2. Currently, since we are evaluating the block with its own virtual
 //    binding being taken into account, using that block's binding as the
-//    `next` (VAL_SPECIFIER(block)) means it's redundant when creating the
+//    `next` (Cell_Specifier(block)) means it's redundant when creating the
 //    feed, since it tries to apply this specifier on top of that *again*.
 //    The merging notices the redundancy and doesn't create a new specifier
 //    which is good...but this is still inefficient.  This all needs review.
@@ -77,14 +77,14 @@ Bounce Lambda_Dispatcher(Level* const L)
     Details* details = Phase_Details(PHASE);
     assert(Array_Len(details) == IDX_LAMBDA_MAX);
 
-    const REBVAL *block = DETAILS_AT(details, IDX_LAMBDA_BLOCK);
+    const REBVAL *block = Details_At(details, IDX_LAMBDA_BLOCK);
     assert(Is_Block(block));
 
     Set_Node_Managed_Bit(L->varlist);  // not manually tracked...
 
     Specifier* specifier = Make_Or_Reuse_Use(  // may reuse [1]
         cast(Context*, L->varlist),
-        VAL_SPECIFIER(block),  // redundant with feed [2]
+        Cell_Specifier(block),  // redundant with feed [2]
         REB_WORD
     );
 
@@ -108,7 +108,7 @@ Bounce Lambda_Unoptimized_Dispatcher(Level* level_)
 {
     Details* details = Phase_Details(PHASE);
     Cell* body = Array_At(details, IDX_DETAILS_1);  // code to run
-    assert(Is_Block(body) and IS_RELATIVE(body) and VAL_INDEX(body) == 0);
+    assert(Is_Block(body) and Is_Relative(body) and VAL_INDEX(body) == 0);
 
     return DELEGATE_CORE(
         OUT,  // output
@@ -149,7 +149,7 @@ DECLARE_NATIVE(lambda)
     const Cell* item;
     if (Is_Block(spec)) {
         item = Cell_Array_At(&item_tail, spec);
-        item_specifier = VAL_SPECIFIER(spec);
+        item_specifier = Cell_Specifier(spec);
     }
     else if (
         Is_Word(spec)

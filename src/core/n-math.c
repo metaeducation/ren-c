@@ -713,7 +713,7 @@ DECLARE_NATIVE(same_q)
     if (Any_Word(v1))  // !!! "same" was spelling -and- binding in R3-Alpha
         return Init_Logic(
             OUT,
-            VAL_WORD_SYMBOL(v1) == VAL_WORD_SYMBOL(v2)
+            Cell_Word_Symbol(v1) == Cell_Word_Symbol(v2)
                 and VAL_WORD_BINDING(v1) == VAL_WORD_BINDING(v2)
         );
 

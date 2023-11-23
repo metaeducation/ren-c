@@ -43,7 +43,7 @@ Intrinsic* Extract_Intrinsic(Phase* phase)
     Details* details = Phase_Details(phase);
     assert(Array_Len(details) >= IDX_INTRINSIC_MAX);  // typecheck uses more
 
-    Cell* handle = DETAILS_AT(details, IDX_INTRINSIC_CFUNC);
+    Cell* handle = Details_At(details, IDX_INTRINSIC_CFUNC);
     return cast(Intrinsic*, VAL_HANDLE_CFUNC(handle));
 }
 
@@ -132,7 +132,7 @@ Phase* Make_Native(
         );
 
         Details* details = Phase_Details(native);
-        Init_Handle_Cfunc(DETAILS_AT(details, IDX_INTRINSIC_CFUNC), cfunc);
+        Init_Handle_Cfunc(Details_At(details, IDX_INTRINSIC_CFUNC), cfunc);
     }
     else {
         native = Make_Action(
@@ -144,9 +144,9 @@ Phase* Make_Native(
 
         Details* details = Phase_Details(native);
 
-        Init_Blank(DETAILS_AT(details, IDX_NATIVE_BODY));
+        Init_Blank(Details_At(details, IDX_NATIVE_BODY));
         Copy_Cell(
-            DETAILS_AT(details, IDX_NATIVE_CONTEXT),
+            Details_At(details, IDX_NATIVE_CONTEXT),
             CTX_ARCHETYPE(module)
         );
 
@@ -283,7 +283,7 @@ Array* Startup_Natives(const REBVAL *boot_natives)
     assert(VAL_INDEX(boot_natives) == 0); // should be at head, sanity check
     const Cell* tail;
     Cell* item = Cell_Array_At_Known_Mutable(&tail, boot_natives);
-    assert(VAL_SPECIFIER(boot_natives) == SPECIFIED);
+    assert(Cell_Specifier(boot_natives) == SPECIFIED);
 
     // !!! We could avoid this by making NATIVE a specialization of a NATIVE*
     // function which carries those arguments, which would be cleaner.  The

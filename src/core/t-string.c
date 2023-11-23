@@ -72,7 +72,7 @@ Utf8(*) String_At(const_if_c String* s, REBLEN at) {
     REBLEN index;
 
     BookmarkList* book = nullptr;  // updated at end if not nulled out
-    if (Is_NonSymbol_String(s))
+    if (Is_String_NonSymbol(s))
         book = LINK(Bookmarks, s);
 
   #if DEBUG_SPORADICALLY_DROP_BOOKMARKS
@@ -91,14 +91,14 @@ Utf8(*) String_At(const_if_c String* s, REBLEN at) {
 
     if (at < len / 2) {
         if (len < sizeof(Cell)) {
-            if (Is_NonSymbol_String(s))
+            if (Is_String_NonSymbol(s))
                 assert(
                     Get_Series_Flag(s, DYNAMIC)  // e.g. mold buffer
                     or not book  // mutations must ensure this
                 );
             goto scan_from_head;  // good locality, avoid bookmark logic
         }
-        if (not book and Is_NonSymbol_String(s)) {
+        if (not book and Is_String_NonSymbol(s)) {
             book = Alloc_BookmarkList();
             LINK(Bookmarks, m_cast(String*, s)) = book;
             goto scan_from_head;  // will fill in bookmark
@@ -106,14 +106,14 @@ Utf8(*) String_At(const_if_c String* s, REBLEN at) {
     }
     else {
         if (len < sizeof(Cell)) {
-            if (Is_NonSymbol_String(s))
+            if (Is_String_NonSymbol(s))
                 assert(
                     not book  // mutations must ensure this usually but...
                     or Get_Series_Flag(s, DYNAMIC)  // !!! mold buffer?
                 );
             goto scan_from_tail;  // good locality, avoid bookmark logic
         }
-        if (not book and Is_NonSymbol_String(s)) {
+        if (not book and Is_String_NonSymbol(s)) {
             book = Alloc_BookmarkList();
             LINK(Bookmarks, m_cast(String*, s)) = book;
             goto scan_from_tail;  // will fill in bookmark
@@ -923,7 +923,7 @@ REBTYPE(String)
     REBVAL *v = D_ARG(1);
     assert(Any_String(v));
 
-    Option(SymId) id = ID_OF_SYMBOL(verb);
+    Option(SymId) id = Symbol_Id(verb);
 
     switch (id) {
 
@@ -1038,7 +1038,7 @@ REBTYPE(String)
         assert(not Is_Nulled(arg));  // not an <opt> parameter
 
         REBLEN len; // length of target
-        if (ID_OF_SYMBOL(verb) == SYM_CHANGE)
+        if (Symbol_Id(verb) == SYM_CHANGE)
             len = Part_Len_May_Modify_Index(v, ARG(part));
         else
             len = Part_Limit_Append_Insert(ARG(part));

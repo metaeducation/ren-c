@@ -535,7 +535,7 @@ INLINE void INIT_VAL_WORD_BINDING(Cell* v, const Series* binding) {
 // relativized value is "unbound", so make an expired frame if necessary.
 //
 INLINE REBVAL* Unrelativize(Cell* out, const Cell* v) {
-    if (not Is_Bindable(v) or IS_SPECIFIC(v))
+    if (not Is_Bindable(v) or Is_Specific(v))
         Copy_Cell(out, SPECIFIC(v));
     else {
         Copy_Cell_Header(out, v);
@@ -695,7 +695,7 @@ INLINE REBVAL *Lookup_Mutable_Word_May_Fail(
     //
     if (Get_Cell_Flag(var, PROTECTED)) {
         DECLARE_LOCAL (unwritable);
-        Init_Word(unwritable, VAL_WORD_SYMBOL(any_word));
+        Init_Word(unwritable, Cell_Word_Symbol(any_word));
         fail (Error_Protected_Word_Raw(unwritable));
     }
 

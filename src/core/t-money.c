@@ -85,7 +85,7 @@ Bounce MAKE_Money(
         return RAISE(Error_Bad_Make_Parent(kind, unwrap(parent)));
 
     if (Is_Logic(arg)) {
-        return Init_Money(OUT, int_to_deci(VAL_LOGIC(arg) ? 1 : 0));
+        return Init_Money(OUT, int_to_deci(Cell_Logic(arg) ? 1 : 0));
     }
     else switch (VAL_TYPE(arg)) {
       case REB_INTEGER:
@@ -205,7 +205,7 @@ REBTYPE(Money)
 {
     REBVAL *v = D_ARG(1);
 
-    switch (ID_OF_SYMBOL(verb)) {
+    switch (Symbol_Id(verb)) {
       case SYM_ADD: {
         REBVAL *arg = Math_Arg_For_Money(SPARE, D_ARG(2), verb);
         return Init_Money(
@@ -297,7 +297,7 @@ REBTYPE(Money)
       case SYM_EVEN_Q:
       case SYM_ODD_Q: {
         REBINT result = 1 & cast(REBINT, deci_to_int(VAL_MONEY_AMOUNT(v)));
-        if (ID_OF_SYMBOL(verb) == SYM_EVEN_Q)
+        if (Symbol_Id(verb) == SYM_EVEN_Q)
             result = not result;
         return Init_Logic(OUT, result != 0); }
 

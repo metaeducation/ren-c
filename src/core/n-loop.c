@@ -73,7 +73,7 @@ bool Try_Catch_Break_Or_Continue(
         // in cases like MAP-EACH (one wants a continue to not add any value)
         //
         CATCH_THROWN(out, level_);
-        ASSERT_STABLE(out);  // CONTINUE doesn't take unstable /WITH
+        Assert_Cell_Stable(out);  // CONTINUE doesn't take unstable /WITH
         *breaking = false;
         return true;
     }
@@ -725,7 +725,7 @@ void Init_Loop_Each(Value(*) iterator, Value(*) data)
             les->u.eser.len = Cell_Series_Len_Head(data);  // has HOLD, won't change
 
             if (Any_Array(data))
-                les->specifier = VAL_SPECIFIER(data);
+                les->specifier = Cell_Specifier(data);
         }
         else if (Any_Context(data)) {
             les->series = CTX_VARLIST(VAL_CONTEXT(data));
@@ -1317,7 +1317,7 @@ DECLARE_NATIVE(remove_each)
                 Derelativize(
                     var,
                     Array_At(Cell_Array(data), index),
-                    VAL_SPECIFIER(data)
+                    Cell_Specifier(data)
                 );
             else if (Is_Binary(data)) {
                 Binary* bin = cast(Binary*, series);
@@ -1351,7 +1351,7 @@ DECLARE_NATIVE(remove_each)
             keep = true;  // treat same as logic false (e.g. don't remove)
         }
         else if (Is_Logic(OUT)) {  // pure logic required [6]
-            keep = not VAL_LOGIC(OUT);
+            keep = not Cell_Logic(OUT);
         }
         else if (Is_Nulled(OUT)) {  // don't remove
             keep = true;
@@ -1640,7 +1640,7 @@ DECLARE_NATIVE(map)
     }
     else if (
         not Is_Quoted(data)
-        or VAL_QUOTED_DEPTH(data) != 1
+        or Cell_Num_Quotes(data) != 1
         or not (
             Any_Series(Unquotify(data, 1))
             or Any_Path(data)  // has been unquoted
@@ -1692,7 +1692,7 @@ DECLARE_NATIVE(map)
         const Cell* tail;
         const Cell* v = Cell_Array_At(&tail, SPARE);
         for (; v != tail; ++v)
-            Derelativize(PUSH(), v, VAL_SPECIFIER(SPARE));
+            Derelativize(PUSH(), v, Cell_Specifier(SPARE));
     }
     else if (Is_Isotope(SPARE)) {
         Init_Error(SPARE, Error_Bad_Isotope(SPARE));
@@ -1768,7 +1768,7 @@ DECLARE_NATIVE(repeat)
   initial_entry: {  //////////////////////////////////////////////////////////
 
     if (Is_Logic(count)) {
-        if (VAL_LOGIC(count) == false)
+        if (Cell_Logic(count) == false)
             return VOID;  // treat false as "don't run"
 
         STATE = ST_REPEAT_EVALUATING_BODY;  // true is "infinite loop"
@@ -1795,7 +1795,7 @@ DECLARE_NATIVE(repeat)
     }
 
     if (Is_Logic(count)) {
-        assert(VAL_LOGIC(count) == true);  // false already returned
+        assert(Cell_Logic(count) == true);  // false already returned
         return CATCH_CONTINUE_BRANCH(OUT, body);  // true infinite loops
     }
 

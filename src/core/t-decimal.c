@@ -156,7 +156,7 @@ Bounce MAKE_Decimal(
     REBDEC d;
 
     if (Is_Logic(arg)) {
-        d = VAL_LOGIC(arg) ? 1.0 : 0.0;
+        d = Cell_Logic(arg) ? 1.0 : 0.0;
         goto dont_divide_if_percent;
     }
     else switch (VAL_TYPE(arg)) {
@@ -472,7 +472,7 @@ REBTYPE(Decimal)
 
     REBDEC d1 = VAL_DECIMAL(val);
 
-    Option(SymId) id = ID_OF_SYMBOL(verb);
+    Option(SymId) id = Symbol_Id(verb);
 
     // !!! This used to use IS_BINARY_ACT() which is no longer available with
     // symbol-based dispatch.  Consider doing this another way.

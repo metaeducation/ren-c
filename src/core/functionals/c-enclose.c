@@ -88,9 +88,9 @@ Bounce Encloser_Dispatcher(Level* const L)
     Details* details = Phase_Details(PHASE);
     assert(Array_Len(details) == IDX_ENCLOSER_MAX);
 
-    REBVAL *inner = DETAILS_AT(details, IDX_ENCLOSER_INNER);
+    REBVAL *inner = Details_At(details, IDX_ENCLOSER_INNER);
     assert(Is_Frame(inner));  // same args as f
-    REBVAL *outer = DETAILS_AT(details, IDX_ENCLOSER_OUTER);
+    REBVAL *outer = Details_At(details, IDX_ENCLOSER_OUTER);
     assert(Is_Frame(outer));  // takes 1 arg (a FRAME!)
 
     // We want to call OUTER with a FRAME! value that will dispatch to INNER
@@ -228,8 +228,8 @@ DECLARE_NATIVE(enclose_p)  // see extended definition ENCLOSE in %base-defs.r
     );
 
     Details* details = Phase_Details(enclosure);
-    Copy_Cell(DETAILS_AT(details, IDX_ENCLOSER_INNER), inner);
-    Copy_Cell(DETAILS_AT(details, IDX_ENCLOSER_OUTER), outer);
+    Copy_Cell(Details_At(details, IDX_ENCLOSER_INNER), inner);
+    Copy_Cell(Details_At(details, IDX_ENCLOSER_OUTER), outer);
 
     return Init_Activation(OUT, enclosure, VAL_FRAME_LABEL(inner), UNBOUND);
 }

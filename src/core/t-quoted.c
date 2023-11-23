@@ -115,7 +115,7 @@ REBTYPE(Quoted)
 {
     // Note: SYM_REFLECT is handled directly in the REFLECT native
     //
-    switch (ID_OF_SYMBOL(verb)) {
+    switch (Symbol_Id(verb)) {
       case SYM_COPY: {  // D_ARG(1) skips RETURN in first arg slot
         INCLUDE_PARAMS_OF_COPY;
         UNUSED(REF(part));
@@ -315,7 +315,7 @@ DECLARE_NATIVE(unquote)
     if (depth < 0)
         fail (PARAM(depth));
 
-    if (cast(REBLEN, depth) > VAL_NUM_QUOTES(v))
+    if (cast(REBLEN, depth) > Cell_Num_Quotes(v))
         fail ("Value not quoted enough for unquote depth requested");
 
     Unquotify(Copy_Cell(OUT, v), depth);
@@ -560,7 +560,7 @@ DECLARE_NATIVE(pack)
         const Cell* tail;
         const Cell* at = Cell_Array_At(&tail, v);
         for (; at != tail; ++at)
-            Quotify(Derelativize(PUSH(), at, VAL_SPECIFIER(v)), 1);
+            Quotify(Derelativize(PUSH(), at, Cell_Specifier(v)), 1);
 
         return Init_Pack(OUT, Pop_Stack_Values(BASELINE->stack_base));
     }
@@ -832,7 +832,7 @@ DECLARE_INTRINSIC(noquote)
     UNUSED(phase);
 
     Copy_Cell(out, arg);
-    Unquotify(out, VAL_NUM_QUOTES(out));
+    Unquotify(out, Cell_Num_Quotes(out));
 }
 
 

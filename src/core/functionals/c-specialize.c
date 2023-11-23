@@ -164,7 +164,7 @@ Context* Make_Context_For_Action_Push_Partials(
         StackIndex stackindex = highest_ordered_stackindex;
         for (; stackindex != lowest_ordered_stackindex; --stackindex) {
             StackValue(*) ordered = Data_Stack_At(stackindex);
-            if (VAL_WORD_SYMBOL(ordered) != symbol)
+            if (Cell_Word_Symbol(ordered) != symbol)
                 continue;  // just continuing this loop
 
             assert(not IS_WORD_BOUND(ordered));  // we bind only one
@@ -537,7 +537,7 @@ void For_Each_Unspecialized_Param(
             const Cell* partial = Array_Head(unwrap(partials));
             for (; partial != partial_tail; ++partial) {
                 if (Are_Synonyms(
-                    VAL_WORD_SYMBOL(partial),
+                    Cell_Word_Symbol(partial),
                     KEY_SYMBOL(key)
                 )){
                     goto skip_in_first_pass;
@@ -594,7 +594,7 @@ void For_Each_Unspecialized_Param(
             const Cell* partial = Array_Head(unwrap(partials));
             for (; partial != partial_tail; ++partial) {
                 if (Are_Synonyms(
-                    VAL_WORD_SYMBOL(partial),
+                    Cell_Word_Symbol(partial),
                     KEY_SYMBOL(key)
                 )){
                     goto continue_unspecialized_loop;

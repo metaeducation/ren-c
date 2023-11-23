@@ -125,7 +125,7 @@ Bounce Func_Dispatcher(Level* const L)
 
     Details* details = Phase_Details(PHASE);
     Cell* body = Array_At(details, IDX_DETAILS_1);  // code to run
-    assert(Is_Block(body) and IS_RELATIVE(body) and VAL_INDEX(body) == 0);
+    assert(Is_Block(body) and Is_Relative(body) and VAL_INDEX(body) == 0);
 
     assert(ACT_HAS_RETURN(PHASE));  // all FUNC have RETURN
     assert(KEY_SYM(ACT_KEYS_HEAD(PHASE)) == SYM_RETURN);

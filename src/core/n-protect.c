@@ -303,7 +303,7 @@ static Bounce Protect_Unprotect_Core(Level* level_, Flags flags)
             const Cell* item = Cell_Array_At(&tail, value);
             for (; item != tail; ++item) {
                 DECLARE_STABLE (word); // need binding, can't pass Cell
-                Derelativize(word, item, VAL_SPECIFIER(value));
+                Derelativize(word, item, Cell_Specifier(value));
                 Protect_Word_Value(word, flags);  // will unmark if deep
             }
             return COPY(ARG(value));
@@ -323,7 +323,7 @@ static Bounce Protect_Unprotect_Core(Level* level_, Flags flags)
                     //
                     var = m_cast(
                         REBVAL*,
-                        Lookup_Word_May_Fail(item, VAL_SPECIFIER(value))
+                        Lookup_Word_May_Fail(item, Cell_Specifier(value))
                     );
                 }
                 else if (Is_Path(value)) {

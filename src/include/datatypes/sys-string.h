@@ -228,7 +228,7 @@ INLINE Length String_Len(const String* s) {
     if (Is_Definitely_Ascii(s))
         return String_Size(s);
 
-    if (Is_NonSymbol_String(s)) {  // length is cached for non-ANY-WORD!
+    if (Is_String_NonSymbol(s)) {  // length is cached for non-ANY-WORD!
       #if DEBUG_UTF8_EVERYWHERE
         if (s->misc.length > Series_Used(s))  // includes 0xDECAFBAD
             panic(s);
@@ -257,7 +257,7 @@ INLINE REBLEN String_Index_At(const String* s, Size byteoffset) {
     //
     assert(not Is_Continuation_Byte(*Binary_At(s, byteoffset)));
 
-    if (Is_NonSymbol_String(s)) {  // length is cached for non-ANY-WORD!
+    if (Is_String_NonSymbol(s)) {  // length is cached for non-ANY-WORD!
       #if DEBUG_UTF8_EVERYWHERE
         if (s->misc.length > Series_Used(s))  // includes 0xDECAFBAD
             panic(s);
@@ -281,7 +281,7 @@ INLINE REBLEN String_Index_At(const String* s, Size byteoffset) {
 }
 
 INLINE void Set_String_Len_Size(String* s, REBLEN len, Size used) {
-    assert(Is_NonSymbol_String(s));
+    assert(Is_String_NonSymbol(s));
     assert(len <= used);
     assert(used == Series_Used(s));
     s->misc.length = len;
@@ -290,7 +290,7 @@ INLINE void Set_String_Len_Size(String* s, REBLEN len, Size used) {
 }
 
 INLINE void Term_String_Len_Size(String* s, REBLEN len, Size used) {
-    assert(Is_NonSymbol_String(s));
+    assert(Is_String_NonSymbol(s));
     assert(len <= used);
     Set_Series_Used(s, used);
     s->misc.length = len;
@@ -328,7 +328,7 @@ INLINE BookmarkList* Alloc_BookmarkList(void) {
 }
 
 INLINE void Free_Bookmarks_Maybe_Null(String* str) {
-    assert(Is_NonSymbol_String(str));
+    assert(Is_String_NonSymbol(str));
     if (LINK(Bookmarks, str)) {
         GC_Kill_Series(LINK(Bookmarks, str));
         LINK(Bookmarks, str) = nullptr;
@@ -376,7 +376,7 @@ INLINE const String* Cell_String(NoQuote(const Cell*) v) {
     if (Any_Stringlike(v))
         return c_cast(String*, Cell_Series(v));
 
-    return VAL_WORD_SYMBOL(v);  // asserts Any_Word_Kind() for heart
+    return Cell_Word_Symbol(v);  // asserts Any_Word_Kind() for heart
 }
 
 #define Cell_String_Ensure_Mutable(v) \
@@ -530,7 +530,7 @@ INLINE void Set_Char_At(String* s, REBLEN n, Codepoint c) {
     REBLEN len = String_Len(s);
   #endif
 
-    assert(Is_NonSymbol_String(s));
+    assert(Is_String_NonSymbol(s));
     assert(n < String_Len(s));
 
     Utf8(*) cp = String_At(s, n);

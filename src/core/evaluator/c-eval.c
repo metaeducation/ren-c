@@ -555,7 +555,7 @@ Bounce Evaluator_Executor(Level* L)
         VAL_FRAME_BINDING(unwrap(L_current_gotten))
     );
     if (Is_Word(L_current))
-        Begin_Enfix_Action(sub, VAL_WORD_SYMBOL(L_current));
+        Begin_Enfix_Action(sub, Cell_Word_Symbol(L_current));
     else
         Begin_Enfix_Action(sub, VAL_FRAME_LABEL(L_current));
 
@@ -727,7 +727,7 @@ Bounce Evaluator_Executor(Level* L)
             }
 
             Context* binding = VAL_FRAME_BINDING(unwrap(L_current_gotten));
-            const Symbol* label = VAL_WORD_SYMBOL(L_current);  // use WORD!
+            const Symbol* label = Cell_Word_Symbol(L_current);  // use WORD!
             bool enfixed = Is_Enfixed(unwrap(L_current_gotten));
             if (Get_Eval_Executor_Flag(L, DIDNT_LEFT_QUOTE_TUPLE)) {
                 if (enfixed) {
@@ -852,7 +852,7 @@ Bounce Evaluator_Executor(Level* L)
                 fail (Error_Bad_Isotope(OUT));
 
             if (Is_Activation(OUT))  // !!! Review: When to update labels?
-                INIT_VAL_ACTION_LABEL(OUT, VAL_WORD_SYMBOL(L_current));
+                INIT_VAL_ACTION_LABEL(OUT, Cell_Word_Symbol(L_current));
 
             Copy_Cell(
                 Sink_Word_May_Fail(L_current, L_specifier),
@@ -865,7 +865,7 @@ Bounce Evaluator_Executor(Level* L)
                 }
                 else {
                     assert(VAL_TYPE_UNCHECKED(L_next) == REB_WORD);
-                    if (VAL_WORD_SYMBOL(L_next) == VAL_WORD_SYMBOL(L_current))
+                    if (Cell_Word_Symbol(L_next) == Cell_Word_Symbol(L_current))
                         L_next_gotten = nullptr;
                 }
             }
@@ -1120,7 +1120,7 @@ Bounce Evaluator_Executor(Level* L)
 
       case REB_SET_PATH: {
         REBVAL *redbol = Get_System(SYS_OPTIONS, OPTIONS_REDBOL_PATHS);
-        if (not Is_Logic(redbol) or VAL_LOGIC(redbol) == false) {
+        if (not Is_Logic(redbol) or Cell_Logic(redbol) == false) {
             Derelativize(OUT, L_current, L_specifier);
             HEART_BYTE(OUT) = REB_SET_TUPLE;
 
@@ -1179,7 +1179,7 @@ Bounce Evaluator_Executor(Level* L)
 
         /*  // !!! Should we figure out how to cache a label in the cell?
         if (Is_Frame(OUT))
-            INIT_VAL_ACTION_LABEL(OUT, VAL_WORD_SYMBOL(v));
+            INIT_VAL_ACTION_LABEL(OUT, Cell_Word_Symbol(v));
         */
 
         if (Is_Raised(OUT)) {
@@ -1453,7 +1453,7 @@ Bounce Evaluator_Executor(Level* L)
             if (
                 // @xxx is indicator of circled result [3]
                 //
-                (heart == REB_WORD and VAL_WORD_SYMBOL(TOP) == Canon(AT_1))
+                (heart == REB_WORD and Cell_Word_Symbol(TOP) == Canon(AT_1))
                 or heart == REB_THE_WORD
                 or heart == REB_THE_TUPLE
             ){
@@ -1465,7 +1465,7 @@ Bounce Evaluator_Executor(Level* L)
             if (
                 // ^xxx is indicator of a ^META result [4]
                 //
-                (heart == REB_WORD and VAL_WORD_SYMBOL(check) == Canon(CARET_1))
+                (heart == REB_WORD and Cell_Word_Symbol(check) == Canon(CARET_1))
                 or heart == REB_META_WORD
                 or heart == REB_META_TUPLE
             ){
@@ -1530,7 +1530,7 @@ Bounce Evaluator_Executor(Level* L)
 
         if (Is_Pack(OUT)) {  // isotopic block
             pack_meta_at = Cell_Array_At(&pack_meta_tail, OUT);
-            pack_specifier = VAL_SPECIFIER(OUT);
+            pack_specifier = Cell_Specifier(OUT);
         }
         else {
             Meta_Quotify(OUT);  // standardize to align with pack items
@@ -1575,7 +1575,7 @@ Bounce Evaluator_Executor(Level* L)
 
             if (
                 var_heart == REB_WORD
-                and VAL_WORD_SYMBOL(var) == Canon(CARET_1)
+                and Cell_Word_Symbol(var) == Canon(CARET_1)
             ){
                 // leave as meta the way it came in
                 goto circled_check;
@@ -1601,7 +1601,7 @@ Bounce Evaluator_Executor(Level* L)
 
             if (
                 var_heart == REB_WORD
-                and VAL_WORD_SYMBOL(var) == Canon(AT_1)  // [@ ...]:
+                and Cell_Word_Symbol(var) == Canon(AT_1)  // [@ ...]:
             ){
                 goto circled_check;
             }
@@ -1638,7 +1638,7 @@ Bounce Evaluator_Executor(Level* L)
                     stackindex_circled == BASELINE->stack_base + 1
                     or (
                         var_heart == REB_WORD
-                        and VAL_WORD_SYMBOL(var) == Canon(AT_1)
+                        and Cell_Word_Symbol(var) == Canon(AT_1)
                     )
                     or var_heart == REB_THE_WORD
                     or var_heart == REB_THE_TUPLE
@@ -2063,7 +2063,7 @@ Bounce Evaluator_Executor(Level* L)
     Push_Action(sub, enfixed, VAL_FRAME_BINDING(unwrap(L_next_gotten)));
     Begin_Enfix_Action(
         sub,
-        Is_Frame(L_next) ? VAL_FRAME_LABEL(L_next) : VAL_WORD_SYMBOL(L_next)
+        Is_Frame(L_next) ? VAL_FRAME_LABEL(L_next) : Cell_Word_Symbol(L_next)
     );
 
     Fetch_Next_Forget_Lookback(L);  // advances next

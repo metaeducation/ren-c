@@ -304,10 +304,10 @@ Bounce Reframer_Dispatcher(Level* const L)
     Details* details = Phase_Details(PHASE);
     assert(Array_Len(details) == IDX_REFRAMER_MAX);
 
-    REBVAL* shim = DETAILS_AT(details, IDX_REFRAMER_SHIM);
+    REBVAL* shim = Details_At(details, IDX_REFRAMER_SHIM);
     assert(Is_Frame(shim));
 
-    REBVAL* param_index = DETAILS_AT(details, IDX_REFRAMER_PARAM_INDEX);
+    REBVAL* param_index = Details_At(details, IDX_REFRAMER_PARAM_INDEX);
     assert(Is_Integer(param_index));
 
     // First run ahead and make the frame we want from the feed.
@@ -385,7 +385,7 @@ DECLARE_NATIVE(reframer_p)
     const Param* param;
 
     if (REF(parameter)) {
-        const Symbol* symbol = VAL_WORD_SYMBOL(ARG(parameter));
+        const Symbol* symbol = Cell_Word_Symbol(ARG(parameter));
         param_index = Get_Binder_Index_Else_0(&binder, symbol);
         if (param_index == 0) {
             error = Error_No_Arg(label, symbol);
@@ -472,8 +472,8 @@ DECLARE_NATIVE(reframer_p)
     );
 
     Details* details = Phase_Details(reframer);
-    Copy_Cell(DETAILS_AT(details, IDX_REFRAMER_SHIM), ARG(shim));
-    Init_Integer(DETAILS_AT(details, IDX_REFRAMER_PARAM_INDEX), param_index);
+    Copy_Cell(Details_At(details, IDX_REFRAMER_SHIM), ARG(shim));
+    Init_Integer(Details_At(details, IDX_REFRAMER_PARAM_INDEX), param_index);
 
     return Init_Activation(OUT, reframer, label, UNBOUND);
 }

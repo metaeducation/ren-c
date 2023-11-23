@@ -158,7 +158,7 @@ Bounce Chainer_Dispatcher(Level* const L)
 
     Value(*) pipeline_at = Init_Block(
         SPARE,  // index of BLOCK! is current step
-        Cell_Array(DETAILS_AT(details, IDX_CHAINER_PIPELINE))
+        Cell_Array(Details_At(details, IDX_CHAINER_PIPELINE))
     );
 
     Level* sub = Push_Downshifted_Level(OUT, L);  // steals varlist [1]
@@ -254,7 +254,7 @@ DECLARE_NATIVE(chain_p)  // see extended definition CHAIN in %base-defs.r
     for (; check != tail; ++check) {
         if (not Is_Frame(check)) {
             DECLARE_LOCAL (specific);
-            Derelativize(specific, check, VAL_SPECIFIER(pipeline));
+            Derelativize(specific, check, Cell_Specifier(pipeline));
             fail (specific);
         }
     }

@@ -324,7 +324,7 @@ REBTYPE(Issue)
 {
     REBVAL *issue = D_ARG(1);
 
-    Option(SymId) sym = ID_OF_SYMBOL(verb);
+    Option(SymId) sym = Symbol_Id(verb);
 
     switch (sym) {
       case SYM_REFLECT: {

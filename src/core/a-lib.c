@@ -1546,7 +1546,7 @@ intptr_t RL_rebUnbox(const void *p, va_list *vaptr)
     Run_Va_Decay_May_Fail_Calls_Va_End(result, p, vaptr);
 
     if (Is_Logic(result)) {
-        return VAL_LOGIC(result) ? 1 : 0;
+        return Cell_Logic(result) ? 1 : 0;
     }
     else switch (VAL_TYPE(result)) {
       case REB_INTEGER:
@@ -1576,7 +1576,7 @@ bool RL_rebUnboxLogic(
     if (not Is_Logic(result))
         fail ("rebUnboxLogic() called on non-LOGIC!");
 
-    return VAL_LOGIC(result);
+    return Cell_Logic(result);
 }
 
 
