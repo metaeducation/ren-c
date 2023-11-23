@@ -265,7 +265,7 @@ inline static REBVAL *Value_From_Value_Id(heapaddr_t id) {
 //
 
 inline static heapaddr_t Native_Id_For_Action(Action* act)
-  { return Heapaddr_From_Pointer(ACT_KEYLIST(act)); }
+  { return Heapaddr_From_Pointer(ACT_IDENTITY(act)); }
 
 enum {
     IDX_JS_NATIVE_OBJECT = IDX_NATIVE_MAX,
@@ -939,10 +939,16 @@ DECLARE_NATIVE(js_native)
     //
     Copy_Cell(DETAILS_AT(details, IDX_NATIVE_CONTEXT), User_Context_Value);
 
+    // We want this native and its JS Object to GC in the same step--because
+    // if the native GC'd without removing its identity from the table, then
+    // a new native could come into existence recycling that pointer before
+    // the handle could clean up the old ID.  For now, we trust that this
+    // native and a HANDLE! resident in its details will GC in the same step.
+    //
     Init_Handle_Cdata_Managed(
         DETAILS_AT(details, IDX_JS_NATIVE_OBJECT),
-        ACT_KEYLIST(native),
-        0,
+        ACT_IDENTITY(native),
+        1,  // 0 size interpreted to mean it's a C function
         &cleanup_js_object
     );
 
