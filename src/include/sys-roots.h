@@ -78,7 +78,8 @@ INLINE void Link_Api_Handle_To_Level(Array* a, Level* L)
 
     if (not empty_list) {  // head of list exists, take its spot at the head
         Array* head = cast(Array*, L->alloc_value_list);
-        assert(Is_Api_Value(Stub_Cell(head)));
+        if (Is_Api_Value(Stub_Cell(head)))
+            assert(not Is_Nulled(Stub_Cell(head)));
         mutable_MISC(ApiPrev, head) = a;  // link back
     }
 
@@ -86,47 +87,62 @@ INLINE void Link_Api_Handle_To_Level(Array* a, Level* L)
     L->alloc_value_list = a;
 }
 
-INLINE void Unlink_Api_Handle_From_Level(Array* a)
+INLINE void Unlink_Api_Handle_From_Level(Stub* stub)
 {
     bool at_head = did (
-        *cast(Byte*, MISC(ApiPrev, a)) & NODE_BYTEMASK_0x01_CELL
+        *cast(Byte*, MISC(ApiPrev, stub)) & NODE_BYTEMASK_0x01_CELL
     );
     bool at_tail = did (
-        *cast(Byte*, LINK(ApiNext, a)) & NODE_BYTEMASK_0x01_CELL
+        *cast(Byte*, LINK(ApiNext, stub)) & NODE_BYTEMASK_0x01_CELL
     );
 
     if (at_head) {
-        Level* L = cast(Level*, MISC(ApiPrev, a));
-        L->alloc_value_list = LINK(ApiNext, a);
+        Level* L = cast(Level*, MISC(ApiPrev, stub));
+        L->alloc_value_list = LINK(ApiNext, stub);
 
         if (not at_tail) {  // only set next item's backlink if it exists
-            Array* next = cast(Array*, LINK(ApiNext, a));
-            assert(Is_Api_Value(Array_Single(next)));
+            Stub* next = cast(Stub*, LINK(ApiNext, stub));
+            if (Is_Api_Value(Stub_Cell(next)))
+                assert(not Is_Nulled(Stub_Cell(next)));
             mutable_MISC(ApiPrev, next) = L;
         }
     }
     else {
         // we're not at the head, so there is a node before us, set its "next"
-        Array* prev = cast(Array*, MISC(ApiPrev, a));
-        assert(Is_Api_Value(Array_Single(prev)));
-        mutable_LINK(ApiNext, prev) = LINK(ApiNext, a);
+        Stub* prev = cast(Stub*, MISC(ApiPrev, stub));
+        if (Is_Api_Value(Stub_Cell(prev)))
+            assert(not Is_Nulled(Stub_Cell(prev)));
+        mutable_LINK(ApiNext, prev) = LINK(ApiNext, stub);
 
         if (not at_tail) {  // only set next item's backlink if it exists
-            Array* next = cast(Array*, LINK(ApiNext, a));
-            assert(Is_Api_Value(Array_Single(next)));
-            mutable_MISC(ApiPrev, next) = MISC(ApiPrev, a);
+            Stub* next = cast(Stub*, LINK(ApiNext, stub));
+            if (Is_Api_Value(Stub_Cell(next)))
+                assert(not Is_Nulled(Stub_Cell(next)));
+            mutable_MISC(ApiPrev, next) = MISC(ApiPrev, stub);
         }
     }
 }
 
 
-// We are introducing the containing node for this cell to the GC and can't
-// leave it trash.  If a pattern like `Do_Evaluation_Into(Alloc_Value(), ...)`
-// is used, then there might be a recycle during the evaluation that sees it.
-// Low-level allocation already pulled off making it VOID with just three
-// assignments, see Prep_Stub() for that magic.
+// 1. We are introducing the containing node for this cell to the GC and can't
+//    leave it trash.  If a pattern like `Do_Eval_Into(Alloc_Value(), ...)`
+//    is used, there might be a recycle during the evaluation that sees it.
 //
-INLINE REBVAL *Alloc_Value(void)
+// 2. We link the API handle into a doubly linked list maintained by the
+//    topmost level at the time the allocation happens.  This level will
+//    be responsible for marking the node live, freeing the node in case
+//    of a fail() that interrupts the level, and reporting any leaks.
+//
+// 3. Giving the cell itself NODE_FLAG_ROOT lets a REBVAL* be discerned as
+//    either a "public" API handle or not.  We don't want evaluation targets
+//    to have this flag, because it's legal for the Level's ->out cell to be
+//    nulled--not legal for API values.  So if an evaluation is done into an
+//    API handle, the flag has to be off...and then added later.
+//
+//    Having NODE_FLAG_ROOT is still tolerated as a "fresh" state for
+//    purposes of init.  The flag is not copied by Copy_Cell().
+//
+INLINE REBVAL *Alloc_Value_Core(Flags flags)
 {
     Array* a = Make_Array_Core(
         1,
@@ -134,35 +150,28 @@ INLINE REBVAL *Alloc_Value(void)
             |  NODE_FLAG_ROOT | NODE_FLAG_MANAGED | SERIES_FLAG_FIXED_SIZE
     );
 
-    // Giving the cell itself NODE_FLAG_ROOT lets a REBVAL* be discerned as
-    // either an API handle or not.  The flag is not copied by Copy_Cell().
-    //
-    // This is still tolerated as a "fresh" state for purposes of init.
-    //
     REBVAL *v = SPECIFIC(Array_Single(a));
-    v->header.bits = CELL_MASK_0_ROOT;  // not readable, but still "fresh"
+    v->header.bits = flags;  // can't be trash [1]
 
-    // We link the API handle into a doubly linked list maintained by the
-    // topmost level at the time the allocation happens.  This level will
-    // be responsible for marking the node live, freeing the node in case
-    // of a fail() that interrupts the level, and reporting any leaks.
-    //
-    Link_Api_Handle_To_Level(a, TOP_LEVEL);
+    Link_Api_Handle_To_Level(a, TOP_LEVEL);  // [2]
 
     return v;
 }
 
+#define Alloc_Value() \
+    Alloc_Value_Core(CELL_MASK_0_ROOT)  // don't use as eval target [3]
+
 INLINE void Free_Value(REBVAL *v)
 {
-    assert(Is_Api_Value(v));
+    Stub* stub = Singular_From_Cell(v);
+    assert(FLAVOR_BYTE(stub) == FLAVOR_API);
+    assert(Is_Node_Root_Bit_Set(stub));
 
-    Array* a = Singular_From_Cell(v);
+    if (Is_Node_Managed(stub))
+        Unlink_Api_Handle_From_Level(stub);
 
-    if (Is_Node_Managed(a))
-        Unlink_Api_Handle_From_Level(a);
-
-    Poison_Cell(v);  // has to be last (removes NODE_FLAG_ROOT)
-    GC_Kill_Series(a);
+    Poison_Cell(v);  // has to be last (removes NODE_FLAG_ROOT if set)
+    GC_Kill_Series(stub);
 }
 
 

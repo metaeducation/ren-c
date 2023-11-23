@@ -1174,14 +1174,15 @@ REBVAL *RL_rebValue(const void *p, va_list *vaptr)
 {
     ENTER_API;
 
-    REBVAL *result = Alloc_Value();
+    REBVAL *result = Alloc_Value_Core(CELL_MASK_0);
     Run_Va_Decay_May_Fail_Calls_Va_End(result, p, vaptr);
 
     if (Is_Nulled(result)) {
-        rebRelease(result);
+        Free_Value(result);
         return nullptr;  // No NULLED cells in API, see NULLIFY_NULLED()
     }
 
+    Set_Node_Root_Bit(result);
     return result;  // caller must rebRelease()
 }
 
@@ -1287,13 +1288,14 @@ REBVAL *RL_rebMeta(const void *p, va_list *vaptr)
 {
     ENTER_API;
 
-    REBVAL *v = Alloc_Value();
+    REBVAL *v = Alloc_Value_Core(CELL_MASK_0);
     bool interruptible = false;
     if (Run_Va_Throws(v, interruptible, LEVEL_FLAG_META_RESULT, p, vaptr))
         fail (Error_No_Catch_For_Throw(TOP_LEVEL));  // panic?
 
     assert(not Is_Nulled(v));  // meta operations cannot produce NULL
 
+    Set_Node_Root_Bit(v);
     return v;  // caller must rebRelease()
 }
 
@@ -1309,10 +1311,11 @@ REBVAL *RL_rebEntrap(const void *p, va_list *vaptr)
 {
     ENTER_API;
 
-    REBVAL *v = Alloc_Value();
+    REBVAL *v = Alloc_Value_Core(CELL_MASK_0);
     bool interruptible = false;
     if (Run_Va_Throws(v, interruptible, LEVEL_FLAG_META_RESULT, p, vaptr)) {
         Init_Error(v, Error_No_Catch_For_Throw(TOP_LEVEL));
+        Set_Node_Root_Bit(v);
         return v;
     }
 
@@ -1322,7 +1325,7 @@ REBVAL *RL_rebEntrap(const void *p, va_list *vaptr)
     }
 
     assert(not Is_Nulled(v));  // meta operations cannot produce NULL
-
+    Set_Node_Root_Bit(v);
     return v;  // caller must rebRelease()
 }
 
@@ -1340,10 +1343,11 @@ REBVAL *RL_rebEntrapInterruptible(
 ){
     ENTER_API;
 
-    REBVAL *v = Alloc_Value();
+    REBVAL *v = Alloc_Value_Core(CELL_MASK_0);
     bool interruptible = true;
     if (Run_Va_Throws(v, interruptible, LEVEL_FLAG_META_RESULT, p, vaptr)) {
         Init_Error(v, Error_No_Catch_For_Throw(TOP_LEVEL));
+        Set_Node_Root_Bit(v);
         return v;
     }
 
@@ -1353,7 +1357,7 @@ REBVAL *RL_rebEntrapInterruptible(
     }
 
     assert(not Is_Nulled(v));  // META operations can't return null
-
+    Set_Node_Root_Bit(v);
     return v;  // caller must rebRelease()
 }
 

@@ -420,7 +420,7 @@ void RunPromise(void)
     Init_Block(code, a);
 
     Level* L = Make_Level_At(code, LEVEL_FLAG_ROOT_LEVEL);
-    Push_Level(Alloc_Value(), L);
+    Push_Level(Alloc_Value_Core(CELL_MASK_0), L);
     goto run_promise;
 
 } run_promise: {  ////////////////////////////////////////////////////////////
@@ -456,7 +456,7 @@ void RunPromise(void)
             //
             info->state = PROMISE_STATE_REJECTED;
             TRACE("RunPromise() => promise is rejecting due to error");
-            rebRelease(metaresult);  // !!! report the error?
+            Free_Value(metaresult);  // !!! report the error?
         }
         else {
             info->state = PROMISE_STATE_RESOLVED;
@@ -467,7 +467,7 @@ void RunPromise(void)
             // It could cause leaks.
             //
             REBVAL *result = rebValue("unmeta", rebQ(metaresult));
-            rebRelease(metaresult);
+            Free_Value(metaresult);
             rebUnmanage(result);
 
             EM_ASM(

@@ -297,6 +297,10 @@ INLINE void Push_Level(
     // slot at all times; use null until first eval call if needed
     //
     L->out = out;
+  #if DEBUG
+    if (L->out)
+        assert(not Is_Api_Value(L->out));
+  #endif
 
   #if DEBUG_EXPIRED_LOOKBACK
     L->stress = nullptr;
