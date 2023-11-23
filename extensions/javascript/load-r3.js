@@ -66,7 +66,7 @@
 //   in order to use Emscripten's "Pthreads" emulation.  The code in the
 //   JavaScript extension for using pthreads was scrapped in favor of other
 //   means of suspending and resuming the interpreter.  But pthreads may
-//   be interesting for use in other C librareis in the future...so just the
+//   be interesting for use in other C libraries in the future...so just the
 //   loading-oriented support is kept alive here in the loader.
 //
 // * Loading "modules" in JavaScript is an inexact science to begin with, and
@@ -650,6 +650,7 @@ let load_rebol_scripts = function(defer) {
               }).then(function (result) {  // !!! how might we process result?
                 config.log("Finished <script> IMPORT @ tick " + reb.Tick())
                 config.log("defer = " + scripts[i].defer)
+                reb.Release(result)
               })
     }
     return promise
