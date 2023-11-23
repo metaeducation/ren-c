@@ -268,7 +268,7 @@ INLINE void Init_Cell_Node2(Cell* v, Option(const Node*) node) {
 
 
 #define Cell_Heart_Unchecked(cell) \
-    cast(enum Reb_Kind, HEART_BYTE(cell))
+    u_cast(enum Reb_Kind, HEART_BYTE(cell))
 
 #define Cell_Heart(cell) \
     Cell_Heart_Unchecked(READABLE(cell))
@@ -297,7 +297,7 @@ INLINE enum Reb_Kind VAL_TYPE_UNCHECKED(const Cell* v) {
         return REB_ISOTOPE; }
 
       case UNQUOTED_1:
-        return cast(enum Reb_Kind, HEART_BYTE(v));
+        return u_cast(enum Reb_Kind, HEART_BYTE(v));
 
       case QUASI_2:
         return REB_QUASI;
@@ -321,27 +321,30 @@ INLINE enum Reb_Kind VAL_TYPE_UNCHECKED(const Cell* v) {
 // as well as some flags that are reserved for system purposes.  These are
 // the NODE_FLAG_XXX and CELL_FLAG_XXX flags, that work on any cell.
 //
-// 1. See Set_Series_Flag()/Clear_Series_Flag() for why const ignored here.
+// 1. Avoid cost that inline functions (even constexpr) add to debug builds
+//    by "typechecking" via finding the name ->header.bits in (c).
+//
+// 2. Cell flags are managed distinctly from conceptual immutability of their
+//    data, and so we m_cast away constness.  We do this on the HeaderUnion
+//    vs. x_cast() on the (c) to get the typechecking of [1]
 
-#define Get_Cell_Flag(v,name) \
-    ((READABLE(v)->header.bits & CELL_FLAG_##name) != 0)
+#define Get_Cell_Flag(c,name) /* [1] */ \
+    ((READABLE(c)->header.bits & CELL_FLAG_##name) != 0)
 
-#define Not_Cell_Flag(v,name) \
-    ((READABLE(v)->header.bits & CELL_FLAG_##name) == 0)
+#define Not_Cell_Flag(c,name) \
+    ((READABLE(c)->header.bits & CELL_FLAG_##name) == 0)
 
-#define Get_Cell_Flag_Unchecked(v,name) \
-    (((v)->header.bits & CELL_FLAG_##name) != 0)
+#define Get_Cell_Flag_Unchecked(c,name) \
+    (((c)->header.bits & CELL_FLAG_##name) != 0)
 
-#define Not_Cell_Flag_Unchecked(v,name) \
-    (((v)->header.bits & CELL_FLAG_##name) == 0)
+#define Not_Cell_Flag_Unchecked(c,name) \
+    (((c)->header.bits & CELL_FLAG_##name) == 0)
 
-#define Set_Cell_Flag(v,name) \
-    (x_cast(Cell*, READABLE(v))->header.bits \
-        |= CELL_FLAG_##name)  // [1]
+#define Set_Cell_Flag(c,name) /* [2] */ \
+    m_cast(union HeaderUnion*, &READABLE(c)->header)->bits |= CELL_FLAG_##name
 
-#define Clear_Cell_Flag(v,name) \
-    (x_cast(Cell*, READABLE(v))->header.bits \
-        &= ~CELL_FLAG_##name)  // [1]
+#define Clear_Cell_Flag(c,name) \
+    m_cast(union HeaderUnion*, &READABLE(c)->header)->bits &= ~CELL_FLAG_##name
 
 
 // See notes on ALIGN_SIZE regarding why we check this, and when it does and
@@ -380,7 +383,7 @@ INLINE enum Reb_Kind VAL_TYPE_UNCHECKED(const Cell* v) {
 INLINE Cell* Erase_Cell_Untracked(Cell* c) {
     ALIGN_CHECK_CELL_EVIL_MACRO(c);
     c->header.bits = CELL_MASK_0;
-    return cast(Cell*, c);
+    return c;
 }
 
 #define Erase_Cell(c) \
@@ -592,7 +595,7 @@ INLINE bool Any_Arraylike(NoQuote(const Cell*) v) {
     const Node* node1 = Cell_Node1(v);
     if (Is_Node_A_Cell(node1))
         return true;  // Cell_Array_At() works, but Cell_Array() won't work!
-    return Series_Flavor(c_cast(Series*, node1)) == FLAVOR_ARRAY;
+    return Series_Flavor(u_cast(const Series*, node1)) == FLAVOR_ARRAY;
 }
 
 INLINE bool Any_Wordlike(NoQuote(const Cell*) v) {
@@ -606,7 +609,7 @@ INLINE bool Any_Wordlike(NoQuote(const Cell*) v) {
     const Node* node1 = Cell_Node1(v);
     if (Is_Node_A_Cell(node1))
         return false;
-    return Series_Flavor(c_cast(Series*, node1)) == FLAVOR_SYMBOL;
+    return Series_Flavor(u_cast(const Series*, node1)) == FLAVOR_SYMBOL;
 }
 
 INLINE bool Any_Stringlike(NoQuote(const Cell*) v) {

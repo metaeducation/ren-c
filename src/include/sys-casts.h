@@ -218,7 +218,7 @@ struct cast_helper<VP,const Series*> {  // [2]
         if (not p)
             return nullptr;
 
-        if ((reinterpret_cast<const Stub*>(p)->header.bits & (
+        if ((reinterpret_cast<const Stub*>(p)->leader.bits & (
             NODE_FLAG_NODE | NODE_FLAG_FREE | NODE_FLAG_CELL
         )) != (
             NODE_FLAG_NODE
@@ -279,7 +279,7 @@ struct cast_helper<VP,const Binary*> {  // [2]
         if (not p)
             return nullptr;
 
-        if ((reinterpret_cast<const Stub*>(p)->header.bits & (
+        if ((reinterpret_cast<const Stub*>(p)->leader.bits & (
             NODE_FLAG_NODE | NODE_FLAG_FREE | NODE_FLAG_CELL
         )) != (
             NODE_FLAG_NODE
@@ -324,7 +324,7 @@ struct cast_helper<VP,const String*> {  // [2]
         if (not p)
             return nullptr;
 
-        if (((reinterpret_cast<const Stub*>(p)->header.bits & (
+        if (((reinterpret_cast<const Stub*>(p)->leader.bits & (
             NODE_FLAG_NODE | NODE_FLAG_FREE | NODE_FLAG_CELL
         ))
         ) !=
@@ -372,7 +372,7 @@ struct cast_helper<VP,const Symbol*> {  // [2]
         if (not p)
             return nullptr;
 
-        if (((reinterpret_cast<const Stub*>(p)->header.bits & (
+        if (((reinterpret_cast<const Stub*>(p)->leader.bits & (
             SERIES_MASK_SYMBOL
                 | NODE_FLAG_FREE
                 | NODE_FLAG_CELL
@@ -441,7 +441,7 @@ struct cast_helper<VP,const Array*> {  // [2]
         if (not p)
             return nullptr;
 
-        if ((reinterpret_cast<const Stub*>(p)->header.bits & (
+        if ((reinterpret_cast<const Stub*>(p)->leader.bits & (
             NODE_FLAG_NODE | NODE_FLAG_FREE | NODE_FLAG_CELL
         )) != (
             NODE_FLAG_NODE
@@ -487,7 +487,7 @@ struct cast_helper<VP,Context*> {  // [2]
         if (not p)
             return nullptr;
 
-        if (((reinterpret_cast<Stub*>(p)->header.bits & (
+        if (((reinterpret_cast<Stub*>(p)->leader.bits & (
             SERIES_MASK_VARLIST
                 | NODE_FLAG_FREE
                 | NODE_FLAG_CELL
@@ -545,7 +545,7 @@ struct cast_helper<VP,Action*> {  // [2]
             return nullptr;
 
         if (reinterpret_cast<Byte*>(p)[2] == FLAVOR_DETAILS) {
-            if ((reinterpret_cast<const Stub*>(p)->header.bits & (
+            if ((reinterpret_cast<const Stub*>(p)->leader.bits & (
                 SERIES_MASK_DETAILS
                     | NODE_FLAG_FREE
                     | NODE_FLAG_CELL
@@ -557,7 +557,7 @@ struct cast_helper<VP,Action*> {  // [2]
             }
         }
         else {
-            if (((reinterpret_cast<Stub*>(p)->header.bits & (
+            if (((reinterpret_cast<Stub*>(p)->leader.bits & (
                       SERIES_MASK_VARLIST
                       | NODE_FLAG_FREE
                       | NODE_FLAG_CELL

@@ -135,30 +135,30 @@ typedef uintptr_t Flags;
 
     // 63,62,61...or...31,30,20
     #define FLAG_LEFT_BIT(n) \
-        (cast(uintptr_t, 1) << (PLATFORM_BITS - (n) - 1))
+        (u_cast(uintptr_t, 1) << (PLATFORM_BITS - (n) - 1))
 
     #define FLAG_FIRST_BYTE(b) \
-        (cast(uintptr_t, (b)) << (24 + (PLATFORM_BITS - 8)))
+        (u_cast(uintptr_t, (b)) << (24 + (PLATFORM_BITS - 8)))
 
     #define FLAG_SECOND_BYTE(b) \
-        (cast(uintptr_t, (b)) << (16 + (PLATFORM_BITS - 8)))
+        (u_cast(uintptr_t, (b)) << (16 + (PLATFORM_BITS - 8)))
 
     #define FLAG_THIRD_BYTE(b) \
-        (cast(uintptr_t, (b)) << (8 + (PLATFORM_BITS - 32)))
+        (u_cast(uintptr_t, (b)) << (8 + (PLATFORM_BITS - 32)))
 
     #define FLAG_FOURTH_BYTE(b) \
-        (cast(uintptr_t, (b)) << (0 + (PLATFORM_BITS - 32)))
+        (u_cast(uintptr_t, (b)) << (0 + (PLATFORM_BITS - 32)))
 
 #elif defined(ENDIAN_LITTLE)  // Byte w/least significant bit first (e.g. x86)
 
     // 7,6,..0|15,14..8|..
     #define FLAG_LEFT_BIT(n) \
-        (cast(uintptr_t, 1) << (7 + ((n) / 8) * 8 - (n) % 8))
+        (u_cast(uintptr_t, 1) << (7 + ((n) / 8) * 8 - (n) % 8))
 
-    #define FLAG_FIRST_BYTE(b)      cast(uintptr_t, (b))
-    #define FLAG_SECOND_BYTE(b)     (cast(uintptr_t, (b)) << 8)
-    #define FLAG_THIRD_BYTE(b)      (cast(uintptr_t, (b)) << 16)
-    #define FLAG_FOURTH_BYTE(b)     (cast(uintptr_t, (b)) << 24)
+    #define FLAG_FIRST_BYTE(b)      u_cast(uintptr_t, (b))
+    #define FLAG_SECOND_BYTE(b)     (u_cast(uintptr_t, (b)) << 8)
+    #define FLAG_THIRD_BYTE(b)      (u_cast(uintptr_t, (b)) << 16)
+    #define FLAG_FOURTH_BYTE(b)     (u_cast(uintptr_t, (b)) << 24)
 #else
     // !!! There are macro hacks which can actually make reasonable guesses
     // at endianness, and should possibly be used in the config if nothing is
@@ -182,10 +182,36 @@ typedef uintptr_t Flags;
 // c_cast() is used so that if the input pointer is const, the output will
 // be a `const Byte*` and not a `Byte*`.
 
-#define FIRST_BYTE(p)       c_cast(Byte*, (p))[0]
-#define SECOND_BYTE(p)      c_cast(Byte*, (p))[1]
-#define THIRD_BYTE(p)       c_cast(Byte*, (p))[2]
-#define FOURTH_BYTE(p)      c_cast(Byte*, (p))[3]
+#if (! DEBUG_CHECK_CASTS)  // use x_cast and throw away const knowledge
+    #define FIRST_BYTE(p)       x_cast(Byte*, (p))[0]
+    #define SECOND_BYTE(p)      x_cast(Byte*, (p))[1]
+    #define THIRD_BYTE(p)       x_cast(Byte*, (p))[2]
+    #define FOURTH_BYTE(p)      x_cast(Byte*, (p))[3]
+#else
+    inline static Byte FIRST_BYTE(const void* p)
+      { return cast(const Byte*, p)[0]; }
+
+    inline static Byte& FIRST_BYTE(void* p)
+      { return cast(Byte*, p)[0]; }
+
+    inline static Byte SECOND_BYTE(const void* p)
+      { return cast(const Byte*, p)[1]; }
+
+    inline static Byte& SECOND_BYTE(void* p)
+      { return cast(Byte*, p)[1]; }
+
+    inline static Byte THIRD_BYTE(const void* p)
+      { return cast(const Byte*, p)[2]; }
+
+    inline static Byte& THIRD_BYTE(void *p)
+      { return cast(Byte*, p)[2]; }
+
+    inline static Byte FOURTH_BYTE(const void* p)
+      { return cast(const Byte*, p)[3]; }
+
+    inline static Byte& FOURTH_BYTE(void* p)
+      { return cast(Byte*, p)[3]; }
+#endif
 
 
 // There might not seem to be a good reason to keep the uint16_t variant in

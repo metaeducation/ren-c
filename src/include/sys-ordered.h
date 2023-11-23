@@ -42,7 +42,7 @@
 
 
 #define FLAGIT_KIND(t) \
-    (cast(uint_fast64_t, 1) << (t)) // makes a 64-bit bitflag
+    (u_cast(uint_fast64_t, 1) << (t))  // makes a 64-bit bitflag
 
 
 //=//// BINDABILITY ///////////////////////////////////////////////////////=//

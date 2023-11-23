@@ -1051,7 +1051,7 @@ void Remake_Series(Series* s, REBLEN units, Flags flags)
         data_old = cast(char*, &content_old);
     }
 
-    s->header.bits |= flags;
+    s->leader.bits |= flags;
 
     // !!! Currently the remake won't make a series that fits entirely inside
     // a Stub (so always SERIES_FLAG_DYNAMIC).  All series code needs a general

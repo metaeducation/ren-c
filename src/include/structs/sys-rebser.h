@@ -296,17 +296,23 @@
 // enum which is ordered in a way that offers information (e.g. all the
 // arrays are in a range, all the series with wide size of 1 are together...)
 //
+// 1. In lieu of typechecking cell is-a cell, we assume the macro finding
+//    a field called ->leader with .bits in it is good enough.  All methods of
+//    checking seem to add overhead in the debug build that isn't worth it.
+//    To help avoid accidentally passing cell, the HeaderUnion in a Cell
+//    is named "header" instead of "leader".
+//
 #define FLAVOR_BYTE(stub) \
-    THIRD_BYTE(ensure(const Stub*, stub))
+    THIRD_BYTE(&(stub)->leader.bits)
 
 #define FLAG_FLAVOR_BYTE(flavor)        FLAG_THIRD_BYTE(flavor)
 #define FLAG_FLAVOR(name)               FLAG_FLAVOR_BYTE(FLAVOR_##name)
 
 INLINE Flavor Flavor_From_Flags(Flags flags)
-  { return cast(Flavor, THIRD_BYTE(&flags)); }
+  { return u_cast(Flavor, THIRD_BYTE(&flags)); }
 
 #define Series_Flavor(s) \
-    cast(Flavor, FLAVOR_BYTE(s))
+    u_cast(Flavor, FLAVOR_BYTE(s))
 
 
 //=//// BITS 24-31: SUBCLASS FLAGS ////////////////////////////////////////=//
@@ -499,10 +505,14 @@ STATIC_ASSERT(SERIES_INFO_0_IS_FALSE == NODE_FLAG_NODE);
 // Stub to be distinguished from a Cell or a UTF-8 string and not run
 // afoul of strict aliasing requirements.
 //
+// In order to help avoid confusion in optimizing macros that could be passed
+// a cell vs. stub unintentionally, the header in a stub is called "leader",
+// distinguishing it from the stub's "header".
+//
 // There are 3 basic layouts which can be overlaid inside the union:
 //
-//      Dynamic: [header link [allocation tracking] info misc]
-//     Singular: [header link [cell] info misc]
+//      Dynamic: [leader link [allocation tracking] info misc]
+//     Singular: [leader link [cell] info misc]
 //      Pairing: [[cell] [cell]]
 //
 // The singular form has space the *size* of a cell, but can be addressed as
@@ -713,9 +723,11 @@ union StubInfoUnion {
 {
     // See the description of SERIES_FLAG_XXX for the bits in this header.
     // It is in the same position as a Cell header, and the first byte
-    // can be read via NODE_BYTE() to determine which it is.
+    // can be read via NODE_BYTE() to determine which it is.  It's named
+    // "leader" to be distinct from a Cell's "header" to achieve a kind of
+    // poor-man's macro typechecking which doesn't incur debug build costs.
     //
-    union HeaderUnion header;
+    union HeaderUnion leader;
 
     // The `link` field is generally used for pointers to something that
     // when updated, all references to this series would want to be able

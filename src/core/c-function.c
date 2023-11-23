@@ -607,7 +607,7 @@ Array* Pop_Paramlist_With_Adjunct_May_Fail(
     LINK(Ancestor, keylist) = keylist;  // chain ends with self
 
     if (flags & MKF_HAS_RETURN)
-        paramlist->header.bits |= VARLIST_FLAG_PARAMLIST_HAS_RETURN;
+        paramlist->leader.bits |= VARLIST_FLAG_PARAMLIST_HAS_RETURN;
 
     // We want to check for duplicates and a Binder can be used for that
     // purpose--but fail() isn't allowed while binders are in effect.
@@ -1269,9 +1269,9 @@ DECLARE_NATIVE(tweak)
     }
 
     if (Cell_Logic(ARG(enable)))
-        ACT_IDENTITY(act)->header.bits |= flag;
+        ACT_IDENTITY(act)->leader.bits |= flag;
     else
-        ACT_IDENTITY(act)->header.bits &= ~flag;
+        ACT_IDENTITY(act)->leader.bits &= ~flag;
 
     return Activatify(Copy_Cell(OUT, ARG(frame)));;
 }

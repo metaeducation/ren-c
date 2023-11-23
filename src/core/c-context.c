@@ -920,7 +920,7 @@ void Assert_Context_Core(Context* c)
     Array* varlist = CTX_VARLIST(c);
 
     if (
-        (varlist->header.bits & SERIES_MASK_VARLIST) != SERIES_MASK_VARLIST
+        (varlist->leader.bits & SERIES_MASK_VARLIST) != SERIES_MASK_VARLIST
     ){
         panic (varlist);
     }

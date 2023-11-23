@@ -69,7 +69,7 @@ void Dump_Series(Series* s, const char *memo)
     printf(" rest: %d\n", cast(int, Series_Rest(s)));
 
     // flags includes len if non-dynamic
-    printf(" flags: %lx\n", cast(unsigned long, s->header.bits));
+    printf(" flags: %lx\n", cast(unsigned long, s->leader.bits));
 
     // info includes width
     printf(" info: %lx\n", cast(unsigned long, SERIES_INFO(s)));

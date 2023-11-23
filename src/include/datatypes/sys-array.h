@@ -61,10 +61,10 @@
     Not_Subclass_Flag(ARRAY, ensure(const Array*, (a)), flag)
 
 #define Set_Array_Flag(a,flag) \
-    Set_Subclass_Flag(ARRAY, m_cast(Array*, (a)), flag)  // [1]
+    Set_Subclass_Flag(ARRAY, ensure(const Array*, (a)), flag)
 
 #define Clear_Array_Flag(a,flag) \
-    Clear_Subclass_Flag(ARRAY, m_cast(Array*, (a)), flag)  // [1]
+    Clear_Subclass_Flag(ARRAY, ensure(const Array*, (a)), flag)
 
 
 INLINE bool Has_Newline_At_Tail(const Array* a) {
@@ -73,7 +73,7 @@ INLINE bool Has_Newline_At_Tail(const Array* a) {
 
     // Using Get_Subclass_Flag() would redundantly check it's a plain array.
     //
-    return did (a->header.bits & ARRAY_FLAG_NEWLINE_AT_TAIL);
+    return did (a->leader.bits & ARRAY_FLAG_NEWLINE_AT_TAIL);
 }
 
 INLINE bool Has_File_Line(const Array* a) {
@@ -82,7 +82,7 @@ INLINE bool Has_File_Line(const Array* a) {
 
     // Using Get_Subclass_Flag() would redundantly check it's a plain array.
     //
-    return did (a->header.bits & ARRAY_FLAG_HAS_FILE_LINE_UNMASKED);
+    return did (a->leader.bits & ARRAY_FLAG_HAS_FILE_LINE_UNMASKED);
 }
 
 

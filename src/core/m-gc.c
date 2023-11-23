@@ -682,7 +682,7 @@ static void Mark_Root_Series(void)
                 Is_Series_Array(s)
                 and s != g_ds.array  // !!! Review g_ds.array exemption!
             ){
-                if (s->header.bits & NODE_FLAG_MANAGED)
+                if (Is_Node_Managed(s))
                     continue;  // BLOCK! or OBJECT! etc. holding it should mark
 
                 Array* a = cast(Array*, s);
@@ -834,7 +834,7 @@ static void Mark_Level_Stack_Deep(void)
 
         if (
             L_specifier != SPECIFIED
-            and (L_specifier->header.bits & NODE_FLAG_MANAGED)
+            and (L_specifier->leader.bits & NODE_FLAG_MANAGED)
         ){
             // Expand L_specifier.
             //

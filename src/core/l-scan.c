@@ -3196,7 +3196,7 @@ DECLARE_NATIVE(transcode)
 
         a->misc.line = ss->line;
         LINK(Filename, a) = try_unwrap(ss->file);
-        a->header.bits |= ARRAY_MASK_HAS_FILE_LINE;
+        a->leader.bits |= ARRAY_MASK_HAS_FILE_LINE;
 
         Init_Block(OUT, a);
     }

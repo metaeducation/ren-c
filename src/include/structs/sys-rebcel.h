@@ -141,8 +141,14 @@
 // HEART, because that treats QUOTED! cells differently.  If you only check
 // the heart, then (''''x) will equal (x) because both hearts are WORD!.
 //
+// 1. In lieu of typechecking cell is-a cell, we assume the macro finding
+//    a field called ->header with .bits in it is good enough.  All methods of
+//    checking seem to add overhead in the debug build that isn't worth it.
+//    To help avoid accidentally passing stubs, the HeaderUnion in a Stub
+//    is named "leader" instead of "header".
+//
 #define HEART_BYTE(cell) \
-    SECOND_BYTE(ensure(NoQuote(const Cell*), cell))
+    SECOND_BYTE(&(cell)->header.bits)  // don't use ensure() [1]
 
 #define FLAG_HEART_BYTE(kind)       FLAG_SECOND_BYTE(kind)
 

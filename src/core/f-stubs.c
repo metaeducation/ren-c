@@ -269,7 +269,7 @@ REBINT Get_System_Int(REBLEN i1, REBLEN i2, REBINT default_int)
 //
 void Extra_Init_Context_Cell_Checks_Debug(enum Reb_Kind kind, Context* c) {
     assert(
-        (CTX_VARLIST(c)->header.bits & SERIES_MASK_VARLIST)
+        (CTX_VARLIST(c)->leader.bits & SERIES_MASK_VARLIST)
         == SERIES_MASK_VARLIST
     );
 
@@ -322,7 +322,7 @@ void Extra_Init_Frame_Details_Checks_Debug(Phase* a) {
 
     KeyList* keylist = ACT_KEYLIST(a);
     assert(
-        (keylist->header.bits & SERIES_MASK_KEYLIST)
+        (keylist->leader.bits & SERIES_MASK_KEYLIST)
         == SERIES_MASK_KEYLIST
     );
 

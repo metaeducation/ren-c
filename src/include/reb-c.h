@@ -502,21 +502,24 @@
     #define m_cast(T,v) \
         m_cast_helper<T>(v)
 
-    /* We build an arbitrary pointer cast out of two steps: one which adds
-     * a const if it wasn't already there, and then a const_cast to the
-     * desired type (which will remove the const if target type isn't const).
-     * This has no runtime cost in debug builds due to no inline function.
-     */
+    template<typename TQP>
+    struct x_cast_pointer_helper {
+        typedef typename std::remove_pointer<TQP>::type TQ;
+        typedef typename std::add_const<TQ>::type TC;
+        typedef typename std::add_pointer<TC>::type type;
+    };
+
+    template<typename T>
+    struct x_cast_helper {
+        typedef typename std::conditional<
+            std::is_pointer<T>::value,
+            typename x_cast_pointer_helper<T>::type,
+            T
+        >::type type;
+    };
+
     #define x_cast(T,v) \
-       (const_cast<T>( \
-            ( \
-                typename std::add_pointer< \
-                    typename std::add_const< \
-                        typename std::remove_pointer<T>::type \
-                    >::type \
-                >::type \
-            )(v) /* old-style parentheses cast, "everything but" the const */ \
-        ))
+       (const_cast<T>((typename x_cast_helper<T>::type)(v)))
 
     template<typename TP, typename VQPR>
     struct c_cast_helper {

@@ -151,7 +151,7 @@ INLINE REBVAL* Freshen_Cell_Untracked(Cell* v);
         operator Value(*) () const { return p; }
         operator Node* () const { return p; }
 
-        explicit operator Byte* () { return reinterpret_cast<Byte*>(p); }
+        explicit operator Byte* () const { return reinterpret_cast<Byte*>(p); }
 
         Value(*) operator->() const { return p; }
     };

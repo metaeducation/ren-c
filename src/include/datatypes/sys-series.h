@@ -66,27 +66,24 @@
 //
 // Using token pasting macros helps avoid mixups with SERIES_INFO_XXX!
 //
-// 1. It's not worth it to enforce constness on the series flags, because
-//    they're fairly decoupled from "conceptual immutability" of the data
-//    in the series.  Doing things like Set_Series_Flag(s, BLACK) is not
-//    dependent on whether the series is const or not.  If the system
-//    wished to compact a 1-element array to not use a dynamic allocation
-//    in the garbage collector, Clear_Series_Flag(s, DYNAMIC) should be
-//    legal even if the array is const.  etc.
+// 1. Avoid cost that inline functions (even constexpr) add to debug builds
+//    by "typechecking" via finding the name ->leader.bits in (s).
+//
+// 2. Series flags are managed distinctly from conceptual immutability of their
+//    data, and so we m_cast away constness.  We do this on the HeaderUnion
+//    vs. x_cast() on the (s) to get the typechecking of [1]
 
 #define Get_Series_Flag(s,name) \
-    ((ensure(const Series*, (s))->header.bits & SERIES_FLAG_##name) != 0)
+    (((s)->leader.bits & SERIES_FLAG_##name) != 0)
 
 #define Not_Series_Flag(s,name) \
-    ((ensure(const Series*, (s))->header.bits & SERIES_FLAG_##name) == 0)
+    (((s)->leader.bits & SERIES_FLAG_##name) == 0)
 
 #define Set_Series_Flag(s,name) \
-    (x_cast(Series*, ensure(const Series*, (s)))->header.bits \
-        |= SERIES_FLAG_##name)  // [1]
+    m_cast(union HeaderUnion*, &(s)->leader)->bits |= SERIES_FLAG_##name
 
 #define Clear_Series_Flag(s,name) \
-    (x_cast(Series*, ensure(const Series*, (s)))->header.bits \
-        &= ~SERIES_FLAG_##name)  // [1]
+    m_cast(union HeaderUnion*, &(s)->leader)->bits &= ~SERIES_FLAG_##name
 
 
 
@@ -131,20 +128,22 @@
 #endif
 
 #define Get_Subclass_Flag(subclass,s,name) \
-    ((ensure_flavor(FLAVOR_##subclass, (s))->header.bits \
+    ((ensure_flavor(FLAVOR_##subclass, (s))->leader.bits \
         & subclass##_FLAG_##name) != 0)
 
 #define Not_Subclass_Flag(subclass,s,name) \
-    ((ensure_flavor(FLAVOR_##subclass, (s))->header.bits \
+    ((ensure_flavor(FLAVOR_##subclass, (s))->leader.bits \
         & subclass##_FLAG_##name) == 0)
 
 #define Set_Subclass_Flag(subclass,s,name) \
-    (x_cast(Series*, ensure_flavor(FLAVOR_##subclass, (s)))->header.bits \
-        |= subclass##_FLAG_##name)
+    m_cast(union HeaderUnion*, /* [1] */ \
+        &ensure_flavor(FLAVOR_##subclass, (s))->leader)->bits \
+        |= subclass##_FLAG_##name
 
-#define Clear_Subclass_Flag(subclass,s,name) \
-    (x_cast(Series*, ensure_flavor(FLAVOR_##subclass, (s)))->header.bits \
-        &= ~subclass##_FLAG_##name)
+#define Clear_Subclass_Flag(subclass,s,name)\
+    m_cast(union HeaderUnion*, /* [1] */ \
+        &ensure_flavor(FLAVOR_##subclass, (s))->leader)->bits \
+        &= ~subclass##_FLAG_##name
 
 
 //=//// LINK AND MISC HELPERS /////////////////////////////////////////////=//
@@ -347,12 +346,12 @@ INLINE size_t Series_Total(const Series* s) {
     #define Series_Bonus(s) \
         (s)->content.dynamic.bonus.node
 #else
-    INLINE const struct NodeStruct* const &Series_Bonus(const Series* s) {
-        assert(s->header.bits & SERIES_FLAG_DYNAMIC);
+    INLINE const Node* const &Series_Bonus(const Series* s) {
+        assert(Get_Series_Flag(s, DYNAMIC));
         return s->content.dynamic.bonus.node;
     }
-    INLINE const struct NodeStruct* &Series_Bonus(Series* s) {
-        assert(s->header.bits & SERIES_FLAG_DYNAMIC);
+    INLINE const Node* &Series_Bonus(Series* s) {
+        assert(Get_Series_Flag(s, DYNAMIC));
         return s->content.dynamic.bonus.node;
     }
 #endif
@@ -468,8 +467,8 @@ INLINE Byte* Series_Data(const_if_c Series* s) {
     assert(Not_Series_Flag(s, INACCESSIBLE));
 
     return Get_Series_Flag(s, DYNAMIC)
-        ? cast(Byte*, s->content.dynamic.data)
-        : cast(Byte*, &s->content);
+        ? u_cast(Byte*, s->content.dynamic.data)
+        : u_cast(Byte*, &s->content);
 }
 
 INLINE Byte* Series_Data_At(Byte w, const_if_c Series* s, REBLEN i) {
@@ -1195,7 +1194,7 @@ INLINE Stub* Prep_Stub(void *preallocated, Flags flags) {
 
     Stub *s = u_cast(Stub*, preallocated);
 
-    s->header.bits = NODE_FLAG_NODE | flags;  // #1
+    s->leader.bits = NODE_FLAG_NODE | flags;  // #1
 
   #if !defined(NDEBUG)
     SafeTrash_Pointer_If_Debug(s->link.trash);  // #2
