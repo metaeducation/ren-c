@@ -528,11 +528,16 @@ EXTERN_C void RL_rebIdle_internal(void)  // NO user JS code on stack!
 {
     TRACE("rebIdle() => begin running promise code");
 
+    Flags saved_sigmask = g_ts.eval_sigmask;
+    g_ts.eval_sigmask &= ~SIG_HALT;  // disable
+
     // In stackless, we'd have some protocol by which RunPromise() could get
     // started in rebPromise(), then maybe be continued here.  For now, it
     // is always continued here.
     //
     RunPromise();
+
+    g_ts.eval_sigmask = saved_sigmask;
 
     TRACE("rebIdle() => finished running promise code");
 }
