@@ -301,7 +301,7 @@ String* Append_UTF8_May_Fail(
     Push_Mold(mo);
 
     bool all_ascii = true;
-    REBLEN num_codepoints = 0;
+    Length num_codepoints = 0;
 
     Size bytes_left = size;  // see remarks on Back_Scan_UTF8_Char's 3rd arg
     for (; bytes_left > 0; --bytes_left, ++bp) {

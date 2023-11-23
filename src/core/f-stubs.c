@@ -355,7 +355,7 @@ REBLEN Part_Len_May_Modify_Index(
         if (not Is_Nulled(part))
             fail ("/PART cannot be used with ANY-SEQUENCE");
 
-        return VAL_SEQUENCE_LEN(series);
+        return Cell_Sequence_Len(series);
     }
 
     assert(Is_Issue(series) or Any_Series(series));

@@ -81,10 +81,10 @@ uint32_t Hash_Scan_UTF8_Caseless_May_Fail(const Byte* utf8, Size size)
 // NOTE: This takes LENGTH, not number of bytes, because it goes codepoint by
 // codepoint for the lowercase operation.
 //
-uint32_t Hash_UTF8_Len_Caseless(Utf8(const*) cp, REBLEN len) {
+uint32_t Hash_UTF8_Len_Caseless(Utf8(const*) cp, Length len) {
     uint32_t crc = 0x00000000;
 
-    REBLEN n;
+    Count n;
     for (n = 0; n < len; n++) {
         Codepoint c;
         cp = Utf8_Next(&c, cp);

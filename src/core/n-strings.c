@@ -944,12 +944,12 @@ DECLARE_NATIVE(to_hex)
         if (
             len == cast(REBLEN, UNLIMITED)
             || len > 2 * MAX_TUPLE
-            || len > cast(REBLEN, 2 * VAL_SEQUENCE_LEN(arg))
+            || len > cast(REBLEN, 2 * Cell_Sequence_Len(arg))
         ){
-            len = 2 * VAL_SEQUENCE_LEN(arg);
+            len = 2 * Cell_Sequence_Len(arg);
         }
-        for (n = 0; n != VAL_SEQUENCE_LEN(arg); n++)
-            Form_Hex2(mo, VAL_SEQUENCE_BYTE_AT(arg, n));
+        for (n = 0; n != Cell_Sequence_Len(arg); n++)
+            Form_Hex2(mo, Cell_Sequence_Byte_At(arg, n));
         for (; n < 3; n++)
             Form_Hex2(mo, 0);
     }

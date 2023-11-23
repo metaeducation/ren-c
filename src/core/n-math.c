@@ -1019,10 +1019,10 @@ DECLARE_NATIVE(zero_q)
         return Init_False(OUT);
 
     if (type == REB_TUPLE) {
-        REBLEN len = VAL_SEQUENCE_LEN(v);
+        REBLEN len = Cell_Sequence_Len(v);
         REBLEN i;
         for (i = 0; i < len; ++i) {
-            const Cell* item = VAL_SEQUENCE_AT(SPARE, v, i);
+            const Cell* item = Cell_Sequence_At(SPARE, v, i);
             if (not Is_Integer(item) or VAL_INT64(item) != 0)
                 return Init_False(OUT);
         }

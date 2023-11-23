@@ -167,10 +167,10 @@ Bounce TO_Word(Level* level_, enum Reb_Kind kind, const REBVAL *arg)
 
         DECLARE_LOCAL (temp);
 
-        REBLEN len = VAL_SEQUENCE_LEN(arg);
+        REBLEN len = Cell_Sequence_Len(arg);
         REBLEN i;
         for (i = 0; i < len; ++i) {
-            const Cell* item = VAL_SEQUENCE_AT(temp, arg, i);
+            const Cell* item = Cell_Sequence_At(temp, arg, i);
             if (Is_Blank(item))
                 continue;
             if (not Is_Word(item))
@@ -181,7 +181,7 @@ Bounce TO_Word(Level* level_, enum Reb_Kind kind, const REBVAL *arg)
                 return RAISE(
                     "Can't make ANY-WORD! from path w/more than one WORD!"
                 );
-            Derelativize(OUT, item, VAL_SEQUENCE_SPECIFIER(arg));
+            Derelativize(OUT, item, Cell_Sequence_Specifier(arg));
         }
 
         if (Is_Fresh(OUT))

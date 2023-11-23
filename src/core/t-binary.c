@@ -50,7 +50,7 @@ REBINT CT_Binary(NoQuote(const Cell*) a, NoQuote(const Cell*) b, bool strict)
     Size size2;
     const Byte* data2 = Cell_Binary_Size_At(&size2, b);
 
-    REBLEN size = MIN(size1, size2);
+    Size size = MIN(size1, size2);
 
     REBINT n = memcmp(data1, data2, size);
 
@@ -155,7 +155,7 @@ static Bounce MAKE_TO_Binary_Common(Level* level_, const REBVAL *arg)
         return Init_Binary(OUT, bin); }
 
       case REB_TUPLE: {
-        REBLEN len = VAL_SEQUENCE_LEN(arg);
+        REBLEN len = Cell_Sequence_Len(arg);
         Binary* bin = Make_Binary(len);
         if (Did_Get_Sequence_Bytes(Binary_Head(bin), arg, len)) {
             Term_Binary_Len(bin, len);

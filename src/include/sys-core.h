@@ -324,12 +324,12 @@ typedef struct {
   #endif
 
   #if DEBUG_COLLECT_STATS
-    REBI64 series_memory;
-    REBLEN series_made;
-    REBLEN series_freed;
-    REBLEN series_expanded;
-    REBLEN blocks_made;
-    REBLEN objects_made;
+    Size series_memory;
+    Count series_made;
+    Count series_freed;
+    Count series_expanded;
+    Count blocks_made;
+    Count objects_made;
   #endif
 } MemoryState;
 

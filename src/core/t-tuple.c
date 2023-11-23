@@ -186,7 +186,7 @@ REBTYPE(Sequence)
     // This is a work in progress, just to try to get to booting.
     //
     Byte buf[MAX_TUPLE];
-    REBLEN len = VAL_SEQUENCE_LEN(sequence);
+    Length len = Cell_Sequence_Len(sequence);
     if (len > MAX_TUPLE)
         len = MAX_TUPLE;
     bool all_byte_sized_ints = Did_Get_Sequence_Bytes(buf, sequence, len);
@@ -232,7 +232,7 @@ REBTYPE(Sequence)
         }
         else if (Is_Tuple(arg)) {
             dec = -251.8517; // unused but avoid maybe uninitialized warning
-            alen = VAL_SEQUENCE_LEN(arg);
+            alen = Cell_Sequence_Len(arg);
             Get_Tuple_Bytes(abuf, arg, alen);
             ap = abuf;
             if (len < alen)
@@ -354,7 +354,7 @@ REBTYPE(Sequence)
 
         switch (VAL_WORD_ID(ARG(property))) {
           case SYM_LENGTH:
-            return Init_Integer(OUT, VAL_SEQUENCE_LEN(sequence));
+            return Init_Integer(OUT, Cell_Sequence_Len(sequence));
 
           case SYM_INDEX:  // Note: not legal, paths always at head, no index
           default:
@@ -396,10 +396,10 @@ REBTYPE(Sequence)
         else
             fail (picker);
 
-        if (n < 0 or n >= cast(REBINT, VAL_SEQUENCE_LEN(sequence)))
+        if (n < 0 or n >= cast(REBINT, Cell_Sequence_Len(sequence)))
             return nullptr;
 
-        Copy_Sequence_At(OUT, sequence, VAL_SEQUENCE_SPECIFIER(sequence), n);
+        Copy_Sequence_At(OUT, sequence, Cell_Sequence_Specifier(sequence), n);
         return OUT; }
 
       case SYM_REVERSE: {
@@ -411,7 +411,7 @@ REBTYPE(Sequence)
 
         if (REF(part)) {
             REBLEN part = Get_Num_From_Arg(ARG(part));
-            temp = MIN(part, VAL_SEQUENCE_LEN(sequence));
+            temp = MIN(part, Cell_Sequence_Len(sequence));
         }
         if (len > 0) {
             REBLEN i;
@@ -451,10 +451,10 @@ void MF_Sequence(REB_MOLD *mo, NoQuote(const Cell*) v, bool form)
     bool first = true;
 
     DECLARE_LOCAL (temp);
-    REBLEN len = VAL_SEQUENCE_LEN(v);
+    Length len = Cell_Sequence_Len(v);
     REBLEN i;
     for (i = 0; i < len; ++i) {
-        const Cell* element = VAL_SEQUENCE_AT(temp, v, i);
+        const Cell* element = Cell_Sequence_At(temp, v, i);
         enum Reb_Kind element_kind = VAL_TYPE(element);
 
         if (first)

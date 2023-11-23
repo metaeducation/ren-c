@@ -396,8 +396,8 @@ Bounce TO_Sequence(Level* level_, enum Reb_Kind kind, const REBVAL *arg) {
 //
 REBINT CT_Sequence(NoQuote(const Cell*) a, NoQuote(const Cell*) b, bool strict)
 {
-    REBLEN len_a = VAL_SEQUENCE_LEN(a);
-    REBLEN len_b = VAL_SEQUENCE_LEN(b);
+    REBLEN len_a = Cell_Sequence_Len(a);
+    REBLEN len_b = Cell_Sequence_Len(b);
 
     if (len_a != len_b)
         return len_a < len_b ? -1 : 1;
@@ -408,8 +408,8 @@ REBINT CT_Sequence(NoQuote(const Cell*) a, NoQuote(const Cell*) b, bool strict)
     REBLEN n;
     for (n = 0; n < len_a; ++n) {
         int compare = Cmp_Value(
-            VAL_SEQUENCE_AT(temp_a, a, n),
-            VAL_SEQUENCE_AT(temp_b, b, n),
+            Cell_Sequence_At(temp_a, a, n),
+            Cell_Sequence_At(temp_b, b, n),
             strict
         );
         if (compare != 0)

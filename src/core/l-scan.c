@@ -2771,17 +2771,17 @@ Bounce Scanner_Executor(Level* const L) {
         // including the zero.  This doesn't put any decision in stone, but
         // reserves the right to make a decision at a later time.
         //
-        if (Is_Tuple(TOP) and VAL_SEQUENCE_LEN(TOP) == 2) {
+        if (Is_Tuple(TOP) and Cell_Sequence_Len(TOP) == 2) {
             if (
-                Is_Integer(VAL_SEQUENCE_AT(temp, TOP, 0))
-                and Is_Blank(VAL_SEQUENCE_AT(temp, TOP, 1))
+                Is_Integer(Cell_Sequence_At(temp, TOP, 0))
+                and Is_Blank(Cell_Sequence_At(temp, TOP, 1))
             ){
                 DROP();
                 return RAISE("`5.` currently reserved, please use 5.0");
             }
             if (
-                Is_Blank(VAL_SEQUENCE_AT(temp, TOP, 0))
-                and Is_Integer(VAL_SEQUENCE_AT(temp, TOP, 1))
+                Is_Blank(Cell_Sequence_At(temp, TOP, 0))
+                and Is_Integer(Cell_Sequence_At(temp, TOP, 1))
             ){
                 DROP();
                 return RAISE("`.5` currently reserved, please use 0.5");

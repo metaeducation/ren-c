@@ -278,7 +278,7 @@ REBINT CT_String(NoQuote(const Cell*) a, NoQuote(const Cell*) b, bool strict)
 ***********************************************************************/
 
 
-static void reverse_string(String* str, REBLEN index, REBLEN len)
+static void reverse_string(String* str, REBLEN index, Length len)
 {
     if (len == 0)
         return; // if non-zero, at least one character in the string
@@ -303,13 +303,13 @@ static void reverse_string(String* str, REBLEN index, REBLEN len)
         DECLARE_MOLD (mo);
         Push_Mold(mo);
 
-        REBLEN val_len_head = String_Len(str);
+        Length len_head = String_Len(str);
 
-        Utf8(const*) up = String_Tail(str);  // last exists due to len != 0
-        REBLEN n;
+        Utf8(const*) utf8 = String_Tail(str);  // last exists due to len != 0
+        Count n;
         for (n = 0; n < len; ++n) {
             Codepoint c;
-            up = Utf8_Back(&c, up);
+            utf8 = Utf8_Back(&c, utf8);
             Append_Codepoint(mo->series, c);
         }
 
@@ -333,8 +333,8 @@ static void reverse_string(String* str, REBLEN index, REBLEN len)
         // Regardless of whether the whole string was reversed or just some
         // part from the index to the tail, the length shouldn't change.
         //
-        assert(Cell_Series_Len_Head(string) == val_len_head);
-        UNUSED(val_len_head);
+        assert(Cell_Series_Len_Head(string) == len_head);
+        UNUSED(len_head);
     }
 }
 
@@ -662,7 +662,7 @@ void Mold_Text_Series_At(REB_MOLD *mo, const String* s, REBLEN index) {
         return;
     }
 
-    REBLEN len = String_Len(s) - index;
+    Length len = String_Len(s) - index;
 
     bool parened = GET_MOLD_FLAG(mo, MOLD_FLAG_NON_ANSI_PARENED);
 
@@ -1015,7 +1015,7 @@ REBTYPE(String)
         if (index >= tail or limit == 0)
             return COPY(v);
 
-        REBLEN len;
+        Length len;
         Size size = Cell_String_Size_Limit_At(&len, v, limit);
 
         Size offset = VAL_BYTEOFFSET_FOR_INDEX(v, index);

@@ -329,12 +329,12 @@ bool Set_Bits(Binary* bset, const Cell* val, bool set)
             ){
                 item += 2;
                 if (IS_CHAR(item)) {
-                    REBLEN n = Cell_Codepoint(item);
-                    if (n < c)
+                    Codepoint c2 = Cell_Codepoint(item);
+                    if (c2 < c)
                         fail (Error_Index_Out_Of_Range_Raw());
                     do {
                         Set_Bit(bset, c, set);
-                    } while (c++ < n); // post-increment: test before overflow
+                    } while (c++ < c2);  // post-increment test BEFORE overflow
                 }
                 else
                     fail (Error_Bad_Value(item));
@@ -464,10 +464,10 @@ bool Check_Bits(const Binary* bset, const Cell* val, bool uncased)
             ){
                 item += 2;
                 if (IS_CHAR(item)) {
-                    REBLEN n = Cell_Codepoint(item);
-                    if (n < c)
+                    Codepoint c2 = Cell_Codepoint(item);
+                    if (c2 < c)
                         fail (Error_Index_Out_Of_Range_Raw());
-                    for (; c <= n; c++)
+                    for (; c <= c2; c++)
                         if (Check_Bit(bset, c, uncased))
                             return true;
                 }

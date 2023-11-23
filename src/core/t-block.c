@@ -330,20 +330,20 @@ Bounce MAKE_Array(
 Bounce TO_Array(Level* level_, enum Reb_Kind kind, const REBVAL *arg) {
     if (Any_Sequence(arg)) {
         StackIndex base = TOP_INDEX;
-        REBLEN len = VAL_SEQUENCE_LEN(arg);
+        Length len = Cell_Sequence_Len(arg);
         REBLEN i;
         for (i = 0; i < len; ++i) {
             Copy_Sequence_At(
                 PUSH(),
                 arg,
-                VAL_SEQUENCE_SPECIFIER(arg),
+                Cell_Sequence_Specifier(arg),
                 i
             );
         }
         return Init_Array_Cell(OUT, kind, Pop_Stack_Values(base));
     }
     else if (Any_Array(arg)) {
-        REBLEN len;
+        Length len;
         const Cell* at = Cell_Array_Len_At(&len, arg);
         return Init_Array_Cell(
             OUT,
@@ -1522,8 +1522,8 @@ DECLARE_NATIVE(glom)
         //
         Array* r = Cell_Array_Ensure_Mutable(result);
         Specifier* r_specifier = Cell_Specifier(result);
-        REBLEN a_len = Array_Len(a);
-        REBLEN r_len = Array_Len(r);
+        Length a_len = Array_Len(a);
+        Length r_len = Array_Len(r);
         Expand_Series_Tail(a, r_len);  // can move memory, get `at` after
         Cell* dst = Array_At(a, a_len);  // old tail position
         Cell* src = Array_Head(r);

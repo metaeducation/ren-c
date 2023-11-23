@@ -448,7 +448,7 @@ INLINE Value(*) Try_Pop_Sequence_Or_Element_Or_Nulled(
 // take as immutable...or you can create a `/foo`-style path in a more
 // optimized fashion using Refinify()
 
-INLINE REBLEN VAL_SEQUENCE_LEN(NoQuote(const Cell*) sequence) {
+INLINE Length Cell_Sequence_Len(NoQuote(const Cell*) sequence) {
     assert(Any_Sequence_Kind(Cell_Heart(sequence)));
 
     if (Not_Cell_Flag(sequence, SEQUENCE_HAS_NODE)) {  // compressed bytes
@@ -493,7 +493,7 @@ INLINE REBLEN VAL_SEQUENCE_LEN(NoQuote(const Cell*) sequence) {
 // 3. The quotes must be removed because the quotes are intended to be "on"
 //    the path or tuple.  If implemented as a pseudo-WORD!
 //
-INLINE const Cell* VAL_SEQUENCE_AT(
+INLINE const Cell* Cell_Sequence_At(
     Cell* store,  // relative value, return may not point at this cell [1]
     NoQuote(const Cell*) sequence,
     REBLEN n
@@ -545,22 +545,22 @@ INLINE Value(*) Copy_Sequence_At(
     REBLEN n
 ){
     DECLARE_STABLE (store);
-    const Cell* at = VAL_SEQUENCE_AT(store, sequence, n);
+    const Cell* at = Cell_Sequence_At(store, sequence, n);
     return Derelativize(out, at, specifier);
 }
 
-INLINE Byte VAL_SEQUENCE_BYTE_AT(
+INLINE Byte Cell_Sequence_Byte_At(
     NoQuote(const Cell*) sequence,
     REBLEN n
 ){
     DECLARE_LOCAL (temp);
-    const Cell* at = VAL_SEQUENCE_AT(temp, sequence, n);
+    const Cell* at = Cell_Sequence_At(temp, sequence, n);
     if (not Is_Integer(at))
-        fail ("VAL_SEQUENCE_BYTE_AT() used on non-byte ANY-SEQUENCE!");
+        fail ("Cell_Sequence_Byte_At() used on non-byte ANY-SEQUENCE!");
     return VAL_UINT8(at);  // !!! All callers of this routine need vetting
 }
 
-INLINE Specifier* VAL_SEQUENCE_SPECIFIER(
+INLINE Specifier* Cell_Sequence_Specifier(
     NoQuote(const Cell*) sequence
 ){
     assert(Any_Sequence_Kind(Cell_Heart(sequence)));
@@ -601,7 +601,7 @@ INLINE bool Did_Get_Sequence_Bytes(
     const Cell* sequence,
     Size buf_size
 ){
-    REBLEN len = VAL_SEQUENCE_LEN(sequence);
+    Length len = Cell_Sequence_Len(sequence);
 
     Byte* dp = cast(Byte*, buf);
     Size i;
@@ -611,7 +611,7 @@ INLINE bool Did_Get_Sequence_Bytes(
             dp[i] = 0;
             continue;
         }
-        const Cell* at = VAL_SEQUENCE_AT(temp, sequence, i);
+        const Cell* at = Cell_Sequence_At(temp, sequence, i);
         if (not Is_Integer(at))
             return false;
         REBI64 i64 = VAL_INT64(at);

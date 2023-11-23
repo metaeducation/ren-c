@@ -539,7 +539,7 @@ void Push_Mold(REB_MOLD *mo)
         // the contents, as there may be important mold data behind the
         // ->start index in the stack!
         //
-        REBLEN len = String_Len(g_mold.buffer);
+        Length len = String_Len(g_mold.buffer);
         Remake_Series(
             s,
             Series_Used(s) + MIN_COMMON,

@@ -249,11 +249,11 @@ void Uncolor(const Cell* v)
     if (Any_Array(v))
         Uncolor_Array(Cell_Array(v));
     else if (Any_Path(v)) {
-        REBLEN len = VAL_SEQUENCE_LEN(v);
+        REBLEN len = Cell_Sequence_Len(v);
         REBLEN i;
         DECLARE_LOCAL (temp);
         for (i = 0; i < len; ++i) {
-            const Cell* item = VAL_SEQUENCE_AT(temp, v, i);
+            const Cell* item = Cell_Sequence_At(temp, v, i);
             Uncolor(item);
         }
     }

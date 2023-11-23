@@ -254,7 +254,7 @@ INLINE REBLEN String_Index_At(
     return index;
 }
 
-INLINE void Set_String_Len_Size(String* s, REBLEN len, Size used) {
+INLINE void Set_String_Len_Size(String* s, Length len, Size used) {
     assert(Is_String_NonSymbol(s));
     assert(len <= used);
     assert(used == Series_Used(s));
@@ -263,7 +263,7 @@ INLINE void Set_String_Len_Size(String* s, REBLEN len, Size used) {
     UNUSED(used);
 }
 
-INLINE void Term_String_Len_Size(String* s, REBLEN len, Size used) {
+INLINE void Term_String_Len_Size(String* s, Length len, Size used) {
     assert(Is_String_NonSymbol(s));
     assert(len <= used);
     Set_Series_Used(s, used);
@@ -362,7 +362,7 @@ INLINE const String* Cell_String(NoQuote(const Cell*) v) {
 // that type.  So if the series is a string and not a binary, the special
 // cache of the length in the series node for strings must be used.
 //
-INLINE REBLEN Cell_Series_Len_Head(NoQuote(const Cell*) v) {
+INLINE Length Cell_Series_Len_Head(NoQuote(const Cell*) v) {
     const Series* s = Cell_Series(v);
     if (Is_Series_UTF8(s) and Cell_Heart(v) != REB_BINARY)
         return String_Len(c_cast(String*, s));
@@ -372,7 +372,7 @@ INLINE REBLEN Cell_Series_Len_Head(NoQuote(const Cell*) v) {
 INLINE bool VAL_PAST_END(NoQuote(const Cell*) v)
    { return VAL_INDEX(v) > Cell_Series_Len_Head(v); }
 
-INLINE REBLEN Cell_Series_Len_At(NoQuote(const Cell*) v) {
+INLINE Length Cell_Series_Len_At(NoQuote(const Cell*) v) {
     //
     // !!! At present, it is considered "less of a lie" to tell people the
     // length of a series is 0 if its index is actually past the end, than

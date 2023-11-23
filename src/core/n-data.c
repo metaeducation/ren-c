@@ -933,7 +933,7 @@ bool Get_Path_Push_Refinements_Throws(
         //    >> .a.b/c/d
         //    == .a.b/c/d
         //
-        if (Is_Blank(VAL_SEQUENCE_AT(safe, head, 0))) {
+        if (Is_Blank(Cell_Sequence_At(safe, head, 0))) {
             Derelativize(out, path, path_specifier);
             return false;
         }
@@ -1019,9 +1019,9 @@ bool Get_Path_Push_Refinements_Throws(
     // as refinements to the function.  The action execution machinery will
     // decide if they are valid or not.
     //
-    REBLEN len = VAL_SEQUENCE_LEN(path) - 1;
+    REBLEN len = Cell_Sequence_Len(path) - 1;
     for (; len != 0; --len) {
-        const Cell* at = VAL_SEQUENCE_AT(safe, path, len);
+        const Cell* at = Cell_Sequence_At(safe, path, len);
         DECLARE_LOCAL (temp);
         if (Is_Group(at)) {
             Specifier* derived = Derive_Specifier(

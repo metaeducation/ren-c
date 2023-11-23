@@ -963,7 +963,7 @@ Bounce Evaluator_Executor(Level* L)
       tuple_common:  /////////////////////////////////////////////////////////
 
       case REB_TUPLE: {
-        const Cell* head = VAL_SEQUENCE_AT(SCRATCH, L_current, 0);
+        const Cell* head = Cell_Sequence_At(SCRATCH, L_current, 0);
         if (Is_Blank(head) or Any_Inert(head)) {
             Derelativize(OUT, L_current, L_specifier);
             break;
@@ -1026,16 +1026,16 @@ Bounce Evaluator_Executor(Level* L)
     // blank at its head, and it evaluates to itself.
 
       case REB_PATH: {
-        const Cell* temp = VAL_SEQUENCE_AT(SPARE, L_current, 0);
+        const Cell* temp = Cell_Sequence_At(SPARE, L_current, 0);
         if (Is_Blank(temp) or Any_Inert(temp)) {
             Derelativize(OUT, L_current, L_specifier);
             break;
         }
 
-        temp = VAL_SEQUENCE_AT(
+        temp = Cell_Sequence_At(
             SPARE,
             L_current,
-            VAL_SEQUENCE_LEN(L_current) - 1
+            Cell_Sequence_Len(L_current) - 1
         );
         bool applying = Is_Blank(temp);  // terminal slash is APPLY
 
@@ -1402,8 +1402,8 @@ Bounce Evaluator_Executor(Level* L)
             bool is_optional;
             if (
                 (heart == REB_PATH or heart == REB_META_PATH)
-                and VAL_SEQUENCE_LEN(check) == 2
-                and Is_Blank(VAL_SEQUENCE_AT(SCRATCH, check, 0))
+                and Cell_Sequence_Len(check) == 2
+                and Is_Blank(Cell_Sequence_At(SCRATCH, check, 0))
             ){
                 is_optional = true;  // leading slash means optional
                 Copy_Sequence_At(

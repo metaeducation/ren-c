@@ -31,9 +31,9 @@
 // Returns true if byte string does not use upper code page
 // (e.g. no 128-255 characters)
 //
-bool All_Bytes_ASCII(Byte* bp, REBLEN len)
+bool All_Bytes_ASCII(Byte* bp, Size size)
 {
-    for (; len > 0; len--, bp++)
+    for (; size > 0; --size, ++bp)
         if (*bp >= 0x80)
             return false;
 
@@ -224,7 +224,7 @@ Array* Split_Lines(const REBVAL *str)
 {
     StackIndex base = TOP_INDEX;
 
-    REBLEN len = Cell_Series_Len_At(str);
+    Length len = Cell_Series_Len_At(str);
     REBLEN i = VAL_INDEX(str);
     if (i == len)
         return Make_Array(0);

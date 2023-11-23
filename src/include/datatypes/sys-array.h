@@ -412,7 +412,7 @@ INLINE const Array* Cell_Array(NoQuote(const Cell*) v) {
 // arrays meaningfully, it should work with VAL_INDEX_UNBOUNDED().
 //
 INLINE const Cell* Cell_Array_Len_At(
-    Option(REBLEN*) len_at_out,
+    Option(Length*) len_at_out,
     NoQuote(const Cell*) v
 ){
     const Node* node = Cell_Node1(v);
@@ -425,7 +425,7 @@ INLINE const Cell* Cell_Array_Len_At(
     }
     const Array* arr = c_cast(Array*, node);
     REBIDX i = VAL_INDEX_RAW(v);  // Cell_Array() already checks it's series
-    REBLEN len = Array_Len(arr);
+    Length len = Array_Len(arr);
     if (i < 0 or i > cast(REBIDX, len))
         fail (Error_Index_Out_Of_Range_Raw());
     if (len_at_out)  // inlining should remove this if() for Cell_Array_At()
@@ -448,7 +448,7 @@ INLINE const Cell* Cell_Array_At(
     }
     const Array* arr = c_cast(Array*, node);
     REBIDX i = VAL_INDEX_RAW(v);  // Cell_Array() already checks it's arraylike
-    REBLEN len = Array_Len(arr);
+    Length len = Array_Len(arr);
     if (i < 0 or i > cast(REBIDX, len))
         fail (Error_Index_Out_Of_Range_Raw());
     const Cell* at = Array_At(arr, i);

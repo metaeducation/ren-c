@@ -199,7 +199,7 @@ static Bounce DNS_Actor(Level* level_, REBVAL *port, const Symbol* verb)
             // that scans to a tuple, at this time (currently uses a string)
             //
           reverse_lookup:
-            if (VAL_SEQUENCE_LEN(host) != 4)
+            if (Cell_Sequence_Len(host) != 4)
                 fail ("Reverse DNS lookup requires length 4 TUPLE!");
 
             // 93.184.216.34 => example.com

@@ -663,13 +663,13 @@ INLINE void Set_Series_Used(Series* s, REBLEN used) {
 // including the '\0' termination (this routine will corrupt the tail byte
 // in the debug build to catch violators.)
 //
-INLINE void Set_Series_Len(Series* s, REBLEN len) {
+INLINE void Set_Series_Len(Series* s, Length len) {
     assert(not Is_Series_UTF8(s));  // use _Len_Size() instead
     Set_Series_Used(s, len);
 }
 
 #if CPLUSPLUS_11  // catch cases when calling on String* directly
-    INLINE void Set_Series_Len(String* s, REBLEN len) = delete;
+    INLINE void Set_Series_Len(String* s, Length len) = delete;
 #endif
 
 

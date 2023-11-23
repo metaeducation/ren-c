@@ -263,7 +263,7 @@ Byte* Decompress_Alloc_Core(
     if (ret_init != Z_OK)
         fail (Error_Compression(&strm, ret_init));
 
-    REBLEN buf_size;
+    Size buf_size;
     if (
         envelope == SYM_GZIP  // not DETECT, trust stored size
         and size_in < 4161808  // (2^32 / 1032 + 18) ->1032 max deflate ratio
@@ -303,7 +303,7 @@ Byte* Decompress_Alloc_Core(
 
         // "Typical zlib compression ratios are from 1:2 to 1:5"
 
-        if (max >= 0 and (cast(REBLEN, max) < size_in * 6))
+        if (max >= 0 and (cast(Size, max) < size_in * 6))
             buf_size = max;
         else
             buf_size = size_in * 3;
@@ -333,7 +333,7 @@ Byte* Decompress_Alloc_Core(
         //
         assert(strm.next_out == output + buf_size - strm.avail_out);
 
-        if (max >= 0 and buf_size >= cast(REBLEN, max)) {
+        if (max >= 0 and buf_size >= cast(Size, max)) {
             DECLARE_LOCAL (temp);
             Init_Integer(temp, max);
             fail (Error_Size_Limit_Raw(temp));
@@ -342,9 +342,9 @@ Byte* Decompress_Alloc_Core(
         // Use remaining input amount to guess how much more decompressed
         // data might be produced.  Clamp to limit.
         //
-        REBLEN old_size = buf_size;
+        Size old_size = buf_size;
         buf_size = buf_size + strm.avail_in * 3;
-        if (max >= 0 and buf_size > cast(REBLEN, max))
+        if (max >= 0 and buf_size > cast(Size, max))
             buf_size = max;
 
         output = cast(Byte*, rebRealloc(output, buf_size));
