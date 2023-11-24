@@ -184,36 +184,6 @@ INLINE REBVAL *Derelativize_Untracked(
     Dequotify(Derelativize((out), \
         cast(const Cell*, ensure(NoQuote(*), (in))), (specifier)))
 
-// These integer accessors depend on Dequoted_Derelativize() for their error
-// messages (they take in potentially quoted values).
-
-INLINE int32_t VAL_INT32(NoQuote(const Cell*) v) {
-    if (VAL_INT64(v) > INT32_MAX or VAL_INT64(v) < INT32_MIN) {
-        DECLARE_STABLE (unquoted);
-        Dequoted_Derelativize(unquoted, v, SPECIFIED);
-        fail (Error_Out_Of_Range(unquoted));
-    }
-    return cast(int32_t, VAL_INT64(v));
-}
-
-INLINE uint32_t VAL_UINT32(NoQuote(const Cell*) v) {
-    if (VAL_INT64(v) < 0 or VAL_INT64(v) > UINT32_MAX) {
-        DECLARE_STABLE (unquoted);
-        Dequoted_Derelativize(unquoted, v, SPECIFIED);
-        fail (Error_Out_Of_Range(unquoted));
-    }
-    return cast(uint32_t, VAL_INT64(v));
-}
-
-INLINE Byte VAL_UINT8(NoQuote(const Cell*) v) {
-    if (VAL_INT64(v) > 255 or VAL_INT64(v) < 0) {
-        DECLARE_STABLE (unquoted);
-        Dequoted_Derelativize(unquoted, v, SPECIFIED);
-        fail (Error_Out_Of_Range(unquoted));
-    }
-    return cast(Byte, VAL_INT32(v));
-}
-
 
 // Tells whether when an ACTION! has a binding to a context, if that binding
 // should override the stored binding inside of a WORD! being looked up.

@@ -110,23 +110,6 @@ INLINE bool Is_Isotope_Get_Friendly(Value(const*) v) {
     return HEART_BYTE(v) != REB_VOID;
 }
 
-// The evaluator publishes its internal states in this header file, so that
-// a level can be made with e.g. `FLAG_STATE_BYTE(ST_EVALUATOR_REEVALUATING)`
-// to start in various points of the evaluation process.  When doing so, be
-// sure the expected level variables for that state are initialized.
-//
-enum {
-    ST_EVALUATOR_INITIAL_ENTRY = STATE_0,
-
-    // The evaluator uses REB_XXX types of the current cell being processed
-    // for the STATE byte in those cases.  This is helpful for knowing what
-    // the mode of an evaluator level is, and makes the value on hand for
-    // easy use in the "hot" level header location.
-
-    ST_EVALUATOR_LOOKING_AHEAD = 100,
-    ST_EVALUATOR_REEVALUATING,
-    ST_EVALUATOR_CALCULATING_INTRINSIC_ARG
-};
 
 // Some array executions wish to vaporize if all contents vaporize
 // The generalized hack for that is ST_ARRAY_PRELOADED_ENTRY
@@ -382,35 +365,3 @@ INLINE bool Eval_Value_Core_Throws(
 
 #define Eval_Value_Throws(out,value,specifier) \
     Eval_Value_Core_Throws(out, LEVEL_MASK_NONE, (value), (specifier))
-
-
-INLINE Bounce Native_Raised_Result(Level* level_, const void *p) {
-    assert(not THROWING);
-
-    Context* error;
-    switch (Detect_Rebol_Pointer(p)) {
-      case DETECTED_AS_UTF8:
-        error = Error_User(c_cast(char*, p));
-        break;
-      case DETECTED_AS_SERIES: {
-        error = cast(Context*, m_cast(void*, p));
-        break; }
-      case DETECTED_AS_CELL: {  // note: can be Is_Raised()
-        Value(const*) cell = c_cast(REBVAL*, p);
-        assert(Is_Error(cell));
-        error = VAL_CONTEXT(cell);
-        break; }
-      default:
-        assert(false);
-        error = nullptr;  // avoid uninitialized variable warning
-    }
-
-    assert(CTX_TYPE(error) == REB_ERROR);
-    Force_Location_Of_Error(error, level_);
-
-    while (TOP_LEVEL != level_)  // cancel sublevels as default behavior
-        Drop_Level_Unbalanced(TOP_LEVEL);  // Note: won't seem like THROW/Fail
-
-    Init_Error(level_->out, error);
-    return Raisify(level_->out);
-}

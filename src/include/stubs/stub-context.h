@@ -294,6 +294,35 @@ INLINE Value(*) CTX_VAR(Context* c, REBLEN n) {  // 1-based, no Cell*
     return cast(Value(*), cast(Series*, c)->content.dynamic.data) + n;
 }
 
+INLINE Value(const*) Try_Lib_Var(SymId id) {
+    assert(id < LIB_SYMS_MAX);
+
+    // !!! We allow a "removed state", in case modules implement a
+    // feature for dropping variables.
+    //
+    if (INODE(PatchContext, &PG_Lib_Patches[id]) == nullptr)
+        return nullptr;
+
+    return cast(Value(*), Array_Single(&PG_Lib_Patches[id]));
+}
+
+#define Lib(name) \
+    Try_Lib_Var(SYM_##name)
+
+INLINE Value(*) Force_Lib_Var(SymId id) {
+    Value(*) var = m_cast(Value(*), Try_Lib_Var(id));
+    if (var)
+        return var;
+    return Append_Context(Lib_Context, Canon_Symbol(id));
+}
+
+#define force_Lib(name) \
+    Force_Lib_Var(SYM_##name)
+
+#define SysUtil(name) \
+    cast(const Value(*), MOD_VAR(Sys_Context, Canon_Symbol(SYM_##name), true))
+
+
 INLINE Value(*) MOD_VAR(Context* c, const Symbol* sym, bool strict) {
     //
     // Optimization for Lib_Context for datatypes + natives + generics; use

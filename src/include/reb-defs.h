@@ -388,3 +388,13 @@ enum act_find_mask {
     AM_FIND_CASE = 1 << 1,
     AM_FIND_MATCH = 1 << 2
 };
+
+// Flags used for Protect functions
+//
+enum {
+    PROT_SET = 1 << 0,
+    PROT_DEEP = 1 << 1,
+    PROT_HIDE = 1 << 2,
+    PROT_WORD = 1 << 3,
+    PROT_FREEZE = 1 << 4
+};

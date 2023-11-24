@@ -1041,11 +1041,17 @@ Context* Error_Invalid_Type(enum Reb_Kind kind)
 //
 //  Error_Out_Of_Range: C
 //
-// value out of range: <value>
+// Accessors like VAL_UINT8() are written to be able to extract the value
+// from QUOTED! integers (used in applications like molding, where the quoted
+// status is supposed to be ignored).  Dequoted_Derelativize() is defined
+// after %cell-integer.h, so we handle the issue here.
 //
-Context* Error_Out_Of_Range(const Cell* arg)
+Context* Error_Out_Of_Range(NoQuote(const Cell*) arg)
 {
-    return Error_Out_Of_Range_Raw(arg);
+    DECLARE_STABLE (unquoted);
+    Dequoted_Derelativize(unquoted, arg, SPECIFIED);
+
+    return Error_Out_Of_Range_Raw(unquoted);
 }
 
 

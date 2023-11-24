@@ -460,8 +460,6 @@ typedef struct {
 
 #if DEBUG_CHECK_CASTS
     #include "sys-casts.h"
-#else
-    #define MAP(p)          x_cast(Map*, (p))
 #endif
 
 #include "sys-mold.h"
@@ -539,8 +537,6 @@ extern void reb_qsort_r(void *a, size_t n, size_t es, void *thunk, cmp_t *cmp);
 #include "tmp-sysobj.h"
 
 
-
-
 #include "tmp-error-funcs.h" // functions below are called
 
 
@@ -555,8 +551,6 @@ INLINE void INIT_BINDING_MAY_MANAGE(
     Cell* out,
     const Series*  binding
 );
-
-#include "sys-track.h"
 
 
 enum rebol_signals {
@@ -614,116 +608,87 @@ INLINE void SET_SIGNAL(Flags f) { // used in %sys-series.h
     cast(void, g_ts.eval_signals &= ~(f))
 
 
+//=//// STUB-DERIVED STRUCTURE ACCESSORS //////////////////////////////////=//
+
 #include "sys-flavor.h"  // series subclass byte (uses sizeof(Cell))
 
-#include "sys-value.h"  // these defines don't need series accessors
+#include "sys-track.h"
+#include "sys-value.h"  // needs IS_DETAILS() for Derelativize()
 
 #include "stubs/stub-series.h"  // needs Is_Cell_Poisoned(), Erase_Cell()
 
 #include "sys-gc.h"
 
-#include "cells/cell-series.h"
 #include "stubs/stub-array.h"  // Array* used by UTF-8 string bookmarks
-#include "cells/cell-array.h"
-
-
-//=//// LIB BUILTINS ACCESS MACRO //////////////////////////////////////////=//
-
 #include "stubs/stub-symbol.h"
-
-INLINE Value(const*) Try_Lib_Var(SymId id) {
-    assert(id < LIB_SYMS_MAX);
-
-    // !!! We allow a "removed state", in case modules implement a
-    // feature for dropping variables.
-    //
-    if (INODE(PatchContext, &PG_Lib_Patches[id]) == nullptr)
-        return nullptr;
-
-    return cast(Value(*), Array_Single(&PG_Lib_Patches[id]));
-}
-
-#define Lib(name) \
-    Try_Lib_Var(SYM_##name)
-
-INLINE Value(*) Force_Lib_Var(SymId id) {
-    Value(*) var = m_cast(Value(*), Try_Lib_Var(id));
-    if (var)
-        return var;
-    return Append_Context(Lib_Context, Canon_Symbol(id));
-}
-
-#define force_Lib(name) \
-    Force_Lib_Var(SYM_##name)
-
-#define SysUtil(name) \
-    cast(const Value(*), MOD_VAR(Sys_Context, Canon_Symbol(SYM_##name), true))
-
-
-//=//// CONTINUE VALUE TYPES ///////////////////////////////////////////////=//
-
-#include "cells/cell-void.h"
-#include "cells/cell-trash.h"
-
-#include "cells/cell-blank.h"
-
-#include "cells/cell-comma.h"
-
-#include "cells/cell-integer.h"
-#include "cells/cell-decimal.h"
-
-#include "sys-protect.h"
-
-
 #include "stubs/stub-binary.h"  // BIN_XXX(), etc. used by strings
-
-#include "cells/cell-char.h"  // use Init_Integer() for bad codepoint error
+#include "sys-utf8.h"
 #include "stubs/stub-string.h"  // SymId needed for typesets
-
-#include "cells/cell-quoted.h"
-
 #include "stubs/stub-action.h"
 #include "stubs/stub-context.h"  // needs actions for FRAME! contexts
 
-#include "cells/cell-word.h"  // needs to know about QUOTED! for binding
-#include "cells/cell-string.h"
-#include "cells/cell-binary.h"  // byte addressing interprets string indexes
 
+//=//// GENERAL CELL SERVICES THAT NEED SERIES DEFINED ////////////////////=//
+
+#include "sys-stack.h"
+#include "sys-protect.h"
+
+
+//=//// CELL ACCESSOR FUNCTIONS ///////////////////////////////////////////=//
+
+#include "cells/cell-blank.h"
+#include "cells/cell-integer.h"
+#include "cells/cell-decimal.h"
+#include "cells/cell-time.h"
+#include "cells/cell-bitset.h"
+#include "cells/cell-handle.h"
 
 #include "cells/cell-pair.h"
 
-#include "sys-stack.h"
+#include "cells/cell-series.h"
+#include "cells/cell-array.h"
+
+#include "cells/cell-void.h"  // uses pack array for Init_Heavy_Void()
+#include "cells/cell-trash.h"  // trash is a tweaked quasi-void
+
+#include "cells/cell-comma.h"  // Is_Elision() references nihil array isotope
+
+#include "cells/cell-quoted.h"  // has special handling for voids/nones
+
+#include "cells/cell-word.h"  // needs to know about QUOTED! for binding
+#include "cells/cell-nulled.h"  // ~null~ is an isotopic word
+#include "cells/cell-logic.h"  // ~true~ and ~false~ are isotopic words
+
+#include "cells/cell-string.h"
+#include "cells/cell-binary.h"  // Cell_Bytes_At() interprets string indexes
+#include "cells/cell-token.h"
 
 #include "cells/cell-context.h"
 #include "cells/cell-frame.h"
-
-#include "cells/cell-nulled.h"
-#include "cells/cell-logic.h"
-#include "cells/cell-datatype.h"  // uses words
-
 #include "cells/cell-error.h"
 
-#include "cells/cell-bitset.h"
+#include "cells/cell-map.h"
+#include "cells/cell-varargs.h"
 
 #include "sys-patch.h"
-#include "sys-bind.h" // needs PUSH() and TOP from %sys-stack.h
+#include "sys-bind.h"
 
-#include "cells/cell-typeset.h"  // needed for keys in contexts
+#include "cells/cell-typeset.h"  // PARAMETER! evolving to be user exposed?
+#include "cells/cell-datatype.h"  // needs Derelativize(), TYPE_CHECK()
 
-#include "cells/cell-token.h"
-#include "cells/cell-sequence.h"  // also needs PUSH()
+#include "cells/cell-sequence.h"  // needs Derelativize()
 
-#include "sys-roots.h"
 
+//=//// API HANDLES ///////////////////////////////////////////////////////=//
+
+#include "sys-roots.h"  // ensures values aren't Is_Nulled()
+
+
+//=//// EVALUATOR SERVICES ////////////////////////////////////////////////=//
 
 #include "sys-throw.h"
 #include "sys-feed.h"
 #include "sys-level.h"  // needs words for frame-label helpers
-
-#include "cells/cell-time.h"
-#include "cells/cell-handle.h"
-#include "cells/cell-map.h"
-#include "cells/cell-varargs.h"
 
 #include "sys-eval.h"  // low-level single-step evaluation API
 #include "sys-do.h"  // higher-level evaluate-until-end API

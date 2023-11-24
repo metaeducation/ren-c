@@ -146,3 +146,22 @@ struct EvaluatorExecutorStateStruct {
 
     StackIndex stackindex_circled;  // used only by multi-return
 };
+
+
+// The evaluator publishes its internal states in this header file, so that
+// a level can be made with e.g. `FLAG_STATE_BYTE(ST_EVALUATOR_REEVALUATING)`
+// to start in various points of the evaluation process.  When doing so, be
+// sure the expected level variables for that state are initialized.
+//
+enum {
+    ST_EVALUATOR_INITIAL_ENTRY = STATE_0,
+
+    // The evaluator uses REB_XXX types of the current cell being processed
+    // for the STATE byte in those cases.  This is helpful for knowing what
+    // the mode of an evaluator level is, and makes the value on hand for
+    // easy use in the "hot" level header location.
+
+    ST_EVALUATOR_LOOKING_AHEAD = 100,
+    ST_EVALUATOR_REEVALUATING,
+    ST_EVALUATOR_CALCULATING_INTRINSIC_ARG
+};

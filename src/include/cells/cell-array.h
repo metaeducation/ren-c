@@ -38,15 +38,6 @@ INLINE const Array* Cell_Array(NoQuote(const Cell*) v) {
     m_cast(Array*, Cell_Array(Known_Mutable(v)))
 
 
-#define PAIRING_LEN 2
-
-#define Pairing_Second(paired) \
-    (ensure(const Cell*, (paired)) + 1)
-
-#define Pairing_Tail(paired) \
-    (ensure(const Cell*, (paired)) + 2)
-
-
 // These array operations take the index position into account.  The use
 // of the word AT with a missing index is a hint that the index is coming
 // from the VAL_INDEX() of the value itself.
@@ -84,7 +75,6 @@ INLINE const Cell* Cell_Array_At(
     const Node* node = Cell_Node1(v);
     if (Is_Node_A_Cell(node)) {
         assert(Any_Sequence_Kind(Cell_Heart(v)));
-        assert(VAL_INDEX_RAW(v) == 0);
         const Cell* cell = c_cast(Cell*, node);
         if (tail_out)
             *unwrap(tail_out) = Pairing_Tail(cell);

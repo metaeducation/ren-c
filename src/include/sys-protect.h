@@ -141,15 +141,7 @@ INLINE void Fail_If_Read_Only_Series(const Series* s) {
 }
 
 
-// Flags used for Protect functions
-//
-enum {
-    PROT_SET = 1 << 0,
-    PROT_DEEP = 1 << 1,
-    PROT_HIDE = 1 << 2,
-    PROT_WORD = 1 << 3,
-    PROT_FREEZE = 1 << 4
-};
+
 
 INLINE bool Is_Array_Frozen_Shallow(const Array* a)
   { return Get_Series_Info(a, FROZEN_SHALLOW); }
@@ -217,4 +209,21 @@ INLINE const Cell* Ensure_Mutable(const Cell* v) {
     DECLARE_LOCAL (specific);
     Unrelativize(specific, v);  // relative values lose binding in error object
     fail (Error_Const_Value_Raw(specific));
+}
+
+
+// (Used by DO and EVALUATE)
+//
+// If `source` is not const, tweak it to be explicitly mutable--because
+// otherwise, it would wind up inheriting the FEED_MASK_CONST of our
+// currently executing level.  That's no good for `repeat 2 [do block]`,
+// because we want whatever constness is on block...
+//
+// (Note we *can't* tweak values that are Cell in source.  So we either
+// bias to having to do this or Do_XXX() versions explode into passing
+// mutability parameters all over the place.  This is better.)
+//
+INLINE void Tweak_Non_Const_To_Explicitly_Mutable(Value(*) source) {
+    if (Not_Cell_Flag(source, CONST))
+        Set_Cell_Flag(source, EXPLICITLY_MUTABLE);
 }

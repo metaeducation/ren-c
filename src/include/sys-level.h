@@ -1,6 +1,6 @@
 //
-//  File: %sys-frame.h
-//  Summary: {Accessors and Argument Pushers/Poppers for Function Call Frames}
+//  File: %sys-level.h
+//  Summary: {Accessors and Argument Pushers/Poppers for Trampoline Levels}
 //  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
 //  Homepage: https://github.com/metaeducation/ren-c/
 //
@@ -478,6 +478,91 @@ INLINE Level* Prep_Level_Core(
     (not Is_Nulled(ARG(name)))
 
 
+INLINE Bounce Native_Thrown_Result(Level* level_) {
+    assert(THROWING);
+    FRESHEN(level_->out);
+    return BOUNCE_THROWN;
+}
+
+INLINE Bounce Native_Void_Result_Untracked(
+    Atom(*) out,  // have to pass; comma at callsite -> "operand has no effect"
+    Level* level_
+){
+    assert(out == level_->out);
+    UNUSED(out);
+    assert(not THROWING);
+    return Init_Void_Untracked(level_->out, UNQUOTED_1);
+}
+
+INLINE Bounce Native_Unmeta_Result(Level* level_, const REBVAL *v) {
+    assert(not THROWING);
+    return Meta_Unquotify_Undecayed(Copy_Cell(level_->out, v));
+}
+
+INLINE Bounce Native_None_Result_Untracked(
+    Atom(*) out,  // have to pass; comma at callsite -> "operand has no effect"
+    Level* level_
+){
+    assert(out == level_->out);
+    UNUSED(out);
+    assert(not THROWING);
+    return Init_Void_Untracked(level_->out, ISOTOPE_0);
+}
+
+INLINE Bounce Native_Raised_Result(Level* level_, const void *p) {
+    assert(not THROWING);
+
+    Context* error;
+    switch (Detect_Rebol_Pointer(p)) {
+      case DETECTED_AS_UTF8:
+        error = Error_User(c_cast(char*, p));
+        break;
+      case DETECTED_AS_SERIES: {
+        error = cast(Context*, m_cast(void*, p));
+        break; }
+      case DETECTED_AS_CELL: {  // note: can be Is_Raised()
+        Value(const*) cell = c_cast(REBVAL*, p);
+        assert(Is_Error(cell));
+        error = VAL_CONTEXT(cell);
+        break; }
+      default:
+        assert(false);
+        error = nullptr;  // avoid uninitialized variable warning
+    }
+
+    assert(CTX_TYPE(error) == REB_ERROR);
+    Force_Location_Of_Error(error, level_);
+
+    while (TOP_LEVEL != level_)  // cancel sublevels as default behavior
+        Drop_Level_Unbalanced(TOP_LEVEL);  // Note: won't seem like THROW/Fail
+
+    Init_Error(level_->out, error);
+    return Raisify(level_->out);
+}
+
+// Convenience routine for returning a value which is *not* located in OUT.
+// (If at all possible, it's better to build values directly into OUT and
+// then return the OUT pointer...this is the fastest form of returning.)
+//
+// Note: We do not allow direct `return v` of arbitrary values to be copied
+// in the dispatcher because it's too easy to think that will work for an
+// arbitrary local variable, which would be dead after the return.
+//
+INLINE Atom(*) Native_Copy_Result_Untracked(
+    Atom(*) out,  // have to pass; comma at callsite -> "operand has no effect"
+    Level* level_,
+    Atom(const*) v
+){
+    assert(out == level_->out);
+    UNUSED(out);
+    assert(v != level_->out);   // Copy_Cell() would fail; don't tolerate
+    assert(not Is_Api_Value(v));  // too easy to not release()
+    Copy_Cell_Untracked(level_->out, v, CELL_MASK_COPY);
+    return level_->out;
+}
+
+
+
 // Quick access functions from natives (or compatible functions that name a
 // Level* pointer `level_`) to get some of the common public fields.
 //
@@ -560,130 +645,7 @@ INLINE REBVAL *D_ARG_Core(Level* L, REBLEN n) {  // 1 for first arg
     D_ARG_Core(level_, (n))
 
 
-INLINE bool Eval_Value_Core_Throws(
-    Atom(*) out,
-    Flags flags,
-    const Cell* value,  // e.g. a BLOCK! here would just evaluate to itself!
-    Specifier* specifier
-);
-
 enum {
     ST_GROUP_BRANCH_ENTRY_DONT_ERASE_OUT = 1,  // STATE_0 erases OUT
     ST_GROUP_BRANCH_RUNNING_GROUP
 };
-
-// Conveniences for returning a continuation.  The concept is that when a
-// BOUNCE_CONTINUE comes back via the C `return` for a native, that native's
-// C stack variables are all gone.  But the heap-allocated Rebol frame stays
-// intact and in the Rebol stack trace.  It will be resumed when the
-// continuation finishes.
-//
-// Conditional constructs allow branches that are either BLOCK!s or ACTION!s.
-// If an action, the triggering condition is passed to it as an argument:
-// https://trello.com/c/ay9rnjIe
-//
-// Allowing other values was deemed to do more harm than good:
-// https://forum.rebol.info/t/backpedaling-on-non-block-branches/476
-//
-// !!! Review if @word, @pa/th, @tu.p.le would make good branch types.  :-/
-//
-
-
-//=//// CONTINUATION HELPER MACROS ////////////////////////////////////////=//
-//
-// Normal continuations come in catching and non-catching forms; they evaluate
-// without tampering with the result.
-//
-// Branch continuations enforce the result not being pure null or void.
-//
-// Uses variadic method to allow you to supply an argument to be passed to
-// a branch continuation if it is a function.
-//
-
-#define CONTINUE_CORE_5(...) ( \
-    Pushed_Continuation(__VA_ARGS__), \
-    BOUNCE_CONTINUE)  /* ^-- don't heed result: want callback, push or not */
-
-#define CONTINUE_CORE_4(...) ( \
-    Pushed_Continuation(__VA_ARGS__, nullptr), \
-    BOUNCE_CONTINUE)  /* ^-- don't heed result: want callback, push or not */
-
-#define CONTINUE_CORE(...) \
-    PP_CONCAT(CONTINUE_CORE_, PP_NARGS(__VA_ARGS__))(__VA_ARGS__)
-
-#define CONTINUE(out,...) \
-    CONTINUE_CORE((out), LEVEL_MASK_NONE, SPECIFIED, __VA_ARGS__)
-
-#define CATCH_CONTINUE(out,...) ( \
-    Set_Executor_Flag(ACTION, level_, DISPATCHER_CATCHES), \
-    CONTINUE_CORE((out), LEVEL_MASK_NONE, SPECIFIED, __VA_ARGS__))
-
-#define CONTINUE_BRANCH(out,...) \
-    CONTINUE_CORE((out), LEVEL_FLAG_BRANCH, SPECIFIED, __VA_ARGS__)
-
-#define CATCH_CONTINUE_BRANCH(out,...) ( \
-    Set_Executor_Flag(ACTION, level_, DISPATCHER_CATCHES), \
-    CONTINUE_CORE((out), LEVEL_FLAG_BRANCH, SPECIFIED, __VA_ARGS__))
-
-INLINE Bounce Continue_Sublevel_Helper(
-    Level* L,
-    bool catches,
-    Level* sub
-){
-    if (catches) {  // all executors catch, but action may or may not delegate
-        if (Is_Action_Level(L) and not Is_Level_Fulfilling(L))
-            L->flags.bits |= ACTION_EXECUTOR_FLAG_DISPATCHER_CATCHES;
-    }
-    else {  // Only Action_Executor() can let dispatchers avoid catching
-        assert(Is_Action_Level(L) and not Is_Level_Fulfilling(L));
-    }
-
-    assert(sub == TOP_LEVEL);  // currently sub must be pushed & top level
-    UNUSED(sub);
-    return BOUNCE_CONTINUE;
-}
-
-#define CATCH_CONTINUE_SUBLEVEL(sub) \
-    Continue_Sublevel_Helper(level_, true, (sub))
-
-#define CONTINUE_SUBLEVEL(sub) \
-    Continue_Sublevel_Helper(level_, false, (sub))
-
-
-//=//// DELEGATION HELPER MACROS ///////////////////////////////////////////=//
-//
-// Delegation is when a level wants to hand over the work to do to another
-// level, and not receive any further callbacks.  This gives the opportunity
-// for an optimization to not go through with a continuation at all and just
-// use the output if it is simple to do.
-//
-// !!! Delegation doesn't want to use the old level it had.  It leaves it
-// on the stack for sanity of debug tracing, but it could be more optimal
-// if the delegating level were freed before running what's underneath it...
-// at least it could be collapsed into a more primordial state.  Review.
-
-#define DELEGATE_CORE_3(o,sub_flags,...) ( \
-    assert((o) == level_->out), \
-    Pushed_Continuation( \
-        level_->out, \
-        (sub_flags) | (level_->flags.bits & LEVEL_FLAG_RAISED_RESULT_OK), \
-        __VA_ARGS__  /* branch_specifier, branch, and "with" argument */ \
-    ) ? BOUNCE_DELEGATE \
-        : level_->out)  // no need to give callback to delegator
-
-#define DELEGATE_CORE_2(out,sub_flags,...) \
-    DELEGATE_CORE_3((out), (sub_flags), __VA_ARGS__, nullptr)
-
-#define DELEGATE_CORE(out,sub_flags,...) \
-    PP_CONCAT(DELEGATE_CORE_, PP_NARGS(__VA_ARGS__))( \
-        (out), (sub_flags), __VA_ARGS__)
-
-#define DELEGATE(out,...) \
-    DELEGATE_CORE((out), LEVEL_MASK_NONE, SPECIFIED, __VA_ARGS__)
-
-#define DELEGATE_BRANCH(out,...) \
-    DELEGATE_CORE((out), LEVEL_FLAG_BRANCH, SPECIFIED, __VA_ARGS__)
-
-#define DELEGATE_SUBLEVEL(sub) ( \
-    Continue_Sublevel_Helper(level_, false, (sub)), \
-    BOUNCE_DELEGATE)

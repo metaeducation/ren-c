@@ -48,21 +48,6 @@
     )
 
 
-// (Used by DO and EVALUATE)
-//
-// If `source` is not const, tweak it to be explicitly mutable--because
-// otherwise, it would wind up inheriting the FEED_MASK_CONST of our
-// currently executing level.  That's no good for `repeat 2 [do block]`,
-// because we want whatever constness is on block...
-//
-// (Note we *can't* tweak values that are Cell in source.  So we either
-// bias to having to do this or Do_XXX() versions explode into passing
-// mutability parameters all over the place.  This is better.)
-//
-INLINE void Tweak_Non_Const_To_Explicitly_Mutable(Value(*) source) {
-    if (Not_Cell_Flag(source, CONST))
-        Set_Cell_Flag(source, EXPLICITLY_MUTABLE);
-}
 
 INLINE bool Do_Any_Array_At_Core_Throws(
     Atom(*) out,
@@ -79,24 +64,6 @@ INLINE bool Do_Any_Array_At_Core_Throws(
 #define Do_Any_Array_At_Throws(out,any_array,specifier) \
     Do_Any_Array_At_Core_Throws(out, LEVEL_MASK_NONE, (any_array), (specifier))
 
-
-INLINE bool Do_Branch_Throws(  // !!! Legacy code, should be phased out
-    Atom(*) out,
-    const REBVAL *branch
-){
-    if (not Pushed_Continuation(
-        out,
-        LEVEL_FLAG_BRANCH,
-        SPECIFIED, branch,
-        nullptr
-    )){
-        return false;
-    }
-
-    bool threw = Trampoline_With_Top_As_Root_Throws();
-    Drop_Level(TOP_LEVEL);
-    return threw;
-}
 
 
 INLINE Bounce Run_Generic_Dispatch_Core(
@@ -153,4 +120,141 @@ INLINE bool Run_Generic_Dispatch_Throws(
         assert(!"Unhandled return signal from Run_Generic_Dispatch_Core");
     }
     return false;
+}
+
+
+// Conveniences for returning a continuation.  The concept is that when a
+// BOUNCE_CONTINUE comes back via the C `return` for a native, that native's
+// C stack variables are all gone.  But the heap-allocated Rebol frame stays
+// intact and in the Rebol stack trace.  It will be resumed when the
+// continuation finishes.
+//
+// Conditional constructs allow branches that are either BLOCK!s or ACTION!s.
+// If an action, the triggering condition is passed to it as an argument:
+// https://trello.com/c/ay9rnjIe
+//
+// Allowing other values was deemed to do more harm than good:
+// https://forum.rebol.info/t/backpedaling-on-non-block-branches/476
+//
+// !!! Review if @word, @pa/th, @tu.p.le would make good branch types.  :-/
+//
+
+
+//=//// CONTINUATION HELPER MACROS ////////////////////////////////////////=//
+//
+// Normal continuations come in catching and non-catching forms; they evaluate
+// without tampering with the result.
+//
+// Branch continuations enforce the result not being pure null or void.
+//
+// Uses variadic method to allow you to supply an argument to be passed to
+// a branch continuation if it is a function.
+//
+
+#define CONTINUE_CORE_5(...) ( \
+    Pushed_Continuation(__VA_ARGS__), \
+    BOUNCE_CONTINUE)  /* ^-- don't heed result: want callback, push or not */
+
+#define CONTINUE_CORE_4(...) ( \
+    Pushed_Continuation(__VA_ARGS__, nullptr), \
+    BOUNCE_CONTINUE)  /* ^-- don't heed result: want callback, push or not */
+
+#define CONTINUE_CORE(...) \
+    PP_CONCAT(CONTINUE_CORE_, PP_NARGS(__VA_ARGS__))(__VA_ARGS__)
+
+#define CONTINUE(out,...) \
+    CONTINUE_CORE((out), LEVEL_MASK_NONE, SPECIFIED, __VA_ARGS__)
+
+#define CATCH_CONTINUE(out,...) ( \
+    Set_Executor_Flag(ACTION, level_, DISPATCHER_CATCHES), \
+    CONTINUE_CORE((out), LEVEL_MASK_NONE, SPECIFIED, __VA_ARGS__))
+
+#define CONTINUE_BRANCH(out,...) \
+    CONTINUE_CORE((out), LEVEL_FLAG_BRANCH, SPECIFIED, __VA_ARGS__)
+
+#define CATCH_CONTINUE_BRANCH(out,...) ( \
+    Set_Executor_Flag(ACTION, level_, DISPATCHER_CATCHES), \
+    CONTINUE_CORE((out), LEVEL_FLAG_BRANCH, SPECIFIED, __VA_ARGS__))
+
+INLINE Bounce Continue_Sublevel_Helper(
+    Level* L,
+    bool catches,
+    Level* sub
+){
+    if (catches) {  // all executors catch, but action may or may not delegate
+        if (Is_Action_Level(L) and not Is_Level_Fulfilling(L))
+            L->flags.bits |= ACTION_EXECUTOR_FLAG_DISPATCHER_CATCHES;
+    }
+    else {  // Only Action_Executor() can let dispatchers avoid catching
+        assert(Is_Action_Level(L) and not Is_Level_Fulfilling(L));
+    }
+
+    assert(sub == TOP_LEVEL);  // currently sub must be pushed & top level
+    UNUSED(sub);
+    return BOUNCE_CONTINUE;
+}
+
+#define CATCH_CONTINUE_SUBLEVEL(sub) \
+    Continue_Sublevel_Helper(level_, true, (sub))
+
+#define CONTINUE_SUBLEVEL(sub) \
+    Continue_Sublevel_Helper(level_, false, (sub))
+
+
+//=//// DELEGATION HELPER MACROS ///////////////////////////////////////////=//
+//
+// Delegation is when a level wants to hand over the work to do to another
+// level, and not receive any further callbacks.  This gives the opportunity
+// for an optimization to not go through with a continuation at all and just
+// use the output if it is simple to do.
+//
+// !!! Delegation doesn't want to use the old level it had.  It leaves it
+// on the stack for sanity of debug tracing, but it could be more optimal
+// if the delegating level were freed before running what's underneath it...
+// at least it could be collapsed into a more primordial state.  Review.
+
+#define DELEGATE_CORE_3(o,sub_flags,...) ( \
+    assert((o) == level_->out), \
+    Pushed_Continuation( \
+        level_->out, \
+        (sub_flags) | (level_->flags.bits & LEVEL_FLAG_RAISED_RESULT_OK), \
+        __VA_ARGS__  /* branch_specifier, branch, and "with" argument */ \
+    ) ? BOUNCE_DELEGATE \
+        : level_->out)  // no need to give callback to delegator
+
+#define DELEGATE_CORE_2(out,sub_flags,...) \
+    DELEGATE_CORE_3((out), (sub_flags), __VA_ARGS__, nullptr)
+
+#define DELEGATE_CORE(out,sub_flags,...) \
+    PP_CONCAT(DELEGATE_CORE_, PP_NARGS(__VA_ARGS__))( \
+        (out), (sub_flags), __VA_ARGS__)
+
+#define DELEGATE(out,...) \
+    DELEGATE_CORE((out), LEVEL_MASK_NONE, SPECIFIED, __VA_ARGS__)
+
+#define DELEGATE_BRANCH(out,...) \
+    DELEGATE_CORE((out), LEVEL_FLAG_BRANCH, SPECIFIED, __VA_ARGS__)
+
+#define DELEGATE_SUBLEVEL(sub) ( \
+    Continue_Sublevel_Helper(level_, false, (sub)), \
+    BOUNCE_DELEGATE)
+
+
+
+INLINE bool Do_Branch_Throws(  // !!! Legacy code, should be phased out
+    Atom(*) out,
+    const REBVAL *branch
+){
+    if (not Pushed_Continuation(
+        out,
+        LEVEL_FLAG_BRANCH,
+        SPECIFIED, branch,
+        nullptr
+    )){
+        return false;
+    }
+
+    bool threw = Trampoline_With_Top_As_Root_Throws();
+    Drop_Level(TOP_LEVEL);
+    return threw;
 }

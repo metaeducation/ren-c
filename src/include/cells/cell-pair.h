@@ -30,6 +30,14 @@
 // accepted for now in the PAIR! type.
 //
 
+#define PAIRING_LEN 2
+
+#define Pairing_Second(paired) \
+    (ensure(const Cell*, (paired)) + 1)
+
+#define Pairing_Tail(paired) \
+    (ensure(const Cell*, (paired)) + 2)
+
 INLINE bool Any_Pairlike(NoQuote(const Cell*) v) {
     // called by core code, sacrifice READABLE() checks
     if (Cell_Heart_Unchecked(v) == REB_PAIR)
@@ -71,7 +79,11 @@ INLINE Value(*) Init_Pair_Untracked(Cell* out, Cell* pairing) {
     assert(Is_Node_Managed(pairing));
     Reset_Unquoted_Header_Untracked(out, CELL_MASK_PAIR);
     INIT_VAL_PAIR(out, pairing);
-    VAL_INDEX_RAW(out) = 0;  // "arraylike", needs an index
+
+  #ifdef ZERO_UNUSED_CELL_FIELDS
+    PAYLOAD(Any, out).second.trash = ZEROTRASH;  // payload second not used
+  #endif
+
     mutable_BINDING(out) = UNBOUND;  // "arraylike", needs binding
     return SPECIFIC(out);
 }
