@@ -26,6 +26,98 @@
 #include "sys-int-funcs.h"
 
 
+//
+//  Did_Series_Data_Alloc: C
+//
+// Allocates the data array for an already allocated Series stub structure.
+// Resets the bias and tail to zero, and sets the new width.  Flags like
+// SERIES_FLAG_FIXED_SIZE are left as they were, and other fields in the
+// series structure are untouched.
+//
+// This routine can thus be used for an initial construction or an operation
+// like expansion.
+//
+// 1. Currently once a series becomes dynamic, it never goes back.  There is
+//    no shrinking process that will pare it back to fit completely inside
+//    the series Stub if it gets small enough to do so.  This may change.
+//
+// 2. One benefit of using a bespoke pooled allocator is that series know
+//    how much extra space their is in the allocation block, and can use
+//    it as expansion capacity.
+//
+// 3. When R3-Alpha was asked to make an allocation too big to fit in any
+//    of the preallocated-size pools, it didn't just malloc() the big size.
+//    It did some second-guessing to align to 2Kb boundaries (or choose a
+//    power of 2, if requested).  It's nearly certain that the 90's era
+//    experience informing this code is outdated, and should be reviewed,
+//    likely replacing the allocator completely.  But what's here runs.
+//
+// 4. The Bias component was once shared with other flags in R3-Alpha, when
+//    series were smaller (6 pointers vs. 8).  This may become an interesting
+//    feature in the future again.  So since Set_Series_Bias() uses bit masks
+//    on an existing value, clear out the whole value for starters.
+//
+bool Did_Series_Data_Alloc(Series* s, REBLEN capacity) {
+    assert(Get_Series_Flag(s, DYNAMIC));  // once set, never shrinks [1]
+
+    Byte wide = Series_Wide(s);
+    assert(wide != 0);
+
+    if (cast(REBU64, capacity) * wide > INT32_MAX)  // R3-Alpha said "too big"
+        return false;
+
+    Size size;  // size of allocation, possibly bigger than we need [2]
+
+    PoolId pool_id = Pool_Id_For_Size(capacity * wide);
+
+    if (pool_id < SYSTEM_POOL) {  // a pool is designated for this size range
+        s->content.dynamic.data = cast(char*, Try_Alloc_Pooled(pool_id));
+        if (not s->content.dynamic.data)
+            return false;
+
+        size = g_mem.pools[pool_id].wide;
+        assert(size >= capacity * wide);
+
+        Clear_Series_Flag(s, POWER_OF_2);  // fits in a pool, no rounding
+    }
+    else {  // too big for a pool, second-guess the requested size [3]
+        size = capacity * wide;
+        if (Get_Series_Flag(s, POWER_OF_2)) {
+            Size size2 = 2048;
+            while (size2 < size)
+                size2 *= 2;
+            size = size2;
+
+            if (size % wide == 0)  // even divisibility by item width
+                Clear_Series_Flag(s, POWER_OF_2);  // flag isn't necessary
+        }
+
+        s->content.dynamic.data = Try_Alloc_N(char, size);
+        if (not s->content.dynamic.data)
+            return false;
+
+        g_mem.pools[SYSTEM_POOL].has += size;
+        g_mem.pools[SYSTEM_POOL].free++;
+    }
+
+    if (Is_Series_Biased(s))
+        s->content.dynamic.bonus.bias = 0;  // fully clear value [4]
+    else {
+        // Leave as trash, or as existing bonus (if called in Expand_Series())
+    }
+
+    /*assert(size % wide == 0);*/  // allow irregular sizes
+    s->content.dynamic.rest = size / wide;  // extra capacity in units
+
+    s->content.dynamic.used = 0;  // all series start zero length
+
+    if ((g_gc.depletion -= size) <= 0)  // should we trigger garbage collect?
+        SET_SIGNAL(SIG_RECYCLE);  // queue it to run on next evaluation
+
+    assert(Series_Total(s) <= size);  // irregular widths won't use all space
+    return true;
+}
+
 
 //
 //  Extend_Series_If_Necessary: C

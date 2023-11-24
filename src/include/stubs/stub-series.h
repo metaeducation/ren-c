@@ -6,7 +6,7 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Copyright 2012-2021 Ren-C Open Source Contributors
+// Copyright 2012-2023 Ren-C Open Source Contributors
 // Copyright 2012 REBOL Technologies
 // REBOL is a trademark of REBOL Technologies
 //
@@ -27,22 +27,16 @@
 //    abstraction which represents a contiguous region of memory containing
 //    equally-sized elements.
 //
-//   (For the struct definition of Series, see %sys-rebser.h)
+//   (For the struct definition of the series stub, see %struct-stub.h)
 //
 // 2. The user-level value type ANY-SERIES!.  This might be more accurately
 //    called ITERATOR!, because it includes both a pointer to a Series of
-//    data and an index offset into that data.  Attempts to reconcile all
-//    the naming issues from historical Rebol have not yielded a satisfying
-//    alternative, so the ambiguity has stuck.
+//    data and an index offset into that data.  An ANY-SERIES! cell contains
+//    an `index` as the 0-based position into the series represented by this
+//    ANY-VALUE! (so if it is 0 then that means a Rebol index of 1).
 //
-// An ANY-SERIES! cell contains an `index` as the 0-based position into the
-// series represented by this ANY-VALUE! (so if it is 0 then that means a
-// Rebol index of 1).
-//
-// It is possible that the index could be to a point beyond the range of the
-// series.  This is intrinsic, because the series data can be modified through
-// one cell and not update the other cells referring to it.  Hence VAL_INDEX()
-// must be checked, or the routine called with it must.
+// Attempts to reconcile all the naming issues from historical Rebol have not
+// yielded a satisfying alternative, so the ambiguity has stuck.
 //
 //=//// NOTES //////////////////////////////////////////////////////////////=//
 //
@@ -64,10 +58,12 @@
 //
 // See definitions of SERIES_FLAG_XXX.
 //
-// Using token pasting macros helps avoid mixups with SERIES_INFO_XXX!
+// Using token pasting macros achieves some brevity, but also helps to avoid
+// mixups with SERIES_INFO_XXX!
 //
 // 1. Avoid cost that inline functions (even constexpr) add to debug builds
-//    by "typechecking" via finding the name ->leader.bits in (s).
+//    by "typechecking" via finding the name ->leader.bits in (s).  (The name
+//    "leader" is chosen to prevent calls with cells, which use "header".)
 //
 // 2. Series flags are managed distinctly from conceptual immutability of their
 //    data, and so we m_cast away constness.  We do this on the HeaderUnion
@@ -86,7 +82,6 @@
     m_cast(union HeaderUnion*, &(s)->leader)->bits &= ~SERIES_FLAG_##name
 
 
-
 //=//// SERIES SUBCLASS FLAGS //////////////////////////////////////////////=//
 //
 // In the debug build, ensure_flavor() checks if a series node matches the
@@ -95,37 +90,6 @@
 // flavor that you expect.
 //
 // 1. See Set_Series_Flag()/Clear_Series_Flag() for why implicit mutability.
-
-#if defined(NDEBUG)
-    #define ensure_flavor(flavor,s) \
-        ensure(const Series*, (s))  // no-op in release build
-#else
-    INLINE Series* ensure_flavor(
-        Flavor flavor,
-        const_if_c Series* s
-    ){
-        if (Series_Flavor(s) != flavor) {
-            Flavor actual_flavor = Series_Flavor(s);
-            USED(actual_flavor);
-            panic (s);
-        }
-        return m_cast(Series*, s);
-    }
-
-    #if CPLUSPLUS_11
-        INLINE const Series* ensure_flavor(
-            Flavor flavor,
-            const Series* s
-        ){
-            if (Series_Flavor(s) != flavor) {
-                Flavor actual_flavor = Series_Flavor(s);
-                USED(actual_flavor);
-                panic (s);
-            }
-            return s;
-        }
-    #endif
-#endif
 
 #define Get_Subclass_Flag(subclass,s,name) \
     ((ensure_flavor(FLAVOR_##subclass, (s))->leader.bits \
@@ -330,9 +294,8 @@ INLINE Length Series_Rest(const Series* s) {
     return sizeof(s->content) / Series_Wide(s);
 }
 
-INLINE size_t Series_Total(const Series* s) {
-    return (Series_Rest(s) + Series_Bias(s)) * Series_Wide(s);
-}
+INLINE size_t Series_Total(const Series* s)
+  { return (Series_Rest(s) + Series_Bias(s)) * Series_Wide(s); }
 
 
 //=//// SERIES "BONUS" /////////////////////////////////////////////////////=//
@@ -371,23 +334,28 @@ INLINE size_t Series_Total(const Series* s) {
 
 //=//// SERIES "TOUCH" FOR DEBUGGING ///////////////////////////////////////=//
 //
-// For debugging purposes, it's nice to be able to crash on some kind of guard
-// for tracking the call stack at the point of allocation if we find some
-// undesirable condition that we want a trace from.  Generally, series get
-// set with this guard at allocation time.  But if you want to mark a moment
-// later, you can.
+// **IMPORTANT** - This is defined early before code that does manipulation
+// on series, because it can be very useful in debugging the low-level code.
+//
+//=////////////////////////////////////////////////////////////////////////=//
+//
+// It's nice to be able to trigger a debug_break() after-the-fact on some kind
+// of guard which can show the stack where it was set.  Generally, series get
+// this guard put on it at allocation time.  But if you want to mark a moment
+// later as notable to trace back to, you can.
 //
 // This works with Address Sanitizer or with Valgrind, but the config flag to
 // enable it only comes automatically with address sanitizer.
 //
+// 1. In the general case, you can't assume the incoming stub has valid data,
+//    as the default is to call it after only the header bits are set.  But
+//    in case it helps, the s->guard is set to nullptr by Alloc_Stub(), so
+//    conditional instrumentation here can distinguish fresh from valid.
+//
+
 #if DEBUG_SERIES_ORIGINS || DEBUG_COUNT_TICKS
-    INLINE void Touch_Stub_Debug(void *p) {
-        Stub *s = cast(Stub*, p);  // Array*, Context*, Action*...
-
-        // NOTE: When series are allocated, the only thing valid here is the
-        // header.  Hence you can't tell (for instance) if it's an array or
-        // not, as that's in the info.
-
+    INLINE void Touch_Stub_Debug(Stub *s)  // if alloc, only header valid [1]
+    {
       #if DEBUG_SERIES_ORIGINS
         s->guard = cast(Byte*, malloc(sizeof(Byte)));  // smallest allocation
         *s->guard = FREE_POOLUNIT_BYTE;  // irrelevant, but disruptive choice
@@ -409,64 +377,74 @@ INLINE size_t Series_Total(const Series* s) {
 #endif
 
 
-//=//// DEBUG SERIES MONITORING ////////////////////////////////////////////=//
+//=//// NUMBER OF WIDTH-SIZED UNITS "USED" IN SERIES //////////////////////=//
 //
-// This once used a series flag in debug builds to tell whether a series was
-// monitored or not.  But series flags are scarce, so the feature was scaled
-// back to just monitoring a single node.  It could also track a list--but the
-// point is just that stealing a flag isn't viable.
-//
-
-#if DEBUG_MONITOR_SERIES
-    INLINE void Debug_Monitor_Series(void *p) {
-        printf("Adding monitor to %p on tick #%d\n", p, cast(int, TG_tick));
-        fflush(stdout);
-        g_mem.monitor_node = cast(Series*, p);
-    }
-#endif
-
-
-//
-// The mechanics of the macros that get or set the length of a series are a
-// little bit complicated.  This is due to the optimization that allows data
+// There is an optimization based on SERIES_FLAG_DYNAMIC that allows data
 // which is sizeof(Cell) or smaller to fit directly inside the series stub.
 //
-// If a series is not "dynamic" (e.g. has no full pooled allocation) then its
-// length is stored in the header.  But if a series is dynamically allocated
-// out of the memory pools, then without the data itself taking up the
-// "content", there's room for a length in the stub.
+// 1. If a series is dynamically allocated out of the memory pools, then
+//    without the data itself taking up the StubContent, there's room for a
+//    full used count in the content.
+//
+// 2. A non-dynamic array can store one or zero cells in the StubContent.
+//    We report the units used as being 0 if it's the distinguished case of
+//    a poisoned cell (added benefit: catches stray writes).
+//
+// 3. Other non-dynamic series are short, and so they use a byte out of the
+//    series info to store the units used.  (This byte is currently free for
+//    other purposes in cases [1] and [2].)
 //
 
 INLINE Length Series_Used(const Series* s) {
     if (Get_Series_Flag(s, DYNAMIC))
-        return s->content.dynamic.used;
+        return s->content.dynamic.used;  // length stored in header [1]
     if (Is_Series_Array(s)) {
-        //
-        // We report the array length as being 0 if it's the distinguished
-        // case of a poisoned cell (added benefit: catches stray writes)
-        //
-        if (Is_Cell_Poisoned(Stub_Cell(s)))
+        if (Is_Cell_Poisoned(Stub_Cell(s)))  // empty singular array [2]
             return 0;
-        return 1;
+        return 1;  // one-element singular array [2]
     }
-    return USED_BYTE(s);
+    return USED_BYTE(s);  // small series length < sizeof(StubContent) [3]
 }
 
+#define Is_Series_Full(s) \
+    (Series_Used(s) + 1 >= Series_Rest(s))
 
-// Raw access does not demand that the caller know the contained type.  So
-// for instance a generic debugging routine might just want a byte pointer
-// but have no element type pointer to pass in.
+#define Series_Available_Space(s) \
+    (Series_Rest(s) - (Series_Used(s) + 1))  // space minus a terminator
+
+#define Series_Fits(s,n) \
+    ((Series_Used(s) + (n) + 1) <= Series_Rest(s))
+
+
+//=//// SERIES DATA ACCESSORS /////////////////////////////////////////////=//
 //
-// Note: if updating, also update manual inlining in Series_Data_At()
+// 1. Callers like Cell_String() or Cell_Array() are expected to test for
+//    SERIES_FLAG_INACCESSIBLE and fail before getting as far as calling
+//    this routine.
 //
+// 2. Because these inline functions are called so often, Series_Data_At()
+//    duplicates the code in Series_Data() rather than call it.  Be sure
+//    to change both routines if changing one of them.
+//
+// 3. The C++ build uses `const` pointers to enforce the notion of immutable
+//    series at compile time.  So a const series pointer should give a const
+//    data pointer back.  Plain C would need two differently-named functions
+//    to do this, which is deemed too ugly at callsites...so it's only done
+//    with overloading in C++.  See %sys-protect.h for more information.
+//
+// 4. Note that series indexing in C is zero based.  So as far as Series is
+//    concerned, `Series_Head(T, s)` is the same as `Series_At(T, s, 0)`
+//
+// 5. The clever c_cast() macro is used here to avoid writing overloads just
+//    to get a const vs. non-const response.  But it only works to avoid the
+//    overload if you can write it as a macro, and asserting on the series
+//    would repeat the argument twice in a macro body (bad mojo!)
+//
+
 INLINE Byte* Series_Data(const_if_c Series* s) {
+    assert(Not_Series_Flag(s, INACCESSIBLE));  // caller should've checked [1]
 
-    // The VAL_CONTEXT(), Cell_Series(), Cell_Array() extractors do the failing
-    // upon extraction--that's meant to catch it before it gets this far.
-    //
-    assert(Not_Series_Flag(s, INACCESSIBLE));
-
-    return Get_Series_Flag(s, DYNAMIC)
+    return Get_Series_Flag(s, DYNAMIC)  // inlined in Series_Data_At() [2]
         ? u_cast(Byte*, s->content.dynamic.data)
         : u_cast(Byte*, &s->content);
 }
@@ -486,22 +464,18 @@ INLINE Byte* Series_Data_At(Byte w, const_if_c Series* s, REBLEN i) {
     }
   #endif
 
-    // The VAL_CONTEXT(), Cell_Series(), Cell_Array() extractors do the failing
-    // upon extraction--that's meant to catch it before it gets this far.
-    //
-    assert(Not_Series_Flag(s, INACCESSIBLE));
-
+    assert(Not_Series_Flag(s, INACCESSIBLE));  // caller should've checked [1]
     assert(i <= Series_Used(s));
 
-    return ((w) * (i)) + ( // v-- inlining of Series_Data()
+    return ((w) * (i)) + (  // v-- inlining of Series_Data() [2]
         Get_Series_Flag(s, DYNAMIC)
             ? cast(Byte*, s->content.dynamic.data)
             : cast(Byte*, &s->content)
         );
 }
 
-#if CPLUSPLUS_11
-    INLINE const Byte* Series_Data(const Series* s)  // head of data
+#if CPLUSPLUS_11  // give back const pointer on const series input [3]
+    INLINE const Byte* Series_Data(const Series* s)
       { return Series_Data(m_cast(Series*, s)); }
 
     INLINE const Byte* Series_Data_At(
@@ -513,47 +487,19 @@ INLINE Byte* Series_Data_At(Byte w, const_if_c Series* s, REBLEN i) {
     }
 #endif
 
-
-// In general, requesting a pointer into the series data requires passing in
-// a type which is the correct size for the series.  A pointer is given back
-// to that type.
-//
-// Note that series indexing in C is zero based.  So as far as SERIES is
-// concerned, `Series_Head(T, s)` is the same as `Series_At(T, s, 0)`
-
 #define Series_At(T,s,i) \
-    c_cast(T*, Series_Data_At(sizeof(T), (s), (i)))
+    c_cast(T*, Series_Data_At(sizeof(T), (s), (i)))  // zero-based [4]
 
 #if DEBUG
     #define Series_Head(T,s) \
         Series_At(T, (s), 0)  // Series_Data() doesn't check width, _At() does
 #else
     #define Series_Head(T,s) \
-        c_cast(T*, Series_Data(s))
+        c_cast(T*, Series_Data(s))  // slightly faster, but no width check
 #endif
 
-
-// If a binary series is a string (or aliased as a string), it must have all
-// modifications keep it with valid UTF-8 content.  That includes having a
-// terminal `\0` byte.  Since there is a special code path for setting the
-// length in the case of aliased binaries, that's what enforces the 0 byte
-// rule...but if a binary is never aliased as a string it may not be
-// terminated.  It's always long enough to carry a terminator...and the
-// debug build sets binary-sized series tails to this byte to make sure that
-// they are formally terminated if they need to be.
-//
-#if DEBUG_POISON_SERIES_TAILS
-    #define BINARY_BAD_UTF8_TAIL_BYTE 0xFE
-#endif
-
-
-INLINE Byte* Series_Data_Tail(size_t w, const_if_c Series* s)
-  { return Series_Data_At(w, s, Series_Used(s)); }
-
-#if CPLUSPLUS_11
-    INLINE const Byte* Series_Data_Tail(size_t w, const Series* s)
-      { return Series_Data_At(w, s, Series_Used(s)); }
-#endif
+#define Series_Data_Tail(w,s) \
+    c_cast(Byte*, Series_Data_At((w), (s), Series_Used(s)))
 
 #define Series_Tail(T,s) \
     c_cast(T*, Series_Data_Tail(sizeof(T), (s)))
@@ -563,7 +509,7 @@ INLINE Byte* Series_Data_Last(size_t wide, const_if_c Series* s) {
     return Series_Data_At(wide, s, Series_Used(s) - 1);
 }
 
-#if CPLUSPLUS_11
+#if CPLUSPLUS_11  // can't use c_cast() to inherit const, must overload [5]
     INLINE const Byte* Series_Data_Last(size_t wide, const Series* s) {
         assert(Series_Used(s) != 0);
         return Series_Data_At(wide, s, Series_Used(s) - 1);
@@ -572,116 +518,6 @@ INLINE Byte* Series_Data_Last(size_t wide, const_if_c Series* s) {
 
 #define Series_Last(T,s) \
     c_cast(T*, Series_Data_Last(sizeof(T), (s)))
-
-
-#define Is_Series_Full(s) \
-    (Series_Used(s) + 1 >= Series_Rest(s))
-
-#define Series_Available_Space(s) \
-    (Series_Rest(s) - (Series_Used(s) + 1))  // space minus a terminator
-
-#define Series_Fits(s,n) \
-    ((Series_Used(s) + (n) + 1) <= Series_Rest(s))
-
-
-#if DEBUG_POISON_SERIES_TAILS
-    INLINE void Poison_Or_Unpoison_Tail_Debug(Series* s, bool poison) {
-        if (Series_Wide(s) == 1) {  // presume BINARY! or ANY-STRING! (?)
-            Byte* tail = Series_Tail(Byte, s);
-            if (poison)
-                *tail = BINARY_BAD_UTF8_TAIL_BYTE;
-            else {
-                /* Doesn't seem there's any invariant here--improve over time.
-                assert(*tail == BINARY_BAD_UTF8_TAIL_BYTE or *tail == '\0');
-                */
-            }
-        }
-        else if (Is_Series_Array(s) and Get_Series_Flag(s, DYNAMIC)) {
-            Cell* tail = Series_At(Cell, s, s->content.dynamic.used);
-            if (poison)
-                Poison_Cell(tail);
-            else {
-                assert(Is_Cell_Poisoned(tail));
-                Erase_Cell(tail);
-            }
-        }
-    }
-
-    #define POISON_SERIES_TAIL(s)   Poison_Or_Unpoison_Tail_Debug((s), true)
-    #define UNPOISON_SERIES_TAIL(s) Poison_Or_Unpoison_Tail_Debug((s), false)
-#else
-    #define POISON_SERIES_TAIL(s) NOOP
-    #define UNPOISON_SERIES_TAIL(s) NOOP
-#endif
-
-// !!! Review if SERIES_FLAG_FIXED_SIZE should be calling this routine.  At
-// the moment, fixed size series merely can't expand, but it might be more
-// efficient if they didn't use any "appending" operators to get built.
-//
-INLINE void Set_Series_Used_Internal(Series* s, REBLEN used) {
-    if (Get_Series_Flag(s, DYNAMIC))
-        s->content.dynamic.used = used;
-    else {
-        assert(used < sizeof(s->content));
-
-        if (Is_Series_Array(s)) {  // content taken up by cell, no room for length
-            if (used == 0)
-                Poison_Cell(Stub_Cell(s));  // poison cell means 0 used
-            else {
-                assert(used == 1);  // any non-poison will mean length 1
-                if (not Is_Cell_Poisoned(Stub_Cell(s))) {
-                    // it was already length 1, leave the cell alone
-                } else
-                    Erase_Cell(Stub_Cell(s));
-            }
-        }
-        else
-            USED_BYTE(s) = used;
-    }
-
-  #if DEBUG_UTF8_EVERYWHERE
-    //
-    // Low-level series mechanics will manipulate the used field, but that's
-    // at the byte level.  The higher level string mechanics must be used on
-    // strings.
-    //
-    if (Is_String_NonSymbol(s)) {
-        s->misc.length = 0xDECAFBAD;
-        Touch_Stub_If_Debug(s);
-    }
-  #endif
-}
-
-INLINE void Set_Series_Used(Series* s, REBLEN used) {
-    UNPOISON_SERIES_TAIL(s);
-    Set_Series_Used_Internal(s, used);
-    POISON_SERIES_TAIL(s);
-}
-
-// See Term_String_Len_Size() for the code that maintains string invariants,
-// including the '\0' termination (this routine will corrupt the tail byte
-// in the debug build to catch violators.)
-//
-INLINE void Set_Series_Len(Series* s, Length len) {
-    assert(not Is_Series_UTF8(s));  // use _Len_Size() instead
-    Set_Series_Used(s, len);
-}
-
-#if CPLUSPLUS_11  // catch cases when calling on String* directly
-    INLINE void Set_Series_Len(String* s, Length len) = delete;
-#endif
-
-
-//
-// Optimized expand when at tail (but, does not reterminate)
-//
-
-INLINE void Expand_Series_Tail(Series* s, REBLEN delta) {
-    if (Series_Fits(s, delta))
-        Set_Series_Used(s, Series_Used(s) + delta);  // no termination implied
-    else
-        Expand_Series(s, Series_Used(s), delta);  // currently terminates
-}
 
 
 //=//// SERIES TERMINATION ////////////////////////////////////////////////=//
@@ -700,6 +536,58 @@ INLINE void Expand_Series_Tail(Series* s, REBLEN delta) {
 // generic routines that memcpy() data behind the scenes needs to be sure it
 // maintains the invariant that the higher level routines want.
 //
+// 1. A binary alias of a string must have all modifications keep it as valid
+//    UTF-8, and it must maintain a `\0` terminator.  Because all binaries
+//    are candidates for being aliased as strings, they reserve a byte at
+//    their tail.  This debug setting helps ensure that binaries are setting
+//    the '\0' tail intentionally when appropriate by poisoning the byte.
+//
+// 2. There's a difference with how byte buffers are handled vs. arrays, in
+//    that arrays have to be expanded before they are written to, so that
+//    the cells are formatted.  Byte strings don't have that requirement,
+//    so the code isn't stylized to set the used size first and then put
+//    data into the buffer.  So it wouldn't do any good to put a poison
+//    byte at the head of a series allocation and expect to be able to see
+//    it before the termination.  Review if callers can/should be changed.
+//
+
+#if DEBUG_POISON_SERIES_TAILS
+    #define BINARY_BAD_UTF8_TAIL_BYTE 0xFE  // binaries reserve tail byte [1]
+
+    INLINE void Poison_Or_Unpoison_Tail_Debug(Series* s, bool poison) {
+        if (Series_Wide(s) == 1) {  // presume BINARY! or ANY-STRING! (?)
+            Byte* tail = Series_Tail(Byte, s);
+            if (poison)
+                *tail = BINARY_BAD_UTF8_TAIL_BYTE;
+            else {
+                /* assert(  // doesn't have an invariant [2]
+                    *tail == BINARY_BAD_UTF8_TAIL_BYTE or *tail == '\0'
+                ); */
+            }
+        }
+        else if (Is_Series_Array(s) and Get_Series_Flag(s, DYNAMIC)) {
+            Cell* tail = Series_At(Cell, s, s->content.dynamic.used);
+            if (poison)
+                Poison_Cell(tail);
+            else {
+                assert(Is_Cell_Poisoned(tail));
+                Erase_Cell(tail);
+            }
+        }
+    }
+
+    #define POISON_SERIES_TAIL(s) \
+        Poison_Or_Unpoison_Tail_Debug((s), true)
+
+    #define UNPOISON_SERIES_TAIL(s) \
+        Poison_Or_Unpoison_Tail_Debug((s), false)
+#else
+    #define POISON_SERIES_TAIL(s) \
+        NOOP
+
+    #define UNPOISON_SERIES_TAIL(s) \
+        NOOP
+#endif
 
 INLINE void Term_Series_If_Necessary(Series* s)
 {
@@ -727,261 +615,76 @@ INLINE void Term_Series_If_Necessary(Series* s)
         Assert_Series_Term_Core(s);
 #endif
 
-// Just a No-Op note to point out when a series may-or-may-not be terminated
-//
-#define Note_Series_Maybe_Term(s) NOOP
+#define Note_Series_Maybe_Term(s) NOOP  // use to annotate if may-or-may-not be
 
 
-//=//// SERIES MANAGED MEMORY /////////////////////////////////////////////=//
+//=//// SETTING SERIES LENGTH/SIZE ////////////////////////////////////////=//
 //
-// If NODE_FLAG_MANAGED is not explicitly passed to Make_Series(), a
-// series will be manually memory-managed by default.  Hence you don't need
-// to worry about the series being freed out from under you while building it.
-// Manual series are tracked, and automatically freed in the case of a fail().
+// 1. Right now SERIES_FLAG_FIXED_SIZE merely means they can't expand, but
+//    they set the flag before initializing things like termination and the
+//    length.  If this routine were to disallow it, then the flag wouldn't
+//    be passed into series creation but could only be added afterward.
 //
-// All manual series *must* either be freed with Free_Unmanaged_Series() or
-// delegated to the GC with Manage_Series() before the level ends.  Once a
-// series is managed, only the GC is allowed to free it.
-//
-// Manage_Series() is shallow--it only sets a bit on that *one* series, not
-// any series referenced by values inside of it.  Hence many routines that
-// build hierarchical structures (like the scanner) only return managed
-// results, since they can manage it as they build them.
+// 2. UTF-8 strings maintain a length in codepoints (in misc.length), as well
+//    as the size in bytes (as "used").  It's expected that both will be
+//    updated together--see Term_String_Len_Size().  But sometimes the used
+//    field is updated solo by a binary-based routine in an intermediate step.
+//    That's okay so long as the length is not consulted before the string
+//    handling code finalizes it.  DEBUG_UTF8_EVERYWHERE makes violations
+//    obvious by corrupting the length.
 
-INLINE void Untrack_Manual_Series(Series* s)
-{
-    Series* * const last_ptr
-        = &cast(Series**, g_gc.manuals->content.dynamic.data)[
-            g_gc.manuals->content.dynamic.used - 1
-        ];
+INLINE void Set_Series_Used_Internal(Series* s, Count used) {
+    /* assert(Not_Series_Flag(s, FIXED_SIZE)); */  // [1]
+    if (Get_Series_Flag(s, DYNAMIC))
+        s->content.dynamic.used = used;
+    else {
+        assert(used < sizeof(s->content));
 
-    assert(g_gc.manuals->content.dynamic.used >= 1);
-    if (*last_ptr != s) {
-        //
-        // If the series is not the last manually added series, then
-        // find where it is, then move the last manually added series
-        // to that position to preserve it when we chop off the tail
-        // (instead of keeping the series we want to free).
-        //
-        Series* *current_ptr = last_ptr - 1;
-        for (; *current_ptr != s; --current_ptr) {
-          #if !defined(NDEBUG)
-            if (
-                current_ptr
-                <= cast(Series**, g_gc.manuals->content.dynamic.data)
-            ){
-                printf("Series not in list of last manually added series\n");
-                panic(s);
+        if (Is_Series_Array(s)) {  // content used by cell, no room for length
+            if (used == 0)
+                Poison_Cell(Stub_Cell(s));  // poison cell means 0 used
+            else {
+                assert(used == 1);  // any non-poison will mean length 1
+                if (not Is_Cell_Poisoned(Stub_Cell(s))) {
+                    // it was already length 1, leave the cell alone
+                } else
+                    Erase_Cell(Stub_Cell(s));
             }
-          #endif
         }
-        *current_ptr = *last_ptr;
+        else
+            USED_BYTE(s) = used;
     }
 
-    // !!! Should g_gc.manuals ever shrink or save memory?
-    //
-    --g_gc.manuals->content.dynamic.used;
-}
-
-INLINE Series* Manage_Series(Series* s)  // give manual series to GC
-{
-  #if !defined(NDEBUG)
-    if (Is_Node_Managed(s))
-        panic (s);  // shouldn't manage an already managed series
+  #if DEBUG_UTF8_EVERYWHERE
+    if (Is_String_NonSymbol(s)) {
+        Trash_If_Debug(s->misc.length);  // catch violators [2]
+        Touch_Stub_If_Debug(s);
+    }
   #endif
-
-    Untrack_Manual_Series(s);
-    Set_Node_Managed_Bit(s);
-    return s;
 }
 
-#ifdef NDEBUG
-    #define Assert_Series_Managed(s) NOOP
-#else
-    INLINE void Assert_Series_Managed(const Series* s) {
-        if (Not_Node_Managed(s))
-            panic (s);
-    }
+INLINE void Set_Series_Used(Series* s, Count used) {
+    UNPOISON_SERIES_TAIL(s);
+    Set_Series_Used_Internal(s, used);
+    POISON_SERIES_TAIL(s);
+}
+
+INLINE void Set_Series_Len(Series* s, Length len) {
+    assert(not Is_Series_UTF8(s));  // use _Len_Size() instead [2]
+    Set_Series_Used(s, len);
+}
+
+#if CPLUSPLUS_11  // catch cases when calling on String* directly
+    INLINE void Set_Series_Len(String* s, Length len) = delete;
 #endif
 
-INLINE Series* Force_Series_Managed(const_if_c Series* s) {
-    if (Not_Node_Managed(s))
-        Manage_Series(m_cast(Series*, s));
-    return m_cast(Series*, s);
-}
-
-#if (! CPLUSPLUS_11)
-    #define Force_Series_Managed_Core Force_Series_Managed
-#else
-    INLINE Series* Force_Series_Managed_Core(Series* s)
-      { return Force_Series_Managed(s); }  // mutable series may be unmanaged
-
-    INLINE Series* Force_Series_Managed_Core(const Series* s) {
-        Assert_Series_Managed(s);  // const series should already be managed
-        return m_cast(Series*, s);
-    }
-#endif
-
-
-//=////////////////////////////////////////////////////////////////////////=//
+// Optimized expand when at tail (but, does not reterminate)
 //
-// SERIES COLORING API
-//
-//=////////////////////////////////////////////////////////////////////////=//
-//
-// R3-Alpha re-used the same marking flag from the GC in order to do various
-// other bit-twiddling tasks when the GC wasn't running.  This is an
-// unusually dangerous thing to be doing...because leaving a stray mark on
-// during some other traversal could lead the GC to think it had marked
-// things reachable from that series when it had not--thus freeing something
-// that was still in use.
-//
-// While leaving a stray mark on is a bug either way, GC bugs are particularly
-// hard to track down.  So one doesn't want to risk them if not absolutely
-// necessary.  Not to mention that sharing state with the GC that you can
-// only use when it's not running gets in the way of things like background
-// garbage collection, etc.
-//
-// Ren-C keeps the term "mark" for the GC, since that's standard nomenclature.
-// A lot of basic words are taken other places for other things (tags, flags)
-// so this just goes with a series "color" of black or white, with white as
-// the default.  The debug build keeps a count of how many black series there
-// are and asserts it's 0 by the time each evaluation ends, to ensure balance.
-//
-
-INLINE bool Is_Series_Black(const Series* s) {
-    return Get_Series_Flag(s, BLACK);
-}
-
-INLINE bool Is_Series_White(const Series* s) {
-    return Not_Series_Flag(s, BLACK);
-}
-
-INLINE void Flip_Series_To_Black(const Series* s) {
-    assert(Not_Series_Flag(s, BLACK));
-    Set_Series_Flag(s, BLACK);
-  #if !defined(NDEBUG)
-    g_mem.num_black_series += 1;
-  #endif
-}
-
-INLINE void Flip_Series_To_White(const Series* s) {
-    assert(Get_Series_Flag(s, BLACK));
-    Clear_Series_Flag(s, BLACK);
-  #if !defined(NDEBUG)
-    g_mem.num_black_series -= 1;
-  #endif
-}
-
-
-//
-// Freezing and Locking
-//
-
-INLINE void Freeze_Series(const Series* s) {  // there is no unfreeze
-    assert(not Is_Series_Array(s)); // use Deep_Freeze_Array
-
-    // We set the FROZEN_DEEP flag even though there is no structural depth
-    // here, so that the generic test for deep-frozenness can be faster.
-    //
-    Set_Series_Info(s, FROZEN_SHALLOW);
-    Set_Series_Info(s, FROZEN_DEEP);
-}
-
-INLINE bool Is_Series_Frozen(const Series* s) {
-    assert(not Is_Series_Array(s));  // use Is_Array_Deeply_Frozen
-    if (Not_Series_Info(s, FROZEN_SHALLOW))
-        return false;
-    assert(Get_Series_Info(s, FROZEN_DEEP));  // true on frozen non-arrays
-    return true;
-}
-
-INLINE bool Is_Series_Read_Only(const Series* s) {  // may be temporary
-    return 0 != (SERIES_INFO(s) &
-        (SERIES_INFO_HOLD | SERIES_INFO_PROTECTED
-        | SERIES_INFO_FROZEN_SHALLOW | SERIES_INFO_FROZEN_DEEP)
-    );
-}
-
-
-// Gives the appropriate kind of error message for the reason the series is
-// read only (frozen, running, protected, locked to be a map key...)
-//
-// !!! Should probably report if more than one form of locking is in effect,
-// but if only one error is to be reported then this is probably the right
-// priority ordering.
-//
-
-INLINE void Fail_If_Read_Only_Series(const Series* s) {
-    if (not Is_Series_Read_Only(s))
-        return;
-
-    if (Get_Series_Info(s, AUTO_LOCKED))
-        fail (Error_Series_Auto_Locked_Raw());
-
-    if (Get_Series_Info(s, HOLD))
-        fail (Error_Series_Held_Raw());
-
-    if (Get_Series_Info(s, FROZEN_SHALLOW))
-        fail (Error_Series_Frozen_Raw());
-
-    assert(Not_Series_Info(s, FROZEN_DEEP));  // implies FROZEN_SHALLOW
-
-    assert(Get_Series_Info(s, PROTECTED));
-    fail (Error_Series_Protected_Raw());
-}
-
-
-
-//=////////////////////////////////////////////////////////////////////////=//
-//
-//  GUARDING SERIES FROM GARBAGE COLLECTION
-//
-//=////////////////////////////////////////////////////////////////////////=//
-//
-// The garbage collector can run anytime the trampoline runs (and possibly
-// at certain other times).  So if a series has NODE_FLAG_MANAGED on it, the
-// potential exists that any C pointers that are outstanding may "go bad"
-// if the series wasn't reachable from the root set.  This is important to
-// remember any time a pointer is held across a call that runs arbitrary
-// user code.
-//
-// This simple stack approach allows pushing protection for a series, and
-// then can release protection only for the last series pushed.  A parallel
-// pair of macros exists for pushing and popping of guard status for values,
-// to protect any series referred to by the value's contents.  (Note: This can
-// only be used on values that do not live inside of series, because there is
-// no way to guarantee a value in a series will keep its address besides
-// guarding the series AND locking it from resizing.)
-//
-// The guard stack is not meant to accumulate, and must be cleared out
-// before a level returns to the trampoline.
-//
-
-#define Push_GC_Guard(node) \
-    Push_Guard_Node(node)
-
-INLINE void Drop_GC_Guard(const Node* node) {
-  #if defined(NDEBUG)
-    UNUSED(node);
-  #else
-    if (node != *Series_Last(const Node*, g_gc.guarded)) {
-        printf("Drop_GC_Guard() pointer that wasn't last Push_GC_Guard()\n");
-        panic (node);
-    }
-  #endif
-
-    g_gc.guarded->content.dynamic.used -= 1;
-}
-
-// Cells memset 0 for speed.  But Push_Guard_Node() expects a Node, where
-// the NODE_BYTE() has NODE_FLAG_NODE set.  Use this with DECLARE_LOCAL().
-//
-INLINE void Push_GC_Guard_Erased_Cell(Cell* cell) {
-    assert(FIRST_BYTE(cell) == 0);
-    FIRST_BYTE(cell) = NODE_BYTEMASK_0x80_NODE | NODE_BYTEMASK_0x01_CELL;
-
-    Push_Guard_Node(cell);
+INLINE void Expand_Series_Tail(Series* s, REBLEN delta) {
+    if (Series_Fits(s, delta))
+        Set_Series_Used(s, Series_Used(s) + delta);  // no termination implied
+    else
+        Expand_Series(s, Series_Used(s), delta);  // currently terminates
 }
 
 
@@ -1003,6 +706,10 @@ INLINE Stub* Prep_Stub(void *preallocated, Flags flags) {
     SafeTrash_Pointer_If_Debug(s->info.trash);  // #7
     SafeTrash_Pointer_If_Debug(s->link.trash);  // #8
 
+  #if DEBUG_SERIES_ORIGINS
+    s->guard = nullptr;  // so Touch_Stub_Debug() can tell data is invalid
+  #endif
+
     Touch_Stub_If_Debug(s);  // tag current C stack as series origin in ASAN
   #endif
 
@@ -1012,7 +719,6 @@ INLINE Stub* Prep_Stub(void *preallocated, Flags flags) {
 
     return s;
 }
-
 
 INLINE PoolId Pool_Id_For_Size(Size size) {
   #if DEBUG_ENABLE_ALWAYS_MALLOC
@@ -1027,107 +733,13 @@ INLINE PoolId Pool_Id_For_Size(Size size) {
 }
 
 
-// Allocates the data array for an already allocated Series stub structure.
-// Resets the bias and tail to zero, and sets the new width.  Flags like
-// SERIES_FLAG_FIXED_SIZE are left as they were, and other fields in the
-// series structure are untouched.
-//
-// This routine can thus be used for an initial construction or an operation
-// like expansion.
-//
-INLINE bool Did_Series_Data_Alloc(Series* s, REBLEN capacity) {
-    //
-    // Currently once a series becomes dynamic, it never goes back.  There is
-    // no shrinking process that will pare it back to fit completely inside
-    // the series Stub if it gets small enough to do so.
-    //
-    assert(Get_Series_Flag(s, DYNAMIC));  // caller sets
-
-    Byte wide = Series_Wide(s);
-    assert(wide != 0);
-
-    if (cast(REBU64, capacity) * wide > INT32_MAX)  // R3-Alpha said "too big"
-        return false;
-
-    Size size;  // size of allocation (possibly bigger than we need)
-
-    PoolId pool_id = Pool_Id_For_Size(capacity * wide);
-    if (pool_id < SYSTEM_POOL) {
-        // ...there is a pool designated for allocations of this size range
-        s->content.dynamic.data = cast(char*, Try_Alloc_Pooled(pool_id));
-        if (not s->content.dynamic.data)
-            return false;
-
-        // The pooled allocation might wind up being larger than we asked.
-        // Don't waste the space...mark as capacity the series could use.
-        size = g_mem.pools[pool_id].wide;
-        assert(size >= capacity * wide);
-
-        // We don't round to power of 2 for allocations in memory pools
-        Clear_Series_Flag(s, POWER_OF_2);
-    }
-    else {
-        // ...the allocation is too big for a pool.  But instead of just
-        // doing an unpooled allocation to give you the size you asked
-        // for, the system does some second-guessing to align to 2Kb
-        // boundaries (or choose a power of 2, if requested).
-
-        size = capacity * wide;
-        if (Get_Series_Flag(s, POWER_OF_2)) {
-            Size size2 = 2048;
-            while (size2 < size)
-                size2 *= 2;
-            size = size2;
-
-            // Clear the power of 2 flag if it isn't necessary, due to even
-            // divisibility by the item width.
-            //
-            if (size % wide == 0)
-                Clear_Series_Flag(s, POWER_OF_2);
-        }
-
-        s->content.dynamic.data = Try_Alloc_N(char, size);
-        if (not s->content.dynamic.data)
-            return false;
-
-        g_mem.pools[SYSTEM_POOL].has += size;
-        g_mem.pools[SYSTEM_POOL].free++;
-    }
-
-    // Note: Bias field may contain other flags at some point.  Because
-    // Set_Series_Bias() uses bit masking on an existing value, we are sure
-    // here to clear out the whole value for starters.
-    //
-    if (Is_Series_Biased(s))
-        s->content.dynamic.bonus.bias = 0;
-    else {
-        // Leave as trash, or as existing bonus (if called in Expand_Series())
-    }
-
-    // The allocation may have returned more than we requested, so we note
-    // that in 'rest' so that the series can expand in and use the space.
-    //
-    /*assert(size % wide == 0);*/  // allow irregular sizes
-    s->content.dynamic.rest = size / wide;
-
-    // We set the tail of all series to zero initially, but currently do
-    // leave series termination to callers.  (This is under review.)
-    //
-    s->content.dynamic.used = 0;
-
-    // See if allocation tripped our need to queue a garbage collection
-
-    if ((g_gc.depletion -= size) <= 0)
-        SET_SIGNAL(SIG_RECYCLE);
-
-    assert(Series_Total(s) <= size);  // irregular sizes won't use all the space
-    return true;
-}
-
-
 // If the data is tiny enough, it will be fit into the series node itself.
 // Small series will be allocated from a memory pool.
 // Large series will be allocated from system memory.
+//
+// 1. It is more efficient if you know a series is going to become managed to
+//   create it in the managed state.  But be sure no evaluations are called
+//   before it's made reachable by the GC, or use Push_GC_Guard().
 //
 INLINE Series* Make_Series_Into(
     void* preallocated,
@@ -1151,12 +763,8 @@ INLINE Series* Make_Series_Into(
 
     if (
         (flags & SERIES_FLAG_DYNAMIC)  // inlining will constant fold
-        or (capacity * wide > sizeof(s->content))
+        or (capacity * wide > sizeof(s->content))  // data won't fit in stub
     ){
-        // Data won't fit in the series Stub, needs a dynamic allocation.  The
-        // capacity given back as the ->rest may be larger than the requested
-        // size, because the memory pool reports the full rounded allocation.
-
         Set_Series_Flag(s, DYNAMIC);
 
         if (not Did_Series_Data_Alloc(s, capacity)) {
@@ -1172,19 +780,13 @@ INLINE Series* Make_Series_Into(
       #endif
     }
 
-    // It is more efficient if you know a series is going to become managed to
-    // create it in the managed state.  But be sure no evaluations are called
-    // before it's made reachable by the GC, or use Push_GC_Guard().
-    //
-    // !!! Code duplicated in Make_Array_Core() ATM.
-    //
-    if (not (flags & NODE_FLAG_MANAGED)) {
+    if (not (flags & NODE_FLAG_MANAGED)) {  // more efficient if managed [1]
         if (Is_Series_Full(g_gc.manuals))
             Extend_Series_If_Necessary(g_gc.manuals, 8);
 
         cast(Series**, g_gc.manuals->content.dynamic.data)[
             g_gc.manuals->content.dynamic.used++
-        ] = s; // start out managed to not need to find/remove from this later
+        ] = s;  // will need to find/remove from this list later
     }
 
     return s;
@@ -1197,13 +799,17 @@ INLINE Series* Make_Series_Into(
     cast(T*, Make_Series_Core((capacity), (flags)))
 
 
-enum act_modify_mask {
-    AM_PART = 1 << 0,
-    AM_SPLICE = 1 << 1,
-    AM_LINE = 1 << 2
-};
-
-enum act_find_mask {
-    AM_FIND_CASE = 1 << 1,
-    AM_FIND_MATCH = 1 << 2
-};
+//=//// DEBUG SERIES MONITORING ////////////////////////////////////////////=//
+//
+// This once used a series flag in debug builds to tell whether a series was
+// monitored or not.  But series flags are scarce, so the feature was scaled
+// back to just monitoring a single node.  It could also track a list--but the
+// point is just that stealing a flag is wasteful.
+//
+#if DEBUG_MONITOR_SERIES
+    INLINE void Debug_Monitor_Series(void *p) {
+        printf("Adding monitor to %p on tick #%d\n", p, cast(int, TG_tick));
+        fflush(stdout);
+        g_mem.monitor_node = cast(Series*, p);
+    }
+#endif

@@ -18,6 +18,11 @@ INLINE const Series* Cell_Series(NoQuote(const Cell*) v) {
     m_cast(Series*, Cell_Series(Known_Mutable(v)))
 
 
+// It is possible that the index could be to a point beyond the range of the
+// series.  This is intrinsic, because the series data can be modified through
+// one cell and not update the other cells referring to it.  Hence VAL_INDEX()
+// must be checked, or the routine called with it must.
+
 #define VAL_INDEX_RAW(v) \
     PAYLOAD(Any, (v)).second.i
 
@@ -143,33 +148,3 @@ INLINE REBVAL *Init_Series_Cell_At_Core(
 
 #define Init_Series_Cell(v,t,s) \
     Init_Series_Cell_At((v), (t), (s), 0)
-
-
-#if defined(NDEBUG)
-    #define Known_Mutable(v) v
-#else
-    INLINE const Cell* Known_Mutable(const Cell* v) {
-        assert(Get_Cell_Flag(v, FIRST_IS_NODE));
-        const Series* s = c_cast(Series*, Cell_Node1(v));  // varlist, etc.
-        assert(not Is_Series_Read_Only(s));
-        assert(Not_Cell_Flag(v, CONST));
-        return v;
-    }
-#endif
-
-// Forward declaration needed
-INLINE REBVAL* Unrelativize(Cell* out, const Cell* v);
-
-INLINE const Cell* Ensure_Mutable(const Cell* v) {
-    assert(Get_Cell_Flag(v, FIRST_IS_NODE));
-    const Series* s = c_cast(Series*, Cell_Node1(v));  // varlist, etc.
-
-    Fail_If_Read_Only_Series(s);
-
-    if (Not_Cell_Flag(v, CONST))
-        return v;
-
-    DECLARE_LOCAL (specific);
-    Unrelativize(specific, v);  // relative values lose binding in error object
-    fail (Error_Const_Value_Raw(specific));
-}

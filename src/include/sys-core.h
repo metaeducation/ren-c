@@ -208,8 +208,6 @@
 #include "structs/struct-cell.h"
 #include "structs/struct-value.h"
 
-#include "sys-flavor.h"  // series subclass byte (uses sizeof(Cell))
-
 #include "structs/struct-stub.h"  // series structure definition, embeds Cell
 
 #include "structs/struct-array.h"  // series subclass
@@ -559,7 +557,6 @@ INLINE void INIT_BINDING_MAY_MANAGE(
 );
 
 #include "sys-track.h"
-#include "sys-value.h"  // these defines don't need series accessors
 
 
 enum rebol_signals {
@@ -617,7 +614,14 @@ INLINE void SET_SIGNAL(Flags f) { // used in %sys-series.h
     cast(void, g_ts.eval_signals &= ~(f))
 
 
-#include "stubs/stub-series.h"
+#include "sys-flavor.h"  // series subclass byte (uses sizeof(Cell))
+
+#include "sys-value.h"  // these defines don't need series accessors
+
+#include "stubs/stub-series.h"  // needs Is_Cell_Poisoned(), Erase_Cell()
+
+#include "sys-gc.h"
+
 #include "cells/cell-series.h"
 #include "stubs/stub-array.h"  // Array* used by UTF-8 string bookmarks
 #include "cells/cell-array.h"

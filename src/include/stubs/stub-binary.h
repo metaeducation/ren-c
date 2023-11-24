@@ -21,9 +21,11 @@
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // A BINARY! value holds a byte-size series.  The bytes may be arbitrary, or
-// if the series has SERIES_FLAG_IS_STRING then modifications are constrained
-// to only allow valid UTF-8 data.  Such binary "views" are possible due to
-// things like the AS operator (`as binary! "abc"`).
+// if the series flavor is FLAVOR_STRING or FLAVOR_SYMBOL then modifications
+// are constrained to only allow valid `\0`-terminated UTF-8 data.
+//
+// (Such binary "views" are possible due to things like the AS operator,
+// e.g `as binary! "abc"`)
 //
 // R3-Alpha used a binary series to hold the data for BITSET!.  See notes in
 // %sys-bitset.h regarding this usage (which has a "negated" bit in the
@@ -36,7 +38,7 @@
 //   binary series can't use MISC() and LINK() for its own purposes.  (For
 //   the moment, typesets cannot be aliased, so you can't get into a situation
 //   like `as text! as binary! make bitset! [...]`)
-
+//
 
 //=//// BINARY! SERIES ////////////////////////////////////////////////////=//
 

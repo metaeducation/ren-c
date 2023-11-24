@@ -33,6 +33,114 @@
 //
 
 
+//=////////////////////////////////////////////////////////////////////////=//
+//
+// SERIES COLORING API
+//
+//=////////////////////////////////////////////////////////////////////////=//
+//
+// R3-Alpha re-used the same marking flag from the GC in order to do various
+// other bit-twiddling tasks when the GC wasn't running.  This is an
+// unusually dangerous thing to be doing...because leaving a stray mark on
+// during some other traversal could lead the GC to think it had marked
+// things reachable from that series when it had not--thus freeing something
+// that was still in use.
+//
+// While leaving a stray mark on is a bug either way, GC bugs are particularly
+// hard to track down.  So one doesn't want to risk them if not absolutely
+// necessary.  Not to mention that sharing state with the GC that you can
+// only use when it's not running gets in the way of things like background
+// garbage collection, etc.
+//
+// Ren-C keeps the term "mark" for the GC, since that's standard nomenclature.
+// A lot of basic words are taken other places for other things (tags, flags)
+// so this just goes with a series "color" of black or white, with white as
+// the default.  The debug build keeps a count of how many black series there
+// are and asserts it's 0 by the time each evaluation ends, to ensure balance.
+//
+
+INLINE bool Is_Series_Black(const Series* s) {
+    return Get_Series_Flag(s, BLACK);
+}
+
+INLINE bool Is_Series_White(const Series* s) {
+    return Not_Series_Flag(s, BLACK);
+}
+
+INLINE void Flip_Series_To_Black(const Series* s) {
+    assert(Not_Series_Flag(s, BLACK));
+    Set_Series_Flag(s, BLACK);
+  #if !defined(NDEBUG)
+    g_mem.num_black_series += 1;
+  #endif
+}
+
+INLINE void Flip_Series_To_White(const Series* s) {
+    assert(Get_Series_Flag(s, BLACK));
+    Clear_Series_Flag(s, BLACK);
+  #if !defined(NDEBUG)
+    g_mem.num_black_series -= 1;
+  #endif
+}
+
+//
+// Freezing and Locking
+//
+
+INLINE void Freeze_Series(const Series* s) {  // there is no unfreeze
+    assert(not Is_Series_Array(s)); // use Deep_Freeze_Array
+
+    // We set the FROZEN_DEEP flag even though there is no structural depth
+    // here, so that the generic test for deep-frozenness can be faster.
+    //
+    Set_Series_Info(s, FROZEN_SHALLOW);
+    Set_Series_Info(s, FROZEN_DEEP);
+}
+
+INLINE bool Is_Series_Frozen(const Series* s) {
+    assert(not Is_Series_Array(s));  // use Is_Array_Deeply_Frozen
+    if (Not_Series_Info(s, FROZEN_SHALLOW))
+        return false;
+    assert(Get_Series_Info(s, FROZEN_DEEP));  // true on frozen non-arrays
+    return true;
+}
+
+INLINE bool Is_Series_Read_Only(const Series* s) {  // may be temporary
+    return 0 != (SERIES_INFO(s) &
+        (SERIES_INFO_HOLD | SERIES_INFO_PROTECTED
+        | SERIES_INFO_FROZEN_SHALLOW | SERIES_INFO_FROZEN_DEEP)
+    );
+}
+
+
+// Gives the appropriate kind of error message for the reason the series is
+// read only (frozen, running, protected, locked to be a map key...)
+//
+// !!! Should probably report if more than one form of locking is in effect,
+// but if only one error is to be reported then this is probably the right
+// priority ordering.
+//
+
+INLINE void Fail_If_Read_Only_Series(const Series* s) {
+    if (not Is_Series_Read_Only(s))
+        return;
+
+    if (Get_Series_Info(s, AUTO_LOCKED))
+        fail (Error_Series_Auto_Locked_Raw());
+
+    if (Get_Series_Info(s, HOLD))
+        fail (Error_Series_Held_Raw());
+
+    if (Get_Series_Info(s, FROZEN_SHALLOW))
+        fail (Error_Series_Frozen_Raw());
+
+    assert(Not_Series_Info(s, FROZEN_DEEP));  // implies FROZEN_SHALLOW
+
+    assert(Get_Series_Info(s, PROTECTED));
+    fail (Error_Series_Protected_Raw());
+}
+
+
 // Flags used for Protect functions
 //
 enum {
@@ -80,3 +188,33 @@ INLINE const Array* Freeze_Array_Shallow(const Array* a) {
 
 #define Force_Value_Frozen_Shallow(v) \
     Force_Value_Frozen_Core((v), false, EMPTY_ARRAY)  // auto-locked
+
+
+#if defined(NDEBUG)
+    #define Known_Mutable(v) v
+#else
+    INLINE const Cell* Known_Mutable(const Cell* v) {
+        assert(Get_Cell_Flag(v, FIRST_IS_NODE));
+        const Series* s = c_cast(Series*, Cell_Node1(v));  // varlist, etc.
+        assert(not Is_Series_Read_Only(s));
+        assert(Not_Cell_Flag(v, CONST));
+        return v;
+    }
+#endif
+
+// Forward declaration needed
+INLINE REBVAL* Unrelativize(Cell* out, const Cell* v);
+
+INLINE const Cell* Ensure_Mutable(const Cell* v) {
+    assert(Get_Cell_Flag(v, FIRST_IS_NODE));
+    const Series* s = c_cast(Series*, Cell_Node1(v));  // varlist, etc.
+
+    Fail_If_Read_Only_Series(s);
+
+    if (Not_Cell_Flag(v, CONST))
+        return v;
+
+    DECLARE_LOCAL (specific);
+    Unrelativize(specific, v);  // relative values lose binding in error object
+    fail (Error_Const_Value_Raw(specific));
+}

@@ -184,6 +184,13 @@ enum StubFlavorEnum {
 typedef enum StubFlavorEnum Flavor;
 
 
+INLINE Flavor Flavor_From_Flags(Flags flags)
+  { return u_cast(Flavor, THIRD_BYTE(&flags)); }
+
+#define Series_Flavor(s) \
+    u_cast(Flavor, FLAVOR_BYTE(s))
+
+
 // Most accesses of series via Series_At(...) and Array_At(...) macros already
 // know at the callsite the size of the access.  The width is only a double
 // check in the debug build, and used at allocation time and other moments
@@ -224,3 +231,35 @@ INLINE size_t Wide_For_Flavor(Flavor flavor) {
 #define IS_PAIRLIST(s)          (Series_Flavor(s) == FLAVOR_PAIRLIST)
 #define IS_DETAILS(s)           (Series_Flavor(s) == FLAVOR_DETAILS)
 #define IS_PARTIALS(s)          (Series_Flavor(s) == FLAVOR_PARTIALS)
+
+
+#if defined(NDEBUG)
+    #define ensure_flavor(flavor,s) \
+        ensure(const Series*, (s))  // no-op in release build
+#else
+    INLINE Series* ensure_flavor(
+        Flavor flavor,
+        const_if_c Series* s
+    ){
+        if (Series_Flavor(s) != flavor) {
+            Flavor actual_flavor = Series_Flavor(s);
+            USED(actual_flavor);
+            panic (s);
+        }
+        return m_cast(Series*, s);
+    }
+
+    #if CPLUSPLUS_11
+        INLINE const Series* ensure_flavor(
+            Flavor flavor,
+            const Series* s
+        ){
+            if (Series_Flavor(s) != flavor) {
+                Flavor actual_flavor = Series_Flavor(s);
+                USED(actual_flavor);
+                panic (s);
+            }
+            return s;
+        }
+    #endif
+#endif

@@ -377,3 +377,14 @@ enum Reb_Attach_Mode {
     ATTACH_WRITE,
     ATTACH_COPY
 };
+
+enum act_modify_mask {
+    AM_PART = 1 << 0,
+    AM_SPLICE = 1 << 1,
+    AM_LINE = 1 << 2
+};
+
+enum act_find_mask {
+    AM_FIND_CASE = 1 << 1,
+    AM_FIND_MATCH = 1 << 2
+};

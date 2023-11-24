@@ -308,12 +308,6 @@
 #define FLAG_FLAVOR_BYTE(flavor)        FLAG_THIRD_BYTE(flavor)
 #define FLAG_FLAVOR(name)               FLAG_FLAVOR_BYTE(FLAVOR_##name)
 
-INLINE Flavor Flavor_From_Flags(Flags flags)
-  { return u_cast(Flavor, THIRD_BYTE(&flags)); }
-
-#define Series_Flavor(s) \
-    u_cast(Flavor, FLAVOR_BYTE(s))
-
 
 //=//// BITS 24-31: SUBCLASS FLAGS ////////////////////////////////////////=//
 //
