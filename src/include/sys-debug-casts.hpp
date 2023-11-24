@@ -1,5 +1,5 @@
 //
-//  File: %sys-casts.h
+//  File: %sys-debug-casts.hpp
 //  Summary: {Instrumented operators for casting Node subclasses}
 //  Project: "Ren-C Interpreter and Run-time"
 //  Homepage: https://github.com/metaeducation/ren-c/
@@ -324,7 +324,8 @@ struct cast_helper<VP,const String*> {  // [2]
         if (not p)
             return nullptr;
 
-        if (((reinterpret_cast<const Stub*>(p)->leader.bits & (
+        const Stub* stub = reinterpret_cast<const Stub*>(p);
+        if (((stub->leader.bits & (
             NODE_FLAG_NODE | NODE_FLAG_FREE | NODE_FLAG_CELL
         ))
         ) !=
@@ -333,7 +334,7 @@ struct cast_helper<VP,const String*> {  // [2]
             panic (p);
         }
 
-        const Byte flavor = reinterpret_cast<const Byte*>(p)[2];
+        const Byte flavor = FLAVOR_BYTE(stub);
         if (flavor != FLAVOR_STRING and flavor != FLAVOR_SYMBOL)
             panic (p);
 
@@ -544,8 +545,10 @@ struct cast_helper<VP,Action*> {  // [2]
         if (not p)
             return nullptr;
 
-        if (reinterpret_cast<Byte*>(p)[2] == FLAVOR_DETAILS) {
-            if ((reinterpret_cast<const Stub*>(p)->leader.bits & (
+        const Stub* stub = reinterpret_cast<Stub*>(p);
+
+        if (FLAVOR_BYTE(stub) == FLAVOR_DETAILS) {
+            if ((stub->leader.bits & (
                 SERIES_MASK_DETAILS
                     | NODE_FLAG_FREE
                     | NODE_FLAG_CELL
@@ -557,14 +560,14 @@ struct cast_helper<VP,Action*> {  // [2]
             }
         }
         else {
-            if (((reinterpret_cast<Stub*>(p)->leader.bits & (
-                      SERIES_MASK_VARLIST
-                      | NODE_FLAG_FREE
-                      | NODE_FLAG_CELL
-                      | FLAG_FLAVOR_BYTE(255)
-                      ))
-                 | SERIES_FLAG_DYNAMIC  // permit non-dynamic (e.g. inaccessible
-                 ) !=
+            if ((stub->leader.bits & ((
+                SERIES_MASK_VARLIST
+                    | NODE_FLAG_FREE
+                    | NODE_FLAG_CELL
+                    | FLAG_FLAVOR_BYTE(255)
+                )
+                | SERIES_FLAG_DYNAMIC  // permit non-dynamic (inaccessible)
+            )) !=
                 SERIES_MASK_VARLIST
             ){
                 panic (p);

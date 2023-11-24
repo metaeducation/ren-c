@@ -202,9 +202,6 @@
 #include "structs/struct-node.h"
 #include "mem-pools.h"
 
-#include "tmp-kinds.h"  // Defines `enum Reb_Kind` (REB_BLOCK, REB_TEXT, etc)
-#include "sys-ordered.h"  // changing the type enum *must* update these macros
-
 #include "structs/struct-cell.h"
 #include "structs/struct-value.h"
 
@@ -221,6 +218,11 @@
 #include "structs/struct-feed.h"
 #include "structs/struct-state.h"  // state of variables restored on jumps
 #include "structs/struct-level.h"  // C struct for running level, uses feed
+
+
+#include "tmp-kinds.h"  // Defines `enum Reb_Kind` (REB_BLOCK, REB_TEXT, etc)
+#include "sys-ordered.h"  // changing the type enum *must* update these macros
+#include "sys-flavor.h"  // series subclass byte (uses sizeof(Cell))
 
 
 #include "sys-hooks.h"  // function pointer definitions
@@ -458,10 +460,6 @@ typedef struct {
 
 #include "sys-panic.h"  // "blue screen of death"-style termination
 
-#if DEBUG_CHECK_CASTS
-    #include "sys-casts.h"
-#endif
-
 #include "sys-mold.h"
 
 
@@ -608,9 +606,17 @@ INLINE void SET_SIGNAL(Flags f) { // used in %sys-series.h
     cast(void, g_ts.eval_signals &= ~(f))
 
 
-//=//// STUB-DERIVED STRUCTURE ACCESSORS //////////////////////////////////=//
+//=//// DEBUG HOOKS INTO THE CAST() OPERATOR //////////////////////////////=//
+//
+// In the C++ build, there is the opportunity to hook any cast() operation
+// with code that can do checking or validation.  See comments in file.
+//
+#if DEBUG_CHECK_CASTS
+    #include "sys-debug-casts.hpp"
+#endif
 
-#include "sys-flavor.h"  // series subclass byte (uses sizeof(Cell))
+
+//=//// STUB-DERIVED STRUCTURE ACCESSORS //////////////////////////////////=//
 
 #include "sys-track.h"
 #include "sys-value.h"  // needs IS_DETAILS() for Derelativize()

@@ -91,6 +91,21 @@
 //
 // 1. See Set_Series_Flag()/Clear_Series_Flag() for why implicit mutability.
 
+#if (! CPLUSPLUS_11) || (! DEBUG)
+    #define ensure_flavor(flavor,s) \
+        (s)  // no-op in release build
+#else
+    template<typename T>
+    INLINE T ensure_flavor(Flavor flavor, T series) {
+        if (Series_Flavor(series) != flavor) {
+            Flavor actual_flavor = Series_Flavor(series);
+            USED(actual_flavor);
+            assert(!"series flavor did not match what caller expected");
+        }
+        return series;
+    }
+#endif
+
 #define Get_Subclass_Flag(subclass,s,name) \
     ((ensure_flavor(FLAVOR_##subclass, (s))->leader.bits \
         & subclass##_FLAG_##name) != 0)
