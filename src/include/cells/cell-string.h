@@ -1,7 +1,7 @@
 // %cell-string.h
 
 INLINE const String* Cell_String(NoQuote(const Cell*) v) {
-    if (Any_Stringlike(v))
+    if (Any_String_Kind(Cell_Heart(v)))
         return c_cast(String*, Cell_Series(v));
 
     return Cell_Word_Symbol(v);  // asserts Any_Word_Kind() for heart
@@ -9,6 +9,12 @@ INLINE const String* Cell_String(NoQuote(const Cell*) v) {
 
 #define Cell_String_Ensure_Mutable(v) \
     m_cast(String*, Cell_String(Ensure_Mutable(v)))
+
+INLINE const String* Cell_Issue_String(NoQuote(const Cell*) v) {
+    assert(Cell_Heart(v) == REB_ISSUE);
+    assert(Get_Cell_Flag(v, FIRST_IS_NODE));
+    return c_cast(String*, Cell_Node1(v));
+}
 
 // This routine works with the notion of "length" that corresponds to the
 // idea of the datatype which the series index is for.  Notably, a BINARY!
@@ -67,6 +73,16 @@ INLINE Utf8(const*) Cell_String_Tail(NoQuote(const Cell*) v) {
 #define Cell_String_At_Known_Mutable(v) \
     m_cast(Utf8(*), Cell_String_At(Known_Mutable(v)))
 
+INLINE bool Any_Stringlike(NoQuote(const Cell*) v) {
+    // called by core code, sacrifice READABLE() checks
+    if (Any_String_Kind(Cell_Heart_Unchecked(v)))
+        return true;
+    if (Cell_Heart(v) == REB_URL)
+        return true;
+    if (Cell_Heart(v) != REB_ISSUE)
+        return false;
+    return Get_Cell_Flag_Unchecked(v, ISSUE_HAS_NODE);
+}
 
 INLINE Size Cell_String_Size_Limit_At(
     Option(REBLEN*) length_out,  // length in chars to end (including limit)

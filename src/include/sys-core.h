@@ -672,24 +672,27 @@ INLINE Value(*) Force_Lib_Var(SymId id) {
 
 
 #include "stubs/stub-binary.h"  // BIN_XXX(), etc. used by strings
-#include "cells/cell-binary.h"
 
 #include "cells/cell-char.h"  // use Init_Integer() for bad codepoint error
 #include "stubs/stub-string.h"  // SymId needed for typesets
-#include "cells/cell-string.h"
 
 #include "cells/cell-quoted.h"
+
+#include "stubs/stub-action.h"
+#include "stubs/stub-context.h"  // needs actions for FRAME! contexts
+
+#include "cells/cell-word.h"  // needs to know about QUOTED! for binding
+#include "cells/cell-string.h"
+#include "cells/cell-binary.h"  // byte addressing interprets string indexes
+
 
 #include "cells/cell-pair.h"
 
 #include "sys-stack.h"
 
-#include "stubs/stub-action.h"
-#include "stubs/stub-context.h"  // needs actions for FRAME! contexts
 #include "cells/cell-context.h"
 #include "cells/cell-frame.h"
 
-#include "cells/cell-word.h"  // needs to know about QUOTED! for binding
 #include "cells/cell-nulled.h"
 #include "cells/cell-logic.h"
 #include "cells/cell-datatype.h"  // uses words

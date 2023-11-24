@@ -822,7 +822,7 @@ DECLARE_NATIVE(let)
             where = stable_OUT;
 
         Copy_Cell_Header(where, vars);  // keep QUASI! state and word/setword
-        INIT_Cell_Word_Symbol(where, symbol);
+        INIT_CELL_WORD_SYMBOL(where, symbol);
         INIT_VAL_WORD_BINDING(where, bindings);
         INIT_VAL_WORD_INDEX(where, INDEX_ATTACHED);
 

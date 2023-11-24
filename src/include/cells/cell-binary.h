@@ -51,3 +51,40 @@ INLINE const Byte* Cell_Binary_Size_At(
     Root_Empty_Binary
 
 #define BYTE_BUF TG_Byte_Buf
+
+
+// Historically, it was popular for routines that wanted BINARY! data to also
+// accept a STRING!, which would be automatically converted to UTF-8 binary
+// data.  This makes those more convenient to write.
+//
+// !!! With the existence of AS, this might not be as useful as leaving
+// STRING! open for a different meaning (or an error as a sanity check).
+//
+INLINE const Byte* Cell_Bytes_Limit_At(
+    Size* size_out,
+    const Cell* v,
+    REBINT limit
+){
+    if (limit == UNLIMITED or limit > cast(REBINT, Cell_Series_Len_At(v)))
+        limit = Cell_Series_Len_At(v);
+
+    if (Is_Binary(v)) {
+        *size_out = limit;
+        return Cell_Binary_At(v);
+    }
+
+    if (Any_String(v)) {
+        *size_out = Cell_String_Size_Limit_At(nullptr, v, limit);
+        return Cell_String_At(v);
+    }
+
+    assert(Any_Word(v));
+    assert(cast(REBLEN, limit) == Cell_Series_Len_At(v));
+
+    const String* spelling = Cell_Word_Symbol(v);
+    *size_out = String_Size(spelling);
+    return String_Head(spelling);
+}
+
+#define Cell_Bytes_At(size_out,v) \
+    Cell_Bytes_Limit_At((size_out), (v), UNLIMITED)

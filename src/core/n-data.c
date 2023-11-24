@@ -1880,7 +1880,7 @@ bool Try_As_String(
     }
     else if (Is_Issue(v)) {
         if (Get_Cell_Flag(v, ISSUE_HAS_NODE)) {
-            assert(Is_Series_Frozen(Cell_String(v)));
+            assert(Is_Series_Frozen(Cell_Issue_String(v)));
             goto any_string;  // ISSUE! series must be immutable
         }
 
@@ -1996,7 +1996,6 @@ DECLARE_NATIVE(as)
 
               case FLAVOR_ARRAY:
                 assert(Is_Array_Frozen_Shallow(Cell_Array(v)));
-                assert(VAL_INDEX(v) == 0);
                 HEART_BYTE(v) = REB_BLOCK;
                 break;
 

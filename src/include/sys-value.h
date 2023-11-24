@@ -584,64 +584,6 @@ INLINE Value(*) SPECIFIC(const_if_c Cell* v) {
 #define UNSPECIFIED nullptr
 
 
-INLINE bool Any_Arraylike(NoQuote(const Cell*) v) {
-    // called by core code, sacrifice READABLE() checks
-    if (Any_Array_Kind(Cell_Heart_Unchecked(v)))
-        return true;
-    if (not Any_Sequence_Kind(Cell_Heart_Unchecked(v)))
-        return false;
-    if (Not_Cell_Flag_Unchecked(v, FIRST_IS_NODE))
-        return false;
-    const Node* node1 = Cell_Node1(v);
-    if (Is_Node_A_Cell(node1))
-        return true;  // Cell_Array_At() works, but Cell_Array() won't work!
-    return Series_Flavor(u_cast(const Series*, node1)) == FLAVOR_ARRAY;
-}
-
-INLINE bool Any_Wordlike(NoQuote(const Cell*) v) {
-    // called by core code, sacrifice READABLE() checks
-    if (Any_Word_Kind(Cell_Heart_Unchecked(v)))
-        return true;
-    if (not Any_Sequence_Kind(Cell_Heart_Unchecked(v)))
-        return false;
-    if (Not_Cell_Flag_Unchecked(v, FIRST_IS_NODE))
-        return false;
-    const Node* node1 = Cell_Node1(v);
-    if (Is_Node_A_Cell(node1))
-        return false;
-    return Series_Flavor(u_cast(const Series*, node1)) == FLAVOR_SYMBOL;
-}
-
-INLINE bool Any_Stringlike(NoQuote(const Cell*) v) {
-    // called by core code, sacrifice READABLE() checks
-    if (Any_String_Kind(Cell_Heart_Unchecked(v)))
-        return true;
-    if (Cell_Heart(v) == REB_URL)
-        return true;
-    if (Cell_Heart(v) != REB_ISSUE)
-        return false;
-    return Get_Cell_Flag_Unchecked(v, ISSUE_HAS_NODE);
-}
-
-INLINE bool Any_Pairlike(NoQuote(const Cell*) v) {
-    // called by core code, sacrifice READABLE() checks
-    if (Cell_Heart_Unchecked(v) == REB_PAIR)
-        return true;
-    if (not Any_Sequence_Kind(Cell_Heart_Unchecked(v)))
-        return false;
-    if (Not_Cell_Flag(v, SEQUENCE_HAS_NODE))  // compressed bytes
-        return false;
-    return Is_Node_A_Cell(Cell_Node1(v));
-}
-
-
-INLINE void INIT_Cell_Word_Symbol(Cell* v, const Symbol* symbol)
-  { Init_Cell_Node1(v, symbol); }
-
-INLINE const Symbol* Cell_Word_Symbol(NoQuote(const Cell*) cell) {
-    assert(Any_Wordlike(cell));  // no _UNCHECKED variant :-(
-    return cast(Symbol*, Cell_Node1(cell));
-}
 
 #define INDEX_PATCHED 1  // Make it easier to find patch (LET) index settings
 

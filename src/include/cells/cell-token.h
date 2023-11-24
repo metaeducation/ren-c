@@ -228,49 +228,13 @@ INLINE bool Is_Blackhole(const Cell* v) {
 
 //=//// GENERIC UTF-8 ACCESSORS //////////////////////////////////////////=//
 
-// Historically, it was popular for routines that wanted BINARY! data to also
-// accept a STRING!, which would be automatically converted to UTF-8 binary
-// data.  This makes those more convenient to write.
-//
-// !!! With the existence of AS, this might not be as useful as leaving
-// STRING! open for a different meaning (or an error as a sanity check).
-//
-INLINE const Byte* Cell_Bytes_Limit_At(
-    Size* size_out,
-    const Cell* v,
-    REBINT limit
-){
-    if (limit == UNLIMITED or limit > cast(REBINT, Cell_Series_Len_At(v)))
-        limit = Cell_Series_Len_At(v);
-
-    if (Is_Binary(v)) {
-        *size_out = limit;
-        return Cell_Binary_At(v);
-    }
-
-    if (Any_String(v)) {
-        *size_out = Cell_String_Size_Limit_At(nullptr, v, limit);
-        return Cell_String_At(v);
-    }
-
-    assert(Any_Word(v));
-    assert(cast(REBLEN, limit) == Cell_Series_Len_At(v));
-
-    const String* spelling = Cell_Word_Symbol(v);
-    *size_out = String_Size(spelling);
-    return String_Head(spelling);
-}
-
-#define Cell_Bytes_At(size_out,v) \
-    Cell_Bytes_Limit_At((size_out), (v), UNLIMITED)
-
 
 // Analogous to VAL_BYTES_AT, some routines were willing to accept either an
 // ANY-WORD! or an ANY-STRING! to get UTF-8 data.  This is a convenience
 // routine for handling that.
 //
 INLINE Utf8(const*) Cell_Utf8_Len_Size_At_Limit(
-    Option(REBLEN*) length_out,
+    Option(Length*) length_out,
     Option(Size*) size_out,
     NoQuote(const Cell*) v,
     REBINT limit
@@ -281,7 +245,9 @@ INLINE Utf8(const*) Cell_Utf8_Len_Size_At_Limit(
         size_out = &dummy_size;  // force size calculation for debug check
   #endif
 
-    if (Cell_Heart(v) == REB_ISSUE and Not_Cell_Flag(v, ISSUE_HAS_NODE)) {
+    enum Reb_Kind heart = Cell_Heart(v);
+
+    if (heart == REB_ISSUE and Not_Cell_Flag(v, ISSUE_HAS_NODE)) {
         REBLEN len;
         Size size;
         //
@@ -306,28 +272,17 @@ INLINE Utf8(const*) Cell_Utf8_Len_Size_At_Limit(
         return cast(Utf8(const*), PAYLOAD(Bytes, v).at_least_8);
     }
 
+    const String* s = c_cast(String*, Cell_Node1(v));  // +Cell_Issue_String()
     Utf8(const*) utf8;
-    if (Any_Stringlike(v)) {
-        utf8 = Cell_String_At(v);
 
-        if (size_out or length_out) {
-            Size utf8_size = Cell_String_Size_Limit_At(length_out, v, limit);
-            if (size_out)
-                *unwrap(size_out) = utf8_size;
-            // length_out handled by Cell_String_Size_Limit_At, even if nullptr
-        }
-    }
-    else {
-        assert(Any_Wordlike(v));
-
-        const String* spelling = Cell_Word_Symbol(v);
-        utf8 = String_Head(spelling);
+    if (Is_String_Symbol(s)) {
+        utf8 = String_Head(s);
 
         if (size_out or length_out) {
             if (limit == UNLIMITED and not length_out)
-                *unwrap(size_out) = String_Size(spelling);
+                *unwrap(size_out) = String_Size(s);
             else {
-                // WORD!s don't cache their codepoint length, must calculate
+                // Symbols don't cache their codepoint length, must calculate
                 //
                 // Note that signed cast to REBLEN of -1 UNLIMITED is a large #
                 //
@@ -346,6 +301,23 @@ INLINE Utf8(const*) Cell_Utf8_Len_Size_At_Limit(
                 if (length_out)
                     *unwrap(length_out) = index;
             }
+        }
+    }
+    else if (heart == REB_ISSUE or heart == REB_URL) {  // no index
+        utf8 = String_Head(s);
+        if (size_out)
+            *unwrap(size_out) = Series_Used(s);
+        if (length_out)
+            *unwrap(length_out) = s->misc.length;
+    }
+    else {
+        utf8 = Cell_String_At(v);
+
+        if (size_out or length_out) {
+            Size utf8_size = Cell_String_Size_Limit_At(length_out, v, limit);
+            if (size_out)
+                *unwrap(size_out) = utf8_size;
+            // length_out handled by Cell_String_Size_Limit_At, even if nullptr
         }
     }
 

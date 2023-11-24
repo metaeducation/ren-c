@@ -7,6 +7,20 @@
     PG_Empty_Array // Note: initialized from Cell_Array(Root_Empty_Block)
 
 
+INLINE bool Any_Arraylike(NoQuote(const Cell*) v) {
+    // called by core code, sacrifice READABLE() checks
+    if (Any_Array_Kind(Cell_Heart_Unchecked(v)))
+        return true;
+    if (not Any_Sequence_Kind(Cell_Heart_Unchecked(v)))
+        return false;
+    if (Not_Cell_Flag_Unchecked(v, FIRST_IS_NODE))
+        return false;
+    const Node* node1 = Cell_Node1(v);
+    if (Is_Node_A_Cell(node1))
+        return true;  // Cell_Array_At() works, but Cell_Array() won't work!
+    return Series_Flavor(u_cast(const Series*, node1)) == FLAVOR_ARRAY;
+}
+
 INLINE const Array* Cell_Array(NoQuote(const Cell*) v) {
     assert(Any_Arraylike(v));
     assert(Is_Node_A_Stub(Cell_Node1(v)));  // not a pairing arraylike!

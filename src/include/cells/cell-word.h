@@ -30,6 +30,28 @@
 // For routines that manage binding, see %sys-bind.h.
 //
 
+INLINE bool Any_Wordlike(NoQuote(const Cell*) v) {
+    // called by core code, sacrifice READABLE() checks
+    if (Any_Word_Kind(Cell_Heart_Unchecked(v)))
+        return true;
+    if (not Any_Sequence_Kind(Cell_Heart_Unchecked(v)))
+        return false;
+    if (Not_Cell_Flag_Unchecked(v, FIRST_IS_NODE))
+        return false;
+    const Node* node1 = Cell_Node1(v);
+    if (Is_Node_A_Cell(node1))
+        return false;
+    return Series_Flavor(u_cast(const Series*, node1)) == FLAVOR_SYMBOL;
+}
+
+INLINE void INIT_CELL_WORD_SYMBOL(Cell* v, const Symbol* symbol)
+  { Init_Cell_Node1(v, symbol); }
+
+INLINE const Symbol* Cell_Word_Symbol(NoQuote(const Cell*) cell) {
+    assert(Any_Wordlike(cell));  // no _UNCHECKED variant :-(
+    return cast(Symbol*, Cell_Node1(cell));
+}
+
 #define VAL_WORD_ID(v) \
     Symbol_Id(Cell_Word_Symbol(v))
 
@@ -53,7 +75,7 @@ INLINE REBVAL *Init_Any_Word_Untracked(
     );
     VAL_WORD_INDEX_U32(out) = 0;
     mutable_BINDING(out) = nullptr;
-    INIT_Cell_Word_Symbol(out, sym);
+    INIT_CELL_WORD_SYMBOL(out, sym);
 
     return cast(REBVAL*, out);
 }
@@ -81,7 +103,7 @@ INLINE REBVAL *Init_Any_Word_Bound_Untracked(
     );
     mutable_BINDING(out) = binding;
     VAL_WORD_INDEX_U32(out) = index;
-    INIT_Cell_Word_Symbol(out, symbol);
+    INIT_CELL_WORD_SYMBOL(out, symbol);
 
     if (IS_VARLIST(binding)) {
         if (CTX_TYPE(cast(Context*, binding)) == REB_MODULE)

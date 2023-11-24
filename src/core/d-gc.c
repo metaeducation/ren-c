@@ -98,7 +98,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
 
       case REB_ISSUE: {
         if (Get_Cell_Flag_Unchecked(v, ISSUE_HAS_NODE)) {
-            const Series* s = Cell_String(v);
+            const Series* s = Cell_Issue_String(v);
             assert(Is_Series_Frozen(s));
 
             // We do not want ISSUE!s to use series if the payload fits in

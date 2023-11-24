@@ -328,7 +328,7 @@ DECLARE_NATIVE(make_native)
 
     Details* details = Phase_Details(native);
 
-    if (Is_Series_Frozen(Cell_Series(source)))
+    if (Is_Series_Frozen(Cell_String(source)))
         Copy_Cell(Details_At(details, IDX_NATIVE_BODY), source); // no copy
     else {
         Init_Text(
@@ -346,7 +346,7 @@ DECLARE_NATIVE(make_native)
     if (REF(linkname)) {
         REBVAL *linkname = ARG(linkname);
 
-        if (Is_Series_Frozen(Cell_Series(linkname)))
+        if (Is_Series_Frozen(Cell_String(linkname)))
             Copy_Cell(Details_At(details, IDX_TCC_NATIVE_LINKNAME), linkname);
         else {
             Init_Text(

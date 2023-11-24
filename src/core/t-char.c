@@ -258,19 +258,16 @@ static REBINT Math_Arg_For_Char(REBVAL *arg, const Symbol* verb)
 //
 void MF_Issue(REB_MOLD *mo, NoQuote(const Cell*) v, bool form)
 {
-    REBLEN len;
-    if (Get_Cell_Flag(v, ISSUE_HAS_NODE))
-        len = Cell_Series_Len_At(v);
-    else
-        len = EXTRA(Bytes, v).exactly_4[IDX_EXTRA_LEN];
-
     if (form) {
         if (IS_CHAR_CELL(v) and Cell_Codepoint(v) == 0)
             fail (Error_Illegal_Zero_Byte_Raw());  // don't form #, only mold
 
-        Append_String_Limit(mo->series, v, len);
+        Append_String_Limit(mo->series, v, UNLIMITED);
         return;
     }
+
+    Length len;
+    Utf8(const*) cp = Cell_Utf8_Len_Size_At(&len, nullptr, v);
 
     Append_Codepoint(mo->series, '#');
 
@@ -283,7 +280,6 @@ void MF_Issue(REB_MOLD *mo, NoQuote(const Cell*) v, bool form)
     // of what that logic *should* do.
 
     bool no_quotes = true;
-    Utf8(const*) cp = Cell_Utf8_At(v);
     Codepoint c = Codepoint_At(cp);
     for (; c != '\0'; cp = Utf8_Next(&c, cp)) {
         if (
@@ -303,7 +299,7 @@ void MF_Issue(REB_MOLD *mo, NoQuote(const Cell*) v, bool form)
     }
 
     if (no_quotes or Not_Cell_Flag(v, ISSUE_HAS_NODE)) {  // !!! hack
-        if (len == 1 and not no_quotes) {  // use historical CHAR! path
+        if (len == 1 and not no_quotes) {  // use historical CHAR! molding
             bool parened = GET_MOLD_FLAG(mo, MOLD_FLAG_ALL);
 
             Append_Codepoint(mo->series, '"');
@@ -312,8 +308,11 @@ void MF_Issue(REB_MOLD *mo, NoQuote(const Cell*) v, bool form)
         }
         else
             Append_String_Limit(mo->series, v, len);
-    } else
-        Mold_Text_Series_At(mo, Cell_String(v), 0);
+    }
+    else {
+        const String* s = Cell_Issue_String(v);  // !!! needs node
+        Mold_Text_Series_At(mo, s, 0);
+    }
 }
 
 

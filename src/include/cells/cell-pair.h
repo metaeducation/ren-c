@@ -30,6 +30,16 @@
 // accepted for now in the PAIR! type.
 //
 
+INLINE bool Any_Pairlike(NoQuote(const Cell*) v) {
+    // called by core code, sacrifice READABLE() checks
+    if (Cell_Heart_Unchecked(v) == REB_PAIR)
+        return true;
+    if (not Any_Sequence_Kind(Cell_Heart_Unchecked(v)))
+        return false;
+    if (Not_Cell_Flag(v, SEQUENCE_HAS_NODE))  // compressed bytes
+        return false;
+    return Is_Node_A_Cell(Cell_Node1(v));
+}
 
 #define INIT_VAL_PAIR(v,pairing) \
     Init_Cell_Node1((v), (pairing))

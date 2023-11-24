@@ -4,15 +4,7 @@
 // the debug build (which doesn't inline functions) there's a notable cost.
 //
 INLINE const Series* Cell_Series(NoQuote(const Cell*) v) {
-  #if !defined(NDEBUG)
-    enum Reb_Kind k = Cell_Heart(v);
-    assert(
-        Any_Series_Kind(k)
-        or k == REB_ISSUE or k == REB_URL
-        or Any_Arraylike(v)
-    );
-  #endif
-    assert(not Is_Node_A_Cell(Cell_Node1(v)));  // not a pairing arraylike
+    assert(Any_Series_Kind(Cell_Heart(v)));
     const Series* s = c_cast(Series*, Cell_Node1(v));
     if (Get_Series_Flag(s, INACCESSIBLE))
         fail (Error_Series_Data_Freed_Raw());
@@ -42,22 +34,14 @@ INLINE const Series* Cell_Series(NoQuote(const Cell*) v) {
     //
     INLINE REBIDX VAL_INDEX_UNBOUNDED(NoQuote(const Cell*) v) {
         enum Reb_Kind k = Cell_Heart_Unchecked(v);  // only const if heart!
-        assert(
-            Any_Series_Kind(k)
-            or k == REB_ISSUE or k == REB_URL
-            or Any_Arraylike(v)
-        );
+        assert(Any_Series_Kind(k));
         assert(Get_Cell_Flag_Unchecked(v, FIRST_IS_NODE));
         return VAL_INDEX_RAW(v);
     }
     INLINE REBIDX & VAL_INDEX_UNBOUNDED(Cell* v) {
         ASSERT_CELL_WRITABLE_EVIL_MACRO(v);
         enum Reb_Kind k = Cell_Heart_Unchecked(v);
-        assert(
-            Any_Series_Kind(k)
-            or k == REB_ISSUE or k == REB_URL
-            or Any_Arraylike(v)
-        );
+        assert(Any_Series_Kind(k));
         assert(Get_Cell_Flag_Unchecked(v, FIRST_IS_NODE));
         return VAL_INDEX_RAW(v);  // returns a C++ reference
     }
@@ -72,11 +56,7 @@ INLINE REBLEN Cell_Series_Len_Head(NoQuote(const Cell*) v);  // forward decl
 //
 INLINE REBLEN VAL_INDEX(NoQuote(const Cell*) v) {
     enum Reb_Kind k = Cell_Heart(v);  // only const access if heart!
-    assert(
-        Any_Series_Kind(k)
-        or k == REB_ISSUE or k == REB_URL
-        or Any_Arraylike(v)
-    );
+    assert(Any_Series_Kind(k));
     UNUSED(k);
     assert(Get_Cell_Flag(v, FIRST_IS_NODE));
     REBIDX i = VAL_INDEX_RAW(v);
