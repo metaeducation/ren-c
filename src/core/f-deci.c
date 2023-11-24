@@ -41,7 +41,7 @@
 
 #include "sys-core.h"
 
-#include "datatypes/sys-money.h"
+#include "cells/cell-money.h"
 #include "sys-dec-to-char.h"
 
 #define IS_DIGIT(c) ((c) >= '0' && (c) <= '9')

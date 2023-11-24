@@ -132,7 +132,7 @@ not be complete.  Please amend with any corrections.
 
 **Unicode**
 - Copyright 2001-2004 Unicode, Inc.
-- Portions used in `%src/include/datatypes/sys-char.h`
+- Portions used in `%src/include/cells/cell-char.h`
 - Author: Mark E. Davis, 1994.
 - Rev History: Rick McGowan, fixes & updates May 2001.
   Fixes & updates, Sept 2001.

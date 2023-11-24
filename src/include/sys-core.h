@@ -199,29 +199,30 @@
 
 #include "reb-defs.h"  // basic typedefs like Byte (wraps symbol IDs as SymId)
 
-#include "structs/sys-rebnod.h"
+#include "structs/struct-node.h"
 #include "mem-pools.h"
 
 #include "tmp-kinds.h"  // Defines `enum Reb_Kind` (REB_BLOCK, REB_TEXT, etc)
 #include "sys-ordered.h"  // changing the type enum *must* update these macros
 
-#include "structs/sys-rebcel.h"
-#include "structs/sys-rebval.h"  // low level Rebol cell structure definition
+#include "structs/struct-cell.h"
+#include "structs/struct-value.h"
 
 #include "sys-flavor.h"  // series subclass byte (uses sizeof(Cell))
 
-#include "structs/sys-rebser.h"  // series structure definition, embeds Cell
+#include "structs/struct-stub.h"  // series structure definition, embeds Cell
 
-#include "structs/sys-rebarr.h"  // array structure (Series subclass)
-#include "structs/sys-rebact.h"  // action structure
-#include "structs/sys-rebctx.h"  // context structure
-#include "structs/sys-rebpat.h"  // virtual binding patch definitions
+#include "structs/struct-array.h"  // series subclass
+#include "structs/struct-action.h"  // array subclass
+#include "structs/struct-context.h"  // array subclass
 
-#include "structs/sys-rebchr.h"  // Utf8(*) is Byte* in validated UTF8
+#include "structs/struct-patch.h"
 
-#include "structs/sys-rebfed.h"  // REBFED (feed) definition
-#include "structs/sys-rebjmp.h"  // state of variables restored on jumps
-#include "structs/sys-rebfrm.h"  // C struct for running frame, uses REBFED
+#include "structs/struct-char.h"  // Utf8(*) is Byte* in validated UTF8
+
+#include "structs/struct-feed.h"
+#include "structs/struct-state.h"  // state of variables restored on jumps
+#include "structs/struct-level.h"  // C struct for running level, uses feed
 
 
 #include "sys-hooks.h"  // function pointer definitions
@@ -558,7 +559,7 @@ INLINE void INIT_BINDING_MAY_MANAGE(
 );
 
 #include "sys-track.h"
-#include "datatypes/sys-value.h"  // these defines don't need series accessors
+#include "sys-value.h"  // these defines don't need series accessors
 
 
 enum rebol_signals {
@@ -616,13 +617,15 @@ INLINE void SET_SIGNAL(Flags f) { // used in %sys-series.h
     cast(void, g_ts.eval_signals &= ~(f))
 
 
-#include "datatypes/sys-series.h"
-#include "datatypes/sys-array.h"  // Array* used by UTF-8 string bookmarks
+#include "stubs/stub-series.h"
+#include "cells/cell-series.h"
+#include "stubs/stub-array.h"  // Array* used by UTF-8 string bookmarks
+#include "cells/cell-array.h"
 
 
 //=//// LIB BUILTINS ACCESS MACRO //////////////////////////////////////////=//
 
-#include "sys-symbol.h"
+#include "stubs/stub-symbol.h"
 
 INLINE Value(const*) Try_Lib_Var(SymId id) {
     assert(id < LIB_SYMS_MAX);
@@ -655,61 +658,65 @@ INLINE Value(*) Force_Lib_Var(SymId id) {
 
 //=//// CONTINUE VALUE TYPES ///////////////////////////////////////////////=//
 
-#include "sys-void.h"
-#include "sys-trash.h"  // quasi-void with special behavior in debug build
+#include "cells/cell-void.h"
+#include "cells/cell-trash.h"
 
-#include "datatypes/sys-blank.h"
+#include "cells/cell-blank.h"
 
-#include "datatypes/sys-comma.h"
+#include "cells/cell-comma.h"
 
-#include "datatypes/sys-integer.h"
-#include "datatypes/sys-decimal.h"
+#include "cells/cell-integer.h"
+#include "cells/cell-decimal.h"
 
 #include "sys-protect.h"
 
 
-#include "datatypes/sys-binary.h"  // BIN_XXX(), etc. used by strings
+#include "stubs/stub-binary.h"  // BIN_XXX(), etc. used by strings
+#include "cells/cell-binary.h"
 
-#include "datatypes/sys-char.h"  // use Init_Integer() for bad codepoint error
-#include "datatypes/sys-string.h"  // SymId needed for typesets
+#include "cells/cell-char.h"  // use Init_Integer() for bad codepoint error
+#include "stubs/stub-string.h"  // SymId needed for typesets
+#include "cells/cell-string.h"
 
-#include "datatypes/sys-quoted.h"
+#include "cells/cell-quoted.h"
 
-#include "datatypes/sys-pair.h"
+#include "cells/cell-pair.h"
 
 #include "sys-stack.h"
 
-#include "datatypes/sys-action.h"
-#include "datatypes/sys-context.h"  // needs actions for FRAME! contexts
+#include "stubs/stub-action.h"
+#include "stubs/stub-context.h"  // needs actions for FRAME! contexts
+#include "cells/cell-context.h"
+#include "cells/cell-frame.h"
 
-#include "datatypes/sys-word.h"  // needs to know about QUOTED! for binding
-#include "sys-nulled.h"
-#include "datatypes/sys-logic.h"
-#include "datatypes/sys-datatype.h"  // uses words
+#include "cells/cell-word.h"  // needs to know about QUOTED! for binding
+#include "cells/cell-nulled.h"
+#include "cells/cell-logic.h"
+#include "cells/cell-datatype.h"  // uses words
 
-#include "datatypes/sys-error.h"
+#include "cells/cell-error.h"
 
-#include "datatypes/sys-bitset.h"
+#include "cells/cell-bitset.h"
 
 #include "sys-patch.h"
 #include "sys-bind.h" // needs PUSH() and TOP from %sys-stack.h
 
-#include "datatypes/sys-typeset.h"  // needed for keys in contexts
+#include "cells/cell-typeset.h"  // needed for keys in contexts
 
-#include "datatypes/sys-token.h"
-#include "datatypes/sys-sequence.h"  // also needs PUSH()
+#include "cells/cell-token.h"
+#include "cells/cell-sequence.h"  // also needs PUSH()
 
 #include "sys-roots.h"
 
 
 #include "sys-throw.h"
 #include "sys-feed.h"
-#include "datatypes/sys-frame.h"  // needs words for frame-label helpers
+#include "sys-level.h"  // needs words for frame-label helpers
 
-#include "datatypes/sys-time.h"
-#include "datatypes/sys-handle.h"
-#include "datatypes/sys-map.h"
-#include "datatypes/sys-varargs.h"
+#include "cells/cell-time.h"
+#include "cells/cell-handle.h"
+#include "cells/cell-map.h"
+#include "cells/cell-varargs.h"
 
 #include "sys-eval.h"  // low-level single-step evaluation API
 #include "sys-do.h"  // higher-level evaluate-until-end API

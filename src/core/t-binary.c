@@ -34,7 +34,7 @@
 #undef Byte  // sys-zlib.h defines it compatibly (unsigned char)
 #include "sys-zlib.h"  // for crc32_z()
 
-#include "datatypes/sys-money.h"
+#include "cells/cell-money.h"
 
 
 //

@@ -29,7 +29,7 @@
 
 #include "sys-int-funcs.h"
 
-#include "datatypes/sys-money.h"
+#include "cells/cell-money.h"
 
 #define MAX_QUOTED_STR  50  // max length of "string" before going to { }
 

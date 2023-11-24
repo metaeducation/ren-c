@@ -26,7 +26,7 @@
 #include <math.h>
 #include <float.h>
 
-#include "datatypes/sys-money.h"
+#include "cells/cell-money.h"
 
 #define COEF 0.0625 // Coefficient used for float comparision
 #define EQ_RANGE 4
