@@ -139,7 +139,7 @@ Context* Make_Context_For_Action_Push_Partials(
         }
 
         const Symbol* symbol = KEY_SYMBOL(key);  // added to binding
-        if (NOT_PARAM_FLAG(param, REFINEMENT)) {  // nothing to push
+        if (Not_Parameter_Flag(param, REFINEMENT)) {  // nothing to push
 
           continue_unspecialized:
 
@@ -336,8 +336,8 @@ bool Specialize_Action_Throws(
         // return and output parameters means they are exposed to the user
         // in the external view of frames.  They should not be.
         //
-        enum Reb_Param_Class pclass = VAL_PARAM_CLASS(param);
-        if (pclass == PARAM_CLASS_OUTPUT or pclass == PARAM_CLASS_RETURN) {
+        ParamClass pclass = Cell_ParamClass(param);
+        if (pclass == PARAMCLASS_OUTPUT or pclass == PARAMCLASS_RETURN) {
             if (not Is_None(arg))
                 fail ("Can't specialize RETURN or output parameters");
             Copy_Cell(arg, param);
@@ -358,7 +358,7 @@ bool Specialize_Action_Throws(
         // !!! If argument was previously specialized, should have been type
         // checked already... don't type check again (?)
         //
-        if (GET_PARAM_FLAG(param, VARIADIC))
+        if (Get_Parameter_Flag(param, VARIADIC))
             fail ("Cannot currently SPECIALIZE variadic arguments.");
 
         if (not Typecheck_Coerce_Argument(param, arg)) {
@@ -524,10 +524,10 @@ void For_Each_Unspecialized_Param(
         if (Is_Specialized(param))
             continue;
 
-        if (GET_PARAM_FLAG(param, REFINEMENT))
+        if (Get_Parameter_Flag(param, REFINEMENT))
             continue;
 
-        if (VAL_PARAM_CLASS(param) == PARAM_CLASS_RETURN)
+        if (Cell_ParamClass(param) == PARAMCLASS_RETURN)
             continue;
 
         Flags flags = 0;
@@ -583,8 +583,8 @@ void For_Each_Unspecialized_Param(
             continue;
 
         if (
-            NOT_PARAM_FLAG(param, REFINEMENT)
-            or VAL_PARAM_CLASS(param) == PARAM_CLASS_RETURN
+            Not_Parameter_Flag(param, REFINEMENT)
+            or Cell_ParamClass(param) == PARAMCLASS_RETURN
         ){
             continue;
         }
@@ -626,8 +626,12 @@ static bool First_Param_Hook(
     struct Find_Param_State *s = cast(struct Find_Param_State*, opaque);
     assert(not s->key);  // should stop enumerating if found
 
-    if (not (flags & PHF_UNREFINED) and GET_PARAM_FLAG(param, REFINEMENT))
+    if (
+        not (flags & PHF_UNREFINED)
+        and Get_Parameter_Flag(param, REFINEMENT)
+    ){
         return false;  // we know WORD!-based invocations will be 0 arity
+    }
 
     s->key = key;
     s->param = param;
@@ -642,8 +646,12 @@ static bool Last_Param_Hook(
 ){
     struct Find_Param_State *s = cast(struct Find_Param_State*, opaque);
 
-    if (not (flags & PHF_UNREFINED) and GET_PARAM_FLAG(param, REFINEMENT))
+    if (
+        not (flags & PHF_UNREFINED)
+        and Get_Parameter_Flag(param, REFINEMENT)
+    ){
         return false;  // we know WORD!-based invocations will be 0 arity
+    }
 
     s->key = key;
     s->param = param;

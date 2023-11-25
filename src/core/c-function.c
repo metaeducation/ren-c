@@ -42,8 +42,8 @@ static bool Params_Of_Hook(
 ){
     struct Params_Of_State *s = cast(struct Params_Of_State*, opaque);
 
-    enum Reb_Param_Class pclass = VAL_PARAM_CLASS(param);
-    if (pclass == PARAM_CLASS_OUTPUT)
+    ParamClass pclass = Cell_ParamClass(param);
+    if (pclass == PARAMCLASS_OUTPUT)
         return true;  // use `outputs of` instead of `parameters of` to get
 
     Init_Word(PUSH(), KEY_SYMBOL(key));
@@ -51,29 +51,29 @@ static bool Params_Of_Hook(
     if (not s->just_words) {
         if (
             not (flags & PHF_UNREFINED)
-            and GET_PARAM_FLAG(param, REFINEMENT)
+            and Get_Parameter_Flag(param, REFINEMENT)
         ){
             Refinify(TOP);
         }
 
-        switch (VAL_PARAM_CLASS(param)) {
-          case PARAM_CLASS_RETURN:
-          case PARAM_CLASS_NORMAL:
+        switch (Cell_ParamClass(param)) {
+          case PARAMCLASS_RETURN:
+          case PARAMCLASS_NORMAL:
             break;
 
-          case PARAM_CLASS_META:
+          case PARAMCLASS_META:
             Metafy(TOP);
             break;
 
-          case PARAM_CLASS_SOFT:
+          case PARAMCLASS_SOFT:
             Getify(TOP);
             break;
 
-          case PARAM_CLASS_MEDIUM:
+          case PARAMCLASS_MEDIUM:
             Quotify(Getify(TOP), 1);
             break;
 
-          case PARAM_CLASS_HARD:
+          case PARAMCLASS_HARD:
             Quotify(TOP, 1);
             break;
 
@@ -111,7 +111,7 @@ static bool Outputs_Of_Hook(
 ){
     UNUSED(opaque);
     UNUSED(flags);
-    if (VAL_PARAM_CLASS(param) == PARAM_CLASS_OUTPUT)
+    if (Cell_ParamClass(param) == PARAMCLASS_OUTPUT)
         Init_Word(PUSH(), KEY_SYMBOL(key));
     return true;
 }
@@ -138,7 +138,7 @@ enum Reb_Spec_Mode {
 
 static void Finalize_Param(Value(*) param) {
     //
-    // This used to guard against nullptr in VAL_PARAMETER_ARRAY() and canonize
+    // This used to guard against nullptr in Cell_Parameter_Spec() and canonize
     // the refinement case to EMPTY_ARRAY and the non-refinement case to
     // the ANY-VALUE! typeset.  New philosophy is to allow null arrays in
     // order to establish &(ANY-VALUE?) as a type annotation, because
@@ -219,21 +219,16 @@ void Push_Paramlist_Quads_May_Fail(
             }
             else if (0 == CT_String(item, Root_None_Tag, strict)) {
                 StackValue(*) param = PARAM_SLOT(TOP_INDEX);
-                SET_PARAM_FLAG(param, RETURN_NONE);  // enforce RETURN NONE
+                Set_Parameter_Flag(param, RETURN_NONE);  // enforce RETURN NONE
 
-                // Fake as if they said []
-                //
-                assert(VAL_PARAMETER_ARRAY(param) == nullptr);
+                assert(Cell_Parameter_Spec(param) == nullptr);
                 continue;
             }
-            else if (0 == CT_String(item, Root_Void_Tag, strict)) {
-                //
-                // Fake as if they said [<void>] !!! make more efficient
-                //
+            else if (0 == CT_String(item, Root_Nihil_Tag, strict)) {
                 StackValue(*) param = PARAM_SLOT(TOP_INDEX);
-                assert(VAL_PARAMETER_ARRAY(param) == nullptr);
-                SET_PARAM_FLAG(param, RETURN_VOID);
-                SET_PARAM_FLAG(param, ENDABLE);
+                Set_Parameter_Flag(param, RETURN_NIHIL);  // enforce RETURN NIHIL
+
+                assert(Cell_Parameter_Spec(param) == nullptr);
                 continue;
             }
             else
@@ -249,7 +244,7 @@ void Push_Paramlist_Quads_May_Fail(
             Specifier* derived = Derive_Specifier(Cell_Specifier(spec), item);
 
             bool was_refinement;
-            enum Reb_Param_Class pclass;
+            ParamClass pclass;
 
           blockscope {
             StackValue(*) types = TYPES_SLOT(TOP_INDEX);
@@ -283,8 +278,8 @@ void Push_Paramlist_Quads_May_Fail(
             if (Is_Specialized(cast(Param*, cast(REBVAL*, param))))
                 continue;
 
-            was_refinement = GET_PARAM_FLAG(param, REFINEMENT);
-            pclass = VAL_PARAM_CLASS(cast_PAR(param));
+            was_refinement = Get_Parameter_Flag(param, REFINEMENT);
+            pclass = Cell_ParamClass(cast_PAR(param));
 
             Init_Block(
                 types,
@@ -308,12 +303,12 @@ void Push_Paramlist_Quads_May_Fail(
             );
 
             StackValue(*) param = PARAM_SLOT(TOP_INDEX);
-            VAL_PARAM_FLAGS(param) |= param_flags;
-            assert(VAL_PARAMETER_ARRAY(param) == nullptr);
-            INIT_VAL_PARAMETER_ARRAY(param, a);
+            PARAMETER_FLAGS(param) |= param_flags;
+            assert(Cell_Parameter_Spec(param) == nullptr);
+            INIT_CELL_PARAMETER_SPEC(param, a);
 
             if (was_refinement)
-                SET_PARAM_FLAG(param, REFINEMENT);
+                Set_Parameter_Flag(param, REFINEMENT);
 
             *flags |= MKF_HAS_TYPES;
             continue;
@@ -331,7 +326,7 @@ void Push_Paramlist_Quads_May_Fail(
         enum Reb_Kind heart = Cell_Heart(item);
 
         const Symbol* symbol = nullptr;  // avoids compiler warning
-        enum Reb_Param_Class pclass = PARAM_CLASS_0;  // error if not changed
+        ParamClass pclass = PARAMCLASS_0;  // error if not changed
 
         bool local = false;
         bool refinement = false;  // paths with blanks at head are refinements
@@ -357,18 +352,18 @@ void Push_Paramlist_Quads_May_Fail(
 
             if (heart == REB_GET_PATH) {
                 if (quoted)
-                    pclass = PARAM_CLASS_MEDIUM;
+                    pclass = PARAMCLASS_MEDIUM;
                 else
-                    pclass = PARAM_CLASS_SOFT;
+                    pclass = PARAMCLASS_SOFT;
             }
             else if (heart == REB_PATH) {
                 if (quoted)
-                    pclass = PARAM_CLASS_HARD;
+                    pclass = PARAMCLASS_HARD;
                 else
-                    pclass = PARAM_CLASS_NORMAL;
+                    pclass = PARAMCLASS_NORMAL;
             }
             else if (heart == REB_META_PATH) {
-                pclass = PARAM_CLASS_META;
+                pclass = PARAMCLASS_META;
             }
         }
         else if (Any_Tuple_Kind(heart)) {
@@ -387,7 +382,7 @@ void Push_Paramlist_Quads_May_Fail(
 
             if (heart == REB_SET_WORD) {
                 if (VAL_WORD_ID(item) == SYM_RETURN and not quoted) {
-                    pclass = PARAM_CLASS_RETURN;
+                    pclass = PARAMCLASS_RETURN;
                 }
             }
             else if (heart == REB_THE_WORD) {
@@ -402,7 +397,7 @@ void Push_Paramlist_Quads_May_Fail(
                         );
                     }
 
-                    pclass = PARAM_CLASS_OUTPUT;
+                    pclass = PARAMCLASS_OUTPUT;
                 }
             }
             else {
@@ -415,30 +410,30 @@ void Push_Paramlist_Quads_May_Fail(
 
                 if (heart == REB_GET_WORD) {
                     if (quoted)
-                        pclass = PARAM_CLASS_MEDIUM;
+                        pclass = PARAMCLASS_MEDIUM;
                     else
-                        pclass = PARAM_CLASS_SOFT;
+                        pclass = PARAMCLASS_SOFT;
                 }
                 else if (heart == REB_WORD) {
                     if (quoted)
-                        pclass = PARAM_CLASS_HARD;
+                        pclass = PARAMCLASS_HARD;
                     else
-                        pclass = PARAM_CLASS_NORMAL;
+                        pclass = PARAMCLASS_NORMAL;
                 }
                 else if (heart == REB_META_WORD) {
                     if (not quoted)
-                        pclass = PARAM_CLASS_META;
+                        pclass = PARAMCLASS_META;
                 }
             }
         }
         else
             fail (Error_Bad_Func_Def_Raw(item));
 
-        if (not local and pclass == PARAM_CLASS_0)  // didn't match
+        if (not local and pclass == PARAMCLASS_0)  // didn't match
             fail (Error_Bad_Func_Def_Raw(item));
 
         if (mode != SPEC_MODE_NORMAL) {
-            if (pclass != PARAM_CLASS_NORMAL and not local)
+            if (pclass != PARAMCLASS_NORMAL and not local)
                 fail (Error_Bad_Func_Def_Raw(item));
 
             if (mode == SPEC_MODE_LOCAL)
@@ -448,7 +443,7 @@ void Push_Paramlist_Quads_May_Fail(
         if (
             (*flags & MKF_RETURN)
             and Symbol_Id(symbol) == SYM_RETURN
-            and pclass != PARAM_CLASS_RETURN
+            and pclass != PARAMCLASS_RETURN
         ){
             fail ("Generator provides RETURN:, use LAMBDA if not desired");
         }
@@ -480,17 +475,17 @@ void Push_Paramlist_Quads_May_Fail(
             Finalize_None(param);
         }
         else if (refinement) {
-            Init_Param(
+            Init_Parameter(
                 param,
-                FLAG_PARAM_CLASS_BYTE(pclass)
-                    | PARAM_FLAG_REFINEMENT,  // must preserve if type block
+                FLAG_PARAMCLASS_BYTE(pclass)
+                    | PARAMETER_FLAG_REFINEMENT,  // must preserve if type block
                 nullptr
             );
         }
         else {
-            Init_Param(
+            Init_Parameter(
                 param,
-                FLAG_PARAM_CLASS_BYTE(pclass),
+                FLAG_PARAMCLASS_BYTE(pclass),
                 nullptr
             );
         }
@@ -502,7 +497,7 @@ void Push_Paramlist_Quads_May_Fail(
                 fail (Error_Dup_Vars_Raw(word));  // most dup checks are later
             }
             if (*flags & MKF_RETURN) {
-                assert(pclass == PARAM_CLASS_RETURN);
+                assert(pclass == PARAMCLASS_RETURN);
                 *return_stackindex = TOP_INDEX;  // RETURN: explicit
             }
         }
@@ -559,9 +554,9 @@ Array* Pop_Paramlist_With_Adjunct_May_Fail(
             // If you have a RETURN spec, however, you must explicitly say
             // you can return void.
             //
-            Init_Param(
+            Init_Parameter(
                 param,
-                FLAG_PARAM_CLASS_BYTE(PARAM_CLASS_RETURN),
+                FLAG_PARAMCLASS_BYTE(PARAMCLASS_RETURN),
                 nullptr
             );
 
@@ -574,7 +569,6 @@ Array* Pop_Paramlist_With_Adjunct_May_Fail(
             assert(
                 VAL_WORD_ID(KEY_SLOT(return_stackindex)) == SYM_RETURN
             );
-            SET_PARAM_FLAG(param, RETURN_TYPECHECKED);  // was explicit
         }
 
         // definitional_return handled specially when paramlist copied
@@ -1036,17 +1030,17 @@ Phase* Make_Action(
 
     const Param* first = First_Unspecialized_Param(nullptr, act);
     if (first) {
-        enum Reb_Param_Class pclass = VAL_PARAM_CLASS(first);
+        ParamClass pclass = Cell_ParamClass(first);
         switch (pclass) {
-          case PARAM_CLASS_RETURN:
-          case PARAM_CLASS_OUTPUT:
-          case PARAM_CLASS_NORMAL:
-          case PARAM_CLASS_META:
+          case PARAMCLASS_RETURN:
+          case PARAMCLASS_OUTPUT:
+          case PARAMCLASS_NORMAL:
+          case PARAMCLASS_META:
             break;
 
-          case PARAM_CLASS_SOFT:
-          case PARAM_CLASS_MEDIUM:
-          case PARAM_CLASS_HARD:
+          case PARAMCLASS_SOFT:
+          case PARAMCLASS_MEDIUM:
+          case PARAMCLASS_HARD:
             Set_Subclass_Flag(VARLIST, paramlist, PARAMLIST_QUOTES_FIRST);
             break;
 
@@ -1054,7 +1048,7 @@ Phase* Make_Action(
             assert(false);
         }
 
-        if (GET_PARAM_FLAG(first, SKIPPABLE))
+        if (Get_Parameter_Flag(first, SKIPPABLE))
             Set_Subclass_Flag(VARLIST, paramlist, PARAMLIST_SKIPPABLE_FIRST);
     }
 
@@ -1240,24 +1234,24 @@ DECLARE_NATIVE(tweak)
     Action* act = VAL_ACTION(ARG(frame));
     const Param* first = First_Unspecialized_Param(nullptr, act);
 
-    enum Reb_Param_Class pclass = first
-        ? VAL_PARAM_CLASS(first)
-        : PARAM_CLASS_NORMAL;  // imagine it as <end>able
+    ParamClass pclass = first
+        ? Cell_ParamClass(first)
+        : PARAMCLASS_NORMAL;  // imagine it as <end>able
 
     Flags flag;
 
     switch (VAL_WORD_ID(ARG(property))) {
       case SYM_DEFER:  // Special enfix behavior used by THEN, ELSE, ALSO...
-        if (pclass != PARAM_CLASS_NORMAL and pclass != PARAM_CLASS_META)
+        if (pclass != PARAMCLASS_NORMAL and pclass != PARAMCLASS_META)
             fail ("TWEAK defer only actions with evaluative 1st params");
         flag = DETAILS_FLAG_DEFERS_LOOKBACK;
         break;
 
       case SYM_POSTPONE:  // Wait as long as it can to run w/o changing order
         if (
-            pclass != PARAM_CLASS_NORMAL
-            and pclass != PARAM_CLASS_SOFT
-            and pclass != PARAM_CLASS_META
+            pclass != PARAMCLASS_NORMAL
+            and pclass != PARAMCLASS_SOFT
+            and pclass != PARAMCLASS_META
         ){
             fail ("TWEAK postpone only actions with evaluative 1st params");
         }

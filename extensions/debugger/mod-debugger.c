@@ -109,7 +109,7 @@ bool Do_Breakpoint_Throws(
 //
 //  "Signal breakpoint to the host, but do not participate in evaluation"
 //
-//      return: <void>
+//      return: <nihil>
 //  ]
 //
 DECLARE_NATIVE(breakpoint_p)
@@ -132,7 +132,7 @@ DECLARE_NATIVE(breakpoint_p)
     if (not Is_Quasi_Word(SPARE))
         fail ("BREAKPOINT is invisible, can't RESUME/WITH code (use PAUSE)");
 
-    return VOID;
+    return Init_Nihil(OUT);
 }
 
 

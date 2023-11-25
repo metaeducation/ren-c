@@ -185,9 +185,9 @@ Phase* Make_Native(
     if (native_type == NATIVE_INTRINSIC) {
         assert(ACT_NUM_PARAMS(native) == 2);  // return + 1 argument
         const Param* param = ACT_PARAM(native, 2);
-        assert(NOT_PARAM_FLAG(param, REFINEMENT));
-        assert(NOT_PARAM_FLAG(param, SKIPPABLE));
-        assert(NOT_PARAM_FLAG(param, ENDABLE));
+        assert(Not_Parameter_Flag(param, REFINEMENT));
+        assert(Not_Parameter_Flag(param, SKIPPABLE));
+        assert(Not_Parameter_Flag(param, ENDABLE));
         UNUSED(param);
     }
 

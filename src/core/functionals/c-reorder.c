@@ -186,7 +186,7 @@ DECLARE_NATIVE(reorder_p)  // see REORDER in %base-defs.r, for inheriting meta
             continue;
 
         const REBVAL *param = ACT_PARAM(reorderee, index);
-        if (GET_PARAM_FLAG(param, REFINEMENT) and Is_Parameter_Unconstrained(param)) {
+        if (Get_Parameter_Flag(param, REFINEMENT) and Is_Parameter_Unconstrained(param)) {
             error = Error_User("Can't reorder refinements with no argument");
             goto cleanup_binder;
         }
@@ -215,7 +215,7 @@ DECLARE_NATIVE(reorder_p)  // see REORDER in %base-defs.r, for inheriting meta
         if (
             not error  // don't report an error here if one is pending
             and not mentioned
-            and NOT_PARAM_FLAG(param, REFINEMENT)  // okay to leave out
+            and Not_Parameter_Flag(param, REFINEMENT)  // okay to leave out
         ){
             error = Error_No_Arg(label, KEY_SYMBOL(key));
         }

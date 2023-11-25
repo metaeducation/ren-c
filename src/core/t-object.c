@@ -418,10 +418,10 @@ bool Did_Advance_Evars(EVARS *e) {
                 // "input" view of a FRAME!.
                 //
               #if 0
-                enum Reb_Param_Class pclass = VAL_PARAM_CLASS(e->param);
-                if (pclass == PARAM_CLASS_RETURN)
+                ParamClass pclass = Cell_ParamClass(e->param);
+                if (pclass == PARAMCLASS_RETURN)
                     continue;
-                if (pclass == PARAM_CLASS_OUTPUT)
+                if (pclass == PARAMCLASS_OUTPUT)
                     continue;
               #endif
             }

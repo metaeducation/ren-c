@@ -225,4 +225,4 @@ INLINE const Param* Param_For_Varargs_Maybe_Null(
 
 
 #define Do_Vararg_Op_Maybe_End_Throws(out,op,vararg) \
-    Do_Vararg_Op_Maybe_End_Throws_Core((out), (op), (vararg), PARAM_CLASS_0)
+    Do_Vararg_Op_Maybe_End_Throws_Core((out), (op), (vararg), PARAMCLASS_0)

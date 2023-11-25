@@ -676,11 +676,12 @@ INLINE void SET_SIGNAL(Flags f) { // used in %sys-series.h
 #include "cells/cell-map.h"
 #include "cells/cell-varargs.h"
 
+#include "cells/cell-parameter.h"
+
 #include "sys-patch.h"
 #include "sys-bind.h"
 
-#include "cells/cell-typeset.h"  // PARAMETER! evolving to be user exposed?
-#include "cells/cell-datatype.h"  // needs Derelativize(), TYPE_CHECK()
+#include "cells/cell-datatype.h"  // needs Derelativize()
 
 #include "cells/cell-sequence.h"  // needs Derelativize()
 

@@ -896,7 +896,7 @@ Context* Error_Not_Varargs(
     const Param* param,
     const REBVAL *arg
 ){
-    assert(GET_PARAM_FLAG(param, VARIADIC));
+    assert(Get_Parameter_Flag(param, VARIADIC));
     assert(not Is_Varargs(arg));
 
     // Since the "types accepted" are a lie (an [integer! <variadic>] takes
@@ -904,10 +904,10 @@ Context* Error_Not_Varargs(
     // an "honest" parameter has to be made to give the error.
     //
     DECLARE_LOCAL (honest_param);
-    Init_Param(
+    Init_Parameter(
         honest_param,
-        FLAG_PARAM_CLASS_BYTE(PARAM_CLASS_NORMAL)
-            | PARAM_FLAG_VARIADIC,
+        FLAG_PARAMCLASS_BYTE(PARAMCLASS_NORMAL)
+            | PARAMETER_FLAG_VARIADIC,
         nullptr
     );
     UNUSED(honest_param);  // !!! pass to Error_Arg_Type(?)
@@ -1123,7 +1123,7 @@ Context* Error_Arg_Type(
     const Param* param,
     const REBVAL *arg
 ){
-    if (VAL_PARAM_CLASS(param) == PARAM_CLASS_META and Is_Meta_Of_Raised(arg))
+    if (Cell_ParamClass(param) == PARAMCLASS_META and Is_Meta_Of_Raised(arg))
         return VAL_CONTEXT(arg);
 
     DECLARE_LOCAL (param_word);
@@ -1136,7 +1136,7 @@ Context* Error_Arg_Type(
         Init_Nulled(label);
 
     DECLARE_LOCAL (spec);
-    Option(const Array*) param_array = VAL_PARAMETER_ARRAY(param);
+    Option(const Array*) param_array = Cell_Parameter_Spec(param);
     if (param_array)
         Init_Block(spec, unwrap(param_array));
     else
@@ -1168,7 +1168,7 @@ Context* Error_Phase_Arg_Type(
     if (Level_Phase(L) == L->u.action.original)  // not an internal phase
         return Error_Arg_Type(L->label, key, param, arg);
 
-    if (VAL_PARAM_CLASS(param) == PARAM_CLASS_META and Is_Meta_Of_Raised(arg))
+    if (Cell_ParamClass(param) == PARAMCLASS_META and Is_Meta_Of_Raised(arg))
         return VAL_CONTEXT(arg);
 
     Context* error = Error_Arg_Type(L->label, key, param, arg);

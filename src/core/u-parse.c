@@ -635,7 +635,7 @@ static REBIXO Parse_One_Rule(
           case REB_TYPE_GROUP:
           case REB_PARAMETER: {
             Derelativize(SPARE, item, P_INPUT_SPECIFIER);
-            if (Typecheck_Value(rule, P_RULE_SPECIFIER, SPARE))
+            if (Typecheck_Atom_Core(rule, P_RULE_SPECIFIER, SPARE))
                 return pos + 1;  // type was in typeset
             return END_FLAG; }
 

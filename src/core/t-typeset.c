@@ -154,7 +154,7 @@ void Shutdown_Typesets(void)
 //
 Array* Add_Parameter_Bits_Core(
     Flags* flags,
-    enum Reb_Param_Class pclass,
+    ParamClass pclass,
     const Cell* head,
     const Cell* tail,
     Specifier* specifier
@@ -176,15 +176,15 @@ Array* Add_Parameter_Bits_Core(
                 // core sources were changed to `<variadic>`, asking users
                 // to shuffle should only be done once (when final is known).
                 //
-                *flags |= PARAM_FLAG_VARIADIC;
+                *flags |= PARAMETER_FLAG_VARIADIC;
             }
             else if (0 == CT_String(item, Root_End_Tag, strict)) {
-                *flags |= PARAM_FLAG_ENDABLE;
+                *flags |= PARAMETER_FLAG_ENDABLE;
                 Init_Quasi_Word(PUSH(), Canon(NULL));
 
             }
             else if (0 == CT_String(item, Root_Maybe_Tag, strict)) {
-                *flags |= PARAM_FLAG_NOOP_IF_VOID;
+                *flags |= PARAMETER_FLAG_NOOP_IF_VOID;
             }
             else if (0 == CT_String(item, Root_Opt_Tag, strict)) {
                 Init_Quasi_Word(PUSH(), Canon(NULL));
@@ -199,15 +199,15 @@ Array* Add_Parameter_Bits_Core(
                 );
             }
             else if (0 == CT_String(item, Root_Skip_Tag, strict)) {
-                if (pclass != PARAM_CLASS_HARD)
+                if (pclass != PARAMCLASS_HARD)
                     fail ("Only hard-quoted parameters are <skip>-able");
 
-                *flags |= PARAM_FLAG_SKIPPABLE;
-                *flags |= PARAM_FLAG_ENDABLE; // skip => null
+                *flags |= PARAMETER_FLAG_SKIPPABLE;
+                *flags |= PARAMETER_FLAG_ENDABLE; // skip => null
                 Init_Quasi_Word(PUSH(), Canon(NULL));
             }
             else if (0 == CT_String(item, Root_Const_Tag, strict)) {
-                *flags |= PARAM_FLAG_CONST;
+                *flags |= PARAMETER_FLAG_CONST;
             }
             else if (0 == CT_String(item, Root_None_Tag, strict)) {
                 Init_Quasi_Void(PUSH());
@@ -267,7 +267,7 @@ void MF_Parameter(REB_MOLD *mo, NoQuote(const Cell*) v, bool form)
     }
 
     DECLARE_LOCAL(temp);
-    Option(const Array*) param_array = VAL_PARAMETER_ARRAY(v);
+    Option(const Array*) param_array = Cell_Parameter_Spec(v);
     if (param_array)
         Init_Block(temp, unwrap(param_array));
     else

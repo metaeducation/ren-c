@@ -197,7 +197,7 @@ INLINE bool Did_Init_Inert_Optimize_Complete(
             // !!! Cache this test?
             //
             const Param* first = First_Unspecialized_Param(nullptr, action);
-            if (VAL_PARAM_CLASS(first) == PARAM_CLASS_SOFT)
+            if (Cell_ParamClass(first) == PARAMCLASS_SOFT)
                 goto optimized;  // don't look back, yield the lookahead
 
             *flags |=

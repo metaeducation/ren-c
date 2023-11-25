@@ -56,7 +56,7 @@
 // The varlist of the exemplar context is referred to as a "paramlist".  It
 // is an array that serves two overlapping purposes: any *unspecialized*
 // slots in the paramlist holds the TYPESET! definition of legal types for
-// that argument, as well as the PARAM_FLAG_XXX for other properties of the
+// that argument, as well as the PARAMETER_FLAG_XXX for other properties of the
 // parameter.  But a *specialized* parameter slot holds the specialized value
 // itself, which is presumed to have been type-checked upon specialization.
 //

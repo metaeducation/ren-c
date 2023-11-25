@@ -97,6 +97,9 @@ INLINE REBVAL *Init_Builtin_Datatype_Untracked(
 
 // isotopic type matcher (e.g. used by FIND, SWITCH)
 
+#define Typecheck_Atom(tests,atom) \
+    Typecheck_Atom_Core((tests), SPECIFIED, (atom))
+
 INLINE bool Is_Matcher(const Cell* v) {
     if (QUOTE_BYTE(v) != ISOTOPE_0)
         return false;
@@ -116,7 +119,7 @@ INLINE bool Matcher_Matches(
 
     DECLARE_STABLE (v_derelativized);
     Derelativize(v_derelativized, v, v_specifier);
-    if (TYPE_CHECK(Stable_Unchecked(plain), v_derelativized))
+    if (Typecheck_Atom(Stable_Unchecked(plain), v_derelativized))
         return true;
 
     return false;

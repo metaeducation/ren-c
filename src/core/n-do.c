@@ -876,10 +876,10 @@ DECLARE_NATIVE(apply)
             }
 
             if (
-                VAL_PARAM_CLASS(e->param) == PARAM_CLASS_RETURN
-                or VAL_PARAM_CLASS(e->param) == PARAM_CLASS_OUTPUT
-                or GET_PARAM_FLAG(e->param, REFINEMENT)
-                or GET_PARAM_FLAG(e->param, SKIPPABLE)
+                Cell_ParamClass(e->param) == PARAMCLASS_RETURN
+                or Cell_ParamClass(e->param) == PARAMCLASS_OUTPUT
+                or Get_Parameter_Flag(e->param, REFINEMENT)
+                or Get_Parameter_Flag(e->param, SKIPPABLE)
             ){
                 Init_None(e->var);  // TBD: RETURN will be a pure local
                 continue;  // skippable only requested by name [4]
@@ -893,7 +893,7 @@ DECLARE_NATIVE(apply)
 
     assert(not Is_Pointer_Trash_Debug(param));  // nullptr means toss result
 
-    if (param and VAL_PARAM_CLASS(param) == PARAM_CLASS_META)
+    if (param and Cell_ParamClass(param) == PARAMCLASS_META)
         Set_Level_Flag(SUBLEVEL, META_RESULT);  // get decayed result otherwise
     else
         Clear_Level_Flag(SUBLEVEL, META_RESULT);
@@ -923,7 +923,7 @@ DECLARE_NATIVE(apply)
 
     if (  // help convert logic for no-arg refinement [5]
         Is_Logic(SPARE)
-        and GET_PARAM_FLAG(param, REFINEMENT)
+        and Get_Parameter_Flag(param, REFINEMENT)
         and Is_Parameter_Unconstrained(param)
     ){
         if (Cell_Logic(SPARE))

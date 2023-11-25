@@ -327,7 +327,7 @@ DECLARE_NATIVE(c_debug_tick)
 //
 //  {Break at next evaluation point (only use when running under C debugger)}
 //
-//      return: <void>
+//      return: <nihil>
 //          "Invisibly returns what the expression to the right would have"
 //  ]
 //
@@ -348,14 +348,14 @@ DECLARE_NATIVE(c_debug_break)
         // happened and has been passed as an argument.
         //
         g_break_at_tick = level_->tick + 1;
-        return VOID;
+        return Init_Nihil(OUT);
      #else
         // No tick counting or tick-break checking, but still want some
         // debug break functionality (e.g. callgrind build).  Break here--
         // you'll have to step up out into the evaluator stack.
         //
         debug_break();
-        return VOID;
+        return Init_Nihil(OUT);
       #endif
   #endif
 }

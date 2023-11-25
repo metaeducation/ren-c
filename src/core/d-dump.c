@@ -146,7 +146,7 @@ void Dump_Stack(Level* L)
 //
 //  "Temporary debug dump"
 //
-//      return: <void>
+//      return: <nihil>
 //      :value [word!]
 //  ]
 //
@@ -174,6 +174,6 @@ DECLARE_NATIVE(dump)
             PROBE(var);
     }
 
-    return VOID;
+    return Init_Nihil(OUT);
 #endif
 }

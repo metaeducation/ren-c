@@ -48,7 +48,7 @@ inline static bool Vararg_Op_If_No_Advance_Handled(
     enum Reb_Vararg_Op op,
     Option(const Cell*) opt_look, // the first value in the varargs input
     Specifier* specifier,
-    enum Reb_Param_Class pclass
+    ParamClass pclass
 ){
     if (not opt_look) {
         Init_For_Vararg_End(out, op); // exhausted
@@ -57,12 +57,12 @@ inline static bool Vararg_Op_If_No_Advance_Handled(
 
     const Cell* look = unwrap(opt_look);
 
-    if (pclass == PARAM_CLASS_NORMAL and Is_Comma(look)) {
+    if (pclass == PARAMCLASS_NORMAL and Is_Comma(look)) {
         Init_For_Vararg_End(out, op);  // non-quoted COMMA!
         return true;
     }
 
-    if (pclass == PARAM_CLASS_NORMAL and Is_Word(look)) {
+    if (pclass == PARAMCLASS_NORMAL and Is_Word(look)) {
         //
         // When a variadic argument is being TAKE-n, deferred left hand side
         // argument needs to be seen as end of variadic input.  Otherwise,
@@ -80,7 +80,7 @@ inline static bool Vararg_Op_If_No_Advance_Handled(
         if (child_gotten and Is_Activation(child_gotten)) {
             if (Is_Enfixed(child_gotten)) {
                 if (
-                    pclass == PARAM_CLASS_NORMAL or
+                    pclass == PARAMCLASS_NORMAL or
                     Get_Action_Flag(VAL_ACTION(child_gotten), DEFERS_LOOKBACK)
                 ){
                     Init_For_Vararg_End(out, op);
@@ -99,7 +99,7 @@ inline static bool Vararg_Op_If_No_Advance_Handled(
     }
 
     if (op == VARARG_OP_FIRST) {
-        if (pclass != PARAM_CLASS_HARD)
+        if (pclass != PARAMCLASS_HARD)
             fail (Error_Varargs_No_Look_Raw()); // hard quote only
 
         Derelativize(out, look, specifier);
@@ -137,14 +137,14 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
     Atom(*) out,
     enum Reb_Vararg_Op op,
     const Cell* vararg,
-    enum Reb_Param_Class pclass  // PARAM_CLASS_0 to use vararg's class
+    ParamClass pclass  // PARAMCLASS_0 to use vararg's class
 ){
     FRESHEN(out);
 
     const Key* key;
     const Param* param = Param_For_Varargs_Maybe_Null(&key, vararg);
-    if (pclass == PARAM_CLASS_0)
-        pclass = VAL_PARAM_CLASS(param);
+    if (pclass == PARAMCLASS_0)
+        pclass = Cell_ParamClass(param);
 
     REBVAL *arg; // for updating CELL_FLAG_UNEVALUATED
 
@@ -181,10 +181,10 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
         // this argument happens.  Review if that should be an error.
 
         switch (pclass) {
-        case PARAM_CLASS_META:
+        case PARAMCLASS_META:
             fail ("Variadic literal parameters not yet implemented");
 
-        case PARAM_CLASS_NORMAL: {
+        case PARAMCLASS_NORMAL: {
             Level* L_temp = Make_Level_At(
                 shared,
                 EVAL_EXECUTOR_FLAG_FULFILLING_ARG
@@ -213,7 +213,7 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
             Drop_Level(L_temp);
             break; }
 
-        case PARAM_CLASS_HARD:
+        case PARAMCLASS_HARD:
             Derelativize(
                 out,
                 Cell_Array_Item_At(shared),
@@ -223,10 +223,10 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
             VAL_INDEX_UNBOUNDED(shared) += 1;
             break;
 
-        case PARAM_CLASS_MEDIUM:
+        case PARAMCLASS_MEDIUM:
             fail ("Variadic medium parameters not yet implemented");
 
-        case PARAM_CLASS_SOFT:
+        case PARAMCLASS_SOFT:
             if (ANY_ESCAPABLE_GET(Cell_Array_Item_At(shared))) {
                 if (Eval_Value_Throws(
                     out, Cell_Array_Item_At(shared), Cell_Specifier(shared)
@@ -291,19 +291,19 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
         // overwritten by an arbitrary evaluation.
         //
         switch (pclass) {
-        case PARAM_CLASS_NORMAL: {
+        case PARAMCLASS_NORMAL: {
             Flags flags = EVAL_EXECUTOR_FLAG_FULFILLING_ARG;
 
             if (Eval_Step_In_Sublevel_Throws(out, L, flags))
                 return true;
             break; }
 
-        case PARAM_CLASS_HARD:
+        case PARAMCLASS_HARD:
             Literal_Next_In_Feed(out, L->feed);
             break;
 
-        case PARAM_CLASS_MEDIUM:  // !!! Review nuance
-        case PARAM_CLASS_SOFT:
+        case PARAMCLASS_MEDIUM:  // !!! Review nuance
+        case PARAMCLASS_SOFT:
             if (ANY_ESCAPABLE_GET(At_Level(L))) {
                 if (Eval_Value_Throws(
                     out,
@@ -577,32 +577,32 @@ void MF_Varargs(REB_MOLD *mo, NoQuote(const Cell*) v, bool form) {
 
     Append_Codepoint(mo->series, '[');
 
-    enum Reb_Param_Class pclass;
+    ParamClass pclass;
     const Key* key;
     const Param* param = Param_For_Varargs_Maybe_Null(&key, v);
     if (param == NULL) {
-        pclass = PARAM_CLASS_HARD;
+        pclass = PARAMCLASS_HARD;
         Append_Ascii(mo->series, "???"); // never bound to an argument
     }
     else {
         enum Reb_Kind kind;
         bool quoted = false;
-        switch ((pclass = VAL_PARAM_CLASS(param))) {
-        case PARAM_CLASS_NORMAL:
+        switch ((pclass = Cell_ParamClass(param))) {
+        case PARAMCLASS_NORMAL:
             kind = REB_WORD;
             break;
 
-        case PARAM_CLASS_HARD:
+        case PARAMCLASS_HARD:
             kind = REB_WORD;
             quoted = true;
             break;
 
-        case PARAM_CLASS_MEDIUM:
+        case PARAMCLASS_MEDIUM:
             kind = REB_GET_WORD;
             quoted = true;
             break;
 
-        case PARAM_CLASS_SOFT:
+        case PARAMCLASS_SOFT:
             kind = REB_GET_WORD;
             break;
 
@@ -624,7 +624,7 @@ void MF_Varargs(REB_MOLD *mo, NoQuote(const Cell*) v, bool form) {
     if (Is_Block_Style_Varargs(&shared, v)) {
         if (Is_Cell_Poisoned(shared))
             Append_Ascii(mo->series, "[]");
-        else if (pclass == PARAM_CLASS_HARD)
+        else if (pclass == PARAMCLASS_HARD)
             Mold_Value(mo, shared); // full feed can be shown if hard quoted
         else
             Append_Ascii(mo->series, "[...]"); // can't look ahead
@@ -635,7 +635,7 @@ void MF_Varargs(REB_MOLD *mo, NoQuote(const Cell*) v, bool form) {
         else if (Is_Feed_At_End(L->feed)) {
             Append_Ascii(mo->series, "[]");
         }
-        else if (pclass == PARAM_CLASS_HARD) {
+        else if (pclass == PARAMCLASS_HARD) {
             Append_Ascii(mo->series, "[");
             Mold_Value(mo, At_Feed(L->feed)); // one value shown if hard quoted
             Append_Ascii(mo->series, " ...]");
@@ -671,7 +671,7 @@ DECLARE_NATIVE(variadic_q)
     const Key* key = ACT_KEYS(&key_tail, action);
     const REBVAL *param = ACT_PARAMS_HEAD(action);
     for (; key != key_tail; ++param, ++key) {
-        if (GET_PARAM_FLAG(param, VARIADIC))
+        if (Get_Parameter_Flag(param, VARIADIC))
             return Init_True(OUT);
     }
 

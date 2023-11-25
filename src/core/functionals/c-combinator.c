@@ -681,7 +681,7 @@ static bool Combinator_Param_Hook(
     else if (symid == SYM_RULE_END) {
         s->rule_end = var;  // can't set until rules consumed, let caller do it
     }
-    else if (GET_PARAM_FLAG(param, REFINEMENT)) {
+    else if (Get_Parameter_Flag(param, REFINEMENT)) {
         //
         // !!! Behavior of refinements is a bit up in the air, the idea is
         // that refinements that don't take arguments can be supported...
@@ -692,8 +692,8 @@ static bool Combinator_Param_Hook(
         //
         return true;  // just leave unspecialized for now
     }
-    else switch (VAL_PARAM_CLASS(param)) {
-      case PARAM_CLASS_HARD: {
+    else switch (Cell_ParamClass(param)) {
+      case PARAMCLASS_HARD: {
         //
         // Quoted parameters represent a literal element captured from rules.
         //
@@ -706,15 +706,15 @@ static bool Combinator_Param_Hook(
             item == tail
             or (Is_Comma(item) or IS_BAR(item) or IS_BAR_BAR(item))
         ){
-            if (NOT_PARAM_FLAG(param, ENDABLE))
+            if (Not_Parameter_Flag(param, ENDABLE))
                 fail ("Too few parameters for combinator");  // !!! Error_No_Arg
             Init_Nulled(var);
         }
         else {
             Derelativize(var, item, Cell_Specifier(ARG(rules)));
             if (
-                GET_PARAM_FLAG(param, SKIPPABLE)
-                and not TYPE_CHECK(param, var)
+                Get_Parameter_Flag(param, SKIPPABLE)
+                and not Typecheck_Atom(param, var)
             ){
                 Init_Nulled(var);
             }
@@ -724,7 +724,7 @@ static bool Combinator_Param_Hook(
         }
         break; }
 
-      case PARAM_CLASS_NORMAL: {
+      case PARAMCLASS_NORMAL: {
         //
         // Need to make PARSIFY a native!  Work around it for now...
         //
@@ -734,7 +734,7 @@ static bool Combinator_Param_Hook(
             item == tail
             or (Is_Comma(item) or IS_BAR(item) or IS_BAR_BAR(item))
         ){
-            if (NOT_PARAM_FLAG(param, ENDABLE))
+            if (Not_Parameter_Flag(param, ENDABLE))
                 fail ("Too few parameters for combinator");  // !!! Error_No_Arg
             Init_Nulled(var);
         }
@@ -756,7 +756,7 @@ static bool Combinator_Param_Hook(
         }
         break; }
 
-      case PARAM_CLASS_OUTPUT:
+      case PARAMCLASS_OUTPUT:
         break;  // just skip
 
       default:

@@ -166,7 +166,7 @@ bool Pushed_Continuation(
 
             Copy_Cell(arg, unwrap(with));  // do not decay [4]
 
-            if (VAL_PARAM_CLASS(param) == PARAM_CLASS_META)
+            if (Cell_ParamClass(param) == PARAMCLASS_META)
                 Meta_Quotify(arg);
             else
                 Decay_If_Unstable(arg);

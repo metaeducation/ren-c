@@ -293,7 +293,7 @@ Bounce MAKE_Array(
             else
                 param += VAL_VARARGS_SIGNED_PARAM_INDEX(arg);
 
-            if (TYPE_CHECK(param, Lib(NULL)))
+            if (Typecheck_Atom(param, Lib(NULL)))
                 return RAISE(Error_Null_Vararg_Array_Raw());
         }
 

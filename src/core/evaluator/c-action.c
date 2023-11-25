@@ -165,7 +165,7 @@ Bounce Proxy_Multi_Returns_Core(Level* L, Atom(*) v)
     for (; KEY != KEY_TAIL; ++KEY, ++PARAM, ++ARG) {
         if (Is_Specialized(PARAM))
             continue;
-        if (VAL_PARAM_CLASS(PARAM) != PARAM_CLASS_OUTPUT)
+        if (Cell_ParamClass(PARAM) != PARAMCLASS_OUTPUT)
             continue;
 
         if (not Typecheck_Coerce_Argument(PARAM, ARG))
@@ -214,7 +214,7 @@ Bounce Action_Executor(Level* L)
             goto fulfill;
 
           case ST_ACTION_FULFILLING_ARGS:
-            if (VAL_PARAM_CLASS(PARAM) != PARAM_CLASS_META) {
+            if (Cell_ParamClass(PARAM) != PARAMCLASS_META) {
                 if (Is_Barrier(ARG)) {
                     STATE = ST_ACTION_BARRIER_HIT;
                     Init_Word_Isotope(ARG, Canon(END));
@@ -348,7 +348,7 @@ Bounce Action_Executor(Level* L)
 
   //=//// A /REFINEMENT ARG ///////////////////////////////////////////////=//
 
-        if (GET_PARAM_FLAG(PARAM, REFINEMENT)) {
+        if (Get_Parameter_Flag(PARAM, REFINEMENT)) {
             assert(Not_Action_Executor_Flag(L, DOING_PICKUPS));  // jump lower
             assert(Is_Fresh_Or_None(ARG));
             Init_None(ARG);  // may be filled by a pickup
@@ -359,13 +359,13 @@ Bounce Action_Executor(Level* L)
 
       fulfill_arg: ;  // semicolon needed--next statement is declaration
 
-        enum Reb_Param_Class pclass = VAL_PARAM_CLASS(PARAM);
+        ParamClass pclass = Cell_ParamClass(PARAM);
 
   //=//// SKIP OVER RETURN /////////////////////////////////////////////////=//
 
         // The return function is filled in by the dispatchers that provide it.
 
-        if (pclass == PARAM_CLASS_RETURN or pclass == PARAM_CLASS_OUTPUT) {
+        if (pclass == PARAMCLASS_RETURN or pclass == PARAMCLASS_OUTPUT) {
             assert(Not_Action_Executor_Flag(L, DOING_PICKUPS));
             assert(Is_Fresh_Or_None(ARG));
             Init_None(ARG);
@@ -428,36 +428,36 @@ Bounce Action_Executor(Level* L)
                 if (Get_Action_Executor_Flag(L, DIDNT_LEFT_QUOTE_TUPLE))
                     fail (Error_Literal_Left_Tuple_Raw());  // [2]
 
-                if (GET_PARAM_FLAG(PARAM, VARIADIC)) {  // empty is ok [3]
+                if (Get_Parameter_Flag(PARAM, VARIADIC)) {  // empty is ok [3]
                     Init_Varargs_Untyped_Enfix(ARG, nullptr);
                     goto continue_fulfilling;
                 }
 
-                if (NOT_PARAM_FLAG(PARAM, ENDABLE))
+                if (Not_Parameter_Flag(PARAM, ENDABLE))
                     fail (Error_No_Arg(L->label, KEY_SYMBOL(KEY)));
 
                 Init_Nulled(ARG);
                 goto continue_fulfilling;
             }
 
-            if (GET_PARAM_FLAG(PARAM, VARIADIC)) {  // non-empty is ok [4]
+            if (Get_Parameter_Flag(PARAM, VARIADIC)) {  // non-empty is ok [4]
                 assert(not Is_None(OUT));
                 Decay_If_Unstable(OUT);  // !!! ^META variadics?
                 Init_Varargs_Untyped_Enfix(ARG, stable_OUT);
                 FRESHEN(OUT);
             }
             else switch (pclass) {
-              case PARAM_CLASS_NORMAL:
+              case PARAMCLASS_NORMAL:
                 Decay_If_Unstable(OUT);
                 Move_Cell(ARG, OUT);
                 break;
 
-              case PARAM_CLASS_META: {
+              case PARAMCLASS_META: {
                 Move_Cell(ARG, OUT);
                 Meta_Quotify(ARG);
                 break; }
 
-              case PARAM_CLASS_HARD:  // PARAM_FLAG_SKIPPABLE in pre-lookback
+              case PARAMCLASS_HARD:  // PARAMETER_FLAG_SKIPPABLE in pre-lookback
                 if (Not_Cell_Flag(OUT, UNEVALUATED))  // `x: 10 | x >- the`
                     fail (Error_Evaluative_Quote_Raw());  // [5]
 
@@ -465,10 +465,10 @@ Bounce Action_Executor(Level* L)
                 assert(Get_Cell_Flag(ARG, UNEVALUATED));  // move preserves
                 break;
 
-              case PARAM_CLASS_SOFT:  // can carry UNEVALUATED [6]
+              case PARAMCLASS_SOFT:  // can carry UNEVALUATED [6]
                 goto escapable;
 
-              case PARAM_CLASS_MEDIUM:  // must carry UNEVALUATED [7]
+              case PARAMCLASS_MEDIUM:  // must carry UNEVALUATED [7]
                 assert(Get_Cell_Flag(OUT, UNEVALUATED));
                 goto escapable;
 
@@ -517,7 +517,7 @@ Bounce Action_Executor(Level* L)
         // FRAME!, and are able to consume additional arguments during the
         // function run.
         //
-        if (GET_PARAM_FLAG(PARAM, VARIADIC)) {
+        if (Get_Parameter_Flag(PARAM, VARIADIC)) {
             Init_Varargs_Untyped_Normal(ARG, L);
             goto continue_fulfilling;
         }
@@ -580,19 +580,19 @@ Bounce Action_Executor(Level* L)
 
   //=//// REGULAR ARG-OR-REFINEMENT-ARG (consumes 1 EVALUATE's worth) /////=//
 
-          case PARAM_CLASS_OUTPUT:  // e.g. evaluate/next [1 + 2] 'var
+          case PARAMCLASS_OUTPUT:  // e.g. evaluate/next [1 + 2] 'var
             goto output_from_feed;
 
         output_from_feed:
-          case PARAM_CLASS_NORMAL:
-          case PARAM_CLASS_META: {
+          case PARAMCLASS_NORMAL:
+          case PARAMCLASS_META: {
             if (Is_Level_At_End(L)) {
                 Init_Word_Isotope(ARG, Canon(END));
                 goto continue_fulfilling;
             }
 
             Flags flags = EVAL_EXECUTOR_FLAG_FULFILLING_ARG;
-            if (pclass == PARAM_CLASS_META) {
+            if (pclass == PARAMCLASS_META) {
                 flags |= LEVEL_FLAG_META_RESULT;
             }
 
@@ -606,19 +606,19 @@ Bounce Action_Executor(Level* L)
 
   //=//// HARD QUOTED ARG-OR-REFINEMENT-ARG ///////////////////////////////=//
 
-          case PARAM_CLASS_HARD:
+          case PARAMCLASS_HARD:
             //
             // !!! Need to think about how cases like `source ||` or `help ||`
             // are supposed to act.  They set the "barrier hit" and then we
             // get here...if we don't clear the flag, then the presence of
             // a non-void causes a later assert.  Review.
             //
-            if (NOT_PARAM_FLAG(PARAM, SKIPPABLE))
+            if (Not_Parameter_Flag(PARAM, SKIPPABLE))
                 Literal_Next_In_Feed(ARG, L->feed);  // CELL_FLAG_UNEVALUATED
             else {
                 Derelativize(SPARE, L_next, L_specifier);
-                if (not TYPE_CHECK(PARAM, SPARE)) {
-                    assert(GET_PARAM_FLAG(PARAM, ENDABLE));
+                if (not Typecheck_Atom(PARAM, SPARE)) {
+                    assert(Get_Parameter_Flag(PARAM, ENDABLE));
                     Init_Nulled(ARG);  // not actually an ~end~ (?)
                     goto continue_fulfilling;
                 }
@@ -659,8 +659,8 @@ Bounce Action_Executor(Level* L)
     // notice a quoting enfix construct afterward looking left, we call
     // into a nested evaluator before finishing the operation.
 
-          case PARAM_CLASS_SOFT:
-          case PARAM_CLASS_MEDIUM:
+          case PARAMCLASS_SOFT:
+          case PARAMCLASS_MEDIUM:
             Literal_Next_In_Feed(ARG, L->feed);  // CELL_FLAG_UNEVALUATED
 
             // See remarks on Lookahead_To_Sync_Enfix_Defer_Flag().  We
@@ -677,7 +677,7 @@ Bounce Action_Executor(Level* L)
             //
             if (
                 Lookahead_To_Sync_Enfix_Defer_Flag(L->feed) and  // ensure got
-                (pclass == PARAM_CLASS_SOFT and Get_Subclass_Flag(
+                (pclass == PARAMCLASS_SOFT and Get_Subclass_Flag(
                     VARLIST,
                     ACT_PARAMLIST(VAL_ACTION(unwrap(L->feed->gotten))),
                     PARAMLIST_QUOTES_FIRST
@@ -709,7 +709,7 @@ Bounce Action_Executor(Level* L)
             }
             break;
 
-          case PARAM_CLASS_RETURN:  // should not happen!
+          case PARAMCLASS_RETURN:  // should not happen!
             assert(false);
             break;
 
@@ -850,42 +850,42 @@ Bounce Action_Executor(Level* L)
             continue;
 
         if (
-            VAL_PARAM_CLASS(PARAM) == PARAM_CLASS_RETURN
-            or VAL_PARAM_CLASS(PARAM) == PARAM_CLASS_OUTPUT
+            Cell_ParamClass(PARAM) == PARAMCLASS_RETURN
+            or Cell_ParamClass(PARAM) == PARAMCLASS_OUTPUT
         ){
             assert(Is_None(ARG));
             continue;  // typeset is its legal return types, wants to be unset
         }
 
         if (Is_None(ARG)) {  // e.g. (~) isotope, unspecialized [2]
-            if (GET_PARAM_FLAG(PARAM, REFINEMENT)) {
+            if (Get_Parameter_Flag(PARAM, REFINEMENT)) {
                 Init_Nulled(ARG);
                 continue;
             }
-            if (GET_PARAM_FLAG(PARAM, SKIPPABLE)) {
+            if (Get_Parameter_Flag(PARAM, SKIPPABLE)) {
                 Init_Nulled(ARG);
                 continue;
             }
         }
         else if (Is_Void(ARG)) {
-            if (GET_PARAM_FLAG(PARAM, NOOP_IF_VOID)) {  // e.g. <maybe> param
+            if (Get_Parameter_Flag(PARAM, NOOP_IF_VOID)) {  // e.g. <maybe> param
                 Set_Action_Executor_Flag(L, TYPECHECK_ONLY);
                 Init_Nulled(OUT);
                 continue;
             }
-            if (GET_PARAM_FLAG(PARAM, REFINEMENT)) {
+            if (Get_Parameter_Flag(PARAM, REFINEMENT)) {
                 Init_Nulled(ARG);
                 continue;
             }
         }
         else if (Is_Word_Isotope_With_Id(ARG, SYM_END)) {
-            if (NOT_PARAM_FLAG(PARAM, ENDABLE))
+            if (Not_Parameter_Flag(PARAM, ENDABLE))
                 fail (Error_No_Arg(L->label, KEY_SYMBOL(KEY)));
             Init_Nulled(ARG);  // more convenient, use ^META for nuance
             continue;
         }
 
-        if (GET_PARAM_FLAG(PARAM, VARIADIC)) {  // can't check now [3]
+        if (Get_Parameter_Flag(PARAM, VARIADIC)) {  // can't check now [3]
             if (not Is_Varargs(ARG))  // argument itself is always VARARGS!
                 fail (Error_Not_Varargs(L, KEY, PARAM, stable_ARG));
 
@@ -1133,7 +1133,7 @@ Bounce Action_Executor(Level* L)
             for (; KEY != KEY_TAIL; ++KEY, ++ARG, ++PARAM) {
                 if (Is_Specialized(PARAM))
                     Copy_Cell(ARG, PARAM);  // must reset [3]
-                else if (VAL_PARAM_CLASS(PARAM) == PARAM_CLASS_RETURN)
+                else if (Cell_ParamClass(PARAM) == PARAMCLASS_RETURN)
                     Init_None(ARG);  // dispatcher expects unset
             }
 

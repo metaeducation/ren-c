@@ -52,7 +52,7 @@
 //   possible using CLOSURE which made a costly deep copy of the function's
 //   body on every invocation.  Ren-C's method does not require a copy.)
 //
-// * Invisible functions (return: [nihil?]) that vanish completely,
+// * Invisible functions (return: <nihil>) that vanish completely,
 //   leaving whatever result was in the evaluation previous to the function
 //   call as-is.
 //
@@ -85,12 +85,8 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// 1. FUNC(TION) does its evaluation into the SPARE cell, because the idea is
-//    that arbitrary code may want to return void--even if the body itself
-//    produces evaluative products.  This voidness can come from either a
-//    `return: <void>` annotation in the spec, or code like `(return void)`.
-//    A RETURN that uses a void trampoline UNWIND to pass by this dispatcher
-//    will be able to be invisible because OUT will not have been corrupted.
+// 1. FUNC(TION) does its evaluation into the SPARE cell, because the body
+//    result is never used as a return value.  Only RETURN can give non-NONE.
 //
 // 2. A design point here is that Func_Dispatcher() does no typechecking, and
 //    does not even request to catch THROWN values.  This makes it easier to
@@ -99,7 +95,7 @@
 //    will catch the result.  Hence the full typechecking burden is on RETURN.
 //
 // 3. There is an exception made for tolerating the lack of a RETURN call for
-//    the cases of `return: <none>` and `return: <void>`.  This has a little
+//    the cases of `return: <none>` and `return: <nihil>`.  This has a little
 //    bit of a negative side in that if someone is to hook the RETURN function,
 //    it will not be called in these "fallout" cases.  It's deemed too ugly
 //    to slip in a "hidden" call to RETURN for these cases, and too much of
@@ -150,21 +146,20 @@ Bounce Func_Dispatcher(Level* const L)
 
 } body_finished_without_returning: {  ////////////////////////////////////////
 
-    const Param* param = ACT_PARAMS_HEAD(Level_Phase(L));
+    const Param* param_return = ACT_PARAMS_HEAD(Level_Phase(L));
 
-    if (NOT_PARAM_FLAG(param, RETURN_TYPECHECKED)) {
-        Init_None(OUT);  // none falls out of FUNC by default
-        return Proxy_Multi_Returns(L);
-    }
-
-    if (GET_PARAM_FLAG(param, RETURN_VOID)) {
-        // void, regardless of body result [3]
-        Init_Void(OUT);
-        return Proxy_Multi_Returns(L);
-    }
-
-    if (GET_PARAM_FLAG(param, RETURN_NONE)) {
+    if (Get_Parameter_Flag(param_return, RETURN_NONE)) {
         Init_None(OUT);  // none, regardless of body result [3]
+        return Proxy_Multi_Returns(L);
+    }
+
+    if (Get_Parameter_Flag(param_return, RETURN_NIHIL)) {
+        Init_Nihil(OUT);  // nihil, regardless of body result [3]
+        return Proxy_Multi_Returns(L);
+    }
+
+    if (Is_Parameter_Unconstrained(param_return)) {
+        Init_None(OUT);  // none falls out of FUNC by default
         return Proxy_Multi_Returns(L);
     }
 
@@ -377,7 +372,7 @@ DECLARE_NATIVE(endable_q)
     Action* act = CTX_FRAME_PHASE(ctx);
 
     Param* param = ACT_PARAM(act, VAL_WORD_INDEX(v));
-    bool endable = GET_PARAM_FLAG(param, ENDABLE);
+    bool endable = Get_Parameter_Flag(param, ENDABLE);
 
     return Init_Logic(OUT, endable);
 }
@@ -412,7 +407,7 @@ DECLARE_NATIVE(skippable_q)
     Action* act = CTX_FRAME_PHASE(ctx);
 
     Param* param = ACT_PARAM(act, VAL_WORD_INDEX(v));
-    bool skippable = GET_PARAM_FLAG(param, SKIPPABLE);
+    bool skippable = Get_Parameter_Flag(param, SKIPPABLE);
 
     return Init_Logic(OUT, skippable);
 }
@@ -542,8 +537,11 @@ bool Typecheck_Coerce_Return(
     const Param* param = ACT_PARAMS_HEAD(phase);
     assert(KEY_SYM(ACT_KEYS_HEAD(phase)) == SYM_RETURN);
 
-    if (GET_PARAM_FLAG(param, RETURN_NONE) and not Is_None(atom))
+    if (Get_Parameter_Flag(param, RETURN_NONE) and not Is_None(atom))
         fail ("If RETURN: <none> is in a function spec, RETURN NONE only");
+
+    if (Get_Parameter_Flag(param, RETURN_NIHIL) and not Is_Nihil(atom))
+        fail ("If RETURN: <nihil> is in a function spec, RETURN NIHIL only");
 
     if (Typecheck_Coerce_Argument(param, atom))
         return true;

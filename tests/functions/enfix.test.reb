@@ -285,7 +285,7 @@
     )
 
     (
-        bar: func [return: [nihil?]] [bar: null, return nihil]
+        bar: func [return: <nihil>] [bar: null]
         did all [
             var: evaluate/next [1020 bar 304] 'pos
             pos = [bar 304]
@@ -322,7 +322,7 @@
             comment {skip irrelevant (tests right on *next* step)}
         ]
     )(
-        enibar: enfix func [return: <void> 'i [<skip> integer!]] [
+        enibar: enfix func [return: [] 'i [<skip> integer!]] [
             fail {
                 When arguments are skipped, this defers the enfix until the
                 next evaluator step.  Doing otherwise would mean that

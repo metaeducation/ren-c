@@ -426,10 +426,10 @@
 //
 // Another aspect of breaking out the "extra" is so that on 32-bit platforms,
 // the starting address of the payload is on a 64-bit alignment boundary.
-// See Reb_Integer, Reb_Decimal, and REB_PARAMETER for examples where the 64-bit
-// quantity requires things like REBDEC to have 64-bit alignment.  At time of
-// writing, this is necessary for the "C-to-Javascript" emscripten build to
-// work.  It's also likely preferred by x86.
+// See Reb_Integer and Reb_Decimal  for examples where the 64-bit quantity
+// requires things like REBDEC to have 64-bit alignment.  At time of writing,
+// this is necessary for the "C-to-Javascript" emscripten build to work.
+// It's also likely preferred by x86.
 //
 
 struct Reb_Character_Extra { Codepoint codepoint; };  // see %sys-char.h
@@ -439,9 +439,9 @@ struct Reb_Date_Extra  // see %sys-time.h
     REBYMD ymdz;  // month/day/year/zone (time payload *may* hold nanoseconds)
 };
 
-struct Reb_Parameter_Extra  // see %sys-typeset.h
+struct Reb_Parameter_Extra  // see %sys-parameter.h
 {
-    Flags param_flags;  // PARAM_FLAG_XXX and VAL_PARAM_CLASS for param typeset
+    Flags parameter_flags;  // PARAMETER_FLAG_XXX and PARAMCLASS_BYTE
 };
 
 union AnyUnion {  // needed to beat strict aliasing, used in payload

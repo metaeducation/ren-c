@@ -20,7 +20,7 @@ REBOL [
 assert: func* [
     {Ensure conditions are conditionally true if hooked by debugging}
 
-    return: <void>
+    return: <nihil>
     conditions "Block of conditions to evaluate and test for logical truth"
         [block!]
     /handler "Optional code to run if the assertion fails, receives condition"
@@ -106,7 +106,7 @@ func: func* [
     parse3 spec [try some [
         '<none> (append new-spec <none>)
     |
-        '<void> (append new-spec <void>)
+        '<nihil> (append new-spec <nihil>)
     |
         :(if var '[  ; so long as we haven't reached any <local> or <with> etc.
             set var: [any-word! | any-path! | quoted!] (
@@ -283,7 +283,7 @@ function: specialize :func [gather: #]
 ; (This is a good reason for retaking ==, as that looks like a divider.)
 ;
 ===: func [
-    return: <void>
+    return: <nihil>
     'remarks [any-value! <variadic>]
     /visibility [logic!]
     <static> showing (false)
@@ -879,19 +879,18 @@ lock-of: redescribe [
 eval-all: func [
     {Evaluate any number of expressions and discard them}
 
-    return: [nihil?]
+    return: <nihil>
     expressions [<opt> any-value! <variadic>]
         {Any number of expressions on the right.}
 ][
     do expressions
-    return nihil
 ]
 
 
 ; These constructs used to be enfix to complete their left hand side.  Yet
 ; that form of completion was only one expression's worth, when they wanted
 ; to allow longer runs of evaluation.  "Invisible functions" (those which
-; `return: <void>`) permit a more flexible version of the mechanic.
+; `return: <nihil>`) permit a more flexible version of the mechanic.
 
 |<\||: runs tweak copy unrun :eval-all 'postpone on
 |\|>|: runs tweak enfix copy :shove 'postpone on

@@ -687,7 +687,7 @@ DECLARE_NATIVE(match)
       case REB_TYPE_WORD:
       case REB_TYPE_GROUP:
       case REB_TYPE_BLOCK:
-        if (not Typecheck_Value(test, SPECIFIED, v))
+        if (not Typecheck_Atom(test, v))
             return nullptr;
         break;
 
@@ -1339,7 +1339,7 @@ DECLARE_NATIVE(switch)
         if (not Any_Type_Value(SPARE))
             fail ("SWITCH/TYPE requires comparisons to TYPE-XXX!");
 
-        if (not TYPE_CHECK(stable_SPARE, left))
+        if (not Typecheck_Atom(stable_SPARE, left))
             goto next_switch_step;
     }
     else if (Is_Nulled(predicate)) {

@@ -367,7 +367,7 @@ Bounce Evaluator_Executor(Level* L)
         Intrinsic* intrinsic = Extract_Intrinsic(cast(Phase*, action));
         Param* param = ACT_PARAM(action, 2);
 
-        if (VAL_PARAM_CLASS(param) == PARAM_CLASS_META)
+        if (Cell_ParamClass(param) == PARAMCLASS_META)
             Meta_Quotify(SPARE);
         if (not Typecheck_Coerce_Argument(param, SPARE)) {
             Option(const Symbol*) label = VAL_FRAME_LABEL(SCRATCH);
@@ -477,8 +477,8 @@ Bounce Evaluator_Executor(Level* L)
         //
         const Param* first = First_Unspecialized_Param(nullptr, enfixed);
         if (
-            VAL_PARAM_CLASS(first) == PARAM_CLASS_SOFT
-            or VAL_PARAM_CLASS(first) == PARAM_CLASS_META
+            Cell_ParamClass(first) == PARAMCLASS_SOFT
+            or Cell_ParamClass(first) == PARAMCLASS_META
         ){
             goto give_up_backward_quote_priority;  // yield as an exemption
         }
@@ -498,7 +498,7 @@ Bounce Evaluator_Executor(Level* L)
     //
     if (Get_Subclass_Flag(VARLIST, paramlist, PARAMLIST_SKIPPABLE_FIRST)) {
         const Param* first = First_Unspecialized_Param(nullptr, enfixed);
-        if (not TYPE_CHECK(first, OUT)) {  // left's kind
+        if (not Typecheck_Atom(first, OUT)) {  // left's kind
             FRESHEN(OUT);
             goto give_up_backward_quote_priority;
         }
@@ -751,7 +751,7 @@ Bounce Evaluator_Executor(Level* L)
                 INIT_VAL_ACTION_LABEL(SCRATCH, label);  // use the word
                 Param* param = ACT_PARAM(action, 2);
                 Flags flags = EVAL_EXECUTOR_FLAG_FULFILLING_ARG;
-                if (VAL_PARAM_CLASS(param) == PARAM_CLASS_META)
+                if (Cell_ParamClass(param) == PARAMCLASS_META)
                     flags |= LEVEL_FLAG_RAISED_RESULT_OK;
 
                 Clear_Feed_Flag(L->feed, NO_LOOKAHEAD);  // when non-enfix call
@@ -1951,7 +1951,7 @@ Bounce Evaluator_Executor(Level* L)
             fail (Error_Literal_Left_Tuple_Raw());
 
         const Param* first = First_Unspecialized_Param(nullptr, enfixed);
-        if (VAL_PARAM_CLASS(first) == PARAM_CLASS_SOFT) {
+        if (Cell_ParamClass(first) == PARAMCLASS_SOFT) {
             if (Get_Feed_Flag(L->feed, NO_LOOKAHEAD)) {
                 Clear_Feed_Flag(L->feed, NO_LOOKAHEAD);
                 Clear_Eval_Executor_Flag(L, INERT_OPTIMIZATION);

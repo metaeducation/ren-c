@@ -185,28 +185,28 @@ DECLARE_NATIVE(lambda)
         // First in quad needs to be a WORD!, after pclass extracted...
         //
         Flags param_flags = 0;
-        enum Reb_Param_Class pclass;
+        ParamClass pclass;
         if (Is_Word(key_slot))
-            pclass = PARAM_CLASS_NORMAL;
+            pclass = PARAMCLASS_NORMAL;
         else if (Is_Meta_Word(key_slot)) {
-            pclass = PARAM_CLASS_META;
+            pclass = PARAMCLASS_META;
             HEART_BYTE(key_slot) = REB_WORD;
         }
         else if (Is_Get_Word(key_slot)) {
-            pclass = PARAM_CLASS_SOFT;
+            pclass = PARAMCLASS_SOFT;
             HEART_BYTE(key_slot) = REB_WORD;
         }
         else if (Is_Quoted(key_slot)) {
             Unquotify(key_slot, 1);
             if (not Is_Word(key_slot))
                 fail (item);
-            pclass = PARAM_CLASS_HARD;
+            pclass = PARAMCLASS_HARD;
         }
         else if (Is_Path(key_slot) and Is_Refinement(key_slot)) {
-            pclass = PARAM_CLASS_NORMAL;
+            pclass = PARAMCLASS_NORMAL;
             const Symbol* symbol = VAL_REFINEMENT_SYMBOL(key_slot);
             Init_Word(key_slot, symbol);
-            param_flags |= PARAM_FLAG_REFINEMENT;
+            param_flags |= PARAMETER_FLAG_REFINEMENT;
         }
         else if (Is_Set_Word(item) and VAL_WORD_ID(item) == SYM_RETURN) {
             fail ("LAMBDA (->) does not offer RETURN facilities, use FUNCTION");
@@ -219,7 +219,7 @@ DECLARE_NATIVE(lambda)
             continue;
         }
 
-        Init_Param(
+        Init_Parameter(
             PARAM_SLOT(TOP_INDEX),
             pclass | param_flags,
             nullptr

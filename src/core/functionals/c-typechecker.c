@@ -158,13 +158,13 @@ DECLARE_NATIVE(typechecker)
 
 
 //
-//  Typecheck_Value: C
+//  Typecheck_Atom_Core: C
 //
 // Ren-C has eliminated the concept of TYPESET!, instead gaining behaviors
 // for TYPE-BLOCK! and TYPE-GROUP!.
 //
-bool Typecheck_Value(
-    const Cell* tests,  // can be BLOCK!, TYPE-BLOCK!, GROUP!, TYPE-GROUP!
+bool Typecheck_Atom_Core(
+    const Cell* tests,  // PARAMETER!, TYPE-BLOCK!, GROUP!, TYPE-GROUP!...
     Specifier* tests_specifier,
     Atom(const*) v
 ){
@@ -188,7 +188,7 @@ bool Typecheck_Value(
         break;
 
       case REB_PARAMETER: {
-        const Array* array = try_unwrap(VAL_PARAMETER_ARRAY(tests));
+        const Array* array = try_unwrap(Cell_Parameter_Spec(tests));
         if (array == nullptr)
             return true;  // implicitly all is permitted
         item = Array_Head(array);
@@ -215,7 +215,7 @@ bool Typecheck_Value(
         // !!! Ultimately, we'll enable literal comparison for quoted/quasi
         // items.  For the moment just try quasi-words for isotopes.
         //
-        if (VAL_TYPE_UNCHECKED(item) == REB_QUASI) {
+        if (Is_Quasi(item)) {
             if (HEART_BYTE(item) == REB_VOID) {
                 if (Is_None(v))
                     goto test_succeeded;
@@ -270,7 +270,7 @@ bool Typecheck_Value(
                 Param* param = ACT_PARAM(action, 2);
                 DECLARE_LOCAL (arg);
                 Copy_Cell(arg, v);
-                if (VAL_PARAM_CLASS(param) == PARAM_CLASS_META)
+                if (Cell_ParamClass(param) == PARAMCLASS_META)
                     Meta_Quotify(arg);
                 if (not Typecheck_Coerce_Argument(param, arg))
                     goto test_failed;
@@ -308,7 +308,7 @@ bool Typecheck_Value(
 
             Copy_Cell(arg, v);  // do not decay [4]
 
-            if (VAL_PARAM_CLASS(param) == PARAM_CLASS_META)
+            if (Cell_ParamClass(param) == PARAMCLASS_META)
                 Meta_Quotify(arg);
 
             if (not Typecheck_Coerce_Argument(param, arg)) {
@@ -335,7 +335,7 @@ bool Typecheck_Value(
           case REB_TYPE_BLOCK:
           case REB_TYPE_GROUP: {
             Specifier* subspecifier = Derive_Specifier(tests_specifier, test);
-            if (not Typecheck_Value(test, subspecifier, v))
+            if (not Typecheck_Atom_Core(test, subspecifier, v))
                 goto test_failed;
             break; }
 
@@ -344,7 +344,7 @@ bool Typecheck_Value(
             fail ("QUOTED! and QUASI! not currently supported in TYPE-XXX!"); }
 
           case REB_PARAMETER: {
-            if (not Typecheck_Value(test, SPECIFIED, v))
+            if (not Typecheck_Atom(test, v))
                 goto test_failed;
             break; }
 
@@ -407,12 +407,12 @@ bool Typecheck_Coerce_Argument(
     const Param* param,
     Atom(*) arg  // need mutability for coercion
 ){
-    if (GET_PARAM_FLAG(param, CONST))
+    if (Get_Parameter_Flag(param, CONST))
         Set_Cell_Flag(arg, CONST);  // mutability override?  [1]
 
     if (
-        GET_PARAM_FLAG(param, REFINEMENT)
-        or GET_PARAM_FLAG(param, SKIPPABLE)
+        Get_Parameter_Flag(param, REFINEMENT)
+        or Get_Parameter_Flag(param, SKIPPABLE)
     ){
         if (Is_Nulled(arg))  // nulls always legal...means refinement not used
             return true;
@@ -428,9 +428,9 @@ bool Typecheck_Coerce_Argument(
     //
     bool unquoted = false;
 
-    if (VAL_PARAM_CLASS(param) == PARAM_CLASS_META) {
+    if (Cell_ParamClass(param) == PARAMCLASS_META) {
         if (Is_Nulled(arg))
-            return GET_PARAM_FLAG(param, ENDABLE);
+            return Get_Parameter_Flag(param, ENDABLE);
 
         if (not Is_Quasi(arg) and not Is_Quoted(arg))
             return false;
@@ -438,7 +438,7 @@ bool Typecheck_Coerce_Argument(
         Meta_Unquotify_Undecayed(arg);  // temporary adjustment (easiest option)
         unquoted = true;
     }
-    else if (VAL_PARAM_CLASS(param) == PARAM_CLASS_RETURN) {
+    else if (Cell_ParamClass(param) == PARAMCLASS_RETURN) {
         unquoted = false;
     }
     else {
@@ -450,7 +450,7 @@ bool Typecheck_Coerce_Argument(
 
   typecheck_again:
 
-    if (TYPE_CHECK(param, arg))
+    if (Typecheck_Atom(param, arg))
         goto return_true;
 
     if (not coerced) {
@@ -492,7 +492,7 @@ bool Typecheck_Coerce_Argument(
         Meta_Quotify(arg);
 
     if (not Is_Stable(arg))
-        assert(VAL_PARAM_CLASS(param) == PARAM_CLASS_RETURN);
+        assert(Cell_ParamClass(param) == PARAMCLASS_RETURN);
 
     return true;
 }

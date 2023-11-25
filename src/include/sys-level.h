@@ -633,8 +633,8 @@ INLINE REBVAL *D_ARG_Core(Level* L, REBLEN n) {  // 1 for first arg
     REBVAL *arg = Level_Arg(L, 1);
     while (
         Is_Specialized(param)  // e.g. slots for saving multi-return variables
-        or VAL_PARAM_CLASS(param) == PARAM_CLASS_RETURN
-        or VAL_PARAM_CLASS(param) == PARAM_CLASS_OUTPUT
+        or Cell_ParamClass(param) == PARAMCLASS_RETURN
+        or Cell_ParamClass(param) == PARAMCLASS_OUTPUT
     ){
         ++param;
         ++arg;

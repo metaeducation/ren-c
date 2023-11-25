@@ -175,10 +175,10 @@ typedef uint_fast32_t StackIndex;  // 0 for empty stack ([0] entry is trash)
 
 //=//// PARAMETER CLASSES ////////////////////////////////////////////////=//
 
-enum Reb_Param_Class {
-    PARAM_CLASS_0,  // used to indicate an "unset" state
+typedef enum {
+    PARAMCLASS_0,  // temporary state for Option(ParamClass)
 
-    // `PARAM_CLASS_NORMAL` is cued by an ordinary WORD! in the function spec
+    // `PARAMCLASS_NORMAL` is cued by an ordinary WORD! in the function spec
     // to indicate that you would like that argument to be evaluated normally.
     //
     //     >> foo: function [a] [print [{a is} a]]
@@ -186,13 +186,13 @@ enum Reb_Param_Class {
     //     >> foo 1 + 2
     //     a is 3
     //
-    PARAM_CLASS_NORMAL,
+    PARAMCLASS_NORMAL,
 
-    PARAM_CLASS_RETURN,
+    PARAMCLASS_RETURN,
 
-    PARAM_CLASS_OUTPUT,
+    PARAMCLASS_OUTPUT,
 
-    // `PARAM_CLASS_HARD` is cued by a quoted WORD! in the function spec
+    // `PARAMCLASS_HARD` is cued by a quoted WORD! in the function spec
     // dialect.  It indicates that a single value of content at the callsite
     // should be passed through *literally*, without any evaluation:
     //
@@ -205,9 +205,9 @@ enum Reb_Param_Class {
     //     a is :(1 + 2)
     //
     //
-    PARAM_CLASS_HARD,
+    PARAMCLASS_HARD,
 
-    // `PARAM_CLASS_MEDIUM` is cued by a QUOTED GET-WORD! in the function spec
+    // `PARAMCLASS_MEDIUM` is cued by a QUOTED GET-WORD! in the function spec
     // dialect.  It quotes with the exception of GET-GROUP!, GET-WORD!, and
     // GET-PATH!...which will be evaluated:
     //
@@ -223,10 +223,10 @@ enum Reb_Param_Class {
     // a convenient way to allow callers to "escape" a quoted context when
     // they need to.
     //
-    PARAM_CLASS_MEDIUM,
+    PARAMCLASS_MEDIUM,
 
-    // `PARAM_CLASS_SOFT` is cued by a PLAIN GET-WORD!.  It's a more nuanced
-    // version of PARAM_CLASS_MEDIUM which is escapable but will defer to enfix.
+    // `PARAMCLASS_SOFT` is cued by a PLAIN GET-WORD!.  It's a more nuanced
+    // version of PARAMCLASS_MEDIUM which is escapable but will defer to enfix.
     // This covers cases like:
     //
     //     if true [...] then :(func [...] [...])  ; want escapability
@@ -247,9 +247,9 @@ enum Reb_Param_Class {
     // using soft quoting is favored to medium quoting for being one less
     // character to type.
     //
-    PARAM_CLASS_SOFT,
+    PARAMCLASS_SOFT,
 
-    // `PARAM_CLASS_META` is the only parameter type that can accept unstable
+    // `PARAMCLASS_META` is the only parameter type that can accept unstable
     // isotopes.  Isotopes become quasiforms when they are an argument, and all
     // other types receive one added quote level.
     //
@@ -261,8 +261,8 @@ enum Reb_Param_Class {
     //     >> foo get/any 'asdfasfasdf
     //     a is ~
     //
-    PARAM_CLASS_META
-};
+    PARAMCLASS_META
+} ParamClass;
 
 
 //=//// SYMBOL IDs ////////////////////////////////////////////////////////=//

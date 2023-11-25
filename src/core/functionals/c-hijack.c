@@ -105,13 +105,13 @@ void Push_Redo_Action_Level(Atom(*) out, Level* L1, const REBVAL *run)
         if (Is_Specialized(e.param))  // specialized or local
             continue;
 
-        if (VAL_PARAM_CLASS(e.param) == PARAM_CLASS_RETURN)
-            continue;  // !!! hack, has PARAM_FLAG_REFINEMENT, don't stack it
+        if (Cell_ParamClass(e.param) == PARAMCLASS_RETURN)
+            continue;  // !!! hack, has PARAMETER_FLAG_REFINEMENT, don't stack it
 
-        if (GET_PARAM_FLAG(e.param, SKIPPABLE) and Is_Nulled(e.var))
+        if (Get_Parameter_Flag(e.param, SKIPPABLE) and Is_Nulled(e.var))
             continue;  // don't throw in skippable args that are nulled out
 
-        if (GET_PARAM_FLAG(e.param, REFINEMENT)) {
+        if (Get_Parameter_Flag(e.param, REFINEMENT)) {
             if (Is_Nulled(e.var))  // don't add to PATH!
                 continue;
 

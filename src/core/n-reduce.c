@@ -139,7 +139,7 @@ DECLARE_NATIVE(reduce)
             nullptr,
             VAL_ACTION(predicate)
         );
-        if (not TYPE_CHECK(param, OUT))
+        if (not Typecheck_Atom(param, OUT))
             goto next_reduce_step;
     }
 
