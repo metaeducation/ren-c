@@ -85,45 +85,6 @@ void Startup_Typesets(void)
     Index last = (cast(int, SYM_DATATYPES) - SYM_ANY_VALUE_Q) / 2;
     assert(Typesets[last] == 0);  // table ends in zero
     UNUSED(last);
-
-    // Make the NULL! type checker
-  {
-    Array* a = Alloc_Singular(NODE_FLAG_MANAGED);
-    Init_Any_Word_Bound(
-        Array_Single(a),
-        REB_WORD,
-        Canon(NULL_Q),
-        Lib_Context,
-        INDEX_ATTACHED
-    );
-    Init_Array_Cell(Force_Lib_Var(SYM_NULL_X), REB_TYPE_GROUP, a);
-  }
-
-    // Make the ACTIVATION! type checker
-  {
-    Array* a = Alloc_Singular(NODE_FLAG_MANAGED);
-    Init_Any_Word_Bound(
-        Array_Single(a),
-        REB_WORD,
-        Canon(ACTIVATION_Q),
-        Lib_Context,
-        INDEX_ATTACHED
-    );
-    Init_Array_Cell(Force_Lib_Var(SYM_ACTIVATION_X), REB_TYPE_GROUP, a);
-  }
-
-    // Make the ANY-MATCHER! type checker
-  {
-    Array* a = Alloc_Singular(NODE_FLAG_MANAGED);
-    Init_Any_Word_Bound(
-        Array_Single(a),
-        REB_WORD,
-        Canon(ANY_MATCHER_Q),
-        Lib_Context,
-        INDEX_ATTACHED
-    );
-    Init_Array_Cell(Force_Lib_Var(SYM_ANY_MATCHER_X), REB_TYPE_GROUP, a);
-  }
 }
 
 
@@ -136,35 +97,93 @@ void Shutdown_Typesets(void)
 
 
 //
-//  Add_Parameter_Bits_Core: C
+//  Init_Parameter_Untracked: C
 //
-// This sets the bits in a bitset according to a type spec.  These accelerate
+// This copies the input spec as an array stored in the parameter, while
+// setting flags appropriately and making notes for optimizations to help in
+// the later typechecking.
+//
+//
 // the checking of tags when functions are called to not require string
 // comparisons for things like <opt> or <skip>.
 //
-// Because this uses the stack, it cannot take the Param being built on the
-// stack as input.  As a workaround the parameter class and flags to write
-// are passed in.
+// 1. As written, the function spec processing code builds the parameter
+//    directly into a stack variable.  That means this code can't PUSH()
+//    (or call code that does).  It's not impossible to relax this and
+//    have the code build the parameter into a non-stack variable then
+//    copy it...but try avoiding that.
 //
-// !!! R3-Alpha supported fixed word symbols for datatypes and typesets.
-// Confusingly, this means that if you have said `word!: integer!` and use
-// WORD!, you will get the integer type... but if WORD! is unbound then it
-// will act as WORD!.  Also, is essentially having "keywords" and should be
-// reviewed to see if anything actually used it.
+// 2. TAG! parameter modifiers can't be abstracted.  So you can't say:
 //
-Array* Add_Parameter_Bits_Core(
-    Flags* flags,
-    ParamClass pclass,
-    const Cell* head,
-    const Cell* tail,
-    Specifier* specifier
+//        modifier: either condition [<end>] [<maybe>]
+//        foo: func [arg [modifier integer!]] [...]
+//
+// 3. Everything non-TAG! can be abstracted via WORD!.  This can lead to some
+//    strange mixtures:
+//
+//        func compose/deep [x [word! (integer!)]] [ ... ]
+//
+//    (But then the help will show the types as [word! &integer].  Is it
+//    preferable to enforce words for some things?  That's not viable for
+//    type predicate actions, like SPLICE?...)
+//
+// 4. Ren-C disallows unbounds, and validates what the word looks up to
+//    at the time of creation.  If it didn't, then optimizations could not
+//    be calculated at creation-time.
+//
+//    (R3-Alpha had a hacky fallback where unbound variables were interpreted
+//    as their word.  So if you said `word!: integer!` and used WORD!, you'd
+//    get the integer typecheck... but if WORD! is unbound then it would act
+//    as a WORD! typecheck.)
+//
+Param* Init_Parameter_Untracked(
+    StackValue(*) out,  // target is stack value [1]
+    Flags flags,
+    const Cell* spec,
+    Specifier* spec_specifier
 ){
-    StackIndex base = TOP_INDEX;
-    *flags = 0;
+    ParamClass pclass = u_cast(ParamClass, FIRST_BYTE(&flags));
+    assert(pclass != PARAMCLASS_0);  // must have class
+    if (flags & PARAMETER_FLAG_REFINEMENT) {
+        assert(flags & PARAMETER_FLAG_NULLS_DEFINITELY_OK);
+        assert(pclass != PARAMCLASS_RETURN and pclass != PARAMCLASS_OUTPUT);
+    }
 
-    const Cell* item = head;
-    for (; item != tail; ++item) {
-        if (Is_Tag(item)) {
+    const Cell* tail;
+    const Cell* item = Cell_Array_At(&tail, unwrap(spec));
+
+    Length len = tail - item;
+
+    Array* copy = Make_Array_For_Copy(
+        len,
+        NODE_FLAG_MANAGED,
+        Cell_Array(spec)
+    );
+    Set_Series_Len(copy, len);
+    Cell* dest = Array_Head(copy);
+
+    Byte* optimized = PAYLOAD(Any, out).second.at_least_4;
+    Byte* optimized_tail = optimized + sizeof(uintptr_t);
+
+    for (; item != tail; ++item, ++dest) {
+        Derelativize(dest, item, spec_specifier);
+        Clear_Cell_Flag(dest, NEWLINE_BEFORE);
+
+        if (Is_Quasi(item)) {
+            if (Cell_Heart(item) != REB_WORD and Cell_Heart(item) != REB_VOID)
+                fail (item);
+            flags |= PARAMETER_FLAG_INCOMPLETE_OPTIMIZATION;
+            continue;
+        }
+        if (Is_Quoted(item)) {
+            //
+            // !!! Some question on if you could do a typecheck on words like
+            // an enum, e.g. `foo [size ['small 'medium 'large]]`.
+            //
+            fail (item);
+        }
+
+        if (Cell_Heart(item) == REB_TAG) {  // literal check of tag [2]
             bool strict = false;
 
             if (
@@ -176,60 +195,131 @@ Array* Add_Parameter_Bits_Core(
                 // core sources were changed to `<variadic>`, asking users
                 // to shuffle should only be done once (when final is known).
                 //
-                *flags |= PARAMETER_FLAG_VARIADIC;
+                flags |= PARAMETER_FLAG_VARIADIC;
+                Init_Quasi_Word(dest, Canon(VARIADIC_Q)); // !!!
             }
             else if (0 == CT_String(item, Root_End_Tag, strict)) {
-                *flags |= PARAMETER_FLAG_ENDABLE;
-                Init_Quasi_Word(PUSH(), Canon(NULL));
-
+                flags |= PARAMETER_FLAG_ENDABLE;
+                Init_Quasi_Word(dest, Canon(NULL));  // !!!
+                flags |= PARAMETER_FLAG_NULLS_DEFINITELY_OK;
             }
             else if (0 == CT_String(item, Root_Maybe_Tag, strict)) {
-                *flags |= PARAMETER_FLAG_NOOP_IF_VOID;
+                flags |= PARAMETER_FLAG_NOOP_IF_VOID;
+                Set_Cell_Flag(dest, PARAMSPEC_SPOKEN_FOR);
+                Init_Quasi_Word(dest, Canon(VOID));  // !!!
             }
             else if (0 == CT_String(item, Root_Opt_Tag, strict)) {
-                Init_Quasi_Word(PUSH(), Canon(NULL));
+                Init_Quasi_Word(dest, Canon(NULL));  // !!!
+                flags |= PARAMETER_FLAG_NULLS_DEFINITELY_OK;
             }
             else if (0 == CT_String(item, Root_Void_Tag, strict)) {
-                Init_Any_Word_Bound(
-                    PUSH(),
+                Init_Any_Word_Bound(  // !!
+                    dest,
                     REB_WORD,
                     Canon(VOID_Q),
                     Lib_Context,
                     INDEX_ATTACHED
                 );
+                flags |= PARAMETER_FLAG_INCOMPLETE_OPTIMIZATION;
             }
             else if (0 == CT_String(item, Root_Skip_Tag, strict)) {
                 if (pclass != PARAMCLASS_HARD)
                     fail ("Only hard-quoted parameters are <skip>-able");
 
-                *flags |= PARAMETER_FLAG_SKIPPABLE;
-                *flags |= PARAMETER_FLAG_ENDABLE; // skip => null
-                Init_Quasi_Word(PUSH(), Canon(NULL));
+                flags |= PARAMETER_FLAG_SKIPPABLE;
+                flags |= PARAMETER_FLAG_ENDABLE; // skip => null
+                Init_Quasi_Word(dest, Canon(NULL));  // !!!
+                flags |= PARAMETER_FLAG_NULLS_DEFINITELY_OK;
             }
             else if (0 == CT_String(item, Root_Const_Tag, strict)) {
-                *flags |= PARAMETER_FLAG_CONST;
+                flags |= PARAMETER_FLAG_CONST;
+                Set_Cell_Flag(dest, PARAMSPEC_SPOKEN_FOR);
+                Init_Quasi_Word(dest, Canon(CONST));
             }
             else if (0 == CT_String(item, Root_None_Tag, strict)) {
-                Init_Quasi_Void(PUSH());
+                Init_Quasi_Void(dest);
+                flags |= PARAMETER_FLAG_INCOMPLETE_OPTIMIZATION;
             }
             else if (0 == CT_String(item, Root_Unrun_Tag, strict)) {
                 // !!! Currently just commentary, degrading happens due
                 // to type checking.  Review this.
+                //
+                Init_Quasi_Word(dest, Canon(UNRUN));
             }
             else {
                 fail (item);
             }
+            continue;
+        }
+
+        const Cell* lookup;
+        if (Cell_Heart(item) == REB_WORD) {  // allow abstraction [3]
+            lookup = Lookup_Word(item, spec_specifier);
+            if (not lookup)  // not even bound to anything
+                fail (item);
+            if (Is_None(lookup)) {  // bound but not set
+                //
+                // !!! This happens on things like LOGIC?, because they are
+                // assigned in usermode code.  That misses an optimization
+                // opportunity...suggesting strongly those be done sooner.
+                //
+                flags |= PARAMETER_FLAG_INCOMPLETE_OPTIMIZATION;
+                continue;
+            }
+            if (Is_Isotope(lookup) and Cell_Heart(lookup) != REB_FRAME)
+                fail (item);
+            if (Is_Quoted(lookup))
+                fail (item);
+        }
+        else
+            lookup = item;
+
+        enum Reb_Kind heart = Cell_Heart(lookup);
+
+        if (heart == REB_TYPE_WORD) {
+            if (optimized == optimized_tail and item != tail) {
+                flags |= PARAMETER_FLAG_INCOMPLETE_OPTIMIZATION;
+                continue;
+            }
+            Option(SymId) id = VAL_WORD_ID(lookup);
+            if (not IS_KIND_SYM(id))
+                fail (item);
+            *optimized = KIND_FROM_SYM(id);
+            ++optimized;
+            Set_Cell_Flag(dest, PARAMSPEC_SPOKEN_FOR);
+        }
+        else if (
+            heart == REB_TYPE_GROUP or heart == REB_TYPE_BLOCK
+            or heart == REB_TYPE_PATH or heart == REB_TYPE_TUPLE
+        ){
+            flags |= PARAMETER_FLAG_INCOMPLETE_OPTIMIZATION;
+        }
+        else if (heart == REB_FRAME) {
+            //
+            // Same arguments as Any_Type_Value(), but for composing actions.
+            //
+            flags |= PARAMETER_FLAG_INCOMPLETE_OPTIMIZATION;
         }
         else {
-            Derelativize(PUSH(), item, specifier);
-            Clear_Cell_Flag(TOP, NEWLINE_BEFORE);
-        }
+            // By pre-checking we can avoid needing to double check in the
+            // actual type-checking phase.
 
-        // !!! Review erroring policy--should probably not just be ignoring
-        // things that aren't recognized here (!)
+            fail (item);
+        }
     }
 
-    return Pop_Stack_Values_Core(base, NODE_FLAG_MANAGED);
+    if (optimized != optimized_tail)
+        *optimized = 0;  // signal termination (else tail is termination)
+
+    Reset_Unquoted_Header_Untracked(out, CELL_MASK_PARAMETER);
+
+    PARAMETER_FLAGS(out) = flags;
+    INIT_CELL_PARAMETER_SPEC(out, copy);
+
+    Param* param = cast(Param*, cast(REBVAL*, out));
+
+    assert(Not_Cell_Flag(param, VAR_MARKED_HIDDEN));
+    return param;
 }
 
 

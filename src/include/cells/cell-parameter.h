@@ -216,8 +216,29 @@ INLINE Option(const Array*) Cell_Parameter_Spec(
     FLAG_LEFT_BIT(15)
 
 
-#define PARAMETER_FLAG_16           FLAG_LEFT_BIT(16)
-#define PARAMETER_FLAG_17           FLAG_LEFT_BIT(17)
+//=//// PARAMETER_FLAG_INCOMPLETE_OPTIMIZATION ////////////////////////////=//
+//
+// To try and speed up parameter typechecking to not need to do word fetches
+// on common cases, an array of bytes is built compacting types and typesets.
+// But this array is a finite length (4 bytes on 32-bit, 8 on 64-bit) and so
+
+#define PARAMETER_FLAG_INCOMPLETE_OPTIMIZATION \
+    FLAG_LEFT_BIT(16)
+
+
+//=//// PARAMETER_FLAG_NULLS_DEFINITELY_OK ////////////////////////////////=//
+//
+// The NULL? type checking function adds overhead, even if called via an
+// intrinsic optimization.  Yet it's common--especially unused refinements,
+// so just fold it into a flag.
+//
+// This flag not being set doesn't mean nulls aren't ok (some unoptimized
+// typechecker might accept nulls).
+//
+#define PARAMETER_FLAG_NULLS_DEFINITELY_OK \
+    FLAG_LEFT_BIT(17)
+
+
 #define PARAMETER_FLAG_18           FLAG_LEFT_BIT(18)
 #define PARAMETER_FLAG_19           FLAG_LEFT_BIT(19)
 #define PARAMETER_FLAG_20           FLAG_LEFT_BIT(20)
@@ -260,33 +281,33 @@ INLINE bool Is_Specialized(const Param* param) {
     return true;
 }
 
-INLINE Param* Init_Parameter_Core(
+
+#define Init_Parameter(out,param_flags,spec,specifier) \
+    TRACK(Init_Parameter_Untracked((out), (param_flags), (spec), (specifier)))
+
+
+INLINE Param* Init_Unconstrained_Parameter_Untracked(
     Cell* out,
-    Flags param_flags,
-    Option(const Array*) spec
+    Flags flags
 ){
-    assert((param_flags & FLAG_PARAMCLASS_BYTE(255)) != 0);  // must have class
-
-    Reset_Unquoted_Header_Untracked(out, CELL_MASK_PARAMETER);
-    if (spec)
-        Assert_Series_Managed(unwrap(spec));
-
-    PARAMETER_FLAGS(out) = param_flags;
-    INIT_CELL_PARAMETER_SPEC(out, try_unwrap(spec));
-
-    Param* param = cast(Param*, cast(REBVAL*, out));
-
-    if (Get_Parameter_Flag(param, REFINEMENT)) {
-        ParamClass pclass = Cell_ParamClass(param);
+    ParamClass pclass = u_cast(ParamClass, FIRST_BYTE(&flags));
+    assert(pclass != PARAMCLASS_0);  // must have class
+    if (flags & PARAMETER_FLAG_REFINEMENT) {
+        assert(flags & PARAMETER_FLAG_NULLS_DEFINITELY_OK);
         assert(pclass != PARAMCLASS_RETURN and pclass != PARAMCLASS_OUTPUT);
     }
+    UNUSED(pclass);
 
-    assert(Not_Cell_Flag(param, VAR_MARKED_HIDDEN));
+    Reset_Unquoted_Header_Untracked(out, CELL_MASK_PARAMETER);
+    PARAMETER_FLAGS(out) = flags;
+    INIT_CELL_PARAMETER_SPEC(out, nullptr);
+
+    Param* param = cast(Param*, cast(REBVAL*, out));
     return param;
 }
 
-#define Init_Parameter(out,param_flags,bits) \
-    TRACK(Init_Parameter_Core((out), (param_flags), (bits)))
+#define Init_Unconstrained_Parameter(out,param_flags) \
+    TRACK(Init_Unconstrained_Parameter_Untracked((out), (param_flags)))
 
 
 INLINE bool Is_Parameter_Unconstrained(NoQuote(const Cell*) param) {

@@ -537,11 +537,17 @@ bool Typecheck_Coerce_Return(
     const Param* param = ACT_PARAMS_HEAD(phase);
     assert(KEY_SYM(ACT_KEYS_HEAD(phase)) == SYM_RETURN);
 
-    if (Get_Parameter_Flag(param, RETURN_NONE) and not Is_None(atom))
+    if (Get_Parameter_Flag(param, RETURN_NONE)) {
+        if (Is_None(atom))
+            return true;
         fail ("If RETURN: <none> is in a function spec, RETURN NONE only");
+    }
 
-    if (Get_Parameter_Flag(param, RETURN_NIHIL) and not Is_Nihil(atom))
+    if (Get_Parameter_Flag(param, RETURN_NIHIL)) {
+        if (Is_Nihil(atom))
+            return true;
         fail ("If RETURN: <nihil> is in a function spec, RETURN NIHIL only");
+    }
 
     if (Typecheck_Coerce_Argument(param, atom))
         return true;
@@ -632,7 +638,7 @@ DECLARE_NATIVE(definitional_return)
 //  {Copy help information from the original function to the derived function}
 //
 //      return: "Same as derived (assists in efficient chaining)"
-//          [activation!]
+//          [activation?]
 //      derived [<unrun> frame!]
 //      original [<unrun> frame!]
 //      /augment "Additional spec information to scan"

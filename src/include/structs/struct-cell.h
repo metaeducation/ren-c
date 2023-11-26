@@ -107,7 +107,14 @@
 //   difference during an APPLY of encoded partial refinement specialization
 //   encoding from just a user putting random values in a refinement slot.
 //
-#define CELL_FLAG_VAR_MARKED_HIDDEN     NODE_FLAG_MARKED
+// * PARAMSPEC_SPOKEN_FOR -- When parameters are optimizing the blocks they
+//   receive, this is applied to any elements whose information was subsumed
+//   into parameter flags or optimization bytes.  If the parameter could not
+//   be fully optimized and needs to process the array, then anything with
+//   this mark on it can be skipped.
+//
+#define CELL_FLAG_VAR_MARKED_HIDDEN         NODE_FLAG_MARKED
+#define CELL_FLAG_PARAMSPEC_SPOKEN_FOR      NODE_FLAG_MARKED
 
 
 //=//// CELL_FLAG_FIRST_IS_NODE ///////////////////////////////////////////=//
@@ -478,6 +485,9 @@ union AnyUnion {  // needed to beat strict aliasing, used in payload
     Cell* cell_pun;
   #endif
 
+    Byte exactly_4[sizeof(uint32_t)];
+    Byte at_least_4[sizeof(uintptr_t)];
+
     // This should be initialized with ZEROTRASH, which permits optimization in
     // release builds and more likely to cause an error in debug builds.  See
     // remarks in ZERO_UNUSED_CELL_FIELDS regarding the rationale.
@@ -486,8 +496,8 @@ union AnyUnion {  // needed to beat strict aliasing, used in payload
 };
 
 union Reb_Bytes_Extra {
-    Byte exactly_4[sizeof(uint32_t) * 1];
-    Byte at_least_4[sizeof(void*) * 1];
+    Byte exactly_4[sizeof(uint32_t)];
+    Byte at_least_4[sizeof(uintptr_t)];
 };
 
 #define IDX_EXTRA_USED 0  // index into exactly_4 when used for in cell storage

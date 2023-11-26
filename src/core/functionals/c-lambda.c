@@ -207,6 +207,7 @@ DECLARE_NATIVE(lambda)
             const Symbol* symbol = VAL_REFINEMENT_SYMBOL(key_slot);
             Init_Word(key_slot, symbol);
             param_flags |= PARAMETER_FLAG_REFINEMENT;
+            param_flags |= PARAMETER_FLAG_NULLS_DEFINITELY_OK;
         }
         else if (Is_Set_Word(item) and VAL_WORD_ID(item) == SYM_RETURN) {
             fail ("LAMBDA (->) does not offer RETURN facilities, use FUNCTION");
@@ -219,10 +220,9 @@ DECLARE_NATIVE(lambda)
             continue;
         }
 
-        Init_Parameter(
+        Init_Unconstrained_Parameter(
             PARAM_SLOT(TOP_INDEX),
-            pclass | param_flags,
-            nullptr
+            FLAG_PARAMCLASS_BYTE(pclass) | param_flags
         );
 
         Init_Nulled(TYPES_SLOT(TOP_INDEX));  // types (not supported)

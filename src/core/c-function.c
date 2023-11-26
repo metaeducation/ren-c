@@ -243,9 +243,6 @@ void Push_Paramlist_Quads_May_Fail(
 
             Specifier* derived = Derive_Specifier(Cell_Specifier(spec), item);
 
-            bool was_refinement;
-            ParamClass pclass;
-
           blockscope {
             StackValue(*) types = TYPES_SLOT(TOP_INDEX);
 
@@ -278,9 +275,6 @@ void Push_Paramlist_Quads_May_Fail(
             if (Is_Specialized(cast(Param*, cast(REBVAL*, param))))
                 continue;
 
-            was_refinement = Get_Parameter_Flag(param, REFINEMENT);
-            pclass = Cell_ParamClass(cast_PAR(param));
-
             Init_Block(
                 types,
                 Copy_Array_At_Deep_Managed(
@@ -291,24 +285,11 @@ void Push_Paramlist_Quads_May_Fail(
             );
           }
 
-            const Cell* types_tail;
-            const Cell* types_at = Cell_Array_At(&types_tail, item);
-            Flags param_flags;
-            Array* a = Add_Parameter_Bits_Core(
-                &param_flags,
-                pclass,
-                types_at,
-                types_tail,
-                derived
-            );
-
             StackValue(*) param = PARAM_SLOT(TOP_INDEX);
-            PARAMETER_FLAGS(param) |= param_flags;
+            Flags param_flags = PARAMETER_FLAGS(param);
             assert(Cell_Parameter_Spec(param) == nullptr);
-            INIT_CELL_PARAMETER_SPEC(param, a);
 
-            if (was_refinement)
-                Set_Parameter_Flag(param, REFINEMENT);
+            Init_Parameter(param, param_flags, item, derived);
 
             *flags |= MKF_HAS_TYPES;
             continue;
@@ -371,8 +352,8 @@ void Push_Paramlist_Quads_May_Fail(
             // !!! Tuples are theorized as a way to "name parameters out of
             // the way" so there can be an interface name, but then a local
             // name...so that something like /ALL can be named out of the
-            // way without disrupting use of ALL.  That's not implemented yet,
-            // and a previous usage to name locals is deprecated:
+            // way without disrupting use of ALL:
+            //
             // https://forum.rebol.info/t/1793
             //
             fail ("TUPLE! behavior in func spec not defined at present");
@@ -475,18 +456,17 @@ void Push_Paramlist_Quads_May_Fail(
             Finalize_None(param);
         }
         else if (refinement) {
-            Init_Parameter(
+            Init_Unconstrained_Parameter(
                 param,
                 FLAG_PARAMCLASS_BYTE(pclass)
-                    | PARAMETER_FLAG_REFINEMENT,  // must preserve if type block
-                nullptr
+                    | PARAMETER_FLAG_REFINEMENT  // must preserve if type block
+                    | PARAMETER_FLAG_NULLS_DEFINITELY_OK  // need if refinement
             );
         }
         else {
-            Init_Parameter(
+            Init_Unconstrained_Parameter(
                 param,
-                FLAG_PARAMCLASS_BYTE(pclass),
-                nullptr
+                FLAG_PARAMCLASS_BYTE(pclass)
             );
         }
 
@@ -554,10 +534,9 @@ Array* Pop_Paramlist_With_Adjunct_May_Fail(
             // If you have a RETURN spec, however, you must explicitly say
             // you can return void.
             //
-            Init_Parameter(
+            Init_Unconstrained_Parameter(
                 param,
-                FLAG_PARAMCLASS_BYTE(PARAMCLASS_RETURN),
-                nullptr
+                FLAG_PARAMCLASS_BYTE(PARAMCLASS_RETURN)
             );
 
             Init_Nulled(TYPES_SLOT(TOP_INDEX));
@@ -565,10 +544,10 @@ Array* Pop_Paramlist_With_Adjunct_May_Fail(
         }
         else {
             StackValue(*) param = PARAM_SLOT(return_stackindex);
-
             assert(
                 VAL_WORD_ID(KEY_SLOT(return_stackindex)) == SYM_RETURN
             );
+            UNUSED(param);
         }
 
         // definitional_return handled specially when paramlist copied
@@ -1219,7 +1198,7 @@ REBTYPE(Fail)
 //  {Modify a special property (currently only for ACTION!)}
 //
 //      return: "Same action identity as input"
-//          [activation!]
+//          [activation?]
 //      frame "(modified) Action to modify property of"
 //          [<unrun> frame!]
 //      property "Currently must be [defer postpone]"

@@ -410,17 +410,6 @@ bool Typecheck_Coerce_Argument(
     if (Get_Parameter_Flag(param, CONST))
         Set_Cell_Flag(arg, CONST);  // mutability override?  [1]
 
-    if (
-        Get_Parameter_Flag(param, REFINEMENT)
-        or Get_Parameter_Flag(param, SKIPPABLE)
-    ){
-        if (Is_Nulled(arg))  // nulls always legal...means refinement not used
-            return true;
-
-        if (Is_Parameter_Unconstrained(param))  // no-arg refinement
-            return Is_Blackhole(arg);  // !!! Error_Bad_Argless_Refine(key)
-    }
-
     bool coerced = false;
 
     // We do an adjustment of the argument to accommodate meta parameters,
@@ -448,10 +437,41 @@ bool Typecheck_Coerce_Argument(
             goto do_coercion;
     }
 
-  typecheck_again:
+  typecheck_again: {
 
-    if (Typecheck_Atom(param, arg))
+    const Byte* optimized = PAYLOAD(Any, param).second.at_least_4;
+    const Byte* optimized_tail = optimized + sizeof(uintptr_t);
+
+    enum Reb_Kind kind = Is_Stable(arg) ? VAL_TYPE(arg) : REB_ISOTOPE;
+
+    if (Get_Parameter_Flag(param, NULLS_DEFINITELY_OK) and Is_Nulled(arg))
         goto return_true;
+
+    if (Is_Parameter_Unconstrained(param)) {
+        if (Get_Parameter_Flag(param, REFINEMENT)) {  // no-arg refinement
+            if (Is_Blackhole(arg))
+                goto return_true;  // nulls handled by NULLS_DEFINITELY_OK
+            goto return_false;
+        }
+        goto return_true;  // other parameters
+    }
+
+    if (Get_Parameter_Flag(param, NOOP_IF_VOID))
+        assert(kind != REB_VOID);  // should have bypassed typecheck
+
+    for (; optimized != optimized_tail; ++optimized) {
+        if (*optimized == 0)
+            break;
+
+        if (kind == *optimized)
+            goto return_true;
+    }
+
+    if (Get_Parameter_Flag(param, INCOMPLETE_OPTIMIZATION)) {
+        if (Typecheck_Atom(param, arg))
+            goto return_true;
+    }
+  }
 
     if (not coerced) {
 
