@@ -5,7 +5,7 @@
 [
     (void? any [])
 
-    ~expect-arg~ !! (if any [] [<safety>])
+    ~bad-void~ !! (if any [] [<safety>])
 
     (
         x: <overwritten>

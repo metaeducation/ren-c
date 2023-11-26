@@ -44,8 +44,8 @@ probe: func* [
     {Debug print a molded value and returns that same value.}
 
     return: "Same as the input value"
-        [nihil? <opt> <void> any-value!]
-    ^value' [<opt> <void> pack? raised? any-value! barrier?]
+        [any-atom?]
+    ^value' [any-atom?]
 ][
     ; Remember this is early in the boot, so many things not defined.
 

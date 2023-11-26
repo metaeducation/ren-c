@@ -8,7 +8,7 @@
     (void? all [])
     (void' = ^ all [])
 
-    ~expect-arg~ !! (if all [] [<safety>])
+    ~bad-void~ !! (if all [] [<safety>])
 
     (
         x: <overwritten>

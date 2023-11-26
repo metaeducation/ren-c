@@ -174,6 +174,15 @@ INLINE bool Is_Isotope_Unstable(Atom(const*) v) {
 #define Is_Isotope_Stable(v) \
     (not Is_Isotope_Unstable(v))
 
+INLINE bool Is_Stable_Isotope_Heart(enum Reb_Kind heart) {
+    return (
+        heart != REB_BLOCK  // Is_Pack()
+        and heart != REB_ERROR  // Is_Raised()
+        and heart != REB_COMMA  // Is_Barrier()
+        and heart != REB_OBJECT  // Is_Lazy()
+    );
+}
+
 INLINE bool Is_Stable(Atom(const*) v) {  // repeat for non-inlined speed
     ASSERT_CELL_READABLE_EVIL_MACRO(v);
     if (QUOTE_BYTE(v) != ISOTOPE_0)

@@ -134,9 +134,9 @@ Bounce Group_Branch_Executor(Level* level_)
 //
 //  {When TO LOGIC! CONDITION is true, execute branch}
 //
-//      return: "void if branch not run, otherwise branch result"
-//          [<opt> <void> any-value!]
-//      condition [<opt> any-value!]
+//      return: "void if branch not run, otherwise branch result (see HEAVY)"
+//          [any-atom?]
+//      condition [any-value?]  ; non-void-value? possible, but slower
 //      :branch "If arity-1 ACTION!, receives the evaluated condition"
 //          [any-branch!]
 //  ]
@@ -172,9 +172,8 @@ DECLARE_NATIVE(if)
 //
 //  {Choose a branch to execute, based on TO-LOGIC of the CONDITION value}
 //
-//      return: [<opt> any-value!]
-//          "Returns null if either branch returns null (unlike IF...ELSE)"
-//      condition [<opt> any-value!]
+//      return: [any-atom?]
+//      condition [any-value?]  ; non-void-value? possible, but slower
 //      :true-branch "If arity-1 ACTION!, receives the evaluated condition"
 //          [any-branch!]
 //      :false-branch
@@ -259,7 +258,7 @@ static Bounce Then_Else_Isotopic_Object_Helper(
 ){
     INCLUDE_PARAMS_OF_THEN;  // assume frame compatibility w/ELSE
 
-    Atom(*) in = ARG(optional);  /* !!! Wrong, rewrite this routine */
+    Atom(*) in = ARG(atom);  /* !!! Wrong, rewrite this routine */
     Value(*) branch = ARG(branch);
 
     if (Is_Meta_Of_Nihil(in))
@@ -376,8 +375,8 @@ static Bounce Then_Else_Isotopic_Object_Helper(
 //  {Synonym for NOT NULL? that is isotope tolerant (IF DID is prefix THEN)}
 //
 //      return: [logic?]
-//      ^optional "Argument to test"
-//          [<opt> <void> pack? any-value!]
+//      ^atom "Argument to test"
+//          [any-atom?]
 //      /decay "Pre-decay ~null~ isotope input to NULL"
 //      <local> branch  ; for frame compatibility with THEN/ELSE/ALSO
 //  ]
@@ -405,7 +404,7 @@ DECLARE_NATIVE(did_1)  // see TO-C-NAME for why the "_1" is needed
 {
     INCLUDE_PARAMS_OF_DID_1;
 
-    Value(*) in = ARG(optional);
+    Value(*) in = ARG(atom);
     USED(ARG(decay));  // used by helper
     USED(ARG(branch));
 
@@ -470,8 +469,8 @@ DECLARE_NATIVE(did_1)  // see TO-C-NAME for why the "_1" is needed
 //  {Synonym for NULL? that is isotope tolerant (IF DIDN'T is prefix ELSE)}
 //
 //      return: [logic?]
-//      ^optional "Argument to test"
-//          [<opt> <void> any-value!]
+//      ^atom "Argument to test"
+//          [any-atom?]
 //      /decay "Pre-decay ~null~ isotope input to NULL"
 //      <local> branch  ; for frame compatibility with THEN/ELSE/ALSO
 //  ]
@@ -480,7 +479,7 @@ DECLARE_NATIVE(didnt)
 {
     INCLUDE_PARAMS_OF_DIDNT;
 
-    Value(*) in = ARG(optional);
+    Value(*) in = ARG(atom);
     USED(ARG(decay));  // used by helper
     USED(ARG(branch));
 
@@ -500,9 +499,9 @@ DECLARE_NATIVE(didnt)
 //  {If input is null, return null, otherwise evaluate the branch}
 //
 //      return: "null if input is null, or branch result"
-//          [<opt> <void> any-value!]
-//      ^optional "<deferred argument> Run branch if this is not null"
-//          [<opt> <void> raised? pack? any-value!]
+//          [any-atom?]
+//      ^atom "<deferred argument> Run branch if this is not null"
+//          [any-atom?]
 //      /decay "Pre-decay ~null~ isotope input to NULL"
 //      :branch "If arity-1 ACTION!, receives value that triggered branch"
 //          [<unrun> any-branch!]
@@ -512,7 +511,7 @@ DECLARE_NATIVE(then)  // see `tweak :then 'defer on` in %base-defs.r
 {
     INCLUDE_PARAMS_OF_THEN;
 
-    Value(*) in = ARG(optional);
+    Value(*) in = ARG(atom);
     Deactivate_If_Activation(ARG(branch));
     USED(ARG(branch));  // used by helper
     USED(ARG(decay));
@@ -542,9 +541,9 @@ DECLARE_NATIVE(then)  // see `tweak :then 'defer on` in %base-defs.r
 //  {If input is not null, return that value, otherwise evaluate the branch}
 //
 //      return: "Input value if not null, or branch result"
-//          [<opt> <void> any-value!]
-//      ^optional "<deferred argument> Run branch if this is null"
-//          [<opt> <void> raised? pack? any-value!]
+//          [any-atom?]
+//      ^atom "<deferred argument> Run branch if this is null"
+//          [any-atom?]
 //      /decay "Pre-decay ~null~ isotope input to NULL"
 //      :branch [<unrun> any-branch!]
 //  ]
@@ -553,7 +552,7 @@ DECLARE_NATIVE(else)  // see `tweak :else 'defer on` in %base-defs.r
 {
     INCLUDE_PARAMS_OF_ELSE;
 
-    Value(*) in = ARG(optional);
+    Value(*) in = ARG(atom);
     Deactivate_If_Activation(ARG(branch));
     USED(ARG(branch));  // used by helper
     USED(ARG(decay));
@@ -583,9 +582,9 @@ DECLARE_NATIVE(else)  // see `tweak :else 'defer on` in %base-defs.r
 //  {For non-null input, evaluate and discard branch (like a pass-thru THEN)}
 //
 //      return: "The same value as input, regardless of if branch runs"
-//          [<opt> <void> any-value!]
-//      ^optional "<deferred argument> Run branch if this is not null"
-//          [<opt> <void> raised? pack? any-value!]
+//          [any-atom?]
+//      ^atom "<deferred argument> Run branch if this is not null"
+//          [any-atom?]
 //      /decay "Pre-decay ~null~ isotope input to NULL"
 //      :branch "If arity-1 ACTION!, receives value that triggered branch"
 //          [<unrun> any-branch!]
@@ -595,7 +594,7 @@ DECLARE_NATIVE(also)  // see `tweak :also 'defer on` in %base-defs.r
 {
     INCLUDE_PARAMS_OF_ALSO;  // `then func [x] [(...) :x]` => `also [...]`
 
-    Value(*) in = ARG(optional);
+    Value(*) in = ARG(atom);
     Value(*) branch = ARG(branch);
     Deactivate_If_Activation(ARG(branch));
 
@@ -645,10 +644,10 @@ DECLARE_NATIVE(also)  // see `tweak :also 'defer on` in %base-defs.r
 //  {Check value using tests (match types, TRUE or FALSE, or filter action)}
 //
 //      return: "Input if it matched, NULL if it did not (isotope if falsey)"
-//          [<opt> any-value!]
+//          [any-value?]
 //      test "Typeset or arity-1 filter function"
 //          [<opt> logic? activation? block! type-word! type-group! type-block!]
-//      value [<opt> <void> any-value!]
+//      value [any-value?]
 //  ]
 //
 DECLARE_NATIVE(match)

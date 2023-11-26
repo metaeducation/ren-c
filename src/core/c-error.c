@@ -1308,10 +1308,7 @@ Context* Error_Bad_Isotope(const Cell* isotope) {
 //  Error_Bad_Void: C
 //
 Context* Error_Bad_Void(void) {
-    DECLARE_LOCAL (void_word);
-    Init_Meta_Of_Void(void_word);
-
-    return Error_Bad_Isotope_Raw(void_word);
+    return Error_Bad_Void_Raw();
 }
 
 

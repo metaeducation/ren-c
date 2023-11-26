@@ -572,8 +572,8 @@ bool Typecheck_Coerce_Return(
 //
 //  {RETURN, giving a result to the caller}
 //
-//      return: []  ; !!! notation for "divergent?"
-//      ^value [<opt> <void> raised? pack? any-value! barrier?]
+//      return: []  ; "divergent"
+//      ^value [any-atom?]
 //      /only "Do not do proxying of output variables, just return argument"
 //  ]
 //
@@ -615,8 +615,8 @@ DECLARE_NATIVE(definitional_return)
     // !!! In the userspace formulation of this abstraction, it indicates
     // it's not RETURN's type signature that is constrained, as if it were
     // then RETURN would be implicated in the error.  Instead, RETURN must
-    // take [<opt> any-value!] as its argument, and then report the error
-    // itself...implicating the frame (in a way parallel to this native).
+    // take [any-atom?] as its argument, and then report the error itself...
+    // implicating the frame (in a way parallel to this native).
     //
     if (not REF(only) and not Typecheck_Coerce_Return(target_level, atom))
         fail (Error_Bad_Return_Type(target_level, atom));

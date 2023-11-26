@@ -80,6 +80,7 @@ Script: [
     bad-null:           [:arg1 {cannot be null}]
     bad-word-get:       [:arg1 {is} :arg2 {isotope (see ^^(...) and GET/ANY)}]
     bad-isotope:        [{Invalid use of} :arg1 {isotope}]
+    bad-void:           {Invalid use of void}
     need-non-end:       [{end was reached while trying to set} :arg1]
     not-bound:          [:arg1 {word is not bound to a context}]
     unassigned-attach:  [:arg1 {word is attached to a context, but unassigned}]

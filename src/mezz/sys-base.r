@@ -45,7 +45,7 @@ rescue: func [  ; see also TRAP
 rescue+: func [  ; see also TRAP+
     {Experimental variation of RESCUE using THENable mechanics}
 
-    return: [<opt> any-value!]
+    return: [pack? lazy?]
     code [block!]
     <local> result
 ][

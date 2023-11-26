@@ -534,27 +534,30 @@ DECLARE_NATIVE(lazy)
 //
 //  {Create a pack of arguments from an array}
 //
-//      return: "Isotope of BLOCK! or unquoted value (passthru null and void)"
-//          [<opt> <void> any-value!]
-//      array [<opt> <void> quoted! the-block! block!]
+//      return: "Isotope of BLOCK!"
+//          [pack?]
+//      array "Reduce if plain BLOCK!, not if THE-BLOCK!"
+//          [<maybe> the-block! block!]  ; accept quoted values?  [1]
 //  ]
 //
 DECLARE_NATIVE(pack)
 //
-// We create a new array for a pack, because we need to turn each item into
-// its meta form.  But for literal packs, this could be optimized with a
-// "pretend everything in the block is quoted" flag.
+// 1. The original implementation accepted quoted values as if they were
+//    blocks containing one item.  This semantic equivalence is presumably
+//    for some efficiency trick to let users avoid block allocations in
+//    some situations.  No usages existed, so it was scrapped.  Review.
+//
+// 2. In REDUCE, /PREDICATE functions are offered isotopes like nihil and void
+//    if they can accept them (which META can).  But COMMA! isotopes that
+//    result from evaluating commas are -not- offered to any predicates.  This
+//    is by design, so we get:
+//
+//        >> pack [1 + 2, comment "hi", if false [1020]]
+//        == ~[3 ~[]~ ']
 {
     INCLUDE_PARAMS_OF_PACK;
 
     Value(*) v = ARG(array);
-    if (Is_Void(v))
-        return VOID;
-    if (Is_Nulled(v))
-        return nullptr;
-
-    if (Is_Quoted(v))
-        return Unquotify(Copy_Cell(OUT, v), 1);
 
     if (Is_The_Block(v)) {
         const Cell* tail;
@@ -569,7 +572,7 @@ DECLARE_NATIVE(pack)
 
     if (rebRunThrows(
         cast(REBVAL*, SPARE),  // output cell
-        Canon(QUASI), "reduce/predicate", v, Lib(META)
+        Canon(QUASI), "reduce/predicate", v, Lib(META)  // commas excluded [2]
     )){
         return THROWN;
     }

@@ -2371,6 +2371,74 @@ DECLARE_INTRINSIC(null_q)
 
 
 //
+//  any-value?: native/intrinsic [
+//
+//  "Tells you if the argument (taken as meta) is storable in a variable"
+//
+//      return: [logic?]
+//      ^value
+//  ]
+//
+DECLARE_INTRINSIC(any_value_q)
+{
+    UNUSED(phase);
+
+    if (not Is_Quasi(arg))
+        Init_True(out);
+    else
+        Init_Logic(out, Is_Stable_Isotope_Heart(Cell_Heart(arg)));
+}
+
+
+//
+//  non-void-value?: native/intrinsic [
+//
+//  "If the argument (taken as meta) non void, and storable in a variable"
+//
+//      return: [logic?]
+//      ^value
+//  ]
+//
+DECLARE_INTRINSIC(non_void_value_q)
+//
+// Being able to specify that a function does not accept voids on its type
+// checking is fundamentally different from taking ANY-VALUE? and then failing
+// if a void is received.  Functions like REDUCE test for if predicates will
+// accept voids, and only pass them if they do.  So a function like REIFY
+// needs to use NON-VOID-VALUE? in its type spec to work with REDUCE.
+{
+    UNUSED(phase);
+
+    if (not Is_Quasi(arg)) {
+        if (Is_Meta_Of_Void(arg))
+            Init_False(out);
+        else
+            Init_True(out);
+    }
+    else
+        Init_Logic(out, Is_Stable_Isotope_Heart(Cell_Heart(arg)));
+}
+
+
+//
+//  any-atom?: native/intrinsic [
+//
+//  "Accepts absolutely any argument state (unstable isotopes included)"
+//
+//      return: [logic?]
+//      ^value
+//  ]
+//
+DECLARE_INTRINSIC(any_atom_q)
+{
+    UNUSED(phase);
+    UNUSED(arg);
+
+    Init_True(out);
+}
+
+
+//
 //  logic?: native/intrinsic [
 //
 //  "Tells you if the argument is a ~true~ or ~false~ isotope"
@@ -2603,21 +2671,24 @@ DECLARE_INTRINSIC(decay)
 //  "Make isotopes into their quasiforms, pass thru other values"
 //
 //      return: [element?]
-//      value [<opt> any-value!]
+//      value [non-void-value?]  ; so reduce/predicate won't pass void [1]
 //  ]
 //
 DECLARE_NATIVE(reify)
 //
-// 1. REIFY of VOID isn't currently supported by default.  If it was it might
-//    become a quoted void (e.g. ')
+// 1. REIFY of VOID isn't supported, in order for this to work:
+//
+//       >> reduce/predicate [1 + 2 if false [10 + 20] 100 + 200] :reify
+//       == [3 300]
+//
+//   When REDUCE/PREDICATE sees a typecheck on void fail, it assumes the
+//   predicate does not have handling.  If we did handle it, we'd have to
+//   return void to get the same outcome...which seems inconsistent with
+//   "reification".  But an argument for the exception could be made.
 {
     INCLUDE_PARAMS_OF_REIFY;
 
     REBVAL *v = ARG(value);
-
-    if (Is_Void(v))  // see 1
-        fail ("REIFY of VOID is currently undefined (needs motivating case)");
-
     return Reify(Copy_Cell(OUT, v));
 }
 

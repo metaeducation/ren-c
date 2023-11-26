@@ -54,19 +54,21 @@ void Startup_Typesets(void)
     for (id = SYM_ANY_VALUE_Q; id != SYM_DATATYPES; id += 2) {
         REBINT n = (id - SYM_ANY_VALUE_Q) / 2;  // means Typesets[n]
 
-        // We want the forms like ANY-VALUE? to be typechecker functions that
+        // We want the forms like ANY-SERIES? to be typechecker functions that
         // act on Typesets[n].
         //
-        DECLARE_STABLE (typeset_index);
-        Init_Integer(typeset_index, n);
-        Phase* typechecker = Make_Typechecker(typeset_index);
+        if (id != SYM_ANY_VALUE_Q) {  // see any-value? for unstable rule-out
+            DECLARE_STABLE (typeset_index);
+            Init_Integer(typeset_index, n);
+            Phase* typechecker = Make_Typechecker(typeset_index);
 
-        Init_Activation(
-            Force_Lib_Var(cast(SymId, id)),
-            typechecker,
-            Canon_Symbol(cast(SymId, id)),  // cached symbol for function
-            UNBOUND
-        );
+            Init_Activation(
+                Force_Lib_Var(cast(SymId, id)),
+                typechecker,
+                Canon_Symbol(cast(SymId, id)),  // cached symbol for function
+                UNBOUND
+            );
+        }
 
         // Make e.g. ANY-VALUE! a TYPE-GROUP! with the bound question mark
         // form inside it, e.g. any-value!: &(any-value?)
