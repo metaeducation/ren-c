@@ -57,6 +57,10 @@ run-single-test: func [
 
     log [mold code]
 
+    ; Need to do ^result, otherwise nihil (empty pack) would case a failure
+    ; in the test code itself trying to unpack to a regular result.  We want
+    ; to report it as a failure, not fail ourseves...
+    ;
     let [error ^result]: sys.util.rescue+ as block! code
 
     all [
@@ -66,12 +70,6 @@ run-single-test: func [
     ] then [
         successes: me + 1
         log reduce [_ {"correct failure:"} _ quote quasi expected-id newline]
-        return none
-    ]
-
-    if (result = '~true~) and (not expected-id) [
-        successes: me + 1
-        log reduce [_ {"succeeded"} newline]
         return none
     ]
 
@@ -88,10 +86,16 @@ run-single-test: func [
             spaced ["did not error, but expected:" mold quasi expected-id]
         ]
 
-        '~[]~ = result [
-            "test returned empty pack ~[]~ isotope"  ; ~result~ would error
+        nihil' = result [
+            "test returned empty pack ~[]~ isotope"  ; UNMETA fails
         ]
         (elide if pack? unmeta result [result: first unquasi result])
+
+        result = '~true~ [
+            successes: me + 1
+            log reduce [_ {"succeeded"} newline]
+            return none
+        ]
 
         result = '~false~ [
             "test returned false"
@@ -109,7 +113,7 @@ run-single-test: func [
             "test returned void"
         ]
         true [
-            spaced ["was" (mold kind of :result) ", not logic!"]
+            spaced ["was" (mold kind of :result) ", not ~true~ or ~false~"]
         ]
     ] then message -> [
         test-failures: me + 1
@@ -201,7 +205,7 @@ run-test-cluster: func [
 process-tests: function [
     return: <none>
     test-sources [block!]
-    handler [activation!]
+    handler [activation?]
 ][
     parse3 test-sources [
         try some [
