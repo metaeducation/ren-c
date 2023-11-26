@@ -200,7 +200,7 @@ Bounce Hijacker_Dispatcher(Level* level_)
 //  {Cause all existing references to a frame to invoke another frame}
 //
 //      return: "The hijacked action value, null if self-hijack (no-op)"
-//          [<opt> activation!]
+//          [<opt> activation?]
 //      victim "Frame whose inherited instances are to be affected"
 //          [<unrun> frame!]
 //      hijacker "The frame to run in its place"

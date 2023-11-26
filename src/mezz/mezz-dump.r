@@ -52,7 +52,7 @@ dump: function [
 
     dump-one: function [return: <none> item] [
         switch/type item [
-            refinement!  ; treat as label, /a no shift and shorter than "a"
+            refinement?!  ; treat as label, /a no shift and shorter than "a"
             text! [  ; good for longer labeling when you need spaces/etc.
                 print unspaced [
                     elide trunc: ~
@@ -146,7 +146,7 @@ dump-to-newline: adapt :dump [
 dumps: enfix function [
     {Fast generator for dumping function that uses assigned name for prefix}
 
-    return: [activation!]
+    return: [activation?]
     :name [set-word!]
     :value "If issue, create non-specialized dumper...#on or #off by default"
         [issue! text! integer! word! set-word! set-path! group! block!]
@@ -236,7 +236,7 @@ summarize-obj: function [
             ]
 
             switch/type pattern [  ; filter out any non-matching items
-                null! []
+                null?! []
 
                 type-word! [
                     if kind != pattern [continue]

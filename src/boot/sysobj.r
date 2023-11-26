@@ -178,8 +178,6 @@ standard: make object! [
         ~  ; if you don't call RETURN, the result is a ~ isotope
     ]
 
-    proc-return-type: []  ; was once [none!], now just []
-
     ; !!! The PORT! and actor code is deprecated, but this bridges it so
     ; it doesn't have to build a spec by hand.
     ;

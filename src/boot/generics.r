@@ -58,37 +58,37 @@ reflect: generic [
 
 add: generic [
     {Returns the addition of two values.}
-    return: [char! any-scalar! date! binary!]
-    value1 [char! any-scalar! date! binary!]
-    value2 [char! any-scalar! date!]
+    return: [char? any-scalar! date! binary!]
+    value1 [char? any-scalar! date! binary!]
+    value2 [char? any-scalar! date!]
 ]
 
 subtract: generic [
     {Returns the second value subtracted from the first.}
-    return: [char! any-scalar! date! binary!]
-    value1 [char! any-scalar! date! binary!]
-    value2 [char! any-scalar! date!]
+    return: [char? any-scalar! date! binary!]
+    value1 [char? any-scalar! date! binary!]
+    value2 [char? any-scalar! date!]
 ]
 
 multiply: generic [
     {Returns the first value multiplied by the second.}
-    return: [char! any-scalar!]
-    value1 [char! any-scalar!]
-    value2 [char! any-scalar!]
+    return: [char? any-scalar!]
+    value1 [char? any-scalar!]
+    value2 [char? any-scalar!]
 ]
 
 divide: generic [
     {Returns the first value divided by the second.}
-    return: [char! any-scalar!]
-    value1 [char! any-scalar!]
-    value2 [char! any-scalar!]
+    return: [char? any-scalar!]
+    value1 [char? any-scalar!]
+    value2 [char? any-scalar!]
 ]
 
 remainder: generic [
     {Returns the remainder of first value divided by second.}
-    return: [char! any-scalar!]
-    value1 [char! any-scalar!]
-    value2 [char! any-scalar!]
+    return: [char? any-scalar!]
+    value1 [char? any-scalar!]
+    value2 [char? any-scalar!]
 ]
 
 power: generic [
@@ -101,30 +101,30 @@ power: generic [
 
 bitwise-and: generic [
     {Bitwise AND of two values}
-    return: [logic! integer! char! tuple! binary!]
-    value1 [logic! integer! char! tuple! binary!]
-    value2 [logic! integer! char! tuple! binary!]
+    return: [logic? integer! char? tuple! binary!]
+    value1 [logic? integer! char? tuple! binary!]
+    value2 [logic? integer! char? tuple! binary!]
 ]
 
 bitwise-or: generic [
     {Bitwise OR of two values}
-    return: [logic! integer! char! tuple! binary!]
-    value1 [logic! integer! char! tuple! binary!]
-    value2 [logic! integer! char! tuple! binary!]
+    return: [logic? integer! char? tuple! binary!]
+    value1 [logic? integer! char? tuple! binary!]
+    value2 [logic? integer! char? tuple! binary!]
 ]
 
 bitwise-xor: generic [
     {Bitwise XOR of two values}
-    return: [logic! integer! char! tuple! binary!]
-    value1 [logic! integer! char! tuple! binary!]
-    value2 [logic! integer! char! tuple! binary!]
+    return: [logic? integer! char? tuple! binary!]
+    value1 [logic? integer! char? tuple! binary!]
+    value2 [logic? integer! char? tuple! binary!]
 ]
 
 bitwise-and-not: generic [
     {Bitwise AND NOT of two values}
-    return: [logic! integer! char! tuple! binary!]
-    value1 [logic! integer! char! tuple! binary!]
-    value2 [logic! integer! char! tuple! binary!]
+    return: [logic? integer! char? tuple! binary!]
+    value1 [logic? integer! char? tuple! binary!]
+    value2 [logic? integer! char? tuple! binary!]
 ]
 
 
@@ -132,17 +132,17 @@ intersect: generic [
     {Returns the intersection (AND) of two sets}
 
     return: [
-        logic! integer! char! tuple!  ; math
+        logic? integer! char? tuple!  ; math
         any-array! any-string! bitset!  ; sets
         binary!  ; ???
     ]
     value1 [
-        logic! integer! char! tuple!  ; math
+        logic? integer! char? tuple!  ; math
         any-array! any-string! bitset!  ; sets
         binary!  ; ???
     ]
     value2 [
-        logic! integer! char! tuple!  ; math
+        logic? integer! char? tuple!  ; math
         any-array! any-string! bitset!  ; sets
         binary!  ; ???
     ]
@@ -155,17 +155,17 @@ union: generic [
     {Returns the union (OR) of two sets}
 
     return: [
-        logic! integer! char! tuple!  ; math
+        logic? integer! char? tuple!  ; math
         any-array! any-string! bitset!  ; sets
         binary!  ; ???
     ]
     value1 [
-        logic! integer! char! tuple!  ; math
+        logic? integer! char? tuple!  ; math
         any-array! any-string! bitset!  ; sets
         binary!  ; ???
     ]
     value2 [
-        logic! integer! char! tuple!  ; math
+        logic? integer! char? tuple!  ; math
         any-array! any-string! bitset!  ; sets
         binary!  ; ???
     ]
@@ -178,19 +178,19 @@ difference: generic [
     {Returns the special difference (XOR) of two sets}
 
     return: [
-        logic! integer! char! tuple!
+        logic? integer! char? tuple!
         any-array! any-string! bitset!
         binary!
         time!  ; !!! Under review, this really doesn't fit
     ]
     value1 [
-        logic! integer! char! tuple!  ; math
+        logic? integer! char? tuple!  ; math
         any-array! any-string! bitset!  ; sets
         binary!  ; ???
         date!  ; !!! Under review, this really doesn't fit
     ]
     value2 [
-        logic! integer! char! tuple!  ; math
+        logic? integer! char? tuple!  ; math
         any-array! any-string! bitset!  ; sets
         binary!  ; ???
         date!  ; !!! Under review, this really doesn't fit
@@ -224,8 +224,8 @@ negate: generic [
 
 bitwise-not: generic [
     {Returns the one's complement value.}
-    return: [logic! integer! tuple! binary!]
-    value [logic! integer! tuple! binary!]
+    return: [logic? integer! tuple! binary!]
+    value [logic? integer! tuple! binary!]
 ]
 
 complement: generic [
@@ -279,13 +279,13 @@ random: generic [
 odd?: generic [
     {Returns TRUE if the number is odd.}
     return: [logic?]
-    number [any-number! char! date! money! time! pair!]
+    number [any-number! char? date! money! time! pair!]
 ]
 
 even?: generic [
     {Returns TRUE if the number is even.}
     return: [logic?]
-    number [any-number! char! date! money! time! pair!]
+    number [any-number! char? date! money! time! pair!]
 ]
 
 ; Series Navigation
@@ -295,7 +295,7 @@ skip: generic [
     return: "Input skipped by offset, or null if out of bounds"
         [<opt> any-series! port!]
     series [<maybe> any-series! port!]
-    offset [any-number! logic! pair!]
+    offset [any-number! logic? pair!]
     /unbounded "Return out of bounds series if before tail or after head"
 ]
 
@@ -304,7 +304,7 @@ at: generic [
     return: "Input at the given index, not clipped to head/tail by default"
         [<opt> any-series! port!]
     series [<maybe> any-series! port!]
-    index [any-number! logic! pair!]
+    index [any-number! logic? pair!]
     /bounded "Return null if index is before tail or after head"
 ]
 
@@ -314,13 +314,13 @@ find: generic [
     {Searches for the position where a matching value is found}
 
     return: "position found, else null - logic true if non-positional find"
-        [<opt> any-series! logic!]
+        [<opt> any-series! logic?]
     @tail "Returns the end of the found data"
         [<opt> any-series!]
     series [
         <maybe> any-series! any-context! map!
     ]
-    pattern [<maybe> element? splice! any-matcher!]
+    pattern [<maybe> element? splice? any-matcher?]
     /part "Limits the search to a given length or position"
         [any-number! any-series! pair!]
     /case "Characters are case-sensitive"
@@ -335,7 +335,7 @@ select: generic [
     return: [<opt> any-value!]
     @tail []  ; for frame compatibility with FIND
     series [<maybe> any-series! any-context! map! bitset!]
-    value [<maybe> element? splice! any-matcher!]
+    value [<maybe> element? splice? any-matcher?]
     /part "Limits the search to a given length or position"
         [any-number! any-series! pair!]
     /case "Characters are case-sensitive"
@@ -438,7 +438,7 @@ insert: generic [
     series "At position (modified)"
         [<maybe> any-series! port! map! object! bitset! port!]
     value "What to insert (isotopic groups will splice, e.g. SPREAD)"
-        [<void> element? splice!]
+        [<void> element? splice?]
     /part "Limits to a given length or position"
         [any-number! any-series! pair!]
     /dup "Duplicates the insert a specified number of times"
@@ -456,7 +456,7 @@ append: generic [
     series "Any position (modified)"
         [<maybe> any-series! port! map! object! module! bitset!]
     value "What to append (isotopic groups will splice, e.g. SPREAD)"
-        [<void> element? splice!]
+        [<void> element? splice?]
     /part "Limits to a given length or position"
         [any-number! any-series! pair!]
     /dup "Duplicates the insert a specified number of times"
@@ -474,7 +474,7 @@ change: generic [
     series "At position (modified)"
         [<maybe> any-series! port!]
     value "The new value (isotopic groups will splice, e.g. SPREAD)"
-        [<void> element? splice!]
+        [<void> element? splice?]
     /part "Limits the amount to change to a given length or position"
         [any-number! any-series! pair!]
     /dup "Duplicates the change a specified number of times"
@@ -489,7 +489,7 @@ remove: generic [
     series "At position (modified)"
         [<maybe> any-series! map! port! bitset!]
     /part "Removes multiple elements or to a given position"
-        [any-number! any-series! pair! char!]
+        [any-number! any-series! pair! char?]
 ]
 
 clear: generic [

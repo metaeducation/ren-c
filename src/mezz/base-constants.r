@@ -49,17 +49,18 @@ lf: LF:    newline
 
 ; Type predicates
 
-null!: &(null?)
-none!: &(none?)
-void!: &(void?)
-refinement!: &(refinement?)
-char!: &(char?)
-blackhole!: &(blackhole?)
-splice!: &(splice?)
-lit-word!: &(lit-word?)
-lit-path!: &(lit-path?)
-logic!: &(logic?)
-quasi-word!: &(quasi-word?)
+null?!: &(null?)
+none?!: &(none?)
+void?!: &(void?)
+refinement?!: &(refinement?)
+char?!: &(char?)
+blackhole?!: &(blackhole?)
+splice?!: &(splice?)
+lit-word?!: &(lit-word?)
+lit-path?!: &(lit-path?)
+logic?!: &(logic?)
+quasi-word?!: &(quasi-word?)
+activation?!: &(activation?)
 
 
 ; A "blackhole" is a name for the usage of the NUL character in the sense of

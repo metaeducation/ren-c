@@ -89,7 +89,7 @@ DECLARE_NATIVE(reeval)
 //      'right [<variadic> <end> any-value!]
 //          "(uses magic -- SHOVE can't be written easily in usermode yet)"
 //      /prefix "Force either prefix or enfix behavior (vs. acting as is)"
-//          [logic!]
+//          [logic?]
 //  ]
 //
 DECLARE_NATIVE(shove)

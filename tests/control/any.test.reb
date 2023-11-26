@@ -417,7 +417,7 @@
     ('false = any @[false])  ; just the word, and words are truthy
 ]
 
-(not any [match logic! false])
-(true = any [did match logic! false])
+(not any [match logic?! false])
+(true = any [did match logic?! false])
 
 (^append = ^(any [1 > 2, :append, 3 > 4]))

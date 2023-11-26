@@ -73,7 +73,7 @@ module: func [
     @product "The result of running the body (~quit~ isotope if it ran QUIT)"
         [any-value!]
     @quitting "If requested and quitting, when true PRODUCT is QUIT's argument"
-        [logic!]
+        [logic?]
     spec "The header block of the module (modified)"
         [<opt> block! object!]
     body "The body of the module (all bindings will be overwritten if block)"
@@ -224,7 +224,7 @@ do*: func [
     args "Args passed as system.script.args to a script (normally a string)"
         [<opt> any-value!]
     only "Do not catch quits...propagate them"
-        [logic!]
+        [logic?]
 ][
     ; For the moment, common features of DO and IMPORT are implemented in the
     ; IMPORT* command.  This includes:

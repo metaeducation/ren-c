@@ -2,7 +2,7 @@
 
 ; Originally discussed in #38, but logic is no longer a fundamental type
 [
-    ~expect-val~ !! (to word! logic!)
+    ~expect-val~ !! (to word! logic?!)
 ]
 
 ; Fundamental datatypes are now `percent!: &percent` and give word with no

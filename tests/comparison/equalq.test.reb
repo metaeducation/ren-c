@@ -143,9 +143,9 @@
     b-value: [a b]
     equal? equal? :a-value :b-value equal? :b-value :a-value
 )
-; block! vs. lit-path!
+; block! vs. lit-path?
 (not equal? [a b] first ['a/b])
-; block! vs. lit-path! symmetry
+; block! vs. lit-path? symmetry
 (
     a-value: first ['a/b]
     b-value: [a b]
@@ -365,17 +365,17 @@
     (not equal? 0 00:00)
 ]
 (equal? #"a" #"a")
-; char! vs. integer!
-; No implicit to char! from integer! in R3.
+; char?! vs. integer!
+; No implicit to char from integer! in R3.
 (not equal? #"a" 97)
-; char! vs. integer! symmetry
+; char?! vs. integer! symmetry
 (equal? equal? #"a" 97 equal? 97 #"a")
-; char! vs. decimal!
-; No implicit to char! from decimal! in R3.
+; char?! vs. decimal!
+; No implicit to char from decimal! in R3.
 (not equal? #"a" 97.0)
-; char! vs. decimal! symmetry
+; char?! vs. decimal! symmetry
 (equal? equal? #"a" 97.0 equal? 97.0 #"a")
-; char! case
+; char?! case
 (not equal? #"a" #"A")
 ; text! case
 (equal? "a" "A")
@@ -398,14 +398,14 @@
 (equal? 'a first [:a])
 ; word! vs. get-word! symmetry
 (equal? equal? 'a first [:a] equal? first [:a] 'a)
-; {word! vs. lit-word!
+; {word! vs. lit-word?
 (equal? the 'a first ['a])
-; word! vs. lit-word! symmetry
+; word! vs. lit-word? symmetry
 (equal? equal? 'a first ['a] equal? first ['a] 'a)
-; word! vs. refinement! (changed in Ren-C)
+; word! vs. refinement? (changed in Ren-C)
 (not equal? 'a /a)
 (equal? 'a second /a)
-; word! vs. refinement! symmetry
+; word! vs. refinement? symmetry
 (equal? equal? 'a /a equal? /a 'a)
 ; word! vs. set-word!
 (equal? 'a first [a:])
@@ -413,33 +413,33 @@
 (equal? equal? 'a first [a:] equal? first [a:] 'a)
 ; get-word! reflexivity
 (equal? first [:a] first [:a])
-; get-word! vs. lit-word!
+; get-word! vs. lit-word?
 (not equal? first [:a] first ['a])
-; get-word! vs. lit-word! symmetry
+; get-word! vs. lit-word? symmetry
 (equal? equal? first [:a] first ['a] equal? first ['a] first [:a])
-; get-word! vs. refinement!
+; get-word! vs. refinement?
 (not equal? first [:a] /a)
-; get-word! vs. refinement! symmetry
+; get-word! vs. refinement? symmetry
 (equal? equal? first [:a] /a equal? /a first [:a])
 ; get-word! vs. set-word!
 (equal? first [:a] first [a:])
 ; get-word! vs. set-word! symmetry
 (equal? equal? first [:a] first [a:] equal? first [a:] first [:a])
-; lit-word! reflexivity
+; lit-word? reflexivity
 (equal? first ['a] first ['a])
-; lit-word! vs. refinement!
+; lit-word? vs. refinement?
 (not equal? first ['a] /a)
-; lit-word! vs. refinement! symmetry
+; lit-word? vs. refinement? symmetry
 (equal? equal? first ['a] /a equal? /a first ['a])
-; lit-word! vs. set-word!
+; lit-word? vs. set-word!
 (not equal? first ['a] first [a:])
-; lit-word! vs. set-word! symmetry
+; lit-word? vs. set-word! symmetry
 (equal? equal? first ['a] first [a:] equal? first [a:] first ['a])
-; refinement! reflexivity
+; refinement? reflexivity
 (equal? /a /a)
-; refinement! vs. set-word!
+; refinement? vs. set-word!
 (not equal? /a first [a:])
-; refinement! vs. set-word! symmetry
+; refinement? vs. set-word! symmetry
 (equal? equal? /a first [a:] equal? first [a:] /a)
 ; set-word! reflexivity
 (equal? first [a:] first [a:])

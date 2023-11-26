@@ -24,7 +24,7 @@
         ; We prune out any unused refinements for convenience.
         ;
         params: map-each w parameters of frame [
-            match [word! lit-word! get-word!] w  ; !!! what about skippable?
+            match [word! lit-word? get-word!] w  ; !!! what about skippable?
         ]
 
         frame: make frame! frame
@@ -48,7 +48,7 @@
                 ]
 
                 all [
-                    match lit-word! p.1
+                    match [lit-word?] p.1
                     match [group! get-word! get-path!] block.1
                 ][
                     frame.(p.1): reeval block.1

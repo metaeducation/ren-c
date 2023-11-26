@@ -131,7 +131,7 @@ set '~ :null3  ; most similar behavior to bad-word isotope available
 none: :void3  ; again, most similar thing
 
 ; Done is used as a signal in the boot files that the expected end is reached.
-; This is a QUASI-WORD! in modern Ren-C, but a plain word in the bootstrap EXE.
+; This is a QUASI-WORD? in modern Ren-C, but a plain word in the bootstrap EXE.
 ; Must use SET because even though we don't run this in modern Ren-C, the file
 ; gets scanned...and `~done~:` would be invalid.
 ;
@@ -275,7 +275,6 @@ also: enfix adapt :lib3/also [if blank? :optional [optional: null3]]
 reeval: chain [:reeval3 :null3-to-blank]
 eval: :do
 
-
 did: func3 [return: [logic!] optional [<opt> any-value!]] [
     not any [
         blank? :optional  ; acts like NULL
@@ -361,6 +360,10 @@ quote: func3 [x [<opt> any-value!]] [
 
 ;=== BELOW THIS LINE, TRY NOT TO USE FUNCTIONS IN THE SHIM IMPLEMENTATION ===
 
+char?!: char!  ; modern char is ISSUE! constraint
+logic?!: logic!  ; modern logic is ISOTOPE! constraint
+lit-word?!: lit-word!  ; modern LIT-WORD! is QUOTED! constraint
+refinement?!: refinement!  ; modern REFINEMENT! is PATH! constraint
 
 any-inert!: make typeset! [  ; note TYPESET! does not exist in new exe
     any-string! binary! char! any-context! time! date! any-number! object!
@@ -627,7 +630,7 @@ modernize-action: function3 [
                 continue
             ]
 
-            if refinement? spec/1 [  ; REFINEMENT! is a word in this r3
+            if refinement? spec/1 [  ; REFINEMENT! is ANY-WORD! in this r3
                 last-refine-word: as word! spec/1
                 keep3/only spec/1
 
@@ -655,7 +658,7 @@ modernize-action: function3 [
                 keep3/only proxy
                 keep3/only spec/1
 
-                append3 proxiers compose [
+                append3 proxiers compose [  ; lib3/try turns null3 to blank
                     (as set-word! last-refine-word) lib3/try (as get-word! proxy)
                     set (as lit-word! proxy) void
                 ]
@@ -957,7 +960,7 @@ split: function3 [
 ;
 delimit: func [
     return: [<opt> text!]
-    delimiter [<opt> char! text!]
+    delimiter [<opt> char?! text!]
     line [<maybe> text! block!]
     <local> text value pending anything
 ][

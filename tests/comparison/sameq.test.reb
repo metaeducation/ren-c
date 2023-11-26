@@ -306,7 +306,7 @@
 (same? 00:00 00:00:00)
 ; no timezone math
 (not same? 22:20 20:20)
-; char!; symmetry
+; char?! symmetry
 (equal? same? #"a" 97 same? 97 #"a")
 ; symmetry
 (equal? same? #"a" 97.0 same? 97.0 #"a")
@@ -372,7 +372,7 @@
 (equal? same? /a first [a:] same? first [a:] /a)
 ; reflexivity
 (same? first [a:] first [a:])
-; logic! values
+; logic? values
 (same? true true)
 (same? false false)
 (not same? true false)

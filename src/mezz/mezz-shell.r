@@ -29,7 +29,7 @@ cd: func [
         "Accepts %file, :variables and just words (as dirs)"
 ][
     switch/type path [
-        null! []
+        null?! []
         file! [change-dir path]
         text! [
             ; !!! LOCAL-TO-FILE lives in the filesystem extension, and does

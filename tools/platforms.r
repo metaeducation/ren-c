@@ -494,7 +494,7 @@ export for-each-platform: func [
             copy cflags [opt some tag!] (
                 cflags: map-each x cflags [to-word to-text x]
             )
-            copy ldflags [opt some refinement!] (
+            copy ldflags [opt some refinement?!] (
                 ldflags: map-each x ldflags [to-word x]
             )
             copy libraries [opt some file!] (

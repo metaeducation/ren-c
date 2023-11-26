@@ -321,7 +321,7 @@ list-dir: function [
     ]
 
     switch/type :path [
-        null! []  ; Stay here
+        null?! []  ; Stay here
         file! [change-dir path]
         text! [change-dir local-to-file path]
         word! path! [change-dir to-file path]

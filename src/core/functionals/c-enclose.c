@@ -202,7 +202,7 @@ Bounce Encloser_Dispatcher(Level* const L)
 //
 //  {Wrap code around a frame with access to its instance and return value}
 //
-//      return: [activation!]
+//      return: [activation?]
 //      inner "Frame to be copied, then passed to OUTER"
 //          [<unrun> frame!]
 //      outer "Gets a FRAME! for INNER before invocation, can DO it (or not)"

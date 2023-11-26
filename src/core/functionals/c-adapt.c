@@ -121,7 +121,7 @@ Bounce Adapter_Dispatcher(Level* const L)
 //
 //  {Create a variant of an action that preprocesses its arguments}
 //
-//      return: [activation!]
+//      return: [activation?]
 //      original "Code to be run after the prelude is complete"
 //          [<unrun> frame!]
 //      prelude "Code to run in constructed frame before adaptee runs"

@@ -55,7 +55,7 @@ map-files-to-local: func [
 ]
 
 ends-with?: func [
-    return: [logic!]
+    return: [logic?!]
     s [any-string!]
     suffix [<opt> any-string!]
 ][
@@ -439,7 +439,7 @@ compiler-class: make object! [
     ]
     ;check if the compiler is available
     check: meth [
-        return: [logic!]
+        return: [logic?!]
         path [<maybe> any-string!]
     ][
         fail ~tbd~
@@ -450,7 +450,7 @@ gcc: make compiler-class [
     name: 'gcc
     id: "gnu"
     check: meth [
-        return: [logic!]
+        return: [logic?!]
         /exec [file!]
     ][
         ; !!! This used to be static, but the bootstrap executable's non
@@ -737,7 +737,7 @@ ld: make linker-class [
         searches [<opt> block!]
         ldflags [<opt> block! any-string!]
         /dynamic
-        /debug [logic!]
+        /debug [logic?!]
     ][
         let suffix: either dynamic [
             target-platform/dll-suffix
@@ -822,7 +822,7 @@ ld: make linker-class [
     ]
 
     check: meth [
-        return: [logic!]
+        return: [logic?!]
         /exec [file!]
     ][
         let version: copy ""
@@ -846,7 +846,7 @@ llvm-link: make linker-class [
         searches [<opt> block!]
         ldflags [<opt> block! any-string!]
         /dynamic
-        /debug [logic!]
+        /debug [logic?!]
     ][
         let suffix: either dynamic [
             target-platform/dll-suffix
@@ -930,7 +930,7 @@ link: make linker-class [
         searches [<opt> block!]
         ldflags [<opt> block! any-string!]
         /dynamic
-        /debug [logic!]
+        /debug [logic?!]
     ][
         let suffix: either dynamic [
             target-platform/dll-suffix
@@ -1049,7 +1049,7 @@ strip-class: make object! [
 strip: make strip-class [
     id: "gnu"
     check: meth [
-        return: [logic!]
+        return: [logic?!]
         /exec [file!]
     ][
         exec-file: exec: default ["strip"]
@@ -1295,7 +1295,7 @@ generator-class: make object! [
     flip-flag: meth [
         return: <none>
         project [object!]
-        to [logic!]
+        to [logic?!]
     ][
         all [
             find words-of project 'generated?

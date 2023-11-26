@@ -92,7 +92,7 @@ DECLARE_NATIVE(startup_p)
 //  "Write text to standard output, or raw BINARY! (for control codes / CGI)"
 //
 //      return: <none>
-//      value [<maybe> text! char! binary!]
+//      value [<maybe> text! char? binary!]
 //          "Text to write, if a STRING! or CHAR! is converted to OS format"
 //  ]
 //
@@ -163,9 +163,9 @@ DECLARE_NATIVE(write_stdout)
 //  {Read binary data from standard input}
 //
 //      return: "Null if no more input is available, ~escape~ if aborted"
-//          [<opt> binary! quasi-word!]
+//          [<opt> binary! quasi-word?]
 //      @eof "Set to true if end of file reached"
-//          [logic!]
+//          [logic?]
 //      size "Maximum size of input to read"
 //          [integer!]
 //  ]
@@ -232,9 +232,9 @@ DECLARE_NATIVE(read_stdin)
 //  {Read a line from standard input, with smart line editing if available}
 //
 //      return: "Null if no more input is available, ~escape~ if aborted"
-//          [<opt> text! quasi-word!]
+//          [<opt> text! quasi-word?]
 //      @eof "Set to true if end of file reached"
-//          [logic!]
+//          [logic?]
 //      /raw "Include the newline, and allow reaching end of file with no line"
 //      /hide "Mask input with a * character (not implemented)"
 //  ]
@@ -394,7 +394,7 @@ DECLARE_NATIVE(read_line)
 //  {Inputs a single character from the input}
 //
 //      return: "Null if end of file or input was aborted (e.g. via ESCAPE)"
-//          [<opt> char! word! quasi-word!]
+//          [<opt> char? word! quasi-word?]
 //
 //      /virtual "Return keys like Up, Ctrl-A, or ESCAPE vs. ignoring them"
 //      /timeout "Seconds to wait before returning ~timeout~ if no input"

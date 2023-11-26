@@ -284,7 +284,7 @@ requote: reframer lambda [
 ;
 ->: enfix lambda [
     'words "Names of arguments (will not be type checked)"
-        [<skip> word! lit-word! meta-word! refinement! block! group!]
+        [<skip> word! lit-word? meta-word! refinement? block! group!]
     body "Code to execute"
         [block!]
 ][
@@ -376,7 +376,7 @@ run func* [
 
         set-adjunct tester make system.standard.action-adjunct [
             description: spaced [{Returns TRUE if the value is} an type-name]
-            return-type: [logic!]
+            return-type: [logic?]
         ]
     ]
 ]
@@ -456,7 +456,7 @@ print: func* [
     return: "See NIHIL docs for caution on casually making vaporizing routines"
         [nihil?]
     line "Line of text or block, [] has NO output, CHAR! newline allowed"
-        [<maybe> char! text! block! quoted!]
+        [<maybe> char? text! block! quoted!]
 ][
     if char? line [
         if line <> newline [
@@ -515,7 +515,7 @@ internal!: &[
 ]
 
 immediate!: &[  ; Does not include internal datatypes
-    blank! logic! any-scalar! date! any-word!
+    blank! any-scalar! date! any-word!
 ]
 
 ok?: func* [

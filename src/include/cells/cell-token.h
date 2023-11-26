@@ -191,7 +191,7 @@ INLINE Context* Maybe_Init_Char_Untracked(Cell* out, uint32_t c) {
 //
 //     do-something [
 //         in
-//         /out [blank! word! path! blackhole!]
+//         /out [blank! word! path! blackhole?]
 //         <local> result
 //      ][
 //          process in

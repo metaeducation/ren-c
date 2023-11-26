@@ -20,8 +20,8 @@
         {Match maximum of two rules, keeping side effects of both if match}
         return: "Result of the longest match (favors first parser if equal)"
            [<opt> any-value!]
-        parser1 [activation!]
-        parser2 [activation!]
+        parser1 [activation?]
+        parser2 [activation?]
         <local> result1' result2' remainder1 remainder2
     ][
         [~^result1'~ remainder1]: parser1 input except e -> [
@@ -196,8 +196,8 @@
         return: "Result of the longest match (favors first parser if equal)"
            [<opt> any-value!]
         @pending [<opt> block!]
-        parser1 [activation!]
-        parser2 [activation!]
+        parser1 [activation?]
+        parser2 [activation?]
         <local> result1' result2' remainder1 remainder2 pending1 pending2
     ][
         [~^result1'~ remainder1 pending1]: parser1 input except e -> [

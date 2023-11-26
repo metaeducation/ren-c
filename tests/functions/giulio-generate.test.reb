@@ -44,7 +44,7 @@
         {Makes a generator that yields lines from a file or port}
         return: [activation?]
         src [<opt> port! file!]
-        /delimiter [binary! char! text! bitset!]
+        /delimiter [binary! char? text! bitset!]
         /keep "Don't remove delimiter"
         /binary "Return BINARY instead of TEXT"
     ][

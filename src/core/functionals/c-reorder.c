@@ -91,7 +91,7 @@ Bounce Reorderer_Dispatcher(Level* L) {
 //
 //  {Create variation of a frame with its parameters reordered}
 //
-//      return: [activation!]
+//      return: [activation?]
 //      original [<unrun> frame!]
 //      ordering "Parameter WORD!s, all required parameters must be mentioned"
 //          [block!]

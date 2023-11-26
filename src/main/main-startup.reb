@@ -172,7 +172,7 @@ license: func [
 host-script-pre-load: func [
     {Code registered as a hook when a module or script are loaded}
     return: <none>
-    is-module [logic!]
+    is-module [logic?]
     hdr [<opt> object!]
         {Header object (missing for DO of BINARY! with no header)}
 ][
@@ -341,7 +341,7 @@ main-startup: func [
     if defined? 'get-current-exec [
         switch/type system.options.boot: get-current-exec [
             file! []  ; found it
-            null! []  ; also okay (not foolproof!)
+            null?! []  ; also okay (not foolproof!)
             fail "GET-CURRENT-EXEC returned unexpected datatype"
         ]
     ] else [

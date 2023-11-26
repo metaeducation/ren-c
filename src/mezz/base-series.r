@@ -203,7 +203,7 @@ charset: function [
     {Makes a bitset of chars for the parse function.}
 
     return: [bitset!]
-    chars [text! block! binary! char! integer!]
+    chars [text! block! binary! char? integer!]
     /length "Preallocate this many bits (must be > 0)"
         [integer!]
 ][
@@ -227,7 +227,7 @@ trim: function [
     /lines "Removes all line breaks and extra spaces"
     /all "Removes all whitespace"
     /with "Same as /all, but removes specific characters"
-        [char! text! binary! integer! block! bitset!]
+        [char? text! binary! integer! block! bitset!]
 ][
     tail_TRIM: tail
     tail: runs :lib.tail

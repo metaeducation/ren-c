@@ -40,4 +40,4 @@
 (type-word? &frame!)
 
 ; Now a type constraint, not a datatype
-(type-group? logic!)
+(type-group? logic?!)

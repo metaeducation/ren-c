@@ -20,7 +20,7 @@ utrim: function [
     /lines "Removes all line breaks and extra spaces"
     /all "Removes all whitespace"
     /with "Same as /all, but removes specific characters"
-        [char! text! binary! integer! block! bitset!]
+        [char? text! binary! integer! block! bitset!]
 ][
     tail_TRIM: :tail
     tail: :lib.tail

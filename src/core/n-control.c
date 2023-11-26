@@ -135,8 +135,8 @@ Bounce Group_Branch_Executor(Level* level_)
 //  {When TO LOGIC! CONDITION is true, execute branch}
 //
 //      return: "void if branch not run, otherwise branch result"
-//          [<opt> <void> any-value! logic!]
-//      condition [<opt> any-value! logic!]
+//          [<opt> <void> any-value!]
+//      condition [<opt> any-value!]
 //      :branch "If arity-1 ACTION!, receives the evaluated condition"
 //          [any-branch!]
 //  ]
@@ -174,7 +174,7 @@ DECLARE_NATIVE(if)
 //
 //      return: [<opt> any-value!]
 //          "Returns null if either branch returns null (unlike IF...ELSE)"
-//      condition [<opt> any-value! logic!]
+//      condition [<opt> any-value!]
 //      :true-branch "If arity-1 ACTION!, receives the evaluated condition"
 //          [any-branch!]
 //      :false-branch
@@ -387,16 +387,16 @@ DECLARE_NATIVE(did_1)  // see TO-C-NAME for why the "_1" is needed
 // DID exists as a complement to isotopes to help solve conflation of falsey
 // values with conditional tests.  One example:
 //
-//     >> match [logic! integer!] false
+//     >> match [logic? integer!] false
 //     == ~false~  ; isotope
 //
-//     >> if (match [logic! integer!] false) [print "Want this to run"]
+//     >> if (match [logic? integer!] false) [print "Want this to run"]
 //     ** Error: We save you by not letting isotopes be conditionally tested
 //
-//     >> did match [logic! integer!] false
+//     >> did match [logic? integer!] false
 //     == ~true~  ; DID tolerates isotopes, returns false only on true NULL
 //
-//     >> if (did match [logic! integer!] false) [print "Praise isotopes!"]
+//     >> if (did match [logic? integer!] false) [print "Praise isotopes!"]
 //     Praise isotopes!
 //
 // By making routines that intend to return ANY-VALUE! (even falsey ones) on
@@ -645,9 +645,9 @@ DECLARE_NATIVE(also)  // see `tweak :also 'defer on` in %base-defs.r
 //  {Check value using tests (match types, TRUE or FALSE, or filter action)}
 //
 //      return: "Input if it matched, NULL if it did not (isotope if falsey)"
-//          [<opt> any-value! logic!]
+//          [<opt> any-value!]
 //      test "Typeset or arity-1 filter function"
-//          [<opt> logic! activation? block! type-word! type-group! type-block!]
+//          [<opt> logic? activation? block! type-word! type-group! type-block!]
 //      value [<opt> <void> any-value!]
 //  ]
 //
@@ -701,7 +701,7 @@ DECLARE_NATIVE(match)
     // avoid misleading falseness of the result:
     //
     //     >> value: false
-    //     >> if match [integer! logic!] value [print "Won't run :-("]
+    //     >> if match [integer! logic?] value [print "Won't run :-("]
     //     ; null  <-- this would be a bad result!
     //
     // So successful matching of falsey values will give back ~false~,

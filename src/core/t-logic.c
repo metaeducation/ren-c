@@ -178,7 +178,7 @@ inline static bool Do_Logic_Right_Side_Throws(
 //  {Boolean AND, right hand side must be in GROUP! to allow short-circuit}
 //
 //      return: [logic?]
-//      left [<opt> any-value! logic!]
+//      left [<opt> any-value! logic?]
 //      'right "Right is evaluated if left is true"
 //          [group! tuple! word!]
 //  ]
@@ -209,7 +209,7 @@ DECLARE_NATIVE(and_1)  // see TO-C-NAME
 //  {Boolean OR, right hand side must be in GROUP! to allow short-circuit}
 //
 //      return: [logic?]
-//      left [<opt> any-value! logic!]
+//      left [<opt> any-value! logic?]
 //      'right "Right is evaluated if left is false"
 //          [group! tuple! word!]
 //  ]
@@ -240,7 +240,7 @@ DECLARE_NATIVE(or_1)  // see TO-C-NAME
 //  {Boolean XOR (operation cannot be short-circuited)}
 //
 //      return: [logic?]
-//      left [<opt> any-value! logic!]
+//      left [<opt> any-value! logic?]
 //      'right "Always evaluated"
 //          [group! tuple! word!]
 //  ]

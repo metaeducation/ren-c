@@ -318,7 +318,7 @@ export make-emitter: function [
 
             return: <none>
             'look [any-value! <variadic>]
-            data [text! char! <variadic>]
+            data [text! char?! <variadic>]
             <with> buf-emit
         ][
             context: null

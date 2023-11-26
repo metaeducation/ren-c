@@ -51,11 +51,11 @@ save: function [
     value "Value(s) to save"
         [<const> element?]
     /header "Provide REBOL header block/object, or TRUE (header is in value)"
-        [block! object! logic!]
+        [block! object! logic?]
     /all "Save in serialized format"
     /length "Save the length of the script content in the header"
     /compress "true = compressed, false = not, 'script = encoded string"
-        [logic! word!]
+        [logic? word!]
 ][
     ; Recover common natives for words used as refinements.
     all_SAVE: all

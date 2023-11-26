@@ -15,5 +15,5 @@
         '~()~ = parse "" [synthesized: ^[(~()~)]]
         '~()~ = synthesized
     ])
-    ('~friendly~ = parse [~friendly~] [quasi-word!])
+    ('~friendly~ = parse [~friendly~] [quasi-word?!])
 ]

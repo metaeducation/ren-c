@@ -35,9 +35,9 @@
     (raised? parse [a b] [wrba])
     ('b == parse [a b] [wrab wrba])
     (123 == parse [a 123] [wa integer!])
-    (raised? parse [a 123] [wa char!])
+    (raised? parse [a 123] [wa char?!])
     (123 == parse [a 123] [wra [integer!]])
-    (raised? parse [a 123] [wa [char!]])
+    (raised? parse [a 123] [wa [char?!]])
     (
         res: ~
         did all [
@@ -78,7 +78,7 @@
     )
     (
         res: ~
-        wres: [char! (res: 2) | integer! (res: 3)]
+        wres: [char?! (res: 2) | integer! (res: 3)]
         did all [
             3 == parse [a 123] [wa (res: 1) wres]
             res = 3
@@ -86,7 +86,7 @@
     )
     (
         res: ~
-        wres: [char! (res: 2) | text! (res: 3)]
+        wres: [char?! (res: 2) | text! (res: 3)]
         did all [
             raised? parse [a 123] [wa (res: 1) wres]
             res = 1

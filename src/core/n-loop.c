@@ -471,7 +471,7 @@ DECLARE_NATIVE(cfor)
 //      return: "Last body result, or null if BREAK"
 //          [<opt> <void> any-value!]
 //      'word "Variable set to each position in the series at skip distance"
-//          [word! lit-word! blank!]
+//          [word! lit-word? blank!]
 //      series "The series to iterate over"
 //          [<maybe> any-series!]
 //      skip "Number of positions to skip each time"
@@ -986,7 +986,7 @@ void Shutdown_Loop_Each(Value(*) iterator)
 //      return: "Last body result, or null if BREAK"
 //          [<opt> <void> any-value!]
 //      :vars "Word or block of words to set each time, no new var if quoted"
-//          [blank! word! lit-word! block! group!]
+//          [blank! word! lit-word? block! group!]
 //      data "The series to traverse"
 //          [<maybe> blank! any-series! any-context! map! any-sequence!
 //           activation?]  ; activation support experimental, e.g. generators
@@ -1081,7 +1081,7 @@ DECLARE_NATIVE(for_each)
 //      return: [<opt> <void> any-value!]
 //          {null on BREAK, blank on empty, false or the last truthy value}
 //      :vars "Word or block of words to set each time, no new var if quoted"
-//          [blank! word! lit-word! block! group!]
+//          [blank! word! lit-word? block! group!]
 //      data "The series to traverse"
 //          [<maybe> any-series! any-context! map! activation?]
 //      body [<const> block! meta-block!]
@@ -1093,20 +1093,13 @@ DECLARE_NATIVE(every)
 // 1. In light of other tolerances in the system for voids in logic tests
 //    (see ALL & ANY), EVERY treats a void as "no vote".
 //
-//        every x [1 2 3 4] [if odd? x [x]]  =>  [1 3]
+//        every x [1 2 3 4] [if even? x [x]]  =>  4
 //
-//        every x [1 2 3 4] [maybe if odd? x [x]]  => none (~) isotope
+//        every x [1 2 3 4] [if odd? x [x]]  => none (~) isotope
 //
-//        every x [1 2 3 4] [comment "heavy"]  => none (~) isotope
+//    It returns a none isotope (~) on the skipped bodies, as loop composition
+//    breaks down if we try to keep old values.
 //
-//    But it returns a none isotope (~) on the skipped bodies, as loop
-//    composition breaks down if we try to keep old values.
-//
-// 2. We don't decay isotopes, for the reason we don't decay them in ALL etc:
-//
-//        every x [~false~ ~true~] [match logic! decay x]
-//
-//    The ~false~ isotope here catches the misunderstanding by erroring.
 {
     INCLUDE_PARAMS_OF_EVERY;
 
@@ -1207,7 +1200,7 @@ DECLARE_NATIVE(every)
 //      return: "Number of removed series items, or null if BREAK"
 //          [<opt> integer!]
 //      :vars "Word or block of words to set each time, no new var if quoted"
-//          [blank! word! lit-word! block! group!]
+//          [blank! word! lit-word? block! group!]
 //      data "The series to traverse (modified)"
 //          [<maybe> any-series!]
 //      body "Block to evaluate (return TRUE to remove)"
@@ -1246,7 +1239,7 @@ DECLARE_NATIVE(remove_each)
 //
 // 5. We do not want to decay isotopes, e.g. if someone tried to say:
 //
-//        remove-each x [...] [n: _, ..., match [logic! integer!] false]
+//        remove-each x [...] [n: _, ..., match [logic? integer!] false]
 //
 //    The ~false~ isotope protects from having a condition you thought should
 //    be truthy come back #[false] and be falsey.
@@ -1543,7 +1536,7 @@ DECLARE_NATIVE(remove_each)
 //      return: "Collected block"
 //          [<opt> block!]
 //      :vars "Word or block of words to set each time, no new var if quoted"
-//          [blank! word! lit-word! block! group!]
+//          [blank! word! lit-word? block! group!]
 //      data "The series to traverse"
 //          [<maybe> blank! any-series! any-sequence! any-context!
 //           activation?]
@@ -1586,7 +1579,7 @@ DECLARE_NATIVE(map_each)
 //      return: "Collected block"
 //          [<opt> block!]
 //      :vars "Word or block of words to set each time, no new var if quoted"
-//          [blank! word! lit-word! block! group!]
+//          [blank! word! lit-word? block! group!]
 //      data "The series to traverse (only QUOTED! BLOCK! at the moment...)"
 //          [<maybe> blank! quoted! activation?]
 //      :body "Block to evaluate each time"
@@ -1735,7 +1728,7 @@ DECLARE_NATIVE(map)
 //      return: "Last body result, or null if BREAK"
 //          [<opt> <void> any-value!]
 //      count "Repetitions (true loops infinitely, false doesn't run)"
-//          [<maybe> any-number! logic!]
+//          [<maybe> any-number! logic?]
 //      body "Block to evaluate or action to run"
 //          [<unrun> <const> block! frame!]
 //  ]
@@ -1816,7 +1809,7 @@ DECLARE_NATIVE(repeat)
 //      return: "Last body result, or NULL if BREAK"
 //          [<opt> <void> any-value!]
 //      :vars "Word or block of words to set each time, no new var if quoted"
-//          [blank! word! lit-word! block! group!]
+//          [blank! word! lit-word? block! group!]
 //      value "Maximum number or series to traverse"
 //          [<maybe> any-number! any-sequence! quoted! block! activation?]
 //      'body "!!! actually just BLOCK!, but quoted to catch legacy uses"

@@ -126,7 +126,7 @@ Bounce Lambda_Unoptimized_Dispatcher(Level* level_)
 //
 //      return: [activation?]
 //      spec "Names of arguments (will not be type checked)"
-//          [<opt> word! lit-word! meta-word! refinement! block!]
+//          [<opt> word! lit-word? meta-word! refinement? block!]
 //      body "Code to execute"
 //          [<const> block!]
 //  ]

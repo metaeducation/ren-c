@@ -1786,7 +1786,7 @@ DECLARE_NATIVE(subparse)
                 FETCH_NEXT_RULE(L);
                 goto pre_rule;
 
-                // IF is deprecated in favor of `:(<logic!>)`.  But it is
+                // IF is deprecated in favor of `:(expression)`.  But it is
                 // currently used for bootstrap.  Remove once the bootstrap
                 // executable is updated to have GET-GROUP!s.  Substitution:
                 //

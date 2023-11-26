@@ -1200,7 +1200,7 @@ DECLARE_NATIVE(insert_odbc)
 
     bool get_catalog = rebUnboxLogic(
         "switch/type first", sql, "[",
-            "lit-word! [true]",  // like Rebol2: 'tables, 'columns, 'types
+            "lit-word?! [true]",  // like Rebol2: 'tables, 'columns, 'types
             "text! [false]",
         "] else [",
             "fail [",
@@ -1763,8 +1763,8 @@ DECLARE_NATIVE(copy_odbc)
 //
 //      return: <none>
 //      connection [object!]
-//      access [logic!]
-//      commit [logic!]
+//      access [logic?]
+//      commit [logic?]
 //  ]
 //
 DECLARE_NATIVE(update_odbc)

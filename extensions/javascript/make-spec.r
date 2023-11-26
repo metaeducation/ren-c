@@ -14,5 +14,5 @@ includes: [
 libraries: []
 
 options: [
-    ; option-name [word! logic! blank!] ()
+    ; option-name [word! logic? blank!] ()
 ]

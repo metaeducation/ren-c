@@ -34,7 +34,7 @@
 //
 //      return: "Null if blank input or block's contents are all null"
 //          [<opt> text!]
-//      delimiter [<opt> blank! char! text!]
+//      delimiter [<opt> blank! char? text!]
 //      line "Will be copied if already a text value"
 //          [<maybe> text! block! the-block! issue!]
 //      /head "Include delimiter at head of result (if non-NULL)"
@@ -138,7 +138,7 @@ DECLARE_NATIVE(delimit)
         if (Is_Elision(OUT))  // spaced [elide print "hi"], etc
             continue;  // vaporize
 
-        Decay_If_Unstable(OUT);  // spaced [match [logic!] false ...]
+        Decay_If_Unstable(OUT);  // spaced [match [logic?] false ...]
 
         if (Is_Void(OUT))  // spaced [maybe null], spaced [if false [<a>]], etc
             continue;  // vaporize
@@ -870,9 +870,9 @@ DECLARE_NATIVE(detab)
 //
 //  "Converts string of characters to lowercase."
 //
-//      return: [any-string! char!]
+//      return: [any-string! char?]
 //      string "(modified if series)"
-//          [any-string! char!]
+//          [any-string! char?]
 //      /part "Limits to a given length or position"
 //          [any-number! any-string!]
 //  ]
@@ -891,9 +891,9 @@ DECLARE_NATIVE(lowercase)
 //
 //  "Converts string of characters to uppercase."
 //
-//      return: [any-string! char!]
+//      return: [any-string! char?]
 //      string "(modified if series)"
-//          [any-string! char!]
+//          [any-string! char?]
 //      /part "Limits to a given length or position"
 //          [any-number! any-string!]
 //  ]

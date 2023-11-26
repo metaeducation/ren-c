@@ -129,10 +129,10 @@ INLINE LineNumber LineNumber_Of_Level(Level* L) {
 // ID ran.  Consider when reviewing the future of ACTION!.
 //
 #define Level_Num_Args(L) \
-    (cast(Series*, (L)->varlist)->content.dynamic.used - 1)  // minus rootvar
+    ((L)->varlist->content.dynamic.used - 1)  // minus rootvar
 
 #define Level_Spare(L) \
-    cast(Atom(*), &(L)->spare)
+    u_cast(Atom(*), &(L)->spare)
 
 
 // The "phase" slot of a FRAME! value is the second node pointer in PAYLOAD().

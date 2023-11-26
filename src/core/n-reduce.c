@@ -783,11 +783,11 @@ Bounce Composer_Executor(Level* const L)
 //
 //  {Evaluates only contents of GROUP!-delimited expressions in an array}
 //
-//      return: [blackhole! any-array! any-sequence! any-word! activation?]
+//      return: [blackhole? any-array! any-sequence! any-word! activation?]
 //      'label "Distinguish compose groups, e.g. [(plain) (<*> composed)]"
 //          [<skip> tag! file!]
 //      value "The template to fill in (no-op if WORD!, ACTIVATION?, BLACKHOLE!)"
-//          [blackhole! any-array! any-sequence! any-word! activation?]
+//          [blackhole? any-array! any-sequence! any-word! activation?]
 //      /deep "Compose deeply into nested arrays"
 //      /predicate "Function to run on composed slots (default: META)"
 //          [<unrun> frame!]

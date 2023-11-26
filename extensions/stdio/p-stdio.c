@@ -116,7 +116,7 @@ REBVAL *Read_Line(STD_TERM *t)
 
             rebElide("append", Line_History, "copy", line);
         }
-        else if (rebDid("match [text! char!] @", e)) {  // printable
+        else if (rebDid("match [text! char?] @", e)) {  // printable
             //
             // Because we are using the "buffered" mode, the terminal will
             // accrue TEXT! in a batch until an "unbufferable" key event

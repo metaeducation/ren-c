@@ -438,7 +438,7 @@ Bounce TO_String(Level* level_, enum Reb_Kind kind, const REBVAL *arg)
         if (Is_Integer(arg)) {
             //
             // `to issue! 1` is slated to keep the visual consistency intact,
-            // so that you'd get #1 back.  With issue! and char! unified,
+            // so that you'd get #1 back.  With issue! and char? unified,
             // that means a way to get a codepoint is needed.
             //
             return RAISE("Use CODEPOINT-TO-CHAR for codepoint to ISSUE!");

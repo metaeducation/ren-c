@@ -63,14 +63,14 @@
 ]
 
 ; At one time, UNTIL errored upon receiving "isotopes", so that cases like
-; `until [match [logic!] false]` would raise an error on a ~false~ isotopic
+; `until [match [logic?] false]` would raise an error on a ~false~ isotopic
 ; word--as opposed to a plain #[false] value.  This protection no longer made
 ; sense once ~false~ the isotopic word *was* the representation of falseness.
 ; So there's no stopping you shooting yourself in the foot with MATCH here,
 ; you need to use something like DID.
 [
     (
-        true = until [did match logic! false]
+        true = until [did match logic?! false]
     )
 ]
 

@@ -62,7 +62,7 @@
 //
 //  {Create an action variant that acts the same, but has added parameters}
 //
-//      return: [activation!]
+//      return: [activation?]
 //      original "Frame whose implementation is to be augmented"
 //          [<unrun> frame!]
 //      spec "Spec dialect for words to add to the derived function"

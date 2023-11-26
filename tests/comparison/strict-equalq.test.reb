@@ -289,7 +289,7 @@
 
 ; time!
 (strict-equal? 00:00 00:00)
-; char!; symmetry
+; char?! symmetry
 (equal? strict-equal? #"a" 97 strict-equal? 97 #"a")
 ; symmetry
 (equal? strict-equal? #"a" 97.0 strict-equal? 97.0 #"a")
@@ -355,7 +355,7 @@
 (equal? strict-equal? /a first [a:] strict-equal? first [a:] /a)
 ; reflexivity
 (strict-equal? first [a:] first [a:])
-; logic! values
+; logic? values
 (strict-equal? true true)
 (strict-equal? false false)
 (not strict-equal? true false)

@@ -588,8 +588,8 @@ REBINT Compare_Modify_Values(Cell* a, Cell* b, bool strict)
 //  {TRUE if the values are equal}
 //
 //      return: [logic?]
-//      value1 [<opt> any-value! logic!]
-//      value2 [<opt> any-value! logic!]
+//      value1 [<opt> any-value! logic?]
+//      value2 [<opt> any-value! logic?]
 //  ]
 //
 DECLARE_NATIVE(equal_q)

@@ -52,7 +52,7 @@ return: func* [] [
 func: func* [
     {Make action with set-words as locals, <static>, <in>, <with>, <local>}
 
-    return: [activation!]
+    return: [activation?]
     spec "Help string (opt) followed by arg words (and opt type and string)"
         [block!]
     body "The body block of the function"
@@ -285,7 +285,7 @@ function: specialize :func [gather: #]
 ===: func [
     return: <nihil>
     'remarks [any-value! <variadic>]
-    /visibility [logic!]
+    /visibility [logic?]
     <static> showing (false)
 ][
     if not null? visibility [showing: visibility, return]
@@ -319,7 +319,7 @@ change-dir: func [  ; This can be HIJACK'd by a "smarter" version
 redescribe: func [
     {Mutate action description with new title and/or new argument notes.}
 
-    return: [activation!]
+    return: [activation?]
         {The input action, with its description now updated.}
     spec [block!]
         {Either a string description, or a spec block (without types).}
@@ -391,7 +391,7 @@ redescribe: func [
         ]
         try some [
             set param: [
-                word! | get-word! | lit-word! | set-word!
+                word! | get-word! | lit-word?! | set-word!
                 | ahead path! into [word! blank!]
             ](
                 if path? param [param: param.1]
@@ -536,7 +536,7 @@ curtail: reframer func [
 ; the operation being shoved into:
 ;
 ;    >> 10 >- lib.= 5 + 5  ; as if you wrote `10 = 5 + 5`
-;    ** Script Error: + does not allow logic! for its value1 argument
+;    ** Script Error: + does not allow logic? for its value1 argument
 ;
 ;    >> 10 >- equal? 5 + 5  ; as if you wrote `equal? 10 5 + 5`
 ;    == ~true~  ; isotope
@@ -581,8 +581,8 @@ so: enfix func [
     {Postfix assertion which won't keep running if left expression is false}
 
     return: [<opt> <void> any-value!]
-    condition "Condition to test, must resolve to a LOGIC! (use DID, NOT)"
-        [logic!]
+    condition "Condition to test, must resolve to logic (use DID, NOT)"
+        [logic?]
     feed "Needs value to return as result e.g. (x: even? 4 so 10 + 20)"
         [<end> <opt> <void> any-value! <variadic>]
 ][
@@ -899,7 +899,7 @@ eval-all: func [
 meth: enfix func [
     {FUNC variant that creates an ACTION! implicitly bound in a context}
 
-    return: [activation!]
+    return: [activation?]
     :member [set-word! set-path!]
     spec [block!]
     body [block!]

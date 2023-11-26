@@ -22,7 +22,7 @@
 (e: sys.util.rescue [fail "hello"], (e.id = null) and (e.message = "hello"))
 
 
-; Failing instead with a quasi-WORD! will make the error have that ID
+; Failing instead with a quasi-WORD? will make the error have that ID
 ;
 (e: sys.util.rescue [fail ~some-error-id~], e.id = 'some-error-id)
 

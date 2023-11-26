@@ -56,7 +56,7 @@ static bool Check_Char_Range(const REBVAL *val, REBLEN limit)
 //  {Returns TRUE if value or string is in ASCII character range (below 128).}
 //
 //      return: [logic?]
-//      value [any-string! char! integer!]
+//      value [any-string! char? integer!]
 //  ]
 //
 DECLARE_NATIVE(ascii_q)
@@ -73,7 +73,7 @@ DECLARE_NATIVE(ascii_q)
 //  {Returns TRUE if value or string is in Latin-1 character range (below 256).}
 //
 //      return: [logic?]
-//      value [any-string! char! integer!]
+//      value [any-string! char? integer!]
 //  ]
 //
 DECLARE_NATIVE(latin1_q)
@@ -107,9 +107,9 @@ DECLARE_NATIVE(as_pair)
 //
 //  {Binds words or words in arrays to the specified context}
 //
-//      return: [frame! activation! any-array! any-path! any-word! quoted!]
+//      return: [frame! activation? any-array! any-path! any-word! quoted!]
 //      value "Value whose binding is to be set (modified) (returned)"
-//          [frame! activation! any-array! any-path! any-word! quoted!]
+//          [frame! activation? any-array! any-path! any-word! quoted!]
 //      target "Target context or a word whose binding should be the target"
 //          [any-word! any-context!]
 //      /copy "Bind and return a deep copy of a block, don't modify original"
@@ -1735,7 +1735,7 @@ DECLARE_NATIVE(free)
 //  {Tells if data has been released with FREE}
 //
 //      return: "Returns false if value wouldn't be FREEable (e.g. LOGIC!)"
-//          [logic!]
+//          [logic?]
 //      value [<opt> <void> any-value!]
 //  ]
 //

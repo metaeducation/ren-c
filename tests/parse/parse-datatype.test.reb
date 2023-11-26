@@ -43,9 +43,9 @@
 
 [
     (123 == parse [a 123] ['a integer!])
-    (raised? parse [a 123] ['a char!])
+    (raised? parse [a 123] ['a char?!])
     (123 == parse [a 123] [['a] [integer!]])
-    (raised? parse [a 123] ['a [char!]])
+    (raised? parse [a 123] ['a [char?!]])
     (123 == parse [123] [any-number!])
     (raised? parse [123] [any-string!])
     (123 == parse [123] [[any-number!]])
@@ -57,7 +57,7 @@
         res: ~
         did all [
             3 == parse [a 123] [
-                'a (res: 1) [char! (res: 2) | integer! (res: 3)]
+                'a (res: 1) [char?! (res: 2) | integer! (res: 3)]
             ]
             res = 3
         ]
@@ -65,7 +65,9 @@
     (
         res: ~
         did all [
-            raised? parse [a 123] ['a (res: 1) [char! (res: 2) | text! (res: 3)]]
+            raised? parse [a 123] [
+                'a (res: 1) [char?! (res: 2) | text! (res: 3)]
+            ]
             res = 1
         ]
     )

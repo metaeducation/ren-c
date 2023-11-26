@@ -298,7 +298,7 @@ export console!: make object! [
         {Receives line input, parse/transform, send back to CONSOLE eval}
 
         return: "null if EOF, ~escape~ if canceled, else line of text input"
-            [<opt> text! quasi-word!]
+            [<opt> text! quasi-word?]
     ][
         return read-line
     ]
@@ -464,7 +464,7 @@ ext-console-impl: func [
     result "^META result from evaluating PRIOR, or non-quoted error"
         [<opt> any-value!]
     resumable "Is the RESUME function allowed to exit this console"
-        [logic!]
+        [logic?]
     skin "Console skin to use if the console has to be launched"
         [<opt> object! file!]
 ][
@@ -613,7 +613,7 @@ ext-console-impl: func [
             return 1  ; treat all other QUIT with isotopes as generic error
         ]
         return switch/type result.arg1 [
-            logic! [either result.arg1 [0] [1]]  ; logic true is success
+            logic?! [either result.arg1 [0] [1]]  ; logic true is success
 
             integer! [result.arg1]  ; Note: may be too big for status range
 

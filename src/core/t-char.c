@@ -159,7 +159,7 @@ Bounce MAKE_Issue(
 //
 //  {Make a character out of an integer codepoint}
 //
-//      return: [char!]
+//      return: [char?]
 //      codepoint [integer!]
 //  ]
 //
@@ -179,7 +179,7 @@ DECLARE_NATIVE(codepoint_to_char)
 //
 //  {Make a single character out of a UTF-8 binary sequence}
 //
-//      return: [char!]
+//      return: [char?]
 //      utf8 [binary!]
 //  ]
 //

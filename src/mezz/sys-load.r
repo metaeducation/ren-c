@@ -423,7 +423,7 @@ import*: func [
     /args "Args passed as system.script.args to a script (normally a string)"
         [any-value!]
     /only "Do not catch quits...propagate them"
-        [logic!]
+        [logic?]
     /into "e.g. reuse Context* already made for NATIVEs loading from extension"
         [module!]
     <static>

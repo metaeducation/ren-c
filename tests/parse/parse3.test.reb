@@ -89,7 +89,7 @@
 ]
 
 
-; WORD! isotopes cause an error, plain QUASI-WORD! matches literal QUASI-WORD!s
+; WORD! isotopes cause an error, plain QUASI-WORD? matches literal QUASI-WORD?s
 [
     ~bad-word-get~ !! (
         foo: ~bad~

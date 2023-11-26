@@ -8,15 +8,15 @@
     source [any-string! binary!]
     values [map! object! block!]
     /case
-    /escape [char! any-string! word! binary! block!]
+    /escape [char?! any-string! word! binary! block!]
 
     <static>
 
-    delimiter-types (
-        &[char! any-string! word! binary!]
+    delimiter-types?! (
+        &[char?! any-string! word! binary!]
     )
-    keyword-types (
-        &[char! any-string! integer! word! binary!]
+    keyword-types?! (
+        &[char?! any-string! integer! word! binary!]
     )
 ][
     case_REWORD: if case [#] else [null]
@@ -35,14 +35,14 @@
 
         block? escape [
             parse escape [
-                prefix: [_ (void) | delimiter-types]
-                suffix: [_ (void) | delimiter-types]
+                prefix: [_ (void) | delimiter-types?!]
+                suffix: [_ (void) | delimiter-types?!]
             ] else [
                 fail ["Invalid /ESCAPE delimiter block" escape]
             ]
         ]
     ] else [
-        prefix: ensure delimiter-types escape
+        prefix: ensure delimiter-types?! escape
     ]
 
     if match [integer! word!] prefix [prefix: to-text prefix]
@@ -65,7 +65,7 @@
     ;
     keyword-suffix-rules: collect [
         for-each [keyword value] values [
-            if not match keyword-types keyword [
+            if not match keyword-types?! keyword [
                 fail ["Invalid keyword type:" keyword]
             ]
 

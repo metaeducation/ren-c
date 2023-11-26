@@ -10,7 +10,7 @@
 ; https://github.com/metaeducation/rebol-issues/issues/1879
 ;
 
-; logic!
+; logic?
 (true and+ true = true)
 (true and+ false = false)
 (false and+ true = false)
@@ -25,7 +25,7 @@
 (2 and+ 1 = 0)
 (2 and+ 2 = 2)
 
-; char!
+; char?!
 (NUL and+ NUL = NUL)
 (#"^(01)" and+ NUL = NUL)
 (NUL and+ #"^(01)" = NUL)

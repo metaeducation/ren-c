@@ -54,7 +54,7 @@ DECLARE_NATIVE(form)
 //      return: "Returns null if input is void"
 //          [<opt> text!]
 //      @truncated "Whether the mold was truncated"
-//          [logic!]
+//          [logic?]
 //      value [<maybe> element?]
 //      /only "For a block value, mold only its contents, no outer []"
 //      /all "Use construction syntax"
@@ -101,7 +101,7 @@ DECLARE_NATIVE(mold)
 //  "Boot-only implementation of WRITE-STDOUT (HIJACK'd by STDIO module)"
 //
 //      return: <none>
-//      value [<maybe> text! char! binary!]
+//      value [<maybe> text! char? binary!]
 //          "Text to write, if a STRING! or CHAR! is converted to OS format"
 //  ]
 //
@@ -145,7 +145,7 @@ DECLARE_NATIVE(write_stdout)
 //      position "Position to change marker (modified)"
 //          [block! group!]
 //      mark "Set TRUE for newline"
-//          [logic!]
+//          [logic?]
 //      /all "Set/clear marker to end of series"
 //      /skip "Set/clear marker periodically to the end of the series"
 //          [integer!]

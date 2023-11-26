@@ -54,7 +54,7 @@ compile: func [
             librebol-path [file! text!]
             output-type [word!]  ; MEMORY, EXE, DLL, OBJ, PREPROCESS
             output-file [file! text!]
-            debug [word! logic!]  ; !!! currently unimplemented
+            debug [word!]  ; !!! currently unimplemented
     }
     /files "COMPILABLES represents a list of disk files (TEXT! paths)"
     /inspect "Return the C source code as text, but don't compile it"
@@ -325,7 +325,7 @@ compile: func [
         if match [word! path!] :item [item: get item]
 
         switch/type :item [
-            activation! [
+            activation?! [
                 librebol: true
                 unrun :item
             ]
@@ -408,7 +408,7 @@ compile: func [
         switch/type config.librebol-path [
             text! [config.librebol-path: my local-to-file]
             file! []
-            null! [
+            null?! [
                 fail [
                     {LIBREBOL_INCLUDE_DIR currently must be set either as an}
                     {environment variable or as LIBREBOL-PATH in /OPTIONS so}

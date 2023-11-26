@@ -158,7 +158,7 @@ reword: function [
         [map! object! block!]
     /case "Characters are case-sensitive"
     /escape "Escape char(s) or [prefix suffix] delimiters (default is $)"
-        [char! any-string! word! binary! block!]
+        [char? any-string! word! binary! block!]
 
     <static>
 
@@ -166,10 +166,10 @@ reword: function [
     ; BLOCK! excluded.
     ;
     delimiter-types (
-        &[char! any-string! word! binary!]
+        &[char? any-string! word! binary!]
     )
     keyword-types (
-        &[char! any-string! integer! word! binary!]
+        &[char? any-string! integer! word! binary!]
     )
 ][
     case_REWORD: case
@@ -415,7 +415,7 @@ collect*: func [
     ; use LAMBDA for binding work of connecting KEEP with the keeper function
     ; (Doesn't have or enforce RETURN)
     ;
-    run lambda [keep [activation!]] body :keeper
+    run lambda [keep] body :keeper
 
     return out  ; might be null if no KEEPs that kept anything yet
 ]
@@ -436,7 +436,7 @@ format: function [
     "Format a string according to the format dialect."
     rules {A block in the format dialect. E.g. [10 -10 #"-" 4]}
     values
-    /pad [char! integer!] {char or char code, but 0 -> #"0"}
+    /pad [char? integer!] {char or char code, but 0 -> #"0"}
 ][
     pad: default [space]
     case [
@@ -455,7 +455,7 @@ format: function [
         val: me + switch/type rule [
             integer! [abs rule]
             text! [length of rule]
-            char! [1]
+            char?! [1]
         ] else [0]
     ]
 
@@ -483,7 +483,7 @@ format: function [
                 out: skip out pad ; spacing (remainder)
             ]
             text! [out: change out rule]
-            char! [out: change out rule]
+            char?! [out: change out rule]
         ]
     ]
 
@@ -510,7 +510,7 @@ split: function [
     series "The series to split"
         [any-series!]
     dlm "Split size, delimiter(s) (if all integer block), or block rule(s)"
-        [block! integer! char! bitset! text! tag! word!]
+        [block! integer! char? bitset! text! tag! word!]
     /into "If dlm is integer, split in n pieces (vs. pieces of length n)"
 ][
     if try parse3 (maybe match block! dlm) [some integer!] [
@@ -567,7 +567,7 @@ split: function [
             ]
         ]
     ] else [
-        ensure [bitset! text! char! word! tag!] dlm
+        ensure [bitset! text! char? word! tag!] dlm
         [
             some [not <end> [
                 copy mk1: [to @dlm | to <end>]
@@ -600,7 +600,7 @@ split: function [
         ;
         switch/type dlm [
             bitset! [did select dlm maybe last series]
-            char! [dlm = last series]
+            char?! [dlm = last series]
             text! tag! word! [
                 (find series dlm) and (empty? [_ @]: find-last series dlm)
             ]

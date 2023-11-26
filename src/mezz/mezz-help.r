@@ -219,13 +219,13 @@ help: function [
             ]
 
             switch/type value: get/any topic [
-                void! [
+                void?! [
                     print [topic "is void"]
                 ]
-                null! [
+                null?! [
                     print [topic "is null"]
                 ]
-                none! [
+                none?! [
                     print [topic "is not defined (e.g. has a NONE! value)"]
                 ]
             ] then [
@@ -295,7 +295,7 @@ help: function [
         return nihil
     ]
 
-    match [frame! activation!] :value else [
+    match [frame! activation?] :value else [
         print collect [
             keep uppercase mold topic
             keep "is"
@@ -334,7 +334,7 @@ help: function [
     refinements: ~  ; optional parameters (PARAMETERS OF puts at tail)
 
     parse parameters of :value [
-        args: try across some [word! | meta-word! | get-word! | lit-word!]
+        args: try across some [word! | meta-word! | get-word! | lit-word?!]
         refinements: try across some path!  ; as mentioned, these are at tail
     ] except [
         fail ["Unknown results in PARAMETERS OF:" mold parameters of :value]
@@ -496,8 +496,8 @@ source: function [
 what: function [
     {Prints a list of known actions}
 
-    return: [none! block!]
-    'name [<end> word! lit-word!]
+    return: [none? block!]
+    'name [<end> word! lit-word?]
         "Optional module name"
     /args "Show arguments not titles"
     /as-block "Return data as block"

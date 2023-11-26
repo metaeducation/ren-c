@@ -91,8 +91,8 @@
     ; has to wait.
 
     (
-        takes-2-logics: func [x [logic!] y [logic!]] [return x]
-        infix-voider: enfix func [return: [quasi-word!] x y] [
+        takes-2-logics: func [x [logic?] y [logic?]] [return x]
+        infix-voider: enfix func [return: [quasi-word?] x y] [
             return '~bad~
         ]
         true

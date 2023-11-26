@@ -82,7 +82,7 @@ extern void Quit_Terminal(STD_TERM *t);
 //
 //    CHAR!, TEXT! => printable characters (includes space, but not newline)
 //    WORD! => keystroke or control code
-//    QUASI-WORD! => interrupted by HALT or Ctrl-C
+//    QUASI-WORD?! => interrupted by HALT or Ctrl-C
 //
 // It does not do any printing or handling while fetching the event.
 //

@@ -145,7 +145,7 @@ export analyse: context [
         return all [
             filetype: select extensions extension-of file
             type: in source filetype
-            (reeval (ensure activation! get type) file
+            (reeval (ensure activation?! get type) file
                 (read %% (repo-dir)/(file)))
         ]
     ]

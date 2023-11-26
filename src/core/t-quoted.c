@@ -584,7 +584,7 @@ DECLARE_NATIVE(pack)
 //  {Create isotopic pattern to signal a desire to test types non-literally}
 //
 //      return: "Isotope of TYPE-XXX!"
-//          [<opt> any-matcher!]
+//          [<opt> any-matcher?]
 //      types [<opt> block! any-type-value!]
 //  ]
 //
@@ -719,7 +719,7 @@ DECLARE_INTRINSIC(activation_q)
 //
 //  {Make frames run when fetched through word access}
 //
-//      return: [activation!]
+//      return: [activation?]
 //      frame [<maybe> frame! activation?]
 //  ]
 //

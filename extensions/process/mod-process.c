@@ -88,11 +88,11 @@
 //      /shell "Forces command to be run from shell"
 //      /info "Returns process information object"
 //      /input "Redirects stdin (false=/dev/null, true=inherit)"
-//          [text! binary! file! logic!]
+//          [text! binary! file! logic?]
 //      /output "Redirects stdout (false=/dev/null, true=inherit)"
-//          [text! binary! file! logic!]
+//          [text! binary! file! logic?]
 //      /error "Redirects stderr (false=/dev/null, true=inherit)"
-//          [text! binary! file! logic!]
+//          [text! binary! file! logic?]
 //  ]
 //
 DECLARE_NATIVE(call_internal_p)

@@ -645,7 +645,7 @@ gen-obj: func [
             []  ; empty for SPREAD
         ]
 
-        fail ["RIGOROUS [yes no \logic!\] not" (rigorous)]
+        fail ["RIGOROUS [yes no \logic?!\] not" (rigorous)]
     ]
 
     ; Now add the flags for the project overall.
@@ -1327,7 +1327,7 @@ append app-config/definitions maybe spread switch user-config/pre-vista [
         []  ; empty for spread
     ]
 
-    fail ["PRE-VISTA [yes no \logic!\] not" (user-config/pre-vista)]
+    fail ["PRE-VISTA [yes no \logic?!\] not" (user-config/pre-vista)]
 ]
 
 
@@ -1344,7 +1344,7 @@ append app-config/ldflags maybe spread switch user-config/static [
         ]
     ]
 
-    fail ["STATIC must be yes, no or logic! not" (user-config/static)]
+    fail ["STATIC must be yes, no or logic?! not" (user-config/static)]
 ]
 
 
