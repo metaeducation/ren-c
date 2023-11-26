@@ -1071,11 +1071,13 @@ bool Get_Path_Push_Refinements_Throws(
 //
 DECLARE_NATIVE(resolve)
 //
-// Note: Originally, resolving was something done by GET to give you an
-// optional parameter out.  This complicated the multi-return situation in the
-// cases of wanting to return NULL or GET a multi-return itself (with /ANY).
-// It's now a separate operation, but the fact that you've already navigated
-// the path means that it's cheap enough to give back the thing retrieved.
+// Note: Originally, GET and SET were multi-returns, giving back a second
+// parameter of "steps".  Variables couldn't themselves hold packs, so it
+// seemed all right to use a multi-return.  But it complicated situations
+// where people wanted to write META GET in case the variable held a
+// stable isotope.  This could be worked around with a GET/META refinement,
+// but RESOLVE is a pretty rarely-used facility...and making GET and SET
+// harder to work with brings pain points to everyday code.
 {
     INCLUDE_PARAMS_OF_RESOLVE;
 
@@ -1098,7 +1100,7 @@ DECLARE_NATIVE(resolve)
 //      return: [<opt> <void> any-value!]
 //      source "Word or tuple to get, or block of PICK steps (see RESOLVE)"
 //          [<void> any-word! any-sequence! any-group! the-block!]
-//      /any "Do not error on isotopes"
+//      /any "Do not error on unset words"
 //      /groups "Allow GROUP! Evaluations"
 //  ]
 //
@@ -1459,7 +1461,7 @@ void Set_Var_May_Fail(
 //      target "Word or tuple, or calculated sequence steps (from GET)"
 //          [<void> any-word! any-sequence! any-group! the-block!]
 //      ^value [<opt> <void> raised? any-value!]  ; tunnels failure
-//      /any "Do not error on isotopes"
+//      /any "Do not error on unset words"
 //      /groups "Allow GROUP! Evaluations"
 //  ]
 //
@@ -1480,7 +1482,7 @@ DECLARE_NATIVE(set)
     if (Is_Meta_Of_Raised(v))
         return UNMETA(v);  // !!! Is this tunneling worthwhile?
 
-    Meta_Unquotify_Known_Stable(v);
+    Meta_Unquotify_Decayed(v);
 
     REBVAL *steps;
     if (REF(groups))
@@ -2477,7 +2479,7 @@ DECLARE_INTRINSIC(void_q)
 //
 //      return: [logic?]
 //      ^value "Parameter must be ^META, none usually means unspecialized"
-//          [void? any-value?] ; [1]
+//          [void? any-value?]  ; [1]
 //  ]
 //
 DECLARE_INTRINSIC(none_q)
@@ -2485,12 +2487,13 @@ DECLARE_INTRINSIC(none_q)
 // 1. Although none values are stable, they can't be passed as normal arguments
 //    to functions, because in frames they represent an unspecialized
 //    argument value.  So a meta parameter is used.  However, it isn't
-//    intended that raised errors be tolerated by this test, so the type
-//    constraint is just to regular values.
+//    intended that raised errors be tolerated by this test, so decay it.
 {
     UNUSED(phase);
 
-    Init_Logic(out, Is_Meta_Of_None(arg));
+    Meta_Unquotify_Decayed(arg);  // [1]
+
+    Init_Logic(out, Is_None(arg));
 }
 
 

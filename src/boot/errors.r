@@ -111,8 +111,8 @@ Script: [
     action-with-dotted: {ACTION! used with dotted sequence access form}
     inert-with-slashed: {ANY-INERT! used with slashed sequence access form}
 
-    bad-get-group:      [{GROUP!s require /STEPS in GET or SET:} :arg1]
-    bad-set-group:      {SET-GROUP! sets WORD!/PATH!/BLOCK!, arity-1 ACTION!}
+    bad-get-group:      [{GROUP!s require /GROUPS in GET or SET:} :arg1]
+    bad-set-group:      {SET-GROUP! sets WORD!/TUPLE!/BLOCK!}
 
     bad-branch-type:    {Bad branch type}
 
