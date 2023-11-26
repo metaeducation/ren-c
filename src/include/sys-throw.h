@@ -27,38 +27,22 @@
 // You cannot fit both values into a single value's bits of course.  One way
 // to approach the problem would be to create a new REB_THROWN type with
 // two fields (like a PAIR!).  But since there can only be one thrown value
-// on an evaluator thread at a time, a more efficient trick is used.  The
-// throw label is shuffled up the stack via the output cell, with the arg
-// put off to the side.
+// on an evaluator thread at a time, trampoline-globals are used instead.
 //
-// There are important technical reasons for favoring the label as the output:
-//
-// * RETURN is implemented as a throw whose label is a FRAME!.  That FRAME!
-//   value can store either a Level* which costs nothing extra, or Context*
-//   which requires "reifying" the frame and making it GC-visible.  Reifying
-//   would happen unconditionally if the level is put into a global variable,
-//   but so long as the FRAME! value bubbles up no higher than the Level*
-//   it points to, it can be used as-is.  With RETURN, it will be exactly the
-//   right lifetime--since the originating level is right where it stops.
-//
-// * When various stack levels are checking for their interest in a thrown
-//   value, they look at the label...and if it's not what they want, they
-//   pass it on.  So the label is checked many times, while the arg is only
-//   caught once at its final location.
+// ALL calls into the evaluator to generate values must check for the thrown
+// flag.  This is helped by naming conventions, e.g. `XXX_Throws()` to remind
+// callers they have to handle it, pass it up the stack, or raise an uncaught
+// throw exception.
 //
 //=//// NOTES /////////////////////////////////////////////////////////////=//
 //
-// * While similar to ERROR!s that are "raised" with FAIL, throwing is a
-//   lighter-weight mechanism and doesn't subvert the C call stack.
-//
-// * ALL calls into the evaluator to generate values must check for the
-//   thrown flag.  This is helped by naming conventions, e.g. `XXX_Throws()`
-//   to remind callers they have to handle it, pass it up the stack, or
-//   raise an uncaught throw exception.
-//
-// * VAL_THROWN_LABEL() should be used vs. direct access of a thrown out
-//   cell.  This abstracts the mechanism and allows the debug build to do
-//   more checking that thrown values aren't being dropped or misused.
+// 1. When an abrupt failure occurs, it is intercepted by the trampoline and
+//    converted into a throw state with an ERROR! as the label.  This state
+//    is bubbled up the stack much like a throw, however it cannot be
+//    intercepted by CATCH or definitional-error handlers like TRY.  Only
+//    special routines like SYS.UTIL.RESCUE can catch abrupt failures, as
+//    what they mean is too nebulous for arbitrary stacks to assume they
+//    know how to handle them.
 //
 
 INLINE Value(const*) VAL_THROWN_LABEL(Level* level_) {
@@ -66,6 +50,9 @@ INLINE Value(const*) VAL_THROWN_LABEL(Level* level_) {
     assert(not Is_Cell_Erased(&g_ts.thrown_label));
     return &g_ts.thrown_label;
 }
+
+#define Is_Throwing_Failure(level_) \
+    Is_Error(VAL_THROWN_LABEL(level_))  // non-definitional errors [1]
 
 INLINE Bounce Init_Thrown_With_Label(  // assumes `arg` in g_ts.thrown_arg
     Level* level_,

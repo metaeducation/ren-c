@@ -73,7 +73,7 @@ DECLARE_NATIVE(enrescue)
     if (not THROWING)  // successful result
         return Meta_Quotify(OUT);
 
-    if (not Is_Error(VAL_THROWN_LABEL(LEVEL)))  // non-ERROR! throws
+    if (not Is_Throwing_Failure(LEVEL))  // non-ERROR! throws
         return BOUNCE_THROWN;
 
     Copy_Cell(OUT, VAL_THROWN_LABEL(LEVEL));

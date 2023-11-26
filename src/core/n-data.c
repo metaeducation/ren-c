@@ -1119,7 +1119,7 @@ DECLARE_NATIVE(get)
         steps = nullptr;  // no GROUP! evals
 
     if (Get_Var_Core_Throws(OUT, steps, source, SPECIFIED)) {
-        assert(steps or Is_Error(VAL_THROWN_LABEL(level_)));  // [1]
+        assert(steps or Is_Throwing_Failure(LEVEL));  // [1]
         return THROWN;
     }
 
@@ -1494,7 +1494,7 @@ DECLARE_NATIVE(set)
     }
 
     if (Set_Var_Core_Throws(SPARE, steps, target, SPECIFIED, v)) {
-        assert(steps or Is_Error(VAL_THROWN_LABEL(level_)));  // [1]
+        assert(steps or Is_Throwing_Failure(LEVEL));  // [1]
         return THROWN;
     }
 

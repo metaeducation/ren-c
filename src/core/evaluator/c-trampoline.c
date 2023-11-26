@@ -216,7 +216,7 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
     if (Get_Level_Flag(LEVEL, ABRUPT_FAILURE)) {
         assert(Get_Level_Flag(LEVEL, NOTIFY_ON_ABRUPT_FAILURE));
         assert(bounce == BOUNCE_THROWN);
-        assert(Is_Error(VAL_THROWN_LABEL(LEVEL)));
+        assert(Is_Throwing_Failure(LEVEL));
     }
 
     if (bounce == OUT) {
@@ -355,7 +355,7 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
             assert(Get_Level_Flag(LEVEL, NOTIFY_ON_ABRUPT_FAILURE));
             Clear_Level_Flag(LEVEL, NOTIFY_ON_ABRUPT_FAILURE);
             Clear_Level_Flag(LEVEL, ABRUPT_FAILURE);
-            assert(Is_Error(VAL_THROWN_LABEL(LEVEL)));
+            assert(Is_Throwing_Failure(LEVEL));
             Context* ctx = VAL_CONTEXT(VAL_THROWN_LABEL(LEVEL));
             CATCH_THROWN(SPARE, LEVEL);
             fail (ctx);

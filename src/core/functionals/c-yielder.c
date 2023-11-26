@@ -233,7 +233,7 @@ Bounce Yielder_Dispatcher(Level* const L)
     Init_Trash(DETAILS_AT(details, IDX_YIELDER_OUT));
 
  /*   if (Is_Throwing(L)) {
-        if (Is_Error(VAL_THROWN_LABEL(L->out))) {
+        if (Is_Throwing_Failure(L)) {
             //
             // We treat a failure as if it was an invalid termination of the
             // yielder.  Future calls will raise an error.
