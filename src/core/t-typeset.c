@@ -152,7 +152,7 @@ Param* Init_Parameter_Untracked(
     }
 
     const Cell* tail;
-    const Cell* item = Cell_Array_At(&tail, unwrap(spec));
+    const Cell* item = Cell_Array_At(&tail, spec);
 
     Length len = tail - item;
 
@@ -256,7 +256,7 @@ Param* Init_Parameter_Untracked(
 
         const Cell* lookup;
         if (Cell_Heart(item) == REB_WORD) {  // allow abstraction [3]
-            lookup = Lookup_Word(item, spec_specifier);
+            lookup = try_unwrap(Lookup_Word(item, spec_specifier));
             if (not lookup)  // not even bound to anything
                 fail (item);
             if (Is_None(lookup)) {  // bound but not set
@@ -286,7 +286,7 @@ Param* Init_Parameter_Untracked(
             Option(SymId) id = VAL_WORD_ID(lookup);
             if (not IS_KIND_SYM(id))
                 fail (item);
-            *optimized = KIND_FROM_SYM(id);
+            *optimized = KIND_FROM_SYM(unwrap(id));
             ++optimized;
             Set_Cell_Flag(dest, PARAMSPEC_SPOKEN_FOR);
         }
