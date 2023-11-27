@@ -65,7 +65,25 @@ call*: adapt :call-internal* [
 ; ahead and keeps the asynchronous behavior in a lower level and chooses to
 ; /WAIT by default.
 ;
-call: specialize :call* [wait: #]
+; BUT... also, this wrapper raises a (definitional!) error by default on
+; non-zero exit codes.  Use the /RELAX option to get it to return an integer.
+; Nice default!
+;
+call: enclose (
+    augment (specialize :call* [wait: #]) [
+        /relax "If exit code is non-zero, return the integer vs. raising error"
+    ]
+) func [f [frame!]] [
+    let relax: f.relax
+    let result: do f
+    if relax or (result = 0) [
+        return result
+    ]
+    return raise make error! compose [
+        message: ["Process returned non-zero exit code:" exit-code]
+        exit-code: (result)
+    ]
+]
 
 parse-command-to-argv*: func [
     {Helper for when POSIX gets a TEXT! and the /SHELL refinement not used}
