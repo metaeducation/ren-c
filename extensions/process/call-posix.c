@@ -68,9 +68,10 @@ static inline bool retry_read(int nbytes) {
 }
 
 static inline ssize_t safe_read(int f, void*b, size_t c) {
+  read_again: ;
     ssize_t r = read(f,b,c);
     if (retry_read(r))
-        r = safe_read(f,b,c);
+        goto read_again;
     return r;
 }
 
