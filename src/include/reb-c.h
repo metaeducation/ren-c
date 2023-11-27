@@ -546,7 +546,7 @@
             "invalid p_cast() - target type must be pointer");
         static_assert(! std::is_pointer<V>::value,
             "invalid p_cast() - source type can't be pointer");
-        return reinterpret_cast<TP>(v);
+        return reinterpret_cast<TP>(static_cast<uintptr_t>(v));
     }
 
     #define p_cast(TP,v) \
