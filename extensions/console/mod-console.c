@@ -233,10 +233,10 @@ DECLARE_NATIVE(console)
     CONSOLE_INCLUDE_PARAMS_OF_CONSOLE;
 
     // skin return result--request or ultimate return
-    REBVAL *code = cast(Value(*), OUT);
+    REBVAL* const code = cast(Value(*), OUT);
 
     // what we got from running code requests
-    REBVAL *metaresult = cast(Value(*), SPARE);
+    REBVAL* const metaresult = cast(Value(*), SPARE);
 
     enum {
         ST_CONSOLE_INITIAL_ENTRY = STATE_0,
@@ -333,8 +333,8 @@ DECLARE_NATIVE(console)
         if (Cell_Logic(ARG(no_recover)))
             rebJumps("panic @", metacode);
 
-        code = rebValue("[#host-console-error]");
-        metaresult = metacode;
+        rebRunThrows(code, "[#host-console-error]");
+        Copy_Cell(metaresult, metacode);
         Init_True(ARG(no_recover));  // no second chances until user code runs
         goto recover;
     }
