@@ -554,6 +554,11 @@ DECLARE_NATIVE(pack)
 //
 //        >> pack [1 + 2, comment "hi", if false [1020]]
 //        == ~[3 ~[]~ ']
+//
+//    Note that raised errors are also tolerated, so `pack [1 / 0]` works.
+//    This is leveraged in situations like this one from MAXMATCH-D:
+//
+//        [~^e~ remainder]: parser input except e -> [pack [raise e, null]]
 {
     INCLUDE_PARAMS_OF_PACK;
 

@@ -7,7 +7,7 @@
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // Copyright 2012 REBOL Technologies
-// Copyright 2012-2017 Ren-C Open Source Contributors
+// Copyright 2012-2023 Ren-C Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information
@@ -53,7 +53,15 @@ DECLARE_NATIVE(reduce)
 //    won't have the starting value anymore.  Cache the newline flag on the
 //    ARG(value) cell, as newline flags on ARG()s are available.
 //
-// 3. The sublevel that is pushed to run the reduce evaluations uses the data
+// 3. There is an assert which checks to make sure that no values overwrite
+//    a raised error--cells must be cleared first (see FRESHEN()).  This
+//    makes it tough in situations where you are trying to pass a const
+//    cell pointer to something like a continuation--it makes a copy of the
+//    raised error, leaving it in its old location.  The aggressive assert
+//    may be infeasible long-term but it has been helpful in designing
+//    raised errors--workaround it for now.
+//
+// 4. The sublevel that is pushed to run the reduce evaluations uses the data
 //    stack position captured in BASELINE to tell things like whether a
 //    function dispatch has pushed refinements, etc.  So when the REDUCE level
 //    underneath it pushes a value to the data stack, that level must be
@@ -107,6 +115,7 @@ DECLARE_NATIVE(reduce)
         v,  // REB_BLOCK or REB_GROUP
         LEVEL_FLAG_ALLOCATED_FEED
             | LEVEL_FLAG_TRAMPOLINE_KEEPALIVE  // reused for each step
+            | LEVEL_FLAG_RAISED_RESULT_OK  // predicates (like META) may handle
     );
     Push_Level(OUT, sub);
     goto next_reduce_step;
@@ -145,9 +154,17 @@ DECLARE_NATIVE(reduce)
 
     SUBLEVEL->executor = &Just_Use_Out_Executor;
     STATE = ST_REDUCE_RUNNING_PREDICATE;
+
+    if (Is_Raised(OUT)) {  // workaround for assert about error clearing [3]
+        Move_Cell(SPARE, OUT);
+        return CONTINUE(OUT, predicate, SPARE);
+    }
+
     return CONTINUE(OUT, predicate, OUT);  // arg can be same as output
 
 } process_out: {  ////////////////////////////////////////////////////////////
+
+    Erase_Cell(SPARE);  // in case it was used for error [3]
 
     if (Is_Elision(OUT) or Is_Void(OUT))
         goto next_reduce_step;  // void results are skipped by reduce
@@ -163,7 +180,7 @@ DECLARE_NATIVE(reduce)
         bool newline = Get_Cell_Flag(v, NEWLINE_BEFORE);
         for (; at != tail; ++at) {
             Derelativize(PUSH(), at, Cell_Specifier(OUT));
-            SUBLEVEL->baseline.stack_base += 1;  // [3]
+            SUBLEVEL->baseline.stack_base += 1;  // [4]
             if (newline) {
                 Set_Cell_Flag(TOP, NEWLINE_BEFORE);  // [2]
                 newline = false;
@@ -174,7 +191,7 @@ DECLARE_NATIVE(reduce)
         return RAISE(Error_Bad_Isotope(OUT));
     else {
         Move_Cell(PUSH(), OUT);
-        SUBLEVEL->baseline.stack_base += 1;  // [3]
+        SUBLEVEL->baseline.stack_base += 1;  // [4]
 
         if (Get_Cell_Flag(v, NEWLINE_BEFORE))  // [2]
             Set_Cell_Flag(TOP, NEWLINE_BEFORE);
