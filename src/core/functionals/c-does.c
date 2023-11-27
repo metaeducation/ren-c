@@ -160,7 +160,7 @@ DECLARE_NATIVE(surprise)
 //
 //  {Make action that will DO a value (more optimized than SPECIALIZE :DO)}
 //
-//      return: [activation?]
+//      return: [action?]
 //      source "Note: Will LOCK source if a BLOCK! (review behavior)"
 //          [any-value!]
 //  ]
@@ -200,7 +200,7 @@ DECLARE_NATIVE(does)
         Force_Value_Frozen_Deep(source);
         Copy_Cell(body, source);
 
-        return Init_Activation(OUT, doer, ANONYMOUS, UNBOUND);
+        return Init_Action(OUT, doer, ANONYMOUS, UNBOUND);
     }
 
     // On all other types, we just make it act like a specialized call to
@@ -221,5 +221,5 @@ DECLARE_NATIVE(does)
     const Symbol* label = Canon(DO);  // !!! Better answer?
 
     Phase* doer = Make_Action_From_Exemplar(exemplar, label);
-    return Init_Activation(OUT, doer, label, UNBOUND);
+    return Init_Action(OUT, doer, label, UNBOUND);
 }

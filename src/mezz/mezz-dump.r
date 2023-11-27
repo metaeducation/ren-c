@@ -146,7 +146,7 @@ dump-to-newline: adapt :dump [
 dumps: enfix function [
     {Fast generator for dumping function that uses assigned name for prefix}
 
-    return: [activation?]
+    return: [action?]
     :name [set-word!]
     :value "If issue, create non-specialized dumper...#on or #off by default"
         [issue! text! integer! word! set-word! set-path! group! block!]

@@ -144,7 +144,7 @@ Phase* Make_Typechecker(Value(const*) type) {
 //
 //  {Generator for an optimized typechecking ACTION!}
 //
-//      return: [activation?]
+//      return: [action?]
 //      type [type-word! integer!]
 //  ]
 //
@@ -153,7 +153,7 @@ DECLARE_NATIVE(typechecker)
     INCLUDE_PARAMS_OF_TYPECHECKER;
 
     Phase* typechecker = Make_Typechecker(ARG(type));
-    return Init_Activation(OUT, typechecker, ANONYMOUS, UNBOUND);
+    return Init_Action(OUT, typechecker, ANONYMOUS, UNBOUND);
 }
 
 
@@ -256,11 +256,11 @@ bool Typecheck_Atom_Core(
             }
         }
 
-        if (Is_Activation(test))
-            goto run_activation;
+        if (Is_Action(test))
+            goto run_action;
 
         switch (kind) {
-          run_activation: {
+          run_action: {
             Action* action = VAL_ACTION(test);
 
             if (ACT_DISPATCHER(action) == &Intrinsic_Dispatcher) {
@@ -477,7 +477,7 @@ bool Typecheck_Coerce_Argument(
 
       do_coercion:
 
-        if (Is_Activation(arg)) {
+        if (Is_Action(arg)) {
             QUOTE_BYTE(arg) = UNQUOTED_1;
             coerced = true;
             goto typecheck_again;

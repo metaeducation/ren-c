@@ -1,6 +1,6 @@
 ; datatypes/action.r
 
-(activation? :abs)
+(action? :abs)
 (frame? unrun :abs)
 (not frame? 1)
 (isotope! = kind of :abs)
@@ -11,7 +11,7 @@
     (1 == do reduce [unrun :abs -1])
 ]
 
-; Activations should store labels of the last GET-WORD! or GET-PATH! that was
+; Actions should store labels of the last GET-WORD! or GET-PATH! that was
 ; used to retrieve them.  Using GET subverts changing the name.
 [
     ('append = label of :append)

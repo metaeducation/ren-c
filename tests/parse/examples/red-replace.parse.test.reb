@@ -15,7 +15,7 @@
         if not all [match [text! binary!] f.target, block? f.pattern] [
             return do f
         ]
-        rule: if activation? :f.replacement '[
+        rule: if action? :f.replacement '[
             head: <here>
             change [f.pattern, tail: <here>] (
                 apply/relax :f.replacement [const head, const tail]

@@ -54,8 +54,8 @@ array: func [
         [block!]
     size "Size or block of sizes for each dimension"
         [<maybe> integer! block!]
-    /initial "Initial value (will be called each time if activation)"
-        [element? activation?]
+    /initial "Initial value (will be called each time if action)"
+        [element? action?]
     <local> rest block
 ][
     initial: default ['~]  ; if not specified, array will be all meta none
@@ -78,7 +78,7 @@ array: func [
         block? rest [
             repeat size [append block (array/initial rest :initial)]
         ]
-        activation? :initial [
+        action? :initial [
             repeat size [append block initial]  ; Called every time
         ]
         any-series? initial [
@@ -100,7 +100,7 @@ replace: function [
     pattern "Value to be replaced (converted if necessary)"
         [<void> element? splice? any-matcher?]
     replacement "Value to replace with (called each time if action isotope)"
-        [<void> element? splice? activation?]
+        [<void> element? splice? action?]
 
     ; !!! Note these refinements alias ALL, CASE natives!
     /all "Replace all occurrences"
@@ -122,7 +122,7 @@ replace: function [
         pattern
         /case case_REPLACE
     ]][
-        if activation? :replacement [
+        if action? :replacement [
             ;
             ; If arity-0 action, pos and tail discarded
             ; If arity-1 action, pos will be argument to replacement

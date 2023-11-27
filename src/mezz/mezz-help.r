@@ -52,7 +52,7 @@ description-of: function [
     return: [<opt> text!]
     v [<maybe> any-value!]
 ][
-    if activation? :v [
+    if action? :v [
         v: unrun v
     ]
     return (switch/type :v [
@@ -231,7 +231,7 @@ help: function [
             ] then [
                 return nihil
             ]
-            enfixed: (activation? :value) and (enfix? :value)
+            enfixed: (action? :value) and (enfix? :value)
         ]
     ] else [
         ; !!! There may be interesting meanings to apply to things like
@@ -249,9 +249,9 @@ help: function [
     ]
 
     ; Open the web page for it?
-    all [doc, match [activation? type-word!] :value] then [
+    all [doc, match [action? type-word!] :value] then [
         item: form :topic
-        if activation? get :topic [
+        if action? get :topic [
             ;
             ; !!! The logic here repeats somewhat the same thing that is done
             ; by TO-C-NAME for generating C identifiers.  It might be worth it
@@ -295,7 +295,7 @@ help: function [
         return nihil
     ]
 
-    match [frame! activation?] :value else [
+    match [frame! action?] :value else [
         print collect [
             keep uppercase mold topic
             keep "is"
@@ -445,7 +445,7 @@ source: function [
     ] else [
         name: "anonymous"
         f: arg
-        if activation? :f [
+        if action? :f [
             f: unrun :f
         ]
     ]
@@ -510,7 +510,7 @@ what: function [
 
     for-each [word val] ctx [
         ; word val
-        if (activation? :val) [
+        if (action? :val) [
             arg: either args [
                 mold parameters of :val
             ][

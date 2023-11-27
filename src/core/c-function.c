@@ -1198,7 +1198,7 @@ REBTYPE(Fail)
 //  {Modify a special property (currently only for ACTION!)}
 //
 //      return: "Same action identity as input"
-//          [activation?]
+//          [action?]
 //      frame "(modified) Action to modify property of"
 //          [<unrun> frame!]
 //      property "Currently must be [defer postpone]"
@@ -1246,5 +1246,5 @@ DECLARE_NATIVE(tweak)
     else
         ACT_IDENTITY(act)->leader.bits &= ~flag;
 
-    return Activatify(Copy_Cell(OUT, ARG(frame)));;
+    return Actionify(Copy_Cell(OUT, ARG(frame)));;
 }

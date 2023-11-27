@@ -709,7 +709,7 @@ void Init_Loop_Each(Value(*) iterator, Value(*) data)
 
     les->specifier = SPECIFIED;
 
-    if (Is_Activation(data)) {
+    if (Is_Action(data)) {
         //
         // The value is generated each time by calling the data action.
         // Assign values to avoid compiler warnings.
@@ -794,7 +794,7 @@ static bool Try_Loop_Each_Next(Value(const*) iterator, Context* vars_ctx)
 
         enum Reb_Kind kind = VAL_TYPE(les->data);
 
-        if (Is_Activation(les->data)) {
+        if (Is_Action(les->data)) {
             REBVAL *generated = rebValue(rebRUN(les->data));
             if (generated) {
                 if (var)
@@ -989,7 +989,7 @@ void Shutdown_Loop_Each(Value(*) iterator)
 //          [blank! word! lit-word? block! group!]
 //      data "The series to traverse"
 //          [<maybe> blank! any-series! any-context! map! any-sequence!
-//           activation?]  ; activation support experimental, e.g. generators
+//           action?]  ; action support experimental, e.g. generators
 //      body "Block to evaluate each time"
 //          [<const> block! meta-block!]
 //  ]
@@ -1083,7 +1083,7 @@ DECLARE_NATIVE(for_each)
 //      :vars "Word or block of words to set each time, no new var if quoted"
 //          [blank! word! lit-word? block! group!]
 //      data "The series to traverse"
-//          [<maybe> any-series! any-context! map! activation?]
+//          [<maybe> any-series! any-context! map! action?]
 //      body [<const> block! meta-block!]
 //          "Block to evaluate each time"
 //  ]
@@ -1539,7 +1539,7 @@ DECLARE_NATIVE(remove_each)
 //          [blank! word! lit-word? block! group!]
 //      data "The series to traverse"
 //          [<maybe> blank! any-series! any-sequence! any-context!
-//           activation?]
+//           action?]
 //      body "Block to evaluate each time (result will be kept literally)"
 //          [<const> block!]
 //  ]
@@ -1581,7 +1581,7 @@ DECLARE_NATIVE(map_each)
 //      :vars "Word or block of words to set each time, no new var if quoted"
 //          [blank! word! lit-word? block! group!]
 //      data "The series to traverse (only QUOTED! BLOCK! at the moment...)"
-//          [<maybe> blank! quoted! activation?]
+//          [<maybe> blank! quoted! action?]
 //      :body "Block to evaluate each time"
 //          [<const> block! meta-block!]
 //  ]
@@ -1628,7 +1628,7 @@ DECLARE_NATIVE(map)
     if (Is_Blank(data))  // same response as to empty series
         return Init_Block(OUT, Make_Array(0));
 
-    if (Is_Activation(data)) {
+    if (Is_Action(data)) {
         // treat as a generator
     }
     else if (
@@ -1811,7 +1811,7 @@ DECLARE_NATIVE(repeat)
 //      :vars "Word or block of words to set each time, no new var if quoted"
 //          [blank! word! lit-word? block! group!]
 //      value "Maximum number or series to traverse"
-//          [<maybe> any-number! any-sequence! quoted! block! activation?]
+//          [<maybe> any-number! any-sequence! quoted! block! action?]
 //      'body "!!! actually just BLOCK!, but quoted to catch legacy uses"
 //          [<const> any-value!]
 //  ]

@@ -121,7 +121,7 @@ Bounce Adapter_Dispatcher(Level* const L)
 //
 //  {Create a variant of an action that preprocesses its arguments}
 //
-//      return: [activation?]
+//      return: [action?]
 //      original "Code to be run after the prelude is complete"
 //          [<unrun> frame!]
 //      prelude "Code to run in constructed frame before adaptee runs"
@@ -169,5 +169,5 @@ DECLARE_NATIVE(adapt_p)  // see extended definition ADAPT in %base-defs.r
     );
     Copy_Cell(Details_At(details, IDX_ADAPTER_ADAPTEE), adaptee);
 
-    return Init_Activation(OUT, adaptation, VAL_FRAME_LABEL(adaptee), UNBOUND);
+    return Init_Action(OUT, adaptation, VAL_FRAME_LABEL(adaptee), UNBOUND);
 }

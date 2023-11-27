@@ -111,7 +111,7 @@ Bounce Macro_Dispatcher(Level* const L)
     // can't unwind a macro frame to make it return an arbitrary result.
     //
     REBVAL *cell = Level_Arg(L, 1);
-    Init_Activation(
+    Init_Action(
         cell,
         ACT_IDENTITY(VAL_ACTION(Lib(DEFINITIONAL_RETURN))),
         Canon(RETURN),  // relabel (the RETURN in lib is a dummy action)
@@ -157,7 +157,7 @@ Bounce Macro_Dispatcher(Level* const L)
 //
 //  {Makes function that generates code to splice into the execution stream}
 //
-//      return: [activation?]
+//      return: [action?]
 //      spec "Help string (opt) followed by arg words (and opt type + string)"
 //          [block!]
 //      body "Code implementing the macro--use RETURN to yield a result"
@@ -176,7 +176,7 @@ DECLARE_NATIVE(macro)
         IDX_DETAILS_1 + 1  // details capacity, just body slot (and archetype)
     );
 
-    return Init_Activation(OUT, macro, ANONYMOUS, UNBOUND);
+    return Init_Action(OUT, macro, ANONYMOUS, UNBOUND);
 }
 
 

@@ -52,7 +52,7 @@ return: func* [] [
 func: func* [
     {Make action with set-words as locals, <static>, <in>, <with>, <local>}
 
-    return: [activation?]
+    return: [action?]
     spec "Help string (opt) followed by arg words (and opt type and string)"
         [block!]
     body "The body block of the function"
@@ -319,7 +319,7 @@ change-dir: func [  ; This can be HIJACK'd by a "smarter" version
 redescribe: func [
     {Mutate action description with new title and/or new argument notes.}
 
-    return: [activation?]
+    return: [action?]
         {The input action, with its description now updated.}
     spec [block!]
         {Either a string description, or a spec block (without types).}
@@ -899,7 +899,7 @@ eval-all: func [
 meth: enfix func [
     {FUNC variant that creates an ACTION! implicitly bound in a context}
 
-    return: [activation?]
+    return: [action?]
     :member [set-word! set-path!]
     spec [block!]
     body [block!]

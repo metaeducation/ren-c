@@ -36,9 +36,11 @@ REBOL [
         will find the ACTION! dispatch for that type in `REBTYPE(Somename)`.
     }
     Notes: {
-      * NULL is not a datatype, and is not included here.  It uses the special
-        heart byte of 0, which is also the heart byte of its isotopic form
-        (which is called VOID).
+      * VOID is not a datatype (type of void is NULL), and not included here.
+        It uses the special heart byte of 0, which is also the heart byte of
+        its isotopic form (called NONE, the contents of unset variables).
+        While other enum values are not baked in, zero as the heart byte of
+        voids and nones are used with memset() for optimizations.
 
       * Code shouldn't be dependent on the specific values of the other heart
         bytes.  Though there are some issues related to relative ordering;
@@ -122,13 +124,12 @@ handle      "arbitrary internal object or value"
 
 
 ; URL! has a HEART-BYTE! that is a string, but is not itself in the ANY-STRING!
-; category.
+; category, due to not allowing index positions that would pass the URN.
 ;
 url         "uniform resource locator or identifier"
             (CELL_FLAG_FIRST_IS_NODE)
             [any-utf8!]
             [url         string  string]
-
 
 
 binary      "series of bytes"
@@ -190,8 +191,8 @@ issue       "immutable codepoint or codepoint sequence"
                 []
                 [context     +       +]
 
-    frame       "arguments and locals of a specific action invocation"
-    ~activation~ (CELL_FLAG_FIRST_IS_NODE | CELL_FLAG_SECOND_IS_NODE)
+    frame       "arguments and locals of a function state"
+    ~action~    (CELL_FLAG_FIRST_IS_NODE | CELL_FLAG_SECOND_IS_NODE)
                 [any-branch!]
                 [frame       +       *]
 

@@ -1212,7 +1212,7 @@ REBTYPE(Array)
         flags.all = REF(all);  // !!! not used?
 
         REBVAL *cmp = ARG(compare);  // null if no /COMPARE
-        Deactivate_If_Activation(cmp);
+        Deactivate_If_Action(cmp);
         if (Is_Frame(cmp)) {
             flags.comparator = cmp;
             flags.offset = 0;

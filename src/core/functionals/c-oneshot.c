@@ -113,7 +113,7 @@ DECLARE_NATIVE(do_branch)
 //
 //  {Create a DO variant that executes what it's given for N times}
 //
-//      return: [activation?]
+//      return: [action?]
 //      n "Number of times to execute before being a no-op"
 //          [integer!]
 //  ]
@@ -132,5 +132,5 @@ DECLARE_NATIVE(n_shot)
     );
     Init_Integer(Array_At(Phase_Details(n_shot), IDX_ONESHOT_COUNTER), n);
 
-    return Init_Activation(OUT, n_shot, ANONYMOUS, UNBOUND);
+    return Init_Action(OUT, n_shot, ANONYMOUS, UNBOUND);
 }

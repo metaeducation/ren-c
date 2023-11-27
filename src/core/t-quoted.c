@@ -706,19 +706,19 @@ DECLARE_INTRINSIC(isoword_q)
 
 
 //
-//  activation?: native/intrinsic [
+//  action?: native/intrinsic [
 //
-//  "Tells you if argument is an activation (isotopic action)"
+//  "Tells you if argument is an action (isotopic frame)"
 //
 //      return: [logic?]
 //      value
 //  ]
 //
-DECLARE_INTRINSIC(activation_q)
+DECLARE_INTRINSIC(action_q)
 {
     UNUSED(phase);
 
-    Init_Logic(out, Is_Activation(arg));
+    Init_Logic(out, Is_Action(arg));
 }
 
 
@@ -727,8 +727,8 @@ DECLARE_INTRINSIC(activation_q)
 //
 //  {Make frames run when fetched through word access}
 //
-//      return: [activation?]
-//      frame [<maybe> frame! activation?]
+//      return: [action?]
+//      frame [<maybe> frame! action?]
 //  ]
 //
 DECLARE_INTRINSIC(runs)
@@ -743,10 +743,10 @@ DECLARE_INTRINSIC(runs)
 //
 //  unrun: native/intrinsic [
 //
-//  {Give back a frame! for activation? input}
+//  {Give back a frame! for action? input}
 //
 //      return: [frame!]
-//      action [<maybe> frame! activation?]
+//      action [<maybe> frame! action?]
 //  ]
 //
 DECLARE_INTRINSIC(unrun)

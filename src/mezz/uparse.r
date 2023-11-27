@@ -179,7 +179,7 @@ combinator: func [
                 ]
                 all [
                     not unset? 'val
-                    activation? :val
+                    action? :val
                 ] then [
                     ; All parsers passed as arguments, we want it to be
                     ; rigged so that their results append to an aggregator in
@@ -260,7 +260,7 @@ default-combinators: make map! reduce [
         {If applying parser fails, succeed and return NULL; don't advance input}
         return: "PARSER's result if it succeeds, otherwise NULL"
             [<opt> <void> any-value!]
-        parser [activation?]
+        parser [action?]
         <local> result'
     ][
         fail "OPT combinator replaced in UPARSE by TRY"
@@ -270,7 +270,7 @@ default-combinators: make map! reduce [
         {If applying parser fails, succeed and return NULL; don't advance input}
         return: "PARSER's result if it succeeds, otherwise NULL"
             [<opt> <void> any-value!]
-        parser [activation?]
+        parser [action?]
         <local> result'
     ][
         [^result' remainder]: parser input except e -> [
@@ -284,7 +284,7 @@ default-combinators: make map! reduce [
         {Return isotope form of array arguments}
         return: "PARSER's result if it succeeds"
             [<opt> any-value!]  ; can be isotope
-        parser [activation?]
+        parser [action?]
         <local> result'
     ][
         [^result' remainder]: parser input except e -> [
@@ -299,7 +299,7 @@ default-combinators: make map! reduce [
     'not combinator [
         {Fail if the parser rule given succeeds, else continue}
         return: [~not~]
-        parser [activation?]
+        parser [action?]
     ][
         [@ remainder]: parser input except [  ; don't care about result
             remainder: input  ; parser failed, so NOT reports success
@@ -312,7 +312,7 @@ default-combinators: make map! reduce [
         {Leave the parse position at the same location, but fail if no match}
         return: "parser result if success, NULL if failure"
             [<opt> <void> any-value!]
-        parser [activation?]
+        parser [action?]
     ][
         remainder: input
         return parser input  ; don't care about what parser's remainder is
@@ -322,7 +322,7 @@ default-combinators: make map! reduce [
         {Pass through the result only if the input was advanced by the rule}
         return: "parser result if it succeeded and advanced input, else NULL"
             [<opt> <void> any-value!]
-        parser [activation?]
+        parser [action?]
         <local> result' pos
     ][
         [^result' pos]: parser input except e -> [
@@ -354,7 +354,7 @@ default-combinators: make map! reduce [
         {Run the parser argument in a loop, requiring at least one match}
         return: "Result of last successful match"
             [<opt> <void> any-value!]
-        parser [activation?]
+        parser [action?]
         <local> result'
     ][
         append state.loops binding of 'return
@@ -377,8 +377,8 @@ default-combinators: make map! reduce [
         {Run the body parser in a loop, for as long as condition matches}
         return: "Result of last body parser (or none if failure)"
             [<opt> <void> any-value!]
-        condition-parser [activation?]
-        body-parser [activation?]
+        condition-parser [action?]
+        body-parser [action?]
         <local> result'
     ][
         append state.loops binding of 'return
@@ -407,7 +407,7 @@ default-combinators: make map! reduce [
         {Run the body parser continuously in a loop until BREAK or STOP}
         return: "Result of last body parser (or void if failure)"
             [<opt> <void> any-value!]
-        parser [activation?]
+        parser [action?]
         <local> result'
     ][
         append state.loops binding of 'return
@@ -427,7 +427,7 @@ default-combinators: make map! reduce [
         {Iterate a rule and count the number of times it matches}
         return: "Number of matches (can be 0)"
             [integer!]
-        parser [activation?]
+        parser [action?]
         <local> count
     ][
         append state.loops binding of 'return
@@ -460,7 +460,7 @@ default-combinators: make map! reduce [
     'stop combinator [
         {Break an iterated construct like SOME or REPEAT, succeeding the match}
         return: []  ; divergent
-        parser [<end> activation?]
+        parser [<end> action?]
         <local> f result'
     ][
         result': none'  ; default `[stop]` returns none
@@ -494,7 +494,7 @@ default-combinators: make map! reduce [
     'accept combinator [
         {Return a value explicitly from the parse, terminating early}
         return: []  ; divergent
-        parser [activation?]
+        parser [action?]
         <local> value'
     ][
         [^value' _]: parser input except e -> [
@@ -546,7 +546,7 @@ default-combinators: make map! reduce [
         {Get the length of a matched portion of content}
         return: "Length in series units"
             [integer!]
-        parser [activation?]
+        parser [action?]
         <local> start end
     ][
         [^ remainder]: parser input except e -> [return raise e]
@@ -580,8 +580,8 @@ default-combinators: make map! reduce [
     'change combinator [
         {Substitute a match with new data}
         return: [~change~]
-        parser [activation?]
-        replacer [activation?]  ; !!! How to say result is used here?
+        parser [action?]
+        replacer [action?]  ; !!! How to say result is used here?
         <local> replacement'
     ][
         [^ remainder]: parser input except e -> [  ; first find end position
@@ -601,7 +601,7 @@ default-combinators: make map! reduce [
     'remove combinator [
         {Remove data that matches a parse rule}
         return: [~remove~]
-        parser [activation?]
+        parser [action?]
     ][
         [^ remainder]: parser input except e -> [  ; first find end position
             return raise e
@@ -614,7 +614,7 @@ default-combinators: make map! reduce [
     'insert combinator [
         {Insert literal data into the input series}
         return: [~insert~]
-        parser [activation?]
+        parser [action?]
         <local> insertion'
     ][
         [^insertion' _]: parser input except e -> [  ; remainder ignored
@@ -631,7 +631,7 @@ default-combinators: make map! reduce [
         {Match up TO a certain rule (result position before succeeding rule)}
         return: "The rule's product"
             [<opt> <void> any-value!]
-        parser [activation?]
+        parser [action?]
         <local> result'
     ][
         cycle [
@@ -652,7 +652,7 @@ default-combinators: make map! reduce [
         {Match up THRU a certain rule (result position after succeeding rule)}
         return: "The rule's product"
             [<opt> <void> any-value!]
-        parser [activation?]
+        parser [action?]
         <local> result'
     ][
         cycle [
@@ -671,7 +671,7 @@ default-combinators: make map! reduce [
     'seek combinator [
         return: "seeked position"
             [any-series!]
-        parser [activation?]
+        parser [action?]
         <local> where
     ][
         [^where remainder]: parser input except e -> [
@@ -702,8 +702,8 @@ default-combinators: make map! reduce [
     'between combinator [
         return: "Copy of content between the left and right parsers"
             [any-series!]
-        parser-left [activation?]
-        parser-right [activation?]
+        parser-left [action?]
+        parser-right [action?]
         <local> start limit
     ][
         [^ start]: (parser-left input) except e -> [
@@ -812,7 +812,7 @@ default-combinators: make map! reduce [
         {Copy from the current parse position through a rule}
         return: "Copied series"
             [any-series!]
-        parser [activation?]
+        parser [action?]
     ][
         [^ remainder]: parser input except e -> [
             return raise e
@@ -874,8 +874,8 @@ default-combinators: make map! reduce [
         {Perform a recursion into other data with a rule}
         return: "Result of the subparser"
             [<opt> <void> any-value!]
-        parser [activation?]  ; !!! Easier expression of value-bearing parser?
-        subparser [activation?]
+        parser [action?]  ; !!! Easier expression of value-bearing parser?
+        subparser [action?]
         <local> subseries result'
     ][
         [^subseries remainder]: parser input except e -> [
@@ -929,7 +929,7 @@ default-combinators: make map! reduce [
         return: "Block of collected values"
             [block!]
         @pending [<opt> block!]
-        parser [activation?]
+        parser [action?]
         <local> collected
     ][
         [^ remainder pending]: parser input except e -> [
@@ -958,7 +958,7 @@ default-combinators: make map! reduce [
         return: "The kept value (same as input)"
             [<void> any-value!]
         @pending [<opt> block!]
-        parser [activation?]
+        parser [action?]
         <local> result'
     ][
         [^result' remainder pending]: parser input except e -> [
@@ -1022,7 +1022,7 @@ default-combinators: make map! reduce [
         return: "The gathered object"
             [object!]
         @pending [<opt> block!]
-        parser [activation?]
+        parser [action?]
         <local> obj
     ][
         [^ remainder pending]: parser input except e -> [
@@ -1048,7 +1048,7 @@ default-combinators: make map! reduce [
             [<opt> any-value!]
         @pending [<opt> block!]
         'target [set-word! set-group!]
-        parser [activation?]
+        parser [action?]
         <local> result'
     ][
         if set-group? target [
@@ -1086,7 +1086,7 @@ default-combinators: make map! reduce [
             [<opt> <void> any-value!]
         value [set-word!]
         parser "Failed parser will means target SET-WORD! will be unchanged"
-            [activation?]
+            [action?]
         <local> result'
     ][
         [^result' remainder]: parser input except e -> [return raise e]
@@ -1099,7 +1099,7 @@ default-combinators: make map! reduce [
             [<opt> <void> any-value!]
         value [set-tuple!]
         parser "Failed parser will means target SET-TUPLE! will be unchanged"
-            [activation?]
+            [action?]
         <local> result'
     ][
         [^result' remainder]: parser input except e -> [return raise e]
@@ -1123,7 +1123,7 @@ default-combinators: make map! reduce [
             [<opt> <void> any-value!]
         value [set-group!]
         parser "Failed parser will means target will be unchanged"
-            [activation?]
+            [action?]
         <local> result'
     ][
         let var: eval value
@@ -1289,7 +1289,7 @@ default-combinators: make map! reduce [
         return: "Result of the parser evaluation"
             [nihil? <void> <opt> any-value!]
         @pending [<opt> block!]
-        parser [activation?]
+        parser [action?]
         <local> result'
     ][
         [^result' remainder pending]: parser input except e -> [
@@ -1613,8 +1613,8 @@ default-combinators: make map! reduce [
     'repeat combinator [
         return: "Last parser result"
             [<opt> <void> any-value!]
-        times-parser [activation?]
-        parser [activation?]
+        times-parser [action?]
+        parser [action?]
         <local> times' min max result'
     ][
         [^times' input]: times-parser input except e -> [return raise e]
@@ -1798,7 +1798,7 @@ default-combinators: make map! reduce [
     '@ combinator [
         return: "Match product of result of applying rule" [any-value!]
         @pending [<opt> block!]
-        parser [activation?]
+        parser [action?]
         <local> comb result'
     ][
         [^result' remainder]: parser input except e -> [return raise e]
@@ -1911,7 +1911,7 @@ default-combinators: make map! reduce [
 
     '^ combinator [
         return: "Meta quoted" [<opt> quasi! quoted!]
-        parser [activation?]
+        parser [action?]
     ][
         return [^ remainder]: parser input
     ]
@@ -1982,7 +1982,7 @@ default-combinators: make map! reduce [
         {Transform a result-bearing combinator into one that has no result}
         return: "Invisible"
             [nihil?]
-        parser [activation?]
+        parser [action?]
     ][
         [^ remainder]: parser input except e -> [return raise e]
         return nihil
@@ -2018,7 +2018,7 @@ default-combinators: make map! reduce [
     'skip combinator [
         {Skip an integral number of items}
         return: "Invisible" [nihil?]
-        parser [activation?]
+        parser [action?]
         <local> result
     ][
         [result _]: parser input except e -> [return raise e]
@@ -2470,7 +2470,7 @@ comment [combinatorize: func [
     {Analyze combinator parameters in rules to produce a specialized "parser"}
 
     return: "Parser function taking only input, returning value + remainder"
-        [activation?]
+        [action?]
     @advanced [block!]
     combinator "Parser combinator taking input, but also other parameters"
         [frame!]
@@ -2601,7 +2601,7 @@ parsify: func [
     {Transform one "step's worth" of rules into a parser combinator action}
 
     return: "Parser action for input processing corresponding to a full rule"
-        [activation?]
+        [action?]
     @advanced "Rules position advanced past the elements used for the action"
         [block!]
     state "Parse state"
@@ -2734,7 +2734,7 @@ parsify: func [
                     for-each param parameters of gotten [
                         if not path? param [
                             keep spread compose [
-                                (to word! unspaced ["param" n]) [activation?]
+                                (to word! unspaced ["param" n]) [action?]
                             ]
                             n: n + 1
                         ]

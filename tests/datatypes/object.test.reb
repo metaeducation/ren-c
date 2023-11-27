@@ -107,7 +107,7 @@
 ; ]
 ;
 ; [#1528
-;     (activation? func [self] [])
+;     (action? func [self] [])
 ; ]
 (
     o: make object! []

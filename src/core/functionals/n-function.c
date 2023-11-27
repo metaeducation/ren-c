@@ -128,7 +128,7 @@ Bounce Func_Dispatcher(Level* const L)
 
     REBVAL *cell = Level_Arg(L, 1);
     assert(Is_None(cell));
-    Init_Activation(
+    Init_Action(
         cell,
         ACT_IDENTITY(VAL_ACTION(Lib(DEFINITIONAL_RETURN))),
         Canon(RETURN),  // relabel (the RETURN in lib is a dummy action)
@@ -317,7 +317,7 @@ Phase* Make_Interpreted_Action_May_Fail(
 //
 //  "Defines an ACTION! with given spec and body"
 //
-//      return: [activation?]
+//      return: [action?]
 //      spec "Help string (opt) followed by arg words (and opt type + string)"
 //          [block!]
 //      body "Code implementing the function--use RETURN to yield a result"
@@ -339,7 +339,7 @@ DECLARE_NATIVE(func_p)
         1 + IDX_DETAILS_1  // archetype and one array slot (will be filled)
     );
 
-    return Init_Activation(OUT, func, ANONYMOUS, UNBOUND);
+    return Init_Action(OUT, func, ANONYMOUS, UNBOUND);
 }
 
 
@@ -638,7 +638,7 @@ DECLARE_NATIVE(definitional_return)
 //  {Copy help information from the original function to the derived function}
 //
 //      return: "Same as derived (assists in efficient chaining)"
-//          [activation?]
+//          [action?]
 //      derived [<unrun> frame!]
 //      original [<unrun> frame!]
 //      /augment "Additional spec information to scan"

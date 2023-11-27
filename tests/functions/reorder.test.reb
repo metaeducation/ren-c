@@ -98,7 +98,7 @@
 ; macro, to implement something along the lines of Haskell FLIP.
 [
     (flip: macro ['name [word!] <local> frame] [
-        frame: unrun ensure [activation?] get name
+        frame: unrun ensure [action?] get name
         reduce [reorder frame (reverse parameters of frame)]
     ]
     true)

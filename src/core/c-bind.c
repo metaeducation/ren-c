@@ -1259,7 +1259,7 @@ void Rebind_Values_Deep(
 ) {
     Cell* v = head;
     for (; v != tail; ++v) {
-        if (Is_Activation(v)) {
+        if (Is_Action(v)) {
             //
             // !!! This is a new take on R3-Alpha's questionable feature of
             // deep copying function bodies and rebinding them when a

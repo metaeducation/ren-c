@@ -116,23 +116,23 @@ gather-natives join src-dir %core/
 
 native-proto: null
 logic?-proto: null
-activation?-proto: null
+action?-proto: null
 enfix-proto: null
 
 for-next info all-protos [
     case [
         info/1/name = "native" [native-proto: take info]
         info/1/name = "logic?" [logic?-proto: take info]
-        info/1/name = "activation?" [activation?-proto: take info]
+        info/1/name = "action?" [action?-proto: take info]
         info/1/name = "enfix" [enfix-proto: take info]
     ]
 ]
 
-assert [native-proto logic?-proto activation?-proto enfix-proto]
+assert [native-proto logic?-proto action?-proto enfix-proto]
 
 insert all-protos enfix-proto  ; will be fourth
 insert all-protos logic?-proto  ; will be third
-insert all-protos activation?-proto  ; will be second
+insert all-protos action?-proto  ; will be second
 insert all-protos native-proto  ; so now it's first
 
 

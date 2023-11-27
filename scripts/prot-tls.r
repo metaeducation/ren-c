@@ -397,7 +397,7 @@ parse-asn: func [
 ; move to the competed state.
 
 make-state-updater: func [
-    return: [activation?]
+    return: [action?]
     direction "READ or WRITE"
         [word!]
     transdialect "dialected mapping from state to legal next states"

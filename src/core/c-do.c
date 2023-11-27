@@ -71,7 +71,7 @@ bool Pushed_Continuation(
     assert(branch != out);  // it's legal for `with` to be the same as out
     assert(not with or unwrap(with) == out or not Is_Api_Value(unwrap(with)));
 
-    if (Is_Activation(branch))
+    if (Is_Action(branch))
         goto handle_action;
 
     if (Is_Group(branch) or Is_Get_Group(branch)) {  // [2] for GET-GROUP!

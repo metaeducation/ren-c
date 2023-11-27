@@ -445,7 +445,7 @@ Bounce Evaluator_Executor(Level* L)
 
         if (
             not L_next_gotten
-            or not Is_Activation(unwrap(L_next_gotten))
+            or not Is_Action(unwrap(L_next_gotten))
         ){
             goto give_up_backward_quote_priority;  // note only ACTION! is ENFIXED
         }
@@ -709,7 +709,7 @@ Bounce Evaluator_Executor(Level* L)
 
       word_common: ///////////////////////////////////////////////////////////
 
-        if (Is_Activation(unwrap(L_current_gotten))) {
+        if (Is_Action(unwrap(L_current_gotten))) {
             Action* action = VAL_ACTION(unwrap(L_current_gotten));
 
             if (Is_Enfixed(unwrap(L_current_gotten))) {
@@ -851,7 +851,7 @@ Bounce Evaluator_Executor(Level* L)
             if (Is_Isotope(OUT) and not Is_Isotope_Set_Friendly(stable_OUT))
                 fail (Error_Bad_Isotope(OUT));
 
-            if (Is_Activation(OUT))  // !!! Review: When to update labels?
+            if (Is_Action(OUT))  // !!! Review: When to update labels?
                 INIT_VAL_ACTION_LABEL(OUT, Cell_Word_Symbol(L_current));
 
             Copy_Cell(
@@ -972,7 +972,7 @@ Bounce Evaluator_Executor(Level* L)
         if (Get_Var_Core_Throws(SCRATCH, GROUPS_OK, L_current, L_specifier))
             goto return_thrown;
 
-        if (Is_Activation(SCRATCH)) {
+        if (Is_Action(SCRATCH)) {
             //
             // PATH! dispatch is costly and can error in more ways than WORD!:
             //
@@ -1049,7 +1049,7 @@ Bounce Evaluator_Executor(Level* L)
             goto return_thrown;
         }
 
-        if (not Is_Activation(SPARE)) {
+        if (not Is_Action(SPARE)) {
             //
             // !!! This is legacy support, which will be done another way in
             // the future.  You aren't supposed to use PATH! to get field
@@ -1912,7 +1912,7 @@ Bounce Evaluator_Executor(Level* L)
     if (
         not L_next_gotten
         or (
-            not (Is_Word(L_next) and Is_Activation(unwrap(L_next_gotten)))
+            not (Is_Word(L_next) and Is_Action(unwrap(L_next_gotten)))
             and not Is_Frame(L_next)
         )
         or Not_Enfixed(unwrap(L_next_gotten))

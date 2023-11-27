@@ -162,7 +162,7 @@ REBTYPE(Port)
         ? cast(REBVAL*, nullptr)  // C++98 ambiguous w/o cast
         : CTX_VAR(VAL_CONTEXT(actor), n);
 
-    if (not action or not Is_Activation(action)) {
+    if (not action or not Is_Action(action)) {
         DECLARE_LOCAL (verb_cell);
         Init_Word(verb_cell, verb);
         fail (Error_No_Port_Action_Raw(verb_cell));

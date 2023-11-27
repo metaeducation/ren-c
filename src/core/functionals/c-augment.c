@@ -62,7 +62,7 @@
 //
 //  {Create an action variant that acts the same, but has added parameters}
 //
-//      return: [activation?]
+//      return: [action?]
 //      original "Frame whose implementation is to be augmented"
 //          [<unrun> frame!]
 //      spec "Spec dialect for words to add to the derived function"
@@ -171,5 +171,5 @@ DECLARE_NATIVE(augment_p)  // see extended definition AUGMENT in %base-defs.r
     //
     LINK(Ancestor, ACT_KEYLIST(augmentated)) = ACT_KEYLIST(augmentee);
 
-    return Init_Activation(OUT, augmentated, label, UNBOUND);
+    return Init_Action(OUT, augmentated, label, UNBOUND);
 }

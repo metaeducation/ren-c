@@ -60,7 +60,7 @@ lit-word?!: &(lit-word?)
 lit-path?!: &(lit-path?)
 logic?!: &(logic?)
 quasi-word?!: &(quasi-word?)
-activation?!: &(activation?)
+action?!: &(action?)
 
 
 ; A "blackhole" is a name for the usage of the NUL character in the sense of

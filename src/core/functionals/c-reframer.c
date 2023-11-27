@@ -197,7 +197,7 @@ bool Init_Invokable_From_Feed_Throws(
     if (not first)  // nothing passed in, so we used a feed value
         Fetch_Next_In_Feed(feed);  // we've seen it now
 
-    if (not Is_Activation(out)) {
+    if (not Is_Action(out)) {
         Quotify(out, 1);
         return false;
     }
@@ -344,7 +344,7 @@ Bounce Reframer_Dispatcher(Level* const L)
 //
 //  {Make a function that manipulates an invocation at the callsite}
 //
-//      return: [activation?]
+//      return: [action?]
 //      shim "The action that has a FRAME! (or QUOTED!) argument to supply"
 //          [<unrun> frame!]
 //      /parameter "Shim parameter receiving the frame--defaults to last"
@@ -475,5 +475,5 @@ DECLARE_NATIVE(reframer_p)
     Copy_Cell(Details_At(details, IDX_REFRAMER_SHIM), ARG(shim));
     Init_Integer(Details_At(details, IDX_REFRAMER_PARAM_INDEX), param_index);
 
-    return Init_Activation(OUT, reframer, label, UNBOUND);
+    return Init_Action(OUT, reframer, label, UNBOUND);
 }

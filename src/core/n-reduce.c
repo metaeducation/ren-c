@@ -800,11 +800,11 @@ Bounce Composer_Executor(Level* const L)
 //
 //  {Evaluates only contents of GROUP!-delimited expressions in an array}
 //
-//      return: [blackhole? any-array! any-sequence! any-word! activation?]
+//      return: [blackhole? any-array! any-sequence! any-word! action?]
 //      'label "Distinguish compose groups, e.g. [(plain) (<*> composed)]"
 //          [<skip> tag! file!]
-//      value "The template to fill in (no-op if WORD!, ACTIVATION?, BLACKHOLE!)"
-//          [blackhole? any-array! any-sequence! any-word! activation?]
+//      value "The template to fill in (no-op if WORD!, ACTION?, BLACKHOLE!)"
+//          [blackhole? any-array! any-sequence! any-word! action?]
 //      /deep "Compose deeply into nested arrays"
 //      /predicate "Function to run on composed slots (default: META)"
 //          [<unrun> frame!]
@@ -842,7 +842,7 @@ DECLARE_NATIVE(compose)
     if (Is_Blackhole(v))
         return COPY(v);  // sink locations composed to avoid double eval
 
-    if (Any_Word(v) or Is_Activation(v))
+    if (Any_Word(v) or Is_Action(v))
         return COPY(v);  // makes it easier to `set compose target`
 
     Push_Composer_Level(OUT, level_, v, Cell_Specifier(v));

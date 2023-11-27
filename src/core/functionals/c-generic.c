@@ -114,7 +114,7 @@ DECLARE_NATIVE(generic)
     Copy_Cell(Details_At(details, IDX_NATIVE_CONTEXT), Lib_Context_Value);
 
     REBVAL *verb_var = Sink_Word_May_Fail(verb, SPECIFIED);
-    Init_Activation(verb_var, generic, Cell_Word_Symbol(verb), UNBOUND);
+    Init_Action(verb_var, generic, Cell_Word_Symbol(verb), UNBOUND);
 
     return NONE;
 }

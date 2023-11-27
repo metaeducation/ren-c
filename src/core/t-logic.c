@@ -165,8 +165,8 @@ inline static bool Do_Logic_Right_Side_Throws(
 
     Get_Var_May_Fail(out, right, SPECIFIED, false);
 
-    if (Is_Activation(out))
-        fail ("words/tuples can't be activation as right hand of OR, AND, XOR");
+    if (Is_Action(out))
+        fail ("words/tuples can't be action as right hand of OR, AND, XOR");
 
     return false;
 }
@@ -341,8 +341,8 @@ REBTYPE(Isotope)
         //
         // Need a special exemption for COPY on ACTION! isotopes.
         //
-        if (Is_Activation(D_ARG(1)) and Symbol_Id(verb) == SYM_COPY) {
-            Deactivate_If_Activation(D_ARG(1));
+        if (Is_Action(D_ARG(1)) and Symbol_Id(verb) == SYM_COPY) {
+            Deactivate_If_Action(D_ARG(1));
             return rebValue(Canon(RUNS), Canon(COPY), rebQ(D_ARG(1)));
         }
 

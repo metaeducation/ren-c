@@ -259,7 +259,7 @@ Bounce Yielder_Dispatcher(Level* const L)
 //  yielder: native [
 //
 //      return: "Action that can be called repeatedly until it yields NULL"
-//          [activation?]
+//          [action?]
 //      spec "Arguments passed in to each call for the generator"
 //          [block!]
 //      body "Code containing YIELD statements"
@@ -296,7 +296,7 @@ DECLARE_NATIVE(yielder)
     Init_Trash(Details_At(details, IDX_YIELDER_PLUG));
     Init_Trash(Details_At(details, IDX_YIELDER_OUT));
 
-    return Init_Activation(OUT, yielder, ANONYMOUS, UNBOUND);
+    return Init_Action(OUT, yielder, ANONYMOUS, UNBOUND);
 }
 
 
@@ -304,7 +304,7 @@ DECLARE_NATIVE(yielder)
 //  generator: native [
 //
 //      return: "Arity-0 action you can call repeatedly until it yields NULL"
-//          [activation?]
+//          [action?]
 //      body "Code containing YIELD statements"
 //          [block!]
 //  ]

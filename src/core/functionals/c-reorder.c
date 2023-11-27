@@ -91,7 +91,7 @@ Bounce Reorderer_Dispatcher(Level* L) {
 //
 //  {Create variation of a frame with its parameters reordered}
 //
-//      return: [activation?]
+//      return: [action?]
 //      original [<unrun> frame!]
 //      ordering "Parameter WORD!s, all required parameters must be mentioned"
 //          [block!]
@@ -242,5 +242,5 @@ DECLARE_NATIVE(reorder_p)  // see REORDER in %base-defs.r, for inheriting meta
     Details* details = Phase_Details(reordered);
     Copy_Cell(Details_At(details, IDX_REORDERER_REORDEREE), ARG(original));
 
-    return Init_Activation(OUT, reordered, label, UNBOUND);
+    return Init_Action(OUT, reordered, label, UNBOUND);
 }

@@ -89,7 +89,7 @@ Bounce MAKE_Unhooked(
 //          "Constructed value, or null if BLANK! input"
 //      type [<maybe> meta-word! any-value!]
 //          {The datatype or parent value to construct from}
-//      def [<maybe> <unrun> element?]  ; accept activation for FRAME!
+//      def [<maybe> <unrun> element?]  ; accept action for FRAME!
 //          {Definition or size of the new value (binding may be modified)}
 //  ]
 //

@@ -62,7 +62,7 @@ void Startup_Typesets(void)
             Init_Integer(typeset_index, n);
             Phase* typechecker = Make_Typechecker(typeset_index);
 
-            Init_Activation(
+            Init_Action(
                 Force_Lib_Var(cast(SymId, id)),
                 typechecker,
                 Canon_Symbol(cast(SymId, id)),  // cached symbol for function

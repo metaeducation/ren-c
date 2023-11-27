@@ -205,7 +205,7 @@ backtrace*: function [
                     continue
                 ]
             ] else [
-                assert [activation? :level]
+                assert [action? :level]
                 if (action of f) <> :level [
                     continue
                 ]

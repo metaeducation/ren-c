@@ -155,7 +155,7 @@ DECLARE_NATIVE(shove)
     else
         Copy_Cell(shovee, SPECIFIC(At_Level(L)));
 
-    Deactivate_If_Activation(shovee);  // allow ACTION! to be run
+    Deactivate_If_Action(shovee);  // allow ACTION! to be run
 
     if (not Is_Frame(shovee))
         fail ("SHOVE's immediate right must be ACTION! or SET-XXX! type");
@@ -228,7 +228,7 @@ DECLARE_NATIVE(shove)
 //          the-word!  ; module name (URL! looked up from table)
 //          error!  ; should use FAIL instead
 //          frame!  ; acts like APPLY (voids are optionals, not unspecialized)
-//          activation?  ; will only run arity 0 actions (avoids DO variadic)
+//          action?  ; will only run arity 0 actions (avoids DO variadic)
 //          varargs!  ; simulates as if frame! or block! is being executed
 //      ]
 //      /args "Sets system.script.args if doing a script (usually a TEXT!)"
@@ -258,7 +258,7 @@ DECLARE_NATIVE(do)
     Set_Cell_Flag(source, PROTECTED);  // maybe only GC reference, keep!
   #endif
 
-    Deactivate_If_Activation(source);
+    Deactivate_If_Action(source);
 
     switch (VAL_TYPE(source)) {
       case REB_BLOCK :  // no REB_GROUP, etc...EVAL does that.  [1]
@@ -360,7 +360,7 @@ DECLARE_NATIVE(do)
 //      source [
 //          <maybe>  ; useful for `evaluate try ...` scenarios when no match
 //          any-array!  ; source code in block form
-//          activation?
+//          action?
 //          frame!
 //          varargs!  ; simulates as if frame! or block! is being executed
 //      ]
@@ -417,7 +417,7 @@ DECLARE_NATIVE(evaluate)
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
-    Deactivate_If_Activation(source);
+    Deactivate_If_Action(source);
     Tweak_Non_Const_To_Explicitly_Mutable(source);
 
   #if !defined(NDEBUG)

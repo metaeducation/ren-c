@@ -201,7 +201,7 @@ Phase* Make_Native(
 //  {(Internal Function) Create a native, using compiled C code}
 //
 //      return: "Isotopic ACTION!"
-//          [isotope!]  ; [activation?] needs NATIVE to define it!
+//          [isotope!]  ; [action?] needs NATIVE to define it!
 //      spec [block!]
 //      /combinator "This native is an implementation of a PARSE keyword"
 //      /intrinsic "This native can be called without building a frame"
@@ -233,7 +233,7 @@ DECLARE_NATIVE(native)
         PG_Currently_Loading_Module
     );
 
-    return Init_Activation(OUT, native, ANONYMOUS, UNBOUND);
+    return Init_Action(OUT, native, ANONYMOUS, UNBOUND);
 }
 
 
@@ -314,7 +314,7 @@ Array* Startup_Natives(const REBVAL *boot_natives)
     );
     ++PG_Next_Native_Cfunc;
 
-    Init_Activation(
+    Init_Action(
         Append_Context(Lib_Context, Canon(NATIVE)),
         the_native_action,
         Canon(NATIVE),  // label
@@ -353,10 +353,10 @@ Array* Startup_Natives(const REBVAL *boot_natives)
 
     assert(PG_Next_Native_Cfunc == Native_C_Funcs + Num_Natives);
 
-    if (not Is_Activation(Lib(GENERIC)))
+    if (not Is_Action(Lib(GENERIC)))
         panic (Lib(GENERIC));
 
-    if (not Is_Activation(Lib(PARSE_REJECT)))
+    if (not Is_Action(Lib(PARSE_REJECT)))
         panic (Lib(PARSE_REJECT));
   #endif
 

@@ -200,7 +200,7 @@ Bounce Hijacker_Dispatcher(Level* level_)
 //  {Cause all existing references to a frame to invoke another frame}
 //
 //      return: "The hijacked action value, null if self-hijack (no-op)"
-//          [<opt> activation?]
+//          [<opt> action?]
 //      victim "Frame whose inherited instances are to be affected"
 //          [<unrun> frame!]
 //      hijacker "The frame to run in its place"
@@ -272,7 +272,7 @@ DECLARE_NATIVE(hijack)
         PROTECTED
     );
 
-    return Init_Activation(  // don't bother returning copy of original [3]
+    return Init_Action(  // don't bother returning copy of original [3]
         OUT,
         victim_identity,
         VAL_FRAME_LABEL(ARG(victim)),  // MISC(victim_paramlist).meta? [4]

@@ -66,7 +66,7 @@ INLINE Bounce Init_Thrown_With_Label(  // assumes `arg` in g_ts.thrown_arg
 
     assert(Is_Cell_Erased(&g_ts.thrown_label));
     Copy_Cell(&g_ts.thrown_label, label);
-    Deactivate_If_Activation(&g_ts.thrown_label);
+    Deactivate_If_Action(&g_ts.thrown_label);
 
     assert(THROWING);
 

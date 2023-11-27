@@ -231,7 +231,7 @@ Bounce Chainer_Dispatcher(Level* const L)
 //
 //  {Create a processing pipeline of actions, each consuming the last result}
 //
-//      return: [activation?]
+//      return: [action?]
 //      pipeline "Block of ACTION!s to apply (will be LOCKed)"
 //          [block!]
 //  ]
@@ -275,5 +275,5 @@ DECLARE_NATIVE(chain_p)  // see extended definition CHAIN in %base-defs.r
     Force_Value_Frozen_Deep(pipeline);
     Copy_Cell(Array_At(Phase_Details(chain), IDX_CHAINER_PIPELINE), pipeline);
 
-    return Init_Activation(out, chain, VAL_FRAME_LABEL(first), UNBOUND);
+    return Init_Action(out, chain, VAL_FRAME_LABEL(first), UNBOUND);
 }

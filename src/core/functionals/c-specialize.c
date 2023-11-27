@@ -434,7 +434,7 @@ bool Specialize_Action_Throws(
     );
     assert(CTX_KEYLIST(exemplar) == ACT_KEYLIST(unspecialized));
 
-    Init_Activation(out, specialized, VAL_FRAME_LABEL(specializee), UNBOUND);
+    Init_Action(out, specialized, VAL_FRAME_LABEL(specializee), UNBOUND);
 
     if (enfix)  // incoming was enfix, and we didn't specialize out first arg
         Set_Cell_Flag(out, ENFIX_FRAME);
@@ -448,7 +448,7 @@ bool Specialize_Action_Throws(
 //
 //  {Create a new action through partial or full specialization of another}
 //
-//      return: [activation?]
+//      return: [action?]
 //      original "Frame whose parameters will be set to fixed values"
 //          [<unrun> frame!]
 //      def "Definition code setting fields for args and refinements"

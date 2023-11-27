@@ -124,7 +124,7 @@ Bounce Lambda_Unoptimized_Dispatcher(Level* level_)
 //
 //  {Makes an anonymous function that evaluates to its body, and has no RETURN}
 //
-//      return: [activation?]
+//      return: [action?]
 //      spec "Names of arguments (will not be type checked)"
 //          [<opt> word! lit-word? meta-word! refinement? block!]
 //      body "Code to execute"
@@ -240,7 +240,7 @@ DECLARE_NATIVE(lambda)
             1 + IDX_DETAILS_1  // archetype and one array slot (will be filled)
         );
 
-        return Init_Activation(OUT, lambda, ANONYMOUS, UNBOUND);
+        return Init_Action(OUT, lambda, ANONYMOUS, UNBOUND);
     }
 
     Context* adjunct;  // reuses Pop_Paramlist() [1]
@@ -263,5 +263,5 @@ DECLARE_NATIVE(lambda)
     Details* details = Phase_Details(lambda);
     Copy_Cell(Array_At(details, IDX_LAMBDA_BLOCK), body);
 
-    return Init_Activation(OUT, lambda, ANONYMOUS, UNBOUND);
+    return Init_Action(OUT, lambda, ANONYMOUS, UNBOUND);
 }

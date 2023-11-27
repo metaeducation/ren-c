@@ -202,7 +202,7 @@ Bounce Encloser_Dispatcher(Level* const L)
 //
 //  {Wrap code around a frame with access to its instance and return value}
 //
-//      return: [activation?]
+//      return: [action?]
 //      inner "Frame to be copied, then passed to OUTER"
 //          [<unrun> frame!]
 //      outer "Gets a FRAME! for INNER before invocation, can DO it (or not)"
@@ -231,5 +231,5 @@ DECLARE_NATIVE(enclose_p)  // see extended definition ENCLOSE in %base-defs.r
     Copy_Cell(Details_At(details, IDX_ENCLOSER_INNER), inner);
     Copy_Cell(Details_At(details, IDX_ENCLOSER_OUTER), outer);
 
-    return Init_Activation(OUT, enclosure, VAL_FRAME_LABEL(inner), UNBOUND);
+    return Init_Action(OUT, enclosure, VAL_FRAME_LABEL(inner), UNBOUND);
 }

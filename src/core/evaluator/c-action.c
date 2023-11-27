@@ -121,7 +121,7 @@ bool Lookahead_To_Sync_Enfix_Defer_Flag(Feed* feed) {
 
     if (
         not feed->gotten
-        or not Is_Activation(unwrap(feed->gotten))
+        or not Is_Action(unwrap(feed->gotten))
     ){
         return false;
     }

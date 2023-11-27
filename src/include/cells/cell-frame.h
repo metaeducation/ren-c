@@ -97,7 +97,7 @@ INLINE REBVAL *Init_Frame_Details_Core(
 
 
 
-//=//// ACTIVATIONS (FRAME! Isotopes) //////////////////////////////////////=//
+//=//// ACTIONS (FRAME! Isotopes) /////////////////////////////////////////=//
 //
 // Isotopic forms of actions exist for a couple of reasons.  They are the form
 // that when stored in a variable leads to implicit execution by a reference
@@ -118,17 +118,17 @@ INLINE REBVAL *Init_Frame_Details_Core(
 // the signal that the function should be invoked, and not searched for.
 //
 
-#define Init_Activation(out,a,label,binding) \
-    Activatify(Init_Frame_Details_Core(TRACK(out), (a), (label), (binding)))
+#define Init_Action(out,a,label,binding) \
+    Actionify(Init_Frame_Details_Core(TRACK(out), (a), (label), (binding)))
 
-INLINE Value(*) Activatify(Value(*) v) {
+INLINE Value(*) Actionify(Value(*) v) {
     assert(Is_Frame(v) and QUOTE_BYTE(v) == UNQUOTED_1);
     QUOTE_BYTE(v) = ISOTOPE_0;
     return v;
 }
 
-INLINE Cell* Deactivate_If_Activation(Cell* v) {
-    if (Is_Activation(v))
+INLINE Cell* Deactivate_If_Action(Cell* v) {
+    if (Is_Action(v))
         QUOTE_BYTE(v) = UNQUOTED_1;
     return v;
 }

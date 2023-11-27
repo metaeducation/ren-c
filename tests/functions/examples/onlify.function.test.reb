@@ -7,7 +7,7 @@
 
 [(
 onlify: func [
-    return: [activation?]
+    return: [action?]
     frame [<unrun> frame!]
     /param [word!]
 ][

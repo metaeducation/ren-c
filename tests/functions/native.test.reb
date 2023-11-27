@@ -1,6 +1,6 @@
 ; datatypes/native.r
-(activation? :reduce)
-(not activation? 1)
+(action? :reduce)
+(not action? 1)
 (isotope! = kind of :reduce)
 [#1659 (
     ; natives are active

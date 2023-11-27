@@ -107,9 +107,9 @@ DECLARE_NATIVE(as_pair)
 //
 //  {Binds words or words in arrays to the specified context}
 //
-//      return: [frame! activation? any-array! any-path! any-word! quoted!]
+//      return: [frame! action? any-array! any-path! any-word! quoted!]
 //      value "Value whose binding is to be set (modified) (returned)"
-//          [frame! activation? any-array! any-path! any-word! quoted!]
+//          [frame! action? any-array! any-path! any-word! quoted!]
 //      target "Target context or a word whose binding should be the target"
 //          [any-word! any-context!]
 //      /copy "Bind and return a deep copy of a block, don't modify original"
@@ -802,14 +802,14 @@ bool Get_Var_Core_Throws(
         out, steps_out, var, var_specifier
     );
     if (TOP_INDEX != base) {
-        assert(Is_Activation(out) and not threw);
+        assert(Is_Action(out) and not threw);
         //
         // !!! Note: passing EMPTY_BLOCK here for the def causes problems;
         // that needs to be looked into.
         //
         DECLARE_STABLE (action);
         Move_Cell(action, out);
-        Deactivate_If_Activation(action);
+        Deactivate_If_Action(action);
         return Specialize_Action_Throws(out, action, nullptr, base);
     }
     return threw;
@@ -873,7 +873,7 @@ bool Get_Path_Push_Refinements_Throws(
         //
         const REBVAL *val = Lookup_Word_May_Fail(path, path_specifier);
         if (Is_Isotope(val)) {
-            if (not Is_Activation(val))
+            if (not Is_Action(val))
                 fail (Error_Bad_Word_Get(path, val));
             Copy_Cell(out, val);
         }
@@ -881,7 +881,7 @@ bool Get_Path_Push_Refinements_Throws(
             if (not Is_Frame(val))
                 fail (Error_Inert_With_Slashed_Raw());
             Copy_Cell(out, val);
-            Activatify(out);
+            Actionify(out);
         }
         return false; }
 
@@ -914,12 +914,12 @@ bool Get_Path_Push_Refinements_Throws(
         if (Eval_Value_Throws(out, head, derived))
             return true;
 
-        if (Is_Activation(out))
+        if (Is_Action(out))
             NOOP;  // it's good
         else if (Is_Isotope(out))
             fail (Error_Bad_Isotope(out));
         else if (Is_Frame(out))
-            Activatify(out);
+            Actionify(out);
         else
             fail ("Head of PATH! did not evaluate to an ACTION!");
     }
@@ -945,11 +945,11 @@ bool Get_Path_Push_Refinements_Throws(
             return true;
 
         if (Is_Isotope(out)) {
-            if (not Is_Activation(out))
+            if (not Is_Action(out))
                 fail (Error_Bad_Isotope(out));
         }
         else if (Is_Frame(out)) {
-            Activatify(out);
+            Actionify(out);
         }
         else
             fail ("TUPLE! must resolve to an action isotope if head of PATH!");
@@ -963,9 +963,9 @@ bool Get_Path_Push_Refinements_Throws(
 
         // Under the new thinking, PATH! is only used to invoke actions.
         //
-        if (Is_Activation(lookup)) {
+        if (Is_Action(lookup)) {
             Copy_Cell(out, lookup);
-            goto activation_in_out;
+            goto action_in_out;
         }
 
         if (Is_Isotope(lookup))
@@ -1000,7 +1000,7 @@ bool Get_Path_Push_Refinements_Throws(
         if (Get_Var_Core_Throws(out, steps, safe, SPECIFIED))
             return true;
 
-        if (Is_Activation(out))
+        if (Is_Action(out))
             return false;  // activated actions are ok
 
         if (Is_Isotope(out) and not redbol)  // need for GET/ANY 'OBJ/UNDEF
@@ -1011,9 +1011,9 @@ bool Get_Path_Push_Refinements_Throws(
     else
         fail (head);  // what else could it have been?
 
-  activation_in_out:
+  action_in_out:
 
-    assert(Is_Activation(out));
+    assert(Is_Action(out));
 
     // We push the remainder of the path in *reverse order* as words to act
     // as refinements to the function.  The action execution machinery will
@@ -1173,7 +1173,7 @@ bool Set_Var_Core_Updater_Throws(
 
     Assert_Cell_Stable(setval);
 
-    assert(Is_Activation(updater));  // we will use rebM() on it
+    assert(Is_Action(updater));  // we will use rebM() on it
 
     DECLARE_LOCAL (temp);  // target might be same as out (e.g. spare)
 
@@ -1365,7 +1365,7 @@ bool Set_Var_Core_Updater_Throws(
     Move_Cell(temp, out);
     Quotify(temp, 1);
     const void *ins = rebQ(cast(REBVAL*, Data_Stack_At(stackindex)));
-    assert(Is_Activation(updater));
+    assert(Is_Action(updater));
     if (rebRunThrows(
         out,  // <-- output cell
         rebRUN(updater), temp, ins, rebQ(setval)
@@ -1625,7 +1625,7 @@ DECLARE_INTRINSIC(enfix_q)
 //  {For making enfix functions, e.g `+: enfix :add`}
 //
 //      return: "Isotopic action"
-//          [isotope!]  ; [activation?] comes after ENFIX in bootstrap
+//          [isotope!]  ; [action?] comes after ENFIX in bootstrap
 //      original [<unrun> frame!]
 //  ]
 //
@@ -1633,7 +1633,7 @@ DECLARE_INTRINSIC(enfix)
 {
     UNUSED(phase);
 
-    Activatify(Copy_Cell(out, arg));
+    Actionify(Copy_Cell(out, arg));
     Set_Cell_Flag(out, ENFIX_FRAME);
 }
 
@@ -1644,7 +1644,7 @@ DECLARE_INTRINSIC(enfix)
 //  {For removing enfixedness from functions (prefix is a common var name)}
 //
 //      return: "Isotopic action"
-//          [isotope!]  ; [activation?] comes after ENFIX in bootstrap
+//          [isotope!]  ; [action?] comes after ENFIX in bootstrap
 //      original [<unrun> frame!]
 //  ]
 //
@@ -1652,7 +1652,7 @@ DECLARE_INTRINSIC(unenfix)
 {
     UNUSED(phase);
 
-    Activatify(Copy_Cell(out, arg));
+    Actionify(Copy_Cell(out, arg));
     Clear_Cell_Flag(out, ENFIX_FRAME);
 }
 

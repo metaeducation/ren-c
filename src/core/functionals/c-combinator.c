@@ -363,7 +363,7 @@ void Push_Parser_Sublevel(
 //
 //      return: "PARSER's result if it succeeds, otherwise ~null~ isotope"
 //          [any-value!]
-//      parser [activation?]
+//      parser [action?]
 //  ]
 //
 DECLARE_NATIVE(opt_combinator)
@@ -475,7 +475,7 @@ DECLARE_NATIVE(text_x_combinator)
 //
 //      return: "Result of last successful match"
 //          [<opt> any-value!]
-//      parser [activation?]
+//      parser [action?]
 //  ]
 //
 DECLARE_NATIVE(some_combinator)
@@ -575,7 +575,7 @@ DECLARE_NATIVE(some_combinator)
 //
 //      return: "parser result if it succeeded and advanced input, else NULL"
 //          [<opt> any-value!]
-//      parser [activation?]
+//      parser [action?]
 //  ]
 //
 DECLARE_NATIVE(further_combinator)
@@ -773,7 +773,7 @@ static bool Combinator_Param_Hook(
 //  {Analyze combinator parameters in rules to produce a specialized "parser"}
 //
 //      return: "Parser function taking only input, returning value + remainder"
-//          [activation?]
+//          [action?]
 //      @advanced [block!]
 //      c "Parser combinator taking input, but also other parameters"
 //          [frame!]
@@ -846,7 +846,7 @@ DECLARE_NATIVE(combinatorize)
     Phase* parser = Make_Action_From_Exemplar(s.ctx, label);
     Drop_GC_Guard(s.ctx);
 
-    Activatify(Init_Frame_Details(
+    Actionify(Init_Frame_Details(
         OUT,
         parser,
         label,

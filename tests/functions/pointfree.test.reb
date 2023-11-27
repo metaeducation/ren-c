@@ -11,7 +11,7 @@
     pointfree*: func* [
         {Specialize by example: https://en.wikipedia.org/wiki/Tacit_programming}
 
-        return: [activation?]
+        return: [action?]
         frame [<unrun> frame!]  ; this lower version takes frame AND a block
         block [block!]
         <local> params var
@@ -90,7 +90,7 @@
     <-: enfix func* [
         {Declare action by example instantiation, missing args unspecialized}
 
-        return: [activation?]
+        return: [action?]
         :left "Enforces nothing to the left of the pointfree expression"
             [<end>]
         :expression "POINTFREE expression, BLANK!s are unspecialized arg slots"

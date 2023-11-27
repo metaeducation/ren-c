@@ -7,9 +7,9 @@
 ; reflexivity test for infix
 (equal? :+ :+)
 (not equal? :+ :-)
-; reflexivity test for activation
+; reflexivity test for action
 (equal? a-value: func [] [] :a-value)
-; No structural equivalence for activation
+; No structural equivalence for action
 (not equal? func [] [] func [] [])
 (equal? a-value: #{00} a-value)
 ; binary!

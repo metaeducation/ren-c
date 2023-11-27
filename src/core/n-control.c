@@ -512,7 +512,7 @@ DECLARE_NATIVE(then)  // see `tweak :then 'defer on` in %base-defs.r
     INCLUDE_PARAMS_OF_THEN;
 
     Value(*) in = ARG(atom);
-    Deactivate_If_Activation(ARG(branch));
+    Deactivate_If_Action(ARG(branch));
     USED(ARG(branch));  // used by helper
     USED(ARG(decay));
 
@@ -553,7 +553,7 @@ DECLARE_NATIVE(else)  // see `tweak :else 'defer on` in %base-defs.r
     INCLUDE_PARAMS_OF_ELSE;
 
     Value(*) in = ARG(atom);
-    Deactivate_If_Activation(ARG(branch));
+    Deactivate_If_Action(ARG(branch));
     USED(ARG(branch));  // used by helper
     USED(ARG(decay));
 
@@ -596,7 +596,7 @@ DECLARE_NATIVE(also)  // see `tweak :also 'defer on` in %base-defs.r
 
     Value(*) in = ARG(atom);
     Value(*) branch = ARG(branch);
-    Deactivate_If_Activation(ARG(branch));
+    Deactivate_If_Action(ARG(branch));
 
     enum {
         ST_ALSO_INITIAL_ENTRY = STATE_0,
@@ -646,7 +646,7 @@ DECLARE_NATIVE(also)  // see `tweak :also 'defer on` in %base-defs.r
 //      return: "Input if it matched, NULL if it did not (isotope if falsey)"
 //          [any-value?]
 //      test "Typeset or arity-1 filter function"
-//          [<opt> logic? activation? block! type-word! type-group! type-block!]
+//          [<opt> logic? action? block! type-word! type-group! type-block!]
 //      value [any-value?]
 //  ]
 //
@@ -670,7 +670,7 @@ DECLARE_NATIVE(match)
         if (Is_Truthy(v) != Cell_Logic(test))
             return nullptr;
     }
-    else if (Is_Activation(test)) {
+    else if (Is_Action(test)) {
         if (rebRunThrows(
             cast(REBVAL*, SPARE),  // <-- output cell, API doesn't do unstable
             rebRUN(test), rebQ(v)

@@ -5,7 +5,7 @@
 
 (enfix? :+)
 ~expect-arg~ !! (enfix? 1)
-(activation? get '+)
+(action? get '+)
 
 ; #1934
 (3 = do reduce [1 unrun get '+ 2])
@@ -290,7 +290,7 @@
             var: evaluate/next [1020 bar 304] 'pos
             pos = [bar 304]
             var == 1020
-            activation? :bar
+            action? :bar
             bar
             null? bar
         ]

@@ -782,7 +782,7 @@ Bounce JavaScript_Dispatcher(Level* const L)
 //
 //  {Create ACTION! from textual JavaScript code}
 //
-//      return: [activation?]
+//      return: [action?]
 //      spec "Function specification (similar to the one used by FUNCTION)"
 //          [block!]
 //      source "JavaScript code as a text string" [text!]
@@ -952,7 +952,7 @@ DECLARE_NATIVE(js_native)
         &cleanup_js_object
     );
 
-    return Init_Activation(OUT, native, ANONYMOUS, UNBOUND);
+    return Init_Action(OUT, native, ANONYMOUS, UNBOUND);
 }
 
 

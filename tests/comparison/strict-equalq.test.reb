@@ -4,12 +4,12 @@
 (strict-equal? :all :all)
 ; reflexivity test for infix
 (strict-equal? :+ :+)
-; reflexivity test for activation
+; reflexivity test for action
 (
     a-value: func [] []
     strict-equal? :a-value :a-value
 )
-; no structural equality for activation
+; no structural equality for action
 (not strict-equal? func [] [] func [] [])
 ; binary!
 (strict-equal? #{00} #{00})

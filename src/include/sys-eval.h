@@ -165,7 +165,7 @@ INLINE bool Did_Init_Inert_Optimize_Complete(
         feed->gotten = Lookup_Word(At_Feed(feed), FEED_SPECIFIER(feed));
         if (
             not feed->gotten
-            or not Is_Activation(unwrap(feed->gotten))
+            or not Is_Action(unwrap(feed->gotten))
         ){
             Clear_Feed_Flag(feed, NO_LOOKAHEAD);
             goto optimized;  // not action
