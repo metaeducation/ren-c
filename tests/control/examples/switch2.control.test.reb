@@ -38,7 +38,7 @@ switch2: func [
                     log ["Testing condition:" mold condition]
 
                     let f: make frame! make varargs! condition
-                    for-each param (parameters of action of f) [
+                    for-each param (parameters of f) [
                         all [word? param, '~end~ = ^f.(param)] then [
                             f.(param): :value
                             break

@@ -132,7 +132,7 @@
 
 (1 = case [(comment "hi") true [1]])
 
-~bad-isotope~ !! (case [(void) true [1]])
+~bad-void~ !! (case [(void) true [1]])
 
 ~bad-isotope~ !! (case [~isotope~ [print "Causes error"]])
 

@@ -244,6 +244,7 @@ combinator?: func [
     ]
 ]
 
+block-combinator: ~  ; need in variable for recursion implementing "..."
 
 ; !!! We use a MAP! here instead of an OBJECT! because if it were MAKE OBJECT!
 ; then the parse keywords would override the Rebol functions (so you couldn't
@@ -2257,7 +2258,7 @@ default-combinators: make map! reduce [
     ; function...rather than being able to build a small function for each
     ; step that could short circuit before the others were needed.)
 
-    block! combinator [
+    block! (block-combinator: combinator [
         return: "Last result value"
             [<opt> <void> nihil? any-value!]
         @pending [<opt> block!]
@@ -2338,14 +2339,20 @@ default-combinators: make map! reduce [
                 ]
                 sublimit: find/part rules [...] limit
 
-                f: make frame! action of binding of 'return  ; this combinator
+                ; !!! At one point this used ACTION OF BINDING OF 'RETURN, but
+                ; the fusion of actions and frames removed ACTION OF.  So the
+                ; action is accessed by an assigned name from outside.  On
+                ; the plus side, that allowed RULE-START and RULE-END to be
+                ; exposed, which were not visible to the inner function that
+                ; ACTION OF BINDING OF 'RETURN received.
+                ;
+                f: make frame! :block-combinator  ; this combinator
                 f.state: state
                 f.value: rules
                 f.limit: sublimit
-                comment [  ; !!! BINDING OF 'RETURN doesn't expose these
-                    f.rule-start: rules
-                    f.rule-end: sublimit else [tail of rules]
-                ]
+                f.rule-start: rules
+                f.rule-end: sublimit else [tail of rules]
+
                 f.thru: #
 
                 rules: sublimit else [tail of rules]
@@ -2407,7 +2414,7 @@ default-combinators: make map! reduce [
 
         remainder: pos
         return unmeta result'
-    ]
+    ])
 
     === FAIL COMBINATOR ===
 
