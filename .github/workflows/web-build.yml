@@ -147,7 +147,7 @@ jobs:
     #
     # See README: !!! IMPORTANT - Untrusted Actions, Use Audited Hash !!!
     #
-    - uses: mymindstorm/setup-emsdk@5b66c2d3aac3b3d1572a96064e91833b68cf65d3
+    - uses: mymindstorm/setup-emsdk@d233ac12b0102f74ca199f5dad7a4e2c13a8a745
       with:
         version: 'latest-upstream'
 
