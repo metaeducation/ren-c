@@ -70,6 +70,18 @@
 #endif
 
 
+// For variable sized data, SQLDescribeColW() does not necessarily give back
+// a useful column_size (e.g. BLOBs can come back with the maximum of
+// 2,147,483,647).  It's not until the SQLGetData() that you can actually
+// get back a useful length...first passing in a too-small buffer to get
+// the size, then making a right-sized buffer in a second SQLGetData() call.
+//
+// However, you cannot pass in a nullptr for the buffer.  So DUMMY_BUFFER is
+// used instead.
+//
+char DUMMY_BUFFER[1];
+
+
 //
 // https://docs.microsoft.com/en-us/sql/odbc/reference/appendixes/c-data-types
 //
@@ -826,7 +838,7 @@ SQLRETURN Get_ODBC_Catalog(
     int index;
     for (index = 2; index != 6; ++index) {
         pattern[index - 2] = rebSpellWide(  // gives nullptr if BLANK!
-            "try ensure [<opt> text!]",
+            "ensure [<opt> text!]",
                 "pick ensure block!", block, rebI(index)
         );
     }
@@ -886,7 +898,7 @@ static void Force_ColumnList_Cleanup(ColumnList* list) {
     SQLSMALLINT col_num;
     for (col_num = 0; col_num < list->num_columns; ++col_num) {
         Column* col = &list->columns[col_num];
-        rebFree(col->buffer);
+        rebFreeMaybe(col->buffer);
         rebRelease(col->title);
     }
     rebFree(list->columns);
@@ -1090,7 +1102,7 @@ void Describe_ODBC_Results(
           case SQL_VARBINARY:
           case SQL_LONGVARBINARY:
             col->c_type = SQL_C_BINARY;
-            col->buffer_size = sizeof(char) * col->column_size;
+            col->buffer_size = 0;
             break;
 
           case SQL_CHAR:
@@ -1153,11 +1165,14 @@ void Describe_ODBC_Results(
             rebJumps ("fail {Unknown column SQL_XXX type}");
         }
 
-        col->buffer = rebTryAllocN(char, col->buffer_size);
-        if (col->buffer == nullptr)
-            rebJumps ("fail {Couldn't allocate column buffer!}");
-
-        rebUnmanageMemory(col->buffer);
+        if (col->buffer_size == 0)
+            col->buffer = nullptr;
+        else {
+            col->buffer = rebTryAllocN(char, col->buffer_size);
+            if (col->buffer == nullptr)
+                rebJumps ("fail {Couldn't allocate column buffer!}");
+            rebUnmanageMemory(col->buffer);
+        }
     }
 }
 
@@ -1426,8 +1441,11 @@ DECLARE_NATIVE(insert_odbc)
 // reinterpreted as a Rebol value.  Successive queries for records reuse the
 // buffer for a column.
 //
-REBVAL* ODBC_Column_To_Rebol_Value(Column* col)
-{
+REBVAL* ODBC_Column_To_Rebol_Value(
+    Column* col,
+    Option(SQLPOINTER) allocated,
+    SQLLEN len
+){
     if (col->length == SQL_NULL_DATA)
         return rebBlank();
 
@@ -1438,7 +1456,7 @@ REBVAL* ODBC_Column_To_Rebol_Value(Column* col)
         // where n != 1, as opposed to SQL_BIT and column_size of n.  See
         // remarks on the fail() below.
         //
-        if (col->column_size != 1)
+        if (len != 1)
             rebJumps("fail {BIT(n) fields are only supported for n = 1}");
 
         if (*cast(unsigned char*, col->buffer))
@@ -1532,7 +1550,9 @@ REBVAL* ODBC_Column_To_Rebol_Value(Column* col)
     // as SQL_C_BINARY.
 
       case SQL_C_BINARY:
-        return rebSizedBinary(col->buffer, col->length);
+        if (allocated)
+            return rebRepossess(unwrap(allocated), len);
+        return rebSizedBinary(col->buffer, len);
 
     // There's no guarantee that CHAR fields contain valid UTF-8, but we
     // currently only support that.
@@ -1545,7 +1565,7 @@ REBVAL* ODBC_Column_To_Rebol_Value(Column* col)
           case CHAR_COL_UTF8:
             return rebSizedText(
                 cast(char*, col->buffer),  // unixodbc SQLCHAR is unsigned
-                col->length
+                len
             );
 
           case CHAR_COL_UTF16:
@@ -1560,20 +1580,20 @@ REBVAL* ODBC_Column_To_Rebol_Value(Column* col)
             //
             REBVAL* binary = rebSizedBinary(
                 cast(unsigned char*, col->buffer),
-                col->length
+                len
             );
             return rebValue(
-                "append make text!", rebI(col->length),
+                "append make text!", rebI(len),
                     "map-each byte", rebR(binary), "[codepoint-to-char byte]"
             ); }
         }
         break; }
 
       case SQL_C_WCHAR:
-        assert(col->length % 2 == 0);
+        assert(len % 2 == 0);
         return rebLengthedTextWide(
             cast(SQLWCHAR*, col->buffer),
-            col->length / 2
+            len / 2
         );
 
       default:
@@ -1690,46 +1710,47 @@ DECLARE_NATIVE(copy_odbc)
         for (column_index = 1; column_index <= num_columns; ++column_index) {
             Column* col = &columns[column_index - 1];
 
+            if (col->buffer == nullptr)
+                assert(col->buffer_size == 0);
+
+            SQLLEN len;
             rc = SQLGetData(
                 hstmt,
                 column_index,
                 col->c_type,
-                col->buffer,
-                col->buffer_size,
-                &col->length
+                col->buffer ? col->buffer : DUMMY_BUFFER,  // can't be null
+                col->buffer_size,  // zero if null
+                &len
             );
+
+            Option(SQLPOINTER) allocated;
 
             switch (rc) {
               case SQL_SUCCESS:
+                if (len > cast(SQLLEN, col->buffer_size)) {
+                    assert(col->buffer == nullptr);  // Firebase does this (!)
+                    goto success_with_info;
+                }
+                allocated = nullptr;
                 break;
 
+              success_with_info:
               case SQL_SUCCESS_WITH_INFO:  // potential truncation
-                //
-                // !!! This code is untested, but something like this would
-                // be needed here.  Review.
-                //
-                if (
-                    col->c_type == SQL_C_CHAR
-                    and col->length > cast(SQLLEN, col->buffer_size)
-                ){
-                    col->buffer = rebRealloc(col->buffer, col->length + 1);
+                assert(col->buffer == nullptr);
+                allocated = rebMalloc(len + 1);  // can be rebRepossess()'d
+                SQLLEN len_check;
+                rc = SQLGetData(
+                    hstmt,
+                    column_index,
+                    col->c_type,
+                    allocated,
+                    len,  // amount of space in buffer
+                    &len_check
+                );
+                if (rc != SQL_SUCCESS)
+                    rebJumps ("fail", Error_ODBC_Stmt(hstmt));
 
-                    SQLLEN len_partial = col->buffer_size - 1;
-                    SQLLEN len_remaining = col->length - len_partial;
-                    SQLLEN len_check;
-                    rc = SQLGetData(
-                        hstmt,
-                        column_index,
-                        col->c_type,
-                        cast(char*, col->buffer) + len_partial,
-                        len_remaining,  // amount of space in buffer
-                        &len_check
-                    );
-                    if (rc != SQL_SUCCESS)
-                        rebJumps ("fail", Error_ODBC_Stmt(hstmt));
-
-                    assert(len_check == len_remaining);
-                }
+                assert(len_check == len);
                 break;
 
               case SQL_NO_DATA:
@@ -1743,7 +1764,8 @@ DECLARE_NATIVE(copy_odbc)
                 rebJumps ("fail", Error_ODBC_Stmt(hstmt));
             }
 
-            REBVAL* temp = ODBC_Column_To_Rebol_Value(col);
+            REBVAL* temp = ODBC_Column_To_Rebol_Value(col, allocated, len);
+
             rebElide("append", record, rebQ(temp));  // Q because blank => NULL
             rebRelease(temp);
         }
