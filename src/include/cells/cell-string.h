@@ -1,10 +1,12 @@
 // %cell-string.h
 
 INLINE const String* Cell_String(NoQuote(const Cell*) v) {
-    if (Any_String_Kind(Cell_Heart(v)))
-        return c_cast(String*, Cell_Series(v));
+    enum Reb_Kind heart = Cell_Heart(v);
+    if (Any_Word_Kind(heart))
+        return Cell_Word_Symbol(v);
 
-    return Cell_Word_Symbol(v);  // asserts Any_Word_Kind() for heart
+    assert(Any_String_Kind(heart) or heart == REB_URL);
+    return c_cast(String*, Cell_Series(v));
 }
 
 #define Cell_String_Ensure_Mutable(v) \

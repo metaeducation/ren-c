@@ -4,7 +4,9 @@
 // the debug build (which doesn't inline functions) there's a notable cost.
 //
 INLINE const Series* Cell_Series(NoQuote(const Cell*) v) {
-    assert(Any_Series_Kind(Cell_Heart(v)));
+    enum Reb_Kind heart = Cell_Heart(v);
+    assert(Any_Series_Kind(heart) or heart == REB_URL);
+    UNUSED(heart);
     const Series* s = c_cast(Series*, Cell_Node1(v));
     if (Get_Series_Flag(s, INACCESSIBLE))
         fail (Error_Series_Data_Freed_Raw());
