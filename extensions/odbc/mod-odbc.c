@@ -129,7 +129,6 @@ struct ColumnStruct {  // For describing a single column
     SQLULEN column_size;
     SQLPOINTER buffer;
     SQLULEN buffer_size;
-    SQLLEN length;
     SQLSMALLINT precision;
     SQLSMALLINT nullable;
     bool is_unsigned;
@@ -549,14 +548,14 @@ SQLRETURN ODBC_BindParameter(
     //
     SQLSMALLINT c_type = rebUnboxInteger("switch/type", rebQ(v), "[",
         "quasi! [",
-            "if find [~true~ ~false~]", rebQ(v), "[",
-                rebI(SQL_C_BIT),
+            "switch", rebQ(v), "[",
+                "'~null~ [", rebI(SQL_C_DEFAULT), "]",
+                "'~true~ [", rebI(SQL_C_BIT), "]",
+                "'~false~ [", rebI(SQL_C_BIT), "]",
             "] else [",
-                "fail {Only legal QUASI!-parameters are ~true~ and ~false~}",
+                "fail {Legal QUASI!-parameters ~null~ ~true~ ~false~}",
             "]",
         "]",
-
-        "blank! [", rebI(SQL_C_DEFAULT), "]",
 
         // When we ask to insert data, the ODBC layer is supposed to be able
         // to take a C variable in any known integral type format, and so
@@ -609,17 +608,18 @@ SQLRETURN ODBC_BindParameter(
     SQLSMALLINT sql_type;
 
     switch (c_type) {
-      case SQL_C_DEFAULT: {  // BLANK!
+      case SQL_C_DEFAULT: {  // ~null~
         sql_type = SQL_NULL_DATA;
+        assert(rebUnboxLogic("null?", v));
         p->buffer_size = 0;
         p->buffer = nullptr;
         break; }
 
-      case SQL_C_BIT: {  // LOGIC!
+      case SQL_C_BIT: {  // ~true~ ~false~
         sql_type = SQL_BIT;
         p->buffer_size = sizeof(unsigned char);
         p->buffer = rebAllocN(char, p->buffer_size);
-        *cast(unsigned char*, p->buffer) = rebUnboxLogic(v);
+        *cast(unsigned char*, p->buffer) = rebUnboxLogic(v);  // unmetas
         break; }
 
       case SQL_C_ULONG: {  // unsigned INTEGER! in 32-bit positive range
@@ -1446,8 +1446,8 @@ REBVAL* ODBC_Column_To_Rebol_Value(
     Option(SQLPOINTER) allocated,
     SQLLEN len
 ){
-    if (col->length == SQL_NULL_DATA)
-        return rebBlank();
+    if (len == SQL_NULL_DATA)
+        return rebValue("'~null~");
 
     switch (col->c_type) {
       case SQL_C_BIT:
@@ -1723,11 +1723,19 @@ DECLARE_NATIVE(copy_odbc)
                 &len
             );
 
+            if (col->buffer == nullptr and len == SQL_NO_TOTAL)
+                rebJumps (
+                    "fail {ODBC driver gave SQL_NO_TOTAL for var-sized field}"
+                );
+
             Option(SQLPOINTER) allocated;
 
             switch (rc) {
               case SQL_SUCCESS:
-                if (len > cast(SQLLEN, col->buffer_size)) {
+                if (
+                    len != SQL_NULL_DATA
+                    and len > cast(SQLLEN, col->buffer_size)
+                ){
                     assert(col->buffer == nullptr);  // Firebase does this (!)
                     goto success_with_info;
                 }
@@ -1736,6 +1744,8 @@ DECLARE_NATIVE(copy_odbc)
 
               success_with_info:
               case SQL_SUCCESS_WITH_INFO:  // potential truncation
+                assert(len != SQL_NULL_DATA);
+                assert(len != SQL_NO_TOTAL);
                 assert(col->buffer == nullptr);
                 allocated = rebMalloc(len + 1);  // can be rebRepossess()'d
                 SQLLEN len_check;
@@ -1743,7 +1753,7 @@ DECLARE_NATIVE(copy_odbc)
                     hstmt,
                     column_index,
                     col->c_type,
-                    allocated,
+                    unwrap(allocated),
                     len,  // amount of space in buffer
                     &len_check
                 );
@@ -1766,7 +1776,9 @@ DECLARE_NATIVE(copy_odbc)
 
             REBVAL* temp = ODBC_Column_To_Rebol_Value(col, allocated, len);
 
-            rebElide("append", record, rebQ(temp));  // Q because blank => NULL
+            rebElide(
+                "append", record, rebQ(temp)  // rebQ for ~null~ ~true~ ~false~
+            );
             rebRelease(temp);
         }
 
