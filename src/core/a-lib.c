@@ -2483,7 +2483,7 @@ void RL_rebUnmanage(void *p)
 //
 void RL_rebRelease(const REBVAL *v)
 {
-    ENTER_API;
+    ENTER_API_RECYCLING_OK;  // !!! Needs bulletproofing, but needs to work
 
     if (not v)
         return;  // less rigorous, but makes life easier for C programmers
