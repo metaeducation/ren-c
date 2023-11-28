@@ -518,14 +518,6 @@ immediate!: &[  ; Does not include internal datatypes
     blank! any-scalar! date! any-word!
 ]
 
-ok?: func* [
-    "Returns TRUE on all values that are not ERROR!"
-    return: [logic?]
-    value [<opt> any-value!]
-][
-    return not error? :value
-]
-
 ; Convenient alternatives for readability
 ;
 neither?: runs :nand?

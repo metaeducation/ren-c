@@ -226,7 +226,7 @@ DECLARE_NATIVE(except)
 //
 //  raised?: native/intrinsic [
 //
-//  "Tells you if argument is a failure, but does not raise it"
+//  "Tells you if argument is an ERROR! isotope, doesn't fail if it is"
 //
 //      return: [logic?]
 //      ^optional
@@ -239,6 +239,22 @@ DECLARE_INTRINSIC(raised_q)
     Init_Logic(out, Is_Meta_Of_Raised(arg));
 }
 
+
+//
+//  ok?: native/intrinsic [
+//
+//  "Tells you if argument is not an ERROR! isotope, doesn't fail if it is"
+//
+//      return: [logic?]
+//      ^optional
+//  ]
+//
+DECLARE_INTRINSIC(ok_q)
+{
+    UNUSED(phase);
+
+    Init_Logic(out, not Is_Meta_Of_Raised(arg));
+}
 
 //
 //  set-location-of-error: native [
