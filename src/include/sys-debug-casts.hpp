@@ -68,9 +68,10 @@
 //    template partial specializations that only take one parameter: the `V`
 //    type being cast from.  (e.g. we want to define an operator that does the
 //    handling for casting to an Array*, that gets the arbitrary type being
-//    cast from to inspect).  This single parameter is renamed `VP` since we
-//    require it to be a pointer--which means we can make typedef aliases for
-//    the type without a pointer being named `V`, etc.
+//    cast from to inspect).  In order to not get in the way of smart pointer
+//    classes, we narrow the specializations to V* raw pointer types (the
+//    smart pointers can overload cast_helper and extract that raw pointer,
+//    then delegate back to cast again)
 //
 // 2. The casts are implemented with a static method inside of a templated
 //    class vs. just as a templated function.  This is because partial
@@ -94,7 +95,7 @@
 //
 //      https://stackoverflow.com/questions/11531989/
 //
-//    So at minimum you need a dummy template variable (VP_) and a dummy
+//    So at minimum you need a dummy template variable (V_) and a dummy
 //    check of it to cause the enable_if to work correctly.  <shrug>
 //
 // 4. By default, if you upcast (e.g. casting from a derived class like Array
@@ -133,24 +134,23 @@
 
 //=//// cast(Node*, ...) //////////////////////////////////////////////////=//
 
-template<typename VP>  // [1]
-struct cast_helper<VP,const Node*> {  // [2]
-    typedef typename std::remove_pointer<VP>::type V;
+template<typename V>  // [1]
+struct cast_helper<V*,const Node*> {  // [2]
     typedef typename std::remove_const<V>::type V0;
 
-    template<typename VP_ = VP>
+    template<typename V_ = V>
     static constexpr typename std::enable_if<
-        std::is_same<VP_, VP>::value &&  // [3]
-        std::is_base_of<Node, V0>::value,  // upcasting, no check [4]
-    const Node*>::type convert(VP_ p) {
+        std::is_same<V_, V>::value  // [3]
+        and std::is_base_of<Node, V0>::value,  // upcasting, no check [4]
+    const Node*>::type convert(V_* p) {
         return reinterpret_cast<const Node*>(p);
     }
 
-    template<typename VP_ = VP>
+    template<typename V_ = V>
     static typename std::enable_if<
-        std::is_same<VP_, VP>::value &&  // [3]
-        !(std::is_base_of<Node, V0>::value),  // downcasting, checked [4]
-    const Node*>::type convert(VP_ p) {
+        std::is_same<V_, V>::value  // [3]
+        and not std::is_base_of<Node, V0>::value,  // downcasting, check [4]
+    const Node*>::type convert(V_* p) {
         static_assert(
             std::is_same<V0, void>::value
                 or std::is_same<V0, Byte>::value,
@@ -172,42 +172,40 @@ struct cast_helper<VP,const Node*> {  // [2]
     }
 };
 
-template<typename VP>
-struct cast_helper<VP,Node*> {
-    static constexpr Node* convert(VP p) {
-        typedef typename std::remove_pointer<VP>::type V;
-        static_assert(!std::is_const<V>::value, "casting discards const");
+template<typename V>
+struct cast_helper<V*,Node*> {
+    static constexpr Node* convert(V* p) {
+        static_assert(not std::is_const<V>::value, "casting discards const");
         return const_cast<Node*>(cast(const Node*, rr_cast(p)));
     }
 };
 
-template<typename VP>
-struct cast_helper<VP,Node*&&> {  // [5]
-    static constexpr Node* convert(VP p)
+template<typename V>
+struct cast_helper<V*,Node*&&> {  // [5]
+    static constexpr Node* convert(V* p)
       { return const_cast<Node*>(cast(Node*, p)); }
 };
 
 
 //=//// cast(Series*, ...) ////////////////////////////////////////////////=//
 
-template<typename VP>  // [1]
-struct cast_helper<VP,const Series*> {  // [2]
-    typedef typename std::remove_pointer<VP>::type V;
+template<typename V>  // [1]
+struct cast_helper<V*,const Series*> {  // [2]
     typedef typename std::remove_const<V>::type V0;
 
-    template<typename VP_ = VP>
+    template<typename V_ = V>
     static constexpr typename std::enable_if<
-        std::is_same<VP_, VP>::value &&  // [3]
-        std::is_base_of<Series, V0>::value,  // upcasting, no check [4]
-    const Series*>::type convert(VP_ p) {
+        std::is_same<V_, V>::value  // [3]
+        and std::is_base_of<Series, V0>::value,  // upcasting, no check [4]
+    const Series*>::type convert(V_* p) {
         return reinterpret_cast<const Series*>(p);
     }
 
-    template<typename VP_ = VP>
+    template<typename V_ = V>
     static typename std::enable_if<
-        std::is_same<VP_, VP>::value &&  // [3]
-        !(std::is_base_of<Series, V0>::value),  // downcasting, checked [4]
-    const Series*>::type convert(VP_ p) {
+        std::is_same<V_, V>::value  // [3]
+        and not std::is_base_of<Series, V0>::value,  // downcasting, check [4]
+    const Series*>::type convert(V_* p) {
         static_assert(
             std::is_same<V0, void>::value
                 or std::is_same<V0, Byte>::value
@@ -230,44 +228,42 @@ struct cast_helper<VP,const Series*> {  // [2]
     }
 };
 
-template<typename VP>
-struct cast_helper<VP,Series*> {
-    static constexpr Series* convert(VP p) {
-        typedef typename std::remove_pointer<VP>::type V;
-        static_assert(!std::is_const<V>::value, "casting discards const");
+template<typename V>
+struct cast_helper<V*,Series*> {
+    static constexpr Series* convert(V* p) {
+        static_assert(not std::is_const<V>::value, "casting discards const");
         return const_cast<Series*>(
             cast_helper<decltype(rr_cast(p)), const Series*>::convert(rr_cast(p))
             /*cast(const Series*, rr_cast(p))*/);
     }
 };
 
-template<typename VP>
-struct cast_helper<VP,Series*&&> {  // [5]
-    static constexpr Series* convert(VP p)
+template<typename V>
+struct cast_helper<V*,Series*&&> {  // [5]
+    static constexpr Series* convert(V* p)
       { return const_cast<Series*>(cast(Series*, p)); }  // cast away ref
 };
 
 
 //=//// cast(Binary*, ...) ////////////////////////////////////////////////=//
 
-template<typename VP>  // [1]
-struct cast_helper<VP,const Binary*> {  // [2]
-    typedef typename std::remove_pointer<VP>::type V;
+template<typename V>  // [1]
+struct cast_helper<V*,const Binary*> {  // [2]
     typedef typename std::remove_const<V>::type V0;
 
-    template<typename VP_ = VP>
+    template<typename V_ = V>
     static constexpr typename std::enable_if<
-        std::is_same<VP_, VP>::value &&  // [3]
-        std::is_base_of<Binary, V0>::value,  // upcasting, no check [4]
-    const Binary*>::type convert(VP_ p) {
+        std::is_same<V_, V>::value  // [3]
+        and std::is_base_of<Binary, V0>::value,  // upcasting, no check [4]
+    const Binary*>::type convert(V_* p) {
         return reinterpret_cast<const Binary*>(p);
     }
 
-    template<typename VP_ = VP>
+    template<typename V_ = V>
     static typename std::enable_if<
-        std::is_same<VP_, VP>::value &&  // [3]
-        !(std::is_base_of<Binary, V0>::value),  // downcasting, checked [4]
-    const Binary*>::type convert(VP_ p) {
+        std::is_same<V_, V>::value  // [3]
+        and not std::is_base_of<Binary, V0>::value,  // downcasting, check [4]
+    const Binary*>::type convert(V_* p) {
         static_assert(
             std::is_same<V0, void>::value
                 or std::is_same<V0, Byte>::value
@@ -294,11 +290,10 @@ struct cast_helper<VP,const Binary*> {  // [2]
     }
 };
 
-template<typename VP>
-struct cast_helper<VP,Binary*> {
-    static constexpr Binary* convert(VP p) {
-        typedef typename std::remove_pointer<VP>::type V;
-        static_assert(!std::is_const<V>::value, "casting discards const");
+template<typename V>
+struct cast_helper<V*,Binary*> {
+    static constexpr Binary* convert(V* p) {
+        static_assert(not std::is_const<V>::value, "casting discards const");
         return const_cast<Binary*>(cast(const Binary*, rr_cast(p)));
     }
 };
@@ -306,12 +301,11 @@ struct cast_helper<VP,Binary*> {
 
 //=//// cast(String*, ...) ////////////////////////////////////////////////=//
 
-template<typename VP>  // [1]
-struct cast_helper<VP,const String*> {  // [2]
-    typedef typename std::remove_pointer<VP>::type V;
+template<typename V>  // [1]
+struct cast_helper<V*,const String*> {  // [2]
     typedef typename std::remove_const<V>::type V0;
 
-    static const String* convert(VP p) {
+    static const String* convert(V* p) {
         static_assert(
             std::is_same<V0, void>::value
                 or std::is_same<V0, Byte>::value
@@ -342,11 +336,10 @@ struct cast_helper<VP,const String*> {  // [2]
     }
 };
 
-template<typename VP>
-struct cast_helper<VP,String*> {
-    static constexpr String* convert(VP p) {
-        typedef typename std::remove_pointer<VP>::type V;
-        static_assert(!std::is_const<V>::value, "casting discards const");
+template<typename V>
+struct cast_helper<V*,String*> {
+    static constexpr String* convert(V* p) {
+        static_assert(not std::is_const<V>::value, "casting discards const");
         return const_cast<String*>(cast(const String*, rr_cast(p)));
     }
 };
@@ -354,12 +347,11 @@ struct cast_helper<VP,String*> {
 
 //=//// cast(Symbol*, ...) ////////////////////////////////////////////////=//
 
-template<typename VP>  // [1]
-struct cast_helper<VP,const Symbol*> {  // [2]
-    typedef typename std::remove_pointer<VP>::type V;
+template<typename V>  // [1]
+struct cast_helper<V*,const Symbol*> {  // [2]
     typedef typename std::remove_const<V>::type V0;
 
-    static const Symbol* convert(VP p) {
+    static const Symbol* convert(V* p) {
         static_assert(
             std::is_same<V0, void>::value
                 or std::is_same<V0, Byte>::value
@@ -395,15 +387,15 @@ struct cast_helper<VP,const Symbol*> {  // [2]
 // be const if downcasting.
 
 /*
-template<typename VP>
-struct cast_helper<VP,Symbol*> {
-    template<typename VP_ = VP>
+template<typename V>
+struct cast_helper<V*,Symbol*> {
+    template<typename V_ = V>
     static constexpr typename std::enable_if<
-        std::is_same<VP_, VP>::value,  // [6]
-    Symbol*>::type convert(VP_ p) {
+        std::is_same<V_, V>::value,  // [6]
+    Symbol*>::type convert(V_* p) {
         UNUSED(p);
         static_assert(
-            !std::is_same<VP_,VP>::value,  // [6]
+            not std::is_same<V_,V>::value,  // [6]
             "Mutable cast on Symbol requested--use x_cast() if intentional"
         );
         return nullptr;
@@ -413,24 +405,23 @@ struct cast_helper<VP,Symbol*> {
 
 //=//// cast(Array*, ...) /////////////////////////////////////////////////=//
 
-template<typename VP>  // [1]
-struct cast_helper<VP,const Array*> {  // [2]
-    typedef typename std::remove_pointer<VP>::type V;
+template<typename V>  // [1]
+struct cast_helper<V*,const Array*> {  // [2]
     typedef typename std::remove_const<V>::type V0;
 
-    template<typename VP_ = VP>
+    template<typename V_ = V>
     static constexpr typename std::enable_if<
-        std::is_same<VP_, VP>::value &&  // [3]
-        std::is_base_of<Array, V0>::value,  // upcasting, no check [4]
-    const Array*>::type convert(VP_ p) {
+        std::is_same<V_, V>::value  // [3]
+        and std::is_base_of<Array, V0>::value,  // upcasting, no check [4]
+    const Array*>::type convert(V_* p) {
         return reinterpret_cast<const Array*>(p);
     }
 
-    template<typename VP_ = VP>
+    template<typename V_ = V>
     static typename std::enable_if<
-        std::is_same<VP_, VP>::value &&  // [3]
-        !(std::is_base_of<Array, V0>::value),  // downcasting, checked [4]
-    const Array*>::type convert(VP_ p) {
+        std::is_same<V_, V>::value  // [3]
+        and not std::is_base_of<Array, V0>::value,  // downcasting, checked [4]
+    const Array*>::type convert(V_* p) {
         static_assert(
             std::is_same<V0, void>::value
                 or std::is_same<V0, Byte>::value
@@ -454,11 +445,10 @@ struct cast_helper<VP,const Array*> {  // [2]
     }
 };
 
-template<typename VP>
-struct cast_helper<VP,Array*> {
-    static constexpr Array* convert(VP pq) {
-        typedef typename std::remove_pointer<VP>::type V;
-        static_assert(!std::is_const<V>::value, "casting discards const");
+template<typename V>
+struct cast_helper<V*,Array*> {
+    static constexpr Array* convert(V* pq) {
+        static_assert(not std::is_const<V>::value, "casting discards const");
         return const_cast<Array*>(cast(const Array*, rr_cast(pq)));
     }
 };
@@ -466,16 +456,15 @@ struct cast_helper<VP,Array*> {
 
 //=//// cast(Context*, ...) ///////////////////////////////////////////////=//
 
-template<typename VP>  // [1]
-struct cast_helper<VP,Context*> {  // [2]
-    typedef typename std::remove_pointer<VP>::type V;
+template<typename V>  // [1]
+struct cast_helper<V*,Context*> {  // [2]
     typedef typename std::remove_const<V>::type V0;
 
-    template<typename VP_ = VP>
+    template<typename V_ = V>
     static typename std::enable_if<
-        std::is_same<VP_, VP>::value &&  // [3]
-        !(std::is_const<V>::value),
-    Context*>::type convert(VP_ p) {
+        std::is_same<V_, V>::value  // [3]
+        and not std::is_const<V>::value,
+    Context*>::type convert(V_* p) {
         static_assert(
             std::is_same<V0, void>::value
                 or std::is_same<V0, Byte>::value
@@ -505,14 +494,14 @@ struct cast_helper<VP,Context*> {  // [2]
     }
 };
 
-template<typename VP>
-struct cast_helper<VP,const Context*> {
-    template<typename VP_ = VP>
+template<typename V>
+struct cast_helper<V*,const Context*> {
+    template<typename V_ = V>
     static constexpr typename std::enable_if<
-        std::is_same<VP_, VP>::value,  // need VP_ reference for SFINAE
-    const Context*>::type convert(VP_ p) {
+        std::is_same<V_, V>::value,  // [3]
+    const Context*>::type convert(V_* p) {
         static_assert(
-            !std::is_same<VP_,VP>::value,
+            not std::is_same<V_,V>::value,
             "const Context* pointers currently shouldn't exist, can't cast to"
         );
         UNUSED(p);
@@ -523,16 +512,15 @@ struct cast_helper<VP,const Context*> {
 
 //=//// cast(Action*, ...) ////////////////////////////////////////////////=//
 
-template<typename VP>  // [1]
-struct cast_helper<VP,Action*> {  // [2]
-    typedef typename std::remove_pointer<VP>::type V;
+template<typename V>  // [1]
+struct cast_helper<V*,Action*> {  // [2]
     typedef typename std::remove_const<V>::type V0;
 
-    template<typename VP_ = VP>
+    template<typename V_ = V>
     static typename std::enable_if<
-        std::is_same<VP_, VP>::value &&  // [3]
-        !(std::is_const<V>::value),
-    Action*>::type convert(VP_ p) {
+        std::is_same<V_, V>::value  // [3]
+        and not std::is_const<V>::value,
+    Action*>::type convert(V_* p) {
         static_assert(
             std::is_same<V0, void>::value
                 or std::is_same<V0, Byte>::value
@@ -578,14 +566,14 @@ struct cast_helper<VP,Action*> {  // [2]
     }
 };
 
-template<typename VP>
-struct cast_helper<VP,const Action*> {
-    template<typename VP_ = VP>
+template<typename V>
+struct cast_helper<V*,const Action*> {
+    template<typename V_ = V>
     static constexpr typename std::enable_if<
-        std::is_same<VP_, VP>::value,  // need VP_ reference for SFINAE
-    const Action*>::type convert(VP_ p) {
+        std::is_same<V_, V>::value,  // [3]
+    const Action*>::type convert(V_* p) {
         static_assert(
-            !std::is_same<VP_,VP>::value,
+            not std::is_same<V_, V>::value,
             "const Action* pointers currently shouldn't exist, can't cast to"
         );
         UNUSED(p);
@@ -596,16 +584,15 @@ struct cast_helper<VP,const Action*> {
 
 //=//// cast(Level*, ...) /////////////////////////////////////////////////=//
 
-template<typename VP>  // [1]
-struct cast_helper<VP,Level*> {  // [2]
-    typedef typename std::remove_pointer<VP>::type V;
+template<typename V>  // [1]
+struct cast_helper<V*,Level*> {  // [2]
     typedef typename std::remove_const<V>::type V0;
 
-    template<typename VP_ = VP>
+    template<typename V_ = V>
     static typename std::enable_if<
-        std::is_same<VP_, VP>::value &&  // [3]
-        !(std::is_const<V>::value),
-    Level*>::type convert(VP_ p) {
+        std::is_same<V_, V>::value  // [3]
+        and not std::is_const<V>::value,
+    Level*>::type convert(V_* p) {
         static_assert(
             std::is_same<V0, void>::value
                 or std::is_same<V0, Byte>::value
@@ -629,14 +616,14 @@ struct cast_helper<VP,Level*> {  // [2]
     }
 };
 
-template<typename VP>
-struct cast_helper<VP,const Level*> {
-    template<typename VP_ = VP>
+template<typename V>
+struct cast_helper<V*,const Level*> {
+    template<typename V_ = V>
     static constexpr typename std::enable_if<
-        std::is_same<VP_, VP>::value,  // need VP_ reference for SFINAE
-    const Level*>::type convert(VP_ p) {
+        std::is_same<V_, V>::value,  // [3]
+    const Level*>::type convert(V_* p) {
         static_assert(
-            !std::is_same<VP_,VP>::value,
+            not std::is_same<V_, V>::value,
             "const Level* pointers currently shouldn't exist, can't cast to"
         );
         UNUSED(p);

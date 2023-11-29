@@ -562,7 +562,7 @@ INLINE bool Should_Skip_Ascii_Byte_May_Fail(
 }
 
 #define Validate_Ascii_Byte(bp,strmode,start) \
-    cast(void, Should_Skip_Ascii_Byte_May_Fail((bp), (strmode), (start)))
+    (Should_Skip_Ascii_Byte_May_Fail((bp), (strmode), (start)), NOOP)
 
 #define Append_String(dest,string) \
     Append_String_Limit((dest), (string), UNLIMITED)

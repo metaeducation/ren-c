@@ -603,7 +603,7 @@ INLINE void SET_SIGNAL(Flags f) { // used in %sys-series.h
     (did (g_ts.eval_signals & (f)))
 
 #define CLR_SIGNAL(f) \
-    cast(void, g_ts.eval_signals &= ~(f))
+    g_ts.eval_signals &= ~(f)
 
 
 //=//// DEBUG HOOKS INTO THE CAST() OPERATOR //////////////////////////////=//

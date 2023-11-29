@@ -473,18 +473,32 @@
     #define i_cast(T,v)     ((T)(v))  /* non-integral to integral */
     #define rr_cast(T,v)    ((T)(v))  /* simplifying remove-reference cast */
 #else
-    template<typename V, typename T = void>
+    template<typename V, typename T>
     struct cast_helper {
         template<typename V_ = V, typename T_ = T>
         static constexpr typename std::enable_if<
-            !(std::is_pointer<V_>::value and std::is_pointer<T_>::value),
+            not std::is_convertible<V_,T_>::value and (
+                (std::is_arithmetic<V_>::value or std::is_enum<V_>::value)
+                and (std::is_arithmetic<T_>::value or std::is_enum<T_>::value)
+            ),
         T>::type convert(V_ v) { return static_cast<T>(v); }
 
         template<typename V_ = V, typename T_ = T>
         static constexpr typename std::enable_if<
-            std::is_pointer<V_>::value and std::is_pointer<T_>::value,
+            not std::is_convertible<V_,T_>::value and (
+                std::is_pointer<V_>::value and std::is_pointer<T_>::value
+            ),
         T>::type convert(V_ v) { return reinterpret_cast<T>(v); }
+
+        template<typename V_ = V, typename T_ = T>
+        static constexpr typename std::enable_if<
+            std::is_convertible<V_,T_>::value,
+        T>::type convert(V_ v) { return v; }
     };
+
+    template<typename V>
+    struct cast_helper<V,void>
+      { static constexpr void convert(V v) { (void)(v);} };
 
     #define cast(T,v) \
         (cast_helper<typename std::remove_reference< \
@@ -492,7 +506,7 @@
 
     template<typename T, typename V>
     constexpr T m_cast_helper(V v) {
-        static_assert(!std::is_const<T>::value,
+        static_assert(not std::is_const<T>::value,
             "invalid m_cast() - requested a const type for output result");
         static_assert(std::is_volatile<T>::value == std::is_volatile<V>::value,
             "invalid m_cast() - input and output have mismatched volatility");
@@ -544,7 +558,7 @@
     constexpr TP p_cast_helper(V v) {
         static_assert(std::is_pointer<TP>::value,
             "invalid p_cast() - target type must be pointer");
-        static_assert(! std::is_pointer<V>::value,
+        static_assert(not std::is_pointer<V>::value,
             "invalid p_cast() - source type can't be pointer");
         return reinterpret_cast<TP>(static_cast<uintptr_t>(v));
     }
@@ -556,7 +570,7 @@
     constexpr T i_cast_helper(V v) {
         static_assert(std::is_integral<T>::value,
             "invalid i_cast() - target type must be integral");
-        static_assert(! std::is_integral<V>::value,
+        static_assert(not std::is_integral<V>::value,
             "invalid i_cast() - source type can't be integral");
         return reinterpret_cast<T>(v);
     }

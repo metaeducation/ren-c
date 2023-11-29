@@ -71,7 +71,7 @@ REBI64 Join_Time(REB_TIMEF *tf, bool neg)
 //
 const Byte* Scan_Time(Cell* out, const Byte* cp, REBLEN len)
 {
-    cast(void, len); // !!! should len be paid attention to?
+    UNUSED(len); // !!! should len be paid attention to?
 
     bool neg;
     if (*cp == '-') {
