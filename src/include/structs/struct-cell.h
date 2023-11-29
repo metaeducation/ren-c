@@ -733,15 +733,28 @@ union ValuePayloadUnion { //=/////////////// ACTUAL PAYLOAD DEFINITION ////=//
 // on a CellBase.
 //
 // Notationally, the choice is to make it appear that the NoQuote modifies
-// the type as `NoQuote(const cell*)`.
+// the type as `NoQuote(const Cell*)`.
 //
 // Note: This needs special handling in %make-headers.r to recognize the
 // format.  See the `typemacro_parentheses` rule.
 //
 #if (! CPLUSPLUS_11)
-    #define NoQuote(const_cell_star) \
-        const struct ValueStruct*
+    #define NoQuote(maybe_const_cell_star) \
+        maybe_const_cell_star
 #else
-    #define NoQuote(const_cell_star) \
-        const CellBase*
+    template<typename T>
+    struct NoQuoteTypeHelper {
+        static_assert(not std::is_same<T,T>::value, "[Cell*, const Cell*]");
+    };
+
+    template<>
+    struct NoQuoteTypeHelper<const Cell*>
+      { typedef const CellBase* type; };
+
+    template<>
+    struct NoQuoteTypeHelper<Cell*>
+      { typedef CellBase* type; };
+
+    #define NoQuote(maybe_const_cell_star) \
+        NoQuoteTypeHelper<maybe_const_cell_star>::type
 #endif

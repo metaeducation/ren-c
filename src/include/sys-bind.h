@@ -178,7 +178,7 @@ INLINE REBVAL *Derelativize_Untracked(
 
 #define Dequoted_Derelativize(out,in,specifier) \
     Dequotify(Derelativize((out), \
-        cast(const Cell*, ensure(NoQuote(*), (in))), (specifier)))
+        cast(const Cell*, ensure(NoQuote(const Cell*), (in))), (specifier)))
 
 
 // Tells whether when an ACTION! has a binding to a context, if that binding
