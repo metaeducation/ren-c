@@ -443,9 +443,6 @@ INLINE void INIT_BINDING(
     Cell* out,
     const Series* binding
 ){
-    if (binding and Not_Node_Managed(binding))
-        panic (binding);
-
     assert(not binding or Is_Node_Managed(binding));
     mutable_BINDING(out) = binding;
 }
