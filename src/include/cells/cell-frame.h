@@ -57,7 +57,7 @@ INLINE void INIT_VAL_FRAME_BINDING(
     Context* binding
 ){
     assert(HEART_BYTE(v) == REB_FRAME);
-    mutable_BINDING(v) = binding;
+    INIT_BINDING(v, binding);
 }
 
 
@@ -79,6 +79,8 @@ INLINE REBVAL *Init_Frame_Details_Core(
     Option(const Symbol*) label,  // allowed to be ANONYMOUS
     Context* binding  // allowed to be UNBOUND
 ){
+    assert(not binding or Is_Node_Managed(binding));
+
   #if !defined(NDEBUG)
     Extra_Init_Frame_Details_Checks_Debug(a);
   #endif

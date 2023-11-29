@@ -128,6 +128,7 @@ Bounce Func_Dispatcher(Level* const L)
 
     REBVAL *cell = Level_Arg(L, 1);
     assert(Is_None(cell));
+    Force_Level_Varlist_Managed(L);
     Init_Action(
         cell,
         ACT_IDENTITY(VAL_ACTION(Lib(DEFINITIONAL_RETURN))),
@@ -574,7 +575,7 @@ bool Typecheck_Coerce_Return(
 //
 //      return: []  ; "divergent"
 //      ^value [any-atom?]
-//      /only "Do not do proxying of output variables, just return argument"
+//      /only "Don't proxy output variables, return argument without typecheck"
 //  ]
 //
 DECLARE_NATIVE(definitional_return)
@@ -587,39 +588,37 @@ DECLARE_NATIVE(definitional_return)
 // This means the RETURN that is in LIB is actually just a dummy function
 // which you will bind to and run if there is no definitional return in effect.
 //
-// (The cached name of the value for this native is set to RETURN by the
-// dispatchers that use it, which might be a bit confusing.)
+// 1. The cached name for values holding this native is set to RETURN by the
+//    dispatchers that use it, which might seem confusing debugging this.
+//
+// 2. Check type NOW instead of waiting and having the dispatcher check it.
+//    Reasoning is that that lets the error indicate the callsite, e.g. the
+//    point where `return badly-typed-value` happened.
+//
+//    !!! In the userspace formulation of this abstraction, it indicates
+//    it's not RETURN's type signature that is constrained, as if it were
+//    then RETURN would be implicated in the error.  Instead, RETURN must
+//    take [any-atom?] as its argument, and then report the error itself...
+//    implicating the frame (in a way parallel to this native).
 {
-    INCLUDE_PARAMS_OF_DEFINITIONAL_RETURN;
+    INCLUDE_PARAMS_OF_DEFINITIONAL_RETURN;  // cached name usually RETURN [1]
 
     Atom(*) atom = Copy_Cell(SPARE, ARG(value));  // SPARE for unstable atoms
     Meta_Unquotify_Undecayed(atom);
 
     Level* return_level = LEVEL;  // Level of this RETURN call
 
-    // Each ACTION! cell for RETURN has a piece of information in it that can
-    // can be unique (the binding).  When invoked, that binding is held in the
-    // Level*.  This generic RETURN dispatcher interprets that binding as the
-    // FRAME! which this instance is specifically intended to return from.
-    //
-    Context* return_binding = Level_Binding(return_level);
-    if (not return_binding)
-        fail (Error_Return_Archetype_Raw());  // must have binding to jump to
+    Context* binding = Level_Binding(return_level);  // see definition
+    if (not binding)
+        fail (Error_Unbound_Archetype_Raw());
 
-    Level* target_level = CTX_LEVEL_MAY_FAIL(return_binding);
-
-    // Check type NOW instead of waiting and letting Eval_Core()
-    // check it.  Reasoning is that the error can indicate the callsite,
-    // e.g. the point where `return badly-typed-value` happened.
-    //
-    // !!! In the userspace formulation of this abstraction, it indicates
-    // it's not RETURN's type signature that is constrained, as if it were
-    // then RETURN would be implicated in the error.  Instead, RETURN must
-    // take [any-atom?] as its argument, and then report the error itself...
-    // implicating the frame (in a way parallel to this native).
-    //
-    if (not REF(only) and not Typecheck_Coerce_Return(target_level, atom))
+    Level* target_level = CTX_LEVEL_MAY_FAIL(binding);
+    if (
+        not REF(only)
+        and not Typecheck_Coerce_Return(target_level, atom)  // check NOW! [2]
+    ){
         fail (Error_Bad_Return_Type(target_level, atom));
+    }
 
     DECLARE_STABLE (label);
     Copy_Cell(label, Lib(UNWIND)); // see Make_Thrown_Unwind_Value

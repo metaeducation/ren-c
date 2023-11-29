@@ -277,6 +277,9 @@ DECLARE_NATIVE(reduce_each)
     );
     Init_Object(ARG(vars), context);  // keep GC safe
 
+    if (Is_Block(body) or Is_Meta_Block(body))
+        Add_Definitional_Break_Continue(body, level_);
+
     if (Is_The_Block(block))
         flags |= EVAL_EXECUTOR_FLAG_NO_EVALUATIONS;
 

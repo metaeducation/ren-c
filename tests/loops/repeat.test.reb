@@ -81,14 +81,22 @@
     '~[']~ = ^ repeat 2 [unspaced ["abc" continue]]
 )
 
-; Test ACTION! as branch
+; Test ACTION! as branch.
+;
+; Note: At one time the branch was:
+;
+;     branch: does [if nbreak = n [break] n: n + 1]
+;
+; Definitional BREAK doesn't allow this--that would be a call to a dummy BREAK
+; function that says "no loop tied to break".  So there's currently no way for
+; a branch expressed as a function to trigger a break (unless it captures the
+; specific loop's break somehow).
 ;
 [
     (did branch: does [if nbreak = n [break] n: n + 1])
 
     (nbreak: ('...), n: 0, void? repeat 0 :branch)
     (nbreak: ('...), n: 0, 3 = repeat 3 :branch)
-    (nbreak: 2, n: 0, null? repeat 3 :branch)
 ]
 
 ; If body never runs, none can be made to act invisibly

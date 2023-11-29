@@ -49,6 +49,18 @@ return: func* [] [
     fail "RETURN archetype called when no generator is providing it"
 ]
 
+continue: func* [] [
+    fail "CONTINUE archetype called when no loop is providing it"
+]
+
+break: func* [] [
+    fail "BREAK archetype called when no loop is providing it"
+]
+
+stop: func* [] [
+    fail "STOP archetype called when no loop is providing it"
+]
+
 func: func* [
     {Make action with set-words as locals, <static>, <in>, <with>, <local>}
 

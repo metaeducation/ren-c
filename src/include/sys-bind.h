@@ -135,7 +135,7 @@ INLINE REBVAL *Derelativize_Untracked(
             out->extra = v->extra;
         }
         else {
-            INIT_BINDING_MAY_MANAGE(out, s);
+            INIT_BINDING(out, s);
             INIT_VAL_WORD_INDEX(out, index);
         }
 
@@ -147,14 +147,10 @@ INLINE REBVAL *Derelativize_Untracked(
         // the specifier.  However, it cannot lose any prior existing info
         // that's in the specifier it holds.
         //
-        // THE BINDING IN ARRAYS MAY BE UNMANAGED...due to an optimization
-        // for passing things to natives that is probably not needed any
-        // longer.  Review.
-        //
         // The mechanism otherwise is shared with specifier derivation.
         // That includes the case of if specifier==SPECIFIED.
         //
-        INIT_BINDING_MAY_MANAGE(out, Derive_Specifier(specifier, v));
+        INIT_BINDING(out, Derive_Specifier(specifier, v));
     }
     else {
         // Things like contexts and varargs are not affected by specifiers,
@@ -428,25 +424,30 @@ INLINE Series* SPC_BINDING(Specifier* specifier)
 }
 
 
-// If the cell we're writing into is a stack cell, there's a chance that
-// management/reification of the binding can be avoided.
+// At one time this was INIT_BINDING_MAY_MANAGE, with the premise that this
+// routine would be avoided by initialization of RETURN action cells in the
+// frame of invoked actions.  These rogue RETURN cells with unmanaged bindings
+// would die when the frame died, so breaking the rules was "safe".  Then
+// the varlist would only become managed when a binding to RETURN occurred in
+// a WORD! in the body.  This never happened for natives, so a native that
+// didn't have usermode FRAME!s introspected for it could free its varlist
+// without giving it to the garbage collector.
 //
-// Payload and header should be valid prior to making this call.
+// A cleaner solution is achieved today by making the initialization of an
+// actual RETURN action in a frame cell only happen for usermode functions.
+// It's injected by the dispatcher--not the frame fulfilling process.  So
+// natives just have an unset cell in their RETURN slot.  Hence we now assert
+// that this binding initialization only happens with managed bindings.
 //
-INLINE void INIT_BINDING_MAY_MANAGE(
+INLINE void INIT_BINDING(
     Cell* out,
     const Series* binding
 ){
+    if (binding and Not_Node_Managed(binding))
+        panic (binding);
+
+    assert(not binding or Is_Node_Managed(binding));
     mutable_BINDING(out) = binding;
-
-    if (not binding or Is_Node_Managed(binding))
-        return;  // unbound or managed already (frame OR object context)
-
-    Level* L = cast(Level*, node_BONUS(KeySource, binding));  // unmanaged only
-    assert(not Is_Level_Fulfilling(L));
-    UNUSED(L);
-
-    Set_Node_Managed_Bit(binding);  // GC sees...
 }
 
 

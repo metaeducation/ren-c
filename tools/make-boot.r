@@ -639,8 +639,14 @@ e-typesets/write-emitted
 ; establish their slots first.  Any natives or generics which have the same
 ; name will have to use the slot position established for these words.
 
-for-each word load %lib-words.r [
-    add-sym word  ; Note, may actually be a BAR! w/older boot
+for-each term load %lib-words.r [
+    if issue? term [
+        if not find syms-words as text! term [
+            fail ["Expected symbol for" term "from native/generic/type"]
+        ]
+    ] else [
+        add-sym term  ; Note, may actually be a BAR! w/older boot
+    ]
 ]
 
 

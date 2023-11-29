@@ -252,7 +252,7 @@ INLINE void Virtual_Bind_Patchify(
     // not concerned and want to try binding it through the virtualized
     // reference anyway.
     //
-    INIT_BINDING_MAY_MANAGE(
+    INIT_BINDING(
         any_array,
         Make_Or_Reuse_Use(ctx, Cell_Specifier(any_array), kind)
     );

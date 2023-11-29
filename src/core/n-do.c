@@ -542,7 +542,7 @@ DECLARE_NATIVE(evaluate)
     VAL_INDEX_UNBOUNDED(source) = Level_Array_Index(SUBLEVEL);  // new index
     Drop_Level(SUBLEVEL);
 
-    INIT_BINDING_MAY_MANAGE(source, specifier);  // integrate LETs [6]
+    INIT_BINDING(source, specifier);  // integrate LETs [6]
 
     if (REF(next))
         rebElide(Canon(SET), rebQ(rest_var), source);

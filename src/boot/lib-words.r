@@ -106,6 +106,12 @@ into
 spread
 end  ; must be last (SYM_END referred to by GET_VAR() in %u-parse.c)
 
+; definitional forms as DEFINITIONAL-RETURN, DEFINITIONAL-BREAK, ...
+#return
+#break
+continue
+stop
+
 ; It is convenient to be able to say `for-each [_ x y] [1 2 3 ...] [...]` and
 ; let the blank indicate you are not interested in a value.  This might be
 ; doable with a generalized "anonymous key" system.  But for now it is assumed

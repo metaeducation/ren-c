@@ -218,9 +218,9 @@
     ]
 )
 
-; BREAK out leaves a "running" function in a "clean" state
+; The BREAK designates breaking the outer repeat (definitional BREAK)
 (
-    1 = repeat 1 [
+    null = repeat 1 [
         f: lambda [x] [
             either x = 1 [
                 repeat 1 [f 2]

@@ -99,6 +99,8 @@ Bounce Adapter_Dispatcher(Level* const L)
 
     STATE = ST_ADAPTER_RUNNING_PRELUDE;  // no definitional RETURN [2]
 
+    Force_Level_Varlist_Managed(L);
+
     return CONTINUE_CORE(  // Note: we won't catch throws or errors
         SPARE,  // Evaluate prelude into SPARE cell (result discarded [1])
         LEVEL_MASK_NONE,  // plain result

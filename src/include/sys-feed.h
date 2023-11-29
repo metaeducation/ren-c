@@ -660,6 +660,8 @@ INLINE Feed* Prep_Array_Feed(
     Specifier* specifier,
     Flags flags
 ){
+    assert(not specifier or Is_Node_Managed(specifier));
+
     Feed* feed = Prep_Feed_Common(preallocated, flags);
 
     if (first) {

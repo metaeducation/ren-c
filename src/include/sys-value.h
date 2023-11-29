@@ -623,6 +623,15 @@ INLINE void Copy_Cell_Header(
 //
 // Interface designed to line up with Derelativize()
 //
+// 1. Will optimizer notice if copy mask is CELL_MASK_ALL, and not bother with
+//    masking out CELL_MASK_PERSIST since all bits are overwritten?  Review.
+//
+// 2. Once upon a time INIT_BINDING() depended on the payload (when quoteds
+//    could forward to a different cell), so this needed to be done first.
+//    That's not true anymore, but some future INIT_BINDING() may need to
+//    be able to study to the cell to do the initialization?
+//
+
 INLINE Cell* Copy_Cell_Untracked(
     Cell* out,
     const Cell* v,
@@ -631,20 +640,14 @@ INLINE Cell* Copy_Cell_Untracked(
     assert(out != v);  // usually a sign of a mistake; not worth supporting
     ASSERT_CELL_READABLE_EVIL_MACRO(v);  // allow copy void object vars
 
-    // Q: Will optimizer notice if copy mask is CELL_MASK_ALL, and not bother
-    // with masking out CELL_MASK_PERSIST since all bits are overwritten?
-    //
-    FRESHEN_CELL_EVIL_MACRO(out);
+    FRESHEN_CELL_EVIL_MACRO(out);  // will CELL_MASK_ALL optimize?  [1]
     out->header.bits |= (NODE_FLAG_NODE | NODE_FLAG_CELL  // ensure NODE+CELL
         | (v->header.bits & copy_mask));
 
-    // Note: must be copied over *before* INIT_BINDING_MAY_MANAGE is called,
-    // so that if it's a REB_QUOTED it can find the literal->cell.
-    //
-    out->payload = v->payload;
+    out->payload = v->payload;  // before init binding anachronism [1]
 
     if (Is_Bindable(v))  // extra is either a binding or a plain C value/ptr
-        INIT_BINDING_MAY_MANAGE(out, BINDING(v));
+        INIT_BINDING(out, BINDING(v));
     else
         out->extra = v->extra;  // extra inert bits
 

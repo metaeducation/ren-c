@@ -146,3 +146,26 @@
         ]
     ]
 )
+
+; CONTINUE and BREAK are definitional
+(
+    implemented-with-loops: func [body [block!]] [
+        let sum: 0
+        let result
+        while [result: do body] [
+            sum: sum + result
+        ]
+        return sum
+    ]
+    counter: 0
+    null = while [true] [
+        assert [(1 + 2 + 3) = implemented-with-loops [
+            counter: counter + 1
+            if counter <= 3 [counter] else [null]
+        ]]
+        implemented-with-loops [
+            if counter < 10 [break]
+        ]
+        fail "Should not reach!"
+    ]
+)

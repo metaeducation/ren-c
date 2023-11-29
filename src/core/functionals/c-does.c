@@ -125,6 +125,8 @@ Bounce Block_Dispatcher(Level* const L)
 
     assert(Is_Relative(block));
 
+    Force_Level_Varlist_Managed(L);
+
     return DELEGATE_CORE(
         OUT,  // output
         LEVEL_MASK_NONE,

@@ -104,6 +104,8 @@ Bounce Macro_Dispatcher(Level* const L)
     assert(ACT_HAS_RETURN(PHASE));
     assert(KEY_SYM(ACT_KEYS_HEAD(PHASE)) == SYM_RETURN);
 
+    Force_Level_Varlist_Managed(L);
+
     // !!! Using this form of RETURN is based on UNWIND, which means we must
     // catch UNWIND ourselves to process that return.  This is probably not
     // a good idea, and if macro wants a RETURN that it processes it should

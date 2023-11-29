@@ -135,6 +135,23 @@ INLINE LineNumber LineNumber_Of_Level(Level* L) {
     u_cast(Atom(*), &(L)->spare)
 
 
+// A level's varlist is unmanaged by default, because when running code like
+// a native there's typically no way to get access to the frame directly.
+// e.g. no variables are getting bound to the native's arguments, because
+// it's just C code running.
+//
+// However, things like usermode FUNC do hand out their frame variables.  But
+// they can't assert that the varlist hasn't already been managed, because
+// something like ADAPT may come along and manage the varlist first.  So this
+// macro captures the intent and provides a place to read this comment.
+//
+// Note we don't use Set_Series_Managed() here, because the varlist was never
+// put in the "untracked manuals" list... created as unmanaged/untracked.
+//
+#define Force_Level_Varlist_Managed(L) \
+    Set_Node_Managed_Bit((L)->varlist)
+
+
 // The "phase" slot of a FRAME! value is the second node pointer in PAYLOAD().
 // If a frame value is non-archetypal, this slot may be occupied by a String*
 // which represents the cached name of the action from which the frame
@@ -151,6 +168,12 @@ INLINE void INIT_LVL_PHASE(Level* L, Phase* phase)  // check types
 INLINE void INIT_LVL_BINDING(Level* L, Context* binding)
   { mutable_BINDING(L->rootvar) = binding; }  // also fast
 
+// Each ACTION! cell for things like RETURN/BREAK/CONTINUE has a piece of
+// information in it that can can be unique (the binding).  When invoked, that
+// binding is held in the Level*.  Generic dispatchers for things like RETURN
+// interprets that binding as the FRAME! which the instance is specifically
+// intended to return from (break out of, etc.)
+//
 #define Level_Binding(L) \
     cast(Context*, BINDING((L)->rootvar))
 
@@ -202,7 +225,7 @@ INLINE Option(const Symbol*) Level_Label(Level* L) {
 
 INLINE Context* Context_For_Level_May_Manage(Level* L) {
     assert(not Is_Level_Fulfilling(L));
-    Set_Node_Managed_Bit(L->varlist);  // may already be managed
+    Force_Level_Varlist_Managed(L);  // may already be managed
     return cast(Context*, L->varlist);
 }
 

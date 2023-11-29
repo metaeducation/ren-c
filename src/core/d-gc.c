@@ -46,34 +46,38 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
 
     enum Reb_Kind heart = Cell_Heart_Unchecked(v);
 
-    Series* binding;
-    if (
-        Is_Bindable_Kind(heart)
-        and (binding = BINDING(v))
-        and not Is_String_Symbol(binding)
-        and Not_Series_Flag(binding, INACCESSIBLE)
-    ){
-        if (not Is_Series_Array(binding))
-            panic(binding);
+    while (Is_Bindable_Kind(heart)) {  // for `break` convenience
+        Series* binding = BINDING(v);
+        if (not binding)
+            break;
+
+        assert(Is_Node_Managed(binding));
+
+        if (Get_Series_Flag(binding, INACCESSIBLE))
+            break;
 
         assert(Is_Series_Array(binding));
+
+        if (not IS_VARLIST(binding))
+            break;
+
+        if (CTX_TYPE(cast(Context*, binding)) != REB_FRAME)
+            break;
+
+        Node* keysource = BONUS(KeySource, x_cast(Array*, binding));
+        if (Is_Node_A_Cell(keysource))  // actually a Level
+            break;
+
+        KeyList* keylist = cast(KeyList*, keysource);
         if (
-            IS_VARLIST(binding)
-            and CTX_TYPE(cast(Context*, binding)) == REB_FRAME
+            (keylist->leader.bits & SERIES_MASK_KEYLIST)
+            != SERIES_MASK_KEYLIST
         ){
-            Node* keysource = BONUS(KeySource, x_cast(Array*, binding));
-            if (Is_Node_A_Stub(keysource)) {
-                KeyList* keylist = cast(KeyList*, keysource);
-                if (
-                    (keylist->leader.bits & SERIES_MASK_KEYLIST)
-                    != SERIES_MASK_KEYLIST
-                ){
-                    panic (binding);
-                }
-                if (Not_Node_Managed(keysource))
-                    panic (keysource);
-            }
+            panic (binding);
         }
+        if (Not_Node_Managed(keysource))
+            panic (keysource);
+        break;
     }
 
     // This switch was originally done via contiguous REB_XXX values, in order

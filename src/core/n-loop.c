@@ -48,10 +48,10 @@
 //
 bool Try_Catch_Break_Or_Continue(
     Sink(Value(*)) out,
-    Level* level_,
+    Level* loop_level,
     bool* breaking
 ){
-    Value(const*) label = VAL_THROWN_LABEL(level_);
+    Value(const*) label = VAL_THROWN_LABEL(loop_level);
 
     // Throw /NAME-s used by CONTINUE and BREAK are the actual native
     // function values of the routines themselves.
@@ -59,20 +59,21 @@ bool Try_Catch_Break_Or_Continue(
     if (not Is_Frame(label))
         return false;
 
-    if (ACT_DISPATCHER(VAL_ACTION(label)) == &N_break) {
-        CATCH_THROWN(out, level_);
+    if (
+        ACT_DISPATCHER(VAL_ACTION(label)) == &N_definitional_break
+        and BINDING(label) == loop_level->varlist
+    ){
+        CATCH_THROWN(out, loop_level);
         Init_Trash(out);  // caller must interpret breaking flag
         *breaking = true;
         return true;
     }
 
-    if (ACT_DISPATCHER(VAL_ACTION(label)) == &N_continue) {
-        //
-        // !!! Continue with no argument acts the same as asking
-        // for CONTINUE void (the form with an argument).  This makes sense
-        // in cases like MAP-EACH (one wants a continue to not add any value)
-        //
-        CATCH_THROWN(out, level_);
+    if (
+        ACT_DISPATCHER(VAL_ACTION(label)) == &N_definitional_continue
+        and BINDING(label) == loop_level->varlist
+    ){
+        CATCH_THROWN(out, loop_level);
         Assert_Cell_Stable(out);  // CONTINUE doesn't take unstable /WITH
         *breaking = false;
         return true;
@@ -83,48 +84,112 @@ bool Try_Catch_Break_Or_Continue(
 
 
 //
-//  break: native [
+//  definitional_break: native [
 //
 //  {Exit the current iteration of a loop and stop iterating further}
 //
-//      return: []  ; !!! notation for divergent function?
+//      return: []  ; "divergent"
 //  ]
 //
-DECLARE_NATIVE(break)
+DECLARE_NATIVE(definitional_break)
 //
 // BREAK is implemented via a thrown signal that bubbles up through the stack.
 // It uses the value of its own native function as the name of the throw,
 // like `throw/name null :break`.
 {
-    INCLUDE_PARAMS_OF_BREAK;
+    INCLUDE_PARAMS_OF_DEFINITIONAL_BREAK;
 
-    return Init_Thrown_With_Label(LEVEL, Lib(NULL), Lib(BREAK));
+    Level* break_level = LEVEL;  // Level of this BREAK call
+
+    Context* binding = Level_Binding(break_level);  // see definition
+    if (not binding)
+        fail (Error_Unbound_Archetype_Raw());
+
+    Level* loop_level = CTX_LEVEL_MAY_FAIL(binding);
+
+    Init_Action(
+        SPARE,  // use as label for throw
+        ACT_IDENTITY(VAL_ACTION(Lib(DEFINITIONAL_BREAK))),
+        Canon(BREAK),
+        cast(Context*, loop_level->varlist)
+    );
+
+    return Init_Thrown_With_Label(LEVEL, Lib(NULL), stable_SPARE);
 }
 
 
 //
-//  continue: native [
+//  definitional-continue: native [
 //
 //  "Throws control back to top of loop for next iteration."
 //
-//      return: []  ; !!! notation for divergent function?
+//      return: []  ; "divergent"
 //      /with "Act as if loop body finished with this value"
 //          [<void> <opt> any-value!]
 //  ]
 //
-DECLARE_NATIVE(continue)
+DECLARE_NATIVE(definitional_continue)
 //
 // CONTINUE is implemented via a thrown signal that bubbles up through the
 // stack.  It uses the value of its own native function as the name of the
 // throw, like `throw/name value :continue`.
+//
+// 1. Continue with no argument acts like CONTINUE/WITH VOID.  This makes
+//    sense in cases like MAP-EACH (plain CONTINUE should not add a value).
 {
-    INCLUDE_PARAMS_OF_CONTINUE;
+    INCLUDE_PARAMS_OF_DEFINITIONAL_CONTINUE;
 
     Value(*) v = ARG(with);
     if (not REF(with))
-        Init_Void(v);  // See: https://forum.rebol.info/t/1965/3
+        Init_Void(v);  // See: https://forum.rebol.info/t/1965/3 [1]
 
-    return Init_Thrown_With_Label(LEVEL, v, Lib(CONTINUE));
+    Level* continue_level = LEVEL;  // Level of this CONTINUE call
+
+    Context* binding = Level_Binding(continue_level);  // see definition
+    if (not binding)
+        fail (Error_Unbound_Archetype_Raw());
+
+    Level* loop_level = CTX_LEVEL_MAY_FAIL(binding);
+
+    Init_Action(
+        SPARE,  // use as label for throw
+        ACT_IDENTITY(VAL_ACTION(Lib(DEFINITIONAL_CONTINUE))),
+        Canon(CONTINUE),
+        cast(Context*, loop_level->varlist)
+    );
+
+    return Init_Thrown_With_Label(LEVEL, v, stable_SPARE);
+}
+
+
+//
+//  Add_Definitional_Break_Continue: C
+//
+void Add_Definitional_Break_Continue(
+    Value(*) body,
+    Level* loop_level
+){
+    Specifier* body_specifier = Cell_Specifier(body);
+
+    Force_Level_Varlist_Managed(loop_level);
+
+    Array* let_continue = Make_Let_Patch(Canon(CONTINUE), body_specifier);
+    Init_Action(
+        Stub_Cell(let_continue),
+        ACT_IDENTITY(VAL_ACTION(Lib(DEFINITIONAL_CONTINUE))),
+        Canon(CONTINUE),  // relabel (the CONTINUE in lib is a dummy action)
+        cast(Context*, loop_level->varlist)  // what to continue
+    );
+
+    Array* let_break = Make_Let_Patch(Canon(BREAK), let_continue);
+    Init_Action(
+        Stub_Cell(let_break),
+        ACT_IDENTITY(VAL_ACTION(Lib(DEFINITIONAL_BREAK))),
+        Canon(BREAK),  // relabel (the BREAK in lib is a dummy action)
+        cast(Context*, loop_level->varlist)  // what to break
+    );
+
+    INIT_SPECIFIER(body, let_break);  // extend chain
 }
 
 
@@ -409,11 +474,16 @@ DECLARE_NATIVE(cfor)
 {
     INCLUDE_PARAMS_OF_CFOR;
 
+    Value(*) body = ARG(body);
+
     Context* context = Virtual_Bind_Deep_To_New_Context(
-        ARG(body),  // may be updated, will still be GC safe
+        body,  // may be updated, will still be GC safe
         ARG(word)
     );
     Init_Object(ARG(word), context);  // keep GC safe
+
+    if (Is_Block(body) or Is_Meta_Block(body))
+        Add_Definitional_Break_Continue(body, level_);
 
     REBVAL *var = CTX_VAR(context, 1);  // not movable, see #2274
 
@@ -485,6 +555,7 @@ DECLARE_NATIVE(for_skip)
     INCLUDE_PARAMS_OF_FOR_SKIP;
 
     REBVAL *series = ARG(series);
+    REBVAL *body = ARG(body);
 
     REBINT skip = Int32(ARG(skip));
     if (skip == 0) {
@@ -495,10 +566,13 @@ DECLARE_NATIVE(for_skip)
     }
 
     Context* context = Virtual_Bind_Deep_To_New_Context(
-        ARG(body),  // may be updated, will still be GC safe
+        body,  // may be updated, will still be GC safe
         ARG(word)
     );
     Init_Object(ARG(word), context);  // keep GC safe
+
+    if (Is_Block(body) or Is_Meta_Block(body))
+        Add_Definitional_Break_Continue(body, level_);
 
     REBVAL *pseudo_var = CTX_VAR(context, 1); // not movable, see #2274
     REBVAL *var = Real_Var_From_Pseudo(pseudo_var);
@@ -566,7 +640,7 @@ DECLARE_NATIVE(for_skip)
 
 
 //
-//  stop: native [
+//  definitional-stop: native [
 //
 //  {End the current iteration of CYCLE, optionally returning a value}
 //
@@ -575,15 +649,53 @@ DECLARE_NATIVE(for_skip)
 //          [<void> any-value!]
 //  ]
 //
-DECLARE_NATIVE(stop)  // See CYCLE for notes about STOP
+DECLARE_NATIVE(definitional_stop)  // See CYCLE for notes about STOP
 {
-    INCLUDE_PARAMS_OF_STOP;
+    INCLUDE_PARAMS_OF_DEFINITIONAL_STOP;
 
     Value(*) v = ARG(with);
     if (not REF(with))
         Init_Void(v);  // See: https://forum.rebol.info/t/1965/3
 
-    return Init_Thrown_With_Label(LEVEL, v, Lib(STOP));
+    Level* stop_level = LEVEL;  // Level of this STOP call
+
+    Context* binding = Level_Binding(stop_level);  // see definition
+    if (not binding)
+        fail (Error_Unbound_Archetype_Raw());
+
+    Level* loop_level = CTX_LEVEL_MAY_FAIL(binding);
+
+    Init_Action(
+        SPARE,  // use as label for throw
+        ACT_IDENTITY(VAL_ACTION(Lib(DEFINITIONAL_STOP))),
+        Canon(STOP),
+        cast(Context*, loop_level->varlist)
+    );
+
+    return Init_Thrown_With_Label(LEVEL, v, stable_SPARE);
+}
+
+
+//
+//  Add_Definitional_Stop: C
+//
+void Add_Definitional_Stop(
+    Value(*) body,
+    Level* loop_level
+){
+    Specifier* body_specifier = Cell_Specifier(body);
+
+    Force_Level_Varlist_Managed(loop_level);
+
+    Array* let_stop = Make_Let_Patch(Canon(STOP), body_specifier);
+    Init_Action(
+        Stub_Cell(let_stop),
+        ACT_IDENTITY(VAL_ACTION(Lib(DEFINITIONAL_STOP))),
+        Canon(STOP),  // relabel (the STOP in lib is a dummy action)
+        cast(Context*, loop_level->varlist)  // what to stop
+   );
+
+    INIT_SPECIFIER(body, let_stop);  // extend chain
 }
 
 
@@ -631,6 +743,11 @@ DECLARE_NATIVE(cycle)
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
+    if (Is_Block(body) or Is_Meta_Block(body)) {
+        Add_Definitional_Break_Continue(body, level_);
+        Add_Definitional_Stop(body, level_);
+    }
+
     STATE = ST_CYCLE_EVALUATING_BODY;
     return CATCH_CONTINUE(OUT, body);
 
@@ -654,7 +771,8 @@ DECLARE_NATIVE(cycle)
     const REBVAL *label = VAL_THROWN_LABEL(LEVEL);
     if (
         Is_Frame(label)
-        and ACT_DISPATCHER(VAL_ACTION(label)) == &N_stop
+        and ACT_DISPATCHER(VAL_ACTION(label)) == &N_definitional_stop
+        and BINDING(label) == LEVEL->varlist
     ){
         CATCH_THROWN(OUT, LEVEL);  // Unlike BREAK, STOP takes an arg--[1]
 
@@ -1026,10 +1144,13 @@ DECLARE_NATIVE(for_each)
         return VOID;
 
     Context* pseudo_vars_ctx = Virtual_Bind_Deep_To_New_Context(
-        ARG(body),  // may be updated, will still be GC safe
-        ARG(vars)
+        body,  // may be updated, will still be GC safe
+        vars
     );
-    Init_Object(ARG(vars), pseudo_vars_ctx);  // keep GC safe
+    Init_Object(vars, pseudo_vars_ctx);  // keep GC safe
+
+    if (Is_Block(body) or Is_Meta_Block(body))
+        Add_Definitional_Break_Continue(body, level_);
 
     Init_Loop_Each(iterator, data);
     Set_Level_Flag(level_, NOTIFY_ON_ABRUPT_FAILURE);  // to clean up iterator
@@ -1133,6 +1254,9 @@ DECLARE_NATIVE(every)
         ARG(vars)
     );
     Init_Object(ARG(vars), pseudo_vars_ctx);  // keep GC safe
+
+    if (Is_Block(body) or Is_Meta_Block(body))
+        Add_Definitional_Break_Continue(body, level_);
 
     Init_Loop_Each(iterator, data);
     Set_Level_Flag(level_, NOTIFY_ON_ABRUPT_FAILURE);  // to clean up iterator
@@ -1267,6 +1391,9 @@ DECLARE_NATIVE(remove_each)
         ARG(vars)
     );
     Init_Object(ARG(vars), context);  // keep GC safe
+
+    if (Is_Block(body))
+        Add_Definitional_Break_Continue(body, level_);
 
     REBLEN start = VAL_INDEX(data);
 
@@ -1623,6 +1750,9 @@ DECLARE_NATIVE(map)
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
+    if (Is_Block(body) or Is_Meta_Block(body))
+        Add_Definitional_Break_Continue(body, level_);
+
     assert(Is_Fresh(OUT));  // output only written during MAP if BREAK hit
 
     if (Is_Blank(data))  // same response as to empty series
@@ -1760,6 +1890,9 @@ DECLARE_NATIVE(repeat)
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
+    if (Is_Block(body))
+        Add_Definitional_Break_Continue(body, level_);
+
     if (Is_Logic(count)) {
         if (Cell_Logic(count) == false)
             return VOID;  // treat false as "don't run"
@@ -1812,8 +1945,7 @@ DECLARE_NATIVE(repeat)
 //          [blank! word! lit-word? block! group!]
 //      value "Maximum number or series to traverse"
 //          [<maybe> any-number! any-sequence! quoted! block! action?]
-//      'body "!!! actually just BLOCK!, but quoted to catch legacy uses"
-//          [<const> any-value!]
+//      body [<const> block!]
 //  ]
 //
 DECLARE_NATIVE(for)
@@ -1841,14 +1973,8 @@ DECLARE_NATIVE(for)
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
-    if (Is_Group(body)) {
-        if (Eval_Value_Throws(SPARE, body, SPECIFIED))
-            return THROWN;
-        Move_Cell(body, SPARE);
-    }
-
-    if (not Is_Block(body))
-        fail ("FOR has a new syntax, use CFOR for old arity-5 behavior.");
+    if (Is_Block(body))
+        Add_Definitional_Break_Continue(body, level_);
 
     if (Is_Quoted(value)) {
         Unquotify(value, 1);
@@ -1964,6 +2090,9 @@ DECLARE_NATIVE(until)
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
+    if (Is_Block(body))
+        Add_Definitional_Break_Continue(body, level_);
+
     STATE = ST_UNTIL_EVALUATING_BODY;
     return CATCH_CONTINUE(OUT, body);
 
@@ -2060,13 +2189,18 @@ DECLARE_NATIVE(while)
     };
 
     switch (STATE) {
-      case ST_WHILE_INITIAL_ENTRY : goto evaluate_condition;
+      case ST_WHILE_INITIAL_ENTRY : goto initial_entry;
       case ST_WHILE_EVALUATING_CONDITION : goto condition_was_evaluated;
       case ST_WHILE_EVALUATING_BODY : goto body_was_evaluated;
       default: assert(false);
     }
 
-  evaluate_condition: {  /////////////////////////////////////////////////////
+  initial_entry: {  //////////////////////////////////////////////////////////
+
+    if (Is_Block(body))
+        Add_Definitional_Break_Continue(body, level_);
+
+} evaluate_condition: {  /////////////////////////////////////////////////////
 
     STATE = ST_WHILE_EVALUATING_CONDITION;
     return CONTINUE(SPARE, condition);  // ignore BREAKs [2]

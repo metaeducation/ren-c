@@ -97,6 +97,6 @@ https://github.com/metaeducation/ren-c/commit/e57c147465f3ed47f297e7a3ce3bb03196
 (
     4 = call/relax [(system.options.boot) --do "quit/with 4"]
 )
-~!!!~ (
+~???~ !! (
     call [(system.options.boot) --do "quit/with 4"]
 )

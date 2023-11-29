@@ -358,10 +358,8 @@ static void Queue_Mark_Cell_Deep(const Cell* c)
   #endif
 
     if (Is_Bindable_Kind(heart)) {
-        Series* binding = BINDING(c);
-        if (binding != UNBOUND)
-            if (NODE_BYTE(binding) & NODE_BYTEMASK_0x20_MANAGED)
-                Queue_Mark_Node_Deep(&m_cast(Cell*, c)->extra.Binding);
+        if (c->extra.Binding)
+            Queue_Mark_Node_Deep(&m_cast(Cell*, c)->extra.Binding);
     }
 
     if (Get_Cell_Flag_Unchecked(c, FIRST_IS_NODE) and Cell_Node1(c))

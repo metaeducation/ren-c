@@ -80,7 +80,7 @@ Bounce Lambda_Dispatcher(Level* const L)
     const REBVAL *block = Details_At(details, IDX_LAMBDA_BLOCK);
     assert(Is_Block(block));
 
-    Set_Node_Managed_Bit(L->varlist);  // not manually tracked...
+    Force_Level_Varlist_Managed(L);
 
     Specifier* specifier = Make_Or_Reuse_Use(  // may reuse [1]
         cast(Context*, L->varlist),
@@ -104,16 +104,20 @@ Bounce Lambda_Dispatcher(Level* const L)
 // like function dispatch, except there's no RETURN to catch.  So it can
 // execute directly into the output cell.
 //
-Bounce Lambda_Unoptimized_Dispatcher(Level* level_)
+Bounce Lambda_Unoptimized_Dispatcher(Level* const L)
 {
+    USE_LEVEL_SHORTHANDS (L);
+
     Details* details = Phase_Details(PHASE);
     Cell* body = Array_At(details, IDX_DETAILS_1);  // code to run
     assert(Is_Block(body) and Is_Relative(body) and VAL_INDEX(body) == 0);
 
+    Force_Level_Varlist_Managed(L);
+
     return DELEGATE_CORE(
         OUT,  // output
         LEVEL_MASK_NONE,  // flags
-        SPC(LEVEL->varlist),  // branch specifier
+        SPC(L->varlist),  // branch specifier
         body  // branch
     );
 }

@@ -901,7 +901,7 @@ DECLARE_NATIVE(let)
             if (vars != where)
                 Copy_Cell(where, vars);  // Move_Cell() of ARG() not allowed
         }
-        INIT_BINDING_MAY_MANAGE(where, bindings);
+        INIT_BINDING(where, bindings);
 
         Trash_Pointer_If_Debug(vars);  // if in spare, we may have overwritten
     }
@@ -1535,14 +1535,7 @@ Context* Virtual_Bind_Deep_To_New_Context(
     //
     /* Set_Series_Flag(CTX_VARLIST(c), DONT_RELOCATE); */
 
-    // !!! In virtual binding, there would not be a Bind_Values call below;
-    // so it wouldn't necessarily be required to manage the augmented
-    // information.  For now it's a requirement for any references that
-    // might be found...and INIT_BINDING_MAY_MANAGE() won't auto-manage
-    // things unless they are stack-based.  Virtual bindings will be, but
-    // contexts like this won't.
-    //
-    Manage_Series(CTX_VARLIST(c));
+    Manage_Series(CTX_VARLIST(c));  // must be managed to use in binding
 
     if (not rebinding)
         return c;  // nothing else needed to do

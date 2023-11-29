@@ -518,6 +518,7 @@ Bounce Action_Executor(Level* L)
         // function run.
         //
         if (Get_Parameter_Flag(PARAM, VARIADIC)) {
+            Force_Level_Varlist_Managed(L);
             Init_Varargs_Untyped_Normal(ARG, L);
             goto continue_fulfilling;
         }
@@ -1196,7 +1197,8 @@ void Push_Action(
     Stub* s = Prep_Stub(
         Alloc_Stub(),  // not preallocated
         SERIES_MASK_VARLIST
-            | SERIES_FLAG_FIXED_SIZE // FRAME!s don't expand ATM
+            | SERIES_FLAG_FIXED_SIZE  // FRAME!s don't expand ATM
+            // not managed by default, see Force_Level_Varlist_Managed()
     );
     SERIES_INFO(s) = SERIES_INFO_MASK_NONE;
     INIT_BONUS_KEYSOURCE(x_cast(Array*, s), L);  // maps varlist back to L

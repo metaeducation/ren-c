@@ -68,13 +68,13 @@ INLINE void INIT_VAL_VARARGS_BINDING(
     Array* binding  // either an array or a frame varlist
 ){
     assert(Is_Varargs(v));
-    mutable_BINDING(v) = binding;
+    INIT_BINDING(v, binding);
 }
 
 
 INLINE REBVAL *Init_Varargs_Untyped_Normal(Cell* out, Level* L) {
     Reset_Unquoted_Header_Untracked(out, CELL_MASK_VARARGS);
-    mutable_BINDING(out) = L->varlist;  // frame-based VARARGS!
+    INIT_BINDING(out, L->varlist);  // frame-based VARARGS!
     UNUSED(VAL_VARARGS_SIGNED_PARAM_INDEX(out));
     INIT_VAL_VARARGS_PHASE(out, nullptr);  // set in typecheck
     return cast(REBVAL*, out);
