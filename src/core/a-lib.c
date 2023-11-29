@@ -2759,17 +2759,6 @@ DECLARE_NATIVE(api_transient)
 }
 
 
-// There's no particularly ideal place to define the instance of the nullptr
-// shim when building with C++98.  At time of writing (in 2021) this is needed
-// for the Haiku build and it's ancient compiler (GCC 2.95, released 2001)
-// which can build neither C99 nor C++11.
-//
-#if defined(REBOL_USE_NULLPTR_SHIM)
-    const nullptr_t nullptr = {};  // global instance behind faked nullptr
-#endif
-
-
-
 #include "sys-ext.h"
 
 //
