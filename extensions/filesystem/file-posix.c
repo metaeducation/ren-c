@@ -317,8 +317,10 @@ REBVAL *Read_File(const REBVAL *port, size_t length)
         file->offset,
         nullptr  // no callback, synchronous
     );
-    if (num_bytes_read < 0)
+    if (num_bytes_read < 0) {
+        rebFree(buffer);
         return rebError_UV(num_bytes_read);
+    }
 
     file->offset += num_bytes_read;
 
