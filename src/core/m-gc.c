@@ -573,6 +573,10 @@ void Run_All_Handle_Cleaners(void) {
             const Cell* item_tail = Array_Tail(cast(Array*, stub));
             Cell* item = Array_Head(cast(Array*, stub));
             for (; item != item_tail; ++item) {
+              #if DEBUG_UNREADABLE_TRASH
+                if (IS_TRASH(item))
+                    continue;
+              #endif
                 if (Cell_Heart(item) != REB_HANDLE)
                     continue;
                 if (Not_Cell_Flag(item, FIRST_IS_NODE))

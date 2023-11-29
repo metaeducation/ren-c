@@ -60,12 +60,16 @@
     }
 
     INLINE bool IS_TRASH(const Cell* v) {
-        if (Cell_Heart(v) != REB_VOID)
+        if (not Is_Node_Free(v))
             return false;
-        if (QUOTE_BYTE(v) != QUASI_2)
-            return false;
-        return Is_Node_Free(v);
+        assert(Is_Node(v) and Is_Node_A_Cell(v));
+        assert(HEART_BYTE(v) == REB_VOID);
+        assert(QUOTE_BYTE(v) == QUASI_2);
+        return true;
     }
+
+    #define Assert_Is_Trash_If_Debug(v) \
+        assert(IS_TRASH(v))
 #else
     // Release Build Behavior: Looks just like a meta-none (`~` value)
 
@@ -73,6 +77,8 @@
         Init_Void_Untracked((out), QUASI_2)
 
     #undef IS_TRASH  // testing for trash in release builds is not meaningful
+
+    #define Assert_Is_Trash_If_Debug(v) NOOP
 #endif
 
 #define Init_Trash(out) \

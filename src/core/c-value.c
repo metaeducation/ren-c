@@ -159,7 +159,7 @@ void Probe_Cell_Print_Helper(
 
   #if DEBUG_UNREADABLE_TRASH
     if (IS_TRASH(v)) {  // Is_Nulled() asserts on trash
-        Append_Ascii(mo->series, "~trash~");
+        Append_Ascii(mo->series, "\\\\~trash~\\\\");
         return;
     }
   #endif

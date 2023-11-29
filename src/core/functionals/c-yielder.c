@@ -190,7 +190,7 @@ Bounce Yielder_Dispatcher(Level* const L)
 
     Value(*) plug = Details_At(details, IDX_YIELDER_PLUG);
     Replug_Stack(yield_level, yielder_level, plug);
-    assert(IS_TRASH(plug));  // Replug trashes, make GC safe
+    Assert_Is_Trash_If_Debug(plug);  // Replug trashes, make GC safe
 
     // Restore the in-progress output cell state that was going on when
     // the YIELD ran (e.g. if it interrupted a CASE or something, this
@@ -385,7 +385,7 @@ DECLARE_NATIVE(yield)
     Move_Cell(out_copy, yielder_level->out);
 
     Value(*) plug = Details_At(yielder_details, IDX_YIELDER_PLUG);
-    assert(IS_TRASH(plug));
+    Assert_Is_Trash_If_Debug(plug);
     Unplug_Stack(plug, yield_level, yielder_level);
 
     // We preserve the fragment of call stack leading from the yield up to the
