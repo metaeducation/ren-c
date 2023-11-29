@@ -2686,7 +2686,7 @@ Bounce Scanner_Executor(Level* const L) {
                 Array* a = Alloc_Singular(NODE_FLAG_MANAGED);
                 HEART_BYTE(cleanup) = REB_GET_WORD;
 
-                Move_Cell(Array_Single(a), cleanup);
+                Move_Cell(Stub_Cell(a), cleanup);
                 Init_Group(cleanup, a);
             }
         }

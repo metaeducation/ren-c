@@ -99,12 +99,12 @@
     (nbreak: ('...), n: 0, 3 = repeat 3 :branch)
 ]
 
-; If body never runs, none can be made to act invisibly
+; If body never runs it's void, which acts invisibly in ANY/ALL
 [
-    (7 == any [maybe repeat 0 [1 + 2], 3 + 4])
+    (7 == any [repeat 0 [1 + 2], 3 + 4])
     (<vote> == any [
-        maybe repeat 1 [<vote>]
-        maybe repeat 0 [<abstain>]
+        repeat 1 [<vote>]
+        repeat 0 [<abstain>]
     ])
-    (7 == any [maybe repeat 10 [break] then [<vote>], 3 + 4])
+    (7 == any [repeat 10 [break] then [<vote>], 3 + 4])
 ]

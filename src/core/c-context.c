@@ -218,7 +218,7 @@ static Value(*) Append_Context_Core(
             INIT_VAL_WORD_INDEX(unwrap(any_word), INDEX_ATTACHED);
         }
 
-        return cast(Value(*), Array_Single(patch));
+        return cast(Value(*), Stub_Cell(patch));
     }
 
     KeyList* keylist = CTX_KEYLIST(context);

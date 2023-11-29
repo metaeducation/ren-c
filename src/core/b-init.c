@@ -217,8 +217,8 @@ static void Startup_Lib(void)
         INODE(PatchContext, patch) = nullptr;  // signals unused
         LINK(PatchReserved, patch) = nullptr;
         MISC(PatchHitch, patch) = nullptr;
-        assert(Is_Cell_Poisoned(Array_Single(patch)));
-        TRACK(Erase_Cell(Array_Single(patch)));  // Lib(XXX) starts unreadable
+        assert(Is_Cell_Poisoned(Stub_Cell(patch)));
+        TRACK(Erase_Cell(Stub_Cell(patch)));  // Lib(XXX) starts unreadable
     }
 
   //=//// INITIALIZE EARLY BOOT USED VALUES ////////////////////////////////=//
@@ -277,7 +277,7 @@ static void Shutdown_Lib(void)
         if (INODE(PatchContext, patch) == nullptr)
             continue;  // was never initialized !!! should it not be in lib?
 
-        Erase_Cell(Array_Single(patch));  // may be PROTECTED, can't FRESHEN()
+        Erase_Cell(Stub_Cell(patch));  // may be PROTECTED, can't FRESHEN()
         Decay_Series(patch);
 
         // !!! Typically nodes aren't zeroed out when they are freed.  Since

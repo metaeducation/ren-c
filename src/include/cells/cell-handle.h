@@ -41,8 +41,8 @@
 //   the spec and has different forms for functions and data.
 //
 
-#define INIT_VAL_HANDLE_SINGULAR        Init_Cell_Node1
-#define VAL_HANDLE_SINGULAR(v)          cast(Array*, Cell_Node1(v))
+#define INIT_VAL_HANDLE_STUB            Init_Cell_Node1
+#define VAL_HANDLE_STUB(v)              cast(Stub*, Cell_Node1(v))
 
 #define VAL_HANDLE_LENGTH_U(v)          PAYLOAD(Any, (v)).second.u
 
@@ -59,14 +59,14 @@ INLINE NoQuote(const Cell*) VAL_HANDLE_CANON(NoQuote(const Cell*) v) {
     assert(Cell_Heart_Unchecked(v) == REB_HANDLE);
     if (Not_Cell_Flag_Unchecked(v, FIRST_IS_NODE))
         return v;  // changing handle instance won't be seen by copies
-    return Array_Single(VAL_HANDLE_SINGULAR(v));  // has shared node
+    return Stub_Cell(VAL_HANDLE_STUB(v));  // has shared node
 }
 
 INLINE Cell* mutable_VAL_HANDLE_CANON(Cell* v) {
     assert(Cell_Heart_Unchecked(v) == REB_HANDLE);
     if (Not_Cell_Flag_Unchecked(v, FIRST_IS_NODE))
         return v;  // changing handle instance won't be seen by copies
-    return Array_Single(VAL_HANDLE_SINGULAR(v));  // has shared node
+    return Stub_Cell(VAL_HANDLE_STUB(v));  // has shared node
 }
 
 INLINE uintptr_t VAL_HANDLE_LEN(NoQuote(const Cell*) v) {
@@ -91,7 +91,7 @@ INLINE CLEANUP_CFUNC *VAL_HANDLE_CLEANER(NoQuote(const Cell*) v) {
     assert(Cell_Heart_Unchecked(v) == REB_HANDLE);
     if (Not_Cell_Flag_Unchecked(v, FIRST_IS_NODE))
         return nullptr;
-    return VAL_HANDLE_SINGULAR(v)->misc.cleaner;
+    return VAL_HANDLE_STUB(v)->misc.cleaner;
 }
 
 INLINE void SET_HANDLE_LEN(Cell* v, uintptr_t length)
@@ -152,12 +152,12 @@ INLINE void Init_Handle_Managed_Common(
     Array* singular = Alloc_Singular(FLAG_FLAVOR(HANDLE) | NODE_FLAG_MANAGED);
     singular->misc.cleaner = cleaner;
 
-    Cell* single = Array_Single(singular);
+    Cell* single = Stub_Cell(singular);
     Reset_Unquoted_Header_Untracked(
         single,
         FLAG_HEART_BYTE(REB_HANDLE) | CELL_FLAG_FIRST_IS_NODE
     );
-    INIT_VAL_HANDLE_SINGULAR(single, singular);
+    INIT_VAL_HANDLE_STUB(single, singular);
     VAL_HANDLE_LENGTH_U(single) = length;
     // caller fills in VAL_HANDLE_CDATA_P or VAL_HANDLE_CFUNC_P
 
@@ -170,7 +170,7 @@ INLINE void Init_Handle_Managed_Common(
         out,
         FLAG_HEART_BYTE(REB_HANDLE) | CELL_FLAG_FIRST_IS_NODE
     );
-    INIT_VAL_HANDLE_SINGULAR(out, singular);
+    INIT_VAL_HANDLE_STUB(out, singular);
     VAL_HANDLE_LENGTH_U(out) = 0xDECAFBAD;  // trash to avoid compiler warning
     VAL_HANDLE_CDATA_P(out) = nullptr;  // or complains about not initializing
 }
@@ -185,8 +185,8 @@ INLINE REBVAL *Init_Handle_Cdata_Managed(
 
     // Leave the non-singular cfunc as trash; clients should not be using
 
-    Array* a = VAL_HANDLE_SINGULAR(out);
-    VAL_HANDLE_CDATA_P(Array_Single(a)) = cdata;
+    Stub* stub = VAL_HANDLE_STUB(out);
+    VAL_HANDLE_CDATA_P(Stub_Cell(stub)) = cdata;
     return cast(REBVAL*, out);
 }
 
@@ -199,7 +199,7 @@ INLINE REBVAL *Init_Handle_Cdata_Managed_Cfunc(
 
     // Leave the non-singular cfunc as trash; clients should not be using
 
-    Array* a = VAL_HANDLE_SINGULAR(out);
-    VAL_HANDLE_CFUNC_P(Array_Single(a)) = cfunc;
+    Stub* stub = VAL_HANDLE_STUB(out);
+    VAL_HANDLE_CFUNC_P(Stub_Cell(stub)) = cfunc;
     return cast(REBVAL*, out);
 }

@@ -581,10 +581,10 @@ void Run_All_Handle_Cleaners(void) {
                     continue;
                 if (Not_Cell_Flag(item, FIRST_IS_NODE))
                     continue;
-                Array* singular = VAL_HANDLE_SINGULAR(item);
-                if (Get_Series_Flag(singular, INACCESSIBLE))
+                Stub* handle_stub = VAL_HANDLE_STUB(item);
+                if (Get_Series_Flag(handle_stub, INACCESSIBLE))
                     continue;
-                Decay_Series(singular);
+                Decay_Series(handle_stub);
             }
         }
     }
@@ -663,8 +663,7 @@ static void Mark_Root_Series(void)
                     // (They should only be fresh if they are targeted by some
                     // Level's L->out...could we verify that?)
                     //
-                    Array* a = cast(Array*, s);
-                    Queue_Mark_Maybe_Fresh_Cell_Deep(Array_Single(a));  // [2]
+                    Queue_Mark_Maybe_Fresh_Cell_Deep(Stub_Cell(s));  // [2]
                 }
                 else {  // It's a rebMalloc()
                     assert(Series_Flavor(s) == FLAVOR_BINARY);
@@ -813,9 +812,9 @@ static void Mark_Level_Stack_Deep(void)
         // Note: MISC_PENDING() should either live in FEED_ARRAY(), or
         // it may be trash (e.g. if it's an apply).  GC can ignore it.
         //
-        Array* singular = FEED_SINGULAR(L->feed);
+        Stub* singular = FEED_SINGULAR(L->feed);
         do {
-            Queue_Mark_Cell_Deep(Array_Single(singular));
+            Queue_Mark_Cell_Deep(Stub_Cell(singular));
             singular = LINK(Splice, singular);
         } while (singular);
 
@@ -1222,7 +1221,7 @@ REBLEN Recycle_Core(Series* sweeplist)
         Array* patch = &PG_Lib_Patches[i];
         if (Not_Node_Marked(patch)) {  // the prior loop iterations can mark
             Add_GC_Mark(patch);
-            Queue_Mark_Maybe_Fresh_Cell_Deep(Array_Single(patch));
+            Queue_Mark_Maybe_Fresh_Cell_Deep(Stub_Cell(patch));
         }
     }
     Propagate_All_GC_Marks();

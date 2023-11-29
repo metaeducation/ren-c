@@ -106,7 +106,7 @@ Phase* Make_Typechecker(Value(const*) type) {
     //
     DECLARE_STABLE (spec);
     Array* spec_array = Alloc_Singular(NODE_FLAG_MANAGED);
-    Init_Word(Array_Single(spec_array), Canon(VALUE));
+    Init_Word(Stub_Cell(spec_array), Canon(VALUE));
     Init_Block(spec, spec_array);
 
     Context* meta;

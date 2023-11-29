@@ -100,8 +100,8 @@
 // Shared routine that handles linking the patch into the context's variant
 // list, and bumping the meta out of the misc into the misc if needed.
 //
-INLINE Array* Make_Use_Core(
-    Array* binding,  // must be a varlist or a LET patch
+INLINE Stub* Make_Use_Core(
+    Stub* binding,  // must be a varlist or a LET patch
     Specifier* next,
     enum Reb_Kind kind,
     bool reuse
@@ -125,7 +125,7 @@ INLINE Array* Make_Use_Core(
     // Over the long run, this needs to be legal, though.
     //
     if (next and IS_USE(next)) {
-        assert(BINDING(Array_Single(next)) != binding);
+        assert(BINDING(Stub_Cell(next)) != binding);
     }
 
     // A virtual bind patch array is a singular node holding an ANY-WORD!
@@ -174,7 +174,7 @@ INLINE Array* Make_Use_Core(
         // for it and just let virtual binds see the latest situation.
         //
         Init_Context_Cell(
-            Array_Single(use),
+            Stub_Cell(use),
             REB_MODULE,
             cast(Context*, binding)
         );
@@ -186,7 +186,7 @@ INLINE Array* Make_Use_Core(
         else
             symbol = INODE(LetSymbol, binding);
         Init_Any_Word_Bound_Untracked(  // arbitrary word
-            TRACK(Array_Single(use)),
+            TRACK(Stub_Cell(use)),
             kind,
             symbol,
             binding,

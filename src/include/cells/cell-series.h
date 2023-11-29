@@ -73,11 +73,10 @@ INLINE REBLEN VAL_INDEX(NoQuote(const Cell*) v) {
 }
 
 
-INLINE void INIT_SPECIFIER(Cell* v, const void *p) {
+INLINE void INIT_SPECIFIER(Cell* v, const Stub* binding) {
     //
     // can be called on non-bindable series, but p must be nullptr
 
-    const Series* binding = c_cast(Series*, p);  // can't be a cell/pairing
     mutable_BINDING(v) = binding;
 
   #if !defined(NDEBUG)
@@ -86,19 +85,16 @@ INLINE void INIT_SPECIFIER(Cell* v, const void *p) {
 
     assert(Is_Bindable(v));  // works on partially formed values
 
-    if (Is_Node_Managed(binding)) {
-        assert(
-            IS_DETAILS(binding)  // relative
-            or IS_VARLIST(binding)  // specific
-            or (
-                Any_Array(v) and (IS_LET(binding) or IS_USE(binding)) // virtual
-            ) or (
-                Is_Varargs(v) and Not_Series_Flag(binding, DYNAMIC)
-            )  // varargs from MAKE VARARGS! [...], else is a varlist
-        );
-    }
-    else
-        assert(IS_VARLIST(binding));
+    assert(Is_Node_Managed(binding));
+    assert(
+        IS_DETAILS(binding)  // relative
+        or IS_VARLIST(binding)  // specific
+        or (
+            Any_Array(v) and (IS_LET(binding) or IS_USE(binding)) // virtual
+        ) or (
+            Is_Varargs(v) and Not_Series_Flag(binding, DYNAMIC)
+        )  // varargs from MAKE VARARGS! [...], else is a varlist
+    );
   #endif
 }
 
@@ -108,7 +104,7 @@ INLINE REBVAL *Init_Series_Cell_At_Core(
     enum Reb_Kind type,
     const Series* s,  // ensured managed by calling macro
     REBLEN index,
-    Array* specifier
+    Stub* specifier
 ){
   #if !defined(NDEBUG)
     assert(Any_Series_Kind(type) or type == REB_URL);

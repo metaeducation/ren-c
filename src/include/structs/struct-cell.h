@@ -711,7 +711,7 @@ union ValuePayloadUnion { //=/////////////// ACTUAL PAYLOAD DEFINITION ////=//
     (v)->extra.Binding
 
 #define BINDING(v) \
-    x_cast(Series*, (v)->extra.Binding)  // binding const (why?), need x_cast
+    x_cast(Stub*, (v)->extra.Binding)  // binding const (why?), need x_cast
 
 
 //=//// ESCAPE-ALIASABLE CELLS ////////////////////////////////////////////=//

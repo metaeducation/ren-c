@@ -47,7 +47,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
     enum Reb_Kind heart = Cell_Heart_Unchecked(v);
 
     while (Is_Bindable_Kind(heart)) {  // for `break` convenience
-        Series* binding = BINDING(v);
+        Stub* binding = BINDING(v);
         if (not binding)
             break;
 
@@ -64,7 +64,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
         if (CTX_TYPE(cast(Context*, binding)) != REB_FRAME)
             break;
 
-        Node* keysource = BONUS(KeySource, x_cast(Array*, binding));
+        Node* keysource = BONUS(KeySource, binding);
         if (Is_Node_A_Cell(keysource))  // actually a Level
             break;
 
@@ -156,7 +156,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
             // simple handle, no GC interaction
         }
         else {
-            Array* a = VAL_HANDLE_SINGULAR(v);
+            Stub* stub = VAL_HANDLE_STUB(v);
 
             // Handle was created with Init_Handle_XXX_Managed.  It holds a
             // singular array containing exactly one handle, and the actual
@@ -164,11 +164,11 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
             // nothing the GC needs to see inside a handle.
             //
             assert(v->header.bits & CELL_FLAG_FIRST_IS_NODE);
-            assert(Is_Node_Marked(a));
+            assert(Is_Node_Marked(stub));
 
-            Cell* single = Array_Single(a);
+            Cell* single = Stub_Cell(stub);
             assert(Is_Handle(single));
-            assert(VAL_HANDLE_SINGULAR(single) == a);
+            assert(VAL_HANDLE_STUB(single) == stub);
             if (v != single) {
                 //
                 // In order to make it clearer that individual handles do not

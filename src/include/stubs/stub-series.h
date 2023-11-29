@@ -414,7 +414,7 @@ INLINE Length Series_Used(const Series* s) {
     if (Get_Series_Flag(s, DYNAMIC))
         return s->content.dynamic.used;  // length stored in header [1]
     if (Is_Series_Array(s)) {
-        if (Is_Cell_Poisoned(Stub_Cell(s)))  // empty singular array [2]
+        if (Is_Cell_Poisoned(&s->content.fixed.cell))  // empty singular [2]
             return 0;
         return 1;  // one-element singular array [2]
     }
@@ -657,13 +657,13 @@ INLINE void Set_Series_Used_Internal(Series* s, Count used) {
 
         if (Is_Series_Array(s)) {  // content used by cell, no room for length
             if (used == 0)
-                Poison_Cell(Stub_Cell(s));  // poison cell means 0 used
+                Poison_Cell(&s->content.fixed.cell);  // poison means 0 used
             else {
                 assert(used == 1);  // any non-poison will mean length 1
-                if (not Is_Cell_Poisoned(Stub_Cell(s))) {
+                if (not Is_Cell_Poisoned(&s->content.fixed.cell)) {
                     // it was already length 1, leave the cell alone
                 } else
-                    Erase_Cell(Stub_Cell(s));
+                    Erase_Cell(&s->content.fixed.cell);
             }
         }
         else

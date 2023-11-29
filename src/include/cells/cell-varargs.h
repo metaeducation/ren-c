@@ -89,10 +89,10 @@ INLINE REBVAL *Init_Varargs_Untyped_Enfix(
         feed = EMPTY_ARRAY;
     else {
         Array* singular = Alloc_Singular(NODE_FLAG_MANAGED);
-        Copy_Cell(Array_Single(singular), unwrap(left));
+        Copy_Cell(Stub_Cell(singular), unwrap(left));
 
         feed = Alloc_Singular(FLAG_FLAVOR(FEED) | NODE_FLAG_MANAGED);
-        Init_Block(Array_Single(feed), singular);  // index 0
+        Init_Block(Stub_Cell(feed), singular);  // index 0
     }
 
     Reset_Unquoted_Header_Untracked(out, CELL_MASK_VARARGS);
@@ -120,7 +120,7 @@ INLINE bool Is_Block_Style_Varargs(
     // array with one BLOCK!, that is the actual array and index to advance.
     //
     Array* array1 = binding;
-    *shared_out = cast(REBVAL*, Array_Single(array1));
+    *shared_out = cast(REBVAL*, Stub_Cell(array1));
     assert(
         Is_Cell_Poisoned(*shared_out)
         or (Is_Specific(cast(Cell*, *shared_out)) and Is_Block(*shared_out))

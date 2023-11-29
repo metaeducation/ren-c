@@ -612,9 +612,6 @@ union StubContentUnion {
     } fixed;
 };
 
-#define Stub_Cell(s) \
-    x_cast(Cell*, &(s)->content.fixed.cell)  // fast Array_Single()
-
 
 union StubLinkUnion {
     //

@@ -307,7 +307,7 @@ INLINE bool Try_Add_Binder_Index(
         NODE_FLAG_MANAGED | SERIES_FLAG_BLACK | FLAG_FLAVOR(HITCH)
     );
     Clear_Node_Managed_Bit(new_hitch);
-    Init_Integer(Array_Single(new_hitch), index);
+    Init_Integer(Stub_Cell(new_hitch), index);
     node_MISC(Hitch, new_hitch) = old_hitch;
 
     MISC(Hitch, s) = new_hitch;
@@ -337,13 +337,13 @@ INLINE REBINT Get_Binder_Index_Else_0( // 0 if not present
     const Symbol* s
 ){
     UNUSED(binder);
-    Series* hitch = MISC(Hitch, s);
+    Stub* hitch = MISC(Hitch, s);
 
     // Only unmanaged hitches are used for binding.
     //
     if (hitch == s or Not_Series_Flag(hitch, BLACK))
         return 0;
-    return VAL_INT32(Array_Single(cast(Array*, hitch)));
+    return VAL_INT32(Stub_Cell(hitch));
 }
 
 
@@ -358,7 +358,7 @@ INLINE REBINT Remove_Binder_Index_Else_0( // return old value if there
     Stub* hitch = MISC(Hitch, s);
 
     REBINT index = VAL_INT32(Stub_Cell(hitch));
-    MISC(Hitch, s) = cast(Array*, node_MISC(Hitch, hitch));
+    MISC(Hitch, s) = cast(Stub*, node_MISC(Hitch, hitch));
     Set_Node_Managed_Bit(hitch);  // we didn't manuals track it
     GC_Kill_Series(hitch);
 
@@ -472,9 +472,9 @@ INLINE REBLEN VAL_WORD_INDEX(const Cell* v) {
     return cast(REBLEN, i);
 }
 
-INLINE Array* VAL_WORD_BINDING(const Cell* v) {
+INLINE Stub* VAL_WORD_BINDING(const Cell* v) {
     assert(Any_Wordlike(v));
-    return cast(Array*, BINDING(v));  // could be nullptr / UNBOUND
+    return BINDING(v);  // could be nullptr / UNBOUND
 }
 
 INLINE void INIT_VAL_WORD_BINDING(Cell* v, const Series* binding) {
@@ -530,7 +530,7 @@ INLINE void Unbind_Any_Word(Cell* v) {
 
 INLINE Context* VAL_WORD_CONTEXT(const REBVAL *v) {
     assert(IS_WORD_BOUND(v));
-    Array* binding = VAL_WORD_BINDING(v);
+    Stub* binding = VAL_WORD_BINDING(v);
     if (IS_PATCH(binding)) {
         Context* patch_context = INODE(PatchContext, binding);
         binding = CTX_VARLIST(patch_context);
@@ -751,7 +751,7 @@ INLINE Specifier* Derive_Specifier_Core(
     Specifier* specifier,  // merge this specifier...
     NoQuote(const Cell*) any_array  // ...onto the one in this array
 ){
-    Array* old = cast(Array*, BINDING(any_array));
+    Stub* old = BINDING(any_array);
 
     // If any specifiers in a chain are inaccessible, the whole thing is.
     //
@@ -902,7 +902,7 @@ INLINE Specifier* Derive_Specifier_Core(
         NoQuote(const Cell*) any_array
     ){
         Specifier* derived = Derive_Specifier_Core(specifier, any_array);
-        Array* old = cast(Array*, BINDING(any_array));
+        Stub* old = BINDING(any_array);
         if (old == UNSPECIFIED or IS_VARLIST(old)) {
             // no special invariant to check, anything goes for derived
         }

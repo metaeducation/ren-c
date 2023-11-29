@@ -668,10 +668,10 @@ void Drop_Level_Core(Level* L) {
         //
         Node* n = L->alloc_value_list;
         while (n != L) {
-            Array* a = cast(Array*, n);
-            n = LINK(ApiNext, a);
-            FRESHEN(Array_Single(a));
-            GC_Kill_Series(a);
+            Stub* s = cast(Stub*, n);
+            n = LINK(ApiNext, s);
+            FRESHEN(Stub_Cell(s));
+            GC_Kill_Series(s);
         }
         Trash_Pointer_If_Debug(L->alloc_value_list);
 
@@ -684,9 +684,9 @@ void Drop_Level_Core(Level* L) {
       #if !defined(NDEBUG)
         Node* n = L->alloc_value_list;
         while (n != L) {
-            Array* a = cast(Array*, n);
+            Stub* stub = cast(Stub*, n);
             printf("API handle was allocated but not freed, panic'ing leak\n");
-            panic (a);
+            panic (stub);
         }
         Trash_Pointer_If_Debug(L->alloc_value_list);
       #endif

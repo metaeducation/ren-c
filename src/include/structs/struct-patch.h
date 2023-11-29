@@ -53,10 +53,10 @@
 #define INODE_PatchContext_TYPE          Context*
 #define HAS_INODE_PatchContext           FLAVOR_PATCH
 
-#define LINK_PatchReserved_TYPE           Array*
+#define LINK_PatchReserved_TYPE           void*
 #define HAS_LINK_PatchReserved            FLAVOR_PATCH
 
-#define MISC_PatchHitch_TYPE              Array*  // circular list [1]
+#define MISC_PatchHitch_TYPE              Stub*  // circular list [1]
 #define HAS_MISC_PatchHitch               FLAVOR_PATCH
 
 
@@ -68,10 +68,10 @@
 #define INODE_LetSymbol_TYPE           const Symbol*
 #define HAS_INODE_LetSymbol            FLAVOR_LET
 
-#define LINK_NextLet_TYPE              Array*
+#define LINK_NextLet_TYPE              Stub*
 #define HAS_LINK_NextLet               FLAVOR_LET
 
-#define MISC_LetReserved_TYPE          Array*
+#define MISC_LetReserved_TYPE          void*
 #define HAS_MISC_LetReserved           FLAVOR_LET
 
 
@@ -84,17 +84,17 @@
 // all that often in practice.  It was removed for now.
 //
 
-#define INODE_UseReserved_TYPE          Array*  // no use yet
+#define INODE_UseReserved_TYPE          Stub*  // no use yet
 #define HAS_INODE_UseReserved           FLAVOR_USE
 
-#define LINK_NextUse_TYPE               Array*
+#define LINK_NextUse_TYPE               Stub*
 #define HAS_LINK_NextUse                FLAVOR_USE
 
-#define MISC_Variant_TYPE               Array*  // see note
+#define MISC_Variant_TYPE               void*  // see note
 #define HAS_MISC_Variant                FLAVOR_USE
 
 
 // Common extractor for the next field, used on either LET or USE
 //
 #define NextVirtual(let_or_use) \
-    cast(Array*, node_LINK(NextLet, let_or_use))
+    cast(Stub*, node_LINK(NextLet, let_or_use))

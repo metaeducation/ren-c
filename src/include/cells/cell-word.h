@@ -92,7 +92,7 @@ INLINE REBVAL *Init_Any_Word_Bound_Untracked(
     Cell* out,
     enum Reb_Kind type,
     const Symbol* symbol,
-    Array* binding,  // spelling determined by linked-to thing
+    Stub* binding,  // spelling determined by linked-to thing
     REBLEN index  // must be 1 if LET patch (INDEX_ATTACHED)
 ){
     assert(index != 0);

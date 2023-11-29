@@ -66,25 +66,25 @@ INLINE bool Is_Api_Value(const Cell* v) {
     return did (v->header.bits & NODE_FLAG_ROOT);
 }
 
-INLINE void Link_Api_Handle_To_Level(Array* a, Level* L)
+INLINE void Link_Api_Handle_To_Level(Stub* stub, Level* L)
 {
     // The head of the list isn't null, but points at the level, so that
     // API freeing operations can update the head of the list in the level
     // when given only the node pointer.
 
-    MISC(ApiPrev, a) = L;  // back pointer for doubly linked list
+    MISC(ApiPrev, stub) = L;  // back pointer for doubly linked list
 
     bool empty_list = L->alloc_value_list == L;
 
     if (not empty_list) {  // head of list exists, take its spot at the head
-        Array* head = cast(Array*, L->alloc_value_list);
+        Stub* head = cast(Stub*, L->alloc_value_list);
         if (Is_Api_Value(Stub_Cell(head)))
             assert(not Is_Nulled(Stub_Cell(head)));
-        MISC(ApiPrev, head) = a;  // link back
+        MISC(ApiPrev, head) = stub;  // link back
     }
 
-    LINK(ApiNext, a) = L->alloc_value_list;  // forward pointer
-    L->alloc_value_list = a;
+    LINK(ApiNext, stub) = L->alloc_value_list;  // forward pointer
+    L->alloc_value_list = stub;
 }
 
 INLINE void Unlink_Api_Handle_From_Level(Stub* stub)
@@ -141,22 +141,21 @@ INLINE void Unlink_Api_Handle_From_Level(Stub* stub)
 //
 INLINE REBVAL *Alloc_Value_Core(Flags flags)
 {
-    Array* a = Make_Array_Core(
-        1,
+    Stub* stub = Alloc_Singular(
         FLAG_FLAVOR(API)
             |  NODE_FLAG_ROOT | NODE_FLAG_MANAGED | SERIES_FLAG_FIXED_SIZE
     );
 
-    REBVAL *v = SPECIFIC(Array_Single(a));
-    v->header.bits = flags;  // can't be trash [1]
+    Cell* cell = Stub_Cell(stub);
+    cell->header.bits = flags;  // can't be trash [1]
 
-    Link_Api_Handle_To_Level(a, TOP_LEVEL);  // [2]
+    Link_Api_Handle_To_Level(stub, TOP_LEVEL);  // [2]
 
-    return v;
+    return cast(REBVAL*, cell);
 }
 
 #define Alloc_Value() \
-    Alloc_Value_Core(CELL_MASK_0_ROOT)  // don't use as eval target [3]
+    TRACK(Alloc_Value_Core(CELL_MASK_0_ROOT))  // don't use as eval target [3]
 
 INLINE void Free_Value(REBVAL *v)
 {

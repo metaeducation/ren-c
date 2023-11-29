@@ -1204,14 +1204,14 @@ void Push_Action(
     INIT_BONUS_KEYSOURCE(x_cast(Array*, s), L);  // maps varlist back to L
     MISC(VarlistAdjunct, s) = nullptr;
     LINK(Patches, s) = nullptr;
-    L->varlist = x_cast(Array*, s);
 
     if (not Did_Series_Data_Alloc(s, num_args + 1 + 1)) {  // +rootvar, +end
         Set_Series_Flag(s, INACCESSIBLE);
         GC_Kill_Series(s);  // ^-- needs non-null data unless INACCESSIBLE
-        L->varlist = nullptr;
         fail (Error_No_Memory(sizeof(Cell) * (num_args + 1 + 1)));
     }
+
+    L->varlist = x_cast(Array*, s);
 
     L->rootvar = cast(REBVAL*, s->content.dynamic.data);
     USED(Erase_Cell(L->rootvar));  // want the tracking info, overwriting header

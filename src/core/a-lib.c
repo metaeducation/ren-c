@@ -894,7 +894,7 @@ void RL_rebModifyHandleCleaner(REBVAL *v, CLEANUP_CFUNC *cleaner) {
 
     assert(Get_Cell_Flag(v, FIRST_IS_NODE));  // api only sees managed handles
 
-    VAL_HANDLE_SINGULAR(v)->misc.cleaner = cleaner;
+    VAL_HANDLE_STUB(v)->misc.cleaner = cleaner;
 }
 
 
@@ -1667,8 +1667,8 @@ CLEANUP_CFUNC *RL_rebExtractHandleCleaner(
     if (VAL_TYPE(v) != REB_HANDLE)
         fail ("rebUnboxHandleCleaner() called on non-HANDLE!");
 
-    Array* singular = VAL_HANDLE_SINGULAR(v);
-    return singular->misc.cleaner;
+    Stub* stub = VAL_HANDLE_STUB(v);
+    return stub->misc.cleaner;
 }
 
 
@@ -2212,12 +2212,12 @@ const REBINS *RL_rebQUOTING(const void *p)
     if (p == nullptr)
         return FEED_NULL_SUBSTITUTE_CELL;  // precooked meta null
 
-    const Array* a;
+    const Stub* stub;
 
     switch (Detect_Rebol_Pointer(p)) {
       case DETECTED_AS_SERIES: {
-        a = c_cast(Array*, p);
-        if (Not_Subclass_Flag(API, a, RELEASE))
+        stub = c_cast(Stub*, p);
+        if (Not_Subclass_Flag(API, stub, RELEASE))
             fail ("Can't quote instructions (besides rebR())");
         break; }
 
@@ -2229,17 +2229,17 @@ const REBINS *RL_rebQUOTING(const void *p)
         }
 
         Value(*) v = Copy_Cell(Alloc_Value(), at);
-        a = Singular_From_Cell(v);
-        Set_Subclass_Flag(API, a, RELEASE);
+        stub = Singular_From_Cell(v);
+        Set_Subclass_Flag(API, stub, RELEASE);
         break; }
 
       default:
         fail ("Unknown pointer");
     }
 
-    Value(*) v = x_cast(Value(*), Array_Single(a));
+    Value(*) v = x_cast(Value(*), Stub_Cell(stub));
     Meta_Quotify(v);
-    return a;
+    return stub;
 }
 
 
@@ -2273,26 +2273,26 @@ const REBINS *RL_rebUNQUOTING(const void *p)
     if (p == nullptr)
         fail ("Cannot unquote NULL");
 
-    Array* a;
+    Stub* stub;
 
     switch (Detect_Rebol_Pointer(p)) {
       case DETECTED_AS_SERIES: {
-        a = m_cast(Array*, c_cast(Array*, p));
-        if (Not_Subclass_Flag(API, a, RELEASE))
+        stub = m_cast(Stub*, c_cast(Stub*, p));
+        if (Not_Subclass_Flag(API, stub, RELEASE))
             fail ("Can't unquote instructions (besides rebR())");
         break; }
 
       case DETECTED_AS_CELL: {
         REBVAL *v = Copy_Cell(Alloc_Value(), c_cast(REBVAL*, p));
-        a = Singular_From_Cell(v);
-        Set_Subclass_Flag(API, a, RELEASE);
+        stub = Singular_From_Cell(v);
+        Set_Subclass_Flag(API, stub, RELEASE);
         break; }
 
       default:
         fail ("Unknown pointer");
     }
 
-    Cell* v = Array_Single(a);
+    Cell* v = Stub_Cell(stub);
     if (
         QUOTE_BYTE(v) == UNQUOTED_1
         or QUOTE_BYTE(v) == QUASI_2
@@ -2302,7 +2302,7 @@ const REBINS *RL_rebUNQUOTING(const void *p)
     }
 
     Unquotify(v, 1);
-    return a;
+    return stub;
 }
 
 
@@ -2350,7 +2350,7 @@ const void *RL_rebINLINE(const REBVAL *v)
     if (not (Is_Block(v) or Is_Quoted(v) or Is_Blank(v)))
         fail ("rebINLINE() requires argument to be a BLOCK!/QUOTED!/BLANK!");
 
-    Copy_Cell(Array_Single(a), v);
+    Copy_Cell(Stub_Cell(a), v);
 
     return cast(REBINS*, a);
 }
@@ -2371,12 +2371,12 @@ const REBINS *RL_rebRUN(const void *p)
     if (p == nullptr)
         fail ("rebRUN() received nullptr");
 
-    Array* a;
+    Stub* stub;
 
     switch (Detect_Rebol_Pointer(p)) {
       case DETECTED_AS_SERIES: {
-        a = m_cast(Array*, c_cast(Array*, p));
-        if (Not_Subclass_Flag(API, a, RELEASE))
+        stub = m_cast(Stub*, c_cast(Stub*, p));
+        if (Not_Subclass_Flag(API, stub, RELEASE))
             fail ("Can't quote instructions (besides rebR())");
         break; }
 
@@ -2386,21 +2386,21 @@ const REBINS *RL_rebRUN(const void *p)
             fail ("rebRUN() received null cell");
 
         Value(*) v = Copy_Cell(Alloc_Value(), at);
-        a = Singular_From_Cell(v);
-        Set_Subclass_Flag(API, a, RELEASE);
+        stub = Singular_From_Cell(v);
+        Set_Subclass_Flag(API, stub, RELEASE);
         break; }
 
       default:
         fail ("Unknown pointer");
     }
 
-    Value(*) v = SPECIFIC(Array_Single(a));
+    Value(*) v = SPECIFIC(Stub_Cell(stub));
     if (Is_Action(v))
         QUOTE_BYTE(v) = UNQUOTED_1;
     else if (not Is_Frame(v))
         fail ("rebRUN() only accepts FRAME! or actions (aka FRAME! isotopes)");
 
-    return a;
+    return stub;
 }
 
 

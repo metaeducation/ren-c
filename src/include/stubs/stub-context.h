@@ -202,7 +202,7 @@ INLINE void INIT_VAL_FRAME_ROOTVAR_Core(
     Context* binding  // allowed to be UNBOUND
 ){
     assert(
-        (Get_Series_Flag(varlist, INACCESSIBLE) and out == Array_Single(varlist))
+        (Get_Series_Flag(varlist, INACCESSIBLE) and out == Stub_Cell(varlist))
         or out == Array_Head(varlist)
     );
     assert(phase != nullptr);
@@ -303,7 +303,7 @@ INLINE Value(const*) Try_Lib_Var(SymId id) {
     if (INODE(PatchContext, &PG_Lib_Patches[id]) == nullptr)
         return nullptr;
 
-    return cast(Value(*), Array_Single(&PG_Lib_Patches[id]));
+    return cast(Value(*), Stub_Cell(&PG_Lib_Patches[id]));
 }
 
 #define Lib(name) \

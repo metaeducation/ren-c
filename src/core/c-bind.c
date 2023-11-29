@@ -236,18 +236,18 @@ REBLEN Try_Bind_Word(const Cell* context, REBVAL *word)
 //    So we can simply point to the existing specifier...whether it is a let,
 //    a use, a frame context, or nullptr.
 //
-Array* Make_Let_Patch(
+Stub* Make_Let_Patch(
     const Symbol* symbol,
     Specifier* specifier
 ){
-    Array* let = Alloc_Singular(  // payload is one variable
+    Stub* let = Alloc_Singular(  // payload is one variable
         FLAG_FLAVOR(LET)
             | NODE_FLAG_MANAGED
             | SERIES_FLAG_LINK_NODE_NEEDS_MARK  // link to next virtual bind
             | SERIES_FLAG_INFO_NODE_NEEDS_MARK  // inode of symbol
     );
 
-    Finalize_None(x_cast(Value(*), Array_Single(let)));  // start as unset
+    Finalize_None(x_cast(Value(*), Stub_Cell(let)));  // start as unset
 
     if (specifier) {
         assert(IS_LET(specifier) or IS_USE(specifier) or IS_VARLIST(specifier));
@@ -275,9 +275,9 @@ Array* Make_Let_Patch(
 // whether it's worth searching their patchlist or not...as newly created
 // patches can't appear in their prior create list.
 //
-Array* Merge_Patches_May_Reuse(
-    Array* parent,
-    Array* child
+Stub* Merge_Patches_May_Reuse(
+    Stub* parent,
+    Stub* child
 ){
     assert(IS_USE(parent) or IS_LET(parent));
     assert(IS_USE(child) or IS_LET(child));
@@ -298,7 +298,7 @@ Array* Merge_Patches_May_Reuse(
     // If we get to the end of the merge chain and don't find the child, then
     // we're going to need a patch that incorporates it.
     //
-    Array* next;
+    Stub* next;
     bool was_next_reused;
     if (NextVirtual(parent) == nullptr or IS_VARLIST(NextVirtual(parent))) {
         next = child;
@@ -325,7 +325,7 @@ Array* Merge_Patches_May_Reuse(
     // So we have to make a new patch that points to the LET, or promote it
     // (using node-identity magic) into an object.  We point at the LET.
     //
-    Array* binding;
+    Stub* binding;
     enum Reb_Kind kind;
     if (IS_LET(parent)) {
         binding = parent;
@@ -342,8 +342,8 @@ Array* Merge_Patches_May_Reuse(
         kind = REB_WORD;
     }
     else {
-        binding = cast(Array*, BINDING(Array_Single(parent)));
-        kind = VAL_TYPE(Array_Single(parent));
+        binding = BINDING(Stub_Cell(parent));
+        kind = VAL_TYPE(Stub_Cell(parent));
     }
 
     return Make_Use_Core(
@@ -408,8 +408,8 @@ Option(Series*) Get_Word_Container(
             goto skip_miss_patch;
         }
 
-        if (Is_Module(Array_Single(specifier))) {
-            Context* mod = VAL_CONTEXT(Array_Single(specifier));
+        if (Is_Module(Stub_Cell(specifier))) {
+            Context* mod = VAL_CONTEXT(Stub_Cell(specifier));
             REBVAL *var = MOD_VAR(mod, symbol, true);
             if (var) {
                 *index_out = INDEX_PATCHED;
@@ -418,8 +418,8 @@ Option(Series*) Get_Word_Container(
             goto skip_miss_patch;
         }
 
-        Array* overbind;  // avoid goto-past-initialization warning
-        overbind = cast(Array*, BINDING(Array_Single(specifier)));
+        Stub* overbind;  // avoid goto-past-initialization warning
+        overbind = BINDING(Stub_Cell(specifier));
         if (not IS_VARLIST(overbind)) {  // a patch-formed LET overload
             if (INODE(LetSymbol, overbind) == symbol) {
                 *index_out = 1;
@@ -429,7 +429,7 @@ Option(Series*) Get_Word_Container(
         }
 
         if (
-            Is_Set_Word(Array_Single(specifier))
+            Is_Set_Word(Stub_Cell(specifier))
             and REB_SET_WORD != Cell_Heart(any_word)
         ){
             goto skip_miss_patch;
@@ -444,7 +444,7 @@ Option(Series*) Get_Word_Container(
         // not really work.  A "rematch" with virtual binding is in the works,
         // where all these ideas will be reviewed.
         //
-        /* REBLEN cached_len = VAL_WORD_INDEX(Array_Single(specifier)); */
+        /* REBLEN cached_len = VAL_WORD_INDEX(Stub_Cell(specifier)); */
 
         REBLEN index = 1;
         const Key* key_tail;
@@ -991,7 +991,7 @@ DECLARE_NATIVE(add_let_binding) {
 
     Specifier* let = Make_Let_Patch(Cell_Word_Symbol(ARG(word)), L_specifier);
 
-    Move_Cell(Array_Single(let), ARG(value));
+    Move_Cell(Stub_Cell(let), ARG(value));
 
     mutable_BINDING(FEED_SINGLE(L->feed)) = let;
 

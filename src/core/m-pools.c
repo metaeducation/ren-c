@@ -1137,7 +1137,7 @@ void Decay_Series(Series* s)
         break;
 
       case FLAVOR_HANDLE: {
-        Cell* v = Array_Single(x_cast(Array*, s));
+        Cell* v = Stub_Cell(s);
         assert(Cell_Heart_Unchecked(v) == REB_HANDLE);
 
         // Some handles use the managed form just because they want changes to

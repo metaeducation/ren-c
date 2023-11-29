@@ -59,10 +59,10 @@ void Splice_Block_Into_Feed(Feed* feed, const REBVAL *splice) {
     // be used once the splice runs out.
     //
     if (FEED_IS_VARIADIC(feed) or Not_End(feed->p)) {
-        Array* saved = Alloc_Singular(
+        Stub* saved = Alloc_Singular(
             FLAG_FLAVOR(FEED) | NODE_FLAG_MANAGED  // no tracking
         );
-        Mem_Copy(saved, FEED_SINGULAR(feed), sizeof(Array));
+        Mem_Copy(saved, FEED_SINGULAR(feed), sizeof(Stub));
         assert(Not_Node_Managed(saved));
 
         // old feed data resumes after the splice
@@ -206,7 +206,7 @@ DECLARE_NATIVE(inline)
         // turn it into a block.
         //
         Array* a = Alloc_Singular(SERIES_FLAGS_NONE);
-        Unquotify(Move_Cell(Array_Single(a), splice), 1);
+        Unquotify(Move_Cell(Stub_Cell(a), splice), 1);
         Init_Block(splice, a);
         Splice_Block_Into_Feed(level_->feed, ARG(splice));
     }

@@ -94,15 +94,17 @@ INLINE bool Has_File_Line(const Array* a) {
 #define Array_Tail(a)           Series_Tail(Cell, (a))
 #define Array_Last(a)           Series_Last(Cell, (a))
 
-INLINE Cell* Array_Single(const_if_c Array* a) {
-    assert(Not_Series_Flag(a, DYNAMIC));
-    return Stub_Cell(a);
+INLINE Cell* Stub_Cell(const_if_c Series* s) {
+    assert(Not_Series_Flag(s, DYNAMIC));
+    assert(Is_Series_Array(s));
+    return m_cast(Cell*, &s->content.fixed.cell);
 }
 
 #if CPLUSPLUS_11
-    INLINE const Cell* Array_Single(const Array* a) {
-        assert(Not_Series_Flag(a, DYNAMIC));
-        return Stub_Cell(a);
+    INLINE const Cell* Stub_Cell(const Stub* s) {
+        assert(Not_Series_Flag(s, DYNAMIC));
+        assert(Is_Series_Array(s));
+        return &s->content.fixed.cell;
     }
 #endif
 
@@ -271,14 +273,19 @@ INLINE Array* Make_Array_For_Copy(
 // A singular array is specifically optimized to hold *one* value in the
 // series Stub directly, and stay fixed at that size.
 //
-// Note Array_Single() must be overwritten by the caller...it contains an end
-// marker but the array length is 1, so that will assert if you don't.
+// Note Stub_Cell() must be overwritten by the caller...it contains an erased
+// cell but the array length is 1, so that will assert if you don't.
 //
 // For `flags`, be sure to consider if you need ARRAY_FLAG_HAS_FILE_LINE.
 //
 INLINE Array* Alloc_Singular(Flags flags) {
     assert(not (flags & SERIES_FLAG_DYNAMIC));
-    Array* a = Make_Array_Core(1, flags | SERIES_FLAG_FIXED_SIZE);
+    Array* a = x_cast(Array*, Make_Series_Into(
+        Alloc_Stub(),
+        1,
+        flags | SERIES_FLAG_FIXED_SIZE
+    ));
+    assert(Is_Series_Array(a));  // flavor should have been an array flavor
     Erase_Cell(Stub_Cell(a));  // poison means length 0, erased length 1
     return a;
 }

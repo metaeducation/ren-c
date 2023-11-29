@@ -173,7 +173,7 @@ void Add_Definitional_Break_Continue(
 
     Force_Level_Varlist_Managed(loop_level);
 
-    Array* let_continue = Make_Let_Patch(Canon(CONTINUE), body_specifier);
+    Stub* let_continue = Make_Let_Patch(Canon(CONTINUE), body_specifier);
     Init_Action(
         Stub_Cell(let_continue),
         ACT_IDENTITY(VAL_ACTION(Lib(DEFINITIONAL_CONTINUE))),
@@ -181,7 +181,7 @@ void Add_Definitional_Break_Continue(
         cast(Context*, loop_level->varlist)  // what to continue
     );
 
-    Array* let_break = Make_Let_Patch(Canon(BREAK), let_continue);
+    Stub* let_break = Make_Let_Patch(Canon(BREAK), let_continue);
     Init_Action(
         Stub_Cell(let_break),
         ACT_IDENTITY(VAL_ACTION(Lib(DEFINITIONAL_BREAK))),
@@ -687,7 +687,7 @@ void Add_Definitional_Stop(
 
     Force_Level_Varlist_Managed(loop_level);
 
-    Array* let_stop = Make_Let_Patch(Canon(STOP), body_specifier);
+    Stub* let_stop = Make_Let_Patch(Canon(STOP), body_specifier);
     Init_Action(
         Stub_Cell(let_stop),
         ACT_IDENTITY(VAL_ACTION(Lib(DEFINITIONAL_STOP))),

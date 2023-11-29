@@ -75,7 +75,7 @@ void Startup_Typesets(void)
         //
         Array* a = Alloc_Singular(NODE_FLAG_MANAGED);
         Init_Any_Word_Bound(
-            Array_Single(a),
+            Stub_Cell(a),
             REB_WORD,
             Canon_Symbol(cast(SymId, id)),
             Lib_Context,

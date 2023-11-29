@@ -61,7 +61,7 @@ DECLARE_NATIVE(only_p)  // https://forum.rebol.info/t/1182/11
     if (Is_Nulled(v))
         Set_Series_Len(a, 0);  // singulars initialize at length 1
     else
-        Copy_Cell(Array_Single(a), ARG(value));
+        Copy_Cell(Stub_Cell(a), ARG(value));
     return Init_Block(OUT, a);
 }
 
@@ -355,7 +355,7 @@ Bounce TO_Array(Level* level_, enum Reb_Kind kind, const REBVAL *arg) {
         // !!! Review handling of making a 1-element PATH!, e.g. TO PATH! 10
         //
         Array* single = Alloc_Singular(NODE_FLAG_MANAGED);
-        Copy_Cell(Array_Single(single), arg);
+        Copy_Cell(Stub_Cell(single), arg);
         return Init_Array_Cell(OUT, kind, single);
     }
 }

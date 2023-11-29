@@ -129,7 +129,7 @@ INLINE REBVAL *Init_Array_Cell_At_Core(
     enum Reb_Kind kind,
     const_if_c Array* array,
     REBLEN index,
-    Array* binding
+    Stub* binding
 ){
     return Init_Series_Cell_At_Core(
         out,
@@ -146,7 +146,7 @@ INLINE REBVAL *Init_Array_Cell_At_Core(
         enum Reb_Kind kind,
         const Array* array,  // all const arrays should be already managed
         REBLEN index,
-        Array* binding
+        Stub* binding
     ){
         return Init_Series_Cell_At_Core(out, kind, array, index, binding);
     }

@@ -71,10 +71,10 @@
     (not Is_End(p))
 
 
-#define FEED_SINGULAR(feed)     x_cast(Array*, &(feed)->singular)
+#define FEED_SINGULAR(feed)     (&(feed)->singular)
 #define FEED_SINGLE(feed)       Stub_Cell(&(feed)->singular)
 
-#define LINK_Splice_TYPE        Array*
+#define LINK_Splice_TYPE        Stub*
 #define HAS_LINK_Splice         FLAVOR_FEED
 
 #define MISC_Pending_TYPE       const Cell*
@@ -224,7 +224,7 @@ INLINE Option(Value(const*)) Try_Reify_Variadic_Feed_Series(
     switch (Series_Flavor(s)) {
       case FLAVOR_INSTRUCTION_SPLICE: {
         Array* inst1 = x_cast(Array*, s);
-        REBVAL *single = SPECIFIC(Array_Single(inst1));
+        REBVAL *single = SPECIFIC(Stub_Cell(inst1));
         if (Is_Blank(single)) {
             GC_Kill_Series(inst1);
             return nullptr;
@@ -263,7 +263,7 @@ INLINE Option(Value(const*)) Try_Reify_Variadic_Feed_Series(
         // vs. putting it in fetched/MARKED_TEMPORARY...but that makes
         // this more convoluted.  Review.
 
-        REBVAL *single = SPECIFIC(Array_Single(inst1));
+        REBVAL *single = SPECIFIC(Stub_Cell(inst1));
         feed->p = single;
         feed->p = Copy_Reified_Variadic_Feed_Cell(&feed->fetched, feed);
         rebRelease(single);  // *is* the instruction
@@ -473,11 +473,11 @@ INLINE void Fetch_Next_In_Feed(Feed* feed) {
                     Clear_Feed_Flag(feed, TOOK_HOLD);
                 }
 
-                Array* splice = FEED_SPLICE(feed);
+                Stub* splice = FEED_SPLICE(feed);
                 Mem_Copy(
                     FEED_SINGULAR(feed),
                     FEED_SPLICE(feed),
-                    sizeof(Array)
+                    sizeof(Stub)
                 );
                 GC_Kill_Series(splice);  // Array* would hold reference
                 goto retry_splice;
