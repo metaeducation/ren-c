@@ -463,7 +463,7 @@ REBTYPE(Integer)
 
         if (REF(seed)) {
             Set_Random(num);
-            return nullptr;
+            return NONE;
         }
         if (num == 0)
             fail (ARG(value));

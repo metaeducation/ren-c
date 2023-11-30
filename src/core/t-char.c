@@ -476,7 +476,7 @@ REBTYPE(Issue)
 
         if (REF(seed)) {
             Set_Random(chr);
-            return nullptr;
+            return NONE;
         }
         if (chr == 0)
             break;
