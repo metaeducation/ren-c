@@ -421,6 +421,11 @@ INLINE Length Series_Used(const Series* s) {
     return USED_BYTE(s);  // small series length < sizeof(StubContent) [3]
 }
 
+INLINE Length Series_Dynamic_Used(const Series* s) {
+    assert(Get_Series_Flag(s, DYNAMIC));
+    return s->content.dynamic.used;
+}
+
 #define Is_Series_Full(s) \
     (Series_Used(s) + 1 >= Series_Rest(s))
 

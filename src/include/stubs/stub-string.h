@@ -199,27 +199,31 @@ INLINE bool Is_String_Definitely_ASCII(const String* str) {
 #define String_Size(s) \
     Series_Used(ensure(const String*, s))  // encoded byte size, not codepoints
 
+#define String_Dynamic_Size(s) \
+    Series_Dynamic_Used(ensure(const String*, s))
+
 INLINE Length String_Len(const String* s) {
+    if (not Is_String_Symbol(s)) {
+      #if DEBUG_UTF8_EVERYWHERE
+        if (s->misc.length > Series_Used(s))  // includes 0xDECAFBAD
+            panic(s);
+        if (Is_Definitely_Ascii(s))
+            assert(s->misc.length == String_Size(s));
+      #endif
+        return s->misc.length;  // length cached in misc for non-ANY-WORD!
+    }
+
     if (Is_Definitely_Ascii(s))
         return String_Size(s);
 
-    if (Is_String_Symbol(s)) {  // no length cache; hope symbol is short!
-        REBLEN len = 0;
-        Utf8(const*) ep = String_Tail(s);
-        Utf8(const*) cp = String_Head(s);
-        while (cp != ep) {
-            cp = Skip_Codepoint(cp);
-            ++len;
-        }
-        return len;
+    Length len = 0;  // no length cache; hope symbol is short!
+    Utf8(const*) ep = String_Tail(s);
+    Utf8(const*) cp = String_Head(s);
+    while (cp != ep) {
+        cp = Skip_Codepoint(cp);
+        ++len;
     }
-
-  #if DEBUG_UTF8_EVERYWHERE
-    if (s->misc.length > Series_Used(s))  // includes 0xDECAFBAD
-        panic(s);
-  #endif
-
-    return s->misc.length;  // length cached in misc for non-ANY-WORD!
+    return len;
 }
 
 INLINE REBLEN String_Index_At(

@@ -42,12 +42,12 @@ void Snap_State(struct Reb_State *s)
 {
     s->stack_base = TOP_INDEX;
 
-    s->guarded_len = Series_Used(g_gc.guarded);
+    s->guarded_len = Series_Dynamic_Used(g_gc.guarded);
 
-    s->manuals_len = Series_Used(g_gc.manuals);
+    s->manuals_len = Series_Dynamic_Used(g_gc.manuals);
     s->mold_buf_len = String_Len(g_mold.buffer);
-    s->mold_buf_size = String_Size(g_mold.buffer);
-    s->mold_loop_tail = Series_Used(g_mold.stack);
+    s->mold_buf_size = String_Dynamic_Size(g_mold.buffer);
+    s->mold_loop_tail = Series_Dynamic_Used(g_mold.stack);
 
     s->saved_sigmask = g_ts.eval_sigmask;
 }
@@ -69,11 +69,15 @@ void Rollback_Globals_To_State(struct Reb_State *s)
     // into the managed state).  This will include the series used as backing
     // store for rebMalloc() calls.
     //
-    assert(Series_Used(g_gc.manuals) >= s->manuals_len);
-    while (Series_Used(g_gc.manuals) != s->manuals_len) {
+    assert(Series_Dynamic_Used(g_gc.manuals) >= s->manuals_len);
+    while (Series_Dynamic_Used(g_gc.manuals) != s->manuals_len) {
         Free_Unmanaged_Series(
-            *Series_At(Series*, g_gc.manuals, Series_Used(g_gc.manuals) - 1)
-        );  // ^-- Free_Unmanaged_Series will decrement Series_Used(g_gc.manuals)
+            *Series_At(
+                Series*,
+                g_gc.manuals,
+                Series_Dynamic_Used(g_gc.manuals) - 1
+            )
+        );  // ^-- Free_Unmanaged_Series will decrement Series_Used()
     }
 
     Set_Series_Len(g_gc.guarded, s->guarded_len);
