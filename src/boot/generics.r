@@ -567,9 +567,9 @@ connect: generic [
 ]
 
 close: generic [
-    {Closes a port/library.}
-    return: [<opt> any-value!]
-    port [port!]  ; !!! See Extend_Generics_Someday() for why LIBRARY! works
+    {Closes a port}  ; !!! Used to also close LIBRARY!
+    return: [port!]  ; !!! Is returning the port useful?
+    port [port!]
 ]
 
 read: generic [

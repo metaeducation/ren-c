@@ -110,21 +110,23 @@ sys.util.make-scheme [
 
         close: function [
             {Closes a statement port only or a database port w/all statements}
-            return: <none>
+            return: [port!]
             port [port!]
         ][
             if get maybe in (statement: port.locals) 'hstmt [
                 remove find head statement.database.statements port
                 close-statement statement
-                return none
+                return port
             ]
 
             if get maybe in (connection: port.locals) 'hdbc [
                 for-each stmt-port connection.statements [close stmt-port]
                 clear connection.statements
                 close-connection connection
-                return none
+                return port
             ]
+
+            return port  ; !!! should this error?
         ]
 
         insert: func [
