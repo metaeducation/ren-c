@@ -136,18 +136,6 @@ enum Reb_Spec_Mode {
 };
 
 
-static void Finalize_Param(Value(*) param) {
-    //
-    // This used to guard against nullptr in Cell_Parameter_Spec() and canonize
-    // the refinement case to EMPTY_ARRAY and the non-refinement case to
-    // the ANY-VALUE! typeset.  New philosophy is to allow null arrays in
-    // order to establish &(ANY-VALUE?) as a type annotation, because
-    // ANY-VALUE? has to bootstrap itself somehow.
-    //
-    UNUSED(param);
-}
-
-
 //
 //  Push_Paramlist_Quads_May_Fail: C
 //
@@ -604,7 +592,6 @@ Array* Pop_Paramlist_With_Adjunct_May_Fail(
         Init_Key(key, Cell_Word_Symbol(KEY_SLOT(return_stackindex)));
         ++key;
 
-        Finalize_Param(cast(REBVAL*, PARAM_SLOT(return_stackindex)));
         Copy_Cell(param, PARAM_SLOT(return_stackindex));
         ++param;
     }
@@ -632,9 +619,6 @@ Array* Pop_Paramlist_With_Adjunct_May_Fail(
             hidden = true;
         }
         else {
-            if (not Is_Specialized(cast(Param*, cast(REBVAL*, slot))))
-                Finalize_Param(cast(REBVAL*, slot));
-
             if (not Try_Add_Binder_Index(&binder, symbol, 1020))
                 duplicate = symbol;
 
