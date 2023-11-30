@@ -233,7 +233,7 @@ INLINE REBVAL *Init_Any_Sequence_Bytes(
         out,
         FLAG_HEART_BYTE(kind) | CELL_MASK_NO_NODES
     );
-    mutable_BINDING(out) = nullptr;  // paths are bindable, can't have garbage
+    BINDING(out) = nullptr;  // paths are bindable, can't have garbage
 
     if (size > sizeof(PAYLOAD(Bytes, out).at_least_8) - 1) {  // too big
         Array* a = Make_Array_Core(size, NODE_FLAG_MANAGED);
@@ -271,7 +271,7 @@ INLINE REBVAL *Try_Init_Any_Sequence_All_Integers(
         out,
         FLAG_HEART_BYTE(kind) | CELL_MASK_NO_NODES
     );
-    mutable_BINDING(out) = nullptr;  // paths are bindable, can't be garbage
+    BINDING(out) = nullptr;  // paths are bindable, can't be garbage
 
     PAYLOAD(Bytes, out).at_least_8[IDX_SEQUENCE_USED] = len;
 

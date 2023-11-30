@@ -84,7 +84,7 @@ INLINE Value(*) Init_Pair_Untracked(Cell* out, Cell* pairing) {
     PAYLOAD(Any, out).second.trash = ZEROTRASH;  // payload second not used
   #endif
 
-    mutable_BINDING(out) = UNBOUND;  // "arraylike", needs binding
+    BINDING(out) = UNBOUND;  // "arraylike", needs binding
     return SPECIFIC(out);
 }
 

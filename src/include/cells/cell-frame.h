@@ -57,7 +57,7 @@ INLINE void INIT_VAL_FRAME_BINDING(
     Context* binding
 ){
     assert(HEART_BYTE(v) == REB_FRAME);
-    INIT_BINDING(v, binding);
+    BINDING(v) = binding;
 }
 
 
@@ -76,11 +76,9 @@ INLINE void INIT_VAL_FRAME_BINDING(
 INLINE REBVAL *Init_Frame_Details_Core(
     Cell* out,
     Phase* a,
-    Option(const Symbol*) label,  // allowed to be ANONYMOUS
-    Context* binding  // allowed to be UNBOUND
+    Option(const Symbol*) label,
+    Option(Context*) binding
 ){
-    assert(not binding or Is_Node_Managed(binding));
-
   #if !defined(NDEBUG)
     Extra_Init_Frame_Details_Checks_Debug(a);
   #endif
@@ -89,7 +87,7 @@ INLINE REBVAL *Init_Frame_Details_Core(
     Reset_Unquoted_Header_Untracked(out, CELL_MASK_FRAME);
     INIT_VAL_ACTION_DETAILS(out, a);
     INIT_VAL_ACTION_LABEL(out, label);
-    INIT_VAL_FRAME_BINDING(out, binding);
+    INIT_VAL_FRAME_BINDING(out, try_unwrap(binding));
 
     return cast(REBVAL*, out);
 }

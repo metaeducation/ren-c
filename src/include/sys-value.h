@@ -476,6 +476,64 @@ INLINE REBVAL* Freshen_Cell_Untracked(Cell* v) {
 // are at lower values than the unbindable types.
 //
 
+#if DEBUG
+    #define Assert_Cell_Binding_Valid(v) \
+        Assert_Cell_Binding_Valid_Core(v)
+#else
+    #define Assert_Cell_Binding_Valid(v) NOOP
+#endif
+
+#if (! CPLUSPLUS_11)
+    #define BINDING(v) \
+        *x_cast(Stub**, m_cast(Node**, &(v)->extra.Binding))
+#else
+    struct BindingHolder {
+        NoQuote(Cell*) & ref;
+
+        BindingHolder(NoQuote(const Cell*) const& ref)
+            : ref (const_cast<NoQuote(Cell*) &>(ref))
+          {}
+
+        void operator=(Stub* right) {
+            ref->extra.Binding = right;
+            Assert_Cell_Binding_Valid(ref);
+        }
+        void operator=(BindingHolder const& right) {
+            ref->extra.Binding = right.ref->extra.Binding;
+            Assert_Cell_Binding_Valid(ref);
+        }
+        void operator=(nullptr_t)
+          { ref->extra.Binding = nullptr; }
+
+        template<typename T>
+        void operator=(Option(T) right) {
+            ref->extra.Binding = try_unwrap(right);
+            Assert_Cell_Binding_Valid(ref);
+        }
+
+        Stub* operator-> () const
+          { return x_cast(Stub*, ref->extra.Binding); }
+
+        operator Stub* () const
+          { return x_cast(Stub*, ref->extra.Binding); }
+    };
+
+    #define BINDING(v) \
+        BindingHolder{v}
+
+    template<typename T>
+    struct cast_helper<BindingHolder,T> {
+        static constexpr T convert(BindingHolder const& holder) {
+            return cast(T, x_cast(Stub*, holder.ref->extra.Binding));
+        }
+    };
+
+  #if DEBUG
+    INLINE void Trash_Pointer_If_Debug(BindingHolder const& bh)
+      { bh.ref->extra.Binding = p_cast(Stub*, cast(uintptr_t, 0xDECAFBAD)); }
+  #endif
+#endif
+
 
 
 // An ANY-WORD! is relative if it refers to a local or argument of a function,
@@ -626,7 +684,7 @@ INLINE void Copy_Cell_Header(
 // 1. Will optimizer notice if copy mask is CELL_MASK_ALL, and not bother with
 //    masking out CELL_MASK_PERSIST since all bits are overwritten?  Review.
 //
-// 2. Once upon a time INIT_BINDING() depended on the payload (when quoteds
+// 2. Once upon a time binding init depended on the payload (when quoteds
 //    could forward to a different cell), so this needed to be done first.
 //    That's not true anymore, but some future INIT_BINDING() may need to
 //    be able to study to the cell to do the initialization?
@@ -647,7 +705,7 @@ INLINE Cell* Copy_Cell_Untracked(
     out->payload = v->payload;  // before init binding anachronism [1]
 
     if (Is_Bindable(v))  // extra is either a binding or a plain C value/ptr
-        INIT_BINDING(out, BINDING(v));
+        BINDING(out) = BINDING(v);
     else
         out->extra = v->extra;  // extra inert bits
 

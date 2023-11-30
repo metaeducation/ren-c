@@ -512,7 +512,7 @@ union Reb_Bytes_Extra {
 union ValueExtraUnion { //=/////////////////// ACTUAL EXTRA DEFINITION ////=//
 
     struct Reb_Character_Extra Character;
-    const Node* Binding;  // see %sys-bind.h
+    const Node* Binding;  // const Node for GC mark w/update consistency
     struct Reb_Date_Extra Date;
     struct Reb_Parameter_Extra Parameter;
 
@@ -706,12 +706,6 @@ union ValuePayloadUnion { //=/////////////// ACTUAL PAYLOAD DEFINITION ////=//
 
 #define EXTRA(Type, v) \
     (v)->extra.Type
-
-#define mutable_BINDING(v) \
-    (v)->extra.Binding
-
-#define BINDING(v) \
-    x_cast(Stub*, (v)->extra.Binding)  // binding const (why?), need x_cast
 
 
 //=//// ESCAPE-ALIASABLE CELLS ////////////////////////////////////////////=//

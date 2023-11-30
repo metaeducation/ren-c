@@ -73,11 +73,11 @@ INLINE REBLEN VAL_INDEX(NoQuote(const Cell*) v) {
 }
 
 
-INLINE void INIT_SPECIFIER(Cell* v, const Stub* binding) {
+INLINE void INIT_SPECIFIER(Cell* v, Stub* binding) {
     //
     // can be called on non-bindable series, but p must be nullptr
 
-    mutable_BINDING(v) = binding;
+    BINDING(v) = binding;
 
   #if !defined(NDEBUG)
     if (not binding)

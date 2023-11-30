@@ -135,7 +135,7 @@ INLINE REBVAL *Derelativize_Untracked(
             out->extra = v->extra;
         }
         else {
-            INIT_BINDING(out, s);
+            BINDING(out) = s;
             INIT_VAL_WORD_INDEX(out, index);
         }
 
@@ -150,7 +150,7 @@ INLINE REBVAL *Derelativize_Untracked(
         // The mechanism otherwise is shared with specifier derivation.
         // That includes the case of if specifier==SPECIFIED.
         //
-        INIT_BINDING(out, Derive_Specifier(specifier, v));
+        BINDING(out) = Derive_Specifier(specifier, v);
     }
     else {
         // Things like contexts and varargs are not affected by specifiers,
@@ -424,30 +424,6 @@ INLINE Series* SPC_BINDING(Specifier* specifier)
 }
 
 
-// At one time this was INIT_BINDING_MAY_MANAGE, with the premise that this
-// routine would be avoided by initialization of RETURN action cells in the
-// frame of invoked actions.  These rogue RETURN cells with unmanaged bindings
-// would die when the frame died, so breaking the rules was "safe".  Then
-// the varlist would only become managed when a binding to RETURN occurred in
-// a WORD! in the body.  This never happened for natives, so a native that
-// didn't have usermode FRAME!s introspected for it could free its varlist
-// without giving it to the garbage collector.
-//
-// A cleaner solution is achieved today by making the initialization of an
-// actual RETURN action in a frame cell only happen for usermode functions.
-// It's injected by the dispatcher--not the frame fulfilling process.  So
-// natives just have an unset cell in their RETURN slot.  Hence we now assert
-// that this binding initialization only happens with managed bindings.
-//
-INLINE void INIT_BINDING(
-    Cell* out,
-    const Series* binding
-){
-    assert(not binding or Is_Node_Managed(binding));
-    mutable_BINDING(out) = binding;
-}
-
-
 // The unbound state for an ANY-WORD! is to hold its spelling.  Once bound,
 // the spelling is derived by indexing into the keylist of the binding (if
 // bound directly to a context) or into the paramlist (if relative to an
@@ -474,10 +450,10 @@ INLINE Stub* VAL_WORD_BINDING(const Cell* v) {
     return BINDING(v);  // could be nullptr / UNBOUND
 }
 
-INLINE void INIT_VAL_WORD_BINDING(Cell* v, const Series* binding) {
+INLINE void INIT_VAL_WORD_BINDING(Cell* v, Series* binding) {
     assert(Any_Wordlike(v));
 
-    mutable_BINDING(v) = binding;
+    BINDING(v) = binding;
 
   #if !defined(NDEBUG)
     if (binding == nullptr)
@@ -508,7 +484,7 @@ INLINE REBVAL* Unrelativize(Cell* out, const Cell* v) {
     else {
         Copy_Cell_Header(out, v);
         out->payload = v->payload;
-        mutable_BINDING(out) = &PG_Inaccessible_Series;
+        BINDING(out) = &PG_Inaccessible_Series;
     }
     return cast(REBVAL*, out);
 }
@@ -522,7 +498,7 @@ INLINE REBVAL* Unrelativize(Cell* out, const Cell* v) {
 INLINE void Unbind_Any_Word(Cell* v) {
     assert(Any_Wordlike(v));
     VAL_WORD_INDEX_U32(v) = 0;
-    mutable_BINDING(v) = nullptr;
+    BINDING(v) = nullptr;
 }
 
 INLINE Context* VAL_WORD_CONTEXT(const REBVAL *v) {

@@ -57,7 +57,7 @@ INLINE Value(*) Init_Comma(Cell* out) {
     // This means the binding has to be nulled out in the cell to keep the
     // GC from crashing on it.
     //
-    mutable_BINDING(out) = nullptr;
+    BINDING(out) = nullptr;
 
   #ifdef ZERO_UNUSED_CELL_FIELDS
     PAYLOAD(Any, out).first.trash = ZEROTRASH;

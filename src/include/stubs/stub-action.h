@@ -134,7 +134,7 @@ INLINE REBVAL *Init_Return_Signal_Untracked(Cell* out, char ch) {
         out,
         FLAG_HEART_BYTE(REB_T_RETURN_SIGNAL) | CELL_MASK_NO_NODES
     );
-    mutable_BINDING(out) = nullptr;
+    BINDING(out) = nullptr;
 
     PAYLOAD(Any, out).first.u = ch;
   #ifdef ZERO_UNUSED_CELL_FIELDS

@@ -185,7 +185,7 @@ INLINE void INIT_VAL_CONTEXT_ROOTVAR_Core(
         FLAG_HEART_BYTE(kind) | CELL_MASK_ANY_CONTEXT
     );
     INIT_VAL_CONTEXT_VARLIST(out, varlist);
-    mutable_BINDING(out) = UNBOUND;  // not a frame
+    BINDING(out) = UNBOUND;  // not a frame
     INIT_VAL_FRAME_PHASE_OR_LABEL(out, nullptr);  // not a frame
   #if !defined(NDEBUG)
     out->header.bits |= CELL_FLAG_PROTECTED;
@@ -208,7 +208,7 @@ INLINE void INIT_VAL_FRAME_ROOTVAR_Core(
     assert(phase != nullptr);
     Reset_Unquoted_Header_Untracked(out, CELL_MASK_FRAME);
     INIT_VAL_CONTEXT_VARLIST(out, varlist);
-    mutable_BINDING(out) = binding;
+    BINDING(out) = binding;
     INIT_VAL_FRAME_PHASE_OR_LABEL(out, phase);
   #if !defined(NDEBUG)
     out->header.bits |= CELL_FLAG_PROTECTED;
@@ -520,7 +520,7 @@ INLINE Context* Steal_Context_Vars(Context* c, Node* keysource) {
         NODE_FLAG_NODE | NODE_FLAG_CELL
             | CELL_MASK_FRAME;
     INIT_VAL_CONTEXT_VARLIST(single, x_cast(Array*, stub));
-    mutable_BINDING(single) = BINDING(rootvar);
+    BINDING(single) = BINDING(rootvar);
 
   #if !defined(NDEBUG)
     INIT_VAL_FRAME_PHASE_OR_LABEL(single, nullptr);  // can't trash

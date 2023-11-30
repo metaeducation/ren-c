@@ -1421,7 +1421,7 @@ void Drop_Action(Level* L) {
         Cell* rootvar = Array_Head(L->varlist);
         assert(CTX_VARLIST(VAL_CONTEXT(rootvar)) == L->varlist);
         INIT_VAL_FRAME_PHASE_OR_LABEL(rootvar, nullptr);  // can't trash ptr
-        Trash_Pointer_If_Debug(mutable_BINDING(rootvar));
+        Trash_Pointer_If_Debug(BINDING(rootvar));
     }
   #endif
 

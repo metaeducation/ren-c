@@ -978,7 +978,7 @@ Phase* Make_Action(
     Cell* archetype = Array_Head(details);
     Reset_Unquoted_Header_Untracked(TRACK(archetype), CELL_MASK_FRAME);
     INIT_VAL_ACTION_DETAILS(archetype, details);
-    mutable_BINDING(archetype) = UNBOUND;
+    BINDING(archetype) = UNBOUND;
     INIT_VAL_ACTION_PARTIALS_OR_LABEL(archetype, partials);
 
   #if !defined(NDEBUG)  // notice attempted mutation of the archetype cell
@@ -1145,7 +1145,7 @@ void Get_Maybe_Fake_Action_Body(Sink(Value(*)) out, Value(const*) action)
         // Don't use INIT_SPECIFIER(), because it does not expect to get an
         // inaccessible series.
         //
-        mutable_BINDING(out) = &PG_Inaccessible_Series;
+        BINDING(out) = &PG_Inaccessible_Series;
         return;
     }
 

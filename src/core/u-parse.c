@@ -1601,7 +1601,7 @@ DECLARE_NATIVE(subparse)
                 // the in-effect specifier.
                 //
                 if (cmd == SYM_LET) {
-                    mutable_BINDING(FEED_SINGLE(L->feed)) = Make_Let_Patch(
+                    BINDING(FEED_SINGLE(L->feed)) = Make_Let_Patch(
                         Cell_Word_Symbol(P_RULE),
                         P_RULE_SPECIFIER
                     );

@@ -257,7 +257,7 @@ void Init_Evars(EVARS *e, NoQuote(const Cell*) v) {
             }
             if (found) {
                 Init_Any_Word(PUSH(), REB_WORD, *psym);
-                mutable_BINDING(TOP) = found;
+                BINDING(TOP) = found;
                 INIT_VAL_WORD_INDEX(TOP, INDEX_ATTACHED);
             }
         }
@@ -1458,7 +1458,7 @@ REBTYPE(Frame)
             //
             Reset_Unquoted_Header_Untracked(TRACK(OUT), CELL_MASK_FRAME);
             INIT_VAL_CONTEXT_VARLIST(OUT, ACT_PARAMLIST(act));
-            mutable_BINDING(OUT) = VAL_FRAME_BINDING(frame);
+            BINDING(OUT) = VAL_FRAME_BINDING(frame);
             INIT_VAL_FRAME_PHASE_OR_LABEL(OUT, act);
             return OUT; }
 

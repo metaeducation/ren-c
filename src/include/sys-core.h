@@ -543,13 +543,6 @@ extern void reb_qsort_r(void *a, size_t n, size_t es, void *thunk, cmp_t *cmp);
 #include "sys-node.h"
 
 
-// Lives in %sys-bind.h, but needed for Copy_Cell() and Derelativize()
-//
-INLINE void INIT_BINDING(
-    Cell* out,
-    const Series*  binding
-);
-
 
 enum rebol_signals {
     //

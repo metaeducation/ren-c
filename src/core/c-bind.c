@@ -901,7 +901,7 @@ DECLARE_NATIVE(let)
             if (vars != where)
                 Copy_Cell(where, vars);  // Move_Cell() of ARG() not allowed
         }
-        INIT_BINDING(where, bindings);
+        BINDING(where) = bindings;
 
         Trash_Pointer_If_Debug(vars);  // if in spare, we may have overwritten
     }
@@ -916,7 +916,7 @@ DECLARE_NATIVE(let)
     // Leverage same mechanism as REEVAL to preload the next execution step
     // with the rebound SET-WORD! or SET-BLOCK!
 
-    mutable_BINDING(bindings_holder) = bindings;
+    BINDING(bindings_holder) = bindings;
     Trash_Pointer_If_Debug(bindings);  // catch uses after this point in scope
 
     if (STATE != ST_LET_EVAL_STEP) {
@@ -947,7 +947,7 @@ DECLARE_NATIVE(let)
 
     if (L_specifier and IS_LET(L_specifier)) { // add bindings [7]
         bindings = Merge_Patches_May_Reuse(L_specifier, bindings);
-        mutable_BINDING(bindings_holder) = bindings;
+        BINDING(bindings_holder) = bindings;
     }
 
     L->feed->gotten = nullptr;  // invalidate next word's cache [8]
@@ -960,7 +960,7 @@ DECLARE_NATIVE(let)
     // needs systemic review.
 
     Specifier* bindings = Cell_Specifier(bindings_holder);
-    mutable_BINDING(FEED_SINGLE(L->feed)) = bindings;
+    BINDING(FEED_SINGLE(L->feed)) = bindings;
 
     if (Is_Pack(OUT))
         Decay_If_Unstable(OUT);
@@ -993,7 +993,7 @@ DECLARE_NATIVE(add_let_binding) {
 
     Move_Cell(Stub_Cell(let), ARG(value));
 
-    mutable_BINDING(FEED_SINGLE(L->feed)) = let;
+    BINDING(FEED_SINGLE(L->feed)) = let;
 
     Move_Cell(OUT, ARG(word));
     INIT_VAL_WORD_BINDING(OUT, let);
@@ -1026,7 +1026,7 @@ DECLARE_NATIVE(add_use_object) {
 
     Specifier* use = Make_Or_Reuse_Use(ctx, L_specifier, REB_WORD);
 
-    mutable_BINDING(FEED_SINGLE(L->feed)) = use;
+    BINDING(FEED_SINGLE(L->feed)) = use;
 
     return NONE;
 }
@@ -1640,7 +1640,7 @@ void Bind_Nonspecifically(Cell* head, const Cell* tail, Context* context)
             //
             // Give context but no index; this is how we attach to modules.
             //
-            mutable_BINDING(v) = context;
+            BINDING(v) = context;
             INIT_VAL_WORD_INDEX(v, INDEX_ATTACHED);  // may be quoted
         }
     }
@@ -1668,3 +1668,25 @@ DECLARE_NATIVE(intern_p)
 
     return COPY(ARG(data));
 }
+
+
+#if DEBUG
+
+//
+//  Assert_Cell_Binding_Valid_Core: C
+//
+void Assert_Cell_Binding_Valid_Core(NoQuote(const Cell*) cell)
+{
+    Stub* binding = x_cast(Stub*, cell->extra.Binding);
+    if (not binding)
+        return;
+    assert(Is_Node_Managed(binding));
+
+    if (HEART_BYTE(cell) == REB_FRAME) {
+        assert(IS_VARLIST(binding));  // actions/frames bind to contexts only
+        return;
+    }
+
+}
+
+#endif

@@ -166,7 +166,7 @@ INLINE void INIT_LVL_PHASE(Level* L, Phase* phase)  // check types
   { INIT_VAL_FRAME_PHASE_OR_LABEL(L->rootvar, phase); }  // ...only
 
 INLINE void INIT_LVL_BINDING(Level* L, Context* binding)
-  { mutable_BINDING(L->rootvar) = binding; }  // also fast
+  { BINDING(L->rootvar) = binding; }  // also fast
 
 // Each ACTION! cell for things like RETURN/BREAK/CONTINUE has a piece of
 // information in it that can can be unique (the binding).  When invoked, that

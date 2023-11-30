@@ -74,7 +74,7 @@ INLINE REBVAL *Init_Any_Word_Untracked(
             | CELL_FLAG_FIRST_IS_NODE
     );
     VAL_WORD_INDEX_U32(out) = 0;
-    mutable_BINDING(out) = nullptr;
+    BINDING(out) = nullptr;
     INIT_CELL_WORD_SYMBOL(out, sym);
 
     return cast(REBVAL*, out);
@@ -101,7 +101,7 @@ INLINE REBVAL *Init_Any_Word_Bound_Untracked(
         out,
         FLAG_HEART_BYTE(type) | CELL_FLAG_FIRST_IS_NODE
     );
-    mutable_BINDING(out) = binding;
+    BINDING(out) = binding;
     VAL_WORD_INDEX_U32(out) = index;
     INIT_CELL_WORD_SYMBOL(out, symbol);
 
