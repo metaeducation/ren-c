@@ -329,7 +329,7 @@ Bounce Action_Executor(Level* L)
                     continue;
 
                 REBLEN offset = ARG - cast(Atom(*), Level_Args_Head(L));
-                INIT_VAL_WORD_BINDING(ordered, L->varlist);
+                INIT_VAL_WORD_BINDING(ordered, L->u.action.original);
                 INIT_VAL_WORD_INDEX(ordered, offset + 1);
 
                 if (Is_Parameter_Unconstrained(PARAM)) {

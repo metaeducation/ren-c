@@ -168,7 +168,7 @@ Context* Make_Context_For_Action_Push_Partials(
                 continue;  // just continuing this loop
 
             assert(not IS_WORD_BOUND(ordered));  // we bind only one
-            INIT_VAL_WORD_BINDING(ordered, varlist);
+            INIT_VAL_WORD_BINDING(ordered, act);
             INIT_VAL_WORD_INDEX(ordered, index);
 
             if (not Is_Parameter_Unconstrained(param))  // needs argument
