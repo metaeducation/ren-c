@@ -153,7 +153,7 @@
 // it required a bit being added and removed, so it was replaced with the
 // concept of "freshness" removing NODE_FLAG_NODE and NODE_FLAG_CELL to get
 // the effect with less overhead.  So NODE_FLAG_FREE is now used in a more
-// limited sense to get "poisoning"--a cell you can't read or write.
+// limited sense to get "trash"--a cell you can write, but not read.
 //
 // [WRITABILITY]
 //
@@ -173,10 +173,6 @@
   // of repeating macro arguments to speed up these critical tests, then
   // wrap in READABLE() and WRITABLE() functions for higher-level callers
   // that don't mind the cost.
-
-    #define ASSERT_CELL_FRESH_EVIL_MACRO(c) do {  /* someday may be EVIL! */ \
-        assert(Is_Fresh(c)); \
-    } while (0)
 
     #define ASSERT_CELL_READABLE_EVIL_MACRO(c) do {  /* EVIL! see above */ \
         if ( \
@@ -237,7 +233,6 @@
     }
 
 #else
-    #define ASSERT_CELL_FRESH_EVIL_MACRO(c)    NOOP
     #define ASSERT_CELL_READABLE_EVIL_MACRO(c)    NOOP
     #define ASSERT_CELL_WRITABLE_EVIL_MACRO(c)    NOOP
 

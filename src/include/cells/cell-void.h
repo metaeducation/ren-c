@@ -168,7 +168,7 @@ STATIC_ASSERT(REB_VOID == 0);  // the optimization depends on this
 STATIC_ASSERT(ISOTOPE_0 == 0);  // QUOTE_BYTE() of 0 means it's an isotope
 
 INLINE Value(*) Finalize_None_Untracked(Atom(*) out) {
-    ASSERT_CELL_FRESH_EVIL_MACRO(out);  // can bitwise OR, need node+cell flags
+    assert(Is_Fresh(out));  // can bitwise OR, need node+cell flags
 
     assert(HEART_BYTE(out) == 0 and QUOTE_BYTE(out) == 0);
 
@@ -185,7 +185,7 @@ INLINE Value(*) Finalize_None_Untracked(Atom(*) out) {
     TRACK(Finalize_None_Untracked(out))
 
 INLINE Value(*) Finalize_Void_Untracked(Atom(*) out) {
-    ASSERT_CELL_FRESH_EVIL_MACRO(out);  // can bitwise OR, need node+cell flags
+    assert(Is_Fresh(out));  // can bitwise OR, need node+cell flags
 
     assert(HEART_BYTE(out) == 0 and QUOTE_BYTE(out) == 0);
 
