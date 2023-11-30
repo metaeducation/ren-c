@@ -1,12 +1,12 @@
 //
-//  File: %sys-rebarr.h
-//  Summary: {any-array! defs BEFORE %tmp-internals.h (see: %sys-array.h)}
+//  File: %struct-array.h
+//  Summary: "Array structure definitions preceding %tmp-internals.h"
 //  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
 //  Homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Copyright 2012-2021 Ren-C Open Source Contributors
+// Copyright 2012-2023 Ren-C Open Source Contributors
 // Copyright 2012 REBOL Technologies
 // REBOL is a trademark of REBOL Technologies
 //
@@ -20,9 +20,9 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// In the C build, a Array* and Series* are the same type.  The C++ build
-// derives Array from Series...meaning you can pass an array to a
-// function that expects a series, but not vice-versa.
+// Arrays are series whose element type is Cell.  The garbage collector has to
+// treat them specially, by visiting the cells and marking the pointers inside
+// those cells as live.
 //
 // There are several subclasses (FLAVOR_XXX) whose elements are value cells,
 // and hence are arrays.  However the "plain" array, e.g. the kind used in
@@ -32,44 +32,15 @@
 // output at the end of the varlist).
 //
 
+// The C++ build derives Array from Series...so it allows passing an array to
+// a function that expects a series, but not vice-versa.  In the C build, an
+// Array* and Series* are the same type, so it doesn't get those checks.
+//
 #if CPLUSPLUS_11
     struct Array : public Series {};
-
-    struct Details : public Array {};
 #else
     typedef Series Array;
-    typedef Array Details;
 #endif
-
-
-// It may become interesting to say that a specifier can be a pairing or
-// a REBVAL* of some kind, but currently all instances are array-derived.
-//
-typedef Stub Specifier;
-
-
-//=//// TYPE HOOK ACCESS //////////////////////////////////////////////////=//
-//
-// Built-in types identify themselves as one of ~64 fundamental "kinds".  This
-// occupies a byte in the header (64 is chosen as a limit currently in order
-// to be used with 64-bit typesets, but this is due for change).
-//
-// For efficiency, what's put in the extra is what would be like that type's
-// row in the `Builtin_Type_Hooks` if it had been built-in.  These table
-// rows are speculatively implemented as an untyped array of CFunction* which is
-// null terminated (vs. a struct with typed fields) so that the protocol can
-// be expanded without breaking strict aliasing.
-//
-
-enum Reb_Type_Hook_Index {
-    IDX_GENERIC_HOOK,
-    IDX_COMPARE_HOOK,
-    IDX_MAKE_HOOK,
-    IDX_TO_HOOK,
-    IDX_MOLD_HOOK,
-    IDX_HOOK_NULLPTR,  // see notes on why null termination convention
-    IDX_HOOKS_MAX
-};
 
 
 //=//// ARRAY_FLAG_HAS_FILE_LINE_UNMASKED /////////////////////////////////=//
@@ -88,6 +59,9 @@ enum Reb_Type_Hook_Index {
 
 #define ARRAY_MASK_HAS_FILE_LINE \
     (ARRAY_FLAG_HAS_FILE_LINE_UNMASKED | SERIES_FLAG_LINK_NODE_NEEDS_MARK)
+
+#define LINK_Filename_TYPE          const String*
+#define HAS_LINK_Filename           FLAVOR_ARRAY
 
 
 //=//// ARRAY_FLAG_25 /////////////////////////////////////////////////////=//
@@ -140,12 +114,3 @@ STATIC_ASSERT(ARRAY_FLAG_CONST_SHALLOW == CELL_FLAG_CONST);
 //
 #define ARRAY_FLAG_NEWLINE_AT_TAIL \
     SERIES_FLAG_31
-
-
-// Ordinary source arrays use their ->link field to point to an interned file
-// name string (or URL string) from which the code was loaded.  If a series
-// was not created from a file, then the information from the source that was
-// running at the time is propagated into the new second-generation series.
-//
-#define LINK_Filename_TYPE          const String*
-#define HAS_LINK_Filename           FLAVOR_ARRAY

@@ -1,6 +1,6 @@
 //
-//  File: %sys-rebser.h
-//  Summary: {any-series! defs BEFORE %tmp-internals.h (see: %sys-series.h)}
+//  File: %struct-stub.h
+//  Summary: "Stub structure definitions preceding %tmp-internals.h"
 //  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
 //  Homepage: https://github.com/metaeducation/ren-c/
 //
@@ -494,7 +494,7 @@ STATIC_ASSERT(SERIES_INFO_0_IS_FALSE == NODE_FLAG_NODE);
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // A Stub is normally the size of two Cells (though compiling with certain
-// debug flags can add tracking information).  See %sys-rebnod.h for
+// debug flags can add tracking information).  See %struct-node.h for
 // explanations of how obeying the header-in-first-slot convention allows a
 // Stub to be distinguished from a Cell or a UTF-8 string and not run
 // afoul of strict aliasing requirements.
@@ -530,8 +530,8 @@ STATIC_ASSERT(SERIES_INFO_0_IS_FALSE == NODE_FLAG_NODE);
 //
 // Pairings are allocated from the Stub pool instead of their own to
 // help exchange a common "currency" of allocation size more efficiently.
-// They are used in the PAIR! datatype, but can have other interesting
-// applications when exactly two values (with no termination) are needed.
+// They are used in the PAIR! datatype, but have other applications when
+// exactly two values are needed (e.g. paths or tuples like `a/b` or `a.b`)
 //
 // Most of the time, code does not need to be concerned about distinguishing
 // Pairing from the Dynamic and Singular layouts--because it already knows
@@ -766,6 +766,9 @@ union StubInfoUnion {
 };
 
 
+typedef Stub Series;
+
+
 // In C++, String* and Array* are derived from Series.  This gives
 // desirable type checking properties (like being able to pass an array to
 // a routine that needs a series, but not vice versa).  And it also means
@@ -783,9 +786,6 @@ union StubInfoUnion {
 
     struct BookmarkList : public Series {};
 
-    struct Action : public Series {};
-    struct Phase : public Action {};
-
     struct Context : public Series {};
 
     struct Map : public Series {};  // the "pairlist" is the identity
@@ -798,15 +798,17 @@ union StubInfoUnion {
 
     typedef Series BookmarkList;
 
-    typedef Series Action;
-    typedef Series Phase;
-
     typedef Series Context;
 
     typedef Series Map;
 
     typedef Series KeyList;
 #endif
+
+// It may become interesting to say that a specifier can be a pairing or
+// a REBVAL* of some kind, but currently all instances are array-derived.
+//
+typedef Stub Specifier;
 
 
 #define SERIES_MASK_SYMBOL \

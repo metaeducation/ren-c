@@ -1,6 +1,6 @@
 //
-//  File: %sys-rebact.h
-//  Summary: "action! defs BEFORE %tmp-internals.h"
+//  File: %struct-action.h
+//  Summary: "Action structure definitions preceding %tmp-internals.h"
 //  Section: core
 //  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
 //  Homepage: https://github.com/metaeducation/ren-c/
@@ -25,6 +25,15 @@
 // This file just defines basic structures and flags.
 //
 
+#if CPLUSPLUS_11
+    struct Details : public Array {};
+    struct Action : public Series {};
+    struct Phase : public Action {};
+#else
+    typedef Array Details;
+    typedef Series Action;
+    typedef Series Phase;
+#endif
 
 
 #define MISC_DetailsAdjunct_TYPE      Context*
@@ -102,6 +111,12 @@
 #define DETAILS_FLAG_IS_NATIVE \
     SERIES_FLAG_29
 
+typedef enum {
+    NATIVE_NORMAL,
+    NATIVE_COMBINATOR,
+    NATIVE_INTRINSIC
+} NativeType;
+
 
 //=//// DETAILS_FLAG_30 ///////////////////////////////////////////////////=//
 //
@@ -159,3 +174,95 @@
         | FLAG_FLAVOR(PARTIALS) \
         /* LINK is unused at this time */ \
         /* MISC is unused at this time (could be paramlist cache?) */)
+
+
+//=//// PARAMETER CLASSES ////////////////////////////////////////////////=//
+
+typedef enum {
+    PARAMCLASS_0,  // temporary state for Option(ParamClass)
+
+    // `PARAMCLASS_NORMAL` is cued by an ordinary WORD! in the function spec
+    // to indicate that you would like that argument to be evaluated normally.
+    //
+    //     >> foo: function [a] [print [{a is} a]]
+    //
+    //     >> foo 1 + 2
+    //     a is 3
+    //
+    PARAMCLASS_NORMAL,
+
+    PARAMCLASS_RETURN,
+
+    PARAMCLASS_OUTPUT,
+
+    // `PARAMCLASS_HARD` is cued by a quoted WORD! in the function spec
+    // dialect.  It indicates that a single value of content at the callsite
+    // should be passed through *literally*, without any evaluation:
+    //
+    //     >> foo: function ['a] [print [{a is} a]]
+    //
+    //     >> foo (1 + 2)
+    //     a is (1 + 2)
+    //
+    //     >> foo :(1 + 2)
+    //     a is :(1 + 2)
+    //
+    //
+    PARAMCLASS_HARD,
+
+    // `PARAMCLASS_MEDIUM` is cued by a QUOTED GET-WORD! in the function spec
+    // dialect.  It quotes with the exception of GET-GROUP!, GET-WORD!, and
+    // GET-PATH!...which will be evaluated:
+    //
+    //     >> foo: function [':a] [print [{a is} a]
+    //
+    //     >> foo (1 + 2)
+    //     a is (1 + 2)
+    //
+    //     >> foo :(1 + 2)
+    //     a is 3
+    //
+    // Although possible to implement medium quoting with hard quoting, it is
+    // a convenient way to allow callers to "escape" a quoted context when
+    // they need to.
+    //
+    PARAMCLASS_MEDIUM,
+
+    // `PARAMCLASS_SOFT` is cued by a PLAIN GET-WORD!.  It's a more nuanced
+    // version of PARAMCLASS_MEDIUM which is escapable but will defer to enfix.
+    // This covers cases like:
+    //
+    //     if true [...] then :(func [...] [...])  ; want escapability
+    //     if true [...] then x -> [...]  ; but want enfix -> lookback to win
+    //
+    // Hence it is the main mode of quoting for branches.  It would be
+    // unsuitable for cases like OF, however, due to this problem:
+    //
+    //     integer! = kind of 1  ; want left quoting semantics on `kind` WORD!
+    //     integer! = :(first [kind length]) of 1  ; want escapability
+    //
+    // OF wants its left hand side to be escapable, however it wants the
+    // quoting behavior to out-prioritize the completion of enfix on the
+    // left.  Contrast this with how THEN wants the enfix on the right to
+    // win out ahead of its quoting.
+    //
+    // This is a subtlety that most functions don't have to worry about, so
+    // using soft quoting is favored to medium quoting for being one less
+    // character to type.
+    //
+    PARAMCLASS_SOFT,
+
+    // `PARAMCLASS_META` is the only parameter type that can accept unstable
+    // isotopes.  Isotopes become quasiforms when they are an argument, and all
+    // other types receive one added quote level.
+    //
+    //     >> foo: function [^a] [print [{a is} a]
+    //
+    //     >> foo 1 + 2
+    //     a is '3
+    //
+    //     >> foo get/any 'asdfasfasdf
+    //     a is ~
+    //
+    PARAMCLASS_META
+} ParamClass;

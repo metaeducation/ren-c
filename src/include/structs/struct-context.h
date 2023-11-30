@@ -1,6 +1,6 @@
 //
-//  File: %sys-rebctx.h
-//  Summary: "context! defs BEFORE %tmp-internals.h"
+//  File: %struct-context.h
+//  Summary: "Context structure definitions preceding %tmp-internals.h"
 //  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
 //  Homepage: https://github.com/metaeducation/ren-c/
 //

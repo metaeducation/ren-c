@@ -1,6 +1,6 @@
 //
-//  File: %sys-state.h
-//  Summary: "Interpreter State"
+//  File: %struct-state.h
+//  Summary: "State structure definitions preceding %tmp-internals.h"
 //  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
 //  Homepage: https://github.com/metaeducation/ren-c/
 //

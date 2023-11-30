@@ -1,6 +1,6 @@
 //
-//  File: %sys-rebfed.h
-//  Summary: {REBFED Structure Definition}
+//  File: %struct-feed.h
+//  Summary: "Feed structure definitions preceding %tmp-internals.h"
 //  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
 //  Homepage: https://github.com/metaeducation/ren-c/
 //
@@ -156,6 +156,7 @@ STATIC_ASSERT(FEED_FLAG_CONST == CELL_FLAG_CONST);
 
 #define TRASHED_INDEX ((REBLEN)(-3))
 
+typedef struct FeedStruct Feed;
 
 struct FeedStruct {
     union HeaderUnion flags;  // quoting level included

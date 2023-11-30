@@ -1,14 +1,12 @@
 //
-//  File: %sys-rebfrm.h
-//  Summary: {Reb_Level Structure Definition}
+//  File: %struct-level.h
+//  Summary: "Level structure definitions preceding %tmp-internals.h"
 //  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
 //  Homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Copyright 2012 REBOL Technologies
-// Copyright 2012-2019 Ren-C Open Source Contributors
-// REBOL is a trademark of REBOL Technologies
+// Copyright 2019-2023 Ren-C Open Source Contributors
 //
 // See README.md and CREDITS.md for more information
 //
@@ -20,9 +18,20 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// This declares the structure used by levels, for use in other structs.
-// See %sys-frame.h for a higher-level description.
+// This declares the Level structure used for recursions in the trampoline.
+// Levels are allocated out of their own memory pool.
 //
+//=//// NOTES /////////////////////////////////////////////////////////////=//
+//
+// * Due to contention with the usermode datatype FRAME!, stack levels of the
+//   trampoline are called "Levels" as opposed to "Frames".  This is actually
+//   a good distinction, as levels are much more broad than function frames.
+//
+// * Because lowercase "L" looks too much like a number 1, the shorthand for
+//   level variables is uppercase L.
+//
+
+typedef struct LevelStruct Level;
 
 
 // !!! A Level* answers that it is a node, and a cell.  This is questionable

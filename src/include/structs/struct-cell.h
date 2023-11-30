@@ -1,6 +1,6 @@
 //
-//  File: %sys-rebcel.h
-//  Summary: "Low level structure definitions for ValueStruct"
+//  File: %struct-cell.h
+//  Summary: "Cell structure definitions preceding %tmp-internals.h"
 //  Project: "Ren-C Interpreter and Run-time"
 //  Homepage: https://github.com/metaeducation/ren-c/
 //
@@ -73,6 +73,7 @@
 // enforced by rule-of-thumb...so building as C++ gives the rules teeth.)
 //
 
+typedef struct StubStruct Stub;  // forward decl for DEBUG_USE_UNION_PUNS
 
 
 #define CELL_MASK_NO_NODES 0  // no CELL_FLAG_FIRST_IS_NODE or SECOND_IS_NODE
@@ -481,7 +482,7 @@ union AnyUnion {  // needed to beat strict aliasing, used in payload
     // are unreliable, and for debug viewing only--in case they help.
     //
   #if DEBUG_USE_UNION_PUNS
-    Series* series_pun;
+    Stub* stub_pun;
     Cell* cell_pun;
   #endif
 

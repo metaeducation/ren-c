@@ -1,6 +1,6 @@
 //
-//  File: %sys-rebpat.h
-//  Summary: {Definitions for the Virtual Bind and Single Variable LET Node}
+//  File: %struct-patch.h
+//  Summary: "Patch structure definitions preceding %tmp-internals.h"
 //  Project: "Ren-C Interpreter and Run-time"
 //  Homepage: https://github.com/metaeducation/ren-c/
 //

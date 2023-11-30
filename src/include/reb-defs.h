@@ -128,10 +128,6 @@ typedef uint_fast32_t Codepoint;
 // higher level definitions in %sys-series.h are *before* %sys-value.h.
 //
 
-typedef struct StubStruct Stub;
-
-typedef Stub Series;
-
 typedef struct BookmarkStruct {
     REBLEN index;
     Size offset;
@@ -142,127 +138,14 @@ typedef struct BookmarkStruct {
 struct Reb_Binder;
 struct Reb_Collector;
 
-
-//=//// LEVELS ////////////////////////////////////////////////////////////=//
-//
-// Due to contention with the usermode datatype FRAME!, stack levels of the
-// trampoline are called "Levels" as opposed to "Frames".  This is actually
-// a good distinction, as levels are much more broad than function frames.
-//
-// Because lowercase "L" looks too much like a number 1, the shorthand for
-// level variables is uppercase L.
-//
-
-typedef struct LevelStruct Level;
-
-typedef struct FeedStruct Feed;
-
-struct Reb_State;
 typedef struct JumpStruct Jump;
 
-
-typedef enum {
-    NATIVE_NORMAL,
-    NATIVE_COMBINATOR,
-    NATIVE_INTRINSIC
-} NativeType;
 
 
 //=//// DATA STACK ////////////////////////////////////////////////////////=//
 //
 typedef uint_fast32_t StackIndex;  // 0 for empty stack ([0] entry is trash)
 
-
-//=//// PARAMETER CLASSES ////////////////////////////////////////////////=//
-
-typedef enum {
-    PARAMCLASS_0,  // temporary state for Option(ParamClass)
-
-    // `PARAMCLASS_NORMAL` is cued by an ordinary WORD! in the function spec
-    // to indicate that you would like that argument to be evaluated normally.
-    //
-    //     >> foo: function [a] [print [{a is} a]]
-    //
-    //     >> foo 1 + 2
-    //     a is 3
-    //
-    PARAMCLASS_NORMAL,
-
-    PARAMCLASS_RETURN,
-
-    PARAMCLASS_OUTPUT,
-
-    // `PARAMCLASS_HARD` is cued by a quoted WORD! in the function spec
-    // dialect.  It indicates that a single value of content at the callsite
-    // should be passed through *literally*, without any evaluation:
-    //
-    //     >> foo: function ['a] [print [{a is} a]]
-    //
-    //     >> foo (1 + 2)
-    //     a is (1 + 2)
-    //
-    //     >> foo :(1 + 2)
-    //     a is :(1 + 2)
-    //
-    //
-    PARAMCLASS_HARD,
-
-    // `PARAMCLASS_MEDIUM` is cued by a QUOTED GET-WORD! in the function spec
-    // dialect.  It quotes with the exception of GET-GROUP!, GET-WORD!, and
-    // GET-PATH!...which will be evaluated:
-    //
-    //     >> foo: function [':a] [print [{a is} a]
-    //
-    //     >> foo (1 + 2)
-    //     a is (1 + 2)
-    //
-    //     >> foo :(1 + 2)
-    //     a is 3
-    //
-    // Although possible to implement medium quoting with hard quoting, it is
-    // a convenient way to allow callers to "escape" a quoted context when
-    // they need to.
-    //
-    PARAMCLASS_MEDIUM,
-
-    // `PARAMCLASS_SOFT` is cued by a PLAIN GET-WORD!.  It's a more nuanced
-    // version of PARAMCLASS_MEDIUM which is escapable but will defer to enfix.
-    // This covers cases like:
-    //
-    //     if true [...] then :(func [...] [...])  ; want escapability
-    //     if true [...] then x -> [...]  ; but want enfix -> lookback to win
-    //
-    // Hence it is the main mode of quoting for branches.  It would be
-    // unsuitable for cases like OF, however, due to this problem:
-    //
-    //     integer! = kind of 1  ; want left quoting semantics on `kind` WORD!
-    //     integer! = :(first [kind length]) of 1  ; want escapability
-    //
-    // OF wants its left hand side to be escapable, however it wants the
-    // quoting behavior to out-prioritize the completion of enfix on the
-    // left.  Contrast this with how THEN wants the enfix on the right to
-    // win out ahead of its quoting.
-    //
-    // This is a subtlety that most functions don't have to worry about, so
-    // using soft quoting is favored to medium quoting for being one less
-    // character to type.
-    //
-    PARAMCLASS_SOFT,
-
-    // `PARAMCLASS_META` is the only parameter type that can accept unstable
-    // isotopes.  Isotopes become quasiforms when they are an argument, and all
-    // other types receive one added quote level.
-    //
-    //     >> foo: function [^a] [print [{a is} a]
-    //
-    //     >> foo 1 + 2
-    //     a is '3
-    //
-    //     >> foo get/any 'asdfasfasdf
-    //     a is ~
-    //
-    PARAMCLASS_META
-} ParamClass;
 
 
 //=//// SYMBOL IDs ////////////////////////////////////////////////////////=//
@@ -344,6 +227,30 @@ enum Reb_Vararg_Op {
     VARARG_OP_TAIL_Q, // tail?
     VARARG_OP_FIRST, // "lookahead"
     VARARG_OP_TAKE // doesn't modify underlying data stream--advances index
+};
+
+
+//=//// TYPE HOOK ACCESS //////////////////////////////////////////////////=//
+//
+// Built-in types identify themselves as one of ~64 fundamental "kinds".  This
+// occupies a byte in the header (64 is chosen as a limit currently in order
+// to be used with 64-bit typesets, but this is due for change).
+//
+// For efficiency, what's put in the extra is what would be like that type's
+// row in the `Builtin_Type_Hooks` if it had been built-in.  These table
+// rows are speculatively implemented as an untyped array of CFunction* which is
+// null terminated (vs. a struct with typed fields) so that the protocol can
+// be expanded without breaking strict aliasing.
+//
+
+enum Reb_Type_Hook_Index {
+    IDX_GENERIC_HOOK,
+    IDX_COMPARE_HOOK,
+    IDX_MAKE_HOOK,
+    IDX_TO_HOOK,
+    IDX_MOLD_HOOK,
+    IDX_HOOK_NULLPTR,  // see notes on why null termination convention
+    IDX_HOOKS_MAX
 };
 
 

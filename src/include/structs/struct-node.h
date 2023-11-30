@@ -1,6 +1,6 @@
 //
-//  File: %sys-rebnod.h
-//  Summary: {Definitions for the Rebol_Header-having "superclass" structure}
+//  File: %struct-node.h
+//  Summary: "Node structure definitions preceding %tmp-internals.h"
 //  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
 //  Homepage: https://github.com/metaeducation/ren-c/
 //
@@ -49,7 +49,7 @@
 // for a stored pointer's type.  They can just check the first byte instead.
 //
 // For lack of a better name, the generic type covering the superclass is
-// called a "Rebol Node".
+// called a "Node".
 //
 
 

@@ -1,6 +1,6 @@
 //
-//  File: %sys-rebchr.h
-//  Summary: {"Iterator" data type for characters verified as valid UTF-8}
+//  File: %struct-char.h
+//  Summary: "Utf8 structure definitions preceding %tmp-internals.h"
 //  Project: "Ren-C Interpreter and Run-time"
 //  Homepage: https://github.com/metaeducation/ren-c/
 //
