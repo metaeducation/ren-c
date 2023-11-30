@@ -276,7 +276,7 @@ DECLARE_NATIVE(console)
     if (halting_enabled)
         Disable_Halting();
 
-    Init_Nulled(metaresult);
+    Init_Nulled(metaresult);  // invalid "meta" result, but first call expects
 
     Init_False(ARG(no_recover));  // one chance at HOST-CONSOLE internal error
 
@@ -284,10 +284,8 @@ DECLARE_NATIVE(console)
         Copy_Cell(code, ARG(provoke));
         goto provoked;
     }
-    else {
+    else
         Init_Nulled(code);
-        rebRunThrows(metaresult, "'~startup~");  // signal starting
-    }
 
 } run_skin: {  ///////////////////////////////////////////////////////////////
 

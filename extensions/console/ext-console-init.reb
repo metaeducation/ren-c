@@ -119,7 +119,7 @@ export console!: make object! [
     print-result: meth [
         return: <none>
         ^v "Value (done with meta parameter to discern isotope status)"
-            [<opt> <void> pack? raised? any-value!]
+            [any-atom?]
     ][
         ; We use SET instead of a SET-WORD! here to avoid caching the action
         ; name as "last-result", so it should keep the name it had before.
@@ -462,7 +462,7 @@ ext-console-impl: func [
     prior "BLOCK! or GROUP! that last invocation of HOST-CONSOLE requested"
         [<opt> block! group!]
     result "^META result from evaluating PRIOR, or non-quoted error"
-        [<opt> any-value!]
+        [<opt> error! quoted! quasi!]
     resumable "Is the RESUME function allowed to exit this console"
         [logic?]
     skin "Console skin to use if the console has to be launched"
@@ -568,7 +568,7 @@ ext-console-impl: func [
         ; something like that) then whoever broke into the REPL takes
         ; care of that.
         ;
-        assert [result = '~startup~]
+        assert [not result]
         any [
             unset? 'system.console
             not system.console
@@ -577,6 +577,8 @@ ext-console-impl: func [
         ]
         return <prompt>
     ]
+
+    assert [result]  ; all other calls should provide a result
 
     === GATHER DIRECTIVES ===
 
