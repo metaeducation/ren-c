@@ -58,7 +58,7 @@
         assert [b = [<xx>]]
         append b 'z
     )
-    ([] = blockify null)
+    ([] = blockify void)
     ([] = blockify [])
 ]
 
@@ -111,8 +111,7 @@
     ([a b c ^(d e)] = append [a b c] spread blockify '^(d e))
     ([a b c ^d/e] = append [a b c] spread blockify '^d/e)
 
-    ; Enblock test...this offers a cheap way to put the "don't splice"
-    ; instruction onto the value itself.
+    ; Enblock test...
     ;
     ([a b c [d e]] = append [a b c] spread enblock [d e])
     ([a b c (d e)] = append [a b c] spread enblock '(d e))

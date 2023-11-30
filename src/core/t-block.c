@@ -26,22 +26,18 @@
 
 
 //
-//  only*: native [
+//  only*: native [  ; fallen from favor, kept as ONLY* instead of ONLY [1]
 //
 //  {Optimized native for creating a single-element wrapper block}
 //
 //     return: [block!]
-//     value "If NULL, the resulting block will be empty"
-//          [<opt> any-value!]
+//     value "If VOID, the resulting block will be empty"  ; [2]
+//          [<void> element?]
 //  ]
 //
 DECLARE_NATIVE(only_p)  // https://forum.rebol.info/t/1182/11
 //
-// 1. This uses a "singular" array which is the size of a "stub" (8 platform
-//    pointers).  The cell is put in the portion of the stub where tracking
-//    information for a dynamically allocated series would ordinarily be.
-//
-//    Prior to SPLICE and isotopic BLOCK!--when blocks spliced by default--
+// 1. Prior to SPLICE and isotopic GROPU!--when blocks spliced by default--
 //    this was conceived as a replacement for things like APPEND/ONLY, e.g.
 //
 //        >> only [d]
@@ -50,15 +46,22 @@ DECLARE_NATIVE(only_p)  // https://forum.rebol.info/t/1182/11
 //        >> append [a b c] only [d]
 //        == [a b c [d]]  ; pre-isotopic-BLOCK! concept of splice by default
 //
-//    But this has been leapfrogged by making APPEND take ^META and having
-//    SPLICE return isotopic blocks.
+//    Without that purpose, use of the word ONLY here for an optimized
+//    synonym for ENBLOCK is questionable.
+//
+// 2. How useful the VOID-makes-empty-block is (vs. returning null, void, or
+//    failing) is unclear, since there aren't really usage scenarios for this.
+//
+// 3. This uses a "singular" array which is the size of a "stub" (8 platform
+//    pointers).  The cell is put in the portion of the stub where tracking
+//    information for a dynamically allocated series would ordinarily be.
 {
     INCLUDE_PARAMS_OF_ONLY_P;
 
     Value(*) v = ARG(value);
 
-    Array* a = Alloc_Singular(NODE_FLAG_MANAGED);  // semi-efficient [1]
-    if (Is_Nulled(v))
+    Array* a = Alloc_Singular(NODE_FLAG_MANAGED);  // semi-efficient [3]
+    if (Is_Void(v))
         Set_Series_Len(a, 0);  // singulars initialize at length 1
     else
         Copy_Cell(Stub_Cell(a), ARG(value));
@@ -1323,8 +1326,8 @@ REBTYPE(Array)
 //  {If a value isn't already a BLOCK!, enclose it in a block, else return it}
 //
 //      return: [block!]
-//      value "NULL input will produce an empty block"
-//          [<opt> any-value!]
+//      value "VOID input will produce an empty block"
+//          [<void> element?]
 //  ]
 //
 DECLARE_NATIVE(blockify)
@@ -1340,7 +1343,7 @@ DECLARE_NATIVE(blockify)
         NODE_FLAG_MANAGED | ARRAY_MASK_HAS_FILE_LINE
     );
 
-    if (Is_Nulled(v)) {
+    if (Is_Void(v)) {
         // leave empty
     } else {
         Set_Series_Len(a, 1);
@@ -1356,8 +1359,8 @@ DECLARE_NATIVE(blockify)
 //  {If a value isn't already a GROUP!, enclose it in a group, else return it}
 //
 //      return: [group!]
-//      value "NULL input will produce an empty group"
-//          [<opt> any-value!]
+//      value "VOID input will produce an empty group"
+//          [<void> element?]
 //  ]
 //
 DECLARE_NATIVE(groupify)
@@ -1373,7 +1376,7 @@ DECLARE_NATIVE(groupify)
         NODE_FLAG_MANAGED | ARRAY_MASK_HAS_FILE_LINE
     );
 
-    if (Is_Nulled(v)) {
+    if (Is_Void(v)) {
         // leave empty
     } else {
         Set_Series_Len(a, 1);
@@ -1389,8 +1392,8 @@ DECLARE_NATIVE(groupify)
 //  {Enclose a value in a BLOCK!, even if it's already a block}
 //
 //      return: [block!]
-//      value "NULL input will produce an empty block"
-//          [<opt> any-value!]
+//      value "VOID input will produce an empty block"
+//          [<void> element?]
 //  ]
 //
 DECLARE_NATIVE(enblock)
@@ -1404,7 +1407,7 @@ DECLARE_NATIVE(enblock)
         NODE_FLAG_MANAGED | ARRAY_MASK_HAS_FILE_LINE
     );
 
-    if (Is_Nulled(v)) {
+    if (Is_Void(v)) {
         // leave empty
     } else {
         Set_Series_Len(a, 1);
@@ -1420,8 +1423,8 @@ DECLARE_NATIVE(enblock)
 //  {Enclose a value in a GROUP!, even if it's already a group}
 //
 //      return: [group!]
-//      value "NULL input will produce an empty group"
-//          [<opt> any-value!]
+//      value "VOID input will produce an empty group"
+//          [<void> element?]
 //  ]
 //
 DECLARE_NATIVE(engroup)
@@ -1435,7 +1438,7 @@ DECLARE_NATIVE(engroup)
         NODE_FLAG_MANAGED | ARRAY_MASK_HAS_FILE_LINE
     );
 
-    if (Is_Nulled(v)) {
+    if (Is_Void(v)) {
         // leave empty
     } else {
         Set_Series_Len(a, 1);

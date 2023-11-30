@@ -9,7 +9,7 @@
 ; not immutable--other names might be better (ENVELOP) though generic quoting
 ; is a better tool for efficiently putting things in a cheap "container"
 
-([] = only* null)
+([] = only* void)
 ([1] = only* 1)
 ([[1]] = only* only* 1)
 
