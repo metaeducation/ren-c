@@ -682,6 +682,7 @@ modernize-action: function3 [
                         types: copy spec/1
                         replace types 'any-value? [<opt> any-value!]
                         replace types 'element? 'any-value!
+                        replace types 'action? 'action!
                         keep3/only append3 types [
                             <opt> blank!  ; e.g. <maybe> may return "null" blank
                         ]
@@ -750,6 +751,7 @@ modernize-action: function3 [
                     ]
                     replace types 'any-value? [<opt> any-value!]
                     replace types 'element? 'any-value!
+                    replace types 'action? 'action!
                     replace types <variadic> <...>
                     keep3/only types
                     spec: my next
@@ -783,6 +785,14 @@ modernize-action: function3 [
 
 func: adapt :func3 [set [spec body] modernize-action spec body]
 function: adapt :function3 [set [spec body] modernize-action spec body]
+lambda: func3 [spec body] [
+    set [spec body] modernize-action spec body
+    if not tail? next find spec <local> [
+        fail "Lambda bootstrap doesn't support <local>"
+    ]
+    take find spec <local>
+    make action! compose3/only [(spec) (body)]  ; gets no RETURN
+]
 
 ; Bootstrap MATCH was designed very strangely as a variadic for some since
 ; dropped features.  But it seems to not be able to be CHAIN'd or ADAPTed

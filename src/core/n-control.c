@@ -1623,7 +1623,7 @@ DECLARE_NATIVE(catch)
 //
 //      return: []  ; !!! notation for divergent function?
 //      ^value "Value returned from catch"
-//          [<opt> <void> pack? raised? any-value!]
+//          [any-atom?]
 //      /name "Throws to a named catch"
 //          [word! frame! object!]
 //  ]

@@ -239,19 +239,7 @@ for-each-datatype: func [
                 make: make*
                 mold: mold*
             ]
-            completed*: false
-            running*: false
-            while [true] [  ; must be in loop for BREAK or CONTINUE
-                if running* [  ; must have had a CONTINUE
-                    completed*: true
-                    break
-                ]
-                running*: true
-                do body
-                completed*: true
-                break
-            ]
-            if not completed* [return null]  ; must have asked to BREAK
+            repeat 1 body else [return null]  ; give body BREAK/CONTINUE
         )]
         (heart*: heart* + 1)
     ]] else [
