@@ -275,6 +275,7 @@
 %parse/examples/red-replace.parse.test.reb
 %parse/examples/reword.parse.test.reb
 %parse/examples/split.parse.test.reb
+%parse/examples/topaz-expression.parse.test.reb
 %parse/examples/tracked-word.parse.test.reb
 %parse/examples/trim.parse.test.reb
 %parse/examples/ugly-parse.parse.test.reb
