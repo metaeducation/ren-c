@@ -172,18 +172,21 @@ bool Typecheck_Atom_Core(
 
     const Cell* tail;
     const Cell* item;
+    Specifier* derived;
     bool match_all;
 
     switch (VAL_TYPE(tests)) {
       case REB_BLOCK:
       case REB_TYPE_BLOCK:
         item = Cell_Array_At(&tail, tests);
+        derived = Derive_Specifier(tests_specifier, tests);
         match_all = false;
         break;
 
       case REB_GROUP:
       case REB_TYPE_GROUP:
         item = Cell_Array_At(&tail, tests);
+        derived = Derive_Specifier(tests_specifier, tests);
         match_all = true;
         break;
 
@@ -193,12 +196,14 @@ bool Typecheck_Atom_Core(
             return true;  // implicitly all is permitted
         item = Array_Head(array);
         tail = Array_Tail(array);
+        derived = SPECIFIED;
         match_all = false;
         break; }
 
       case REB_TYPE_WORD:
         item = tests;
         tail = tests + 1;
+        derived = tests_specifier;
         match_all = true;
         break;
 
@@ -236,7 +241,7 @@ bool Typecheck_Atom_Core(
         const Cell* test;
         if (VAL_TYPE_UNCHECKED(item) == REB_WORD) {
             label = Cell_Word_Symbol(item);
-            test = Lookup_Word_May_Fail(item, tests_specifier);
+            test = Lookup_Word_May_Fail(item, derived);
             kind = VAL_TYPE(test);  // e.g. TYPE-BLOCK! <> BLOCK!
         }
         else {
