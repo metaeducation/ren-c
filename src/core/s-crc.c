@@ -169,10 +169,13 @@ uint32_t Hash_Value(const Cell* cell)
             // of bit fields.  This shift is done to account for the number
             // of bits in each field, giving a compatible effect.
             //
-            REBYMD d = VAL_DATE(cell);
+            unsigned year = VAL_YEAR(cell);  // 16 bits
+            unsigned month = VAL_MONTH(cell);  // 4 bits
+            unsigned day = VAL_DAY(cell);  // 5 bits
+            int zone = VAL_ZONE(cell);  // 7 bits
+
             hash ^= (
-                ((((((d.year << 16) + d.month) << 4) + d.day) << 5)
-                    + d.zone) << 7
+                ((((((year << 16) + month) << 4) + day) << 5) + zone) << 7
             );
         }
         break;

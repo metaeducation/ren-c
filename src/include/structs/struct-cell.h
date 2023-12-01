@@ -444,7 +444,10 @@ struct Reb_Character_Extra { Codepoint codepoint; };  // see %sys-char.h
 
 struct Reb_Date_Extra  // see %sys-time.h
 {
-    REBYMD ymdz;  // month/day/year/zone (time payload *may* hold nanoseconds)
+    unsigned year:16;
+    unsigned month:4;
+    unsigned day:5;
+    int zone:7; // +/-15:00 res: 0:15
 };
 
 struct Reb_Parameter_Extra  // see %sys-parameter.h

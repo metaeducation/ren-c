@@ -21,8 +21,8 @@
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // The same payload is used for TIME! and DATE!.  The extra bits needed by
-// DATE! (as REBYMD) fit into 32 bits, so can live in the ->extra field,
-// which is the size of a platform pointer.
+// DATE! fit into 32 bits, so can live in the ->extra field, which is the
+// size of a platform pointer.
 //
 
 
@@ -33,32 +33,30 @@
 //=////////////////////////////////////////////////////////////////////////=//
 
 #if (! CPLUSPLUS_11)
-    #define VAL_DATE(v) \
-        EXTRA(Date, (v)).ymdz
+    #define Ensure_Date(v) \
+        (v)
 #else
-    // C++ has reference types--use them and add extra assert it's a date
-
-    INLINE const REBYMD & VAL_DATE(NoQuote(const Cell*) v) {
+    INLINE NoQuote(const Cell*) Ensure_Date(NoQuote(const Cell*) v) {
         assert(Cell_Heart(v) == REB_DATE);
-        return EXTRA(Date, v).ymdz;
+        return v;
     }
 
-    INLINE REBYMD & VAL_DATE(Cell* v) {
+    INLINE Cell* Ensure_Date(Cell* v) {
         assert(VAL_TYPE(v) == REB_DATE);
-        return EXTRA(Date, v).ymdz; // const reference
+        return v;
     }
 #endif
 
 #define MAX_YEAR 0x3fff
 
 #define VAL_YEAR(v) \
-    VAL_DATE(v).year
+    EXTRA(Date, Ensure_Date(v)).year
 
 #define VAL_MONTH(v) \
-    VAL_DATE(v).month
+    EXTRA(Date, Ensure_Date(v)).month
 
 #define VAL_DAY(v) \
-    VAL_DATE(v).day
+    EXTRA(Date, Ensure_Date(v)).day
 
 #define ZONE_MINS 15
 
@@ -68,8 +66,8 @@
 #define MAX_ZONE \
     (15 * (60 / ZONE_MINS))
 
-// All dates have REBYMD information in their ->extra field, but not all
-// of them also have associated time information.  This value for the nano
+// All dates have year/month/day information in their ->extra field, but not
+// all of them also have associated time information.  This value for the nano
 // means there is no time.
 //
 #define NO_DATE_TIME INT64_MIN
@@ -83,7 +81,7 @@ INLINE bool Does_Date_Have_Time(NoQuote(const Cell*) v)
 {
     assert(Cell_Heart(v) == REB_DATE);
     if (PAYLOAD(Time, v).nanoseconds == NO_DATE_TIME) {
-        assert(VAL_DATE(v).zone == NO_DATE_ZONE);
+        assert(EXTRA(Date, v).zone == NO_DATE_ZONE);
         return false;
     }
     return true;
@@ -92,16 +90,40 @@ INLINE bool Does_Date_Have_Time(NoQuote(const Cell*) v)
 INLINE bool Does_Date_Have_Zone(NoQuote(const Cell*) v)
 {
     assert(Cell_Heart(v) == REB_DATE);
-    if (VAL_DATE(v).zone == NO_DATE_ZONE)  // out of band of 7-bit field
+    if (EXTRA(Date, v).zone == NO_DATE_ZONE)  // out of band of 7-bit field
         return false;
     assert(PAYLOAD(Time, v).nanoseconds != NO_DATE_TIME);
     return true;
 }
 
-INLINE int VAL_ZONE(NoQuote(const Cell*) v) {
-    assert(Does_Date_Have_Zone(v));
-    return VAL_DATE(v).zone;
-}
+#if (! CPLUSPLUS_11) || (! DEBUG)
+    #define VAL_ZONE(v) \
+        EXTRA(Date, Ensure_Date(v)).zone
+#else
+    template<typename TP>
+    struct ZoneHolder {
+        typedef typename std::remove_pointer<TP>::type T;
+        T* cell;
+
+        ZoneHolder(T* cell) : cell (cell)
+          { assert(Is_Date(cell)); }
+
+        operator int () {  // stop accidental reads of NO_DATE_ZONE
+            assert(EXTRA(Date, cell).zone != NO_DATE_ZONE);
+            return EXTRA(Date, cell).zone;
+        }
+
+        template<
+            typename U = T,
+            typename std::enable_if<not std::is_const<U>::value, int>::type = 0
+        >
+        void operator=(int zone) {  // zone writes allow NO_DATE_ZONE
+            EXTRA(Date, cell).zone = zone;
+        }
+
+    };
+    #define VAL_ZONE(v) ZoneHolder<decltype(v)>{v}
+#endif
 
 
 //=////////////////////////////////////////////////////////////////////////=//

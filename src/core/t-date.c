@@ -193,17 +193,15 @@ static REBLEN Month_Length(REBLEN month, REBLEN year)
 // Given a year, month and day, return the number of days since the
 // beginning of that year.
 //
-REBLEN Julian_Date(REBYMD date)
+REBLEN Julian_Date(NoQuote(const Cell*) date)
 {
-    REBLEN days;
+    REBLEN days = 0;
+
     REBLEN i;
+    for (i = 0; i < cast(REBLEN, VAL_MONTH(date) - 1); i++)
+        days += Month_Length(i, VAL_YEAR(date));
 
-    days = 0;
-
-    for (i = 0; i < cast(REBLEN, date.month - 1); i++)
-        days += Month_Length(i, date.year);
-
-    return date.day + days;
+    return VAL_DAY(date) + days;
 }
 
 
@@ -212,73 +210,67 @@ REBLEN Julian_Date(REBYMD date)
 //
 // Calculate the (signed) difference in days between two dates.
 //
-REBINT Days_Between_Dates(const REBVAL *a, const REBVAL *b)
+REBINT Days_Between_Dates(const REBVAL *a_in, const REBVAL *b_in)
 {
-    if (Does_Date_Have_Time(a) != Does_Date_Have_Time(b))
-        fail (Error_Invalid_Compare_Raw(a, b));
+    if (Does_Date_Have_Time(a_in) != Does_Date_Have_Time(b_in))
+        fail (Error_Invalid_Compare_Raw(a_in, b_in));
 
-    DECLARE_STABLE (utc_a);
-    DECLARE_STABLE (utc_b);
+    if (Does_Date_Have_Zone(a_in) != Does_Date_Have_Zone(b_in))
+        fail (Error_Invalid_Compare_Raw(a_in, b_in));
 
-    if (Does_Date_Have_Zone(a) != Does_Date_Have_Zone(b))
-        fail (Error_Invalid_Compare_Raw(a, b));
+    DECLARE_STABLE (a);
+    DECLARE_STABLE (b);
+    Copy_Cell(a, a_in);
+    Copy_Cell(b, b_in);
 
     if (Does_Date_Have_Zone(a)) {
-        Copy_Cell(utc_a, a);
-        Copy_Cell(utc_b, b);
-
-        Adjust_Date_UTC(utc_a);
-        Adjust_Date_UTC(utc_b);
-
-        a = utc_a;
-        b = utc_b;
+        Adjust_Date_UTC(a);
+        Adjust_Date_UTC(b);
     }
-
-    REBYMD d1 = VAL_DATE(a);
-    REBYMD d2 = VAL_DATE(b);
 
     REBINT sign = 1;
 
-    if (d1.year < d2.year)
+    if (VAL_YEAR(a) < VAL_YEAR(b))
         sign = -1;
-    else if (d1.year == d2.year) {
-        if (d1.month < d2.month)
+    else if (VAL_YEAR(a) == VAL_YEAR(b)) {
+        if (VAL_MONTH(a) < VAL_MONTH(b))
             sign = -1;
-        else if (d1.month == d2.month) {
-            if (d1.day < d2.day)
+        else if (VAL_MONTH(a) == VAL_MONTH(b)) {
+            if (VAL_DAY(a) < VAL_DAY(b))
                 sign = -1;
-            else if (d1.day == d2.day)
+            else if (VAL_DAY(a) == VAL_DAY(b))
                 return 0;
         }
     }
 
     if (sign == -1) {
-        REBYMD tmp = d1;
-        d1 = d2;
-        d2 = tmp;
+        DECLARE_STABLE (tmp);
+        Copy_Cell(tmp, a);
+        Copy_Cell(a, b);
+        Copy_Cell(b, tmp);
     }
 
     // if not same year, calculate days to end of month, year and
     // days in between years plus days in end year
     //
-    if (d1.year > d2.year) {
-        REBLEN days = Month_Length(d2.month-1, d2.year) - d2.day;
+    if (VAL_YEAR(a) > VAL_YEAR(b)) {
+        REBLEN days = Month_Length(VAL_MONTH(b) - 1, VAL_YEAR(b)) - VAL_DAY(b);
 
         REBLEN m;
-        for (m = d2.month; m < 12; m++)
-            days += Month_Length(m, d2.year);
+        for (m = VAL_MONTH(b); m < 12; m++)
+            days += Month_Length(m, VAL_YEAR(b));
 
         REBLEN y;
-        for (y = d2.year + 1; y < d1.year; y++) {
+        for (y = VAL_YEAR(b) + 1; y < VAL_YEAR(a); y++) {
             days += (((y % 4) == 0) and  // divisible by four is a leap year
                 (((y % 100) != 0) or  // except when divisible by 100
                 ((y % 400) == 0)))  // but not when divisible by 400
                 ? 366u : 365u;
         }
-        return sign * (REBINT)(days + Julian_Date(d1));
+        return sign * (REBINT)(days + Julian_Date(a));
     }
 
-    return sign * (REBINT)(Julian_Date(d1) - Julian_Date(d2));
+    return sign * (REBINT)(Julian_Date(a) - Julian_Date(b));
 }
 
 
@@ -291,9 +283,9 @@ REBLEN Week_Day(const REBVAL *date)
 {
     DECLARE_STABLE (year1);
     Copy_Cell(year1, date);
-    VAL_DATE(year1).year = 0;
-    VAL_DATE(year1).month = 1;
-    VAL_DATE(year1).day = 1;
+    VAL_YEAR(year1) = 0;
+    VAL_MONTH(year1) = 1;
+    VAL_DAY(year1) = 1;
 
     return ((Days_Between_Dates(date, year1) + 5) % 7) + 1;
 }
@@ -325,13 +317,18 @@ void Normalize_Time(REBI64 *sp, REBLEN *dp)
 
 
 //
-//  Normalize_Date: C
+//  Init_Normalized_Date: C
 //
 // Given a year, month and day, normalize and combine to give a new
 // date value.
 //
-static REBYMD Normalize_Date(REBINT day, REBINT month, REBINT year, REBINT tz)
-{
+static Value(*) Init_Normalized_Date(
+    Cell* out,
+    REBINT day,
+    REBINT month,
+    REBINT year,
+    REBINT tz
+){
     // First we normalize the month to get the right year
 
     if (month < 0) {
@@ -366,12 +363,14 @@ static REBYMD Normalize_Date(REBINT day, REBINT month, REBINT year, REBINT tz)
     if (year < 0 or year > MAX_YEAR)
         fail (Error_Type_Limit_Raw(Datatype_From_Kind(REB_DATE)));
 
-    REBYMD dr;
-    dr.year = year;
-    dr.month = month + 1;
-    dr.day = day + 1;
-    dr.zone = tz;
-    return dr;
+    Reset_Unquoted_Header_Untracked(out, CELL_MASK_DATE);
+    EXTRA(Date, out).year = year;
+    EXTRA(Date, out).month = month + 1;
+    EXTRA(Date, out).day = day + 1;
+    EXTRA(Date, out).zone = tz;
+    PAYLOAD(Time, out).nanoseconds = NO_DATE_TIME;
+
+    return cast(Value(*), out);
 }
 
 
@@ -395,8 +394,6 @@ void Adjust_Date_Zone_Core(Cell* d, int zone)
 
     nano += VAL_NANO(d);
 
-    PAYLOAD(Time, d).nanoseconds = (nano + TIME_IN_DAY) % TIME_IN_DAY;
-
     REBLEN n = VAL_DAY(d) - 1;
 
     if (nano < 0)
@@ -404,13 +401,13 @@ void Adjust_Date_Zone_Core(Cell* d, int zone)
     else if (nano >= TIME_IN_DAY)
         ++n;
     else {
-        VAL_DATE(d).zone = zone;  // usually done by Normalize
+        VAL_ZONE(d) = zone;  // usually done by Normalize
+        PAYLOAD(Time, d).nanoseconds = (nano + TIME_IN_DAY) % TIME_IN_DAY;
         return;
     }
 
-    VAL_DATE(d) = Normalize_Date(
-        n, VAL_MONTH(d) - 1, VAL_YEAR(d), zone
-    );
+    Init_Normalized_Date(d, n, VAL_MONTH(d) - 1, VAL_YEAR(d), zone);
+    PAYLOAD(Time, d).nanoseconds = (nano + TIME_IN_DAY) % TIME_IN_DAY;
 }
 
 
@@ -428,10 +425,10 @@ void Fold_Zone_Into_Date(Cell* d)
 {
     if (Does_Date_Have_Zone(d)) {
         int zone = VAL_ZONE(d);
-        VAL_DATE(d).zone = NO_DATE_ZONE;
+        VAL_ZONE(d) = NO_DATE_ZONE;
         if (zone != 0)
             Adjust_Date_Zone_Core(d, - zone);
-        VAL_DATE(d).zone = NO_DATE_ZONE;
+        VAL_ZONE(d) = NO_DATE_ZONE;
     }
 }
 
@@ -452,17 +449,17 @@ void Adjust_Date_UTC(Cell* d)
 {
     if (not Does_Date_Have_Time(d)) {
         PAYLOAD(Time, d).nanoseconds = 0;
-        VAL_DATE(d).zone = 0;
+        VAL_ZONE(d) = 0;
     }
     else if (not Does_Date_Have_Zone(d)) {
-        VAL_DATE(d).zone = 0;
+        VAL_ZONE(d) = 0;
     }
     else {
         int zone = VAL_ZONE(d);
         if (zone != 0) {
-            VAL_DATE(d).zone = NO_DATE_ZONE;
+            VAL_ZONE(d) = NO_DATE_ZONE;
             Adjust_Date_Zone_Core(d, - zone);
-            VAL_DATE(d).zone = 0;
+            VAL_ZONE(d) = 0;
         }
     }
 }
@@ -620,8 +617,7 @@ Bounce MAKE_Date(
     if (secs != NO_DATE_TIME)
         Normalize_Time(&secs, &day);
 
-    Reset_Unquoted_Header_Untracked(TRACK(OUT), CELL_MASK_DATE);
-    VAL_DATE(OUT) = Normalize_Date(day, month, year, tz);
+    Init_Normalized_Date(OUT, day, month, year, tz);
     PAYLOAD(Time, OUT).nanoseconds = secs;
 
     Adjust_Date_UTC(OUT);
@@ -744,7 +740,7 @@ void Pick_Or_Poke_Date(
           case SYM_DATE: {
             Copy_Cell(out, adjusted);  // want the adjusted date
             PAYLOAD(Time, out).nanoseconds = NO_DATE_TIME;  // with no time
-            assert(VAL_DATE(out).zone == NO_DATE_ZONE);  // time zone removed
+            assert(not Does_Date_Have_Zone(out));  // time zone removed
             break; }
 
           case SYM_WEEKDAY:
@@ -753,7 +749,7 @@ void Pick_Or_Poke_Date(
 
           case SYM_JULIAN:
           case SYM_YEARDAY:
-            Init_Integer(out, cast(REBINT, Julian_Date(VAL_DATE(adjusted))));
+            Init_Integer(out, cast(REBINT, Julian_Date(adjusted)));
             break;
 
           case SYM_UTC: {
@@ -764,7 +760,7 @@ void Pick_Or_Poke_Date(
             // with the time zone component set to 0:00
             //
             Move_Cell(out, v);
-            VAL_DATE(out).zone = 0;  // GMT
+            VAL_ZONE(out) = 0;  // GMT
             break; }
 
           case SYM_HOUR:
@@ -963,10 +959,10 @@ void Pick_Or_Poke_Date(
         //
         // https://forum.rebol.info/t/240/
         //
-        VAL_DATE(v).year = year;
-        VAL_DATE(v).month = month;
-        VAL_DATE(v).day = day;
-        VAL_DATE(v).zone = NO_DATE_ZONE;  // to be adjusted
+        VAL_YEAR(v) = year;
+        VAL_MONTH(v) = month;
+        VAL_DAY(v) = day;
+        VAL_ZONE(v) = NO_DATE_ZONE;  // to be adjusted
         PAYLOAD(Time, v).nanoseconds = nano;  // may be NO_DATE_TIME
 
         // This is not a canon stored date, so we have to take into account
@@ -988,7 +984,6 @@ REBTYPE(Date)
 
     Option(SymId) id = Symbol_Id(verb);
 
-    REBYMD date = VAL_DATE(v);
     REBLEN day = VAL_DAY(v) - 1;
     REBLEN month = VAL_MONTH(v) - 1;
     REBLEN year = VAL_YEAR(v);
@@ -1100,7 +1095,7 @@ REBTYPE(Date)
                 //
                 Set_Random(
                     (cast(REBI64, year) << 48)
-                    + (cast(REBI64, Julian_Date(date)) << 32)
+                    + (cast(REBI64, Julian_Date(v)) << 32)
                     + secs
                 );
                 return NONE;
@@ -1116,9 +1111,6 @@ REBTYPE(Date)
                 secs = Random_Range(TIME_IN_DAY, secure);
 
             goto fix_date; }
-
-          case SYM_ABSOLUTE:
-            goto set_date;
 
           case SYM_DIFFERENCE: {
             INCLUDE_PARAMS_OF_DIFFERENCE;
@@ -1155,19 +1147,17 @@ REBTYPE(Date)
     Normalize_Time(&secs, &day);
 
   fix_date:
-    date = Normalize_Date(
+    Init_Normalized_Date(
+        OUT,
         day,
         month,
         year,
-        Does_Date_Have_Zone(v) ? VAL_ZONE(v) : 0
+        Does_Date_Have_Zone(v) ? cast(int, VAL_ZONE(v)) : 0
     );
 
-  set_date:
-    Reset_Unquoted_Header_Untracked(TRACK(OUT), CELL_MASK_DATE);
-    VAL_DATE(OUT) = date;
     PAYLOAD(Time, OUT).nanoseconds = secs; // may be NO_DATE_TIME
     if (secs == NO_DATE_TIME)
-        VAL_DATE(OUT).zone = NO_DATE_ZONE;
+        VAL_ZONE(OUT) = NO_DATE_ZONE;
     return OUT;
 }
 
@@ -1207,9 +1197,9 @@ DECLARE_NATIVE(make_date_ymdsnz)
     VAL_DAY(OUT) = VAL_INT32(ARG(day));
 
     if (Is_Nulled(ARG(zone)))
-        VAL_DATE(OUT).zone = NO_DATE_ZONE;
+        VAL_ZONE(OUT) = NO_DATE_ZONE;
     else
-        VAL_DATE(OUT).zone = VAL_INT32(ARG(zone)) / ZONE_MINS;
+        VAL_ZONE(OUT) = VAL_INT32(ARG(zone)) / ZONE_MINS;
 
     REBI64 nano = Is_Nulled(ARG(nano)) ? 0 : VAL_INT64(ARG(nano));
     PAYLOAD(Time, OUT).nanoseconds

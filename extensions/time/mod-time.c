@@ -80,13 +80,13 @@ DECLARE_NATIVE(now)
         // Say it has a time zone component, but it's 0:00 (as opposed
         // to saying it has no time zone component at all?)
         //
-        VAL_DATE(OUT).zone = 0;
+        VAL_ZONE(OUT) = 0;
     }
     else if (REF(local)) {
         //
         // Clear out the time zone flag
         //
-        VAL_DATE(OUT).zone = NO_DATE_ZONE;
+        VAL_ZONE(OUT) = NO_DATE_ZONE;
     }
     else {
         if (
@@ -106,7 +106,7 @@ DECLARE_NATIVE(now)
 
     if (REF(date)) {
         PAYLOAD(Time, OUT).nanoseconds = NO_DATE_TIME;
-        VAL_DATE(OUT).zone = NO_DATE_ZONE;
+        VAL_ZONE(OUT) = NO_DATE_ZONE;
     }
     else if (REF(time)) {
         HEART_BYTE(OUT) = REB_TIME;
@@ -119,7 +119,7 @@ DECLARE_NATIVE(now)
     else if (REF(weekday))
         n = Week_Day(stable_OUT);
     else if (REF(yearday))
-        n = Julian_Date(VAL_DATE(OUT));
+        n = Julian_Date(stable_OUT);
     else if (REF(year))
         n = VAL_YEAR(OUT);
     else if (REF(month))

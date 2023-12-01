@@ -949,11 +949,11 @@ const Byte* Scan_Date(
     VAL_YEAR(out) = year;
     VAL_MONTH(out) = month;
     VAL_DAY(out) = day;
-    VAL_DATE(out).zone = NO_DATE_ZONE;  // Adjust_Date_Zone() requires this
+    VAL_ZONE(out) = NO_DATE_ZONE;  // Adjust_Date_Zone() requires this
 
     Adjust_Date_Zone_Core(out, tz);
 
-    VAL_DATE(out).zone = tz;
+    VAL_ZONE(out) = tz;
 
     return cp;
 }
