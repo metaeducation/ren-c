@@ -2587,8 +2587,8 @@ DECLARE_INTRINSIC(blackhole_q)
 //
 //  {Make the heavy form of NULL or VOID (passes through all other values)}
 //
-//      return: [<void> <opt> any-value!]
-//      ^optional [<opt> <void> pack? any-value!]
+//      return: [any-value? pack?]
+//      ^optional [any-value? pack?]
 //  ]
 //
 DECLARE_NATIVE(heavy) {
@@ -2611,17 +2611,31 @@ DECLARE_NATIVE(heavy) {
 //
 //  {Make the light form of NULL or VOID (passes through all other values)}
 //
-//      return: [<opt> any-value!]
-//      ^optional [<opt> <void> pack? any-value!]
+//      return: [any-value? pack?]
+//      ^value [any-value? pack?]
 //  ]
 //
 DECLARE_NATIVE(light) {
     INCLUDE_PARAMS_OF_LIGHT;
 
-    Meta_Unquotify_Decayed(ARG(optional));
-    Move_Cell(OUT, ARG(optional));
+    Value(*) v = ARG(value);
 
-    return OUT;
+    if (not Is_Meta_Of_Pack(v))
+        return UNMETA(v);
+
+    Length len;
+    const Cell* first = Cell_Array_Len_At(&len, v);
+
+    if (len != 1)
+        return UNMETA(v);
+
+    if (Is_Meta_Of_Void(first))
+        return VOID;
+
+    if (Is_Meta_Of_Null(first))
+        return nullptr;
+
+    return UNMETA(v);
 }
 
 

@@ -34,8 +34,8 @@
 ; The specific role of ~_~ isotopes is to be reactive with THEN and not
 ; ELSE, so that a taken branch may be purposefully NULL.
 ;
-; HEAVY is probably not the best name for an operator that creates blank
-; isotopes out of NULL and passes everything else through.  But it's what it
+; HEAVY is probably not the best name for an operator that creates packs
+; out of null and void and passes everything else through.  But it's what it
 ; was called, in line with the idea of "heavy isotopes".
 [
     (null' = ^ null)
@@ -47,6 +47,9 @@
 
     (304 = (null then [1020] else [304]))
     (1020 = (heavy null then [1020] else [304]))
+
+    (null' = meta light heavy null)
+    (void' = meta light heavy void)
 ]
 
 ; Conditionals return VOID on failure, and ~_~ isotope on a branch that
