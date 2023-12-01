@@ -7,7 +7,7 @@
 log: :elide
 
 switch2: func [
-    value [<opt> <void> any-value!]
+    value [any-value?]
     cases [block!]
     /multi
     <local> more found result' condition branch

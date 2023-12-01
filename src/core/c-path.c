@@ -111,13 +111,13 @@ Value(*) Try_Init_Any_Sequence_At_Arraylike_Core(
 //
 //  pick: native [
 //
-//  {Perform a path picking operation, same as `:(:location)/(:picker)`}
+//  {Perform a path picking operation, same as `:(location).(picker)`}
 //
-//      return: [<opt> any-value!]
-//          {Picked value, or null if picker can't fulfill the request}
-//      location [any-value!]
-//      picker [<maybe> any-value!]
-//          {Index offset, symbol, or other value to use as index}
+//      return: "Picked value, or null if picker can't fulfill the request"
+//          [any-value?]
+//      location [element?]
+//      picker "Index offset, symbol, or other value to use as index"
+//          [<maybe> element? logic?]
 //  ]
 //
 DECLARE_NATIVE(pick)
@@ -127,7 +127,7 @@ DECLARE_NATIVE(pick)
 //
 //     [any-series! map! gob! pair! date! time! tuple! bitset! port! varargs!]
 //
-// In Ren-C, PICK is rethought to use the same dispatch mechanic as paths,
+// In Ren-C, PICK is rethought to use the same dispatch mechanic as tuples,
 // to cut down on the total number of operations the system has to define.
 {
     INCLUDE_PARAMS_OF_PICK;
@@ -146,23 +146,22 @@ DECLARE_NATIVE(pick)
 //
 //  poke: native [
 //
-//  {Perform a path poking operation, same as `(:location)/(:picker): :value`}
+//  {Perform a path poking operation, same as `(location).(picker): :value`}
 //
-//      return: [<opt> any-value!]
-//          {Same as value}
-//      location [any-value!]
-//          {(modified)}
-//      picker [<maybe> any-value!]
-//          {Index offset, symbol, or other value to use as index}
-//      value [<opt> any-value!]
-//          {The new value}
+//      return: "Same as poked value"
+//          [any-value?]
+//      location "(modified)"
+//          [element?]
+//      picker "Index offset, symbol, or other value to use as index"
+//          [<maybe> element?]
+//      value [any-value?]
 //      /immediate "Allow modification even if it will not mutate location"
 //  ]
 //
 DECLARE_NATIVE(poke)
 //
 // As with PICK, POKE is changed in Ren-C from its own action to "whatever
-// path-setting (now path-poking) would do".
+// tuple-setting (now tuple-poking) would do".
 //
 // !!! Frame compatibility is assumed here with PICK-POKE*, for efficiency.
 {

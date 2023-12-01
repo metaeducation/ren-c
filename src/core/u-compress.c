@@ -384,7 +384,7 @@ Byte* Decompress_Alloc_Core(
 //      data "Data to encode (using UTF-8 if TEXT!)"
 //          [binary! text!]
 //      /part "Length of data"
-//          [any-value!]
+//          [integer! binary! text!]
 //  ]
 //
 DECLARE_NATIVE(checksum_core)
@@ -456,7 +456,7 @@ DECLARE_NATIVE(checksum_core)
 //      data "If text, it will be UTF-8 encoded"
 //          [binary! text!]
 //      /part "Length of data (elements)"
-//          [any-value!]
+//          [integer! binary! text!]
 //      /envelope "ZLIB (adler32, no size) or GZIP (crc32, uncompressed size)"
 //          [word!]
 //  ]
@@ -505,7 +505,7 @@ DECLARE_NATIVE(deflate)
 //      return: [binary!]
 //      data [binary! handle!]
 //      /part "Length of compressed data (must match end marker)"
-//          [any-value!]
+//          [integer! binary!]
 //      /max "Error out if result is larger than this"
 //          [integer!]
 //      /envelope "ZLIB, GZIP, or DETECT (http://stackoverflow.com/a/9213826)"

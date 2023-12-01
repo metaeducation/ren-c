@@ -308,7 +308,7 @@ DECLARE_NATIVE(without)
 //
 //  {Defines words local to a block (See also: LET)}
 //
-//      return: [<opt> <void> any-value!]
+//      return: [any-value?]
 //      vars "Local word(s) to the block"
 //          [block! word!]
 //      body "Block to evaluate"
@@ -507,24 +507,22 @@ DECLARE_INTRINSIC(lit_path_q)
 
 
 //
-//  any-inert?: native [
+//  any-inert?: native/intrinsic [
 //
-//  "Test if a value type is inert"
+//  "Test if a value type always produces itself in the evaluator"
 //
 //      return: [logic?]
-//      optional [<opt> any-value!]
+//      value
 //  ]
 //
-DECLARE_NATIVE(any_inert_q)
-//
-// This could be done via a typeset bit the way ANY-BLOCK! and other tests are
-// done.  However, the types are organized to make this particular test fast.
+DECLARE_INTRINSIC(any_inert_q)
 {
-    INCLUDE_PARAMS_OF_ANY_INERT_Q;
+    UNUSED(phase);
 
-    REBVAL *v = ARG(optional);
-
-    return Init_Logic(OUT, not Is_Nulled(v) and Any_Inert(v));
+    Init_Logic(
+        out,
+        not Is_Void(arg) and not Is_Isotope(arg) and Any_Inert(arg)
+    );
 }
 
 
@@ -1065,7 +1063,7 @@ bool Get_Path_Push_Refinements_Throws(
 //  {Produce an invariant array structure for doing multiple GET or SET from}
 //
 //      return: [the-word! the-tuple! the-block!]
-//      @value [<opt> <void> any-value!]
+//      @value [any-value?]
 //      source [any-word! any-sequence! any-group!]
 //  ]
 //
@@ -1097,9 +1095,9 @@ DECLARE_NATIVE(resolve)
 //
 //  {Gets the value of a word or path, or block of words/paths}
 //
-//      return: [<opt> <void> any-value!]
+//      return: [any-value?]
 //      source "Word or tuple to get, or block of PICK steps (see RESOLVE)"
-//          [<void> any-word! any-sequence! any-group! the-block!]
+//          [<maybe> any-word! any-sequence! any-group! the-block!]
 //      /any "Do not error on unset words"
 //      /groups "Allow GROUP! Evaluations"
 //  ]
@@ -1456,11 +1454,11 @@ void Set_Var_May_Fail(
 //
 //  {Sets a word or path to specified value (see also: UNPACK)}
 //
-//      return: "Same value as input"
-//          [<opt> <void> any-value!]
+//      return: "Same value as input (pass through if target is void)"
+//          [any-value?]
 //      target "Word or tuple, or calculated sequence steps (from GET)"
 //          [<void> any-word! any-sequence! any-group! the-block!]
-//      ^value [<opt> <void> raised? any-value!]  ; tunnels failure
+//      ^value [raised? any-value?]  ; tunnels failure
 //      /any "Do not error on unset words"
 //      /groups "Allow GROUP! Evaluations"
 //  ]
@@ -1509,8 +1507,8 @@ DECLARE_NATIVE(set)
 //
 //  {Suppress failure from raised errors or VOID, by returning NULL}
 //
-//      return: [<opt> any-value!]
-//      ^optional [<opt> <void> raised? any-value!]
+//      return: [any-value?]
+//      ^optional [any-atom?]  ; e.g. TRY on a pack returns the pack
 //  ]
 //
 DECLARE_NATIVE(try)
@@ -1690,8 +1688,8 @@ DECLARE_NATIVE(semiquoted_q)
 //
 //  {Returns input value (https://en.wikipedia.org/wiki/Identity_function)}
 //
-//      return: [<opt> <void> any-value!]
-//      ^value [<opt> <void> any-value!]
+//      return: [any-value? pack?]
+//      ^value [any-value? pack?]
 //  ]
 //
 DECLARE_NATIVE(identity) // sample uses: https://stackoverflow.com/q/3136338
@@ -1738,7 +1736,7 @@ DECLARE_NATIVE(free)
 //
 //      return: "Returns false if value wouldn't be FREEable (e.g. LOGIC!)"
 //          [logic?]
-//      value [<opt> <void> any-value!]
+//      value [any-value?]
 //  ]
 //
 DECLARE_NATIVE(free_q)
@@ -2302,7 +2300,7 @@ DECLARE_NATIVE(as)
 //      {AS TEXT! variant that may disallow CR LF sequences in BINARY! alias}
 //
 //      return: [<opt> text!]
-//      value [<maybe> any-value!]
+//      value [<maybe> any-value?]
 //      /strict "Don't allow CR LF sequences in the alias"
 //  ]
 //
@@ -2659,7 +2657,7 @@ DECLARE_NATIVE(nihil) {
 //
 //  "Handle unstable isotopes like assignments do, pass through other values"
 //
-//      return: [<opt> any-value!]
+//      return: [any-value?]
 //      atom
 //  ]
 //
@@ -2674,7 +2672,7 @@ DECLARE_INTRINSIC(decay)
 {
     UNUSED(phase);
 
-    Assert_Cell_Stable(arg);  // paranoid check...Value(*) should always be stable
+    Assert_Cell_Stable(arg);  // Value(*) should always be stable
     Copy_Cell(out, arg);  // pre-decayed by non-^META argument [1]
 }
 
@@ -2712,8 +2710,8 @@ DECLARE_NATIVE(reify)
 //
 //  "Make quasiforms into their isotopes, pass thru other values"
 //
-//      return: [any-value!]
-//      value [<opt> any-value!]
+//      return: [any-value?]
+//      value [any-value?]
 //  ]
 //
 DECLARE_NATIVE(degrade)
@@ -2737,7 +2735,7 @@ DECLARE_NATIVE(degrade)
 //  "Make isotopes into plain forms, pass thru other values"
 //
 //      return: [element?]
-//      value [<opt> any-value!]
+//      value [any-value?]
 //  ]
 //
 DECLARE_NATIVE(concretize)

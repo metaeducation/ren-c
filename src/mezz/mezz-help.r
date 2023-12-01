@@ -50,7 +50,7 @@ description-of: function [
     {One-line summary of a value's purpose}
 
     return: [<opt> text!]
-    v [<maybe> any-value!]
+    v [<maybe> any-value?]
 ][
     if action? :v [
         v: unrun v
@@ -84,7 +84,7 @@ help: function [
     "Prints information about words and values (if no args, general help)."
 
     return: <nihil>
-    'topic [<end> any-value!]
+    'topic [<end> element?]
         "WORD! whose value to explain, or other HELP target (try HELP HELP)"
     /doc "Open web browser to related documentation."
 ][

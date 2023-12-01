@@ -33,9 +33,9 @@
 //  {Evaluates expressions, keeping each result (DO only gives last result)}
 //
 //      return: "New array or value"
-//          [<opt> any-value!]
+//          [element?]
 //      value "GROUP! and BLOCK! evaluate each item, single values evaluate"
-//          [any-value!]
+//          [<maybe> element?]
 //      /predicate "Applied after evaluation, default is IDENTITY"
 //          [<unrun> frame!]
 //  ]
@@ -221,7 +221,7 @@ DECLARE_NATIVE(reduce)
 //  {Evaluates expressions, keeping each result (DO only gives last result)}
 //
 //      return: "Last body result"
-//          [<opt> <void> any-value!]
+//          [any-atom?]
 //      :vars "Variable to receive each reduced value (multiple TBD)"
 //          [word! meta-word!]
 //      block "Input block of expressions (@[block] acts like FOR-EACH)"

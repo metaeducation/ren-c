@@ -32,7 +32,7 @@
 ; equivalent to the usermode version.
 [
     (uattempt: func [
-        return: [<opt> any-value!]
+        return: [any-value?]
         code [block!]
         <local> last'
     ][

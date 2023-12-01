@@ -101,7 +101,7 @@ encode: function [
     return: [binary!]
     type "Media type (jpeg, png, etc.)"
         [word!]
-    data [any-value!]
+    data [element?]
     /options "Encoding options"
         [block!]  ; !!! Not currently used
 ][

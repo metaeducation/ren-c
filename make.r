@@ -1585,8 +1585,8 @@ add-project-flags: func [
     /I "includes" [block!]
     /D "definitions" [block!]
     /c "cflags" [block!]
-    /O "optimization" [any-value!] ; !!! types?
-    /g "debug" [any-value!]  ; !!! types?
+    /O "optimization" [word! logic?! integer! text!]
+    /g "debug" [word! logic?! integer!]
 ][
     assert [
         find [

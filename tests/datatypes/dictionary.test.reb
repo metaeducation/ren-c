@@ -146,12 +146,12 @@
         m.key: null
     )
 
-    ~bad-isotope~ !! (
+    ~expect-arg~ !! (
         m: make map! []
         m.(null): 1020
     )
 
-    ~bad-isotope~ !! (
+    ~expect-arg~ !! (
         m: make map! []
         m.(spread [a b c]): 1020
     )

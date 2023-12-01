@@ -28,11 +28,11 @@
 //
 //  const: native [
 //
-//  {Return value whose access doesn't allow mutation to its argument}
+//  {Return value whose access level doesn't allow mutation to its content}
 //
-//      return: [<opt> any-value!]
+//      return: [any-value?]
 //      value "Argument to change access to (can be locked or not)"
-//          [<opt> any-value!]  ; INTEGER!, etc. someday
+//          [any-value?]  ; !!! should affect INTEGER! when it's a bignum
 //  ]
 //
 DECLARE_NATIVE(const) {
@@ -75,9 +75,9 @@ DECLARE_NATIVE(const_q) {
 //  {Return value whose access allows mutation to its argument (if unlocked)}
 //
 //      return: "Same as input -- no errors are given if locked or immediate"
-//          [<opt> any-value!]
+//          [any-value?]
 //      value "Argument to change access to (if such access can be granted)"
-//          [<opt> any-value!]  ; INTEGER!, etc. someday
+//          [any-value?]  ; !!! should affect INTEGER! when it's a bignum
 //  ]
 //
 DECLARE_NATIVE(mutable)
@@ -487,7 +487,7 @@ bool Is_Value_Frozen_Deep(const Cell* v) {
 //  {Determine if the value is locked (deeply and permanently immutable)}
 //
 //      return: [logic?]
-//      value [any-value!]
+//      value [any-value?]
 //  ]
 //
 DECLARE_NATIVE(locked_q)
@@ -563,9 +563,9 @@ void Force_Value_Frozen_Core(
 //
 //  {Permanently lock values (if applicable) so they can be immutably shared.}
 //
-//      return: [any-value!]
+//      return: [any-value?]
 //      value "Value to make permanently immutable"
-//          [any-value!]
+//          [any-value?]
 //      /deep "Freeze deeply"
 //  ;   /blame "What to report as source of lock in error"
 //  ;       [any-series!]  ; not exposed for the moment

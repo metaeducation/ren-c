@@ -48,7 +48,7 @@ DECLARE_NATIVE(halt)
 //
 //      return: []  ; !!! Notation for divergent functions?
 //      /with "See: http://en.wikipedia.org/wiki/Exit_status"
-//          [<opt> <void> any-value!]
+//          [any-value?]
 //  ]
 //
 DECLARE_NATIVE(quit)
@@ -228,9 +228,9 @@ DECLARE_NATIVE(limit_usage)
 //
 //  "Run an integrity check on a value in debug builds of the interpreter"
 //
-//      return: [<opt> any-value!]
+//      return: [any-value?]
 //      value "System will terminate abnormally if this value is corrupt"
-//          [<opt> any-value!]
+//          [any-value?]
 //  ]
 //
 DECLARE_NATIVE(check)

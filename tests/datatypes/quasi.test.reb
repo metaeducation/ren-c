@@ -91,7 +91,7 @@
 
 ; Explicit return of VOID
 [
-    (did foo: func [return: [<opt> <void> any-value!]] [return void])
+    (did foo: func [return: [any-value?]] [return void])
 
     (void? foo)
     (void' = ^ foo)
@@ -102,14 +102,14 @@
 ; Not providing an argument is an error (too easy to pick up random arguments
 ; from another line if 0-arity were allowed)
 [
-    (did foo: func [return: [<opt> <void> any-value!] x] [return none])
+    (did foo: func [return: [any-value?] x] [return none])
 
     ~no-arg~ !! (foo)
 ]
 
 ; !!! Should the ~()~ isotope be usable as a synonym for VOID?
 [
-    (did foo: func [return: [<opt> <void> any-value!]] [return ~()~])
+    (did foo: func [return: [any-value?]] [return ~()~])
 
     (not void? foo)
     ('~()~ = ^ foo)

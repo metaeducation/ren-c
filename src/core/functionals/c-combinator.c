@@ -146,13 +146,13 @@ Bounce Combinator_Dispatcher(Level* L)
 //     compose [
 //         ; Get the text description if given
 //
-//         ((if text? spec.1 [spec.1, elide spec: my next]))
+//         (if text? spec.1 [spec.1, elide spec: my next])
 //
 //         ; Get the RETURN: definition if there is one, otherwise add one
 //         ; so that we are sure that we know the position/order of the
 //         ; arguments.
 //
-//         ((if set-word? spec.1 [
+//         (if set-word? spec.1 [
 //             assert [spec.1 = 'return:]
 //             assert [text? spec.2]
 //             assert [block? spec.3]
@@ -160,15 +160,15 @@ Bounce Combinator_Dispatcher(Level* L)
 //             reduce [spec.1 spec.2 spec.3]
 //             elide spec: my skip 3
 //         ] else [
-//             [return: [<opt> <void> any-value!]]",
-//         ]))
+//             [return: [any-value?]],
+//         ])
 //
 //         remainder: [<opt> any-series!]
 //
 //         state [frame!]
 //         input [any-series!]
 //
-//         ((spec))  ; arguments the combinator takes, if any.
+//         (spread spec)  ; arguments the combinator takes, if any.
 //      ]
 //
 // !!! Optimizing it was at first considered unnecessary because the speed
@@ -361,8 +361,8 @@ void Push_Parser_Sublevel(
 //
 //  {If supplied parser fails, succeed anyway without advancing the input}
 //
-//      return: "PARSER's result if it succeeds, otherwise ~null~ isotope"
-//          [any-value!]
+//      return: "PARSER's result if it succeeds, otherwise NULL"
+//          [any-value?]
 //      parser [action?]
 //  ]
 //
@@ -474,7 +474,7 @@ DECLARE_NATIVE(text_x_combinator)
 //  {Must run at least one match}
 //
 //      return: "Result of last successful match"
-//          [<opt> any-value!]
+//          [any-value?]
 //      parser [action?]
 //  ]
 //
@@ -574,7 +574,7 @@ DECLARE_NATIVE(some_combinator)
 //  {Pass through the result only if the input was advanced by the rule}
 //
 //      return: "parser result if it succeeded and advanced input, else NULL"
-//          [<opt> any-value!]
+//          [any-value?]
 //      parser [action?]
 //  ]
 //
@@ -779,7 +779,7 @@ static bool Combinator_Param_Hook(
 //          [frame!]
 //      rules [block!]
 //      state "Parse State" [frame!]
-//      /value "Initiating value (if datatype)" [any-value!]
+//      /value "Initiating value (if datatype)" [element?]
 //      /path "Invoking Path" [path!]
 //      <local> rule-start
 //  ]

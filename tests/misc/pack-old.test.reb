@@ -25,7 +25,7 @@
 
 [(pack-old: enfix func [
     {Prepare a BLOCK! of values for storing each in a SET-BLOCK!}
-    return: [<opt> <void> any-value!]
+    return: [any-value?]
     'vars [set-block! set-group!]
     block "Reduced if normal [block], but values used as-is if @[block]"
         [block! the-block!]

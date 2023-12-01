@@ -2731,7 +2731,7 @@ REBVAL *RL_rebError_OS(int errnum)  // see also convenience macro rebFail_OS()
 //
 //      return: "Heap address of the autoreleasing (rebR()) API handle"
 //          [integer!]
-//      value [<opt> any-value!]
+//      value [any-value?]
 //  ]
 //
 DECLARE_NATIVE(api_transient)

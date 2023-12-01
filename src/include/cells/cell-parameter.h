@@ -239,8 +239,26 @@ INLINE Option(const Array*) Cell_Parameter_Spec(
     FLAG_LEFT_BIT(17)
 
 
-#define PARAMETER_FLAG_18           FLAG_LEFT_BIT(18)
-#define PARAMETER_FLAG_19           FLAG_LEFT_BIT(19)
+//=//// PARAMETER_FLAG_ANY_VALUE_OK ///////////////////////////////////////=//
+//
+// The check for ANY-VALUE? (e.g. any element or stable isotope) is very
+// common, and has an optimized flag if the ANY-VALUE? function is detected
+// in the parameter spec.
+//
+#define PARAMETER_FLAG_ANY_VALUE_OK \
+    FLAG_LEFT_BIT(18)
+
+
+//=//// PARAMETER_FLAG_ANY_ATOM ///////////////////////////////////////////=//
+//
+// The check for ANY-ATOM? (e.g. literally any cell state) is relatively
+// common, and has an optimized flag if the ANY-ATOM? function is detected
+// in the parameter spec.
+//
+#define PARAMETER_FLAG_ANY_ATOM_OK \
+    FLAG_LEFT_BIT(19)
+
+
 #define PARAMETER_FLAG_20           FLAG_LEFT_BIT(20)
 #define PARAMETER_FLAG_21           FLAG_LEFT_BIT(21)
 #define PARAMETER_FLAG_22           FLAG_LEFT_BIT(22)

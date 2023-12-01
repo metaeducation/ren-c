@@ -2684,7 +2684,7 @@ DECLARE_NATIVE(subparse)
 //  "Parse series according to grammar rules"
 //
 //      return: "Parse product (return value may be what's passed to ACCEPT)"
-//          [<opt> <void> any-value!]
+//          [any-value?]
 //
 //      input "Input series to parse"
 //          [<maybe> any-series! any-sequence! url!]

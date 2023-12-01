@@ -187,7 +187,7 @@ DECLARE_NATIVE(macro)
 //
 //  {Inject an array of content into the execution stream, or single value}
 //
-//      return: [<opt> <void> any-value!]
+//      return: [any-value?]
 //      splice "If quoted single value, if blank no insertion (e.g. invisible)"
 //          [blank! block! quoted!]
 //  ]

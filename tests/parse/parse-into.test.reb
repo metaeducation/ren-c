@@ -9,9 +9,9 @@
     ; pass it through.  The block combinator does, so `[elide "a"]` acts the
     ; same as `elide "a"`.  But SUBPARSE currently does not, and leverages
     ; the default behavior that functions which do not support NIHIL returns
-    ; will react by producing a NONE when passed a NIHIL.
+    ; will react by producing a VOID when passed a NIHIL.
     ;
-    (none? parse [[]] [subparse any-series! []])
+    (void? parse [[]] [subparse any-series! []])
 
     ('a == parse [[a]] [subparse any-series! ['a]])
     ('c == parse [b [a] c] ['b subparse any-series! ['a] 'c])

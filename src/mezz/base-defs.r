@@ -159,7 +159,7 @@ elide: func* [
     return: "The evaluator will skip over the result (not seen)"
         [nihil?]
     ^discarded "Evaluated value to be ignored"
-        [<opt> <void> pack? any-value!]  ; pack? so (elide elide "x") works
+        [any-value? nihil?]  ; nihil? so (elide elide "x") works
 ][
     return nihil
 ]
@@ -167,9 +167,9 @@ elide: func* [
 elide-if-void: func* [
     {Argument is evaluative, but discarded if void}
 
-    return: [nihil? <opt> <void> any-value!]
+    return: [any-value? pack?]
     ^value' "Evaluated value to be ignored"
-        [<opt> <void> pack? any-value!]  ; pack? is passed through
+        [any-value? pack?]  ; pack? is passed through
 ][
     if value' = void' [return nihil]
     return unmeta value'
@@ -184,7 +184,7 @@ elide-if-void: func* [
     {Inertly consumes all subsequent data, evaluating to previous result.}
 
     return: <nihil>
-    :omit [any-value! <variadic>]
+    'omit [element? <variadic>]
 ][
     until [null? try take omit]
 ]
@@ -442,11 +442,11 @@ run func* [
 ; bridge compatibility, as LIT-WORD! and LIT-PATH! are no longer fundamental
 ; datatypes... but type constraints (LIT-WORD? and LIT-PATH?)
 
-to-lit-word: func* [return: [quoted!] value [any-value!]] [
+to-lit-word: func* [return: [quoted!] value [element?]] [
     return quote to word! noquote value
 ]
 
-to-lit-path: func* [return: [quoted!] value [any-value!]] [
+to-lit-path: func* [return: [quoted!] value [element?]] [
     return quote to path! noquote value
 ]
 
@@ -482,7 +482,7 @@ echo: func* [
 
     return: <nihil>
     'args "If a BLOCK!, then just that block's contents--else to end of line"
-        [any-value! <variadic>]
+        [element? <variadic>]
     <local> line
 ][
     line: if block? first args [take args] else [

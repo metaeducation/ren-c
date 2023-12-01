@@ -21,7 +21,7 @@
 //
 // Making a typechecker can be easy:
 //
-//     >> integer?: func [v [any-value!]] [integer! = kind of :v]
+//     >> integer?: lambda [v [any-value?]] [integer! = kind of :v]
 //
 //     >> integer? 10
 //     == ~true~  ; isotope
@@ -445,6 +445,12 @@ bool Typecheck_Coerce_Argument(
     enum Reb_Kind kind = Is_Stable(arg) ? VAL_TYPE(arg) : REB_ISOTOPE;
 
     if (Get_Parameter_Flag(param, NULLS_DEFINITELY_OK) and Is_Nulled(arg))
+        goto return_true;
+
+    if (Get_Parameter_Flag(param, ANY_VALUE_OK) and Is_Stable(arg))
+        goto return_true;
+
+    if (Get_Parameter_Flag(param, ANY_ATOM_OK))
         goto return_true;
 
     if (Is_Parameter_Unconstrained(param)) {

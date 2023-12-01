@@ -1,6 +1,6 @@
 //
 //  File: %t-quoted.c
-//  Summary: "QUOTED! datatype that acts as container for ANY-VALUE!"
+//  Summary: "QUOTED! datatype that acts as container for unquoted elements"
 //  Section: datatypes
 //  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
 //  Homepage: https://github.com/metaeducation/ren-c/
@@ -142,8 +142,8 @@ REBTYPE(Quoted)
 //  "Returns value passed in without evaluation"
 //
 //      return: "Input value, verbatim--unless /SOFT and soft quoted type"
-//          [<opt> any-value!]
-//      'value [any-value!]
+//          [any-value?]
+//      'value [element?]
 //      /soft "Evaluate if a GET-GROUP!, GET-WORD!, or GET-PATH!"
 //  ]
 //
@@ -175,8 +175,8 @@ DECLARE_NATIVE(the)
 //  "Returns value passed in without evaluation, but QUASI! become isotopes"
 //
 //      return: "If input is QUASI! then isotope, else input value, verbatim"
-//          [<opt> any-value!]
-//      'value [any-value!]
+//          [any-value?]
+//      'value [element?]
 //  ]
 //
 DECLARE_NATIVE(the_p)
@@ -272,7 +272,7 @@ DECLARE_INTRINSIC(meta)
 //  {META variant that passes through VOID and NULL, and doesn't take failures}
 //
 //      return: [<opt> <void> quoted! quasi!]
-//      ^optional [<opt> <void> pack? any-value!]
+//      ^optional [pack? any-value?]
 //  ]
 //
 DECLARE_NATIVE(meta_p)
@@ -297,9 +297,9 @@ DECLARE_NATIVE(meta_p)
 //  {Remove quoting levels from the evaluated argument}
 //
 //      return: "Value with quotes removed"
-//          [<void> any-value!]
+//          [<void> element?]
 //      value "Void allowed in case input is void and /DEPTH is 0"
-//          [<void> any-value!]
+//          [<void> element?]
 //      /depth "Number of quoting levels to remove (default 1)"
 //          [integer!]
 //  ]
@@ -330,7 +330,7 @@ DECLARE_NATIVE(unquote)
 //
 //      return: [quasi!]
 //      value "Any non-QUOTED! value"
-//          [<opt> any-value!]  ; there isn't an any-nonquoted! typeset
+//          [<opt> element?]  ; there isn't an any-nonquoted! typeset
 //  ]
 //
 DECLARE_NATIVE(quasi)
@@ -360,8 +360,29 @@ DECLARE_INTRINSIC(unquasi)
 {
     UNUSED(phase);
 
+    Unquasify(arg);
     Copy_Cell(out, arg);
-    Unquasify(out);
+}
+
+
+//
+//  isotope?: native/intrinsic [
+//
+//  {Tells you whether argument is a stable or unstable isotope}
+//
+//      return: [logic?]
+//      ^atom
+//  ]
+//
+DECLARE_INTRINSIC(isotope_q)
+//
+// !!! This can be deceptive, in the sense that you could ask if something
+// like an isotopic pack is an isotope, and it will say yes...but then
+// another routine like integer? might say it's an integer.  Be aware.
+{
+    UNUSED(phase);
+
+    Init_Logic(out, Is_Quasi(arg));
 }
 
 
@@ -370,9 +391,9 @@ DECLARE_INTRINSIC(unquasi)
 //
 //  {Give the isotopic form of the plain argument (same as UNMETA QUASI)}
 //
-//      return: [isotope!]
+//      return: [isotope?]
 //      value "Any non-QUOTED!, non-QUASI value"
-//          [<opt> any-value!]  ; there isn't an any-nonquoted! typeset
+//          [<opt> element?]  ; there isn't an any-nonquoted! typeset
 //  ]
 //
 DECLARE_NATIVE(isotopic)
@@ -398,7 +419,7 @@ DECLARE_NATIVE(isotopic)
 //
 //  {Variant of UNQUOTE that also accepts QUASI! to make isotopes}
 //
-//      return: [<opt> <void> nihil? any-value!]
+//      return: [any-atom?]
 //      value [quoted! quasi!]
 //  ]
 //
@@ -416,7 +437,7 @@ DECLARE_INTRINSIC(unmeta)
 //
 //  {Variant of UNMETA that passes thru VOID and NULL}
 //
-//      return: [<opt> <void> nihil? any-value!]
+//      return: [any-atom?]
 //      value [<opt> <void> quoted! quasi!]
 //  ]
 //
@@ -498,7 +519,7 @@ DECLARE_INTRINSIC(spread)
 //  {Make objects lazy}
 //
 //      return: "Isotope of OBJECT! or unquoted value (passthru null and void)"
-//          [<opt> <void> any-value!]
+//          [<opt> <void> element? lazy?]
 //      object "Will do MAKE OBJECT! on BLOCK!"
 //          [<opt> <void> quoted! object! block!]
 //  ]
@@ -640,7 +661,7 @@ DECLARE_INTRINSIC(splice_q)
 //  "Tells you if argument is any kind of matcher (TYPE-XXX! isotope)"
 //
 //      return: [logic?]
-//      ^value [<opt> <void> raised? pack? any-value!]
+//      ^value [any-atom?]
 //  ]
 //
 DECLARE_INTRINSIC(any_matcher_q)

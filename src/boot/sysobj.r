@@ -178,11 +178,6 @@ standard: make object! [
         ~  ; if you don't call RETURN, the result is a ~ isotope
     ]
 
-    ; !!! The PORT! and actor code is deprecated, but this bridges it so
-    ; it doesn't have to build a spec by hand.
-    ;
-    port-actor-spec: [port-actor-parameter [any-value!]]
-
     ; !!! The %sysobj.r initialization currently runs natives (notably the
     ; natives for making objects, and here using COMMENT because it can).
     ; This means that if the ACTION-ADJUNCT information is going to be produced

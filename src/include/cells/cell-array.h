@@ -267,7 +267,7 @@ INLINE Value(*) Splicify(Value(*) v) {
     return v;
 }
 
-INLINE Value(*) Init_Splice_Untracked(Value(*) out, Array* a) {
+INLINE Value(*) Init_Splice_Untracked(Sink(Value(*)) out, Array* a) {
     Init_Group(out, a);
     QUOTE_BYTE(out) = ISOTOPE_0;
     return out;

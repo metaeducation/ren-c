@@ -125,7 +125,7 @@ DECLARE_NATIVE(definitional_break)
 //
 //      return: []  ; "divergent"
 //      /with "Act as if loop body finished with this value"
-//          [<void> <opt> any-value!]
+//          [any-value?]
 //  ]
 //
 DECLARE_NATIVE(definitional_continue)
@@ -457,7 +457,7 @@ REBVAL *Real_Var_From_Pseudo(REBVAL *pseudo_var) {
 //
 //  {Evaluate a block over a range of values. (See also: REPEAT)}
 //
-//      return: [<opt> <void> any-value!]
+//      return: [any-value?]
 //      :word [word!]
 //          "Variable to hold current value"
 //      start [any-series! any-number!]
@@ -539,7 +539,7 @@ DECLARE_NATIVE(cfor)
 //  "Evaluates a block for periodic values in a series"
 //
 //      return: "Last body result, or null if BREAK"
-//          [<opt> <void> any-value!]
+//          [any-value?]
 //      'word "Variable set to each position in the series at skip distance"
 //          [word! lit-word? blank!]
 //      series "The series to iterate over"
@@ -646,7 +646,7 @@ DECLARE_NATIVE(for_skip)
 //
 //      return: []  ; !!! Notation for divergent functions?s
 //      /with "Act as if loop body finished with this value"
-//          [<void> any-value!]
+//          [any-value?]
 //  ]
 //
 DECLARE_NATIVE(definitional_stop)  // See CYCLE for notes about STOP
@@ -704,10 +704,10 @@ void Add_Definitional_Stop(
 //
 //  "Evaluates a block endlessly, until a BREAK or a STOP is hit"
 //
-//      return: [<opt> any-value!]
-//          {Null if BREAK, or non-null value passed to STOP}
-//      body [<const> any-branch!]
-//          "Block or action to evaluate each time"
+//      return: "Null if BREAK, or non-null value passed to STOP"
+//          [any-value?]
+//      body "Block or action to evaluate each time"
+//          [<const> any-branch!]
 //  ]
 //
 DECLARE_NATIVE(cycle)
@@ -1102,7 +1102,7 @@ void Shutdown_Loop_Each(Value(*) iterator)
 //  {Evaluates a block for each value(s) in a series.}
 //
 //      return: "Last body result, or null if BREAK"
-//          [<opt> <void> any-value!]
+//          [any-value?]
 //      :vars "Word or block of words to set each time, no new var if quoted"
 //          [blank! word! lit-word? block! group!]
 //      data "The series to traverse"
@@ -1199,7 +1199,7 @@ DECLARE_NATIVE(for_each)
 //
 //  {Iterate and return null if any previous body evaluations were falsey}
 //
-//      return: [<opt> <void> any-value!]
+//      return: [any-value?]
 //          {null on BREAK, blank on empty, false or the last truthy value}
 //      :vars "Word or block of words to set each time, no new var if quoted"
 //          [blank! word! lit-word? block! group!]
@@ -1856,7 +1856,7 @@ DECLARE_NATIVE(map)
 //  {Evaluates a block a specified number of times}
 //
 //      return: "Last body result, or null if BREAK"
-//          [<opt> <void> any-value!]
+//          [any-value?]
 //      count "Repetitions (true loops infinitely, false doesn't run)"
 //          [<maybe> any-number! logic?]
 //      body "Block to evaluate or action to run"
@@ -1940,7 +1940,7 @@ DECLARE_NATIVE(repeat)
 //  {Evaluates a branch a number of times or over a series, return last result}
 //
 //      return: "Last body result, or NULL if BREAK"
-//          [<opt> <void> any-value!]
+//          [any-value?]
 //      :vars "Word or block of words to set each time, no new var if quoted"
 //          [blank! word! lit-word? block! group!]
 //      value "Maximum number or series to traverse"
@@ -2043,8 +2043,8 @@ DECLARE_NATIVE(for)
 //
 //  {Evaluates the body until it produces a conditionally true value}
 //
-//      return: [<opt> any-value!]
-//          {Last body result, or null if a BREAK occurred}
+//      return: "Last body result, or null if a BREAK occurred"
+//          [any-value?]
 //      body [<const> block!]
 //      /predicate "Function to apply to body result"
 //          [<unrun> frame!]
@@ -2142,7 +2142,7 @@ DECLARE_NATIVE(until)
 //  {So long as a condition is truthy, evaluate the body}
 //
 //      return: "Void if body never run, else last body result, null if BREAK"
-//          [<opt> <void> any-value!]
+//          [any-value?]
 //      condition [<const> block!]
 //      body [<unrun> <const> block! frame!]
 //  ]

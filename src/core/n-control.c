@@ -728,7 +728,7 @@ DECLARE_NATIVE(match)
 //  {Short-circuiting variant of AND, using a block of expressions as input}
 //
 //      return: "Product of last passing evaluation if all truthy, else null"
-//          [<opt> <void> any-value!]
+//          [any-value?]
 //      block "Block of expressions, @[block] will be treated inertly"
 //          [block! the-block!]
 //      /predicate "Test for whether an evaluation passes (default is DID)"
@@ -877,7 +877,7 @@ DECLARE_NATIVE(all)
 //  {Short-circuiting version of OR, using a block of expressions as input}
 //
 //      return: "First passing evaluative result, or null if none pass"
-//          [<opt> <void> any-value!]
+//          [any-value?]
 //      block "Block of expressions, @[block] will be treated inertly"
 //          [block! the-block!]
 //      /predicate "Test for whether an evaluation passes (default is DID)"
@@ -1004,7 +1004,7 @@ DECLARE_NATIVE(any)
 //  {Evaluates each condition, and when true, evaluates what follows it}
 //
 //      return: "Last matched case evaluation, or null if no cases matched"
-//          [<opt> <void> any-value!]
+//          [any-value?]
 //      cases "Conditions followed by branches"
 //          [block!]
 //      /all "Do not stop after finding first logically true case"
@@ -1209,9 +1209,8 @@ DECLARE_NATIVE(case)
 //  {Selects a choice and evaluates the block that follows it.}
 //
 //      return: "Last case evaluation, or void if no cases matched"
-//          [<opt> <void> any-value!]
-//      value "Target value"
-//          [<opt> <void> any-value!]
+//          [any-value?]
+//      value [any-value?]
 //      cases "Block of cases (comparison lists followed by block branches)"
 //          [block!]
 //      /all "Evaluate all matches (not just first one)"
@@ -1410,7 +1409,7 @@ DECLARE_NATIVE(switch)
 //  {Set word or path to a default value if it is not set yet}
 //
 //      return: "Former value or branch result, can only be null if no target"
-//          [<opt> any-value!]
+//          [any-value?]
 //      :target "Word or path which might be set appropriately (or not)"
 //          [set-group! set-word! set-tuple!]  ; to left of DEFAULT
 //      :branch "If target needs default, this is evaluated and stored there"
@@ -1495,7 +1494,7 @@ DECLARE_NATIVE(default)
 //  {Catches a throw from a block and returns its value.}
 //
 //      return: "Thrown value"
-//          [<opt> any-value!]
+//          [any-value?]
 //      block "Block to evaluate"
 //          [block!]
 //      /name "Catches a named throw (single name if not block)"

@@ -89,7 +89,7 @@ Bounce Upshot_Dispatcher(Level* const L)  // won't run until count is reached
 //
 //  {Sample Interface for a Simplified DO that just runs a Branch}
 //
-//      return: [<opt> any-value!]
+//      return: [any-atom?]
 //      branch [any-branch!]
 //  ]
 //

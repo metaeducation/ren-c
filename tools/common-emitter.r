@@ -317,7 +317,7 @@ export make-emitter: function [
             {Write data to the emitter using CSCAPE templating (see HELP)}
 
             return: <none>
-            'look [any-value! <variadic>]
+            'look [element? <variadic>]
             data [text! char?! <variadic>]
             <with> buf-emit
         ][

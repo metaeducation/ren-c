@@ -492,7 +492,7 @@ Bounce TO_String(Level* level_, enum Reb_Kind kind, const REBVAL *arg)
 //      {Variant of TO TEXT! with option to tolerate invisible codepoints}
 //
 //      return: [<opt> text!]
-//      value [<maybe> any-value!]
+//      value [<maybe> element?]
 //      /relax "Allow invisible codepoints like CR when converting BINARY!"
 //  ]
 //

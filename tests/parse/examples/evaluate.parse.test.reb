@@ -9,7 +9,7 @@
     (parse-evaluate: combinator [
         {Run the evaluator one step to advance input, and produce a result}
         return: "Result of one evaluation step"
-            [<opt> any-value!]
+            [any-value?]
     ][
         if tail? input [return raise "PARSE-EVALUATE attempted at series tail"]
 

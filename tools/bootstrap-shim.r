@@ -365,6 +365,9 @@ logic?!: logic!  ; modern logic is ISOTOPE! constraint
 lit-word?!: lit-word!  ; modern LIT-WORD! is QUOTED! constraint
 refinement?!: refinement!  ; modern REFINEMENT! is PATH! constraint
 
+element?: :any-value?  ; used to exclude null
+any-value?: func3 [x] [true]  ; now inclusive of null
+
 any-inert!: make typeset! [  ; note TYPESET! does not exist in new exe
     any-string! binary! char! any-context! time! date! any-number! object!
 ]
@@ -676,7 +679,10 @@ modernize-action: function3 [
                     if tail? spec [continue]
                     if text? spec/1 [keep3 spec/1, spec: my next]
                     if block? spec/1 [
-                        keep3/only append3 copy spec/1 [
+                        types: copy spec/1
+                        replace types 'any-value? [<opt> any-value!]
+                        replace types 'element? 'any-value!
+                        keep3/only append3 types [
                             <opt> blank!  ; e.g. <maybe> may return "null" blank
                         ]
                         spec: my next
@@ -737,6 +743,13 @@ modernize-action: function3 [
                             if null3? (as get-word! w) [return _]
                         ]
                     ]
+                    if find3 types 'any-value! [
+                        fail/where [
+                            "Use ANY-VALUE? not ANY-VALUE! in updated specs"
+                        ] 'spec
+                    ]
+                    replace types 'any-value? [<opt> any-value!]
+                    replace types 'element? 'any-value!
                     replace types <variadic> <...>
                     keep3/only types
                     spec: my next
@@ -776,9 +789,9 @@ function: adapt :function3 [set [spec body] modernize-action spec body]
 ; due to that quirky interface.  It's simple, just rewrite it.
 ;
 match: func [
-    return: [<opt> any-value!]
+    return: [any-value?]
     types [block! datatype! typeset!]
-    value [<maybe> any-value!]
+    value [<maybe> any-value?]
 ][
     case [
         datatype? types [types: make typeset! reduce [types]]  ; circuitious :-(
@@ -795,7 +808,7 @@ method: func3 [] [
 ]
 
 for-each: func [  ; add opt-out ability with <maybe>
-    return: [<opt> any-value!]
+    return: [any-value?]
     'vars [word! lit-word! block!]
     data [<maybe> any-series! any-context! map! datatype! action!]
     body [block!]

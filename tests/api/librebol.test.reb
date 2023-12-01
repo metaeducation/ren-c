@@ -13,7 +13,7 @@
 ; If the tests were not built in, an informational string is returned.
 
 (
-    result: test-librebol
+    result: test-librebol none
     did any [
         text? result  ; informational string
 

@@ -29,11 +29,11 @@
 //
 //   (For the struct definition of the series stub, see %struct-stub.h)
 //
-// 2. The user-level value type ANY-SERIES!.  This might be more accurately
-//    called ITERATOR!, because it includes both a pointer to a Series of
-//    data and an index offset into that data.  An ANY-SERIES! cell contains
+// 2. The user-level value type ANY-SERIES?.  This might be more accurately
+//    called an iterator, because it includes both a pointer to a Series of
+//    data and an index offset into that data.  An ANY-SERIES? cell contains
 //    an `index` as the 0-based position into the series represented by this
-//    ANY-VALUE! (so if it is 0 then that means a Rebol index of 1).
+//    ANY-VALUE? (so if it is 0 then that means a Rebol index of 1).
 //
 // Attempts to reconcile all the naming issues from historical Rebol have not
 // yielded a satisfying alternative, so the ambiguity has stuck.

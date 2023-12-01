@@ -37,7 +37,7 @@ steal: lambda [
     {Return a variable's value prior to an assignment, then do the assignment}
 
     evaluation "Takes assigned value (variadic enables STEAL X: DEFAULT [...])"
-        [<opt> any-value! <variadic>]
+        [any-value? <variadic>]
     'look [set-word! set-tuple! <variadic>]
 ][
     get first look  ; returned value
@@ -296,7 +296,7 @@ function: specialize :func [gather: #]
 ;
 ===: func [
     return: <nihil>
-    'remarks [any-value! <variadic>]
+    'remarks [element? <variadic>]
     /visibility [logic?]
     <static> showing (false)
 ][
@@ -529,7 +529,7 @@ voided?: func [
 
 curtail: reframer func [
     {Voids an expression if it raises any NEED-NON-NULL failures}
-    return: [<void> <opt> any-value!]
+    return: [any-value?]
     frame [frame!]
 ][
     return do frame except e -> [
@@ -592,11 +592,11 @@ my: enfix redescribe [
 so: enfix func [
     {Postfix assertion which won't keep running if left expression is false}
 
-    return: [<opt> <void> any-value!]
+    return: [any-value?]
     condition "Condition to test, must resolve to logic (use DID, NOT)"
         [logic?]
     feed "Needs value to return as result e.g. (x: even? 4 so 10 + 20)"
-        [<end> <opt> <void> any-value! <variadic>]
+        [<end> any-value? <variadic>]
 ][
     if not condition [
         fail 'condition make error! [
@@ -614,7 +614,7 @@ tweak :so 'postpone on
 was: enfix redescribe [
     "Assert that the left hand side--when fully evaluated--IS the right"
 ](
-    lambda [left [<opt> any-value!] right [<opt> any-value!]] [
+    lambda [left [any-value?] right [any-value?]] [
         if :left != :right [
             fail 'return make error! [
                 type: 'Script
@@ -733,7 +733,7 @@ attempt: func [
     {Evaluate a block and returns result or NULL if an expression fails}
 
     return: "Returns NULL on failure (-or- if last evaluative result is NULL)"
-        [<opt> <void> any-value!]
+        [any-value?]
     code [block!]
     <local> temp
 ][
@@ -744,7 +744,7 @@ attempt: func [
 trap: func [
     {If evaluation raises an error, return it, otherwise NULL}
 
-    return: [<opt> any-value!]
+    return: [<opt> error!]
     code [block!]
 ][
     return match error! entrap code
@@ -753,7 +753,7 @@ trap: func [
 trap+: func [
     {Experimental variation of TRAP using THENable mechanics}
 
-    return: [<opt> any-value!]
+    return: [pack?]
     code [block!]
     <local> result
 ][
@@ -830,8 +830,8 @@ iterate-back: redescribe [
 
 
 count-up: func [
-    "Loop the body, setting a word from 1 up to the end value given"
-    return: [<opt> <void> any-value!]
+    {Loop the body, setting a word from 1 up to the end value given}
+    return: [any-value?]
     'var [word!]
     limit [<maybe> integer! issue!]
     body [block!]
@@ -892,8 +892,8 @@ eval-all: func [
     {Evaluate any number of expressions and discard them}
 
     return: <nihil>
-    expressions [<opt> any-value! <variadic>]
-        {Any number of expressions on the right.}
+    expressions "Any number of expressions on the right"
+        [any-value? <variadic>]
 ][
     do expressions
 ]

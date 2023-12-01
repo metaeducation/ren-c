@@ -19,7 +19,7 @@
     maxmatch-D: combinator [  ; "(D)efault"
         {Match maximum of two rules, keeping side effects of both if match}
         return: "Result of the longest match (favors first parser if equal)"
-           [<opt> any-value!]
+           [any-value? pack?]
         parser1 [action?]
         parser2 [action?]
         <local> result1' result2' remainder1 remainder2
@@ -194,7 +194,7 @@
     maxmatch-C: combinator [  ; "(C)ustom"
         {Match maximum of two rules, keeping side effects of both if match}
         return: "Result of the longest match (favors first parser if equal)"
-           [<opt> any-value!]
+           [any-value? pack?]
         @pending [<opt> block!]
         parser1 [action?]
         parser2 [action?]

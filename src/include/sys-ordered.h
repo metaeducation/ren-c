@@ -63,7 +63,7 @@
 // All the inert types are grouped together to make this test fast.
 
 INLINE bool Any_Inert_Kind(Byte k) {
-    assert(k != REB_VOID);  // don't call on void (0 in enum, breaks pattern)
+    assert(k != REB_VOID and k != REB_ISOTOPE);
     return k <= REB_BLOCK and k != REB_FRAME;  // hack for frame
 }
 

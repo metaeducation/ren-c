@@ -154,9 +154,9 @@ sqlform: func [
     parameters "Parameter block being gathered"
         [block!]
     value "Item to form"
-        [any-value!]
+        [element?]
 ][
-    return switch/type :value [
+    return switch/type value [
         comma! [join #"," space]  ; avoid spacing before the comma
 
         integer! word! [as text! value]

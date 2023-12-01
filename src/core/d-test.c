@@ -36,10 +36,10 @@
 //
 //  "libRebol tests (ultimately should build as separate EXEs)"
 //
-//      return: [text! block!]
-//          {Block of test numbers and failures}
-//      :value [<end> <opt> any-value!]
-//          {Optional argument that may be useful for ad hoc tests}
+//      return: "Block of test numbers and failures"
+//          [text! block!]
+//      value "Argument that may be useful for ad hoc tests (or just NONE)"
+//          [any-value?]
 //  ]
 //
 DECLARE_NATIVE(test_librebol)
@@ -114,8 +114,8 @@ DECLARE_NATIVE(test_librebol)
 //  {Prints some basic internal information about the value (debug only)}
 //
 //      return: "Same as input value (for passthru similar to PROBE)"
-//          [<opt> any-value!]
-//      value [<opt> any-value!]
+//          [any-value?]
+//      value [any-value?]
 //  ]
 //
 DECLARE_NATIVE(diagnose)

@@ -611,8 +611,8 @@ e-typesets/emit {
 
 e-typesets/emit {
     const REBU64 Typesets[] = ^{
-        TS_VALUE,  /* any-value! */
-        TS_ELEMENT,  /* any-element! */
+        TS_VALUE,  /* any-value? (everything that isn't an unstable isotope) */
+        TS_ELEMENT,  /* any-element? (everything you can put in an array)  */
 }
 
 for-each [ts-name types] typeset-sets [

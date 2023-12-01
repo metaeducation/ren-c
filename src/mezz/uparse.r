@@ -259,7 +259,7 @@ default-combinators: make map! reduce [
     'opt combinator [
         {If applying parser fails, succeed and return NULL; don't advance input}
         return: "PARSER's result if it succeeds, otherwise NULL"
-            [<opt> <void> any-value!]
+            [any-value? pack?]
         parser [action?]
         <local> result'
     ][
@@ -269,7 +269,7 @@ default-combinators: make map! reduce [
     'try combinator [
         {If applying parser fails, succeed and return NULL; don't advance input}
         return: "PARSER's result if it succeeds, otherwise NULL"
-            [<opt> <void> any-value!]
+            [any-value? pack?]
         parser [action?]
         <local> result'
     ][
@@ -282,8 +282,8 @@ default-combinators: make map! reduce [
 
     'spread combinator [
         {Return isotope form of array arguments}
-        return: "PARSER's result if it succeeds"
-            [<opt> any-value!]  ; can be isotope
+        return: "Splice isotope if input is array"
+            [<opt> <void> element? splice?]
         parser [action?]
         <local> result'
     ][
@@ -311,7 +311,7 @@ default-combinators: make map! reduce [
     'ahead combinator [
         {Leave the parse position at the same location, but fail if no match}
         return: "parser result if success, NULL if failure"
-            [<opt> <void> any-value!]
+            [any-value? pack?]
         parser [action?]
     ][
         remainder: input
@@ -321,7 +321,7 @@ default-combinators: make map! reduce [
     'further combinator [
         {Pass through the result only if the input was advanced by the rule}
         return: "parser result if it succeeded and advanced input, else NULL"
-            [<opt> <void> any-value!]
+            [any-value? pack?]
         parser [action?]
         <local> result' pos
     ][
@@ -353,7 +353,7 @@ default-combinators: make map! reduce [
     'some combinator [
         {Run the parser argument in a loop, requiring at least one match}
         return: "Result of last successful match"
-            [<opt> <void> any-value!]
+            [any-value? pack?]
         parser [action?]
         <local> result'
     ][
@@ -375,8 +375,8 @@ default-combinators: make map! reduce [
 
     'while combinator [
         {Run the body parser in a loop, for as long as condition matches}
-        return: "Result of last body parser (or none if failure)"
-            [<opt> <void> any-value!]
+        return: "Result of last body parser (or void if body never matched)"
+            [any-value? pack?]
         condition-parser [action?]
         body-parser [action?]
         <local> result'
@@ -405,8 +405,8 @@ default-combinators: make map! reduce [
 
     'cycle combinator [
         {Run the body parser continuously in a loop until BREAK or STOP}
-        return: "Result of last body parser (or void if failure)"
-            [<opt> <void> any-value!]
+        return: "Result of last body parser (or void if body never matched)"
+            [any-value? pack?]
         parser [action?]
         <local> result'
     ][
@@ -487,9 +487,9 @@ default-combinators: make map! reduce [
     ;
     ; RETURN was removed for a time in Ren-C due to concerns about how it
     ; could lead to abruptly ending a parse before all the matching was
-    ; complete.  Now UPARSE can return ANY-VALUE! and the only reason you'd
-    ; ever use ACCEPT would be specifically for the abrupt exit...so it's fit
-    ; for purpose.
+    ; complete.  Now UPARSE can return ANY-VALUE? (or PACK?) and the only
+    ; reason you'd ever use ACCEPT would be specifically for the abrupt exit,
+    ; so it's fit for purpose.
 
     'accept combinator [
         {Return a value explicitly from the parse, terminating early}
@@ -630,7 +630,7 @@ default-combinators: make map! reduce [
     'to combinator [
         {Match up TO a certain rule (result position before succeeding rule)}
         return: "The rule's product"
-            [<opt> <void> any-value!]
+            [any-value? pack?]
         parser [action?]
         <local> result'
     ][
@@ -651,7 +651,7 @@ default-combinators: make map! reduce [
     'thru combinator [
         {Match up THRU a certain rule (result position after succeeding rule)}
         return: "The rule's product"
-            [<opt> <void> any-value!]
+            [any-value? pack?]
         parser [action?]
         <local> result'
     ][
@@ -737,7 +737,7 @@ default-combinators: make map! reduce [
     tag! combinator [
         {Special noun-like keyword subdispatcher for TAG!s}
         return: "What the delegated-to tag returned"
-            [<opt> <void> any-value!]
+            [any-value? pack?]
         @pending [<opt> block!]
         value [tag!]
         <local> comb
@@ -790,8 +790,8 @@ default-combinators: make map! reduce [
 
     <any> combinator [  ; historically called "SKIP"
         {Match one series item in input, succeeding so long as it's not at END}
-        return: "One atom of series input"
-            [any-value!]
+        return: "One element of series input"
+            [element?]
     ][
         if tail? input [
             return raise "PARSE position at tail, <any> has no item to match"
@@ -873,7 +873,7 @@ default-combinators: make map! reduce [
     'subparse combinator [
         {Perform a recursion into other data with a rule}
         return: "Result of the subparser"
-            [<opt> <void> any-value!]
+            [any-value? pack?]
         parser [action?]  ; !!! Easier expression of value-bearing parser?
         subparser [action?]
         <local> subseries result'
@@ -956,7 +956,7 @@ default-combinators: make map! reduce [
 
     'keep combinator [
         return: "The kept value (same as input)"
-            [<void> any-value!]
+            [any-value?]
         @pending [<opt> block!]
         parser [action?]
         <local> result'
@@ -1045,7 +1045,7 @@ default-combinators: make map! reduce [
 
     'emit combinator [
         return: "The emitted value"
-            [<opt> any-value!]
+            [any-value?]
         @pending [<opt> block!]
         'target [set-word! set-group!]
         parser [action?]
@@ -1083,7 +1083,7 @@ default-combinators: make map! reduce [
 
     set-word! combinator [
         return: "The set value"
-            [<opt> <void> any-value!]
+            [any-value?]
         value [set-word!]
         parser "Failed parser will means target SET-WORD! will be unchanged"
             [action?]
@@ -1096,7 +1096,7 @@ default-combinators: make map! reduce [
 
     set-tuple! combinator [
         return: "The set value"
-            [<opt> <void> any-value!]
+            [any-value?]
         value [set-tuple!]
         parser "Failed parser will means target SET-TUPLE! will be unchanged"
             [action?]
@@ -1120,7 +1120,7 @@ default-combinators: make map! reduce [
 
     set-group! combinator [
         return: "The set value"
-            [<opt> <void> any-value!]
+            [any-value?]
         value [set-group!]
         parser "Failed parser will means target will be unchanged"
             [action?]
@@ -1267,7 +1267,7 @@ default-combinators: make map! reduce [
 
     group! combinator [
         return: "Result of evaluating the group (invisible if <delay>)"
-            [<void> <opt> nihil? any-value!]
+            [any-value? pack?]
         @pending [<opt> block!]
         value [any-array!]  ; allow any array to use this "DO combinator"
     ][
@@ -1287,7 +1287,7 @@ default-combinators: make map! reduce [
 
     'phase combinator [
         return: "Result of the parser evaluation"
-            [nihil? <void> <opt> any-value!]
+            [any-value? pack?]
         @pending [<opt> block!]
         parser [action?]
         <local> result'
@@ -1322,7 +1322,7 @@ default-combinators: make map! reduce [
 
     get-group! combinator [
         return: "Result of running combinator from fetching the WORD!"
-            [<opt> <void> nihil? any-value!]
+            [any-value? pack?]
         @pending [<opt> block!]   ; we retrigger combinator; it may KEEP, etc.
 
         value [any-array!]  ; allow any array to use this "REPARSE-COMBINATOR"
@@ -1434,7 +1434,7 @@ default-combinators: make map! reduce [
 
     quoted! combinator [
         return: "The matched value"
-            [nihil? any-value!]
+            [nihil? element? splice?]  ; !!! splice b.c. called by @(...)
         @pending [<opt> block!]
         value [quoted! quasi!]
         <local> comb
@@ -1500,9 +1500,9 @@ default-combinators: make map! reduce [
     ]
 
     'lit combinator [  ; should long form be LITERALLY or LITERAL ?
-        return: "Literal value" [any-value!]
+        return: "Literal value" [element?]
         @pending [<opt> block!]
-        'value [any-value!]
+        'value [element?]
         <local> comb
     ][
         ; Though generic quoting exists, being able to say [lit ''x] instead
@@ -1518,8 +1518,8 @@ default-combinators: make map! reduce [
     ; or META/ invocations.
 
     'the combinator [
-        return: "Quoted form of literal value (not matched)" [any-value!]
-        'value [any-value!]
+        return: "Quoted form of literal value (not matched)" [element?]
+        'value [element?]
     ][
         remainder: input
         return :value
@@ -1612,7 +1612,7 @@ default-combinators: make map! reduce [
 
     'repeat combinator [
         return: "Last parser result"
-            [<opt> <void> any-value!]
+            [any-value? pack?]
         times-parser [action?]
         parser [action?]
         <local> times' min max result'
@@ -1697,7 +1697,7 @@ default-combinators: make map! reduce [
 
     type-word! combinator [
         return: "Matched or synthesized value"
-            [any-value!]
+            [element?]
         value [type-word!]
         <local> item error
     ][
@@ -1725,7 +1725,7 @@ default-combinators: make map! reduce [
 
     type-group! combinator [
         return: "Matched or synthesized value"
-            [any-value!]
+            [element?]
         value [type-group!]
         <local> item error
     ][
@@ -1753,7 +1753,7 @@ default-combinators: make map! reduce [
 
     type-block! combinator [
         return: "Matched or synthesized value"
-            [any-value!]
+            [element?]
         value [type-block!]
         <local> item error
     ][
@@ -1796,7 +1796,8 @@ default-combinators: make map! reduce [
     ; !!! These follow a simple pattern, could generate at a higher level.
 
     '@ combinator [
-        return: "Match product of result of applying rule" [any-value!]
+        return: "Match product of result of applying rule"
+            [element? splice?]
         @pending [<opt> block!]
         parser [action?]
         <local> comb result'
@@ -1808,7 +1809,7 @@ default-combinators: make map! reduce [
     ]
 
     the-word! combinator [
-        return: "Literal value" [any-value!]
+        return: "Literal value or splice" [element? splice?]
         @pending [<opt> block!]
         value [the-word!]
         <local> comb
@@ -1818,7 +1819,7 @@ default-combinators: make map! reduce [
     ]
 
     the-path! combinator [
-        return: "Literal value" [any-value!]
+        return: "Literal value or splice" [element? splice?]
         @pending [<opt> block!]
         value [the-word!]
         <local> comb
@@ -1828,7 +1829,7 @@ default-combinators: make map! reduce [
     ]
 
     the-tuple! combinator [
-        return: "Literal value" [any-value!]
+        return: "Literal value or splice" [element? splice?]
         @pending [<opt> block!]
         value [the-tuple!]
         <local> comb
@@ -1838,7 +1839,7 @@ default-combinators: make map! reduce [
     ]
 
     the-group! combinator [
-        return: "Literal value" [any-value!]
+        return: "Literal value or splice" [element? splice?]
         @pending [<opt> block!]
         value [the-group!]
         <local> result' comb subpending single
@@ -1865,7 +1866,7 @@ default-combinators: make map! reduce [
     ]
 
     the-block! combinator [
-        return: "Literal value" [any-value!]
+        return: "Literal value" [element?]
         @pending [<opt> block!]
         value [the-block!]
         <local> result' comb subpending
@@ -2051,7 +2052,7 @@ default-combinators: make map! reduce [
     frame! combinator [
         {Run an ordinary action with parse rule products as its arguments}
         return: "The return value of the action"
-            [nihil? <opt> <void> any-value!]
+            [any-value? pack?]
         @pending [<opt> block!]
         value [frame!]
         ; AUGMENT is used to add param1, param2, param3, etc.
@@ -2110,7 +2111,7 @@ default-combinators: make map! reduce [
 
     word! combinator [
         return: "Result of running combinator from fetching the WORD!"
-            [<opt> <void> nihil? any-value!]
+            [any-value? pack?]
         @pending [<opt> block!]
         value [word! tuple!]
         <local> r comb rule-start rule-end
@@ -2207,10 +2208,10 @@ default-combinators: make map! reduce [
 
     'any combinator [
         return: "Last result value"
-            [<opt> <void> any-value!]
+            [any-value? pack?]
         @pending [<opt> block!]
         'arg "To catch instances of old ANY, only GROUP! and THE-BLOCK!"
-            [any-value!]  ; lie and take ANY-VALUE! to report better error
+            [element?]  ; lie and take any element to report better error
         <local> result' block
     ][
         switch/type :arg [
@@ -2260,7 +2261,7 @@ default-combinators: make map! reduce [
 
     block! (block-combinator: combinator [
         return: "Last result value"
-            [<opt> <void> nihil? any-value!]
+            [any-value? pack?]
         @pending [<opt> block!]
         value [block!]
         /limit "Limit of how far to consider (used by ... recursion)"
@@ -2476,7 +2477,7 @@ comment [combinatorize: func [
         [frame!]
     rules [block!]
     state "Parse State" [frame!]
-    /value "Initiating value (if datatype)" [any-value!]
+    /value "Initiating value (if datatype)" [element?]
     /path "Invoking Path" [path!]
     <local> r f rule-start
 ][
@@ -2811,7 +2812,7 @@ parse*: func [
     {Process as much of the input as parse rules consume (see also PARSE)}
 
     return: "Synthesized value from last match rule, or NULL if rules failed"
-        [<opt> <void> any-value!]
+        [any-value? pack?]
     @pending "Values remaining in pending queue after reaching end"
         [<opt> block!]
 

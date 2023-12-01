@@ -170,7 +170,7 @@ ask: function [
     {Ask the user for input}
 
     return: "Null if the input was aborted (via ESCAPE, Ctrl-D, etc.)"
-        [<opt> any-value!]
+        [any-value?]
     question "Prompt to user, datatype to request, or dialect block"
         [block! text! type-word!]
     /hide "mask input with * (Rebol2 feature, not yet implemented)"
@@ -301,7 +301,7 @@ confirm: function [
 list-dir: function [
     "Print contents of a directory (ls)."
 
-    return: <none>  ; don't want console to print evaluative result
+    return: [nihil?]
     'path [<end> file! word! path! text!]
         "Accepts %file, :variables, and just words (as dirs)"
     /l "Line of info format"
@@ -310,7 +310,7 @@ list-dir: function [
 ;   /t "Time order"
     /r "Recursive"
     /i "Indent"
-        [any-value!]
+        [integer! text!]
 ][
     i: default [""]
 
@@ -333,7 +333,7 @@ list-dir: function [
     files: attempt [read %./] else [
         print ["Not found:" :path]
         change-dir save-dir
-        return none
+        return nihil
     ]
 
     for-each file files [
@@ -361,6 +361,7 @@ list-dir: function [
     all [text? l, not empty? l] then [print l]
 
     change-dir save-dir
+    return nihil
 ]
 
 
@@ -378,7 +379,7 @@ undirize: function [
 
 in-dir: function [
     "Evaluate a block in a directory, and restore current directory when done"
-    return: [<opt> any-value!]
+    return: [any-value?]
     dir [file!]
         "Directory to change to (changed back after)"
     block [block!]

@@ -89,7 +89,7 @@ shell: func [
     ; GET-ENV function here, because we haven't run the shell code yet...and
     ; the environment might change by the time it is reached.
     ;
-    let shellify-tag: func [value [any-value!]] [
+    let shellify-tag: func [value [element?]] [
         if not tag? value [return value]
 
         return if system.version.4 = 3 [   ; Windows
@@ -202,7 +202,7 @@ shell: func [
 $: func [
     {Run SHELL code to end of line (or continue on next line with `...`)}
     :args "See documentation for SHELL"
-        [any-value! <variadic>]
+        [any-value? <variadic>]
     /inspect
     /pipe
     <local> code item

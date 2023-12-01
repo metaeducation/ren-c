@@ -231,7 +231,7 @@ REBLEN Modify_Array(
 REBLEN Modify_String_Or_Binary(
     REBVAL *dst,  // ANY-STRING! or BINARY! value to modify
     SymId op,  // SYM_APPEND @ tail, SYM_INSERT/SYM_CHANGE @ index
-    const REBVAL *src,  // ANY-VALUE! argument with content to inject
+    const REBVAL *src,  // argument with content to inject
     Flags flags,  // AM_PART, AM_LINE
     REBLEN part,  // dst to remove (CHANGE) or limit to grow (APPEND/INSERT)
     REBINT dups  // dup count of how many times to insert the src content

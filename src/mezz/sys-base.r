@@ -24,8 +24,8 @@ REBOL [
 ; If the host wants to know if a script or module is loaded, e.g. to print out
 ; a message.  (Printing directly from this code would be presumptuous.)
 ;
-; !!! This is not blank but is unset because it is risky to have variables
-; meant to hold functions be NULL or BLANK! as they turn into no-ops.
+; !!! This is not null but is unset because it is risky to have variables
+; meant to hold functions be NULL or BLANK! as they act as no-ops.
 ;
 script-pre-load-hook: ~
 
@@ -35,7 +35,7 @@ lib.enrescue: ~  ; forcing long name of SYS.UTIL.ENRESCUE hints it is dangerous
 rescue: func [  ; see also TRAP
     {If evaluation encounters a failure, return it, otherwise NULL}
 
-    return: [<opt> any-value!]
+    return: [<opt> error!]
     code [block!]
 ][
     return match error! enrescue code
@@ -71,7 +71,7 @@ module: func [
 
     return: [module!]
     @product "The result of running the body (~quit~ isotope if it ran QUIT)"
-        [any-value!]
+        [any-value?]
     @quitting "If requested and quitting, when true PRODUCT is QUIT's argument"
         [logic?]
     spec "The header block of the module (modified)"
@@ -218,11 +218,11 @@ do*: func [
     {SYS: Called by system for DO on datatypes that require special handling}
 
     return: "Final evaluative product of code or block"
-        [<opt> <void> any-value!]
+        [any-value?]
     source "Files, urls and modules evaluate as scripts, other strings don't"
         [file! url! text! binary! tag! the-word!]
     args "Args passed as system.script.args to a script (normally a string)"
-        [<opt> any-value!]
+        [<opt> element?]
     only "Do not catch quits...propagate them"
         [logic?]
 ][

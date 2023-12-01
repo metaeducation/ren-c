@@ -17,9 +17,9 @@ dump: function [
 
     return: "Doesn't return anything, not even void (so like a COMMENT)"
         [nihil?]
-    :value [any-value!]
+    :value [any-value?]
     'extra "Optional variadic data for SET-WORD!, e.g. `dump x: 1 + 2`"
-        [any-value! <variadic>]
+        [element? <variadic>]
     /prefix "Put a custom marker at the beginning of each output line"
         [text!]
 
@@ -34,7 +34,7 @@ dump: function [
         do f
     ]
 
-    val-to-text: function [return: [text!] ^val [<opt> <void> any-value!]] [
+    val-to-text: function [return: [text!] ^val [any-value?]] [
         return case [
             void? val ["; void"]
             quasi? val [unspaced [mold val space space "; isotope"]]
@@ -151,7 +151,7 @@ dumps: enfix function [
     :value "If issue, create non-specialized dumper...#on or #off by default"
         [issue! text! integer! word! set-word! set-path! group! block!]
     extra "Optional variadic data for SET-WORD!, e.g. `dv: dump var: 1 + 2`"
-        [<opt> any-value! <variadic>]
+        [<opt> any-value? <variadic>]
 ][
     if issue? value [
         d: specialize :dump-to-newline [prefix: as text! name]
@@ -280,13 +280,11 @@ summarize-obj: function [
 ; Notice that if line breaks occur internal to an element on the line, that
 ; is detected, and lets that element be the last commented element.
 ;
-**: enfix function [
+**: function [
     {Comment until end of line, or end of current BLOCK!/GROUP!}
 
     return: <nihil>
-    left "Enfix required for 'fully invisible' enfix behavior (ignored)"
-        [<opt> <end> any-value!]
-    'args [any-value! <variadic>]
+    'args [element? <variadic>]
 ][
     while [all [
         not new-line? args

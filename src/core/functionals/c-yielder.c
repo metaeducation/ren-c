@@ -322,17 +322,17 @@ DECLARE_NATIVE(generator)
 //
 //  {Function used with GENERATOR and YIELDER to give back results}
 //
-//      return: "Same value given as input, won't return until resumption"
-//          [<opt> any-value!]
-//      value "Value to yield (null is no-op)"
-//          [<opt> any-value!]
+//      return: "Same value given as input (NULL/VOID enclosed in pack)"
+//          [any-value?]
+//      value "Value to yield"
+//          [any-value?]
 //  ]
 //
 DECLARE_NATIVE(yield)
 //
 // The benefits of distinguishing NULL as a generator result meaning the body
-// has completed are considered to outweigh the ability to yield NULL.  A
-// modified generator that yields quoted values and unquotes on exit points
+// has completed are considered to outweigh the ability to yield pure NULL.
+// A modified generator that yields quoted values and unquotes on exit points
 // can be used to work around this.
 {
     INCLUDE_PARAMS_OF_YIELD;

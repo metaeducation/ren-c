@@ -646,11 +646,11 @@ Option(Series*) Get_Word_Container(
 //  {Dynamically add a new binding into the stream of evaluation}
 //
 //      return: "Expression result if SET form, else gives the new vars"
-//          [<opt> <void> any-value!]
+//          [any-value?]
 //      'vars "Variable(s) to create, GROUP!s must evaluate to BLOCK! or WORD!"
 //          [word! block! set-word! set-block! group! set-group!]
 //      :expression "Optional Expression to assign"
-//          [<variadic> <end> <opt> any-value!]
+//          [<variadic> any-value?]
 //  ]
 //
 DECLARE_NATIVE(let)
@@ -977,7 +977,7 @@ DECLARE_NATIVE(let)
 //      return: [any-word!]
 //      frame [frame!]
 //      word [any-word!]
-//      value [<opt> any-value!]
+//      value [any-value?]
 //  ]
 //
 DECLARE_NATIVE(add_let_binding) {

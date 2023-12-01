@@ -194,8 +194,8 @@ Bounce Func_Dispatcher(Level* const L)
 // acting more like:
 //
 //     return: lambda
-//         [{Returns a value from a function.} value [<opt> any-value!]]
-//         [unwind/with (binding of 'return) :value]
+//         [{Returns a value from a function.} ^value [any-atom?]]
+//         [unwind/with (binding of 'return) unmeta value]
 //     ]
 //     (body goes here)
 //
@@ -488,11 +488,11 @@ Bounce Init_Thrown_Unwind_Value(
 //
 //  {Jump up the stack to return from a specific frame or call.}
 //
-//      return: []  ; !!! notation for divergent functions?
+//      return: []  ; "divergent"
 //      level "Frame or index to exit from"
 //          [frame! integer!]
 //      ^result "Result for enclosing state"
-//          [<opt> <void> raised? pack? any-value!]
+//          [any-atom?]
 //  ]
 //
 DECLARE_NATIVE(unwind)

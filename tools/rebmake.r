@@ -488,8 +488,8 @@ gcc: make compiler-class [
         /I "includes" [block!]
         /D "definitions" [block!]
         /F "cflags" [block!]
-        /O "opt-level" [any-value!]  ; !!! datatypes?
-        /g "debug" [any-value!]  ; !!! datatypes?
+        /O "opt-level" [word! logic?! integer! text!]
+        /g "debug" [word! logic?! integer!]
         /PIC "https://en.wikipedia.org/wiki/Position-independent_code"
         /E "only preprocessing"
     ][
@@ -602,8 +602,8 @@ cl: make compiler-class [
         /I "includes" [block!]
         /D "definitions" [block!]
         /F "cflags" [block!]
-        /O "opt-level" [any-value!]  ; !!! datatypes?
-        /g "debug" [any-value!]  ; !!! datatypes?
+        /O "opt-level" [word! logic?! integer! text!]
+        /g "debug" [word! logic?! integer!]
         /PIC "https://en.wikipedia.org/wiki/Position-independent_code"
         ; Note: PIC is ignored for this Microsoft CL compiler handler
         /E "only preprocessing"
@@ -1082,8 +1082,8 @@ object-file-class: make object! [
         /I "extra includes" [block!]
         /D "extra definitions" [block!]
         /F "extra cflags (override)" [block!]
-        /O "opt-level" [any-value!]  ; !!! datatypes?
-        /g "dbg" [any-value!]  ; !!! datatypes?
+        /O "opt-level" [word! logic?! integer! text!]
+        /g "dbg" [word! logic?! integer!]
         /PIC "https://en.wikipedia.org/wiki/Position-independent_code"
         /E "only preprocessing"
     ][

@@ -43,7 +43,7 @@
         var: 1020
         return nihil
     ]
-    outer: enclose :inner func [return: [nihil? <opt> any-value!] f] [
+    outer: enclose :inner func [return: [quoted! quasi!] f] [
         return ^(eval f)  ; don't unquote it here
     ]
     did all [
@@ -56,7 +56,7 @@
         var: 1020
         return nihil
     ]
-    outer: enclose :inner func [return: [nihil? <opt> <void> any-value!] f] [
+    outer: enclose :inner func [return: [nihil? any-value?] f] [
         return eval f  ; now try unquoting
     ]
     did all [

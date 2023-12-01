@@ -222,7 +222,7 @@ load: func [
     {Loads code or data from a file, URL, text string, or binary.}
 
     return: "BLOCK! if Rebol code, otherwise value(s) appropriate for codec"
-        [<opt> any-value!]
+        [<opt> element?]
     @header "Request the Rebol header object be returned as well"
         [<opt> object!]
     source "Source of the information being loaded"
@@ -408,7 +408,7 @@ import*: func [
     return: "Loaded module"
         [<opt> module!]
     @product' "Evaluative product of module body (only if WHERE is BLANK!)"
-        [<opt> any-value!]
+        [~cached~ ~registered~ ~nameless~ quoted! quasi!]
     where "Where to put exported definitions from SOURCE"
         [<opt> module!]
     source [
@@ -421,7 +421,7 @@ import*: func [
         module!  ; register the module and import its exports--do not create
     ]
     /args "Args passed as system.script.args to a script (normally a string)"
-        [any-value!]
+        [element?]
     /only "Do not catch quits...propagate them"
         [logic?]
     /into "e.g. reuse Context* already made for NATIVEs loading from extension"
@@ -650,12 +650,12 @@ export*: func [
     {Add words to module's `Exports: []` list}
 
     return: "Evaluated expression if used with SET-WORD!"
-        [<opt> any-value!]
+        [any-value?]
     where "Specialized for each module via EXPORT"
         [module!]
     'left [<skip> set-word! set-group!]
     args "`export x: ...` for single or `export [...]` for words list"
-        [<opt> any-value! <variadic>]
+        [any-value? <variadic>]
     <local>
         hdr exports val word types items
 ][

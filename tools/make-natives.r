@@ -118,18 +118,29 @@ native-proto: null
 logic?-proto: null
 action?-proto: null
 enfix-proto: null
+any-value?-proto: null
+any-atom?-proto: null
 
-for-next info all-protos [
+info: all-protos
+while [not tail? info] [
     case [
         info/1/name = "native" [native-proto: take info]
         info/1/name = "logic?" [logic?-proto: take info]
         info/1/name = "action?" [action?-proto: take info]
         info/1/name = "enfix" [enfix-proto: take info]
+        info/1/name = "any-value?" [any-value?-proto: take info]
+        info/1/name = "any-atom?" [any-atom?-proto: take info]
+    ]
+    else [
+        info: next info
     ]
 ]
 
-assert [native-proto logic?-proto action?-proto enfix-proto]
+assert [native-proto logic?-proto action?-proto enfix-proto
+    any-value?-proto any-atom?-proto]
 
+insert all-protos any-atom?-proto  ; will be sixth
+insert all-protos any-value?-proto  ; will be fifth
 insert all-protos enfix-proto  ; will be fourth
 insert all-protos logic?-proto  ; will be third
 insert all-protos action?-proto  ; will be second

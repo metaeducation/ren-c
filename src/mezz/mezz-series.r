@@ -37,10 +37,10 @@ last?: single?: lambda [
 
 extend: func [
     "Extend an object, map, or block type with word and value pair."
-    return: [<opt> any-value!]
+    return: [any-value?]
     obj [object! map!] {object to extend (modified)}
     word [any-word!]
-    val [<opt> any-value!]
+    val [any-value?]
 ][
     append obj word
     return poke obj word :val

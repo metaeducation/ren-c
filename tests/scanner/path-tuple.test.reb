@@ -113,7 +113,7 @@
     transform: func [
         {Turn PATH!/TUPLE!s into BLOCK!/GROUP!s for validation testing}
 
-        value [any-value!]
+        value [element?]
         <local> mtype
         <static> mapping (reduce [
             path! block!

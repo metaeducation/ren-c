@@ -141,7 +141,7 @@ DECLARE_NATIVE(breakpoint_p)
 //
 //  "Pause in the debugger before running the provided code"
 //
-//      return: [<opt> any-value!]
+//      return: [any-value?]
 //          "Result of the code evaluation, or RESUME/WITH value if override"
 //      :code [group!]  ; or LIT-WORD! name or BLOCK! for dialect
 //          "Run the given code if breakpoint does not override"

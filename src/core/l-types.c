@@ -85,12 +85,12 @@ Bounce MAKE_Unhooked(
 //
 //  {Constructs or allocates the specified datatype.}
 //
-//      return: [<opt> any-value!]
-//          "Constructed value, or null if BLANK! input"
-//      type [<maybe> meta-word! any-value!]
-//          {The datatype or parent value to construct from}
-//      def [<maybe> <unrun> element?]  ; accept action for FRAME!
-//          {Definition or size of the new value (binding may be modified)}
+//      return: "Constructed value, or null if BLANK! input"
+//          [element?]
+//      type "The datatype or parent value to construct from"
+//          [<maybe> element?]
+//      def "Definition or size of the new value (binding may be modified)"
+//          [<maybe> <unrun> element?]  ; <unrun> action for FRAME!
 //  ]
 //
 DECLARE_NATIVE(make)
@@ -176,10 +176,10 @@ Bounce TO_Unhooked(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 //
 //  {Converts to a specified datatype, copying any underying data}
 //
-//      return: "VALUE converted to TYPE, null if type or value are blank"
-//          [<opt> any-value!]
-//      type [<maybe> type-word!]
-//      value [<maybe> any-value!]
+//      return: "VALUE converted to TYPE (copied if same type as value)"
+//          [element?]
+//      type [<maybe> element?]
+//      value [<maybe> element?]
 //  ]
 //
 DECLARE_NATIVE(to)
@@ -287,11 +287,11 @@ Bounce Reflect_Core(Level* level_)
 //
 //  {Returns specific details about a datatype.}
 //
-//      return: [<opt> any-value!]
+//      return: [any-value?]
 //      value "Accepts isotopes for the purposes of TYPE OF"
-//          [<maybe> <opt> any-value!]
-//      property [word!]
-//          "Such as: type, length, spec, body, words, values, title"
+//          [<maybe> any-value?]
+//      property "Such as: type, length, spec, body, words, values, title"
+//          [word!]
 //  ]
 //
 DECLARE_NATIVE(reflect_native)
@@ -310,11 +310,11 @@ DECLARE_NATIVE(reflect_native)
 //
 //  {Infix form of REFLECT which quotes its left (X OF Y => REFLECT Y 'X)}
 //
-//      return: [<opt> any-value!]
+//      return: [any-value?]
 //      'property "Will be escapable, ':property (bootstrap permitting)"
 //          [word! get-word! get-path! get-group!]
 //      value "Accepts null so TYPE OF NULL can be returned as null"
-//          [<maybe> <opt> any-value!]
+//          [<maybe> any-value?]
 //  ]
 //
 DECLARE_NATIVE(of)

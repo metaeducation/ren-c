@@ -296,11 +296,19 @@ Param* Init_Parameter_Untracked(
         ){
             flags |= PARAMETER_FLAG_INCOMPLETE_OPTIMIZATION;
         }
-        else if (heart == REB_FRAME) {
-            //
-            // Same arguments as Any_Type_Value(), but for composing actions.
-            //
-            flags |= PARAMETER_FLAG_INCOMPLETE_OPTIMIZATION;
+        else if (heart == REB_FRAME and QUOTE_BYTE(lookup) == ISOTOPE_0) {
+            Phase* phase = ACT_IDENTITY(VAL_ACTION(lookup));
+            if (ACT_DISPATCHER(phase) == &Intrinsic_Dispatcher) {
+                Intrinsic* intrinsic = Extract_Intrinsic(phase);
+                if (intrinsic == &N_any_value_q)
+                    flags |= PARAMETER_FLAG_ANY_VALUE_OK;
+                else if (intrinsic == &N_any_atom_q)
+                    flags |= PARAMETER_FLAG_ANY_ATOM_OK;
+                else
+                    flags |= PARAMETER_FLAG_INCOMPLETE_OPTIMIZATION;
+            }
+            else
+                flags |= PARAMETER_FLAG_INCOMPLETE_OPTIMIZATION;
         }
         else {
             // By pre-checking we can avoid needing to double check in the

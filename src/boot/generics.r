@@ -47,8 +47,8 @@ REBOL [
 
 reflect: generic [
     {Returns specific details about a value (used by OF, e.g. LENGTH OF)}
-    return: [<opt> any-value!]
-    value [any-value!]
+    return: [any-value?]
+    value [any-value?]
     property "Such as: type, length, spec, body, words, values, title"
         [word!]
 ]
@@ -332,7 +332,7 @@ find: generic [
 select: generic [
     {Searches for a value; returns the value that follows, else null}
 
-    return: [<opt> any-value!]
+    return: [any-value?]
     @tail []  ; for frame compatibility with FIND
     series [<maybe> any-series! any-context! map! bitset!]
     value [<maybe> element? splice? any-matcher?]
@@ -349,11 +349,11 @@ pick*: generic [
     {Low-level hook for PICK, used also by PATH! and GET-PATH!}
 
     return: "PICK: the retrieved value"
-        [<opt> <void> any-value!]  ; PICK doesn't return void, but GET can
+        [any-value?]  ; PICK doesn't return void, but GET can
     location "Target value"
-        [any-value!]
+        [element? logic?]
     picker "Field or index to use"
-        [any-value!]
+        [element?]
 ]
 
 
@@ -361,13 +361,13 @@ poke*: generic [
     {Low-level hook for POKE, used also by SET-PATH!}
 
     return: "Bits referencing cell must update (nullptr if no update needed)"
-        [<opt> any-value!]
+        [<opt> element?]
     location "Target value (on some steps, bits are modified)"
-        [any-value!]
+        [element?]
     picker "The property to update"
-        [any-value!]
+        [element? logic?]
     value "Value to POKE"
-        [<opt> <void> any-value!]
+        [any-value?]
 ]
 
 
@@ -375,11 +375,11 @@ protect*: generic [
     {Low-level hook for PROTECT, used as /UPDATER with SET}
 
     return: "Bits referencing cell must update (nullptr if no update needed)"
-        [<opt> any-value!]
+        [<opt> element?]
     location "Target value (on some steps, bits are modified)"
-        [any-value!]
+        [element?]
     picker "The property to update (e.g. object field)"
-        [any-value!]
+        [element?]
     value "Protection signal, currently [PROTECT UNPROTECT HIDE]"
         [word!]
 ]
@@ -392,10 +392,10 @@ protect*: generic [
 ;
 put: generic [
     {Replaces the value following a key, and returns the new value.}
-    return: [<opt> any-value!]
+    return: [element?]
     series [map!]
-    key [any-value!]
-    value [<opt> any-value!]
+    key [element?]
+    value [<maybe> element?]
     /case {Perform a case-sensitive search}
 ]
 
@@ -404,10 +404,10 @@ put: generic [
 copy: generic [
     {Copies a series, object, or other value.}
 
-    return: "Return type will match the input type, or void if blank"
-        [<opt> any-value!]
+    return: "Return type will match the input type"
+        [any-value?]
     value "If an ANY-SERIES!, it is only copied from its current position"
-        [<maybe> any-value!]
+        [<maybe> any-value?]  ; can be e.g. an action isotope, copied as action
     /part "Limits to a given length or position"
         [any-number! any-series! pair!]
     /deep "Also copies series values within the block"
@@ -417,7 +417,7 @@ copy: generic [
 take: generic [
     {Removes and returns one or more elements}
 
-    return: [<opt> any-value!]
+    return: [any-value?]  ; !!! Variadic TAKE may evaluate, rethink
     series "At position (modified)"
         [any-series! port! varargs!]
     /part "Specifies a length or end position"

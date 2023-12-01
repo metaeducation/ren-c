@@ -39,11 +39,11 @@
 //
 //  {Process an evaluated argument *inline* as the evaluator loop would}
 //
-//      return: [<opt> <void> nihil? any-value!]
-//      value [element?]
-//          {BLOCK! passes-thru, ACTION! runs, SET-WORD! assigns...}
-//      expressions [<opt> element? <variadic>]
-//          {Depending on VALUE, more expressions may be consumed}
+//      return: [any-atom?]
+//      value "BLOCK! passes-thru, ACTION! runs, SET-WORD! assigns..."
+//          [element?]
+//      expressions "Depending on VALUE, more expressions may be consumed"
+//          [<opt> element? <variadic>]
 //  ]
 //
 DECLARE_NATIVE(reeval)
@@ -82,11 +82,11 @@ DECLARE_NATIVE(reeval)
 //
 //  {Shove a parameter into an ACTION! as its first argument}
 //
-//      return: [<opt> any-value!]
+//      return: [any-value?]
 //          "REVIEW: How might this handle shoving enfix invisibles?"
-//      :left [<end> <opt> any-value!]
+//      :left [any-value?]
 //          "Requests parameter convention based on enfixee's first argument"
-//      'right [<variadic> <end> any-value!]
+//      'right [<variadic> <end> element?]
 //          "(uses magic -- SHOVE can't be written easily in usermode yet)"
 //      /prefix "Force either prefix or enfix behavior (vs. acting as is)"
 //          [logic?]
@@ -216,7 +216,7 @@ DECLARE_NATIVE(shove)
 //
 //  {Evaluates source code (see also EVAL for stepwise or invisible evaluation)}
 //
-//      return: [<opt> <void> any-value!]
+//      return: [any-value?]
 //      source "Block of code, or indirect specification to find/make it" [
 //          <maybe>  ; opts out of the DO, returns null
 //          block!  ; source code in block form (see EVALUATE for other kinds)
@@ -232,7 +232,7 @@ DECLARE_NATIVE(shove)
 //          varargs!  ; simulates as if frame! or block! is being executed
 //      ]
 //      /args "Sets system.script.args if doing a script (usually a TEXT!)"
-//          [any-value!]
+//          [element?]
 //      /only "Don't catch QUIT (default behavior for BLOCK!)"
 //  ]
 //
@@ -356,7 +356,7 @@ DECLARE_NATIVE(do)
 //  {Perform a single evaluator step, returning the next source position}
 //
 //      return: "Value from the step"
-//          [<opt> <void> nihil? any-value!]
+//          [any-atom?]
 //      source [
 //          <maybe>  ; useful for `evaluate try ...` scenarios when no match
 //          any-array!  ; source code in block form
@@ -633,7 +633,7 @@ DECLARE_NATIVE(redo)
 //
 //  {Invoke an ACTION! with all required arguments specified}
 //
-//      return: [<opt> <void> any-value!]
+//      return: [any-atom?]
 //      operation [<unrun> frame!]
 //      def "Frame definition block (will be bound and evaluated)"
 //          [block!]
@@ -703,7 +703,7 @@ DECLARE_NATIVE(applique)
 //
 //  {Invoke an action with all required arguments specified}
 //
-//      return: [<opt> <void> any-value!]
+//      return: [any-atom?]
 //      operation [<unrun> frame!]
 //      args "Arguments and Refinements, e.g. [arg1 arg2 /ref refine1]"
 //          [block!]
@@ -975,9 +975,9 @@ DECLARE_NATIVE(apply)
 //
 //  {Invoke code inline as if it had been invoked via a WORD!}
 //
-//      return: [<opt> <void> any-value!]
+//      return: [any-atom?]
 //      frame [<unrun> frame!]
-//      args [<opt> <void> any-value! <variadic>]
+//      args [any-value? <variadic>]
 //  ]
 //
 DECLARE_NATIVE(run)

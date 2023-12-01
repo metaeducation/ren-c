@@ -120,8 +120,8 @@
     (|1|: lambda [
         {Barrier that's willing to only run one expression after it}
 
-        right [<opt> <end> any-value! <variadic>]
-        'lookahead [any-value! <variadic>]
+        right [any-value? <variadic>]
+        'lookahead [element? <variadic>]
         <local> look
     ][
         take right  ; returned value

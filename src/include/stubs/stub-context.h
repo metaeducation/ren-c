@@ -24,7 +24,7 @@
 // It maps keys to values using two parallel series, whose indices line up in
 // correspondence:
 //
-//   "KEYLIST" - a series of pointer-sized elements to String* symbols.
+//   "KEYLIST" - a series of pointer-sized elements holding Symbol* pointers
 //
 //   "VARLIST" - an array which holds an archetypal ANY-CONTEXT! value in its
 //   [0] element, and then a cell-sized slot for each variable.
@@ -37,16 +37,16 @@
 // Indices into the arrays are 0-based for keys and 1-based for values, with
 // the [0] elements of the varlist used an archetypal value:
 //
-//    VARLIST ARRAY (aka Context*)  ---Link--+
+//    VARLIST ARRAY (aka Context*)  --Link--+
 //  +------------------------------+        |
 //  +          "ROOTVAR"           |        |
 //  | Archetype ANY-CONTEXT! Value |        v         KEYLIST SERIES
 //  +------------------------------+        +-------------------------------+
-//  |      <opt> ANY-VALUE! 1      |        |     Symbol* key symbol  1   |
+//  |         Value Cell 1         |        |         Symbol* Key 1         |
 //  +------------------------------+        +-------------------------------+
-//  |      <opt> ANY-VALUE! 2      |        |     Symbol* key symbol 2    |
+//  |         Value Cell 2         |        |         Symbol* key 2         |
 //  +------------------------------+        +-------------------------------+
-//  |      <opt> ANY-VALUE! ...    |        |     Symbol* key symbol ...  |
+//  |         Value Cell ...       |        |         Symbol* key ...       |
 //  +------------------------------+        +-------------------------------+
 //
 // (For executing frames, the ---Link--> is actually to its Level* structure

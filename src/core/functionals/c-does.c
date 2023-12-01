@@ -139,9 +139,9 @@ Bounce Block_Dispatcher(Level* const L)
 //
 //  surprise: native [
 //
-//  {Generate a surprise ANY-VALUE!}
+//  {Generate a surprise ANY-VALUE?}
 //
-//      return: [<opt> <void> any-value!]
+//      return: [any-value?]
 //  ]
 //
 DECLARE_NATIVE(surprise)
@@ -164,7 +164,7 @@ DECLARE_NATIVE(surprise)
 //
 //      return: [action?]
 //      source "Note: Will LOCK source if a BLOCK! (review behavior)"
-//          [any-value!]
+//          [element?]  ; can be e.g. (does http://example.com/script.r)
 //  ]
 //
 DECLARE_NATIVE(does)

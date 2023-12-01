@@ -157,7 +157,7 @@ prin: function [
     "Print without implicit line break, blocks are SPACED."
 
     return: <none>
-    value [<opt> any-value!]
+    value [<opt> element?]
 ][
     write-stdout switch/type value [
         null?! [return none]  ; type of VOID is currently null
