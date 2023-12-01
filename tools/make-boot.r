@@ -391,7 +391,7 @@ for-each-datatype t [
         e-types/emit newline
     ]
 
-    e-types/emit 't {
+    e-types/emit [propercase-of t] {
         #define Is_${propercase-of T/name}(v) \
             (VAL_TYPE(v) == REB_${T/NAME})  /* $<T/HEART> */
     }
@@ -435,7 +435,7 @@ for-each-datatype t [
         append typeset-sets reduce [t/name]
 
         e-types/emit newline
-        e-types/emit 'ts-name {
+        e-types/emit [propercase-of ts-name] {
             #define Any_${propercase-of Ts-Name}_Kind(k) \
                (did (FLAGIT_KIND(k) & TS_${TS-NAME}))
 
@@ -454,7 +454,7 @@ for-each-typerange tr [
     name: copy tr/name
 
     e-types/emit newline
-    e-types/emit 'tr {
+    e-types/emit [propercase-of tr] {
         INLINE bool Any_${propercase-of Tr/Name}_Kind(Byte k)
           { return k >= $<TR/START> and k < $<TR/END>; }
 
