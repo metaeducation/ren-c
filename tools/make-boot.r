@@ -1120,7 +1120,7 @@ e-symbols/emit 'syms-cscape {
      *
      * Note: Any interning that *does not have* a compile-time constant
      * assigned to it will have a symbol ID of 0.  See Option(SymId) for how
-     * potential bugs like `VAL_WORD_ID(a) == VAL_WORD_ID(b)` are mitigated
+     * potential bugs like `Cell_Word_Id(a) == Cell_Word_Id(b)` are mitigated
      * by preventing such comparisons.
      */
     enum SymIdEnum {

@@ -92,7 +92,7 @@ REBTYPE(Blank)
         INCLUDE_PARAMS_OF_REFLECT;
         UNUSED(ARG(value)); // taken care of by `unit` above.
 
-        switch (VAL_WORD_ID(ARG(property))) {
+        switch (Cell_Word_Id(ARG(property))) {
           case SYM_INDEX:
           case SYM_LENGTH:
             return nullptr;

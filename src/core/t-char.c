@@ -330,7 +330,7 @@ REBTYPE(Issue)
         INCLUDE_PARAMS_OF_REFLECT;
         UNUSED(ARG(value));  // same as `v`
 
-        switch (VAL_WORD_ID(ARG(property))) {
+        switch (Cell_Word_Id(ARG(property))) {
           case SYM_CODEPOINT:
             if (not IS_CHAR(issue))
                 break;  // must be a single codepoint to use this reflector

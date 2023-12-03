@@ -308,7 +308,7 @@ REBTYPE(Word)
         INCLUDE_PARAMS_OF_REFLECT;
 
         UNUSED(ARG(value));
-        Option(SymId) property = VAL_WORD_ID(ARG(property));
+        Option(SymId) property = Cell_Word_Id(ARG(property));
 
         switch (property) {
           case SYM_LENGTH: {  // byte size stored, but not # of codepoints

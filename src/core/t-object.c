@@ -1099,7 +1099,7 @@ REBTYPE(Context)
         UNUSED(ARG(value));  // covered by `v`
 
         REBVAL *property = ARG(property);
-        Option(SymId) prop = VAL_WORD_ID(property);
+        Option(SymId) prop = Cell_Word_Id(property);
 
         switch (prop) {
           case SYM_LENGTH: // !!! Should this be legal?
@@ -1180,7 +1180,7 @@ REBTYPE(Context)
         if (not Is_Word(setval))
             fail ("PROTECT* currently takes just WORD!");
 
-        switch (VAL_WORD_ID(setval)) {
+        switch (Cell_Word_Id(setval)) {
           case SYM_PROTECT:
             Set_Cell_Flag(var, PROTECTED);
             break;
@@ -1318,7 +1318,7 @@ REBTYPE(Frame)
         INCLUDE_PARAMS_OF_REFLECT;
         UNUSED(ARG(value));  // covered by `frame`
 
-        Option(SymId) prop = VAL_WORD_ID(ARG(property));
+        Option(SymId) prop = Cell_Word_Id(ARG(property));
 
         if (prop == SYM_LABEL) {
             //
@@ -1414,7 +1414,7 @@ REBTYPE(Frame)
         assert(IS_DETAILS(act));
 
         REBVAL *property = ARG(property);
-        Option(SymId) sym = VAL_WORD_ID(property);
+        Option(SymId) sym = Cell_Word_Id(property);
         switch (sym) {
           case SYM_BINDING: {
             if (Did_Get_Binding_Of(OUT, frame))
@@ -1482,7 +1482,7 @@ REBTYPE(Frame)
 
             // !!! How to tell URL! vs FILE! ?
             //
-            if (VAL_WORD_ID(property) == SYM_FILE)
+            if (Cell_Word_Id(property) == SYM_FILE)
                 Init_File(OUT, LINK(Filename, a));
             else
                 Init_Integer(OUT, a->misc.line);

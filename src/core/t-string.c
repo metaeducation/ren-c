@@ -979,7 +979,7 @@ REBTYPE(String)
         INCLUDE_PARAMS_OF_REFLECT;
         UNUSED(ARG(value));  // accounted for by `v`
 
-        if (VAL_WORD_ID(ARG(property)) == SYM_SIZE) {
+        if (Cell_Word_Id(ARG(property)) == SYM_SIZE) {
             Size size;
             Cell_Utf8_Size_At(&size, v);
             return Init_Integer(OUT, size);

@@ -213,7 +213,7 @@ DECLARE_NATIVE(lambda)
             param_flags |= PARAMETER_FLAG_REFINEMENT;
             param_flags |= PARAMETER_FLAG_NULLS_DEFINITELY_OK;
         }
-        else if (Is_Set_Word(item) and VAL_WORD_ID(item) == SYM_RETURN) {
+        else if (Is_Set_Word(item) and Cell_Word_Id(item) == SYM_RETURN) {
             fail ("LAMBDA (->) does not offer RETURN facilities, use FUNCTION");
         }
         else {

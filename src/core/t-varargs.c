@@ -438,7 +438,7 @@ REBTYPE(Varargs)
         INCLUDE_PARAMS_OF_REFLECT;
 
         UNUSED(ARG(value)); // already have `value`
-        Option(SymId) property = VAL_WORD_ID(ARG(property));
+        Option(SymId) property = Cell_Word_Id(ARG(property));
 
         switch (property) {
         case SYM_TAIL_Q: {

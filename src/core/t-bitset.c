@@ -305,7 +305,7 @@ bool Set_Bits(Binary* bset, const Cell* val, bool set)
     if (
         item != tail
         && Is_Word(item)
-        && VAL_WORD_ID(item) == SYM_NOT_1  // see TO-C-NAME
+        && Cell_Word_Id(item) == SYM_NOT_1  // see TO-C-NAME
     ){
         INIT_BITS_NOT(bset, true);
         item++;
@@ -379,7 +379,7 @@ bool Set_Bits(Binary* bset, const Cell* val, bool set)
 
         case REB_WORD: {
             // Special: BITS #{000...}
-            if (not Is_Word(item) or VAL_WORD_ID(item) != SYM_BITS)
+            if (not Is_Word(item) or Cell_Word_Id(item) != SYM_BITS)
                 return false;
             item++;
             if (not Is_Binary(item))
@@ -590,7 +590,7 @@ REBTYPE(Bitset)
         INCLUDE_PARAMS_OF_REFLECT;
         UNUSED(ARG(value)); // covered by `v`
 
-        Option(SymId) property = VAL_WORD_ID(ARG(property));
+        Option(SymId) property = Cell_Word_Id(ARG(property));
         switch (property) {
           case SYM_LENGTH:
             return Init_Integer(v, Binary_Len(VAL_BITSET(v)) * 8);

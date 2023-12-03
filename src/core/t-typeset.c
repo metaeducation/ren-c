@@ -283,7 +283,7 @@ Param* Init_Parameter_Untracked(
                 flags |= PARAMETER_FLAG_INCOMPLETE_OPTIMIZATION;
                 continue;
             }
-            Option(SymId) id = VAL_WORD_ID(lookup);
+            Option(SymId) id = Cell_Word_Id(lookup);
             if (not IS_KIND_SYM(id))
                 fail (item);
             *optimized = KIND_FROM_SYM(unwrap(id));

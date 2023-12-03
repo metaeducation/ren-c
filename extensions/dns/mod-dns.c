@@ -153,7 +153,7 @@ static Bounce DNS_Actor(Level* level_, REBVAL *port, const Symbol* verb)
         INCLUDE_PARAMS_OF_REFLECT;
         UNUSED(ARG(value));  // covered by `port`
 
-        Option(SymId) property = VAL_WORD_ID(ARG(property));
+        Option(SymId) property = Cell_Word_Id(ARG(property));
         switch (property) {
           case SYM_OPEN_Q:
             fail ("DNS 'ports' do not currently support OPEN?, only READ");

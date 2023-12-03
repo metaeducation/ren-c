@@ -659,7 +659,7 @@ void Pick_Or_Poke_Date(
 ){
     Option(SymId) sym;
     if (Is_Word(picker)) {
-        sym = VAL_WORD_ID(picker); // error later if SYM_0 or not a match
+        sym = Cell_Word_Id(picker); // error later if SYM_0 or not a match
     }
     else if (Is_Integer(picker)) {
         switch (Int32(picker)) {

@@ -67,7 +67,7 @@ INLINE bool Is_Nulled(const Cell* v) {
     ASSERT_CELL_READABLE_EVIL_MACRO(v);
     return QUOTE_BYTE(v) == 0
         and HEART_BYTE(v) == REB_WORD
-        and VAL_WORD_ID(v) == SYM_NULL;
+        and Cell_Word_Id(v) == SYM_NULL;
 }
 
 #define Init_Word_Isotope(out,label) \
@@ -88,7 +88,7 @@ INLINE bool Is_Quasi_Null(const Cell* v) {
         return false;
     if (HEART_BYTE(v) != REB_WORD)
         return false;
-    return VAL_WORD_ID(v) == SYM_NULL;
+    return Cell_Word_Id(v) == SYM_NULL;
 }
 
 #define Init_Meta_Of_Null(out) \

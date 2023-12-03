@@ -372,7 +372,7 @@ void Pick_Time(Sink(Value(*)) out, const Cell* value, const Cell* picker)
 {
     REBINT i;
     if (Is_Word(picker)) {
-        switch (VAL_WORD_ID(picker)) {
+        switch (Cell_Word_Id(picker)) {
         case SYM_HOUR:   i = 0; break;
         case SYM_MINUTE: i = 1; break;
         case SYM_SECOND: i = 2; break;
@@ -417,7 +417,7 @@ void Poke_Time_Immediate(
 ) {
     REBINT i;
     if (Is_Word(picker)) {
-        switch (VAL_WORD_ID(picker)) {
+        switch (Cell_Word_Id(picker)) {
         case SYM_HOUR:   i = 0; break;
         case SYM_MINUTE: i = 1; break;
         case SYM_SECOND: i = 2; break;

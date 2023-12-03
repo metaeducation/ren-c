@@ -352,7 +352,7 @@ REBTYPE(Sequence)
         INCLUDE_PARAMS_OF_REFLECT;
         UNUSED(ARG(value));
 
-        switch (VAL_WORD_ID(ARG(property))) {
+        switch (Cell_Word_Id(ARG(property))) {
           case SYM_LENGTH:
             return Init_Integer(OUT, Cell_Sequence_Len(sequence));
 

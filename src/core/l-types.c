@@ -246,7 +246,7 @@ Bounce Reflect_Core(Level* level_)
 
     REBVAL *v = ARG(value);
 
-    Option(SymId) id = VAL_WORD_ID(ARG(property));
+    Option(SymId) id = Cell_Word_Id(ARG(property));
     if (not id) {
         //
         // If a word wasn't in %words.r, it has no integer SYM.  There is

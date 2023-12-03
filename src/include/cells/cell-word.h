@@ -52,7 +52,7 @@ INLINE const Symbol* Cell_Word_Symbol(NoQuote(const Cell*) cell) {
     return cast(Symbol*, Cell_Node1(cell));
 }
 
-#define VAL_WORD_ID(v) \
+#define Cell_Word_Id(v) \
     Symbol_Id(Cell_Word_Symbol(v))
 
 INLINE void INIT_VAL_WORD_INDEX(Cell* v, REBLEN i) {
@@ -201,7 +201,7 @@ INLINE bool Is_Word_Isotope_With_Id(const Cell* v, SymId id) {
     if (not Is_Word_Isotope(v))
         return false;
 
-    return id == VAL_WORD_ID(v);
+    return id == Cell_Word_Id(v);
 }
 
 INLINE bool Is_Quasi_Word(const Cell* v)

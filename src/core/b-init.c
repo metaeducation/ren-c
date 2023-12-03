@@ -829,7 +829,7 @@ void Startup_Core(void)
         Array_Head(Cell_Array_Known_Mutable(Array_Head(boot_array)))
     );
 
-    // Symbol_Id(), VAL_WORD_ID() and Canon(XXX) now available
+    // Symbol_Id(), Cell_Word_Id() and Canon(XXX) now available
 
     PG_Boot_Phase = BOOT_LOADED;
 

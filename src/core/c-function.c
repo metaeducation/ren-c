@@ -350,7 +350,7 @@ void Push_Paramlist_Quads_May_Fail(
             symbol = Cell_Word_Symbol(item);
 
             if (heart == REB_SET_WORD) {
-                if (VAL_WORD_ID(item) == SYM_RETURN and not quoted) {
+                if (Cell_Word_Id(item) == SYM_RETURN and not quoted) {
                     pclass = PARAMCLASS_RETURN;
                 }
             }
@@ -533,7 +533,7 @@ Array* Pop_Paramlist_With_Adjunct_May_Fail(
         else {
             StackValue(*) param = PARAM_SLOT(return_stackindex);
             assert(
-                VAL_WORD_ID(KEY_SLOT(return_stackindex)) == SYM_RETURN
+                Cell_Word_Id(KEY_SLOT(return_stackindex)) == SYM_RETURN
             );
             UNUSED(param);
         }
@@ -1203,7 +1203,7 @@ DECLARE_NATIVE(tweak)
 
     Flags flag;
 
-    switch (VAL_WORD_ID(ARG(property))) {
+    switch (Cell_Word_Id(ARG(property))) {
       case SYM_DEFER:  // Special enfix behavior used by THEN, ELSE, ALSO...
         if (pclass != PARAMCLASS_NORMAL and pclass != PARAMCLASS_META)
             fail ("TWEAK defer only actions with evaluative 1st params");

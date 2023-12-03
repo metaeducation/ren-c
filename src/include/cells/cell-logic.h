@@ -57,7 +57,7 @@ INLINE bool Is_Logic(const Cell* v) {
     if (HEART_BYTE(v) != REB_WORD)  // quote byte checked it
         return false;
 
-    Option(SymId) id = VAL_WORD_ID(v);
+    Option(SymId) id = Cell_Word_Id(v);
     return id == SYM_TRUE or id == SYM_FALSE;
 }
 
@@ -66,7 +66,7 @@ INLINE bool Is_Logic(const Cell* v) {
 
 INLINE bool Cell_Logic(const Cell* v) {
     assert(Is_Isotope(v));
-    Option(SymId) id = VAL_WORD_ID(v);
+    Option(SymId) id = Cell_Word_Id(v);
     if (id == SYM_TRUE)
         return true;
     if (id == SYM_FALSE)
@@ -81,7 +81,7 @@ INLINE bool Is_Truthy(const Cell* v) {
     if (QUOTE_BYTE(v) == ISOTOPE_0) {
         if (HEART_BYTE(v) != REB_WORD)
             return true;  // all non-word isotopes are truthy?
-        Option(SymId) id = VAL_WORD_ID(v);
+        Option(SymId) id = Cell_Word_Id(v);
         if (id == SYM_NULL)
             return false;
         if (id == SYM_TRUE)
@@ -126,7 +126,7 @@ INLINE bool Is_Meta_Of_False(const Cell* v) {
     return (
         QUOTE_BYTE(v) == QUASI_2
         and HEART_BYTE(v) == REB_WORD
-        and VAL_WORD_ID(v) == SYM_FALSE
+        and Cell_Word_Id(v) == SYM_FALSE
     );
 }
 

@@ -231,7 +231,7 @@ STATIC_ASSERT((int)AM_FIND_MATCH == (int)PF_FIND_MATCH);
 // see if they're really the best option.
 //
 inline static Option(SymId) VAL_CMD(const Cell* v) {
-    Option(SymId) sym = VAL_WORD_ID(v);
+    Option(SymId) sym = Cell_Word_Id(v);
     if (sym >= SYM_SET and sym <= SYM_END)
         return sym;
     return SYM_0;
@@ -1022,7 +1022,7 @@ static REBIXO To_Thru_Non_Block_Rule(
     if (kind == REB_VOID)
         return P_POS;  // make it a no-op
 
-    if (kind == REB_WORD and VAL_WORD_ID(rule) == SYM_END) {
+    if (kind == REB_WORD and Cell_Word_Id(rule) == SYM_END) {
         if (not (P_FLAGS & PF_REDBOL))
             fail ("Use <end> instead of END outside PARSE2");
 
@@ -1632,7 +1632,7 @@ DECLARE_NATIVE(subparse)
                 // and KEEP SPREAD (whatever) will splice
                 //
                 bool spread;
-                if (Is_Word(rule) and VAL_WORD_ID(rule) == SYM_SPREAD) {
+                if (Is_Word(rule) and Cell_Word_Id(rule) == SYM_SPREAD) {
                     spread = true;
                     FETCH_NEXT_RULE(L);  // e.g. skip the SPREAD
                     rule = Get_Parse_Value(P_SAVE, P_RULE, P_RULE_SPECIFIER);
@@ -1964,14 +1964,14 @@ DECLARE_NATIVE(subparse)
         // This will change to be generic SET after this has had some
         // time to settle.  Allows also `here: <here>` with `pos: here`
         //
-        if (Is_Word(P_RULE) and VAL_WORD_ID(P_RULE) == SYM_ACROSS) {
+        if (Is_Word(P_RULE) and Cell_Word_Id(P_RULE) == SYM_ACROSS) {
             FETCH_NEXT_RULE(L);
             P_FLAGS |= PF_COPY;
             goto pre_rule;
         }
         else if (
             Is_Word(P_RULE)
-            and VAL_WORD_ID(P_RULE) == SYM_COLLECT
+            and Cell_Word_Id(P_RULE) == SYM_COLLECT
         ){
             FETCH_NEXT_RULE(L);
 
@@ -2735,7 +2735,7 @@ DECLARE_NATIVE(parse3)
         rules_at != rules_tail
         and rules_at + 1 != rules_tail
         and rules_at + 2 == rules_tail
-        and Is_Word(rules_at) and VAL_WORD_ID(rules_at) == SYM_COLLECT
+        and Is_Word(rules_at) and Cell_Word_Id(rules_at) == SYM_COLLECT
         and Is_Block(rules_at + 1)
     ){
         Context* frame_ctx = Context_For_Level_May_Manage(level_);

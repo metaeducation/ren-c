@@ -1173,7 +1173,7 @@ Context* Error_Phase_Arg_Type(
     Context* error = Error_Arg_Type(L->label, key, param, arg);
     ERROR_VARS* vars = ERR_VARS(error);
     assert(Is_Word(&vars->id));
-    assert(VAL_WORD_ID(&vars->id) == SYM_EXPECT_ARG);
+    assert(Cell_Word_Id(&vars->id) == SYM_EXPECT_ARG);
     Init_Word(&vars->id, Canon(PHASE_EXPECT_ARG));
     return error;
 }

@@ -599,7 +599,7 @@ REBTYPE(Map)
         const Map* m = VAL_MAP(map);
 
         REBVAL *property = ARG(property);
-        switch (VAL_WORD_ID(property)) {
+        switch (Cell_Word_Id(property)) {
           case SYM_LENGTH:
             return Init_Integer(OUT, Length_Map(m));
 

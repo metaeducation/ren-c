@@ -347,7 +347,7 @@ const Symbol* Intern_UTF8_Managed_Core(
     if (not synonym) {
         LINK(Synonym, s) = c_cast(Symbol*, s);  // 1-item circular list
 
-        // leave header.bits as 0 for SYM_0 as answer to VAL_WORD_ID()
+        // leave header.bits as 0 for SYM_0 as answer to Cell_Word_Id()
         // Startup_Lib() tags values from %words.r after the fact.
         //
         // Words that aren't in the bootup %words.r list don't have integer
@@ -561,7 +561,7 @@ void Startup_Symbols(void)
         SYM_GZIP
     );
 
-    // All words that do not have a SYM_XXX get back VAL_WORD_ID(w) == SYM_0
+    // All words that do not have a SYM_XXX get back Cell_Word_Id(w) == SYM_0
     // Hence Canon(0) is illegal, to avoid `Canon(X) == Canon(Y)` being
     // true when X and Y are different symbols with no SYM_XXX id.
     //

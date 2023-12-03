@@ -52,7 +52,7 @@ Bounce Series_Common_Action_Maybe_Unhandled(
         INCLUDE_PARAMS_OF_REFLECT;
         UNUSED(PARAM(value));  // covered by `value`
 
-        Option(SymId) property = VAL_WORD_ID(ARG(property));
+        Option(SymId) property = Cell_Word_Id(ARG(property));
 
         switch (property) {
           case SYM_INDEX:

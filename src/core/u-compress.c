@@ -408,7 +408,7 @@ DECLARE_NATIVE(checksum_core)
     const Byte* data = Cell_Bytes_Limit_At(&size, ARG(data), len);
 
     uLong crc;  // Note: zlib.h defines "crc32" as "z_crc32"
-    switch (VAL_WORD_ID(ARG(method))) {
+    switch (Cell_Word_Id(ARG(method))) {
       case SYM_CRC32:
         crc = crc32_z(0L, data, size);
         break;
@@ -474,7 +474,7 @@ DECLARE_NATIVE(deflate)
     if (not REF(envelope))
         envelope = SYM_0;
     else {
-        envelope = VAL_WORD_ID(ARG(envelope));
+        envelope = Cell_Word_Id(ARG(envelope));
         switch (envelope) {
           case SYM_ZLIB:
           case SYM_GZIP:
@@ -550,7 +550,7 @@ DECLARE_NATIVE(inflate)
     if (not REF(envelope))
         envelope = SYM_0;
     else {
-        envelope = VAL_WORD_ID(ARG(envelope));
+        envelope = Cell_Word_Id(ARG(envelope));
         switch (envelope) {
           case SYM_ZLIB:
           case SYM_GZIP:
