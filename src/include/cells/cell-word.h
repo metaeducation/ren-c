@@ -67,7 +67,7 @@ INLINE REBVAL *Init_Any_Word_Untracked(
     const Symbol* sym,
     Byte quote_byte
 ){
-    FRESHEN_CELL_EVIL_MACRO(out);
+    FRESHEN_CELL(out);
     out->header.bits |= (
         NODE_FLAG_NODE | NODE_FLAG_CELL
             | FLAG_HEART_BYTE(kind) | FLAG_QUOTE_BYTE(quote_byte)
@@ -189,7 +189,7 @@ INLINE bool IS_QUOTED_WORD(const Cell* v) {
 
 
 INLINE bool Is_Word_Isotope(const Cell* v) {
-    ASSERT_CELL_READABLE_EVIL_MACRO(v);
+    ASSERT_CELL_READABLE(v);
     if (HEART_BYTE(v) != REB_WORD)
         return false;
     return QUOTE_BYTE(v) == ISOTOPE_0;

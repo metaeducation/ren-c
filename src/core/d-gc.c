@@ -42,7 +42,7 @@
 //
 void Assert_Cell_Marked_Correctly(const Cell* v)
 {
-    ASSERT_CELL_READABLE_EVIL_MACRO(v);  // then we use unchecked() on v below
+    ASSERT_CELL_READABLE(v);  // then we use unchecked() on v below
 
     enum Reb_Kind heart = Cell_Heart_Unchecked(v);
 

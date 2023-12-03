@@ -184,7 +184,7 @@ INLINE bool Is_Stable_Isotope_Heart(enum Reb_Kind heart) {
 }
 
 INLINE bool Is_Stable(Atom(const*) v) {  // repeat for non-inlined speed
-    ASSERT_CELL_READABLE_EVIL_MACRO(v);
+    ASSERT_CELL_READABLE(v);
     if (QUOTE_BYTE(v) != ISOTOPE_0)
         return true;
     return (

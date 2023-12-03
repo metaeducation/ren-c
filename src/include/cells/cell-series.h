@@ -46,7 +46,7 @@ INLINE const Series* Cell_Series(NoQuote(const Cell*) v) {
         return VAL_INDEX_RAW(v);
     }
     INLINE REBIDX & VAL_INDEX_UNBOUNDED(Cell* v) {
-        ASSERT_CELL_WRITABLE_EVIL_MACRO(v);
+        ASSERT_CELL_WRITABLE(v);
         enum Reb_Kind k = Cell_Heart_Unchecked(v);
         assert(Any_Series_Kind(k));
         assert(Get_Cell_Flag_Unchecked(v, FIRST_IS_NODE));

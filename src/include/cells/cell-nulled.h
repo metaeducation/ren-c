@@ -64,7 +64,7 @@
 //
 
 INLINE bool Is_Nulled(const Cell* v) {
-    ASSERT_CELL_READABLE_EVIL_MACRO(v);
+    ASSERT_CELL_READABLE(v);
     return QUOTE_BYTE(v) == 0
         and HEART_BYTE(v) == REB_WORD
         and Cell_Word_Id(v) == SYM_NULL;

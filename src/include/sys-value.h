@@ -168,13 +168,14 @@
 
 #if DEBUG_CELL_WRITABILITY
 
-  // These macros are "evil", because in the debug build, functions aren't
-  // inlined, and the overhead actually adds up very quickly.  Run the risk
-  // of repeating macro arguments to speed up these critical tests, then
-  // wrap in READABLE() and WRITABLE() functions for higher-level callers
-  // that don't mind the cost.
+  // 1. These macros are "evil", because in the debug build, functions aren't
+  //    inlined, and the overhead actually adds up very quickly.  We repeat
+  //    arguments to speed up these critical tests, then wrap in READABLE()
+  //    and WRITABLE() functions for callers that don't mind the cost.  The
+  //    STATIC_ASSERT_LVALUE() macro catches any potential violators.
 
-    #define ASSERT_CELL_READABLE_EVIL_MACRO(c) do {  /* EVIL! see above */ \
+    #define ASSERT_CELL_READABLE(c) do { \
+        STATIC_ASSERT_LVALUE(c);  /* "evil macro" [1] */ \
         if ( \
             (FIRST_BYTE(&(c)->header.bits) & ( \
                 NODE_BYTEMASK_0x01_CELL | NODE_BYTEMASK_0x80_NODE \
@@ -193,7 +194,8 @@
         } \
     } while (0)
 
-    #define ASSERT_CELL_WRITABLE_EVIL_MACRO(c) do {  /* EVIL! see above */ \
+    #define ASSERT_CELL_WRITABLE(c) do { \
+        STATIC_ASSERT_LVALUE(c);  /* "evil macro" [1] */ \
         if ( \
             (FIRST_BYTE(&(c)->header.bits) & ( \
                 NODE_BYTEMASK_0x01_CELL | NODE_BYTEMASK_0x80_NODE \
@@ -212,29 +214,29 @@
 
   #if (! CPLUSPLUS_11)
     INLINE const Cell* READABLE(NoQuote(const Cell*) c) {
-        ASSERT_CELL_READABLE_EVIL_MACRO(c);
+        ASSERT_CELL_READABLE(c);
         return c_cast(Cell*, c);
     }
   #else
     INLINE NoQuote(const Cell*) READABLE(NoQuote(const Cell*) c) {
-        ASSERT_CELL_READABLE_EVIL_MACRO(c);
+        ASSERT_CELL_READABLE(c);
         return c;
     }
 
     INLINE const Cell* READABLE(const Cell* c) {
-        ASSERT_CELL_READABLE_EVIL_MACRO(c);
+        ASSERT_CELL_READABLE(c);
         return c;
     }
   #endif
 
     INLINE Cell* WRITABLE(Cell* c) {
-        ASSERT_CELL_WRITABLE_EVIL_MACRO(c);
+        ASSERT_CELL_WRITABLE(c);
         return c;
     }
 
 #else
-    #define ASSERT_CELL_READABLE_EVIL_MACRO(c)    NOOP
-    #define ASSERT_CELL_WRITABLE_EVIL_MACRO(c)    NOOP
+    #define ASSERT_CELL_READABLE(c)    NOOP
+    #define ASSERT_CELL_WRITABLE(c)    NOOP
 
     #define READABLE(c) (c)
     #define WRITABLE(c) (c)
@@ -349,9 +351,10 @@ INLINE enum Reb_Kind VAL_TYPE_UNCHECKED(const Cell* v) {
 // Run the risk of repeating macro args to speed up this critical check.
 //
 #if (! DEBUG_MEMORY_ALIGN)
-    #define ALIGN_CHECK_CELL_EVIL_MACRO(c)    NOOP
+    #define ALIGN_CHECK_CELL(c)    NOOP
 #else
-    #define ALIGN_CHECK_CELL_EVIL_MACRO(c) \
+    #define ALIGN_CHECK_CELL(c) \
+        STATIC_ASSERT_LVALUE(c);  /* "evil macro", repeats arguments */ \
         if (i_cast(uintptr_t, (c)) % ALIGN_SIZE != 0) { \
             printf( \
                 "Cell address %p not aligned to %d bytes\n", \
@@ -376,7 +379,7 @@ INLINE enum Reb_Kind VAL_TYPE_UNCHECKED(const Cell* v) {
 // Note that an erased cell Is_Fresh(), but not READABLE() or WRITABLE().
 
 INLINE Cell* Erase_Cell_Untracked(Cell* c) {
-    ALIGN_CHECK_CELL_EVIL_MACRO(c);
+    ALIGN_CHECK_CELL(c);
     c->header.bits = CELL_MASK_0;
     return c;
 }
@@ -415,21 +418,25 @@ INLINE Cell* Erase_Cell_Untracked(Cell* c) {
 
 //=//// CELL HEADERS AND PREPARATION //////////////////////////////////////=//
 
-// 1. In order to avoid the accidental ignoring of raised errors, they must
+// 1. "evil macros" for debug build performance, see STATIC_ASSERT_LVALUE()
+//
+// 2. In order to avoid the accidental ignoring of raised errors, they must
 //    be deliberately suppressed vs. overwritten.
 //
-// 2. The requirement for suppression does not apply to a cell that is being
+// 3. The requirement for suppression does not apply to a cell that is being
 //    erased after having been moved, because it's the new cell that takes
 //    over the "hot potato" of the error.
 
-#define FRESHEN_CELL_EVIL_MACRO(v) do { \
-    if (HEART_BYTE(v) == REB_ERROR)  /* must suppress [1] */ \
+#define FRESHEN_CELL(v) do { \
+    STATIC_ASSERT_LVALUE(v);  /* evil macro [1] */ \
+    if (HEART_BYTE(v) == REB_ERROR)  /* must suppress [2] */ \
         assert(QUOTE_BYTE(v) != ISOTOPE_0);\
     assert(not ((v)->header.bits & CELL_FLAG_PROTECTED)); \
     (v)->header.bits &= CELL_MASK_PERSIST;  /* Note: no CELL or NODE flags */ \
 } while (0)
 
-#define FRESHEN_MOVED_CELL_EVIL_MACRO(v) do {  /* no suppress [2] */ \
+#define FRESHEN_MOVED_CELL(v) do {  /* no suppress [3] */ \
+    STATIC_ASSERT_LVALUE(v);  /* evil macro [1] */ \
     assert(not ((v)->header.bits & CELL_FLAG_PROTECTED)); \
     (v)->header.bits &= CELL_MASK_PERSIST;  /* Note: no CELL or NODE flags */ \
 } while (0)
@@ -438,13 +445,13 @@ INLINE Cell* Erase_Cell_Untracked(Cell* c) {
 INLINE void Reset_Unquoted_Header_Untracked(Cell* v, uintptr_t flags)
 {
     assert((flags & FLAG_QUOTE_BYTE(255)) == FLAG_QUOTE_BYTE(ISOTOPE_0));
-    FRESHEN_CELL_EVIL_MACRO(v);
+    FRESHEN_CELL(v);
     v->header.bits |= (NODE_FLAG_NODE | NODE_FLAG_CELL  // must ensure NODE+CELL
         | flags | FLAG_QUOTE_BYTE(UNQUOTED_1));
 }
 
 INLINE REBVAL* Freshen_Cell_Untracked(Cell* v) {
-    FRESHEN_CELL_EVIL_MACRO(v);
+    FRESHEN_CELL(v);
     return cast(REBVAL*, v);
 }
 
@@ -654,9 +661,9 @@ INLINE void Copy_Cell_Header(
     const Cell* v
 ){
     assert(out != v);  // usually a sign of a mistake; not worth supporting
-    ASSERT_CELL_READABLE_EVIL_MACRO(v);  // allow copy void object vars
+    ASSERT_CELL_READABLE(v);  // allow copy void object vars
 
-    FRESHEN_CELL_EVIL_MACRO(out);
+    FRESHEN_CELL(out);
     out->header.bits |= (NODE_FLAG_NODE | NODE_FLAG_CELL  // ensure NODE+CELL
         | (v->header.bits & CELL_MASK_COPY));
 
@@ -691,9 +698,9 @@ INLINE Cell* Copy_Cell_Untracked(
     Flags copy_mask  // typically you don't copy UNEVALUATED, PROTECTED, etc
 ){
     assert(out != v);  // usually a sign of a mistake; not worth supporting
-    ASSERT_CELL_READABLE_EVIL_MACRO(v);  // allow copy void object vars
+    ASSERT_CELL_READABLE(v);  // allow copy void object vars
 
-    FRESHEN_CELL_EVIL_MACRO(out);  // will CELL_MASK_ALL optimize?  [1]
+    FRESHEN_CELL(out);  // will CELL_MASK_ALL optimize?  [1]
     out->header.bits |= (NODE_FLAG_NODE | NODE_FLAG_CELL  // ensure NODE+CELL
         | (v->header.bits & copy_mask));
 
@@ -796,7 +803,7 @@ INLINE REBVAL *Move_Cell_Untracked(
     Flags copy_mask
 ){
     Copy_Cell_Untracked(out, v, copy_mask);  // Move_Cell() adds track to `out`
-    FRESHEN_MOVED_CELL_EVIL_MACRO(v);  // track to here not useful
+    FRESHEN_MOVED_CELL(v);  // track to here not useful
 
   #if DEBUG_TRACK_EXTEND_CELLS  // `out` has tracking info we can use
     v->file = out->file;

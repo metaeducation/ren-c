@@ -49,7 +49,7 @@
 #define Is_False(out)       Is_Word_Isotope_With_Id((out), SYM_FALSE)
 
 INLINE bool Is_Logic(const Cell* v) {
-    ASSERT_CELL_READABLE_EVIL_MACRO(v);
+    ASSERT_CELL_READABLE(v);
 
     if (QUOTE_BYTE(v) != ISOTOPE_0)
         return false;
@@ -76,7 +76,7 @@ INLINE bool Cell_Logic(const Cell* v) {
 }
 
 INLINE bool Is_Truthy(const Cell* v) {
-    ASSERT_CELL_READABLE_EVIL_MACRO(v);
+    ASSERT_CELL_READABLE(v);
 
     if (QUOTE_BYTE(v) == ISOTOPE_0) {
         if (HEART_BYTE(v) != REB_WORD)

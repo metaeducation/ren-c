@@ -204,7 +204,7 @@ INLINE StackValue(*) Data_Stack_At(StackIndex i) {
     }
     else if (i < TOP_INDEX + 1) {  // in the range of PUSH()'d cells
         if (not Is_Cell_Erased(at))
-            ASSERT_CELL_READABLE_EVIL_MACRO(at);
+            ASSERT_CELL_READABLE(at);
     }
     else {
         assert(i == TOP_INDEX + 1);  // allow getting tail's address [3]

@@ -806,6 +806,34 @@
 #endif
 
 
+//=//// STATIC ASSERT LVALUE TO HELP EVIL MACRO USAGE /////////////////////=//
+//
+// Macros are generally bad, but especially bad if they use their arguments
+// more than once...because if that argument has a side-effect, they will
+// have that side effect more than once.
+//
+// However, debug builds will not inline functions.  Some code is run so
+// often that not defining it in a macro leads to excessive cost in these
+// debug builds, and "evil macros" which repeat arguments are a pragmatic
+// solution to factoring code in these cases.  You just have to be careful
+// to call them with simple references.
+//
+// Rather than need to give mean-sounding names like XXX_EVIL_MACRO() to
+// these macros (which doesn't have any enforcement), this lets the C++
+// build ensure the argument is assignable (an lvalue).
+//
+// 1. Double-parentheses needed to force reference qualifiers for decltype.
+//
+#if CPLUSPLUS_11
+    #define STATIC_ASSERT_LVALUE(x) \
+        static_assert( \
+            std::is_lvalue_reference<decltype((x))>::value, /* [1] */ \
+            "must be lvalue reference")
+#else
+    #define STATIC_ASSERT_LVALUE(x) NOOP
+#endif
+
+
 //=//// OPTIONAL TRICK FOR BOOLEAN COERCIBLE TYPES ////////////////////////=//
 //
 // This is a light wrapper class that uses a trick to provide limited

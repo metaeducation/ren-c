@@ -67,7 +67,7 @@ INLINE bool Is_Void(const Cell* v)
   { return HEART_BYTE(v) == REB_VOID and QUOTE_BYTE(v) == UNQUOTED_1; }
 
 INLINE REBVAL *Init_Void_Untracked(Cell* out, Byte quote_byte) {
-    FRESHEN_CELL_EVIL_MACRO(out);
+    FRESHEN_CELL(out);
     out->header.bits |= (
         NODE_FLAG_NODE | NODE_FLAG_CELL
             | FLAG_HEART_BYTE(REB_VOID) | FLAG_QUOTE_BYTE(quote_byte)
