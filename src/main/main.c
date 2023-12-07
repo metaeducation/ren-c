@@ -53,15 +53,15 @@
     #include <shellapi.h>  // for CommandLineToArgvW()
 #endif
 
-#include "pstdint.h"  // stdint.h for builds w/pre-C99 compilers--see notes
-#include "pstdbool.h"  // stdbool.h for builds w/pre-C99 compilers--see notes
+#include <stdint.h>
+#include <stdbool.h>
 
 // This file should only use the external API.  However, it can be helpful in
 // debug situations to have access to PROBE() and other internal features.
 //
 #define DEBUG_MAIN_USING_SYS_CORE 0
 #if (! DEBUG_MAIN_USING_SYS_CORE)
-    #include "rebol.h"  // note: includes pstdint.h and pstdbool.h by default
+    #include "rebol.h"
 #else
     #undef OUT  // %minwindef.h defines this, we have a better use for it
     #undef VOID  // %winnt.h defines this, we have a better use for it

@@ -70,8 +70,8 @@
 // work with isolated values that need indefinite duration.
 //
 #include <stdlib.h>  // size_t and other types used in rebol.h
-#include "pstdint.h"  // polyfill <stdint.h> for pre-C99/C++11 compilers
-#include "pstdbool.h"  // polyfill <stdbool.h> for pre-C99/C++11 compilers
+#include <stdint.h>
+#include <stdbool.h>
 #include "rebol.h"
 
 // assert() is enabled by default; disable with `#define NDEBUG`

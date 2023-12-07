@@ -38,50 +38,6 @@
 #define C_ENHANCED_H
 
 
-//=//// EXPECTS <stdint.h> OR "pstdint.h" SHIM INCLUDED ///////////////////=//
-//
-// Rebol's initial design targeted C89 and old-ish compilers on a variety of
-// systems.  A comment in that code said:
-//
-//     "One of the biggest flaws in the C language was not
-//      to indicate bitranges of integers. So, we do that here.
-//      You cannot 'abstractly remove' the range of a number.
-//      It is a critical part of its definition."
-//
-// Once C99 arrived, the file <stdint.h> offered several basic types, and
-// basically covered the needs:
-//
-// http://en.cppreference.com/w/c/types/integer
-//
-// The code was changed to use either the C99 types -or- a portable shim that
-// could mimic the types (with the same names) on older compilers.  It should
-// be included before %c-enhanced.h is included.
-//
-//=////////////////////////////////////////////////////////////////////////=//
-//
-// Note: INT32_MAX and INT32_C can be missing in C++ builds on some older
-// compilers without __STDC_LIMIT_MACROS and __STDC_CONSTANT_MACROS:
-//
-// https://sourceware.org/bugzilla/show_bug.cgi?id=15366
-//
-// You can run into this since pstdint.h falls back on stdint.h if it
-// thinks it can.  Put those on the command line if needed.
-//
-// !!! One aspect of pstdint.h is that it considers 64-bit "optional".
-// Some esoteric platforms may have a more hidden form of 64-bit support,
-// e.g. this case from R3-Alpha for "Windows VC6 nonstandard typing":
-//
-//     #if (defined(_MSC_VER) && (_MSC_VER <= 1200))
-//         typedef _int64 i64;
-//         typedef unsigned _int64 u64;
-//         #define I64_C(c) c ## I64
-//         #define U64_C(c) c ## U64
-//     #endif
-//
-// If %pstdint.h isn't trying hard enough for an unsupported platform of
-// interest to get 64-bit integers, then patches should be made there.
-//
-
 #if !defined(DEBUG_CHECK_OPTIONALS)
     #define DEBUG_CHECK_OPTIONALS 0
 #endif
@@ -91,13 +47,36 @@
 #endif
 
 
-//=//// EXPECTS <stdbool.h> OR "pstdbool.h" SHIM INCLUDED /////////////////=//
+// Ren-C assumes the availability of <stdint.h> and <stdbool.h>
 //
-// Historically Rebol used TRUE and FALSE uppercase macros, but so long as
-// C99 has added bool to the language, there's not much point in being
-// compatible with codebases that have `char* true = "Spandau";` or similar
-// in them.  So Rebol can use `true` and `false.
+// If for some reason the only barrier to compiling the codebase is lack of
+// these definitions, there are shims on the Internet that implement them
+// (look for pstdint.h and pstdbool.h)  But lack of variadic macros is likely
+// to be a bigger showstopper on older platforms.
 //
+// * One aspect of pstdint.h is that it considers 64-bit "optional".
+//   Some esoteric platforms may have a more hidden form of 64-bit support,
+//   e.g. this case from R3-Alpha for "Windows VC6 nonstandard typing":
+//
+//     #if (defined(_MSC_VER) && (_MSC_VER <= 1200))
+//         typedef _int64 i64;
+//         typedef unsigned _int64 u64;
+//         #define I64_C(c) c ## I64
+//         #define U64_C(c) c ## U64
+//     #endif
+//
+//   If %pstdint.h isn't trying hard enough for an unsupported platform of
+//   interest to get 64-bit integers, then patches should be made there.
+//
+// * INT32_MAX and INT32_C can be missing in C++ builds on some older
+//   compilers without __STDC_LIMIT_MACROS and __STDC_CONSTANT_MACROS:
+//
+// https://sourceware.org/bugzilla/show_bug.cgi?id=15366
+//
+#include <stdint.h>
+#if !defined(__cplusplus)
+    #include <stdbool.h>
+#endif
 
 
 //=//// EXPECTS <assert.h> TO BE INCLUDED, PATCH BUG //////////////////////=//
@@ -182,10 +161,12 @@
 
 //=//// CPLUSPLUS_11 PREPROCESSOR DEFINE //////////////////////////////////=//
 //
-// Because the goal of Ren-C is ultimately to be built with C, the C++ build
-// is just for static analysis and debug checks.  This means there's not much
-// value in trying to tailor reduced versions of the checks to old ANSI C++98
-// compilers, so the "C++ build" is an "at least C++11 build".
+// Because the goal of Ren-C is generally to be buildable as C, the C++ build
+// is mostly for static analysis and debug checks.  (But also exceptions with
+// try/catch, on platforms where setjmp()/longjmp() are not viable.)
+//
+// There's not much value in trying to tailor reduced versions of the checks
+// to ANSI C++98 compilers, so the "C++ build" is an "at least C++11 build".
 //
 // Besides being a little less verbose to use, testing via a #define allows
 // override when using with Microsoft Visual Studio via a command line

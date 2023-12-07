@@ -54,9 +54,9 @@
 // machines, and a possible loss of performance for forcing a platform to use
 // a specific size int (instead of deferring to C's generic `int`).
 //
-// Hence Ren-C switches to using indexes that are provided by <stdint.h> (or
-// the stub "pstdint.h") that are deemed by the compiler to be the fastest
-// representation for 32-bit integers...even if that might be larger.
+// Hence Ren-C switches to using indexes that are provided by <stdint.h>
+// that are deemed by the compiler to be the fastest representation for 32-bit
+// integers...even if that might be larger.
 //
 typedef int_fast32_t REBINT; // series index, signed, at *least* 32 bits
 typedef intptr_t REBIDX; // series index, signed, at *least* 32 bits

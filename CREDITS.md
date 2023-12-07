@@ -121,11 +121,6 @@ not be complete.  Please amend with any corrections.
 - Copyright The Mbed TLS Contributors
 - `%extensions/crypt/mbedtls/*`
 
-**pstdint.h**
-- Copyright (c) 2005-2016 Paul Hsieh
-- BSD License
-- `%src/include/pstdint.h`
-
 **qsort**
 - Copyright (c) 1992, 1993 The Regents of the University of California.
 - `%src/core/f-qsort.c`
