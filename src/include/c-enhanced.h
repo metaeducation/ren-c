@@ -457,7 +457,7 @@
 
     template<typename V>
     struct cast_helper<V,void>
-      { static constexpr void convert(V v) { (void)(v);} };
+      { static void convert(V v) { (void)(v);} };  // void can't be constexpr
 
     #define cast(T,v) \
         (cast_helper<typename std::remove_reference< \
