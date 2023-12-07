@@ -633,22 +633,6 @@
 #endif
 
 
-//=//// NULL ENSURER FOR C++ ///////////////////////////////////////////////=//
-//
-// No-op in C builds, but in C++ build helps to ensure the given variable is
-// null, while still allowing the reference to be used as an lvalue.
-//
-#if CPLUSPLUS_11
-    template<class TP>
-    INLINE TP& ensureNullptr(TP& p) {
-        assert(p == nullptr);
-        return p;
-    }
-#else
-    #define ensureNullptr(p) p
-#endif
-
-
 //=//// NOOP a.k.a. VOID GENERATOR ////////////////////////////////////////=//
 //
 // VOID would be a more purposeful name, but Windows headers define that
@@ -1053,19 +1037,9 @@
 // want to retain it, you will need two overloads in C++ (and C does not
 // have overloading).
 //
-// This introduces some tools that are no-ops in C.  One is a simple type
-// `ensure` construct:
+// This introduces a simple `ensure` construct:
 //
 //      void *p = ensure(Series*, s);
-//
-// Another called `ensurer` lets you put it in the stream of execution without
-// being inside parentheses (it does this with operator `<<` magic):
-//
-//      int x = ensurer(int) "this would fail in a C++ build, for instance";
-//
-// And yet another called `ensured` lets you check an assignment.  This is
-// helpful when you need to do something like assign to a void* and can't
-// do weird cast dereferencing or you'll violate strict aliasing.
 //
 // 1. Because ensure is a no-op in non-checked builds, it does no casting in
 //    the checked builds.  It only validates the type is convertible, and
@@ -1073,42 +1047,29 @@
 //    like `ensure(const foo*, bar)` and bar is a pointer to a mutable foo,
 //    it will be valid...but pass the mutable bar as-is.
 //
+// 2. There was a macro for `ensureNullptr(p) = xxx` which did a runtime
+//    check that a pointer was already nulled before assigning.  It turned
+//    out templates specialize with nullptr, so `ensure(nullptr, p) = xxx`
+//    happens to work out as an overloading of this construct, even though
+//    it's rather different as a runtime value check instead of a compile-time
+//    type check.  Avoids needing another name.
+//
 #if (! CPLUSPLUS_11)
     #define ensure(T,v) (v)
-    #define ensurer(T)
-    #define ensured(T,L,left) (left)
 #else
-    template<typename T>
-    struct EnsureReader {
-        template<typename U>
-        constexpr T operator<< (U u) const { return u; }
-
-        template<typename V>
-        constexpr static V const& check(V const& v) {
-            static_assert(
-                std::is_convertible<V,T>::value, "ensure() failed"
-            );
-            return v;  // doesn't coerce to type T, same as unchecked [1]
-        }
-    };
-    #define ensure(T,v) EnsureReader<T>::check(v)
-    #define ensurer(T) EnsureReader<T>() <<
-
-    template<typename T, typename L>
-    struct EnsureWriter {
-        L &left;
-        EnsureWriter(L &left) : left (left) {}
-        void operator=(const T &right) {
-            left = right;
-        }
-    };
-    #define ensured(T,L,left) EnsureWriter<T,L>{left}
-        //
-        // ^-- Note: C++17 should be able to infer template arguments from
-        // constructors, so this could just be `ensurer(T,left)`.  There
-        // aren't enough of these to worry about it, yet.
-        //
-        // https://stackoverflow.com/a/984597/
+    template<typename V, typename T>
+    constexpr V const& ensure_impl(V const& v) {
+        static_assert(
+            std::is_convertible<V,T>::value, "ensure() failed"
+        );
+        return v;  // doesn't coerce to type T [1]
+    }
+    template<typename V, nullptr_t>  // runtime check of nullptr [2]
+    V & ensure_impl(V & v) {
+        assert(v == nullptr);
+        return v;  // doesn't coerce to type T [1]
+    }
+    #define ensure(T,v) (ensure_impl<decltype(v),T>(v))
 #endif
 
 

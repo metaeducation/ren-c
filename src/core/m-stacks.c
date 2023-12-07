@@ -41,7 +41,7 @@ void Startup_Data_Stack(Length capacity)
     // a singular array and then expanding it here it's a chance to test out
     // that logic early in the boot.
     //
-    ensureNullptr(g_ds.array) = Make_Array_Core(
+    ensure(nullptr, g_ds.array) = Make_Array_Core(
         1,
         FLAG_FLAVOR(DATASTACK) | SERIES_FLAGS_NONE
     );

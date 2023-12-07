@@ -189,9 +189,9 @@ void Set_Stack_Limit(void *base, uintptr_t bounds) {
 static void Startup_Lib(void)
 {
     Context* lib = Alloc_Context_Core(REB_MODULE, 1, NODE_FLAG_MANAGED);
-    ensureNullptr(Lib_Context_Value) = Alloc_Value();
+    ensure(nullptr, Lib_Context_Value) = Alloc_Value();
     Init_Context_Cell(Lib_Context_Value, REB_MODULE, lib);
-    ensureNullptr(Lib_Context) = VAL_CONTEXT(Lib_Context_Value);
+    ensure(nullptr, Lib_Context) = VAL_CONTEXT(Lib_Context_Value);
 
   //=//// INITIALIZE LIB PATCHES ///////////////////////////////////////////=//
 
@@ -311,20 +311,20 @@ static REBVAL *Make_Locked_Tag(const char *utf8) { // helper
 //
 static void Init_Action_Spec_Tags(void)
 {
-    ensureNullptr(Root_None_Tag) = Make_Locked_Tag("none");
-    ensureNullptr(Root_Nihil_Tag) = Make_Locked_Tag("nihil");
-    ensureNullptr(Root_With_Tag) = Make_Locked_Tag("with");
-    ensureNullptr(Root_Variadic_Tag) = Make_Locked_Tag("variadic");
-    ensureNullptr(Root_Opt_Tag) = Make_Locked_Tag("opt");
-    ensureNullptr(Root_End_Tag) = Make_Locked_Tag("end");
-    ensureNullptr(Root_Maybe_Tag) = Make_Locked_Tag("maybe");
-    ensureNullptr(Root_Local_Tag) = Make_Locked_Tag("local");
-    ensureNullptr(Root_Skip_Tag) = Make_Locked_Tag("skip");
-    ensureNullptr(Root_Const_Tag) = Make_Locked_Tag("const");
-    ensureNullptr(Root_Void_Tag) = Make_Locked_Tag("void");
-    ensureNullptr(Root_Unrun_Tag) = Make_Locked_Tag("unrun");
+    ensure(nullptr, Root_None_Tag) = Make_Locked_Tag("none");
+    ensure(nullptr, Root_Nihil_Tag) = Make_Locked_Tag("nihil");
+    ensure(nullptr, Root_With_Tag) = Make_Locked_Tag("with");
+    ensure(nullptr, Root_Variadic_Tag) = Make_Locked_Tag("variadic");
+    ensure(nullptr, Root_Opt_Tag) = Make_Locked_Tag("opt");
+    ensure(nullptr, Root_End_Tag) = Make_Locked_Tag("end");
+    ensure(nullptr, Root_Maybe_Tag) = Make_Locked_Tag("maybe");
+    ensure(nullptr, Root_Local_Tag) = Make_Locked_Tag("local");
+    ensure(nullptr, Root_Skip_Tag) = Make_Locked_Tag("skip");
+    ensure(nullptr, Root_Const_Tag) = Make_Locked_Tag("const");
+    ensure(nullptr, Root_Void_Tag) = Make_Locked_Tag("void");
+    ensure(nullptr, Root_Unrun_Tag) = Make_Locked_Tag("unrun");
 
-    ensureNullptr(Root_Here_Tag) = Make_Locked_Tag("here");  // used by PARSE
+    ensure(nullptr, Root_Here_Tag) = Make_Locked_Tag("here");  // used by PARSE
 }
 
 static void Shutdown_Action_Spec_Tags(void)
@@ -457,30 +457,33 @@ static void Init_Root_Vars(void)
     Init_Return_Signal(&PG_R_Delegation, C_DELEGATION);
     Init_Return_Signal(&PG_R_Suspend, C_SUSPEND);
 
-    ensureNullptr(Root_Empty_Block) = Init_Block(Alloc_Value(), PG_Empty_Array);
+    ensure(nullptr, Root_Empty_Block) = Init_Block(
+        Alloc_Value(),
+        PG_Empty_Array
+    );
     Force_Value_Frozen_Deep(Root_Empty_Block);
 
     // Note: has to be a BLOCK!, 2-element blank paths use SYM__SLASH_1_
     //
-    ensureNullptr(Root_2_Blanks_Block) = Init_Block(
+    ensure(nullptr, Root_2_Blanks_Block) = Init_Block(
         Alloc_Value(),
         PG_2_Blanks_Array
       );
     Force_Value_Frozen_Deep(Root_2_Blanks_Block);
 
-    ensureNullptr(Root_Heavy_Null) = Init_Block(
+    ensure(nullptr, Root_Heavy_Null) = Init_Block(
         Alloc_Value(),
         PG_1_Quasi_Null_Array
       );
     Force_Value_Frozen_Deep(Root_Heavy_Null);
 
-    ensureNullptr(Root_Heavy_Void) = Init_Block(
+    ensure(nullptr, Root_Heavy_Void) = Init_Block(
         Alloc_Value(),
         PG_1_Quoted_Void_Array
       );
     Force_Value_Frozen_Deep(Root_Heavy_Void);
 
-    ensureNullptr(Root_Heavy_False) = Init_Block(
+    ensure(nullptr, Root_Heavy_False) = Init_Block(
         Alloc_Value(),
         PG_1_Meta_False_Array
       );
@@ -497,11 +500,11 @@ static void Init_Root_Vars(void)
     assert(String_Len(nulled_uni) == 0);
   #endif
 
-    ensureNullptr(Root_Empty_Text) = Init_Text(Alloc_Value(), nulled_uni);
+    ensure(nullptr, Root_Empty_Text) = Init_Text(Alloc_Value(), nulled_uni);
     Force_Value_Frozen_Deep(Root_Empty_Text);
 
     Binary* bzero = Make_Binary(0);
-    ensureNullptr(Root_Empty_Binary) = Init_Binary(Alloc_Value(), bzero);
+    ensure(nullptr, Root_Empty_Binary) = Init_Binary(Alloc_Value(), bzero);
     Force_Value_Frozen_Deep(Root_Empty_Binary);
 }
 
@@ -956,9 +959,9 @@ void Startup_Core(void)
     //  Better was to say SYS was just an abbreviation for SYSTEM.)
 
     Context* util = Alloc_Context_Core(REB_MODULE, 1, NODE_FLAG_MANAGED);
-    ensureNullptr(Sys_Util_Module) = Alloc_Value();
+    ensure(nullptr, Sys_Util_Module) = Alloc_Value();
     Init_Context_Cell(Sys_Util_Module, REB_MODULE, util);
-    ensureNullptr(Sys_Context) = VAL_CONTEXT(Sys_Util_Module);
+    ensure(nullptr, Sys_Context) = VAL_CONTEXT(Sys_Util_Module);
 
     rebElide(
         //
@@ -1022,7 +1025,7 @@ void Startup_Core(void)
         "system.contexts.user: module [Name: User] []"
     );
 
-    ensureNullptr(User_Context_Value) = Copy_Cell(
+    ensure(nullptr, User_Context_Value) = Copy_Cell(
         Alloc_Value(),
         Get_System(SYS_CONTEXTS, CTX_USER)
     );

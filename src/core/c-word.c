@@ -535,7 +535,7 @@ void Startup_Interning(void)
     n = 1; // forces exercise of rehashing logic in debug build
   #endif
 
-    ensureNullptr(g_symbols.by_hash) = Make_Series_Core(
+    ensure(nullptr, g_symbols.by_hash) = Make_Series_Core(
         n, FLAG_FLAVOR(CANONTABLE) | SERIES_FLAG_POWER_OF_2
     );
     Clear_Series(g_symbols.by_hash);  // all slots start as nullptr

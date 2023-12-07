@@ -738,7 +738,7 @@ void Startup_Mold(REBLEN size)
 {
     g_mold.stack = Make_Series_Core(10, FLAG_FLAVOR(MOLDSTACK));
 
-    ensureNullptr(g_mold.buffer) = Make_String_Core(size, SERIES_FLAG_DYNAMIC);
+    ensure(nullptr, g_mold.buffer) = Make_String_Core(size, SERIES_FLAG_DYNAMIC);
 }
 
 

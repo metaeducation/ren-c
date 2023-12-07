@@ -1468,7 +1468,7 @@ void Startup_GC(void)
     // As a trick to keep this series from trying to track itself, say it's
     // managed, then sneak the flag off.
     //
-    ensureNullptr(g_gc.manuals) = Make_Series_Core(
+    ensure(nullptr, g_gc.manuals) = Make_Series_Core(
         15,
         FLAG_FLAVOR(SERIESLIST) | NODE_FLAG_MANAGED  // lie!
     );
@@ -1476,12 +1476,12 @@ void Startup_GC(void)
 
     // Temporary series and values protected from GC. Holds node pointers.
     //
-    ensureNullptr(g_gc.guarded) = Make_Series_Core(15, FLAG_FLAVOR(NODELIST));
+    ensure(nullptr, g_gc.guarded) = Make_Series_Core(15, FLAG_FLAVOR(NODELIST));
 
     // The marking queue used in lieu of recursion to ensure that deeply
     // nested structures don't cause the C stack to overflow.
     //
-    ensureNullptr(g_gc.mark_stack) = Make_Series_Core(
+    ensure(nullptr, g_gc.mark_stack) = Make_Series_Core(
         100,
         FLAG_FLAVOR(NODELIST)
     );
