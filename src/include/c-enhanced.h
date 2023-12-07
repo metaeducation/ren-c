@@ -1,14 +1,12 @@
 //
-//  File: %reb-c.h
-//  Summary: "General C definitions and constants"
+//  File: %c-enhanced.h
+//  Summary: "Tools for C with enhanced features if built as C++11 or higher"
 //  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
 //  Homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Copyright 2012-2021 Ren-C Open Source Contributors
-// Copyright 2012 REBOL Technologies
-// REBOL is a trademark of REBOL Technologies
+// Copyright 2012-2023 Ren-C Open Source Contributors
 //
 // See README.md and CREDITS.md for more information.
 //
@@ -20,31 +18,30 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// This is a set of definitions and helpers which are generically useful for
-// any project which is trying to implement portable C across a variety of
-// old and new compilers/systems.
+// Ren-C is designed to be able to build its core as C99 (or higher), and
+// allow usage by API clients that are potentially C89.
 //
-// Though R3-Alpha was written to mostly comply with ANSI C89, it needs 64-bit
-// integers, and used the `long long` data type.  To suppress warnings in a
-// C89 build related to this, use `-Wno-long-long`.  Additionally, `//` style
-// comments are used, which were commonly supported by C compilers even before
-// the C99 standard.  But that means this code can't be used with the switches
-// `--pedantic --std=c89` (unless you convert or strip out all the comments).
+// BUT if the system is built as C++11 or higher, there are extended runtime
+// and compile-time checks available.
 //
-// The Ren-C branch advanced Rebol to be able to build under C99=>C11 and
-// C++98=>C++17 as well.  Some extended checks are provided for these macros
-// if building under various versions of C++.  Also, C99 definitions are
-// taken advantage of if they are available.
+// This file contains various definitions for constructs that will behave
+// in more "interesting" ways when built as C++.
+//
+//=//// NOTES /////////////////////////////////////////////////////////////=//
+//
+// * C++98 support was included for a while, but it lacks <type_traits> and
+//   other features which are required to make the C++ build of any real use
+//   beyond what C provides.  It was ultimately dropped.
 //
 
-#ifndef REB_C_H_1020_0304  // "include guard" allows multiple #includes
-#define REB_C_H_1020_0304  // numbers in case REB_C_H defined elsewhere
+#ifndef C_ENHANCED_H  // "include guard" allows multiple #includes
+#define C_ENHANCED_H
 
 
 //=//// EXPECTS <stdint.h> OR "pstdint.h" SHIM INCLUDED ///////////////////=//
 //
 // Rebol's initial design targeted C89 and old-ish compilers on a variety of
-// systems.  A comment here said:
+// systems.  A comment in that code said:
 //
 //     "One of the biggest flaws in the C language was not
 //      to indicate bitranges of integers. So, we do that here.
@@ -58,7 +55,7 @@
 //
 // The code was changed to use either the C99 types -or- a portable shim that
 // could mimic the types (with the same names) on older compilers.  It should
-// be included before %reb-c.h is included.
+// be included before %c-enhanced.h is included.
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
@@ -113,7 +110,7 @@
 //
 
 #if !defined(assert)
-    #error "Include <assert.h> before including reb-c.h"
+    #error "Include <assert.h> before including c-enhanced.h"
     #include <stophere>  // https://stackoverflow.com/a/45661130
 #endif
 
@@ -154,7 +151,7 @@
 
 #define did !!  // Not in iso646.h
 
-#if defined(__cplusplus) && (! TO_HAIKU)
+#if defined(__cplusplus) && (! defined(__HAIKU__))
     //
     // HaikuOS's GCC 2.95 apparently not only doesn't define the keywords for
     // C++, but #include <iso646.h> has no effect.
@@ -1098,7 +1095,7 @@
     #include <string.h>
 
     // See definition of Cell for why casting to void* is needed.
-    // (Mem_Set() macro that does this is not defined for %reb-c.h)
+    // (Mem_Set() macro that does this is not defined for %c-enhanced.h)
     //
     #define Trash_If_Debug(x) \
         memset(cast(void*, &(x)), 0xBD, sizeof(x));
@@ -1201,7 +1198,7 @@
     void Trash_If_Debug(T && v) {
         //
         // See definition of Cell for why casting to void* is needed.
-        // (Mem_Set() macro that does this is not defined for %reb-c.h)
+        // (Mem_Set() macro that does this is not defined for %c-enhanced.h)
         //
         memset(cast(void*, &v), 123, sizeof(TRR));
     }
@@ -1312,4 +1309,4 @@
 #define PP_NARGS(...) \
     PP_EXPAND(PP_NARGS_IMPL(__VA_ARGS__,10,9,8,7,6,5,4,3,2,1,0))
 
-#endif  // !defined(REB_C_H_1020_0304)
+#endif  // !defined(C_ENHANCED_H)

@@ -60,7 +60,7 @@
 #include "rebol.h"  // not %sys-core.h !
 
 #include "assert.h"
-#include "reb-c.h"
+#include "c-enhanced.h"
 
 #include "sys-zlib.h"  // needed for the ADLER32 hash
 

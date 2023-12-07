@@ -55,13 +55,13 @@
 
 //=//// [REDUNDANT] CPLUSPLUS_11 PREPROCESSOR DEFINE ///////////////////////=//
 //
-// There is a Catch-22 in the CPLUSPLUS_11 definition from %reb-c.h, because
-// it currently depends on TO_WINDOWS and %reb-config.h depends on CPLUSPLUS_11.
+// There is a Catch-22 in defining CPLUSPLUS_11 from %c-enhanced.h, because it
+// currently depends on TO_WINDOWS and %reb-config.h depends on CPLUSPLUS_11.
 // For the moment, sort that out by defining the macro here...but we might
 // just say it's the responsibility of whoever's doing the compiling to supply
 // it on the command line, as you have to for MSVC anyway.
 //
-// (See notes on definition in %reb-c.h)
+// (See notes on definition in %c-enhanced.h)
 
 #if !defined(CPLUSPLUS_11)
   #if defined(__cplusplus) && __cplusplus >= 201103L
@@ -75,8 +75,8 @@
 //=//// [REDUNDANT] STATIC_ASSERT PREPROCESSOR DEFINE /////////////////////=//
 //
 // It's inconvenient to not have STATIC_ASSERT in this file, but we want it
-// in %reb-c.h as well.  Allow the redundant definition (%reb-c checks to see
-// if it's already defined).
+// in %c-enhanced.h as well.  Allow the redundant definition (%c-enhanced.h
+// checks to see if it's already defined).
 
 #if CPLUSPLUS_11
     #define STATIC_ASSERT(cond) \

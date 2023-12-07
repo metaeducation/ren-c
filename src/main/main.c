@@ -68,7 +68,7 @@
     #include "sys-core.h"
 #endif
 
-#include "reb-c.h"  // provides cast(), UNUSED(), etc.
+#include "c-enhanced.h"  // provides cast(), UNUSED(), etc.
 
 
 // Initialization done by rebStartup() is intended to be as basic as possible

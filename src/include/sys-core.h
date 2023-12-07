@@ -105,7 +105,7 @@
 
 //=//// STANDARD DEPENDENCIES FOR CORE ////////////////////////////////////=//
 
-#include "reb-c.h"
+#include "c-enhanced.h"
 
 #if CPLUSPLUS_11 && DEBUG_HAS_PROBE
     //

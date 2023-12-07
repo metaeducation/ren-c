@@ -81,7 +81,7 @@
 #include "rebol.h"  // not %sys-core.h !
 
 #include "assert.h"
-#include "reb-c.h"
+#include "c-enhanced.h"
 
 #include "tmp-mod-view.h"
 

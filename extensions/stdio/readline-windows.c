@@ -37,7 +37,7 @@
 
 #include <assert.h>
 #include <stdint.h>
-#include "reb-c.h"
+#include "c-enhanced.h"
 
 #include "readline.h"  // will define REBOL_SMART_CONSOLE (if not C89)
 

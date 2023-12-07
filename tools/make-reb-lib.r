@@ -413,7 +413,7 @@ e-lib/emit 'ver {
     #ifndef __has_builtin
         #define __has_builtin(x) 0
     #endif
-    #if !defined(GCC_VERSION_AT_LEAST)  /* !!! duplicated in %reb-c.h */
+    #if !defined(GCC_VERSION_AT_LEAST)  /* !!! duplicated in %c-enhanced.h */
         #ifdef __GNUC__
             #define GCC_VERSION_AT_LEAST(m, n) \
                 (__GNUC__ > (m) || (__GNUC__ == (m) && __GNUC_MINOR__ >= (n)))
@@ -452,7 +452,7 @@ e-lib/emit 'ver {
      * suppress spurious warnings.
      *
      * We use `inline static` here in the C function vs plain `inline` due to
-     * pragmatic issues.  See the comments on the INLINE macro in %reb-c.h for
+     * pragmatic issues.  See comments on the INLINE macro in %c-enhanced.h for
      * why C builds of the core define INLINE as `static inline` in C builds
      * and `inline` in C++ builds.  That macro is avoided in this header to
      * avoid potential conflicts with INLINE definitions in the utilizing code.

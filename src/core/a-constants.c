@@ -46,7 +46,7 @@
 
 #include "pstdint.h" // polyfill <stdint.h> for pre-C99/C++11 compilers
 #include "pstdbool.h" // polyfill <stdbool.h> for pre-C99/C++11 compilers
-#include "reb-c.h"
+#include "c-enhanced.h"
 
 #include "tmp-constants.h" // need the extern definitions
 

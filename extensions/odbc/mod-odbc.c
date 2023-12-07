@@ -48,7 +48,7 @@
 #include "rebol.h"  // not %sys-core.h !
 
 #include "assert.h"
-#include "reb-c.h"
+#include "c-enhanced.h"
 
 #if !defined(NDEBUG)
     #include <stdio.h>
