@@ -32,7 +32,7 @@
 
 #include "rebol.h"  // not %sys-core.h !
 
-#include "assert.h"
+#include "assert-fix.h"
 #include "c-enhanced.h"
 
 #include "tmp-mod-locale.h"

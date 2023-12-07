@@ -38,6 +38,8 @@
 #define C_ENHANCED_H
 
 
+//=//// CONFIGURATION /////////////////////////////////////////////////////=//
+
 #if !defined(DEBUG_CHECK_OPTIONALS)
     #define DEBUG_CHECK_OPTIONALS 0
 #endif
@@ -47,6 +49,8 @@
 #endif
 
 
+//=//// STDINT.H AND STDBOOL.H ////////////////////////////////////////////=//
+//
 // Ren-C assumes the availability of <stdint.h> and <stdbool.h>
 //
 // If for some reason the only barrier to compiling the codebase is lack of
@@ -79,39 +83,16 @@
 #endif
 
 
-//=//// EXPECTS <assert.h> TO BE INCLUDED, PATCH BUG //////////////////////=//
+//=//// EXPECTS assert() TO BE DEFINED ALREADY ////////////////////////////=//
 //
-// There is a bug in older GCC where the assert macro expands arguments
-// unnecessarily.  Since Rebol tries to build on fairly old systems, this
-// patch corrects the issue:
+// This file uses assert(), but doesn't #include <assert.h> on its own, since
+// there may be overriding assertion definitions desired.  (Some assert
+// implementations provided by the system are antagontic to debuggers and
+// need replacement.)
 //
-// https://sourceware.org/bugzilla/show_bug.cgi?id=18604
-//
-
 #if !defined(assert)
-    #error "Include <assert.h> before including c-enhanced.h"
+    #error "Include <assert.h> or assert-fix.h before including c-enhanced.h"
     #include <stophere>  // https://stackoverflow.com/a/45661130
-#endif
-
-#if !defined(NDEBUG) && defined(__GLIBC__) && defined(__GLIBC_MINOR__) \
-    && (__GLIBC__ < 2 || (__GLIBC__ == 2 && __GLIBC_MINOR__ < 23))
-
-    #undef assert
-  #if !defined(__GNUC__) || defined (__STRICT_ANSI__)
-    #define assert(expr) \
-        ((expr) \
-            ? __ASSERT_VOID_CAST (0) \
-            : __assert_fail (#expr, __FILE__, __LINE__, __ASSERT_FUNCTION))
-  #else
-    #define assert(expr) \
-        ({ \
-          if (expr) \
-            ; /* empty */ \
-          else \
-            __assert_fail (#expr, __FILE__, __LINE__, __ASSERT_FUNCTION); \
-        })
-    #endif
-
 #endif
 
 

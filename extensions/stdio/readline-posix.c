@@ -28,7 +28,7 @@
 
 #include "reb-config.h"
 
-#include <assert.h>
+#include "assert-fix.h"
 #include <stdint.h>
 #include "c-enhanced.h"
 

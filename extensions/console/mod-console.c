@@ -33,10 +33,6 @@
     #undef OUT  // %minwindef.h defines this, we have a better use for it
     #undef VOID  // %winnt.h defines this, we have a better use for it
 
-#elif defined(TO_EMSCRIPTEN)
-    //
-    // Nothing needed here yet...
-    //
 #else
 
     #include <signal.h>  // needed for SIGINT, SIGTERM, SIGHUP

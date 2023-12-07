@@ -35,7 +35,7 @@
 // covers the characters you wish to display:
 // https://superuser.com/a/927575
 
-#include <assert.h>
+#include "assert-fix.h"
 #include <stdint.h>
 #include "c-enhanced.h"
 

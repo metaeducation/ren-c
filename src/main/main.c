@@ -42,7 +42,8 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include <assert.h>
+
+#include "assert-fix.h"
 
 #if TO_WINDOWS
     #undef _WIN32_WINNT  // https://forum.rebol.info/t/326/4

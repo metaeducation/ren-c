@@ -2538,9 +2538,7 @@ Bounce Scanner_Executor(Level* const L) {
         }
         break; }  // case TOKEN_CONSTRUCT
 
-      case TOKEN_END:
-        assert(false);  // handled way above, before the switch()
-
+      case TOKEN_END:  // handled way above, before the switch()
       default:
         panic ("Invalid TOKEN in Scanner.");
     }
