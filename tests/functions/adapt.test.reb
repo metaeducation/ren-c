@@ -42,3 +42,12 @@
         ]
     )
 ]
+
+; A function's locals are not visible to an ADAPT, only the functions on its
+; interface.
+(
+    y: <outside>
+    test: func [x <local> y] [return :y]
+    adapted: adapt :test [assert [y = <outside>]]
+    none? adapted 10
+)
