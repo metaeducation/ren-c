@@ -120,9 +120,13 @@
 %convert/mold.test.reb
 %convert/to.test.reb
 
+%convert/to-hex.test.reb
+
 %define/func.test.reb
 
-%convert/to-hex.test.reb
+%examples/n-queens.test.reb
+%examples/prime-factors.test.reb
+%examples/sudoku-solver.test.reb
 
 %file/clean-path.test.reb
 %file/file-port.test.reb
