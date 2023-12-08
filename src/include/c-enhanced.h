@@ -410,9 +410,9 @@
 // C++ doesn't let you use old-style casts to accomplish this, so it has to
 // be done using two casts and type_traits magic.
 //
-// Due to the constexpr feature of C++, these casts should not cost anything
-// at runtime--even in the debug build--unless the helpers are using smart
-// pointer
+// These casts should not cost anything at runtime--unless non-constexpr
+// helpers are invoked.  Those are only used in the codebase for debug
+// features in the C++ builds, and release builds do not use them.
 //
 // 1. The C preprocessor doesn't know about templates, so it parses things
 //    like FOO(something<a,b>) as taking "something<a" and "b>".  This is a
@@ -652,9 +652,10 @@
 #define ALIGN_SIZE \
     (sizeof(double) > sizeof(void*) ? sizeof(double) : sizeof(void*))
 
-#if TO_HAIKU
-#undef ALIGN
+#if defined(__HAIKU__)
+    #undef ALIGN
 #endif
+
 #define ALIGN(s,a) \
     (((s) + (a) - 1) & ~((a) - 1))
 
@@ -678,7 +679,7 @@
 // http://stackoverflow.com/questions/3404372/
 //
 //
-#if TO_WINDOWS
+#if defined(_WIN32)  // 32-bit or 64-bit windows
     typedef void (__cdecl CFunction)(void);
 #else
     typedef void (CFunction)(void);
@@ -705,7 +706,7 @@
     #define FINITE isfinite
 #elif defined(__MINGW32__) || defined(__MINGW64__)
     #define FINITE isfinite // With --std==c++98 MinGW still has isfinite
-#elif TO_WINDOWS
+#elif defined(_WIN32)  // 32-bit or 64-bit windows
     #define FINITE _finite // The usual answer for Windows
 #else
     #define FINITE finite // The usual answer for POSIX
