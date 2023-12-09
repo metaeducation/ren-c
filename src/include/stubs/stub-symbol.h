@@ -103,6 +103,18 @@
     SERIES_FLAG_26
 
 
+//=//// SYMBOL_FLAG_MISC_IS_BINDINFO ///////////////////////////////////////=//
+//
+// The symbol hash table itself doubles as a "binding table", by making an
+// in-progress bind point to a small stub to hold a binding index into an
+// object.  It's fastest for binding to keep this flag on the symbol (an
+// original incarnation had to follow the misc pointer and check a flag
+// on the next pointer that was reached, which was slower).
+//
+#define SYMBOL_FLAG_MISC_IS_BINDINFO \
+    SERIES_FLAG_27
+
+
 INLINE Option(SymId) Symbol_Id(const Symbol* s)
   { return cast(SymId, SECOND_UINT16(&s->info)); }
 

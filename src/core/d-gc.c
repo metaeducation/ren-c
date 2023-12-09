@@ -417,7 +417,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
 
         // GC can't run during bind
         //
-        assert(Not_Series_Flag(MISC(Hitch, spelling), BLACK));
+        assert(Not_Subclass_Flag(SYMBOL, spelling, MISC_IS_BINDINFO));
 
         REBLEN index = VAL_WORD_INDEX_U32(v);
         if (IS_WORD_BOUND(v)) {

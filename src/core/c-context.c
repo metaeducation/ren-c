@@ -206,8 +206,8 @@ static Value(*) Append_Context_Core(
         // skip over binding-related hitches
         //
         Series* updating = m_cast(Symbol*, symbol);
-        while (Get_Series_Flag(cast(Stub*, node_MISC(Hitch, updating)), BLACK))
-            updating = cast(Stub*, node_MISC(Hitch, updating));
+        if (Get_Subclass_Flag(SYMBOL, updating, MISC_IS_BINDINFO))
+            updating = cast(Stub*, node_MISC(Hitch, updating));  // skip
 
         node_MISC(Hitch, patch) = node_MISC(Hitch, updating);
         INODE(PatchContext, patch) = context;

@@ -499,8 +499,8 @@ Option(Series*) Get_Word_Container(
         if (CTX_TYPE(cast(Context*, binding)) == REB_MODULE) {
             const Symbol* symbol = Cell_Word_Symbol(any_word);
             Stub* patch = MISC(Hitch, symbol);
-            while (Get_Series_Flag(patch, BLACK))  // binding temps
-                patch = cast(Stub*, node_MISC(Hitch, patch));
+            if (Get_Subclass_Flag(SYMBOL, symbol, MISC_IS_BINDINFO))
+                patch = cast(Stub*, node_MISC(Hitch, patch));  // skip bindinfo
 
             for (
                 ;
@@ -549,8 +549,8 @@ Option(Series*) Get_Word_Container(
                 return nullptr;
 
             patch = MISC(Hitch, symbol);
-            while (Get_Series_Flag(patch, BLACK))  // binding temps
-                patch = cast(Stub*, node_MISC(Hitch, patch));
+            if (Get_Subclass_Flag(SYMBOL, symbol, MISC_IS_BINDINFO))
+                patch = cast(Stub*, node_MISC(Hitch, patch));  // skip bindinfo
 
             for (
                 ;

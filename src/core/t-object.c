@@ -238,8 +238,8 @@ void Init_Evars(EVARS *e, NoQuote(const Cell*) v) {
                 continue;
 
             Stub* patch = MISC(Hitch, *psym);
-            while (Get_Series_Flag(patch, BLACK))  // binding temps
-                patch = cast(Stub*, node_MISC(Hitch, patch));
+            if (Get_Subclass_Flag(SYMBOL, *psym, MISC_IS_BINDINFO))
+                patch = cast(Stub*, node_MISC(Hitch, patch));  // skip bindinfo
 
             Series* found = nullptr;
 
@@ -853,8 +853,8 @@ Context* Copy_Context_Extra_Managed(
                 continue;
 
             Stub* patch = MISC(Hitch, *psym);
-            while (Get_Series_Flag(patch, BLACK))  // binding temps
-                patch = MISC(Hitch, patch);
+            if (Get_Subclass_Flag(SYMBOL, *psym, MISC_IS_BINDINFO))
+                patch = MISC(Hitch, patch);  // skip bindinfo
 
             for (
                 ;

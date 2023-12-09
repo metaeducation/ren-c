@@ -291,26 +291,25 @@ INLINE void SHUTDOWN_BINDER(struct Reb_Binder *binder) {
 //
 INLINE bool Try_Add_Binder_Index(
     struct Reb_Binder *binder,
-    const Symbol* sym,
+    const Symbol* s,
     REBINT index
 ){
-    Symbol* s = m_cast(Symbol*, sym);
     assert(index != 0);
-    Series* old_hitch = MISC(Hitch, s);
-    if (old_hitch != s and Get_Series_Flag(old_hitch, BLACK))
+    if (Get_Subclass_Flag(SYMBOL, s, MISC_IS_BINDINFO))
         return false;  // already has a mapping
 
     // Not actually managed...but GC doesn't run while binders are active,
     // and we don't want to pay for putting this in the manual tracking list.
     //
-    Array* new_hitch = Alloc_Singular(
+    Array* hitch = Alloc_Singular(
         NODE_FLAG_MANAGED | SERIES_FLAG_BLACK | FLAG_FLAVOR(HITCH)
     );
-    Clear_Node_Managed_Bit(new_hitch);
-    Init_Integer(Stub_Cell(new_hitch), index);
-    node_MISC(Hitch, new_hitch) = old_hitch;
+    Clear_Node_Managed_Bit(hitch);
+    Init_Integer(Stub_Cell(hitch), index);
+    node_MISC(Hitch, hitch) = node_MISC(Hitch, s);
 
-    MISC(Hitch, s) = new_hitch;
+    MISC(Hitch, s) = hitch;
+    Set_Subclass_Flag(SYMBOL, s, MISC_IS_BINDINFO);
 
   #if defined(NDEBUG)
     UNUSED(binder);
@@ -337,28 +336,27 @@ INLINE REBINT Get_Binder_Index_Else_0( // 0 if not present
     const Symbol* s
 ){
     UNUSED(binder);
-    Stub* hitch = MISC(Hitch, s);
-
-    // Only unmanaged hitches are used for binding.
-    //
-    if (hitch == s or Not_Series_Flag(hitch, BLACK))
+    if (Not_Subclass_Flag(SYMBOL, s, MISC_IS_BINDINFO))
         return 0;
+
+    Stub* hitch = MISC(Hitch, s);  // unmanaged stub used for binding
     return VAL_INT32(Stub_Cell(hitch));
 }
 
 
 INLINE REBINT Remove_Binder_Index_Else_0( // return old value if there
     struct Reb_Binder *binder,
-    const Symbol* str
+    const Symbol* s
 ){
-    Series* s = m_cast(Symbol*, str);
-    if (MISC(Hitch, s) == s or Not_Series_Flag(MISC(Hitch, s), BLACK))
+    if (Not_Subclass_Flag(SYMBOL, s, MISC_IS_BINDINFO))
         return 0;
 
     Stub* hitch = MISC(Hitch, s);
 
     REBINT index = VAL_INT32(Stub_Cell(hitch));
     MISC(Hitch, s) = cast(Stub*, node_MISC(Hitch, hitch));
+    Clear_Subclass_Flag(SYMBOL, s, MISC_IS_BINDINFO);
+
     Set_Node_Managed_Bit(hitch);  // we didn't manuals track it
     GC_Kill_Series(hitch);
 

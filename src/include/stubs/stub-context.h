@@ -346,8 +346,8 @@ INLINE Value(*) MOD_VAR(Context* c, const Symbol* sym, bool strict) {
     const Symbol* synonym = sym;
     do {
         Stub* patch = MISC(Hitch, sym);
-        while (Get_Series_Flag(patch, BLACK))  // binding temps
-            patch = cast(Stub*, node_MISC(Hitch, patch));
+        if (Get_Subclass_Flag(SYMBOL, sym, MISC_IS_BINDINFO))
+            patch = cast(Stub*, node_MISC(Hitch, patch));  // skip bindinfo
 
         for (; patch != sym; patch = cast(Stub*, node_MISC(Hitch, patch))) {
             if (INODE(PatchContext, patch) == c)
