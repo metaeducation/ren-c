@@ -8,7 +8,7 @@
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // Copyright 2012 REBOL Technologies
-// Copyright 2012-2017 Ren-C Open Source Contributors
+// Copyright 2012-2023 Ren-C Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information.
@@ -21,22 +21,28 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// In R3-Alpha, words were not garbage collected, and their UTF-8 data was
-// kept in a separate table from the Series stubs.  In Ren-C, words are string
-// series, and are merely *indexed* by hashes of their canon forms via an
-// external table.  It grows and shrinks as canons are added and removed.
+// * In R3-Alpha, symbols were permanently interned in a table as UTF-8, and
+//   referenced in cells by an integer index.  This was distinct from string
+//   series which were variable-length encoded and could be GC'd.  Ren-C
+//   unifies this where Symbols are String series which are referenced in
+//   cells by pointers and can be GC'd, and all strings use UTF-8 everywhere.
 //
+// * Ren-C binding is case-sensitive.  This is a difficult decision, but
+//   there is a good reasoning in the sense that it must be case-preserving,
+//   and case-preserving without case-sensitivity creates problems:
+//
+//     https://forum.rebol.info/t/1439
+//
+
 
 #include "sys-core.h"
 
 #define WORD_TABLE_SIZE 1024  // initial size in words
 
 
+// https://primes.utm.edu/lists/2small/0bit.html
 //
-// Prime numbers used for hash table sizes. Divide by 2 for
-// number of words that can be held in the symbol table.
-//
-static REBLEN const Primes[] =
+static uint32_t const g_primes[] =
 {
     7,
     13,
@@ -69,7 +75,6 @@ static REBLEN const Primes[] =
     2147483647,
     0xFFFFFFFB, // 4294967291 = 2^32 - 5 (C89)
     0
-// see https://primes.utm.edu/lists/2small/0bit.html
 };
 
 
@@ -78,31 +83,31 @@ static REBLEN const Primes[] =
 //
 // Given a value, return a prime number that is larger or equal.
 //
-REBINT Try_Get_Hash_Prime(REBLEN minimum)
+Option(uint32_t) Try_Get_Hash_Prime(uint32_t minimum)
 {
-    REBINT n = 0;
-    while (minimum > Primes[n]) {
+    uint32_t n = 0;
+    while (minimum > g_primes[n]) {
         ++n;
-        if (Primes[n] == 0)
+        if (g_primes[n] == 0)
             return 0;
     }
 
-    return Primes[n];
+    return g_primes[n];
 }
 
 
 //
 //  Get_Hash_Prime_May_Fail: C
 //
-REBINT Get_Hash_Prime_May_Fail(REBLEN minimum)
+uint32_t Get_Hash_Prime_May_Fail(uint32_t minimum)
 {
-    REBINT prime = Try_Get_Hash_Prime(minimum);
-    if (prime == 0) {  // larger than hash prime table
+    Option(uint32_t) prime = Try_Get_Hash_Prime(minimum);
+    if (not prime) {  // larger than hash prime table
         DECLARE_LOCAL (temp);
         Init_Integer(temp, minimum);
         fail (Error_Size_Limit_Raw(temp));
     }
-    return prime;
+    return unwrap(prime);
 }
 
 
@@ -117,7 +122,7 @@ REBINT Get_Hash_Prime_May_Fail(REBLEN minimum)
 //  if an insertion is needed, you can fill the first deleted slot that you
 //  passed over.  This assumes that deletions are rather rare."
 //
-// Since it's not enough make the spot nullptr when an interned string
+// Since it's not enough to make the spot nullptr when an interned string
 // is GC'd, a special pointer signaling "deletedness" is used.  It does not
 // cause a linear probe to terminate, but it is reused on insertions.
 //
@@ -127,35 +132,35 @@ REBINT Get_Hash_Prime_May_Fail(REBLEN minimum)
 //
 //  Expand_Word_Table: C
 //
-// Expand the hash table part of the word_table by allocating
-// the next larger table size and rehashing all the words of
-// the current table.  Free the old hash array.
+// Expand the hash table part of the word_table by allocating the next larger
+// table size and rehashing all the words of the current table.
+//
+// 1. The only full list of symbol words available is the old hash table.
+//    Hold onto it while creating the new hash table, and free it once the
+//    new table is built.
 //
 static void Expand_Word_Table(void)
 {
-    // The only full list of symbol words available is the old hash table.
-    // Hold onto it while creating the new hash table.
-
-    REBLEN old_num_slots = Series_Used(g_symbols.by_hash);
-    Symbol** old_symbols_by_hash = Series_Head(
+    Length old_num_slots = Series_Used(g_symbols.by_hash);
+    Symbol** old_symbols_by_hash = Series_Head(  // hold on temporarily [1]
         Symbol*,
         g_symbols.by_hash
     );
 
-    REBLEN num_slots = Get_Hash_Prime_May_Fail(old_num_slots + 1);
+    Length num_slots = Get_Hash_Prime_May_Fail(old_num_slots + 1);
     assert(Series_Wide(g_symbols.by_hash) == sizeof(Symbol*));
 
-    Series* ser = Make_Series_Core(
+    Series* table = Make_Series_Core(
         num_slots, FLAG_FLAVOR(CANONTABLE) | SERIES_FLAG_POWER_OF_2
     );
-    Clear_Series(ser);
-    Set_Series_Len(ser, num_slots);
+    Clear_Series(table);
+    Set_Series_Len(table, num_slots);
 
     // Rehash all the symbols:
 
-    Symbol** new_symbols_by_hash = Series_Head(Symbol*, ser);
+    Symbol** new_symbols_by_hash = Series_Head(Symbol*, table);
 
-    REBLEN old_slot;
+    Offset old_slot;
     for (old_slot = 0; old_slot != old_num_slots; ++old_slot) {
         Symbol* symbol = old_symbols_by_hash[old_slot];
         if (not symbol)
@@ -169,8 +174,8 @@ static void Expand_Word_Table(void)
             continue;
         }
 
-        REBLEN skip;
-        REBLEN slot = First_Hash_Candidate_Slot(
+        Length skip;
+        Offset slot = First_Hash_Candidate_Slot(
             &skip,
             Hash_String(symbol),
             num_slots
@@ -185,63 +190,69 @@ static void Expand_Word_Table(void)
     }
 
     Free_Unmanaged_Series(g_symbols.by_hash);
-    g_symbols.by_hash = ser;
+    g_symbols.by_hash = table;
 }
 
 
 //
 //  Intern_UTF8_Managed: C
 //
-// Makes only one copy of each distinct character string:
+// Makes only one copy of each distinct character string.
 //
-// https://en.wikipedia.org/wiki/String_interning
+//   https://en.wikipedia.org/wiki/String_interning
 //
-// Interned UTF8 strings are stored as series, and are implicitly managed
-// by the GC (because they are shared).
+// The hashing technique used is called "linear probing":
 //
-// Interning is case-sensitive, but a "synonym" linkage is established between
-// instances that are just differently upper-or-lower-"cased".  They agree on
-// one "canon" interning to use for fast case-insensitive compares.  If that
-// canon form is GC'd, the agreed upon canon for the group will change.
+//   https://en.wikipedia.org/wiki/Linear_probing
 //
-// Created series must be managed, because if they were not there could be no
-// clear contract on the return result--as it wouldn't be possible to know if a
-// shared instance had been managed by someone else or not.
+// 1. The result series must be managed, because if they were not there could
+//    be no clear contract on the return result--as it wouldn't be possible to
+//    know if a shared instance had been managed by someone else or not.
 //
-const Symbol* Intern_UTF8_Managed_Core(
+// 2. Interning is case-sensitive, but a "synonym" linkage is established
+//    between instances that are just differently upper-or-lower-"cased".
+//    They agree on one "canon" interning to use for fast case-insensitive
+//    compares.  If that canon form is GC'd, the agreed upon canon for the
+//    group will change.
+//
+// 3. Newly interned symbols will have SYM_0 as the answer to Symbol_Id().
+//    Startup_Symbols() tags the builtin SYM_XXX values from %symbols.r and
+//    %lib-words.r on the terms that it interns after they are returned.
+//    This lets them be used in compiled C switch() cases (e.g. SYM_ANY,
+//    SYM_INTEGER_X, etc.)  But non-builtin words will be left at SYM_0.
+//
+//    (Idea to extend SYM_XXX values: https://forum.rebol.info/t/1188)
+//
+// 4. In addition to a circularly linked list of synonyms via LINK(), the
+//    MISC() field of the Symbol is another circularly linked list of stubs
+//    holding module-level variables with that symbol as a name.  Upon the
+//    initial interning of a symbol, this list is empty.
+//
+const Symbol* Intern_UTF8_Managed_Core(  // results implicitly managed [1]
     Option(void*) preallocated,  // most calls don't know if allocation needed
-    const Byte* utf8,
-    size_t size
+    const Byte* utf8,  // case-sensitive [2]
+    Size utf8_size
 ){
-    // The hashing technique used is called "linear probing":
-    //
-    // https://en.wikipedia.org/wiki/Linear_probing
-    //
     // For the hash search to be guaranteed to terminate, the table must be
-    // large enough that we are able to find a NULL if there's a miss.  (It's
+    // large enough that we are able to find nullptr if there's a miss.  (It's
     // actually kept larger than that, but to be on the right side of theory,
     // the table is always checked for expansion needs *before* the search.)
     //
-    REBLEN num_slots = Series_Used(g_symbols.by_hash);
+    Length num_slots = Series_Used(g_symbols.by_hash);
     if (g_symbols.num_slots_in_use > num_slots / 2) {
         Expand_Word_Table();
-        num_slots = Series_Used(g_symbols.by_hash);  // got larger
+        num_slots = Series_Used(g_symbols.by_hash);  // got larger, update
     }
 
     Symbol** symbols_by_hash = Series_Head(Symbol*, g_symbols.by_hash);
 
-    REBLEN skip; // how many slots to skip when occupied candidates found
-    REBLEN slot = First_Hash_Candidate_Slot(
+    Length skip;  // how many slots to skip when occupied candidates found
+    Offset slot = First_Hash_Candidate_Slot(
         &skip,
-        Hash_Scan_UTF8_Caseless_May_Fail(utf8, size),
+        Hash_Scan_UTF8_Caseless_May_Fail(utf8, utf8_size),
         num_slots
     );
 
-    // The hash table only indexes the canon form of each spelling.  So when
-    // testing a slot to see if it's a match (or a collision that needs to
-    // be skipped to try again) the search uses a comparison that is
-    // case-insensitive...but reports if synonyms via > 0 results.
-    //
     Symbol* synonym = nullptr;
     Symbol** deleted_slot = nullptr;
     Symbol* symbol;
@@ -252,7 +263,7 @@ const Symbol* Intern_UTF8_Managed_Core(
         }
 
       blockscope {
-        REBINT cmp = Compare_UTF8(String_Head(symbol), utf8, size);
+        REBINT cmp = Compare_UTF8(String_Head(symbol), utf8, utf8_size);
         if (cmp == 0) {
             assert(not preallocated);
             return symbol;  // was a case-sensitive match
@@ -281,7 +292,7 @@ const Symbol* Intern_UTF8_Managed_Core(
 
     Binary* s = cast(Binary*, Make_Series_Into(
         preallocated ? unwrap(preallocated) : Alloc_Stub(),
-        size + 1,  // if small, fits in a Series stub (no dynamic allocation)
+        utf8_size + 1,  // small sizes fit in a Stub (no dynamic allocation)
         SERIES_MASK_SYMBOL
     ));
 
@@ -297,7 +308,7 @@ const Symbol* Intern_UTF8_Managed_Core(
         Set_Subclass_Flag(SYMBOL, s, ESCAPE_WITH_SIGIL);
         Set_Subclass_Flag(SYMBOL, s, ESCAPE_IN_SEQUENCE);
     }
-    else for (REBLEN i = 0; i < size; ++i) {
+    else for (Offset i = 0; i < utf8_size; ++i) {
         if (utf8[i] == ' ') {
             Set_Subclass_Flag(SYMBOL, s, ESCAPE_PLAIN);
             Set_Subclass_Flag(SYMBOL, s, ESCAPE_WITH_SIGIL);
@@ -336,8 +347,8 @@ const Symbol* Intern_UTF8_Managed_Core(
     // The incoming string isn't always null terminated, e.g. if you are
     // interning `foo` in `foo: bar + 1` it would be colon-terminated.
     //
-    memcpy(Binary_Head(s), utf8, size);
-    Term_Binary_Len(s, size);
+    memcpy(Binary_Head(s), utf8, utf8_size);
+    Term_Binary_Len(s, utf8_size);
 
     // The UTF-8 series can be aliased with AS to become an ANY-STRING! or a
     // BINARY!.  If it is, then it should not be modified.
@@ -346,22 +357,7 @@ const Symbol* Intern_UTF8_Managed_Core(
 
     if (not synonym) {
         LINK(Synonym, s) = c_cast(Symbol*, s);  // 1-item circular list
-
-        // leave header.bits as 0 for SYM_0 as answer to Cell_Word_Id()
-        // Startup_Lib() tags values from %words.r after the fact.
-        //
-        // Words that aren't in the bootup %words.r list don't have integer
-        // IDs defined that can be used in compiled C switch() cases (e.g.
-        // SYM_ANY, SYM_INTEGER_X, etc.)  So if we didn't find a pre-existing
-        // synonym, and none is added, it will remain at 0.
-        //
-        // !!! It is proposed that a pre-published dictionary of small words
-        // could be agreed on, and then extensions using those words could
-        // request the numbers for those words.  Inconsistent requests that
-        // didn't follow the published list could cause an error.  This would
-        // give more integer values without more strings in the core.
-        //
-        assert(SECOND_UINT16(&s->info) == SYM_0);
+        assert(SECOND_UINT16(&s->info) == SYM_0);  // Startup may assign [3]
     }
     else {
         // This is a synonym for an existing canon.  Link it into the synonyms
@@ -377,13 +373,7 @@ const Symbol* Intern_UTF8_Managed_Core(
         SET_SECOND_UINT16(&s->info, Symbol_Id(synonym));
     }
 
-    // Symbols use their MISC() as a linked list of binding information.  The
-    // list is circular, so that the symbol can be found from any element.
-    //
-    // !!! This is expected to grow into a list that will include statically
-    // the list of declared variables in things like `user` and `lib`.
-    //
-    MISC(Hitch, s) = s;
+    MISC(Hitch, s) = s;  // circular list of module vars and bind info [4]
 
     if (deleted_slot) {
         *deleted_slot = cast(Symbol*, s);  // reuse the deleted slot
@@ -402,97 +392,67 @@ const Symbol* Intern_UTF8_Managed_Core(
 
 
 //
-//  Intern_Any_String_Managed: C
-//
-// The main use of interning ANY-STRING! is FILE! for ARRAY_FLAG_FILE_LINE.
-// It's important to make a copy, because you would not want the change of
-// `file` to affect the filename references in already loaded sources:
-//
-//     file: copy %test
-//     x: transcode/file data1 file
-//     append file "-2"  ; shouldn't change FILE OF X answer
-//     y: transcode/file data2 file
-//
-// So mutable series shouldn't be used directly.  Reusing the string interning
-// mechanics also cuts down on storage of redundant data (though it needs to
-// allow spaces).
-//
-// !!! With UTF-8 Everywhere, could locked strings be used here?  Should all
-// locked strings become interned, and forward pointers to the old series in
-// the background to the interned version?
-//
-const String* Intern_Any_String_Managed(const Cell* v) {
-    Size utf8_size;
-    Utf8(const*) utf8 = Cell_Utf8_Size_At(&utf8_size, v);
-    return Intern_UTF8_Managed(utf8, utf8_size);
-}
-
-
-//
 //  GC_Kill_Interning: C
 //
 // Unlink this spelling out of the circularly linked list of synonyms.
-// Further, if it happens to be canon, we need to re-point everything in the
-// chain to a new entry.  Choose the synonym as a new canon if so.
+// Further, if it happens to be canon, we need to pick one of the remaining
+// synonyms as a new canon.
 //
-void GC_Kill_Interning(const Symbol* intern)
+// 1. Symbols should not be GC'd while a binding is in progress.
+//
+// 2. We should only be GC'ing a symbol if all the sea-of-words module
+//    variables referring to it are also being freed.
+//
+// 3. This ripples the collision slots back until nullptr is found, to
+//    reduce search times:
+//
+//  "Knuth gives a nice refinment as Algorithm R6.4 [pp. 533-534] that
+//  instead marks the cell as empty rather than deleted, and then finds ways
+//  to move table entries back closer to their initial-probe location by
+//  moving the hole that was just made until it ends up next to another hole.
+//
+void GC_Kill_Interning(const Symbol* symbol)
 {
-    const Symbol* synonym = LINK(Synonym, intern);
+    assert(Not_Subclass_Flag(SYMBOL, symbol, MISC_IS_BINDINFO));  // [1]
 
-    // Note synonym and intern may be the same here.
-    //
+    const Symbol* synonym = LINK(Synonym, symbol);  // may be same as symbol
     const Symbol* temp = synonym;
-    while (LINK(Synonym, temp) != intern)
+    while (LINK(Synonym, temp) != symbol)
         temp = LINK(Synonym, temp);
-    LINK(Synonym, m_cast(Symbol*, temp)) = synonym;  // cut the intern out (or no-op)
+    LINK(Synonym, temp) = synonym;  // cut symbol out of synonyms (maybe no-op)
 
-    // We should only be GC'ing a symbol if all the sea-of-words module
-    // variables referring to it are also being freed.  Make sure that is
-    // the case, and remove from the circularly linked list.
-    //
-    const Stub* patch = intern;
-    while (node_MISC(Hitch, patch) != intern) {
-        assert(Not_Node_Marked(patch));
+    const Stub* patch = symbol;  // cut symbol out of module vars list
+    while (node_MISC(Hitch, patch) != symbol) {
+        assert(Not_Node_Marked(patch));  // no live vars with symbol's name [2]
         patch = cast(Stub*, node_MISC(Hitch, patch));
     }
-    node_MISC(Hitch, m_cast(Stub*, patch)) = node_MISC(Hitch, intern);  // may be no-op
+    node_MISC(Hitch, patch) = node_MISC(Hitch, symbol);  // may be no-op
 
-    REBLEN num_slots = Series_Used(g_symbols.by_hash);
+    Length num_slots = Series_Used(g_symbols.by_hash);
     Symbol** symbols_by_hash = Series_Head(Symbol*, g_symbols.by_hash);
 
-    REBLEN skip;
-    REBLEN slot = First_Hash_Candidate_Slot(
+    Length skip;
+    Offset slot = First_Hash_Candidate_Slot(
         &skip,
-        Hash_String(intern),
+        Hash_String(symbol),
         num_slots
     );
 
-    // We *will* find the canon form in the hash table.
-    //
-    while (symbols_by_hash[slot] != intern) {
+    while (symbols_by_hash[slot] != symbol) {  // *will* be found in table
         slot += skip;
         if (slot >= num_slots)
             slot -= num_slots;
     }
 
-    // This canon form must be removed from the hash table.  Ripple the
-    // collision slots back until a NULL is found, to reduce search times.
-    //
-    REBLEN previous_slot = slot;
-    while (symbols_by_hash[slot]) {
+    Offset previous_slot = slot;
+    while (symbols_by_hash[slot]) {  // ripple collision slots back [3]
         slot += skip;
         if (slot >= num_slots)
             slot -= num_slots;
         symbols_by_hash[previous_slot] = symbols_by_hash[slot];
     }
 
-    // Signal that the hash slot is "deleted" via a special pointer.
-    // See notes on DELETED_SLOT for why the final slot in the collision
-    // chain can't just be left NULL:
-    //
-    // http://stackoverflow.com/a/279812/211160
-    //
-    symbols_by_hash[previous_slot] = DELETED_SYMBOL;
+    symbols_by_hash[previous_slot] = DELETED_SYMBOL;  // see DELETED_SYMBOL
 
   #if !defined(NDEBUG)
     g_symbols.num_deleteds += 1;  // total use same (num_symbols_or_deleteds)
@@ -503,12 +463,17 @@ void GC_Kill_Interning(const Symbol* intern)
 //
 //  Startup_Interning: C
 //
-// Get the engine ready to do Intern_UTF8_Managed(), which is required to
-// get String* pointers generated during a scan of ANY-WORD!s.  Words of the
-// same spelling currently look up and share the same String*, this process
-// is referred to as "string interning":
+// Get the engine ready to do Intern_UTF8_Managed().  We start the hash table
+// out at a fixed size.  When collisions occur, it causes a skipping pattern
+// that continues until it finds the desired slot.  The method is known as
+// linear probing:
 //
-// https://en.wikipedia.org/wiki/String_interning
+//   https://en.wikipedia.org/wiki/Linear_probing
+//
+// It must always be at least as big as the total number of words, in order
+// for it to uniquely be able to locate each symbol pointer.  But to reduce
+// long probing chains, it should be significantly larger than that.  R3-Alpha
+// used a heuristic of 4 times as big as the number of words.
 //
 void Startup_Interning(void)
 {
@@ -517,18 +482,7 @@ void Startup_Interning(void)
     g_symbols.num_deleteds = 0;
   #endif
 
-    // Start hash table out at a fixed size.  When collisions occur, it
-    // causes a skipping pattern that continues until it finds the desired
-    // slot.  The method is known as linear probing:
-    //
-    // https://en.wikipedia.org/wiki/Linear_probing
-    //
-    // It must always be at least as big as the total number of words, in order
-    // for it to uniquely be able to locate each symbol pointer.  But to
-    // reduce long probing chains, it should be significantly larger than that.
-    // R3-Alpha used a heuristic of 4 times as big as the number of words.
-
-    REBLEN n;
+    Length n;
   #if defined(NDEBUG)
     n = Get_Hash_Prime_May_Fail(WORD_TABLE_SIZE * 4);  // *4 reduces rehashing
   #else
@@ -546,8 +500,18 @@ void Startup_Interning(void)
 //
 //  Startup_Symbols: C
 //
-// Initializes a table for mapping from SYM_XXX => REBSTR series.  This
-// is used by Canon_Symbol(id) and Canon(XXX) to get the symbol from id.
+// Initializes a table for mapping from SYM_XXX => Symbol series.  This is used
+// by Canon_Symbol(id) and Canon(XXX) to get the symbol from id.
+//
+// 1. All words that do not have a SYM_XXX get back Cell_Word_Id(w) == SYM_0.
+//    Hence Canon(0) is illegal, to avoid `Canon(X) == Canon(Y)` being true
+//    when X and Y are different symbols with no SYM_XXX id.  We turn it into
+//    a freed series, so Detect_Rebol_Pointer() doesn't confuse the zeroed
+//    memory with an empty UTF-8 string.
+//
+// 2. Symbol series store symbol number in the header's 2nd uint16_t.  Could
+//    probably use less than 16 bits, but 8 is insufficient (there are more
+//    than 256 SYM_XXX values)
 //
 void Startup_Symbols(void)
 {
@@ -561,21 +525,11 @@ void Startup_Symbols(void)
         SYM_GZIP
     );
 
-    // All words that do not have a SYM_XXX get back Cell_Word_Id(w) == SYM_0
-    // Hence Canon(0) is illegal, to avoid `Canon(X) == Canon(Y)` being
-    // true when X and Y are different symbols with no SYM_XXX id.
-    //
-    // We turn it into a freed series, so Detect_Rebol_Pointer() doesn't
-    // confuse the zeroed memory with an empty UTF-8 string.
-    //
-    assert(FIRST_BYTE(&g_symbols.builtin_canons[0]) == 0);
+    assert(FIRST_BYTE(&g_symbols.builtin_canons[0]) == 0);  // no Canon(0) [1]
     FIRST_BYTE(&g_symbols.builtin_canons[0]) = FREE_POOLUNIT_BYTE;
 
-    SymId id = cast(SymId, cast(REBLEN, SYM_0 + 1));  // SymId for debug watch
+    SymId id = cast(SymId, 1);  // SymId for debug watch
 
-    // We assume no symbols will be larger than 256 characters, so instead
-    // of delimiting them in the data we length-prefix them with a byte.
-    //
     Byte* tail = bytes + uncompressed_size;
     Byte* at = bytes;
     while (at != tail) {
@@ -584,19 +538,15 @@ void Startup_Symbols(void)
         size_t size = *at;  // length prefix byte
         ++at;
 
-        Symbol* canon = &g_symbols.builtin_canons[id];  // not valid Symbol*
-        Intern_UTF8_Managed_Core(canon, at, size);
+        Symbol* canon = &g_symbols.builtin_canons[id];  // not a Symbol*...yet
+        Intern_UTF8_Managed_Core(canon, at, size);  // now it is!
         at += size;
 
-        // Symbol series store symbol number in the header's 2nd uint16_t.
-        // Could probably use less than 16 bits, but 8 is insufficient (there
-        // are more than 256 SYM_XXX values)
-        //
         assert(SECOND_UINT16(&canon->info) == 0);
-        SET_SECOND_UINT16(&canon->info, id);
+        SET_SECOND_UINT16(&canon->info, id);  // store ID in canon [2]
         assert(id == unwrap(Symbol_Id(canon)));
 
-        id = cast(SymId, cast(REBLEN, id) + 1);
+        id = cast(SymId, cast(uint16_t, id) + 1);
     }
 
     rebFree(bytes);
@@ -620,16 +570,16 @@ void Startup_Symbols(void)
 //
 //  Shutdown_Symbols: C
 //
+// The Shutdown_Interning() code checks for g_symbols.by_hash to be empty...
+// the necessary removal happens in Decay_Series().  (Note that a "dirty"
+// shutdown--used in release builds--avoids all these balancing checks!)
+//
 void Shutdown_Symbols(void)
 {
     assert(Is_Node_Free(&g_symbols.builtin_canons[SYM_0]));
     FIRST_BYTE(&g_symbols.builtin_canons[0]) = 0;  // pre-boot state
 
-    // The Shutdown_Interning() code checks for g_symbols.by_hash to be
-    // empty...the necessary removal happens in Decay_Series().  (Note that a
-    // "dirty" shutdown--typically used--avoids all these balancing checks!)
-    //
-    for (REBLEN i = 1; i < ALL_SYMS_MAX; ++i) {
+    for (uint16_t i = 1; i < ALL_SYMS_MAX; ++i) {
         Symbol* canon = &g_symbols.builtin_canons[i];
         Decay_Series(canon);
     }

@@ -472,13 +472,13 @@ INLINE String* Make_Sized_String_UTF8(const char *utf8, size_t size) {
 
 //=//// REBSTR HASHING ////////////////////////////////////////////////////=//
 
-INLINE REBINT Hash_String(const String* str)
+INLINE uint32_t Hash_String(const String* str)
     { return Hash_UTF8_Len_Caseless(String_Head(str), String_Len(str)); }
 
-INLINE REBINT First_Hash_Candidate_Slot(
-    REBLEN *skip_out,
-    REBLEN hash,
-    REBLEN num_slots
+INLINE Offset First_Hash_Candidate_Slot(
+    Length *skip_out,
+    uint32_t hash,
+    Length num_slots
 ){
     *skip_out = (hash & 0x0000FFFF) % num_slots;
     if (*skip_out == 0)
