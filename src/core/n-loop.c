@@ -2141,9 +2141,9 @@ DECLARE_NATIVE(until)
 //
 //  {So long as a condition is truthy, evaluate the body}
 //
-//      return: "Void if body never run, else last body result, null if BREAK"
+//      return: "VOID if body never run, NULL if BREAK, else last body result"
 //          [any-value?]
-//      condition [<const> block!]
+//      condition [<const> block!]  ; literals not allowed, [1]
 //      body [<unrun> <const> block! frame!]
 //  ]
 //
@@ -2152,34 +2152,29 @@ DECLARE_NATIVE(while)
 // 1. It was considered if `while true [...]` should infinite loop, and then
 //    `while false [...]` never ran.  However, that could lead to accidents
 //    like `while x > 10 [...]` instead of `while [x > 10] [...]`.  It is
-//    probably safer to require a BLOCK! vs. falling back on such behaviors.
+//    safer to require a BLOCK! vs. falling back on such behaviors.
 //
 //    (It's now easy for people to make their own weird polymorphic loops.)
 //
-// 2. We have to pick a meaning when someone writes:
+// 2. We could make it so CONTINUE in the condition of a WHILE meant you skip
+//    the execution of the body of that loop, and run the condition again.
+//    That *might* be interesting for some strange stylized usage that puts
+//    complex branching code in a condition.  But it adds some cost, and would
+//    override the default meaning of CONTINUE (of continuing some enclosing
+//    loop)...which is free, and enables other strange stylized usages.
 //
-//        while [print "condition" continue] [print "body"]
+// 3. If someone writes:
 //
-//    R3-Alpha would alternate printing out "condition"/"body", which isn't
-//    useful.  Here the decision is to assume a BREAK or CONTINUE in the
-//    condition targets an enclosing loop--not this WHILE loop.
-//
-// 3. A weird idea being tried here is that if your condition vanishes, it
-//    doesn't run the body, and it doesn't end the loop.  It acts as a continue
-//    and re-runs the condition again.  This offers a feature that resembles
-//    what someone might want for the semantics of [2], so it's being tried.
-//
-// 4. If someone writes:
-//
-//        flag: true, while [flag] [flag: false, null]
+//        flag: true
+//        while [flag] [flag: false, null]
 //
 //    We don't want that to evaluate to NULL--because NULL is reserved for
-//    signaling BREAK.  Similarly, void results are reserved for when the body
-//    never runs--so they're turned into none (~)
+//    signaling BREAK.  Similarly, VOID results are reserved for when the body
+//    never runs.  BRANCHED() encloses these states in single-element packs.
 {
     INCLUDE_PARAMS_OF_WHILE;
 
-    Value(*) condition = ARG(condition);  // condition is BLOCK! only [1]
+    Value(*) condition = ARG(condition);
     Value(*) body = ARG(body);
 
     enum {
@@ -2197,28 +2192,24 @@ DECLARE_NATIVE(while)
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
-    if (Is_Block(body))
-        Add_Definitional_Break_Continue(body, level_);
+    Add_Definitional_Break_Continue(body, LEVEL);  // don't bind condition [2]
 
 } evaluate_condition: {  /////////////////////////////////////////////////////
 
     STATE = ST_WHILE_EVALUATING_CONDITION;
-    return CONTINUE(SPARE, condition);  // ignore BREAKs [2]
+    return CONTINUE(SPARE, condition);
 
 } condition_was_evaluated: {  ////////////////////////////////////////////////
-
-    if (Is_Void(SPARE))
-        goto evaluate_condition;  // skip body [3]
 
     if (Is_Falsey(SPARE)) {  // falsey condition => return last body result
         if (Is_Fresh(OUT))
             return VOID;  // body never ran, so no result to return!
 
-        return BRANCHED(OUT);  // [4]
+        return BRANCHED(OUT);  // put void and null in packs [3]
     }
 
     STATE = ST_WHILE_EVALUATING_BODY;  // body result => OUT
-    return CATCH_CONTINUE_BRANCH(OUT, body, SPARE);  // catch break & continue
+    return CATCH_CONTINUE_BRANCH(OUT, body, SPARE);  // catch break/continue
 
 } body_was_evaluated: {  /////////////////////////////////////////////////////
 
