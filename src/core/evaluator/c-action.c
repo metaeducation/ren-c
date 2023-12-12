@@ -1190,7 +1190,7 @@ void Push_Action(
     assert(Not_Action_Executor_Flag(L, FULFILL_ONLY));
     assert(Not_Action_Executor_Flag(L, RUNNING_ENFIX));
 
-    REBLEN num_args = ACT_NUM_PARAMS(act);  // includes specialized + locals
+    Length num_args = ACT_NUM_PARAMS(act);  // includes specialized + locals
 
     assert(L->varlist == nullptr);
 
@@ -1205,10 +1205,15 @@ void Push_Action(
     MISC(VarlistAdjunct, s) = nullptr;
     LINK(Patches, s) = nullptr;
 
-    if (not Did_Series_Data_Alloc(s, num_args + 1 + 1)) {  // +rootvar, +end
+    if (not Did_Series_Data_Alloc(
+        s,
+        num_args + 1 + ONE_IF_POISON_TAILS  // +1 is rootvar
+    )){
         Set_Series_Flag(s, INACCESSIBLE);
         GC_Kill_Series(s);  // ^-- needs non-null data unless INACCESSIBLE
-        fail (Error_No_Memory(sizeof(Cell) * (num_args + 1 + 1)));
+        fail (Error_No_Memory(
+            sizeof(Cell) * (num_args + 1 + ONE_IF_POISON_TAILS))
+        );
     }
 
     L->varlist = x_cast(Array*, s);

@@ -572,6 +572,8 @@ INLINE Byte* Series_Data_Last(size_t wide, const_if_c Series* s) {
 //
 
 #if DEBUG_POISON_SERIES_TAILS
+    #define ONE_IF_POISON_TAILS 1
+
     #define BINARY_BAD_UTF8_TAIL_BYTE 0xFE  // binaries reserve tail byte [1]
 
     INLINE void Poison_Or_Unpoison_Tail_Debug(Series* s, bool poison) {
@@ -602,6 +604,8 @@ INLINE Byte* Series_Data_Last(size_t wide, const_if_c Series* s) {
     #define UNPOISON_SERIES_TAIL(s) \
         Poison_Or_Unpoison_Tail_Debug((s), false)
 #else
+    #define ONE_IF_POISON_TAILS 0
+
     #define POISON_SERIES_TAIL(s) \
         NOOP
 
