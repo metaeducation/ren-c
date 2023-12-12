@@ -50,7 +50,7 @@ void Startup_Data_Stack(Length capacity)
 
     Cell* head = Array_Head(g_ds.array);
     assert(Is_Cell_Erased(head));  // non-dynamic array, length 1 indicator
-    Init_Trash(head);
+    Init_Unreadable(head);
 
     // The tail marker will signal PUSH() that it has run out of space,
     // and it will perform the allocation at that time.

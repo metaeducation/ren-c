@@ -339,8 +339,8 @@ static void Queue_Unmarked_Accessible_Series_Deep(const Series* s)
 //
 static void Queue_Mark_Cell_Deep(const Cell* c)
 {
-  #if DEBUG_UNREADABLE_TRASH
-    if (IS_TRASH(c))  // tolerate unreadable "trash" in debug builds
+  #if DEBUG_UNREADABLE_CELLS
+    if (Is_Unreadable_Debug(c))  // tolerate write-only cells in debug builds
         return;
   #endif
 
@@ -573,8 +573,8 @@ void Run_All_Handle_Cleaners(void) {
             const Cell* item_tail = Array_Tail(cast(Array*, stub));
             Cell* item = Array_Head(cast(Array*, stub));
             for (; item != item_tail; ++item) {
-              #if DEBUG_UNREADABLE_TRASH
-                if (IS_TRASH(item))
+              #if DEBUG_UNREADABLE_CELLS
+                if (Is_Unreadable_Debug(item))
                     continue;
               #endif
                 if (Cell_Heart(item) != REB_HANDLE)

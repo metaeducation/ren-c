@@ -429,8 +429,8 @@ void Mold_Or_Form_Value(REB_MOLD *mo, const Cell* v, bool form)
     // Mold hooks take a noquote cell and not a Cell*, so they expect any
     // quotes applied to have already been done.
 
-  #if DEBUG_UNREADABLE_TRASH
-    if (IS_TRASH(v)) {  // would assert otherwise
+  #if DEBUG_UNREADABLE_CELLS
+    if (Is_Unreadable_Debug(v)) {  // would assert otherwise
         Append_Ascii(mo->series, "~trash~");
         return;
     }

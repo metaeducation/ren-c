@@ -628,7 +628,7 @@ INLINE void SET_SIGNAL(Flags f) { // used in %sys-series.h
 #include "cells/cell-array.h"
 
 #include "cells/cell-void.h"  // uses pack array for Init_Heavy_Void()
-#include "cells/cell-trash.h"  // trash is a tweaked quasi-void
+#include "cells/cell-unreadable.h"  // a cell not READABLE(), but WRITABLE()
 
 #include "cells/cell-comma.h"  // Is_Elision() references nihil array isotope
 

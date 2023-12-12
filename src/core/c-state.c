@@ -309,7 +309,7 @@ void Replug_Stack(Level* L, Level* base, Value(*) plug) {
 
 } finished: {
 
-    Init_Trash(plug);  // no longer needed, let it be GC'd
+    Init_Unreadable(plug);  // no longer needed, let it be GC'd
 
     g_ts.top_level = L;  // make the jump deeper into the stack official...
 }}

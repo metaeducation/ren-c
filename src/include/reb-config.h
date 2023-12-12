@@ -389,8 +389,8 @@ Special internal defines used by RT, not Host-Kit developers:
     #define DEBUG_LEVEL_LABELS DEBUG
 #endif
 
-#if !defined(DEBUG_UNREADABLE_TRASH)
-    #define DEBUG_UNREADABLE_TRASH DEBUG
+#if !defined(DEBUG_UNREADABLE_CELLS)
+    #define DEBUG_UNREADABLE_CELLS DEBUG
 #endif
 
 #if !defined(DEBUG_POISON_EXCESS_CAPACITY)

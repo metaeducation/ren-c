@@ -64,7 +64,7 @@ bool Try_Catch_Break_Or_Continue(
         and BINDING(label) == loop_level->varlist
     ){
         CATCH_THROWN(out, loop_level);
-        Init_Trash(out);  // caller must interpret breaking flag
+        Init_Unreadable(out);  // caller must interpret breaking flag
         *breaking = true;
         return true;
     }
@@ -1092,7 +1092,7 @@ void Shutdown_Loop_Each(Value(*) iterator)
         rebRelease(les->data);
 
     Free(struct Loop_Each_State, les);
-    Init_Trash(iterator);
+    Init_Unreadable(iterator);
 }
 
 

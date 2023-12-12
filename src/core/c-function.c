@@ -868,8 +868,8 @@ Array* Make_Paramlist_Managed_May_Fail(
     // it is turned into a rootkey for param_notes.
     //
     Init_Word_Isotope(KEY_SLOT(TOP_INDEX), Canon(KEY));  // signal no pushes yet
-    Init_Trash(PARAM_SLOT(TOP_INDEX));  // not used at all
-    Init_Trash(TYPES_SLOT(TOP_INDEX));  // not used at all
+    Init_Unreadable(PARAM_SLOT(TOP_INDEX));  // not used at all
+    Init_Unreadable(TYPES_SLOT(TOP_INDEX));  // not used at all
     Init_Nulled(NOTES_SLOT(TOP_INDEX));  // overwritten if description
 
     // The process is broken up into phases so that the spec analysis code

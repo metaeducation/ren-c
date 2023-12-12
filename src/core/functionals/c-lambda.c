@@ -176,8 +176,8 @@ DECLARE_NATIVE(lambda)
     PUSH_SLOTS();
 
     Init_Word_Isotope(KEY_SLOT(TOP_INDEX), Canon(KEY));
-    Init_Trash(PARAM_SLOT(TOP_INDEX));  // unused
-    Init_Trash(TYPES_SLOT(TOP_INDEX));  // unused
+    Init_Unreadable(PARAM_SLOT(TOP_INDEX));  // unused
+    Init_Unreadable(TYPES_SLOT(TOP_INDEX));  // unused
     Init_Nulled(NOTES_SLOT(TOP_INDEX));  // overwritten if description
 
     for (; item != item_tail; ++item) {

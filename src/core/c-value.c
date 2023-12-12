@@ -157,8 +157,8 @@ void Probe_Cell_Print_Helper(
 
     const REBVAL *v = c_cast(REBVAL*, p);
 
-  #if DEBUG_UNREADABLE_TRASH
-    if (IS_TRASH(v)) {  // Is_Nulled() asserts on trash
+  #if DEBUG_UNREADABLE_CELLS
+    if (Is_Unreadable_Debug(v)) {  // Is_Nulled() asserts on unreadables
         Append_Ascii(mo->series, "\\\\~trash~\\\\");
         return;
     }
