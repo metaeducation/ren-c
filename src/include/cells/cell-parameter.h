@@ -296,7 +296,7 @@ INLINE bool Is_Specialized(const Param* param) {
             assert(!"Unspecialized parameter is marked hidden!");
         return false;
     }
-    return true;
+    return not Is_None(param);
 }
 
 

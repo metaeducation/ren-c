@@ -34,7 +34,7 @@
         foo: func [x] [return "available now"]
         bar: adapt :foo [
             captured-x: x
-            assert [unset? 'return]
+            assert [null? :return]
         ]
         did all [
             "available now" = bar 1020
@@ -47,7 +47,7 @@
 ; interface.
 (
     y: <outside>
-    test: func [x <local> y] [return :y]
+    test: func [x <local> y] [return y]
     adapted: adapt :test [assert [y = <outside>]]
-    none? adapted 10
+    null? adapted 10
 )

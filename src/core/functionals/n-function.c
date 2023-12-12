@@ -127,7 +127,7 @@ Bounce Func_Dispatcher(Level* const L)
     assert(KEY_SYM(ACT_KEYS_HEAD(PHASE)) == SYM_RETURN);
 
     REBVAL *cell = Level_Arg(L, 1);
-    assert(Is_None(cell));
+    assert(Is_Nulled(cell));
     Force_Level_Varlist_Managed(L);
     Init_Action(
         cell,

@@ -264,7 +264,8 @@ Bounce Action_Executor(Level* L)
         }
         continue;
 
-      skip_fulfilling_arg_for_now:  // the GC marks args up through ARG...
+      skip_fulfilling_arg_for_now:
+        assert(Not_Action_Executor_Flag(L, DOING_PICKUPS));
         assert(Is_Cell_Erased(ARG));
         continue;
 
@@ -272,24 +273,22 @@ Bounce Action_Executor(Level* L)
 
       fulfill_loop_body:
 
-  //=//// SPECIALIZED ARGUMENTS ////////////////////////////////////////////=//
+  //=//// SKIP ALREADY SPECIALIZED ARGUMENTS //////////////////////////////=//
 
-        // Parameters that are specialized (which includes locals, that are
-        // specialized to `~` isotopes) are completely hidden from the public
-        // interface.  So they will never come from argument fulfillment.
-        // Their value comes from the exemplar frame in the slot where typesets
-        // would be if it was unspecialized.
+        // It's the job of Push_Action() to preload any argument slots which
+        // have been specialized (including locals, which are "specialized
+        // to none").  The unspecialized slots are "erased" and ready to
+        // be written to.
         //
-        if (Is_Specialized(PARAM)) {  // specialized includes local
-            Copy_Cell(ARG, PARAM);
-            goto continue_fulfilling;
-        }
-
-        // The arguments may be provided by an isotopic FRAME! which was
-        // copied into the varlist.  If that is the case, then any arguments
-        // which are not none are specialized.
+        // Note this means there has already been a walk of argument cells
+        // before this fulfillment walk.  It's tempting for Push_Action() to
+        // leave the memory uninitialized and try to fold the passes into one
+        // traversal.  But since actions are implemented as isotopic frames,
+        // if the frame is mutable it might be altered by code that runs
+        // during fulfillment!  So capturing the non-NONE cells atomically is
+        // crucial for the design.
         //
-        if (not Is_Fresh_Or_None(ARG))
+        if (not Is_Cell_Erased(ARG))
             goto continue_fulfilling;
 
         assert(Is_Parameter(PARAM));
@@ -350,8 +349,8 @@ Bounce Action_Executor(Level* L)
 
         if (Get_Parameter_Flag(PARAM, REFINEMENT)) {
             assert(Not_Action_Executor_Flag(L, DOING_PICKUPS));  // jump lower
-            assert(Is_Fresh_Or_None(ARG));
-            Init_None(ARG);  // may be filled by a pickup
+            assert(Is_Fresh(ARG));
+            Init_None(ARG);  // may be filled with pickup, or get to typecheck
             goto continue_fulfilling;
         }
 
@@ -367,7 +366,7 @@ Bounce Action_Executor(Level* L)
 
         if (pclass == PARAMCLASS_RETURN or pclass == PARAMCLASS_OUTPUT) {
             assert(Not_Action_Executor_Flag(L, DOING_PICKUPS));
-            assert(Is_Fresh_Or_None(ARG));
+            assert(Is_Fresh(ARG));
             Init_None(ARG);
             goto continue_fulfilling;
         }
@@ -854,7 +853,8 @@ Bounce Action_Executor(Level* L)
             Cell_ParamClass(PARAM) == PARAMCLASS_RETURN
             or Cell_ParamClass(PARAM) == PARAMCLASS_OUTPUT
         ){
-            assert(Is_None(ARG));
+            assert(Is_Nulled(ARG) or Is_None(ARG));
+            Init_Nulled(ARG);
             continue;  // typeset is its legal return types, wants to be unset
         }
 
@@ -1135,7 +1135,7 @@ Bounce Action_Executor(Level* L)
                 if (Is_Specialized(PARAM))
                     Copy_Cell(ARG, PARAM);  // must reset [3]
                 else if (Cell_ParamClass(PARAM) == PARAMCLASS_RETURN)
-                    Init_None(ARG);  // dispatcher expects unset
+                    Init_Nulled(ARG);  // dispatcher expects null
             }
 
             INIT_LVL_PHASE(L, ACT_IDENTITY(redo_phase));
@@ -1164,21 +1164,36 @@ Bounce Action_Executor(Level* L)
 // Allocate the series of REBVALs inspected by a function when executed (the
 // values behind ARG(name), REF(name), D_ARG(3),  etc.)
 //
-// This only allocates space for the arguments, it does not initialize.
-// Action_Executor() initializes as it goes, and updates KEY so the GC knows
-// how far it has gotten so as not to see garbage.  APPLY is different
-// when it has to build the frame for the user to write to before running;
-// so Action_Core() only checks the arguments, and does not fulfill them.
+// 1. We perform a traversal of the argument slots.  This fills any cells that
+//    have been specialized with the specialized value, and erases cells
+//    that need to be fulfilled from the callsite.
 //
-// If the function is a specialization, then the parameter list of that
-// specialization will have *fewer* parameters than the full function would.
-// For this reason we push the arguments for the "underlying" function.
-// Yet if there are specialized values, they must be filled in from the
-// exemplar frame.
+//    Originally the idea was to leave the argument slots uninitialized here,
+//    and have the code that fulfills the arguments handle copying the
+//    specialized values.  This makes the GC have to be more sensitive to
+//    how far fulfillment has progressed and not try to mark uninitialized
+//    memory--the invariants are messier, but it's technically possible.  But
+//    the unification of frames and actions nixed this idea, since if frames
+//    are mutable they could be modified by code that runs in mid-fulfillment.
 //
-// Rather than "dig" through layers of functions to find the underlying
-// function or the specialization's exemplar frame, those properties are
-// cached during the creation process.
+//    Additionally, only a subset of the information needed for specialization
+//    is available to the fulfillment process.  It walks the "paramlist" of
+//    the underlying action, which contains typechecking information for
+//    slots that are none (and hence unspecialized) for frame invocations.
+//    But walking exemplar frames to see specializations would only see those
+//    none cells and not know how to typecheck.
+//
+//    Empirically this extra walk can be costing us as much as 5% of runtime
+//    vs. leaving memory uninitialized and folding the walks together.  If
+//    frames could somehow be rigged to store parameters instead of none
+//    and merely give the impression of none on extraction, the gains could
+//    be substantial.
+//
+// 2. Each layer of specialization of a function can only add specializations
+//    of arguments which have not been specialized already.  For efficiency,
+//    the act of specialization merges all the underlying specializations
+//    together.  This means only the outermost specialization is needed to
+//    fill the specialized slots contributed by later phases.
 //
 void Push_Action(
     Level* L,
@@ -1233,25 +1248,13 @@ void Push_Action(
 
     s->content.dynamic.used = num_args + 1;
 
-    // !!! Historically the idea was to prep during the walk of the frame,
-    // to avoid doing two walks.  The current thinking is to move toward a
-    // notion of being able to just memset() to 0 or calloc().  The debug
-    // build still wants to initialize the cells with file/line info though.
-    //
     Cell* tail = Array_Tail(L->varlist);
     Cell* prep = L->rootvar + 1;
-    if (IS_DETAILS(act)) {
-        for (; prep < tail; ++prep)
-            USED(Erase_Cell(prep));
-    }
-    else {
-        Value(*) arg = CTX_VARS_HEAD(ACT_EXEMPLAR(act));
-        for (; prep < tail; ++prep, ++arg) {
-            if (Is_Parameter(arg))
-                USED(Erase_Cell(prep));
-            else
-                Copy_Cell(Erase_Cell(prep), arg);
-        }
+    Param* param = u_cast(Param*, CTX_VARS_HEAD(ACT_EXEMPLAR(act)));
+    for (; prep < tail; ++prep, ++param) {  // initialize arg cells [1]
+        Erase_Cell(prep);
+        if (Is_Specialized(param))
+            Copy_Relative_internal(prep, param);  // specialized [2]
     }
 
   #if DEBUG_POISON_EXCESS_CAPACITY  // poison cells past usable range
@@ -1263,12 +1266,6 @@ void Push_Action(
     Poison_Cell(Array_Tail(L->varlist));
   #endif
 
-    // Each layer of specialization of a function can only add specializations
-    // of arguments which have not been specialized already.  For efficiency,
-    // the act of specialization merges all the underlying layers of
-    // specialization together.  This means only the outermost specialization
-    // is needed to fill the specialized slots contributed by later phases.
-    //
     Array* partials = try_unwrap(ACT_PARTIALS(act));
     if (partials) {
         const Cell* word_tail = Array_Tail(partials);

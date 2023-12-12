@@ -384,6 +384,14 @@ INLINE Cell* Erase_Cell_Untracked(Cell* c) {
     return c;
 }
 
+#if CPLUSPLUS_11
+    INLINE Atom(*) Erase_Cell_Untracked(Atom(*) atom) {
+        ALIGN_CHECK_CELL(atom);
+        atom->header.bits = CELL_MASK_0;
+        return atom;
+    }
+#endif
+
 #define Erase_Cell(c) \
     TRACK(Erase_Cell_Untracked(c))
 
@@ -683,15 +691,16 @@ INLINE void Copy_Cell_Header(
 //
 // Interface designed to line up with Derelativize()
 //
-// 1. Will optimizer notice if copy mask is CELL_MASK_ALL, and not bother with
-//    masking out CELL_MASK_PERSIST since all bits are overwritten?  Review.
+// 1. If you write `Erase_Cell(dest)` followed by `Copy_Cell(dest, src)` the
+//    optimizer seems to notice it doesn't need the masking of FRESHEN_CELL().
+//    This was discovered by trying to force callers to pass in an already
+//    freshened cell and seeing things get more complicated for no benefit.
 //
 // 2. Once upon a time binding init depended on the payload (when quoteds
 //    could forward to a different cell), so this needed to be done first.
 //    That's not true anymore, but some future INIT_BINDING() may need to
 //    be able to study to the cell to do the initialization?
 //
-
 INLINE Cell* Copy_Cell_Untracked(
     Cell* out,
     const Cell* v,
@@ -700,16 +709,13 @@ INLINE Cell* Copy_Cell_Untracked(
     assert(out != v);  // usually a sign of a mistake; not worth supporting
     ASSERT_CELL_READABLE(v);  // allow copy void object vars
 
-    FRESHEN_CELL(out);  // will CELL_MASK_ALL optimize?  [1]
+    FRESHEN_CELL(out);  // optimizer seems to skip this mask after erasure [1]
     out->header.bits |= (NODE_FLAG_NODE | NODE_FLAG_CELL  // ensure NODE+CELL
         | (v->header.bits & copy_mask));
 
     out->payload = v->payload;  // before init binding anachronism [1]
 
-    if (Is_Bindable(v))  // extra is either a binding or a plain C value/ptr
-        BINDING(out) = BINDING(v);
-    else
-        out->extra = v->extra;  // extra inert bits
+    out->extra = v->extra;  // binding or inert bits
 
     if (Is_Relative(v)) {
         //

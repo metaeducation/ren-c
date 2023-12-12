@@ -32,8 +32,8 @@
 ; (locals should be cleared on each redo)
 (
     foo: func [return: [tag!] n <local> unset-me] [
-        if set? 'unset-me [
-            return "local not cleared"
+        if not null? unset-me [
+            fail "local not cleared"
         ]
         if n = 0 [
             return <success>

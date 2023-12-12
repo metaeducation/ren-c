@@ -1058,7 +1058,7 @@
     #include <string.h>
 
     // See definition of Cell for why casting to void* is needed.
-    // (Mem_Set() macro that does this is not defined for %c-enhanced.h)
+    // (Mem_Fill() macro that does this is not defined for %c-enhanced.h)
     //
     #define Trash_If_Debug(x) \
         memset(cast(void*, &(x)), 0xBD, sizeof(x));

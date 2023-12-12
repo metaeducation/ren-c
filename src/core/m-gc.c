@@ -911,40 +911,34 @@ static void Mark_Level_Stack_Deep(void)
             goto propagate_and_continue;
         }
 
-        // Mark arguments as used, but only as far as parameter filling has
-        // gotten (may be garbage bits past that).  Could also be an END value
-        // of an in-progress arg fulfillment, but in that case it is protected
-        // by the *evaluating frame's L->out* (!)
-        //
-        // Refinements need special treatment, and also consideration of if
-        // this is the "doing pickups" or not.  If doing pickups then skip the
-        // cells for pending refinement arguments.
-        //
         Phase* phase; // goto would cross initialization
         phase = Level_Phase(L);
         const Key* key;
-        const Key* tail;
-        key = ACT_KEYS(&tail, phase);
+        const Key* key_tail;
+        key = ACT_KEYS(&key_tail, phase);
 
         REBVAL *arg;
-        for (arg = Level_Args_Head(L); key != tail; ++key, ++arg) {
-            //
-            // We only tolerate unfulfilled cells during the fulfillment phase.
-            // Once the frame is fulfilled, it may be exposed to usermode code
-            // as a FRAME!...and there can be no END/prep cells.
-            //
-            // (Note that when key == L->u.action.key, that means that arg is
-            // the output slot for some other level's L->out...which is a case
-            // where transient FRESHEN() can also leave voids in slots.)
-            //
-            if (Is_Cell_Erased(arg))
-                assert(L->u.action.key != tail);
-            else {
-                if (key == L->u.action.key)
-                    Queue_Mark_Maybe_Fresh_Cell_Deep(arg);
-                else
-                    Queue_Mark_Cell_Deep(arg);
+        for (arg = Level_Args_Head(L); key != key_tail; ++key, ++arg) {
+            if (not Is_Fresh(arg)) {
+                Queue_Mark_Cell_Deep(arg);
+                continue;
             }
+
+            if (Is_Level_Fulfilling(L))
+                continue;  // unspecialized arguments start out erased
+
+            // Natives are allowed to use their locals as evaluation targets,
+            // which can be fresh at various times when the GC sees them.
+            // But we want the debug build to catch cases where erased cells
+            // appear anywhere that the user might encounter them.
+            //
+            Action* action = cast(Action*, cast(Series*, phase));
+            assert(Is_Action_Native(action));
+            Param* param = ACT_PARAMS_HEAD(action);
+            param += (key - ACT_KEYS_HEAD(action));
+            assert(Is_Specialized(param));
+            UNUSED(param);
+            UNUSED(action);
         }
 
       propagate_and_continue:;
