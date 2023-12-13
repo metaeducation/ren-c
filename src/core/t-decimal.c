@@ -650,7 +650,7 @@ REBTYPE(Decimal)
             assert(sizeof(d) == sizeof(i));
             memcpy(&i, &d, sizeof(d));
             Set_Random(i); // use IEEE bits
-            return NONE;
+            return TRASH;
         }
         d1 = Random_Dec(d1, REF(secure));
         goto setDec; }

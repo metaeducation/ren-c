@@ -20,7 +20,7 @@
 )
 (
     unset 'a
-    none? :a
+    trash? :a
 )
 
 [#1477

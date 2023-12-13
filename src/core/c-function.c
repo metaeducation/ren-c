@@ -205,13 +205,6 @@ void Push_Paramlist_Quads_May_Fail(
                 mode = SPEC_MODE_LOCAL;
                 continue;
             }
-            else if (0 == CT_String(item, Root_None_Tag, strict)) {
-                StackValue(*) param = PARAM_SLOT(TOP_INDEX);
-                Set_Parameter_Flag(param, RETURN_NONE);  // enforce RETURN NONE
-
-                assert(Cell_Parameter_Spec(param) == nullptr);
-                continue;
-            }
             else if (0 == CT_String(item, Root_Nihil_Tag, strict)) {
                 StackValue(*) param = PARAM_SLOT(TOP_INDEX);
                 Set_Parameter_Flag(param, RETURN_NIHIL);  // enforce RETURN NIHIL

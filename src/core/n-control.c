@@ -151,8 +151,8 @@ DECLARE_NATIVE(if)
 //
 // 2. Evaluations must be performed through continuations, so IF can't be on
 //    the C function stack while the branch runs.  Rather than asking to be
-//    called back after the evaluation so it can turn null into null isotopes
-//    and voids into none, it requests "branch semantics" so that the evaluator
+//    called back after the evaluation so it can turn null and void into
+//    "heavy" pack forms, it requests "branch semantics" so that the evaluator
 //    does that automatically.  `delegate` means it doesn't need a callback.
 {
     INCLUDE_PARAMS_OF_IF;
@@ -1463,7 +1463,7 @@ DECLARE_NATIVE(default)
         return CONTINUE(SPARE, predicate, OUT);
     }
 
-    if (not Is_None(OUT) and not Is_Nulled(OUT))
+    if (not Is_Trash(OUT) and not Is_Nulled(OUT))
         return OUT;  // consider it a "value" [2]
 
     STATE = ST_DEFAULT_EVALUATING_BRANCH;

@@ -48,7 +48,7 @@ e-funcs: make-emitter "Internal API" (
 prototypes: make block! 10000 ; MAP! is buggy in R3-Alpha
 
 emit-proto: func [
-    return: <none>
+    return: [~]
     proto
 ][
     any [
@@ -60,7 +60,7 @@ emit-proto: func [
         ; Should we allow macro expansion or do the REBTYPE another way?
         ; `not find proto "REBTYPE("]`
     ] then [
-        return none
+        return ~
     ]
 
     header: proto-parser/data
@@ -86,7 +86,7 @@ emit-proto: func [
             ; and considers itself to have "non-extension linkage" to the API,
             ; so the calls can be directly linked without a struct.
             ;
-            return none
+            return ~
         ]
         'C [
             ; The only accepted type for now
@@ -110,7 +110,7 @@ emit-proto: func [
 ]
 
 process-conditional: function [
-    return: <none>
+    return: [~]
     directive
     dir-position
     emitter [object!]
@@ -131,11 +131,11 @@ process-conditional: function [
     ]
 ]
 
-emit-directive: function [return: <none> directive] [
+emit-directive: function [return: [~] directive] [
     process-conditional directive proto-parser/parse-position e-funcs
 ]
 
-process: function [return: <none> file] [
+process: function [return: [~] file] [
     proto-parser/emit-proto: :emit-proto
     proto-parser/file: file
     proto-parser/emit-directive: :emit-directive
@@ -229,7 +229,7 @@ sys-globals-parser: context [
     parse-position: ~
     id: null
 
-    process: func [return: <none> text] [
+    process: func [return: [~] text] [
         parse2 text grammar/rule  ; Review: no END (return result unused?)
     ]
 

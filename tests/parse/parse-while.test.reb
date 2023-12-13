@@ -11,4 +11,4 @@
 
 (1020 = parse "aaa" [while [some "a"] (1020)])
 
-(none? parse "" [while [some "a"] (1020)])
+(trash? parse "" [while [some "a"] (1020)])

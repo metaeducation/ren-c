@@ -172,7 +172,11 @@ Param* Init_Parameter_Untracked(
         Clear_Cell_Flag(dest, NEWLINE_BEFORE);
 
         if (Is_Quasi(item)) {
-            if (Cell_Heart(item) != REB_WORD and Cell_Heart(item) != REB_VOID)
+            if (Cell_Heart(item) == REB_VOID) {
+                flags |= PARAMETER_FLAG_RETURN_TRASH;
+                continue;
+            }
+            if (Cell_Heart(item) != REB_WORD)
                 fail (item);
             flags |= PARAMETER_FLAG_INCOMPLETE_OPTIMIZATION;
             continue;
@@ -238,10 +242,6 @@ Param* Init_Parameter_Untracked(
                 Set_Cell_Flag(dest, PARAMSPEC_SPOKEN_FOR);
                 Init_Quasi_Word(dest, Canon(CONST));
             }
-            else if (0 == CT_String(item, Root_None_Tag, strict)) {
-                Init_Quasi_Void(dest);
-                flags |= PARAMETER_FLAG_INCOMPLETE_OPTIMIZATION;
-            }
             else if (0 == CT_String(item, Root_Unrun_Tag, strict)) {
                 // !!! Currently just commentary, degrading happens due
                 // to type checking.  Review this.
@@ -259,7 +259,7 @@ Param* Init_Parameter_Untracked(
             lookup = try_unwrap(Lookup_Word(item, spec_specifier));
             if (not lookup)  // not even bound to anything
                 fail (item);
-            if (Is_None(lookup)) {  // bound but not set
+            if (Is_Trash(lookup)) {  // bound but not set
                 //
                 // !!! This happens on things like LOGIC?, because they are
                 // assigned in usermode code.  That misses an optimization

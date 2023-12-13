@@ -131,7 +131,7 @@ bool Pushed_Continuation(
             if (Is_Specialized(param))
                 Copy_Cell(arg, param);
             else
-                Finalize_None(arg);
+                Finalize_Trash(arg);
         }
 
         arg = First_Unspecialized_Arg(&param, L);
@@ -155,7 +155,7 @@ bool Pushed_Continuation(
             if (Is_Specialized(param))
                 Copy_Cell(arg, param);
             else
-                Finalize_None(arg);
+                Finalize_Trash(arg);
             assert(Is_Stable(arg));
         }
 

@@ -197,7 +197,7 @@ module: func [
         ;
         assert [block? body]
 
-        set/any 'product ^ do body  ; can't set variable to none/etc.
+        set/any 'product ^ do body  ; can't set variable to trash/etc.
         quitting: false
     ]
     then ^arg-to-quit -> [

@@ -705,5 +705,5 @@ export*: func [
         append exports word
     ]
 
-    return none  ; !!! Return the exported words list?
+    return ~  ; !!! Return the exported words list?
 ]

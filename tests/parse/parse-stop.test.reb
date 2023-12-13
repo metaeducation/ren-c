@@ -4,7 +4,7 @@
 ; match a rule and return a result.
 
 [
-    (none? parse "a" [some ["a" stop]])
+    (trash? parse "a" [some ["a" stop]])
     ("a" = parse "a" [some [stop "a"]])
 ]
 
@@ -28,4 +28,4 @@
 
 ; https://github.com/Oldes/Rebol-issues/issues/967
 ;
-(x: ~, did all [none? parse "" [some  [(x: 2) stop]], x = 2])
+(x: ~, did all [trash? parse "" [some  [(x: 2) stop]], x = 2])

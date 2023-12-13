@@ -729,7 +729,7 @@ c-debug-break: :lib/c-debug-break
 make-obj-defs: function [
     {Given a Rebol OBJECT!, write C structs that can access its raw variables}
 
-    return: <none>
+    return: [~]
     e [object!]
        {The emitter to write definitions to}
     obj

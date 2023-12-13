@@ -84,7 +84,7 @@
                             input.(9 * (y - 1) + x): 0  ; backtracking
                         ]
                     ]
-                    return none
+                    return ~
                 ]
             ]
         ]

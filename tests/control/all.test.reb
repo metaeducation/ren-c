@@ -328,7 +328,7 @@
 (true = all [0:00 true])
 (true = all [0.0.0 true])
 (true = all ['a true])
-; evaluation stops after encountering FALSE or NONE
+; evaluation stops after encountering FALSE or NULL
 (
     success: true
     all [false success: false]

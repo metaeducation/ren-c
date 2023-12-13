@@ -221,7 +221,7 @@ decode-url: :*parse-url.decode-url  ; wrapped in context, expose function
 make-scheme: function [
     {Make a scheme from a specification and add it to the system}
 
-    return: <none>
+    return: [~]
     def "Scheme specification"
         [block!]
     /with "Scheme name to use as base"

@@ -58,7 +58,7 @@ decode-key-value-text: function [
     ]
 
     emit-stuff: func [
-        return: <none>
+        return: [~]
         <local> key
     ][
         key: replace/all copy/part position eof #" " #"-"
@@ -135,7 +135,7 @@ export proto-parser: context [
 
     count: ~
 
-    process: func [return: <none> text] [
+    process: func [return: [~] text] [
         parse2 text grammar/rule
     ]
 
@@ -310,7 +310,7 @@ export proto-parser: context [
 
 export rewrite-if-directives: function [
     {Bottom up rewrite conditional directives to remove unnecessary sections.}
-    return: <none>
+    return: [~]
     position
 ][
     until [

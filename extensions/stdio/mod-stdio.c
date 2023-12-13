@@ -68,7 +68,7 @@ DECLARE_NATIVE(get_console_actor_handle)
 //
 //  startup*: native [  ; Note: DO NOT EXPORT!
 //
-//      return: <none>
+//      return: [~]
 //  ]
 //
 DECLARE_NATIVE(startup_p)
@@ -82,7 +82,7 @@ DECLARE_NATIVE(startup_p)
     //
     Startup_Stdio();
 
-    return rebNone();
+    return rebTrash();
 }
 
 
@@ -91,7 +91,7 @@ DECLARE_NATIVE(startup_p)
 //
 //  "Write text to standard output, or raw BINARY! (for control codes / CGI)"
 //
-//      return: <none>
+//      return: [~]
 //      value [<maybe> text! char? binary!]
 //          "Text to write, if a STRING! or CHAR! is converted to OS format"
 //  ]
@@ -139,7 +139,7 @@ DECLARE_NATIVE(write_stdout)
         //
         if (rebWasHalting()) {  // the test clears halt request
             rebHalt();  // put in a new halt request and stop
-            return NONE;  // ...or, could also RAISE() or FAIL() a halt
+            return TRASH;  // ...or, could also RAISE() or FAIL() a halt
         }
 
         REBLEN part;
@@ -153,7 +153,7 @@ DECLARE_NATIVE(write_stdout)
         VAL_INDEX_RAW(v) += part;
     }
 
-    return NONE;
+    return TRASH;
 }
 
 
@@ -548,7 +548,7 @@ DECLARE_NATIVE(read_char)
 //
 //  {Shut down the stdio and terminal devices, called on extension unload}
 //
-//      return: <none>
+//      return: [~]
 //  ]
 //
 DECLARE_NATIVE(shutdown_p)
@@ -560,5 +560,5 @@ DECLARE_NATIVE(shutdown_p)
     //
     Shutdown_Stdio();
 
-    return rebNone();
+    return rebTrash();
 }

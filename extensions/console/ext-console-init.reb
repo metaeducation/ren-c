@@ -92,7 +92,7 @@ export console!: make object! [
   ABOUT   - Information about your Rebol}
 
     print-greeting: meth [
-        return: <none>
+        return: [~]
         {Adds live elements to static greeting content (build #, version)}
     ][
         boot-print [
@@ -104,7 +104,7 @@ export console!: make object! [
         boot-print greeting
     ]
 
-    print-prompt: meth [return: <none>] [
+    print-prompt: meth [return: [~]] [
         ;
         ; Note: See example override in skin in the Debugger extension, which
         ; adds the stack "level" number and "current" function name.
@@ -117,7 +117,7 @@ export console!: make object! [
     ]
 
     print-result: meth [
-        return: <none>
+        return: [~]
         ^v "Value (done with meta parameter to discern isotope status)"
             [any-atom?]
     ][
@@ -153,7 +153,7 @@ export console!: make object! [
 
         if raised? unmeta v [
             print form unquasi v
-            return none
+            return ~
         ]
 
         === DECAY IF A "LAZY" VALUE ===
@@ -185,14 +185,14 @@ export console!: make object! [
 
             if 0 = length of v [
                 print "!!! UNEXPECTED 0-LENGTH PACK, SHOULD NOT HAPPEN !!!"
-                return none
+                return ~
             ]
 
             for-each item v [
                 any [quoted? item, quasi? item] else [
                     print "!!! MALFORMED PARAMETER PACK, NOT QUOTED/QUASI !!!"
                     print mold quasi v
-                    return none
+                    return ~
                 ]
             ]
 
@@ -209,7 +209,7 @@ export console!: make object! [
         ; So giving *no* output is the most natural case for such a situation.
 
         if v = void' [
-            return none
+            return ~
         ]
 
         === ISOTOPES (^META v parameter means they are quasiforms) ===
@@ -233,7 +233,7 @@ export console!: make object! [
             ; just for the isotopes.
             ;
             print unspaced [result _ mold v _ _ {;} _ "isotope"]
-            return none
+            return ~
         ]
 
         === "ORDINARY" VALUES (^META v parameter means they get quoted) ===
@@ -274,23 +274,23 @@ export console!: make object! [
         ]
     ]
 
-    print-warning: meth [return: <none> s] [print [warning reduce s]]
+    print-warning: meth [return: [~] s] [print [warning reduce s]]
 
-    print-error: meth [return: <none> e [error!]] [
+    print-error: meth [return: [~] e [error!]] [
         if e.file = 'tmp-boot.r [
             e.file: e.line: null  ; errors in console showed this, junk
         ]
         print [e]
     ]
 
-    print-halted: meth [return: <none>] [
+    print-halted: meth [return: [~]] [
         print newline  ; interrupts happen anytime, clearer to start newline
         print "[interrupted by Ctrl-C or HALT instruction]"
     ]
 
-    print-info: meth [return: <none> s] [print [info reduce s]]
+    print-info: meth [return: [~] s] [print [info reduce s]]
 
-    print-gap: meth [return: <none>] [print newline]
+    print-gap: meth [return: [~]] [print newline]
 
     === BEHAVIOR (can be overridden) ===
 
@@ -343,7 +343,7 @@ export console!: make object! [
 
     add-shortcut: meth [
         {Add/Change console shortcut}
-        return: <none>
+        return: [~]
         name [any-word!] "Shortcut name"
         block [block!] "Command(s) expanded to"
     ][
@@ -355,7 +355,7 @@ export console!: make object! [
 start-console: func [
     "Called when a REPL is desired after command-line processing, vs quitting"
 
-    return: <none>
+    return: [~]
     /skin "Custom skin (e.g. derived from MAKE CONSOLE!) or file"
         [file! object!]
     <static>
@@ -480,7 +480,7 @@ ext-console-impl: func [
     let emit: func [
         {Builds up sandboxed code to submit to C, hooked RETURN will finalize}
 
-        return: <none>
+        return: [~]
         item "ISSUE! directive, TEXT! comment, (<*> composed) code BLOCK!"
             [block! issue! text!]
         <with> instruction
@@ -919,7 +919,7 @@ ext-console-impl: func [
 
 export why: func [
     "Explain the last error in more detail."
-    return: <none>
+    return: [~]
     'err [<end> word! path! error!] "Optional error value"
 ][
     let err: default [system.state.last-error]
@@ -940,7 +940,7 @@ export why: func [
 
 export upgrade: func [
     "Check for newer versions."
-    return: <none>
+    return: [~]
 ][
     ; Should this be a console-detected command, like Q, or is it meaningful
     ; to define this as a function you could call from code?

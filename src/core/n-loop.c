@@ -1216,9 +1216,9 @@ DECLARE_NATIVE(every)
 //
 //        every x [1 2 3 4] [if even? x [x]]  =>  4
 //
-//        every x [1 2 3 4] [if odd? x [x]]  => none (~) isotope
+//        every x [1 2 3 4] [if odd? x [x]]  => trash (~) isotope
 //
-//    It returns a none isotope (~) on the skipped bodies, as loop composition
+//    It returns trash isotopes (~) on the skipped bodies, as loop composition
 //    breaks down if we try to keep old values.
 //
 {

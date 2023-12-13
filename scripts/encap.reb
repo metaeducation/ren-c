@@ -109,7 +109,7 @@ elf-format: context [
     ; explicit at the callsites.
     ;
     mode: ~
-    handler: func [return: <none> name [word!] num-bytes [integer!]] [
+    handler: func [return: [~] name [word!] num-bytes [integer!]] [
         assert [
             binary? begin, num-bytes <= length of begin,
             find [read write] mode
@@ -259,7 +259,7 @@ elf-format: context [
     update-offsets: meth [
         {Adjust headers to account for insertion or removal of data @ offset}
 
-        return: <none>
+        return: [~]
         executable [binary!]
         offset [integer!]
         delta [integer!]
@@ -293,7 +293,7 @@ elf-format: context [
     ]
 
     update-embedding: meth [
-        return: <none>
+        return: [~]
         executable [binary!]
             {Executable to be mutated to either add or update an embedding}
         embedding [binary!]
@@ -576,7 +576,7 @@ pe-format: context [
 
         let def: make block! 1
         let find-a-word: func [
-            return: <none>
+            return: [~]
             word [any-word!]
         ][
             any [
@@ -834,7 +834,7 @@ pe-format: context [
     ]
 
     update-section-header: func [
-        return: <none>
+        return: [~]
         pos [binary!]
         section [object!]
     ][
@@ -1172,7 +1172,7 @@ generic-format: context [
     sig-length: length of signature
 
     update-embedding: meth [
-        return: <none>
+        return: [~]
         executable "Executable to mutate to either add or update an embedding"
             [binary!]
         embedding [binary!]

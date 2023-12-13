@@ -11,7 +11,7 @@ sys.util.make-scheme [
     name: 'file
     actor: get-file-actor-handle
     info: system.standard.file-info ; for C enums
-    init: func [return: <none> port <local> path] [
+    init: func [return: [~] port <local> path] [
         if url? port.spec.ref [
             parse3 port.spec.ref [thru #":" 0 2 slash path:]
             append port.spec spread compose [path: (to file! path)]

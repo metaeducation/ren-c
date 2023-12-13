@@ -38,7 +38,7 @@ REBOL [
     Notes: {
       * VOID is not a datatype (type of void is NULL), and not included here.
         It uses the special heart byte of 0, which is also the heart byte of
-        its isotopic form (called NONE, the contents of unset variables).
+        its isotopic form (called "trash", the contents of unset variables).
         While other enum values are not baked in, zero as the heart byte of
         voids and nones are used with memset() for optimizations.
 

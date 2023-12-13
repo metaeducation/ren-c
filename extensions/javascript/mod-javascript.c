@@ -962,7 +962,7 @@ DECLARE_NATIVE(js_native)
 //  {Evaluate textual JavaScript code}
 //
 //      return: "Note: Only supports types that reb.Box() supports"
-//          [<opt> <none> logic? integer! text!]
+//          [~ <opt> logic? integer! text!]
 //      source "JavaScript code as a text string" [text!]
 //      /local "Evaluate in local scope (as opposed to global)"
 //      /value "Return a Rebol value"
@@ -1011,15 +1011,15 @@ DECLARE_NATIVE(js_eval_p)
         );
 
     if (addr == 0)
-        return NONE;
+        return TRASH;
 
     goto handle_error;
 
   want_result: {  ////////////////////////////////////////////////////////////
 
-    // Currently, reb.Box() only translates to INTEGER!, TEXT!, NONE!, NULL
+    // Currently, reb.Box() only translates to INTEGER!, TEXT!, TRASH?, NULL
     //
-    // !!! All other types come back as NONE!.  Should they error?
+    // !!! All other types come back as trash (~ isotope).  Should they error?
     //
     if (REF(local)) {
         addr = EM_ASM_INT(
@@ -1060,7 +1060,7 @@ DECLARE_NATIVE(js_eval_p)
 //
 //  {Initialize the JavaScript Extension}
 //
-//      return: <none>
+//      return: [~]
 //  ]
 //
 DECLARE_NATIVE(startup_p)
@@ -1083,7 +1083,7 @@ DECLARE_NATIVE(startup_p)
 
     TRACE("INIT-JAVASCRIPT-EXTENSION called");
 
-    return NONE;
+    return TRASH;
 }
 
 
@@ -1092,7 +1092,7 @@ DECLARE_NATIVE(startup_p)
 //
 //  {Internal debug tool for seeing what's going on in JavaScript dispatch}
 //
-//      return: <none>
+//      return: [~]
 //      enable [logic?]
 //  ]
 //
@@ -1106,7 +1106,7 @@ DECLARE_NATIVE(js_trace)
     fail ("JS-TRACE only if DEBUG_JAVASCRIPT_EXTENSION set in %emscripten.r");
   #endif
 
-    return NONE;
+    return TRASH;
 }
 
 

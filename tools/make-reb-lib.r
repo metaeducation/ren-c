@@ -66,7 +66,7 @@ for-each-api: func [code [block!]] [
     ]
 ]
 
-emit-proto: func [return: <none> proto] [
+emit-proto: func [return: [~] proto] [
     header: proto-parser/data
 
     all [
@@ -81,7 +81,7 @@ emit-proto: func [return: <none> proto] [
         ]
     ]
 
-    if header/2 != 'RL_API [return none]
+    if header/2 != 'RL_API [return ~]
     if not set-word? header/1 [
         fail ["API declaration should be a SET-WORD!, not" (header/1)]
     ]
@@ -160,7 +160,7 @@ emit-proto: func [return: <none> proto] [
     ]
 ]
 
-process: func [return: <none> file] [
+process: func [return: [~] file] [
     proto-parser/file: file
     proto-parser/emit-proto: :emit-proto
     proto-parser/process as text! read file

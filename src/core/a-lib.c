@@ -573,13 +573,13 @@ REBVAL *RL_rebVoid(void)
 
 
 //
-//  rebNone: RL_API
+//  rebTrash: RL_API
 //
-REBVAL *RL_rebNone(void)
+REBVAL *RL_rebTrash(void)
 {
     ENTER_API;
 
-    return Init_None(Alloc_Value());
+    return Init_Trash(Alloc_Value());
 }
 
 
@@ -1071,14 +1071,14 @@ static bool Run_Va_Throws(
 
 
 // This version of the variadic run does not do isotope decay, because that
-// errors on empty parameter packs ("none"), e.g. ~[]~ isotopes.  It would be
+// errors on empty parameter packs ("nihil"), e.g. ~[]~ isotopes.  It would be
 // deceptive to have that unpack and conflate as any other state (including
 // void and null, which have specific meanings).  So it simply won't.
 //
 // An API like rebValue() or rebUnboxLogic() thus won't handle ~[]~, and you
 // need to use rebMeta() to get the parameter pack and understand its nature,
 // or use rebElide() and say it doesn't matter.  (or just find a way in the
-// executed code passed to not have it evaluate to none)
+// executed code passed to not have it evaluate to nihil)
 //
 inline static void Run_Va_Undecayed_May_Fail_Calls_Va_End(
     Atom(*) out,
@@ -1390,7 +1390,7 @@ REBVAL *RL_rebQuote(const void *p, va_list *vaptr)
 // Variant of rebValue() which assumes you don't need the result.  This saves on
 // allocating an API handle, or the caller needing to manage its lifetime.
 //
-// It also means that if the product is something like a ~[]~ isotope ("none")
+// Also means that if the product is something like a ~[]~ isotope ("nihil")
 // that is not an issue.
 //
 void RL_rebElide(const void *p, va_list *vaptr)

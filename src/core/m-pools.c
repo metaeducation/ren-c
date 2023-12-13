@@ -979,7 +979,7 @@ void Swap_Series_Content(Series* a, Series* b)
 //  swap-contents: native [
 //      {Low-level operation for swapping the underlying data for two series.}
 //
-//      return: <none>
+//      return: [~]
 //      series1 [any-series!]
 //      series2 [any-series!]
 //  ]
@@ -1004,7 +1004,7 @@ DECLARE_NATIVE(swap_contents)
     Series* s2 = Cell_Series_Ensure_Mutable(ARG(series2));
     Swap_Series_Content(s1, s2);
 
-    return NONE;
+    return TRASH;
 }
 
 

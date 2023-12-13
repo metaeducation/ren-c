@@ -1099,7 +1099,7 @@ void halt_poll_timer_callback(uv_timer_t* handle) {
 //
 //  {Initialize Network Extension (e.g. call WSAStartup() on Windows)}
 //
-//      return: <none>
+//      return: [~]
 //  ]
 //
 DECLARE_NATIVE(startup_p)
@@ -1134,7 +1134,7 @@ DECLARE_NATIVE(startup_p)
 
     uv_timer_init(uv_default_loop(), &halt_poll_timer);
 
-    return rebNone();
+    return rebTrash();
 }
 
 
@@ -1143,7 +1143,7 @@ DECLARE_NATIVE(startup_p)
 //
 //  {Shutdown Network Extension}
 //
-//      return: <none>
+//      return: [~]
 //  ]
 //
 DECLARE_NATIVE(shutdown_p)
@@ -1157,7 +1157,7 @@ DECLARE_NATIVE(shutdown_p)
     uv_close(cast(uv_handle_t*, &wait_timer), nullptr);  // no close callback
     uv_close(cast(uv_handle_t*, &halt_poll_timer), nullptr);
 
-    return rebNone();
+    return rebTrash();
 }
 
 

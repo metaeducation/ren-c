@@ -416,7 +416,7 @@ default-combinators: make map! reduce [
 
         cycle [
             [^result' input]: parser input except [
-                result': none'
+                result': trash'
                 continue
             ]
         ]
@@ -463,7 +463,7 @@ default-combinators: make map! reduce [
         parser [<end> action?]
         <local> f result'
     ][
-        result': none'  ; default `[stop]` returns none
+        result': trash'  ; default `[stop]` returns trash
         if :parser [  ; parser argument is optional
             [^result' input]: parser input except e -> [
                 return raise e
@@ -3062,7 +3062,7 @@ parse-furthest: adapt augment :parse [
 ; the UPARSE tests involve it.
 ;
 using: func [
-    return: <none>  ; should it return a value?  (e.g. the object?)
+    return: [~]  ; should it return a value?  (e.g. the object?)
     obj [<maybe> object!]
 ][
     add-use-object (binding of 'obj) obj

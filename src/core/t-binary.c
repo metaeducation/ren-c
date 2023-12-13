@@ -837,7 +837,7 @@ REBTYPE(Binary)
             Size size;
             const Byte* data = Cell_Binary_Size_At(&size, v);
             Set_Random(crc32_z(0L, data, size));
-            return NONE;
+            return TRASH;
         }
 
         REBINT tail = cast(REBINT, Cell_Series_Len_Head(v));

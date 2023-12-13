@@ -100,7 +100,7 @@ DECLARE_NATIVE(mold)
 //
 //  "Boot-only implementation of WRITE-STDOUT (HIJACK'd by STDIO module)"
 //
-//      return: <none>
+//      return: [~]
 //      value [<maybe> text! char? binary!]
 //          "Text to write, if a STRING! or CHAR! is converted to OS format"
 //  ]
@@ -131,7 +131,7 @@ DECLARE_NATIVE(write_stdout)
         assert(Is_Binary(v));
         PROBE(v);
     }
-    return NONE;
+    return TRASH;
   #endif
 }
 
@@ -352,7 +352,7 @@ DECLARE_NATIVE(basic_read)
 //
 //  {Very simplistic function for writing files, provided for WASI}
 //
-//       return: [none?]
+//       return: [~]
 //       file [file!]
 //       data [binary! text!]
 //  ]
@@ -378,6 +378,6 @@ DECLARE_NATIVE(basic_write)
     fwrite(data, size, 1, f);
     fclose(f);
 
-    return NONE;
+    return TRASH;
   #endif
 }

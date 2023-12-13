@@ -156,11 +156,11 @@ comment [
 prin: function [
     "Print without implicit line break, blocks are SPACED."
 
-    return: <none>
+    return: [~]
     value [<opt> element?]
 ][
     write-stdout switch/type value [
-        null?! [return none]  ; type of VOID is currently null
+        null?! [return ~]  ; type of VOID is currently null
         text! issue! [value]
         block! [spaced value]
     ] else [

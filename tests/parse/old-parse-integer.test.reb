@@ -5,7 +5,7 @@
 ; out in terms of how to make [2 4 rule] range between 2 and 4 occurrences,
 ; as that breaks the combinator pattern at this time.
 
-(none? parse "" [0 <any>])
+(trash? parse "" [0 <any>])
 ("a" == parse "a" [1 "a"])
 ("a" == parse "aa" [2 "a"])
 
@@ -31,10 +31,10 @@
 )]
 
 [https://github.com/red/red/issues/4591
-    (none? parse [] [0 [ignore me]])
-    (none? parse [] [0 "ignore me"])
-    (none? parse [] [0 0 [ignore me]])
-    (none? parse [] [0 0 "ignore me"])
+    (trash? parse [] [0 [ignore me]])
+    (trash? parse [] [0 "ignore me"])
+    (trash? parse [] [0 0 [ignore me]])
+    (trash? parse [] [0 0 "ignore me"])
     (raised? parse [x] [0 0 'x])
     (raised? parse " " [0 0 space])
 ]

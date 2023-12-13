@@ -38,7 +38,7 @@
 //
 //      return: "Block of test numbers and failures"
 //          [text! block!]
-//      value "Argument that may be useful for ad hoc tests (or just NONE)"
+//      value "Argument that may be useful for ad hoc tests"
 //          [any-value?]
 //  ]
 //
@@ -143,7 +143,7 @@ DECLARE_NATIVE(diagnose)
 
     Dump_Value_Debug(v);
 
-    return NONE;
+    return TRASH;
   #endif
 }
 
@@ -153,7 +153,7 @@ DECLARE_NATIVE(diagnose)
 //
 //  {Introduce periodic or deterministic fuzzing of out of memory errors}
 //
-//      return: <none>
+//      return: [~]
 //      factor "Ticks or percentage of time to cause allocation errors"
 //          [integer! percent!]
 //  ]
@@ -178,6 +178,6 @@ DECLARE_NATIVE(fuzz)
         assert(Is_Percent(ARG(factor)));
         g_mem.fuzz_factor = 10000 * VAL_DECIMAL(ARG(factor));
     }
-    return NONE;
+    return TRASH;
   #endif
 }

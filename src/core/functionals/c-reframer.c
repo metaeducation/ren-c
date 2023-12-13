@@ -116,7 +116,7 @@ Level* Make_Pushed_Level_From_Action_Feed_May_Throw(
     if (Trampoline_With_Top_As_Root_Throws())
         return L;
 
-    assert(Is_None(L->out));  // should only have gathered arguments
+    assert(Is_Trash(L->out));  // should only have gathered arguments
 
     assert(  // !!! new flag [2]
         Not_Subclass_Flag(VARLIST, L->varlist, FRAME_HAS_BEEN_INVOKED)
@@ -368,7 +368,7 @@ DECLARE_NATIVE(reframer_p)
         ARG(shim),
         base,
         &binder,
-        NONE_CELL
+        TRASH_CELL
     );
 
     Option(Context*) error = nullptr;  // can't fail() with binder in effect
@@ -457,7 +457,7 @@ DECLARE_NATIVE(reframer_p)
     // takes a void and giving it ~pending~; would make bugs more obvious.
     //
     REBVAL *var = CTX_VAR(exemplar, param_index);
-    assert(Is_None(var));
+    assert(Is_Trash(var));
     Copy_Cell(var, CTX_ARCHETYPE(exemplar));
 
     // Make action with enough space to store the implementation phase and

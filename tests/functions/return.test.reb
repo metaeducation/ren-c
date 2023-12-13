@@ -50,26 +50,30 @@
 
 (
     success: true
-    f1: func [return: <none>] [return none, success: false]
+    f1: func [return: [~]] [return ~, success: false]
     f1
     success
 )
 (
-    f1: func [return: <none>] [return none]
-    none' = ^ f1
+    f1: func [return: [~]] [return ~]
+    trash' = ^ f1
 )
-[#1515 ; the "result" of a none return should not be assignable
-    (a: 1 run func [return: <none>] [a: return none] :a =? 1)
-]
-(a: 1 reeval reify func [return: <none>] [set 'a return none] :a =? 1)
-(a: 1 reeval reify func [return: <none>] [set/any 'a return none] :a =? 1)
-[#1509 ; the "result" of a none return should not be passable to functions
-    (a: 1 run func [return: <none>] [a: error? return none] :a =? 1)
-]
+[#1515 (  ; the "result" of a return should not be assignable
+    a: 1
+    run func [return: [~]] [a: return ~]
+    a = 1
+)]
+(a: 1 reeval reify func [return: [~]] [set 'a return ~] :a =? 1)
+(a: 1 reeval reify func [return: [~]] [set/any 'a return ~] :a =? 1)
+[#1509 (  ; the "result" of a return should not be passable to functions
+    a: 1
+    run func [return: [~]] [a: error? return ~]
+    a = 1
+)]
 [#1535
-    (reeval reify func [return: <none>] [words of return none] true)
+    (reeval reify func [return: [~]] [words of return ~] true)
 ]
-(run func [return: <none>] [values of return none] true)
+(run func [return: [~]] [values of return ~] true)
 [#1945
-    (run func [return: <none>] [spec-of return none] true)
+    (run func [return: [~]] [spec-of return ~] true)
 ]

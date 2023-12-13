@@ -58,7 +58,7 @@ array: func [
         [element? action?]
     <local> rest block
 ][
-    initial: default ['~]  ; if not specified, array will be all meta none
+    initial: default ['~]  ; if not specified, array will be all meta trash
     if block? size [
         rest: next size else [
             ;
@@ -309,7 +309,7 @@ reword: function [
 move: func [
     {Move a value or span of values in a series}
 
-    return: <none>  ; !!! Define return value?
+    return: [~]  ; !!! Define return value?
     source "Source series (modified)"
         [any-series!]
     offset "Offset to move by, or index to move to"
@@ -495,7 +495,7 @@ format: function [
 
 printf: func [
     "Formatted print."
-    return: <none>
+    return: [~]
     fmt "Format"
     val "Value or block of values"
 ][
@@ -617,7 +617,7 @@ split: function [
 find-all: function [
     "Find all occurrences of a value within a series (allows modification)."
 
-    return: <none>
+    return: [~]
     'series [word!]
         "Variable for block, string, or other series"
     value

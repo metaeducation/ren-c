@@ -32,7 +32,6 @@
     foo: function [] [
         set 'x: 20
         set 'y x
-        return none
     ]
     foo
     (x = 10) and (y = 20)
@@ -47,7 +46,7 @@
 )(
     x: 10
     y: null
-    foo: function [return: <none>] [
+    foo: function [return: [~]] [
         set unquote the 'x: 20
         set unquote the 'y x
     ]
@@ -64,7 +63,7 @@
 )(
     x: 10
     y: null
-    foo: function [return: <none>] [
+    foo: function [return: [~]] [
         set noquote the '''''''x: 20  ; SET-WORD! gathered, no assignment
         set noquote the '''''''y x
     ]

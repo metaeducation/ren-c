@@ -66,8 +66,8 @@
             fail 'block ["Unused argument data at end of POINTFREE block"]
         ]
 
-        ; We now create an action out of the frame.  NONE parameters are taken
-        ; as being unspecialized and gathered at the callsite.
+        ; We now create an action out of the frame.  trash parameters are
+        ; taken as being unspecialized and gathered at the callsite.
         ;
         return runs frame
     ]

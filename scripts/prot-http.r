@@ -163,7 +163,7 @@ do-request: function [
 parse-write-dialect: function [
     {Sets PORT.SPEC fields: DEBUG, FOLLOW, METHOD, PATH, HEADERS, CONTENT}
 
-    return: <none>
+    return: [~]
     port [port!]
     block [block!]
 ][
@@ -180,7 +180,7 @@ parse-write-dialect: function [
 ]
 
 check-response: function [
-    return: <none>
+    return: [~]
     port [port!]
 ][
     state: port.state
@@ -391,7 +391,7 @@ http-response-headers: context [
 ]
 
 do-redirect: func [
-    return: <none>
+    return: [~]
     port [port!]
     new-uri [url! text! file!]
     headers
@@ -459,7 +459,7 @@ do-redirect: func [
 
 read-body: function [
     {Based on the information in the HTTP headers, read body into PORT.DATA}
-    return: <none>
+    return: [~]
     port [port!]
 ][
     state: port.state

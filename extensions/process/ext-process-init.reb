@@ -147,7 +147,7 @@ argv-block-to-command*: func [
 browse*: func [
     "Open web browser to a URL or local file."
 
-    return: <none>
+    return: [~]
     location [<maybe> url! file!]
 ][
     print "Opening web browser..."
@@ -165,7 +165,7 @@ browse*: func [
         call/shell command except [  ; CALL is synchronous by default
             continue  ; just keep trying
         ]
-        return none
+        return ~
     ]
     fail "Could not open web browser"
 ]

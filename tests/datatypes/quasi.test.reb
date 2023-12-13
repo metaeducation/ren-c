@@ -78,15 +78,15 @@
 [
     (foo: func [] [], true)
 
-    (none? foo)
+    (trash? foo)
 
-    (none' = ^ applique :foo [])
-    (none? applique :foo [])
+    (trash' = ^ applique :foo [])
+    (trash? applique :foo [])
 
-    (none' = ^ eval :foo)
-    (none? eval :foo)
+    (trash' = ^ eval :foo)
+    (trash? eval :foo)
 
-    (none' = ^ do :foo)
+    (trash' = ^ do :foo)
 ]
 
 ; Explicit return of VOID
@@ -102,7 +102,7 @@
 ; Not providing an argument is an error (too easy to pick up random arguments
 ; from another line if 0-arity were allowed)
 [
-    (did foo: func [return: [any-value?] x] [return none])
+    (did foo: func [return: [any-value?] x] [])
 
     ~no-arg~ !! (foo)
 ]
@@ -120,12 +120,12 @@
 
 
 [(
-    foo: func [return: <none>] []
-    none' = ^ foo
+    foo: func [return: [~]] []
+    trash' = ^ foo
 )(
     data: [a b c]
-    f: func [return: <none>] [append data spread [1 2 3]]
-    none' = ^ f
+    f: func [return: [~]] [append data spread [1 2 3]]
+    trash' = ^ f
 )]
 
 ; locals are null before they are assigned (unset breaks rules of frames not

@@ -188,7 +188,7 @@ net-log: lambda [txt /C /S][txt]
 net-trace: function [
     "Switch between using a no-op or a print operation for net-tracing"
 
-    return: <none>
+    return: [~]
     val [logic?]
 ][
     either val [

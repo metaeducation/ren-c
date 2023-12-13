@@ -107,13 +107,13 @@ export extract-native-protos: func [
 export emit-include-params-macro: function [
     "Emit macros for a native's parameters"
 
-    return: <none>
+    return: [~]
     e [object!] "where to emit (see %common-emitters.r)"
     proto [text!]
     /ext [text!] "extension name"
 ][
     if find proto "native/intrinsic" [
-        return none  ; intrinsics don't have INCLUDE_PARAMS_OF macros
+        return ~  ; intrinsics don't have INCLUDE_PARAMS_OF macros
     ]
 
     seen-refinement: false

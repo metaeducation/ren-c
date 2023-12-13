@@ -1345,7 +1345,7 @@ REBTYPE(String)
             Size utf8_size;
             Utf8(const*) utf8 = Cell_Utf8_Size_At(&utf8_size, v);
             Set_Random(crc32_z(0L, utf8, utf8_size));
-            return NONE;
+            return TRASH;
         }
 
         REBLEN index = VAL_INDEX(v);

@@ -269,7 +269,7 @@ round: generic [
 
 random: generic [
     {Returns a random value of the same datatype; or shuffles series.}
-    return: [element? none?]  ; !!! returns none if /SEED, should be RANDOMIZE?
+    return: [~ element?]  ; !!! returns trash if /SEED, should be RANDOMIZE?
     value   {Maximum value of result (modified when series)}
     /seed   {Restart or randomize}
     /secure {Returns a cryptographically secure random number}

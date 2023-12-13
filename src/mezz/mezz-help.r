@@ -74,7 +74,7 @@ description-of: function [
 browse: function [
     "stub function for browse* in extensions/process/ext-process-init.reb"
 
-    return: <none>
+    return: [~]
     location [<maybe> url! file!]
 ][
     print "Browse needs redefining"
@@ -225,8 +225,8 @@ help: function [
                 null?! [
                     print [topic "is null"]
                 ]
-                none?! [
-                    print [topic "is not defined (e.g. has a NONE! value)"]
+                trash?! [
+                    print [topic "is not defined (e.g. has a trash value)"]
                 ]
             ] then [
                 return nihil
@@ -456,7 +456,7 @@ source: function [
         ]
         not frame? f [
             print [
-                name "is" an any [mold kind of :f, "NONE"]
+                name "is" an any [mold kind of :f, "VOID"]
                 "and not a FRAME!"
             ]
         ]
@@ -496,7 +496,7 @@ source: function [
 what: function [
     {Prints a list of known actions}
 
-    return: [none? block!]
+    return: [~ block!]
     'name [<end> word! lit-word?]
         "Optional module name"
     /args "Show arguments not titles"
@@ -535,11 +535,11 @@ what: function [
             :arg
         ]
     ]
-    return none
+    return ~
 ]
 
 
-bugs: func [return: <none>] [
+bugs: func [return: [~]] [
     "View bug database."
 ][
     browse https://github.com/metaeducation/ren-c/issues
@@ -551,10 +551,10 @@ bugs: func [return: <none>] [
 require-commit: function [
     "checks current commit against required commit"
 
-    return: <none>
+    return: [~]
     commit [text!]
 ][
-    c: select system.script.header 'commit else [return none]
+    c: select system.script.header 'commit else [return ~]
 
     ; If we happen to have commit information that includes a date, then we
     ; can look at the date of the running Rebol and know that a build that is

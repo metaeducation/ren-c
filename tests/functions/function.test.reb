@@ -471,11 +471,11 @@
 )
 
 [#539 https://github.com/metaeducation/ren-c/issues/755 (
-    f: func [return: <none>] [
-        use [x] [return none]
+    f: func [return: [~]] [
+        use [x] [return ~]
         42
     ]
-    none' = ^ f
+    trash' = ^ f
 )]
 
 (

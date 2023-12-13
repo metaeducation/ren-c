@@ -20,9 +20,9 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// VOID represents the idea of "no value".  It is the result of branching
-// constructs that don't take a branch, and if code evaluates to void then
-// there will be no `==` in the console (as void has no representation).
+// VOID is the result of branching constructs that don't take a branch, and if
+// code evaluates to void then there will be no `==` in the console (as void
+// has no representation).
 //
 //     >> if false [<d>]
 //
@@ -59,8 +59,9 @@
 //     >> ~
 //     == ~  ; isotope
 //
-// The `~` isotope is called NONE, and is chosen in particular by the system
-// to represent variables that have not been assigned.
+// The `~` isotope is called TRASH, and is chosen in particular by the system
+// to represent variables that have not been assigned, that generate an error
+// when accessed by plain WORD!.
 //
 
 INLINE bool Is_Void(const Cell* v)
@@ -101,10 +102,10 @@ INLINE bool Is_Quasi_Void(const Cell* v)
 #define Is_Meta_Of_Void(v)           Is_Quoted_Void(v)
 
 
-//=//// '~' ISOTOPE (a.k.a. NONE) /////////////////////////////////////////=//
+//=//// '~' ISOTOPE (a.k.a. TRASH) ////////////////////////////////////////=//
 //
 // Picking isotopic void as the contents of unset variables has many benefits
-// over choosing something like an `~unset~` isotope:
+// over choosing something like an `~unset~` or `~trash~` isotope:
 //
 //  * Reduces noise in FRAME! to see which variables are specialized
 //
@@ -114,60 +115,53 @@ INLINE bool Is_Quasi_Void(const Cell* v)
 //
 //  * Quick way to unset variables, simply `(var: ~)`
 //
-// While the name "none" had a significantly different meaning in historical
-// Rebol, there are really only so many names to choose from.
+// While "trash" is a slightly jarring name for ~ isotopes, one doesn't need
+// to call it by name to use it.  e.g. return specs can say `return: [~]`
+// instead of `return: [trash?]`, and `return ~` instead of `return trash`
+//
+// The choice of this name (vs. "unset") was meditated on for quite some time,
+// and resolved as superior to trying to claim there's such a thing as an
+// "unset value".
 //
 
-INLINE bool Is_None(const Cell* v)
+INLINE bool Is_Trash(const Cell* v)
   { return HEART_BYTE(v) == REB_VOID and QUOTE_BYTE(v) == ISOTOPE_0; }
 
-#if defined(NDEBUG)
-    INLINE bool Is_Fresh_Or_None(const Cell* v) {
-        return 0 == (
-            v->header.bits & (FLAG_HEART_BYTE(255) | FLAG_QUOTE_BYTE(255))
-        );
-    }
-#else
-    INLINE bool Is_Fresh_Or_None(const Cell* v) {
-        return Is_Fresh(v) or Is_None(v);
-    }
-#endif
-
-#define Init_None(out) \
+#define Init_Trash(out) \
     TRACK(Init_Void_Untracked((out), ISOTOPE_0))
 
-#define Init_Meta_Of_None(out)      Init_Quasi_Void(out)
-#define Is_Meta_Of_None(v)          Is_Quasi_Void(v)
+#define Init_Meta_Of_Trash(out)     Init_Quasi_Void(out)
+#define Is_Meta_Of_Trash(v)         Is_Quasi_Void(v)
 
-#define NONE_CELL \
-    cast(const REBVAL*, &PG_None_Cell)  // !!! Could we just use Lib(NONE) ?
+#define TRASH_CELL \
+    cast(const REBVAL*, &PG_Trash_Cell)  // !!! Could we just use Lib(TRASH) ?
 
 
-//=//// EFFICIENT VOID AND NONE "FINALIZATION" ////////////////////////////=//
+//=//// EFFICIENT VOID AND TRASH "FINALIZATION" ///////////////////////////=//
 //
 // A cell with all its header bits 0 (Is_Fresh(), CELL_MASK_0) is very close
-// to being a NONE.  Its HEART_BYTE() is 0 for REB_VOID, and its QUOTE_BYTE()
+// to being TRASH.  Its HEART_BYTE() is 0 for REB_VOID, and its QUOTE_BYTE()
 // is ISOTOPE_0 to say it is an isotope.  However, it can't be a valid cell
 // from the API perspective because Detect_Rebol_Pointer() would see the `\0`
 // first byte, and that's a legal empty UTF-8 C string.
 //
 // There is still leverage from the near overlap with fresh cells...because
 // it only takes a single masking operation to add NODE_FLAG_NODE and
-// NODE_FLAG_CELL to make a valid none.  This eliminates the need to mask
+// NODE_FLAG_CELL to make a valid trash.  This eliminates the need to mask
 // out the bits that are CELL_MASK_PERSIST.  And since the isotope byte is
 // 0, we don't have to mask it out to mask in other levels of void
 //
 // This trick alone may seem like a micro-optimization, but fresh cells
 // are used to help with semantics too.  They can be written to but not read,
 // and assist in safety involving accidentally overwriting raised errors.
-// Calling Finalize_None() and Finalize_Void() also implicitly asserts that
+// Calling Finalize_Trash() and Finalize_Void() also implicitly asserts that
 // the cell was previously fresh... which is often an important invariant.
 //
 
 STATIC_ASSERT(REB_VOID == 0);  // the optimization depends on this
 STATIC_ASSERT(ISOTOPE_0 == 0);  // QUOTE_BYTE() of 0 means it's an isotope
 
-INLINE Value(*) Finalize_None_Untracked(Atom(*) out) {
+INLINE Value(*) Finalize_Trash_Untracked(Atom(*) out) {
     assert(Is_Fresh(out));  // can bitwise OR, need node+cell flags
 
     assert(HEART_BYTE(out) == 0 and QUOTE_BYTE(out) == 0);
@@ -181,8 +175,8 @@ INLINE Value(*) Finalize_None_Untracked(Atom(*) out) {
     return cast(Value(*), out);
 }
 
-#define Finalize_None(out) \
-    TRACK(Finalize_None_Untracked(out))
+#define Finalize_Trash(out) \
+    TRACK(Finalize_Trash_Untracked(out))
 
 INLINE Value(*) Finalize_Void_Untracked(Atom(*) out) {
     assert(Is_Fresh(out));  // can bitwise OR, need node+cell flags

@@ -85,8 +85,8 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// 1. FUNC(TION) does its evaluation into the SPARE cell, because the body
-//    result is never used as a return value.  Only RETURN can give non-NONE.
+// 1. FUNC(TION) evaluates into the SPARE cell, because the body result is
+//    never used as a return value.  Only RETURN can give non-"trash".
 //
 // 2. A design point here is that Func_Dispatcher() does no typechecking, and
 //    does not even request to catch THROWN values.  This makes it easier to
@@ -95,11 +95,11 @@
 //    will catch the result.  Hence the full typechecking burden is on RETURN.
 //
 // 3. There is an exception made for tolerating the lack of a RETURN call for
-//    the cases of `return: <none>` and `return: <nihil>`.  This has a little
+//    the cases of `return: [~]` and `return: <nihil>`.  This has a little
 //    bit of a negative side in that if someone is to hook the RETURN function,
 //    it will not be called in these "fallout" cases.  It's deemed too ugly
 //    to slip in a "hidden" call to RETURN for these cases, and too much of
-//    a hassle to force people to put RETURN NONE or RETURN at the end.  So
+//    a hassle to force people to put RETURN ~ or RETURN at the end.  So
 //    this is the compromise chosen.
 //
 Bounce Func_Dispatcher(Level* const L)
@@ -149,8 +149,8 @@ Bounce Func_Dispatcher(Level* const L)
 
     const Param* param_return = ACT_PARAMS_HEAD(Level_Phase(L));
 
-    if (Get_Parameter_Flag(param_return, RETURN_NONE)) {
-        Init_None(OUT);  // none, regardless of body result [3]
+    if (Get_Parameter_Flag(param_return, RETURN_TRASH)) {
+        Init_Trash(OUT);  // trash, regardless of body result [3]
         return Proxy_Multi_Returns(L);
     }
 
@@ -160,7 +160,7 @@ Bounce Func_Dispatcher(Level* const L)
     }
 
     if (Is_Parameter_Unconstrained(param_return)) {
-        Init_None(OUT);  // none falls out of FUNC by default
+        Init_Trash(OUT);  // trash falls out of FUNC by default
         return Proxy_Multi_Returns(L);
     }
 
@@ -538,10 +538,9 @@ bool Typecheck_Coerce_Return(
     const Param* param = ACT_PARAMS_HEAD(phase);
     assert(KEY_SYM(ACT_KEYS_HEAD(phase)) == SYM_RETURN);
 
-    if (Get_Parameter_Flag(param, RETURN_NONE)) {
-        if (Is_None(atom))
+    if (Get_Parameter_Flag(param, RETURN_TRASH)) {
+        if (Is_Trash(atom))
             return true;
-        fail ("If RETURN: <none> is in a function spec, RETURN NONE only");
     }
 
     if (Get_Parameter_Flag(param, RETURN_NIHIL)) {
@@ -555,13 +554,13 @@ bool Typecheck_Coerce_Return(
 
     if (Is_Nihil(atom)) {  // RETURN NIHIL
         //
-        // !!! Treating a return of NIHIL as a return of NONE helps some
+        // !!! Treating a return of NIHIL as a return of trash helps some
         // scenarios, for instance piping UPARSE combinators which do not
         // want to propagate pure invisibility.  The idea should be reviewed
         // to see if VOID makes more sense...but start with a more "ornery"
         // value to see how it shapes up.
         //
-        Init_None(atom);
+        Init_Trash(atom);
     }
 
     return Typecheck_Coerce_Argument(param, atom);
@@ -700,7 +699,7 @@ DECLARE_NATIVE(inherit_adjunct)
             CTX_ARCHETYPE(a1),
             Canon_Symbol(unwrap(syms[which]))
         ));
-        if (not val1 or Is_Nulled(val1) or Is_None(val1))
+        if (not val1 or Is_Nulled(val1) or Is_Trash(val1))
             continue;  // nothing to inherit from
         if (not Any_Context(val1))
             fail ("Expected context in original meta information");
@@ -715,7 +714,7 @@ DECLARE_NATIVE(inherit_adjunct)
             continue;
 
         Context* ctx2;
-        if (Is_Nulled(val2) or Is_None(val2)) {
+        if (Is_Nulled(val2) or Is_Trash(val2)) {
             ctx2 = Make_Context_For_Action(
                 derived,  // the action
                 TOP_INDEX,  // would weave in refinements pushed (none apply)
@@ -733,7 +732,7 @@ DECLARE_NATIVE(inherit_adjunct)
         Init_Evars(&e, val2);
 
         while (Did_Advance_Evars(&e)) {
-            if (not Is_None(e.var) and not Is_Nulled(e.var))
+            if (not Is_Trash(e.var) and not Is_Nulled(e.var))
                 continue;  // already set to something
 
             Option(Value(*)) slot = Select_Symbol_In_Context(

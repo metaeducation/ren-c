@@ -324,7 +324,7 @@
 (0.0.0 == any [0.0.0 false])
 (null? any [null false])
 ('a == any ['a false])
-; evaluation stops after encountering something else than FALSE or NONE
+; evaluation stops after encountering something else than FALSE or NULL
 (
     success: true
     any [true success: false]

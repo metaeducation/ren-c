@@ -21,7 +21,7 @@ import %test-parsing.r
 log-file: ~
 
 log: func [
-    return: <none>
+    return: [~]
     report [block!]
 ][
     write/append log-file unspaced report
@@ -48,7 +48,7 @@ error: ~
 run-single-test: func [
     {Run code and write the success or failure to the log file}
 
-    return: <none>
+    return: [~]
     code "Code GROUP! from test file, assumed bound into isolated module"
         [group!]
     expected-id [<opt> word!]
@@ -70,7 +70,7 @@ run-single-test: func [
     ] then [
         successes: me + 1
         log reduce [_ {"correct failure:"} _ quote quasi expected-id newline]
-        return none
+        return ~
     ]
 
     case [
@@ -94,7 +94,7 @@ run-single-test: func [
         result = '~true~ [
             successes: me + 1
             log reduce [_ {"succeeded"} newline]
-            return none
+            return ~
         ]
 
         result = '~false~ [
@@ -122,7 +122,7 @@ run-single-test: func [
 ]
 
 run-test-cluster: func [
-    return: <none>
+    return: [~]
     flags [block!]
     cluster "Block of GROUP!s to be run together in a common isolated context"
         [block!]
@@ -131,7 +131,7 @@ run-test-cluster: func [
     if not empty? exclude flags allowed-flags [
         skipped: me + 1
         log [space {"skipped"} newline]
-        return none
+        return ~
     ]
 
     ; Here we use MODULE instead of MAKE MODULE! so that we get IMPORT and
@@ -203,7 +203,7 @@ run-test-cluster: func [
 ; long list of BLOCK!s that are test groups.
 ;
 process-tests: function [
-    return: <none>
+    return: [~]
     test-sources [block!]
     handler [action?]
 ][

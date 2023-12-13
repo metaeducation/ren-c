@@ -50,7 +50,7 @@ lf: LF:    newline
 ; Type predicates
 
 null?!: &(null?)
-none?!: &(none?)
+trash?!: &(trash?)
 void?!: &(void?)
 refinement?!: &(refinement?)
 char?!: &(char?)

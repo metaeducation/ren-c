@@ -112,7 +112,7 @@ whitelisted: [
 log-emit: function [
     {Append a COMPOSE'd block to a log block, clearing any new-line flags}
 
-    return: <none>
+    return: [~]
     log [block!]
     label [tag!]
     body [block!]
@@ -195,8 +195,8 @@ export analyse: context [
                 emit <eof-eol-missing> [(file)]
             ]
 
-            emit-proto: function [return: <none> proto] [
-                if not block? proto-parser.data [return none]
+            emit-proto: function [return: [~] proto] [
+                if not block? proto-parser.data [return ~]
 
                 do in c-parser-extension [
                     if last-func-end [

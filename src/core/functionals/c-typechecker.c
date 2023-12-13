@@ -222,7 +222,7 @@ bool Typecheck_Atom_Core(
         //
         if (Is_Quasi(item)) {
             if (HEART_BYTE(item) == REB_VOID) {
-                if (Is_None(v))
+                if (Is_Trash(v))
                     goto test_succeeded;
                 goto test_failed;
             }
@@ -303,7 +303,7 @@ bool Typecheck_Atom_Core(
                 if (Is_Specialized(param))
                     Copy_Cell(arg, param);
                 else
-                    Finalize_None(arg);
+                    Finalize_Trash(arg);
                 assert(Is_Stable(arg));
             }
 

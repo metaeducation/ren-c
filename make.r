@@ -824,6 +824,7 @@ parse-ext-build-spec: function [
 
     if in ext 'options [
         ensure block! ext/options
+        config: null  ; default for locals in modern Ren-C
         parse2 ext/options [
             opt some [
                 word! block! opt text! set config: group!
@@ -832,7 +833,7 @@ parse-ext-build-spec: function [
             fail ["Could not parse extension build spec" mold spec]
         ]
 
-        if set? 'config [
+        if config [
             do as block! config  ; Note: old Ren-Cs disallowed DO of GROUP!
         ]
     ]
@@ -1060,7 +1061,7 @@ replace help-topics/usage "HELP-TOPICS" ;\
     form append (map-each x help-topics [either text? x ['|] [x]]) 'all
 
 help: function [
-    return: <none>
+    return: [~]
     /topic [text!]
 ][
     if topic [
@@ -1107,7 +1108,7 @@ if launched-from-root [
 ]
 
 set-exec-path: func [
-    return: <none>
+    return: [~]
     tool [object!]
     path
 ][
@@ -1461,7 +1462,7 @@ pthread: make rebmake/ext-dynamic-class [
 folders: copy [%objs/ %objs/main/]
 
 add-new-obj-folders: function [
-    return: <none>
+    return: [~]
     objs
     folders
     <local>
@@ -1580,7 +1581,7 @@ for-each [mode label] [
 
 
 add-project-flags: func [
-    return: <none>
+    return: [~]
     project [object!]
     /I "includes" [block!]
     /D "definitions" [block!]

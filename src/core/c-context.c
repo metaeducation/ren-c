@@ -464,7 +464,7 @@ Array* Collect_Unique_Words_Managed(
     const Cell* head,
     const Cell* tail,
     Flags flags,  // See COLLECT_XXX
-    const REBVAL *ignorables  // BLOCK!, ANY-CONTEXT!, or BLANK! for none
+    const REBVAL *ignorables  // BLOCK!, ANY-CONTEXT!, or BLANK!
 ){
     // We do not want to fail() during the bind at this point in time (the
     // system doesn't know how to clean up, and the only cleanup it does
@@ -655,7 +655,7 @@ Context* Make_Context_Detect_Managed(
     ++var;
 
     for (; len > 0; --len, ++var)  // [0] is rootvar (context), already done
-        Init_None(var);
+        Init_Trash(var);
 
     if (parent) {
         //
@@ -667,7 +667,7 @@ Context* Make_Context_Detect_Managed(
         REBVAL *src = CTX_VARS(&src_tail, unwrap(parent));
         for (; src != src_tail; ++dest, ++src) {
             Flags flags = NODE_FLAG_MANAGED;  // !!! Review, what flags?
-            assert(Is_None(dest));
+            assert(Is_Trash(dest));
             Copy_Cell(dest, src);
             Clonify(dest, flags, TS_CLONE);
         }

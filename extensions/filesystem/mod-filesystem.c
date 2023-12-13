@@ -54,14 +54,14 @@ extern Bounce Dir_Actor(Level* level_, REBVAL *port, const Symbol* verb);
 //
 //  {Start up down the filesystem device}
 //
-//      return: <none>
+//      return: [~]
 //  ]
 //
 DECLARE_NATIVE(startup_p)
 {
     FILESYSTEM_INCLUDE_PARAMS_OF_STARTUP_P;
 
-    return rebNone();
+    return rebTrash();
 }
 
 
@@ -85,14 +85,14 @@ DECLARE_NATIVE(get_file_actor_handle)
 //
 //  {Shut down the filesystem device}
 //
-//      return: <none>
+//      return: [~]
 //  ]
 //
 DECLARE_NATIVE(shutdown_p)
 {
     FILESYSTEM_INCLUDE_PARAMS_OF_SHUTDOWN_P;
 
-    return rebNone();
+    return rebTrash();
 }
 
 

@@ -283,7 +283,7 @@ static const REBVAL *Unloaded_Dispatcher(Level* L)
 //
 //  "Unload an extension"
 //
-//      return: <none>
+//      return: [~]
 //      extension "The extension to be unloaded"
 //          [module!]
 //  ]
@@ -349,11 +349,11 @@ DECLARE_NATIVE(unload_extension)
        true
     );
    if (shutdown_action == nullptr)
-        return NONE;
+        return TRASH;
 
    rebElide(rebRUN(shutdown_action));
 
-   return NONE;
+   return TRASH;
 }
 
 

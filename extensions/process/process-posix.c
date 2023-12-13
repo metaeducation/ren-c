@@ -220,7 +220,7 @@ DECLARE_NATIVE(set_egid)
 //
 //  "Send signal to a process"
 //
-//      return: <none>  ; !!! might this return pid or signal (?)
+//      return: [~]  ; !!! might this return pid or signal (?)
 //      pid [integer!]
 //          {The process ID}
 //      signal [integer!]
@@ -238,7 +238,7 @@ DECLARE_NATIVE(send_signal)
     //
     kill_process(pid, signal);
 
-    return NONE;
+    return TRASH;
 }
 
 #endif  // TO_LINUX || TO_ANDROID || TO_POSIX || TO_OSX || TO_HAIKU

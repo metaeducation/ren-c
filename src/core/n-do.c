@@ -675,7 +675,7 @@ DECLARE_NATIVE(applique)
         op,
         STACK_BASE,  // lowest_ordered_dsp of refinements to weave in
         nullptr,  // no binder needed
-        NONE_CELL  // seen as unspecialized by ST_ACTION_TYPECHECKING
+        TRASH_CELL  // seen as unspecialized by ST_ACTION_TYPECHECKING
     );
     Manage_Series(CTX_VARLIST(exemplar));
     Init_Frame(frame, exemplar, VAL_FRAME_LABEL(op));
@@ -771,7 +771,7 @@ DECLARE_NATIVE(apply)
       case ST_APPLY_UNLABELED_EVAL_STEP :
         if (THROWING)
             goto finalize_apply;
-        if (Is_None(iterator)) {
+        if (Is_Trash(iterator)) {
             assert(REF(relax));
             goto handle_next_item;
         }
@@ -788,7 +788,7 @@ DECLARE_NATIVE(apply)
         op,
         STACK_BASE, // lowest_ordered_dsp of refinements to weave in
         nullptr /* &binder */,
-        NONE_CELL
+        TRASH_CELL
     );
     Manage_Series(CTX_VARLIST(exemplar)); // Putting into a frame
     Init_Frame(frame, exemplar, VAL_FRAME_LABEL(op));  // GC guarded
@@ -841,7 +841,7 @@ DECLARE_NATIVE(apply)
         var = CTX_VAR(VAL_CONTEXT(frame), index);
         param = ACT_PARAM(VAL_ACTION(op), index);
 
-        if (not Is_None(var))
+        if (not Is_Trash(var))
             fail (Error_Bad_Parameter_Raw(rebUnrelativize(at)));
 
         const Cell* lookback = Lookback_While_Fetching_Next(L);  // for error
@@ -855,7 +855,7 @@ DECLARE_NATIVE(apply)
 
         Init_Integer(ARG(index), index);
     }
-    else if (Is_None(iterator)) {
+    else if (Is_Trash(iterator)) {
         STATE = ST_APPLY_UNLABELED_EVAL_STEP;
         param = nullptr;  // throw away result
     }
@@ -870,7 +870,7 @@ DECLARE_NATIVE(apply)
                     fail (Error_Apply_Too_Many_Raw());
 
                 Free(EVARS, e);
-                Init_None(iterator);
+                Init_Trash(iterator);
                 param = nullptr;  // we're throwing away the evaluated product
                 break;
             }
@@ -881,10 +881,10 @@ DECLARE_NATIVE(apply)
                 or Get_Parameter_Flag(e->param, REFINEMENT)
                 or Get_Parameter_Flag(e->param, SKIPPABLE)
             ){
-                Init_None(e->var);  // TBD: RETURN will be a pure local
+                Init_Trash(e->var);  // TBD: RETURN will be a pure local
                 continue;  // skippable only requested by name [4]
             }
-            if (Is_None(e->var)) {
+            if (Is_Trash(e->var)) {
                 param = e->param;
                 break;
             }
@@ -941,13 +941,13 @@ DECLARE_NATIVE(apply)
 
 } finalize_apply: {  /////////////////////////////////////////////////////////
 
-    if (Is_None(iterator))
+    if (Is_Trash(iterator))
         assert(REF(relax));
     else {
         EVARS *e = VAL_HANDLE_POINTER(EVARS, iterator);
         Shutdown_Evars(e);
         Free(EVARS, e);
-        Init_None(iterator);
+        Init_Trash(iterator);
     }
 
     if (THROWING)  // assume Drop_Level() called on SUBLEVEL?

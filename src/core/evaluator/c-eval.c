@@ -170,27 +170,7 @@ STATIC_ASSERT(
 //    an arity-1 function.  `1 + x: whatever ...`.  This overrides the no
 //    lookahead behavior flag right up front.
 //
-// 3. If the evaluation step doesn't produce any output, we want the variable
-//    to be set to NULL, but the voidness to propagate:
-//
-//        >> 1 + 2 x: comment "hi"
-//        == 3
-//
-//        >> x
-//        == null
-//
-//    Originally this would unset x, and propagate a none.  But once isotope
-//    assignments were disallowed, that ruined `x: y: if condition [...]`
-//    where we want `x = y` after that.  Cases like `return [@ result]: ...`
-//    presented a challenge for how not naming a variable would want to
-//    preserve the value, so turning voids to nones didn't feel good there.
-//    The general `x: case [...]` being able to leave X as NULL after no
-//    match was also a persuasion point, along with the tight link between
-//    NULL and VOID by triggering ELSE and linked by ^META state.  In the
-//    balance it is simply too good to worry about the potentially misleading
-//    state of X after the assignment.  So it was changed.
-//
-// 4. If current is pointing into the lookback buffer or the fetched value,
+// 3. If current is pointing into the lookback buffer or the fetched value,
 //    it will not work to hold onto this pointer while evaluating the right
 //    hand side.  The old stackless build wrote current into the spare and
 //    restored it in the state switch().  Did this ever happen?
@@ -215,7 +195,7 @@ inline static Level* Maybe_Rightward_Continuation_Needed(Level* L)
     );
     Push_Level(OUT, sub);
 
-    assert(L_current != &L->feed->lookback);  // are these possible?  [4]
+    assert(L_current != &L->feed->lookback);  // are these possible?  [3]
     assert(L_current != &L->feed->fetched);
 
     return sub;
@@ -244,7 +224,7 @@ Bounce Array_Executor(Level* L)
         goto initial_entry;
 
       case ST_ARRAY_PRELOADED_ENTRY:
-        assert(not Is_Fresh(OUT));  // groups `1 (elide "hi")` preload none
+        assert(not Is_Fresh(OUT));  // groups `1 (elide "hi")` preload nihil
         goto initial_entry;
 
       case ST_ARRAY_STEPPING:
@@ -689,7 +669,7 @@ Bounce Evaluator_Executor(Level* L)
     //
     // A plain word tries to fetch its value through its binding.  It fails
     // if the word is unbound (or if the binding is to a variable which is
-    // set, but to the isotopic form of void, e.g. "none").  Should the word
+    // set, but to the isotopic form of void, e.g. "trash").  Should the word
     // look up to an isotopic action, then that action will be invoked.
     //
     // NOTE: The usual dispatch of enfix functions is *not* via a REB_WORD in
@@ -792,16 +772,7 @@ Bounce Evaluator_Executor(Level* L)
     //
     //////////////////////////////////////////////////////////////////////////
     //
-    // 1. Void unsets the variable, and propagates a none signal, instead of
-    //    a void.  This maintains `y: x: (...)` where y = x afterward:
-    //
-    //        >> x: comment "hi"
-    //        == ~  ; isotope
-    //
-    //        >> get/any 'x
-    //        == ~  ; isotope
-    //
-    // 2. Running functions flushes the L_next_gotten cache.  But a plain
+    // 1. Running functions flushes the L_next_gotten cache.  But a plain
     //    assignment can cause trouble too:
     //
     //        >> x: <before> x: 1 x
@@ -859,7 +830,7 @@ Bounce Evaluator_Executor(Level* L)
                 OUT
             );
 
-            if (L_next_gotten) {  // cache can tamper with lookahead [2]
+            if (L_next_gotten) {  // cache can tamper with lookahead [1]
                 if (VAL_TYPE_UNCHECKED(L_next) == REB_FRAME) {
                     // not a cache
                 }
@@ -950,9 +921,9 @@ Bounce Evaluator_Executor(Level* L)
     //
     // For now, we defer to what GET does.
     //
-    // Tuples looking up to none isotopes are handled consistently with
+    // Tuples looking up to trash isotopes are handled consistently with
     // WORD! and GET-WORD!, and will error...directing you use GET/ANY if
-    // fetching isotopes is what you actually intended.
+    // fetching trash is what you actually intended.
 
       tuple_in_spare:  ///////////////////////////////////////////////////////
 
@@ -1264,7 +1235,7 @@ Bounce Evaluator_Executor(Level* L)
     //
     //    :foo/(print "side effect" 1)  ; this is allowed
     //
-    // Consistent with GET-WORD!, a GET-PATH! won't allow none access on
+    // Consistent with GET-WORD!, a GET-PATH! won't allow trash access on
     // the plain (unfriendly) forms.
 
       case REB_META_PATH:

@@ -247,7 +247,7 @@ static void Startup_Lib(void)
     );
 
     Set_Cell_Flag(Init_Quasi_Void(force_Lib(QUASI_VOID)), PROTECTED);
-    assert(Is_Truthy(Lib(QUASI_VOID)) and Is_Meta_Of_None(Lib(QUASI_VOID)));
+    assert(Is_Truthy(Lib(QUASI_VOID)) and Is_Meta_Of_Trash(Lib(QUASI_VOID)));
 
     Init_True(force_Lib(TRUE));
     Init_False(force_Lib(FALSE));
@@ -311,7 +311,6 @@ static REBVAL *Make_Locked_Tag(const char *utf8) { // helper
 //
 static void Init_Action_Spec_Tags(void)
 {
-    ensure(nullptr, Root_None_Tag) = Make_Locked_Tag("none");
     ensure(nullptr, Root_Nihil_Tag) = Make_Locked_Tag("nihil");
     ensure(nullptr, Root_With_Tag) = Make_Locked_Tag("with");
     ensure(nullptr, Root_Variadic_Tag) = Make_Locked_Tag("variadic");
@@ -329,7 +328,6 @@ static void Init_Action_Spec_Tags(void)
 
 static void Shutdown_Action_Spec_Tags(void)
 {
-    rebReleaseAndNull(&Root_None_Tag);
     rebReleaseAndNull(&Root_Nihil_Tag);
     rebReleaseAndNull(&Root_With_Tag);
     rebReleaseAndNull(&Root_Variadic_Tag);
@@ -435,9 +433,9 @@ static void Init_Root_Vars(void)
     // Simple isolated values, not available via lib, e.g. not Lib(TRUE) or
     // Lib(BLANK)...
 
-    Finalize_None(&PG_None_Cell);
-    Set_Cell_Flag(&PG_None_Cell, PROTECTED);  // prevent overwriting
-    assert(Is_None(NONE_CELL));
+    Finalize_Trash(&PG_Trash_Cell);
+    Set_Cell_Flag(&PG_Trash_Cell, PROTECTED);  // prevent overwriting
+    assert(Is_Trash(TRASH_CELL));
 
     // They should only be accessed by macros which retrieve their values
     // as `const`, to avoid the risk of accidentally changing them.  (This
@@ -510,7 +508,7 @@ static void Init_Root_Vars(void)
 
 static void Shutdown_Root_Vars(void)
 {
-    Erase_Cell(&PG_None_Cell);
+    Erase_Cell(&PG_Trash_Cell);
 
     Erase_Cell(&PG_R_Thrown);
     Erase_Cell(&PG_R_Redo_Unchecked);

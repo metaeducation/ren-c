@@ -60,13 +60,13 @@ PVAR Codepoint *Lower_Cases;
 #endif
 
 // These are some canon cells that cannot be offered via Lib(XXX).  e.g. if
-// NONE were a variable in Lib, users couldn't access it by typing `none`
+// TRASH were a variable in Lib, users couldn't access it by typing `trash`
 // (they'd get an error on isotope variable access)...hence it is a function.
 //
 
 PVAR REBVAL PG_Feed_At_End;  // Canon pointer; internals use instead of rebEND
 
-PVAR REBVAL PG_None_Cell;
+PVAR REBVAL PG_Trash_Cell;
 
 // These are special return values that can be checked easily by pointer.  They
 // could be checked even faster if they were fake immediate values, like
@@ -85,7 +85,6 @@ PVAR REBVAL PG_R_Suspend;
 // by the same mechanism they use.  This means they can be initialized at
 // the appropriate moment during the boot, one at a time.
 
-PVAR REBVAL *Root_None_Tag; // RETURN: <none> for "uninteresting" results
 PVAR REBVAL *Root_Nihil_Tag;  // RETURN: <nihil> for invisible results
 PVAR REBVAL *Root_With_Tag; // overrides locals gathering (can disable RETURN)
 PVAR REBVAL *Root_Variadic_Tag; // marks variadic argument <variadic>

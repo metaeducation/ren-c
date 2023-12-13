@@ -193,7 +193,7 @@ export collect-tests: function [
 ]
 
 export collect-logs: function [
-    return: <none>
+    return: [~]
     collected-logs [block!]
         {collect the logged results here (modified)}
     log-file [file!]

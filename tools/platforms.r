@@ -452,7 +452,7 @@ export platform-libraries: make object! [
 export for-each-platform: func [
     {Use PARSE to enumerate the platforms, and set 'var to a record object}
 
-    return: <none>
+    return: [~]
     'var [word!]
     body "Body of code to run for each platform"
         [block!]

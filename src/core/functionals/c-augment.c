@@ -84,7 +84,7 @@ DECLARE_NATIVE(augment_p)  // see extended definition AUGMENT in %base-defs.r
 
     // Start with pushing nothings for the [0] slot
     //
-    Init_None(PUSH());  // key slot (signal for no pushes)
+    Init_Trash(PUSH());  // key slot (signal for no pushes)
     Init_Unreadable(PUSH());  // unused
     Init_Unreadable(PUSH());  // unused
     Init_Nulled(PUSH());  // description slot

@@ -208,7 +208,7 @@ DECLARE_NATIVE(get_os_browsers)
 //
 //  "Use system sleep to wait a certain amount of time (doesn't use PORT!s)."
 //
-//      return: <none>
+//      return: [~]
 //      duration [integer! decimal! time!]
 //          {Length to sleep (integer and decimal are measuring seconds)}
 //  ]
@@ -235,7 +235,7 @@ DECLARE_NATIVE(sleep)
     usleep(msec * 1000);
   #endif
 
-    return NONE;
+    return TRASH;
 }
 
 

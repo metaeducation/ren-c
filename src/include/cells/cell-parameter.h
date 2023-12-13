@@ -194,14 +194,14 @@ INLINE Option(const Array*) Cell_Parameter_Spec(
     FLAG_LEFT_BIT(13)
 
 
-//=//// PARAMETER_FLAG_RETURN_NONE ////////////////////////////////////////=//
+//=//// PARAMETER_FLAG_RETURN_TRASH ///////////////////////////////////////=//
 //
 // This flag is only on `return:` parameters, and it indicates for a FUNC
 // that it intentionally has a ~ isotope result...and it's okay to not have a
 // RETURN statement at the end of the function.  Any RETURN statements that
-// do happen must be `return none`.
+// do happen must be e.g. `return ~` or `return trash`.
 //
-#define PARAMETER_FLAG_RETURN_NONE \
+#define PARAMETER_FLAG_RETURN_TRASH \
     FLAG_LEFT_BIT(14)
 
 
@@ -296,7 +296,7 @@ INLINE bool Is_Specialized(const Param* param) {
             assert(!"Unspecialized parameter is marked hidden!");
         return false;
     }
-    return not Is_None(param);
+    return not Is_Trash(param);
 }
 
 

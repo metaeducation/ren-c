@@ -275,7 +275,7 @@ windows: make platform-class [
 ]
 
 set-target-platform: func [
-    return: <none>
+    return: [~]
     platform
 ][
     switch platform [
@@ -363,7 +363,7 @@ application-class: make project-class [
     searches: null
     ldflags: null
 
-    link: meth [return: <none>] [
+    link: meth [return: [~]] [
         linker/link output depends ldflags
     ]
 
@@ -385,7 +385,7 @@ dynamic-library-class: make project-class [
 
     searches: null
     ldflags: null
-    link: meth [return: <none>] [
+    link: meth [return: [~]] [
         linker/link output depends ldflags
     ]
 
@@ -419,7 +419,7 @@ compiler-class: make object! [
     version: null
     exec-file: null
     compile: meth [
-        return: <none>
+        return: [~]
         output [file!]
         source [file!]
         include [file! block!]
@@ -702,7 +702,7 @@ linker-class: make object! [
     id: null  ; flag prefix
     version: null
     link: meth [
-        return: <none>
+        return: [~]
     ][
         ...  ; overridden
     ]
@@ -1073,7 +1073,7 @@ object-file-class: make object! [
     generated?: false
     depends: null
 
-    compile: meth [return: <none>] [
+    compile: meth [return: [~]] [
         compiler/compile
     ]
 
@@ -1272,7 +1272,7 @@ generator-class: make object! [
     ]
 
     prepare: meth [
-        return: <none>
+        return: [~]
         solution [object!]
     ][
         if find words-of solution 'output [
@@ -1293,7 +1293,7 @@ generator-class: make object! [
     ]
 
     flip-flag: meth [
-        return: <none>
+        return: [~]
         project [object!]
         to [logic?!]
     ][
@@ -1311,7 +1311,7 @@ generator-class: make object! [
     ]
 
     setup-output: meth [
-        return: <none>
+        return: [~]
         project [object!]
     ][
         assert [project/class]
@@ -1322,7 +1322,7 @@ generator-class: make object! [
             #object-library [target-platform/archive-suffix]
             #object-file [target-platform/obj-suffix]
         ] else [
-            return none
+            return ~
         ]
 
         case [
@@ -1362,7 +1362,7 @@ generator-class: make object! [
 
     setup-outputs: meth [
         {Set the output/implib for the project tree}
-        return: <none>
+        return: [~]
         project [object!]
     ][
         ;print ["Setting outputs for:"]
@@ -1373,7 +1373,7 @@ generator-class: make object! [
             #static-library
             #solution
             #object-library [
-                if project/generated? [return none]
+                if project/generated? [return ~]
                 setup-output project
                 project/generated?: true
                 for-each dep project/depends [
@@ -1383,7 +1383,7 @@ generator-class: make object! [
             #object-file [
                 setup-output project
             ]
-        ] else [return none]
+        ] else [return ~]
     ]
 ]
 
@@ -1479,14 +1479,14 @@ makefile: make generator-class [
     ]
 
     emit: meth [
-        return: <none>
+        return: [~]
         buf [binary!]
         project [object!]
         /parent [object!]  ; !!! Not heeded?
     ][
         ;print ["emitting..."]
         ;dump project
-        ;if project/generated? [return none]
+        ;if project/generated? [return ~]
         ;project/generated?: true
 
         for-each dep project/depends [
@@ -1555,7 +1555,7 @@ makefile: make generator-class [
     ]
 
     generate: meth [
-        return: <none>
+        return: [~]
         output [file!]
         solution [object!]
     ][
@@ -1608,7 +1608,7 @@ export execution: make generator-class [
     gen-cmd-strip: :host/gen-cmd-strip
 
     run-target: meth [
-        return: <none>
+        return: [~]
         target [object!]
         /cwd "change working directory"  ; !!! Not heeded (?)
             [file!]
@@ -1623,7 +1623,7 @@ export execution: make generator-class [
                     ; so you can use words for "phony" targets
                     exists? to-file target/target
                 ][
-                    return none
+                    return ~
                 ]  ; TODO: Check the timestamp to see if it needs to be updated
                 either block? target/commands [
                     for-each cmd target/commands [
@@ -1643,18 +1643,18 @@ export execution: make generator-class [
     ]
 
     run: meth [
-        return: <none>
+        return: [~]
         project [object!]
         /parent "parent project"
             [object!]
     ][
         ;dump project
-        if not object? project [return none]
+        if not object? project [return ~]
 
         prepare project
 
         if not find [#dynamic-extension #static-extension] project/class [
-            if project/generated? [return none]
+            if project/generated? [return ~]
             project/generated?: true
         ]
 

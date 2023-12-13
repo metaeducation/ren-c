@@ -72,7 +72,7 @@ Bounce Generic_Dispatcher(Level* L)
 //
 //  {Creates datatype action (currently for internal use only)}
 //
-//      return: <none>
+//      return: [~]
 //      :verb [set-word!]
 //      spec [block!]
 //  ]
@@ -116,7 +116,7 @@ DECLARE_NATIVE(generic)
     REBVAL *verb_var = Sink_Word_May_Fail(verb, SPECIFIED);
     Init_Action(verb_var, generic, Cell_Word_Symbol(verb), UNBOUND);
 
-    return NONE;
+    return TRASH;
 }
 
 

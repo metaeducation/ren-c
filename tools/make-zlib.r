@@ -53,7 +53,7 @@ path-zlib: https://raw.githubusercontent.com/madler/zlib/master/
 ; Optionally will inline a list of files at the inclusion point
 ;
 disable-user-includes: function [
-    return: <none>
+    return: [~]
     lines [block!] "Block of strings"
     /inline [block!] "Block of filenames to inline if seen"
     /stdio "Disable stdio.h"

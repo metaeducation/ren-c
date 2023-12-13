@@ -88,7 +88,7 @@ output-buffer: make text! 20000
 
 
 gather-natives: func [
-    return: <none>
+    return: [~]
     dir
 ][
     files: read dir

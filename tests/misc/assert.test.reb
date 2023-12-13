@@ -24,7 +24,7 @@
 ; next value given
 
 (
-    none? (1 = 1 so)
+    trash? (1 = 1 so)
 )
 ~assertion-failure~ !! (
     1 = 2 so

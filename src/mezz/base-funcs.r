@@ -116,8 +116,6 @@ func: func* [
     with-return: null
 
     parse3 spec [try some [
-        '<none> (append new-spec <none>)
-    |
         '<nihil> (append new-spec <nihil>)
     |
         :(if var '[  ; so long as we haven't reached any <local> or <with> etc.
@@ -453,7 +451,7 @@ redescribe: func [
     ;
     all [
         notes
-        every [param note] notes [none? :note]
+        every [param note] notes [trash? :note]
     ] then [
         adjunct.parameter-notes: null
     ]
@@ -478,7 +476,7 @@ unset?: func [
     return: [logic?]
     var [word! path! tuple!]
 ][
-    return none? get/any var
+    return trash? get/any var
 ]
 
 set?: func [
@@ -486,7 +484,7 @@ set?: func [
     return: [logic?]
     var [word! path! tuple!]
 ][
-    return not none? get/any var
+    return not trash? get/any var
 ]
 
 
@@ -605,7 +603,7 @@ so: enfix func [
             arg1: compose [~false~ so]
         ]
     ]
-    if tail? feed [return none]
+    if tail? feed [return ~]
     return take feed
 ]
 tweak :so 'postpone on

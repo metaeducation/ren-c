@@ -97,17 +97,6 @@
     )
 ]
 
-; Opting out of a primary return result can't (currently) be detected by the
-; callee, but it will give a none isotope back instead of the actual result.
-;
-; !!! Should this be void instead?  This would require not writing into the
-; output cell directly to erase the result--which adds overhead by taking away
-; the evaluator SPARE cell due to writing it as scratch, which we don't want to
-; do in the general case.  Letting people ELIDE the NONE! lets those who want
-; to pay for it get the same effect.  Additionally, having it be something
-; that generates an error allows us to change or mind later...since people
-; will likely not depend on it and elide it, which would be harmless if it
-; ultimately did become void.
 [(
     did all [
         'abc = [_ rest]: transcode/one "abc def"

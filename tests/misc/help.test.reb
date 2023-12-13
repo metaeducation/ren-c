@@ -27,9 +27,9 @@
         dump w
         if quasi? ^(get/any w) [continue]
         if action? get w
-            (compose/deep [assert [none? help (w)]])
+            (compose/deep [assert [trash? help (w)]])
         else [
-            if not issue? get w [ comment "don't open web browser"
+            if not issue? get w [  ; "don't open web browser"
                 assert [nihil? help (get w)]
             ]
         ]

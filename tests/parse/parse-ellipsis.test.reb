@@ -4,7 +4,7 @@
 ; items to its right in a BLOCK!, or default to seeking <end> if there is
 ; nothing to the right.
 
-(none? parse "" [...])
+(trash? parse "" [...])
 
 ("a" = parse "ab" ["a" ...])
 ("b" = parse "ab" [... "b"])

@@ -2812,7 +2812,7 @@ DECLARE_NATIVE(parse3)
         return OUT;
     }
 
-    return NONE;
+    return TRASH;
 }
 
 

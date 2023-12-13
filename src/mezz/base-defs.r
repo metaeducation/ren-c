@@ -35,7 +35,7 @@ c-break-debug: runs :c-debug-break  ; easy to mix up
 ;
 void': meta void
 null': meta null
-none': meta none
+trash': meta trash
 nihil': meta nihil
 
 eval: :evaluate  ; shorthands should be synonyms, too confusing otherwise
@@ -363,7 +363,7 @@ empty-or-null?: func* [
 
 run func* [
     {Make fast type testing functions (variadic to quote "top-level" words)}
-    return: <none>
+    return: [~]
     'set-words [<variadic> set-word! tag!]
     <local>
         set-word type-name tester meta

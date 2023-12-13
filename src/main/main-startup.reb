@@ -60,7 +60,7 @@ make-banner: func [
                         | text! (b: b.1)
                     ]
                     (
-                        b: default ["(none)"]  ; show (none) for NULL
+                        b: default ["~null~"]
                         s: format ["**    " 11 55 "**"] reduce [a b]
                     )
               | '* (s: star)
@@ -171,7 +171,7 @@ license: func [
 
 host-script-pre-load: func [
     {Code registered as a hook when a module or script are loaded}
-    return: <none>
+    return: [~]
     is-module [logic?]
     hdr [<opt> object!]
         {Header object (missing for DO of BINARY! with no header)}
@@ -222,7 +222,7 @@ main-startup: func [
     let emit: func [
         {Builds up sandboxed code to submit to C, hooked RETURN will finalize}
 
-        return: <none>
+        return: [~]
         item "ISSUE! directive, TEXT! comment, (<*> composed) code BLOCK!"
             [block! issue! text!]
         <with> instruction

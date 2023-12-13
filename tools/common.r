@@ -303,7 +303,7 @@ export propercase-of: func [
 ]
 
 export write-if-changed: function [
-    return: <none>
+    return: [~]
     dest [file!]
     content [text! block!]
 ][

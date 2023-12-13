@@ -27,7 +27,7 @@ dump: function [
 ][
     print: enclose :lib.print lambda [f [frame!]] [
         if prefix [
-            if #on <> select enablements prefix [return none]
+            if #on <> select enablements prefix [return ~]
             write-stdout prefix
             write-stdout space
         ]
@@ -50,7 +50,7 @@ dump: function [
         ]
     ]
 
-    dump-one: function [return: <none> item] [
+    dump-one: function [return: [~] item] [
         switch/type item [
             refinement?!  ; treat as label, /a no shift and shorter than "a"
             text! [  ; good for longer labeling when you need spaces/etc.

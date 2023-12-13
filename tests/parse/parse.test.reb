@@ -48,7 +48,7 @@
     null = parse+ "a" [some "a" (null)] else e -> [<unreachable>]
 )
 
-; NONE should be allowable as a combinator result.
+; TRASH should be allowable as a combinator result.
 [
-    (none? parse "a" ["a" (none)])
+    (trash? parse "a" ["a" (~)])
 ]

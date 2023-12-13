@@ -168,7 +168,7 @@ DECLARE_NATIVE(bind)
         // not in context, bind/new means add it if it's not.
         //
         if (REF(new) or (Is_Set_Word(v) and REF(set))) {
-            Finalize_None(Append_Context_Bind_Word(VAL_CONTEXT(context), v));
+            Finalize_Trash(Append_Context_Bind_Word(VAL_CONTEXT(context), v));
             return COPY(v);
         }
 
@@ -242,7 +242,7 @@ DECLARE_NATIVE(in)
 
     // !!! Note that BIND of a WORD! in historical Rebol/Red would return the
     // input word as-is if the word wasn't in the requested context, while
-    // IN would return NONE! on failure.  We carry forward the NULL-failing
+    // IN would return TRASH! on failure.  We carry forward the NULL-failing
     // here in IN, but BIND's behavior on words may need revisiting.
     //
     if (Any_Word(v)) {
@@ -280,7 +280,7 @@ DECLARE_NATIVE(without)
 
     // !!! Note that BIND of a WORD! in historical Rebol/Red would return the
     // input word as-is if the word wasn't in the requested context, while
-    // IN would return NONE! on failure.  We carry forward the NULL-failing
+    // IN would return TRASH! on failure.  We carry forward the NULL-failing
     // here in IN, but BIND's behavior on words may need revisiting.
     //
     if (Any_Word(v)) {
@@ -655,7 +655,7 @@ bool Get_Var_Push_Refinements_Throws(
         Drop_GC_Guard(safe);
 
         if (steps_out and steps_out != GROUPS_OK)
-            Init_None(unwrap(steps_out));  // !!! What to return?
+            Init_Trash(unwrap(steps_out));  // !!! What to return?
 
         Move_Cell(out, result);
         return threw;
@@ -1707,7 +1707,7 @@ DECLARE_NATIVE(identity) // sample uses: https://stackoverflow.com/q/3136338
 //
 //  {Releases the underlying data of a value so it can no longer be accessed}
 //
-//      return: <none>
+//      return: [~]
 //      memory [<maybe> any-series! any-context! handle!]
 //  ]
 //
@@ -1725,7 +1725,7 @@ DECLARE_NATIVE(free)
         fail ("Cannot FREE already freed series");
 
     Decay_Series(s);
-    return NONE; // !!! Could return freed value
+    return TRASH; // !!! Could return freed value
 }
 
 
@@ -2506,18 +2506,18 @@ DECLARE_INTRINSIC(elision_q)
 
 
 //
-//  none: native [
+//  trash: native [
 //
 //  "Returns the value used to represent an unset variable (isotopic void)"
 //
-//      return: [<none>]
+//      return: [~]
 //  ]
 //
-DECLARE_NATIVE(none)
+DECLARE_NATIVE(trash)
 {
-    INCLUDE_PARAMS_OF_NONE;
+    INCLUDE_PARAMS_OF_TRASH;
 
-    return Init_None(OUT);
+    return Init_Trash(OUT);
 }
 
 
@@ -2539,18 +2539,18 @@ DECLARE_INTRINSIC(void_q)
 
 
 //
-//  none?: native/intrinsic [
+//  trash?: native/intrinsic [
 //
 //  "Tells you if argument is the value used to indicate an unset variable"
 //
 //      return: [logic?]
-//      ^value "Parameter must be ^META, none usually means unspecialized"
-//          [void? any-value?]  ; [1]
+//      ^value "Parameter must be ^META (trash usually means unspecialized)"
+//          [any-value?]  ; [1]
 //  ]
 //
-DECLARE_INTRINSIC(none_q)
+DECLARE_INTRINSIC(trash_q)
 //
-// 1. Although none values are stable, they can't be passed as normal arguments
+// 1. Though trash values are stable, they can't be passed as normal arguments
 //    to functions, because in frames they represent an unspecialized
 //    argument value.  So a meta parameter is used.  However, it isn't
 //    intended that raised errors be tolerated by this test, so decay it.
@@ -2559,7 +2559,7 @@ DECLARE_INTRINSIC(none_q)
 
     Meta_Unquotify_Decayed(arg);  // [1]
 
-    Init_Logic(out, Is_None(arg));
+    Init_Logic(out, Is_Trash(arg));
 }
 
 
@@ -2740,7 +2740,7 @@ DECLARE_NATIVE(degrade)
 //
 DECLARE_NATIVE(concretize)
 //
-// 1. CONCRETIZE of NONE and VOID are not currently supported by default.
+// 1. CONCRETIZE of TRASH and VOID are not currently supported by default.
 //    If they were, then they would both become '
 {
     INCLUDE_PARAMS_OF_REIFY;
@@ -2750,8 +2750,8 @@ DECLARE_NATIVE(concretize)
     if (Is_Void(v))  // see 1
         fail ("CONCRETIZE of VOID is undefined (needs motivating case)");
 
-    if (Is_None(v))  // see 1
-        fail ("CONCRETIZE of NONE is undefined (needs motivating case)");
+    if (Is_Trash(v))  // see 1
+        fail ("CONCRETIZE of TRASH is undefined (needs motivating case)");
 
     return Concretize(Copy_Cell(OUT, v));
 }

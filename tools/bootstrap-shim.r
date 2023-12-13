@@ -127,8 +127,11 @@ trap [
 
 ;=== THESE REMAPPINGS ARE OKAY TO USE IN THE BOOTSTRAP SHIM ITSELF ===
 
-set '~ :null3  ; most similar behavior to bad-word isotope available
-none: :void3  ; again, most similar thing
+; modern isotopic void (trash) can be assigned, e.g. (foo: ~), the result is
+; then ornery to access.  Bootstrap build's closest match was its null.
+;
+set '~ :null3
+trash: :null3
 
 ; Done is used as a signal in the boot files that the expected end is reached.
 ; This is a QUASI-WORD? in modern Ren-C, but a plain word in the bootstrap EXE.
@@ -675,7 +678,7 @@ modernize-action: function3 [
                 if set-word? w [
                     assert [w = first [return:]]
                     keep3 spec/1, spec: my next
-                    if <none> = spec/1 [keep3 <void>, spec: my next]
+                    if [~] = spec/1 [keep3/only [<opt>], spec: my next]
                     if tail? spec [continue]
                     if text? spec/1 [keep3 spec/1, spec: my next]
                     if block? spec/1 [
@@ -718,7 +721,7 @@ modernize-action: function3 [
                     keep3/only spec/1
                 ]
 
-                if spec/1 = <none> [  ; new semantics: <none> -> ~[]~
+                if spec/1 = [~] [  ; new semantics: [~] -> ~[]~
                     keep3/only <void>  ; old cue for returning garbage
                     spec: my next
                     continue
@@ -779,6 +782,7 @@ modernize-action: function3 [
         (tryers)
         (proxiers)
         (as group! body)  ; compose3 does not splice groups--just blocks
+        return ~  ; functions now default to returning trash
     ]
     return reduce [spec body]
 ]
@@ -1029,7 +1033,7 @@ delimit: func [
         assert [text = ""]
         return null
     ]
-    text
+    return text
 ]
 
 unspaced: specialize :delimit [delimiter: _]

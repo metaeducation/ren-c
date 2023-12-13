@@ -277,7 +277,7 @@ Bounce Action_Executor(Level* L)
 
         // It's the job of Push_Action() to preload any argument slots which
         // have been specialized (including locals, which are "specialized
-        // to none").  The unspecialized slots are "erased" and ready to
+        // to null").  The unspecialized slots are "erased" and ready to
         // be written to.
         //
         // Note this means there has already been a walk of argument cells
@@ -285,7 +285,7 @@ Bounce Action_Executor(Level* L)
         // leave the memory uninitialized and try to fold the passes into one
         // traversal.  But since actions are implemented as isotopic frames,
         // if the frame is mutable it might be altered by code that runs
-        // during fulfillment!  So capturing the non-NONE cells atomically is
+        // during fulfillment!  So capturing the non-trash cells atomically is
         // crucial for the design.
         //
         if (not Is_Cell_Erased(ARG))
@@ -350,7 +350,7 @@ Bounce Action_Executor(Level* L)
         if (Get_Parameter_Flag(PARAM, REFINEMENT)) {
             assert(Not_Action_Executor_Flag(L, DOING_PICKUPS));  // jump lower
             assert(Is_Fresh(ARG));
-            Init_None(ARG);  // may be filled with pickup, or get to typecheck
+            Init_Trash(ARG);  // may be filled with pickup, or get to typecheck
             goto continue_fulfilling;
         }
 
@@ -367,7 +367,7 @@ Bounce Action_Executor(Level* L)
         if (pclass == PARAMCLASS_RETURN or pclass == PARAMCLASS_OUTPUT) {
             assert(Not_Action_Executor_Flag(L, DOING_PICKUPS));
             assert(Is_Fresh(ARG));
-            Init_None(ARG);
+            Init_Trash(ARG);
             goto continue_fulfilling;
         }
 
@@ -440,7 +440,7 @@ Bounce Action_Executor(Level* L)
             }
 
             if (Get_Parameter_Flag(PARAM, VARIADIC)) {  // non-empty is ok [4]
-                assert(not Is_None(OUT));
+                assert(not Is_Trash(OUT));
                 Decay_If_Unstable(OUT);  // !!! ^META variadics?
                 Init_Varargs_Untyped_Enfix(ARG, stable_OUT);
                 FRESHEN(OUT);
@@ -792,7 +792,7 @@ Bounce Action_Executor(Level* L)
 } fulfill_and_any_pickups_done: {  ///////////////////////////////////////////
 
     if (Get_Action_Executor_Flag(L, FULFILL_ONLY)) {  // no typecheck
-        Finalize_None(OUT);  // didn't touch out, should be fresh
+        Finalize_Trash(OUT);  // didn't touch out, should be fresh
         goto skip_output_check;
     }
 
@@ -821,7 +821,7 @@ Bounce Action_Executor(Level* L)
   //    modified.  Even though it's hidden, it may need to be typechecked
   //    again (unless it was *fully* hidden).
   //
-  // 2. None (isotopic voids) are the default values from MAKE FRAME!.
+  // 2. Trash (isotopic voids) are the default values from MAKE FRAME!.
   //
   // 3. We can't a-priori typecheck the variadic argument, since the values
   //    aren't calculated until the function starts running.  Instead we stamp
@@ -853,12 +853,12 @@ Bounce Action_Executor(Level* L)
             Cell_ParamClass(PARAM) == PARAMCLASS_RETURN
             or Cell_ParamClass(PARAM) == PARAMCLASS_OUTPUT
         ){
-            assert(Is_Nulled(ARG) or Is_None(ARG));
+            assert(Is_Nulled(ARG) or Is_Trash(ARG));
             Init_Nulled(ARG);
             continue;  // typeset is its legal return types, wants to be unset
         }
 
-        if (Is_None(ARG)) {  // e.g. (~) isotope, unspecialized [2]
+        if (Is_Trash(ARG)) {  // e.g. (~) isotope, unspecialized [2]
             if (Get_Parameter_Flag(PARAM, REFINEMENT)) {
                 Init_Nulled(ARG);
                 continue;
@@ -1179,14 +1179,14 @@ Bounce Action_Executor(Level* L)
 //    Additionally, only a subset of the information needed for specialization
 //    is available to the fulfillment process.  It walks the "paramlist" of
 //    the underlying action, which contains typechecking information for
-//    slots that are none (and hence unspecialized) for frame invocations.
+//    slots that are trash (and hence unspecialized) for frame invocations.
 //    But walking exemplar frames to see specializations would only see those
-//    none cells and not know how to typecheck.
+//    trash cells and not know how to typecheck.
 //
 //    Empirically this extra walk can be costing us as much as 5% of runtime
 //    vs. leaving memory uninitialized and folding the walks together.  If
-//    frames could somehow be rigged to store parameters instead of none
-//    and merely give the impression of none on extraction, the gains could
+//    frames could somehow be rigged to store parameters instead of trash
+//    and merely give the impression of trash on extraction, the gains could
 //    be substantial.
 //
 // 2. Each layer of specialization of a function can only add specializations

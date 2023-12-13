@@ -105,7 +105,7 @@ INLINE Bounce Run_Pickpoke_Dispatch(
 //
 // Requesting steps will supress that, but sometimes you don't actually need
 // the steps (as the evaluator doesn't when doing SET-TUPLE!).  Rather than
-// passing a separate flag, the NONE_CELL pointer is used (mutable, but it
+// passing a separate flag, the TRASH_CELL pointer is used (mutable, but it
 // has the protected bit set to avoid accidents)
 //
-#define GROUPS_OK &PG_None_Cell
+#define GROUPS_OK &PG_Trash_Cell

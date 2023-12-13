@@ -203,13 +203,13 @@ bytes-to-version: reverse copy version-to-bytes
 emit: func [
     {Emits binary data, optionally marking positions with SET-WORD!}
 
-    return: <none>
+    return: [~]
     ctx [object!]
     code [block! binary!]
 ][
     if binary? code [
         append ctx.msg code
-        return none
+        return ~
     ]
 
     while [code] [
@@ -417,7 +417,7 @@ make-state-updater: func [
     ]
 
     return func [
-        return: <none>  ; !!! Should it have a return?
+        return: [~]  ; !!! Should it have a return?
         ctx [object!]
         new [tag! issue!]
     ][
@@ -460,7 +460,7 @@ update-write-state: make-state-updater 'write [
 === TLS PROTOCOL CODE ===
 
 client-hello: func [
-    return: <none>
+    return: [~]
     ctx [object!]
     /version "TLS version to request (block is [lowest highest] allowed)"
         [decimal! block!]
@@ -670,7 +670,7 @@ client-hello: func [
 
 
 client-key-exchange: func [
-    return: <none>
+    return: [~]
     ctx [object!]
 ][
     let [key-data key-len]
@@ -779,7 +779,7 @@ client-key-exchange: func [
 
 
 change-cipher-spec: func [
-    return: <none>
+    return: [~]
     ctx [object!]
 ][
     emit ctx [
@@ -792,7 +792,7 @@ change-cipher-spec: func [
 
 
 encrypted-handshake-msg: func [
-    return: <none>
+    return: [~]
     ctx [object!]
     unencrypted [binary!]
 ][
@@ -808,7 +808,7 @@ encrypted-handshake-msg: func [
 
 
 application-data: func [
-    return: <none>
+    return: [~]
     ctx [object!]
     unencrypted [binary! text!]
 ][
@@ -823,7 +823,7 @@ application-data: func [
 
 
 alert-close-notify: func [
-    return: <none>
+    return: [~]
     ctx [object!]
 ][
     let encrypted: encrypt-data ctx #{0100} ; close notify
@@ -1341,7 +1341,7 @@ parse-messages: func [
                                     ;
                                     hash-algorithm: grab-int 'bin 1
                                     hash-algorithm: select [
-                                        0 <none>
+                                        0 [~]
                                         1 <md5>
                                         2 <sha1>
                                         3 <sha224>
@@ -1620,7 +1620,7 @@ make-master-secret: func [
 
 
 do-commands: func [
-    return: <none>  ; some paths returned LOGIC!, others none...was unused
+    return: [~]  ; some paths returned LOGIC!, others none...was unused
     tls-port [port!]
     commands [block!]
 ][
@@ -1667,10 +1667,10 @@ do-commands: func [
 
     switch tls-port.state.mode [
         <close-notify> [
-            return none  ; at one point returned TRUE, wasn't used
+            return ~  ; at one point returned TRUE, wasn't used
         ]
         #application [
-            return none  ; at one point returned FALSE, wasn't used
+            return ~  ; at one point returned FALSE, wasn't used
         ]
         ; Note: Even if state is <finished>, it seems to still want to READ.
     ]
@@ -1682,7 +1682,7 @@ do-commands: func [
 
 
 tls-init: func [
-    return: <none>
+    return: [~]
     ctx [object!]
 ][
     ctx.seq-num-r: 0
@@ -1745,7 +1745,7 @@ tls-read-data: func [
 
 
 perform-read: function [
-    return: <none>
+    return: [~]
     port [port!]
 ][
     debug ["READ" open? port.state.connection]

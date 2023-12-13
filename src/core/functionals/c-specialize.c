@@ -217,7 +217,7 @@ Context* Make_Context_For_Action(
         action,
         lowest_ordered_stackindex,
         binder,
-        NONE_CELL
+        TRASH_CELL
     );
 
     Manage_Series(CTX_VARLIST(exemplar));  // !!! was needed before, review
@@ -263,7 +263,7 @@ bool Specialize_Action_Throws(
         def ?
             &binder
             : cast(struct Reb_Binder*, nullptr),  // C++98 ambiguous w/o cast
-        NONE_CELL
+        TRASH_CELL
     );
     Manage_Series(CTX_VARLIST(exemplar)); // destined to be managed, guarded
 
@@ -338,17 +338,17 @@ bool Specialize_Action_Throws(
         //
         ParamClass pclass = Cell_ParamClass(param);
         if (pclass == PARAMCLASS_OUTPUT or pclass == PARAMCLASS_RETURN) {
-            if (not Is_None(arg))
+            if (not Is_Trash(arg))
                 fail ("Can't specialize RETURN or output parameters");
             Copy_Cell(arg, param);
             continue;
         }
 
-        // You can't specialize with ~ isotopes ("none"), these indicate
-        // unspecialized arguments.  Only ^META parameters can take meta-none
-        // (e.g. a plain quasi-void, or ~)
+        // You can't specialize with ~ isotopes ("trash"), these indicate
+        // unspecialized arguments.  Only ^META parameters take trash (and
+        // recieve them as meta-trash, e.g. a plain quasi-void, or ~)
         //
-        if (Is_None(arg)) {  // unspecialized argument
+        if (Is_Trash(arg)) {  // unspecialized argument
             Copy_Cell(arg, param);
             if (first_param)
                 first_param = false;  // leave enfix as is
@@ -748,7 +748,7 @@ Phase* Alloc_Action_From_Exemplar(
         // https://forum.rebol.info/t/default-values-and-make-frame/1412
         // https://forum.rebol.info/t/1413
         //
-        if (Is_None(arg)) {
+        if (Is_Trash(arg)) {
             assert(Is_Parameter(param));
             Copy_Cell(arg, param);
             continue;

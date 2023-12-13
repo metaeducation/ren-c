@@ -522,7 +522,7 @@ INLINE Bounce Native_Unmeta_Result(Level* level_, const REBVAL *v) {
     return Meta_Unquotify_Undecayed(Copy_Cell(level_->out, v));
 }
 
-INLINE Bounce Native_None_Result_Untracked(
+INLINE Bounce Native_Trash_Result_Untracked(
     Atom(*) out,  // have to pass; comma at callsite -> "operand has no effect"
     Level* level_
 ){
@@ -626,7 +626,7 @@ INLINE Atom(*) Native_Copy_Result_Untracked(
         (assert(Is_Action_Level(level_)), level_->u.action.dispatcher_base)
 
     #define VOID        Native_Void_Result_Untracked(TRACK(OUT), level_)
-    #define NONE        (Native_None_Result_Untracked(TRACK(OUT), level_))
+    #define TRASH       Native_Trash_Result_Untracked(TRACK(OUT), level_)
     #define THROWN      Native_Thrown_Result(level_)
     #define COPY(v)     (Native_Copy_Result_Untracked(TRACK(OUT), level_, (v)))
     #define RAISE(p)    Native_Raised_Result(level_, (p))

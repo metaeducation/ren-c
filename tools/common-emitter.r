@@ -316,7 +316,7 @@ export make-emitter: function [
         emit: function [
             {Write data to the emitter using CSCAPE templating (see HELP)}
 
-            return: <none>
+            return: [~]
             'look [element? <variadic>]
             data [text! char?! <variadic>]
             <with> buf-emit
@@ -343,7 +343,7 @@ export make-emitter: function [
         ]
 
         write-emitted: function [
-            return: <none>
+            return: [~]
             /tabbed
             <with> file buf-emit
         ][

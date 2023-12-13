@@ -247,7 +247,7 @@ INLINE Atom(*) Degrade(Atom(*) v) {
 
 INLINE Value(*) Concretize(Value(*) v) {
     assert(not Is_Void(v));
-    assert(not Is_None(v));
+    assert(not Is_Trash(v));
     if (QUOTE_BYTE(v) == ISOTOPE_0)
         QUOTE_BYTE(v) = UNQUOTED_1;
     return v;
