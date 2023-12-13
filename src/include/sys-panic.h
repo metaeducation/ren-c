@@ -98,33 +98,6 @@
 #endif
 
 
-
-//
-// PROGRAMMATIC C BREAKPOINT
-//
-// This header file brings in the ability to trigger a programmatic breakpoint
-// in C code, by calling `debug_break();`  It is not supported by HaikuOS R1,
-// so instead kick into an infinite loop which can be broken and stepped out
-// of in the debugger.
-//
-#if INCLUDE_C_DEBUG_BREAK_NATIVE || DEBUG_COUNT_TICKS
-    #if TO_HAIKU || TO_EMSCRIPTEN
-        INLINE void debug_break() {
-            int x = 0;
-          #if !defined(NDEBUG)
-            printf("debug_break() called\n");
-            fflush(stdout);
-          #endif
-            while (1) { ++x; }
-            x = 0; // set next statement in debugger to here
-            UNUSED(x);
-        }
-    #else
-        #include "debugbreak.h"
-    #endif
-#endif
-
-
 //=////////////////////////////////////////////////////////////////////////=//
 //
 //  TICK-RELATED FUNCTIONS <== **THESE ARE VERY USEFUL**

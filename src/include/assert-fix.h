@@ -35,11 +35,32 @@
 
 #if !defined(NDEBUG) && !defined(USE_STANDARD_ASSERT_H)
 
+    #include <stdio.h>
+
+  // PROGRAMMATIC C BREAKPOINT
+  //
+  // This header brings in the ability to trigger a programmatic breakpoint
+  // in C code, by calling `debug_break();`  It is not supported by HaikuOS R1,
+  // so instead kick into an infinite loop which can be broken and stepped out
+  // of in the debugger.
+  //
+  #if defined(__HAIKU__) || defined(__EMSCRIPTEN__)
+      inline static void debug_break() {
+          int x = 0;
+        #if !defined(NDEBUG)
+          printf("debug_break() called\n");
+          fflush(stdout);
+        #endif
+          while (1) { ++x; }
+          x = 0; // set next statement in debugger to here
+          (void)(x);
+      }
+  #else
+      #include "debugbreak.h"
+  #endif
+
     #include <assert.h>  // include so it will think it has been included
     #undef assert  // (this way its include guard prevents it defining again)
-
-    #include "debugbreak.h"
-    #include <stdio.h>
 
     inline static void Assertion_Failure(
         const char* file,

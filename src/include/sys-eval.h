@@ -43,7 +43,7 @@
 //
 
 
-#if DEBUG_COUNT_TICKS  // <-- THIS IS VERY USEFUL, READ THIS SECTION!
+#if DEBUG && DEBUG_COUNT_TICKS  // <-- THIS IS VERY USEFUL, READ THIS SECTION!
     //
     // The evaluator `tick` should be visible in the C debugger watchlist as a
     // local variable on each evaluator stack level.  So if a fail() happens
