@@ -153,7 +153,7 @@
 // it required a bit being added and removed, so it was replaced with the
 // concept of "freshness" removing NODE_FLAG_NODE and NODE_FLAG_CELL to get
 // the effect with less overhead.  So NODE_FLAG_FREE is now used in a more
-// limited sense to get "trash"--a cell you can write, but not read.
+// limited sense to get "unreadables"--a cell you can write, but not read.
 //
 // [WRITABILITY]
 //
@@ -411,7 +411,7 @@ INLINE Cell* Erase_Cell_Untracked(Cell* c) {
 // where the content tracking information would usually be, there's no length.
 // Hence the presence of a poison cell in the slot indicates length 0.
 //
-// * To stop reading but not stop writing, use "TRASHING" cells instead.
+// * To stop reading but not stop writing, use "unreadable" cells instead.
 //
 // * This will defeat Detect_Rebol_Pointer(), so it will not realize the value
 //   is a cell any longer.  Hence poisoned cells should (perhaps obviously) not
@@ -539,7 +539,7 @@ INLINE REBVAL* Freshen_Cell_Untracked(Cell* v) {
     };
 
   #if DEBUG
-    INLINE void Trash_Pointer_If_Debug(BindingHolder const& bh)
+    INLINE void Corrupt_Pointer_If_Debug(BindingHolder const& bh)
       { bh.ref->extra.Binding = p_cast(Stub*, cast(uintptr_t, 0xDECAFBAD)); }
   #endif
 #endif

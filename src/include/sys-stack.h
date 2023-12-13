@@ -224,11 +224,6 @@ INLINE StackValue(*) Data_Stack_At(StackIndex i) {
 //
 // PUSHING
 //
-// If you push "unsafe" trash to the stack, it has the benefit of costing
-// nothing extra in a release build for setting the value (as it is just
-// left uninitialized).  But you must make sure that a GC can't run before
-// you have put a valid value into the slot you pushed.
-//
 // If the stack runs out of capacity then it will be expanded by the basis
 // defined below.  The number is arbitrary and should be tuned.  Note the
 // number of bytes will be sizeof(Cell) * STACK_EXPAND_BASIS

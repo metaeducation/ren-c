@@ -241,7 +241,7 @@ Bounce Action_Executor(Level* L)
 
   fulfill: {  ////////////////////////////////////////////////////////////////
 
-    assert(not Is_Pointer_Trash_Debug(ORIGINAL));  // set by Begin_Action()
+    assert(not Is_Pointer_Corrupt_Debug(ORIGINAL));  // set by Begin_Action()
 
     assert(TOP_INDEX >= L->baseline.stack_base);  // paths push refinements
 
@@ -931,7 +931,7 @@ Bounce Action_Executor(Level* L)
     Set_Action_Executor_Flag(L, IN_DISPATCH);
 
     Action* save_original = L->u.action.original;
-    Trash_If_Debug(L->u);  // freed for dispatcher use...
+    Corrupt_If_Debug(L->u);  // freed for dispatcher use...
     L->u.action.original = save_original;  // ...er, mostly.  [1]
     L->u.action.dispatcher_base = TOP_INDEX;
 
@@ -1302,7 +1302,7 @@ void Begin_Action_Core(
     PARAM = ACT_PARAMS_HEAD(ACT_IDENTITY(ORIGINAL));
     ARG = L->rootvar + 1;
 
-    assert(Is_Pointer_Trash_Debug(L->label));  // ACTION! makes valid
+    assert(Is_Pointer_Corrupt_Debug(L->label));  // ACTION! makes valid
     assert(not label or Is_String_Symbol(unwrap(label)));
     L->label = label;
   #if DEBUG_LEVEL_LABELS  // helpful for looking in the debugger
@@ -1422,16 +1422,16 @@ void Drop_Action(Level* L) {
 
         Cell* rootvar = Array_Head(L->varlist);
         assert(CTX_VARLIST(VAL_CONTEXT(rootvar)) == L->varlist);
-        INIT_VAL_FRAME_PHASE_OR_LABEL(rootvar, nullptr);  // can't trash ptr
-        Trash_Pointer_If_Debug(BINDING(rootvar));
+        INIT_VAL_FRAME_PHASE_OR_LABEL(rootvar, nullptr);  // can't corrupt ptr
+        Corrupt_Pointer_If_Debug(BINDING(rootvar));
     }
   #endif
 
-    Trash_Pointer_If_Debug(ORIGINAL); // action is no longer running
+    Corrupt_Pointer_If_Debug(ORIGINAL); // action is no longer running
     L->executor = nullptr;  // so GC won't think level needs Action marking
 
-    Trash_Pointer_If_Debug(L->label);
+    Corrupt_Pointer_If_Debug(L->label);
   #if DEBUG_LEVEL_LABELS
-    Trash_Pointer_If_Debug(L->label_utf8);
+    Corrupt_Pointer_If_Debug(L->label_utf8);
   #endif
 }

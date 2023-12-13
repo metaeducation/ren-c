@@ -28,7 +28,7 @@
 // * Evaluator_Expression_Checks_Debug() runs before each full "expression"
 //   is evaluated, e.g. before each EVALUATE step.  It makes sure the state
 //   balanced completely--so no PUSH() that wasn't balanced by a DROP()
-//   (for example).  It also trashes variables in the level which might
+//   (for example).  It also corrupts variables in the level which might
 //   accidentally carry over from one step to another, so that there will be
 //   a crash instead of a casual reuse.
 //
@@ -60,7 +60,7 @@ void Dump_Level_Location(Level* L)
 
     if (
         L->executor == &Evaluator_Executor  // looks ahead by one
-        and Level_State_Byte(L) != ST_EVALUATOR_INITIAL_ENTRY  // L->u trashed
+        and Level_State_Byte(L) != ST_EVALUATOR_INITIAL_ENTRY  // L->u corrupt
     ){
         Derelativize(dump, L->u.eval.current, L_specifier);
         printf("Dump_Level_Location() current\n");
@@ -141,7 +141,7 @@ static void Evaluator_Shared_Checks_Debug(Level* L)
 
     // We only have a label if we are in the middle of running a function.
     //
-    assert(Is_Pointer_Trash_Debug(unwrap(L->label)));
+    assert(Is_Pointer_Corrupt_Debug(unwrap(L->label)));
 
     if (L->varlist) {
         assert(Not_Node_Managed(L->varlist));
@@ -186,7 +186,7 @@ static void Evaluator_Shared_Checks_Debug(Level* L)
 //     it is a WORD!, and other information is stored here through a level of
 //     indirection so it may be shared and updated between recursions.
 //
-// This routine attempts to "trash" a lot of level state variables to help
+// This routine attempts to "corrupt" a lot of level state variables to help
 // make sure one evaluation does not leak data into the next.
 //
 void Evaluator_Expression_Checks_Debug(Level* L)
@@ -202,11 +202,11 @@ void Evaluator_Expression_Checks_Debug(Level* L)
 
     assert(not Is_Throwing(L)); // no evals between throws
 
-    // Trash fields that GC won't be seeing unless Is_Action_Level()
+    // Corrupt fields that GC won't be seeing unless Is_Action_Level()
     //
-    Trash_Pointer_If_Debug(L->u.action.key);
-    Trash_Pointer_If_Debug(L->u.action.arg);
-    Trash_Pointer_If_Debug(L->u.action.param);
+    Corrupt_Pointer_If_Debug(L->u.action.key);
+    Corrupt_Pointer_If_Debug(L->u.action.arg);
+    Corrupt_Pointer_If_Debug(L->u.action.param);
 
     assert(not L->varlist or Not_Series_Flag(L->varlist, INACCESSIBLE));
 

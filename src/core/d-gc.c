@@ -176,7 +176,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
                 // references at once), the data pointers in all but the
                 // shared singular value are NULL.
                 //
-                // (Trash not used because release build complains about lack
+                // (Corrupt not used because release build complains about lack
                 // of initialization, so null is always used)
                 //
                 assert(VAL_HANDLE_CDATA_P(v) == nullptr);

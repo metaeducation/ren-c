@@ -826,7 +826,7 @@ DECLARE_NATIVE(apply)
     // to mean we are naming the next argument.
 
   #if !defined(NDEBUG)
-    Trash_Pointer_If_Debug(param);
+    Corrupt_Pointer_If_Debug(param);
   #endif
 
     if (Is_Path(at) and Is_Refinement(at)) {
@@ -891,7 +891,7 @@ DECLARE_NATIVE(apply)
         }
     }
 
-    assert(not Is_Pointer_Trash_Debug(param));  // nullptr means toss result
+    assert(not Is_Pointer_Corrupt_Debug(param));  // nullptr means toss result
 
     if (param and Cell_ParamClass(param) == PARAMCLASS_META)
         Set_Level_Flag(SUBLEVEL, META_RESULT);  // get decayed result otherwise

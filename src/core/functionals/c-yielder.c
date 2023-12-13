@@ -190,7 +190,7 @@ Bounce Yielder_Dispatcher(Level* const L)
 
     Value(*) plug = Details_At(details, IDX_YIELDER_PLUG);
     Replug_Stack(yield_level, yielder_level, plug);
-    Assert_Is_Unreadable_If_Debug(plug);  // Replug trashes, make GC safe
+    Assert_Is_Unreadable_If_Debug(plug);  // Replug wiped, make GC safe
 
     // Restore the in-progress output cell state that was going on when
     // the YIELD ran (e.g. if it interrupted a CASE or something, this

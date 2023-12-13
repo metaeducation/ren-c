@@ -2464,8 +2464,8 @@ void RL_rebUnmanage(void *p)
     Clear_Node_Managed_Bit(a);
     Unlink_Api_Handle_From_Level(a);
 
-    Trash_Pointer_If_Debug(a->link.trash);
-    Trash_Pointer_If_Debug(a->misc.trash);
+    Corrupt_Pointer_If_Debug(a->link.corrupt);
+    Corrupt_Pointer_If_Debug(a->misc.corrupt);
 }
 
 

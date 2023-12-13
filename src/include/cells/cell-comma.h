@@ -60,8 +60,8 @@ INLINE Value(*) Init_Comma(Cell* out) {
     BINDING(out) = nullptr;
 
   #ifdef ZERO_UNUSED_CELL_FIELDS
-    PAYLOAD(Any, out).first.trash = ZEROTRASH;
-    PAYLOAD(Any, out).second.trash = ZEROTRASH;
+    PAYLOAD(Any, out).first.corrupt = CORRUPTZERO;
+    PAYLOAD(Any, out).second.corrupt = CORRUPTZERO;
   #endif
 
     return cast(Value(*), out);

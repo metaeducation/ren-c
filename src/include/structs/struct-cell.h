@@ -492,11 +492,11 @@ union AnyUnion {  // needed to beat strict aliasing, used in payload
     Byte exactly_4[sizeof(uint32_t)];
     Byte at_least_4[sizeof(uintptr_t)];
 
-    // This should be initialized with ZEROTRASH, which permits optimization in
-    // release builds and more likely to cause an error in debug builds.  See
-    // remarks in ZERO_UNUSED_CELL_FIELDS regarding the rationale.
+    // This should be initialized with ZERO_UNUSED, which permits optimization
+    // in release builds and more likely to cause an error in debug builds.
+    // See remarks in ZERO_UNUSED_CELL_FIELDS regarding the rationale.
     //
-    void *trash;
+    void *corrupt;
 };
 
 union Reb_Bytes_Extra {

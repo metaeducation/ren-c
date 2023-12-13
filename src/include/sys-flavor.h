@@ -144,11 +144,11 @@ enum StubFlavorEnum {
     FLAVOR_HASHLIST,  // outlier, sizeof(REBLEN)...
     FLAVOR_BOOKMARKLIST,  // also outlier, sizeof(BookmarkT)
 
-    FLAVOR_MIN_BYTESIZE,  //=//////// EVERYTHING BELOW THIS LINE HAS WIDTH = 1
+    FLAVOR_MIN_BYTESIZE,  //=/////////////////// BELOW THIS LINE HAS WIDTH = 1
 
     FLAVOR_BINARY = FLAVOR_MIN_BYTESIZE,
 
-    FLAVOR_MIN_UTF8,  //=////// EVERYTHING BELOW THIS LINE IS UTF-8 (OR TRASH)
+    FLAVOR_MIN_UTF8,  //=/////////////// BELOW THIS LINE IS UTF-8 (OR CORRUPT)
 
     FLAVOR_STRING = FLAVOR_MIN_UTF8,
 
@@ -175,7 +175,7 @@ enum StubFlavorEnum {
     FLAVOR_THE_GLOBAL_INACCESSIBLE,
 
   #if !defined(NDEBUG)
-    FLAVOR_TRASH,
+    FLAVOR_CORRUPT,
   #endif
 
     FLAVOR_MAX
@@ -199,7 +199,7 @@ INLINE Flavor Flavor_From_Flags(Flags flags)
 // not needed.  Still, the common cases (array and strings) are put first.
 //
 INLINE size_t Wide_For_Flavor(Flavor flavor) {
-    assert(flavor != FLAVOR_TRASH);
+    assert(flavor != FLAVOR_CORRUPT);
     if (flavor <= FLAVOR_MAX_ARRAY)
         return sizeof(Cell);
     if (flavor >= FLAVOR_MIN_BYTESIZE)

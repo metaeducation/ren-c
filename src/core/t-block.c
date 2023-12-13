@@ -1537,14 +1537,14 @@ DECLARE_NATIVE(glom)
 
         assert(Array_Len(a) == a_len + r_len);  // Expand_Series_Tail sets
 
-     #if DEBUG_POISON_SERIES_TAILS  // need trash at tail with this debug setting
+     #if DEBUG_POISON_SERIES_TAILS
         Term_Series_If_Necessary(a);
      #endif
 
         // GLOM only works with mutable arrays, as part of its efficiency.  We
-        // show a hint of the optimizations to come by trashing the incoming
+        // show a hint of the optimizations to come by decaying the incoming
         // result array (we might sporadically do it the other way just to
-        // establish that the optimizations could trash either).
+        // establish that the optimizations could obliterate either).
         //
         Decay_Series(r);
     }

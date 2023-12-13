@@ -719,8 +719,8 @@ static Context* Error_Syntax(SCAN_STATE *ss, enum Reb_Token token) {
     // to get almost as much brevity and not much less clarity than bp and
     // ep, while avoiding the possibility of the state getting out of sync?
     //
-    assert(ss->begin and not Is_Pointer_Trash_Debug(ss->begin));
-    assert(ss->end and not Is_Pointer_Trash_Debug(ss->end));
+    assert(ss->begin and not Is_Pointer_Corrupt_Debug(ss->begin));
+    assert(ss->end and not Is_Pointer_Corrupt_Debug(ss->end));
     assert(ss->end >= ss->begin);
 
     DECLARE_LOCAL (token_name);
@@ -844,7 +844,7 @@ static Context* Error_Mismatch(SCAN_LEVEL *level, char wanted, char seen) {
 //
 static LEXFLAGS Prescan_Token(SCAN_STATE *ss)
 {
-    assert(Is_Pointer_Trash_Debug(ss->end));  // prescan only uses ->begin
+    assert(Is_Pointer_Corrupt_Debug(ss->end));  // prescan only uses ->begin
 
     const Byte* cp = ss->begin;
     LEXFLAGS flags = 0;  // flags for all LEX_SPECIALs seen after ss->begin[0]
@@ -999,7 +999,7 @@ static enum Reb_Token Maybe_Locate_Token_May_Push_Mold(
 ){
     SCAN_LEVEL *level = &L->u.scan;
     SCAN_STATE *ss = level->ss;
-    Trash_Pointer_If_Debug(ss->end);  // this routine should set ss->end
+    Corrupt_Pointer_If_Debug(ss->end);  // this routine should set ss->end
 
   acquisition_loop:
     //
@@ -1361,7 +1361,7 @@ static enum Reb_Token Maybe_Locate_Token_May_Push_Mold(
             // there's more content yet to come.
             //
             ss->begin = nullptr;
-            Trash_Pointer_If_Debug(ss->end);
+            Corrupt_Pointer_If_Debug(ss->end);
             goto acquisition_loop;
 
           case LEX_DELIMIT_COMMA:
@@ -1852,7 +1852,7 @@ void Init_Scan_Level(
     level->ss = ss;
 
     ss->begin = try_unwrap(bp);  // Locate_Token's first fetch from vaptr
-    Trash_Pointer_If_Debug(ss->end);
+    Corrupt_Pointer_If_Debug(ss->end);
 
     ss->file = file;
 
@@ -1906,8 +1906,8 @@ Bounce Scanner_Executor(Level* const L) {
     const Byte* ep;
     REBLEN len;
 
-    Trash_Pointer_If_Debug(bp);
-    Trash_Pointer_If_Debug(ep);
+    Corrupt_Pointer_If_Debug(bp);
+    Corrupt_Pointer_If_Debug(ep);
 
     enum {
         ST_SCANNER_INITIAL_ENTRY = STATE_0,

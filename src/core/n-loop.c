@@ -1403,7 +1403,7 @@ DECLARE_NATIVE(remove_each)
         // We're going to use NODE_FLAG_MARKED on the elements of data's
         // array for those items we wish to remove later.  [2]
         //
-        Trash_Pointer_If_Debug(mo);
+        Corrupt_Pointer_If_Debug(mo);
     }
     else {
         // Generate a new data allocation, but then swap its underlying content

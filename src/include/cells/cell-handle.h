@@ -121,7 +121,7 @@ INLINE REBVAL *Init_Handle_Cdata(
         FLAG_HEART_BYTE(REB_HANDLE) | CELL_MASK_NO_NODES
     );
   #ifdef ZERO_UNUSED_CELL_FIELDS
-    PAYLOAD(Any, out).first.trash = ZEROTRASH;
+    PAYLOAD(Any, out).first.corrupt = CORRUPTZERO;
   #endif
     VAL_HANDLE_CDATA_P(out) = cdata;
     VAL_HANDLE_LENGTH_U(out) = length;  // non-zero signals cdata
@@ -137,7 +137,7 @@ INLINE REBVAL *Init_Handle_Cfunc(
         FLAG_HEART_BYTE(REB_HANDLE) | CELL_MASK_NO_NODES
     );
   #ifdef ZERO_UNUSED_CELL_FIELDS
-    PAYLOAD(Any, out).first.trash = ZEROTRASH;
+    PAYLOAD(Any, out).first.corrupt = CORRUPTZERO;
   #endif
     VAL_HANDLE_CFUNC_P(out) = cfunc;
     VAL_HANDLE_LENGTH_U(out) = 0;  // signals cfunc
@@ -171,7 +171,8 @@ INLINE void Init_Handle_Managed_Common(
         FLAG_HEART_BYTE(REB_HANDLE) | CELL_FLAG_FIRST_IS_NODE
     );
     INIT_VAL_HANDLE_STUB(out, singular);
-    VAL_HANDLE_LENGTH_U(out) = 0xDECAFBAD;  // trash to avoid compiler warning
+
+    VAL_HANDLE_LENGTH_U(out) = 0xDECAFBAD;  // corrupt avoids compiler warning
     VAL_HANDLE_CDATA_P(out) = nullptr;  // or complains about not initializing
 }
 
@@ -183,7 +184,7 @@ INLINE REBVAL *Init_Handle_Cdata_Managed(
 ){
     Init_Handle_Managed_Common(out, length, cleaner);
 
-    // Leave the non-singular cfunc as trash; clients should not be using
+    // Leave the non-singular cfunc corrupt; clients should not be using
 
     Stub* stub = VAL_HANDLE_STUB(out);
     VAL_HANDLE_CDATA_P(Stub_Cell(stub)) = cdata;
@@ -197,7 +198,7 @@ INLINE REBVAL *Init_Handle_Cdata_Managed_Cfunc(
 ){
     Init_Handle_Managed_Common(out, 0, cleaner);
 
-    // Leave the non-singular cfunc as trash; clients should not be using
+    // Leave the non-singular cfunc corrupt; clients should not be using
 
     Stub* stub = VAL_HANDLE_STUB(out);
     VAL_HANDLE_CFUNC_P(Stub_Cell(stub)) = cfunc;

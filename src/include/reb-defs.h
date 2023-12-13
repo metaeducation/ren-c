@@ -144,7 +144,7 @@ typedef struct JumpStruct Jump;
 
 //=//// DATA STACK ////////////////////////////////////////////////////////=//
 //
-typedef uint_fast32_t StackIndex;  // 0 for empty stack ([0] entry is trash)
+typedef uint_fast32_t StackIndex;  // 0 for empty stack ([0] entry poison)
 
 
 

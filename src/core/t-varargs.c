@@ -399,7 +399,7 @@ Bounce MAKE_Varargs(
 
         Reset_Unquoted_Header_Untracked(TRACK(OUT), CELL_MASK_VARARGS);
         INIT_VAL_VARARGS_PHASE(OUT, nullptr);
-        UNUSED(VAL_VARARGS_SIGNED_PARAM_INDEX(OUT));  // trashes in C++11
+        UNUSED(VAL_VARARGS_SIGNED_PARAM_INDEX(OUT));  // corrupts in C++11
         INIT_VAL_VARARGS_BINDING(OUT, array1);
 
         return OUT;

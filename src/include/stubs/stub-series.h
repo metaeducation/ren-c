@@ -681,7 +681,7 @@ INLINE void Set_Series_Used_Internal(Series* s, Count used) {
 
   #if DEBUG_UTF8_EVERYWHERE
     if (Is_String_NonSymbol(s)) {
-        Trash_If_Debug(s->misc.length);  // catch violators [2]
+        Corrupt_If_Debug(s->misc.length);  // catch violators [2]
         Touch_Stub_If_Debug(s);
     }
   #endif
@@ -725,10 +725,10 @@ INLINE Stub* Prep_Stub(void *preallocated, Flags flags) {
     s->leader.bits = NODE_FLAG_NODE | flags;  // #1
 
   #if !defined(NDEBUG)
-    SafeTrash_Pointer_If_Debug(s->link.trash);  // #2
+    SafeCorrupt_Pointer_If_Debug(s->link.corrupt);  // #2
     Mem_Fill(&s->content.fixed, 0xBD, sizeof(s->content));  // #3 - #6
-    SafeTrash_Pointer_If_Debug(s->info.trash);  // #7
-    SafeTrash_Pointer_If_Debug(s->link.trash);  // #8
+    SafeCorrupt_Pointer_If_Debug(s->info.corrupt);  // #7
+    SafeCorrupt_Pointer_If_Debug(s->link.corrupt);  // #8
 
   #if DEBUG_SERIES_ORIGINS
     s->guard = nullptr;  // so Touch_Stub_Debug() can tell data is invalid
@@ -780,7 +780,7 @@ INLINE Series* Make_Series_Into(
     SERIES_INFO(s) = SERIES_INFO_MASK_NONE;
   #else
     if (flags & SERIES_FLAG_INFO_NODE_NEEDS_MARK)
-        Trash_Pointer_If_Debug(s->info.node);
+        Corrupt_Pointer_If_Debug(s->info.node);
     else
         SERIES_INFO(s) = SERIES_INFO_MASK_NONE;
   #endif

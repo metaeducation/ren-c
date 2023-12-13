@@ -279,9 +279,9 @@ INLINE void Free_Level_Internal(Level* L) {
 
     if (L->varlist and Not_Node_Managed(L->varlist))
         GC_Kill_Series(L->varlist);
-    Trash_Pointer_If_Debug(L->varlist);
+    Corrupt_Pointer_If_Debug(L->varlist);
 
-    assert(Is_Pointer_Trash_Debug(L->alloc_value_list));
+    assert(Is_Pointer_Corrupt_Debug(L->alloc_value_list));
 
     Free_Pooled(LEVEL_POOL, L);
 }
@@ -340,7 +340,7 @@ INLINE void Push_Level(
     L->prior = TOP_LEVEL;
     g_ts.top_level = L;
 
-    assert(Is_Pointer_Trash_Debug(L->alloc_value_list));
+    assert(Is_Pointer_Corrupt_Debug(L->alloc_value_list));
     L->alloc_value_list = L;  // doubly link list, terminates in `L`
 }
 
@@ -389,14 +389,14 @@ INLINE Level* Prep_Level_Core(
 
     L->feed = feed;
     Erase_Cell(&L->spare);
-    Trash_Pointer_If_Debug(L->out);
+    Corrupt_Pointer_If_Debug(L->out);
 
     L->varlist = nullptr;
     L->executor = &Evaluator_Executor;  // compatible default (for now)
 
-    Trash_Pointer_If_Debug(L->alloc_value_list);
+    Corrupt_Pointer_If_Debug(L->alloc_value_list);
 
-    Trash_If_Debug(L->u);  // fills with garbage bytes in debug build
+    Corrupt_If_Debug(L->u);  // fills with garbage bytes in debug build
 
     // !!! Recycling is done in the trampoline before the level gets a chance
     // to run.  So it's hard for the GC to know if it's okay to mark the
@@ -405,9 +405,9 @@ INLINE Level* Prep_Level_Core(
     //
     Erase_Cell(&L->u.eval.scratch);
 
-    Trash_Pointer_If_Debug(L->label);
+    Corrupt_Pointer_If_Debug(L->label);
   #if DEBUG_LEVEL_LABELS
-    Trash_Pointer_If_Debug(L->label_utf8);
+    Corrupt_Pointer_If_Debug(L->label_utf8);
   #endif
 
     // !!! Previously just TOP_STACK was captured in L->baseline.stack_base,

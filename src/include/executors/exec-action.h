@@ -209,11 +209,6 @@ struct ActionExecutorStateStruct {
     // are moved in sync.  This movement can be done for typechecking or
     // fulfillment, see In_Typecheck_Mode()
     //
-    // If arguments are actually being fulfilled into the slots, those
-    // slots start out as trash.  Yet the GC has access to the Level,
-    // so it can examine `arg` and avoid trying to protect the random
-    // bits that haven't been fulfilled yet.
-    //
     // While ultimately the arguments will be Value(*) and not able to hold
     // unstable isotopes arguments, the process of argument fulfillment will
     // hold unstable isotopes temporarily.

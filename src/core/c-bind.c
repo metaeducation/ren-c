@@ -377,9 +377,7 @@ Option(Series*) Get_Word_Container(
     Specifier* specifier,
     enum Reb_Attach_Mode mode
 ){
-  #if !defined(NDEBUG)
-    *index_out = 0xDECAFBAD;  // trash index to make sure it gets set
-  #endif
+    Corrupt_If_Debug(*index_out);  // corrupt index to make sure it gets set
 
     Series* binding = VAL_WORD_BINDING(any_word);
 
@@ -826,7 +824,7 @@ DECLARE_NATIVE(let)
         INIT_VAL_WORD_BINDING(where, bindings);
         INIT_VAL_WORD_INDEX(where, INDEX_ATTACHED);
 
-        Trash_Pointer_If_Debug(vars);  // if in spare, we may have overwritten
+        Corrupt_Pointer_If_Debug(vars);  // if in spare, we may have overwritten
     }
     else {
         assert(Is_Block(vars) or Is_Set_Block(vars));
@@ -903,7 +901,7 @@ DECLARE_NATIVE(let)
         }
         BINDING(where) = bindings;
 
-        Trash_Pointer_If_Debug(vars);  // if in spare, we may have overwritten
+        Corrupt_Pointer_If_Debug(vars);  // if in spare, we may have overwritten
     }
 
     //=//// ONE EVAL STEP WITH OLD BINDINGS IF SET-WORD! or SET-BLOCK! /////=//
@@ -917,7 +915,7 @@ DECLARE_NATIVE(let)
     // with the rebound SET-WORD! or SET-BLOCK!
 
     BINDING(bindings_holder) = bindings;
-    Trash_Pointer_If_Debug(bindings);  // catch uses after this point in scope
+    Corrupt_Pointer_If_Debug(bindings);  // catch uses after this point in scope
 
     if (STATE != ST_LET_EVAL_STEP) {
         assert(Is_Word(OUT) or Is_Block(OUT));  // should have written output
@@ -1443,7 +1441,7 @@ Context* Virtual_Bind_Deep_To_New_Context(
             // !!! For loops, nothing should be able to be aware of this
             // synthesized variable until the loop code has initialized it
             // with something.  But this code is shared with USE, so the user
-            // can get their hands on the variable.  Can't be trash.
+            // can get their hands on the variable.  Can't be unreadable.
             //
             Finalize_None(var);
 

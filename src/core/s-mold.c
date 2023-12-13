@@ -431,7 +431,7 @@ void Mold_Or_Form_Value(REB_MOLD *mo, const Cell* v, bool form)
 
   #if DEBUG_UNREADABLE_CELLS
     if (Is_Unreadable_Debug(v)) {  // would assert otherwise
-        Append_Ascii(mo->series, "~trash~");
+        Append_Ascii(mo->series, "\\\\unreadable\\\\");
         return;
     }
   #endif

@@ -145,9 +145,7 @@ REBINT Find_Binstr_In_Binstr(
     Flags flags,  // AM_FIND_CASE, AM_FIND_MATCH
     REBINT skip1  // in length units of binstr1 (bytes or codepoints)
 ){
-  #if !defined(NDEBUG)
-    *len_out = 0xDECAFBAD;  // trash output length in case of no match
-  #endif
+    Corrupt_If_Debug(*len_out);  // corrupt output length in case of no match
 
     assert((flags & ~(AM_FIND_CASE | AM_FIND_MATCH)) == 0);
 

@@ -193,7 +193,7 @@ void Init_Evars(EVARS *e, NoQuote(const Cell*) v) {
     if (kind == REB_FRAME and Is_Frame_Details(v)) {
         e->index = 0;  // will be bumped to 1
 
-        Trash_Pointer_If_Debug(e->ctx);
+        Corrupt_Pointer_If_Debug(e->ctx);
 
         Action* act = VAL_ACTION(v);
         e->key = ACT_KEYS(&e->key_tail, act) - 1;
@@ -215,7 +215,7 @@ void Init_Evars(EVARS *e, NoQuote(const Cell*) v) {
       #endif
 
         e->word = nullptr;
-        Trash_Pointer_If_Debug(e->word_tail);
+        Corrupt_Pointer_If_Debug(e->word_tail);
     }
     else if (kind == REB_MODULE) {
         //
@@ -268,7 +268,7 @@ void Init_Evars(EVARS *e, NoQuote(const Cell*) v) {
         e->word = cast(REBVAL*, Array_Head(e->wordlist)) - 1;
         e->word_tail = cast(REBVAL*, Array_Tail(e->wordlist));
 
-        Trash_Pointer_If_Debug(e->key_tail);
+        Corrupt_Pointer_If_Debug(e->key_tail);
         e->var = nullptr;
         e->param = nullptr;
     }

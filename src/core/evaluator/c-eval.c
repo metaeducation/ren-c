@@ -412,8 +412,8 @@ Bounce Evaluator_Executor(Level* L)
   // This starts a new expression.
 
     Sync_Feed_At_Cell_Or_End_May_Fail(L->feed);
-    Trash_Pointer_If_Debug(L_current);
-    Trash_Pointer_If_Debug(L_current_gotten);
+    Corrupt_Pointer_If_Debug(L_current);
+    Corrupt_Pointer_If_Debug(L_current_gotten);
 
     Update_Expression_Start(L);  // !!! See Level_Array_Index() for caveats
 
@@ -957,7 +957,7 @@ Bounce Evaluator_Executor(Level* L)
       tuple_in_spare:  ///////////////////////////////////////////////////////
 
         L_current = SPARE;
-        Trash_Pointer_If_Debug(L_current_gotten);
+        Corrupt_Pointer_If_Debug(L_current_gotten);
         goto tuple_common;
 
       tuple_common:  /////////////////////////////////////////////////////////
@@ -1388,7 +1388,7 @@ Bounce Evaluator_Executor(Level* L)
         const Cell* check = Cell_Array_At(&tail, L_current);
         Specifier* check_specifier = Derive_Specifier(L_specifier, L_current);
 
-        Trash_Pointer_If_Debug(L_current);  // might be SPARE, we use it now
+        Corrupt_Pointer_If_Debug(L_current);  // might be SPARE, we use it now
 
         StackIndex stackindex_circled = 0;
 

@@ -70,9 +70,9 @@ INLINE Value(*) Init_Blank_Untracked(Cell* out, Byte quote_byte) {
     );
 
   #ifdef ZERO_UNUSED_CELL_FIELDS
-    EXTRA(Any, out).trash = ZEROTRASH;  // not Is_Bindable()
-    PAYLOAD(Any, out).first.trash = ZEROTRASH;
-    PAYLOAD(Any, out).second.trash = ZEROTRASH;
+    EXTRA(Any, out).corrupt = CORRUPTZERO;  // not Is_Bindable()
+    PAYLOAD(Any, out).first.corrupt = CORRUPTZERO;
+    PAYLOAD(Any, out).second.corrupt = CORRUPTZERO;
   #endif
 
     return cast(Value(*), out);

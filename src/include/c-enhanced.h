@@ -884,7 +884,7 @@
 #endif
 
 
-//=//// MEMORY POISONING and POINTER TRASHING /////////////////////////////=//
+//=//// MEMORY POISONING and POINTER CORRUPTING ///////////////////////////=//
 //
 // If one wishes to indicate a region of memory as being "off-limits", modern
 // tools like Address Sanitizer allow instrumented builds to augment reads
@@ -897,7 +897,7 @@
 // would prefer to intercept accesses as if they were freed.)
 //
 // Also, in order to overwrite a pointer with garbage, the historical method
-// of using 0xBADF00D or 0xDECAFBAD is formalized with Trash_Pointer_If_Debug.
+// of using 0xBADF00D or 0xDECAFBAD is formalized in Corrupt_Pointer_If_Debug.
 // This makes the instances easier to find and standardizes how it is done.
 // Special choices are made for 0xF4EEF4EE to indicate a freed thing, and
 // 0x5AFE5AFE to indicate an allocated thing.
@@ -934,54 +934,53 @@
 
 
 #ifdef NDEBUG
-    #define Trash_Pointer_If_Debug(p)       NOOP
-    #define Trash_Cfunc_If_Debug(T,p)       NOOP
+    #define Corrupt_Pointer_If_Debug(p)       NOOP
 #elif (! CPLUSPLUS_11)
-    #define Trash_Pointer_If_Debug(p) \
+    #define Corrupt_Pointer_If_Debug(p) \
         ((p) = p_cast(void*, cast(uintptr_t, 0xDECAFBAD)))
 
-    #define SafeTrash_Pointer_If_Debug(p) \
+    #define SafeCorrupt_Pointer_If_Debug(p) \
         ((p) = p_cast(void*, cast(uintptr_t, 0x5AFE5AFE)))
 
-    #define FreeTrash_Pointer_If_Debug(p) \
+    #define FreeCorrupt_Pointer_If_Debug(p) \
         ((p) = p_cast(void*, cast(uintptr_t, 0xF4EEF4EE)))
 
-    #define Is_Pointer_Trash_Debug(p) \
+    #define Is_Pointer_Corrupt_Debug(p) \
         ((p) == p_cast(void*, cast(uintptr_t, 0xDECAFBAD)))
 #else
     template<class T>
-    INLINE void Trash_Pointer_If_Debug(T* &p)
+    INLINE void Corrupt_Pointer_If_Debug(T* &p)
       { p = p_cast(T*, cast(uintptr_t, 0xDECAFBAD)); }
 
     template<class T>
-    INLINE void SafeTrash_Pointer_If_Debug(T* &p)
+    INLINE void SafeCorrupt_Pointer_If_Debug(T* &p)
       { p = p_cast(T*, cast(uintptr_t, 0x5AFE5AFE)); }
 
     template<class T>
-    INLINE void FreeTrash_Pointer_If_Debug(T* &p)
+    INLINE void FreeCorrupt_Pointer_If_Debug(T* &p)
       { p = p_cast(T*, cast(uintptr_t, 0xF4EEF4EEE)); }
 
     template<class T>
-    INLINE bool Is_Pointer_Trash_Debug(T* p)
+    INLINE bool Is_Pointer_Corrupt_Debug(T* p)
       { return (p == p_cast(T*, cast(uintptr_t, 0xDECAFBAD))); }
 
     #if DEBUG_CHECK_OPTIONALS
         template<class P>
-        INLINE void Trash_Pointer_If_Debug(Option(P) &option)
-          { Trash_Pointer_If_Debug(option.wrapped); }
+        INLINE void Corrupt_Pointer_If_Debug(Option(P) &option)
+          { Corrupt_Pointer_If_Debug(option.wrapped); }
 
         template<class P>
-        INLINE bool Is_Pointer_Trash_Debug(Option(P) &option)
-          { return Is_Pointer_Trash_Debug(option.wrapped); }
+        INLINE bool Is_Pointer_Corrupt_Debug(Option(P) &option)
+          { return Is_Pointer_Corrupt_Debug(option.wrapped); }
     #endif
 
     template<class P>
-    INLINE void Trash_Pointer_If_Debug(NeverNull(P) &nn)
-      { Trash_Pointer_If_Debug(nn.p); }
+    INLINE void Corrupt_Pointer_If_Debug(NeverNull(P) &nn)
+      { Corrupt_Pointer_If_Debug(nn.p); }
 
     template<class P>
-    INLINE bool Is_Pointer_Trash_Debug(NeverNull(P) &nn)
-      { return Is_Pointer_Trash_Debug(nn.p); }
+    INLINE bool Is_Pointer_Corrupt_Debug(NeverNull(P) &nn)
+      { return Is_Pointer_Corrupt_Debug(nn.p); }
 #endif
 
 
@@ -1060,19 +1059,19 @@
     // See definition of Cell for why casting to void* is needed.
     // (Mem_Fill() macro that does this is not defined for %c-enhanced.h)
     //
-    #define Trash_If_Debug(x) \
+    #define Corrupt_If_Debug(x) \
         memset(cast(void*, &(x)), 0xBD, sizeof(x));
 
     #define UNUSED(x) \
         ((void)(x))
 #else
-    #define UNUSED Trash_If_Debug
+    #define UNUSED Corrupt_If_Debug
 
     #include <cstring>  // for memset
 
-    // Can't trash the variable if it's not an lvalue.  So for the basic
+    // Can't corrupt the variable if it's not an lvalue.  So for the basic
     // SFINAE overload, just cast void.  Do this also for cases that are
-    // lvalues, but we don't really know how to "trash" them.
+    // lvalues, but we don't really know how to "corrupt" them.
     //
     template<
         typename T,
@@ -1087,7 +1086,7 @@
             )
         >::type* = nullptr
     >
-    void Trash_If_Debug(T && v) {
+    void Corrupt_If_Debug(T && v) {
         USED(v);
     }
 
@@ -1104,12 +1103,12 @@
             && std::is_pointer<TRR>::value
         >::type* = nullptr
     >
-    void Trash_If_Debug(T && v) {
+    void Corrupt_If_Debug(T && v) {
         static bool zero = false;
         if (zero)
             v = nullptr; // do null half the time, deterministic
         else
-            Trash_Pointer_If_Debug(v); // trash the other half of the time
+            Corrupt_Pointer_If_Debug(v); // corrupt the other half of the time
         zero = not zero;
     }
 
@@ -1125,7 +1124,7 @@
             && !std::is_pointer<TRR>::value
         >::type* = nullptr
     >
-    void Trash_If_Debug(T && v) {
+    void Corrupt_If_Debug(T && v) {
         static bool zero = false;
         if (zero)
             v = false; // false/0 half the time, deterministic
@@ -1158,7 +1157,7 @@
             )
         >::type* = nullptr
     >
-    void Trash_If_Debug(T && v) {
+    void Corrupt_If_Debug(T && v) {
         //
         // See definition of Cell for why casting to void* is needed.
         // (Mem_Set() macro that does this is not defined for %c-enhanced.h)

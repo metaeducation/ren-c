@@ -760,8 +760,7 @@ void Expand_Series(Series* s, REBLEN index, REBLEN delta)
             //
             // When the bias region was marked, it was made "unsettable" if
             // this was a debug build.  Now that the memory is included in
-            // the array again, we want it to be "settable", but still trash
-            // until the caller puts something there.
+            // the array again, we want it to be "settable".
             //
             // !!! The unsettable feature is currently not implemented,
             // but when it is this will be useful.
@@ -806,7 +805,7 @@ void Expand_Series(Series* s, REBLEN index, REBLEN delta)
       #if !defined(NDEBUG)
         if (Is_Series_Array(s)) {
             //
-            // The opened up area needs to be set to "settable" trash in the
+            // The opened up area needs to be set to "settable" in the
             // debug build.  This takes care of making "unsettable" values
             // settable (if part of the expansion is in what was formerly the
             // ->rest), as well as just making sure old data which was in
@@ -1222,9 +1221,9 @@ void GC_Kill_Series(Series* s)
         Decay_Series(s);
 
   #if !defined(NDEBUG)
-    FreeTrash_Pointer_If_Debug(s->info.node);
+    FreeCorrupt_Pointer_If_Debug(s->info.node);
     // The spot LINK occupies will be used by Free_Pooled() to link the freelist
-    FreeTrash_Pointer_If_Debug(s->misc.trash);
+    FreeCorrupt_Pointer_If_Debug(s->misc.corrupt);
   #endif
 
     Free_Pooled(STUB_POOL, s);

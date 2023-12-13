@@ -154,7 +154,7 @@ STATIC_ASSERT(FEED_FLAG_CONST == CELL_FLAG_CONST);
     ensure(Feed*, (f))->flags.bits &= ~FEED_FLAG_##name
 
 
-#define TRASHED_INDEX ((REBLEN)(-3))
+#define CORRUPT_INDEX ((REBLEN)(-3))
 
 typedef struct FeedStruct Feed;
 

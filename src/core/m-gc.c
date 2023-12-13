@@ -402,9 +402,9 @@ static void Propagate_All_GC_Marks(void)
         );
 
         // Termination is not required in the release build (the length is
-        // enough to know where it ends).  But overwrite with trash in debug.
+        // enough to know where it ends).  But corrupt in debug.
         //
-        Trash_Pointer_If_Debug(
+        Corrupt_Pointer_If_Debug(
             *Series_At(
                 Array*,
                 g_gc.mark_stack,
@@ -810,7 +810,7 @@ static void Mark_Level_Stack_Deep(void)
     while (true) {  // mark all levels (even BOTTOM_LEVEL)
         //
         // Note: MISC_PENDING() should either live in FEED_ARRAY(), or
-        // it may be trash (e.g. if it's an apply).  GC can ignore it.
+        // it may be corrupt (e.g. if it's an apply).  GC can ignore it.
         //
         Stub* singular = FEED_SINGULAR(L->feed);
         do {
@@ -851,7 +851,7 @@ static void Mark_Level_Stack_Deep(void)
             Queue_Mark_Maybe_Fresh_Cell_Deep(L->out);
 
         // Level temporary cell should always contain initialized bits, as
-        // Make_Level() sets it up and no one is supposed to trash it.
+        // Make_Level() sets it up and no one is supposed to corrupt it.
         //
         Queue_Mark_Maybe_Fresh_Cell_Deep(&L->feed->fetched);
         Queue_Mark_Maybe_Fresh_Cell_Deep(&L->feed->lookback);

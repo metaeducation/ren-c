@@ -483,7 +483,7 @@ gen-obj: func [
 
                 ; Warning about std::is_pod<OptionWrapper<const ValueT*>>
                 ; having a different answer in different versions, affects the
-                ; UNUSED() variable trashing in debug build, not a big issue.
+                ; UNUSED() variable corrupting in debug build, not a big issue.
                 ;
                 <msc:/wd4647>
 

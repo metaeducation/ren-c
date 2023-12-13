@@ -498,7 +498,7 @@ INLINE Context* Steal_Context_Vars(Context* c, Node* keysource) {
             | SERIES_FLAG_FIXED_SIZE
     );
     SERIES_INFO(copy) = SERIES_INFO_MASK_NONE;
-    Trash_Pointer_If_Debug(BONUS(KeySource, copy)); // needs update
+    Corrupt_Pointer_If_Debug(BONUS(KeySource, copy)); // needs update
     Mem_Copy(&copy->content, &stub->content, sizeof(union StubContentUnion));
     MISC(VarlistAdjunct, copy) = nullptr;  // let stub have the meta
     LINK(Patches, copy) = nullptr;  // don't carry forward patches
@@ -523,7 +523,7 @@ INLINE Context* Steal_Context_Vars(Context* c, Node* keysource) {
     BINDING(single) = BINDING(rootvar);
 
   #if !defined(NDEBUG)
-    INIT_VAL_FRAME_PHASE_OR_LABEL(single, nullptr);  // can't trash
+    INIT_VAL_FRAME_PHASE_OR_LABEL(single, nullptr);  // can't corrupt
   #endif
 
     INIT_VAL_CONTEXT_VARLIST(rootvar, x_cast(Array*, copy));

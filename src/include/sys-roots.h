@@ -122,7 +122,7 @@ INLINE void Unlink_Api_Handle_From_Level(Stub* stub)
 
 
 // 1. We are introducing the containing node for this cell to the GC and can't
-//    leave it trash.  If a pattern like `Do_Eval_Into(Alloc_Value(), ...)`
+//    leave it uninitialized.  e.g. if `Do_Eval_Into(Alloc_Value(), ...)`
 //    is used, there might be a recycle during the evaluation that sees it.
 //
 // 2. We link the API handle into a doubly linked list maintained by the
@@ -147,7 +147,7 @@ INLINE REBVAL *Alloc_Value_Core(Flags flags)
     );
 
     Cell* cell = Stub_Cell(stub);
-    cell->header.bits = flags;  // can't be trash [1]
+    cell->header.bits = flags;  // can't be corrupt [1]
 
     Link_Api_Handle_To_Level(stub, TOP_LEVEL);  // [2]
 

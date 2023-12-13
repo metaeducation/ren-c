@@ -178,8 +178,8 @@ INLINE void Finalize_Variadic_Feed(Feed* feed) {
     else
         assert(FEED_PACKED(feed));
 
-    Trash_Pointer_If_Debug(FEED_VAPTR_POINTER(feed));
-    Trash_Pointer_If_Debug(FEED_PACKED(feed));
+    Corrupt_Pointer_If_Debug(FEED_VAPTR_POINTER(feed));
+    Corrupt_Pointer_If_Debug(FEED_PACKED(feed));
 }
 
 
@@ -415,14 +415,14 @@ INLINE void Fetch_Next_In_Feed(Feed* feed) {
   #endif
 
     assert(Not_End(feed->p));  // should test for end before fetching again
-    Trash_Pointer_If_Debug(feed->p);
+    Corrupt_Pointer_If_Debug(feed->p);
 
     // We are changing "Feed_At()", and thus by definition any ->gotten value
     // will be invalid.  It might be "wasteful" to always set this to null,
     // especially if it's going to be overwritten with the real fetch...but
     // at a source level, having every call to Fetch_Next_In_Feed have to
     // explicitly set ->gotten to null is overkill.  Could be split into
-    // a version that just trashes ->gotten in the debug build vs. null.
+    // a version that just corrupts ->gotten in the debug build vs. null.
     //
     feed->gotten = nullptr;
 
@@ -645,10 +645,10 @@ INLINE Feed* Prep_Feed_Common(void* preallocated, Flags flags) {
     MISC(Pending, s) = nullptr;
 
     feed->flags.bits = flags;
-    Trash_Pointer_If_Debug(feed->p);
-    Trash_Pointer_If_Debug(feed->gotten);
+    Corrupt_Pointer_If_Debug(feed->p);
+    Corrupt_Pointer_If_Debug(feed->gotten);
 
-    Trash_Pointer_If_Debug(feed->context);  // experiment!
+    Corrupt_Pointer_If_Debug(feed->context);  // experiment!
     return feed;
 }
 

@@ -657,23 +657,6 @@ static void Init_Contexts_Object(void)
 }
 
 
-#if !defined(NDEBUG)
-    //
-    // The C language initializes global variables to zero:
-    //
-    // https://stackoverflow.com/q/2091499
-    //
-    // For some values this may risk them being consulted and interpreted as
-    // the 0 carrying information, as opposed to them not being ready yet.
-    // Any variables that should be trashed up front should do so here.
-    //
-    static void Startup_Trash_Debug(void) {
-        //
-        // !!! TBD: Identify global Option(...) state.
-    }
-#endif
-
-
 //
 //  Startup_Core: C
 //
@@ -693,9 +676,6 @@ static void Init_Contexts_Object(void)
 //
 void Startup_Core(void)
 {
-  #if !defined(NDEBUG)
-    Startup_Trash_Debug();
-  #endif
 
 //=//// INITIALIZE TICK COUNT /////////////////////////////////////////////=//
 

@@ -127,7 +127,7 @@ bool Read_Stdin_Byte_Interrupted(bool *eof, Byte* out) {
     //
     if (stdin_piping == Piped_To_NUL) {  // reads nothing forever, no eof
         *eof = true;  // but treat like it is an end of file
-        *out = 0xFF;  // unused, make it trash (0xFF is bad UTF-8)
+        *out = 0xFF;  // unused, corrupt i (0xFF is bad UTF-8)
         return false;  // not interrupted
     }
 
@@ -160,7 +160,7 @@ bool Read_Stdin_Byte_Interrupted(bool *eof, Byte* out) {
 
         if (++num_zero_reads == 128) {  // heuristic to detect NUL in piping
             *eof = true;  // treat it like an end of file
-            *out = 0xFF;  // unused, make it trash (0xFF is bad UTF-8)
+            *out = 0xFF;  // unused, corrupt it (0xFF is bad UTF-8)
             return false;  // not interrupted
         }
     } while (ok and actual == 0);

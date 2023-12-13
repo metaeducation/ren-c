@@ -344,8 +344,8 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
 
         assert(LEVEL == TOP_LEVEL);  // Action_Executor() helps, drops inerts
 
-        assert(not Is_Pointer_Trash_Debug(LEVEL->executor));
-        Trash_Pointer_If_Debug(LEVEL->executor);
+        assert(not Is_Pointer_Corrupt_Debug(LEVEL->executor));
+        Corrupt_Pointer_If_Debug(LEVEL->executor);
 
         if (Get_Level_Flag(LEVEL, ABRUPT_FAILURE)) {
             //
@@ -551,7 +551,7 @@ void Startup_Trampoline(void)
     Level* L = Make_End_Level(LEVEL_MASK_NONE);  // ensure L->prior [1]
     Push_Level(nullptr, L);  // global API handles attach here [2]
 
-    Trash_Pointer_If_Debug(L->prior);  // catches enumeration past bottom_level
+    Corrupt_Pointer_If_Debug(L->prior);  // catches enumeration past bottom_level
     g_ts.bottom_level = L;
 
     assert(TOP_LEVEL == L and BOTTOM_LEVEL == L);
@@ -572,7 +572,7 @@ void Startup_Trampoline(void)
 //  Shutdown_Trampoline: C
 //
 // 1. To stop enumerations from using nullptr to stop the walk, and not count
-//    the bottom level as a "real stack level", it had a trash pointer put
+//    the bottom level as a "real stack level", it had a corrupt pointer put
 //    in the debug build.  Restore it to a typical null before the drop.
 //
 // 2. There's a Catch-22 on checking the balanced state for outstanding
@@ -584,7 +584,7 @@ void Shutdown_Trampoline(void)
 {
     assert(TOP_LEVEL == BOTTOM_LEVEL);
 
-    assert(Is_Pointer_Trash_Debug(BOTTOM_LEVEL->prior));  // trash [1]
+    assert(Is_Pointer_Corrupt_Debug(BOTTOM_LEVEL->prior));  // corrupt [1]
     BOTTOM_LEVEL->prior = nullptr;
 
   blockscope {
@@ -673,7 +673,7 @@ void Drop_Level_Core(Level* L) {
             FRESHEN(Stub_Cell(s));
             GC_Kill_Series(s);
         }
-        Trash_Pointer_If_Debug(L->alloc_value_list);
+        Corrupt_Pointer_If_Debug(L->alloc_value_list);
 
         // There could be outstanding values on the data stack, or data in the
         // mold buffer...we clean it up automatically in these cases.
@@ -688,7 +688,7 @@ void Drop_Level_Core(Level* L) {
             printf("API handle was allocated but not freed, panic'ing leak\n");
             panic (stub);
         }
-        Trash_Pointer_If_Debug(L->alloc_value_list);
+        Corrupt_Pointer_If_Debug(L->alloc_value_list);
       #endif
     }
 

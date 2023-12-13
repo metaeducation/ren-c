@@ -57,8 +57,6 @@
     // `Series.tick` where they were created, levels have a `Level.tick`,
     // and the DEBUG_TRACK_EXTEND_CELLS switch will double the size of cells
     // so they can carry the tick, file, and line where they were initialized.
-    // (Even without TRACK_EXTEND, cells that don't have their EXTRA() field
-    // in use carry the tick--it's in end cells, nulls, blanks, and trash.)
     //
     // For custom updating of stored ticks to help debugging some scenarios,
     // see TOUCH_SERIES() and TOUCH_CELL().  Note also that BREAK_NOW() can be
@@ -327,7 +325,7 @@ INLINE bool Eval_Step_In_Any_Array_At_Throws(
     Push_Level(out, L);
 
     if (Trampoline_With_Top_As_Root_Throws()) {
-        *index_out = TRASHED_INDEX;
+        *index_out = CORRUPT_INDEX;
         Drop_Level(L);
         return true;
     }

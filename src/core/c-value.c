@@ -159,7 +159,7 @@ void Probe_Cell_Print_Helper(
 
   #if DEBUG_UNREADABLE_CELLS
     if (Is_Unreadable_Debug(v)) {  // Is_Nulled() asserts on unreadables
-        Append_Ascii(mo->series, "\\\\~trash~\\\\");
+        Append_Ascii(mo->series, "\\\\unreadable\\\\");
         return;
     }
   #endif
@@ -400,8 +400,8 @@ void* Probe_Core_Debug(
         break; }
 
     #if !defined(NDEBUG)  // PROBE() is sometimes in non-debug executables
-      case FLAVOR_TRASH:
-        Probe_Print_Helper(p, expr, "!!! TRASH Series !!!", file, line);
+      case FLAVOR_CORRUPT:
+        Probe_Print_Helper(p, expr, "!!! CORRUPT Series !!!", file, line);
         break;
     #endif
 

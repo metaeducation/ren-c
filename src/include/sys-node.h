@@ -410,7 +410,7 @@ INLINE void Free_Pooled(PoolId pool_id, void* p)
 
   #if DEBUG
     template<class T>
-    INLINE void Trash_Pointer_If_Debug(NodeHolder<T> const& nh)
+    INLINE void Corrupt_Pointer_If_Debug(NodeHolder<T> const& nh)
       { nh.ref = p_cast(Node*, cast(uintptr_t, 0xDECAFBAD)); }
   #endif
 #endif

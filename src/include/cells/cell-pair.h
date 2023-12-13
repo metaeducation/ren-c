@@ -81,7 +81,7 @@ INLINE Value(*) Init_Pair_Untracked(Cell* out, Cell* pairing) {
     INIT_VAL_PAIR(out, pairing);
 
   #ifdef ZERO_UNUSED_CELL_FIELDS
-    PAYLOAD(Any, out).second.trash = ZEROTRASH;  // payload second not used
+    PAYLOAD(Any, out).second.corrupt = CORRUPTZERO;  // payload second not used
   #endif
 
     BINDING(out) = UNBOUND;  // "arraylike", needs binding

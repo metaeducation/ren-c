@@ -284,7 +284,7 @@
 
         got: null
         test: lambda [expr [block!]] [
-            got: '~trash~
+            got: '~junk~
             compose [(do expr), (:got)]
         ]
         true
@@ -320,7 +320,7 @@
 
         got: null
         test: func [expr [block!]] [
-            got: '~trash~
+            got: '~junk~
             return compose [(do expr), (:got)]
         ]
         true

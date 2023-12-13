@@ -57,7 +57,7 @@ INLINE REBVAL *Init_Integer_Untracked(Cell* out, REBI64 i64) {
     Reset_Unquoted_Header_Untracked(out, CELL_MASK_INTEGER);
     PAYLOAD(Integer, out).i64 = i64;
   #ifdef ZERO_UNUSED_CELL_FIELDS
-    EXTRA(Any, out).trash = ZEROTRASH;
+    EXTRA(Any, out).corrupt = CORRUPTZERO;
   #endif
     return cast(REBVAL*, out);
 }

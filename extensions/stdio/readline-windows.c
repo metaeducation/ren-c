@@ -207,7 +207,7 @@ inline static unsigned int Term_Remain(STD_TERM *t)
     // We use a special menu event in the debug build to "poison" the tail and
     // notice overruns of t->in_tail.
     //
-    #define MENU_ID_TRASH_DEBUG 10203
+    #define MENU_ID_POISON_DEBUG 10203
 #endif
 
 
@@ -430,7 +430,7 @@ static bool Read_Input_Records_Interrupted(STD_TERM *t)
 
   #if !defined(NDEBUG)
     t->in_tail->EventType = MENU_EVENT;
-    t->in_tail->Event.MenuEvent.dwCommandId = MENU_ID_TRASH_DEBUG;
+    t->in_tail->Event.MenuEvent.dwCommandId = MENU_ID_POISON_DEBUG;
   #endif
 
     CHECK_INPUT_RECORDS(t);
@@ -664,7 +664,7 @@ REBVAL *Try_Get_One_Console_Event(STD_TERM *t, bool buffered, int timeout_msec)
     KEY_EVENT_RECORD *key_event = &t->in->Event.KeyEvent;  // shorthand
   #if !defined(NDEBUG)
     if (t->in->EventType != KEY_EVENT)
-        Trash_Pointer_If_Debug(key_event);
+        Corrupt_Pointer_If_Debug(key_event);
   #endif
 
     if (t->in->EventType == WINDOW_BUFFER_SIZE_EVENT) {
@@ -681,7 +681,7 @@ REBVAL *Try_Get_One_Console_Event(STD_TERM *t, bool buffered, int timeout_msec)
     }
     else if (t->in->EventType == MENU_EVENT) {
       #if !defined(NDEBUG)
-        assert(t->in->Event.MenuEvent.dwCommandId != MENU_ID_TRASH_DEBUG);
+        assert(t->in->Event.MenuEvent.dwCommandId != MENU_ID_POISON_DEBUG);
       #endif
 
         // Ignore menu events.  They are likely not interesting, because the
@@ -958,7 +958,7 @@ void Term_Abandon_Pending_Events(STD_TERM *t)
 
   #if !defined(NDEBUG)
     t->buf[0].EventType = MENU_EVENT;  // v-- poison the empty buffer
-    t->buf[0].Event.MenuEvent.dwCommandId = MENU_ID_TRASH_DEBUG;
+    t->buf[0].Event.MenuEvent.dwCommandId = MENU_ID_POISON_DEBUG;
   #endif
 }
 

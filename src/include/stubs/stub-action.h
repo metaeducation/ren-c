@@ -138,7 +138,7 @@ INLINE REBVAL *Init_Return_Signal_Untracked(Cell* out, char ch) {
 
     PAYLOAD(Any, out).first.u = ch;
   #ifdef ZERO_UNUSED_CELL_FIELDS
-    PAYLOAD(Any, out).second.trash = ZEROTRASH;
+    PAYLOAD(Any, out).second.corrupt = CORRUPTZERO;
   #endif
     return cast(REBVAL*, out);
 }

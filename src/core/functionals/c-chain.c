@@ -74,16 +74,16 @@ Level* Push_Downshifted_Level(Atom(*) out, Level* L) {
     // frame and drop it, when in reality we're changing the executor and
     // everything.  This is clearly voodoo but maybe it can be formalized.
     //
-    L->varlist = &PG_Inaccessible_Series;  // trash?  nullptr?
+    L->varlist = &PG_Inaccessible_Series;  // corrupt?  nullptr?
     L->rootvar = nullptr;
-    Trash_Pointer_If_Debug(L->executor);  // caller must set
-    Trash_Pointer_If_Debug(L->label);
+    Corrupt_Pointer_If_Debug(L->executor);  // caller must set
+    Corrupt_Pointer_If_Debug(L->label);
 
     sub->u.action.dispatcher_base = L->u.action.dispatcher_base;
 
     sub->executor = &Action_Executor;
 
-    Trash_If_Debug(L->u);  // not an action anymore; trash after get stack base
+    Corrupt_If_Debug(L->u);  // no longer action; corrupt after get stack base
 
     return sub;
 }

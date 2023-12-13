@@ -103,7 +103,7 @@ bool Did_Series_Data_Alloc(Series* s, REBLEN capacity) {
     if (Is_Series_Biased(s))
         s->content.dynamic.bonus.bias = 0;  // fully clear value [4]
     else {
-        // Leave as trash, or as existing bonus (if called in Expand_Series())
+        // Leave corrupt, or as existing bonus (if called in Expand_Series())
     }
 
     /*assert(size % wide == 0);*/  // allow irregular sizes
@@ -470,7 +470,7 @@ void Assert_Series_Basics_Core(const Series* s)
     if (Is_Node_Free(s))
         panic (s);
 
-    assert(Series_Flavor(s) != FLAVOR_TRASH);
+    assert(Series_Flavor(s) != FLAVOR_CORRUPT);
     assert(Series_Used(s) <= Series_Rest(s));
 
     Assert_Series_Term_Core(s);
