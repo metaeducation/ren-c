@@ -260,7 +260,6 @@ process-tests: function [
                 ]
             )
         ]
-        <end>
     ]
 ]
 

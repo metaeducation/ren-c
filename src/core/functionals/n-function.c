@@ -52,7 +52,7 @@
 //   possible using CLOSURE which made a costly deep copy of the function's
 //   body on every invocation.  Ren-C's method does not require a copy.)
 //
-// * Invisible functions (return: <nihil>) that vanish completely,
+// * Invisible functions (return: [nihil?]) that vanish completely,
 //   leaving whatever result was in the evaluation previous to the function
 //   call as-is.
 //
@@ -88,19 +88,13 @@
 // 1. FUNC(TION) evaluates into the SPARE cell, because the body result is
 //    never used as a return value.  Only RETURN can give non-"trash".
 //
-// 2. A design point here is that Func_Dispatcher() does no typechecking, and
-//    does not even request to catch THROWN values.  This makes it easier to
-//    write usermode parallels to FUNC because there is no need for any special
-//    CATCH logic--the usermode RETURN can simply use UNWIND and the trampoline
-//    will catch the result.  Hence the full typechecking burden is on RETURN.
-//
-// 3. There is an exception made for tolerating the lack of a RETURN call for
-//    the cases of `return: [~]` and `return: <nihil>`.  This has a little
-//    bit of a negative side in that if someone is to hook the RETURN function,
-//    it will not be called in these "fallout" cases.  It's deemed too ugly
-//    to slip in a "hidden" call to RETURN for these cases, and too much of
-//    a hassle to force people to put RETURN ~ or RETURN at the end.  So
-//    this is the compromise chosen.
+// 2. If no RETURN statement is given, the result is trash, and typechecking
+//    is performed to make sure trash was a legitimate return.  This has a
+//    little bit of a negative side in that if someone is to hook the RETURN
+//    function, it will not be called in these "fallout" cases.  It's deemed
+//    too ugly to slip in a "hidden" call to RETURN for this case, and too
+//    much of a hassle to force people to put RETURN ~ or RETURN at the end.
+//    So this is the compromise chosen...at the moment.
 //
 Bounce Func_Dispatcher(Level* const L)
 {
@@ -141,30 +135,18 @@ Bounce Func_Dispatcher(Level* const L)
     assert(Is_Fresh(SPARE));
     return CONTINUE_CORE(
         SPARE,  // body evaluative result discarded [1]
-        LEVEL_MASK_NONE,  // no DISPATCHER_CATCHES, so RETURN skips [2]
+        LEVEL_MASK_NONE,  // no DISPATCHER_CATCHES, RETURN is responsible
         SPC(L->varlist), body
     );
 
 } body_finished_without_returning: {  ////////////////////////////////////////
 
-    const Param* param_return = ACT_PARAMS_HEAD(Level_Phase(L));
+    Init_Trash(OUT);  // trash, regardless of body result [2]
 
-    if (Get_Parameter_Flag(param_return, RETURN_TRASH)) {
-        Init_Trash(OUT);  // trash, regardless of body result [3]
-        return Proxy_Multi_Returns(L);
-    }
+    if (not Typecheck_Coerce_Return(L, OUT))
+        fail ("End of function without a RETURN, but ~ not in RETURN: spec");
 
-    if (Get_Parameter_Flag(param_return, RETURN_NIHIL)) {
-        Init_Nihil(OUT);  // nihil, regardless of body result [3]
-        return Proxy_Multi_Returns(L);
-    }
-
-    if (Is_Parameter_Unconstrained(param_return)) {
-        Init_Trash(OUT);  // trash falls out of FUNC by default
-        return Proxy_Multi_Returns(L);
-    }
-
-    fail ("Functions with RETURN: in spec must use RETURN to typecheck");
+    return Proxy_Multi_Returns(L);
 }}
 
 
@@ -538,16 +520,11 @@ bool Typecheck_Coerce_Return(
     const Param* param = ACT_PARAMS_HEAD(phase);
     assert(KEY_SYM(ACT_KEYS_HEAD(phase)) == SYM_RETURN);
 
-    if (Get_Parameter_Flag(param, RETURN_TRASH)) {
-        if (Is_Trash(atom))
-            return true;
-    }
+    if (Get_Parameter_Flag(param, TRASH_DEFINITELY_OK) and Is_Trash(atom))
+        return true;  // common case, make fast
 
-    if (Get_Parameter_Flag(param, RETURN_NIHIL)) {
-        if (Is_Nihil(atom))
-            return true;
-        fail ("If RETURN: <nihil> is in a function spec, RETURN NIHIL only");
-    }
+    if (Get_Parameter_Flag(param, NIHIL_DEFINITELY_OK) and Is_Nihil(atom))
+        return true;  // kind of common... necessary?
 
     if (Typecheck_Coerce_Argument(param, atom))
         return true;

@@ -183,10 +183,11 @@ elide-if-void: func* [
 |\|\|\||: func* [  ; e.g. |||
     {Inertly consumes all subsequent data, evaluating to previous result.}
 
-    return: <nihil>
+    return: [nihil?]
     'omit [element? <variadic>]
 ][
     until [null? try take omit]
+    return nihil
 ]
 
 
@@ -480,7 +481,7 @@ print: func* [
 echo: func* [
     {Freeform output of text, with @WORD, @TU.P.LE, and @(GR O UP) as escapes}
 
-    return: <nihil>
+    return: [nihil?]
     'args "If a BLOCK!, then just that block's contents--else to end of line"
         [element? <variadic>]
     <local> line
@@ -507,6 +508,7 @@ echo: func* [
         ]
     ]
     write-stdout newline
+    return nihil
 ]
 
 

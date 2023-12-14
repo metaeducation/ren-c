@@ -2642,7 +2642,7 @@ DECLARE_NATIVE(light) {
 //
 //  {Make an empty parameter pack (isotopic ~[]~), representing "vaporization"}
 //
-//      return: <nihil>
+//      return: [nihil?]
 //  ]
 //
 DECLARE_NATIVE(nihil) {

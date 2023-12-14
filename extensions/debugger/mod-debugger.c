@@ -109,7 +109,7 @@ bool Do_Breakpoint_Throws(
 //
 //  "Signal breakpoint to the host, but do not participate in evaluation"
 //
-//      return: <nihil>
+//      return: [nihil?]
 //  ]
 //
 DECLARE_NATIVE(breakpoint_p)

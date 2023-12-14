@@ -252,6 +252,5 @@ export collect-logs: function [
                 |
             seek position
         ]
-        <end>
     ]
 ]

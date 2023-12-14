@@ -449,7 +449,13 @@ bool Typecheck_Coerce_Argument(
 
     enum Reb_Kind kind = Is_Stable(arg) ? VAL_TYPE(arg) : REB_ISOTOPE;
 
-    if (Get_Parameter_Flag(param, NULLS_DEFINITELY_OK) and Is_Nulled(arg))
+    if (Get_Parameter_Flag(param, NULL_DEFINITELY_OK) and Is_Nulled(arg))
+        goto return_true;
+
+    if (Get_Parameter_Flag(param, NIHIL_DEFINITELY_OK) and Is_Nihil(arg))
+        goto return_true;
+
+    if (Get_Parameter_Flag(param, TRASH_DEFINITELY_OK) and Is_Trash(arg))
         goto return_true;
 
     if (Get_Parameter_Flag(param, ANY_VALUE_OK) and Is_Stable(arg))
@@ -461,7 +467,7 @@ bool Typecheck_Coerce_Argument(
     if (Is_Parameter_Unconstrained(param)) {
         if (Get_Parameter_Flag(param, REFINEMENT)) {  // no-arg refinement
             if (Is_Blackhole(arg))
-                goto return_true;  // nulls handled by NULLS_DEFINITELY_OK
+                goto return_true;  // nulls handled by NULL_DEFINITELY_OK
             goto return_false;
         }
         goto return_true;  // other parameters

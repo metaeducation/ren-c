@@ -146,7 +146,7 @@ void Dump_Stack(Level* L)
 //
 //  "Temporary debug dump"
 //
-//      return: <nihil>
+//      return: [nihil?]
 //      :value [word!]
 //  ]
 //

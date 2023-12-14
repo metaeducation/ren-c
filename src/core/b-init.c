@@ -311,7 +311,6 @@ static REBVAL *Make_Locked_Tag(const char *utf8) { // helper
 //
 static void Init_Action_Spec_Tags(void)
 {
-    ensure(nullptr, Root_Nihil_Tag) = Make_Locked_Tag("nihil");
     ensure(nullptr, Root_With_Tag) = Make_Locked_Tag("with");
     ensure(nullptr, Root_Variadic_Tag) = Make_Locked_Tag("variadic");
     ensure(nullptr, Root_Opt_Tag) = Make_Locked_Tag("opt");
@@ -328,7 +327,6 @@ static void Init_Action_Spec_Tags(void)
 
 static void Shutdown_Action_Spec_Tags(void)
 {
-    rebReleaseAndNull(&Root_Nihil_Tag);
     rebReleaseAndNull(&Root_With_Tag);
     rebReleaseAndNull(&Root_Variadic_Tag);
     rebReleaseAndNull(&Root_Opt_Tag);

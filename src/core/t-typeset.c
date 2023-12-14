@@ -147,7 +147,7 @@ Param* Init_Parameter_Untracked(
     ParamClass pclass = u_cast(ParamClass, FIRST_BYTE(&flags));
     assert(pclass != PARAMCLASS_0);  // must have class
     if (flags & PARAMETER_FLAG_REFINEMENT) {
-        assert(flags & PARAMETER_FLAG_NULLS_DEFINITELY_OK);
+        assert(flags & PARAMETER_FLAG_NULL_DEFINITELY_OK);
         assert(pclass != PARAMCLASS_RETURN and pclass != PARAMCLASS_OUTPUT);
     }
 
@@ -173,7 +173,7 @@ Param* Init_Parameter_Untracked(
 
         if (Is_Quasi(item)) {
             if (Cell_Heart(item) == REB_VOID) {
-                flags |= PARAMETER_FLAG_RETURN_TRASH;
+                flags |= PARAMETER_FLAG_TRASH_DEFINITELY_OK;
                 continue;
             }
             if (Cell_Heart(item) != REB_WORD)
@@ -207,7 +207,7 @@ Param* Init_Parameter_Untracked(
             else if (0 == CT_String(item, Root_End_Tag, strict)) {
                 flags |= PARAMETER_FLAG_ENDABLE;
                 Init_Quasi_Word(dest, Canon(NULL));  // !!!
-                flags |= PARAMETER_FLAG_NULLS_DEFINITELY_OK;
+                flags |= PARAMETER_FLAG_NULL_DEFINITELY_OK;
             }
             else if (0 == CT_String(item, Root_Maybe_Tag, strict)) {
                 flags |= PARAMETER_FLAG_NOOP_IF_VOID;
@@ -216,7 +216,7 @@ Param* Init_Parameter_Untracked(
             }
             else if (0 == CT_String(item, Root_Opt_Tag, strict)) {
                 Init_Quasi_Word(dest, Canon(NULL));  // !!!
-                flags |= PARAMETER_FLAG_NULLS_DEFINITELY_OK;
+                flags |= PARAMETER_FLAG_NULL_DEFINITELY_OK;
             }
             else if (0 == CT_String(item, Root_Void_Tag, strict)) {
                 Init_Any_Word_Bound(  // !!
@@ -235,7 +235,7 @@ Param* Init_Parameter_Untracked(
                 flags |= PARAMETER_FLAG_SKIPPABLE;
                 flags |= PARAMETER_FLAG_ENDABLE; // skip => null
                 Init_Quasi_Word(dest, Canon(NULL));  // !!!
-                flags |= PARAMETER_FLAG_NULLS_DEFINITELY_OK;
+                flags |= PARAMETER_FLAG_NULL_DEFINITELY_OK;
             }
             else if (0 == CT_String(item, Root_Const_Tag, strict)) {
                 flags |= PARAMETER_FLAG_CONST;
@@ -304,6 +304,8 @@ Param* Init_Parameter_Untracked(
                     flags |= PARAMETER_FLAG_ANY_VALUE_OK;
                 else if (intrinsic == &N_any_atom_q)
                     flags |= PARAMETER_FLAG_ANY_ATOM_OK;
+                else if (intrinsic == &N_nihil_q)
+                    flags |= PARAMETER_FLAG_NIHIL_DEFINITELY_OK;
                 else
                     flags |= PARAMETER_FLAG_INCOMPLETE_OPTIMIZATION;
             }

@@ -205,13 +205,6 @@ void Push_Paramlist_Quads_May_Fail(
                 mode = SPEC_MODE_LOCAL;
                 continue;
             }
-            else if (0 == CT_String(item, Root_Nihil_Tag, strict)) {
-                StackValue(*) param = PARAM_SLOT(TOP_INDEX);
-                Set_Parameter_Flag(param, RETURN_NIHIL);  // enforce RETURN NIHIL
-
-                assert(Cell_Parameter_Spec(param) == nullptr);
-                continue;
-            }
             else
                 fail (Error_Bad_Func_Def_Raw(item));
         }
@@ -441,7 +434,7 @@ void Push_Paramlist_Quads_May_Fail(
                 param,
                 FLAG_PARAMCLASS_BYTE(pclass)
                     | PARAMETER_FLAG_REFINEMENT  // must preserve if type block
-                    | PARAMETER_FLAG_NULLS_DEFINITELY_OK  // need if refinement
+                    | PARAMETER_FLAG_NULL_DEFINITELY_OK  // need if refinement
             );
         }
         else {

@@ -172,7 +172,7 @@ dumps: enfix function [
         ; have a way to be called--in spirit they are like enfix functions,
         ; so SHOVE (>-) would be used, but it doesn't work yet...review.)
         ;
-        d: function [return: <nihil> /on /off <static> d'] compose/deep [
+        d: function [return: [nihil?] /on /off <static> d'] compose/deep [
             d': default [
                 d'': specialize :dump [prefix: (as text! name)]
                 d'' #on
@@ -182,6 +182,7 @@ dumps: enfix function [
                 off [d' #off]
                 /else [d' (value)]
             ]
+            return nihil
         ]
     ]
     return set name runs :d
@@ -283,7 +284,7 @@ summarize-obj: function [
 **: function [
     {Comment until end of line, or end of current BLOCK!/GROUP!}
 
-    return: <nihil>
+    return: [nihil?]
     'args [element? <variadic>]
 ][
     while [all [
@@ -296,4 +297,5 @@ summarize-obj: function [
             return nihil
         ]
     ]
+    return nihil
 ]

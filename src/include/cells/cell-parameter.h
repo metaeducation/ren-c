@@ -194,25 +194,19 @@ INLINE Option(const Array*) Cell_Parameter_Spec(
     FLAG_LEFT_BIT(13)
 
 
-//=//// PARAMETER_FLAG_RETURN_TRASH ///////////////////////////////////////=//
+//=//// PARAMETER_FLAG_TRASH_DEFINITELY_OK ////////////////////////////////=//
 //
-// This flag is only on `return:` parameters, and it indicates for a FUNC
-// that it intentionally has a ~ isotope result...and it's okay to not have a
-// RETURN statement at the end of the function.  Any RETURN statements that
-// do happen must be e.g. `return ~` or `return trash`.
+// See notes on NULL_DEFINITELY_OK
 //
-#define PARAMETER_FLAG_RETURN_TRASH \
+#define PARAMETER_FLAG_TRASH_DEFINITELY_OK \
     FLAG_LEFT_BIT(14)
 
 
-//=//// PARAMETER_FLAG_RETURN_NIHIL ///////////////////////////////////////=//
+//=//// PARAMETER_FLAG_NIHIL_DEFINITELY_OK ////////////////////////////////=//
 //
-// This flag is only on `return:` parameters, and it indicates for a FUNC
-// that it intentionally has a ~[]~ isotope result (e.g. invisible, like
-// COMMENT).  It's okay to not have a RETURN statement at the end of the
-// function, but any RETURN statements that do happen must be `return nihil`.
+// See notes on NULL_DEFINITELY_OK
 //
-#define PARAMETER_FLAG_RETURN_NIHIL \
+#define PARAMETER_FLAG_NIHIL_DEFINITELY_OK \
     FLAG_LEFT_BIT(15)
 
 
@@ -226,7 +220,7 @@ INLINE Option(const Array*) Cell_Parameter_Spec(
     FLAG_LEFT_BIT(16)
 
 
-//=//// PARAMETER_FLAG_NULLS_DEFINITELY_OK ////////////////////////////////=//
+//=//// PARAMETER_FLAG_NULL_DEFINITELY_OK /////////////////////////////////=//
 //
 // The NULL? type checking function adds overhead, even if called via an
 // intrinsic optimization.  Yet it's common--especially unused refinements,
@@ -235,7 +229,7 @@ INLINE Option(const Array*) Cell_Parameter_Spec(
 // This flag not being set doesn't mean nulls aren't ok (some unoptimized
 // typechecker might accept nulls).
 //
-#define PARAMETER_FLAG_NULLS_DEFINITELY_OK \
+#define PARAMETER_FLAG_NULL_DEFINITELY_OK \
     FLAG_LEFT_BIT(17)
 
 
@@ -311,7 +305,7 @@ INLINE Param* Init_Unconstrained_Parameter_Untracked(
     ParamClass pclass = u_cast(ParamClass, FIRST_BYTE(&flags));
     assert(pclass != PARAMCLASS_0);  // must have class
     if (flags & PARAMETER_FLAG_REFINEMENT) {
-        assert(flags & PARAMETER_FLAG_NULLS_DEFINITELY_OK);
+        assert(flags & PARAMETER_FLAG_NULL_DEFINITELY_OK);
         assert(pclass != PARAMCLASS_RETURN and pclass != PARAMCLASS_OUTPUT);
     }
     UNUSED(pclass);

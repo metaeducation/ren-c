@@ -1658,7 +1658,6 @@ do-commands: func [
                 update-write-state ctx cmd
             )
         ]
-        <end>
     ]
     debug ["writing bytes:" length of ctx.msg]
     ctx.resp: copy []

@@ -211,7 +211,7 @@ DECLARE_NATIVE(lambda)
             const Symbol* symbol = VAL_REFINEMENT_SYMBOL(key_slot);
             Init_Word(key_slot, symbol);
             param_flags |= PARAMETER_FLAG_REFINEMENT;
-            param_flags |= PARAMETER_FLAG_NULLS_DEFINITELY_OK;
+            param_flags |= PARAMETER_FLAG_NULL_DEFINITELY_OK;
         }
         else if (Is_Set_Word(item) and Cell_Word_Id(item) == SYM_RETURN) {
             fail ("LAMBDA (->) does not offer RETURN facilities, use FUNCTION");

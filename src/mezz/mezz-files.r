@@ -452,11 +452,10 @@ detab-file: function [
 
 ; temporary location
 set-net: function [
-    {sets the system/user/identity email smtp pop3 esmtp-usr esmtp-pass fqdn}
+    {sets the system.user.identity email smtp pop3 esmtp-usr esmtp-pass fqdn}
 
-    return: [~]
     bl [block!]
 ][
     if 6 <> length of bl [fail "Needs all 6 parameters for set-net"]
-    set (words of system/user/identity) bl
+    set (words of system.user.identity) bl
 ]
