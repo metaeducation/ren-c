@@ -541,11 +541,9 @@ Bounce MAKE_Frame(
     if (Is_Varargs(arg)) {
         Level* L_varargs;
         Feed* feed;
-        bool allocated_feed;
         if (Is_Level_Style_Varargs_May_Fail(&L_varargs, arg)) {
             assert(Is_Action_Level(L_varargs));
             feed = L_varargs->feed;
-            allocated_feed = false;
         }
         else {
             REBVAL *shared;
@@ -553,8 +551,9 @@ Bounce MAKE_Frame(
                 fail ("Expected BLOCK!-style varargs");  // shouldn't happen
 
             feed = Make_At_Feed_Core(shared, SPECIFIED);
-            allocated_feed = true;
         }
+
+        Add_Feed_Reference(feed);
 
         bool error_on_deferred = true;
         if (Init_Frame_From_Feed_Throws(
@@ -566,8 +565,7 @@ Bounce MAKE_Frame(
             return BOUNCE_THROWN;
         }
 
-        if (allocated_feed)
-            Free_Feed(feed);
+        Release_Feed(feed);
 
         return OUT;
     }

@@ -113,8 +113,7 @@ DECLARE_NATIVE(reduce)
 
     Level* sub = Make_Level_At(
         v,  // REB_BLOCK or REB_GROUP
-        LEVEL_FLAG_ALLOCATED_FEED
-            | LEVEL_FLAG_TRAMPOLINE_KEEPALIVE  // reused for each step
+        LEVEL_FLAG_TRAMPOLINE_KEEPALIVE  // reused for each step
             | LEVEL_FLAG_RAISED_RESULT_OK  // predicates (like META) may handle
     );
     Push_Level(OUT, sub);
@@ -643,7 +642,7 @@ Bounce Composer_Executor(Level* const L)
 
     Level* sublevel = Make_Level(
         subfeed,  // used subfeed so we could skip the label if there was one
-        LEVEL_FLAG_ALLOCATED_FEED
+        LEVEL_MASK_NONE
     );
     sublevel->executor = &Array_Executor;
 

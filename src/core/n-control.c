@@ -111,9 +111,6 @@ Bounce Group_Branch_Executor(Level* level_)
     Push_Level(SPARE, sub);
     sub->executor = &Array_Executor;
 
-    Clear_Level_Flag(LEVEL, ALLOCATED_FEED);
-    LEVEL->feed = TG_End_Feed;  // feed consumed by sublevel
-
     STATE = ST_GROUP_BRANCH_RUNNING_GROUP;
     return CATCH_CONTINUE_SUBLEVEL(sub);
 

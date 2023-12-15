@@ -274,8 +274,7 @@ INLINE const char* Level_Label_Or_Anonymous_UTF8(Level* L) {
 // optimize performance by working with the evaluator directly.
 
 INLINE void Free_Level_Internal(Level* L) {
-    if (Get_Level_Flag(L, ALLOCATED_FEED))
-        Free_Feed(L->feed);  // didn't inherit from parent, and not END_FRAME
+    Release_Feed(L->feed);  // frees if refcount goes to 0
 
     if (L->varlist and Not_Node_Managed(L->varlist))
         GC_Kill_Series(L->varlist);
@@ -426,7 +425,8 @@ INLINE Level* Prep_Level_Core(
 }
 
 #define Make_Level(feed,flags) \
-    Prep_Level_Core(u_cast(Level*, Alloc_Pooled(LEVEL_POOL)), (feed), (flags))
+    Prep_Level_Core(u_cast(Level*, Alloc_Pooled(LEVEL_POOL)), \
+        Add_Feed_Reference(feed), (flags))
 
 #define Make_Level_At_Core(any_array,specifier,level_flags) \
     Make_Level( \
@@ -436,7 +436,7 @@ INLINE Level* Prep_Level_Core(
             (specifier), \
             TOP_LEVEL->feed->flags.bits \
         ), \
-        (level_flags) | LEVEL_FLAG_ALLOCATED_FEED \
+        (level_flags) \
     )
 
 #define Make_Level_At(any_array,flags) \

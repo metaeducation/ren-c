@@ -1052,10 +1052,7 @@ static bool Run_Va_Throws(
         FEED_MASK_DEFAULT
     );
 
-    Level* L = Make_Level(
-        feed,
-        LEVEL_FLAG_ALLOCATED_FEED | flags
-    );
+    Level* L = Make_Level(feed, flags);
     L->executor = &Array_Executor;
 
     bool threw = Trampoline_Throws(out, L);
@@ -1140,11 +1137,7 @@ bool RL_rebRunCoreThrows(
         FEED_MASK_DEFAULT
     );
 
-    Level* L = Make_Level(
-        feed,
-        flags | LEVEL_FLAG_ALLOCATED_FEED
-    );
-
+    Level* L = Make_Level(feed, flags);
     Push_Level(out, L);
 
     if (Trampoline_With_Top_As_Root_Throws()) {
@@ -1209,6 +1202,7 @@ REBVAL *RL_rebTranscodeInto(
         Get_Context_From_Stack(),  // No context parameter [1]
         FEED_MASK_DEFAULT
     );
+    Add_Feed_Reference(feed);
     Sync_Feed_At_Cell_Or_End_May_Fail(feed);
 
     StackIndex base = TOP_INDEX;
@@ -1218,7 +1212,7 @@ REBVAL *RL_rebTranscodeInto(
         Fetch_Next_In_Feed(feed);
     }
 
-    Free_Feed(feed);  // Note: exhausting feed should take care of the va_end()
+    Release_Feed(feed);  // Note: exhausting feed takes care of the va_end()
 
     return Init_Block(
         out,

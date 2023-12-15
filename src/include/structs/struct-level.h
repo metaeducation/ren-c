@@ -44,30 +44,15 @@ STATIC_ASSERT(LEVEL_FLAG_0_IS_TRUE == NODE_FLAG_NODE);
 STATIC_ASSERT(LEVEL_FLAG_1_IS_FALSE == NODE_FLAG_FREE);
 
 
-//=//// LEVEL_FLAG_ALLOCATED_FEED //////////////////////////////////////////=//
+//=//// LEVEL_FLAG_2 //////////////////////////////////////////////////////=//
 //
-// Some level recursions re-use a feed that already existed, while others will
-// allocate them.  This re-use allows recursions to keep index positions and
-// fetched "gotten" values in sync.  The dynamic allocation means that feeds
-// can be kept alive across contiuations--which wouldn't be possible if they
-// were on the C stack.
-//
-// If a level allocated a feed, then it has to be freed...which is done when
-// the level is dropped or aborted.
-//
-// !!! Note that this is NODE_FLAG_MANAGED.  Right now, the concept of
-// "managed" vs. "unmanaged" doesn't completely apply to levels--they are all
-// basically managed, but references to them in values are done through a
-// level of indirection (a varlist) which will be patched up to not point
-// to them if they are freed.  So this bit is used for another purpose.
-//
-#define LEVEL_FLAG_ALLOCATED_FEED \
+#define LEVEL_FLAG_2 \
     FLAG_LEFT_BIT(2)
 
-STATIC_ASSERT(LEVEL_FLAG_ALLOCATED_FEED == NODE_FLAG_MANAGED);  // should be ok
+STATIC_ASSERT(LEVEL_FLAG_2 == NODE_FLAG_MANAGED);  // if useful
 
 
-//=//// LEVEL_FLAG_BRANCH ///////////////////////////////////////////////////=//
+//=//// LEVEL_FLAG_BRANCH /////////////////////////////////////////////////=//
 //
 // If something is a branch and it is evaluating, then it cannot result in
 // either a pure null or void result.  So they have to be put in a PACK!.

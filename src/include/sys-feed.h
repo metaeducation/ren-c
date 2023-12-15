@@ -626,6 +626,17 @@ INLINE void Free_Feed(Feed* feed) {
     Free_Pooled(FEED_POOL, feed);
 }
 
+INLINE void Release_Feed(Feed* feed) {
+    assert(feed->refcount > 0);
+    if (--feed->refcount == 0)
+        Free_Feed(feed);
+}
+
+INLINE Feed* Add_Feed_Reference(Feed* feed) {
+    ++feed->refcount;
+    return feed;
+}
+
 INLINE Feed* Prep_Feed_Common(void* preallocated, Flags flags) {
    Feed* feed = u_cast(Feed*, preallocated);
 
@@ -647,6 +658,8 @@ INLINE Feed* Prep_Feed_Common(void* preallocated, Flags flags) {
     feed->flags.bits = flags;
     Corrupt_Pointer_If_Debug(feed->p);
     Corrupt_Pointer_If_Debug(feed->gotten);
+
+    feed->refcount = 0;  // putting in levels should add references
 
     Corrupt_Pointer_If_Debug(feed->context);  // experiment!
     return feed;

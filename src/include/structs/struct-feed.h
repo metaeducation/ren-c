@@ -253,6 +253,13 @@ struct FeedStruct {
     //
     Option(Value(const*)) gotten;
 
+    // Feeds need to be freed when the last level reference is dropped.  This
+    // doesn't go in a simple stacklike order, due to stack rearrangement
+    // done by generators and tail calls etc.  Dropping the refcount to 0
+    // should free it.
+    //
+    uintptr_t refcount;
+
     // If a feed contains text portions, we offer the ability to say where
     // those text portions should be "interned".
     //

@@ -133,7 +133,6 @@ DECLARE_NATIVE(entrap)  // wrapped as TRAP and ATTEMPT
         sub = Make_Level_At(
             code,  // REB_BLOCK or REB_GROUP
             flags
-                | LEVEL_FLAG_ALLOCATED_FEED
         );
         Push_Level(SPARE, sub);
     }

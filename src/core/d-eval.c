@@ -267,7 +267,6 @@ void Evaluator_Exit_Checks_Debug(Level* L) {
         filtered &= ~ (
             LEVEL_FLAG_0_IS_TRUE  // always true
             | LEVEL_FLAG_7_IS_TRUE  // always true
-            | LEVEL_FLAG_ALLOCATED_FEED
             | LEVEL_FLAG_ROOT_LEVEL
             | LEVEL_FLAG_TRAMPOLINE_KEEPALIVE
         );

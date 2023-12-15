@@ -144,11 +144,7 @@ Bounce Macro_Dispatcher(Level* const L)
 
     Splice_Block_Into_Feed(L->feed, stable_SPARE);
 
-    Level* sub = Make_Level(
-        L->feed,
-        LEVEL_MASK_NONE
-    );
-
+    Level* sub = Make_Level(L->feed, LEVEL_MASK_NONE);
     Push_Level(OUT, sub);
     return DELEGATE_SUBLEVEL(sub);
 }
@@ -215,10 +211,7 @@ DECLARE_NATIVE(inline)
         Splice_Block_Into_Feed(level_->feed, ARG(splice));
     }
 
-    Level* sub = Make_Level(
-        level_->feed,
-        LEVEL_MASK_NONE
-    );
+    Level* sub = Make_Level(level_->feed, LEVEL_MASK_NONE);
     Push_Level(OUT, sub);
     return DELEGATE_SUBLEVEL(sub);
 }

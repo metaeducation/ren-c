@@ -2976,6 +2976,7 @@ Array* Scan_UTF8_Managed(
         context,
         FEED_MASK_DEFAULT
     );
+    Add_Feed_Reference(feed);
     Sync_Feed_At_Cell_Or_End_May_Fail(feed);
 
     StackIndex base = TOP_INDEX;
@@ -2990,7 +2991,7 @@ Array* Scan_UTF8_Managed(
 /*    if (Get_Scan_Executor_Flag(L, NEWLINE_PENDING))  // !!! feed flag
         flags |= ARRAY_FLAG_NEWLINE_AT_TAIL; */
 
-    Free_Feed(feed);  // feeds are dynamically allocated and must be freed
+    Release_Feed(feed);  // feeds are dynamically allocated and must be freed
 
     Array* a = Pop_Stack_Values_Core(base, flags);
 
@@ -3140,8 +3141,7 @@ DECLARE_NATIVE(transcode)
 
     Flags flags =
         LEVEL_FLAG_TRAMPOLINE_KEEPALIVE  // query pending newline
-        | LEVEL_FLAG_RAISED_RESULT_OK  // want to pass on definitional error
-        | LEVEL_FLAG_ALLOCATED_FEED;
+        | LEVEL_FLAG_RAISED_RESULT_OK;  // want to pass on definitional error
 
     if (REF(one))
         flags |= SCAN_EXECUTOR_FLAG_JUST_ONCE;

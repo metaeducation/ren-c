@@ -92,6 +92,8 @@ void Startup_Feeds(void)
     PG_Feed_At_End.header.bits = FLAG_FIRST_BYTE(END_SIGNAL_BYTE);
 
     TG_End_Feed = Make_Array_Feed_Core(EMPTY_ARRAY, 0, SPECIFIED);
+    Add_Feed_Reference(TG_End_Feed);
+    assert(Is_Feed_At_End(TG_End_Feed));
 }
 
 //
@@ -100,7 +102,7 @@ void Startup_Feeds(void)
 void Shutdown_Feeds(void) {
     PG_Feed_At_End.header.bits = 0;
 
-    Free_Feed(TG_End_Feed);
+    Release_Feed(TG_End_Feed);
     TG_End_Feed = nullptr;
 }
 

@@ -304,10 +304,7 @@ DECLARE_NATIVE(do)
         if (Is_Level_At_End(L))
             return VOID;
 
-        Level* sub = Make_Level(
-            L->feed,
-            LEVEL_MASK_NONE
-        );
+        Level* sub = Make_Level(L->feed, LEVEL_MASK_NONE);
         sub->executor = &Array_Executor;
         Push_Level(OUT, sub);
         return DELEGATE_SUBLEVEL(sub); }
@@ -439,7 +436,7 @@ DECLARE_NATIVE(evaluate)
         );
         assert(Not_Feed_At_End(feed));
 
-        Flags flags = LEVEL_FLAG_ALLOCATED_FEED;
+        Flags flags = LEVEL_MASK_NONE;
 
         if (not REF(next)) {
             flags |= FLAG_STATE_BYTE(ST_ARRAY_PRELOADED_ENTRY);

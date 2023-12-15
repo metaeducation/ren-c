@@ -317,11 +317,7 @@ INLINE bool Eval_Step_In_Any_Array_At_Throws(
         return false;
     }
 
-    Level* L = Make_Level(
-        feed,
-        flags | LEVEL_FLAG_ALLOCATED_FEED
-    );
-
+    Level* L = Make_Level(feed, flags);
     Push_Level(out, L);
 
     if (Trampoline_With_Top_As_Root_Throws()) {
@@ -356,7 +352,7 @@ INLINE bool Eval_Value_Core_Throws(
         FEED_MASK_DEFAULT | (value->header.bits & FEED_FLAG_CONST)
     );
 
-    Level* L = Make_Level(feed, flags | LEVEL_FLAG_ALLOCATED_FEED);
+    Level* L = Make_Level(feed, flags);
 
     return Trampoline_Throws(out, L);
 }
