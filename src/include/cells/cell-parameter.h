@@ -67,7 +67,7 @@ INLINE Option(const Array*) Cell_Parameter_Spec(
     assert(HEART_BYTE(v) == REB_PARAMETER);
 
     const Array* a = cast(Array*, Cell_Node1(v));
-    if (a != nullptr and Get_Series_Flag(a, INACCESSIBLE))
+    if (a != nullptr and Not_Series_Accessible(a))
         fail (Error_Series_Data_Freed_Raw());
     return a;
 }

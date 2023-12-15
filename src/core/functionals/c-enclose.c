@@ -128,7 +128,7 @@ Bounce Encloser_Dispatcher(Level* const L)
     //
     // INIT_BONUS_KEYSOURCE(CTX_VARLIST(c), ACT_KEYLIST(VAL_ACTION(inner)));
     //
-    // assert(Get_Series_Flag(L->varlist, INACCESSIBLE));  // look dead
+    // assert(Not_Series_Accessible(L->varlist));  // look dead
     //
     // // L->varlist may or may not have wound up being managed.  It was not
     // // allocated through the usual mechanisms, so if unmanaged it's not in

@@ -940,7 +940,7 @@ void Assert_Context_Core(Context* c)
     if (keys_len + 1 != vars_len)
         panic (c);
 
-    if (Get_Series_Flag(CTX_VARLIST(c), INACCESSIBLE)) {
+    if (Not_Series_Accessible(CTX_VARLIST(c))) {
         //
         // !!! For the moment, don't check inaccessible stack frames any
         // further.  This includes varless reified frames and those reified

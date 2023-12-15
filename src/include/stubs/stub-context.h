@@ -148,7 +148,7 @@
 
 INLINE const REBVAL *CTX_ARCHETYPE(Context* c) {  // read-only form
     const Series* varlist = CTX_VARLIST(c);
-    if (Get_Series_Flag(varlist, INACCESSIBLE)) {  // a freed stub
+    if (Not_Series_Accessible(varlist)) {  // a freed stub
         assert(Not_Series_Flag(varlist, DYNAMIC));  // variables are gone
         return c_cast(REBVAL*, &varlist->content.fixed);
     }
@@ -202,7 +202,7 @@ INLINE void INIT_VAL_FRAME_ROOTVAR_Core(
     Context* binding  // allowed to be UNBOUND
 ){
     assert(
-        (Get_Series_Flag(varlist, INACCESSIBLE) and out == Stub_Cell(varlist))
+        (Not_Series_Accessible(varlist) and out == Stub_Cell(varlist))
         or out == Array_Head(varlist)
     );
     assert(phase != nullptr);
@@ -278,18 +278,19 @@ INLINE REBLEN CTX_LEN(Context* c) {
 
 INLINE const Key* CTX_KEY(Context* c, REBLEN n) {
     //
-    // !!! Inaccessible contexts have to retain their keylists, at least
-    // until all words bound to them have been adjusted somehow, because the
-    // words depend on those keys for their spellings (once bound)
+    // !!! At one point, bound words got their spellings from their context.
+    // Hence inaccessible contexts had to retain their keylists until all
+    // words bound to them had been adjusted somehow.  Consider this issue
+    // if ever retrying that technique.
     //
-    /* assert(Not_Series_Flag(c, INACCESSIBLE)); */
+    /* assert(Is_Series_Accessible(c)); */
 
     assert(n != 0 and n <= CTX_LEN(c));
     return Series_At(const Key, CTX_KEYLIST(c), n - 1);
 }
 
 INLINE Value(*) CTX_VAR(Context* c, REBLEN n) {  // 1-based, no Cell*
-    assert(Not_Series_Flag(CTX_VARLIST(c), INACCESSIBLE));
+    assert(Is_Series_Accessible(CTX_VARLIST(c)));
     assert(n != 0 and n <= CTX_LEN(c));
     return cast(Value(*), cast(Series*, c)->content.dynamic.data) + n;
 }
@@ -402,7 +403,7 @@ INLINE Level* CTX_LEVEL_IF_ON_STACK(Context* c) {
     if (not Is_Node_A_Cell(keysource))
         return nullptr; // e.g. came from MAKE FRAME! or Encloser_Dispatcher
 
-    assert(Not_Series_Flag(CTX_VARLIST(c), INACCESSIBLE));
+    assert(Is_Series_Accessible(CTX_VARLIST(c)));
     assert(Is_Frame(CTX_ARCHETYPE(c)));
 
     Level* L = cast(Level*, keysource);
@@ -418,7 +419,7 @@ INLINE Level* CTX_LEVEL_MAY_FAIL(Context* c) {
 }
 
 INLINE void FAIL_IF_INACCESSIBLE_CTX(Context* c) {
-    if (Get_Series_Flag(CTX_VARLIST(c), INACCESSIBLE)) {
+    if (Not_Series_Accessible(CTX_VARLIST(c))) {
         if (CTX_TYPE(c) == REB_FRAME)
             fail (Error_Expired_Frame_Raw()); // !!! different error?
         fail (Error_Series_Data_Freed_Raw());
@@ -513,7 +514,7 @@ INLINE Context* Steal_Context_Vars(Context* c, Node* keysource) {
     // now those marking failure are asked to do so manually to the stub
     // after this returns (hence they need to cache the varlist first).
     //
-    Set_Series_Flag(stub, INACCESSIBLE);
+    Set_Series_Inaccessible(stub);
 
     REBVAL *single = cast(REBVAL*, &stub->content.fixed);
     single->header.bits =

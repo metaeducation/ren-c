@@ -26,7 +26,7 @@ INLINE const Array* Cell_Array(NoQuote(const Cell*) v) {
     assert(Is_Node_A_Stub(Cell_Node1(v)));  // not a pairing arraylike!
 
     const Array* a = cast(Array*, Cell_Node1(v));
-    if (Get_Series_Flag(a, INACCESSIBLE))
+    if (Not_Series_Accessible(a))
         fail (Error_Series_Data_Freed_Raw());
     return a;
 }

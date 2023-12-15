@@ -112,7 +112,7 @@ PVAR REBVAL *Root_Heavy_Null;  // isotopic block containing a blank
 PVAR REBVAL *Root_Heavy_Void;  // isotopic block containing a quasi null
 PVAR REBVAL *Root_Heavy_False;  // isotopic block containing a meta false
 
-PVAR Array PG_Inaccessible_Series;  // singular inaccessible varlist
+PVAR Array PG_Inaccessible_Series;  // canon inaccessible series
 
 PVAR REBVAL *Root_Action_Adjunct;
 

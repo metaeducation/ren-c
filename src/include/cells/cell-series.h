@@ -8,7 +8,7 @@ INLINE const Series* Cell_Series(NoQuote(const Cell*) v) {
     assert(Any_Series_Kind(heart) or heart == REB_URL);
     UNUSED(heart);
     const Series* s = c_cast(Series*, Cell_Node1(v));
-    if (Get_Series_Flag(s, INACCESSIBLE))
+    if (Not_Series_Accessible(s))
         fail (Error_Series_Data_Freed_Raw());
     return s;
 }

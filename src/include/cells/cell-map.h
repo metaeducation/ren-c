@@ -67,7 +67,7 @@ INLINE const Map* VAL_MAP(NoQuote(const Cell*) v) {
     assert(Cell_Heart(v) == REB_MAP);
 
     Array* a = cast(Array*, Cell_Node1(v));
-    if (Get_Series_Flag(a, INACCESSIBLE))
+    if (Not_Series_Accessible(a))
         fail (Error_Series_Data_Freed_Raw());
 
     return cast(Map*, a);

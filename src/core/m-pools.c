@@ -1098,7 +1098,7 @@ void Remake_Series(Series* s, REBLEN units, Flags flags)
 //
 void Decay_Series(Series* s)
 {
-    assert(Not_Series_Flag(s, INACCESSIBLE));
+    assert(Is_Series_Accessible(s));
 
     switch (Series_Flavor(s)) {
       case FLAVOR_STRING:
@@ -1191,7 +1191,7 @@ void Decay_Series(Series* s)
             : tmp;
     }
 
-    Set_Series_Flag(s, INACCESSIBLE);
+    Set_Series_Inaccessible(s);
 }
 
 
@@ -1217,7 +1217,7 @@ void GC_Kill_Series(Series* s)
     //
     Touch_Stub_If_Debug(s);
 
-    if (Not_Series_Flag(s, INACCESSIBLE))
+    if (Is_Series_Accessible(s))
         Decay_Series(s);
 
   #if !defined(NDEBUG)

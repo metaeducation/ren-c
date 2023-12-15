@@ -797,7 +797,7 @@ Context* Copy_Context_Extra_Managed(
     REBLEN extra,
     REBU64 types
 ){
-    assert(Not_Series_Flag(CTX_VARLIST(original), INACCESSIBLE));
+    assert(Is_Series_Accessible(CTX_VARLIST(original)));
 
     REBLEN len = (CTX_TYPE(original) == REB_MODULE) ? 0 : CTX_LEN(original);
 

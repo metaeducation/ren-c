@@ -53,7 +53,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
 
         assert(Is_Node_Managed(binding));
 
-        if (Get_Series_Flag(binding, INACCESSIBLE))
+        if (Not_Series_Accessible(binding))
             break;
 
         assert(Is_Series_Array(binding));
@@ -138,7 +138,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
         assert(Get_Cell_Flag_Unchecked(v, FIRST_IS_NODE));
         Series* s = cast(Series*, Cell_Node1(v));
         Assert_Series_Term_Core(s);
-        if (Get_Series_Flag(s, INACCESSIBLE)) {
+        if (Not_Series_Accessible(s)) {
             // TBD: clear out reference and GC `s`?
         }
         assert(Is_Node_Marked(s));
@@ -187,7 +187,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
       case REB_BINARY: {
         assert(Get_Cell_Flag_Unchecked(v, FIRST_IS_NODE));
         Binary* s = cast(Binary*, Cell_Node1(v));
-        if (Get_Series_Flag(s, INACCESSIBLE))
+        if (Not_Series_Accessible(s))
             break;
 
         assert(Series_Wide(s) == sizeof(Byte));
@@ -202,7 +202,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
       case REB_TAG: {
         assert(Get_Cell_Flag_Unchecked(v, FIRST_IS_NODE));
         const String* s = c_cast(String*, Cell_Node1(v));
-        if (Get_Series_Flag(s, INACCESSIBLE))
+        if (Not_Series_Accessible(s))
             break;
 
         Assert_Series_Term_If_Needed(s);
@@ -264,7 +264,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
       case REB_MODULE:
       case REB_ERROR:
       case REB_PORT: {
-        if (Get_Series_Flag(cast(Series*, Cell_Node1(v)), INACCESSIBLE))
+        if (Not_Series_Accessible(cast(Series*, Cell_Node1(v))))
             break;
 
         assert(
@@ -299,7 +299,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
             assert(Is_Node_Marked(PAYLOAD(Any, v).second.node));  // phase or label
         }
 
-        if (Get_Series_Flag(CTX_VARLIST(context), INACCESSIBLE))
+        if (Not_Series_Accessible(CTX_VARLIST(context)))
             break;
 
         const REBVAL *archetype = CTX_ARCHETYPE(context);
@@ -332,7 +332,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
       case REB_META_GROUP:
       case REB_TYPE_GROUP: {
         Array* a = cast(Array*, Cell_Node1(v));
-        if (Get_Series_Flag(a, INACCESSIBLE))
+        if (Not_Series_Accessible(a))
             break;
 
         Assert_Series_Term_If_Needed(a);
@@ -382,7 +382,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
           //
           case FLAVOR_ARRAY : {
             Array* a = x_cast(Array*, node1);
-            assert(Not_Series_Flag(a, INACCESSIBLE));
+            assert(Is_Series_Accessible(a));
 
             assert(Array_Len(a) >= 2);
             const Cell* tail = Array_Tail(a);

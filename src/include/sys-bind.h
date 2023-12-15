@@ -566,7 +566,7 @@ INLINE Value(const*) Lookup_Word_May_Fail(
     if (IS_LET(s) or IS_PATCH(s))
         return SPECIFIC(Stub_Cell(s));
     Context* c = cast(Context*, s);
-    if (Get_Series_Flag(CTX_VARLIST(c), INACCESSIBLE))
+    if (Not_Series_Accessible(CTX_VARLIST(c)))
         fail (Error_No_Relative_Core(any_word));
 
     return CTX_VAR(c, index);
@@ -585,7 +585,7 @@ INLINE Option(Value(const*)) Lookup_Word(
     if (IS_LET(s) or IS_PATCH(s))
         return SPECIFIC(Stub_Cell(s));
     Context* c = cast(Context*, s);
-    if (Get_Series_Flag(CTX_VARLIST(c), INACCESSIBLE))
+    if (Not_Series_Accessible(CTX_VARLIST(c)))
         return nullptr;
 
     return CTX_VAR(c, index);
@@ -726,7 +726,7 @@ INLINE Specifier* Derive_Specifier_Core(
 
     // If any specifiers in a chain are inaccessible, the whole thing is.
     //
-    if (old != UNBOUND and Get_Series_Flag(old, INACCESSIBLE))
+    if (old != UNBOUND and Not_Series_Accessible(old))
         return &PG_Inaccessible_Series;
 
     if (specifier == SPECIFIED) {  // no override being requested
@@ -775,7 +775,7 @@ INLINE Specifier* Derive_Specifier_Core(
         if (
             frame_ctx == nullptr
             or (
-                Not_Series_Flag(CTX_VARLIST(frame_ctx), INACCESSIBLE) and
+                Is_Series_Accessible(CTX_VARLIST(frame_ctx)) and
                 not Action_Is_Base_Of(
                     cast(Action*, old),
                     CTX_FRAME_PHASE(frame_ctx)

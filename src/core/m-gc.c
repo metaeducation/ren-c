@@ -192,7 +192,7 @@ static void Queue_Mark_Node_Deep(const Node** pp) {
     }
 
     const Series* s = x_cast(const Series*, *pp);
-    if (Get_Series_Flag(s, INACCESSIBLE)) {
+    if (Not_Series_Accessible(s)) {
         //
         // All inaccessible nodes are collapsed and canonized into a universal
         // inaccessible node so the stub can be freed.
@@ -241,6 +241,8 @@ static void Queue_Mark_Node_Deep(const Node** pp) {
 //
 static void Queue_Unmarked_Accessible_Series_Deep(const Series* s)
 {
+    assert(Is_Series_Accessible(s));
+
     Add_GC_Mark(s);
 
   //=//// MARK LINK AND MISC IF DESIRED ////////////////////////////////////=//
@@ -277,7 +279,7 @@ static void Queue_Unmarked_Accessible_Series_Deep(const Series* s)
             // Symbol* are not available to the user to free out from under
             // a keylist (can't use FREE on them) and shouldn't vanish.
             //
-            assert(Not_Series_Flag(*key, INACCESSIBLE));
+            assert(Is_Series_Accessible(*key));
             if (Is_Node_Marked(*key))
                 continue;
             Queue_Unmarked_Accessible_Series_Deep(*key);
@@ -565,7 +567,7 @@ void Run_All_Handle_Cleaners(void) {
             Stub* stub = cast(Stub*, unit);
             if (stub == g_ds.array)
                 continue;
-            if (Get_Series_Flag(stub, INACCESSIBLE))
+            if (Not_Series_Accessible(stub))
                 continue;
             if (not Is_Series_Array(stub))
                 continue;
@@ -582,7 +584,7 @@ void Run_All_Handle_Cleaners(void) {
                 if (Not_Cell_Flag(item, FIRST_IS_NODE))
                     continue;
                 Stub* handle_stub = VAL_HANDLE_STUB(item);
-                if (Get_Series_Flag(handle_stub, INACCESSIBLE))
+                if (Not_Series_Accessible(handle_stub))
                     continue;
                 Decay_Series(handle_stub);
             }
@@ -877,10 +879,8 @@ static void Mark_Level_Stack_Deep(void)
 
         if (L->label) { // nullptr if anonymous
             const Symbol* sym = unwrap(L->label);
-            if (not Is_Node_Marked(sym)) {
-                assert(Not_Series_Flag(sym, INACCESSIBLE));  // can't happen
+            if (not Is_Node_Marked(sym))
                 Queue_Unmarked_Accessible_Series_Deep(sym);
-            }
         }
 
         if (L->varlist and Is_Node_Managed(L->varlist)) {
@@ -902,7 +902,7 @@ static void Mark_Level_Stack_Deep(void)
             goto propagate_and_continue;
         }
 
-        if (L->varlist and Get_Series_Flag(L->varlist, INACCESSIBLE)) {
+        if (L->varlist and Not_Series_Accessible(L->varlist)) {
             //
             // This happens in Encloser_Dispatcher(), where it can capture a
             // varlist that may not be managed (e.g. if there were no ADAPTs
@@ -1502,6 +1502,25 @@ void Startup_GC(void)
   #endif
 
     g_gc.depletion = g_gc.ballast;
+
+    // When a series needs to expire its content for some reason (including
+    // the user explicitly saying FREE), then there can still be references to
+    // that series around.  Since we don't want to trigger a GC synchronously
+    // each time this happens, the NODE_FLAG_FREE flag is added to series...and
+    // it is checked for by value extractors (like VAL_CONTEXT()).  But once
+    // the GC gets a chance to run, those stubs can be swept with all the
+    // inaccessible references canonized to this one global node.
+    //
+    Make_Series_Into(
+        &PG_Inaccessible_Series,
+        1,
+        FLAG_FLAVOR(THE_GLOBAL_INACCESSIBLE)
+            | NODE_FLAG_MANAGED
+            // Don't confuse the series creation machinery by trying to pass
+            // in NODE_FLAG_FREE to the creation.  Do it after.
+    );
+    Set_Series_Inaccessible(&PG_Inaccessible_Series);
+    assert(Not_Series_Accessible(&PG_Inaccessible_Series));
 }
 
 
@@ -1510,6 +1529,8 @@ void Startup_GC(void)
 //
 void Shutdown_GC(void)
 {
+    GC_Kill_Series(&PG_Inaccessible_Series);
+
     assert(Series_Used(g_gc.guarded) == 0);
     Free_Unmanaged_Series(g_gc.guarded);
     g_gc.guarded = nullptr;

@@ -145,7 +145,7 @@ static void Evaluator_Shared_Checks_Debug(Level* L)
 
     if (L->varlist) {
         assert(Not_Node_Managed(L->varlist));
-        assert(Not_Series_Flag(L->varlist, INACCESSIBLE));
+        assert(Is_Series_Accessible(L->varlist));
     }
 
     //=//// ^-- ABOVE CHECKS *ALWAYS* APPLY ///////////////////////////////=//
@@ -208,7 +208,7 @@ void Evaluator_Expression_Checks_Debug(Level* L)
     Corrupt_Pointer_If_Debug(L->u.action.arg);
     Corrupt_Pointer_If_Debug(L->u.action.param);
 
-    assert(not L->varlist or Not_Series_Flag(L->varlist, INACCESSIBLE));
+    assert(not L->varlist or Is_Series_Accessible(L->varlist));
 
     // Mutate va_list sources into arrays at fairly random moments in the
     // debug build.  It should be able to handle it at any time.
@@ -226,7 +226,7 @@ void Evaluator_Expression_Checks_Debug(Level* L)
 void Do_After_Action_Checks_Debug(Level* L) {
     assert(not Is_Throwing(L));
 
-    if (Get_Series_Flag(L->varlist, INACCESSIBLE))  // e.g. ENCLOSE
+    if (Not_Series_Accessible(L->varlist))  // e.g. ENCLOSE
         return;
 
     // Usermode functions check the return type via Func_Dispatcher(),

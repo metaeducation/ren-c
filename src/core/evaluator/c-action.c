@@ -1224,8 +1224,8 @@ void Push_Action(
         s,
         num_args + 1 + ONE_IF_POISON_TAILS  // +1 is rootvar
     )){
-        Set_Series_Flag(s, INACCESSIBLE);
-        GC_Kill_Series(s);  // ^-- needs non-null data unless INACCESSIBLE
+        Set_Series_Inaccessible(s);
+        GC_Kill_Series(s);  // ^-- needs non-null data unless free
         fail (Error_No_Memory(
             sizeof(Cell) * (num_args + 1 + ONE_IF_POISON_TAILS))
         );
@@ -1275,7 +1275,7 @@ void Push_Action(
     }
 
     assert(Not_Node_Managed(L->varlist));
-    assert(Not_Series_Flag(L->varlist, INACCESSIBLE));
+    assert(Is_Series_Accessible(L->varlist));
 
     ORIGINAL = act;
 }
@@ -1338,11 +1338,11 @@ void Drop_Action(Level* L) {
     Clear_Action_Executor_Flag(L, FULFILL_ONLY);
 
     assert(
-        Get_Series_Flag(L->varlist, INACCESSIBLE)
+        Not_Series_Accessible(L->varlist)
         or BONUS(KeySource, L->varlist) == L
     );
 
-    if (Get_Series_Flag(L->varlist, INACCESSIBLE)) {
+    if (Not_Series_Accessible(L->varlist)) {
         //
         // If something like Encloser_Dispatcher() runs, it might steal the
         // variables from a context to give them to the user, leaving behind
@@ -1417,7 +1417,7 @@ void Drop_Action(Level* L) {
 
   #if !defined(NDEBUG)
     if (L->varlist) {
-        assert(Not_Series_Flag(L->varlist, INACCESSIBLE));
+        assert(Is_Series_Accessible(L->varlist));
         assert(Not_Node_Managed(L->varlist));
 
         Cell* rootvar = Array_Head(L->varlist);

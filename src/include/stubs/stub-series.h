@@ -82,6 +82,23 @@
     m_cast(union HeaderUnion*, &(s)->leader)->bits &= ~SERIES_FLAG_##name
 
 
+//=//// SERIES ACCESSIBILITY ///////////////////////////////////////////////=//
+//
+// The default for requesting a node to be created is that it be accessible.
+// So the INACCESSIBLE state is the set bit (as opposed to ACCESSIBLE).  This
+// leads to some complex double negations for testing for accessibility.
+// These macros compensate for that.
+
+#define Is_Series_Accessible(s) \
+    Not_Series_Flag((s), INACCESSIBLE)
+
+#define Not_Series_Accessible(s) \
+    Get_Series_Flag((s), INACCESSIBLE)
+
+#define Set_Series_Inaccessible(s) \
+    Set_Series_Flag((s), INACCESSIBLE)
+
+
 //=//// SERIES SUBCLASS FLAGS //////////////////////////////////////////////=//
 //
 // In the debug build, ensure_flavor() checks if a series node matches the
@@ -462,7 +479,7 @@ INLINE Length Series_Dynamic_Used(const Series* s) {
 //
 
 INLINE Byte* Series_Data(const_if_c Series* s) {
-    assert(Not_Series_Flag(s, INACCESSIBLE));  // caller should've checked [1]
+    assert(Is_Series_Accessible(s));  // caller should've checked [1]
 
     return Get_Series_Flag(s, DYNAMIC)  // inlined in Series_Data_At() [2]
         ? u_cast(Byte*, s->content.dynamic.data)
@@ -484,7 +501,7 @@ INLINE Byte* Series_Data_At(Byte w, const_if_c Series* s, REBLEN i) {
     }
   #endif
 
-    assert(Not_Series_Flag(s, INACCESSIBLE));  // caller should've checked [1]
+    assert(Is_Series_Accessible(s));  // caller should've checked [1]
     assert(i <= Series_Used(s));
 
     return ((w) * (i)) + (  // v-- inlining of Series_Data() [2]
@@ -793,7 +810,7 @@ INLINE Series* Make_Series_Into(
 
         if (not Did_Series_Data_Alloc(s, capacity)) {
             Clear_Node_Managed_Bit(s);
-            Set_Series_Flag(s, INACCESSIBLE);
+            Set_Series_Inaccessible(s);
             GC_Kill_Series(s);  // ^-- needs non-null data unless INACCESSIBLE
 
             fail (Error_No_Memory(capacity * wide));

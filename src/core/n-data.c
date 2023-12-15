@@ -1721,7 +1721,7 @@ DECLARE_NATIVE(free)
         fail ("FREE only implemented for ANY-SERIES! at the moment");
 
     Series* s = Cell_Series_Ensure_Mutable(v);
-    if (Get_Series_Flag(s, INACCESSIBLE))
+    if (Not_Series_Accessible(s))
         fail ("Cannot FREE already freed series");
 
     Decay_Series(s);
@@ -1764,7 +1764,7 @@ DECLARE_NATIVE(free_q)
     if (n == nullptr or Is_Node_A_Cell(n))
         return Init_False(OUT);
 
-    return Init_Logic(OUT, Get_Series_Flag(cast(Series*, n), INACCESSIBLE));
+    return Init_Logic(OUT, Not_Series_Accessible(cast(Series*, n)));
 }
 
 

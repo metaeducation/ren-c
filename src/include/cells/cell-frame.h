@@ -3,7 +3,7 @@
 INLINE Action* VAL_ACTION(NoQuote(const Cell*) v) {
     assert(HEART_BYTE(v) == REB_FRAME);
     Series* s = cast(Series*, Cell_Node1(v));  // maybe exemplar, maybe details
-    if (Get_Series_Flag(s, INACCESSIBLE))
+    if (Not_Series_Accessible(s))
         fail (Error_Series_Data_Freed_Raw());
     return cast(Action*, s);
 }
