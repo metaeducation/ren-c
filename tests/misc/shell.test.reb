@@ -37,7 +37,7 @@
     (if system.version.4 = 3 [  ; Windows
         ({ls -alF "foo\b ar.txt"} = shell/inspect [ls -alF %"foo/b ar.txt"])
     ] else [
-        ({ls -alF foo/b ar.txt} = shell/inspect [ls -alF %"foo/b ar.txt"])
+        ({ls -alF "foo/b ar.txt"} = shell/inspect [ls -alF %"foo/b ar.txt"])
     ])
 ]
 
