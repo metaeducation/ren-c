@@ -88,8 +88,6 @@
         // The keylist for a frame's context should come from a function's
         // paramlist, which should have an ACTION! value in keylist[0]
         //
-        // The context may be inaccessible here.
-        //
         assert(CTX_TYPE(cast(Context*, a)) == REB_FRAME);
         return cast(Specifier*, a);
     }

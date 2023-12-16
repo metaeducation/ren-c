@@ -2,9 +2,10 @@
 
 INLINE Action* VAL_ACTION(NoQuote(const Cell*) v) {
     assert(HEART_BYTE(v) == REB_FRAME);
-    Series* s = cast(Series*, Cell_Node1(v));  // maybe exemplar, maybe details
-    if (Not_Series_Accessible(s))
+    if (Not_Node_Accessible(Cell_Node1(v)))
         fail (Error_Series_Data_Freed_Raw());
+
+    Series* s = cast(Series*, Cell_Node1(v));  // maybe exemplar, maybe details
     return cast(Action*, s);
 }
 

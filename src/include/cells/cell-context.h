@@ -12,6 +12,11 @@
 INLINE Context* VAL_CONTEXT(NoQuote(const Cell*) v) {
     assert(Any_Context_Kind(Cell_Heart_Unchecked(v)));
     Context* c;
+    if (Not_Node_Accessible(Cell_Node1(v))) {
+        if (HEART_BYTE(v) == REB_FRAME)
+            fail (Error_Expired_Frame_Raw());  // !!! different error?
+        fail (Error_Series_Data_Freed_Raw());
+    }
 
     if (IS_VARLIST(cast(Stub*, Cell_Node1(v)))) {
         c = cast(Context*, Cell_Node1(v));
@@ -21,7 +26,6 @@ INLINE Context* VAL_CONTEXT(NoQuote(const Cell*) v) {
         assert(IS_DETAILS(cast(Stub*, Cell_Node1(v))));
         c = INODE(Exemplar, cast(Array*, Cell_Node1(v)));
     }
-    FAIL_IF_INACCESSIBLE_CTX(c);
     return c;
 }
 

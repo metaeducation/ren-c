@@ -396,7 +396,7 @@ void* Probe_Core_Debug(
         break; }
 
       case FLAVOR_THE_GLOBAL_INACCESSIBLE: {
-        Probe_Print_Helper(p, expr, "Global Inaccessible Series", file, line);
+        Probe_Print_Helper(p, expr, "Global Inaccessible Stub", file, line);
         break; }
 
     #if !defined(NDEBUG)  // PROBE() is sometimes in non-debug executables

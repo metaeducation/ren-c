@@ -1115,7 +1115,7 @@ void Get_Maybe_Fake_Action_Body(Sink(Value(*)) out, Value(const*) action)
         // Don't use INIT_SPECIFIER(), because it does not expect to get an
         // inaccessible series.
         //
-        BINDING(out) = &PG_Inaccessible_Series;
+        BINDING(out) = &PG_Inaccessible_Stub;
         return;
     }
 

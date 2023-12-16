@@ -159,19 +159,9 @@
     0  // helps locate places that want to say "no flags"
 
 
-//=//// SERIES_FLAG_INACCESSIBLE //////////////////////////////////////////=//
+//=//// SERIES_FLAG_8 /////////////////////////////////////////////////////=//
 //
-// An inaccessible series is one which may still have extant references, but
-// the data is no longer available.  That can happen implicitly or because
-// of a manual use of the FREE operation.
-//
-// It would be costly if all series access operations had to check the
-// accessibility bit.  Instead, the general pattern is that code that extracts
-// series from values, e.g. Cell_Array(), performs a check to make sure that
-// the series is accessible at the time of extraction.  Subsequent access of
-// the extracted series is then unchecked.
-//
-#define SERIES_FLAG_INACCESSIBLE \
+#define SERIES_FLAG_8 \
     FLAG_LEFT_BIT(8)
 
 
@@ -185,7 +175,7 @@
 // One important reason for ensuring a series is fixed size is to avoid
 // the possibility of the data pointer being reallocated.  This allows
 // code to ignore the usual rule that it is unsafe to hold a pointer to
-// a value inside the series data...it still might have to check INACCESSIBLE.
+// a value in the series data (still might have to check for inaccessible).
 //
 // !!! Strictly speaking, SERIES_FLAG_NO_RELOCATE could be different
 // from fixed size... if there would be a reason to reallocate besides
@@ -232,10 +222,6 @@
 // gained by being able to assume where to look for the data pointer and the
 // length (e.g. paramlists and context varlists/keylists).  So passing this
 // flag into series creation routines avoids creating the shortened form.
-//
-// Note: Currently SERIES_FLAG_INACCESSIBLE overrides this, but does not
-// remove the flag...e.g. there can be inaccessible contexts that carry the
-// SERIES_FLAG_ALWAYS_DYNAMIC bit but no longer have an allocation.
 //
 // Note: At one time the USED_BYTE() of 255 was the signal for this.  But
 // being able to pass in the flag to creation routines easily, and make the

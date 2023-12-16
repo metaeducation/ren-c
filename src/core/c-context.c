@@ -940,15 +940,6 @@ void Assert_Context_Core(Context* c)
     if (keys_len + 1 != vars_len)
         panic (c);
 
-    if (Not_Series_Accessible(CTX_VARLIST(c))) {
-        //
-        // !!! For the moment, don't check inaccessible stack frames any
-        // further.  This includes varless reified frames and those reified
-        // frames that are no longer on the stack.
-        //
-        return;
-    }
-
     const Key* key = CTX_KEYS_HEAD(c);
     REBVAL *var = CTX_VARS_HEAD(c);
 

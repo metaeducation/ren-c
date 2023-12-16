@@ -74,8 +74,9 @@ Level* Push_Downshifted_Level(Atom(*) out, Level* L) {
     // frame and drop it, when in reality we're changing the executor and
     // everything.  This is clearly voodoo but maybe it can be formalized.
     //
-    L->varlist = &PG_Inaccessible_Series;  // corrupt?  nullptr?
-    L->rootvar = nullptr;
+    L->varlist = nullptr;
+    Corrupt_Pointer_If_Debug(L->rootvar);
+
     Corrupt_Pointer_If_Debug(L->executor);  // caller must set
     Corrupt_Pointer_If_Debug(L->label);
 
@@ -220,7 +221,12 @@ Bounce Chainer_Dispatcher(Level* const L)
 
 } finished: {  ///////////////////////////////////////////////////////////////
 
+    // Note that Drop_Action() will not be called on LEVEL, because we
+    // took over from Action_Executor().  The varlist should be nullptr.
+
     Drop_Level(SUBLEVEL);
+
+    assert(L->varlist == nullptr and Is_Pointer_Corrupt_Debug(L->rootvar));
 
     return OUT;
 }}

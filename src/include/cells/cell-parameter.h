@@ -65,11 +65,10 @@ INLINE Option(const Array*) Cell_Parameter_Spec(
     NoQuote(const Cell*) v
 ){
     assert(HEART_BYTE(v) == REB_PARAMETER);
-
-    const Array* a = cast(Array*, Cell_Node1(v));
-    if (a != nullptr and Not_Series_Accessible(a))
+    if (Cell_Node1(v) != nullptr and Not_Node_Accessible(Cell_Node1(v)))
         fail (Error_Series_Data_Freed_Raw());
-    return a;
+
+    return cast(Array*, Cell_Node1(v));
 }
 
 #define INIT_CELL_PARAMETER_SPEC(v, a) \

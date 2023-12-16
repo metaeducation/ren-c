@@ -160,13 +160,8 @@ struct cast_helper<V*,const Node*> {  // [2]
         if (not p)
             return nullptr;
 
-        if ((*reinterpret_cast<const Byte*>(p) & (
-            NODE_BYTEMASK_0x80_NODE | NODE_BYTEMASK_0x40_FREE
-        )) != (
-            NODE_BYTEMASK_0x80_NODE
-        )){
+        if (not (*reinterpret_cast<const Byte*>(p) & NODE_BYTEMASK_0x80_NODE))
             panic (p);
-        }
 
         return reinterpret_cast<const Node*>(p);
     }
@@ -477,14 +472,12 @@ struct cast_helper<V*,Context*> {  // [2]
         if (not p)
             return nullptr;
 
-        if (((reinterpret_cast<Stub*>(p)->leader.bits & (
+        if ((reinterpret_cast<Stub*>(p)->leader.bits & (
             SERIES_MASK_VARLIST
                 | NODE_FLAG_FREE
                 | NODE_FLAG_CELL
                 | FLAG_FLAVOR_BYTE(255)
-        ))
-            | SERIES_FLAG_DYNAMIC  // permit non-dynamic (e.g. inaccessible
-        ) !=
+        )) !=
             SERIES_MASK_VARLIST
         ){
             panic (p);
@@ -554,7 +547,6 @@ struct cast_helper<V*,Action*> {  // [2]
                     | NODE_FLAG_CELL
                     | FLAG_FLAVOR_BYTE(255)
                 )
-                | SERIES_FLAG_DYNAMIC  // permit non-dynamic (inaccessible)
             )) !=
                 SERIES_MASK_VARLIST
             ){

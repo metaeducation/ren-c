@@ -54,6 +54,34 @@
 //
 
 
+//=//// SERIES ACCESSIBILITY ///////////////////////////////////////////////=//
+//
+// An inaccessible series is one which may still have extant references, but
+// the data is no longer available.  Some internal mechanics can create this
+// situation, such as DO of a FRAME! which steals the memory of the frame
+// to execute it...leaving the old stub as inaccessible.  There is also a
+// FREE operation that users can use to manually throw away data.
+//
+// It would be costly if all series access operations had to check the
+// accessibility bit.  Instead, the general pattern is that code that extracts
+// series from values, e.g. Cell_Array(), performs a check to make sure that
+// the series is accessible at the time of extraction.  Subsequent access of
+// the extracted series is then unchecked.
+//
+// When the GC runs, it canonizes all inaccessible series to a single canon
+// inaccessible stub.  This compacts memory of references that have expired.
+//
+
+#define Not_Node_Accessible(n)          Is_Node_Free(n)
+#define Is_Node_Accessible(n)           Not_Node_Free(n)
+
+#define Assert_Node_Accessible(n) \
+    assert(Is_Node_Accessible(n))
+
+#define Set_Series_Inaccessible(s) \
+    Set_Node_Free_Bit(s)
+
+
 //=//// SERIES "FLAG" BITS /////////////////////////////////////////////////=//
 //
 // See definitions of SERIES_FLAG_XXX.
@@ -80,23 +108,6 @@
 
 #define Clear_Series_Flag(s,name) \
     m_cast(union HeaderUnion*, &(s)->leader)->bits &= ~SERIES_FLAG_##name
-
-
-//=//// SERIES ACCESSIBILITY ///////////////////////////////////////////////=//
-//
-// The default for requesting a node to be created is that it be accessible.
-// So the INACCESSIBLE state is the set bit (as opposed to ACCESSIBLE).  This
-// leads to some complex double negations for testing for accessibility.
-// These macros compensate for that.
-
-#define Is_Series_Accessible(s) \
-    Not_Series_Flag((s), INACCESSIBLE)
-
-#define Not_Series_Accessible(s) \
-    Get_Series_Flag((s), INACCESSIBLE)
-
-#define Set_Series_Inaccessible(s) \
-    Set_Series_Flag((s), INACCESSIBLE)
 
 
 //=//// SERIES SUBCLASS FLAGS //////////////////////////////////////////////=//
@@ -456,8 +467,7 @@ INLINE Length Series_Dynamic_Used(const Series* s) {
 //=//// SERIES DATA ACCESSORS /////////////////////////////////////////////=//
 //
 // 1. Callers like Cell_String() or Cell_Array() are expected to test for
-//    SERIES_FLAG_INACCESSIBLE and fail before getting as far as calling
-//    this routine.
+//    NODE_FLAG_FREE and fail before getting as far as calling these routines.
 //
 // 2. Because these inline functions are called so often, Series_Data_At()
 //    duplicates the code in Series_Data() rather than call it.  Be sure
@@ -478,9 +488,7 @@ INLINE Length Series_Dynamic_Used(const Series* s) {
 //    would repeat the argument twice in a macro body (bad mojo!)
 //
 
-INLINE Byte* Series_Data(const_if_c Series* s) {
-    assert(Is_Series_Accessible(s));  // caller should've checked [1]
-
+INLINE Byte* Series_Data(const_if_c Series* s) {  // assume valid [1]
     return Get_Series_Flag(s, DYNAMIC)  // inlined in Series_Data_At() [2]
         ? u_cast(Byte*, s->content.dynamic.data)
         : u_cast(Byte*, &s->content);
@@ -501,7 +509,6 @@ INLINE Byte* Series_Data_At(Byte w, const_if_c Series* s, REBLEN i) {
     }
   #endif
 
-    assert(Is_Series_Accessible(s));  // caller should've checked [1]
     assert(i <= Series_Used(s));
 
     return ((w) * (i)) + (  // v-- inlining of Series_Data() [2]
@@ -811,7 +818,7 @@ INLINE Series* Make_Series_Into(
         if (not Did_Series_Data_Alloc(s, capacity)) {
             Clear_Node_Managed_Bit(s);
             Set_Series_Inaccessible(s);
-            GC_Kill_Series(s);  // ^-- needs non-null data unless INACCESSIBLE
+            GC_Kill_Stub(s);
 
             fail (Error_No_Memory(capacity * wide));
         }

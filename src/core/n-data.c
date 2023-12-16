@@ -1720,10 +1720,10 @@ DECLARE_NATIVE(free)
     if (Any_Context(v) or Is_Handle(v))
         fail ("FREE only implemented for ANY-SERIES! at the moment");
 
-    Series* s = Cell_Series_Ensure_Mutable(v);
-    if (Not_Series_Accessible(s))
+    if (Not_Node_Accessible(Cell_Node1(v)))
         fail ("Cannot FREE already freed series");
 
+    Series* s = Cell_Series_Ensure_Mutable(v);
     Decay_Series(s);
     return TRASH; // !!! Could return freed value
 }
@@ -1764,7 +1764,7 @@ DECLARE_NATIVE(free_q)
     if (n == nullptr or Is_Node_A_Cell(n))
         return Init_False(OUT);
 
-    return Init_Logic(OUT, Not_Series_Accessible(cast(Series*, n)));
+    return Init_Logic(OUT, Not_Node_Accessible(n));
 }
 
 

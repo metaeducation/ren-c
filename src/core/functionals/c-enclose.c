@@ -7,7 +7,7 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Copyright 2017-2020 Ren-C Open Source Contributors
+// Copyright 2017-2023 Ren-C Open Source Contributors
 //
 // See README.md and CREDITS.md for more information.
 //
@@ -73,13 +73,45 @@ enum {
 //
 //  Encloser_Dispatcher: C
 //
-// An encloser is called with a frame that was built compatibly to invoke an
-// "inner" function.  It wishes to pass this frame as an argument to an
+// An encloser is called with a varlist that was built compatibly to invoke an
+// "inner" function.  It wishes to pass this list as a FRAME! argument to an
 // "outer" function, that takes only that argument.  To do this, the frame's
-// varlist must thus be detached from `f` and transitioned from an "executing"
+// varlist must thus be detached from `L` and transitioned from an "executing"
 // to "non-executing" state...so that it can be used with DO.
 //
-// Note: Not static because it's checked for by pointer in RESKIN.
+// 1. The varlist is still pointed to by any extant FRAME!s.  Its keysource
+//    should not be this level any longer.
+//
+// 2. We're passing the built context to the `outer` function as a FRAME!,
+//    which that function can DO (or not).  But when the DO runs, we don't
+//    want it to run the encloser again--that would be an infinite loop.
+//    Update CTX_FRAME_PHASE() to point to the `inner` that was enclosed.
+//
+// 3. DO does not allow you to invoke a FRAME! that is currently running.
+//    we have to clear the FRAME_HAS_BEEN_INVOKED_FLAG to allow DO INNER.
+//
+// 4. The FRAME! we're making demands that the varlist be managed to put it
+//    into a cell.  It may already have been managed...but since varlists
+//    aren't added to the manual series list, the bit must be tweaked vs.
+//    using Force_Series_Managed().
+//
+// 5. Because the built FRAME! is intended to be used with DO, it must be
+//    "phaseless".  The property of phaselessness allows detection of when
+//    the frame should heed FRAME_HAS_BEEN_INVOKED (phased frames internal
+//    to the implementation must have full visibility of locals/etc.)  Hence
+//    we make a separate FRAME! in SPARE and don't use the ROOTVAR directly.
+//
+// 6. At one time, the encloser would leave its level on the frame with a
+//    garbage varlist, that had to be handled specially when Drop_Action()
+//    happened.  It's now an invariant that if a level uses Action_Executor()
+//    that it must have a valid varlist, so the more efficient choice is
+//    to just reuse this level for running the OUTER action.  This means
+//    that you only see one stack level for both the encloser and outer.
+//
+// 7. The encloser frame had a label of the WORD! (or cached name) that it
+//    was invoked as.  We're reusing the level to invoke OUTER, and the level
+//    can only have one label in the stack.  We favor the name used for the
+//    original invocation.  See [6] regarding why we don't use two levels.
 //
 Bounce Encloser_Dispatcher(Level* const L)
 {
@@ -93,107 +125,40 @@ Bounce Encloser_Dispatcher(Level* const L)
     REBVAL *outer = Details_At(details, IDX_ENCLOSER_OUTER);
     assert(Is_Frame(outer));  // takes 1 arg (a FRAME!)
 
-    // We want to call OUTER with a FRAME! value that will dispatch to INNER
-    // when (and if) it runs DO on it.  That frame is the one built for this
-    // call to the encloser.  (The encloser can run the frame multiple times
-    // via DO COPY of the frame if they like.)
-    //
-    // Since we are unplugging the varlist from the Level* in which it is
-    // running, we at one time would actually `Steal_Context_Vars()` on it...
-    // which would mean all outstanding FRAME! that had been pointing at
-    // the varlist would go stale.  This hampered tricks like:
-    //
-    //     f: func [x /augmented [frame!]] [
-    //        reduce [x if augmented [augmented.y]]
-    //     ]
-    //
-    //     a: adapt augment :f [y] [augmented: binding of 'y]
-    //
-    //     >> f 10
-    //     == [10]
-    //
-    //     >> a 10 20
-    //     == [10 20]
-    //
-    // So instead we make L->varlist point to a universal inaccessible array
-    // and keep the varlist itself valid, so extant FRAME!s still work.  This
-    // may be a bad idea, so keeping the old code on hand in case it turns
-    // out to be fundamentally broken for some reason.
-    //
-    //-----------------------------------------------------------begin-old-code
-    // Context* c = Steal_Context_Vars(
-    //     cast(Context*, L->varlist),
-    //     ACT_KEYLIST(Level_Phase(L))
-    // );
-    //
-    // INIT_BONUS_KEYSOURCE(CTX_VARLIST(c), ACT_KEYLIST(VAL_ACTION(inner)));
-    //
-    // assert(Not_Series_Accessible(L->varlist));  // look dead
-    //
-    // // L->varlist may or may not have wound up being managed.  It was not
-    // // allocated through the usual mechanisms, so if unmanaged it's not in
-    // // the tracking list Init_Context_Cell() expects.  Just fiddle the bit.
-    // //
-    // Set_Node_Managed_Bit(CTX_VARLIST(c)); */
-    //-------------------------------------------------------------end-old-code
-
-    //-----------------------------------------------------------begin-new-code
     Array* varlist = L->varlist;
     Context* c = cast(Context*, varlist);
 
-    // Replace the L->varlist with a dead list.
-    //
-    L->varlist = &PG_Inaccessible_Series;
+    L->varlist = nullptr;  // we're going to push new action in this level
+    Corrupt_Pointer_If_Debug(L->rootvar);
 
-    // The varlist is still pointed to by any extant frames.  Its keysource
-    // should not be this frame any longer.
-    //
-    assert(BONUS(KeySource, varlist) == L);
+    assert(BONUS(KeySource, varlist) == L);  // need to change keysource [1]
     INIT_BONUS_KEYSOURCE(varlist, ACT_KEYLIST(L->u.action.original));
-    //-------------------------------------------------------------end-new-code
 
-    // We're passing the built context to the `outer` function as a FRAME!,
-    // which that function can DO (or not).  But when the DO runs, we don't
-    // want it to run the encloser again--that would be an infinite loop.
-    // Update CTX_FRAME_PHASE() to point to the `inner` that was enclosed.
-    //
-    REBVAL *rootvar = CTX_ROOTVAR(c);
+    REBVAL *rootvar = CTX_ROOTVAR(c);  // don't phase run encloser again [2]
     INIT_VAL_FRAME_PHASE(rootvar, ACT_IDENTITY(VAL_ACTION(inner)));
     INIT_VAL_FRAME_BINDING(rootvar, VAL_FRAME_BINDING(inner));
 
-    // We want people to be able to DO the FRAME! being given back.
-    //
     assert(Get_Subclass_Flag(VARLIST, varlist, FRAME_HAS_BEEN_INVOKED));
-    Clear_Subclass_Flag(VARLIST, varlist, FRAME_HAS_BEEN_INVOKED);
+    Clear_Subclass_Flag(VARLIST, varlist, FRAME_HAS_BEEN_INVOKED);  // [3]
 
-    // We don't actually know how long the frame we give back is going to
-    // live, or who it might be given to.  And it may contain things like
-    // bindings in a RETURN or a VARARGS! which are to the old varlist, which
-    // may not be managed...and so when it goes off the stack it might try
-    // and think that since nothing managed it then it can be freed.  Go
-    // ahead and mark it managed--even though it's dead--so that returning
-    // won't free it if there are outstanding references.
-    //
-    // Note that since varlists aren't added to the manual series list, the
-    // bit must be tweaked vs. using Force_Series_Managed.
-    //
-    Set_Node_Managed_Bit(varlist);
+    Set_Node_Managed_Bit(varlist);  // can't use Force_Series_Managed [4]
 
-    // Because the built context is intended to be used with DO, it must be
-    // "phaseless".  The property of phaselessness allows detection of when
-    // the frame should heed FRAME_HAS_BEEN_INVOKED (phased frames internal
-    // to the implementation must have full visibility of locals/etc.)
-    //
-    // !!! A bug was observed here in the stackless build that required a
-    // copy instead of using the archetype.  However, the "phaseless"
-    // requirement for DO was introduced since...suggesting the copy would
-    // be needed regardless.  Be attentive should this ever be switched to
-    // try and use CTX_ARCHETYPE() directly to GC issues.
-    //
-    REBVAL *rootcopy = Copy_Cell(SPARE, rootvar);
+    REBVAL *rootcopy = Copy_Cell(SPARE, rootvar);  // need phaseless copy [5]
     INIT_VAL_FRAME_PHASE_OR_LABEL(SPARE, VAL_FRAME_LABEL(inner));
 
-    return DELEGATE(OUT, outer, rootcopy);
+    assert(Is_Level_Dispatching(L));
+    Clear_Executor_Flag(ACTION, L, IN_DISPATCH);  // reuse this level [6]
+    Clear_Executor_Flag(ACTION, L, RUNNING_ENFIX);
+
+    Option(const Symbol*) original_label = L->label;
+    Corrupt_Pointer_If_Debug(L->label);  // Begin_Action() requires
+    Prep_Action_Level(L, outer, rootcopy);
+    if (original_label)
+        L->label = original_label;  // prefer original name [7]
+
+    STATE = ST_ACTION_TYPECHECKING;
+
+    return BOUNCE_CONTINUE;
 }
 
 

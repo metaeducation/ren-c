@@ -148,10 +148,6 @@
 
 INLINE const REBVAL *CTX_ARCHETYPE(Context* c) {  // read-only form
     const Series* varlist = CTX_VARLIST(c);
-    if (Not_Series_Accessible(varlist)) {  // a freed stub
-        assert(Not_Series_Flag(varlist, DYNAMIC));  // variables are gone
-        return c_cast(REBVAL*, &varlist->content.fixed);
-    }
     return c_cast(REBVAL*, varlist->content.dynamic.data);
 }
 
@@ -201,10 +197,7 @@ INLINE void INIT_VAL_FRAME_ROOTVAR_Core(
     Phase* phase,
     Context* binding  // allowed to be UNBOUND
 ){
-    assert(
-        (Not_Series_Accessible(varlist) and out == Stub_Cell(varlist))
-        or out == Array_Head(varlist)
-    );
+    assert(out == Array_Head(varlist));
     assert(phase != nullptr);
     Reset_Unquoted_Header_Untracked(out, CELL_MASK_FRAME);
     INIT_VAL_CONTEXT_VARLIST(out, varlist);
@@ -277,20 +270,11 @@ INLINE REBLEN CTX_LEN(Context* c) {
 }
 
 INLINE const Key* CTX_KEY(Context* c, REBLEN n) {
-    //
-    // !!! At one point, bound words got their spellings from their context.
-    // Hence inaccessible contexts had to retain their keylists until all
-    // words bound to them had been adjusted somehow.  Consider this issue
-    // if ever retrying that technique.
-    //
-    /* assert(Is_Series_Accessible(c)); */
-
     assert(n != 0 and n <= CTX_LEN(c));
     return Series_At(const Key, CTX_KEYLIST(c), n - 1);
 }
 
 INLINE Value(*) CTX_VAR(Context* c, REBLEN n) {  // 1-based, no Cell*
-    assert(Is_Series_Accessible(CTX_VARLIST(c)));
     assert(n != 0 and n <= CTX_LEN(c));
     return cast(Value(*), cast(Series*, c)->content.dynamic.data) + n;
 }
@@ -403,7 +387,6 @@ INLINE Level* CTX_LEVEL_IF_ON_STACK(Context* c) {
     if (not Is_Node_A_Cell(keysource))
         return nullptr; // e.g. came from MAKE FRAME! or Encloser_Dispatcher
 
-    assert(Is_Series_Accessible(CTX_VARLIST(c)));
     assert(Is_Frame(CTX_ARCHETYPE(c)));
 
     Level* L = cast(Level*, keysource);
@@ -416,14 +399,6 @@ INLINE Level* CTX_LEVEL_MAY_FAIL(Context* c) {
     if (not L)
         fail (Error_Frame_Not_On_Stack_Raw());
     return L;
-}
-
-INLINE void FAIL_IF_INACCESSIBLE_CTX(Context* c) {
-    if (Not_Series_Accessible(CTX_VARLIST(c))) {
-        if (CTX_TYPE(c) == REB_FRAME)
-            fail (Error_Expired_Frame_Raw()); // !!! different error?
-        fail (Error_Series_Data_Freed_Raw());
-    }
 }
 
 
@@ -486,14 +461,23 @@ INLINE void Deep_Freeze_Context(Context* c) {
 // filled-in heap memory can be directly used as the args for the invocation,
 // instead of needing to push a redundant run of stack-based memory cells.
 //
+// 1. Rather than Mem_Copy() the whole stub and touch up the header and info
+//    to remove SERIES_INFO_HOLD from DETAILS_FLAG_IS_NATIVE, or things like
+//    NODE_FLAG_MANAGED, etc.--use constant assignments and only copy the
+//    remaining fields.
+//
+// 2. Once this tried to leave some amount of "information" in the stolen
+//    from context, despite marking it inaccessible.  The modern idea is
+//    that once a stub becomes inaccessible, the GC canonizes it to a
+//    single inaccessible node so it can free up the other stubs.  So it
+//    should lose all of its information.
+//
 INLINE Context* Steal_Context_Vars(Context* c, Node* keysource) {
+    UNUSED(keysource);
+
     Stub* stub = CTX_VARLIST(c);
 
-    // Rather than memcpy() and touch up the header and info to remove
-    // SERIES_INFO_HOLD from DETAILS_FLAG_IS_NATIVE, or NODE_FLAG_MANAGED,
-    // etc.--use constant assignments and only copy the remaining fields.
-    //
-    Stub* copy = Prep_Stub(
+    Stub* copy = Prep_Stub(  // don't Mem_Copy() the incoming stub [1]
         Alloc_Stub(),  // not preallocated
         SERIES_MASK_VARLIST
             | SERIES_FLAG_FIXED_SIZE
@@ -505,36 +489,16 @@ INLINE Context* Steal_Context_Vars(Context* c, Node* keysource) {
     LINK(Patches, copy) = nullptr;  // don't carry forward patches
 
     REBVAL *rootvar = cast(REBVAL*, copy->content.dynamic.data);
-
-    // Convert the old varlist that had outstanding references into a
-    // singular "stub", holding only the CTX_ARCHETYPE.  This is needed
-    // for the ->binding to allow Derelativize(), see SPC_BINDING().
-    //
-    // Note: previously this had to preserve VARLIST_FLAG_FRAME_FAILED, but
-    // now those marking failure are asked to do so manually to the stub
-    // after this returns (hence they need to cache the varlist first).
-    //
-    Set_Series_Inaccessible(stub);
-
-    REBVAL *single = cast(REBVAL*, &stub->content.fixed);
-    single->header.bits =
-        NODE_FLAG_NODE | NODE_FLAG_CELL
-            | CELL_MASK_FRAME;
-    INIT_VAL_CONTEXT_VARLIST(single, x_cast(Array*, stub));
-    BINDING(single) = BINDING(rootvar);
-
-  #if !defined(NDEBUG)
-    INIT_VAL_FRAME_PHASE_OR_LABEL(single, nullptr);  // can't corrupt
-  #endif
-
     INIT_VAL_CONTEXT_VARLIST(rootvar, x_cast(Array*, copy));
 
-    // Disassociate the stub from the frame, by degrading the link field
-    // to a keylist.  !!! Review why this was needed, vs just nullptr
-    //
-    INIT_BONUS_KEYSOURCE(cast(Array*, stub), keysource);
-
-    Clear_Series_Flag(stub, DYNAMIC);  // mark stub as no longer dynamic
+    Set_Series_Inaccessible(stub);  // Make unusable [2]
+  #if DEBUG
+    FLAVOR_BYTE(stub) = FLAVOR_CORRUPT;
+    Corrupt_Pointer_If_Debug(stub->link.corrupt);
+    Corrupt_Pointer_If_Debug(stub->misc.corrupt);
+    Corrupt_If_Debug(stub->content);
+    Corrupt_Pointer_If_Debug(stub->info.corrupt);
+  #endif
 
     return cast(Context*, copy);
 }

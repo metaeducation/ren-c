@@ -1096,9 +1096,9 @@ void Remake_Series(Series* s, REBLEN units, Flags flags)
 //
 //  Decay_Series: C
 //
-void Decay_Series(Series* s)
+Stub *Decay_Series(Series* s)
 {
-    assert(Is_Series_Accessible(s));
+    Assert_Node_Accessible(s);
 
     switch (Series_Flavor(s)) {
       case FLAVOR_STRING:
@@ -1192,33 +1192,33 @@ void Decay_Series(Series* s)
     }
 
     Set_Series_Inaccessible(s);
+    return s;
 }
 
 
 //
-//  GC_Kill_Series: C
+//  GC_Kill_Stub: C
 //
 // Only the garbage collector should be calling this routine.
 // It frees a series even though it is under GC management,
 // because the GC has figured out no references exist.
 //
-void GC_Kill_Series(Series* s)
+void GC_Kill_Stub(Stub* s)
 {
   #if !defined(NDEBUG)
-    if (Is_Node_Free(s)) {
-        printf("Freeing already freed node.\n");
+    if (NODE_BYTE(s) == FREE_POOLUNIT_BYTE) {
+        printf("Killing already deallocated stub.\n");
         panic (s);
     }
   #endif
+
+    assert(Not_Node_Accessible(s));  // must Decay_Series() first
 
     // By default the series is touched so its tick reflects the tick that
     // freed it.  If you need to know the tick where it was allocated, then
     // comment this out so it remains that way.
     //
     Touch_Stub_If_Debug(s);
-
-    if (Is_Series_Accessible(s))
-        Decay_Series(s);
 
   #if !defined(NDEBUG)
     FreeCorrupt_Pointer_If_Debug(s->info.node);
@@ -1234,6 +1234,19 @@ void GC_Kill_Series(Series* s)
   #if DEBUG_COLLECT_STATS
     g_mem.series_freed += 1;
   #endif
+}
+
+
+//
+//  GC_Kill_Series: C
+//
+// Only the garbage collector should be calling this routine.
+// It frees a series even though it is under GC management,
+// because the GC has figured out no references exist.
+//
+void GC_Kill_Series(Series* s) {
+    Assert_Node_Accessible(s);
+    GC_Kill_Stub(Decay_Series(s));
 }
 
 

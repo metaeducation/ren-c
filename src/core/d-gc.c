@@ -34,6 +34,12 @@
 
 #if !defined(NDEBUG)
 
+static bool Not_Node_Accessible_Canon(const Node* n) {
+    if (Not_Node_Free(n))
+        return false;
+    assert(n == &PG_Inaccessible_Stub);
+    return true;
+}
 
 //
 //  Assert_Cell_Marked_Correctly: C
@@ -47,15 +53,14 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
     enum Reb_Kind heart = Cell_Heart_Unchecked(v);
 
     while (Is_Bindable_Kind(heart)) {  // for `break` convenience
+        if (not v->extra.Binding)
+            break;
+
+        if (Not_Node_Accessible_Canon(v->extra.Binding))
+            break;
+
         Stub* binding = BINDING(v);
-        if (not binding)
-            break;
-
         assert(Is_Node_Managed(binding));
-
-        if (Not_Series_Accessible(binding))
-            break;
-
         assert(Is_Series_Array(binding));
 
         if (not IS_VARLIST(binding))
@@ -136,11 +141,10 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
 
       case REB_BITSET: {
         assert(Get_Cell_Flag_Unchecked(v, FIRST_IS_NODE));
+        if (Not_Node_Accessible_Canon(Cell_Node1(v)))
+            break;
         Series* s = cast(Series*, Cell_Node1(v));
         Assert_Series_Term_Core(s);
-        if (Not_Series_Accessible(s)) {
-            // TBD: clear out reference and GC `s`?
-        }
         assert(Is_Node_Marked(s));
         break; }
 
@@ -186,10 +190,10 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
 
       case REB_BINARY: {
         assert(Get_Cell_Flag_Unchecked(v, FIRST_IS_NODE));
-        Binary* s = cast(Binary*, Cell_Node1(v));
-        if (Not_Series_Accessible(s))
+        if (Not_Node_Accessible_Canon(Cell_Node1(v)))
             break;
 
+        Binary* s = cast(Binary*, Cell_Node1(v));
         assert(Series_Wide(s) == sizeof(Byte));
         Assert_Series_Term_If_Needed(s);
         assert(Is_Node_Marked(s));
@@ -201,10 +205,10 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
       case REB_URL:
       case REB_TAG: {
         assert(Get_Cell_Flag_Unchecked(v, FIRST_IS_NODE));
-        const String* s = c_cast(String*, Cell_Node1(v));
-        if (Not_Series_Accessible(s))
+        if (Not_Node_Accessible_Canon(Cell_Node1(v)))
             break;
 
+        const String* s = c_cast(String*, Cell_Node1(v));
         Assert_Series_Term_If_Needed(s);
 
         assert(Series_Wide(s) == sizeof(Byte));
@@ -264,7 +268,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
       case REB_MODULE:
       case REB_ERROR:
       case REB_PORT: {
-        if (Not_Series_Accessible(cast(Series*, Cell_Node1(v))))
+        if (Not_Node_Accessible_Canon(Cell_Node1(v)))
             break;
 
         assert(
@@ -299,9 +303,6 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
             assert(Is_Node_Marked(PAYLOAD(Any, v).second.node));  // phase or label
         }
 
-        if (Not_Series_Accessible(CTX_VARLIST(context)))
-            break;
-
         const REBVAL *archetype = CTX_ARCHETYPE(context);
         assert(CTX_TYPE(context) == heart);
         assert(VAL_CONTEXT(archetype) == context);
@@ -331,13 +332,12 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
       case REB_GET_GROUP:
       case REB_META_GROUP:
       case REB_TYPE_GROUP: {
-        Array* a = cast(Array*, Cell_Node1(v));
-        if (Not_Series_Accessible(a))
+        assert(Get_Cell_Flag_Unchecked(v, FIRST_IS_NODE));
+        if (Not_Node_Accessible_Canon(Cell_Node1(v)))
             break;
 
+        Array* a = cast(Array*, Cell_Node1(v));
         Assert_Series_Term_If_Needed(a);
-
-        assert(Get_Cell_Flag_Unchecked(v, FIRST_IS_NODE));
         assert(Is_Node_Marked(a));
         break; }
 
@@ -381,8 +381,8 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
           // !!! Optimization abandoned
           //
           case FLAVOR_ARRAY : {
+            Assert_Node_Accessible(node1);
             Array* a = x_cast(Array*, node1);
-            assert(Is_Series_Accessible(a));
 
             assert(Array_Len(a) >= 2);
             const Cell* tail = Array_Tail(a);

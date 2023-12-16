@@ -797,8 +797,6 @@ Context* Copy_Context_Extra_Managed(
     REBLEN extra,
     REBU64 types
 ){
-    assert(Is_Series_Accessible(CTX_VARLIST(original)));
-
     REBLEN len = (CTX_TYPE(original) == REB_MODULE) ? 0 : CTX_LEN(original);
 
     Array* varlist = Make_Array_For_Copy(

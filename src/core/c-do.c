@@ -31,6 +31,59 @@
 #include "sys-core.h"
 
 //
+//  Prep_Action_Level: C
+//
+// 1. If branch function argument isn't "meta" then we decay any isotopes.
+//    Do the decay test first to avoid needing to scan parameters unless it's
+//    one of those cases.
+//
+//    (The theory here is that we're not throwing away any safety, as the
+//     isotopification process was usually just for the purposes of making the
+//     branch trigger or not.  With that addressed, it's just inconvenient to
+//     force functions to be meta to get things like NULL.)
+//
+//         if true [null] then x -> [
+//             ;
+//             ; Why would we want to have to make it ^x, when we know any
+//             ; nulls that triggered the branch would have been isotopic?
+//         ]
+//
+void Prep_Action_Level(
+    Level* L,
+    const Cell* action,
+    Option(Atom(const*)) with
+){
+    Push_Action(L, VAL_ACTION(action), VAL_FRAME_BINDING(action));
+    Begin_Prefix_Action(L, VAL_FRAME_LABEL(action));
+
+    const Key* key = L->u.action.key;
+    const Param* param = L->u.action.param;
+    Atom(*) arg = L->u.action.arg;
+    for (; key != L->u.action.key_tail; ++key, ++param, ++arg) {
+        if (Is_Specialized(param))
+            Copy_Cell(arg, param);
+        else
+            Finalize_Trash(arg);
+        assert(Is_Stable(arg));
+    }
+
+    if (with) do {
+        arg = First_Unspecialized_Arg(&param, L);
+        if (not arg)
+            break;
+
+        Copy_Cell(arg, unwrap(with));  // do not decay [1]
+
+        if (Cell_ParamClass(param) == PARAMCLASS_META)
+            Meta_Quotify(arg);
+        else
+            Decay_If_Unstable(arg);
+        break;
+    } while (0);
+}
+
+
+//
 //  Pushed_Continuation: C
 //
 //////////////////////////////////////////////////////////////////////////////
@@ -45,21 +98,6 @@
 //    they haven't checked, but encounter via evaluation.  Hence we FAIL here
 //    instead of panic()...but that suggests this should be narrowed to the
 //    kinds of types branching permits.
-//
-// 4. If branch function argument isn't "meta" then we decay any isotopes.
-//    Do the decay test first to avoid needing to scan parameters unless it's
-//    one of those cases.
-//
-//    (The theory here is that we're not throwing away any safety, as the
-//     isotopification process was usually just for the purposes of making the
-//     branch trigger or not.  With that addressed, it's just inconvenient to
-//     force functions to be meta to get things like NULL.)
-//
-//         if true [null] then x -> [
-//             ;
-//             ; Why would we want to have to make it ^x, when we know any
-//             ; nulls that triggered the branch would have been isotopic?
-//         ]
 //
 bool Pushed_Continuation(
     Atom(*) out,
@@ -145,34 +183,7 @@ bool Pushed_Continuation(
         Level* L = Make_End_Level(
             FLAG_STATE_BYTE(ST_ACTION_TYPECHECKING) | flags
         );
-        Push_Action(L, VAL_ACTION(branch), VAL_FRAME_BINDING(branch));
-        Begin_Prefix_Action(L, VAL_FRAME_LABEL(branch));
-
-        const Key* key = L->u.action.key;
-        const Param* param = L->u.action.param;
-        Atom(*) arg = L->u.action.arg;
-        for (; key != L->u.action.key_tail; ++key, ++param, ++arg) {
-            if (Is_Specialized(param))
-                Copy_Cell(arg, param);
-            else
-                Finalize_Trash(arg);
-            assert(Is_Stable(arg));
-        }
-
-        if (with) do {
-            arg = First_Unspecialized_Arg(&param, L);
-            if (not arg)
-                break;
-
-            Copy_Cell(arg, unwrap(with));  // do not decay [4]
-
-            if (Cell_ParamClass(param) == PARAMCLASS_META)
-                Meta_Quotify(arg);
-            else
-                Decay_If_Unstable(arg);
-            break;
-        } while (0);
-
+        Prep_Action_Level(L, branch, with);
         Push_Level(out, L);
         goto pushed_continuation; }
 
@@ -183,7 +194,7 @@ bool Pushed_Continuation(
         if (IS_FRAME_PHASED(branch))  // see REDO for tail-call recursion
             fail ("Use REDO to restart a running FRAME! (not DO)");
 
-        Context* c = VAL_CONTEXT(branch);  // checks for INACCESSIBLE
+        Context* c = VAL_CONTEXT(branch);
 
         if (Get_Subclass_Flag(VARLIST, CTX_VARLIST(c), FRAME_HAS_BEEN_INVOKED))
             fail (Error_Stale_Frame_Raw());

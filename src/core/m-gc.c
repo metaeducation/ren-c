@@ -191,8 +191,7 @@ static void Queue_Mark_Node_Deep(const Node** pp) {
         return;  // it's 2 cells, sizeof(Stub), but no room for a Stub's data
     }
 
-    const Series* s = x_cast(const Series*, *pp);
-    if (Not_Series_Accessible(s)) {
+    if (Not_Node_Accessible(*pp)) {
         //
         // All inaccessible nodes are collapsed and canonized into a universal
         // inaccessible node so the stub can be freed.
@@ -207,9 +206,11 @@ static void Queue_Mark_Node_Deep(const Node** pp) {
         // !!! Here we are setting things that may already be the canon
         // inaccessible series which may not be efficient.  Review.
         //
-        *pp = &PG_Inaccessible_Series;
+        *pp = &PG_Inaccessible_Stub;
         return;
     }
+
+    const Series* s = x_cast(const Series*, *pp);
 
  #if !defined(NDEBUG)
     if (Is_Node_Free(s))
@@ -241,7 +242,7 @@ static void Queue_Mark_Node_Deep(const Node** pp) {
 //
 static void Queue_Unmarked_Accessible_Series_Deep(const Series* s)
 {
-    assert(Is_Series_Accessible(s));
+    Assert_Node_Accessible(s);
 
     Add_GC_Mark(s);
 
@@ -279,7 +280,7 @@ static void Queue_Unmarked_Accessible_Series_Deep(const Series* s)
             // Symbol* are not available to the user to free out from under
             // a keylist (can't use FREE on them) and shouldn't vanish.
             //
-            assert(Is_Series_Accessible(*key));
+            Assert_Node_Accessible(*key);
             if (Is_Node_Marked(*key))
                 continue;
             Queue_Unmarked_Accessible_Series_Deep(*key);
@@ -564,10 +565,11 @@ void Run_All_Handle_Cleaners(void) {
             if (unit[0] & NODE_BYTEMASK_0x01_CELL)
                 continue;  // assume no handles in pairings, for now?
 
+            if (Not_Node_Accessible(u_cast(Node*, unit)))
+                continue;
+
             Stub* stub = cast(Stub*, unit);
             if (stub == g_ds.array)
-                continue;
-            if (Not_Series_Accessible(stub))
                 continue;
             if (not Is_Series_Array(stub))
                 continue;
@@ -583,9 +585,9 @@ void Run_All_Handle_Cleaners(void) {
                     continue;
                 if (Not_Cell_Flag(item, FIRST_IS_NODE))
                     continue;
-                Stub* handle_stub = VAL_HANDLE_STUB(item);
-                if (Not_Series_Accessible(handle_stub))
+                if (Not_Node_Accessible(Cell_Node1(item)))
                     continue;
+                Stub* handle_stub = VAL_HANDLE_STUB(item);
                 Decay_Series(handle_stub);
             }
         }
@@ -638,6 +640,9 @@ static void Mark_Root_Series(void)
                 Queue_Mark_Cell_Deep(Pairing_Second(paired));
                 continue;
             }
+
+            if (Is_Node_Free(cast(Node*, unit)))
+                continue;
 
             Series* s = cast(Series*, unit);
 
@@ -841,7 +846,7 @@ static void Mark_Level_Stack_Deep(void)
         ){
             // Expand L_specifier.
             //
-            // !!! Should this instead check that it isn't INACCESSIBLE?
+            // !!! Should this instead check that it isn't inaccessible?
             //
             Queue_Mark_Node_Deep(&FEED_SINGLE(L->feed)->extra.Binding);
         }
@@ -899,15 +904,6 @@ static void Mark_Level_Stack_Deep(void)
             Queue_Mark_Node_Deep(
                 cast(const Node**, m_cast(const Array**, &L->varlist))
             );
-            goto propagate_and_continue;
-        }
-
-        if (L->varlist and Not_Series_Accessible(L->varlist)) {
-            //
-            // This happens in Encloser_Dispatcher(), where it can capture a
-            // varlist that may not be managed (e.g. if there were no ADAPTs
-            // or other phases running that triggered it).
-            //
             goto propagate_and_continue;
         }
 
@@ -996,12 +992,11 @@ Count Sweep_Series(void)
                 //
                 // NODE_FLAG_NODE (0x80 => 0x8) is clear.  This signature is
                 // reserved for UTF-8 strings (corresponding to valid ASCII
-                // values in the first byte).  There should not be any
-                // UTF-8 strings in the stub pool... although there might be
-                // applications for being able to fit string allocations in
-                // the "hot" stub pool as some kind of optimization.
+                // values in the first byte), and the only exception is the
+                // free-not-a-node FREE_POOLUNIT_BYTE (0x7F).
                 //
-                panic (unit);
+                assert(unit[0] == FREE_POOLUNIT_BYTE);
+                continue;
 
             // v-- Everything below here has NODE_FLAG_NODE set (0x8)
 
@@ -1032,7 +1027,8 @@ Count Sweep_Series(void)
                     Free_Pooled(STUB_POOL, unit);  // manuals use Free_Pairing
                 }
                 else {
-                    GC_Kill_Series(cast(Series*, unit));
+                    Decay_Series(u_cast(Series*, unit));
+                    GC_Kill_Stub(u_cast(Stub*, unit));
                 }
                 ++sweep_count;
                 break;
@@ -1046,18 +1042,33 @@ Count Sweep_Series(void)
 
             // v-- Everything below this line has the two leftmost bits set
             // in the header.  In the *general* case this could be a valid
-            // first byte of a multi-byte sequence in UTF-8...so only the
-            // special bit pattern of the free poolunit uses this for now.
+            // first byte of a multi-byte sequence in UTF-8.  But since we
+            // are looking at a stub pool, these are free (inaccessible) stubs
 
               case 12:
-                // 0x8 + 0x4: free node, uses special illegal UTF-8 byte
+                // 0x8 + 0x4: unmanaged free node, these should not exist
+                // Should have just been killed vs. marked free and wait!
                 //
-                assert(unit[0] == FREE_POOLUNIT_BYTE);
-                break;
+                panic (unit);
 
               case 13:
+                // 0x8 + 0x4 + 0x1: unmanaged but marked free node (?)
+                //
+                panic (unit);
+
               case 14:
+                // 0x8 + 0x4 + 0x2: free stub, managed but not marked
+                // GC pass canonized refs to these to PG_Inaccessible_Stub
+                // With no more refs outstanding, time to clean them up.
+                //
+                assert(not (unit[0] & NODE_BYTEMASK_0x01_CELL));
+                GC_Kill_Stub(u_cast(Stub*, unit));
+                break;
+
               case 15:
+                // 0x8 + 0x4 + 0x2 + 0x1: managed, marked, free stub
+                // Should have canonized to PG_Inaccessible_Stub vs. marked!
+                //
                 panic (unit);  // 0x8 + 0x4 + ... reserved for UTF-8
             }
         }
@@ -1291,10 +1302,10 @@ REBLEN Recycle_Core(Series* sweeplist)
 
     Assert_No_GC_Marks_Pending();
 
-    // Note: We do not need to mark the PG_Inaccessible_Series, because it is
+    // Note: We do not need to mark the PG_Inaccessible_Stub, because it is
     // not subject to GC and no one should mark it.  Make sure that's true.
     //
-    assert(not Is_Node_Marked(&PG_Inaccessible_Series));
+    assert(not Is_Node_Marked(&PG_Inaccessible_Stub));
 
     REBLEN sweep_count;
 
@@ -1512,15 +1523,15 @@ void Startup_GC(void)
     // inaccessible references canonized to this one global node.
     //
     Make_Series_Into(
-        &PG_Inaccessible_Series,
+        &PG_Inaccessible_Stub,
         1,
         FLAG_FLAVOR(THE_GLOBAL_INACCESSIBLE)
             | NODE_FLAG_MANAGED
             // Don't confuse the series creation machinery by trying to pass
             // in NODE_FLAG_FREE to the creation.  Do it after.
     );
-    Set_Series_Inaccessible(&PG_Inaccessible_Series);
-    assert(Not_Series_Accessible(&PG_Inaccessible_Series));
+    Set_Series_Inaccessible(&PG_Inaccessible_Stub);
+    assert(Not_Node_Accessible(&PG_Inaccessible_Stub));
 }
 
 
@@ -1529,7 +1540,7 @@ void Startup_GC(void)
 //
 void Shutdown_GC(void)
 {
-    GC_Kill_Series(&PG_Inaccessible_Series);
+    GC_Kill_Stub(&PG_Inaccessible_Stub);
 
     assert(Series_Used(g_gc.guarded) == 0);
     Free_Unmanaged_Series(g_gc.guarded);

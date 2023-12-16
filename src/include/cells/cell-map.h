@@ -65,12 +65,10 @@ INLINE Array* MAP_PAIRLIST(const_if_c Map* map)
 
 INLINE const Map* VAL_MAP(NoQuote(const Cell*) v) {
     assert(Cell_Heart(v) == REB_MAP);
-
-    Array* a = cast(Array*, Cell_Node1(v));
-    if (Not_Series_Accessible(a))
+    if (Not_Node_Accessible(Cell_Node1(v)))
         fail (Error_Series_Data_Freed_Raw());
 
-    return cast(Map*, a);
+    return cast(Map*, Cell_Node1(v));  // pairlist
 }
 
 #define VAL_MAP_Ensure_Mutable(v) \

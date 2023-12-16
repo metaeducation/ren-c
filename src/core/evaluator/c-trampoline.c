@@ -325,10 +325,9 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
   //    return, so that you could generically UNWIND to a macro level and
   //    overwrite the result verbatim.
   //
-  // 2. Note LEVEL->varlist may be SERIES_FLAG_INACCESSIBLE here.  This can
-  //    happen in RETURN during ENCLOSE.  Don't cast(Context*, LEVEL->varlist)
-  //    here, as that would try to validate it as not being inaccessible
-  //    in the DEBUG_CHECK_CASTS build.
+  // 2. Note LEVEL->varlist may be garbage here.  This can happen in RETURN
+  //    during ENCLOSE.  Don't cast(Context*, LEVEL->varlist) here, as that
+  //    would try to validate it in the DEBUG_CHECK_CASTS build.
   //
   // 3. Constructs like REDUCE-EACH keep a sublevel pushed to do evaluation,
   //    but then want to keep that state while doing another evaluation

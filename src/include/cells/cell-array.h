@@ -24,11 +24,10 @@ INLINE bool Any_Arraylike(NoQuote(const Cell*) v) {
 INLINE const Array* Cell_Array(NoQuote(const Cell*) v) {
     assert(Any_Arraylike(v));
     assert(Is_Node_A_Stub(Cell_Node1(v)));  // not a pairing arraylike!
-
-    const Array* a = cast(Array*, Cell_Node1(v));
-    if (Not_Series_Accessible(a))
+    if (Not_Node_Accessible(Cell_Node1(v)))
         fail (Error_Series_Data_Freed_Raw());
-    return a;
+
+    return cast(Array*, Cell_Node1(v));
 }
 
 #define Cell_Array_Ensure_Mutable(v) \

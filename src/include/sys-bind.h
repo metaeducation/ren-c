@@ -482,7 +482,7 @@ INLINE REBVAL* Unrelativize(Cell* out, const Cell* v) {
     else {
         Copy_Cell_Header(out, v);
         out->payload = v->payload;
-        BINDING(out) = &PG_Inaccessible_Series;
+        BINDING(out) = &PG_Inaccessible_Stub;
     }
     return cast(REBVAL*, out);
 }
@@ -509,13 +509,13 @@ INLINE Context* VAL_WORD_CONTEXT(const REBVAL *v) {
     else if (IS_LET(binding))
         fail ("LET variables have no context at this time");
 
+    assert(Is_Node_Accessible(binding));
     assert(
         Is_Node_Managed(binding) or
         not Is_Level_Fulfilling(cast(Level*, node_BONUS(KeySource, binding)))
     );
     Set_Node_Managed_Bit(binding);  // !!! review managing needs
     Context* c = cast(Context*, binding);
-    FAIL_IF_INACCESSIBLE_CTX(c);
     return c;
 }
 
@@ -565,10 +565,9 @@ INLINE Value(const*) Lookup_Word_May_Fail(
     }
     if (IS_LET(s) or IS_PATCH(s))
         return SPECIFIC(Stub_Cell(s));
-    Context* c = cast(Context*, s);
-    if (Not_Series_Accessible(CTX_VARLIST(c)))
-        fail (Error_No_Relative_Core(any_word));
 
+    Assert_Node_Accessible(s);
+    Context* c = cast(Context*, s);
     return CTX_VAR(c, index);
 }
 
@@ -584,10 +583,9 @@ INLINE Option(Value(const*)) Lookup_Word(
         return nullptr;
     if (IS_LET(s) or IS_PATCH(s))
         return SPECIFIC(Stub_Cell(s));
-    Context* c = cast(Context*, s);
-    if (Not_Series_Accessible(CTX_VARLIST(c)))
-        return nullptr;
 
+    Assert_Node_Accessible(s);
+    Context* c = cast(Context*, s);
     return CTX_VAR(c, index);
 }
 
@@ -722,12 +720,16 @@ INLINE Specifier* Derive_Specifier_Core(
     Specifier* specifier,  // merge this specifier...
     NoQuote(const Cell*) any_array  // ...onto the one in this array
 ){
-    Stub* old = BINDING(any_array);
-
     // If any specifiers in a chain are inaccessible, the whole thing is.
     //
-    if (old != UNBOUND and Not_Series_Accessible(old))
-        return &PG_Inaccessible_Series;
+    if (
+        any_array->extra.Binding != UNBOUND
+        and Not_Node_Accessible(any_array->extra.Binding)
+    ){
+        return &PG_Inaccessible_Stub;
+    }
+
+    Stub* old = BINDING(any_array);
 
     if (specifier == SPECIFIED) {  // no override being requested
         assert(old == UNBOUND or IS_VARLIST(old) or IS_LET(old) or IS_USE(old));
@@ -772,14 +774,12 @@ INLINE Specifier* Derive_Specifier_Core(
         //
       #if !defined(NDEBUG)
         Context* frame_ctx = try_unwrap(SPC_FRAME_CTX(specifier));
+        Assert_Node_Accessible(frame_ctx);
         if (
             frame_ctx == nullptr
-            or (
-                Is_Series_Accessible(CTX_VARLIST(frame_ctx)) and
-                not Action_Is_Base_Of(
-                    cast(Action*, old),
-                    CTX_FRAME_PHASE(frame_ctx)
-                )
+            or not Action_Is_Base_Of(
+                cast(Action*, old),
+                CTX_FRAME_PHASE(frame_ctx)
             )
         ){
             printf("Function mismatch in specific binding, expected:\n");
