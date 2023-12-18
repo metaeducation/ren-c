@@ -552,6 +552,8 @@ bool Typecheck_Coerce_Return(
 //      return: []  ; "divergent"
 //      ^value [any-atom?]
 //      /only "Don't proxy output variables, return argument without typecheck"
+//      /run "Reuse stack level for another call (@redo uses locals/args too)"
+//      ;   [<variadic> any-value?]  ; would force this frame managed
 //  ]
 //
 DECLARE_NATIVE(definitional_return)
@@ -589,21 +591,105 @@ DECLARE_NATIVE(definitional_return)
         fail (Error_Unbound_Archetype_Raw());
 
     Level* target_level = CTX_LEVEL_MAY_FAIL(binding);
-    if (
-        not REF(only)
-        and not Typecheck_Coerce_Return(target_level, atom)  // check NOW! [2]
-    ){
-        fail (Error_Bad_Return_Type(target_level, atom));
+
+    if (not REF(run)) {  // plain simple RETURN (not weird tail-call)
+        if (
+            not REF(only)  // typecheck NOW! [2]
+            and not Typecheck_Coerce_Return(target_level, atom)
+        ){
+            fail (Error_Bad_Return_Type(target_level, atom));
+        }
+
+        DECLARE_STABLE (label);
+        Copy_Cell(label, Lib(UNWIND)); // see Make_Thrown_Unwind_Value
+        g_ts.unwind_level = target_level;
+
+        if (not Is_Raised(atom) and not REF(only))
+            Proxy_Multi_Returns_Core(target_level, atom);
+
+        return Init_Thrown_With_Label(LEVEL, atom, label);
     }
 
-    DECLARE_STABLE (label);
-    Copy_Cell(label, Lib(UNWIND)); // see Make_Thrown_Unwind_Value
-    g_ts.unwind_level = target_level;
+  //=//// TAIL-CALL HANDLING //////////////////////////////////////////////=//
 
-    if (not Is_Raised(atom) and not REF(only))
-        Proxy_Multi_Returns_Core(target_level, atom);
+    // Tail calls are a semi-obscure feature that are included more "just to
+    // show we can" vs. actually mattering that much.  They have the negative
+    // property of obscuring the actual call stack, which is a reasoning that
+    // kept them from being included in Python:
+    //
+    //   https://en.wikipedia.org/wiki/Tail_call
+    //
+    // 1. The function we are returning from is in the dispatching state, and
+    //    the level's state byte can be used by the dispatcher function when
+    //    that is the case.  We're pushing the level back to either the
+    //    argument-gathering phase (INITIAL_ENTRY) or typechecking phase.
+    //    Other flags pertinent to the dispatcher need to be cleared too.
+    //
+    // 2. Because tail calls might use existing arguments and locals when
+    //    calculating the new call's locals and args, we can only avoid
+    //    allocating new memory for the args and locals if we reuse the frame
+    //    "as is"--assuming the values of the variables have been loaded with
+    //    what the recursion expects.  We still have to reset specialized
+    //    values back (including locals) to what a fresh call would have.
 
-    return Init_Thrown_With_Label(LEVEL, atom, label);
+    if (REF(only))
+        fail (Error_Bad_Refines_Raw());
+
+    Value(const*) gather_args;
+
+    if (Is_The_Word(atom) and Cell_Word_Id(atom) == SYM_REDO) {  // reuse args
+        Action* redo_action = target_level->u.action.original;
+        const Key* key_tail;
+        const Key* key = ACT_KEYS(&key_tail, redo_action);
+        target_level->u.action.key = key;
+        target_level->u.action.key_tail = key_tail;
+        Param* param = cast(Param*, CTX_VARS_HEAD(ACT_EXEMPLAR(redo_action)));
+        target_level->u.action.param = ACT_PARAMS_HEAD(redo_action);
+        Value(*) arg = Level_Args_Head(target_level);
+        target_level->u.action.arg = arg;
+        for (; key != key_tail; ++key, ++arg, ++param) {
+            if (Is_Specialized(param))
+                Copy_Cell(arg, param);  // must reset [2]
+            else if (Cell_ParamClass(param) == PARAMCLASS_RETURN)
+                Init_Nulled(arg);  // dispatcher expects null
+            else {
+                // assume arguments assigned to values desired for recursion
+            }
+        }
+
+        // leave phase as-is... we redo the phase we were in
+        // (also if we redid original, note there's no original_binding :-/)
+
+        gather_args = Lib(FALSE);
+    }
+    else if (Is_Action(atom) or Is_Frame(atom)) {  // just reuse Level
+        Drop_Action(target_level);
+        Push_Action(
+            target_level,
+            VAL_ACTION(atom),
+            VAL_FRAME_BINDING(atom)
+        );
+        Begin_Prefix_Action(target_level, VAL_FRAME_LABEL(atom));
+
+        Release_Feed(target_level->feed);
+        target_level->feed = return_level->feed;
+        Add_Feed_Reference(return_level->feed);
+
+        Set_Node_Managed_Bit(target_level->varlist);
+
+        gather_args = Lib(TRUE);
+    }
+    else
+        fail ("RETURN/RUN requires action, frame, or @redo as argument");
+
+    // We need to cooperatively throw a restart instruction up to the level
+    // of the frame.  Use REDO as the throw label that Eval_Core() will
+    // identify for that behavior.
+    //
+    Copy_Cell(SPARE, Lib(REDO));
+    BINDING(SPARE) = target_level->varlist;  // may have changed
+
+    return Init_Thrown_With_Label(LEVEL, gather_args, stable_SPARE);
 }
 
 

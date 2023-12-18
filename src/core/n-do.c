@@ -556,16 +556,30 @@ DECLARE_NATIVE(evaluate)
 //      return: []  ; !!! notation for divergent function?
 //      restartee "Frame to restart, or bound word (e.g. REDO 'RETURN)"
 //          [frame! any-word!]
-//      /other "Restart in a frame-compatible function (sibling tail-call)"
+//      /sibling "Restart execution in a frame-compatible function"
 //          [<unrun> frame!]
 //  ]
 //
 DECLARE_NATIVE(redo)
 //
-// This can be used to implement tail-call recursion:
+// REDO starts the function phase again from its top, and reuses the frame
+// already allocated.  It's a more generic form of tail call recursion (the
+// RETURN/RUN option reuses the mechanism):
 //
-// https://en.wikipedia.org/wiki/Tail_call
+//   https://en.wikipedia.org/wiki/Tail_call
 //
+// 1. If we were given a sibling to restart, make sure it is frame compatible
+//    (e.g. the product of ADAPT-ing, CHAIN-ing, ENCLOSE-ing, HIJACK-ing a
+//    common underlying function).
+//
+// 2. We are reusing the frame and may be jumping to an "earlier phase" of
+//    a composite function, or even to a "not-even-earlier-just-compatible"
+//    phase of another function (sibling tail call).  Type checking is
+//    necessary, as is zeroing out any locals...but if we're jumping to any
+//    higher or different phase we need to reset the specialization
+//    values as well.
+//
+//    !!! Consider folding this pass into the typechecking loop itself.
 {
     INCLUDE_PARAMS_OF_REDO;
 
@@ -586,19 +600,8 @@ DECLARE_NATIVE(redo)
     if (L == NULL)
         fail ("Use DO to start a not-currently running FRAME! (not REDO)");
 
-    // If we were given a sibling to restart, make sure it is frame compatible
-    // (e.g. the product of ADAPT-ing, CHAIN-ing, ENCLOSE-ing, HIJACK-ing a
-    // common underlying function).
-    //
-    // !!! It is possible for functions to be frame-compatible even if they
-    // don't come from the same heritage (e.g. two functions that take an
-    // INTEGER! and have 2 locals).  Such compatibility may seem random to
-    // users--e.g. not understanding why a function with 3 locals is not
-    // compatible with one that has 2, and the test would be more expensive
-    // than the established check for a common "ancestor".
-    //
-    if (REF(other)) {
-        REBVAL *sibling = ARG(other);
+    if (REF(sibling)) {  // ensure frame compatibility [1]
+        REBVAL *sibling = ARG(sibling);
         if (
             ACT_KEYLIST(L->u.action.original)
             != ACT_KEYLIST(VAL_ACTION(sibling))
@@ -606,22 +609,32 @@ DECLARE_NATIVE(redo)
             fail ("/OTHER function passed to REDO has incompatible FRAME!");
         }
 
-        INIT_VAL_FRAME_PHASE(restartee, ACT_IDENTITY(VAL_ACTION(sibling)));
-        INIT_VAL_FRAME_BINDING(restartee, VAL_FRAME_BINDING(sibling));
+        INIT_LVL_PHASE(L, ACT_IDENTITY(VAL_ACTION(sibling)));
+        INIT_LVL_BINDING(L, VAL_FRAME_BINDING(sibling));
+    }
+    else {
+        INIT_LVL_PHASE(L, VAL_FRAME_PHASE(restartee));
+        INIT_LVL_BINDING(L, VAL_FRAME_BINDING(restartee));
     }
 
-    // We need to cooperatively throw a restart instruction up to the level
-    // of the frame.  Use REDO as the throw label that Eval_Core() will
-    // identify for that behavior.
-    //
-    Copy_Cell(SPARE, Lib(REDO));
-    INIT_VAL_FRAME_BINDING(SPARE, c);
+    Action* redo_action = u_cast(Action*, Level_Phase(L));
 
-    // The FRAME! contains its ->phase and ->binding, which should be enough
-    // to restart the phase at the point of parameter checking.  Make that
-    // the actual value that Eval_Core() catches.
-    //
-    return Init_Thrown_With_Label(LEVEL, restartee, stable_SPARE);
+    const Key* key_tail;
+    const Key* key = ACT_KEYS(&key_tail, redo_action);
+    Param* param = ACT_PARAMS_HEAD(redo_action);
+    Value(*) arg = Level_Args_Head(L);
+    for (; key != key_tail; ++key, ++arg, ++param) {
+        if (Is_Specialized(param))
+            Copy_Cell(arg, param);  // must reset [2]
+        else if (Cell_ParamClass(param) == PARAMCLASS_RETURN)
+            Init_Nulled(arg);  // dispatcher expects null
+    }
+
+    Copy_Cell(SPARE, Lib(REDO));  // label used for throw
+    INIT_VAL_FRAME_BINDING(SPARE, c);  // target has restartee as varlist
+
+    Value(const*) gather_args = Lib(FALSE);
+    return Init_Thrown_With_Label(LEVEL, gather_args, stable_SPARE);
 }
 
 

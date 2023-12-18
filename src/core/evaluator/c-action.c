@@ -1093,30 +1093,6 @@ Bounce Action_Executor(Level* L)
   // call to something that issues a REDO.  So we can't handle REDO at the
   // top of this executor where we test for THROWING, the way we might if
   // we could always expect continuations as the sources of throws.
-  //
-  // 1. REDO is the mechanism for doing "tail calls", and it is a generic
-  //    feature offered on ACTION! frames regardless of what executor
-  //    they use.  It starts the function phase again from its top, and
-  //    reuses the frame already allocated.
-  //
-  // 2. Since dispatchers run arbitrary code to pick how (and if) they want
-  //    to change the phase on each redo, we have no easy way to tell if a
-  //    phase is "earlier" or "later".
-  //
-  // 3. We are reusing the frame and may be jumping to an "earlier phase" of
-  //    a composite function, or even to a "not-even-earlier-just-compatible"
-  //    phase of another function (sibling tail call).  Type checking is
-  //    necessary, as is zeroing out any locals...but if we're jumping to any
-  //    higher or different phase we need to reset the specialization
-  //    values as well.
-  //
-  //    !!! Consider folding this pass into the typechecking loop itself.
-  //
-  // 4. As a convenience, we automatically drop evaluator levels above on the
-  //    stack.  This doesn't necessarily generalize well, but if we didn't do
-  //    it then anything that pushed a sublevel to do an evaluator walk (like
-  //    a CASE or ANY) would need to explicitly catch evaluator throws...which
-  //    seems like make-work.
 
     const REBVAL *label = VAL_THROWN_LABEL(level_);
     if (Is_Frame(label)) {
@@ -1125,25 +1101,19 @@ Bounce Action_Executor(Level* L)
             and VAL_FRAME_BINDING(label) == cast(Context*, L->varlist)
         ){
             CATCH_THROWN(OUT, level_);
-            assert(Is_Frame(OUT));
+            assert(Is_Logic(OUT));  // signal if we want to gather args or not
 
-            Action* redo_phase = VAL_FRAME_PHASE(OUT);  // earlier?  [2]
-            KEY = ACT_KEYS(&KEY_TAIL, redo_phase);
-            PARAM = ACT_PARAMS_HEAD(redo_phase);
-            ARG = Level_Args_Head(L);
-            for (; KEY != KEY_TAIL; ++KEY, ++ARG, ++PARAM) {
-                if (Is_Specialized(PARAM))
-                    Copy_Cell(ARG, PARAM);  // must reset [3]
-                else if (Cell_ParamClass(PARAM) == PARAMCLASS_RETURN)
-                    Init_Nulled(ARG);  // dispatcher expects null
-            }
-
-            INIT_LVL_PHASE(L, ACT_IDENTITY(redo_phase));
-            INIT_LVL_BINDING(L, VAL_FRAME_BINDING(OUT));
-            STATE = ST_ACTION_TYPECHECKING;
-            Clear_Action_Executor_Flag(L, DISPATCHER_CATCHES);  // else asserts
-            Clear_Level_Flag(L, NOTIFY_ON_ABRUPT_FAILURE);
+            assert(Get_Action_Executor_Flag(L, IN_DISPATCH));
             Clear_Action_Executor_Flag(L, IN_DISPATCH);
+
+            Clear_Action_Executor_Flag(L, DISPATCHER_CATCHES);
+            Clear_Level_Flag(L, NOTIFY_ON_ABRUPT_FAILURE);
+
+            if (Is_True(OUT)) {
+                STATE = ST_ACTION_FULFILLING_ARGS;
+                goto fulfill;
+            }
+            STATE = ST_ACTION_TYPECHECKING;
             goto typecheck_then_dispatch;
         }
     }
