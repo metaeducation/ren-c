@@ -354,7 +354,9 @@ DECLARE_NATIVE(c_debug_break)
         // debug break functionality (e.g. callgrind build).  Break here--
         // you'll have to step up out into the evaluator stack.
         //
+      #if DEBUG
         debug_break();
+      #endif
         return Init_Nihil(OUT);
       #endif
   #endif
