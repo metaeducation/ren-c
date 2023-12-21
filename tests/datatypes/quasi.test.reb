@@ -128,20 +128,19 @@
     trash' = ^ f
 )]
 
-; locals are null before they are assigned (unset breaks rules of frames not
-; being able to "specialize" to unset)
+; locals are unset before they are assigned
 (
-    f: func [<local> loc] [return get 'loc]
-    null? f
+    f: func [<local> loc] [return get/any 'loc]
+    trash? f
 )(
-    f: func [<local> loc] [return reify get 'loc]
-    f = '~null~
+    f: func [<local> loc] [return reify get/any 'loc]
+    f = '~
 )(
     f: func [<local> loc] [return ^loc]
-    f = '~null~
+    f = '~
 )(
     f: lambda [<local> loc] [^loc]
-    f = '~null~
+    f = '~
 )
 
 

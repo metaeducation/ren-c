@@ -823,7 +823,7 @@ Bounce Action_Executor(Level* L)
   //    modified.  Even though it's hidden, it may need to be typechecked
   //    again (unless it was *fully* hidden).
   //
-  // 2. Trash (isotopic voids) are the default values from MAKE FRAME!.
+  // 2. Parameter isotopes are the default values from MAKE FRAME!.
   //
   // 3. We can't a-priori typecheck the variadic argument, since the values
   //    aren't calculated until the function starts running.  Instead we stamp

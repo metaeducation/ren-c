@@ -84,7 +84,7 @@
 ; RETURN/RUN with current values of frame arguments
 (
     foo: func [return: [tag!] n <local> clear-me] [
-        assert [clear-me = null]
+        assert [unset? 'clear-me]
         if n = 0 [
             return <success>
         ]
@@ -100,7 +100,7 @@
 ; old values while calculating the new ones)
 (
     foo: func [return: [tag!] n <local> clear-me] [
-        assert [clear-me = null]
+        assert [unset? 'clear-me]
         if n = 0 [
            return <success>
         ]
