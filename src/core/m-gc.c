@@ -907,11 +907,28 @@ static void Mark_Level_Stack_Deep(void)
             goto propagate_and_continue;
         }
 
+        if (
+            Is_Level_Fulfilling(L)
+            and (
+                Level_State_Byte(L) == ST_ACTION_INITIAL_ENTRY
+                or Level_State_Byte(L) == ST_ACTION_INITIAL_ENTRY_ENFIX
+            )
+        ){
+            goto propagate_and_continue;  // args and locals poison/garbage
+        }
+
         Phase* phase; // goto would cross initialization
         phase = Level_Phase(L);
         const Key* key;
         const Key* key_tail;
         key = ACT_KEYS(&key_tail, phase);
+
+        if (
+            Is_Level_Fulfilling(L)
+            and Not_Executor_Flag(ACTION, L, DOING_PICKUPS)
+        ){
+            key_tail = L->u.action.key + 1;  // key may be fresh
+        }
 
         REBVAL *arg;
         for (arg = Level_Args_Head(L); key != key_tail; ++key, ++arg) {
@@ -920,8 +937,10 @@ static void Mark_Level_Stack_Deep(void)
                 continue;
             }
 
-            if (Is_Level_Fulfilling(L))
-                continue;  // unspecialized arguments start out erased
+            if (Is_Level_Fulfilling(L)) {
+                assert(key == L->u.action.key);
+                continue;
+            }
 
             // Natives are allowed to use their locals as evaluation targets,
             // which can be fresh at various times when the GC sees them.

@@ -450,6 +450,9 @@ REBINT Cmp_Value(const Cell* sval, const Cell* tval, bool strict)
       case REB_COMMA:
         return CT_Comma(s, t, strict);
 
+      case REB_PARAMETER:
+        return CT_Parameter(s, t, strict);
+
       default:
         break;
     }

@@ -121,7 +121,7 @@ Bounce Func_Dispatcher(Level* const L)
     assert(KEY_SYM(ACT_KEYS_HEAD(PHASE)) == SYM_RETURN);
 
     REBVAL *cell = Level_Arg(L, 1);
-    assert(Is_Nulled(cell));
+    assert(Not_Specialized(cell));
     Force_Level_Varlist_Managed(L);
     Init_Action(
         cell,
@@ -648,10 +648,13 @@ DECLARE_NATIVE(definitional_return)
         Value(*) arg = Level_Args_Head(target_level);
         target_level->u.action.arg = arg;
         for (; key != key_tail; ++key, ++arg, ++param) {
-            if (Is_Specialized(param))
-                Copy_Cell(arg, param);  // must reset [2]
-            else if (Cell_ParamClass(param) == PARAMCLASS_RETURN)
-                Init_Nulled(arg);  // dispatcher expects null
+            if (
+                Is_Specialized(param)  // must reset [2]
+                or Cell_ParamClass(param) == PARAMCLASS_RETURN
+                or Cell_ParamClass(param) == PARAMCLASS_OUTPUT
+            ){
+                Copy_Cell(arg, param);
+            }
             else {
                 // assume arguments assigned to values desired for recursion
             }

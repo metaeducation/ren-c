@@ -81,7 +81,7 @@ INLINE Option(const Array*) Cell_Parameter_Spec(
         *x_cast(uintptr_t*, &EXTRA(Parameter, (p)).parameter_flags)
 #else
     INLINE uintptr_t& PARAMETER_FLAGS(const Cell* p) {
-        assert(Is_Parameter(p));
+        assert(Cell_Heart_Unchecked(p) == REB_PARAMETER);
         return const_cast<uintptr_t&>(EXTRA(Parameter, (p)).parameter_flags);
     }
 #endif
@@ -279,19 +279,24 @@ INLINE ParamClass Cell_ParamClass(const Param* param) {
 }
 
 
-// A "Param" can be any value (including isotopes) if it is specialized.
-// But a typeset that does not have param class 0 is unspecialized.
+// Isotopic parameters are used to represent unspecialized parameters.  When
+// the slot they are in is overwritten by another value, that indicates they
+// are then fixed at a value and hence specialized--so not part of the public
+// interface of the function.
 //
-INLINE bool Is_Specialized(const Param* param) {
-    if (HEART_BYTE(param) == REB_PARAMETER) {
-        assert(QUOTE_BYTE(param) == UNQUOTED_1);  // no quoteds
-        if (Get_Cell_Flag_Unchecked(param, VAR_MARKED_HIDDEN))
+INLINE bool Is_Specialized(Value(const*) v) {
+    if (
+        HEART_BYTE(v) == REB_PARAMETER
+        and QUOTE_BYTE(v) == ISOTOPE_0
+    ){
+        if (Get_Cell_Flag_Unchecked(v, VAR_MARKED_HIDDEN))
             assert(!"Unspecialized parameter is marked hidden!");
         return false;
     }
-    return not Is_Trash(param);
+    return true;
 }
 
+#define Not_Specialized(v)      (not Is_Specialized(v))
 
 #define Init_Parameter(out,param_flags,spec,specifier) \
     TRACK(Init_Parameter_Untracked((out), (param_flags), (spec), (specifier)))
@@ -309,7 +314,7 @@ INLINE Param* Init_Unconstrained_Parameter_Untracked(
     }
     UNUSED(pclass);
 
-    Reset_Unquoted_Header_Untracked(out, CELL_MASK_PARAMETER);
+    Reset_Isotope_Header_Untracked(out, CELL_MASK_PARAMETER);
     PARAMETER_FLAGS(out) = flags;
     INIT_CELL_PARAMETER_SPEC(out, nullptr);
 

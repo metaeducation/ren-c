@@ -235,6 +235,7 @@ enum {
     // to be stale.  This allows the caller to subvert that rule as well as
     // have the enfix-from-out signal without needing a separate flag.
     //
+    ST_ACTION_INITIAL_ENTRY_ENFIX,
     ST_ACTION_FULFILLING_ENFIX_FROM_OUT,
 
     // While some special-purpose functions intentionally receive nihil, most

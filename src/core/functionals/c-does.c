@@ -222,6 +222,5 @@ DECLARE_NATIVE(does)
 
     const Symbol* label = Canon(DO);  // !!! Better answer?
 
-    Phase* doer = Make_Action_From_Exemplar(exemplar, label);
-    return Init_Action(OUT, doer, label, UNBOUND);
+    return Actionify(Init_Frame(OUT, exemplar, label));
 }

@@ -86,8 +86,7 @@ Bounce Specializer_Dispatcher(Level* L)
 Context* Make_Context_For_Action_Push_Partials(
     const REBVAL *action,  // need ->binding, so can't just be a Action*
     StackIndex lowest_ordered_stackindex,  // caller can add refinements
-    Option(struct Reb_Binder*) binder,
-    const REBVAL *unspecialized  // what to put in unspecialized slots
+    Option(struct Reb_Binder*) binder
 ){
     StackIndex highest_ordered_stackindex = TOP_INDEX;
 
@@ -143,7 +142,7 @@ Context* Make_Context_For_Action_Push_Partials(
 
           continue_unspecialized:
 
-            Copy_Cell(arg, unspecialized);
+            Copy_Cell(arg, param);
             if (binder)
                 Add_Binder_Index(unwrap(binder), symbol, index);
 
@@ -216,8 +215,7 @@ Context* Make_Context_For_Action(
     Context* exemplar = Make_Context_For_Action_Push_Partials(
         action,
         lowest_ordered_stackindex,
-        binder,
-        TRASH_CELL
+        binder
     );
 
     Manage_Series(CTX_VARLIST(exemplar));  // !!! was needed before, review
@@ -260,10 +258,7 @@ bool Specialize_Action_Throws(
     Context* exemplar = Make_Context_For_Action_Push_Partials(
         specializee,
         lowest_ordered_stackindex,
-        def ?
-            &binder
-            : cast(struct Reb_Binder*, nullptr),  // C++98 ambiguous w/o cast
-        TRASH_CELL
+        def ? &binder : nullptr
     );
     Manage_Series(CTX_VARLIST(exemplar)); // destined to be managed, guarded
 
@@ -327,10 +322,10 @@ bool Specialize_Action_Throws(
     bool enfix = Is_Enfixed(specializee);
 
     for (; key != tail; ++key, ++param, ++arg) {
-        if (Is_Specialized(param))
+        if (Is_Specialized(param)) {  // was specialized in underlying phase
+            assert(Is_Specialized(arg));  // user couldn't have changed it!
             continue;
-
-        assert(Is_Parameter(param));
+        }
 
         // !!! Current entanglements of wanting to get help information for
         // return and output parameters means they are exposed to the user
@@ -338,17 +333,13 @@ bool Specialize_Action_Throws(
         //
         ParamClass pclass = Cell_ParamClass(param);
         if (pclass == PARAMCLASS_OUTPUT or pclass == PARAMCLASS_RETURN) {
-            if (not Is_Trash(arg))
+            if (Is_Specialized(arg))
                 fail ("Can't specialize RETURN or output parameters");
             Copy_Cell(arg, param);
             continue;
         }
 
-        // You can't specialize with ~ isotopes ("trash"), these indicate
-        // unspecialized arguments.  Only ^META parameters take trash (and
-        // recieve them as meta-trash, e.g. a plain quasi-void, or ~)
-        //
-        if (Is_Trash(arg)) {  // unspecialized argument
+        if (Not_Specialized(arg)) {
             Copy_Cell(arg, param);
             if (first_param)
                 first_param = false;  // leave enfix as is
@@ -527,8 +518,12 @@ void For_Each_Unspecialized_Param(
         if (Get_Parameter_Flag(param, REFINEMENT))
             continue;
 
-        if (Cell_ParamClass(param) == PARAMCLASS_RETURN)
+        if (
+            Cell_ParamClass(param) == PARAMCLASS_RETURN
+            or Cell_ParamClass(param) == PARAMCLASS_OUTPUT
+        ){
             continue;
+        }
 
         Flags flags = 0;
 
@@ -741,15 +736,12 @@ Phase* Alloc_Action_From_Exemplar(
         if (Is_Specialized(param))
             continue;
 
-        // We leave non-hidden `~` isotopes to be handled by the evaluator as
-        // unspecialized (which means putting it back to the parameter
-        // description info, e.g. the typeset for now):
+        // Leave non-hidden unspecialized args to be handled by the evaluator.
         //
         // https://forum.rebol.info/t/default-values-and-make-frame/1412
         // https://forum.rebol.info/t/1413
         //
-        if (Is_Trash(arg)) {
-            assert(Is_Parameter(param));
+        if (Not_Specialized(arg)) {
             Copy_Cell(arg, param);
             continue;
         }
@@ -767,24 +759,5 @@ Phase* Alloc_Action_From_Exemplar(
         details_capacity
     );
 
-    return action;
-}
-
-
-//
-//  Make_Action_From_Exemplar: C
-//
-// Assumes you want a Specializer_Dispatcher with the exemplar in details.
-//
-Phase* Make_Action_From_Exemplar(
-    Context* exemplar,
-    Option(const Symbol*) label
-){
-    Phase* action = Alloc_Action_From_Exemplar(
-        exemplar,
-        label,
-        &Specializer_Dispatcher,
-        IDX_SPECIALIZER_MAX  // details capacity
-    );
     return action;
 }

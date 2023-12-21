@@ -211,7 +211,7 @@ Bounce Chainer_Dispatcher(Level* const L)
 
     Begin_Prefix_Action(sub, VAL_FRAME_LABEL(chained));
 
-    Level_State_Byte(sub) = ST_ACTION_FULFILLING_ENFIX_FROM_OUT;  // [4]
+    Level_State_Byte(sub) = ST_ACTION_INITIAL_ENTRY_ENFIX;  // [4]
     Clear_Executor_Flag(ACTION, sub, DISPATCHER_CATCHES);
     Clear_Executor_Flag(ACTION, sub, IN_DISPATCH);
     Clear_Level_Flag(sub, NOTIFY_ON_ABRUPT_FAILURE);

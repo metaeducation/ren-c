@@ -278,31 +278,31 @@ static bool Subparse_Throws(
     USE_LEVEL_SHORTHANDS (L);
     INCLUDE_PARAMS_OF_SUBPARSE;
 
-    Init_Nulled(ARG(return));
+    Init_Nulled(Erase_Cell(ARG(return)));
 
-    Derelativize(ARG(input), input, input_specifier);
+    Derelativize(Erase_Cell(ARG(input)), input, input_specifier);
 
     assert((flags & PF_STATE_MASK) == 0);  // no "parse state" flags allowed
-    Init_Integer(ARG(flags), flags);
+    Init_Integer(Erase_Cell(ARG(flags)), flags);
 
     // If there's an array for collecting into, there has to be some way of
     // passing it between frames.
     //
     REBLEN collect_tail;
     if (collection) {
-        Init_Block(ARG(collection), unwrap(collection));
+        Init_Block(Erase_Cell(ARG(collection)), unwrap(collection));
         collect_tail = Array_Len(unwrap(collection));  // rollback here on fail
     }
     else {
-        Init_Nulled(ARG(collection));
+        Init_Nulled(Erase_Cell(ARG(collection)));
         collect_tail = 0;
     }
 
     // Locals in frame would be unset on entry if called by action dispatch.
     //
-    Init_Nulled(ARG(num_quotes));
-    Init_Nulled(ARG(position));
-    Init_Nulled(ARG(save));
+    Init_Nulled(Erase_Cell(ARG(num_quotes)));
+    Init_Nulled(Erase_Cell(ARG(position)));
+    Init_Nulled(Erase_Cell(ARG(save)));
 
     // !!! By calling the subparse native here directly from its C function
     // vs. going through the evaluator, we don't get the opportunity to do

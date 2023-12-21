@@ -60,10 +60,8 @@ void Prep_Action_Level(
     const Param* param = L->u.action.param;
     Atom(*) arg = L->u.action.arg;
     for (; key != L->u.action.key_tail; ++key, ++param, ++arg) {
-        if (Is_Specialized(param))
-            Copy_Cell(arg, param);
-        else
-            Finalize_Trash(arg);
+        Erase_Cell(arg);
+        Copy_Cell(arg, param);
         assert(Is_Stable(arg));
     }
 
@@ -166,10 +164,8 @@ bool Pushed_Continuation(
         const Param* param = L->u.action.param;
         Atom(*) arg = L->u.action.arg;
         for (; key != L->u.action.key_tail; ++key, ++param, ++arg) {
-            if (Is_Specialized(param))
-                Copy_Cell(arg, param);
-            else
-                Finalize_Trash(arg);
+            Erase_Cell(arg);
+            Copy_Cell(arg, param);
         }
 
         arg = First_Unspecialized_Arg(&param, L);

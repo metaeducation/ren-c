@@ -835,6 +835,8 @@ DECLARE_NATIVE(combinatorize)
     USED(REF(value));
     For_Each_Unspecialized_Param(act, &Combinator_Param_Hook, &s);
 
+    Drop_GC_Guard(s.ctx);
+
     // Set the advanced parameter to how many rules were consumed (the hook
     // steps through ARG(rules), updating its index)
     //
@@ -844,15 +846,12 @@ DECLARE_NATIVE(combinatorize)
     //
     Copy_Cell(s.rule_end, ARG(rules));
 
-    Phase* parser = Make_Action_From_Exemplar(s.ctx, label);
-    Drop_GC_Guard(s.ctx);
-
-    Actionify(Init_Frame_Details(
+    Actionify(Init_Frame(
         OUT,
-        parser,
-        label,
-        binding
+        s.ctx,
+        label
     ));
+    UNUSED(binding);  // !!! should be put in there somewhere
 
     return Proxy_Multi_Returns(level_);
 }

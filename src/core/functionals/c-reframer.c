@@ -367,8 +367,7 @@ DECLARE_NATIVE(reframer_p)
     Context* exemplar = Make_Context_For_Action_Push_Partials(
         ARG(shim),
         base,
-        &binder,
-        TRASH_CELL
+        &binder
     );
 
     Option(Context*) error = nullptr;  // can't fail() with binder in effect
@@ -457,7 +456,7 @@ DECLARE_NATIVE(reframer_p)
     // takes a void and giving it ~pending~; would make bugs more obvious.
     //
     REBVAL *var = CTX_VAR(exemplar, param_index);
-    assert(Is_Trash(var));
+    assert(Not_Specialized(var));
     Copy_Cell(var, CTX_ARCHETYPE(exemplar));
 
     // Make action with enough space to store the implementation phase and

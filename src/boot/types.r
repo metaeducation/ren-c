@@ -102,10 +102,10 @@ integer     "64 bit integer"
             [any-number! any-scalar!]
             [integer     +       +]
 
-parameter   "function parameter description"
-            (CELL_FLAG_FIRST_IS_NODE)
-            []
-            [parameter   +       +]
+parameter         "function parameter description"
+~unspecialized~   (CELL_FLAG_FIRST_IS_NODE)
+                  []
+                  [parameter   +       +]
 
 bitset      "set of bit flags"
             (CELL_FLAG_FIRST_IS_NODE)

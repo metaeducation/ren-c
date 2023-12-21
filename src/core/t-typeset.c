@@ -34,10 +34,17 @@ REBINT CT_Parameter(NoQuote(const Cell*) a, NoQuote(const Cell*) b, bool strict)
 
     assert(Cell_Heart(a) == REB_PARAMETER);
     assert(Cell_Heart(b) == REB_PARAMETER);
-    UNUSED(a);
-    UNUSED(b);
 
-    fail ("Parameter equality test currently disabled");
+    if (Cell_Parameter_Spec(a) != Cell_Parameter_Spec(b))
+        return Cell_Parameter_Spec(a) > Cell_Parameter_Spec(b) ? 1 : -1;
+
+    if (Cell_Parameter_String(a) != Cell_Parameter_String(b))
+        return Cell_Parameter_String(a) > Cell_Parameter_String(b) ? 1 : -1;
+
+    if (Cell_ParamClass(a) != Cell_ParamClass(b))
+        return Cell_ParamClass(a) > Cell_ParamClass(b) ? 1 : -1;
+
+    return 0;
 }
 
 
@@ -323,7 +330,7 @@ Param* Init_Parameter_Untracked(
     if (optimized != optimized_tail)
         *optimized = 0;  // signal termination (else tail is termination)
 
-    Reset_Unquoted_Header_Untracked(out, CELL_MASK_PARAMETER);
+    Reset_Isotope_Header_Untracked(out, CELL_MASK_PARAMETER);
 
     PARAMETER_FLAGS(out) = flags;
     INIT_CELL_PARAMETER_SPEC(out, copy);
@@ -332,6 +339,23 @@ Param* Init_Parameter_Untracked(
 
     assert(Not_Cell_Flag(param, VAR_MARKED_HIDDEN));
     return param;
+}
+
+
+//
+//  unspecialized?: native/intrinsic [
+//
+//  "Tells you if argument is a parameter isotope, used for unspecialized args"
+//
+//      return: [logic?]
+//      value
+//  ]
+//
+DECLARE_INTRINSIC(unspecialized_q)
+{
+    UNUSED(phase);
+
+    Init_Logic(out, Is_Unspecialized(arg));
 }
 
 

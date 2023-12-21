@@ -200,7 +200,7 @@ DECLARE_NATIVE(shove)
             Set_Cell_Flag(OUT, UNEVALUATED);
     }
 
-    Flags flags = FLAG_STATE_BYTE(ST_ACTION_FULFILLING_ENFIX_FROM_OUT);
+    Flags flags = FLAG_STATE_BYTE(ST_ACTION_INITIAL_ENTRY_ENFIX);
 
     Level* sub = Make_Level(level_->feed, flags);
     Push_Action(sub, VAL_ACTION(shovee), VAL_FRAME_BINDING(shovee));
@@ -624,10 +624,13 @@ DECLARE_NATIVE(redo)
     Param* param = ACT_PARAMS_HEAD(redo_action);
     Value(*) arg = Level_Args_Head(L);
     for (; key != key_tail; ++key, ++arg, ++param) {
-        if (Is_Specialized(param))
-            Copy_Cell(arg, param);  // must reset [2]
-        else if (Cell_ParamClass(param) == PARAMCLASS_RETURN)
-            Init_Nulled(arg);  // dispatcher expects null
+        if (
+            Is_Specialized(param)  // must reset [2]
+            or Cell_ParamClass(param) == PARAMCLASS_RETURN
+            or Cell_ParamClass(param) == PARAMCLASS_OUTPUT
+        ){
+            Copy_Cell(arg, param);
+        }
     }
 
     Copy_Cell(SPARE, Lib(REDO));  // label used for throw
@@ -684,8 +687,7 @@ DECLARE_NATIVE(applique)
     Context* exemplar = Make_Context_For_Action_Push_Partials(  // [1]
         op,
         STACK_BASE,  // lowest_ordered_dsp of refinements to weave in
-        nullptr,  // no binder needed
-        TRASH_CELL  // seen as unspecialized by ST_ACTION_TYPECHECKING
+        nullptr  // no binder needed
     );
     Manage_Series(CTX_VARLIST(exemplar));
     Init_Frame(frame, exemplar, VAL_FRAME_LABEL(op));
@@ -797,8 +799,7 @@ DECLARE_NATIVE(apply)
     Context* exemplar = Make_Context_For_Action_Push_Partials(  // [2]
         op,
         STACK_BASE, // lowest_ordered_dsp of refinements to weave in
-        nullptr /* &binder */,
-        TRASH_CELL
+        nullptr /* &binder */
     );
     Manage_Series(CTX_VARLIST(exemplar)); // Putting into a frame
     Init_Frame(frame, exemplar, VAL_FRAME_LABEL(op));  // GC guarded
@@ -851,7 +852,7 @@ DECLARE_NATIVE(apply)
         var = CTX_VAR(VAL_CONTEXT(frame), index);
         param = ACT_PARAM(VAL_ACTION(op), index);
 
-        if (not Is_Trash(var))
+        if (Is_Specialized(var))
             fail (Error_Bad_Parameter_Raw(rebUnrelativize(at)));
 
         const Cell* lookback = Lookback_While_Fetching_Next(L);  // for error
@@ -891,10 +892,9 @@ DECLARE_NATIVE(apply)
                 or Get_Parameter_Flag(e->param, REFINEMENT)
                 or Get_Parameter_Flag(e->param, SKIPPABLE)
             ){
-                Init_Trash(e->var);  // TBD: RETURN will be a pure local
                 continue;  // skippable only requested by name [4]
             }
-            if (Is_Trash(e->var)) {
+            if (Not_Specialized(e->var)) {
                 param = e->param;
                 break;
             }

@@ -210,7 +210,8 @@ Bounce Action_Executor(Level* L)
             STATE = ST_ACTION_FULFILLING_ARGS;
             goto fulfill;
 
-          case ST_ACTION_FULFILLING_ENFIX_FROM_OUT:
+          case ST_ACTION_INITIAL_ENTRY_ENFIX:
+            STATE = ST_ACTION_FULFILLING_ENFIX_FROM_OUT;
             goto fulfill;
 
           case ST_ACTION_FULFILLING_ARGS:
@@ -227,6 +228,7 @@ Bounce Action_Executor(Level* L)
           case ST_ACTION_TYPECHECKING:
             goto typecheck_then_dispatch;
 
+          case ST_ACTION_FULFILLING_ENFIX_FROM_OUT:  // no evals during this
           default:
             assert(false);
         }
@@ -266,32 +268,34 @@ Bounce Action_Executor(Level* L)
 
       skip_fulfilling_arg_for_now:
         assert(Not_Action_Executor_Flag(L, DOING_PICKUPS));
-        assert(Is_Cell_Erased(ARG));
+        assert(Is_Unspecialized(ARG));
         continue;
 
   //=//// ACTUAL LOOP BODY ////////////////////////////////////////////////=//
 
       fulfill_loop_body:
 
+      #if DEBUG
+        assert(Is_Cell_Poisoned(ARG));
+      #endif
+
+        Erase_Cell(ARG);  // poison in debug, uninitialized memory in release
+
   //=//// SKIP ALREADY SPECIALIZED ARGUMENTS //////////////////////////////=//
 
-        // It's the job of Push_Action() to preload any argument slots which
-        // have been specialized (including locals, which are "specialized
-        // to null").  The unspecialized slots are "erased" and ready to
-        // be written to.
+        // In the fulfillment walk, the PARAM is coming from the exemplar.
+        // Slots that are specialized hold values in lieu of the parameter
+        // information (whether it's quoted or a refinement or what types
+        // it accepts).
         //
-        // Note this means there has already been a walk of argument cells
-        // before this fulfillment walk.  It's tempting for Push_Action() to
-        // leave the memory uninitialized and try to fold the passes into one
-        // traversal.  But since actions are implemented as isotopic frames,
-        // if the frame is mutable it might be altered by code that runs
-        // during fulfillment!  So capturing the non-trash cells atomically is
-        // crucial for the design.
+        // The typechecking walk uses a PARAM coming from the phase, so this
+        // means it can type check the specialized slots on behalf of the
+        // underlying phase that will be running.
         //
-        if (not Is_Cell_Erased(ARG))
+        if (Is_Specialized(PARAM)) {
+            Copy_Cell(ARG, PARAM);
             goto continue_fulfilling;
-
-        assert(Is_Parameter(PARAM));
+        }
 
   //=//// CHECK FOR ORDER OVERRIDE ////////////////////////////////////////=//
 
@@ -341,6 +345,7 @@ Bounce Action_Executor(Level* L)
                     goto continue_fulfilling;
                 }
 
+                Copy_Cell(ARG, PARAM);
                 goto skip_fulfilling_arg_for_now;
             }
         }
@@ -349,8 +354,8 @@ Bounce Action_Executor(Level* L)
 
         if (Get_Parameter_Flag(PARAM, REFINEMENT)) {
             assert(Not_Action_Executor_Flag(L, DOING_PICKUPS));  // jump lower
-            assert(Is_Fresh(ARG));
-            Init_Trash(ARG);  // may be filled with pickup, or get to typecheck
+            assert(Is_Cell_Erased(ARG));
+            Copy_Cell(ARG, PARAM);  // fills with pickup, or null by typecheck
             goto continue_fulfilling;
         }
 
@@ -366,8 +371,8 @@ Bounce Action_Executor(Level* L)
 
         if (pclass == PARAMCLASS_RETURN or pclass == PARAMCLASS_OUTPUT) {
             assert(Not_Action_Executor_Flag(L, DOING_PICKUPS));
-            assert(Is_Fresh(ARG));
-            Init_Trash(ARG);
+            assert(Is_Cell_Erased(ARG));
+            Copy_Cell(ARG, PARAM);
             goto continue_fulfilling;
         }
 
@@ -780,10 +785,7 @@ Bounce Action_Executor(Level* L)
             goto fulfill_and_any_pickups_done;
         }
 
-        if (not Is_Cell_Erased(ARG)) {
-            assert(Is_Nulled(ARG));
-            FRESHEN(ARG);
-        }
+        assert(Is_Unspecialized(ARG));
 
         Set_Action_Executor_Flag(L, DOING_PICKUPS);
         goto fulfill_arg;
@@ -853,12 +855,11 @@ Bounce Action_Executor(Level* L)
             Cell_ParamClass(PARAM) == PARAMCLASS_RETURN
             or Cell_ParamClass(PARAM) == PARAMCLASS_OUTPUT
         ){
-            assert(Is_Nulled(ARG) or Is_Trash(ARG));
-            Init_Nulled(ARG);
+            assert(Not_Specialized(stable_ARG));
             continue;  // typeset is its legal return types, wants to be unset
         }
 
-        if (Is_Trash(ARG)) {  // e.g. (~) isotope, unspecialized [2]
+        if (Not_Specialized(stable_ARG)) {
             if (Get_Parameter_Flag(PARAM, REFINEMENT)) {
                 Init_Nulled(ARG);
                 continue;
@@ -1218,22 +1219,20 @@ void Push_Action(
 
     s->content.dynamic.used = num_args + 1;
 
+  #if DEBUG
     Cell* tail = Array_Tail(L->varlist);
     Cell* prep = L->rootvar + 1;
-    Param* param = u_cast(Param*, CTX_VARS_HEAD(ACT_EXEMPLAR(act)));
-    for (; prep < tail; ++prep, ++param) {  // initialize arg cells [1]
-        Erase_Cell(prep);
-        if (Is_Specialized(param))
-            Copy_Relative_internal(prep, param);  // specialized [2]
-    }
+    for (; prep < tail; ++prep)
+        Poison_Cell(prep);
 
-  #if DEBUG_POISON_EXCESS_CAPACITY  // poison cells past usable range
-    for (; prep < L->rootvar + s->content.dynamic.rest; ++prep)
-        Poison_Cell(prep);  // unreadable + unwritable
-  #endif
+    #if DEBUG_POISON_EXCESS_CAPACITY  // poison cells past usable range
+        for (; prep < L->rootvar + s->content.dynamic.rest; ++prep)
+            Poison_Cell(prep);  // unreadable + unwritable
+    #endif
 
-  #if DEBUG_POISON_SERIES_TAILS  // redundant if excess capacity poisoned
-    Poison_Cell(Array_Tail(L->varlist));
+    #if DEBUG_POISON_SERIES_TAILS  // redundant if excess capacity poisoned
+        Poison_Cell(Array_Tail(L->varlist));
+    #endif
   #endif
 
     Array* partials = try_unwrap(ACT_PARTIALS(act));
@@ -1268,7 +1267,7 @@ void Begin_Action_Core(
     Set_Subclass_Flag(VARLIST, L->varlist, FRAME_HAS_BEEN_INVOKED);
 
     KEY = ACT_KEYS(&KEY_TAIL, ACT_IDENTITY(ORIGINAL));
-    PARAM = ACT_PARAMS_HEAD(ACT_IDENTITY(ORIGINAL));
+    PARAM = cast(Param*, CTX_VARS_HEAD(ACT_EXEMPLAR(ORIGINAL)));
     ARG = L->rootvar + 1;
 
     assert(Is_Pointer_Corrupt_Debug(L->label));  // ACTION! makes valid
@@ -1292,7 +1291,7 @@ void Begin_Action_Core(
         //
         Clear_Feed_Flag(L->feed, NO_LOOKAHEAD);
 
-        Level_State_Byte(L) = ST_ACTION_FULFILLING_ENFIX_FROM_OUT;
+        Level_State_Byte(L) = ST_ACTION_INITIAL_ENTRY_ENFIX;
     }
 }
 

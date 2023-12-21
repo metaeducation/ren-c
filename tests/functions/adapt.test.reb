@@ -34,7 +34,7 @@
         foo: func [x] [return "available now"]
         bar: adapt :foo [
             captured-x: x
-            assert [null? :return]
+            assert [unspecialized? :return]
         ]
         did all [
             "available now" = bar 1020

@@ -175,7 +175,16 @@ bool Typecheck_Atom_Core(
     Specifier* derived;
     bool match_all;
 
-    switch (VAL_TYPE(tests)) {
+    if (Cell_Heart(tests) == REB_PARAMETER) {  // usually isotopic
+        const Array* array = try_unwrap(Cell_Parameter_Spec(tests));
+        if (array == nullptr)
+            return true;  // implicitly all is permitted
+        item = Array_Head(array);
+        tail = Array_Tail(array);
+        derived = SPECIFIED;
+        match_all = false;
+    }
+    else switch (VAL_TYPE(tests)) {
       case REB_BLOCK:
       case REB_TYPE_BLOCK:
         item = Cell_Array_At(&tail, tests);
@@ -189,16 +198,6 @@ bool Typecheck_Atom_Core(
         derived = Derive_Specifier(tests_specifier, tests);
         match_all = true;
         break;
-
-      case REB_PARAMETER: {
-        const Array* array = try_unwrap(Cell_Parameter_Spec(tests));
-        if (array == nullptr)
-            return true;  // implicitly all is permitted
-        item = Array_Head(array);
-        tail = Array_Tail(array);
-        derived = SPECIFIED;
-        match_all = false;
-        break; }
 
       case REB_TYPE_WORD:
         item = tests;

@@ -450,6 +450,14 @@ INLINE Cell* Erase_Cell_Untracked(Cell* c) {
 } while (0)
 
 
+INLINE void Reset_Isotope_Header_Untracked(Cell* v, uintptr_t flags)
+{
+    assert((flags & FLAG_QUOTE_BYTE(255)) == FLAG_QUOTE_BYTE(ISOTOPE_0));
+    FRESHEN_CELL(v);
+    v->header.bits |= (NODE_FLAG_NODE | NODE_FLAG_CELL  // must ensure NODE+CELL
+        | flags | FLAG_QUOTE_BYTE(ISOTOPE_0));
+}
+
 INLINE void Reset_Unquoted_Header_Untracked(Cell* v, uintptr_t flags)
 {
     assert((flags & FLAG_QUOTE_BYTE(255)) == FLAG_QUOTE_BYTE(ISOTOPE_0));
