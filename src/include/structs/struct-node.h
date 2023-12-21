@@ -548,3 +548,15 @@ union HeaderUnion {
 STATIC_ASSERT(not (END_SIGNAL_BYTE & NODE_BYTEMASK_0x01_CELL));
 
 #define FREE_POOLUNIT_BYTE 0x7F  // not NODE_FLAG_NODE, but NODE_FLAG_FREE
+
+
+// The GC allows you to mark a node as safe from garbage collection.  It is
+// sometimes interesting to know the file and line that asked for the protect.
+//
+typedef struct {
+    const Node* node;
+  #if DEBUG
+    const char* file;
+    LineNumber line;
+  #endif
+} NodeGuardInfo;

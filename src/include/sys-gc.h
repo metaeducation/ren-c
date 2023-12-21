@@ -117,14 +117,19 @@ INLINE Series* Force_Series_Managed(const_if_c Series* s) {
 // before a level returns to the trampoline.
 //
 
-#define Push_GC_Guard(node) \
-    Push_Guard_Node(node)
+#if DEBUG
+    #define Push_GC_Guard(node) \
+        Push_Guard_Node({(node), __FILE__, __LINE__})
+#else
+    #define Push_GC_Guard(node) \
+        Push_Guard_Node({node})
+#endif
 
 INLINE void Drop_GC_Guard(const Node* node) {
   #if defined(NDEBUG)
     UNUSED(node);
   #else
-    if (node != *Series_Last(const Node*, g_gc.guarded)) {
+    if (node != Series_Last(NodeGuardInfo, g_gc.guarded)->node) {
         printf("Drop_GC_Guard() pointer that wasn't last Push_GC_Guard()\n");
         panic (node);
     }
@@ -140,6 +145,5 @@ INLINE void Push_GC_Guard_Erased_Cell(Cell* cell) {
     assert(FIRST_BYTE(cell) == 0);
     FIRST_BYTE(cell) = NODE_BYTEMASK_0x80_NODE | NODE_BYTEMASK_0x01_CELL;
 
-    Push_Guard_Node(cell);
+    Push_GC_Guard(cell);
 }
-

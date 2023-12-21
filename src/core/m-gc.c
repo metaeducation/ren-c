@@ -773,22 +773,22 @@ static void Mark_Data_Stack(void)
 //
 static void Mark_Guarded_Nodes(void)
 {
-    const Node* *np = Series_Head(const Node*, g_gc.guarded);
-    REBLEN n = Series_Used(g_gc.guarded);
-    for (; n > 0; --n, ++np) {
-        if (Is_Node_A_Cell(*np)) {
+    NodeGuardInfo* info = Series_Head(NodeGuardInfo, g_gc.guarded);
+    Count c = Series_Used(g_gc.guarded);
+    for (; c > 0; --c, ++info) {
+        if (Is_Node_A_Cell(info->node)) {
             //
             // !!! Guarding a cell means keeping its contents alive...the
             // cell is assumed to not live in a series or pairing.  Marks
             // on the cell itself are not covered... if this happens, treat
             // it as a bug.
             //
-            assert(Not_Node_Marked(*np));
+            assert(Not_Node_Marked(info->node));
 
-            Queue_Mark_Maybe_Fresh_Cell_Deep(x_cast(const REBVAL*, *np));
+            Queue_Mark_Maybe_Fresh_Cell_Deep(x_cast(const REBVAL*, info->node));
         }
         else  // a series stub
-            Queue_Mark_Node_Deep(np);
+            Queue_Mark_Node_Deep(&info->node);
 
         Propagate_All_GC_Marks();
     }
@@ -1409,11 +1409,12 @@ REBLEN Recycle(void)
 //
 //  Push_Guard_Node: C
 //
-void Push_Guard_Node(const Node* node)
+void Push_Guard_Node(NodeGuardInfo info)
 {
+  #if !defined(NDEBUG)
+    const Node* node = info.node;
     assert(Is_Node(node));
 
-  #if !defined(NDEBUG)
     if (Is_Node_A_Cell(node)) {
 
       #ifdef STRESS_CHECK_GUARD_VALUE_POINTER
@@ -1424,7 +1425,7 @@ void Push_Guard_Node(const Node* node)
         // being able to resize and reallocate the data pointer.  But this is
         // a somewhat expensive check, so only feasible to run occasionally.
         //
-        Node* containing = Try_Find_Containing_Node_Debug(v);
+        Node* containing = Try_Find_Containing_Node_Debug(u_cast(Cell*, node));
         if (containing)
             panic (containing);
       #endif
@@ -1444,7 +1445,7 @@ void Push_Guard_Node(const Node* node)
     if (Is_Series_Full(g_gc.guarded))
         Extend_Series_If_Necessary(g_gc.guarded, 8);
 
-    *Series_At(const Node*, g_gc.guarded, Series_Used(g_gc.guarded)) = node;
+    *Series_At(NodeGuardInfo, g_gc.guarded, Series_Used(g_gc.guarded)) = info;
 
     Set_Series_Used(g_gc.guarded, Series_Used(g_gc.guarded) + 1);
 }
@@ -1481,7 +1482,10 @@ void Startup_GC(void)
 
     // Temporary series and values protected from GC. Holds node pointers.
     //
-    ensure(nullptr, g_gc.guarded) = Make_Series_Core(15, FLAG_FLAVOR(NODELIST));
+    ensure(nullptr, g_gc.guarded) = Make_Series_Core(
+        15,
+        FLAG_FLAVOR(GUARDLIST)
+    );
 
     // The marking queue used in lieu of recursion to ensure that deeply
     // nested structures don't cause the C stack to overflow.
