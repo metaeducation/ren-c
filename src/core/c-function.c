@@ -130,73 +130,40 @@ Array* Make_Action_Outputs_Arr(Action* act)
 
 
 enum Reb_Spec_Mode {
-    SPEC_MODE_NORMAL, // words are arguments
-    SPEC_MODE_LOCAL, // words are locals
-    SPEC_MODE_WITH // words are "extern"
+    SPEC_MODE_DEFAULT,  // waiting, words seen will be arguments
+    SPEC_MODE_PUSHED,  // argument pushed, information can be augmented
+    SPEC_MODE_LOCAL,  // words are locals
+    SPEC_MODE_WITH  // words are "extern"
 };
 
 
 //
-//  Push_Paramlist_Quads_May_Fail: C
+//  Push_Keys_And_Parameters_May_Fail: C
 //
 // This is an implementation routine for Make_Paramlist_Managed_May_Fail().
 // It was broken out into its own separate routine so that the AUGMENT
 // function could reuse the logic for function spec analysis.  It may not
 // be broken out in a particularly elegant way, but it's a start.
 //
-void Push_Paramlist_Quads_May_Fail(
+void Push_Keys_And_Parameters_May_Fail(
     const REBVAL *spec,
     Flags *flags,
     StackIndex *return_stackindex
 ){
     assert(Is_Block(spec));
 
-    enum Reb_Spec_Mode mode = SPEC_MODE_NORMAL;
-
-    bool refinement_seen = false;
+    enum Reb_Spec_Mode mode = SPEC_MODE_DEFAULT;
 
     const Cell* tail;
-    const Cell* value = Cell_Array_At(&tail, spec);
+    const Cell* item = Cell_Array_At(&tail, spec);
 
-    while (value != tail) {
-        const Cell* item = value;  // "faked"
-        ++value;  // go ahead and consume next
+    for (; item != tail; ++item) {
 
-    //=//// STRING! FOR FUNCTION DESCRIPTION OR PARAMETER NOTE ////////////=//
-
-        if (Is_Text(item)) {
-            //
-            // Consider `[<with> some-extern "description of that extern"]` to
-            // be purely commentary for the implementation, and don't include
-            // it in the meta info.
-            //
-            if (mode == SPEC_MODE_WITH)
-                continue;
-
-            StackValue(*) notes = NOTES_SLOT(TOP_INDEX);
-            assert(
-                Is_Nulled(notes)  // hasn't been written to yet
-                or Is_Text(notes)  // !!! we overwrite, but should we append?
-            );
-
-            if (Is_Word_Isotope_With_Id(KEY_SLOT(TOP_INDEX), SYM_KEY)) {
-                // no keys seen yet, act as description
-                Init_Text(notes, Copy_String_At(item));
-                *flags |= MKF_HAS_DESCRIPTION;
-            }
-            else {
-                assert(Is_Word(KEY_SLOT(TOP_INDEX)));
-                Init_Text(notes, Copy_String_At(item));
-                *flags |= MKF_HAS_NOTES;
-            }
-
-            continue;
-        }
-
-    //=//// TOP-LEVEL SPEC TAGS LIKE <local>, <with> etc. /////////////////=//
+  //=//// TOP-LEVEL SPEC TAGS LIKE <local>, <with> etc. ///////////////////=//
 
         bool strict = false;
-        if (Is_Tag(item) and (*flags & MKF_KEYWORDS)) {
+        if (Is_Tag(item)) {
+            *flags |= MKF_PARAMETER_SEEN;  // don't look for description after
             if (0 == CT_String(item, Root_With_Tag, strict)) {
                 mode = SPEC_MODE_WITH;
                 continue;
@@ -209,67 +176,60 @@ void Push_Paramlist_Quads_May_Fail(
                 fail (Error_Bad_Func_Def_Raw(item));
         }
 
-    //=//// BLOCK! OF TYPES TO MAKE TYPESET FROM (PLUS PARAMETER TAGS) ////=//
+  //=//// TEXT! FOR FUNCTION DESCRIPTION OR PARAMETER NOTE ////////////////=//
 
-        if (Is_Block(item)) {
-            if (Is_Word_Isotope_With_Id(KEY_SLOT(TOP_INDEX), SYM_KEY))
-                fail (Error_Bad_Func_Def_Raw(item));   // `func [[integer!]]`
+    // 1. Consider `[<with> some-extern "description of that extern"]` to be
+    //    purely commentary for the implementation (there's nowhere to put
+    //    the information for <with> or <local>)
 
-            Specifier* derived = Derive_Specifier(Cell_Specifier(spec), item);
+        if (Is_Text(item)) {
+            if (mode == SPEC_MODE_LOCAL or mode == SPEC_MODE_WITH)
+                continue;  // treat as a comment [1]
 
-          blockscope {
-            StackValue(*) types = TYPES_SLOT(TOP_INDEX);
+            if (not (*flags & MKF_PARAMETER_SEEN)) {
+                assert(mode != SPEC_MODE_PUSHED);  // none seen, none pushed!
+                // no keys seen yet, act as overall description
+            }
+            else {
+                // act as description for current parameter
+                assert(mode == SPEC_MODE_PUSHED);
+            }
 
-            if (Is_Block(types))  // too many, `func [x [integer!] [blank!]]`
-                fail (Error_Bad_Func_Def_Raw(item));
-
-            assert(Is_Nulled(types));
-
-            // You currently can't say `<local> x [integer!]`, because locals
-            // are hidden from the interface, and hidden values (notably
-            // specialized-out values) use the `param` slot for the value,
-            // not type information.  So local has `~` isotope in that slot.
-            //
-            // Even if you could give locals a type, it could only be given
-            // a meaning if it were used to check assignments during the
-            // function.  There's currently no mechanism for doing that.
-            //
-            // You can't say `<with> y [integer!]` either...though it might
-            // be a nice feature to check the type of an imported value at
-            // the time of calling.
-            //
-            if (mode != SPEC_MODE_NORMAL)  // <local> <with>
-                fail (Error_Bad_Func_Def_Raw(item));
-
-            // Turn block into typeset for parameter at current index.
-            // Leaves VAL_TYPESET_SYM as-is.
-
-            StackValue(*) param = PARAM_SLOT(TOP_INDEX);
-
-            if (Is_Specialized(cast(Param*, cast(REBVAL*, param))))
-                continue;
-
-            Init_Block(
-                types,
-                Copy_Array_At_Deep_Managed(
-                    Cell_Array(item),
-                    VAL_INDEX(item),
-                    derived
-                )
-            );
-          }
-
-            StackValue(*) param = PARAM_SLOT(TOP_INDEX);
-            Flags param_flags = PARAMETER_FLAGS(param);
-            assert(Cell_Parameter_Spec(param) == nullptr);
-
-            Init_Parameter(param, param_flags, item, derived);
-
-            *flags |= MKF_HAS_TYPES;
             continue;
         }
 
-    //=//// ANY-WORD! PARAMETERS THEMSELVES (MAKE TYPESETS w/SYMBOL) //////=//
+  //=//// BLOCK! OF TYPES TO MAKE TYPESET FROM (PLUS PARAMETER TAGS) //////=//
+
+    // 1. We disallow `func [[integer!]]`, but also `<local> x [integer!]`,
+    //    because locals are hidden from the interface, and hidden values
+    //    (notably specialized-out values) use the `param` slot for the value,
+    //    not type information.  So local has `~` isotope.
+    //
+    //    Even if you *could* give locals a type, it could only be given a
+    //    meaning if it were used to check assignments during the function.
+    //    There's currently no mechanism for doing that.
+    //
+    //    You can't say `<with> y [integer!]` either...though it might be nice
+    //    to check the type of an imported value at time of calling.
+
+        if (Is_Block(item)) {
+            if (mode != SPEC_MODE_PUSHED)  // must come after parameter [1]
+                fail (Error_Bad_Func_Def_Raw(item));
+
+            StackValue(*) param = TOP;
+
+            if (Cell_Parameter_Spec(param))  // `func [x [integer!] [blank!]]`
+                fail (Error_Bad_Func_Def_Raw(item));  // too many spec blocks
+
+            Flags param_flags = PARAMETER_FLAGS(param);  // preserve
+
+            Specifier* derived = Derive_Specifier(Cell_Specifier(spec), item);
+            Init_Parameter(param, param_flags, item, derived);
+
+            continue;
+        }
+
+  //=//// ANY-WORD! PARAMETERS THEMSELVES /////////////////////////////////=//
 
         bool quoted = false;  // single quoting level used as signal in spec
         if (Cell_Num_Quotes(item) > 0) {
@@ -283,27 +243,21 @@ void Push_Paramlist_Quads_May_Fail(
         const Symbol* symbol = nullptr;  // avoids compiler warning
         ParamClass pclass = PARAMCLASS_0;  // error if not changed
 
-        bool local = false;
         bool refinement = false;  // paths with blanks at head are refinements
+        bool local = false;
         if (Any_Path_Kind(heart)) {
             if (not IS_REFINEMENT_CELL(item))
                 fail (Error_Bad_Func_Def_Raw(item));
 
             refinement = true;
-            refinement_seen = true;
 
-            // !!! If you say [<with> x /foo y] the <with> terminates and a
-            // refinement is started.  Same w/<local>.  Is this a good idea?
-            // Note that historically, help hides any refinements that appear
-            // behind a /local, but this feature has no parallel in Ren-C.
+            // !!! There's currently the ability to shift back into parameter
+            // mode via [<local> x /foo y].  This is used to create dummy
+            // variables in mid-spec.  Review.
             //
-            mode = SPEC_MODE_NORMAL;
+            mode = SPEC_MODE_DEFAULT;
 
             symbol = VAL_REFINEMENT_SYMBOL(item);
-            if (Symbol_Id(symbol) == SYM_LOCAL) {  // /LOCAL
-                if (item + 1 != tail and Any_Word(item + 1))
-                    fail (Error_Legacy_Local_Raw(spec));  // -> <local>
-            }
 
             if (heart == REB_GET_PATH) {
                 if (quoted)
@@ -340,11 +294,7 @@ void Push_Paramlist_Quads_May_Fail(
                     pclass = PARAMCLASS_RETURN;
                 }
             }
-            else if (heart == REB_THE_WORD) {
-                //
-                // Outputs are set to refinements, because they can act like
-                // refinements and be passed the word to set.
-                //
+            else if (heart == REB_THE_WORD) {  // output
                 if (not quoted) {
                     if (not (*flags & MKF_RETURN)) {
                         fail (
@@ -356,13 +306,6 @@ void Push_Paramlist_Quads_May_Fail(
                 }
             }
             else {
-                if (  // let RETURN: presence indicate you know new rules
-                    refinement_seen and mode == SPEC_MODE_NORMAL
-                    and *return_stackindex == 0
-                ){
-                    fail (Error_Legacy_Refinement_Raw(spec));
-                }
-
                 if (heart == REB_GET_WORD) {
                     if (quoted)
                         pclass = PARAMCLASS_MEDIUM;
@@ -384,11 +327,11 @@ void Push_Paramlist_Quads_May_Fail(
         else
             fail (Error_Bad_Func_Def_Raw(item));
 
-        if (not local and pclass == PARAMCLASS_0)  // didn't match
+        if (pclass == PARAMCLASS_0)  // didn't match
             fail (Error_Bad_Func_Def_Raw(item));
 
-        if (mode != SPEC_MODE_NORMAL) {
-            if (pclass != PARAMCLASS_NORMAL and not local)
+        if (mode == SPEC_MODE_LOCAL or mode == SPEC_MODE_WITH) {
+            if (pclass != PARAMCLASS_NORMAL)
                 fail (Error_Bad_Func_Def_Raw(item));
 
             if (mode == SPEC_MODE_LOCAL)
@@ -414,35 +357,11 @@ void Push_Paramlist_Quads_May_Fail(
         if (mode == SPEC_MODE_WITH)
             continue;
 
+        *flags |= MKF_PARAMETER_SEEN;  // don't look for description after
+
         // Pushing description values for a new named element...
 
-        PUSH_SLOTS();
-
-        Init_Word(KEY_SLOT(TOP_INDEX), symbol);
-        Init_Nulled(TYPES_SLOT(TOP_INDEX));  // may or may not add later
-        Init_Nulled(NOTES_SLOT(TOP_INDEX));  // may or may not add later
-
-        StackValue(*) param = PARAM_SLOT(TOP_INDEX);
-
-        // Non-annotated arguments allow all parameter types.
-
-        if (local) {
-            Init_Trash(param);
-        }
-        else if (refinement) {
-            Init_Unconstrained_Parameter(
-                param,
-                FLAG_PARAMCLASS_BYTE(pclass)
-                    | PARAMETER_FLAG_REFINEMENT  // must preserve if type block
-                    | PARAMETER_FLAG_NULL_DEFINITELY_OK  // need if refinement
-            );
-        }
-        else {
-            Init_Unconstrained_Parameter(
-                param,
-                FLAG_PARAMCLASS_BYTE(pclass)
-            );
-        }
+        Init_Word(PUSH(), symbol);
 
         if (symbol == Canon(RETURN)) {
             if (*return_stackindex != 0) {
@@ -455,7 +374,34 @@ void Push_Paramlist_Quads_May_Fail(
                 *return_stackindex = TOP_INDEX;  // RETURN: explicit
             }
         }
+
+        StackValue(*) param = PUSH();
+
+        // Non-annotated arguments allow all parameter types.
+
+        if (local) {
+            Init_Trash(param);
+            assert(mode == SPEC_MODE_LOCAL);
+        }
+        else if (refinement) {
+            Init_Unconstrained_Parameter(
+                param,
+                FLAG_PARAMCLASS_BYTE(pclass)
+                    | PARAMETER_FLAG_REFINEMENT  // must preserve if type block
+                    | PARAMETER_FLAG_NULL_DEFINITELY_OK  // need if refinement
+            );
+            mode = SPEC_MODE_PUSHED;
+        }
+        else {
+            Init_Unconstrained_Parameter(
+                param,
+                FLAG_PARAMCLASS_BYTE(pclass)
+            );
+            mode = SPEC_MODE_PUSHED;
+        }
     }
+
+    *flags |= MKF_PARAMETER_SEEN;  // don't look for description after
 }
 
 
@@ -486,42 +432,19 @@ Array* Pop_Paramlist_With_Adjunct_May_Fail(
 
     if (flags & MKF_RETURN) {
         if (return_stackindex == 0) { // no explicit RETURN: pure local
-            PUSH_SLOTS();
 
-            Init_Word(KEY_SLOT(TOP_INDEX), Canon(RETURN));
+            Init_Word(PUSH(), Canon(RETURN));
             return_stackindex = TOP_INDEX;
 
-            StackValue(*) param = PARAM_SLOT(TOP_INDEX);
-
-            // By default, you can return anything.  This goes with the bias
-            // that checks happen on the reading side of things, not writing.
-            //
-            // This includes void.  Returning void is a bit rare when your
-            // function has a body and you don't use RETURN, because the entire
-            // body has to be void.  If it does, we want to allow it:
-            //
-            //    >> wrapper: func [x] [return comment x]
-            //
-            //    >> 1 + 2 wrapper "This is desirable"
-            //    == 3
-            //
-            // If you have a RETURN spec, however, you must explicitly say
-            // you can return void.
-            //
-            Init_Unconstrained_Parameter(
-                param,
+            Init_Unconstrained_Parameter(  // return anything by default
+                PUSH(),
                 FLAG_PARAMCLASS_BYTE(PARAMCLASS_RETURN)
             );
-
-            Init_Nulled(TYPES_SLOT(TOP_INDEX));
-            Init_Nulled(NOTES_SLOT(TOP_INDEX));
         }
         else {
-            StackValue(*) param = PARAM_SLOT(return_stackindex);
             assert(
-                Cell_Word_Id(KEY_SLOT(return_stackindex)) == SYM_RETURN
+                Cell_Word_Id(Data_Stack_At(return_stackindex)) == SYM_RETURN
             );
-            UNUSED(param);
         }
 
         // definitional_return handled specially when paramlist copied
@@ -530,28 +453,20 @@ Array* Pop_Paramlist_With_Adjunct_May_Fail(
         flags |= MKF_HAS_RETURN;
     }
 
-    // Slots, which is length +1 (includes the rootvar or rootparam)
-    //
-    assert((TOP_INDEX - base) % 4 == 0);
-    Count num_slots = (TOP_INDEX - base) / 4;
-
-    // Must make the function "paramlist" even if "empty", for identity.
-    //
-    // !!! This is no longer true, since details is the identity.  Review
-    // optimization potential.
-    //
-    Array* paramlist = Make_Array_Core(
-        num_slots,
-        SERIES_MASK_PARAMLIST
-    );
-    Set_Series_Len(paramlist, num_slots);
+    Count num_params = (TOP_INDEX - base) / 2;
 
     KeyList* keylist = Make_Series(KeyList,
-        (num_slots - 1),  // - 1 archetype
+        num_params,
         SERIES_MASK_KEYLIST | NODE_FLAG_MANAGED
     );
-    Set_Series_Used(keylist, num_slots - 1);  // no terminator
-    LINK(Ancestor, keylist) = keylist;  // chain ends with self
+    Set_Series_Used(keylist, num_params);  // no terminator
+    LINK(Ancestor, keylist) = keylist;  // chain
+
+    Array* paramlist = Make_Array_Core(
+        num_params + 1,
+        SERIES_MASK_PARAMLIST
+    );
+    Set_Series_Len(paramlist, num_params + 1);
 
     if (flags & MKF_HAS_RETURN)
         paramlist->leader.bits |= VARLIST_FLAG_PARAMLIST_HAS_RETURN;
@@ -575,18 +490,17 @@ Array* Pop_Paramlist_With_Adjunct_May_Fail(
 
     if (return_stackindex != 0) {
         assert(flags & MKF_RETURN);
-        Init_Key(key, Cell_Word_Symbol(KEY_SLOT(return_stackindex)));
+        *key = Cell_Word_Symbol(Data_Stack_At(return_stackindex));
         ++key;
 
-        Copy_Cell(param, PARAM_SLOT(return_stackindex));
+        Copy_Cell(param, Data_Stack_At(return_stackindex + 1));
         ++param;
     }
 
-    StackIndex stackindex = base + 8;
-    for (; stackindex <= TOP_INDEX; stackindex += 4) {
-        const Symbol* symbol = Cell_Word_Symbol(KEY_SLOT(stackindex));
-
-        StackValue(*) slot = PARAM_SLOT(stackindex);
+    StackIndex stackindex = base + 1;  // empty stack base would be 0, bad cell
+    for (; stackindex <= TOP_INDEX; stackindex += 2) {
+        const Symbol* symbol = Cell_Word_Symbol(Data_Stack_At(stackindex));
+        StackValue(*) slot = Data_Stack_At(stackindex + 1);
 
         assert(Not_Cell_Flag(slot, VAR_MARKED_HIDDEN));  // use NOTE_SEALED
 
@@ -614,7 +528,7 @@ Array* Pop_Paramlist_With_Adjunct_May_Fail(
         if (stackindex == return_stackindex)
             continue;  // was added to the head of the list already
 
-        Init_Key(key, symbol);
+        *key = symbol;
 
         Copy_Cell_Core(
             param,
@@ -632,21 +546,26 @@ Array* Pop_Paramlist_With_Adjunct_May_Fail(
         ++key;
         ++param;
     }
+    assert(param == Array_Tail(paramlist));
 
     Manage_Series(paramlist);
 
     INIT_BONUS_KEYSOURCE(paramlist, keylist);
     MISC(VarlistAdjunct, paramlist) = nullptr;
     LINK(Patches, paramlist) = nullptr;
+
+    // With all the values extracted from stack to array, restore stack pointer
+    //
+    Drop_Data_Stack_To(base);
   }
 
     // Must remove binder indexes for all words, even if about to fail
     //
   blockscope {
-    const Key* tail = Series_Tail(Key, keylist);
+    const Key* key_tail = Series_Tail(Key, keylist);
     const Key* key = Series_Head(Key, keylist);
     const Param* param = Series_At(Param, paramlist, 1);
-    for (; key != tail; ++key, ++param) {
+    for (; key != key_tail; ++key, ++param) {
         //
         // See notes in AUGMENT on why we don't do binder indices on "sealed"
         // arguments (we can add `x` to the interface of a func with local `x`)
@@ -677,126 +596,7 @@ Array* Pop_Paramlist_With_Adjunct_May_Fail(
 
     // !!! See notes on ACTION-ADJUNCT in %sysobj.r
 
-    if (flags & (MKF_HAS_DESCRIPTION | MKF_HAS_TYPES | MKF_HAS_NOTES))
-        *adjunct_out = Copy_Context_Shallow_Managed(
-            VAL_CONTEXT(Root_Action_Adjunct)
-        );
-    else
-        *adjunct_out = nullptr;
-
-    // If a description string was gathered, it's sitting in the first string
-    // slot, the third cell we pushed onto the stack.  Extract it if so.
-    //
-    if (flags & MKF_HAS_DESCRIPTION) {
-        StackValue(*) description = NOTES_SLOT(base + 4);
-        assert(Is_Text(description));
-        Copy_Cell(
-            CTX_VAR(*adjunct_out, STD_ACTION_ADJUNCT_DESCRIPTION),
-            description
-        );
-    }
-
-    // Only make `parameter-types` if there were blocks in the spec
-    //
-    if (flags & MKF_HAS_TYPES) {
-        Array* types_varlist = Make_Array_Core(
-            num_slots,
-            SERIES_MASK_VARLIST | NODE_FLAG_MANAGED
-        );
-        Set_Series_Len(types_varlist, num_slots);
-
-        MISC(VarlistAdjunct, types_varlist) = nullptr;
-        LINK(Patches, types_varlist) = nullptr;
-        INIT_CTX_KEYLIST_SHARED(cast(Context*, types_varlist), keylist);
-
-        Cell* rootvar = Array_Head(types_varlist);
-        INIT_VAL_CONTEXT_ROOTVAR(rootvar, REB_OBJECT, types_varlist);
-
-        REBVAL *dest = SPECIFIC(rootvar) + 1;
-        const Cell* param = Array_At(paramlist, 1);
-
-        if (return_stackindex != 0) {
-            assert(flags & MKF_RETURN);
-            ++param;
-
-            Copy_Cell(dest, TYPES_SLOT(return_stackindex));
-            ++dest;
-        }
-
-        StackIndex stackindex = base + 8;
-        for (; stackindex <= TOP_INDEX; stackindex += 4) {
-            StackValue(*) types = TYPES_SLOT(stackindex);
-            assert(Is_Nulled(types) or Is_Block(types));
-
-            if (stackindex == return_stackindex)
-                continue;  // was added to the head of the list already
-
-            Copy_Cell(dest, types);
-
-            ++dest;
-            ++param;
-        }
-
-        Init_Object(
-            CTX_VAR(*adjunct_out, STD_ACTION_ADJUNCT_PARAMETER_TYPES),
-            cast(Context*, types_varlist)
-        );
-
-        USED(param);
-    }
-
-    // Only make `parameter-notes` if there were strings (besides description)
-    //
-    if (flags & MKF_HAS_NOTES) {
-        Array* notes_varlist = Make_Array_Core(
-            num_slots,
-            SERIES_MASK_VARLIST | NODE_FLAG_MANAGED
-        );
-        Set_Series_Len(notes_varlist, num_slots);
-
-        MISC(VarlistAdjunct, notes_varlist) = nullptr;
-        LINK(Patches, notes_varlist) = nullptr;
-        INIT_CTX_KEYLIST_SHARED(cast(Context*, notes_varlist), keylist);
-
-        Cell* rootvar = Array_Head(notes_varlist);
-        INIT_VAL_CONTEXT_ROOTVAR(rootvar, REB_OBJECT, notes_varlist);
-
-        const Cell* param = Array_At(paramlist, 1);
-        REBVAL *dest = SPECIFIC(rootvar) + 1;
-
-        if (return_stackindex != 0) {
-            assert(flags & MKF_RETURN);
-            ++param;
-
-            Copy_Cell(dest, NOTES_SLOT(return_stackindex));
-            ++dest;
-        }
-
-        StackIndex stackindex = base + 8;
-        for (; stackindex <= TOP_INDEX; stackindex += 4) {
-            StackValue(*) notes = NOTES_SLOT(stackindex);
-            assert(Is_Text(notes) or Is_Nulled(notes));
-
-            if (stackindex == return_stackindex)
-                continue;  // was added to the head of the list already
-
-            Copy_Cell(dest, notes);
-
-            ++dest;
-            ++param;
-        }
-
-        Init_Object(
-            CTX_VAR(*adjunct_out, STD_ACTION_ADJUNCT_PARAMETER_NOTES),
-            cast(Context*, notes_varlist)
-        );
-
-        USED(param);
-    }
-
-    // With all the values extracted from stack to array, restore stack pointer
-    //
-    Drop_Data_Stack_To(base);
+    *adjunct_out = nullptr;
 
     return paramlist;
 }
@@ -843,25 +643,10 @@ Array* Make_Paramlist_Managed_May_Fail(
 
     StackIndex return_stackindex = 0;
 
-    PUSH_SLOTS();
-
-    // As we go through the spec block, we push TYPESET! BLOCK! TEXT! triples.
-    // These will be split out into separate arrays after the process is done.
-    // The first slot of the paramlist needs to be the function canon value,
-    // while the other two first slots need to be rootkeys.  Get the process
-    // started right after a BLOCK! so it's willing to take a string for
-    // the function description--it will be extracted from the slot before
-    // it is turned into a rootkey for param_notes.
-    //
-    Init_Word_Isotope(KEY_SLOT(TOP_INDEX), Canon(KEY));  // signal no pushes yet
-    Init_Unreadable(PARAM_SLOT(TOP_INDEX));  // not used at all
-    Init_Unreadable(TYPES_SLOT(TOP_INDEX));  // not used at all
-    Init_Nulled(NOTES_SLOT(TOP_INDEX));  // overwritten if description
-
     // The process is broken up into phases so that the spec analysis code
     // can be reused in AUGMENT.
     //
-    Push_Paramlist_Quads_May_Fail(
+    Push_Keys_And_Parameters_May_Fail(
         spec,
         flags,
         &return_stackindex

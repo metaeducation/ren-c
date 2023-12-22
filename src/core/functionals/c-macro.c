@@ -169,7 +169,7 @@ DECLARE_NATIVE(macro)
     Phase* macro = Make_Interpreted_Action_May_Fail(
         ARG(spec),
         ARG(body),
-        MKF_RETURN | MKF_KEYWORDS,
+        MKF_RETURN,
         &Macro_Dispatcher,
         IDX_DETAILS_1 + 1  // details capacity, just body slot (and archetype)
     );

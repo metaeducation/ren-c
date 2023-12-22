@@ -467,17 +467,15 @@ enum Boot_Levels {
 
 // Modes allowed by Make_Function:
 enum {
-    MKF_RETURN      = 1 << 0,   // give a return COPY(but local RETURN: overrides)
-    MKF_KEYWORDS    = 1 << 1,   // respond to tags like <opt>, <with>, <local>
-    MKF_2           = 1 << 2,
+    MKF_RETURN      = 1 << 0,   // built-in FUNC-style RETURN (vs LAMBDA)
+    MKF_1           = 1 << 1,
+    MKF_PARAMETER_SEEN = 1 << 2,  // text will be description until this
 
     // These flags are set during the process of spec analysis.  It helps
     // avoid the inefficiency of creating documentation frames on functions
     // that don't have any.
     //
     MKF_HAS_DESCRIPTION = 1 << 3,
-    MKF_HAS_TYPES = 1 << 4,
-    MKF_HAS_NOTES = 1 << 5,
 
     // These flags are also set during the spec analysis process.
     //

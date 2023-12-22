@@ -799,7 +799,7 @@ DECLARE_NATIVE(js_native)
     REBVAL *source = ARG(source);
 
     Context* meta;
-    Flags flags = MKF_RETURN | MKF_KEYWORDS;
+    Flags flags = MKF_RETURN;
     Array* paramlist = Make_Paramlist_Managed_May_Fail(
         &meta,
         spec,

@@ -110,7 +110,7 @@ Phase* Make_Typechecker(Value(const*) type) {
     Init_Block(spec, spec_array);
 
     Context* meta;
-    Flags flags = MKF_KEYWORDS | MKF_RETURN;
+    Flags flags = MKF_RETURN;
     Array* paramlist = Make_Paramlist_Managed_May_Fail(
         &meta,
         spec,

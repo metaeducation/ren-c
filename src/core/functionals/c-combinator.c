@@ -265,7 +265,7 @@ DECLARE_NATIVE(combinator)
     Init_Block(expanded_spec, Expanded_Combinator_Spec(spec));
 
     Context* meta;
-    Flags flags = MKF_KEYWORDS | MKF_RETURN;
+    Flags flags = MKF_RETURN;
     Array* paramlist = Make_Paramlist_Managed_May_Fail(
         &meta,
         expanded_spec,

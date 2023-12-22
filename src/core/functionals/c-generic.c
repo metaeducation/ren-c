@@ -89,7 +89,7 @@ DECLARE_NATIVE(generic)
     REBVAL *spec = ARG(spec);
 
     Context* meta;
-    Flags flags = MKF_KEYWORDS | MKF_RETURN;
+    Flags flags = MKF_RETURN;
     Array* paramlist = Make_Paramlist_Managed_May_Fail(
         &meta,
         spec,

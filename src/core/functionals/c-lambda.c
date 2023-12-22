@@ -148,12 +148,10 @@ DECLARE_NATIVE(lambda)
 
     bool optimizable = true;
 
-    Specifier* item_specifier;
     const Cell* item_tail;
     const Cell* item;
     if (Is_Block(spec)) {
         item = Cell_Array_At(&item_tail, spec);
-        item_specifier = Cell_Specifier(spec);
     }
     else if (
         Is_Word(spec)
@@ -163,53 +161,43 @@ DECLARE_NATIVE(lambda)
         or (Is_Path(spec) and Is_Refinement(spec))
     ){
         item = spec;
-        item_specifier = SPECIFIED;
         item_tail = item + 1;
     }
     else {
         assert(Is_Nulled(spec));
-        item_specifier = SPECIFIED;
         item = nullptr;
         item_tail = nullptr;
     }
 
-    PUSH_SLOTS();
-
-    Init_Word_Isotope(KEY_SLOT(TOP_INDEX), Canon(KEY));
-    Init_Unreadable(PARAM_SLOT(TOP_INDEX));  // unused
-    Init_Unreadable(TYPES_SLOT(TOP_INDEX));  // unused
-    Init_Nulled(NOTES_SLOT(TOP_INDEX));  // overwritten if description
-
     for (; item != item_tail; ++item) {
-        PUSH_SLOTS();
-
-        Value(*) key_slot = KEY_SLOT(TOP_INDEX);
-        Derelativize(key_slot, item, item_specifier);
-
-        // First in quad needs to be a WORD!, after pclass extracted...
-        //
         Flags param_flags = 0;
         ParamClass pclass;
-        if (Is_Word(key_slot))
+        const Symbol* symbol;
+        if (Is_Word(item)) {
             pclass = PARAMCLASS_NORMAL;
-        else if (Is_Meta_Word(key_slot)) {
+            symbol = Cell_Word_Symbol(item);
+        }
+        else if (Is_Meta_Word(item)) {
             pclass = PARAMCLASS_META;
-            HEART_BYTE(key_slot) = REB_WORD;
+            symbol = Cell_Word_Symbol(item);
         }
-        else if (Is_Get_Word(key_slot)) {
+        else if (Is_Get_Word(item)) {
             pclass = PARAMCLASS_SOFT;
-            HEART_BYTE(key_slot) = REB_WORD;
+            symbol = Cell_Word_Symbol(item);
         }
-        else if (Is_Quoted(key_slot)) {
-            Unquotify(key_slot, 1);
-            if (not Is_Word(key_slot))
+        else if (Is_Quoted(item)) {
+            if (not (
+                Cell_Num_Quotes(item) == 1
+                and Cell_Heart(item) == REB_WORD
+            )){
                 fail (item);
+            }
             pclass = PARAMCLASS_HARD;
+            symbol = Cell_Word_Symbol(item);
         }
-        else if (Is_Path(key_slot) and Is_Refinement(key_slot)) {
+        else if (Is_Path(item) and Is_Refinement(item)) {
             pclass = PARAMCLASS_NORMAL;
-            const Symbol* symbol = VAL_REFINEMENT_SYMBOL(key_slot);
-            Init_Word(key_slot, symbol);
+            symbol = VAL_REFINEMENT_SYMBOL(item);
             param_flags |= PARAMETER_FLAG_REFINEMENT;
             param_flags |= PARAMETER_FLAG_NULL_DEFINITELY_OK;
         }
@@ -221,25 +209,22 @@ DECLARE_NATIVE(lambda)
                 fail ("Invalid LAMBDA specification");
 
             optimizable = false;
-            continue;
+            Drop_Data_Stack_To(STACK_BASE);
+            break;
         }
 
+        Init_Word(PUSH(), symbol);
         Init_Unconstrained_Parameter(
-            PARAM_SLOT(TOP_INDEX),
+            PUSH(),
             FLAG_PARAMCLASS_BYTE(pclass) | param_flags
         );
-
-        Init_Nulled(TYPES_SLOT(TOP_INDEX));  // types (not supported)
-        Init_Nulled(NOTES_SLOT(TOP_INDEX));  // notes (not supported)
     }
 
     if (not optimizable) {
-        Drop_Data_Stack_To(STACK_BASE);
-
         Phase* lambda = Make_Interpreted_Action_May_Fail(
             spec,
             body,
-            MKF_KEYWORDS,  // no MKF_RETURN
+            MKF_MASK_NONE,  // no MKF_RETURN
             &Lambda_Unoptimized_Dispatcher,
             1 + IDX_DETAILS_1  // archetype and one array slot (will be filled)
         );
@@ -251,7 +236,7 @@ DECLARE_NATIVE(lambda)
     Array* paramlist = Pop_Paramlist_With_Adjunct_May_Fail(
         &adjunct,
         STACK_BASE,
-        MKF_KEYWORDS,
+        MKF_MASK_NONE,
         0  // no return_stackindex
     );
 

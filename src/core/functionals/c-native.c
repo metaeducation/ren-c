@@ -114,7 +114,7 @@ Phase* Make_Native(
     // table built in the bootstrap scripts, `Native_C_Funcs`.
 
     Context* meta;
-    Flags flags = MKF_KEYWORDS | MKF_RETURN;
+    Flags flags = MKF_RETURN;
     Array* paramlist = Make_Paramlist_Managed_May_Fail(
         &meta,
         spec,

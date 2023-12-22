@@ -176,15 +176,6 @@ Script: [
     bad-parameter:      [{incompatible or duplicate parameter:} :arg1]
     bad-argless-refine: [{Argless Refinement} :arg1 {Must be either # or NULL}]
 
-    legacy-refinement:  [
-                            {Refinements now act as their own args.  See}
-                            {https://trello.com/c/DaVz9GG3 - spec was} :arg1
-                        ]
-    legacy-local:       [
-                            {/LOCAL is a plain refinement now, use <local>}
-                            {https://trello.com/c/IyxPieNa - spec was} :arg1
-                        ]
-
     bad-field-set:      [{cannot set} :arg1 {field to} :arg2 {datatype}]
     bad-pick:           [{cannot pick} :arg1]
     bad-poke:           [{cannot poke} :arg1]

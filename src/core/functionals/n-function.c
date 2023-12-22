@@ -317,7 +317,7 @@ DECLARE_NATIVE(func_p)
     Phase* func = Make_Interpreted_Action_May_Fail(
         spec,
         body,
-        MKF_RETURN | MKF_KEYWORDS,
+        MKF_RETURN,
         &Func_Dispatcher,
         1 + IDX_DETAILS_1  // archetype and one array slot (will be filled)
     );

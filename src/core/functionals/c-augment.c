@@ -82,28 +82,20 @@ DECLARE_NATIVE(augment_p)  // see extended definition AUGMENT in %base-defs.r
     StackIndex base = TOP_INDEX;
     StackIndex return_stackindex = 0;
 
-    // Start with pushing nothings for the [0] slot
-    //
-    Init_Trash(PUSH());  // key slot (signal for no pushes)
-    Init_Unreadable(PUSH());  // unused
-    Init_Unreadable(PUSH());  // unused
-    Init_Nulled(PUSH());  // description slot
-
-    Flags flags = MKF_KEYWORDS;
+    Flags flags = MKF_MASK_NONE;
     if (ACT_HAS_RETURN(augmentee)) {
         flags |= MKF_RETURN;
-        return_stackindex = TOP_INDEX + 4;
+        return_stackindex = TOP_INDEX + 1;
     }
 
     // For each parameter in the original function, push a "quad"
     //
   blockscope {
-    const Key* tail;
-    const Key* key = ACT_KEYS(&tail, augmentee);
+    const Key* key_tail;
+    const Key* key = ACT_KEYS(&key_tail, augmentee);
     const Param* param = ACT_PARAMS_HEAD(augmentee);
-    for (; key != tail; ++key, ++param) {
-        Init_Word(PUSH(), KEY_SYMBOL(key));
-
+    for (; key != key_tail; ++key, ++param) {
+        Init_Word(PUSH(), *key);
         Copy_Cell(PUSH(), param);
 
         // For any specialized (incl. local) parameters in the paramlist we are
@@ -114,9 +106,6 @@ DECLARE_NATIVE(augment_p)  // see extended definition AUGMENT in %base-defs.r
         //
         if (Is_Specialized(param))
             Set_Cell_Flag(TOP, STACK_NOTE_SEALED);
-
-        Init_Nulled(PUSH());  // types (inherits via INHERIT-ADJUNCT)
-        Init_Nulled(PUSH());  // notes (inherits via INHERIT-ADJUNCT)
     }
   }
 
@@ -124,7 +113,7 @@ DECLARE_NATIVE(augment_p)  // see extended definition AUGMENT in %base-defs.r
     // the stack.  This may add duplicates--which will be detected when we
     // try to pop the stack into a paramlist.
     //
-    Push_Paramlist_Quads_May_Fail(
+    Push_Keys_And_Parameters_May_Fail(
         ARG(spec),
         &flags,
         &return_stackindex

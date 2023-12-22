@@ -281,7 +281,7 @@ DECLARE_NATIVE(yielder)
     Phase* yielder = Make_Interpreted_Action_May_Fail(
         ARG(spec),
         body,
-        MKF_KEYWORDS | MKF_RETURN,  // give it a RETURN
+        MKF_RETURN,  // give it a RETURN
         &Yielder_Dispatcher,
         IDX_YIELDER_MAX  // details array capacity
     );

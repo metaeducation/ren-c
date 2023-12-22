@@ -310,7 +310,7 @@ DECLARE_NATIVE(make_native)
     REBVAL *source = ARG(source);
 
     Context* meta;
-    Flags flags = MKF_KEYWORDS | MKF_RETURN;
+    Flags flags = MKF_RETURN;
     Array* paramlist = Make_Paramlist_Managed_May_Fail(
         &meta,
         ARG(spec),
