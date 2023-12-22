@@ -441,12 +441,7 @@ bool Typecheck_Coerce_Argument(
             goto do_coercion;
     }
 
-  typecheck_again: {
-
-    const Byte* optimized = PAYLOAD(Any, param).second.at_least_4;
-    const Byte* optimized_tail = optimized + sizeof(uintptr_t);
-
-    enum Reb_Kind kind = Is_Stable(arg) ? VAL_TYPE(arg) : REB_ISOTOPE;
+  typecheck_again:
 
     if (Get_Parameter_Flag(param, NULL_DEFINITELY_OK) and Is_Nulled(arg))
         goto return_true;
@@ -471,6 +466,12 @@ bool Typecheck_Coerce_Argument(
         }
         goto return_true;  // other parameters
     }
+
+  blockscope {
+    const Byte* optimized = Cell_Parameter_Spec(param)->misc.any.at_least_4;
+    const Byte* optimized_tail = optimized + sizeof(uintptr_t);
+
+    enum Reb_Kind kind = Is_Stable(arg) ? VAL_TYPE(arg) : REB_ISOTOPE;
 
     if (Get_Parameter_Flag(param, NOOP_IF_VOID))
         assert(kind != REB_VOID);  // should have bypassed typecheck
