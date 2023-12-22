@@ -395,8 +395,8 @@ collect*: func [
         [<maybe> block!]
 ][
     let out: null
-    let keeper: specialize* (  ; SPECIALIZE to hide series argument
-        enclose* :append lambda [  ; Derive from APPEND for /LINE /DUP
+    let keeper: specialize (  ; SPECIALIZE to hide series argument
+        enclose :append lambda [  ; Derive from APPEND for /LINE /DUP
             f [frame!]
             <with> out
         ][

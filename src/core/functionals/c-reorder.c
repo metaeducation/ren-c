@@ -87,7 +87,7 @@ Bounce Reorderer_Dispatcher(Level* L) {
 
 
 //
-//  reorder*: native [
+//  reorder: native [
 //
 //  {Create variation of a frame with its parameters reordered}
 //
@@ -97,9 +97,9 @@ Bounce Reorderer_Dispatcher(Level* L) {
 //          [block!]
 //  ]
 //
-DECLARE_NATIVE(reorder_p)  // see REORDER in %base-defs.r, for inheriting meta
+DECLARE_NATIVE(reorder)
 {
-    INCLUDE_PARAMS_OF_REORDER_P;
+    INCLUDE_PARAMS_OF_REORDER;
 
     Action* reorderee = VAL_ACTION(ARG(original));
     Option(const Symbol*) label  = VAL_FRAME_LABEL(ARG(original));

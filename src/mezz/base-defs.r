@@ -197,65 +197,11 @@ elide-if-void: func* [
 each: runs :quote
 
 
-; Function derivations have core implementations (SPECIALIZE*, ADAPT*, etc.)
-; that don't create META information for the HELP.  Those can be used in
-; performance-sensitive code.
+; It's easier to pre-process CHAIN's block in usermode, which also offers a
+; lower-level version CHAIN* that just takes a block of frames.
 ;
-; These higher-level variations without the * (SPECIALIZE, ADAPT, etc.) do the
-; inheritance for you.  This makes them a little slower, and the generated
-; functions will be bigger due to having their own objects describing the
-; HELP information.  That's not such a big deal for functions that are made
-; only one time, but something like a KEEP inside a COLLECT might be better
-; off being defined with ENCLOSE* instead of ENCLOSE and foregoing HELP.
-;
-; Once HELP has been made for a derived function, it can be customized via
-; REDESCRIBE.
-;
-; https://forum.rebol.info/t/1222
-;
-; Note: ENCLOSE is the first wrapped version here; so that the other wrappers
-; can use it, thus inheriting HELP from their core (*-having) implementations.
-;
-; (A usermode INHERIT-ADJUNCT existed, but it was slow.  It was made native.)
-;
-; https://forum.rebol.info/t/1619
-;
-
-enclose: enclose* :enclose* lambda [f] [  ; uses low-level ENCLOSE* to make
-    let inner: f.inner
-    inherit-adjunct (do f) inner
-]
-inherit-adjunct enclose :enclose*  ; needed since we used ENCLOSE*
-
-specialize: enclose :specialize* lambda [f] [  ; now we have high-level ENCLOSE
-    let original: f.original
-    inherit-adjunct (do f) original
-]
-
-adapt: enclose :adapt* lambda [f] [
-    let original: f.original
-    inherit-adjunct (do f) original
-]
-
-chain: enclose :chain* lambda [f] [
-    let pipeline1: pick (f.pipeline: reduce/predicate f.pipeline :unrun) 1
-    inherit-adjunct (do f) pipeline1
-]
-
-augment: enclose :augment* lambda [f] [
-    let original: f.original
-    let spec: f.spec
-    inherit-adjunct/augment (do f) original spec
-]
-
-reframer: enclose :reframer* lambda [f] [
-    let shim: f.shim
-    inherit-adjunct (do f) shim
-]
-
-reorder: enclose :reorder* lambda [f] [
-    let original: f.original
-    inherit-adjunct (do f) original
+chain: adapt :chain* [
+    pipeline: reduce/predicate pipeline :unrun
 ]
 
 

@@ -163,7 +163,7 @@ Bounce Encloser_Dispatcher(Level* const L)
 
 
 //
-//  enclose*: native [
+//  enclose: native [
 //
 //  {Wrap code around a frame with access to its instance and return value}
 //
@@ -174,9 +174,9 @@ Bounce Encloser_Dispatcher(Level* const L)
 //          [<unrun> frame!]
 //  ]
 //
-DECLARE_NATIVE(enclose_p)  // see extended definition ENCLOSE in %base-defs.r
+DECLARE_NATIVE(enclose)
 {
-    INCLUDE_PARAMS_OF_ENCLOSE_P;
+    INCLUDE_PARAMS_OF_ENCLOSE;
 
     Value(*) inner = ARG(inner);
     Value(*) outer = ARG(outer);

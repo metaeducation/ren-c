@@ -328,133 +328,13 @@ redescribe: func [
     {Mutate action description with new title and/or new argument notes.}
 
     return: [action?]
-        {The input action, with its description now updated.}
-    spec [block!]
-        {Either a string description, or a spec block (without types).}
-    action [<unrun> frame!]
-        {(modified) Action whose description is to be updated.}
+    spec "Either a string description, or a spec block"
+        [block!]
+    action "(modified) Action whose description is to be updated"
+        [<unrun> frame!]
 ][
-    let adjunct: adjunct-of action
-    let notes: null
-    let description: null
-
-    ; For efficiency, objects are only created on demand by hitting the
-    ; required point in the PARSE.  Hence `redescribe [] :foo` will not tamper
-    ; with the meta information at all, while `redescribe [{stuff}] :foo` will
-    ; only manipulate the description.
-
-    let on-demand-adjunct: does [
-        adjunct: default [
-            set-adjunct action copy system.standard.action-adjunct
-        ]
-
-        if not in adjunct 'description [
-            fail [{archetype ADJUNCT OF doesn't have DESCRIPTION slot} meta]
-        ]
-
-        if notes: select adjunct 'parameter-notes [
-            if not any-context? notes [  ; !!! Sometimes OBJECT!, else FRAME!
-                fail [{PARAMETER-NOTES in ADJUNCT-OF is not a FRAME!} notes]
-            ]
-
-;            all [frame? notes, action <> (action of notes)] then [
-;                fail [{PARAMETER-NOTES in ADJUNCT-OF frame mismatch} notes]
-;            ]
-        ]
-    ]
-
-    let on-demand-notes: does [  ; was DOES CATCH, removed during DOES tweak
-        on-demand-adjunct
-
-        if find adjunct 'parameter-notes [
-            adjunct: null  ; need to get a parameter-notes field in the OBJECT!
-            on-demand-adjunct  ; ...so this loses SPECIALIZEE, etc.
-
-            description: adjunct.description: fields.description
-            notes: adjunct.parameter-notes: fields.parameter-notes
-            types: adjunct.parameter-types: fields.parameter-types
-        ]
-    ]
-
-    let param: null
-    let note: null
-    parse3 spec [
-        try [
-            copy description some text! (
-                description: spaced description
-                all [
-                    description = {}
-                    not adjunct
-                ] then [
-                    ; No action needed (no adjunct to delete old description in)
-                ] else [
-                    on-demand-adjunct
-                    adjunct.description: if description = {} [
-                        _
-                    ] else [
-                        description
-                    ]
-                ]
-            )
-        ]
-        try some [
-            set param: [
-                word! | get-word! | lit-word?! | set-word!
-                | ahead path! into [word! blank!]
-            ](
-                if path? param [param: param.1]
-            )
-
-            ; It's legal for the redescribe to name a parameter just to
-            ; show it's there for descriptive purposes without adding notes.
-            ; But if {} is given as the notes, that's seen as a request
-            ; to delete a note.
-            ;
-            try [[copy note some text!] (
-                note: spaced note
-                on-demand-adjunct
-                if param = 'return: [
-                    adjunct.return-note: all [
-                        note <> {}
-                        copy note
-                    ]
-                ] else [
-                    any [
-                        notes
-                        note <> {}
-                    ] then [
-                        on-demand-notes
-
-                        if not find notes as word! param [
-                            fail [param "not found in frame to describe"]
-                        ]
-
-                        let actual: first find parameters of :value param
-                        if param !== actual [
-                            fail [param {doesn't match word type of} actual]
-                        ]
-
-                        notes.(as word! param): if note = {} [~] else [note]
-                    ]
-                ]
-            )]
-        ]
-        <end>
-    ] except [
-        fail [{REDESCRIBE specs should be STRING! and ANY-WORD! only:} spec]
-    ]
-
-    ; If you kill all the notes then they will be cleaned up.  The adjunct
-    ; object will be left behind, however.
-    ;
-    all [
-        notes
-        every [param note] notes [trash? :note]
-    ] then [
-        adjunct.parameter-notes: null
-    ]
-
-    return runs action  ; should have updated the adjunct
+    ; !!! This needs to be completely rethought
+    return runs action
 ]
 
 

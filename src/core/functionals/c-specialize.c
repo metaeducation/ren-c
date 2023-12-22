@@ -435,7 +435,7 @@ bool Specialize_Action_Throws(
 
 
 //
-//  specialize*: native [
+//  specialize: native [
 //
 //  {Create a new action through partial or full specialization of another}
 //
@@ -446,14 +446,14 @@ bool Specialize_Action_Throws(
 //          [block!]
 //  ]
 //
-DECLARE_NATIVE(specialize_p)  // see extended SPECIALIZE in %base-defs.r
+DECLARE_NATIVE(specialize)
 //
 // 1. Refinement specializations via path are pushed to the stack, giving
 //    order information that can't be meaningfully gleaned from an arbitrary
 //    code block (e.g. `specialize :append [dup: x | if y [part: z]]`, we
 //    shouldn't think that intends any ordering of /dup/part or /part/dup)
 {
-    INCLUDE_PARAMS_OF_SPECIALIZE_P;
+    INCLUDE_PARAMS_OF_SPECIALIZE;
 
     Value(*) specializee = ARG(original);
     Value(*) def = ARG(def);

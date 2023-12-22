@@ -72,7 +72,7 @@
         return runs frame
     ]
 
-    pointfree: specialize* (enclose :pointfree* lambda [f] [
+    pointfree: specialize (enclose :pointfree lambda [f] [
         set let frame f.frame: (match frame! any [  ; no SET-WORD! namecache
             if match [word! path!] f.block.1 [unrun get/any f.block.1]
         ]) else [
@@ -81,8 +81,6 @@
 
         ; rest of block is invocation by example
         f.block: skip f.block 1  ; Note: NEXT not defined yet
-
-        inherit-adjunct (do f) frame  ; don't SET-WORD! cache name
     ])[
         frame: unrun :panic/value  ; overwritten, best to make something mean
     ]

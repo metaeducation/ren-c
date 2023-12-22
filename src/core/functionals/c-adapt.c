@@ -119,7 +119,7 @@ Bounce Adapter_Dispatcher(Level* const L)
 
 
 //
-//  adapt*: native [
+//  adapt: native [
 //
 //  {Create a variant of an action that preprocesses its arguments}
 //
@@ -130,9 +130,9 @@ Bounce Adapter_Dispatcher(Level* const L)
 //          [block!]
 //  ]
 //
-DECLARE_NATIVE(adapt_p)  // see extended definition ADAPT in %base-defs.r
+DECLARE_NATIVE(adapt)
 {
-    INCLUDE_PARAMS_OF_ADAPT_P;
+    INCLUDE_PARAMS_OF_ADAPT;
 
     REBVAL *adaptee = ARG(original);
 

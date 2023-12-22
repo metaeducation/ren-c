@@ -340,7 +340,7 @@ Bounce Reframer_Dispatcher(Level* const L)
 
 
 //
-//  reframer*: native [
+//  reframer: native [
 //
 //  {Make a function that manipulates an invocation at the callsite}
 //
@@ -351,9 +351,9 @@ Bounce Reframer_Dispatcher(Level* const L)
 //          [word!]
 //  ]
 //
-DECLARE_NATIVE(reframer_p)
+DECLARE_NATIVE(reframer)
 {
-    INCLUDE_PARAMS_OF_REFRAMER_P;
+    INCLUDE_PARAMS_OF_REFRAMER;
 
     QUOTE_BYTE(ARG(shim)) = UNQUOTED_1;  // remove isotope if present
 

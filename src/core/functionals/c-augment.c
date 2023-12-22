@@ -58,7 +58,7 @@
 
 
 //
-//  augment*: native [
+//  augment: native [
 //
 //  {Create an action variant that acts the same, but has added parameters}
 //
@@ -69,9 +69,9 @@
 //          [block!]
 //  ]
 //
-DECLARE_NATIVE(augment_p)  // see extended definition AUGMENT in %base-defs.r
+DECLARE_NATIVE(augment)
 {
-    INCLUDE_PARAMS_OF_AUGMENT_P;
+    INCLUDE_PARAMS_OF_AUGMENT;
 
     Action* augmentee = VAL_ACTION(ARG(original));
     Option(const Symbol*) label = VAL_FRAME_LABEL(ARG(original));

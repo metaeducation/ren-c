@@ -884,9 +884,8 @@ void Startup_Core(void)
     // The code in "base" is the lowest level of initialization written as
     // Rebol code.  This is where things like `+` being an infix form of ADD is
     // set up, or FIRST being a specialization of PICK.  It also has wrappers
-    // for more basic natives like FUNC* or SPECIALIZE*, that handle aspects
-    // that are easier to write in usermode than in C (like inheriting HELP
-    // information).
+    // for more basic natives that handle aspects that are easier to write in
+    // usermode than in C.
 
     rebElide(
         //
