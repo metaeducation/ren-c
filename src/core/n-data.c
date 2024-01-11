@@ -717,7 +717,7 @@ bool Get_Var_Push_Refinements_Throws(
                 // of a "steps" block needs to be "fetched" we quote it.
                 //
                 if (at == head)
-                    Quotify(TOP, 1);
+                    Meta_Quotify(TOP);
             }
             else
                 Derelativize(PUSH(), at, at_specifier);
@@ -738,17 +738,19 @@ bool Get_Var_Push_Refinements_Throws(
 
   blockscope {
     StackValue(*) at = Data_Stack_At(stackindex);
-    if (Is_Quoted(at)) {
+    if (Is_Quoted(at) or Is_Quasi(at)) {
         Copy_Cell(out, at);
-        Unquotify(out, 1);
+        Meta_Unquotify_Known_Stable(out);
+        if (Is_Nulled(out))
+            fail (Error_Need_Non_Null_Raw());
+        if (Is_Void(out))
+            fail (Error_Bad_Void());
     }
     else if (Is_Word(at)) {
         Copy_Cell(
             out,
             Lookup_Word_May_Fail(at, SPECIFIED)
         );
-        if (Is_Isotope(out))
-            fail (Error_Bad_Word_Get(at, out));
     }
     else
         fail (Copy_Cell(out, at));
@@ -760,7 +762,7 @@ bool Get_Var_Push_Refinements_Throws(
 
     while (stackindex != TOP_INDEX + 1) {
         Move_Cell(temp, out);
-        Quotify(temp, 1);
+        QUOTE_BYTE(temp) = ONEQUOTE_3;
         const void *ins = rebQ(cast(REBVAL*, Data_Stack_At(stackindex)));
         if (rebRunThrows(
             out,  // <-- output cell
@@ -1361,7 +1363,8 @@ bool Set_Var_Core_Updater_Throws(
     // Now do a the final step, an update (often a poke)
 
     Move_Cell(temp, out);
-    Quotify(temp, 1);
+    Byte quote_byte = QUOTE_BYTE(temp);
+    QUOTE_BYTE(temp) = ONEQUOTE_3;
     const void *ins = rebQ(cast(REBVAL*, Data_Stack_At(stackindex)));
     assert(Is_Action(updater));
     if (rebRunThrows(
@@ -1379,6 +1382,7 @@ bool Set_Var_Core_Updater_Throws(
 
     if (not Is_Nulled(out)) {
         Move_Cell(writeback, out);
+        QUOTE_BYTE(writeback) = quote_byte;
         setval = writeback;
 
         --stackindex_top;
