@@ -80,7 +80,7 @@ INLINE Option(const Array*) Cell_Parameter_Spec(
     #define PARAMETER_FLAGS(p) \
         *x_cast(uintptr_t*, &EXTRA(Parameter, (p)).parameter_flags)
 #else
-    INLINE uintptr_t& PARAMETER_FLAGS(const Cell* p) {
+    INLINE uintptr_t& PARAMETER_FLAGS(NoQuote(const Cell*) p) {
         assert(Cell_Heart_Unchecked(p) == REB_PARAMETER);
         return const_cast<uintptr_t&>(EXTRA(Parameter, (p)).parameter_flags);
     }
@@ -272,10 +272,22 @@ INLINE Option(const Array*) Cell_Parameter_Spec(
 
 
 
-INLINE ParamClass Cell_ParamClass(const Param* param) {
+INLINE ParamClass Cell_ParamClass(NoQuote(const Cell*) param) {
     assert(HEART_BYTE(param) == REB_PARAMETER);
     ParamClass pclass = u_cast(ParamClass, PARAMCLASS_BYTE(param));
     return pclass;
+}
+
+INLINE Option(const String*) Cell_Parameter_String(
+    NoQuote(const Cell*) param
+){
+    assert(HEART_BYTE(param) == REB_PARAMETER);
+    return cast(const String*, Cell_Node2(param));
+}
+
+INLINE void Set_Parameter_String(Cell* param, Option(const String*) string) {
+    assert(HEART_BYTE(param) == REB_PARAMETER);
+    Init_Cell_Node2(param, try_unwrap(string));
 }
 
 
@@ -298,9 +310,6 @@ INLINE bool Is_Specialized(Value(const*) v) {
 
 #define Not_Specialized(v)      (not Is_Specialized(v))
 
-#define Init_Parameter(out,param_flags,spec,specifier) \
-    TRACK(Init_Parameter_Untracked((out), (param_flags), (spec), (specifier)))
-
 
 INLINE Param* Init_Unconstrained_Parameter_Untracked(
     Cell* out,
@@ -317,6 +326,7 @@ INLINE Param* Init_Unconstrained_Parameter_Untracked(
     Reset_Isotope_Header_Untracked(out, CELL_MASK_PARAMETER);
     PARAMETER_FLAGS(out) = flags;
     INIT_CELL_PARAMETER_SPEC(out, nullptr);
+    Init_Cell_Node2(out, nullptr);  // parameter string
 
     Param* param = cast(Param*, cast(REBVAL*, out));
     return param;

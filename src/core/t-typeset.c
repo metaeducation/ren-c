@@ -106,15 +106,11 @@ void Shutdown_Typesets(void)
 
 
 //
-//  Init_Parameter_Untracked: C
+//  Set_Parameter_Spec: C
 //
 // This copies the input spec as an array stored in the parameter, while
 // setting flags appropriately and making notes for optimizations to help in
 // the later typechecking.
-//
-//
-// the checking of tags when functions are called to not require string
-// comparisons for things like <opt> or <skip>.
 //
 // 1. As written, the function spec processing code builds the parameter
 //    directly into a stack variable.  That means this code can't PUSH()
@@ -145,16 +141,17 @@ void Shutdown_Typesets(void)
 //    get the integer typecheck... but if WORD! is unbound then it would act
 //    as a WORD! typecheck.)
 //
-Param* Init_Parameter_Untracked(
-    StackValue(*) out,  // target is stack value [1]
-    Flags flags,
+void Set_Parameter_Spec(
+    Cell* param,  // target is usually a stack value [1]
     const Cell* spec,
     Specifier* spec_specifier
 ){
-    ParamClass pclass = u_cast(ParamClass, FIRST_BYTE(&flags));
+    ParamClass pclass = Cell_ParamClass(param);
     assert(pclass != PARAMCLASS_0);  // must have class
-    if (flags & PARAMETER_FLAG_REFINEMENT) {
-        assert(flags & PARAMETER_FLAG_NULL_DEFINITELY_OK);
+
+    uintptr_t* flags = &PARAMETER_FLAGS(param);
+    if (*flags & PARAMETER_FLAG_REFINEMENT) {
+        assert(*flags & PARAMETER_FLAG_NULL_DEFINITELY_OK);
         assert(pclass != PARAMCLASS_RETURN and pclass != PARAMCLASS_OUTPUT);
     }
 
@@ -180,12 +177,12 @@ Param* Init_Parameter_Untracked(
 
         if (Is_Quasi(item)) {
             if (Cell_Heart(item) == REB_VOID) {
-                flags |= PARAMETER_FLAG_TRASH_DEFINITELY_OK;
+                *flags |= PARAMETER_FLAG_TRASH_DEFINITELY_OK;
                 continue;
             }
             if (Cell_Heart(item) != REB_WORD)
                 fail (item);
-            flags |= PARAMETER_FLAG_INCOMPLETE_OPTIMIZATION;
+            *flags |= PARAMETER_FLAG_INCOMPLETE_OPTIMIZATION;
             continue;
         }
         if (Is_Quoted(item)) {
@@ -208,22 +205,22 @@ Param* Init_Parameter_Untracked(
                 // core sources were changed to `<variadic>`, asking users
                 // to shuffle should only be done once (when final is known).
                 //
-                flags |= PARAMETER_FLAG_VARIADIC;
+                *flags |= PARAMETER_FLAG_VARIADIC;
                 Init_Quasi_Word(dest, Canon(VARIADIC_Q)); // !!!
             }
             else if (0 == CT_String(item, Root_End_Tag, strict)) {
-                flags |= PARAMETER_FLAG_ENDABLE;
+                *flags |= PARAMETER_FLAG_ENDABLE;
                 Init_Quasi_Word(dest, Canon(NULL));  // !!!
-                flags |= PARAMETER_FLAG_NULL_DEFINITELY_OK;
+                *flags |= PARAMETER_FLAG_NULL_DEFINITELY_OK;
             }
             else if (0 == CT_String(item, Root_Maybe_Tag, strict)) {
-                flags |= PARAMETER_FLAG_NOOP_IF_VOID;
+                *flags |= PARAMETER_FLAG_NOOP_IF_VOID;
                 Set_Cell_Flag(dest, PARAMSPEC_SPOKEN_FOR);
                 Init_Quasi_Word(dest, Canon(VOID));  // !!!
             }
             else if (0 == CT_String(item, Root_Opt_Tag, strict)) {
                 Init_Quasi_Word(dest, Canon(NULL));  // !!!
-                flags |= PARAMETER_FLAG_NULL_DEFINITELY_OK;
+                *flags |= PARAMETER_FLAG_NULL_DEFINITELY_OK;
             }
             else if (0 == CT_String(item, Root_Void_Tag, strict)) {
                 Init_Any_Word_Bound(  // !!
@@ -233,19 +230,19 @@ Param* Init_Parameter_Untracked(
                     Lib_Context,
                     INDEX_ATTACHED
                 );
-                flags |= PARAMETER_FLAG_INCOMPLETE_OPTIMIZATION;
+                *flags |= PARAMETER_FLAG_INCOMPLETE_OPTIMIZATION;
             }
             else if (0 == CT_String(item, Root_Skip_Tag, strict)) {
                 if (pclass != PARAMCLASS_HARD)
                     fail ("Only hard-quoted parameters are <skip>-able");
 
-                flags |= PARAMETER_FLAG_SKIPPABLE;
-                flags |= PARAMETER_FLAG_ENDABLE; // skip => null
+                *flags |= PARAMETER_FLAG_SKIPPABLE;
+                *flags |= PARAMETER_FLAG_ENDABLE; // skip => null
                 Init_Quasi_Word(dest, Canon(NULL));  // !!!
-                flags |= PARAMETER_FLAG_NULL_DEFINITELY_OK;
+                *flags |= PARAMETER_FLAG_NULL_DEFINITELY_OK;
             }
             else if (0 == CT_String(item, Root_Const_Tag, strict)) {
-                flags |= PARAMETER_FLAG_CONST;
+                *flags |= PARAMETER_FLAG_CONST;
                 Set_Cell_Flag(dest, PARAMSPEC_SPOKEN_FOR);
                 Init_Quasi_Word(dest, Canon(CONST));
             }
@@ -272,7 +269,7 @@ Param* Init_Parameter_Untracked(
                 // assigned in usermode code.  That misses an optimization
                 // opportunity...suggesting strongly those be done sooner.
                 //
-                flags |= PARAMETER_FLAG_INCOMPLETE_OPTIMIZATION;
+                *flags |= PARAMETER_FLAG_INCOMPLETE_OPTIMIZATION;
                 continue;
             }
             if (Is_Isotope(lookup) and Cell_Heart(lookup) != REB_FRAME)
@@ -287,7 +284,7 @@ Param* Init_Parameter_Untracked(
 
         if (heart == REB_TYPE_WORD) {
             if (optimized == optimized_tail and item != tail) {
-                flags |= PARAMETER_FLAG_INCOMPLETE_OPTIMIZATION;
+                *flags |= PARAMETER_FLAG_INCOMPLETE_OPTIMIZATION;
                 continue;
             }
             Option(SymId) id = Cell_Word_Id(lookup);
@@ -301,23 +298,23 @@ Param* Init_Parameter_Untracked(
             heart == REB_TYPE_GROUP or heart == REB_TYPE_BLOCK
             or heart == REB_TYPE_PATH or heart == REB_TYPE_TUPLE
         ){
-            flags |= PARAMETER_FLAG_INCOMPLETE_OPTIMIZATION;
+            *flags |= PARAMETER_FLAG_INCOMPLETE_OPTIMIZATION;
         }
         else if (heart == REB_FRAME and QUOTE_BYTE(lookup) == ISOTOPE_0) {
             Phase* phase = ACT_IDENTITY(VAL_ACTION(lookup));
             if (ACT_DISPATCHER(phase) == &Intrinsic_Dispatcher) {
                 Intrinsic* intrinsic = Extract_Intrinsic(phase);
                 if (intrinsic == &N_any_value_q)
-                    flags |= PARAMETER_FLAG_ANY_VALUE_OK;
+                    *flags |= PARAMETER_FLAG_ANY_VALUE_OK;
                 else if (intrinsic == &N_any_atom_q)
-                    flags |= PARAMETER_FLAG_ANY_ATOM_OK;
+                    *flags |= PARAMETER_FLAG_ANY_ATOM_OK;
                 else if (intrinsic == &N_nihil_q)
-                    flags |= PARAMETER_FLAG_NIHIL_DEFINITELY_OK;
+                    *flags |= PARAMETER_FLAG_NIHIL_DEFINITELY_OK;
                 else
-                    flags |= PARAMETER_FLAG_INCOMPLETE_OPTIMIZATION;
+                    *flags |= PARAMETER_FLAG_INCOMPLETE_OPTIMIZATION;
             }
             else
-                flags |= PARAMETER_FLAG_INCOMPLETE_OPTIMIZATION;
+                *flags |= PARAMETER_FLAG_INCOMPLETE_OPTIMIZATION;
         }
         else {
             // By pre-checking we can avoid needing to double check in the
@@ -330,15 +327,10 @@ Param* Init_Parameter_Untracked(
     if (optimized != optimized_tail)
         *optimized = 0;  // signal termination (else tail is termination)
 
-    Reset_Isotope_Header_Untracked(out, CELL_MASK_PARAMETER);
-
-    PARAMETER_FLAGS(out) = flags;
-    INIT_CELL_PARAMETER_SPEC(out, copy);
-
-    Param* param = cast(Param*, cast(REBVAL*, out));
+    Freeze_Array_Shallow(copy);  // !!! copy and freeze should likely be deep
+    INIT_CELL_PARAMETER_SPEC(param, copy);
 
     assert(Not_Cell_Flag(param, VAR_MARKED_HIDDEN));
-    return param;
 }
 
 
@@ -414,8 +406,75 @@ void MF_Parameter(REB_MOLD *mo, NoQuote(const Cell*) v, bool form)
 //
 REBTYPE(Parameter)
 {
-    UNUSED(level_);
-    UNUSED(verb);
+    Value(*) param = D_ARG(1);
+    Option(SymId) symid = Symbol_Id(verb);
+
+    switch (symid) {
+
+    //=//// PICK* (see %sys-pick.h for explanation) ////////////////////////=//
+
+      case SYM_PICK_P: {
+        INCLUDE_PARAMS_OF_PICK_P;
+        UNUSED(ARG(location));
+
+        const Cell* picker = ARG(picker);
+        if (not Is_Word(picker))
+            fail (picker);
+
+        switch (Cell_Word_Id(picker)) {
+          case SYM_TEXT: {
+            Option(const String*) string = Cell_Parameter_String(param);
+            if (not string)
+                return nullptr;
+            return Init_Text(OUT, unwrap(string)); }
+
+          case SYM_SPEC: {
+            Option(const Array*) spec = Cell_Parameter_Spec(param);
+            if (not spec)
+                return nullptr;
+            return Init_Block(OUT, unwrap(spec)); }
+
+          case SYM_TYPE:
+            return nullptr;  // TBD
+
+          default:
+            break;
+        }
+
+        fail (Error_Bad_Pick_Raw(picker)); }
+
+
+    //=//// POKE* (see %sys-pick.h for explanation) ////////////////////////=//
+
+      case SYM_POKE_P: {
+        INCLUDE_PARAMS_OF_POKE_P;
+        UNUSED(ARG(location));
+
+        const Cell* picker = ARG(picker);
+        if (not Is_Word(picker))
+            fail (picker);
+
+        REBVAL *setval = ARG(value);
+
+        switch (Cell_Word_Id(picker)) {
+          case SYM_TEXT: {
+            if (not Is_Text(setval))
+                fail (setval);
+            String* string = Copy_String_At(setval);
+            Manage_Series(string);
+            Freeze_Series(string);
+            Set_Parameter_String(param, string);
+            return COPY(param); }  // update to container (e.g. varlist) needed
+
+          default:
+            break;
+        }
+
+        fail (Error_Bad_Pick_Raw(picker)); }
+
+      default:
+        break;
+    }
 
     fail (UNHANDLED);
 }

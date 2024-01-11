@@ -103,7 +103,7 @@ integer     "64 bit integer"
             [integer     +       +]
 
 parameter         "function parameter description"
-~unspecialized~   (CELL_FLAG_FIRST_IS_NODE)
+~unspecialized~   (CELL_FLAG_FIRST_IS_NODE | CELL_FLAG_SECOND_IS_NODE)
                   []
                   [parameter   +       +]
 

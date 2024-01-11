@@ -193,6 +193,14 @@ void Push_Keys_And_Parameters_May_Fail(
             else {
                 // act as description for current parameter
                 assert(mode == SPEC_MODE_PUSHED);
+
+                if (Cell_Parameter_String(TOP))
+                    fail (Error_Bad_Func_Def_Raw(item));
+
+                String* string = Copy_String_At(item);
+                Manage_Series(string);
+                Freeze_Series(string);
+                Set_Parameter_String(TOP, string);
             }
 
             continue;
@@ -221,10 +229,8 @@ void Push_Keys_And_Parameters_May_Fail(
             if (Cell_Parameter_Spec(param))  // `func [x [integer!] [blank!]]`
                 fail (Error_Bad_Func_Def_Raw(item));  // too many spec blocks
 
-            Flags param_flags = PARAMETER_FLAGS(param);  // preserve
-
             Specifier* derived = Derive_Specifier(Cell_Specifier(spec), item);
-            Init_Parameter(param, param_flags, item, derived);
+            Set_Parameter_Spec(param, item, derived);
 
             continue;
         }

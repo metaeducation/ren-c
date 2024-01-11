@@ -352,30 +352,21 @@ help: function [
         ]
     ]
 
-    adjunct: adjunct-of :value else '[]  ; so SELECT just returns NULL
+    adjunct: adjunct-of :value  ; so SELECT just returns NULL
 
     print newline
 
     print "DESCRIPTION:"
-    print [_ _ _ _ (select adjunct 'description) else ["(undocumented)"]]
+    print [_ _ _ _ (select maybe adjunct 'description) else ["(undocumented)"]]
     print [_ _ _ _ (uppercase mold topic) {is an ACTION!}]
 
     print-args: [list /indent-words] -> [
-        for-each param list [
-            types: ensure [<opt> block!] (
-                select (maybe select adjunct 'parameter-types) (
-                    to-word noquote param
-                )
-            )
-            note: ensure [<opt> text!] (try
-                select (maybe select adjunct 'parameter-notes) (
-                    to-word noquote param
-                )
-            )
+        for-each key list [
+            param: select :value to-word noquote key
 
-            print [_ _ _ _ param (if types [mold types])]
-            if note [
-                print [_ _ _ _ _ _ _ _ note]
+            print [_ _ _ _ key (if param.spec [mold param.spec])]
+            if param.text [
+                print [_ _ _ _ _ _ _ _ param.text]
             ]
         ]
     ]
@@ -384,15 +375,18 @@ help: function [
     ; that isn't intended for use as a definitional return is a return type.
     ; The concepts are still being fleshed out.
     ;
-    return-type: select maybe select adjunct 'parameter-types 'return
-    return-note: select maybe select adjunct 'parameter-notes 'return
+    return-param: select :value 'return
 
     print newline
     print [
-        "RETURNS:" mold any [return-type, "(undocumented)"]
+        "RETURNS:" if return-param and (return-param.spec) [
+            mold return-param.spec
+        ] else [
+            "(undocumented)"
+        ]
     ]
-    if return-note [
-        print [_ _ _ _ return-note]
+    if return-param and (return-param.text) [
+        print [_ _ _ _ return-param.text]
     ]
 
     outputs: outputs of :value
