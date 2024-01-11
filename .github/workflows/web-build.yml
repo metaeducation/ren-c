@@ -458,7 +458,7 @@ jobs:
       uses: cypress-io/github-action@v6
       with:
         working-directory: tests/cypress
-        browser: chrome
+        browser: firefox
         config-file: cypress.config.js
         record: true
       env:  # [1]
@@ -466,6 +466,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # [3]
         CYPRESS_GIT_COMMIT_SHORT: ${{ env.GIT_COMMIT_SHORT }}  # [4]
         # DEBUG: '@cypress/github-action'  # verbose debug output
+        # DEBUG: 'cypress:*'  # see runner logs (:* is far too much output)
 
 
   #====# GREENLIGHT STEP (MARK THE UPLOADED BUILD AS CURRENT) #===============#
