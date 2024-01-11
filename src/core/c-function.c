@@ -137,6 +137,16 @@ enum Reb_Spec_Mode {
 };
 
 
+static void Ensure_Adjunct(Context* *adjunct_out) {
+    if (*adjunct_out)
+        return;
+
+    *adjunct_out = Copy_Context_Shallow_Managed(
+        VAL_CONTEXT(Root_Action_Adjunct)
+    );
+}
+
+
 //
 //  Push_Keys_And_Parameters_May_Fail: C
 //
@@ -146,6 +156,7 @@ enum Reb_Spec_Mode {
 // be broken out in a particularly elegant way, but it's a start.
 //
 void Push_Keys_And_Parameters_May_Fail(
+    Context* *adjunct_out,
     const REBVAL *spec,
     Flags *flags,
     StackIndex *return_stackindex
@@ -189,6 +200,16 @@ void Push_Keys_And_Parameters_May_Fail(
             if (not (*flags & MKF_PARAMETER_SEEN)) {
                 assert(mode != SPEC_MODE_PUSHED);  // none seen, none pushed!
                 // no keys seen yet, act as overall description
+
+                Ensure_Adjunct(adjunct_out);
+
+                String* string = Copy_String_At(item);
+                Manage_Series(string);
+                Freeze_Series(string);
+                Init_Text(
+                    CTX_VAR(*adjunct_out, STD_ACTION_ADJUNCT_DESCRIPTION),
+                    string
+                );
             }
             else {
                 // act as description for current parameter
@@ -601,8 +622,10 @@ Array* Pop_Paramlist_With_Adjunct_May_Fail(
     //=///////////////////////////////////////////////////////////////////=//
 
     // !!! See notes on ACTION-ADJUNCT in %sysobj.r
+    //
+    // Currently only contains description, assigned during parameter pushes.
 
-    *adjunct_out = nullptr;
+    UNUSED(adjunct_out);
 
     return paramlist;
 }
@@ -649,10 +672,13 @@ Array* Make_Paramlist_Managed_May_Fail(
 
     StackIndex return_stackindex = 0;
 
+    *adjunct_out = nullptr;
+
     // The process is broken up into phases so that the spec analysis code
     // can be reused in AUGMENT.
     //
     Push_Keys_And_Parameters_May_Fail(
+        adjunct_out,
         spec,
         flags,
         &return_stackindex

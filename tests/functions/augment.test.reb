@@ -78,11 +78,12 @@
     did all [
         orig: func ["description" a "a" /b "b"] [return <unused>]
         aug: augment :orig [c "c" /d "d"]
-        m: adjunct-of :aug
-        m.description = "description"
-        m.parameter-notes.a = "a"
-        m.parameter-notes.b = "b"
-        m.parameter-notes.c = "c"
-        m.parameter-notes.d = "d"
+        if m: adjunct-of :aug [
+            m.description = null  ; description not inherited ATM
+        ]
+        (select :aug 'a).text = "a"
+        (select :aug 'b).text = "b"
+        (select :aug 'c).text = "c"
+        (select :aug 'd).text = "d"
     ]
 )]

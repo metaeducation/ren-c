@@ -109,17 +109,19 @@ DECLARE_NATIVE(augment)
     }
   }
 
+    Context* adjunct = nullptr;
+
     // Now we reuse the spec analysis logic, which pushes more parameters to
     // the stack.  This may add duplicates--which will be detected when we
     // try to pop the stack into a paramlist.
     //
     Push_Keys_And_Parameters_May_Fail(
+        &adjunct,
         ARG(spec),
         &flags,
         &return_stackindex
     );
 
-    Context* adjunct;
     Array* paramlist = Pop_Paramlist_With_Adjunct_May_Fail(
         &adjunct,
         base,

@@ -26,43 +26,48 @@
         foo: func ["description" a "a" b "b"] []
         m: adjunct-of :foo
         m.description = "description"
-        m.parameter-types = null
-        m.parameter-notes.return = null
-        m.parameter-notes.a = "a"
-        m.parameter-notes.b = "b"
+        (select :foo 'return).spec = null
+        (select :foo 'return).text = null
+        (select :foo 'a).spec = null
+        (select :foo 'a).text = "a"
+        (select :foo 'b).spec = null
+        (select :foo 'b).text = "b"
     ]
 )(
     did all [  ; try RETURN: with no type
         foo: func ["description" return: "returns" a "a" b "b"] []
         m: adjunct-of :foo
         m.description = "description"
-        m.parameter-types = null
-        m.parameter-notes.return = "returns"
-        m.parameter-notes.a = "a"
-        m.parameter-notes.b = "b"
+        (select :foo 'return).spec = null
+        (select :foo 'return).text = "returns"
+        (select :foo 'a).spec = null
+        (select :foo 'a).text = "a"
+        (select :foo 'b).spec = null
+        (select :foo 'b).text = "b"
     ]
 )(
     did all [  ; try RETURN: with type
         foo: func ["description" return: [integer!] "returns" a "a" b "b"] []
         m: adjunct-of :foo
         m.description = "description"
-        m.parameter-types.return = [integer!]
-        m.parameter-types.a = null
-        m.parameter-types.b = null
-        m.parameter-notes.return = "returns"
-        m.parameter-notes.a = "a"
-        m.parameter-notes.b = "b"
+        (select :foo 'return).spec = [integer!]
+        (select :foo 'return).text = "returns"
+        (select :foo 'a).spec = null
+        (select :foo 'a).text = "a"
+        (select :foo 'b).spec = null
+        (select :foo 'b).text = "b"
     ]
 )(
     did all [  ; try without description
         foo: func [return: [integer!] "returns" a "a" /b "b"] []
-        m: adjunct-of :foo
-        m.description = null
-        m.parameter-types.return = [integer!]
-        m.parameter-types.a = null
-        m.parameter-types.b = null
-        m.parameter-notes.return = "returns"
-        m.parameter-notes.a = "a"
-        m.parameter-notes.b = "b"
+        if m: adjunct-of :foo [
+            m.description = null
+        ]
+        (select :foo 'return).spec = [integer!]
+        (select :foo 'return).text = "returns"
+        (select :foo 'a).spec = null
+        (select :foo 'a).text = "a"
+        (select :foo 'b).spec = null
+        (select :foo 'b).text = "b"
     ]
 )]

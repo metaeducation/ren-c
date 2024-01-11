@@ -250,12 +250,12 @@ DECLARE_NATIVE(native)
 // that this manual construction actually matches the definition in the file.
 //
 static void Init_Action_Adjunct_Shim(void) {
-    SymId field_syms[3] = {
-        SYM_DESCRIPTION, SYM_PARAMETER_TYPES, SYM_PARAMETER_NOTES
+    SymId field_syms[1] = {
+        SYM_DESCRIPTION
     };
-    Context* adjunct = Alloc_Context_Core(REB_OBJECT, 4, NODE_FLAG_MANAGED);
+    Context* adjunct = Alloc_Context_Core(REB_OBJECT, 2, NODE_FLAG_MANAGED);
     REBLEN i = 1;
-    for (; i != 4; ++i)
+    for (; i != 2; ++i)
         Init_Nulled(Append_Context(adjunct, Canon_Symbol(field_syms[i - 1])));
 
     Root_Action_Adjunct = Init_Object(Alloc_Value(), adjunct);

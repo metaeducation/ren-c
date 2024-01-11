@@ -191,8 +191,6 @@ standard: make object! [
     ;
     action-adjunct: make object! [
         description: null
-        parameter-types: null
-        parameter-notes: null
     ]
 
     ; !!! This is the template used for all errors, to which extra fields are
