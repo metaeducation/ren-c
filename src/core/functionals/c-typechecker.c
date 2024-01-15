@@ -468,7 +468,8 @@ bool Typecheck_Coerce_Argument(
     }
 
   blockscope {
-    const Byte* optimized = Cell_Parameter_Spec(param)->misc.any.at_least_4;
+    const Array* spec = try_unwrap(Cell_Parameter_Spec(param));
+    const Byte* optimized = spec->misc.any.at_least_4;
     const Byte* optimized_tail = optimized + sizeof(uintptr_t);
 
     enum Reb_Kind kind = Is_Stable(arg) ? VAL_TYPE(arg) : REB_ANTIFORM;

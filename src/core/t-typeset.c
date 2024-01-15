@@ -35,11 +35,31 @@ REBINT CT_Parameter(NoQuote(const Cell*) a, NoQuote(const Cell*) b, bool strict)
     assert(Cell_Heart(a) == REB_PARAMETER);
     assert(Cell_Heart(b) == REB_PARAMETER);
 
-    if (Cell_Parameter_Spec(a) != Cell_Parameter_Spec(b))
-        return Cell_Parameter_Spec(a) > Cell_Parameter_Spec(b) ? 1 : -1;
+    if (
+        try_unwrap(Cell_Parameter_Spec(a))
+        != try_unwrap(Cell_Parameter_Spec(b))
+    ){
+        if (
+            try_unwrap(Cell_Parameter_Spec(a))
+            > try_unwrap(Cell_Parameter_Spec(b))
+        ){
+            return 1;
+        }
+        return -1;
+    }
 
-    if (Cell_Parameter_String(a) != Cell_Parameter_String(b))
-        return Cell_Parameter_String(a) > Cell_Parameter_String(b) ? 1 : -1;
+    if (
+        try_unwrap(Cell_Parameter_String(a))
+        != try_unwrap(Cell_Parameter_String(b))
+    ){
+        if (
+            try_unwrap(Cell_Parameter_String(a))
+            > try_unwrap(Cell_Parameter_String(b))
+        ){
+            return 1;
+        }
+        return -1;
+    }
 
     if (Cell_ParamClass(a) != Cell_ParamClass(b))
         return Cell_ParamClass(a) > Cell_ParamClass(b) ? 1 : -1;
