@@ -536,7 +536,7 @@ Node* Try_Find_Containing_Node_Debug(const void *p)
             }
 
             // We now have a bad condition, in that the pointer is known to
-            // be inside a series data allocation.  But it could be doubly
+            // be resident in a series data allocation.  But it could be doubly
             // bad if the pointer is in the extra head or tail capacity,
             // because that's effectively free data.  Since we're already
             // going to be asserting if we get here, go ahead and pay to
@@ -1052,7 +1052,7 @@ void Remake_Series(Series* s, REBLEN units, Flags flags)
 
     s->leader.bits |= flags;
 
-    // !!! Currently the remake won't make a series that fits entirely inside
+    // !!! Currently the remake won't make a series that fits entirely in
     // a Stub (so always SERIES_FLAG_DYNAMIC).  All series code needs a general
     // audit, so that should be one of the things considered.
 

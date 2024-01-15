@@ -218,7 +218,7 @@
 )]
 
 
-; You can KEEP inside a KEEP rule.
+; You can KEEP a KEEP rule.
 [
     (["a" "a"] = parse "aaa" [collect [keep keep "a", "aa"]])
     (["a" "a" "a"] = parse "aaa" [collect [keep [keep "a" keep "a"] "a"]])

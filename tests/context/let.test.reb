@@ -210,7 +210,7 @@
 ]
 
 ; LET is also a PARSE keyword.  It means the variable will only be visible
-; inside the rules and subrules
+; in the rules and subrules
 (
     x: <before>
     did all [

@@ -26,7 +26,7 @@ REBOL [
 ]
 
 ; Note: There are no `import` statements here because this is run via DO LOAD
-; inside the %make-reb-lib.r script's context.  This is done in order to
+; within the %make-reb-lib.r script's context.  This is done in order to
 ; inherit the `api` object, and the `for-each-api` enumerator.  As a result
 ; it also inherits access to CWRAP and other tools.  Review.
 
@@ -628,7 +628,7 @@ e-cwrap/emit {
          * make it cancelable, but we'd have to recognize Rebol promises.
          */
 
-        let cancel  /* defined inside promise scope, but added to promise */
+        let cancel  /* defined in promise scope, but added to promise */
 
         let cancelable = new Promise((resolve, reject) => {
             let wasCanceled = false
@@ -914,7 +914,7 @@ write (join output-dir %libr3.exports.json) json-collect [
 ; on the stack when a function may yield.  It then does not instrument these
 ; functions with the additional code allowing it to yield.  However, it makes
 ; a conservative guess...so it can be helped with additional blacklisted
-; functions that one has inside knowledge should *not* be asyncified:
+; functions that one has knowledge should *not* be asyncified:
 ;
 ; https://emscripten.org/docs/porting/asyncify.html#optimizing
 ;
@@ -929,7 +929,7 @@ write (join output-dir %libr3.exports.json) json-collect [
 ; https://stackoverflow.com/q/51204703/
 ;
 ; This means that APIs which are able to be blacklisted can be called directly
-; from inside a JS-AWAITER.  That means being able to produce `reb.Text()`
+; from within a JS-AWAITER.  That means being able to produce `reb.Text()`
 ; and other values.  But also critically can include reb.Promise() so that
 ; the final return value of a JS-AWAITER can be returned with it.
 ; </review>

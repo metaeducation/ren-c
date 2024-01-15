@@ -151,7 +151,7 @@ export collect-tests: function [
             |
             ; Tags represent flags which can control the behavior of tests.
             ; Each test grouping resets the flags here, but that suggests
-            ; the flags should probably go inside blocks (?)  Unclear what
+            ; the flags should probably go in blocks (?)  Unclear what
             ; the feature will shape up to be, but there were stray tags,
             ; so just collect them... nothing looks at them right now.
             ;

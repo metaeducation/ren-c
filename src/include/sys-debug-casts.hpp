@@ -73,7 +73,7 @@
 //    smart pointers can overload cast_helper and extract that raw pointer,
 //    then delegate back to cast again)
 //
-// 2. The casts are implemented with a static method inside of a templated
+// 2. The casts are implemented with a static method of a templated
 //    class vs. just as a templated function.  This is because partial
 //    specialization of function templates is not legal in C++ due to the
 //    fact that functions can be overloaded, while classes can't:

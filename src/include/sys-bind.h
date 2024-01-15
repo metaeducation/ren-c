@@ -23,22 +23,14 @@
 // R3-Alpha had a per-thread "bind table"; a large and sparsely populated hash
 // into which index numbers would be placed, for what index those words would
 // have as keys or parameters.  Ren-C's strategy is that binding information
-// is wedged into Symbol stubs that represent the canon words themselves.
+// is linked onto Symbol stubs that represent the canon words themselves.
 //
+// Currently it is assumed a symbol has zero or one of these linked bindings.
 // This would create problems if multiple threads were trying to bind at the
 // same time.  While threading was never realized in R3-Alpha, Ren-C doesn't
 // want to have any "less of a plan".  So the Reb_Binder is used by binding
-// clients as a placeholder for whatever actual state would be used to augment
-// the information in the canon word series about which client is making a
-// request.  This could be coupled with some kind of lockfree adjustment
-// strategy whereby a word that was contentious would cause a structure to
-// "pop out" and be pointed to by some atomic thing inside the word.
-//
-// For the moment, a binder has some influence by saying whether the high 16
-// bits or low 16 bits of the canon's misc.index are used.  If the index
-// were atomic this would--for instance--allow two clients to bind at once.
-// It's just a demonstration of where more general logic using atomics
-// that could work for N clients would be.
+// clients as a placeholder for any state needed to interpret more than one
+// binding at a time.
 //
 // The debug build also adds another feature, that makes sure the clear count
 // matches the set count.
@@ -50,8 +42,7 @@
 //     ANY-WORD!: binding is the word's binding
 //
 //     ANY-ARRAY!: binding is the relativization or specifier for the REBVALs
-//     which can be found inside of the frame (for recursive resolution
-//     of ANY-WORD!s)
+//     which can be found in the frame (for recursive resolution of ANY-WORD!s)
 //
 //     ACTION!: binding is the instance data for archetypal invocation, so
 //     although all the RETURN instances have the same paramlist, it is
@@ -182,7 +173,7 @@ INLINE REBVAL *Derelativize_Untracked(
 
 
 // Tells whether when an ACTION! has a binding to a context, if that binding
-// should override the stored binding inside of a WORD! being looked up.
+// should override the stored binding in a WORD! being looked up.
 //
 //    o1: make object! [a: 10 f: does [print a]]
 //    o2: make o1 [a: 20 b: 22]
@@ -660,7 +651,7 @@ INLINE REBVAL *Sink_Word_May_Fail(
 // A relative array must be combined with a specifier in order to find the
 // actual context instance where its values can be found.  Since today's
 // specifiers are always nothing or a FRAME!'s context, this is fairly easy...
-// if you find a specific child value living inside a relative array then
+// if you find a specific child value resident in a relative array then
 // it's that child's specifier that overrides the specifier in effect.
 //
 // With virtual binding this could get more complex, since a specifier may
@@ -705,7 +696,7 @@ INLINE Option(Context*) SPC_FRAME_CTX(Specifier* specifier)
 
 // An ANY-ARRAY! cell has a pointer's-worth of spare space in it, which is
 // used to keep track of the information required to further resolve the
-// words and arrays that are inside of it.  Each time code wishes to take a
+// words and arrays that reside in it.  Each time code wishes to take a
 // step descending into an array's contents, this "specifier" information
 // must be merged with the specifier that is being applied.
 //

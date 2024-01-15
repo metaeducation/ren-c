@@ -860,9 +860,9 @@ INLINE REBVAL *Constify(REBVAL *v) {
 // Rather than allow Cell storage to be declared plainly as a local variable in
 // a C function, this macro provides a generic "constructor-like" hook.
 //
-// Note: because this will run instructions, a routine should avoid doing a
-// DECLARE_LOCAL() inside of a loop.  It should be at the outermost scope of
-// the function.
+// Note: This runs an Erase_Cell(), which is cheap.  But still something, so
+// DECLARE_LOCAL() during a loop should be avoided.  It should be at the
+// outermost scope of the function.
 //
 // !!! Cells on the C stack can't be preserved across stackless continuations.
 // Rather than using DECLARE_LOCAL(), natives should use <local> in their spec

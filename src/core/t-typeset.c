@@ -78,7 +78,7 @@ void Startup_Typesets(void)
         }
 
         // Make e.g. ANY-VALUE! a TYPE-GROUP! with the bound question mark
-        // form inside it, e.g. any-value!: &(any-value?)
+        // form in it, e.g. any-value!: &(any-value?)
         //
         Array* a = Alloc_Singular(NODE_FLAG_MANAGED);
         Init_Any_Word_Bound(

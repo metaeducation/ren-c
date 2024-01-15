@@ -38,7 +38,7 @@
 // like expansion.
 //
 // 1. Currently once a series becomes dynamic, it never goes back.  There is
-//    no shrinking process that will pare it back to fit completely inside
+//    no shrinking process that will pare it back to fit completely in
 //    the series Stub if it gets small enough to do so.  This may change.
 //
 // 2. One benefit of using a bespoke pooled allocator is that series know

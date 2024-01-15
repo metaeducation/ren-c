@@ -41,7 +41,7 @@
 // Hence the parameter is a compressed digest of information gleaned from
 // the properties of the named argument and its typechecking block.  The
 // content of the typehecking block is also copied into an immutable array
-// and stored inside the parameter.  (Refinements with no arguments store
+// and stored in the parameter.  (Refinements with no arguments store
 // a nullptr for the array.)
 //
 // The list of PARAMETER! cells in a function's parameter list are used for

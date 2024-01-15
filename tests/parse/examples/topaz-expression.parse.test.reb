@@ -10,8 +10,8 @@
 ; Changes:
 ;
 ; * Topaz's version of GATHER is called OBJECT, and it assumes any SET-WORD!
-;   inside are intended to be emitted as fields of the gathered object.
-;   UPARSE needs an EMIT instruction to presume a field emission intended.
+;   are intended to be emitted as fields of the gathered object.  UPARSE needs
+;   an EMIT instruction to presume a field emission intended.
 ;
 ; * Topaz's OBJECT returned a Red MAP! and not an OBJECT!, for some reason
 ;   (appears that map/key for missing key was #[none] vs. error for object)

@@ -248,7 +248,7 @@ block-combinator: ~  ; need in variable for recursion implementing "..."
 
 ; !!! We use a MAP! here instead of an OBJECT! because if it were MAKE OBJECT!
 ; then the parse keywords would override the Rebol functions (so you couldn't
-; use ANY inside the implementation of a combinator, because there's a
+; use ANY during the implementation of a combinator, because there's a
 ; combinator named ANY).  This is part of the general issues with binding that
 ; need to have answers.
 ;
@@ -804,7 +804,7 @@ default-combinators: make map! reduce [
 
     ; Historically Rebol used COPY to mean "match across a span of rules and
     ; then copy from the first position to the tail of the match".  That could
-    ; have assignments done inside, which extract some values and omit others.
+    ; have assignments done during, which extract some values and omit others.
     ; You could thus end up with `y: copy x: ...` and wind up with x and y
     ; being different things, which is not intuitive.
 
@@ -2622,7 +2622,7 @@ parsify: func [
     ; is run, it might never be run.
     ;
     if comma? r [
-        fail "COMMA! can only be run between PARSE steps, not inside them"
+        fail "COMMA! can only be run between PARSE steps, not during them"
     ]
     rules: my next
 
@@ -2880,7 +2880,7 @@ parse*: func [
     f.value: rules
 
     ; There's a display issue with giving the whole rule in that the outermost
-    ; block isn't positioned inside another block, so it would have to be
+    ; block isn't positioned within another block, so it would have to be
     ; nested in a singular block to get brackets on it and suggest you are
     ; in a block rule.  But more generally, giving the entire parse rule as
     ; a parse step in the display isn't that helpful--you know you're running

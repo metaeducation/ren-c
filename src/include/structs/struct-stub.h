@@ -489,7 +489,7 @@ STATIC_ASSERT(SERIES_INFO_0_IS_FALSE == NODE_FLAG_NODE);
 // a cell vs. stub unintentionally, the header in a stub is called "leader",
 // distinguishing it from the stub's "header".
 //
-// There are 3 basic layouts which can be overlaid inside the union:
+// There are 3 basic layouts which the union can be interpreted as:
 //
 //      Dynamic: [leader link [allocation tracking] info misc]
 //     Singular: [leader link [cell] info misc]

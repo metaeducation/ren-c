@@ -651,7 +651,7 @@ REBVAL *Rename_File_Or_Directory(const REBVAL *port, const REBVAL *to)
 
         // gmtime() is badly named.  It's utc time.  Note we have to be careful
         // as it returns a system static buffer, so we have to copy the result
-        // via dereference to avoid calls to localtime() inside Get_Timezone
+        // via dereference to avoid calls to localtime() in Get_Timezone()
         // from corrupting the buffer before it gets used.
         //
         // !!! Consider usage of the thread-safe variants, though they are not

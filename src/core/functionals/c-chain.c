@@ -101,9 +101,9 @@ Level* Push_Downshifted_Level(Atom(*) out, Level* L) {
 // the Level_Phase() and returned a REDO signal--pushing actions to the data
 // stack that the evaluator was complicit in processing as "things to run
 // afterward".  This baked awareness of chaining into %c-action.c, when it is
-// better if the process was localized inside the dispatcher.
+// better if the process was localized in the dispatcher.
 //
-// Handling it inside the dispatcher means the Chainer_Dispatcher() stays on
+// Handling it in the dispatcher means the Chainer_Dispatcher() stays on
 // the stack and in control.  This means either unhooking the current `L` and
 // putting a new Level* above it, or stealing the content of the `L` into a
 // new level to put beneath it.  The latter is chosen to avoid disrupting

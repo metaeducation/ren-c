@@ -25,9 +25,8 @@
 // so it could not be changed and reflected in other instances.
 //
 // Ren-C kept that "cheap" form, but also added a variant "managed" form of
-// HANDLE that keeps its data inside of a shared tracking node.  This means
-// that operations can change the data and have the change reflected in other
-// references to that handle.
+// HANDLE that employs a shared stub.  This means that operations can change
+// the data and have the change reflected in other references to that handle.
 //
 // Another feature of the managed form is that the node can hold a hook for
 // a "cleanup" function.  The GC will call this when there are no references

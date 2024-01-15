@@ -13,7 +13,7 @@
 # So this script not only builds an executable for Android, it also does the
 # bundling of a complete package, that can run the ReplPad web-based console
 # without an Internet connection.  It tests the resulting executable and .APK
-# inside an Android Emulator to make sure they are working.  It even builds
+# in an Android Emulator to make sure they are working.  It even builds
 # a C compiler into the native program, so it can compile new ARM native
 # functions accessible from Ren-C!
 #
@@ -311,7 +311,7 @@ jobs:
   #====# .APK GENERATION STEPS #==============================================#
   #
   # While the raw `r3` executable can be run in on a root-enabled system, or
-  # inside a terminal app like "Termux"...there is a packaging as an .APK to
+  # in a terminal app like "Termux"...there is a packaging as an .APK to
   # use it as a webserver coupled to another copy of R3 running in WASM as
   # a front-end.  The sandboxed web app presents the interface, while the
   # Android-native server acts as a "backdoor" to get at things the browser

@@ -43,60 +43,60 @@
             <local> private
         ][
             private: 304
-            return binding of 'public  ; frame as seen from inside
+            return binding of 'public  ; frame as seen from interior
         ]
 
-        f-outside: make frame! unrun :foo  ; frame as seen from outside
-        f-outside.public: 1020
+        f-outer: make frame! unrun :foo  ; frame as seen from exterior
+        f-outer.public: 1020
 
-        f-inside: do copy f-outside
+        f-inner: do copy f-outer
         true
     )
 
-    (f-outside.public = 1020)  ; public values visible externally
+    (f-outer.public = 1020)  ; public values visible externally
     ~bad-pick~ !! (
-        f-outside.private  ; private not visible in external view
+        f-outer.private  ; private not visible in external view
     )
 
-    (f-inside.public = 1020)  ; public values still visible internally
-    (f-inside.private = 304)  ; returned internal view exposes private fields
+    (f-inner.public = 1020)  ; public values still visible internally
+    (f-inner.private = 304)  ; returned internal view exposes private fields
 
     ; === ADAPT ===
     ;
-    ; Inside adaptation, we should not be able to see or manipulate any
+    ; In the adaptation, we should not be able to see or manipulate any
     ; locals of the underlying function.
     ;
     ; !!! Taking advantage of the space available in locals could be
     ; interesting if possible to rename them, and then reset them to
     ; undefined while typechecking for lower level phases.  Think about it.
     (
-        f-inside-prelude: '~junk~
+        f-inner-prelude: '~junk~
         private: <not-in-prelude>
         adapted-foo: adapt :foo [
-            f-inside-prelude: binding of 'public
+            f-inner-prelude: binding of 'public
             assert [private = <not-in-prelude>]  ; should not be bound
         ]
 
-        f-outside-adapt: make frame! unrun :adapted-foo
-        f-outside-adapt.public: 1020
+        f-outer-adapt: make frame! unrun :adapted-foo
+        f-outer-adapt.public: 1020
 
-        f-inside-foo: do copy f-outside-adapt
+        f-inner-foo: do copy f-outer-adapt
 
         true
     )
 
-    (f-outside-adapt.public = 1020)
+    (f-outer-adapt.public = 1020)
     ~bad-pick~ !! (
-        f-outside-adapt.private
+        f-outer-adapt.private
     )
 
-    (f-inside-prelude.public = 1020)
+    (f-inner-prelude.public = 1020)
     ~bad-pick~ !! (
-        f-inside-prelude.private
+        f-inner-prelude.private
     )
 
-    (f-inside-foo.public = 1020)
-    (f-inside.private = 304)
+    (f-inner-foo.public = 1020)
+    (f-inner.private = 304)
 
     ; === AUGMENT ===
     ;
@@ -105,7 +105,7 @@
     ; the same name as a hidden implementation detail of the inner portions
     ; of the composition.
     (
-        f-inside-augment: ~
+        f-inner-augment: ~
         private: <not-in-prelude>
 
         augmented-foo: adapt (augment :adapted-foo [
@@ -113,16 +113,16 @@
             /private [tag!]  ; reusing name, for different variable!
         ]) [
             private: <reused>
-            f-inside-augment: binding of 'private
+            f-inner-augment: binding of 'private
         ]
 
         assert [private = <not-in-prelude>]  ; should be untouched
 
-        f-outside-augment: make frame! unrun :augmented-foo
-        f-outside-augment.public: 1020
-        f-outside-augment.additional: 1020304
+        f-outer-augment: make frame! unrun :augmented-foo
+        f-outer-augment.public: 1020
+        f-outer-augment.additional: 1020304
 
-        f-inside-foo: do copy f-outside-augment
+        f-inner-foo: do copy f-outer-augment
 
         true
     )
@@ -131,14 +131,14 @@
     (f-outside-augment.additional = 1020304)
     (unspecialized? f-outside-augment.private)  ; we didn't assign it
 
-    (f-inside-augment.public = 1020)
-    (f-inside-augment.additional = 1020304)
-    (f-inside-augment.private = <reused>)  ; not 304!
+    (f-inner-augment.public = 1020)
+    (f-inner-augment.additional = 1020304)
+    (f-inner-augment.private = <reused>)  ; not 304!
 
-    (f-inside-foo.public = 1020)
-    (f-inside-foo.private = 304)  ; not reused!
+    (f-inner-foo.public = 1020)
+    (f-inner-foo.private = 304)  ; not reused!
     ~bad-pick~ !! (
-        f-inside-foo.additional
+        f-inner-foo.additional
     )
 ]
 
@@ -159,11 +159,11 @@
             f-prelude: binding of 'private
         ]
 
-        f-outside: make frame! unrun :bar
-        f-outside.public: 1020
-        f-outside.private: <different!>
+        f-outer: make frame! unrun :bar
+        f-outer.public: 1020
+        f-outer.private: <different!>
 
-        f-inside: do f-outside
+        f-inner: do f-outer
 
         true
     )
@@ -171,8 +171,8 @@
     (f-prelude.public = 1020)
     (f-prelude.private = <different!>)
 
-    (f-inside.public = 1020)
-    (f-inside.private = 304)
+    (f-inner.public = 1020)
+    (f-inner.private = 304)
 ]
 
 

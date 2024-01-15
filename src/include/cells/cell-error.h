@@ -32,7 +32,7 @@
 // Ren-C is exploring the customization of user errors to be able to provide
 // arbitrary named arguments and message templates to use them.  It is
 // a work in progress, but refer to the FAIL native, the corresponding
-// `fail()` C macro inside the source, and the various routines in %c-error.c
+// `fail()` C macro in the source, and the various routines in %c-error.c
 //
 
 #define ERR_VARS(e) \

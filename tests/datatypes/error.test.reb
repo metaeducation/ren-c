@@ -151,9 +151,8 @@
 ; the array are mirrored into the error.  This happens to go to the limit of
 ; 3, and shows that the infix expression start was known to the error.
 ;
-; !!! This used to use `/` instead of divide, but because `/` is now a zero
-; length path it actually retriggers divide inside the path dispatcher, so
-; that complicated the error delivery.  Review.
+; !!! This used to use `/` instead of divide, but a period of time where
+; `/` was a zero-length path complicated the error, review.
 (
     e1: trap [divide 1 0]
     e2: trap [divide 2 0]

@@ -87,7 +87,7 @@
 //
 // These macros are used to address into the frame directly to get the
 // current parse rule, current input series, current parse position in that
-// input series, etc.  Because the bits inside the frame arguments are
+// input series, etc.  Because the cell bits of the frame arguments are
 // modified as the parse runs, that means users can see the effects at
 // a breakpoint.
 //
@@ -325,7 +325,7 @@ static bool Subparse_Throws(
         // construct.
         //
         // !!! R3-Alpha didn't react to these instructions in general, only in
-        // the particular case where subparsing was called inside an iterated
+        // the particular case where subparsing was called in an iterated
         // construct.  Even then, it could only break through one level of
         // depth.  Most places would treat them the same as a normal match
         // or not found.  This returns the interrupted flag which is still

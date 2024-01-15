@@ -1,7 +1,7 @@
 ; %parse-furthest.test.reb
 ;
 ; The FURTHEST feature was requested by @CodeByBrett.  Making it work means
-; having a hook inside every combinator to know when it succeeds and how
+; having a hook into every combinator to know when it succeeds and how
 ; far it got.
 ;
 ; !!! Initially this was a feature provided as an optional return value

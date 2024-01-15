@@ -35,7 +35,7 @@
 //   RL_rebPromise_internal().
 //
 // * If the code block in the EM_ASM() family of functions contains a comma,
-//   then wrap the whole code block inside parentheses ().  See the examples
+//   then wrap the whole code block with parentheses ().  See the examples
 //   which are cited in %em_asm.h
 //
 // * Stack overflows were historically checked via a limit calculated at boot
@@ -345,8 +345,8 @@ EXTERN_C intptr_t RL_rebPromise(void *p, va_list *vaptr)
     // So speculatively running and then yielding only on asynchronous
     // requests would be *technically* possible.  But it would require the
     // stackless build features--unfinished at time of writing.  Without that
-    // then asyncify is incapable of doing it...it's stuck inside the
-    // caller's JS stack it can't sleep_with_yield() from).
+    // then asyncify is incapable of doing it...it's stuck in the caller's JS
+    // stack it can't sleep_with_yield() from).
     //
     // But there's also an issue that if we allow a thread to run now, then we
     // would have to block the MAIN thread from running.  And while the MAIN
@@ -514,7 +514,7 @@ void RunPromise(void)
 // Until the stackless build is implemented, rebPromise() must defer its
 // execution until there is no JavaScript above it or after it on the stack.
 //
-// Inside this call, emscripten_sleep() can sneakily make us fall through
+// During this call, emscripten_sleep() can sneakily make us fall through
 // to the main loop.  We don't notice it here--it's invisible to the C
 // code being yielded.  -BUT- the JS callsite for rebIdle() would
 // notice, as it would seem rebIdle() had finished...when really what's
@@ -629,7 +629,7 @@ EXTERN_C void RL_rebRejectNative_internal(
 // is done running...it has to wait for either the `resolve` or `reject`
 // parameter functions to get called.
 //
-// An AWAITER can only be called inside a rebPromise().
+// An AWAITER can only be called during a rebPromise().
 //
 //////////////////////////////////////////////////////////////////////////////
 //
@@ -849,11 +849,11 @@ DECLARE_NATIVE(js_native)
     // A JS-AWAITER can only be triggered from Rebol on the worker thread as
     // part of a rebPromise().  Making it an async function means it will
     // return an ES6 Promise, and allows use of the AWAIT JavaScript feature
-    // inside the body:
+    // in the body:
     //
     // https://javascript.info/async-await
     //
-    // Using plain return inside an async function returns a fulfilled promise
+    // Using plain return within an async function returns a fulfilled promise
     // while using AWAIT causes the execution to pause and return a pending
     // promise.  When that promise is fulfilled it will jump back in and
     // pick up code on the line after that AWAIT.

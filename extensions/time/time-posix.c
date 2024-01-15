@@ -130,9 +130,9 @@ REBVAL *Get_Current_Datetime_Value(void)
     //
     time_t stime = tv.tv_sec;
 
-    // gmtime() is badly named.  It's utc time.  Note we have to be careful as
+    // gmtime() means the same as utc time.  Note we have to be careful as
     // it returns a system static buffer, so we have to copy the result
-    // via dereference to avoid calls to localtime() inside Get_Timezone
+    // via dereference to avoid calls to localtime() during Get_Timezone()
     // from corrupting the buffer before it gets used.
     //
     // !!! Consider usage of the thread-safe variants, though they are not

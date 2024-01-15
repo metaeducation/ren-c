@@ -21,11 +21,11 @@
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // As in historical Rebol, Ren-C has several different kinds of functions...
-// each of which have a different implementation path inside the system.
+// each of which have a different implementation path in the system.
 // But in Ren-C there is only one user-visible datatype from the user's
-// perspective for all of them, which is called ACTION!.
+// perspective for all of them, which is called "action" (FRAME! antiform).
 //
-// Each ACTION! has an associated C function that runs when it is invoked, and
+// Each action has an associated C function that runs when it is invoked, and
 // this is called the "dispatcher".  A dispatcher may be general and reused
 // by many different actions.  For example: the same dispatcher code is used
 // for most `FUNC [...] [...]` instances--but each one has a different body
@@ -34,7 +34,7 @@
 // which is solely used to implement IF.
 //
 // The identity array for an action is called its "details".  It has an
-// archetypal value for the ACTION! in its [0] slot, but the other slots are
+// archetypal value for the action in its [0] slot, but the other slots are
 // dispatcher-specific.  Different dispatchers lay out the details array with
 // different values that define the action instance.
 //
@@ -429,7 +429,7 @@ INLINE void Init_Key(Key* dest, const Symbol* symbol)
 //
 // When you build a frame for an expanded action (e.g. with an AUGMENT) then
 // it can be used to run phases that are from before it in the ancestry chain.
-// This informs low-level asserts inside of the specific binding machinery, as
+// This informs low-level asserts in the specific binding machinery, as
 // well as determining whether higher-level actions can be taken (like if a
 // sibling tail call would be legal, or if a certain HIJACK would be safe).
 //

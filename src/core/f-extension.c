@@ -203,7 +203,7 @@ DECLARE_NATIVE(load_extension)
         SYM_GZIP
     );
 
-    // The decompress routine gives back a pointer which is actually inside of
+    // The decompress routine gives back a pointer which points directly into
     // a binary series (e.g. a rebAlloc() product).  Get the series back so
     // we can pass it to import as a string.
     //

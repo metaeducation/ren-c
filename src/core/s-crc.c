@@ -441,9 +441,7 @@ Series* Hash_Block(const REBVAL *block, REBLEN skip, bool cased)
                     // !!! It's not clear what to do when hashing something
                     // for a skip index when the number isn't evenly divisible
                     // by that amount.  It means a hash lookup will find
-                    // something, but it won't be a "full record".  Just as
-                    // we have to check for ENDs inside the hashed-to material
-                    // here, later code would have to check also.
+                    // something, but it won't be a "full record".
                     //
                     // The conservative thing to do here is to error.  If a
                     // compelling coherent behavior and rationale in the

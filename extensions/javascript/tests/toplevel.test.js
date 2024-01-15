@@ -1,15 +1,15 @@
 //
 // toplevel.test.js
 //
-// Some features of libRebol can't be used from inside of a rebPromise().
+// Some features of libRebol can't be used from during a rebPromise().
 // (Even if they could be, they would still be running under different
 // conditions at the top level.)
 //
 // Getting to what libRebol considers the "top level" cannot happen with
 // JS-DO and its implementation of adding a <script> tag to the page.
 // That is because JS-DO is an awaiter and must be run in a rebPromise().
-// The *entire* REPL session itself runs inside a rebPromise() in fact,
-// and doesn't exit that promise until you QUIT.
+// The *entire* REPL session itself runs in a rebPromise() in fact, and
+// doesn't exit that promise until you QUIT.
 //
 // For the moment, these tests are included in the ReplPad boot just as
 // that boot is done very often.  The test project should be separate.

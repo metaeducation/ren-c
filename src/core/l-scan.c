@@ -1275,7 +1275,7 @@ static enum Reb_Token Maybe_Locate_Token_May_Push_Mold(
             // !!! Ren-C is attempting to rationalize and standardize Rebol
             // on line feeds only.  If for some reason we wanted a tolerant
             // mode, that tolerance would go here.  Note that this code does
-            // not cover the case of CR that are embedded inside multi-line
+            // not cover the case of CR that are embedded in multi-line
             // string literals.
             //
             enum Reb_Strmode strmode = STRMODE_NO_CR;  // ss->strmode ?

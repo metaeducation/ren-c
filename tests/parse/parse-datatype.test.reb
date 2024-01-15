@@ -74,7 +74,7 @@
 ]
 
 
-; !!! Ren-C is currently letting you put quotes inside URLs unescaped; this is
+; !!! Ren-C is currently letting you put quotes in URLs unescaped; this is
 ; because browsers render quotes in the URL bar.  For instance, this shows
 ; quotes in the URL bar:
 ;

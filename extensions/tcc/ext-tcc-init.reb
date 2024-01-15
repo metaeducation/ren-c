@@ -242,7 +242,7 @@ compile: func [
 
     ; The other complicating factor is that once emitted code has these
     ; references to TCC-specific internal routines not in libc, the
-    ; tcc_relocate() command inside the extension (API link step) has to
+    ; tcc_relocate() command used by the extension (API link step) has to
     ; be able to find definitions for them.  They live in %libtcc1.a,
     ; which is generally located in the CONFIG_TCCDIR.
 

@@ -195,8 +195,6 @@ Bounce Yielder_Dispatcher(Level* const L)
     // Restore the in-progress output cell state that was going on when
     // the YIELD ran (e.g. if it interrupted a CASE or something, this
     // would be what the case had in the out cell at moment of interrupt).
-    // Note special trick used to encode END inside an array by means of
-    // using the hidden identity of the details array itself.
     //
     Value(*) out_copy = Details_At(details, IDX_YIELDER_OUT);
     Move_Cell(yielder_level->out, out_copy);

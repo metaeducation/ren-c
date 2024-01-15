@@ -48,7 +48,7 @@
 //     >> reduce [g g]  ; REDUCE changes the TOP_INDEX as it accrues values
 //     == ["b" ["a" "b"]]
 //
-// The REDUCE inside the generator and outside the generator both need to
+// The REDUCE in the generator and the one outside the generator both need to
 // have a concept of baseline, but they're also pushing values to the data
 // stack.  This means that baseline must be adjusted for each call to the
 // generator based on the delta in stack position between each call.  Similar

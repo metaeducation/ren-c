@@ -20,7 +20,7 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// API cells live in singular arrays (which fit inside an array Stub, that
+// API cells live in singular arrays (which fit within an array Stub, that
 // is the size of 2 REBVALs).  But they aren't kept alive by references from
 // other values, like the way that an Array* used by a BLOCK! is kept alive.
 // They are kept alive by being roots (currently implemented with a flag

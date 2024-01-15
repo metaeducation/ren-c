@@ -164,8 +164,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
 
             // Handle was created with Init_Handle_XXX_Managed.  It holds a
             // singular array containing exactly one handle, and the actual
-            // data for the handle lives in that shared location.  There is
-            // nothing the GC needs to see inside a handle.
+            // data for the handle lives in that shared location.
             //
             assert(v->header.bits & CELL_FLAG_FIRST_IS_NODE);
             assert(Is_Node_Marked(stub));
@@ -280,7 +279,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
 
         // Currently the "binding" in a context is only used by FRAME! to
         // preserve the binding of the ACTION! value that spawned that
-        // frame.  Currently that binding is typically NULL inside of a
+        // frame.  Currently that binding is typically NULL in of a
         // function's REBVAL unless it is a definitional RETURN or LEAVE.
         //
         // !!! Expanded usages may be found in other situations that mix an

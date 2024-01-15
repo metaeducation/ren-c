@@ -1,6 +1,6 @@
 //
 //  File: %d-test.c
-//  Summary: "Test routines for things only testable from inside Rebol"
+//  Summary: "Test routines for things only testable from within Rebol"
 //  Section: debug
 //  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
 //  Homepage: https://github.com/metaeducation/ren-c/

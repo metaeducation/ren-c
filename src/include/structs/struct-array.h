@@ -21,7 +21,7 @@
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // Arrays are series whose element type is Cell.  The garbage collector has to
-// treat them specially, by visiting the cells and marking the pointers inside
+// treat them specially, by visiting the cells and marking the pointers in
 // those cells as live.
 //
 // There are several subclasses (FLAVOR_XXX) whose elements are value cells,

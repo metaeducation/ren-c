@@ -49,7 +49,7 @@ Rebol [
         using APPEND is the clearest alternative.)
 
       * There seems to be flakiness on recursive DO in the bootstrap EXE.
-        So having multi-inclusion handled inside this script isn't an option,
+        So having multi-inclusion handled by this script isn't an option,
         because READs and other things start panic'ing randomly.  It seems
         avoiding recursion solves the issue: run %import-shim.r only once.
     }

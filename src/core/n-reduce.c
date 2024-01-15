@@ -596,7 +596,7 @@ Bounce Composer_Executor(Level* const L)
     if (not Any_Group_Kind(heart)) {
         //
         // Don't compose at this level, but may need to walk deeply to
-        // find compositions inside it if /DEEP and it's an array
+        // find compositions if /DEEP and it's an array
     }
     else {  // plain compose, if match
         if (Match_For_Compose(at, label)) {

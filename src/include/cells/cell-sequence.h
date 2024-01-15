@@ -567,7 +567,7 @@ INLINE Specifier* Cell_Sequence_Specifier(
 
     // Getting the specifier for any of the optimized types means getting
     // the specifier for *that item in the sequence*; the sequence itself
-    // does not provide a layer of communication connecting the insides
+    // does not provide a layer of communication connecting the interior
     // to a frame instance (because there is no actual layer).
 
     if (Not_Cell_Flag(sequence, SEQUENCE_HAS_NODE))  // compressed bytes

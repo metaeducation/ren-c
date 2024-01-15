@@ -443,7 +443,7 @@ union HeaderUnion {
 // Note that all scanned code is expected to be managed by the GC (because
 // walking the tree after constructing it to add the "manage GC" bit would be
 // expensive, and we don't load source and free it manually anyway...how
-// would you know after running it that pointers inside weren't stored?)
+// would you know after running it that pointers in it weren't stored?)
 //
 #define NODE_FLAG_MANAGED \
     FLAG_LEFT_BIT(2)

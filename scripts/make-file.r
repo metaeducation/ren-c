@@ -59,7 +59,7 @@ doubled-file-slash-error: lambda [item] [
 embedded-file-slash-error: lambda [item] [
     make error! [
         id: 'embedded-file-slash
-        message: ["Embedded / encountered inside filename component:" :arg1]
+        message: ["Embedded `/` encountered in filename component:" :arg1]
         arg1: item
     ]
 ]

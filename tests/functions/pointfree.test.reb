@@ -72,7 +72,7 @@
         return runs frame
     ]
 
-    pointfree: specialize (enclose :pointfree lambda [f] [
+    pointfree: specialize (enclose :pointfree* lambda [f] [
         set let frame f.frame: (match frame! any [  ; no SET-WORD! namecache
             if match [word! path!] f.block.1 [unrun get/any f.block.1]
         ]) else [

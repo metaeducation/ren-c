@@ -224,7 +224,7 @@ DECLARE_NATIVE(bind)
 
 
 //
-//  in: native [
+//  inside: native [
 //
 //  "Returns a view of the input bound virtually to the context"
 //
@@ -233,9 +233,9 @@ DECLARE_NATIVE(bind)
 //      value [<const> <maybe> any-word! any-array!]  ; QUOTED! support?
 //  ]
 //
-DECLARE_NATIVE(in)
+DECLARE_NATIVE(inside)
 {
-    INCLUDE_PARAMS_OF_IN;
+    INCLUDE_PARAMS_OF_INSIDE;
 
     Context* ctx = VAL_CONTEXT(ARG(context));
     REBVAL *v = ARG(value);

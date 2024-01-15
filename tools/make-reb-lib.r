@@ -776,7 +776,7 @@ e-lib/emit 'ver {
 
         /*
          * The NOMACRO version of the API is one in which you can use macros
-         * inside the call.  If you're using C this means you'll have to
+         * in varargs of the call.  If you're using C this means you'll have to
          * explicitly put a rebEND on, whether using C99 or not.
          */
         #define LIBREBOL_NOMACRO(api) api##_inline
@@ -896,7 +896,7 @@ e-lib/emit 'ver {
 
         /*
          * The NOMACRO version of the API is one in which you can use macros
-         * inside the call.  If you're using C99 this means you'll have to
+         * in varargs of the call.  If using C99 this means you'll have to
          * explicitly put a rebEND on.  No special action w/C++ wrappers.
          */
         #define LIBREBOL_NOMACRO(api) api

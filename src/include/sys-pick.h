@@ -42,8 +42,8 @@
 // the `gob.size` path dispatch can't give back a pointer to a REBVAL* to
 // which later writes will update the GOB!.  It can only give back a
 // temporary value built from its internal bits.  So workarounds are needed,
-// as they are for a similar situation in trying to set values inside of
-// C arrays in STRUCT!.
+// as they are for a similar situation in trying to set values in C arrays
+// in STRUCT!.
 //
 // The way the workaround works involves allowing a SET-PATH! to run forward
 // and write into a temporary value.  Then in these cases the temporary
@@ -51,7 +51,7 @@
 // SET-PATH! evaluation finishes.  This means that it's not currently
 // prohibited for the effect of a SET-PATH! to be writing into a temporary.
 //
-// Further, the `value` slot is writable...even when it is inside of the path
+// Further, the `value` slot is writable...even when it is in the path
 // that is being dispatched:
 //
 //     >> code: compose [(make set-path! [12-Dec-2012 day]) 1]

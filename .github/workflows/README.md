@@ -272,8 +272,8 @@ https://github.blog/changelog/2020-10-01-github-actions-deprecating-set-env-and-
 ## If Statements
 
 You can control whether a step runs with an if statement.  Important to know
-is that this expression is evaluated explicitly inside GitHub's ${{ }}
-syntax.  So using the syntax will silently cause undesirable behavor:
+is that this expression is evaluated explicitly in GitHub's ${{ }} syntax.
+So using the syntax will silently cause undesirable behavor:
 
     step: Demonstrate Incorrect Use of IF Statement
     if: ${{ matrix.os }} == 'ubuntu-20.04'

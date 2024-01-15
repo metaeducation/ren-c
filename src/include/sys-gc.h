@@ -13,7 +13,7 @@
 // series is managed, only the GC is allowed to free it.
 //
 // Manage_Series() is shallow--it only sets a bit on that *one* series, not
-// any series referenced by values inside of it.  Hence many routines that
+// any series referenced by values resident in it.  Hence many routines that
 // build hierarchical structures (like the scanner) only return managed
 // results, since they can manage it as they build them.
 
@@ -109,9 +109,9 @@ INLINE Series* Force_Series_Managed(const_if_c Series* s) {
 // then can release protection only for the last series pushed.  A parallel
 // pair of macros exists for pushing and popping of guard status for values,
 // to protect any series referred to by the value's contents.  (Note: This can
-// only be used on values that do not live inside of series, because there is
-// no way to guarantee a value in a series will keep its address besides
-// guarding the series AND locking it from resizing.)
+// only be used on values that aren't resident in arrays, because there is
+// no way to guarantee a value in an array will keep its address besides
+// guarding the array AND locking it from resizing.)
 //
 // The guard stack is not meant to accumulate, and must be cleared out
 // before a level returns to the trampoline.

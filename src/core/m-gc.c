@@ -33,7 +33,7 @@
 // support for arbitrary-sized-numbers.
 //
 // Some cells embed Stub pointers even when the payload would technically
-// fit inside their cell.  They do this in order to create a level of
+// fit completely in their cell.  They do this in order to create a level of
 // indirection so that their data can be shared among copies of that cell.
 // For instance, HANDLE! does this.
 //
@@ -807,8 +807,8 @@ static void Mark_Guarded_Nodes(void)
 // has gotten in its fulfillment must be taken into account.  Only those
 // argument slots through points of fulfillment may be GC protected.
 //
-// This should be called at the top level, and not from inside a
-// Propagate_All_GC_Marks().  All marks will be propagated.
+// This should be called at the top level, not from Propagate_All_GC_Marks().
+// All marks will be propagated.
 //
 static void Mark_Level_Stack_Deep(void)
 {
@@ -1439,8 +1439,8 @@ void Push_Guard_Node(NodeGuardInfo info)
       #ifdef STRESS_CHECK_GUARD_VALUE_POINTER
         //
         // Technically we should never call this routine to guard a value
-        // that lives inside of a series.  Not only would we have to guard the
-        // containing series, we would also have to lock the series from
+        // that lives in some array.  Not only would we have to guard the
+        // containing array, we would also have to lock the array from
         // being able to resize and reallocate the data pointer.  But this is
         // a somewhat expensive check, so only feasible to run occasionally.
         //

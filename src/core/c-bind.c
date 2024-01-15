@@ -509,7 +509,7 @@ Option(Series*) Get_Word_Container(
                     continue;
 
                 // Since this is now resolving to the context, update the
-                // cache inside the word itself.  Don't do this for inherited
+                // cache in the word itself.  Don't do this for inherited
                 // variables, since if we hardened the reference to the
                 // inherited variable we'd not see an override if it came
                 // into existence in the actual context.
@@ -1038,7 +1038,7 @@ DECLARE_NATIVE(add_use_object) {
 //
 // Note: The resulting clones will be managed.  The model for lists only
 // allows the topmost level to contain unmanaged values...and we *assume* the
-// values we are operating on here live inside of an array.
+// values we are operating on here live in an array.
 //
 // !!! Should this return true if any relative bindings were made?
 //

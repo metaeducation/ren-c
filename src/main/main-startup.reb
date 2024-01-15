@@ -768,12 +768,11 @@ main-startup: func [
         let [code header]: load main
 
         ; !!! This needs to be thought through better, in terms of whether
-        ; it's a module and handling HEADER correctly.  Also, any scripts
-        ; should be passed as arguments...not executed.  And the active
-        ; directory should be inside the ZIP, so that FILE! paths are
-        ; resolved relative to %main.reb's location.  But for now, just do
-        ; a proof of concept by showing execution of a main.reb if that is
-        ; found in the encapping.
+        ; it's a module and handling HEADER correctly.  Also, scripts should
+        ; be passed as arguments...not executed.  And the active directory
+        ; should be in the ZIP, so that FILE! paths are resolved relative to
+        ; %main.reb's location.  But for now, just do a proof of concept by
+        ; showing execution of a main.reb if that is found in the encapping.
 
         emit [do/only (<*> code)]
         quit-when-done: default [true]

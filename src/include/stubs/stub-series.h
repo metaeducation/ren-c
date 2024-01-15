@@ -423,7 +423,7 @@ INLINE size_t Series_Total(const Series* s)
 //=//// NUMBER OF WIDTH-SIZED UNITS "USED" IN SERIES //////////////////////=//
 //
 // There is an optimization based on SERIES_FLAG_DYNAMIC that allows data
-// which is sizeof(Cell) or smaller to fit directly inside the series stub.
+// which is sizeof(Cell) or smaller to fit directly in the series stub.
 //
 // 1. If a series is dynamically allocated out of the memory pools, then
 //    without the data itself taking up the StubContent, there's room for a

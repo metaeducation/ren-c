@@ -53,7 +53,7 @@
 // other language bindings can inject it automatically...only C89 has no way
 // to work around it.)
 //
-// While the approach is flexible, any token must appear fully inside its
+// While the approach is flexible, any token must be completed within its
 // UTF-8 string component.  So you can't--for instance--divide a scan up like
 // ("{abc", "def", "ghi}") and get the TEXT! {abcdefghi}.  On that note,
 // ("a", "/", "b") produces `a / b` and not the PATH! `a/b`.
@@ -1327,7 +1327,7 @@ REBVAL *RL_rebEntrap(const void *p, va_list *vaptr)
 //
 //  rebEntrapInterruptible: RL_API
 //
-// !!! The core interruptible routine used is this one inside of console code.
+// !!! This is the core interruptible routine, used by the console code.
 // More will be needed, but this is made to quarantine the unfinished design
 // points to one routine for now.
 //

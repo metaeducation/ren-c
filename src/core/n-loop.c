@@ -204,7 +204,7 @@ static Bounce Loop_Series_Common(
     REBINT end,
     REBINT bump
 ){
-    // !!! This bounds incoming `end` inside the array.  Should it assert?
+    // !!! This limits incoming `end` to the array bounds.  Should it assert?
     //
     if (end >= cast(REBINT, Cell_Series_Len_Head(start)))
         end = cast(REBINT, Cell_Series_Len_Head(start));

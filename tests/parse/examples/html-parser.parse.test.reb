@@ -1,6 +1,6 @@
 ; %html-parser.parse.test.reb
 ;
-; Recursive parser (uses `rule` inside `rule`).  Requires STOP to work.
+; Recursive parser (uses `rule` during `rule`).  Requires STOP to work.
 
 [
     (

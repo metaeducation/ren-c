@@ -9,15 +9,15 @@
     var: <before>
     m: a-module: module [
     ][
-        var: <inside>
+        var: <inner>
     ]
     did all [
         var = <before>
-        m.var = <inside>
+        m.var = <inner>
 
-        elide var: <outside>
-        var = <outside>
-        m.var = <inside>
+        elide var: <outer>
+        var = <outer>
+        m.var = <inner>
     ]
 )
 
@@ -26,16 +26,16 @@
     var: <before>
     m: import mm: module [
     ][
-        var: <inside>
+        var: <inner>
     ]
     did all [
         m = mm
         var = <before>
-        m.var = <inside>
+        m.var = <inner>
 
-        elide var: <outside>
-        var = <outside>
-        m.var = <inside>
+        elide var: <outer>
+        var = <outer>
+        m.var = <inner>
     ]
 )
 
@@ -45,24 +45,24 @@
     m: import mm: module [
         exports: [var]
     ][
-        var: <inside>
+        var: <inner>
     ]
     did all [
         m = mm
-        m.var = <inside>
-        var = <inside>  ; imported
+        m.var = <inner>
+        var = <inner>  ; imported
 
         ; Overwriting m.var will not have an effect on our copy of the
         ; variable.
         ;
         elide m.var: <overwritten>
         m.var = <overwritten>
-        var = <inside>
+        var = <inner>
 
         ; The variables are fully disconnected post-import.
         ;
-        elide var: <outside>
-        var = <outside>
+        elide var: <outer>
+        var = <outer>
         m.var = <overwritten>
     ]
 )
@@ -80,7 +80,7 @@
 
 ; Import a module to a second module without contaminating the first
 (
-    var: <outside>
+    var: <outer>
 
     m1: module [Exports: [var]] [var: <1>]
     m2: module [Exports: [fetch]] compose <m2compose> [
@@ -89,7 +89,7 @@
         fetch: does [var]
     ]
     did all [
-        var = <outside>
+        var = <outer>
         <1> = m2.fetch
     ]
 )
@@ -109,7 +109,7 @@
             ; is too convoluted to use reasonably, it should probably say
             ; something like ~virtual~ back.
             ;
-            rebound: lib.in lib source
+            rebound: inside lib source
             ; assert [this <> binding of first source]
             ; assert [lib = binding of first source]
 

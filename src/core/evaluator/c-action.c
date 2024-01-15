@@ -809,7 +809,7 @@ Bounce Action_Executor(Level* L)
   // allows manipulation of arguments between fulfillment and execution, and
   // that could turn invalid arguments good or valid arguments bad.  Plus if
   // all the arguments are evaluated before any type checking, that puts
-  // custom type checks inside the body of a function on equal footing with
+  // custom type checks in the body of a function on equal footing with
   // any system-optimized type checking.
   //
   // So a second loop is required by the system's semantics.

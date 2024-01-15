@@ -30,8 +30,8 @@
 // the value's "Header".  This includes the data type, such as REB_INTEGER,
 // REB_BLOCK, REB_TEXT, etc.  Then there are flags which are for general
 // purposes that could apply equally well to any type of value (including
-// whether the value should have a new-line after it when molded out inside
-// of a block).
+// whether the value should have a new-line after it when molded out during
+// display of its containing array).
 //
 // Obviously, an arbitrary long string won't fit into the remaining 3*32 bits,
 // or even 3*64 bits!  You can fit the data for an INTEGER or DECIMAL in that
@@ -400,10 +400,10 @@ typedef struct StubStruct Stub;  // forward decl for DEBUG_USE_UNION_PUNS
 // If they are something like a WORD!, they cannot be looked up to find a
 // variable unless coupled with a "specifier".
 //
-// (The bit pattern inside the cell may actually be "absolute"--e.g. no
+// (The bit pattern the cell has may actually be "specific"--e.g. no
 // specifier needed--but many routines accept a relative view as a principle
 // of least privilege.  e.g. you can get the symbol of a word regardless of
-// whether it is absolute or relative).
+// whether it is specific or relative).
 //
 // Note that in the C build, %rebol.h forward-declares `struct ValueStruct` and
 // then #defines REBVAL to that.

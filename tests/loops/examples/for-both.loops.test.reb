@@ -129,7 +129,7 @@
     ])
 
     ; The contract of returning VOID is preserved when no loop bodies
-    ; run, as both FOR-EACH inside the ALL have their contributions erased
+    ; run, as both FOR-EACH in the ALL have their contributions erased
     ; and effectively leave behind an `all []`.  Ren-C's working definition
     ; (motivated by this kind of example) is that should produce a VOID
     ; as well.  Technical reasons besides this scenario lead it to be favorable

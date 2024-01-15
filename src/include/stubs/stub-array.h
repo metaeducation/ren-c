@@ -110,7 +110,7 @@ INLINE Cell* Stub_Cell(const_if_c Series* s) {
 
 
 // It's possible to calculate the array from just a cell if you know it's a
-// cell inside a singular array.
+// cell living in a singular array.
 //
 INLINE Array* Singular_From_Cell(const Cell* v) {
     Array* singular = cast(Array*,  // DEBUG_CHECK_CASTS checks Array

@@ -146,7 +146,7 @@ Bounce File_Actor(Level* level_, REBVAL *port, const Symbol* verb)
             fail (Error_Invalid_Spec_Raw(path));
 
         // Historically the native ports would store a C structure of data
-        // inside a BINARY! in the port state.  This makes it easier and more
+        // in a BINARY! in the port state.  This makes it easier and more
         // compact to store types that would have to be a HANDLE!.  It likely
         // was seen as having another benefit in making the internal state
         // opaque to users, so they didn't depend on it or fiddle with it.

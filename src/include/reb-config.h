@@ -171,7 +171,7 @@ Special internal defines used by RT, not Host-Kit developers:
 
 
 // Windows headers define the macros IN and OUT as part of an interface
-// definition language.  Inside of Ren-C the OUT macro is used as a shorthand
+// definition language.  Ren-C core uses the OUT macro is used as a shorthand
 // for accessing `Level_Out(level_)` in a native.  You can #undef the Windows
 // macros after you #include <windows.h>, but having the definitions under
 // a switch gives more flexibility to define your own macros and leave the

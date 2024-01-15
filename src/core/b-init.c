@@ -536,7 +536,7 @@ static void Init_System_Object(
     // was a context containing some utility functions, some of which were
     // meant to be called from the core when writing those utilities in pure
     // C would be tedious.  But we put those functions in a module called
-    // UTIL inside SYSTEM, and then abbreviate SYS as a synonym for SYSTEM.
+    // UTIL in SYSTEM, and then abbreviate SYS as a synonym for SYSTEM.
     // Hence the utilities are available as SYS.UTIL
     //
     Init_Object(force_Lib(SYSTEM), system);

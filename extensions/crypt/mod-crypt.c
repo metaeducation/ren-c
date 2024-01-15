@@ -82,7 +82,7 @@ inline static REBVAL* rebMbedtlsError(int mbedtls_ret) {
 // Most routines in mbedTLS return either `void` or an `int` code which is
 // 0 on success and negative numbers on error.  This macro helps generalize
 // the pattern of trying to build a result and having a cleanup (similar
-// ones exist inside mbedTLS itself, e.g. MBEDTLS_MPI_CHK() in %bignum.h)
+// ones exist in mbedTLS itself, e.g. MBEDTLS_MPI_CHK() in %bignum.h)
 //
 #define IF_NOT_0(label,error,call) \
     do { \
@@ -1109,7 +1109,7 @@ DECLARE_NATIVE(dh_generate_keypair)
 
     // The "make_public" routine expects to be giving back a public key as
     // bytes, so it takes that buffer for output.  But it keeps the private
-    // key inside the context...so we have to extract that separately.
+    // key in the context...so we have to extract that separately.
     //
   try_again_even_if_poor_primes: ;  // semicolon needed before declaration
     int ret = mbedtls_dhm_make_public(
@@ -1627,7 +1627,7 @@ DECLARE_NATIVE(ecc_generate_keypair)
 {
     CRYPT_INCLUDE_PARAMS_OF_ECC_GENERATE_KEYPAIR;
 
-    // A change in mbedTLS ecdh code means there's a context variable inside
+    // A change in mbedTLS ecdh code means there's a context variable in
     // the context (ctx.ctx) when not using MBEDTLS_ECDH_LEGACY_CONTEXT
     //
     struct mbedtls_ecdh_context ctx;
@@ -1738,7 +1738,7 @@ DECLARE_NATIVE(ecdh_shared_secret)
     "]");
     rebRelease(public_arg);
 
-    // A change in mbedTLS ecdh code means there's a context variable inside
+    // A change in mbedTLS ecdh code means there's a context variable in
     // the context (ctx.ctx) when not using MBEDTLS_ECDH_LEGACY_CONTEXT
     //
     struct mbedtls_ecdh_context ctx;

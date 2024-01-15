@@ -18,8 +18,8 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Ren-C exchanges UTF-8 data with the outside world via "char*".  But inside
-// the code, Byte* is used for not-yet-validated bytes that are to be
+// Ren-C exchanges UTF-8 data with the outside world via "char*".  But within
+// the core, Byte* is used for not-yet-validated bytes that are to be
 // scanned as UTF-8, since it's less error-prone to do math on unsigned bytes.
 //
 // But there's a different datatype for accessing an already-validated string!
