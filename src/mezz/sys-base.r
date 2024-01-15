@@ -107,7 +107,7 @@ module: func [
         ; !!! Historically, the `Name:` and `Type:` fields would tolerate
         ; either a quoted word or plain word.  Now only WORD! is tolerated.
         ;
-        for-each [var types] [  ; !!! `in spec` doesn't work here, why not?
+        for-each [var types] [  ; !!! `has spec` doesn't work here, why not?
             spec.name [<opt> word!]
             spec.type [word!]  ; default is `script` from system.standard.header
             spec.version [<opt> tuple!]
@@ -128,7 +128,7 @@ module: func [
         ;
         all [
             spec.type = 'Module
-            not in spec 'Exports
+            not has spec 'Exports
         ] then [
             append spec spread compose [Exports: (make block! 10)]
         ]

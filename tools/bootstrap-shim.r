@@ -61,7 +61,7 @@ trap [
 ] then [
     ; Fall through to the body of this file, we are shimming version ~8994d23
 ] else [
-    if not in (pick system 'options) 'redbol-paths [  ; old shim'd interpreter
+    if trap [system.options.redbol-paths] [  ; old shim'd interpreter
         ;
         ; Old bootstrap executables that are already shimmed should not do
         ; tweaks for the modern import.  Otherwise, export load-all: would
@@ -326,6 +326,7 @@ unrun: func3 [] [
 opt: ~  ; replaced by DEGRADE word
 try: ~  ; reviewing uses
 
+has: :in  ; old IN behavior of word lookup achieved by HAS now
 
 ; !!! This isn't perfect, but it should work for the cases in rebmake
 ;
@@ -860,9 +861,6 @@ mutable: func3 [x [any-value!]] [
 join: func3 [base value [<opt> any-value!]] [
     append copy base :value  ; shim APPEND, that offers SPLICE behavior
 ]
-
-; https://forum.rebol.info/t/has-hasnt-worked-rethink-construct/1058
-has: ~
 
 const?: func3 [x] [return false]
 

@@ -1,7 +1,7 @@
 ; functions/context/bindq.r
 (
     o: make object! [a: null]
-    same? o binding of in o 'a
+    same? o binding of has o 'a
 )
 
 (

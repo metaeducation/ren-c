@@ -86,7 +86,7 @@ make-port*: function [
     ; Get the scheme definition:
     all [
         word? name
-        scheme: get try in system.schemes name
+        scheme: get maybe has system.schemes name
     ] else [
         cause-error 'access 'no-scheme name
     ]
@@ -120,7 +120,7 @@ make-port*: function [
     port.scheme: scheme
 
     ; Defaults:
-    port.actor: try get in scheme 'actor ; avoid evaluation
+    port.actor: get maybe has scheme 'actor ; avoid evaluation
     port.spec.ref: default [spec]
     port.spec.title: default [scheme.title]
     port: to port! port
@@ -128,7 +128,7 @@ make-port*: function [
     ; Call the scheme-specific port init. Note that if the
     ; scheme has not yet been initialized, it can be done
     ; at this time.
-    if in scheme 'init [scheme.init port]
+    if has scheme 'init [scheme.init port]
     return port
 ]
 
@@ -227,7 +227,7 @@ make-scheme: function [
     /with "Scheme name to use as base"
         [word!]
 ][
-    with: either with [get in system.schemes with] [system.standard.scheme]
+    with: either with [system.schemes.(with)] [system.standard.scheme]
     if not with [cause-error 'access 'no-scheme with]
 
     scheme: make with def

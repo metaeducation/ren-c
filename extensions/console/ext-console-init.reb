@@ -141,7 +141,7 @@ export console!: make object! [
 
         if lazy? unmeta v [
             v: unquasi v
-            if in v 'decay [
+            if has v 'decay [
                 print ["; decay of lazy object with" mold words of v]
                 v: ^ do v.decay
             ] else [
@@ -649,7 +649,7 @@ ext-console-impl: func [
     ; result so the program can continue.
 
     all [
-        in lib 'resume
+        has lib 'resume
         error? result
         result.id = 'no-catch
         result.arg2 = unrun :lib.resume  ; throw's /NAME

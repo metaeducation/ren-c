@@ -5,8 +5,8 @@
     p: make o []
     append p spread [b 2]
     did all [
-        in p 'b
-        not in o 'b
+        has p 'b
+        not has o 'b
     ]
 )]
 

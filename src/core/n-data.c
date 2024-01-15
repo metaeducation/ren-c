@@ -240,23 +240,38 @@ DECLARE_NATIVE(in)
     Context* ctx = VAL_CONTEXT(ARG(context));
     REBVAL *v = ARG(value);
 
-    // !!! Note that BIND of a WORD! in historical Rebol/Red would return the
-    // input word as-is if the word wasn't in the requested context, while
-    // IN would return TRASH! on failure.  We carry forward the NULL-failing
-    // here in IN, but BIND's behavior on words may need revisiting.
-    //
-    if (Any_Word(v)) {
-        const Symbol* symbol = Cell_Word_Symbol(v);
-        const bool strict = true;
-        REBLEN index = Find_Symbol_In_Context(ARG(context), symbol, strict);
-        if (index == 0)
-            return nullptr;
-        return Init_Any_Word_Bound(OUT, VAL_TYPE(v), symbol, ctx, index);
-    }
+    if (Any_Word(v))
+        fail ("ANY-WORD! lookup using IN is deprecated, use HAS");
 
     assert(Any_Array(v));
     Virtual_Bind_Deep_To_Existing_Context(v, ctx, nullptr, REB_WORD);
     return COPY(v);
+}
+
+
+//
+//  has: native [
+//
+//  "Returns a word bound into the context, if it's available, else null"
+//
+//      return: [<opt> any-word!]
+//      context [any-context!]
+//      value [<maybe> any-word!]  ; QUOTED! support?
+//  ]
+//
+DECLARE_NATIVE(has)
+{
+    INCLUDE_PARAMS_OF_HAS;
+
+    Context* ctx = VAL_CONTEXT(ARG(context));
+    REBVAL *v = ARG(value);
+
+    const Symbol* symbol = Cell_Word_Symbol(v);
+    const bool strict = true;
+    REBLEN index = Find_Symbol_In_Context(ARG(context), symbol, strict);
+    if (index == 0)
+        return nullptr;
+    return Init_Any_Word_Bound(OUT, VAL_TYPE(v), symbol, ctx, index);
 }
 
 

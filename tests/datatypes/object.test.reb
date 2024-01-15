@@ -204,5 +204,5 @@
     ~bad-pick~ !! (set? 'o.i)
     ~bad-pick~ !! (unset? 'o.i)
 
-    (null = in o 'i)
+    (null = has o 'i)
 ]

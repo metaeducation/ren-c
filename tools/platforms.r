@@ -554,7 +554,7 @@ use [
         ][
             ; Exclude should mutate (CC#2222), but this works either way
             unknown-flags: exclude (
-                    unknown_flags: copy any [build-flags: get in p word, []]
+                    unknown_flags: copy any [build-flags: get has p word, []]
                 )
                 words-of context
             if not empty? unknown-flags [

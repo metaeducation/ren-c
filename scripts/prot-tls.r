@@ -939,7 +939,7 @@ encrypt-data: func [
     ;
     if ctx.version > 1.0 [
         insert data ctx.client-iv
-        unset in ctx 'client-iv  ; avoid accidental reuse
+        ctx.client-iv: ~  ; avoid accidental reuse
     ]
 
     return data
@@ -1100,7 +1100,7 @@ parse-messages: func [
             )
             debug ["depadding..."]
             if ctx.version > 1.0 [
-                unset in ctx 'server-iv  ; avoid reuse in TLS 1.1 and above
+                ctx.server-iv: ~  ; avoid reuse in TLS 1.1 and above
             ]
         ]
         debug ["data:" data]

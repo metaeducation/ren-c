@@ -144,7 +144,7 @@ for-each [name value] options [
             ]
         ]
     ] else [
-        set in user-config (to-word replace/all to text! name #"_" #"-")
+        set has user-config (to-word replace/all to text! name #"_" #"-")
             attempt [load-value value] else [value]
     ]
 ]
@@ -822,7 +822,7 @@ parse-ext-build-spec: function [
         (spread spec)
     ]
 
-    if in ext 'options [
+    if has ext 'options [
         ensure block! ext/options
         config: null  ; default for locals in modern Ren-C
         parse2 ext/options [

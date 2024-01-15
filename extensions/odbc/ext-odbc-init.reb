@@ -113,13 +113,13 @@ sys.util.make-scheme [
             return: [port!]
             port [port!]
         ][
-            if get maybe in (statement: port.locals) 'hstmt [
+            if get maybe has (statement: port.locals) 'hstmt [
                 remove find head statement.database.statements port
                 close-statement statement
                 return port
             ]
 
-            if get maybe in (connection: port.locals) 'hdbc [
+            if get maybe has (connection: port.locals) 'hdbc [
                 for-each stmt-port connection.statements [close stmt-port]
                 clear connection.statements
                 close-connection connection
