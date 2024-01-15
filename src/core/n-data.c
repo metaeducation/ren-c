@@ -451,7 +451,7 @@ DECLARE_INTRINSIC(quasi_word_q)
 {
     UNUSED(phase);
 
-    Init_Logic(out, Is_Quasi(arg) and HEART_BYTE(arg) == REB_WORD);
+    Init_Logic(out, Is_Quasiform(arg) and HEART_BYTE(arg) == REB_WORD);
 }
 
 
@@ -485,7 +485,7 @@ DECLARE_INTRINSIC(lit_word_q)
 {
     UNUSED(phase);
 
-    Init_Logic(out, not Is_Isotope(arg) and IS_QUOTED_WORD(arg));
+    Init_Logic(out, not Is_Antiform(arg) and IS_QUOTED_WORD(arg));
 }
 
 
@@ -521,7 +521,7 @@ DECLARE_INTRINSIC(any_inert_q)
 
     Init_Logic(
         out,
-        not Is_Void(arg) and not Is_Isotope(arg) and Any_Inert(arg)
+        not Is_Void(arg) and not Is_Antiform(arg) and Any_Inert(arg)
     );
 }
 
@@ -738,7 +738,7 @@ bool Get_Var_Push_Refinements_Throws(
 
   blockscope {
     StackValue(*) at = Data_Stack_At(stackindex);
-    if (Is_Quoted(at) or Is_Quasi(at)) {
+    if (Is_Quoted(at) or Is_Quasiform(at)) {
         Copy_Cell(out, at);
         Meta_Unquotify_Known_Stable(out);
         if (Is_Nulled(out))
@@ -833,7 +833,7 @@ void Get_Var_May_Fail(
         fail (Error_No_Catch_For_Throw(TOP_LEVEL));
 
     if (not any)
-        if (Is_Isotope(out) and not Is_Isotope_Get_Friendly(out))
+        if (Is_Antiform(out) and not Is_Antiform_Get_Friendly(out))
             fail (Error_Bad_Word_Get(source, out));
 }
 
@@ -872,7 +872,7 @@ bool Get_Path_Push_Refinements_Throws(
         // !!! `a/` should error if it's not an action...
         //
         const REBVAL *val = Lookup_Word_May_Fail(path, path_specifier);
-        if (Is_Isotope(val)) {
+        if (Is_Antiform(val)) {
             if (not Is_Action(val))
                 fail (Error_Bad_Word_Get(path, val));
             Copy_Cell(out, val);
@@ -916,8 +916,8 @@ bool Get_Path_Push_Refinements_Throws(
 
         if (Is_Action(out))
             NOOP;  // it's good
-        else if (Is_Isotope(out))
-            fail (Error_Bad_Isotope(out));
+        else if (Is_Antiform(out))
+            fail (Error_Bad_Antiform(out));
         else if (Is_Frame(out))
             Actionify(out);
         else
@@ -944,15 +944,15 @@ bool Get_Path_Push_Refinements_Throws(
         if (Get_Var_Core_Throws(out, steps, head, derived))
             return true;
 
-        if (Is_Isotope(out)) {
+        if (Is_Antiform(out)) {
             if (not Is_Action(out))
-                fail (Error_Bad_Isotope(out));
+                fail (Error_Bad_Antiform(out));
         }
         else if (Is_Frame(out)) {
             Actionify(out);
         }
         else
-            fail ("TUPLE! must resolve to an action isotope if head of PATH!");
+            fail ("TUPLE! must resolve to an action if head of PATH!");
     }
     else if (Is_Word(head)) {
         Specifier* derived = Derive_Specifier(path_specifier, path);
@@ -968,7 +968,7 @@ bool Get_Path_Push_Refinements_Throws(
             goto action_in_out;
         }
 
-        if (Is_Isotope(lookup))
+        if (Is_Antiform(lookup))
             fail (Error_Bad_Word_Get(head, lookup));
 
         Derelativize(safe, path, path_specifier);
@@ -1003,7 +1003,7 @@ bool Get_Path_Push_Refinements_Throws(
         if (Is_Action(out))
             return false;  // activated actions are ok
 
-        if (Is_Isotope(out) and not redbol)  // need for GET/ANY 'OBJ/UNDEF
+        if (Is_Antiform(out) and not redbol)  // need for GET/ANY 'OBJ/UNDEF
             fail (Error_Bad_Word_Get(path, out));
 
         return false;  // refinements pushed by Redbol-adjusted Get_Var()
@@ -1035,8 +1035,8 @@ bool Get_Path_Push_Refinements_Throws(
                 continue;  // just skip it (voids are ignored, NULLs error)
 
             at = Decay_If_Unstable(temp);
-            if (Is_Isotope(at))
-                fail (Error_Bad_Isotope(at));
+            if (Is_Antiform(at))
+                fail (Error_Bad_Antiform(at));
         }
 
         // Note: NULL not supported intentionally, could represent an accident
@@ -1074,10 +1074,9 @@ DECLARE_NATIVE(resolve)
 // Note: Originally, GET and SET were multi-returns, giving back a second
 // parameter of "steps".  Variables couldn't themselves hold packs, so it
 // seemed all right to use a multi-return.  But it complicated situations
-// where people wanted to write META GET in case the variable held a
-// stable isotope.  This could be worked around with a GET/META refinement,
-// but RESOLVE is a pretty rarely-used facility...and making GET and SET
-// harder to work with brings pain points to everyday code.
+// where people wanted to write META GET.  RESOLVE is a pretty rarely-used
+// facility...and making GET and SET harder to work with brings pain points
+// to everyday code.
 {
     INCLUDE_PARAMS_OF_RESOLVE;
 
@@ -1126,7 +1125,7 @@ DECLARE_NATIVE(get)
     }
 
     if (not REF(any))
-        if (Is_Isotope(OUT) and not Is_Isotope_Get_Friendly(stable_OUT))
+        if (Is_Antiform(OUT) and not Is_Antiform_Get_Friendly(stable_OUT))
             fail (Error_Bad_Word_Get(source, stable_OUT));
 
     return OUT;
@@ -1334,7 +1333,7 @@ bool Set_Var_Core_Updater_Throws(
             out,
             Lookup_Word_May_Fail(at, SPECIFIED)
         );
-        if (Is_Isotope(out))
+        if (Is_Antiform(out))
             fail (Error_Bad_Word_Get(at, out));
     }
     else
@@ -1478,7 +1477,7 @@ DECLARE_NATIVE(set)
     REBVAL *target = ARG(target);
     REBVAL *v = ARG(value);
 
-    // !!! Should SET look for isotopic objects specially, with a particular
+    // !!! Should SET look for antiform objects specially, with a particular
     // interaction distinct from DECAY?  Review.
 
     if (Is_Meta_Of_Raised(v))
@@ -1493,8 +1492,8 @@ DECLARE_NATIVE(set)
         steps = nullptr;  // no GROUP! evals
 
     if (not REF(any)) {
-        if (Is_Isotope(v) and not Is_Isotope_Set_Friendly(v))
-            fail ("Use SET/ANY to set variables to an isotope");
+        if (Is_Antiform(v) and not Is_Antiform_Set_Friendly(v))
+            fail ("Use SET/ANY to set variables to an antiform");
     }
 
     if (Set_Var_Core_Throws(SPARE, steps, target, SPECIFIED, v)) {
@@ -1527,7 +1526,7 @@ DECLARE_NATIVE(try)
     if (Is_Meta_Of_Raised(v))
         return nullptr;
 
-    return UNMETA(v);  // !!! also tolerates other isotopes, should it?
+    return UNMETA(v);  // !!! also tolerates other antiforms, should it?
 }
 
 
@@ -1627,7 +1626,7 @@ DECLARE_INTRINSIC(enfix_q)
 //  {For making enfix functions, e.g `+: enfix :add`}
 //
 //      return: "Isotopic action"
-//          [isotope!]  ; [action?] comes after ENFIX in bootstrap
+//          [antiform!]  ; [action?] comes after ENFIX in bootstrap
 //      original [<unrun> frame!]
 //  ]
 //
@@ -1646,7 +1645,7 @@ DECLARE_INTRINSIC(enfix)
 //  {For removing enfixedness from functions (prefix is a common var name)}
 //
 //      return: "Isotopic action"
-//          [isotope!]  ; [action?] comes after ENFIX in bootstrap
+//          [antiform!]  ; [action?] comes after ENFIX in bootstrap
 //      original [<unrun> frame!]
 //  ]
 //
@@ -2385,10 +2384,10 @@ DECLARE_INTRINSIC(any_value_q)
 {
     UNUSED(phase);
 
-    if (not Is_Quasi(arg))
+    if (not Is_Quasiform(arg))
         Init_True(out);
     else
-        Init_Logic(out, Is_Stable_Isotope_Heart(Cell_Heart(arg)));
+        Init_Logic(out, Is_Stable_Antiform_Heart(Cell_Heart(arg)));
 }
 
 
@@ -2411,21 +2410,21 @@ DECLARE_INTRINSIC(non_void_value_q)
 {
     UNUSED(phase);
 
-    if (not Is_Quasi(arg)) {
+    if (not Is_Quasiform(arg)) {
         if (Is_Meta_Of_Void(arg))
             Init_False(out);
         else
             Init_True(out);
     }
     else
-        Init_Logic(out, Is_Stable_Isotope_Heart(Cell_Heart(arg)));
+        Init_Logic(out, Is_Stable_Antiform_Heart(Cell_Heart(arg)));
 }
 
 
 //
 //  any-atom?: native/intrinsic [
 //
-//  "Accepts absolutely any argument state (unstable isotopes included)"
+//  "Accepts absolutely any argument state (unstable antiforms included)"
 //
 //      return: [logic?]
 //      ^value
@@ -2443,10 +2442,10 @@ DECLARE_INTRINSIC(any_atom_q)
 //
 //  logic?: native/intrinsic [
 //
-//  "Tells you if the argument is a ~true~ or ~false~ isotope"
+//  "Tells you if the argument is a ~true~ or ~false~ antiform"
 //
-//      return: "~true~ or ~false~ isotope"
-//          [isotope!]  ; can't use LOGIC? to test LOGIC? return result
+//      return: "~true~ or ~false~ antiform"
+//          [antiform!]  ; can't use LOGIC? to test LOGIC? return result
 //      value
 //  ]
 //
@@ -2461,7 +2460,7 @@ DECLARE_INTRINSIC(logic_q)
 //
 //  nihil?: native/intrinsic [
 //
-//  "Tells you if argument is an ~[]~ isotope, e.g. an empty pack"
+//  "Tells you if argument is an ~[]~ antiform, e.g. an empty pack"
 //
 //      return: [logic?]
 //      ^atom
@@ -2478,7 +2477,7 @@ DECLARE_INTRINSIC(nihil_q)
 //
 //  barrier?: native/intrinsic [
 //
-//  "Tells you if argument is an ~,~ isotope, e.g. an isotopic comma"
+//  "Tells you if argument is a comma antiform (unstable)"
 //
 //      return: [logic?]
 //      ^atom
@@ -2495,7 +2494,7 @@ DECLARE_INTRINSIC(barrier_q)
 //
 //  elision?: native/intrinsic [
 //
-//  "If argument is either nihil or a barrier (empty pack or isotopic comma)"
+//  "If argument is either nihil or a barrier (empty pack or antiform comma)"
 //
 //      return: [logic?]
 //      ^atom
@@ -2512,7 +2511,7 @@ DECLARE_INTRINSIC(elision_q)
 //
 //  trash: native [
 //
-//  "Returns the value used to represent an unset variable (isotopic void)"
+//  "Returns the value used to represent an unset variable (antiform void)"
 //
 //      return: [~]
 //  ]
@@ -2644,7 +2643,7 @@ DECLARE_NATIVE(light) {
 //
 //  nihil: native [
 //
-//  {Make an empty parameter pack (isotopic ~[]~), representing "vaporization"}
+//  {Makes empty parameter pack (antiform ~[]~), representing "vaporization"}
 //
 //      return: [nihil?]
 //  ]
@@ -2684,7 +2683,7 @@ DECLARE_INTRINSIC(decay)
 //
 //  reify: native [
 //
-//  "Make isotopes into their quasiforms, pass thru other values"
+//  "Make antiforms into their quasiforms, pass thru other values"
 //
 //      return: [element?]
 //      value [non-void-value?]  ; so reduce/predicate won't pass void [1]
@@ -2712,7 +2711,7 @@ DECLARE_NATIVE(reify)
 //
 //  degrade: native [
 //
-//  "Make quasiforms into their isotopes, pass thru other values"
+//  "Make quasiforms into their antiforms, pass thru other values"
 //
 //      return: [any-value?]
 //      value [any-value?]
@@ -2736,7 +2735,7 @@ DECLARE_NATIVE(degrade)
 //
 //  concretize: native [
 //
-//  "Make isotopes into plain forms, pass thru other values"
+//  "Make antiforms into plain forms, pass thru other values"
 //
 //      return: [element?]
 //      value [any-value?]
@@ -2763,20 +2762,20 @@ DECLARE_NATIVE(concretize)
 
 
 //
-//  noisotope: native/intrinsic [
+//  noantiform: native/intrinsic [
 //
-//  "Turn isotopes into their plain forms, pass thru other values"
+//  "Turn antiforms into their plain forms, pass thru other values"
 //
 //      return: [<void> element?]
 //      value
 //  ]
 //
-DECLARE_INTRINSIC(noisotope)
+DECLARE_INTRINSIC(noantiform)
 {
     UNUSED(phase);
 
     Copy_Cell(out, arg);
 
-    if (Is_Isotope(out))
-        QUOTE_BYTE(out) = UNQUOTED_1;
+    if (Is_Antiform(out))
+        QUOTE_BYTE(out) = NOQUOTE_1;
 }

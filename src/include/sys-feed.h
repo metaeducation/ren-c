@@ -145,12 +145,12 @@ INLINE Option(va_list*) FEED_VAPTR(Feed* feed) {
 
 
 // When we see nullptr in the valist, we make a compromise of convenience,
-// where it is replaced with a QUASI!-BLANK!.  We've told a lie, but if
-// evaluated it will produce a blank isotope, e.g. NULL.  If not evaluated it
+// where it is replaced with a ~null~ quasiform.  We've told a lie, but if
+// evaluated it will produce a null antiform, e.g. NULL.  If not evaluated it
 // will stand out as unusual.
 //
-// Also: the `@` operator is tweaked to turn QUASI!s into their isotopic
-// forms.  So this can be leveraged in API calls.
+// Also: the `@` operator is tweaked to turn quasiforms into their antiforms.
+// So this can be leveraged in API calls.
 //
 #define FEED_NULL_SUBSTITUTE_CELL \
     Lib(QUASI_NULL)
@@ -198,9 +198,9 @@ INLINE Value(const*) Copy_Reified_Variadic_Feed_Cell(
     if (Is_Nulled(cell))  // API enforces use of C's nullptr (0) for NULL
         assert(not Is_Api_Value(cell));  // but internal cells can be nulled
 
-    if (Is_Isotope(cell)) {  // @ will turn these back into isotopes
+    if (Is_Antiform(cell)) {  // @ will turn these back into antiforms
         Copy_Cell(out, SPECIFIC(cell));
-        QUOTE_BYTE(out) = QUASI_2;
+        QUOTE_BYTE(out) = QUASIFORM_2;
         return cast(Value(*), out);
     }
 
@@ -270,7 +270,7 @@ INLINE Option(Value(const*)) Try_Reify_Variadic_Feed_Series(
         break; }
 
         // This lets you use a symbol and it assumes you want a WORD!.  If all
-        // you have is an isotopic ACTION! available, this means Canon(WORD)
+        // you have is an antiform ACTION! available, this means Canon(WORD)
         // can be cheaper than rebM(Lib(WORD)) for the action, especially if
         // the ->gotten field is set up.  Using words can also be more clear
         // in debugging than putting the actions themselves.
@@ -565,7 +565,7 @@ INLINE void Inertly_Derelativize_Inheriting_Const(
     const Cell* v,
     Feed* feed
 ){
-    assert(not Is_Isotope(v));  // Source should not have isotopes
+    assert(not Is_Antiform(v));  // Antiforms should not appear in source code
 
     Derelativize(out, v, FEED_SPECIFIER(feed));
     Set_Cell_Flag(out, UNEVALUATED);

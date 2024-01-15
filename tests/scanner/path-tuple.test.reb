@@ -67,8 +67,8 @@
         === BAD PATH ELEMENT TESTS ===
 
         ; TUPLE! can go in PATH! but not vice-versa.  Besides that, only
-        ; INTEGER!, WORD!, GROUP!, BLOCK!, TEXT!, TAG!, and their QUASI!
-        ; forms are currently allowed in either sequence form.
+        ; INTEGER!, WORD!, GROUP!, BLOCK!, TEXT!, TAG!, and their quasiforms
+        ; are currently allowed in either sequence form.
 
         "/#a"  !!  ~scan-invalid~
         "blk/#{}"  !!  ~scan-invalid~

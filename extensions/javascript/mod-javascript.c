@@ -1019,7 +1019,7 @@ DECLARE_NATIVE(js_eval_p)
 
     // Currently, reb.Box() only translates to INTEGER!, TEXT!, TRASH?, NULL
     //
-    // !!! All other types come back as trash (~ isotope).  Should they error?
+    // !!! All other types come back as trash (~ antiform).  Should they error?
     //
     if (REF(local)) {
         addr = EM_ASM_INT(

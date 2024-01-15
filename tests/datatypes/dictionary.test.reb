@@ -139,9 +139,9 @@
     1020 = m.(#"A")
 )]
 
-; Isotopes are not allowed in maps as either keys or values
+; Antiforms are not allowed in maps as either keys or values
 [
-    ~bad-isotope~ !! (
+    ~bad-antiform~ !! (
         m: make map! []
         m.key: null
     )

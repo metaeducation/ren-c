@@ -32,7 +32,7 @@
 //
 //      return: "Returns null if input is void"
 //          [<opt> text!]
-//      value "The value to form (currently errors on isotopes)"
+//      value "The value to form (currently errors on antiforms)"
 //          [<maybe> element?]
 //  ]
 //

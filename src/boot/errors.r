@@ -76,10 +76,10 @@ Syntax: [
 ]
 
 Script: [
-    no-value:           {No value in isotopic BLOCK! pack: ~[]~ (nihil)}
+    no-value:           {No value in antiorm BLOCK! pack: ~[]~ (nihil)}
     bad-null:           [:arg1 {cannot be null}]
-    bad-word-get:       [:arg1 {is} :arg2 {isotope (see ^^(...) and GET/ANY)}]
-    bad-isotope:        [{Invalid use of} :arg1 {isotope}]
+    bad-word-get:       [:arg1 {is} :arg2 {antiform (see ^^(...) and GET/ANY)}]
+    bad-antiform:       [{Invalid use of} :arg1 {antiform}]
     bad-void:           {Invalid use of void}
     need-non-end:       [{end was reached while trying to set} :arg1]
     not-bound:          [:arg1 {word is not bound to a context}]
@@ -144,7 +144,6 @@ Script: [
     bad-value:          [{Failure on bad value (no additional info):} :arg1]
 
     invalid-arg:        [:arg1 {has an invalid} :arg2 {argument:} :arg3]
-    isotope-arg:        [:arg1 {needs} :arg2 {as ^^META for} :arg3 {isotope}]
     no-arg:             [:arg1 {is missing its} :arg2 {argument}]
 
     ; These need to have the same arguments (shared code coerces them)

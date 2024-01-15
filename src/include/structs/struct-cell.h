@@ -164,8 +164,8 @@ typedef struct StubStruct Stub;  // forward decl for DEBUG_USE_UNION_PUNS
 //=//// BITS 16-23: QUOTING DEPTH BYTE ("QUOTE") //////////////////////////=//
 //
 // Cells can be quote-escaped up to 126 levels.  Because the low bit of the
-// quoting byte is reserved for whether the value is "QUASI!", hence each
-// quoting level effectively adds 2 to the quote byte.
+// quoting byte is reserved for whether the contained value is a quasiform,
+// each quoting level effectively adds 2 to the quote byte.
 //
 // A cell's underlying "HEART" can report it as something like a REB_WORD, but
 // if the quoting byte is > 1 VAL_TYPE() says it is REB_QUOTED.  This has the
@@ -179,10 +179,10 @@ typedef struct StubStruct Stub;  // forward decl for DEBUG_USE_UNION_PUNS
 #define FLAG_QUOTE_BYTE(byte)       FLAG_THIRD_BYTE(byte)
 
 
-#define ISOTOPE_0           0  // Also QUASI (e.g. with NONQUASI_BIT is clear)
-#define UNQUOTED_1          1
+#define ANTIFORM_0          0  // Also QUASI (e.g. with NONQUASI_BIT is clear)
+#define NOQUOTE_1           1
 #define NONQUASI_BIT        1
-#define QUASI_2             2
+#define QUASIFORM_2         2
 #define ONEQUOTE_3          3  // non-QUASI state of having one quote level
 
 #define AddQuote(byte)           ((byte) + 2)
@@ -190,14 +190,14 @@ typedef struct StubStruct Stub;  // forward decl for DEBUG_USE_UNION_PUNS
 
 #define MAX_QUOTE_DEPTH     126  // highest legal quoting level
 
-#define Is_Isotope(v) \
-    (QUOTE_BYTE(READABLE(v)) == ISOTOPE_0)
+#define Is_Antiform(v) \
+    (QUOTE_BYTE(READABLE(v)) == ANTIFORM_0)
 
 #define Is_Unquoted(v) \
-    (QUOTE_BYTE(READABLE(v)) == UNQUOTED_1)
+    (QUOTE_BYTE(READABLE(v)) == NOQUOTE_1)
 
-#define Is_Quasi(v) \
-    (QUOTE_BYTE(READABLE(v)) == QUASI_2)
+#define Is_Quasiform(v) \
+    (QUOTE_BYTE(READABLE(v)) == QUASIFORM_2)
 
 #define Is_Quoted(v) \
     (QUOTE_BYTE(READABLE(v)) >= ONEQUOTE_3)  // '''~a~ is quoted, not quasi
@@ -715,11 +715,11 @@ union ValuePayloadUnion { //=/////////////// ACTUAL PAYLOAD DEFINITION ////=//
 //=//// ESCAPE-ALIASABLE CELLS ////////////////////////////////////////////=//
 //
 // The header contains a QUOTE_BYTE() that can encode up to 126 levels of
-// quoting (with an extra bit for being a quasiform, and an isotope if the
+// quoting (with an extra bit for holding a quasiform, and an antiform if the
 // byte is 0).  This is independent of the cell's "heart", or underlying
 // layout for its unquoted type.
 //
-// Most of the time, routines want to see these as QUOTED!/QUASI!/ISOTOPE!.
+// Usually most routines want to see these as QUOTED!/QUASIFORM!/ANTIFORM!.
 // But some lower-level routines (like molding or comparison) want to act
 // on them in-place without making a copy.  To ensure they see the value for
 // the "type that it is" and use Cell_Heart() and not VAL_TYPE(), this subtype

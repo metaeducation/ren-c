@@ -98,24 +98,24 @@ INLINE REBVAL *Init_Frame_Details_Core(
 
 
 
-//=//// ACTIONS (FRAME! Isotopes) /////////////////////////////////////////=//
+//=//// ACTIONS (FRAME! Antiforms) ////////////////////////////////////////=//
 //
-// Isotopic forms of actions exist for a couple of reasons.  They are the form
+// The antiforms of actions exist for a couple of reasons.  They are the form
 // that when stored in a variable leads to implicit execution by a reference
-// from a WORD!...while non-isotopic ACTION! is inert.  This means you cannot
+// from a WORD!...while non-antiform ACTION! is inert.  This means you cannot
 // accidentally run a function with the following code:
 //
 //     for-each item block [print ["The item's kind is" kind of item]]
 //
-// That reference to ITEM is guaranteed to not be the isotopic form, since it
+// That reference to ITEM is guaranteed to not be the antiform form, since it
 // is enumerating over a block.  Various places in the system are geared for
-// making it more difficult to assign isotopic actions accidentally.
+// making it more difficult to assign antiform actions accidentally.
 //
 // The other big reason is for a "non-literal" distinction in parameters.
 // Historically, functions like REPLACE have chosen to run functions to
 // calculate what the replacement should be.  However, that ruled out the
 // ability to replace actual function instances--and doing otherwise would
-// require extra parameterization.  This lets the isotopic state serve as
+// require extra parameterization.  This lets the antiform state serve as
 // the signal that the function should be invoked, and not searched for.
 //
 
@@ -123,14 +123,14 @@ INLINE REBVAL *Init_Frame_Details_Core(
     Actionify(Init_Frame_Details_Core(TRACK(out), (a), (label), (binding)))
 
 INLINE Value(*) Actionify(Value(*) v) {
-    assert(Is_Frame(v) and QUOTE_BYTE(v) == UNQUOTED_1);
-    QUOTE_BYTE(v) = ISOTOPE_0;
+    assert(Is_Frame(v) and QUOTE_BYTE(v) == NOQUOTE_1);
+    QUOTE_BYTE(v) = ANTIFORM_0;
     return v;
 }
 
 INLINE Cell* Deactivate_If_Action(Cell* v) {
     if (Is_Action(v))
-        QUOTE_BYTE(v) = UNQUOTED_1;
+        QUOTE_BYTE(v) = NOQUOTE_1;
     return v;
 }
 

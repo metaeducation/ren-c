@@ -14,7 +14,7 @@
 ; underscore is sometimes used in this wildcarding fashion in some languages:
 ;
 ;    >> did parse [x <y> "z"] [_ _ _]
-;    == ~true~  ; isotope
+;    == ~true~  ; anti
 ;
 ; ...but the <any> tag combinator serves this purpose more literately.)
 ;

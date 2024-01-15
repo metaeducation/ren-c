@@ -241,7 +241,7 @@ Array* Pop_Stack_Values_Core(StackIndex base, Flags flags)
     Cell* dest = Array_Head(a);
     for (; count < len; ++count, ++src, ++dest) {
       #if DEBUG
-        if (Is_Isotope(src)) {
+        if (Is_Antiform(src)) {
             Assert_Cell_Stable(src);
             assert(flavor >= FLAVOR_MIN_ISOTOPES_OK);
         }

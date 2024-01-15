@@ -128,7 +128,7 @@ DECLARE_NATIVE(false_if_zero)
 //
 //  "Returns the logic complement"
 //
-//      return: "Only ~false~ and ~null~ isotopes return a ~true~ isotope"
+//      return: "Only ~false~ and ~null~ antiforms return a ~true~ antiform"
 //          [logic?]
 //      value
 //  ]
@@ -303,20 +303,20 @@ inline static bool Math_Arg_For_Logic(REBVAL *arg)
     if (Is_Blank(arg))
         return false;
 
-    fail (Error_Unexpected_Type(REB_ISOTOPE, VAL_TYPE(arg)));
+    fail (Error_Unexpected_Type(REB_ANTIFORM, VAL_TYPE(arg)));
 }
 
 
 //
-//  MAKE_Isotope: C
+//  MAKE_Antiform: C
 //
-Bounce MAKE_Isotope(
+Bounce MAKE_Antiform(
     Level* level_,
     enum Reb_Kind kind,
     Option(Value(const*)) parent,
     const REBVAL *arg
 ){
-    assert(kind == REB_ISOTOPE);
+    assert(kind == REB_ANTIFORM);
     if (parent)
         return RAISE(Error_Bad_Make_Parent(kind, unwrap(parent)));
 
@@ -325,9 +325,9 @@ Bounce MAKE_Isotope(
 
 
 //
-//  TO_Isotope: C
+//  TO_Antiform: C
 //
-Bounce TO_Isotope(Level* level_, enum Reb_Kind kind, const REBVAL *data) {
+Bounce TO_Antiform(Level* level_, enum Reb_Kind kind, const REBVAL *data) {
     return RAISE(Error_Bad_Make(kind, data));
 }
 
@@ -335,18 +335,18 @@ Bounce TO_Isotope(Level* level_, enum Reb_Kind kind, const REBVAL *data) {
 //
 //  REBTYPE: C
 //
-REBTYPE(Isotope)
+REBTYPE(Antiform)
 {
     if (not Is_Logic(D_ARG(1))) {
         //
-        // Need a special exemption for COPY on ACTION! isotopes.
+        // Need a special exemption for COPY on ACTION! antiforms.
         //
         if (Is_Action(D_ARG(1)) and Symbol_Id(verb) == SYM_COPY) {
             Deactivate_If_Action(D_ARG(1));
             return rebValue(Canon(RUNS), Canon(COPY), rebQ(D_ARG(1)));
         }
 
-        fail ("Isotope handler only supports LOGIC! (legacy workaround)");
+        fail ("Antiform handler only supports LOGIC! (legacy workaround)");
     }
 
     bool b1 = Cell_Logic(D_ARG(1));

@@ -32,8 +32,8 @@
 // It has the property that it renders "glued" to the element to the left.
 //
 // Commas are effectively invisible, but they accomplish this not by
-// producing Nihil (an empty PACK! isotope) but rather by making an isotopic
-// comma, which is called a "barrier".  It's treated like nihil in interstitial
+// producing Nihil (an empty PACK! antiform) but rather by making an antiform
+// COMMA! which is called a "barrier".  It's treated like nihil in interstitial
 // positions and vaporizes, but has the special property of appearing like
 // an <end>...as well as stopping lookahead.  For code that doesn't care
 // about the subtlety, nihil and barrier are both considered "elisions".
@@ -46,7 +46,7 @@
 //   fairly big interruption visually...so comma was preferred.  It is still
 //   possible to get the same effect of an expression barrier with any user
 //   function, so `|` could be used for this in normal evaluation if it
-//   evaluated to a COMMA! isotope (for instance).
+//   evaluated to a COMMA! antiform (for instance).
 //
 
 INLINE Value(*) Init_Comma(Cell* out) {
@@ -69,7 +69,7 @@ INLINE Value(*) Init_Comma(Cell* out) {
 
 INLINE Value(*) Init_Barrier(Cell* out) {
     Init_Comma(out);
-    QUOTE_BYTE(out) = ISOTOPE_0;
+    QUOTE_BYTE(out) = ANTIFORM_0;
     return cast(Value(*), out);
 }
 

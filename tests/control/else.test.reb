@@ -66,12 +66,9 @@
     ]
 )
 
-; This is a by-product of the wish to make it so (@ <SOME-QUASI!>) can produce
+; This is a by-product of the wish to make it so (@ <QUASIFORM!>) can produce
 ; a true NULL, for use with the API...and that this provoking quasivalue be
 ; something the API puts in automatically when a nullptr is given as input.
-; Generation of quasiblanks is considered less useful, and preservation of
-; QUOTED! nulls is considered important to not undermine the QUOTED! type.
-; See @ for further reasoning--this may be revisited
 (
     null? (~null~ then [fail ~unreachable~])
 )
@@ -97,7 +94,7 @@
     (null *else ^x -> [null' = x])
 ]
 
-; Variant forms react to ~null~ isotopes as if they were null.  This can be
+; Variant forms react to heavy null as if they were null.  This can be
 ; useful in chaining scenarios.
 ;
 ; https://forum.rebol.info/t/why-then-and-else-are-mutually-exclusive/1080/9

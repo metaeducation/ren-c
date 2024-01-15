@@ -355,8 +355,6 @@ DECLARE_NATIVE(reframer)
 {
     INCLUDE_PARAMS_OF_REFRAMER;
 
-    QUOTE_BYTE(ARG(shim)) = UNQUOTED_1;  // remove isotope if present
-
     Action* shim = VAL_ACTION(ARG(shim));
     Option(const Symbol*) label = VAL_FRAME_LABEL(ARG(shim));
 

@@ -80,7 +80,7 @@ enum StubFlavorEnum {
     //
     FLAVOR_INSTRUCTION_SPLICE,
 
-    // Pairlists are used by map!.  They can't hold isotopes, but voids are
+    // Pairlists are used by map!.  They can't hold antiforms, but voids are
     // used to signal missing keys.
     //
     FLAVOR_PAIRLIST,
@@ -121,9 +121,9 @@ enum StubFlavorEnum {
     FLAVOR_PATCH,
 
     // The data stack is implemented as an array but has its own special
-    // marking routine.  However, isotopes are legal in the data stack... but
+    // marking routine.  However, antiforms are legal in the data stack... but
     // when popping the stack it is checked that the array being popped *into*
-    // allows isotopes.
+    // allows antiforms.
     //
     FLAVOR_DATASTACK,
 

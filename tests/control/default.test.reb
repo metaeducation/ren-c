@@ -56,14 +56,13 @@
     x = 304
 )
 
-; Only `~` is a candidate for an isotope the system knows to go with the idea
-; of "missing variables".
+; Antiform `~` specifically means "unset variable".
 [(
     x: ~
     x: default [1020]
     x = 1020
 )(
-    x: second [~()~ ~]  ; plain QUASI! of void
+    x: second [~()~ ~]  ; quasiform of void
     x: default [1020]
     x = '~
 )(

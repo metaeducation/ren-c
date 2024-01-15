@@ -32,8 +32,8 @@
 //     == a
 //
 // But the QUOTE_BYTE() is used to encode other states as well: all datatypes
-// (besides QUOTED! itself) have an "isotopic" form as well as a "quasi" form.
-// The quasi form will evaluate to the isotopic form, and the isotopic form is
+// (besides QUOTED! itself) have an "antiform" form as well as a "quasi" form.
+// The quasi form will evaluate to the antiform form, and the antiform form is
 // expressly prohibited from being put in arrays:
 //
 //     >> nice: first [~foo~]
@@ -43,11 +43,11 @@
 //     == ~foo~
 //
 //     >> mean: ~foo~
-//     == ~foo~  ; isotope
+//     == ~foo~  ; anti
 //
 // With the use of the `^xxx` family of types and the `^` operator, it is
-// possible to leverage a form of quoting to transition isotopes to normal, and
-// normal quasiforms to quoted:
+// possible to leverage a form of quoting to transition antiform to quasiform,
+// and quasiforms to quoted:
 //
 //     >> ^nice
 //     == '~foo~
@@ -55,13 +55,13 @@
 //     >> ^mean
 //     == ~foo~
 //
-// Isotopes are new in Ren-C and central to how the design solves historical
+// Antiforms are new in Ren-C and central to how the design solves historical
 // problems in Rebol languages.
 //
 
 INLINE Count Cell_Num_Quotes(const Cell* v) {
-    assert(QUOTE_BYTE(v) != ISOTOPE_0);
-    return (QUOTE_BYTE(v) - UNQUOTED_1) >> 1;
+    assert(QUOTE_BYTE(v) != ANTIFORM_0);
+    return (QUOTE_BYTE(v) - NOQUOTE_1) >> 1;
 }
 
 // Turns X into 'X, or '''[1 + 2] into '''''(1 + 2), etc.
@@ -92,7 +92,7 @@ INLINE Cell* Quotify_Core(Cell* v, Count depth) {
 //
 INLINE Cell* Unquotify_Core(Cell* v, Count unquotes) {
     if (unquotes == 0) {
-        assert(QUOTE_BYTE(v) != ISOTOPE_0);
+        assert(QUOTE_BYTE(v) != ANTIFORM_0);
         return v;
     }
 
@@ -116,18 +116,18 @@ INLINE Cell* Unquotify_Core(Cell* v, Count unquotes) {
 INLINE Count Dequotify(Cell* v) {
     Count depth = Cell_Num_Quotes(v);
     if (QUOTE_BYTE(v) & NONQUASI_BIT)
-        QUOTE_BYTE(v) = UNQUOTED_1;
+        QUOTE_BYTE(v) = NOQUOTE_1;
     else
-        QUOTE_BYTE(v) = QUASI_2;
+        QUOTE_BYTE(v) = QUASIFORM_2;
     return depth;
 }
 
 
-//=//// ISOTOPES //////////////////////////////////////////////////////////=//
+//=//// ANTIFORMS /////////////////////////////////////////////////////////=//
 
-// Isotopes are foundational in covering edge cases in representation which
+// Antiforms are foundational in covering edge cases in representation which
 // plague Rebol2 and Red.  They enable shifting into a "non-literal" domain,
-// where whatever "weird" condition the isotope was attempting to capture can
+// where whatever "weird" condition the antiform was attempting to capture can
 // be handled without worrying about conflating with more literal usages.
 // A good example is addressing the splicing intent for blocks:
 //
@@ -135,7 +135,7 @@ INLINE Count Dequotify(Cell* v) {
 //     == [a b c [d e]]
 //
 //     >> ~(d e)~
-//     == ~(d e)~  ; isotope (this connotes a "splice")
+//     == ~(d e)~  ; anti (this connotes a "splice")
 //
 //     >> append [a b c] ~(d e)~
 //     == [a b c d e]
@@ -143,26 +143,26 @@ INLINE Count Dequotify(Cell* v) {
 //     >> append [a b c] '~(d e)~
 //     == [a b c ~(d e)~]
 //
-// As demonstrated, the reified QUASI! form and the "ghostly" isotopic form
-// work in concert to solve the problem.
+// As demonstrated, the reified QUASIFORM! and the "ghostly" ANTIFORM! work
+// in concert to solve the problem.
 //
-// * Besides the word isotopes of ~true~, ~false~ and ~null~, isotope forms
+// * Besides the word antiforms of ~true~, ~false~ and ~null~, antiforms
 //   are neither true nor false...they must be decayed or handled in some other
 //   way, for instance DID/DIDN'T or THEN/ELSE.
 //
-// * A special parameter convention must be used to receive isotopes.  Code
-//   that isn't expecting such strange circumstances can error if they ever
+// * A special parameter convention must be used to receive unstable antiforms.
+//   Code that isn't expecting such strange circumstances can error if they
 //   happen, while more sensitive code can be adapted to cleanly handle the
 //   intents that they care about.
 //
-// Unstable isotopes like packs (block isotopes), error isotopes, and object
-// isotopes aren't just not allowed in blocks, they can't be in variables.
+// Unstable antiforms like packs (block antiforms), error antiforms, and object
+// antiforms aren't just not allowed in blocks, they can't be in variables.
 //
 
 
-INLINE bool Is_Isotope_Unstable(Atom(const*) v) {
-    // Assume Is_Isotope() checked READABLE()
-    assert(QUOTE_BYTE(v) == ISOTOPE_0);
+INLINE bool Is_Antiform_Unstable(Atom(const*) v) {
+    // Assume Is_Antiform() checked READABLE()
+    assert(QUOTE_BYTE(v) == ANTIFORM_0);
     return (
         HEART_BYTE(v) == REB_BLOCK  // Is_Pack()
         or HEART_BYTE(v) == REB_ERROR  // Is_Raised()
@@ -171,10 +171,10 @@ INLINE bool Is_Isotope_Unstable(Atom(const*) v) {
     );
 }
 
-#define Is_Isotope_Stable(v) \
-    (not Is_Isotope_Unstable(v))
+#define Is_Antiform_Stable(v) \
+    (not Is_Antiform_Unstable(v))
 
-INLINE bool Is_Stable_Isotope_Heart(enum Reb_Kind heart) {
+INLINE bool Is_Stable_Antiform_Heart(enum Reb_Kind heart) {
     return (
         heart != REB_BLOCK  // Is_Pack()
         and heart != REB_ERROR  // Is_Raised()
@@ -185,7 +185,7 @@ INLINE bool Is_Stable_Isotope_Heart(enum Reb_Kind heart) {
 
 INLINE bool Is_Stable(Atom(const*) v) {  // repeat for non-inlined speed
     ASSERT_CELL_READABLE(v);
-    if (QUOTE_BYTE(v) != ISOTOPE_0)
+    if (QUOTE_BYTE(v) != ANTIFORM_0)
         return true;
     return (
         HEART_BYTE(v) != REB_BLOCK  // Is_Pack()
@@ -197,7 +197,7 @@ INLINE bool Is_Stable(Atom(const*) v) {  // repeat for non-inlined speed
 
 #if CPLUSPLUS_11
     void Is_Stable(Value(const*) v) = delete;
-    void Is_Isotope_Unstable(Value(const*) v) = delete;
+    void Is_Antiform_Unstable(Value(const*) v) = delete;
 #endif
 
 #if !defined(NDEBUG)
@@ -208,48 +208,48 @@ INLINE bool Is_Stable(Atom(const*) v) {  // repeat for non-inlined speed
 #endif
 
 
-//=//// QUASI! FORMS //////////////////////////////////////////////////////=//
+//=//// QUASIFORM! ////////////////////////////////////////////////////////=//
 
-// * QUASI! states are truthy.  There's a reason for this, because it
-//   allows operations in the ^META domain to easily use functions like ALL
-//   and ANY on the meta values.  (See the FOR-BOTH example.)
+// * Quasiforms are truthy.  There's a reason for this, because it allows
+//   operations in the ^META domain to easily use functions like ALL and ANY
+//   on the meta values.  (See the FOR-BOTH example.)
 
 INLINE Value(*) Unquasify(Value(*) v) {
-    assert(QUOTE_BYTE(v) == QUASI_2);
-    QUOTE_BYTE(v) = UNQUOTED_1;
+    assert(QUOTE_BYTE(v) == QUASIFORM_2);
+    QUOTE_BYTE(v) = NOQUOTE_1;
     return v;
 }
 
 INLINE Value(*) Quasify(Value(*) v) {
-    assert(QUOTE_BYTE(v) == UNQUOTED_1);  // e.g. can't quote void
-    QUOTE_BYTE(v) = QUASI_2;
+    assert(QUOTE_BYTE(v) == NOQUOTE_1);  // e.g. can't quote void
+    QUOTE_BYTE(v) = QUASIFORM_2;
     return v;
 }
 
-INLINE Value(*) Quasify_Isotope(Atom(*) v) {
-    assert(Is_Isotope(v));
-    QUOTE_BYTE(v) = QUASI_2;
+INLINE Value(*) Quasify_Antiform(Atom(*) v) {
+    assert(Is_Antiform(v));
+    QUOTE_BYTE(v) = QUASIFORM_2;
     return cast(Value(*), v);
 }
 
 INLINE Value(*) Reify(Atom(*) v) {
     assert(not Is_Void(v));
-    if (QUOTE_BYTE(v) == ISOTOPE_0)
-        QUOTE_BYTE(v) = QUASI_2;
+    if (QUOTE_BYTE(v) == ANTIFORM_0)
+        QUOTE_BYTE(v) = QUASIFORM_2;
     return cast(Value(*), v);
 }
 
 INLINE Atom(*) Degrade(Atom(*) v) {
-    if (QUOTE_BYTE(v) == QUASI_2)
-        QUOTE_BYTE(v) = ISOTOPE_0;
+    if (QUOTE_BYTE(v) == QUASIFORM_2)
+        QUOTE_BYTE(v) = ANTIFORM_0;
     return v;
 }
 
 INLINE Value(*) Concretize(Value(*) v) {
     assert(not Is_Void(v));
     assert(not Is_Trash(v));
-    if (QUOTE_BYTE(v) == ISOTOPE_0)
-        QUOTE_BYTE(v) = UNQUOTED_1;
+    if (QUOTE_BYTE(v) == ANTIFORM_0)
+        QUOTE_BYTE(v) = NOQUOTE_1;
     return v;
 }
 
@@ -257,7 +257,7 @@ INLINE Value(*) Concretize(Value(*) v) {
 //=//// META QUOTING ///////////////////////////////////////////////////////=//
 
 // Meta quoting is a superset of plain quoting.  It has the twist that it can
-// quote isotopes to produce QUASI! values.  This is done by META (alias ^)
+// quote antiforms to produce quasiforms.  This is done by META (alias ^)
 // and the REB_META_XXX family of values (like ^WORD, ^TU.P.LE...)
 //
 // It's hard to summarize in one place all the various applications of this
@@ -269,16 +269,16 @@ INLINE Value(*) Concretize(Value(*) v) {
 //
 
 INLINE Value(*) Meta_Quotify(Atom(*) v) {
-    if (QUOTE_BYTE(v) == ISOTOPE_0) {
-        QUOTE_BYTE(v) = QUASI_2;
+    if (QUOTE_BYTE(v) == ANTIFORM_0) {
+        QUOTE_BYTE(v) = QUASIFORM_2;
         return cast(Value(*), v);
     }
-    return cast(Value(*), Quotify(v, 1));  // a non-isotope winds up quoted
+    return cast(Value(*), Quotify(v, 1));  // a non-antiform winds up quoted
 }
 
 INLINE Atom(*) Meta_Unquotify_Undecayed(Atom(*) v) {
-    if (QUOTE_BYTE(v) == QUASI_2)
-        QUOTE_BYTE(v) = ISOTOPE_0;
+    if (QUOTE_BYTE(v) == QUASIFORM_2)
+        QUOTE_BYTE(v) = ANTIFORM_0;
     else
         Unquotify_Core(v, 1);  // will assert the input is quoted
     return v;

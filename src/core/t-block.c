@@ -37,14 +37,14 @@
 //
 DECLARE_NATIVE(only_p)  // https://forum.rebol.info/t/1182/11
 //
-// 1. Prior to SPLICE and isotopic GROPU!--when blocks spliced by default--
+// 1. Prior to SPLICE and antiform GROUP!--when blocks spliced by default--
 //    this was conceived as a replacement for things like APPEND/ONLY, e.g.
 //
 //        >> only [d]
 //        == [[d]]
 //
 //        >> append [a b c] only [d]
-//        == [a b c [d]]  ; pre-isotopic-BLOCK! concept of splice by default
+//        == [a b c [d]]  ; pre-antiform-GROUP! concept of splice by default
 //
 //    Without that purpose, use of the word ONLY here for an optimized
 //    synonym for ENBLOCK is questionable.
@@ -454,8 +454,8 @@ REBINT Find_In_Array(
         return NOT_FOUND;
     }
 
-    if (Is_Isotope(pattern))
-        fail ("Only Isotopes Supported by FIND are MATCHES and SPREAD");
+    if (Is_Antiform(pattern))
+        fail ("Only Antiforms Supported by FIND are MATCHES and SPREAD");
 
     if (Any_Type_Value(pattern) and not (flags & AM_FIND_CASE))
         fail (
@@ -851,8 +851,8 @@ REBTYPE(Array)
 
         REBVAL *setval = ARG(value);
 
-        if (Is_Isotope(setval))
-            fail (Error_Bad_Isotope(setval));  // can't put in blocks
+        if (Is_Antiform(setval))
+            fail (Error_Bad_Antiform(setval));  // can't put in blocks
 
         if (Is_Nulled(setval))
             fail (Error_Need_Non_Null_Raw());  // also can't put in blocks
@@ -1031,10 +1031,10 @@ REBTYPE(Array)
         }
         else if (Is_Splice(arg)) {
             flags |= AM_SPLICE;
-            QUOTE_BYTE(arg) = UNQUOTED_1;  // make plain group
+            QUOTE_BYTE(arg) = NOQUOTE_1;  // make plain group
         }
-        else if (Is_Isotope(arg))  // only SPLICE! in typecheck
-            fail (Error_Bad_Isotope(arg));  // ...but that doesn't filter yet
+        else if (Is_Antiform(arg))  // only SPLICE! in typecheck
+            fail (Error_Bad_Antiform(arg));  // ...but that doesn't filter yet
 
         if (REF(part))
             flags |= AM_PART;
@@ -1488,7 +1488,7 @@ DECLARE_NATIVE(glom)
         splice = true;
         assert(HEART_BYTE(result) == REB_GROUP);
         HEART_BYTE(result) = REB_BLOCK;  // interface is for blocks
-        QUOTE_BYTE(result) = UNQUOTED_1;
+        QUOTE_BYTE(result) = NOQUOTE_1;
     }
 
     if (Is_Nulled(accumulator)) {

@@ -175,7 +175,7 @@ void Set_Parameter_Spec(
         Derelativize(dest, item, spec_specifier);
         Clear_Cell_Flag(dest, NEWLINE_BEFORE);
 
-        if (Is_Quasi(item)) {
+        if (Is_Quasiform(item)) {
             if (Cell_Heart(item) == REB_VOID) {
                 *flags |= PARAMETER_FLAG_TRASH_DEFINITELY_OK;
                 continue;
@@ -272,7 +272,7 @@ void Set_Parameter_Spec(
                 *flags |= PARAMETER_FLAG_INCOMPLETE_OPTIMIZATION;
                 continue;
             }
-            if (Is_Isotope(lookup) and Cell_Heart(lookup) != REB_FRAME)
+            if (Is_Antiform(lookup) and Cell_Heart(lookup) != REB_FRAME)
                 fail (item);
             if (Is_Quoted(lookup))
                 fail (item);
@@ -300,7 +300,7 @@ void Set_Parameter_Spec(
         ){
             *flags |= PARAMETER_FLAG_INCOMPLETE_OPTIMIZATION;
         }
-        else if (heart == REB_FRAME and QUOTE_BYTE(lookup) == ISOTOPE_0) {
+        else if (heart == REB_FRAME and QUOTE_BYTE(lookup) == ANTIFORM_0) {
             Phase* phase = ACT_IDENTITY(VAL_ACTION(lookup));
             if (ACT_DISPATCHER(phase) == &Intrinsic_Dispatcher) {
                 Intrinsic* intrinsic = Extract_Intrinsic(phase);
@@ -337,7 +337,7 @@ void Set_Parameter_Spec(
 //
 //  unspecialized?: native/intrinsic [
 //
-//  "Tells you if argument is a parameter isotope, used for unspecialized args"
+//  "Tells you if argument is parameter antiform, used for unspecialized args"
 //
 //      return: [logic?]
 //      value

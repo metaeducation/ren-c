@@ -186,8 +186,8 @@ DECLARE_NATIVE(reduce)
             }
         }
     }
-    else if (Is_Isotope(OUT))
-        return RAISE(Error_Bad_Isotope(OUT));
+    else if (Is_Antiform(OUT))
+        return RAISE(Error_Bad_Antiform(OUT));
     else {
         Move_Cell(PUSH(), OUT);
         SUBLEVEL->baseline.stack_base += 1;  // [4]
@@ -232,7 +232,7 @@ DECLARE_NATIVE(reduce)
 DECLARE_NATIVE(reduce_each)
 //
 // !!! There used to be a /COMMAS refinement on this, which allowed you to
-// see source-level commas.  Once comma isotopes took over the barrier role,
+// see source-level commas.  Once comma antiforms took over the barrier role,
 // they were distinguishable from nihils and could be filtered separately.
 // With this you can write `pack [1, nihil, 2]` and get a 3-element pack.
 // It may be that some use case requires /COMMAS to come back, but waiting
@@ -307,7 +307,7 @@ DECLARE_NATIVE(reduce_each)
         )
     ){
         Init_Nihil(OUT);
-        goto reduce_next;  // always cull isotopic commas (barriers)
+        goto reduce_next;  // always cull antiform commas (barriers)
     }
 
     if (
@@ -668,7 +668,7 @@ Bounce Composer_Executor(Level* const L)
         return RAISE(Error_Need_Non_Null_Raw());  // [(null)] => error!
 
     if (Is_Void(OUT)) {
-        if (group_heart == REB_GROUP and group_quote_byte == UNQUOTED_1)
+        if (group_heart == REB_GROUP and group_quote_byte == NOQUOTE_1)
             goto handle_next_item;  // compose [(void)] => []
 
         // [''(void)] => ['']
@@ -676,8 +676,8 @@ Bounce Composer_Executor(Level* const L)
     else
         Decay_If_Unstable(OUT);
 
-    if (Is_Isotope(OUT))
-        return RAISE(Error_Bad_Isotope(OUT));
+    if (Is_Antiform(OUT))
+        return RAISE(Error_Bad_Antiform(OUT));
 
     goto push_out_as_is;
 
@@ -687,7 +687,7 @@ Bounce Composer_Executor(Level* const L)
     // compose [([a b c]) unmerged] => [[a b c] unmerged]
 
     if (Is_Void(OUT)) {
-        assert(group_quote_byte != UNQUOTED_1);  // handled above
+        assert(group_quote_byte != NOQUOTE_1);  // handled above
         Init_Void(PUSH());
     }
     else
@@ -707,7 +707,7 @@ Bounce Composer_Executor(Level* const L)
     if (group_quote_byte & NONQUASI_BIT)
         Quotify(TOP, group_quote_byte / 2);  // add to existing quotes
     else {
-        if (QUOTE_BYTE(TOP) != UNQUOTED_1)
+        if (QUOTE_BYTE(TOP) != NOQUOTE_1)
             fail ("COMPOSE cannot quasify items not at quote level 0");
         QUOTE_BYTE(TOP) = group_quote_byte;
     }
@@ -726,11 +726,11 @@ Bounce Composer_Executor(Level* const L)
 
     // compose [(spread [a b]) merges] => [a b merges]... [3]
 
-    if (group_quote_byte != UNQUOTED_1 or group_heart != REB_GROUP)
+    if (group_quote_byte != NOQUOTE_1 or group_heart != REB_GROUP)
         return RAISE("Currently can only splice plain unquoted GROUP!s");
 
     if (Is_Splice(OUT)) {  // GROUP! at "quoting level -1" means splice
-        Quasify_Isotope(OUT);
+        Quasify_Antiform(OUT);
 
         const Cell* push_tail;
         const Cell* push = Cell_Array_At(&push_tail, OUT);

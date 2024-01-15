@@ -178,15 +178,15 @@ INLINE Cell* Init_Relative_Block_At(
     Init_Relative_Block_At((out), (action), (array), 0)
 
 
-//=//// "PACKS" (BLOCK! Isotopes) /////////////////////////////////////////=//
+//=//// "PACKS" (BLOCK! Antiforms) ////////////////////////////////////////=//
 //
-// BLOCK! isotopes are exploited as a mechanism for bundling values in a way
+// BLOCK! antiforms are exploited as a mechanism for bundling values in a way
 // that they can be passed around as a single value.  They are leveraged in
 // particular for multi-return, because a SET-WORD! will unpack only the
 // first item, while a SET-BLOCK! will unpack others.
 //
 //      >> pack [<a> <b>]
-//      == ~['<a> '<b>]~  ; isotope
+//      == ~['<a> '<b>]~  ; anti
 //
 //      >> x: pack [<a> <b>]
 //      == <a>
@@ -203,17 +203,17 @@ INLINE Cell* Init_Relative_Block_At(
 
 INLINE Value(*) Init_Pack_Untracked(Atom(*) out, Array* a) {
     Init_Block(out, a);
-    QUOTE_BYTE(out) = ISOTOPE_0;
-    return cast(Value(*), out);  // Note: Is_Isotope_Unstable(out)
+    QUOTE_BYTE(out) = ANTIFORM_0;
+    return cast(Value(*), out);  // Note: Is_Antiform_Unstable(out)
 }
 
 #define Init_Pack(out,a) \
     TRACK(Init_Pack_Untracked((out), (a)))
 
 
-//=//// "NIHIL" (empty BLOCK! Isotope Pack, ~[]~) /////////////////////////=//
+//=//// "NIHIL" (empty BLOCK! Antiform Pack, ~[]~) ////////////////////////=//
 //
-// This unstable isotope is used in situations that want to convey a full
+// This unstable antiform is used in situations that want to convey a full
 // absence of values (e.g. ELIDE).  It can't be used in assignments, and if
 // the evaluator encounters one in an interstitial context it will be
 // vaporized.  It is sensibly represented as a parameter pack of length 0.
@@ -242,33 +242,33 @@ INLINE bool Is_Meta_Of_Nihil(const Cell* v) {
 }
 
 
-//=//// "SPLICES" (GROUP! Isotopes) ///////////////////////////////////////=//
+//=//// "SPLICES" (GROUP! Antiforms) //////////////////////////////////////=//
 //
-// Group isotopes are understood by routines like APPEND/INSERT/CHANGE to
+// Group antiforms are understood by routines like APPEND/INSERT/CHANGE to
 // mean that you intend to splice their content (the default is to append
 // as-is, which is changed from Rebol2/Red).  The typical way of making these
-// isotopes is the SPREAD function.
+// antiforms is the SPREAD function.
 //
 //    >> append [a b c] [d e]
 //    == [a b c] [d e]
 //
 //    >> spread [d e]
-//    == ~(d e)~  ; isotope
+//    == ~(d e)~  ; anti
 //
 //    >> append [a b c] ~(d e)~
 //    == [a b c d e]
 //
 
 INLINE Value(*) Splicify(Value(*) v) {
-    assert(Any_Array(v) and QUOTE_BYTE(v) == UNQUOTED_1);
-    QUOTE_BYTE(v) = ISOTOPE_0;
+    assert(Any_Array(v) and QUOTE_BYTE(v) == NOQUOTE_1);
+    QUOTE_BYTE(v) = ANTIFORM_0;
     HEART_BYTE(v) = REB_GROUP;
     return v;
 }
 
 INLINE Value(*) Init_Splice_Untracked(Sink(Value(*)) out, Array* a) {
     Init_Group(out, a);
-    QUOTE_BYTE(out) = ISOTOPE_0;
+    QUOTE_BYTE(out) = ANTIFORM_0;
     return out;
 }
 

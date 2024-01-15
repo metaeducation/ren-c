@@ -127,7 +127,7 @@ trap [
 
 ;=== THESE REMAPPINGS ARE OKAY TO USE IN THE BOOTSTRAP SHIM ITSELF ===
 
-; modern isotopic void (trash) can be assigned, e.g. (foo: ~), the result is
+; modern antiform void (trash) can be assigned, e.g. (foo: ~), the result is
 ; then ornery to access.  Bootstrap build's closest match was its null.
 ;
 set '~ :null3
@@ -235,7 +235,7 @@ if: chain [:lib3/if :isotopify-blanks]
 case: chain [:lib3/case :isotopify-blanks]
 switch: chain [:lib3/switch :isotopify-blanks]
 
-quasi!: word!  ; conflated, but can work in a very limited sense
+quasiform!: word!  ; conflated, but can work in a very limited sense
 quasi?: func3 [v <local> spelling] [
     if not word? v [return false]
     spelling: as text! v
@@ -261,7 +261,7 @@ or: enfix :lib3/or [assert [not block? right] right: as block! :right]
 
 else: enfix chain [
     adapt :lib3/else [if blank? :optional [optional: null3]]
-    ; we don't isotopify blanks to simulate isotopic null via shim blank null
+    ; we don't isotopify blanks to simulate antiform null via shim blank null
 ]
 then: enfix chain [
     adapt :lib3/then [if blank? :optional [optional: null3]]
@@ -296,8 +296,8 @@ to-logic: func3 [return: [logic!] optional [<opt> any-value!]] [
 ]
 
 
-; We don't have isotopes in the bootstrap build.  But if a branch produces
-; NULL it will yield a "VOID!" (kind of like a QUASI! of ~void~)  Turn these
+; We don't have antiforms in the bootstrap build.  But if a branch produces
+; NULL it will yield a "VOID!" (kind of like the quasiform ~)  Turn these
 ; into NULL, and trust that the current build will catch cases of something
 ; like a PRINT being turned into a NULL.
 ;
@@ -364,7 +364,7 @@ quote: func3 [x [<opt> any-value!]] [
 ;=== BELOW THIS LINE, TRY NOT TO USE FUNCTIONS IN THE SHIM IMPLEMENTATION ===
 
 char?!: char!  ; modern char is ISSUE! constraint
-logic?!: logic!  ; modern logic is ISOTOPE! constraint
+logic?!: logic!  ; modern logic is ANTIFORM! constraint
 lit-word?!: lit-word!  ; modern LIT-WORD! is QUOTED! constraint
 refinement?!: refinement!  ; modern REFINEMENT! is PATH! constraint
 

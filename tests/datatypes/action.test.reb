@@ -3,7 +3,7 @@
 (action? :abs)
 (frame? unrun :abs)
 (not frame? 1)
-(isotope! = kind of :abs)
+(antiform! = kind of :abs)
 (frame! = kind of unrun :abs)
 
 ; frames are active

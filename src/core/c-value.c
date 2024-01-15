@@ -170,11 +170,11 @@ void Probe_Cell_Print_Helper(
     else if (Is_Void(v)) {
         Append_Ascii(mo->series, "; void");
     }
-    else if (Is_Isotope(v)) {
+    else if (Is_Antiform(v)) {
         DECLARE_LOCAL (reified);
-        Quasify_Isotope(Copy_Cell(reified, v));
+        Quasify_Antiform(Copy_Cell(reified, v));
         Mold_Value(mo, reified);
-        Append_Ascii(mo->series, "  ; isotope");
+        Append_Ascii(mo->series, "  ; anti");
     }
     else
         Mold_Value(mo, v);

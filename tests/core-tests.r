@@ -63,6 +63,7 @@
 %datatypes/meta-path.test.reb
 %datatypes/meta-word.test.reb
 %datatypes/string.test.reb
+%datatypes/the.test.reb
 %datatypes/tag.test.reb
 %datatypes/time.test.reb
 %datatypes/tuple.test.reb

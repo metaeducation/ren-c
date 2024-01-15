@@ -118,38 +118,19 @@ export console!: make object! [
 
     print-result: meth [
         return: [~]
-        ^v "Value (done with meta parameter to discern isotope status)"
+        ^v "Value (done with meta parameter to handle unstable isotopes)"
             [any-atom?]
     ][
-        ; We use SET instead of a SET-WORD! here to avoid caching the action
-        ; name as "last-result", so it should keep the name it had before.
-        ; (also it gives us the /ANY option to save isotopes!)
+        ; Store LAST-RESULT in ^META form so unstable isotopes don't decay.
         ;
-        ; !!! This keeps the last-result in ^META form, because some meta
-        ; forms must be unpacked otherwise they'll cause an error:
-        ;
-        ;     >> ^ pack [pack [1 2] 3]
-        ;     == ~[~['1 '2]~ '3]~
-        ;
-        ; That's a valid representation of a meta of a parameter pack with a
-        ; parameter pack in its first slot.  But you can't UNMETA that and
-        ; assign it to a single variable--it will cause an error.  It must
-        ; unpacked:
-        ;
-        ;     >> [a b]: pack [pack [1 2] 3]
-        ;     == 1
-        ;
-        ;     >> [^a b]: pack [pack [1 2] 3]
-        ;     == ~['1 '2]~
-        ;
-        set 'last-result v
+        last-result: v
 
         === FORM ERROR IF RAISED ===
 
         ; The console knows the difference between a raised error returned as
         ; a result, and a failure.  It's worth thinking about how to present
         ; this nuance in the display...but for now we just form it, because
-        ; it looks ugly to show the molded isotopic object.
+        ; it looks ugly to show the molded antiform object.
 
         if raised? unmeta v [
             print form unquasi v
@@ -171,8 +152,8 @@ export console!: make object! [
 
         === UNPACK FIRST VALUE IN "PACKS" ===
 
-        ; Functions can return block isotopes which represent multiple returns.
-        ; Only the first output is printed--but with a comment saying that it
+        ; Block antiforms represent multiple returns.  Only the first output
+        ; is printed--but with a comment saying that it
         ; was in a pack.  This hints the user to do a ^META on the value to
         ; see the complete pack.
         ;
@@ -212,27 +193,26 @@ export console!: make object! [
             return ~
         ]
 
-        === ISOTOPES (^META v parameter means they are quasiforms) ===
+        === ANTIFORMS (^META v parameter means they are quasiforms) ===
 
         if quasi? v [
             ;
-            ; Isotopes don't technically have "a representation", but the
+            ; Antiforms don't technically have "a representation", but the
             ; historical console behavior is to add a comment annotation.
             ;
             ;     >> do [~something~]
-            ;     == ~something~  ; isotope
+            ;     == ~something~  ; anti
             ;
-            ; Isotopes are evaluative products only, so you won't see the
+            ; Antiforms are evaluative products only, so you won't see the
             ; annotation for anything you picked out of a block:
             ;
             ;     >> first [~something~]
             ;     == ~something~
             ;
-            ; That's the plain form.  Those quasiforms are received
-            ; quoted by this routine like other ordinary values; this case is
-            ; just for the isotopes.
+            ; Those quasiforms are received quoted by this routine like other
+            ; ordinary values; this case is just for the antiforms.
             ;
-            print unspaced [result _ mold v _ _ {;} _ "isotope"]
+            print unspaced [result _ mold v _ _ {;} _ "anti"]
             return ~
         ]
 
@@ -462,7 +442,7 @@ ext-console-impl: func [
     prior "BLOCK! or GROUP! that last invocation of HOST-CONSOLE requested"
         [<opt> block! group!]
     result "^META result from evaluating PRIOR, or non-quoted error"
-        [<opt> error! quoted! quasi!]
+        [<opt> error! quoted! quasiform!]
     resumable "Is the RESUME function allowed to exit this console"
         [logic?]
     skin "Console skin to use if the console has to be launched"
@@ -612,7 +592,7 @@ ext-console-impl: func [
             return 0  ; plain QUIT with no argument, treat it as success
         ]
         if quasi? ^result.arg1 [
-            return 1  ; treat all other QUIT with isotopes as generic error
+            return 1  ; treat all other QUIT with antiforms as generic error
         ]
         return switch/type result.arg1 [
             logic?! [either result.arg1 [0] [1]]  ; logic true is success
@@ -782,7 +762,7 @@ ext-console-impl: func [
         ;
         emit [(  ; <-- GROUP! needed for binding bug, review
             let f: make frame! :system.console.print-result
-            f.v: '(<*> result)  ; avoid conflating pure void and void isotope
+            f.v: '(<*> result)
             do f
         )]
         return <prompt>

@@ -33,7 +33,7 @@
 //
 //  Prep_Action_Level: C
 //
-// 1. If branch function argument isn't "meta" then we decay any isotopes.
+// 1. If branch function argument isn't "meta" then we decay isotopes.
 //    Do the decay test first to avoid needing to scan parameters unless it's
 //    one of those cases.
 //
@@ -45,7 +45,7 @@
 //         if true [null] then x -> [
 //             ;
 //             ; Why would we want to have to make it ^x, when we know any
-//             ; nulls that triggered the branch would have been isotopic?
+//             ; nulls that triggered the branch would have been antiforms?
 //         ]
 //
 void Prep_Action_Level(

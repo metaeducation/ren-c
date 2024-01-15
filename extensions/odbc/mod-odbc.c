@@ -547,13 +547,13 @@ SQLRETURN ODBC_BindParameter(
     // https://forum.rebol.info/t/689/2
     //
     SQLSMALLINT c_type = rebUnboxInteger("switch/type", rebQ(v), "[",
-        "quasi! [",
+        "quasiform! [",
             "switch", rebQ(v), "[",
                 "'~null~ [", rebI(SQL_C_DEFAULT), "]",
                 "'~true~ [", rebI(SQL_C_BIT), "]",
                 "'~false~ [", rebI(SQL_C_BIT), "]",
             "] else [",
-                "fail {Legal QUASI!-parameters ~null~ ~true~ ~false~}",
+                "fail {Legal QUASIFORM!-parameters ~null~ ~true~ ~false~}",
             "]",
         "]",
 
@@ -1460,7 +1460,7 @@ REBVAL* ODBC_Column_To_Rebol_Value(
             rebJumps("fail {BIT(n) fields are only supported for n = 1}");
 
         if (*cast(unsigned char*, col->buffer))
-            return rebValue("'~true~");  // can't append isotope to block :-(
+            return rebValue("'~true~");  // can't append antiform to block :-(
         return rebValue("'~false~");
 
     // ODBC was asked at SQLGetData time to give back *most* integer

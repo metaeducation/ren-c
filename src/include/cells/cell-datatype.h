@@ -49,7 +49,7 @@
 //    == [a b c]
 //
 //    >> match any-series! 10
-//    == ~null~  ; isotope
+//    == ~null~  ; anti
 //
 //=//// NOTES /////////////////////////////////////////////////////////////=//
 //
@@ -95,13 +95,13 @@ INLINE REBVAL *Init_Builtin_Datatype_Untracked(
 
 
 
-// isotopic type matcher (e.g. used by FIND, SWITCH)
+// antiform type matcher (e.g. used by FIND, SWITCH)
 
 #define Typecheck_Atom(tests,atom) \
     Typecheck_Atom_Core((tests), SPECIFIED, (atom))
 
 INLINE bool Is_Matcher(const Cell* v) {
-    if (QUOTE_BYTE(v) != ISOTOPE_0)
+    if (QUOTE_BYTE(v) != ANTIFORM_0)
         return false;
     return Any_Type_Value_Kind(HEART_BYTE(v));
 }
@@ -115,7 +115,7 @@ INLINE bool Matcher_Matches(
     assert(Is_Matcher(matcher));
     DECLARE_LOCAL (plain);
     Derelativize(plain, matcher, matcher_specifier);
-    QUOTE_BYTE(plain) = UNQUOTED_1;
+    QUOTE_BYTE(plain) = NOQUOTE_1;
 
     DECLARE_STABLE (v_derelativized);
     Derelativize(v_derelativized, v, v_specifier);

@@ -35,10 +35,10 @@
 //=//// NOTES /////////////////////////////////////////////////////////////=//
 //
 // * The low-level type used to store these cells is a quasi-void (~) with
-//   NODE_FLAG_FREE set in the debug build.  While an isotope form might seem
+//   NODE_FLAG_FREE set in the debug build.  While an antiform might seem
 //   more desirable to draw attention if these leak to userspace in the
 //   release build, quasiform cells can be used in blocks.  It would break
-//   more invariants and possibly cause more damage for isotopes to appear in
+//   more invariants and possibly cause more damage for antiforms to appear in
 //   those places.
 //
 // * Something like the quasi-word ~unreadable~ might be better in drawing
@@ -49,7 +49,7 @@
 
 #if DEBUG_UNREADABLE_CELLS
     INLINE Value(*) Init_Unreadable_Untracked(Cell* out) {
-        Init_Void_Untracked(out, QUASI_2);
+        Init_Void_Untracked(out, QUASIFORM_2);
         Set_Node_Free_Bit(out);  // cell won't be READABLE(), but WRITABLE()
         return cast(Value(*), out);
     }
@@ -59,7 +59,7 @@
             return false;
         assert(Is_Node(v) and Is_Node_A_Cell(v));
         assert(HEART_BYTE(v) == REB_VOID);
-        assert(QUOTE_BYTE(v) == QUASI_2);
+        assert(QUOTE_BYTE(v) == QUASIFORM_2);
         return true;
     }
 
@@ -67,7 +67,7 @@
         assert(Is_Unreadable_Debug(v))
 #else
     #define Init_Unreadable_Untracked(out) \
-        Init_Void_Untracked((out), QUASI_2)
+        Init_Void_Untracked((out), QUASIFORM_2)
 
     #undef Is_Unreadable_Debug  // testing in release builds is not meaningful
 

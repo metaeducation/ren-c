@@ -28,7 +28,7 @@
 // The best thing to do is to pass in whatever Cell or Series subclass
 // (including Array*, Context*, Action*...) is a useful "smoking gun":
 //
-//     if (VAL_TYPE(value) == REB_QUASI)
+//     if (VAL_TYPE(value) == REB_QUASIFORM)
 //         panic (value);  // debug build points out this file and line
 //
 //     if (Array_Len(array) < 2)

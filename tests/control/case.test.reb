@@ -21,7 +21,7 @@
 )
 (
     '~[~null~]~ = ^ case [
-        true [null]  ; turned to isotope so ELSE won't run
+        true [null]  ; turned to heavy null pack so ELSE won't run
         false [1 + 2]
     ]
 )
@@ -134,7 +134,7 @@
 
 ~bad-void~ !! (case [(void) true [1]])
 
-~bad-isotope~ !! (case [~isotope~ [print "Causes error"]])
+~bad-antiform~ !! (case [~antiform~ [print "Causes error"]])
 
 ; GET-GROUP! branches will be evaluated unconditionally, but their branches
 ; are not run if the condition was false.

@@ -51,18 +51,18 @@ INLINE void Force_Location_Of_Error(Context* error, Level* where) {
 }
 
 
-// An isotopic ERROR! represents a thrown state.  This failure state can't be
+// An antiform ERROR! represents a thrown state.  This failure state can't be
 // stored in variables and will raise an alarm if something in a processing
 // pipeline doesn't ask to ^META it.  While it's in the ^META state it can
 // also be passed around normally until it's UNMETA'd back to a failure again.
 
 INLINE bool Is_Raised(Atom(const*) v)
-  { return HEART_BYTE(v) == REB_ERROR and QUOTE_BYTE(v) == ISOTOPE_0; }
+  { return HEART_BYTE(v) == REB_ERROR and QUOTE_BYTE(v) == ANTIFORM_0; }
 
 INLINE Atom(*) Raisify(Atom(*) v) {
-    assert(Is_Error(v) and QUOTE_BYTE(v) == UNQUOTED_1);
+    assert(Is_Error(v) and QUOTE_BYTE(v) == NOQUOTE_1);
     Force_Location_Of_Error(VAL_CONTEXT(v), TOP_LEVEL);  // ideally already set
-    QUOTE_BYTE(v) = ISOTOPE_0;
+    QUOTE_BYTE(v) = ANTIFORM_0;
     return v;
 }
 
@@ -72,4 +72,4 @@ INLINE Atom(*) Raisify(Atom(*) v) {
 #endif
 
 INLINE bool Is_Meta_Of_Raised(const Cell* v)
-  { return HEART_BYTE(v) == REB_ERROR and QUOTE_BYTE(v) == QUASI_2; }
+  { return HEART_BYTE(v) == REB_ERROR and QUOTE_BYTE(v) == QUASIFORM_2; }

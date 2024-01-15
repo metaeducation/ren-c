@@ -71,7 +71,7 @@ Rebol [
 ;
 ; The goal of a combinator is to decide whether to match (by returning a
 ; synthesized value and the updated position in the series) or fail to match
-; (by returning an isotopic error)
+; (by returning an antiform error)
 ;
 ; Additional parameters to a combinator are fulfilled by the parse engine by
 ; looking at the ensuing rules in the rule block.
@@ -281,8 +281,8 @@ default-combinators: make map! reduce [
     ]
 
     'spread combinator [
-        {Return isotope form of array arguments}
-        return: "Splice isotope if input is array"
+        {Return antiform group for array arguments}
+        return: "Splice antiform if input is array"
             [<opt> <void> element? splice?]
         parser [action?]
         <local> result'
@@ -678,7 +678,7 @@ default-combinators: make map! reduce [
             return raise e
         ]
         if quasi? where [
-            fail "Cannot SEEK to isotope"
+            fail "Cannot SEEK to antiform"
         ]
         where: my unquote
         case [
@@ -894,7 +894,7 @@ default-combinators: make map! reduce [
         ]
 
         if quasi? subseries [
-            fail "Cannot SUBPARSE an isotope synthesized result"
+            fail "Cannot SUBPARSE an antiform synthesized result"
         ]
 
         subseries: my unquote
@@ -1065,8 +1065,7 @@ default-combinators: make map! reduce [
         ]
 
         ; The value is quoted or quasi because of ^ on ^(parser input).
-        ; This lets us emit null fields and isotopes, since the MAKE OBJECT!
-        ; will do an evaluation.
+        ; This lets us emit antiforms, since the MAKE OBJECT! evaluates.
         ;
         pending: glom pending :[as set-word! target result']
         return unmeta result'
@@ -1348,7 +1347,7 @@ default-combinators: make map! reduce [
 
         if quasi? r [
             if not find [~true~ ~false~] r [
-                fail ["Bad isotope from GET-GROUP!" r]  ; fail other isotopes
+                fail ["Bad antiform from GET-GROUP!" r]  ; fail other antiforms
             ]
         ]
 
@@ -1379,7 +1378,7 @@ default-combinators: make map! reduce [
     ; as a rule"
     ;
     ;     >> did parse "aaabbb" [:[some "a" ([some "b"])]
-    ;     == ~true~  ; isotope
+    ;     == ~true~  ; anti
     ;
     ; It's hard offhand to think of great uses for that, but that isn't to say
     ; that they don't exist.
@@ -1436,7 +1435,7 @@ default-combinators: make map! reduce [
         return: "The matched value"
             [nihil? element? splice?]  ; !!! splice b.c. called by @(...)
         @pending [<opt> block!]
-        value [quoted! quasi!]
+        value [quoted! quasiform!]
         <local> comb
     ][
         ; It is legal to say:
@@ -1465,7 +1464,7 @@ default-combinators: make map! reduce [
                 return unquote value
             ]
             if not splice? unmeta value [
-                fail "Only isotope matched against array content is splice"
+                fail "Only antiform matched against array content is splice"
             ]
             for-each item unquasi value [
                 if input.1 <> item [
@@ -1563,7 +1562,7 @@ default-combinators: make map! reduce [
         return raise "BLANK! rule found next input in binary was not ASCII 32"
     ]
 
-    === ISOTOPE! COMBINATOR ===
+    === ANTIFORM! COMBINATOR ===
 
     ; Handling of LOGIC! in Ren-C replaces the idea of FAIL, because a logic
     ; true is treated as "continue parsing" while false is "rule didn't match".
@@ -1571,10 +1570,10 @@ default-combinators: make map! reduce [
     ;
     ; e.g. parse "..." [:(mode = 'read) ... | :(mode = 'write) ...]
 
-    isotope! combinator [
+    antiform! combinator [
         return: "Invisible if true (signal to keep parsing)"
             [nihil?]
-        value [isotope!]
+        value [antiform!]
     ][
         switch/type :value [
             logic?! [
@@ -1582,10 +1581,10 @@ default-combinators: make map! reduce [
                     remainder: input
                     return nihil
                 ]
-                return raise "~false~ isotope used to signal a parse failing"
+                return raise "~false~ antiform used to force a non-match"
             ]
         ]
-        fail "Unhandled isotope type in GET-GROUP!"
+        fail "Unhandled antiform in GET-GROUP!"
     ]
 
     === INTEGER! COMBINATOR ===
@@ -1898,7 +1897,7 @@ default-combinators: make map! reduce [
     === META-XXX! COMBINATORS ===
 
     ; The META-XXX! combinators add a quoting level to their result, unless
-    ; it's isotopic in which case it becomes a qusaiform.  The quoting is
+    ; it's antiform in which case it becomes a qusaiform.  The quoting is
     ; important with functions like KEEP...but advanced tunneling of behavior
     ; regarding unsets, nulls, and invisibility requires the feature.
     ;
@@ -1911,14 +1910,14 @@ default-combinators: make map! reduce [
     ; just be sensitive to the received kind of value.
 
     '^ combinator [
-        return: "Meta quoted" [<opt> quasi! quoted!]
+        return: "Meta quoted" [<opt> quasiform! quoted!]
         parser [action?]
     ][
         return [^ remainder]: parser input
     ]
 
     meta-word! combinator [
-        return: "Meta quoted" [<opt> quasi! quoted!]
+        return: "Meta quoted" [<opt> quasiform! quoted!]
         @pending [<opt> block!]
         value [meta-word!]
         <local> comb
@@ -1929,7 +1928,7 @@ default-combinators: make map! reduce [
     ]
 
     meta-tuple! combinator [
-        return: "Meta quoted" [<opt> quasi! quoted!]
+        return: "Meta quoted" [<opt> quasiform! quoted!]
         @pending [<opt> block!]
         value [meta-tuple!]
         <local> comb
@@ -1940,7 +1939,7 @@ default-combinators: make map! reduce [
     ]
 
     meta-path! combinator [
-        return: "Meta quoted" [<opt> quasi! quoted!]
+        return: "Meta quoted" [<opt> quasiform! quoted!]
         @pending [<opt> block!]
         value [meta-path!]
         <local> comb
@@ -1951,7 +1950,7 @@ default-combinators: make map! reduce [
     ]
 
     meta-group! combinator [
-        return: "Meta quoted" [<opt> quasi! quoted!]
+        return: "Meta quoted" [<opt> quasiform! quoted!]
         @pending [<opt> block!]
         value [meta-group!]
         <local> comb
@@ -1962,7 +1961,7 @@ default-combinators: make map! reduce [
     ]
 
     meta-block! combinator [
-        return: "Meta quoted" [<opt> quasi! quoted!]
+        return: "Meta quoted" [<opt> quasiform! quoted!]
         @pending [<opt> block!]
         value [meta-block!]
         <local> comb
@@ -2140,7 +2139,7 @@ default-combinators: make map! reduce [
             issue! []
 
             ; While most frequently used with GET-GROUP! to use a conditional
-            ; to continue control or not, ~true~ and ~false~ isotopes are
+            ; to continue control or not, ~true~ and ~false~ antiforms are
             ; allowed from word lookups e.g. TRUE and FALSE.
             ;
             logic?! []
@@ -2669,7 +2668,7 @@ parsify: func [
             ; checking to see if the word looks up to a variable via binding.
             ;
             if null? value: get r [
-                fail [r "looked up to ~null~ isotope in UPARSE"]  ; void is ok
+                fail [r "looked up to ~null~ antiform in UPARSE"]  ; void is ok
             ]
 
             ; Looking up to a combinator via variable is allowed, and will use

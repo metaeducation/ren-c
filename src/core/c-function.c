@@ -232,7 +232,7 @@ void Push_Keys_And_Parameters_May_Fail(
     // 1. We disallow `func [[integer!]]`, but also `<local> x [integer!]`,
     //    because locals are hidden from the interface, and hidden values
     //    (notably specialized-out values) use the `param` slot for the value,
-    //    not type information.  So local has `~` isotope.
+    //    not type information.  So local has `~` antiform.
     //
     //    Even if you *could* give locals a type, it could only be given a
     //    meaning if it were used to check assignments during the function.
@@ -510,7 +510,7 @@ Array* Pop_Paramlist_With_Adjunct_May_Fail(
     const Symbol* duplicate = nullptr;
 
   blockscope {
-    REBVAL *param = 1 + Init_Word_Isotope(
+    REBVAL *param = 1 + Init_Anti_Word(
         x_cast(Value(*), Array_Head(paramlist)), Canon(ROOTVAR)
     );
     Key* key = Series_Head(Key, keylist);
@@ -728,7 +728,7 @@ Phase* Make_Action(
 
     assert(Is_Node_Managed(paramlist));
     assert(
-        Is_Word_Isotope_With_Id(Array_Head(paramlist), SYM_ROOTVAR)  // fills in
+        Is_Anti_Word_With_Id(Array_Head(paramlist), SYM_ROOTVAR)  // fills in
         or CTX_TYPE(cast(Context*, paramlist)) == REB_FRAME
     );
 
@@ -784,7 +784,7 @@ Phase* Make_Action(
     // !!! We may have to initialize the exemplar rootvar.
     //
     REBVAL *rootvar = Series_Head(REBVAL, paramlist);
-    if (Is_Word_Isotope_With_Id(rootvar, SYM_ROOTVAR)) {
+    if (Is_Anti_Word_With_Id(rootvar, SYM_ROOTVAR)) {
         INIT_VAL_FRAME_ROOTVAR(rootvar, paramlist, ACT_IDENTITY(act), UNBOUND);
     }
 

@@ -236,7 +236,7 @@ DECLARE_NATIVE(panic)
         p = v;
     }
     else {  // interpret reason as a message
-      if (Is_Word_Isotope(v)) {
+      if (Is_Anti_Word(v)) {
             p = String_UTF8(Cell_Word_Symbol(v));
         }
         else if (Is_Text(v)) {

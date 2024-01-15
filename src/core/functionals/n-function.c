@@ -490,7 +490,7 @@ DECLARE_NATIVE(unwind)
 // !!! This might be a little more natural if the label of the throw was a
 // FRAME! value.  But that also would mean throws named by frames couldn't be
 // taken advantage by the user for other features, while this only takes one
-// function away.  (Or, perhaps Isotope frames could be used?)
+// function away.  (Or, perhaps antiform frames could be used?)
 {
     INCLUDE_PARAMS_OF_UNWIND;
 

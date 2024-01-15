@@ -22,17 +22,17 @@
 // Null is used as a signal for "soft failure", e.g. (find [c d] 'e) is null.
 // It is treated as conditionally false by branching constructs like IF.
 //
-// The representation for nulls is the isotope form of the WORD! "null":
+// The representation for nulls is the antiform of the WORD! "null":
 //
 //    >> find [c d] 'e
-//    == ~null~  ; isotope
+//    == ~null~  ; anti
 //
 // This choice conveniently fits with the rule that nulls should not be able
-// to be stored in blocks (as no isotope forms can be).  Greater safety comes
-// from catching potential mistakes with this property:
+// to be stored in blocks (as no antiforms can be).  Greater safety comes from
+// catching potential mistakes with this property:
 //
 //    >> append [a b] find [c d] 'e
-//    ** Error: Cannot put ~null~ isotopes in blocks
+//    ** Error: Cannot put ~null~ antiforms in blocks
 //
 // If a no-op is desired in this situation, MAYBE can be used to convert the
 // null to a void:
@@ -70,21 +70,21 @@ INLINE bool Is_Nulled(const Cell* v) {
         and Cell_Word_Id(v) == SYM_NULL;
 }
 
-#define Init_Word_Isotope(out,label) \
+#define Init_Anti_Word(out,label) \
     TRACK(Init_Any_Word_Untracked(ensure(Sink(Value(*)), (out)), REB_WORD, \
-            (label), ISOTOPE_0))
+            (label), ANTIFORM_0))
 
 #define Init_Quasi_Word(out,label) \
-    TRACK(Init_Any_Word_Untracked((out), REB_WORD, (label), QUASI_2))
+    TRACK(Init_Any_Word_Untracked((out), REB_WORD, (label), QUASIFORM_2))
 
 #define Init_Nulled(out) \
-    Init_Word_Isotope((out), Canon(NULL))
+    Init_Anti_Word((out), Canon(NULL))
 
 #define Init_Quasi_Null(out) \
     Init_Quasi_Word((out), Canon(NULL))
 
 INLINE bool Is_Quasi_Null(const Cell* v) {
-    if (not Is_Quasi(v))
+    if (not Is_Quasiform(v))
         return false;
     if (HEART_BYTE(v) != REB_WORD)
         return false;
@@ -98,21 +98,21 @@ INLINE bool Is_Quasi_Null(const Cell* v) {
     Is_Quasi_Null(v)
 
 
-//=//// "HEAVY NULLS" (BLOCK! Isotope Pack with `~null~` in it) ///////////=//
+//=//// "HEAVY NULLS" (BLOCK! Antiform Pack with `~null~` in it) //////////=//
 //
-// An "pack" of a ~[~null~]~ isotope is used for the concept of a "heavy null".
+// An "pack" of ~[~null~]~ antiform is used for the concept of a "heavy null".
 // This is something that will act like "pure" NULL in almost all contexts,
 // except that things like THEN will consider it to have been the product of
 // a "taken branch".
 //
 //     >> x: ~[~null~]~
-//     == ~null~  ; isotope
+//     == ~null~  ; anti
 //
 //     >> if true [null]
-//     == ~[~null~]~  ; isotope
+//     == ~[~null~]~  ; anti
 //
 //     >> if true [null] else [print "This won't run"]
-//     == ~[~null~]~  ; isotope
+//     == ~[~null~]~  ; anti
 //
 // ("Heavy Voids" are an analogous concept for VOID.)
 
@@ -120,7 +120,7 @@ INLINE bool Is_Quasi_Null(const Cell* v) {
     Init_Pack((out), PG_1_Quasi_Null_Array)
 
 #define Init_Meta_Of_Heavy_Null(out) \
-    TRACK(Init_Pack_Untracked((out), QUASI_2, (a)))
+    TRACK(Init_Pack_Untracked((out), QUASIFORM_2, (a)))
 
 INLINE bool Is_Heavy_Null(const Cell* v) {
     if (not Is_Pack(v))

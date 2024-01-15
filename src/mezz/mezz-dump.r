@@ -37,7 +37,7 @@ dump: function [
     val-to-text: function [return: [text!] ^val [any-value?]] [
         return case [
             void? val ["; void"]
-            quasi? val [unspaced [mold val space space "; isotope"]]
+            quasi? val [unspaced [mold val space space "; anti"]]
 
             (elide val: unquote val)
 
@@ -228,7 +228,7 @@ summarize-obj: function [
         for-each [word val] obj [
             if unset? 'val [continue]  ; don't consider unset fields
 
-            kind: kind of noisotope get/any 'val
+            kind: kind of noantiform get/any 'val
 
             str: if kind = object! [
                 spaced [word, form words of val]
@@ -253,7 +253,7 @@ summarize-obj: function [
                 fail 'pattern
             ]
 
-            if desc: description-of noisotope get/any 'val [
+            if desc: description-of noantiform get/any 'val [
                 if 48 < length of desc [
                     desc: append copy/part desc 45 "..."
                 ]

@@ -73,14 +73,14 @@ INLINE Bounce Run_Generic_Dispatch_Core(
 ){
     GENERIC_HOOK *hook;
     switch (QUOTE_BYTE(first_arg)) {
-      case ISOTOPE_0:
-        hook = &T_Isotope;
+      case ANTIFORM_0:
+        hook = &T_Antiform;
         break;
-      case UNQUOTED_1:
+      case NOQUOTE_1:
         hook = Generic_Hook_For_Type_Of(first_arg);
         break;
-      case QUASI_2:
-        hook = &T_Quasi;
+      case QUASIFORM_2:
+        hook = &T_Quasiform;
         break;
       default:
         hook = &T_Quoted;  // a few things like COPY are supported by QUOTED!

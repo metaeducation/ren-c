@@ -259,7 +259,7 @@ REBLEN Find_Map_Entry(
     Specifier* Cell_Specifier,
     bool strict
 ) {
-    assert(not Is_Isotope(key));
+    assert(not Is_Antiform(key));
 
     Series* hashlist = MAP_HASHLIST(map); // can be null
     Array* pairlist = MAP_PAIRLIST(map);
@@ -622,7 +622,7 @@ REBTYPE(Map)
 
       case SYM_SELECT: {
         INCLUDE_PARAMS_OF_SELECT;
-        if (Is_Isotope(ARG(value)))
+        if (Is_Antiform(ARG(value)))
             fail (ARG(value));
 
         UNUSED(PARAM(series));  // covered by `v`
@@ -680,7 +680,7 @@ REBTYPE(Map)
         if (not Is_Splice(value))
             fail ("Appending to MAP! only accepts a splice block of key/value");
 
-        QUOTE_BYTE(value) = UNQUOTED_1;
+        QUOTE_BYTE(value) = NOQUOTE_1;
 
         Map* m = VAL_MAP_Ensure_Mutable(map);
 
@@ -727,9 +727,9 @@ REBTYPE(Map)
         INCLUDE_PARAMS_OF_PICK_P;
         UNUSED(ARG(location));
 
-        const Cell* picker = ARG(picker);  // isotope pickers not allowed
-        if (Is_Isotope(picker))
-            return RAISE(Error_Bad_Isotope(picker));
+        const Cell* picker = ARG(picker);
+        if (Is_Antiform(picker))
+            return RAISE(Error_Bad_Antiform(picker));
 
         bool strict = false;
 
@@ -759,9 +759,9 @@ REBTYPE(Map)
         INCLUDE_PARAMS_OF_POKE_P;
         UNUSED(ARG(location));
 
-        const Cell* picker = ARG(picker);  // isotope pickers not allowed
-        if (Is_Isotope(picker))
-            return RAISE(Error_Bad_Isotope(picker));
+        const Cell* picker = ARG(picker);
+        if (Is_Antiform(picker))
+            return RAISE(Error_Bad_Antiform(picker));
 
         // Fetching and setting with path-based access is case-preserving for
         // initial insertions.  However, the case-insensitivity means that all
@@ -774,8 +774,8 @@ REBTYPE(Map)
 
         REBVAL *setval = ARG(value);  // Note: VOID interpreted as remove key
 
-        if (Is_Isotope(setval))  // isotopes not allowed as value in maps
-            return RAISE(Error_Bad_Isotope(setval));
+        if (Is_Antiform(setval))  // antiforms not allowed as value in maps
+            return RAISE(Error_Bad_Antiform(setval));
 
         REBINT n = Find_Map_Entry(
             VAL_MAP_Ensure_Mutable(map),  // modified

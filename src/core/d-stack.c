@@ -125,7 +125,7 @@ REBVAL *Init_Near_For_Level(Cell* out, Level* L)
     const Cell* item = Array_At(Level_Array(L), start);
     for (; item != tail and count < 6; ++item, ++count) {
         assert(not Is_Void(item));  // can't be in arrays, API won't splice
-        assert(not Is_Isotope(item));  // can't be in arrays, API won't splice
+        assert(not Is_Antiform(item));  // can't be in arrays, API won't splice
         Derelativize(PUSH(), item, Level_Specifier(L));
 
         if (count == Level_Array_Index(L) - start - 1) {

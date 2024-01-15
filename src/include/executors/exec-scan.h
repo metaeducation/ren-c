@@ -54,7 +54,7 @@
 //
 // NULL splice in top level of rebValue()
 //
-// !!! Appears no longer used; pure NULL now always splices as ~null~ QUASI!
+// !!! No longer used; null antiforms now always splice as ~null~ quasiform
 //
 #define SCAN_EXECUTOR_FLAG_NULLEDS_LEGAL \
     LEVEL_FLAG_26

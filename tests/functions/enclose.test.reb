@@ -43,7 +43,7 @@
         var: 1020
         return nihil
     ]
-    outer: enclose :inner func [return: [quoted! quasi!] f] [
+    outer: enclose :inner func [return: [quoted! quasiform!] f] [
         return ^(eval f)  ; don't unquote it here
     ]
     did all [

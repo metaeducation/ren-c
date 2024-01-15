@@ -106,7 +106,7 @@ INLINE void Drop_Level(Level* L);
 // then use this to get the first value unmeta'd
 //
 INLINE Value(*) Decay_If_Unstable(Atom(*) v) {
-    if (not Is_Isotope(v))
+    if (not Is_Antiform(v))
         return cast(Value(*), v);
 
     if (Is_Lazy(v)) {
@@ -130,10 +130,10 @@ INLINE Value(*) Decay_If_Unstable(Atom(*) v) {
         Derelativize(v, pack_meta_at, Cell_Specifier(v));
         Meta_Unquotify_Undecayed(v);
         if (Is_Pack(v) or Is_Lazy(v))
-            fail (Error_Bad_Isotope(v));  // need more granular unpacking
+            fail (Error_Bad_Antiform(v));  // need more granular unpacking
         if (Is_Raised(v))
             fail (VAL_CONTEXT(v));
-        assert(not Is_Isotope(v) or Is_Isotope_Stable(v));
+        assert(not Is_Antiform(v) or Is_Antiform_Stable(v));
         return cast(Value(*), v);
     }
 
@@ -146,9 +146,9 @@ INLINE Value(*) Decay_If_Unstable(Atom(*) v) {
     return cast(Value(*), v);
 }
 
-// Packs with unstable isotopes in their first cell (or nihil) are not able
-// to be decayed.  Type checking has to be aware of this, and know that such
-// packs shouldn't raise errors.
+// Packs with unstable isotopes in their first cell are not able to be decayed.
+// Type checking has to be aware of this, and know that such packs shouldn't
+// raise errors.
 //
 INLINE bool Is_Pack_Undecayable(Atom(*) pack)
 {

@@ -180,7 +180,7 @@
     (null = append void "abc")
 ]
 
-; The behavior of conditionals returning ~()~ isotopes on empty branches
+; The behavior of conditionals returning ~()~ antiforms on empty branches
 ; leads to a useful interaction with blocks, while retaining the reactivity
 ; of a true branch product with THEN, and false giving void runs ELSE.
 [

@@ -553,7 +553,7 @@ static void Init_System_Object(
     DECLARE_LOCAL (result);
     if (Do_Any_Array_At_Throws(result, boot_sysobj_spec, SPECIFIED))
         panic (result);
-    if (not Is_Word_Isotope_With_Id(result, SYM_DONE))
+    if (not Is_Anti_Word_With_Id(result, SYM_DONE))
         panic (result);
 
     // Init_Action_Adjunct_Shim() made Root_Action_Adjunct as a bootstrap hack
@@ -622,7 +622,7 @@ static void Init_Contexts_Object(void)
     // is wrong if it's used during boot.
     //
     const char *label = "startup-mezz-not-finished-yet";
-    Init_Word_Isotope(
+    Init_Anti_Word(
         Get_System(SYS_CONTEXTS, CTX_USER),
         Intern_UTF8_Managed(cb_cast(label), strsize(label))
     );

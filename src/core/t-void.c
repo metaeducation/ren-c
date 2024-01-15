@@ -26,11 +26,11 @@
 
 
 //
-//  MAKE_Quasi: C
+//  MAKE_Quasiform: C
 //
-// See also ISOTOPIC for making isotopes.
+// See also ANTI for making antiforms.
 //
-Bounce MAKE_Quasi(
+Bounce MAKE_Quasiform(
     Level* level_,
     enum Reb_Kind kind,
     Option(Value(const*)) parent,
@@ -42,32 +42,32 @@ Bounce MAKE_Quasi(
     if (Is_Quoted(arg))  // QUOTED! competes for quote byte with quasiform
         return RAISE(Error_Bad_Make(kind, arg));
 
-    // !!! Should it allow things that are already QUASI! (?)  This does, but
-    // Quasify() does not.
+    // !!! Should it allow things that are already QUASIFORM! (?)  This does,
+    // but Quasify() does not.
 
     Copy_Cell(OUT, arg);
-    QUOTE_BYTE(OUT) = QUASI_2;
+    QUOTE_BYTE(OUT) = QUASIFORM_2;
     return OUT;
 }
 
 
 //
-//  TO_Quasi: C
+//  TO_Quasiform: C
 //
-// TO is disallowed, e.g. you can't TO convert an integer of 0 to a blank.
+// TO is disallowed at the moment (use QUASI)
 //
-Bounce TO_Quasi(Level* level_, enum Reb_Kind kind, const REBVAL *data) {
+Bounce TO_Quasiform(Level* level_, enum Reb_Kind kind, const REBVAL *data) {
     return RAISE(Error_Bad_Make(kind, data));
 }
 
 
 //
-//  CT_Quasi: C
+//  CT_Quasiform: C
 //
-REBINT CT_Quasi(NoQuote(const Cell*) a, NoQuote(const Cell*) b, bool strict)
+REBINT CT_Quasiform(NoQuote(const Cell*) a, NoQuote(const Cell*) b, bool strict)
 {
     UNUSED(a); UNUSED(b); UNUSED(strict);
-    assert(!"CT_Quasi should never be called");
+    assert(!"CT_Quasiform should never be called");
     return 0;
 }
 
@@ -75,7 +75,7 @@ REBINT CT_Quasi(NoQuote(const Cell*) a, NoQuote(const Cell*) b, bool strict)
 //
 //  REBTYPE: C
 //
-REBTYPE(Quasi)
+REBTYPE(Quasiform)
 {
     REBVAL *quasi = D_ARG(1);
 

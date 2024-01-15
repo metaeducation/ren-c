@@ -218,7 +218,7 @@ Bounce Action_Executor(Level* L)
             if (Cell_ParamClass(PARAM) != PARAMCLASS_META) {
                 if (Is_Barrier(ARG)) {
                     STATE = ST_ACTION_BARRIER_HIT;
-                    Init_Word_Isotope(ARG, Canon(END));
+                    Init_Anti_Word(ARG, Canon(END));
                 }
                 else
                     Decay_If_Unstable(ARG);
@@ -421,7 +421,7 @@ Bounce Action_Executor(Level* L)
     //    Thus when reaching this point, it must carry the UENEVALUATED FLAG.
 
         if (STATE == ST_ACTION_BARRIER_HIT) {
-            Init_Word_Isotope(ARG, Canon(END));
+            Init_Anti_Word(ARG, Canon(END));
             goto continue_fulfilling;
         }
 
@@ -577,7 +577,7 @@ Bounce Action_Executor(Level* L)
   //=//// ERROR ON END MARKER, BAR! IF APPLICABLE /////////////////////////=//
 
         if (Is_Level_At_End(L)) {
-            Init_Word_Isotope(ARG, Canon(END));
+            Init_Anti_Word(ARG, Canon(END));
             goto continue_fulfilling;
         }
 
@@ -592,7 +592,7 @@ Bounce Action_Executor(Level* L)
           case PARAMCLASS_NORMAL:
           case PARAMCLASS_META: {
             if (Is_Level_At_End(L)) {
-                Init_Word_Isotope(ARG, Canon(END));
+                Init_Anti_Word(ARG, Canon(END));
                 goto continue_fulfilling;
             }
 
@@ -823,7 +823,7 @@ Bounce Action_Executor(Level* L)
   //    modified.  Even though it's hidden, it may need to be typechecked
   //    again (unless it was *fully* hidden).
   //
-  // 2. Parameter isotopes are the default values from MAKE FRAME!.
+  // 2. Parameter antiforms are the default values from MAKE FRAME!.
   //
   // 3. We can't a-priori typecheck the variadic argument, since the values
   //    aren't calculated until the function starts running.  Instead we stamp
@@ -880,7 +880,7 @@ Bounce Action_Executor(Level* L)
                 continue;
             }
         }
-        else if (Is_Word_Isotope_With_Id(ARG, SYM_END)) {
+        else if (Is_Anti_Word_With_Id(ARG, SYM_END)) {
             if (Not_Parameter_Flag(PARAM, ENDABLE))
                 fail (Error_No_Arg(L->label, KEY_SYMBOL(KEY)));
             Init_Nulled(ARG);  // more convenient, use ^META for nuance
@@ -1211,7 +1211,7 @@ void Push_Action(
             | NODE_FLAG_CELL
             | CELL_FLAG_PROTECTED  // payload/binding tweaked, but not by user
             | CELL_MASK_FRAME
-            | FLAG_QUOTE_BYTE(UNQUOTED_1);
+            | FLAG_QUOTE_BYTE(NOQUOTE_1);
     INIT_VAL_CONTEXT_VARLIST(L->rootvar, L->varlist);
 
     INIT_VAL_FRAME_PHASE(L->rootvar, ACT_IDENTITY(act));  // Level_Phase()

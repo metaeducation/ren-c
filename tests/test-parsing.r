@@ -117,7 +117,7 @@ export collect-tests: function [
             ;
             ;    ~bad-pick~ !! (pick #{00} 'x)
             [
-                set expected: quasi! ['!! | (fail "!! must follow ~error-id~")]
+                set expected: quasiform! ['!! | (fail "!! must follow ~error-id~")]
                 |
                 (expected: null)
             ]

@@ -3,15 +3,14 @@
 (not quasi? 1)
 
 (
-    v: make quasi! 'labeled
+    v: make quasiform! 'labeled
     did all [
         quasi? v
         '~labeled~ = v
     ]
 )
 
-; QUASI!s were initially neither true nor false, but this came to be the
-; role of the isotopic forms.
+; quasiforms are reified values and hence conditionally truthy
 ;
 (did first [~()~])
 
@@ -22,8 +21,8 @@
         bad: load-value str
         assert [quasi? bad]
         assert [word = unquasi bad]
-        isotope: ^ do str
-        assert [bad = isotope]
+        quasiform: ^ do str
+        assert [bad = quasiform]
     ]
     true
 )
@@ -107,7 +106,7 @@
     ~no-arg~ !! (foo)
 ]
 
-; !!! Should the ~()~ isotope be usable as a synonym for VOID?
+; ~()~ antiforms were VOID for a short time, but void is now its own thing
 [
     (did foo: func [return: [any-value?]] [return ~()~])
 
@@ -157,26 +156,25 @@
     e.arg1 = 'asiieiajiaosdfbjakbsjxbjkchasdf
 ])
 
-; MATCH will match a quasi-word?! as-is, but falsey inputs produce isotopes
 [
     (''~preserved~ = ^ match quasi-word?! '~preserved~)
     ('~[~null~]~ = ^ match null null)
 ]
 
-; ~quit~ is the label of the QUASI-WORD? isotope you get by default from QUIT.
-; If the result is meant to be used, then QUIT should be passed an argument,
+; ~quit~ is the label of the quasiform you get by default from QUIT.  If the
+; result is meant to be used, then QUIT should be passed an argument,
 ; but the idea is to help draw attention to when a script was cut short
-; prematurely via a QUIT command.  Isotopes may be passed.
+; prematurely via a QUIT command.  Antiforms may be passed.
 ;
 ; Note: DO of BLOCK! does not catch quits, so TEXT! is used here.
 [
     (1 = do "quit/with 1")
     ('~quit~ =  ^ do "quit")
-    ('~isotope~ = ^ do "quit/with ~isotope~")
+    ('~thing~ = ^ do "quit/with ~thing~")
     ('~plain~ = do "quit/with '~plain~")
 ]
 
-; Isotopes make it easier to write generic routines that handle QUASI-WORD?
+; Antiforms make it easier to write generic routines that handle QUASI-WORD?
 ; values, so long as they are "friendly" (e.g. come from picking out of a
 ; block vs. running it, or come from a quote evaluation).
 ;
@@ -230,7 +228,7 @@
 (not error? trap [set 'a '~bad~])
 
 
-; CONCRETIZE is used to make isotopes into the non-isotope form, pass through
+; CONCRETIZE is used to make antiforms into the non-antiform, pass through
 ; all other values.
 [
     ('foo = concretize ~foo~)
@@ -241,7 +239,7 @@
     ((the '''a) = reify the '''a)
 ]
 
-; UNMETA* works on void, but not other "isotopic" forms as a trick
+; UNMETA* works on void, but not other "antiform" forms as a trick
 [
     (void? unmeta* void)
     ~expect-arg~ !! (

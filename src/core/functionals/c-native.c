@@ -201,7 +201,7 @@ Phase* Make_Native(
 //  {(Internal Function) Create a native, using compiled C code}
 //
 //      return: "Isotopic ACTION!"
-//          [isotope!]  ; [action?] needs NATIVE to define it!
+//          [antiform!]  ; [action?] needs NATIVE to define it!
 //      spec [block!]
 //      /combinator "This native is an implementation of a PARSE keyword"
 //      /intrinsic "This native can be called without building a frame"
@@ -342,7 +342,7 @@ Array* Startup_Natives(const REBVAL *boot_natives)
     DECLARE_LOCAL (discarded);
     if (Do_Any_Array_At_Throws(discarded, skipped, SPECIFIED))
         panic (Error_No_Catch_For_Throw(TOP_LEVEL));
-    if (not Is_Word_Isotope_With_Id(discarded, SYM_DONE))
+    if (not Is_Anti_Word_With_Id(discarded, SYM_DONE))
         panic (discarded);
 
   #if !defined(NDEBUG)

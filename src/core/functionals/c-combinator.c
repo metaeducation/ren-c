@@ -25,7 +25,7 @@
 // series and then returns an indication of how much input it consumed (the
 // "remainder") as well as a synthesized value.  One of its possible return
 // results is a signal of failure, which is done by synthesizing a "pure" NULL
-// (as opposed to a null isotope).
+// (as opposed to a "heavy" null, that's wrapped in a block antiform).
 //
 // So one of the reasons to have a separate COMBINATOR function generator is
 // to force some of those implicit function arguments and returns.
@@ -296,7 +296,7 @@ DECLARE_NATIVE(combinator)
         relativized
     );
 
-    return Init_Frame_Details(  // not isotopic
+    return Init_Frame_Details(  // not an antiform
         OUT,
         combinator,
         ANONYMOUS,
@@ -401,11 +401,11 @@ DECLARE_NATIVE(opt_combinator)
 
 } parser_result_in_out: {  ///////////////////////////////////////////////////
 
-    if (not Is_Nulled(OUT))  // parser succeeded...
-        return OUT;  // so return its result (note: may be null *isotope*)
+    if (not Is_Raised(OUT))  // parser succeeded...
+        return OUT;  // so return its result
 
     Set_Var_May_Fail(remainder, SPECIFIED, input);  // convey no progress made
-    return Init_Heavy_Null(OUT);  // ...but still, non-NULL for success
+    return Init_Nulled(OUT);  // null result
 }}
 
 

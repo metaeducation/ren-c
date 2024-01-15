@@ -1,6 +1,7 @@
 ; %meta.test.reb
 ;
-; Operator whose evaluator behavior is like QUOTE, but accepts isotopes/void
+; Operator whose evaluator behavior is like QUOTE, but accepts antiforms and
+; gives back quaisforms
 
 ((the '3) = ^ 1 + 2)
 

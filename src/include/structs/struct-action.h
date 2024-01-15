@@ -253,8 +253,8 @@ typedef enum {
     PARAMCLASS_SOFT,
 
     // `PARAMCLASS_META` is the only parameter type that can accept unstable
-    // isotopes.  Isotopes become quasiforms when they are an argument, and all
-    // other types receive one added quote level.
+    // isotopes.  Antiforms become quasiforms when they are an argument, and
+    // all other types receive one added quote level.
     //
     //     >> foo: function [^a] [print [{a is} a]
     //

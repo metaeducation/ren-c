@@ -102,7 +102,7 @@
     null = catch [10 + 20]
 )
 
-; Isotopes
+; Antiforms
 (
     '~ugly~ = ^ catch [throw ~ugly~]
 )

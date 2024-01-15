@@ -628,13 +628,13 @@ INLINE void SET_SIGNAL(Flags f) { // used in %sys-series.h
 #include "cells/cell-void.h"  // uses pack array for Init_Heavy_Void()
 #include "cells/cell-unreadable.h"  // a cell not READABLE(), but WRITABLE()
 
-#include "cells/cell-comma.h"  // Is_Elision() references nihil array isotope
+#include "cells/cell-comma.h"  // Is_Elision() references nihil block antiform
 
 #include "cells/cell-quoted.h"  // has special handling for voids/nones
 
 #include "cells/cell-word.h"  // needs to know about QUOTED! for binding
-#include "cells/cell-nulled.h"  // ~null~ is an isotopic word
-#include "cells/cell-logic.h"  // ~true~ and ~false~ are isotopic words
+#include "cells/cell-nulled.h"  // ~null~ is an antiform word
+#include "cells/cell-logic.h"  // ~true~ and ~false~ are antiform words
 
 #include "cells/cell-string.h"
 #include "cells/cell-binary.h"  // Cell_Bytes_At() interprets string indexes

@@ -436,8 +436,8 @@ void Mold_Or_Form_Value(REB_MOLD *mo, const Cell* v, bool form)
     }
   #endif
 
-    if (Is_Isotope(v))
-        fail (Error_Bad_Isotope(v));
+    if (Is_Antiform(v))
+        fail (Error_Bad_Antiform(v));
 
     REBLEN depth = Cell_Num_Quotes(v);
 

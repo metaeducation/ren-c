@@ -99,7 +99,7 @@ replace: function [
         [any-series!]
     pattern "Value to be replaced (converted if necessary)"
         [<void> element? splice? any-matcher?]
-    replacement "Value to replace with (called each time if action isotope)"
+    replacement "Value to replace with (called each time if action)"
         [<void> element? splice? action?]
 
     ; !!! Note these refinements alias ALL, CASE natives!

@@ -33,7 +33,7 @@
 //         'qarg [word!]       ; PARAMCLASS_QUOTED
 //         earg [<end> time!]  ; PARAMCLASS_NORMAL + PARAMETER_FLAG_ENDABLE
 //         /refine [tag!]      ; PARAMCLASS_NORMAL + PARAMETER_FLAG_REFINEMENT
-//         <local> loc         ; not a PARAMETER!, specialized to ~ isotope
+//         <local> loc         ; not a PARAMETER!, specialized to ~ antiform
 //     ][
 //        ...
 //     ]
@@ -299,7 +299,7 @@ INLINE void Set_Parameter_String(Cell* param, Option(const String*) string) {
 INLINE bool Is_Specialized(Value(const*) v) {
     if (
         HEART_BYTE(v) == REB_PARAMETER
-        and QUOTE_BYTE(v) == ISOTOPE_0
+        and QUOTE_BYTE(v) == ANTIFORM_0
     ){
         if (Get_Cell_Flag_Unchecked(v, VAR_MARKED_HIDDEN))
             assert(!"Unspecialized parameter is marked hidden!");
@@ -323,7 +323,7 @@ INLINE Param* Init_Unconstrained_Parameter_Untracked(
     }
     UNUSED(pclass);
 
-    Reset_Isotope_Header_Untracked(out, CELL_MASK_PARAMETER);
+    Reset_Antiform_Header_Untracked(out, CELL_MASK_PARAMETER);
     PARAMETER_FLAGS(out) = flags;
     INIT_CELL_PARAMETER_SPEC(out, nullptr);
     Init_Cell_Node2(out, nullptr);  // parameter string

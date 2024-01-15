@@ -25,33 +25,33 @@
 // a representation for logic literals.  R3-Alpha used #[true] and #[false]
 // but often molded them as looking like the words true and false anyway.
 //
-// Ren-C's answer is to use the isotopic WORD!s for ~true~ and ~false~,
-// which creates some friction as these isotopic states can't be put in
+// Ren-C's answer is to use the antiform WORD!s for ~true~ and ~false~,
+// which creates some friction as these antiform states can't be put in
 // blocks directly...but that turns out to be a benefit, and helps guide the
 // user to triage their intent with LOGIC-TO-WORD or REIFY-LOGIC, etc.
 //
 //=//// NOTES /////////////////////////////////////////////////////////////=//
 //
-// * See ~null~ for another isotopic word state that is falsey, like ~false~.
+// * See ~null~ for another antiform word state that is falsey, like ~false~.
 //
 // * There may be value to making ~on~ and ~off~ and ~yes~ and ~no~ be other
-//   isotopic words that register as falsey... or more generally allowing
+//   antiform words that register as falsey... or more generally allowing
 //   the concept of truthiness and falseyness to be overridden in a way that
 //   is cross-cutting for a "language skin" (e.g. Redbol)
 //
 // * Despite Rebol's C heritage, the INTEGER! 0 is purposefully not "falsey".
 //
 
-#define Init_True(out)      Init_Word_Isotope((out), Canon(TRUE))
-#define Init_False(out)     Init_Word_Isotope((out), Canon(FALSE))
+#define Init_True(out)      Init_Anti_Word((out), Canon(TRUE))
+#define Init_False(out)     Init_Anti_Word((out), Canon(FALSE))
 
-#define Is_True(out)        Is_Word_Isotope_With_Id((out), SYM_TRUE)
-#define Is_False(out)       Is_Word_Isotope_With_Id((out), SYM_FALSE)
+#define Is_True(out)        Is_Anti_Word_With_Id((out), SYM_TRUE)
+#define Is_False(out)       Is_Anti_Word_With_Id((out), SYM_FALSE)
 
 INLINE bool Is_Logic(const Cell* v) {
     ASSERT_CELL_READABLE(v);
 
-    if (QUOTE_BYTE(v) != ISOTOPE_0)
+    if (QUOTE_BYTE(v) != ANTIFORM_0)
         return false;
 
     if (HEART_BYTE(v) != REB_WORD)  // quote byte checked it
@@ -62,10 +62,10 @@ INLINE bool Is_Logic(const Cell* v) {
 }
 
 #define Init_Logic(out,flag) \
-    Init_Word_Isotope((out), (flag) ? Canon(TRUE) : Canon(FALSE))
+    Init_Anti_Word((out), (flag) ? Canon(TRUE) : Canon(FALSE))
 
 INLINE bool Cell_Logic(const Cell* v) {
-    assert(Is_Isotope(v));
+    assert(Is_Antiform(v));
     Option(SymId) id = Cell_Word_Id(v);
     if (id == SYM_TRUE)
         return true;
@@ -78,9 +78,9 @@ INLINE bool Cell_Logic(const Cell* v) {
 INLINE bool Is_Truthy(const Cell* v) {
     ASSERT_CELL_READABLE(v);
 
-    if (QUOTE_BYTE(v) == ISOTOPE_0) {
+    if (QUOTE_BYTE(v) == ANTIFORM_0) {
         if (HEART_BYTE(v) != REB_WORD)
-            return true;  // all non-word isotopes are truthy?
+            return true;  // all non-word antiforms are truthy?
         Option(SymId) id = Cell_Word_Id(v);
         if (id == SYM_NULL)
             return false;
@@ -88,16 +88,16 @@ INLINE bool Is_Truthy(const Cell* v) {
             return true;
         if (id == SYM_FALSE)
             return false;
-        fail (Error_Bad_Isotope(v));  // !!! special error?
+        fail (Error_Bad_Antiform(v));  // !!! special error?
     }
 
-    if (QUOTE_BYTE(v) != UNQUOTED_1)
-        return true;  // all QUOTED! and QUASI! types are truthy
+    if (QUOTE_BYTE(v) != NOQUOTE_1)
+        return true;  // all quoted values and quasiforms are truthy
 
     if (HEART_BYTE(v) == REB_VOID)
         fail (Error_Bad_Void());  // void is neither truthy nor falsey
 
-    return true;  // all other non-isotopic values are truthy
+    return true;  // all other non-antiform values are truthy
 }
 
 #define Is_Falsey(v) \
@@ -124,7 +124,7 @@ INLINE bool Is_Conditional_True(const REBVAL *v) {
 
 INLINE bool Is_Meta_Of_False(const Cell* v) {
     return (
-        QUOTE_BYTE(v) == QUASI_2
+        QUOTE_BYTE(v) == QUASIFORM_2
         and HEART_BYTE(v) == REB_WORD
         and Cell_Word_Id(v) == SYM_FALSE
     );

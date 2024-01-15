@@ -24,10 +24,10 @@
 //     >> integer?: lambda [v [any-value?]] [integer! = kind of :v]
 //
 //     >> integer? 10
-//     == ~true~  ; isotope
+//     == ~true~  ; anti
 //
 //     >> integer? <foo>
-//     == ~false~  ; isotope
+//     == ~false~  ; anti
 //
 // But given that it is done so often, it's more efficient to have a custom
 // dispatcher for making a typechecker:
@@ -175,7 +175,7 @@ bool Typecheck_Atom_Core(
     Specifier* derived;
     bool match_all;
 
-    if (Cell_Heart(tests) == REB_PARAMETER) {  // usually isotopic
+    if (Cell_Heart(tests) == REB_PARAMETER) {  // usually antiform
         const Array* array = try_unwrap(Cell_Parameter_Spec(tests));
         if (array == nullptr)
             return true;  // implicitly all is permitted
@@ -217,9 +217,9 @@ bool Typecheck_Atom_Core(
         Option(const Symbol*) label = nullptr;  // so goto doesn't cross
 
         // !!! Ultimately, we'll enable literal comparison for quoted/quasi
-        // items.  For the moment just try quasi-words for isotopes.
+        // items.  For the moment just try quasiforms for antiforms.
         //
-        if (Is_Quasi(item)) {
+        if (Is_Quasiform(item)) {
             if (HEART_BYTE(item) == REB_VOID) {
                 if (Is_Trash(v))
                     goto test_succeeded;
@@ -229,7 +229,7 @@ bool Typecheck_Atom_Core(
             if (HEART_BYTE(item) != REB_WORD)
                 fail (item);
 
-            if (not Is_Isoword(v))
+            if (not Is_Antiword(v))
                 continue;
             if (Cell_Word_Symbol(v) == Cell_Word_Symbol(item))
                 goto test_succeeded;
@@ -344,8 +344,8 @@ bool Typecheck_Atom_Core(
             break; }
 
           case REB_QUOTED:
-          case REB_QUASI: {
-            fail ("QUOTED! and QUASI! not currently supported in TYPE-XXX!"); }
+          case REB_QUASIFORM: {
+            fail ("QUOTED! and QUASIFORM! not supported in TYPE-XXX!"); }
 
           case REB_PARAMETER: {
             if (not Typecheck_Atom(test, v))
@@ -354,8 +354,8 @@ bool Typecheck_Atom_Core(
 
           case REB_TYPE_WORD: {
             enum Reb_Kind k;
-            if (Is_Isotope(v) and Is_Isotope_Unstable(v))
-                k = REB_ISOTOPE;
+            if (Is_Antiform(v) and Is_Antiform_Unstable(v))
+                k = REB_ANTIFORM;
             else
                 k = VAL_TYPE(v);
             if (VAL_TYPE_KIND(test) != k)
@@ -425,7 +425,7 @@ bool Typecheck_Coerce_Argument(
         if (Is_Nulled(arg))
             return Get_Parameter_Flag(param, ENDABLE);
 
-        if (not Is_Quasi(arg) and not Is_Quoted(arg))
+        if (not Is_Quasiform(arg) and not Is_Quoted(arg))
             return false;
 
         Meta_Unquotify_Undecayed(arg);  // temporary adjustment (easiest option)
@@ -471,7 +471,7 @@ bool Typecheck_Coerce_Argument(
     const Byte* optimized = Cell_Parameter_Spec(param)->misc.any.at_least_4;
     const Byte* optimized_tail = optimized + sizeof(uintptr_t);
 
-    enum Reb_Kind kind = Is_Stable(arg) ? VAL_TYPE(arg) : REB_ISOTOPE;
+    enum Reb_Kind kind = Is_Stable(arg) ? VAL_TYPE(arg) : REB_ANTIFORM;
 
     if (Get_Parameter_Flag(param, NOOP_IF_VOID))
         assert(kind != REB_VOID);  // should have bypassed typecheck
@@ -495,7 +495,7 @@ bool Typecheck_Coerce_Argument(
       do_coercion:
 
         if (Is_Action(arg)) {
-            QUOTE_BYTE(arg) = UNQUOTED_1;
+            QUOTE_BYTE(arg) = NOQUOTE_1;
             coerced = true;
             goto typecheck_again;
         }
@@ -507,9 +507,9 @@ bool Typecheck_Coerce_Argument(
             goto return_false;  // nihil or unstable isotope in first slot
 
         if (Is_Barrier(arg))
-            goto return_false;  // comma isotopes
+            goto return_false;  // comma antiforms
 
-        if (Is_Isotope(arg) and Is_Isotope_Unstable(arg)) {
+        if (Is_Antiform(arg) and Is_Antiform_Unstable(arg)) {
             Decay_If_Unstable(arg);
             coerced = true;
             goto typecheck_again;

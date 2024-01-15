@@ -8,7 +8,7 @@
 
 ; R3-Alpha and Red permit GET-WORD! access to subvert unsetness.  Rebol2 did
 ; not permit this.  At one point Ren-C limited GET-WORD! use to functions, but
-; the rise of more isotopic forms leans to doing it like R3-Alpha and Red.
+; the rise of more antiform forms leans to doing it like R3-Alpha and Red.
 (
     unset 'a
     e: sys.util.rescue [a]

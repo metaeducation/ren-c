@@ -408,7 +408,7 @@ import*: func [
     return: "Loaded module"
         [<opt> module!]
     @product' "Evaluative product of module body (only if WHERE is BLANK!)"
-        [~cached~ ~registered~ ~nameless~ quoted! quasi!]
+        [~cached~ ~registered~ ~nameless~ quoted! quasiform!]
     where "Where to put exported definitions from SOURCE"
         [<opt> module!]
     source [
@@ -690,7 +690,7 @@ export*: func [
         val: get/any word: match word! items.1 else [
             fail ["EXPORT only accepts WORD! or WORD! [typeset], not" ^items.1]
         ]
-        ; !!! notation for exporting isotopes?
+        ; !!! notation for exporting antiforms?
         items: next items
 
         (types: match block! items.1) then [

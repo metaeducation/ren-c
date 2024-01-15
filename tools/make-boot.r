@@ -159,7 +159,7 @@ syms-words: copy []
 syms-cscape: copy []
 
 ; It's important for clarity and optimization that REB_VOID is 0 (with the
-; isotope byte being 0, empty memory is interpreted as isotopic VOID, e.g.
+; quote byte being 0, empty memory is interpreted as antiform VOID, e.g.
 ; state of an unset variable, and that's one of many good reasons for it).
 ;
 ; But SYM_0 does not line up with that; it is distinctly used for symbols that
@@ -205,7 +205,7 @@ for-each-datatype: func [
     body "Block to evaluate each time"
         [block!]
     <local>
-    name* isoname* description* typesets* class* make* mold* heart* cellmask*
+    name* antiname* description* typesets* class* make* mold* heart* cellmask*
     completed* running*
 ][
     heart*: 1  ; VOID is 0, and is not in the type table
@@ -214,7 +214,7 @@ for-each-datatype: func [
 
         set name* word!
         set description* text!
-        [set isoname* quasi! | (isoname*: null)]
+        [set antiname* quasiform! | (antiname*: null)]
         [set cellmask* group!]
         [set typesets* block!]
         [and block! into [
@@ -235,7 +235,7 @@ for-each-datatype: func [
                     any-name!
                 ]
                 class: class*
-                isoname: either isoname* [unquasi isoname*] [null]
+                antiname: either antiname* [unquasi antiname*] [null]
                 make: make*
                 mold: mold*
             ]
@@ -302,7 +302,7 @@ for-each-typerange: func [
                 append types* to text! name*
             ])]
             text!
-            opt quasi!
+            opt quasiform!
             group!
             block!
             block!
@@ -379,7 +379,7 @@ for-each-datatype t [
     ;
     ; Pseudotypes don't make macros or cell masks.
     ;
-    if find ["quoted" "quasi" "isotope"] ensure text! t/name  [
+    if find ["quoted" "quasiform" "antiform"] ensure text! t/name  [
         continue
     ]
 
@@ -410,7 +410,7 @@ e-types/emit {
         ((FLAGIT_KIND(REB_MAX) - 1) & ~FLAGIT_KIND(REB_VOID))
 
     #define TS_ELEMENT \
-        ((FLAGIT_KIND(REB_MAX) - 1) & ~FLAGIT_KIND(REB_VOID) & ~FLAGIT_KIND(REB_ISOTOPE))
+        ((FLAGIT_KIND(REB_MAX) - 1) & ~FLAGIT_KIND(REB_VOID) & ~FLAGIT_KIND(REB_ANTIFORM))
 }
 
 typeset-sets: copy []
@@ -501,16 +501,16 @@ e-types/emit {
 e-types/emit newline
 
 for-each-datatype t [
-    if not t/isoname [continue]  ; no special name for isotopic form
+    if not t/antiname [continue]  ; no special name for antiform form
 
     e-types/emit 't {
-        #define Is_$<Propercase To Text! T/Isoname>(v) \
+        #define Is_$<Propercase To Text! T/Antiname>(v) \
             ((READABLE(v)->header.bits & (FLAG_QUOTE_BYTE(255) | FLAG_HEART_BYTE(255))) \
-                == (FLAG_QUOTE_BYTE(ISOTOPE_0) | FLAG_HEART_BYTE(REB_$<T/NAME>)))
+                == (FLAG_QUOTE_BYTE(ANTIFORM_0) | FLAG_HEART_BYTE(REB_$<T/NAME>)))
 
-        #define Is_Meta_Of_$<Propercase To Text! T/Isoname>(v) \
+        #define Is_Meta_Of_$<Propercase To Text! T/Antiname>(v) \
         ((READABLE(v)->header.bits & (FLAG_QUOTE_BYTE(255) | FLAG_HEART_BYTE(255))) \
-            == (FLAG_QUOTE_BYTE(QUASI_2) | FLAG_HEART_BYTE(REB_$<T/NAME>)))
+            == (FLAG_QUOTE_BYTE(QUASIFORM_2) | FLAG_HEART_BYTE(REB_$<T/NAME>)))
     }
     e-types/emit newline
 ]
@@ -599,7 +599,7 @@ e-typesets/emit {
 
 e-typesets/emit {
     const REBU64 Typesets[] = ^{
-        TS_VALUE,  /* any-value? (everything that isn't an unstable isotope) */
+        TS_VALUE,  /* any-value? (everything that isn't an unstable antiform) */
         TS_ELEMENT,  /* any-element? (everything you can put in an array)  */
 }
 

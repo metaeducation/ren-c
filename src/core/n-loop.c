@@ -44,7 +44,7 @@
 //    from one that has CONTINUE'd each body.  Unless those are allowed to be
 //    indistinguishable, loop compositions that work don't work.  So instead:
 //
-//        for-each x [1 2 3] [if x != 3 [x]]  =>  ~()~ isotope
+//        for-each x [1 2 3] [if x != 3 [x]]  =>  ~[']~ antiform
 //
 bool Try_Catch_Break_Or_Continue(
     Sink(Value(*)) out,
@@ -1216,10 +1216,10 @@ DECLARE_NATIVE(every)
 //
 //        every x [1 2 3 4] [if even? x [x]]  =>  4
 //
-//        every x [1 2 3 4] [if odd? x [x]]  => trash (~) isotope
+//        every x [1 2 3 4] [if odd? x [x]]  => ~[']~ antiform
 //
-//    It returns trash isotopes (~) on the skipped bodies, as loop composition
-//    breaks down if we try to keep old values.
+//    It returns heavy void on skipped bodies, as loop composition breaks down
+//    if we try to keep old values.
 //
 {
     INCLUDE_PARAMS_OF_EVERY;
@@ -1365,7 +1365,7 @@ DECLARE_NATIVE(remove_each)
 //
 //        remove-each x [...] [n: _, ..., match [logic? integer!] false]
 //
-//    The ~false~ isotope protects from having a condition you thought should
+//    The ~false~ antiform protects from having a condition you thought should
 //    be truthy come back #[false] and be falsey.
 //
 // 6. The only signals allowed are LOGIC! and void.  This is believed to be
@@ -1477,9 +1477,9 @@ DECLARE_NATIVE(remove_each)
             keep = true;
             Init_Heavy_Null(OUT);  // NULL reserved for BREAK signal
         }
-        else if (Is_Isotope(OUT)) {  // don't decay isotopes [5]
+        else if (Is_Antiform(OUT)) {  // don't decay isotopes [5]
             threw = true;
-            Init_Error(SPARE, Error_Bad_Isotope(OUT));
+            Init_Error(SPARE, Error_Bad_Antiform(OUT));
             Init_Thrown_With_Label(LEVEL, Lib(NULL), stable_SPARE);
             goto finalize_remove_each;
         }
@@ -1811,14 +1811,14 @@ DECLARE_NATIVE(map)
         goto next_iteration;  // okay to skip
 
     if (Is_Splice(SPARE)) {
-        Quasify_Isotope(SPARE);
+        Quasify_Antiform(SPARE);
         const Cell* tail;
         const Cell* v = Cell_Array_At(&tail, SPARE);
         for (; v != tail; ++v)
             Derelativize(PUSH(), v, Cell_Specifier(SPARE));
     }
-    else if (Is_Isotope(SPARE)) {
-        Init_Error(SPARE, Error_Bad_Isotope(SPARE));
+    else if (Is_Antiform(SPARE)) {
+        Init_Error(SPARE, Error_Bad_Antiform(SPARE));
         Init_Thrown_Failure(LEVEL, stable_SPARE);
         goto finalize_map;
     }

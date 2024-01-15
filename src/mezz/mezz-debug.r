@@ -33,16 +33,16 @@ verify: function [
         ; FIND does) we'd have a meta-PACK! and have to write code to decay
         ; it ourselves.
         ;
-        ; Using a meta-value here is a way of reacting to isotopes, but we
+        ; Using a meta-value here is a way of reacting to unstable isotopes,
         ; could also put that responsibility onto the access points.  Review.
         ;
         [^/result']: evaluate/next conditions 'pos
         pos
     ][
         any [
-            null? result'  ; evaluated to ~[]~ isotope, no first item to unpack
+            null? result'  ; ~null~ antiform, no first item to unpack
             '~true~ = result'  ; truthy
-            non quasi! result' then [result' <> null']
+            non quasiform! result' then [result' <> null']
 
             if :handler [  ; may or may-not take two arguments
                 reaction: ^ if block? :handler [
@@ -69,8 +69,8 @@ verify: function [
                 arg1: compose [
                     (spread copy/part conditions pos) ** (case [
                         null' = result' ['~null~]
-                        '~false~ = result' ['~false~]  ; isotopic false
-                        isoword? result' [result']  ; non-~true~ isotope
+                        '~false~ = result' ['~false~]  ; antiform false
+                        antiword? result' [result']  ; non-~true~ antiform
                     ])
                 ]
             ]

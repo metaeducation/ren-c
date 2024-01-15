@@ -38,7 +38,7 @@ REBOL [
     Notes: {
       * VOID is not a datatype (type of void is NULL), and not included here.
         It uses the special heart byte of 0, which is also the heart byte of
-        its isotopic form (called "trash", the contents of unset variables).
+        its antiform (called "trash", the contents of unset variables).
         While other enum values are not baked in, zero as the heart byte of
         voids and nones are used with memset() for optimizations.
 
@@ -304,7 +304,7 @@ pair        "two dimensional point or size"
                 [sequence    *       *]
 
     word        "evaluates a variable or action"
-    ~isoword~   (CELL_FLAG_FIRST_IS_NODE)  ; !!! Better name than isoword?
+    ~antiword~   (CELL_FLAG_FIRST_IS_NODE)  ; !!! Better name than antiword?
                 [any-word! any-utf8!]
                 [word        *       +]
 
@@ -378,22 +378,22 @@ pair        "two dimensional point or size"
                 [any-block! any-array! any-series! any-branch!]
                 [array       *       *]
 
-    meta-group  "group that quotes its product or removes isotope status"
+    meta-group  "group that quotes product or turns quasiforms to antiforms"
                 (CELL_FLAG_FIRST_IS_NODE)
                 [any-group! any-array! any-series!]
                 [array       *       *]
 
-    meta-path   "path that quotes its product or removes isotope status"
+    meta-path   "path that quotes product or turns quasiforms to antiforms"
                 ()
                 [any-path! any-sequence!]
                 [sequence    *       *]
 
-    meta-tuple  "tuple that quotes its product or removes isotope status"
+    meta-tuple  "tuple that quotes product or turns quasiforms to antiforms"
                 ()
                 [any-tuple! any-sequence!]
                 [sequence    *       *]
 
-    meta-word   "word that quotes its product or removes isotope status"
+    meta-word   "word that quotes product or turns quasiforms to antiforms"
                 (CELL_FLAG_FIRST_IS_NODE)
                 [any-word! any-utf8!]
                 [word        *       +]
@@ -413,33 +413,34 @@ comma       "separator between full evaluations (that is otherwise invisible)"
 
 
 ; ============================================================================
-; QUOTED and QUASI "PSEUDOTYPES"
+; QUOTED, QUASIFORM, and ANTIFORM "PSEUDOTYPES"
 ; ============================================================================
 
-; The REB_QUOTED and REB_QUASI enum values never appear in the HEART_BYTE() of
-; a cell.  These are synthesized datatypes when the QUOTE_BYTE() contains
-; nonzero values.
+; The REB_QUOTED, REB_QUASIFORM, and REB_ANTIFORM enum values never appear in
+; the HEART_BYTE() of a cell.  These are synthesized datatypes when the
+; QUOTE_BYTE() contains values other than one (NOQUOTE_1).
 ;
-; Neither are inert...QUASI! becomes isotopic when evaluated, and QUOTED!
-; removes one level of quoting.
+; They're not inert... QUASIFORM! becomes ANTIFORM! when evaluated, and QUOTED!
+; removes one level of quoting.  (ANTIFORM! should never be seen by the
+; evaluator, only produced by it.)
 ;
 ; NOTE: These are in the %types.r table because that drives the creation of
 ; things like "type spec strings" as well as the QUOTED! and QUOTED? usermode
 ; functions, which are in specific places expected for a "datatype".  The
-; macros for testing Is_Quoted()/Is_Quasi()/Is_Isotope() are exempted and
+; macros for testing Is_Quoted()/Is_Quasiform()/Is_Antiform() are exempted and
 ; written by hand.
 
-quasi       "value which evaluates to a form that triggers errors on access"
+quasiform   "value which evaluates to an antiform"
             ()
             []
-            [quasi       +       -]
+            [quasiform    +       -]
 
 quoted      "container for arbitrary levels of quoting"
             ()
             [any-branch!]
             [quoted       +       -]
 
-isotope     "special values that cannot be stored in blocks"
+antiform    "special states that cannot be stored in blocks"
             ()
             []
             [quoted       +       -]

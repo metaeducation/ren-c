@@ -542,7 +542,7 @@ INLINE Context* VAL_WORD_CONTEXT(const REBVAL *v) {
 // The Lookup_Word_May_Fail() function takes the conservative default that
 // only const access is needed.  A const pointer to a REBVAL is given back
 // which may be inspected, but the contents not modified.  While a bound
-// variable that is not currently set will return an isotopic void value,
+// variable that is not currently set will return an antiform void value,
 // Lookup_Word_May_Fail() on an *unbound* word will raise an error.
 //
 // Lookup_Mutable_Word_May_Fail() offers a parallel facility for getting a
@@ -595,7 +595,7 @@ INLINE const REBVAL *Get_Word_May_Fail(
     Specifier* specifier
 ){
     const REBVAL *var = Lookup_Word_May_Fail(any_word, specifier);
-    if (Is_Isotope(var) and not Is_Logic(var))
+    if (Is_Antiform(var) and not Is_Logic(var))
         fail (Error_Bad_Word_Get(any_word, var));
 
     return Copy_Cell(out, var);

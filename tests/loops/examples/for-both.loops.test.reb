@@ -105,7 +105,7 @@
     ])
 
     ; It's not possible to return a "pure NULL" otherwise.  But the existence
-    ; of ~[~null~]~ isotopes permit a non-break-signaling construct that
+    ; of ~[~null~]~ antiforms permit a non-break-signaling construct that
     ; carries semantic intent of a "there's an answer and it is null"
 
     ([1 2 3 4] = collect [
@@ -144,14 +144,14 @@
         ]
     )
 
-    ; Handles isotopes (^META operations make quasiforms, these are truthy, so
+    ; Handles antiforms (^META operations make quasiforms, these are truthy, so
     ; the only falsey possibility is the BREAK
 
     ([1 2 3 4] = collect [
         assert [
             '~bad~ = ^ for-both x [1 2] [3 4] [
                 keep x
-                ~bad~  ; makes isotope
+                ~bad~  ; makes antiform
             ]
         ]
     ])
@@ -159,7 +159,7 @@
     ; FOR-BOTH provides a proof of why this is true:
     ;
     ;     >> for-each x [1 2] [if x = 2 [continue]]
-    ;     == ~[~]~  ; isotope
+    ;     == ~[~]~  ; anti
     ;
     ; Plain void is reserved for "loop didn't run", and we do not want
     ; a loop that consists of just CONTINUE to lie and say the body of the

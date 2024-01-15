@@ -48,8 +48,8 @@
 //=//// BINDABILITY ///////////////////////////////////////////////////////=//
 //
 // Note that the HEART_BYTE() is what is being tested--e.g. the type that the
-// cell payload and extra actually are *for*.  QUOTED! and QUASI! indicators
-// in the quote byte do not affect it.
+// cell payload and extra actually are *for*.  Quoted/quasiform/antiform
+// indicators in the quote byte do not affect it.
 
 #define Is_Bindable_Kind(k) \
     ((k) >= REB_OBJECT)
@@ -63,7 +63,7 @@
 // All the inert types are grouped together to make this test fast.
 
 INLINE bool Any_Inert_Kind(Byte k) {
-    assert(k != REB_VOID and k != REB_ISOTOPE);
+    assert(k != REB_VOID and k != REB_ANTIFORM);
     return k <= REB_BLOCK and k != REB_FRAME;  // hack for frame
 }
 

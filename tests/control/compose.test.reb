@@ -20,7 +20,7 @@
 ([<ok> *] = compose [<ok> * ((void))])
 
 
-~bad-isotope~ !! (
+~bad-antiform~ !! (
     compose [(~bad~) * <ok>]
 )
 ~need-non-null~ !! (
@@ -29,7 +29,7 @@
 ~need-non-null~ !! (
     compose [(~null~) * <ok>]
 )
-~bad-isotope~ !! (
+~bad-antiform~ !! (
     compose [(~false~)]
 )
 ([~false~] = compose [('~false~)])
@@ -207,7 +207,7 @@
 ; ([-30 70] = compose /negate [(10 + 20) ((30 + 40))])
 
 
-; isotopes besides splices are not legal in compose, but you can reify them
+; antiforms besides splices are not legal in compose, but you can reify them
 [
     ([<a> ~null~ <b>] = apply :compose [
         [<a> (if true [null]) <b>]

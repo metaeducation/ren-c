@@ -428,18 +428,18 @@ static void Propagate_All_GC_Marks(void)
             assert(flavor <= FLAVOR_MAX_ARRAY);
 
             switch (QUOTE_BYTE(v)) {
-              case ISOTOPE_0:
+              case ANTIFORM_0:
                 if (flavor < FLAVOR_MIN_ISOTOPES_OK)
-                    panic (v);  // isotopes not legal in some array types
+                    panic (v);  // antiforms not legal in many array types
 
-                if (Is_Isotope_Unstable(cast(Atom(*), v)))  // illegal in array
+                if (Is_Antiform_Unstable(cast(Atom(*), v)))  // always illegal
                     panic (v);
                 break;
 
-              case UNQUOTED_1:
+              case NOQUOTE_1:
                 if (HEART_BYTE(v) == REB_VOID) {
                     if (flavor < FLAVOR_MIN_VOIDS_OK)
-                        panic (v);  // voids not legal in some array types
+                        panic (v);  // voids not legal in many array types
                 }
                 break;
 
@@ -491,7 +491,7 @@ void Reify_Variadic_Feed_As_Array_Feed(
         do {
             Derelativize(PUSH(), At_Feed(feed), FEED_SPECIFIER(feed));
             assert(not Is_Void(TOP));
-            assert(not Is_Isotope(TOP));
+            assert(not Is_Antiform(TOP));
             Fetch_Next_In_Feed(feed);
         } while (Not_Feed_At_End(feed));
 

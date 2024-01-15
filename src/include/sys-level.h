@@ -41,12 +41,11 @@
 //
 INLINE bool ANY_ESCAPABLE_GET(const Cell* v) {
     //
-    // !!! Note: GET-BLOCK! is earmarked for isotope generation.
+    // !!! Doesn't include GET-BLOCK!, but should it, e.g. REDUCE escapability?
     //
-    //     >> append [a b c] :[d e]
-    //     == [a b c d e]
-    //
-    // Makes more sense than "escaping a block", whatever that would be.
+    //    for-each :[first [a b] second [c d] [...]
+    //    =>
+    //    for-each [a d] [...]
     //
     return Is_Get_Group(v) or Is_Get_Word(v)
         or Is_Get_Path(v) or Is_Get_Tuple(v);
@@ -514,7 +513,7 @@ INLINE Bounce Native_Void_Result_Untracked(
     assert(out == level_->out);
     UNUSED(out);
     assert(not THROWING);
-    return Init_Void_Untracked(level_->out, UNQUOTED_1);
+    return Init_Void_Untracked(level_->out, NOQUOTE_1);
 }
 
 INLINE Bounce Native_Unmeta_Result(Level* level_, const REBVAL *v) {
@@ -529,7 +528,7 @@ INLINE Bounce Native_Trash_Result_Untracked(
     assert(out == level_->out);
     UNUSED(out);
     assert(not THROWING);
-    return Init_Void_Untracked(level_->out, ISOTOPE_0);
+    return Init_Void_Untracked(level_->out, ANTIFORM_0);
 }
 
 INLINE Bounce Native_Raised_Result(Level* level_, const void *p) {

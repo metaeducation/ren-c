@@ -407,7 +407,7 @@ copy: generic [
     return: "Return type will match the input type"
         [any-value?]
     value "If an ANY-SERIES!, it is only copied from its current position"
-        [<maybe> any-value?]  ; can be e.g. an action isotope, copied as action
+        [<unrun> <maybe> any-value?]  ; frame antiforms copied as frame ATM
     /part "Limits to a given length or position"
         [any-number! any-series! pair!]
     /deep "Also copies series values within the block"
@@ -437,7 +437,7 @@ insert: generic [
         integer!]  ; !!! INSERT returns INTEGER! in ODBC, review this
     series "At position (modified)"
         [<maybe> any-series! port! map! object! bitset! port!]
-    value "What to insert (isotopic groups will splice, e.g. SPREAD)"
+    value "What to insert (antiform groups will splice, e.g. SPREAD)"
         [<void> element? splice?]
     /part "Limits to a given length or position"
         [any-number! any-series! pair!]
@@ -455,7 +455,7 @@ append: generic [
     return: [any-series! port! map! object! module! bitset!]
     series "Any position (modified)"
         [<maybe> any-series! port! map! object! module! bitset!]
-    value "What to append (isotopic groups will splice, e.g. SPREAD)"
+    value "What to append (antiform groups will splice, e.g. SPREAD)"
         [<void> element? splice?]
     /part "Limits to a given length or position"
         [any-number! any-series! pair!]
@@ -473,7 +473,7 @@ change: generic [
     return: [any-series! port!]
     series "At position (modified)"
         [<maybe> any-series! port!]
-    value "The new value (isotopic groups will splice, e.g. SPREAD)"
+    value "The new value (antiform groups will splice, e.g. SPREAD)"
         [<void> element? splice?]
     /part "Limits the amount to change to a given length or position"
         [any-number! any-series! pair!]
@@ -580,7 +580,7 @@ read: generic [
         block!  ; READ/LINES returned BLOCK!
         port!  ; asynchronous READ on PORT!s returned the PORT!
         tuple!  ; READ/DNS returned tuple!
-        quasi!  ; !!! If READ is Ctrl-C'd in nonhaltable API calls, ATM
+        quasiform!  ; !!! If READ is Ctrl-C'd in nonhaltable API calls, ATM
     ]
     source [port! file! url! block!]
     /part "Partial read a given number of units (source relative)"

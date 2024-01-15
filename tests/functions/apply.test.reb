@@ -72,19 +72,13 @@
     ])
 ]
 
-; ^META functions will receive the meta form of the argument, so isotopes will
+; ^META functions will receive the meta form of the argument, antiforms will
 ; be converted to quasiforms and other values quoted.  This is a service given
 ; by APPLY, because the fundamental frame mechanics do not intervene.
 [
     (
         non-detector: lambda [arg] [arg]
-        did all [
-            e: sys.util.rescue [apply :non-detector [~baddie~]]
-            e.id = 'isotope-arg
-            e.arg1 = 'non-detector
-            e.arg2 = 'arg
-            e.arg3 = '~baddie~
-        ]
+        ~baddie~ = apply :non-detector [~baddie~]
     )
     (
         detector: lambda [^arg] [arg]

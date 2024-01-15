@@ -146,8 +146,8 @@ DECLARE_NATIVE(delimit)
         if (Is_Nulled(OUT))  // catches bugs in practice [1]
             return RAISE(Error_Need_Non_Null_Raw());
 
-        if (Is_Isotope(OUT))
-            return RAISE(Error_Bad_Isotope(OUT));
+        if (Is_Antiform(OUT))
+            return RAISE(Error_Bad_Antiform(OUT));
 
         if (Any_Array(OUT))  // guessing a behavior is bad [2]
             fail ("Desired array rendering in DELIMIT not known");

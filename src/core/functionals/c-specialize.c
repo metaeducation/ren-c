@@ -195,11 +195,8 @@ Context* Make_Context_For_Action_Push_Partials(
 //
 //  Make_Context_For_Action: C
 //
-// This creates a FRAME! context with `~` isotopes in all of the unspecialized
-// slots.  The reason this is chosen instead of NULL is that specialization
-// with NULL is frequent, while frame values may not be isotopes when a
-// function is called.  The only way to take isotopes is to use a ^meta
-// argument, and they are represented as non-isotopes in the frame.
+// This creates a FRAME! context with parameter antiforms in all unspecialized
+// slots.
 //
 // !!! The ultimate concept is that it would be possible for a FRAME! to
 // preserve ordering information such that an ACTION! could be made from it.

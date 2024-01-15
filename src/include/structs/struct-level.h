@@ -136,8 +136,8 @@ INLINE Byte State_Byte_From_Flags(Flags flags)
 
 //=//// LEVEL_FLAG_RAISED_RESULT_OK ///////////////////////////////////////=//
 //
-// The special ISOTOPE_0 quotelevel will trip up code that isn't expecting
-// it, so most levels do not want to receive these "isotopic forms of error!"
+// The special ANTIFORM_0 quotelevel will trip up code that isn't expecting
+// it, so most levels do not want to receive these "antiform forms of error!"
 // This flag can be used with LEVEL_FLAG_META_RESULT or without it, to say
 // that the caller is planning on dealing with the special case.
 //

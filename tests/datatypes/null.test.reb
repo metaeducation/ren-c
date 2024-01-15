@@ -1,19 +1,19 @@
 ; null.test.reb
 ;
-; Note: "null" is the isotopic state of the word "null", which has special
+; Note: "null" is the antiform state of the word "null", which has special
 ; consideration in the system, and is exposed in the API not via a typical
 ; value handle but the bound-to language's NULL abstraction.
 ;
-; WORD! isotopes like ~null~ can be held by variables, but they cannot
+; WORD! antiforms like ~null~ can be held by variables, but they cannot
 ; appear in BLOCK!s etc.  It's use is as a kind of "soft failure", and can
 ; be tested for and reacted to easily with things like DID, DIDN'T, THEN, ELSE.
 
 (null? null)
-(isotope! = kind of null)
+(antiform! = kind of null)
 (not null? 1)
 
 ; Early designs for NULL did not let you get or set them from plain WORD!
-; Responsibility for kind of "ornery-ness" shifted to the isotope of void.
+; Responsibility for kind of "ornery-ness" shifted to the antiform of void.
 (
     a: ~
     did all [
@@ -31,7 +31,7 @@
     ]
 )
 
-; The specific role of ~_~ isotopes is to be reactive with THEN and not
+; The specific role of heavy nulls is to be reactive with THEN and not
 ; ELSE, so that a taken branch may be purposefully NULL.
 ;
 ; HEAVY is probably not the best name for an operator that creates packs
@@ -52,8 +52,8 @@
     (void' = meta light heavy void)
 ]
 
-; Conditionals return VOID on failure, and ~_~ isotope on a branch that
-; executes and evaluates to either NULL or ~_~ isotope.
+; Conditionals return VOID on failure, and ~[~null~]~ antiform on a branch that
+; executes and evaluates to either NULL or ~[~null~]~ antiform.
 [
     ('~[~null~]~ = ^ if true [null])
     ('~[~null~]~ = ^ if true [heavy null])
@@ -61,9 +61,9 @@
     ('~custom~ = ^ if true [~custom~])
     (''~custom~ = ^ if true ['~custom~])
 
-    (void' <> ^ ~()~)  ; tests for isotopes
-    (not void' = first [~()~])  ; plain QUASI!s do not count
-    (not void' = ^ 'void)  ; ...nor do words, strings, etc
+    (void' <> ^ ~()~)
+    (not void' = first [~()~])
+    (not void' = ^ 'void)
 
     ('~null~ = if true ^[null])
     ('~[~null~]~ = if true ^[heavy null])

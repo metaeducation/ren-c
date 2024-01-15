@@ -51,7 +51,7 @@ probe: func* [
 
     write-stdout case [
         value' = void' ["; void"]
-        quasi? value' [unspaced [mold value' space space "; isotope"]]
+        quasi? value' [unspaced [mold value' space space "; anti"]]
     ] else [
         mold unmeta value'
     ]
@@ -176,7 +176,7 @@ elide-if-void: func* [
 ]
 
 ; COMMA! is the new expression barrier.  But `||` is included as a way to
-; make comma isotopes to show how to create custom barrier-like constructs.
+; make comma antiforms to show how to create custom barrier-like constructs.
 ;
 |\|\||: func* [] [return ~,~]
 

@@ -63,7 +63,7 @@
     (
         e: sys.util.rescue [spaced ["Hello" ~baddie~ "World"]]
         did all [
-            e.id = 'bad-isotope
+            e.id = 'bad-antiform
             e.arg1 = '~baddie~
         ]
     )

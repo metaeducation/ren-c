@@ -63,16 +63,11 @@ DECLARE_NATIVE(quit)
 
     if (not REF(with)) {  // e.g. QUIT VOID or QUIT
         //
-        // This returns an isotope if there is no arg, and labels it ~quit~
-        // It's a pretty good generic signal of what happened if there's not
-        // some explicit handling.
+        // This returns an antiform if there is no arg, and labels it ~quit~,
+        // and whether that's a good idea depends on the larger ideas for what
+        // antiwords should be used for.
         //
-        // !!! Should the decision of what happens here be done by the receiver
-        // of the throw?  We have to turn the END to a BLANK!, but other than
-        // that we might not editorialize...as it means we can't distinguish
-        // `quit ~quit~` at the catch site.
-        //
-        Init_Word_Isotope(v, Canon(QUIT));
+        Init_Anti_Word(v, Canon(QUIT));
     }
 
     return Init_Thrown_With_Label(LEVEL, v, Lib(QUIT));

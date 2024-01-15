@@ -296,7 +296,7 @@ DECLARE_NATIVE(console)
     // own separate step with rebMetaInterruptible()
     //
     // !!! We use rebQ() here and not "@" due to the current behavior of
-    // @ which will make quasiforms into isotopes.  That behavior is to
+    // @ which will make quasiforms into antiforms.  That behavior is to
     // help with treatment of ~null~, but perhaps it should be exclusive
     // to ~null~?  Either way, rebQ() would be needed if the distinction
     // were to be important.

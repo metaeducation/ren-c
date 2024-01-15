@@ -1,6 +1,6 @@
 ; %enfix.test.reb
 
-(isotope! = kind of :+)
+(antiform! = kind of :+)
 (true = enfix? :+)
 
 (enfix? :+)

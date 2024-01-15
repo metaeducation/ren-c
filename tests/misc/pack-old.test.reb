@@ -1,13 +1,13 @@
 ; %pack-old.test.reb
 ;
-; Prior to the creation of isotopic-BLOCK!-packs, this function was created
+; Prior to the creation of antiform-BLOCK!-packs, this function was created
 ; to replace the idiom of using SET on a BLOCK! that you REDUCE.  It used
 ; enfix to relate a SET-BLOCK! on the left to reduced expressions on the right,
 ; to work around issues related to states that cannot be put into blocks
-; (e.g. isotopes and NULL).
+; (e.g. antiforms and void).
 ;
 ; This was then achieved in a generalized fashion in the evaluator with the
-; isotopic blocks, and their intrinsic relationship with SET-BLOCK!.
+; antiform blocks, and their intrinsic relationship with SET-BLOCK!.
 ;
 ; The old code is kept here just as a test that exercises some features (and
 ; as a demonstration that usermode enfix is quite powerful for implementing

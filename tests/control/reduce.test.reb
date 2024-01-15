@@ -102,14 +102,14 @@
 ;
 ([3 300] = reduce* [1 + 2 null 100 + 200])
 
-~bad-isotope~ !! (reduce/predicate [1 + 2 3 + 4] func [x] [x * 10])
+~bad-antiform~ !! (reduce/predicate [1 + 2 3 + 4] func [x] [x * 10])
 ([30 70] = reduce/predicate [1 + 2 3 + 4] func [x] [return x * 10])
 
 ([~true~ ~false~] = reduce/predicate [2 + 2 3 + 4] chain [:even?, :reify])
 
 
 ; REDUCE-EACH is a variant which lets you intercept the values, and thus
-; intervene in questions of how isotopes and nulls will be handled.
+; intervene in questions of how unstable antiforms will be handled.
 [
     ([<null> 3] = collect [reduce-each x [null 1 + 2] [keep (x else '<null>)]])
 

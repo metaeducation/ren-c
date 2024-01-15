@@ -33,13 +33,10 @@
 //    See %sys-void.h for more information about this mechanic.)
 //
 // * If a branch *does* run--and its evaluation happens to produce VOID or
-//   NULL, then special isotopes are returned: either a zero-lenght GROUP!
-//   isotope for void, or a BLANK! isotope for NULL.  This way THEN runs
+//   NULL, then they are wrapped in a BLOCK! antiform.  This way THEN runs
 //   instead of ELSE.  Although this does mean there is some conflation of
 //   the results, the conflated values have properties that mostly align with
 //   what their intent was--so it works about as well as it can.
-//
-//   (See %sys-bad-word.h for more details about isotopes.)
 //
 // * Zero-arity function values used as branches will be executed, and
 //   single-arity functions used as branches will also be executed--but passed
@@ -47,9 +44,6 @@
 //
 //       >> if 1 < 2 [10 + 20] then x -> [print ["THEN got" x]]
 //       THEN got 30
-//
-//   Isotopes of NULL, FALSE, and BLANK are decayed before being passed to the
-//   function, unless the argument is taken as a ^META parameter.
 //
 //   (See Do_Branch_Throws() for supported ANY-BRANCH! types and behaviors.)
 //
@@ -207,16 +201,16 @@ DECLARE_NATIVE(either)
 //
 // https://stackoverflow.com/q/59492809/
 //
-// 1. The input is a ^META parameter in order to react to voids and tolerate
-//    isotopes.  But we don't want to actually return a quoted version of the
-//    input if branches don't run, so unmeta them.
+// 1. The input is a ^META parameter in order to react to unstable isotopes.
+//    But we don't want to actually return a quoted version of the input if
+//    branches don't run, so unmeta them.
 //
 // 2. THEN and ELSE want to pass on contents of a multi-return pack to
 //    branches if applicable.  But the decision on whether it's a THEN or
 //    ELSE case comes from the first parameter in the pack.
 //
 // 3. With the exception of ~[~null~]~ and ~[']~ when /DECAY is used, a "pack"
-//    (isotopic block) will always run a THEN and not an ELSE.  If a function
+//    (antiform block) will always run a THEN and not an ELSE.  If a function
 //    wants to tweak this, it needs to return a lazy object with customized
 //    then/else behavior that otherwise reifies to a pack.
 //
@@ -293,7 +287,7 @@ static Bounce Then_Else_Isotopic_Object_Helper(
             Copy_Cell(in, SPARE);  // cheap reification... (e.g. quoted)
             Meta_Unquotify_Known_Stable(Stable_Unchecked(in));  // [1]
             assert(STATE == ST_THENABLE_INITIAL_ENTRY);
-            assert(not Is_Isotope(in));
+            assert(not Is_Antiform(in));
             goto test_not_lazy;
         }
 
@@ -369,34 +363,34 @@ static Bounce Then_Else_Isotopic_Object_Helper(
 //
 //  did: native [
 //
-//  {Synonym for NOT NULL? that is isotope tolerant (IF DID is prefix THEN)}
+//  {Tests for not being a "pure" null or void (IF DID is prefix THEN)}
 //
 //      return: [logic?]
 //      ^atom "Argument to test"
 //          [any-atom?]
-//      /decay "Pre-decay ~null~ isotope input to NULL"
+//      /decay
 //      <local> branch  ; for frame compatibility with THEN/ELSE/ALSO
 //  ]
 //
 DECLARE_NATIVE(did_1)  // see TO-C-NAME for why the "_1" is needed
 //
-// DID exists as a complement to isotopes to help solve conflation of falsey
+// DID exists as a complement to antiforms to help solve conflation of falsey
 // values with conditional tests.  One example:
 //
 //     >> match [logic? integer!] false
-//     == ~false~  ; isotope
+//     == ~false~  ; anti
 //
 //     >> if (match [logic? integer!] false) [print "Want this to run"]
-//     ** Error: We save you by not letting isotopes be conditionally tested
+//     ** Error: We save you by not letting antiforms be conditionally tested
 //
 //     >> did match [logic? integer!] false
-//     == ~true~  ; DID tolerates isotopes, returns false only on true NULL
+//     == ~true~  ; DID tolerates antiforms, returns false only on true NULL
 //
 //     >> if (did match [logic? integer!] false) [print "Praise isotopes!"]
 //     Praise isotopes!
 //
 // By making routines that intend to return ANY-VALUE! (even falsey ones) on
-// success return the falsey ones as isotopes, incorrect uses can be caught
+// success return the falsey ones as antiforms, incorrect uses can be caught
 // and guided to use DID or DIDN'T (or whatever they actually meant).
 {
     INCLUDE_PARAMS_OF_DID_1;
@@ -463,12 +457,12 @@ DECLARE_NATIVE(did_1)  // see TO-C-NAME for why the "_1" is needed
 //
 //  didn't: native [
 //
-//  {Synonym for NULL? that is isotope tolerant (IF DIDN'T is prefix ELSE)}
+//  {Test for being a "pure" null or void (IF DID'T is prefix ELSE)}
 //
 //      return: [logic?]
 //      ^atom "Argument to test"
 //          [any-atom?]
-//      /decay "Pre-decay ~null~ isotope input to NULL"
+//      /decay
 //      <local> branch  ; for frame compatibility with THEN/ELSE/ALSO
 //  ]
 //
@@ -499,7 +493,7 @@ DECLARE_NATIVE(didnt)
 //          [any-atom?]
 //      ^atom "<deferred argument> Run branch if this is not null"
 //          [any-atom?]
-//      /decay "Pre-decay ~null~ isotope input to NULL"
+//      /decay
 //      :branch "If arity-1 ACTION!, receives value that triggered branch"
 //          [<unrun> any-branch!]
 //  ]
@@ -541,7 +535,7 @@ DECLARE_NATIVE(then)  // see `tweak :then 'defer on` in %base-defs.r
 //          [any-atom?]
 //      ^atom "<deferred argument> Run branch if this is null"
 //          [any-atom?]
-//      /decay "Pre-decay ~null~ isotope input to NULL"
+//      /decay
 //      :branch [<unrun> any-branch!]
 //  ]
 //
@@ -582,7 +576,7 @@ DECLARE_NATIVE(else)  // see `tweak :else 'defer on` in %base-defs.r
 //          [any-atom?]
 //      ^atom "<deferred argument> Run branch if this is not null"
 //          [any-atom?]
-//      /decay "Pre-decay ~null~ isotope input to NULL"
+//      /decay
 //      :branch "If arity-1 ACTION!, receives value that triggered branch"
 //          [<unrun> any-branch!]
 //  ]
@@ -624,7 +618,7 @@ DECLARE_NATIVE(also)  // see `tweak :also 'defer on` in %base-defs.r
     }
 
     if (REF(decay) and Is_Meta_Of_Heavy_Null(in))
-        return Init_Heavy_Null(OUT);  // telegraph null isotope
+        return Init_Heavy_Null(OUT);
 
     STATE = ST_ALSO_RUNNING_BRANCH;
     return CONTINUE(SPARE, branch, Meta_Unquotify_Undecayed(in));
@@ -640,7 +634,7 @@ DECLARE_NATIVE(also)  // see `tweak :also 'defer on` in %base-defs.r
 //
 //  {Check value using tests (match types, TRUE or FALSE, or filter action)}
 //
-//      return: "Input if it matched, NULL if it did not (isotope if falsey)"
+//      return: "Input if it matched, NULL if it did not"
 //          [any-value?]
 //      test "Typeset or arity-1 filter function"
 //          [<opt> logic? action? block! type-word! type-group! type-block!]
@@ -693,26 +687,9 @@ DECLARE_NATIVE(match)
 
     //=//// IF IT GOT THIS FAR WITHOUT RETURNING, THE TEST MATCHED /////////=//
 
-    // Falsey matched values return isotopes to show they did match, but to
-    // avoid misleading falseness of the result:
-    //
-    //     >> value: false
-    //     >> if match [integer! logic?] value [print "Won't run :-("]
-    //     ; null  <-- this would be a bad result!
-    //
-    // So successful matching of falsey values will give back ~false~,
-    // or ~null~ isotopes.  This can be consciously turned back into their
-    // original values with DECAY, which happens automatically in assignments.
-    //
-    //     >> match [<opt>] null
-    //     == ~[~null~]~  ; isotope
-    //
-    //     >> decay match [<opt>] null
-    //     == ~null~
-    //
-    Copy_Cell(OUT, v);  // Otherwise, input is the result
+    Copy_Cell(OUT, v);
 
-    return BRANCHED(OUT);
+    return BRANCHED(OUT);  // "heavy" null or void, so THEN and ELSE work
 }
 
 
@@ -753,7 +730,7 @@ DECLARE_NATIVE(all)
 //
 // 3. The only way a falsey evaluation should make it to the end is if a
 //    predicate let it pass.  Don't want that to trip up `if all` so make it
-//    an isotope...but this way `(all/predicate [null] :not?) then [<runs>]`
+//    heavy...but this way `(all/predicate [null] :not?) then [<runs>]`
 {
     INCLUDE_PARAMS_OF_ALL;
 
@@ -883,7 +860,7 @@ DECLARE_NATIVE(all)
 //
 DECLARE_NATIVE(any)
 //
-// 1. Don't let ANY return something falsey, but using an isotope means that
+// 1. Don't let ANY return something falsey, but using heavy form means that
 //    it can work with DID/THEN
 //
 // 2. See ALL[2]
@@ -1047,7 +1024,7 @@ DECLARE_NATIVE(case)
 //        == 30  ; so not the same as an ELSE, it's just "fallout"
 //
 //    This counts as a "branch taken", so void and null are boxed into an
-//    isotopic pack.
+//    antiform pack.
 {
     INCLUDE_PARAMS_OF_CASE;
 
@@ -1133,7 +1110,7 @@ DECLARE_NATIVE(case)
 
 } processed_result_in_spare: {  //////////////////////////////////////////////
 
-    bool matched = Is_Truthy(SPARE);  // errors on most isotopes
+    bool matched = Is_Truthy(SPARE);
 
     const Cell* branch = Lookback_While_Fetching_Next(SUBLEVEL);
 
@@ -1424,8 +1401,7 @@ DECLARE_NATIVE(default)
 //    `steps` which can resolve the variable without doing more evaluations.
 //
 // 2. Usually we only want to consider variables with states that are known
-//    to mean "emptiness" as candidates for overriding.  So isotopes do not
-//    count as being unset.
+//    to mean "emptiness" as candidates for overriding.
 {
     INCLUDE_PARAMS_OF_DEFAULT;
 
@@ -1686,7 +1662,7 @@ void Debranch_Output(Atom(*) out) {
 bool Pushed_Decaying_Level(Atom(*) out, Atom(const*) obj, Flags flags) {
     if (out != obj)
         Copy_Cell(out, obj);
-    QUOTE_BYTE(out) = UNQUOTED_1;
+    QUOTE_BYTE(out) = NOQUOTE_1;
     Option(Value(*)) decayer = Select_Symbol_In_Context(
         cast(const Cell*, out),
         Canon(DECAY)

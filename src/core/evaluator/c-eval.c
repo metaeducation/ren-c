@@ -583,8 +583,8 @@ Bounce Evaluator_Executor(Level* L)
     //
     // But what it does as a compromise is it will make the spliced values
     // into ~null~ quasiforms.  This usually works out in decay.  Further
-    // convenience is supplied by making the @ operator turn QUASI! values
-    // into their isotopic forms:
+    // convenience is supplied by making the @ operator turn quasiform values
+    // into their antiforms:
     //
     //     bool is_null = rebUnboxLogic("null?", rebQ(v));
     //     bool is_null = rebUnboxLogic("null? @", v);  // equivalent, shorter
@@ -596,7 +596,7 @@ Bounce Evaluator_Executor(Level* L)
     //=//// COMMA! ////////////////////////////////////////////////////////=//
     //
     // A comma is a lightweight looking expression barrier, which evaluates
-    // to isotopic comma.  It acts much like a vaporizing COMMENT or ELIDE,
+    // to antiform comma.  It acts much like a vaporizing COMMENT or ELIDE,
     // but has the distinction of appearing like an <end> to most evaluative
     // parameters.  We can debate the wisdom of the exceptions:
     //
@@ -624,7 +624,7 @@ Bounce Evaluator_Executor(Level* L)
     // literally a frame in the array (`do compose [(unrun :add) 1 2]`) or is
     // being retriggered via REEVAL.
     //
-    // Most FRAME! evaluations are the isotopic form ("actions") triggered
+    // Most FRAME! evaluations come from the antiform ("actions") triggered
     // from a WORD! or PATH! case.)
     //
     // 1. If an enfix function is run at this moment, it will not have a left
@@ -669,8 +669,8 @@ Bounce Evaluator_Executor(Level* L)
     //
     // A plain word tries to fetch its value through its binding.  It fails
     // if the word is unbound (or if the binding is to a variable which is
-    // set, but to the isotopic form of void, e.g. "trash").  Should the word
-    // look up to an isotopic action, then that action will be invoked.
+    // set, but to the antiform of void, e.g. "trash").  Should the word
+    // look up to an antiform frame, then that "action" will be invoked.
     //
     // NOTE: The usual dispatch of enfix functions is *not* via a REB_WORD in
     // this switch, it's by some code at the `lookahead:` label.  You only see
@@ -754,8 +754,8 @@ Bounce Evaluator_Executor(Level* L)
         }
 
         if (
-            Is_Isotope(unwrap(L_current_gotten))  // checked second
-            and not Is_Isotope_Get_Friendly(unwrap(L_current_gotten))
+            Is_Antiform(unwrap(L_current_gotten))  // checked second
+            and not Is_Antiform_Get_Friendly(unwrap(L_current_gotten))
         ){
             fail (Error_Bad_Word_Get(L_current, unwrap(L_current_gotten)));
         }
@@ -807,7 +807,7 @@ Bounce Evaluator_Executor(Level* L)
             Decay_If_Unstable(OUT);
         }
 
-        if (Is_Barrier(OUT))  // e.g. (x:,) where comma makes isotope
+        if (Is_Barrier(OUT))  // e.g. (x:,) where comma makes antiform
             fail (Error_Need_Non_End(L_current));
 
         if (Is_Void(L_current)) {
@@ -819,8 +819,8 @@ Bounce Evaluator_Executor(Level* L)
         else {
             Decay_If_Unstable(OUT);  // !!! See above regarding rethink
 
-            if (Is_Isotope(OUT) and not Is_Isotope_Set_Friendly(stable_OUT))
-                fail (Error_Bad_Isotope(OUT));
+            if (Is_Antiform(OUT) and not Is_Antiform_Set_Friendly(stable_OUT))
+                fail (Error_Bad_Antiform(OUT));
 
             if (Is_Action(OUT))  // !!! Review: When to update labels?
                 INIT_VAL_ACTION_LABEL(OUT, Cell_Word_Symbol(L_current));
@@ -848,7 +848,7 @@ Bounce Evaluator_Executor(Level* L)
     //=//// GET-WORD! /////////////////////////////////////////////////////=//
     //
     // A GET-WORD! gives you the contents of a variable as-is, with no
-    // dispatch on functions.  This includes isotopes.
+    // dispatch on functions.  This includes antiforms.
     //
     // https://forum.rebol.info/t/1301
 
@@ -921,7 +921,7 @@ Bounce Evaluator_Executor(Level* L)
     //
     // For now, we defer to what GET does.
     //
-    // Tuples looking up to trash isotopes are handled consistently with
+    // Tuples looking up to trash (~ antiform) are handled consistently with
     // WORD! and GET-WORD!, and will error...directing you use GET/ANY if
     // fetching trash is what you actually intended.
 
@@ -967,8 +967,8 @@ Bounce Evaluator_Executor(Level* L)
         }
 
         if (
-            Is_Isotope(SCRATCH)  // we test *after* action (faster common case)
-            and not Is_Isotope_Get_Friendly(SCRATCH)
+            Is_Antiform(SCRATCH)  // we test *after* action (faster common case)
+            and not Is_Antiform_Get_Friendly(SCRATCH)
         ){
             fail (Error_Bad_Word_Get(L_current, SCRATCH));
         }
@@ -1127,8 +1127,6 @@ Bounce Evaluator_Executor(Level* L)
     //     right
     //     left
     //     == 20
-    //
-    // Isotope and NULL assigns are allowed: https://forum.rebol.info/t/895/4
 
     set_tuple_in_spare: //////////////////////////////////////////////////////
 
@@ -1162,8 +1160,8 @@ Bounce Evaluator_Executor(Level* L)
         else {
             Decay_If_Unstable(OUT);
 
-            if (Is_Isotope(OUT) and not Is_Isotope_Set_Friendly(stable_OUT))
-                fail (Error_Bad_Isotope(OUT));
+            if (Is_Antiform(OUT) and not Is_Antiform_Set_Friendly(stable_OUT))
+                fail (Error_Bad_Antiform(OUT));
 
             if (Set_Var_Core_Throws(
                 SCRATCH,
@@ -1282,10 +1280,10 @@ Bounce Evaluator_Executor(Level* L)
     //=//// SET-BLOCK! ////////////////////////////////////////////////////=//
     //
     // The evaluator treats SET-BLOCK! specially as a means for implementing
-    // multiple return values.  It unpacks isotopic blocks into components.
+    // multiple return values.  It unpacks antiform blocks into components.
     //
     //     >> pack [1 2]
-    //     == ~[1 2]~
+    //     == ~[1 2]~  ; anti
     //
     //     >> [a b]: pack [1 2]
     //     == 1
@@ -1306,7 +1304,7 @@ Bounce Evaluator_Executor(Level* L)
     //     == 1
     //
     //     >> b
-    //     == ~null~  ; isotope
+    //     == ~null~  ; anti
     //
     // It supports `_` in slots whose results you don't want to ask for, `#`
     // in slots you want to ask for (but don't want to name), will evaluate
@@ -1367,7 +1365,7 @@ Bounce Evaluator_Executor(Level* L)
             if (Is_Quoted(check))
                 fail ("QUOTED! not currently permitted in SET-BLOCK!s");
 
-            bool raised_ok = Is_Quasi(check);  // quasi has meaning
+            bool raised_ok = Is_Quasiform(check);  // quasi has meaning
             enum Reb_Kind heart = Cell_Heart(check);
 
             bool is_optional;
@@ -1418,7 +1416,7 @@ Bounce Evaluator_Executor(Level* L)
             if (is_optional)  // so next phase won't worry about leading slash
                 Set_Cell_Flag(TOP, STACK_NOTE_OPTIONAL);
 
-            if (raised_ok and not Is_Quasi(TOP))
+            if (raised_ok and not Is_Quasiform(TOP))
                 Quasify(TOP);  // keep this as signal for raised ok
 
             if (
@@ -1499,7 +1497,7 @@ Bounce Evaluator_Executor(Level* L)
         if (Is_Barrier(OUT))  // !!! Hack, wnat ([/foo]: eval) to always work
             Init_Nihil(OUT);
 
-        if (Is_Pack(OUT)) {  // isotopic block
+        if (Is_Pack(OUT)) {  // antiform block
             pack_meta_at = Cell_Array_At(&pack_meta_tail, OUT);
             pack_specifier = Cell_Specifier(OUT);
         }
@@ -1528,7 +1526,7 @@ Bounce Evaluator_Executor(Level* L)
             Copy_Cell(var, Data_Stack_At(stackindex_var));
 
             assert(not Is_Quoted(var));
-            bool raised_ok = Is_Quasi(var);  // quasi has meaning
+            bool raised_ok = Is_Quasiform(var);  // quasi has meaning
             enum Reb_Kind var_heart = Cell_Heart(var);
 
             if (pack_meta_at == pack_meta_tail) {
@@ -1561,7 +1559,7 @@ Bounce Evaluator_Executor(Level* L)
                     goto circled_check;
                 }
                 if (Is_Meta_Of_Raised(SPARE) and not raised_ok) {
-                    QUOTE_BYTE(SPARE) = UNQUOTED_1;
+                    QUOTE_BYTE(SPARE) = NOQUOTE_1;
                     fail (VAL_CONTEXT(SPARE));
                 }
                 Set_Var_May_Fail(var, SPECIFIED, stable_SPARE);  // is meta'd
@@ -1589,9 +1587,9 @@ Bounce Evaluator_Executor(Level* L)
                 Init_Nulled(SPARE);
 
             if (
-                Is_Isotope(SPARE) and not Is_Isotope_Set_Friendly(stable_SPARE)
+                Is_Antiform(SPARE) and not Is_Antiform_Set_Friendly(stable_SPARE)
             ){
-                fail (Error_Bad_Isotope(SPARE));
+                fail (Error_Bad_Antiform(SPARE));
             }
             else if (
                 var_heart == REB_WORD or var_heart == REB_TUPLE
@@ -1718,22 +1716,22 @@ Bounce Evaluator_Executor(Level* L)
         break;
 
 
-      //=//// QUASI! //////////////////////////////////////////////////////=//
+      //=//// QUASIFORM! //////////////////////////////////////////////////=//
       //
-      // QUASI! forms will produce an isotope when evaluated of whatever it is
+      // Quasiforms will produce an antiform when evaluated of whatever it is
       // containing:
       //
       //     >> bar: ~whatever~
-      //     == ~whatever~  ; isotope
+      //     == ~whatever~  ; anti
       //
       //     >> bar
-      //     ** Error: bar is a ~whatever~ isotope
+      //     ** Error: bar is a ~whatever~ antiform
       //
       // To bypass the error, use GET/ANY.
 
-      case REB_QUASI:
+      case REB_QUASIFORM:
         Derelativize(OUT, L_current, L_specifier);
-        QUOTE_BYTE(OUT) = ISOTOPE_0;
+        QUOTE_BYTE(OUT) = ANTIFORM_0;
         break;
 
 
@@ -1745,7 +1743,7 @@ Bounce Evaluator_Executor(Level* L)
 
       case REB_QUOTED:
         Derelativize(OUT, L_current, L_specifier);
-        Unquotify(OUT, 1);  // asserts it is not an isotope
+        Unquotify(OUT, 1);  // asserts it is not an antiform
         break;
 
 
@@ -1818,7 +1816,7 @@ Bounce Evaluator_Executor(Level* L)
         // With COMMA!, we skip the lookahead step, which means (then [...])
         // will have the same failure mode as (1 + 2, then [...]).  In order
         // to make this the same behavior anything else that evaluates to
-        // a barrier (COMMA! isotope) we make this hinge on producing a
+        // a barrier (COMMA! antiform) we make this hinge on producing a
         // barrier--not on being a source level comma.  Note it's different
         // from what would happen with (nihil then [...]) which shows a nuance
         // between barriers and nihils.

@@ -282,7 +282,7 @@ INLINE void Init_Cell_Node2(Cell* v, Option(const Node*) node) {
 
 INLINE enum Reb_Kind VAL_TYPE_UNCHECKED(const Cell* v) {
     switch (QUOTE_BYTE(v)) {
-      case ISOTOPE_0: {
+      case ANTIFORM_0: {
         Byte heart = HEART_BYTE(v);
         assert(  // can't answer VAL_TYPE() for unstable isotopes
             heart != REB_BLOCK
@@ -291,13 +291,13 @@ INLINE enum Reb_Kind VAL_TYPE_UNCHECKED(const Cell* v) {
             and heart != REB_OBJECT
         );
         UNUSED(heart);
-        return REB_ISOTOPE; }
+        return REB_ANTIFORM; }
 
-      case UNQUOTED_1:
+      case NOQUOTE_1:
         return u_cast(enum Reb_Kind, HEART_BYTE(v));
 
-      case QUASI_2:
-        return REB_QUASI;
+      case QUASIFORM_2:
+        return REB_QUASIFORM;
 
       default:
         return REB_QUOTED;
@@ -438,7 +438,7 @@ INLINE Cell* Erase_Cell_Untracked(Cell* c) {
 #define FRESHEN_CELL(v) do { \
     STATIC_ASSERT_LVALUE(v);  /* evil macro [1] */ \
     if (HEART_BYTE(v) == REB_ERROR)  /* must suppress [2] */ \
-        assert(QUOTE_BYTE(v) != ISOTOPE_0);\
+        assert(QUOTE_BYTE(v) != ANTIFORM_0);\
     assert(not ((v)->header.bits & CELL_FLAG_PROTECTED)); \
     (v)->header.bits &= CELL_MASK_PERSIST;  /* Note: no CELL or NODE flags */ \
 } while (0)
@@ -450,20 +450,20 @@ INLINE Cell* Erase_Cell_Untracked(Cell* c) {
 } while (0)
 
 
-INLINE void Reset_Isotope_Header_Untracked(Cell* v, uintptr_t flags)
+INLINE void Reset_Antiform_Header_Untracked(Cell* v, uintptr_t flags)
 {
-    assert((flags & FLAG_QUOTE_BYTE(255)) == FLAG_QUOTE_BYTE(ISOTOPE_0));
+    assert((flags & FLAG_QUOTE_BYTE(255)) == FLAG_QUOTE_BYTE(ANTIFORM_0));
     FRESHEN_CELL(v);
     v->header.bits |= (NODE_FLAG_NODE | NODE_FLAG_CELL  // must ensure NODE+CELL
-        | flags | FLAG_QUOTE_BYTE(ISOTOPE_0));
+        | flags | FLAG_QUOTE_BYTE(ANTIFORM_0));
 }
 
 INLINE void Reset_Unquoted_Header_Untracked(Cell* v, uintptr_t flags)
 {
-    assert((flags & FLAG_QUOTE_BYTE(255)) == FLAG_QUOTE_BYTE(ISOTOPE_0));
+    assert((flags & FLAG_QUOTE_BYTE(255)) == FLAG_QUOTE_BYTE(ANTIFORM_0));
     FRESHEN_CELL(v);
     v->header.bits |= (NODE_FLAG_NODE | NODE_FLAG_CELL  // must ensure NODE+CELL
-        | flags | FLAG_QUOTE_BYTE(UNQUOTED_1));
+        | flags | FLAG_QUOTE_BYTE(NOQUOTE_1));
 }
 
 INLINE REBVAL* Freshen_Cell_Untracked(Cell* v) {

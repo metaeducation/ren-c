@@ -684,7 +684,7 @@ Context* Make_Error_Managed_Core(
             else switch (Detect_Rebol_Pointer(p)) {
               case DETECTED_AS_END :
                 assert(!"Not enough arguments in Make_Error_Managed()");
-                Init_Word_Isotope(var, Canon(END));
+                Init_Anti_Word(var, Canon(END));
                 break;
 
               case DETECTED_AS_CELL : {
@@ -796,7 +796,7 @@ Context* Error_Need_Non_End(const Cell* target) {
 //
 Context* Error_Bad_Word_Get(
     const Cell* target,
-    Value(const*) isotope
+    Value(const*) anti
 ){
     // SET calls this, and doesn't work on just SET-WORD! and SET-PATH!
     //
@@ -806,14 +806,14 @@ Context* Error_Bad_Word_Get(
         or Any_Block(target)
         or Any_Group(target)
     );
-    assert(Is_Isotope(isotope));
+    assert(Is_Antiform(anti));
 
-    // Don't want the error message to have an isotope version as argument, as
+    // Don't want the error message to have an antiform version as argument, as
     // they're already paying for an error regarding the state.
     //
     DECLARE_STABLE (reified);
-    Copy_Cell(reified, isotope);
-    Quasify_Isotope(reified);
+    Copy_Cell(reified, anti);
+    Quasify_Antiform(reified);
 
     return Error_Bad_Word_Get_Raw(target, reified);
 }
@@ -943,42 +943,6 @@ Context* Error_Invalid_Arg(Level* L, const Param* param)
 
 
 //
-//  Error_Isotope_Arg: C
-//
-// This directs the user that they can't take isotopes as an argument to a
-// function unless the ^META parameter convention is used.
-//
-Context* Error_Isotope_Arg(Level* L, const Param* param)
-{
-    assert(Is_Parameter(param));
-
-    const Param* headparam = ACT_PARAMS_HEAD(Level_Phase(L));
-    assert(param >= headparam);
-    assert(param <= headparam + Level_Num_Args(L));
-
-    REBLEN index = 1 + (param - headparam);
-
-    DECLARE_LOCAL (label);
-    if (not L->label)
-        Init_Nulled(label);
-    else
-        Init_Word(label, unwrap(L->label));
-
-    DECLARE_LOCAL (param_name);
-    Init_Word(param_name, KEY_SYMBOL(ACT_KEY(Level_Phase(L), index)));
-
-    // Don't actually want an isotope in the error field, just put a normal
-    // bad word there...
-    //
-    REBVAL *arg = Level_Arg(L, index);
-    Copy_Cell(PUSH(), arg);
-    Quasify_Isotope(TOP);
-
-    return Error_Isotope_Arg_Raw(label, param_name, TOP);
-}
-
-
-//
 //  Error_Bad_Value: C
 //
 // This is the very vague and generic error citing a value with no further
@@ -991,8 +955,8 @@ Context* Error_Isotope_Arg(Level* L, const Param* param)
 //
 Context* Error_Bad_Value(const Cell* value)
 {
-    if (Is_Isotope(value))
-        return Error_Bad_Isotope(value);
+    if (Is_Antiform(value))
+        return Error_Bad_Antiform(value);
 
     return Error_Bad_Value_Raw(value);
 }
@@ -1291,16 +1255,16 @@ Context* Error_On_Port(SymId id, REBVAL *port, REBINT err_code)
 
 
 //
-//  Error_Bad_Isotope: C
+//  Error_Bad_Antiform: C
 //
-Context* Error_Bad_Isotope(const Cell* isotope) {
-    assert(Is_Isotope(isotope));
+Context* Error_Bad_Antiform(const Cell* anti) {
+    assert(Is_Antiform(anti));
 
     DECLARE_STABLE (reified);
-    Copy_Cell(reified, SPECIFIC(isotope));
-    Quasify_Isotope(reified);
+    Copy_Cell(reified, SPECIFIC(anti));
+    Quasify_Antiform(reified);
 
-    return Error_Bad_Isotope_Raw(reified);
+    return Error_Bad_Antiform_Raw(reified);
 }
 
 

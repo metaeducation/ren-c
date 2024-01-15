@@ -197,7 +197,7 @@ INLINE REBVAL *rebSpecific(const Cell* v, Specifier* specifier)
 INLINE void Release_Api_Value_If_Unmanaged(const Atom(*) r) {
     assert(Is_Node_Root_Bit_Set(r));
 
-    if (Is_Nulled(r))  // tolerate isotopes
+    if (Is_Nulled(r))
         assert(!"Dispatcher returned nulled cell, not C nullptr for API use");
 
     if (Not_Node_Managed(r))

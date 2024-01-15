@@ -328,7 +328,7 @@ Bounce File_Actor(Level* level_, REBVAL *port, const Symbol* verb)
       case SYM_APPEND: {
         INCLUDE_PARAMS_OF_APPEND;
 
-        if (Is_Isotope(ARG(value)))
+        if (Is_Antiform(ARG(value)))
             fail (ARG(value));
 
         if (REF(part) or REF(dup) or REF(line))

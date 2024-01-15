@@ -98,9 +98,9 @@ INLINE bool Is_Valid_Sequence_Element(
 ){
     assert(Any_Sequence_Kind(sequence_kind));
 
-    // QUASI! cases are legal, to support e.g. `~/home/Projects/ren-c/README.md`
+    // Quasi cases are legal, to support e.g. `~/home/Projects/ren-c/README.md`
     //
-    enum Reb_Kind k = Is_Quasi(v) ? Cell_Heart(v) : VAL_TYPE(v);
+    enum Reb_Kind k = Is_Quasiform(v) ? Cell_Heart(v) : VAL_TYPE(v);
     if (
         k == REB_BLANK
         or k == REB_INTEGER
@@ -523,7 +523,7 @@ INLINE const Cell* Cell_Sequence_At(
 
         Copy_Relative_internal(store, x_cast(const Cell*, sequence));  // [2]
         HEART_BYTE(store) = REB_WORD;
-        QUOTE_BYTE(store) = UNQUOTED_1;  // [3]
+        QUOTE_BYTE(store) = NOQUOTE_1;  // [3]
         return store; }
 
       case FLAVOR_ARRAY : {  // uncompressed sequence

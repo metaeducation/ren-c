@@ -203,7 +203,6 @@
 ]
 
 ; Making a FRAME! from an ACTION!, and making an ACTION! from a FRAME!
-; (here, `~` isotope in the frame is considered unspecialized)
 (
     data: [a b c]
 

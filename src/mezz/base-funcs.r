@@ -350,7 +350,7 @@ unset: redescribe [
 )
 
 unset?: func [
-    {Determine if a variable looks up to a `~` isotope}
+    {Determine if a variable looks up to a `~` antiform}
     return: [logic?]
     var [word! path! tuple!]
 ][
@@ -358,7 +358,7 @@ unset?: func [
 ]
 
 set?: func [
-    {Determine if a variable does not look up to  `~` isotope}
+    {Determine if a variable does not look up to  `~` antiform}
     return: [logic?]
     var [word! path! tuple!]
 ][
@@ -427,7 +427,7 @@ curtail: reframer func [
 ;    ** Script Error: + does not allow logic? for its value1 argument
 ;
 ;    >> 10 >- equal? 5 + 5  ; as if you wrote `equal? 10 5 + 5`
-;    == ~true~  ; isotope
+;    == ~true~  ; anti
 ;
 ; You can force processing to be enfix using `->-` (an infix-looking "icon"):
 ;
@@ -531,7 +531,7 @@ gunzip: redescribe [
 ensure: redescribe [
     {Pass through value if it matches test, otherwise trigger a FAIL}
 ](
-    ; MATCH returns a pack (isotopic block) vs. NULL if the input is NULL
+    ; MATCH returns a pack (antiform block) vs. NULL if the input is NULL
     ; and matches NULL.  This is not reactive with ELSE
     ;
     enclose :match lambda [f <local> value] [  ; LET was having trouble
@@ -643,7 +643,7 @@ trap+: func [
         return pack [result null]
     ]
 
-    return isotopic make object! [
+    return anti make object! [
         else: branch -> [(heavy unmeta :result) then (:branch)]
         decay: [pack [null unmeta result]]
     ]
@@ -797,7 +797,7 @@ meth: enfix func [
     let context: binding of member else [
         fail [member "must be bound to an ANY-CONTEXT! to use METHOD"]
     ]
-    return set member runs bind (  ; !!! BIND doesn't take ACTION! as isotope
+    return set member runs bind (  ; !!! BIND doesn't take ACTION! as antiform
         unrun apply :func [
             compose [(spread spec) <in> (context)]
             body
@@ -841,18 +841,18 @@ raise: func [
     'blame "Point to variable or parameter to blame"
         [<skip> quoted!]
     reason "ERROR! value, ID, URL, message text, or failure spec"
-        [<end> error! path! url! text! block! isoword?]
+        [<end> error! path! url! text! block! antiword?]
     /where "Frame or parameter at which to indicate the error originated"
         [frame! any-word!]
 ][
-    if (isoword? reason) and (not null? reason) [  ; <end> acts as null nonmeta
+    if (antiword? reason) and (not null? reason) [  ; <end> acts as null nonmeta
         ;
         ; !!! It's not clear that users will be able to create arbitrary
-        ; isotopic words like ~unreachable~ to occupy the same space as
+        ; antiform words like ~unreachable~ to occupy the same space as
         ; ~null~, ~true~, ~false~, etc.  But for a time they were allowed
         ; to say things like (fail ~unreachable~)...permit for now.
         ;
-        reason: noisotope reason
+        reason: noantiform reason
     ]
     all [error? reason, not blame, not where] then [
         return raise* reason  ; fast shortcut
@@ -946,7 +946,7 @@ raise: func [
     ; Initially this would call DO in order to force an exception to the nearest
     ; trap up the stack (if any).  However, Ren-C rethought errors as being
     ; "definitional", which means you would say RETURN RAISE and it would be
-    ; a special kind of "error isotope" that was a unique return result.  Then
+    ; a special kind of "error antiform" that was a unique return result.  Then
     ; you typically can only trap/catch errors that come from a function you
     ; directly called.
     ;

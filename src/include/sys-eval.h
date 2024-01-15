@@ -85,26 +85,27 @@
 #endif
 
 
-// A "set friendly" isotope is one that allows assignment via SET-WORD!
-// without any special considerations.  The allowance of WORD! isotopes started
-// so that ~true~ and ~false~ could be implemented as isotopes, but a decision
-// to also permit the void state to assign easily was made as well--so that
-// a variable could easily be unset with (var: ~)
+// A "set friendly" antiform is one that allows assignment via SET-WORD!
+// without any special considerations.  The allowance of antiform WORD! started
+// so that ~true~ and ~false~ could be implemented as antiforms, but a decision
+// to also permit the unset state to assign easily was made as well--so that
+// a variable could easily be unset with (var: ~).  So this shifted to say
+// that all stable antiforms are set friendly.
 //
-INLINE bool Is_Isotope_Set_Friendly(Value(const*) v) {
-    assert(QUOTE_BYTE(v) == ISOTOPE_0);
+INLINE bool Is_Antiform_Set_Friendly(Value(const*) v) {
+    assert(QUOTE_BYTE(v) == ANTIFORM_0);
     UNUSED(v);
     return true;
 }
 
 // Like with set-friendliness, get-friendliness relates to what can be done
-// with plain WORD! access regarding isotopes.  Since ~true~ and ~false~
-// isotopes are the currency of "logic" now, they have to be legal...so this
-// is opened up to the entire class of isotopic words.  But unlike in
-// assignment, isotopic voids are not get-friendly.
+// with plain WORD! access regarding antiforms.  Since ~true~ and ~false~
+// antiforms are the currency of "logic" now, they have to be legal...so this
+// is opened up to the entire class of antiforms.  But unlike in assignment,
+// antiform voids (trash) are not get-friendly.
 //
-INLINE bool Is_Isotope_Get_Friendly(Value(const*) v) {
-    assert(QUOTE_BYTE(v) == ISOTOPE_0);
+INLINE bool Is_Antiform_Get_Friendly(Value(const*) v) {
+    assert(QUOTE_BYTE(v) == ANTIFORM_0);
     return HEART_BYTE(v) != REB_VOID;
 }
 

@@ -1058,7 +1058,7 @@ static bool Run_Va_Throws(
     bool threw = Trampoline_Throws(out, L);
 
     if (not threw and (flags & LEVEL_FLAG_META_RESULT))
-        assert(QUOTE_BYTE(out) >= QUASI_2);
+        assert(QUOTE_BYTE(out) >= QUASIFORM_2);
 
     // (see also Reb_State->saved_sigmask RE: if a longjmp happens)
     g_ts.eval_sigmask = saved_sigmask;
@@ -1068,7 +1068,7 @@ static bool Run_Va_Throws(
 
 
 // This version of the variadic run does not do isotope decay, because that
-// errors on empty parameter packs ("nihil"), e.g. ~[]~ isotopes.  It would be
+// errors on empty parameter packs ("nihil"), e.g. ~[]~ antiforms.  It would be
 // deceptive to have that unpack and conflate as any other state (including
 // void and null, which have specific meanings).  So it simply won't.
 //
@@ -1253,7 +1253,7 @@ void RL_rebPushContinuation(
 //
 // !!! At the moment, this is used to work around the inability of REBVAL* to
 // store unstable isotopes, which hinders extensions that want to do multiple
-// return values.  Review
+// return values.  Review.
 //
 REBVAL *RL_rebDelegate(  // !!! Hack: returns BOUNCE, not REBVAL*
     const void *p, va_list *vaptr
@@ -1384,7 +1384,7 @@ REBVAL *RL_rebQuote(const void *p, va_list *vaptr)
 // Variant of rebValue() which assumes you don't need the result.  This saves on
 // allocating an API handle, or the caller needing to manage its lifetime.
 //
-// Also means that if the product is something like a ~[]~ isotope ("nihil")
+// Also means that if the product is something like a ~[]~ antiform ("nihil")
 // that is not an issue.
 //
 void RL_rebElide(const void *p, va_list *vaptr)
@@ -1445,13 +1445,12 @@ void RL_rebJumps(const void *p, va_list *vaptr)
 //
 //  rebDid: RL_API
 //
-// Analogue of DID, which is an isotope-tolerant version of NON NULL?.
-// e.g. "Would the supplied expression run a THEN"
+// Analogue of DID, asks "Would the supplied expression run a THEN"
 // See DECLARE_NATIVE(did_1) for explanation.
 //
-// !!! This does not handle isotopic objects, an experimental concept where
+// !!! This does not handle antiform OBJECT!, an experimental concept where
 // if the object supports a THEN method it would pass the DID test.  Review
-// this in light of whether isotopic objects are going to be kept.
+// this in light of whether antiform objects are going to be kept.
 //
 bool RL_rebDid(const void *p, va_list *vaptr)
 {
@@ -1467,12 +1466,12 @@ bool RL_rebDid(const void *p, va_list *vaptr)
 //
 //  rebDidnt: RL_API
 //
-// Analogue of DIDN'T, which is an isotope-tolerant version of NULL?.
-// e.g. "Would the supplied expression run an ELSE"
+// Analogue of DIDN'T, asks "Would the supplied expression run an ELSE"
+// See DECLARE_NATIVE(didnt) for explanation.
 //
-// !!! This does not handle isotopic objects, an experimental concept where
+// !!! This does not handle antiform OBJECT!, an experimental concept where
 // if the object supports a ELSE method it would pass the DIDN'T test.  Review
-// this in light of whether isotopic objects are going to be kept.
+// this in light of whether antiform objects are going to be kept.
 //
 bool RL_rebDidnt(const void *p, va_list *vaptr)
 {
@@ -1500,7 +1499,7 @@ bool RL_rebTruthy(const void *p, va_list *vaptr)
     DECLARE_STABLE (condition);
     Run_Va_Decay_May_Fail_Calls_Va_End(condition, p, vaptr);
 
-    return Is_Truthy(condition);  // will fail() on (most) isotopes
+    return Is_Truthy(condition);  // will fail() on (most) antiforms
 }
 
 
@@ -1517,7 +1516,7 @@ bool RL_rebNot(const void *p, va_list *vaptr)
     DECLARE_STABLE (condition);
     Run_Va_Decay_May_Fail_Calls_Va_End(condition, p, vaptr);
 
-    return Is_Falsey(condition);  // will fail() on isotopes
+    return Is_Falsey(condition);  // will fail() on (most) antiforms
 }
 
 
@@ -2078,7 +2077,7 @@ REBVAL *RL_rebRescueWith(
     }
     else if (
         rescuer == nullptr
-        and QUOTE_BYTE(result) == UNQUOTED_1
+        and QUOTE_BYTE(result) == NOQUOTE_1
         and HEART_BYTE(result) == REB_ERROR
     ){
         // If you don't have a handler for the error case then you can't
@@ -2089,7 +2088,7 @@ REBVAL *RL_rebRescueWith(
         if (Is_Api_Value(result))
             rebRelease(result);
 
-        Init_Word_Isotope(result, Canon(ERRORED));
+        Init_Anti_Word(result, Canon(ERRORED));
         goto proxy_result;
     }
     else {
@@ -2288,9 +2287,9 @@ const REBINS *RL_rebUNQUOTING(const void *p)
 
     Cell* v = Stub_Cell(stub);
     if (
-        QUOTE_BYTE(v) == UNQUOTED_1
-        or QUOTE_BYTE(v) == QUASI_2
-        or QUOTE_BYTE(v) == ISOTOPE_0
+        QUOTE_BYTE(v) == NOQUOTE_1
+        or QUOTE_BYTE(v) == QUASIFORM_2
+        or QUOTE_BYTE(v) == ANTIFORM_0
     ){
         fail ("rebUNQUOTING()/rebU() can only unquote QUOTED! values");
     }
@@ -2353,9 +2352,9 @@ const void *RL_rebINLINE(const REBVAL *v)
 //
 //  rebRUN: RL_API
 //
-// If a REBVAL* holds an isotope, this will convert it to a regular action
+// If a REBVAL* holds an action, this will convert it to a regular FRAME!
 // so that it runs inline.  If it were ^META'd then it would produce a
-// QUASI!-action, that would just evaluate to an isotope.  Something like a
+// quasi-action, that would just evaluate to an antiform.  Something like a
 // rebREIFY would also work, but it would not do type checking.
 //
 const REBINS *RL_rebRUN(const void *p)
@@ -2390,9 +2389,9 @@ const REBINS *RL_rebRUN(const void *p)
 
     Value(*) v = SPECIFIC(Stub_Cell(stub));
     if (Is_Action(v))
-        QUOTE_BYTE(v) = UNQUOTED_1;
+        QUOTE_BYTE(v) = NOQUOTE_1;
     else if (not Is_Frame(v))
-        fail ("rebRUN() only accepts FRAME! or actions (aka FRAME! isotopes)");
+        fail ("rebRUN() requires FRAME! or actions (aka FRAME! antiforms)");
 
     return stub;
 }

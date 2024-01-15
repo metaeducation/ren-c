@@ -61,7 +61,7 @@ PVAR Codepoint *Lower_Cases;
 
 // These are some canon cells that cannot be offered via Lib(XXX).  e.g. if
 // TRASH were a variable in Lib, users couldn't access it by typing `trash`
-// (they'd get an error on isotope variable access)...hence it is a function.
+// (they'd get an error on antiform variable access)...hence it is a function.
 //
 
 PVAR REBVAL PG_Feed_At_End;  // Canon pointer; internals use instead of rebEND
@@ -94,7 +94,7 @@ PVAR REBVAL *Root_Local_Tag; // marks beginning of a list of "pure locals"
 PVAR REBVAL *Root_Skip_Tag; // marks a hard quote as "skippable" if wrong type
 PVAR REBVAL *Root_Const_Tag; // pass a CONST version of the input argument
 PVAR REBVAL *Root_Void_Tag;  // tolerance for void returns or passing void args
-PVAR REBVAL *Root_Unrun_Tag;  // parameters that degrade isotopic actions
+PVAR REBVAL *Root_Unrun_Tag;  // parameters that degrade antiform actions
 
 PVAR REBVAL *Root_Here_Tag;  // https://forum.rebol.info/t/1558/5
 
@@ -108,9 +108,9 @@ PVAR Array* PG_1_Quoted_Void_Array;  // used by heavy voids ~[']~
 PVAR Array* PG_1_Meta_False_Array;  // used by heavy false ~[~false~]~
 PVAR Array* PG_2_Blanks_Array;  // surrogate array used by `/` paths
 
-PVAR REBVAL *Root_Heavy_Null;  // isotopic block containing a blank
-PVAR REBVAL *Root_Heavy_Void;  // isotopic block containing a quasi null
-PVAR REBVAL *Root_Heavy_False;  // isotopic block containing a meta false
+PVAR REBVAL *Root_Heavy_Null;  // antiform block containing a blank
+PVAR REBVAL *Root_Heavy_Void;  // antiform block containing a quasi null
+PVAR REBVAL *Root_Heavy_False;  // antiform block containing a meta false
 
 PVAR Stub PG_Inaccessible_Stub;  // GC canonizes all inaccessible stubs to this
 

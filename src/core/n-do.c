@@ -57,7 +57,7 @@ DECLARE_NATIVE(reeval)
     REBVAL *v = ARG(value);
 
     bool enfix =
-        Is_Quasi(v)
+        Is_Quasiform(v)
         and HEART_BYTE(v) == REB_FRAME
         and Is_Enfixed(v);
 

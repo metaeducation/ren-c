@@ -113,7 +113,7 @@ Array* Copy_Values_Len_Extra_Shallow_Core(
     Cell* dest = Array_Head(a);
     for (; count < len; ++count, ++src, ++dest) {
         if (
-            Is_Isotope(src)
+            Is_Antiform(src)
             or VAL_TYPE_UNCHECKED(src) == REB_VOID  // allow unreadable
         ){
             assert(IS_VARLIST(a));  // usually not legal
@@ -243,7 +243,7 @@ void Uncolor_Array(const Array* a)
 //
 void Uncolor(const Cell* v)
 {
-    if (Is_Isotope(v))
+    if (Is_Antiform(v))
         return;
 
     if (Any_Array(v))

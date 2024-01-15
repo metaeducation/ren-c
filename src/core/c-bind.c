@@ -775,7 +775,7 @@ DECLARE_NATIVE(let)
         if (Is_Quoted(SPARE))  // should (let 'x: <whatever>) be legal? [3]
             fail ("QUOTED! escapes not supported at top level of LET");
 
-        switch (Cell_Heart(SPARE)) {  // QUASI! states mean isotopes ok
+        switch (Cell_Heart(SPARE)) {  // quasi states mean antiforms ok
           case REB_WORD:
           case REB_BLOCK:
             if (Is_Set_Group(vars))
@@ -819,7 +819,7 @@ DECLARE_NATIVE(let)
         else
             where = stable_OUT;
 
-        Copy_Cell_Header(where, vars);  // keep QUASI! state and word/setword
+        Copy_Cell_Header(where, vars);  // keep quasi state and word/setword
         INIT_CELL_WORD_SYMBOL(where, symbol);
         INIT_VAL_WORD_BINDING(where, bindings);
         INIT_VAL_WORD_INDEX(where, INDEX_ATTACHED);
@@ -858,7 +858,7 @@ DECLARE_NATIVE(let)
                 altered = true;
             }
 
-            switch (Cell_Heart(temp)) {  // permit QUASI!
+            switch (Cell_Heart(temp)) {  // permit quasi
               case REB_ISSUE:  // is multi-return opt-in for dialect, passthru
               case REB_BLANK:  // is multi-return opt-out for dialect, passthru
                 Derelativize(PUSH(), temp, temp_specifier);
@@ -1290,7 +1290,7 @@ void Rebind_Values_Deep(
                 }
             }
         }
-        else if (Is_Isotope(v))
+        else if (Is_Antiform(v))
             NOOP;
         else if (Any_Arraylike(v)) {
             const Cell* sub_tail;

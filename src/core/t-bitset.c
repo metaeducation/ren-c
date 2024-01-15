@@ -609,7 +609,7 @@ REBTYPE(Bitset)
 
       case SYM_SELECT: {
         INCLUDE_PARAMS_OF_SELECT;
-        if (Is_Isotope(ARG(value)))
+        if (Is_Antiform(ARG(value)))
             fail (ARG(value));
 
         UNUSED(PARAM(series));  // covered by `v`
@@ -636,7 +636,7 @@ REBTYPE(Bitset)
         if (Is_Void(arg))
             return COPY(v);  // don't fail on read only if it would be a no-op
 
-        if (Is_Isotope(arg))
+        if (Is_Antiform(arg))
             fail (arg);
 
         Binary* bin = VAL_BITSET_Ensure_Mutable(v);

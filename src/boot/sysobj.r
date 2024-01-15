@@ -175,7 +175,7 @@ standard: make object! [
             ]
             [unwind/with (binding of 'return) typecheck 'return unmeta value]
         ] #BODY
-        ~  ; if you don't call RETURN, the result is a ~ isotope
+        ; if you don't call RETURN, the result is a ~ antiform (trash)
     ]
 
     ; !!! The %sysobj.r initialization currently runs natives (notably the

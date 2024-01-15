@@ -79,10 +79,10 @@ INLINE Value(*) Init_Blank_Untracked(Cell* out, Byte quote_byte) {
 }
 
 #define Init_Blank(out) \
-    TRACK(Init_Blank_Untracked((out), UNQUOTED_1))
+    TRACK(Init_Blank_Untracked((out), NOQUOTE_1))
 
 #define Init_Quasi_Blank(out) \
-    TRACK(Init_Blank_Untracked((out), QUASI_2))
+    TRACK(Init_Blank_Untracked((out), QUASIFORM_2))
 
 INLINE bool Is_Quasi_Blank(const Cell* v)
-  { return Is_Quasi(v) and HEART_BYTE(v) == REB_BLANK; }
+  { return Is_Quasiform(v) and HEART_BYTE(v) == REB_BLANK; }

@@ -166,7 +166,7 @@ static void Protect_Var(const REBVAL *var, Flags flags)
 //
 void Protect_Value(const Cell* v, Flags flags)
 {
-    if (Is_Isotope(v))
+    if (Is_Antiform(v))
         return;
 
     if (Any_Series(v))

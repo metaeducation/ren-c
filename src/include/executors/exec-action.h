@@ -249,7 +249,7 @@ enum {
     //
     //    bar: func [^y [nihil? integer!]] [...]
     //
-    //    (bar,)  ; sees an empty pack isotope (nihil) ~[]~
+    //    (bar,)  ; sees an empty pack antiform (nihil) ~[]~
     //    (bar comment "hi")  ; same
     //
     ST_ACTION_BARRIER_HIT,

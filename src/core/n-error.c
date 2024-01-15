@@ -32,7 +32,7 @@
 //  {Sandbox code to intercept failures at ANY depth (including typos)}
 //
 //      return: "ERROR! if raised, else ^META of the result"
-//          [error! quoted! quasi! blank!]
+//          [error! quoted! quasiform! blank!]
 //      code "Code to sandbox and monitor"
 //          [<unrun> frame! block!]
 //  ]
@@ -91,7 +91,7 @@ DECLARE_NATIVE(enrescue)
 //  {Tries to DO a block, trapping raised errors}
 //
 //      return: "ERROR! if raised, else the ^META of the result"
-//          [error! quasi! quoted! blank!]
+//          [error! quasiform! quoted! blank!]
 //      code "Code to execute and monitor"
 //          [block! frame!]
 //  ]
@@ -157,7 +157,7 @@ DECLARE_NATIVE(entrap)  // wrapped as TRAP and ATTEMPT
     if (Is_Raised(SPARE)) {
         Drop_Level(SUBLEVEL);
         Move_Cell(OUT, SPARE);
-        QUOTE_BYTE(OUT) = UNQUOTED_1;  // change isotope error to plain
+        QUOTE_BYTE(OUT) = NOQUOTE_1;  // change antiform error to plain
         return BRANCHED(OUT);
     }
 
@@ -225,7 +225,7 @@ DECLARE_NATIVE(except)
 //
 //  raised?: native/intrinsic [
 //
-//  "Tells you if argument is an ERROR! isotope, doesn't fail if it is"
+//  "Tells you if argument is an ERROR! antiform, doesn't fail if it is"
 //
 //      return: [logic?]
 //      ^optional
@@ -242,7 +242,7 @@ DECLARE_INTRINSIC(raised_q)
 //
 //  ok?: native/intrinsic [
 //
-//  "Tells you if argument is not an ERROR! isotope, doesn't fail if it is"
+//  "Tells you if argument is not an ERROR! antiform, doesn't fail if it is"
 //
 //      return: [logic?]
 //      ^optional

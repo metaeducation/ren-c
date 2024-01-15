@@ -62,10 +62,10 @@
     ('~['1 '2]~ = until [meta pack [1 2]])
 ]
 
-; At one time, UNTIL errored upon receiving "isotopes", so that cases like
-; `until [match [logic?] false]` would raise an error on a ~false~ isotopic
+; At one time, UNTIL errored upon receiving antiforms, so that cases like
+; `until [match [logic?] false]` would raise an error on a ~false~ antiform
 ; word--as opposed to a plain #[false] value.  This protection no longer made
-; sense once ~false~ the isotopic word *was* the representation of falseness.
+; sense once ~false~ the antiform word *was* the representation of falseness.
 ; So there's no stopping you shooting yourself in the foot with MATCH here,
 ; you need to use something like DID.
 [

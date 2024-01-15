@@ -81,7 +81,7 @@ INLINE REBVAL *Init_Any_Word_Untracked(
 }
 
 #define Init_Any_Word(out,kind,spelling) \
-    TRACK(Init_Any_Word_Untracked((out), (kind), (spelling), UNQUOTED_1))
+    TRACK(Init_Any_Word_Untracked((out), (kind), (spelling), NOQUOTE_1))
 
 #define Init_Word(out,str)          Init_Any_Word((out), REB_WORD, (str))
 #define Init_Get_Word(out,str)      Init_Any_Word((out), REB_GET_WORD, (str))
@@ -188,21 +188,21 @@ INLINE bool IS_QUOTED_WORD(const Cell* v) {
 }
 
 
-INLINE bool Is_Word_Isotope(const Cell* v) {
+INLINE bool Is_Anti_Word(const Cell* v) {
     ASSERT_CELL_READABLE(v);
     if (HEART_BYTE(v) != REB_WORD)
         return false;
-    return QUOTE_BYTE(v) == ISOTOPE_0;
+    return QUOTE_BYTE(v) == ANTIFORM_0;
 }
 
-INLINE bool Is_Word_Isotope_With_Id(const Cell* v, SymId id) {
+INLINE bool Is_Anti_Word_With_Id(const Cell* v, SymId id) {
     assert(id != 0);
 
-    if (not Is_Word_Isotope(v))
+    if (not Is_Anti_Word(v))
         return false;
 
     return id == Cell_Word_Id(v);
 }
 
 INLINE bool Is_Quasi_Word(const Cell* v)
-  { return Is_Quasi(v) and HEART_BYTE(v) == REB_WORD; }
+  { return Is_Quasiform(v) and HEART_BYTE(v) == REB_WORD; }

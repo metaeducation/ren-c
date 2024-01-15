@@ -272,7 +272,7 @@ Bounce Reflect_Core(Level* level_)
         break;
     }
 
-    QUOTE_BYTE(ARG(value)) = UNQUOTED_1;  // ignore QUASI! or QUOTED!
+    QUOTE_BYTE(ARG(value)) = NOQUOTE_1;  // ignore quasi or quoted
 
     INIT_LVL_PHASE(
         level_,
@@ -288,7 +288,7 @@ Bounce Reflect_Core(Level* level_)
 //  {Returns specific details about a datatype.}
 //
 //      return: [any-value?]
-//      value "Accepts isotopes for the purposes of TYPE OF"
+//      value "Accepts antiforms for the purposes of TYPE OF"
 //          [<maybe> any-value?]
 //      property "Such as: type, length, spec, body, words, values, title"
 //          [word!]
@@ -324,10 +324,10 @@ DECLARE_NATIVE(of)
 // these cases would work:
 //
 //     >> integer! = kind of 1
-//     == ~true~  ; isotope
+//     == ~true~  ; anti
 //
 //     >> integer! = :(second [length kind]) of 1
-//     == ~true~  ; isotope
+//     == ~true~  ; anti
 //
 // For the moment the behavior is manually simulated.
 //

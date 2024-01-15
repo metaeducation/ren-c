@@ -87,7 +87,7 @@ run-single-test: func [
         ]
 
         nihil' = result [
-            "test returned empty pack ~[]~ isotope"  ; UNMETA fails
+            "test returned empty pack ~[]~ antiform"  ; UNMETA fails
         ]
         (elide if pack? unmeta result [result: first unquasi result])
 
@@ -102,7 +102,7 @@ run-single-test: func [
         ]
 
         quasi? result [
-            "test returned isotope:" (mold/limit result 40)
+            "test returned antiform:" (mold/limit result 40)
         ]
         (elide result: unmeta result)
 
@@ -185,9 +185,9 @@ run-test-cluster: func [
         (expected-id: null)  ; default expects a true result, not error w/id
 
         try [
-            expected-id: quasi! [(expected-id: unquasi expected-id)
+            expected-id: quasiform! [(expected-id: unquasi expected-id)
                 '!! ahead group!
-                | (fail "QUASI! must be followed by !! and a GROUP!")
+                | (fail "~error-id~ must be followed by !! and a GROUP!")
             ]
         ]
         [

@@ -970,17 +970,14 @@ void MF_Context(REB_MOLD *mo, NoQuote(const Cell*) v, bool form)
     if (form) {
         //
         // Mold all words and their values ("key: <molded value>").
-        // Because FORM-ing is lossy, we don't worry much about showing the
-        // bad word isotopes as the plain bad words, or that blanks are
-        // showing up as NULL.
         //
         bool had_output = false;
         while (Did_Advance_Evars(&e)) {
             Append_Spelling(mo->series, KEY_SYMBOL(e.key));
             Append_Ascii(mo->series, ": ");
 
-            if (Is_Isotope(e.var)) {
-                fail (Error_Bad_Isotope(e.var));  // can't FORM isotopes
+            if (Is_Antiform(e.var)) {
+                fail (Error_Bad_Antiform(e.var));  // can't FORM antiforms
             }
             else if (not Is_Nulled(e.var) and not Is_Blank(e.var))
                 Mold_Value(mo, e.var);
@@ -1021,12 +1018,12 @@ void MF_Context(REB_MOLD *mo, NoQuote(const Cell*) v, bool form)
         if (Is_Void(e.var)) {
             Append_Ascii(s, "'");
         }
-        else if (Is_Isotope(e.var)) {
-            assert(Is_Isotope_Stable(cast(Atom(*), e.var)));  // extra check
+        else if (Is_Antiform(e.var)) {
+            assert(Is_Antiform_Stable(cast(Atom(*), e.var)));  // extra check
 
             DECLARE_LOCAL (reified);
             Unrelativize(reified, e.var);
-            Quasify_Isotope(reified);  // will become QUASI!...
+            Quasify_Antiform(reified);  // will become quasi...
             Mold_Value(mo, reified);  // ...hence molds as `~xxx~`
         }
         else {
@@ -1205,7 +1202,7 @@ REBTYPE(Context)
             fail ("APPEND only works on OBJECT! and MODULE! contexts");
 
         if (Is_Splice(arg)) {
-            QUOTE_BYTE(arg) = UNQUOTED_1;  // make plain group
+            QUOTE_BYTE(arg) = NOQUOTE_1;  // make plain group
         }
         else if (Any_Word(arg)) {
             // Add an unset word: `append context 'some-word`
@@ -1265,7 +1262,7 @@ REBTYPE(Context)
             fail (Error_Bad_Refines_Raw());
 
         REBVAL *pattern = ARG(value);
-        if (Is_Isotope(pattern))
+        if (Is_Antiform(pattern))
             fail (pattern);
 
         if (not Is_Word(pattern))

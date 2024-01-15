@@ -114,7 +114,7 @@ enum LEX_DELIMIT_ENUM {
     LEX_DELIMIT_DOUBLE_QUOTE,       /* 22 " */
     LEX_DELIMIT_SLASH,              /* 2F / - date, path, file */
     LEX_DELIMIT_PERIOD,             /* 2E . - decimal, tuple, file */
-    LEX_DELIMIT_TILDE,              /* 7E ~ - used only by QUASI! */
+    LEX_DELIMIT_TILDE,              /* 7E ~ - used only by quasiforms */
 
     LEX_DELIMIT_UTF8_ERROR,
 

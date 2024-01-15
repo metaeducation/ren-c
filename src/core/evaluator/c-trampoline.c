@@ -233,7 +233,7 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
                 // treat any failure as if it could have been thrown from
                 // anywhere, so it is bubbled up as a throw.
                 //
-                QUOTE_BYTE(OUT) = UNQUOTED_1;
+                QUOTE_BYTE(OUT) = NOQUOTE_1;
                 Init_Thrown_Failure(LEVEL, stable_OUT);
                 goto handle_thrown;
             }

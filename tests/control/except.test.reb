@@ -5,8 +5,7 @@
 ; passing any failures along, which will raise an alarm if not
 ; consumed by some ^META receiving site.
 ;
-; Note: "raises" are like the isotope form of ERROR!.  They cannot
-; be stored in variables.
+; Note: "raised" is the antiform of ERROR!.  Can't be stored in variables.
 
 (
    x: ~

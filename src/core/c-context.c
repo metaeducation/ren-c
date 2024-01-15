@@ -743,8 +743,8 @@ Context* Construct_Context_Managed(
         REBVAL *var = Sink_Word_May_Fail(value, specifier);
         Derelativize(var, value + 1, specifier);
 
-        if (Is_Quasi(var) and HEART_BYTE(var) == REB_WORD)  // ~null~, ~true~
-            Meta_Unquotify_Known_Stable(var);  // want isotope in the object
+        if (Is_Quasiform(var) and HEART_BYTE(var) == REB_WORD)  // e.g. ~true~
+            Meta_Unquotify_Known_Stable(var);  // want antiform in the object
     }
 
     return context;

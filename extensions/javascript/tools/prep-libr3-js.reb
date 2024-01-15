@@ -844,7 +844,7 @@ e-cwrap/emit {
 
         switch (typeof js_value) {
           case 'undefined':
-            return reb.Trash()  /* or `reb.Value("~undefined~") isotope? */
+            return reb.Trash()  /* or `reb.Value("~undefined~") antiform? */
 
           case 'number':
             return reb.Integer(js_value)

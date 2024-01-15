@@ -59,7 +59,7 @@ rescue+: func [  ; see also TRAP+
         return pack [result null]
     ]
 
-    return isotopic make object! [
+    return anti make object! [
         else: branch -> [(heavy unmeta :result) then (:branch)]
         decay: [pack [null unmeta result]]
     ]
@@ -70,7 +70,7 @@ module: func [
     {Creates a new module}
 
     return: [module!]
-    @product "The result of running the body (~quit~ isotope if it ran QUIT)"
+    @product "The result of running the body (~quit~ antiform if it ran QUIT)"
         [any-value?]
     @quitting "If requested and quitting, when true PRODUCT is QUIT's argument"
         [logic?]

@@ -429,10 +429,10 @@ REBTYPE(Binary)
             // not necessarily a no-op (e.g. CHANGE can erase)
         }
         else if (Is_Splice(arg)) {
-            QUOTE_BYTE(arg) = UNQUOTED_1;  // make plain group
+            QUOTE_BYTE(arg) = NOQUOTE_1;  // make plain group
         }
-        else if (Is_Isotope(arg)) {  // only SPLICE! in typecheck
-            fail (Error_Bad_Isotope(arg));  // ...but that doesn't filter yet
+        else if (Is_Antiform(arg)) {  // only SPLICE! in typecheck
+            fail (Error_Bad_Antiform(arg));  // ...but that doesn't filter yet
         }
         else if (Any_Array(arg) or Any_Sequence(arg))
             fail (ARG(value));
@@ -454,7 +454,7 @@ REBTYPE(Binary)
         UNUSED(PARAM(series));  // covered by `v`
 
         REBVAL *pattern = ARG(pattern);
-        if (Is_Isotope(pattern))
+        if (Is_Antiform(pattern))
             fail (pattern);
 
         Flags flags = (

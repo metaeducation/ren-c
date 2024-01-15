@@ -200,7 +200,7 @@
     ])
 ]
 
-; QUASI! values in SET-BLOCK! on meta-values allow upacking errors
+; quasiform values in SET-BLOCK! on meta-values allow upacking errors
 [
     ~zero-divide~ !! (
         [e]: pack [1 / 0]  ; should ~e~ have meaning, e.g. give plain error?
@@ -226,7 +226,7 @@
     )
 ]
 
-; Using @ or _ allows passthru of isotopes
+; Using @ or _ allows passthru of antiforms
 [
     (
         '~(a b c)~ = ^ [x]: spread [a b c]

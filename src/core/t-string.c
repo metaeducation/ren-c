@@ -1065,16 +1065,16 @@ REBTYPE(String)
         //     == "abcd"
         //
         // However it will not try to FORM blocks or other arrays; it only
-        // accepts isotopic blocks to imply "append each item individually".
+        // accepts antiform blocks to imply "append each item individually".
         //
         if (Is_Void(arg)) {
             // not necessarily a no-op (e.g. CHANGE can erase)
         }
         else if (Is_Splice(arg)) {
-            QUOTE_BYTE(arg) = UNQUOTED_1;
+            QUOTE_BYTE(arg) = NOQUOTE_1;
         }
-        else if (Is_Isotope(arg)) {  // only SPLICE! in typecheck
-            fail (Error_Bad_Isotope(arg));  // ...but that doesn't filter yet
+        else if (Is_Antiform(arg)) {  // only SPLICE! in typecheck
+            fail (Error_Bad_Antiform(arg));  // ...but that doesn't filter yet
         }
         else if (Any_Array(arg))
             fail (ARG(value));  // error on `append "abc" [d e]` w/o SPREAD
@@ -1093,7 +1093,7 @@ REBTYPE(String)
       case SYM_SELECT:
       case SYM_FIND: {
         INCLUDE_PARAMS_OF_FIND;
-        if (Is_Isotope(ARG(pattern)))
+        if (Is_Antiform(ARG(pattern)))
             fail (ARG(pattern));
 
         UNUSED(PARAM(series));

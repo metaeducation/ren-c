@@ -172,23 +172,22 @@ DECLARE_NATIVE(the)
 //
 //  the*: native [
 //
-//  "Returns value passed in without evaluation, but QUASI! become isotopes"
+//  "Give value passed in without evaluation, but quasiforms become antiforms"
 //
-//      return: "If input is QUASI! then isotope, else input value, verbatim"
-//          [any-value?]
+//      return: [any-value?]
 //      'value [element?]
 //  ]
 //
 DECLARE_NATIVE(the_p)
 //
-// THE* is the variant assigned to @.  It turns QUASI! forms into isotopes,
+// THE* is the variant assigned to @.  It turns quasiforms into antiforms,
 // but passes through all other values:
 //
 //     >> @ ~null~
-//     == ~null~  ; isotope
+//     == ~null~  ; anti
 //
-//     >> @ ~[1 2 3]~
-//     == ~[1 2 3]~  ; isotope
+//     >> @ ~(1 2 3)~
+//     == ~(1 2 3)~  ; anti
 //
 //     >> @ abc
 //     == abc
@@ -204,7 +203,7 @@ DECLARE_NATIVE(the_p)
 // Because the API machinery puts FEED_NULL_SUBSTITUTE_CELL into the stream as
 // a surrogate for a nullptr instead of asserting/erroring.
 //
-// The reason it isotopifies things is that the belief is that this will
+// The reason it antiforms things is that the belief is that this will
 // be more likely to generate something that will raise attention if it's not
 // actually correct--otherwise the auto-reification would be more troublesome.
 {
@@ -212,9 +211,9 @@ DECLARE_NATIVE(the_p)
 
     REBVAL *v = ARG(value);
 
-    if (Is_Quasi(v)) {  // for `rebElide("@", nullptr, "else [...]");`
+    if (Is_Quasiform(v)) {  // for `rebElide("@", nullptr, "else [...]");`
         Copy_Cell(OUT, v);
-        QUOTE_BYTE(OUT) = ISOTOPE_0;
+        QUOTE_BYTE(OUT) = ANTIFORM_0;
     }
     else {
         Copy_Cell(OUT, v);
@@ -252,9 +251,9 @@ DECLARE_NATIVE(quote)
 //
 //  meta: native/intrinsic [
 //
-//  {isotopes -> QUASI!, adds a quote to rest (behavior of ^^)}
+//  {antiforms -> quasiforms, adds a quote to rest (behavior of ^^)}
 //
-//      return: [quoted! quasi!]
+//      return: [quoted! quasiform!]
 //      ^atom
 //  ]
 //
@@ -271,7 +270,7 @@ DECLARE_INTRINSIC(meta)
 //
 //  {META variant that passes through VOID and NULL, and doesn't take failures}
 //
-//      return: [<opt> <void> quoted! quasi!]
+//      return: [<opt> <void> quoted! quasiform!]
 //      ^optional [pack? any-value?]
 //  ]
 //
@@ -328,7 +327,7 @@ DECLARE_NATIVE(unquote)
 //
 //  {Constructs a quasi form of the evaluated argument}
 //
-//      return: [quasi!]
+//      return: [quasiform!]
 //      value "Any non-QUOTED! value"
 //          [<opt> element?]  ; there isn't an any-nonquoted! typeset
 //  ]
@@ -340,7 +339,7 @@ DECLARE_NATIVE(quasi)
     Value(*) v = ARG(value);
 
     if (Is_Quoted(v))
-        fail ("QUOTED! values do not have QUASI! forms");
+        fail ("Quoted values do not have quasiforms");
 
     return COPY(Quasify(v));
 }
@@ -349,11 +348,10 @@ DECLARE_NATIVE(quasi)
 //
 //  unquasi: native/intrinsic [
 //
-//  {Remove QUASI! wrapper from the argument}
+//  {Turn quasiforms into common forms}
 //
-//      return: "Value with quasi state removed"
-//          [element?]  ; more narrowly, a non-quasi non-quoted element
-//      value [quasi!]
+//      return: [element?]  ; more narrowly, a non-quasi non-quoted element
+//      value [quasiform!]
 //  ]
 //
 DECLARE_INTRINSIC(unquasi)
@@ -366,50 +364,50 @@ DECLARE_INTRINSIC(unquasi)
 
 
 //
-//  isotope?: native/intrinsic [
+//  antiform?: native/intrinsic [
 //
-//  {Tells you whether argument is a stable or unstable isotope}
+//  {Tells you whether argument is a stable or unstable antiform}
 //
 //      return: [logic?]
 //      ^atom
 //  ]
 //
-DECLARE_INTRINSIC(isotope_q)
+DECLARE_INTRINSIC(antiform_q)
 //
 // !!! This can be deceptive, in the sense that you could ask if something
-// like an isotopic pack is an isotope, and it will say yes...but then
+// like an antiform pack is an antiform, and it will say yes...but then
 // another routine like integer? might say it's an integer.  Be aware.
 {
     UNUSED(phase);
 
-    Init_Logic(out, Is_Quasi(arg));
+    Init_Logic(out, Is_Quasiform(arg));
 }
 
 
 //
-//  isotopic: native [
+//  anti: native [
 //
-//  {Give the isotopic form of the plain argument (same as UNMETA QUASI)}
+//  {Give the antiform of the plain argument (same as UNMETA QUASI)}
 //
-//      return: [isotope?]
+//      return: [antiform?]
 //      value "Any non-QUOTED!, non-QUASI value"
 //          [<opt> element?]  ; there isn't an any-nonquoted! typeset
 //  ]
 //
-DECLARE_NATIVE(isotopic)
+DECLARE_NATIVE(anti)
 {
-    INCLUDE_PARAMS_OF_ISOTOPIC;
+    INCLUDE_PARAMS_OF_ANTI;
 
     Value(*) v = ARG(value);
 
     if (Is_Quoted(v))
-        fail ("QUOTED! values have no isotopic form (isotopes are quoted -1");
+        fail ("QUOTED! values have no antiform (antiforms are quoted -1");
 
-    if (Is_Quasi(v))  // Review: Allow this?
-        fail ("QUASI! values can be made isotopic with UNMETA");
+    if (Is_Quasiform(v))  // Review: Allow this?
+        fail ("QUASIFORM! values can be made into antiforms with UNMETA");
 
     Copy_Cell(OUT, v);
-    QUOTE_BYTE(OUT) = ISOTOPE_0;
+    QUOTE_BYTE(OUT) = ANTIFORM_0;
     return OUT;
 }
 
@@ -417,10 +415,10 @@ DECLARE_NATIVE(isotopic)
 //
 //  unmeta: native/intrinsic [
 //
-//  {Variant of UNQUOTE that also accepts QUASI! to make isotopes}
+//  {Variant of UNQUOTE that also accepts quasiforms to make antiforms}
 //
 //      return: [any-atom?]
-//      value [quoted! quasi!]
+//      value [quoted! quasiform!]
 //  ]
 //
 DECLARE_INTRINSIC(unmeta)
@@ -438,7 +436,7 @@ DECLARE_INTRINSIC(unmeta)
 //  {Variant of UNMETA that passes thru VOID and NULL}
 //
 //      return: [any-atom?]
-//      value [<opt> <void> quoted! quasi!]
+//      value [<opt> <void> quoted! quasiform!]
 //  ]
 //
 DECLARE_INTRINSIC(unmeta_p)
@@ -463,7 +461,7 @@ DECLARE_INTRINSIC(unmeta_p)
 //
 //  {Make block arguments splice}
 //
-//      return: "Isotope of BLOCK! or unquoted value (passthru null and void)"
+//      return: "Antiform of GROUP! or unquoted value (pass null and void)"
 //          [<opt> <void> element? splice?]
 //      value [<opt> <void> quoted! blank! any-array!]
 //  ]
@@ -508,7 +506,7 @@ DECLARE_INTRINSIC(spread)
         assert(Any_Array(arg));
         Copy_Cell(out, arg);
         HEART_BYTE(out) = REB_GROUP;
-        QUOTE_BYTE(out) = ISOTOPE_0;
+        QUOTE_BYTE(out) = ANTIFORM_0;
     }
 }
 
@@ -518,7 +516,7 @@ DECLARE_INTRINSIC(spread)
 //
 //  {Make objects lazy}
 //
-//      return: "Isotope of OBJECT! or unquoted value (passthru null and void)"
+//      return: "Antiform of OBJECT! or unquoted value (pass null and void)"
 //          [<opt> <void> element? lazy?]
 //      object "Will do MAKE OBJECT! on BLOCK!"
 //          [<opt> <void> quoted! object! block!]
@@ -545,7 +543,7 @@ DECLARE_NATIVE(lazy)
         Copy_Cell(OUT, v);
 
     assert(Is_Object(OUT));
-    QUOTE_BYTE(OUT) = ISOTOPE_0;
+    QUOTE_BYTE(OUT) = ANTIFORM_0;
     return OUT;
 }
 
@@ -555,7 +553,7 @@ DECLARE_NATIVE(lazy)
 //
 //  {Create a pack of arguments from an array}
 //
-//      return: "Isotope of BLOCK!"
+//      return: "Antiform of BLOCK!"
 //          [pack?]
 //      array "Reduce if plain BLOCK!, not if THE-BLOCK!"
 //          [<maybe> the-block! block!]  ; accept quoted values?  [1]
@@ -568,8 +566,8 @@ DECLARE_NATIVE(pack)
 //    for some efficiency trick to let users avoid block allocations in
 //    some situations.  No usages existed, so it was scrapped.  Review.
 //
-// 2. In REDUCE, /PREDICATE functions are offered isotopes like nihil and void
-//    if they can accept them (which META can).  But COMMA! isotopes that
+// 2. In REDUCE, /PREDICATE functions are offered things like nihil and void
+//    if they can accept them (which META can).  But COMMA! antiforms that
 //    result from evaluating commas are -not- offered to any predicates.  This
 //    is by design, so we get:
 //
@@ -610,9 +608,9 @@ DECLARE_NATIVE(pack)
 //
 //  matches: native [
 //
-//  {Create isotopic pattern to signal a desire to test types non-literally}
+//  {Create antiform pattern to signal a desire to test types non-literally}
 //
-//      return: "Isotope of TYPE-XXX!"
+//      return: "Antiform of TYPE-XXX!"
 //          [<opt> any-matcher?]
 //      types [<opt> block! any-type-value!]
 //  ]
@@ -632,7 +630,7 @@ DECLARE_NATIVE(matches)
     assert(Is_Block(v));
     Copy_Cell(OUT, v);
     HEART_BYTE(OUT) = REB_TYPE_BLOCK;
-    QUOTE_BYTE(OUT) = ISOTOPE_0;
+    QUOTE_BYTE(OUT) = ANTIFORM_0;
 
     return OUT;
 }
@@ -641,7 +639,7 @@ DECLARE_NATIVE(matches)
 //
 //  splice?: native/intrinsic [
 //
-//  "Tells you if argument is a splice (isotopic group)"
+//  "Tells you if argument is a splice (antiform group)"
 //
 //      return: [logic?]
 //      value
@@ -658,7 +656,7 @@ DECLARE_INTRINSIC(splice_q)
 //
 //  any-matcher?: native/intrinsic [
 //
-//  "Tells you if argument is any kind of matcher (TYPE-XXX! isotope)"
+//  "Tells you if argument is any kind of matcher (TYPE-XXX! antiform)"
 //
 //      return: [logic?]
 //      ^value [any-atom?]
@@ -668,7 +666,7 @@ DECLARE_INTRINSIC(any_matcher_q)
 {
     UNUSED(phase);
 
-    if (Is_Quasi(arg) and Any_Type_Value_Kind(HEART_BYTE(arg)))
+    if (Is_Quasiform(arg) and Any_Type_Value_Kind(HEART_BYTE(arg)))
         Init_True(out);
     else
         Init_False(out);
@@ -678,7 +676,7 @@ DECLARE_INTRINSIC(any_matcher_q)
 //
 //  lazy?: native/intrinsic [
 //
-//  "Tells you if argument is a lazy value (isotopic object)"
+//  "Tells you if argument is a lazy value (antiform object)"
 //
 //      return: [logic?]
 //      ^atom
@@ -695,7 +693,7 @@ DECLARE_INTRINSIC(lazy_q)
 //
 //  pack?: native/intrinsic [
 //
-//  "Tells you if argument is a parameter pack (isotopic block)"
+//  "Tells you if argument is a parameter pack (antiform block)"
 //
 //      return: [logic?]
 //      ^atom
@@ -710,26 +708,26 @@ DECLARE_INTRINSIC(pack_q)
 
 
 //
-//  isoword?: native/intrinsic [
+//  antiword?: native/intrinsic [
 //
-//  "Tells you if argument is an isotopic word"
+//  "Tells you if argument is an antiform word"
 //
 //      return: [logic?]
 //      value
 //  ]
 //
-DECLARE_INTRINSIC(isoword_q)
+DECLARE_INTRINSIC(antiword_q)
 {
     UNUSED(phase);
 
-    Init_Logic(out, Is_Isoword(arg));
+    Init_Logic(out, Is_Antiword(arg));
 }
 
 
 //
 //  action?: native/intrinsic [
 //
-//  "Tells you if argument is an action (isotopic frame)"
+//  "Tells you if argument is an action (antiform frame)"
 //
 //      return: [logic?]
 //      value
@@ -756,8 +754,8 @@ DECLARE_INTRINSIC(runs)
 {
     UNUSED(phase);
 
-    Copy_Cell(out, arg);  // may or may not be isotope
-    QUOTE_BYTE(out) = ISOTOPE_0;  // now it's known to be an isotope
+    Copy_Cell(out, arg);  // may or may not be antiform
+    QUOTE_BYTE(out) = ANTIFORM_0;  // now it's known to be an antiform
 }
 
 
@@ -774,8 +772,8 @@ DECLARE_INTRINSIC(unrun)
 {
     UNUSED(phase);
 
-    Copy_Cell(out, arg);  // may or may not be isotope
-    QUOTE_BYTE(out) = UNQUOTED_1;  // now it's known to not be isotopic
+    Copy_Cell(out, arg);  // may or may not be antiform
+    QUOTE_BYTE(out) = NOQUOTE_1;  // now it's known to not be antiform
 }
 
 
@@ -833,7 +831,7 @@ DECLARE_INTRINSIC(quoted_q)
 //
 //  quasi?: native/intrinsic [
 //
-//  {Tells you if the argument is QUASI! or not}
+//  {Tells you if the argument is a quasiform or not}
 //
 //      return: [logic?]
 //      value
@@ -843,7 +841,7 @@ DECLARE_INTRINSIC(quasi_q)
 {
     UNUSED(phase);
 
-    Init_Logic(out, VAL_TYPE(arg) == REB_QUASI);
+    Init_Logic(out, VAL_TYPE(arg) == REB_QUASIFORM);
 }
 
 

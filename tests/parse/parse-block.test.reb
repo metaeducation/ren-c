@@ -102,22 +102,6 @@
     (raised? parse "ax" ["a" || "b" | "c"])
 ]
 
-
-; UPARSE can be used where "heavy" nulls produced by the rule products do not
-; trigger ELSE, but match failures do.
-;
-; !!! Is it worth it to add a way to do something like ^[...] block rules to
-; say you don't want the ~_~ isotope, or does that just confuse things?  Is
-; it better to just rig that up from the outside?
-;
-;     parse data rules then result -> [
-;         ; If RESULT is null we can react differently here
-;     ] else [
-;         ; This is a match failure null
-;     ]
-;
-; Adding additional interface complexity onto UPARSE may not be worth it when
-; it's this easy to work around.
 [
     (
         x: parse "aaa" [some "a" (null)] except [fail "Shouldn't be reached"]
