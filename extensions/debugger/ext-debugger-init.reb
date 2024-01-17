@@ -108,7 +108,7 @@ Expect crashes and mayhem.  But see BACKTRACE, RESUME, and STEP.}
 ]
 
 
-backtrace*: function [
+backtrace*: func [
     "Backtrace to find a specific FRAME!, or other queried property."
 
     return: [<opt> block! frame!]
@@ -121,7 +121,7 @@ backtrace*: function [
         [logic? integer!]
     /brief "Do not list depths, just function labels on one line"
 ][
-    get-frame: not blank? :level
+    let get-frame: not blank? :level
 
     if get-frame [
         any [limit brief] then [
@@ -135,7 +135,7 @@ backtrace*: function [
         ]
     ]
 
-    max-rows: case [
+    let max-rows: case [
         blank? limit [
             20  ; Default 20, leaves room to type on 80x25 terminal
         ]
@@ -151,14 +151,14 @@ backtrace*: function [
         fail
     ]
 
-    row: 0  ; row we're on (incl. pending frames and maybe ellipsis)
-    number: 0  ; level label number in the loop (no pending frames)
-    first-frame: true  ; special check of first frame for "breakpoint 0"
+    let row: 0  ; row we're on (incl. pending frames and maybe ellipsis)
+    let number: 0  ; level label number in the loop (no pending frames)
+    let first-frame: true  ; special check of first frame for "breakpoint 0"
 
-    f: start
+    let f: start
 
-    stack: collect [while [f: parent of f] [
-        a: action of f
+    let stack: collect [while [f: parent of f] [
+        let a: action of f
 
         if :a = :console [
             ;
@@ -190,7 +190,7 @@ backtrace*: function [
 
         first-frame: false
 
-        row: me + 1
+        let row: me + 1
 
         ; !!! Try and keep the numbering in sync with other code that wants
         ; to be on the same page about the index.
@@ -276,12 +276,12 @@ backtrace*: function [
             ; dealings with the arguments, however (for instance: not having
             ; to initialize not-yet-filled args could be one thing).
             ;
-            keep [*]
+            keep '*
         ] else [
             keep number
         ]
 
-        keep/line []
+        keep/line spread []  ; !!! should VOID work here?
     ]]
 
     ; If we ran out of stack levels before finding the single one requested
@@ -295,7 +295,7 @@ backtrace*: function [
 ]
 
 
-backtrace: function [
+backtrace: func [
     {Prints out a backtrace at the current location}
 
     return: [~]
@@ -303,7 +303,7 @@ backtrace: function [
     ; We could backtrace relative to `binding of 'return`, but this would
     ; mean `>> if true [backtrace]` would see that IF in the trace.
     ;
-    stack: backtrace* debug-console-skin/base-frame _
+    let stack: backtrace* debug-console-skin/base-frame _
     print mold/only stack
 ]
 

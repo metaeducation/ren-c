@@ -16,7 +16,7 @@ REBOL [
     }
 ]
 
-loop: function [] [
+loop: func [] [
     fail 'return [
         "Short word LOOP is reserved for a generalized looping dialect:"
         https://forum.rebol.info/t/common-lisp-loop-and-iterate/1878
@@ -29,7 +29,7 @@ loop: function [] [
 ;
 ; https://forum.rebol.info/t/rethinking-auto-gathered-set-word-locals/1150
 ;
-method: func [/dummy] [
+function: method: func [/dummy] [
     fail 'dummy [
         {The distinction between FUNC vs. FUNCTION, and METH vs. METHOD was}
         {the gathering of SET-WORD! as locals.  This behavior led to many}
@@ -42,7 +42,7 @@ method: func [/dummy] [
 ]
 
 
-REBOL: function [] [
+REBOL: func [] [
     fail 'return [
         "The REBOL [] header of a script must be interpreted by LOAD (and"
         "functions like DO).  It cannot be executed directly."
@@ -153,7 +153,7 @@ comment [
 
 ; The legacy PRIN construct is replaced by WRITE-STDOUT SPACED and similar
 ;
-prin: function [
+prin: func [
     "Print without implicit line break, blocks are SPACED."
 
     return: [~]

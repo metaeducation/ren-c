@@ -35,7 +35,7 @@
                 [compose [ return if (to group! condition) [result] ]]
             )
         ]
-        let f: function spec body
+        let f: func spec body
         f/reset init
         return :f
     ]

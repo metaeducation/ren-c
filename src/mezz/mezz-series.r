@@ -91,7 +91,7 @@ array: func [
 ]
 
 
-replace: function [
+replace: func [
     {Replaces a search value with the replace value within the target series}
 
     return: [any-series!]
@@ -148,7 +148,7 @@ replace: function [
 ;
 ; reword "$1 is $2." [1 "This" 2 "that"] => "This is that."
 ;
-reword: function [
+reword: func [
     {Make a string or binary based on a template and substitution values}
 
     return: [any-string! binary!]
@@ -172,13 +172,13 @@ reword: function [
         &[char? any-string! integer! word! binary!]
     )
 ][
-    case_REWORD: case
+    let case_REWORD: case
     case: runs :lib.case
 
-    out: make (kind of source) length of source
+    let out: make (kind of source) length of source
 
-    prefix: void  ; void imperfect in parse3
-    suffix: void
+    let prefix: void
+    let suffix: void
     case [
         null? escape [prefix: "$"]  ; refinement not used, so use default
 
@@ -239,8 +239,8 @@ reword: function [
     ;         | "10" (keyword-match: '10)
     ;    ] suffix  ; ...but then it's at "0>" and not ">", so it fails
     ;
-    keyword-match: null  ; variable that gets set by rule
-    any-keyword-suffix-rule: collect [
+    let keyword-match: null  ; variable that gets set by rule
+    let any-keyword-suffix-rule: collect [
         for-each [keyword value] values [
             if not match keyword-types keyword [
                 fail ["Invalid keyword type:" keyword]
@@ -263,7 +263,9 @@ reword: function [
         keep [false]  ; add failure if no match, instead of removing last |
     ]
 
-    rule: [
+    let a
+    let b
+    let rule: [
         a: <here>  ; Begin marking text to copy verbatim to output
         try some [
             to prefix  ; seek to prefix (may be void, this could be a no-op)
@@ -274,17 +276,13 @@ reword: function [
                     any-keyword-suffix-rule (
                         append/part out a offset? a b  ; output before prefix
 
-                        v: apply :select [
+                        let v: apply :select [
                             values keyword-match
                             /case case_REWORD
                         ]
                         append out switch/type v [
                             frame! [
-                                ; Give v the option of taking an argument, but
-                                ; if it does not, evaluate to arity-0 result.
-                                ;
-                                (result: run v :keyword-match)
-                                :result
+                                apply/relax v [:keyword-match]  ; arity-0 okay
                             ]
                             block! [do v]
                         ] else [
@@ -333,7 +331,7 @@ move: func [
 ]
 
 
-extract: function [
+extract: func [
     {Extracts a value from a series at regular intervals}
 
     series [any-series!]
@@ -344,14 +342,14 @@ extract: function [
 ][
     if zero? width [return make (kind of series) 0]  ; avoid an infinite loop
 
-    len: to integer! either positive? width [  ; Length to preallocate
+    let len: to integer! either positive? width [  ; Length to preallocate
         divide (length of series) width  ; Forward loop, use length
     ][
         divide (index of series) negate width  ; Backward loop, use position
     ]
 
-    index: default '1
-    out: make (kind of series) len
+    index: default [1]
+    let out: make (kind of series) len
     iterate-skip series width [
         append out maybe (pick series index)
     ]
@@ -432,7 +430,7 @@ collect: redescribe [
     specialize :else [branch: [copy []]]
 ]
 
-format: function [
+format: func [
     "Format a string according to the format dialect."
     rules {A block in the format dialect. E.g. [10 -10 #"-" 4]}
     values
@@ -440,15 +438,15 @@ format: function [
 ][
     pad: default [space]
     case [
-      pad = 0 [pad: #"0"]
-      integer? pad [pad: to-char pad]
+        pad = 0 [pad: #"0"]
+        integer? pad [pad: to-char pad]
     ]
 
     rules: blockify :rules
     values: blockify :values
 
     ; Compute size of output (for better mem usage):
-    val: 0
+    let val: 0
     for-each rule rules [
         if word? rule [rule: get rule]
 
@@ -459,7 +457,7 @@ format: function [
         ] else [0]
     ]
 
-    out: make text! val
+    let out: make text! val
     insert/dup out pad val
 
     ; Process each rule:
@@ -503,7 +501,7 @@ printf: func [
 ]
 
 
-split: function [
+split: func [
     {Split series in pieces: fixed/variable size, fixed number, or delimited}
 
     return: [block!]
@@ -526,14 +524,15 @@ split: function [
     if all [any-string? series tag? dlm] [dlm: form dlm]
     ; reserve other strings for future meanings
 
-    result: collect [parse3 series case [
+    let size  ; set for INTEGER! case
+    let result: collect [parse3 series case [
         integer? dlm [
             size: dlm  ; alias for readability in integer case
             if size < 1 [fail "Bad SPLIT size given:" size]
 
             if into [
-                count: size - 1
-                piece-size: to integer! round/down (length of series) / size
+                let count: size - 1
+                let piece-size: to integer! round/down (length of series) / size
                 if zero? piece-size [piece-size: 1]
 
                 [
@@ -556,7 +555,8 @@ split: function [
             ; A block that is not all integers, e.g. not `[1 1 1]`, acts as a
             ; PARSE rule (see %split.test.reb)
             ;
-
+            let mk1
+            let mk2
             [
                 try some [not <end> [
                     mk1: <here>
@@ -568,6 +568,7 @@ split: function [
         ]
     ] else [
         ensure [bitset! text! char? word! tag!] dlm
+        let mk1
         [
             some [not <end> [
                 copy mk1: [to @dlm | to <end>]
@@ -582,8 +583,8 @@ split: function [
     ; or where the dlm was a char/string/charset and it was the last char
     ; (so we want to append an empty field that the above rule misses).
     ;
-    fill-val: does [copy either any-array? series [[]] [""]]
-    add-fill-val: does [append result fill-val]
+    let fill-val: does [copy either any-array? series [[]] [""]]
+    let add-fill-val: does [append result fill-val]
     if integer? dlm [
         if into [
             ; If the result is too short, i.e., less items than 'size, add
@@ -614,7 +615,7 @@ split: function [
 ]
 
 
-find-all: function [
+find-all: func [
     "Find all occurrences of a value within a series (allows modification)."
 
     return: [~]

@@ -11,7 +11,7 @@ REBOL [
     }
 ]
 
-launch: function [
+launch: func [
     {Runs a script as a separate process; return immediately.}
 
     script "The name of the script"
@@ -21,7 +21,7 @@ launch: function [
     /wait "Wait for the process to terminate"
 ][
     if file? script [script: file-to-local clean-path script]
-    command: reduce [file-to-local system.options.boot script]
+    let command: reduce [file-to-local system.options.boot script]
     append command maybe spread args
     return apply :call* [command, /wait wait]
 ]

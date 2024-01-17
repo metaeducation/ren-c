@@ -43,7 +43,7 @@ import <bootstrap-shim.r>
 import <common.r>  ; for REPO-DIR
 import <platforms.r>  ; for BOOT-VERSION
 
-export cscape: function [
+export cscape: func [
     {Escape Rebol expressions in templated C source, returns new string}
 
     return: "${} TO-C-NAME, $<> UNSPACED, $[]/$() DELIMIT closed/open"
@@ -52,17 +52,18 @@ export cscape: function [
         [text!]
     /with "Lookup var words in additional context (besides user context)"
         [any-word! any-context! block!]
+    <local> col prefix suffix mode pattern
 ][
-    string: trim/auto copy template
+    let string: trim/auto copy template
 
     ; As we process the string, we CHANGE any substitution expressions into
     ; an INTEGER! for doing the replacements later with REWORD (and not
     ; being ambiguous).
     ;
-    num: 1
-    num-text: to text! num  ; CHANGE won't take GROUP! to evaluate, #1279
+    let num: 1
+    let num-text: to text! num  ; CHANGE won't take GROUP! to evaluate, #1279
 
-    list: collect* [
+    let list: collect* [
         parse2 string [(col: 0), start:  ; <here>
         opt some [
             [
@@ -113,7 +114,7 @@ export cscape: function [
 
     list: unique/case list
 
-    substitutions: collect [
+    let substitutions: collect [
         for-each item list [
             ;
             ; SET no longer takes BLOCK!, and bootstrap executable doesn't have
@@ -126,9 +127,9 @@ export cscape: function [
             prefix: degrade item/5
             suffix: degrade item/6
 
-            any-upper: did find/case expr charset [#"A" - #"Z"]
-            any-lower: did find/case expr charset [#"a" - #"z"]
-            keep maybe :pattern
+            let any-upper: did find/case expr charset [#"A" - #"Z"]
+            let any-lower: did find/case expr charset [#"a" - #"z"]
+            keep maybe pattern
 
             ; With binding being case-sensitive, we lowercase the expression.
             ; Since we do the lowercasing before the load, embedded string
@@ -138,7 +139,7 @@ export cscape: function [
             ;
             ; !!! Needs LOAD-ALL shim hack for bootstrap since /ALL deprecated
             ;
-            code: load-all lowercase expr
+            let code: load-all lowercase expr
 
             if with [
                 if not block? with [  ; convert to block if not already
@@ -149,7 +150,7 @@ export cscape: function [
                     bind code item
                 ]
             ]
-            if null? sub: do code [  ; shim null, e.g. blank!
+            if null? let sub: do code [  ; shim null, e.g. blank!
                 print mold template
                 print mold code
                 fail "Substitution can't be NULL (shim BLANK!)"
@@ -183,7 +184,7 @@ export cscape: function [
                 ]
                 fail ["Invalid CSCAPE mode:" mode]
             ]
-            assert [not void? sub]  ; turned to "null" by now (shim's BLANK!)
+            assert [not void? :sub]  ; turned to "null" by now (shim's BLANK!)
 
             ; We want to recognize lines that had substitutions that all
             ; vanished, and remove them (distinctly from lines left empty
@@ -204,7 +205,7 @@ export cscape: function [
             ; If the substitution started at a certain column, make any line
             ; breaks continue at the same column.
             ;
-            indent: unspaced collect [
+            let indent: unspaced collect [
                 keep newline
                 keep maybe :prefix
             ]
@@ -227,7 +228,10 @@ export cscape: function [
     ; bootstrap executable inherited that.  Collect a list of lines to kill
     ; and do it in a phase after the parse.  (Probably just don't use PARSE.)
     ;
-    kill-lines: copy []
+    let kill-lines: copy []
+    let allwhite
+    let start-line
+    let end-line
     parse2 string [
         (allwhite: true) start-line:  ; <here>
         opt some [
@@ -268,7 +272,7 @@ export cscape: function [
 
 export boot-version: load-value %../src/boot/version.r
 
-export make-emitter: function [
+export make-emitter: func [
     {Create a buffered output text file emitter}
 
     return: [object!]
@@ -281,7 +285,7 @@ export make-emitter: function [
     <with>
     system  ; The `System:` SET-WORD! below overrides the global for access
 ][
-    if not by: system/script/header/file [
+    if not let by: system/script/header/file [
         fail [
             "File: should be set in the generating scripts header section"
             "so that generated files have a comment on what made them"
@@ -290,18 +294,18 @@ export make-emitter: function [
 
     print unspaced [{Generating "} title {" (via } by {)}]
 
-    stem: split-path file
+    let stem: split-path file
 
     temporary: to-logic any [
         temporary
         did parse2 stem ["tmp-" to end]
     ]
 
-    is-c: did parse2 stem [thru [".c" | ".h" | ".inc"] end]
+    let is-c: did parse2 stem [thru [".c" | ".h" | ".inc"] end]
 
-    is-js: did parse2 stem [thru ".js" end]
+    let is-js: did parse2 stem [thru ".js" end]
 
-    e: make object! compose [
+    let e: make object! compose [
         ;
         ; NOTE: %make-headers.r directly manipulates the buffer, because it
         ; wishes to merge #ifdef/#endif cases
@@ -313,7 +317,7 @@ export make-emitter: function [
         file: (file)
         title: (title)
 
-        emit: function [
+        emit: func [
             {Write data to the emitter using CSCAPE templating (see HELP)}
 
             return: [~]
@@ -321,8 +325,8 @@ export make-emitter: function [
             data [text! char?! <variadic>]
             <with> buf-emit
         ][
-            context: null
-            firstlook: first look
+            let context: null
+            let firstlook: first look
             if any [
                 lit-word? :firstlook
                 block? :firstlook
@@ -342,7 +346,7 @@ export make-emitter: function [
             ]
         ]
 
-        write-emitted: function [
+        write-emitted: func [
             return: [~]
             /tabbed
             <with> file buf-emit
@@ -352,7 +356,7 @@ export make-emitter: function [
                 fail "WRITE-EMITTED needs NEWLINE as last character in buffer"
             ]
 
-            if tab-pos: find buf-emit tab [
+            if let tab-pos: find buf-emit tab [
                 probe skip tab-pos -100
                 fail "tab character passed to emit"
             ]
@@ -367,13 +371,13 @@ export make-emitter: function [
 
             ; For clarity/simplicity, emitters are not reused.
             ;
-            file: null
-            buf-emit: null
+            file: ~
+            buf-emit: ~
         ]
     ]
 
     any [is-c is-js] then [
-        e/emit [return boot-version title] {
+        e/emit [title boot-version stem by] {
             /**********************************************************************
             **
             **  REBOL [R3] Language Interpreter and Run-time Environment

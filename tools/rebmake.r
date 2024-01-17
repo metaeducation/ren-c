@@ -66,7 +66,7 @@ ends-with?: func [
     ]
 ]
 
-filter-flag: function [
+filter-flag: func [
     return: [<opt> text! file!]
     flag [tag! text! file!]
         {If TAG! then must be <prefix:flag>, e.g. <gnu:-Wno-unknown-warning>}
@@ -75,9 +75,11 @@ filter-flag: function [
 ][
     if not tag? flag [return flag]  ; no filtering
 
+    let header
+    let option
     parse2 to text! flag [
-        copy header: to ":"
-        ":" copy option: to end
+        copy header to ":"
+        ":" copy option to end
     ] else [
         fail ["Tag must be <prefix:flag> ->" (flag)]
     ]

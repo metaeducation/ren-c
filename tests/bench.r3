@@ -201,12 +201,13 @@ use set-words init reduce [
 :while test head insert tail copy body inc
 ]
 ]
-enum: function [
+enum: func [
 "Enumerates a block"
 from [integer!]
 to [integer!]
 ] [result] [
-result: make block! to + 1 - from
+let result: make block! to + 1 - from
+let i
 cfor [i: from] [i <= to] [i: i + 1] [
 insert tail result i
 ]

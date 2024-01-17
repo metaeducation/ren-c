@@ -8,7 +8,7 @@
 ;
 
 [(
-utrim: function [
+utrim: func [
     {Removes spaces from strings or blanks from blocks or objects.}
 
     return: [any-string! any-array! binary! any-context!]
@@ -22,11 +22,11 @@ utrim: function [
     /with "Same as /all, but removes specific characters"
         [char? text! binary! integer! block! bitset!]
 ][
-    tail_TRIM: :tail
+    let tail_TRIM: :tail
     tail: :lib.tail
-    head_TRIM: :head
+    let head_TRIM: :head
     head: :lib.head
-    all_TRIM: :all
+    let all_TRIM: :all
     all: :lib.all
 
     ; ACTION!s in the new object will still refer to fields in the original
@@ -50,6 +50,7 @@ utrim: function [
         return trimmed
     ]
 
+    let rule
     case [
         any-array? series [
             if any [auto lines with] [
@@ -148,7 +149,7 @@ utrim: function [
     ; later lines relative to that.  Only makes sense for ANY-STRING!, though
     ; a concept like "lines" could apply to a BLOCK! of BLOCK!s.
     ;
-    indent: #  ; by default, remove all indentation (opt in to the REPEAT)
+    let indent: #  ; by default, remove all indentation (opt in to the REPEAT)
     if auto [
         parse- series [
             ; Don't count empty lines, (e.g. utrim/auto {^/^/^/    asdf})
@@ -158,7 +159,7 @@ utrim: function [
         ]
     ]
 
-    line-start-rule: [try remove repeat (indent) rule]
+    let line-start-rule: [try remove repeat (indent) rule]
 
     parse series [
         line-start-rule

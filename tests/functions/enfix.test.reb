@@ -205,7 +205,7 @@
 (
     count: 0
     o: make object! [x: null]
-    nuller: function [y] [return null]
+    nuller: func [y] [return null]
     o.(count: count + 1, first [x]): my nuller
     did all [
         :o.x = null

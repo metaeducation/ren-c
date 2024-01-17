@@ -109,7 +109,7 @@ emit-proto: func [
     }
 ]
 
-process-conditional: function [
+process-conditional: func [
     return: [~]
     directive
     dir-position
@@ -125,17 +125,16 @@ process-conditional: function [
     ;
     all [
         find/match directive "#endif"
-        position: find-last tail-of emitter/buf-emit "#if"
-    ] then [
-        rewrite-if-directives position
+        let position: find-last tail-of emitter/buf-emit "#if"
+        elide rewrite-if-directives position
     ]
 ]
 
-emit-directive: function [return: [~] directive] [
+emit-directive: func [return: [~] directive] [
     process-conditional directive proto-parser/parse-position e-funcs
 ]
 
-process: function [return: [~] file] [
+process: func [return: [~] file] [
     proto-parser/emit-proto: :emit-proto
     proto-parser/file: file
     proto-parser/emit-directive: :emit-directive

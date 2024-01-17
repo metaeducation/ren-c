@@ -12,7 +12,7 @@ REBOL [
     }
 ]
 
-dump: function [
+dump: func [
     {Show the name of a value or expressions with the value (See Also: --)}
 
     return: "Doesn't return anything, not even void (so like a COMMENT)"
@@ -25,7 +25,7 @@ dump: function [
 
     <static> enablements (make map! [])
 ][
-    print: enclose :lib.print lambda [f [frame!]] [
+    let print: enclose :lib.print lambda [f [frame!]] [
         if prefix [
             if #on <> select enablements prefix [return ~]
             write-stdout prefix
@@ -34,7 +34,7 @@ dump: function [
         do f
     ]
 
-    val-to-text: function [return: [text!] ^val [any-value?]] [
+    let val-to-text: func [return: [text!] ^val [any-value?]] [
         return case [
             void? val ["; void"]
             quasi? val [unspaced [mold val space space "; anti"]]
@@ -43,19 +43,19 @@ dump: function [
 
             object? val [unspaced ["make object! [" (summarize-obj val) "]"]]
         ] else [
-            trunc: ~
+            let trunc
             append (
                 [@ trunc]: mold/limit :val system.options.dump-size
             ) if trunc ["..."]
         ]
     ]
 
-    dump-one: function [return: [~] item] [
+    let dump-one: func [return: [~] item] [
         switch/type item [
             refinement?!  ; treat as label, /a no shift and shorter than "a"
             text! [  ; good for longer labeling when you need spaces/etc.
+                let trunc
                 print unspaced [
-                    elide trunc: ~
                     [@ trunc]: mold/limit item system.options.dump-size
                     if trunc ["..."]
                 ]
@@ -87,14 +87,16 @@ dump: function [
         ]
     ]
 
+    let swp
     case [
         swp: match [set-word! set-path!] :value [  ; `dump x: 1 + 2`
-            result: evaluate/next extra (to word! the pos:)
+            let pos
+            let result: evaluate/next extra 'pos
             set swp :result
             print [swp, result]
         ]
 
-        b: match block! value [
+        let b: match block! value [
             while [not tail? b] [
                 if swp: match [set-word! set-path!] :b.1 [  ; `dump [x: 1 + 2]`
                     result: evaluate/next b (to word! the b:)
@@ -111,13 +113,13 @@ dump: function [
     return nihil
 ]
 
-contains-newline: function [return: [logic?] pos [block! group!]] [
+contains-newline: func [return: [logic?] pos [block! group!]] [
     while [pos] [
         any [
             new-line? pos
             all [
-                match [block! group!] :pos.1
-                contains-newline :pos.1
+                match [block! group!] pos.1
+                contains-newline pos.1
             ]
         ] then [return true]
 
@@ -143,7 +145,7 @@ dump-to-newline: adapt :dump [
     ]
 ]
 
-dumps: enfix function [
+dumps: enfix func [
     {Fast generator for dumping function that uses assigned name for prefix}
 
     return: [action?]
@@ -153,6 +155,7 @@ dumps: enfix function [
     extra "Optional variadic data for SET-WORD!, e.g. `dv: dump var: 1 + 2`"
         [<opt> any-value? <variadic>]
 ][
+    let d
     if issue? value [
         d: specialize :dump-to-newline [prefix: as text! name]
         if value <> #off [d #on]  ; note: d hard quotes its argument
@@ -172,9 +175,9 @@ dumps: enfix function [
         ; have a way to be called--in spirit they are like enfix functions,
         ; so SHOVE (>-) would be used, but it doesn't work yet...review.)
         ;
-        d: function [return: [nihil?] /on /off <static> d'] compose/deep [
-            d': default [
-                d'': specialize :dump [prefix: (as text! name)]
+        d: func [return: [nihil?] /on /off <static> d'] compose/deep [
+            let d': default [
+                let d'': specialize :dump [prefix: (as text! name)]
                 d'' #on
             ]
             case [
@@ -203,7 +206,7 @@ dumps: enfix function [
 ; so it uses that as a string pattern.  Review how to better factor that
 ; (as part of a general help review)
 ;
-summarize-obj: function [
+summarize-obj: func [
     {Returns a block of information about an object or port}
 
     return: "Block of short lines (fitting in roughly 80 columns)"
@@ -212,25 +215,25 @@ summarize-obj: function [
     /pattern "Include only fields that match a string or datatype"
         [text! type-word!]
 ][
-    form-pad: lambda [
+    let form-pad: lambda [
         {Form a value with fixed size (space padding follows)}
         val
         size
     ][
-        val: form val
+        let val: form val
         insert/dup (tail of val) space (size - length of val)
         val
     ]
 
-    wild: to-logic find maybe (match text! maybe pattern) "*"
+    let wild: to-logic find maybe (match text! maybe pattern) "*"
 
     return collect [
         for-each [word val] obj [
             if unset? 'val [continue]  ; don't consider unset fields
 
-            kind: kind of noantiform get/any 'val
+            let kind: kind of noantiform get/any 'val
 
-            str: if kind = object! [
+            let str: if kind = object! [
                 spaced [word, form words of val]
             ] else [
                 form word
@@ -253,7 +256,8 @@ summarize-obj: function [
                 fail 'pattern
             ]
 
-            if desc: description-of noantiform get/any 'val [
+            let desc: description-of noantiform get/any 'val
+            if desc [
                 if 48 < length of desc [
                     desc: append copy/part desc 45 "..."
                 ]
@@ -281,12 +285,13 @@ summarize-obj: function [
 ; Notice that if line breaks occur internal to an element on the line, that
 ; is detected, and lets that element be the last commented element.
 ;
-**: function [
+**: func [
     {Comment until end of line, or end of current BLOCK!/GROUP!}
 
     return: [nihil?]
     'args [element? <variadic>]
 ][
+    let value
     while [all [
         not new-line? args
         value: try take args

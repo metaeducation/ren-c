@@ -104,7 +104,7 @@ export extract-native-protos: func [
 ; to take in the textual spec, "massage" it in a way that doesn't destroy the
 ; information being captured, and then LOAD it.
 ;
-export emit-include-params-macro: function [
+export emit-include-params-macro: func [
     "Emit macros for a native's parameters"
 
     return: [~]
@@ -116,16 +116,16 @@ export emit-include-params-macro: function [
         return ~  ; intrinsics don't have INCLUDE_PARAMS_OF macros
     ]
 
-    seen-refinement: false
+    let seen-refinement: false
 
-    native-name: ~
+    let native-name: ~
     parse2 proto [
         opt some newline  ; stripload preserves newlines
         opt ["export" space] copy native-name to ":" to end
     ] else [
         fail "Could not extract native name in emit-include-params-macro"
     ]
-    spec: copy find proto "["  ; make copy (we'll corupt it)
+    let spec: copy find proto "["  ; make copy (we'll corrupt it)
 
     replace/all spec "^^" {}
 
@@ -133,12 +133,13 @@ export emit-include-params-macro: function [
     ; parameters.  The bootstrap executable thinks that's an illegal email.
     ; So to process these, we replace the @ with # to get ISSUE!.
     ;
-    output-param?: :issue?
-    output-param!: issue!
+    let output-param?: :issue?
+    let output-param!: issue!
     replace/all spec "@" {#}
 
     spec: load-value spec
 
+    let paramlist
     if not find proto "native/combinator" [
         paramlist: spec
     ]
@@ -177,8 +178,8 @@ export emit-include-params-macro: function [
         ]
     ]
 
-    n: 1
-    items: collect* [
+    let n: 1
+    let items: collect* [
         ;
         ; All natives *should* specify a `return:`, because it's important
         ; to document what the return types are (and HELP should show it).
@@ -205,7 +206,7 @@ export emit-include-params-macro: function [
                 continue
             ]
 
-            param-name: as text! to word! noquote item
+            let param-name: as text! to word! noquote item
             keep cscape/with {DECLARE_PARAM($<n>, ${param-name})} [n param-name]
             n: n + 1
 
@@ -217,7 +218,7 @@ export emit-include-params-macro: function [
         ]
     ]
 
-    prefix: all [ext unspaced [ext "_"]]
+    let prefix: all [ext unspaced [ext "_"]]
     e/emit [prefix native-name items] {
         #define ${MAYBE PREFIX}INCLUDE_PARAMS_OF_${NATIVE-NAME} \
             $[Items]; \

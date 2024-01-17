@@ -32,13 +32,13 @@ c-fib: make-native [
     return rebInteger(i1);
 }
 
-rebol-fib: function [
+rebol-fib: func [
     n [integer!]
 ][
     if n < 0 [return -1]
     if n <= 1 [return n]
-    i0: 0
-    i1: 1
+    let i0: 0
+    let i1: 1
     while [n > 1] [
         t: i1
         i1: i0 + i1

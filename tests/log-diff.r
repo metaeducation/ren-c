@@ -15,7 +15,7 @@ Rebol [
 
 import %test-parsing.r
 
-make-diff: function [
+make-diff: func [
     return: [~]
     old-log [file!]
     new-log [file!]
@@ -30,20 +30,21 @@ make-diff: function [
     sort/case/skip new-log-contents 2
 
     ; counter initialization
-    new-successes:
-    new-failures:
-    new-crashes:
-    progressions:
-    regressions:
-    removed:
-    unchanged:
-    0
+    let new-successes: 0
+    let new-failures: 0
+    let new-crashes: 0
+    let progressions: 0
+    let regressions: 0
+    let removed: 0
+    let unchanged: 0
 
     ; cycle initialization
-    set [old-test old-result] old-log-contents
+    let old-test: old-log-contents.1
+    let old-result: old-log-contents.2
     old-log-contents: skip old-log-contents 2
 
-    set [new-test new-result] new-log-contents
+    let new-test: new-log-contents.1
+    let new-result: new-log-contents.2
     new-log-contents: skip new-log-contents 2
 
     while [any [old-test new-test]] [

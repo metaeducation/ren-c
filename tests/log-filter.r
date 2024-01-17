@@ -15,14 +15,14 @@ Rebol [
 
 import %test-parsing.r
 
-log-filter: function [
+log-filter: func [
     return: [~]
     source-log [file!]
 ][
     ; if the source log is r_2_7_8_3_1_1DEF65_002052.log
     ; the target log will be f_2_7_8_3_1_1DEF65_002052.log
     ; , i.e., using the "f" prefix
-    target-log: copy source-log
+    let target-log: copy source-log
     change target-log %f
 
     if exists? target-log [delete target-log]

@@ -75,7 +75,7 @@ last: redescribe [
 ; to just cause confusion.  Weirdos who want features *like that* can make them
 ; but JOIN isn't the right place for it.
 ;
-join: function [
+join: func [
     {Concatenates values to the end of a copy of a value}
 
     return:
@@ -90,12 +90,13 @@ join: function [
     ]
     value [<void> element? splice?]
 ][
-    if void? :value [
+    if void? value [
         return copy base
     ]
 
+    let kind
     if type-word? base [
-        if not block? :value [
+        if not block? value [
             fail "JOIN with base as type only takes BLOCK! arguments"
         ]
         kind: base
@@ -129,6 +130,7 @@ join: function [
         return append (copy base) :value
     ]
 
+    let sep
     if find/case reduce [
         path! get-path! set-path! the-path! meta-path!
     ] kind [
@@ -142,8 +144,8 @@ join: function [
 
     base: copy as block! base
 
-    if splice? :value [
-        value: unquasi meta :value  ; should AS BLOCK! work on splices?
+    if splice? value [
+        value: unquasi meta value  ; should AS BLOCK! work on splices?
     ]
     else [
         value: reduce [value]  ; !!! should FOR-EACH take quoted?
@@ -199,7 +201,7 @@ join: function [
 ; CHARSET was moved from "Mezzanine" because it is called by TRIM which is
 ; in "Base" - see TRIM.
 ;
-charset: function [
+charset: func [
     {Makes a bitset of chars for the parse function.}
 
     return: [bitset!]
@@ -207,7 +209,7 @@ charset: function [
     /length "Preallocate this many bits (must be > 0)"
         [integer!]
 ][
-    init: either length [length] [[]]
+    let init: either length [length] [[]]
     return append make bitset! init chars
 ]
 
@@ -215,7 +217,7 @@ charset: function [
 ; TRIM is used by PORT! implementations, which currently rely on "Base" and
 ; not "Mezzanine", so this can't be in %mezz-series at the moment.  Review.
 ;
-trim: function [
+trim: func [
     {Removes spaces from strings or blanks from blocks or objects.}
 
     return: [any-string! any-array! binary! any-context!]
@@ -229,11 +231,11 @@ trim: function [
     /with "Same as /all, but removes specific characters"
         [char? text! binary! integer! block! bitset!]
 ][
-    tail_TRIM: tail
+    let tail_TRIM: tail
     tail: runs :lib.tail
-    head_TRIM: head
+    let head_TRIM: head
     head: runs :lib.head
-    all_TRIM: all
+    let all_TRIM: all
     all: runs :lib.all
 
     ; ACTION!s in the new object will still refer to fields in the original
@@ -257,6 +259,7 @@ trim: function [
         return trimmed
     ]
 
+    let rule
     case [
         any-array? series [
             if any [auto lines with] [
@@ -355,7 +358,9 @@ trim: function [
     ; later lines relative to that.  Only makes sense for ANY-STRING!, though
     ; a concept like "lines" could apply to a BLOCK! of BLOCK!s.
     ;
-    indent: null
+    let indent: null
+    let s
+    let e
     if auto [
         parse3 series [
             ; Don't count empty lines, (e.g. trim/auto {^/^/^/    asdf})
@@ -369,7 +374,7 @@ trim: function [
         ]
     ]
 
-    line-start-rule: compose [
+    let line-start-rule: compose [
         remove (if indent '[try [repeat (indent) rule]] else '[try some rule])
     ]
 

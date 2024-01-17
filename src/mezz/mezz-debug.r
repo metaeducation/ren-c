@@ -11,7 +11,7 @@ REBOL [
     }
 ]
 
-verify: function [
+verify: func [
     {Verify all the conditions in the passed-in block are conditionally true}
 
     return: [nihil?]
@@ -44,14 +44,13 @@ verify: function [
             '~true~ = result'  ; truthy
             non quasiform! result' then [result' <> null']
 
-            if :handler [  ; may or may-not take two arguments
-                reaction: ^ if block? :handler [
+            if handler [  ; may or may-not take two arguments
+                let reaction: ^ if block? handler [
                     do handler
                 ] else [
-                    if (comment [1 = arity of :handler], true) [  ; TBD
-                        run handler (copy/part conditions pos)
-                    ] else [
-                        run handler (copy/part conditions pos) unmeta result'
+                    apply/relax handler [  ; arity 0 or 1 is okay
+                        copy/part conditions pos
+                        unmeta result'
                     ]
                 ]
 
@@ -99,11 +98,11 @@ native-assert: runs copy unrun :assert
 hijack :assert :verify
 
 
-delta-time: function [
+delta-time: func [
     {Returns the time it takes to evaluate the block}
     block [block!]
 ][
-    timer: unrun :lib.now/precise  ; Note: NOW comes from an Extension
+    let timer: unrun :lib.now/precise  ; Note: NOW comes from an Extension
     results: reduce reduce [  ; resolve word lookups first, run fetched items
         timer
         (unrun :elide) (unrun :do) block
@@ -129,12 +128,13 @@ delta-profile: func [
     start
 ]
 
-speed?: function [
+speed?: func [
     "Returns approximate speed benchmarks [eval cpu memory file-io]."
     /no-io "Skip the I/O test"
     /times "Show time for each test"
 ][
-    result: copy []
+    let result: copy []
+    let calc
     for-each block [
         [
             repeat 100'000 [
@@ -147,7 +147,7 @@ speed?: function [
             ]
             calc: [100'000 / secs / 100] ; arbitrary calc
         ][
-            tmp: make binary! 500'000
+            let tmp: make binary! 500'000
             insert/dup tmp "abcdefghij" 50000
             repeat 10 [
                 random tmp
@@ -161,8 +161,9 @@ speed?: function [
             calc: [(length of tmp) * 40 / secs / 1024 / 1024]
         ][
             if not no-io [
-                write file: %tmp-junk.txt "" ; force security request before timer
-                tmp: make text! 32000 * 5
+                let file: %tmp-junk.txt
+                write file "" ; force security request before timer
+                let tmp: make text! 32000 * 5
                 insert/dup tmp "test^/" 32000
                 repeat 100 [
                     write file tmp
@@ -173,7 +174,7 @@ speed?: function [
             ]
         ]
     ][
-        secs: now/precise
+        let secs: now/precise
         calc: 0
         recycle
         do block
@@ -186,7 +187,7 @@ speed?: function [
 
 net-log: lambda [txt /C /S][txt]
 
-net-trace: function [
+net-trace: func [
     "Switch between using a no-op or a print operation for net-tracing"
 
     return: [~]

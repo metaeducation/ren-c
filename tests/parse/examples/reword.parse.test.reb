@@ -3,7 +3,7 @@
 ; Test of REWORD written with UPARSE instead of parse.
 ; See comments on non-UPARSE REWORD implementation.
 
-[(did uparse-reword: function [
+[(did uparse-reword: func [
     return: [any-string! binary!]
     source [any-string! binary!]
     values [map! object! block!]
@@ -19,13 +19,13 @@
         &[char?! any-string! integer! word! binary!]
     )
 ][
-    case_REWORD: if case [#] else [null]
+    let case_REWORD: case
     case: :lib.case
 
-    out: make (kind of source) length of source
+    let out: make (kind of source) length of source
 
-    prefix: void  ; initialize with no-op rules
-    suffix: void
+    let prefix: void  ; initialize with no-op rules
+    let suffix: void
     case [
         null? escape [prefix: "$"]  ; refinement not used, so use default
 
@@ -63,7 +63,7 @@
     ; after the matched "keyword" would be at a time too late to go back and
     ; look for the keyword2 option.  :-/
     ;
-    keyword-suffix-rules: collect [
+    let keyword-suffix-rules: collect [
         for-each [keyword value] values [
             if not match keyword-types?! keyword [
                 fail ["Invalid keyword type:" keyword]
@@ -83,7 +83,9 @@
         ]
     ]
 
-    rule: [
+    let a
+    let b
+    let rule: [
         a: <here>  ; Begin marking text to copy verbatim to output
         try some [
             to prefix  ; seek to prefix (may be void, this could be a no-op)
@@ -93,14 +95,10 @@
             [keyword-match: any (keyword-suffix-rules)] (
                 append/part out a offset? a b  ; output before prefix
 
-                v: apply :select [values keyword-match, /case case_REWORD]
+                let v: apply :select [values keyword-match, /case case_REWORD]
                 append out switch/type v [
                     frame! [
-                        ; Give v the option of taking an argument, but
-                        ; if it does not, evaluate to arity-0 result.
-                        ;
-                        (result: run v :keyword-match)
-                        :result
+                        apply/relax v [:keyword-match]  ; arity-0 ok
                     ]
                     block! [eval v]
                 ] else [

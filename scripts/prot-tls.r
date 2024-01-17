@@ -1743,7 +1743,7 @@ tls-read-data: func [
 ]
 
 
-perform-read: function [
+perform-read: func [
     return: [~]
     port [port!]
 ][
@@ -1754,7 +1754,7 @@ perform-read: function [
     ]
 ]
 
-check-response: function [
+check-response: func [
     return: [logic?]
     tls-port [port!]
 ][

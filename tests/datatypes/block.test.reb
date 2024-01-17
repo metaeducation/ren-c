@@ -40,7 +40,7 @@
 ; Making a block from an action will iterate the action until it gives null
 
 (
-    make-one-thru-five: function [
+    make-one-thru-five: func [
         return: [<opt> integer!]
         <static> count (0)
     ][

@@ -172,6 +172,7 @@ run-test-cluster: func [
     ; *inherited* from the cluster.  Hopefully modules will be able to do
     ; things like that in the "near future"(tm).
     ;
+    let group
     parse cluster [while not <end> [
         ;
         ; !!! Skip any ISSUE! or URL!, as this style has been used:
@@ -202,11 +203,16 @@ run-test-cluster: func [
 ; The tests are collected in a pre-phase with COLLECT-TESTS.  It produces a
 ; long list of BLOCK!s that are test groups.
 ;
-process-tests: function [
+process-tests: func [
     return: [~]
     test-sources [block!]
     handler [action?]
 ][
+    let flags
+    let value
+    let test-file
+    let body
+    let collected
     parse3 test-sources [
         try some [
             set flags: block! set value: block! (
@@ -247,7 +253,7 @@ process-tests: function [
 
                 ; COLLECTED should just be a BLOCK! of groups now.
                 ;
-                let flags: []
+                flags: []
 
                 sys.util.rescue+ [
                     handler flags collected

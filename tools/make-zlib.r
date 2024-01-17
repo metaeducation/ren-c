@@ -52,7 +52,7 @@ path-zlib: https://raw.githubusercontent.com/madler/zlib/master/
 ; Disable #include "foo.h" style inclusions (but not #include <foo.h> style)
 ; Optionally will inline a list of files at the inclusion point
 ;
-disable-user-includes: function [
+disable-user-includes: func [
     return: [~]
     lines [block!] "Block of strings"
     /inline [block!] "Block of filenames to inline if seen"
@@ -61,8 +61,8 @@ disable-user-includes: function [
     <static>
     open-include (charset {"<})
     close-include (charset {">})
-] [
-    include-rule: compose [
+][
+    let include-rule: compose [
         (if stdio [
             [open-include name: across "stdio.h" close-include |]
         ])
@@ -70,12 +70,12 @@ disable-user-includes: function [
     ]
 
     for-next line-iter lines [
-        did parse2 line: line-iter/1 [
+        did parse2 line-iter/1 [
             opt some space {#}
             opt some space {include}
             some space, include-rule, to <end>
         ] then [
-            if pos: find try inline (as file! name) [
+            if let pos: find try inline (as file! name) [
                 change/part line-iter (read/lines join path-zlib name) 1
                 take pos
             ] else [
@@ -145,11 +145,13 @@ make-warning-lines: lamda [name [file!] title [text!]] [
     ]
 ]
 
-fix-kr: function [
+fix-kr: func [
     "Fix K&R style C function definition"
     source
 ][
-    single-param: bind copy/deep [
+    let tmp-start
+    let name
+    let single-param: bind copy/deep [
         identifier  ; (part of)type
         some [
             opt some white-space
@@ -166,6 +168,12 @@ fix-kr: function [
         ]
     ] c-lexical.grammar
 
+    let fn
+    let open-paren
+    let close-paren
+    let param-ser
+    let param-spec
+    let check-point
     parse2 source bind copy/deep [
         opt some [
             fn: across identifier
@@ -183,14 +191,14 @@ fix-kr: function [
             "{" check-point: <here> (
                 remove/part param-ser length of param-spec
                 insert param-ser newline
-                length-diff: 1 - (length of param-spec)
+                let length-diff: 1 - (length of param-spec)
 
-                param-len: (index of close-paren) - (index of open-paren)
-                params: copy/part open-paren param-len
+                let param-len: (index of close-paren) - (index of open-paren)
+                let params: copy/part open-paren param-len
                 remove/part open-paren param-len
-                length-diff: length-diff - param-len
+                let length-diff: length-diff - param-len
 
-                param-block: make block! 8
+                let param-block: make block! 8
                 parse2 params [
                     opt some white-space
                     name: across identifier (
@@ -211,6 +219,10 @@ fix-kr: function [
                 ; 1) "int i;" or
                 ; 2) "int i, *j, **k;"
 
+                let typed?
+                let single-param-start
+                let spec-type
+                let param-end
                 parse2 param-spec [
                     opt some white-space
                     some [
@@ -275,6 +287,7 @@ fix-kr: function [
                     ]
                 ]
 
+                let new-param
                 insert open-paren new-param: delimit ",^/    " (
                     extract/index param-block 2 2
                 )

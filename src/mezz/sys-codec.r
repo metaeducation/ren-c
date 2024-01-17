@@ -77,7 +77,7 @@ append system.options.file-types spread switch fourth system.version [
 ]
 
 
-decode: function [
+decode: func [
     {Decodes a series of bytes into the related datatype (e.g. image!).}
 
     type [word!]
@@ -86,7 +86,7 @@ decode: function [
         {The data to decode}
 ][
     all [
-        cod: select system.codecs type
+        let cod: select system.codecs type
         (data: run cod.decode data)
     ] else [
         cause-error 'access 'no-codec type
@@ -95,7 +95,7 @@ decode: function [
 ]
 
 
-encode: function [
+encode: func [
     {Encodes a datatype (e.g. image!) into a series of bytes.}
 
     return: [binary!]
@@ -106,7 +106,7 @@ encode: function [
         [block!]  ; !!! Not currently used
 ][
     all [
-        cod: select system.codecs type
+        let cod: select system.codecs type
         (data: run cod.encode data)
     ] else [
         cause-error 'access 'no-codec type
@@ -115,7 +115,7 @@ encode: function [
 ]
 
 
-encoding-of: function [
+encoding-of: func [
     "Returns the media codec name for given binary data. (identify)"
 
     return: [<opt> word!]

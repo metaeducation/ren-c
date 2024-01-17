@@ -91,7 +91,7 @@ transcode-header: func [
 ;    bad-header
 ;    bad-compress
 ;
-load-header: function [
+load-header: func [
     {Loads script header object and body binary (not loaded)}
 
     return: "header OBJECT! if present"
@@ -150,8 +150,10 @@ load-header: function [
 
     if 10 = rest.1 [rest: next rest, line: me + 1]  ; skip LF
 
-    if integer? tmp: select hdr 'length [
-        end: skip rest tmp
+    let end
+    all [
+        integer? let tmp: select hdr 'length
+        elide end: skip rest tmp
     ] else [
         end: tail of data
     ]

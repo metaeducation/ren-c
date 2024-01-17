@@ -12,22 +12,22 @@ REBOL [
 ]
 
 
-spec-of: function [
+spec-of: func [
     {Generate a block which could be used as a "spec block" from an action.}
 
     return: [block!]
     action [<unrun> frame!]
 ][
-    adjunct: (match object! adjunct-of action) else [return [~bad-spec~]]
+    let adjunct: (match object! adjunct-of action) else [return [~bad-spec~]]
 
     return collect [
         keep/line maybe ensure [<opt> text!] select adjunct 'description
 
-        types: ensure [<opt> frame! object!] select adjunct 'parameter-types
-        notes: ensure [<opt> frame! object!] select adjunct 'parameter-notes
+        let types: ensure [<opt> frame! object!] select adjunct 'parameter-types
+        let notes: ensure [<opt> frame! object!] select adjunct 'parameter-notes
 
-        return-type: ensure [<opt> block!] select maybe types 'return
-        return-note: ensure [<opt> text!] select maybe notes 'return
+        let return-type: ensure [<opt> block!] select maybe types 'return
+        let return-note: ensure [<opt> text!] select maybe notes 'return
 
         if return-type or return-note [
             keep spread compose [
@@ -46,7 +46,7 @@ spec-of: function [
 ]
 
 
-description-of: function [
+description-of: func [
     {One-line summary of a value's purpose}
 
     return: [<opt> text!]
@@ -71,7 +71,7 @@ description-of: function [
     ] else [null])
 ]
 
-browse: function [
+browse: func [
     "stub function for browse* in extensions/process/ext-process-init.reb"
 
     return: [~]
@@ -80,7 +80,7 @@ browse: function [
     print "Browse needs redefining"
 ]
 
-help: function [
+help: func [
     "Prints information about words and values (if no args, general help)."
 
     return: [nihil?]
@@ -88,7 +88,7 @@ help: function [
         "WORD! whose value to explain, or other HELP target (try HELP HELP)"
     /doc "Open web browser to related documentation."
 ][
-    if null? :topic [
+    if null? topic [
         ;
         ; Was just `>> help` or `do [help]` or similar.
         ; Print out generic help message.
@@ -154,7 +154,7 @@ help: function [
     ; but they exist...e.g. DEFAULT.)  To make sure HELP DEFAULT works, HELP
     ; must hard quote and simulate its own soft quote semantics.
     ;
-    if match [group! get-word! get-path! get-tuple!] :topic [
+    if match [group! get-word! get-path! get-tuple!] topic [
         topic: reeval topic else [
             print "NULL is a non-valued state that cannot be put in arrays"
             return nihil
@@ -169,8 +169,8 @@ help: function [
     ; remove potential duplicates (even if not actually identical).  This
     ; does that manually, review.
     ;
-    make-libuser: does [
-        libuser: copy system.contexts.lib
+    let make-libuser: does [
+        let libuser: copy system.contexts.lib
         for-each [key val] system.contexts.user [
             if set? 'val [
                append libuser spread reduce [key ^val]
@@ -179,7 +179,9 @@ help: function [
         libuser
     ]
 
-    switch/type :topic [
+    let value
+    let enfixed
+    switch/type topic [
         issue! [
             ; HELP #TOPIC will browse r3n for the topic
 
@@ -191,7 +193,7 @@ help: function [
         text! [
             ; HELP "TEXT" wildcard searches things w/"TEXT" in their name
 
-            if types: summarize-obj/pattern make-libuser :topic [
+            if let types: summarize-obj/pattern make-libuser topic [
                 print "Found these related words:"
                 for-each line sort types [
                     print line
@@ -240,17 +242,17 @@ help: function [
         ; For the moment, it just tells you the type.
 
         print collect [
-            if not free? :topic [keep mold topic]
+            if not free? topic [keep mold topic]
             keep "is"
-            if free? :topic [keep "a *freed*"]
-            keep any [mold kind of :topic, "VOID"]
+            if free? topic [keep "a *freed*"]
+            keep any [mold kind of topic, "VOID"]
         ]
         return nihil
     ]
 
     ; Open the web page for it?
     all [doc, match [action? type-word!] :value] then [
-        item: form :topic
+        let item: form :topic
         if action? get :topic [
             ;
             ; !!! The logic here repeats somewhat the same thing that is done
@@ -284,7 +286,7 @@ help: function [
     ]
 
     if type-word? :value [
-        if instances: summarize-obj/pattern make-libuser :value [
+        if instances: summarize-obj/pattern make-libuser value [
             print ["Found these" (uppercase form topic) "words:"]
             for-each line instances [
                 print line
@@ -299,8 +301,8 @@ help: function [
         print collect [
             keep uppercase mold topic
             keep "is"
-            keep an any [mold kind of :value, "VOID"]
-            if free? :value [
+            keep an any [mold kind of value, "VOID"]
+            if free? value [
                 keep "that has been FREEd"
             ] else [
                 keep "of value:"
@@ -330,8 +332,8 @@ help: function [
 
     print "USAGE:"
 
-    args: ~  ; required parameters (and "skippable" parameters, at the moment)
-    refinements: ~  ; optional parameters (PARAMETERS OF puts at tail)
+    let args  ; required parameters (and "skippable" parameters, at the moment)
+    let refinements  ; optional parameters (PARAMETERS OF puts at tail)
 
     parse parameters of :value [
         args: try across some [word! | meta-word! | get-word! | lit-word?!]
@@ -352,7 +354,7 @@ help: function [
         ]
     ]
 
-    adjunct: adjunct-of :value  ; so SELECT just returns NULL
+    let adjunct: adjunct-of :value
 
     print newline
 
@@ -360,9 +362,9 @@ help: function [
     print [_ _ _ _ (select maybe adjunct 'description) else ["(undocumented)"]]
     print [_ _ _ _ (uppercase mold topic) {is an ACTION!}]
 
-    print-args: [list /indent-words] -> [
+    let print-args: [list /indent-words] -> [
         for-each key list [
-            param: select :value to-word noquote key
+            let param: select :value to-word noquote key
 
             print [_ _ _ _ key (if param.spec [mold param.spec])]
             if param.text [
@@ -375,7 +377,7 @@ help: function [
     ; that isn't intended for use as a definitional return is a return type.
     ; The concepts are still being fleshed out.
     ;
-    return-param: select :value 'return
+    let return-param: select :value 'return
 
     print newline
     print [
@@ -389,7 +391,7 @@ help: function [
         print [_ _ _ _ return-param.text]
     ]
 
-    outputs: outputs of :value
+    let outputs: outputs of :value
     if not empty? outputs [
         print newline
         print "ADDITIONAL OUTPUTS:"
@@ -412,12 +414,14 @@ help: function [
 ]
 
 
-source: function [
+source: func [
     "Prints the source code for an ACTION! (if available)"
 
     return: [nihil?]
     'arg [<unrun> word! path! frame! tag!]
 ][
+    let name
+    let f
     switch/type arg [
         tag! [
             f: copy "unknown tag"
@@ -471,7 +475,8 @@ source: function [
     ; some kind of displayable "source" would have to depend on the dispatcher
     ; used.  For the moment, BODY OF hands back limited information.  Review.
     ;
-    switch/type (body: body of f) [
+    let body: body of f
+    switch/type body [
         block! [  ; FUNC, FUNCTION, PROC, PROCEDURE or (DOES of a BLOCK!)
             print [mold body "]"]
         ]
@@ -487,7 +492,7 @@ source: function [
 ]
 
 
-what: function [
+what: func [
     {Prints a list of known actions}
 
     return: [~ block!]
@@ -496,15 +501,15 @@ what: function [
     /args "Show arguments not titles"
     /as-block "Return data as block"
 ][
-    list: make block! 400
-    size: 0
+    let list: make block! 400
+    let size: 0
 
     ; copy to get around error: "temporary hold for iteration"
-    ctx: (copy try select system.modules try :name) else [lib]
+    let ctx: (copy maybe select system.modules maybe name) else [lib]
 
     for-each [word val] ctx [
         ; word val
-        if (action? :val) [
+        if (activation? :val) or (action? :val) [
             arg: either args [
                 mold parameters of :val
             ][
@@ -514,7 +519,7 @@ what: function [
             size: max size length of to-text word
         ]
     ]
-    list: sort/skip list 2
+    let list: sort/skip list 2
 
     name: make text! size
     if as-block [
@@ -542,20 +547,20 @@ bugs: func [return: [~]] [
 
 ; temporary solution to ensuring scripts run on a minimum build
 ;
-require-commit: function [
+require-commit: func [
     "checks current commit against required commit"
 
     return: [~]
     commit [text!]
 ][
-    c: select system.script.header 'commit else [return ~]
+    let c: select system.script.header 'commit else [return ~]
 
     ; If we happen to have commit information that includes a date, then we
     ; can look at the date of the running Rebol and know that a build that is
     ; older than that won't work.
     ;
     all [
-        date: select c 'date
+        let date: select c 'date
         system/build < date
 
         fail [
@@ -567,7 +572,8 @@ require-commit: function [
     ; If there's a specific ID then assume that if the current build does not
     ; have that ID then there *could* be a problem.
     ;
-    all [id: select c 'id, id <> commit] then [
+    let id: select c 'id
+    if id and (id <> commit) [
         print [
             "This script has only been tested again commit" id LF
 

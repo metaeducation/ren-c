@@ -210,14 +210,14 @@ for-each api api-objects [do in api [
 
     opt-return_: either returns != "void" ["return "] [null]  ; has space
 
-    make-c-proxy: function [
+    make-c-proxy: func [
         return: [text!]
         /inline
         <with> returns wrapper-params proxied-args
     ][
-        returns: default ["void"]
-        _inline: either inline ["_inline"] [""]
+        let _inline: either inline ["_inline"] [""]
 
+        returns: default ["void"]
         wrapper-params: default ["void"]
         proxied-args: default [""]
 
@@ -235,12 +235,11 @@ for-each api api-objects [do in api [
         ]
     ]
 
-    make-c++-proxy: function [
+    make-c++-proxy: func [
         return: [text!]
         <with> returns wrapper-params proxied-args
     ][
         returns: default ["void"]
-
         wrapper-params: default ["void"]
         proxied-args: default [""]
 

@@ -166,7 +166,7 @@ clean-path: func [
 ]
 
 
-ask: function [
+ask: func [
     {Ask the user for input}
 
     return: "Null if the input was aborted (via ESCAPE, Ctrl-D, etc.)"
@@ -186,8 +186,8 @@ ask: function [
     ; This is a limited implementation just to get the ball rolling; could
     ; do much more: https://forum.rebol.info/t/1124
     ;
-    prompt: null
-    type: text!
+    let prompt: null
+    let type: text!
     switch/type question [
         text! [prompt: question]  ; `ask "Input:"` doesn't filter type
         type-word! [type: question]  ; `ask text!` has no prompt (like INPUT)
@@ -220,7 +220,7 @@ ask: function [
             write-stdout space  ; space after prompt is implicit
         ]
 
-        line: read-line else [
+        let line: read-line else [
             ;
             ; NULL signals "end of file".  At present this only applies to
             ; redirected input--as there's no limit to how much you can type
@@ -266,7 +266,7 @@ ask: function [
 ]
 
 
-confirm: function [
+confirm: func [
     {Confirms a user choice}
 
     return: [logic?]
@@ -286,7 +286,7 @@ confirm: function [
         ]
     ]
 
-    response: ask question
+    let response: ask question
 
     return case [
         empty? with [true]
@@ -298,7 +298,7 @@ confirm: function [
 ]
 
 
-list-dir: function [
+list-dir: func [
     "Print contents of a directory (ls)."
 
     return: [nihil?]
@@ -314,7 +314,7 @@ list-dir: function [
 ][
     i: default [""]
 
-    save-dir: what-dir
+    let save-dir: what-dir
 
     if not file? save-dir [
         fail ["No directory listing protocol registered for" save-dir]
@@ -330,7 +330,7 @@ list-dir: function [
     if r [l: true]
     if not l [l: make text! 62] ; approx width
 
-    files: attempt [read %./] else [
+    let files: attempt [read %./] else [
         print ["Not found:" :path]
         change-dir save-dir
         return nihil
@@ -349,7 +349,7 @@ list-dir: function [
             append/dup l #" " 15 - remainder length of l 15
             if greater? length of l 60 [print l clear l]
         ] else [
-            info: get (words of query file)
+            let info: get (words of query file)
             change info split-path info/1
             printf [i 16 -8 #" " 24 #" " 6] info
             if all [r, dir? file] [
@@ -365,7 +365,7 @@ list-dir: function [
 ]
 
 
-undirize: function [
+undirize: func [
     {Returns a copy of the path with any trailing "/" removed.}
 
     return: [file! text! url!]
@@ -377,7 +377,7 @@ undirize: function [
 ]
 
 
-in-dir: function [
+in-dir: func [
     "Evaluate a block in a directory, and restore current directory when done"
     return: [any-value?]
     dir [file!]
@@ -385,7 +385,7 @@ in-dir: function [
     block [block!]
         "Block to evaluate"
 ][
-    old-dir: what-dir
+    let old-dir: what-dir
     change-dir dir
 
     ; You don't want the block to be done if the change-dir fails, for safety.
@@ -397,7 +397,7 @@ in-dir: function [
 ]
 
 
-to-relative-file: function [
+to-relative-file: func [
     {Returns relative portion of a file if in subdirectory, original if not.}
 
     return: [file! text!]
@@ -414,6 +414,7 @@ to-relative-file: function [
                 file: next tmp
             ]
         ]
+        let pos
         if [@ pos]: find/match file (file-to-local what-dir) [
             file: pos  ; !!! https://forum.rebol.info/t/1582/6
         ]
@@ -422,6 +423,7 @@ to-relative-file: function [
             no-copy: true
         ]
     ] else [
+        let pos
         if [@ pos]: find/match file what-dir [
             file: pos  ; !!! https://forum.rebol.info/t/1582/6
         ]
@@ -441,7 +443,7 @@ to-relative-file: function [
 ;
 ; http://www.rebol.com/r3/docs/concepts/scripts-style.html#section-4
 ;
-detab-file: function [
+detab-file: func [
     "detabs a disk file"
 
     return: [~]
@@ -451,7 +453,7 @@ detab-file: function [
 ]
 
 ; temporary location
-set-net: function [
+set-net: func [
     {sets the system.user.identity email smtp pop3 esmtp-usr esmtp-pass fqdn}
 
     bl [block!]

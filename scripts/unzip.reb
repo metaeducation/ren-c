@@ -309,7 +309,7 @@ zip: func [
     return num-entries
 ]
 
-unzip: function [
+unzip: func [
     {Decompresses a zip archive to a directory or a block}
 
     return: "If `where` was a block, then position after archive insertion"
@@ -321,8 +321,8 @@ unzip: function [
     /verbose "Lists files while decompressing (default)"
     /quiet "Don't lists files while decompressing"
 ][
-    num-errors: 0
-    info: all [quiet, not verbose] then [:elide] else [:print]
+    let num-errors: 0
+    let info: all [quiet, not verbose] then [:elide] else [:print]
     if not block? where [
         where: my dirize
         if not exists? where [make-dir/deep where]
@@ -335,10 +335,11 @@ unzip: function [
     ; utility rules like this have trouble with name overlap in the
     ; enclosing routine.  To be addressed soon.
     ;
-    uint16-rule: [tmpbin: across skip 2, (debin [LE + 2] tmpbin)]
-    uint32-rule: [tmpbin: across skip 4, (debin [LE + 4] tmpbin)]
-    msdos-date-rule: [tmpbin: across skip 2, (get-msdos-date tmpbin)]
-    msdos-time-rule: [tmpbin: across skip 2, (get-msdos-time tmpbin)]
+    let tmpbin
+    let uint16-rule: [tmpbin: across skip 2, (debin [LE + 2] tmpbin)]
+    let uint32-rule: [tmpbin: across skip 4, (debin [LE + 4] tmpbin)]
+    let msdos-date-rule: [tmpbin: across skip 2, (get-msdos-date tmpbin)]
+    let msdos-time-rule: [tmpbin: across skip 2, (get-msdos-time tmpbin)]
 
     ; NOTE: The original rebzip.r did decompression based on the local file
     ; header records in the zip file.  But due to streaming compression
@@ -357,6 +358,10 @@ unzip: function [
     if not central-end-pos: find-reverse (tail source) end-of-central-sig [
         fail "Could not find end of central directory signature"
     ]
+    let num-central-entries
+    let total-central-directory-size
+    let central-directory-offset
+    let archive-comment-len
     parse central-end-pos [
         end-of-central-sig  ; by definition (pos matched this)
 
@@ -387,6 +392,24 @@ unzip: function [
     ; !!! Review if this would be better done as a GATHER into an object,
     ; as SET-WORD! gathering (e.g. FUNCT-ION) is falling from favor.
     ;
+    let version-created-by
+    let version-needed
+    let flags
+    let method-number
+    let time
+    let date
+    let crc
+    let compressed-size
+    let uncompressed-size
+    let name-length
+    let extra-field-length
+    let file-comment-length
+    let disk-number-start
+    let internal-attributes
+    let external-attributes
+    let local-header-offset
+    let name
+    let temp
     central-directory-entry-rule: [
         [central-file-sig | (fail "CENTRAL-FILE-SIG mismatch")]
 
@@ -421,6 +444,7 @@ unzip: function [
     ;
     ; However, consider making these checks downgradable to warnings.
     ;
+    let x
     check-local-directory-entry-rule: [
         [local-file-sig | (fail "LOCAL-FILE-SIG mismatch")]
 
@@ -472,6 +496,7 @@ unzip: function [
     ; While this is by no means broken up perfectly into subrules, it is
     ; clearer than it was.
     ;
+    let data
     parse source [
         skip (central-directory-offset)
 
@@ -513,7 +538,7 @@ unzip: function [
             ;
             data: <here>
             (
-                uncompressed-data: catch [
+                let uncompressed-data: catch [
 
                     ; STORE(0) and DEFLATE(8) are the only widespread
                     ; methods used for .ZIP compression in the wild today
@@ -537,7 +562,7 @@ unzip: function [
                         throw blank
                     ]
 
-                    check: checksum-core 'crc32 data
+                    let check: checksum-core 'crc32 data
                     if crc != check [
                         info "-> failed [bad crc32]"
                         print [
@@ -569,7 +594,7 @@ unzip: function [
                             make-dir/deep %%(where)/(name)
                         ]
                     ][
-                        [file path]: split-path name
+                        let [file path]: split-path name
                         if not exists? %% (where)/(path) [
                             make-dir/deep %% (where)/(path)
                         ]

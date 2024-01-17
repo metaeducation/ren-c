@@ -45,25 +45,25 @@
     ; the native version (which is much more likely to be testing if this
     ; code breaks for some reason than anything wrong with mbedTLS).
     ;
-    hmac-sha256: function [
+    hmac-sha256: func [
         {computes the hmac-sha256 for message m using key k}
 
         m [binary! text!]
         k [binary! text!]
     ][
-        key: as binary! copy k
-        message: as binary! copy m
-        blocksize: 64
+        let key: as binary! copy k
+        let message: as binary! copy m
+        let blocksize: 64
         if blocksize < length of key [
             key: sha256 key
         ]
         if blocksize > length of key [
             insert/dup tail key #{00} (blocksize - length of key)
         ]
-        insert/dup opad: copy #{} #{5C} blocksize
-        insert/dup ipad: copy #{} #{36} blocksize
-        o_key_pad: opad xor+ key
-        i_key_pad: ipad xor+ key
+        insert/dup let opad: copy #{} #{5C} blocksize
+        insert/dup let ipad: copy #{} #{36} blocksize
+        let o_key_pad: opad xor+ key
+        let i_key_pad: ipad xor+ key
         return sha256 join o_key_pad (sha256 join i_key_pad message)
     ]
 

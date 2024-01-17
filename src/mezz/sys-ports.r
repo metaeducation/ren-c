@@ -22,7 +22,7 @@ REBOL [
 ;
 parse: ~sys-util-parse-not-set-yet~
 
-make-port*: function [
+make-port*: func [
     "SYS: Called by system on MAKE of PORT! port from a scheme."
 
     return: [port!]
@@ -31,6 +31,7 @@ make-port*: function [
 ][
     ; The first job is to identify the scheme specified:
 
+    let name
     switch/type spec [
         file! [
             name: either (dir? spec) 'dir 'file
@@ -83,7 +84,7 @@ make-port*: function [
         fail
     ]
 
-    ; Get the scheme definition:
+    let scheme  ; Get the scheme definition
     all [
         word? name
         scheme: get maybe has system.schemes name
@@ -97,7 +98,7 @@ make-port*: function [
     ; doing some hacky inheritance manually from object-to-object, there needs
     ; to be a COPY made.
     ;
-    port: make system.standard.port []
+    let port: make system.standard.port []
     port.spec: copy any [scheme.spec, system.standard.port-spec-head]
 
     ; !!! Override any of the fields in port.spec with fields in spec.
@@ -108,7 +109,7 @@ make-port*: function [
     ; !!! COLLECT is not available here.  This is all very old stuff and was
     ; organized terribly.  :-(
     ;
-    overloads: copy []
+    let overloads: copy []
     for-each [key val] spec [
         if not any [quasi? ^val, null? :val, blank? :val] [
             append overloads spread :[to set-word! key get 'val]  ; override
@@ -218,7 +219,7 @@ decode-url: :*parse-url.decode-url  ; wrapped in context, expose function
 
 ;-- Native Schemes -----------------------------------------------------------
 
-make-scheme: function [
+make-scheme: func [
     {Make a scheme from a specification and add it to the system}
 
     return: [~]
@@ -230,12 +231,12 @@ make-scheme: function [
     with: either with [system.schemes.(with)] [system.standard.scheme]
     if not with [cause-error 'access 'no-scheme with]
 
-    scheme: make with def
+    let scheme: make with def
     if not scheme.name [cause-error 'access 'no-scheme-name scheme]
 
     ; If actor is block build a non-contextual actor object:
     if block? scheme.actor [
-        actor: make object! (length of scheme.actor) / 4
+        let actor: make object! (length of scheme.actor) / 4
         for-each [name op args body] scheme.actor [
             assert [
                 set-word? name

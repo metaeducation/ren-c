@@ -38,7 +38,10 @@ REBOL [
 
 digit: charset [#"0" - #"9"]
 alpha: charset [#"a" - #"z" #"A" - #"Z"]
-idate-to-date: lambda [idate [text!]] [
+idate-to-date: lambda [
+    idate [text!]
+    <local> day month year time zone
+][
     parse idate [
         skip 5
         day: across [digit digit]
@@ -103,15 +106,15 @@ make-http-request: func [
     return result
 ]
 
-do-request: function [
+do-request: func [
     {Synchronously process an HTTP request on a port}
 
     return: "Result of the request (BLOCK! for HEAD requests, BINARY! read...)"
         [binary! block!]
     port [port!]
 ][
-    spec: port.spec
-    info: port.state.info
+    let spec: port.spec
+    let info: port.state.info
     spec.headers: body-of make make object! [
         Accept: "*/*"
         Accept-Charset: "utf-8"
@@ -160,14 +163,14 @@ do-request: function [
 ; if a no-redirect keyword is found in the write dialect after 'headers then
 ; 302 redirects will not be followed
 ;
-parse-write-dialect: function [
+parse-write-dialect: func [
     {Sets PORT.SPEC fields: DEBUG, FOLLOW, METHOD, PATH, HEADERS, CONTENT}
 
     return: [~]
     port [port!]
     block [block!]
 ][
-    spec: port.spec
+    let spec: port.spec
     parse block [
         try ['headers (spec.debug: true)]  ; may leave debug as-is
         try ['no-redirect (spec.follow: 'ok)]  ; may leave follow as-is
@@ -179,18 +182,20 @@ parse-write-dialect: function [
     ]
 ]
 
-check-response: function [
+check-response: func [
     return: [~]
     port [port!]
 ][
-    state: port.state
-    conn: state.connection
-    info: state.info
-    headers: info.headers
-    line: info.response-line
-    spec: port.spec
+    let state: port.state
+    let conn: state.connection
+    let info: state.info
+    let headers: info.headers
+    let line: info.response-line
+    let spec: port.spec
 
     while [state.mode = <reading-headers>] [
+        let d1
+        let d2
         any [
             all [
                 d1: find conn.data crlfbin
@@ -457,14 +462,14 @@ do-redirect: func [
     port.data: data
 ]
 
-read-body: function [
+read-body: func [
     {Based on the information in the HTTP headers, read body into PORT.DATA}
     return: [~]
     port [port!]
 ][
-    state: port.state
-    headers: state.info.headers
-    conn: state.connection
+    let state: port.state
+    let headers: state.info.headers
+    let conn: state.connection
 
     assert [not port.data]
 
@@ -485,6 +490,8 @@ read-body: function [
                 ; even have enough input data for the chunk *size*, much less
                 ; the chunk.  READ until we have at least a chunk size.
                 ;
+                let chunk-size
+                let mk1
                 while [not try parse3 conn.data [
                     copy chunk-size: some hex-digits, thru crlfbin
                     mk1: <here>, to <end>
@@ -594,8 +601,8 @@ sys.util.make-scheme [
     ]
 
     info: make system.standard.file-info [
-        response-line:
-        response-parsed:
+        response-line: null
+        response-parsed: null
         headers: null
     ]
 

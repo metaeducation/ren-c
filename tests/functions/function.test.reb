@@ -433,14 +433,14 @@
     outer: {outer}
     n: 20
 
-    f: function [
+    f: func [
         /count [integer!]
         <in> o1 o1.o2
         <with> outer
         <static> static (10 + n)
     ][
         count: default [2]
-        data: reduce [count x y outer static]
+        let data: reduce [count x y outer static]
         return case [
             count = 0 [reduce [data]]
             true [
@@ -459,9 +459,9 @@
 ; Duplicate arguments or refinements.
 [
     ~dup-vars~ !! (func [a b a] [return 0])
-    ~dup-vars~ !! (function [a b a] [return 0])
+    ~dup-vars~ !! (lambda [a b a] [return 0])
     ~dup-vars~ !! (func [/test /test] [return 0])
-    ~dup-vars~ !! (function [/test /test] [return 0])
+    ~dup-vars~ !! (lambda [/test /test] [return 0])
 ]
 
 ; /LOCAL is an ordinary refinement in Ren-C

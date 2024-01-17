@@ -121,7 +121,7 @@
 
 ; Functions mark their body CONST by default
 [
-    (did symbol-to-string: function [s] [
+    (did symbol-to-string: func [s] [
        return switch s [
            '+ ["plus"]
            '- ["minus"]

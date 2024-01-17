@@ -805,7 +805,7 @@ extension-class: make object! [
 
 extensions: copy []
 
-parse-ext-build-spec: function [
+parse-ext-build-spec: func [
     return: [object!]
     spec [block!]
 ][
@@ -817,17 +817,18 @@ parse-ext-build-spec: function [
     ; be precarious in bootstrap.  Instead, the bootstrap-shim puts its versions
     ; of COMPOSE and PARSE into the lib context.
     ;
-    ext: make extension-class compose [
+    let ext: make extension-class compose [
         comment [import (join (clean-path repo-dir) %tools/bootstrap-shim.r)]
         (spread spec)
     ]
 
+    let config
     if has ext 'options [
         ensure block! ext/options
         config: null  ; default for locals in modern Ren-C
         parse2 ext/options [
             opt some [
-                word! block! opt text! set config: group!
+                word! block! opt text! set config group!
             ]
         ] else [
             fail ["Could not parse extension build spec" mold spec]
@@ -1060,7 +1061,7 @@ CURRENT VALUE:
 replace help-topics/usage "HELP-TOPICS" ;\
     form append (map-each x help-topics [either text? x ['|] [x]]) 'all
 
-help: function [
+help: func [
     return: [~]
     /topic [text!]
 ][
@@ -1076,9 +1077,8 @@ help: function [
         ]
         all [
             topic
-            msg: select help-topics topic
-        ][
-            print msg
+            let msg: select help-topics topic
+            elide print msg
         ]
     ] else [
         print help-topics/usage
@@ -1461,13 +1461,14 @@ pthread: make rebmake/ext-dynamic-class [
 
 folders: copy [%objs/ %objs/main/]
 
-add-new-obj-folders: function [
+add-new-obj-folders: func [
     return: [~]
     objs
     folders
     <local>
     lib
     obj
+    dir
 ][
     for-each lib objs [
         switch lib/class [
@@ -1637,16 +1638,15 @@ add-project-flags: func [
 ; when a dynamically loaded extension requires some other extension (which
 ; may or may not be dynamic.)
 
-calculate-sequence: function [
+calculate-sequence: func [
     return: [integer!]
     ext
-    <local> req b
 ][
     if integer? ext/sequence [return ext/sequence]
     if ext/visited [fail ["circular dependency on" ext]]
     if null? ext/requires [ext/sequence: 0 return ext/sequence]
     ext/visited: true
-    seq: 0
+    let seq: 0
     if word? ext/requires [ext/requires: reduce [ext/requires]]
     for-each req ext/requires [
         for-each b extensions [

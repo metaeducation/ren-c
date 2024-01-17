@@ -34,7 +34,7 @@ export repo-dir: clean-path %../
 
 export spaced-tab: unspaced [space space space space]
 
-export to-c-name: function [
+export to-c-name: func [
     {Take a Rebol value and transliterate it as a (likely) valid C identifier}
 
     return: [<opt> text!]
@@ -43,18 +43,20 @@ export to-c-name: function [
     /scope "[#global #local #prefixed] see http://stackoverflow.com/q/228783/"
         [issue!]
 ][
+    scope: default [#global]
+
     all [text? value, empty? value] then [
         fail/where ["TO-C-NAME received empty input"] 'value
     ]
 
-    c-chars: charset [
+    let c-chars: charset [
         #"a" - #"z"
         #"A" - #"Z"
         #"0" - #"9"
         #"_"
     ]
 
-    string: either block? :value [unspaced value] [form value]
+    let string: either block? :value [unspaced value] [form value]
 
     string: switch string [
         ; Used specifically by t-routine.c to make SYM_ELLIPSIS
@@ -147,8 +149,6 @@ export to-c-name: function [
         ]
     ]
 
-    scope: default [#global]
-
     for-next s string [
         all [
             scope <> #prefixed
@@ -189,7 +189,7 @@ export to-c-name: function [
 
 
 ; http://stackoverflow.com/questions/11488616/
-export binary-to-c: function [
+export binary-to-c: func [
     {Converts a binary to a string of C source that represents an initializer
     for a character array.  To be "strict" C standard compatible, we do not
     use a string literal due to length limits (509 characters in C89, and
@@ -198,14 +198,13 @@ export binary-to-c: function [
 
     return: [text!]
     data [binary!]
-    <local> data-len
 ][
-    data-len: length of data
+    let data-len: length of data
 
-    out: make text! 6 * (length of data)
+    let out: make text! 6 * (length of data)
     while [not empty-or-null? data] [
         ; grab hexes in groups of 8 bytes
-        hexed: enbase/base (copy/part data 8) 16
+        let hexed: enbase/base (copy/part data 8) 16
         data: skip data 8
         for-each [digit1 digit2] hexed [
             append out unspaced [{0x} digit1 digit2 {,} space]
@@ -219,6 +218,7 @@ export binary-to-c: function [
     ]
 
     ; Sanity check (should be one more byte in source than commas out)
+    let comma-count
     parse2 out [
         (comma-count: 0)
         some [thru "," (comma-count: comma-count + 1)]
@@ -230,17 +230,17 @@ export binary-to-c: function [
 ]
 
 
-export parse-args: function [
+export parse-args: func [
     return: [block!]
     args [block!]
 ][
-    ret: make block! 4
-    standalone: make block! 4
+    let ret: make block! 4
+    let standalone: make block! 4
     iterate args [
-        name: null
-        value: args/1
+        let name
+        let value: args/1
         case [
-            idx: find value #"=" [; name=value
+            let idx: find value #"=" [; name=value
                 name: to word! copy/part value (index of idx) - 1
                 value: copy next idx
             ]
@@ -302,7 +302,7 @@ export propercase-of: func [
     return propercase form string
 ]
 
-export write-if-changed: function [
+export write-if-changed: func [
     return: [~]
     dest [file!]
     content [text! block!]
@@ -346,7 +346,7 @@ export relative-to-path: func [
 ]
 
 
-export stripload: function [
+export stripload: func [
     {Get an equivalent to MOLD/FLAT (plus no comments) without using LOAD}
 
     return: "contents, w/o comments or indentation"
@@ -367,9 +367,9 @@ export stripload: function [
     ; lines in the original files.  That would require preserving some info
     ; about the file of origin, though.
 
-    pushed: copy []  ; <Q>uoted or <B>raced string delimiter stack
+    let pushed: copy []  ; <Q>uoted or <B>raced string delimiter stack
 
-    comment-or-space-rule: [
+    let comment-or-space-rule: [
         ;
         ; Note: IF is deprecated in PARSE, and `:(...)` should be used instead
         ; once the bootstrap executable supports it.
@@ -384,7 +384,7 @@ export stripload: function [
         ]
     ]
 
-    rule: [
+    let rule: [
         ; Bootstrap WHILE: https://github.com/rebol/rebol-issues/issues/1401
         while [
             newline [opt some [comment-or-space-rule remove newline]]
@@ -412,7 +412,9 @@ export stripload: function [
         ]
     ]
 
+    let contents
     let file
+    let text
     either text? source [
         contents: source  ; useful for debugging STRIPLOAD from console
         file: <textual source>
@@ -434,12 +436,12 @@ export stripload: function [
     if gather [
         append (ensure block! get gather) spread collect [
             for-next t text [
-                newline-pos: find t newline else [tail text]
-                if not colon-pos: find/part t ":" newline-pos [
+                let newline-pos: find t newline else [tail text]
+                if not let colon-pos: find/part t ":" newline-pos [
                     t: newline-pos
                     continue
                 ]
-                if space-pos: find/part t space colon-pos [
+                if let space-pos: find/part t space colon-pos [
                     t: newline-pos
                     continue
                 ]
@@ -460,7 +462,7 @@ export stripload: function [
     ]
 
     if header [
-        if not hdr: copy/part (next find text "[") (find text "^/]") [
+        if not let hdr: copy/part (next find text "[") (find text "^/]") [
             fail ["Couldn't locate header in STRIPLOAD of" file]
         ]
         parse2 hdr rule else [

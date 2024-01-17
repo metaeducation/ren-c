@@ -170,7 +170,7 @@ syms-cscape: copy []
 ;
 sym-n: 1  ; counts up as symbols are added
 
-add-sym: function [
+add-sym: func [
     {Add SYM_XXX to enumeration}
     return: [<opt> integer!]
     word "Word (but may be in text form to gloss over bootstrap issues)"
@@ -178,7 +178,7 @@ add-sym: function [
     /exists "return ID of existing SYM_XXX constant if already exists"
     <with> sym-n
 ][
-    if pos: find syms-words as text! word [
+    if let pos: find syms-words as text! word [
         if exists [return index of pos]
         fail ["Duplicate word specified" word]
     ]
@@ -726,7 +726,7 @@ ob: make object! boot-sysobj
 
 c-debug-break: :lib/c-debug-break
 
-make-obj-defs: function [
+make-obj-defs: func [
     {Given a Rebol OBJECT!, write C structs that can access its raw variables}
 
     return: [~]
@@ -736,8 +736,8 @@ make-obj-defs: function [
     prefix
     depth
 ][
-    items: collect [
-        n: 1
+    let items: collect [
+        let n: 1
 
         for-each field words-of obj [
             keep cscape/with {${PREFIX}_${FIELD} = $<n>} [prefix field n]
@@ -759,7 +759,7 @@ make-obj-defs: function [
                 field != 'standard
                 object? get has obj field
             ][
-                extended-prefix: uppercase unspaced [prefix "_" field]
+                let extended-prefix: uppercase unspaced [prefix "_" field]
                 make-obj-defs e obj/:field extended-prefix (depth - 1)
             ]
         ]

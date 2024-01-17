@@ -29,7 +29,7 @@
 )(
     x: 10
     y: null
-    foo: function [] [
+    foo: func [<local> x] [
         set 'x: 20
         set 'y x
     ]
@@ -46,7 +46,7 @@
 )(
     x: 10
     y: null
-    foo: function [return: [~]] [
+    foo: func [return: [~] <local> x] [
         set unquote the 'x: 20
         set unquote the 'y x
     ]
@@ -63,8 +63,11 @@
 )(
     x: 10
     y: null
-    foo: function [return: [~]] [
-        set noquote the '''''''x: 20  ; SET-WORD! gathered, no assignment
+    foo: func [
+        return: [~]
+        <local> x
+    ][
+        set noquote the '''''''x: 20  ; x is local assignment
         set noquote the '''''''y x
     ]
     foo
@@ -86,13 +89,13 @@
     w2: bind word o2
     (0 = get noquote word) and (1 = get noquote w1) and (2 = get noquote w2)
 )(
-    foo: function [] [
-        a: 0
-        o1: make object! [a: 1]
-        o2: make object! [a: 2]
-        word: ''''''''''a:
-        w1: bind word o1
-        w2: bind word o2
+    foo: func [] [
+        let a: 0
+        let o1: make object! [a: 1]
+        let o2: make object! [a: 2]
+        let word: ''''''''''a:
+        let w1: bind word o1
+        let w2: bind word o2
         return (0 = get noquote word)
             and (1 = get noquote w1)
             and (2 = get noquote w2)

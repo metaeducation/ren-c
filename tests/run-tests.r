@@ -52,7 +52,7 @@ run-tests: func [
 ][
     print ["=== Running Tests implied by" mold file "==="]
 
-    [log-file summary]: do-recover tests flags check log-file-prefix
+    let [log-file summary]: do-recover tests flags check log-file-prefix
 
     print newline
 

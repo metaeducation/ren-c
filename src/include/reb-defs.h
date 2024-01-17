@@ -147,7 +147,6 @@ typedef struct JumpStruct Jump;
 typedef uint_fast32_t StackIndex;  // 0 for empty stack ([0] entry poison)
 
 
-
 //=//// SYMBOL IDs ////////////////////////////////////////////////////////=//
 //
 // Built-in symbols get a hardcoded integer number that can be used in the

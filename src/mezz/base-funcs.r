@@ -61,17 +61,16 @@ stop: func* [] [
 ]
 
 func: func* [
-    {Make action with set-words as locals, <static>, <in>, <with>, <local>}
+    {Augment action with <static>, <in>, <with> features}
 
     return: [action?]
     spec "Help string (opt) followed by arg words (and opt type and string)"
         [block!]
     body "The body block of the function"
         [<const> block!]
-    /gather "Gather SET-WORD! as local variables (preferably, please use LET)"
     <local>
         new-spec var loc other
-        new-body exclusions locals defaulters statics with-return
+        new-body defaulters statics with-return
 ][
     ; R3-Alpha offered features on FUNCTION (a complex usermode construct)
     ; that the simpler/faster FUNC did not have.  Ren-C seeks to make FUNC and
@@ -90,12 +89,9 @@ func: func* [
     ; faster than this usermode prelude.
     ;
     all [
-        not gather
         not find spec matches tag!
         return func* spec body
     ]
-
-    exclusions: copy []
 
     ; Rather than MAKE BLOCK! LENGTH OF SPEC here, we copy the spec and clear
     ; it.  This costs slightly more, but it means we inherit the file and line
@@ -118,24 +114,6 @@ func: func* [
         :(if var '[  ; so long as we haven't reached any <local> or <with> etc.
             set var: [any-word! | any-path! | quoted!] (
                 append new-spec var
-
-                var: noquote var
-                case [
-                    match [get-path! path!] var [
-                        if (length of var != 2) or ('_ <> var.1) [
-                            fail ["Bad path in spec:" ^spec]
-                        ]
-                        append exclusions var.2  ; exclude args/refines
-                    ]
-
-                    any-word? var [
-                        append exclusions var  ; exclude args/refines
-                    ]
-
-                    true [  ; QUOTED! could have been anything
-                        fail ["Bad spec item" ^var]
-                    ]
-                ]
             )
             |
             set other: block! (
@@ -170,7 +148,6 @@ func: func* [
         '<local> (append new-spec <local>)
         try some [set var: word! set other: try group! (
             append new-spec var
-            append exclusions var
             if other [
                 defaulters: default [copy []]
                 append defaulters spread compose [  ; always sets
@@ -189,16 +166,12 @@ func: func* [
             set other: [object! | word! | tuple!] (
                 if not object? other [other: ensure any-context! get other]
                 bind new-body other
-                for-each [key val] other [
-                    append exclusions key
-                ]
             )
         ]
     |
         '<with> try some [
             set other: [word! | path!] (
-                append exclusions other
-
+                ;
                 ; Definitional returns need to be signaled even if FUNC, so
                 ; the FUNC* doesn't automatically generate one.
                 ;
@@ -216,7 +189,6 @@ func: func* [
         )
         try some [
             set var: word! (other: null) try set other: group! (
-                append exclusions var
                 append statics (as set-word! var)
                 append statics (other else [the ~])
             )
@@ -235,28 +207,9 @@ func: func* [
         )
     ]]
 
-    ; Gather the SET-WORD!s in the body, excluding the collected ANY-WORD!s
-    ; that should not be considered.  Note that COLLECT is not defined by
-    ; this point in the bootstrap.
-    ;
-    locals: if gather [
-        collect-words/deep/set/ignore body exclusions
-    ] else [null]
-
     if statics [
         statics: make object! statics
         bind new-body statics
-    ]
-
-    ; The <local> designation may be redundant with a <local> in the original
-    ; spec.  Historical implementations of things like FUNCT in R3-Alpha had
-    ; to dodge this to keep from providing redundant refinements.  It's legal
-    ; in Ren-C, but really this generator should be making a FRAME! and not
-    ; a spec block.  This is a work in progress.
-    ;
-    if locals [
-        append new-spec <local>
-        append new-spec spread locals
     ]
 
     append new-spec maybe with-return  ; if FUNC* suppresses return generation
@@ -274,15 +227,6 @@ func: func* [
         any [new-body body]
     ]
 ]
-
-
-; Historical FUNCTION is intended to one day be a synonym for FUNC, once there
-; are solutions such that LET can take the place of what SET-WORD! gathering
-; was able to do.  This will be an ongoing process.
-;
-; https://forum.rebol.info/t/rethinking-auto-gathered-set-word-locals/1150
-;
-function: specialize :func [gather: #]
 
 
 ; Simple "divider-style" thing for remarks.  At a certain verbosity level,
@@ -336,11 +280,6 @@ redescribe: func [
     ; !!! This needs to be completely rethought
     return runs action
 ]
-
-
-redescribe [
-    {Create an ACTION, implicity gathering SET-WORD!s as <local> by default}
-] :function
 
 
 unset: redescribe [

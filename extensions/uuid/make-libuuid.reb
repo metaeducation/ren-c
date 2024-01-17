@@ -23,7 +23,7 @@ ROOT: https://raw.githubusercontent.com/karelzak/util-linux/master/
 
 mkdir %libuuid
 
-add-config.h: [
+add-config-h: [
     to "/*" thru "*/"
     thru "^/"
     insert {^/#include "config.h"^/}
@@ -44,7 +44,7 @@ comment-out-includes: [
 ]
 
 
-fix-randutils.c: func [
+fix-randutils-c: func [
     text [text!]
 ][
     exclude-headers: [
@@ -52,7 +52,7 @@ fix-randutils.c: func [
     ]
 
     parse3 text [
-        add-config.h
+        add-config-h
         insert {^/#include <errno.h>^/}
 
         try some [
@@ -77,15 +77,14 @@ fix-randutils.c: func [
     return text
 ]
 
-fix-gen_uuid.c: function [
+fix-gen_uuid-c: func [
     text [text!]
     <with>
     exclude-headers
     comment-out-includes
-    add-config.h
+    add-config-h
     space
 ][
-
     exclude-headers: [
         {"all-io.h"}
         | {"c.h"}
@@ -94,8 +93,12 @@ fix-gen_uuid.c: function [
         | {"sha1.h"}
     ]
 
+    let definition
+    let target
+    let unused
+
     parse3 text [
-        add-config.h
+        add-config-h
 
         try some [
             ;comment out unneeded headers
@@ -142,8 +145,8 @@ fix-gen_uuid.c: function [
 files: compose [
     %include/nls.h              _
     %include/randutils.h        _
-    %lib/randutils.c            (:fix-randutils.c)
-    %libuuid/src/gen_uuid.c     (:fix-gen_uuid.c)
+    %lib/randutils.c            (unrun :fix-randutils-c)
+    %libuuid/src/gen_uuid.c     (unrun :fix-gen_uuid-c)
     %libuuid/src/pack.c         _
     %libuuid/src/unpack.c       _
     %libuuid/src/uuidd.h        _
@@ -160,7 +163,7 @@ for-each [file fix] files [
         "->" target LF
     ]
 
-    if :fix [data: fix data]  ; correct compiler warnings
+    if not blank? fix [data: run fix data]  ; correct compiler warnings
 
     replace/all data tab {    }  ; spaces not tabs
 

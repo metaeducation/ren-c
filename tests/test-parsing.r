@@ -84,7 +84,7 @@ load-testfile: func [
     return test-source
 ]
 
-export collect-tests: function [
+export collect-tests: func [
     return: [block!]
     file "Name of file written in the test dialect to gather tests from"
         [file!]
@@ -92,7 +92,7 @@ export collect-tests: function [
 ][
     into: default [copy []]
 
-    current-dir: what-dir
+    let current-dir: what-dir
     print ["file:" mold file]
 
     let code: load file
@@ -105,6 +105,9 @@ export collect-tests: function [
     ;
     append into clean-path file
 
+    let pos
+    let item
+    let body
     append into spread collect [parse3 code [
         try some [
             pos: <here>
@@ -192,16 +195,21 @@ export collect-tests: function [
     return into
 ]
 
-export collect-logs: function [
+export collect-logs: func [
     return: [~]
     collected-logs [block!]
         {collect the logged results here (modified)}
     log-file [file!]
 ][
-    log-contents: read log-file except [
+    let log-contents: read log-file except [
         fail ["Unable to read " mold log-file]
     ]
 
+    let guard
+    let value
+    let last-vector
+    let position
+    let next-position
     parse3 log-contents [
         (guard: false)  ; trigger failure by default (may be set to true)
         try some [

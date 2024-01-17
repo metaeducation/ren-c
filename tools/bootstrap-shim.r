@@ -789,7 +789,6 @@ modernize-action: function3 [
 ]
 
 func: adapt :func3 [set [spec body] modernize-action spec body]
-function: adapt :function3 [set [spec body] modernize-action spec body]
 lambda: func3 [spec body] [
     set [spec body] modernize-action spec body
     if not tail? next find spec <local> [
@@ -797,6 +796,10 @@ lambda: func3 [spec body] [
     ]
     take find spec <local>
     make action! compose3/only [(spec) (body)]  ; gets no RETURN
+]
+
+function: does [
+    fail "gathering FUNCTION deprecated (will be synonym for FUNC, eventually)"
 ]
 
 ; Bootstrap MATCH was designed very strangely as a variadic for some since

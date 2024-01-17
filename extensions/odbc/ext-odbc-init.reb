@@ -108,18 +108,20 @@ sys.util.make-scheme [
             ]
         ]
 
-        close: function [
+        close: func [
             {Closes a statement port only or a database port w/all statements}
             return: [port!]
             port [port!]
         ][
-            if get maybe has (statement: port.locals) 'hstmt [
+            let statement: port.locals
+            if get maybe has statement 'hstmt [
                 remove find head statement.database.statements port
                 close-statement statement
                 return port
             ]
 
-            if get maybe has (connection: port.locals) 'hdbc [
+            let connection: port.locals
+            if get maybe has connection 'hdbc [
                 for-each stmt-port connection.statements [close stmt-port]
                 clear connection.statements
                 close-connection connection
@@ -138,7 +140,7 @@ sys.util.make-scheme [
             return insert-odbc port.locals blockify sql
         ]
 
-        copy: function [port [port!] /part [integer!]] [
+        copy: func [port [port!] /part [integer!]] [
             return copy-odbc/part port.locals part
         ]
     ]

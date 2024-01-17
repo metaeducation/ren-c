@@ -16,7 +16,7 @@ REBOL [
     }
 ]
 
-info?: function [
+info?: func [
     {Returns an info object about a file or url.}
     return: [<opt> object! word!]
     target [file! url!]
@@ -26,7 +26,7 @@ info?: function [
         return query target
     ]
 
-    t: write target [HEAD] except e -> [return null]
+    let t: write target [HEAD] except e -> [return null]
 
     if only [return 'file]
     return make object! [
@@ -52,7 +52,7 @@ exists?: func [
     return select maybe attempt [query target] 'type
 ]
 
-size-of: size?: function [
+size-of: size?: func [
     {Returns the size of a file.}
     return: [<opt> integer!]
     target [file! url!]
@@ -63,7 +63,7 @@ size-of: size?: function [
     ]
 ]
 
-modified?: function [
+modified?: func [
     {Returns the last modified date of a file.}
     return: [<opt> date!]
     target [file! url!]
@@ -74,15 +74,15 @@ modified?: function [
     ]
 ]
 
-suffix-of: function [
+suffix-of: func [
     "Return the file suffix of a filename or url. Else, null."
     return: [<opt> file!]
     path [file! url! text!]
 ][
     path: as text! path
     return all [
-        pos: find-last path #"."
-        not find pos #"/"
+        let pos: find-last path "."
+        not find pos "/"
         to file! pos
     ]
 ]
@@ -184,13 +184,13 @@ script?: func [
     ]
 ]
 
-file-type?: function [
+file-type?: func [
     "Return the identifying word for a specific file type (or null)"
     return: [<opt> word!]
     file [file! url!]
 ][
     return all [
-        pos: find system.options.file-types maybe suffix-of file
+        let pos: find system.options.file-types maybe suffix-of file
         first maybe find pos matches word!
     ]
 ]

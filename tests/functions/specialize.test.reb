@@ -184,7 +184,7 @@
 ; and other enfix situations.
 [
     (
-        foo: function [/a [integer!] '/b [<skip> word!]] [
+        foo: func [/a [integer!] '/b [<skip> word!]] [
             return reduce [/A (reify a) /B (reify b)]
         ]
         foob: enfix :foo/b

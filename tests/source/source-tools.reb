@@ -109,7 +109,7 @@ whitelisted: [
 ]
 
 
-log-emit: function [
+log-emit: func [
     {Append a COMPOSE'd block to a log block, clearing any new-line flags}
 
     return: [~]
@@ -123,7 +123,7 @@ log-emit: function [
 
 export analyse: context [
 
-    files: function [
+    files: func [
         {Analyse the source files of REBOL.}
         return: [block!]
     ][
@@ -136,15 +136,15 @@ export analyse: context [
         ]
     ]
 
-    file: function [
+    file: func [
         {Analyse a file returning facts.}
         return: [<opt> block!]
         file
     ][
         lib.print ["Analyzing:" file]  ; subvert tests PRINT disablement
         return all [
-            filetype: select extensions extension-of file
-            type: has source filetype
+            let filetype: select extensions extension-of file
+            let type: in source filetype
             (reeval (ensure action?! get type) file
                 (read %% (repo-dir)/(file)))
         ]
@@ -152,25 +152,26 @@ export analyse: context [
 
     source: context [
 
-        c: function [
+        c: func [
             {Analyse a C file at the C preprocessing token level}
 
             return: [block!]
                 "Facts about the file (lines that are too long, etc.)"
             file [file!]
             data [binary!]
+            <local> position  ; used sketchily in rules, no LET in parse :-/
         ][
-            analysis: analyse.text file data
-            emit: specialize :log-emit [log: analysis]
+            let analysis: analyse.text file data
+            let emit: specialize :log-emit [log: analysis]
 
             data: as text! data
 
-            identifier: c-lexical.grammar.identifier
-            c-pp-token: c-lexical.grammar.c-pp-token
+            let identifier: c-lexical.grammar.identifier
+            let c-pp-token: c-lexical.grammar.c-pp-token
 
-            malloc-found: copy []
+            let malloc-found: copy []
 
-            malloc-check: [
+            let malloc-check: [
                 and identifier "malloc" (
                     append malloc-found try text-line-of position
                 )
@@ -195,7 +196,7 @@ export analyse: context [
                 emit <eof-eol-missing> [(file)]
             ]
 
-            emit-proto: function [return: [~] proto] [
+            let emit-proto: func [return: [~] proto] [
                 if not block? proto-parser.data [return ~]
 
                 do inside c-parser-extension [
@@ -210,7 +211,7 @@ export analyse: context [
                             ]
                             same? position proto-parser.parse-position
                         ] else [
-                            line: text-line-of proto-parser.parse-position
+                            let line: text-line-of proto-parser.parse-position
                             append
                                 non-std-func-space: default [copy []]
                                 line  ; should it be appending BLANK! ?
@@ -240,7 +241,7 @@ export analyse: context [
                         proto-parser.proto-arg-1
                         <> to-c-name/scope name #prefixed
                     )[
-                        line: text-line-of proto-parser.parse-position
+                        let line: text-line-of proto-parser.parse-position
                         emit <id-mismatch> [
                             (mold proto-parser.data.1) (file) (line)
                         ]
@@ -257,7 +258,7 @@ export analyse: context [
                                 "RL_" to word! proto-parser.data.1
                             ])
                     ] else [
-                        line: text-line-of proto-parser.parse-position
+                        let line: text-line-of proto-parser.parse-position
                         emit <id-mismatch> [
                             (mold proto-parser.data.1) (file) (line)
                         ]
@@ -265,7 +266,7 @@ export analyse: context [
                 ]
             ]
 
-            non-std-func-space: null
+            let non-std-func-space: null
             proto-parser.emit-proto: :emit-proto
             proto-parser.process data
 
@@ -276,7 +277,7 @@ export analyse: context [
             return analysis
         ]
 
-        rebol: function [
+        rebol: func [
             {Analyse a Rebol file (no checks beyond those for text yet)}
 
             return: [block!]
@@ -284,33 +285,35 @@ export analyse: context [
             file [file!]
             data
         ][
-            analysis: analyse.text file data
+            let analysis: analyse.text file data
             return analysis
         ]
     ]
 
-    text: function [
+    text: func [
         {Analyse textual formatting irrespective of language}
 
         return: [block!]
             "Facts about the text file (inconsistent line endings, etc)"
         file [file!]
         data
+        <local> position last-pos line-ending alt-ending  ; no PARSE let :-/
     ][
-        analysis: copy []
-        emit: specialize :log-emit [log: analysis]
+        let analysis: copy []
+        let emit: specialize :log-emit [log: analysis]
 
         data: read %% (repo-dir)/(file)
 
-        bol: null
-        line: null
+        let bol: null  ; beginning of line
+        let line: null
 
-        stop-char: charset { ^-^M^/}
-        ws-char: charset { ^-}
-        wsp: [some ws-char]
+        let stop-char: charset { ^-^M^/}
+        let ws-char: charset { ^-}
+        let wsp: [some ws-char]
 
-        eol: [line-ending | alt-ending (append inconsistent-eol line)]
+        let eol: [line-ending | alt-ending (append inconsistent-eol line)]
         line-ending: null
+        alt-ending: null
 
         ;
         ; Identify line termination.
@@ -327,9 +330,12 @@ export analyse: context [
             alt-ending: unspaced [CR LF]
         ]
 
-        count-line: [
+        let over-std-len: copy []
+        let over-max-len: copy []
+
+        let count-line: [
             (
-                line-len: subtract index of position index of bol
+                let line-len: subtract index of position index of bol
                 if line-len > standard.std-line-length [
                     append over-std-len line
                     if line-len > standard.max-line-length [
@@ -341,11 +347,9 @@ export analyse: context [
             bol: <here>
         ]
 
-        tabbed: copy []
-        whitespace-at-eol: copy []
-        over-std-len: copy []
-        over-max-len: copy []
-        inconsistent-eol: copy []
+        let tabbed: copy []
+        let whitespace-at-eol: copy []
+        let inconsistent-eol: copy []
 
         parse3/case data [
 
@@ -411,10 +415,10 @@ export analyse: context [
 
 list: context [
 
-    source-files: function [
+    source-files: func [
         {Retrieves a list of source files (relative paths).}
     ][
-        files: read-deep/full/strategy source-paths :source-files-seq
+        let files: read-deep/full/strategy source-paths :source-files-seq
 
         sort files
         new-line/all files true
@@ -422,19 +426,19 @@ list: context [
         return files
     ]
 
-    source-files-seq: function [
+    source-files-seq: func [
         {Take next file from a sequence that is represented by a queue.}
         return: [<opt> file!]
         queue [block!]
     ][
-        item: ensure file! take queue
+        let item: ensure file! take queue
 
         if find whitelisted item [
             return null
         ]
 
         if equal? #"/" last item [
-            contents: read %% (repo-dir)/(item)
+            let contents: read %% (repo-dir)/(item)
             insert queue spread map-each x contents [join item x]
             item: null
         ] else [
@@ -477,7 +481,7 @@ c-parser-extension: context bind bind [
 
 ] proto-parser c-lexical.grammar
 
-extension-of: function [
+extension-of: func [
     {Return file extension for file.}
     return: [file!]
     file [file!]

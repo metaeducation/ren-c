@@ -31,18 +31,18 @@ write-enlined: redescribe [
 )
 
 
-mold64: function [
+mold64: func [
     "Temporary function to mold binary base 64." ; fix the need for this! -CS
     data
 ][
-    base: system.options.binary-base
+    let base: system.options.binary-base
     system.options.binary-base: 64
-    data: mold data
+    let data: mold data
     system.options.binary-base: base
     return data
 ]
 
-save: function [
+save: func [
     {Saves a value, block, or other data to a file, URL, binary, or text}
 
     ; !!! what RETURN values make sense?
@@ -58,16 +58,16 @@ save: function [
         [logic? word!]
 ][
     ; Recover common natives for words used as refinements.
-    all_SAVE: all
+    let all_SAVE: all
     all: runs :lib.all
 
     ; Special datatypes use codecs directly (e.g. PNG image file):
     all [
         not header  ; User wants to save value as script, not data file
         match [file! url!] where
-        type: file-type? where
+        let type: file-type? where
         type <> 'rebol  ; handled by this routine, not by WRITE+ENCODE
-    ] then [
+
         ; We have a codec.  Will check for valid type.
         return write where encode type :value
     ]
@@ -118,14 +118,14 @@ save: function [
     ]
 
     ; !!! Maybe /all should be the default?  See #2159
-    data: either all_SAVE [mold/all/only :value] [
+    let data: either all_SAVE [mold/all/only :value] [
         mold/only :value
     ]
 
     append data newline  ; MOLD does not append a newline
 
     case/all [
-        tmp: find maybe header 'checksum: [  ; e.g. says "checksum: true"
+        let tmp: find maybe header 'checksum: [  ; e.g. says "checksum: true"
             ; Checksum uncompressed data, if requested
             change next tmp (checksum-core 'crc32 data)
         ]

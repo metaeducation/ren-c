@@ -28,68 +28,16 @@ c-lexical: import <c-lexicals.r>
 import <text-lines.reb>
 import <parsing-tools.reb>
 
-decode-key-value-text: function [
-    {Decode key value formatted text.}
-    return: [block!]
-    text [text!]
-][
-    data-fields: [
-        opt some [
-            position:  ; <here>
-            data-field
-            | newline
-        ]
-    ]
-
-    data-field: [
-        data-field-name eof:  ; <here>
-        [
-            #" " to newline opt some [
-                newline not data-field-name not newline to newline
-            ]
-            | opt some [newline opt newline 2 20 #" " to newline]
-        ] eol: (emit-stuff) newline
-    ]
-
-    data-field-char: charset [#"A" - #"Z" #"a" - #"z"]
-    data-field-name: [
-        some data-field-char
-        opt some [#" " some data-field-char] #":"
-    ]
-
-    emit-stuff: func [
-        return: [~]
-        <local> key
-    ][
-        key: replace/all copy/part position eof #" " #"-"
-        remove back tail-of key
-        append meta spread reduce [
-            to word! key
-            trim/auto copy/part eof eol
-        ]
-    ]
-
-    stuff: copy []
-
-    parse2 text data-fields else [
-        fail [
-            {Expected key value format on line} (text-line-of position)
-            {and lines must end with newline.}
-        ]
-    ]
-
-    return new-line/all/skip stuff true 2
-]
-
-load-until-blank: function [
+load-until-blank: func [
     {Load rebol values from text until double newline.}
     text [text!]
     /next {Return values and next position.}
-] [
-    wsp: compose [some (charset { ^-})]
+    <local> position  ; no LET in parse :-/
+][
+    let wsp: compose [some (charset { ^-})]
 
-    res: null  ; !!! collect as SET-WORD!s for locals, evolving...
-    rebol-value: parsing-at x [
+    let res: null  ; !!! collect as SET-WORD!s for locals, evolving...
+    let rebol-value: parsing-at x [
         ;
         ; !!! SET-BLOCK! not bootstrap
         ;
@@ -97,7 +45,7 @@ load-until-blank: function [
         res
     ]
 
-    terminator: [opt wsp newline opt wsp newline]
+    let terminator: [opt wsp newline opt wsp newline]
 
     parse2 text [
         some [not terminator rebol-value]
@@ -308,12 +256,13 @@ export proto-parser: context [
     ] c-lexical/grammar
 ]
 
-export rewrite-if-directives: function [
+export rewrite-if-directives: func [
     {Bottom up rewrite conditional directives to remove unnecessary sections.}
     return: [~]
     position
 ][
     until [
+        let rewritten
         parse2 position [
             (rewritten: false)
             some [
