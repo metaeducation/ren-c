@@ -1004,7 +1004,7 @@ grab: enfix func [
         [binary! integer!]
     :left "Needs variable name for assignment (to deliver errors)"
         [set-word!]
-    var "Variable containing the BINARY! to be extracted and advanced"
+    'var "Variable containing the BINARY! to be extracted and advanced"
         [word!]
     n "Number of bytes to extract (errors if not enough bytes available)"
         [integer!]
@@ -1148,7 +1148,7 @@ parse-messages: func [
                     <server-hello> [
                         ; https://tools.ietf.org/html/rfc5246#section-7.4.1.3
 
-                        let server-version: grab 'bin 2
+                        let server-version: grab bin 2
                         server-version: select bytes-to-version server-version
                         if server-version < ctx.min-version [
                             fail [
@@ -1165,18 +1165,18 @@ parse-messages: func [
 
                             version: ctx.version
 
-                            server-random: grab 'bin 32
+                            server-random: grab bin 32
 
-                            session-id-len: grab-int 'bin 1
-                            session-id: grab 'bin session-id-len
+                            session-id-len: grab-int bin 1
+                            session-id: grab bin session-id-len
 
-                            suite-id: grab 'bin 2
+                            suite-id: grab bin 2
 
-                            compression-method-length: grab-int 'bin 1
+                            compression-method-length: grab-int bin 1
                             if compression-method-length != 0 [
                                 comment [
                                     compression-method:
-                                        grab 'bin compression-method-length
+                                        grab bin compression-method-length
                                 ]
                                 fail ["TLS compression disabled (CRIME)"]
                             ]
@@ -1193,23 +1193,23 @@ parse-messages: func [
                             ;
                             let extensions-list-length: 0
                             if not tail? bin [
-                                extensions-list-length: grab-int 'bin 2
+                                extensions-list-length: grab-int bin 2
                             ]
                             check-length: 0
 
                             curve-list: null
                             while [not tail? bin] [
-                                let extension-id: grab 'bin 2
-                                let extension-length: grab-int 'bin 2
+                                let extension-id: grab bin 2
+                                let extension-length: grab-int bin 2
                                 check-length: me + 2 + 2 + extension-length
 
                                 switch extension-id [
                                     #{00 0A} [  ; elliptic curve groups
-                                        let curve-list-length: grab-int 'bin 2
-                                        curve-list: grab 'bin curve-list-length
+                                        let curve-list-length: grab-int bin 2
+                                        curve-list: grab bin curve-list-length
                                     ]
                                 ] else [
-                                    let dummy: grab 'bin extension-length
+                                    let dummy: grab bin extension-length
                                 ]
 
                             ]
@@ -1231,11 +1231,11 @@ parse-messages: func [
                         let msg-obj: context [
                             type: msg-type
                             length: len
-                            certificate-list-length: grab-int 'bin 3
+                            certificate-list-length: grab-int bin 3
                             certificate-list: make block! 4
                             while [not tail? bin] [
-                                let certificate-length: grab-int 'bin 3
-                                let certificate: grab 'bin certificate-length
+                                let certificate-length: grab-int bin 3
+                                let certificate: grab bin certificate-length
                                 append certificate-list certificate
                             ]
                         ]
@@ -1279,12 +1279,12 @@ parse-messages: func [
                                 let msg-obj: context [
                                     type: msg-type
                                     length: len
-                                    p-length: grab-int 'bin 2
-                                    p: grab 'bin p-length
-                                    g-length: grab-int 'bin 2
-                                    g: grab 'bin g-length
-                                    ys-length: grab-int 'bin 2
-                                    ys: grab 'bin ys-length
+                                    p-length: grab-int bin 2
+                                    p: grab bin p-length
+                                    g-length: grab-int bin 2
+                                    g: grab bin g-length
+                                    ys-length: grab-int bin 2
+                                    ys: grab bin ys-length
 
                                     ; RFC 5246 Section 7.4.3 "Note that the
                                     ; introduction of the algorithm field is a
@@ -1292,11 +1292,11 @@ parse-messages: func [
                                     ;
                                     algorithm: null
                                     if ctx.version >= 1.2 [
-                                        algorithm: grab 'bin 2
+                                        algorithm: grab bin 2
                                     ]
 
-                                    signature-length: grab-int 'bin 2
-                                    signature: grab 'bin signature-length
+                                    signature-length: grab-int bin 2
+                                    signature: grab bin signature-length
                                 ]
 
                                 ctx.dh-p: msg-obj.p  ; modulus
@@ -1315,7 +1315,7 @@ parse-messages: func [
                                     type: msg-type
                                     length: len
 
-                                    curve-info: grab 'bin 3
+                                    curve-info: grab bin 3
                                     if curve-info <> #{03 00 17} [
                                         fail [
                                             "ECDHE only works for secp256r1"
@@ -1326,20 +1326,20 @@ parse-messages: func [
                                     ; 32-byte numbers.
                                     ; https://superuser.com/q/1465455/
                                     ;
-                                    server-public-length: grab-int 'bin 1
+                                    server-public-length: grab-int bin 1
                                     assert [server-public-length = 65]
-                                    prefix: grab 'bin 1
+                                    prefix: grab bin 1
                                     assert [prefix = #{04}]
                                     ctx.ecdh-pub: copy/part bin 64
-                                    x: grab 'bin 32
-                                    y: grab 'bin 32
+                                    x: grab bin 32
+                                    y: grab bin 32
 
                                     ; https://crypto.stackexchange.com/a/26355
                                     ; This is for digital signatures, e.g. it
                                     ; does not relate to the hash in the
                                     ; cipher suite.
                                     ;
-                                    hash-algorithm: grab-int 'bin 1
+                                    hash-algorithm: grab-int bin 1
                                     hash-algorithm: select [
                                         0 [~]
                                         1 <md5>
@@ -1354,7 +1354,7 @@ parse-messages: func [
 
                                     ; https://crypto.stackexchange.com/a/26355
                                     ;
-                                    signature-algorithm: grab-int 'bin 1
+                                    signature-algorithm: grab-int bin 1
                                     signature-algorithm: select [
                                         0 #anonymous
                                         1 #rsa
@@ -1363,8 +1363,8 @@ parse-messages: func [
                                     ] signature-algorithm else [
                                         fail "Unkown signature algorithm"
                                     ]
-                                    signature-length: grab-int 'bin 2
-                                    signature: grab 'bin signature-length
+                                    signature-length: grab-int bin 2
+                                    signature: grab bin signature-length
 
                                     ; The signature is supposed to be, e.g.
                                     ;
@@ -1398,7 +1398,7 @@ parse-messages: func [
                     <client-hello> [
                         context [
                             type: msg-type
-                            version: grab 'bin 2
+                            version: grab bin 2
                             length: len
                             content: bin
                         ]
