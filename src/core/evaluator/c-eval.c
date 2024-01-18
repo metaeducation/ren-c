@@ -417,10 +417,7 @@ Bounce Evaluator_Executor(Level* L)
 
     assert(not L_next_gotten);  // Fetch_Next_In_Frame() cleared it
 
-    if (VAL_TYPE_UNCHECKED(L_next) == REB_FRAME) {  // plain FRAME! runs
-        L_next_gotten = SPECIFIC(L_next);
-    }
-    else if (VAL_TYPE_UNCHECKED(L_next) == REB_WORD) {  // right's kind
+    if (VAL_TYPE_UNCHECKED(L_next) == REB_WORD) {  // right's kind
         L_next_gotten = Lookup_Word(L_next, FEED_SPECIFIER(L->feed));
 
         if (
