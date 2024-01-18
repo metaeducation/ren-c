@@ -109,7 +109,7 @@ elf-format: context [
     ; explicit at the callsites.
     ;
     mode: ~
-    handler: func [return: [~] name [word!] num-bytes [integer!]] [
+    handler: func [return: [~] 'name [word!] num-bytes [integer!]] [
         assert [
             binary? begin, num-bytes <= length of begin,
             find [read write] mode
@@ -140,44 +140,44 @@ elf-format: context [
         [
             :(bits = 32) [
                 4 skip ; e_entry
-                begin: <here>, 4 skip (handler 'e_phoff 4)
-                begin: <here>, 4 skip (handler 'e_shoff 4)
+                begin: <here>, 4 skip (handler e_phoff 4)
+                begin: <here>, 4 skip (handler e_shoff 4)
             ]
         |
             :(bits = 64) [
                 8 skip ; e_entry
-                begin: <here>, 8 skip (handler 'e_phoff 8)
-                begin: <here>, 8 skip (handler 'e_shoff 8)
+                begin: <here>, 8 skip (handler e_phoff 8)
+                begin: <here>, 8 skip (handler e_shoff 8)
             ]
         ]
         4 skip  ; e_flags
         2 skip  ; e_ehsize
-        begin: <here>, 2 skip (handler 'e_phentsize 2)
-        begin: <here>, 2 skip (handler 'e_phnum 2)
-        begin: <here>, 2 skip (handler 'e_shentsize 2)
-        begin: <here>, 2 skip (handler 'e_shnum 2)
-        begin: <here>, 2 skip (handler 'e_shstrndx 2)
+        begin: <here>, 2 skip (handler e_phentsize 2)
+        begin: <here>, 2 skip (handler e_phnum 2)
+        begin: <here>, 2 skip (handler e_shentsize 2)
+        begin: <here>, 2 skip (handler e_shnum 2)
+        begin: <here>, 2 skip (handler e_shstrndx 2)
 
         (mode: null)
     ]
 
     program-header-rule: [
-        begin: <here>, 4 skip (handler 'p_type 4)
+        begin: <here>, 4 skip (handler p_type 4)
         [
             :(bits = 32) [
-                begin: <here>, 4 skip (handler 'p_offset 4)
+                begin: <here>, 4 skip (handler p_offset 4)
                 4 skip  ; p_vaddr
                 4 skip  ; p_paddr
-                begin: <here>, 4 skip (handler 'p_filesz 4)
+                begin: <here>, 4 skip (handler p_filesz 4)
                 4 skip  ; p_memsz
             ]
         |
             :(bits = 64) [
                 4 skip  ; p_flags, different position in 64-bit
-                begin: <here>, 8 skip (handler 'p_offset 8)
+                begin: <here>, 8 skip (handler p_offset 8)
                 8 skip  ; p_vaddr
                 8 skip  ; p_paddr
-                begin: <here>, 8 skip (handler 'p_filesz 8)
+                begin: <here>, 8 skip (handler p_filesz 8)
                 8 skip  ; p_memsz
             ]
         ]
@@ -196,34 +196,34 @@ elf-format: context [
     ]
 
     section-header-rule: [
-        begin: <here>, 4 skip (handler 'sh_name 4)
-        begin: <here>, 4 skip (handler 'sh_type 4)
+        begin: <here>, 4 skip (handler sh_name 4)
+        begin: <here>, 4 skip (handler sh_type 4)
         [
             :(bits = 32) [
-                begin: <here>, 4 skip (handler 'sh_flags 4)
-                begin: <here>, 4 skip (handler 'sh_addr 4)
-                begin: <here>, 4 skip (handler 'sh_offset 4)
-                begin: <here>, 4 skip (handler 'sh_size 4)
+                begin: <here>, 4 skip (handler sh_flags 4)
+                begin: <here>, 4 skip (handler sh_addr 4)
+                begin: <here>, 4 skip (handler sh_offset 4)
+                begin: <here>, 4 skip (handler sh_size 4)
             ]
         |
             :(bits = 64) [
-                begin: <here>, 8 skip (handler 'sh_flags 8)
-                begin: <here>, 8 skip (handler 'sh_addr 8)
-                begin: <here>, 8 skip (handler 'sh_offset 8)
-                begin: <here>, 8 skip (handler 'sh_size 8)
+                begin: <here>, 8 skip (handler sh_flags 8)
+                begin: <here>, 8 skip (handler sh_addr 8)
+                begin: <here>, 8 skip (handler sh_offset 8)
+                begin: <here>, 8 skip (handler sh_size 8)
             ]
         ]
-        begin: <here>, 4 skip (handler 'sh_link 4)
-        begin: <here>, 4 skip (handler 'sh_info 4)
+        begin: <here>, 4 skip (handler sh_link 4)
+        begin: <here>, 4 skip (handler sh_info 4)
         [
             :(bits = 32) [
-                begin: <here>, 4 skip (handler 'sh_addralign 4)
-                begin: <here>, 4 skip (handler 'sh_entsize 4)
+                begin: <here>, 4 skip (handler sh_addralign 4)
+                begin: <here>, 4 skip (handler sh_entsize 4)
             ]
         |
             :(bits = 64) [
-                begin: <here>, 8 skip (handler 'sh_addralign 8)
-                begin: <here>, 8 skip (handler 'sh_entsize 8)
+                begin: <here>, 8 skip (handler sh_addralign 8)
+                begin: <here>, 8 skip (handler sh_entsize 8)
             ]
         ]
 
