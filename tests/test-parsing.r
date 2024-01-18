@@ -16,9 +16,6 @@ Rebol [
     }
 ]
 
-import %../tools/parsing-tools.reb
-import %../tools/text-lines.reb
-
 export whitespace: charset [#"^A" - #" " "^(7F)^(A0)"]
 export digit: charset {0123456789}
 
