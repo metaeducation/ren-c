@@ -799,6 +799,10 @@ Bounce Evaluator_Executor(Level* L)
         if (not right)
             goto set_word_rightside_in_out;
 
+        if (L_current != SPARE) {  // !!! hack due to pointer move w/ME, review
+            Copy_Cell(SPARE, L_current);
+            L_current = SPARE;
+        }
         return CATCH_CONTINUE_SUBLEVEL(right);
 
       } set_word_rightside_in_out: {  ////////////////////////////////////////
