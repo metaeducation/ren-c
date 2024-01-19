@@ -542,9 +542,7 @@ import*: func [
 
     let [hdr code line]: load-header/file data file
     if not hdr [
-        if where [  ; not just a DO
-            fail ["IMPORT requires a header on:" (any [file, "<source>"])]
-        ]
+        fail ["IMPORT and DO require a header on:" (any [file, "<source>"])]
     ]
 
     let name: select maybe hdr 'name

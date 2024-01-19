@@ -21,7 +21,7 @@
         bad: load-value str
         assert [quasi? bad]
         assert [word = unquasi bad]
-        quasiform: ^ do str
+        quasiform: ^ do reduce [bad]
         assert [bad = quasiform]
     ]
     true
@@ -168,10 +168,10 @@
 ;
 ; Note: DO of BLOCK! does not catch quits, so TEXT! is used here.
 [
-    (1 = do "quit/with 1")
-    ('~quit~ =  ^ do "quit")
-    ('~thing~ = ^ do "quit/with ~thing~")
-    ('~plain~ = do "quit/with '~plain~")
+    (1 = do "Rebol [] quit/with 1")
+    ('~quit~ =  ^ do "Rebol [] quit")
+    ('~thing~ = ^ do "Rebol [] quit/with ~thing~")
+    ('~plain~ = do "Rebol [] quit/with '~plain~")
 ]
 
 ; Antiforms make it easier to write generic routines that handle QUASI-WORD?

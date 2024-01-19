@@ -89,7 +89,7 @@
     success
 )
 (
-    a-value: to binary! "1 + 1"
+    a-value: to binary! "Rebol [] 1 + 1"
     2 == do a-value
 )
 ; do block start
@@ -196,12 +196,12 @@
     2 == do as block! :a-value
 )
 (
-    a-value: "1"
+    a-value: "Rebol [] 1"
     1 == do :a-value
 )
-(void? do "")
-(1 = do "1")
-(3 = do "1 2 3")
+(void? do "Rebol []")
+(1 = do "Rebol [] 1")
+(3 = do "Rebol [] 1 2 3")
 
 ; RETURN stops the evaluation
 (
@@ -261,7 +261,7 @@
 )
 ; recursive behaviour
 (1 = do [do [1]])
-(1 = do "do [1]")
+(1 = do "Rebol [] do [1]")
 (1 == 1)
 (3 = reeval unrun :reeval unrun :add 1 2)
 ; infinite recursion for block
@@ -276,7 +276,7 @@
 ;
 [#1896
     ~unassigned-attach~ !! (
-        str: "do str"
+        str: "Rebol [] do str"
         do str
     )
 ]

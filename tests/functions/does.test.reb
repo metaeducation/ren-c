@@ -10,7 +10,7 @@
 ; are likely firm.
 
 (
-    three: does "1 + 2"
+    three: does "Rebol [] 1 + 2"
     3 = three
 )
 

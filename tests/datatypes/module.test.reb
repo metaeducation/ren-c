@@ -116,11 +116,11 @@
             return lib.do rebound
         ]
 
-        test: does [emulate [do "1 + 2"]]
+        test: does [emulate [do [1 + 2]]]
     ]
     did all [
         3 = test
-        <override> = catch [m.do "1 + 2"]
+        <override> = catch [m.do [1 + 2]]
         ^do = ^do-before
     ]
 )

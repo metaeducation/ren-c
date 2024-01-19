@@ -442,8 +442,6 @@ main-startup: func [
 
     sys.util.script-pre-load-hook: runs :host-script-pre-load
 
-    let do-string: null  ; will be set if a string is given with --do
-
     let quit-when-done: null  ; by default run CONSOLE
 
     ; Process the option syntax out of the command line args in order to get
@@ -546,8 +544,10 @@ main-startup: func [
 
             is-script-implicit: false  ; must use --script
 
-            emit {Use /ONLY so that QUIT/WITH quits, vs. return DO value}
-            emit [do/only (<*> param)]
+            ; Use /ONLY so that QUIT/WITH quits, vs. return DO value
+            ; !!! TBD: change to IN SYSTEM.CONTEXTS.USER TRANSCODE PARAM
+            ;
+            emit [do/only (<*> spaced ["Rebol []" param])]
         )
     |
         ["--halt" | "-h"] (
@@ -618,7 +618,7 @@ main-startup: func [
                 code: as text! code
             ]
             emit {Use /ONLY so that QUIT/WITH quits, vs. return DO value}
-            emit [do/only (code)]
+            emit [do/only (spaced ["Rebol []" code])]
         )
     |
         ["-t" | "--trace"] (
