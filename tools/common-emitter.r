@@ -410,7 +410,7 @@ export make-emitter: func [
     ]
     else [
         e/emit {REBOL }  ; no COMPOSE/DEEP in bootstrap shim, yet
-        e/emit mold/only compose [
+        e/emit mold spread compose [
             System: "REBOL [R3] Language Interpreter and Run-time Environment"
             Title: (title)
             File: (stem)

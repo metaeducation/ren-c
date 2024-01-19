@@ -3013,7 +3013,7 @@ parse-trace-hook: func [
     let state: f.state
 
     if f.rule-start [
-        print ["RULE:" mold/only copy/part f.rule-start f.rule-end]
+        print ["RULE:" mold spread copy/part f.rule-start f.rule-end]
     ]
 
     let result': ^ eval f except e -> [

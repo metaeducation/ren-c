@@ -75,7 +75,7 @@ enum REB_Mold_Opts {
     MOLD_FLAG_SLASH_DATE = 1 << 2, // Date as 1/1/2000
     MOLD_FLAG_INDENT = 1 << 3, // Indentation
     MOLD_FLAG_TIGHT = 1 << 4, // No space between block values
-    MOLD_FLAG_ONLY = 1 << 5, // Mold/only - no outer block []
+    MOLD_FLAG_SPREAD = 1 << 5, // Mold Spread - no outer block []
     MOLD_FLAG_LINES  = 1 << 6, // add a linefeed between each value
     MOLD_FLAG_LIMIT = 1 << 7, // Limit length to mold->limit, then "..."
     MOLD_FLAG_RESERVE = 1 << 8,  // At outset, reserve capacity for buffer

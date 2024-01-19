@@ -271,8 +271,8 @@ void Mold_Array_At(
                 indented = true;
             }
 
-            // If doing a MOLD/ONLY then a leading newline should not be
-            // added, e.g. `mold/only new-line [a b] true` should not give
+            // If doing a MOLD SPREAD then a leading newline should not be
+            // added, e.g. `mold spread new-line [a b] true` should not give
             // a newline at the start.
             //
             if (sep[1] != '\0' or not first_item)

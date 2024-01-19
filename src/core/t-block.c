@@ -766,8 +766,8 @@ void MF_Array(REB_MOLD *mo, NoQuote(const Cell*) v, bool form)
           case REB_BLOCK:
           case REB_SET_BLOCK:
           block:
-            if (GET_MOLD_FLAG(mo, MOLD_FLAG_ONLY)) {
-                CLEAR_MOLD_FLAG(mo, MOLD_FLAG_ONLY); // only top level
+            if (GET_MOLD_FLAG(mo, MOLD_FLAG_SPREAD)) {
+                CLEAR_MOLD_FLAG(mo, MOLD_FLAG_SPREAD); // only top level
                 sep = "\000\000";
             }
             else

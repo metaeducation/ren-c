@@ -129,9 +129,9 @@
     true
 )]
 
-; NEW-LINE shouldn't be included on first element of a MOLD/ONLY
+; NEW-LINE shouldn't be included on first element of a MOLD SPREAD
 ;
-("a b" = mold/only new-line [a b] true)
+("a b" = mold spread new-line [a b] true)
 ("[^/    a b]" = mold new-line [a b] true)
 
 [https://github.com/metaeducation/ren-c/issues/1033 (

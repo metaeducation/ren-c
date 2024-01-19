@@ -55,8 +55,7 @@ DECLARE_NATIVE(form)
 //          [<opt> text!]
 //      @truncated "Whether the mold was truncated"
 //          [logic?]
-//      value [<maybe> element?]
-//      /only "For a block value, mold only its contents, no outer []"
+//      value [<maybe> element? splice?]
 //      /all "Use construction syntax"
 //      /flat "No indentation"
 //      /limit "Limit to a certain length"
@@ -81,8 +80,11 @@ DECLARE_NATIVE(mold)
 
     Push_Mold(mo);
 
-    if (REF(only) and Is_Block(v))
-        SET_MOLD_FLAG(mo, MOLD_FLAG_ONLY);
+    if (Is_Splice(v)) {
+        SET_MOLD_FLAG(mo, MOLD_FLAG_SPREAD);
+        QUOTE_BYTE(v) = NOQUOTE_1;  // !!! Should Mold_Value() take splices?
+        HEART_BYTE(v) = REB_BLOCK;  // !!! historical code for /ONLY was BLOCK!
+    }
 
     Mold_Value(mo, v);
 

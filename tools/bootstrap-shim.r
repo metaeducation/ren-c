@@ -948,6 +948,16 @@ transcode: function3 [
     return values
 ]
 
+mold: adapt :lib/mold [  ; update so MOLD SPREAD works
+    if all [
+        block? value
+        #splice! = first value
+    ][
+        only: true
+        value: next value
+    ]
+]
+
 split: function3 [
     return: [block!]
     series [any-series!]

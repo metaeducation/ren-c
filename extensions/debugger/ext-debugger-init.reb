@@ -304,7 +304,7 @@ backtrace: func [
     ; mean `>> if true [backtrace]` would see that IF in the trace.
     ;
     let stack: backtrace* debug-console-skin/base-frame _
-    print mold/only stack
+    print mold spread stack
 ]
 
 

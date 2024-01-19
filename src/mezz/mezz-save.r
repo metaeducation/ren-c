@@ -118,8 +118,25 @@ save: func [
     ]
 
     ; !!! Maybe /all should be the default?  See #2159
-    let data: either all_SAVE [mold/all/only :value] [
-        mold/only :value
+    ;
+    ; !!! This logic may look weird but it really was the original logic from
+    ; R3-Alpha.  The idea was that if you SAVE'd a BLOCK! it assumed it was
+    ; meant as saving the items in the block, but anything else was saved
+    ; as is.  We have more options with isotopes now, but it's not clear
+    ; what the scope of application of LOAD and SAVE really are.  Review.
+    ;
+    let data: either all_SAVE [
+        if block? :value [
+            mold/all spread value
+        ] else [
+            mold/all :value
+        ]
+    ][
+        if block? :value [
+            mold spread :value
+        ] else [
+            mold :value
+        ]
     ]
 
     append data newline  ; MOLD does not append a newline
