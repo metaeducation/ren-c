@@ -144,7 +144,7 @@ export analyse: context [
         lib.print ["Analyzing:" file]  ; subvert tests PRINT disablement
         return all [
             let filetype: select extensions extension-of file
-            let type: in source filetype
+            let type: has source filetype
             (reeval (ensure action?! get type) file
                 (read %% (repo-dir)/(file)))
         ]

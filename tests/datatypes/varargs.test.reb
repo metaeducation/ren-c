@@ -75,7 +75,7 @@
     (28 = do [multiply 3 9 defers])  ; seen as (multiply 3 9) defers))
 ][
     (
-        soft: enfixed func [:v [any-value? <variadic>]] [
+        soft: enfix func [:v [any-value? <variadic>]] [
             return collect [
                 while [not tail? v] [
                     keep take v

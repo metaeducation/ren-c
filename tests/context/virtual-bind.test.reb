@@ -15,7 +15,7 @@
     obj284: make object! [x: 284]
     did all [
         1020 = do block
-        304 = do in obj284 block
+        304 = do inside obj284 block
         1020 = do block
     ]
 )
