@@ -188,8 +188,8 @@
 ; literally match something that's not set vs. be a typo.
 ;
 (parse3 [~foo~ ~foo~] [some '~foo~], true)  ; acceptable
-(parse3 [~foo~ ~foo~] [some ~foo~], true)  ; !!! shady, rethink
-(
+~???~ !! (parse3 [~foo~ ~foo~] [some ~foo~], true)  ; !!! shady, rethink
+~???~ !! (
     foo: '~foo~
     parse3 [~foo~ ~foo~] [some foo]
     true

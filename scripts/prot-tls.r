@@ -1627,29 +1627,26 @@ do-commands: func [
     ctx: tls-port.state
     clear ctx.msg
 
-    let cmd
-    let arg
-    parse3 commands [
+    parse commands [
         some [
-            ; redundant `set cmd`, consider how ELIDE might improve it
-            ; https://forum.rebol.info/t/1534/5
+            let cmd: ahead <any>
             [
-                set cmd '<client-hello> (
+                '<client-hello> (
                     client-hello/version ctx [1.0 1.2]  ; min/max versioning
                 )
-                | set cmd '<client-key-exchange> (
+                | '<client-key-exchange> (
                     client-key-exchange ctx
                 )
-                | set cmd '<change-cipher-spec> (
+                | '<change-cipher-spec> (
                     change-cipher-spec ctx
                 )
-                | set cmd '<finished> (
+                | '<finished> (
                     encrypted-handshake-msg ctx finished ctx
                 )
-                | set cmd #application set arg [text! | binary!] (
+                | #application let arg: [text! | binary!] (
                     application-data ctx arg
                 )
-                | set cmd '<close-notify> (
+                | '<close-notify> (
                     alert-close-notify ctx
                 )
             ] (

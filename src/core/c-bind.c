@@ -837,34 +837,51 @@ DECLARE_NATIVE(let)
 //
 //  add-let-binding: native [
 //
-//  {Experimental function for adding a new variable binding to a frame}
+//  {Experimental function for adding a new variable binding}
 //
-//      return: [any-word!]
-//      frame [frame!]
+//      return: [frame! any-array!]
+//      environment [frame! any-array!]
 //      word [any-word!]
 //      value [any-value?]
 //  ]
 //
-DECLARE_NATIVE(add_let_binding) {
+DECLARE_NATIVE(add_let_binding)
+//
+// !!! At time of writing, there are no "first class environments" that
+// expose the "Specifier" chain in arrays.  So the arrays themselves are
+// used as proxies for that.  Usermode dialects (like UPARSE) update their
+// environment by passing in a rule block with a version of that rule block
+// with an updated specifier.  A function that wants to add to the evaluator
+// environment uses the frame at the moment.
+{
     INCLUDE_PARAMS_OF_ADD_LET_BINDING;
 
-    Level* L = CTX_LEVEL_MAY_FAIL(VAL_CONTEXT(ARG(frame)));
+    Value(*) env = ARG(environment);
+    Specifier* before;
 
-    Specifier* L_specifier = Level_Specifier(L);
-    if (L_specifier)
-        Set_Node_Managed_Bit(L_specifier);
+    if (Is_Frame(env)) {
+        Level* L = CTX_LEVEL_MAY_FAIL(VAL_CONTEXT(env));
+        before = Level_Specifier(L);
+        if (before)
+            Set_Node_Managed_Bit(before);
+    } else {
+        assert(Any_Array(env));
+        before = Cell_Specifier(env);
+    }
 
-    Specifier* let = Make_Let_Patch(Cell_Word_Symbol(ARG(word)), L_specifier);
+    Specifier* let = Make_Let_Patch(Cell_Word_Symbol(ARG(word)), before);
 
     Move_Cell(Stub_Cell(let), ARG(value));
 
-    BINDING(FEED_SINGLE(L->feed)) = let;
+    if (Is_Frame(env)) {
+        Level* L = CTX_LEVEL_MAY_FAIL(VAL_CONTEXT(env));
+        BINDING(FEED_SINGLE(L->feed)) = let;
+    }
+    else {
+        BINDING(env) = let;
+    }
 
-    Move_Cell(OUT, ARG(word));
-    INIT_VAL_WORD_INDEX(OUT, INDEX_PATCHED);
-    BINDING(OUT) = let;
-
-    return OUT;
+    return COPY(env);
 }
 
 

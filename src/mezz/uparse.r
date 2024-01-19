@@ -1262,6 +1262,28 @@ default-combinators: make map! reduce [
         ]
     ]
 
+    === LET COMBINATOR ===
+
+    ; We want to be able to declare variables mid-parse.  The parsing state
+    ; keeps track of a binding environment that can be added to by combinators
+    ; as they go.  The combinatorization process uses this environment with
+    ; INSIDE on unbound material.
+
+    'let combinator [
+        return: "Result of the LET if assignment, else bound word"
+            [any-value?]
+        'vars [set-word!]
+        parser [action?]
+        <local> result'
+    ][
+        [^result' remainder]: parser input except e -> [
+            return raise e
+        ]
+        state.env: add-let-binding state.env vars unmeta result'
+
+        return unmeta result'
+    ]
+
     === GROUP! AND PHASE COMBINATOR ===
 
     ; GROUP! does not advance the input, just runs the group.  It can return
@@ -2275,7 +2297,7 @@ default-combinators: make map! reduce [
         /limit "Limit of how far to consider (used by ... recursion)"
             [block!]
         /thru "Keep trying rule until end of block"
-        <local> rules pos result' f sublimit subpending temp
+        <local> rules pos result' f sublimit subpending temp old-env
     ][
         rules: value  ; alias for clarity
         limit: default [tail of rules]
@@ -2284,6 +2306,10 @@ default-combinators: make map! reduce [
         pending: null  ; can become GLOM'd into a BLOCK!
 
         result': nihil'  ; default result is invisible
+
+        old-env: state.env
+        return: adapt :return [state.env: old-env]
+        state.env: rules  ; currently using blocks as surrogate for environment
 
         while [not same? rules limit] [
             if rules.1 = ', [  ; COMMA! is only legal between steps
@@ -2676,7 +2702,7 @@ parsify: func [
             ; Failing to find an entry in the combinator table, we fall back on
             ; checking to see if the word looks up to a variable via binding.
             ;
-            if null? value: get inside rules r [
+            if null? value: get inside state.env r [
                 fail [r "looked up to ~null~ antiform in UPARSE"]  ; void is ok
             ]
 
@@ -2708,7 +2734,7 @@ parsify: func [
             ;
             comb: select state.combinators word!
             return [@ advanced]:
-                combinatorize/value :comb rules state (inside rules r)
+                combinatorize/value :comb rules state (inside state.env r)
         ]
 
         path? r [
@@ -2724,7 +2750,7 @@ parsify: func [
             ;
             let f
             if blank? last r [
-                if not frame? let gotten: unrun get/any inside rules r [
+                if not frame? let gotten: unrun get/any inside state.env r [
                     fail "In UPARSE PATH ending in / must be action or frame"
                 ]
                 if not comb: select state.combinators frame! [
@@ -2773,14 +2799,16 @@ parsify: func [
             let word: ensure word! first r
             if comb: select state.combinators word [
                 return [@ advanced]:
-                    combinatorize/path comb rules state (inside rules r)
+                    combinatorize/path comb rules state (inside state.env r)
             ]
 
             ; !!! Originally this would just say "unknown combinator" at this
             ; point, but for compatibility with historical Rebol we handle
             ; paths in UPARSE for now as being gotten as if they were tuples.
             ;
-            r: get inside rules r else [fail [r "is NULL, not legal in UPARSE"]]
+            r: get inside state.env r else [
+                fail [r "is NULL, not legal in UPARSE"]
+            ]
         ]
 
         ; !!! Here is where we would let GET-PATH! and GET-WORD! be used to
@@ -2798,7 +2826,7 @@ parsify: func [
         fail ["Unhandled type in PARSIFY:" kind of r "-" mold r]
     ]
 
-    return [@ advanced]: combinatorize/value comb rules state (inside rules r)
+    return [@ advanced]: combinatorize/value comb rules state (inside state.env r)
 ]
 
 
@@ -2840,7 +2868,7 @@ parse*: func [
     /hook "Call a hook on dispatch of each combinator"
         [<unrun> frame!]
 
-    <local> loops furthest synthesized' remainder
+    <local> loops furthest synthesized' remainder env
 ][
     ; PATH!s, TUPLE!s, and URL!s are read only and don't have indices.  But we
     ; want to be able to parse them, so make them read-only series aliases:
@@ -2857,7 +2885,14 @@ parse*: func [
     ; We put an implicit PHASE bracketing the whole of UPARSE* so that the
     ; <delay> groups will be executed.
     ;
-    rules: reduce ['phase rules]
+    rules: inside rules bindable reduce ['phase bindable rules]
+
+    ; There's no first-class ENVIRONMENT! type, so arrays are used as a
+    ; surrogate for exposing their specifiers.  When the environment is
+    ; expanded (e.g. by LET) the rules block in effect is changed to a block
+    ; with the same contents (array/position) but a different specifier.
+    ;
+    env: rules
 
     ; !!! Red has a /PART feature and so in order to run the tests pertaining
     ; to that we go ahead and fake it.  Actually implementing /PART would be

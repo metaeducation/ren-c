@@ -240,6 +240,7 @@
 %parse/parse-insert.test.reb
 %parse/parse-into.test.reb
 %parse/parse-issue.test.reb
+%parse/parse-let.test.reb
 %parse/parse-logic.test.reb
 %parse/parse-maybe.test.reb
 %parse/parse-measure.test.reb

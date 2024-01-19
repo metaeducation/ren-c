@@ -96,7 +96,7 @@
         parse3 "a" [foo]
         true
     )
-    (
+    ~???~ !! (
         foo: '~bad~
         parse3 [~bad~] [foo <end>]
         true
