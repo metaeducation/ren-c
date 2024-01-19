@@ -77,7 +77,7 @@ run-single-test: func [
         error [
             spaced ["error" any [
                 to text! maybe error.id
-                error.message
+                mold error.message   ; errors with no ID may have BLOCK!
                 "(unknown)"
             ]]
         ]
