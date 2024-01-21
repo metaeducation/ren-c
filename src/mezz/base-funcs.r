@@ -239,12 +239,12 @@ func: func* [
     /visibility [logic?]
     <static> showing (false)
 ][
-    if not null? visibility [showing: visibility, return]
+    if not null? visibility [showing: visibility, return nihil]
 
     if showing [
         print form collect [
             keep [===]
-            until [equal? ''=== keep take remarks]  ; prints tail `===`
+            until [equal? '=== keep take remarks]  ; prints tail `===`
         ]
     ] else [
         until [equal? '=== take remarks]
