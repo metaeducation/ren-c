@@ -920,7 +920,7 @@ Context* Error_Not_Varargs(
 //
 Context* Error_Invalid_Arg(Level* L, const Param* param)
 {
-    assert(Is_Parameter(param));
+    assert(Is_Unspecialized(param));
 
     const Param* headparam = ACT_PARAMS_HEAD(Level_Phase(L));
     assert(param >= headparam);
@@ -985,6 +985,11 @@ Context* Error_No_Catch_For_Throw(Level* level_)
         assert(Is_Nulled(arg));
         return VAL_CONTEXT(label);
     }
+
+    if (Is_Antiform(label))
+        Meta_Quotify(label);  // !!! Review... stops errors in molding
+    if (Is_Antiform(arg))
+        Meta_Quotify(arg);  // !!! Review... stops errors in molding
 
     return Error_No_Catch_Raw(arg, label);
 }
