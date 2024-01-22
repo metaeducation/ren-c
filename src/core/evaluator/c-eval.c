@@ -402,9 +402,8 @@ Bounce Evaluator_Executor(Level* L)
         goto finished;
     }
 
+    L_current_gotten = L_next_gotten;  // Lookback clears it
     L_current = Lookback_While_Fetching_Next(L);
-    L_current_gotten = L_next_gotten;
-    L_next_gotten = nullptr;
 
 } evaluate: ;  // meaningful semicolon--subsequent macro may declare things
 
