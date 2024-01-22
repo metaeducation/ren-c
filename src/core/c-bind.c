@@ -61,8 +61,8 @@ void Bind_Values_Inner_Loop(
             bool strict = true;
             REBVAL *lookup = MOD_VAR(context, symbol, strict);
             if (lookup) {
-                INIT_VAL_WORD_BINDING(v, Singular_From_Cell(lookup));
-                INIT_VAL_WORD_INDEX(v, 1);
+                INIT_VAL_WORD_INDEX(v, INDEX_PATCHED);
+                BINDING(v) = Singular_From_Cell(lookup);
             }
             else if (type_bit & add_midstream_types) {
                 Finalize_Trash(Append_Context_Bind_Word(context, v));
@@ -82,8 +82,8 @@ void Bind_Values_Inner_Loop(
                 // We're overwriting any previous binding, which may have
                 // been relative.
 
-                INIT_VAL_WORD_BINDING(v, context);
                 INIT_VAL_WORD_INDEX(v, n);
+                BINDING(v) = context;
             }
             else if (type_bit & add_midstream_types) {
                 //
@@ -207,19 +207,34 @@ void Unbind_Values_Core(
 // Returns 0 if word is not part of the context, otherwise the index of the
 // word in the context.
 //
-REBLEN Try_Bind_Word(const Cell* context, REBVAL *word)
+bool Try_Bind_Word(const Cell* context, REBVAL *word)
 {
     const bool strict = true;
+    if (Is_Module(context)) {
+        Stub* patch = try_unwrap(MOD_PATCH(
+            VAL_CONTEXT(context),
+            Cell_Word_Symbol(word),
+            strict
+        ));
+        if (not patch)
+            return false;
+        INIT_VAL_WORD_INDEX(word, INDEX_PATCHED);
+        BINDING(word) = patch;
+        return true;
+    }
+
     REBLEN n = Find_Symbol_In_Context(
         context,
         Cell_Word_Symbol(word),
         strict
     );
+    if (n == 0)
+        return false;
     if (n != 0) {
-        INIT_VAL_WORD_BINDING(word, VAL_CONTEXT(context));
         INIT_VAL_WORD_INDEX(word, n);  // ^-- may have been relative
+        BINDING(word) = VAL_CONTEXT(context);
     }
-    return n;
+    return true;
 }
 
 
@@ -420,7 +435,7 @@ Option(Series*) Get_Word_Container(
         overbind = BINDING(Stub_Cell(specifier));
         if (not IS_VARLIST(overbind)) {  // a patch-formed LET overload
             if (INODE(LetSymbol, overbind) == symbol) {
-                *index_out = 1;
+                *index_out = INDEX_PATCHED;
                 return overbind;
             }
             goto skip_miss_patch;
@@ -514,8 +529,8 @@ Option(Series*) Get_Word_Container(
                 // inherited variable we'd not see an override if it came
                 // into existence in the actual context.
                 //
-                INIT_VAL_WORD_BINDING(m_cast(Cell*, any_word), patch);
-                INIT_VAL_WORD_INDEX(m_cast(Cell*, any_word), 1);
+                INIT_VAL_WORD_INDEX(m_cast(Cell*, any_word), INDEX_PATCHED);
+                BINDING(m_cast(Cell*, any_word)) = patch;
 
                 *index_out = 1;
                 return patch;
@@ -563,7 +578,7 @@ Option(Series*) Get_Word_Container(
                 // as it would commit to the inherited version, never seeing
                 // derived overrides.
                 //
-                *index_out = 1;
+                *index_out = INDEX_PATCHED;
                 return patch;
             }
 
@@ -821,8 +836,8 @@ DECLARE_NATIVE(let)
 
         Copy_Cell_Header(where, vars);  // keep quasi state and word/setword
         INIT_CELL_WORD_SYMBOL(where, symbol);
-        INIT_VAL_WORD_BINDING(where, bindings);
-        INIT_VAL_WORD_INDEX(where, INDEX_ATTACHED);
+        INIT_VAL_WORD_INDEX(where, INDEX_PATCHED);
+        BINDING(where) = bindings;
 
         Corrupt_Pointer_If_Debug(vars);  // if in spare, we may have overwritten
     }
@@ -994,8 +1009,8 @@ DECLARE_NATIVE(add_let_binding) {
     BINDING(FEED_SINGLE(L->feed)) = let;
 
     Move_Cell(OUT, ARG(word));
-    INIT_VAL_WORD_BINDING(OUT, let);
-    INIT_VAL_WORD_INDEX(OUT, 1);
+    INIT_VAL_WORD_INDEX(OUT, INDEX_PATCHED);
+    BINDING(OUT) = let;
 
     return OUT;
 }
@@ -1071,8 +1086,8 @@ void Clonify_And_Bind_Relative(
             // Word' symbol is in frame.  Relatively bind it.  Note that the
             // action bound to can be "incomplete" (LETs still gathering)
             //
-            INIT_VAL_WORD_BINDING(v, unwrap(relative));
             INIT_VAL_WORD_INDEX(v, n);
+            BINDING(v) = unwrap(relative);
         }
     }
     else if (deep_types & FLAGIT_KIND(heart) & TS_SERIES_OBJ) {
@@ -1298,7 +1313,7 @@ void Rebind_Values_Deep(
             Rebind_Values_Deep(sub_at, sub_tail, from, to, binder);
         }
         else if (Any_Wordlike(v) and BINDING(v) == from) {
-            INIT_VAL_WORD_BINDING(v, to);
+            BINDING(v) = to;
 
             if (binder) {
                 REBLEN index = Get_Binder_Index_Else_0(

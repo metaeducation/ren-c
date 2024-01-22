@@ -2551,8 +2551,8 @@ Bounce Scanner_Executor(Level* const L) {
     // like it existed before.
     //
     if (L->feed->context and Any_Word(TOP)) {
-        INIT_VAL_WORD_BINDING(TOP, CTX_VARLIST(unwrap(L->feed->context)));
         INIT_VAL_WORD_INDEX(TOP, INDEX_ATTACHED);
+        BINDING(TOP) = CTX_VARLIST(unwrap(L->feed->context));
     }
 
   lookahead:
@@ -2758,8 +2758,8 @@ Bounce Scanner_Executor(Level* const L) {
         //
         if (L->feed->context) {
             if (Any_Word(TOP)) {
-                INIT_VAL_WORD_BINDING(TOP, CTX_VARLIST(unwrap(L->feed->context)));
                 INIT_VAL_WORD_INDEX(TOP, INDEX_ATTACHED);
+                BINDING(TOP) = CTX_VARLIST(unwrap(L->feed->context));
             }
         }
 

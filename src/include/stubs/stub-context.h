@@ -307,8 +307,7 @@ INLINE Value(*) Force_Lib_Var(SymId id) {
 #define SysUtil(name) \
     cast(const Value(*), MOD_VAR(Sys_Context, Canon_Symbol(SYM_##name), true))
 
-
-INLINE Value(*) MOD_VAR(Context* c, const Symbol* sym, bool strict) {
+INLINE Option(Stub*) MOD_PATCH(Context* c, const Symbol* sym, bool strict) {
     //
     // Optimization for Lib_Context for datatypes + natives + generics; use
     // tailored order of SYM_XXX constants to beeline for the storage.  The
@@ -324,7 +323,10 @@ INLINE Value(*) MOD_VAR(Context* c, const Symbol* sym, bool strict) {
             // binding we can't be sure it's a match.  :-/  For this moment
             // hope lib doesn't have two-cased variations of anything.
             //
-            return m_cast(Value(*), Try_Lib_Var(unwrap(id)));
+            if (INODE(PatchContext, &PG_Lib_Patches[id]) == nullptr)
+                return nullptr;
+
+            return &PG_Lib_Patches[id];
         }
     }
 
@@ -336,13 +338,20 @@ INLINE Value(*) MOD_VAR(Context* c, const Symbol* sym, bool strict) {
 
         for (; patch != sym; patch = cast(Stub*, node_MISC(Hitch, patch))) {
             if (INODE(PatchContext, patch) == c)
-                return cast(Value(*), Stub_Cell(patch));
+                return patch;
         }
         if (strict)
             return nullptr;
         sym = LINK(Synonym, sym);
     } while (synonym != sym);
     return nullptr;
+}
+
+INLINE Value(*) MOD_VAR(Context* c, const Symbol* sym, bool strict) {
+    Stub* patch = try_unwrap(MOD_PATCH(c, sym, strict));
+    if (not patch)
+        return nullptr;
+    return cast(Value(*), Stub_Cell(patch));
 }
 
 

@@ -179,17 +179,26 @@ INLINE Stub* Make_Use_Core(
     }
     else {
         const Symbol* symbol;  // can't use ?: with INODE
-        if (IS_VARLIST(binding))
+        if (IS_VARLIST(binding)) {
             symbol = KEY_SYMBOL(CTX_KEY(cast(Context*, binding), 1));
-        else
+            Init_Any_Word_Bound_Untracked(  // arbitrary word
+                TRACK(Stub_Cell(use)),
+                kind,
+                symbol,
+                binding,
+                1  // arbitrary first word
+            );
+        }
+        else {
             symbol = INODE(LetSymbol, binding);
-        Init_Any_Word_Bound_Untracked(  // arbitrary word
-            TRACK(Stub_Cell(use)),
-            kind,
-            symbol,
-            binding,
-            1  // arbitrary word (used to use CTX_LEN())
-        );
+            Init_Any_Word_Bound_Untracked(  // arbitrary word
+                TRACK(Stub_Cell(use)),
+                kind,
+                symbol,
+                binding,
+                INDEX_PATCHED  // the only word in the LET
+            );
+        }
     }
 
     // The way it is designed, the list of use/lets terminates in either a

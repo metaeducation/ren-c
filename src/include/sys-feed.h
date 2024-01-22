@@ -276,18 +276,15 @@ INLINE Option(Value(const*)) Try_Reify_Variadic_Feed_Series(
         // in debugging than putting the actions themselves.
         //
       case FLAVOR_SYMBOL: {
+        Init_Any_Word(&feed->fetched, REB_WORD, c_cast(Symbol*, s));
         if (feed->context) {
             assert(CTX_TYPE(unwrap(feed->context)) == REB_MODULE);
-            Init_Any_Word_Attached(
-                &feed->fetched,
-                REB_WORD,
-                c_cast(Symbol*, s),
-                unwrap(feed->context)
-            );
+            INIT_VAL_WORD_INDEX(&feed->fetched, INDEX_ATTACHED);
+            BINDING(&feed->fetched) = unwrap(feed->context);
+            //
             // !!! Should we speed it up by setting feed->gotten here, if it's
             // bound into Lib?  Would it be overwritten by nullptr?
-        } else
-            Init_Any_Word(&feed->fetched, REB_WORD, c_cast(Symbol*, s));
+        }
 
         feed->p = &feed->fetched;
         break; }

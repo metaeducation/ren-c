@@ -332,8 +332,8 @@ Bounce Action_Executor(Level* L)
                     continue;
 
                 REBLEN offset = ARG - cast(Atom(*), Level_Args_Head(L));
-                INIT_VAL_WORD_BINDING(ordered, L->u.action.original);
                 INIT_VAL_WORD_INDEX(ordered, offset + 1);
+                BINDING(ordered) = L->u.action.original;
 
                 if (Is_Parameter_Unconstrained(PARAM)) {
                     //
@@ -761,7 +761,7 @@ Bounce Action_Executor(Level* L)
 
         assert(Is_Pushed_Refinement(TOP));
 
-        if (not IS_WORD_BOUND(TOP)) {  // the loop didn't index it
+        if (not BINDING(TOP)) {  // the loop didn't index it
             Refinify_Pushed_Refinement(TOP);
             fail (Error_Bad_Parameter_Raw(TOP));  // so duplicate or junk
         }

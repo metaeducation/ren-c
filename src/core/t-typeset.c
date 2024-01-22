@@ -101,13 +101,13 @@ void Startup_Typesets(void)
         // form in it, e.g. any-value!: &(any-value?)
         //
         Array* a = Alloc_Singular(NODE_FLAG_MANAGED);
-        Init_Any_Word_Bound(
+        Init_Any_Word(
             Stub_Cell(a),
             REB_WORD,
-            Canon_Symbol(cast(SymId, id)),
-            Lib_Context,
-            INDEX_ATTACHED
+            Canon_Symbol(cast(SymId, id))
         );
+        INIT_VAL_WORD_INDEX(Stub_Cell(a), INDEX_PATCHED);
+        BINDING(Stub_Cell(a)) = &PG_Lib_Patches[id];
         Init_Array_Cell(Force_Lib_Var(cast(SymId, id + 1)), REB_TYPE_GROUP, a);
     }
 
@@ -243,13 +243,13 @@ void Set_Parameter_Spec(
                 *flags |= PARAMETER_FLAG_NULL_DEFINITELY_OK;
             }
             else if (0 == CT_String(item, Root_Void_Tag, strict)) {
-                Init_Any_Word_Bound(  // !!
+                Value(*) word = Init_Any_Word(
                     dest,
                     REB_WORD,
-                    Canon(VOID_Q),
-                    Lib_Context,
-                    INDEX_ATTACHED
+                    Canon(VOID_Q)
                 );
+                INIT_VAL_WORD_INDEX(word, INDEX_PATCHED);
+                BINDING(word) = &PG_Lib_Patches[SYM_VOID_Q];
                 *flags |= PARAMETER_FLAG_INCOMPLETE_OPTIMIZATION;
             }
             else if (0 == CT_String(item, Root_Skip_Tag, strict)) {

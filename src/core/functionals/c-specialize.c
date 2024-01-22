@@ -166,9 +166,9 @@ Context* Make_Context_For_Action_Push_Partials(
             if (Cell_Word_Symbol(ordered) != symbol)
                 continue;  // just continuing this loop
 
-            assert(not IS_WORD_BOUND(ordered));  // we bind only one
-            INIT_VAL_WORD_BINDING(ordered, act);
+            assert(BINDING(ordered) == nullptr);  // we bind only one
             INIT_VAL_WORD_INDEX(ordered, index);
+            BINDING(ordered) = act;
 
             if (not Is_Parameter_Unconstrained(param))  // needs argument
                 goto continue_unspecialized;
@@ -384,7 +384,7 @@ bool Specialize_Action_Throws(
         while (ordered_stackindex != TOP_INDEX) {
             ++ordered_stackindex;
             StackValue(*) ordered = Data_Stack_At(ordered_stackindex);
-            if (not IS_WORD_BOUND(ordered)) {  // specialize :print/asdf
+            if (not BINDING(ordered)) {  // specialize :print/asdf
                 Refinify_Pushed_Refinement(ordered);
                 fail (Error_Bad_Parameter_Raw(ordered));
             }

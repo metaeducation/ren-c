@@ -93,7 +93,7 @@ INLINE REBVAL *Init_Any_Word_Bound_Untracked(
     enum Reb_Kind type,
     const Symbol* symbol,
     Stub* binding,  // spelling determined by linked-to thing
-    REBLEN index  // must be 1 if LET patch (INDEX_ATTACHED)
+    REBLEN index  // must be INDEX_PATCHED if LET patch
 ){
     assert(index != 0);
 
@@ -101,15 +101,13 @@ INLINE REBVAL *Init_Any_Word_Bound_Untracked(
         out,
         FLAG_HEART_BYTE(type) | CELL_FLAG_FIRST_IS_NODE
     );
-    BINDING(out) = binding;
-    VAL_WORD_INDEX_U32(out) = index;
     INIT_CELL_WORD_SYMBOL(out, symbol);
+    VAL_WORD_INDEX_U32(out) = index;
+    BINDING(out) = binding;
 
     if (IS_VARLIST(binding)) {
-        if (CTX_TYPE(cast(Context*, binding)) == REB_MODULE)
-            assert(index == INDEX_ATTACHED);
-        else
-            assert(symbol == *CTX_KEY(cast(Context*, binding), index));
+        assert(CTX_TYPE(cast(Context*, binding)) != REB_MODULE);  // must patch
+        assert(symbol == *CTX_KEY(cast(Context*, binding), index));
     }
     else {
         assert(IS_LET(binding) or IS_PATCH(binding));
@@ -124,23 +122,6 @@ INLINE REBVAL *Init_Any_Word_Bound_Untracked(
     TRACK(Init_Any_Word_Bound_Untracked((out), \
             (type), (symbol), CTX_VARLIST(context), (index)))
 
-INLINE REBVAL *Init_Any_Word_Patched(  // e.g. LET or MODULE! var
-    Cell* out,
-    enum Reb_Kind type,
-    Array* patch
-){
-    return Init_Any_Word_Bound_Untracked(
-        out,
-        type,
-        INODE(LetSymbol, patch),
-        patch,
-        INDEX_PATCHED
-    );
-}
-
-#define Init_Any_Word_Attached(out,type,symbol,module) \
-    TRACK(Init_Any_Word_Bound_Untracked((out), \
-            (type), (symbol), CTX_VARLIST(module), INDEX_ATTACHED))
 
 // Helper calls strsize() so you can more easily use literals at callsite.
 // (Better to call Intern_UTF8_Managed() with the size if you know it.)

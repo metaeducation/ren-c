@@ -214,8 +214,8 @@ static Value(*) Append_Context_Core(
         MISC(Hitch, updating) = patch;
 
         if (any_word) {  // bind word while we're at it
-            INIT_VAL_WORD_BINDING(unwrap(any_word), patch);
-            INIT_VAL_WORD_INDEX(unwrap(any_word), INDEX_ATTACHED);
+            INIT_VAL_WORD_INDEX(unwrap(any_word), INDEX_PATCHED);
+            BINDING(unwrap(any_word)) = patch;
         }
 
         return cast(Value(*), Stub_Cell(patch));
@@ -241,8 +241,8 @@ static Value(*) Append_Context_Core(
 
     if (any_word) {
         REBLEN len = CTX_LEN(context);  // length we just bumped
-        INIT_VAL_WORD_BINDING(unwrap(any_word), context);
         INIT_VAL_WORD_INDEX(unwrap(any_word), len);
+        BINDING(unwrap(any_word)) = context;
     }
 
     return cast(Value(*), value);  // location we just added (void cell)
@@ -775,13 +775,19 @@ Array* Context_To_Array(const Cell* context, REBINT mode)
     while (Did_Advance_Evars(&e)) {
         if (mode & 1) {
             assert(e.index != 0);
-            Init_Any_Word_Bound(
+            Init_Any_Word(
                 PUSH(),
                 (mode & 2) ? REB_SET_WORD : REB_WORD,
-                KEY_SYMBOL(e.key),
-                e.ctx,
-                e.index
+                KEY_SYMBOL(e.key)
             );
+            if (Is_Module(context)) {
+                INIT_VAL_WORD_INDEX(TOP, INDEX_PATCHED);
+                BINDING(TOP) = MOD_PATCH(e.ctx, KEY_SYMBOL(e.key), true);
+            }
+            else {
+                INIT_VAL_WORD_INDEX(TOP, e.index);
+                BINDING(TOP) = e.ctx;
+            }
 
             if (mode & 2)
                 Set_Cell_Flag(TOP, NEWLINE_BEFORE);
@@ -831,7 +837,7 @@ REBLEN Find_Symbol_In_Context(
         // list with other modules who also have variables of that name.
         //
         Context* c = VAL_CONTEXT(context);
-        return MOD_VAR(c, symbol, strict) ? INDEX_ATTACHED : 0;
+        return MOD_VAR(c, symbol, strict) ? INDEX_PATCHED : 0;
     }
 
     EVARS e;

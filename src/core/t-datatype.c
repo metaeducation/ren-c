@@ -69,13 +69,13 @@ Array* Startup_Datatypes(Array* boot_typespecs)
         // The "catalog of types" is somewhere that could serve as Datatypes[]
         // if that is reconsidered.
         //
-        Init_Any_Word_Bound(
+        Value(*) word = Init_Any_Word(
             Alloc_Tail_Array(catalog),
             REB_WORD,
-            Canon_Symbol(constraint_sym),
-            Lib_Context,
-            INDEX_ATTACHED
+            Canon_Symbol(constraint_sym)
         );
+        INIT_VAL_WORD_INDEX(word, INDEX_PATCHED);
+        BINDING(word) = &PG_Lib_Patches[constraint_sym];
     }
 
     return catalog;

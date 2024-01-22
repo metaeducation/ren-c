@@ -407,27 +407,23 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
         const String *spelling = Cell_Word_Symbol(v);
         assert(Is_Series_Frozen(spelling));
 
-        // !!! Whether you can count at this point on a spelling being GC
-        // marked depends on whether it's the binding or not; this is a
-        // change from when spellings were always pointed to by the cell.
-        //
-        if (IS_WORD_UNBOUND(v))
-            assert(Is_Node_Marked(spelling));
+        assert(Is_Node_Marked(spelling));
 
         // GC can't run during bind
         //
         assert(Not_Subclass_Flag(SYMBOL, spelling, MISC_IS_BINDINFO));
 
         REBLEN index = VAL_WORD_INDEX_U32(v);
-        if (IS_WORD_BOUND(v)) {
-            if (IS_VARLIST(BINDING(v))) {
-                if (CTX_TYPE(cast(Context*, BINDING(v))) == REB_MODULE)
-                    assert(index != 0);
+        Series* binding = BINDING(v);
+        if (binding) {
+            if (IS_VARLIST(binding)) {
+                if (CTX_TYPE(cast(Context*, binding)) == REB_MODULE)
+                    assert(index == INDEX_ATTACHED);
                 else
                     assert(index != 0 and index != INDEX_ATTACHED);
             }
-            else if (IS_LET(BINDING(v)))
-                assert(index == 1 or index == INDEX_ATTACHED);
+            else if (IS_LET(binding))
+                assert(index == INDEX_PATCHED);
             else
                 assert(index != 0);
         }

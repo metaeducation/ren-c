@@ -714,7 +714,7 @@ DECLARE_NATIVE(same_q)
         return Init_Logic(
             OUT,
             Cell_Word_Symbol(v1) == Cell_Word_Symbol(v2)
-                and VAL_WORD_BINDING(v1) == VAL_WORD_BINDING(v2)
+                and BINDING(v1) == BINDING(v2)
         );
 
     if (Is_Decimal(v1) or Is_Percent(v1)) {

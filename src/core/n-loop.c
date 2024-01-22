@@ -973,13 +973,24 @@ static bool Try_Loop_Each_Next(Value(const*) iterator, Context* vars_ctx)
           case REB_FRAME: {
             if (var) {
                 assert(les->u.evars.index != 0);
-                Init_Any_Word_Bound(
+                Init_Any_Word(
                     var,
                     REB_WORD,
-                    KEY_SYMBOL(les->u.evars.key),
-                    VAL_CONTEXT(les->data),
-                    les->u.evars.index
+                    KEY_SYMBOL(les->u.evars.key)
                 );
+
+                if (kind == REB_MODULE) {
+                    INIT_VAL_WORD_INDEX(var, INDEX_PATCHED);
+                    BINDING(var) = MOD_PATCH(
+                        VAL_CONTEXT(les->data),
+                        KEY_SYMBOL(les->u.evars.key),
+                        true
+                    );
+                }
+                else {
+                    INIT_VAL_WORD_INDEX(var, les->u.evars.index);
+                    BINDING(var) = VAL_CONTEXT(les->data);
+                }
             }
 
             if (CTX_LEN(vars_ctx) == 1) {

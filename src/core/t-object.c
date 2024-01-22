@@ -225,7 +225,7 @@ void Init_Evars(EVARS *e, NoQuote(const Cell*) v) {
         // consistent enumerator state in the current design.  So for the
         // moment we fabricate an array to enumerate.
 
-        e->index = INDEX_ATTACHED;
+        e->index = INDEX_PATCHED;
 
         e->ctx = VAL_CONTEXT(v);
 
@@ -257,8 +257,8 @@ void Init_Evars(EVARS *e, NoQuote(const Cell*) v) {
             }
             if (found) {
                 Init_Any_Word(PUSH(), REB_WORD, *psym);
+                INIT_VAL_WORD_INDEX(TOP, INDEX_PATCHED);
                 BINDING(TOP) = found;
-                INIT_VAL_WORD_INDEX(TOP, INDEX_ATTACHED);
             }
         }
 

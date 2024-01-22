@@ -271,7 +271,13 @@ DECLARE_NATIVE(has)
     REBLEN index = Find_Symbol_In_Context(ARG(context), symbol, strict);
     if (index == 0)
         return nullptr;
-    return Init_Any_Word_Bound(OUT, VAL_TYPE(v), symbol, ctx, index);
+    if (CTX_TYPE(ctx) != REB_MODULE)
+        return Init_Any_Word_Bound(OUT, VAL_TYPE(v), symbol, ctx, index);
+
+    Init_Any_Word(OUT, VAL_TYPE(v), symbol);
+    INIT_VAL_WORD_INDEX(OUT, INDEX_PATCHED);
+    BINDING(OUT) = MOD_PATCH(ctx, symbol, strict);
+    return OUT;
 }
 
 
@@ -379,6 +385,11 @@ bool Did_Get_Binding_Of(Sink(Value(*)) out, const REBVAL *v)
     case REB_THE_WORD: {
         if (IS_WORD_UNBOUND(v))
             return false;
+
+        if (IS_LET(BINDING(v))) {  // temporary (LETs not exposed)
+            Init_Word(out, Canon(LET));
+            return true;
+        }
 
         // Requesting the context of a word that is relatively bound may
         // result in that word having a FRAME! incarnated as a Stub (if

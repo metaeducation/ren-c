@@ -126,8 +126,8 @@ INLINE REBVAL *Derelativize_Untracked(
             out->extra = v->extra;
         }
         else {
-            BINDING(out) = s;
             INIT_VAL_WORD_INDEX(out, index);
+            BINDING(out) = s;
         }
 
         return cast(REBVAL*, out);
@@ -437,28 +437,6 @@ INLINE REBLEN VAL_WORD_INDEX(const Cell* v) {
 INLINE Stub* VAL_WORD_BINDING(const Cell* v) {
     assert(Any_Wordlike(v));
     return BINDING(v);  // could be nullptr / UNBOUND
-}
-
-INLINE void INIT_VAL_WORD_BINDING(Cell* v, Series* binding) {
-    assert(Any_Wordlike(v));
-
-    BINDING(v) = binding;
-
-  #if !defined(NDEBUG)
-    if (binding == nullptr)
-        return;  // e.g. UNBOUND (words use strings to indicate unbounds)
-
-    if (Is_Node_Managed(binding)) {
-        assert(
-            IS_DETAILS(binding)  // relative
-            or IS_VARLIST(binding)  // specific
-            or IS_LET(binding)  // let
-            or IS_PATCH(binding)  // module variable
-        );
-    }
-    else
-        assert(IS_VARLIST(binding));
-  #endif
 }
 
 
