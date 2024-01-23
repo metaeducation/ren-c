@@ -91,20 +91,21 @@ Bounce Adapter_Dispatcher(Level* const L)
   initial_entry: {  //////////////////////////////////////////////////////////
 
     Cell* prelude = Array_At(details, IDX_ADAPTER_PRELUDE);  // code to run
-    assert(
-        Is_Block(prelude)
-        and Is_Relative(prelude)
-        and VAL_INDEX(prelude) == 0
-    );
+    assert(Is_Block(prelude) and VAL_INDEX(prelude) == 0);
 
     STATE = ST_ADAPTER_RUNNING_PRELUDE;  // no definitional RETURN [2]
 
     Force_Level_Varlist_Managed(L);
 
+    Copy_Cell(SPARE, prelude);
+    node_LINK(NextVirtual, L->varlist) = Cell_Specifier(prelude);
+    INIT_SPECIFIER(SPARE, L->varlist);
+
     return CONTINUE_CORE(  // Note: we won't catch throws or errors
-        SPARE,  // Evaluate prelude into SPARE cell (result discarded [1])
+        OUT,  // result discarded [1]
         LEVEL_MASK_NONE,  // plain result
-        SPC(L->varlist), prelude
+        SPECIFIED,
+        SPARE
     );
 
 } run_adaptee_in_same_frame: {  //////////////////////////////////////////////
@@ -135,6 +136,7 @@ DECLARE_NATIVE(adapt)
     INCLUDE_PARAMS_OF_ADAPT;
 
     REBVAL *adaptee = ARG(original);
+    Value(*) prelude = ARG(prelude);
 
     // !!! There was code here which would hide it so adapted code had no
     // access to the locals.  That requires creating a new paramlist.  Is
@@ -152,8 +154,8 @@ DECLARE_NATIVE(adapt)
     // we might as well mutably bind it--there's no incentive to virtual
     // bind things that are copied.
     //
-    Array* prelude = Copy_And_Bind_Relative_Deep_Managed(
-        ARG(prelude),
+    Array* prelude_copy = Copy_And_Bind_Relative_Deep_Managed(
+        prelude,
         adaptation,
         VAR_VISIBILITY_INPUTS
     );
@@ -164,11 +166,12 @@ DECLARE_NATIVE(adapt)
     // it can be executed (e.g. the `Level* L` it is dispatching).
     //
     Details* details = Phase_Details(adaptation);
-    Init_Relative_Block(
+    Value(*) rebound = Init_Block(
         Array_At(details, IDX_ADAPTER_PRELUDE),
-        adaptation,
-        prelude
+        prelude_copy
     );
+    INIT_SPECIFIER(rebound, Cell_Specifier(prelude));
+
     Copy_Cell(Details_At(details, IDX_ADAPTER_ADAPTEE), adaptee);
 
     return Init_Action(OUT, adaptation, VAL_FRAME_LABEL(adaptee), UNBOUND);

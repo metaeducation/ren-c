@@ -38,7 +38,7 @@ last: redescribe [
     {Returns the last value of a series.}
 ](
     specialize adapt :pick [
-        picker: length of get 'location
+        picker: length of :location
     ][
         picker: <removed-parameter>
     ]

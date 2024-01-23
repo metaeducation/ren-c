@@ -161,7 +161,9 @@
             specialize :flp/pass []
         ]
     ][
-        is-bad: me and ('bad-parameter = (sys.util.rescue [do code]).id)
+        is-bad: me and (
+            'bad-parameter = (sys.util.rescue [do inside [] code]).id
+        )
     ]
 
     is-bad

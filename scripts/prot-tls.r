@@ -214,11 +214,11 @@ emit: func [
 
     while [code] [
         if set-word? code.1 [  ; set the word to the binary at current position
-            add-let-binding (binding of 'return) code.1 (tail ctx.msg)
+            add-let-binding (binding of inside [] 'return) code.1 (tail ctx.msg)
             code: my next
         ]
         else [
-            let result': ^ evaluate/next code 'code
+            let result': ^ evaluate/next code inside [] 'code
             if code [
                 if result' = nihil' [continue]  ; invisible
                 append ctx.msg ensure binary! unmeta result'

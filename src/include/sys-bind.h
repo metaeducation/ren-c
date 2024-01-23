@@ -105,7 +105,7 @@ INLINE REBVAL *Derelativize_Untracked(
 ){
     Copy_Cell_Header(out, v);
     out->payload = v->payload;
-    if (not Is_Bindable(v)) {
+    if (not Is_Bindable(v) or (BINDING(v) and not IS_DETAILS(BINDING(v)))) {
         out->extra = v->extra;
         return cast(REBVAL*, out);
     }
@@ -116,7 +116,7 @@ INLINE REBVAL *Derelativize_Untracked(
     if (Any_Wordlike(v)) {
         REBLEN index;
         Series* s = try_unwrap(
-            Get_Word_Container(&index, v, specifier, ATTACH_COPY)
+            Get_Word_Container(&index, v, specifier, ATTACH_READ)
         );
         if (not s) {
             // Getting back NULL here could mean that it's actually unbound,
@@ -406,10 +406,13 @@ struct Reb_Collector {
 //
 INLINE Series* SPC_BINDING(Specifier* specifier)
 {
-    assert(specifier != UNBOUND);
+    UNUSED(specifier);
+    return nullptr;
+
+/*    assert(specifier != UNBOUND);
     const REBVAL *rootvar = CTX_ARCHETYPE(cast(Context*, specifier));  // [1]
     assert(Is_Frame(rootvar));
-    return BINDING(rootvar);
+    return BINDING(rootvar); */
 }
 
 
@@ -420,7 +423,10 @@ INLINE Series* SPC_BINDING(Specifier* specifier)
 //
 INLINE bool IS_WORD_UNBOUND(const Cell* v) {
     assert(Any_Wordlike(v));
-    return BINDING(v) == UNBOUND;
+    if (VAL_WORD_INDEX_U32(v) == INDEX_ATTACHED)
+        return true;
+    Series* binding = BINDING(v);
+    return binding == UNBOUND or IS_DETAILS(binding);
 }
 
 #define IS_WORD_BOUND(v) \
@@ -428,15 +434,10 @@ INLINE bool IS_WORD_UNBOUND(const Cell* v) {
 
 
 INLINE REBLEN VAL_WORD_INDEX(const Cell* v) {
-    assert(IS_WORD_BOUND(v));
+    assert(BINDING(v));
     uint32_t i = VAL_WORD_INDEX_U32(v);
     assert(i > 0);
     return cast(REBLEN, i);
-}
-
-INLINE Stub* VAL_WORD_BINDING(const Cell* v) {
-    assert(Any_Wordlike(v));
-    return BINDING(v);  // could be nullptr / UNBOUND
 }
 
 
@@ -451,7 +452,9 @@ INLINE REBVAL* Unrelativize(Cell* out, const Cell* v) {
     else {
         Copy_Cell_Header(out, v);
         out->payload = v->payload;
-        BINDING(out) = &PG_Inaccessible_Stub;
+        BINDING(out) = nullptr;
+        if (Any_Word(out))
+            VAL_WORD_INDEX_U32(out) = 0;
     }
     return cast(REBVAL*, out);
 }
@@ -470,7 +473,7 @@ INLINE void Unbind_Any_Word(Cell* v) {
 
 INLINE Context* VAL_WORD_CONTEXT(const REBVAL *v) {
     assert(IS_WORD_BOUND(v));
-    Stub* binding = VAL_WORD_BINDING(v);
+    Stub* binding = BINDING(v);
     if (IS_PATCH(binding)) {
         Context* patch_context = INODE(PatchContext, binding);
         binding = CTX_VARLIST(patch_context);
@@ -527,11 +530,11 @@ INLINE Value(const*) Lookup_Word_May_Fail(
     Series* s = try_unwrap(
         Get_Word_Container(&index, any_word, specifier, ATTACH_READ)
     );
-    if (not s) {
-        if (VAL_WORD_BINDING(any_word) == UNBOUND)
-            fail (Error_Not_Bound_Raw(any_word));
+    if (not s)
+        fail (Error_Not_Bound_Raw(any_word));
+    if (index == INDEX_ATTACHED)
         fail (Error_Unassigned_Attach_Raw(any_word));
-    }
+
     if (IS_LET(s) or IS_PATCH(s))
         return SPECIFIC(Stub_Cell(s));
 
@@ -548,7 +551,7 @@ INLINE Option(Value(const*)) Lookup_Word(
     Series* s = try_unwrap(
         Get_Word_Container(&index, any_word, specifier, ATTACH_READ)
     );
-    if (not s)
+    if (not s or index == INDEX_ATTACHED)
         return nullptr;
     if (IS_LET(s) or IS_PATCH(s))
         return SPECIFIC(Stub_Cell(s));
@@ -674,198 +677,17 @@ INLINE Option(Context*) SPC_FRAME_CTX(Specifier* specifier)
 
 // An ANY-ARRAY! cell has a pointer's-worth of spare space in it, which is
 // used to keep track of the information required to further resolve the
-// words and arrays that reside in it.  Each time code wishes to take a
-// step descending into an array's contents, this "specifier" information
-// must be merged with the specifier that is being applied.
+// words and arrays that reside in it.
 //
-// Specifier state only accrues in this way while descending through nodes.
-// Jumping to a new value...e.g. fetching a REBVAL* out of a WORD! variable,
-// should restart the process with a new specifier.
-//
-// The returned specifier must not lose the ability to resolve relative
-// values, so it has to remember what frame relative values are for.
-//
-INLINE Specifier* Derive_Specifier_Core(
-    Specifier* specifier,  // merge this specifier...
-    NoQuote(const Cell*) any_array  // ...onto the one in this array
+INLINE Specifier* Derive_Specifier(
+    Specifier* specifier,
+    NoQuote(const Cell*) any_array
 ){
-    // If any specifiers in a chain are inaccessible, the whole thing is.
-    //
-    if (
-        any_array->extra.Binding != UNBOUND
-        and Not_Node_Accessible(any_array->extra.Binding)
-    ){
-        return &PG_Inaccessible_Stub;
-    }
+    if (BINDING(any_array) != UNBOUND)
+        return BINDING(any_array);
 
-    Stub* old = BINDING(any_array);
-
-    if (specifier == SPECIFIED) {  // no override being requested
-        assert(old == UNBOUND or IS_VARLIST(old) or IS_LET(old) or IS_USE(old));
-        return old;  // so give back what was the array was holding
-    }
-
-    if (old == UNBOUND) {  // no binding information in the incoming cell
-        //
-        // It is legal to use a specifier with a "fully resolved" value.
-        // A virtual specifier must be propagated, but it's not necessary to
-        // add a frame node.  While it would be "harmless" to put it on, it
-        // would mean specifier chains would have to be made to preserve it
-        // when it wasn't actually useful...and it taxes the GC.  Drop if
-        // possible.
-        //
-        if (not IS_LET(specifier) and not IS_USE(specifier))
-            return SPECIFIED;
-
-        return specifier;  // so just propagate the incoming specifier
-    }
-
-    // v-- NOTE: The following two IFs just `return specifier`.  Separate for
-    // clarity and assertions, but trust the optimizer to fold them together
-    // in the release build.
-
-    if (specifier == old) {  // a no-op, specifier was already applied
-        assert(IS_VARLIST(specifier) or IS_LET(specifier) or IS_USE(specifier));
-        return specifier;
-    }
-
-    if (IS_DETAILS(old)) {
-        //
-        // The stored binding is relative to a function, and so the specifier
-        // we have *must* be able to give us the matching FRAME! instance.
-        //
-        // We have to be content with checking for a match in underlying
-        // functions, vs. checking for an exact match.  Else hijackings or
-        // COPY'd actions, or adapted preludes, could not match up with
-        // actions put in the specifier.  We'd have to make new and
-        // re-relativized copies of the bodies--which is not only wasteful,
-        // but breaks the "black box" quality of function composition.
-        //
-      #if !defined(NDEBUG)
-        Context* frame_ctx = try_unwrap(SPC_FRAME_CTX(specifier));
-        Assert_Node_Accessible(frame_ctx);
-        if (
-            frame_ctx == nullptr
-            or not Action_Is_Base_Of(
-                cast(Action*, old),
-                CTX_FRAME_PHASE(frame_ctx)
-            )
-        ){
-            printf("Function mismatch in specific binding, expected:\n");
-            PROBE(ACT_ARCHETYPE(cast(Action*, old)));
-            printf("Panic on relative value\n");
-            panic (any_array);
-        }
-      #endif
-
-        return specifier;  // input specifier will serve for derelativizations
-    }
-
-    // Either binding or the specifier have virtual components.  Whatever
-    // happens, the specifier we give back has to have the frame resolution
-    // compatible with what's in the value.
-
-    if (IS_VARLIST(old)) {
-        //
-        // If the specifier is only for providing resolutions of variables in
-        // functions, an array specified by a frame isn't going to need that.
-        // This is kind of like dealing with something specified.
-        //
-        if (IS_VARLIST(specifier))  // superfluous additional specification
-            return old;
-
-        // If the array cell is already holding a frame, then it intends to
-        // broadcast that down for resolving relative values underneath it.
-        // We can only pass thru the incoming specifier if it is compatible.
-        // Otherwise we need a new specifier that folds in the binding.
-        //
-        assert(IS_LET(specifier) or IS_USE(specifier));
-
-        // !!! This case of a match could be handled by the swap below, but
-        // break it out separately for now for the sake of asserts.
-        //
-        // !!! We already know it's a patch so calling SPC_FRAME_CTX() does
-        // an extra check of that, review when efficiency is being revisited
-        // (SPC_PATCH_CTX() as separate entry point?)
-        //
-        Node** specifier_frame_ctx_addr = SPC_FRAME_CTX_ADDRESS(specifier);
-        if (*specifier_frame_ctx_addr == old)  // all clear to reuse
-            return specifier;
-
-        if (*specifier_frame_ctx_addr == UNSPECIFIED) {
-            //
-            // If the patch had no specifier, then it doesn't hurt to modify
-            // it directly.  This will only work once for specifier's chain.
-            //
-            *specifier_frame_ctx_addr = old;
-            return specifier;
-        }
-
-        // Patch resolves to a binding, and it's an incompatible one.  If
-        // this happens, we have to copy the whole chain.  Is this possible?
-        // Haven't come up with a situation that forces it yet.
-        //
-        // !!! See above about heavy null and void exacerbating this.
-
-        panic ("Incompatible patch bindings; if you hit this, report it.");
-    }
-
-    // The situation for if the array is already holding a patch is that we
-    // have to integrate our new patch on top of it.
-    //
-    // !!! How do we make sure this doesn't make a circularly linked list?
-
-    assert(IS_LET(old) or IS_USE(old));
-
-    if (not IS_LET(specifier) and not IS_USE(specifier)) {
-        assert(IS_VARLIST(specifier));
-        return old;  // The binding can be disregarded on this value
-    }
-
-    // The patch might be able to be reused and it might not, so it may carry
-    // the PATCH_REUSED array flag.  Is that interesting information here?
-    //
-    return Merge_Patches_May_Reuse(specifier, old);
+    return specifier;
 }
-
-
-#if (! DEBUG_VIRTUAL_BINDING)
-    INLINE Specifier* Derive_Specifier(
-        Specifier* specifier,
-        NoQuote(const Cell*) any_array
-    ){
-        return Derive_Specifier_Core(specifier, any_array);
-    }
-#else
-    INLINE Specifier* Derive_Specifier(
-        Specifier* specifier,
-        NoQuote(const Cell*) any_array
-    ){
-        Specifier* derived = Derive_Specifier_Core(specifier, any_array);
-        Stub* old = BINDING(any_array);
-        if (old == UNSPECIFIED or IS_VARLIST(old)) {
-            // no special invariant to check, anything goes for derived
-        }
-        else if (IS_DETAILS(old)) {  // relative
-            Context* derived_ctx = try_unwrap(SPC_FRAME_CTX(derived));
-            Context* specifier_ctx = try_unwrap(SPC_FRAME_CTX(specifier));
-            assert(derived_ctx == specifier_ctx);
-        }
-        else {
-            assert(IS_LET(old) or IS_USE(old));
-
-            Context* binding_ctx = try_unwrap(SPC_FRAME_CTX(old));
-            if (binding_ctx == UNSPECIFIED) {
-                // anything goes for the frame in the derived specifier
-            }
-            else {
-                Context* derived_ctx = try_unwrap(SPC_FRAME_CTX(derived));
-                assert(derived_ctx == binding_ctx);
-            }
-        }
-        return derived;
-    }
-#endif
 
 
 //

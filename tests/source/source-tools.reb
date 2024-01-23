@@ -199,7 +199,7 @@ export analyse: context [
             let emit-proto: func [return: [~] proto] [
                 if not block? proto-parser.data [return ~]
 
-                do inside c-parser-extension [
+                do overbind c-parser-extension [
                     if last-func-end [
                         all [
                             parse2 last-func-end [
@@ -391,7 +391,7 @@ export analyse: context [
         ]
 
         for-each list [tabbed whitespace-at-eol] [
-            if not empty? get list [
+            if not empty? get inside [] list [
                 emit as tag! list [(file) (get list)]
             ]
         ]
@@ -470,12 +470,12 @@ c-parser-extension: context bind bind [
 
     grammar.function-body: braced
 
-    append grammar.format-func-section spread [
+    append grammar.format-func-section [  ; spread loses binding
         last-func-end: <here>
         try some [nl | eol | wsp]
     ]
 
-    append grammar.other-segment '(
+    append grammar.other-segment @(
         last-func-end: null
     )
 

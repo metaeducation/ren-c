@@ -111,7 +111,7 @@
 ; ADD-LET-BINDING is a conceptual step for making your own LET-like thing.
 (
     maker: func [name] [
-        frame: binding of 'return
+        frame: binding of inside [] 'return
         add-let-binding frame (to word! unspaced [name 1]) <one>
         add-let-binding frame (to word! unspaced [name 2]) <two>
     ]

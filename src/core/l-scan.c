@@ -2543,18 +2543,6 @@ Bounce Scanner_Executor(Level* const L) {
         panic ("Invalid TOKEN in Scanner.");
     }
 
-    // We are able to bind code as we go into any "module", where the ambient
-    // hashing is available.
-    //
-    // !!! While it wouldn't be impossible to do this with a binder for any
-    // object, it would be more complex...only for efficiency, and nothing
-    // like it existed before.
-    //
-    if (L->feed->context and Any_Word(TOP)) {
-        INIT_VAL_WORD_INDEX(TOP, INDEX_ATTACHED);
-        BINDING(TOP) = CTX_VARLIST(unwrap(L->feed->context));
-    }
-
   lookahead:
 
     // At this point the item at TOP is the last token pushed.  It has
@@ -2749,19 +2737,6 @@ Bounce Scanner_Executor(Level* const L) {
 
       push_temp:
         Copy_Cell(PUSH(), temp);
-
-        // !!! Need to cover case where heart byte is a WORD!, at least when
-        // it is something like `/` (refinements like /FOO should have been
-        // bound when the words themselves were pushed).  This attachment may
-        // be redundant in that case.  Review how this ties in with the
-        // word attachment code above.
-        //
-        if (L->feed->context) {
-            if (Any_Word(TOP)) {
-                INIT_VAL_WORD_INDEX(TOP, INDEX_ATTACHED);
-                BINDING(TOP) = CTX_VARLIST(unwrap(L->feed->context));
-            }
-        }
 
         // !!! Temporarily raise attention to usage like `.5` or `5.` to guide
         // people that these are contentious with tuples.  There is no way
@@ -2964,8 +2939,7 @@ Bounce Scanner_Executor(Level* const L) {
 Array* Scan_UTF8_Managed(
     Option(const String*) file,
     const Byte* utf8,
-    Size size,
-    Option(Context*) context
+    Size size
 ){
     assert(utf8[size] == '\0');
     UNUSED(size);  // scanner stops at `\0` (no size limit functionality)
@@ -2973,7 +2947,6 @@ Array* Scan_UTF8_Managed(
     const void* packed[2] = {utf8, rebEND};  // BEWARE: Stack, can't trampoline!
     Feed* feed = Make_Variadic_Feed(  // scanner requires variadic [1]
         packed, nullptr,  // va_list* as nullptr means `p` is packed [2]
-        context,
         FEED_MASK_DEFAULT
     );
     Add_Feed_Reference(feed);
@@ -3040,8 +3013,6 @@ void Shutdown_Scanner(void)
 //          [file! url!]
 //      /line "Line number for start of scan, word variable will be updated"
 //          [integer! any-word!]
-//      /where "Where you want to bind words to (default unbound)"
-//          [module!]
 //  ]
 //
 DECLARE_NATIVE(transcode)
@@ -3135,9 +3106,6 @@ DECLARE_NATIVE(transcode)
     // Note: Could reuse global TG_End_Feed if context was null.
 
     Feed* feed = Make_Array_Feed_Core(EMPTY_ARRAY, 0, SPECIFIED);
-    feed->context = REF(where)
-        ? VAL_CONTEXT(ARG(where))
-        : nullptr;
 
     Flags flags =
         LEVEL_FLAG_TRAMPOLINE_KEEPALIVE  // query pending newline

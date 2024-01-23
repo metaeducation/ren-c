@@ -186,6 +186,7 @@ DECLARE_NATIVE(load_extension)
     // !!! used to use STD_EXT_CTX, now this would go in META OF
 
     Context* module_ctx = Alloc_Context_Core(REB_MODULE, 1, NODE_FLAG_MANAGED);
+    node_LINK(NextVirtual, module_ctx) = Lib_Context;
 
     PG_Next_Native_Cfunc = cfuncs;
     PG_Currently_Loading_Module = module_ctx;

@@ -201,9 +201,9 @@
     all [
         1 = bl.a
         [e/r 42] = bl.('q/w)
-        [e/r 42] = reduce to-tuple [bl ('q/w)]
+        [e/r 42] = reduce inside [] to-tuple [bl ('q/w)]
         42 = bl.('q/w).('e/r)
-        42 = reduce to-tuple [bl ('q/w) ('e/r)]
+        42 = reduce inside [] to-tuple [bl ('q/w) ('e/r)]
     ]
 )
 

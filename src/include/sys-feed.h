@@ -137,6 +137,9 @@ INLINE Option(va_list*) FEED_VAPTR(Feed* feed) {
 #define FEED_SPECIFIER(feed) \
     cast(Array*, BINDING(FEED_SINGLE(feed)))
 
+#define mutable_FEED_SPECIFIER(feed) \
+    BINDING(FEED_SINGLE(feed))
+
 #define FEED_ARRAY(feed) \
     Cell_Array(FEED_SINGLE(feed))
 
@@ -190,10 +193,7 @@ INLINE Value(const*) Copy_Reified_Variadic_Feed_Cell(
     Cell* out,
     Feed* feed
 ){
-    assert(FEED_SPECIFIER(feed) == SPECIFIED);  // why?
-
     const Cell* cell = c_cast(Cell*, feed->p);
-    assert(not Is_Relative(cell));
 
     if (Is_Nulled(cell))  // API enforces use of C's nullptr (0) for NULL
         assert(not Is_Api_Value(cell));  // but internal cells can be nulled
@@ -277,15 +277,6 @@ INLINE Option(Value(const*)) Try_Reify_Variadic_Feed_Series(
         //
       case FLAVOR_SYMBOL: {
         Init_Any_Word(&feed->fetched, REB_WORD, c_cast(Symbol*, s));
-        if (feed->context) {
-            assert(CTX_TYPE(unwrap(feed->context)) == REB_MODULE);
-            INIT_VAL_WORD_INDEX(&feed->fetched, INDEX_ATTACHED);
-            BINDING(&feed->fetched) = unwrap(feed->context);
-            //
-            // !!! Should we speed it up by setting feed->gotten here, if it's
-            // bound into Lib?  Would it be overwritten by nullptr?
-        }
-
         feed->p = &feed->fetched;
         break; }
 
@@ -331,7 +322,6 @@ INLINE void Force_Variadic_Feed_At_Cell_Or_End_May_Fail(Feed* feed)
         break;  // va_end() handled by Free_Feed() logic
 
       case DETECTED_AS_CELL:
-        assert(FEED_SPECIFIER(feed) == SPECIFIED);
         break;
 
       case DETECTED_AS_SERIES:  // e.g. rebQ, rebU, or a rebR() handle
@@ -350,6 +340,7 @@ INLINE void Force_Variadic_Feed_At_Cell_Or_End_May_Fail(Feed* feed)
         // !!! Scans that produce only one value (which are likely very
         // common) can go into feed->fetched and not make an array at all.
         //
+        Specifier* specifier = FEED_SPECIFIER(feed);
         Array* reified = try_unwrap(Try_Scan_Variadic_Feed_Utf8_Managed(feed));
 
         if (not reified) {  // rebValue("", ...) [1]
@@ -366,6 +357,7 @@ INLINE void Force_Variadic_Feed_At_Cell_Or_End_May_Fail(Feed* feed)
 
         feed->p = Array_Head(reified);
         Init_Array_Cell_At(FEED_SINGLE(feed), REB_BLOCK, reified, 1);
+        mutable_FEED_SPECIFIER(feed) = specifier;
         break; }
 
       default:
@@ -658,7 +650,6 @@ INLINE Feed* Prep_Feed_Common(void* preallocated, Flags flags) {
 
     feed->refcount = 0;  // putting in levels should add references
 
-    Corrupt_Pointer_If_Debug(feed->context);  // experiment!
     return feed;
 }
 
@@ -708,8 +699,6 @@ INLINE Feed* Prep_Array_Feed(
     else
         assert(READABLE(c_cast(Cell*, feed->p)));
 
-    feed->context = nullptr;  // already has binding
-
     return feed;
 }
 
@@ -743,7 +732,6 @@ INLINE Feed* Prep_Variadic_Feed(
     void* preallocated,
     const void *p,
     Option(va_list*) vaptr,
-    Option(Context*) context,
     Flags flags
 ){
     Feed* feed = Prep_Feed_Common(preallocated, flags | FEED_FLAG_NEEDS_SYNC);
@@ -773,8 +761,6 @@ INLINE Feed* Prep_Variadic_Feed(
     // "instruction", it must be synchronized before you get a cell pointer.
     // So At_Feed() will assert if you do not synchronize first.
 
-    feed->context = context;
-
     feed->gotten = nullptr;
 
     return feed;
@@ -784,8 +770,8 @@ INLINE Feed* Prep_Variadic_Feed(
 // fetch as part of the initialization from the `first`...and if you want
 // the flags to take effect, they must be passed in up front.
 //
-#define Make_Variadic_Feed(p,vaptr,context,flags) \
-    Prep_Variadic_Feed(Alloc_Feed(), (p), (vaptr), (context), (flags))
+#define Make_Variadic_Feed(p,vaptr,flags) \
+    Prep_Variadic_Feed(Alloc_Feed(), (p), (vaptr), (flags))
 
 INLINE Feed* Prep_At_Feed(
     void *preallocated,
@@ -810,7 +796,7 @@ INLINE Feed* Prep_At_Feed(
         VAL_INDEX(any_array),
         Derive_Specifier(specifier, any_array),
         flags
-    );;
+    );
 }
 
 #define Make_At_Feed_Core(any_array,specifier) \

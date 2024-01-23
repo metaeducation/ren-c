@@ -153,17 +153,6 @@ run-test-cluster: func [
         ]
     ]
 
-    ; Since we didn't use our cluster block as the body of the module, we have
-    ; to bind into it.  The form of binding we use here is called "attachment"
-    ; and it is done with the INTERN function.
-    ;
-    ; INTERN without a * is specialized to be single arity, and intern code
-    ; into this module (e.g. %test-framework.r).  The lower-level INTERN* is
-    ; arity-2, and we can tell it to bind this whole block-of-groups-of-code
-    ; into the isolation context we just created.
-    ;
-    intern* isolate cluster
-
     ; Code that begins a line and starts a GROUP! will be checked as a test.
     ; Everything else will be executed and its results discarded.  This
     ; permits sharing, cleanup, and opens many other possibilities.
@@ -195,7 +184,7 @@ run-test-cluster: func [
             group: group!
             | (fail "GROUP! expected in tests")
         ]
-        (run-single-test group expected-id)
+        (run-single-test inside isolate group expected-id)
     ]]
 ]
 

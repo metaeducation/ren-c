@@ -301,6 +301,7 @@ enum Reb_Promise_State {
 struct Reb_Promise_Info {
     enum Reb_Promise_State state;
     heapaddr_t promise_id;
+    Specifier* specifier;  // where code is to be run
 
     struct Reb_Promise_Info *next;
 };
@@ -378,6 +379,7 @@ EXTERN_C intptr_t RL_rebPromise(void *p, va_list *vaptr)
     struct Reb_Promise_Info *info = Try_Alloc(struct Reb_Promise_Info);
     info->state = PROMISE_STATE_QUEUEING;
     info->promise_id = Heapaddr_From_Pointer(code);
+    info->specifier = Get_Context_From_Stack();
     info->next = PG_Promises;
     PG_Promises = info;
 
@@ -418,6 +420,7 @@ void RunPromise(void)
 
     DECLARE_LOCAL (code);
     Init_Block(code, a);
+    BINDING(code) = info->specifier;
 
     Level* L = Make_Level_At(code, LEVEL_FLAG_ROOT_LEVEL);
     Push_Level(Alloc_Value_Core(CELL_MASK_0), L);

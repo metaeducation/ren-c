@@ -283,7 +283,7 @@ Array* Startup_Natives(const REBVAL *boot_natives)
     assert(VAL_INDEX(boot_natives) == 0); // should be at head, sanity check
     const Cell* tail;
     Cell* item = Cell_Array_At_Known_Mutable(&tail, boot_natives);
-    assert(Cell_Specifier(boot_natives) == SPECIFIED);
+    Specifier* specifier = Cell_Specifier(boot_natives);
 
     // !!! We could avoid this by making NATIVE a specialization of a NATIVE*
     // function which carries those arguments, which would be cleaner.  The
@@ -303,7 +303,8 @@ Array* Startup_Natives(const REBVAL *boot_natives)
     assert(Is_Word(item) and Cell_Word_Id(item) == SYM_NATIVE);
     ++item;
     assert(Is_Block(item));
-    REBVAL *spec = SPECIFIC(item);
+    DECLARE_STABLE (spec);
+    Derelativize(spec, item, specifier);
     ++item;
 
     Phase* the_native_action = Make_Native(
@@ -340,7 +341,7 @@ Array* Startup_Natives(const REBVAL *boot_natives)
     Init_Array_Cell_At(skipped, REB_BLOCK, Cell_Array(boot_natives), 3);
 
     DECLARE_LOCAL (discarded);
-    if (Do_Any_Array_At_Throws(discarded, skipped, SPECIFIED))
+    if (Do_Any_Array_At_Throws(discarded, skipped, specifier))
         panic (Error_No_Catch_For_Throw(TOP_LEVEL));
     if (not Is_Anti_Word_With_Id(discarded, SYM_DONE))
         panic (discarded);

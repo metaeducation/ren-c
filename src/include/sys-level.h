@@ -72,8 +72,9 @@ INLINE const Array* Level_Array(Level* L) {
     return FEED_ARRAY(L->feed);
 }
 
-#define Level_Specifier(L) \
-    FEED_SPECIFIER(ensure(Level*, (L))->feed)
+INLINE Specifier *Level_Specifier(Level *L) {
+    return FEED_SPECIFIER(L->feed);
+}
 
 
 // !!! Though the evaluator saves its `index`, the index is not meaningful

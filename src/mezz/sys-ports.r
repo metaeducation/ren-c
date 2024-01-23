@@ -112,7 +112,7 @@ make-port*: func [
     let overloads: copy []
     for-each [key val] spec [
         if not any [quasi? ^val, null? :val, blank? :val] [
-            append overloads spread :[to set-word! key get 'val]  ; override
+            append overloads spread :[to set-word! key :val]  ; override
         ]
     ]
     append port.spec spread overloads
@@ -121,7 +121,7 @@ make-port*: func [
     port.scheme: scheme
 
     ; Defaults:
-    port.actor: get maybe has scheme 'actor ; avoid evaluation
+    port.actor: get maybe has scheme 'actor  ; avoid evaluation
     port.spec.ref: default [spec]
     port.spec.title: default [scheme.title]
     port: to port! port
@@ -245,6 +245,9 @@ make-scheme: func [
                 block? body
             ]
             append actor name: to word! name  ; !!! use EXTEND-style operation?
+            op: inside scheme.actor op
+            args: inside scheme.actor args
+            body: inside scheme.actor body
             actor.(name): reeval op args body ; add action to object! w/name
         ]
         scheme.actor: actor

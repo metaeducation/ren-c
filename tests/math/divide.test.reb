@@ -88,10 +88,10 @@
     code: [1 / 2]
     obj: make object! [
         /: enfix func [a b] [
-            return reduce '(b a)
+            return reduce @(b a)
         ]
     ]
     0.5 = do code
-    bind code obj
+    bind inside [] code obj
     '(2 1) = do code
 )]

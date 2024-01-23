@@ -240,7 +240,7 @@ reword: func [
     ;    ] suffix  ; ...but then it's at "0>" and not ">", so it fails
     ;
     let keyword-match: null  ; variable that gets set by rule
-    let any-keyword-suffix-rule: collect [
+    let any-keyword-suffix-rule: inside [] collect [
         for-each [keyword value] values [
             if not match keyword-types keyword [
                 fail ["Invalid keyword type:" keyword]
@@ -263,13 +263,11 @@ reword: func [
         keep [false]  ; add failure if no match, instead of removing last |
     ]
 
-    let a
-    let b
     let rule: [
-        a: <here>  ; Begin marking text to copy verbatim to output
+        let a: <here>  ; Begin marking text to copy verbatim to output
         try some [
             to prefix  ; seek to prefix (may be void, this could be a no-op)
-            b: <here>  ; End marking text to copy verbatim to output
+            let b: <here>  ; End marking text to copy verbatim to output
             prefix  ; consume prefix (if void, may not be at start of match)
             [
                 [
@@ -398,11 +396,11 @@ collect*: func [
             f [frame!]
             <with> out
         ][
-            decay either voided? 'f.value [  ; DECAY, we want pure null
+            decay either void? f.value [  ; DECAY, we want pure null
                 null  ; void in, null out (should it pass through the void?)
             ][
                 f.series: out: default [make block! 16]  ; no null return now
-                get/any 'f.value  ; ELIDE leaves as result
+                f.value  ; ELIDE leaves as result
                 elide do f  ; would invalidate f.value (hence ELIDE)
             ]
         ]

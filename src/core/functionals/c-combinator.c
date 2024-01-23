@@ -209,7 +209,7 @@ Array* Expanded_Combinator_Spec(const REBVAL *original)
 
     const void* packed[2] = {utf8, rebEND};  // BEWARE: Stack, can't Trampoline!
 
-    Feed* feed = Make_Variadic_Feed(packed, nullptr, nullptr, FEED_MASK_DEFAULT);
+    Feed* feed = Make_Variadic_Feed(packed, nullptr, FEED_MASK_DEFAULT);
     Add_Feed_Reference(feed);
     Sync_Feed_At_Cell_Or_End_May_Fail(feed);
 

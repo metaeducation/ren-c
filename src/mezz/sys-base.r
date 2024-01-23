@@ -76,29 +76,26 @@ module: func [
         [logic?]
     spec "The header block of the module (modified)"
         [<opt> block! object!]
-    body "The body of the module (all bindings will be overwritten if block)"
-        [text! binary! block!]
+    body "The body of the module"
+        [block!]
     /mixin "Bind body to this additional object before executing"
         [object!]
     /into "Add data to existing MODULE! context (vs making a new one)"
         [module!]
-    /file "The filename of the body if it needs transcoding"
-        [file! url!]
-    /line "The line number of the body if it needs transcoding"
-        [integer!]
     <local>
         mod  ; note: overwrites MODULO shorthand in this function
 ][
     mod: any [
         into
-        make module! #  ; !!! currently you can only make module from #
+        make module! body  ; inherits specifier from body, does not run it
     ]
+    body: inside mod bindable body
 
     ; Turn spec into an OBJECT! if it was a block.  See system.standard.header
     ; for a description of the fields and benefits of using a standard object.
     ;
     if block? spec [
-        unbind/deep spec
+        ;; !!! unbind/deep spec
         spec: construct/with/only spec system.standard.header
     ]
 
@@ -113,7 +110,7 @@ module: func [
             spec.version [<opt> tuple!]
             spec.options [<opt> block!]
         ][
-            (match types get var) else [
+            (match inside [] types get inside [] var) else [
                 fail ["Module" var "must be in" mold types "- not" ^(get var)]
             ]
         ]
@@ -136,26 +133,6 @@ module: func [
         set-adjunct mod spec
     ]
 
-    ; Interning makes the binding of *all* the words be "attached" in their
-    ; binding to the created module.  This process does not create any new
-    ; storage space for variables.
-    ;
-    ; Using the /WHERE option to TRANSCODE asks it to do the interning binding
-    ; while it scans, so it's in a single pass.  Hence it's good for higher
-    ; level constructs like IMPORT* to only scan the header, but hold off on
-    ; turning the body into a BLOCK! of code.  Instead they should pass in
-    ; the text or binary to scan at this last minute, when the MAKE MODULE! has
-    ; been run and `mod` is available to pass in as the /WHERE.
-    ;
-    ; !!! Future developments should allow a `Baseline: xxx` in the header,
-    ; which specifies modules other than lib to inherit from.
-    ;
-    if block? body [
-        intern* mod body  ; will overwrite any existing bindings in BODY
-    ] else [
-        body: transcode/where/line/file body mod line file
-    ]
-
     ; We add importing and exporting as specializations of lower-level IMPORT*
     ; and EXPORT* functions.  (Those are still available if you ever want to
     ; specify a "where".)
@@ -166,9 +143,6 @@ module: func [
     ;
     append mod 'import
     mod.import: specialize :sys.util.import* [where: mod]
-
-    append mod 'intern
-    mod.intern: specialize :intern* [where: mod]
 
     ; If you DO a file, it doesn't get an EXPORT operation...only modules.
     ;
@@ -197,12 +171,12 @@ module: func [
         ;
         assert [block? body]
 
-        set/any 'product ^ do body  ; can't set variable to trash/etc.
+        product: ^ do body  ; can't set variable to trash/etc.
         quitting: false
     ]
     then ^arg-to-quit -> [
         quitting: true
-        set/any 'product arg-to-quit  ; !!! meta convention?
+        product: arg-to-quit  ; !!! meta convention?
     ]
 
     return mod

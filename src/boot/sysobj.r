@@ -173,7 +173,11 @@ standard: make object! [
             if not typecheck 'return unmeta atom [
                 fail ["Invalid Return type, expects:" types of 'return]
             ]
-            [unwind/with (binding of 'return) typecheck 'return unmeta value]
+            [
+                unwind/with
+                    (binding of inside [] 'return)
+                    typecheck 'return unmeta value
+            ]
         ] #BODY
         ; if you don't call RETURN, the result is a ~ antiform (trash)
     ]

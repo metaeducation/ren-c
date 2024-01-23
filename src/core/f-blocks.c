@@ -39,6 +39,8 @@ Array* Copy_Array_At_Extra_Shallow(
     REBLEN extra,
     Flags flags
 ){
+    UNUSED(specifier);
+
     REBLEN len = Array_Len(original);
 
     if (index > len)
@@ -53,7 +55,7 @@ Array* Copy_Array_At_Extra_Shallow(
     Cell* dest = Array_Head(copy);
     REBLEN count = 0;
     for (; count < len; ++count, ++dest, ++src)
-        Derelativize(dest, src, specifier);
+        Copy_Cell(dest, src);
 
     return copy;
 }
@@ -71,6 +73,8 @@ Array* Copy_Array_At_Max_Shallow(
     Specifier* specifier,
     REBLEN max
 ){
+    UNUSED(specifier);
+
     const Flags flags = 0;
 
     if (index > Array_Len(original))
@@ -86,7 +90,7 @@ Array* Copy_Array_At_Max_Shallow(
     const Cell* src = Array_At(original, index);
     Cell* dest = Array_Head(copy);
     for (; count < max; ++count, ++src, ++dest)
-        Derelativize(dest, src, specifier);
+        Copy_Cell(dest, src);
 
     return copy;
 }
@@ -156,6 +160,8 @@ Array* Copy_Array_Core_Managed(
     Flags flags,
     REBU64 deep_types
 ){
+    UNUSED(specifier);
+
     if (index > tail) // !!! should this be asserted?
         index = tail;
 
@@ -180,7 +186,7 @@ Array* Copy_Array_Core_Managed(
     REBLEN count = 0;
     for (; count < len; ++count, ++dest, ++src) {
         Clonify(
-            Derelativize(dest, src, specifier),
+            Copy_Cell(dest, src),
             flags | NODE_FLAG_MANAGED,
             deep_types
         );

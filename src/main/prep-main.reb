@@ -70,13 +70,17 @@ for-each file reduce [
     header: ~
     contents: stripload/header file 'header
 
+    ; The import will happen in the lib context, so the body block being
+    ; unquoted means it will reach MODULE with the lib definitions in it.
+    ; Module will add itself in the specifier chain.
+    ;
     ; !!! This currently imports all these modules into LIB, which is an
     ; unsustainable pattern set by historical Redbols that needs to be
     ; rethought.
     ;
     append/line buf "sys.util.import* lib module ["
     append/line buf header
-    append/line buf "]["
+    append/line buf "]["  ; use unquoted block so modules inherit lib
     append/line buf contents
     append/line buf "]"
 ]

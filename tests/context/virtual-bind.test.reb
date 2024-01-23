@@ -179,8 +179,8 @@
             keep do alpha.minus
             keep do beta.plus
             keep do beta.minus
-            keep do plus-global
-            keep do minus-global
+            keep do inside [] plus-global
+            keep do inside [] minus-global
         ]
     ]
 )

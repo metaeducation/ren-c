@@ -620,7 +620,7 @@ static REBIXO Parse_One_Rule(
 
         switch (VAL_TYPE(rule)) {
           case REB_QUOTED:
-            Derelativize(SPARE, rule, rule_specifier());
+            Copy_Cell(SPARE, rule);
             rule = Unquotify(SPARE, 1);
             break;  // fall through to direct match
 
@@ -634,8 +634,7 @@ static REBIXO Parse_One_Rule(
           case REB_TYPE_BLOCK:
           case REB_TYPE_GROUP:
           case REB_PARAMETER: {
-            Derelativize(SPARE, item, P_INPUT_SPECIFIER);
-            if (Typecheck_Atom_Core(rule, P_RULE_SPECIFIER, SPARE))
+            if (Typecheck_Atom_Core(rule, P_RULE_SPECIFIER, cast(Atom(const*), item)))
                 return pos + 1;  // type was in typeset
             return END_FLAG; }
 
@@ -2483,10 +2482,9 @@ DECLARE_NATIVE(subparse)
                 else if (Is_Series_Array(P_INPUT)) {
                     assert(count == 1);  // check for > 1 would have errored
 
-                    Derelativize(
+                    Copy_Relative_internal(
                         Sink_Word_May_Fail(set_or_copy_word, P_RULE_SPECIFIER),
-                        Array_At(P_INPUT_ARRAY, begin),
-                        P_INPUT_SPECIFIER
+                        Array_At(P_INPUT_ARRAY, begin)
                     );
                 }
                 else {

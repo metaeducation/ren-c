@@ -775,9 +775,7 @@ Bounce Evaluator_Executor(Level* L)
     //                            ^-- x value was cached in infix lookahead
     //
     //    It used to not be a problem, when variables didn't just pop into
-    //    existence or have their caching states changed.  But INDEX_ATTACHED
-    //    and the various complexities involved with that means we have to
-    //    flush here if the symbols match.
+    //    existence.  Reconsidered in light of "emergence".  Review.
 
     set_void_in_spare: ///////////////////////////////////////////////////////
 
@@ -1729,8 +1727,8 @@ Bounce Evaluator_Executor(Level* L)
       //
       // To bypass the error, use GET/ANY.
 
-      case REB_QUASIFORM:
-        Derelativize(OUT, L_current, L_specifier);
+      case REB_QUASIFORM:  // do not Derelativize() !
+        Copy_Cell(OUT, L_current);
         QUOTE_BYTE(OUT) = ANTIFORM_0;
         break;
 
@@ -1741,9 +1739,9 @@ Bounce Evaluator_Executor(Level* L)
       // reduced case of a single ' produces a void.
       //
 
-      case REB_QUOTED:
-        Derelativize(OUT, L_current, L_specifier);
-        Unquotify(OUT, 1);  // asserts it is not an antiform
+      case REB_QUOTED:  // do not Derelativize() !
+        Copy_Cell(OUT, L_current);
+        Unquotify(OUT, 1);
         break;
 
 

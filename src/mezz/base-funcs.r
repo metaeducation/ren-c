@@ -101,7 +101,7 @@ func: func* [
     ; !!! General API control to set the file and line on blocks is another
     ; possibility, but since it's so new, we'd rather get experience first.
     ;
-    new-spec: clear copy spec
+    new-spec: clear copy spec  ; also inherits binding
 
     new-body: null
     statics: null
@@ -127,18 +127,17 @@ func: func* [
             [false]
         ])
     |
-        other: <here>
-        group! (
+        set other: group! (
             if not var [
                 fail [
                     ; <where> spec
                     ; <near> other
-                    "Default value not paired with argument:" (mold other.1)
+                    "Default value not paired with argument:" (mold other)
                 ]
             ]
-            defaulters: default [copy []]
+            defaulters: default [inside body copy '[]]
             append defaulters spread compose [
-                (var): default '(eval other.1)  ; !!! meta?
+                (var): default (meta eval inside spec other)
             ]
         )
     |
@@ -149,9 +148,9 @@ func: func* [
         try some [set var: word! set other: try group! (
             append new-spec var
             if other [
-                defaulters: default [copy []]
+                defaulters: default [inside body copy '[]]
                 append defaulters spread compose [  ; always sets
-                    (var): (meta eval other)
+                    (var): (meta eval inside spec other)
                 ]
             ]
         )]
@@ -175,14 +174,19 @@ func: func* [
                 ; Definitional returns need to be signaled even if FUNC, so
                 ; the FUNC* doesn't automatically generate one.
                 ;
-                if other = 'return [with-return: [<with> return]]
+                if other = 'return [with-return: '[<with> return]]
             )
         |
             text!  ; skip over as commentary
         ]
     |
+        ; For static variables to see each other, the GROUP!s can't have an
+        ; hardened context.  We ignore their binding here for now.
+        ;
+        ; https://forum.rebol.info/t/2132
+        ;
         '<static> (
-            statics: default [copy []]
+            statics: default [copy inside spec '[]]
             new-body: default [
                 copy/deep body
             ]
@@ -190,7 +194,7 @@ func: func* [
         try some [
             set var: word! (other: null) try set other: group! (
                 append statics (as set-word! var)
-                append statics (other else [the ~])
+                append statics ((bindable other) else '~)  ; !!! ignore binding
             )
         ]
         (var: null)
@@ -222,7 +226,7 @@ func: func* [
     if const? body [new-body: const new-body]
 
     return func* new-spec either defaulters [
-        append defaulters as group! any [new-body body]
+        append defaulters as group! bindable any [new-body body]
     ][
         any [new-body body]
     ]
@@ -731,17 +735,12 @@ meth: enfix func [
     :member [set-word! set-path!]
     spec [block!]
     body [block!]
-    /gather "Temporary compatibility tweak for METHOD (until synonymous)"
 ][
     let context: binding of member else [
         fail [member "must be bound to an ANY-CONTEXT! to use METHOD"]
     ]
     return set member runs bind (  ; !!! BIND doesn't take ACTION! as antiform
-        unrun apply :func [
-            compose [(spread spec) <in> (context)]
-            body
-            /gather gather
-        ]
+        func spec body
     ) context
 ]
 
@@ -877,7 +876,7 @@ raise: func [
         ; If no specific location specified, and error doesn't already have a
         ; location, make it appear to originate from the frame calling FAIL.
         ;
-        where: default [any [frame, binding of 'return]]
+        where: default [any [frame, binding of inside [] 'return]]
 
         set-location-of-error error where  ; !!! why is this native?
     ]

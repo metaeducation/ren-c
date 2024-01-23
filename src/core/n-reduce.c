@@ -396,8 +396,7 @@ static void Push_Composer_Level(
 ){
     Value(const*) adjusted = nullptr;
     if (Any_Sequence(arraylike)) {  // allow sequences [1]
-        Derelativize(out, arraylike, specifier);
-        adjusted = rebValue(Canon(AS), Canon(BLOCK_X), rebQ(out));
+        adjusted = rebValue(Canon(AS), Canon(BLOCK_X), rebQ(SPECIFIC(arraylike)));
     }
 
     Level* sub = Make_Level_At_Core(
@@ -584,7 +583,7 @@ Bounce Composer_Executor(Level* const L)
     const Cell* at = At_Level(L);
 
     if (not Any_Arraylike(at)) {  // won't substitute/recurse
-        Derelativize(PUSH(), at, L_specifier);  // keep newline flag
+        Copy_Relative_internal(PUSH(), at);  // keep newline flag
         goto handle_next_item;
     }
 
@@ -616,14 +615,14 @@ Bounce Composer_Executor(Level* const L)
 
         // compose [[(1 + 2)] (3 + 4)] => [[(1 + 2)] 7]  ; non-deep
         //
-        Derelativize(PUSH(), at, L_specifier);  // keep newline flag
+        Copy_Relative_internal(PUSH(), at);  // keep newline flag
         goto handle_next_item;
     }
 
     if (Is_Nulled(predicate))
         goto evaluate_group;
 
-    Derelativize(SPARE, match, match_specifier);
+    Copy_Cell(SPARE, match);
     Dequotify(SPARE);  // cast was needed because there may have been quotes
     HEART_BYTE(SPARE) = REB_GROUP;  // don't confuse with decoration
     if (not Is_Nulled(label))
@@ -735,14 +734,14 @@ Bounce Composer_Executor(Level* const L)
         const Cell* push_tail;
         const Cell* push = Cell_Array_At(&push_tail, OUT);
         if (push != push_tail) {
-            Derelativize(PUSH(), push, Cell_Specifier(OUT));
+            Copy_Relative_internal(PUSH(), push);
             if (Get_Cell_Flag(At_Level(L), NEWLINE_BEFORE))
                 Set_Cell_Flag(TOP, NEWLINE_BEFORE);  // first [4]
             else
                 Clear_Cell_Flag(TOP, NEWLINE_BEFORE);
 
             while (++push, push != push_tail)
-                Derelativize(PUSH(), push, Cell_Specifier(OUT));
+                Copy_Relative_internal(PUSH(), push);
         }
     }
     else {
@@ -774,7 +773,7 @@ Bounce Composer_Executor(Level* const L)
         Drop_Data_Stack_To(SUBLEVEL->baseline.stack_base);
         Drop_Level(SUBLEVEL);
 
-        Derelativize(PUSH(), At_Level(L), L_specifier);
+        Copy_Relative_internal(PUSH(), At_Level(L));
         // Constify(TOP);
         goto handle_next_item;
     }
@@ -859,6 +858,9 @@ DECLARE_NATIVE(compose)
 
     if (Is_Raised(OUT))  // sublevel was killed
         return OUT;
+
+    if (Any_Arraylike(OUT))
+        BINDING(OUT) = BINDING(v);
 
     return OUT;
 }}

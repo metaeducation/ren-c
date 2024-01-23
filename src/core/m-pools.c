@@ -591,10 +591,12 @@ Cell* Alloc_Pairing(Flags flags) {
 //  Copy_Pairing: C
 //
 Value(*) Copy_Pairing(const Cell* paired, Specifier* specifier, Flags flags) {
+    UNUSED(specifier);
+
     Cell* copy = Alloc_Pairing(flags);
 
-    Derelativize(copy, paired, specifier);
-    Derelativize(Pairing_Second(copy), Pairing_Second(paired), specifier);
+    Copy_Cell(copy, paired);
+    Copy_Cell(Pairing_Second(copy), Pairing_Second(paired));
 
     return SPECIFIC(copy);
 }

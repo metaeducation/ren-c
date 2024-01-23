@@ -929,10 +929,6 @@ void Get_Maybe_Fake_Action_Body(Sink(Value(*)) out, Value(const*) action)
         Init_Cell_Node1(out, maybe_fake_body);
         VAL_INDEX_RAW(out) = 0;
 
-        // Don't use INIT_SPECIFIER(), because it does not expect to get an
-        // inaccessible series.
-        //
-        BINDING(out) = &PG_Inaccessible_Stub;
         return;
     }
 

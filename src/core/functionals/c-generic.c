@@ -138,14 +138,6 @@ Array* Startup_Generics(const REBVAL *boot_generics)
     //
     Bind_Values_Set_Midstream_Shallow(head, tail, Lib_Context_Value);
 
-    // The above actually does bind the GENERIC word to the GENERIC native,
-    // since the GENERIC word is found in the top-level of the block.  But as
-    // with the natives, in order to process `foo: generic [x [integer!]]` the
-    // INTEGER! word must be bound to its datatype.  Deep bind the code in
-    // order to bind the words for these datatypes.
-    //
-    Bind_Values_Deep(head, tail, Lib_Context_Value);
-
     DECLARE_LOCAL (discarded);
     if (Do_Any_Array_At_Throws(discarded, boot_generics, SPECIFIED))
         panic (discarded);

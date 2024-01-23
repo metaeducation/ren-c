@@ -111,8 +111,8 @@
 #define SERIES_MASK_VARLIST \
     (NODE_FLAG_NODE | SERIES_FLAG_DYNAMIC \
         | FLAG_FLAVOR(VARLIST) \
-        | SERIES_FLAG_LINK_NODE_NEEDS_MARK  /* keysource */ \
-        | SERIES_FLAG_MISC_NODE_NEEDS_MARK  /* meta */)
+        | SERIES_FLAG_LINK_NODE_NEEDS_MARK  /* NextVirtual */ \
+        | SERIES_FLAG_MISC_NODE_NEEDS_MARK  /* Adjunct */)
 
 #define SERIES_MASK_KEYLIST \
     (NODE_FLAG_NODE  /* NOT always dynamic */ \

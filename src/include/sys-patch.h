@@ -83,12 +83,10 @@
         if (IS_LET(a) or IS_USE(a))
             return cast(Specifier*, a);  // virtual bind
 
-        // While an ANY-WORD! can be bound specifically to an arbitrary
-        // object, an ANY-ARRAY! only becomes bound specifically to frames.
-        // The keylist for a frame's context should come from a function's
-        // paramlist, which should have an ACTION! value in keylist[0]
-        //
-        assert(CTX_TYPE(cast(Context*, a)) == REB_FRAME);
+        assert(
+            CTX_TYPE(cast(Context*, a)) == REB_FRAME
+            or CTX_TYPE(cast(Context*, a)) == REB_MODULE
+        );
         return cast(Specifier*, a);
     }
 #endif
@@ -253,16 +251,9 @@ INLINE void Virtual_Bind_Patchify(
     Context* ctx,
     enum Reb_Kind kind
 ){
-    // Update array's binding.  Note that once virtually bound, mutating BIND
-    // operations might apepar to be ignored if applied to the block.  This
-    // makes CONST a good default...and MUTABLE can be used if people are
-    // not concerned and want to try binding it through the virtualized
-    // reference anyway.
-    //
     BINDING(any_array) = Make_Or_Reuse_Use(
         ctx,
         Cell_Specifier(any_array),
         kind
     );
-    Constify(any_array);
 }

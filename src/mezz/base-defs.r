@@ -318,7 +318,7 @@ run func* [
     while [<end> != set-word: take set-words] [
         type-name: copy as text! set-word
         change back tail of type-name "!"  ; change ? at tail to !
-        tester: unrun typechecker (get bind (as word! type-name) set-word)
+        tester: unrun typechecker (get inside lib (as word! type-name))
         set set-word runs tester
 
         set-adjunct tester make system.standard.action-adjunct [

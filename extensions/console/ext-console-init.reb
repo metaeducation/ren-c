@@ -218,8 +218,7 @@ export console!: make object! [
 
         === "ORDINARY" VALUES (^META v parameter means they get quoted) ===
 
-        assert [quoted? v]
-        set 'v unquote v  ; Avoid SET-WORD!--would cache action names as "v"
+        v: unquote v
 
         case [
             free? v [
@@ -244,7 +243,8 @@ export console!: make object! [
         else [
             ; print the first 20 lines of the first 2048 characters of mold
             ;
-            let pos: let molded: mold/limit get 'v 2048
+            let molded: mold/limit v 2048
+            let pos: molded
             repeat 20 [
                 pos: next (find pos newline else [break])
             ] then [  ; e.g. didn't break
@@ -288,15 +288,13 @@ export console!: make object! [
         return: [block!]
         b [block!]
     ][
-        ; By default we bind the code to system.contexts.user
-        ;
         ; See the Debug console skin for example of binding the code to the
         ; currently "focused" FRAME!, or this example on the forum of injecting
         ; the last value:
         ;
         ; https://forum.rebol.info/t/1071
 
-        return bind b system.contexts.user
+        return inside system.contexts.user b
     ]
 
     shortcuts: make object! compose/deep [
@@ -550,7 +548,7 @@ ext-console-impl: func [
         ;
         assert [not result]
         any [
-            unset? 'system.console
+            unset? inside [] 'system.console
             not system.console
         ] then [
             emit [start-console/skin (<*> ^ skin)]
@@ -804,7 +802,7 @@ ext-console-impl: func [
     ]
 
     code: (
-        transcode/where (delimit newline result) sys.contexts.user
+        transcode (delimit newline result)
     ) except error -> [
         ;
         ; If loading the string gave back an error, check to see if it
@@ -833,7 +831,7 @@ ext-console-impl: func [
                 ; *Note this is not running in a continuation at present*,
                 ; so the WRITE-STDOUT can only be done via the EMIT.
                 ;
-                emit [write-stdout unspaced [unclosed "\" _ _]]
+                emit [write-stdout unspaced [(<*> unclosed) "\" _ _]]
 
                 emit [reduce [  ; reduce will runs in sandbox
                     (<*> spread result)  ; splice previous inert literal lines
@@ -859,7 +857,7 @@ ext-console-impl: func [
         ;
         ; Shortcuts like `q => [quit]`, `d => [dump]`
         ;
-        if (binding of code.1) and (set? code.1) [
+        if (has sys.contexts.user code.1) and (set? inside code code.1) [
             ;
             ; Help confused user who might not know about the shortcut not
             ; panic by giving them a message.  Reduce noise for the casual
@@ -884,7 +882,7 @@ ext-console-impl: func [
     emit #unskin-if-halt  ; Ctrl-C during dialect hook is a problem
     emit [
         comment {not all users may want CONST result, review configurability}
-        as group! system.console.dialect-hook (<*> code)
+        as group! system.console.dialect-hook '(<*> code)
     ]
     return group!  ; a group RESULT should come back to HOST-CONSOLE
 ]

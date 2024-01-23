@@ -71,7 +71,7 @@
     )(
         a: b: c: null
         did all [
-            <z-result> = [a b @(first [c])]: test 1020
+            <z-result> = [a b @(inside [] first [c])]: test 1020
             a = 304
             b = <y-result>
             c = <z-result>

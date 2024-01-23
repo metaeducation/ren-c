@@ -228,24 +228,56 @@ DECLARE_NATIVE(bind)
 //
 //  "Returns a view of the input bound virtually to the context"
 //
-//      return: [<opt> any-word! any-array!]
-//      context [any-context!]
-//      value [<const> <maybe> any-word! any-array!]  ; QUOTED! support?
+//      return: [<opt> any-value!]
+//      context [any-context! any-array!]
+//      value [<maybe> any-value!]  ; QUOTED! support?
 //  ]
 //
 DECLARE_NATIVE(inside)
 {
     INCLUDE_PARAMS_OF_INSIDE;
 
-    Context* ctx = VAL_CONTEXT(ARG(context));
-    REBVAL *v = ARG(value);
+    Cell* v = ARG(value);
+    Value(*) context = ARG(context);
 
-    if (Any_Word(v))
-        fail ("ANY-WORD! lookup using IN is deprecated, use HAS");
+    Specifier* specifier;
+    if (Any_Context(context))
+        specifier = VAL_CONTEXT(context);
+    else {
+        assert(Any_Array(context));
+        specifier = BINDING(context);
+    }
 
-    assert(Any_Array(v));
-    Virtual_Bind_Deep_To_Existing_Context(v, ctx, nullptr, REB_WORD);
-    return COPY(v);
+    Derelativize(OUT, v, specifier);
+    return OUT;
+}
+
+
+//
+//  overbind: native [
+//
+//  "Add definitions from context to environment of value"
+//
+//      return: [<opt> any-value!]
+//      context [any-context!]
+//      value [<maybe> any-array!]  ; QUOTED! support?
+//  ]
+//
+DECLARE_NATIVE(overbind)
+{
+    INCLUDE_PARAMS_OF_OVERBIND;
+
+    Cell* v = ARG(value);
+    Value(*) context = ARG(context);
+
+    Copy_Cell(OUT, v);
+    Virtual_Bind_Deep_To_Existing_Context(
+        stable_OUT,
+        VAL_CONTEXT(context),
+        nullptr,
+        REB_WORD
+    );
+    return OUT;
 }
 
 
@@ -586,6 +618,33 @@ DECLARE_NATIVE(unbind)
 
 
 //
+//  bindable: native [
+//
+//  "Remove Tip Binding of a Value"
+//
+//      return: [any-array! any-word!]
+//      value [any-array! any-word!]
+//  ]
+//
+DECLARE_NATIVE(bindable)
+{
+    INCLUDE_PARAMS_OF_BINDABLE;
+
+    REBVAL *v = ARG(value);
+
+    if (Any_Word(v))
+        Unbind_Any_Word(v);
+    else {
+        assert(Any_Array(v));
+
+        BINDING(v) = UNBOUND;
+    }
+
+    return COPY(v);
+}
+
+
+//
 //  collect-words: native [
 //
 //  {Collect unique words used in a block (used for context construction)}
@@ -646,7 +705,7 @@ bool Get_Var_Push_Refinements_Throws(
     }
 
     if (Is_Void(var)) {
-        Init_Nulled(out);  // "blank in, null out" get variable convention
+        Init_Nulled(out);  // "void in, null out" get variable convention
         if (steps_out and steps_out != GROUPS_OK)
             Init_Nulled(unwrap(steps_out));
         return false;

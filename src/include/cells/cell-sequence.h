@@ -301,14 +301,16 @@ INLINE REBVAL *Try_Init_Any_Sequence_Pairlike_Core(
     const Cell* v2,
     Specifier* specifier  // assumed to apply to both v1 and v2
 ){
+    UNUSED(specifier);
+
     if (Is_Blank(v1))
         return Try_Leading_Blank_Pathify(
-            Derelativize(out, v2, specifier),
+            SPECIFIC(Copy_Relative_internal(out, v2)),
             kind
         );
 
     if (not Is_Valid_Sequence_Element(kind, v1)) {
-        Derelativize(out, v1, specifier);
+        Copy_Relative_internal(out, v1);
         return nullptr;
     }
 
@@ -316,7 +318,7 @@ INLINE REBVAL *Try_Init_Any_Sequence_Pairlike_Core(
     //
     enum Reb_Kind inner = VAL_TYPE(v1);
     if (Is_Blank(v2) and inner == REB_WORD) {
-        Derelativize(out, v1, specifier);
+        Copy_Relative_internal(out, v1);
         HEART_BYTE(out) = kind;
         return cast(REBVAL*, out);
     }
@@ -335,13 +337,13 @@ INLINE REBVAL *Try_Init_Any_Sequence_Pairlike_Core(
     }
 
     if (not Is_Valid_Sequence_Element(kind, v2)) {
-        Derelativize(out, v2, specifier);
+        Copy_Relative_internal(out, v2);
         return nullptr;
     }
 
     Cell* pairing = Alloc_Pairing(NODE_FLAG_MANAGED);
-    Derelativize(pairing, v1, specifier);
-    Derelativize(Pairing_Second(pairing), v2, specifier);
+    Copy_Relative_internal(pairing, v1);
+    Copy_Relative_internal(Pairing_Second(pairing), v2);
     Init_Pair(out, pairing);
     HEART_BYTE(out) = kind;
 

@@ -181,7 +181,7 @@ sqlform: func [
                 keep "("
                 for-next pos value [
                     if new-line? pos [keep newline]
-                    keep sqlform parameters :pos.1
+                    keep sqlform parameters inside value :pos.1
                 ]
                 if new-line? tail value [keep newline]
                 keep ")"
@@ -242,7 +242,7 @@ odbc-execute: func [
                     if new-line? pos [keep newline]
                 ]
                 is-first: false
-                keep sqlform parameters :pos.1
+                keep sqlform parameters inside query :pos.1
             ]
         ]
     ]

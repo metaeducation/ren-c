@@ -13,10 +13,10 @@
     <seta> = get noquote the '''''''a
 )(
     a: b: ~
-    set noquote first ['''''a] <seta>
-    set noquote first [''b] <setb>
+    set inside [] noquote first ['''''a] <seta>
+    set inside [] noquote first [''b] <setb>
     [<seta> <setb>] = collect [
-        reduce-each x [noquote 'a noquote '''''''b] [keep get x]
+        reduce-each x [noquote 'a noquote '''''''b] [keep get inside [] x]
     ]
 )
 
@@ -87,7 +87,11 @@
     word: ''''''''''a:
     w1: bind word o1
     w2: bind word o2
-    (0 = get noquote word) and (1 = get noquote w1) and (2 = get noquote w2)
+    all [
+        (0 = get noquote inside [] word)
+        (1 = get noquote w1)
+        (2 = get noquote w2)
+    ]
 )(
     foo: func [] [
         let a: 0
@@ -96,9 +100,11 @@
         let word: ''''''''''a:
         let w1: bind word o1
         let w2: bind word o2
-        return (0 = get noquote word)
-            and (1 = get noquote w1)
-            and (2 = get noquote w2)
+        return all [
+            (0 = get noquote inside [] word)
+            (1 = get noquote w1)
+            (2 = get noquote w2)
+        ]
     ]
     foo
 )

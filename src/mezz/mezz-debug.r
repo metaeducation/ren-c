@@ -36,7 +36,7 @@ verify: func [
         ; Using a meta-value here is a way of reacting to unstable isotopes,
         ; could also put that responsibility onto the access points.  Review.
         ;
-        [^/result']: evaluate/next conditions 'pos
+        [^/result']: evaluate/next conditions inside [] 'pos
         pos
     ][
         any [

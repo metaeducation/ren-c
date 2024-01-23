@@ -135,7 +135,7 @@ static void Append_Vars_To_Context_From_Group(REBVAL *context, REBVAL *block)
             break;  // fix bug#708
         }
         else
-            Derelativize(var, &word[1], Cell_Specifier(block));
+            Copy_Relative_internal(var, &word[1]);
     }
   }
 
@@ -616,12 +616,13 @@ Bounce MAKE_Context(
     assert(kind == REB_OBJECT or kind == REB_MODULE);
 
     if (kind == REB_MODULE) {
-        if (not Is_Blackhole(arg))
-            return RAISE("Currently only (MAKE MODULE! #) is allowed");
+        if (not Any_Array(arg))
+            return RAISE("Currently only (MAKE MODULE! any-array) is allowed");
 
         assert(not parent);
 
         Context* ctx = Alloc_Context_Core(REB_MODULE, 1, NODE_FLAG_MANAGED);
+        node_LINK(NextVirtual, ctx) = BINDING(arg);
         return Init_Context_Cell(OUT, REB_MODULE, ctx);
     }
 

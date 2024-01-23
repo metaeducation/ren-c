@@ -289,20 +289,18 @@ load: func [
 
     if not block? data [
         assert [match [binary! text!] data]  ; UTF-8
-        data: transcode/file/line data file 'line except e -> [return raise e]
+        data: (transcode/file/line data file inside [] 'line) except e -> [
+            return raise e
+        ]
     ]
 
-    ; Bind code to user context
+    ; !!! Once this would bind code to user context, now we're thinking of
+    ; code being unbound by default.  Should LOAD be binding?  Here we give it
+    ; its own module which inherits from lib.
 
-    all [
-        'unbound != type
-        'module != select maybe header 'type
-        not find maybe (select maybe header 'options) [unbound]
-    ] then [
-        data: intern* system.contexts.user data
-    ]
+    let mod: make module! inside system.contexts.lib '[]
 
-    return data
+    return inside mod data
 ]
 
 load-value: redescribe [
@@ -573,7 +571,7 @@ import*: func [
         args: (^ :args)  ; variable same name as field, trips up binding
     ]
 
-    if (set? 'script-pre-load-hook) and (match [file! url!] source) [
+    if (set? inside [] 'script-pre-load-hook) and (match [file! url!] source) [
         ;
         ; !!! It seems we could/should pass system.script here, and the
         ; filtering of source as something not to notify about would be the
@@ -621,7 +619,10 @@ import*: func [
     ; from the unfinished R3-Alpha module system, and its decade of atrophy
     ; that happened after that...
 
-    let [mod 'product' quitting]: module/into/file/line hdr code into file line
+    if not block? code [  ; review assumption of lib here (header guided?)
+        code: inside lib transcode/file/line code file line
+    ]
+    let [mod 'product' quitting]: module/into hdr code into
 
     ensure module! mod
 
@@ -673,8 +674,13 @@ export*: func [
         ] else [
             word: as word! left
         ]
-        return (
-            (maybe word): try take args
+        return (  ; can't append until after, if prev. definition used in expr
+            (
+                if word [  ; no "attached" state, must append word to get IN
+                    append where word
+                    word: inside where unbind word  ; maybe bound e.g. WHAT-DIR
+                ]
+            ): try take args
             elide if word [append exports word]
         )
     ]
@@ -687,7 +693,7 @@ export*: func [
     items: unmeta items
 
     while [not tail? items] [
-        val: get/any word: match word! items.1 else [
+        val: get/any inside items word: match word! items.1 else [
             fail ["EXPORT only accepts WORD! or WORD! [typeset], not" ^items.1]
         ]
         ; !!! notation for exporting antiforms?

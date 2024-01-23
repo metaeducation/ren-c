@@ -229,9 +229,9 @@ summarize-obj: func [
 
     return collect [
         for-each [word val] obj [
-            if unset? 'val [continue]  ; don't consider unset fields
+            if unset? inside [] 'val [continue]  ; don't consider unset fields
 
-            let kind: kind of noantiform get/any 'val
+            let kind: kind of noantiform get/any inside [] 'val
 
             let str: if kind = object! [
                 spaced [word, form words of val]
@@ -256,7 +256,7 @@ summarize-obj: func [
                 fail 'pattern
             ]
 
-            let desc: description-of noantiform get/any 'val
+            let desc: description-of noantiform get/any inside [] 'val
             if desc [
                 if 48 < length of desc [
                     desc: append copy/part desc 45 "..."

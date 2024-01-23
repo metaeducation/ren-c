@@ -603,13 +603,13 @@ INLINE bool Is_Relative(const Cell* v) {
 //
 
 INLINE Value(*) SPECIFIC(const_if_c Cell* v) {
-    assert(Is_Specific(v));
+   /* assert(Is_Specific(v)); */
     return x_cast(ValueT*, v);
 }
 
 #if CPLUSPLUS_11
     INLINE Value(const*) SPECIFIC(const Cell* v) {
-        assert(Is_Specific(v));
+/*        assert(Is_Specific(v)); */
         return c_cast(ValueT*, v);
     }
 
@@ -722,19 +722,6 @@ INLINE Cell* Copy_Cell_Untracked(
     out->payload = v->payload;  // before init binding anachronism [1]
 
     out->extra = v->extra;  // binding or inert bits
-
-    if (Is_Relative(v)) {
-        //
-        // You shouldn't be getting relative values out of cells that are
-        // actually API handles.
-        //
-        assert(not (v->header.bits & NODE_FLAG_ROOT));
-
-        // However, you should not write relative bits into API destinations,
-        // not even hypothetically.  The target should not be an API cell.
-        //
-        assert(not (out->header.bits & (NODE_FLAG_ROOT | NODE_FLAG_MANAGED)));
-    }
 
     return out;
 }

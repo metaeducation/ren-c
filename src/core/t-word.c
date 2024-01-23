@@ -326,41 +326,6 @@ REBTYPE(Word)
             if (not Did_Get_Binding_Of(OUT, v))
                 return nullptr;
 
-            if (not Is_Module(OUT))  // ordinary contexts don't have "attach"
-                return OUT;
-
-            if (VAL_CONTEXT(OUT) == Lib_Context)
-                return OUT;  // lib context doesn't inherit
-
-            // BINDING OF answers just ~attached~ if it's a module and there
-            // is no variable instance in the module.  Hack that together for
-            // the moment.
-            //
-            REBVAL *var = MOD_VAR(
-                VAL_CONTEXT(OUT),
-                Cell_Word_Symbol(v),
-                true
-            );
-            if (var)
-                return OUT;  // found variable actually in module.
-
-            if (MOD_VAR(Lib_Context, Cell_Word_Symbol(v), true))
-                return Init_Quasi_Word(OUT, Canon(INHERITED));
-
-            return Init_Quasi_Word(OUT, Canon(ATTACHED)); }
-
-          case SYM_ATTACH: {  // hack it up...
-            if (not IS_WORD_BOUND(v))
-                return nullptr;
-
-            if (CTX_TYPE(VAL_WORD_CONTEXT(v)) == REB_MODULE) {
-                if (MOD_VAR(VAL_WORD_CONTEXT(v), Cell_Word_Symbol(v), true))
-                    return Copy_Cell(OUT, CTX_ARCHETYPE(VAL_WORD_CONTEXT(v)));
-            }
-
-            if (not Did_Get_Binding_Of(OUT, v))
-                assert(!"Did_Get_Binding_Of() should have worked.");
-
             return OUT; }
 
           default:

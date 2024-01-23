@@ -1048,9 +1048,10 @@ static bool Run_Va_Throws(
 
     Feed* feed = Make_Variadic_Feed(
         p, vaptr,
-        Get_Context_From_Stack(),
         FEED_MASK_DEFAULT
     );
+
+    mutable_FEED_SPECIFIER(feed) = Get_Context_From_Stack();
 
     Level* L = Make_Level(feed, flags);
     L->executor = &Array_Executor;
@@ -1133,9 +1134,10 @@ bool RL_rebRunCoreThrows(
 ){
     Feed* feed = Make_Variadic_Feed(
         p, vaptr,
-        Get_Context_From_Stack(),
         FEED_MASK_DEFAULT
     );
+
+    mutable_FEED_SPECIFIER(feed) = Get_Context_From_Stack();
 
     Level* L = Make_Level(feed, flags);
     Push_Level(out, L);
@@ -1185,12 +1187,6 @@ REBVAL *RL_rebValue(const void *p, va_list *vaptr)
 //
 // Just scans the source given into a BLOCK! without executing it.
 //
-// 1. This uses whatever context is currently considered "active" on the
-//    stack, which is consistent with the general behavior of the API.  It's
-//    all being juggled around right now, but see Scan_UTF8_Managed() for
-//    a non-variadic entry point to scanning that is related.
-//
-//
 REBVAL *RL_rebTranscodeInto(
     REBVAL *out,
     const void *p, va_list *vaptr
@@ -1199,7 +1195,6 @@ REBVAL *RL_rebTranscodeInto(
 
     Feed* feed = Make_Variadic_Feed(
         p, vaptr,
-        Get_Context_From_Stack(),  // No context parameter [1]
         FEED_MASK_DEFAULT
     );
     Add_Feed_Reference(feed);
@@ -1214,10 +1209,18 @@ REBVAL *RL_rebTranscodeInto(
 
     Release_Feed(feed);  // Note: exhausting feed takes care of the va_end()
 
-    return Init_Block(
+    Init_Block(
         out,
         Pop_Stack_Values_Core(base, NODE_FLAG_MANAGED)
     );
+
+    Virtual_Bind_Deep_To_Existing_Context(
+        out,
+        Get_Context_From_Stack(),
+        nullptr,
+        REB_WORD
+    );
+    return out;
 }
 
 

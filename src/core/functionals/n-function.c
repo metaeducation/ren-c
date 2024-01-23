@@ -85,8 +85,8 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// 1. FUNC(TION) evaluates into the SPARE cell, because the body result is
-//    never used as a return value.  Only RETURN can give non-"trash".
+// 1. The body result is never used as a return value.  Only RETURN can give
+//    non-"trash".
 //
 // 2. If no RETURN statement is given, the result is trash, and typechecking
 //    is performed to make sure trash was a legitimate return.  This has a
@@ -115,7 +115,7 @@ Bounce Func_Dispatcher(Level* const L)
 
     Details* details = Phase_Details(PHASE);
     Cell* body = Array_At(details, IDX_DETAILS_1);  // code to run
-    assert(Is_Block(body) and Is_Relative(body) and VAL_INDEX(body) == 0);
+    assert(Is_Block(body) and VAL_INDEX(body) == 0);
 
     assert(ACT_HAS_RETURN(PHASE));  // all FUNC have RETURN
     assert(KEY_SYM(ACT_KEYS_HEAD(PHASE)) == SYM_RETURN);
@@ -132,11 +132,16 @@ Bounce Func_Dispatcher(Level* const L)
 
     STATE = ST_FUNC_BODY_EXECUTING;
 
-    assert(Is_Fresh(SPARE));
+    Copy_Cell(SPARE, body);
+    node_LINK(NextVirtual, L->varlist) = Cell_Specifier(body);
+    INIT_SPECIFIER(SPARE, L->varlist);
+
+    assert(Is_Fresh(OUT));
     return CONTINUE_CORE(
-        SPARE,  // body evaluative result discarded [1]
+        OUT,  // body evaluative result discarded [1]
         LEVEL_MASK_NONE,  // no DISPATCHER_CATCHES, RETURN is responsible
-        SPC(L->varlist), body
+        SPECIFIED,
+        SPARE
     );
 
 } body_finished_without_returning: {  ////////////////////////////////////////
@@ -177,7 +182,7 @@ Bounce Func_Dispatcher(Level* const L)
 //
 //     return: lambda
 //         [{Returns a value from a function.} ^value [any-atom?]]
-//         [unwind/with (binding of 'return) unmeta value]
+//         [unwind/with (binding of inside [] 'return) unmeta value]
 //     ]
 //     (body goes here)
 //
@@ -260,11 +265,11 @@ Phase* Make_Interpreted_Action_May_Fail(
     // executing the interpreted code.
     //
     Details* details = Phase_Details(a);
-    Cell* rebound = Init_Relative_Block(
+    Cell* rebound = Init_Block(
         Array_At(details, IDX_NATIVE_BODY),
-        a,
         copy
     );
+    INIT_SPECIFIER(rebound, Cell_Specifier(body));
 
     // Capture the mutability flag that was in effect when this action was
     // created.  This allows the following to work:

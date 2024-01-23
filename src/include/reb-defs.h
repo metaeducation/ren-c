@@ -265,8 +265,7 @@ typedef struct rebol_time_fields {
 
 enum Reb_Attach_Mode {
     ATTACH_READ,
-    ATTACH_WRITE,
-    ATTACH_COPY
+    ATTACH_WRITE
 };
 
 enum act_modify_mask {

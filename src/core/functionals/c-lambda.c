@@ -64,13 +64,6 @@ Bounce Lambda_Dispatcher(Level* const L)
 //
 // 1. We have to use Make_Or_Reuse_Use() here, because it could be the case
 //    that a higher level wrapper used the frame and virtually bound it.
-//
-// 2. Currently, since we are evaluating the block with its own virtual
-//    binding being taken into account, using that block's binding as the
-//    `next` (Cell_Specifier(block)) means it's redundant when creating the
-//    feed, since it tries to apply this specifier on top of that *again*.
-//    The merging notices the redundancy and doesn't create a new specifier
-//    which is good...but this is still inefficient.  This all needs review.
 {
     USE_LEVEL_SHORTHANDS (L);
 
@@ -84,15 +77,18 @@ Bounce Lambda_Dispatcher(Level* const L)
 
     Specifier* specifier = Make_Or_Reuse_Use(  // may reuse [1]
         cast(Context*, L->varlist),
-        Cell_Specifier(block),  // redundant with feed [2]
+        Cell_Specifier(block),
         REB_WORD
     );
+
+    Copy_Cell(SPARE, block);
+    INIT_SPECIFIER(SPARE, specifier);
 
     return DELEGATE_CORE(
         OUT,
         LEVEL_MASK_NONE,
-        specifier,  // block's specifier
-        block
+        SPECIFIED,
+        SPARE
     );
 }
 
@@ -110,15 +106,19 @@ Bounce Lambda_Unoptimized_Dispatcher(Level* const L)
 
     Details* details = Phase_Details(PHASE);
     Cell* body = Array_At(details, IDX_DETAILS_1);  // code to run
-    assert(Is_Block(body) and Is_Relative(body) and VAL_INDEX(body) == 0);
+    assert(Is_Block(body) and VAL_INDEX(body) == 0);
 
     Force_Level_Varlist_Managed(L);
+
+    Copy_Cell(SPARE, body);
+    node_LINK(NextVirtual, L->varlist) = Cell_Specifier(body);
+    INIT_SPECIFIER(SPARE, L->varlist);
 
     return DELEGATE_CORE(
         OUT,  // output
         LEVEL_MASK_NONE,  // flags
-        SPC(L->varlist),  // branch specifier
-        body  // branch
+        SPECIFIED,  // branch specifier
+        SPARE  // branch
     );
 }
 

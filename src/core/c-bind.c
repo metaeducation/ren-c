@@ -279,98 +279,6 @@ Stub* Make_Let_Patch(
 
 
 //
-//  Merge_Patches_May_Reuse: C
-//
-// This routine will merge virtual binding patches, returning one where the
-// child is at the beginning of the chain.  This will preserve the child's
-// frame resolving context (if any) that terminates it.
-//
-// If the returned chain manages to reuse an existing case, then the result
-// will have ARRAY_FLAG_PATCH_REUSED set.  This can inform higher levels of
-// whether it's worth searching their patchlist or not...as newly created
-// patches can't appear in their prior create list.
-//
-Stub* Merge_Patches_May_Reuse(
-    Stub* parent,
-    Stub* child
-){
-    assert(IS_USE(parent) or IS_LET(parent));
-    assert(IS_USE(child) or IS_LET(child));
-
-    // Case of already incorporating.  Came up with:
-    //
-    //    1 then x -> [2 also y -> [3]]
-    //
-    // A virtual link for Y is added on top of the virtual link for X that
-    // resides on the [3] block.  But then feed generation for [3] tries to
-    // apply the Y virtual link again.  !!! Review if that's just inefficient.
-    //
-    if (NextVirtual(parent) == child) {
-        Set_Subclass_Flag(USE, parent, REUSED);
-        return parent;
-    }
-
-    // If we get to the end of the merge chain and don't find the child, then
-    // we're going to need a patch that incorporates it.
-    //
-    Stub* next;
-    bool was_next_reused;
-    if (NextVirtual(parent) == nullptr or IS_VARLIST(NextVirtual(parent))) {
-        next = child;
-        was_next_reused = true;
-    }
-    else {
-        next = Merge_Patches_May_Reuse(NextVirtual(parent), child);
-        if (IS_USE(next))
-            was_next_reused = Get_Subclass_Flag(USE, next, REUSED);
-        else {
-            assert(IS_LET(next));
-            was_next_reused = false;
-        }
-    }
-
-    // If we have to make a new patch due to non-reuse, then we cannot make
-    // one out of a LET, since the patch *is* the variable.  It's actually
-    // uncommon for this to happen, but here's an example of how to force it:
-    //
-    //     block1: do [let x: 10, [x + y]]
-    //     block2: do compose/deep [let y: 20, [(block1)]]
-    //     30 = do first block2
-    //
-    // So we have to make a new patch that points to the LET, or promote it
-    // (using node-identity magic) into an object.  We point at the LET.
-    //
-    Stub* binding;
-    enum Reb_Kind kind;
-    if (IS_LET(parent)) {
-        binding = parent;
-
-        // !!! LET bindings do not have anywhere to put the subclass info of
-        // whether they only apply to SET-WORD!s or things like that, so they
-        // are always assumed to be "universal bindings".  More granular
-        // forms of LET would need to get more bits somehow...either by
-        // being a different "flavor" or by making a full object.  We might
-        // have just gone ahead and done that here, but having to make an
-        // object would bloat things considerably.  Try allowing LET patches
-        // to act as the storage to point at by other patches for now.
-        //
-        kind = REB_WORD;
-    }
-    else {
-        binding = BINDING(Stub_Cell(parent));
-        kind = VAL_TYPE(Stub_Cell(parent));
-    }
-
-    return Make_Use_Core(
-        binding,
-        next,
-        kind,
-        was_next_reused
-    );
-}
-
-
-//
 //  Get_Word_Container: C
 //
 // Find the context a word is bound into.  This must account for the various
@@ -386,78 +294,191 @@ Stub* Merge_Patches_May_Reuse(
 // failure mode while it's running...even if the context is inaccessible or
 // the word is unbound.  Errors should be raised by callers if applicable.
 //
+// 1. We want to continue the next_virtual loop from inside sub-loops, which
+//    means we need a `goto` and not a `continue`.  But putting the goto at
+//    the end of the loop would jump over variable initializations.  Stylizing
+//    this way makes it work without a warning.
+//
+// 2. !!! One original goal with Sea of Words was to enable something like
+//    JavaScript's "strict mode", to prevent writing to variables that had not
+//    been somehow previously declared.  However, that is a bit too ambitious
+//    for a first rollout...as just having the traditional behavior of "any
+//    assignment works" is something people are used to.  Don't do it for the
+//    Lib_Context (so mezzanine is still guarded) but as a first phase, permit
+//    the "emergence" of any variable that is attached to a module.
+//
+// 3. RELATIVE BINDING: The word was made during a deep copy of the block
+//    that was given as a function's body, and stored a reference to that
+//    ACTION! as its binding.  To get a variable for the word, we must
+//    find the right function call on the stack (if any) for the word to
+//    refer to (the FRAME!)
+//
+//    We can only check for a match of the underlying function.  If we checked
+//    for an exact match, then the same function body could not be repurposed
+//    for dispatch e.g. in copied, hijacked, or adapted code, because the
+//    identity of the derived function would not match up with the body it
+//    intended to reuse.
+//
+// 4. !!! FOR-EACH uses the slots in an object to count how many arguments
+//    there are...and if a slot is reusing an existing variable it holds that
+//    variable.  This ties into general questions of hiding (same bit).  Don't
+//    count it as a hit.
+//
 Option(Series*) Get_Word_Container(
     REBLEN *index_out,
     const Cell* any_word,
-    Specifier* specifier,
+    Specifier* specifier_in,
     enum Reb_Attach_Mode mode
 ){
     Corrupt_If_Debug(*index_out);  // corrupt index to make sure it gets set
 
-    Series* binding = VAL_WORD_BINDING(any_word);
-
-    if (specifier == SPECIFIED or not (IS_LET(specifier) or IS_USE(specifier)))
-        goto not_virtually_bound;
-
-  blockscope {
-    //
-    // There was caching to assist with this previously...but it was complex
-    // and needs to be rethought.  Hence we have no way of knowing if
-    // this word is overridden without doing a linear search.  Do it
-    // and then save the hit or miss information in the word for next use.
-    //
+    Series* binding = BINDING(any_word);
     const Symbol* symbol = Cell_Word_Symbol(any_word);
 
-    // !!! Virtual binding could use the bind table as a kind of next
-    // level cache if it encounters a large enough object to make it
-    // wortwhile?
-    //
-    do {
+    if (VAL_WORD_INDEX_U32(any_word) == INDEX_ATTACHED) {
+        //
+        // Variable may have popped into existence since the original attach.
+        //
+        Context* ctx = cast(Context*, binding);
+        REBVAL* var = MOD_VAR(ctx, symbol, true);
+        if (var) {
+            *index_out = INDEX_PATCHED;
+            return Singular_From_Cell(var);
+        }
+        if (mode != ATTACH_WRITE) {
+            *index_out = INDEX_ATTACHED;
+            return binding;
+        }
+        *index_out = INDEX_PATCHED;
+        var = Append_Context(ctx, symbol);
+        Finalize_Trash(var);
+        return Singular_From_Cell(var);
+    }
+
+    Specifier* specifier = specifier_in;
+
+    if (binding and not IS_DETAILS(binding)) {  // leave binding alone
+        *index_out = VAL_WORD_INDEX(any_word);
+        return binding;
+    }
+
+    Context* attach = nullptr;  // where to attach variable if not found
+
+    while (specifier) {
+        goto loop_body;  // avoid compiler warnings on `goto next_virtual` [1]
+
+      next_virtual:
+        specifier = NextVirtual(specifier);
+        continue;
+
+      loop_body:
+
+        if (IS_VARLIST(specifier)) {
+            Context* ctx = cast(Context*, specifier);
+
+            if (CTX_TYPE(ctx) == REB_MODULE) {
+                REBVAL *var = MOD_VAR(ctx, symbol, true);
+                if (var) {
+                    *index_out = INDEX_PATCHED;
+                    return Singular_From_Cell(var);
+                }
+
+                if (ctx == Lib_Context or ctx == Sys_Context)  // "strict"
+                    goto next_virtual;
+
+                if (mode == ATTACH_WRITE) {  // only write to first module
+                    *index_out = INDEX_PATCHED;
+                    var = Append_Context(ctx, symbol);
+                    Finalize_Trash(var);
+                    return Singular_From_Cell(var);
+                }
+
+                if (not attach)  // non-strict, allow later emergence
+                    attach = ctx;
+
+                goto next_virtual;
+            }
+
+            assert(CTX_TYPE(cast(Context*, specifier)) == REB_FRAME);
+
+            if (binding) {
+                assert(IS_DETAILS(binding));
+                Action* action = cast(Action*, binding);
+                if (Action_Is_Base_Of(action, CTX_FRAME_PHASE(ctx))) {  // [3]
+                    *index_out = VAL_WORD_INDEX(any_word);
+                    return CTX_VARLIST(ctx);
+                }
+            }
+
+          blockscope {
+            REBLEN len = Find_Symbol_In_Context(
+                CTX_ARCHETYPE(cast(Context*, specifier)),
+                symbol,
+                true
+            );
+            if (len != 0) {
+                *index_out = len;
+                return specifier;
+            }
+          }
+
+          blockscope {
+            Level* level = CTX_LEVEL_IF_ON_STACK(cast(Context*, specifier));
+            if (not level)
+                goto next_virtual;
+            Context* object = Level_Binding(level);
+            if (not object)
+                goto next_virtual;
+
+            REBLEN len = Find_Symbol_In_Context(
+                CTX_ARCHETYPE(object),
+                symbol,
+                true
+            );
+            if (len == 0)
+                goto next_virtual;
+
+            *index_out = len;
+            return object;
+          }
+        }
+
         if (IS_LET(specifier)) {
             if (INODE(LetSymbol, specifier) == symbol) {
                 *index_out = INDEX_PATCHED;
                 return specifier;
             }
-            goto skip_miss_patch;
+            goto next_virtual;
         }
 
         if (Is_Module(Stub_Cell(specifier))) {
             Context* mod = VAL_CONTEXT(Stub_Cell(specifier));
+
             REBVAL *var = MOD_VAR(mod, symbol, true);
             if (var) {
                 *index_out = INDEX_PATCHED;
                 return Singular_From_Cell(var);
             }
-            goto skip_miss_patch;
+            goto next_virtual;
         }
 
-        Stub* overbind;  // avoid goto-past-initialization warning
-        overbind = BINDING(Stub_Cell(specifier));
+        Stub* overbind = BINDING(Stub_Cell(specifier));
         if (not IS_VARLIST(overbind)) {  // a patch-formed LET overload
             if (INODE(LetSymbol, overbind) == symbol) {
                 *index_out = INDEX_PATCHED;
                 return overbind;
             }
-            goto skip_miss_patch;
+            goto next_virtual;
         }
 
         if (
             Is_Set_Word(Stub_Cell(specifier))
             and REB_SET_WORD != Cell_Heart(any_word)
         ){
-            goto skip_miss_patch;
+            goto next_virtual;
         }
 
-      blockscope {
         Context* overload = cast(Context*, overbind);
-
-        // !!! At one time, this would enumerate up to a "cached_len" which
-        // was the length of the object at the time of the virtual bind.
-        // However, that is unreliable (e.g. in AUGMENT scenarios) and did
-        // not really work.  A "rematch" with virtual binding is in the works,
-        // where all these ideas will be reviewed.
-        //
-        /* REBLEN cached_len = VAL_WORD_INDEX(Stub_Cell(specifier)); */
 
         REBLEN index = 1;
         const Key* key_tail;
@@ -466,190 +487,23 @@ Option(Series*) Get_Word_Container(
             if (KEY_SYMBOL(key) != symbol)
                 continue;
 
-            // !!! FOR-EACH uses the slots in an object to count how
-            // many arguments there are...and if a slot is reusing an
-            // existing variable it holds that variable.  This ties into
-            // general questions of hiding which is the same bit.  Don't
-            // count it as a hit.
-            //
             if (Get_Cell_Flag(CTX_VAR(overload, index), BIND_NOTE_REUSE))
-                break;
+                break;  // FOR-EACH uses context slots weirdly [4]
 
             *index_out = index;
             return CTX_VARLIST(overload);
         }
-      }
-      skip_miss_patch:
-        specifier = NextVirtual(specifier);
-    } while (
-        specifier and not IS_VARLIST(specifier)
-    );
 
-    // The linked list of specifiers bottoms out with either null or the
-    // varlist of the frame we want to bind relative values with.  So
-    // `specifier` should be set now.
-  }
-
-  not_virtually_bound: {
-
-    Context* c;
-
-    if (binding == UNBOUND)
-        return nullptr;  // once no virtual bind found, no binding is unbound
-
-    if (IS_LET(binding) or IS_PATCH(binding)) {  // points direct to variable
-        *index_out = INDEX_PATCHED;
-        return binding;
+        goto next_virtual;
     }
 
-    if (IS_VARLIST(binding)) {
-        //
-        // !!! Work in progress...shortcut that allows finding variables
-        // in Lib_Context, that is to be designed with a "force reified vs not"
-        // concept.  Idea would be (I guess) that a special form of mutable
-        // lookup would say "I want that but be willing to make it."
-        //
-        if (CTX_TYPE(cast(Context*, binding)) == REB_MODULE) {
-            const Symbol* symbol = Cell_Word_Symbol(any_word);
-            Stub* patch = MISC(Hitch, symbol);
-            if (Get_Subclass_Flag(SYMBOL, symbol, MISC_IS_BINDINFO))
-                patch = cast(Stub*, node_MISC(Hitch, patch));  // skip bindinfo
-
-            for (
-                ;
-                patch != symbol;
-                patch = cast(Stub*, node_MISC(Hitch, patch))
-            ){
-                if (INODE(PatchContext, patch) != binding)
-                    continue;
-
-                // Since this is now resolving to the context, update the
-                // cache in the word itself.  Don't do this for inherited
-                // variables, since if we hardened the reference to the
-                // inherited variable we'd not see an override if it came
-                // into existence in the actual context.
-                //
-                INIT_VAL_WORD_INDEX(m_cast(Cell*, any_word), INDEX_PATCHED);
-                BINDING(m_cast(Cell*, any_word)) = patch;
-
-                *index_out = 1;
-                return patch;
-            }
-
-            // !!! One original goal with Sea of Words was to enable something
-            // like JavaScript's "strict mode", to prevent writing to variables
-            // that had not been somehow previously declared.  However, that
-            // is a bit too ambitious for a first rollout...as just having the
-            // traditional behavior of "any assignment works" is something
-            // people are used to.  Don't do it for the Lib_Context (so
-            // mezzanine is still guarded) but as a first phase, permit the
-            // "emergence" of any variable that is attached to a module.
-            //
-            if (
-                mode == ATTACH_WRITE
-                and binding != Lib_Context
-                and binding != Sys_Context
-            ){
-                *index_out = INDEX_ATTACHED;
-                Value(*) var = Append_Context(cast(Context*, binding), symbol);
-                Finalize_Trash(var);
-                return Singular_From_Cell(var);
-            }
-
-            // non generic inheritance; inherit only from Lib for now
-            //
-            if (mode != ATTACH_READ or binding == Lib_Context)
-                return nullptr;
-
-            patch = MISC(Hitch, symbol);
-            if (Get_Subclass_Flag(SYMBOL, symbol, MISC_IS_BINDINFO))
-                patch = cast(Stub*, node_MISC(Hitch, patch));  // skip bindinfo
-
-            for (
-                ;
-                patch != symbol;
-                patch = cast(Stub*, node_MISC(Hitch, patch))
-            ){
-                if (INODE(PatchContext, patch) != Lib_Context)
-                    continue;
-
-                // We return it, but don't cache it in the cell.  Note that
-                // Derelativize() or other operations should not cache either
-                // as it would commit to the inherited version, never seeing
-                // derived overrides.
-                //
-                *index_out = INDEX_PATCHED;
-                return patch;
-            }
-
-            return nullptr;
-        }
-
-        // SPECIFIC BINDING: The context the word is bound to is explicitly
-        // contained in the `any_word` REBVAL payload.  Extract it, but check
-        // to see if there is an override via "DERIVED BINDING", e.g.:
-        //
-        //    o1: make object [a: 10 f: meth [] [print a]]
-        //    o2: make o1 [a: 20]
-        //
-        // O2 doesn't copy F's body, but its copy of the ACTION! cell in o2/f
-        // gets its ->binding to point at O2 instead of O1.  When o2/f runs,
-        // the frame stores that pointer, and we take it into account when
-        // looking up `a` here, instead of using a's stored binding directly.
-
-        c = cast(Context*, binding); // start with stored binding
-
-        if (specifier == SPECIFIED) {
-            //
-            // Lookup must be determined solely from bits in the value
-            //
-        }
-        else {
-            Series* f_binding = SPC_BINDING(specifier); // can't fail()
-            if (
-                f_binding
-                and Is_Overriding_Context(c, cast(Context*, f_binding))
-            ){
-                // The specifier binding overrides--because what's happening
-                // is that this cell came from a METHOD's body, where the
-                // particular ACTION! value cell triggering it held a binding
-                // of a more derived version of the object to which the
-                // instance in the method body refers.
-                //
-                c = cast(Context*, f_binding);
-            }
-        }
-    }
-    else {
-        assert(IS_DETAILS(binding));
-
-        // RELATIVE BINDING: The word was made during a deep copy of the block
-        // that was given as a function's body, and stored a reference to that
-        // ACTION! as its binding.  To get a variable for the word, we must
-        // find the right function call on the stack (if any) for the word to
-        // refer to (the FRAME!)
-
-      #if !defined(NDEBUG)
-        if (specifier == SPECIFIED) {
-            printf("Get_Context_Core on relative value without specifier\n");
-            panic (any_word);
-        }
-      #endif
-
-        c = cast(Context*, specifier);
-
-        // We can only check for a match of the underlying function.  If we
-        // checked for an exact match, then the same function body could not
-        // be repurposed for dispatch e.g. in copied, hijacked, or adapted
-        // code, because the identity of the derived function would not match
-        // up with the body it intended to reuse.
-        //
-        assert(Action_Is_Base_Of(cast(Action*, binding), CTX_FRAME_PHASE(c)));
+    if (attach) {
+        assert(mode == ATTACH_READ);
+        *index_out = INDEX_ATTACHED;
+        return attach;
     }
 
-    *index_out = VAL_WORD_INDEX(any_word);
-    return CTX_VARLIST(c);
-  }
+    return nullptr;
 }
 
 
@@ -674,7 +528,7 @@ DECLARE_NATIVE(let)
 //
 // 2. For convenience, the group can evaluate to a SET-BLOCK,  e.g.
 //
-//        block: just [x y]:
+//        block: inside [] '[x y]:
 //        (block): <whatever>  ; no real reason to prohibit this
 //
 //    But there are conflicting demands where we want `(thing):` equivalent
@@ -883,9 +737,11 @@ DECLARE_NATIVE(let)
               case REB_SET_WORD:
               case REB_META_WORD:
               case REB_THE_WORD: {
-                Derelativize(PUSH(), temp, temp_specifier);
+                Derelativize(PUSH(), temp, temp_specifier);  // !!! no derel
                 const Symbol* symbol = Cell_Word_Symbol(temp);
                 bindings = Make_Let_Patch(symbol, bindings);
+                VAL_WORD_INDEX_U32(TOP) = INDEX_PATCHED;
+                BINDING(TOP) = bindings;
                 break; }
 
               default:
@@ -956,12 +812,8 @@ DECLARE_NATIVE(let)
 
 } integrate_eval_bindings: {  ////////////////////////////////////////////////
 
-    Specifier* bindings = Cell_Specifier(bindings_holder);
-
-    if (L_specifier and IS_LET(L_specifier)) { // add bindings [7]
-        bindings = Merge_Patches_May_Reuse(L_specifier, bindings);
-        BINDING(bindings_holder) = bindings;
-    }
+    // !!! Currently, any bindings added during the eval are lost.
+    // Rethink this.
 
     L->feed->gotten = nullptr;  // invalidate next word's cache [8]
     goto update_feed_binding;
@@ -1067,9 +919,6 @@ void Clonify_And_Bind_Relative(
     if (C_STACK_OVERFLOWING(&relative))
         Fail_Stack_Overflow();
 
-    if (relative)
-        assert(not Is_Relative(v));  // when relativizing, v is not relative
-
     assert(flags & NODE_FLAG_MANAGED);
 
     // !!! Could theoretically do what COPY does and generate a new hijackable
@@ -1080,6 +929,10 @@ void Clonify_And_Bind_Relative(
     enum Reb_Kind heart = Cell_Heart_Unchecked(v);
 
     if (relative and Any_Wordlike(v)) {
+        //
+        // !!! Should only bind relative (e.g. "unbound but cached") or
+        // fully unbound.
+        //
         REBINT n = Get_Binder_Index_Else_0(unwrap(binder), Cell_Word_Symbol(v));
         if (n != 0) {
             //
@@ -1111,7 +964,6 @@ void Clonify_And_Bind_Relative(
                 NODE_FLAG_MANAGED
             );
             Init_Cell_Node1(v, copy);
-            INIT_SPECIFIER(v, try_unwrap(relative));
 
             deep = copy;
             deep_tail = Pairing_Tail(copy);
@@ -1120,7 +972,7 @@ void Clonify_And_Bind_Relative(
             Array* copy = Copy_Array_At_Extra_Shallow(
                 Cell_Array(v),
                 0,  // !!! what if VAL_INDEX() is nonzero?
-                Cell_Specifier(v),
+                SPECIFIED,  // !!! Don't derelativize
                 0,
                 NODE_FLAG_MANAGED
             );
@@ -1133,13 +985,9 @@ void Clonify_And_Bind_Relative(
             if (Any_Sequence_Kind(heart))
                 Freeze_Array_Shallow(copy);
 
-            // !!! Technically speaking it is not necessary for an array to
-            // be marked relative if it doesn't contain any relative words
-            // under it.  However, for uniformity in the near term, it's
-            // easiest to debug if there is a clear mark on arrays that are
-            // part of a deep copy of a function body either way.
-            //
-            INIT_SPECIFIER(v, try_unwrap(relative));
+            // !!! At one point, arrays were marked relative as well as the
+            // words in function bodies.  Now it's needed to consider them
+            // to be unbound most of the time.
 
             deep = Array_Head(copy);
             deep_tail = Array_Tail(copy);
@@ -1155,7 +1003,7 @@ void Clonify_And_Bind_Relative(
         if (deep and (deep_types & FLAGIT_KIND(heart))) {
             for (; deep != deep_tail; ++deep)
                 Clonify_And_Bind_Relative(
-                    SPECIFIC(deep),
+                    deep,
                     flags,
                     deep_types,
                     binder,
@@ -1212,7 +1060,7 @@ Array* Copy_And_Bind_Relative_Deep_Managed(
   blockscope {
     const Array* original = Cell_Array(body);
     REBLEN index = VAL_INDEX(body);
-    Specifier* specifier = Cell_Specifier(body);
+   /* Specifier* specifier = Cell_Specifier(body); */
     REBLEN tail = Cell_Series_Len_At(body);
     assert(tail <= Array_Len(original));
 
@@ -1234,7 +1082,7 @@ Array* Copy_And_Bind_Relative_Deep_Managed(
     REBLEN count = 0;
     for (; count < len; ++count, ++dest, ++src) {
         Clonify_And_Bind_Relative(
-            Derelativize(dest, src, specifier),
+            Copy_Cell(dest, src),
             flags | NODE_FLAG_MANAGED,
             deep_types,
             &binder,
@@ -1640,49 +1488,6 @@ void Virtual_Bind_Deep_To_Existing_Context(
 }
 
 
-void Bind_Nonspecifically(Cell* head, const Cell* tail, Context* context)
-{
-    Cell* v = head;
-    for (; v != tail; ++v) {
-        if (Any_Arraylike(v)) {
-            const Cell* sub_tail;
-            Cell* sub_head = Cell_Array_At_Mutable_Hack(&sub_tail, v);
-            Bind_Nonspecifically(sub_head, sub_tail, context);
-        }
-        else if (Any_Wordlike(v)) {
-            //
-            // Give context but no index; this is how we attach to modules.
-            //
-            BINDING(v) = context;
-            INIT_VAL_WORD_INDEX(v, INDEX_ATTACHED);  // may be quoted
-        }
-    }
-}
-
-
-//
-//  intern*: native [
-//      {Overwrite all bindings of a block deeply}
-//
-//      return: [block!]
-//      where [module!]
-//      data [block!]
-//  ]
-//
-DECLARE_NATIVE(intern_p)
-{
-    INCLUDE_PARAMS_OF_INTERN_P;
-
-    assert(Is_Block(ARG(data)));
-
-    const Cell* tail;
-    Cell* head = Cell_Array_At_Mutable_Hack(&tail, ARG(data));
-    Bind_Nonspecifically(head, tail, VAL_CONTEXT(ARG(where)));
-
-    return COPY(ARG(data));
-}
-
-
 #if DEBUG
 
 //
@@ -1693,13 +1498,38 @@ void Assert_Cell_Binding_Valid_Core(NoQuote(const Cell*) cell)
     Stub* binding = x_cast(Stub*, cell->extra.Binding);
     if (not binding)
         return;
-    assert(Is_Node_Managed(binding));
 
-    if (HEART_BYTE(cell) == REB_FRAME) {
+    enum Reb_Kind heart = Cell_Heart_Unchecked(cell);
+
+    assert(Is_Node(binding));
+    assert(Is_Node_Managed(binding));
+    assert(Is_Node_A_Stub(binding));
+    assert(Not_Node_Free(binding));
+
+    if (heart == REB_FRAME) {
         assert(IS_VARLIST(binding));  // actions/frames bind to contexts only
         return;
     }
 
+    if (IS_LET(binding)) {
+        if (Any_Word_Kind(heart))
+            assert(VAL_WORD_INDEX_U32(cell) == INDEX_PATCHED);
+        return;
+    }
+
+    if (
+        IS_VARLIST(binding)
+        and CTX_TYPE(cast(Context*, binding)) == REB_MODULE
+    ){
+        if (not (
+            Any_Array_Kind(heart)
+            or Any_Sequence_Kind(heart)
+            or heart == REB_COMMA  // feed cells, use for specifier ATM
+        )){
+            assert(Any_Word_Kind(heart));
+            assert(VAL_WORD_INDEX_U32(cell) == INDEX_ATTACHED);
+        }
+    }
 }
 
 #endif

@@ -101,18 +101,9 @@
         do: func [source] [throw <override>]
 
         emulate: func [source [block!] <local> rebound] [
-            this: attach of 'any-variable-in-this-module
             assert ['do = first source]
-            assert [this = binding of first source]
 
-            ; BINDING OF doesn't account for virtual binding.  If the answer
-            ; is too convoluted to use reasonably, it should probably say
-            ; something like ~virtual~ back.
-            ;
-            rebound: inside lib source
-            ; assert [this <> binding of first source]
-            ; assert [lib = binding of first source]
-
+            rebound: inside lib bindable source
             return lib.do rebound
         ]
 

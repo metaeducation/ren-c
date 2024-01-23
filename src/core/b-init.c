@@ -542,18 +542,22 @@ static void Init_System_Object(
     Init_Object(force_Lib(SYSTEM), system);
     Init_Object(force_Lib(SYS), system);
 
-    Bind_Values_Deep(spec_head, spec_tail, Lib_Context_Value);
+    DECLARE_STABLE (sysobj_spec_virtual);
+    Copy_Cell(sysobj_spec_virtual, boot_sysobj_spec);
 
-    // Bind it so CONTEXT native will work (only used at topmost depth)
-    //
-    Bind_Values_Shallow(spec_head, spec_tail, CTX_ARCHETYPE(system));
+    Virtual_Bind_Deep_To_Existing_Context(
+        sysobj_spec_virtual,
+        system,
+        nullptr,  // !!! no binder made at present
+        REB_WORD  // all internal refs are to the object
+    );
 
-    // Evaluate the block (will eval CONTEXTs within).  Expects void result.
+    // Evaluate the block (will eval CONTEXTs within).
     //
     DECLARE_LOCAL (result);
-    if (Do_Any_Array_At_Throws(result, boot_sysobj_spec, SPECIFIED))
+    if (Do_Any_Array_At_Throws(result, sysobj_spec_virtual, SPECIFIED))
         panic (result);
-    if (not Is_Anti_Word_With_Id(result, SYM_DONE))
+    if (not Is_Anti_Word_With_Id(result, SYM_DONE))  // ~done~ sanity check
         panic (result);
 
     // Init_Action_Adjunct_Shim() made Root_Action_Adjunct as a bootstrap hack
@@ -772,8 +776,7 @@ void Startup_Core(void)
     Array* boot_array = Scan_UTF8_Managed(
         tmp_boot,
         utf8,
-        utf8_size,
-        Lib_Context  // used by Base + Mezzanine, overruled in SYS.UTIL
+        utf8_size
     );
     Drop_GC_Guard(tmp_boot);
     Push_GC_Guard(boot_array); // managed, so must be guarded
@@ -813,12 +816,14 @@ void Startup_Core(void)
     // boot->natives is from the automatically gathered list of natives found
     // by scanning comments in the C sources for `native: ...` declarations.
     //
+    INIT_SPECIFIER(&boot->natives, Lib_Context);
     Array* natives_catalog = Startup_Natives(SPECIFIC(&boot->natives));
     Manage_Series(natives_catalog);
     Push_GC_Guard(natives_catalog);
 
     // boot->generics is the list in %generics.r
     //
+    INIT_SPECIFIER(&boot->generics, Lib_Context);
     Array* generics_catalog = Startup_Generics(SPECIFIC(&boot->generics));
     Manage_Series(generics_catalog);
     Push_GC_Guard(generics_catalog);
@@ -828,6 +833,7 @@ void Startup_Core(void)
     Context* errors_catalog = Startup_Errors(SPECIFIC(&boot->errors));
     Push_GC_Guard(errors_catalog);
 
+    INIT_SPECIFIER(&boot->sysobj, Lib_Context);
     Init_System_Object(
         SPECIFIC(&boot->sysobj),
         datatypes_catalog,
@@ -889,11 +895,12 @@ void Startup_Core(void)
 
     rebElide(
         //
-        // Code is already interned to Lib_Context by TRANSCODE.  Create
-        // actual variables for top-level SET-WORD!s only, and run.
+        // Create actual variables for top-level SET-WORD!s only, and run.
         //
         "bind/only/set", &boot->base, Lib_Context_Value,
-        "do", &boot->base  // ENSURE not available yet (but returns blank)
+        "do inside", Lib_Context_Value, rebQ(&boot->base)
+        //
+        // Note: ENSURE not available yet.
     );
 
   //=//// SYSTEM.UTIL STARTUP /////////////////////////////////////////////=//
@@ -910,6 +917,7 @@ void Startup_Core(void)
     //  Better was to say SYS was just an abbreviation for SYSTEM.)
 
     Context* util = Alloc_Context_Core(REB_MODULE, 1, NODE_FLAG_MANAGED);
+    node_LINK(NextVirtual, util) = Lib_Context;
     ensure(nullptr, Sys_Util_Module) = Alloc_Value();
     Init_Context_Cell(Sys_Util_Module, REB_MODULE, util);
     ensure(nullptr, Sys_Context) = VAL_CONTEXT(Sys_Util_Module);
@@ -921,10 +929,8 @@ void Startup_Core(void)
         //
         "sys.util:", Sys_Util_Module,
 
-        "intern* sys.util", &boot->system_util,
-
         "bind/only/set", &boot->system_util, Sys_Util_Module,
-        "if not equal? '~done~ ^ do", &boot->system_util, "[fail {sys.util}]",
+        "if not equal? '~done~ ^ do inside", Sys_Util_Module, rebQ(&boot->system_util), "[fail {sys.util}]",
 
         // SYS contains the implementation of the module machinery itself, so
         // we don't have MODULE or EXPORT available.  Do the exports manually,
@@ -946,10 +952,6 @@ void Startup_Core(void)
   //=//// MEZZ STARTUP /////////////////////////////////////////////////////=//
 
     rebElide(
-        //
-        // The code is already bound non-specifically to the Lib_Context during
-        // scanning.
-        //
         // (It's not necessarily the greatest idea to have LIB be this
         // flexible.  But as it's not hardened from mutations altogether then
         // prohibiting it doesn't offer any real security...and only causes
@@ -958,7 +960,7 @@ void Startup_Core(void)
         // Create actual variables for top-level SET-WORD!s only, and run.
         //
         "bind/only/set", SPECIFIC(&boot->mezz), Lib_Context_Value,
-        "do", SPECIFIC(&boot->mezz)
+        "do inside", Lib_Context_Value, rebQ(SPECIFIC(&boot->mezz))
     );
 
   //=//// MAKE USER CONTEXT ////////////////////////////////////////////////=//
@@ -971,6 +973,12 @@ void Startup_Core(void)
     //
     // Doing this as a proper module creation gives us IMPORT and INTERN (as
     // well as EXPORT...?  When do you export from the user context?)
+    //
+    // rebElide() here runs in the Lib_Context by default, which means the
+    // block we are passing evaluatively as the module body will evaluate
+    // and carry the lib context.  This achieves the desired inheritance,
+    // because when we say DO INSIDE SYSTEM.CONTEXTS.USER CODE we want the
+    // code to find definitions in user as well as in lib.
     //
     rebElide(
         "system.contexts.user: module [Name: User] []"

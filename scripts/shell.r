@@ -76,7 +76,7 @@ shell: func [
         ]
 
         let item: first block
-        if group? item [item: eval item]
+        if group? item [item: eval inside block item]
 
         return switch/type item [
             text! word! [unspaced ["${" item "}"]]
@@ -107,7 +107,7 @@ shell: func [
     let process-tag: func [container [path! tuple! block!]] [
         return to type-of-container map-each item container [
             if group? item [
-                item: eval item
+                item: inside container eval item
             ]
 
             ensure/not tag! item [shellify-tag item]

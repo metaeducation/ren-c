@@ -127,11 +127,10 @@ Bounce MAKE_Array(
         Utf8(const*) utf8 = Cell_Utf8_Size_At(&size, arg);
 
         Option(const String*) file = ANONYMOUS;
-        Option(Context*) context = nullptr;
         Init_Array_Cell(
             OUT,
             kind,
-            Scan_UTF8_Managed(file, utf8, size, context)
+            Scan_UTF8_Managed(file, utf8, size)
         );
         return OUT;
     }
@@ -216,11 +215,10 @@ Bounce MAKE_Array(
         Size utf8_size;
         Utf8(const*) utf8 = Cell_Utf8_Size_At(&utf8_size, arg);
         Option(const String*) file = ANONYMOUS;
-        Option(Context*) context = nullptr;
         return Init_Array_Cell(
             OUT,
             kind,
-            Scan_UTF8_Managed(file, utf8, utf8_size, context)
+            Scan_UTF8_Managed(file, utf8, utf8_size)
         );
     }
     else if (Is_Binary(arg)) {
@@ -232,11 +230,10 @@ Bounce MAKE_Array(
 
         Size size;
         const Byte* at = Cell_Binary_Size_At(&size, arg);
-        Option(Context*) context = nullptr;
         return Init_Array_Cell(
             OUT,
             kind,
-            Scan_UTF8_Managed(file, at, size, context)
+            Scan_UTF8_Managed(file, at, size)
         );
     }
     else if (Is_Map(arg)) {
@@ -836,7 +833,7 @@ REBTYPE(Array)
 
         const Cell* at = Array_At(Cell_Array(array), n);
 
-        Derelativize(OUT, at, Cell_Specifier(array));
+        Copy_Relative_internal(OUT, at);
         Inherit_Const(stable_OUT, array);
         return OUT; }
 
@@ -1098,7 +1095,9 @@ REBTYPE(Array)
             types // types to copy deeply
         );
 
-        return Init_Array_Cell(OUT, VAL_TYPE(array), copy); }
+        Init_Array_Cell(OUT, VAL_TYPE(array), copy);
+        INIT_SPECIFIER(OUT, Cell_Specifier(array));
+        return OUT; }
 
     //-- Special actions:
 

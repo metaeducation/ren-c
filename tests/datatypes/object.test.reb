@@ -112,7 +112,7 @@
 (
     o: make object! []
     append o 'self
-    '~ = ^ get/any 'o.self
+    '~ = ^ get/any @o.self
 )(
     o: make object! []
     append o spread [self: 1]
@@ -137,7 +137,7 @@
 )
 
 (
-    o-big: make object! collect [
+    o-big: make object! inside [] collect [
         count-up n 256 [
             ;
             ; var-1: 1
@@ -201,8 +201,8 @@
     )
 
     ~bad-pick~ !! (o.i: 1)
-    ~bad-pick~ !! (set? 'o.i)
-    ~bad-pick~ !! (unset? 'o.i)
+    ~bad-pick~ !! (set? @o.i)
+    ~bad-pick~ !! (unset? @o.i)
 
     (null = has o 'i)
 ]

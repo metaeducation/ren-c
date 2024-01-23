@@ -44,7 +44,6 @@ REBLEN Modify_Array(
     REBLEN tail_idx = Array_Len(dst_arr);
 
     const Cell* src_rel;
-    Specifier* specifier;
 
     if (op == SYM_CHANGE and Is_Void(src_val)) {
         flags |= AM_SPLICE;
@@ -109,23 +108,20 @@ REBLEN Modify_Array(
             Array* copy = Copy_Array_At_Extra_Shallow(
                 Cell_Array(src_val),
                 VAL_INDEX(src_val),
-                Cell_Specifier(src_val),
+                SPECIFIED,  // !!! Ignored
                 0, // extra
                 NODE_FLAG_MANAGED // !!! Worth it to not manage and free?
             );
             src_rel = Array_Head(copy);
-            specifier = SPECIFIED; // copy already specified it
         }
         else {
             src_rel = Cell_Array_At(nullptr, src_val);  // may be tail
-            specifier = Cell_Specifier(src_val);
         }
     }
     else {
-        // use passed in Cell and specifier
+        // use passed in Cell
         ilen = 1;
         src_rel = src_val;
-        specifier = SPECIFIED; // it's a REBVAL, not a Cell, so specified
     }
 
     REBLEN size = cast(REBLEN, dups) * ilen;  // total to insert (dups is > 0)
@@ -158,10 +154,9 @@ REBLEN Modify_Array(
     for (; dup_index < cast(REBLEN, dups); ++dup_index) {  // dups checked > 0
         REBLEN index = 0;
         for (; index < ilen; ++index, ++dst_idx) {
-            Derelativize(
+            Copy_Cell(
                 Array_Head(dst_arr) + dst_idx,
-                src_rel + index,
-                specifier
+                src_rel + index
             );
 
             if (dup_index == 0 and index == 0 and head_newline) {

@@ -62,7 +62,7 @@ description-of: func [
         ]
         frame! [
             if let adjunct: adjunct-of :v [
-                copy maybe get 'adjunct.description
+                copy maybe adjunct.description
             ] else [null]
         ]
         object! [mold words of v]
@@ -172,7 +172,7 @@ help: func [
     let make-libuser: does [
         let libuser: copy system.contexts.lib
         for-each [key val] system.contexts.user [
-            if set? 'val [
+            if set? inside [] 'val [
                append libuser spread reduce [key ^val]
             ]
         ]

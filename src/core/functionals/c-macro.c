@@ -99,7 +99,7 @@ Bounce Macro_Dispatcher(Level* const L)
 
     Details* details = Phase_Details(PHASE);
     Cell* body = Array_At(details, IDX_DETAILS_1);  // code to run
-    assert(Is_Block(body) and Is_Relative(body) and VAL_INDEX(body) == 0);
+    assert(Is_Block(body) and VAL_INDEX(body) == 0);
 
     assert(ACT_HAS_RETURN(PHASE));
     assert(KEY_SYM(ACT_KEYS_HEAD(PHASE)) == SYM_RETURN);
@@ -120,31 +120,36 @@ Bounce Macro_Dispatcher(Level* const L)
         cast(Context*, L->varlist)  // so RETURN knows where to return from
     );
 
+    Copy_Cell(SPARE, body);
+    node_LINK(NextVirtual, L->varlist) = Cell_Specifier(body);
+    INIT_SPECIFIER(SPARE, L->varlist);
+
     // Must catch RETURN ourselves, as letting it bubble up to generic UNWIND
     // handling would return a BLOCK! instead of splice it.
     //
-    if (Do_Any_Array_At_Throws(SPARE, body, SPC(L->varlist))) {
+    if (Do_Any_Array_At_Throws(OUT, SPARE, SPECIFIED)) {
         const REBVAL *label = VAL_THROWN_LABEL(L);
         if (
             Is_Frame(label)  // catch UNWIND here [2]
             and VAL_ACTION(label) == VAL_ACTION(Lib(UNWIND))
             and g_ts.unwind_level == L
         ){
-            CATCH_THROWN(SPARE, L);  // preserves CELL_FLAG_UNEVALUATED
+            CATCH_THROWN(OUT, L);  // preserves CELL_FLAG_UNEVALUATED
         }
         else
             return THROWN;  // we didn't catch the throw
     }
 
-    if (Is_Void(SPARE))
+    if (Is_Void(OUT))
         return Init_Nihil(OUT);
 
-    if (not Is_Block(SPARE))
+    if (not Is_Block(OUT))
         fail ("MACRO must return VOID or BLOCK! for the moment");
 
-    Splice_Block_Into_Feed(L->feed, stable_SPARE);
+    Splice_Block_Into_Feed(L->feed, stable_OUT);
 
     Level* sub = Make_Level(L->feed, LEVEL_MASK_NONE);
+    Erase_Cell(OUT);
     Push_Level(OUT, sub);
     return DELEGATE_SUBLEVEL(sub);
 }

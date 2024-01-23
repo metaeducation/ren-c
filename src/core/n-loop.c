@@ -805,7 +805,6 @@ struct Loop_Each_State {
     } u;
     bool took_hold;
     bool more_data;
-    Specifier* specifier;  // specifier (if applicable)
 };
 
 //
@@ -825,8 +824,6 @@ void Init_Loop_Each(Value(*) iterator, Value(*) data)
         rebUnmanage(data);
     }
 
-    les->specifier = SPECIFIED;
-
     if (Is_Action(data)) {
         //
         // The value is generated each time by calling the data action.
@@ -841,9 +838,6 @@ void Init_Loop_Each(Value(*) iterator, Value(*) data)
             les->series = Cell_Series(data);
             les->u.eser.index = VAL_INDEX(data);
             les->u.eser.len = Cell_Series_Len_Head(data);  // has HOLD, won't change
-
-            if (Any_Array(data))
-                les->specifier = Cell_Specifier(data);
         }
         else if (Any_Context(data)) {
             les->series = CTX_VARLIST(VAL_CONTEXT(data));
@@ -954,13 +948,12 @@ static bool Try_Loop_Each_Next(Value(const*) iterator, Context* vars_ctx)
           case REB_META_TUPLE:
           case REB_THE_TUPLE:
             if (var)
-                Derelativize(
+                Copy_Relative_internal(
                     var,
                     Array_At(
                         c_cast(Array*, les->series),
                         les->u.eser.index
-                    ),
-                    les->specifier
+                    )
                 );
             if (++les->u.eser.index == les->u.eser.len)
                 les->more_data = false;

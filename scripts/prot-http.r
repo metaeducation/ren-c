@@ -151,7 +151,7 @@ do-request: func [
         ; !!! Is the name always guaranteed to be non-NULL?  The size and date
         ; seem to be null, and name can come back as %"/"
         ;
-        return reduce inside port.state.info [name, reify size, reify date]
+        return reduce overbind port.state.info [name, reify size, reify date]
     ]
 
     ; The port data has been accrued for the client and can be given back
