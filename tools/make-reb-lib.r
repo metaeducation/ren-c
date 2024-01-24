@@ -179,7 +179,7 @@ process (join src-dir %a-lib.c)
 ; long generated lists, and then spliced into slots in that "big picture"
 
 extern-prototypes: map-each-api [
-    cscape/with {RL_API $<Proto>} api
+    cscape [:api {RL_API $<Proto>}]
 ]
 
 lib-struct-fields: map-each-api [
@@ -189,8 +189,9 @@ lib-struct-fields: map-each-api [
         (if is-variadic ["va_list *vaptr"])
     ]
     cfunc-params: default ["void"]
-    cscape/with {$<Returns> (*$<Name>)($<Cfunc-Params>)} compose [
-        c-func-params (api)
+    cscape [
+        :api c-func-params
+        {$<Returns> (*$<Name>)($<Cfunc-Params>)}
     ]
 ]
 
@@ -198,7 +199,7 @@ non-variadics: make block! length of api-objects
 c89-variadic-inlines: make block! length of api-objects
 c++-variadic-inlines: make block! length of api-objects
 
-for-each api api-objects [do in api [
+for-each api api-objects [do overbind api [
     if spec and (find spec #noreturn) [
         assert [returns = "void"]
         opt-dead-end: "DEAD_END;"
@@ -221,18 +222,18 @@ for-each api api-objects [do in api [
         wrapper-params: default ["void"]
         proxied-args: default [""]
 
-        return cscape/with {
+        return cscape [
+            _inline returns wrapper-params proxied_args
+            opt-va-start opt-return_ opt-dead-end
+            :api
+        {
             $<MAYBE OPT-NORETURN>
             inline static $<Returns> $<Name>$<_inline>($<Wrapper-Params>) {
                 $<Maybe Opt-Va-Start>
                 $<maybe opt-return_>LIBREBOL_PREFIX($<Name>)($<Proxied-Args>);
                 $<MAYBE OPT-DEAD-END>
             }
-        } compose [
-            wrapper-params  ; "global" where locals undefined, must be first
-            (api)
-            inline
-        ]
+        }]
     ]
 
     make-c++-proxy: func [
@@ -243,7 +244,11 @@ for-each api api-objects [do in api [
         wrapper-params: default ["void"]
         proxied-args: default [""]
 
-        return cscape/with {
+        return cscape [
+            returns wrapper-params proxied-args
+            opt-return_ opt-dead-end
+            :api
+        {
             template <typename... Ts>
             $<MAYBE OPT-NORETURN>
             inline $<Returns> $<Name>($<Wrapper-Params>) {
@@ -251,10 +256,7 @@ for-each api api-objects [do in api [
                 $<maybe opt-return_>LIBREBOL_PREFIX($<Name>)($<Proxied-Args>);
                 $<MAYBE OPT-DEAD-END>
             }
-        } compose [
-            wrapper-params  ; "global" where locals undefined, must be first
-            (api)
-        ]
+        }]
     ]
 
     if is-variadic [
@@ -314,7 +316,7 @@ for-each api api-objects [do in api [
 
 c89-macros: map-each-api [
     if is-variadic [
-        cscape/with {#define $<Name> $<Name>_inline} api
+        cscape [:api {#define $<Name> $<Name>_inline}]
     ]
 ]
 
@@ -326,8 +328,10 @@ c99-or-c++11-macros: map-each-api [
     ; able to implicitly know the number of variadic parameters used.
     ;
     if is-variadic [
-        cscape/with
-            {#define $<Name>(...) $<Name>_inline(__VA_ARGS__, rebEND)} api
+        cscape [
+            :api
+            {#define $<Name>(...) $<Name>_inline(__VA_ARGS__, rebEND)}
+        ]
     ]
 ]
 
@@ -343,7 +347,7 @@ e-lib: make-emitter "Rebol External Library Interface" (
     join output-dir %rebol.h
 )
 
-e-lib/emit 'ver {
+e-lib/emit [ver {
     #ifndef REBOL_H_1020_0304  /* "include guard" allows multiple #includes */
     #define REBOL_H_1020_0304  /* numbers in case REBOL_H defined elsewhere */
 
@@ -955,7 +959,7 @@ e-lib/emit 'ver {
         ((TP)rebUnboxHandleCData((size_t*)(0), (v)))  // 0=NULL, don't get size
 
     #endif  /* REBOL_H_1020_0304 */
-}
+}]
 
 e-lib/write-emitted
 
@@ -975,11 +979,11 @@ table-init-items: map-each-api [
     unspaced ["RL_" name]
 ]
 
-e-table/emit 'table-init-items {
+e-table/emit [table-init-items {
     RL_LIB Ext_Lib = {
         $(Table-Init-Items),
     };
-}
+}]
 
 e-table/write-emitted
 

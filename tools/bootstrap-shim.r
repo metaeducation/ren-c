@@ -104,6 +104,8 @@ trap [
         return unmeta first unquasi result
     ]
 
+    export cscape-inside: :inside  ; modern string interpolation tool
+
     ; LOAD changed to have no /ALL, so it always enforces getting a block.
     ; But LOAD-VALUE comes in the box to load a single value.
     ;
@@ -327,6 +329,8 @@ opt: ~  ; replaced by DEGRADE word
 try: ~  ; reviewing uses
 
 has: :in  ; old IN behavior of word lookup achieved by HAS now
+
+overbind: :in  ; works in a limited sense
 
 ; !!! This isn't perfect, but it should work for the cases in rebmake
 ;
@@ -1200,4 +1204,36 @@ if not all [
     null? either false [<unused>] [null]
 ][
     fail "EITHER not preserving null"
+]
+
+; This is a surrogate for being able to receive the environment for string
+; interpolation from a block.  Instead, the words that aren't in the user
+; context or lib have to be mentioned explicitly inside the block.  If you
+; want to bind to an object as well, name it with a GET-WORD!.
+;
+cscape-inside: func3 [
+    return: [block!]
+    template [block!]
+    code [block!]
+    <local> obj
+][
+    intern code  ; baseline user/lib binding
+    obj: make object! []  ; can't bind individual words, fake w/proxy object
+    for-each item template [
+        if path? item [item: first item]
+        case [
+            text? item [continue]  ; should only be last item
+            get-word? item [
+                item: get item
+                assert [object? item]
+                bind code item
+            ]
+        ] else [
+            assert [word? item]
+            append obj spread reduce [item 0]
+            obj/(item): get item
+        ]
+    ]
+    bind code obj  ; simulates ability to bind to single words
+    return code
 ]

@@ -272,9 +272,9 @@ e-forward/emit newline
 
 for-each info all-protos [
     if info/native-type = 'intrinsic [
-        e-forward/emit 'info {DECLARE_INTRINSIC(${info/name});}
+        e-forward/emit [info {DECLARE_INTRINSIC(${info/name});}]
     ] else [
-        e-forward/emit 'info {DECLARE_NATIVE(${info/name});}
+        e-forward/emit [info {DECLARE_NATIVE(${info/name});}]
     ]
     e-forward/emit newline
 ]

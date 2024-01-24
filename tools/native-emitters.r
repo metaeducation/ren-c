@@ -207,7 +207,7 @@ export emit-include-params-macro: func [
             ]
 
             let param-name: as text! to word! noquote item
-            keep cscape/with {DECLARE_PARAM($<n>, ${param-name})} [n param-name]
+            keep cscape [n param-name {DECLARE_PARAM($<n>, ${param-name})}]
             n: n + 1
 
             if output-param? item [
@@ -219,11 +219,11 @@ export emit-include-params-macro: func [
     ]
 
     let prefix: all [ext unspaced [ext "_"]]
-    e/emit [prefix native-name items] {
+    e/emit [prefix native-name items {
         #define ${MAYBE PREFIX}INCLUDE_PARAMS_OF_${NATIVE-NAME} \
             $[Items]; \
             assert(Get_Series_Info(level_->varlist, HOLD))
-    }
+    }]
     e/emit newline
     e/emit newline
 ]

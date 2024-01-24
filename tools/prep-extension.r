@@ -208,10 +208,10 @@ if use-librebol [
             opt ["export" space] copy proto-name to ":"
         ]
         proto-name: to-c-name proto-name
-        e1/emit [info u-m-name] {
+        e1/emit [info u-m-name {
             #define ${U-M-NAME}_INCLUDE_PARAMS_OF_${PROTO-NAME} \
                 (void)level_
-        }
+        }]
         e1/emit newline
     ]
 ]
@@ -236,12 +236,12 @@ dispatcher-forward-decls: collect [
         if info/native-type = 'intrinsic [  ; not that hard to do if needed
             fail "Intrinsics not currently supported in extensions"
         ]
-        keep cscape/with {DECLARE_NATIVE(${Name})} 'name
+        keep cscape [name {DECLARE_NATIVE(${Name})}]
     ]
 ]
 
 if use-librebol [
-    e1/emit 'mod {
+    e1/emit [mod {
         /*
         * Redefine DECLARE_NATIVE macro locally to include extension name.
         * This avoids name collisions with the core, or with other extensions.
@@ -249,10 +249,10 @@ if use-librebol [
         #undef DECLARE_NATIVE
         #define DECLARE_NATIVE(n) \
             REBVAL* N_${MOD}_##n(void* level_)
-    }
+    }]
 ]
 else [
-    e1/emit 'mod {
+    e1/emit [mod {
         /*
         * Redefine DECLARE_NATIVE macro locally to include extension name.
         * This avoids name collisions with the core, or with other extensions.
@@ -260,15 +260,15 @@ else [
         #undef DECLARE_NATIVE
         #define DECLARE_NATIVE(n) \
             Bounce N_${MOD}_##n(Level* level_)
-    }
+    }]
 ]
 
-e1/emit 'dispatcher-forward-decls {
+e1/emit [dispatcher-forward-decls {
     /*
      * Forward-declare DECLARE_NATIVE() dispatcher prototypes
      */
     $[Dispatcher-Forward-Decls];
-}
+}]
 e1/emit newline
 
 e1/write-emitted
@@ -342,11 +342,11 @@ script-compressed: gzip script-uncompressed
 dispatcher_c_names: collect [  ; must be in the order that NATIVE is called!
     for-each info all-protos [
         name: info/name
-        keep cscape/with {N_${MOD}_${Name}} [mod name]
+        keep cscape [mod name {N_${MOD}_${Name}}]
     ]
 ]
 
-e/emit 'mod {
+e/emit [mod {
     #include "sys-core.h" /* !!! Could this just use "rebol.h"? */
 
     #include "tmp-mod-$<mod>.h" /* for DECLARE_NATIVE() forward decls */
@@ -411,6 +411,6 @@ e/emit 'mod {
             $<num-natives>  /* number of NATIVE invocations in script */
         );
     }
-}
+}]
 
 e/write-emitted

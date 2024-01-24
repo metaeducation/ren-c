@@ -408,9 +408,10 @@ for-each-api [
 
     if is-variadic [
         if js-param-types [
-            print cscape/with
-            "!!! WARNING! !!! Skipping mixed variadic function $<Name> !!!"
-            api
+            print cscape [
+                :api
+                "!!! WARNING! !!! Skipping mixed variadic function $<Name> !!!"
+            ]
             continue
         ]
 
@@ -460,7 +461,7 @@ for-each-api [
             {return a}
         ])
 
-        e-cwrap/emit cscape/with {
+        e-cwrap/emit cscape [:api {
             reb.$<No-Reb-Name> = function() {
                 let argc = arguments.length
                 let stack = stackSave()
@@ -499,16 +500,16 @@ for-each-api [
 
                 $<Return-Code>
             }
-        } api
+        }]
     ] else [
-        e-cwrap/emit cscape/with {
+        e-cwrap/emit cscape [:api {
             reb.$<No-Reb-Name> = cwrap_tolerant(  /* vs. R3Module.cwrap() */
                 'RL_$<Name>',
                 $<Js-Returns>, [
                     $(Maybe Js-Param-Types),
                 ]
             )
-        } api
+        }]
     ]
 ]
 e-cwrap/emit {
@@ -895,11 +896,11 @@ json-collect: func [
         ]
         (spread body)
     ]
-    return cscape/with {
+    return cscape [results {
         [
             $(Results),
         ]
-    } 'results
+    }]
 ]
 
 write (join output-dir %libr3.exports.json) json-collect [

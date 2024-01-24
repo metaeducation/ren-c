@@ -49,12 +49,12 @@ export cscape: func [
     return: "${} TO-C-NAME, $<> UNSPACED, $[]/$() DELIMIT closed/open"
         [text!]
     template "${Expr} case as-is, ${expr} lowercased, ${EXPR} is uppercased"
-        [text!]
-    /with "Lookup var words in additional context (besides user context)"
-        [any-word! any-context! block!]
+        [block!]
     <local> col prefix suffix mode pattern
 ][
-    let string: trim/auto copy template
+    assert [text? last template]
+
+    let string: trim/auto copy last template
 
     ; As we process the string, we CHANGE any substitution expressions into
     ; an INTEGER! for doing the replacements later with REWORD (and not
@@ -139,17 +139,10 @@ export cscape: func [
             ;
             ; !!! Needs LOAD-ALL shim hack for bootstrap since /ALL deprecated
             ;
-            let code: load-all lowercase expr
+            let code: transcode lowercase expr
 
-            if with [
-                if not block? with [  ; convert to block if not already
-                    with: reduce [with]
-                ]
-                for-each item with [
-                    if path? item [item: first item]
-                    bind code item
-                ]
-            ]
+            code: cscape-inside template code
+
             if null? let sub: do code [  ; shim null, e.g. blank!
                 print mold template
                 print mold code
@@ -321,28 +314,18 @@ export make-emitter: func [
             {Write data to the emitter using CSCAPE templating (see HELP)}
 
             return: [~]
-            'look [element? <variadic>]
-            data [text! char?! <variadic>]
+            template [text! char?! block!]
             <with> buf-emit
         ][
-            let context: null
-            let firstlook: first look
-            if any [
-                lit-word? :firstlook
-                block? :firstlook
-                any-context? :firstlook
-            ][
-                context: take look
-            ]
-
-            data: take data
             case [  ; no switch/type in bootstrap
-                text? data [
-                    append buf-emit cscape/with data noquote maybe context
+                text? template [
+                    append buf-emit trim/auto copy template
                 ]
-                char? data [
-                    append buf-emit data
+                char? template [
+                    append buf-emit template
                 ]
+            ] else [
+                append buf-emit cscape template
             ]
         ]
 
@@ -377,7 +360,7 @@ export make-emitter: func [
     ]
 
     any [is-c is-js] then [
-        e/emit [title boot-version stem by] {
+        e/emit [title boot-version stem by {
             /**********************************************************************
             **
             **  REBOL [R3] Language Interpreter and Run-time Environment
@@ -396,7 +379,7 @@ export make-emitter: func [
             **      Licensed under the Apache License, Version 2.0.
             **      See: http://www.apache.org/licenses/LICENSE-2.0
             **  }
-        }
+        }]
         if temporary [
             e/emit {
                 **  Note: {AUTO-GENERATED FILE - Do not modify.}
@@ -424,7 +407,7 @@ export make-emitter: func [
                 See: http://www.apache.org/licenses/LICENSE-2.0
             }
             (if temporary [
-                [Note: {AUTO-GENERATED FILE - Do not modify.}]
+                spread [Note: {AUTO-GENERATED FILE - Do not modify.}]
             ])
         ]
         e/emit newline

@@ -106,7 +106,7 @@ e: make-emitter "r3 console executable embedded Rebol code bundle" (
 
 compressed: gzip buf
 
-e/emit 'compressed {
+e/emit [compressed {
     /*
      * Gzip compression of host initialization code
      * Originally $<length of buf> bytes
@@ -115,6 +115,6 @@ e/emit 'compressed {
     const unsigned char Main_Startup_Code[MAIN_STARTUP_SIZE] = {
         $<Binary-To-C Compressed>
     };
-}
+}]
 
 e/write-emitted

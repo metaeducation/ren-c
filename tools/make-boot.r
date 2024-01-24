@@ -119,7 +119,7 @@ version: to tuple! reduce [
     version/1 version/2 version/3 platform-config/id/2 platform-config/id/3
  ]
 
-e-version/emit 'version {
+e-version/emit [version {
     /*
      * VERSION INFORMATION
      *
@@ -132,7 +132,7 @@ e-version/emit 'version {
     #define REBOL_UPD $<version/3>
     #define REBOL_SYS $<version/4>
     #define REBOL_VAR $<version/5>
-}
+}]
 e-version/emit newline
 e-version/write-emitted
 
@@ -184,8 +184,9 @@ add-sym: func [
     ]
 
     append syms-words as text! word
-    append syms-cscape cscape/with {/* $<Word> */ SYM_${FORM WORD} = $<sym-n>} [
+    append syms-cscape cscape [
         sym-n word
+        {/* $<Word> */ SYM_${FORM WORD} = $<sym-n>}
     ]
     sym-n: sym-n + 1
 
@@ -325,11 +326,11 @@ rebs: collect [
 
         add-sym unspaced t/name
 
-        keep cscape/with {REB_${T/NAME} = $<T/HEART>} [t]
+        keep cscape [t {REB_${T/NAME} = $<T/HEART>}]
     ]
 ]
 
-e-types/emit 'rebs {
+e-types/emit [rebs {
     /*
      * INTERNAL DATATYPE CONSTANTS, e.g. REB_BLOCK or REB_TAG
      *
@@ -365,7 +366,7 @@ e-types/emit 'rebs {
      * necessary if this number exceeds 64.
      */
     STATIC_ASSERT(REB_MAX <= 64);
-}
+}]
 e-types/emit newline
 
 e-types/emit {
@@ -384,17 +385,17 @@ for-each-datatype t [
     ]
 
     if not empty? t/cellmask [
-        e-types/emit 't {
+        e-types/emit [t {
             #define CELL_MASK_${T/NAME} \
                 (FLAG_HEART_BYTE(REB_${T/NAME}) | $<MOLD T/CELLMASK>)
-        }
+        }]
         e-types/emit newline
     ]
 
-    e-types/emit [propercase-of t] {
+    e-types/emit [propercase-of t {
         #define Is_${propercase-of T/name}(v) \
             (VAL_TYPE(v) == REB_${T/NAME})  /* $<T/HEART> */
-    }
+    }]
     e-types/emit newline
 ]
 
@@ -435,13 +436,13 @@ for-each-datatype t [
         append typeset-sets reduce [t/name]
 
         e-types/emit newline
-        e-types/emit [propercase-of ts-name] {
+        e-types/emit [propercase-of ts-name {
             #define Any_${propercase-of Ts-Name}_Kind(k) \
                (did (FLAGIT_KIND(k) & TS_${TS-NAME}))
 
             #define Any_${propercase-of Ts-Name}(v) \
                 Any_${propercase-of Ts-Name}_Kind(VAL_TYPE(v))
-        }
+        }]
     ]
 ]
 
@@ -454,24 +455,24 @@ for-each-typerange tr [
     name: copy tr/name
 
     e-types/emit newline
-    e-types/emit [propercase-of tr] {
+    e-types/emit [propercase-of tr {
         INLINE bool Any_${propercase-of Tr/Name}_Kind(Byte k)
           { return k >= $<TR/START> and k < $<TR/END>; }
 
         #define Any_${propercase-of Tr/Name}(v) \
             Any_${propercase-of Tr/Name}_Kind(VAL_TYPE(v))
-    }
+    }]
 ]
 
 for-each [ts-name types] typeset-sets [
     flagits: collect [
         for-each t-name types [
-            keep cscape/with {FLAGIT_KIND(REB_${T-NAME})} 't-name
+            keep cscape [t-name {FLAGIT_KIND(REB_${T-NAME})}]
         ]
     ]
-    e-types/emit [flagits ts-name] {
+    e-types/emit [flagits ts-name {
         #define TS_${TS-NAME} ($<Delimit "|" Flagits>)
-    }  ; !!! TS_ANY_XXX is wordy, considering TS_XXX denotes a typeset
+    }]  ; !!! TS_ANY_XXX is wordy, considering TS_XXX denotes a typeset
 ]
 
 add-sym 'datatypes  ; signal where the datatypes stop
@@ -503,7 +504,7 @@ e-types/emit newline
 for-each-datatype t [
     if not t/antiname [continue]  ; no special name for antiform form
 
-    e-types/emit 't {
+    e-types/emit [t {
         #define Is_$<Propercase To Text! T/Antiname>(v) \
             ((READABLE(v)->header.bits & (FLAG_QUOTE_BYTE(255) | FLAG_HEART_BYTE(255))) \
                 == (FLAG_QUOTE_BYTE(ANTIFORM_0) | FLAG_HEART_BYTE(REB_$<T/NAME>)))
@@ -511,7 +512,7 @@ for-each-datatype t [
         #define Is_Meta_Of_$<Propercase To Text! T/Antiname>(v) \
         ((READABLE(v)->header.bits & (FLAG_QUOTE_BYTE(255) | FLAG_HEART_BYTE(255))) \
             == (FLAG_QUOTE_BYTE(QUASIFORM_2) | FLAG_HEART_BYTE(REB_$<T/NAME>)))
-    }
+    }]
     e-types/emit newline
 ]
 
@@ -547,7 +548,7 @@ hookname: enfix func [
 ]
 
 hook-list: collect [
-    keep cscape {
+    keep cscape [{
         {  /* VOID = 0 */
             cast(CFunction*, nullptr),  /* generic */
             cast(CFunction*, nullptr),  /* compare */
@@ -556,10 +557,10 @@ hook-list: collect [
             cast(CFunction*, MF_Void),  /* mold */
             nullptr
         }
-    }
+    }]
 
     for-each-datatype t [
-        keep cscape/with {
+        keep cscape [t {
             {  /* $<T/NAME> = $<T/HEART> */
                 cast(CFunction*, ${"T_" Hookname T 'Class}),  /* generic */
                 cast(CFunction*, ${"CT_" Hookname T 'Class}),  /* compare */
@@ -567,18 +568,19 @@ hook-list: collect [
                 cast(CFunction*, ${"TO_" Hookname T 'Make}),  /* to */
                 cast(CFunction*, ${"MF_" Hookname T 'Mold}),  /* mold */
                 nullptr
-            }} [t]
+            }
+        }]
     ]
 ]
 
-e-hooks/emit 'hook-list {
+e-hooks/emit [hook-list {
     #include "sys-core.h"
 
     /* See comments in %sys-ordered.h */
     CFunction* Builtin_Type_Hooks[REB_MAX][IDX_HOOKS_MAX] = {
         $(Hook-List),
     };
-}
+}]
 
 e-hooks/write-emitted
 
@@ -604,9 +606,9 @@ e-typesets/emit {
 }
 
 for-each [ts-name types] typeset-sets [
-    e-typesets/emit 'ts-name {
+    e-typesets/emit [ts-name {
         TS_${TS-NAME},  /* any-${ts-name}! */
-    }
+    }]
 ]
 
 e-typesets/emit {
@@ -740,18 +742,18 @@ make-obj-defs: func [
         let n: 1
 
         for-each field words-of obj [
-            keep cscape/with {${PREFIX}_${FIELD} = $<n>} [prefix field n]
+            keep cscape [prefix field n {${PREFIX}_${FIELD} = $<n>}]
             n: n + 1
         ]
 
-        keep cscape/with {${PREFIX}_MAX} [prefix]
+        keep cscape [prefix {${PREFIX}_MAX}]
     ]
 
-    e/emit [prefix items] {
+    e/emit [prefix items {
         enum ${PREFIX}_object {
             $(Items),
         };
-    }
+    }]
 
     if depth > 1 [
         for-each field words-of obj [
@@ -791,19 +793,19 @@ fields: collect [
         either word = 'near [
             keep {/* near & far are old C keywords */ Cell nearest}
         ][
-            keep cscape/with {Cell ${word}} 'word
+            keep cscape [word {Cell ${word}}]
         ]
     ]
 ]
 
-e-errfuncs/emit 'fields {
+e-errfuncs/emit [fields {
     /*
      * STANDARD ERROR STRUCTURE
      */
     typedef struct REBOL_Error_Vars {
         $[Fields];
     } ERROR_VARS;
-}
+}]
 
 e-errfuncs/emit {
     /*
@@ -877,12 +879,12 @@ for-each [sw-cat list] boot-errors [
             ]
         ]
 
-        e-errfuncs/emit [message cat id f-name params args] {
+        e-errfuncs/emit [message cat id f-name params args {
             /* $<Mold Message> */
             INLINE Context* Error_${F-Name}_Raw($<Delimit ", " Params>) {
                 return Error(SYM_${CAT}, SYM_${ID}, $<Delimit ", " Args>);
             }
-        }
+        }]
         e-errfuncs/emit newline
     ]
 ]
@@ -970,7 +972,7 @@ nats: collect [
     ; Make_Native() decides which actual function type to cast them to.
     ;
     for-each name native-names [
-        keep cscape/with {(CFunction*)N_${name}} 'name
+        keep cscape [name {(CFunction*)N_${name}}]
     ]
 ]
 
@@ -984,7 +986,7 @@ symbol-strings: to binary! reduce collect [  ; no bootstrap MAKE BINARY!
 
 compressed: gzip symbol-strings
 
-e-bootblock/emit 'compressed {
+e-bootblock/emit [compressed {
     /*
      * Gzip compression of symbol strings
      * Originally $<length of symbol-strings> bytes
@@ -996,18 +998,18 @@ e-bootblock/emit 'compressed {
     const Byte Symbol_Strings_Compressed[$<length of compressed>] = {
         $<Binary-To-C Compressed>
     };
-}
+}]
 
 print [length of nats "natives"]
 
-e-bootblock/emit 'nats {
+e-bootblock/emit [nats {
     #define NUM_NATIVES $<length of nats>
     const REBLEN Num_Natives = NUM_NATIVES;
 
     CFunction* const Native_C_Funcs[NUM_NATIVES] = {
         $(Nats),
     };
-}
+}]
 
 ; Build typespecs block (in same order as datatypes table)
 
@@ -1036,7 +1038,7 @@ data: as binary! boot-molded
 
 compressed: gzip data
 
-e-bootblock/emit 'compressed {
+e-bootblock/emit [compressed {
     /*
      * Gzip compression of boot block
      * Originally $<length of data> bytes
@@ -1048,7 +1050,7 @@ e-bootblock/emit 'compressed {
     const Byte Boot_Block_Compressed[$<length of compressed>] = {
         $<Binary-To-C Compressed>
     };
-}
+}]
 
 e-bootblock/write-emitted
 
@@ -1064,11 +1066,11 @@ fields: collect [
         word: form as word! word
         remove/part word 5  ; 5 leading characters, [boot-]xxx
         word: to-c-name word
-        keep cscape/with {Cell ${word}} 'word
+        keep cscape [word {Cell ${word}}]
     ]
 ]
 
-e-boot/emit 'fields {
+e-boot/emit [fields {
     /*
      * Symbols in SYM_XXX order, separated by newline characters, compressed.
      */
@@ -1090,14 +1092,14 @@ e-boot/emit 'fields {
     typedef struct REBOL_Boot_Block {
         $[Fields];
     } BOOT_BLK;
-}
+}]
 
 e-boot/write-emitted
 
 
 === {EMIT SYMBOLS} ===
 
-e-symbols/emit 'syms-cscape {
+e-symbols/emit [syms-cscape {
     /*
      * CONSTANTS FOR BUILT-IN SYMBOLS: e.g. SYM_THRU or SYM_INTEGER_X
      *
@@ -1130,7 +1132,7 @@ e-symbols/emit 'syms-cscape {
 
     #define LIB_SYMS_MAX $<lib-syms-max>
     #define ALL_SYMS_MAX $<sym-n>
-}
+}]
 
 print [sym-n "words + generics + errors"]
 

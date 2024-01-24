@@ -60,7 +60,7 @@ e: make-emitter "Boot Modules" (
     join output-dir %include/tmp-boot-extensions.inc
 )
 
-e/emit 'extensions {
+e/emit [extensions {
     #include "sys-ext.h"
 
     DECLARE_EXT_COLLATE($[Extensions]);
@@ -77,6 +77,6 @@ e/emit 'extensions {
         RX_COLLATE_NAME($[Extensions]),
         nullptr  /* Just for guaranteeing length > 0, as C++ requires it */
     };
-}
+}]
 
 e/write-emitted
