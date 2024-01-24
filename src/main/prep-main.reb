@@ -68,7 +68,8 @@ for-each file reduce [
     %src/main/main-startup.reb
 ][
     header: ~
-    contents: stripload/header file 'header
+    contents: stripload/header file inside [] 'header
+    ensure text! header
 
     ; The import will happen in the lib context, so the body block being
     ; unquoted means it will reach MODULE with the lib definitions in it.

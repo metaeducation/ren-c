@@ -88,14 +88,15 @@ trap [
     ; Bootstrap EXE doesn't support multi-returns so SPLIT-PATH takes a /DIR
     ; refinement of a variable to write to.
     ;
-    export split-path: enclose (augment :split-path [/dir [word!]]) f -> [
+    let split-path2: enclose (augment :split-path [/dir [word!]]) f -> [
         let dir: f.dir
         let results: unquasi ^ do f  ; no [...]: in bootstrap load of this file
         set maybe dir unmeta second results
         unmeta first results
     ]
+    export split-path: :split-path2
 
-    export transcode: enclose (augment :transcode [/next [word!]]) func [f] [
+    let transcode2: enclose (augment :transcode [/next [word!]]) func [f] [
         let next: f.next  ; note: contention with NEXT series verb
         f.one: all [next make issue! 0]  ; # is invalid issue in bootstrap
         let result: ^ (do f except e -> [return raise e])
@@ -103,6 +104,7 @@ trap [
         set maybe next unmeta second unquasi result
         return unmeta first unquasi result
     ]
+    export transcode: :transcode2
 
     export cscape-inside: :inside  ; modern string interpolation tool
 
@@ -329,8 +331,13 @@ opt: ~  ; replaced by DEGRADE word
 try: ~  ; reviewing uses
 
 has: :in  ; old IN behavior of word lookup achieved by HAS now
-
 overbind: :in  ; works in a limited sense
+bindable: func3 [what] [:what]
+inside: func3 [where value] [:value]  ; no-op in bootstrap
+
+in: func3 [] [
+    fail/where "Use HAS or OVERBIND instead of IN in bootstrap" 'return
+]
 
 ; !!! This isn't perfect, but it should work for the cases in rebmake
 ;
@@ -351,6 +358,12 @@ maybe: func3 [
     if null? :v [return void]  ; null here is blank in the shim, void is null
     :v
 ]
+
+; Tricky way of getting simple non-definitional break extraction that looks
+; like getting a definitional break.
+;
+set '^break does [does [:break]]
+set '^continue does [does [:continue]]
 
 the: :the3  ; Renamed due to the QUOTED! datatype
 quote: func3 [x [<opt> any-value!]] [

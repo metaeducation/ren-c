@@ -611,7 +611,11 @@ for-each term load %lib-words.r [
 first-native-sym: sym-n
 
 native-names: copy []
-boot-natives: stripload/gather (join prep-dir %boot/tmp-natives.r) 'native-names
+
+boot-natives: stripload/gather (
+    join prep-dir %boot/tmp-natives.r
+) inside [] 'native-names
+
 insert boot-natives "["
 append boot-natives "]"
 for-each name native-names [
@@ -870,13 +874,13 @@ mezz-files: load %../mezz/boot-files.r  ; base, sys, mezz
 sys-toplevel: copy []
 
 for-each section [boot-base boot-system-util boot-mezz] [
-    set section s: make text! 20000
+    set (inside [] section) s: make text! 20000
     append/line s "["
     for-each file first mezz-files [  ; doesn't use LOAD to strip
         gather:  [null]
         text: stripload/gather (
             join %../mezz/ file
-        ) if section = 'boot-system-util ['sys-toplevel]
+        ) if section = 'boot-system-util [inside [] 'sys-toplevel]
         append/line s text
     ]
     append/line s "~done~"
@@ -986,10 +990,10 @@ boot-molded: copy ""
 append/line boot-molded "["
 for-each sec sections [
     if get-word? sec [  ; wasn't LOAD-ed (no bootstrap compatibility issues)
-        append boot-molded get sec
+        append boot-molded (get inside sections sec)
     ]
     else [  ; was LOAD-ed for easier analysis (makes bootstrap complicated)
-        append/line boot-molded mold/flat get sec
+        append/line boot-molded mold/flat (get inside sections sec)
     ]
 ]
 append/line boot-molded "]"

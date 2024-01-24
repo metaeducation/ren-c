@@ -471,7 +471,7 @@ export for-each-platform: func [
         ldflags: null
     ]
 
-    parse2 platforms in p [ some [
+    parse2 platforms overbind p [ some [
         set name set-word! (
             name: to-word name
         )
@@ -520,7 +520,7 @@ use [
 ][
     used-flags: copy []
     for-each-platform p [
-        assert in p [
+        assert overbind p [
             word? name
             integer? number
             any [

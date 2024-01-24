@@ -54,15 +54,17 @@ ver: load-value join repo-dir %src/boot/version.r
 
 api-objects: make block! 50
 
-map-each-api: func [code [block!]] [
-    return map-each api api-objects compose [
-        eval in api (code)  ; want API variable visible to `code` while running
+map-each-api: func [code [block!]] [  ; lambda bootstrap doesn't support LET
+    return map-each api api-objects compose [  ; compose so bootstrap sees 'API
+        let aux: make object! compose [break: (^break) continue: (^continue)]
+        eval overbind aux overbind api (code)
     ]
 ]
 
-for-each-api: func [code [block!]] [
-    return for-each api api-objects compose [
-        eval in api (code)  ; want API variable visible to `code` while running
+for-each-api: func [code [block!]] [  ; lambda bootstrap doesn't support LET
+    return for-each api api-objects compose [  ; compose so bootstrap sees 'API
+        let aux: make object! compose [break: (^break) continue: (^continue)]
+        eval overbind aux overbind api (code)
     ]
 ]
 
@@ -1009,9 +1011,9 @@ saved-dir: what-dir
 ; first...
 ;
 change-dir (join repo-dir %extensions/tcc/tools/)
-do in (binding of 'output-dir) load %prep-libr3-tcc.reb
+do overbind (binding of inside [] 'output-dir) load %prep-libr3-tcc.reb
 
 change-dir (join repo-dir %extensions/javascript/tools/)
-do in (binding of 'output-dir) load %prep-libr3-js.reb
+do overbind (binding of inside [] 'output-dir) load %prep-libr3-js.reb
 
 change-dir saved-dir

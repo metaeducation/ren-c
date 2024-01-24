@@ -102,22 +102,22 @@ for-each [name value] options [
             ;
             config-stack: copy []
             while [:config] [
-                file: split-path/dir config 'dir
+                file: split-path/dir config inside [] 'dir
                 change-dir dir
-                append config-stack (transcode read file)
+                append config-stack (load read file)
 
                 ; !!! LOAD has changed between bootstrap versions, for the
-                ; handling of the /HEADER.  This hacks it together by doing a
-                ; transcode + intern.  Revisit and use actual LOAD with mods in
-                ; the bootstrap shim.  `Inherits:` may actually be good as
-                ; a first-class module feature, not config-specific.
+                ; handling of the /HEADER.  This just transcodes the file
+                ; again to extract the "Inherits" information.
                 ;
-                assert ['REBOL = first last config-stack]
-                config: select ensure block! second last config-stack 'Inherits
-                take/part last config-stack 2  ; drop the REBOL [...] header
+                ; Note: Inherits may be a good non-config-specific feature.
+                ;
+                let temp: transcode read file
+                assert ['REBOL = first temp]
+                config: select ensure block! second temp 'Inherits
             ]
             while [not empty? config-stack] [
-                user-config: make user-config intern take/last config-stack
+                user-config: make user-config take/last config-stack
             ]
 
             change-dir saved-dir
@@ -1483,7 +1483,7 @@ add-new-obj-folders: func [
         ]
 
         for-each obj lib [
-            split-path/dir obj/output 'dir
+            split-path/dir obj/output inside [] 'dir
             if not find folders dir [
                 append folders dir
             ]
@@ -1510,7 +1510,7 @@ for-each [category entries] file-base [
                         ; assume taken care of
                     ]
                     path! [
-                        split-path/dir to file! entry 'dir
+                        split-path/dir to file! entry inside [] 'dir
                         if not find folders dir [
                             append folders join %objs/ dir
                         ]

@@ -60,7 +60,7 @@ args: parse-args system/script/args  ; either from command line or DO/ARGS
 ; just point at a directory and follow the specification.
 ;
 src: to file! :args/SRC
-file-name: split-path/dir src 'in-dir
+file-name: split-path/dir src inside [] 'in-dir
 
 ; Assume we start up in the directory where build products are being made
 ;
@@ -316,7 +316,8 @@ e1/write-emitted
 
 e: make-emitter "Ext custom init code" (join output-dir inc-name)
 
-initscript-body: stripload/header script-name 'header  ; header will be TEXT!
+initscript-body: stripload/header script-name inside [] 'header
+ensure text! header  ; stripload gives back textual header
 
 script-uncompressed: unspaced [
     "Rebol" space "["  ; header has no brackets

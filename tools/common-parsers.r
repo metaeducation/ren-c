@@ -41,7 +41,7 @@ load-until-blank: func [
         ;
         ; !!! SET-BLOCK! not bootstrap
         ;
-        attempt [transcode/next x 'res] else [res: null]
+        attempt [transcode/next x inside [] 'res] else [res: null]
         res
     ]
 
