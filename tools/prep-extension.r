@@ -71,9 +71,9 @@ src: join repo-dir src
 mkdir/deep output-dir
 
 
-platform-config: configure-platform get 'args/OS_ID
+platform-config: configure-platform args/OS_ID
 
-use-librebol: switch get 'args/USE_LIBREBOL [
+use-librebol: switch args/USE_LIBREBOL [
     "false" [false]
     "true" [true]
     fail "%prep-extension.r needs USE_LIBREBOL as true or false"

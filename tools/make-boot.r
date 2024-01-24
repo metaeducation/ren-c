@@ -36,7 +36,7 @@ import <platforms.r>
 change-dir join repo-dir %src/boot/
 
 args: parse-args system/script/args  ; either from command line or DO/ARGS
-platform-config: configure-platform get 'args/OS_ID
+platform-config: configure-platform args/OS_ID
 
 first-rebol-commit: "19d4f969b4f5c1536f24b023991ec11ee6d5adfb"
 
@@ -68,45 +68,6 @@ Title: {
     Licensed under the Apache License, Version 2.0
 }
 
-
-=== {PROCESS COMMAND LINE ARGUMENTS} ===
-
-; !!! Heed /script/args so you could say e.g. `do/args %make-boot.r [0.3.1]`
-; Note however that current leaning is that scripts called by the invoked
-; process will not have access to the "outer" args, hence there will be only
-; one "args" to be looked at in the long run.  This is an attempt to still
-; be able to bootstrap under the conditions of the A111 rebol.com R3-Alpha
-; as well as function either from the command line or the REPL.
-;
-args: any [
-    either text? :system/script/args [
-        either block? load system/script/args [
-            load system/script/args
-        ][
-            reduce [load system/script/args]
-        ]
-    ][
-        get 'system/script/args
-    ]
-
-    ; This is the only piece that should be necessary if not dealing w/legacy
-    system/options/args
-] else [
-    fail "No platform specified."
-]
-
-product: to-word any [get 'args/PRODUCT "core"]
-
-platform-data: context [type: 'windows]
-build: context [features: [help-strings]]
-
-; !!! "Fetch platform specifications" (was commented out)
-;
-comment [
-    init-build-objects/platform platform
-    platform-data: platforms/:platform
-    build: platform-data/builds/:product
-]
 
 === {MAKE VERSION INFORMATION AVAILABLE TO CORE C CODE} ===
 
@@ -712,7 +673,7 @@ boot-sysobj: load strip-commas-and-null-apostrophes read/string %sysobj.r
 change (at-value version) version
 change (at-value commit) maybe git-commit  ; no-op if no git-commit
 change (at-value build) now/utc
-change (at-value product) (quote to word! product)  ; want it to be quoted
+change (at-value product) (quote to word! "core")  ; want it to be quoted
 
 change at-value platform reduce [
     any [platform-config/name "Unknown"]

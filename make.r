@@ -1187,10 +1187,10 @@ switch rebmake/default-compiler/name [
     fail ["Unrecognized compiler (gcc, clang or cl):" cc]
 ]
 
-if get 'cc-exec [
+if cc-exec [
     set-exec-path rebmake/default-compiler cc-exec
 ]
-if get 'linker-exec [
+if linker-exec [
     set-exec-path rebmake/default-linker linker-exec
 ]
 
