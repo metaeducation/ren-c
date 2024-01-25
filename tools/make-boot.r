@@ -168,7 +168,7 @@ for-each-datatype: func [
         [block!]
     <local>
     name* antiname* description* typesets* class* make* mold* heart* cellmask*
-    completed* running*
+    completed* running* is-unstable*
 ][
     heart*: 1  ; VOID is 0, and is not in the type table
     parse2 type-table [some [not end
@@ -178,6 +178,7 @@ for-each-datatype: func [
         set description* text!
         [set antiname* quasiform! | (antiname*: null)]
         [set cellmask* group!]
+        [set is-unstable* issue! | (is-unstable*: null)]
         [set typesets* block!]
         [and block! into [
             set class* [word! | '- | '? | quote 0]
@@ -266,6 +267,7 @@ for-each-typerange: func [
             text!
             opt quasiform!
             group!
+            opt issue!
             block!
             block!
             (heart*: heart* + 1)

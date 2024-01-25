@@ -358,7 +358,7 @@ INLINE void Drop_Level(Level* L)
 {
     if (
         not Is_Throwing(L)
-        and not (L->out and Is_Raised(L->out))
+        and not (L->out and not Is_Cell_Erased(L->out) and Is_Raised(L->out))
     ){
       #if DEBUG_BALANCE_STATE
         //

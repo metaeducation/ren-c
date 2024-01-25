@@ -206,8 +206,7 @@ DECLARE_NATIVE(except)
 //
 //        let result': ^ eval f
 //        if failure? unmeta result' [let e: unquasi reify unmeta result ...]
-//
- {
+{
     INCLUDE_PARAMS_OF_EXCEPT;
 
     Value* v = ARG(optional);

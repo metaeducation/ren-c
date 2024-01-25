@@ -658,8 +658,10 @@ void Drop_Level_Core(Level* L) {
 
     assert(TOP_LEVEL == L);
 
-    if (Is_Throwing(L) or (L->out and Is_Raised(L->out))) {
-        //
+    if (
+        Is_Throwing(L)
+        or (L->out and not Is_Cell_Erased(L->out) and Is_Raised(L->out))
+    ){
         // On normal completion with a return result, we do not allow API
         // handles attached to a level to leak--you are expected to release
         // everything.  But definitional failure and throw cases are exempt.

@@ -178,7 +178,7 @@ issue       "immutable codepoint or codepoint sequence"
 
     object      "context of names with values"
     ~lazy~      (CELL_FLAG_FIRST_IS_NODE | CELL_FLAG_SECOND_IS_NODE)
-                []
+    #unstable   []
                 [context     *       *]
 
     module      "loadable context of code and data"
@@ -187,8 +187,8 @@ issue       "immutable codepoint or codepoint sequence"
                 [context     *       *]
 
     error       "error context with id, arguments, and stack origin"
-                (CELL_FLAG_FIRST_IS_NODE | CELL_FLAG_SECOND_IS_NODE)
-                []
+    ~raised~    (CELL_FLAG_FIRST_IS_NODE | CELL_FLAG_SECOND_IS_NODE)
+    #unstable   []
                 [context     +       +]
 
     frame       "arguments and locals of a function state"
@@ -281,7 +281,7 @@ pair        "two dimensional point or size"
 
     block       "array of values that blocks evaluation unless DO is used"
     ~pack~      (CELL_FLAG_FIRST_IS_NODE)
-                [any-block! any-array! any-series! any-branch!]
+    #unstable   [any-block! any-array! any-series! any-branch!]
                 [array       *       *]
 
   ; ==========================================================================
@@ -408,7 +408,7 @@ pair        "two dimensional point or size"
 
 comma       "separator between full evaluations (that is otherwise invisible)"
 ~barrier~   (CELL_MASK_NO_NODES)
-            [any-unit!]
+#unstable   [any-unit!]
             [comma       -       +]
 
 
