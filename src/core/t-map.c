@@ -57,16 +57,6 @@ Map* Make_Map(REBLEN capacity)
 }
 
 
-static Context* Error_Conflicting_Key(
-    const Cell* key,
-    Specifier* specifier
-){
-    DECLARE_LOCAL (specific);
-    Derelativize(specific, key, specifier);
-    return Error_Conflicting_Key_Raw(specific);
-}
-
-
 //
 //  Find_Key_Hashed: C
 //
@@ -84,7 +74,6 @@ REBINT Find_Key_Hashed(
     Array* array,
     Series* hashlist,
     const Cell* key,  // !!! assumes ++key finds the values
-    Specifier* specifier,
     REBLEN wide,
     bool strict,
     Byte mode
@@ -134,7 +123,7 @@ REBINT Find_Key_Hashed(
               found_synonym:;
 
                 if (synonym_slot != -1) // another equivalent already matched
-                    fail (Error_Conflicting_Key(key, specifier));
+                    fail (Error_Conflicting_Key_Raw(key));
                 synonym_slot = slot; // save and continue checking
             }
         }
@@ -155,10 +144,9 @@ REBINT Find_Key_Hashed(
     if (zombie_slot != -1) { // zombie encountered; overwrite with new key
         assert(mode == 0);
         slot = zombie_slot;
-        Derelativize(
+        Copy_Relative_internal(
             Array_At(array, (indexes[slot] - 1) * wide),
-            key,
-            specifier
+            key
         );
     }
 
@@ -168,7 +156,7 @@ REBINT Find_Key_Hashed(
 
         REBLEN index;
         for (index = 0; index < wide; ++src, ++index)
-            Append_Value_Core(array, src, specifier);
+            Append_Value(array, src);
     }
 
     return (mode > 0) ? -1 : cast(REBINT, slot);
@@ -209,7 +197,7 @@ static void Rehash_Map(Map* map)
         }
 
         REBLEN hash = Find_Key_Hashed(
-            pairlist, hashlist, key, SPECIFIED, 2, cased, 0
+            pairlist, hashlist, key, 2, cased, 0
         );
         hashes[hash] = n / 2 + 1;
 
@@ -254,9 +242,7 @@ void Expand_Hash(Series* ser)
 REBLEN Find_Map_Entry(
     Map* map,
     const Cell* key,
-    Specifier* key_specifier,
     const Cell* val,
-    Specifier* Cell_Specifier,
     bool strict
 ) {
     assert(not Is_Antiform(key));
@@ -275,7 +261,7 @@ REBLEN Find_Map_Entry(
     const REBLEN wide = 2;
     const Byte mode = 0; // just search for key, don't add it
     REBLEN slot = Find_Key_Hashed(
-        pairlist, hashlist, key, key_specifier, wide, strict, mode
+        pairlist, hashlist, key, wide, strict, mode
     );
 
     REBLEN *indexes = Series_Head(REBLEN, hashlist);
@@ -295,10 +281,9 @@ REBLEN Find_Map_Entry(
 
     // Must set the value:
     if (n) {  // re-set it:
-        Derelativize(
+        Copy_Relative_internal(
             Array_At(pairlist, ((n - 1) * 2) + 1),
-            val,
-            Cell_Specifier
+            val
         );
         return n;
     }
@@ -308,8 +293,8 @@ REBLEN Find_Map_Entry(
     // Create new entry.  Note that it does not copy underlying series (e.g.
     // the data of a string), which is why the immutability test is necessary
     //
-    Append_Value_Core(pairlist, key, key_specifier);
-    Append_Value_Core(pairlist, val, Cell_Specifier);
+    Append_Value(pairlist, key);
+    Append_Value(pairlist, val);
 
     return (indexes[slot] = (Array_Len(pairlist) / 2));
 }
@@ -322,7 +307,6 @@ static void Append_Map(
     Map* map,
     const Cell* head,
     const Cell* tail,
-    Specifier* specifier,
     REBLEN len
 ){
     const Cell* item = head;
@@ -340,9 +324,7 @@ static void Append_Map(
         Find_Map_Entry(
             map,
             item,
-            specifier,
             item + 1,
-            specifier,
             strict
         );
 
@@ -435,10 +417,9 @@ Bounce TO_Map(Level* level_, enum Reb_Kind kind, const REBVAL *arg)
         REBLEN len = Cell_Series_Len_At(arg);
         const Element* tail;
         const Element* at = Cell_Array_At(&tail, arg);
-        Specifier* specifier = Cell_Specifier(arg);
 
         Map* map = Make_Map(len / 2); // [key value key value...] + END
-        Append_Map(map, at, tail, specifier, len);
+        Append_Map(map, at, tail, len);
         Rehash_Map(map);
         return Init_Map(OUT, map);
     }
@@ -635,9 +616,7 @@ REBTYPE(Map)
         REBINT n = Find_Map_Entry(
             m_cast(Map*, VAL_MAP(map)),  // should not modify, see below
             ARG(value),
-            SPECIFIED,
             nullptr,  // nullptr indicates it will only search, not modify
-            SPECIFIED,
             REF(case)
         );
 
@@ -658,9 +637,7 @@ REBTYPE(Map)
         REBINT n = Find_Map_Entry(
             VAL_MAP_Ensure_Mutable(map),
             ARG(key),
-            SPECIFIED,
             ARG(value),  // non-null indicates it will modify, vs. just search
-            SPECIFIED,
             REF(case)
         );
         UNUSED(n);
@@ -690,7 +667,7 @@ REBTYPE(Map)
         const Element* tail;
         const Element* at = Cell_Array_At(&tail, value);  // w/modified index
 
-        Append_Map(m, at, tail, Cell_Specifier(value), len);
+        Append_Map(m, at, tail, len);
 
         return Init_Map(OUT, m); }
 
@@ -735,9 +712,7 @@ REBTYPE(Map)
         REBINT n = Find_Map_Entry(
             m_cast(Map*, VAL_MAP(map)),  // not modified
             picker,
-            SPECIFIED,
             nullptr,  // no value, so map not changed
-            SPECIFIED,
             strict
         );
 
@@ -780,9 +755,7 @@ REBTYPE(Map)
         REBINT n = Find_Map_Entry(
             VAL_MAP_Ensure_Mutable(map),  // modified
             picker,
-            SPECIFIED,
             setval,  // value to set (either ARG(value) or L->out)
-            SPECIFIED,
             strict
         );
 

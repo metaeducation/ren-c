@@ -218,7 +218,7 @@ static Value* Append_Context_Core(
             BINDING(unwrap(any_word)) = patch;
         }
 
-        return cast(Value*, Stub_Cell(patch));
+        return Stub_Cell(patch);
     }
 
     KeyList* keylist = CTX_KEYLIST(context);

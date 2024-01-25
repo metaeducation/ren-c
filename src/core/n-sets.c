@@ -141,7 +141,6 @@ Series* Make_Set_Operation_Series(
                         m_cast(Array*, Cell_Array(val2)),  // mode 1 unchanged
                         hser,
                         item,
-                        Cell_Specifier(val1),
                         skip,
                         cased,
                         1  // won't modify the input array
@@ -154,7 +153,6 @@ Series* Make_Set_Operation_Series(
                         cast(Array*, buffer),
                         hret,
                         item,
-                        Cell_Specifier(val1),
                         skip,
                         cased,
                         2
