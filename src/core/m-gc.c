@@ -361,8 +361,8 @@ static void Queue_Mark_Cell_Deep(const Cell* c)
   #endif
 
     if (Is_Bindable_Kind(heart)) {
-        if (c->extra.Binding)
-            Queue_Mark_Node_Deep(&m_cast(Cell*, c)->extra.Binding);
+        if (Cell_Binding(c))
+            Queue_Mark_Node_Deep(&m_cast(Cell*, c)->extra.Any.node);
     }
 
     if (Get_Cell_Flag_Unchecked(c, FIRST_IS_NODE) and Cell_Node1(c))
@@ -848,7 +848,7 @@ static void Mark_Level_Stack_Deep(void)
             //
             // !!! Should this instead check that it isn't inaccessible?
             //
-            Queue_Mark_Node_Deep(&FEED_SINGLE(L->feed)->extra.Binding);
+            Queue_Mark_Node_Deep(&FEED_SINGLE(L->feed)->extra.Any.node);
         }
 
         // L->out can be nullptr at the moment, when a level is created that

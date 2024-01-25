@@ -1510,7 +1510,7 @@ void Virtual_Bind_Deep_To_Existing_Context(
 //
 void Assert_Cell_Binding_Valid_Core(NoQuote(const Cell*) cell)
 {
-    Stub* binding = x_cast(Stub*, cell->extra.Binding);
+    Stub* binding = BINDING(cell);
     if (not binding)
         return;
 

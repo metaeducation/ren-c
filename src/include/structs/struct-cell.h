@@ -516,7 +516,6 @@ union Reb_Bytes_Extra {
 union ValueExtraUnion { //=/////////////////// ACTUAL EXTRA DEFINITION ////=//
 
     struct Reb_Character_Extra Character;
-    const Node* Binding;  // const Node for GC mark w/update consistency
     struct Reb_Date_Extra Date;
     struct Reb_Parameter_Extra Parameter;
 

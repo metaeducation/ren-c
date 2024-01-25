@@ -53,13 +53,13 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
     enum Reb_Kind heart = Cell_Heart_Unchecked(v);
 
     while (Is_Bindable_Kind(heart)) {  // for `break` convenience
-        if (not v->extra.Binding)
-            break;
-
-        if (Not_Node_Accessible_Canon(v->extra.Binding))
-            break;
-
         Stub* binding = BINDING(v);
+        if (not binding)
+            break;
+
+        if (Not_Node_Accessible_Canon(binding))
+            break;
+
         assert(Is_Node_Managed(binding));
         assert(Is_Series_Array(binding));
 

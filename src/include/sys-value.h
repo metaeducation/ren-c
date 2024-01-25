@@ -501,9 +501,12 @@ INLINE REBVAL* Freshen_Cell_Untracked(Cell* v) {
     #define Assert_Cell_Binding_Valid(v) NOOP
 #endif
 
+#define Cell_Binding(v) \
+    x_cast(Stub*, (v)->extra.Any.node)
+
 #if (! CPLUSPLUS_11)
     #define BINDING(v) \
-        *x_cast(Stub**, m_cast(Node**, &(v)->extra.Binding))
+        *x_cast(Stub**, m_cast(Node**, &(v)->extra.Any.node))
 #else
     struct BindingHolder {
         NoQuote(Cell*) & ref;
@@ -513,27 +516,27 @@ INLINE REBVAL* Freshen_Cell_Untracked(Cell* v) {
           {}
 
         void operator=(Stub* right) {
-            ref->extra.Binding = right;
+            ref->extra.Any.node = right;
             Assert_Cell_Binding_Valid(ref);
         }
         void operator=(BindingHolder const& right) {
-            ref->extra.Binding = right.ref->extra.Binding;
+            ref->extra.Any.node = right.ref->extra.Any.node;
             Assert_Cell_Binding_Valid(ref);
         }
         void operator=(nullptr_t)
-          { ref->extra.Binding = nullptr; }
+          { ref->extra.Any.node = nullptr; }
 
         template<typename T>
         void operator=(Option(T) right) {
-            ref->extra.Binding = try_unwrap(right);
+            ref->extra.Any.node = try_unwrap(right);
             Assert_Cell_Binding_Valid(ref);
         }
 
         Stub* operator-> () const
-          { return x_cast(Stub*, ref->extra.Binding); }
+          { return x_cast(Stub*, ref->extra.Any.node); }
 
         operator Stub* () const
-          { return x_cast(Stub*, ref->extra.Binding); }
+          { return x_cast(Stub*, ref->extra.Any.node); }
     };
 
     #define BINDING(v) \
@@ -542,13 +545,13 @@ INLINE REBVAL* Freshen_Cell_Untracked(Cell* v) {
     template<typename T>
     struct cast_helper<BindingHolder,T> {
         static constexpr T convert(BindingHolder const& holder) {
-            return cast(T, x_cast(Stub*, holder.ref->extra.Binding));
+            return cast(T, x_cast(Stub*, holder.ref->extra.Any.node));
         }
     };
 
   #if DEBUG
     INLINE void Corrupt_Pointer_If_Debug(BindingHolder const& bh)
-      { bh.ref->extra.Binding = p_cast(Stub*, cast(uintptr_t, 0xDECAFBAD)); }
+      { bh.ref->extra.Any.node = p_cast(Stub*, cast(uintptr_t, 0xDECAFBAD)); }
   #endif
 #endif
 
