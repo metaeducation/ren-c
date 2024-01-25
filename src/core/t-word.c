@@ -170,7 +170,7 @@ Bounce TO_Word(Level* level_, enum Reb_Kind kind, const REBVAL *arg)
         REBLEN len = Cell_Sequence_Len(arg);
         REBLEN i;
         for (i = 0; i < len; ++i) {
-            const Cell* item = Cell_Sequence_At(temp, arg, i);
+            const Cell* item = Copy_Sequence_At(temp, arg, i);
             if (Is_Blank(item))
                 continue;
             if (not Is_Word(item))

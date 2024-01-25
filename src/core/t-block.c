@@ -333,7 +333,7 @@ Bounce TO_Array(Level* level_, enum Reb_Kind kind, const REBVAL *arg) {
         Length len = Cell_Sequence_Len(arg);
         REBLEN i;
         for (i = 0; i < len; ++i) {
-            Copy_Sequence_At(
+            Derelativize_Sequence_At(
                 PUSH(),
                 arg,
                 Cell_Sequence_Specifier(arg),

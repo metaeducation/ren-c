@@ -399,7 +399,7 @@ REBTYPE(Sequence)
         if (n < 0 or n >= cast(REBINT, Cell_Sequence_Len(sequence)))
             return nullptr;
 
-        Copy_Sequence_At(OUT, sequence, Cell_Sequence_Specifier(sequence), n);
+        Copy_Sequence_At(OUT, sequence, n);
         return OUT; }
 
       case SYM_REVERSE: {
@@ -450,11 +450,11 @@ void MF_Sequence(REB_MOLD *mo, NoQuote(const Cell*) v, bool form)
 
     bool first = true;
 
-    DECLARE_LOCAL (temp);
+    DECLARE_LOCAL (element);
     Length len = Cell_Sequence_Len(v);
     REBLEN i;
     for (i = 0; i < len; ++i) {
-        const Cell* element = Cell_Sequence_At(temp, v, i);
+        Copy_Sequence_At(element, c_cast(Cell*, v), i);  // !!! cast
         enum Reb_Kind element_kind = VAL_TYPE(element);
 
         if (first)

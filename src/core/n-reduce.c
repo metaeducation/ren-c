@@ -453,7 +453,7 @@ static Atom(*) Finalize_Composer_Level(
             Cell_Heart(composee),
             L->baseline.stack_base
         )){
-            if (Is_Valid_Sequence_Element(heart, out))
+            if (Is_Valid_Sequence_Element(heart, Stable_Unchecked(out)))
                 fail (Error_Cant_Decorate_Type_Raw(out));  // no `3:` [1]
 
             fail (Error_Bad_Sequence_Init(Stable_Unchecked(out)));

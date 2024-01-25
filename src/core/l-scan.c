@@ -2746,15 +2746,15 @@ Bounce Scanner_Executor(Level* const L) {
         //
         if (Is_Tuple(TOP) and Cell_Sequence_Len(TOP) == 2) {
             if (
-                Is_Integer(Cell_Sequence_At(temp, TOP, 0))
-                and Is_Blank(Cell_Sequence_At(temp, TOP, 1))
+                Is_Integer(Copy_Sequence_At(temp, TOP, 0))
+                and Is_Blank(Copy_Sequence_At(temp, TOP, 1))
             ){
                 DROP();
                 return RAISE("`5.` currently reserved, please use 5.0");
             }
             if (
-                Is_Blank(Cell_Sequence_At(temp, TOP, 0))
-                and Is_Integer(Cell_Sequence_At(temp, TOP, 1))
+                Is_Blank(Copy_Sequence_At(temp, TOP, 0))
+                and Is_Integer(Copy_Sequence_At(temp, TOP, 1))
             ){
                 DROP();
                 return RAISE("`.5` currently reserved, please use 0.5");

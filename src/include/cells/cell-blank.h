@@ -62,7 +62,7 @@
 //   have different behavior, e.g. SPREAD of a ~ is an error
 //
 
-INLINE Value(*) Init_Blank_Untracked(Cell* out, Byte quote_byte) {
+INLINE Element(*) Init_Blank_Untracked(Cell* out, Byte quote_byte) {
     FRESHEN_CELL(out);
     out->header.bits |= (
         NODE_FLAG_NODE | NODE_FLAG_CELL
@@ -75,7 +75,7 @@ INLINE Value(*) Init_Blank_Untracked(Cell* out, Byte quote_byte) {
     PAYLOAD(Any, out).second.corrupt = CORRUPTZERO;
   #endif
 
-    return cast(Value(*), out);
+    return cast(Element(*), out);
 }
 
 #define Init_Blank(out) \

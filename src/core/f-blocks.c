@@ -249,8 +249,8 @@ void Uncolor(const Cell* v)
         REBLEN i;
         DECLARE_LOCAL (temp);
         for (i = 0; i < len; ++i) {
-            const Cell* item = Cell_Sequence_At(temp, v, i);
-            Uncolor(item);
+            Copy_Sequence_At(temp, v, i);
+            Uncolor(temp);
         }
     }
     else if (Is_Map(v))

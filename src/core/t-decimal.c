@@ -198,8 +198,18 @@ Bounce MAKE_Decimal(
 
         DECLARE_STABLE (numerator);
         DECLARE_STABLE (denominator);
-        Copy_Sequence_At(numerator, arg, Cell_Sequence_Specifier(arg), 0);
-        Copy_Sequence_At(denominator, arg, Cell_Sequence_Specifier(arg), 1);
+        Derelativize_Sequence_At(
+            numerator,
+            arg,
+            Cell_Sequence_Specifier(arg),
+            0
+        );
+        Derelativize_Sequence_At(
+            denominator,
+            arg,
+            Cell_Sequence_Specifier(arg),
+            1
+        );
         Push_GC_Guard(numerator);  // might be GROUP!, so (1.2)/4
         Push_GC_Guard(denominator);
 
@@ -329,10 +339,10 @@ Bounce TO_Decimal(Level* level_, enum Reb_Kind kind, const REBVAL *arg)
         if (Cell_Sequence_Len(arg) != 2)
             goto bad_to;
 
-        DECLARE_LOCAL (temp1);  // decompress path from cell into values
-        DECLARE_LOCAL (temp2);
-        const Cell* numerator = Cell_Sequence_At(temp1, arg, 0);
-        const Cell* denominator = Cell_Sequence_At(temp2, arg, 1);
+        DECLARE_LOCAL (numerator);  // decompress path from cell into values
+        DECLARE_LOCAL (denominator);
+        Copy_Sequence_At(numerator, arg, 0);
+        Copy_Sequence_At(denominator, arg, 1);
 
         if (not Is_Integer(numerator))
             goto bad_to;

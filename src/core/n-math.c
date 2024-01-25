@@ -1022,8 +1022,8 @@ DECLARE_NATIVE(zero_q)
         REBLEN len = Cell_Sequence_Len(v);
         REBLEN i;
         for (i = 0; i < len; ++i) {
-            const Cell* item = Cell_Sequence_At(SPARE, v, i);
-            if (not Is_Integer(item) or VAL_INT64(item) != 0)
+            Copy_Sequence_At(SPARE, v, i);
+            if (not Is_Integer(SPARE) or VAL_INT64(SPARE) != 0)
                 return Init_False(OUT);
         }
         return Init_True(OUT);

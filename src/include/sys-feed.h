@@ -550,7 +550,7 @@ INLINE const Cell* Lookback_While_Fetching_Next(Level* L) {
 //       mutable (e.g. with MUTABLE) it takes the flag from the feed.
 //
 INLINE void Inertly_Derelativize_Inheriting_Const(
-    Sink(Value(*)) out,
+    Sink(Element(*)) out,
     const Cell* v,
     Feed* feed
 ){
@@ -563,7 +563,7 @@ INLINE void Inertly_Derelativize_Inheriting_Const(
         out->header.bits |= (feed->flags.bits & FEED_FLAG_CONST);
 }
 
-INLINE void Literal_Next_In_Feed(Sink(Value(*)) out, Feed* feed) {
+INLINE void Literal_Next_In_Feed(Sink(Element(*)) out, Feed* feed) {
     Inertly_Derelativize_Inheriting_Const(out, At_Feed(feed), feed);
     Fetch_Next_In_Feed(feed);
 }

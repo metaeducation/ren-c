@@ -94,11 +94,17 @@
 
 INLINE bool Is_Valid_Sequence_Element(
     enum Reb_Kind sequence_kind,
-    const Cell* v
+    Value(const*) v  // current code paths check arbitrary pushed stack values
 ){
     assert(Any_Sequence_Kind(sequence_kind));
 
+    if (Is_Antiform(v) or Is_Quoted(v))
+        return false;
+
     // Quasi cases are legal, to support e.g. `~/home/Projects/ren-c/README.md`
+    //
+    // !!! Ambiguity with Quasi-Path, e.g. ~/foo/~
+    // https://github.com/metaeducation/ren-c/issues/1157
     //
     enum Reb_Kind k = Is_Quasiform(v) ? Cell_Heart(v) : VAL_TYPE(v);
     if (
@@ -152,14 +158,17 @@ INLINE Context* Error_Bad_Sequence_Init(const REBVAL *v) {
 // mechanics that optimized as a word were just changed to make a real WORD!
 // with SYMBOL_FLAG_ESCAPE_IN_SEQUENCE.
 //
-INLINE REBVAL *Init_Any_Sequence_1(Cell* out, enum Reb_Kind kind) {
+INLINE Element(*) Init_Any_Sequence_1(
+    Sink(Element(*)) out,
+    enum Reb_Kind kind
+){
     if (Any_Path_Kind(kind))
         Init_Word(out, Canon(SLASH_1));
     else {
         assert(Any_Tuple_Kind(kind));
         Init_Word(out, Canon(DOT_1));
     }
-    return cast(REBVAL*, out);
+    return out;
 }
 
 
@@ -172,8 +181,8 @@ INLINE REBVAL *Init_Any_Sequence_1(Cell* out, enum Reb_Kind kind) {
 // R3-Alpha, the underlying representation of `/foo` in the cell is the same
 // as an ANY-WORD!.
 
-INLINE REBVAL *Try_Leading_Blank_Pathify(
-    REBVAL *v,
+INLINE Element(*) Try_Leading_Blank_Pathify(
+    Value(*) v,
     enum Reb_Kind kind
 ){
     assert(Any_Sequence_Kind(kind));
@@ -190,7 +199,7 @@ INLINE REBVAL *Try_Leading_Blank_Pathify(
     if (inner_kind == REB_WORD) {
         Set_Cell_Flag(v, REFINEMENT_LIKE);
         HEART_BYTE(v) = kind;
-        return v;
+        return cast(Element(*), v);
     }
 
     Cell* p = Alloc_Pairing(NODE_FLAG_MANAGED);
@@ -200,7 +209,7 @@ INLINE REBVAL *Try_Leading_Blank_Pathify(
     Init_Pair(v, p);
     HEART_BYTE(v) = kind;
 
-    return v;
+    return cast(Element(*), v);
 }
 
 
@@ -220,8 +229,8 @@ INLINE REBVAL *Try_Leading_Blank_Pathify(
 // This will likely be easy to reuse in an ISSUE!+CHAR! unification, so
 // revisit this low-priority idea at that time.
 
-INLINE REBVAL *Init_Any_Sequence_Bytes(
-    Cell* out,
+INLINE Element(*) Init_Any_Sequence_Bytes(
+    Sink(Element(*)) out,
     enum Reb_Kind kind,
     const Byte* data,
     Size size
@@ -246,16 +255,16 @@ INLINE REBVAL *Init_Any_Sequence_Bytes(
             *dest = *data;
     }
 
-    return cast(REBVAL*, out);
+    return out;
 }
 
 #define Init_Tuple_Bytes(out,data,len) \
     Init_Any_Sequence_Bytes((out), REB_TUPLE, (data), (len));
 
-INLINE REBVAL *Try_Init_Any_Sequence_All_Integers(
-    Cell* out,
+INLINE Element(*) Try_Init_Any_Sequence_All_Integers(
+    Sink(Element(*)) out,
     enum Reb_Kind kind,
-    const Cell* head,  // NOTE: Can't use PUSH() or evaluation
+    Value(const*) head,  // NOTE: Can't use PUSH() or evaluation
     REBLEN len
 ){
     if (len > sizeof(PAYLOAD(Bytes, out)).at_least_8 - 1)
@@ -274,7 +283,7 @@ INLINE REBVAL *Try_Init_Any_Sequence_All_Integers(
 
     Byte* bp = PAYLOAD(Bytes, out).at_least_8 + 1;
 
-    const Cell* item = head;
+    Value(const*) item = head;
     REBLEN n;
     for (n = 0; n < len; ++n, ++item, ++bp) {
         if (not Is_Integer(item))
@@ -285,17 +294,17 @@ INLINE REBVAL *Try_Init_Any_Sequence_All_Integers(
         *bp = cast(Byte, i64);
     }
 
-    return cast(REBVAL*, out);
+    return out;
 }
 
 
 //=//// 2-Element "PAIR" SEQUENCE OPTIMIZATION ////////////////////////////=//
 
-INLINE REBVAL *Try_Init_Any_Sequence_Pairlike(
-    Sink(Value(*)) out,
+INLINE Element(*) Try_Init_Any_Sequence_Pairlike(
+    Sink(Element(*)) out,
     enum Reb_Kind kind,
-    const Cell* v1,
-    const Cell* v2
+    Value(const*) v1,
+    Value(const*) v2
 ){
     if (Is_Blank(v1))
         return Try_Leading_Blank_Pathify(
@@ -314,7 +323,7 @@ INLINE REBVAL *Try_Init_Any_Sequence_Pairlike(
     if (Is_Blank(v2) and inner == REB_WORD) {
         Copy_Relative_internal(out, v1);
         HEART_BYTE(out) = kind;
-        return cast(REBVAL*, out);
+        return out;
     }
 
     if (Is_Integer(v1) and Is_Integer(v2)) {
@@ -341,7 +350,7 @@ INLINE REBVAL *Try_Init_Any_Sequence_Pairlike(
     Init_Pair(out, pairing);
     HEART_BYTE(out) = kind;
 
-    return cast(REBVAL*, out);
+    return out;
 }
 
 
@@ -349,14 +358,14 @@ INLINE REBVAL *Try_Init_Any_Sequence_Pairlike(
 // either pathlike or value like.  It is used in COMPOSE of paths, which
 // allows things like:
 //
-//     >> compose (null)/a
+//     >> compose (void)/a
 //     == a
 //
-//     >> compose (try null)/a
+//     >> compose (blank)/a
 //     == /a
 //
-//     >> compose (null)/(null)/(null)
-//     ; null
+//     >> compose (void)/(void)/(void)
+//     == ~null~  ; anti -- or should it be void?
 //
 // Not all clients will want to be this lenient, but that lack of lenience
 // should be done by calling this generic routine and raising an error if
@@ -470,14 +479,10 @@ INLINE Length Cell_Sequence_Len(NoQuote(const Cell*) sequence) {
 }
 
 // Paths may not always be implemented as arrays, so this mechanism needs to
-// be used to read the pointers.  If the value is not in an array, it may
-// need to be written to a passed-in storage location.
+// be used to read the pointers.  Writes to the passed in location.
 //
-// 1. It's important that the return result from this routine be a Cell* and
-//    not a REBVAL*, because path ATs are relative values.  Hence the
-//    seemingly minor optimization of not copying out array cells is more than
-//    just that...it also assures that the caller isn't passing in a REBVAL*
-//    then using it as if it were fully specified.  It serves two purposes.
+// 1. It would sometimes be possible to return a pointer into the array and
+//    not copy a cell.  But
 //
 // 2. Because the cell is being viewed as a PATH! or TUPLE!, we cannot view
 //    it as a WORD! unless we fiddle the bits at a new location.  The cell
@@ -486,44 +491,48 @@ INLINE Length Cell_Sequence_Len(NoQuote(const Cell*) sequence) {
 // 3. The quotes must be removed because the quotes are intended to be "on"
 //    the path or tuple.  If implemented as a pseudo-WORD!
 //
-INLINE const Cell* Cell_Sequence_At(
-    Cell* store,  // relative value, return may not point at this cell [1]
-    NoQuote(const Cell*) sequence,
+INLINE Element(*) Derelativize_Sequence_At(
+    Sink(Element(*)) out,
+    const Cell* sequence,
+    Specifier* specifier,
     REBLEN n
 ){
-    assert(store != sequence);
+    assert(out != sequence);
     assert(Any_Sequence_Kind(Cell_Heart(sequence)));
 
     if (Not_Cell_Flag(sequence, SEQUENCE_HAS_NODE)) {  // compressed bytes
         assert(n < PAYLOAD(Bytes, sequence).at_least_8[IDX_SEQUENCE_USED]);
-        return Init_Integer(store, PAYLOAD(Bytes, sequence).at_least_8[n + 1]);
+        return Init_Integer(out, PAYLOAD(Bytes, sequence).at_least_8[n + 1]);
     }
 
     const Node* node1 = Cell_Node1(sequence);
     if (Is_Node_A_Cell(node1)) {  // test if it's a pairing
         const Cell* pairing = c_cast(Cell*, node1);  // 2 elements compressed
         if (n == 0)
-            return pairing;
+            return cast(Element(*), Derelativize(out, pairing, specifier));
         assert(n == 1);
-        return Pairing_Second(pairing);
+        return cast(
+            Element(*),
+            Derelativize(out, Pairing_Second(pairing), specifier)
+        );
     }
 
     switch (Series_Flavor(x_cast(Series*, node1))) {
       case FLAVOR_SYMBOL : {  // compressed single WORD! sequence
         assert(n < 2);
         if (Get_Cell_Flag(sequence, REFINEMENT_LIKE) ? n == 0 : n != 0)
-            return Lib(BLANK);
+            return Init_Blank(out);
 
-        Copy_Relative_internal(store, x_cast(const Cell*, sequence));  // [2]
-        HEART_BYTE(store) = REB_WORD;
-        QUOTE_BYTE(store) = NOQUOTE_1;  // [3]
-        return store; }
+        Derelativize(out, sequence, specifier);  // [2]
+        HEART_BYTE(out) = REB_WORD;
+        QUOTE_BYTE(out) = NOQUOTE_1;  // [3]
+        return out; }
 
       case FLAVOR_ARRAY : {  // uncompressed sequence
         const Array* a = c_cast(Array*, Cell_Node1(sequence));
         assert(Array_Len(a) >= 2);
         assert(Is_Array_Frozen_Shallow(a));
-        return Array_At(a, n); }  // array is read only
+        return cast(Element(*), Derelativize(out, Array_At(a, n), specifier)); }
 
       default :
         assert(false);
@@ -531,23 +540,15 @@ INLINE const Cell* Cell_Sequence_At(
     }
 }
 
-INLINE Value(*) Copy_Sequence_At(
-    Sink(Value(*)) out,
-    NoQuote(const Cell*) sequence,
-    Specifier* specifier,
-    REBLEN n
-){
-    DECLARE_STABLE (store);
-    const Cell* at = Cell_Sequence_At(store, sequence, n);
-    return Derelativize(out, at, specifier);
-}
+#define Copy_Sequence_At(out,sequence,n) \
+    Derelativize_Sequence_At((out), (sequence), SPECIFIED, (n))
 
 INLINE Byte Cell_Sequence_Byte_At(
-    NoQuote(const Cell*) sequence,
+    const Cell* sequence,
     REBLEN n
 ){
-    DECLARE_LOCAL (temp);
-    const Cell* at = Cell_Sequence_At(temp, sequence, n);
+    DECLARE_LOCAL (at);
+    Copy_Sequence_At(at, sequence, n);
     if (not Is_Integer(at))
         fail ("Cell_Sequence_Byte_At() used on non-byte ANY-SEQUENCE!");
     return VAL_UINT8(at);  // !!! All callers of this routine need vetting
@@ -604,10 +605,10 @@ INLINE bool Did_Get_Sequence_Bytes(
             dp[i] = 0;
             continue;
         }
-        const Cell* at = Cell_Sequence_At(temp, sequence, i);
-        if (not Is_Integer(at))
+        Copy_Sequence_At(temp, sequence, i);
+        if (not Is_Integer(temp))
             return false;
-        REBI64 i64 = VAL_INT64(at);
+        REBI64 i64 = VAL_INT64(temp);
         if (i64 < 0 or i64 > 255)
             return false;
 
@@ -621,7 +622,7 @@ INLINE void Get_Tuple_Bytes(
     const Cell* tuple,
     Size buf_size
 ){
-    assert(Is_Tuple(tuple));
+    assert(Cell_Heart(tuple) == REB_TUPLE);
     if (not Did_Get_Sequence_Bytes(buf, tuple, buf_size))
         fail ("non-INTEGER! found used with Get_Tuple_Bytes()");
 }

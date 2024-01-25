@@ -78,8 +78,8 @@ Value(*) Try_Init_Any_Sequence_At_Arraylike(
         return cast(REBVAL*, out);
     }
 
-    const Cell* tail = Array_Tail(a);
-    const Cell* v = Array_Head(a);
+    Element(const*) tail = Array_Tail(a);
+    Element(const*) v = Array_Head(a);
     for (; v != tail; ++v) {
         if (not Is_Valid_Sequence_Element(kind, v)) {
             Copy_Relative_internal(out, v);
@@ -340,7 +340,7 @@ Bounce TO_Sequence(Level* level_, enum Reb_Kind kind, const REBVAL *arg) {
         return RAISE(Error_Sequence_Too_Short_Raw());
 
     if (len == 2) {
-        const Cell* at = Cell_Array_Item_At(arg);
+        Element(const*) at = Cell_Array_Item_At(arg);
         if (not Try_Init_Any_Sequence_Pairlike(
             OUT,
             kind,
@@ -401,8 +401,8 @@ REBINT CT_Sequence(NoQuote(const Cell*) a, NoQuote(const Cell*) b, bool strict)
     REBLEN n;
     for (n = 0; n < len_a; ++n) {
         int compare = Cmp_Value(
-            Cell_Sequence_At(temp_a, a, n),
-            Cell_Sequence_At(temp_b, b, n),
+            Copy_Sequence_At(temp_a, c_cast(Cell*, a), n),  // !!! cast
+            Copy_Sequence_At(temp_b, c_cast(Cell*, b), n),  // !!! cast
             strict
         );
         if (compare != 0)
