@@ -874,22 +874,6 @@ Context* Error_No_Memory(REBLEN bytes)
 
 
 //
-//  Error_No_Relative_Core: C
-//
-Context* Error_No_Relative_Core(NoQuote(const Cell*) any_word)
-{
-    DECLARE_LOCAL (unbound);
-    Init_Any_Word(
-        unbound,
-        Cell_Heart(any_word),
-        Cell_Word_Symbol(any_word)
-    );
-
-    return Error_No_Relative_Raw(unbound);
-}
-
-
-//
 //  Error_Not_Varargs: C
 //
 Context* Error_Not_Varargs(
