@@ -55,10 +55,10 @@ INLINE const Symbol* Cell_Word_Symbol(NoQuote(const Cell*) cell) {
 #define Cell_Word_Id(v) \
     Symbol_Id(Cell_Word_Symbol(v))
 
-INLINE void INIT_VAL_WORD_INDEX(Cell* v, REBLEN i) {
+INLINE void INIT_VAL_WORD_INDEX(Cell* v, REBINT i) {
     assert(Any_Wordlike(v));
     assert(i != 0);
-    VAL_WORD_INDEX_U32(v) = i;
+    VAL_WORD_INDEX_I32(v) = i;
 }
 
 INLINE REBVAL *Init_Any_Word_Untracked(
@@ -73,7 +73,7 @@ INLINE REBVAL *Init_Any_Word_Untracked(
             | FLAG_HEART_BYTE(kind) | FLAG_QUOTE_BYTE(quote_byte)
             | CELL_FLAG_FIRST_IS_NODE
     );
-    VAL_WORD_INDEX_U32(out) = 0;
+    VAL_WORD_INDEX_I32(out) = 0;
     BINDING(out) = nullptr;
     INIT_CELL_WORD_SYMBOL(out, sym);
 
@@ -102,7 +102,7 @@ INLINE REBVAL *Init_Any_Word_Bound_Untracked(
         FLAG_HEART_BYTE(type) | CELL_FLAG_FIRST_IS_NODE
     );
     INIT_CELL_WORD_SYMBOL(out, symbol);
-    VAL_WORD_INDEX_U32(out) = index;
+    VAL_WORD_INDEX_I32(out) = index;
     BINDING(out) = binding;
 
     if (IS_VARLIST(binding)) {

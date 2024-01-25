@@ -335,7 +335,7 @@ Option(Series*) Get_Word_Container(
     Series* binding = BINDING(any_word);
     const Symbol* symbol = Cell_Word_Symbol(any_word);
 
-    if (VAL_WORD_INDEX_U32(any_word) == INDEX_ATTACHED) {
+    if (VAL_WORD_INDEX_I32(any_word) == INDEX_ATTACHED) {
         //
         // Variable may have popped into existence since the original attach.
         //
@@ -357,7 +357,7 @@ Option(Series*) Get_Word_Container(
 
     Specifier* specifier = specifier_in;
 
-    if (binding and not IS_DETAILS(binding)) {  // leave binding alone
+    if (IS_WORD_BOUND(any_word)) {  // leave binding alone
         *index_out = VAL_WORD_INDEX(any_word);
         return binding;
     }
@@ -401,28 +401,39 @@ Option(Series*) Get_Word_Container(
 
             assert(CTX_TYPE(cast(Context*, specifier)) == REB_FRAME);
 
-            if (binding) {
-                assert(IS_DETAILS(binding));
-                Action* action = cast(Action*, binding);
-                if (Action_Is_Base_Of(action, CTX_FRAME_PHASE(ctx))) {  // [3]
-                    *index_out = VAL_WORD_INDEX(any_word);
-                    return CTX_VARLIST(ctx);
+            if (
+                binding  // word has a cache for if it's in an action frame
+                and Action_Is_Base_Of(
+                    cast(Action*, binding),
+                    CTX_FRAME_PHASE(ctx)
+                )
+            ){
+                assert(VAL_WORD_INDEX_I32(any_word) <= 0);
+                if (VAL_WORD_INDEX_I32(any_word) == 0)
+                    goto check_method_members;
+                *index_out = -(VAL_WORD_INDEX_I32(any_word));
+                return CTX_VARLIST(ctx);
+            }
+            else {  // have to search frame manually
+                REBINT len = Find_Symbol_In_Context(
+                    CTX_ARCHETYPE(cast(Context*, specifier)),
+                    symbol,
+                    true
+                );
+                // Note: caching here seems to slow things down?
+              #ifdef CACHE_FINDINGS_BUT_SEEMS_TO_SLOW_THINGS_DOWN
+                if (VAL_WORD_INDEX_I32(any_word) <= 0) {  // cache in unbounds
+                    VAL_WORD_INDEX_I32(m_cast(Cell*, any_word)) = -(len);
+                    BINDING(m_cast(Cell*, any_word)) = CTX_FRAME_PHASE(ctx);
+                }
+              #endif
+                if (len != 0) {
+                    *index_out = len;
+                    return specifier;
                 }
             }
 
-          blockscope {
-            REBLEN len = Find_Symbol_In_Context(
-                CTX_ARCHETYPE(cast(Context*, specifier)),
-                symbol,
-                true
-            );
-            if (len != 0) {
-                *index_out = len;
-                return specifier;
-            }
-          }
-
-          blockscope {
+          check_method_members: {
             Level* level = CTX_LEVEL_IF_ON_STACK(cast(Context*, specifier));
             if (not level)
                 goto next_virtual;
@@ -740,7 +751,7 @@ DECLARE_NATIVE(let)
                 Derelativize(PUSH(), temp, temp_specifier);  // !!! no derel
                 const Symbol* symbol = Cell_Word_Symbol(temp);
                 bindings = Make_Let_Patch(symbol, bindings);
-                VAL_WORD_INDEX_U32(TOP) = INDEX_PATCHED;
+                VAL_WORD_INDEX_I32(TOP) = INDEX_PATCHED;
                 BINDING(TOP) = bindings;
                 break; }
 
@@ -924,7 +935,18 @@ DECLARE_NATIVE(add_use_object) {
 // allows the topmost level to contain unmanaged values...and we *assume* the
 // values we are operating on here live in an array.
 //
-// !!! Should this return true if any relative bindings were made?
+// 1. In Ren-C's binding model, function bodies are conceptually unbound, and
+//    need the specifier of the frame instance plus whatever specifier was
+//    on the body to resolve the words.  That resolution happens every time
+//    the body is run.  Since function frames don't expand in size, we can
+//    speed the lookup process for unbound words by reusing their binding
+//    space to say whether a word is present in this function's frame or not.
+//
+// 2. To make the test for IS_WORD_UNBOUND() easy, it's just that the index
+//    is less than or equal to zero.  If a word has a negative index then
+//    that means it is caching the fact that the word CAN be found in the
+//    action at the positive index.  If it has zero and a binding, that
+//    means it CAN'T be found in the action's frame.
 //
 void Clonify_And_Bind_Relative(
     Cell* v,
@@ -945,20 +967,14 @@ void Clonify_And_Bind_Relative(
 
     enum Reb_Kind heart = Cell_Heart_Unchecked(v);
 
-    if (relative and Any_Wordlike(v)) {
-        //
-        // !!! Should only bind relative (e.g. "unbound but cached") or
-        // fully unbound.
-        //
+    if (
+        relative
+        and Any_Wordlike(v)
+        and IS_WORD_UNBOUND(v)  // use unbound words as "in frame" cache [1]
+    ){
         REBINT n = Get_Binder_Index_Else_0(unwrap(binder), Cell_Word_Symbol(v));
-        if (n != 0) {
-            //
-            // Word' symbol is in frame.  Relatively bind it.  Note that the
-            // action bound to can be "incomplete" (LETs still gathering)
-            //
-            INIT_VAL_WORD_INDEX(v, n);
-            BINDING(v) = unwrap(relative);
-        }
+        VAL_WORD_INDEX_I32(v) = -(n);  // negative or zero signals unbound [2]
+        BINDING(v) = unwrap(relative);
     }
     else if (deep_types & FLAGIT_KIND(heart) & TS_SERIES_OBJ) {
         //
@@ -1528,7 +1544,7 @@ void Assert_Cell_Binding_Valid_Core(NoQuote(const Cell*) cell)
 
     if (IS_LET(binding)) {
         if (Any_Word_Kind(heart))
-            assert(VAL_WORD_INDEX_U32(cell) == INDEX_PATCHED);
+            assert(VAL_WORD_INDEX_I32(cell) == INDEX_PATCHED);
         return;
     }
 
@@ -1542,7 +1558,7 @@ void Assert_Cell_Binding_Valid_Core(NoQuote(const Cell*) cell)
             or heart == REB_COMMA  // feed cells, use for specifier ATM
         )){
             assert(Any_Word_Kind(heart));
-            assert(VAL_WORD_INDEX_U32(cell) == INDEX_ATTACHED);
+            assert(VAL_WORD_INDEX_I32(cell) == INDEX_ATTACHED);
         }
     }
 }

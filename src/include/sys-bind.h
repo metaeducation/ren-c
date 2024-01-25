@@ -396,19 +396,20 @@ struct Reb_Collector {
 //
 INLINE bool IS_WORD_UNBOUND(const Cell* v) {
     assert(Any_Wordlike(v));
-    if (VAL_WORD_INDEX_U32(v) == INDEX_ATTACHED)
+    if (VAL_WORD_INDEX_I32(v) == INDEX_ATTACHED)
         return true;
-    Series* binding = BINDING(v);
-    return binding == UNBOUND or IS_DETAILS(binding);
+    if (VAL_WORD_INDEX_I32(v) < 0)
+        assert(IS_DETAILS(BINDING(v)));
+    return VAL_WORD_INDEX_I32(v) <= 0;
 }
 
 #define IS_WORD_BOUND(v) \
     (not IS_WORD_UNBOUND(v))
 
 
-INLINE REBLEN VAL_WORD_INDEX(const Cell* v) {
-    assert(BINDING(v));
-    uint32_t i = VAL_WORD_INDEX_U32(v);
+INLINE REBINT VAL_WORD_INDEX(const Cell* v) {
+    assert(Any_Wordlike(v));
+    uint32_t i = VAL_WORD_INDEX_I32(v);
     assert(i > 0);
     return cast(REBLEN, i);
 }
@@ -427,7 +428,7 @@ INLINE REBVAL* Unrelativize(Cell* out, const Cell* v) {
         out->payload = v->payload;
         BINDING(out) = nullptr;
         if (Any_Word(out))
-            VAL_WORD_INDEX_U32(out) = 0;
+            VAL_WORD_INDEX_I32(out) = 0;
     }
     return cast(REBVAL*, out);
 }
@@ -440,7 +441,7 @@ INLINE REBVAL* Unrelativize(Cell* out, const Cell* v) {
 
 INLINE void Unbind_Any_Word(Cell* v) {
     assert(Any_Wordlike(v));
-    VAL_WORD_INDEX_U32(v) = 0;
+    VAL_WORD_INDEX_I32(v) = 0;
     BINDING(v) = nullptr;
 }
 

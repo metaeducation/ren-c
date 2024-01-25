@@ -413,7 +413,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
         //
         assert(Not_Subclass_Flag(SYMBOL, spelling, MISC_IS_BINDINFO));
 
-        REBLEN index = VAL_WORD_INDEX_U32(v);
+        REBINT index = VAL_WORD_INDEX_I32(v);
         Series* binding = BINDING(v);
         if (binding) {
             if (IS_VARLIST(binding)) {
@@ -425,10 +425,10 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
             else if (IS_LET(binding))
                 assert(index == INDEX_PATCHED);
             else
-                assert(index != 0);
+                assert(index != 0 or IS_DETAILS(binding));
         }
         else
-            assert(VAL_WORD_INDEX_U32(v) == 0);
+            assert(index == 0);
         break; }
 
       case REB_QUOTED:
