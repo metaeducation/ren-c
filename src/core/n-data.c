@@ -194,7 +194,6 @@ DECLARE_NATIVE(bind)
         Array* copy = Copy_Array_Core_Managed(
             Cell_Array(v),
             VAL_INDEX(v), // at
-            Cell_Specifier(v),
             Array_Len(Cell_Array(v)), // tail
             0, // extra
             ARRAY_MASK_HAS_FILE_LINE, // flags
@@ -203,6 +202,7 @@ DECLARE_NATIVE(bind)
         at = Array_Head(copy);
         tail = Array_Tail(copy);
         Init_Array_Cell(OUT, VAL_TYPE(v), copy);
+        BINDING(OUT) = BINDING(v);
     }
     else {
         Ensure_Mutable(v);  // use IN for virtual binding
@@ -2114,13 +2114,13 @@ DECLARE_NATIVE(as)
             if (not Is_Array_Frozen_Shallow(Cell_Array(v)))
                 Freeze_Array_Shallow(Cell_Array_Ensure_Mutable(v));
 
-            if (Try_Init_Any_Sequence_At_Arraylike_Core(
+            if (Try_Init_Any_Sequence_At_Arraylike(
                 OUT,  // if failure, nulled if too short...else bad element
                 new_kind,
                 Cell_Array(v),
-                Cell_Specifier(v),
                 VAL_INDEX(v)
             )){
+                BINDING(OUT) = BINDING(v);
                 return OUT;
             }
 

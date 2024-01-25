@@ -977,7 +977,6 @@ void Clonify_And_Bind_Relative(
         else if (Any_Pairlike(v)) {
             Value(*) copy = Copy_Pairing(
                 VAL_PAIRING(v),
-                Cell_Specifier(v),
                 NODE_FLAG_MANAGED
             );
             Init_Cell_Node1(v, copy);
@@ -989,7 +988,6 @@ void Clonify_And_Bind_Relative(
             Array* copy = Copy_Array_At_Extra_Shallow(
                 Cell_Array(v),
                 0,  // !!! what if VAL_INDEX() is nonzero?
-                SPECIFIED,  // !!! Don't derelativize
                 0,
                 NODE_FLAG_MANAGED
             );

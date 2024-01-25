@@ -590,9 +590,7 @@ Cell* Alloc_Pairing(Flags flags) {
 //
 //  Copy_Pairing: C
 //
-Value(*) Copy_Pairing(const Cell* paired, Specifier* specifier, Flags flags) {
-    UNUSED(specifier);
-
+Value(*) Copy_Pairing(const Cell* paired, Flags flags) {
     Cell* copy = Alloc_Pairing(flags);
 
     Copy_Cell(copy, paired);

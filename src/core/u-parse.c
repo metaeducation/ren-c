@@ -2422,7 +2422,6 @@ DECLARE_NATIVE(subparse)
                         Copy_Array_At_Max_Shallow(
                             P_INPUT_ARRAY,
                             begin,
-                            P_INPUT_SPECIFIER,
                             count
                         )
                     );

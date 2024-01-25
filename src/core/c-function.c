@@ -901,7 +901,6 @@ void Get_Maybe_Fake_Action_Body(Sink(Value(*)) out, Value(const*) action)
             //
             Array* fake = Copy_Array_Shallow_Flags(
                 Cell_Array(example),
-                Cell_Specifier(example),
                 NODE_FLAG_MANAGED
             );
 

@@ -108,7 +108,6 @@ REBLEN Modify_Array(
             Array* copy = Copy_Array_At_Extra_Shallow(
                 Cell_Array(src_val),
                 VAL_INDEX(src_val),
-                SPECIFIED,  // !!! Ignored
                 0, // extra
                 NODE_FLAG_MANAGED // !!! Worth it to not manage and free?
             );

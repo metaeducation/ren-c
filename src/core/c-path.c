@@ -28,13 +28,12 @@
 
 
 //
-//  Try_Init_Any_Sequence_At_Arraylike_Core: C
+//  Try_Init_Any_Sequence_At_Arraylike: C
 //
-Value(*) Try_Init_Any_Sequence_At_Arraylike_Core(
+Value(*) Try_Init_Any_Sequence_At_Arraylike(
     Sink(Value(*)) out,  // NULL if array too short, violating value otherwise
     enum Reb_Kind kind,
     const Array* a,
-    Specifier* specifier,
     REBLEN index
 ){
     assert(Any_Sequence_Kind(kind));
@@ -52,20 +51,17 @@ Value(*) Try_Init_Any_Sequence_At_Arraylike_Core(
     }
 
     if (len_at == 2) {
-        if (a == PG_2_Blanks_Array) {  // can get passed back in
-            assert(specifier == SPECIFIED);
+        if (a == PG_2_Blanks_Array)  // can get passed back in
             return Init_Any_Sequence_1(out, kind);
-        }
 
         // !!! Note: at time of writing, this may just fall back and make
         // a 2-element array vs. a pair optimization.
         //
-        if (Try_Init_Any_Sequence_Pairlike_Core(
+        if (Try_Init_Any_Sequence_Pairlike(
             out,
             kind,
             Array_At(a, index),
-            Array_At(a, index + 1),
-            specifier
+            Array_At(a, index + 1)
         )){
             return cast(REBVAL*, out);
         }
@@ -86,7 +82,7 @@ Value(*) Try_Init_Any_Sequence_At_Arraylike_Core(
     const Cell* v = Array_Head(a);
     for (; v != tail; ++v) {
         if (not Is_Valid_Sequence_Element(kind, v)) {
-            Derelativize(out, v, specifier);
+            Copy_Relative_internal(out, v);
             return nullptr;
         }
     }
@@ -101,7 +97,7 @@ Value(*) Try_Init_Any_Sequence_At_Arraylike_Core(
     // do it is that leaving it as an index allows for aliasing BLOCK! as
     // PATH! from non-head positions.
 
-    Init_Series_Cell_At_Core(out, REB_BLOCK, a, index, specifier);
+    Init_Series_Cell_At_Core(out, REB_BLOCK, a, index, SPECIFIED);
     HEART_BYTE(out) = kind;
 
     return cast(REBVAL*, out);
@@ -345,12 +341,11 @@ Bounce TO_Sequence(Level* level_, enum Reb_Kind kind, const REBVAL *arg) {
 
     if (len == 2) {
         const Cell* at = Cell_Array_Item_At(arg);
-        if (not Try_Init_Any_Sequence_Pairlike_Core(
+        if (not Try_Init_Any_Sequence_Pairlike(
             OUT,
             kind,
             at,
-            at + 1,
-            Cell_Specifier(arg)
+            at + 1
         )){
             return RAISE(Error_Bad_Sequence_Init(stable_OUT));
         }
@@ -362,8 +357,7 @@ Bounce TO_Sequence(Level* level_, enum Reb_Kind kind, const REBVAL *arg) {
 
         Array* a = Copy_Array_At_Shallow(
             Cell_Array(arg),
-            VAL_INDEX(arg),
-            Cell_Specifier(arg)
+            VAL_INDEX(arg)
         );
         Freeze_Array_Shallow(a);
         Force_Series_Managed(a);

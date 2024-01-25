@@ -193,7 +193,7 @@ Series* Make_Set_Operation_Series(
         // The buffer may have been allocated too large, so copy it at the
         // used capacity size
         //
-        out_ser = Copy_Array_Shallow(x_cast(Array*, buffer), SPECIFIED);
+        out_ser = Copy_Array_Shallow(x_cast(Array*, buffer));
         Free_Unmanaged_Series(x_cast(Array*, buffer));
     }
     else if (Any_String(val1)) {

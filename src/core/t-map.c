@@ -379,7 +379,6 @@ Bounce MAKE_Map(
 inline static Map* Copy_Map(const Map* map, REBU64 types) {
     Array* copy = Copy_Array_Shallow_Flags(
         MAP_PAIRLIST(map),
-        SPECIFIED,
         SERIES_MASK_PAIRLIST
     );
 

@@ -533,7 +533,6 @@ Array* Collect_Unique_Words_Managed(
     //
     Array* array = Copy_Values_Len_Shallow_Core(
         Data_Stack_At(cl->stack_base + 1),
-        SPECIFIED,
         TOP_INDEX - cl->stack_base,
         NODE_FLAG_MANAGED
     );

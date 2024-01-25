@@ -135,10 +135,7 @@ INLINE Context* Error_Bad_Sequence_Init(const REBVAL *v) {
 //=//// UNCOMPRESSED ARRAY SEQUENCE FORM //////////////////////////////////=//
 
 #define Try_Init_Any_Sequence_Arraylike(v,k,a) \
-    Try_Init_Any_Sequence_At_Arraylike_Core((v), (k), (a), SPECIFIED, 0)
-
-#define Try_Init_Path_Arraylike(v,a) \
-    Try_Init_Any_Sequence_Arraylike((v), REB_PATH, (a))
+    Try_Init_Any_Sequence_At_Arraylike((v), (k), (a), 0)
 
 
 //=//// ALL-BLANK! SEQUENCE OPTIMIZATION //////////////////////////////////=//
@@ -294,15 +291,12 @@ INLINE REBVAL *Try_Init_Any_Sequence_All_Integers(
 
 //=//// 2-Element "PAIR" SEQUENCE OPTIMIZATION ////////////////////////////=//
 
-INLINE REBVAL *Try_Init_Any_Sequence_Pairlike_Core(
+INLINE REBVAL *Try_Init_Any_Sequence_Pairlike(
     Sink(Value(*)) out,
     enum Reb_Kind kind,
     const Cell* v1,
-    const Cell* v2,
-    Specifier* specifier  // assumed to apply to both v1 and v2
+    const Cell* v2
 ){
-    UNUSED(specifier);
-
     if (Is_Blank(v1))
         return Try_Leading_Blank_Pathify(
             SPECIFIC(Copy_Relative_internal(out, v2)),
@@ -349,9 +343,6 @@ INLINE REBVAL *Try_Init_Any_Sequence_Pairlike_Core(
 
     return cast(REBVAL*, out);
 }
-
-#define Try_Init_Any_Sequence_Pairlike(out,kind,v1,v2) \
-    Try_Init_Any_Sequence_Pairlike_Core((out), (kind), (v1), (v2), SPECIFIED)
 
 
 // This is a general utility for turning stack values into something that is

@@ -309,60 +309,24 @@ enum {
     (COPY_DEEP | COPY_STRINGS)
 
 
-#define Copy_Values_Len_Shallow(v,s,l) \
-    Copy_Values_Len_Extra_Shallow_Core((v), (s), (l), 0, 0)
+#define Copy_Values_Len_Shallow(v,l) \
+    Copy_Values_Len_Extra_Shallow_Core((v), (l), 0, 0)
 
-#define Copy_Values_Len_Shallow_Core(v,s,l,f) \
-    Copy_Values_Len_Extra_Shallow_Core((v), (s), (l), 0, (f))
-
-#define Copy_Values_Len_Extra_Shallow(v,s,l,e) \
-    Copy_Values_Len_Extra_Shallow_Core((v), (s), (l), (e), 0)
+#define Copy_Values_Len_Shallow_Core(v,l,f) \
+    Copy_Values_Len_Extra_Shallow_Core((v), (l), 0, (f))
 
 
-#define Copy_Array_Shallow(a,s) \
-    Copy_Array_At_Shallow((a), 0, (s))
+#define Copy_Array_Shallow(a) \
+    Copy_Array_At_Shallow((a), 0)
 
-#define Copy_Array_Shallow_Flags(a,s,f) \
-    Copy_Array_At_Extra_Shallow((a), 0, (s), 0, (f))
+#define Copy_Array_Shallow_Flags(a,f) \
+    Copy_Array_At_Extra_Shallow((a), 0, 0, (f))
 
-#define Copy_Array_Deep_Managed(a,s) \
-    Copy_Array_At_Extra_Deep_Flags_Managed((a), 0, (s), 0, SERIES_FLAGS_NONE)
+#define Copy_Array_At_Shallow(a,i) \
+    Copy_Array_At_Extra_Shallow((a), (i), 0, SERIES_FLAGS_NONE)
 
-#define Copy_Array_Deep_Flags_Managed(a,s,f) \
-    Copy_Array_At_Extra_Deep_Flags_Managed((a), 0, (s), 0, (f))
-
-#define Copy_Array_At_Deep_Managed(a,i,s) \
-    Copy_Array_At_Extra_Deep_Flags_Managed((a), (i), (s), 0, SERIES_FLAGS_NONE)
-
-#define COPY_ANY_ARRAY_AT_DEEP_MANAGED(v) \
-    Copy_Array_At_Extra_Deep_Flags_Managed( \
-        Cell_Array(v), VAL_INDEX(v), Cell_Specifier(v), 0, SERIES_FLAGS_NONE)
-
-#define Copy_Array_At_Shallow(a,i,s) \
-    Copy_Array_At_Extra_Shallow((a), (i), (s), 0, SERIES_FLAGS_NONE)
-
-#define Copy_Array_Extra_Shallow(a,s,e) \
-    Copy_Array_At_Extra_Shallow((a), 0, (s), (e), SERIES_FLAGS_NONE)
-
-// See TS_NOT_COPIED for the default types excluded from being deep copied
-//
-INLINE Array* Copy_Array_At_Extra_Deep_Flags_Managed(
-    const Array* original, // ^-- not macro because original mentioned twice
-    REBLEN index,
-    Specifier* specifier,
-    REBLEN extra,
-    Flags flags
-){
-    return Copy_Array_Core_Managed(
-        original,
-        index, // at
-        specifier,
-        Array_Len(original), // tail
-        extra, // extra
-        flags, // note no ARRAY_HAS_FILE_LINE by default
-        TS_SERIES & ~TS_NOT_COPIED // types
-    );
-}
+#define Copy_Array_Extra_Shallow(a,e) \
+    Copy_Array_At_Extra_Shallow((a), 0, (e), SERIES_FLAGS_NONE)
 
 
 #ifdef NDEBUG

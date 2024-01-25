@@ -389,33 +389,6 @@ struct Reb_Collector {
     ((TOP_INDEX - (collector)->stack_base) + 1)  // index of *next* item to add
 
 
-// The process of derelativization will resolve a relative value with a
-// specific one--storing frame references into cells.  But once that has
-// happened, the cell may outlive the frame...but the binding override that
-// the frame contributed might still matter.
-//
-// !!! The functioning of Decay_Series() should be reviewed to see if it
-// actually needs to preserve the CTX_ARCHETYPE().  It's not entirely clear
-// if the scenarios are meaningful--but Derelativize cannot fail(), and
-// it would without this.  It might also put in some "fake" element that
-// would fail later, but given that the frame's captured binding can outlive
-// the frame that might lose important functionality.
-//
-// 1. It is okay if the context has been decayed, because the rootvar will
-//    still be accessible in the decayed stub.
-//
-INLINE Series* SPC_BINDING(Specifier* specifier)
-{
-    UNUSED(specifier);
-    return nullptr;
-
-/*    assert(specifier != UNBOUND);
-    const REBVAL *rootvar = CTX_ARCHETYPE(cast(Context*, specifier));  // [1]
-    assert(Is_Frame(rootvar));
-    return BINDING(rootvar); */
-}
-
-
 // The unbound state for an ANY-WORD! is to hold its spelling.  Once bound,
 // the spelling is derived by indexing into the keylist of the binding (if
 // bound directly to a context) or into the paramlist (if relative to an

@@ -204,7 +204,7 @@ Bounce MAKE_Array(
         return Init_Array_Cell(
             OUT,
             kind,
-            Copy_Values_Len_Shallow(at, Cell_Specifier(arg), len)
+            Copy_Values_Len_Shallow(at, len)
         );
     }
     else if (Is_Text(arg)) {
@@ -348,7 +348,7 @@ Bounce TO_Array(Level* level_, enum Reb_Kind kind, const REBVAL *arg) {
         return Init_Array_Cell(
             OUT,
             kind,
-            Copy_Values_Len_Shallow(at, Cell_Specifier(arg), len)
+            Copy_Values_Len_Shallow(at, len)
         );
     }
     else {
@@ -914,7 +914,7 @@ REBTYPE(Array)
 
         if (REF(part))
             Init_Block(
-                OUT, Copy_Array_At_Max_Shallow(arr, index, specifier, len)
+                OUT, Copy_Array_At_Max_Shallow(arr, index, len)
             );
         else
             Derelativize(OUT, &Array_Head(arr)[index], specifier);
@@ -1088,7 +1088,6 @@ REBTYPE(Array)
         Array* copy = Copy_Array_Core_Managed(
             arr,
             index, // at
-            specifier,
             tail, // tail
             0, // extra
             flags, // flags

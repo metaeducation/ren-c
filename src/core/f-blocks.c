@@ -35,12 +35,9 @@
 Array* Copy_Array_At_Extra_Shallow(
     const Array* original,
     REBLEN index,
-    Specifier* specifier,
     REBLEN extra,
     Flags flags
 ){
-    UNUSED(specifier);
-
     REBLEN len = Array_Len(original);
 
     if (index > len)
@@ -70,11 +67,8 @@ Array* Copy_Array_At_Extra_Shallow(
 Array* Copy_Array_At_Max_Shallow(
     const Array* original,
     REBLEN index,
-    Specifier* specifier,
     REBLEN max
 ){
-    UNUSED(specifier);
-
     const Flags flags = 0;
 
     if (index > Array_Len(original))
@@ -104,7 +98,6 @@ Array* Copy_Array_At_Max_Shallow(
 //
 Array* Copy_Values_Len_Extra_Shallow_Core(
     const Cell* head,
-    Specifier* specifier,
     REBLEN len,
     REBLEN extra,
     Flags flags
@@ -123,7 +116,7 @@ Array* Copy_Values_Len_Extra_Shallow_Core(
             assert(IS_VARLIST(a));  // usually not legal
         }
 
-        Derelativize(dest, src, specifier);
+        Copy_Cell(dest, src);
     }
 
     return a;
@@ -154,14 +147,11 @@ void Clonify(
 Array* Copy_Array_Core_Managed(
     const Array* original,
     REBLEN index,
-    Specifier* specifier,
     REBLEN tail,
     REBLEN extra,
     Flags flags,
     REBU64 deep_types
 ){
-    UNUSED(specifier);
-
     if (index > tail) // !!! should this be asserted?
         index = tail;
 

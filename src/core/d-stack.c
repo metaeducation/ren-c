@@ -39,27 +39,21 @@
 // ellipses to show they have been cut off.  It does not change the arrays
 // in question, but replaces them with copies.
 //
-void Collapsify_Array(Array* array, Specifier* specifier, REBLEN limit)
+void Collapsify_Array(Array* array, REBLEN limit)
 {
     const Cell* tail = Array_Tail(array);
     Cell* item = Array_Head(array);
     for (; item != tail; ++item) {
         if (Any_Array(item) and Cell_Series_Len_At(item) > limit) {
-            Specifier* derived = Derive_Specifier(specifier, item);
             Array* copy = Copy_Array_At_Max_Shallow(
                 Cell_Array(item),
                 VAL_INDEX(item),
-                derived,
                 limit + 1
             );
 
             Init_Word(Array_At(copy, limit), Canon(ELLIPSIS_1));
 
-            Collapsify_Array(
-                copy,
-                SPECIFIED,
-                limit
-            );
+            Collapsify_Array(copy, limit);
 
             enum Reb_Kind kind = VAL_TYPE(item);
             Init_Array_Cell_At(item, kind, copy, 0);  // at 0 now
@@ -159,7 +153,7 @@ REBVAL *Init_Near_For_Level(Cell* out, Level* L)
     // Simplify overly-deep blocks embedded in the where so they show (...)
     // instead of printing out fully.
     //
-    Collapsify_Array(near, SPECIFIED, 3);
+    Collapsify_Array(near, 3);
 
     Init_Block(out, near);
 
