@@ -56,7 +56,7 @@ enum {
 // move the built level into a new level that can be executed with a new
 // entry to Process_Action().  The ability is also used by RESKINNED.
 //
-Level* Push_Downshifted_Level(Atom(*) out, Level* L) {
+Level* Push_Downshifted_Level(Atom* out, Level* L) {
     Flags flags = ACTION_EXECUTOR_FLAG_IN_DISPATCH;
     flags |= L->flags.bits & LEVEL_FLAG_RAISED_RESULT_OK;
 
@@ -246,7 +246,7 @@ DECLARE_NATIVE(chain_p)  // see extended definition CHAIN in %base-defs.r
 {
     INCLUDE_PARAMS_OF_CHAIN_P;
 
-    Atom(*) out = OUT;  // plan ahead for factoring into Chain_Action(out..
+    Atom* out = OUT;  // plan ahead for factoring into Chain_Action(out..
 
     REBVAL *pipeline = ARG(pipeline);
     const Element* tail;

@@ -373,7 +373,7 @@ REBTYPE(Sequence)
         enum Reb_Kind kind = VAL_TYPE(sequence);
         HEART_BYTE(sequence) = REB_BLOCK;
 
-        Atom(*) r = Atom_From_Bounce(T_Array(level_, verb));
+        Atom* r = Atom_From_Bounce(T_Array(level_, verb));
         assert(Cell_Heart(r) == REB_BLOCK);
 
         if (r != OUT)

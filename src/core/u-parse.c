@@ -476,7 +476,7 @@ bool Process_Group_For_Parse_Throws(
         : Derive_Specifier(P_RULE_SPECIFIER, group);
 
   blockscope {
-    Atom(*) atom_out = out;
+    Atom* atom_out = out;
     if (Do_Any_Array_At_Throws(atom_out, group, derived))
         return true;
     Decay_If_Unstable(atom_out);
@@ -634,7 +634,7 @@ static REBIXO Parse_One_Rule(
           case REB_TYPE_BLOCK:
           case REB_TYPE_GROUP:
           case REB_PARAMETER: {
-            if (Typecheck_Atom_Core(rule, P_RULE_SPECIFIER, cast(Atom(const*), item)))
+            if (Typecheck_Atom_Core(rule, P_RULE_SPECIFIER, cast(const Atom*, item)))
                 return pos + 1;  // type was in typeset
             return END_FLAG; }
 
@@ -2554,7 +2554,7 @@ DECLARE_NATIVE(subparse)
                 );
 
               blockscope {
-                Atom(*) atom_evaluated = evaluated;
+                Atom* atom_evaluated = evaluated;
                 if (Do_Any_Array_At_Throws(
                     atom_evaluated,
                     rule,

@@ -154,9 +154,9 @@ INLINE char VAL_RETURN_SIGNAL(Bounce b) {
     return PAYLOAD(Any, cast(REBVAL*, b)).first.u;
 }
 
-INLINE Atom(*) Atom_From_Bounce(Bounce b) {
+INLINE Atom* Atom_From_Bounce(Bounce b) {
     assert(Is_Bounce_An_Atom(b));
-    return cast(Atom(*), b);
+    return cast(Atom*, b);
 }
 
 

@@ -379,7 +379,7 @@ INLINE Cell* Erase_Cell_Untracked(Cell* c) {
 }
 
 #if CPLUSPLUS_11
-    INLINE Atom(*) Erase_Cell_Untracked(Atom(*) atom) {
+    INLINE Atom* Erase_Cell_Untracked(Atom* atom) {
         ALIGN_CHECK_CELL(atom);
         atom->header.bits = CELL_MASK_0;
         return atom;
@@ -658,7 +658,7 @@ INLINE Cell* Copy_Cell_Untracked(
     return out;
 }
 
-INLINE bool Is_Stable(Atom(const*) v);
+INLINE bool Is_Stable(const Atom* v);
 
 #if CPLUSPLUS_11  // REBVAL and Cell are checked distinctly
     INLINE Value* Copy_Cell_Untracked(
@@ -687,7 +687,7 @@ INLINE bool Is_Stable(Atom(const*) v);
 
     INLINE Value* Copy_Cell_Untracked(
         Value* out,
-        Atom(const*) v,
+        const Atom* v,
         Flags copy_mask
     ){
         assert(Is_Stable(v));
@@ -730,7 +730,7 @@ INLINE Cell* Copy_Relative_internal(Cell* out, const Cell* in) {  // dangerous!
 
 INLINE REBVAL *Move_Cell_Untracked(
     Cell* out,
-    Atom(*) v,
+    Atom* v,
     Flags copy_mask
 ){
     Copy_Cell_Untracked(out, v, copy_mask);  // Move_Cell() adds track to `out`
@@ -760,7 +760,7 @@ INLINE REBVAL *Move_Cell_Untracked(
 // gets you const output, but mutable input will get you const output if
 // the value itself is const (so it inherits).
 //
-INLINE Atom(*) Inherit_Const(Atom(*) out, const Cell* influencer) {
+INLINE Atom* Inherit_Const(Atom* out, const Cell* influencer) {
     out->header.bits |= (influencer->header.bits & CELL_FLAG_CONST);
     return out;
 }
@@ -788,7 +788,7 @@ INLINE REBVAL *Constify(REBVAL *v) {
 #define DECLARE_LOCAL(name) \
     Cell name##_cell; \
     Erase_Cell(&name##_cell); \
-    Atom(*) name = u_cast(Atom(*), &name##_cell)
+    Atom* name = u_cast(Atom*, &name##_cell)
 
 #define DECLARE_STABLE(name) \
     Cell name##_cell; \

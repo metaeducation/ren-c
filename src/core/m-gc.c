@@ -432,7 +432,7 @@ static void Propagate_All_GC_Marks(void)
                 if (flavor < FLAVOR_MIN_ISOTOPES_OK)
                     panic (v);  // antiforms not legal in many array types
 
-                if (Is_Antiform_Unstable(cast(Atom(*), v)))  // always illegal
+                if (Is_Antiform_Unstable(cast(Atom*, v)))  // always illegal
                     panic (v);
                 break;
 

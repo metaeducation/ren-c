@@ -73,7 +73,7 @@ INLINE Value* Init_Barrier(Cell* out) {
     return cast(Value*, out);
 }
 
-INLINE bool Is_Elision(Atom(*) v) {
+INLINE bool Is_Elision(Atom* v) {
     return Is_Barrier(v) or Is_Nihil(v);
 }
 

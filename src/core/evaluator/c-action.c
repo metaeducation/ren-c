@@ -149,7 +149,7 @@ bool Lookahead_To_Sync_Enfix_Defer_Flag(Feed* feed) {
 //    of multi-return proxying via RETURN/ONLY.  Hence natives now need to
 //    take that responsibility of choosing whether or not to proxy.
 //
-Bounce Proxy_Multi_Returns_Core(Level* L, Atom(*) v)
+Bounce Proxy_Multi_Returns_Core(Level* L, Atom* v)
 {
     assert(not Is_Raised(v));
 
@@ -331,7 +331,7 @@ Bounce Action_Executor(Level* L)
                 if (Cell_Word_Symbol(ordered) != param_symbol)
                     continue;
 
-                REBLEN offset = ARG - cast(Atom(*), Level_Args_Head(L));
+                REBLEN offset = ARG - cast(Atom*, Level_Args_Head(L));
                 INIT_VAL_WORD_INDEX(ordered, offset + 1);
                 BINDING(ordered) = L->u.action.original;
 
@@ -770,7 +770,7 @@ Bounce Action_Executor(Level* L)
         // But +1 is okay, because we want the slots after the refinement.
         //
         REBINT offset =
-            VAL_WORD_INDEX(TOP) - (ARG - cast(Atom(*), Level_Args_Head(L))) - 1;
+            VAL_WORD_INDEX(TOP) - (ARG - cast(Atom*, Level_Args_Head(L))) - 1;
         KEY += offset;
         ARG += offset;
         PARAM += offset;
@@ -896,8 +896,8 @@ Bounce Action_Executor(Level* L)
             bool enfix = false;  // !!! how does enfix matter?
             VAL_VARARGS_SIGNED_PARAM_INDEX(ARG) =  // store offset [4]
                 enfix
-                    ? -(ARG - cast(Atom(*), Level_Args_Head(L)) + 1)
-                    : ARG - cast(Atom(*), Level_Args_Head(L)) + 1;
+                    ? -(ARG - cast(Atom*, Level_Args_Head(L)) + 1)
+                    : ARG - cast(Atom*, Level_Args_Head(L)) + 1;
 
             assert(VAL_VARARGS_SIGNED_PARAM_INDEX(ARG) != 0);
             continue;
@@ -1005,7 +1005,7 @@ Bounce Action_Executor(Level* L)
         Init_Nulled(OUT);
     }
     else if (Is_Bounce_An_Atom(b)) {
-        Atom(*) r = Atom_From_Bounce(b);
+        Atom* r = Atom_From_Bounce(b);
         assert(Is_Api_Value(r));
         Copy_Cell(OUT, r);
         Release_Api_Value_If_Unmanaged(r);

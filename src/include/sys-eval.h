@@ -144,7 +144,7 @@ INLINE REBVAL *Refinify_Pushed_Refinement(REBVAL *v) {
 // you have to enter the level specially with ST_EVALUATOR_LOOKING_AHEAD.
 //
 INLINE bool Did_Init_Inert_Optimize_Complete(
-    Atom(*) out,
+    Atom* out,
     Feed* feed,
     Flags *flags
 ){
@@ -248,7 +248,7 @@ INLINE bool Did_Init_Inert_Optimize_Complete(
 // operations on an array, without creating a new level each time.
 //
 INLINE bool Eval_Step_Throws(
-    Atom(*) out,
+    Atom* out,
     Level* L
 ){
     assert(Not_Feed_Flag(L->feed, NO_LOOKAHEAD));
@@ -270,7 +270,7 @@ INLINE bool Eval_Step_Throws(
 // SET-PATH! are running with an expiring `current` in effect.
 //
 INLINE bool Eval_Step_In_Sublevel_Throws(
-    Atom(*) out,
+    Atom* out,
     Level* L,
     Flags flags
 ){
@@ -284,7 +284,7 @@ INLINE bool Eval_Step_In_Sublevel_Throws(
 
 
 INLINE bool Reevaluate_In_Sublevel_Throws(
-    Atom(*) out,
+    Atom* out,
     Level* L,
     const Value* reval,
     Flags flags,
@@ -303,7 +303,7 @@ INLINE bool Reevaluate_In_Sublevel_Throws(
 
 
 INLINE bool Eval_Step_In_Any_Array_At_Throws(
-    Atom(*) out,
+    Atom* out,
     REBLEN *index_out,
     const Cell* any_array,  // Note: legal to have any_array = out
     Specifier* specifier,
@@ -334,7 +334,7 @@ INLINE bool Eval_Step_In_Any_Array_At_Throws(
 
 
 INLINE bool Eval_Value_Core_Throws(
-    Atom(*) out,
+    Atom* out,
     Flags flags,
     const Cell* value,  // e.g. a BLOCK! here would just evaluate to itself!
     Specifier* specifier

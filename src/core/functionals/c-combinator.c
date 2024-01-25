@@ -102,7 +102,7 @@ Bounce Combinator_Dispatcher(Level* L)
     if (b == BOUNCE_THROWN)
         return b;
 
-    Atom(*) r = Atom_From_Bounce(b);
+    Atom* r = Atom_From_Bounce(b);
 
     if (r == nullptr or Is_Nulled(r))
         return r;  // did not advance, don't update furthest
@@ -320,7 +320,7 @@ DECLARE_NATIVE(combinator)
 // in the right order in the frame.
 //
 void Push_Parser_Sublevel(
-    Atom(*) out,
+    Atom* out,
     const REBVAL *remainder,
     const REBVAL *parser,
     const REBVAL *input

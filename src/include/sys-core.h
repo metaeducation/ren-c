@@ -375,7 +375,7 @@ typedef struct {
 
     Jump* jump_list;  // Saved state for RESCUE_SCOPE
 
-    AtomT thrown_arg;
+    Atom thrown_arg;
     Value thrown_label;
     Level* unwind_level;
 

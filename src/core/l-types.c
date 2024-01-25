@@ -132,7 +132,7 @@ DECLARE_NATIVE(make)
         return b;  // !!! Doesn't check result if continuation used, review
     if (b == BOUNCE_THROWN)
         return b;
-    Atom(*) r = Atom_From_Bounce(b);
+    Atom* r = Atom_From_Bounce(b);
     if (r != nullptr) {
         if (Is_Raised(r))
             return r;
@@ -203,7 +203,7 @@ DECLARE_NATIVE(to)
         assert(!"Illegal throw in TO conversion handler");
         fail (Error_No_Catch_For_Throw(LEVEL));
     }
-    Atom(*) r = Atom_From_Bounce(b);
+    Atom* r = Atom_From_Bounce(b);
     if (Is_Raised(r))
         return r;
 

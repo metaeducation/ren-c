@@ -389,7 +389,7 @@ bool Match_For_Compose(NoQuote(const Cell*) group, const REBVAL *label) {
 //    so long as it is passed in the `main_level` member.
 //
 static void Push_Composer_Level(
-    Atom(*) out,
+    Atom* out,
     Level* main_level,
     const Value* arraylike,
     Specifier* specifier
@@ -434,8 +434,8 @@ static void Push_Composer_Level(
 // 3. There are N instances of the NEWLINE_BEFORE flags on the pushed items,
 //    and we need N + 1 flags.  Borrow the tail flag from the input array.
 //
-static Atom(*) Finalize_Composer_Level(
-    Atom(*) out,
+static Atom* Finalize_Composer_Level(
+    Atom* out,
     Level* L,
     const Cell* composee  // special handling if the output kind is a sequence
 ){

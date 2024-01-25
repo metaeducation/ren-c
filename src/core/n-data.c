@@ -785,7 +785,7 @@ bool Get_Var_Push_Refinements_Throws(
                     fail (Error_Bad_Get_Group_Raw(var));
 
               blockscope {
-                Atom(*) atom_out = out;
+                Atom* atom_out = out;
                 if (Do_Any_Array_At_Throws(atom_out, at, at_specifier)) {
                     Drop_Data_Stack_To(base);
                     return true;
@@ -907,7 +907,7 @@ bool Get_Var_Core_Throws(
 // Simple interface, does not process GROUP!s (lone or in TUPLE!s)
 //
 void Get_Var_May_Fail(
-    Sink(Value*) out,  // variables never store unstable Atom(*) values
+    Sink(Value*) out,  // variables never store unstable Atom* values
     const Cell* source,
     Specifier* specifier,
     bool any

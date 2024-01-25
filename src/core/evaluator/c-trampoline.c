@@ -503,7 +503,7 @@ bool Trampoline_With_Top_As_Root_Throws(void)
 //
 //  Trampoline_Throws: C
 //
-bool Trampoline_Throws(Atom(*) out, Level* root)
+bool Trampoline_Throws(Atom* out, Level* root)
 {
     Push_Level(out, root);
     bool threw = Trampoline_With_Top_As_Root_Throws();

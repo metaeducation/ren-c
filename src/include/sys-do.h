@@ -50,7 +50,7 @@
 
 
 INLINE bool Do_Any_Array_At_Core_Throws(
-    Atom(*) out,
+    Atom* out,
     Flags flags,
     NoQuote(const Cell*) any_array,
     Specifier* specifier
@@ -109,7 +109,7 @@ INLINE bool Run_Generic_Dispatch_Throws(
         Init_Nulled(L->out);
     }
     else if (Is_Bounce_An_Atom(b)) {
-        Atom(*) r = Atom_From_Bounce(b);
+        Atom* r = Atom_From_Bounce(b);
         assert(Is_Api_Value(r));
         Copy_Cell(L->out, r);
         Release_Api_Value_If_Unmanaged(r);
@@ -242,7 +242,7 @@ INLINE Bounce Continue_Sublevel_Helper(
 
 
 INLINE bool Do_Branch_Throws(  // !!! Legacy code, should be phased out
-    Atom(*) out,
+    Atom* out,
     const REBVAL *branch
 ){
     if (not Pushed_Continuation(

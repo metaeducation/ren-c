@@ -194,7 +194,7 @@ INLINE REBVAL *rebSpecific(const Cell* v, Specifier* specifier)
 // so that is something to think about.  At the moment, only L->out can
 // hold thrown returns, and these API handles are elsewhere.
 //
-INLINE void Release_Api_Value_If_Unmanaged(const Atom(*) r) {
+INLINE void Release_Api_Value_If_Unmanaged(const Atom* r) {
     assert(Is_Node_Root_Bit_Set(r));
 
     if (Is_Nulled(r))

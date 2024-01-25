@@ -56,7 +56,7 @@ INLINE const Value* VAL_THROWN_LABEL(Level* level_) {
 
 INLINE Bounce Init_Thrown_With_Label(  // assumes `arg` in g_ts.thrown_arg
     Level* level_,
-    Atom(const*) arg,
+    const Atom* arg,
     const REBVAL *label  // Note: is allowed to be same as `out`
 ){
     assert(not THROWING);
@@ -105,7 +105,7 @@ INLINE void Drop_Level(Level* L);
 // When you're sure that the value isn't going to be consumed by a multireturn
 // then use this to get the first value unmeta'd
 //
-INLINE Value* Decay_If_Unstable(Atom(*) v) {
+INLINE Value* Decay_If_Unstable(Atom* v) {
     if (not Is_Antiform(v))
         return cast(Value*, v);
 
@@ -150,7 +150,7 @@ INLINE Value* Decay_If_Unstable(Atom(*) v) {
 // Type checking has to be aware of this, and know that such packs shouldn't
 // raise errors.
 //
-INLINE bool Is_Pack_Undecayable(Atom(*) pack)
+INLINE bool Is_Pack_Undecayable(Atom* pack)
 {
     assert(Is_Pack(pack));
     if (Is_Nihil(pack))

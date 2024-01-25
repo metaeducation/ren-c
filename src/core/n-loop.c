@@ -2077,7 +2077,7 @@ DECLARE_NATIVE(until)
     Value* body = ARG(body);
     Value* predicate = ARG(predicate);
 
-    Atom(*) condition;  // can point to OUT or SPARE
+    Atom* condition;  // can point to OUT or SPARE
 
     enum {
         ST_UNTIL_INITIAL_ENTRY = STATE_0,

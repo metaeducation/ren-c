@@ -99,7 +99,7 @@ ATTRIBUTE_NO_RETURN void Fail_Core(const void *p)
         break; }
 
       case DETECTED_AS_CELL: {
-        Atom(const*) atom = c_cast(Atom(*), p);
+        const Atom* atom = c_cast(Atom*, p);
         assert(not Is_Antiform_Unstable(atom));  // should handle this case...
         UNUSED(atom);
 
@@ -1197,7 +1197,7 @@ Context* Error_Bad_Argless_Refine(const Key* key)
 //
 //  Error_Bad_Return_Type: C
 //
-Context* Error_Bad_Return_Type(Level* L, Atom(*) atom) {
+Context* Error_Bad_Return_Type(Level* L, Atom* atom) {
     DECLARE_STABLE (label);
     Get_Level_Label_Or_Nulled(label, L);
 
@@ -1264,7 +1264,7 @@ Context* Error_On_Port(SymId id, REBVAL *port, REBINT err_code)
 //
 //  Error_Bad_Antiform: C
 //
-Context* Error_Bad_Antiform(Atom(const*) anti) {
+Context* Error_Bad_Antiform(const Atom* anti) {
     assert(Is_Antiform(anti));
 
     DECLARE_STABLE (reified);

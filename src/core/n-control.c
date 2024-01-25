@@ -113,7 +113,7 @@ Bounce Group_Branch_Executor(Level* level_)
     if (Any_Group(SPARE))
         fail (Error_Bad_Branch_Type_Raw());  // stop infinite recursion (good?)
 
-    Atom(const*) with = Is_Fresh(OUT) ? nullptr : OUT;  // with here [1]
+    const Atom* with = Is_Fresh(OUT) ? nullptr : OUT;  // with here [1]
 
     assert(Is_Level_At_End(LEVEL));
     return DELEGATE_BRANCH(OUT, SPARE, with);  // couldn't do (OUT, OUT, SPARE)
@@ -249,7 +249,7 @@ static Bounce Then_Else_Isotopic_Object_Helper(
 ){
     INCLUDE_PARAMS_OF_THEN;  // assume frame compatibility w/ELSE
 
-    Atom(*) in = ARG(atom);  /* !!! Wrong, rewrite this routine */
+    Atom* in = ARG(atom);  /* !!! Wrong, rewrite this routine */
     Value* branch = ARG(branch);
 
     if (Is_Meta_Of_Nihil(in))
@@ -1031,7 +1031,7 @@ DECLARE_NATIVE(case)
     REBVAL *cases = ARG(cases);
     REBVAL *predicate = ARG(predicate);
 
-    Atom(*) discarded = LOCAL(discarded);  // slot to write unused results to
+    Atom* discarded = LOCAL(discarded);  // slot to write unused results to
 
     enum {
         ST_CASE_INITIAL_ENTRY = STATE_0,
@@ -1235,7 +1235,7 @@ DECLARE_NATIVE(switch)
     REBVAL *predicate = ARG(predicate);
     REBVAL *cases = ARG(cases);
 
-    Atom(*) scratch = LOCAL(scratch);
+    Atom* scratch = LOCAL(scratch);
 
     enum {
         ST_SWITCH_INITIAL_ENTRY = STATE_0,
@@ -1635,7 +1635,7 @@ DECLARE_NATIVE(throw)
 // See notes about "Heavy Null" and "Heavy Void" for how the variations carry
 // some behaviors of the types, while not being technically void or null.
 //
-void Debranch_Output(Atom(*) out) {
+void Debranch_Output(Atom* out) {
     if (Is_Lazy(out)) {
         //
         // We don't have to fully reify the object, we just need to make sure
@@ -1659,7 +1659,7 @@ void Debranch_Output(Atom(*) out) {
 //
 //  Pushed_Decaying_Level: C
 //
-bool Pushed_Decaying_Level(Atom(*) out, Atom(const*) obj, Flags flags) {
+bool Pushed_Decaying_Level(Atom* out, const Atom* obj, Flags flags) {
     if (out != obj)
         Copy_Cell(out, obj);
     QUOTE_BYTE(out) = NOQUOTE_1;

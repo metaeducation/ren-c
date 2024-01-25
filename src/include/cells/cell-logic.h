@@ -133,7 +133,7 @@ INLINE bool Is_Meta_Of_False(const Cell* v) {
 #define Init_Heavy_False(out) \
     Init_Pack((out), PG_1_Meta_False_Array)
 
-INLINE bool Is_Heavy_False(Atom(const*) v) {
+INLINE bool Is_Heavy_False(const Atom* v) {
     if (not Is_Pack(v))
         return false;
     const Element* tail;
@@ -141,7 +141,7 @@ INLINE bool Is_Heavy_False(Atom(const*) v) {
     return (tail == at + 1) and Is_Meta_Of_False(at);
 }
 
-INLINE Atom(*) Isotopify_If_Falsey(Atom(*) v) {
+INLINE Atom* Isotopify_If_Falsey(Atom* v) {
     if (Is_Nulled(v))
         Init_Heavy_Null(v);
     else if (Is_Logic(v) and Cell_Logic(v) == false)
@@ -151,7 +151,7 @@ INLINE Atom(*) Isotopify_If_Falsey(Atom(*) v) {
 
 // Turns voids and nulls into boxed form to be THEN-reactive, vs ELSE
 //
-INLINE Bounce Native_Branched_Result(Level* level_, Atom(*) v) {
+INLINE Bounce Native_Branched_Result(Level* level_, Atom* v) {
     assert(v == level_->out);  // would not be zero cost if we supported copy
     if (Is_Void(v))
         Init_Heavy_Void(v);

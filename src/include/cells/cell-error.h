@@ -56,10 +56,10 @@ INLINE void Force_Location_Of_Error(Context* error, Level* where) {
 // pipeline doesn't ask to ^META it.  While it's in the ^META state it can
 // also be passed around normally until it's UNMETA'd back to a failure again.
 
-INLINE bool Is_Raised(Atom(const*) v)
+INLINE bool Is_Raised(const Atom* v)
   { return HEART_BYTE(v) == REB_ERROR and QUOTE_BYTE(v) == ANTIFORM_0; }
 
-INLINE Atom(*) Raisify(Atom(*) v) {
+INLINE Atom* Raisify(Atom* v) {
     assert(Is_Error(v) and QUOTE_BYTE(v) == NOQUOTE_1);
     Force_Location_Of_Error(VAL_CONTEXT(v), TOP_LEVEL);  // ideally already set
     QUOTE_BYTE(v) = ANTIFORM_0;

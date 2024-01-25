@@ -154,7 +154,7 @@ inline static bool Do_Logic_Right_Side_Throws(
     const REBVAL *right
 ){
     if (Is_Group(right)) {
-        Atom(*) atom_out = out;
+        Atom* atom_out = out;
         if (Do_Any_Array_At_Throws(atom_out, right, SPECIFIED))
             return true;
         Decay_If_Unstable(atom_out);

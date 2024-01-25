@@ -47,15 +47,15 @@
 
 #if CPLUSPLUS_11
 
-    // An Atom(*) is able to hold unstable isotope states.  A separate type
+    // An Atom* is able to hold unstable isotope states.  A separate type
     // is used to avoid propagating the concerns of unstable isotopes to
     // routines that shouldn't have to worry about them.
     //
-    struct AtomT : public Cell
+    struct Atom : public Cell
     {
       #if !defined(NDEBUG)
-        AtomT() = default;
-        ~AtomT() {
+        Atom() = default;
+        ~Atom() {
             assert(
                 (this->header.bits & (NODE_FLAG_NODE | NODE_FLAG_CELL))
                 or this->header.bits == CELL_MASK_0
@@ -64,7 +64,7 @@
       #endif
     };
 
-    struct ValueStruct : public AtomT {
+    struct ValueStruct : public Atom {
       #if !defined(NDEBUG)
         ValueStruct () = default;
         ~ValueStruct () {
@@ -93,14 +93,11 @@
       #endif
     };
 #else
-    typedef struct ValueStruct AtomT;
+    typedef struct ValueStruct Atom;
     typedef struct ValueStruct Element;
 #endif
 
 typedef struct ValueStruct Value;
-
-#define Atom(star_maybe_const) \
-    AtomT star_maybe_const
 
 
 //=//// VARS and PARAMs ///////////////////////////////////////////////////=//
@@ -135,7 +132,7 @@ typedef struct ValueStruct Value;
 // of the atom, to ensure they are not examined.
 //
 #define Stable_Unchecked(atom) \
-    x_cast(Value*, ensure(Atom(const*), (atom)))
+    x_cast(Value*, ensure(const Atom*, (atom)))
 
 INLINE REBVAL* Freshen_Cell_Untracked(Cell* v);
 

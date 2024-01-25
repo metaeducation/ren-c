@@ -138,7 +138,7 @@ INLINE bool Is_Meta_Of_Heavy_Null(const Cell* v) {
     return (tail == at + 1) and Is_Meta_Of_Null(at);
 }
 
-INLINE Atom(*) Isotopify_If_Nulled(Atom(*) v) {
+INLINE Atom* Isotopify_If_Nulled(Atom* v) {
     if (Is_Nulled(v))
         Init_Heavy_Null(v);
     return v;

@@ -160,7 +160,7 @@ INLINE Count Dequotify(Cell* v) {
 //
 
 
-INLINE bool Is_Antiform_Unstable(Atom(const*) v) {
+INLINE bool Is_Antiform_Unstable(const Atom* v) {
     // Assume Is_Antiform() checked READABLE()
     assert(QUOTE_BYTE(v) == ANTIFORM_0);
     return (
@@ -183,7 +183,7 @@ INLINE bool Is_Stable_Antiform_Heart(enum Reb_Kind heart) {
     );
 }
 
-INLINE bool Is_Stable(Atom(const*) v) {  // repeat for non-inlined speed
+INLINE bool Is_Stable(const Atom* v) {  // repeat for non-inlined speed
     ASSERT_CELL_READABLE(v);
     if (QUOTE_BYTE(v) != ANTIFORM_0)
         return true;
@@ -202,7 +202,7 @@ INLINE bool Is_Stable(Atom(const*) v) {  // repeat for non-inlined speed
 
 #if !defined(NDEBUG)
     #define Assert_Cell_Stable(v) \
-        assert(Is_Stable(cast(Atom(const*), (v))));
+        assert(Is_Stable(cast(const Atom*, (v))));
 #else
     #define Assert_Cell_Stable(v)
 #endif
@@ -226,20 +226,20 @@ INLINE Element* Quasify(Value* v) {
     return u_cast(Element*, v);
 }
 
-INLINE Element* Quasify_Antiform(Atom(*) v) {
+INLINE Element* Quasify_Antiform(Atom* v) {
     assert(Is_Antiform(v));
     QUOTE_BYTE(v) = QUASIFORM_2;
     return u_cast(Element*, v);
 }
 
-INLINE Value* Reify(Atom(*) v) {
+INLINE Value* Reify(Atom* v) {
     assert(not Is_Void(v));
     if (QUOTE_BYTE(v) == ANTIFORM_0)
         QUOTE_BYTE(v) = QUASIFORM_2;
     return cast(Value*, v);
 }
 
-INLINE Atom(*) Degrade(Atom(*) v) {
+INLINE Atom* Degrade(Atom* v) {
     if (QUOTE_BYTE(v) == QUASIFORM_2)
         QUOTE_BYTE(v) = ANTIFORM_0;
     return v;
@@ -268,7 +268,7 @@ INLINE Value* Concretize(Value* v) {
 //  https://forum.rebol.info/t/1833
 //
 
-INLINE Value* Meta_Quotify(Atom(*) v) {
+INLINE Value* Meta_Quotify(Atom* v) {
     if (QUOTE_BYTE(v) == ANTIFORM_0) {
         QUOTE_BYTE(v) = QUASIFORM_2;
         return cast(Value*, v);
@@ -276,7 +276,7 @@ INLINE Value* Meta_Quotify(Atom(*) v) {
     return cast(Value*, Quotify(v, 1));  // a non-antiform winds up quoted
 }
 
-INLINE Atom(*) Meta_Unquotify_Undecayed(Atom(*) v) {
+INLINE Atom* Meta_Unquotify_Undecayed(Atom* v) {
     if (QUOTE_BYTE(v) == QUASIFORM_2)
         QUOTE_BYTE(v) = ANTIFORM_0;
     else
@@ -290,12 +290,12 @@ INLINE Value* Meta_Unquotify_Known_Stable(Value* v) {
     return v;
 }
 
-INLINE Value* Decay_If_Unstable(Atom(*) v);
+INLINE Value* Decay_If_Unstable(Atom* v);
 
 #if CPLUSPLUS_11
     INLINE Value* Decay_If_Unstable(Value* v) = delete;
 #endif
 
 INLINE Value* Meta_Unquotify_Decayed(Value* v) {
-    return Decay_If_Unstable(Meta_Unquotify_Undecayed(cast(Atom(*), v)));
+    return Decay_If_Unstable(Meta_Unquotify_Undecayed(cast(Atom*, v)));
 }

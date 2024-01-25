@@ -132,7 +132,7 @@ INLINE LineNumber LineNumber_Of_Level(Level* L) {
     ((L)->varlist->content.dynamic.used - 1)  // minus rootvar
 
 #define Level_Spare(L) \
-    u_cast(Atom(*), &(L)->spare)
+    u_cast(Atom*, &(L)->spare)
 
 
 // A level's varlist is unmanaged by default, because when running code like
@@ -297,7 +297,7 @@ INLINE void Free_Level_Internal(Level* L) {
 //   that local state for a native will never be exposed by a debugger.
 //
 INLINE void Push_Level(
-    Atom(*) out,  // typecheck prohibits passing `unstable` Cell* for output
+    Atom* out,  // typecheck prohibits passing `unstable` Cell* for output
     Level* L
 ){
     // All calls through to Eval_Core() are assumed to happen at the same C
@@ -489,7 +489,7 @@ INLINE Level* Prep_Level_Core(
     Level_Arg(level_, (p_##name##_))
 
 #define LOCAL(name) \
-    cast(Atom(*), ARG(name))  // see Push_Level() for why this is allowed
+    cast(Atom*, ARG(name))  // see Push_Level() for why this is allowed
 
 #define PARAM(name) \
     ACT_PARAM(Level_Phase(level_), (p_##name##_))  // a TYPESET!
@@ -508,7 +508,7 @@ INLINE Bounce Native_Thrown_Result(Level* level_) {
 }
 
 INLINE Bounce Native_Void_Result_Untracked(
-    Atom(*) out,  // have to pass; comma at callsite -> "operand has no effect"
+    Atom* out,  // have to pass; comma at callsite -> "operand has no effect"
     Level* level_
 ){
     assert(out == level_->out);
@@ -523,7 +523,7 @@ INLINE Bounce Native_Unmeta_Result(Level* level_, const REBVAL *v) {
 }
 
 INLINE Bounce Native_Trash_Result_Untracked(
-    Atom(*) out,  // have to pass; comma at callsite -> "operand has no effect"
+    Atom* out,  // have to pass; comma at callsite -> "operand has no effect"
     Level* level_
 ){
     assert(out == level_->out);
@@ -571,10 +571,10 @@ INLINE Bounce Native_Raised_Result(Level* level_, const void *p) {
 // in the dispatcher because it's too easy to think that will work for an
 // arbitrary local variable, which would be dead after the return.
 //
-INLINE Atom(*) Native_Copy_Result_Untracked(
-    Atom(*) out,  // have to pass; comma at callsite -> "operand has no effect"
+INLINE Atom* Native_Copy_Result_Untracked(
+    Atom* out,  // have to pass; comma at callsite -> "operand has no effect"
     Level* level_,
-    Atom(const*) v
+    const Atom* v
 ){
     assert(out == level_->out);
     UNUSED(out);

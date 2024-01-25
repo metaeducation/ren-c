@@ -166,7 +166,7 @@ DECLARE_NATIVE(typechecker)
 bool Typecheck_Atom_Core(
     const Cell* tests,  // PARAMETER!, TYPE-BLOCK!, GROUP!, TYPE-GROUP!...
     Specifier* tests_specifier,
-    Atom(const*) v
+    const Atom* v
 ){
     DECLARE_LOCAL (spare);  // !!! stackful
 
@@ -297,7 +297,7 @@ bool Typecheck_Atom_Core(
 
             const Key* key = L->u.action.key;
             const Param* param = L->u.action.param;
-            Atom(*) arg = L->u.action.arg;
+            Atom* arg = L->u.action.arg;
             for (; key != L->u.action.key_tail; ++key, ++param, ++arg) {
                 if (Is_Specialized(param))
                     Copy_Cell(arg, param);
@@ -409,7 +409,7 @@ bool Typecheck_Atom_Core(
 //
 bool Typecheck_Coerce_Argument(
     const Param* param,
-    Atom(*) arg  // need mutability for coercion
+    Atom* arg  // need mutability for coercion
 ){
     if (Get_Parameter_Flag(param, CONST))
         Set_Cell_Flag(arg, CONST);  // mutability override?  [1]

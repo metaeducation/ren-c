@@ -413,7 +413,7 @@ DECLARE_NATIVE(skippable_q)
 Bounce Init_Thrown_Unwind_Value(
     Level* level_,
     const REBVAL *seek, // FRAME!, ACTION! (or INTEGER! relative to frame)
-    Atom(const*) value,
+    const Atom* value,
     Level* target // required if level is INTEGER! or ACTION!
 ) {
     DECLARE_STABLE (label);
@@ -513,7 +513,7 @@ DECLARE_NATIVE(unwind)
 //
 bool Typecheck_Coerce_Return(
     Level* L,
-    Atom(*) atom  // coercion needs mutability
+    Atom* atom  // coercion needs mutability
 ){
     if (Is_Raised(atom))
         return true;  // For now, all functions return definitional errors
@@ -586,7 +586,7 @@ DECLARE_NATIVE(definitional_return)
 {
     INCLUDE_PARAMS_OF_DEFINITIONAL_RETURN;  // cached name usually RETURN [1]
 
-    Atom(*) atom = Copy_Cell(SPARE, ARG(value));  // SPARE for unstable atoms
+    Atom* atom = Copy_Cell(SPARE, ARG(value));  // SPARE for unstable atoms
     Meta_Unquotify_Undecayed(atom);
 
     Level* return_level = LEVEL;  // Level of this RETURN call

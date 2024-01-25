@@ -1020,7 +1020,7 @@ void MF_Context(REB_MOLD *mo, NoQuote(const Cell*) v, bool form)
             Append_Ascii(s, "'");
         }
         else if (Is_Antiform(e.var)) {
-            assert(Is_Antiform_Stable(cast(Atom(*), e.var)));  // extra check
+            assert(Is_Antiform_Stable(cast(Atom*, e.var)));  // extra check
 
             DECLARE_LOCAL (reified);
             Copy_Cell(reified, e.var);

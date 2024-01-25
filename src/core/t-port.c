@@ -141,7 +141,7 @@ REBTYPE(Port)
         if (b == nullptr)
            Init_Nulled(OUT);
         else if (b != OUT) {
-            Atom(*) r = Atom_From_Bounce(b);
+            Atom* r = Atom_From_Bounce(b);
             assert(Is_Api_Value(r));
             Copy_Cell(OUT, r);
             Release_Api_Value_If_Unmanaged(r);

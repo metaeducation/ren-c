@@ -29,7 +29,7 @@
 #include "sys-core.h"
 
 
-inline static void Init_For_Vararg_End(Atom(*) out, enum Reb_Vararg_Op op) {
+inline static void Init_For_Vararg_End(Atom* out, enum Reb_Vararg_Op op) {
     if (op == VARARG_OP_TAIL_Q)
         Init_True(out);
     else
@@ -44,7 +44,7 @@ inline static void Init_For_Vararg_End(Atom(*) out, enum Reb_Vararg_Op op) {
 // unit ahead.
 //
 inline static bool Vararg_Op_If_No_Advance_Handled(
-    Atom(*) out,
+    Atom* out,
     enum Reb_Vararg_Op op,
     Option(const Cell*) opt_look, // the first value in the varargs input
     Specifier* specifier,
@@ -134,7 +134,7 @@ inline static bool Vararg_Op_If_No_Advance_Handled(
 // If an evaluation is involved, then a thrown value is possibly returned.
 //
 bool Do_Vararg_Op_Maybe_End_Throws_Core(
-    Atom(*) out,
+    Atom* out,
     enum Reb_Vararg_Op op,
     const Cell* vararg,
     ParamClass pclass  // PARAMCLASS_0 to use vararg's class

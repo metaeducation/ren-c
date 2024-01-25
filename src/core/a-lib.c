@@ -1026,7 +1026,7 @@ REBVAL *RL_rebArg(const void *p, va_list *vaptr)
 //   encoded...and can stick to the standardized layout of a pointer array.)
 //
 static bool Run_Va_Throws(
-    Atom(*) out,
+    Atom* out,
     bool interruptible,  // whether a HALT can cause a longjmp/throw
     Flags flags,
     const void *p,  // first pointer (may be END, nullptr means NULLED)
@@ -1079,7 +1079,7 @@ static bool Run_Va_Throws(
 // executed code passed to not have it evaluate to nihil)
 //
 inline static void Run_Va_Undecayed_May_Fail_Calls_Va_End(
-    Atom(*) out,
+    Atom* out,
     const void *p,  // first pointer (may be END, nullptr means NULLED)
     va_list *vaptr  // va_end() handled by feed for all cases (throws, fails)
 ){
@@ -1106,7 +1106,7 @@ inline static void Run_Va_Decay_May_Fail_Calls_Va_End(
 ){
     Run_Va_Undecayed_May_Fail_Calls_Va_End(out, p, vaptr);
 
-    Decay_If_Unstable(cast(Atom(*), out));
+    Decay_If_Unstable(cast(Atom*, out));
 }
 
 
@@ -1155,7 +1155,7 @@ bool RL_rebRunCoreThrows(
     if (too_many)
         fail (Error_Apply_Too_Many_Raw());
 
-    Decay_If_Unstable(cast(Atom(*), out));
+    Decay_If_Unstable(cast(Atom*, out));
     return false;
 }
 

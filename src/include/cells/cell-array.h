@@ -201,7 +201,7 @@ INLINE Cell* Init_Relative_Block_At(
 //      == <b>
 //
 
-INLINE Value* Init_Pack_Untracked(Atom(*) out, Array* a) {
+INLINE Value* Init_Pack_Untracked(Atom* out, Array* a) {
     Init_Block(out, a);
     QUOTE_BYTE(out) = ANTIFORM_0;
     return cast(Value*, out);  // Note: Is_Antiform_Unstable(out)
@@ -225,7 +225,7 @@ INLINE Value* Init_Pack_Untracked(Atom(*) out, Array* a) {
 #define Init_Nihil(out) \
     TRACK(Init_Nihil_Untracked(out))
 
-INLINE bool Is_Nihil(Atom(const*) v) {
+INLINE bool Is_Nihil(const Atom* v) {
     if (not Is_Pack(v))
         return false;
     const Element* tail;

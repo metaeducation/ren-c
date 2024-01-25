@@ -51,14 +51,14 @@
 void Prep_Action_Level(
     Level* L,
     const Cell* action,
-    Option(Atom(const*)) with
+    Option(const Atom*) with
 ){
     Push_Action(L, VAL_ACTION(action), VAL_FRAME_BINDING(action));
     Begin_Prefix_Action(L, VAL_FRAME_LABEL(action));
 
     const Key* key = L->u.action.key;
     const Param* param = L->u.action.param;
-    Atom(*) arg = L->u.action.arg;
+    Atom* arg = L->u.action.arg;
     for (; key != L->u.action.key_tail; ++key, ++param, ++arg) {
         Erase_Cell(arg);
         Copy_Cell(arg, param);
@@ -98,11 +98,11 @@ void Prep_Action_Level(
 //    kinds of types branching permits.
 //
 bool Pushed_Continuation(
-    Atom(*) out,
+    Atom* out,
     Flags flags,  // LEVEL_FLAG_BRANCH, etc. for pushed levels
     Specifier* branch_specifier,  // before branch forces non-empty variadic call
     const Cell* branch,
-    Option(Atom(const*)) with  // can be same as out or not GC-safe, may copy
+    Option(const Atom*) with  // can be same as out or not GC-safe, may copy
 ){
     assert(branch != out);  // it's legal for `with` to be the same as out
     assert(not with or unwrap(with) == out or not Is_Api_Value(unwrap(with)));
@@ -162,7 +162,7 @@ bool Pushed_Continuation(
 
         const Key* key = L->u.action.key;
         const Param* param = L->u.action.param;
-        Atom(*) arg = L->u.action.arg;
+        Atom* arg = L->u.action.arg;
         for (; key != L->u.action.key_tail; ++key, ++param, ++arg) {
             Erase_Cell(arg);
             Copy_Cell(arg, param);
