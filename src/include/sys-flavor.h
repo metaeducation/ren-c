@@ -137,7 +137,6 @@ enum StubFlavorEnum {
     FLAVOR_KEYLIST,  // width = sizeof(Symbol*)
     FLAVOR_POINTER,  // generic
     FLAVOR_CANONTABLE,  // for canons table
-    FLAVOR_GUARDLIST,  // e.g. GC protect list
     FLAVOR_NODELIST,  // e.g. GC protect list
     FLAVOR_SERIESLIST,  // e.g. manually allocated series list
     FLAVOR_MOLDSTACK,
@@ -209,10 +208,6 @@ INLINE size_t Wide_For_Flavor(Flavor flavor) {
         return sizeof(BookmarkT);
     if (flavor == FLAVOR_HASHLIST)
         return sizeof(REBLEN);
-  #if DEBUG
-    if (flavor == FLAVOR_GUARDLIST)
-        return sizeof(NodeGuardInfo);
-  #endif
     return sizeof(void*);
 }
 
