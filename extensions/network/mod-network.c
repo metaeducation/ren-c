@@ -1182,14 +1182,14 @@ DECLARE_NATIVE(wait_p)  // See wrapping function WAIT in usermode code
     REBLEN timeout = 0;  // in milliseconds
     REBVAL *ports = nullptr;
 
-    const Cell* val;
+    Element(const*) val;
     if (not Is_Block(ARG(value)))
-        val = ARG(value);
+        val = cast(Element(*), ARG(value));
     else {
         ports = ARG(value);
 
         REBLEN num_pending = 0;
-        const Cell* tail;
+        Element(const*) tail;
         val = Cell_Array_At(&tail, ports);
         for (; val != tail; ++val) {  // find timeout
             if (Is_Port(val))
@@ -1216,7 +1216,7 @@ DECLARE_NATIVE(wait_p)  // See wrapping function WAIT in usermode code
 
           case REB_PORT: {
             Array* single = Make_Array(1);
-            Append_Value(single, SPECIFIC(val));
+            Append_Value(single, val);
             Init_Block(ARG(value), single);
             ports = ARG(value);
 

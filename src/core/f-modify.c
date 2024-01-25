@@ -43,7 +43,7 @@ REBLEN Modify_Array(
 
     REBLEN tail_idx = Array_Len(dst_arr);
 
-    const Cell* src_rel;
+    const REBVAL* src_rel;
 
     if (op == SYM_CHANGE and Is_Void(src_val)) {
         flags |= AM_SPLICE;
@@ -466,8 +466,8 @@ REBLEN Modify_String_Or_Binary(
             // between.  There is some rationale to this, though implications
             // for operations like TO TEXT! of a BLOCK! are unclear...
             //
-            const Cell* item_tail;
-            const Cell* item = Cell_Array_At(&item_tail, src);
+            Element(const*) item_tail;
+            Element(const*) item = Cell_Array_At(&item_tail, src);
             for (; item != item_tail; ++item)
                 Form_Value(mo, item);
             goto use_mold_buffer;

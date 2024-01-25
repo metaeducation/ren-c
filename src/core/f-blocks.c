@@ -196,11 +196,11 @@ Array* Copy_Array_Core_Managed(
 //
 // Note: Updates the termination and tail.
 //
-Cell* Alloc_Tail_Array(Array* a)
+Element(*) Alloc_Tail_Array(Array* a)
 {
     Expand_Series_Tail(a, 1);
     Set_Series_Len(a, Array_Len(a));
-    Cell* last = Array_Last(a);
+    Element(*) last = Array_Last(a);
 
   #if DEBUG_ERASE_ALLOC_TAIL_CELLS
     if (not Is_Cell_Erased(last)) {

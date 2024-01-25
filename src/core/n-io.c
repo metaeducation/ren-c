@@ -160,8 +160,8 @@ DECLARE_NATIVE(new_line)
     bool mark = Cell_Logic(ARG(mark));
 
     REBVAL *pos = ARG(position);
-    const Cell* tail;
-    Cell* item = Cell_Array_At_Ensure_Mutable(&tail, pos);
+    Element(const*) tail;
+    Element(*) item = Cell_Array_At_Ensure_Mutable(&tail, pos);
     Array* a = Cell_Array_Known_Mutable(pos);  // need if setting flag at tail
 
     REBINT skip;
@@ -218,8 +218,8 @@ DECLARE_NATIVE(new_line_q)
     REBVAL *pos = ARG(position);
 
     const Array* arr;
-    const Cell* item;
-    const Cell* tail;
+    Element(const*) item;
+    Element(const*) tail;
 
     if (Is_Varargs(pos)) {
         Level* L;

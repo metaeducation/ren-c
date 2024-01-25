@@ -91,13 +91,6 @@ INLINE Specifier* Derive_Specifier(
     NoQuote(const Cell*) any_array
 );
 
-#if CPLUSPLUS_11
-    INLINE Specifier* Derive_Specifier(
-        Specifier* parent,
-        const REBVAL* any_array
-    ) = delete;
-#endif
-
 INLINE REBVAL *Derelativize_Untracked(
     Cell* out,  // relative dest overwritten w/specific value
     const Cell* v,
@@ -153,16 +146,6 @@ INLINE REBVAL *Derelativize_Untracked(
     return cast(REBVAL*, out);
 }
 
-
-// In the C++ build, defining this overload that takes a REBVAL* instead of
-// a Cell*, and then not defining it...will tell you that you do not need
-// to use Derelativize.  Juse Copy_Cell() if your source is a REBVAL!
-//
-#if CPLUSPLUS_11
-    REBVAL *Derelativize_Untracked(
-        Cell* dest, const REBVAL *v, Specifier* specifier
-    );
-#endif
 
 #define Derelativize(dest,v,specifier) \
     TRACK(Derelativize_Untracked((dest), (v), (specifier)))

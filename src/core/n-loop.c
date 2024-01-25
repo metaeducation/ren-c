@@ -1010,11 +1010,11 @@ static bool Try_Loop_Each_Next(Value(const*) iterator, Context* vars_ctx)
             const REBVAL *key;
             const REBVAL *val;
             while (true) {  // pass over the unused map slots
-                key = SPECIFIC(
+                key = (
                     Array_At(c_cast(Array*, les->series), les->u.eser.index)
                 );
                 ++les->u.eser.index;
-                val = SPECIFIC(
+                val = (
                     Array_At(c_cast(Array*, les->series), les->u.eser.index)
                 );
                 ++les->u.eser.index;
@@ -1552,8 +1552,8 @@ DECLARE_NATIVE(remove_each)
 
     if (Any_Array(data)) {
         if (not threw and breaking) {  // clean marks, don't remove
-            const Cell* tail;
-            Cell* temp = Cell_Array_At_Known_Mutable(&tail, data);
+            Element(const*)tail;
+            Element(*)temp = Cell_Array_At_Known_Mutable(&tail, data);
             for (; temp != tail; ++temp) {
                 if (Get_Cell_Flag(temp, NOTE_REMOVE))
                     Clear_Cell_Flag(temp, NOTE_REMOVE);
@@ -1561,9 +1561,9 @@ DECLARE_NATIVE(remove_each)
             goto done_finalizing;
         }
 
-        const Cell* tail;
-        Cell* dest = Cell_Array_At_Known_Mutable(&tail, data);
-        Cell* src = dest;
+        Element(const*)tail;
+        Element(*)dest = Cell_Array_At_Known_Mutable(&tail, data);
+        Element(*)src = dest;
 
         // avoid blitting cells onto themselves by making the first thing we
         // do is to pass up all the unmarked (kept) cells.
@@ -1816,8 +1816,8 @@ DECLARE_NATIVE(map)
 
     if (Is_Splice(SPARE)) {
         Quasify_Antiform(SPARE);
-        const Cell* tail;
-        const Cell* v = Cell_Array_At(&tail, SPARE);
+        Element(const*)tail;
+        Element(const*)v = Cell_Array_At(&tail, SPARE);
         for (; v != tail; ++v)
             Derelativize(PUSH(), v, Cell_Specifier(SPARE));
     }

@@ -189,7 +189,7 @@ static void Rehash_Map(Map* map)
     REBLEN *hashes = Series_Head(REBLEN, hashlist);
     Array* pairlist = MAP_PAIRLIST(map);
 
-    REBVAL *key = SPECIFIC(Array_Head(pairlist));
+    REBVAL *key = Array_Head(pairlist);
     REBLEN n;
 
     for (n = 0; n < Array_Len(pairlist); n += 2, key += 2) {
@@ -200,10 +200,10 @@ static void Rehash_Map(Map* map)
             // It's a "zombie", move last key to overwrite it
             //
             Copy_Cell(
-                key, SPECIFIC(Array_At(pairlist, Array_Len(pairlist) - 2))
+                key, Array_At(pairlist, Array_Len(pairlist) - 2)
             );
             Copy_Cell(
-                &key[1], SPECIFIC(Array_At(pairlist, Array_Len(pairlist) - 1))
+                &key[1], Array_At(pairlist, Array_Len(pairlist) - 1)
             );
             Set_Series_Len(pairlist, Array_Len(pairlist) - 2);
         }
@@ -403,7 +403,7 @@ inline static Map* Copy_Map(const Map* map, REBU64 types) {
     assert(Array_Len(copy) % 2 == 0); // should be [key value key value]...
 
     const Cell* tail = Array_Tail(copy);
-    REBVAL *key = SPECIFIC(Array_Head(copy));  // keys/vals specified
+    REBVAL *key = Array_Head(copy);  // keys/vals specified
     for (; key != tail; key += 2) {
         assert(Is_Value_Frozen_Deep(key));  // immutable key
 
@@ -433,8 +433,8 @@ Bounce TO_Map(Level* level_, enum Reb_Kind kind, const REBVAL *arg)
         // make map! [word val word val]
         //
         REBLEN len = Cell_Series_Len_At(arg);
-        const Cell* tail;
-        const Cell* at = Cell_Array_At(&tail, arg);
+        Element(const*) tail;
+        Element(const*) at = Cell_Array_At(&tail, arg);
         Specifier* specifier = Cell_Specifier(arg);
 
         Map* map = Make_Map(len / 2); // [key value key value...] + END
@@ -485,7 +485,7 @@ Array* Map_To_Array(const Map* map, REBINT what)
         }
     }
 
-    Set_Series_Len(a, dest - Array_Head(a));
+    Set_Series_Len(a, dest - cast(Cell*, Array_Head(a)));
     return a;
 }
 
@@ -646,7 +646,7 @@ REBTYPE(Map)
 
         Copy_Cell(
             OUT,
-            SPECIFIC(Array_At(MAP_PAIRLIST(m), ((n - 1) * 2) + 1))
+            Array_At(MAP_PAIRLIST(m), ((n - 1) * 2) + 1)
         );
 
         return OUT; }
@@ -687,8 +687,8 @@ REBTYPE(Map)
             fail (Error_Bad_Refines_Raw());
 
         REBLEN len = Part_Len_May_Modify_Index(value, ARG(part));
-        const Cell* tail;
-        const Cell* at = Cell_Array_At(&tail, value);  // w/modified index
+        Element(const*) tail;
+        Element(const*) at = Cell_Array_At(&tail, value);  // w/modified index
 
         Append_Map(m, at, tail, Cell_Specifier(value), len);
 
@@ -744,8 +744,9 @@ REBTYPE(Map)
         if (n == 0)
             return nullptr;
 
-        const REBVAL *val = SPECIFIC(
-            Array_At(MAP_PAIRLIST(VAL_MAP(map)), ((n - 1) * 2) + 1)
+        const REBVAL *val = Array_At(
+            MAP_PAIRLIST(VAL_MAP(map)),
+            ((n - 1) * 2) + 1
         );
         if (Is_Void(val))  // zombie entry, means unused
             return nullptr;

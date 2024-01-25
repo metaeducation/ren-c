@@ -89,10 +89,10 @@ INLINE bool Has_File_Line(const Array* a) {
 // HEAD, TAIL, and LAST refer to specific value pointers in the array.  Since
 // empty arrays have no "last" value Array_Last() should not be called on it.
 
-#define Array_At(a,n)           Series_At(Cell, (a), (n))
-#define Array_Head(a)           Series_Head(Cell, (a))
-#define Array_Tail(a)           Series_Tail(Cell, (a))
-#define Array_Last(a)           Series_Last(Cell, (a))
+#define Array_At(a,n)           Series_At(ElementT, (a), (n))
+#define Array_Head(a)           Series_Head(ElementT, (a))
+#define Array_Tail(a)           Series_Tail(ElementT, (a))
+#define Array_Last(a)           Series_Last(ElementT, (a))
 
 INLINE Cell* Stub_Cell(const_if_c Series* s) {
     assert(Not_Series_Flag(s, DYNAMIC));

@@ -174,8 +174,8 @@ DECLARE_NATIVE(reduce)
         return RAISE(Error_Need_Non_Null_Raw());  // error enables e.g. CURTAIL
 
     if (Is_Splice(OUT)) {
-        const Cell* tail;
-        const Cell* at = Cell_Array_At(&tail, OUT);
+        Element(const*) tail;
+        Element(const*) at = Cell_Array_At(&tail, OUT);
         bool newline = Get_Cell_Flag(v, NEWLINE_BEFORE);
         for (; at != tail; ++at) {
             Derelativize(PUSH(), at, Cell_Specifier(OUT));
@@ -731,8 +731,8 @@ Bounce Composer_Executor(Level* const L)
     if (Is_Splice(OUT)) {  // GROUP! at "quoting level -1" means splice
         Quasify_Antiform(OUT);
 
-        const Cell* push_tail;
-        const Cell* push = Cell_Array_At(&push_tail, OUT);
+        Element(const*) push_tail;
+        Element(const*) push = Cell_Array_At(&push_tail, OUT);
         if (push != push_tail) {
             Copy_Relative_internal(PUSH(), push);
             if (Get_Cell_Flag(At_Level(L), NEWLINE_BEFORE))
@@ -884,8 +884,8 @@ static void Flatten_Core(
         if (Is_Block(item) and level != FLATTEN_NOT) {
             Specifier* derived = Derive_Specifier(specifier, item);
 
-            const Cell* sub_tail;
-            Cell* sub = Cell_Array_At_Ensure_Mutable(&sub_tail, item);
+            Element(const*) sub_tail;
+            Element(*) sub = Cell_Array_At_Ensure_Mutable(&sub_tail, item);
             Flatten_Core(
                 sub,
                 sub_tail,
@@ -917,8 +917,8 @@ DECLARE_NATIVE(flatten)
 
     StackIndex base = TOP_INDEX;
 
-    const Cell* tail;
-    Cell* at = Cell_Array_At_Ensure_Mutable(&tail, ARG(block));
+    Element(const*) tail;
+    Element(*) at = Cell_Array_At_Ensure_Mutable(&tail, ARG(block));
     Flatten_Core(
         at,
         tail,

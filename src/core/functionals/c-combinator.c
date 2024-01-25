@@ -181,8 +181,8 @@ Array* Expanded_Combinator_Spec(const REBVAL *original)
 {
     StackIndex base = TOP_INDEX;
 
-    const Cell* tail;
-    const Cell* item = Cell_Array_At(&tail, original);
+    Element(const*) tail;
+    Element(const*) item = Cell_Array_At(&tail, original);
     Specifier* specifier = Cell_Specifier(original);
 
     if (Is_Text(item)) {
@@ -430,8 +430,8 @@ DECLARE_NATIVE(text_x_combinator)
     Value(*) input = ARG(input);
 
     if (Any_Array(input)) {
-        const Cell* tail;
-        const Cell* at = Cell_Array_At(&tail, input);
+        Element(const*) tail;
+        Element(const*) at = Cell_Array_At(&tail, input);
         if (at == tail)  // no item to match against
             return nullptr;
         if (Cmp_Value(at, v, true) != 0)  // not case-insensitive equal
@@ -700,8 +700,8 @@ static bool Combinator_Param_Hook(
         //
         // !!! <skip>-able parameters would be useful as well.
         //
-        const Cell* tail;
-        const Cell* item = Cell_Array_At(&tail, ARG(rules));
+        Element(const*) tail;
+        Element(const*) item = Cell_Array_At(&tail, ARG(rules));
 
         if (
             item == tail
@@ -729,8 +729,8 @@ static bool Combinator_Param_Hook(
         //
         // Need to make PARSIFY a native!  Work around it for now...
         //
-        const Cell* tail;
-        const Cell* item = Cell_Array_At(&tail, ARG(rules));
+        Element(const*) tail;
+        Element(const*) item = Cell_Array_At(&tail, ARG(rules));
         if (
             item == tail
             or (Is_Comma(item) or IS_BAR(item) or IS_BAR_BAR(item))

@@ -67,42 +67,42 @@ INLINE const Cell* Cell_Array_Len_At(
     return Array_At(arr, i);
 }
 
-INLINE const Cell* Cell_Array_At(
-    Option(const Cell**) tail_out,
+INLINE Element(const*) Cell_Array_At(
+    Option(Element(const*)*) tail_out,
     NoQuote(const Cell*) v
 ){
     const Node* node = Cell_Node1(v);
     if (Is_Node_A_Cell(node)) {
         assert(Any_Sequence_Kind(Cell_Heart(v)));
-        const Cell* cell = c_cast(Cell*, node);
+        Element(const*) elem = c_cast(Element(*), node);
         if (tail_out)
-            *unwrap(tail_out) = Pairing_Tail(cell);
-        return cell;
+            *unwrap(tail_out) = Pairing_Tail(elem);
+        return elem;
     }
     const Array* arr = c_cast(Array*, node);
     REBIDX i = VAL_INDEX_RAW(v);  // Cell_Array() already checks it's arraylike
     Length len = Array_Len(arr);
     if (i < 0 or i > cast(REBIDX, len))
         fail (Error_Index_Out_Of_Range_Raw());
-    const Cell* at = Array_At(arr, i);
+    Element(const*) at = Array_At(arr, i);
     if (tail_out)  // inlining should remove this if() for no tail
         *unwrap(tail_out) = at + (len - i);
     return at;
 }
 
-INLINE const Cell* Cell_Array_Item_At(NoQuote(const Cell*) v) {
-    const Cell* tail;
-    const Cell* item = Cell_Array_At(&tail, v);
+INLINE Element(const*) Cell_Array_Item_At(NoQuote(const Cell*) v) {
+    Element(const*) tail;
+    Element(const*) item = Cell_Array_At(&tail, v);
     assert(item != tail);  // should be a valid value
     return item;
 }
 
 
 #define Cell_Array_At_Ensure_Mutable(tail_out,v) \
-    m_cast(Cell*, Cell_Array_At((tail_out), Ensure_Mutable(v)))
+    m_cast(Element(*), Cell_Array_At((tail_out), Ensure_Mutable(v)))
 
 #define Cell_Array_At_Known_Mutable(tail_out,v) \
-    m_cast(Cell*, Cell_Array_At((tail_out), Known_Mutable(v)))
+    m_cast(Element(*), Cell_Array_At((tail_out), Known_Mutable(v)))
 
 
 // !!! R3-Alpha introduced concepts of immutable series with PROTECT, but
@@ -115,7 +115,7 @@ INLINE const Cell* Cell_Array_Item_At(NoQuote(const Cell*) v) {
 // calls to this function get mutable access on non-mutable series.  :-/
 //
 #define Cell_Array_At_Mutable_Hack(tail_out,v) \
-    m_cast(Cell*, Cell_Array_At((tail_out), (v)))
+    m_cast(Element(*), Cell_Array_At((tail_out), (v)))
 
 
 //=//// ANY-ARRAY! INITIALIZER HELPERS ////////////////////////////////////=//
@@ -228,16 +228,16 @@ INLINE Value(*) Init_Pack_Untracked(Atom(*) out, Array* a) {
 INLINE bool Is_Nihil(Atom(const*) v) {
     if (not Is_Pack(v))
         return false;
-    const Cell* tail;
-    const Cell* at = Cell_Array_At(&tail, v);
+    Element(const*) tail;
+    Element(const*) at = Cell_Array_At(&tail, v);
     return tail == at;
 }
 
 INLINE bool Is_Meta_Of_Nihil(const Cell* v) {
     if (not Is_Meta_Of_Pack(v))
         return false;
-    const Cell* tail;
-    const Cell* at = Cell_Array_At(&tail, v);
+    Element(const*) tail;
+    Element(const*) at = Cell_Array_At(&tail, v);
     return tail == at;
 }
 

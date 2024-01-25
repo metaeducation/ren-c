@@ -171,8 +171,8 @@ REBINT Find_Max_Bit(const Cell* val)
         break;
 
     case REB_BLOCK: {
-        const Cell* tail;
-        const Cell* item = Cell_Array_At(&tail, val);
+        Element(const*) tail;
+        Element(const*) item = Cell_Array_At(&tail, val);
         for (; item != tail; ++item) {
             REBINT n = Find_Max_Bit(item);
             if (n != NOT_FOUND and cast(REBLEN, n) > maxi)
@@ -299,8 +299,8 @@ bool Set_Bits(Binary* bset, const Cell* val, bool set)
     if (!Any_Array(val))
         fail (Error_Invalid_Type(VAL_TYPE(val)));
 
-    const Cell* tail;
-    const Cell* item = Cell_Array_At(&tail, val);
+    Element(const*) tail;
+    Element(const*) item = Cell_Array_At(&tail, val);
 
     if (
         item != tail
@@ -318,7 +318,7 @@ bool Set_Bits(Binary* bset, const Cell* val, bool set)
         switch (VAL_TYPE(item)) {
         case REB_ISSUE: {
             if (not IS_CHAR(item)) {  // no special handling for hyphen
-                Set_Bits(bset, SPECIFIC(item), set);
+                Set_Bits(bset, item, set);
                 break;
             }
             Codepoint c = Cell_Codepoint(item);
@@ -344,7 +344,7 @@ bool Set_Bits(Binary* bset, const Cell* val, bool set)
             break; }
 
         case REB_INTEGER: {
-            REBLEN n = Int32s(SPECIFIC(item), 0);
+            REBLEN n = Int32s(item, 0);
             if (n > MAX_BITSET)
                 return false;
             if (
@@ -355,7 +355,7 @@ bool Set_Bits(Binary* bset, const Cell* val, bool set)
                 Codepoint c = n;
                 item += 2;
                 if (Is_Integer(item)) {
-                    n = Int32s(SPECIFIC(item), 0);
+                    n = Int32s(item, 0);
                     if (n < c)
                         fail (Error_Index_Out_Of_Range_Raw());
                     for (; c <= n; c++)
@@ -374,7 +374,7 @@ bool Set_Bits(Binary* bset, const Cell* val, bool set)
         case REB_EMAIL:
         case REB_URL:
         case REB_TAG:
-            Set_Bits(bset, SPECIFIC(item), set);
+            Set_Bits(bset, item, set);
             break;
 
         case REB_WORD: {
@@ -446,15 +446,15 @@ bool Check_Bits(const Binary* bset, const Cell* val, bool uncased)
 
     // Loop through block of bit specs
 
-    const Cell* tail;
-    const Cell* item = Cell_Array_At(&tail, val);
+    Element(const*) tail;
+    Element(const*) item = Cell_Array_At(&tail, val);
     for (; item != tail; item++) {
 
         switch (VAL_TYPE(item)) {
 
         case REB_ISSUE: {
             if (not IS_CHAR(item)) {
-                if (Check_Bits(bset, SPECIFIC(item), uncased))
+                if (Check_Bits(bset, item, uncased))
                     return true;
             }
             Codepoint c = Cell_Codepoint(item);
@@ -480,7 +480,7 @@ bool Check_Bits(const Binary* bset, const Cell* val, bool uncased)
             break; }
 
         case REB_INTEGER: {
-            REBLEN n = Int32s(SPECIFIC(item), 0);
+            REBLEN n = Int32s(item, 0);
             if (n > 0xffff)
                 return false;
             if (
@@ -490,7 +490,7 @@ bool Check_Bits(const Binary* bset, const Cell* val, bool uncased)
                 Codepoint c = n;
                 item += 2;
                 if (Is_Integer(item)) {
-                    n = Int32s(SPECIFIC(item), 0);
+                    n = Int32s(item, 0);
                     if (n < c)
                         fail (Error_Index_Out_Of_Range_Raw());
                     for (; c <= n; c++)
@@ -512,7 +512,7 @@ bool Check_Bits(const Binary* bset, const Cell* val, bool uncased)
         case REB_URL:
         case REB_TAG:
 //      case REB_ISSUE:
-            if (Check_Bits(bset, SPECIFIC(item), uncased))
+            if (Check_Bits(bset, item, uncased))
                 return true;
             break;
 

@@ -81,8 +81,8 @@ Bounce MAKE_Pair(
         y = arg;
     }
     else if (Is_Block(arg)) {
-        const Cell* tail;
-        const Cell* item = Cell_Array_At(&tail, arg);
+        Element(const*) tail;
+        Element(const*) item = Cell_Array_At(&tail, arg);
 
         if (Is_Integer(item))
             x = item;

@@ -31,8 +31,8 @@ static void Append_Vars_To_Context_From_Group(REBVAL *context, REBVAL *block)
 
     assert(Is_Group(block));
 
-    const Cell* tail;
-    const Cell* item = Cell_Array_At(&tail, block);
+    Element(const*) tail;
+    Element(const*) item = Cell_Array_At(&tail, block);
 
     struct Reb_Collector collector;
     //
@@ -631,8 +631,8 @@ Bounce MAKE_Context(
         : nullptr;
 
     if (Is_Block(arg)) {
-        const Cell* tail;
-        const Cell* at = Cell_Array_At(&tail, arg);
+        Element(const*) tail;
+        Element(const*) at = Cell_Array_At(&tail, arg);
 
         Context* ctx = Make_Context_Detect_Managed(
             kind,
@@ -1743,8 +1743,8 @@ DECLARE_NATIVE(construct)
     // refinement was passed in.
     //
   blockscope {
-    const Cell* tail;
-    Cell* at = Cell_Array_At_Mutable_Hack(&tail, spec);
+    Element(const*) tail;
+    Element(*) at = Cell_Array_At_Mutable_Hack(&tail, spec);
     if (REF(only)) {
         Init_Object(
             OUT,
@@ -1763,8 +1763,8 @@ DECLARE_NATIVE(construct)
     // Scan the object for top-level set words in order to make an
     // appropriately sized context.
     //
-    const Cell* tail;
-    Cell* at = Cell_Array_At_Ensure_Mutable(&tail, spec);
+    Element(const*) tail;
+    Element(*) at = Cell_Array_At_Ensure_Mutable(&tail, spec);
 
     Context* ctx = Make_Context_Detect_Managed(
         parent ? CTX_TYPE(parent) : REB_OBJECT,  // !!! Presume object?

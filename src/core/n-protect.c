@@ -299,8 +299,8 @@ static Bounce Protect_Unprotect_Core(Level* level_, Flags flags)
 
     if (Is_Block(value)) {
         if (REF(words)) {
-            const Cell* tail;
-            const Cell* item = Cell_Array_At(&tail, value);
+            Element(const*) tail;
+            Element(const*) item = Cell_Array_At(&tail, value);
             for (; item != tail; ++item) {
                 DECLARE_STABLE (word); // need binding, can't pass Cell
                 Derelativize(word, item, Cell_Specifier(value));
@@ -310,8 +310,8 @@ static Bounce Protect_Unprotect_Core(Level* level_, Flags flags)
         }
         if (REF(values)) {
             REBVAL *var;
-            const Cell* tail;
-            const Cell* item = Cell_Array_At(&tail, value);
+            Element(const*) tail;
+            Element(const*) item = Cell_Array_At(&tail, value);
 
             DECLARE_STABLE (safe);
 

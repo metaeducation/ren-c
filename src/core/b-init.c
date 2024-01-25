@@ -516,8 +516,8 @@ static void Init_System_Object(
     Context* errors_catalog
 ) {
     assert(VAL_INDEX(boot_sysobj_spec) == 0);
-    const Cell* spec_tail;
-    Cell* spec_head
+    Element(const*) spec_tail;
+    Element(*) spec_head
         = Cell_Array_At_Known_Mutable(&spec_tail, boot_sysobj_spec);
 
     // Create the system object from the sysobj block (defined in %sysobj.r)

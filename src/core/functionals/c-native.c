@@ -281,8 +281,8 @@ Array* Startup_Natives(const REBVAL *boot_natives)
     Init_Action_Adjunct_Shim();
 
     assert(VAL_INDEX(boot_natives) == 0); // should be at head, sanity check
-    const Cell* tail;
-    Cell* item = Cell_Array_At_Known_Mutable(&tail, boot_natives);
+    Element(const*) tail;
+    Element(*) item = Cell_Array_At_Known_Mutable(&tail, boot_natives);
     Specifier* specifier = Cell_Specifier(boot_natives);
 
     // !!! We could avoid this by making NATIVE a specialization of a NATIVE*

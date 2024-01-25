@@ -153,7 +153,7 @@ DECLARE_NATIVE(shove)
         Move_Cell(shovee, OUT);  // can't eval directly into arg slot
     }
     else
-        Copy_Cell(shovee, SPECIFIC(At_Level(L)));
+        Copy_Cell(shovee, At_Level(L));
 
     Deactivate_If_Action(shovee);  // allow ACTION! to be run
 

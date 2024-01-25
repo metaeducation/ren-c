@@ -1237,8 +1237,8 @@ void Push_Action(
 
     Array* partials = try_unwrap(ACT_PARTIALS(act));
     if (partials) {
-        const Cell* word_tail = Array_Tail(partials);
-        const REBVAL *word = SPECIFIC(Array_Head(partials));
+        Element(const*) word_tail = Array_Tail(partials);
+        Element(const*) word = Array_Head(partials);
         for (; word != word_tail; ++word)
             Copy_Cell(PUSH(), word);
     }

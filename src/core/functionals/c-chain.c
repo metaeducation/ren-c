@@ -66,7 +66,7 @@ Level* Push_Downshifted_Level(Atom(*) out, Level* L) {
     sub->varlist = L->varlist;
     assert(BONUS(KeySource, sub->varlist) == L);
     INIT_BONUS_KEYSOURCE(sub->varlist, sub);
-    sub->rootvar = SPECIFIC(Array_Head(sub->varlist));
+    sub->rootvar = Array_Head(sub->varlist);
 
     // Note that it can occur that this may be a TRAMPOLINE_KEEPALIVE sublevel
     // of something like another CHAIN, that it intends to reuse (!)  This
@@ -199,8 +199,8 @@ Bounce Chainer_Dispatcher(Level* const L)
 
     assert(Is_Block(SPARE));
     Value(*) pipeline_at = cast(Value(*), SPARE);
-    const Cell* chained_tail;
-    const Cell* chained = Cell_Array_At(&chained_tail, pipeline_at);
+    Element(const*) chained_tail;
+    Element(const*) chained = Cell_Array_At(&chained_tail, pipeline_at);
 
     if (chained == chained_tail)
         goto finished;
@@ -249,14 +249,14 @@ DECLARE_NATIVE(chain_p)  // see extended definition CHAIN in %base-defs.r
     Atom(*) out = OUT;  // plan ahead for factoring into Chain_Action(out..
 
     REBVAL *pipeline = ARG(pipeline);
-    const Cell* tail;
-    const Cell* first = Cell_Array_At(&tail, pipeline);
+    Element(const*) tail;
+    Element(const*) first = Cell_Array_At(&tail, pipeline);
 
     // !!! Current validation is that all are frames.  Should there be other
     // checks?  (That inputs match outputs in the chain?)  Should it be
     // a dialect and allow things other than functions?
     //
-    const Cell* check = first;
+    Element(const*) check = first;
     for (; check != tail; ++check) {
         if (not Is_Frame(check)) {
             DECLARE_LOCAL (specific);

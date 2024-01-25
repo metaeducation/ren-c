@@ -125,16 +125,16 @@ INLINE bool Is_Quasi_Null(const Cell* v) {
 INLINE bool Is_Heavy_Null(const Cell* v) {
     if (not Is_Pack(v))
         return false;
-    const Cell* tail;
-    const Cell* at = Cell_Array_At(&tail, v);
+    Element(const*) tail;
+    Element(const*) at = Cell_Array_At(&tail, v);
     return (tail == at + 1) and Is_Meta_Of_Null(at);
 }
 
 INLINE bool Is_Meta_Of_Heavy_Null(const Cell* v) {
     if (not Is_Meta_Of_Pack(v))
         return false;
-    const Cell* tail;
-    const Cell* at = Cell_Array_At(&tail, v);
+    Element(const*) tail;
+    Element(const*) at = Cell_Array_At(&tail, v);
     return (tail == at + 1) and Is_Meta_Of_Null(at);
 }
 

@@ -2721,8 +2721,8 @@ DECLARE_NATIVE(parse3)
 
     assert(Any_Series(input));
 
-    const Cell* rules_tail;
-    const Cell* rules_at = Cell_Array_At(&rules_tail, rules);
+    Element(const*) rules_tail;
+    Element(const*) rules_at = Cell_Array_At(&rules_tail, rules);
 
     // !!! Look for the special pattern `parse ... [collect [x]]` and delegate
     // to a fabricated `parse [temp: collect [x]]` so we can return temp.

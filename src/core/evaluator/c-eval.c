@@ -1351,8 +1351,8 @@ Bounce Evaluator_Executor(Level* L)
         if (Cell_Series_Len_At(L_current) == 0)  // not supported [1]
             fail ("SET-BLOCK! must not be empty for now.");
 
-        const Cell* tail;
-        const Cell* check = Cell_Array_At(&tail, L_current);
+        Element(const*) tail;
+        Element(const*) check = Cell_Array_At(&tail, L_current);
         Specifier* check_specifier = Derive_Specifier(L_specifier, L_current);
 
         Corrupt_Pointer_If_Debug(L_current);  // might be SPARE, we use it now
@@ -1488,8 +1488,8 @@ Bounce Evaluator_Executor(Level* L)
                 fail ("Lazy Object Reified to Lazy Object: Not Allowed");
         }
 
-        const Cell* pack_meta_at = nullptr;  // pack block items are ^META'd
-        const Cell* pack_meta_tail = nullptr;
+        Element(const*) pack_meta_at = nullptr;  // pack block items are ^META'd
+        Element(const*) pack_meta_tail = nullptr;
         Specifier* pack_specifier = nullptr;
 
         if (Is_Barrier(OUT))  // !!! Hack, wnat ([/foo]: eval) to always work
@@ -1502,8 +1502,8 @@ Bounce Evaluator_Executor(Level* L)
         else {
             Meta_Quotify(OUT);  // standardize to align with pack items
 
-            pack_meta_at = OUT;
-            pack_meta_tail = OUT + 1;  // not a valid location, just a tail
+            pack_meta_at = cast(Element(*), OUT);
+            pack_meta_tail = cast(Element(*), OUT) + 1;  // not a valid cell
             pack_specifier = nullptr;
         }
 

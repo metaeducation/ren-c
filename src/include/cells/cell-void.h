@@ -223,15 +223,15 @@ INLINE Value(*) Finalize_Void_Untracked(Atom(*) out) {
 INLINE bool Is_Heavy_Void(const Cell* v) {
     if (not Is_Pack(v))
         return false;
-    const Cell* tail;
-    const Cell* at = Cell_Array_At(&tail, v);
+    Element(const*) tail;
+    Element(const*) at = Cell_Array_At(&tail, v);
     return (tail == at + 1) and Is_Meta_Of_Void(at);
 }
 
 INLINE bool Is_Meta_Of_Heavy_Void(const Cell* v) {
     if (not Is_Meta_Of_Pack(v))
         return false;
-    const Cell* tail;
-    const Cell* at = Cell_Array_At(&tail, v);
+    Element(const*) tail;
+    Element(const*) at = Cell_Array_At(&tail, v);
     return (tail == at + 1) and Is_Meta_Of_Void(at);
 }

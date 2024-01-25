@@ -110,15 +110,15 @@
 #define FEED_VAPTR_POINTER(feed)    PAYLOAD(Comma, FEED_SINGLE(feed)).vaptr
 #define FEED_PACKED(feed)           PAYLOAD(Comma, FEED_SINGLE(feed)).packed
 
-INLINE const Cell* At_Feed(Feed* feed) {
+INLINE Element(const*) At_Feed(Feed* feed) {
     assert(Not_Feed_Flag(feed, NEEDS_SYNC));
     assert(feed->p != &PG_Feed_At_End);
-    return c_cast(Cell*, feed->p);
+    return c_cast(Element(*), feed->p);
 }
 
-INLINE const Cell* Try_At_Feed(Feed* feed) {
+INLINE Element(const*) Try_At_Feed(Feed* feed) {
     assert(Not_Feed_Flag(feed, NEEDS_SYNC));
-    return c_cast(Cell*, feed->p);
+    return c_cast(Element(*), feed->p);
 }
 
 INLINE Option(va_list*) FEED_VAPTR(Feed* feed) {

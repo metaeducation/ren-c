@@ -419,8 +419,8 @@ Bounce MAKE_Error(
         // Bind and do an evaluation step (as with MAKE OBJECT! with A_MAKE
         // code in REBTYPE(Context) and code in DECLARE_NATIVE(construct))
 
-        const Cell* tail;
-        const Cell* head = Cell_Array_At(&tail, arg);
+        Element(const*) tail;
+        Element(const*) head = Cell_Array_At(&tail, arg);
 
         e = Make_Context_Detect_Managed(
             REB_ERROR, // type
@@ -633,8 +633,8 @@ Context* Make_Error_Managed_Core(
 
     REBLEN expected_args = 0;
     if (Is_Block(message)) { // GET-WORD!s in template should match va_list
-        const Cell* tail;
-        const Cell* temp = Cell_Array_At(&tail, message);
+        Element(const*) tail;
+        Element(const*) temp = Cell_Array_At(&tail, message);
         for (; temp != tail; ++temp) {
             if (Is_Get_Word(temp))
                 ++expected_args;
@@ -661,8 +661,8 @@ Context* Make_Error_Managed_Core(
     // They can also be a single TEXT! (which will just bypass this loop).
     //
     if (not Is_Text(message)) {
-        const Cell* msg_tail;
-        const Cell* msg_item = Cell_Array_At(&msg_tail, message);
+        Element(const*) msg_tail;
+        Element(const*) msg_item = Cell_Array_At(&msg_tail, message);
 
         for (; msg_item != msg_tail; ++msg_item) {
             if (not Is_Get_Word(msg_item))
@@ -1302,8 +1302,8 @@ Context* Startup_Errors(const REBVAL *boot_errors)
     }
   #endif
 
-    const Cell* errors_tail;
-    Cell* errors_head
+    Element(const*) errors_tail;
+    Element(*) errors_head
         = Cell_Array_At_Known_Mutable(&errors_tail, boot_errors);
 
     assert(VAL_INDEX(boot_errors) == 0);
@@ -1317,11 +1317,11 @@ Context* Startup_Errors(const REBVAL *boot_errors)
 
     // Morph blocks into objects for all error categories.
     //
-    const Cell* category_tail = Array_Tail(CTX_VARLIST(catalog));
+    Element(const*) category_tail = Array_Tail(CTX_VARLIST(catalog));
     REBVAL *category = CTX_VARS_HEAD(catalog);
     for (; category != category_tail; ++category) {
-        const Cell* tail;
-        Cell* head = Cell_Array_At_Known_Mutable(&tail, category);
+        Element(const*) tail;
+        Element(*) head = Cell_Array_At_Known_Mutable(&tail, category);
         Context* error = Construct_Context_Managed(
             REB_OBJECT,
             head,  // modifies bindings

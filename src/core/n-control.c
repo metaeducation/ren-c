@@ -1542,8 +1542,8 @@ DECLARE_NATIVE(catch)
             //
             // Test all the words in the block for a match to catch
 
-            const Cell* tail;
-            const Cell* candidate = Cell_Array_At(&tail, ARG(name));
+            Element(const*) tail;
+            Element(const*) candidate = Cell_Array_At(&tail, ARG(name));
             for (; candidate != tail; candidate++) {
                 //
                 // !!! Should we test a typeset for illegal name types?

@@ -285,9 +285,9 @@ Bounce MAKE_Array(
             Context* context = cast(Context*, VAL_VARARGS_BINDING(arg));
             Level* param_level = CTX_LEVEL_MAY_FAIL(context);
 
-            REBVAL *param = SPECIFIC(Array_Head(
+            REBVAL *param = Array_Head(
                 CTX_VARLIST(ACT_EXEMPLAR(Level_Phase(param_level)))
-            ));
+            );
             if (VAL_VARARGS_SIGNED_PARAM_INDEX(arg) < 0)
                 param += - VAL_VARARGS_SIGNED_PARAM_INDEX(arg);
             else
@@ -402,12 +402,12 @@ REBINT Find_In_Array(
             return index_unsigned;
 
         for (; index >= start and index < end; index += skip) {
-            const Cell* item_tail = Array_Tail(array);
-            const Cell* item = Array_At(array, index);
+            Element(const*) item_tail = Array_Tail(array);
+            Element(const*) item = Array_At(array, index);
 
             REBLEN count = 0;
-            const Cell* other_tail;
-            const Cell* other = Cell_Array_At(&other_tail, pattern);
+            Element(const*) other_tail;
+            Element(const*) other = Cell_Array_At(&other_tail, pattern);
             for (; other != other_tail; ++other, ++item) {
                 if (
                     item == item_tail or
@@ -642,8 +642,8 @@ static REBINT Try_Get_Array_Index_From_Picker(
         n = -1;
 
         const Symbol* symbol = Cell_Word_Symbol(picker);
-        const Cell* tail;
-        const Cell* item = Cell_Array_At(&tail, v);
+        Element(const*) tail;
+        Element(const*) item = Cell_Array_At(&tail, v);
         REBLEN index = VAL_INDEX(v);
         for (; item != tail; ++item, ++index) {
             if (Any_Word(item) and Are_Synonyms(symbol, Cell_Word_Symbol(item))) {
@@ -1113,9 +1113,9 @@ REBTYPE(Array)
         ){
             // Cell bits can be copied within the same array
             //
-            Cell* a = Cell_Array_At_Ensure_Mutable(nullptr, array);
-            Cell* b = Cell_Array_At_Ensure_Mutable(nullptr, arg);
-            Cell temp;
+            Element(*) a = Cell_Array_At_Ensure_Mutable(nullptr, array);
+            Element(*) b = Cell_Array_At_Ensure_Mutable(nullptr, arg);
+            ElementT temp;
             temp.header = a->header;
             temp.payload = a->payload;
             temp.extra = a->extra;
