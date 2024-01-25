@@ -149,8 +149,8 @@ INLINE Size VAL_BYTEOFFSET_FOR_INDEX(
 // Declaring as inline with type signature ensures you use a String* to
 // initialize, and the C++ build can also validate managed consistent w/const.
 
-INLINE REBVAL *Init_Any_String_At(
-    Cell* out,
+INLINE Element(*) Init_Any_String_At(
+    Sink(Element(*)) out,
     enum Reb_Kind kind,
     const_if_c String* str,
     REBLEN index
@@ -162,12 +162,12 @@ INLINE REBVAL *Init_Any_String_At(
         index,
         UNBOUND
     );
-    return SPECIFIC(out);
+    return out;
 }
 
 #if CPLUSPLUS_11
-    INLINE REBVAL *Init_Any_String_At(
-        Cell* out,
+    INLINE Element(*) Init_Any_String_At(
+        Sink(Element(*)) out,
         enum Reb_Kind kind,
         const String* str,
         REBLEN index

@@ -98,7 +98,7 @@ Context* Make_Context_For_Action_Push_Partials(
 
     INIT_CTX_KEYLIST_SHARED(cast(Context*, varlist), ACT_KEYLIST(act));
 
-    Cell* rootvar = Array_Head(varlist);
+    Element(*) rootvar = Array_Head(varlist);
     INIT_VAL_FRAME_ROOTVAR(
         rootvar,
         varlist,
@@ -110,10 +110,10 @@ Context* Make_Context_For_Action_Push_Partials(
     //
     Array* partials = try_unwrap(ACT_PARTIALS(act));
     if (partials) {
-        const Cell* word_tail = Array_Tail(partials);
-        const Cell* word = Array_Head(partials);
+        Element(const*) word_tail = Array_Tail(partials);
+        Element(const*) word = Array_Head(partials);
         for (; word != word_tail; ++word) {
-            Copy_Cell(PUSH(), SPECIFIC(word));
+            Copy_Cell(PUSH(), word);
             assert(Is_Pushed_Refinement(TOP));
         }
     }
@@ -122,7 +122,7 @@ Context* Make_Context_For_Action_Push_Partials(
     const Key* key = ACT_KEYS(&tail, act);
     const Param* param = ACT_PARAMS_HEAD(act);
 
-    REBVAL *arg = SPECIFIC(rootvar) + 1;
+    Value(*) arg = cast(Value(*), rootvar) + 1;
 
     REBLEN index = 1;  // used to bind REFINEMENT! values to parameter slots
 

@@ -1055,13 +1055,9 @@ void Clonify_And_Bind_Relative(
 //
 //  Copy_And_Bind_Relative_Deep_Managed: C
 //
-// This routine is called by Make_Action in order to take the raw material
-// given as a function body, and de-relativize any Is_Relative(value)s that
-// happen to be in it already (as any Copy does).  But it also needs to make
-// new relative references to ANY-WORD! that are referencing function
-// parameters, as well as to relativize the copies of ANY-ARRAY! that contain
-// these relative words...so that they refer to the archetypal function
-// to which they should be relative.
+// This routine is called by Make_Action to copy the body deeply, and while
+// it is doing that it puts a cache in any unbound words of whether or not
+// that words can be found in the function's frame.
 //
 Array* Copy_And_Bind_Relative_Deep_Managed(
     const REBVAL *body,

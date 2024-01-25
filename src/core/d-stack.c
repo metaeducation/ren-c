@@ -57,7 +57,6 @@ void Collapsify_Array(Array* array, REBLEN limit)
 
             enum Reb_Kind kind = VAL_TYPE(item);
             Init_Array_Cell_At(item, kind, copy, 0);  // at 0 now
-            assert(Is_Specific(item));
             assert(Not_Cell_Flag(item, NEWLINE_BEFORE));  // gets cleared
         }
     }
@@ -85,7 +84,7 @@ void Collapsify_Array(Array* array, REBLEN limit)
 // onto these values for the purposes of better error messages (at the cost
 // of performance).
 //
-REBVAL *Init_Near_For_Level(Cell* out, Level* L)
+Element(*) Init_Near_For_Level(Sink(Element(*)) out, Level* L)
 {
     StackIndex base = TOP_INDEX;
 
@@ -115,8 +114,8 @@ REBVAL *Init_Near_For_Level(Cell* out, Level* L)
         start = 0;
 
     REBLEN count = 0;
-    const Cell* tail = Array_Tail(Level_Array(L));
-    const Cell* item = Array_At(Level_Array(L), start);
+    Element(const*) tail = Array_Tail(Level_Array(L));
+    Element(const*) item = Array_At(Level_Array(L), start);
     for (; item != tail and count < 6; ++item, ++count) {
         assert(not Is_Void(item));  // can't be in arrays, API won't splice
         assert(not Is_Antiform(item));  // can't be in arrays, API won't splice
@@ -157,7 +156,7 @@ REBVAL *Init_Near_For_Level(Cell* out, Level* L)
 
     Init_Block(out, near);
 
-    return SPECIFIC(out);
+    return out;
 }
 
 

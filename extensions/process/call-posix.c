@@ -296,12 +296,12 @@ Bounce Call_Core(Level* level_) {
         assert(argc != 0);  // usermode layer checks this
         argv = rebAllocN(char*, (argc + 1));
 
-        const Cell* param = Cell_Array_Item_At(block);
+        Element(const*) param = Cell_Array_Item_At(block);
         int i;
         for (i = 0; i < argc; ++param, ++i) {
             if (not Is_Text(param))  // usermode layer ensures FILE! converted
                 fail (PARAM(command));
-            argv[i] = rebSpell(SPECIFIC(param));
+            argv[i] = rebSpell(param);
         }
         argv[argc] = nullptr;
     }

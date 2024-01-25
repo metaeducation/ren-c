@@ -45,7 +45,7 @@ INLINE const Array* Cell_Array(NoQuote(const Cell*) v) {
 // of bounds of the data.  If a function can deal with such out of bounds
 // arrays meaningfully, it should work with VAL_INDEX_UNBOUNDED().
 //
-INLINE const Cell* Cell_Array_Len_At(
+INLINE Element(const*) Cell_Array_Len_At(
     Option(Length*) len_at_out,
     NoQuote(const Cell*) v
 ){
@@ -55,7 +55,7 @@ INLINE const Cell* Cell_Array_Len_At(
         assert(VAL_INDEX_RAW(v) == 0);
         if (len_at_out)
             *unwrap(len_at_out) = PAIRING_LEN;
-        return c_cast(Cell*, node);
+        return c_cast(Element(*), node);
     }
     const Array* arr = c_cast(Array*, node);
     REBIDX i = VAL_INDEX_RAW(v);  // Cell_Array() already checks it's series

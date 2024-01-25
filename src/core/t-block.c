@@ -552,9 +552,9 @@ static int Compare_Val_Custom(void *arg, const void *v1, const void *v2)
 {
     struct sort_flags *flags = cast(struct sort_flags*, arg);
 
-    DECLARE_LOCAL (result);
+    DECLARE_STABLE (result);
     if (rebRunThrows(
-        cast(REBVAL*, result),  // <-- output cell
+        result,  // <-- output cell
         flags->comparator,
             flags->reverse ? v1 : v2,
             flags->reverse ? v2 : v1

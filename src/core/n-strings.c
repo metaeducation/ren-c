@@ -80,7 +80,12 @@ DECLARE_NATIVE(delimit)
 {
     INCLUDE_PARAMS_OF_DELIMIT;
 
-    REBVAL *delimiter = ARG(delimiter);
+    Option(Element(*)) delimiter;
+    if (REF(delimiter))
+        delimiter = cast(Element(*), ARG(delimiter));
+    else
+        delimiter = nullptr;
+
     REBVAL *line = ARG(line);
 
     if (Is_Text(line) or Is_Issue(line)) {  // can shortcut, no evals needed
@@ -92,17 +97,17 @@ DECLARE_NATIVE(delimit)
         DECLARE_MOLD (mo);
         Push_Mold(mo);
 
-        if (REF(head) and REF(delimiter))
-            Form_Value(mo, delimiter);
+        if (REF(head) and delimiter)
+            Form_Value(mo, unwrap(delimiter));
 
         // Note: This path used to shortcut with running TO TEXT! if not using
         // /HEAD or /TAIL options, but it's probably break-even to invoke the
         // evaluator.  Review optimizations later.
         //
-        Form_Value(mo, line);
+        Form_Value(mo, cast(Element(*), line));
 
-        if (REF(tail) and REF(delimiter))
-            Form_Value(mo, delimiter);
+        if (REF(tail) and delimiter)
+            Form_Value(mo, unwrap(delimiter));
 
         return Init_Text(OUT, Pop_Molded_String(mo));
     }
@@ -122,8 +127,8 @@ DECLARE_NATIVE(delimit)
     // If /HEAD is used, speculatively start the mold out with the delimiter
     // (will be thrown away if the block turns out to make nothing)
     //
-    if (REF(head))
-        Form_Value(mo, delimiter);
+    if (REF(head) and delimiter)
+        Form_Value(mo, unwrap(delimiter));
 
     bool pending = false;  // pending delimiter output, *if* more non-nulls
     bool nothing = true;  // any elements seen so far have been null or blank
@@ -159,19 +164,22 @@ DECLARE_NATIVE(delimit)
             pending = false;
         }
         else if (Is_Issue(OUT)) {  // do not delimit (unified w/char) [4]
-            Form_Value(mo, OUT);
+            Form_Value(mo, cast(Element(*), OUT));
             pending = false;
         }
         else {
-            if (pending and REF(delimiter))
-                Form_Value(mo, delimiter);
+            if (pending and delimiter)
+                Form_Value(mo, unwrap(delimiter));
 
             if (Is_Quoted(OUT)) {
                 Unquotify(OUT, 1);
-                Mold_Value(mo, OUT);
+                Mold_Value(mo, cast(Element(*), OUT));
             }
-            else
-                Form_Value(mo, OUT);
+            else {
+                if (Is_Antiform(OUT))
+                    fail (Error_Bad_Antiform(OUT));
+                Form_Value(mo, cast(Element(*), OUT));
+            }
 
             pending = true;  // note this includes empty strings [5]
         }
@@ -182,8 +190,8 @@ DECLARE_NATIVE(delimit)
         Init_Nulled(OUT);
     }
     else {
-        if (REF(tail) and REF(delimiter))
-            Form_Value(mo, delimiter);
+        if (REF(tail) and delimiter)
+            Form_Value(mo, unwrap(delimiter));
         Init_Text(OUT, Pop_Molded_String(mo));
     }
 

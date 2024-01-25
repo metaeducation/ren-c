@@ -60,7 +60,7 @@ static void Append_Vars_To_Context_From_Group(REBVAL *context, REBVAL *block)
     // Should it allow ANY-WORD!?  Restrict to just SET-WORD!?
     //
   blockscope {
-    const Cell* word;
+    Element(const*) word;
     for (word = item; word != tail; word += 2) {
         if (not Is_Word(word) and not Is_Set_Word(word)) {
             error = Error_Bad_Value(word);
@@ -546,7 +546,7 @@ Bounce MAKE_Frame(
             feed = L_varargs->feed;
         }
         else {
-            REBVAL *shared;
+            Element(*) shared;
             if (not Is_Block_Style_Varargs(&shared, arg))
                 fail ("Expected BLOCK!-style varargs");  // shouldn't happen
 
@@ -860,7 +860,7 @@ Context* Copy_Context_Extra_Managed(
             ){
                 if (original == INODE(PatchContext, patch)) {
                     REBVAL *var = Append_Context(copy, *psym);
-                    Copy_Cell(var, SPECIFIC(Stub_Cell(patch)));
+                    Copy_Cell(var, Stub_Cell(patch));
                     break;
                 }
             }
@@ -980,8 +980,8 @@ void MF_Context(REB_MOLD *mo, NoQuote(const Cell*) v, bool form)
             if (Is_Antiform(e.var)) {
                 fail (Error_Bad_Antiform(e.var));  // can't FORM antiforms
             }
-            else if (not Is_Nulled(e.var) and not Is_Blank(e.var))
-                Mold_Value(mo, e.var);
+            else if (not Is_Blank(e.var))
+                Mold_Value(mo, cast(Element(*), e.var));
 
             Append_Codepoint(mo->series, LF);
             had_output = true;
@@ -1010,7 +1010,7 @@ void MF_Context(REB_MOLD *mo, NoQuote(const Cell*) v, bool form)
 
         const Symbol* spelling = KEY_SYMBOL(e.key);
 
-        DECLARE_LOCAL (set_word);
+        DECLARE_ELEMENT (set_word);
         Init_Set_Word(set_word, spelling);  // want escaping, e.g `|::|: 10`
 
         Mold_Value(mo, set_word);
@@ -1025,7 +1025,7 @@ void MF_Context(REB_MOLD *mo, NoQuote(const Cell*) v, bool form)
             DECLARE_LOCAL (reified);
             Copy_Cell(reified, e.var);
             Quasify_Antiform(reified);  // will become quasi...
-            Mold_Value(mo, reified);  // ...hence molds as `~xxx~`
+            Mold_Value(mo, cast(Element(*), reified));  // ...molds as `~xxx~`
         }
         else {
             // We want the molded object to be able to "round trip" back to the
@@ -1038,7 +1038,7 @@ void MF_Context(REB_MOLD *mo, NoQuote(const Cell*) v, bool form)
             //
             if (not Any_Inert(e.var))
                 Append_Ascii(s, "'");
-            Mold_Value(mo, e.var);
+            Mold_Value(mo, cast(Element(*), e.var));
         }
     }
     Shutdown_Evars(&e);

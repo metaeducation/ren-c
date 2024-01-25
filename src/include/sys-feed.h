@@ -189,8 +189,8 @@ INLINE void Finalize_Variadic_Feed(Feed* feed) {
 // A cell pointer in a variadic feed should be fine to use directly, because
 // all such "spliced" cells should be specific.
 //
-INLINE Value(const*) Copy_Reified_Variadic_Feed_Cell(
-    Cell* out,
+INLINE Element(const*) Copy_Reified_Variadic_Feed_Cell(
+    Sink(Element(*)) out,
     Feed* feed
 ){
     const Cell* cell = c_cast(Cell*, feed->p);
@@ -199,12 +199,13 @@ INLINE Value(const*) Copy_Reified_Variadic_Feed_Cell(
         assert(not Is_Api_Value(cell));  // but internal cells can be nulled
 
     if (Is_Antiform(cell)) {  // @ will turn these back into antiforms
-        Copy_Cell(out, SPECIFIC(cell));
+        Copy_Cell(cast(Cell*, out), cell);
         QUOTE_BYTE(out) = QUASIFORM_2;
-        return cast(Value(*), out);
+        return out;
     }
 
-    return Copy_Cell(out, cast(Value(const*), cell));
+    Copy_Cell(out, cast(Value(const*), cell));
+    return out;
 }
 
 
@@ -224,7 +225,7 @@ INLINE Option(Value(const*)) Try_Reify_Variadic_Feed_Series(
     switch (Series_Flavor(s)) {
       case FLAVOR_INSTRUCTION_SPLICE: {
         Array* inst1 = x_cast(Array*, s);
-        REBVAL *single = SPECIFIC(Stub_Cell(inst1));
+        REBVAL *single = Stub_Cell(inst1);
         if (Is_Blank(single)) {
             GC_Kill_Series(inst1);
             return nullptr;
@@ -263,7 +264,7 @@ INLINE Option(Value(const*)) Try_Reify_Variadic_Feed_Series(
         // vs. putting it in fetched/MARKED_TEMPORARY...but that makes
         // this more convoluted.  Review.
 
-        REBVAL *single = SPECIFIC(Stub_Cell(inst1));
+        Value(*) single = Stub_Cell(inst1);
         feed->p = single;
         feed->p = Copy_Reified_Variadic_Feed_Cell(&feed->fetched, feed);
         rebRelease(single);  // *is* the instruction
@@ -511,13 +512,13 @@ INLINE const Cell* Lookback_While_Fetching_Next(Level* L) {
     // this is currently kind of an unknown, but in the scheme of things it
     // seems like it must be something favorable to optimization.)
     //
-    const Cell* lookback;
+    Element(const*) lookback;
     if (L->feed->p == &L->feed->fetched) {
-        Copy_Cell(&L->feed->lookback, SPECIFIC(&L->feed->fetched));
+        Copy_Cell(&L->feed->lookback, &L->feed->fetched);
         lookback = &L->feed->lookback;
     }
     else
-        lookback = c_cast(Cell*, L->feed->p);
+        lookback = c_cast(Element(*), L->feed->p);
 
     Fetch_Next_In_Feed(L->feed);
 

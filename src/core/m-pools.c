@@ -574,9 +574,9 @@ Node* Try_Find_Containing_Node_Debug(const void *p)
 // leak if not freed or managed.  This shouldn't be hard to fix--it just
 // means the GC manuals list needs to be Node* and not just Series*.
 //
-Cell* Alloc_Pairing(Flags flags) {
+Value(*) Alloc_Pairing(Flags flags) {
     assert(flags == 0 or flags == NODE_FLAG_MANAGED);
-    Cell* paired = cast(Cell*, Alloc_Pooled(PAIR_POOL));  // 2x cell size
+    Value(*) paired = cast(ValueT*, Alloc_Pooled(PAIR_POOL));  // 2x cell size
 
     Erase_Cell(paired);
     Erase_Cell(Pairing_Second(paired));
@@ -590,13 +590,13 @@ Cell* Alloc_Pairing(Flags flags) {
 //
 //  Copy_Pairing: C
 //
-Value(*) Copy_Pairing(const Cell* paired, Flags flags) {
-    Cell* copy = Alloc_Pairing(flags);
+Value(*) Copy_Pairing(Value(const*) paired, Flags flags) {
+    Value(*) copy = Alloc_Pairing(flags);
 
     Copy_Cell(copy, paired);
     Copy_Cell(Pairing_Second(copy), Pairing_Second(paired));
 
-    return SPECIFIC(copy);
+    return copy;
 }
 
 
@@ -1136,7 +1136,7 @@ Stub *Decay_Series(Series* s)
         break;
 
       case FLAVOR_HANDLE: {
-        Cell* v = Stub_Cell(s);
+        Value(*) v = Stub_Cell(s);
         assert(Cell_Heart_Unchecked(v) == REB_HANDLE);
 
         // Some handles use the managed form just because they want changes to
@@ -1144,7 +1144,7 @@ Stub *Decay_Series(Series* s)
         // may be no cleaner function.
         //
         if (s->misc.cleaner)
-            (s->misc.cleaner)(SPECIFIC(v));
+            (s->misc.cleaner)(v);
         break; }
 
       default:

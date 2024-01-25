@@ -1415,11 +1415,6 @@ DECLARE_NATIVE(subparse)
             goto pre_rule;
         }
         rule = Move_Cell(P_SAVE, SPARE);
-
-        // was a GET-GROUP!, e.g. :(...), fall through so its result will
-        // act as a rule in its own right.
-        //
-        assert(Is_Specific(rule));  // can use w/P_RULE_SPECIFIER, harmless
     }}
     else {
         // If we ran the GROUP! then that invokes the evaluator, and so
@@ -1815,7 +1810,7 @@ DECLARE_NATIVE(subparse)
 
                 FETCH_NEXT_RULE(L);
 
-                if (Is_Truthy(condition))
+                if (Is_Truthy(Stable_Unchecked(condition)))
                     goto pre_rule;
 
                 Init_Nulled(ARG(position));  // not found
@@ -2213,8 +2208,8 @@ DECLARE_NATIVE(subparse)
                 if (not Is_Series_Array(P_INPUT))
                     fail (Error_Parse_Rule());
 
-                const Cell* input_tail = Array_Tail(P_INPUT_ARRAY);
-                const Cell* into = Array_At(P_INPUT_ARRAY, P_POS);
+                Element(const*) input_tail = Array_Tail(P_INPUT_ARRAY);
+                Element(const*) into = Array_At(P_INPUT_ARRAY, P_POS);
                 if (into == input_tail) {
                     i = END_FLAG;  // `parse [] [into [...]]`, rejects
                     break;
@@ -2228,7 +2223,7 @@ DECLARE_NATIVE(subparse)
                     // !!! Review faster way of sharing the AS transform.
                     //
                     Derelativize(SPARE, into, P_INPUT_SPECIFIER);
-                    into = rebValue("as block! @", SPARE);
+                    into = cast(Element(*), rebValue("as block! @", SPARE));
                 }
                 else if (
                     not Any_Series_Kind(Cell_Heart(into))
@@ -2269,7 +2264,7 @@ DECLARE_NATIVE(subparse)
                 }
 
                 if (Is_Api_Value(into))
-                    rebRelease(SPECIFIC(into));  // !!! rethink to use SPARE
+                    rebRelease(x_cast(REBVAL*, into));  // !!! or use SPARE?
 
                 FRESHEN(OUT);  // restore invariant
                 break; }

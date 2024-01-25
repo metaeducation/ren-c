@@ -476,7 +476,7 @@ REBLEN Modify_String_Or_Binary(
     else { form:
 
         Push_Mold(mo);
-        Mold_Or_Form_Value(mo, src, true);
+        Mold_Or_Form_Value(mo, cast(Element(const*), src), true);
 
         // Don't capture pointer until after mold (it may expand the buffer)
 

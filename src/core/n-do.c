@@ -265,7 +265,7 @@ DECLARE_NATIVE(do)
         return DELEGATE(OUT, source);
 
       case REB_VARARGS : {
-        REBVAL *position;
+        Element(*) position;
         if (Is_Block_Style_Varargs(&position, source)) {
             //
             // We can execute the array, but we must "consume" elements out
@@ -477,7 +477,7 @@ DECLARE_NATIVE(evaluate)
       case REB_VARARGS : {
         assert(Is_Varargs(source));
 
-        REBVAL *position;
+        Element(*) position;
         if (Is_Block_Style_Varargs(&position, source)) {
             //
             // We can execute the array, but we must "consume" elements out

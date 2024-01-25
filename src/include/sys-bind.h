@@ -468,7 +468,7 @@ INLINE Value(const*) Lookup_Word_May_Fail(
         fail (Error_Unassigned_Attach_Raw(any_word));
 
     if (IS_LET(s) or IS_PATCH(s))
-        return SPECIFIC(Stub_Cell(s));
+        return Stub_Cell(s);
 
     Assert_Node_Accessible(s);
     Context* c = cast(Context*, s);
@@ -486,7 +486,7 @@ INLINE Option(Value(const*)) Lookup_Word(
     if (not s or index == INDEX_ATTACHED)
         return nullptr;
     if (IS_LET(s) or IS_PATCH(s))
-        return SPECIFIC(Stub_Cell(s));
+        return Stub_Cell(s);
 
     Assert_Node_Accessible(s);
     Context* c = cast(Context*, s);
@@ -518,7 +518,7 @@ INLINE REBVAL *Lookup_Mutable_Word_May_Fail(
 
     REBVAL *var;
     if (IS_LET(s) or IS_PATCH(s))
-        var = SPECIFIC(Stub_Cell(s));
+        var = Stub_Cell(s);
     else {
         Context* c = cast(Context*, s);
 

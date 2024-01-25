@@ -1106,7 +1106,7 @@ bool Get_Path_Push_Refinements_Throws(
     //
     REBLEN len = Cell_Sequence_Len(path) - 1;
     for (; len != 0; --len) {
-        const Cell* at = Copy_Sequence_At(safe, path, len);
+        Value(const*) at = Copy_Sequence_At(safe, path, len);
         DECLARE_LOCAL (temp);
         if (Is_Group(at)) {
             Specifier* derived = Derive_Specifier(

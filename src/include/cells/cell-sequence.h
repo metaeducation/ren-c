@@ -202,7 +202,7 @@ INLINE Element(*) Try_Leading_Blank_Pathify(
         return cast(Element(*), v);
     }
 
-    Cell* p = Alloc_Pairing(NODE_FLAG_MANAGED);
+    Value(*) p = Alloc_Pairing(NODE_FLAG_MANAGED);
     Init_Blank(p);
     Copy_Cell(Pairing_Second(p), v);
 
@@ -306,11 +306,10 @@ INLINE Element(*) Try_Init_Any_Sequence_Pairlike(
     Value(const*) v1,
     Value(const*) v2
 ){
-    if (Is_Blank(v1))
-        return Try_Leading_Blank_Pathify(
-            SPECIFIC(Copy_Relative_internal(out, v2)),
-            kind
-        );
+    if (Is_Blank(v1)) {
+        Copy_Relative_internal(out, v2);
+        return Try_Leading_Blank_Pathify(out, kind);
+    }
 
     if (not Is_Valid_Sequence_Element(kind, v1)) {
         Copy_Relative_internal(out, v1);
@@ -344,7 +343,7 @@ INLINE Element(*) Try_Init_Any_Sequence_Pairlike(
         return nullptr;
     }
 
-    Cell* pairing = Alloc_Pairing(NODE_FLAG_MANAGED);
+    Value(*) pairing = Alloc_Pairing(NODE_FLAG_MANAGED);
     Copy_Relative_internal(pairing, v1);
     Copy_Relative_internal(Pairing_Second(pairing), v2);
     Init_Pair(out, pairing);

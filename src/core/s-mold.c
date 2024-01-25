@@ -261,8 +261,8 @@ void Mold_Array_At(
 
     bool first_item = true;
 
-    const Cell* item_tail = Array_Tail(a);
-    const Cell* item = Array_At(a, index);
+    Element(const*) item_tail = Array_Tail(a);
+    Element(const*) item = Array_At(a, index);
     assert(item <= item_tail);
     while (item != item_tail) {
         if (Get_Cell_Flag(item, NEWLINE_BEFORE)) {
@@ -320,15 +320,18 @@ void Form_Array_At(
 
     REBINT n;
     for (n = 0; n < len;) {
-        const Cell* item = Array_At(array, index + n);
+        Element(const*) item = Array_At(array, index + n);
         Option(Value(*)) wval = nullptr;
         if (context and (Is_Word(item) or Is_Get_Word(item))) {
             wval = Select_Symbol_In_Context(
                 CTX_ARCHETYPE(unwrap(context)),
                 Cell_Word_Symbol(item)
             );
-            if (wval)
-                item = unwrap(wval);
+            if (wval) {
+                if (Is_Antiform(unwrap(wval)))
+                    fail (Error_Bad_Antiform(unwrap(wval)));
+                item = cast(Element(*), unwrap(wval));
+            }
         }
         Mold_Or_Form_Value(mo, item, wval == nullptr);
         n++;
@@ -424,7 +427,7 @@ void Mold_Or_Form_Cell(
 //
 // Mold or form any value to string series tail.
 //
-void Mold_Or_Form_Value(REB_MOLD *mo, const Cell* v, bool form)
+void Mold_Or_Form_Value(REB_MOLD *mo, Element(const*) v, bool form)
 {
     // Mold hooks take a noquote cell and not a Cell*, so they expect any
     // quotes applied to have already been done.
@@ -435,9 +438,6 @@ void Mold_Or_Form_Value(REB_MOLD *mo, const Cell* v, bool form)
         return;
     }
   #endif
-
-    if (Is_Antiform(v))
-        fail (Error_Bad_Antiform(v));
 
     REBLEN depth = Cell_Num_Quotes(v);
 
@@ -462,7 +462,7 @@ void Mold_Or_Form_Value(REB_MOLD *mo, const Cell* v, bool form)
 //
 // Form a value based on the mold opts provided.
 //
-String* Copy_Mold_Or_Form_Value(const Cell* v, Flags opts, bool form)
+String* Copy_Mold_Or_Form_Value(Element(const*) v, Flags opts, bool form)
 {
     DECLARE_MOLD (mo);
     mo->opts = opts;

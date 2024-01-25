@@ -104,7 +104,7 @@ INLINE REBVAL *Init_Varargs_Untyped_Enfix(
 
 
 INLINE bool Is_Block_Style_Varargs(
-    REBVAL **shared_out,
+    Element(*) *shared_out,
     NoQuote(const Cell*) vararg
 ){
     assert(Cell_Heart(vararg) == REB_VARARGS);
@@ -120,11 +120,8 @@ INLINE bool Is_Block_Style_Varargs(
     // array with one BLOCK!, that is the actual array and index to advance.
     //
     Array* array1 = binding;
-    *shared_out = cast(REBVAL*, Stub_Cell(array1));
-    assert(
-        Is_Cell_Poisoned(*shared_out)
-        or (Is_Specific(cast(Cell*, *shared_out)) and Is_Block(*shared_out))
-    );
+    *shared_out = cast(Element(*), Stub_Cell(array1));
+    assert(Is_Cell_Poisoned(*shared_out) or Is_Block(*shared_out));
 
     return true;
 }

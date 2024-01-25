@@ -99,7 +99,11 @@ ATTRIBUTE_NO_RETURN void Fail_Core(const void *p)
         break; }
 
       case DETECTED_AS_CELL: {
-        const Cell* v = c_cast(Cell*, p);
+        Atom(const*) atom = c_cast(Atom(*), p);
+        assert(not Is_Antiform_Unstable(atom));  // should handle this case...
+        UNUSED(atom);
+
+        Value(const*) v = c_cast(Value(*), p);
 
         // Check to see if the REBVAL* cell is in the paramlist of the current
         // running native.  (We could theoretically do this with ARG(), or
@@ -112,7 +116,6 @@ ATTRIBUTE_NO_RETURN void Fail_Core(const void *p)
             // any value, then it would call into question the treatment of
             // the error as an error and not erroring on "some value"
             //
-            assert(not Is_Relative(v));
             if (Is_Error(v)) {
                 error = VAL_CONTEXT(v);
             }
@@ -120,7 +123,7 @@ ATTRIBUTE_NO_RETURN void Fail_Core(const void *p)
                 assert(!"fail() given API handle that is not an ERROR!");
                 error = Error_Bad_Value(v);
             }
-            rebRelease(c_cast(REBVAL*, v));  // released even if we didn't
+            rebRelease(m_cast(Value(*), v));  // released even if we didn't
         }
         else if (not Is_Action_Level(TOP_LEVEL))
             error = Error_Bad_Value(v);
@@ -952,7 +955,7 @@ Context* Error_Invalid_Arg(Level* L, const Param* param)
 // distinguished from `fail (some_context)` meaning that the context iss for
 // an actual intended error.
 //
-Context* Error_Bad_Value(const Cell* value)
+Context* Error_Bad_Value(Value(const*) value)
 {
     if (Is_Antiform(value))
         return Error_Bad_Antiform(value);
@@ -1261,11 +1264,11 @@ Context* Error_On_Port(SymId id, REBVAL *port, REBINT err_code)
 //
 //  Error_Bad_Antiform: C
 //
-Context* Error_Bad_Antiform(const Cell* anti) {
+Context* Error_Bad_Antiform(Atom(const*) anti) {
     assert(Is_Antiform(anti));
 
     DECLARE_STABLE (reified);
-    Copy_Cell(reified, SPECIFIC(anti));
+    Copy_Cell(reified, anti);
     Quasify_Antiform(reified);
 
     return Error_Bad_Antiform_Raw(reified);
@@ -1285,7 +1288,7 @@ Context* Error_Bad_Void(void) {
 //
 // Create error objects and error type objects
 //
-Context* Startup_Errors(const REBVAL *boot_errors)
+Context* Startup_Errors(Element(const*) boot_errors)
 {
   #if DEBUG_HAS_PROBE
     const char *env_probe_failures = getenv("R3_PROBE_FAILURES");
@@ -1379,7 +1382,7 @@ void Shutdown_Stackoverflow(void)
 // to the mold.  It was only used in error molding and was kept working
 // without a general review of such a facility.  Review.
 //
-static void Mold_Value_Limit(REB_MOLD *mo, Cell* v, REBLEN limit)
+static void Mold_Value_Limit(REB_MOLD *mo, Element(*) v, REBLEN limit)
 {
     String* str = mo->series;
 
@@ -1436,23 +1439,27 @@ void MF_Error(REB_MOLD *mo, NoQuote(const Cell*) v, bool form)
     if (Is_Block(&vars->message))
         Form_Array_At(mo, Cell_Array(&vars->message), 0, error);
     else if (Is_Text(&vars->message))
-        Form_Value(mo, &vars->message);
+        Form_Value(mo, cast(Element(*), &vars->message));
     else
         Append_Ascii(mo->series, RM_BAD_ERROR_FORMAT);
 
     // Form: ** Where: function
-    REBVAL *where = SPECIFIC(&vars->where);
+    Value(*) where = &vars->where;
     if (
         not Is_Nulled(where)
         and not (Is_Block(where) and Cell_Series_Len_At(where) == 0)
     ){
-        Append_Codepoint(mo->series, '\n');
-        Append_Ascii(mo->series, RM_ERROR_WHERE);
-        Form_Value(mo, where);
+        if (Is_Block(where)) {
+            Append_Codepoint(mo->series, '\n');
+            Append_Ascii(mo->series, RM_ERROR_WHERE);
+            Form_Value(mo, cast(Element(*), where));
+        }
+        else
+            Append_Ascii(mo->series, RM_BAD_ERROR_FORMAT);
     }
 
     // Form: ** Near: location
-    REBVAL *nearest = SPECIFIC(&vars->nearest);
+    Value(*) nearest = &vars->nearest;
     if (not Is_Nulled(nearest)) {
         Append_Codepoint(mo->series, '\n');
         Append_Ascii(mo->series, RM_ERROR_NEAR);
@@ -1468,7 +1475,7 @@ void MF_Error(REB_MOLD *mo, NoQuote(const Cell*) v, bool form)
             Append_String(mo->series, nearest);
         }
         else if (Any_Array(nearest) or Any_Path(nearest))
-            Mold_Value_Limit(mo, nearest, 60);
+            Mold_Value_Limit(mo, cast(Element(*), nearest), 60);
         else
             Append_Ascii(mo->series, RM_BAD_ERROR_FORMAT);
     }
@@ -1480,23 +1487,23 @@ void MF_Error(REB_MOLD *mo, NoQuote(const Cell*) v, bool form)
     // only be used in ANY-WORD! values at the moment, so the filename is
     // not a FILE!.
     //
-    REBVAL *file = SPECIFIC(&vars->file);
+    Value(*) file = &vars->file;
     if (not Is_Nulled(file)) {
         Append_Codepoint(mo->series, '\n');
         Append_Ascii(mo->series, RM_ERROR_FILE);
         if (Is_File(file))
-            Form_Value(mo, file);
+            Form_Value(mo, cast(Element(*), file));
         else
             Append_Ascii(mo->series, RM_BAD_ERROR_FORMAT);
     }
 
     // Form: ** Line: line-number
-    REBVAL *line = SPECIFIC(&vars->line);
+    Value(*) line = &vars->line;
     if (not Is_Nulled(line)) {
         Append_Codepoint(mo->series, '\n');
         Append_Ascii(mo->series, RM_ERROR_LINE);
         if (Is_Integer(line))
-            Form_Value(mo, line);
+            Form_Value(mo, cast(Element(*), line));
         else
             Append_Ascii(mo->series, RM_BAD_ERROR_FORMAT);
     }

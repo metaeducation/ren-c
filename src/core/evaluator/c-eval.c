@@ -83,7 +83,7 @@
 // value of that is.  These macros help make the code less ambiguous.
 //
 #undef At_Level
-#define L_next              cast(const Cell*, L->feed->p)
+#define L_next              cast(Element(const*), L->feed->p)
 #define L_next_gotten       L->feed->gotten
 #define L_current           L->u.eval.current
 #define L_current_gotten    L->u.eval.current_gotten
@@ -1855,7 +1855,7 @@ Bounce Evaluator_Executor(Level* L)
         break;  // need to check for lookahead
 
       case REB_FRAME:
-        L_next_gotten = SPECIFIC(L_next);
+        L_next_gotten = L_next;
         break;
 
       default:

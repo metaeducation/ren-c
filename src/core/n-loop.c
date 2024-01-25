@@ -1297,7 +1297,7 @@ DECLARE_NATIVE(every)
         goto next_iteration;  // ...but void does not NULL-lock output
     }
 
-    if (Is_Falsey(SPARE)) {
+    if (Is_Falsey(stable_SPARE)) {
         Init_Nulled(OUT);
     }
     else if (Is_Fresh(OUT) or not Is_Nulled(OUT)) {
@@ -2131,7 +2131,7 @@ DECLARE_NATIVE(until)
     Decay_If_Unstable(condition);  // must decay for truth test [2]
 
     if (not Is_Void(condition)) {  // skip voids [3]
-        if (Is_Truthy(condition))
+        if (Is_Truthy(Stable_Unchecked(condition)))
             return BRANCHED(OUT);  // truthy result, return value!
     }
 
@@ -2205,7 +2205,7 @@ DECLARE_NATIVE(while)
 
 } condition_was_evaluated: {  ////////////////////////////////////////////////
 
-    if (Is_Falsey(SPARE)) {  // falsey condition => return last body result
+    if (Is_Falsey(stable_SPARE)) {  // falsey condition => last body result
         if (Is_Fresh(OUT))
             return VOID;  // body never ran, so no result to return!
 

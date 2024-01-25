@@ -2390,7 +2390,7 @@ const REBINS *RL_rebRUN(const void *p)
         fail ("Unknown pointer");
     }
 
-    Value(*) v = SPECIFIC(Stub_Cell(stub));
+    Value(*) v = Stub_Cell(stub);
     if (Is_Action(v))
         QUOTE_BYTE(v) = NOQUOTE_1;
     else if (not Is_Frame(v))

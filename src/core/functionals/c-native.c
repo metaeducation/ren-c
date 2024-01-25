@@ -272,7 +272,7 @@ static void Shutdown_Action_Adjunct_Shim(void) {
 //
 // Returns an array of words bound to natives for SYSTEM.CATALOG.NATIVES
 //
-Array* Startup_Natives(const REBVAL *boot_natives)
+Array* Startup_Natives(Element(const*) boot_natives)
 {
     Array* catalog = Make_Array(Num_Natives);
 

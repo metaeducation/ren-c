@@ -509,7 +509,7 @@ static void Shutdown_Root_Vars(void)
 // (See also N_context() which creates the subobjects of the system object.)
 //
 static void Init_System_Object(
-    const REBVAL *boot_sysobj_spec,
+    Element(const*) boot_sysobj_spec,
     Array* datatypes_catalog,
     Array* natives_catalog,
     Array* generics_catalog,
@@ -817,25 +817,25 @@ void Startup_Core(void)
     // by scanning comments in the C sources for `native: ...` declarations.
     //
     INIT_SPECIFIER(&boot->natives, Lib_Context);
-    Array* natives_catalog = Startup_Natives(SPECIFIC(&boot->natives));
+    Array* natives_catalog = Startup_Natives(&boot->natives);
     Manage_Series(natives_catalog);
     Push_GC_Guard(natives_catalog);
 
     // boot->generics is the list in %generics.r
     //
     INIT_SPECIFIER(&boot->generics, Lib_Context);
-    Array* generics_catalog = Startup_Generics(SPECIFIC(&boot->generics));
+    Array* generics_catalog = Startup_Generics(&boot->generics);
     Manage_Series(generics_catalog);
     Push_GC_Guard(generics_catalog);
 
     // boot->errors is the error definition list from %errors.r
     //
-    Context* errors_catalog = Startup_Errors(SPECIFIC(&boot->errors));
+    Context* errors_catalog = Startup_Errors(&boot->errors);
     Push_GC_Guard(errors_catalog);
 
     INIT_SPECIFIER(&boot->sysobj, Lib_Context);
     Init_System_Object(
-        SPECIFIC(&boot->sysobj),
+        &boot->sysobj,
         datatypes_catalog,
         natives_catalog,
         generics_catalog,
@@ -959,8 +959,8 @@ void Startup_Core(void)
 
         // Create actual variables for top-level SET-WORD!s only, and run.
         //
-        "bind/only/set", SPECIFIC(&boot->mezz), Lib_Context_Value,
-        "do inside", Lib_Context_Value, rebQ(SPECIFIC(&boot->mezz))
+        "bind/only/set", &boot->mezz, Lib_Context_Value,
+        "do inside", Lib_Context_Value, rebQ(&boot->mezz)
     );
 
   //=//// MAKE USER CONTEXT ////////////////////////////////////////////////=//

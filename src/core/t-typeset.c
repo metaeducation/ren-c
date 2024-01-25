@@ -404,7 +404,7 @@ void MF_Parameter(REB_MOLD *mo, NoQuote(const Cell*) v, bool form)
         Pre_Mold(mo, v);  // #[parameter! or make parameter!
     }
 
-    DECLARE_LOCAL(temp);
+    DECLARE_ELEMENT(temp);
     Option(const Array*) param_array = Cell_Parameter_Spec(v);
     if (param_array)
         Init_Block(temp, unwrap(param_array));

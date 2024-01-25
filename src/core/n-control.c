@@ -668,7 +668,7 @@ DECLARE_NATIVE(match)
         )){
             return THROWN;
         }
-        if (Is_Falsey(SPARE))
+        if (Is_Falsey(stable_SPARE))
             return nullptr;
     }
     else switch (VAL_TYPE(test)) {
@@ -1110,7 +1110,7 @@ DECLARE_NATIVE(case)
 
 } processed_result_in_spare: {  //////////////////////////////////////////////
 
-    bool matched = Is_Truthy(SPARE);
+    bool matched = Is_Truthy(stable_SPARE);
 
     const Cell* branch = Lookback_While_Fetching_Next(SUBLEVEL);
 
@@ -1334,7 +1334,7 @@ DECLARE_NATIVE(switch)
         )){
             return BOUNCE_THROWN;  // aborts sublevel
         }
-        if (Is_Falsey(scratch))
+        if (Is_Falsey(Stable_Unchecked(scratch)))
             goto next_switch_step;
     }
 
@@ -1444,7 +1444,7 @@ DECLARE_NATIVE(default)
 
 } predicate_result_in_spare: {  //////////////////////////////////////////////
 
-    if (Is_Truthy(SPARE))
+    if (Is_Truthy(stable_SPARE))
         return OUT;
 
     STATE = ST_DEFAULT_EVALUATING_BRANCH;

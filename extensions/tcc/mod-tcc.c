@@ -209,7 +209,7 @@ static void Process_Block_Helper(
     Element(const*) tail;
     Element(const*) text = Cell_Array_At(&tail, block);
     for (; text != tail; ++text)
-        Process_Text_Helper_Core(some_tcc_api, state, SPECIFIC(text), label);
+        Process_Text_Helper_Core(some_tcc_api, state, text, label);
 
     rebRelease(block);
 }
@@ -484,7 +484,7 @@ DECLARE_NATIVE(compile_p)
             if (not Is_Text(item))
                 fail ("If COMPILE*/FILES, compilables must be TEXT! paths");
 
-            char *filename_utf8 = rebSpell(SPECIFIC(item));
+            char *filename_utf8 = rebSpell(item);
             tcc_add_file(state, filename_utf8);
             rebFree(filename_utf8);
         }
@@ -516,7 +516,7 @@ DECLARE_NATIVE(compile_p)
                 // back and fill in its dispatcher and TCC_State after the
                 // compilation...
                 //
-                Copy_Cell(PUSH(), SPECIFIC(item));
+                Copy_Cell(PUSH(), item);
 
                 Details* details = Phase_Details(VAL_ACTION(item));
                 Value(*) source = Details_At(details, IDX_NATIVE_BODY);

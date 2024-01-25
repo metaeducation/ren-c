@@ -391,12 +391,12 @@ bool Match_For_Compose(NoQuote(const Cell*) group, const REBVAL *label) {
 static void Push_Composer_Level(
     Atom(*) out,
     Level* main_level,
-    const Cell* arraylike,
+    Value(const*) arraylike,
     Specifier* specifier
 ){
     Value(const*) adjusted = nullptr;
     if (Any_Sequence(arraylike)) {  // allow sequences [1]
-        adjusted = rebValue(Canon(AS), Canon(BLOCK_X), rebQ(SPECIFIC(arraylike)));
+        adjusted = rebValue(Canon(AS), Canon(BLOCK_X), rebQ(arraylike));
     }
 
     Level* sub = Make_Level_At_Core(
@@ -580,7 +580,7 @@ Bounce Composer_Executor(Level* const L)
     if (Is_Level_At_End(L))
         goto finished;
 
-    const Cell* at = At_Level(L);
+    Element(const*) at = At_Level(L);
 
     if (not Any_Arraylike(at)) {  // won't substitute/recurse
         Copy_Relative_internal(PUSH(), at);  // keep newline flag
@@ -590,7 +590,7 @@ Bounce Composer_Executor(Level* const L)
     enum Reb_Kind heart = Cell_Heart(at);  // quoted groups match [1]
 
     Specifier* match_specifier = nullptr;
-    const Cell* match = nullptr;
+    Element(const*) match = nullptr;
 
     if (not Any_Group_Kind(heart)) {
         //

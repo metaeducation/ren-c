@@ -99,8 +99,8 @@ INLINE void INIT_SPECIFIER(Cell* v, Stub* binding) {
 }
 
 
-INLINE REBVAL *Init_Series_Cell_At_Core(
-    Cell* out,
+INLINE Element(*) Init_Series_Cell_At_Core(
+    Sink(Element(*)) out,
     enum Reb_Kind type,
     const Series* s,  // ensured managed by calling macro
     REBLEN index,
@@ -137,7 +137,7 @@ INLINE REBVAL *Init_Series_Cell_At_Core(
     Init_Cell_Node1(out, s);
     VAL_INDEX_RAW(out) = index;
     INIT_SPECIFIER(out, specifier);  // asserts if unbindable type tries to bind
-    return cast(REBVAL*, out);
+    return out;
 }
 
 #define Init_Series_Cell_At(v,t,s,i) \

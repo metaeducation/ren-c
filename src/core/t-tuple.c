@@ -450,7 +450,7 @@ void MF_Sequence(REB_MOLD *mo, NoQuote(const Cell*) v, bool form)
 
     bool first = true;
 
-    DECLARE_LOCAL (element);
+    DECLARE_ELEMENT (element);
     Length len = Cell_Sequence_Len(v);
     REBLEN i;
     for (i = 0; i < len; ++i) {

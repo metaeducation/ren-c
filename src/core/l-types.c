@@ -1090,7 +1090,7 @@ const Byte* Scan_URL(
 // Scan and convert a pair
 //
 const Byte* Scan_Pair(
-    Cell* out,
+    Sink(Element(*)) out,
     const Byte* cp,
     REBLEN len
 ) {
@@ -1103,7 +1103,7 @@ const Byte* Scan_Pair(
     if (*ep != 'x' && *ep != 'X')
         return_NULL;
 
-    Cell* paired = Alloc_Pairing(CELL_MASK_0);
+    Value(*) paired = Alloc_Pairing(CELL_MASK_0);
 
     // X is in the first pairing cell
     if (is_integral)

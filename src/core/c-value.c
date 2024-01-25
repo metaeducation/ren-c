@@ -134,11 +134,21 @@ inline static void Probe_Print_Helper(
 }
 
 
-inline static void Probe_Molded_Value(const REBVAL *v)
+inline static void Probe_Molded_Value(Value(const*) v)
 {
     DECLARE_MOLD (mo);
     Push_Mold(mo);
-    Mold_Value(mo, v);
+
+    if (Is_Antiform(v)) {
+        DECLARE_STABLE (temp);
+        Copy_Cell(temp, v);
+        Element(*) elem = Quasify_Antiform(temp);
+        Mold_Value(mo, elem);
+        Append_Ascii(mo->series, "  ; anti");
+    }
+    else {
+        Mold_Value(mo, c_cast(Element(*), v));
+    }
 
     printf("%s\n", c_cast(char*, Binary_At(mo->series, mo->base.size)));
     fflush(stdout);
@@ -171,13 +181,13 @@ void Probe_Cell_Print_Helper(
         Append_Ascii(mo->series, "; void");
     }
     else if (Is_Antiform(v)) {
-        DECLARE_LOCAL (reified);
+        DECLARE_STABLE (reified);
         Quasify_Antiform(Copy_Cell(reified, v));
-        Mold_Value(mo, reified);
+        Mold_Value(mo, cast(Element(*), reified));
         Append_Ascii(mo->series, "  ; anti");
     }
     else
-        Mold_Value(mo, v);
+        Mold_Value(mo, cast(Element(const*), v));
 }
 
 

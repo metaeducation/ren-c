@@ -220,16 +220,16 @@ INLINE Value(*) Unquasify(Value(*) v) {
     return v;
 }
 
-INLINE Value(*) Quasify(Value(*) v) {
+INLINE Element(*) Quasify(Value(*) v) {
     assert(QUOTE_BYTE(v) == NOQUOTE_1);  // e.g. can't quote void
     QUOTE_BYTE(v) = QUASIFORM_2;
-    return v;
+    return u_cast(Element(*), v);
 }
 
-INLINE Value(*) Quasify_Antiform(Atom(*) v) {
+INLINE Element(*) Quasify_Antiform(Atom(*) v) {
     assert(Is_Antiform(v));
     QUOTE_BYTE(v) = QUASIFORM_2;
-    return cast(Value(*), v);
+    return u_cast(Element(*), v);
 }
 
 INLINE Value(*) Reify(Atom(*) v) {

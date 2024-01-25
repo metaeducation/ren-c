@@ -468,24 +468,24 @@ Array* Map_To_Array(const Map* map, REBINT what)
     REBLEN count = Length_Map(map);
     Array* a = Make_Array(count * ((what == 0) ? 2 : 1));
 
-    Cell* dest = Array_Head(a);
-    const Cell* val_tail = Array_Tail(MAP_PAIRLIST(map));
-    const Cell* val = Array_Head(MAP_PAIRLIST(map));
+    Element(*) dest = Array_Head(a);
+    Element(const*) val_tail = Array_Tail(MAP_PAIRLIST(map));
+    Element(const*) val = Array_Head(MAP_PAIRLIST(map));
     for (; val != val_tail; val += 2) {
         if (Is_Void(val + 1))  // val + 1 can't be past tail
             continue;  // zombie key, e.g. not actually in map
 
         if (what <= 0) {
-            Copy_Cell(dest, SPECIFIC(&val[0]));
+            Copy_Cell(dest, &val[0]);
             ++dest;
         }
         if (what >= 0) {
-            Copy_Cell(dest, SPECIFIC(&val[1]));
+            Copy_Cell(dest, &val[1]);
             ++dest;
         }
     }
 
-    Set_Series_Len(a, dest - cast(Cell*, Array_Head(a)));
+    Set_Series_Len(a, dest - Array_Head(a));
     return a;
 }
 
@@ -516,13 +516,13 @@ Context* Alloc_Context_From_Map(const Map* map)
 
     Context* c = Alloc_Context(REB_OBJECT, count);
 
-    const Cell* mval_tail = Array_Tail(MAP_PAIRLIST(map));
-    const Cell* mval = Array_Head(MAP_PAIRLIST(map));
+    Value(const*) mval_tail = Series_Tail(ValueT, MAP_PAIRLIST(map));
+    Value(const*) mval = Series_Head(ValueT, MAP_PAIRLIST(map));
 
     for (; mval != mval_tail; mval += 2) {  // note mval must not be END
         if (Any_Word(mval) and not Is_Void(mval + 1)) {
             REBVAL *var = Append_Context(c, Cell_Word_Symbol(mval));
-            Copy_Cell(var, SPECIFIC(mval + 1));
+            Copy_Cell(var, mval + 1);
         }
     }
 
@@ -555,8 +555,8 @@ void MF_Map(REB_MOLD *mo, NoQuote(const Cell*) v, bool form)
     //
     mo->indent++;
 
-    const Cell* tail = Array_Tail(MAP_PAIRLIST(m));
-    const Cell* key = Array_Head(MAP_PAIRLIST(m));
+    Value(const*) tail = Series_Tail(ValueT, MAP_PAIRLIST(m));
+    Value(const*) key = Series_Head(ValueT, MAP_PAIRLIST(m));
     for (; key != tail; key += 2) {  // note value slot must not be END
         assert(key + 1 != tail);
         if (Is_Void(key + 1))
@@ -564,9 +564,9 @@ void MF_Map(REB_MOLD *mo, NoQuote(const Cell*) v, bool form)
 
         if (not form)
             New_Indented_Line(mo);
-        Mold_Value(mo, key);
+        Mold_Value(mo, c_cast(Element(*), key));
         Append_Codepoint(mo->series, ' ');
-        Mold_Value(mo, key + 1);
+        Mold_Value(mo, c_cast(Element(*), key + 1));
         if (form)
             Append_Codepoint(mo->series, '\n');
     }
@@ -726,7 +726,7 @@ REBTYPE(Map)
         INCLUDE_PARAMS_OF_PICK_P;
         UNUSED(ARG(location));
 
-        const Cell* picker = ARG(picker);
+        Value(const*) picker = ARG(picker);
         if (Is_Antiform(picker))
             return RAISE(Error_Bad_Antiform(picker));
 
@@ -759,7 +759,7 @@ REBTYPE(Map)
         INCLUDE_PARAMS_OF_POKE_P;
         UNUSED(ARG(location));
 
-        const Cell* picker = ARG(picker);
+        Value(const*) picker = ARG(picker);
         if (Is_Antiform(picker))
             return RAISE(Error_Bad_Antiform(picker));
 

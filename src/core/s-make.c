@@ -383,7 +383,7 @@ void Join_Binary_In_Byte_Buf(const REBVAL *blk, REBINT limit)
 
     Set_Series_Len(buf, 0);
 
-    const Cell* val = Cell_Array_Item_At(blk);
+    Element(const*) val = Cell_Array_Item_At(blk);
     for (; limit > 0; val++, limit--) {
         switch (VAL_TYPE(val)) {
           case REB_BLANK:

@@ -213,27 +213,21 @@
     } while (0)
 
   #if (! CPLUSPLUS_11)
-    INLINE const Cell* READABLE(NoQuote(const Cell*) c) {
-        ASSERT_CELL_READABLE(c);
-        return c_cast(Cell*, c);
-    }
+    #define READABLE(c) (c)
+    #define WRITABLE(c) (c)
   #else
-    INLINE NoQuote(const Cell*) READABLE(NoQuote(const Cell*) c) {
-        ASSERT_CELL_READABLE(c);
-        return c;
+    template <typename T>
+    T READABLE(T cell) {
+        ASSERT_CELL_READABLE(cell);
+        return cell;
     }
 
-    INLINE const Cell* READABLE(const Cell* c) {
-        ASSERT_CELL_READABLE(c);
-        return c;
+    template <typename T>
+    T WRITABLE(T cell) {
+        ASSERT_CELL_WRITABLE(cell);
+        return cell;
     }
   #endif
-
-    INLINE Cell* WRITABLE(Cell* c) {
-        ASSERT_CELL_WRITABLE(c);
-        return c;
-    }
-
 #else
     #define ASSERT_CELL_READABLE(c)    NOOP
     #define ASSERT_CELL_WRITABLE(c)    NOOP
@@ -556,71 +550,6 @@ INLINE REBVAL* Freshen_Cell_Untracked(Cell* v) {
 #endif
 
 
-
-// An ANY-WORD! is relative if it refers to a local or argument of a function,
-// and has its bits resident in the deep copy of that function's body.
-//
-// An ANY-ARRAY! in the deep copy of a function body must be relative also to
-// the same function if it contains any instances of such relative words.
-//
-INLINE bool Is_Relative(const Cell* v) {
-    if (not Is_Bindable(v))
-        return false;  // may use extra for non-GC-marked uintptr_t-size data
-
-    Series* binding = BINDING(v);
-    if (not binding)
-        return false;  // INTEGER! and other types are inherently "specific"
-
-    if (not Is_Series_Array(binding))
-        return false;
-
-    return IS_DETAILS(binding);  // action
-}
-
-#if CPLUSPLUS_11
-    bool Is_Relative(Value(const*) v) = delete;  // error on superfluous check
-#endif
-
-#define Is_Specific(v) \
-    (not Is_Relative(v))
-
-
-// When you have a Cell* (e.g. from a array) that you KNOW to be specific,
-// you might be bothered by an error like:
-//
-//     "invalid conversion from 'Cell*' to 'ValueT*'"
-//
-// You can use SPECIFIC to cast it if you are *sure* that it has been
-// derelativized -or- is a value type that doesn't have a specifier (e.g. an
-// integer).  If the value is actually relative, this will assert at runtime!
-//
-// Because SPECIFIC has cost in the debug build, there may be situations where
-// one is sure that the value is specific, and `cast(ValueT*, v)` is a better
-// choice for efficiency.  This applies to things like `Copy_Cell()`, which
-// is called often and already knew its input was a Value(*) to start with.
-//
-// Also, if you are enumerating an array of items you "know to be specific"
-// then you have to worry about if the array is empty:
-//
-//     Value(*) head = SPECIFIC(Array_Head(a));  // a might be at tail !!!
-//
-
-INLINE Value(*) SPECIFIC(const_if_c Cell* v) {
-   /* assert(Is_Specific(v)); */
-    return x_cast(ValueT*, v);
-}
-
-#if CPLUSPLUS_11
-    INLINE Value(const*) SPECIFIC(const Cell* v) {
-/*        assert(Is_Specific(v)); */
-        return c_cast(ValueT*, v);
-    }
-
-    INLINE void SPECIFIC(Value(const*) v) = delete;
-#endif
-
-
-
 //=////////////////////////////////////////////////////////////////////////=//
 //
 //  BINDING
@@ -859,9 +788,14 @@ INLINE REBVAL *Constify(REBVAL *v) {
 #define DECLARE_LOCAL(name) \
     Cell name##_cell; \
     Erase_Cell(&name##_cell); \
-    Atom(*) name = cast(Atom(*), &name##_cell)
+    Atom(*) name = u_cast(Atom(*), &name##_cell)
 
 #define DECLARE_STABLE(name) \
     Cell name##_cell; \
     Erase_Cell(&name##_cell); \
-    Value(*) name = cast(Value(*), &name##_cell)
+    Value(*) name = u_cast(Value(*), &name##_cell)
+
+#define DECLARE_ELEMENT(name) \
+    Cell name##_cell; \
+    Erase_Cell(&name##_cell); \
+    Element(*) name = u_cast(Element(*), &name##_cell)

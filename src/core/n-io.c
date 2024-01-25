@@ -40,9 +40,9 @@ DECLARE_NATIVE(form)
 {
     INCLUDE_PARAMS_OF_FORM;
 
-    REBVAL *v = ARG(value);
+    Element(*) elem = cast(Element(*), ARG(value));
 
-    return Init_Text(OUT, Copy_Form_Value(v, 0));
+    return Init_Text(OUT, Copy_Form_Value(elem, 0));
 }
 
 
@@ -86,7 +86,7 @@ DECLARE_NATIVE(mold)
         HEART_BYTE(v) = REB_BLOCK;  // !!! historical code for /ONLY was BLOCK!
     }
 
-    Mold_Value(mo, v);
+    Mold_Value(mo, cast(Element(*), v));
 
     String* popped = Pop_Molded_String(mo);  // sets MOLD_FLAG_TRUNCATED
 
@@ -223,7 +223,7 @@ DECLARE_NATIVE(new_line_q)
 
     if (Is_Varargs(pos)) {
         Level* L;
-        REBVAL *shared;
+        Element(*) shared;
         if (Is_Level_Style_Varargs_May_Fail(&L, pos)) {
             if (Level_Is_Variadic(L)) {
                 //

@@ -125,7 +125,7 @@ DECLARE_NATIVE(generic)
 //
 // Returns an array of words bound to generics for SYSTEM/CATALOG/ACTIONS
 //
-Array* Startup_Generics(const REBVAL *boot_generics)
+Array* Startup_Generics(Element(const*) boot_generics)
 {
     assert(VAL_INDEX(boot_generics) == 0); // should be at head, sanity check
     Element(const*) tail;

@@ -199,7 +199,7 @@ DECLARE_NATIVE(and_1)  // see TO-C-NAME
     if (Do_Logic_Right_Side_Throws(SPARE, right))
         return THROWN;
 
-    return Init_Logic(OUT, Is_Truthy(SPARE));
+    return Init_Logic(OUT, Is_Truthy(stable_SPARE));
 }
 
 
@@ -230,7 +230,7 @@ DECLARE_NATIVE(or_1)  // see TO-C-NAME
     if (Do_Logic_Right_Side_Throws(SPARE, right))
         return THROWN;
 
-    return Init_Logic(OUT, Is_Truthy(SPARE));
+    return Init_Logic(OUT, Is_Truthy(stable_SPARE));
 }
 
 
@@ -259,9 +259,9 @@ DECLARE_NATIVE(xor_1)  // see TO-C-NAME
         return THROWN;
 
     if (Is_Falsey(left))
-        return Init_Logic(OUT, Is_Truthy(SPARE));
+        return Init_Logic(OUT, Is_Truthy(stable_SPARE));
 
-    return Init_Logic(OUT, Is_Falsey(SPARE));
+    return Init_Logic(OUT, Is_Falsey(stable_SPARE));
 }
 
 
