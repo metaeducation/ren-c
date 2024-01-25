@@ -402,12 +402,12 @@ REBINT Find_In_Array(
             return index_unsigned;
 
         for (; index >= start and index < end; index += skip) {
-            Element(const*) item_tail = Array_Tail(array);
-            Element(const*) item = Array_At(array, index);
+            const Element* item_tail = Array_Tail(array);
+            const Element* item = Array_At(array, index);
 
             REBLEN count = 0;
-            Element(const*) other_tail;
-            Element(const*) other = Cell_Array_At(&other_tail, pattern);
+            const Element* other_tail;
+            const Element* other = Cell_Array_At(&other_tail, pattern);
             for (; other != other_tail; ++other, ++item) {
                 if (
                     item == item_tail or
@@ -642,8 +642,8 @@ static REBINT Try_Get_Array_Index_From_Picker(
         n = -1;
 
         const Symbol* symbol = Cell_Word_Symbol(picker);
-        Element(const*) tail;
-        Element(const*) item = Cell_Array_At(&tail, v);
+        const Element* tail;
+        const Element* item = Cell_Array_At(&tail, v);
         REBLEN index = VAL_INDEX(v);
         for (; item != tail; ++item, ++index) {
             if (Any_Word(item) and Are_Synonyms(symbol, Cell_Word_Symbol(item))) {
@@ -1113,9 +1113,9 @@ REBTYPE(Array)
         ){
             // Cell bits can be copied within the same array
             //
-            Element(*) a = Cell_Array_At_Ensure_Mutable(nullptr, array);
-            Element(*) b = Cell_Array_At_Ensure_Mutable(nullptr, arg);
-            ElementT temp;
+            Element* a = Cell_Array_At_Ensure_Mutable(nullptr, array);
+            Element* b = Cell_Array_At_Ensure_Mutable(nullptr, arg);
+            Element temp;
             temp.header = a->header;
             temp.payload = a->payload;
             temp.extra = a->extra;

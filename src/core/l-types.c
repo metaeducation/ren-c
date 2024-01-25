@@ -1090,7 +1090,7 @@ const Byte* Scan_URL(
 // Scan and convert a pair
 //
 const Byte* Scan_Pair(
-    Sink(Element(*)) out,
+    Sink(Element*) out,
     const Byte* cp,
     REBLEN len
 ) {

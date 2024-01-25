@@ -58,10 +58,10 @@ INLINE Value(*) VAL_PAIRING(NoQuote(const Cell*) v) {
 }
 
 #define VAL_PAIR_X(v) \
-    cast(Element(*), VAL_PAIRING(v))
+    cast(Element*, VAL_PAIRING(v))
 
 #define VAL_PAIR_Y(v) \
-    cast(Element(*), Pairing_Second(VAL_PAIRING(v)))
+    cast(Element*, Pairing_Second(VAL_PAIRING(v)))
 
 INLINE REBI64 VAL_PAIR_X_INT(NoQuote(const Cell*) v) {
     if (Is_Integer(VAL_PAIR_X(v)))
@@ -75,7 +75,7 @@ INLINE REBDEC VAL_PAIR_Y_INT(NoQuote(const Cell*) v) {
     return ROUND_TO_INT(VAL_DECIMAL(VAL_PAIR_Y(v)));
 }
 
-INLINE Element(*) Init_Pair_Untracked(Sink(Element(*)) out, Value(*) pairing) {
+INLINE Element* Init_Pair_Untracked(Sink(Element*) out, Value(*) pairing) {
     assert(Is_Node_Managed(pairing));
     Reset_Unquoted_Header_Untracked(out, CELL_MASK_PAIR);
     INIT_VAL_PAIR(out, pairing);

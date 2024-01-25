@@ -433,8 +433,8 @@ Bounce TO_Map(Level* level_, enum Reb_Kind kind, const REBVAL *arg)
         // make map! [word val word val]
         //
         REBLEN len = Cell_Series_Len_At(arg);
-        Element(const*) tail;
-        Element(const*) at = Cell_Array_At(&tail, arg);
+        const Element* tail;
+        const Element* at = Cell_Array_At(&tail, arg);
         Specifier* specifier = Cell_Specifier(arg);
 
         Map* map = Make_Map(len / 2); // [key value key value...] + END
@@ -468,9 +468,9 @@ Array* Map_To_Array(const Map* map, REBINT what)
     REBLEN count = Length_Map(map);
     Array* a = Make_Array(count * ((what == 0) ? 2 : 1));
 
-    Element(*) dest = Array_Head(a);
-    Element(const*) val_tail = Array_Tail(MAP_PAIRLIST(map));
-    Element(const*) val = Array_Head(MAP_PAIRLIST(map));
+    Element* dest = Array_Head(a);
+    const Element* val_tail = Array_Tail(MAP_PAIRLIST(map));
+    const Element* val = Array_Head(MAP_PAIRLIST(map));
     for (; val != val_tail; val += 2) {
         if (Is_Void(val + 1))  // val + 1 can't be past tail
             continue;  // zombie key, e.g. not actually in map
@@ -564,9 +564,9 @@ void MF_Map(REB_MOLD *mo, NoQuote(const Cell*) v, bool form)
 
         if (not form)
             New_Indented_Line(mo);
-        Mold_Value(mo, c_cast(Element(*), key));
+        Mold_Value(mo, c_cast(Element*, key));
         Append_Codepoint(mo->series, ' ');
-        Mold_Value(mo, c_cast(Element(*), key + 1));
+        Mold_Value(mo, c_cast(Element*, key + 1));
         if (form)
             Append_Codepoint(mo->series, '\n');
     }
@@ -687,8 +687,8 @@ REBTYPE(Map)
             fail (Error_Bad_Refines_Raw());
 
         REBLEN len = Part_Len_May_Modify_Index(value, ARG(part));
-        Element(const*) tail;
-        Element(const*) at = Cell_Array_At(&tail, value);  // w/modified index
+        const Element* tail;
+        const Element* at = Cell_Array_At(&tail, value);  // w/modified index
 
         Append_Map(m, at, tail, Cell_Specifier(value), len);
 

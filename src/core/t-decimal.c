@@ -231,7 +231,7 @@ Bounce MAKE_Decimal(
 
       case REB_BLOCK: {
         REBLEN len;
-        Element(const*) item = Cell_Array_Len_At(&len, arg);
+        const Element* item = Cell_Array_Len_At(&len, arg);
 
         if (len != 2)
             return RAISE(Error_Bad_Make(kind, arg));

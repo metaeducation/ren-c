@@ -384,8 +384,8 @@ static void Collect_Inner_Loop(
         // https://github.com/rebol/rebol-issues/issues/2276
         //
         if (Any_Array_Kind(kind)) {
-            Element(const*) sub_tail;
-            Element(const*) sub_at = Cell_Array_At(&sub_tail, v);
+            const Element* sub_tail;
+            const Element* sub_at = Cell_Array_At(&sub_tail, v);
             Collect_Inner_Loop(cl, sub_at, sub_tail);
         }
     }
@@ -461,8 +461,8 @@ KeyList* Collect_KeyList_Managed(
 // Collect unique words from a block, possibly deeply...maybe just SET-WORD!s.
 //
 Array* Collect_Unique_Words_Managed(
-    Element(const*) head,
-    Element(const*) tail,
+    const Element* head,
+    const Element* tail,
     Flags flags,  // See COLLECT_XXX
     const REBVAL *ignorables  // BLOCK!, ANY-CONTEXT!, or BLANK!
 ){
@@ -473,8 +473,8 @@ Array* Collect_Unique_Words_Managed(
     // any non-words in a block the user passed in.
     //
     if (not Is_Nulled(ignorables)) {
-        Element(const*) check_tail;
-        Element(const*) check = Cell_Array_At(&check_tail, ignorables);
+        const Element* check_tail;
+        const Element* check = Cell_Array_At(&check_tail, ignorables);
         for (; check != check_tail; ++check) {
             if (not Any_Word_Kind(Cell_Heart(check)))
                 fail (Error_Bad_Value(check));
@@ -492,8 +492,8 @@ Array* Collect_Unique_Words_Managed(
     // an error...so they will just be skipped when encountered.
     //
     if (Is_Block(ignorables)) {
-        Element(const*) ignore_tail;
-        Element(const*) ignore = Cell_Array_At(&ignore_tail, ignorables);
+        const Element* ignore_tail;
+        const Element* ignore = Cell_Array_At(&ignore_tail, ignorables);
         for (; ignore != ignore_tail; ++ignore) {
             const Symbol* symbol = Cell_Word_Symbol(ignore);
 
@@ -538,8 +538,8 @@ Array* Collect_Unique_Words_Managed(
     );
 
     if (Is_Block(ignorables)) {
-        Element(const*) ignore_tail;
-        Element(const*) ignore = Cell_Array_At(&ignore_tail, ignorables);
+        const Element* ignore_tail;
+        const Element* ignore = Cell_Array_At(&ignore_tail, ignorables);
         for (; ignore != ignore_tail; ++ignore) {
             const Symbol* symbol = Cell_Word_Symbol(ignore);
 
@@ -711,8 +711,8 @@ Context* Make_Context_Detect_Managed(
 //
 Context* Construct_Context_Managed(
     enum Reb_Kind kind,
-    Element(*) head,  // !!! Warning: modified binding
-    Element(const*) tail,
+    Element* head,  // !!! Warning: modified binding
+    const Element* tail,
     Specifier* specifier,
     Option(Context*) parent
 ){

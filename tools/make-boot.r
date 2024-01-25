@@ -1031,7 +1031,7 @@ fields: collect [
         word: form as word! word
         remove/part word 5  ; 5 leading characters, [boot-]xxx
         word: to-c-name word
-        keep cscape [word {ElementT ${word}}]
+        keep cscape [word {Element ${word}}]
     ]
 ]
 

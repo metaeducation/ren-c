@@ -103,8 +103,8 @@ Bounce MAKE_Sequence(
         REBLEN len = 0;
         REBINT n;
 
-        Element(const*) tail;
-        Element(const*) item = Cell_Array_At(&tail, arg);
+        const Element* tail;
+        const Element* item = Cell_Array_At(&tail, arg);
 
         Byte buf[MAX_TUPLE];
         Byte* vp = buf;

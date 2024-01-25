@@ -174,8 +174,8 @@ DECLARE_NATIVE(reduce)
         return RAISE(Error_Need_Non_Null_Raw());  // error enables e.g. CURTAIL
 
     if (Is_Splice(OUT)) {
-        Element(const*) tail;
-        Element(const*) at = Cell_Array_At(&tail, OUT);
+        const Element* tail;
+        const Element* at = Cell_Array_At(&tail, OUT);
         bool newline = Get_Cell_Flag(v, NEWLINE_BEFORE);
         for (; at != tail; ++at) {
             Derelativize(PUSH(), at, Cell_Specifier(OUT));
@@ -580,7 +580,7 @@ Bounce Composer_Executor(Level* const L)
     if (Is_Level_At_End(L))
         goto finished;
 
-    Element(const*) at = At_Level(L);
+    const Element* at = At_Level(L);
 
     if (not Any_Arraylike(at)) {  // won't substitute/recurse
         Copy_Relative_internal(PUSH(), at);  // keep newline flag
@@ -590,7 +590,7 @@ Bounce Composer_Executor(Level* const L)
     enum Reb_Kind heart = Cell_Heart(at);  // quoted groups match [1]
 
     Specifier* match_specifier = nullptr;
-    Element(const*) match = nullptr;
+    const Element* match = nullptr;
 
     if (not Any_Group_Kind(heart)) {
         //
@@ -731,8 +731,8 @@ Bounce Composer_Executor(Level* const L)
     if (Is_Splice(OUT)) {  // GROUP! at "quoting level -1" means splice
         Quasify_Antiform(OUT);
 
-        Element(const*) push_tail;
-        Element(const*) push = Cell_Array_At(&push_tail, OUT);
+        const Element* push_tail;
+        const Element* push = Cell_Array_At(&push_tail, OUT);
         if (push != push_tail) {
             Copy_Relative_internal(PUSH(), push);
             if (Get_Cell_Flag(At_Level(L), NEWLINE_BEFORE))
@@ -884,8 +884,8 @@ static void Flatten_Core(
         if (Is_Block(item) and level != FLATTEN_NOT) {
             Specifier* derived = Derive_Specifier(specifier, item);
 
-            Element(const*) sub_tail;
-            Element(*) sub = Cell_Array_At_Ensure_Mutable(&sub_tail, item);
+            const Element* sub_tail;
+            Element* sub = Cell_Array_At_Ensure_Mutable(&sub_tail, item);
             Flatten_Core(
                 sub,
                 sub_tail,
@@ -917,8 +917,8 @@ DECLARE_NATIVE(flatten)
 
     StackIndex base = TOP_INDEX;
 
-    Element(const*) tail;
-    Element(*) at = Cell_Array_At_Ensure_Mutable(&tail, ARG(block));
+    const Element* tail;
+    Element* at = Cell_Array_At_Ensure_Mutable(&tail, ARG(block));
     Flatten_Core(
         at,
         tail,

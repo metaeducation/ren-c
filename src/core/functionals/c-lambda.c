@@ -143,8 +143,8 @@ DECLARE_NATIVE(lambda)
 
     bool optimizable = true;
 
-    Element(const*) item_tail;
-    Element(const*) item;
+    const Element* item_tail;
+    const Element* item;
     if (Is_Block(spec)) {
         item = Cell_Array_At(&item_tail, spec);
     }
@@ -155,7 +155,7 @@ DECLARE_NATIVE(lambda)
         or Is_Quoted(spec)
         or (Is_Path(spec) and Is_Refinement(spec))
     ){
-        item = cast(Element(*), spec);
+        item = cast(Element*, spec);
         item_tail = item + 1;
     }
     else {

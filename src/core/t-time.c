@@ -272,8 +272,8 @@ Bounce MAKE_Time(
         return Init_Time_Nanoseconds(OUT, DEC_TO_SECS(VAL_DECIMAL(arg)));
 
     case REB_BLOCK: { // [hh mm ss]
-        Element(const*) tail;
-        Element(const*) item = Cell_Array_At(&tail, arg);
+        const Element* tail;
+        const Element* item = Cell_Array_At(&tail, arg);
 
         if (item == tail)
             goto bad_make;  // must have at least hours

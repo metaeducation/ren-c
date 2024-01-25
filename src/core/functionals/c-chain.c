@@ -199,8 +199,8 @@ Bounce Chainer_Dispatcher(Level* const L)
 
     assert(Is_Block(SPARE));
     Value(*) pipeline_at = cast(Value(*), SPARE);
-    Element(const*) chained_tail;
-    Element(const*) chained = Cell_Array_At(&chained_tail, pipeline_at);
+    const Element* chained_tail;
+    const Element* chained = Cell_Array_At(&chained_tail, pipeline_at);
 
     if (chained == chained_tail)
         goto finished;
@@ -249,14 +249,14 @@ DECLARE_NATIVE(chain_p)  // see extended definition CHAIN in %base-defs.r
     Atom(*) out = OUT;  // plan ahead for factoring into Chain_Action(out..
 
     REBVAL *pipeline = ARG(pipeline);
-    Element(const*) tail;
-    Element(const*) first = Cell_Array_At(&tail, pipeline);
+    const Element* tail;
+    const Element* first = Cell_Array_At(&tail, pipeline);
 
     // !!! Current validation is that all are frames.  Should there be other
     // checks?  (That inputs match outputs in the chain?)  Should it be
     // a dialect and allow things other than functions?
     //
-    Element(const*) check = first;
+    const Element* check = first;
     for (; check != tail; ++check) {
         if (not Is_Frame(check)) {
             DECLARE_LOCAL (specific);

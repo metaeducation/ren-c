@@ -272,7 +272,7 @@ static void Shutdown_Action_Adjunct_Shim(void) {
 //
 // Returns an array of words bound to natives for SYSTEM.CATALOG.NATIVES
 //
-Array* Startup_Natives(Element(const*) boot_natives)
+Array* Startup_Natives(const Element* boot_natives)
 {
     Array* catalog = Make_Array(Num_Natives);
 
@@ -281,8 +281,8 @@ Array* Startup_Natives(Element(const*) boot_natives)
     Init_Action_Adjunct_Shim();
 
     assert(VAL_INDEX(boot_natives) == 0); // should be at head, sanity check
-    Element(const*) tail;
-    Element(*) item = Cell_Array_At_Known_Mutable(&tail, boot_natives);
+    const Element* tail;
+    Element* item = Cell_Array_At_Known_Mutable(&tail, boot_natives);
     Specifier* specifier = Cell_Specifier(boot_natives);
 
     // !!! We could avoid this by making NATIVE a specialization of a NATIVE*

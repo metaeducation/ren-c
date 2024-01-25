@@ -99,8 +99,8 @@ INLINE void INIT_SPECIFIER(Cell* v, Stub* binding) {
 }
 
 
-INLINE Element(*) Init_Series_Cell_At_Core(
-    Sink(Element(*)) out,
+INLINE Element* Init_Series_Cell_At_Core(
+    Sink(Element*) out,
     enum Reb_Kind type,
     const Series* s,  // ensured managed by calling macro
     REBLEN index,

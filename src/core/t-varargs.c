@@ -151,7 +151,7 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
     Option(Level*) vararg_level;
 
     Level* L;
-    Element(*) shared;
+    Element* shared;
     if (Is_Block_Style_Varargs(&shared, vararg)) {
         //
         // We are processing an ANY-ARRAY!-based varargs, which came from
@@ -620,7 +620,7 @@ void MF_Varargs(REB_MOLD *mo, NoQuote(const Cell*) v, bool form) {
     Append_Ascii(mo->series, " => ");
 
     Level* L;
-    Element(*) shared;
+    Element* shared;
     if (Is_Block_Style_Varargs(&shared, v)) {
         if (Is_Cell_Poisoned(shared))
             Append_Ascii(mo->series, "[]");

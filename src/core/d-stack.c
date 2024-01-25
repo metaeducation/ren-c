@@ -84,7 +84,7 @@ void Collapsify_Array(Array* array, REBLEN limit)
 // onto these values for the purposes of better error messages (at the cost
 // of performance).
 //
-Element(*) Init_Near_For_Level(Sink(Element(*)) out, Level* L)
+Element* Init_Near_For_Level(Sink(Element*) out, Level* L)
 {
     StackIndex base = TOP_INDEX;
 
@@ -114,8 +114,8 @@ Element(*) Init_Near_For_Level(Sink(Element(*)) out, Level* L)
         start = 0;
 
     REBLEN count = 0;
-    Element(const*) tail = Array_Tail(Level_Array(L));
-    Element(const*) item = Array_At(Level_Array(L), start);
+    const Element* tail = Array_Tail(Level_Array(L));
+    const Element* item = Array_At(Level_Array(L), start);
     for (; item != tail and count < 6; ++item, ++count) {
         assert(not Is_Void(item));  // can't be in arrays, API won't splice
         assert(not Is_Antiform(item));  // can't be in arrays, API won't splice

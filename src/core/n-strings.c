@@ -80,9 +80,9 @@ DECLARE_NATIVE(delimit)
 {
     INCLUDE_PARAMS_OF_DELIMIT;
 
-    Option(Element(*)) delimiter;
+    Option(Element*) delimiter;
     if (REF(delimiter))
-        delimiter = cast(Element(*), ARG(delimiter));
+        delimiter = cast(Element*, ARG(delimiter));
     else
         delimiter = nullptr;
 
@@ -104,7 +104,7 @@ DECLARE_NATIVE(delimit)
         // /HEAD or /TAIL options, but it's probably break-even to invoke the
         // evaluator.  Review optimizations later.
         //
-        Form_Value(mo, cast(Element(*), line));
+        Form_Value(mo, cast(Element*, line));
 
         if (REF(tail) and delimiter)
             Form_Value(mo, unwrap(delimiter));
@@ -164,7 +164,7 @@ DECLARE_NATIVE(delimit)
             pending = false;
         }
         else if (Is_Issue(OUT)) {  // do not delimit (unified w/char) [4]
-            Form_Value(mo, cast(Element(*), OUT));
+            Form_Value(mo, cast(Element*, OUT));
             pending = false;
         }
         else {
@@ -173,12 +173,12 @@ DECLARE_NATIVE(delimit)
 
             if (Is_Quoted(OUT)) {
                 Unquotify(OUT, 1);
-                Mold_Value(mo, cast(Element(*), OUT));
+                Mold_Value(mo, cast(Element*, OUT));
             }
             else {
                 if (Is_Antiform(OUT))
                     fail (Error_Bad_Antiform(OUT));
-                Form_Value(mo, cast(Element(*), OUT));
+                Form_Value(mo, cast(Element*, OUT));
             }
 
             pending = true;  // note this includes empty strings [5]

@@ -466,8 +466,8 @@ REBLEN Modify_String_Or_Binary(
             // between.  There is some rationale to this, though implications
             // for operations like TO TEXT! of a BLOCK! are unclear...
             //
-            Element(const*) item_tail;
-            Element(const*) item = Cell_Array_At(&item_tail, src);
+            const Element* item_tail;
+            const Element* item = Cell_Array_At(&item_tail, src);
             for (; item != item_tail; ++item)
                 Form_Value(mo, item);
             goto use_mold_buffer;
@@ -476,7 +476,7 @@ REBLEN Modify_String_Or_Binary(
     else { form:
 
         Push_Mold(mo);
-        Mold_Or_Form_Value(mo, cast(Element(const*), src), true);
+        Mold_Or_Form_Value(mo, cast(const Element*, src), true);
 
         // Don't capture pointer until after mold (it may expand the buffer)
 

@@ -485,7 +485,7 @@ Bounce TO_String(Level* level_, enum Reb_Kind kind, const REBVAL *arg)
     return Init_Any_String(
         OUT,
         kind,
-        Copy_Form_Value(c_cast(Element(*), arg), MOLD_FLAG_TIGHT)
+        Copy_Form_Value(c_cast(Element*, arg), MOLD_FLAG_TIGHT)
     );
 }
 

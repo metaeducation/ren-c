@@ -798,4 +798,4 @@ INLINE REBVAL *Constify(REBVAL *v) {
 #define DECLARE_ELEMENT(name) \
     Cell name##_cell; \
     Erase_Cell(&name##_cell); \
-    Element(*) name = u_cast(Element(*), &name##_cell)
+    Element* name = u_cast(Element*, &name##_cell)

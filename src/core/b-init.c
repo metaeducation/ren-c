@@ -509,15 +509,15 @@ static void Shutdown_Root_Vars(void)
 // (See also N_context() which creates the subobjects of the system object.)
 //
 static void Init_System_Object(
-    Element(const*) boot_sysobj_spec,
+    const Element* boot_sysobj_spec,
     Array* datatypes_catalog,
     Array* natives_catalog,
     Array* generics_catalog,
     Context* errors_catalog
 ) {
     assert(VAL_INDEX(boot_sysobj_spec) == 0);
-    Element(const*) spec_tail;
-    Element(*) spec_head
+    const Element* spec_tail;
+    Element* spec_head
         = Cell_Array_At_Known_Mutable(&spec_tail, boot_sysobj_spec);
 
     // Create the system object from the sysobj block (defined in %sysobj.r)

@@ -98,7 +98,7 @@ Context* Make_Context_For_Action_Push_Partials(
 
     INIT_CTX_KEYLIST_SHARED(cast(Context*, varlist), ACT_KEYLIST(act));
 
-    Element(*) rootvar = Array_Head(varlist);
+    Element* rootvar = Array_Head(varlist);
     INIT_VAL_FRAME_ROOTVAR(
         rootvar,
         varlist,
@@ -110,8 +110,8 @@ Context* Make_Context_For_Action_Push_Partials(
     //
     Array* partials = try_unwrap(ACT_PARTIALS(act));
     if (partials) {
-        Element(const*) word_tail = Array_Tail(partials);
-        Element(const*) word = Array_Head(partials);
+        const Element* word_tail = Array_Tail(partials);
+        const Element* word = Array_Head(partials);
         for (; word != word_tail; ++word) {
             Copy_Cell(PUSH(), word);
             assert(Is_Pushed_Refinement(TOP));

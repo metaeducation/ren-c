@@ -171,8 +171,8 @@ Array* Copy_Array_Core_Managed(
     );
     Set_Series_Len(copy, len);
 
-    Element(const*) src = Array_At(original, index);
-    Element(*) dest = Array_Head(copy);
+    const Element* src = Array_At(original, index);
+    Element* dest = Array_Head(copy);
     REBLEN count = 0;
     for (; count < len; ++count, ++dest, ++src) {
         Copy_Cell(dest, src);
@@ -197,11 +197,11 @@ Array* Copy_Array_Core_Managed(
 //
 // Note: Updates the termination and tail.
 //
-Element(*) Alloc_Tail_Array(Array* a)
+Element* Alloc_Tail_Array(Array* a)
 {
     Expand_Series_Tail(a, 1);
     Set_Series_Len(a, Array_Len(a));
-    Element(*) last = Array_Last(a);
+    Element* last = Array_Last(a);
 
   #if DEBUG_ERASE_ALLOC_TAIL_CELLS
     if (not Is_Cell_Erased(last)) {

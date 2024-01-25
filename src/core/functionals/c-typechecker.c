@@ -170,8 +170,8 @@ bool Typecheck_Atom_Core(
 ){
     DECLARE_LOCAL (spare);  // !!! stackful
 
-    Element(const*) tail;
-    Element(const*) item;
+    const Element* tail;
+    const Element* item;
     Specifier* derived;
     bool match_all;
 
@@ -200,8 +200,8 @@ bool Typecheck_Atom_Core(
         break;
 
       case REB_TYPE_WORD:
-        item = c_cast(Element(*), tests);
-        tail = c_cast(Element(*), tests) + 1;
+        item = c_cast(Element*, tests);
+        tail = c_cast(Element*, tests) + 1;
         derived = tests_specifier;
         match_all = true;
         break;

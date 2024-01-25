@@ -422,8 +422,8 @@ Bounce MAKE_Error(
         // Bind and do an evaluation step (as with MAKE OBJECT! with A_MAKE
         // code in REBTYPE(Context) and code in DECLARE_NATIVE(construct))
 
-        Element(const*) tail;
-        Element(const*) head = Cell_Array_At(&tail, arg);
+        const Element* tail;
+        const Element* head = Cell_Array_At(&tail, arg);
 
         e = Make_Context_Detect_Managed(
             REB_ERROR, // type
@@ -636,8 +636,8 @@ Context* Make_Error_Managed_Core(
 
     REBLEN expected_args = 0;
     if (Is_Block(message)) { // GET-WORD!s in template should match va_list
-        Element(const*) tail;
-        Element(const*) temp = Cell_Array_At(&tail, message);
+        const Element* tail;
+        const Element* temp = Cell_Array_At(&tail, message);
         for (; temp != tail; ++temp) {
             if (Is_Get_Word(temp))
                 ++expected_args;
@@ -664,8 +664,8 @@ Context* Make_Error_Managed_Core(
     // They can also be a single TEXT! (which will just bypass this loop).
     //
     if (not Is_Text(message)) {
-        Element(const*) msg_tail;
-        Element(const*) msg_item = Cell_Array_At(&msg_tail, message);
+        const Element* msg_tail;
+        const Element* msg_item = Cell_Array_At(&msg_tail, message);
 
         for (; msg_item != msg_tail; ++msg_item) {
             if (not Is_Get_Word(msg_item))
@@ -1288,7 +1288,7 @@ Context* Error_Bad_Void(void) {
 //
 // Create error objects and error type objects
 //
-Context* Startup_Errors(Element(const*) boot_errors)
+Context* Startup_Errors(const Element* boot_errors)
 {
   #if DEBUG_HAS_PROBE
     const char *env_probe_failures = getenv("R3_PROBE_FAILURES");
@@ -1304,8 +1304,8 @@ Context* Startup_Errors(Element(const*) boot_errors)
     }
   #endif
 
-    Element(const*) errors_tail;
-    Element(*) errors_head
+    const Element* errors_tail;
+    Element* errors_head
         = Cell_Array_At_Known_Mutable(&errors_tail, boot_errors);
 
     assert(VAL_INDEX(boot_errors) == 0);
@@ -1319,11 +1319,11 @@ Context* Startup_Errors(Element(const*) boot_errors)
 
     // Morph blocks into objects for all error categories.
     //
-    Element(const*) category_tail = Array_Tail(CTX_VARLIST(catalog));
+    const Element* category_tail = Array_Tail(CTX_VARLIST(catalog));
     REBVAL *category = CTX_VARS_HEAD(catalog);
     for (; category != category_tail; ++category) {
-        Element(const*) tail;
-        Element(*) head = Cell_Array_At_Known_Mutable(&tail, category);
+        const Element* tail;
+        Element* head = Cell_Array_At_Known_Mutable(&tail, category);
         Context* error = Construct_Context_Managed(
             REB_OBJECT,
             head,  // modifies bindings
@@ -1382,7 +1382,7 @@ void Shutdown_Stackoverflow(void)
 // to the mold.  It was only used in error molding and was kept working
 // without a general review of such a facility.  Review.
 //
-static void Mold_Value_Limit(REB_MOLD *mo, Element(*) v, REBLEN limit)
+static void Mold_Value_Limit(REB_MOLD *mo, Element* v, REBLEN limit)
 {
     String* str = mo->series;
 
@@ -1439,7 +1439,7 @@ void MF_Error(REB_MOLD *mo, NoQuote(const Cell*) v, bool form)
     if (Is_Block(&vars->message))
         Form_Array_At(mo, Cell_Array(&vars->message), 0, error);
     else if (Is_Text(&vars->message))
-        Form_Value(mo, cast(Element(*), &vars->message));
+        Form_Value(mo, cast(Element*, &vars->message));
     else
         Append_Ascii(mo->series, RM_BAD_ERROR_FORMAT);
 
@@ -1452,7 +1452,7 @@ void MF_Error(REB_MOLD *mo, NoQuote(const Cell*) v, bool form)
         if (Is_Block(where)) {
             Append_Codepoint(mo->series, '\n');
             Append_Ascii(mo->series, RM_ERROR_WHERE);
-            Form_Value(mo, cast(Element(*), where));
+            Form_Value(mo, cast(Element*, where));
         }
         else
             Append_Ascii(mo->series, RM_BAD_ERROR_FORMAT);
@@ -1475,7 +1475,7 @@ void MF_Error(REB_MOLD *mo, NoQuote(const Cell*) v, bool form)
             Append_String(mo->series, nearest);
         }
         else if (Any_Array(nearest) or Any_Path(nearest))
-            Mold_Value_Limit(mo, cast(Element(*), nearest), 60);
+            Mold_Value_Limit(mo, cast(Element*, nearest), 60);
         else
             Append_Ascii(mo->series, RM_BAD_ERROR_FORMAT);
     }
@@ -1492,7 +1492,7 @@ void MF_Error(REB_MOLD *mo, NoQuote(const Cell*) v, bool form)
         Append_Codepoint(mo->series, '\n');
         Append_Ascii(mo->series, RM_ERROR_FILE);
         if (Is_File(file))
-            Form_Value(mo, cast(Element(*), file));
+            Form_Value(mo, cast(Element*, file));
         else
             Append_Ascii(mo->series, RM_BAD_ERROR_FORMAT);
     }
@@ -1503,7 +1503,7 @@ void MF_Error(REB_MOLD *mo, NoQuote(const Cell*) v, bool form)
         Append_Codepoint(mo->series, '\n');
         Append_Ascii(mo->series, RM_ERROR_LINE);
         if (Is_Integer(line))
-            Form_Value(mo, cast(Element(*), line));
+            Form_Value(mo, cast(Element*, line));
         else
             Append_Ascii(mo->series, RM_BAD_ERROR_FORMAT);
     }

@@ -158,8 +158,8 @@ INLINE Context* Error_Bad_Sequence_Init(const REBVAL *v) {
 // mechanics that optimized as a word were just changed to make a real WORD!
 // with SYMBOL_FLAG_ESCAPE_IN_SEQUENCE.
 //
-INLINE Element(*) Init_Any_Sequence_1(
-    Sink(Element(*)) out,
+INLINE Element* Init_Any_Sequence_1(
+    Sink(Element*) out,
     enum Reb_Kind kind
 ){
     if (Any_Path_Kind(kind))
@@ -181,7 +181,7 @@ INLINE Element(*) Init_Any_Sequence_1(
 // R3-Alpha, the underlying representation of `/foo` in the cell is the same
 // as an ANY-WORD!.
 
-INLINE Element(*) Try_Leading_Blank_Pathify(
+INLINE Element* Try_Leading_Blank_Pathify(
     Value(*) v,
     enum Reb_Kind kind
 ){
@@ -199,7 +199,7 @@ INLINE Element(*) Try_Leading_Blank_Pathify(
     if (inner_kind == REB_WORD) {
         Set_Cell_Flag(v, REFINEMENT_LIKE);
         HEART_BYTE(v) = kind;
-        return cast(Element(*), v);
+        return cast(Element*, v);
     }
 
     Value(*) p = Alloc_Pairing(NODE_FLAG_MANAGED);
@@ -209,7 +209,7 @@ INLINE Element(*) Try_Leading_Blank_Pathify(
     Init_Pair(v, p);
     HEART_BYTE(v) = kind;
 
-    return cast(Element(*), v);
+    return cast(Element*, v);
 }
 
 
@@ -229,8 +229,8 @@ INLINE Element(*) Try_Leading_Blank_Pathify(
 // This will likely be easy to reuse in an ISSUE!+CHAR! unification, so
 // revisit this low-priority idea at that time.
 
-INLINE Element(*) Init_Any_Sequence_Bytes(
-    Sink(Element(*)) out,
+INLINE Element* Init_Any_Sequence_Bytes(
+    Sink(Element*) out,
     enum Reb_Kind kind,
     const Byte* data,
     Size size
@@ -261,8 +261,8 @@ INLINE Element(*) Init_Any_Sequence_Bytes(
 #define Init_Tuple_Bytes(out,data,len) \
     Init_Any_Sequence_Bytes((out), REB_TUPLE, (data), (len));
 
-INLINE Element(*) Try_Init_Any_Sequence_All_Integers(
-    Sink(Element(*)) out,
+INLINE Element* Try_Init_Any_Sequence_All_Integers(
+    Sink(Element*) out,
     enum Reb_Kind kind,
     Value(const*) head,  // NOTE: Can't use PUSH() or evaluation
     REBLEN len
@@ -300,8 +300,8 @@ INLINE Element(*) Try_Init_Any_Sequence_All_Integers(
 
 //=//// 2-Element "PAIR" SEQUENCE OPTIMIZATION ////////////////////////////=//
 
-INLINE Element(*) Try_Init_Any_Sequence_Pairlike(
-    Sink(Element(*)) out,
+INLINE Element* Try_Init_Any_Sequence_Pairlike(
+    Sink(Element*) out,
     enum Reb_Kind kind,
     Value(const*) v1,
     Value(const*) v2
@@ -490,8 +490,8 @@ INLINE Length Cell_Sequence_Len(NoQuote(const Cell*) sequence) {
 // 3. The quotes must be removed because the quotes are intended to be "on"
 //    the path or tuple.  If implemented as a pseudo-WORD!
 //
-INLINE Element(*) Derelativize_Sequence_At(
-    Sink(Element(*)) out,
+INLINE Element* Derelativize_Sequence_At(
+    Sink(Element*) out,
     const Cell* sequence,
     Specifier* specifier,
     REBLEN n
@@ -508,10 +508,10 @@ INLINE Element(*) Derelativize_Sequence_At(
     if (Is_Node_A_Cell(node1)) {  // test if it's a pairing
         const Cell* pairing = c_cast(Cell*, node1);  // 2 elements compressed
         if (n == 0)
-            return cast(Element(*), Derelativize(out, pairing, specifier));
+            return cast(Element*, Derelativize(out, pairing, specifier));
         assert(n == 1);
         return cast(
-            Element(*),
+            Element*,
             Derelativize(out, Pairing_Second(pairing), specifier)
         );
     }
@@ -531,7 +531,7 @@ INLINE Element(*) Derelativize_Sequence_At(
         const Array* a = c_cast(Array*, Cell_Node1(sequence));
         assert(Array_Len(a) >= 2);
         assert(Is_Array_Frozen_Shallow(a));
-        return cast(Element(*), Derelativize(out, Array_At(a, n), specifier)); }
+        return cast(Element*, Derelativize(out, Array_At(a, n), specifier)); }
 
       default :
         assert(false);

@@ -188,8 +188,8 @@ DECLARE_NATIVE(bind)
     if (not Any_Arraylike(v))  // QUOTED! could have wrapped any type
         fail (Error_Invalid_Arg(level_, PARAM(value)));
 
-    Element(*) at;
-    Element(const*) tail;
+    Element* at;
+    const Element* tail;
     if (REF(copy)) {
         Array* copy = Copy_Array_Core_Managed(
             Cell_Array(v),
@@ -607,8 +607,8 @@ DECLARE_NATIVE(unbind)
     else {
         assert(Is_Block(word));
 
-        Element(const*) tail;
-        Element(*) at = Cell_Array_At_Ensure_Mutable(&tail, word);
+        const Element* tail;
+        Element* at = Cell_Array_At_Ensure_Mutable(&tail, word);
         Option(Context*) context = nullptr;
         Unbind_Values_Core(at, tail, context, REF(deep));
     }
@@ -670,8 +670,8 @@ DECLARE_NATIVE(collect_words)
     if (REF(deep))
         flags |= COLLECT_DEEP;
 
-    Element(const*) tail;
-    Element(const*) at = Cell_Array_At(&tail, ARG(block));
+    const Element* tail;
+    const Element* at = Cell_Array_At(&tail, ARG(block));
     return Init_Block(
         OUT,
         Collect_Unique_Words_Managed(at, tail, flags, ARG(ignore))
@@ -775,9 +775,9 @@ bool Get_Var_Push_Refinements_Throws(
             panic (var);
         }
 
-        Element(const*) tail;
-        Element(const*) head = Cell_Array_At(&tail, var);
-        Element(const*) at;
+        const Element* tail;
+        const Element* head = Cell_Array_At(&tail, var);
+        const Element* at;
         Specifier* at_specifier = Derive_Specifier(var_specifier, var);
         for (at = head; at != tail; ++at) {
             if (Is_Group(at)) {
@@ -810,9 +810,9 @@ bool Get_Var_Push_Refinements_Throws(
     }
     else if (Is_The_Block(var)) {
         Specifier* at_specifier = Derive_Specifier(var_specifier, var);
-        Element(const*) tail;
-        Element(const*) head = Cell_Array_At(&tail, var);
-        Element(const*) at;
+        const Element* tail;
+        const Element* head = Cell_Array_At(&tail, var);
+        const Element* at;
         for (at = head; at != tail; ++at)
             Derelativize(PUSH(), at, at_specifier);
     }
@@ -977,8 +977,8 @@ bool Get_Path_Push_Refinements_Throws(
         panic (path);
     }
 
-    Element(const*) tail;
-    Element(const*) head = Cell_Array_At(&tail, path);
+    const Element* tail;
+    const Element* head = Cell_Array_At(&tail, path);
     while (Is_Blank(head)) {
         ++head;
         if (head == tail)
@@ -1356,9 +1356,9 @@ bool Set_Var_Core_Updater_Throws(
             panic (var);
         }
 
-        Element(const*) tail;
-        Element(const*) head = Cell_Array_At(&tail, var);
-        Element(const*) at;
+        const Element* tail;
+        const Element* head = Cell_Array_At(&tail, var);
+        const Element* at;
         Specifier* at_specifier = Derive_Specifier(var_specifier, var);
         for (at = head; at != tail; ++at) {
             if (Is_Group(at)) {
@@ -1385,9 +1385,9 @@ bool Set_Var_Core_Updater_Throws(
         }
     }
     else if (Is_The_Block(var)) {
-        Element(const*) tail;
-        Element(const*) head = Cell_Array_At(&tail, var);
-        Element(const*) at;
+        const Element* tail;
+        const Element* head = Cell_Array_At(&tail, var);
+        const Element* at;
         Specifier* at_specifier = Derive_Specifier(var_specifier, var);
         for (at = head; at != tail; ++at)
             Derelativize(PUSH(), at, at_specifier);
@@ -1658,8 +1658,8 @@ DECLARE_NATIVE(proxy_exports)
     Context* where = VAL_CONTEXT(ARG(where));
     Context* source = VAL_CONTEXT(ARG(source));
 
-    Element(const*) tail;
-    Element(const*) v = Cell_Array_At(&tail, ARG(exports));
+    const Element* tail;
+    const Element* v = Cell_Array_At(&tail, ARG(exports));
     for (; v != tail; ++v) {
         if (not Is_Word(v))
             fail (ARG(exports));

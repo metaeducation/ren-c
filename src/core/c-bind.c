@@ -37,14 +37,14 @@
 //
 void Bind_Values_Inner_Loop(
     struct Reb_Binder *binder,
-    Element(*) head,
-    Element(const*) tail,
+    Element* head,
+    const Element* tail,
     Context* context,
     REBU64 bind_types, // !!! REVIEW: force word types low enough for 32-bit?
     REBU64 add_midstream_types,
     Flags flags
 ){
-    Element(*) v = head;
+    Element* v = head;
     for (; v != tail; ++v) {
         enum Reb_Kind heart = Cell_Heart(v);
 
@@ -96,8 +96,8 @@ void Bind_Values_Inner_Loop(
         }
         else if (flags & BIND_DEEP) {
             if (Any_Arraylike(v)) {
-                Element(const*) sub_tail;
-                Element(*) sub_at = Cell_Array_At_Mutable_Hack(&sub_tail, v);
+                const Element* sub_tail;
+                Element* sub_at = Cell_Array_At_Mutable_Hack(&sub_tail, v);
                 Bind_Values_Inner_Loop(
                     binder,
                     sub_at,
@@ -124,8 +124,8 @@ void Bind_Values_Inner_Loop(
 // bindings that come after the added value is seen will be bound.
 //
 void Bind_Values_Core(
-    Element(*) head,
-    Element(const*) tail,
+    Element* head,
+    const Element* tail,
     const Cell* context,
     REBU64 bind_types,
     REBU64 add_midstream_types,
@@ -179,12 +179,12 @@ void Bind_Values_Core(
 // words will be unbound regardless of their VAL_WORD_CONTEXT).
 //
 void Unbind_Values_Core(
-    Element(*) head,
-    Element(const*) tail,
+    Element* head,
+    const Element* tail,
     Option(Context*) context,
     bool deep
 ){
-    Element(*) v = head;
+    Element* v = head;
     for (; v != tail; ++v) {
         if (
             Any_Wordlike(v)
@@ -193,8 +193,8 @@ void Unbind_Values_Core(
             Unbind_Any_Word(v);
         }
         else if (Any_Arraylike(v) and deep) {
-            Element(const*) sub_tail;
-            Element(*) sub_at = Cell_Array_At_Mutable_Hack(&sub_tail, v);
+            const Element* sub_tail;
+            Element* sub_at = Cell_Array_At_Mutable_Hack(&sub_tail, v);
             Unbind_Values_Core(sub_at, sub_tail, context, true);
         }
     }
@@ -709,8 +709,8 @@ DECLARE_NATIVE(let)
     else {
         assert(Is_Block(vars) or Is_Set_Block(vars));
 
-        Element(const*) tail;
-        Element(const*) item = Cell_Array_At(&tail, vars);
+        const Element* tail;
+        const Element* item = Cell_Array_At(&tail, vars);
         Specifier* item_specifier = Cell_Specifier(vars);
 
         StackIndex base = TOP_INDEX;
@@ -980,8 +980,8 @@ void Clonify_And_Bind_Relative(
         //
         // Objects and series get shallow copied at minimum
         //
-        Element(*) deep = nullptr;
-        Element(*) deep_tail = nullptr;
+        Element* deep = nullptr;
+        Element* deep_tail = nullptr;
 
         if (Any_Context_Kind(heart)) {
             Context* copy = Copy_Context_Shallow_Managed(VAL_CONTEXT(v));
@@ -997,8 +997,8 @@ void Clonify_And_Bind_Relative(
             );
             Init_Cell_Node1(v, copy);
 
-            deep = cast(Element(*), copy);
-            deep_tail = cast(Element(*), Pairing_Tail(copy));
+            deep = cast(Element*, copy);
+            deep_tail = cast(Element*, Pairing_Tail(copy));
         }
         else if (Any_Arraylike(v)) {  // ruled out pairlike sequences above...
             Array* copy = Copy_Array_At_Extra_Shallow(
@@ -1104,8 +1104,8 @@ Array* Copy_And_Bind_Relative_Deep_Managed(
     copy = Make_Array_For_Copy(len, flags, original);
     Set_Series_Len(copy, len);
 
-    Element(const*) src = Array_At(original, index);
-    Element(*) dest = Array_Head(copy);
+    const Element* src = Array_At(original, index);
+    Element* dest = Array_Head(copy);
     REBLEN count = 0;
     for (; count < len; ++count, ++dest, ++src) {
         Copy_Cell(dest, src);
@@ -1184,8 +1184,8 @@ void Rebind_Values_Deep(
         else if (Is_Antiform(v))
             NOOP;
         else if (Any_Arraylike(v)) {
-            Element(const*) sub_tail;
-            Element(*) sub_at = Cell_Array_At_Mutable_Hack(&sub_tail, v);
+            const Element* sub_tail;
+            Element* sub_at = Cell_Array_At_Mutable_Hack(&sub_tail, v);
             Rebind_Values_Deep(sub_at, sub_tail, from, to, binder);
         }
         else if (Any_Wordlike(v) and BINDING(v) == from) {
@@ -1253,8 +1253,8 @@ Context* Virtual_Bind_Deep_To_New_Context(
     if (num_vars == 0)
         fail (spec);  // !!! should fail() take unstable?
 
-    Element(const*) tail;
-    Element(const*) item;
+    const Element* tail;
+    const Element* item;
 
     Specifier* specifier;
     bool rebinding;
@@ -1262,7 +1262,7 @@ Context* Virtual_Bind_Deep_To_New_Context(
         specifier = Cell_Specifier(spec);
         item = Cell_Array_At(&tail, spec);
 
-        Element(const*) check = item;
+        const Element* check = item;
 
         rebinding = false;
         for (; check != tail; ++check) {
@@ -1283,8 +1283,8 @@ Context* Virtual_Bind_Deep_To_New_Context(
         }
     }
     else {
-        item = cast(Element(*), spec);
-        tail = cast(Element(*), spec);
+        item = cast(Element*, spec);
+        tail = cast(Element*, spec);
         specifier = SPECIFIED;
         rebinding = Is_Word(item) or Is_Meta_Word(item);
     }

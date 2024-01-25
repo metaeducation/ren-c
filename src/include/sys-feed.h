@@ -110,15 +110,15 @@
 #define FEED_VAPTR_POINTER(feed)    PAYLOAD(Comma, FEED_SINGLE(feed)).vaptr
 #define FEED_PACKED(feed)           PAYLOAD(Comma, FEED_SINGLE(feed)).packed
 
-INLINE Element(const*) At_Feed(Feed* feed) {
+INLINE const Element* At_Feed(Feed* feed) {
     assert(Not_Feed_Flag(feed, NEEDS_SYNC));
     assert(feed->p != &PG_Feed_At_End);
-    return c_cast(Element(*), feed->p);
+    return c_cast(Element*, feed->p);
 }
 
-INLINE Element(const*) Try_At_Feed(Feed* feed) {
+INLINE const Element* Try_At_Feed(Feed* feed) {
     assert(Not_Feed_Flag(feed, NEEDS_SYNC));
-    return c_cast(Element(*), feed->p);
+    return c_cast(Element*, feed->p);
 }
 
 INLINE Option(va_list*) FEED_VAPTR(Feed* feed) {
@@ -189,8 +189,8 @@ INLINE void Finalize_Variadic_Feed(Feed* feed) {
 // A cell pointer in a variadic feed should be fine to use directly, because
 // all such "spliced" cells should be specific.
 //
-INLINE Element(const*) Copy_Reified_Variadic_Feed_Cell(
-    Sink(Element(*)) out,
+INLINE const Element* Copy_Reified_Variadic_Feed_Cell(
+    Sink(Element*) out,
     Feed* feed
 ){
     const Cell* cell = c_cast(Cell*, feed->p);
@@ -512,13 +512,13 @@ INLINE const Cell* Lookback_While_Fetching_Next(Level* L) {
     // this is currently kind of an unknown, but in the scheme of things it
     // seems like it must be something favorable to optimization.)
     //
-    Element(const*) lookback;
+    const Element* lookback;
     if (L->feed->p == &L->feed->fetched) {
         Copy_Cell(&L->feed->lookback, &L->feed->fetched);
         lookback = &L->feed->lookback;
     }
     else
-        lookback = c_cast(Element(*), L->feed->p);
+        lookback = c_cast(Element*, L->feed->p);
 
     Fetch_Next_In_Feed(L->feed);
 
@@ -551,7 +551,7 @@ INLINE const Cell* Lookback_While_Fetching_Next(Level* L) {
 //       mutable (e.g. with MUTABLE) it takes the flag from the feed.
 //
 INLINE void Inertly_Derelativize_Inheriting_Const(
-    Sink(Element(*)) out,
+    Sink(Element*) out,
     const Cell* v,
     Feed* feed
 ){
@@ -564,7 +564,7 @@ INLINE void Inertly_Derelativize_Inheriting_Const(
         out->header.bits |= (feed->flags.bits & FEED_FLAG_CONST);
 }
 
-INLINE void Literal_Next_In_Feed(Sink(Element(*)) out, Feed* feed) {
+INLINE void Literal_Next_In_Feed(Sink(Element*) out, Feed* feed) {
     Inertly_Derelativize_Inheriting_Const(out, At_Feed(feed), feed);
     Fetch_Next_In_Feed(feed);
 }

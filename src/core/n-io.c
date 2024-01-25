@@ -40,7 +40,7 @@ DECLARE_NATIVE(form)
 {
     INCLUDE_PARAMS_OF_FORM;
 
-    Element(*) elem = cast(Element(*), ARG(value));
+    Element* elem = cast(Element*, ARG(value));
 
     return Init_Text(OUT, Copy_Form_Value(elem, 0));
 }
@@ -86,7 +86,7 @@ DECLARE_NATIVE(mold)
         HEART_BYTE(v) = REB_BLOCK;  // !!! historical code for /ONLY was BLOCK!
     }
 
-    Mold_Value(mo, cast(Element(*), v));
+    Mold_Value(mo, cast(Element*, v));
 
     String* popped = Pop_Molded_String(mo);  // sets MOLD_FLAG_TRUNCATED
 
@@ -160,8 +160,8 @@ DECLARE_NATIVE(new_line)
     bool mark = Cell_Logic(ARG(mark));
 
     REBVAL *pos = ARG(position);
-    Element(const*) tail;
-    Element(*) item = Cell_Array_At_Ensure_Mutable(&tail, pos);
+    const Element* tail;
+    Element* item = Cell_Array_At_Ensure_Mutable(&tail, pos);
     Array* a = Cell_Array_Known_Mutable(pos);  // need if setting flag at tail
 
     REBINT skip;
@@ -218,12 +218,12 @@ DECLARE_NATIVE(new_line_q)
     REBVAL *pos = ARG(position);
 
     const Array* arr;
-    Element(const*) item;
-    Element(const*) tail;
+    const Element* item;
+    const Element* tail;
 
     if (Is_Varargs(pos)) {
         Level* L;
-        Element(*) shared;
+        Element* shared;
         if (Is_Level_Style_Varargs_May_Fail(&L, pos)) {
             if (Level_Is_Variadic(L)) {
                 //

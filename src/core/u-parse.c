@@ -2208,8 +2208,8 @@ DECLARE_NATIVE(subparse)
                 if (not Is_Series_Array(P_INPUT))
                     fail (Error_Parse_Rule());
 
-                Element(const*) input_tail = Array_Tail(P_INPUT_ARRAY);
-                Element(const*) into = Array_At(P_INPUT_ARRAY, P_POS);
+                const Element* input_tail = Array_Tail(P_INPUT_ARRAY);
+                const Element* into = Array_At(P_INPUT_ARRAY, P_POS);
                 if (into == input_tail) {
                     i = END_FLAG;  // `parse [] [into [...]]`, rejects
                     break;
@@ -2223,7 +2223,7 @@ DECLARE_NATIVE(subparse)
                     // !!! Review faster way of sharing the AS transform.
                     //
                     Derelativize(SPARE, into, P_INPUT_SPECIFIER);
-                    into = cast(Element(*), rebValue("as block! @", SPARE));
+                    into = cast(Element*, rebValue("as block! @", SPARE));
                 }
                 else if (
                     not Any_Series_Kind(Cell_Heart(into))
@@ -2716,8 +2716,8 @@ DECLARE_NATIVE(parse3)
 
     assert(Any_Series(input));
 
-    Element(const*) rules_tail;
-    Element(const*) rules_at = Cell_Array_At(&rules_tail, rules);
+    const Element* rules_tail;
+    const Element* rules_at = Cell_Array_At(&rules_tail, rules);
 
     // !!! Look for the special pattern `parse ... [collect [x]]` and delegate
     // to a fabricated `parse [temp: collect [x]]` so we can return temp.

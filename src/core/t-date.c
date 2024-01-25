@@ -540,8 +540,8 @@ Bounce MAKE_Date(
 
   make_from_array: {  ////////////////////////////////////////////////////////
 
-    Element(const*) tail;
-    Element(const*) item = Cell_Array_At(&tail, arg);
+    const Element* tail;
+    const Element* item = Cell_Array_At(&tail, arg);
 
     if (item == tail or not Is_Integer(item))
         goto bad_make;

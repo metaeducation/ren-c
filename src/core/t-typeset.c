@@ -175,8 +175,8 @@ void Set_Parameter_Spec(
         assert(pclass != PARAMCLASS_RETURN and pclass != PARAMCLASS_OUTPUT);
     }
 
-    Element(const*) tail;
-    Element(const*) item = Cell_Array_At(&tail, spec);
+    const Element* tail;
+    const Element* item = Cell_Array_At(&tail, spec);
 
     Length len = tail - item;
 

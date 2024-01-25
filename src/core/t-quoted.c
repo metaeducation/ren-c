@@ -584,8 +584,8 @@ DECLARE_NATIVE(pack)
     Value(*) v = ARG(array);
 
     if (Is_The_Block(v)) {
-        Element(const*) tail;
-        Element(const*) at = Cell_Array_At(&tail, v);
+        const Element* tail;
+        const Element* at = Cell_Array_At(&tail, v);
         for (; at != tail; ++at)
             Quotify(Derelativize(PUSH(), at, Cell_Specifier(v)), 1);
 

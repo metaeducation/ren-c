@@ -53,13 +53,13 @@
     }
 #endif
 
-INLINE Element(*) Init_Integer_Untracked(Cell* out, REBI64 i64) {
+INLINE Element* Init_Integer_Untracked(Cell* out, REBI64 i64) {
     Reset_Unquoted_Header_Untracked(out, CELL_MASK_INTEGER);
     PAYLOAD(Integer, out).i64 = i64;
   #ifdef ZERO_UNUSED_CELL_FIELDS
     EXTRA(Any, out).corrupt = CORRUPTZERO;
   #endif
-    return cast(Element(*), out);
+    return cast(Element*, out);
 }
 
 #define Init_Integer(out,i64) \

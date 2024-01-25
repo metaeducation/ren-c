@@ -31,8 +31,8 @@ static void Append_Vars_To_Context_From_Group(REBVAL *context, REBVAL *block)
 
     assert(Is_Group(block));
 
-    Element(const*) tail;
-    Element(const*) item = Cell_Array_At(&tail, block);
+    const Element* tail;
+    const Element* item = Cell_Array_At(&tail, block);
 
     struct Reb_Collector collector;
     //
@@ -60,7 +60,7 @@ static void Append_Vars_To_Context_From_Group(REBVAL *context, REBVAL *block)
     // Should it allow ANY-WORD!?  Restrict to just SET-WORD!?
     //
   blockscope {
-    Element(const*) word;
+    const Element* word;
     for (word = item; word != tail; word += 2) {
         if (not Is_Word(word) and not Is_Set_Word(word)) {
             error = Error_Bad_Value(word);
@@ -546,7 +546,7 @@ Bounce MAKE_Frame(
             feed = L_varargs->feed;
         }
         else {
-            Element(*) shared;
+            Element* shared;
             if (not Is_Block_Style_Varargs(&shared, arg))
                 fail ("Expected BLOCK!-style varargs");  // shouldn't happen
 
@@ -631,8 +631,8 @@ Bounce MAKE_Context(
         : nullptr;
 
     if (Is_Block(arg)) {
-        Element(const*) tail;
-        Element(const*) at = Cell_Array_At(&tail, arg);
+        const Element* tail;
+        const Element* at = Cell_Array_At(&tail, arg);
 
         Context* ctx = Make_Context_Detect_Managed(
             kind,
@@ -981,7 +981,7 @@ void MF_Context(REB_MOLD *mo, NoQuote(const Cell*) v, bool form)
                 fail (Error_Bad_Antiform(e.var));  // can't FORM antiforms
             }
             else if (not Is_Blank(e.var))
-                Mold_Value(mo, cast(Element(*), e.var));
+                Mold_Value(mo, cast(Element*, e.var));
 
             Append_Codepoint(mo->series, LF);
             had_output = true;
@@ -1025,7 +1025,7 @@ void MF_Context(REB_MOLD *mo, NoQuote(const Cell*) v, bool form)
             DECLARE_LOCAL (reified);
             Copy_Cell(reified, e.var);
             Quasify_Antiform(reified);  // will become quasi...
-            Mold_Value(mo, cast(Element(*), reified));  // ...molds as `~xxx~`
+            Mold_Value(mo, cast(Element*, reified));  // ...molds as `~xxx~`
         }
         else {
             // We want the molded object to be able to "round trip" back to the
@@ -1038,7 +1038,7 @@ void MF_Context(REB_MOLD *mo, NoQuote(const Cell*) v, bool form)
             //
             if (not Any_Inert(e.var))
                 Append_Ascii(s, "'");
-            Mold_Value(mo, cast(Element(*), e.var));
+            Mold_Value(mo, cast(Element*, e.var));
         }
     }
     Shutdown_Evars(&e);
@@ -1743,8 +1743,8 @@ DECLARE_NATIVE(construct)
     // refinement was passed in.
     //
   blockscope {
-    Element(const*) tail;
-    Element(*) at = Cell_Array_At_Mutable_Hack(&tail, spec);
+    const Element* tail;
+    Element* at = Cell_Array_At_Mutable_Hack(&tail, spec);
     if (REF(only)) {
         Init_Object(
             OUT,
@@ -1763,8 +1763,8 @@ DECLARE_NATIVE(construct)
     // Scan the object for top-level set words in order to make an
     // appropriately sized context.
     //
-    Element(const*) tail;
-    Element(*) at = Cell_Array_At_Ensure_Mutable(&tail, spec);
+    const Element* tail;
+    Element* at = Cell_Array_At_Ensure_Mutable(&tail, spec);
 
     Context* ctx = Make_Context_Detect_Managed(
         parent ? CTX_TYPE(parent) : REB_OBJECT,  // !!! Presume object?

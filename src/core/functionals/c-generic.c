@@ -125,11 +125,11 @@ DECLARE_NATIVE(generic)
 //
 // Returns an array of words bound to generics for SYSTEM/CATALOG/ACTIONS
 //
-Array* Startup_Generics(Element(const*) boot_generics)
+Array* Startup_Generics(const Element* boot_generics)
 {
     assert(VAL_INDEX(boot_generics) == 0); // should be at head, sanity check
-    Element(const*) tail;
-    Element(*) head = Cell_Array_At_Known_Mutable(&tail, boot_generics);
+    const Element* tail;
+    Element* head = Cell_Array_At_Known_Mutable(&tail, boot_generics);
     Specifier* specifier = Cell_Specifier(boot_generics);
 
     // Add SET-WORD!s that are top-level in the generics block to the lib

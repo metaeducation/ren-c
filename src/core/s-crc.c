@@ -406,8 +406,8 @@ Series* Hash_Block(const REBVAL *block, REBLEN skip, bool cased)
     // Create the hash array (integer indexes):
     Series* hashlist = Make_Hash_Series(Cell_Series_Len_At(block));
 
-    Element(const*) tail;
-    Element(const*) value = Cell_Array_At(&tail, block);
+    const Element* tail;
+    const Element* value = Cell_Array_At(&tail, block);
     if (value == tail)
         return hashlist;
 

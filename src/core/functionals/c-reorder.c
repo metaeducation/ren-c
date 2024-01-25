@@ -144,8 +144,8 @@ DECLARE_NATIVE(reorder)
     // We iterate backwards, because that's the stack order that needs to
     // be pushed.
     //
-    Element(const*) item;  // starts as tail
-    Element(const*) at = Cell_Array_At(&item, ARG(ordering));
+    const Element* item;  // starts as tail
+    const Element* at = Cell_Array_At(&item, ARG(ordering));
     for (; at != item--; ) {
         const Symbol* symbol = Cell_Word_Symbol(item);
 

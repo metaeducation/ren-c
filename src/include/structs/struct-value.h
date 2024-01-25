@@ -81,10 +81,10 @@
         "C++ REBVAL must match C layout: http://stackoverflow.com/a/7189821/"
     );
 
-    struct ElementT : public ValueStruct {
+    struct Element : public ValueStruct {
       #if !defined(NDEBUG)
-        ElementT () = default;
-        ~ElementT () {
+        Element () = default;
+        ~Element () {
             assert(
                 (this->header.bits & (NODE_FLAG_NODE | NODE_FLAG_CELL))
                 or this->header.bits == CELL_MASK_0
@@ -94,7 +94,7 @@
     };
 #else
     typedef struct ValueStruct AtomT;
-    typedef struct ValueStruct ElementT;
+    typedef struct ValueStruct Element;
 #endif
 
 typedef struct ValueStruct ValueT;
@@ -105,8 +105,6 @@ typedef struct ValueStruct ValueT;
 #define Atom(star_maybe_const) \
     AtomT star_maybe_const
 
-#define Element(star_maybe_const) \
-    ElementT star_maybe_const
 
 //=//// VARS and PARAMs ///////////////////////////////////////////////////=//
 //
