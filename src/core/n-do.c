@@ -847,22 +847,22 @@ DECLARE_NATIVE(apply)
 
         REBLEN index = Find_Symbol_In_Context(frame, symbol, false);
         if (index == 0)
-            fail (Error_Bad_Parameter_Raw(rebUnrelativize(at)));
+            fail (Error_Bad_Parameter_Raw(at));
 
         var = CTX_VAR(VAL_CONTEXT(frame), index);
         param = ACT_PARAM(VAL_ACTION(op), index);
 
         if (Is_Specialized(var))
-            fail (Error_Bad_Parameter_Raw(rebUnrelativize(at)));
+            fail (Error_Bad_Parameter_Raw(at));
 
         const Cell* lookback = Lookback_While_Fetching_Next(L);  // for error
         at = Try_At_Level(L);
 
         if (at == nullptr or Is_Comma(at))
-            fail (Error_Need_Non_End_Raw(rebUnrelativize(lookback)));
+            fail (Error_Need_Non_End_Raw(lookback));
 
         if (Is_Path(at) and Is_Refinement(at))  // [3]
-            fail (Error_Need_Non_End_Raw(rebUnrelativize(lookback)));
+            fail (Error_Need_Non_End_Raw(lookback));
 
         Init_Integer(ARG(index), index);
     }

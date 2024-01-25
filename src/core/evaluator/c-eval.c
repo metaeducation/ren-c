@@ -1153,7 +1153,7 @@ Bounce Evaluator_Executor(Level* L)
             // Don't assign, but let (trap [a.b: transcode "1&aa"]) work
         }
         else if (Is_Barrier(OUT)) {
-            fail (Error_Need_Non_End(rebUnrelativize(L_current)));
+            fail (Error_Need_Non_End(L_current));
         }
         else {
             Decay_If_Unstable(OUT);

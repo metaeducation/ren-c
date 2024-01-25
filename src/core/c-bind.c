@@ -756,7 +756,7 @@ DECLARE_NATIVE(let)
                 break; }
 
               default:
-                fail (rebUnrelativize(temp));  // default to passthru [6]
+                fail (temp);  // default to passthru [6]
             }
         }
 

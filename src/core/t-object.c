@@ -1023,7 +1023,7 @@ void MF_Context(REB_MOLD *mo, NoQuote(const Cell*) v, bool form)
             assert(Is_Antiform_Stable(cast(Atom(*), e.var)));  // extra check
 
             DECLARE_LOCAL (reified);
-            Unrelativize(reified, e.var);
+            Copy_Cell(reified, e.var);
             Quasify_Antiform(reified);  // will become quasi...
             Mold_Value(mo, reified);  // ...hence molds as `~xxx~`
         }

@@ -194,9 +194,6 @@ INLINE const Array* Freeze_Array_Shallow(const Array* a) {
     }
 #endif
 
-// Forward declaration needed
-INLINE REBVAL* Unrelativize(Cell* out, const Cell* v);
-
 INLINE const Cell* Ensure_Mutable(const Cell* v) {
     assert(Get_Cell_Flag(v, FIRST_IS_NODE));
     const Series* s = c_cast(Series*, Cell_Node1(v));  // varlist, etc.
@@ -206,9 +203,7 @@ INLINE const Cell* Ensure_Mutable(const Cell* v) {
     if (Not_Cell_Flag(v, CONST))
         return v;
 
-    DECLARE_LOCAL (specific);
-    Unrelativize(specific, v);  // relative values lose binding in error object
-    fail (Error_Const_Value_Raw(specific));
+    fail (Error_Const_Value_Raw(v));
 }
 
 

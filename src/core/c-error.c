@@ -694,8 +694,7 @@ Context* Make_Error_Managed_Core(
                 // in those cases it was specified, but that could set up
                 // the wrong expectations that the system is trying.)
                 //
-                const Cell* v = c_cast(Cell*, p);
-                Unrelativize(var, v);
+                Copy_Cell(var, c_cast(Value(*), p));
                 break; }
 
               default:

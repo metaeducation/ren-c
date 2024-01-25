@@ -397,31 +397,6 @@ INLINE REBINT VAL_WORD_INDEX(const Cell* v) {
     return cast(REBLEN, i);
 }
 
-
-// While ideally error messages would give back data that is bound exactly to
-// the context that was applicable, threading the specifier into many cases
-// can overcomplicate code.  We'd break too many invariants to just say a
-// relativized value is "unbound", so make an expired frame if necessary.
-//
-INLINE REBVAL* Unrelativize(Cell* out, const Cell* v) {
-    if (not Is_Bindable(v) or Is_Specific(v))
-        Copy_Cell(out, SPECIFIC(v));
-    else {
-        Copy_Cell_Header(out, v);
-        out->payload = v->payload;
-        BINDING(out) = nullptr;
-        if (Any_Word(out))
-            VAL_WORD_INDEX_I32(out) = 0;
-    }
-    return cast(REBVAL*, out);
-}
-
-// This was used to pass arguments to errors when specifiers were not available
-// but then Error() started accepting relative values directly.
-//
-#define rebUnrelativize(v) \
-    Unrelativize(Alloc_Value(), (v))
-
 INLINE void Unbind_Any_Word(Cell* v) {
     assert(Any_Wordlike(v));
     VAL_WORD_INDEX_I32(v) = 0;

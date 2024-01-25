@@ -1835,7 +1835,7 @@ DECLARE_NATIVE(subparse)
 
                 DECLARE_LOCAL (thrown_arg);
                 if (Is_Tag(P_RULE)) {
-                    if (rebDid(rebR(rebUnrelativize(P_RULE)), "= <here>"))
+                    if (rebDid(P_RULE, "= <here>"))
                         Copy_Cell(thrown_arg, ARG(position));
                     else
                         fail ("PARSE3 ACCEPT TAG! only works with <here>");
