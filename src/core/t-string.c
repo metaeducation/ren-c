@@ -345,7 +345,7 @@ static void reverse_string(String* str, REBLEN index, Length len)
 Bounce MAKE_String(
     Level* level_,
     enum Reb_Kind kind,
-    Option(Value(const*)) parent,
+    Option(const Value*) parent,
     const REBVAL *def
 ){
     if (parent)
@@ -1037,7 +1037,7 @@ REBTYPE(String)
         INCLUDE_PARAMS_OF_INSERT;
         UNUSED(PARAM(series));
 
-        Value(*) arg = ARG(value);
+        Value* arg = ARG(value);
         assert(not Is_Nulled(arg));  // not an <opt> parameter
 
         REBLEN len; // length of target

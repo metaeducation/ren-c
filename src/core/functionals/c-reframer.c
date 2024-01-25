@@ -90,7 +90,7 @@ enum {
 //
 Level* Make_Pushed_Level_From_Action_Feed_May_Throw(
     REBVAL *out,
-    Value(*) action,
+    Value* action,
     Feed* feed,
     StackIndex base,
     bool error_on_deferred
@@ -150,7 +150,7 @@ Level* Make_Pushed_Level_From_Action_Feed_May_Throw(
 // a single quote of nothing.
 //
 bool Init_Invokable_From_Feed_Throws(
-    Sink(Value(*)) out,
+    Sink(Value*) out,
     Option(const Cell*) first,  // override first value, vs. At_Feed(feed)
     Feed* feed,
     bool error_on_deferred  // if not planning to keep running, can't ELSE/THEN
@@ -258,7 +258,7 @@ bool Init_Invokable_From_Feed_Throws(
 // This converts QUOTED!s into frames for the identity function.
 //
 bool Init_Frame_From_Feed_Throws(
-    Sink(Value(*)) out,
+    Sink(Value*) out,
     const Cell* first,
     Feed* feed,
     bool error_on_deferred

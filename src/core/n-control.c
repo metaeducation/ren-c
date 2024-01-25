@@ -148,8 +148,8 @@ DECLARE_NATIVE(if)
 {
     INCLUDE_PARAMS_OF_IF;
 
-    Value(*) condition = ARG(condition);
-    Value(*) branch = ARG(branch);
+    Value* condition = ARG(condition);
+    Value* branch = ARG(branch);
 
     if (Is_Conditional_False(condition))  // errors on literal block [1]
         return VOID;
@@ -175,9 +175,9 @@ DECLARE_NATIVE(either)
 {
     INCLUDE_PARAMS_OF_EITHER;
 
-    Value(*) condition = ARG(condition);
+    Value* condition = ARG(condition);
 
-    Value(*) branch = Is_Conditional_True(condition)  // [1] on IF native
+    Value* branch = Is_Conditional_True(condition)  // [1] on IF native
         ? ARG(true_branch)
         : ARG(false_branch);
 
@@ -250,7 +250,7 @@ static Bounce Then_Else_Isotopic_Object_Helper(
     INCLUDE_PARAMS_OF_THEN;  // assume frame compatibility w/ELSE
 
     Atom(*) in = ARG(atom);  /* !!! Wrong, rewrite this routine */
-    Value(*) branch = ARG(branch);
+    Value* branch = ARG(branch);
 
     if (Is_Meta_Of_Nihil(in))
         fail ("THEN/ELSE cannot operate on empty pack! input (e.g. NIHIL)");
@@ -270,11 +270,11 @@ static Bounce Then_Else_Isotopic_Object_Helper(
 
   handle_lazy_object: {  /////////////////////////////////////////////////////
 
-    Option(Value(*)) then_hook = Select_Symbol_In_Context(in, Canon(THEN));
+    Option(Value*) then_hook = Select_Symbol_In_Context(in, Canon(THEN));
     if (then_hook and Is_Void(unwrap(then_hook)))
         then_hook = nullptr;  // can be unset by Debranch_Output()
 
-    Option(Value(*)) else_hook = Select_Symbol_In_Context(in, Canon(ELSE));
+    Option(Value*) else_hook = Select_Symbol_In_Context(in, Canon(ELSE));
     if (else_hook and Is_Void(unwrap(else_hook)))
         else_hook = nullptr;  // can be unset by Debranch_Output()
 
@@ -295,7 +295,7 @@ static Bounce Then_Else_Isotopic_Object_Helper(
         return CONTINUE_SUBLEVEL(TOP_LEVEL);
     }
 
-    Value(*) hook;
+    Value* hook;
     if (then) {
         if (not then_hook) {
             STATE = ST_THENABLE_REJECTING_INPUT;
@@ -395,7 +395,7 @@ DECLARE_NATIVE(did_1)  // see TO-C-NAME for why the "_1" is needed
 {
     INCLUDE_PARAMS_OF_DID_1;
 
-    Value(*) in = ARG(atom);
+    Value* in = ARG(atom);
     USED(ARG(decay));  // used by helper
     USED(ARG(branch));
 
@@ -470,7 +470,7 @@ DECLARE_NATIVE(didnt)
 {
     INCLUDE_PARAMS_OF_DIDNT;
 
-    Value(*) in = ARG(atom);
+    Value* in = ARG(atom);
     USED(ARG(decay));  // used by helper
     USED(ARG(branch));
 
@@ -502,7 +502,7 @@ DECLARE_NATIVE(then)  // see `tweak :then 'defer on` in %base-defs.r
 {
     INCLUDE_PARAMS_OF_THEN;
 
-    Value(*) in = ARG(atom);
+    Value* in = ARG(atom);
     Deactivate_If_Action(ARG(branch));
     USED(ARG(branch));  // used by helper
     USED(ARG(decay));
@@ -543,7 +543,7 @@ DECLARE_NATIVE(else)  // see `tweak :else 'defer on` in %base-defs.r
 {
     INCLUDE_PARAMS_OF_ELSE;
 
-    Value(*) in = ARG(atom);
+    Value* in = ARG(atom);
     Deactivate_If_Action(ARG(branch));
     USED(ARG(branch));  // used by helper
     USED(ARG(decay));
@@ -585,8 +585,8 @@ DECLARE_NATIVE(also)  // see `tweak :also 'defer on` in %base-defs.r
 {
     INCLUDE_PARAMS_OF_ALSO;  // `then func [x] [(...) :x]` => `also [...]`
 
-    Value(*) in = ARG(atom);
-    Value(*) branch = ARG(branch);
+    Value* in = ARG(atom);
+    Value* branch = ARG(branch);
     Deactivate_If_Action(ARG(branch));
 
     enum {
@@ -650,8 +650,8 @@ DECLARE_NATIVE(match)
 {
     INCLUDE_PARAMS_OF_MATCH;
 
-    Value(*) v = ARG(value);
-    Value(*) test = ARG(test);
+    Value* v = ARG(value);
+    Value* test = ARG(test);
 
     if (Is_Nulled(test)) {
         if (not Is_Nulled(v))
@@ -734,12 +734,12 @@ DECLARE_NATIVE(all)
 {
     INCLUDE_PARAMS_OF_ALL;
 
-    Value(*) block = ARG(block);
-    Value(*) predicate = ARG(predicate);
+    Value* block = ARG(block);
+    Value* predicate = ARG(predicate);
 
-    Value(*) scratch = ARG(scratch);
+    Value* scratch = ARG(scratch);
 
-    Value(*) condition;  // will be found in OUT or scratch
+    Value* condition;  // will be found in OUT or scratch
 
     enum {
         ST_ALL_INITIAL_ENTRY = STATE_0,
@@ -869,10 +869,10 @@ DECLARE_NATIVE(any)
 {
     INCLUDE_PARAMS_OF_ANY;
 
-    Value(*) predicate = ARG(predicate);
-    Value(*) block = ARG(block);
+    Value* predicate = ARG(predicate);
+    Value* block = ARG(block);
 
-    Value(*) condition;  // could point to OUT or SPARE
+    Value* condition;  // could point to OUT or SPARE
 
     enum {
         ST_ANY_INITIAL_ENTRY = STATE_0,
@@ -1610,7 +1610,7 @@ DECLARE_NATIVE(throw)
 {
     INCLUDE_PARAMS_OF_THROW;
 
-    Value(*) atom = Copy_Cell(SPARE, ARG(value));
+    Value* atom = Copy_Cell(SPARE, ARG(value));
 
     if (Is_Meta_Of_Void(atom))
         Init_Heavy_Void(atom);
@@ -1644,7 +1644,7 @@ void Debranch_Output(Atom(*) out) {
         const Symbol* syms[2] = {Canon(ELSE), Canon(THEN)};
         int i;
         for (i = 0; i < 2; ++i) {
-            Option(Value(*)) hook = Select_Symbol_In_Context(out, syms[i]);
+            Option(Value*) hook = Select_Symbol_In_Context(out, syms[i]);
             if (hook)
                 Init_Void(unwrap(hook));
         }
@@ -1663,7 +1663,7 @@ bool Pushed_Decaying_Level(Atom(*) out, Atom(const*) obj, Flags flags) {
     if (out != obj)
         Copy_Cell(out, obj);
     QUOTE_BYTE(out) = NOQUOTE_1;
-    Option(Value(*)) decayer = Select_Symbol_In_Context(
+    Option(Value*) decayer = Select_Symbol_In_Context(
         cast(const Cell*, out),
         Canon(DECAY)
     );

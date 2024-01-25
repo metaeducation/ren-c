@@ -454,7 +454,7 @@ INLINE Context* VAL_WORD_CONTEXT(const REBVAL *v) {
 // -or- marked with OPT_TYPESET_LOCKED to protect against modification.
 //
 
-INLINE Value(const*) Lookup_Word_May_Fail(
+INLINE const Value* Lookup_Word_May_Fail(
     const Cell* any_word,
     Specifier* specifier
 ){
@@ -475,7 +475,7 @@ INLINE Value(const*) Lookup_Word_May_Fail(
     return CTX_VAR(c, index);
 }
 
-INLINE Option(Value(const*)) Lookup_Word(
+INLINE Option(const Value*) Lookup_Word(
     const Cell* any_word,
     Specifier* specifier
 ){

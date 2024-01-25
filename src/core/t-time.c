@@ -236,7 +236,7 @@ REBINT CT_Time(NoQuote(const Cell*) a, NoQuote(const Cell*) b, bool strict)
 Bounce MAKE_Time(
     Level* level_,
     enum Reb_Kind kind,
-    Option(Value(const*)) parent,
+    Option(const Value*) parent,
     const REBVAL *arg
 ){
     assert(kind == REB_TIME);
@@ -368,7 +368,7 @@ Bounce TO_Time(Level* level_, enum Reb_Kind kind, const REBVAL *arg)
 //
 //  Pick_Time: C
 //
-void Pick_Time(Sink(Value(*)) out, const Cell* value, const Cell* picker)
+void Pick_Time(Sink(Value*) out, const Cell* value, const Cell* picker)
 {
     REBINT i;
     if (Is_Word(picker)) {

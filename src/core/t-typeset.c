@@ -243,7 +243,7 @@ void Set_Parameter_Spec(
                 *flags |= PARAMETER_FLAG_NULL_DEFINITELY_OK;
             }
             else if (0 == CT_String(item, Root_Void_Tag, strict)) {
-                Value(*) word = Init_Any_Word(
+                Value* word = Init_Any_Word(
                     dest,
                     REB_WORD,
                     Canon(VOID_Q)
@@ -377,7 +377,7 @@ DECLARE_INTRINSIC(unspecialized_q)
 Bounce MAKE_Parameter(
     Level* level_,
     enum Reb_Kind kind,
-    Option(Value(const*)) parent,
+    Option(const Value*) parent,
     const REBVAL *arg
 ){
     UNUSED(kind);
@@ -426,7 +426,7 @@ void MF_Parameter(REB_MOLD *mo, NoQuote(const Cell*) v, bool form)
 //
 REBTYPE(Parameter)
 {
-    Value(*) param = D_ARG(1);
+    Value* param = D_ARG(1);
     Option(SymId) symid = Symbol_Id(verb);
 
     switch (symid) {

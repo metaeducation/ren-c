@@ -177,13 +177,13 @@ INLINE bool Is_Native_Port_Actor(const REBVAL *actor) {
 }
 
 
-INLINE Value(const*) TRY_VAL_CONTEXT_VAR_CORE(
+INLINE const Value* TRY_VAL_CONTEXT_VAR_CORE(
     const REBVAL *context,
     const Symbol* symbol,
     bool writable
 ){
     bool strict = false;
-    Value(*) var;
+    Value* var;
     if (Is_Module(context)) {
         var = MOD_VAR(VAL_CONTEXT(context), symbol, strict);
     }
@@ -203,4 +203,4 @@ INLINE Value(const*) TRY_VAL_CONTEXT_VAR_CORE(
     TRY_VAL_CONTEXT_VAR_CORE((context), (symbol), false)
 
 #define TRY_VAL_CONTEXT_MUTABLE_VAR(context,symbol) \
-    m_cast(Value(*), TRY_VAL_CONTEXT_VAR_CORE((context), (symbol), true))
+    m_cast(Value*, TRY_VAL_CONTEXT_VAR_CORE((context), (symbol), true))

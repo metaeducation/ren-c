@@ -136,7 +136,7 @@ DECLARE_NATIVE(adapt)
     INCLUDE_PARAMS_OF_ADAPT;
 
     REBVAL *adaptee = ARG(original);
-    Value(*) prelude = ARG(prelude);
+    Value* prelude = ARG(prelude);
 
     // !!! There was code here which would hide it so adapted code had no
     // access to the locals.  That requires creating a new paramlist.  Is
@@ -166,7 +166,7 @@ DECLARE_NATIVE(adapt)
     // it can be executed (e.g. the `Level* L` it is dispatching).
     //
     Details* details = Phase_Details(adaptation);
-    Value(*) rebound = Init_Block(
+    Value* rebound = Init_Block(
         Array_At(details, IDX_ADAPTER_PRELUDE),
         prelude_copy
     );

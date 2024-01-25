@@ -146,7 +146,7 @@ REBVAL *Init_Decimal_Bits(Cell* out, const Byte* bp)
 Bounce MAKE_Decimal(
     Level* level_,
     enum Reb_Kind kind,
-    Option(Value(const*)) parent,
+    Option(const Value*) parent,
     const REBVAL *arg
 ){
     assert(kind == REB_DECIMAL or kind == REB_PERCENT);

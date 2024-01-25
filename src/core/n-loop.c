@@ -47,11 +47,11 @@
 //        for-each x [1 2 3] [if x != 3 [x]]  =>  ~[']~ antiform
 //
 bool Try_Catch_Break_Or_Continue(
-    Sink(Value(*)) out,
+    Sink(Value*) out,
     Level* loop_level,
     bool* breaking
 ){
-    Value(const*) label = VAL_THROWN_LABEL(loop_level);
+    const Value* label = VAL_THROWN_LABEL(loop_level);
 
     // Throw /NAME-s used by CONTINUE and BREAK are the actual native
     // function values of the routines themselves.
@@ -139,7 +139,7 @@ DECLARE_NATIVE(definitional_continue)
 {
     INCLUDE_PARAMS_OF_DEFINITIONAL_CONTINUE;
 
-    Value(*) v = ARG(with);
+    Value* v = ARG(with);
     if (not REF(with))
         Init_Void(v);  // See: https://forum.rebol.info/t/1965/3 [1]
 
@@ -166,7 +166,7 @@ DECLARE_NATIVE(definitional_continue)
 //  Add_Definitional_Break_Continue: C
 //
 void Add_Definitional_Break_Continue(
-    Value(*) body,
+    Value* body,
     Level* loop_level
 ){
     Specifier* body_specifier = Cell_Specifier(body);
@@ -474,7 +474,7 @@ DECLARE_NATIVE(cfor)
 {
     INCLUDE_PARAMS_OF_CFOR;
 
-    Value(*) body = ARG(body);
+    Value* body = ARG(body);
 
     Context* context = Virtual_Bind_Deep_To_New_Context(
         body,  // may be updated, will still be GC safe
@@ -653,7 +653,7 @@ DECLARE_NATIVE(definitional_stop)  // See CYCLE for notes about STOP
 {
     INCLUDE_PARAMS_OF_DEFINITIONAL_STOP;
 
-    Value(*) v = ARG(with);
+    Value* v = ARG(with);
     if (not REF(with))
         Init_Void(v);  // See: https://forum.rebol.info/t/1965/3
 
@@ -680,7 +680,7 @@ DECLARE_NATIVE(definitional_stop)  // See CYCLE for notes about STOP
 //  Add_Definitional_Stop: C
 //
 void Add_Definitional_Stop(
-    Value(*) body,
+    Value* body,
     Level* loop_level
 ){
     Specifier* body_specifier = Cell_Specifier(body);
@@ -728,7 +728,7 @@ DECLARE_NATIVE(cycle)
 {
     INCLUDE_PARAMS_OF_CYCLE;
 
-    Value(*) body = ARG(body);
+    Value* body = ARG(body);
 
     enum {
         ST_CYCLE_INITIAL_ENTRY = STATE_0,
@@ -810,7 +810,7 @@ struct Loop_Each_State {
 //
 //  Init_Loop_Each: C
 //
-void Init_Loop_Each(Value(*) iterator, Value(*) data)
+void Init_Loop_Each(Value* iterator, Value* data)
 {
     struct Loop_Each_State *les = Try_Alloc(struct Loop_Each_State);
 
@@ -886,7 +886,7 @@ void Init_Loop_Each(Value(*) iterator, Value(*) data)
 //
 // It's possible to opt out of variable slots using BLANK!.
 //
-static bool Try_Loop_Each_Next(Value(const*) iterator, Context* vars_ctx)
+static bool Try_Loop_Each_Next(const Value* iterator, Context* vars_ctx)
 {
     struct Loop_Each_State *les;
     les = VAL_HANDLE_POINTER(struct Loop_Each_State, iterator);
@@ -894,7 +894,7 @@ static bool Try_Loop_Each_Next(Value(const*) iterator, Context* vars_ctx)
     if (not les->more_data)
         return false;
 
-    Value(const*) pseudo_tail;
+    const Value* pseudo_tail;
     REBVAL *pseudo_var = CTX_VARS(&pseudo_tail, vars_ctx);
     for (; pseudo_var != pseudo_tail; ++pseudo_var) {
         REBVAL *var = Real_Var_From_Pseudo(pseudo_var);
@@ -1081,7 +1081,7 @@ static bool Try_Loop_Each_Next(Value(const*) iterator, Context* vars_ctx)
 //
 // Cleanups that need to be done despite error, throw, etc.
 //
-void Shutdown_Loop_Each(Value(*) iterator)
+void Shutdown_Loop_Each(Value* iterator)
 {
     struct Loop_Each_State *les;
     les = VAL_HANDLE_POINTER(struct Loop_Each_State, iterator);
@@ -1120,11 +1120,11 @@ DECLARE_NATIVE(for_each)
 {
     INCLUDE_PARAMS_OF_FOR_EACH;
 
-    Value(*) vars = ARG(vars);  // transformed to context on initial_entry
-    Value(*) data = ARG(data);
-    Value(*) body = ARG(body);  // bound to vars context on initial_entry
+    Value* vars = ARG(vars);  // transformed to context on initial_entry
+    Value* data = ARG(data);
+    Value* body = ARG(body);  // bound to vars context on initial_entry
 
-    Value(*) iterator = ARG(return);  // reuse to hold Loop_Each_State
+    Value* iterator = ARG(return);  // reuse to hold Loop_Each_State
 
     bool breaking = false;
 
@@ -1228,11 +1228,11 @@ DECLARE_NATIVE(every)
 {
     INCLUDE_PARAMS_OF_EVERY;
 
-    Value(*) vars = ARG(vars);  // transformed to context on initial_entry
-    Value(*) data = ARG(data);
-    Value(*) body = ARG(body);  // bound to vars context on initial_entry
+    Value* vars = ARG(vars);  // transformed to context on initial_entry
+    Value* data = ARG(data);
+    Value* body = ARG(body);  // bound to vars context on initial_entry
 
-    Value(*) iterator = ARG(return);  // place to store iteration state
+    Value* iterator = ARG(return);  // place to store iteration state
 
     enum {
         ST_EVERY_INITIAL_ENTRY = STATE_0,
@@ -1382,8 +1382,8 @@ DECLARE_NATIVE(remove_each)
 {
     INCLUDE_PARAMS_OF_REMOVE_EACH;
 
-    Value(*) data = ARG(data);
-    Value(*) body = ARG(body);
+    Value* data = ARG(data);
+    Value* body = ARG(body);
 
     Series* series = Cell_Series_Ensure_Mutable(data);  // check even if empty
 
@@ -1429,7 +1429,7 @@ DECLARE_NATIVE(remove_each)
     while (index < len) {
         assert(start == index);
 
-        Value(const*) var_tail;
+        const Value* var_tail;
         REBVAL *var = CTX_VARS(&var_tail, context);  // fixed (#2274)
         for (; var != var_tail; ++var) {
             if (index == len) {
@@ -1732,11 +1732,11 @@ DECLARE_NATIVE(map)
 {
     INCLUDE_PARAMS_OF_MAP;
 
-    Value(*) vars = ARG(vars);  // transformed to context on initial_entry
-    Value(*) data = ARG(data);
-    Value(*) body = ARG(body);  // bound to vars context on initial_entry
+    Value* vars = ARG(vars);  // transformed to context on initial_entry
+    Value* data = ARG(data);
+    Value* body = ARG(body);  // bound to vars context on initial_entry
 
-    Value(*) iterator = ARG(return);  // reuse to hold Loop_Each_State
+    Value* iterator = ARG(return);  // reuse to hold Loop_Each_State
 
     enum {
         ST_MAP_INITIAL_ENTRY = STATE_0,
@@ -1876,10 +1876,10 @@ DECLARE_NATIVE(repeat)
 {
     INCLUDE_PARAMS_OF_REPEAT;
 
-    Value(*) count = ARG(count);
-    Value(*) body = ARG(body);
+    Value* count = ARG(count);
+    Value* body = ARG(body);
 
-    Value(*) index = cast(Value(*), SPARE);  // spare cell holds current index
+    Value* index = cast(Value*, SPARE);  // spare cell holds current index
 
     enum {
         ST_REPEAT_INITIAL_ENTRY = STATE_0,
@@ -2074,8 +2074,8 @@ DECLARE_NATIVE(until)
 {
     INCLUDE_PARAMS_OF_UNTIL;
 
-    Value(*) body = ARG(body);
-    Value(*) predicate = ARG(predicate);
+    Value* body = ARG(body);
+    Value* predicate = ARG(predicate);
 
     Atom(*) condition;  // can point to OUT or SPARE
 
@@ -2178,8 +2178,8 @@ DECLARE_NATIVE(while)
 {
     INCLUDE_PARAMS_OF_WHILE;
 
-    Value(*) condition = ARG(condition);
-    Value(*) body = ARG(body);
+    Value* condition = ARG(condition);
+    Value* body = ARG(body);
 
     enum {
         ST_WHILE_INITIAL_ENTRY = STATE_0,

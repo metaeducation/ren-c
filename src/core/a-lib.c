@@ -1100,7 +1100,7 @@ inline static void Run_Va_Undecayed_May_Fail_Calls_Va_End(
 // about multi-return packs etc.
 //
 inline static void Run_Va_Decay_May_Fail_Calls_Va_End(
-    Value(*) out,
+    Value* out,
     const void *p,  // first pointer (may be END, nullptr means NULLED)
     va_list *vaptr  // va_end() handled by feed for all cases (throws, fails)
 ){
@@ -2218,13 +2218,13 @@ const REBINS *RL_rebQUOTING(const void *p)
         break; }
 
       case DETECTED_AS_CELL: {
-        Value(const*) at = cast(Value(const*), p);
+        const Value* at = cast(const Value*, p);
         if (Is_Nulled(at)) {
             assert(not Is_Api_Value(at));  // only internals use nulled cells
             return FEED_NULL_SUBSTITUTE_CELL;  // reified substitute
         }
 
-        Value(*) v = Copy_Cell(Alloc_Value(), at);
+        Value* v = Copy_Cell(Alloc_Value(), at);
         stub = Singular_From_Cell(v);
         Set_Subclass_Flag(API, stub, RELEASE);
         break; }
@@ -2233,7 +2233,7 @@ const REBINS *RL_rebQUOTING(const void *p)
         fail ("Unknown pointer");
     }
 
-    Value(*) v = x_cast(Value(*), Stub_Cell(stub));
+    Value* v = x_cast(Value*, Stub_Cell(stub));
     Meta_Quotify(v);
     return stub;
 }
@@ -2247,7 +2247,7 @@ const REBINS *RL_rebQUOTING(const void *p)
 //
 const REBINS* rebDERELATIVIZE(const Cell* cell, Specifier* specifier)
 {
-    Value(*) v = Derelativize(Alloc_Value(), cell, specifier);
+    Value* v = Derelativize(Alloc_Value(), cell, specifier);
     Array* a = Singular_From_Cell(v);
     Set_Subclass_Flag(API, a, RELEASE);
     return a;
@@ -2377,11 +2377,11 @@ const REBINS *RL_rebRUN(const void *p)
         break; }
 
       case DETECTED_AS_CELL: {
-        Value(const*) at = cast(Value(const*), p);
+        const Value* at = cast(const Value*, p);
         if (Is_Nulled(at))
             fail ("rebRUN() received null cell");
 
-        Value(*) v = Copy_Cell(Alloc_Value(), at);
+        Value* v = Copy_Cell(Alloc_Value(), at);
         stub = Singular_From_Cell(v);
         Set_Subclass_Flag(API, stub, RELEASE);
         break; }
@@ -2390,7 +2390,7 @@ const REBINS *RL_rebRUN(const void *p)
         fail ("Unknown pointer");
     }
 
-    Value(*) v = Stub_Cell(stub);
+    Value* v = Stub_Cell(stub);
     if (Is_Action(v))
         QUOTE_BYTE(v) = NOQUOTE_1;
     else if (not Is_Frame(v))

@@ -372,7 +372,7 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
 Bounce MAKE_Varargs(
     Level* level_,
     enum Reb_Kind kind,
-    Option(Value(const*)) parent,
+    Option(const Value*) parent,
     const REBVAL *arg
 ){
     assert(kind == REB_VARARGS);

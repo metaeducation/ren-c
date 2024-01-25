@@ -130,7 +130,7 @@ void Rollback_Globals_To_State(struct Reb_State *s)
 // cell managed by the caller.  This is referred to as a "plug".
 //
 void Unplug_Stack(
-    Value(*) plug,  // cell where global state differentials can be stored
+    Value* plug,  // cell where global state differentials can be stored
     Level* L,  // level to unplug (currently can only unplug topmost level)
     Level* base  // base level to unplug relative to
 ){
@@ -153,10 +153,10 @@ void Unplug_Stack(
             // still GC safe.  When the stack gets patched back in, it will
             // be recognized and reset to the new base's out.
             //
-            temp->out = m_cast(Value(*), Lib(TRUE));
+            temp->out = m_cast(Value*, Lib(TRUE));
         }
         else if (temp->out == &base->spare) {
-            temp->out = m_cast(Value(*), Lib(FALSE));
+            temp->out = m_cast(Value*, Lib(FALSE));
         }
 
         // We make the baseline stack pointers in each level relative to the
@@ -260,7 +260,7 @@ void Unplug_Stack(
 //    of that sublevel to match the output of the current level (see assert in
 //    Unplug_Stack() proving sublevel had same L->out).
 //
-void Replug_Stack(Level* L, Level* base, Value(*) plug) {
+void Replug_Stack(Level* L, Level* base, Value* plug) {
     assert(base == TOP_LEVEL);  // currently can only plug atop topmost frame
 
     Level* temp = L;
@@ -292,7 +292,7 @@ void Replug_Stack(Level* L, Level* base, Value(*) plug) {
   blockscope {
 
     Array* array = Cell_Array_Known_Mutable(plug);
-    Value(*) item = Series_Tail(ValueT, array);
+    Value* item = Series_Tail(Value, array);
 
     if (Get_Subclass_Flag(PLUG, array, HAS_MOLD)) {  // restore mold from plug
         --item;
@@ -302,7 +302,7 @@ void Replug_Stack(Level* L, Level* base, Value(*) plug) {
     }
 
     if (Get_Subclass_Flag(PLUG, array, HAS_DATA_STACK)) {
-        Value(*) stacked = Series_Head(ValueT, array);
+        Value* stacked = Series_Head(Value, array);
         for (; stacked != item; ++stacked)
             Move_Cell(PUSH(), stacked);
     }

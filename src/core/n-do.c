@@ -622,7 +622,7 @@ DECLARE_NATIVE(redo)
     const Key* key_tail;
     const Key* key = ACT_KEYS(&key_tail, redo_action);
     Param* param = ACT_PARAMS_HEAD(redo_action);
-    Value(*) arg = Level_Args_Head(L);
+    Value* arg = Level_Args_Head(L);
     for (; key != key_tail; ++key, ++arg, ++param) {
         if (
             Is_Specialized(param)  // must reset [2]
@@ -636,7 +636,7 @@ DECLARE_NATIVE(redo)
     Copy_Cell(SPARE, Lib(REDO));  // label used for throw
     INIT_VAL_FRAME_BINDING(SPARE, c);  // target has restartee as varlist
 
-    Value(const*) gather_args = Lib(FALSE);
+    const Value* gather_args = Lib(FALSE);
     return Init_Thrown_With_Label(LEVEL, gather_args, stable_SPARE);
 }
 
@@ -662,10 +662,10 @@ DECLARE_NATIVE(applique)
 {
     INCLUDE_PARAMS_OF_APPLIQUE;
 
-    Value(*) op = ARG(operation);
-    Value(*) def = ARG(def);
+    Value* op = ARG(operation);
+    Value* def = ARG(def);
 
-    Value(*) frame = ARG(return);  // reuse as GC-safe cell for FRAME!
+    Value* frame = ARG(return);  // reuse as GC-safe cell for FRAME!
 
     enum {
         ST_APPLIQUE_INITIAL_ENTRY = STATE_0,
@@ -753,13 +753,13 @@ DECLARE_NATIVE(apply)
 {
     INCLUDE_PARAMS_OF_APPLY;
 
-    Value(*) op = ARG(operation);
-    Value(*) args = ARG(args);
+    Value* op = ARG(operation);
+    Value* args = ARG(args);
 
-    Value(*) frame = ARG(frame);  // local variable for holding GC-safe frame
-    Value(*) iterator = ARG(return);  // reuse to hold Evars iterator
+    Value* frame = ARG(frame);  // local variable for holding GC-safe frame
+    Value* iterator = ARG(return);  // reuse to hold Evars iterator
 
-    Value(*) var;  // may come from evars iterator or found by index
+    Value* var;  // may come from evars iterator or found by index
     Param* param;  // (same)
 
     enum {
@@ -994,7 +994,7 @@ DECLARE_NATIVE(run)
 {
     INCLUDE_PARAMS_OF_RUN;
 
-    Value(*) action = ARG(frame);
+    Value* action = ARG(frame);
     UNUSED(ARG(args));  // uses internal mechanisms to act variadic
 
     Level* sub = Make_Action_Sublevel(level_);

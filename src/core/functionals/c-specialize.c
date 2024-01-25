@@ -122,7 +122,7 @@ Context* Make_Context_For_Action_Push_Partials(
     const Key* key = ACT_KEYS(&tail, act);
     const Param* param = ACT_PARAMS_HEAD(act);
 
-    Value(*) arg = cast(Value(*), rootvar) + 1;
+    Value* arg = cast(Value*, rootvar) + 1;
 
     REBLEN index = 1;  // used to bind REFINEMENT! values to parameter slots
 
@@ -235,9 +235,9 @@ Context* Make_Context_For_Action(
 // has /DUP at TOP, and /PART under it.  List stops at lowest_ordered_dsp.
 //
 bool Specialize_Action_Throws(
-    Sink(Value(*)) out,
-    Value(*) specializee,
-    Option(Value(*)) def,  // !!! REVIEW: binding modified directly, not copied
+    Sink(Value*) out,
+    Value* specializee,
+    Option(Value*) def,  // !!! REVIEW: binding modified directly, not copied
     StackIndex lowest_ordered_stackindex
 ){
     assert(out != specializee);
@@ -452,8 +452,8 @@ DECLARE_NATIVE(specialize)
 {
     INCLUDE_PARAMS_OF_SPECIALIZE;
 
-    Value(*) specializee = ARG(original);
-    Value(*) def = ARG(def);
+    Value* specializee = ARG(original);
+    Value* def = ARG(def);
 
     if (Specialize_Action_Throws(
         OUT,

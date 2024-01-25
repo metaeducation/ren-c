@@ -640,7 +640,7 @@ DECLARE_NATIVE(definitional_return)
     if (REF(only))
         fail (Error_Bad_Refines_Raw());
 
-    Value(const*) gather_args;
+    const Value* gather_args;
 
     if (Is_The_Word(atom) and Cell_Word_Id(atom) == SYM_REDO) {  // reuse args
         Action* redo_action = target_level->u.action.original;
@@ -650,7 +650,7 @@ DECLARE_NATIVE(definitional_return)
         target_level->u.action.key_tail = key_tail;
         Param* param = cast(Param*, CTX_VARS_HEAD(ACT_EXEMPLAR(redo_action)));
         target_level->u.action.param = ACT_PARAMS_HEAD(redo_action);
-        Value(*) arg = Level_Args_Head(target_level);
+        Value* arg = Level_Args_Head(target_level);
         target_level->u.action.arg = arg;
         for (; key != key_tail; ++key, ++arg, ++param) {
             if (

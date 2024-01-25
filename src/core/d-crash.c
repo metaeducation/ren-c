@@ -268,7 +268,7 @@ DECLARE_NATIVE(raise_p)
 {
     INCLUDE_PARAMS_OF_RAISE_P;
 
-    Value(*) v = ARG(reason);
+    Value* v = ARG(reason);
 
     return Raisify(COPY(v));
 }
@@ -289,9 +289,9 @@ DECLARE_NATIVE(fail)
 {
     INCLUDE_PARAMS_OF_FAIL;
 
-    Value(*) reason = ARG(reason);
-    Value(*) blame = ARG(blame);
-    Value(*) where = ARG(where);
+    Value* reason = ARG(reason);
+    Value* blame = ARG(blame);
+    Value* where = ARG(where);
 
   #if defined(NDEBUG)
     UNUSED(blame);

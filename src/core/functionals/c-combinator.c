@@ -254,8 +254,8 @@ DECLARE_NATIVE(combinator)
 {
     INCLUDE_PARAMS_OF_COMBINATOR;
 
-    Value(*) spec = ARG(spec);
-    Value(*) body = ARG(body);
+    Value* spec = ARG(spec);
+    Value* body = ARG(body);
 
     // This creates the expanded spec and puts it in a block which manages it.
     // That might not be needed if the Make_Paramlist_Managed() could take an
@@ -371,10 +371,10 @@ DECLARE_NATIVE(opt_combinator)
 {
     INCLUDE_PARAMS_OF_OPT_COMBINATOR;
 
-    Value(*) remainder = ARG(remainder);  // output (combinator implicit)
+    Value* remainder = ARG(remainder);  // output (combinator implicit)
 
-    Value(*) input = ARG(input);  // combinator implicit
-    Value(*) parser = ARG(parser);
+    Value* input = ARG(input);  // combinator implicit
+    Value* parser = ARG(parser);
     UNUSED(ARG(state));  // combinator implicit
 
     enum {
@@ -426,8 +426,8 @@ DECLARE_NATIVE(text_x_combinator)
     Context* state = VAL_CONTEXT(ARG(state));
     bool cased = Is_Truthy(CTX_VAR(state, IDX_UPARSE_PARAM_CASE));
 
-    Value(*) v = ARG(value);
-    Value(*) input = ARG(input);
+    Value* v = ARG(value);
+    Value* input = ARG(input);
 
     if (Any_Array(input)) {
         const Element* tail;
@@ -496,11 +496,11 @@ DECLARE_NATIVE(some_combinator)
 {
     INCLUDE_PARAMS_OF_SOME_COMBINATOR;
 
-    Value(*) remainder = ARG(remainder);
-    Value(*) parser = ARG(parser);
-    Value(*) input = ARG(input);
+    Value* remainder = ARG(remainder);
+    Value* parser = ARG(parser);
+    Value* input = ARG(input);
 
-    Value(*) state = ARG(state);
+    Value* state = ARG(state);
     Array* loops = Cell_Array_Ensure_Mutable(
         CTX_VAR(VAL_CONTEXT(state), IDX_UPARSE_PARAM_LOOPS)
     );
@@ -627,7 +627,7 @@ DECLARE_NATIVE(further_combinator)
 struct Combinator_Param_State {
     Context* ctx;
     Level* level_;
-    Value(*) rule_end;
+    Value* rule_end;
 };
 
 static bool Combinator_Param_Hook(
@@ -663,7 +663,7 @@ static bool Combinator_Param_Hook(
     // done based on the offset of the param from the head.
 
     REBLEN offset = param - ACT_PARAMS_HEAD(VAL_ACTION(ARG(c)));
-    Value(*) var = CTX_VARS_HEAD(s->ctx) + offset;
+    Value* var = CTX_VARS_HEAD(s->ctx) + offset;
 
     if (symid == SYM_STATE) {  // the "state" is currently the UPARSE frame
         Copy_Cell(var, ARG(state));
@@ -811,7 +811,7 @@ DECLARE_NATIVE(combinatorize)
     Option(const Symbol*) label = VAL_FRAME_LABEL(ARG(c));
     Context* binding = VAL_FRAME_BINDING(ARG(c));
 
-    Value(*) rule_start = ARG(rule_start);
+    Value* rule_start = ARG(rule_start);
     Copy_Cell(rule_start, ARG(rules));
     if (VAL_INDEX(rule_start) > 0)
         VAL_INDEX_RAW(rule_start) -= 1;

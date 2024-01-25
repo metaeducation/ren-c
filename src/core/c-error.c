@@ -103,7 +103,7 @@ ATTRIBUTE_NO_RETURN void Fail_Core(const void *p)
         assert(not Is_Antiform_Unstable(atom));  // should handle this case...
         UNUSED(atom);
 
-        Value(const*) v = c_cast(Value(*), p);
+        const Value* v = c_cast(Value*, p);
 
         // Check to see if the REBVAL* cell is in the paramlist of the current
         // running native.  (We could theoretically do this with ARG(), or
@@ -123,7 +123,7 @@ ATTRIBUTE_NO_RETURN void Fail_Core(const void *p)
                 assert(!"fail() given API handle that is not an ERROR!");
                 error = Error_Bad_Value(v);
             }
-            rebRelease(m_cast(Value(*), v));  // released even if we didn't
+            rebRelease(m_cast(Value*, v));  // released even if we didn't
         }
         else if (not Is_Action_Level(TOP_LEVEL))
             error = Error_Bad_Value(v);
@@ -399,7 +399,7 @@ void Set_Location_Of_Error(
 Bounce MAKE_Error(
     Level* level_,
     enum Reb_Kind kind,
-    Option(Value(const*)) parent,
+    Option(const Value*) parent,
     const REBVAL *arg
 ){
     assert(kind == REB_ERROR);
@@ -494,7 +494,7 @@ Bounce MAKE_Error(
         Context* categories = VAL_CONTEXT(Get_System(SYS_CATALOG, CAT_ERRORS));
 
         // Find correct category for TYPE: (if any)
-        Option(Value(*)) category = Select_Symbol_In_Context(
+        Option(Value*) category = Select_Symbol_In_Context(
             CTX_ARCHETYPE(categories),
             Cell_Word_Symbol(&vars->type)
         );
@@ -504,7 +504,7 @@ Bounce MAKE_Error(
 
             // Find correct message for ID: (if any)
 
-            Option(Value(*)) message = Select_Symbol_In_Context(
+            Option(Value*) message = Select_Symbol_In_Context(
                 unwrap(category),
                 Cell_Word_Symbol(&vars->id)
             );
@@ -697,7 +697,7 @@ Context* Make_Error_Managed_Core(
                 // in those cases it was specified, but that could set up
                 // the wrong expectations that the system is trying.)
                 //
-                Copy_Cell(var, c_cast(Value(*), p));
+                Copy_Cell(var, c_cast(Value*, p));
                 break; }
 
               default:
@@ -798,7 +798,7 @@ Context* Error_Need_Non_End(const Cell* target) {
 //
 Context* Error_Bad_Word_Get(
     const Cell* target,
-    Value(const*) anti
+    const Value* anti
 ){
     // SET calls this, and doesn't work on just SET-WORD! and SET-PATH!
     //
@@ -955,7 +955,7 @@ Context* Error_Invalid_Arg(Level* L, const Param* param)
 // distinguished from `fail (some_context)` meaning that the context iss for
 // an actual intended error.
 //
-Context* Error_Bad_Value(Value(const*) value)
+Context* Error_Bad_Value(const Value* value)
 {
     if (Is_Antiform(value))
         return Error_Bad_Antiform(value);
@@ -1444,7 +1444,7 @@ void MF_Error(REB_MOLD *mo, NoQuote(const Cell*) v, bool form)
         Append_Ascii(mo->series, RM_BAD_ERROR_FORMAT);
 
     // Form: ** Where: function
-    Value(*) where = &vars->where;
+    Value* where = &vars->where;
     if (
         not Is_Nulled(where)
         and not (Is_Block(where) and Cell_Series_Len_At(where) == 0)
@@ -1459,7 +1459,7 @@ void MF_Error(REB_MOLD *mo, NoQuote(const Cell*) v, bool form)
     }
 
     // Form: ** Near: location
-    Value(*) nearest = &vars->nearest;
+    Value* nearest = &vars->nearest;
     if (not Is_Nulled(nearest)) {
         Append_Codepoint(mo->series, '\n');
         Append_Ascii(mo->series, RM_ERROR_NEAR);
@@ -1487,7 +1487,7 @@ void MF_Error(REB_MOLD *mo, NoQuote(const Cell*) v, bool form)
     // only be used in ANY-WORD! values at the moment, so the filename is
     // not a FILE!.
     //
-    Value(*) file = &vars->file;
+    Value* file = &vars->file;
     if (not Is_Nulled(file)) {
         Append_Codepoint(mo->series, '\n');
         Append_Ascii(mo->series, RM_ERROR_FILE);
@@ -1498,7 +1498,7 @@ void MF_Error(REB_MOLD *mo, NoQuote(const Cell*) v, bool form)
     }
 
     // Form: ** Line: line-number
-    Value(*) line = &vars->line;
+    Value* line = &vars->line;
     if (not Is_Nulled(line)) {
         Append_Codepoint(mo->series, '\n');
         Append_Ascii(mo->series, RM_ERROR_LINE);

@@ -178,8 +178,8 @@ DECLARE_NATIVE(enclose)
 {
     INCLUDE_PARAMS_OF_ENCLOSE;
 
-    Value(*) inner = ARG(inner);
-    Value(*) outer = ARG(outer);
+    Value* inner = ARG(inner);
+    Value* outer = ARG(outer);
 
     // The new function has the same interface as `inner`
     //

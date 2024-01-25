@@ -251,7 +251,7 @@ struct FeedStruct {
     // !!! Review how often gotten has hits vs. misses, and what the benefit
     // of the feature actually is.
     //
-    Option(Value(const*)) gotten;
+    Option(const Value*) gotten;
 
     // Feeds need to be freed when the last level reference is dropped.  This
     // doesn't go in a simple stacklike order, due to stack rearrangement

@@ -204,7 +204,7 @@ INLINE const Element* Copy_Reified_Variadic_Feed_Cell(
         return out;
     }
 
-    Copy_Cell(out, cast(Value(const*), cell));
+    Copy_Cell(out, cast(const Value*, cell));
     return out;
 }
 
@@ -217,7 +217,7 @@ INLINE const Element* Copy_Reified_Variadic_Feed_Cell(
 // !!! Actually, THIS CODE CAN'T FAIL.  :-/  It is part of the implementation
 // of fail's cleanup itself.
 //
-INLINE Option(Value(const*)) Try_Reify_Variadic_Feed_Series(
+INLINE Option(const Value*) Try_Reify_Variadic_Feed_Series(
     Feed* feed
 ){
     const Series* s = c_cast(Series*, feed->p);
@@ -264,7 +264,7 @@ INLINE Option(Value(const*)) Try_Reify_Variadic_Feed_Series(
         // vs. putting it in fetched/MARKED_TEMPORARY...but that makes
         // this more convoluted.  Review.
 
-        Value(*) single = Stub_Cell(inst1);
+        Value* single = Stub_Cell(inst1);
         feed->p = single;
         feed->p = Copy_Reified_Variadic_Feed_Cell(&feed->fetched, feed);
         rebRelease(single);  // *is* the instruction

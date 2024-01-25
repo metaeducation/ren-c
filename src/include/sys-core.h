@@ -23,7 +23,7 @@
 // This is the main include file used in the implementation of the core.
 //
 // * It defines all the data types and structures used by the auto-generated
-//   function prototypes.  Includes the obvious REBINT, Value(*), Series*.
+//   function prototypes.  Includes the obvious REBINT, Value*, Series*.
 //   It also includes any enumerated type parameters to functions which are
 //   shared between various C files.
 //
@@ -226,7 +226,7 @@ struct Reb_Enum_Vars {
     const Key* key_tail;
     Param* param;
     enum Reb_Var_Visibility visibility;
-    Value(*) var;
+    Value* var;
     REBLEN index;  // important for enumerations that are binding
 
     // !!! Enumerating key/val pairs in modules in the "sea of words" model is
@@ -353,7 +353,7 @@ typedef struct {
 typedef struct {
     Array* array;
     StackIndex index;
-    Value(*) movable_top;
+    Value* movable_top;
     const Cell* movable_tail;
 
   #if DEBUG_EXTANT_STACK_POINTERS
@@ -376,7 +376,7 @@ typedef struct {
     Jump* jump_list;  // Saved state for RESCUE_SCOPE
 
     AtomT thrown_arg;
-    ValueT thrown_label;
+    Value thrown_label;
     Level* unwind_level;
 
     Flags eval_signals;  // signal flags (Rebol signals, not unix ones!)

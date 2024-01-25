@@ -47,7 +47,7 @@ REBINT CT_Integer(NoQuote(const Cell*) a, NoQuote(const Cell*) b, bool strict)
 Bounce MAKE_Integer(
     Level* level_,
     enum Reb_Kind kind,
-    Option(Value(const*)) parent,
+    Option(const Value*) parent,
     const REBVAL *arg
 ){
     assert(kind == REB_INTEGER);
@@ -148,8 +148,8 @@ void Hex_String_To_Integer(REBVAL *out, const REBVAL *value)
 // If a type is added or removed, update DECLARE_NATIVE(to_integer)'s spec
 //
 Context* Maybe_Value_To_Int64(
-    Sink(Value(*)) out,
-    Value(const*) value,
+    Sink(Value*) out,
+    const Value* value,
     bool no_sign
 ){
     // !!! Code extracted from REBTYPE(Integer)'s A_MAKE and A_TO cases

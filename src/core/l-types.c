@@ -44,7 +44,7 @@
 Bounce MAKE_Fail(
     Level* level_,
     enum Reb_Kind kind,
-    Option(Value(const*)) parent,
+    Option(const Value*) parent,
     const REBVAL *arg
 ){
     UNUSED(kind);
@@ -65,7 +65,7 @@ Bounce MAKE_Fail(
 Bounce MAKE_Unhooked(
     Level* level_,
     enum Reb_Kind kind,
-    Option(Value(const*)) parent,
+    Option(const Value*) parent,
     const REBVAL *arg
 ){
     UNUSED(parent);
@@ -114,7 +114,7 @@ DECLARE_NATIVE(make)
     if (Not_Cell_Flag(arg, CONST))
         Set_Cell_Flag(arg, EXPLICITLY_MUTABLE);
 
-    Option(Value(const*)) parent;
+    Option(const Value*) parent;
     enum Reb_Kind kind;
     if (Is_Type_Word(type)) {
         kind = VAL_TYPE_KIND(type);
@@ -1103,7 +1103,7 @@ const Byte* Scan_Pair(
     if (*ep != 'x' && *ep != 'X')
         return_NULL;
 
-    Value(*) paired = Alloc_Pairing(CELL_MASK_0);
+    Value* paired = Alloc_Pairing(CELL_MASK_0);
 
     // X is in the first pairing cell
     if (is_integral)

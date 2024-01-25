@@ -80,8 +80,8 @@ INLINE Cell* Quotify_Core(Cell* v, Count depth) {
 #if (! CPLUSPLUS_11)    // C++ can overload so return type matches input type
     #define Quotify Quotify_Core
 #else
-    INLINE Value(*) Quotify(Value(*) v, Count depth)
-        { return c_cast(Value(*), Quotify_Core(v, depth)); }
+    INLINE Value* Quotify(Value* v, Count depth)
+        { return c_cast(Value*, Quotify_Core(v, depth)); }
 
     INLINE Cell* Quotify(Cell* v, Count depth)
         { return Quotify_Core(v, depth); }
@@ -106,8 +106,8 @@ INLINE Cell* Unquotify_Core(Cell* v, Count unquotes) {
 #if (! CPLUSPLUS_11)  // C++ can overload so return type matches input type
     #define Unquotify Unquotify_Core
 #else
-    INLINE Value(*) Unquotify(Value(*) v, Count depth)
-        { return cast(Value(*), Unquotify_Core(v, depth)); }
+    INLINE Value* Unquotify(Value* v, Count depth)
+        { return cast(Value*, Unquotify_Core(v, depth)); }
 
     INLINE Cell* Unquotify(Cell* v, Count depth)
         { return Unquotify_Core(v, depth); }
@@ -196,8 +196,8 @@ INLINE bool Is_Stable(Atom(const*) v) {  // repeat for non-inlined speed
 }
 
 #if CPLUSPLUS_11
-    void Is_Stable(Value(const*) v) = delete;
-    void Is_Antiform_Unstable(Value(const*) v) = delete;
+    void Is_Stable(const Value* v) = delete;
+    void Is_Antiform_Unstable(const Value* v) = delete;
 #endif
 
 #if !defined(NDEBUG)
@@ -214,13 +214,13 @@ INLINE bool Is_Stable(Atom(const*) v) {  // repeat for non-inlined speed
 //   operations in the ^META domain to easily use functions like ALL and ANY
 //   on the meta values.  (See the FOR-BOTH example.)
 
-INLINE Value(*) Unquasify(Value(*) v) {
+INLINE Value* Unquasify(Value* v) {
     assert(QUOTE_BYTE(v) == QUASIFORM_2);
     QUOTE_BYTE(v) = NOQUOTE_1;
     return v;
 }
 
-INLINE Element* Quasify(Value(*) v) {
+INLINE Element* Quasify(Value* v) {
     assert(QUOTE_BYTE(v) == NOQUOTE_1);  // e.g. can't quote void
     QUOTE_BYTE(v) = QUASIFORM_2;
     return u_cast(Element*, v);
@@ -232,11 +232,11 @@ INLINE Element* Quasify_Antiform(Atom(*) v) {
     return u_cast(Element*, v);
 }
 
-INLINE Value(*) Reify(Atom(*) v) {
+INLINE Value* Reify(Atom(*) v) {
     assert(not Is_Void(v));
     if (QUOTE_BYTE(v) == ANTIFORM_0)
         QUOTE_BYTE(v) = QUASIFORM_2;
-    return cast(Value(*), v);
+    return cast(Value*, v);
 }
 
 INLINE Atom(*) Degrade(Atom(*) v) {
@@ -245,7 +245,7 @@ INLINE Atom(*) Degrade(Atom(*) v) {
     return v;
 }
 
-INLINE Value(*) Concretize(Value(*) v) {
+INLINE Value* Concretize(Value* v) {
     assert(not Is_Void(v));
     assert(not Is_Trash(v));
     if (QUOTE_BYTE(v) == ANTIFORM_0)
@@ -268,12 +268,12 @@ INLINE Value(*) Concretize(Value(*) v) {
 //  https://forum.rebol.info/t/1833
 //
 
-INLINE Value(*) Meta_Quotify(Atom(*) v) {
+INLINE Value* Meta_Quotify(Atom(*) v) {
     if (QUOTE_BYTE(v) == ANTIFORM_0) {
         QUOTE_BYTE(v) = QUASIFORM_2;
-        return cast(Value(*), v);
+        return cast(Value*, v);
     }
-    return cast(Value(*), Quotify(v, 1));  // a non-antiform winds up quoted
+    return cast(Value*, Quotify(v, 1));  // a non-antiform winds up quoted
 }
 
 INLINE Atom(*) Meta_Unquotify_Undecayed(Atom(*) v) {
@@ -284,18 +284,18 @@ INLINE Atom(*) Meta_Unquotify_Undecayed(Atom(*) v) {
     return v;
 }
 
-INLINE Value(*) Meta_Unquotify_Known_Stable(Value(*) v) {
+INLINE Value* Meta_Unquotify_Known_Stable(Value* v) {
     Meta_Unquotify_Undecayed(v);
     Assert_Cell_Stable(v);
     return v;
 }
 
-INLINE Value(*) Decay_If_Unstable(Atom(*) v);
+INLINE Value* Decay_If_Unstable(Atom(*) v);
 
 #if CPLUSPLUS_11
-    INLINE Value(*) Decay_If_Unstable(Value(*) v) = delete;
+    INLINE Value* Decay_If_Unstable(Value* v) = delete;
 #endif
 
-INLINE Value(*) Meta_Unquotify_Decayed(Value(*) v) {
+INLINE Value* Meta_Unquotify_Decayed(Value* v) {
     return Decay_If_Unstable(Meta_Unquotify_Undecayed(cast(Atom(*), v)));
 }

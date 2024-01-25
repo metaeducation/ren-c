@@ -161,7 +161,7 @@ INLINE bool Is_Trash(const Cell* v)
 STATIC_ASSERT(REB_VOID == 0);  // the optimization depends on this
 STATIC_ASSERT(ANTIFORM_0 == 0);  // QUOTE_BYTE() of 0 means it's an antiform
 
-INLINE Value(*) Finalize_Trash_Untracked(Atom(*) out) {
+INLINE Value* Finalize_Trash_Untracked(Atom(*) out) {
     assert(Is_Fresh(out));  // can bitwise OR, need node+cell flags
 
     assert(HEART_BYTE(out) == 0 and QUOTE_BYTE(out) == 0);
@@ -172,13 +172,13 @@ INLINE Value(*) Finalize_Trash_Untracked(Atom(*) out) {
             /* | FLAG_QUOTE_BYTE(ANTIFORM_0) */  // already 0
     );
 
-    return cast(Value(*), out);
+    return cast(Value*, out);
 }
 
 #define Finalize_Trash(out) \
     TRACK(Finalize_Trash_Untracked(out))
 
-INLINE Value(*) Finalize_Void_Untracked(Atom(*) out) {
+INLINE Value* Finalize_Void_Untracked(Atom(*) out) {
     assert(Is_Fresh(out));  // can bitwise OR, need node+cell flags
 
     assert(HEART_BYTE(out) == 0 and QUOTE_BYTE(out) == 0);
@@ -189,7 +189,7 @@ INLINE Value(*) Finalize_Void_Untracked(Atom(*) out) {
             | FLAG_QUOTE_BYTE(NOQUOTE_1)  // mask over top of existing 0
     );
 
-    return cast(Value(*), out);
+    return cast(Value*, out);
 }
 
 #define Finalize_Void(out) \

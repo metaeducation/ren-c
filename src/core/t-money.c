@@ -77,7 +77,7 @@ REBINT CT_Money(NoQuote(const Cell*) a, NoQuote(const Cell*) b, bool strict)
 Bounce MAKE_Money(
     Level* level_,
     enum Reb_Kind kind,
-    Option(Value(const*)) parent,
+    Option(const Value*) parent,
     const REBVAL *arg
 ){
     assert(kind == REB_MONEY);
@@ -158,7 +158,7 @@ void MF_Money(REB_MOLD *mo, NoQuote(const Cell*) v, bool form)
 //
 // Will successfully convert or fail (longjmp) with an error.
 //
-void Bin_To_Money_May_Fail(Sink(Value(*)) result, Value(const*) val)
+void Bin_To_Money_May_Fail(Sink(Value*) result, const Value* val)
 {
     if (not Is_Binary(val))
         fail (val);
@@ -176,9 +176,9 @@ void Bin_To_Money_May_Fail(Sink(Value(*)) result, Value(const*) val)
 }
 
 
-static Value(*) Math_Arg_For_Money(
-    Sink(Value(*)) store,
-    Value(*) arg,
+static Value* Math_Arg_For_Money(
+    Sink(Value*) store,
+    Value* arg,
     const Symbol* verb
 ){
     if (Is_Money(arg))

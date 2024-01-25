@@ -53,9 +53,9 @@
 // this is not implemented.
 //
 bool Do_Breakpoint_Throws(
-    Sink(Value(*)) out,
+    Sink(Value*) out,
     bool interrupted,  // Ctrl-C (as opposed to a BREAKPOINT)
-    Value(const*) paused
+    const Value* paused
 ){
     UNUSED(interrupted);  // !!! not passed to the REPL, should it be?
     UNUSED(paused);  // !!! feature TBD

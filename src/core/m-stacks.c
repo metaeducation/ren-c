@@ -61,7 +61,7 @@ void Startup_Data_Stack(Length capacity)
     // initial stack size.  It requires you to be on an END to run.
     //
     g_ds.index = 1;
-    g_ds.movable_top = Series_At(ValueT, g_ds.array, g_ds.index);
+    g_ds.movable_top = Series_At(Value, g_ds.array, g_ds.index);
     Expand_Data_Stack_May_Fail(capacity);
 
     DROP();  // drop the hypothetical thing that triggered the expand
@@ -176,7 +176,7 @@ void Expand_Data_Stack_May_Fail(REBLEN amount)
     assert(len_old == g_ds.index);
     assert(g_ds.movable_top == Array_Tail(g_ds.array));
     assert(
-        g_ds.movable_top - Series_Head(ValueT, g_ds.array)
+        g_ds.movable_top - Series_Head(Value, g_ds.array)
         == cast(int, len_old)
     );
 
@@ -237,7 +237,7 @@ Array* Pop_Stack_Values_Core(StackIndex base, Flags flags)
   #endif
 
     Count count = 0;
-    Value(*) src = Data_Stack_At(base + 1);  // not const, will be FRESHEN()
+    Value* src = Data_Stack_At(base + 1);  // not const, will be FRESHEN()
     Cell* dest = Array_Head(a);
     for (; count < len; ++count, ++src, ++dest) {
       #if DEBUG

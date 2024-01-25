@@ -126,7 +126,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
         break; }
 
       case REB_PAIR: {
-        REBVAL *paired = x_cast(Value(*), Cell_Node1(v));
+        REBVAL *paired = x_cast(Value*, Cell_Node1(v));
         assert(Is_Node_Marked(paired));
         break; }
 
@@ -243,8 +243,8 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
         if (Is_Action_Native(a)) {
             Details* details = Phase_Details(a);
             assert(Array_Len(details) >= IDX_NATIVE_MAX);
-            Value(*) body = Details_At(details, IDX_NATIVE_BODY);
-            Value(*) context = Details_At(details, IDX_NATIVE_CONTEXT);
+            Value* body = Details_At(details, IDX_NATIVE_BODY);
+            Value* context = Details_At(details, IDX_NATIVE_CONTEXT);
             assert(
                 Is_Blank(body)
                 or Is_Handle(body)  // Intrinsics use the slot for Intrinsic*

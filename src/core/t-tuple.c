@@ -35,7 +35,7 @@
 Bounce MAKE_Sequence(
     Level* level_,
     enum Reb_Kind kind,
-    Option(Value(const*)) parent,
+    Option(const Value*) parent,
     const REBVAL *arg
 ){
     if (kind == REB_TEXT or Any_Path_Kind(kind))  // delegate for now

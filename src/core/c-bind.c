@@ -144,7 +144,7 @@ void Bind_Values_Core(
     REBLEN index = 1;
     const Key* key_tail;
     const Key* key = CTX_KEYS(&key_tail, c);
-    Value(const*) var = CTX_VARS_HEAD(c);
+    const Value* var = CTX_VARS_HEAD(c);
     for (; key != key_tail; key++, var++, index++)
         Add_Binder_Index(&binder, KEY_SYMBOL(key), index);
   }
@@ -162,7 +162,7 @@ void Bind_Values_Core(
   if (not Is_Module(context)) {  // Reset all the binder indices to zero
     const Key* key_tail;
     const Key* key = CTX_KEYS(&key_tail, c);
-    Value(const*) var = CTX_VARS_HEAD(c);
+    const Value* var = CTX_VARS_HEAD(c);
     for (; key != key_tail; ++key, ++var)
         Remove_Binder_Index(&binder, KEY_SYMBOL(key));
   }
@@ -262,7 +262,7 @@ Stub* Make_Let_Patch(
             | SERIES_FLAG_INFO_NODE_NEEDS_MARK  // inode of symbol
     );
 
-    Finalize_Trash(x_cast(Value(*), Stub_Cell(let)));  // start as unset
+    Finalize_Trash(x_cast(Value*, Stub_Cell(let)));  // start as unset
 
     if (specifier) {
         assert(IS_LET(specifier) or IS_USE(specifier) or IS_VARLIST(specifier));
@@ -867,7 +867,7 @@ DECLARE_NATIVE(add_let_binding)
 {
     INCLUDE_PARAMS_OF_ADD_LET_BINDING;
 
-    Value(*) env = ARG(environment);
+    Value* env = ARG(environment);
     Specifier* before;
 
     if (Is_Frame(env)) {
@@ -949,7 +949,7 @@ DECLARE_NATIVE(add_use_object) {
 //    means it CAN'T be found in the action's frame.
 //
 void Clonify_And_Bind_Relative(
-    Value(*) v,
+    Value* v,
     Flags flags,
     REBU64 deep_types,
     Option(struct Reb_Binder*) binder,
@@ -991,7 +991,7 @@ void Clonify_And_Bind_Relative(
             deep_tail = Array_Tail(varlist);
         }
         else if (Any_Pairlike(v)) {
-            Value(*) copy = Copy_Pairing(
+            Value* copy = Copy_Pairing(
                 VAL_PAIRING(v),
                 NODE_FLAG_MANAGED
             );
@@ -1318,7 +1318,7 @@ Context* Virtual_Bind_Deep_To_New_Context(
             symbol = Canon_Symbol(dummy_sym);
             dummy_sym = cast(SymId, cast(int, dummy_sym) + 1);
 
-            Value(*) var = Append_Context(c, symbol);
+            Value* var = Append_Context(c, symbol);
             Init_Blank(var);
             Set_Cell_Flag(var, BIND_NOTE_REUSE);
             Set_Cell_Flag(var, PROTECTED);
@@ -1327,7 +1327,7 @@ Context* Virtual_Bind_Deep_To_New_Context(
         }
         else if (Is_Word(item) or Is_Meta_Word(item)) {
             symbol = Cell_Word_Symbol(item);
-            Value(*) var = Append_Context(c, symbol);
+            Value* var = Append_Context(c, symbol);
 
             // !!! For loops, nothing should be able to be aware of this
             // synthesized variable until the loop code has initialized it

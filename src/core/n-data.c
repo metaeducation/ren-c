@@ -238,7 +238,7 @@ DECLARE_NATIVE(inside)
     INCLUDE_PARAMS_OF_INSIDE;
 
     Cell* v = ARG(value);
-    Value(*) context = ARG(context);
+    Value* context = ARG(context);
 
     Specifier* specifier;
     if (Any_Context(context))
@@ -268,7 +268,7 @@ DECLARE_NATIVE(overbind)
     INCLUDE_PARAMS_OF_OVERBIND;
 
     Cell* v = ARG(value);
-    Value(*) context = ARG(context);
+    Value* context = ARG(context);
 
     Copy_Cell(OUT, v);
     Virtual_Bind_Deep_To_Existing_Context(
@@ -380,8 +380,8 @@ DECLARE_NATIVE(use)
 {
     INCLUDE_PARAMS_OF_USE;
 
-    Value(*) vars = ARG(vars);
-    Value(*) body = ARG(body);
+    Value* vars = ARG(vars);
+    Value* body = ARG(body);
 
     Context* context = Virtual_Bind_Deep_To_New_Context(
         body,  // may be replaced with rebound copy, or left the same
@@ -399,7 +399,7 @@ DECLARE_NATIVE(use)
 //
 //  Did_Get_Binding_Of: C
 //
-bool Did_Get_Binding_Of(Sink(Value(*)) out, const REBVAL *v)
+bool Did_Get_Binding_Of(Sink(Value*) out, const REBVAL *v)
 {
     switch (VAL_TYPE(v)) {
     case REB_FRAME: {
@@ -683,8 +683,8 @@ DECLARE_NATIVE(collect_words)
 //  Get_Var_Push_Refinements_Throws: C
 //
 bool Get_Var_Push_Refinements_Throws(
-    Sink(Value(*)) out,
-    Option(Value(*)) steps_out,  // if NULL, then GROUP!s not legal
+    Sink(Value*) out,
+    Option(Value*) steps_out,  // if NULL, then GROUP!s not legal
     const Cell* var,
     Specifier* var_specifier
 ){
@@ -877,8 +877,8 @@ bool Get_Var_Push_Refinements_Throws(
 //  Get_Var_Core_Throws: C
 //
 bool Get_Var_Core_Throws(
-    Sink(Value(*)) out,
-    Option(Value(*)) steps_out,  // if NULL, then GROUP!s not legal
+    Sink(Value*) out,
+    Option(Value*) steps_out,  // if NULL, then GROUP!s not legal
     const Cell* var,
     Specifier* var_specifier
 ){
@@ -907,7 +907,7 @@ bool Get_Var_Core_Throws(
 // Simple interface, does not process GROUP!s (lone or in TUPLE!s)
 //
 void Get_Var_May_Fail(
-    Sink(Value(*)) out,  // variables never store unstable Atom(*) values
+    Sink(Value*) out,  // variables never store unstable Atom(*) values
     const Cell* source,
     Specifier* specifier,
     bool any
@@ -933,8 +933,8 @@ void Get_Var_May_Fail(
 // is enabled.
 //
 bool Get_Path_Push_Refinements_Throws(
-    Sink(Value(*)) out,
-    Sink(Value(*)) safe,
+    Sink(Value*) out,
+    Sink(Value*) safe,
     const Cell* path,
     Specifier* path_specifier
 ){
@@ -1106,7 +1106,7 @@ bool Get_Path_Push_Refinements_Throws(
     //
     REBLEN len = Cell_Sequence_Len(path) - 1;
     for (; len != 0; --len) {
-        Value(const*) at = Copy_Sequence_At(safe, path, len);
+        const Value* at = Copy_Sequence_At(safe, path, len);
         DECLARE_LOCAL (temp);
         if (Is_Group(at)) {
             Specifier* derived = Derive_Specifier(
@@ -1165,9 +1165,9 @@ DECLARE_NATIVE(resolve)
 {
     INCLUDE_PARAMS_OF_RESOLVE;
 
-    Value(*) source = ARG(source);
+    Value* source = ARG(source);
 
-    if (Get_Var_Core_Throws(SPARE, cast(Value(*), OUT), source, SPECIFIED))
+    if (Get_Var_Core_Throws(SPARE, cast(Value*, OUT), source, SPECIFIED))
         return THROWN;
 
     Move_Cell(ARG(value), SPARE);  // should be able to eval direct, review
@@ -1246,8 +1246,8 @@ DECLARE_NATIVE(get)
 // in the course of the assignment.
 //
 bool Set_Var_Core_Updater_Throws(
-    Sink(Value(*)) out,  // GC-safe cell to write steps to, or put thrown value
-    Option(Value(*)) steps_out,  // no GROUP!s if nulled
+    Sink(Value*) out,  // GC-safe cell to write steps to, or put thrown value
+    Option(Value*) steps_out,  // no GROUP!s if nulled
     const Cell* var,  // e.g. v
     Specifier* var_specifier,  // e.g. v_specifier
     const REBVAL *setval,  // e.g. L->out (in the evaluator, right hand side)
@@ -1501,8 +1501,8 @@ bool Set_Var_Core_Updater_Throws(
 //  Set_Var_Core_Throws: C
 //
 bool Set_Var_Core_Throws(
-    Sink(Value(*)) out,  // GC-safe cell to write steps to, or put thrown value
-    Option(Value(*)) steps_out,  // no GROUP!s if nulled
+    Sink(Value*) out,  // GC-safe cell to write steps to, or put thrown value
+    Option(Value*) steps_out,  // no GROUP!s if nulled
     const Cell* var,  // e.g. v
     Specifier* var_specifier,  // e.g. v_specifier
     const REBVAL *setval  // e.g. L->out (in the evaluator, right hand side)
@@ -1529,7 +1529,7 @@ void Set_Var_May_Fail(
     Specifier* target_specifier,
     const REBVAL *setval
 ){
-    Option(Value(*)) steps_out = nullptr;
+    Option(Value*) steps_out = nullptr;
 
     DECLARE_LOCAL (dummy);
     if (Set_Var_Core_Throws(dummy, steps_out, target, target_specifier, setval))
@@ -1862,7 +1862,7 @@ DECLARE_NATIVE(free_q)
 // Shared code from the refinement-bearing AS-TEXT and AS TEXT!.
 //
 bool Try_As_String(
-    Sink(Value(*)) out,
+    Sink(Value*) out,
     enum Reb_Kind new_kind,
     const REBVAL *v,
     REBLEN quotes,
@@ -2704,7 +2704,7 @@ DECLARE_NATIVE(heavy) {
 DECLARE_NATIVE(light) {
     INCLUDE_PARAMS_OF_LIGHT;
 
-    Value(*) v = ARG(value);
+    Value* v = ARG(value);
 
     if (not Is_Meta_Of_Pack(v))
         return UNMETA(v);
@@ -2760,7 +2760,7 @@ DECLARE_INTRINSIC(decay)
 {
     UNUSED(phase);
 
-    Assert_Cell_Stable(arg);  // Value(*) should always be stable
+    Assert_Cell_Stable(arg);  // Value* should always be stable
     Copy_Cell(out, arg);  // pre-decayed by non-^META argument [1]
 }
 

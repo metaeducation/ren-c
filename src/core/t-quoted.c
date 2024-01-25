@@ -68,7 +68,7 @@ REBINT CT_Quoted(NoQuote(const Cell*) a, NoQuote(const Cell*) b, bool strict)
 Bounce MAKE_Quoted(
     Level* level_,
     enum Reb_Kind kind,
-    Option(Value(const*)) parent,
+    Option(const Value*) parent,
     const REBVAL *arg
 ){
     assert(kind == REB_QUOTED);
@@ -336,7 +336,7 @@ DECLARE_NATIVE(quasi)
 {
     INCLUDE_PARAMS_OF_QUASI;
 
-    Value(*) v = ARG(value);
+    Value* v = ARG(value);
 
     if (Is_Quoted(v))
         fail ("Quoted values do not have quasiforms");
@@ -398,7 +398,7 @@ DECLARE_NATIVE(anti)
 {
     INCLUDE_PARAMS_OF_ANTI;
 
-    Value(*) v = ARG(value);
+    Value* v = ARG(value);
 
     if (Is_Quoted(v))
         fail ("QUOTED! values have no antiform (antiforms are quoted -1");
@@ -526,7 +526,7 @@ DECLARE_NATIVE(lazy)
 {
     INCLUDE_PARAMS_OF_LAZY;
 
-    Value(*) v = ARG(object);
+    Value* v = ARG(object);
     if (Is_Void(v))
         return VOID;
     if (Is_Nulled(v))
@@ -581,7 +581,7 @@ DECLARE_NATIVE(pack)
 {
     INCLUDE_PARAMS_OF_PACK;
 
-    Value(*) v = ARG(array);
+    Value* v = ARG(array);
 
     if (Is_The_Block(v)) {
         const Element* tail;
@@ -619,7 +619,7 @@ DECLARE_NATIVE(matches)
 {
     INCLUDE_PARAMS_OF_MATCHES;
 
-    Value(*) v = ARG(types);
+    Value* v = ARG(types);
 
     if (Is_Nulled(v))
         return nullptr;  // Put TRY on the FIND or whatever, not MATCHES

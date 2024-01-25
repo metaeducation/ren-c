@@ -60,7 +60,7 @@ Bounce Intrinsic_Dispatcher(Level* const L)
     USE_LEVEL_SHORTHANDS (L);
 
     assert(ACT_HAS_RETURN(PHASE));
-    Value(*) arg = Level_Arg(L, 2);  // skip the RETURN
+    Value* arg = Level_Arg(L, 2);  // skip the RETURN
 
     Intrinsic* intrinsic = Extract_Intrinsic(PHASE);
     (*intrinsic)(OUT, PHASE, arg);  // typechecking done when frame was built
@@ -211,7 +211,7 @@ DECLARE_NATIVE(native)
 {
     INCLUDE_PARAMS_OF_NATIVE;
 
-    Value(*) spec = ARG(spec);
+    Value* spec = ARG(spec);
 
     if (REF(combinator) and REF(intrinsic))
         fail (Error_Bad_Refines_Raw());

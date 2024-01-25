@@ -321,7 +321,7 @@ void Form_Array_At(
     REBINT n;
     for (n = 0; n < len;) {
         const Element* item = Array_At(array, index + n);
-        Option(Value(*)) wval = nullptr;
+        Option(Value*) wval = nullptr;
         if (context and (Is_Word(item) or Is_Get_Word(item))) {
             wval = Select_Symbol_In_Context(
                 CTX_ARCHETYPE(unwrap(context)),

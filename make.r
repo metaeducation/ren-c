@@ -481,7 +481,7 @@ gen-obj: func [
                 <gnu:-Wno-conversion> <gnu:-Wno-strict-overflow>
                 ;<gnu:-Wstrict-overflow=5>
 
-                ; Warning about std::is_pod<OptionWrapper<const ValueT*>>
+                ; Warning about std::is_pod<OptionWrapper<const Value*>>
                 ; having a different answer in different versions, affects the
                 ; UNUSED() variable corrupting in debug build, not a big issue.
                 ;

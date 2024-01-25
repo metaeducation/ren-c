@@ -123,7 +123,7 @@
         }
 
         operator REBVAL* () const { return p; }
-        operator Sink(Value(*)) () const { return p; }
+        operator Sink(Value*) () const { return p; }
         operator Sink(Element*) () const { return p; }
         explicit operator Byte* () const { return cast(Byte*, p); }
 

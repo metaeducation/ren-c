@@ -511,7 +511,7 @@ Array* Pop_Paramlist_With_Adjunct_May_Fail(
 
   blockscope {
     REBVAL *param = 1 + Init_Anti_Word(
-        x_cast(Value(*), Array_Head(paramlist)), Canon(ROOTVAR)
+        x_cast(Value*, Array_Head(paramlist)), Canon(ROOTVAR)
     );
     Key* key = Series_Head(Key, keylist);
 
@@ -838,7 +838,7 @@ Phase* Make_Action(
 // dispatchers to code to get the BODY OF an ACTION.  For the moment, just
 // handle common kinds so the SOURCE command works adquately, revisit later.
 //
-void Get_Maybe_Fake_Action_Body(Sink(Value(*)) out, Value(const*) action)
+void Get_Maybe_Fake_Action_Body(Sink(Value*) out, const Value* action)
 {
     Context* binding = VAL_FRAME_BINDING(action);
     Action* a = VAL_ACTION(action);

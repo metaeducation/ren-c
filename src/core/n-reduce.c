@@ -69,8 +69,8 @@ DECLARE_NATIVE(reduce)
 {
     INCLUDE_PARAMS_OF_REDUCE;
 
-    Value(*) v = ARG(value);  // newline flag on `v` cell is leveraged [2]
-    Value(*) predicate = ARG(predicate);
+    Value* v = ARG(value);  // newline flag on `v` cell is leveraged [2]
+    Value* predicate = ARG(predicate);
 
     enum {
         ST_REDUCE_INITIAL_ENTRY = STATE_0,
@@ -243,9 +243,9 @@ DECLARE_NATIVE(reduce_each)
 {
     INCLUDE_PARAMS_OF_REDUCE_EACH;
 
-    Value(*) vars = ARG(vars);
-    Value(*) block = ARG(block);
-    Value(*) body = ARG(body);
+    Value* vars = ARG(vars);
+    Value* block = ARG(block);
+    Value* body = ARG(body);
 
     bool breaking = false;
 
@@ -391,10 +391,10 @@ bool Match_For_Compose(NoQuote(const Cell*) group, const REBVAL *label) {
 static void Push_Composer_Level(
     Atom(*) out,
     Level* main_level,
-    Value(const*) arraylike,
+    const Value* arraylike,
     Specifier* specifier
 ){
-    Value(const*) adjusted = nullptr;
+    const Value* adjusted = nullptr;
     if (Any_Sequence(arraylike)) {  // allow sequences [1]
         adjusted = rebValue(Canon(AS), Canon(BLOCK_X), rebQ(arraylike));
     }
@@ -542,10 +542,10 @@ Bounce Composer_Executor(Level* const L)
     Level* main_level = L->u.compose.main_level;  // the invoked COMPOSE native
 
     UNUSED(Level_Arg(main_level, p_return_));
-    Value(*) label = Level_Arg(main_level, p_label_);
+    Value* label = Level_Arg(main_level, p_label_);
     UNUSED(Level_Arg(main_level, p_value_));
     bool deep = not Is_Nulled(Level_Arg(main_level, p_deep_));
-    Value(*) predicate = Level_Arg(main_level, p_predicate_);
+    Value* predicate = Level_Arg(main_level, p_predicate_);
 
     assert(Is_Nulled(predicate) or Is_Frame(predicate));
 
@@ -821,7 +821,7 @@ DECLARE_NATIVE(compose)
 {
     INCLUDE_PARAMS_OF_COMPOSE;
 
-    Value(*) v = ARG(value);
+    Value* v = ARG(value);
 
     USED(ARG(predicate));  // used by Composer_Executor() via main_level
     USED(ARG(label));

@@ -688,7 +688,7 @@ static void Update_Error_Near_For_Line(
     if (ss->file)
         Init_File(&vars->file, unwrap(ss->file));
     else
-        Init_Nulled(x_cast(Value(*), &vars->file));
+        Init_Nulled(x_cast(Value*, &vars->file));
 
     Init_Integer(&vars->line, ss->line);
 }
@@ -1034,7 +1034,7 @@ static enum Reb_Token Maybe_Locate_Token_May_Push_Mold(
             break; }
 
           case DETECTED_AS_SERIES: {  // e.g. rebQ, rebU, or a rebR() handle
-            Option(Value(const*)) v = Try_Reify_Variadic_Feed_Series(L->feed);
+            Option(const Value*) v = Try_Reify_Variadic_Feed_Series(L->feed);
             if (not v)
                 goto get_next_variadic_pointer;
 
@@ -2339,7 +2339,7 @@ Bounce Scanner_Executor(Level* const L) {
             // a NoQuote(const Cell*) or REBVAL* overload with DEBUG_CHECK_CASTS.
             // Have to cast explicitly.
             //
-            VAL_DECIMAL(x_cast(Value(*), TOP)) /= 100.0;
+            VAL_DECIMAL(x_cast(Value*, TOP)) /= 100.0;
         }
         break;
 
@@ -3223,7 +3223,7 @@ DECLARE_NATIVE(transcode)
 // Returns symbol number, or zero for errors.
 //
 const Byte* Scan_Any_Word(
-    Sink(Value(*)) out,
+    Sink(Value*) out,
     enum Reb_Kind kind,
     const Byte* utf8,
     Size size

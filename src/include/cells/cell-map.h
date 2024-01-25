@@ -79,8 +79,8 @@ INLINE const Map* VAL_MAP(NoQuote(const Cell*) v) {
 
 INLINE REBLEN Length_Map(const Map* map)
 {
-    Value(const*) tail = Series_Tail(ValueT, MAP_PAIRLIST(map));
-    Value(const*) v = Series_Head(ValueT, MAP_PAIRLIST(map));
+    const Value* tail = Series_Tail(Value, MAP_PAIRLIST(map));
+    const Value* v = Series_Head(Value, MAP_PAIRLIST(map));
 
     REBLEN count = 0;
     for (; v != tail; v += 2) {

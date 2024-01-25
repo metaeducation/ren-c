@@ -232,7 +232,7 @@ INLINE Context* Context_For_Level_May_Manage(Level* L) {
 
 //=//// FRAME LABELING ////////////////////////////////////////////////////=//
 
-INLINE void Get_Level_Label_Or_Nulled(Sink(Value(*)) out, Level* L) {
+INLINE void Get_Level_Label_Or_Nulled(Sink(Value*) out, Level* L) {
     assert(Is_Action_Level(L));
     if (L->label)
         Init_Word(out, unwrap(L->label));  // WORD!, PATH!, or stored invoke
@@ -288,7 +288,7 @@ INLINE void Free_Level_Internal(Level* L) {
 // * Push_Level() takes an Atom() for the output.  This is important, as
 //   we don't want to evaluate into arbitrary array Cell*, since the array
 //   could have its memory moved during an evaluation.  Also we don't want
-//   to take a Value(*) that could be a variable in an object--because the
+//   to take a Value* that could be a variable in an object--because the
 //   unstable intermediate states of the evaluation could be exposed by
 //   an object (this applies to the ARG() of the function too, as these could
 //   be seen by debugging code).  So typically evaluations are done into the
@@ -544,7 +544,7 @@ INLINE Bounce Native_Raised_Result(Level* level_, const void *p) {
         error = cast(Context*, m_cast(void*, p));
         break; }
       case DETECTED_AS_CELL: {  // note: can be Is_Raised()
-        Value(const*) cell = c_cast(REBVAL*, p);
+        const Value* cell = c_cast(REBVAL*, p);
         assert(Is_Error(cell));
         error = VAL_CONTEXT(cell);
         break; }

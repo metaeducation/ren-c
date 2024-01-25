@@ -94,7 +94,7 @@
 
 INLINE bool Is_Valid_Sequence_Element(
     enum Reb_Kind sequence_kind,
-    Value(const*) v  // current code paths check arbitrary pushed stack values
+    const Value* v  // current code paths check arbitrary pushed stack values
 ){
     assert(Any_Sequence_Kind(sequence_kind));
 
@@ -182,7 +182,7 @@ INLINE Element* Init_Any_Sequence_1(
 // as an ANY-WORD!.
 
 INLINE Element* Try_Leading_Blank_Pathify(
-    Value(*) v,
+    Value* v,
     enum Reb_Kind kind
 ){
     assert(Any_Sequence_Kind(kind));
@@ -202,7 +202,7 @@ INLINE Element* Try_Leading_Blank_Pathify(
         return cast(Element*, v);
     }
 
-    Value(*) p = Alloc_Pairing(NODE_FLAG_MANAGED);
+    Value* p = Alloc_Pairing(NODE_FLAG_MANAGED);
     Init_Blank(p);
     Copy_Cell(Pairing_Second(p), v);
 
@@ -264,7 +264,7 @@ INLINE Element* Init_Any_Sequence_Bytes(
 INLINE Element* Try_Init_Any_Sequence_All_Integers(
     Sink(Element*) out,
     enum Reb_Kind kind,
-    Value(const*) head,  // NOTE: Can't use PUSH() or evaluation
+    const Value* head,  // NOTE: Can't use PUSH() or evaluation
     REBLEN len
 ){
     if (len > sizeof(PAYLOAD(Bytes, out)).at_least_8 - 1)
@@ -283,7 +283,7 @@ INLINE Element* Try_Init_Any_Sequence_All_Integers(
 
     Byte* bp = PAYLOAD(Bytes, out).at_least_8 + 1;
 
-    Value(const*) item = head;
+    const Value* item = head;
     REBLEN n;
     for (n = 0; n < len; ++n, ++item, ++bp) {
         if (not Is_Integer(item))
@@ -303,8 +303,8 @@ INLINE Element* Try_Init_Any_Sequence_All_Integers(
 INLINE Element* Try_Init_Any_Sequence_Pairlike(
     Sink(Element*) out,
     enum Reb_Kind kind,
-    Value(const*) v1,
-    Value(const*) v2
+    const Value* v1,
+    const Value* v2
 ){
     if (Is_Blank(v1)) {
         Copy_Relative_internal(out, v2);
@@ -343,7 +343,7 @@ INLINE Element* Try_Init_Any_Sequence_Pairlike(
         return nullptr;
     }
 
-    Value(*) pairing = Alloc_Pairing(NODE_FLAG_MANAGED);
+    Value* pairing = Alloc_Pairing(NODE_FLAG_MANAGED);
     Copy_Relative_internal(pairing, v1);
     Copy_Relative_internal(Pairing_Second(pairing), v2);
     Init_Pair(out, pairing);
@@ -371,8 +371,8 @@ INLINE Element* Try_Init_Any_Sequence_Pairlike(
 // it's not a PATH!...because the optimizations on special cases are all
 // in this code.
 //
-INLINE Value(*) Try_Pop_Sequence_Or_Element_Or_Nulled(
-    Sink(Value(*)) out,  // the error-triggering value if nullptr returned
+INLINE Value* Try_Pop_Sequence_Or_Element_Or_Nulled(
+    Sink(Value*) out,  // the error-triggering value if nullptr returned
     enum Reb_Kind kind,
     StackIndex base
 ){

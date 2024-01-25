@@ -209,7 +209,7 @@ struct ActionExecutorStateStruct {
     // are moved in sync.  This movement can be done for typechecking or
     // fulfillment, see In_Typecheck_Mode()
     //
-    // While ultimately the arguments will be Value(*) and not able to hold
+    // While ultimately the arguments will be Value* and not able to hold
     // unstable isotopes arguments, the process of argument fulfillment will
     // hold unstable isotopes temporarily.
     //

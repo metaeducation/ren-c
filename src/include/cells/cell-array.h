@@ -201,10 +201,10 @@ INLINE Cell* Init_Relative_Block_At(
 //      == <b>
 //
 
-INLINE Value(*) Init_Pack_Untracked(Atom(*) out, Array* a) {
+INLINE Value* Init_Pack_Untracked(Atom(*) out, Array* a) {
     Init_Block(out, a);
     QUOTE_BYTE(out) = ANTIFORM_0;
-    return cast(Value(*), out);  // Note: Is_Antiform_Unstable(out)
+    return cast(Value*, out);  // Note: Is_Antiform_Unstable(out)
 }
 
 #define Init_Pack(out,a) \
@@ -259,14 +259,14 @@ INLINE bool Is_Meta_Of_Nihil(const Cell* v) {
 //    == [a b c d e]
 //
 
-INLINE Value(*) Splicify(Value(*) v) {
+INLINE Value* Splicify(Value* v) {
     assert(Any_Array(v) and QUOTE_BYTE(v) == NOQUOTE_1);
     QUOTE_BYTE(v) = ANTIFORM_0;
     HEART_BYTE(v) = REB_GROUP;
     return v;
 }
 
-INLINE Value(*) Init_Splice_Untracked(Sink(Value(*)) out, Array* a) {
+INLINE Value* Init_Splice_Untracked(Sink(Value*) out, Array* a) {
     Init_Group(out, a);
     QUOTE_BYTE(out) = ANTIFORM_0;
     return out;

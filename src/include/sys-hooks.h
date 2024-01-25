@@ -48,7 +48,7 @@ typedef REBINT (COMPARE_HOOK)(
 // Helper for declaring an intrinsic native (can be dispatched w/o a frame)
 //
 #define DECLARE_INTRINSIC(n) \
-    void N_##n(Atom(*) out, Phase* phase, Value(*) arg)
+    void N_##n(Atom(*) out, Phase* phase, Value* arg)
 
 
 // PER-TYPE MAKE HOOKS: for `make datatype def`
@@ -60,7 +60,7 @@ typedef REBINT (COMPARE_HOOK)(
 typedef Bounce (MAKE_HOOK)(
     Level* level_,
     enum Reb_Kind kind,
-    Option(Value(const*)) opt_parent,
+    Option(const Value*) opt_parent,
     const REBVAL *def
 );
 

@@ -181,7 +181,7 @@ static void Queue_Mark_Node_Deep(const Node** pp) {
         return;  // may not be finished marking yet, but has been queued
 
     if (nodebyte & NODE_BYTEMASK_0x01_CELL) {  // e.g. a pairing
-        const REBVAL *v = x_cast(Value(const*), *pp);
+        const REBVAL *v = x_cast(const Value*, *pp);
         if (Is_Node_Managed(v))
             Queue_Mark_Pairing_Deep(v);
         else {
@@ -635,7 +635,7 @@ static void Mark_Root_Series(void)
 
                 assert(!"unmanaged pairings not believed to exist yet");
 
-                REBVAL *paired = x_cast(Value(*), cast(void*, unit));
+                REBVAL *paired = x_cast(Value*, cast(void*, unit));
                 Queue_Mark_Cell_Deep(paired);
                 Queue_Mark_Cell_Deep(Pairing_Second(paired));
                 continue;
@@ -1108,7 +1108,7 @@ Count Sweep_Series(void)
 
             assert(unit[0] & NODE_BYTEMASK_0x01_CELL);
 
-            ValueT* v = cast(ValueT*, unit);
+            Value* v = cast(Value*, unit);
             if (v->header.bits & NODE_FLAG_MANAGED) {
                 assert(not (v->header.bits & NODE_FLAG_ROOT));
                 if (Is_Node_Marked(v)) {
@@ -1168,7 +1168,7 @@ REBLEN Fill_Sweeplist(Series* sweeplist)
                 //
                 // !!! It is a Stub Node, but *not* a "series".
                 //
-                REBVAL *pairing = x_cast(Value(*), cast(void*, stub));
+                REBVAL *pairing = x_cast(Value*, cast(void*, stub));
                 assert(pairing->header.bits & NODE_FLAG_MANAGED);
                 if (Is_Node_Marked(pairing)) {
                     Remove_GC_Mark(pairing);

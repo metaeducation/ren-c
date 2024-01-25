@@ -134,7 +134,7 @@ inline static void Probe_Print_Helper(
 }
 
 
-inline static void Probe_Molded_Value(Value(const*) v)
+inline static void Probe_Molded_Value(const Value* v)
 {
     DECLARE_MOLD (mo);
     Push_Mold(mo);

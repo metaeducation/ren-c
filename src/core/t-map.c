@@ -358,7 +358,7 @@ static void Append_Map(
 Bounce MAKE_Map(
     Level* level_,
     enum Reb_Kind kind,
-    Option(Value(const*)) parent,
+    Option(const Value*) parent,
     const REBVAL *arg
 ){
     if (parent)
@@ -516,8 +516,8 @@ Context* Alloc_Context_From_Map(const Map* map)
 
     Context* c = Alloc_Context(REB_OBJECT, count);
 
-    Value(const*) mval_tail = Series_Tail(ValueT, MAP_PAIRLIST(map));
-    Value(const*) mval = Series_Head(ValueT, MAP_PAIRLIST(map));
+    const Value* mval_tail = Series_Tail(Value, MAP_PAIRLIST(map));
+    const Value* mval = Series_Head(Value, MAP_PAIRLIST(map));
 
     for (; mval != mval_tail; mval += 2) {  // note mval must not be END
         if (Any_Word(mval) and not Is_Void(mval + 1)) {
@@ -555,8 +555,8 @@ void MF_Map(REB_MOLD *mo, NoQuote(const Cell*) v, bool form)
     //
     mo->indent++;
 
-    Value(const*) tail = Series_Tail(ValueT, MAP_PAIRLIST(m));
-    Value(const*) key = Series_Head(ValueT, MAP_PAIRLIST(m));
+    const Value* tail = Series_Tail(Value, MAP_PAIRLIST(m));
+    const Value* key = Series_Head(Value, MAP_PAIRLIST(m));
     for (; key != tail; key += 2) {  // note value slot must not be END
         assert(key + 1 != tail);
         if (Is_Void(key + 1))
@@ -726,7 +726,7 @@ REBTYPE(Map)
         INCLUDE_PARAMS_OF_PICK_P;
         UNUSED(ARG(location));
 
-        Value(const*) picker = ARG(picker);
+        const Value* picker = ARG(picker);
         if (Is_Antiform(picker))
             return RAISE(Error_Bad_Antiform(picker));
 
@@ -759,7 +759,7 @@ REBTYPE(Map)
         INCLUDE_PARAMS_OF_POKE_P;
         UNUSED(ARG(location));
 
-        Value(const*) picker = ARG(picker);
+        const Value* picker = ARG(picker);
         if (Is_Antiform(picker))
             return RAISE(Error_Bad_Antiform(picker));
 

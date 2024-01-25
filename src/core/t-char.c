@@ -95,7 +95,7 @@ REBINT CT_Issue(NoQuote(const Cell*) a, NoQuote(const Cell*) b, bool strict)
 Bounce MAKE_Issue(
     Level* level_,
     enum Reb_Kind kind,
-    Option(Value(const*)) parent,
+    Option(const Value*) parent,
     const REBVAL *arg
 ){
     assert(kind == REB_ISSUE);

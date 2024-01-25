@@ -661,37 +661,37 @@ INLINE Cell* Copy_Cell_Untracked(
 INLINE bool Is_Stable(Atom(const*) v);
 
 #if CPLUSPLUS_11  // REBVAL and Cell are checked distinctly
-    INLINE Value(*) Copy_Cell_Untracked(
+    INLINE Value* Copy_Cell_Untracked(
         Cell* out,
-        Value(const*) v,
+        const Value* v,
         Flags copy_mask
     ){
-        return cast(Value(*), Copy_Cell_Untracked(
+        return cast(Value*, Copy_Cell_Untracked(
             out,
             c_cast(Cell*, v),
             copy_mask
         ));
     }
 
-    INLINE Value(*) Copy_Cell_Untracked(
-        Value(*) out,
-        Value(const*) v,
+    INLINE Value* Copy_Cell_Untracked(
+        Value* out,
+        const Value* v,
         Flags copy_mask
     ){
-        return cast(Value(*), Copy_Cell_Untracked(
+        return cast(Value*, Copy_Cell_Untracked(
             cast(Cell*, out),
             c_cast(Cell*, v),
             copy_mask
         ));
     }
 
-    INLINE Value(*) Copy_Cell_Untracked(
-        Value(*) out,
+    INLINE Value* Copy_Cell_Untracked(
+        Value* out,
         Atom(const*) v,
         Flags copy_mask
     ){
         assert(Is_Stable(v));
-        return cast(Value(*), Copy_Cell_Untracked(
+        return cast(Value*, Copy_Cell_Untracked(
             cast(Cell*, out),
             c_cast(Cell*, v),
             copy_mask
@@ -699,7 +699,7 @@ INLINE bool Is_Stable(Atom(const*) v);
     }
 
     INLINE void Copy_Cell_Untracked(
-        Value(*) out,
+        Value* out,
         const Cell* v,
         Flags copy_mask
     ) = delete;
@@ -793,7 +793,7 @@ INLINE REBVAL *Constify(REBVAL *v) {
 #define DECLARE_STABLE(name) \
     Cell name##_cell; \
     Erase_Cell(&name##_cell); \
-    Value(*) name = u_cast(Value(*), &name##_cell)
+    Value* name = u_cast(Value*, &name##_cell)
 
 #define DECLARE_ELEMENT(name) \
     Cell name##_cell; \

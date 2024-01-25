@@ -259,10 +259,10 @@ INLINE Phase* ACT_IDENTITY(Action* action) {
 // to be SERIES_FLAG_DYNAMIC, so we use Series_Data() that handles it.
 //
 #define ACT_ARCHETYPE(action) \
-    cast(Value(*), Series_Data(ACT_IDENTITY(action)))
+    cast(Value*, Series_Data(ACT_IDENTITY(action)))
 
 #define Phase_Archetype(phase) \
-    cast(Value(*), Series_Data(ensure(Phase*, phase)))
+    cast(Value*, Series_Data(ensure(Phase*, phase)))
 
 
 INLINE bool Is_Frame_Details(NoQuote(const Cell*) v) {
@@ -353,10 +353,10 @@ INLINE Param* ACT_PARAMS_HEAD(Action* a) {
 // only the archetype, e.g. with a specialized function).  *BUT* if you are
 // asking for elements in the details array, you must know it is dynamic.
 //
-INLINE Value(*) Details_At(Details* details, Length n) {
+INLINE Value* Details_At(Details* details, Length n) {
     assert(n != 0 and n < Series_Dynamic_Used(details));
     Cell* at = cast(Cell*, details->content.dynamic.data) + n;
-    return cast(Value(*), at);
+    return cast(Value*, at);
 }
 
 #define IDX_DETAILS_1 1  // Common index used for code body location

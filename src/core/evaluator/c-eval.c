@@ -97,7 +97,7 @@
 
 #define level_ L  // for OUT, SPARE, STATE macros
 
-#define SCRATCH cast(Value(*), &(L->u.eval.scratch))
+#define SCRATCH cast(Value*, &(L->u.eval.scratch))
 
 // We make the macro for getting specifier a bit more complex here, to
 // account for reevaluation.
@@ -1520,7 +1520,7 @@ Bounce Evaluator_Executor(Level* L)
                 STACK_NOTE_OPTIONAL
             );
 
-            Value(*) var = SCRATCH;  // stable location, safe across SET of var
+            Value* var = SCRATCH;  // stable location, safe across SET of var
             Copy_Cell(var, Data_Stack_At(stackindex_var));
 
             assert(not Is_Quoted(var));

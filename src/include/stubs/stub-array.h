@@ -94,17 +94,17 @@ INLINE bool Has_File_Line(const Array* a) {
 #define Array_Tail(a)           Series_Tail(Element, (a))
 #define Array_Last(a)           Series_Last(Element, (a))
 
-INLINE Value(*) Stub_Cell(const_if_c Series* s) {
+INLINE Value* Stub_Cell(const_if_c Series* s) {
     assert(Not_Series_Flag(s, DYNAMIC));
     assert(Is_Series_Array(s));
-    return x_cast(Value(*), &s->content.fixed.cell);
+    return x_cast(Value*, &s->content.fixed.cell);
 }
 
 #if CPLUSPLUS_11
-    INLINE Value(const*) Stub_Cell(const Stub* s) {
+    INLINE const Value* Stub_Cell(const Stub* s) {
         assert(Not_Series_Flag(s, DYNAMIC));
         assert(Is_Series_Array(s));
-        return u_cast(Value(const*), &s->content.fixed.cell);
+        return u_cast(const Value*, &s->content.fixed.cell);
     }
 #endif
 

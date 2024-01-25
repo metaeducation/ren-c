@@ -45,7 +45,7 @@
 //    know how to handle them.
 //
 
-INLINE Value(const*) VAL_THROWN_LABEL(Level* level_) {
+INLINE const Value* VAL_THROWN_LABEL(Level* level_) {
     UNUSED(level_);
     assert(not Is_Cell_Erased(&g_ts.thrown_label));
     return &g_ts.thrown_label;
@@ -76,7 +76,7 @@ INLINE Bounce Init_Thrown_With_Label(  // assumes `arg` in g_ts.thrown_arg
 
 // When failures are put in the throw state, they are the label--not the value.
 //
-INLINE Bounce Init_Thrown_Failure(Level* L, Value(const*) error) {
+INLINE Bounce Init_Thrown_Failure(Level* L, const Value* error) {
     assert(Is_Error(error));
     return Init_Thrown_With_Label(L, Lib(NULL), error);
 }
@@ -105,13 +105,13 @@ INLINE void Drop_Level(Level* L);
 // When you're sure that the value isn't going to be consumed by a multireturn
 // then use this to get the first value unmeta'd
 //
-INLINE Value(*) Decay_If_Unstable(Atom(*) v) {
+INLINE Value* Decay_If_Unstable(Atom(*) v) {
     if (not Is_Antiform(v))
-        return cast(Value(*), v);
+        return cast(Value*, v);
 
     if (Is_Lazy(v)) {
         if (not Pushed_Decaying_Level(v, v, LEVEL_MASK_NONE))
-            return cast(Value(*), v);  // cheap reification
+            return cast(Value*, v);  // cheap reification
         if (Trampoline_With_Top_As_Root_Throws())
             fail (Error_No_Catch_For_Throw(TOP_LEVEL));
         Drop_Level(TOP_LEVEL);
@@ -134,7 +134,7 @@ INLINE Value(*) Decay_If_Unstable(Atom(*) v) {
         if (Is_Raised(v))
             fail (VAL_CONTEXT(v));
         assert(not Is_Antiform(v) or Is_Antiform_Stable(v));
-        return cast(Value(*), v);
+        return cast(Value*, v);
     }
 
     if (Is_Barrier(v))
@@ -143,7 +143,7 @@ INLINE Value(*) Decay_If_Unstable(Atom(*) v) {
     if (Is_Raised(v))  // !!! should this raise an error here?
         fail (VAL_CONTEXT(v));
 
-    return cast(Value(*), v);
+    return cast(Value*, v);
 }
 
 // Packs with unstable isotopes in their first cell are not able to be decayed.

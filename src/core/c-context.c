@@ -144,7 +144,7 @@ void Expand_Context(Context* context, REBLEN delta)
 // use sym.  When using a word, it will be modified to be specifically bound
 // to this context after the operation.
 //
-static Value(*) Append_Context_Core(
+static Value* Append_Context_Core(
     Context* context,
     const Symbol* symbol,
     Option(Cell*) any_word  // binding modified (Note: quoted words allowed)
@@ -218,7 +218,7 @@ static Value(*) Append_Context_Core(
             BINDING(unwrap(any_word)) = patch;
         }
 
-        return cast(Value(*), Stub_Cell(patch));
+        return cast(Value*, Stub_Cell(patch));
     }
 
     KeyList* keylist = CTX_KEYLIST(context);
@@ -245,14 +245,14 @@ static Value(*) Append_Context_Core(
         BINDING(unwrap(any_word)) = context;
     }
 
-    return cast(Value(*), value);  // location we just added (void cell)
+    return cast(Value*, value);  // location we just added (void cell)
 }
 
 
 //
 //  Append_Context_Bind_Word: C
 //
-Value(*) Append_Context_Bind_Word(
+Value* Append_Context_Bind_Word(
     Context* context,
     Cell* any_word  // binding modified (Note: quoted words allowed)
 ){
@@ -262,7 +262,7 @@ Value(*) Append_Context_Bind_Word(
 //
 //  Apend_Context: C
 //
-Value(*) Append_Context(Context* context, const Symbol* symbol)
+Value* Append_Context(Context* context, const Symbol* symbol)
 {
     return Append_Context_Core(context, symbol, nullptr);
 }
@@ -648,7 +648,7 @@ Context* Make_Context_Detect_Managed(
         }
     }
 
-    Value(*) var = cast(Value(*), Array_Head(varlist));
+    Value* var = cast(Value*, Array_Head(varlist));
     INIT_VAL_CONTEXT_ROOTVAR(var, kind, varlist);
 
     ++var;
@@ -662,7 +662,7 @@ Context* Make_Context_Detect_Managed(
         // strings, replace their series components with deep copies.
         //
         REBVAL *dest = CTX_VARS_HEAD(context);
-        Value(const*) src_tail;
+        const Value* src_tail;
         REBVAL *src = CTX_VARS(&src_tail, unwrap(parent));
         for (; src != src_tail; ++dest, ++src) {
             Flags flags = NODE_FLAG_MANAGED;  // !!! Review, what flags?
@@ -867,7 +867,7 @@ REBLEN Find_Symbol_In_Context(
 // Search a context's keylist looking for the given symbol, and return the
 // value for the word.  Return NULL if the symbol is not found.
 //
-Option(Value(*)) Select_Symbol_In_Context(
+Option(Value*) Select_Symbol_In_Context(
     const Cell* context,
     const Symbol* symbol
 ){

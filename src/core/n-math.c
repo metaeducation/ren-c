@@ -85,8 +85,8 @@ static REBDEC Trig_Value(
 //  Arc_Trans: C
 //
 static void Arc_Trans(
-    Sink(Value(*)) out,
-    Value(const*) value,
+    Sink(Value*) out,
+    const Value* value,
     bool radians,
     SymId which
 ){
@@ -868,8 +868,8 @@ DECLARE_NATIVE(maximum)
 {
     INCLUDE_PARAMS_OF_MAXIMUM;
 
-    Value(const*) value1 = ARG(value1);
-    Value(const*) value2 = ARG(value2);
+    const Value* value1 = ARG(value1);
+    const Value* value2 = ARG(value2);
 
     if (Is_Pair(value1) || Is_Pair(value2)) {
         Min_Max_Pair(OUT, value1, value2, true);

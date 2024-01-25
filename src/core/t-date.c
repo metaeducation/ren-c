@@ -322,7 +322,7 @@ void Normalize_Time(REBI64 *sp, REBLEN *dp)
 // Given a year, month and day, normalize and combine to give a new
 // date value.
 //
-static Value(*) Init_Normalized_Date(
+static Value* Init_Normalized_Date(
     Cell* out,
     REBINT day,
     REBINT month,
@@ -370,7 +370,7 @@ static Value(*) Init_Normalized_Date(
     EXTRA(Date, out).zone = tz;
     PAYLOAD(Time, out).nanoseconds = NO_DATE_TIME;
 
-    return cast(Value(*), out);
+    return cast(Value*, out);
 }
 
 
@@ -470,10 +470,10 @@ void Adjust_Date_UTC(Cell* d)
 //
 // Called by DIFFERENCE function.
 //
-Value(*) Time_Between_Dates(
-    Sink(Value(*)) out,
-    Value(const*) d1,
-    Value(const*) d2
+Value* Time_Between_Dates(
+    Sink(Value*) out,
+    const Value* d1,
+    const Value* d2
 ){
     // DIFFERENCE is supposed to calculate a time difference, and dates without
     // time components will lead to misleading answers for that.  The user is
@@ -515,7 +515,7 @@ Value(*) Time_Between_Dates(
 Bounce MAKE_Date(
     Level* level_,
     enum Reb_Kind kind,
-    Option(Value(const*)) parent,
+    Option(const Value*) parent,
     const REBVAL *arg
 ){
     assert(kind == REB_DATE);
@@ -652,10 +652,10 @@ static REBINT Int_From_Date_Arg(const REBVAL *poke) {
 //  Pick_Or_Poke_Date: C
 //
 void Pick_Or_Poke_Date(
-    Option(Sink(Value(*))) opt_out,
-    Value(*) v,
+    Option(Sink(Value*)) opt_out,
+    Value* v,
     const Cell* picker,
-    Option(Value(const*)) opt_poke
+    Option(const Value*) opt_poke
 ){
     Option(SymId) sym;
     if (Is_Word(picker)) {

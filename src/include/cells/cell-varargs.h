@@ -81,8 +81,8 @@ INLINE REBVAL *Init_Varargs_Untyped_Normal(Cell* out, Level* L) {
 }
 
 INLINE REBVAL *Init_Varargs_Untyped_Enfix(
-    Sink(Value(*)) out,
-    Option(Value(const*)) left
+    Sink(Value*) out,
+    Option(const Value*) left
 ){
     Array* feed;
     if (not left or Is_Void(unwrap(left)))

@@ -756,9 +756,9 @@ e-errfuncs: make-emitter "Error structure and functions" (
 fields: collect [
     for-each word words-of ob/standard/error [
         either word = 'near [
-            keep {/* near & far are old C keywords */ ValueT nearest}
+            keep {/* near & far are old C keywords */ Value nearest}
         ][
-            keep cscape [word {ValueT ${word}}]
+            keep cscape [word {Value ${word}}]
         ]
     ]
 ]

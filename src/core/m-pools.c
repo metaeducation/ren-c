@@ -502,7 +502,7 @@ Node* Try_Find_Containing_Node_Debug(const void *p)
                 continue;
 
             if (unit[0] & NODE_BYTEMASK_0x01_CELL) {  // a "pairing"
-                REBVAL *pairing = x_cast(Value(*), unit);
+                REBVAL *pairing = x_cast(Value*, unit);
                 if (p >= cast(void*, pairing) and p < cast(void*, pairing + 1))
                     return pairing;  // this Stub is actually Cell[2]
                 continue;
@@ -574,9 +574,9 @@ Node* Try_Find_Containing_Node_Debug(const void *p)
 // leak if not freed or managed.  This shouldn't be hard to fix--it just
 // means the GC manuals list needs to be Node* and not just Series*.
 //
-Value(*) Alloc_Pairing(Flags flags) {
+Value* Alloc_Pairing(Flags flags) {
     assert(flags == 0 or flags == NODE_FLAG_MANAGED);
-    Value(*) paired = cast(ValueT*, Alloc_Pooled(PAIR_POOL));  // 2x cell size
+    Value* paired = cast(Value*, Alloc_Pooled(PAIR_POOL));  // 2x cell size
 
     Erase_Cell(paired);
     Erase_Cell(Pairing_Second(paired));
@@ -590,8 +590,8 @@ Value(*) Alloc_Pairing(Flags flags) {
 //
 //  Copy_Pairing: C
 //
-Value(*) Copy_Pairing(Value(const*) paired, Flags flags) {
-    Value(*) copy = Alloc_Pairing(flags);
+Value* Copy_Pairing(const Value* paired, Flags flags) {
+    Value* copy = Alloc_Pairing(flags);
 
     Copy_Cell(copy, paired);
     Copy_Cell(Pairing_Second(copy), Pairing_Second(paired));
@@ -1136,7 +1136,7 @@ Stub *Decay_Series(Series* s)
         break;
 
       case FLAVOR_HANDLE: {
-        Value(*) v = Stub_Cell(s);
+        Value* v = Stub_Cell(s);
         assert(Cell_Heart_Unchecked(v) == REB_HANDLE);
 
         // Some handles use the managed form just because they want changes to

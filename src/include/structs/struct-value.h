@@ -29,7 +29,7 @@
 // A Cell is an equivalent struct layout to to Value, but is allowed to
 // have an Action* as its binding.  These relative cells can point to a
 // specific Value, but a relative word or array cannot be pointed to by a
-// plain Value(*).  The Cell-vs-Value distinction is purely commentary
+// plain Value*.  The Cell-vs-Value distinction is purely commentary
 // in the C build, but the C++ build makes Value a type derived from Cell.
 //
 // Cell exists to help quarantine the bit patterns for relative words into
@@ -97,10 +97,7 @@
     typedef struct ValueStruct Element;
 #endif
 
-typedef struct ValueStruct ValueT;
-
-#define Value(star_maybe_const) \
-    ValueT star_maybe_const  // will evolve to use Holder class
+typedef struct ValueStruct Value;
 
 #define Atom(star_maybe_const) \
     AtomT star_maybe_const
@@ -138,7 +135,7 @@ typedef struct ValueStruct ValueT;
 // of the atom, to ensure they are not examined.
 //
 #define Stable_Unchecked(atom) \
-    x_cast(Value(*), ensure(Atom(const*), (atom)))
+    x_cast(Value*, ensure(Atom(const*), (atom)))
 
 INLINE REBVAL* Freshen_Cell_Untracked(Cell* v);
 
@@ -147,7 +144,7 @@ INLINE REBVAL* Freshen_Cell_Untracked(Cell* v);
     struct SinkWrapper {
         T* p;
 
-        SinkWrapper() = default;  // or MSVC warns making Option(Sink(Value(*)))
+        SinkWrapper() = default;  // or MSVC warns making Option(Sink(Value*))
         SinkWrapper(nullptr_t) : p (nullptr) {}
 
         template<
@@ -184,7 +181,7 @@ INLINE REBVAL* Freshen_Cell_Untracked(Cell* v);
     #define Sink(T) SinkWrapper<std::remove_pointer<T>::type>
 
     template<>
-    struct c_cast_helper<Byte*, Sink(Value(*)) const&> {
+    struct c_cast_helper<Byte*, Sink(Value*) const&> {
         typedef Byte* type;
     };
 #else
@@ -204,7 +201,7 @@ INLINE REBVAL* Freshen_Cell_Untracked(Cell* v);
 // DEBUG_EXTANT_STACK_POINTERS means there will be some cases where distinct
 // overloads of REBVAL* vs. NoQuote(const Cell*) will wind up being ambiguous.
 // For instance, VAL_DECIMAL(StackValue(*)) can't tell which checked overload
-// to use.  Then you have to cast, e.g. VAL_DECIMAL(cast(Value(*), stackval)).
+// to use.  Then you have to cast, e.g. VAL_DECIMAL(cast(Value*, stackval)).
 //
 #if (! DEBUG_EXTANT_STACK_POINTERS)
     #define StackValue(p) REBVAL*

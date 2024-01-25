@@ -95,7 +95,7 @@ static void Append_Vars_To_Context_From_Group(REBVAL *context, REBVAL *block)
     const Cell* word = item;
     for (; word != tail; word += 2) {
         const Symbol* symbol = Cell_Word_Symbol(word);
-        Value(*) var;
+        Value* var;
         if (Is_Module(context)) {
             bool strict = true;
             var = MOD_VAR(c, symbol, strict);
@@ -379,7 +379,7 @@ bool Did_Advance_Evars(EVARS *e) {
         e->key != e->key_tail;
         (++e->index, ++e->key,
             e->param ? ++e->param : cast(Param*, nullptr),
-            e->var ? ++e->var : cast(Value(*), nullptr)
+            e->var ? ++e->var : cast(Value*, nullptr)
         )
     ){
         if (e->var and Get_Cell_Flag(e->var, VAR_MARKED_HIDDEN))
@@ -527,7 +527,7 @@ REBINT CT_Context(NoQuote(const Cell*) a, NoQuote(const Cell*) b, bool strict)
 Bounce MAKE_Frame(
     Level* level_,
     enum Reb_Kind kind,
-    Option(Value(const*)) parent,
+    Option(const Value*) parent,
     const REBVAL *arg
 ){
     if (parent)
@@ -608,7 +608,7 @@ Bounce TO_Frame(Level* level_, enum Reb_Kind kind, const REBVAL *arg)
 Bounce MAKE_Context(
     Level* level_,
     enum Reb_Kind kind,
-    Option(Value(const*)) parent,
+    Option(const Value*) parent,
     const REBVAL *arg
 ){
     // Other context kinds (LEVEL!, ERROR!, PORT!) have their own hooks.
@@ -810,7 +810,7 @@ Context* Copy_Context_Extra_Managed(
     else
         Set_Series_Len(varlist, CTX_LEN(original) + 1);
 
-    Value(*) dest = Series_Head(ValueT, varlist);
+    Value* dest = Series_Head(Value, varlist);
 
     // The type information and fields in the rootvar (at head of the varlist)
     // get filled in with a copy, but the varlist needs to be updated in the
@@ -876,7 +876,7 @@ Context* Copy_Context_Extra_Managed(
     // Now copy the actual vars in the context, from wherever they may be
     // (might be in an array, or might be in the chunk stack for FRAME!)
     //
-    Value(const*) src_tail;
+    const Value* src_tail;
     REBVAL *src = CTX_VARS(&src_tail, original);
     for (; src != src_tail; ++src, ++dest) {
         Copy_Cell_Core(  // trying to duplicate slot precisely
@@ -1167,7 +1167,7 @@ REBTYPE(Context)
 
         REBVAL *setval = ARG(value);
 
-        Value(*) var = m_cast(Value(*), TRY_VAL_CONTEXT_VAR(context, symbol));
+        Value* var = m_cast(Value*, TRY_VAL_CONTEXT_VAR(context, symbol));
         if (not var)
             fail (Error_Bad_Pick_Raw(picker));
 

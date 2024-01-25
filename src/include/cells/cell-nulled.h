@@ -59,7 +59,7 @@
 //   called "Is_Nulled()" instead of "Is_Null()".
 //
 // * We ensure that non-quoted, non-quasi NULL isn't written into a Cell*
-//   e.g. for a BLOCK!... must be a Value(*), e.g. a context variable or
+//   e.g. for a BLOCK!... must be a Value*, e.g. a context variable or
 //   frame output.
 //
 
@@ -71,7 +71,7 @@ INLINE bool Is_Nulled(const Cell* v) {
 }
 
 #define Init_Anti_Word(out,label) \
-    TRACK(Init_Any_Word_Untracked(ensure(Sink(Value(*)), (out)), REB_WORD, \
+    TRACK(Init_Any_Word_Untracked(ensure(Sink(Value*), (out)), REB_WORD, \
             (label), ANTIFORM_0))
 
 #define Init_Quasi_Word(out,label) \

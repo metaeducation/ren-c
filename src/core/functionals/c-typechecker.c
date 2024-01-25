@@ -54,7 +54,7 @@ enum {
 //
 // Intrinsic used by TYPECHECKER generator for when argument is a datatype.
 //
-void Datatype_Checker_Intrinsic(Value(*) out, Phase* phase, Value(*) arg)
+void Datatype_Checker_Intrinsic(Value* out, Phase* phase, Value* arg)
 {
     assert(ACT_DISPATCHER(phase) == &Intrinsic_Dispatcher);
 
@@ -72,7 +72,7 @@ void Datatype_Checker_Intrinsic(Value(*) out, Phase* phase, Value(*) arg)
 //
 // Intrinsic used by TYPECHECKER generator for when argument is a typeset.
 //
-void Typeset_Checker_Intrinsic(Value(*) out, Phase* phase, Value(*) arg)
+void Typeset_Checker_Intrinsic(Value* out, Phase* phase, Value* arg)
 {
     assert(ACT_DISPATCHER(phase) == &Intrinsic_Dispatcher);
 
@@ -95,7 +95,7 @@ void Typeset_Checker_Intrinsic(Value(*) out, Phase* phase, Value(*) arg)
 // Bootstrap creates typechecker functions before functions like TYPECHECKER
 // are allowed to run to create them.  So this is factored out.
 //
-Phase* Make_Typechecker(Value(const*) type) {
+Phase* Make_Typechecker(const Value* type) {
     assert(
         Is_Type_Word(type)  // datatype
         or Is_Integer(type)  // typeset index (for finding bitset)

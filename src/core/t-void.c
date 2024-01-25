@@ -33,7 +33,7 @@
 Bounce MAKE_Quasiform(
     Level* level_,
     enum Reb_Kind kind,
-    Option(Value(const*)) parent,
+    Option(const Value*) parent,
     const REBVAL *arg
 ){
     assert(not parent);

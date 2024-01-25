@@ -62,14 +62,14 @@ Array* Startup_Datatypes(Array* boot_typespecs)
         // it's a lot of work.
         //
         SymId constraint_sym = cast(SymId, REB_MAX + (n - 1) * 2 + 1);
-        Value(*) value = Force_Lib_Var(constraint_sym);
+        Value* value = Force_Lib_Var(constraint_sym);
         Init_Any_Word(value, REB_TYPE_WORD, Canon_Symbol(SYM_FROM_KIND(kind)));
         Set_Cell_Flag(value, PROTECTED);
 
         // The "catalog of types" is somewhere that could serve as Datatypes[]
         // if that is reconsidered.
         //
-        Value(*) word = Init_Any_Word(
+        Value* word = Init_Any_Word(
             Alloc_Tail_Array(catalog),
             REB_WORD,
             Canon_Symbol(constraint_sym)

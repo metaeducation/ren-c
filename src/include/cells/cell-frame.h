@@ -122,7 +122,7 @@ INLINE REBVAL *Init_Frame_Details_Core(
 #define Init_Action(out,a,label,binding) \
     Actionify(Init_Frame_Details_Core(TRACK(out), (a), (label), (binding)))
 
-INLINE Value(*) Actionify(Value(*) v) {
+INLINE Value* Actionify(Value* v) {
     assert(Is_Frame(v) and QUOTE_BYTE(v) == NOQUOTE_1);
     QUOTE_BYTE(v) = ANTIFORM_0;
     return v;

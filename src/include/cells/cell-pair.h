@@ -52,9 +52,9 @@ INLINE bool Any_Pairlike(NoQuote(const Cell*) v) {
 #define INIT_VAL_PAIR(v,pairing) \
     Init_Cell_Node1((v), (pairing))
 
-INLINE Value(*) VAL_PAIRING(NoQuote(const Cell*) v) {
+INLINE Value* VAL_PAIRING(NoQuote(const Cell*) v) {
     assert(Any_Pairlike(v));
-    return x_cast(Value(*), Cell_Node1(v));
+    return x_cast(Value*, Cell_Node1(v));
 }
 
 #define VAL_PAIR_X(v) \
@@ -75,7 +75,7 @@ INLINE REBDEC VAL_PAIR_Y_INT(NoQuote(const Cell*) v) {
     return ROUND_TO_INT(VAL_DECIMAL(VAL_PAIR_Y(v)));
 }
 
-INLINE Element* Init_Pair_Untracked(Sink(Element*) out, Value(*) pairing) {
+INLINE Element* Init_Pair_Untracked(Sink(Element*) out, Value* pairing) {
     assert(Is_Node_Managed(pairing));
     Reset_Unquoted_Header_Untracked(out, CELL_MASK_PAIR);
     INIT_VAL_PAIR(out, pairing);
@@ -91,8 +91,8 @@ INLINE Element* Init_Pair_Untracked(Sink(Element*) out, Value(*) pairing) {
 #define Init_Pair(out,pairing) \
     TRACK(Init_Pair_Untracked((out), (pairing)))
 
-INLINE Value(*) Init_Pair_Int_Untracked(Cell* out, REBI64 x, REBI64 y) {
-    Value(*) p = Alloc_Pairing(NODE_FLAG_MANAGED);
+INLINE Value* Init_Pair_Int_Untracked(Cell* out, REBI64 x, REBI64 y) {
+    Value* p = Alloc_Pairing(NODE_FLAG_MANAGED);
     Init_Integer(p, x);
     Init_Integer(Pairing_Second(p), y);
     return Init_Pair_Untracked(out, p);

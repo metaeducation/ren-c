@@ -210,8 +210,8 @@ DECLARE_NATIVE(except)
  {
     INCLUDE_PARAMS_OF_EXCEPT;
 
-    Value(*) v = ARG(optional);
-    Value(*) branch = ARG(branch);
+    Value* v = ARG(optional);
+    Value* branch = ARG(branch);
     Deactivate_If_Action(ARG(branch));
 
     if (not Is_Meta_Of_Raised(v))

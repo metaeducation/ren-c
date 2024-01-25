@@ -313,7 +313,7 @@ void Extra_Init_Context_Cell_Checks_Debug(enum Reb_Kind kind, Context* c) {
 // !!! Overlaps with ASSERT_ACTION, review folding them together.
 //
 void Extra_Init_Frame_Details_Checks_Debug(Phase* a) {
-    Value(*) archetype = Phase_Archetype(a);
+    Value* archetype = Phase_Archetype(a);
 
     // Once it was true that `VAL_ACTION(archetype) == a`.  That's no longer
     // true, but there might be some checks that apply regarding the two?

@@ -150,7 +150,7 @@ DECLARE_INTRINSIC(not_1)  // see TO-C-NAME
 // WORD!, or TUPLE!.
 //
 inline static bool Do_Logic_Right_Side_Throws(
-    Sink(Value(*)) out,
+    Sink(Value*) out,
     const REBVAL *right
 ){
     if (Is_Group(right)) {
@@ -313,7 +313,7 @@ inline static bool Math_Arg_For_Logic(REBVAL *arg)
 Bounce MAKE_Antiform(
     Level* level_,
     enum Reb_Kind kind,
-    Option(Value(const*)) parent,
+    Option(const Value*) parent,
     const REBVAL *arg
 ){
     assert(kind == REB_ANTIFORM);

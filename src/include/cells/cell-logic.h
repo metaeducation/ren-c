@@ -75,7 +75,7 @@ INLINE bool Cell_Logic(const Cell* v) {
     fail ("Attempt to test Cell_Logic() on non-LOGIC!");  // shouldn't happen
 }
 
-INLINE bool Is_Truthy(Value(const*) v) {
+INLINE bool Is_Truthy(const Value* v) {
     ASSERT_CELL_READABLE(v);
 
     if (QUOTE_BYTE(v) == ANTIFORM_0) {

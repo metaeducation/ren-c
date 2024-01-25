@@ -229,10 +229,10 @@ DECLARE_NATIVE(console)
     CONSOLE_INCLUDE_PARAMS_OF_CONSOLE;
 
     // skin return result--request or ultimate return
-    REBVAL* const code = cast(Value(*), OUT);
+    REBVAL* const code = cast(Value*, OUT);
 
     // what we got from running code requests
-    REBVAL* const metaresult = cast(Value(*), SPARE);
+    REBVAL* const metaresult = cast(Value*, SPARE);
 
     enum {
         ST_CONSOLE_INITIAL_ENTRY = STATE_0,

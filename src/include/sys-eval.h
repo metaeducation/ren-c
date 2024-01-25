@@ -92,7 +92,7 @@
 // a variable could easily be unset with (var: ~).  So this shifted to say
 // that all stable antiforms are set friendly.
 //
-INLINE bool Is_Antiform_Set_Friendly(Value(const*) v) {
+INLINE bool Is_Antiform_Set_Friendly(const Value* v) {
     assert(QUOTE_BYTE(v) == ANTIFORM_0);
     UNUSED(v);
     return true;
@@ -104,7 +104,7 @@ INLINE bool Is_Antiform_Set_Friendly(Value(const*) v) {
 // is opened up to the entire class of antiforms.  But unlike in assignment,
 // antiform voids (trash) are not get-friendly.
 //
-INLINE bool Is_Antiform_Get_Friendly(Value(const*) v) {
+INLINE bool Is_Antiform_Get_Friendly(const Value* v) {
     assert(QUOTE_BYTE(v) == ANTIFORM_0);
     return HEART_BYTE(v) != REB_VOID;
 }
@@ -286,7 +286,7 @@ INLINE bool Eval_Step_In_Sublevel_Throws(
 INLINE bool Reevaluate_In_Sublevel_Throws(
     Atom(*) out,
     Level* L,
-    Value(const*) reval,
+    const Value* reval,
     Flags flags,
     bool enfix
 ){

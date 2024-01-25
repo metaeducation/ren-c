@@ -296,7 +296,7 @@ INLINE void Set_Parameter_String(Cell* param, Option(const String*) string) {
 // are then fixed at a value and hence specialized--so not part of the public
 // interface of the function.
 //
-INLINE bool Is_Specialized(Value(const*) v) {
+INLINE bool Is_Specialized(const Value* v) {
     if (
         HEART_BYTE(v) == REB_PARAMETER
         and QUOTE_BYTE(v) == ANTIFORM_0

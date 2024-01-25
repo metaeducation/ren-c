@@ -63,7 +63,7 @@ Bounce Yielder_Dispatcher(Level* const L)
     USE_LEVEL_SHORTHANDS (L);
 
     Details* details = Phase_Details(PHASE);
-    Value(*) mode = Details_At(details, IDX_YIELDER_MODE);
+    Value* mode = Details_At(details, IDX_YIELDER_MODE);
 
     switch (STATE) {
       case ST_YIELDER_WAS_INVOKED: goto invoked;
@@ -143,8 +143,8 @@ Bounce Yielder_Dispatcher(Level* const L)
     const Key* key_tail;
     const Key* key = CTX_KEYS(&key_tail, last_yielder_context);
     Param* param = ACT_PARAMS_HEAD(Level_Phase(yielder_level));
-    Value(*) dest = CTX_VARS_HEAD(last_yielder_context);
-    Value(*) src = Level_Args_Head(yielder_level);
+    Value* dest = CTX_VARS_HEAD(last_yielder_context);
+    Value* src = Level_Args_Head(yielder_level);
     for (; key != key_tail; ++key, ++param, ++dest, ++src) {
         if (Is_Specialized(param))
             continue;  // don't overwrite locals (including YIELD)0
@@ -188,7 +188,7 @@ Bounce Yielder_Dispatcher(Level* const L)
     L->varlist = CTX_VARLIST(last_yielder_context);  // rootvar must match
     L->rootvar = m_cast(REBVAL*, CTX_ARCHETYPE(last_yielder_context));
 
-    Value(*) plug = Details_At(details, IDX_YIELDER_PLUG);
+    Value* plug = Details_At(details, IDX_YIELDER_PLUG);
     Replug_Stack(yield_level, yielder_level, plug);
     Assert_Is_Unreadable_If_Debug(plug);  // Replug wiped, make GC safe
 
@@ -196,7 +196,7 @@ Bounce Yielder_Dispatcher(Level* const L)
     // the YIELD ran (e.g. if it interrupted a CASE or something, this
     // would be what the case had in the out cell at moment of interrupt).
     //
-    Value(*) out_copy = Details_At(details, IDX_YIELDER_OUT);
+    Value* out_copy = Details_At(details, IDX_YIELDER_OUT);
     Move_Cell(yielder_level->out, out_copy);
 
     // We could make YIELD appear to return a VOID! when we jump back in
@@ -271,7 +271,7 @@ DECLARE_NATIVE(yielder)
     // We start by making an ordinary-seeming interpreted function, but that
     // has a local "yield" which is bound to the frame upon execution.
     //
-    Value(*) body = rebValue("compose [",
+    Value* body = rebValue("compose [",
         "let yield: runs bind :lib.yield binding of inside [] 'return",
         "(as group!", ARG(body), ")",  // GROUP! so it can't backquote 'YIELD
     "]");
@@ -379,10 +379,10 @@ DECLARE_NATIVE(yield)
     // of that evaluative product.  It must be preserved.  But since we can't
     // put END values in blocks, use the hidden block to indicate that
     //
-    Value(*) out_copy = Details_At(yielder_details, IDX_YIELDER_OUT);
+    Value* out_copy = Details_At(yielder_details, IDX_YIELDER_OUT);
     Move_Cell(out_copy, yielder_level->out);
 
-    Value(*) plug = Details_At(yielder_details, IDX_YIELDER_PLUG);
+    Value* plug = Details_At(yielder_details, IDX_YIELDER_PLUG);
     Assert_Is_Unreadable_If_Debug(plug);
     Unplug_Stack(plug, yield_level, yielder_level);
 
@@ -391,7 +391,7 @@ DECLARE_NATIVE(yield)
     // The garbage collector should notice it is there, and mark it live up
     // until the nullptr that we put at the root.
     //
-    Value(*) mode = Details_At(yielder_details, IDX_YIELDER_MODE);
+    Value* mode = Details_At(yielder_details, IDX_YIELDER_MODE);
     assert(Is_Quasi_Void(mode));  // should be signal for "currently running"
     Init_Frame(mode, Context_For_Level_May_Manage(yield_level), ANONYMOUS);
     Assert_Series_Managed(VAL_CONTEXT(mode));

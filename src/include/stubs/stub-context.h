@@ -274,12 +274,12 @@ INLINE const Key* CTX_KEY(Context* c, REBLEN n) {
     return Series_At(const Key, CTX_KEYLIST(c), n - 1);
 }
 
-INLINE Value(*) CTX_VAR(Context* c, REBLEN n) {  // 1-based, no Cell*
+INLINE Value* CTX_VAR(Context* c, REBLEN n) {  // 1-based, no Cell*
     assert(n != 0 and n <= CTX_LEN(c));
-    return cast(Value(*), cast(Series*, c)->content.dynamic.data) + n;
+    return cast(Value*, cast(Series*, c)->content.dynamic.data) + n;
 }
 
-INLINE Value(const*) Try_Lib_Var(SymId id) {
+INLINE const Value* Try_Lib_Var(SymId id) {
     assert(id < LIB_SYMS_MAX);
 
     // !!! We allow a "removed state", in case modules implement a
@@ -288,14 +288,14 @@ INLINE Value(const*) Try_Lib_Var(SymId id) {
     if (INODE(PatchContext, &PG_Lib_Patches[id]) == nullptr)
         return nullptr;
 
-    return cast(Value(*), Stub_Cell(&PG_Lib_Patches[id]));
+    return cast(Value*, Stub_Cell(&PG_Lib_Patches[id]));
 }
 
 #define Lib(name) \
     Try_Lib_Var(SYM_##name)
 
-INLINE Value(*) Force_Lib_Var(SymId id) {
-    Value(*) var = m_cast(Value(*), Try_Lib_Var(id));
+INLINE Value* Force_Lib_Var(SymId id) {
+    Value* var = m_cast(Value*, Try_Lib_Var(id));
     if (var)
         return var;
     return Append_Context(Lib_Context, Canon_Symbol(id));
@@ -305,7 +305,7 @@ INLINE Value(*) Force_Lib_Var(SymId id) {
     Force_Lib_Var(SYM_##name)
 
 #define SysUtil(name) \
-    cast(const Value(*), MOD_VAR(Sys_Context, Canon_Symbol(SYM_##name), true))
+    cast(const Value*, MOD_VAR(Sys_Context, Canon_Symbol(SYM_##name), true))
 
 INLINE Option(Stub*) MOD_PATCH(Context* c, const Symbol* sym, bool strict) {
     //
@@ -347,11 +347,11 @@ INLINE Option(Stub*) MOD_PATCH(Context* c, const Symbol* sym, bool strict) {
     return nullptr;
 }
 
-INLINE Value(*) MOD_VAR(Context* c, const Symbol* sym, bool strict) {
+INLINE Value* MOD_VAR(Context* c, const Symbol* sym, bool strict) {
     Stub* patch = try_unwrap(MOD_PATCH(c, sym, strict));
     if (not patch)
         return nullptr;
-    return cast(Value(*), Stub_Cell(patch));
+    return cast(Value*, Stub_Cell(patch));
 }
 
 
@@ -362,7 +362,7 @@ INLINE Value(*) MOD_VAR(Context* c, const Symbol* sym, bool strict) {
     Series_At(Key, CTX_KEYLIST(c), 0)  // 0-based
 
 #define CTX_VARS_HEAD(c) \
-    (cast(Value(*), x_cast(Series*, (c))->content.dynamic.data) + 1)
+    (cast(Value*, x_cast(Series*, (c))->content.dynamic.data) + 1)
 
 INLINE const Key* CTX_KEYS(const Key* * tail, Context* c) {
     Series* keylist = CTX_KEYLIST(c);
@@ -370,8 +370,8 @@ INLINE const Key* CTX_KEYS(const Key* * tail, Context* c) {
     return Series_Head(Key, keylist);
 }
 
-INLINE Value(*) CTX_VARS(Value(const*) * tail, Context* c) {
-    Value(*) head = CTX_VARS_HEAD(c);
+INLINE Value* CTX_VARS(const Value* * tail, Context* c) {
+    Value* head = CTX_VARS_HEAD(c);
     *tail = head + x_cast(Series*, (c))->content.dynamic.used - 1;
     return head;
 }

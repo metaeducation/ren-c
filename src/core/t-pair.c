@@ -49,7 +49,7 @@ REBINT CT_Pair(NoQuote(const Cell*) a, NoQuote(const Cell*) b, bool strict)
 Bounce MAKE_Pair(
     Level* level_,
     enum Reb_Kind kind,
-    Option(Value(const*)) parent,
+    Option(const Value*) parent,
     const REBVAL *arg
 ){
     assert(kind == REB_PAIR);
@@ -126,9 +126,9 @@ Bounce TO_Pair(Level* level_, enum Reb_Kind kind, const REBVAL *arg)
 //  Min_Max_Pair: C
 //
 void Min_Max_Pair(
-    Sink(Value(*)) out,
-    Value(const*) a,
-    Value(const*) b,
+    Sink(Value*) out,
+    const Value* a,
+    const Value* b,
     bool maxed
 ){
     REBI64 x;

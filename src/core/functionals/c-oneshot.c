@@ -61,7 +61,7 @@ Bounce Downshot_Dispatcher(Level* const L)  // runs until count is reached
         return nullptr;  // always return null once 0 is reached
     mutable_VAL_INT64(n) -= 1;
 
-    Value(*) code = Level_Arg(L, 2);  // skip the RETURN
+    Value* code = Level_Arg(L, 2);  // skip the RETURN
     return DELEGATE_BRANCH(OUT, code);
 }
 
@@ -79,7 +79,7 @@ Bounce Upshot_Dispatcher(Level* const L)  // won't run until count is reached
         return nullptr;  // return null until 0 is reached
     }
 
-    Value(*) code = Level_Arg(L, 2);  // skip the RETURN
+    Value* code = Level_Arg(L, 2);  // skip the RETURN
     return DELEGATE_BRANCH(OUT, code);
 }
 

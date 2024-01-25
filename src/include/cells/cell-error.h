@@ -67,8 +67,8 @@ INLINE Atom(*) Raisify(Atom(*) v) {
 }
 
 #if CPLUSPLUS_11
-    void Is_Raised(Value(const*) v) = delete;
-    void Raisify(Value(*) v) = delete;
+    void Is_Raised(const Value* v) = delete;
+    void Raisify(Value* v) = delete;
 #endif
 
 INLINE bool Is_Meta_Of_Raised(const Cell* v)

@@ -157,7 +157,7 @@ Bounce Chainer_Dispatcher(Level* const L)
     Details* details = Phase_Details(PHASE);
     assert(Array_Len(details) == IDX_CHAINER_MAX);
 
-    Value(*) pipeline_at = Init_Block(
+    Value* pipeline_at = Init_Block(
         SPARE,  // index of BLOCK! is current step
         Cell_Array(Details_At(details, IDX_CHAINER_PIPELINE))
     );
@@ -198,7 +198,7 @@ Bounce Chainer_Dispatcher(Level* const L)
     sub->varlist = nullptr;
 
     assert(Is_Block(SPARE));
-    Value(*) pipeline_at = cast(Value(*), SPARE);
+    Value* pipeline_at = cast(Value*, SPARE);
     const Element* chained_tail;
     const Element* chained = Cell_Array_At(&chained_tail, pipeline_at);
 

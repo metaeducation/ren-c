@@ -189,7 +189,7 @@ static Bounce MAKE_TO_Binary_Common(Level* level_, const REBVAL *arg)
 Bounce MAKE_Binary(
     Level* level_,
     enum Reb_Kind kind,
-    Option(Value(const*)) parent,
+    Option(const Value*) parent,
     const REBVAL *def
 ){
     assert(kind == REB_BINARY);
@@ -389,7 +389,7 @@ REBTYPE(Binary)
         INCLUDE_PARAMS_OF_INSERT;  // compatible frame with APPEND, CHANGE
         UNUSED(PARAM(series));  // covered by `v`
 
-        Value(*) arg = ARG(value);
+        Value* arg = ARG(value);
         assert(not Is_Nulled(arg));  // not an <opt> parameter
 
         REBLEN len; // length of target

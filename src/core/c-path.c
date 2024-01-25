@@ -30,8 +30,8 @@
 //
 //  Try_Init_Any_Sequence_At_Arraylike: C
 //
-Value(*) Try_Init_Any_Sequence_At_Arraylike(
-    Sink(Value(*)) out,  // NULL if array too short, violating value otherwise
+Value* Try_Init_Any_Sequence_At_Arraylike(
+    Sink(Value*) out,  // NULL if array too short, violating value otherwise
     enum Reb_Kind kind,
     const Array* a,
     REBLEN index
@@ -205,7 +205,7 @@ DECLARE_NATIVE(poke)
 Bounce MAKE_Path(
     Level* level_,
     enum Reb_Kind kind,
-    Option(Value(const*)) parent,
+    Option(const Value*) parent,
     const REBVAL *arg
 ){
     if (parent)

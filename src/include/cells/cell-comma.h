@@ -49,7 +49,7 @@
 //   evaluated to a COMMA! antiform (for instance).
 //
 
-INLINE Value(*) Init_Comma(Cell* out) {
+INLINE Value* Init_Comma(Cell* out) {
     Reset_Unquoted_Header_Untracked(out, CELL_MASK_COMMA);
 
     // Although COMMA! carries no data, it is not inert.  To make Any_Inert()
@@ -64,13 +64,13 @@ INLINE Value(*) Init_Comma(Cell* out) {
     PAYLOAD(Any, out).second.corrupt = CORRUPTZERO;
   #endif
 
-    return cast(Value(*), out);
+    return cast(Value*, out);
 }
 
-INLINE Value(*) Init_Barrier(Cell* out) {
+INLINE Value* Init_Barrier(Cell* out) {
     Init_Comma(out);
     QUOTE_BYTE(out) = ANTIFORM_0;
-    return cast(Value(*), out);
+    return cast(Value*, out);
 }
 
 INLINE bool Is_Elision(Atom(*) v) {
@@ -78,7 +78,7 @@ INLINE bool Is_Elision(Atom(*) v) {
 }
 
 #if CPLUSPLUS_11
-    void Is_Elision(Value(*) v) = delete;
+    void Is_Elision(Value* v) = delete;
 #endif
 
 INLINE bool Is_Meta_Of_Elision(Cell* v) {

@@ -253,7 +253,7 @@ inline static Option(SymId) VAL_CMD(const Cell* v) {
 //
 static bool Subparse_Throws(
     bool *interrupted_out,
-    Sink(Value(*)) out,
+    Sink(Value*) out,
     const Cell* input,
     Specifier* input_specifier,
     Level* const L,
@@ -428,7 +428,7 @@ static void Print_Parse_Index(Level* level_) {
 // values as-is.
 //
 static const Cell* Get_Parse_Value(
-    Sink(Value(*)) cell,  // storage for fetched values; must be GC protected
+    Sink(Value*) cell,  // storage for fetched values; must be GC protected
     const Cell* rule,
     Specifier* specifier
 ){
@@ -462,7 +462,7 @@ static const Cell* Get_Parse_Value(
 // like a COMPOSE that runs each time they are visited.
 //
 bool Process_Group_For_Parse_Throws(
-    Sink(Value(*)) out,
+    Sink(Value*) out,
     Level* level_,
     const Cell* group  // may be same as `cell`
 ){
@@ -2762,7 +2762,7 @@ DECLARE_NATIVE(parse3)
         // Any PARSE-specific THROWs (where a PARSE directive jumped the
         // stack) should be handled here.  ACCEPT is one example.
 
-        Value(const*) label = VAL_THROWN_LABEL(LEVEL);
+        const Value* label = VAL_THROWN_LABEL(LEVEL);
         if (Is_Frame(label)) {
             if (VAL_ACTION(label) == VAL_ACTION(Lib(PARSE_ACCEPT))) {
                 CATCH_THROWN(OUT, LEVEL);

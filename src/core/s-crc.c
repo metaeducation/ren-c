@@ -378,7 +378,7 @@ Series* Make_Hash_Series(REBLEN len)
 // A map has an additional hash element hidden in the ->extra field of the
 // Stub which needs to be given to memory management as well.
 //
-Value(*) Init_Map(Cell* out, Map* map)
+Value* Init_Map(Cell* out, Map* map)
 {
     if (MAP_HASHLIST(map))
         Force_Series_Managed(MAP_HASHLIST(map));
@@ -389,7 +389,7 @@ Value(*) Init_Map(Cell* out, Map* map)
     Init_Cell_Node1(out, MAP_PAIRLIST(map));
     // second payload pointer not used
 
-    return cast(ValueT*, out);
+    return cast(Value*, out);
 }
 
 

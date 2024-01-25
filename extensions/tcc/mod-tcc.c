@@ -263,7 +263,7 @@ Bounce Pending_Native_Dispatcher(Level* L) {
     Phase* phase = Level_Phase(L);
     assert(ACT_DISPATCHER(phase) == &Pending_Native_Dispatcher);
 
-    Value(*) action = Phase_Archetype(phase);  // this action's value
+    Value* action = Phase_Archetype(phase);  // this action's value
 
     // !!! We're calling COMPILE here via a textual binding.  However, the
     // pending native dispatcher's IDX_NATIVE_CONTEXT for binding lookup is
@@ -519,8 +519,8 @@ DECLARE_NATIVE(compile_p)
                 Copy_Cell(PUSH(), item);
 
                 Details* details = Phase_Details(VAL_ACTION(item));
-                Value(*) source = Details_At(details, IDX_NATIVE_BODY);
-                Value(*) linkname = Details_At(details, IDX_TCC_NATIVE_LINKNAME);
+                Value* source = Details_At(details, IDX_NATIVE_BODY);
+                Value* linkname = Details_At(details, IDX_TCC_NATIVE_LINKNAME);
 
                 // !!! Level* is not exported by libRebol, though it could be
                 // opaquely...and there could be some very narrow routines for

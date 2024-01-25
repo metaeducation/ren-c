@@ -58,7 +58,7 @@ DECLARE_NATIVE(only_p)  // https://forum.rebol.info/t/1182/11
 {
     INCLUDE_PARAMS_OF_ONLY_P;
 
-    Value(*) v = ARG(value);
+    Value* v = ARG(value);
 
     Array* a = Alloc_Singular(NODE_FLAG_MANAGED);  // semi-efficient [3]
     if (Is_Void(v))
@@ -107,7 +107,7 @@ REBINT CT_Array(NoQuote(const Cell*) a, NoQuote(const Cell*) b, bool strict)
 Bounce MAKE_Array(
     Level* level_,
     enum Reb_Kind kind,
-    Option(Value(const*)) parent,
+    Option(const Value*) parent,
     const REBVAL *arg
 ){
     if (parent)
@@ -686,8 +686,8 @@ static REBINT Try_Get_Array_Index_From_Picker(
 // Fills out with NULL if no pick.
 //
 bool Did_Pick_Block(
-    Sink(Value(*)) out,
-    Value(const*) block,
+    Sink(Value*) out,
+    const Value* block,
     const Cell* picker
 ){
     REBINT n = Get_Num_From_Arg(picker);
@@ -998,7 +998,7 @@ REBTYPE(Array)
         INCLUDE_PARAMS_OF_INSERT;
         UNUSED(PARAM(series));
 
-        Value(*) arg = ARG(value);
+        Value* arg = ARG(value);
         assert(not Is_Nulled(arg));  // not <opt> in typecheck
 
         REBLEN len; // length of target
