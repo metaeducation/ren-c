@@ -145,34 +145,45 @@ typedef struct ValueStruct ValueT;
 INLINE REBVAL* Freshen_Cell_Untracked(Cell* v);
 
 #if CPLUSPLUS_11
-    struct ValueSink {
-        Value(*) p;
+    template<typename T>
+    struct SinkWrapper {
+        T* p;
 
-        ValueSink() = default;  // or MSVC warns making Option(Sink(Value(*)))
-        ValueSink(nullptr_t) : p (nullptr) {}
-        ValueSink(Atom(*) atom) : p (cast(Value(*), atom)) {
+        SinkWrapper() = default;  // or MSVC warns making Option(Sink(Value(*)))
+        SinkWrapper(nullptr_t) : p (nullptr) {}
+
+        template<
+            typename U,
+            typename std::enable_if<
+                std::is_base_of<U,T>::value  // e.g. pass Atom to Sink(Element)
+            >::type* = nullptr
+        >
+        SinkWrapper(U* u) : p (u_cast(T*, u)) {
           #if !defined(NDEBUG)
             Freshen_Cell_Untracked(p);
           #endif
         }
-        ValueSink(Value(*) value) : p (value) {
-          #if !defined(NDEBUG)
-            Freshen_Cell_Untracked(p);
-          #endif
+
+        template<
+            typename U,
+            typename std::enable_if<
+                std::is_base_of<U,T>::value  // e.g. pass Atom to Sink(Element)
+            >::type* = nullptr
+        >
+        SinkWrapper(SinkWrapper<U> u) : p (u_cast(T*, u.p)) {
         }
-        ValueSink(Element(*) element) = delete;
 
         operator bool () const { return p != nullptr; }
 
-        operator Value(*) () const { return p; }
+        operator T* () const { return p; }
         operator Node* () const { return p; }
 
         explicit operator Byte* () const { return reinterpret_cast<Byte*>(p); }
 
-        Value(*) operator->() const { return p; }
+        T* operator->() const { return p; }
     };
 
-    #define Sink(x) ValueSink  // TBD: generalize?
+    #define Sink(T) SinkWrapper<std::remove_pointer<T>::type>
 
     template<>
     struct c_cast_helper<Byte*, Sink(Value(*)) const&> {
