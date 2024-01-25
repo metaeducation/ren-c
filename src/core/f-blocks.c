@@ -127,7 +127,7 @@ Array* Copy_Values_Len_Extra_Shallow_Core(
 //  Clonify: C
 //
 void Clonify(
-    Cell* v,
+    Value(*) v,
     Flags flags,
     REBU64 deep_types
 ){
@@ -171,12 +171,13 @@ Array* Copy_Array_Core_Managed(
     );
     Set_Series_Len(copy, len);
 
-    const Cell* src = Array_At(original, index);
-    Cell* dest = Array_Head(copy);
+    Element(const*) src = Array_At(original, index);
+    Element(*) dest = Array_Head(copy);
     REBLEN count = 0;
     for (; count < len; ++count, ++dest, ++src) {
+        Copy_Cell(dest, src);
         Clonify(
-            Copy_Cell(dest, src),
+            dest,
             flags | NODE_FLAG_MANAGED,
             deep_types
         );

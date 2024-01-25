@@ -949,7 +949,7 @@ DECLARE_NATIVE(add_use_object) {
 //    means it CAN'T be found in the action's frame.
 //
 void Clonify_And_Bind_Relative(
-    Cell* v,
+    Value(*) v,
     Flags flags,
     REBU64 deep_types,
     Option(struct Reb_Binder*) binder,
@@ -980,8 +980,8 @@ void Clonify_And_Bind_Relative(
         //
         // Objects and series get shallow copied at minimum
         //
-        Cell* deep = nullptr;
-        Cell* deep_tail = nullptr;
+        Element(*) deep = nullptr;
+        Element(*) deep_tail = nullptr;
 
         if (Any_Context_Kind(heart)) {
             Context* copy = Copy_Context_Shallow_Managed(VAL_CONTEXT(v));
@@ -997,8 +997,8 @@ void Clonify_And_Bind_Relative(
             );
             Init_Cell_Node1(v, copy);
 
-            deep = copy;
-            deep_tail = Pairing_Tail(copy);
+            deep = cast(Element(*), copy);
+            deep_tail = cast(Element(*), Pairing_Tail(copy));
         }
         else if (Any_Arraylike(v)) {  // ruled out pairlike sequences above...
             Array* copy = Copy_Array_At_Extra_Shallow(
@@ -1108,12 +1108,13 @@ Array* Copy_And_Bind_Relative_Deep_Managed(
     copy = Make_Array_For_Copy(len, flags, original);
     Set_Series_Len(copy, len);
 
-    const Cell* src = Array_At(original, index);
-    Cell* dest = Array_Head(copy);
+    Element(const*) src = Array_At(original, index);
+    Element(*) dest = Array_Head(copy);
     REBLEN count = 0;
     for (; count < len; ++count, ++dest, ++src) {
+        Copy_Cell(dest, src);
         Clonify_And_Bind_Relative(
-            Copy_Cell(dest, src),
+            dest,
             flags | NODE_FLAG_MANAGED,
             deep_types,
             &binder,

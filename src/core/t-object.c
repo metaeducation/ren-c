@@ -810,7 +810,7 @@ Context* Copy_Context_Extra_Managed(
     else
         Set_Series_Len(varlist, CTX_LEN(original) + 1);
 
-    Cell* dest = Array_Head(varlist);
+    Value(*) dest = Series_Head(ValueT, varlist);
 
     // The type information and fields in the rootvar (at head of the varlist)
     // get filled in with a copy, but the varlist needs to be updated in the
