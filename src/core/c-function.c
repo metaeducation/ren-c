@@ -861,7 +861,6 @@ void Get_Maybe_Fake_Action_Body(Sink(Value(*)) out, Value(const*) action)
 
     if (
         ACT_DISPATCHER(a) == &Func_Dispatcher
-        or ACT_DISPATCHER(a) == &Block_Dispatcher
         or ACT_DISPATCHER(a) == &Lambda_Unoptimized_Dispatcher
     ){
         // Interpreted code, the body is a block with some bindings relative

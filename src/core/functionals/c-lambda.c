@@ -55,11 +55,6 @@ enum {
 //
 // Uses virtual binding (essentially like a USE)
 //
-// !!! Review if this should be unified with the Block_Dispatcher() of DOES.
-// It could detect the case of no parameters to the frame, and thus avoid
-// doing any virtual binding.  However, there's some difference w.r.t. the
-// "derived binding" that need a going-over.
-//
 Bounce Lambda_Dispatcher(Level* const L)
 //
 // 1. We have to use Make_Or_Reuse_Use() here, because it could be the case
