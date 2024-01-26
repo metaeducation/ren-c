@@ -675,7 +675,8 @@ Bounce Evaluator_Executor(Level* L)
 
       word_in_spare:  ////////////////////////////////////////////////////////
 
-        L_current = SPARE;
+        assert(Is_Word(SPARE));
+        L_current = cast(Element*, SPARE);
         L_current_gotten = Lookup_Word_May_Fail(L_current, L_specifier);
         goto word_common;
 
@@ -777,12 +778,13 @@ Bounce Evaluator_Executor(Level* L)
     //    It used to not be a problem, when variables didn't just pop into
     //    existence.  Reconsidered in light of "emergence".  Review.
 
-    set_void_in_spare: ///////////////////////////////////////////////////////
+    set_blank_in_spare: //////////////////////////////////////////////////////
 
     set_word_in_spare: ///////////////////////////////////////////////////////
 
-        L_current = SPARE;
-        goto set_word_common;
+        assert(Is_Word(SPARE) or Is_Blank(SPARE));
+        L_current = cast(Element*, SPARE);
+        goto set_word_common;  // !!! Applies current specifier, should it?
 
     set_word_common: /////////////////////////////////////////////////////////
 
@@ -795,7 +797,7 @@ Bounce Evaluator_Executor(Level* L)
 
         if (L_current != SPARE) {  // !!! hack due to pointer move w/ME, review
             Copy_Cell(SPARE, L_current);
-            L_current = SPARE;
+            L_current = cast(Element*, SPARE);
         }
         return CATCH_CONTINUE_SUBLEVEL(right);
 
@@ -808,7 +810,7 @@ Bounce Evaluator_Executor(Level* L)
         if (Is_Barrier(OUT))  // e.g. (x:,) where comma makes antiform
             fail (Error_Need_Non_End(L_current));
 
-        if (Is_Void(L_current)) {
+        if (Is_Blank(L_current)) {
             // can happen with SET-GROUP! e.g. `(void): ...`, current in spare
         }
         else if (Is_Raised(OUT)) {
@@ -925,7 +927,8 @@ Bounce Evaluator_Executor(Level* L)
 
       tuple_in_spare:  ///////////////////////////////////////////////////////
 
-        L_current = SPARE;
+        assert(Is_Tuple(SPARE));
+        L_current = cast(Element*, SPARE);
         Corrupt_Pointer_If_Debug(L_current_gotten);
         goto tuple_common;
 
@@ -1128,8 +1131,9 @@ Bounce Evaluator_Executor(Level* L)
 
     set_tuple_in_spare: //////////////////////////////////////////////////////
 
-        L_current = SPARE;
-        goto generic_set_common;
+        assert(Is_Tuple(SPARE));
+        L_current = cast(Element*, SPARE);
+        goto generic_set_common;  // !!! Applies specifier, should it?
 
     generic_set_common: //////////////////////////////////////////////////////
 
@@ -1198,7 +1202,8 @@ Bounce Evaluator_Executor(Level* L)
         switch (VAL_TYPE(SPARE)) {
           case REB_VOID :
             STATE = REB_SET_WORD;
-            goto set_void_in_spare;
+            Init_Blank(SPARE);  // can't put voids in feed position
+            goto set_blank_in_spare;
 
           case REB_BLOCK :
             STATE = REB_SET_BLOCK;
@@ -1312,8 +1317,9 @@ Bounce Evaluator_Executor(Level* L)
 
     set_block_in_spare: //////////////////////////////////////////////////////
 
-        L_current = SPARE;
-        goto set_block_common;
+        assert(Is_Block(SPARE));
+        L_current = cast(Element*, SPARE);
+        goto set_block_common;  // !!! applies specifier, should it?
 
     set_block_common: ////////////////////////////////////////////////////////
 
