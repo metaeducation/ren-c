@@ -106,8 +106,8 @@ INLINE Cell* Unquotify_Core(Cell* v, Count unquotes) {
 #if (! CPLUSPLUS_11)  // C++ can overload so return type matches input type
     #define Unquotify Unquotify_Core
 #else
-    INLINE Value* Unquotify(Value* v, Count depth)
-        { return cast(Value*, Unquotify_Core(v, depth)); }
+    INLINE Element* Unquotify(Value* v, Count depth)
+        { return cast(Element*, Unquotify_Core(v, depth)); }
 
     INLINE Cell* Unquotify(Cell* v, Count depth)
         { return Unquotify_Core(v, depth); }
@@ -160,7 +160,7 @@ INLINE Count Dequotify(Cell* v) {
 //
 
 
-INLINE bool Is_Antiform_Unstable(const Atom* v) {
+INLINE bool Is_Antiform_Unstable(Need(const Atom*) v) {
     // Assume Is_Antiform() checked READABLE()
     assert(QUOTE_BYTE(v) == ANTIFORM_0);
     return (
@@ -183,7 +183,7 @@ INLINE bool Is_Stable_Antiform_Heart(enum Reb_Kind heart) {
     );
 }
 
-INLINE bool Is_Stable(const Atom* v) {  // repeat for non-inlined speed
+INLINE bool Is_Stable(Need(const Atom*) v) {  // repeat for non-inlined speed
     ASSERT_CELL_READABLE(v);
     if (QUOTE_BYTE(v) != ANTIFORM_0)
         return true;
@@ -195,10 +195,6 @@ INLINE bool Is_Stable(const Atom* v) {  // repeat for non-inlined speed
     );
 }
 
-#if CPLUSPLUS_11
-    void Is_Stable(const Value* v) = delete;
-    void Is_Antiform_Unstable(const Value* v) = delete;
-#endif
 
 #if !defined(NDEBUG)
     #define Assert_Cell_Stable(v) \
@@ -290,11 +286,7 @@ INLINE Value* Meta_Unquotify_Known_Stable(Value* v) {
     return v;
 }
 
-INLINE Value* Decay_If_Unstable(Atom* v);
-
-#if CPLUSPLUS_11
-    INLINE Value* Decay_If_Unstable(Value* v) = delete;
-#endif
+INLINE Value* Decay_If_Unstable(Need(Atom*) v);
 
 INLINE Value* Meta_Unquotify_Decayed(Value* v) {
     return Decay_If_Unstable(Meta_Unquotify_Undecayed(cast(Atom*, v)));

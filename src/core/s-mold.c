@@ -327,11 +327,8 @@ void Form_Array_At(
                 CTX_ARCHETYPE(unwrap(context)),
                 Cell_Word_Symbol(item)
             );
-            if (wval) {
-                if (Is_Antiform(unwrap(wval)))
-                    fail (Error_Bad_Antiform(unwrap(wval)));
-                item = cast(Element*, unwrap(wval));
-            }
+            if (wval)
+                item = Ensure_Element(unwrap(wval));
         }
         Mold_Or_Form_Value(mo, item, wval == nullptr);
         n++;

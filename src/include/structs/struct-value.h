@@ -151,9 +151,7 @@ INLINE REBVAL* Freshen_Cell_Untracked(Cell* v);
             >::type* = nullptr
         >
         SinkWrapper(U* u) : p (u_cast(T*, u)) {
-          #if !defined(NDEBUG)
-            Freshen_Cell_Untracked(p);
-          #endif
+            /* Init_Unreadable(p); */
         }
 
         template<
@@ -168,21 +166,25 @@ INLINE REBVAL* Freshen_Cell_Untracked(Cell* v);
         operator bool () const { return p != nullptr; }
 
         operator T* () const { return p; }
-        operator Node* () const { return p; }
 
-        explicit operator Byte* () const { return reinterpret_cast<Byte*>(p); }
+        operator copy_const_t<Node,T>* () const { return p; }
+
+        explicit operator copy_const_t<Byte,T>* () const
+          { return reinterpret_cast<copy_const_t<Byte,T>*>(p); }
 
         T* operator->() const { return p; }
     };
 
     #define Sink(T) SinkWrapper<std::remove_pointer<T>::type>
+    #define Need(T) SinkWrapper<std::remove_pointer<T>::type>
 
     template<>
     struct c_cast_helper<Byte*, Sink(Value*) const&> {
         typedef Byte* type;
     };
 #else
-    #define Sink(x) x
+    #define Sink(T) T
+    #define Need(T) T
 #endif
 
 

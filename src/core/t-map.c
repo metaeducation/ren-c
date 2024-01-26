@@ -110,7 +110,7 @@ REBINT Find_Key_Hashed(
 
     REBLEN n;
     while ((n = indexes[slot]) != 0) {
-        Cell* k = Array_At(array, (n - 1) * wide); // stored key
+        Value* k = Series_At(Value, array, (n - 1) * wide); // stored key
         if (0 == Cmp_Value(k, key, true)) {
             if (strict)
                 return slot; // don't need to check synonyms, stop looking
@@ -203,7 +203,7 @@ static void Rehash_Map(Map* map)
 
         // discard zombies at end of pairlist
         //
-        while (Is_Void(Array_At(pairlist, Array_Len(pairlist) - 1))) {
+        while (Is_Void(Series_At(Value, pairlist, Array_Len(pairlist) - 1))) {
             Set_Series_Len(pairlist, Array_Len(pairlist) - 2);
         }
     }
@@ -241,12 +241,10 @@ void Expand_Hash(Series* ser)
 //
 REBLEN Find_Map_Entry(
     Map* map,
-    const Cell* key,
-    const Cell* val,
+    const Element* key,
+    Option(const Value*) val,  // nullptr is fetch only, void is remove
     bool strict
 ) {
-    assert(not Is_Antiform(key));
-
     Series* hashlist = MAP_HASHLIST(map); // can be null
     Array* pairlist = MAP_PAIRLIST(map);
 
@@ -269,7 +267,7 @@ REBLEN Find_Map_Entry(
 
     // n==0 or pairlist[(n-1)*]=~key
 
-    if (val == NULL)
+    if (not val)
         return n; // was just fetching the value
 
     // If not just a GET, it may try to set the value in the map.  Which means
@@ -281,20 +279,23 @@ REBLEN Find_Map_Entry(
 
     // Must set the value:
     if (n) {  // re-set it:
-        Copy_Relative_internal(
+        Copy_Cell(
             Array_At(pairlist, ((n - 1) * 2) + 1),
-            val
+            unwrap(val)
         );
         return n;
     }
 
-    if (Is_Void(val)) return 0; // trying to remove non-existing key
+    if (Is_Void(unwrap(val)))
+        return 0;  // trying to remove non-existing key
+
+    assert(not Is_Antiform(unwrap(val)));
 
     // Create new entry.  Note that it does not copy underlying series (e.g.
     // the data of a string), which is why the immutability test is necessary
     //
     Append_Value(pairlist, key);
-    Append_Value(pairlist, val);
+    Append_Value(pairlist, unwrap(val));
 
     return (indexes[slot] = (Array_Len(pairlist) / 2));
 }
@@ -305,11 +306,11 @@ REBLEN Find_Map_Entry(
 //
 static void Append_Map(
     Map* map,
-    const Cell* head,
-    const Cell* tail,
+    const Element* head,
+    const Element* tail,
     REBLEN len
 ){
-    const Cell* item = head;
+    const Element* item = head;
     REBLEN n = 0;
 
     while (n < len and item != tail) {
@@ -450,8 +451,8 @@ Array* Map_To_Array(const Map* map, REBINT what)
     Array* a = Make_Array(count * ((what == 0) ? 2 : 1));
 
     Element* dest = Array_Head(a);
-    const Element* val_tail = Array_Tail(MAP_PAIRLIST(map));
-    const Element* val = Array_Head(MAP_PAIRLIST(map));
+    const Value* val_tail = Series_Tail(Value, MAP_PAIRLIST(map));
+    const Value* val = Series_Head(Value, MAP_PAIRLIST(map));
     for (; val != val_tail; val += 2) {
         if (Is_Void(val + 1))  // val + 1 can't be past tail
             continue;  // zombie key, e.g. not actually in map
@@ -485,8 +486,8 @@ Context* Alloc_Context_From_Map(const Map* map)
     REBLEN count = 0;
 
   blockscope {
-    const Cell* mval_tail = Array_Tail(MAP_PAIRLIST(map));
-    const Cell* mval = Array_Head(MAP_PAIRLIST(map));
+    const Value* mval_tail = Series_Tail(Value, MAP_PAIRLIST(map));
+    const Value* mval = Series_Head(Value, MAP_PAIRLIST(map));
     for (; mval != mval_tail; mval += 2) {  // note mval must not be END
         if (Any_Word(mval) and not Is_Void(mval + 1))
             ++count;
@@ -615,7 +616,7 @@ REBTYPE(Map)
 
         REBINT n = Find_Map_Entry(
             m_cast(Map*, VAL_MAP(map)),  // should not modify, see below
-            ARG(value),
+            cast(Element*, ARG(value)),
             nullptr,  // nullptr indicates it will only search, not modify
             REF(case)
         );
@@ -634,10 +635,21 @@ REBTYPE(Map)
         INCLUDE_PARAMS_OF_PUT;
         UNUSED(ARG(series)); // extracted to `map`
 
+        Value* key = ARG(key);
+        Value* val = ARG(value);
+
+        if (Is_Antiform(key))
+            fail (Error_Bad_Antiform(key));
+        if (Is_Void(key))
+            fail (Error_Bad_Void());  // tolerate?
+
+        if (Is_Antiform(val))  // Note: void is remove
+            fail (Error_Bad_Antiform(val));
+
         REBINT n = Find_Map_Entry(
             VAL_MAP_Ensure_Mutable(map),
-            ARG(key),
-            ARG(value),  // non-null indicates it will modify, vs. just search
+            cast(Element*, ARG(key)),
+            val,  // non-nullptr means modify
             REF(case)
         );
         UNUSED(n);
@@ -711,7 +723,7 @@ REBTYPE(Map)
 
         REBINT n = Find_Map_Entry(
             m_cast(Map*, VAL_MAP(map)),  // not modified
-            picker,
+            c_cast(Element*, picker),
             nullptr,  // no value, so map not changed
             strict
         );
@@ -754,7 +766,7 @@ REBTYPE(Map)
 
         REBINT n = Find_Map_Entry(
             VAL_MAP_Ensure_Mutable(map),  // modified
-            picker,
+            c_cast(Element*, picker),
             setval,  // value to set (either ARG(value) or L->out)
             strict
         );

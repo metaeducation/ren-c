@@ -479,13 +479,10 @@ Bounce TO_String(Level* level_, enum Reb_Kind kind, const REBVAL *arg)
     if (Is_Tag(arg))
         return MAKE_String(level_, kind, nullptr, arg);
 
-    if (Is_Antiform(arg))
-        fail (Error_Bad_Antiform(arg));
-
     return Init_Any_String(
         OUT,
         kind,
-        Copy_Form_Value(c_cast(Element*, arg), MOLD_FLAG_TIGHT)
+        Copy_Form_Value(Ensure_Element(arg), MOLD_FLAG_TIGHT)
     );
 }
 

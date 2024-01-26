@@ -592,6 +592,26 @@
 #endif
 
 
+//=//// CONST COPYING TYPE TRAIT //////////////////////////////////////////=//
+//
+// This is a simple trait which adds const to the first type if the second
+// type is const.
+//
+#if CPLUSPLUS_11
+    template<typename U,typename T>
+    struct copy_const {
+        using type = typename std::conditional<
+            std::is_const<T>::value,
+            typename std::add_const<U>::type,
+            U
+        >::type;
+    };
+
+    template<typename U,typename T>
+    using copy_const_t = typename copy_const<U,T>::type;
+#endif
+
+
 //=//// NOOP a.k.a. VOID GENERATOR ////////////////////////////////////////=//
 //
 // VOID would be a more purposeful name, but Windows headers define that

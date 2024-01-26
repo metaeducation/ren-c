@@ -164,7 +164,7 @@ static void Protect_Var(const REBVAL *var, Flags flags)
 //
 // Anything that calls this must call Uncolor() when done.
 //
-void Protect_Value(const Cell* v, Flags flags)
+void Protect_Value(const Value* v, Flags flags)
 {
     if (Is_Antiform(v))
         return;
@@ -207,8 +207,8 @@ void Protect_Series(const Series* s, REBLEN index, Flags flags)
 
     Flip_Series_To_Black(s); // recursion protection
 
-    const Cell* val_tail = Array_Tail(x_cast(Array*, s));
-    const Cell* val = Array_At(x_cast(Array*, s), index);
+    const Value* val_tail = Series_Tail(Value, x_cast(Array*, s));
+    const Value* val = Series_At(Value, x_cast(Array*, s), index);
     for (; val != val_tail; val++)
         Protect_Value(val, flags);
 }

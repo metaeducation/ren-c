@@ -470,9 +470,9 @@ REBINT Cmp_Value(const Cell* sval, const Cell* tval, bool strict)
 REBLEN Find_In_Array_Simple(
     const Array* array,
     REBLEN index,
-    const Cell* target
+    const Element* target
 ){
-    const Cell* value = Array_Head(array);
+    const Element* value = Array_Head(array);
 
     for (; index < Array_Len(array); index++) {
         if (0 == Cmp_Value(value + index, target, false))

@@ -200,7 +200,7 @@ Bounce MAKE_Array(
         // data, but aliases it under a new kind.)
         //
         REBLEN len;
-        const Cell* at = Cell_Array_Len_At(&len, arg);
+        const Element* at = Cell_Array_Len_At(&len, arg);
         return Init_Array_Cell(
             OUT,
             kind,
@@ -344,7 +344,7 @@ Bounce TO_Array(Level* level_, enum Reb_Kind kind, const REBVAL *arg) {
     }
     else if (Any_Array(arg)) {
         Length len;
-        const Cell* at = Cell_Array_Len_At(&len, arg);
+        const Element* at = Cell_Array_Len_At(&len, arg);
         return Init_Array_Cell(
             OUT,
             kind,
@@ -378,7 +378,7 @@ REBINT Find_In_Array(
     Specifier* array_specifier,
     REBLEN index_unsigned, // index to start search
     REBLEN end_unsigned, // ending position
-    const Cell* pattern,
+    const Value* pattern,
     Specifier* pattern_specifier,
     Flags flags, // see AM_FIND_XXX
     REBINT skip // skip factor
@@ -471,7 +471,7 @@ REBINT Find_In_Array(
 
     if (Any_Word(pattern)) {
         for (; index >= start and index < end; index += skip) {
-            const Cell* item = Array_At(array, index);
+            const Element* item = Array_At(array, index);
             const Symbol* pattern_symbol = Cell_Word_Symbol(pattern);
             if (Any_Word(item)) {
                 if (flags & AM_FIND_CASE) { // Must be same type and spelling
@@ -496,7 +496,7 @@ REBINT Find_In_Array(
     // All other cases
 
     for (; index >= start and index < end; index += skip) {
-        const Cell* item = Array_At(array, index);
+        const Element* item = Array_At(array, index);
         if (0 == Cmp_Value(
             item,
             pattern,
@@ -622,7 +622,7 @@ void Shuffle_Array(Array* arr, REBLEN idx, bool secure)
 
 static REBINT Try_Get_Array_Index_From_Picker(
     const REBVAL *v,
-    const Cell* picker
+    const Value* picker
 ){
     REBINT n;
 
@@ -664,6 +664,9 @@ static REBINT Try_Get_Array_Index_From_Picker(
         else
             n = VAL_INDEX(v) + 1;
     }
+    else if (Is_Antiform(picker)) {
+        fail (Error_Bad_Antiform(picker));
+    }
     else {
         // For other values, act like a SELECT and give the following item.
         // (Note Find_In_Array_Simple returns the array length if missed,
@@ -672,7 +675,7 @@ static REBINT Try_Get_Array_Index_From_Picker(
         n = 1 + Find_In_Array_Simple(
             Cell_Array(v),
             VAL_INDEX(v),
-            picker
+            c_cast(Element*, picker)
         );
     }
 
@@ -688,15 +691,15 @@ static REBINT Try_Get_Array_Index_From_Picker(
 bool Did_Pick_Block(
     Sink(Value*) out,
     const Value* block,
-    const Cell* picker
+    const Value* picker
 ){
     REBINT n = Get_Num_From_Arg(picker);
     n += VAL_INDEX(block) - 1;
     if (n < 0 or cast(REBLEN, n) >= Cell_Series_Len_Head(block))
         return false;
 
-    const Cell* slot = Array_At(Cell_Array(block), n);
-    Derelativize(out, slot, Cell_Specifier(block));
+    const Element* slot = Array_At(Cell_Array(block), n);
+    Copy_Cell(out, slot);
     return true;
 }
 
@@ -826,12 +829,12 @@ REBTYPE(Array)
         INCLUDE_PARAMS_OF_PICK_P;
         UNUSED(ARG(location));
 
-        const Cell* picker = ARG(picker);
+        const Value* picker = ARG(picker);
         REBINT n = Try_Get_Array_Index_From_Picker(array, picker);
         if (n < 0 or n >= cast(REBINT, Cell_Series_Len_Head(array)))
             return nullptr;
 
-        const Cell* at = Array_At(Cell_Array(array), n);
+        const Element* at = Array_At(Cell_Array(array), n);
 
         Copy_Relative_internal(OUT, at);
         Inherit_Const(stable_OUT, array);
@@ -844,7 +847,7 @@ REBTYPE(Array)
         INCLUDE_PARAMS_OF_POKE_P;
         UNUSED(ARG(location));
 
-        const Cell* picker = ARG(picker);
+        const Value* picker = ARG(picker);
 
         REBVAL *setval = ARG(value);
 
@@ -864,7 +867,7 @@ REBTYPE(Array)
             fail (Error_Out_Of_Range(picker));
 
         Array* mut_arr = Cell_Array_Ensure_Mutable(array);
-        Cell* at = Array_At(mut_arr, n);
+        Element* at = Array_At(mut_arr, n);
         Copy_Cell(at, setval);
 
         return nullptr; }  // Array* is still fine, caller need not update

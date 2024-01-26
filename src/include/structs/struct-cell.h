@@ -190,18 +190,6 @@ typedef struct StubStruct Stub;  // forward decl for DEBUG_USE_UNION_PUNS
 
 #define MAX_QUOTE_DEPTH     126  // highest legal quoting level
 
-#define Is_Antiform(v) \
-    (QUOTE_BYTE(READABLE(v)) == ANTIFORM_0)
-
-#define Is_Unquoted(v) \
-    (QUOTE_BYTE(READABLE(v)) == NOQUOTE_1)
-
-#define Is_Quasiform(v) \
-    (QUOTE_BYTE(READABLE(v)) == QUASIFORM_2)
-
-#define Is_Quoted(v) \
-    (QUOTE_BYTE(READABLE(v)) >= ONEQUOTE_3)  // '''~a~ is quoted, not quasi
-
 
 //=//// BITS 24-31: CELL FLAGS ////////////////////////////////////////////=//
 //

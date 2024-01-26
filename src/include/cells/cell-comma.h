@@ -73,13 +73,9 @@ INLINE Value* Init_Barrier(Cell* out) {
     return cast(Value*, out);
 }
 
-INLINE bool Is_Elision(Atom* v) {
+INLINE bool Is_Elision(Need(Atom*) v) {
     return Is_Barrier(v) or Is_Nihil(v);
 }
-
-#if CPLUSPLUS_11
-    void Is_Elision(Value* v) = delete;
-#endif
 
 INLINE bool Is_Meta_Of_Elision(Cell* v) {
     return Is_Meta_Of_Barrier(v) or Is_Meta_Of_Nihil(v);

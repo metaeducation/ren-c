@@ -286,7 +286,7 @@ INLINE bool Eval_Step_In_Sublevel_Throws(
 INLINE bool Reevaluate_In_Sublevel_Throws(
     Atom* out,
     Level* L,
-    const Value* reval,
+    const Element* reval,
     Flags flags,
     bool enfix
 ){

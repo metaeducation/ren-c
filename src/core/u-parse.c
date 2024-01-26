@@ -427,9 +427,12 @@ static void Print_Parse_Index(Level* level_) {
 // Gets the value of a word (when not a command) or path.  Returns all other
 // values as-is.
 //
-static const Cell* Get_Parse_Value(
+// If the fetched value is an antiform logic or splice, it is returned as
+// a quasiform.  Fetched quasiforms are errors.
+//
+static const Element* Get_Parse_Value(
     Sink(Value*) cell,  // storage for fetched values; must be GC protected
-    const Cell* rule,
+    const Element* rule,
     Specifier* specifier
 ){
     if (Is_Word(rule)) {
@@ -444,13 +447,32 @@ static const Cell* Get_Parse_Value(
     else
         return rule;
 
-    if (Is_Nulled(cell))
-        fail (Error_Bad_Null(rule));
+    if (Is_Void(cell)) {  // void means ignore
+        Init_Quasi_Word(cell, Canon(VOID));
+        return cast(Element*, cast(Value*, cell));
+    }
 
-    if (Is_Integer(cell))
-        fail ("Use REPEAT on integers https://forum.rebol.info/t/1578/6");
+    if (Is_Quasiform(cell)) {
+        fail ("RULE should not look up to quasiforms");
+    }
+    else if (Is_Antiform(cell)) {
+        if (Is_Nulled(cell))
+            fail (Error_Bad_Null(rule));
 
-    return cell;
+        if (not Is_Antiform_Get_Friendly(cell))
+            fail (Error_Bad_Word_Get(rule, cell));
+
+        if (Is_Logic(cell) or Is_Splice(cell))
+            Quasify_Antiform(cell);
+        else
+            fail (Error_Bad_Antiform(cell));
+    }
+    else {
+        if (Is_Integer(cell))
+            fail ("Use REPEAT on integers https://forum.rebol.info/t/1578/6");
+    }
+
+    return cast(Element*, cast(Value*, cell));
 }
 
 //
@@ -462,13 +484,13 @@ static const Cell* Get_Parse_Value(
 // like a COMPOSE that runs each time they are visited.
 //
 bool Process_Group_For_Parse_Throws(
-    Sink(Value*) out,
+    Sink(Element*) out,
     Level* level_,
-    const Cell* group  // may be same as `cell`
+    const Element* group  // can't be same as out
 ){
     USE_PARAMS_OF_SUBPARSE;
 
-    assert(cast(Cell*, out) != group);
+    assert(out != group);
 
     assert(Is_Group(group) or Is_Get_Group(group));
     Specifier* derived = (group == P_SAVE)
@@ -479,7 +501,22 @@ bool Process_Group_For_Parse_Throws(
     Atom* atom_out = out;
     if (Do_Any_Array_At_Throws(atom_out, group, derived))
         return true;
-    Decay_If_Unstable(atom_out);
+
+    if (Is_Group(group)) {
+        Erase_Cell(out);
+    }
+    else {
+        Decay_If_Unstable(atom_out);
+
+        if (Is_Antiform(atom_out)) {
+            if (Is_Logic(atom_out))
+                Meta_Quotify(atom_out);
+            else
+                fail (Error_Bad_Antiform(atom_out));
+        }
+        else if (Is_Void(atom_out))
+            Init_Quasi_Word(atom_out, Canon(VOID));
+    }
   }
 
     // !!! The input is not locked from modification by agents other than the
@@ -511,7 +548,7 @@ bool Process_Group_For_Parse_Throws(
 static REBIXO Parse_One_Rule(
     Level* level_,
     REBLEN pos,
-    const Cell* rule
+    const Element* rule
 ){
     USE_PARAMS_OF_SUBPARSE;
 
@@ -526,12 +563,18 @@ static REBIXO Parse_One_Rule(
             assert(pos <= P_INPUT_LEN);  // !!! Process_Group ensures
             return pos;
         }
+        if (Is_Antiform(SPARE)) {
+            if (Is_Logic(SPARE))
+                Meta_Quotify(SPARE);
+            else
+                fail (Error_Bad_Antiform(SPARE));
+        }
         // was a GET-GROUP! :(...), use result as rule
-        rule = SPARE;
+        rule = cast(Element*, SPARE);
     }
 
     if (pos == P_INPUT_LEN) {  // at end of input
-        if (Is_Logic(rule) or Is_Block(rule) or Is_Void(rule)) {
+        if (Is_Quasiform(rule) or Is_Block(rule)) {
             //
             // Only these types can *potentially* handle an END input.
         }
@@ -558,13 +601,14 @@ static REBIXO Parse_One_Rule(
             return END_FLAG;  // Other cases below assert if item is END
     }
 
-    if (Is_Void(rule)) {
-        return pos;  // void matches always
-    }
-    else if (Is_Logic(rule)) {
-        if (Cell_Logic(rule))
+    if (Is_Quasiform(rule)) {
+        if (Is_Meta_Of_True(rule))
             return pos;  // true matches always
-        return END_FLAG;  // false matches never
+        if (Is_Meta_Of_False(rule))
+            return END_FLAG;  // false matches never
+        if (Is_Quasi_Word_With_Id(rule, SYM_VOID))
+            return pos;  // void also skips
+        fail ("PARSE3 only supports ~true~ and ~false~ quasiforms/antiforms");
     }
     else switch (VAL_TYPE(rule)) {  // handle w/same behavior for all P_INPUT
       case REB_INTEGER:
@@ -621,13 +665,13 @@ static REBIXO Parse_One_Rule(
         switch (VAL_TYPE(rule)) {
           case REB_QUOTED:
             Copy_Cell(SPARE, rule);
-            rule = Unquotify(SPARE, 1);
+            rule = cast(Element*, Unquotify(SPARE, 1));
             break;  // fall through to direct match
 
           case REB_THE_WORD: {
             bool any = false;
             Get_Var_May_Fail(SPARE, rule, P_RULE_SPECIFIER, any);
-            rule = SPARE;
+            rule = Ensure_Element(SPARE);
             break; }  // all through to direct match
 
           case REB_TYPE_WORD:
@@ -656,7 +700,9 @@ static REBIXO Parse_One_Rule(
         if (Is_The_Word(rule)) {
             bool any = false;
             Get_Var_May_Fail(SPARE, rule, P_RULE_SPECIFIER, any);
-            rule = SPARE;
+            if (Is_Antiform(SPARE))
+                fail (Error_Bad_Antiform(SPARE));
+            rule = cast(Element*, SPARE);
         }
 
         // We try to allow some conveniences when parsing strings based on
@@ -754,13 +800,13 @@ static REBIXO To_Thru_Block_Rule(
         VAL_INDEX_RAW(iter) <= cast(REBIDX, P_INPUT_LEN);
         ++VAL_INDEX_RAW(iter)
     ){  // see note
-        const Cell* blk_tail = Array_Tail(Cell_Array(rule_block));
-        const Cell* blk = Array_Head(Cell_Array(rule_block));
+        const Element* blk_tail = Array_Tail(Cell_Array(rule_block));
+        const Element* blk = Array_Head(Cell_Array(rule_block));
         for (; blk != blk_tail; blk++) {
             if (IS_BAR(blk))
                 fail (Error_Parse_Rule());  // !!! Shouldn't `TO [|]` succeed?
 
-            const Cell* rule;
+            const Element* rule;
             if (not (Is_Group(blk) or Is_Get_Group(blk)))
                 rule = blk;
             else {
@@ -771,7 +817,7 @@ static REBIXO To_Thru_Block_Rule(
                 if (not inject or Is_Void(cell))
                     continue;
 
-                rule = cell;
+                rule = Ensure_Element(cell);
             }
 
             if (Is_Word(rule)) {
@@ -808,7 +854,9 @@ static REBIXO To_Thru_Block_Rule(
                 }
                 else {
                     Get_Word_May_Fail(cell, rule, P_RULE_SPECIFIER);
-                    rule = cell;
+                    if (Is_Antiform(cell))
+                        fail (Error_Bad_Antiform(cell));
+                    rule = cast(Element*, cell);
                 }
             }
             else if (Is_Tag(rule) and not (P_FLAGS & PF_REDBOL)) {
@@ -1001,13 +1049,20 @@ static REBIXO To_Thru_Block_Rule(
 //
 static REBIXO To_Thru_Non_Block_Rule(
     Level* level_,
-    const Cell* rule,
+    const Element* rule,
     bool is_thru
 ){
     USE_PARAMS_OF_SUBPARSE;
 
-    if (Is_Logic(rule))  // no-op if true, match failure if false
-        return Cell_Logic(rule) ? cast(REBLEN, P_POS) : END_FLAG;
+    if (Is_Quasiform(rule)) {  // no-op if true, match failure if false
+        if (Is_Meta_Of_True(rule))
+            return P_POS;
+        if (Is_Meta_Of_False(rule))
+            return END_FLAG;
+        if (Is_Quasi_Word_With_Id(rule, SYM_VOID))
+            return P_POS;  // no-op
+        fail ("QUASI true and false only forms supported by PARSE3");
+    }
 
     enum Reb_Kind kind = VAL_TYPE(rule);
     assert(kind != REB_BLOCK);
@@ -1016,9 +1071,6 @@ static REBIXO To_Thru_Non_Block_Rule(
     // back on not recognizing blanks literally in Redbol mode.
     //
     if (kind == REB_BLANK and (P_FLAGS & PF_REDBOL))
-        return P_POS;  // make it a no-op
-
-    if (kind == REB_VOID)
         return P_POS;  // make it a no-op
 
     if (kind == REB_WORD and Cell_Word_Id(rule) == SYM_END) {
@@ -1053,18 +1105,16 @@ static REBIXO To_Thru_Non_Block_Rule(
         DECLARE_STABLE (temp);
         if (Is_Quoted(rule)) {  // make `'[foo bar]` match `[foo bar]`
             Derelativize(temp, rule, P_RULE_SPECIFIER);
-            rule = Unquotify(temp, 1);
+            Unquotify(temp, 1);
         }
         else if (Is_The_Word(rule)) {
             bool any = false;
             Get_Var_May_Fail(temp, rule, P_RULE_SPECIFIER, any);
-            rule = temp;
         }
         else if (Is_Type_Word(rule) or Is_Type_Group(rule)) {
             Derelativize(temp, rule, P_RULE_SPECIFIER);
             Quasify(temp);
             Meta_Unquotify_Known_Stable(temp);
-            rule = temp;
         }
 
         Length len;
@@ -1074,7 +1124,7 @@ static REBIXO To_Thru_Non_Block_Rule(
             P_INPUT_SPECIFIER,
             P_POS,
             Array_Len(P_INPUT_ARRAY),
-            rule,
+            temp,
             SPECIFIED,  // !!! is it specific?
             find_flags,
             1
@@ -1093,7 +1143,7 @@ static REBIXO To_Thru_Non_Block_Rule(
         if (Is_The_Word(rule)) {
             bool any = false;
             Get_Var_May_Fail(SPARE, rule, P_RULE_SPECIFIER, any);
-            rule = SPARE;
+            rule = Ensure_Element(SPARE);
         }
     }
 
@@ -1166,7 +1216,7 @@ static void Handle_Mark_Rule(
 
 static void Handle_Seek_Rule_Dont_Update_Begin(
     Level* level_,
-    const Cell* rule,
+    const Element* rule,
     Specifier* specifier
 ){
     USE_PARAMS_OF_SUBPARSE;
@@ -1174,7 +1224,9 @@ static void Handle_Seek_Rule_Dont_Update_Begin(
     enum Reb_Kind k = VAL_TYPE(rule);
     if (k == REB_WORD or k == REB_GET_WORD or k == REB_TUPLE) {
         Get_Var_May_Fail(SPARE, rule, specifier, false);
-        rule = SPARE;
+        if (Is_Antiform(SPARE))
+            fail (Error_Bad_Antiform(SPARE));
+        rule = cast(Element*, SPARE);
         k = VAL_TYPE(rule);
     }
 
@@ -1349,7 +1401,7 @@ DECLARE_NATIVE(subparse)
 
   pre_rule: ;  // next line is declaration, need semicolon
 
-    const Cell* rule = P_AT_END ? nullptr : P_RULE;
+    const Element* rule = P_AT_END ? nullptr : P_RULE;
 
     Update_Expression_Start(L);
 
@@ -1410,11 +1462,11 @@ DECLARE_NATIVE(subparse)
         if (Process_Group_For_Parse_Throws(SPARE, L, rule))
             return THROWN;
 
-        if (not inject or Is_Void(SPARE)) {  // (...) or void :(...)
+        if (not inject) {  // (...) or void :(...)
             FETCH_NEXT_RULE(L);  // ignore result and go on to next rule
             goto pre_rule;
         }
-        rule = Move_Cell(P_SAVE, SPARE);
+        rule = Ensure_Element(Move_Cell(P_SAVE, SPARE));
     }}
     else {
         // If we ran the GROUP! then that invokes the evaluator, and so
@@ -1438,7 +1490,7 @@ DECLARE_NATIVE(subparse)
     // `[some "a"]`.  Because it is iterated it is only captured the first
     // time through, nullptr indicates it's not been captured yet.
     //
-    const Cell* subrule = nullptr;
+    const Element* subrule = nullptr;
 
     if (rule == nullptr)  // means at end
         goto return_position;  // done all needed to do for end position
@@ -1939,15 +1991,16 @@ DECLARE_NATIVE(subparse)
                 assert(Is_Word(rule));  // word - some other variable
 
                 if (rule != P_SAVE) {
-                    Get_Parse_Value(P_SAVE, rule, P_RULE_SPECIFIER);
-                    rule = P_SAVE;
+                    rule = Get_Parse_Value(P_SAVE, rule, P_RULE_SPECIFIER);
                 }
             }
         }
     }
     else if (Is_Tuple(rule)) {
         Get_Var_May_Fail(SPARE, rule, P_RULE_SPECIFIER, false);
-        rule = Copy_Cell(P_SAVE, SPARE);
+        if (Is_Antiform(SPARE))
+            fail (Error_Bad_Antiform(SPARE));
+        rule = cast(Element*, Copy_Cell(P_SAVE, SPARE));
     }
     else if (Is_Set_Tuple(rule)) {
       handle_set:
@@ -2045,17 +2098,21 @@ DECLARE_NATIVE(subparse)
     if (IS_BAR(rule))
         fail ("BAR! must be source level (else PARSE can't skip it)");
 
-    if (Is_Nulled(rule))
-        fail ("NULL rules are not allowed in PARSE");
-
-    if (Is_Logic(rule)) {  // true is a no-op, false causes match failure
-        if (Cell_Logic(rule)) {
+    if (Is_Quasiform(rule)) {  // true is a no-op, false causes match failure
+        if (Is_Meta_Of_True(rule)) {
             FETCH_NEXT_RULE(L);
             goto pre_rule;
         }
-        FETCH_NEXT_RULE(L);
-        Init_Nulled(ARG(position));  // not found
-        goto post_match_processing;
+        if (Is_Meta_Of_False(rule)) {
+            FETCH_NEXT_RULE(L);
+            Init_Nulled(ARG(position));  // not found
+            goto post_match_processing;
+        }
+        if (Is_Quasi_Word_With_Id(rule, SYM_VOID)) {
+            FETCH_NEXT_RULE(L);
+            goto pre_rule;
+        }
+        fail ("Only quasiforms supported by PARSE3 are ~true~ and ~false~");
     }
     else switch (VAL_TYPE(rule)) {
       case REB_GROUP:
@@ -2121,7 +2178,6 @@ DECLARE_NATIVE(subparse)
     while (count < maxcount) {
         assert(
             not IS_BAR(rule)
-            and not Is_Logic(rule)
             and not Is_Integer(rule)
             and not Is_Group(rule)
         );  // these should all have been handled before iterated section
@@ -2174,8 +2230,8 @@ DECLARE_NATIVE(subparse)
                 if (not subrule)  // capture only on iteration #1
                     FETCH_NEXT_RULE_KEEP_LAST(&subrule, L);
 
-                const Cell* input_tail = Array_Tail(P_INPUT_ARRAY);
-                const Cell* cmp = Array_At(P_INPUT_ARRAY, P_POS);
+                const Element* input_tail = Array_Tail(P_INPUT_ARRAY);
+                const Element* cmp = Array_At(P_INPUT_ARRAY, P_POS);
 
                 if (cmp == input_tail)
                     i = END_FLAG;
@@ -2536,7 +2592,7 @@ DECLARE_NATIVE(subparse)
                 if (Any_Meta_Kind(VAL_TYPE(rule))) {
                     if (rule != P_SAVE) {  // move to mutable location
                         Derelativize(P_SAVE, rule, P_RULE_SPECIFIER);
-                        rule = P_SAVE;
+                        rule = c_cast(Element*, P_SAVE);
                     }
                     Plainify(P_SAVE);  // take the ^ off
                     only = true;

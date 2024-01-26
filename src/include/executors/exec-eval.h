@@ -139,7 +139,7 @@ struct EvaluatorExecutorStateStruct {
     //
     Cell scratch;  // raw vs. C++ class so memset() can clear the state
 
-    const Cell* current;
+    const Element* current;
     Option(const Value*) current_gotten;
 
     char enfix_reevaluate;  // either 'Y' or 'N' (catches bugs)

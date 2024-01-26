@@ -105,13 +105,13 @@ INLINE void Drop_Level(Level* L);
 // When you're sure that the value isn't going to be consumed by a multireturn
 // then use this to get the first value unmeta'd
 //
-INLINE Value* Decay_If_Unstable(Atom* v) {
+INLINE Value* Decay_If_Unstable(Need(Atom*) v) {
     if (not Is_Antiform(v))
-        return cast(Value*, v);
+        return u_cast(Value*, u_cast(Atom*, v));
 
     if (Is_Lazy(v)) {
         if (not Pushed_Decaying_Level(v, v, LEVEL_MASK_NONE))
-            return cast(Value*, v);  // cheap reification
+            return u_cast(Value*, u_cast(Atom*, v));  // cheap reification
         if (Trampoline_With_Top_As_Root_Throws())
             fail (Error_No_Catch_For_Throw(TOP_LEVEL));
         Drop_Level(TOP_LEVEL);
@@ -134,7 +134,7 @@ INLINE Value* Decay_If_Unstable(Atom* v) {
         if (Is_Raised(v))
             fail (VAL_CONTEXT(v));
         assert(not Is_Antiform(v) or Is_Antiform_Stable(v));
-        return cast(Value*, v);
+        return u_cast(Value*, u_cast(Atom*, v));
     }
 
     if (Is_Barrier(v))
@@ -143,7 +143,7 @@ INLINE Value* Decay_If_Unstable(Atom* v) {
     if (Is_Raised(v))  // !!! should this raise an error here?
         fail (VAL_CONTEXT(v));
 
-    return cast(Value*, v);
+    return u_cast(Value*, u_cast(Atom*, v));
 }
 
 // Packs with unstable isotopes in their first cell are not able to be decayed.

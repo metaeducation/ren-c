@@ -48,7 +48,11 @@
 #define Is_True(out)        Is_Anti_Word_With_Id((out), SYM_TRUE)
 #define Is_False(out)       Is_Anti_Word_With_Id((out), SYM_FALSE)
 
-INLINE bool Is_Logic(const Cell* v) {
+#define Is_Meta_Of_True(out)    Is_Quasi_Word_With_Id((out), SYM_TRUE)
+#define Is_Meta_Of_False(out)   Is_Quasi_Word_With_Id((out), SYM_FALSE)
+
+
+INLINE bool Is_Logic(Need(const Value*) v) {
     ASSERT_CELL_READABLE(v);
 
     if (QUOTE_BYTE(v) != ANTIFORM_0)
@@ -64,7 +68,7 @@ INLINE bool Is_Logic(const Cell* v) {
 #define Init_Logic(out,flag) \
     Init_Anti_Word((out), (flag) ? Canon(TRUE) : Canon(FALSE))
 
-INLINE bool Cell_Logic(const Cell* v) {
+INLINE bool Cell_Logic(Need(const Value*) v) {
     assert(Is_Antiform(v));
     Option(SymId) id = Cell_Word_Id(v);
     if (id == SYM_TRUE)
@@ -74,6 +78,7 @@ INLINE bool Cell_Logic(const Cell* v) {
     assert(false);
     fail ("Attempt to test Cell_Logic() on non-LOGIC!");  // shouldn't happen
 }
+
 
 INLINE bool Is_Truthy(const Value* v) {
     ASSERT_CELL_READABLE(v);
@@ -120,15 +125,6 @@ INLINE bool Is_Conditional_True(const REBVAL *v) {
 
 #define Is_Conditional_False(v) \
     (not Is_Conditional_True(v))
-
-
-INLINE bool Is_Meta_Of_False(const Cell* v) {
-    return (
-        QUOTE_BYTE(v) == QUASIFORM_2
-        and HEART_BYTE(v) == REB_WORD
-        and Cell_Word_Id(v) == SYM_FALSE
-    );
-}
 
 #define Init_Heavy_False(out) \
     Init_Pack((out), PG_1_Meta_False_Array)

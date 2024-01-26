@@ -658,7 +658,7 @@ INLINE Cell* Copy_Cell_Untracked(
     return out;
 }
 
-INLINE bool Is_Stable(const Atom* v);
+INLINE bool Is_Stable(Need(const Atom*) v);
 
 #if CPLUSPLUS_11  // REBVAL and Cell are checked distinctly
     INLINE Value* Copy_Cell_Untracked(
@@ -799,3 +799,16 @@ INLINE REBVAL *Constify(REBVAL *v) {
     Cell name##_cell; \
     Erase_Cell(&name##_cell); \
     Element* name = u_cast(Element*, &name##_cell)
+
+
+INLINE bool Is_Antiform(Need(const Value*) v)
+  { return QUOTE_BYTE(READABLE(v)) == ANTIFORM_0; }
+
+#define Is_Unquoted(v) \
+    (QUOTE_BYTE(READABLE(v)) == NOQUOTE_1)
+
+#define Is_Quasiform(v) \
+    (QUOTE_BYTE(READABLE(v)) == QUASIFORM_2)
+
+#define Is_Quoted(v) \
+    (QUOTE_BYTE(READABLE(v)) >= ONEQUOTE_3)  // '''~a~ is quoted, not quasi

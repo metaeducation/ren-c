@@ -64,10 +64,10 @@
 // when accessed by plain WORD!.
 //
 
-INLINE bool Is_Void(const Cell* v)
+INLINE bool Is_Void(Need(const Value*) v)
   { return HEART_BYTE(v) == REB_VOID and QUOTE_BYTE(v) == NOQUOTE_1; }
 
-INLINE REBVAL *Init_Void_Untracked(Cell* out, Byte quote_byte) {
+INLINE Cell* Init_Void_Untracked(Cell* out, Byte quote_byte) {
     FRESHEN_CELL(out);
     out->header.bits |= (
         NODE_FLAG_NODE | NODE_FLAG_CELL
@@ -80,26 +80,50 @@ INLINE REBVAL *Init_Void_Untracked(Cell* out, Byte quote_byte) {
     PAYLOAD(Any, out).second.corrupt = CORRUPTZERO;
   #endif
 
-    return cast(REBVAL*, out);
+    return out;
 }
 
 #define Init_Void(out) \
-    TRACK(Init_Void_Untracked((out), NOQUOTE_1))
+    u_cast(Value*, TRACK( \
+        Init_Void_Untracked(ensure(Sink(Value*), (out)), NOQUOTE_1)))
 
 #define Init_Quoted_Void(out) \
-    TRACK(Init_Void_Untracked((out), ONEQUOTE_3))
+    u_cast(Element*, TRACK( \
+        Init_Void_Untracked(ensure(Sink(Element*), (out)), ONEQUOTE_3)))
 
 INLINE bool Is_Quoted_Void(const Cell* v)
   { return QUOTE_BYTE(v) == ONEQUOTE_3 and HEART_BYTE(v) == REB_VOID; }
 
 #define Init_Quasi_Void(out) \
-    TRACK(Init_Void_Untracked((out), QUASIFORM_2))
+    u_cast(Element*, TRACK( \
+        Init_Void_Untracked(ensure(Sink(Element*), (out)), QUASIFORM_2)))
 
 INLINE bool Is_Quasi_Void(const Cell* v)
   { return QUOTE_BYTE(v) == QUASIFORM_2 and HEART_BYTE(v) == REB_VOID; }
 
 #define Init_Meta_Of_Void(out)       Init_Quoted_Void(out)
 #define Is_Meta_Of_Void(v)           Is_Quoted_Void(v)
+
+
+//=//// ENSURE THINGS ARE ELEMENTS ////////////////////////////////////////=//
+//
+// An array element can't be an antiform, and it can't be void.  Now that we
+// have defined void, define an ensure routine.
+
+INLINE Element* Ensure_Element(const_if_c Atom* cell) {
+    if (QUOTE_BYTE(cell) == ANTIFORM_0)
+        fail (Error_Bad_Antiform(cell));
+    if (HEART_BYTE(cell) == REB_VOID and QUOTE_BYTE(cell) == NOQUOTE_1)
+        fail (Error_Bad_Void());
+    return u_cast(Element*, cell);
+}
+
+#if CPLUSPLUS_11
+    INLINE const Element* Ensure_Element(const Atom* cell)
+      { return Ensure_Element(m_cast(Atom*, cell)); }
+
+    void Ensure_Element(const Element*) = delete;
+#endif
 
 
 //=//// '~' ISOTOPE (a.k.a. TRASH) ////////////////////////////////////////=//
@@ -124,17 +148,18 @@ INLINE bool Is_Quasi_Void(const Cell* v)
 // "unset value".
 //
 
-INLINE bool Is_Trash(const Cell* v)
+INLINE bool Is_Trash(Need(const Value*) v)
   { return HEART_BYTE(v) == REB_VOID and QUOTE_BYTE(v) == ANTIFORM_0; }
 
 #define Init_Trash(out) \
-    TRACK(Init_Void_Untracked((out), ANTIFORM_0))
+    u_cast(Value*, TRACK( \
+        Init_Void_Untracked(ensure(Sink(Value*), (out)), ANTIFORM_0)))
 
 #define Init_Meta_Of_Trash(out)     Init_Quasi_Void(out)
 #define Is_Meta_Of_Trash(v)         Is_Quasi_Void(v)
 
 #define TRASH_CELL \
-    cast(const REBVAL*, &PG_Trash_Cell)  // !!! Could we just use Lib(TRASH) ?
+    cast(const Value*, &PG_Trash_Cell)  // Note that Lib(TRASH) is a function
 
 
 //=//// EFFICIENT VOID AND TRASH "FINALIZATION" ///////////////////////////=//
@@ -161,7 +186,7 @@ INLINE bool Is_Trash(const Cell* v)
 STATIC_ASSERT(REB_VOID == 0);  // the optimization depends on this
 STATIC_ASSERT(ANTIFORM_0 == 0);  // QUOTE_BYTE() of 0 means it's an antiform
 
-INLINE Value* Finalize_Trash_Untracked(Atom* out) {
+INLINE Value* Finalize_Trash_Untracked(Need(Value*) out) {
     assert(Is_Fresh(out));  // can bitwise OR, need node+cell flags
 
     assert(HEART_BYTE(out) == 0 and QUOTE_BYTE(out) == 0);
@@ -172,13 +197,13 @@ INLINE Value* Finalize_Trash_Untracked(Atom* out) {
             /* | FLAG_QUOTE_BYTE(ANTIFORM_0) */  // already 0
     );
 
-    return cast(Value*, out);
+    return out;
 }
 
 #define Finalize_Trash(out) \
     TRACK(Finalize_Trash_Untracked(out))
 
-INLINE Value* Finalize_Void_Untracked(Atom* out) {
+INLINE Value* Finalize_Void_Untracked(Need(Value*) out) {
     assert(Is_Fresh(out));  // can bitwise OR, need node+cell flags
 
     assert(HEART_BYTE(out) == 0 and QUOTE_BYTE(out) == 0);
@@ -189,7 +214,7 @@ INLINE Value* Finalize_Void_Untracked(Atom* out) {
             | FLAG_QUOTE_BYTE(NOQUOTE_1)  // mask over top of existing 0
     );
 
-    return cast(Value*, out);
+    return out;
 }
 
 #define Finalize_Void(out) \
@@ -220,7 +245,7 @@ INLINE Value* Finalize_Void_Untracked(Atom* out) {
 #define Init_Heavy_Void(out) \
     Init_Pack((out), PG_1_Quoted_Void_Array)
 
-INLINE bool Is_Heavy_Void(const Cell* v) {
+INLINE bool Is_Heavy_Void(const Atom* v) {
     if (not Is_Pack(v))
         return false;
     const Element* tail;
@@ -228,7 +253,7 @@ INLINE bool Is_Heavy_Void(const Cell* v) {
     return (tail == at + 1) and Is_Meta_Of_Void(at);
 }
 
-INLINE bool Is_Meta_Of_Heavy_Void(const Cell* v) {
+INLINE bool Is_Meta_Of_Heavy_Void(const Atom* v) {
     if (not Is_Meta_Of_Pack(v))
         return false;
     const Element* tail;

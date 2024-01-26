@@ -34,7 +34,7 @@
 // Allow multiple types. Throw error if not valid.
 // Note that the result is one-based.
 //
-REBINT Get_Num_From_Arg(const Cell* val)
+REBINT Get_Num_From_Arg(const Value* val)
 {
     REBINT n;
 

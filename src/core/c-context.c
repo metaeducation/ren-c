@@ -581,8 +581,8 @@ void Rebind_Context_Deep(
     Context* dest,
     Option(struct Reb_Binder*) binder
 ){
-    const Cell* tail = Array_Tail(CTX_VARLIST(dest));
-    Cell* head = Array_Head(CTX_VARLIST(dest));
+    const Value* tail = Series_Tail(Value, CTX_VARLIST(dest));
+    Value* head = Series_Head(Value, CTX_VARLIST(dest));
     Rebind_Values_Deep(head, tail, source, dest, binder);
 }
 

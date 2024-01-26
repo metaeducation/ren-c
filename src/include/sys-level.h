@@ -132,7 +132,7 @@ INLINE LineNumber LineNumber_Of_Level(Level* L) {
     ((L)->varlist->content.dynamic.used - 1)  // minus rootvar
 
 #define Level_Spare(L) \
-    u_cast(Atom*, &(L)->spare)
+    &(L)->spare
 
 
 // A level's varlist is unmanaged by default, because when running code like

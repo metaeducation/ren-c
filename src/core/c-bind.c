@@ -812,7 +812,7 @@ DECLARE_NATIVE(let)
         | (L->flags.bits & LEVEL_FLAG_RAISED_RESULT_OK);
 
     Level* sub = Make_Level(LEVEL->feed, flags);
-    sub->u.eval.current = SPARE;
+    sub->u.eval.current = cast(Element*, SPARE);
     sub->u.eval.current_gotten = nullptr;
     sub->u.eval.enfix_reevaluate = 'N';  // detect?
 
@@ -1140,13 +1140,13 @@ Array* Copy_And_Bind_Relative_Deep_Managed(
 // Rebind is always deep.
 //
 void Rebind_Values_Deep(
-    Cell* head,
-    const Cell* tail,
+    Value* head,
+    const Value* tail,
     Context* from,
     Context* to,
     Option(struct Reb_Binder*) binder
 ) {
-    Cell* v = head;
+    Value* v = head;
     for (; v != tail; ++v) {
         if (Is_Action(v)) {
             //

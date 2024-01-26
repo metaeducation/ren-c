@@ -193,18 +193,18 @@ INLINE const Element* Copy_Reified_Variadic_Feed_Cell(
     Sink(Element*) out,
     Feed* feed
 ){
-    const Cell* cell = c_cast(Cell*, feed->p);
+    const Value* v = c_cast(Value*, feed->p);
 
-    if (Is_Nulled(cell))  // API enforces use of C's nullptr (0) for NULL
-        assert(not Is_Api_Value(cell));  // but internal cells can be nulled
+    if (Is_Nulled(v))  // API enforces use of C's nullptr (0) for NULL
+        assert(not Is_Api_Value(v));  // but internal cells can be nulled
 
-    if (Is_Antiform(cell)) {  // @ will turn these back into antiforms
-        Copy_Cell(cast(Cell*, out), cell);
+    if (Is_Antiform(v)) {  // @ will turn these back into antiforms
+        Copy_Cell(out, v);
         QUOTE_BYTE(out) = QUASIFORM_2;
         return out;
     }
 
-    Copy_Cell(out, cast(const Value*, cell));
+    Copy_Cell(out, v);
     return out;
 }
 
@@ -490,7 +490,7 @@ INLINE void Fetch_Next_In_Feed(Feed* feed) {
 // taken when one is interested in that data, because it may have to be
 // moved.  So current can be returned from Fetch_Next_In_Level_Core().
 
-INLINE const Cell* Lookback_While_Fetching_Next(Level* L) {
+INLINE const Element* Lookback_While_Fetching_Next(Level* L) {
   #if DEBUG_EXPIRED_LOOKBACK
     if (feed->stress) {
         FRESHEN(feed->stress);
@@ -552,11 +552,9 @@ INLINE const Cell* Lookback_While_Fetching_Next(Level* L) {
 //
 INLINE void Inertly_Derelativize_Inheriting_Const(
     Sink(Element*) out,
-    const Cell* v,
+    const Element* v,
     Feed* feed
 ){
-    assert(not Is_Antiform(v));  // Antiforms should not appear in source code
-
     Derelativize(out, v, FEED_SPECIFIER(feed));
     Set_Cell_Flag(out, UNEVALUATED);
 

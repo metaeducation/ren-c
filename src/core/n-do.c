@@ -54,7 +54,7 @@ DECLARE_NATIVE(reeval)
     //
     UNUSED(ARG(expressions));
 
-    REBVAL *v = ARG(value);
+    Element* v = cast(Element*, ARG(value));
 
     bool enfix =
         Is_Quasiform(v)
@@ -66,7 +66,7 @@ DECLARE_NATIVE(reeval)
     if (Reevaluate_In_Sublevel_Throws(
         OUT,  // reeval :comment "this should leave old input"
         level_,
-        ARG(value),
+        v,
         flags,
         enfix
     )){

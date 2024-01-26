@@ -69,7 +69,7 @@ DECLARE_NATIVE(reduce)
 {
     INCLUDE_PARAMS_OF_REDUCE;
 
-    Value* v = ARG(value);  // newline flag on `v` cell is leveraged [2]
+    Element* v = cast(Element*, ARG(value));  // newline flag leveraged [2]
     Value* predicate = ARG(predicate);
 
     enum {

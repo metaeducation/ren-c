@@ -278,7 +278,7 @@ void Set_Parameter_Spec(
             continue;
         }
 
-        const Cell* lookup;
+        const Value* lookup;
         if (Cell_Heart(item) == REB_WORD) {  // allow abstraction [3]
             lookup = try_unwrap(Lookup_Word(item, spec_specifier));
             if (not lookup)  // not even bound to anything

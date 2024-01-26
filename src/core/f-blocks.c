@@ -97,7 +97,7 @@ Array* Copy_Array_At_Max_Shallow(
 // hold that many entries, with an optional bit of extra space at the end.
 //
 Array* Copy_Values_Len_Extra_Shallow_Core(
-    const Cell* head,
+    const Value* head,
     REBLEN len,
     REBLEN extra,
     Flags flags
@@ -106,8 +106,8 @@ Array* Copy_Values_Len_Extra_Shallow_Core(
     Set_Series_Len(a, len);
 
     REBLEN count = 0;
-    const Cell* src = head;
-    Cell* dest = Array_Head(a);
+    const Value* src = head;
+    Value* dest = Series_Head(Value, a);
     for (; count < len; ++count, ++src, ++dest) {
         if (
             Is_Antiform(src)
@@ -224,8 +224,8 @@ void Uncolor_Array(const Array* a)
 
     Flip_Series_To_White(a);
 
-    const Cell* tail = Array_Tail(a);
-    const Cell* v = Array_Head(a);
+    const Element* tail = Array_Tail(a);
+    const Element* v = Array_Head(a);
     for (; v != tail; ++v) {
         if (Any_Path(v) or Any_Array(v) or Is_Map(v) or Any_Context(v))
             Uncolor(v);
@@ -238,7 +238,7 @@ void Uncolor_Array(const Array* a)
 //
 // Clear the recusion markers for series and object trees.
 //
-void Uncolor(const Cell* v)
+void Uncolor(const Value* v)
 {
     if (Is_Antiform(v))
         return;
@@ -248,7 +248,7 @@ void Uncolor(const Cell* v)
     else if (Any_Path(v)) {
         REBLEN len = Cell_Sequence_Len(v);
         REBLEN i;
-        DECLARE_LOCAL (temp);
+        DECLARE_ELEMENT (temp);
         for (i = 0; i < len; ++i) {
             Copy_Sequence_At(temp, v, i);
             Uncolor(temp);

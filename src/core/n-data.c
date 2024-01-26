@@ -685,7 +685,7 @@ DECLARE_NATIVE(collect_words)
 bool Get_Var_Push_Refinements_Throws(
     Sink(Value*) out,
     Option(Value*) steps_out,  // if NULL, then GROUP!s not legal
-    const Cell* var,
+    const Value* var,
     Specifier* var_specifier
 ){
     assert(var != cast(Cell*, out));
@@ -879,7 +879,7 @@ bool Get_Var_Push_Refinements_Throws(
 bool Get_Var_Core_Throws(
     Sink(Value*) out,
     Option(Value*) steps_out,  // if NULL, then GROUP!s not legal
-    const Cell* var,
+    const Value* var,
     Specifier* var_specifier
 ){
     StackIndex base = TOP_INDEX;
@@ -908,7 +908,7 @@ bool Get_Var_Core_Throws(
 //
 void Get_Var_May_Fail(
     Sink(Value*) out,  // variables never store unstable Atom* values
-    const Cell* source,
+    const Value* source,
     Specifier* specifier,
     bool any
 ){
@@ -1248,7 +1248,7 @@ DECLARE_NATIVE(get)
 bool Set_Var_Core_Updater_Throws(
     Sink(Value*) out,  // GC-safe cell to write steps to, or put thrown value
     Option(Value*) steps_out,  // no GROUP!s if nulled
-    const Cell* var,  // e.g. v
+    const Value* var,  // e.g. v (may be void)
     Specifier* var_specifier,  // e.g. v_specifier
     const REBVAL *setval,  // e.g. L->out (in the evaluator, right hand side)
     const REBVAL *updater
@@ -1503,7 +1503,7 @@ bool Set_Var_Core_Updater_Throws(
 bool Set_Var_Core_Throws(
     Sink(Value*) out,  // GC-safe cell to write steps to, or put thrown value
     Option(Value*) steps_out,  // no GROUP!s if nulled
-    const Cell* var,  // e.g. v
+    const Value* var,  // e.g. v (can be void)
     Specifier* var_specifier,  // e.g. v_specifier
     const REBVAL *setval  // e.g. L->out (in the evaluator, right hand side)
 ){
@@ -1525,7 +1525,7 @@ bool Set_Var_Core_Throws(
 // preserving the "steps" to reuse in multiple assignments.
 //
 void Set_Var_May_Fail(
-    const Cell* target,
+    const Value* target,
     Specifier* target_specifier,
     const REBVAL *setval
 ){

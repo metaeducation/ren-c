@@ -176,9 +176,7 @@ DECLARE_NATIVE(delimit)
                 Mold_Value(mo, cast(Element*, OUT));
             }
             else {
-                if (Is_Antiform(OUT))
-                    fail (Error_Bad_Antiform(OUT));
-                Form_Value(mo, cast(Element*, OUT));
+                Form_Value(mo, Ensure_Element(OUT));
             }
 
             pending = true;  // note this includes empty strings [5]

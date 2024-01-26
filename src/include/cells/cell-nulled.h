@@ -63,7 +63,7 @@
 //   frame output.
 //
 
-INLINE bool Is_Nulled(const Cell* v) {
+INLINE bool Is_Nulled(Need(const Value*) v) {
     ASSERT_CELL_READABLE(v);
     return QUOTE_BYTE(v) == 0
         and HEART_BYTE(v) == REB_WORD

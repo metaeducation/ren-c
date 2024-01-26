@@ -117,9 +117,7 @@ Element* Init_Near_For_Level(Sink(Element*) out, Level* L)
     const Element* tail = Array_Tail(Level_Array(L));
     const Element* item = Array_At(Level_Array(L), start);
     for (; item != tail and count < 6; ++item, ++count) {
-        assert(not Is_Void(item));  // can't be in arrays, API won't splice
-        assert(not Is_Antiform(item));  // can't be in arrays, API won't splice
-        Derelativize(PUSH(), item, Level_Specifier(L));
+        Copy_Cell(PUSH(), item);
 
         if (count == Level_Array_Index(L) - start - 1) {
             //

@@ -709,8 +709,14 @@ Bounce Action_Executor(Level* L)
                 // it has to be evaluated.
                 //
                 Move_Cell(SPARE, ARG);
-                if (Get_Var_Core_Throws(ARG, GROUPS_OK, SPARE, SPECIFIED))
+                if (Get_Var_Core_Throws(
+                    ARG,
+                    GROUPS_OK,
+                    Stable_Unchecked(SPARE),
+                    SPECIFIED
+                )){
                     goto handle_thrown_maybe_redo;
+                }
             }
             break;
 

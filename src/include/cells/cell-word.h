@@ -62,7 +62,7 @@ INLINE void INIT_VAL_WORD_INDEX(Cell* v, REBINT i) {
 }
 
 INLINE REBVAL *Init_Any_Word_Untracked(
-    Cell* out,
+    Sink(Element*) out,
     enum Reb_Kind kind,
     const Symbol* sym,
     Byte quote_byte
@@ -89,7 +89,7 @@ INLINE REBVAL *Init_Any_Word_Untracked(
 #define Init_Meta_Word(out,str)     Init_Any_Word((out), REB_META_WORD, (str))
 
 INLINE REBVAL *Init_Any_Word_Bound_Untracked(
-    Cell* out,
+    Sink(Element*) out,
     enum Reb_Kind type,
     const Symbol* symbol,
     Stub* binding,  // spelling determined by linked-to thing
@@ -187,3 +187,12 @@ INLINE bool Is_Anti_Word_With_Id(const Cell* v, SymId id) {
 
 INLINE bool Is_Quasi_Word(const Cell* v)
   { return Is_Quasiform(v) and HEART_BYTE(v) == REB_WORD; }
+
+INLINE bool Is_Quasi_Word_With_Id(const Element* v, SymId id) {
+    assert(id != 0);
+
+    if (not Is_Quasi_Word(v))
+        return false;
+
+    return id == Cell_Word_Id(v);
+}
