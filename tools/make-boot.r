@@ -199,6 +199,11 @@ for-each-datatype: func [
                 ]
                 class: class*
                 antiname: either antiname* [unquasi antiname*] [null]
+                unstable: switch is-unstable* [
+                    null [false]
+                    #unstable [true]
+                    fail "unstable annotation must be #unstable"
+                ]
                 make: make*
                 mold: mold*
             ]
@@ -467,10 +472,19 @@ e-types/emit newline
 for-each-datatype t [
     if not t/antiname [continue]  ; no special name for antiform form
 
+    need: either t/unstable ["Atom"] ["Value"]
+
+    ; Note: READABLE() not defined yet at this point, so wrapped in a macro.
+    ; Revisit.
+    ;
     e-types/emit [t {
+        INLINE bool Is_$<Propercase To Text! T/Antiname>_Core(Need(const $<Need>*) v) { \
+            return ((v->header.bits & (FLAG_QUOTE_BYTE(255) | FLAG_HEART_BYTE(255))) \
+                == (FLAG_QUOTE_BYTE(ANTIFORM_0) | FLAG_HEART_BYTE(REB_$<T/NAME>))); \
+        }
+
         #define Is_$<Propercase To Text! T/Antiname>(v) \
-            ((READABLE(v)->header.bits & (FLAG_QUOTE_BYTE(255) | FLAG_HEART_BYTE(255))) \
-                == (FLAG_QUOTE_BYTE(ANTIFORM_0) | FLAG_HEART_BYTE(REB_$<T/NAME>)))
+            Is_$<Propercase To Text! T/Antiname>_Core(READABLE(v))
 
         #define Is_Meta_Of_$<Propercase To Text! T/Antiname>(v) \
         ((READABLE(v)->header.bits & (FLAG_QUOTE_BYTE(255) | FLAG_HEART_BYTE(255))) \

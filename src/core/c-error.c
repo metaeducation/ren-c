@@ -906,7 +906,7 @@ Context* Error_Not_Varargs(
 //
 Context* Error_Invalid_Arg(Level* L, const Param* param)
 {
-    assert(Is_Unspecialized(param));
+    assert(Is_Unspecialized(c_cast(Value*, param)));
 
     const Param* headparam = ACT_PARAMS_HEAD(Level_Phase(L));
     assert(param >= headparam);
