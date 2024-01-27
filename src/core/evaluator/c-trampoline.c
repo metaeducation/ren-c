@@ -652,10 +652,6 @@ void Shutdown_Trampoline(void)
 //  Drop_Level_Core: C
 //
 void Drop_Level_Core(Level* L) {
-  #if DEBUG_EXPIRED_LOOKBACK
-    free(L->stress);
-  #endif
-
     assert(TOP_LEVEL == L);
 
     if (

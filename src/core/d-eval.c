@@ -62,7 +62,7 @@ void Dump_Level_Location(Level* L)
         L->executor == &Evaluator_Executor  // looks ahead by one
         and Level_State_Byte(L) != ST_EVALUATOR_INITIAL_ENTRY  // L->u corrupt
     ){
-        Derelativize(dump, L->u.eval.current, L_specifier);
+        Derelativize(dump, &L->u.eval.current, L_specifier);
         printf("Dump_Level_Location() current\n");
         PROBE(dump);
     }

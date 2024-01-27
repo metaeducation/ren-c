@@ -312,7 +312,7 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
                 )){
                     return true;
                 }
-                Fetch_Next_Forget_Lookback(L);
+                Fetch_Next_In_Feed(L->feed);
             }
             else // not a soft-"exception" case, quote ordinarily
                 Literal_Next_In_Feed(out, L->feed);

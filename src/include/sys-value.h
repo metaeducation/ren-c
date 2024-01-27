@@ -605,7 +605,7 @@ INLINE void Copy_Cell_Header(
     const Cell* v
 ){
     assert(out != v);  // usually a sign of a mistake; not worth supporting
-    ASSERT_CELL_READABLE(v);  // allow copy void object vars
+    ASSERT_CELL_READABLE(v);
 
     FRESHEN_CELL(out);
     out->header.bits |= (NODE_FLAG_NODE | NODE_FLAG_CELL  // ensure NODE+CELL

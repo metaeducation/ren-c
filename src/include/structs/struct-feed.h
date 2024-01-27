@@ -186,15 +186,6 @@ struct FeedStruct {
     //=//// ^-- be sure above fields align cells below to 64-bits --v /////=//
     // (two intptr_t sized things should take care of it on both 32/64-bit) //
 
-    // Sometimes the feed can be advanced without keeping track of the
-    // last cell.  And sometimes the last cell lives in an array that is
-    // being held onto and read only, so its pointer is guaranteed to still
-    // be valid after a fetch.  But there are cases where values are being
-    // read from transient sources that disappear as they go...if that is
-    // the case, and lookback is needed, it is written into this cell.
-    //
-    Element lookback;
-
     // When feeding cells from a variadic, those cells may wish to mutate the
     // value in some way... e.g. to add a quoting level.  Rather than
     // complicate the evaluator itself with flags and switches, each feed
@@ -259,25 +250,6 @@ struct FeedStruct {
     // should free it.
     //
     uintptr_t refcount;
-
-  #if DEBUG_EXPIRED_LOOKBACK
-    //
-    // On each call to Fetch_Next_In_Feed, it's possible to ask it to give
-    // a pointer to a cell with equivalent data to what was previously in
-    // L->value, but that might not be L->value.  So for all practical
-    // purposes, one is to assume that the L->value pointer died after the
-    // fetch.  If clients are interested in doing "lookback" and examining
-    // two values at the same time (or doing a GC and expecting to still
-    // have the old L->current work), then they must not use the old L->value
-    // but request the lookback pointer from Fetch_Next_In_Feed().
-    //
-    // To help stress this invariant, feeds will forcibly expire REBVAL
-    // cells, handing out disposable lookback pointers on each eval.
-    //
-    // !!! Test currently leaks on shutdown, review how to not leak.
-    //
-    Cell* stress;
-  #endif
 
   #if DEBUG_COUNT_TICKS
     Tick tick;

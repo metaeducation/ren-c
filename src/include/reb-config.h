@@ -781,10 +781,6 @@ Special internal defines used by RT, not Host-Kit developers:
     #define DEBUG_VIRTUAL_BINDING 0
 #endif
 
-#if !defined(DEBUG_EXPIRED_LOOKBACK)
-    #define DEBUG_EXPIRED_LOOKBACK 0
-#endif
-
 // The third-party "dtoa.c" file was sensitive to whether DEBUG was #ifdef'd.
 // In the world where #if is used instead of #ifdef, that means it includes the
 // debug code whether DEBUG is 1 or 0.  The file was tweaked to include a more

@@ -810,7 +810,7 @@ DECLARE_NATIVE(let)
         goto update_feed_binding;
     }
 
-    assert(Cell_Heart(SPARE) == REB_SET_WORD or Is_Set_Block(SPARE));
+    assert(Is_Set_Word(SPARE) or Is_Set_Block(SPARE));
 
     Flags flags =
         FLAG_STATE_BYTE(ST_EVALUATOR_REEVALUATING)
@@ -818,7 +818,7 @@ DECLARE_NATIVE(let)
         | (L->flags.bits & LEVEL_FLAG_RAISED_RESULT_OK);
 
     Level* sub = Make_Level(LEVEL->feed, flags);
-    sub->u.eval.current = cast(Element*, SPARE);
+    Copy_Cell(&sub->u.eval.current, cast(Element*, SPARE));
     sub->u.eval.current_gotten = nullptr;
     sub->u.eval.enfix_reevaluate = 'N';  // detect?
 

@@ -294,7 +294,7 @@ INLINE bool Reevaluate_In_Sublevel_Throws(
     flags |= FLAG_STATE_BYTE(ST_EVALUATOR_REEVALUATING);
 
     Level* sub = Make_Level(L->feed, flags);
-    sub->u.eval.current = reval;
+    Copy_Cell(&sub->u.eval.current, reval);
     sub->u.eval.current_gotten = nullptr;
     sub->u.eval.enfix_reevaluate = enfix ? 'Y' : 'N';
 

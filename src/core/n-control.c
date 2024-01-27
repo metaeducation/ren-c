@@ -987,7 +987,7 @@ DECLARE_NATIVE(any)
 //      /all "Do not stop after finding first logically true case"
 //      /predicate "Unary case-processing action (default is DID)"
 //          [<unrun> frame!]
-//      <local> discarded
+//      <local> discarded branch
 //  ]
 //
 DECLARE_NATIVE(case)
@@ -1115,7 +1115,8 @@ DECLARE_NATIVE(case)
 
     bool matched = Is_Truthy(stable_SPARE);
 
-    const Element* branch = Lookback_While_Fetching_Next(SUBLEVEL);
+    const Element* branch = Copy_Cell(ARG(branch), At_Level(SUBLEVEL));
+    Fetch_Next_In_Feed(SUBLEVEL->feed);
 
     if (not matched) {
         if (not Is_Get_Group(branch))
@@ -1291,7 +1292,7 @@ DECLARE_NATIVE(switch)
     const Element* at = At_Level(SUBLEVEL);
 
     if (Is_Block(at) or Is_Frame(at)) {  // seen with no match in effect
-        Fetch_Next_Forget_Lookback(SUBLEVEL);  // just skip over it
+        Fetch_Next_In_Feed(SUBLEVEL->feed);  // just skip over it
         goto next_switch_step;
     }
 
@@ -1350,7 +1351,7 @@ DECLARE_NATIVE(switch)
         if (Is_Block(at) or Is_Meta_Block(at) or Is_Frame(at))
             break;
 
-        Fetch_Next_Forget_Lookback(SUBLEVEL);
+        Fetch_Next_In_Feed(SUBLEVEL->feed);
         at = At_Level(SUBLEVEL);
     }
 

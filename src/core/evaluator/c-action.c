@@ -82,15 +82,6 @@
 #define kind_current KIND_BYTE_UNCHECKED(v)
 
 
-#if DEBUG_EXPIRED_LOOKBACK
-    #define CURRENT_CHANGES_IF_FETCH_NEXT \
-        (L->feed->stress != nullptr)
-#else
-    #define CURRENT_CHANGES_IF_FETCH_NEXT \
-        (v == &L->feed->lookback)
-#endif
-
-
 // When arguments are hard quoted or soft-quoted, they don't call into the
 // evaluator to do it.  But they need to use the logic of the evaluator for
 // noticing when to defer enfix:
@@ -949,11 +940,6 @@ Bounce Action_Executor(Level* L)
     }
 
     assert(Get_Action_Executor_Flag(L, IN_DISPATCH));
-    assert(
-        Is_Level_At_End(L)
-        or Level_Is_Variadic(L)
-        or IS_VALUE_IN_ARRAY_DEBUG(FEED_ARRAY(L->feed), L_next)
-    );
 
     if (Get_Action_Executor_Flag(L, TYPECHECK_ONLY)) {  // <maybe>
         assert(Is_Nulled(OUT));

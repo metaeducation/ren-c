@@ -85,7 +85,7 @@
 #undef At_Level
 #define L_next              cast(const Element*, L->feed->p)
 #define L_next_gotten       L->feed->gotten
-#define L_current           L->u.eval.current
+#define L_current           cast(const Element*, &L->u.eval.current)
 #define L_current_gotten    L->u.eval.current_gotten
 
 // In debug builds, the KIND_BYTE() calls enforce cell validity...but slow
@@ -97,7 +97,7 @@
 
 #define level_ L  // for OUT, SPARE, STATE macros
 
-#define SCRATCH cast(Value*, &(L->u.eval.scratch))
+#define CURRENT cast(Element*, &(L->u.eval.current))
 
 // We make the macro for getting specifier a bit more complex here, to
 // account for reevaluation.
@@ -129,15 +129,6 @@ STATIC_ASSERT(
         | ((parent)->flags.bits & EVAL_EXECUTOR_FLAG_DIDNT_LEFT_QUOTE_TUPLE))
 
 
-#if DEBUG_EXPIRED_LOOKBACK
-    #define CURRENT_CHANGES_IF_FETCH_NEXT \
-        (L->feed->stress != nullptr)
-#else
-    #define CURRENT_CHANGES_IF_FETCH_NEXT \
-        (L_current == &L->feed->lookback)
-#endif
-
-
 // When a SET-BLOCK! is being processed for multi-returns, it may encounter
 // leading-blank paths as in ([foo /bar]: 10).  Once the work of extracting
 // the real variable from the path is done and pushed to the stack, this bit
@@ -152,16 +143,6 @@ STATIC_ASSERT(
 // SET-WORD! and SET-TUPLE! want to do roughly the same thing as the first step
 // of their evaluation.  They evaluate the right hand side into L->out.
 //
-// What makes this slightly complicated is that the current value may be in
-// a place that doing a Fetch_Next_In_Feed() might corrupt it.  This could
-// be accounted for by pushing the value to some other stack--e.g. the data
-// stack.  That would mean `x: y: z: ...` would only accrue one cell of
-// space for each level instead of a level for each.
-//
-// But for the moment, a new level is used each time.
-//
-//////////////////////////////////////////////////////////////////////////////
-//
 // 1. Note that any enfix quoting operators that would quote backwards to see
 //    the `x:` would have intercepted it during a lookahead...pre-empting any
 //    of this code.
@@ -170,11 +151,6 @@ STATIC_ASSERT(
 //    an arity-1 function.  `1 + x: whatever ...`.  This overrides the no
 //    lookahead behavior flag right up front.
 //
-// 3. If current is pointing into the lookback buffer or the fetched value,
-//    it will not work to hold onto this pointer while evaluating the right
-//    hand side.  The old stackless build wrote current into the spare and
-//    restored it in the state switch().  Did this ever happen?
-//
 inline static Level* Maybe_Rightward_Continuation_Needed(Level* L)
 {
     if (Is_Feed_At_End(L->feed))  // `do [x:]`, `do [o.x:]`, etc. are illegal
@@ -182,7 +158,7 @@ inline static Level* Maybe_Rightward_Continuation_Needed(Level* L)
 
     Clear_Feed_Flag(L->feed, NO_LOOKAHEAD);  // always >= 2 elements [2]
 
-    Flags flags =  // v-- if f was fulfilling, we are
+    Flags flags =  // v-- if L was fulfilling, we are
         (L->flags.bits & EVAL_EXECUTOR_FLAG_FULFILLING_ARG)
         | LEVEL_FLAG_RAISED_RESULT_OK;  // trap [e: transcode "1&aa"] works
 
@@ -194,9 +170,6 @@ inline static Level* Maybe_Rightward_Continuation_Needed(Level* L)
         flags  // inert optimize adjusted the flags to jump in mid-eval
     );
     Push_Level(OUT, sub);
-
-    assert(L_current != &L->feed->lookback);  // are these possible?  [3]
-    assert(L_current != &L->feed->fetched);
 
     return sub;
 }
@@ -290,7 +263,7 @@ Bounce Evaluator_Executor(Level* L)
             return OUT;
         Derelativize(OUT, At_Feed(L->feed), FEED_SPECIFIER(L->feed));
         Set_Cell_Flag(OUT, UNEVALUATED);
-        Fetch_Next_Forget_Lookback(L);
+        Fetch_Next_In_Feed(L->feed);
         return OUT;
     }
 
@@ -340,9 +313,9 @@ Bounce Evaluator_Executor(Level* L)
         L_current_gotten = nullptr;  // !!! allow/require to be passe in?
         goto evaluate; }
 
-      intrinsic_in_scratch_arg_in_spare:
+      intrinsic_in_current_arg_in_spare:
       case ST_EVALUATOR_CALCULATING_INTRINSIC_ARG : {
-        Action* action = VAL_ACTION(SCRATCH);
+        Action* action = VAL_ACTION(L_current);
         assert(IS_DETAILS(action));
         Intrinsic* intrinsic = Extract_Intrinsic(cast(Phase*, action));
         Param* param = ACT_PARAM(action, 2);
@@ -350,7 +323,7 @@ Bounce Evaluator_Executor(Level* L)
         if (Cell_ParamClass(param) == PARAMCLASS_META)
             Meta_Quotify(SPARE);
         if (not Typecheck_Coerce_Argument(param, SPARE)) {
-            Option(const Symbol*) label = VAL_FRAME_LABEL(SCRATCH);
+            Option(const Symbol*) label = VAL_FRAME_LABEL(L_current);
             const Key* key = ACT_KEY(action, 2);
             fail (Error_Arg_Type(label, key, param, stable_SPARE));
         }
@@ -392,8 +365,6 @@ Bounce Evaluator_Executor(Level* L)
   // This starts a new expression.
 
     Sync_Feed_At_Cell_Or_End_May_Fail(L->feed);
-    Corrupt_Pointer_If_Debug(L_current);
-    Corrupt_Pointer_If_Debug(L_current_gotten);
 
     Update_Expression_Start(L);  // !!! See Level_Array_Index() for caveats
 
@@ -403,7 +374,8 @@ Bounce Evaluator_Executor(Level* L)
     }
 
     L_current_gotten = L_next_gotten;  // Lookback clears it
-    L_current = Lookback_While_Fetching_Next(L);
+    Copy_Cell(CURRENT, L_next);
+    Fetch_Next_In_Feed(L->feed);
 
 } evaluate: ;  // meaningful semicolon--subsequent macro may declare things
 
@@ -414,7 +386,7 @@ Bounce Evaluator_Executor(Level* L)
     if (Is_Level_At_End(L))
         goto give_up_backward_quote_priority;
 
-    assert(not L_next_gotten);  // Fetch_Next_In_Frame() cleared it
+    assert(not L_next_gotten);  // Fetch_Next_In_Feed() cleared it
 
     if (VAL_TYPE_UNCHECKED(L_next) == REB_WORD) {  // right's kind
         L_next_gotten = Lookup_Word(L_next, FEED_SPECIFIER(L->feed));
@@ -481,14 +453,14 @@ Bounce Evaluator_Executor(Level* L)
     }
 
     // We skip over the word that invoked the action (e.g. ->-, OF, =>).
-    // v will then hold a pointer to that word (possibly now resident in the
-    // frame spare).  (OUT holds what was the left)
+    // CURRENT will then hold that word.  (OUT holds what was to the left)
     //
     L_current_gotten = L_next_gotten;
-    L_current = Lookback_While_Fetching_Next(L);
+    Copy_Cell(CURRENT, L_next);
+    Fetch_Next_In_Feed(L->feed);
 
     if (
-        Is_Feed_At_End(L->feed)  // v-- out is what used to be on left
+        Is_Feed_At_End(L->feed)  // v-- OUT is what used to be on left
         and (
             VAL_TYPE_UNCHECKED(OUT) == REB_WORD
             or VAL_TYPE_UNCHECKED(OUT) == REB_TUPLE
@@ -500,23 +472,25 @@ Bounce Evaluator_Executor(Level* L)
         // This lets us do e.g. `(the ->)` or `help of`
         //
         // Swap it around so that what we had put in OUT goes to being in
-        // SPARE and used as current.
+        // CURRENT, and the current is put back into the feed.
 
-        Move_Cell(SPARE, OUT);
+        Move_Cell(&L->feed->fetched, CURRENT);
+        L->feed->p = &L->feed->fetched;
+        L->feed->gotten = L_current_gotten;
 
-        Derelativize(OUT, L_current, L_specifier);
-        Set_Cell_Flag(OUT, UNEVALUATED);
+        Move_Cell(CURRENT, cast(Element*, OUT));
+        L_current_gotten = nullptr;
 
         Set_Eval_Executor_Flag(L, DIDNT_LEFT_QUOTE_TUPLE);
 
-        if (Is_Word(SPARE)) {
+        if (Is_Word(CURRENT)) {
             STATE = REB_WORD;
-            goto word_in_spare;
+            goto word_common;
         }
 
-        assert(Is_Tuple(SPARE));
+        assert(Is_Tuple(CURRENT));
         STATE = REB_TUPLE;
-        goto tuple_in_spare;
+        goto tuple_common;
     }
   }
 
@@ -673,18 +647,11 @@ Bounce Evaluator_Executor(Level* L)
     // enfix here when there was nothing to the left, so cases like `(+ 1 2)`
     // or in "stale" left hand situations like `10 comment "hi" + 20`.
 
-      word_in_spare:  ////////////////////////////////////////////////////////
-
-        assert(Is_Word(SPARE));
-        L_current = cast(Element*, SPARE);
-        L_current_gotten = Lookup_Word_May_Fail(L_current, L_specifier);
-        goto word_common;
+      word_common: ///////////////////////////////////////////////////////////
 
       case REB_WORD:
         if (not L_current_gotten)
             L_current_gotten = Lookup_Word_May_Fail(L_current, L_specifier);
-
-      word_common: ///////////////////////////////////////////////////////////
 
         if (Is_Action(unwrap(L_current_gotten))) {
             Action* action = VAL_ACTION(unwrap(L_current_gotten));
@@ -724,8 +691,8 @@ Bounce Evaluator_Executor(Level* L)
                 and Not_Level_At_End(L)  // can't do <end>, fallthru to error
                 and not SPORADICALLY(10)  // debug build bypass every 10th call
             ){
-                Copy_Cell(SCRATCH, unwrap(L_current_gotten));
-                INIT_VAL_ACTION_LABEL(SCRATCH, label);  // use the word
+                Copy_Meta_Cell(CURRENT, unwrap(L_current_gotten));
+                INIT_VAL_ACTION_LABEL(CURRENT, label);  // use the word
                 Param* param = ACT_PARAM(action, 2);
                 Flags flags = EVAL_EXECUTOR_FLAG_FULFILLING_ARG;
                 if (Cell_ParamClass(param) == PARAMCLASS_META)
@@ -734,7 +701,7 @@ Bounce Evaluator_Executor(Level* L)
                 Clear_Feed_Flag(L->feed, NO_LOOKAHEAD);  // when non-enfix call
 
                 if (Did_Init_Inert_Optimize_Complete(SPARE, L->feed, &flags))
-                    goto intrinsic_in_scratch_arg_in_spare;
+                    goto intrinsic_in_current_arg_in_spare;
 
                 Level* sub = Make_Level(L->feed, flags);
                 Push_Level(SPARE, sub);
@@ -778,27 +745,16 @@ Bounce Evaluator_Executor(Level* L)
     //    It used to not be a problem, when variables didn't just pop into
     //    existence.  Reconsidered in light of "emergence".  Review.
 
-    set_blank_in_spare: //////////////////////////////////////////////////////
-
-    set_word_in_spare: ///////////////////////////////////////////////////////
-
-        assert(Is_Word(SPARE) or Is_Blank(SPARE));
-        L_current = cast(Element*, SPARE);
-        goto set_word_common;  // !!! Applies current specifier, should it?
-
-    set_word_common: /////////////////////////////////////////////////////////
+    set_word_common_maybe_blank: /////////////////////////////////////////////
 
       case REB_SET_WORD: {
+        assert(Is_Set_Word(L_current) or Is_Blank(L_current));
         assert(STATE == REB_SET_WORD);
 
         Level* right = Maybe_Rightward_Continuation_Needed(L);
         if (not right)
             goto set_word_rightside_in_out;
 
-        if (L_current != SPARE) {  // !!! hack due to pointer move w/ME, review
-            Copy_Cell(SPARE, L_current);
-            L_current = cast(Element*, SPARE);
-        }
         return CATCH_CONTINUE_SUBLEVEL(right);
 
       } set_word_rightside_in_out: {  ////////////////////////////////////////
@@ -925,26 +881,19 @@ Bounce Evaluator_Executor(Level* L)
     // WORD! and GET-WORD!, and will error...directing you use GET/ANY if
     // fetching trash is what you actually intended.
 
-      tuple_in_spare:  ///////////////////////////////////////////////////////
-
-        assert(Is_Tuple(SPARE));
-        L_current = cast(Element*, SPARE);
-        Corrupt_Pointer_If_Debug(L_current_gotten);
-        goto tuple_common;
-
       tuple_common:  /////////////////////////////////////////////////////////
 
       case REB_TUPLE: {
-        Copy_Sequence_At(SCRATCH, L_current, 0);
-        if (Is_Blank(SCRATCH) or Any_Inert(SCRATCH)) {
+        Copy_Sequence_At(SPARE, L_current, 0);
+        if (Is_Blank(SPARE) or Any_Inert(SPARE)) {
             Derelativize(OUT, L_current, L_specifier);
             break;
         }
 
-        if (Get_Var_Core_Throws(SCRATCH, GROUPS_OK, L_current, L_specifier))
+        if (Get_Var_Core_Throws(SPARE, GROUPS_OK, L_current, L_specifier))
             goto return_thrown;
 
-        if (Is_Action(SCRATCH)) {
+        if (Is_Action(SPARE)) {
             //
             // PATH! dispatch is costly and can error in more ways than WORD!:
             //
@@ -953,28 +902,28 @@ Bounce Evaluator_Executor(Level* L)
             //
             // Plus with GROUP!s in a path, their evaluations can't be undone.
             //
-            if (Is_Enfixed(SCRATCH))
+            if (Is_Enfixed(SPARE))
                 fail ("Use `>-` to shove left enfix operands into PATH!s");
 
             Level* sub = Make_Action_Sublevel(L);
             Push_Level(OUT, sub);
             Push_Action(
                 sub,
-                VAL_ACTION(SCRATCH),
-                VAL_FRAME_BINDING(SCRATCH)
+                VAL_ACTION(SPARE),
+                VAL_FRAME_BINDING(SPARE)
             );
-            Begin_Prefix_Action(sub, VAL_FRAME_LABEL(SCRATCH));
+            Begin_Prefix_Action(sub, VAL_FRAME_LABEL(SPARE));
             goto process_action;
         }
 
         if (
-            Is_Antiform(SCRATCH)  // we test *after* action (faster common case)
-            and not Is_Antiform_Get_Friendly(SCRATCH)
+            Is_Antiform(SPARE)  // we test *after* action (faster common case)
+            and not Is_Antiform_Get_Friendly(stable_SPARE)
         ){
-            fail (Error_Bad_Word_Get(L_current, SCRATCH));
+            fail (Error_Bad_Word_Get(L_current, stable_SPARE));
         }
 
-        Move_Cell(OUT, SCRATCH);  // won't move CELL_FLAG_UNEVALUATED
+        Move_Cell(OUT, SPARE);  // won't move CELL_FLAG_UNEVALUATED
         break; }
 
 
@@ -1062,7 +1011,7 @@ Bounce Evaluator_Executor(Level* L)
             LEVEL_MASK_NONE,
             Canon(APPLY), rebQ(SPARE), rebDERELATIVIZE(L_next, L_specifier)
         );
-        Fetch_Next_Forget_Lookback(L);
+        Fetch_Next_In_Feed(L->feed);
         return BOUNCE_CONTINUE; }
 
 
@@ -1129,12 +1078,6 @@ Bounce Evaluator_Executor(Level* L)
     //     left
     //     == 20
 
-    set_tuple_in_spare: //////////////////////////////////////////////////////
-
-        assert(Is_Tuple(SPARE));
-        L_current = cast(Element*, SPARE);
-        goto generic_set_common;  // !!! Applies specifier, should it?
-
     generic_set_common: //////////////////////////////////////////////////////
 
       case REB_SET_TUPLE: {
@@ -1166,9 +1109,9 @@ Bounce Evaluator_Executor(Level* L)
                 fail (Error_Bad_Antiform(OUT));
 
             if (Set_Var_Core_Throws(
-                SCRATCH,
+                SPARE,
                 GROUPS_OK,
-                L_current,  // may be SPARE
+                L_current,
                 L_specifier,
                 stable_OUT
             )){
@@ -1199,23 +1142,31 @@ Bounce Evaluator_Executor(Level* L)
 
       } set_group_result_in_spare: {  ////////////////////////////////////////
 
+        assert(L_current_gotten == nullptr);
+
         switch (VAL_TYPE(SPARE)) {
           case REB_VOID :
             STATE = REB_SET_WORD;
-            Init_Blank(SPARE);  // can't put voids in feed position
-            goto set_blank_in_spare;
+            Init_Blank(CURRENT);  // can't put voids in feed position
+            goto set_word_common_maybe_blank;
 
           case REB_BLOCK :
+            Copy_Cell(CURRENT, cast(Element*, SPARE));
+            HEART_BYTE(CURRENT) = REB_SET_BLOCK;
             STATE = REB_SET_BLOCK;
-            goto set_block_in_spare;
+            goto set_block;
 
           case REB_WORD :
+            Copy_Cell(CURRENT, cast(Element*, SPARE));
+            HEART_BYTE(CURRENT) = REB_SET_WORD;
             STATE = REB_SET_WORD;
-            goto set_word_in_spare;
+            goto set_word_common_maybe_blank;
 
           case REB_TUPLE :
+            Copy_Cell(CURRENT, cast(Element*, SPARE));
+            HEART_BYTE(CURRENT) = REB_SET_TUPLE;
             STATE = REB_SET_TUPLE;
-            goto set_tuple_in_spare;
+            goto generic_set_common;
 
           default:
             fail ("Unknown type for use in SET-GROUP!");
@@ -1315,13 +1266,7 @@ Bounce Evaluator_Executor(Level* L)
     // to be the overall result of the expression (defaults to the normal
     // main return value).
 
-    set_block_in_spare: //////////////////////////////////////////////////////
-
-        assert(Is_Block(SPARE));
-        L_current = cast(Element*, SPARE);
-        goto set_block_common;  // !!! applies specifier, should it?
-
-    set_block_common: ////////////////////////////////////////////////////////
+    set_block: ///////////////////////////////////////////////////////////////
 
       // 1. Empty SET-BLOCK! are not supported, although it could be argued
       //    that an empty set-block could receive a NIHIL (~[]~) pack.
@@ -1361,7 +1306,7 @@ Bounce Evaluator_Executor(Level* L)
         const Element* check = Cell_Array_At(&tail, L_current);
         Specifier* check_specifier = Derive_Specifier(L_specifier, L_current);
 
-        Corrupt_Pointer_If_Debug(L_current);  // might be SPARE, we use it now
+        // we've extracted the array at and tail, can reuse current now
 
         StackIndex stackindex_circled = 0;
 
@@ -1376,22 +1321,22 @@ Bounce Evaluator_Executor(Level* L)
             if (
                 (heart == REB_PATH or heart == REB_META_PATH)
                 and Cell_Sequence_Len(check) == 2
-                and Is_Blank(Copy_Sequence_At(SCRATCH, check, 0))
+                and Is_Blank(Copy_Sequence_At(CURRENT, check, 0))
             ){
                 is_optional = true;  // leading slash means optional
                 Derelativize_Sequence_At(
-                    SCRATCH,
+                    CURRENT,
                     check,
                     check_specifier,
                     1
                 );
                 if (heart == REB_META_PATH)
-                    Metafy(SCRATCH);
-                heart = Cell_Heart(SCRATCH);
+                    Metafy(CURRENT);
+                heart = Cell_Heart(CURRENT);
             }
             else {
                 is_optional = false;  // no leading slash means required
-                Derelativize(SCRATCH, check, check_specifier);
+                Derelativize(CURRENT, check, check_specifier);
             }
 
             if (
@@ -1399,7 +1344,7 @@ Bounce Evaluator_Executor(Level* L)
                 or heart == REB_THE_GROUP
                 or heart == REB_META_GROUP
             ){
-                if (Do_Any_Array_At_Throws(SPARE, SCRATCH, SPECIFIED)) {
+                if (Do_Any_Array_At_Throws(SPARE, CURRENT, SPECIFIED)) {
                     Drop_Data_Stack_To(BASELINE->stack_base);
                     goto return_thrown;
                 }
@@ -1415,7 +1360,7 @@ Bounce Evaluator_Executor(Level* L)
                 Copy_Cell(PUSH(), stable_SPARE);
             }
             else
-                Copy_Cell(PUSH(), SCRATCH);
+                Copy_Cell(PUSH(), CURRENT);
 
             if (is_optional)  // so next phase won't worry about leading slash
                 Set_Cell_Flag(TOP, STACK_NOTE_OPTIONAL);
@@ -1526,8 +1471,8 @@ Bounce Evaluator_Executor(Level* L)
                 STACK_NOTE_OPTIONAL
             );
 
-            Value* var = SCRATCH;  // stable location, safe across SET of var
-            Copy_Cell(var, Data_Stack_At(stackindex_var));
+            Element* var = CURRENT;  // stable location, safe across SET of var
+            Copy_Cell(var, cast(Element*, Data_Stack_At(stackindex_var)));
 
             assert(not Is_Quoted(var));
             bool raised_ok = Is_Quasiform(var);  // quasi has meaning
@@ -2039,7 +1984,7 @@ Bounce Evaluator_Executor(Level* L)
         Is_Frame(L_next) ? VAL_FRAME_LABEL(L_next) : Cell_Word_Symbol(L_next)
     );
 
-    Fetch_Next_Forget_Lookback(L);  // advances next
+    Fetch_Next_In_Feed(L->feed);
 
     goto process_action; }
 

@@ -1517,7 +1517,7 @@ bool Set_Var_Core_Updater_Throws(
 //  Set_Var_Core_Throws: C
 //
 bool Set_Var_Core_Throws(
-    Sink(Value*) out,  // GC-safe cell to write steps to, or put thrown value
+    Sink(Value*) out,  // GC-safe cell to write steps to
     Option(Value*) steps_out,  // no GROUP!s if nulled
     const Value* var,  // e.g. v (can be void)
     Specifier* var_specifier,  // e.g. v_specifier

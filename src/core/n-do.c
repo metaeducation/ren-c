@@ -175,7 +175,7 @@ DECLARE_NATIVE(shove)
     else
         enfix = false;
 
-    Fetch_Next_Forget_Lookback(L);
+    Fetch_Next_In_Feed(L->feed);
 
     // Since we're simulating enfix dispatch, we need to move the first arg
     // where enfix gets it from...the frame output slot.
@@ -829,7 +829,7 @@ DECLARE_NATIVE(apply)
     const Element* at = At_Level(L);
 
     if (Is_Comma(at)) {
-        Fetch_Next_Forget_Lookback(L);
+        Fetch_Next_In_Feed(L->feed);
         goto handle_next_item;
     }
 
@@ -855,7 +855,9 @@ DECLARE_NATIVE(apply)
         if (Is_Specialized(var))
             fail (Error_Bad_Parameter_Raw(at));
 
-        const Element* lookback = Lookback_While_Fetching_Next(L);  // for error
+        DECLARE_ELEMENT (lookback);  // for error
+        Copy_Cell(lookback, At_Level(L));
+        Fetch_Next_In_Feed(L->feed);
         at = Try_At_Level(L);
 
         if (at == nullptr or Is_Comma(at))

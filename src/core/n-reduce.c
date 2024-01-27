@@ -103,7 +103,7 @@ DECLARE_NATIVE(reduce)
     );
     Push_Level(OUT, sub);
 
-    sub->u.eval.current = v;
+    Copy_Cell(&sub->u.eval.current, v);
     sub->u.eval.current_gotten = nullptr;
     sub->u.eval.enfix_reevaluate = 'N';  // detect?
 
@@ -576,7 +576,7 @@ Bounce Composer_Executor(Level* const L)
 
   handle_next_item: {  ///////////////////////////////////////////////////////
 
-   Fetch_Next_Forget_Lookback(L);
+   Fetch_Next_In_Feed(L->feed);
    goto handle_current_item;
 
 } handle_current_item: {  ////////////////////////////////////////////////////

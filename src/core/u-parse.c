@@ -109,7 +109,8 @@
     USED(ARG(collection)); \
     USED(ARG(num_quotes)); \
     USED(ARG(position)); \
-    USED(ARG(save))
+    USED(ARG(save)); \
+    USED(ARG(lookback))
 
 #define P_AT_END            Is_Level_At_End(level_)
 #define P_RULE              At_Level(level_)  // rvalue
@@ -150,22 +151,8 @@
     (rule == ARG(save) ? SPECIFIED : P_RULE_SPECIFIER)
 
 
-// !!! R3-Alpha's PARSE code long predated frames, and was retrofitted to use
-// them as an experiment in Ren-C.  If it followed the rules of frames, then
-// what is seen in a lookback is only good for *one* unit of time and may be
-// invalid after that.  It takes several observations and goes back expecting
-// a word to be in the same condition, so it can't use opt_lookback yet.
-//
-// (The evaluator pushes SET-WORD!s and SET-PATH!s to the stack in order to
-// be able to reuse the frame and avoid a recursion.  This would have to do
-// that as well.)
-//
-#define FETCH_NEXT_RULE_KEEP_LAST(opt_lookback,L) \
-    *opt_lookback = P_RULE; \
-    Fetch_Next_Forget_Lookback(L)
-
 #define FETCH_NEXT_RULE(L) \
-    Fetch_Next_Forget_Lookback(L)
+    Fetch_Next_In_Feed(L->feed)
 
 
 #define FETCH_TO_BAR_OR_END(L) \
@@ -303,6 +290,7 @@ static bool Subparse_Throws(
     Init_Trash(Erase_Cell(ARG(num_quotes)));
     Init_Trash(Erase_Cell(ARG(position)));
     Init_Trash(Erase_Cell(ARG(save)));
+    Init_Trash(Erase_Cell(ARG(lookback)));
 
     // !!! By calling the subparse native here directly from its C function
     // vs. going through the evaluator, we don't get the opportunity to do
@@ -1280,7 +1268,7 @@ static void Handle_Seek_Rule_Dont_Update_Begin(
 //      flags [integer!]
 //      /collection "Array into which any KEEP values are collected"
 //          [any-series!]
-//      <local> position num-quotes save
+//      <local> position num-quotes save lookback
 //  ]
 //
 DECLARE_NATIVE(subparse)
@@ -1655,10 +1643,12 @@ DECLARE_NATIVE(subparse)
                         FETCH_NEXT_RULE(L);
                         goto pre_rule;
                     }
+                    rule = P_RULE;
                     goto handle_set;
                 }
 
-                FETCH_NEXT_RULE_KEEP_LAST(&set_or_copy_word, L);
+                set_or_copy_word = Copy_Cell(LOCAL(lookback), P_RULE);
+                FETCH_NEXT_RULE(L);
                 goto pre_rule;
 
               case SYM_COLLECT:
@@ -1969,7 +1959,8 @@ DECLARE_NATIVE(subparse)
                 // https://github.com/rebol/rebol-issues/issues/2269
 
                 if (P_FLAGS & PF_REDBOL) {
-                    FETCH_NEXT_RULE_KEEP_LAST(&set_or_copy_word, L);
+                    set_or_copy_word = Copy_Cell(LOCAL(lookback), rule);
+                    FETCH_NEXT_RULE(L);
                     Handle_Mark_Rule(L, set_or_copy_word, P_RULE_SPECIFIER);
                     goto pre_rule;
                 }
@@ -2004,7 +1995,8 @@ DECLARE_NATIVE(subparse)
     }
     else if (Is_Set_Tuple(rule)) {
       handle_set:
-        FETCH_NEXT_RULE_KEEP_LAST(&set_or_copy_word, L);
+        set_or_copy_word = Copy_Cell(LOCAL(lookback), rule);
+        FETCH_NEXT_RULE(L);
 
         // As an interim measure, permit `pos: <here>` to act as
         // setting the position, just as `pos:` did historically.
@@ -2227,8 +2219,10 @@ DECLARE_NATIVE(subparse)
                 if (P_AT_END)
                     fail (Error_Parse_End());
 
-                if (not subrule)  // capture only on iteration #1
-                    FETCH_NEXT_RULE_KEEP_LAST(&subrule, L);
+                if (not subrule) {  // capture only on iteration #1
+                    subrule = Copy_Cell(LOCAL(lookback), P_RULE);
+                    FETCH_NEXT_RULE(L);
+                }
 
                 const Element* input_tail = Array_Tail(P_INPUT_ARRAY);
                 const Element* cmp = Array_At(P_INPUT_ARRAY, P_POS);

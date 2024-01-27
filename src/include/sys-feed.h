@@ -486,59 +486,6 @@ INLINE void Fetch_Next_In_Feed(Feed* feed) {
 }
 
 
-// Most calls to Fetch_Next_In_Level() are no longer interested in the
-// cell backing the pointer that used to be in L->value (this is enforced
-// by a rigorous test in DEBUG_EXPIRED_LOOKBACK).  Special care must be
-// taken when one is interested in that data, because it may have to be
-// moved.  So current can be returned from Fetch_Next_In_Level_Core().
-
-INLINE const Element* Lookback_While_Fetching_Next(Level* L) {
-  #if DEBUG_EXPIRED_LOOKBACK
-    if (feed->stress) {
-        FRESHEN(feed->stress);
-        free(feed->stress);
-        feed->stress = nullptr;
-    }
-  #endif
-
-    assert(READABLE(At_Feed(L->feed)));  // ensure cell
-
-    // L->value may be synthesized, in which case its bits are in the
-    // `L->feed->fetched` cell.  That synthesized value would be overwritten
-    // by another fetch, which would mess up lookback...so we cache those
-    // bits in the lookback cell in that case.
-    //
-    // The reason we do this conditionally isn't just to avoid moving 4
-    // platform pointers worth of data.  It's also to keep from reifying
-    // array cells unconditionally with Derelativize().  (How beneficial
-    // this is currently kind of an unknown, but in the scheme of things it
-    // seems like it must be something favorable to optimization.)
-    //
-    const Element* lookback;
-    if (L->feed->p == &L->feed->fetched) {
-        Copy_Cell(&L->feed->lookback, &L->feed->fetched);
-        lookback = &L->feed->lookback;
-    }
-    else
-        lookback = c_cast(Element*, L->feed->p);
-
-    Fetch_Next_In_Feed(L->feed);
-
-  #if DEBUG_EXPIRED_LOOKBACK
-    if (preserve) {
-        L->stress = cast(Cell*, malloc(sizeof(Cell)));
-        memcpy(L->stress, *opt_lookback, sizeof(Cell));
-        lookback = L->stress;
-    }
-  #endif
-
-    return lookback;
-}
-
-#define Fetch_Next_Forget_Lookback(L) \
-    Fetch_Next_In_Feed(L->feed)
-
-
 // This code is shared by Literal_Next_In_Feed(), and used without a feed
 // advancement in the inert branch of the evaluator.  So for something like
 // `repeat 2 [append [] 10]`, the steps are:
@@ -635,7 +582,6 @@ INLINE Feed* Prep_Feed_Common(void* preallocated, Flags flags) {
   #endif
 
     Erase_Cell(&feed->fetched);
-    Erase_Cell(&feed->lookback);
 
     Stub* s = Prep_Stub(
         &feed->singular,  // preallocated

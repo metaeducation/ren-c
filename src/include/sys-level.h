@@ -286,15 +286,15 @@ INLINE void Free_Level_Internal(Level* L) {
 }
 
 // * Push_Level() takes an Atom() for the output.  This is important, as
-//   we don't want to evaluate into arbitrary array Cell*, since the array
-//   could have its memory moved during an evaluation.  Also we don't want
-//   to take a Value* that could be a variable in an object--because the
-//   unstable intermediate states of the evaluation could be exposed by
-//   an object (this applies to the ARG() of the function too, as these could
-//   be seen by debugging code).  So typically evaluations are done into the
-//   OUT or SPARE cells (or SCRATCH if in the evaluator).  Note that a
-//   special exception is made by LOCAL() in frames, based on the belief
-//   that local state for a native will never be exposed by a debugger.
+//   we don't want to evaluate into variables or array slots.  Not only can
+//   they have their memory moved during an evaluation, but we don't want
+//   unstable antiforms being put into variables (or any antiforms being
+//   put in array cells).  Plus, states like erased cells exist as unstable
+//   intermediate states which we don't want to leak to debuggers.  So
+//   typically evaluations are done into the OUT or SPARE cells.
+//
+//   Note that a special exception is made by LOCAL() in frames, based on the
+//   belief that local state for a native will never be exposed by a debugger.
 //
 INLINE void Push_Level(
     Atom* out,  // typecheck prohibits passing `unstable` Cell* for output
@@ -322,10 +322,6 @@ INLINE void Push_Level(
   #if DEBUG
     if (L->out)
         assert(not Is_Api_Value(L->out));
-  #endif
-
-  #if DEBUG_EXPIRED_LOOKBACK
-    L->stress = nullptr;
   #endif
 
   #if !defined(NDEBUG)
@@ -399,10 +395,10 @@ INLINE Level* Prep_Level_Core(
 
     // !!! Recycling is done in the trampoline before the level gets a chance
     // to run.  So it's hard for the GC to know if it's okay to mark the
-    // scratch cell.  We cheaply erase the cell in case it stays as the
+    // current cell.  We cheaply erase the cell in case it stays as the
     // evaluator executor (it's just writing a single zero).  Review.
     //
-    Erase_Cell(&L->u.eval.scratch);
+    Erase_Cell(&L->u.eval.current);
 
     Corrupt_Pointer_If_Debug(L->label);
   #if DEBUG_LEVEL_LABELS

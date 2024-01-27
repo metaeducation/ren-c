@@ -861,11 +861,10 @@ static void Mark_Level_Stack_Deep(void)
         // Make_Level() sets it up and no one is supposed to corrupt it.
         //
         Queue_Mark_Maybe_Fresh_Cell_Deep(&L->feed->fetched);
-        Queue_Mark_Maybe_Fresh_Cell_Deep(&L->feed->lookback);
         Queue_Mark_Maybe_Fresh_Cell_Deep(&L->spare);
 
         if (L->executor == &Evaluator_Executor) {  // has extra GC-safe cell
-            Queue_Mark_Maybe_Fresh_Cell_Deep(cast(Cell*, &L->u.eval.scratch));
+            Queue_Mark_Maybe_Fresh_Cell_Deep(&L->u.eval.current);
             goto propagate_and_continue;
         }
 
