@@ -524,43 +524,28 @@ Bounce Evaluator_Executor(Level* L)
     // fast tests like Any_Inert() and IS_NULLED_OR_VOID_OR_END() has shown
     // to reduce performance in practice.  The compiler does the right thing.
     //
-    // 1. Left quoting constructs may jump to `word_common:` or `tuple_common:`
-    //    labels, and OUT carries
-    //
-    // 2. The Evaluator Executor's state bytes are a superset of the VAL_TYPE
-    //    of processed values.  Using the state byte to stor
+    // 1. The Evaluator Executor's state bytes are a superset of the VAL_TYPE
+    //    of processed values.  See the ST_EVALUATOR_XXX enumeration.
     //
 
-    assert(Is_Fresh(OUT));  // except [1]
+    assert(Is_Fresh(OUT));
 
-    switch ((STATE = VAL_TYPE(L_current))) {  // type doubles as state [2]
+    switch ((STATE = VAL_TYPE(L_current))) {  // type doubles as state [1]
 
-    //=//// NULL //////////////////////////////////////////////////////////=//
+    //=//// VOID //////////////////////////////////////////////////////////=//
     //
-    // Since nulled cells can't be in BLOCK!s, the evaluator shouldn't usually
-    // see them.  It is technically possible to see one using REEVAL, such as
-    // with `reeval first []`.
+    // Void cells are not elements, and feeds should only give back Element*.
+    // This should never be able to happen, but try not to crash if it does.
     //
-    // Note: It seems tempting to let NULL evaluate to NULL as a convenience
-    // for such cases.  But this breaks the system in subtle ways--like
-    // making it impossible to "reify" the instruction stream as a BLOCK!
-    // for the debugger.  Mechanically speaking, this is best left an error.
+    // The API should error if you try to make this situation happen:
     //
-    // Note: The API can't splice null values in the instruction stream:
-    //
-    //     REBVAL *v = nullptr;
-    //     bool is_null = rebUnboxLogic("null?", v);  // should be rebQ(v)
-    //
-    // But what it does as a compromise is it will make the spliced values
-    // into ~null~ quasiforms.  This usually works out in decay.  Further
-    // convenience is supplied by making the @ operator turn quasiform values
-    // into their antiforms:
-    //
-    //     bool is_null = rebUnboxLogic("null?", rebQ(v));
-    //     bool is_null = rebUnboxLogic("null? @", v);  // equivalent, shorter
+    //     REBVAL *v = rebVoid();
+    //     bool is_void = rebUnboxLogic("void?", v);  // should be rebQ(v)
 
       case REB_VOID:
-        fail (Error_Evaluate_Null_Raw());
+        assert("VOID seen in evaluator feed, should not be able to happen");
+        Init_Anti_Word(OUT, Canon(VOID));  // non-lethal behavior if release
+        break;
 
 
     //=//// COMMA! ////////////////////////////////////////////////////////=//

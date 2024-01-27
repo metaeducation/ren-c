@@ -123,8 +123,6 @@ Script: [
 
     hijack-blank:       {Hijacked function was captured but no body given yet}
 
-    evaluate-null:      {null cannot be evaluated (see UNEVAL)}
-
     need-non-null:      {non-NULL value required (see MAYBE, TRY, REIFY)}
 
     enfix-path-group:   [:arg1 {GROUP! can't be in a lookback quoted PATH!}]
