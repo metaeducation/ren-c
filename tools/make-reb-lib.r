@@ -488,11 +488,11 @@ e-lib/emit [ver {
      * stable locations guarded by GC (e.g. frame argument or output cells).
      * Since the core uses REBVAL*, it must be accurate (not just a void*)
      */
-    struct ValueStruct;
+    struct RebolValue;
     #ifdef __cplusplus
-        #define REBVAL ValueStruct  /* `struct` breaks MS variadic templates */
+        #define REBVAL RebolValue  /* `struct` breaks MS variadic templates */
     #else
-        #define REBVAL struct ValueStruct
+        #define REBVAL struct RebolValue
     #endif
 
     /*

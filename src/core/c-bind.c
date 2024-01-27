@@ -126,7 +126,7 @@ void Bind_Values_Inner_Loop(
 void Bind_Values_Core(
     Element* head,
     const Element* tail,
-    const Cell* context,
+    const Value* context,
     REBU64 bind_types,
     REBU64 add_midstream_types,
     Flags flags // see %sys-core.h for BIND_DEEP, etc.
@@ -207,7 +207,7 @@ void Unbind_Values_Core(
 // Returns 0 if word is not part of the context, otherwise the index of the
 // word in the context.
 //
-bool Try_Bind_Word(const Cell* context, REBVAL *word)
+bool Try_Bind_Word(const Value* context, REBVAL *word)
 {
     const bool strict = true;
     if (Is_Module(context)) {
@@ -718,7 +718,7 @@ DECLARE_NATIVE(let)
         bool altered = false;
 
         for (; item != tail; ++item) {
-            const Cell* temp = item;
+            const Element* temp = item;
             Specifier* temp_specifier = item_specifier;
 
             if (Is_Quoted(temp)) {
@@ -732,7 +732,13 @@ DECLARE_NATIVE(let)
                 if (Do_Any_Array_At_Throws(OUT, temp, item_specifier))
                     return THROWN;
 
-                temp = OUT;
+                if (Is_Antiform(OUT))
+                    fail (Error_Bad_Antiform(OUT));
+
+                if (Is_Void(OUT))
+                    Init_Blank(OUT);
+
+                temp = cast(Element*, OUT);
                 temp_specifier = SPECIFIED;
 
                 altered = true;
@@ -1522,7 +1528,7 @@ void Virtual_Bind_Deep_To_Existing_Context(
 //
 //  Assert_Cell_Binding_Valid_Core: C
 //
-void Assert_Cell_Binding_Valid_Core(NoQuote(const Cell*) cell)
+void Assert_Cell_Binding_Valid_Core(const Cell* cell)
 {
     Stub* binding = BINDING(cell);
     if (not binding)

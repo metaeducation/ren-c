@@ -39,7 +39,7 @@
 
 // !!! Find a better place for this!
 //
-INLINE bool ANY_ESCAPABLE_GET(const Cell* v) {
+INLINE bool ANY_ESCAPABLE_GET(const Atom* v) {
     //
     // !!! Doesn't include GET-BLOCK!, but should it, e.g. REDUCE escapability?
     //

@@ -436,7 +436,7 @@ DECLARE_NATIVE(shift)
 
 //  CT_Fail: C
 //
-REBINT CT_Fail(NoQuote(const Cell*) a, NoQuote(const Cell*) b, bool strict)
+REBINT CT_Fail(const Cell* a, const Cell* b, bool strict)
 {
     UNUSED(a);
     UNUSED(b);
@@ -448,7 +448,7 @@ REBINT CT_Fail(NoQuote(const Cell*) a, NoQuote(const Cell*) b, bool strict)
 
 //  CT_Unhooked: C
 //
-REBINT CT_Unhooked(NoQuote(const Cell*) a, NoQuote(const Cell*) b, bool strict)
+REBINT CT_Unhooked(const Cell* a, const Cell* b, bool strict)
 {
     UNUSED(a);
     UNUSED(b);
@@ -538,7 +538,7 @@ REBINT Compare_Modify_Values(Cell* a, Cell* b, bool strict)
           case REB_SET_WORD:
           case REB_GET_WORD:
           case REB_META_WORD:
-            if (Any_Word(b)) goto compare;
+            if (Any_Word_Kind(tb)) goto compare;
             break;
 
           case REB_TEXT:
@@ -546,7 +546,7 @@ REBINT Compare_Modify_Values(Cell* a, Cell* b, bool strict)
           case REB_EMAIL:
           case REB_URL:
           case REB_TAG:
-            if (Any_String(b)) goto compare;
+            if (Any_String_Kind(tb)) goto compare;
             break;
 
           default:
@@ -556,15 +556,18 @@ REBINT Compare_Modify_Values(Cell* a, Cell* b, bool strict)
         if (not strict)
             return ta > tb ? 1 : -1;  // !!! Review
 
-        fail (Error_Invalid_Compare_Raw(Type_Of(a), Type_Of(b)));
+        fail (Error_Invalid_Compare_Raw(
+            Datatype_From_Kind(ta),
+            Datatype_From_Kind(tb)
+        ));
     }
 
   compare:;
 
-    enum Reb_Kind kind = VAL_TYPE(a);
+    enum Reb_Kind kind = Cell_Heart(a);
 
     if (kind == REB_VOID) {
-        assert(VAL_TYPE(b) == REB_VOID);
+        assert(HEART_BYTE(b) == REB_VOID);
         return 0;  // voids always equal
     }
 

@@ -58,7 +58,7 @@
 #define INIT_VAL_VARARGS_PHASE          Init_Cell_Node2
 #define VAL_VARARGS_PHASE(v)            cast(Action*, Cell_Node2(v))
 
-INLINE Array* VAL_VARARGS_BINDING(NoQuote(const Cell*) v) {
+INLINE Array* VAL_VARARGS_BINDING(const Cell* v) {
     assert(Cell_Heart(v) == REB_VARARGS);
     return cast(Array*, BINDING(v));  // may be varlist or plain array
 }
@@ -67,7 +67,7 @@ INLINE void INIT_VAL_VARARGS_BINDING(
     Cell* v,
     Array* binding  // either an array or a frame varlist
 ){
-    assert(Is_Varargs(v));
+    assert(Cell_Heart(v) == REB_VARARGS);
     BINDING(v) = binding;
 }
 
@@ -81,7 +81,7 @@ INLINE REBVAL *Init_Varargs_Untyped_Normal(Cell* out, Level* L) {
 }
 
 INLINE REBVAL *Init_Varargs_Untyped_Enfix(
-    Sink(Value*) out,
+    Sink(Element*) out,
     Option(const Value*) left
 ){
     Array* feed;
@@ -105,7 +105,7 @@ INLINE REBVAL *Init_Varargs_Untyped_Enfix(
 
 INLINE bool Is_Block_Style_Varargs(
     Element* *shared_out,
-    NoQuote(const Cell*) vararg
+    const Cell* vararg
 ){
     assert(Cell_Heart(vararg) == REB_VARARGS);
 
@@ -129,7 +129,7 @@ INLINE bool Is_Block_Style_Varargs(
 
 INLINE bool Is_Level_Style_Varargs_Maybe_Null(
     Level* *L_out,
-    NoQuote(const Cell*) vararg
+    const Cell* vararg
 ){
     assert(Cell_Heart(vararg) == REB_VARARGS);
 
@@ -181,7 +181,7 @@ INLINE bool Is_Level_Style_Varargs_May_Fail(
 
 INLINE const Param* Param_For_Varargs_Maybe_Null(
     const Key* *key,
-    NoQuote(const Cell*) v
+    const Cell* v
 ){
     assert(Cell_Heart(v) == REB_VARARGS);
 

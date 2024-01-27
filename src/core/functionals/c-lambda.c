@@ -217,7 +217,7 @@ DECLARE_NATIVE(lambda)
 
     if (not optimizable) {
         Phase* lambda = Make_Interpreted_Action_May_Fail(
-            spec,
+            cast(Element*, spec),
             body,
             MKF_MASK_NONE,  // no MKF_RETURN
             &Lambda_Unoptimized_Dispatcher,

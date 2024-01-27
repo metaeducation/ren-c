@@ -1,6 +1,6 @@
 // %cell-frame.h
 
-INLINE Action* VAL_ACTION(NoQuote(const Cell*) v) {
+INLINE Action* VAL_ACTION(const Cell* v) {
     assert(HEART_BYTE(v) == REB_FRAME);
     if (Not_Node_Accessible(Cell_Node1(v)))
         fail (Error_Series_Data_Freed_Raw());
@@ -48,7 +48,7 @@ INLINE void INIT_VAL_ACTION_LABEL(
 // a running frame gets re-executed.  More study is needed.
 //
 
-INLINE Context* VAL_FRAME_BINDING(NoQuote(const Cell*) v) {
+INLINE Context* VAL_FRAME_BINDING(const Cell* v) {
     assert(HEART_BYTE(v) == REB_FRAME);
     return cast(Context*, BINDING(v));
 }
@@ -135,7 +135,7 @@ INLINE Element* Deactivate_If_Action(Need(Value*) v) {
 }
 
 
-INLINE bool Is_Enfixed(NoQuote(const Cell*) v) {
+INLINE bool Is_Enfixed(const Cell* v) {
     assert(HEART_BYTE(v) == REB_FRAME);
     return Get_Cell_Flag_Unchecked(v, ENFIX_FRAME);
 }

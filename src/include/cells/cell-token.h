@@ -36,7 +36,7 @@
 // polymorphically access const data across ANY-STRING!, ANY-WORD!, and ISSUE!
 //
 
-INLINE bool IS_CHAR_CELL(NoQuote(const Cell*) v) {
+INLINE bool IS_CHAR_CELL(const Cell* v) {
     if (Cell_Heart(v) != REB_ISSUE)
         return false;
 
@@ -46,13 +46,13 @@ INLINE bool IS_CHAR_CELL(NoQuote(const Cell*) v) {
     return EXTRA(Bytes, v).exactly_4[IDX_EXTRA_LEN] <= 1;  // codepoint
 }
 
-INLINE bool IS_CHAR(const Cell* v) {
+INLINE bool IS_CHAR(const Atom* v) {
     if (not Is_Issue(v))
         return false;
     return IS_CHAR_CELL(v);
 }
 
-INLINE Codepoint Cell_Codepoint(NoQuote(const Cell*) v) {
+INLINE Codepoint Cell_Codepoint(const Cell* v) {
     assert(Not_Cell_Flag(v, ISSUE_HAS_NODE));
 
     if (EXTRA(Bytes, v).exactly_4[IDX_EXTRA_LEN] == 0)
@@ -70,10 +70,10 @@ INLINE Codepoint Cell_Codepoint(NoQuote(const Cell*) v) {
 // seems like a bad idea for something so cheap to calculate.  But keep a
 // separate entry point in case that cache comes back.
 //
-INLINE Byte Cell_Char_Encoded_Size(NoQuote(const Cell*) v)
+INLINE Byte Cell_Char_Encoded_Size(const Cell* v)
   { return Encoded_Size_For_Codepoint(Cell_Codepoint(v)); }
 
-INLINE const Byte* VAL_CHAR_ENCODED(NoQuote(const Cell*) v) {
+INLINE const Byte* VAL_CHAR_ENCODED(const Cell* v) {
     assert(Cell_Heart(v) == REB_ISSUE and Not_Cell_Flag(v, ISSUE_HAS_NODE));
     assert(EXTRA(Bytes, v).exactly_4[IDX_EXTRA_LEN] <= 1);  // e.g. codepoint
     return PAYLOAD(Bytes, v).at_least_8;  // !!! '\0' terminated or not?
@@ -209,7 +209,7 @@ INLINE Context* Maybe_Init_Char_Untracked(Cell* out, uint32_t c) {
 #define Init_Blackhole(out) \
     Init_Char_Unchecked((out), 0)
 
-INLINE bool Is_Blackhole(const Cell* v) {
+INLINE bool Is_Blackhole(const Atom* v) {
     if (not IS_CHAR(v))
         return false;
 
@@ -236,7 +236,7 @@ INLINE bool Is_Blackhole(const Cell* v) {
 INLINE Utf8(const*) Cell_Utf8_Len_Size_At_Limit(
     Option(Length*) length_out,
     Option(Size*) size_out,
-    NoQuote(const Cell*) v,
+    const Cell* v,
     REBINT limit
 ){
   #if !defined(NDEBUG)

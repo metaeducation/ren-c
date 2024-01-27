@@ -776,7 +776,7 @@ INLINE Feed* Prep_Variadic_Feed(
 
 INLINE Feed* Prep_At_Feed(
     void *preallocated,
-    NoQuote(const Cell*) any_array,  // array is extracted and HOLD put on
+    const Cell* any_array,  // array is extracted and HOLD put on
     Specifier* specifier,
     Flags parent_flags  // only reads FEED_FLAG_CONST out of this
 ){

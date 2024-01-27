@@ -47,7 +47,7 @@ INLINE void INIT_BITS_NOT(Series* s, bool negated)
   { s->misc.negated = negated; }
 
 
-INLINE Binary* VAL_BITSET(NoQuote(const Cell*) v) {
+INLINE Binary* VAL_BITSET(const Cell* v) {
     assert(Cell_Heart(v) == REB_BITSET);
     return cast(Binary*, Cell_Node1(v));
 }

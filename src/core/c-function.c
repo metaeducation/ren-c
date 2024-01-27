@@ -665,7 +665,7 @@ Array* Pop_Paramlist_With_Adjunct_May_Fail(
 //
 Array* Make_Paramlist_Managed_May_Fail(
     Context* *adjunct_out,
-    const REBVAL *spec,
+    const Element* spec,
     Flags *flags  // flags may be modified to carry additional information
 ){
     StackIndex base = TOP_INDEX;
@@ -728,7 +728,7 @@ Phase* Make_Action(
 
     assert(Is_Node_Managed(paramlist));
     assert(
-        Is_Anti_Word_With_Id(Array_Head(paramlist), SYM_ROOTVAR)  // fills in
+        Is_Anti_Word_With_Id(Series_Head(Value, paramlist), SYM_ROOTVAR)
         or CTX_TYPE(cast(Context*, paramlist)) == REB_FRAME
     );
 
@@ -907,7 +907,7 @@ void Get_Maybe_Fake_Action_Body(Sink(Value*) out, const Value* action)
             // To give it the appearance of executing code in place, we use
             // a GROUP!.
 
-            Cell* slot = Array_At(fake, real_body_index);  // #BODY
+            Element* slot = Array_At(fake, real_body_index);  // #BODY
             assert(Is_Issue(slot));
 
             // Note: clears VAL_FLAG_LINE

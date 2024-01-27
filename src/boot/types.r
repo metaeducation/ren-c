@@ -170,7 +170,7 @@ issue       "immutable codepoint or codepoint sequence"
 
 
 ; ============================================================================
-; BEGIN BINDABLE TYPES - SEE Is_Bindable() - ValueStruct.extra USED FOR BINDING
+; BEGIN BINDABLE TYPES - SEE Is_Bindable() - Cell's "extra" USED FOR BINDING
 ; ============================================================================
 
 

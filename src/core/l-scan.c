@@ -2336,7 +2336,7 @@ Bounce Scanner_Executor(Level* const L) {
             HEART_BYTE(TOP) = REB_PERCENT;
 
             // !!! DEBUG_EXTANT_STACK_POINTERS can't resolve if this is
-            // a NoQuote(const Cell*) or REBVAL* overload with DEBUG_CHECK_CASTS.
+            // a const Cell* or REBVAL* overload with DEBUG_CHECK_CASTS.
             // Have to cast explicitly.
             //
             VAL_DECIMAL(x_cast(Value*, TOP)) /= 100.0;
@@ -3082,7 +3082,10 @@ DECLARE_NATIVE(transcode)
 
     const REBVAL *line_number;
     if (Any_Word(ARG(line)))
-        line_number = Lookup_Word_May_Fail(ARG(line), SPECIFIED);
+        line_number = Lookup_Word_May_Fail(
+            cast(Element*, ARG(line)),
+            SPECIFIED
+        );
     else
         line_number = ARG(line);
 

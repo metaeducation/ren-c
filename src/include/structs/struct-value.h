@@ -20,87 +20,6 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-//=////////////////////////////////////////////////////////////////////////=//
-//
-//  RELATIVE AND SPECIFIC VALUES (difference enforced in C++ build only)
-//
-//=////////////////////////////////////////////////////////////////////////=//
-//
-// A Cell is an equivalent struct layout to to Value, but is allowed to
-// have an Action* as its binding.  These relative cells can point to a
-// specific Value, but a relative word or array cannot be pointed to by a
-// plain Value*.  The Cell-vs-Value distinction is purely commentary
-// in the C build, but the C++ build makes Value a type derived from Cell.
-//
-// Cell exists to help quarantine the bit patterns for relative words into
-// the deep-copied-body of the function they are for.  To actually look them
-// up, they must be paired with a FRAME! matching the actual instance of the
-// running function on the stack they correspond to.  Once made specific,
-// a word may then be freely copied into any Value slot.
-//
-// In addition to ANY-WORD!, an ANY-ARRAY! can also be relative, if it is
-// part of the deep-copied function body.  The reason that arrays must be
-// relative too is in case they contain relative words.  If they do, then
-// recursion into them must carry forward the resolving "specifier" pointer
-// to be combined with any relative words that are seen later.
-//
-
-#if DEBUG_USE_CELL_SUBCLASSES
-
-    // An Atom* is able to hold unstable isotope states.  A separate type
-    // is used to avoid propagating the concerns of unstable isotopes to
-    // routines that shouldn't have to worry about them.
-    //
-    struct Atom : public Cell
-    {
-      #if !defined(NDEBUG)
-        Atom() = default;
-        ~Atom() {
-            assert(
-                (this->header.bits & (NODE_FLAG_NODE | NODE_FLAG_CELL))
-                or this->header.bits == CELL_MASK_0
-            );
-        }
-      #endif
-    };
-
-    struct ValueStruct : public Atom {
-      #if !defined(NDEBUG)
-        ValueStruct () = default;
-        ~ValueStruct () {
-            assert(
-                (this->header.bits & (NODE_FLAG_NODE | NODE_FLAG_CELL))
-                or this->header.bits == CELL_MASK_0
-            );
-        }
-      #endif
-    };
-
-    static_assert(
-        std::is_standard_layout<struct ValueStruct>::value,
-        "C++ REBVAL must match C layout: http://stackoverflow.com/a/7189821/"
-    );
-
-    struct Element : public ValueStruct {
-      #if !defined(NDEBUG)
-        Element () = default;
-        ~Element () {
-            assert(
-                (this->header.bits & (NODE_FLAG_NODE | NODE_FLAG_CELL))
-                or this->header.bits == CELL_MASK_0
-            );
-        }
-      #endif
-    };
-#elif CPLUSPLUS_11
-    typedef struct ValueStruct Atom;
-    typedef struct ValueStruct Element;
-#else
-    typedef struct ValueStruct Atom;
-    typedef struct ValueStruct Element;
-#endif
-
-typedef struct ValueStruct Value;
 
 
 //=//// VARS and PARAMs ///////////////////////////////////////////////////=//
@@ -197,15 +116,11 @@ INLINE REBVAL* Freshen_Cell_Untracked(Cell* v);
 
 //=//// EXTANT STACK POINTERS /////////////////////////////////////////////=//
 //
-// See %sys-stack.h for a deeper explanation.  This has to be declared in
-// order to put in one of NoQuote(const Cell*)s implicit constructors.  Because
-// having the StackValue(*) have a user-defined conversion to REBVAL* won't
-// get that...and you can't convert to both REBVAL* and NoQuote(const Cell*) as
-// that would be ambiguous.
+// See %sys-stack.h for a deeper explanation.
 //
 // Even with this definition, the intersecting needs of DEBUG_CHECK_CASTS and
 // DEBUG_EXTANT_STACK_POINTERS means there will be some cases where distinct
-// overloads of REBVAL* vs. NoQuote(const Cell*) will wind up being ambiguous.
+// overloads of Value* vs. Element* vs Cell* will wind up being ambiguous.
 // For instance, VAL_DECIMAL(StackValue(*)) can't tell which checked overload
 // to use.  Then you have to cast, e.g. VAL_DECIMAL(cast(Value*, stackval)).
 //

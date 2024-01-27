@@ -52,7 +52,7 @@
 INLINE bool Do_Any_Array_At_Core_Throws(
     Atom* out,
     Flags flags,
-    NoQuote(const Cell*) any_array,
+    const Cell* any_array,
     Specifier* specifier
 ){
     Level* L = Make_Level_At_Core(any_array, specifier, flags);

@@ -56,11 +56,11 @@ Node* Dump_Value_Debug(const Cell* v)
   #endif
     fflush(stdout);
 
-    printf("kind_byte=%d\n", cast(int, VAL_TYPE_UNCHECKED(v)));
-
     enum Reb_Kind heart = Cell_Heart(v);
     const char *type = String_UTF8(Canon_Symbol(SYM_FROM_KIND(heart)));
     printf("cell_heart=%s\n", type);
+    fflush(stdout);
+    printf("quote_byte=%d\n", QUOTE_BYTE(v));
     fflush(stdout);
 
     if (Get_Cell_Flag(v, FIRST_IS_NODE))

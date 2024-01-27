@@ -261,10 +261,10 @@ REBINT Compare_Arrays_At_Indexes(
     if (s_array == t_array and s_index == t_index)
          return 0;
 
-    const Cell* s_tail = Array_Tail(s_array);
-    const Cell* t_tail = Array_Tail(t_array);
-    const Cell* s = Array_At(s_array, s_index);
-    const Cell* t = Array_At(t_array, t_index);
+    const Element* s_tail = Array_Tail(s_array);
+    const Element* t_tail = Array_Tail(t_array);
+    const Element* s = Array_At(s_array, s_index);
+    const Element* t = Array_At(t_array, t_index);
 
     if (s == s_tail or t == t_tail)
         goto diff_of_ends;
@@ -307,15 +307,13 @@ REBINT Compare_Arrays_At_Indexes(
 //
 // is_case should be true for case sensitive compare
 //
-REBINT Cmp_Value(const Cell* sval, const Cell* tval, bool strict)
+REBINT Cmp_Value(const Cell* s, const Cell* t, bool strict)
 {
-    Byte squotes = QUOTE_BYTE(sval);
-    Byte tquotes = QUOTE_BYTE(tval);
+    Byte squotes = QUOTE_BYTE(s);
+    Byte tquotes = QUOTE_BYTE(t);
     if (squotes != tquotes)
         return squotes > tquotes ? 1 : -1;
 
-    NoQuote(const Cell*) s = sval;
-    NoQuote(const Cell*) t = tval;
     enum Reb_Kind s_kind = Cell_Heart(s);
     enum Reb_Kind t_kind = Cell_Heart(t);
 

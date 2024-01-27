@@ -1115,7 +1115,7 @@ DECLARE_NATIVE(case)
 
     bool matched = Is_Truthy(stable_SPARE);
 
-    const Cell* branch = Lookback_While_Fetching_Next(SUBLEVEL);
+    const Element* branch = Lookback_While_Fetching_Next(SUBLEVEL);
 
     if (not matched) {
         if (not Is_Get_Group(branch))
@@ -1288,7 +1288,7 @@ DECLARE_NATIVE(switch)
     if (Is_Level_At_End(SUBLEVEL))
         goto reached_end;
 
-    const Cell* at = At_Level(SUBLEVEL);
+    const Element* at = At_Level(SUBLEVEL);
 
     if (Is_Block(at) or Is_Frame(at)) {  // seen with no match in effect
         Fetch_Next_Forget_Lookback(SUBLEVEL);  // just skip over it
@@ -1341,7 +1341,7 @@ DECLARE_NATIVE(switch)
             goto next_switch_step;
     }
 
-    const Cell* at = Try_At_Level(SUBLEVEL);
+    const Element* at = Try_At_Level(SUBLEVEL);
 
     while (true) {  // skip ahead for BLOCK!/ACTION! to process the match
         if (at == nullptr)

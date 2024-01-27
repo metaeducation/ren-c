@@ -207,8 +207,8 @@ Bounce Func_Dispatcher(Level* const L)
 //    eliminated (though they set useful precedent for varying dispatchers).
 //
 Phase* Make_Interpreted_Action_May_Fail(
-    const REBVAL *spec,
-    const REBVAL *body,
+    const Element* spec,
+    const Element* body,
     Flags mkf_flags,  // MKF_RETURN, etc.
     Dispatcher* dispatcher,
     REBLEN details_capacity
@@ -316,8 +316,8 @@ DECLARE_NATIVE(func_p)
 {
     INCLUDE_PARAMS_OF_FUNC_P;
 
-    REBVAL *spec = ARG(spec);
-    REBVAL *body = ARG(body);
+    Element* spec = cast(Element*, ARG(spec));
+    Element* body = cast(Element*, ARG(body));
 
     Phase* func = Make_Interpreted_Action_May_Fail(
         spec,

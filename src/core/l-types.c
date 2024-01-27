@@ -340,7 +340,7 @@ DECLARE_NATIVE(of)
     REBVAL *prop = ARG(property);
 
     if (ANY_ESCAPABLE_GET(prop)) {  // !!! See note above
-        if (Eval_Value_Throws(SPARE, prop, SPECIFIED))
+        if (Eval_Value_Throws(SPARE, cast(Element*, prop), SPECIFIED))
             return THROWN;
 
         Decay_If_Unstable(SPARE);
@@ -379,7 +379,7 @@ DECLARE_NATIVE(of)
 // field of zero, except for hex values.
 //
 const Byte* Scan_Hex(
-    REBVAL *out,
+    Sink(Element*) out,
     const Byte* cp,
     REBLEN minlen,
     REBLEN maxlen
@@ -541,7 +541,7 @@ const Byte* Scan_Dec_Buf(
 // Scan and convert a decimal value.  Return zero if error.
 //
 const Byte* Scan_Decimal(
-    Cell* out,
+    Sink(Element*) out,
     const Byte* cp,
     REBLEN len,
     bool dec_only
@@ -633,7 +633,7 @@ const Byte* Scan_Decimal(
 // Allow preceding + - and any combination of ' marks.
 //
 const Byte* Scan_Integer(
-    Cell* out,
+    Sink(Element*) out,
     const Byte* cp,
     REBLEN len
 ){
@@ -726,7 +726,7 @@ const Byte* Scan_Integer(
 // Scan and convert a date. Also can include a time and zone.
 //
 const Byte* Scan_Date(
-    Cell* out,
+    Atom* out,
     const Byte* cp,
     REBLEN len
 ) {
@@ -1274,8 +1274,8 @@ DECLARE_NATIVE(scan_net_header)
         cp++;
         // Search if word already present:
 
-        const Cell* item_tail = Array_Tail(result);
-        Cell* item = Array_Head(result);
+        const Element* item_tail = Array_Tail(result);
+        Element* item = Array_Head(result);
 
         for (; item != item_tail; item += 2) {
             assert(Is_Text(item + 1) || Is_Block(item + 1));

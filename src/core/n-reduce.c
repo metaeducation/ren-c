@@ -359,18 +359,15 @@ DECLARE_NATIVE(reduce_each)
 }}
 
 
-bool Match_For_Compose(NoQuote(const Cell*) group, const REBVAL *label) {
+bool Match_For_Compose(const Cell* group, const Element* label) {
     assert(Any_Group_Kind(HEART_BYTE(group)));
-
-    if (Is_Nulled(label))
-        return true;
 
     assert(Is_Tag(label) or Is_File(label));
 
     if (Cell_Series_Len_At(group) == 0) // you have a pattern, so leave `()` as-is
         return false;
 
-    const Cell* first = Cell_Array_Item_At(group);
+    const Element* first = Cell_Array_Item_At(group);
     if (VAL_TYPE(first) != VAL_TYPE(label))
         return false;
 
@@ -547,7 +544,9 @@ Bounce Composer_Executor(Level* const L)
     Level* main_level = L->u.compose.main_level;  // the invoked COMPOSE native
 
     UNUSED(Level_Arg(main_level, p_return_));
-    Value* label = Level_Arg(main_level, p_label_);
+    Option(Element*) label = nullptr;
+    if (not Is_Nulled(Level_Arg(main_level, p_label_)))
+        label = cast(Element*, Level_Arg(main_level, p_label_));
     UNUSED(Level_Arg(main_level, p_value_));
     bool deep = not Is_Nulled(Level_Arg(main_level, p_deep_));
     Value* predicate = Level_Arg(main_level, p_predicate_);
@@ -603,7 +602,7 @@ Bounce Composer_Executor(Level* const L)
         // find compositions if /DEEP and it's an array
     }
     else {  // plain compose, if match
-        if (Match_For_Compose(at, label)) {
+        if (not label or Match_For_Compose(at, unwrap(label))) {
             match = at;
             match_specifier = L_specifier;
         }
@@ -630,7 +629,7 @@ Bounce Composer_Executor(Level* const L)
     Copy_Cell(SPARE, match);
     Dequotify(SPARE);  // cast was needed because there may have been quotes
     HEART_BYTE(SPARE) = REB_GROUP;  // don't confuse with decoration
-    if (not Is_Nulled(label))
+    if (label)
         VAL_INDEX_RAW(SPARE) += 1;  // wasn't possibly at END
 
     STATE = ST_COMPOSER_RUNNING_PREDICATE;
@@ -641,7 +640,7 @@ Bounce Composer_Executor(Level* const L)
     // If <*> is the label and (<*> 1 + 2) is found, run just (1 + 2).
     //
     Feed* subfeed = Make_At_Feed_Core(match, match_specifier);
-    if (not Is_Nulled(label))
+    if (label)
         Fetch_Next_In_Feed(subfeed);  // wasn't possibly at END
 
     Level* sublevel = Make_Level(
@@ -863,12 +862,12 @@ enum FLATTEN_LEVEL {
 
 
 static void Flatten_Core(
-    Cell* head,
-    const Cell* tail,
+    Element* head,
+    const Element* tail,
     Specifier* specifier,
     enum FLATTEN_LEVEL level
 ) {
-    Cell* item = head;
+    Element* item = head;
     for (; item != tail; ++item) {
         if (Is_Block(item) and level != FLATTEN_NOT) {
             Specifier* derived = Derive_Specifier(specifier, item);

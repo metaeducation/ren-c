@@ -336,7 +336,7 @@ INLINE bool Eval_Step_In_Any_Array_At_Throws(
 INLINE bool Eval_Value_Core_Throws(
     Atom* out,
     Flags flags,
-    const Cell* value,  // e.g. a BLOCK! here would just evaluate to itself!
+    const Element* value,  // e.g. a BLOCK! here would just evaluate to itself!
     Specifier* specifier
 ){
     if (Any_Inert(value)) {

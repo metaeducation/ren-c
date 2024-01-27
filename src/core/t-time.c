@@ -178,7 +178,7 @@ const Byte* Scan_Time(Cell* out, const Byte* cp, REBLEN len)
 //
 //  MF_Time: C
 //
-void MF_Time(REB_MOLD *mo, NoQuote(const Cell*) v, bool form)
+void MF_Time(REB_MOLD *mo, const Cell* v, bool form)
 {
     UNUSED(form);  // no difference between MOLD and FORM at this time
 
@@ -215,7 +215,7 @@ void MF_Time(REB_MOLD *mo, NoQuote(const Cell*) v, bool form)
 //
 //  CT_Time: C
 //
-REBINT CT_Time(NoQuote(const Cell*) a, NoQuote(const Cell*) b, bool strict)
+REBINT CT_Time(const Cell* a, const Cell* b, bool strict)
 {
     UNUSED(strict);
 
@@ -368,7 +368,7 @@ Bounce TO_Time(Level* level_, enum Reb_Kind kind, const REBVAL *arg)
 //
 //  Pick_Time: C
 //
-void Pick_Time(Sink(Value*) out, const Cell* value, const Cell* picker)
+void Pick_Time(Sink(Value*) out, const Cell* value, const Value* picker)
 {
     REBINT i;
     if (Is_Word(picker)) {
@@ -412,7 +412,7 @@ void Pick_Time(Sink(Value*) out, const Cell* value, const Cell* picker)
 //
 void Poke_Time_Immediate(
     REBVAL *value,
-    const Cell* picker,
+    const Value* picker,
     const REBVAL *poke
 ) {
     REBINT i;
@@ -489,7 +489,7 @@ REBTYPE(Time)
         INCLUDE_PARAMS_OF_PICK_P;
         UNUSED(ARG(location));
 
-        const Cell* picker = ARG(picker);
+        const Value* picker = ARG(picker);
 
         Pick_Time(OUT, time, picker);
         return OUT;
@@ -501,7 +501,7 @@ REBTYPE(Time)
         INCLUDE_PARAMS_OF_POKE_P;
         UNUSED(ARG(location));
 
-        const Cell* picker = ARG(picker);
+        const Value* picker = ARG(picker);
 
         REBVAL *setval = ARG(value);
 

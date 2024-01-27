@@ -265,7 +265,7 @@ INLINE Phase* ACT_IDENTITY(Action* action) {
     cast(Element*, Series_Data(ensure(Phase*, phase)))
 
 
-INLINE bool Is_Frame_Details(NoQuote(const Cell*) v) {
+INLINE bool Is_Frame_Details(const Cell* v) {
     assert(HEART_BYTE(v) == REB_FRAME);
     return IS_DETAILS(cast(Stub*, Cell_Node1(v)));
 }

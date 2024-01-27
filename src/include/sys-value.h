@@ -237,6 +237,12 @@
 #endif
 
 
+#define PAYLOAD(Type, v) \
+    (v)->payload.Type
+
+#define EXTRA(Type, v) \
+    (v)->extra.Type
+
 // Note: If incoming p is mutable, we currently assume that's allowed by the
 // flag bits of the node.  This could have a runtime check in debug build
 // with a C++ variation that only takes mutable pointers.
@@ -274,7 +280,7 @@ INLINE void Init_Cell_Node2(Cell* v, Option(const Node*) node) {
 // pointer you pass in is carrying a word payload.  It disregards the quotes.)
 //
 
-INLINE enum Reb_Kind VAL_TYPE_UNCHECKED(const Cell* v) {
+INLINE enum Reb_Kind VAL_TYPE_UNCHECKED(const Atom* v) {
     switch (QUOTE_BYTE(v)) {
       case ANTIFORM_0: {
         Byte heart = HEART_BYTE(v);
@@ -495,10 +501,10 @@ INLINE REBVAL* Freshen_Cell_Untracked(Cell* v) {
         *x_cast(Stub**, m_cast(Node**, &(v)->extra.Any.node))
 #else
     struct BindingHolder {
-        NoQuote(Cell*) & ref;
+        Cell* & ref;
 
-        BindingHolder(NoQuote(const Cell*) const& ref)
-            : ref (const_cast<NoQuote(Cell*) &>(ref))
+        BindingHolder(const Cell* const& ref)
+            : ref (const_cast<Cell* &>(ref))
           {}
 
         void operator=(Stub* right) {

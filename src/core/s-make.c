@@ -221,7 +221,7 @@ void Append_Spelling(String* dst, const String* spelling)
 //
 // Append a partial string to a String*.
 //
-void Append_String_Limit(String* dst, NoQuote(const Cell*) src, REBLEN limit)
+void Append_String_Limit(String* dst, const Cell* src, REBLEN limit)
 {
     assert(not Is_String_Symbol(dst));
     assert(Any_Utf8_Kind(Cell_Heart(src)));

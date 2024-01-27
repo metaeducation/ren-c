@@ -3,7 +3,7 @@
 // Uses "evil macro" variations because it is called so frequently, that in
 // the debug build (which doesn't inline functions) there's a notable cost.
 //
-INLINE const Series* Cell_Series(NoQuote(const Cell*) v) {
+INLINE const Series* Cell_Series(const Cell* v) {
     enum Reb_Kind heart = Cell_Heart(v);
     assert(Any_Series_Kind(heart) or heart == REB_URL);
     UNUSED(heart);
@@ -39,7 +39,7 @@ INLINE const Series* Cell_Series(NoQuote(const Cell*) v) {
     // Avoids READABLE() macro, because it's assumed that it was done in the
     // type checking to ensure VAL_INDEX() applied.  (This is called often.)
     //
-    INLINE REBIDX VAL_INDEX_UNBOUNDED(NoQuote(const Cell*) v) {
+    INLINE REBIDX VAL_INDEX_UNBOUNDED(const Cell* v) {
         enum Reb_Kind k = Cell_Heart_Unchecked(v);  // only const if heart!
         assert(Any_Series_Kind(k));
         assert(Get_Cell_Flag_Unchecked(v, FIRST_IS_NODE));
@@ -55,13 +55,13 @@ INLINE const Series* Cell_Series(NoQuote(const Cell*) v) {
 #endif
 
 
-INLINE REBLEN Cell_Series_Len_Head(NoQuote(const Cell*) v);  // forward decl
+INLINE REBLEN Cell_Series_Len_Head(const Cell* v);  // forward decl
 
 // Unlike VAL_INDEX_UNBOUNDED() that may give a negative number or past the
 // end of series, VAL_INDEX() does bounds checking and always returns an
 // unsigned REBLEN.
 //
-INLINE REBLEN VAL_INDEX(NoQuote(const Cell*) v) {
+INLINE REBLEN VAL_INDEX(const Cell* v) {
     enum Reb_Kind k = Cell_Heart(v);  // only const access if heart!
     assert(Any_Series_Kind(k));
     UNUSED(k);
@@ -90,9 +90,10 @@ INLINE void INIT_SPECIFIER(Cell* v, Stub* binding) {
         IS_DETAILS(binding)  // relative
         or IS_VARLIST(binding)  // specific
         or (
-            Any_Array(v) and (IS_LET(binding) or IS_USE(binding)) // virtual
+            Any_Array_Kind(HEART_BYTE(v))
+            and (IS_LET(binding) or IS_USE(binding)) // virtual
         ) or (
-            Is_Varargs(v) and Not_Series_Flag(binding, DYNAMIC)
+            HEART_BYTE(v) == REB_VARARGS and Not_Series_Flag(binding, DYNAMIC)
         )  // varargs from MAKE VARARGS! [...], else is a varlist
     );
   #endif

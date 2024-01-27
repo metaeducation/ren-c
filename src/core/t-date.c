@@ -45,7 +45,7 @@
 // time zone" would result in determinism problems for this comparison, so
 // date value literals on different machines would compare differently.
 //
-REBINT CT_Date(NoQuote(const Cell*) a_in, NoQuote(const Cell*) b_in, bool strict)
+REBINT CT_Date(const Cell* a_in, const Cell* b_in, bool strict)
 //
 // 1. This comparison doesn't know if it's being asked on behalf of equality or
 //    not.  This is suboptimal, a redesign is needed:
@@ -101,7 +101,7 @@ REBINT CT_Date(NoQuote(const Cell*) a_in, NoQuote(const Cell*) b_in, bool strict
 //
 //  MF_Date: C
 //
-void MF_Date(REB_MOLD *mo, NoQuote(const Cell*) v_orig, bool form)
+void MF_Date(REB_MOLD *mo, const Cell* v_orig, bool form)
 {
     // We can't/shouldn't modify the incoming date value we are molding, so we
     // make a copy that we can tweak during the emit process
@@ -193,7 +193,7 @@ static REBLEN Month_Length(REBLEN month, REBLEN year)
 // Given a year, month and day, return the number of days since the
 // beginning of that year.
 //
-REBLEN Julian_Date(NoQuote(const Cell*) date)
+REBLEN Julian_Date(const Cell* date)
 {
     REBLEN days = 0;
 
@@ -654,7 +654,7 @@ static REBINT Int_From_Date_Arg(const REBVAL *poke) {
 void Pick_Or_Poke_Date(
     Option(Sink(Value*)) opt_out,
     Value* v,
-    const Cell* picker,
+    const Value* picker,
     Option(const Value*) opt_poke
 ){
     Option(SymId) sym;
@@ -996,7 +996,7 @@ REBTYPE(Date)
         INCLUDE_PARAMS_OF_PICK_P;
         UNUSED(ARG(location));
 
-        const Cell* picker = ARG(picker);
+        const Value* picker = ARG(picker);
 
         Pick_Or_Poke_Date(OUT, v, picker, nullptr);
         return OUT;
@@ -1008,7 +1008,7 @@ REBTYPE(Date)
         INCLUDE_PARAMS_OF_POKE_P;
         UNUSED(ARG(location));
 
-        const Cell* picker = ARG(picker);
+        const Value* picker = ARG(picker);
 
         REBVAL *setval = ARG(value);
 

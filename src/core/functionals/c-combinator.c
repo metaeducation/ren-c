@@ -62,7 +62,6 @@ enum {
 //
 enum {
     IDX_UPARSE_PARAM_RETURN = 1,
-    IDX_UPARSE_PARAM_FURTHEST,
     IDX_UPARSE_PARAM_PENDING,
     IDX_UPARSE_PARAM_SERIES,
     IDX_UPARSE_PARAM_RULES,
@@ -86,7 +85,7 @@ Bounce Combinator_Dispatcher(Level* L)
 {
     Phase* phase = Level_Phase(L);
     Details* details = Phase_Details(phase);
-    Cell* body = Array_At(details, IDX_DETAILS_1);  // code to run
+    Value* body = Details_At(details, IDX_DETAILS_1);  // code to run
 
     Bounce b;
     if (Is_Frame(body)) {  // NATIVE-COMBINATOR
@@ -110,29 +109,6 @@ Bounce Combinator_Dispatcher(Level* L)
     // This particular parse succeeded, but did the furthest point exceed the
     // previously measured furthest point?  This only is a question that
     // matters if there was a request to know the furthest point...
-    //
-    REBVAL *state = Level_Arg(L, IDX_COMBINATOR_PARAM_STATE);
-    assert(Is_Frame(state));  // combinators *must* have this as the UPARSE.
-    Level* level_ = CTX_LEVEL_MAY_FAIL(VAL_CONTEXT(state));
-    REBVAL *furthest_word = Level_Arg(level_, IDX_UPARSE_PARAM_FURTHEST);
-    if (Is_Nulled(furthest_word))
-        return r;
-
-    REBVAL *furthest_var = Lookup_Mutable_Word_May_Fail(
-        furthest_word,
-        SPECIFIED
-    );
-
-    REBVAL *remainder_word = Level_Arg(L, IDX_COMBINATOR_PARAM_REMAINDER);
-    const REBVAL *remainder_var = Lookup_Word_May_Fail(
-        remainder_word,
-        SPECIFIED
-    );
-
-    assert(Cell_Series(remainder_var) == Cell_Series(furthest_var));
-
-    if (VAL_INDEX(remainder_var) > VAL_INDEX(furthest_var))
-        Copy_Cell(furthest_var, remainder_var);
 
     return r;
 }
@@ -254,14 +230,14 @@ DECLARE_NATIVE(combinator)
 {
     INCLUDE_PARAMS_OF_COMBINATOR;
 
-    Value* spec = ARG(spec);
-    Value* body = ARG(body);
+    Element* spec = cast(Element*, ARG(spec));
+    Element* body = cast(Element*, ARG(body));
 
     // This creates the expanded spec and puts it in a block which manages it.
     // That might not be needed if the Make_Paramlist_Managed() could take an
     // array and an index.
     //
-    DECLARE_STABLE (expanded_spec);
+    DECLARE_ELEMENT (expanded_spec);
     Init_Block(expanded_spec, Expanded_Combinator_Spec(spec));
 
     Context* meta;

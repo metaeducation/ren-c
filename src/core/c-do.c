@@ -101,7 +101,7 @@ bool Pushed_Continuation(
     Atom* out,
     Flags flags,  // LEVEL_FLAG_BRANCH, etc. for pushed levels
     Specifier* branch_specifier,  // before branch forces non-empty variadic call
-    const Cell* branch,
+    const Atom* branch,
     Option(const Atom*) with  // can be same as out or not GC-safe, may copy
 ){
     assert(branch != out);  // it's legal for `with` to be the same as out

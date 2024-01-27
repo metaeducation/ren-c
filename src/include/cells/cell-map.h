@@ -63,7 +63,7 @@ INLINE Array* MAP_PAIRLIST(const_if_c Map* map)
     Series_Head(MAP_HASHLIST(m))
 
 
-INLINE const Map* VAL_MAP(NoQuote(const Cell*) v) {
+INLINE const Map* VAL_MAP(const Cell* v) {
     assert(Cell_Heart(v) == REB_MAP);
     if (Not_Node_Accessible(Cell_Node1(v)))
         fail (Error_Series_Data_Freed_Raw());

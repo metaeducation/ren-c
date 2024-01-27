@@ -64,7 +64,7 @@ Bounce TO_Quasiform(Level* level_, enum Reb_Kind kind, const REBVAL *data) {
 //
 //  CT_Quasiform: C
 //
-REBINT CT_Quasiform(NoQuote(const Cell*) a, NoQuote(const Cell*) b, bool strict)
+REBINT CT_Quasiform(const Cell* a, const Cell* b, bool strict)
 {
     UNUSED(a); UNUSED(b); UNUSED(strict);
     assert(!"CT_Quasiform should never be called");

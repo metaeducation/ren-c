@@ -158,12 +158,12 @@ DECLARE_NATIVE(dump)
     UNUSED(ARG(value));
     fail (Error_Debug_Only_Raw());
 #else
-    REBVAL *v = ARG(value);
+    Element* v = cast(Element*, ARG(value));
 
     PROBE(v);
     printf("=> ");
     if (Is_Word(v)) {
-        const REBVAL* var = try_unwrap(Lookup_Word(v, SPECIFIED));
+        const Value* var = try_unwrap(Lookup_Word(v, SPECIFIED));
         if (not var) {
             PROBE("\\unbound\\");
         }

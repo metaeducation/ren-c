@@ -49,12 +49,12 @@
 #define VAL_HANDLE_CFUNC_P(v)           EXTRA(Any, (v)).cfunc
 
 
-INLINE bool Is_Handle_Cfunc(NoQuote(const Cell*) v) {
+INLINE bool Is_Handle_Cfunc(const Cell* v) {
     assert(Cell_Heart_Unchecked(v) == REB_HANDLE);
     return VAL_HANDLE_LENGTH_U(v) == 0;
 }
 
-INLINE NoQuote(const Cell*) VAL_HANDLE_CANON(NoQuote(const Cell*) v) {
+INLINE const Cell* VAL_HANDLE_CANON(const Cell* v) {
     assert(Cell_Heart_Unchecked(v) == REB_HANDLE);
     if (Not_Cell_Flag_Unchecked(v, FIRST_IS_NODE))
         return v;  // changing handle instance won't be seen by copies
@@ -68,12 +68,12 @@ INLINE Cell* mutable_VAL_HANDLE_CANON(Cell* v) {
     return Stub_Cell(VAL_HANDLE_STUB(v));  // has shared node
 }
 
-INLINE uintptr_t VAL_HANDLE_LEN(NoQuote(const Cell*) v) {
+INLINE uintptr_t VAL_HANDLE_LEN(const Cell* v) {
     assert(not Is_Handle_Cfunc(v));
     return VAL_HANDLE_LENGTH_U(VAL_HANDLE_CANON(v));
 }
 
-INLINE void *VAL_HANDLE_VOID_POINTER(NoQuote(const Cell*) v) {
+INLINE void *VAL_HANDLE_VOID_POINTER(const Cell* v) {
     assert(not Is_Handle_Cfunc(v));
     return VAL_HANDLE_CDATA_P(VAL_HANDLE_CANON(v));
 }
@@ -81,12 +81,12 @@ INLINE void *VAL_HANDLE_VOID_POINTER(NoQuote(const Cell*) v) {
 #define VAL_HANDLE_POINTER(T, v) \
     cast(T*, VAL_HANDLE_VOID_POINTER(v))
 
-INLINE CFunction* VAL_HANDLE_CFUNC(NoQuote(const Cell*) v) {
+INLINE CFunction* VAL_HANDLE_CFUNC(const Cell* v) {
     assert(Is_Handle_Cfunc(v));
     return VAL_HANDLE_CFUNC_P(VAL_HANDLE_CANON(v));
 }
 
-INLINE CLEANUP_CFUNC *VAL_HANDLE_CLEANER(NoQuote(const Cell*) v) {
+INLINE CLEANUP_CFUNC *VAL_HANDLE_CLEANER(const Cell* v) {
     assert(Cell_Heart_Unchecked(v) == REB_HANDLE);
     if (Not_Cell_Flag_Unchecked(v, FIRST_IS_NODE))
         return nullptr;

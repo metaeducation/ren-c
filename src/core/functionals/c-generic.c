@@ -85,8 +85,8 @@ DECLARE_NATIVE(generic)
 {
     INCLUDE_PARAMS_OF_GENERIC;
 
-    REBVAL *verb = ARG(verb);
-    REBVAL *spec = ARG(spec);
+    Element* verb = cast(Element*, ARG(verb));
+    Element* spec = cast(Element*, ARG(spec));
 
     Context* meta;
     Flags flags = MKF_RETURN;
@@ -151,7 +151,7 @@ Array* Startup_Generics(const Element* boot_generics)
 
     StackIndex base = TOP_INDEX;
 
-    Cell* item = head;
+    Element* item = head;
     for (; item != tail; ++item)
         if (Is_Set_Word(item)) {
             Derelativize(PUSH(), item, specifier);

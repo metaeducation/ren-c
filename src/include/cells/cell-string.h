@@ -1,6 +1,6 @@
 // %cell-string.h
 
-INLINE const String* Cell_String(NoQuote(const Cell*) v) {
+INLINE const String* Cell_String(const Cell* v) {
     enum Reb_Kind heart = Cell_Heart(v);
     if (Any_Word_Kind(heart))
         return Cell_Word_Symbol(v);
@@ -12,7 +12,7 @@ INLINE const String* Cell_String(NoQuote(const Cell*) v) {
 #define Cell_String_Ensure_Mutable(v) \
     m_cast(String*, Cell_String(Ensure_Mutable(v)))
 
-INLINE const String* Cell_Issue_String(NoQuote(const Cell*) v) {
+INLINE const String* Cell_Issue_String(const Cell* v) {
     assert(Cell_Heart(v) == REB_ISSUE);
     assert(Get_Cell_Flag(v, FIRST_IS_NODE));
     return c_cast(String*, Cell_Node1(v));
@@ -24,17 +24,17 @@ INLINE const String* Cell_Issue_String(NoQuote(const Cell*) v) {
 // that type.  So if the series is a string and not a binary, the special
 // cache of the length in the series node for strings must be used.
 //
-INLINE Length Cell_Series_Len_Head(NoQuote(const Cell*) v) {
+INLINE Length Cell_Series_Len_Head(const Cell* v) {
     const Series* s = Cell_Series(v);
     if (Is_Series_UTF8(s) and Cell_Heart(v) != REB_BINARY)
         return String_Len(c_cast(String*, s));
     return Series_Used(s);
 }
 
-INLINE bool VAL_PAST_END(NoQuote(const Cell*) v)
+INLINE bool VAL_PAST_END(const Cell* v)
    { return VAL_INDEX(v) > Cell_Series_Len_Head(v); }
 
-INLINE Length Cell_Series_Len_At(NoQuote(const Cell*) v) {
+INLINE Length Cell_Series_Len_At(const Cell* v) {
     //
     // !!! At present, it is considered "less of a lie" to tell people the
     // length of a series is 0 if its index is actually past the end, than
@@ -52,7 +52,7 @@ INLINE Length Cell_Series_Len_At(NoQuote(const Cell*) v) {
     return Cell_Series_Len_Head(v) - i;  // take current index into account
 }
 
-INLINE Utf8(const*) Cell_String_At(NoQuote(const Cell*) v) {
+INLINE Utf8(const*) Cell_String_At(const Cell* v) {
     const String* str = Cell_String(v);  // checks that it's ANY-STRING!
     REBIDX i = VAL_INDEX_RAW(v);
     REBLEN len = String_Len(str);
@@ -62,7 +62,7 @@ INLINE Utf8(const*) Cell_String_At(NoQuote(const Cell*) v) {
 }
 
 
-INLINE Utf8(const*) Cell_String_Tail(NoQuote(const Cell*) v) {
+INLINE Utf8(const*) Cell_String_Tail(const Cell* v) {
     const String* s = Cell_String(v);  // debug build checks it's ANY-STRING!
     return String_Tail(s);
 }
@@ -75,7 +75,7 @@ INLINE Utf8(const*) Cell_String_Tail(NoQuote(const Cell*) v) {
 #define Cell_String_At_Known_Mutable(v) \
     m_cast(Utf8(*), Cell_String_At(Known_Mutable(v)))
 
-INLINE bool Any_Stringlike(NoQuote(const Cell*) v) {
+INLINE bool Any_Stringlike(const Cell* v) {
     // called by core code, sacrifice READABLE() checks
     if (Any_String_Kind(Cell_Heart_Unchecked(v)))
         return true;
@@ -88,7 +88,7 @@ INLINE bool Any_Stringlike(NoQuote(const Cell*) v) {
 
 INLINE Size Cell_String_Size_Limit_At(
     Option(REBLEN*) length_out,  // length in chars to end (including limit)
-    NoQuote(const Cell*) v,
+    const Cell* v,
     REBINT limit  // UNLIMITED (e.g. a very large number) for no limit
 ){
     assert(Any_Stringlike(v));
@@ -122,7 +122,7 @@ INLINE Size VAL_BYTEOFFSET(const Cell* v) {
 }
 
 INLINE Size VAL_BYTEOFFSET_FOR_INDEX(
-    NoQuote(const Cell*) v,
+    const Cell* v,
     REBLEN index
 ){
     assert(Any_String_Kind(Cell_Heart(v)));

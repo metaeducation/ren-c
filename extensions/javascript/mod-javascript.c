@@ -798,8 +798,8 @@ DECLARE_NATIVE(js_native)
 {
     JAVASCRIPT_INCLUDE_PARAMS_OF_JS_NATIVE;
 
-    REBVAL *spec = ARG(spec);
-    REBVAL *source = ARG(source);
+    Element* spec = cast(Element*, ARG(spec));
+    Element* source = cast(Element*, ARG(source));
 
     Context* meta;
     Flags flags = MKF_RETURN;

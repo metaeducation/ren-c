@@ -273,7 +273,7 @@ DECLARE_NATIVE(new_line_q)
 //
 // Note that this routine is used by the SLEEP extension, as well as by WAIT.
 //
-REBLEN Milliseconds_From_Value(const Cell* v) {
+REBLEN Milliseconds_From_Value(const Value* v) {
     REBINT msec;
 
     switch (VAL_TYPE(v)) {

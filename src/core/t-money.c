@@ -56,7 +56,7 @@ const Byte* Scan_Money(
 //
 //  CT_Money: C
 //
-REBINT CT_Money(NoQuote(const Cell*) a, NoQuote(const Cell*) b, bool strict)
+REBINT CT_Money(const Cell* a, const Cell* b, bool strict)
 {
     UNUSED(strict);
 
@@ -138,7 +138,7 @@ Bounce TO_Money(Level* level_, enum Reb_Kind kind, const REBVAL *arg)
 //
 //  MF_Money: C
 //
-void MF_Money(REB_MOLD *mo, NoQuote(const Cell*) v, bool form)
+void MF_Money(REB_MOLD *mo, const Cell* v, bool form)
 {
     UNUSED(form);
 

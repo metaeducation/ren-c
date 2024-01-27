@@ -258,7 +258,10 @@ void Protect_Context(Context* c, Flags flags)
 static void Protect_Word_Value(REBVAL *word, Flags flags)
 {
     if (Any_Word(word) and IS_WORD_BOUND(word)) {
-        const REBVAL* var = Lookup_Word_May_Fail(word, SPECIFIED);
+        const REBVAL* var = Lookup_Word_May_Fail(
+            cast(Element*, word),
+            SPECIFIED
+        );
 
         Protect_Var(var, flags);
         if (flags & PROT_DEEP) {

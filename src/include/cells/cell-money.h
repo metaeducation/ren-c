@@ -55,7 +55,7 @@
 //     unsigned m0:32; /* significand, lowest part */
 //
 
-INLINE deci VAL_MONEY_AMOUNT(NoQuote(const Cell*) v) {
+INLINE deci VAL_MONEY_AMOUNT(const Cell* v) {
     deci amount;
 
     uintptr_t u = EXTRA(Any, v).u;

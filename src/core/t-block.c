@@ -77,7 +77,7 @@ DECLARE_NATIVE(only_p)  // https://forum.rebol.info/t/1182/11
 // !!! Should CT_Path() delegate to this when it detects it has two arrays
 // to compare?  That requires canonization assurance.
 //
-REBINT CT_Array(NoQuote(const Cell*) a, NoQuote(const Cell*) b, bool strict)
+REBINT CT_Array(const Cell* a, const Cell* b, bool strict)
 {
     if (C_STACK_OVERFLOWING(&strict))
         Fail_Stack_Overflow();
@@ -166,7 +166,7 @@ Bounce MAKE_Array(
         // instead of just [a b c] as the construction spec.
         //
         REBLEN len;
-        const Cell* at = Cell_Array_Len_At(&len, arg);
+        const Element* at = Cell_Array_Len_At(&len, arg);
 
         if (len != 2 or not Any_Array(at) or not Is_Integer(at + 1))
             goto bad_make;
@@ -707,7 +707,7 @@ bool Did_Pick_Block(
 //
 //  MF_Array: C
 //
-void MF_Array(REB_MOLD *mo, NoQuote(const Cell*) v, bool form)
+void MF_Array(REB_MOLD *mo, const Cell* v, bool form)
 {
     // Routine may be called on value that reports REB_QUOTED, even if it
     // has no additional payload and is aliasing the cell itself.  Checking

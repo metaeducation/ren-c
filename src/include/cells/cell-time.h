@@ -32,18 +32,18 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 
-#if (! CPLUSPLUS_11)
+#if (! DEBUG_USE_CELL_SUBCLASSES)
     #define Ensure_Date(v) \
         (v)
 #else
-    INLINE NoQuote(const Cell*) Ensure_Date(NoQuote(const Cell*) v) {
+    INLINE const Cell* Ensure_Date(const Cell* v) {
         assert(Cell_Heart(v) == REB_DATE);
         return v;
     }
 
-    INLINE Cell* Ensure_Date(Cell* v) {
+    INLINE Element* Ensure_Date(Atom* v) {
         assert(VAL_TYPE(v) == REB_DATE);
-        return v;
+        return cast(Element*, v);
     }
 #endif
 
@@ -77,7 +77,7 @@
 //
 #define NO_DATE_ZONE -64
 
-INLINE bool Does_Date_Have_Time(NoQuote(const Cell*) v)
+INLINE bool Does_Date_Have_Time(const Cell* v)
 {
     assert(Cell_Heart(v) == REB_DATE);
     if (PAYLOAD(Time, v).nanoseconds == NO_DATE_TIME) {
@@ -87,7 +87,7 @@ INLINE bool Does_Date_Have_Time(NoQuote(const Cell*) v)
     return true;
 }
 
-INLINE bool Does_Date_Have_Zone(NoQuote(const Cell*) v)
+INLINE bool Does_Date_Have_Zone(const Cell* v)
 {
     assert(Cell_Heart(v) == REB_DATE);
     if (EXTRA(Date, v).zone == NO_DATE_ZONE)  // out of band of 7-bit field
@@ -106,7 +106,7 @@ INLINE bool Does_Date_Have_Zone(NoQuote(const Cell*) v)
         T* cell;
 
         ZoneHolder(T* cell) : cell (cell)
-          { assert(Is_Date(cell)); }
+          { assert(Cell_Heart(cell) == REB_DATE); }
 
         operator int () {  // stop accidental reads of NO_DATE_ZONE
             assert(EXTRA(Date, cell).zone != NO_DATE_ZONE);
@@ -132,7 +132,7 @@ INLINE bool Does_Date_Have_Zone(NoQuote(const Cell*) v)
 //
 //=////////////////////////////////////////////////////////////////////////=//
 
-INLINE REBI64 VAL_NANO(NoQuote(const Cell*) v) {
+INLINE REBI64 VAL_NANO(const Cell* v) {
     assert(Cell_Heart(v) == REB_TIME or Does_Date_Have_Time(v));
     return PAYLOAD(Time, v).nanoseconds;
 }

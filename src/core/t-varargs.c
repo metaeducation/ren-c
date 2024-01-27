@@ -46,7 +46,7 @@ inline static void Init_For_Vararg_End(Atom* out, enum Reb_Vararg_Op op) {
 inline static bool Vararg_Op_If_No_Advance_Handled(
     Atom* out,
     enum Reb_Vararg_Op op,
-    Option(const Cell*) opt_look, // the first value in the varargs input
+    Option(const Element*) opt_look, // the first value in the varargs input
     Specifier* specifier,
     ParamClass pclass
 ){
@@ -55,7 +55,7 @@ inline static bool Vararg_Op_If_No_Advance_Handled(
         return true;
     }
 
-    const Cell* look = unwrap(opt_look);
+    const Element* look = unwrap(opt_look);
 
     if (pclass == PARAMCLASS_NORMAL and Is_Comma(look)) {
         Init_For_Vararg_End(out, op);  // non-quoted COMMA!
@@ -272,7 +272,7 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
         else
             arg = Level_Arg(L, VAL_VARARGS_SIGNED_PARAM_INDEX(vararg));
 
-        Option(const Cell*) look = nullptr;
+        Option(const Element*) look = nullptr;
         if (not Is_Level_At_End(L))
             look = At_Level(L);
 
@@ -463,7 +463,7 @@ REBTYPE(Varargs)
         INCLUDE_PARAMS_OF_PICK_P;
         UNUSED(ARG(location));
 
-        const Cell* picker = ARG(picker);
+        const Value* picker = ARG(picker);
         if (not Is_Integer(picker))
             fail (picker);
 
@@ -546,7 +546,7 @@ REBTYPE(Varargs)
 // Simple comparison function stub (required for every type--rules TBD for
 // levels of "exactness" in equality checking, or sort-stable comparison.)
 //
-REBINT CT_Varargs(NoQuote(const Cell*) a, NoQuote(const Cell*) b, bool strict)
+REBINT CT_Varargs(const Cell* a, const Cell* b, bool strict)
 {
     UNUSED(strict);
 
@@ -570,7 +570,7 @@ REBINT CT_Varargs(NoQuote(const Cell*) a, NoQuote(const Cell*) b, bool strict)
 // has reached its end, or if the frame the varargs is attached to is no
 // longer on the stack.
 //
-void MF_Varargs(REB_MOLD *mo, NoQuote(const Cell*) v, bool form) {
+void MF_Varargs(REB_MOLD *mo, const Cell* v, bool form) {
     UNUSED(form);
 
     Pre_Mold(mo, v);  // #[varargs! or make varargs!

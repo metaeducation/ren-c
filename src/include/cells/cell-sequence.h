@@ -449,7 +449,7 @@ INLINE Value* Try_Pop_Sequence_Or_Element_Or_Nulled(
 // take as immutable...or you can create a `/foo`-style path in a more
 // optimized fashion using Refinify()
 
-INLINE Length Cell_Sequence_Len(NoQuote(const Cell*) sequence) {
+INLINE Length Cell_Sequence_Len(const Cell* sequence) {
     assert(Any_Sequence_Kind(Cell_Heart(sequence)));
 
     if (Not_Cell_Flag(sequence, SEQUENCE_HAS_NODE)) {  // compressed bytes
@@ -553,9 +553,7 @@ INLINE Byte Cell_Sequence_Byte_At(
     return VAL_UINT8(at);  // !!! All callers of this routine need vetting
 }
 
-INLINE Specifier* Cell_Sequence_Specifier(
-    NoQuote(const Cell*) sequence
-){
+INLINE Specifier* Cell_Sequence_Specifier(const Cell* sequence) {
     assert(Any_Sequence_Kind(Cell_Heart(sequence)));
 
     // Getting the specifier for any of the optimized types means getting
@@ -640,7 +638,7 @@ INLINE REBVAL *Refinify(REBVAL *v) {
     return v;
 }
 
-INLINE bool IS_REFINEMENT_CELL(NoQuote(const Cell*) v) {
+INLINE bool IS_REFINEMENT_CELL(const Cell* v) {
     assert(Any_Path_Kind(Cell_Heart(v)));
     if (Not_Cell_Flag(v, SEQUENCE_HAS_NODE))
         return false;
@@ -655,12 +653,12 @@ INLINE bool IS_REFINEMENT_CELL(NoQuote(const Cell*) v) {
     return Get_Cell_Flag(v, REFINEMENT_LIKE);  // !!! Review: test this first?
 }
 
-INLINE bool Is_Refinement(const Cell* v) {
+INLINE bool Is_Refinement(const Value* v) {
     assert(Any_Path(v));
     return IS_REFINEMENT_CELL(v);
 }
 
-INLINE bool IS_PREDICATE1_CELL(NoQuote(const Cell*) v) {
+INLINE bool IS_PREDICATE1_CELL(const Cell* v) {
     if (Cell_Heart(v) != REB_TUPLE)
         return false;
 
@@ -677,9 +675,7 @@ INLINE bool IS_PREDICATE1_CELL(NoQuote(const Cell*) v) {
     return Get_Cell_Flag(v, REFINEMENT_LIKE);  // !!! Review: test this first?
 }
 
-INLINE const Symbol* VAL_REFINEMENT_SYMBOL(
-    NoQuote(const Cell*) v
-){
+INLINE const Symbol* VAL_REFINEMENT_SYMBOL(const Cell* v) {
     assert(IS_REFINEMENT_CELL(v));
     return c_cast(Symbol*, Cell_Node1(v));
 }

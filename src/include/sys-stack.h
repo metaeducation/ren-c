@@ -177,6 +177,10 @@
     struct c_cast_helper<Byte*, StackValue(*) const&> {
         typedef Byte* type;
     };
+
+    template<typename T>
+    struct cast_helper<StackValuePointer,T>
+      { static T convert(StackValuePointer v) { return (T)(v.p);} };
 #endif
 
 #define TOP_INDEX \

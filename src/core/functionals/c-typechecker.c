@@ -104,7 +104,7 @@ Phase* Make_Typechecker(const Value* type) {
     // We need a spec for our typecheckers, which is really just `value`
     // with no type restrictions.
     //
-    DECLARE_STABLE (spec);
+    DECLARE_ELEMENT (spec);
     Array* spec_array = Alloc_Singular(NODE_FLAG_MANAGED);
     Init_Word(Stub_Cell(spec_array), Canon(VALUE));
     Init_Block(spec, spec_array);
@@ -164,7 +164,7 @@ DECLARE_NATIVE(typechecker)
 // for TYPE-BLOCK! and TYPE-GROUP!.
 //
 bool Typecheck_Atom_Core(
-    const Cell* tests,  // PARAMETER!, TYPE-BLOCK!, GROUP!, TYPE-GROUP!...
+    const Value* tests,  // PARAMETER!, TYPE-BLOCK!, GROUP!, TYPE-GROUP!...
     Specifier* tests_specifier,
     const Atom* v
 ){
@@ -237,7 +237,7 @@ bool Typecheck_Atom_Core(
         }
 
         enum Reb_Kind kind;
-        const Cell* test;
+        const Value* test;
         if (VAL_TYPE_UNCHECKED(item) == REB_WORD) {
             label = Cell_Word_Symbol(item);
             test = Lookup_Word_May_Fail(item, derived);

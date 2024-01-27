@@ -9,7 +9,7 @@
 // be checked elsewhere...or also check it before use.
 //
 
-INLINE Context* VAL_CONTEXT(NoQuote(const Cell*) v) {
+INLINE Context* VAL_CONTEXT(const Cell* v) {
     assert(Any_Context_Kind(Cell_Heart_Unchecked(v)));
     Context* c;
     if (Not_Node_Accessible(Cell_Node1(v))) {
@@ -48,24 +48,24 @@ INLINE Context* VAL_CONTEXT(NoQuote(const Cell*) v) {
 //
 
 INLINE void INIT_VAL_FRAME_PHASE(Cell* v, Phase* phase) {
-    assert(Is_Frame(v));  // may be marked protected (e.g. archetype)
+    assert(Cell_Heart(v) == REB_FRAME);  // may be protected (e.g. archetype)
     INIT_VAL_FRAME_PHASE_OR_LABEL(v, phase);
 }
 
-INLINE Phase* VAL_FRAME_PHASE(NoQuote(const Cell*) v) {
+INLINE Phase* VAL_FRAME_PHASE(const Cell* v) {
     Series* s = VAL_FRAME_PHASE_OR_LABEL(v);
     if (not s or Is_String_Symbol(s))  // ANONYMOUS or label, not a phase
         return CTX_FRAME_PHASE(VAL_CONTEXT(v));  // use archetype
     return cast(Phase*, s);  // cell has its own phase, return it
 }
 
-INLINE bool IS_FRAME_PHASED(NoQuote(const Cell*) v) {
+INLINE bool IS_FRAME_PHASED(const Cell* v) {
     assert(Cell_Heart(v) == REB_FRAME);
     Series* s = VAL_FRAME_PHASE_OR_LABEL(v);
     return s and not Is_String_Symbol(s);
 }
 
-INLINE Option(const Symbol*) VAL_FRAME_LABEL(NoQuote(const Cell*) v) {
+INLINE Option(const Symbol*) VAL_FRAME_LABEL(const Cell* v) {
     Series* s = VAL_FRAME_PHASE_OR_LABEL(v);  // VAL_ACTION_PARTIALS_OR_LABEL as well
     if (s and Is_String_Symbol(s))  // label in value
         return cast(Symbol*, s);
@@ -76,7 +76,7 @@ INLINE void INIT_VAL_FRAME_LABEL(
     Cell* v,
     Option(const String*) label
 ){
-    assert(Is_Frame(v));
+    assert(Cell_Heart(v) == REB_FRAME);
     ASSERT_CELL_WRITABLE(v);  // No label in archetype
     INIT_VAL_FRAME_PHASE_OR_LABEL(v, try_unwrap(label));
 }
@@ -96,7 +96,7 @@ INLINE void INIT_VAL_FRAME_LABEL(
 // visible for that phase of execution and which aren't.
 //
 
-INLINE const Key* VAL_CONTEXT_KEYS_HEAD(NoQuote(const Cell*) context)
+INLINE const Key* VAL_CONTEXT_KEYS_HEAD(const Cell* context)
 {
     if (Cell_Heart(context) != REB_FRAME)
         return CTX_KEYS_HEAD(VAL_CONTEXT(context));

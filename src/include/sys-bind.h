@@ -88,7 +88,7 @@
 
 INLINE Specifier* Derive_Specifier(
     Specifier* parent,
-    NoQuote(const Cell*) any_array
+    const Cell* any_array
 );
 
 INLINE REBVAL *Derelativize_Untracked(
@@ -152,7 +152,7 @@ INLINE REBVAL *Derelativize_Untracked(
 
 #define Dequoted_Derelativize(out,in,specifier) \
     Dequotify(Derelativize((out), \
-        cast(const Cell*, ensure(NoQuote(const Cell*), (in))), (specifier)))
+        cast(const Cell*, ensure(const Cell*, (in))), (specifier)))
 
 
 // Tells whether when an ACTION! has a binding to a context, if that binding
@@ -455,7 +455,7 @@ INLINE Context* VAL_WORD_CONTEXT(const REBVAL *v) {
 //
 
 INLINE const Value* Lookup_Word_May_Fail(
-    const Cell* any_word,
+    const Element* any_word,
     Specifier* specifier
 ){
     REBLEN index;
@@ -476,7 +476,7 @@ INLINE const Value* Lookup_Word_May_Fail(
 }
 
 INLINE Option(const Value*) Lookup_Word(
-    const Cell* any_word,
+    const Element* any_word,
     Specifier* specifier
 ){
     REBLEN index;
@@ -495,7 +495,7 @@ INLINE Option(const Value*) Lookup_Word(
 
 INLINE const Value* Get_Word_May_Fail(
     Sink(Value*) out,
-    const Cell* any_word,
+    const Element* any_word,
     Specifier* specifier
 ){
     const Value* var = Lookup_Word_May_Fail(any_word, specifier);
@@ -506,7 +506,7 @@ INLINE const Value* Get_Word_May_Fail(
 }
 
 INLINE REBVAL *Lookup_Mutable_Word_May_Fail(
-    const Cell* any_word,
+    const Element* any_word,
     Specifier* specifier
 ){
     REBLEN index;
@@ -547,7 +547,7 @@ INLINE REBVAL *Lookup_Mutable_Word_May_Fail(
 }
 
 INLINE REBVAL *Sink_Word_May_Fail(
-    const Cell* any_word,
+    const Element* any_word,
     Specifier* specifier
 ){
     REBVAL *var = Lookup_Mutable_Word_May_Fail(any_word, specifier);
@@ -613,7 +613,7 @@ INLINE Option(Context*) SPC_FRAME_CTX(Specifier* specifier)
 //
 INLINE Specifier* Derive_Specifier(
     Specifier* specifier,
-    NoQuote(const Cell*) any_array
+    const Cell* any_array
 ){
     if (BINDING(any_array) != UNBOUND)
         return BINDING(any_array);

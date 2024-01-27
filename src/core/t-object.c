@@ -185,7 +185,7 @@ static void Append_Vars_To_Context_From_Group(REBVAL *context, REBVAL *block)
 //    LEVEL_FLAG_ABRUPT_FAILURE.  So we make them "fake unmanaged" so they
 //    are "untracked" by saying they're managed, and taking that flag off.
 //
-void Init_Evars(EVARS *e, NoQuote(const Cell*) v) {
+void Init_Evars(EVARS *e, const Cell* v) {
     enum Reb_Kind kind = Cell_Heart(v);
 
     e->visibility = VAR_VISIBILITY_ALL;  // ensure not uninitialized
@@ -452,7 +452,7 @@ void Shutdown_Evars(EVARS *e)
 //
 //  CT_Context: C
 //
-REBINT CT_Context(NoQuote(const Cell*) a, NoQuote(const Cell*) b, bool strict)
+REBINT CT_Context(const Cell* a, const Cell* b, bool strict)
 {
     assert(Any_Context_Kind(Cell_Heart(a)));
     assert(Any_Context_Kind(Cell_Heart(b)));
@@ -933,7 +933,7 @@ Context* Copy_Context_Extra_Managed(
 //
 //  MF_Context: C
 //
-void MF_Context(REB_MOLD *mo, NoQuote(const Cell*) v, bool form)
+void MF_Context(REB_MOLD *mo, const Cell* v, bool form)
 {
     String* s = mo->series;
 
@@ -1053,7 +1053,7 @@ void MF_Context(REB_MOLD *mo, NoQuote(const Cell*) v, bool form)
 }
 
 
-const Symbol* Symbol_From_Picker(const REBVAL *context, const Cell* picker)
+const Symbol* Symbol_From_Picker(const REBVAL *context, const Value* picker)
 {
     UNUSED(context);  // Might the picker be context-sensitive?
 
@@ -1124,7 +1124,7 @@ REBTYPE(Context)
         INCLUDE_PARAMS_OF_PICK_P;
         UNUSED(ARG(location));
 
-        const Cell* picker = ARG(picker);
+        const Value* picker = ARG(picker);
         const Symbol* symbol = Symbol_From_Picker(context, picker);
 
         const REBVAL *var = TRY_VAL_CONTEXT_VAR(context, symbol);
@@ -1142,7 +1142,7 @@ REBTYPE(Context)
         INCLUDE_PARAMS_OF_POKE_P;
         UNUSED(ARG(location));
 
-        const Cell* picker = ARG(picker);
+        const Value* picker = ARG(picker);
         const Symbol* symbol = Symbol_From_Picker(context, picker);
 
         REBVAL *setval = ARG(value);
@@ -1162,7 +1162,7 @@ REBTYPE(Context)
         INCLUDE_PARAMS_OF_PROTECT_P;
         UNUSED(ARG(location));
 
-        const Cell* picker = ARG(picker);
+        const Value* picker = ARG(picker);
         const Symbol* symbol = Symbol_From_Picker(context, picker);
 
         REBVAL *setval = ARG(value);
@@ -1625,7 +1625,7 @@ REBTYPE(Frame)
 }
 
 
-static bool Same_Action(NoQuote(const Cell*) a, NoQuote(const Cell*) b)
+static bool Same_Action(const Cell* a, const Cell* b)
 {
     assert(Cell_Heart(a) == REB_FRAME and Cell_Heart(b) == REB_FRAME);
     if (not Is_Frame_Details(a) or not Is_Frame_Details(b))
@@ -1648,7 +1648,7 @@ static bool Same_Action(NoQuote(const Cell*) a, NoQuote(const Cell*) b)
 //
 //  CT_Frame: C
 //
-REBINT CT_Frame(NoQuote(const Cell*) a, NoQuote(const Cell*) b, bool strict)
+REBINT CT_Frame(const Cell* a, const Cell* b, bool strict)
 {
     UNUSED(strict);  // no lax form of comparison
 
@@ -1671,7 +1671,7 @@ REBINT CT_Frame(NoQuote(const Cell*) a, NoQuote(const Cell*) b, bool strict)
 //
 //  MF_Frame: C
 //
-void MF_Frame(REB_MOLD *mo, NoQuote(const Cell*) v, bool form) {
+void MF_Frame(REB_MOLD *mo, const Cell* v, bool form) {
 
     if (Is_Frame_Exemplar(v)) {
         MF_Context(mo, v, form);

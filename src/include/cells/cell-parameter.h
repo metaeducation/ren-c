@@ -61,9 +61,7 @@
 //   object, but Ren-C only uses a single pointer-to-symbol.)
 //
 
-INLINE Option(const Array*) Cell_Parameter_Spec(
-    NoQuote(const Cell*) v
-){
+INLINE Option(const Array*) Cell_Parameter_Spec(const Cell* v) {
     assert(HEART_BYTE(v) == REB_PARAMETER);
     if (Cell_Node1(v) != nullptr and Not_Node_Accessible(Cell_Node1(v)))
         fail (Error_Series_Data_Freed_Raw());
@@ -80,7 +78,7 @@ INLINE Option(const Array*) Cell_Parameter_Spec(
     #define PARAMETER_FLAGS(p) \
         *x_cast(uintptr_t*, &EXTRA(Parameter, (p)).parameter_flags)
 #else
-    INLINE uintptr_t& PARAMETER_FLAGS(NoQuote(const Cell*) p) {
+    INLINE uintptr_t& PARAMETER_FLAGS(const Cell* p) {
         assert(Cell_Heart_Unchecked(p) == REB_PARAMETER);
         return const_cast<uintptr_t&>(EXTRA(Parameter, (p)).parameter_flags);
     }
@@ -272,15 +270,13 @@ INLINE Option(const Array*) Cell_Parameter_Spec(
 
 
 
-INLINE ParamClass Cell_ParamClass(NoQuote(const Cell*) param) {
+INLINE ParamClass Cell_ParamClass(const Cell* param) {
     assert(HEART_BYTE(param) == REB_PARAMETER);
     ParamClass pclass = u_cast(ParamClass, PARAMCLASS_BYTE(param));
     return pclass;
 }
 
-INLINE Option(const String*) Cell_Parameter_String(
-    NoQuote(const Cell*) param
-){
+INLINE Option(const String*) Cell_Parameter_String(const Cell* param) {
     assert(HEART_BYTE(param) == REB_PARAMETER);
     return cast(const String*, Cell_Node2(param));
 }
@@ -336,6 +332,6 @@ INLINE Param* Init_Unconstrained_Parameter_Untracked(
     TRACK(Init_Unconstrained_Parameter_Untracked((out), (param_flags)))
 
 
-INLINE bool Is_Parameter_Unconstrained(NoQuote(const Cell*) param) {
+INLINE bool Is_Parameter_Unconstrained(const Cell* param) {
     return Cell_Parameter_Spec(param) == nullptr;  // e.g. `[/refine]`
 }

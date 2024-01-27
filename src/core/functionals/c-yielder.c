@@ -106,7 +106,7 @@ Bounce Yielder_Dispatcher(Level* const L)
     // If there is no yield, we want a callback so we can mark the
     // generator as finished.
     //
-    Cell* body = Array_At(details, IDX_DETAILS_1);  // code to run
+    Value* body = Details_At(details, IDX_DETAILS_1);  // code to run
 
     Init_Quasi_Void(mode);  // indicate "running"
     STATE = ST_YIELDER_RUNNING_BODY;
@@ -269,17 +269,19 @@ DECLARE_NATIVE(yielder)
 {
     INCLUDE_PARAMS_OF_YIELDER;
 
+    Element* spec = cast(Element*, ARG(spec));
+
     // We start by making an ordinary-seeming interpreted function, but that
     // has a local "yield" which is bound to the frame upon execution.
     //
-    Value* body = rebValue("compose [",
+    REBVAL* body = rebValue("compose [",
         "let yield: runs bind :lib.yield binding of inside [] 'return",
         "(as group!", ARG(body), ")",  // GROUP! so it can't backquote 'YIELD
     "]");
 
     Phase* yielder = Make_Interpreted_Action_May_Fail(
-        ARG(spec),
-        body,
+        spec,
+        cast(Element*, body),
         MKF_RETURN,  // give it a RETURN
         &Yielder_Dispatcher,
         IDX_YIELDER_MAX  // details array capacity

@@ -109,7 +109,10 @@ bool Is_User_Native(Action* act) {
     if (not Is_Action_Native(act))
         return false;
 
-    Details* details = Phase_Details(act);
+    if (Series_Flavor(act) != FLAVOR_DETAILS)
+        return false;
+
+    Details* details = Phase_Details(cast(Phase*, act));
     assert(Array_Len(details) >= 2); // ACTION_FLAG_NATIVE needs source+context
     return Is_Text(Details_At(details, IDX_NATIVE_BODY));
 }
@@ -307,13 +310,14 @@ DECLARE_NATIVE(make_native)
 {
     TCC_INCLUDE_PARAMS_OF_MAKE_NATIVE;
 
-    REBVAL *source = ARG(source);
+    Element* spec = cast(Element*, ARG(spec));
+    Element* source = cast(Element*, ARG(source));
 
     Context* meta;
     Flags flags = MKF_RETURN;
     Array* paramlist = Make_Paramlist_Managed_May_Fail(
         &meta,
-        ARG(spec),
+        spec,
         &flags
     );
     Phase* native = Make_Action(
@@ -359,7 +363,7 @@ DECLARE_NATIVE(make_native)
         // Auto-generate a linker name based on the numeric value of the
         // paramlist pointer.  Just "N_" followed by the hexadecimal value.
 
-        intptr_t heapaddr = cast(intptr_t, details);
+        intptr_t heapaddr = i_cast(intptr_t, details);
         REBVAL *linkname = rebValue(
             "unspaced [{N_} as text! to-hex", rebI(heapaddr), "]"
         );
@@ -412,7 +416,7 @@ DECLARE_NATIVE(compile_p)
     // using a Windows libtcc1.a on Linux) causes a leak.  It may be an error
     // in usage of the API, or TCC itself may leak in that case.  Review.
     //
-    DECLARE_LOCAL (handle);
+    DECLARE_ELEMENT (handle);
     Init_Handle_Cdata_Managed(
         handle,
         state, // "data" pointer
@@ -518,7 +522,7 @@ DECLARE_NATIVE(compile_p)
                 //
                 Copy_Cell(PUSH(), item);
 
-                Details* details = Phase_Details(VAL_ACTION(item));
+                Details* details = Phase_Details(cast(Phase*, VAL_ACTION(item)));
                 Value* source = Details_At(details, IDX_NATIVE_BODY);
                 Value* linkname = Details_At(details, IDX_TCC_NATIVE_LINKNAME);
 
@@ -660,7 +664,7 @@ DECLARE_NATIVE(compile_p)
         Action* action = VAL_ACTION(TOP);  // stack will hold action live
         assert(Is_User_Native(action));  // can't cache stack pointer, extract
 
-        Details* details = Phase_Details(action);
+        Details* details = Phase_Details(cast(Phase*, action));
         REBVAL *linkname = Details_At(details, IDX_TCC_NATIVE_LINKNAME);
 
         char *name_utf8 = rebSpell("ensure text!", linkname);

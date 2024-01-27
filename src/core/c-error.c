@@ -784,7 +784,7 @@ Context* Error_User(const char *utf8) {
 //
 //  Error_Need_Non_End: C
 //
-Context* Error_Need_Non_End(const Cell* target) {
+Context* Error_Need_Non_End(const Element* target) {
     assert(
         Is_Set_Word(target) or Is_Set_Tuple(target) or Is_Set_Group(target)
         or Is_Set_Path(target)  // only needed in legacy Redbol
@@ -797,7 +797,7 @@ Context* Error_Need_Non_End(const Cell* target) {
 //  Error_Bad_Word_Get: C
 //
 Context* Error_Bad_Word_Get(
-    const Cell* target,
+    const Element* target,
     const Value* anti
 ){
     // SET calls this, and doesn't work on just SET-WORD! and SET-PATH!
@@ -999,7 +999,7 @@ Context* Error_Invalid_Type(enum Reb_Kind kind)
 // status is supposed to be ignored).  Dequoted_Derelativize() is defined
 // after %cell-integer.h, so we handle the issue here.
 //
-Context* Error_Out_Of_Range(NoQuote(const Cell*) arg)
+Context* Error_Out_Of_Range(const Cell* arg)
 {
     DECLARE_STABLE (unquoted);
     Dequoted_Derelativize(unquoted, arg, SPECIFIED);
@@ -1033,7 +1033,7 @@ Context* Error_Math_Args(enum Reb_Kind type, const Symbol* verb)
 //
 //  Error_Cannot_Use: C
 //
-Context* Error_Cannot_Use(const Symbol* verb, const Cell* first_arg)
+Context* Error_Cannot_Use(const Symbol* verb, const Value* first_arg)
 {
     DECLARE_LOCAL (verb_cell);
     Init_Word(verb_cell, verb);
@@ -1394,7 +1394,7 @@ static void Mold_Value_Limit(REB_MOLD *mo, Element* v, REBLEN limit)
 //
 //  MF_Error: C
 //
-void MF_Error(REB_MOLD *mo, NoQuote(const Cell*) v, bool form)
+void MF_Error(REB_MOLD *mo, const Cell* v, bool form)
 {
     // Protect against recursion. !!!!
     //

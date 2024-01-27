@@ -38,7 +38,7 @@
 #define Pairing_Tail(paired) \
     (ensure(const Cell*, (paired)) + 2)
 
-INLINE bool Any_Pairlike(NoQuote(const Cell*) v) {
+INLINE bool Any_Pairlike(const Cell* v) {
     // called by core code, sacrifice READABLE() checks
     if (Cell_Heart_Unchecked(v) == REB_PAIR)
         return true;
@@ -52,7 +52,7 @@ INLINE bool Any_Pairlike(NoQuote(const Cell*) v) {
 #define INIT_VAL_PAIR(v,pairing) \
     Init_Cell_Node1((v), (pairing))
 
-INLINE Value* VAL_PAIRING(NoQuote(const Cell*) v) {
+INLINE Value* VAL_PAIRING(const Cell* v) {
     assert(Any_Pairlike(v));
     return x_cast(Value*, Cell_Node1(v));
 }
@@ -63,13 +63,13 @@ INLINE Value* VAL_PAIRING(NoQuote(const Cell*) v) {
 #define VAL_PAIR_Y(v) \
     cast(Element*, Pairing_Second(VAL_PAIRING(v)))
 
-INLINE REBI64 VAL_PAIR_X_INT(NoQuote(const Cell*) v) {
+INLINE REBI64 VAL_PAIR_X_INT(const Cell* v) {
     if (Is_Integer(VAL_PAIR_X(v)))
         return VAL_INT64(VAL_PAIR_X(v));
     return ROUND_TO_INT(VAL_DECIMAL(VAL_PAIR_X(v)));
 }
 
-INLINE REBDEC VAL_PAIR_Y_INT(NoQuote(const Cell*) v) {
+INLINE REBDEC VAL_PAIR_Y_INT(const Cell* v) {
     if (Is_Integer(VAL_PAIR_Y(v)))
         return VAL_INT64(VAL_PAIR_Y(v));
     return ROUND_TO_INT(VAL_DECIMAL(VAL_PAIR_Y(v)));

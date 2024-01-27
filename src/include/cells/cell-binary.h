@@ -1,6 +1,6 @@
 // %cell-binary.h
 
-INLINE const Binary* Cell_Binary(NoQuote(const Cell*) v) {
+INLINE const Binary* Cell_Binary(const Cell* v) {
     assert(Cell_Heart(v) == REB_BINARY);
     return c_cast(Binary*, Cell_Series(v));
 }
@@ -14,7 +14,7 @@ INLINE const Binary* Cell_Binary(NoQuote(const Cell*) v) {
 
 INLINE const Byte* Cell_Binary_Size_At(
     Option(Size*) size_at_out,
-    NoQuote(const Cell*) v
+    const Cell* v
 ){
     const Binary* bin = Cell_Binary(v);
     REBIDX i = VAL_INDEX_RAW(v);
@@ -68,17 +68,17 @@ INLINE const Byte* Cell_Bytes_Limit_At(
     if (limit == UNLIMITED or limit > cast(REBINT, Cell_Series_Len_At(v)))
         limit = Cell_Series_Len_At(v);
 
-    if (Is_Binary(v)) {
+    if (Cell_Heart(v) == REB_BINARY) {
         *size_out = limit;
         return Cell_Binary_At(v);
     }
 
-    if (Any_String(v)) {
+    if (Any_String_Kind(Cell_Heart(v))) {
         *size_out = Cell_String_Size_Limit_At(nullptr, v, limit);
         return Cell_String_At(v);
     }
 
-    assert(Any_Word(v));
+    assert(Any_Word_Kind(Cell_Heart(v)));
     assert(cast(REBLEN, limit) == Cell_Series_Len_At(v));
 
     const String* spelling = Cell_Word_Symbol(v);

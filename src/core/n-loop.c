@@ -436,7 +436,7 @@ static Bounce Loop_Number_Common(
 // It accomplishes this by putting a word into the "variable" slot, and having
 // a flag to indicate a dereference is necessary.
 //
-REBVAL *Real_Var_From_Pseudo(REBVAL *pseudo_var) {
+Value* Real_Var_From_Pseudo(Value* pseudo_var) {
     if (Not_Cell_Flag(pseudo_var, BIND_NOTE_REUSE))
         return pseudo_var;
     if (Is_Blank(pseudo_var))  // e.g. `for-each _ [1 2 3] [...]`
@@ -448,7 +448,7 @@ REBVAL *Real_Var_From_Pseudo(REBVAL *pseudo_var) {
     // variables is locked at fixed size.)
     //
     assert(IS_QUOTED_WORD(pseudo_var));
-    return Lookup_Mutable_Word_May_Fail(pseudo_var, SPECIFIED);
+    return Lookup_Mutable_Word_May_Fail(cast(Element*, pseudo_var), SPECIFIED);
 }
 
 

@@ -476,7 +476,7 @@ Bounce Action_Executor(Level* L)
 
               escapable:
                 if (ANY_ESCAPABLE_GET(OUT)) {
-                    if (Eval_Value_Throws(ARG, OUT, SPECIFIED))
+                    if (Eval_Value_Throws(ARG, cast(Element*, OUT), SPECIFIED))
                         goto handle_thrown_maybe_redo;
                     FRESHEN(OUT);
                 }

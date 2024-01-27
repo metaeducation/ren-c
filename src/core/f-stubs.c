@@ -75,7 +75,7 @@ REBINT Float_Int16(REBD32 f)
 //
 //  Int32: C
 //
-REBINT Int32(const Cell* val)
+REBINT Int32(const Value* val)
 {
     if (Is_Decimal(val)) {
         if (VAL_DECIMAL(val) > INT32_MAX or VAL_DECIMAL(val) < INT32_MIN)
@@ -105,7 +105,7 @@ out_of_range:
 //     1: >  0
 //    -1: <  0
 //
-REBINT Int32s(const Cell* val, REBINT sign)
+REBINT Int32s(const Value* val, REBINT sign)
 {
     REBINT n;
 
@@ -225,7 +225,7 @@ const REBVAL *Datatype_From_Kind(enum Reb_Kind kind)
 // Returns the datatype value for the given value.
 // The datatypes are all at the head of the context.
 //
-const REBVAL *Type_Of(const Cell* value)
+const REBVAL *Type_Of(const Atom* value)
 {
     return Datatype_From_Kind(VAL_TYPE(value));
 }

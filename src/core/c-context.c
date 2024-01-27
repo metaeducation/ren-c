@@ -728,7 +728,7 @@ Context* Construct_Context_Managed(
 
     Bind_Values_Shallow(head, tail, CTX_ARCHETYPE(context));
 
-    const Cell* value = head;
+    const Element* value = head;
     for (; value != tail; value += 2) {
         if (not Is_Set_Word(value))
             fail (Error_Invalid_Type(VAL_TYPE(value)));
@@ -739,7 +739,7 @@ Context* Construct_Context_Managed(
         if (Is_Set_Word(value + 1))
             fail (Error_Invalid_Type(VAL_TYPE(value + 1))); // TBD: support
 
-        REBVAL *var = Sink_Word_May_Fail(value, specifier);
+        Value* var = Sink_Word_May_Fail(value, specifier);
         Derelativize(var, value + 1, specifier);
 
         if (Is_Quasiform(var) and HEART_BYTE(var) == REB_WORD)  // e.g. ~true~
@@ -762,7 +762,7 @@ Context* Construct_Context_Managed(
 //     2 for value
 //     3 for words and values
 //
-Array* Context_To_Array(const Cell* context, REBINT mode)
+Array* Context_To_Array(const Value* context, REBINT mode)
 {
     assert(!(mode & 4));
 

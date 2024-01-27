@@ -169,7 +169,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
             assert(v->header.bits & CELL_FLAG_FIRST_IS_NODE);
             assert(Is_Node_Marked(stub));
 
-            Cell* single = Stub_Cell(stub);
+            Value* single = Stub_Cell(stub);
             assert(Is_Handle(single));
             assert(VAL_HANDLE_STUB(single) == stub);
             if (v != single) {
@@ -384,10 +384,12 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
             Array* a = x_cast(Array*, node1);
 
             assert(Array_Len(a) >= 2);
-            const Cell* tail = Array_Tail(a);
-            const Cell* item = Array_Head(a);
-            for (; item != tail; ++item)
+            const Element* tail = Array_Tail(a);
+            const Element* item = Array_Head(a);
+            for (; item != tail; ++item) {
+                assert(QUOTE_BYTE(item) == NOQUOTE_1);
                 assert(not Any_Path_Kind(VAL_TYPE_UNCHECKED(item)));
+            }
             assert(Is_Node_Marked(a));
             break; }
 
@@ -472,7 +474,7 @@ void Assert_Array_Marked_Correctly(const Array* a) {
     #endif
 
     if (IS_DETAILS(a)) {
-        const Cell* archetype = Array_Head(a);
+        const Element* archetype = Array_Head(a);
         assert(Is_Frame(archetype));
         assert(VAL_FRAME_BINDING(archetype) == UNBOUND);
 

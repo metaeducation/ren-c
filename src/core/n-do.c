@@ -191,7 +191,7 @@ DECLARE_NATIVE(shove)
             PARAMLIST_QUOTES_FIRST
         )
     ){
-        if (Eval_Value_Throws(OUT, left, SPECIFIED))
+        if (Eval_Value_Throws(OUT, Ensure_Element(left), SPECIFIED))
             return THROWN;
     }
     else {
@@ -826,7 +826,7 @@ DECLARE_NATIVE(apply)
     if (Is_Level_At_End(L))
         goto finalize_apply;
 
-    const Cell* at = At_Level(L);
+    const Element* at = At_Level(L);
 
     if (Is_Comma(at)) {
         Fetch_Next_Forget_Lookback(L);
@@ -855,7 +855,7 @@ DECLARE_NATIVE(apply)
         if (Is_Specialized(var))
             fail (Error_Bad_Parameter_Raw(at));
 
-        const Cell* lookback = Lookback_While_Fetching_Next(L);  // for error
+        const Element* lookback = Lookback_While_Fetching_Next(L);  // for error
         at = Try_At_Level(L);
 
         if (at == nullptr or Is_Comma(at))

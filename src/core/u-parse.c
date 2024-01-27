@@ -1174,7 +1174,7 @@ static REBIXO To_Thru_Non_Block_Rule(
 //
 static void Handle_Mark_Rule(
     Level* level_,
-    const Cell* rule,
+    const Element* rule,
     Specifier* specifier
 ){
     USE_PARAMS_OF_SUBPARSE;
@@ -1383,7 +1383,7 @@ DECLARE_NATIVE(subparse)
     //
     assert((P_FLAGS & PF_STATE_MASK) == 0);
 
-    const Cell* set_or_copy_word = NULL;
+    const Element* set_or_copy_word = nullptr;
 
     REBINT mincount = 1;  // min pattern count
     REBINT maxcount = 1;  // max pattern count
@@ -1577,8 +1577,8 @@ DECLARE_NATIVE(subparse)
                     goto return_thrown;
 
                 if (Is_Integer(OUT)) {
-                    mincount = Int32s(OUT, 0);
-                    maxcount = Int32s(OUT, 0);
+                    mincount = Int32s(stable_OUT, 0);
+                    maxcount = Int32s(stable_OUT, 0);
                 } else {
                     if (
                         not Is_Block(OUT)
@@ -2064,7 +2064,7 @@ DECLARE_NATIVE(subparse)
         }
         else if (Is_Word(P_RULE)) {
             DECLARE_STABLE (temp);
-            const Cell* gotten = Get_Parse_Value(
+            const Element* gotten = Get_Parse_Value(
                 temp,
                 P_RULE,
                 P_RULE_SPECIFIER

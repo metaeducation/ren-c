@@ -28,7 +28,7 @@
 //
 //  CT_Port: C
 //
-REBINT CT_Port(NoQuote(const Cell*) a, NoQuote(const Cell*) b, bool strict)
+REBINT CT_Port(const Cell* a, const Cell* b, bool strict)
 {
     UNUSED(strict);
     if (VAL_CONTEXT(a) == VAL_CONTEXT(b))
@@ -218,7 +218,7 @@ REBTYPE(Port)
 //
 //  CT_Url: C
 //
-REBINT CT_Url(NoQuote(const Cell*) a, NoQuote(const Cell*) b, bool strict)
+REBINT CT_Url(const Cell* a, const Cell* b, bool strict)
 {
     return CT_String(a, b, strict);
 }

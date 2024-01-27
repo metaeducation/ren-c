@@ -139,7 +139,7 @@ DECLARE_NATIVE(bind)
     else
         add_midstream_types = 0;
 
-    const Cell* context;
+    const Value* context;
 
     // !!! For now, force reification before doing any binding.
 
@@ -723,7 +723,10 @@ bool Get_Var_Push_Refinements_Throws(
             HEART_BYTE(unwrap(steps_out)) = REB_THE_WORD;
         }
 
-        Copy_Cell(out, Lookup_Word_May_Fail(var, var_specifier));
+        Copy_Cell(
+            out,
+            Lookup_Word_May_Fail(c_cast(Element*, var), var_specifier)
+        );
         return false;
     }
 
@@ -734,7 +737,10 @@ bool Get_Var_Push_Refinements_Throws(
         Push_GC_Guard_Erased_Cell(result);
 
         bool threw = Get_Path_Push_Refinements_Throws(
-            result, safe, var, var_specifier  // var may be in `out`
+            result,
+            safe,
+            c_cast(Element*, var),
+            var_specifier  // var may be in `out`
         );
         Drop_GC_Guard(result);
         Drop_GC_Guard(safe);
@@ -834,7 +840,7 @@ bool Get_Var_Push_Refinements_Throws(
     else if (Is_Word(at)) {
         Copy_Cell(
             out,
-            Lookup_Word_May_Fail(at, SPECIFIED)
+            Lookup_Word_May_Fail(cast(Element*, at), SPECIFIED)
         );
     }
     else
@@ -917,9 +923,12 @@ void Get_Var_May_Fail(
     if (Get_Var_Core_Throws(out, steps_out, source, specifier))
         fail (Error_No_Catch_For_Throw(TOP_LEVEL));
 
-    if (not any)
-        if (Is_Antiform(out) and not Is_Antiform_Get_Friendly(out))
-            fail (Error_Bad_Word_Get(source, out));
+    if (not any) {
+        if (Is_Antiform(out) and not Is_Antiform_Get_Friendly(out)) {
+            assert(not Is_Void(source));  // should have given null
+            fail (Error_Bad_Word_Get(c_cast(Element*, source), out));
+        }
+    }
 }
 
 
@@ -935,7 +944,7 @@ void Get_Var_May_Fail(
 bool Get_Path_Push_Refinements_Throws(
     Sink(Value*) out,
     Sink(Value*) safe,
-    const Cell* path,
+    const Element* path,
     Specifier* path_specifier
 ){
     if (Not_Cell_Flag(path, SEQUENCE_HAS_NODE)) {  // byte compressed, inert
@@ -1113,13 +1122,14 @@ bool Get_Path_Push_Refinements_Throws(
                 path_specifier,
                 at
             );
-            if (Eval_Value_Throws(temp, at, derived))
+            if (Eval_Value_Throws(temp, c_cast(Element*, at), derived))
                 return true;
 
-            if (Is_Void(temp))
+            at = Decay_If_Unstable(temp);
+
+            if (Is_Void(at))
                 continue;  // just skip it (voids are ignored, NULLs error)
 
-            at = Decay_If_Unstable(temp);
             if (Is_Antiform(at))
                 fail (Error_Bad_Antiform(at));
         }
@@ -1196,7 +1206,7 @@ DECLARE_NATIVE(get)
 {
     INCLUDE_PARAMS_OF_GET;
 
-    REBVAL *source = ARG(source);
+    Element* source = cast(Element*, ARG(source));
 
     REBVAL *steps;
     if (REF(groups))
@@ -1290,7 +1300,10 @@ bool Set_Var_Core_Updater_Throws(
             // Shortcut past POKE for WORD! (though this subverts hijacking,
             // review that case.)
             //
-            Copy_Cell(Sink_Word_May_Fail(var, var_specifier), setval);
+            Copy_Cell(
+                Sink_Word_May_Fail(c_cast(Element*, var), var_specifier),
+                setval
+            );
         }
         else {
             // !!! This is a hack to try and get things working for PROTECT*.
@@ -1416,10 +1429,10 @@ bool Set_Var_Core_Updater_Throws(
     else if (Is_Word(at)) {
         Copy_Cell(
             out,
-            Lookup_Word_May_Fail(at, SPECIFIED)
+            Lookup_Word_May_Fail(cast(Element*, at), SPECIFIED)
         );
         if (Is_Antiform(out))
-            fail (Error_Bad_Word_Get(at, out));
+            fail (Error_Bad_Word_Get(cast(Element*, at), out));
     }
     else
         fail (Copy_Cell(out, at));
@@ -1479,7 +1492,10 @@ bool Set_Var_Core_Updater_Throws(
             fail ("Can't POKE back immediate value unless it's to a WORD!");
 
         Copy_Cell(
-            Sink_Word_May_Fail(Data_Stack_At(base + 1), SPECIFIED),
+            Sink_Word_May_Fail(
+                cast(Element*, Data_Stack_At(base + 1)),
+                SPECIFIED
+            ),
             setval
         );
     }
@@ -1765,7 +1781,9 @@ DECLARE_NATIVE(semiquoted_q)
     // !!! TBD: Enforce this is a function parameter (specific binding branch
     // makes the test different, and easier)
 
-    const REBVAL *var = Lookup_Word_May_Fail(ARG(parameter), SPECIFIED);
+    Element* parameter = cast(Element*, ARG(parameter));
+
+    const REBVAL *var = Lookup_Word_May_Fail(parameter, SPECIFIED);
 
     return Init_Logic(OUT, Get_Cell_Flag(var, UNEVALUATED));
 }

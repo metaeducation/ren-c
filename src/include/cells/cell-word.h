@@ -30,7 +30,7 @@
 // For routines that manage binding, see %sys-bind.h.
 //
 
-INLINE bool Any_Wordlike(NoQuote(const Cell*) v) {
+INLINE bool Any_Wordlike(const Cell* v) {
     // called by core code, sacrifice READABLE() checks
     if (Any_Word_Kind(Cell_Heart_Unchecked(v)))
         return true;
@@ -47,7 +47,7 @@ INLINE bool Any_Wordlike(NoQuote(const Cell*) v) {
 INLINE void INIT_CELL_WORD_SYMBOL(Cell* v, const Symbol* symbol)
   { Init_Cell_Node1(v, symbol); }
 
-INLINE const Symbol* Cell_Word_Symbol(NoQuote(const Cell*) cell) {
+INLINE const Symbol* Cell_Word_Symbol(const Cell* cell) {
     assert(Any_Wordlike(cell));  // no _UNCHECKED variant :-(
     return cast(Symbol*, Cell_Node1(cell));
 }
@@ -139,23 +139,23 @@ INLINE const String* Intern_Unsized_Managed(const char *utf8)
 // !!! The quick check that was here was undermined by words no longer always
 // storing their symbols in the word; this will likely have to hit a keylist.
 //
-INLINE bool IS_BAR(const Cell* v) {
+INLINE bool IS_BAR(const Atom* v) {
     return VAL_TYPE_UNCHECKED(v) == REB_WORD
         and Cell_Word_Symbol(v) == Canon(BAR_1);  // caseless | always canon
 }
 
-INLINE bool IS_BAR_BAR(const Cell* v) {
+INLINE bool IS_BAR_BAR(const Atom* v) {
     return VAL_TYPE_UNCHECKED(v) == REB_WORD
         and Cell_Word_Symbol(v) == Canon(_B_B);  // caseless || always canon
 }
 
-INLINE bool IS_META(const Cell* v) {
+INLINE bool IS_META(const Atom* v) {
     if (not Is_Word(v))
         return false;
     return Cell_Word_Symbol(v) == Canon(CARET_1);
 }
 
-INLINE bool IS_THE(const Cell* v) {
+INLINE bool IS_THE(const Atom* v) {
     if (not Is_Word(v))
         return false;
     return Cell_Word_Symbol(v) == Canon(AT_1);
@@ -163,20 +163,20 @@ INLINE bool IS_THE(const Cell* v) {
 
 // !!! Temporary workaround for what was Is_Meta_Word() (now not its own type)
 //
-INLINE bool IS_QUOTED_WORD(const Cell* v) {
+INLINE bool IS_QUOTED_WORD(const Atom* v) {
     return Cell_Num_Quotes(v) == 1
         and Cell_Heart(v) == REB_WORD;
 }
 
 
-INLINE bool Is_Anti_Word(const Cell* v) {
+INLINE bool Is_Anti_Word(Need(const Value*) v) {
     ASSERT_CELL_READABLE(v);
     if (HEART_BYTE(v) != REB_WORD)
         return false;
     return QUOTE_BYTE(v) == ANTIFORM_0;
 }
 
-INLINE bool Is_Anti_Word_With_Id(const Cell* v, SymId id) {
+INLINE bool Is_Anti_Word_With_Id(Need(const Value*) v, SymId id) {
     assert(id != 0);
 
     if (not Is_Anti_Word(v))
@@ -185,10 +185,10 @@ INLINE bool Is_Anti_Word_With_Id(const Cell* v, SymId id) {
     return id == Cell_Word_Id(v);
 }
 
-INLINE bool Is_Quasi_Word(const Cell* v)
+INLINE bool Is_Quasi_Word(const Atom* v)
   { return Is_Quasiform(v) and HEART_BYTE(v) == REB_WORD; }
 
-INLINE bool Is_Quasi_Word_With_Id(const Element* v, SymId id) {
+INLINE bool Is_Quasi_Word_With_Id(const Atom* v, SymId id) {
     assert(id != 0);
 
     if (not Is_Quasi_Word(v))

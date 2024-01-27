@@ -6,7 +6,7 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Copyright 2012-2021 Ren-C Open Source Contributors
+// Copyright 2012-2023 Ren-C Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information.
@@ -60,17 +60,6 @@
 // * See %sys-rebnod.h for an explanation of FLAG_LEFT_BIT.  This file defines
 //   those flags which are common to every value of every type.  Due to their
 //   scarcity, they are chosen carefully.
-//
-
-// In the C build, there is simply one structure definition for all value
-// cells: the `ValueStruct`.  This is defined in %sys-rebval.h, and most of
-// the contents of this file are a no-op.
-//
-// However, the C++ build breaks down various base classes for values that
-// serve roles in type-checking.  The underlying bit pattern is the same,
-// but which functions will accept the subclass varies according to what
-// is legal for that pattern to do.  (In C, such conventions can only be
-// enforced by rule-of-thumb...so building as C++ gives the rules teeth.)
 //
 
 typedef struct StubStruct Stub;  // forward decl for DEBUG_USE_UNION_PUNS
@@ -142,7 +131,7 @@ typedef struct StubStruct Stub;  // forward decl for DEBUG_USE_UNION_PUNS
 
 //=//// BITS 8-15: CELL LAYOUT TYPE BYTE ("HEART") ////////////////////////=//
 //
-// The "heart" is the fundamental datatype a cell, dictating its payload
+// The "heart" is the fundamental datatype of a cell, dictating its payload
 // layout and interpretation.
 //
 // Most of the time code wants to check the VAL_TYPE() of a cell and not it's
@@ -171,7 +160,7 @@ typedef struct StubStruct Stub;  // forward decl for DEBUG_USE_UNION_PUNS
 // if the quoting byte is > 1 VAL_TYPE() says it is REB_QUOTED.  This has the
 // potential to cause confusion in the internals.  But the type system is used
 // to check at compile-time so that different views of the same cell don't
-// get conflated.  See `NoQuote(const Cell*)` for some of that mechanic.
+// get conflated, e.g. Cell* can't have VAL_TYPE() taken on it.
 //
 #define QUOTE_BYTE(cell) \
     THIRD_BYTE(ensure(const Cell*, cell))
@@ -382,27 +371,6 @@ typedef struct StubStruct Stub;  // forward decl for DEBUG_USE_UNION_PUNS
     (NODE_FLAG_CELL | CELL_FLAG_PROTECTED)
 
 
-//=//// UNITS OF ARRAYS (CELLS) ///////////////////////////////////////////=//
-//
-// Cells are array units that don't (necessarily) have fully resolved binding.
-// If they are something like a WORD!, they cannot be looked up to find a
-// variable unless coupled with a "specifier".
-//
-// (The bit pattern the cell has may actually be "specific"--e.g. no
-// specifier needed--but many routines accept a relative view as a principle
-// of least privilege.  e.g. you can get the symbol of a word regardless of
-// whether it is specific or relative).
-//
-// Note that in the C build, %rebol.h forward-declares `struct ValueStruct` and
-// then #defines REBVAL to that.
-//
-#if (! DEBUG_USE_CELL_SUBCLASSES)
-    typedef struct ValueStruct Cell;
-#else
-    struct Cell;  // won't implicitly downcast to REBVAL
-#endif
-
-
 //=//// CELL's `EXTRA` FIELD DEFINITION ///////////////////////////////////=//
 //
 // Each value cell has a header, "extra", and payload.  Having the header come
@@ -474,7 +442,7 @@ union AnyUnion {  // needed to beat strict aliasing, used in payload
     //
   #if DEBUG_USE_UNION_PUNS
     Stub* stub_pun;
-    Cell* cell_pun;
+    struct RebolValue* cell_pun;
   #endif
 
     Byte exactly_4[sizeof(uint32_t)];
@@ -620,9 +588,9 @@ union ValuePayloadUnion { //=/////////////// ACTUAL PAYLOAD DEFINITION ////=//
 //=//// COMPLETED 4-PLATFORM POINTER CELL DEFINITION //////////////////////=//
 //
 // 1. Regardless of what build is made, the %rebol.h file expects to find
-//    the name `struct ValueStruct` exported as what the API uses.  In the
-//    C build that's the only cell struct, but in the C++ build it's a
-//    derived structure.
+//    the name `struct RebolValue` exported as what the API uses.  In the
+//    C build that's the only cell struct, but in the C++ build it can be a
+//    derived structure if DEBUG_USE_CELL_SUBCLASSES is enabled.
 //
 // 2. The DEBUG_TRACK_EXTEND_CELLS option doubles the cell size, but is a
 //    *very* helpful debug option.  See %sys-track.h for explanation.
@@ -648,13 +616,13 @@ union ValuePayloadUnion { //=/////////////// ACTUAL PAYLOAD DEFINITION ////=//
 //    https://stackoverflow.com/a/76426676
 //
 #if DEBUG_USE_CELL_SUBCLASSES
-    struct alignas(ALIGN_SIZE) CellBase : public Node  // VAL_TYPE() illegal
+    struct alignas(ALIGN_SIZE) Cell : public Node  // VAL_TYPE() illegal
 #elif CPLUSPLUS_11
-    struct alignas(ALIGN_SIZE) ValueStruct : public Node
+    struct alignas(ALIGN_SIZE) RebolValue : public Node
 #elif C_11
-    struct alignas(ALIGN_SIZE) ValueStruct  // exported name for API [1]
+    struct alignas(ALIGN_SIZE) RebolValue  // exported name for API [1]
 #else
-    struct ValueStruct  // ...have to just hope the alignment "works out"
+    struct RebolValue  // ...have to just hope the alignment "works out"
 #endif
     {
         union HeaderUnion header;
@@ -668,14 +636,21 @@ union ValuePayloadUnion { //=/////////////// ACTUAL PAYLOAD DEFINITION ////=//
         uintptr_t touch;  // see TOUCH_CELL(), pads out to 4 * sizeof(void*)
       #endif
 
-      #if DEBUG_USE_CELL_SUBCLASSES
+    #if DEBUG_USE_CELL_SUBCLASSES
       public:
-        CellBase () = default;
+        Cell () = default;
 
       private:  // disable assignment and copying [3]
-        CellBase (const CellBase& other) = default;
-        CellBase& operator= (const CellBase& rhs) = default;
-      #endif
+        Cell (const Cell& other) = default;
+        Cell& operator= (const Cell& rhs) = default;
+    #elif CPLUSPLUS_11
+      public:
+        RebolValue () = default;
+
+      private:  // disable assignment and copying [3]
+        RebolValue (const RebolValue& other) = default;
+        RebolValue& operator= (const RebolValue& rhs) = default;
+    #endif
     };
 
 #define Mem_Copy(dst,src,size) \
@@ -684,64 +659,99 @@ union ValuePayloadUnion { //=/////////////// ACTUAL PAYLOAD DEFINITION ////=//
 #define Mem_Fill(dst,val,size) \
     memset(cast(void*, (dst)), (val), (size))  // [4]
 
-#if DEBUG_USE_CELL_SUBCLASSES
-    struct Cell : public CellBase {};  // VAL_TYPE() legal
 
-    static_assert(
-        std::is_standard_layout<Cell>::value,
-        "C++ Cell must match C Value: http://stackoverflow.com/a/7189821/"
-    );
-#endif
-
-
-#define PAYLOAD(Type, v) \
-    (v)->payload.Type
-
-#define EXTRA(Type, v) \
-    (v)->extra.Type
-
-
-//=//// ESCAPE-ALIASABLE CELLS ////////////////////////////////////////////=//
+//=//// CELL SUBCLASSES FOR QUARANTINING STABLE AND UNSTABLE ANTIFORMS /////=//
 //
-// The header contains a QUOTE_BYTE() that can encode up to 126 levels of
-// quoting (with an extra bit for holding a quasiform, and an antiform if the
-// byte is 0).  This is independent of the cell's "heart", or underlying
-// layout for its unquoted type.
+// Systemically, we want to stop antiforms and voids from being put into
+// the array elements of blocks, groups, paths, and tuples.  We also want to
+// keep unstable antiforms out of the values of variables.  To make it easier
+// to do this, the C++ build offers the ability to make `Element` and `Value`
+// subclasess, where an `Atom` can hold potentially any unstable isotope.
 //
-// Usually most routines want to see these as QUOTED!/QUASIFORM!/ANTIFORM!.
-// But some lower-level routines (like molding or comparison) want to act
-// on them in-place without making a copy.  To ensure they see the value for
-// the "type that it is" and use Cell_Heart() and not VAL_TYPE(), this subtype
-// prevents VAL_TYPE() operations.
+// * Class Hierarchy: Atom as base, Value derived, Element derived
+//   (upside-down for compile-time error preferences--we want passing an
+//   Atom to a routine that expects only Element to fail)
 //
-// The way it works is simply to be CellBase...base class of a regular Cell.
-// Because a Cell can be passed anywhere a CellBase can, but not vice-versa.
-// Then overloading is used to turn off functions like VAL_TYPE() when used
-// on a CellBase.
+// * Primary Goal: Prevent passing Atoms/Values to Element-only routines.
 //
-// Notationally, the choice is to make it appear that the NoQuote modifies
-// the type as `NoQuote(const Cell*)`.
+// * Secondary Goal: Prevent things like passing Element cells to writing
+//   routines that may potentially produce antiforms in that cell.
 //
-// Note: This needs special handling in %make-headers.r to recognize the
-// format.  See the `typemacro_parentheses` rule.
+// * Tertiary Goal: Detect things like superfluous Is_Antiform() calls
+//   being made on Elements.
+//
+// The primary goal is achieved by choosing Element as a most-derived type
+// instead of a base type.  The next two goals are trickier, and require a
+// smart pointer class to wrap the pointers and invert the class hierarchy
+// in terms of what are accepted for initialization (see Sink() and Need()).
+//
+// Additionally, the Cell* class is differentiated by not allowing you to
+// ask for its "type".  This makes it useful in passing to routines that
+// are supposed to act agnostically regarding the quoting level of the cell,
+// such as molding...where the quoting level is accounted for by the core
+// molding process, and mold callbacks are only supposed to account for the
+// cell payloads.
 //
 #if (! DEBUG_USE_CELL_SUBCLASSES)
-    #define NoQuote(maybe_const_cell_star) \
-        maybe_const_cell_star
+    typedef struct RebolValue Cell;
+    typedef struct RebolValue Atom;
+    typedef struct RebolValue Element;
 #else
-    template<typename T>
-    struct NoQuoteTypeHelper {
-        static_assert(not std::is_same<T,T>::value, "[Cell*, const Cell*]");
+    struct Atom : public Cell
+    {
+      #if !defined(NDEBUG)
+        Atom() = default;
+        ~Atom() {
+            assert(
+                (this->header.bits & (NODE_FLAG_NODE | NODE_FLAG_CELL))
+                or this->header.bits == CELL_MASK_0
+            );
+        }
+      #endif
     };
 
-    template<>
-    struct NoQuoteTypeHelper<const Cell*>
-      { typedef const CellBase* type; };
+    struct RebolValue : public Atom {
+      #if !defined(NDEBUG)
+        RebolValue () = default;
+        ~RebolValue () {
+            assert(
+                (this->header.bits & (NODE_FLAG_NODE | NODE_FLAG_CELL))
+                or this->header.bits == CELL_MASK_0
+            );
+        }
+      #endif
+    };
 
-    template<>
-    struct NoQuoteTypeHelper<Cell*>
-      { typedef CellBase* type; };
+    static_assert(
+        std::is_standard_layout<struct RebolValue>::value,
+        "C++ REBVAL must match C layout: http://stackoverflow.com/a/7189821/"
+    );
 
-    #define NoQuote(maybe_const_cell_star) \
-        NoQuoteTypeHelper<maybe_const_cell_star>::type
+    struct Element : public RebolValue {
+      #if !defined(NDEBUG)
+        Element () = default;
+        ~Element () {
+            assert(
+                (this->header.bits & (NODE_FLAG_NODE | NODE_FLAG_CELL))
+                or this->header.bits == CELL_MASK_0
+            );
+        }
+      #endif
+    };
+#endif
+
+typedef struct RebolValue Value;  // shorthand name to use internally
+
+
+//=//// ENSURE CELL IS STANDARD LAYOUT ////////////////////////////////////=//
+//
+// Using too much C++ magic can potentially lead to the exported structure
+// not having "standard layout" and being incompatible with C.  We want to be
+// able to memcpy() cells safely, so check to ensure that is still the case.
+//
+#if CPLUSPLUS_11
+    static_assert(
+        std::is_standard_layout<RebolValue>::value,
+        "C++ Cell must match C Value: http://stackoverflow.com/a/7189821/"
+    );
 #endif

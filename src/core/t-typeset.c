@@ -28,7 +28,7 @@
 //
 //  CT_Parameter: C
 //
-REBINT CT_Parameter(NoQuote(const Cell*) a, NoQuote(const Cell*) b, bool strict)
+REBINT CT_Parameter(const Cell* a, const Cell* b, bool strict)
 {
     UNUSED(strict);
 
@@ -398,7 +398,7 @@ Bounce TO_Parameter(Level* level_, enum Reb_Kind kind, const REBVAL *arg)
 //
 //  MF_Parameter: C
 //
-void MF_Parameter(REB_MOLD *mo, NoQuote(const Cell*) v, bool form)
+void MF_Parameter(REB_MOLD *mo, const Cell* v, bool form)
 {
     if (not form) {
         Pre_Mold(mo, v);  // #[parameter! or make parameter!
@@ -437,7 +437,7 @@ REBTYPE(Parameter)
         INCLUDE_PARAMS_OF_PICK_P;
         UNUSED(ARG(location));
 
-        const Cell* picker = ARG(picker);
+        const Value* picker = ARG(picker);
         if (not Is_Word(picker))
             fail (picker);
 
@@ -470,7 +470,7 @@ REBTYPE(Parameter)
         INCLUDE_PARAMS_OF_POKE_P;
         UNUSED(ARG(location));
 
-        const Cell* picker = ARG(picker);
+        const Value* picker = ARG(picker);
         if (not Is_Word(picker))
             fail (picker);
 

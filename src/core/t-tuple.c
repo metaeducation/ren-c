@@ -387,7 +387,7 @@ REBTYPE(Sequence)
         INCLUDE_PARAMS_OF_PICK_P;
         UNUSED(ARG(location));
 
-        const Cell* picker = ARG(picker);
+        const Value* picker = ARG(picker);
 
         REBINT n;
         if (Is_Integer(picker) or Is_Decimal(picker)) { // #2312
@@ -434,7 +434,7 @@ REBTYPE(Sequence)
 //
 //  MF_Sequence: C
 //
-void MF_Sequence(REB_MOLD *mo, NoQuote(const Cell*) v, bool form)
+void MF_Sequence(REB_MOLD *mo, const Cell* v, bool form)
 {
     enum Reb_Kind kind = Cell_Heart(v);
     char interstitial = Any_Tuple_Kind(kind) ? '.' : '/';

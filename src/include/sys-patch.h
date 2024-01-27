@@ -73,7 +73,7 @@
         return x_cast(Specifier*, c);
     }
 
-    INLINE Specifier* Cell_Specifier(NoQuote(const Cell*) v) {
+    INLINE Specifier* Cell_Specifier(const Cell* v) {
         assert(Any_Arraylike(v));
 
         Array* a = cast(Array*, BINDING(v));

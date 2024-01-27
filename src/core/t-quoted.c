@@ -49,7 +49,7 @@
 // functions specifically take noquote cells, so you can't pass REB_QUOTED to
 // them.  The handling for QUOTED! is in the comparison dispatch itself.
 //
-REBINT CT_Quoted(NoQuote(const Cell*) a, NoQuote(const Cell*) b, bool strict)
+REBINT CT_Quoted(const Cell* a, const Cell* b, bool strict)
 {
     UNUSED(a); UNUSED(b); UNUSED(strict);
     assert(!"CT_Quoted should never be called");
@@ -154,7 +154,7 @@ DECLARE_NATIVE(the)
 {
     INCLUDE_PARAMS_OF_THE;
 
-    REBVAL *v = ARG(value);
+    Element* v = cast(Element*, ARG(value));
 
     if (REF(soft) and ANY_ESCAPABLE_GET(v)) {
         if (Eval_Value_Throws(OUT, v, SPECIFIED))

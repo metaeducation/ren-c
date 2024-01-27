@@ -171,9 +171,12 @@ DECLARE_NATIVE(macro)
 {
     INCLUDE_PARAMS_OF_MACRO;
 
+    Element* spec = cast(Element*, ARG(spec));
+    Element* body = cast(Element*, ARG(body));
+
     Phase* macro = Make_Interpreted_Action_May_Fail(
-        ARG(spec),
-        ARG(body),
+        spec,
+        body,
         MKF_RETURN,
         &Macro_Dispatcher,
         IDX_DETAILS_1 + 1  // details capacity, just body slot (and archetype)

@@ -7,7 +7,7 @@
     PG_Empty_Array // Note: initialized from Cell_Array(Root_Empty_Block)
 
 
-INLINE bool Any_Arraylike(NoQuote(const Cell*) v) {
+INLINE bool Any_Arraylike(const Cell* v) {
     // called by core code, sacrifice READABLE() checks
     if (Any_Array_Kind(Cell_Heart_Unchecked(v)))
         return true;
@@ -21,7 +21,7 @@ INLINE bool Any_Arraylike(NoQuote(const Cell*) v) {
     return Series_Flavor(u_cast(const Series*, node1)) == FLAVOR_ARRAY;
 }
 
-INLINE const Array* Cell_Array(NoQuote(const Cell*) v) {
+INLINE const Array* Cell_Array(const Cell* v) {
     assert(Any_Arraylike(v));
     assert(Is_Node_A_Stub(Cell_Node1(v)));  // not a pairing arraylike!
     if (Not_Node_Accessible(Cell_Node1(v)))
@@ -47,7 +47,7 @@ INLINE const Array* Cell_Array(NoQuote(const Cell*) v) {
 //
 INLINE const Element* Cell_Array_Len_At(
     Option(Length*) len_at_out,
-    NoQuote(const Cell*) v
+    const Cell* v
 ){
     const Node* node = Cell_Node1(v);
     if (Is_Node_A_Cell(node)) {
@@ -69,7 +69,7 @@ INLINE const Element* Cell_Array_Len_At(
 
 INLINE const Element* Cell_Array_At(
     Option(const Element**) tail_out,
-    NoQuote(const Cell*) v
+    const Cell* v
 ){
     const Node* node = Cell_Node1(v);
     if (Is_Node_A_Cell(node)) {
@@ -90,7 +90,7 @@ INLINE const Element* Cell_Array_At(
     return at;
 }
 
-INLINE const Element* Cell_Array_Item_At(NoQuote(const Cell*) v) {
+INLINE const Element* Cell_Array_Item_At(const Cell* v) {
     const Element* tail;
     const Element* item = Cell_Array_At(&tail, v);
     assert(item != tail);  // should be a valid value
