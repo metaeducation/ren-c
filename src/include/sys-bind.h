@@ -493,12 +493,12 @@ INLINE Option(const Value*) Lookup_Word(
     return CTX_VAR(c, index);
 }
 
-INLINE const REBVAL *Get_Word_May_Fail(
-    Cell* out,
+INLINE const Value* Get_Word_May_Fail(
+    Sink(Value*) out,
     const Cell* any_word,
     Specifier* specifier
 ){
-    const REBVAL *var = Lookup_Word_May_Fail(any_word, specifier);
+    const Value* var = Lookup_Word_May_Fail(any_word, specifier);
     if (Is_Antiform(var) and not Is_Logic(var))
         fail (Error_Bad_Word_Get(any_word, var));
 

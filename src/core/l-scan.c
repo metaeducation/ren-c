@@ -2681,7 +2681,7 @@ Bounce Scanner_Executor(Level* const L) {
         // Run through the generalized pop path code, which does any
         // applicable compression...and validates the array.
         //
-        DECLARE_LOCAL (temp);
+        DECLARE_STABLE (temp);
 
         // !!! The scanner needs an overhaul and rewrite to be less ad hoc.
         // Right now, dots act as delimiters for tuples which messes with

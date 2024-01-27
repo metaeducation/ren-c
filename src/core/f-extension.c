@@ -101,7 +101,7 @@ DECLARE_NATIVE(builtin_extensions)
         COLLATE_CFUNC *collator = Builtin_Extension_Collators[i];
         REBVAL *details = (*collator)(&Ext_Lib);
         assert(Is_Block(details) and Cell_Series_Len_At(details) == IDX_COLLATOR_MAX);
-        Copy_Cell(Alloc_Tail_Array(list), details);
+        Copy_Cell(Alloc_Tail_Array(list), cast(Element*, details));
         rebRelease(details);
     }
     return Init_Block(OUT, list);

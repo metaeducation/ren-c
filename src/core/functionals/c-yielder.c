@@ -37,7 +37,7 @@ enum {
     IDX_YIELDER_LAST_YIELDER_CONTEXT = 3,  // frame stack fragment to resume
     IDX_YIELDER_LAST_YIELD_RESULT = 4,  // so that `z: yield 1 + 2` is useful
     IDX_YIELDER_PLUG = 5,  // saved if you YIELD, captures data stack etc.
-    IDX_YIELDER_OUT = 6,  // whatever L->out in-progress was when interrupted
+    IDX_YIELDER_META_OUT = 6,  // whatever L->out was when interrupted
     IDX_YIELDER_MAX
 };
 
@@ -186,7 +186,7 @@ Bounce Yielder_Dispatcher(Level* const L)
     // frame (used to speed up Level_Phase() and Level_Binding())
     //
     L->varlist = CTX_VARLIST(last_yielder_context);  // rootvar must match
-    L->rootvar = m_cast(REBVAL*, CTX_ARCHETYPE(last_yielder_context));
+    L->rootvar = m_cast(Element*, CTX_ARCHETYPE(last_yielder_context));
 
     Value* plug = Details_At(details, IDX_YIELDER_PLUG);
     Replug_Stack(yield_level, yielder_level, plug);
@@ -196,8 +196,9 @@ Bounce Yielder_Dispatcher(Level* const L)
     // the YIELD ran (e.g. if it interrupted a CASE or something, this
     // would be what the case had in the out cell at moment of interrupt).
     //
-    Value* out_copy = Details_At(details, IDX_YIELDER_OUT);
+    Value* out_copy = Details_At(details, IDX_YIELDER_META_OUT);
     Move_Cell(yielder_level->out, out_copy);
+    Meta_Unquotify_Undecayed(yielder_level->out);
 
     // We could make YIELD appear to return a VOID! when we jump back in
     // to resume it.  But it's more interesting to return what the YIELD
@@ -228,7 +229,7 @@ Bounce Yielder_Dispatcher(Level* const L)
     Init_Unreadable(Details_At(details, IDX_YIELDER_LAST_YIELDER_CONTEXT));
     Init_Unreadable(Details_At(details, IDX_YIELDER_LAST_YIELD_RESULT));
     Init_Unreadable(Details_At(details, IDX_YIELDER_PLUG));
-    Init_Unreadable(Details_At(details, IDX_YIELDER_OUT));
+    Init_Unreadable(Details_At(details, IDX_YIELDER_META_OUT));
 
  /*   if (Is_Throwing(L)) {
         if (Is_Throwing_Failure(L)) {
@@ -292,7 +293,7 @@ DECLARE_NATIVE(yielder)
     Init_Unreadable(Details_At(details, IDX_YIELDER_LAST_YIELDER_CONTEXT));
     Init_Unreadable(Details_At(details, IDX_YIELDER_LAST_YIELD_RESULT));
     Init_Unreadable(Details_At(details, IDX_YIELDER_PLUG));
-    Init_Unreadable(Details_At(details, IDX_YIELDER_OUT));
+    Init_Unreadable(Details_At(details, IDX_YIELDER_META_OUT));
 
     return Init_Action(OUT, yielder, ANONYMOUS, UNBOUND);
 }
@@ -379,8 +380,8 @@ DECLARE_NATIVE(yield)
     // of that evaluative product.  It must be preserved.  But since we can't
     // put END values in blocks, use the hidden block to indicate that
     //
-    Value* out_copy = Details_At(yielder_details, IDX_YIELDER_OUT);
-    Move_Cell(out_copy, yielder_level->out);
+    Value* out_copy = Details_At(yielder_details, IDX_YIELDER_META_OUT);
+    Copy_Meta_Cell(out_copy, yielder_level->out);
 
     Value* plug = Details_At(yielder_details, IDX_YIELDER_PLUG);
     Assert_Is_Unreadable_If_Debug(plug);

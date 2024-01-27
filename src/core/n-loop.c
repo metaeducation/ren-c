@@ -948,7 +948,7 @@ static bool Try_Loop_Each_Next(const Value* iterator, Context* vars_ctx)
           case REB_META_TUPLE:
           case REB_THE_TUPLE:
             if (var)
-                Copy_Relative_internal(
+                Copy_Cell(
                     var,
                     Array_At(
                         c_cast(Array*, les->series),
@@ -1830,7 +1830,7 @@ DECLARE_NATIVE(map)
         fail (Error_Need_Non_Null_Raw());
     }
     else
-        Copy_Cell(PUSH(), SPARE);  // non nulls added to result
+        Copy_Cell(PUSH(), stable_SPARE);  // non nulls added to result
 
     goto next_iteration;
 

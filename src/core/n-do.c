@@ -144,13 +144,13 @@ DECLARE_NATIVE(shove)
             Level_Specifier(L),
             false
         );
-        Move_Cell(shovee, OUT);
+        Move_Cell(shovee, cast(Value*, OUT));
     }
     else if (Is_Group(At_Level(L))) {
         if (Do_Any_Array_At_Throws(OUT, At_Level(L), Level_Specifier(L)))
             return THROWN;
 
-        Move_Cell(shovee, OUT);  // can't eval directly into arg slot
+        Move_Cell(shovee, Decay_If_Unstable(OUT));
     }
     else
         Copy_Cell(shovee, At_Level(L));
@@ -591,7 +591,7 @@ DECLARE_NATIVE(redo)
         if (not Is_Frame(OUT))
             fail ("Context of restartee in REDO is not a FRAME!");
 
-        Move_Cell(restartee, OUT);
+        Move_Cell(restartee, stable_OUT);
     }
 
     Context* c = VAL_CONTEXT(restartee);
@@ -944,7 +944,7 @@ DECLARE_NATIVE(apply)
         FRESHEN(SPARE);
     }
     else {
-        Move_Cell(var, SPARE);
+        Move_Cell(var, stable_SPARE);  // !!! Review stability
     }
 
     goto handle_next_item;

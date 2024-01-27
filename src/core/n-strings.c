@@ -591,7 +591,7 @@ DECLARE_NATIVE(deline)
     REBVAL *input = rebValue("as text!", ARG(input));
 
     if (REF(lines)) {
-        Init_Block(OUT, Split_Lines(input));
+        Init_Block(OUT, Split_Lines(cast(Element*, input)));
         rebRelease(input);
         return OUT;
     }

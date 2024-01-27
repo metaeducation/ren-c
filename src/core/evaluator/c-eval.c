@@ -827,7 +827,7 @@ Bounce Evaluator_Executor(Level* L)
 
             Copy_Cell(
                 Sink_Word_May_Fail(L_current, L_specifier),
-                OUT
+                stable_OUT
             );
 
             if (L_next_gotten) {  // cache can tamper with lookahead [1]
@@ -1412,7 +1412,7 @@ Bounce Evaluator_Executor(Level* L)
                     Init_Blank(SPARE);  // [(void)]: ... opts out of return
 
                 heart = Cell_Heart(SPARE);
-                Copy_Cell(PUSH(), SPARE);
+                Copy_Cell(PUSH(), stable_SPARE);
             }
             else
                 Copy_Cell(PUSH(), SCRATCH);

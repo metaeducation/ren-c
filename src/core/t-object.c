@@ -92,7 +92,7 @@ static void Append_Vars_To_Context_From_Group(REBVAL *context, REBVAL *block)
   }  // end the non-module part
 
   blockscope {  // Set new values to obj words
-    const Cell* word = item;
+    const Element* word = item;
     for (; word != tail; word += 2) {
         const Symbol* symbol = Cell_Word_Symbol(word);
         Value* var;
@@ -135,7 +135,7 @@ static void Append_Vars_To_Context_From_Group(REBVAL *context, REBVAL *block)
             break;  // fix bug#708
         }
         else
-            Copy_Relative_internal(var, &word[1]);
+            Copy_Cell(var, &word[1]);
     }
   }
 

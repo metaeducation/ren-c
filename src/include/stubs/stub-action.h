@@ -259,10 +259,10 @@ INLINE Phase* ACT_IDENTITY(Action* action) {
 // to be SERIES_FLAG_DYNAMIC, so we use Series_Data() that handles it.
 //
 #define ACT_ARCHETYPE(action) \
-    cast(Value*, Series_Data(ACT_IDENTITY(action)))
+    cast(Element*, Series_Data(ACT_IDENTITY(action)))
 
 #define Phase_Archetype(phase) \
-    cast(Value*, Series_Data(ensure(Phase*, phase)))
+    cast(Element*, Series_Data(ensure(Phase*, phase)))
 
 
 INLINE bool Is_Frame_Details(NoQuote(const Cell*) v) {

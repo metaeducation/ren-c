@@ -404,7 +404,8 @@ DECLARE_NATIVE(did_1)  // see TO-C-NAME for why the "_1" is needed
         goto initial_entry;
 
       case ST_THENABLE_REIFYING_SPARE :
-        Copy_Cell(in, SPARE);
+        assert(Is_Metaform(SPARE));
+        Copy_Cell(in, cast(Element*, SPARE));
         goto reifying_input;  // multiple reifications may be needed
 
       case ST_THENABLE_RUNNING_BRANCH :
@@ -512,7 +513,8 @@ DECLARE_NATIVE(then)  // see `tweak :then 'defer on` in %base-defs.r
         goto reifying_input;
 
       case ST_THENABLE_REIFYING_SPARE :
-        Copy_Cell(in, SPARE);
+        assert(Is_Metaform(SPARE));
+        Copy_Cell(in, cast(Element*, SPARE));
         goto reifying_input;
 
       default : assert(false);
@@ -553,7 +555,8 @@ DECLARE_NATIVE(else)  // see `tweak :else 'defer on` in %base-defs.r
         goto reifying_input;
 
       case ST_THENABLE_REIFYING_SPARE :
-        Copy_Cell(in, SPARE);
+        assert(Is_Metaform(SPARE));
+        Copy_Cell(in, cast(Element*, SPARE));
         goto reifying_input;
 
       default : assert(false);
@@ -1610,7 +1613,7 @@ DECLARE_NATIVE(throw)
 {
     INCLUDE_PARAMS_OF_THROW;
 
-    Value* atom = Copy_Cell(SPARE, ARG(value));
+    Atom* atom = Copy_Cell(SPARE, ARG(value));
 
     if (Is_Meta_Of_Void(atom))
         Init_Heavy_Void(atom);

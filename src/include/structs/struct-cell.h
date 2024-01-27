@@ -396,7 +396,7 @@ typedef struct StubStruct Stub;  // forward decl for DEBUG_USE_UNION_PUNS
 // Note that in the C build, %rebol.h forward-declares `struct ValueStruct` and
 // then #defines REBVAL to that.
 //
-#if (! CPLUSPLUS_11)
+#if (! DEBUG_USE_CELL_SUBCLASSES)
     typedef struct ValueStruct Cell;
 #else
     struct Cell;  // won't implicitly downcast to REBVAL
@@ -647,8 +647,10 @@ union ValuePayloadUnion { //=/////////////// ACTUAL PAYLOAD DEFINITION ////=//
 //
 //    https://stackoverflow.com/a/76426676
 //
-#if CPLUSPLUS_11
+#if DEBUG_USE_CELL_SUBCLASSES
     struct alignas(ALIGN_SIZE) CellBase : public Node  // VAL_TYPE() illegal
+#elif CPLUSPLUS_11
+    struct alignas(ALIGN_SIZE) ValueStruct : public Node
 #elif C_11
     struct alignas(ALIGN_SIZE) ValueStruct  // exported name for API [1]
 #else
@@ -666,7 +668,7 @@ union ValuePayloadUnion { //=/////////////// ACTUAL PAYLOAD DEFINITION ////=//
         uintptr_t touch;  // see TOUCH_CELL(), pads out to 4 * sizeof(void*)
       #endif
 
-      #if CPLUSPLUS_11
+      #if DEBUG_USE_CELL_SUBCLASSES
       public:
         CellBase () = default;
 
@@ -682,7 +684,7 @@ union ValuePayloadUnion { //=/////////////// ACTUAL PAYLOAD DEFINITION ////=//
 #define Mem_Fill(dst,val,size) \
     memset(cast(void*, (dst)), (val), (size))  // [4]
 
-#if CPLUSPLUS_11
+#if DEBUG_USE_CELL_SUBCLASSES
     struct Cell : public CellBase {};  // VAL_TYPE() legal
 
     static_assert(
@@ -723,7 +725,7 @@ union ValuePayloadUnion { //=/////////////// ACTUAL PAYLOAD DEFINITION ////=//
 // Note: This needs special handling in %make-headers.r to recognize the
 // format.  See the `typemacro_parentheses` rule.
 //
-#if (! CPLUSPLUS_11)
+#if (! DEBUG_USE_CELL_SUBCLASSES)
     #define NoQuote(maybe_const_cell_star) \
         maybe_const_cell_star
 #else

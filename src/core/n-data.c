@@ -267,7 +267,7 @@ DECLARE_NATIVE(overbind)
 {
     INCLUDE_PARAMS_OF_OVERBIND;
 
-    Cell* v = ARG(value);
+    Element* v = cast(Element*, ARG(value));
     Value* context = ARG(context);
 
     Copy_Cell(OUT, v);
@@ -742,7 +742,7 @@ bool Get_Var_Push_Refinements_Throws(
         if (steps_out and steps_out != GROUPS_OK)
             Init_Trash(unwrap(steps_out));  // !!! What to return?
 
-        Move_Cell(out, result);
+        Move_Cell(out, Decay_If_Unstable(result));
         return threw;
     }
 
@@ -1170,7 +1170,7 @@ DECLARE_NATIVE(resolve)
     if (Get_Var_Core_Throws(SPARE, cast(Value*, OUT), source, SPECIFIED))
         return THROWN;
 
-    Move_Cell(ARG(value), SPARE);  // should be able to eval direct, review
+    Move_Cell(ARG(value), stable_SPARE);
 
     return Proxy_Multi_Returns(level_);
 }
@@ -1270,7 +1270,7 @@ bool Set_Var_Core_Updater_Throws(
         if (Do_Any_Array_At_Throws(temp, var, var_specifier))
             return true;
 
-        Move_Cell(out, temp);  // if spare was var, we are replacing it
+        Move_Cell(out, Decay_If_Unstable(temp));  // replacing if spare was var
         var = out;
         var_specifier = SPECIFIED;
     }
@@ -1369,7 +1369,7 @@ bool Set_Var_Core_Updater_Throws(
                     Drop_Data_Stack_To(base);
                     return true;
                 }
-                Move_Cell(PUSH(), temp);
+                Move_Cell(PUSH(), Decay_If_Unstable(temp));
 
                 // By convention, picker steps quote the first item if it was a
                 // GROUP!.  It has to be somehow different because `('a).b` is
@@ -2034,7 +2034,7 @@ DECLARE_NATIVE(as)
 {
     INCLUDE_PARAMS_OF_AS;
 
-    REBVAL *v = ARG(value);
+    Element* v = cast(Element*, ARG(value));
 
     REBVAL *t = ARG(type);
     enum Reb_Kind new_kind = VAL_TYPE_KIND(t);

@@ -449,7 +449,7 @@ static const Element* Get_Parse_Value(
 
     if (Is_Void(cell)) {  // void means ignore
         Init_Quasi_Word(cell, Canon(VOID));
-        return cast(Element*, cast(Value*, cell));
+        return cast(Element*, cell);
     }
 
     if (Is_Quasiform(cell)) {
@@ -472,7 +472,7 @@ static const Element* Get_Parse_Value(
             fail ("Use REPEAT on integers https://forum.rebol.info/t/1578/6");
     }
 
-    return cast(Element*, cast(Value*, cell));
+    return cast(Element*, cell);
 }
 
 //
@@ -1459,14 +1459,14 @@ DECLARE_NATIVE(subparse)
       process_group: {
 
         bool inject = Is_Get_Group(rule);
-        if (Process_Group_For_Parse_Throws(SPARE, L, rule))
+        if (Process_Group_For_Parse_Throws(SPARE, L, rule))  // makes Element
             return THROWN;
 
         if (not inject) {  // (...) or void :(...)
             FETCH_NEXT_RULE(L);  // ignore result and go on to next rule
             goto pre_rule;
         }
-        rule = Ensure_Element(Move_Cell(P_SAVE, SPARE));
+        rule = Move_Cell(P_SAVE, cast(Element*, SPARE));
     }}
     else {
         // If we ran the GROUP! then that invokes the evaluator, and so
@@ -2000,7 +2000,7 @@ DECLARE_NATIVE(subparse)
         Get_Var_May_Fail(SPARE, rule, P_RULE_SPECIFIER, false);
         if (Is_Antiform(SPARE))
             fail (Error_Bad_Antiform(SPARE));
-        rule = cast(Element*, Copy_Cell(P_SAVE, SPARE));
+        rule = cast(Element*, Copy_Cell(P_SAVE, stable_SPARE));
     }
     else if (Is_Set_Tuple(rule)) {
       handle_set:
@@ -2532,7 +2532,7 @@ DECLARE_NATIVE(subparse)
                 else if (Is_Series_Array(P_INPUT)) {
                     assert(count == 1);  // check for > 1 would have errored
 
-                    Copy_Relative_internal(
+                    Copy_Cell(
                         Sink_Word_May_Fail(set_or_copy_word, P_RULE_SPECIFIER),
                         Array_At(P_INPUT_ARRAY, begin)
                     );
@@ -2758,7 +2758,7 @@ DECLARE_NATIVE(parse3)
         )){
             return THROWN;
         }
-        Move_Cell(input, SPARE);
+        Move_Cell(input, stable_SPARE);
     }
     else if (Is_Url(input)) {
         if (rebRunThrows(
@@ -2767,7 +2767,7 @@ DECLARE_NATIVE(parse3)
         )){
             return THROWN;
         }
-        Move_Cell(input, SPARE);
+        Move_Cell(input, stable_SPARE);
     }
 
     assert(Any_Series(input));

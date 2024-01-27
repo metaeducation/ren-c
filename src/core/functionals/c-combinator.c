@@ -846,11 +846,8 @@ DECLARE_NATIVE(combinatorize)
     //
     Copy_Cell(s.rule_end, ARG(rules));
 
-    Actionify(Init_Frame(
-        OUT,
-        s.ctx,
-        label
-    ));
+    Init_Frame(OUT, s.ctx, label);
+    Actionify(OUT);
     UNUSED(binding);  // !!! should be put in there somewhere
 
     return Proxy_Multi_Returns(level_);

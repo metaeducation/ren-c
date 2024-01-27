@@ -248,7 +248,7 @@ DECLARE_NATIVE(chain_p)  // see extended definition CHAIN in %base-defs.r
 
     Atom* out = OUT;  // plan ahead for factoring into Chain_Action(out..
 
-    REBVAL *pipeline = ARG(pipeline);
+    Element* pipeline = cast(Element*, ARG(pipeline));
     const Element* tail;
     const Element* first = Cell_Array_At(&tail, pipeline);
 

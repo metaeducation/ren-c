@@ -312,7 +312,7 @@ Bounce MAKE_Array(
             if (Is_Barrier(OUT))
                 break;
 
-            Move_Cell(PUSH(), OUT);
+            Move_Cell(PUSH(), Decay_If_Unstable(OUT));
         } while (true);
 
         return Init_Array_Cell(OUT, kind, Pop_Stack_Values(base));
@@ -594,12 +594,12 @@ void Shuffle_Array(Array* arr, REBLEN idx, bool secure)
 {
     REBLEN n;
     REBLEN k;
-    Cell* data = Array_Head(arr);
+    Element* data = Array_Head(arr);
 
     // Rare case where Cell bit copying is okay...between spots in the
     // same array.
     //
-    Cell swap;
+    Element swap;
 
     for (n = Array_Len(arr) - idx; n > 1;) {
         k = idx + (REBLEN)Random_Int(secure) % n;
@@ -836,7 +836,7 @@ REBTYPE(Array)
 
         const Element* at = Array_At(Cell_Array(array), n);
 
-        Copy_Relative_internal(OUT, at);
+        Copy_Cell(OUT, at);
         Inherit_Const(stable_OUT, array);
         return OUT; }
 
@@ -849,13 +849,16 @@ REBTYPE(Array)
 
         const Value* picker = ARG(picker);
 
-        REBVAL *setval = ARG(value);
+        const Value* setval = ARG(value);
+
+        if (Is_Nulled(setval))
+            fail (Error_Need_Non_Null_Raw());  // also can't put in blocks
 
         if (Is_Antiform(setval))
             fail (Error_Bad_Antiform(setval));  // can't put in blocks
 
-        if (Is_Nulled(setval))
-            fail (Error_Need_Non_Null_Raw());  // also can't put in blocks
+        if (Is_Void(setval))
+            fail (Error_Bad_Void());
 
         // !!! If we are jumping here from getting updated bits, then
         // if the block isn't immutable or locked from modification, the
@@ -868,7 +871,7 @@ REBTYPE(Array)
 
         Array* mut_arr = Cell_Array_Ensure_Mutable(array);
         Element* at = Array_At(mut_arr, n);
-        Copy_Cell(at, setval);
+        Copy_Cell(at, c_cast(Element*, setval));
 
         return nullptr; }  // Array* is still fine, caller need not update
 
@@ -1335,7 +1338,7 @@ DECLARE_NATIVE(blockify)
 {
     INCLUDE_PARAMS_OF_BLOCKIFY;
 
-    REBVAL *v = ARG(value);
+    Value* v = ARG(value);
     if (Is_Block(v))
         return COPY(v);
 
@@ -1348,7 +1351,7 @@ DECLARE_NATIVE(blockify)
         // leave empty
     } else {
         Set_Series_Len(a, 1);
-        Copy_Cell(Array_Head(a), v);
+        Copy_Cell(Array_Head(a), cast(Element*, v));
     }
     return Init_Block(OUT, Freeze_Array_Shallow(a));
 }
@@ -1368,7 +1371,7 @@ DECLARE_NATIVE(groupify)
 {
     INCLUDE_PARAMS_OF_GROUPIFY;
 
-    REBVAL *v = ARG(value);
+    Value* v = ARG(value);
     if (Is_Group(v))
         return COPY(v);
 
@@ -1381,7 +1384,7 @@ DECLARE_NATIVE(groupify)
         // leave empty
     } else {
         Set_Series_Len(a, 1);
-        Copy_Cell(Array_Head(a), v);
+        Copy_Cell(Array_Head(a), cast(Element*, v));
     }
     return Init_Group(OUT, Freeze_Array_Shallow(a));
 }
@@ -1412,7 +1415,7 @@ DECLARE_NATIVE(enblock)
         // leave empty
     } else {
         Set_Series_Len(a, 1);
-        Copy_Cell(Array_Head(a), v);
+        Copy_Cell(Array_Head(a), cast(Element*, v));
     }
     return Init_Block(OUT, Freeze_Array_Shallow(a));
 }
@@ -1443,7 +1446,7 @@ DECLARE_NATIVE(engroup)
         // leave empty
     } else {
         Set_Series_Len(a, 1);
-        Copy_Cell(Array_Head(a), v);
+        Copy_Cell(Array_Head(a), cast(Element*, v));
     }
     return Init_Group(OUT, Freeze_Array_Shallow(a));
 }
@@ -1498,7 +1501,7 @@ DECLARE_NATIVE(glom)
 
         Array* a = Make_Array_Core(1, NODE_FLAG_MANAGED);
         Set_Series_Len(a, 1);
-        Copy_Cell(Array_Head(a), result);  // we know it was inert or quoted
+        Copy_Cell(Array_Head(a), cast(Element*, result));  // not void / splice
         return Init_Block(OUT, a);
     }
 
@@ -1513,7 +1516,7 @@ DECLARE_NATIVE(glom)
         // practice all GLOM that exist for the moment will be working on
         // series that are at their head, so this won't help.
         //
-        Copy_Cell(Alloc_Tail_Array(a), result);
+        Copy_Cell(Alloc_Tail_Array(a), cast(Element*, result));
     }
     else {
         // We're appending multiple items from result.  But we want to avoid
@@ -1525,16 +1528,15 @@ DECLARE_NATIVE(glom)
         // if necessary--work on other details later.
         //
         Array* r = Cell_Array_Ensure_Mutable(result);
-        Specifier* r_specifier = Cell_Specifier(result);
         Length a_len = Array_Len(a);
         Length r_len = Array_Len(r);
         Expand_Series_Tail(a, r_len);  // can move memory, get `at` after
-        Cell* dst = Array_At(a, a_len);  // old tail position
-        Cell* src = Array_Head(r);
+        Element* dst = Array_At(a, a_len);  // old tail position
+        Element* src = Array_Head(r);
 
         REBLEN index;
         for (index = 0; index < r_len; ++index, ++src, ++dst)
-            Derelativize(dst, src, r_specifier);
+            Copy_Cell(dst, src);
 
         assert(Array_Len(a) == a_len + r_len);  // Expand_Series_Tail sets
 

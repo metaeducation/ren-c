@@ -100,7 +100,7 @@ Bounce Lambda_Unoptimized_Dispatcher(Level* const L)
     USE_LEVEL_SHORTHANDS (L);
 
     Details* details = Phase_Details(PHASE);
-    Cell* body = Array_At(details, IDX_DETAILS_1);  // code to run
+    Value* body = Details_At(details, IDX_DETAILS_1);  // code to run
     assert(Is_Block(body) and VAL_INDEX(body) == 0);
 
     Force_Level_Varlist_Managed(L);
@@ -139,7 +139,7 @@ DECLARE_NATIVE(lambda)
     INCLUDE_PARAMS_OF_LAMBDA;
 
     REBVAL *spec = ARG(spec);
-    REBVAL *body = ARG(body);
+    Element* body = cast(Element*, ARG(body));
 
     bool optimizable = true;
 

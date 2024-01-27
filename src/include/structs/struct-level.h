@@ -424,7 +424,7 @@ typedef void (Intrinsic)(Atom* out, Phase* phase, Value* arg);
     // automate in debugging.  That's very speculative, but, possible.
     //
     Array* varlist;
-    Value* rootvar;  // cached CTX_ARCHETYPE(varlist) if varlist is not null
+    Element* rootvar;  // cached CTX_ARCHETYPE(varlist) if varlist is not null
 
     // The "baseline" is a digest of the state of global variables at the
     // beginning of a level evaluation.  An example of one of the things the

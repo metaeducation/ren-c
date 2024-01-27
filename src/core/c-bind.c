@@ -1246,7 +1246,8 @@ Context* Virtual_Bind_Deep_To_New_Context(
         DECLARE_LOCAL (temp);
         if (Do_Any_Array_At_Throws(temp, spec, SPECIFIED))
             fail (Error_No_Catch_For_Throw(TOP_LEVEL));
-        Move_Cell(spec, temp);
+        Decay_If_Unstable(temp);
+        Move_Cell(spec, cast(Value*, temp));
     }
 
     REBLEN num_vars = Is_Block(spec) ? Cell_Series_Len_At(spec) : 1;

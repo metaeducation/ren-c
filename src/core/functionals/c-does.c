@@ -82,5 +82,6 @@ DECLARE_NATIVE(does)
 
     const Symbol* label = Canon(DO);  // !!! Better answer?
 
-    return Actionify(Init_Frame(OUT, exemplar, label));
+    Init_Frame(OUT, exemplar, label);
+    return Actionify(OUT);
 }

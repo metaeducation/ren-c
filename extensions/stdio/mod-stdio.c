@@ -117,7 +117,7 @@ DECLARE_NATIVE(write_stdout)
         );
         assert(not threw);
         UNUSED(threw);
-        Move_Cell(v, SPARE);
+        Move_Cell(v, stable_SPARE);
     }
 
     // !!! The Write_IO() function does not test for halts.  So data is broken

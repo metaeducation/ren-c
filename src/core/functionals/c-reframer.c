@@ -330,7 +330,7 @@ Bounce Reframer_Dispatcher(Level* const L)
     }
 
     REBVAL *arg = Level_Arg(L, VAL_INT32(param_index));
-    Move_Cell(arg, SPARE);
+    Move_Cell(arg, stable_SPARE);
 
     INIT_LVL_PHASE(L, ACT_IDENTITY(VAL_ACTION(shim)));
     INIT_LVL_BINDING(L, VAL_FRAME_BINDING(shim));

@@ -291,7 +291,7 @@ INLINE Array* Alloc_Singular(Flags flags) {
 }
 
 #define Append_Value(a,v) \
-    cast(Element*, Copy_Relative_internal(Alloc_Tail_Array(a), (v)))
+    Copy_Cell(Alloc_Tail_Array(a), (v))
 
 // Modes allowed by Copy_Block function:
 enum {

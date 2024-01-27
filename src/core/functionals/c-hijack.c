@@ -130,7 +130,7 @@ void Push_Redo_Action_Level(Atom* out, Level* L1, const REBVAL *run)
         // another good reason this should probably be done another way.  It
         // also loses information about the const bit.
         //
-        Meta_Quotify(Append_Value(normals, e.var));
+        Copy_Meta_Cell(Alloc_Tail_Array(normals), e.var);
     }
 
     Shutdown_Evars(&e);

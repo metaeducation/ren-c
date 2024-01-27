@@ -48,9 +48,9 @@ Array* Copy_Array_At_Extra_Shallow(
     Array* copy = Make_Array_For_Copy(len + extra, flags, original);
     Set_Series_Len(copy, len);
 
-    const Cell* src = Array_At(original, index);
-    Cell* dest = Array_Head(copy);
-    REBLEN count = 0;
+    const Element* src = Array_At(original, index);
+    Element* dest = Array_Head(copy);
+    Count count = 0;
     for (; count < len; ++count, ++dest, ++src)
         Copy_Cell(dest, src);
 
@@ -80,9 +80,9 @@ Array* Copy_Array_At_Max_Shallow(
     Array* copy = Make_Array_For_Copy(max, flags, original);
     Set_Series_Len(copy, max);
 
-    REBLEN count = 0;
-    const Cell* src = Array_At(original, index);
-    Cell* dest = Array_Head(copy);
+    Count count = 0;
+    const Element* src = Array_At(original, index);
+    Element* dest = Array_Head(copy);
     for (; count < max; ++count, ++src, ++dest)
         Copy_Cell(dest, src);
 

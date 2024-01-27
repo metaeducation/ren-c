@@ -77,7 +77,7 @@ INLINE Cell* Quotify_Core(Cell* v, Count depth) {
     return v;
 }
 
-#if (! CPLUSPLUS_11)    // C++ can overload so return type matches input type
+#if (! DEBUG_USE_CELL_SUBCLASSES)
     #define Quotify Quotify_Core
 #else
     INLINE Value* Quotify(Value* v, Count depth)
@@ -103,7 +103,7 @@ INLINE Cell* Unquotify_Core(Cell* v, Count unquotes) {
     return v;
 }
 
-#if (! CPLUSPLUS_11)  // C++ can overload so return type matches input type
+#if (! DEBUG_USE_CELL_SUBCLASSES)
     #define Unquotify Unquotify_Core
 #else
     INLINE Element* Unquotify(Value* v, Count depth)
@@ -241,12 +241,12 @@ INLINE Atom* Degrade(Atom* v) {
     return v;
 }
 
-INLINE Value* Concretize(Value* v) {
+INLINE Element* Concretize(Atom* v) {
     assert(not Is_Void(v));
     assert(not Is_Trash(v));
     if (QUOTE_BYTE(v) == ANTIFORM_0)
         QUOTE_BYTE(v) = NOQUOTE_1;
-    return v;
+    return cast(Element*, v);
 }
 
 
@@ -264,12 +264,12 @@ INLINE Value* Concretize(Value* v) {
 //  https://forum.rebol.info/t/1833
 //
 
-INLINE Value* Meta_Quotify(Atom* v) {
+INLINE Element* Meta_Quotify(Cell* v) {
     if (QUOTE_BYTE(v) == ANTIFORM_0) {
         QUOTE_BYTE(v) = QUASIFORM_2;
-        return cast(Value*, v);
+        return cast(Element*, v);
     }
-    return cast(Value*, Quotify(v, 1));  // a non-antiform winds up quoted
+    return cast(Element*, Quotify(v, 1));  // a non-antiform winds up quoted
 }
 
 INLINE Atom* Meta_Unquotify_Undecayed(Atom* v) {

@@ -631,9 +631,9 @@ REBTYPE(Time)
             // date dispatcher already.  Instead of repeating the code here in
             // the time dispatcher, swap the arguments and call DATE's version.
             //
-            Move_Cell(SPARE, D_ARG(1));
+            Move_Cell(stable_SPARE, D_ARG(1));
             Move_Cell(D_ARG(1), arg);
-            Move_Cell(D_ARG(2), SPARE);
+            Move_Cell(D_ARG(2), stable_SPARE);
             return T_Date(level_, verb);
         }
         fail (Error_Math_Args(REB_TIME, verb));

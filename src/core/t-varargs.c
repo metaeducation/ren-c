@@ -525,7 +525,7 @@ REBTYPE(Varargs)
             }
             if (Is_Barrier(OUT))
                 break;
-            Move_Cell(PUSH(), OUT);
+            Move_Cell(PUSH(), Decay_If_Unstable(OUT));
         }
 
         // !!! What if caller wanted a REB_GROUP, REB_PATH, or an /INTO?

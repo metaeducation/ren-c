@@ -90,7 +90,7 @@ Bounce Adapter_Dispatcher(Level* const L)
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
-    Cell* prelude = Array_At(details, IDX_ADAPTER_PRELUDE);  // code to run
+    Value* prelude = Details_At(details, IDX_ADAPTER_PRELUDE);  // code to run
     assert(Is_Block(prelude) and VAL_INDEX(prelude) == 0);
 
     STATE = ST_ADAPTER_RUNNING_PRELUDE;  // no definitional RETURN [2]

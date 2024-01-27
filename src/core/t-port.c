@@ -205,8 +205,8 @@ REBTYPE(Port)
         if (REF(lines)) { // caller wants a BLOCK! of STRING!s, not one string
             assert(Is_Text(OUT));
 
-            DECLARE_STABLE (temp);
-            Move_Cell(temp, OUT);
+            DECLARE_ELEMENT (temp);
+            Move_Cell(temp, cast(Element*, OUT));
             Init_Block(OUT, Split_Lines(temp));
         }
     }

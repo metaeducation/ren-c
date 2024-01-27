@@ -165,10 +165,13 @@ DECLARE_NATIVE(reduce)
 
     Erase_Cell(SPARE);  // in case it was used for error [3]
 
-    if (Is_Elision(OUT) or Is_Void(OUT))
+    if (Is_Elision(OUT))
         goto next_reduce_step;  // void results are skipped by reduce
 
     Decay_If_Unstable(OUT);
+
+    if (Is_Void(OUT))
+        goto next_reduce_step;
 
     if (Is_Nulled(OUT))
         return RAISE(Error_Need_Non_Null_Raw());  // error enables e.g. CURTAIL
@@ -189,7 +192,7 @@ DECLARE_NATIVE(reduce)
     else if (Is_Antiform(OUT))
         return RAISE(Error_Bad_Antiform(OUT));
     else {
-        Move_Cell(PUSH(), OUT);
+        Move_Cell(PUSH(), cast(Element*, OUT));  // not void, not antiform
         SUBLEVEL->baseline.stack_base += 1;  // [4]
 
         if (Get_Cell_Flag(v, NEWLINE_BEFORE))  // [2]
@@ -318,7 +321,9 @@ DECLARE_NATIVE(reduce_each)
         goto reduce_next;  // cull voids and nihils if not ^META
     }
 
-    Move_Cell(CTX_VAR(VAL_CONTEXT(vars), 1), SPARE);  // do multiple? [1]
+    Decay_If_Unstable(SPARE);
+
+    Move_Cell(CTX_VAR(VAL_CONTEXT(vars), 1), stable_SPARE);  // multiple? [1]
 
     SUBLEVEL->executor = &Just_Use_Out_Executor;  // pass through sublevel
 
@@ -583,7 +588,7 @@ Bounce Composer_Executor(Level* const L)
     const Element* at = At_Level(L);
 
     if (not Any_Arraylike(at)) {  // won't substitute/recurse
-        Copy_Relative_internal(PUSH(), at);  // keep newline flag
+        Copy_Cell(PUSH(), at);  // keep newline flag
         goto handle_next_item;
     }
 
@@ -615,7 +620,7 @@ Bounce Composer_Executor(Level* const L)
 
         // compose [[(1 + 2)] (3 + 4)] => [[(1 + 2)] 7]  ; non-deep
         //
-        Copy_Relative_internal(PUSH(), at);  // keep newline flag
+        Copy_Cell(PUSH(), at);  // keep newline flag
         goto handle_next_item;
     }
 
@@ -660,37 +665,27 @@ Bounce Composer_Executor(Level* const L)
     enum Reb_Kind group_heart = Cell_Heart(At_Level(L));
     Byte group_quote_byte = QUOTE_BYTE(At_Level(L));
 
+    Decay_If_Unstable(OUT);
+
     if (Is_Splice(OUT))
         goto push_out_spliced;
 
     if (Is_Nulled(OUT))
         return RAISE(Error_Need_Non_Null_Raw());  // [(null)] => error!
 
+    if (Is_Antiform(OUT))
+        return RAISE(Error_Bad_Antiform(OUT));
+
     if (Is_Void(OUT)) {
         if (group_heart == REB_GROUP and group_quote_byte == NOQUOTE_1)
             goto handle_next_item;  // compose [(void)] => []
 
         // [''(void)] => ['']
+
+        Init_Void(PUSH());  // will have group_quote_byte applied
     }
     else
-        Decay_If_Unstable(OUT);
-
-    if (Is_Antiform(OUT))
-        return RAISE(Error_Bad_Antiform(OUT));
-
-    goto push_out_as_is;
-
-  push_out_as_is:  ///////////////////////////////////////////////////////////
-
-    // compose [(1 + 2) inserts as-is] => [3 inserts as-is]
-    // compose [([a b c]) unmerged] => [[a b c] unmerged]
-
-    if (Is_Void(OUT)) {
-        assert(group_quote_byte != NOQUOTE_1);  // handled above
-        Init_Void(PUSH());
-    }
-    else
-        Copy_Cell(PUSH(), OUT);  // can't stack eval direct
+        Copy_Cell(PUSH(), cast(Element*, OUT));
 
     if (group_heart == REB_SET_GROUP)
         Setify(TOP);
@@ -728,25 +723,19 @@ Bounce Composer_Executor(Level* const L)
     if (group_quote_byte != NOQUOTE_1 or group_heart != REB_GROUP)
         return RAISE("Currently can only splice plain unquoted GROUP!s");
 
-    if (Is_Splice(OUT)) {  // GROUP! at "quoting level -1" means splice
-        Quasify_Antiform(OUT);
+    assert(Is_Splice(OUT));  // GROUP! at "quoting level -1" means splice
 
-        const Element* push_tail;
-        const Element* push = Cell_Array_At(&push_tail, OUT);
-        if (push != push_tail) {
-            Copy_Relative_internal(PUSH(), push);
-            if (Get_Cell_Flag(At_Level(L), NEWLINE_BEFORE))
-                Set_Cell_Flag(TOP, NEWLINE_BEFORE);  // first [4]
-            else
-                Clear_Cell_Flag(TOP, NEWLINE_BEFORE);
+    const Element* push_tail;
+    const Element* push = Cell_Array_At(&push_tail, OUT);
+    if (push != push_tail) {
+        Copy_Cell(PUSH(), push);
+        if (Get_Cell_Flag(At_Level(L), NEWLINE_BEFORE))
+            Set_Cell_Flag(TOP, NEWLINE_BEFORE);  // first [4]
+        else
+            Clear_Cell_Flag(TOP, NEWLINE_BEFORE);
 
-            while (++push, push != push_tail)
-                Copy_Relative_internal(PUSH(), push);
-        }
-    }
-    else {
-        assert(not Any_Array(OUT));
-        Copy_Cell(PUSH(), OUT);
+        while (++push, push != push_tail)
+            Copy_Cell(PUSH(), push);
     }
 
     L->u.compose.changed = true;
@@ -773,14 +762,14 @@ Bounce Composer_Executor(Level* const L)
         Drop_Data_Stack_To(SUBLEVEL->baseline.stack_base);
         Drop_Level(SUBLEVEL);
 
-        Copy_Relative_internal(PUSH(), At_Level(L));
+        Copy_Cell(PUSH(), At_Level(L));
         // Constify(TOP);
         goto handle_next_item;
     }
 
     Finalize_Composer_Level(OUT, SUBLEVEL, At_Level(L));
     Drop_Level(SUBLEVEL);
-    Move_Cell(PUSH(), OUT);
+    Move_Cell(PUSH(), stable_OUT);
 
     if (Get_Cell_Flag(At_Level(L), NEWLINE_BEFORE))
         Set_Cell_Flag(TOP, NEWLINE_BEFORE);

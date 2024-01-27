@@ -146,16 +146,16 @@
 // For the moment that is done with the CTX_ADJUNCT() field instead.
 //
 
-INLINE const REBVAL *CTX_ARCHETYPE(Context* c) {  // read-only form
+INLINE const Element* CTX_ARCHETYPE(Context* c) {  // read-only form
     const Series* varlist = CTX_VARLIST(c);
-    return c_cast(REBVAL*, varlist->content.dynamic.data);
+    return c_cast(Element*, varlist->content.dynamic.data);
 }
 
 #define CTX_TYPE(c) \
     VAL_TYPE(CTX_ARCHETYPE(c))
 
-INLINE REBVAL *CTX_ROOTVAR(Context* c)  // mutable archetype access
-  { return m_cast(REBVAL*, CTX_ARCHETYPE(c)); }  // inline checks mutability
+INLINE Element* CTX_ROOTVAR(Context* c)  // mutable archetype access
+  { return m_cast(Element*, CTX_ARCHETYPE(c)); }  // inline checks mutability
 
 INLINE Phase* CTX_FRAME_PHASE(Context* c) {
     const REBVAL *archetype = CTX_ARCHETYPE(c);

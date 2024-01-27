@@ -506,9 +506,9 @@ REBTYPE(Decimal)
             id == SYM_ADD ||
             id == SYM_MULTIPLY
         )){
-            Move_Cell(OUT, D_ARG(2));
+            Move_Cell(stable_OUT, D_ARG(2));
             Move_Cell(D_ARG(2), D_ARG(1));
-            Move_Cell(D_ARG(1), OUT);
+            Move_Cell(D_ARG(1), stable_OUT);
             return Run_Generic_Dispatch_Core(D_ARG(1), level_, verb);
         }
 

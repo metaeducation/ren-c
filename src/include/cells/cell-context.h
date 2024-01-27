@@ -115,8 +115,8 @@ INLINE const Key* VAL_CONTEXT_KEYS_HEAD(NoQuote(const Cell*) context)
 // that is its canon form from a single pointer...the REBVAL sitting in
 // the 0 slot of the context's varlist.
 //
-INLINE REBVAL *Init_Context_Cell(
-    Cell* out,
+INLINE Element* Init_Context_Cell(
+    Sink(Element*) out,
     enum Reb_Kind kind,
     Context* c
 ){
@@ -136,14 +136,14 @@ INLINE REBVAL *Init_Context_Cell(
 #define Init_Port(out,c) \
     Init_Context_Cell((out), REB_PORT, (c))
 
-INLINE REBVAL *Init_Frame(
-    Cell* out,
+INLINE Element* Init_Frame(
+    Sink(Element*) out,
     Context* c,
     Option(const String*) label  // nullptr (ANONYMOUS) is okay
 ){
     Init_Context_Cell(out, REB_FRAME, c);
     INIT_VAL_FRAME_LABEL(out, label);
-    return cast(REBVAL*, out);
+    return out;
 }
 
 

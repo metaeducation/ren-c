@@ -155,8 +155,7 @@ Bounce Proxy_Multi_Returns_Core(Level* L, Atom* v)
 
     StackIndex base = TOP_INDEX;
 
-    Meta_Quotify(v);  // unquotified at end if not overwritten
-    Copy_Cell(PUSH(), v);  // can't push unstable isotopes to data stack
+    Copy_Meta_Cell(PUSH(), v);  // packs contain meta values
 
     KEY = ACT_KEYS(&KEY_TAIL, L->u.action.original);
     PARAM = ACT_PARAMS_HEAD(L->u.action.original);
@@ -171,13 +170,12 @@ Bounce Proxy_Multi_Returns_Core(Level* L, Atom* v)
         if (not Typecheck_Coerce_Argument(PARAM, ARG))
             fail (Error_Phase_Arg_Type(L, KEY, PARAM, stable_ARG));
 
-        Meta_Quotify(Copy_Cell(PUSH(), ARG));
+        Copy_Meta_Cell(PUSH(), stable_ARG);  // packs contain meta values
     }
 
-    if (TOP_INDEX == base + 1) {  // no multi return values
-        DROP();
-        Meta_Unquotify_Undecayed(v);
-    } else
+    if (TOP_INDEX == base + 1)  // no multi return values
+        DROP();  // drop the initial push for the main result
+    else
         Init_Pack(v, Pop_Stack_Values(base));
 
     return v;
@@ -1210,7 +1208,7 @@ void Push_Action(
 
     L->varlist = x_cast(Array*, s);
 
-    L->rootvar = cast(REBVAL*, s->content.dynamic.data);
+    L->rootvar = cast(Element*, s->content.dynamic.data);
     USED(Erase_Cell(L->rootvar));  // want the tracking info, overwriting header
     L->rootvar->header.bits =
         NODE_FLAG_NODE

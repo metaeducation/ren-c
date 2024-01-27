@@ -122,7 +122,9 @@ INLINE Element* Ensure_Element(const_if_c Atom* cell) {
     INLINE const Element* Ensure_Element(const Atom* cell)
       { return Ensure_Element(m_cast(Atom*, cell)); }
 
+  #if DEBUG_USE_CELL_SUBCLASSES
     void Ensure_Element(const Element*) = delete;
+  #endif
 #endif
 
 

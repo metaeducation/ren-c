@@ -301,18 +301,18 @@ INLINE Element* Try_Init_Any_Sequence_All_Integers(
 //=//// 2-Element "PAIR" SEQUENCE OPTIMIZATION ////////////////////////////=//
 
 INLINE Element* Try_Init_Any_Sequence_Pairlike(
-    Sink(Element*) out,
+    Sink(Value*) out,  // holds illegal value if nullptr returned
     enum Reb_Kind kind,
     const Value* v1,
     const Value* v2
 ){
     if (Is_Blank(v1)) {
-        Copy_Relative_internal(out, v2);
+        Copy_Cell(out, v2);
         return Try_Leading_Blank_Pathify(out, kind);
     }
 
     if (not Is_Valid_Sequence_Element(kind, v1)) {
-        Copy_Relative_internal(out, v1);
+        Copy_Cell(out, v1);
         return nullptr;
     }
 
@@ -320,9 +320,9 @@ INLINE Element* Try_Init_Any_Sequence_Pairlike(
     //
     enum Reb_Kind inner = VAL_TYPE(v1);
     if (Is_Blank(v2) and inner == REB_WORD) {
-        Copy_Relative_internal(out, v1);
+        Copy_Cell(out, v1);
         HEART_BYTE(out) = kind;
-        return out;
+        return cast(Element*, out);
     }
 
     if (Is_Integer(v1) and Is_Integer(v2)) {
@@ -339,17 +339,17 @@ INLINE Element* Try_Init_Any_Sequence_Pairlike(
     }
 
     if (not Is_Valid_Sequence_Element(kind, v2)) {
-        Copy_Relative_internal(out, v2);
+        Copy_Cell(out, v2);
         return nullptr;
     }
 
     Value* pairing = Alloc_Pairing(NODE_FLAG_MANAGED);
-    Copy_Relative_internal(pairing, v1);
-    Copy_Relative_internal(Pairing_Second(pairing), v2);
+    Copy_Cell(pairing, v1);
+    Copy_Cell(Pairing_Second(pairing), v2);
     Init_Pair(out, pairing);
     HEART_BYTE(out) = kind;
 
-    return out;
+    return cast(Element*, out);
 }
 
 

@@ -114,7 +114,7 @@ Bounce Func_Dispatcher(Level* const L)
   initial_entry: {  //////////////////////////////////////////////////////////
 
     Details* details = Phase_Details(PHASE);
-    Cell* body = Array_At(details, IDX_DETAILS_1);  // code to run
+    Value* body = Details_At(details, IDX_DETAILS_1);  // code to run
     assert(Is_Block(body) and VAL_INDEX(body) == 0);
 
     assert(ACT_HAS_RETURN(PHASE));  // all FUNC have RETURN

@@ -45,7 +45,7 @@
 // to be combined with any relative words that are seen later.
 //
 
-#if CPLUSPLUS_11
+#if DEBUG_USE_CELL_SUBCLASSES
 
     // An Atom* is able to hold unstable isotope states.  A separate type
     // is used to avoid propagating the concerns of unstable isotopes to
@@ -92,6 +92,9 @@
         }
       #endif
     };
+#elif CPLUSPLUS_11
+    typedef struct ValueStruct Atom;
+    typedef struct ValueStruct Element;
 #else
     typedef struct ValueStruct Atom;
     typedef struct ValueStruct Element;
@@ -107,7 +110,7 @@ typedef struct ValueStruct Value;
 // cell or variable cell.
 //
 
-#if CPLUSPLUS_11
+#if DEBUG_USE_CELL_SUBCLASSES
     struct Param : public REBVAL {};
 
     INLINE const Param* cast_PAR(const REBVAL *v)
@@ -136,7 +139,7 @@ typedef struct ValueStruct Value;
 
 INLINE REBVAL* Freshen_Cell_Untracked(Cell* v);
 
-#if CPLUSPLUS_11
+#if DEBUG_USE_CELL_SUBCLASSES  // wrapper has runtime cost
     template<typename T>
     struct SinkWrapper {
         T* p;
@@ -182,6 +185,10 @@ INLINE REBVAL* Freshen_Cell_Untracked(Cell* v);
     struct c_cast_helper<Byte*, Sink(Value*) const&> {
         typedef Byte* type;
     };
+
+    template<typename V, typename T>
+    struct cast_helper<SinkWrapper<V>,T>
+      { static T convert(SinkWrapper<V> v) { return (T)(v.p);} };
 #else
     #define Sink(T) T
     #define Need(T) T

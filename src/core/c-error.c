@@ -605,15 +605,15 @@ Context* Make_Error_Managed_Core(
         );
       #endif
 
-        DECLARE_LOCAL (id_value);
+        DECLARE_ELEMENT (id_value);
         Init_Integer(id_value, cast(int, id));
         panic (id_value);
     }
 
     Context* root_error = VAL_CONTEXT(Get_System(SYS_STANDARD, STD_ERROR));
 
-    DECLARE_LOCAL (id_value);
-    DECLARE_LOCAL (type);
+    DECLARE_STABLE (id_value);
+    DECLARE_STABLE (type);
     const REBVAL *message;  // Stack values ("movable") are allowed
     if (cat_id == SYM_0 and id == SYM_0) {
         Init_Nulled(id_value);
@@ -813,9 +813,8 @@ Context* Error_Bad_Word_Get(
     // Don't want the error message to have an antiform version as argument, as
     // they're already paying for an error regarding the state.
     //
-    DECLARE_STABLE (reified);
-    Copy_Cell(reified, anti);
-    Quasify_Antiform(reified);
+    DECLARE_ELEMENT (reified);
+    Copy_Meta_Cell(reified, anti);
 
     return Error_Bad_Word_Get_Raw(target, reified);
 }
@@ -824,7 +823,7 @@ Context* Error_Bad_Word_Get(
 //
 //  Error_Bad_Func_Def: C
 //
-Context* Error_Bad_Func_Def(const REBVAL *spec, const REBVAL *body)
+Context* Error_Bad_Func_Def(const Element* spec, const Element* body)
 {
     // !!! Improve this error; it's simply a direct emulation of arity-1
     // error that existed before refactoring code out of MAKE_Function().
@@ -1251,9 +1250,8 @@ Context* Error_On_Port(SymId id, REBVAL *port, REBINT err_code)
 Context* Error_Bad_Antiform(const Atom* anti) {
     assert(Is_Antiform(anti));
 
-    DECLARE_STABLE (reified);
-    Copy_Cell(reified, anti);
-    Quasify_Antiform(reified);
+    DECLARE_ELEMENT (reified);
+    Copy_Meta_Cell(reified, anti);
 
     return Error_Bad_Antiform_Raw(reified);
 }

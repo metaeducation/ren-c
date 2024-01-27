@@ -135,7 +135,7 @@ Series* Make_Set_Operation_Series(
             //
             i = VAL_INDEX(val1);
             for (; i < Array_Len(array1); i += skip) {
-                const Cell* item = Array_At(array1, i);
+                const Element* item = Array_At(array1, i);
                 if (flags & SOP_FLAG_CHECK) {
                     h = Find_Key_Hashed(
                         m_cast(Array*, Cell_Array(val2)),  // mode 1 unchanged

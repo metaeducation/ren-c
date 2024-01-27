@@ -82,7 +82,7 @@ Value* Try_Init_Any_Sequence_At_Arraylike(
     const Element* v = Array_Head(a);
     for (; v != tail; ++v) {
         if (not Is_Valid_Sequence_Element(kind, v)) {
-            Copy_Relative_internal(out, v);
+            Copy_Cell(out, v);
             return nullptr;
         }
     }
@@ -226,13 +226,18 @@ Bounce MAKE_Path(
             return BOUNCE_THROWN;
         }
 
+        Decay_If_Unstable(OUT);
+
         if (Is_Void(OUT))
             continue;
 
         if (Is_Nulled(OUT))
             return RAISE(Error_Need_Non_Null_Raw());
 
-        Move_Cell(PUSH(), OUT);
+        if (Is_Antiform(OUT))
+            fail (Error_Bad_Antiform(OUT));
+
+        Move_Cell(PUSH(), cast(Element*, OUT));
         L->baseline.stack_base += 1;  // compensate for push
     }
 

@@ -43,7 +43,7 @@ REBLEN Modify_Array(
 
     REBLEN tail_idx = Array_Len(dst_arr);
 
-    const REBVAL* src_rel;
+    const Element* src_rel;
 
     if (op == SYM_CHANGE and Is_Void(src_val)) {
         flags |= AM_SPLICE;
@@ -120,7 +120,8 @@ REBLEN Modify_Array(
     else {
         // use passed in Cell
         ilen = 1;
-        src_rel = src_val;
+        assert(not Is_Antiform(src_val) and not Is_Void(src_val));
+        src_rel = c_cast(Element*, src_val);
     }
 
     REBLEN size = cast(REBLEN, dups) * ilen;  // total to insert (dups is > 0)

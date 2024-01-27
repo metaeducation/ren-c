@@ -134,7 +134,7 @@ Bounce Encloser_Dispatcher(Level* const L)
     assert(BONUS(KeySource, varlist) == L);  // need to change keysource [1]
     INIT_BONUS_KEYSOURCE(varlist, ACT_KEYLIST(L->u.action.original));
 
-    REBVAL *rootvar = CTX_ROOTVAR(c);  // don't phase run encloser again [2]
+    Element* rootvar = CTX_ROOTVAR(c);  // don't phase run encloser again [2]
     INIT_VAL_FRAME_PHASE(rootvar, ACT_IDENTITY(VAL_ACTION(inner)));
     INIT_VAL_FRAME_BINDING(rootvar, VAL_FRAME_BINDING(inner));
 
@@ -143,7 +143,7 @@ Bounce Encloser_Dispatcher(Level* const L)
 
     Set_Node_Managed_Bit(varlist);  // can't use Force_Series_Managed [4]
 
-    REBVAL *rootcopy = Copy_Cell(SPARE, rootvar);  // need phaseless copy [5]
+    Element* rootcopy = Copy_Cell(SPARE, rootvar);  // need phaseless copy [5]
     INIT_VAL_FRAME_PHASE_OR_LABEL(SPARE, VAL_FRAME_LABEL(inner));
 
     assert(Is_Level_Dispatching(L));

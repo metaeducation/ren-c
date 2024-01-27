@@ -378,14 +378,6 @@ INLINE Cell* Erase_Cell_Untracked(Cell* c) {
     return c;
 }
 
-#if CPLUSPLUS_11
-    INLINE Atom* Erase_Cell_Untracked(Atom* atom) {
-        ALIGN_CHECK_CELL(atom);
-        atom->header.bits = CELL_MASK_0;
-        return atom;
-    }
-#endif
-
 #define Erase_Cell(c) \
     TRACK(Erase_Cell_Untracked(c))
 
@@ -622,10 +614,12 @@ INLINE void Copy_Cell_Header(
 }
 
 
-// Because you cannot assign REBVALs to one another (e.g. `*dest = *src`)
-// a function is used.  This provides an opportunity to check things like
-// moving data into protected locations, and to mask out bits that should
-// not be propagated.
+// Because you cannot assign cells to one another (e.g. `*dest = *src`), a
+// function is used.  This provides an opportunity to check things like moving
+// data into protected locations, and to mask out bits that should not be
+// propagated.  We can also enforce that you can't copy an Atom into a Value
+// or Element, and that you can't copy a Value into an Element...keeping
+// antiforms and unstable antiforms out of places they should not be.
 //
 // Interface designed to line up with Derelativize()
 //
@@ -639,13 +633,19 @@ INLINE void Copy_Cell_Header(
 //    That's not true anymore, but some future INIT_BINDING() may need to
 //    be able to study to the cell to do the initialization?
 //
+// 3. These overloads are the best I could come up with...but they conflict
+//    if written naively.  The variant for (Sink(Element*), const Element*)
+//    will compete with one as (Sink(Value*), const Value*) when the second
+//    argument is Element*, since Element can be passed where Value is taken.
+//    Template magic lets an overload exclude itself to break the contention.
+//
 INLINE Cell* Copy_Cell_Untracked(
     Cell* out,
     const Cell* v,
     Flags copy_mask  // typically you don't copy UNEVALUATED, PROTECTED, etc
 ){
     assert(out != v);  // usually a sign of a mistake; not worth supporting
-    ASSERT_CELL_READABLE(v);  // allow copy void object vars
+    ASSERT_CELL_READABLE(v);
 
     FRESHEN_CELL(out);  // optimizer seems to skip this mask after erasure [1]
     out->header.bits |= (NODE_FLAG_NODE | NODE_FLAG_CELL  // ensure NODE+CELL
@@ -658,65 +658,42 @@ INLINE Cell* Copy_Cell_Untracked(
     return out;
 }
 
-INLINE bool Is_Stable(Need(const Atom*) v);
-
-#if CPLUSPLUS_11  // REBVAL and Cell are checked distinctly
-    INLINE Value* Copy_Cell_Untracked(
-        Cell* out,
-        const Value* v,
-        Flags copy_mask
-    ){
-        return cast(Value*, Copy_Cell_Untracked(
-            out,
-            c_cast(Cell*, v),
-            copy_mask
-        ));
+#if (! DEBUG_USE_CELL_SUBCLASSES)
+    #define Copy_Cell(out,v) \
+        TRACK(Copy_Cell_Untracked((out), (v), CELL_MASK_COPY))
+#else
+    INLINE Element* Copy_Cell_Overload(Sink(Element*) out, const Element* v) {
+        Copy_Cell_Untracked(out, v, CELL_MASK_COPY);
+        return out;
     }
 
-    INLINE Value* Copy_Cell_Untracked(
-        Value* out,
-        const Value* v,
-        Flags copy_mask
-    ){
-        return cast(Value*, Copy_Cell_Untracked(
-            cast(Cell*, out),
-            c_cast(Cell*, v),
-            copy_mask
-        ));
+    template<  // avoid overload conflict when Element* coerces to Value* [3]
+        typename T,
+        typename std::enable_if<
+            std::is_convertible<T,const Value*>::value
+            && !std::is_convertible<T,const Element*>::value
+        >::type* = nullptr
+    >
+    INLINE Value* Copy_Cell_Overload(Sink(Value*) out, T v) {
+        Copy_Cell_Untracked(out, v, CELL_MASK_COPY);
+        return out;
     }
 
-    INLINE Value* Copy_Cell_Untracked(
-        Value* out,
-        const Atom* v,
-        Flags copy_mask
-    ){
-        assert(Is_Stable(v));
-        return cast(Value*, Copy_Cell_Untracked(
-            cast(Cell*, out),
-            c_cast(Cell*, v),
-            copy_mask
-        ));
+    INLINE Atom* Copy_Cell_Overload(Sink(Atom*) out, const Atom* v) {
+        Copy_Cell_Untracked(out, v, CELL_MASK_COPY);
+        return out;
     }
 
-    INLINE void Copy_Cell_Untracked(
-        Value* out,
-        const Cell* v,
-        Flags copy_mask
-    ) = delete;
+    #define Copy_Cell(out,v) \
+        TRACK(Copy_Cell_Overload((out), (v)))
 #endif
-
-#define Copy_Cell(out,v) \
-    TRACK(Copy_Cell_Untracked((out), (v), CELL_MASK_COPY))
 
 #define Copy_Cell_Core(out,v,copy_mask) \
     TRACK(Copy_Cell_Untracked((out), (v), (copy_mask)))
 
-INLINE Cell* Copy_Relative_internal(Cell* out, const Cell* in) {  // dangerous!
-    Copy_Cell_Header(out, in);
-    out->payload = in->payload;
-    out->extra = in->extra;
-    return out;
-}
+#define Copy_Meta_Cell(out,v) \
+    cast(Element*, TRACK( \
+        Meta_Quotify(Copy_Cell_Untracked((out), (v), CELL_MASK_COPY))))
 
 
 //=//// CELL MOVEMENT //////////////////////////////////////////////////////=//
@@ -747,8 +724,35 @@ INLINE REBVAL *Move_Cell_Untracked(
 
 #define CELL_MASK_MOVE (CELL_MASK_COPY | CELL_FLAG_UNEVALUATED)
 
-#define Move_Cell(out,v) \
-    TRACK(Move_Cell_Untracked((out), (v), CELL_MASK_MOVE))
+#if (! DEBUG_USE_CELL_SUBCLASSES)
+    #define Move_Cell(out,v) \
+        TRACK(Move_Cell_Untracked((out), (v), CELL_MASK_MOVE))
+#else
+    INLINE Element* Move_Cell_Overload(Sink(Element*) out, Element* v) {
+        Move_Cell_Untracked(out, v, CELL_MASK_MOVE);
+        return out;
+    }
+
+    template<  // avoid overload conflict when Element* coerces to Value* [3]
+        typename T,
+        typename std::enable_if<
+            std::is_convertible<T,Value*>::value
+            && !std::is_convertible<T,Element*>::value
+        >::type* = nullptr
+    >
+    INLINE Value* Move_Cell_Overload(Sink(Value*) out, T v) {
+        Move_Cell_Untracked(out, v, CELL_MASK_MOVE);
+        return out;
+    }
+
+    INLINE Atom* Move_Cell_Overload(Sink(Atom*) out, Atom* v) {
+        Move_Cell_Untracked(out, v, CELL_MASK_MOVE);
+        return out;
+    }
+
+    #define Move_Cell(out,v) \
+        TRACK(Move_Cell_Overload((out), (v)))
+#endif
 
 #define Move_Cell_Core(out,v,cell_mask) \
     TRACK(Move_Cell_Untracked((out), (v), (cell_mask)))
@@ -812,3 +816,6 @@ INLINE bool Is_Antiform(Need(const Value*) v)
 
 #define Is_Quoted(v) \
     (QUOTE_BYTE(READABLE(v)) >= ONEQUOTE_3)  // '''~a~ is quoted, not quasi
+
+#define Is_Metaform(v) \
+    (QUOTE_BYTE(READABLE(v)) >= QUASIFORM_2)  // quasi or quoted

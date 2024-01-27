@@ -199,12 +199,14 @@ INLINE const Element* Copy_Reified_Variadic_Feed_Cell(
         assert(not Is_Api_Value(v));  // but internal cells can be nulled
 
     if (Is_Antiform(v)) {  // @ will turn these back into antiforms
-        Copy_Cell(out, v);
-        QUOTE_BYTE(out) = QUASIFORM_2;
+        Copy_Meta_Cell(out, v);
         return out;
     }
 
-    Copy_Cell(out, v);
+    if (Is_Void(v))
+        fail ("Attempt to splice void in variadic feed");
+
+    Copy_Cell(out, c_cast(Element*, v));
     return out;
 }
 
@@ -225,7 +227,7 @@ INLINE Option(const Value*) Try_Reify_Variadic_Feed_Series(
     switch (Series_Flavor(s)) {
       case FLAVOR_INSTRUCTION_SPLICE: {
         Array* inst1 = x_cast(Array*, s);
-        REBVAL *single = Stub_Cell(inst1);
+        Element* single = cast(Element*, Stub_Cell(inst1));
         if (Is_Blank(single)) {
             GC_Kill_Series(inst1);
             return nullptr;

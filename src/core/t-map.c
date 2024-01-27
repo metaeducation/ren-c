@@ -73,7 +73,7 @@ Map* Make_Map(REBLEN capacity)
 REBINT Find_Key_Hashed(
     Array* array,
     Series* hashlist,
-    const Cell* key,  // !!! assumes ++key finds the values
+    const Element* key,  // !!! assumes ++key finds the values
     REBLEN wide,
     bool strict,
     Byte mode
@@ -144,14 +144,14 @@ REBINT Find_Key_Hashed(
     if (zombie_slot != -1) { // zombie encountered; overwrite with new key
         assert(mode == 0);
         slot = zombie_slot;
-        Copy_Relative_internal(
+        Copy_Cell(
             Array_At(array, (indexes[slot] - 1) * wide),
             key
         );
     }
 
     if (mode > 1) { // append new value to the target series
-        const Cell* src = key;
+        const Element* src = key;
         indexes[slot] = (Array_Len(array) / wide) + 1;
 
         REBLEN index;
@@ -197,7 +197,7 @@ static void Rehash_Map(Map* map)
         }
 
         REBLEN hash = Find_Key_Hashed(
-            pairlist, hashlist, key, 2, cased, 0
+            pairlist, hashlist, cast(Element*, key), 2, cased, 0
         );
         hashes[hash] = n / 2 + 1;
 
@@ -280,8 +280,8 @@ REBLEN Find_Map_Entry(
     // Must set the value:
     if (n) {  // re-set it:
         Copy_Cell(
-            Array_At(pairlist, ((n - 1) * 2) + 1),
-            unwrap(val)
+            Series_At(Value, pairlist, ((n - 1) * 2) + 1),
+            unwrap(val)  // val may be void
         );
         return n;
     }
@@ -295,7 +295,7 @@ REBLEN Find_Map_Entry(
     // the data of a string), which is why the immutability test is necessary
     //
     Append_Value(pairlist, key);
-    Append_Value(pairlist, unwrap(val));
+    Append_Value(pairlist, c_cast(Element*, unwrap(val)));  // val not void
 
     return (indexes[slot] = (Array_Len(pairlist) / 2));
 }
@@ -458,11 +458,11 @@ Array* Map_To_Array(const Map* map, REBINT what)
             continue;  // zombie key, e.g. not actually in map
 
         if (what <= 0) {
-            Copy_Cell(dest, &val[0]);
+            Copy_Cell(dest, c_cast(Element*, &val[0]));  // no keys void
             ++dest;
         }
         if (what >= 0) {
-            Copy_Cell(dest, &val[1]);
+            Copy_Cell(dest, c_cast(Element*, &val[1]));  // val tested non void
             ++dest;
         }
     }

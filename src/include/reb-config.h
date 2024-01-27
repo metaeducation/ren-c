@@ -544,6 +544,21 @@ Special internal defines used by RT, not Host-Kit developers:
 #endif
 
 
+// The cell subclasses [Element Value Atom] help to quarantine antiforms and
+// unstable antiforms into slots that should have them.  I couldn't figure
+// out a clean way to get the compile-time errors I wanted without adding
+// runtime cost via wrapper classes...so they are only used in debug builds
+// (and won't work in the C build at all).
+//
+#if !defined(DEBUG_USE_CELL_SUBCLASSES)
+  #if DEBUG && CPLUSPLUS_11
+    #define DEBUG_USE_CELL_SUBCLASSES 1
+  #else
+    #define DEBUG_USE_CELL_SUBCLASSES 0
+  #endif
+#endif
+
+
 // Natives can be decorated with a RETURN: annotation, but this is not
 // checked in the release build.  It's assumed they will only return the
 // correct types.  This switch is used to panic() if they're wrong.
@@ -585,18 +600,18 @@ Special internal defines used by RT, not Host-Kit developers:
     #endif
 #endif
 
-#if CPLUSPLUS_11
-    //
-    // Each PUSH() on the data stack can potentially move all the pointers on
-    // the stack.  Hence there is a debug setting for managing these pointers
-    // in a special C++ container called StackValue(*).  This counts to see
-    // how many stack pointers the user has in local variables, and if that
-    // number is not zero then it asserts when a push or pop is requested, or
-    // when the evaluator is invoked.
-    //
-    #define DEBUG_EXTANT_STACK_POINTERS DEBUG
-#else
+// Each PUSH() on the data stack can potentially move all the pointers on the
+// stack.  Hence there is a debug setting for managing these pointers in a
+// special C++ container called StackValue(*).  This counts to see how many
+// stack pointers the user has in local variables, and if that number is not
+// zero then it asserts when a push or pop is requested, or upon evaluation.
+//
+#if !defined(DEBUG_EXTANT_STACK_POINTERS)
+  #if CPLUSPLUS_11 && DEBUG
+    #define DEBUG_EXTANT_STACK_POINTERS 1
+  #else
     #define DEBUG_EXTANT_STACK_POINTERS 0
+  #endif
 #endif
 
 // The PG_Reb_Stats structure is only tracked in the debug build, as this

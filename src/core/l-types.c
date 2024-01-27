@@ -343,8 +343,10 @@ DECLARE_NATIVE(of)
         if (Eval_Value_Throws(SPARE, prop, SPECIFIED))
             return THROWN;
 
+        Decay_If_Unstable(SPARE);
+
         if (not Is_Word(SPARE)) {
-            Move_Cell(prop, SPARE);
+            Move_Cell(prop, stable_SPARE);
             fail (Error_Invalid_Arg(level_, PARAM(property)));
         }
     }
@@ -358,7 +360,7 @@ DECLARE_NATIVE(of)
     // property in the second.
     //
     Copy_Cell(ARG(property), ARG(value));
-    Copy_Cell(ARG(value), SPARE);
+    Copy_Cell(ARG(value), cast(Element*, SPARE));  // is word
 
     return Reflect_Core(level_);
 }
