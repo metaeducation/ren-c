@@ -190,9 +190,6 @@ DECLARE_NATIVE(and_1)  // see TO-C-NAME
     REBVAL *left = ARG(left);
     REBVAL *right = ARG(right);
 
-    if (Get_Cell_Flag(left, UNEVALUATED))
-        fail (Error_Unintended_Literal_Raw(left));
-
     if (Is_Falsey(left))
         return Init_False(OUT);
 
@@ -221,9 +218,6 @@ DECLARE_NATIVE(or_1)  // see TO-C-NAME
     REBVAL *left = ARG(left);
     REBVAL *right = ARG(right);
 
-    if (Get_Cell_Flag(left, UNEVALUATED))
-        fail (Error_Unintended_Literal_Raw(left));
-
     if (Is_Truthy(left))
         return Init_True(OUT);
 
@@ -251,9 +245,6 @@ DECLARE_NATIVE(xor_1)  // see TO-C-NAME
 
     REBVAL *left = ARG(left);
     REBVAL *right = ARG(right);
-
-    if (Get_Cell_Flag(left, UNEVALUATED))
-        fail (Error_Unintended_Literal_Raw(left));
 
     if (Do_Logic_Right_Side_Throws(SPARE, right))
         return THROWN;

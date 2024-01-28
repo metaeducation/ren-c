@@ -184,8 +184,7 @@ DECLARE_NATIVE(shove)
     // into may want it evaluative.  (Enfix handling itself does soft quoting)
     //
     if (
-        Get_Cell_Flag(left, UNEVALUATED)
-        and Not_Subclass_Flag(
+        Not_Subclass_Flag(
             VARLIST,
             ACT_PARAMLIST(VAL_ACTION(shovee)),
             PARAMLIST_QUOTES_FIRST
@@ -196,8 +195,6 @@ DECLARE_NATIVE(shove)
     }
     else {
         Copy_Cell(OUT, left);
-        if (Get_Cell_Flag(left, UNEVALUATED))
-            Set_Cell_Flag(OUT, UNEVALUATED);
     }
 
     Flags flags = FLAG_STATE_BYTE(ST_ACTION_INITIAL_ENTRY_ENFIX);

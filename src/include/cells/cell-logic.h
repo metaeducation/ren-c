@@ -108,24 +108,6 @@ INLINE bool Is_Truthy(const Value* v) {
 #define Is_Falsey(v) \
     (not Is_Truthy(v))
 
-// Although a BLOCK! value is true, some constructs are safer by not allowing
-// literal blocks.  e.g. `if [x] [print "this is not safe"]`.  The evaluated
-// bit can let these instances be distinguished.  Note that making *all*
-// evaluations safe would be limiting, e.g. `foo: any [false-thing []]`...
-// So ANY and ALL use Is_Truthy() directly
-//
-INLINE bool Is_Conditional_True(const REBVAL *v) {
-    if (Is_Falsey(v))
-        return false;
-    if (Is_Block(v))
-        if (Get_Cell_Flag(v, UNEVALUATED))
-            fail (Error_Block_Conditional_Raw(v));  // !!! Unintended_Literal?
-    return true;
-}
-
-#define Is_Conditional_False(v) \
-    (not Is_Conditional_True(v))
-
 #define Init_Heavy_False(out) \
     Init_Pack((out), PG_1_Meta_False_Array)
 

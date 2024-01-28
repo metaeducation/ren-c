@@ -262,7 +262,6 @@ Bounce Evaluator_Executor(Level* L)
         if (Is_Feed_At_End(L->feed))
             return OUT;
         Derelativize(OUT, At_Feed(L->feed), FEED_SPECIFIER(L->feed));
-        Set_Cell_Flag(OUT, UNEVALUATED);
         Fetch_Next_In_Feed(L->feed);
         return OUT;
     }
@@ -333,7 +332,6 @@ Bounce Evaluator_Executor(Level* L)
       case REB_GROUP :
       case REB_GET_GROUP :
       case REB_META_GROUP :
-        Clear_Cell_Flag(OUT, UNEVALUATED);  // e.g. (<inert>) *did* evaluate
         goto lookahead;
 
       case REB_SET_GROUP :
@@ -437,7 +435,6 @@ Bounce Evaluator_Executor(Level* L)
     // step because we need derelativized value for type check)
     //
     Derelativize(OUT, L_current, L_specifier);  // for FULFILLING_ENFIX
-    Set_Cell_Flag(OUT, UNEVALUATED);  // so lookback knows it was quoted
 
     // Let the <skip> flag allow the right hand side to gracefully decline
     // interest in the left hand side due to type.  This is how DEFAULT works,
@@ -524,13 +521,21 @@ Bounce Evaluator_Executor(Level* L)
     // fast tests like Any_Inert() and IS_NULLED_OR_VOID_OR_END() has shown
     // to reduce performance in practice.  The compiler does the right thing.
     //
-    // 1. The Evaluator Executor's state bytes are a superset of the VAL_TYPE
-    //    of processed values.  See the ST_EVALUATOR_XXX enumeration.
+    // 1. Quasiforms produce antiforms, and quoted values drop one quote
+    //    level.  Binding is left as-is in both cases, and not influenced by
+    //    the current specifier of the evaluator.
     //
+    // 2. The Evaluator Executor's state bytes are a superset of the VAL_TYPE
+    //    of processed values.  See the ST_EVALUATOR_XXX enumeration.
 
     assert(Is_Fresh(OUT));
 
-    switch ((STATE = VAL_TYPE(L_current))) {  // type doubles as state [1]
+    if (QUOTE_BYTE(L_current) != NOQUOTE_1) {  // quasiform or quoted [1]
+        assert(QUOTE_BYTE(L_current) != ANTIFORM_0);
+        Copy_Cell(OUT, L_current);
+        QUOTE_BYTE(OUT) -= 2;  // QUASI_2 => ANTIFORM_0, or drops one quote
+    }
+    else switch ((STATE = HEART_BYTE(L_current))) {  // states include type [2]
 
     //=//// VOID //////////////////////////////////////////////////////////=//
     //
@@ -709,7 +714,7 @@ Bounce Evaluator_Executor(Level* L)
             fail (Error_Bad_Word_Get(L_current, unwrap(L_current_gotten)));
         }
 
-        Copy_Cell(OUT, unwrap(L_current_gotten));  // no CELL_FLAG_UNEVALUATED
+        Copy_Cell(OUT, unwrap(L_current_gotten));
         break;
 
 
@@ -799,7 +804,6 @@ Bounce Evaluator_Executor(Level* L)
             L_current_gotten = Lookup_Word_May_Fail(L_current, L_specifier);
 
         Copy_Cell(OUT, unwrap(L_current_gotten));
-        assert(Not_Cell_Flag(OUT, UNEVALUATED));
 
         if (STATE == REB_META_WORD)
             Meta_Quotify(OUT);
@@ -908,7 +912,7 @@ Bounce Evaluator_Executor(Level* L)
             fail (Error_Bad_Word_Get(L_current, stable_SPARE));
         }
 
-        Move_Cell(OUT, SPARE);  // won't move CELL_FLAG_UNEVALUATED
+        Move_Cell(OUT, SPARE);
         break; }
 
 
@@ -1181,12 +1185,6 @@ Bounce Evaluator_Executor(Level* L)
       case REB_GET_TUPLE:
         if (Get_Var_Core_Throws(OUT, GROUPS_OK, L_current, L_specifier))
             goto return_thrown;
-
-        // !!! This didn't appear to be true for `-- "hi" "hi"`, processing
-        // GET-PATH! of a variadic.  Review if it should be true.
-        //
-        /* assert(Not_Cell_Flag(OUT, CELL_FLAG_UNEVALUATED)); */
-        Clear_Cell_Flag(OUT, UNEVALUATED);
 
         if (STATE == REB_META_PATH or STATE == REB_META_TUPLE)
             Meta_Quotify(OUT);
@@ -1650,37 +1648,6 @@ Bounce Evaluator_Executor(Level* L)
         break;
 
 
-      //=//// QUASIFORM! //////////////////////////////////////////////////=//
-      //
-      // Quasiforms will produce an antiform when evaluated of whatever it is
-      // containing:
-      //
-      //     >> bar: ~whatever~
-      //     == ~whatever~  ; anti
-      //
-      //     >> bar
-      //     ** Error: bar is a ~whatever~ antiform
-      //
-      // To bypass the error, use GET/ANY.
-
-      case REB_QUASIFORM:  // do not Derelativize() !
-        Copy_Cell(OUT, L_current);
-        QUOTE_BYTE(OUT) = ANTIFORM_0;
-        break;
-
-
-      //=//// QUOTED! /////////////////////////////////////////////////////=//
-      //
-      // QUOTED! forms simply evaluate to remove one level of quoting.  The
-      // reduced case of a single ' produces a void.
-      //
-
-      case REB_QUOTED:  // do not Derelativize() !
-        Copy_Cell(OUT, L_current);
-        Unquotify(OUT, 1);
-        break;
-
-
     //=//// GARBAGE (pseudotypes or otherwise //////////////////////////////=//
 
       default:
@@ -1688,29 +1655,6 @@ Bounce Evaluator_Executor(Level* L)
     }
 
   //=//// END MAIN SWITCH STATEMENT ///////////////////////////////////////=//
-
-    // The UNEVALUATED flag is one of the bits that doesn't get copied by
-    // Copy_Cell() or Derelativize().  Hence it can be overkill to clear it
-    // off if one knows a value came from doing those things.  This test at
-    // the end checks to make sure that the right thing happened.
-    //
-    // !!! This check requires caching the kind of `v` at the start of switch.
-    // Is it worth it to do so?
-    //
-    /*if (Any_Inert_Kind(kind_current)) {  // if() to check which part failed
-        assert(Get_Cell_Flag(OUT, UNEVALUATED));
-    }
-    else if (Get_Cell_Flag(OUT, UNEVALUATED)) {
-        //
-        // !!! Should ONLY happen if we processed a WORD! that looked up to
-        // an invisible function, and left something behind that was not
-        // previously evaluative.  To track this accurately, we would have
-        // to use an LEVEL_FLAG_DEBUG_INVISIBLE_UNEVALUATIVE here, because we
-        // don't have the word anymore to look up (and even if we did, what
-        // it looks up to may have changed).
-        //
-        assert(kind_current == REB_WORD or Any_Inert(OUT));
-    }*/
 
     // We're sitting at what "looks like the end" of an evaluation step.
     // But we still have to consider enfix.  e.g.

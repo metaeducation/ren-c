@@ -134,11 +134,7 @@ Bounce Group_Branch_Executor(Level* level_)
 //
 DECLARE_NATIVE(if)
 //
-// 1. It's a common mistake to write something like `if [1 > 2]` and be
-//    surprised that is considered "truthy" (as it's an unevaluated block).
-//    So Is_Conditional_False() notices a hidden bit on ARG(condition) that
-//    tells IF whether a BLOCK! argument is the product of an evaluation.
-//    (See CELL_FLAG_UNEVALUATED for more information on this feature.)
+// 1. ~false~ and ~null~ antiforms are falsey, while voids error.
 //
 // 2. Evaluations must be performed through continuations, so IF can't be on
 //    the C function stack while the branch runs.  Rather than asking to be
@@ -151,7 +147,7 @@ DECLARE_NATIVE(if)
     Value* condition = ARG(condition);
     Value* branch = ARG(branch);
 
-    if (Is_Conditional_False(condition))  // errors on literal block [1]
+    if (Is_Falsey(condition))  // [1]
         return VOID;
 
     return DELEGATE_BRANCH(OUT, branch, condition);  // no callback [2]
@@ -177,7 +173,7 @@ DECLARE_NATIVE(either)
 
     Value* condition = ARG(condition);
 
-    Value* branch = Is_Conditional_True(condition)  // [1] on IF native
+    Value* branch = Is_Truthy(condition)  // [1] on IF native
         ? ARG(true_branch)
         : ARG(false_branch);
 
@@ -1271,9 +1267,6 @@ DECLARE_NATIVE(switch)
 
     if (REF(type) and REF(predicate))
         fail (Error_Bad_Refines_Raw());
-
-    if (Is_Block(left) and Get_Cell_Flag(left, UNEVALUATED))
-        fail (Error_Block_Switch_Raw(left));  // `switch [x] [...]` safeguard
 
     Level* sub = Make_Level_At(
         cases,

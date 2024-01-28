@@ -505,7 +505,6 @@ INLINE void Inertly_Derelativize_Inheriting_Const(
     Feed* feed
 ){
     Derelativize(out, v, FEED_SPECIFIER(feed));
-    Set_Cell_Flag(out, UNEVALUATED);
 
     if (Not_Cell_Flag(v, EXPLICITLY_MUTABLE))
         out->header.bits |= (feed->flags.bits & FEED_FLAG_CONST);

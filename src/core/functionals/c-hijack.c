@@ -126,10 +126,6 @@ void Push_Redo_Action_Level(Atom* out, Level* L1, const REBVAL *run)
         // The arguments were already evaluated to put them in the frame, do
         // not evaluate them again.
         //
-        // !!! This tampers with the VALUE_FLAG_UNEVALUATED bit, which is
-        // another good reason this should probably be done another way.  It
-        // also loses information about the const bit.
-        //
         Copy_Meta_Cell(Alloc_Tail_Array(normals), e.var);
     }
 

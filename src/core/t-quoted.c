@@ -164,7 +164,6 @@ DECLARE_NATIVE(the)
 
     Copy_Cell(OUT, v);
 
-    Set_Cell_Flag(OUT, UNEVALUATED);
     return OUT;
 }
 
@@ -217,7 +216,6 @@ DECLARE_NATIVE(the_p)
     }
     else {
         Copy_Cell(OUT, v);
-        Set_Cell_Flag(OUT, UNEVALUATED);  // !!! Is this a good idea?
     }
     return OUT;
 }

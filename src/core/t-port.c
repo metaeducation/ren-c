@@ -242,19 +242,6 @@ REBTYPE(Url)
         //
         return COPY(url);
     }
-    else if (Get_Cell_Flag(url, UNEVALUATED)) {
-        //
-        // There are risks associated when common terms like APPEND can too
-        // carelessly be interpreted as IO.  Because what was intended as a
-        // local operation can wind up corrupting files or using up network
-        // bandwidth in crazy ways:
-        //
-        //   https://forum.rebol.info/t/1697
-        //
-        // Literal usages are interpreted as intentional, so if the URL was
-        // written at the callsite then accept that.
-        //
-    }
     else switch (id) {
       case SYM_REFLECT:
       case SYM_READ:

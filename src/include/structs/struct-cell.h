@@ -227,28 +227,10 @@ typedef struct StubStruct Stub;  // forward decl for DEBUG_USE_UNION_PUNS
     FLAG_LEFT_BIT(26)
 
 
-//=//// CELL_FLAG_UNEVALUATED /////////////////////////////////////////////=//
-//
-// Some functions wish to be sensitive to whether or not their argument came
-// as a literal in source or as a product of an evaluation.  While all values
-// carry the bit, it is only guaranteed to be meaningful on arguments in
-// function frames...though it is valid on any result at the moment of taking
-// it from Eval_Core().
-//
-// It is in the negative sense because the act of requesting it is uncommon,
-// e.g. from the QUOTE operator.  So most Init_Blank() or other assignment
-// should default to being "evaluative".
-//
-// !!! This concept is somewhat dodgy and experimental, but it shows promise
-// in addressing problems like being able to give errors if a user writes
-// something like `if [x > 2] [print "true"]` vs. `if x > 2 [print "true"]`,
-// while still tolerating `item: [a b c] | if item [print "it's an item"]`.
-// That has a lot of impact for the new user experience.
+//=//// CELL_FLAG_27 //////////////////////////////////////////////////////=//
 //
 #define CELL_FLAG_27 \
     FLAG_LEFT_BIT(27)
-
-#define CELL_FLAG_UNEVALUATED CELL_FLAG_27
 
 
 //=//// CELL_FLAG_NOTE ////////////////////////////////////////////////////=//
@@ -357,7 +339,6 @@ typedef struct StubStruct Stub;  // forward decl for DEBUG_USE_UNION_PUNS
 #define CELL_MASK_COPY \
     ~(CELL_MASK_PERSIST \
         | CELL_FLAG_NOTE \
-        | CELL_FLAG_UNEVALUATED \
         | CELL_FLAG_PROTECTED)
 
 #define CELL_MASK_ALL \

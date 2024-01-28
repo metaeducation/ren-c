@@ -451,18 +451,13 @@ Bounce Action_Executor(Level* L)
                 break; }
 
               case PARAMCLASS_HARD:  // PARAMETER_FLAG_SKIPPABLE in pre-lookback
-                if (Not_Cell_Flag(OUT, UNEVALUATED))  // `x: 10 | x >- the`
-                    fail (Error_Evaluative_Quote_Raw());  // [5]
-
                 Move_Cell(ARG, OUT);
-                assert(Get_Cell_Flag(ARG, UNEVALUATED));  // move preserves
                 break;
 
               case PARAMCLASS_SOFT:  // can carry UNEVALUATED [6]
                 goto escapable;
 
               case PARAMCLASS_MEDIUM:  // must carry UNEVALUATED [7]
-                assert(Get_Cell_Flag(OUT, UNEVALUATED));
                 goto escapable;
 
               escapable:
@@ -471,10 +466,8 @@ Bounce Action_Executor(Level* L)
                         goto handle_thrown_maybe_redo;
                     FRESHEN(OUT);
                 }
-                else {
+                else
                     Move_Cell(ARG, OUT);
-                    Set_Cell_Flag(ARG, UNEVALUATED);
-                }
                 break;
 
               default:
@@ -608,7 +601,7 @@ Bounce Action_Executor(Level* L)
             // a non-void causes a later assert.  Review.
             //
             if (Not_Parameter_Flag(PARAM, SKIPPABLE))
-                Literal_Next_In_Feed(ARG, L->feed);  // CELL_FLAG_UNEVALUATED
+                Literal_Next_In_Feed(ARG, L->feed);
             else {
                 Derelativize(SPARE, L_next, L_specifier);
                 if (not Typecheck_Atom(PARAM, SPARE)) {
@@ -617,7 +610,6 @@ Bounce Action_Executor(Level* L)
                     goto continue_fulfilling;
                 }
                 Literal_Next_In_Feed(ARG, L->feed);
-                Set_Cell_Flag(ARG, UNEVALUATED);
             }
 
             // Have to account for enfix deferrals in cases like:
@@ -655,7 +647,7 @@ Bounce Action_Executor(Level* L)
 
           case PARAMCLASS_SOFT:
           case PARAMCLASS_MEDIUM:
-            Literal_Next_In_Feed(ARG, L->feed);  // CELL_FLAG_UNEVALUATED
+            Literal_Next_In_Feed(ARG, L->feed);
 
             // See remarks on Lookahead_To_Sync_Enfix_Defer_Flag().  We
             // have to account for enfix deferrals in cases like:
@@ -989,7 +981,6 @@ Bounce Action_Executor(Level* L)
 
     if (b == OUT) {  // common case, made fastest
         assert(not Is_Fresh(OUT));  // must write output, even if just void
-        Clear_Cell_Flag(OUT, UNEVALUATED);
     }
     else if (b == nullptr) {  // API and internal code can both return `nullptr`
         Init_Nulled(OUT);

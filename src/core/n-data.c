@@ -1760,36 +1760,6 @@ DECLARE_INTRINSIC(unenfix)
 
 
 //
-//  semiquoted?: native [
-//
-//  {Discern if a function parameter came from an "active" evaluation.}
-//
-//      return: [logic?]
-//      parameter [word!]
-//  ]
-//
-DECLARE_NATIVE(semiquoted_q)
-//
-// This operation is somewhat dodgy.  So even though the flag is carried by
-// all values, and could be generalized in the system somehow to query on
-// anything--we don't.  It's strictly for function parameters, and
-// even then it should be restricted to functions that have labeled
-// themselves as absolutely needing to do this for ergonomic reasons.
-{
-    INCLUDE_PARAMS_OF_SEMIQUOTED_Q;
-
-    // !!! TBD: Enforce this is a function parameter (specific binding branch
-    // makes the test different, and easier)
-
-    Element* parameter = cast(Element*, ARG(parameter));
-
-    const REBVAL *var = Lookup_Word_May_Fail(parameter, SPECIFIED);
-
-    return Init_Logic(OUT, Get_Cell_Flag(var, UNEVALUATED));
-}
-
-
-//
 //  identity: native [
 //
 //  {Returns input value (https://en.wikipedia.org/wiki/Identity_function)}

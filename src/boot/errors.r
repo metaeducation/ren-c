@@ -165,8 +165,6 @@ Script: [
     bad-return-type:    [:arg1 {doesn't have RETURN: enabled for} :arg2]
     bad-void-return:    [:arg1 {doesn't have void RETURN enabled}]
 
-    unintended-literal: [{Likely unintended literal, use quote/group:} :arg1]
-
     no-refine:          [:arg1 {has no refinement called} :arg2]
     bad-refines:        {incompatible or invalid refinements}
     bad-parameter:      [{incompatible or duplicate parameter:} :arg1]
@@ -238,9 +236,7 @@ Script: [
 
     conflicting-key:    [:arg1 {key conflicts; use SELECT or PUT with /CASE}]
 
-    block-conditional:  [{Literal block used as conditional} :arg1]
     non-block-branch:   [{Evaluated non-block/function used as branch} :arg1]
-    block-switch:       [{Literal block used as switch value} :arg1]
 
     native-unloaded:    [{Native has been unloaded:} :arg1]
 ]

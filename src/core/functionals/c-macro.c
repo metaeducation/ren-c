@@ -134,7 +134,7 @@ Bounce Macro_Dispatcher(Level* const L)
             and VAL_ACTION(label) == VAL_ACTION(Lib(UNWIND))
             and g_ts.unwind_level == L
         ){
-            CATCH_THROWN(OUT, L);  // preserves CELL_FLAG_UNEVALUATED
+            CATCH_THROWN(OUT, L);
         }
         else
             return THROWN;  // we didn't catch the throw

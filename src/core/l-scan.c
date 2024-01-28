@@ -2955,7 +2955,6 @@ Array* Scan_UTF8_Managed(
     StackIndex base = TOP_INDEX;
     while (Not_Feed_At_End(feed)) {
         Derelativize(PUSH(), At_Feed(feed), FEED_SPECIFIER(feed));
-        Set_Cell_Flag(TOP, UNEVALUATED);
         Fetch_Next_In_Feed(feed);
     }
     // Note: exhausting feed should take care of the va_end()

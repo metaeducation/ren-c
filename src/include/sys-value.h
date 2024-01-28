@@ -728,14 +728,12 @@ INLINE REBVAL *Move_Cell_Untracked(
     return cast(REBVAL*, out);
 }
 
-#define CELL_MASK_MOVE (CELL_MASK_COPY | CELL_FLAG_UNEVALUATED)
-
 #if (! DEBUG_USE_CELL_SUBCLASSES)
     #define Move_Cell(out,v) \
-        TRACK(Move_Cell_Untracked((out), (v), CELL_MASK_MOVE))
+        TRACK(Move_Cell_Untracked((out), (v), CELL_MASK_COPY))
 #else
     INLINE Element* Move_Cell_Overload(Sink(Element*) out, Element* v) {
-        Move_Cell_Untracked(out, v, CELL_MASK_MOVE);
+        Move_Cell_Untracked(out, v, CELL_MASK_COPY);
         return out;
     }
 
@@ -747,12 +745,12 @@ INLINE REBVAL *Move_Cell_Untracked(
         >::type* = nullptr
     >
     INLINE Value* Move_Cell_Overload(Sink(Value*) out, T v) {
-        Move_Cell_Untracked(out, v, CELL_MASK_MOVE);
+        Move_Cell_Untracked(out, v, CELL_MASK_COPY);
         return out;
     }
 
     INLINE Atom* Move_Cell_Overload(Sink(Atom*) out, Atom* v) {
-        Move_Cell_Untracked(out, v, CELL_MASK_MOVE);
+        Move_Cell_Untracked(out, v, CELL_MASK_COPY);
         return out;
     }
 

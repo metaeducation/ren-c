@@ -30,9 +30,11 @@
 ; bitset
 (if make bitset! "" [true])
 
-; literal blocks illegal as condition in Ren-C, but evaluation products ok
+; literal blocks were once illegal in Ren-C as conditions, but that check
+; was based on CELL_FLAG_UNEVALUATED, which was removed when blocks became
+; "evaluative" for their bindings.
 [
-    ~block-conditional~ !! (if [] [true])
+    (if [] [true])
     (if identity [] [true])
 ]
 

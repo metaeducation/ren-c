@@ -45,12 +45,6 @@
 //   offset can be used to find the param the varargs is tied to, in order
 //   to know whether it is quoted or not (and its name for error delivery).
 //
-// * It can also find the arg.  Similar to the param, the arg is only good
-//   for the lifetime of the FRAME! in extra->binding...but even less so,
-//   because VARARGS! can (currently) be overwritten with another value in
-//   the function frame at any point.  Despite this, we proxy the
-//   CELL_FLAG_UNEVALUATED from the last TAKE to reflect its status.
-//
 
 #define VAL_VARARGS_SIGNED_PARAM_INDEX(v) \
     PAYLOAD(Any, (v)).first.i

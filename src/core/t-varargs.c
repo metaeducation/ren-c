@@ -103,7 +103,6 @@ inline static bool Vararg_Op_If_No_Advance_Handled(
             fail (Error_Varargs_No_Look_Raw()); // hard quote only
 
         Derelativize(out, look, specifier);
-        Set_Cell_Flag(out, UNEVALUATED);
 
         return true; // only a lookahead, no need to advance
     }
@@ -146,8 +145,6 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
     if (pclass == PARAMCLASS_0)
         pclass = Cell_ParamClass(param);
 
-    REBVAL *arg; // for updating CELL_FLAG_UNEVALUATED
-
     Option(Level*) vararg_level;
 
     Level* L;
@@ -160,7 +157,6 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
         // array during that creation, flattening its entire output).
 
         vararg_level = nullptr;
-        arg = nullptr; // no corresponding varargs argument either
 
         if (Vararg_Op_If_No_Advance_Handled(
             out,
@@ -219,7 +215,6 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
                 Cell_Array_Item_At(shared),
                 Cell_Specifier(shared)
             );
-            Set_Cell_Flag(out, UNEVALUATED);
             VAL_INDEX_UNBOUNDED(shared) += 1;
             break;
 
@@ -240,7 +235,6 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
                     Cell_Array_Item_At(shared),
                     Cell_Specifier(shared)
                 );
-                Set_Cell_Flag(out, UNEVALUATED);
             }
             VAL_INDEX_UNBOUNDED(shared) += 1;
             break;
@@ -267,10 +261,6 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
         assert(not Is_Varargs_Enfix(vararg));
 
         vararg_level = L;
-        if (VAL_VARARGS_SIGNED_PARAM_INDEX(vararg) < 0)
-            arg = Level_Arg(L, - VAL_VARARGS_SIGNED_PARAM_INDEX(vararg));
-        else
-            arg = Level_Arg(L, VAL_VARARGS_SIGNED_PARAM_INDEX(vararg));
 
         Option(const Element*) look = nullptr;
         if (not Is_Level_At_End(L))
@@ -351,13 +341,6 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
                 unwrap(vararg_level), key, param, Stable_Unchecked(out))
             );
         }
-    }
-
-    if (arg) {
-        if (Get_Cell_Flag(out, UNEVALUATED))
-            Set_Cell_Flag(arg, UNEVALUATED);
-        else
-            Clear_Cell_Flag(arg, UNEVALUATED);
     }
 
     // Note: may be at end now, but reflect that at *next* call
