@@ -1133,8 +1133,10 @@ DECLARE_NATIVE(for_each)
         ST_FOR_EACH_RUNNING_BODY
     };
 
-    if (Get_Level_Flag(level_, ABRUPT_FAILURE))  // a fail() in this dispatcher
+    if (Get_Level_Flag(level_, ABRUPT_FAILURE)) {  // fail() in this dispatcher
+        Clear_Level_Flag(level_, ABRUPT_FAILURE);
         goto finalize_for_each;
+    }
 
     switch (STATE) {
       case ST_FOR_EACH_INITIAL_ENTRY : goto initial_entry;

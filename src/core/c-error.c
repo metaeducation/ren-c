@@ -69,18 +69,18 @@ ATTRIBUTE_NO_RETURN void Fail_Core(const void *p)
     printf("%ld\n", cast(long, TG_tick));  /* tick count prefix */
   #endif
 
+    // You can't abruptly fail during the handling of abrupt failure.  At the
+    // moment we're assuming that once a level has failed it can't recover if
+    // it originated the failure...but this may be revisited.
+    //
+    assert(Not_Level_Flag(TOP_LEVEL, ABRUPT_FAILURE));
+
     // The topmost level must be the one issuing the error.  If a level was
     // pushed with LEVEL_FLAG_TRAMPOLINE_KEEPALIVE that finished executing
     // but remained pushed, it must be dropped before the level that pushes
     // it issues a failure.
     //
     assert(TOP_LEVEL->executor != nullptr);
-
-    // You can't abruptly fail during the handling of abrupt failure.  At the
-    // moment we're assuming that once a level has failed it can't recover if
-    // it originated the failure...but this may be revisited.
-    //
-    assert(Not_Level_Flag(TOP_LEVEL, ABRUPT_FAILURE));
 
     Context* error;
     if (p == nullptr) {
