@@ -345,6 +345,9 @@ Bounce Evaluator_Executor(Level* L)
         goto set_generic_rightside_in_out;
 
       case REB_SET_BLOCK :
+        if (Is_Raised(OUT))  // don't assign variables [1]
+            goto set_block_drop_stack_and_continue;
+
         goto set_block_rightside_result_in_out;
 
       case REB_FRAME :
@@ -1403,9 +1406,6 @@ Bounce Evaluator_Executor(Level* L)
       //    overwrite of the returned OUT for the whole evaluation will happen
       //    *after* the original OUT was captured into any desired variable.
 
-        if (Is_Raised(OUT))  // don't assign variables [1]
-            goto set_block_drop_stack_and_continue;
-
         if (Is_Lazy(OUT)) {
             //
             // A Lazy Object has a methodization moment here to turn itself
@@ -1422,23 +1422,26 @@ Bounce Evaluator_Executor(Level* L)
                 fail ("Lazy Object Reified to Lazy Object: Not Allowed");
         }
 
-        const Element* pack_meta_at = nullptr;  // pack block items are ^META'd
-        const Element* pack_meta_tail = nullptr;
-        Specifier* pack_specifier = nullptr;
+        const Array* pack_array;  // needs GC guarding when OUT overwritten
+        const Element* pack_meta_at;  // pack block items are ^META'd
+        const Element* pack_meta_tail;
 
         if (Is_Barrier(OUT))  // !!! Hack, wnat ([/foo]: eval) to always work
             Init_Nihil(OUT);
 
         if (Is_Pack(OUT)) {  // antiform block
             pack_meta_at = Cell_Array_At(&pack_meta_tail, OUT);
-            pack_specifier = Cell_Specifier(OUT);
+
+            pack_array = Cell_Array(OUT);
+            Push_GC_Guard(pack_array);
         }
         else {
             Meta_Quotify(OUT);  // standardize to align with pack items
 
             pack_meta_at = cast(Element*, OUT);
             pack_meta_tail = cast(Element*, OUT) + 1;  // not a valid cell
-            pack_specifier = nullptr;
+
+            pack_array = nullptr;
         }
 
         StackIndex stackindex_var = BASELINE->stack_base + 1;  // [2]
@@ -1472,7 +1475,7 @@ Bounce Evaluator_Executor(Level* L)
                 Init_Meta_Of_Null(SPARE);
             }
             else
-                Derelativize(SPARE, pack_meta_at, pack_specifier);
+                Copy_Cell(SPARE, pack_meta_at);
 
             if (
                 var_heart == REB_WORD
@@ -1559,6 +1562,9 @@ Bounce Evaluator_Executor(Level* L)
         // in the implementation of SET-BLOCK! here, so, it's incorrect.
         //
         L_next_gotten = nullptr;
+
+        if (pack_array)
+            Drop_GC_Guard(pack_array);
 
     } set_block_drop_stack_and_continue: {  //////////////////////////////////
 
@@ -1670,15 +1676,6 @@ Bounce Evaluator_Executor(Level* L)
     // processing of the 2 argument doesn't greedily continue to advance, but
     // waits for `1 + 2` to finish.  This is because the right hand argument
     // of math operations tend to be declared #tight.
-    //
-    // Note that invisible functions have to be considered in the lookahead
-    // also.  Consider this case:
-    //
-    //    [val pos]: evaluate/rest [1 + 2 * comment ["hi"] 3 4 / 5]
-    //
-    // We want `val = 9`, with `pos = [4 / 5]`.  To do this, we
-    // can't consider an evaluation finished until all the "invisibles" have
-    // been processed.
     //
     // If that's not enough to consider :-) it can even be the case that
     // subsequent enfix gets "deferred".  Then, possibly later the evaluated

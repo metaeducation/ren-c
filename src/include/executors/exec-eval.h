@@ -137,6 +137,15 @@ struct EvaluatorExecutorStateStruct {
     // slot to be used.  The GC explicitly checks for Eval_Executor() to know
     // if this needs to be marked.
     //
+    // The main use of this cell is to store a copy of the current cell
+    // being evaluated.  That can't be the feed's current cell, because the
+    // evaluator has to seek ahead one unit to find lookback quoters, such
+    // as `x: default [...]`, where DEFAULT wants to quote the X: to its
+    // left.  An attempt was made to optimize this by multiplexing the OUT
+    // cell for this purpose (after all, inert items want to wind up in the
+    // output cell anyway).  But besides obfuscating the code, it was slower,
+    // since the output cell involves a level of indirection to address.
+    //
     Cell current;  // raw vs. derived class due to union/destructor combo
 
     Option(const Value*) current_gotten;
