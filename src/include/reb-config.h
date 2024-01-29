@@ -816,9 +816,9 @@ Special internal defines used by RT, not Host-Kit developers:
 // a corrupt value because it's more likely to cause trouble if accessed.)
 //
 #if DEBUG
-    #define CORRUPTZERO nullptr
-#else
     #define CORRUPTZERO p_cast(void*, cast(intptr_t, 0xDECAFBAD))
+#else
+    #define CORRUPTZERO nullptr
 #endif
 
 #define ZERO_UNUSED_CELL_FIELDS 1
