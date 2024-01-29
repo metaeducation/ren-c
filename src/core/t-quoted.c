@@ -553,18 +553,13 @@ DECLARE_NATIVE(lazy)
 //
 //      return: "Antiform of BLOCK!"
 //          [pack?]
-//      array "Reduce if plain BLOCK!, not if THE-BLOCK!"
-//          [<maybe> the-block! block!]  ; accept quoted values?  [1]
+//      array "Reduce if plain BLOCK!, not if '[block]"
+//          [<maybe> block! lit-block?]
 //  ]
 //
 DECLARE_NATIVE(pack)
 //
-// 1. The original implementation accepted quoted values as if they were
-//    blocks containing one item.  This semantic equivalence is presumably
-//    for some efficiency trick to let users avoid block allocations in
-//    some situations.  No usages existed, so it was scrapped.  Review.
-//
-// 2. In REDUCE, /PREDICATE functions are offered things like nihil and void
+// 1. In REDUCE, /PREDICATE functions are offered things like nihil and void
 //    if they can accept them (which META can).  But COMMA! antiforms that
 //    result from evaluating commas are -not- offered to any predicates.  This
 //    is by design, so we get:
@@ -579,22 +574,23 @@ DECLARE_NATIVE(pack)
 {
     INCLUDE_PARAMS_OF_PACK;
 
-    Value* v = ARG(array);
+    Value* block = ARG(array);
 
-    if (Is_The_Block(v)) {
+    if (Is_Quoted(block)) {
         const Element* tail;
-        const Element* at = Cell_Array_At(&tail, v);
+        const Element* at = Cell_Array_At(&tail, block);
         for (; at != tail; ++at)
-            Quotify(Derelativize(PUSH(), at, Cell_Specifier(v)), 1);
+            Copy_Meta_Cell(PUSH(), at);
 
         return Init_Pack(OUT, Pop_Stack_Values(BASELINE->stack_base));
     }
 
-    assert(Is_Block(v));
+    assert(Is_Block(block));
 
     if (rebRunThrows(
         cast(REBVAL*, SPARE),  // output cell
-        Canon(QUASI), "reduce/predicate", v, Lib(META)  // commas excluded [2]
+        Canon(QUASI),
+            "reduce/predicate", block, Lib(META)  // commas excluded [1]
     )){
         return THROWN;
     }

@@ -36,7 +36,7 @@
 //          [<opt> text!]
 //      delimiter [<opt> blank! char? text!]
 //      line "Will be copied if already a text value"
-//          [<maybe> text! block! the-block! issue!]
+//          [<maybe> text! block! lit-block? issue!]
 //      /head "Include delimiter at head of result (if non-NULL)"
 //      /tail "Include delimiter at tail of result (if non-NULL)"
 //  ]
@@ -113,8 +113,10 @@ DECLARE_NATIVE(delimit)
     }
 
     Flags flags = LEVEL_MASK_NONE;
-    if (Is_The_Block(ARG(line)))
+    if (Is_Quoted(line)) {
+        assert(HEART_BYTE(line) == REB_BLOCK);
         flags |= EVAL_EXECUTOR_FLAG_NO_EVALUATIONS;
+    }
     else
         assert(Is_Block(line));
 

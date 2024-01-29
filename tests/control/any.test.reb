@@ -407,14 +407,14 @@
     )
 ]
 
-; When used with @ blocks, ANY will treat the block as already reduced
+; When used with quoted blocks, ANY will treat the block as already reduced
 ; With all values becoming truthy, this is only really useful with a predicate.
 [
-    (void? any @[])
-    (1 = any @[1 + 2])
-    ('~false~ = any @[~false~ _])
-    ('false = any inert reduce ['false blank])
-    ('false = any @[false])  ; just the word, and words are truthy
+    (void? any ^[])
+    (1 = any ^[1 + 2])
+    ('~false~ = any ^[~false~ _])
+    ('false = any quote reduce ['false blank])
+    ('false = any ^[false])  ; just the word, and words are truthy
 ]
 
 (not any [match logic?! false])

@@ -697,14 +697,34 @@ DECLARE_NATIVE(match)
 
 
 //
+//  lit-block?: native/intrinsic [
+//
+//  {Test if a block is singly quoted}
+//
+//      return: [logic?]
+//      value [any-value?]
+//  ]
+//
+DECLARE_INTRINSIC(lit_block_q)
+{
+    UNUSED(phase);
+
+    Init_Logic(
+        out,
+        QUOTE_BYTE(arg) == ONEQUOTE_3 and HEART_BYTE(arg) == REB_BLOCK
+    );
+}
+
+
+//
 //  all: native [
 //
 //  {Short-circuiting variant of AND, using a block of expressions as input}
 //
 //      return: "Product of last passing evaluation if all truthy, else null"
 //          [any-value?]
-//      block "Block of expressions, @[block] will be treated inertly"
-//          [block! the-block!]
+//      block "Block of expressions, '[block] will be treated inertly"
+//          [block! lit-block?]
 //      /predicate "Test for whether an evaluation passes (default is DID)"
 //          [<unrun> frame!]
 //      <local> scratch
@@ -764,7 +784,7 @@ DECLARE_NATIVE(all)
 
     Flags flags = LEVEL_FLAG_TRAMPOLINE_KEEPALIVE;
 
-    if (Is_The_Block(block))
+    if (Is_Quoted(block))
         flags |= EVAL_EXECUTOR_FLAG_NO_EVALUATIONS;
 
     Level* sub = Make_Level_At(block, flags);
@@ -852,8 +872,8 @@ DECLARE_NATIVE(all)
 //
 //      return: "First passing evaluative result, or null if none pass"
 //          [any-value?]
-//      block "Block of expressions, @[block] will be treated inertly"
-//          [block! the-block!]
+//      block "Block of expressions, '[block] will be treated inertly"
+//          [block! lit-block?]
 //      /predicate "Test for whether an evaluation passes (default is DID)"
 //          [<unrun> frame!]
 //  ]
@@ -897,7 +917,7 @@ DECLARE_NATIVE(any)
 
     Flags flags = LEVEL_FLAG_TRAMPOLINE_KEEPALIVE;
 
-    if (Is_The_Block(block))
+    if (Is_Quoted(block))
         flags |= EVAL_EXECUTOR_FLAG_NO_EVALUATIONS;
 
     Level* sub = Make_Level_At(block, flags);

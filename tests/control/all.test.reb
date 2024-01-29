@@ -401,14 +401,14 @@
     ("A" = all ["A", all [comment "hi", void, eval []]])
 ]
 
-; When used with @ blocks, ALL will treat the block as already reduced
+; When used with quoted blocks, ALL will treat the block as already reduced
 ; With all reified values being truthy, this is only useful with a predicate
 [
-    (void? all @[])
+    (void? all ^[])
 
-    (2 = all @[1 + 2])
-    ('~false~ = all @[true ~true~ false ~false~])
-    ('true = all @[false true])  ; just the word, and words are truthy
+    (2 = all ^[1 + 2])
+    ('~false~ = all ^[true ~true~ false ~false~])
+    ('true = all ^[false true])  ; just the word, and words are truthy
 ]
 
 (not all [match logic?! false])
