@@ -52,6 +52,57 @@ INLINE bool ANY_ESCAPABLE_GET(const Atom* v) {
 }
 
 
+// There are 8 flags in a level header that are reserved for the use of the
+// level executor.  A nice idea was to make generic Get_Executor_Flag()
+// routines that could check to make sure the right flags were only tested
+// on levels with the right executor.
+//
+// Using this pervasively was punishingly slow.  Testing level flags is
+// supposed to be "hot and fast" and this wound up costing 3% of runtime...
+// due to just how often the flags are fiddled.
+//
+// A compromise is that each executor file defines its own set of uniquely
+// named macros that are applicable just in that file.  This is relatively
+// safe, as they should rarely examine flags for other executors.  Then, the
+// rarer operations in other parts of the codebase use the generic and
+// checked forms.
+//
+#if DEBUG_ENSURE_EXECUTOR_FLAGS
+    INLINE Level* ensure_executor(Executor *executor, Level* L) {
+        if (L->executor != executor) {
+            if (
+                executor == &Evaluator_Executor
+                and L->executor == &Array_Executor
+            ){
+                // See Array_Executor(), this is allowed
+            }
+            else
+                assert(!"Wrong executor for flag tested");
+        }
+        return L;
+    }
+#else
+    #define ensure_executor(executor,f) (f)  // no-op in release build
+#endif
+
+
+#define Get_Executor_Flag(executor,L,name) \
+    ((ensure_executor(EXECUTOR_##executor, (L))->flags.bits \
+        & executor##_EXECUTOR_FLAG_##name) != 0)
+
+#define Not_Executor_Flag(executor,L,name) \
+    ((ensure_executor(EXECUTOR_##executor, (L))->flags.bits \
+        & executor##_EXECUTOR_FLAG_##name) == 0)
+
+#define Set_Executor_Flag(executor,L,name) \
+    (ensure_executor(EXECUTOR_##executor, (L))->flags.bits \
+        |= executor##_EXECUTOR_FLAG_##name)
+
+#define Clear_Executor_Flag(executor,L,name) \
+    (ensure_executor(EXECUTOR_##executor, (L))->flags.bits \
+        &= ~executor##_EXECUTOR_FLAG_##name)
+
+
 //=////////////////////////////////////////////////////////////////////////=//
 //
 //  LEVEL ACCESSORS

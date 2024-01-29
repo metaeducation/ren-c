@@ -413,14 +413,7 @@ INLINE Context* VAL_WORD_CONTEXT(const REBVAL *v) {
     else if (IS_LET(binding))
         fail ("LET variables have no context at this time");
 
-    assert(Is_Node_Accessible(binding));
-    assert(
-        Is_Node_Managed(binding) or
-        not Is_Level_Fulfilling(cast(Level*, node_BONUS(KeySource, binding)))
-    );
-    Set_Node_Managed_Bit(binding);  // !!! review managing needs
-    Context* c = cast(Context*, binding);
-    return c;
+    return cast(Context*, binding);
 }
 
 
