@@ -209,11 +209,13 @@ DECLARE_NATIVE(reduce)
     if (Get_Array_Flag(Cell_Array(v), NEWLINE_AT_TAIL))
         pop_flags |= ARRAY_FLAG_NEWLINE_AT_TAIL;
 
-    return Init_Array_Cell(
+    Init_Array_Cell(
         OUT,
         VAL_TYPE(v),
         Pop_Stack_Values_Core(STACK_BASE, pop_flags)
     );
+    BINDING(OUT) = BINDING(v);
+    return OUT;
 }}
 
 
