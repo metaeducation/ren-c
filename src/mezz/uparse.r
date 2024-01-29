@@ -1284,6 +1284,24 @@ default-combinators: make map! reduce [
         return unmeta result'
     ]
 
+    === IN COMBINATOR ===
+
+    ; Propagates the binding from <input> onto a value.
+    ; Should be <in> but TAG! combinators can't take arguments yet.
+
+    '*in* combinator [
+        return: "Argument binding gotten INSIDE the current input"
+            [any-value?]
+        parser [action?]
+        <local> result'
+    ][
+        [^result' remainder]: parser input except e -> [
+            return raise e
+        ]
+
+        return inside state.input unmeta result'
+    ]
+
     === GROUP! AND PHASE COMBINATOR ===
 
     ; GROUP! does not advance the input, just runs the group.  It can return

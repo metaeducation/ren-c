@@ -20,7 +20,7 @@ switch2: func [
         while :(more) [
             ; Find next condition clause, or break loop if we hit => or end
             ;
-            condition: between <here> any [
+            condition: *in* between <here> any [
                 ['| (more: true)]
                 ['=> (more: false)]
                 [<end> accept (unmeta result')]
@@ -57,7 +57,11 @@ switch2: func [
 
         (more: true)
 
-        branch: [block! | (fail "Code must be BLOCK! in SWITCH2 (for now)")]
+        branch: [
+            *in* block!
+            |
+            (fail "Code must be BLOCK! in SWITCH2 (for now)")
+        ]
         try some ',  ; skip commas between branch and next condition
 
         any [

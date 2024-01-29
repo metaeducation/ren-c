@@ -19,16 +19,15 @@ destructure: func [
     input [any-series!]
     dialect [block!]
     /multi "Run multiple branches"
-    <local> result' set-word rule pattern branch combinators
 ][
-    result': void'
-    combinators: copy default-combinators
+    let result': void'
+    let combinators: copy default-combinators
     parse dialect [while [not <end>] [
-        set-word: set-word!, rule: block! (
+        let set-word: *in* set-word!, let rule: *in* block! (
             combinators.(to word! set-word): compose [(set-word) (rule)]
         )
         |
-        pattern: block!, '=>, branch: block!
+        let pattern: *in* block!, '=>, let branch: *in* block!
         (
             if not raised? parse/combinators input pattern combinators (
                 branch

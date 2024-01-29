@@ -194,7 +194,7 @@ ask: func [
         block! [
             parse question [
                 try prompt: text!
-                try word: word! (type: ensure type-word! get word)
+                try let word: *in* word! (type: ensure type-word! get word)
             ] except [
                 fail "ASK currently only supports [{Prompt:} type-word!]"
             ]
