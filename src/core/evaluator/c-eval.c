@@ -88,13 +88,6 @@
 #define L_current           cast(const Element*, &L->u.eval.current)
 #define L_current_gotten    L->u.eval.current_gotten
 
-// In debug builds, the KIND_BYTE() calls enforce cell validity...but slow
-// things down a little.  So we only use the checked version in the main
-// switch statement.  This abbreviation is also shorter and more legible.
-//
-#define kind_current VAL_TYPE_UNCHECKED(L_current)
-
-
 #define level_ L  // for OUT, SPARE, STATE macros
 
 #define CURRENT cast(Element*, &(L->u.eval.current))
@@ -356,7 +349,7 @@ Bounce Evaluator_Executor(Level* L)
         Get_Action_Flag(enfixed, POSTPONES_ENTIRELY)
         or (
             Get_Feed_Flag(L->feed, NO_LOOKAHEAD)
-            and not Any_Set_Kind(kind_current)  // not SET-WORD!, SET-PATH!...
+            and not Any_Set_Kind(VAL_TYPE_UNCHECKED(L_current))
         )
     ){
         // !!! cache this test?
@@ -886,7 +879,6 @@ Bounce Evaluator_Executor(Level* L)
             Cell_Sequence_Len(L_current) - 1
         );
         bool applying = Is_Blank(SPARE);  // terminal slash is APPLY
-
 
         if (Get_Path_Push_Refinements_Throws(
             SPARE,
