@@ -163,7 +163,9 @@ func: func* [
         )
         try some [
             set other: [object! | word! | tuple!] (
-                if not object? other [other: ensure any-context! get other]
+                if not object? other [
+                    other: ensure any-context! get inside spec other
+                ]
                 bind new-body other
             )
         ]
