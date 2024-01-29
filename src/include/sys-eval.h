@@ -109,16 +109,6 @@ INLINE bool Is_Antiform_Get_Friendly(const Value* v) {
     return HEART_BYTE(v) != REB_VOID;
 }
 
-
-// Some array executions wish to vaporize if all contents vaporize
-// The generalized hack for that is ST_ARRAY_PRELOADED_ENTRY
-//
-enum {
-    ST_ARRAY_INITIAL_ENTRY = STATE_0,
-    ST_ARRAY_PRELOADED_ENTRY,
-    ST_ARRAY_STEPPING
-};
-
 INLINE void Restart_Evaluator_Level(Level* L) {
     assert(L->executor == &Evaluator_Executor);
     Level_State_Byte(L) = STATE_0;

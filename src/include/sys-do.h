@@ -55,8 +55,9 @@ INLINE bool Do_Any_Array_At_Core_Throws(
     const Cell* any_array,
     Specifier* specifier
 ){
+    Init_Void(PUSH());  // primed result
     Level* L = Make_Level_At_Core(any_array, specifier, flags);
-    L->executor = &Array_Executor;
+    L->executor = &Stepper_Executor;
 
     return Trampoline_Throws(out, L);
 }

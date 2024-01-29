@@ -97,13 +97,14 @@ Bounce Group_Branch_Executor(Level* level_)
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
+    Init_Void(PUSH());  // primed result
     Level* sub = Make_Level(
         LEVEL->feed,
         ((LEVEL->flags.bits & (~ FLAG_STATE_BYTE(255)))  // take out state 1
             | LEVEL_FLAG_BRANCH)
     );
     Push_Level(SPARE, sub);
-    sub->executor = &Array_Executor;
+    sub->executor = &Stepper_Executor;
 
     STATE = ST_GROUP_BRANCH_RUNNING_GROUP;
     return CATCH_CONTINUE_SUBLEVEL(sub);
@@ -1121,12 +1122,13 @@ DECLARE_NATIVE(case)
             // GET-GROUP! run even on no-match (see IF), but result discarded
         }
 
+        Init_Void(PUSH());  // primed result
         Level* sub = Make_Level_At_Core(
             branch,  // turning into feed drops cell type, :(...) not special
             Level_Specifier(SUBLEVEL),
             LEVEL_MASK_NONE
         );
-        sub->executor = &Array_Executor;
+        sub->executor = &Stepper_Executor;
 
         STATE = ST_CASE_DISCARDING_GET_GROUP;
         SUBLEVEL->executor = &Just_Use_Out_Executor;

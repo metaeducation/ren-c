@@ -342,8 +342,11 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
 
         assert(LEVEL == TOP_LEVEL);  // Action_Executor() helps, drops inerts
 
-        assert(not Is_Pointer_Corrupt_Debug(LEVEL->executor));
-        Corrupt_Pointer_If_Debug(LEVEL->executor);
+        // Corrupting the pointer here was well-intentioned, but Drop_Level()
+        // needs to know if it is an Action_Executor to drop a stack cell.
+        //
+        /*assert(not Is_Pointer_Corrupt_Debug(LEVEL->executor));
+        Corrupt_Pointer_If_Debug(LEVEL->executor);*/
 
         if (Get_Level_Flag(LEVEL, ABRUPT_FAILURE)) {
             //
@@ -689,6 +692,15 @@ void Drop_Level_Core(Level* L) {
     }
 
     g_ts.top_level = L->prior;
+
+    // The Stepper_Executor() has a trick up its sleeve, where it can actually
+    // pass through to the Evaluator_Executor().  It manages to get the one
+    // cell of storage it needs to do the work by sneaking it in the data
+    // stack...*underneath* the level (so the level functions relative to the
+    // baseline predictably).  When we drop the level, drop that cell.
+    //
+    if (L->executor == &Stepper_Executor)
+        DROP();
 
     // Note: Free_Feed() will handle feeding a feed through to its end (which
     // may release handles/etc), so no requirement Level_At(L) be at END.

@@ -1053,8 +1053,9 @@ static bool Run_Va_Throws(
 
     mutable_FEED_SPECIFIER(feed) = Get_Context_From_Stack();
 
+    Init_Void(PUSH());  // primed result
     Level* L = Make_Level(feed, flags);
-    L->executor = &Array_Executor;
+    L->executor = &Stepper_Executor;
 
     bool threw = Trampoline_Throws(out, L);
 
@@ -1244,9 +1245,10 @@ void RL_rebPushContinuation(
     DECLARE_LOCAL (block);
     RL_rebTranscodeInto(cast(REBVAL*, block), p, vaptr);  // use "RL_" [1]
 
+    Init_Void(PUSH());  // primed result
     Level* L = Make_Level_At(block, flags);
     Push_Level(out, L);
-    L->executor = &Array_Executor;
+    L->executor = &Stepper_Executor;
 }
 
 

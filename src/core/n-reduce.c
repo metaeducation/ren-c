@@ -643,11 +643,12 @@ Bounce Composer_Executor(Level* const L)
     if (label)
         Fetch_Next_In_Feed(subfeed);  // wasn't possibly at END
 
+    Init_Void(PUSH());  // primed result
     Level* sublevel = Make_Level(
         subfeed,  // used subfeed so we could skip the label if there was one
         LEVEL_MASK_NONE
     );
-    sublevel->executor = &Array_Executor;
+    sublevel->executor = &Stepper_Executor;
 
     Push_Level(OUT, sublevel);
 

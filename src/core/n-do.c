@@ -301,8 +301,9 @@ DECLARE_NATIVE(do)
         if (Is_Level_At_End(L))
             return VOID;
 
+        Init_Void(PUSH());  // primed result
         Level* sub = Make_Level(L->feed, LEVEL_MASK_NONE);
-        sub->executor = &Array_Executor;
+        sub->executor = &Stepper_Executor;
         Push_Level(OUT, sub);
         return DELEGATE_SUBLEVEL(sub); }
 
@@ -436,15 +437,14 @@ DECLARE_NATIVE(evaluate)
         Flags flags = LEVEL_MASK_NONE;
 
         if (not REF(next)) {
-            flags |= FLAG_STATE_BYTE(ST_ARRAY_PRELOADED_ENTRY);
-            Init_Nihil(OUT);  // heeded by array executor
+            Init_Nihil(atom_PUSH());  // primed result for array executor
         }
 
         Level* sub = Make_Level(feed, flags);
         Push_Level(OUT, sub);
 
         if (not REF(next)) {  // plain evaluation to end, maybe invisible
-            sub->executor = &Array_Executor;
+            sub->executor = &Stepper_Executor;
             return DELEGATE_SUBLEVEL(sub);
         }
 

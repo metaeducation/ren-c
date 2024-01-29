@@ -55,28 +55,15 @@ core: [
     ;
     ; Uses `#prefer-O2-optimization`.  There are several good reasons to
     ; optimize the evaluator itself even if one is doing a "size-biased"
-    ; build.  It's not just about wanting the critical code to be faster--but
-    ; also, since it recurses, if stack frames aren't flattened out then they
-    ; add up...and may blow internal limits (like in a web browser for
-    ; JS/WASM calls)
-    ;
-    ; !!! Note: this will not apply when the stackless branch is merged, which
-    ; does not recurse the evaluator and hence avoids the problem entirely.
+    ; build.  (At one time it also cut down on recursions, critical before
+    ; the stackless trampoline because the WASM build would easily run out
+    ; of call stack in the browser.)
     [
         evaluator/c-eval.c  #prefer-O2-optimization
-
+    ][
+        evaluator/c-stepper.c  #prefer-O2-optimization
     ][
         evaluator/c-action.c  #prefer-O2-optimization
-
-        ; !!! There was once code in Finalize_Arg() call in %c-action.c that
-        ; triggered a warning that seemed like a possible optimizer bug.  That
-        ; code is now removed, but there were problems with it before in gcc
-        ; 9.3.0-10 at -O2 optimization level in the C++ build...it pertained
-        ; to:
-        ;
-        ;   const String* s = Cell_String(v);
-        ;
-        ; <gnu:-Wno-array-bounds>
     ][
         evaluator/c-trampoline.c  #prefer-O2-optimization
     ]

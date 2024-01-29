@@ -72,9 +72,9 @@ INLINE bool ANY_ESCAPABLE_GET(const Atom* v) {
         if (L->executor != executor) {
             if (
                 executor == &Evaluator_Executor
-                and L->executor == &Array_Executor
+                and L->executor == &Stepper_Executor
             ){
-                // See Array_Executor(), this is allowed
+                // See Stepper_Executor(), this is allowed
             }
             else
                 assert(!"Wrong executor for flag tested");

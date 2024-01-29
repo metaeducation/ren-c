@@ -176,69 +176,6 @@ inline static Level* Maybe_Rightward_Continuation_Needed(Level* L)
 
 
 //
-//  Array_Executor: C
-//
-// An array executor simply calls the evaluator executor consecutively, and
-// if the output is void then it does not overwrite the previous output.
-//
-// 1. An idea was tried once where the error was not raised until a step was
-//    shown to be non-void.  This would allow a void evaluation to come after
-//    a raised error and the error could still fall out.  But this meant that
-//    errors could not prevent a next step from happening.
-//
-Bounce Array_Executor(Level* L)
-{
-    if (THROWING)
-        return THROWN;  // no state to clean up
-
-    switch (STATE) {
-      case ST_ARRAY_INITIAL_ENTRY:
-        Finalize_Void(OUT);  // what most callers want (?)
-        goto initial_entry;
-
-      case ST_ARRAY_PRELOADED_ENTRY:
-        assert(not Is_Fresh(OUT));  // groups `1 (elide "hi")` preload nihil
-        goto initial_entry;
-
-      case ST_ARRAY_STEPPING:
-        goto step_result_in_spare;
-
-      default: assert(false);
-    }
-
-  initial_entry: {  //////////////////////////////////////////////////////////
-
-    if (Is_Feed_At_End(L->feed))
-        return OUT;
-
-    Level* sub = Make_Level(
-        L->feed,
-        LEVEL_FLAG_RAISED_RESULT_OK
-            | LEVEL_FLAG_TRAMPOLINE_KEEPALIVE
-    );
-    Push_Level(SPARE, sub);
-    STATE = ST_ARRAY_STEPPING;
-    return CATCH_CONTINUE_SUBLEVEL(sub);
-
-} step_result_in_spare: {  ///////////////////////////////////////////////////
-
-    if (not Is_Elision(SPARE))  // heed ELIDE, COMMENT, COMMA!, preserve result
-        Move_Cell(OUT, SPARE);
-
-    if (Not_Level_At_End(SUBLEVEL)) {
-        if (Is_Raised(OUT))  // promote errors to failure on step [1]
-            fail (VAL_CONTEXT(OUT));
-
-        Restart_Evaluator_Level(SUBLEVEL);
-        return BOUNCE_CONTINUE;
-    }
-
-    Drop_Level(SUBLEVEL);
-    return OUT;
-}}
-
-
-//
 //  Evaluator_Executor: C
 //
 // Expression execution can be thought of as having four distinct states:
@@ -828,9 +765,8 @@ Bounce Evaluator_Executor(Level* L)
     //   seems wasteful on the surface, but it means dialects can be free to
     //   use it to make a distinction--like escaping soft-quoted slots.
     //
-    // 2. The default for the Array_Executor is to make voids if expressions
-    //    vanish.  We use ST_ARRAY_PRELOADED_ENTRY with nihil in order to
-    //    avoid generating voids from thin air when using GROUP!s
+    // 2. We prime the array executor with nihil in order to avoid generating
+    //    voids from thin air when using GROUP!s
     //
     //        >> 1 + 2 (comment "hi")
     //        == 3  ; e.g. not void
@@ -840,20 +776,19 @@ Bounce Evaluator_Executor(Level* L)
       case REB_META_GROUP: {
         L_next_gotten = nullptr;  // arbitrary code changes fetched variables
 
-        Flags flags = LEVEL_FLAG_RAISED_RESULT_OK
-            | FLAG_STATE_BYTE(ST_ARRAY_PRELOADED_ENTRY);  // [2]
+        Flags flags = LEVEL_FLAG_RAISED_RESULT_OK;  // [2]
 
         if (STATE == REB_META_GROUP)
             flags |= LEVEL_FLAG_META_RESULT;
 
+        Init_Nihil(atom_PUSH());  // primed result
         Level* sub = Make_Level_At_Core(
             L_current,
             L_specifier,
             flags
         );
         Push_Level(OUT, sub);
-        Init_Nihil(OUT);  // the ST_ARRAY_PRELOADED_ENTRY [2]
-        sub->executor = &Array_Executor;
+        sub->executor = &Stepper_Executor;
 
         return CATCH_CONTINUE_SUBLEVEL(sub); }
 
@@ -1122,13 +1057,14 @@ Bounce Evaluator_Executor(Level* L)
       case REB_SET_GROUP: {
         L_next_gotten = nullptr;  // arbitrary code changes fetched variables
 
+        Init_Void(PUSH());  // primed result
         Level* sub = Make_Level_At_Core(
             L_current,
             L_specifier,
             LEVEL_MASK_NONE
         );
         Push_Level(SPARE, sub);
-        sub->executor = &Array_Executor;
+        sub->executor = &Stepper_Executor;
 
         return CATCH_CONTINUE_SUBLEVEL(sub);
 
