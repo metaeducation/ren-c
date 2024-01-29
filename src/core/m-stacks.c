@@ -61,7 +61,7 @@ void Startup_Data_Stack(Length capacity)
     // initial stack size.  It requires you to be on an END to run.
     //
     g_ds.index = 1;
-    g_ds.movable_top = Series_At(Value, g_ds.array, g_ds.index);
+    g_ds.movable_top = Series_At(Cell, g_ds.array, g_ds.index);
     Expand_Data_Stack_May_Fail(capacity);
 
     DROP();  // drop the hypothetical thing that triggered the expand
@@ -174,9 +174,9 @@ void Expand_Data_Stack_May_Fail(REBLEN amount)
     // is at its end.  Sanity check that.
     //
     assert(len_old == g_ds.index);
-    assert(g_ds.movable_top == Array_Tail(g_ds.array));
+    assert(g_ds.movable_top == Series_Tail(Cell, g_ds.array));
     assert(
-        g_ds.movable_top - Series_Head(Value, g_ds.array)
+        g_ds.movable_top - Series_Head(Cell, g_ds.array)
         == cast(int, len_old)
     );
 
@@ -197,23 +197,23 @@ void Expand_Data_Stack_May_Fail(REBLEN amount)
     // Update the pointer used for fast access to the top of the stack that
     // likely was moved by the above allocation (needed before using TOP)
     //
-    g_ds.movable_top = cast(REBVAL*, Array_At(g_ds.array, g_ds.index));
+    g_ds.movable_top = Series_At(Cell, g_ds.array, g_ds.index);
 
     REBLEN len_new = len_old + amount;
     Set_Series_Len(g_ds.array, len_new);
 
   #if DEBUG_POISON_DROPPED_STACK_CELLS
-    REBVAL *poison = g_ds.movable_top;
+    Cell* poison = g_ds.movable_top;
     REBLEN n;
     for (n = len_old; n < len_new; ++n, ++poison)
         Poison_Cell(poison);
-    assert(poison == Array_Tail(g_ds.array));
+    assert(poison == Series_Tail(Cell, g_ds.array));
   #endif
 
     // Update the end marker to serve as the indicator for when the next
     // stack push would need to expand.
     //
-    g_ds.movable_tail = Array_Tail(g_ds.array);
+    g_ds.movable_tail = Series_Tail(Cell, g_ds.array);
 }
 
 
@@ -237,7 +237,7 @@ Array* Pop_Stack_Values_Core(StackIndex base, Flags flags)
   #endif
 
     Count count = 0;
-    Value* src = Data_Stack_At(base + 1);  // not const, will be FRESHEN()
+    Atom* src = Data_Stack_At(base + 1);  // not const, will be FRESHEN()
     Cell* dest = Array_Head(a);
     for (; count < len; ++count, ++src, ++dest) {
       #if DEBUG

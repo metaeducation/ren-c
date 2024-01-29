@@ -353,7 +353,7 @@ typedef struct {
 typedef struct {
     Array* array;
     StackIndex index;
-    Value* movable_top;
+    Cell* movable_top;
     const Cell* movable_tail;
 
   #if DEBUG_EXTANT_STACK_POINTERS

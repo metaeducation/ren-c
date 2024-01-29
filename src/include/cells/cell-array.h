@@ -225,6 +225,12 @@ INLINE Atom* Init_Pack_Untracked(Sink(Atom*) out, Array* a) {
 #define Init_Nihil(out) \
     TRACK(Init_Nihil_Untracked(out))
 
+INLINE Element* Init_Meta_Of_Nihil(Sink(Element*) out) {
+    Init_Nihil(cast(Atom*, out));
+    QUOTE_BYTE(out) = QUASIFORM_2;
+    return out;
+}
+
 INLINE bool Is_Nihil(Need(const Atom*) v) {
     if (not Is_Pack(v))
         return false;

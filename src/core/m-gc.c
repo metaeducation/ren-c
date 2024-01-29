@@ -747,16 +747,16 @@ static void Mark_Root_Series(void)
 //
 static void Mark_Data_Stack(void)
 {
-    const Cell* head = Array_Head(g_ds.array);
+    const Cell* head = Series_Head(Cell, g_ds.array);  // unstable allowed
     assert(Is_Cell_Poisoned(head));  // Data_Stack_At(0) is deliberately invalid
 
-    REBVAL *stackval = g_ds.movable_top;
+    Cell* stackval = g_ds.movable_top;
     for (; stackval != head; --stackval)  // stop before Data_Stack_At(0)
         Queue_Mark_Cell_Deep(stackval);
 
   #if DEBUG_POISON_DROPPED_STACK_CELLS
     stackval = g_ds.movable_top + 1;
-    for (; stackval != Array_Tail(g_ds.array); ++stackval)
+    for (; stackval != Series_Tail(Cell, g_ds.array); ++stackval)
         assert(Is_Cell_Poisoned(stackval));
   #endif
 

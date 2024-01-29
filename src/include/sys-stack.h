@@ -189,7 +189,10 @@
 // TOP is the most recently pushed item.
 //
 #define TOP \
-    cast(StackValue(*), g_ds.movable_top) // cast helps stop ++TOP, etc.
+    cast(StackValue(*), cast(Value*, g_ds.movable_top))
+
+#define atom_TOP \
+    cast(Atom*, g_ds.movable_top)  // only legal in narrow cases
 
 
 // 1. Use the fact that the data stack is always dynamic to avoid having to
@@ -254,8 +257,10 @@ INLINE StackValue(*) PUSH(void) {
   #endif
 
     Erase_Cell(g_ds.movable_top);
-    return g_ds.movable_top;
+    return cast(Value*, g_ds.movable_top);
 }
+
+#define atom_PUSH() cast(Atom*, PUSH())
 
 
 //
