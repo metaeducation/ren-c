@@ -557,7 +557,7 @@ bool Typecheck_Coerce_Return(
 //      return: []  ; "divergent"
 //      ^value [any-atom?]
 //      /only "Don't proxy output variables, return argument without typecheck"
-//      /run "Reuse stack level for another call (@redo uses locals/args too)"
+//      /run "Reuse stack level for another call (<redo> uses locals/args too)"
 //      ;   [<variadic> any-value?]  ; would force this frame managed
 //  ]
 //
@@ -642,7 +642,10 @@ DECLARE_NATIVE(definitional_return)
 
     const Value* gather_args;
 
-    if (Is_The_Word(atom) and Cell_Word_Id(atom) == SYM_REDO) {  // reuse args
+    if (
+        Is_Tag(atom)
+        and strcmp(c_cast(char*, Cell_Utf8_At(atom)), "redo") == 0
+    ){
         Action* redo_action = target_level->u.action.original;
         const Key* key_tail;
         const Key* key = ACT_KEYS(&key_tail, redo_action);
@@ -688,7 +691,7 @@ DECLARE_NATIVE(definitional_return)
         gather_args = Lib(TRUE);
     }
     else
-        fail ("RETURN/RUN requires action, frame, or @redo as argument");
+        fail ("RETURN/RUN requires action, frame, or <redo> as argument");
 
     // We need to cooperatively throw a restart instruction up to the level
     // of the frame.  Use REDO as the throw label that Eval_Core() will

@@ -90,7 +90,7 @@
         ]
         n: n - 1
         clear-me: #some-junk
-        return/run @redo
+        return/run <redo>
     ]
 
     <success> = foo 100
@@ -131,13 +131,13 @@
         ]
         n: n - 1
         i: #some-junk  ; type check should fail on redo
-        return/run @redo
+        return/run <redo>
     ]
 
     foo 100 1020
 )
 
-; RETURN/RUN @REDO phase test
+; RETURN/RUN <REDO> phase test
 ; (shared frame compositions should redo the appropriate "phase")
 (
     inner: func [return: [tag!] n] [
@@ -145,7 +145,7 @@
             return <success>
         ]
         n: 0
-        return/run @redo  ; should redo INNER, not outer
+        return/run <redo>  ; should redo INNER, not outer
     ]
 
     outer: adapt :inner [
