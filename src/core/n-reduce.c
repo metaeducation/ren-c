@@ -405,7 +405,7 @@ static void Push_Composer_Level(
 
     Level* sub = Make_Level_At_Core(
         adjusted ? adjusted : arraylike,
-        adjusted ? SPECIFIED : specifier,
+        Derive_Specifier(specifier, adjusted ? adjusted : arraylike),
         EVAL_EXECUTOR_FLAG_NO_EVALUATIONS
             | LEVEL_FLAG_TRAMPOLINE_KEEPALIVE  // allows stack accumulation
             | LEVEL_FLAG_RAISED_RESULT_OK  // bubbles up definitional errors
@@ -427,7 +427,7 @@ static void Push_Composer_Level(
 //
 //////////////////////////////////////////////////////////////////////////////
 //
-// 1. If you write something like `compose '(void)/3:`, it would try to leave
+// 1. If you write something like `compose @ (void)/3:`, it would try to leave
 //    behind something like the "SET-INTEGER!" of `3:`.  Currently that is
 //    not allowed, though it could be a WORD! (like |3|:) ?
 //
@@ -628,7 +628,7 @@ Bounce Composer_Executor(Level* const L)
     if (Is_Nulled(predicate))
         goto evaluate_group;
 
-    Copy_Cell(SPARE, match);
+    Derelativize(SPARE, match, L_specifier);
     Dequotify(SPARE);  // cast was needed because there may have been quotes
     HEART_BYTE(SPARE) = REB_GROUP;  // don't confuse with decoration
     if (label)
