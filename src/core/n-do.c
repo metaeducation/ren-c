@@ -222,7 +222,7 @@ DECLARE_NATIVE(shove)
 //          url!  ; load code from URL via protocol
 //          file!  ; load code from file on local disk
 //          tag!  ; load relative to system.script.name
-//          the-word!  ; module name (URL! looked up from table)
+//          word!  ; module name (URL! looked up from table)
 //          error!  ; should use FAIL instead
 //          frame!  ; acts like APPLY (voids are optionals, not unspecialized)
 //          action?  ; will only run arity 0 actions (avoids DO variadic)
@@ -307,7 +307,7 @@ DECLARE_NATIVE(do)
         Push_Level(OUT, sub);
         return DELEGATE_SUBLEVEL(sub); }
 
-      case REB_THE_WORD : goto do_helper;
+      case REB_WORD : goto do_helper;
       case REB_BINARY : goto do_helper;
       case REB_TEXT : goto do_helper;
       case REB_URL : goto do_helper;
@@ -321,7 +321,7 @@ DECLARE_NATIVE(do)
             cast(REBVAL*, OUT),  // <-- output cell
             LEVEL_MASK_NONE,
             rebRUN(SysUtil(DO_P)),
-                source,
+                rebQ(source),
                 rebQ(ARG(args)),
                 REF(only) ? rebQ(Lib(TRUE)) : rebQ(Lib(FALSE))
         );

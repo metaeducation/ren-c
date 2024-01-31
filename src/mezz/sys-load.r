@@ -228,13 +228,13 @@ load: func [
     @header "Request the Rebol header object be returned as well"
         [<opt> object!]
     source "Source of the information being loaded"
-        [<maybe> file! url! tag! the-word! text! binary!]
+        [<maybe> file! url! tag! word! text! binary!]
     /type "E.g. rebol, text, markup, jpeg... (by default, auto-detected)"
         [word!]
 
     <local> file line data
 ][
-    if match [file! url! tag! the-word!] source [
+    if match [file! url! tag! word!] source [
         source: clean-path source
 
         file: ensure [file! url!] source
@@ -479,19 +479,17 @@ import*: func [
     ]
 
 
-    === TREAT (IMPORT 'FILENAME) AS REQUEST TO LOOK LOCALLY FOR FILENAME.R ===
+    === HANDLE LOCAL IMPORTS (CURRENTLY BAD NOTATION) ===
 
-    ; We don't want remote execution of a module via `import <some-library>`
-    ; to be able to turn around and run code locally.  So during a remote
-    ; import, any WORD!-style imports like `import 'mod2` are turned into
-    ; `import @mod2`.
+    ; We don't want remote execution of a module via (import 'library)
+    ; to be able to turn around and run code locally. (import ''library)
     ;
     let old-importing-remotely: importing-remotely
-    if all [importing-remotely, word? source] [
-        source: to the-word! source
+    if all [importing-remotely, lit-word? source] [
+        source: to word! source
     ]
 
-    if word? source [
+    if lit-word? source [
         let file
         for-each path system.options.module-paths [
             file: join path spread reduce [source system.options.default-suffix]
@@ -512,7 +510,7 @@ import*: func [
     ; so extract the net path where we're executing to save in system.script.
 
     let dir: null
-    match [file! url! the-word! tag!] source then [
+    match [file! url! word! tag!] source then [
         source: clean-path source
         dir: as text! source
         let [before file]: find-last dir slash

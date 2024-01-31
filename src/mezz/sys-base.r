@@ -194,7 +194,7 @@ do*: func [
     return: "Final evaluative product of code or block"
         [any-value?]
     source "Files, urls and modules evaluate as scripts, other strings don't"
-        [file! url! text! binary! tag! the-word!]
+        [file! url! text! binary! tag! word!]
     args "Args passed as system.script.args to a script (normally a string)"
         [<opt> element?]
     only "Do not catch quits...propagate them"
