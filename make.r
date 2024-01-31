@@ -1079,7 +1079,7 @@ help: func [
             topic
             let msg: select help-topics topic
             elide print msg
-        ]
+        ][]
     ] else [
         print help-topics/usage
     ]

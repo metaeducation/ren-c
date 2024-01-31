@@ -237,7 +237,7 @@ export parse-args: func [
     let ret: make block! 4
     let standalone: make block! 4
     iterate args [
-        let name
+        let name: null
         let value: args/1
         case [
             let idx: find value #"=" [; name=value
