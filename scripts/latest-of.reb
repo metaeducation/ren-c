@@ -143,7 +143,7 @@ latest-of: func [
         print warning
     ]
 
-    === DEFAULT OS TO VERSION RUNNING THIS SCRIPT (OR OS RUNNING BROWSER) ===
+    === 'DEFAULT OS TO VERSION RUNNING THIS SCRIPT (OR OS RUNNING BROWSER) ===
 
     ; If you are running the web build and don't ask for a variant, the most
     ; sensible thing to do is to try and give you a version matching your
@@ -226,7 +226,7 @@ latest-of: func [
     let extension: if (find [0.3.1 0.3.40] os) [".exe"] else [null]
 
 
-    === DEFAULT VARIANT TO DEBUG ===
+    === 'DEFAULT VARIANT TO DEBUG ===
 
     ; All stakeholders are requested to use debug builds unless they have a
     ; really good reason not to.  The term "checked" may wind up preferred to
@@ -244,7 +244,7 @@ latest-of: func [
     let suffix: if variant = 'release [null] else [join "-" variant]
 
 
-    === DEFAULT COMMIT TO THE LAST GREEN-LIT HASH ===
+    === 'DEFAULT COMMIT TO THE LAST GREEN-LIT HASH ===
 
     ; After a build is validated (and verified as being a completed upload), a
     ; file called %last-deploy.short-hash is updated in the build directory.
