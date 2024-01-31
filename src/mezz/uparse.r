@@ -148,7 +148,7 @@ combinator: func [
         (if spec.1 = '@pending [
             assert [spec.2 = [<opt> block!]]
             autopipe: false  ; they're asking to handle pending themselves
-            spread reduce [@pending spec.2]
+            spread reduce ['@pending spec.2]
             elide spec: my skip 2
         ] else [
             autopipe: true  ; they didn't mention pending, handle automatically
@@ -168,7 +168,7 @@ combinator: func [
         ; order of being called.
 
         (spread if autopipe '[
-            let f: binding of inside [] 'return
+            let f: binding of @return
 
             pending: null
             let in-args: false
@@ -178,7 +178,7 @@ combinator: func [
                     continue
                 ]
                 all [
-                    not unset? inside [] 'val
+                    not unset? @val
                     action? :val
                 ] then [
                     ; All parsers passed as arguments, we want it to be
@@ -208,7 +208,7 @@ combinator: func [
         ; return?)  Or RETURN ACCEPT and RETURN REJECT to make it clearer,
         ; where ACCEPT makes a pack and REJECT does RAISE?
 
-        do overbind binding of inside [] 'return (body)
+        do overbind binding of @return (body)
 
         ; If the body does not return and falls through here, the function
         ; will fail as it has a RETURN: that needs to be used to type check
@@ -357,7 +357,7 @@ default-combinators: make map! reduce [
         parser [action?]
         <local> result'
     ][
-        append state.loops binding of inside [] 'return
+        append state.loops binding of @return
 
         [^result' input]: parser input except e -> [
             take/last state.loops
@@ -381,7 +381,7 @@ default-combinators: make map! reduce [
         body-parser [action?]
         <local> result'
     ][
-        append state.loops binding of inside [] 'return
+        append state.loops binding of @return
 
         result': void'
 
@@ -410,7 +410,7 @@ default-combinators: make map! reduce [
         parser [action?]
         <local> result'
     ][
-        append state.loops binding of inside [] 'return
+        append state.loops binding of @return
 
         result': void'
 
@@ -430,7 +430,7 @@ default-combinators: make map! reduce [
         parser [action?]
         <local> count
     ][
-        append state.loops binding of inside [] 'return
+        append state.loops binding of @return
 
         count: 0
         cycle [
@@ -1700,7 +1700,7 @@ default-combinators: make map! reduce [
             fail "Can't make MAX less than MIN in range for REPEAT combinator"
         ]
 
-        append state.loops binding of inside [] 'return
+        append state.loops binding of @return
 
         result': void'  ; `repeat (0) <any>` => void intent
 
@@ -2392,12 +2392,12 @@ default-combinators: make map! reduce [
                 ]
                 sublimit: find/part rules [...] limit
 
-                ; !!! Once this used ACTION OF BINDING OF INSIDE [] 'RETURN,
+                ; !!! Once this used ACTION OF BINDING OF @RETURN, however
                 ; the fusion of actions and frames removed ACTION OF.  So the
                 ; action is accessed by an assigned name from outside.  On
                 ; the plus side, that allowed RULE-START and RULE-END to be
                 ; exposed, which were not visible to the inner function that
-                ; ACTION OF BINDING OF INSIDE [] 'RETURN received.
+                ; ACTION OF BINDING OF @RETURN received.
                 ;
                 f: make frame! :block-combinator  ; this combinator
                 f.state: state
@@ -2417,11 +2417,11 @@ default-combinators: make map! reduce [
 
             if not error? temp: entrap f [
                 [^temp pos subpending]: unmeta temp
-                if unset? inside [] 'pos [
+                if unset? @pos [
                     print mold/limit rules 200
                     fail "Combinator did not set remainder"
                 ]
-                if unset? inside [] 'subpending [
+                if unset? @subpending [
                     print mold/limit rules 200
                     fail "Combinator did not set pending"
                 ]
@@ -2492,7 +2492,7 @@ default-combinators: make map! reduce [
             id: 'parse
             message: to text! reason
         ]
-        set-location-of-error e binding of inside [] 'reason
+        set-location-of-error e binding of @reason
         e.near: mold/limit input 80
         fail e
     ]
@@ -2799,7 +2799,7 @@ parsify: func [
                     ; No RETURN visible in ADAPT.  :-/  Should we use ENCLOSE
                     ; to more legitimately get the frame as a parameter?
                     ;
-                    let f: binding of inside [] 'param1
+                    let f: binding of @param1
 
                     let n: 1
                     for-each param (parameters of value) [
@@ -2936,7 +2936,7 @@ parse*: func [
     ; way that data is threaded...as it gives access to not just the
     ; combinators, but also the /VERBOSE or other settings...we can add more.
     ;
-    let state: binding of inside [] 'return
+    let state: binding of @return
 
     let f: make frame! combinators.(block!)
     f.state: state
@@ -3128,5 +3128,5 @@ using: func [
     return: [~]  ; should it return a value?  (e.g. the object?)
     obj [<maybe> object!]
 ][
-    add-use-object (binding of inside [] 'obj) obj
+    add-use-object (binding of @obj) obj
 ]

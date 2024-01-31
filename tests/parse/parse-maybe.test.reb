@@ -59,6 +59,6 @@
 ;         y: x: maybe (~)  ; Isotopic ~ is trash, unset variable
 ;         some "b"
 ;     ]
-;     '~ = ^ get/any 'x
-;     unset? 'y
+;     '~ = ^ get/any @x
+;     unset? @y
 ; ])

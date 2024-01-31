@@ -25,8 +25,8 @@
     (a: 1 run func [return: [integer!]] [a: return 2] a = 1)
 ]
 
-(a: 1 reeval reify func [return: [integer!]] [set 'a return 2] a = 1)
-(a: 1 run func [return: [integer!]] [set/any 'a return 2] a = 1)
+(a: 1 reeval reify func [return: [integer!]] [set @a return 2] a = 1)
+(a: 1 run func [return: [integer!]] [set/any @a return 2] a = 1)
 
 [#1509 ; the "result" of return should not be passable to functions
     (a: 1 reeval reify func [return: [integer!]] [a: error? return 2] a = 1)
@@ -63,8 +63,8 @@
     run func [return: [~]] [a: return ~]
     a = 1
 )]
-(a: 1 reeval reify func [return: [~]] [set 'a return ~] :a =? 1)
-(a: 1 reeval reify func [return: [~]] [set/any 'a return ~] :a =? 1)
+(a: 1 reeval reify func [return: [~]] [set @a return ~] :a =? 1)
+(a: 1 reeval reify func [return: [~]] [set/any @a return ~] :a =? 1)
 [#1509 (  ; the "result" of a return should not be passable to functions
     a: 1
     run func [return: [~]] [a: error? return ~]
@@ -84,7 +84,7 @@
 ; RETURN/RUN with current values of frame arguments
 (
     foo: func [return: [tag!] n <local> clear-me] [
-        assert [unset? 'clear-me]
+        assert [unset? @clear-me]
         if n = 0 [
             return <success>
         ]
@@ -100,7 +100,7 @@
 ; old values while calculating the new ones)
 (
     foo: func [return: [tag!] n <local> clear-me] [
-        assert [unset? 'clear-me]
+        assert [unset? @clear-me]
         if n = 0 [
            return <success>
         ]

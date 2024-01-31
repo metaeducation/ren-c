@@ -321,9 +321,9 @@
 ; symmetry
 (equal? same? 'a 'A same? 'A 'a)
 ; binding
-(not same? 'a use [a] ['a])
+(not same? @a use [a] [@a])
 ; symmetry
-(equal? same? 'a use [a] ['a] same? use [a] ['a] 'a)
+(equal? same? @a use [a] [@a] same? use [a] [@a] @a)
 ; different word types
 (not same? 'a first [:a])
 ; symmetry

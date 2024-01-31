@@ -100,7 +100,7 @@
     same? :a-value a-value
 )
 (
-    a-value: get '+
+    a-value: get @+
     (1 a-value 2) == 3
 )
 (
@@ -184,7 +184,7 @@
         if unescaped-in-path [
             [path pos]: transcode/one unspaced ["a/" str "/b"]
             assert [pos = ""]
-            assert [path = compose 'a/(word)/b]
+            assert [path = compose @a/(word)/b]
         ] else [
             ; !!! The logistics for making this work aren't finished, and
             ; there are higher priorities than rewriting the scanner.

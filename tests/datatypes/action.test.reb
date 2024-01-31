@@ -19,18 +19,18 @@
 
     (
         new-name: :append
-        set 'old-name :append
+        set @old-name :append
         did all [
             'new-name = label of :new-name
-            'new-name = label of get 'new-name
+            'new-name = label of get @new-name
             'append = label of :old-name
-            'append = label of get 'old-name
+            'append = label of get @old-name
         ]
     )
 
     (
-        set 'no-set-word func [] []
-        null = label of get 'no-set-word
+        set @no-set-word func [] []
+        null = label of get @no-set-word
     )
 
     (

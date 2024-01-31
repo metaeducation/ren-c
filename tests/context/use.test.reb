@@ -13,8 +13,8 @@
 )
 
 ; initialization (lack of)
-(a: 10 did all [use [a] ['~ = ^ get/any 'a] a = 10])
-(use [a] [unset? 'a])
+(a: 10 did all [use [a] ['~ = ^ get/any @a] a = 10])
+(use [a] [unset? @a])
 
 ; BREAK out of USE
 (
@@ -50,6 +50,6 @@
 ; This particular nuance with 'SELF from #2076 thus no longer arises
 ;
 ~locked-series~ !! (
-    o: binding of use [x] ['x]
+    o: binding of use [x] [@x]
     append o 'self
 )

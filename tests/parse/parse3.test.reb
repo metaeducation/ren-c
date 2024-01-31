@@ -89,7 +89,7 @@
 ]
 
 
-; WORD! isotopes cause an error, plain QUASI-WORD? matches literal QUASI-WORD?s
+; WORD! isotopes cause an error, quasi-word cannot be used as rule
 [
     ~bad-word-get~ !! (
         foo: ~bad~
@@ -659,7 +659,7 @@
             for-each t things [
                 counts.(t): 0
                 keep t
-                keep compose/deep '(counts.(t): me + 1)
+                keep compose/deep @(counts.(t): me + 1)
                 keep/line '|
             ]
             keep 'fail

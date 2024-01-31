@@ -623,7 +623,7 @@ pe-format: context [
     DOS-header: ~
     pos: ~
 
-    DOS-header-rule: gen-rule inside [] 'DOS-header [
+    DOS-header-rule: gen-rule @DOS-header [
         ["MZ" | fail-at: <here> (err: 'missing-dos-signature) fail]
         u16-le (last-size: u16)
         u16-le (n-blocks: u16)
@@ -650,7 +650,7 @@ pe-format: context [
     ]
 
     COFF-header: ~
-    COFF-header-rule: gen-rule/skip inside [] 'COFF-header [
+    COFF-header-rule: gen-rule/skip @COFF-header [
         and [
             #{4c01} (machine: 'i386)
             | #{6486} (machine: 'x86-64 uintptr-le: uintptr-64-le)
@@ -678,7 +678,7 @@ pe-format: context [
     sections: make block! 8
 
     PE-optional-header: ~
-    PE-optional-header-rule: gen-rule inside [] 'PE-optional-header [
+    PE-optional-header-rule: gen-rule @PE-optional-header [
         and [#{0b01} (signature: 'exe-32)
              | #{0b02} (signature: 'exe-64)
              | #{0701} (signature: 'ROM)
@@ -740,14 +740,14 @@ pe-format: context [
     ]
 
     data-directory: ~
-    data-directory-rule: gen-rule inside [] 'data-directory [
+    data-directory-rule: gen-rule @data-directory [
         u32-le (RVA: u32)
         u32-le (size: u32)
         (append data-directories copy ensure object! data-directory)
     ]
 
     section: ~
-    section-rule: gen-rule inside [] 'section [
+    section-rule: gen-rule @section [
         copy name [8 skip]  ; 8 bytes
         u32-le (virtual-size: u32)
         u32-le (virtual-offset: u32)

@@ -172,7 +172,7 @@ help: func [
     let make-libuser: does [
         let libuser: copy system.contexts.lib
         for-each [key val] system.contexts.user [
-            if set? inside [] 'val [
+            if set? @val [
                append libuser spread reduce [key ^val]
             ]
         ]

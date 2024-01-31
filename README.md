@@ -39,9 +39,9 @@ C and JavaScript, which uses novel tricks to compose code as mixtures of
 strings and spliced Rebol values:
 
     int x = 1020;
-    REBVAL *negate = rebValue("get 'negate");  // runs code, returns value
+    REBVAL *negate = rebValue("get @negate");  // gets bound word
 
-    rebElide("print [", rebI(x), "+ (2 *", negate, "358)]");
+    rebElide("print [", rebI(x), "+ (2 *", rebRUN(negate), "358)]");
 
     // Would print 304--e.g. `1020 + (2 * -358)`, rebElide() returns C void.
 

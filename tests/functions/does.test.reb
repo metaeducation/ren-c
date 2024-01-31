@@ -80,14 +80,14 @@
 (
     o1: make object! [
         a: 10
-        b: bind (does [if true [a]]) binding of 'b
+        b: bind (does [if true [a]]) binding of @b
     ]
     o2: make o1 [a: 20]
     o2.b = 20
 )(
     o1: make object! [
         a: 10
-        b: bind (does [f: does [a] f]) binding of 'b
+        b: bind (does [f: does [a] f]) binding of @b
     ]
     o2: make o1 [a: 20]
 
@@ -95,8 +95,8 @@
 )(
     o1: make object! [
         a: 10
-        b: bind (does [f: lambda [] [a] f]) binding of 'b
-        bind :b binding of 'b
+        b: bind (does [f: lambda [] [a] f]) binding of @b
+        bind :b binding of @b
     ]
     o2: make o1 [a: 20]
 

@@ -1097,7 +1097,7 @@ bool Get_Path_Push_Refinements_Throws(
         if (Is_Action(out))
             return false;  // activated actions are ok
 
-        if (Is_Antiform(out) and not redbol)  // need for GET/ANY 'OBJ/UNDEF
+        if (Is_Antiform(out) and not redbol)  // need for GET/ANY @OBJ/UNDEF
             fail (Error_Bad_Word_Get(path, out));
 
         return false;  // refinements pushed by Redbol-adjusted Get_Var()

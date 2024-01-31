@@ -1516,18 +1516,42 @@ Bounce Evaluator_Executor(Level* L)
         break;
 
 
-    //=////////////////////////////////////////////////////////////////////=//
+    //=///// THE-XXX! /////////////////////////////////////////////////////=//
     //
-    // Treat all the other Is_Bindable() types as inert
+    // The @xxx types were once inert and kept their decoration:
     //
-    //=////////////////////////////////////////////////////////////////////=//
+    //     >> @xxx
+    //     == @xxx
+    //
+    // This didn't turn out to be as useful as thought.  With the new binding
+    // model, a higher calling for them to produce bound material without
+    // the decoration came up:
+    //
+    //     >> whatever: 10
+    //
+    //     >> @whatever
+    //     == whatever
+    //
+    //     >> foo: func [var [word!]] [print ["var is" get var]]
+    //
+    //     >> foo 'whatever
+    //     ** Error: whatever is not bound
+    //
+    //     >> foo get in [] 'whatever  ; works, but verbose
+    //     var is 10
+    //
+    //     >> foo @whatever
+    //     var is 10
 
       case REB_THE_BLOCK:
       case REB_THE_WORD:
       case REB_THE_PATH:
       case REB_THE_TUPLE:
       case REB_THE_GROUP:
-        //
+        Inertly_Derelativize_Inheriting_Const(OUT, L_current, L->feed);
+        HEART_BYTE(OUT) = Plainify_Any_The_Kind(STATE);
+        break;
+
       case REB_BLOCK:
         //
       case REB_BINARY:
@@ -1593,7 +1617,7 @@ Bounce Evaluator_Executor(Level* L)
     // We're sitting at what "looks like the end" of an evaluation step.
     // But we still have to consider enfix.  e.g.
     //
-    //    val: evaluate/next [1 + 2 * 3] 'pos
+    //    val: evaluate/next [1 + 2 * 3] @pos
     //
     // We want that to give a position of [] and `val = 9`.  The evaluator
     // cannot just dispatch on REB_INTEGER in the switch() above, give you 1,

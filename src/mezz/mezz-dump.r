@@ -91,7 +91,7 @@ dump: func [
     case [
         swp: match [set-word! set-path!] :value [  ; `dump x: 1 + 2`
             let pos
-            let result: evaluate/next extra 'pos
+            let result: evaluate/next extra @pos
             set swp :result
             print [swp, result]
         ]
@@ -99,7 +99,7 @@ dump: func [
         let b: match block! value [
             while [not tail? b] [
                 if swp: match [set-word! set-path!] :b.1 [  ; `dump [x: 1 + 2]`
-                    result: evaluate/next b (to word! the b:)
+                    result: evaluate/next b @b
                     print [swp, result]
                 ] else [
                     dump-one b.1
@@ -229,9 +229,9 @@ summarize-obj: func [
 
     return collect [
         for-each [word val] obj [
-            if unset? inside [] 'val [continue]  ; don't consider unset fields
+            if unset? @val [continue]  ; don't consider unset fields
 
-            let kind: kind of noantiform get/any inside [] 'val
+            let kind: kind of noantiform get/any @val
 
             let str: if kind = object! [
                 spaced [word, form words of val]
@@ -256,7 +256,7 @@ summarize-obj: func [
                 fail 'pattern
             ]
 
-            let desc: description-of noantiform get/any inside [] 'val
+            let desc: description-of noantiform get/any @val
             if desc [
                 if 48 < length of desc [
                     desc: append copy/part desc 45 "..."

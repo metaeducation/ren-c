@@ -45,6 +45,19 @@
     (u_cast(uint_fast64_t, 1) << (t))  // makes a 64-bit bitflag
 
 
+//=//// EXTRA NEEDING GC MARK /////////////////////////////////////////////=//
+//
+// Note that the HEART_BYTE() is what is being tested--e.g. the type that the
+// cell payload and extra actually are *for*.  Quoted/quasiform/antiform
+// indicators in the quote byte do not affect it.
+
+#define Is_Extra_Mark_Kind(k) \
+    ((k) >= REB_VARARGS)
+
+#define Cell_Extra_Needs_Mark(v) \
+    Is_Extra_Mark_Kind(HEART_BYTE(v))  // READABLE() checked elsewhere
+
+
 //=//// BINDABILITY ///////////////////////////////////////////////////////=//
 //
 // Note that the HEART_BYTE() is what is being tested--e.g. the type that the
@@ -52,7 +65,7 @@
 // indicators in the quote byte do not affect it.
 
 #define Is_Bindable_Kind(k) \
-    ((k) >= REB_OBJECT)
+    ((k) >= REB_THE_BLOCK)
 
 #define Is_Bindable(v) \
     Is_Bindable_Kind(HEART_BYTE(v))  // READABLE() checked elsewhere
@@ -64,7 +77,7 @@
 
 INLINE bool Any_Inert_Kind(Byte k) {
     assert(k != REB_VOID and k != REB_ANTIFORM);
-    return k <= REB_BLOCK and k != REB_FRAME;  // hack for frame
+    return k < REB_FRAME;
 }
 
 #define Any_Inert(v) \
@@ -83,6 +96,7 @@ INLINE bool Any_Inert_Kind(Byte k) {
 #define Any_Get_Kind Any_Get_Value_Kind
 #define Any_Set_Kind Any_Set_Value_Kind
 #define Any_Meta_Kind Any_Meta_Value_Kind
+#define Any_The_Kind Any_The_Value_Kind
 #define Any_Plain_Kind Any_Plain_Value_Kind
 
 
@@ -100,6 +114,11 @@ INLINE enum Reb_Kind Plainify_Any_Get_Kind(Byte k) {
 INLINE enum Reb_Kind Plainify_Any_Set_Kind(Byte k) {
     assert(Any_Set_Kind(k));
     return cast(enum Reb_Kind, k - 5);
+}
+
+INLINE enum Reb_Kind Plainify_Any_The_Kind(Byte k) {
+    assert(Any_The_Kind(k));
+    return cast(enum Reb_Kind, k + 10);
 }
 
 INLINE enum Reb_Kind Plainify_Any_Meta_Kind(Byte k) {

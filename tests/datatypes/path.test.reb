@@ -213,7 +213,7 @@
 ~bad-sequence-item~ !! (
     to path! [_ _]
 )
-(the / = compose '(blank)/(blank))
+(the / = compose @(blank)/(blank))
 
 ; foo/ is also a length 2 PATH! in Ren-C
 (path! = kind of the foo/ )

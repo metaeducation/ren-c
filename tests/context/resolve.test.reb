@@ -8,7 +8,7 @@
 (
     obj: make object! [x: 1020]
     did all [
-        @[obj x] = steps: resolve 'obj.(first [x y])
+        '@[obj x] = steps: resolve @obj.(first [x y])
         1020 = get steps
     ]
 )

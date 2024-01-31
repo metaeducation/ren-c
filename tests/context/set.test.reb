@@ -59,7 +59,7 @@
 (null = get void)
 
 (
-    e: ^ set 'x raise ~test~
+    e: ^ set @x raise ~test~
     all [
         quasi? e
         error? e: unquasi e

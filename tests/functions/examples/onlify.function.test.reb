@@ -18,7 +18,7 @@ onlify: func [
         ]
     ) compose/deep [
         all [not only, any-array? series, any-array? (param)] then [
-            set/any '(param) spread (param)
+            set/any @(param) spread (param)
         ]
         ; ...fall through to normal handling
     ]

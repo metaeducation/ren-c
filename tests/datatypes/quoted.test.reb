@@ -4,11 +4,11 @@
 ; SET and GET should see through escaping and work anyway
 
 (
-    unset 'a
+    unset @a
     set noquote the '''''a <seta>
     <seta> = get noquote the ''a
 )(
-    unset 'a
+    unset @a
     set noquote the 'a <seta>
     <seta> = get noquote the '''''''a
 )(
@@ -24,14 +24,14 @@
 
 (
     x: 10
-    set 'x: 20
+    set @ x: 20
     x = 20
 )(
     x: 10
     y: null
     foo: func [<local> x] [
-        set 'x: 20
-        set 'y x
+        set @ x: 20
+        set @ y x
     ]
     foo
     (x = 10) and (y = 20)
@@ -41,7 +41,7 @@
 
 (
     x: 10
-    set 'x: 20
+    set @ x: 20
     x = 20
 )(
     x: 10
@@ -54,7 +54,8 @@
     (x = 10) and (y = 20)
 )
 
-; Now exceed the size of a literal that can be overlaid in a cell
+; This used to exceed the size of quoted literals in a cell (but an entire
+; byte in the cell was later dedicated to quoting)
 
 (
     x: 10
@@ -246,12 +247,12 @@
         |
         ~()~
     ][
-        lit-item: quote get/any 'item
+        lit-item: quote get/any @item
 
         comment "Just testing for crashes; discards mold result"
         mold :lit-item
 
-        (e1: trap [equal1: equal? get/any 'item get/any 'item]) also [
+        (e1: trap [equal1: equal? get/any @item get/any @item]) also [
             e1.where: e1.near: null
         ]
         (e2: trap [equal2: :lit-item = :lit-item]) also [
@@ -260,7 +261,7 @@
         if e1 [e1.line: null]  ; ignore line difference (file should be same)
         if e2 [e2.line: null]
         if :e1 != :e2 [
-            print mold kind of get/any 'item
+            print mold kind of get/any @item
             print mold e1
             print mold e2
             fail "no error parity"
@@ -277,6 +278,6 @@
 (
     did all [
         quasi? x: '~()~
-        quasi? get/any 'x
+        quasi? get/any @x
     ]
 )

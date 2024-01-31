@@ -137,9 +137,12 @@ INLINE REBVAL *Derelativize_Untracked(
         BINDING(out) = Derive_Specifier(specifier, v);
     }
     else {
-        // Things like contexts and varargs are not affected by specifiers,
-        // at least not currently.
+        // Something like a packed numeric sequence, 1.2.3 or similar
         //
+        assert(
+            Any_Sequence_Kind(Cell_Heart(v))
+            and Not_Cell_Flag(v, SEQUENCE_HAS_NODE)
+        );
         out->extra = v->extra;
     }
 

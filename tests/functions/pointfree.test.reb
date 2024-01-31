@@ -18,7 +18,7 @@
     ][
         ; If we did a GET of a PATH! it comes back as a partially specialized
         ; function, where the refinements are reported as normal args at the
-        ; right spot in the evaluation order.  (e.g. GET 'APPEND/DUP returns a
+        ; right spot in the evaluation order.  (e.g. GET @APPEND/DUP returns a
         ; function where DUP is a plain WORD! parameter in the third spot).
         ;
         ; We prune out any unused refinements for convenience.
@@ -41,10 +41,10 @@
                 blank? block.1 [block: skip block 1]
 
                 match word! p.1 [
-                    if not (var: evaluate/next block 'block, block) [
+                    if not (var: evaluate/next block @block, block) [
                         break  ; out of args, assume remaining unspecialized
                     ]
-                    frame.(p.1): get/any 'var
+                    frame.(p.1): get/any @var
                 ]
 
                 all [

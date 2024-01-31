@@ -5,10 +5,10 @@
 
 (enfix? :+)
 ~expect-arg~ !! (enfix? 1)
-(action? get '+)
+(action? get @+)
 
 ; #1934
-(3 = do reduce [1 unrun get '+ 2])
+(3 = do reduce [1 unrun get @+ 2])
 ~no-arg~ !! (do reduce [unrun :+ 1 2])
 
 
@@ -20,21 +20,21 @@
     ]
 )
 (
-    set 'foo enfix :add
+    set @foo enfix :add
     did all [
         enfix? :foo
         1 foo 2 = 3
     ]
 )
 (
-    set 'postfix-thing enfix lambda [x] [x * 2]
+    set @postfix-thing enfix lambda [x] [x * 2]
     all [
        enfix? :postfix-thing
        20 = (10 postfix-thing)
     ]
 )
 
-~no-arg~ !! (do reduce [unrun get '+ 1 2])  ; enfix no argument
+~no-arg~ !! (do reduce [unrun get @+ 1 2])  ; enfix no argument
 
 
 ; Only hard-quoted parameters are <skip>-able
@@ -61,9 +61,9 @@
         var: ~
         block: [<tag> lefty "hi"]
         did all [
-            <tag> = evaluate/next block 'block
+            <tag> = evaluate/next block @block
             [lefty "hi"] = block
-            [_ "hi"] = evaluate/next block 'block
+            [_ "hi"] = evaluate/next block @block
             [] = block
         ]
     )
@@ -72,12 +72,12 @@
     ; making the left-quoting operation see nothing on the left, even if the
     ; type matched what it was looking for.
     (
-        unset 'var
+        unset @var
         block: [the 1 lefty "hi"]
         did all [
-            1 = evaluate/next block 'block
+            1 = evaluate/next block @block
             [lefty "hi"] = block
-            [_ "hi"] = evaluate/next block 'block
+            [_ "hi"] = evaluate/next block @block
             [] = block
         ]
     )
@@ -220,13 +220,13 @@
         foo: func [] [
             fail "foo should not run, it's prefix and runs on *next* step"]
         did all [
-            1020 == evaluate/next [1020 foo 304] 'pos
+            1020 == evaluate/next [1020 foo 304] @pos
             pos == [foo 304]
         ]
     )(
         enfoo: enfix func [] [return <enfoo>]
         did all [
-            <enfoo> == evaluate/next [1020 enfoo 304] 'pos
+            <enfoo> == evaluate/next [1020 enfoo 304] @pos
             pos = [304]
         ]
         comment "0-arity function, but enfixed so runs in *same* step"
@@ -242,7 +242,7 @@
                 return #ignored
             ]
             did all [
-                #ignored == var: evaluate/next [ignored ifoo 304] 'pos
+                #ignored == var: evaluate/next [ignored ifoo 304] @pos
                 var == #ignored
                 pos = [ifoo 304]
                 null? ignored
@@ -263,17 +263,17 @@
                 return #ignored
             ]
             did all [
-                var: evaluate/next [ignored enifoo 304] 'pos
+                var: evaluate/next [ignored enifoo 304] @pos
                 pos = [enifoo 304]
                 var == #ignored
                 null? ignored
             ]
         ]
     )(
-        enifoo: enfix lambda ['i [<skip> integer!]] [compose '<enifoo>/(i)]
+        enifoo: enfix lambda ['i [<skip> integer!]] [compose @<enifoo>/(i)]
         did all [
             did all [
-                var: evaluate/next [1020 enifoo 304] 'pos
+                var: evaluate/next [1020 enifoo 304] @pos
                 pos = [304]
                 var == '<enifoo>/1020
             ]
@@ -287,7 +287,7 @@
     (
         bar: func [return: [nihil?]] [bar: null, return nihil]
         did all [
-            var: evaluate/next [1020 bar 304] 'pos
+            var: evaluate/next [1020 bar 304] @pos
             pos = [bar 304]
             var == 1020
             action? :bar
@@ -298,7 +298,7 @@
     )(
         enbar: enfix func [left] [enbar: null, return left]
         did all [
-            var: evaluate/next [1020 enbar 304] 'pos
+            var: evaluate/next [1020 enbar 304] @pos
             pos = [304]
             var == 1020
             null? enbar
@@ -314,7 +314,7 @@
                 return #ignored
             ]
             did all [
-                var: evaluate/next [ignored ibar 304] 'pos
+                var: evaluate/next [ignored ibar 304] @pos
                 pos = [ibar 304]
                 var == #ignored
                 null? ignored
@@ -336,7 +336,7 @@
                 return #kept
             ]
             did all [
-                var: evaluate/next [kept enibar 304] 'pos
+                var: evaluate/next [kept enibar 304] @pos
                 pos = [enibar 304]
                 var == #kept
                 null? kept
@@ -349,7 +349,7 @@
         ]
         did all [
             did all [
-                var: evaluate/next [1020 enibar 304] 'pos
+                var: evaluate/next [1020 enibar 304] @pos
                 pos = [304]
                 var == 1020
                 null? enibar

@@ -551,7 +551,7 @@ DECLARE_NATIVE(evaluate)
 //  {Restart a frame's action from the top with its current state}
 //
 //      return: []  ; !!! notation for divergent function?
-//      restartee "Frame to restart, or bound word (e.g. REDO 'RETURN)"
+//      restartee "Frame to restart, or bound word (e.g. REDO @RETURN)"
 //          [frame! any-word!]
 //      /sibling "Restart execution in a frame-compatible function"
 //          [<unrun> frame!]

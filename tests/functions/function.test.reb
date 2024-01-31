@@ -131,8 +131,8 @@
     same? :a-value f
 )
 (
-    f: does [get '+]
-    same? get '+ f
+    f: does [get @+]
+    same? get @+ f
 )
 (
     f: does [0x0]
@@ -362,13 +362,13 @@
 ; !!! Review: Fix these tests.
 
 ~expect-arg~ !! (
-    f: func [code value] [return either blank? code ['value] [do code]]
+    f: func [code value] [return either blank? code [@value] [do code]]
     f-value: f blank blank
     f compose [2 * (f-value)] 21  ; re-entering same function
 )
 ~expect-arg~ !! (
-    f: func [code value] [return either blank? code ['value] [do code]]
-    g: func [code value] [return either blank? code ['value] [do code]]
+    f: func [code value] [return either blank? code [@value] [do code]]
+    g: func [code value] [return either blank? code [@value] [do code]]
     f-value: f blank blank
     g compose [2 * (f-value)] 21  ; re-entering different function
 )
@@ -413,7 +413,7 @@
 )
 [#2025
     ~unassigned-attach~ !! (
-        assert [unset? 'x, unset? 'y]
+        assert [unset? @x, unset? @y]
 
         body: [return x + y]
         f: func [x] body
@@ -423,7 +423,7 @@
 ]
 
 [#2044 (
-    o: make object! [f: func [x] [return 'x]]
+    o: make object! [f: func [x] [return @x]]
     p: make o []
     not same? o.f 1 p.f 1
 )]

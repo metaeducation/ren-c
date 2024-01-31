@@ -129,10 +129,10 @@
 
 ; locals are unset before they are assigned
 (
-    f: func [<local> loc] [return get/any 'loc]
+    f: func [<local> loc] [return get/any @loc]
     trash? f
 )(
-    f: func [<local> loc] [return reify get/any 'loc]
+    f: func [<local> loc] [return reify get/any @loc]
     f = '~
 )(
     f: func [<local> loc] [return ^loc]
@@ -151,7 +151,7 @@
 ; would demand some kind of prior declaration of intent to use the name).
 ;
 (did all [
-    e: sys.util.rescue [get/any 'asiieiajiaosdfbjakbsjxbjkchasdf]
+    e: sys.util.rescue [get/any @asiieiajiaosdfbjakbsjxbjkchasdf]
     e.id = 'unassigned-attach
     e.arg1 = 'asiieiajiaosdfbjakbsjxbjkchasdf
 ])
@@ -225,7 +225,7 @@
     a: ~bad~
     ^a = '~bad~
 )
-(not error? trap [set 'a '~bad~])
+(not error? trap [set @a '~bad~])
 
 
 ; CONCRETIZE is used to make antiforms into the non-antiform, pass through

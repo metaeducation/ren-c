@@ -75,7 +75,7 @@ INLINE Cell* Init_Void_Untracked(Cell* out, Byte quote_byte) {
     );
 
   #ifdef ZERO_UNUSED_CELL_FIELDS
-    EXTRA(Any, out).corrupt = CORRUPTZERO;  // not Is_Bindable()
+    EXTRA(Any, out).corrupt = CORRUPTZERO;  // not Cell_Extra_Needs_Mark()
     PAYLOAD(Any, out).first.corrupt = CORRUPTZERO;
     PAYLOAD(Any, out).second.corrupt = CORRUPTZERO;
   #endif

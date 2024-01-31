@@ -14,7 +14,7 @@
 ; In newer Ren-C the operator `%%` is available as a quoting form, and is
 ; used for brevity in this test file.
 [
-    (%*.txt = make-file '*.(if true ["txt"]))
+    (%*.txt = make-file @*.(if true ["txt"]))
 
     (%*.txt = %% *.(if true ["txt"]))
 ]

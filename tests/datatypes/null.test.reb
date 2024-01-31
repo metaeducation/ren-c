@@ -25,7 +25,7 @@
 (
     a: ~
     did all [
-        null = set 'a null
+        null = set @a null
         null? a
         null = a
     ]

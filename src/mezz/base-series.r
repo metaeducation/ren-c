@@ -106,7 +106,7 @@ join: func [
         ] else [
             base: copy []
         ]
-        set/any 'value spread value  ; act like a splice
+        set/any @value spread value  ; act like a splice
     ] else [
         kind: kind of base
     ]

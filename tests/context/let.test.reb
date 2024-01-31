@@ -33,11 +33,11 @@
 ; LET X: 10 form declares but doesn't initialize, and returns
 [(
         x: <in-user-context>
-        [<in-user-context> 10 10] = reduce [x, let x: 10, get 'x]
+        [<in-user-context> 10 10] = reduce [x, let x: 10, get @x]
 )
 (
         x: <in-user-context>
-        [<in-user-context> x 10 10] = reduce [x, let x, x: 10, get 'x]
+        [<in-user-context> x 10 10] = reduce [x, let x, x: 10, get @x]
 )]
 
 ; If a LET receives a BLOCK!, then anything that is quoted will be dequoted
@@ -111,7 +111,7 @@
 ; ADD-LET-BINDING is a conceptual step for making your own LET-like thing.
 (
     maker: func [name] [
-        frame: binding of inside [] 'return
+        frame: binding of @return
         add-let-binding frame (to word! unspaced [name 1]) <one>
         add-let-binding frame (to word! unspaced [name 2]) <two>
     ]
@@ -294,7 +294,7 @@
             quasi? e: ^ let x: raise ~test~
             error? e: unquasi e
             e.id = 'test
-            unset? 'x  ; the LET is still in effect
+            unset? @x  ; the LET is still in effect
         ]
         assert [x = <x>]
     )
@@ -306,7 +306,7 @@
             error? e: unquasi e
             e.id = 'test
             a = <a>  ; exempted from let
-            unset? 'b
+            unset? @b
         ]
         assert [a = <a>]
         assert [b = <b>]

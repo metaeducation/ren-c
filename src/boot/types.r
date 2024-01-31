@@ -170,9 +170,24 @@ issue       "immutable codepoint or codepoint sequence"
 
 
 ; ============================================================================
-; BEGIN BINDABLE TYPES - SEE Is_Bindable() - Cell's "extra" USED FOR BINDING
+; BEGIN Cell_Extra_Needs_Mark() Cell's "extra" USES A NODE
 ; ============================================================================
+;
+; There's CELL_FLAG_FIRST_IS_NODE and CELL_FLAG_SECOND_IS_NODE so each cell
+; can say whether the GC needs to consider marking the first or second slots
+; in the payload.  But rather than sacrifice another bit for whether the
+; EXTRA slot is a node, the types are in order so that all the ones that need
+; it marked come after this point.
 
+varargs     "evaluator position for variable numbers of arguments"
+            (CELL_FLAG_SECOND_IS_NODE)
+            []
+            [varargs     +       +]
+
+pair        "two dimensional point or size"
+            (CELL_FLAG_FIRST_IS_NODE)
+            [any-scalar!]
+            [pair        +       +]
 
 <ANY-CONTEXT!>
 
@@ -191,27 +206,33 @@ issue       "immutable codepoint or codepoint sequence"
     #unstable   []
                 [context     +       +]
 
-    frame       "arguments and locals of a function state"
-    ~action~    (CELL_FLAG_FIRST_IS_NODE | CELL_FLAG_SECOND_IS_NODE)
-                [any-branch!]
-                [frame       +       *]
-
     port        "external series, an I/O channel"
                 (CELL_FLAG_FIRST_IS_NODE | CELL_FLAG_SECOND_IS_NODE)
                 []
                 [port        +       context]
 
+  ; ==========================================================================
+  ; BEGIN EVALUATOR ACTIVE TYPES, SEE Any_Evaluative()
+  ; ==========================================================================
+
+    frame       "arguments and locals of a function state"
+    ~action~    (CELL_FLAG_FIRST_IS_NODE | CELL_FLAG_SECOND_IS_NODE)
+                [any-branch!]
+                [frame       +       *]
+
 </ANY-CONTEXT!>
 
-varargs     "evaluator position for variable numbers of arguments"
-            (CELL_FLAG_SECOND_IS_NODE)
-            []
-            [varargs     +       +]
 
-pair        "two dimensional point or size"
-            (CELL_FLAG_FIRST_IS_NODE)
-            [any-scalar!]
-            [pair        +       +]
+comma       "separator between full evaluations (that is otherwise invisible)"
+~barrier~   (CELL_MASK_NO_NODES)
+#unstable   [any-unit!]
+            [comma       -       +]
+
+
+; ============================================================================
+; BEGIN BINDABLE TYPES - SEE Is_Bindable() - Cell's "extra" USED FOR BINDING
+; ============================================================================
+
 
 <ANY-THE-VALUE!>  ; (order matters, e.g. UNTHEIFY_ANY_XXX_KIND())
 
@@ -283,10 +304,6 @@ pair        "two dimensional point or size"
     ~pack~      (CELL_FLAG_FIRST_IS_NODE)
     #unstable   [any-block! any-array! any-series! any-branch!]
                 [array       *       *]
-
-  ; ==========================================================================
-  ; BEGIN EVALUATOR ACTIVE TYPES, SEE Any_Evaluative()
-  ; ==========================================================================
 
     group       "array that evaluates expressions as an isolated group"
     ~splice~    (CELL_FLAG_FIRST_IS_NODE)
@@ -399,17 +416,6 @@ pair        "two dimensional point or size"
                 [word        *       +]
 
 </ANY-META-VALUE!>
-
-
-; COMMA! needs to be evaluative, so it is past the non-bindable types.  We
-; want the Any_Inert() test to be fast with a single comparison, so it has
-; to null out the binding field in order to avoid crashing the processing
-; since it reports Is_Bindable()
-
-comma       "separator between full evaluations (that is otherwise invisible)"
-~barrier~   (CELL_MASK_NO_NODES)
-#unstable   [any-unit!]
-            [comma       -       +]
 
 
 ; ============================================================================

@@ -13,7 +13,7 @@
 )
 ; cyclic object
 [#69 (
-    a: make object! [a: binding of 'a]
+    a: make object! [a: binding of @a]
     text? mold a
 )]
 ; deep nested block mold
@@ -113,7 +113,7 @@
 
 [#145 (
     test-block: [a b c d e f]
-    set 'f func [
+    set @f func [
         <local> buff
     ][
         buff: copy ""

@@ -11,7 +11,7 @@
         x: <overwritten>
         did all [
             void? x: any []
-            voided? 'x
+            voided? @x
             void? :x
         ]
     )
@@ -19,7 +19,7 @@
         x: <overwritten>
         did all [
             void? x: any [comment "hi"]
-            voided? 'x
+            voided? @x
             void? :x
         ]
     )
@@ -98,7 +98,7 @@
     a-value: first [()]
     same? :a-value any [:a-value]
 )
-(same? get '+ any [get '+])
+(same? get @+ any [get @+])
 (0x0 == any [0x0])
 (
     a-value: 'a/b
@@ -197,7 +197,7 @@
     a-value: first [()]
     same? :a-value any [false :a-value]
 )
-(same? get '+ any [false get '+])
+(same? get @+ any [false get @+])
 (0x0 == any [false 0x0])
 (
     a-value: 'a/b
@@ -293,7 +293,7 @@
     a-value: first [()]
     same? :a-value any [:a-value false]
 )
-(same? get '+ any [get '+ false])
+(same? get @+ any [get @+ false])
 (0x0 == any [0x0 false])
 (
     a-value: 'a/b

@@ -261,7 +261,7 @@ typedef enum {
     //     >> foo 1 + 2
     //     a is '3
     //
-    //     >> foo get/any 'asdfasfasdf
+    //     >> foo get/any @asdfasfasdf
     //     a is ~
     //
     PARAMCLASS_META

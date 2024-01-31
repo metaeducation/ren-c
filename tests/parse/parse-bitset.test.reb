@@ -74,7 +74,7 @@
 
 [#753
     (
-        ws: to-bitset unspaced [tab newline cr sp]
+        ws: to-bitset unspaced [tab newline CR SP]
         abc: charset ["a" "b" "c"]
         rls: ["a", some ws, b: across some abc, some ws, "c"]
         rla: ["a", try some ws, b: across some abc, try some ws, "c"]

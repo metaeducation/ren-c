@@ -360,10 +360,8 @@ static void Queue_Mark_Cell_Deep(const Cell* c)
     in_mark = true;
   #endif
 
-    if (Is_Bindable_Kind(heart)) {
-        if (Cell_Binding(c))
-            Queue_Mark_Node_Deep(&m_cast(Cell*, c)->extra.Any.node);
-    }
+    if (Is_Extra_Mark_Kind(heart) and c->extra.Any.node)
+        Queue_Mark_Node_Deep(&m_cast(Cell*, c)->extra.Any.node);
 
     if (Get_Cell_Flag_Unchecked(c, FIRST_IS_NODE) and Cell_Node1(c))
         Queue_Mark_Node_Deep(&PAYLOAD(Any, m_cast(Cell*, c)).first.node);

@@ -10,7 +10,7 @@
 ; not permit this.  At one point Ren-C limited GET-WORD! use to functions, but
 ; the rise of more antiform forms leans to doing it like R3-Alpha and Red.
 (
-    unset 'a
+    unset @a
     e: sys.util.rescue [a]
     did all [
        'bad-word-get = e.id
@@ -19,7 +19,7 @@
     ]
 )
 (
-    unset 'a
+    unset @a
     trash? :a
 )
 
@@ -55,29 +55,29 @@
     (<inert> = :/a)
     (<inert> = :.a)
 
-    (<inert> = get 'a)
-    (<inert> = get '/a)
-    (<inert> = get '.a)
+    (<inert> = get @a)
+    (<inert> = get @/a)
+    (<inert> = get @.a)
 
-    (<inert> = get 'a.)
-    ; (<inert> = get '/a.)  ; !!! Not working ATM, needs path overhaul
-    ; (<inert> = get '.a.)  ; !!! Not working ATM, needs path overhaul
+    (<inert> = get @a.)
+    ; (<inert> = get @/a.)  ; !!! Not working ATM, needs path overhaul
+    ; (<inert> = get @.a.)  ; !!! Not working ATM, needs path overhaul
 
     ('inert-with-slashed = pick trap [ :a/ ] 'id)
     ('inert-with-slashed = pick trap [ :/a/ ] 'id)
     ('inert-with-slashed = pick trap [ :.a/ ] 'id)
 
-    ('inert-with-slashed = pick trap [ get 'a/ ] 'id)
-    ('inert-with-slashed = pick trap [ get '/a/ ] 'id)
-    ('inert-with-slashed = pick trap [ get '.a/ ] 'id)
+    ('inert-with-slashed = pick trap [ get @a/ ] 'id)
+    ('inert-with-slashed = pick trap [ get @/a/ ] 'id)
+    ('inert-with-slashed = pick trap [ get @.a/ ] 'id)
 
-    ('inert-with-slashed = pick trap [ get ':a/ ] 'id)
-    ('inert-with-slashed = pick trap [ get ':/a/ ] 'id)
-    ('inert-with-slashed = pick trap [ get ':.a/ ] 'id)
+    ('inert-with-slashed = pick trap [ get @ :a/ ] 'id)
+    ('inert-with-slashed = pick trap [ get @ :/a/ ] 'id)
+    ('inert-with-slashed = pick trap [ get @ :.a/ ] 'id)
 
-    ('inert-with-slashed = pick trap [ get 'a/: ] 'id)
-    ('inert-with-slashed = pick trap [ get '/a/: ] 'id)
-    ('inert-with-slashed = pick trap [ get '.a/: ] 'id)
+    ('inert-with-slashed = pick trap [ get @ a/: ] 'id)
+    ('inert-with-slashed = pick trap [ get @ /a/: ] 'id)
+    ('inert-with-slashed = pick trap [ get @ .a/: ] 'id)
   ]
   true
 )]
@@ -106,29 +106,29 @@
     (action? :/a)
     (action? :.a)
 
-    (action? get 'a)
-    (action? get '/a)
-    (action? get '.a)
+    (action? get @a)
+    (action? get @/a)
+    (action? get @.a)
 
-    ('action-with-dotted = pick trap [ get 'a. ] 'id)
-    ; (<inert> = get '/a.)  ; !!! Not working ATM, needs path overhaul
-    ; (<inert> = get '.a.)  ; !!! Not working ATM, needs path overhaul
+    ('action-with-dotted = pick trap [ get @a. ] 'id)
+    ; (<inert> = get @/a.)  ; !!! Not working ATM, needs path overhaul
+    ; (<inert> = get @.a.)  ; !!! Not working ATM, needs path overhaul
 
     (action? :a/)
     (action? :/a/)
     (action? :.a/)
 
-    (action? get 'a/)
-    (action? get '/a/)
-    (action? get '.a/)
+    (action? get @a/)
+    (action? get @/a/)
+    (action? get @.a/)
 
-    (action? get ':a/)
-    (action? get ':/a/)
-    (action? get ':.a/)
+    (action? get @ :a/)
+    (action? get @ :/a/)
+    (action? get @ :.a/)
 
-    (action? get 'a/:)
-    (action? get '/a/:)
-    (action? get '.a/:)
+    (action? get @ a/:)
+    (action? get @ /a/:)
+    (action? get @ .a/:)
   ]
   true
 )]
