@@ -618,7 +618,7 @@ main-startup: func [
                 code: as text! code
             ]
             emit {Use /ONLY so that QUIT/WITH quits, vs. return DO value}
-            emit [do/only (spaced ["Rebol []" code])]
+            emit [do/only (<*> spaced ["Rebol []" code])]
         )
     |
         ["-t" | "--trace"] (
