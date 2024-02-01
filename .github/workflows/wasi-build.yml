@@ -93,7 +93,7 @@ jobs:
     #
     # See README: Checkout Action
     #
-    - uses: actions/checkout@v3  # See README: Trusted Actions
+    - uses: actions/checkout@v4  # See README: Trusted Actions
 
 
     # The full commit is passed to make to build into the binary, and the
@@ -264,7 +264,7 @@ jobs:
     #
     - name: Configure AWS Credentials
       if: github.ref == 'refs/heads/master'  # see notes on DEPLOY STEPS
-      uses: aws-actions/configure-aws-credentials@v1
+      uses: aws-actions/configure-aws-credentials@v4
       with:
         aws-access-key-id: ${{ secrets.METAEDUCATION_AWS_ACCESS_KEY }}
         aws-secret-access-key: ${{ secrets.METAEDUCATION_AWS_SECRET_KEY }}
