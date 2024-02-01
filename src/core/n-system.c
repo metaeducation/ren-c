@@ -63,11 +63,9 @@ DECLARE_NATIVE(quit)
 
     if (not REF(with)) {  // e.g. QUIT VOID or QUIT
         //
-        // This returns an antiform if there is no arg, and labels it ~quit~,
-        // and whether that's a good idea depends on the larger ideas for what
-        // antiwords should be used for.
+        // This returns an quasiform if there is no arg, and labels it ~quit~
         //
-        Init_Anti_Word(v, Canon(QUIT));
+        Init_Quasi_Word(v, Canon(QUIT));
     }
 
     return Init_Thrown_With_Label(LEVEL, v, Lib(QUIT));

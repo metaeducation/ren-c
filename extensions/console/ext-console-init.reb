@@ -586,11 +586,8 @@ ext-console-impl: func [
         result.id = 'no-catch
         result.arg2 = unrun :quit  ; throw's /NAME
     ] then [
-        if '~quit~ = ^result.arg1 [
+        if '~quit~ = result.arg1 [
             return 0  ; plain QUIT with no argument, treat it as success
-        ]
-        if quasi? ^result.arg1 [
-            return 1  ; treat all other QUIT with antiforms as generic error
         ]
         return switch/type result.arg1 [
             logic?! [either result.arg1 [0] [1]]  ; logic true is success
