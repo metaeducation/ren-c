@@ -624,12 +624,11 @@ REBTYPE(Map)
         if (n == 0)
             return nullptr;
 
-        Copy_Cell(
-            OUT,
-            Array_At(MAP_PAIRLIST(m), ((n - 1) * 2) + 1)
-        );
+        const Value* val = Series_At(Value, MAP_PAIRLIST(m), ((n - 1) * 2) + 1);
+        if (Is_Void(val))
+            return nullptr;  // zombie value
 
-        return OUT; }
+        return Copy_Cell(OUT, val); }
 
       case SYM_PUT: {
         INCLUDE_PARAMS_OF_PUT;
