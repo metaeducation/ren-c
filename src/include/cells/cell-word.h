@@ -61,7 +61,7 @@ INLINE void INIT_VAL_WORD_INDEX(Cell* v, REBINT i) {
     VAL_WORD_INDEX_I32(v) = i;
 }
 
-INLINE REBVAL *Init_Any_Word_Untracked(
+INLINE Element* Init_Any_Word_Untracked(
     Sink(Element*) out,
     enum Reb_Kind kind,
     const Symbol* sym,
@@ -77,7 +77,7 @@ INLINE REBVAL *Init_Any_Word_Untracked(
     BINDING(out) = nullptr;
     INIT_CELL_WORD_SYMBOL(out, sym);
 
-    return cast(REBVAL*, out);
+    return out;
 }
 
 #define Init_Any_Word(out,kind,spelling) \

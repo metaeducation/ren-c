@@ -1104,6 +1104,9 @@ static REBIXO To_Thru_Non_Block_Rule(
             Quasify(temp);
             Meta_Unquotify_Known_Stable(temp);
         }
+        else {
+            Copy_Cell(temp, rule);
+        }
 
         Length len;
         REBINT i = Find_In_Array(
