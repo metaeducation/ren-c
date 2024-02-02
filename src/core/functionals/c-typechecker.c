@@ -142,7 +142,7 @@ Phase* Make_Typechecker(const Value* type) {
 //
 //  typechecker: native [
 //
-//  {Generator for an optimized typechecking ACTION!}
+//  "Generator for an optimized typechecking ACTION!"
 //
 //      return: [action?]
 //      type [type-word! integer!]

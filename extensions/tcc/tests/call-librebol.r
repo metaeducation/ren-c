@@ -1,5 +1,5 @@
 REBOL [
-    Title: {Test C Code Using Librebol Instead of Stdio.h}
+    Title: "Test C Code Using Librebol Instead of Stdio.h"
     Description: {
         In order to call C functions like printf(), you must have headers and
         libraries installed on your ARM platform.  This is difficult to do
@@ -86,4 +86,4 @@ compile/settings/nostdlib compilables opts  ; does the actual compilation
 print "COMPILE SUCCEEDED"
 
 result: call-librebol 1000
-print [{The result was:} result]
+print ["The result was:" result]

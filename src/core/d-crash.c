@@ -258,7 +258,7 @@ DECLARE_NATIVE(panic)
 //
 //  raise*: native [
 //
-//  {Version of RAISE of definitional error that only takes ERROR!}
+//  "Version of RAISE of definitional error that only takes ERROR!"
 //
 //      return: [raised?]
 //      reason [error!]
@@ -277,7 +277,7 @@ DECLARE_NATIVE(raise_p)
 //
 //  fail: native [
 //
-//  {Early-boot version of FAIL (overridden by more complex usermode version)}
+//  "Early-boot version of FAIL (overridden by more complex usermode version)"
 //
 //      return: []  ; !!! Notation for divergent function?
 //      'blame [<skip> quoted!]

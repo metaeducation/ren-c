@@ -52,7 +52,7 @@ if args/GIT_COMMIT = "unknown" [
     ]
 ]
 
-=== {SETUP PATHS AND MAKE DIRECTORIES (IF NEEDED)} ===
+=== "SETUP PATHS AND MAKE DIRECTORIES (IF NEEDED)" ===
 
 prep-dir: join system/options/path %prep/
 
@@ -60,16 +60,8 @@ mkdir/deep join prep-dir %include/
 mkdir/deep join prep-dir %boot/
 mkdir/deep join prep-dir %core/
 
-Title: {
-    REBOL
-    Copyright 2012 REBOL Technologies
-    Copyright 2012-2019 Ren-C Open Source Contributors
-    REBOL is a trademark of REBOL Technologies
-    Licensed under the Apache License, Version 2.0
-}
 
-
-=== {MAKE VERSION INFORMATION AVAILABLE TO CORE C CODE} ===
+=== "MAKE VERSION INFORMATION AVAILABLE TO CORE C CODE" ===
 
 e-version: make-emitter "Version Information" (
     join prep-dir %include/tmp-version.h
@@ -98,7 +90,7 @@ e-version/emit newline
 e-version/write-emitted
 
 
-=== {SET UP COLLECTION OF SYMBOL NUMBERS} ===
+=== "SET UP COLLECTION OF SYMBOL NUMBERS" ===
 
 ; !!! The symbol strategy in Ren-C is expected to move to using a fixed table
 ; of words that commit to their identity, as opposed to picking on each build.
@@ -155,7 +147,7 @@ add-sym: func [
 ]
 
 
-=== {DATATYPE DEFINITIONS} ===
+=== "DATATYPE DEFINITIONS" ===
 
 type-table: load %types.r
 
@@ -496,7 +488,7 @@ for-each-datatype t [
 e-types/write-emitted
 
 
-=== {BUILT-IN TYPE HOOKS TABLE} ===
+=== "BUILT-IN TYPE HOOKS TABLE" ===
 
 e-hooks: make-emitter "Built-in Type Hooks" (
     join prep-dir %core/tmp-type-hooks.c
@@ -562,7 +554,7 @@ e-hooks/emit [hook-list {
 e-hooks/write-emitted
 
 
-=== {SYMBOL-TO-TYPESET-BITS MAPPING TABLE} ===
+=== "SYMBOL-TO-TYPESET-BITS MAPPING TABLE" ===
 
 ; The typesets for things like ANY-BLOCK! etc. are specified in the %types.r
 ; table, and turned into 64-bit bitsets.
@@ -596,7 +588,7 @@ e-typesets/emit {
 e-typesets/write-emitted
 
 
-=== {SYMBOLS FOR LIB-WORDS.R} ===
+=== "SYMBOLS FOR LIB-WORDS.R" ===
 
 ; Add SYM_XXX constants for the words in %lib-words.r - these are words that
 ; reserve a spot in the lib context.  They can be accessed quickly, without
@@ -617,7 +609,7 @@ for-each term load %lib-words.r [
 ]
 
 
-=== {ESTABLISH SYM_XXX VALUES FOR EACH NATIVE} ===
+=== "ESTABLISH SYM_XXX VALUES FOR EACH NATIVE" ===
 
 ; It's desirable for the core to be able to get the REBVAL* for a native
 ; quickly just by indexing into a table.  An aspect of optimizations related
@@ -641,7 +633,7 @@ for-each name native-names [
 ]
 
 
-=== {"VERB" SYMBOLS FOR GENERICS} ===
+=== "'VERB' SYMBOLS FOR GENERICS" ===
 
 ; This adds SYM_XXX constants for generics (e.g. SYM_APPEND, etc.), which
 ; allows C switch() statements to process them efficiently
@@ -661,7 +653,7 @@ for-each name generic-names [
 lib-syms-max: sym-n  ; *DON'T* count the symbols in %symbols.r, added below...
 
 
-=== {SYMBOLS FOR SYMBOLS.R} ===
+=== "SYMBOLS FOR SYMBOLS.R" ===
 
 ; The %symbols.r file are terms that get SYM_XXX constants and an entry in
 ; the table for turning those constants into a symbol pointer.  But they do
@@ -681,7 +673,7 @@ for-each term load %symbols.r [
 ]
 
 
-=== {SYSTEM OBJECT SELECTORS} ===
+=== "SYSTEM OBJECT SELECTORS" ===
 
 e-sysobj: make-emitter "System Object" (
     join prep-dir %include/tmp-sysobj.h
@@ -763,7 +755,7 @@ make-obj-defs e-sysobj ob/locale "LOCALE" 4
 e-sysobj/write-emitted
 
 
-=== {ERROR STRUCTURE AND CONSTANTS} ===
+=== "ERROR STRUCTURE AND CONSTANTS" ===
 
 e-errfuncs: make-emitter "Error structure and functions" (
     join prep-dir %include/tmp-error-funcs.h
@@ -873,7 +865,7 @@ for-each [sw-cat list] boot-errors [
 e-errfuncs/write-emitted
 
 
-=== {LOAD BOOT MEZZANINE FUNCTIONS} ===
+=== "LOAD BOOT MEZZANINE FUNCTIONS" ===
 
 ; The %base-xxx.r and %mezz-xxx.r files are not run through LOAD.  This is
 ; because the r3.exe being used to bootstrap may be older than the Rebol it
@@ -916,7 +908,7 @@ for-each item sys-toplevel [
 ]
 
 
-=== {MAKE BOOT BLOCK!} ===
+=== "MAKE BOOT BLOCK!" ===
 
 ; Create the aggregated Rebol file of all the Rebol-formatted data that is
 ; used in bootstrap.  This includes everything from a list of WORD!s that
@@ -1036,7 +1028,7 @@ e-bootblock/emit [compressed {
 e-bootblock/write-emitted
 
 
-=== {BOOT HEADER FILE} ===
+=== "BOOT HEADER FILE" ===
 
 e-boot: make-emitter "Bootstrap Structure and Root Module" (
     join prep-dir %include/tmp-boot.h
@@ -1078,7 +1070,7 @@ e-boot/emit [fields {
 e-boot/write-emitted
 
 
-=== {EMIT SYMBOLS} ===
+=== "EMIT SYMBOLS" ===
 
 e-symbols/emit [syms-cscape {
     /*

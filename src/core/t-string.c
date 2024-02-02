@@ -489,7 +489,8 @@ Bounce TO_String(Level* level_, enum Reb_Kind kind, const REBVAL *arg)
 
 //
 //  to-text: native [
-//      {Variant of TO TEXT! with option to tolerate invisible codepoints}
+//
+//  "Variant of TO TEXT! with option to tolerate invisible codepoints"
 //
 //      return: [<opt> text!]
 //      value [<maybe> element?]

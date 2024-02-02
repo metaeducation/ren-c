@@ -976,7 +976,7 @@ REBTYPE(Fail)
 //
 //  tweak: native [
 //
-//  {Modify a special property (currently only for ACTION!)}
+//  "Modify a special property (currently only for ACTION!)"
 //
 //      return: "Same action identity as input"
 //          [action?]

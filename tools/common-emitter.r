@@ -348,7 +348,7 @@ export make-emitter: func [
                 replace/all buf-emit spaced-tab tab
             ]
 
-            print [{WRITING =>} file]
+            print ["WRITING =>" file]
 
             write-if-changed file buf-emit
 

@@ -124,7 +124,7 @@ Bounce Group_Branch_Executor(Level* level_)
 //
 //  if: native [
 //
-//  {When TO LOGIC! CONDITION is true, execute branch}
+//  "When TO LOGIC! CONDITION is true, execute branch"
 //
 //      return: "void if branch not run, otherwise branch result (see HEAVY)"
 //          [any-atom?]
@@ -158,7 +158,7 @@ DECLARE_NATIVE(if)
 //
 //  either: native [
 //
-//  {Choose a branch to execute, based on TO-LOGIC of the CONDITION value}
+//  "Choose a branch to execute, based on TO-LOGIC of the CONDITION value"
 //
 //      return: [any-atom?]
 //      condition [any-value?]  ; non-void-value? possible, but slower
@@ -360,7 +360,7 @@ static Bounce Then_Else_Isotopic_Object_Helper(
 //
 //  did: native [
 //
-//  {Tests for not being a "pure" null or void (IF DID is prefix THEN)}
+//  "Tests for not being a 'pure' null or void (IF DID is prefix THEN)"
 //
 //      return: [logic?]
 //      ^atom "Argument to test"
@@ -455,7 +455,7 @@ DECLARE_NATIVE(did_1)  // see TO-C-NAME for why the "_1" is needed
 //
 //  didn't: native [
 //
-//  {Test for being a "pure" null or void (IF DID'T is prefix ELSE)}
+//  "Test for being a 'pure' null or void (`IF DIDN'T` is prefix `ELSE`)"
 //
 //      return: [logic?]
 //      ^atom "Argument to test"
@@ -485,7 +485,7 @@ DECLARE_NATIVE(didnt)
 //
 //  then: enfix native [
 //
-//  {If input is null, return null, otherwise evaluate the branch}
+//  "If input is null, return null, otherwise evaluate the branch"
 //
 //      return: "null if input is null, or branch result"
 //          [any-atom?]
@@ -528,7 +528,7 @@ DECLARE_NATIVE(then)  // see `tweak :then 'defer on` in %base-defs.r
 //
 //  else: enfix native [
 //
-//  {If input is not null, return that value, otherwise evaluate the branch}
+//  "If input is not null, return that value, otherwise evaluate the branch"
 //
 //      return: "Input value if not null, or branch result"
 //          [any-atom?]
@@ -570,7 +570,7 @@ DECLARE_NATIVE(else)  // see `tweak :else 'defer on` in %base-defs.r
 //
 //  also: enfix native [
 //
-//  {For non-null input, evaluate and discard branch (like a pass-thru THEN)}
+//  "For non-null input, evaluate and discard branch (like a pass-thru THEN)"
 //
 //      return: "The same value as input, regardless of if branch runs"
 //          [any-atom?]
@@ -632,7 +632,7 @@ DECLARE_NATIVE(also)  // see `tweak :also 'defer on` in %base-defs.r
 //
 //  match: native [
 //
-//  {Check value using tests (match types, TRUE or FALSE, or filter action)}
+//  "Check value using tests (match types, TRUE or FALSE, or filter action)"
 //
 //      return: "Input if it matched, NULL if it did not"
 //          [any-value?]
@@ -699,7 +699,7 @@ DECLARE_NATIVE(match)
 //
 //  lit-block?: native/intrinsic [
 //
-//  {Test if a block is singly quoted}
+//  "Test if a block is singly quoted"
 //
 //      return: [logic?]
 //      value [any-value?]
@@ -719,7 +719,7 @@ DECLARE_INTRINSIC(lit_block_q)
 //
 //  all: native [
 //
-//  {Short-circuiting variant of AND, using a block of expressions as input}
+//  "Short-circuiting variant of AND, using a block of expressions as input"
 //
 //      return: "Product of last passing evaluation if all truthy, else null"
 //          [any-value?]
@@ -868,7 +868,7 @@ DECLARE_NATIVE(all)
 //
 //  any: native [
 //
-//  {Short-circuiting version of OR, using a block of expressions as input}
+//  "Short-circuiting version of OR, using a block of expressions as input"
 //
 //      return: "First passing evaluative result, or null if none pass"
 //          [any-value?]
@@ -995,7 +995,7 @@ DECLARE_NATIVE(any)
 //
 //  case: native [
 //
-//  {Evaluates each condition, and when true, evaluates what follows it}
+//  "Evaluates each condition, and when true, evaluates what follows it"
 //
 //      return: "Last matched case evaluation, or null if no cases matched"
 //          [any-value?]
@@ -1202,7 +1202,7 @@ DECLARE_NATIVE(case)
 //
 //  switch: native [
 //
-//  {Selects a choice and evaluates the block that follows it.}
+//  "Selects a choice and evaluates the block that follows it"
 //
 //      return: "Last case evaluation, or void if no cases matched"
 //          [any-value?]
@@ -1399,7 +1399,7 @@ DECLARE_NATIVE(switch)
 //
 //  default: enfix native [
 //
-//  {Set word or path to a default value if it is not set yet}
+//  "Set word or path to a default value if it is not set yet"
 //
 //      return: "Former value or branch result, can only be null if no target"
 //          [any-value?]
@@ -1483,7 +1483,7 @@ DECLARE_NATIVE(default)
 //
 //  catch: native [
 //
-//  {Catches a throw from a block and returns its value.}
+//  "Catches a throw from a block and returns its value"
 //
 //      return: "Thrown value"
 //          [any-value?]
@@ -1611,7 +1611,7 @@ DECLARE_NATIVE(catch)
 //
 //  throw: native [
 //
-//  "Throws control back to a previous catch."
+//  "Throws control back to a previous catch"
 //
 //      return: []  ; !!! notation for divergent function?
 //      ^value "Value returned from catch"

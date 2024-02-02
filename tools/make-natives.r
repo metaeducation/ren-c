@@ -24,7 +24,7 @@ REBOL [
         //
         //  native-name: native [
         //
-        //  {Description of native would go here}
+        //  "Description of native would go here"
         //
         //      return: "Return description here"
         //          [integer!]
@@ -108,7 +108,7 @@ gather-natives: func [
 gather-natives join src-dir %core/
 
 
-=== {MOVE "NATIVE: NATIVE" and "ENFIX: NATIVE" TO FRONT OF GATHERED LIST} ===
+=== "MOVE `NATIVE: NATIVE` and `ENFIX: NATIVE` TO FRONT OF GATHERED LIST" ===
 
 ; The construction `native: native [...]` obviously has to be treated in a
 ; special way.  Startup constructs it manually, before skipping it and invoking
@@ -147,7 +147,7 @@ insert all-protos action?-proto  ; will be second
 insert all-protos native-proto  ; so now it's first
 
 
-=== {MOLD AS TEXT TO BE EMBEDDED IN THE EXECUTABLE AND SCANNED AT BOOT} ===
+=== "MOLD AS TEXT TO BE EMBEDDED IN THE EXECUTABLE AND SCANNED AT BOOT" ===
 
 append output-buffer {REBOL [
     System: "REBOL [R3] Language Interpreter and Run-time Environment"
@@ -194,7 +194,7 @@ print newline
 clear output-buffer
 
 
-=== {GENERATE PROCESSED FILES FOR GENERICS} ===
+=== "GENERATE PROCESSED FILES FOR GENERICS" ===
 
 generic-names: copy []
 stripped-generics: stripload/gather (join src-dir %boot/generics.r) inside [] 'generic-names
@@ -212,7 +212,7 @@ write-if-changed (join output-dir %boot/tmp-generic-names.r) unspaced [
 ]
 
 
-=== {EMIT INCLUDE_PARAMS_OF_XXX AUTOMATIC MACROS} ===
+=== "EMIT INCLUDE_PARAMS_OF_XXX AUTOMATIC MACROS" ===
 
 ; This used to be done in %make-headers.r, but we handle this here because we
 ; still have the individual specs for the natives on hand.  The generics need
@@ -245,7 +245,7 @@ parse2 stripped-generics [
 e-params/write-emitted
 
 
-=== {EMIT DECLARE_NATIVE() or DECLARE_INTRINSIC() FORWARD DECLS} ===
+=== "EMIT DECLARE_NATIVE() or DECLARE_INTRINSIC() FORWARD DECLS" ===
 
 e-forward: make-emitter "DECLARE_NATIVE/INTRINSIC() forward decls" (
     join output-dir %include/tmp-native-fwd-decls.h

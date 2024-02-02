@@ -30,7 +30,7 @@
 //
 //  reduce: native [
 //
-//  {Evaluates expressions, keeping each result (DO only gives last result)}
+//  "Evaluates expressions, keeping each result (DO only gives last result)"
 //
 //      return: "New array or value"
 //          [element?]
@@ -222,7 +222,7 @@ DECLARE_NATIVE(reduce)
 //
 //  reduce-each: native [
 //
-//  {Evaluates expressions, keeping each result (DO only gives last result)}
+//  "Evaluates expressions, keeping each result (DO only gives last result)"
 //
 //      return: "Last body result"
 //          [any-atom?]
@@ -790,7 +790,7 @@ Bounce Composer_Executor(Level* const L)
 //
 //  compose: native [
 //
-//  {Evaluates only contents of GROUP!-delimited expressions in an array}
+//  "Evaluates only contents of GROUP!-delimited expressions in an array"
 //
 //      return: [blackhole? any-array! any-sequence! any-word! action?]
 //      'label "Distinguish compose groups, e.g. [(plain) (<*> composed)]"
@@ -893,7 +893,7 @@ static void Flatten_Core(
 //
 //  flatten: native [
 //
-//  {Flattens a block of blocks.}
+//  "Flattens a block of blocks"
 //
 //      return: [block!]
 //          {The flattened result block}

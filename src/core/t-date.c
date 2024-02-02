@@ -1165,17 +1165,17 @@ REBTYPE(Date)
 //
 //  make-date-ymdsnz: native [
 //
-//  {Make a date from Year, Month, Day, Seconds, Nanoseconds, time Zone}
+//  "Make a date from Year, Month, Day, Seconds, Nanoseconds, time Zone"
 //
 //      return: [date!]
-//      year [integer!]
-//          "full integer, e.g. 1975"
-//      month [integer!]
-//          "1 is January, 12 is December"
-//      day [integer!]
-//          "1 to 31"
-//      seconds [integer!]
-//          "3600 for each hour, 60 for each minute"
+//      year "full integer, e.g. 1975"
+//          [integer!]
+//      month "1 is January, 12 is December"
+//          [integer!]
+//      day "1 to 31"
+//          [integer!]
+//      seconds "3600 for each hour, 60 for each minute"
+//          [integer!]
 //      nano [<opt> integer!]
 //      zone [<opt> integer!]
 //  ]
@@ -1213,7 +1213,7 @@ DECLARE_NATIVE(make_date_ymdsnz)
 //
 //  make-time-sn: native [
 //
-//  {Make a TIME! from Seconds and Nanoseconds}
+//  "Make a TIME! from Seconds and Nanoseconds"
 //
 //      return: [time!]
 //      seconds "3600 for each hour, 60 for each minute"

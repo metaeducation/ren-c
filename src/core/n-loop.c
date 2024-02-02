@@ -86,7 +86,7 @@ bool Try_Catch_Break_Or_Continue(
 //
 //  definitional_break: native [
 //
-//  {Exit the current iteration of a loop and stop iterating further}
+//  "Exit the current iteration of a loop and stop iterating further"
 //
 //      return: []  ; "divergent"
 //  ]
@@ -121,7 +121,7 @@ DECLARE_NATIVE(definitional_break)
 //
 //  definitional-continue: native [
 //
-//  "Throws control back to top of loop for next iteration."
+//  "Throws control back to top of loop for next iteration"
 //
 //      return: []  ; "divergent"
 //      /with "Act as if loop body finished with this value"
@@ -455,7 +455,7 @@ Value* Real_Var_From_Pseudo(Value* pseudo_var) {
 //
 //  cfor: native [
 //
-//  {Evaluate a block over a range of values. (See also: REPEAT)}
+//  "Evaluate a block over a range of values (See also: REPEAT)"
 //
 //      return: [any-value?]
 //      :word [word!]
@@ -642,7 +642,7 @@ DECLARE_NATIVE(for_skip)
 //
 //  definitional-stop: native [
 //
-//  {End the current iteration of CYCLE, optionally returning a value}
+//  "End the current iteration of CYCLE, optionally returning a value"
 //
 //      return: []  ; !!! Notation for divergent functions?s
 //      /with "Act as if loop body finished with this value"
@@ -1103,7 +1103,7 @@ void Shutdown_Loop_Each(Value* iterator)
 //
 //  for-each: native [
 //
-//  {Evaluates a block for each value(s) in a series.}
+//  "Evaluates a block for each value(s) in a series"
 //
 //      return: "Last body result, or null if BREAK"
 //          [any-value?]
@@ -1203,7 +1203,7 @@ DECLARE_NATIVE(for_each)
 //
 //  every: native [
 //
-//  {Iterate and return null if any previous body evaluations were falsey}
+//  "Iterate and return null if any previous body evaluations were falsey"
 //
 //      return: [any-value?]
 //          {null on BREAK, blank on empty, false or the last truthy value}
@@ -1325,7 +1325,7 @@ DECLARE_NATIVE(every)
 //
 //  remove-each: native [
 //
-//  {Removes values for each block that returns true}
+//  "Removes values for each block that returns true"
 //
 //      return: "Number of removed series items, or null if BREAK"
 //          [<opt> integer!]
@@ -1664,7 +1664,7 @@ DECLARE_NATIVE(remove_each)
 //
 //  map-each: native [
 //
-//  {Evaluate a block for each value(s) in a series and collect as a block.}
+//  "Evaluate a block for each value(s) in a series and collect as a block"
 //
 //      return: "Collected block"
 //          [<opt> block!]
@@ -1707,7 +1707,7 @@ DECLARE_NATIVE(map_each)
 //
 //  map: native [
 //
-//  {Evaluate a block for each value(s) in a series and collect as a block}
+//  "Evaluate a block for each value(s) in a series and collect as a block"
 //
 //      return: "Collected block"
 //          [<opt> block!]
@@ -1859,7 +1859,7 @@ DECLARE_NATIVE(map)
 //
 //  repeat: native [
 //
-//  {Evaluates a block a specified number of times}
+//  "Evaluates a block a specified number of times"
 //
 //      return: "Last body result, or null if BREAK"
 //          [any-value?]
@@ -1943,7 +1943,7 @@ DECLARE_NATIVE(repeat)
 //
 //  for: native [
 //
-//  {Evaluates a branch a number of times or over a series, return last result}
+//  "Evaluates a branch a number of times or over a series, return last result"
 //
 //      return: "Last body result, or NULL if BREAK"
 //          [any-value?]
@@ -2047,7 +2047,7 @@ DECLARE_NATIVE(for)
 //
 //  until: native [
 //
-//  {Evaluates the body until it produces a conditionally true value}
+//  "Evaluates the body until it produces a conditionally true value"
 //
 //      return: "Last body result, or null if a BREAK occurred"
 //          [any-value?]
@@ -2145,7 +2145,7 @@ DECLARE_NATIVE(until)
 //
 //  while: native [
 //
-//  {So long as a condition is truthy, evaluate the body}
+//  "So long as a condition is truthy, evaluate the body"
 //
 //      return: "VOID if body never run, NULL if BREAK, else last body result"
 //          [any-value?]

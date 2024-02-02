@@ -235,7 +235,7 @@ Bounce Chainer_Dispatcher(Level* const L)
 //
 //  chain*: native [
 //
-//  {Create a processing pipeline of actions, each consuming the last result}
+//  "Create a processing pipeline of actions, each consuming the last result"
 //
 //      return: [action?]
 //      pipeline "Block of ACTION!s to apply (will be LOCKed)"

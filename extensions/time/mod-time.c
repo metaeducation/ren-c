@@ -33,7 +33,7 @@ extern REBVAL *Get_Current_Datetime_Value(void);
 //
 //  export now: native [
 //
-//  "Returns current date and time with timezone adjustment."
+//  "Returns current date and time with timezone adjustment"
 //
 //      return: [date! time! integer!]
 //      /year "Returns year only"

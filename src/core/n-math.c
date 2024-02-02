@@ -113,7 +113,7 @@ static void Arc_Trans(
 //
 //  cosine: native [
 //
-//  "Returns the trigonometric cosine."
+//  "Returns the trigonometric cosine"
 //
 //      return: [decimal!]
 //      angle [any-number!]
@@ -136,7 +136,7 @@ DECLARE_NATIVE(cosine)
 //
 //  sine: native [
 //
-//  "Returns the trigonometric sine."
+//  "Returns the trigonometric sine"
 //
 //      return: [decimal!]
 //      angle [any-number!]
@@ -159,7 +159,7 @@ DECLARE_NATIVE(sine)
 //
 //  tangent: native [
 //
-//  "Returns the trigonometric tangent."
+//  "Returns the trigonometric tangent"
 //
 //      return: [decimal!]
 //      angle [any-number!]
@@ -182,7 +182,7 @@ DECLARE_NATIVE(tangent)
 //
 //  arccosine: native [
 //
-//  {Returns the trigonometric arccosine.}
+//  "Returns the trigonometric arccosine"
 //
 //      return: [decimal!]
 //      cosine [any-number!]
@@ -202,7 +202,7 @@ DECLARE_NATIVE(arccosine)
 //
 //  arcsine: native [
 //
-//  {Returns the trigonometric arcsine.}
+//  "Returns the trigonometric arcsine"
 //
 //      return: [decimal!]
 //      sine [any-number!]
@@ -222,7 +222,7 @@ DECLARE_NATIVE(arcsine)
 //
 //  arctangent: native [
 //
-//  {Returns the trigonometric arctangent.}
+//  "Returns the trigonometric arctangent"
 //
 //      return: [decimal!]
 //      tangent [any-number!]
@@ -242,7 +242,7 @@ DECLARE_NATIVE(arctangent)
 //
 //  exp: native [
 //
-//  {Raises E (the base of natural logarithm) to the power specified}
+//  "Raises E (the base of natural logarithm) to the power specified"
 //
 //      return: [decimal!]
 //      power [any-number!]
@@ -264,7 +264,7 @@ DECLARE_NATIVE(exp)
 //
 //  log-10: native [
 //
-//  "Returns the base-10 logarithm."
+//  "Returns the base-10 logarithm"
 //
 //      return: [decimal!]
 //      value [any-number!]
@@ -285,7 +285,7 @@ DECLARE_NATIVE(log_10)
 //
 //  log-2: native [
 //
-//  "Return the base-2 logarithm."
+//  "Return the base-2 logarithm"
 //
 //      return: [decimal!]
 //      value [any-number!]
@@ -306,7 +306,7 @@ DECLARE_NATIVE(log_2)
 //
 //  log-e: native [
 //
-//  {Returns the natural (base-E) logarithm of the given value}
+//  "Returns the natural (base-E) logarithm of the given value"
 //
 //      return: [decimal!]
 //      value [any-number!]
@@ -327,7 +327,7 @@ DECLARE_NATIVE(log_e)
 //
 //  square-root: native [
 //
-//  "Returns the square root of a number."
+//  "Returns the square root of a number"
 //
 //      return: [decimal!]
 //      value [any-number!]
@@ -364,7 +364,7 @@ DECLARE_NATIVE(square_root)
 //
 //  shift: native [
 //
-//  {Shifts an integer left or right by a number of bits.}
+//  "Shifts an integer left or right by a number of bits"
 //
 //      return: [integer!]
 //      value [integer!]
@@ -588,7 +588,7 @@ REBINT Compare_Modify_Values(Cell* a, Cell* b, bool strict)
 //
 //  equal?: native [
 //
-//  {TRUE if the values are equal}
+//  "TRUE if the values are equal"
 //
 //      return: [logic?]
 //      value1 [any-value?]
@@ -608,7 +608,7 @@ DECLARE_NATIVE(equal_q)
 //
 //  not-equal?: native [
 //
-//  {TRUE if the values are not equal}
+//  "TRUE if the values are not equal"
 //
 //      return: [logic?]
 //      value1 [any-value?]
@@ -628,7 +628,7 @@ DECLARE_NATIVE(not_equal_q)
 //
 //  strict-equal?: native [
 //
-//  {TRUE if the values are strictly equal}
+//  "TRUE if the values are strictly equal"
 //
 //      return: [logic?]
 //      value1 [any-value?]
@@ -651,7 +651,7 @@ DECLARE_NATIVE(strict_equal_q)
 //
 //  strict-not-equal?: native [
 //
-//  {TRUE if the values are not strictly equal}
+//  "TRUE if the values are not strictly equal"
 //
 //      return: [logic?]
 //      value1 [any-value?]
@@ -674,7 +674,7 @@ DECLARE_NATIVE(strict_not_equal_q)
 //
 //  same?: native [
 //
-//  {TRUE if the values are identical}
+//  "TRUE if the values are identical"
 //
 //      return: [logic?]
 //      value1 [any-value?]
@@ -762,7 +762,7 @@ DECLARE_NATIVE(same_q)
 //
 //  lesser?: native [
 //
-//  {TRUE if the first value is less than the second value}
+//  "TRUE if the first value is less than the second value"
 //
 //      return: [logic?]
 //      value1 value2
@@ -800,7 +800,7 @@ DECLARE_NATIVE(lesser_q)
 //
 //  equal-or-lesser?: native [
 //
-//  {TRUE if the first value is equal to or less than the second value}
+//  "TRUE if the first value is equal to or less than the second value"
 //
 //      return: [logic?]
 //      value1 value2
@@ -819,7 +819,7 @@ DECLARE_NATIVE(equal_or_lesser_q)
 //
 //  greater?: native [
 //
-//  {TRUE if the first value is greater than the second value}
+//  "TRUE if the first value is greater than the second value"
 //
 //      return: [logic?]
 //      value1 value2
@@ -841,7 +841,7 @@ DECLARE_NATIVE(greater_q)
 //
 //  greater-or-equal?: native [
 //
-//  {TRUE if the first value is greater than or equal to the second value}
+//  "TRUE if the first value is greater than or equal to the second value"
 //
 //      return: [logic?]
 //      value1 value2
@@ -860,7 +860,7 @@ DECLARE_NATIVE(greater_or_equal_q)
 //
 //  maximum: native [
 //
-//  "Returns the greater of the two values."
+//  "Returns the greater of the two values"
 //
 //      return: [any-scalar! date! any-series!]
 //      value1 [any-scalar! date! any-series!]
@@ -899,7 +899,7 @@ DECLARE_NATIVE(maximum)
 //
 //  minimum: native [
 //
-//  "Returns the lesser of the two values."
+//  "Returns the lesser of the two values"
 //
 //      return: [any-scalar! date! any-series!]
 //      value1 [any-scalar! date! any-series!]
@@ -958,7 +958,7 @@ inline static REBVAL *Init_Zeroed_Hack(Cell* out, enum Reb_Kind kind) {
 //
 //  negative?: native [
 //
-//  "Returns TRUE if the number is negative."
+//  "Returns TRUE if the number is negative"
 //
 //      return: [logic?]
 //      number [any-number! money! time! pair!]
@@ -980,7 +980,7 @@ DECLARE_NATIVE(negative_q)
 //
 //  positive?: native [
 //
-//  "Returns TRUE if the value is positive."
+//  "Returns TRUE if the value is positive"
 //
 //      return: [logic?]
 //      number [any-number! money! time! pair!]
@@ -1002,7 +1002,7 @@ DECLARE_NATIVE(positive_q)
 //
 //  zero?: native [
 //
-//  {Returns TRUE if the value is zero (for its datatype).}
+//  "Returns TRUE if the value is zero (for its datatype)"
 //
 //      return: [logic?]
 //      value

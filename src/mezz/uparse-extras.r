@@ -1,6 +1,6 @@
 Rebol [
-    Title: {Tools Built On Top of Usermode PARSE}
-    License: {LGPL 3.0}
+    Title: "Tools Built On Top of Usermode PARSE"
+    License: "LGPL 3.0"
 
     Type: module
     Name: Usermode-PARSE-Extras

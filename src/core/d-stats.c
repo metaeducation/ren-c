@@ -32,7 +32,7 @@
 //
 //  stats: native [
 //
-//  {Provides status and statistics information about the interpreter.}
+//  "Provides status and statistics information about the interpreter"
 //
 //      return: [<opt> time! integer! object!]
 //      /show "Print formatted results to console"
@@ -96,7 +96,7 @@ DECLARE_NATIVE(stats)
 //
 //  callgrind: native [
 //
-//  {Provide access to services in <valgrind/callgrind.h>}
+//  "Provide access to services in <valgrind/callgrind.h>"
 //
 //      return: [~]
 //      'instruction "Currently just either ON or OFF"

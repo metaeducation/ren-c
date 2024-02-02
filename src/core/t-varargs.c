@@ -638,7 +638,7 @@ void MF_Varargs(REB_MOLD *mo, const Cell* v, bool form) {
 //
 //  variadic?: native [
 //
-//  {Returns TRUE if a frame may take a variable number of arguments.}
+//  "Returns TRUE if a frame may take a variable number of arguments"
 //
 //      return: [logic?]
 //      frame [<unrun> frame!]

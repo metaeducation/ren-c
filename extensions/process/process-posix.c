@@ -93,7 +93,7 @@ DECLARE_NATIVE(get_egid)
 //
 //  set-uid: native [
 //
-//  {Set real user ID of the process}
+//  "Set real user ID of the process"
 //
 //      return: "Same ID as input"
 //          [integer!]
@@ -124,7 +124,7 @@ DECLARE_NATIVE(set_uid)
 //
 //  set-euid: native [
 //
-//  {Get effective user ID of the process}
+//  "Get effective user ID of the process"
 //
 //      return: "Same ID as input"
 //          [<opt>]
@@ -155,7 +155,7 @@ DECLARE_NATIVE(set_euid)
 //
 //  set-gid: native [
 //
-//  {Set real group ID of the process}
+//  "Set real group ID of the process"
 //
 //      return: "Same ID as input"
 //          [<opt>]

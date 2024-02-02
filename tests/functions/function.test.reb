@@ -429,8 +429,8 @@
 )]
 
 (
-    o1: make object! [x: {x} o2: make object! [y: {y}]]
-    outer: {outer}
+    o1: make object! [x: "x" o2: make object! [y: "y"]]
+    outer: "outer"
     n: 20
 
     f: func [

@@ -1205,9 +1205,9 @@ generic-format: context [
             true
         ] then padded -> [
             if padded [
-                print [{Executable padded to} length of executable {bytes.}]
+                print ["Executable padded to" length of executable "bytes."]
             ] else [
-                print {No padding of executable length required.}
+                print "No padding of executable length required."
             ]
         ]
 

@@ -1,6 +1,6 @@
 Rebol [
-    Title: {UPARSE: Usermode Implementation of PARSE in Ren-C}
-    License: {LGPL 3.0}
+    Title: "UPARSE: Usermode Implementation of Evolved PARSE Dialect"
+    License: "LGPL 3.0"
 
     Type: module
     Name: Usermode-PARSE
@@ -1534,7 +1534,7 @@ default-combinators: make map! reduce [
             ; relevant...it's like FORM by putting < > on tags (TO TEXT! won't)
             ; and it will merge strings in blocks without spacing.
             ;
-            value: append copy {} unquote value
+            value: append copy "" unquote value
 
             comb: (state.combinators).(text!)
             return [@ remainder pending]: run comb state input value

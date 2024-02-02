@@ -1,5 +1,5 @@
 REBOL [
-    Title: {Extract}
+    Title: "Extract libUUID"
     File: %make-libuuid.reb
 
     Description: {
@@ -32,7 +32,7 @@ space: charset " ^-^/^M"
 
 ;comment out unneeded headers
 comment-out-includes: [
-    pos: {#include}
+    pos: "#include"
     [
         [
             some space [

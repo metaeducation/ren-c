@@ -334,7 +334,7 @@ DECLARE_NATIVE(func_p)
 //
 //  endable?: native [
 //
-//  {Tell whether a parameter is registered as <end> or not}
+//  "Tell whether a parameter is registered as <end> or not"
 //
 //      return: [logic?]
 //      parameter [word!]
@@ -369,7 +369,7 @@ DECLARE_NATIVE(endable_q)
 //
 //  skippable?: native [
 //
-//  {Tell whether a parameter is registered as <skip> or not}
+//  "Tell whether a parameter is registered as <skip> or not"
 //
 //      return: [logic?]
 //      parameter [word!]
@@ -473,7 +473,7 @@ Bounce Init_Thrown_Unwind_Value(
 //
 //  unwind: native [
 //
-//  {Jump up the stack to return from a specific frame or call.}
+//  "Jump up the stack to return from a specific frame or call"
 //
 //      return: []  ; "divergent"
 //      level "Frame or index to exit from"
@@ -552,7 +552,7 @@ bool Typecheck_Coerce_Return(
 //
 //  definitional-return: native [
 //
-//  {RETURN, giving a result to the caller}
+//  "RETURN, giving a result to the caller"
 //
 //      return: []  ; "divergent"
 //      ^value [any-atom?]

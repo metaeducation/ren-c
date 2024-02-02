@@ -1,5 +1,5 @@
 REBOL [
-    Title: {TCC Extension Rebmake Compiling/Linking Information}
+    Title: "TCC Extension Rebmake Compiling/Linking Information"
 ]
 
 name: 'TCC

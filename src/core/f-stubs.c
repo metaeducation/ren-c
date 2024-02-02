@@ -525,7 +525,7 @@ REBVAL *Setify(REBVAL *out) {  // called on stack values; can't call evaluator
 //
 //  setify: native [
 //
-//  {If possible, convert a value to a SET-XXX! representation}
+//  "If possible, convert a value to a SET-XXX! representation"
 //
 //      return: [<opt> set-word! set-path! set-tuple! set-group! set-block!]
 //      value [<maybe> element?]
@@ -571,7 +571,7 @@ REBVAL *Getify(REBVAL *out) {  // called on stack values; can't call evaluator
 //
 //  getify: native [
 //
-//  {If possible, convert a value to a GET-XXX! representation}
+//  "If possible, convert a value to a GET-XXX! representation"
 //
 //      return: [<opt> get-word! get-path! get-tuple! get-group! get-block!]
 //      value [<maybe> element?]
@@ -620,7 +620,7 @@ REBVAL *Metafy(REBVAL *out) {  // called on stack values; can't call evaluator
 //
 //  metafy: native [
 //
-//  {If possible, convert a value to a META-XXX! representation}
+//  "If possible, convert a value to a META-XXX! representation"
 //
 //      return: [word! meta-word! meta-path! meta-tuple! meta-group! meta-block!]
 //      value [<void> element?]  ; void makes @ as a WORD!
@@ -669,7 +669,7 @@ REBVAL *Theify(REBVAL *out) {  // called on stack values; can't call evaluator
 //
 //  theify: native [
 //
-//  {If possible, convert a value to a THE-XXX! representation}
+//  "If possible, convert a value to a THE-XXX! representation"
 //
 //      return: [<opt> the-word! the-path! the-tuple! the-group! the-block!]
 //      value [<maybe> element?]
@@ -713,7 +713,7 @@ REBVAL *Plainify(REBVAL *out) {
 //
 //  plain: native [
 //
-//  {Convert a value into its plain representation}
+//  "Convert a value into its plain representation"
 //
 //      return: [<opt> element?]
 //      value [<maybe> element?]

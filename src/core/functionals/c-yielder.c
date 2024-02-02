@@ -321,7 +321,7 @@ DECLARE_NATIVE(generator)
 //
 //  yield: native [
 //
-//  {Function used with GENERATOR and YIELDER to give back results}
+//  "Function used with GENERATOR and YIELDER to give back results"
 //
 //      return: "Same value given as input (NULL/VOID enclosed in pack)"
 //          [any-value?]

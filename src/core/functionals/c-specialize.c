@@ -434,7 +434,7 @@ bool Specialize_Action_Throws(
 //
 //  specialize: native [
 //
-//  {Create a new action through partial or full specialization of another}
+//  "Create a new action through partial or full specialization of another"
 //
 //      return: [action?]
 //      original "Frame whose parameters will be set to fixed values"

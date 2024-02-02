@@ -28,7 +28,7 @@
 //
 //  form: native [
 //
-//  "Converts a value to a human-readable string."
+//  "Converts a value to a human-readable string"
 //
 //      return: "Returns null if input is void"
 //          [<opt> text!]
@@ -141,7 +141,7 @@ DECLARE_NATIVE(write_stdout)
 //
 //  new-line: native [
 //
-//  {Sets or clears the new-line marker within a block or group.}
+//  "Sets or clears the new-line marker within a block or group"
 //
 //      return: [block!]
 //      position "Position to change marker (modified)"
@@ -204,7 +204,7 @@ DECLARE_NATIVE(new_line)
 //
 //  new-line?: native [
 //
-//  {Returns the state of the new-line marker within a block or group.}
+//  "Returns the state of the new-line marker within a block or group"
 //
 //      return: [logic?]
 //      position "Position to check marker"
@@ -308,7 +308,7 @@ REBLEN Milliseconds_From_Value(const Value* v) {
 //
 //  basic-read: native [
 //
-//  {Very simplistic function for reading files, provided for WASI}
+//  "Very simplistic function for reading files, provided for WASI"
 //
 //       return: [binary!]
 //       file [file!]
@@ -352,7 +352,7 @@ DECLARE_NATIVE(basic_read)
 //
 //  basic-write: native [
 //
-//  {Very simplistic function for writing files, provided for WASI}
+//  "Very simplistic function for writing files, provided for WASI"
 //
 //       return: [~]
 //       file [file!]

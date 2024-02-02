@@ -28,7 +28,7 @@
 //
 //  const: native [
 //
-//  {Return value whose access level doesn't allow mutation to its content}
+//  "Return value whose access level doesn't allow mutation to its content"
 //
 //      return: [any-value?]
 //      value "Argument to change access to (can be locked or not)"
@@ -52,7 +52,7 @@ DECLARE_NATIVE(const) {
 //
 //  const?: native [
 //
-//  {Return if a value is a read-only view of its underlying data}
+//  "Return if a value is a read-only view of its underlying data"
 //
 //      return: [logic?]
 //      value [any-series! any-context!]
@@ -72,7 +72,7 @@ DECLARE_NATIVE(const_q) {
 //
 //  mutable: native [
 //
-//  {Return value whose access allows mutation to its argument (if unlocked)}
+//  "Return value whose access allows mutation to its argument (if unlocked)"
 //
 //      return: "Same as input -- no errors are given if locked or immediate"
 //          [any-value?]
@@ -105,7 +105,7 @@ DECLARE_NATIVE(mutable)
 //
 //  mutable?: native [
 //
-//  {Return if a value is a writable view of its underlying data}
+//  "Return if a value is a writable view of its underlying data"
 //
 //      return: [logic?]
 //      value [any-series! any-context!]
@@ -360,7 +360,7 @@ static Bounce Protect_Unprotect_Core(Level* level_, Flags flags)
 //
 //  protect: native [
 //
-//  {Protect a series or a variable from being modified.}
+//  "Protect a series or a variable from being modified"
 //
 //      return: [
 //          any-word! any-tuple! any-series! bitset! map! object! module!
@@ -417,7 +417,7 @@ DECLARE_NATIVE(protect)
 //
 //  unprotect: native [
 //
-//  {Unprotect a series or a variable (it can again be modified).}
+//  "Unprotect a series or a variable (it can again be modified)"
 //
 //      return: [word! any-series! bitset! map! object! module!]
 //      value [word! any-series! bitset! map! object! module!]
@@ -487,7 +487,7 @@ bool Is_Value_Frozen_Deep(const Cell* v) {
 //
 //  locked?: native [
 //
-//  {Determine if the value is locked (deeply and permanently immutable)}
+//  "Determine if the value is locked (deeply and permanently immutable)"
 //
 //      return: [logic?]
 //      value [any-value?]
@@ -564,7 +564,7 @@ void Force_Value_Frozen_Core(
 //
 //  freeze: native [
 //
-//  {Permanently lock values (if applicable) so they can be immutably shared.}
+//  "Permanently lock values (if applicable) so they can be immutably shared"
 //
 //      return: [any-value?]
 //      value "Value to make permanently immutable"

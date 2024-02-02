@@ -191,7 +191,7 @@ uint32_t Compute_IPC(const unsigned char* data, size_t size)
 //
 //  export checksum: native [
 //
-//  "Computes a checksum, CRC, or hash."
+//  "Computes a checksum, CRC, or hash"
 //
 //      return: "Warning: likely to be changed to always be BINARY!"
 //          [binary! integer!]  ; see note below
@@ -1399,7 +1399,7 @@ static void cleanup_aes_ctx(const REBVAL* v)
 //
 //  export aes-key: native [
 //
-//  "Encrypt/decrypt data using AES algorithm."
+//  "Encrypt/decrypt data using AES algorithm"
 //
 //      return: "Stream cipher context handle"
 //          [handle!]
@@ -1492,7 +1492,7 @@ DECLARE_NATIVE(aes_key)
 //
 //  export aes-stream: native [
 //
-//  "Encrypt/decrypt data using AES algorithm."
+//  "Encrypt/decrypt data using AES algorithm"
 //
 //      return: "Encrypted/decrypted data (null if zero length)"
 //          [<opt> binary!]
@@ -1612,7 +1612,8 @@ static const struct mbedtls_ecp_curve_info* Ecp_Curve_Info_From_Word(
 
 //
 //  export ecc-generate-keypair: native [
-//      {Generates an uncompressed secp256r1 key}
+//
+//  "Generates an uncompressed secp256r1 key"
 //
 //      return: "object with PUBLIC/X, PUBLIC/Y, and PRIVATE key members"
 //          [object!]
@@ -1817,7 +1818,7 @@ EXTERN_C int tf_snprintf(char* s, size_t n, const char* fmt, ...);
 //
 //  startup*: native [
 //
-//  {Initialize random number generators and OS-provided crypto services}
+//  "Initialize random number generators and OS-provided crypto services"
 //
 //      return: [~]
 //  ]
@@ -1868,7 +1869,7 @@ DECLARE_NATIVE(startup_p)
 //
 //  shutdown*: native [
 //
-//  {Shut down random number generators and OS-provided crypto services}
+//  "Shut down random number generators and OS-provided crypto services"
 //
 //      return: [~]
 //  ]

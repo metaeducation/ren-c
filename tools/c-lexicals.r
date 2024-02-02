@@ -143,11 +143,11 @@ grammar: [
     ;
     ; -- Whitespace
 
-    nl: {\^/} ; Line break in logical line.
+    nl: "\^/" ; Line break in logical line.
     eol: newline ; End of logical line.
     wsp: [some ws-char]
-    span-comment: [{/*} thru {*/}]
-    line-comment: [{//} to newline]
+    span-comment: ["/*" thru "*/"]
+    line-comment: ["//" to newline]
 
 ]
 

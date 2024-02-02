@@ -37,7 +37,7 @@
 //
 //  reeval: native [
 //
-//  {Process an evaluated argument *inline* as the evaluator loop would}
+//  "Process an evaluated argument *inline* as the evaluator loop would"
 //
 //      return: [any-atom?]
 //      value "BLOCK! passes-thru, ACTION! runs, SET-WORD! assigns..."
@@ -80,7 +80,7 @@ DECLARE_NATIVE(reeval)
 //
 //  shove: native [
 //
-//  {Shove a parameter into an ACTION! as its first argument}
+//  "Shove a parameter into an ACTION! as its first argument"
 //
 //      return: [any-value?]
 //          "REVIEW: How might this handle shoving enfix invisibles?"
@@ -211,7 +211,7 @@ DECLARE_NATIVE(shove)
 //
 //  do: native [
 //
-//  {Evaluates source code (see also EVAL for stepwise or invisible evaluation)}
+//  "Evaluates source (see also EVAL for stepwise or invisible evaluation)"
 //
 //      return: [any-value?]
 //      source "Block of code, or indirect specification to find/make it" [
@@ -348,7 +348,7 @@ DECLARE_NATIVE(do)
 //
 //  evaluate: native [
 //
-//  {Perform a single evaluator step, returning the next source position}
+//  "Perform a single evaluator step, returning the next source position"
 //
 //      return: "Value from the step"
 //          [any-atom?]
@@ -548,7 +548,7 @@ DECLARE_NATIVE(evaluate)
 //
 //  redo: native [
 //
-//  {Restart a frame's action from the top with its current state}
+//  "Restart a frame's action from the top with its current state"
 //
 //      return: []  ; !!! notation for divergent function?
 //      restartee "Frame to restart, or bound word (e.g. REDO @RETURN)"
@@ -641,7 +641,7 @@ DECLARE_NATIVE(redo)
 //
 //  applique: native [
 //
-//  {Invoke an ACTION! with all required arguments specified}
+//  "Invoke an ACTION! with all required arguments specified"
 //
 //      return: [any-atom?]
 //      operation [<unrun> frame!]
@@ -710,7 +710,7 @@ DECLARE_NATIVE(applique)
 //
 //  apply: native [
 //
-//  {Invoke an action with all required arguments specified}
+//  "Invoke an action with all required arguments specified"
 //
 //      return: [any-atom?]
 //      operation [<unrun> frame!]
@@ -982,7 +982,7 @@ DECLARE_NATIVE(apply)
 //
 //  run: native [
 //
-//  {Invoke code inline as if it had been invoked via a WORD!}
+//  "Invoke code inline as if it had been invoked via a WORD!"
 //
 //      return: [any-atom?]
 //      frame [<unrun> frame!]

@@ -107,7 +107,7 @@ Value* Try_Init_Any_Sequence_At_Arraylike(
 //
 //  pick: native [
 //
-//  {Perform a path picking operation, same as `:(location).(picker)`}
+//  "Perform a path picking operation, same as `:(location).(picker)`"
 //
 //      return: "Picked value, or null if picker can't fulfill the request"
 //          [any-value?]
@@ -142,7 +142,7 @@ DECLARE_NATIVE(pick)
 //
 //  poke: native [
 //
-//  {Perform a path poking operation, same as `(location).(picker): :value`}
+//  "Perform a path poking operation, same as `(location).(picker): :value`"
 //
 //      return: "Same as poked value"
 //          [any-value?]

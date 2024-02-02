@@ -2724,7 +2724,7 @@ REBVAL *RL_rebError_OS(int errnum)  // see also convenience macro rebFail_OS()
 //
 //  api-transient: native [
 //
-//  {Produce an API handle pointer (returned via INTEGER!) for a value}
+//  "Produce an API handle pointer (returned via INTEGER!) for a value"
 //
 //      return: "Heap address of the autoreleasing (rebR()) API handle"
 //          [integer!]

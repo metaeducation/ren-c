@@ -375,7 +375,7 @@ Byte* Decompress_Alloc_Core(
 //
 //  checksum-core: native [
 //
-//  {Built-in checksums from zlib (see CHECKSUM in Crypt extension for more)}
+//  "Built-in checksums from zlib (see CHECKSUM in Crypt extension for more)"
 //
 //      return: "Little-endian format of 4-byte CRC-32"
 //          [binary!]

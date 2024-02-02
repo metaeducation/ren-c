@@ -51,7 +51,7 @@
 //
 //  trace: native [
 //
-//  {Enables and disables evaluation tracing and backtrace.}
+//  "Enables and disables evaluation tracing and backtrace"
 //
 //      return: [<opt>]
 //      mode [integer! logic?]

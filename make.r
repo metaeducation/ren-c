@@ -25,7 +25,7 @@ import <tools/platforms.r>
 rebmake: import <tools/rebmake.r>
 
 
-=== {ADJUST TO AN OUT-OF-SOURCE BUILD IF RUN FROM REPOSITORY's DIRECTORY} ===
+=== "ADJUST TO AN OUT-OF-SOURCE BUILD IF RUN FROM REPOSITORY's DIRECTORY" ===
 
 ; NOTE NEW BEHAVIOR IN REN-C, DIFFERENT FROM HISTORICAL REBOL:
 ;
@@ -48,7 +48,7 @@ tools-dir: join repo-dir %tools/
 src-dir: join repo-dir %src/
 
 
-=== {GLOBALS} ===
+=== "GLOBALS" ===
 
 ; The file list for the core .c files comes from %file-base.r, while the
 ; file list for extensions comes from that extension's %make-spec.r
@@ -60,7 +60,7 @@ file-base: make object! load (join repo-dir %tools/file-base.r)
 user-config: make object! load (join repo-dir %configs/default-config.r)
 
 
-=== {SPLIT ARGS INTO OPTIONS AND COMMANDS} ===
+=== "SPLIT ARGS INTO OPTIONS AND COMMANDS" ===
 
 ; Note that we should have launched %make.r with the notion of the current
 ; directory (WHAT-DIR) being the same as what the user had on the command line.
@@ -150,7 +150,7 @@ for-each [name value] options [
 ]
 
 
-=== {CHANGE DIRECTORY} ===
+=== "CHANGE DIRECTORY" ===
 
 ; The baseline directory we are in during the build is where we are writing
 ; the output products.
@@ -170,12 +170,12 @@ change-dir output-dir
 repo-dir: relative-to-path repo-dir output-dir
 
 
-=== {PROCESS COMMANDS} ===
+=== "PROCESS COMMANDS" ===
 
 if commands [user-config/target: null]  ; was `target: load commands`  Why? :-/
 
 
-=== {MODULES AND EXTENSIONS} ===
+=== "MODULES AND EXTENSIONS" ===
 
 platform-config: configure-platform user-config/os-id
 rebmake/set-target-platform platform-config/os-base
@@ -801,7 +801,7 @@ extension-class: make object! [
 ]
 
 
-=== {SCAN TO BUILD LIST OF AVAILABLE EXTENSIONS} ===
+=== "SCAN TO BUILD LIST OF AVAILABLE EXTENSIONS" ===
 
 extensions: copy []
 
@@ -870,7 +870,7 @@ use [extension-dir entry][
 extension-names: map-each x extensions [to-lit-word x/name]
 
 
-=== {TARGETS} ===
+=== "TARGETS" ===
 
 ; Collected here so they can be used with `--help targets`
 
@@ -963,7 +963,7 @@ for-each x targets [
 ]
 
 
-=== {HELP} ===
+=== "HELP" ===
 
 indent: func [
     text [text!]
@@ -1101,7 +1101,7 @@ if commands [
 ]
 
 
-=== {DETECT TOOLCHAIN FOR BUILDING} ===
+=== "DETECT TOOLCHAIN FOR BUILDING" ===
 
 if launched-from-root [
     print ["Launched from root dir, so building in:" output-dir]
@@ -1153,7 +1153,7 @@ parse2 user-config/toolset [
 ]
 
 
-=== {SANITY CHECK COMPILER AND LINKER} ===
+=== "SANITY CHECK COMPILER AND LINKER" ===
 
 if not rebmake/default-compiler [fail "Compiler is not set"]
 if not rebmake/default-linker [fail "Default linker is not set"]
@@ -1195,7 +1195,7 @@ if linker-exec [
 ]
 
 
-=== {GENERATE OVERALL APPLICATION CONFIGURATION} ===
+=== "GENERATE OVERALL APPLICATION CONFIGURATION" ===
 
 ; This appears to put together a baseline of settings that are passed by
 ; default when building all object files.  So if you requested a debug build
@@ -1349,7 +1349,7 @@ append app-config/ldflags maybe spread switch user-config/static [
 ]
 
 
-=== {"ADD SYSTEM SETTINGS"} ===
+=== "ADD SYSTEM SETTINGS" ===
 
 ; Not quite sure what counts as system definitions (?)  Review.
 
@@ -1441,7 +1441,7 @@ pthread: make rebmake/ext-dynamic-class [
 ]
 
 
-=== {GATHER LIST OF FOLDERS THAT MUST BE CREATED} ===
+=== "GATHER LIST OF FOLDERS THAT MUST BE CREATED" ===
 
 ; Analyze what directories were used in this build's entry from %file-base.r
 ; to add those obj folders.  So if the `%generic/host-xxx.c` is listed,
@@ -1524,7 +1524,7 @@ for-each [category entries] file-base [
 ]
 
 
-=== {DETERMINE SETTINGS FOR THE EXTENSIONS} ===
+=== "DETERMINE SETTINGS FOR THE EXTENSIONS" ===
 
 ; The user can ask for an extension to be `-` (not built at all) or `+` (which
 ; is built into the executable) or `*` (built as dll or so dynamically, and
@@ -1567,8 +1567,8 @@ for-each [name val] user-config/extensions [
 ]
 
 for-each [mode label] [
-    <builtin> {BUILTIN EXTENSIONS:}
-    <dynamic> {DYNAMIC EXTENSIONS:}
+    <builtin> "BUILTIN EXTENSIONS:"
+    <dynamic> "DYNAMIC EXTENSIONS:"
 ][
     print label
     print mold collect [
@@ -1628,7 +1628,7 @@ add-project-flags: func [
 ]
 
 
-=== {REORDER EXTENSIONS BASED ON THEIR "REQUIRES" DEPENDENCIES} ===
+=== "REORDER EXTENSIONS BASED ON THEIR 'REQUIRES' DEPENDENCIES" ===
 
 ; When built in extensions are loading, they can say what other extensions
 ; they require.  Here a sequence is calculated to make sure they are loaded
@@ -1667,7 +1667,7 @@ for-each ext extensions [calculate-sequence ext]
 sort/compare extensions func [a b] [return a/sequence < b/sequence]
 
 
-=== {PRODUCE COMPILER/LINKER PROCESSABLE OBJECTS FROM EXTENSION SPECS} ===
+=== "PRODUCE COMPILER/LINKER PROCESSABLE OBJECTS FROM EXTENSION SPECS" ===
 
 ; The #extension object corresponds roughly to the make-spec.r typed in; e.g.
 ; it might list `%odbc32` in the `libraries` section as a FILE!.  But the lower
@@ -1853,7 +1853,7 @@ for-each ext extensions [
 ]
 
 
-=== {RUN THE MAKE (INVOKE COMPILER WITH CALL -OR- GENERATE MAKEFILE} ===
+=== "RUN THE MAKE (INVOKE COMPILER WITH CALL -OR- GENERATE MAKEFILE" ===
 
 ; Here we run MAKE which will not do the actual compilation if you ask the
 ; TARGET to be a makefile.  It only runs the compilation if you are using
@@ -1861,7 +1861,7 @@ for-each ext extensions [
 
 vars: reduce [
     reb-tool: make rebmake/var-class [
-        name: {REBOL_TOOL}
+        name: "REBOL_TOOL"
         any [
             'file = exists? value: system/options/boot
             all [
@@ -1869,7 +1869,7 @@ vars: reduce [
                 'file = exists? value: join repo-dir user-config/rebol-tool
             ]
             'file = exists? value: join repo-dir unspaced [
-                {r3-make}
+                "r3-make"
                 :rebmake/target-platform/exe-suffix
             ]
         ] else [
@@ -1883,16 +1883,16 @@ vars: reduce [
         value: file-to-local value
     ]
     make rebmake/var-class [
-        name: {REBOL}
-        value: {$(REBOL_TOOL) -q}
+        name: "REBOL"
+        value: "$(REBOL_TOOL) -q"
     ]
     make rebmake/var-class [
-        name: {T}
+        name: "T"
         value: join src-dir %tools/
     ]
     make rebmake/var-class [
-        name: {GIT_COMMIT}
-        default: any [user-config/git-commit {unknown}]
+        name: "GIT_COMMIT"
+        default: any [user-config/git-commit "unknown"]
     ]
 ]
 
@@ -1908,29 +1908,29 @@ prep: make rebmake/entry-class [
             ]
         ]
 
-        keep [{$(REBOL)} join tools-dir %make-natives.r]
-        keep [{$(REBOL)} join tools-dir %make-headers.r]
+        keep ["$(REBOL)" join tools-dir %make-natives.r]
+        keep ["$(REBOL)" join tools-dir %make-headers.r]
         keep [
-            {$(REBOL)} join tools-dir %make-boot.r
-            unspaced [{OS_ID=} platform-config/id]
-            {GIT_COMMIT=$(GIT_COMMIT)}
+            "$(REBOL)" join tools-dir %make-boot.r
+            unspaced ["OS_ID=" platform-config/id]
+            "GIT_COMMIT=$(GIT_COMMIT)"
         ]
         keep [
-            {$(REBOL)} join tools-dir %make-reb-lib.r
-            unspaced [{OS_ID=} platform-config/id]
+            "$(REBOL)" join tools-dir %make-reb-lib.r
+            unspaced ["OS_ID=" platform-config/id]
         ]
 
         for-each ext extensions [
             keep [
-                {$(REBOL)} join tools-dir %prep-extension.r
-                unspaced [{MODULE=} ext/name]
-                unspaced [{SRC=extensions/} switch kind of ext/source [
+                "$(REBOL)" join tools-dir %prep-extension.r
+                unspaced ["MODULE=" ext/name]
+                unspaced ["SRC=extensions/" switch kind of ext/source [
                     file! [ext/source]
                     block! [first find ext/source matches file!]
                     fail "ext/source must be BLOCK! or FILE!"
                 ]]
-                unspaced [{OS_ID=} platform-config/id]
-                unspaced [{USE_LIBREBOL=} logic-to-word ext/use-librebol]
+                unspaced ["OS_ID=" platform-config/id]
+                unspaced ["USE_LIBREBOL=" logic-to-word ext/use-librebol]
             ]
 
             if ext/hook [
@@ -1948,22 +1948,22 @@ prep: make rebmake/entry-class [
                     ]
                 )
                 keep [
-                    {$(REBOL)} hook-script
-                    unspaced [{OS_ID=} platform-config/id]
+                    "$(REBOL)" hook-script
+                    unspaced ["OS_ID=" platform-config/id]
                 ]
             ]
         ]
 
         keep [
-            {$(REBOL)} join tools-dir %make-boot-ext-header.r
+            "$(REBOL)" join tools-dir %make-boot-ext-header.r
             unspaced [
-                {EXTENSIONS=} delimit ":" map-each ext extensions [
+                "EXTENSIONS=" delimit ":" map-each ext extensions [
                     if ext/mode = <builtin> [to text! ext/name]
                 ]
             ]
         ]
 
-        keep [{$(REBOL)} join src-dir %main/prep-main.reb]
+        keep ["$(REBOL)" join src-dir %main/prep-main.reb]
     ]
     depends: reduce [
         reb-tool

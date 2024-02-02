@@ -17,7 +17,7 @@
 ; avoid a situation where the user modified one end of the AS
 ; expectating the other to change too.
 (
-    bin: as binary! copy {abc}
+    bin: as binary! copy "abc"
     did all [
        #{616263} = bin
        #{61626364} = append bin #"d"

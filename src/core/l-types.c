@@ -83,7 +83,7 @@ Bounce MAKE_Unhooked(
 //
 //  make: native [
 //
-//  {Constructs or allocates the specified datatype.}
+//  "Constructs or allocates the specified datatype"
 //
 //      return: "Constructed value, or null if BLANK! input"
 //          [element?]
@@ -174,7 +174,7 @@ Bounce TO_Unhooked(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 //
 //  to: native [
 //
-//  {Converts to a specified datatype, copying any underying data}
+//  "Converts to a specified datatype, copying any underying data"
 //
 //      return: "VALUE converted to TYPE (copied if same type as value)"
 //          [element?]
@@ -285,7 +285,7 @@ Bounce Reflect_Core(Level* level_)
 //
 //  reflect-native: native [
 //
-//  {Returns specific details about a datatype.}
+//  "Returns specific details about a datatype"
 //
 //      return: [any-value?]
 //      value "Accepts antiforms for the purposes of TYPE OF"
@@ -308,7 +308,7 @@ DECLARE_NATIVE(reflect_native)
 //
 //  of: enfix native [
 //
-//  {Infix form of REFLECT which quotes its left (X OF Y => REFLECT Y 'X)}
+//  "Infix form of REFLECT which quotes its left (X OF Y => REFLECT Y 'X)"
 //
 //      return: [any-value?]
 //      'property "Will be escapable, ':property (bootstrap permitting)"
@@ -1217,7 +1217,8 @@ const Byte* Scan_Any(
 
 //
 //  scan-net-header: native [
-//      {Scan an Internet-style header (HTTP, SMTP)}
+//
+//  "Scan an Internet-style header (HTTP, SMTP)"
 //
 //      return: [block!]
 //      header "Fields with duplicate words will be merged into a block"

@@ -1,6 +1,6 @@
 REBOL [
     File: %rebmake.r
-    Title: {Rebol-Based C/C++ Makefile and Project File Generator}
+    Title: "Rebol-Based C/C++ Makefile and Project File Generator"
 
     Type: module
     Name: Rebmake

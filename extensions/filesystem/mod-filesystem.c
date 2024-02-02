@@ -52,7 +52,7 @@ extern Bounce Dir_Actor(Level* level_, REBVAL *port, const Symbol* verb);
 //
 //  startup*: native [  ; Note: DO NOT EXPORT!
 //
-//  {Start up down the filesystem device}
+//  "Startup the filesystem device"
 //
 //      return: [~]
 //  ]
@@ -68,7 +68,7 @@ DECLARE_NATIVE(startup_p)
 //
 //  export get-file-actor-handle: native [
 //
-//  {Retrieve handle to the native actor for files}
+//  "Retrieve handle to the native actor for files"
 //
 //      return: [handle!]
 //  ]
@@ -83,7 +83,7 @@ DECLARE_NATIVE(get_file_actor_handle)
 //
 //  shutdown*: native [  ; Note: DO NOT EXPORT!
 //
-//  {Shut down the filesystem device}
+//  "Shut down the filesystem device"
 //
 //      return: [~]
 //  ]
@@ -99,7 +99,7 @@ DECLARE_NATIVE(shutdown_p)
 //
 //  get-dir-actor-handle: native [
 //
-//  {Retrieve handle to the native actor for directories}
+//  "Retrieve handle to the native actor for directories"
 //
 //      return: [handle!]
 //  ]
@@ -493,7 +493,7 @@ String* To_Local_Path(const REBVAL* file, Flags flags) {
 //
 //  export local-to-file: native [
 //
-//  {Converts a local system file path TEXT! to a Rebol FILE! path.}
+//  "Converts a local system file path TEXT! to a Rebol FILE! path"
 //
 //      return: [file!]
 //          {The returned value should be a valid natural FILE! literal}
@@ -527,7 +527,7 @@ DECLARE_NATIVE(local_to_file)
 //
 //  export file-to-local: native [
 //
-//  {Converts a Rebol FILE! path to TEXT! of the local system file path}
+//  "Converts a Rebol FILE! path to TEXT! of the local system file path"
 //
 //      return: [text!]
 //          {A TEXT! like "\foo\bar" is not a "natural" FILE! %\foo\bar}
@@ -568,7 +568,7 @@ DECLARE_NATIVE(file_to_local)
 //
 //  export what-dir: native [
 //
-//  {Returns the current directory path}
+//  "Returns the current directory path"
 //
 //      return: [<opt> file! url!]
 //  ]
@@ -608,7 +608,7 @@ DECLARE_NATIVE(what_dir)
 //
 //  export change-dir: native [
 //
-//  {Changes the current path (where scripts with relative paths will be run).}
+//  "Changes the current path (where scripts with relative paths will be run)"
 //
 //      return: [<opt> file! url!]
 //      path [<maybe> file! url!]
@@ -648,7 +648,7 @@ extern REBVAL *Get_Current_Exec(void);
 //
 //  export get-current-exec: native [
 //
-//  {Get the current path to the running executable}
+//  "Get the current path to the running executable"
 //
 //      return: [<opt> file!]
 //  ]

@@ -121,7 +121,7 @@ Bounce Lambda_Unoptimized_Dispatcher(Level* const L)
 //
 //  lambda: native [
 //
-//  {Makes an anonymous function that evaluates to its body, and has no RETURN}
+//  "Makes an anonymous function that evaluates to its body, and has no RETURN"
 //
 //      return: [action?]
 //      spec "Names of arguments (will not be type checked)"

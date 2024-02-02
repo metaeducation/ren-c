@@ -342,7 +342,7 @@ Bounce Reframer_Dispatcher(Level* const L)
 //
 //  reframer: native [
 //
-//  {Make a function that manipulates an invocation at the callsite}
+//  "Make a function that manipulates an invocation at the callsite"
 //
 //      return: [action?]
 //      shim "The action that has a FRAME! (or QUOTED!) argument to supply"

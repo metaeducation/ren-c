@@ -199,7 +199,7 @@ true)
     (#{BFD3} = utrim #{0000BFD30000})
     (#{10200304} = utrim/with #{AEAEAE10200304BDBDBD} #{AEBD})
 
-    (did s: copy {})
+    (did s: copy "")
 
     ~bad-refines~ !! (utrim/auto/head s)
     ~bad-refines~ !! (utrim/auto/tail s)

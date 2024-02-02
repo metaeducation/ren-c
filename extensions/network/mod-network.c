@@ -1035,7 +1035,7 @@ static Bounce UDP_Actor(Level* level_, REBVAL *port, const Symbol* verb)
 //
 //  export get-tcp-actor-handle: native [
 //
-//  {Retrieve handle to the native actor for TCP}
+//  "Retrieve handle to the native actor for TCP"
 //
 //      return: [handle!]
 //  ]
@@ -1052,7 +1052,7 @@ DECLARE_NATIVE(get_tcp_actor_handle)
 //
 //  export get-udp-actor-handle: native [
 //
-//  {Retrieve handle to the native actor for UDP}
+//  "Retrieve handle to the native actor for UDP"
 //
 //      return: [handle!]
 //  ]
@@ -1095,9 +1095,9 @@ void halt_poll_timer_callback(uv_timer_t* handle) {
 
 
 //
-//  startup*: native [  ; Note: DO NOT EXPORT!
+//  startup*: native [
 //
-//  {Initialize Network Extension (e.g. call WSAStartup() on Windows)}
+//  "Initialize Network Extension (e.g. call WSAStartup() on Windows)"
 //
 //      return: [~]
 //  ]
@@ -1139,9 +1139,9 @@ DECLARE_NATIVE(startup_p)
 
 
 //
-//  shutdown*: native [  ; Note: DO NOT EXPORT!
+//  shutdown*: native [
 //
-//  {Shutdown Network Extension}
+//  "Shutdown Network Extension"
 //
 //      return: [~]
 //  ]
@@ -1164,7 +1164,7 @@ DECLARE_NATIVE(shutdown_p)
 //
 //  export wait*: native [
 //
-//  "Waits for a duration, port, or both."
+//  "Waits for a duration, port, or both"
 //
 //      return: "NULL if timeout, PORT! that awoke or BLOCK! of ports if /ALL"
 //          [<opt> port! block!]

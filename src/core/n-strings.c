@@ -30,7 +30,7 @@
 //
 //  delimit: native [
 //
-//  {Joins a block of values into TEXT! with delimiters}
+//  "Joins a block of values into TEXT! with delimiters"
 //
 //      return: "Null if blank input or block's contents are all null"
 //          [<opt> text!]
@@ -204,7 +204,7 @@ DECLARE_NATIVE(delimit)
 //
 //  debase: native [
 //
-//  {Decodes binary-coded string (BASE-64 default) to binary value.}
+//  "Decodes binary-coded string (BASE-64 default) to binary value"
 //
 //      return: [binary!]
 //          ; Comment said "we don't know the encoding" of the return binary
@@ -236,7 +236,7 @@ DECLARE_NATIVE(debase)
 //
 //  enbase: native [
 //
-//  {Encodes data into a binary, hexadecimal, or base-64 ASCII string.}
+//  "Encodes data into a binary, hexadecimal, or base-64 ASCII string"
 //
 //      return: [text!]
 //      value "If text, will be UTF-8 encoded"
@@ -445,10 +445,10 @@ DECLARE_NATIVE(enhex)
 //
 //  dehex: native [
 //
-//  "Converts URL-style encoded strings, %XX is interpreted as UTF-8 byte."
+//  "Converts URL-style encoded strings, %XX is interpreted as UTF-8 byte"
 //
 //      return: [any-string!]
-//          "Decoded string, with the same string type as the input."
+//          "Decoded string, with the same string type as the input"
 //      string [any-string!]
 //          "See http://en.wikipedia.org/wiki/Percent-encoding"
 //  ]
@@ -575,7 +575,7 @@ DECLARE_NATIVE(dehex)
 //
 //  deline: native [
 //
-//  {Converts string terminators to standard format, e.g. CR LF to LF.}
+//  "Converts string terminators to standard format, e.g. CR LF to LF"
 //
 //      return: [text! block!]
 //      input "Will be modified (unless /LINES used)"
@@ -653,7 +653,7 @@ DECLARE_NATIVE(deline)
 //
 //  enline: native [
 //
-//  {Converts string terminators to native OS format, e.g. LF to CRLF.}
+//  "Converts string terminators to native OS format, e.g. LF to CRLF"
 //
 //      return: [any-string!]
 //      string [any-string!] "(modified)"
@@ -741,7 +741,7 @@ DECLARE_NATIVE(enline)
 //
 //  entab: native [
 //
-//  "Converts spaces to tabs (default tab size is 4)."
+//  "Converts spaces to tabs (default tab size is 4)"
 //
 //      return: [any-string!]
 //      string "(modified)"
@@ -817,7 +817,7 @@ DECLARE_NATIVE(entab)
 //
 //  detab: native [
 //
-//  "Converts tabs to spaces (default tab size is 4)."
+//  "Converts tabs to spaces (default tab size is 4)"
 //
 //      return: [any-string!]
 //      string "(modified)"
@@ -876,7 +876,7 @@ DECLARE_NATIVE(detab)
 //
 //  lowercase: native [
 //
-//  "Converts string of characters to lowercase."
+//  "Converts string of characters to lowercase"
 //
 //      return: [any-string! char?]
 //      string "(modified if series)"
@@ -897,7 +897,7 @@ DECLARE_NATIVE(lowercase)
 //
 //  uppercase: native [
 //
-//  "Converts string of characters to uppercase."
+//  "Converts string of characters to uppercase"
 //
 //      return: [any-string! char?]
 //      string "(modified if series)"
@@ -918,7 +918,7 @@ DECLARE_NATIVE(uppercase)
 //
 //  to-hex: native [
 //
-//  {Converts numeric value to a hex issue! datatype (with leading # and 0's).}
+//  "Converts numeric value to a hex issue! datatype (with leading # and 0's)"
 //
 //      return: [issue!]
 //      value [integer! tuple!]
@@ -979,7 +979,7 @@ DECLARE_NATIVE(to_hex)
 //
 //  invalid-utf8?: native [
 //
-//  {Checks UTF-8 encoding}
+//  "Checks UTF-8 encoding"
 //
 //      return: "NULL if correct, otherwise position in binary of the error"
 //          [<opt> binary!]

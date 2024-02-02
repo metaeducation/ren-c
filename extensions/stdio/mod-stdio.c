@@ -53,7 +53,7 @@ extern Bounce Console_Actor(Level* level_, REBVAL *port, const Symbol* verb);
 //
 //  get-console-actor-handle: native [
 //
-//  {Retrieve handle to the native actor for console}
+//  "Retrieve handle to the native actor for console"
 //
 //      return: [handle!]
 //  ]
@@ -160,7 +160,7 @@ DECLARE_NATIVE(write_stdout)
 //
 //  export read-stdin: native [
 //
-//  {Read binary data from standard input}
+//  "Read binary data from standard input"
 //
 //      return: "Null if no more input is available, ~escape~ if aborted"
 //          [<opt> binary! quasi-word?]
@@ -229,7 +229,7 @@ DECLARE_NATIVE(read_stdin)
 //
 //  export read-line: native [
 //
-//  {Read a line from standard input, with smart line editing if available}
+//  "Read a line from standard input, with smart line editing if available"
 //
 //      return: "Null if no more input is available, ~escape~ if aborted"
 //          [<opt> text! quasi-word?]
@@ -391,7 +391,7 @@ DECLARE_NATIVE(read_line)
 //
 //  export read-char: native [
 //
-//  {Inputs a single character from the input}
+//  "Inputs a single character from the input"
 //
 //      return: "Null if end of file or input was aborted (e.g. via ESCAPE)"
 //          [<opt> char? word! quasi-word?]
@@ -546,7 +546,7 @@ DECLARE_NATIVE(read_char)
 //
 //  shutdown*: native [  ; Note: DO NOT EXPORT!
 //
-//  {Shut down the stdio and terminal devices, called on extension unload}
+//  "Shut down the stdio and terminal devices, called on extension unload"
 //
 //      return: [~]
 //  ]

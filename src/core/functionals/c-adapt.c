@@ -122,7 +122,7 @@ Bounce Adapter_Dispatcher(Level* const L)
 //
 //  adapt: native [
 //
-//  {Create a variant of an action that preprocesses its arguments}
+//  "Create a variant of an action that preprocesses its arguments"
 //
 //      return: [action?]
 //      original "Code to be run after the prelude is complete"

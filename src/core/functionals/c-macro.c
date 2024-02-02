@@ -158,7 +158,7 @@ Bounce Macro_Dispatcher(Level* const L)
 //
 //  macro: native [
 //
-//  {Makes function that generates code to splice into the execution stream}
+//  "Makes function that generates code to splice into the execution stream"
 //
 //      return: [action?]
 //      spec "Help string (opt) followed by arg words (and opt type + string)"
@@ -189,7 +189,7 @@ DECLARE_NATIVE(macro)
 //
 //  inline: native [
 //
-//  {Inject an array of content into the execution stream, or single value}
+//  "Inject an array of content into the execution stream, or single value"
 //
 //      return: [any-value?]
 //      splice "If quoted single value, if blank no insertion (e.g. invisible)"

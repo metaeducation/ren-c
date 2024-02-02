@@ -157,7 +157,7 @@ Bounce MAKE_Issue(
 //
 //  codepoint-to-char: native [
 //
-//  {Make a character out of an integer codepoint}
+//  "Make a character out of an integer codepoint"
 //
 //      return: [char?]
 //      codepoint [integer!]
@@ -177,7 +177,7 @@ DECLARE_NATIVE(codepoint_to_char)
 //
 //  utf8-to-char: native [
 //
-//  {Make a single character out of a UTF-8 binary sequence}
+//  "Make a single character out of a UTF-8 binary sequence"
 //
 //      return: [char?]
 //      utf8 [binary!]
@@ -502,7 +502,7 @@ REBTYPE(Issue)
 //
 //  trailing-bytes-for-utf8: native [
 //
-//  {Given the first byte of a UTF-8 encoding, how many bytes should follow}
+//  "Given the first byte of a UTF-8 encoding, how many bytes should follow"
 //
 //      return: [integer!]
 //      first-byte [integer!]

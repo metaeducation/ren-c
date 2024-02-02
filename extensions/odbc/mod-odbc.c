@@ -326,10 +326,11 @@ typedef enum {
 //
 CharColumnEncoding char_column_encoding = CHAR_COL_UTF16;
 
+
 //
 //  export odbc-set-char-encoding: native [
 //
-//  {Set the encoding for CHAR, CHAR(n), VARCHAR(n), LONGVARCHAR fields}
+//  "Set the encoding for CHAR, CHAR(n), VARCHAR(n), LONGVARCHAR fields"
 //
 //      return: [~]
 //      encoding "Either UTF-8, Latin-1, or UCS-2"
@@ -1180,7 +1181,7 @@ void Describe_ODBC_Results(
 //
 //  export insert-odbc: native [
 //
-//  {Executes SQL statements (prepare on first pass, executes conservatively)}
+//  "Executes SQL statements (prepare on first pass, executes conservatively)"
 //
 //      return: "Row count for row change, column title BLOCK! for selects"
 //          [integer! block!]
@@ -1939,7 +1940,7 @@ DECLARE_NATIVE(close_connection)
 //
 //  startup*: native [
 //
-//  {Start up the ODBC Extension}
+//  "Start up the ODBC Extension"
 //
 //      return: [~]
 //  ]
@@ -1964,7 +1965,7 @@ DECLARE_NATIVE(startup_p)
 //
 //  shutdown*: native [
 //
-//  {Shut down the ODBC Extension}
+//  "Shut down the ODBC Extension"
 //
 //      return: [~]
 //  ]

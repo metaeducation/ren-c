@@ -29,7 +29,7 @@
 //
 //  and?: native [
 //
-//  {Returns true if both values are conditionally true (no "short-circuit")}
+//  "Returns true if both values are conditionally true (no 'short-circuit')"
 //
 //      return: [logic?]
 //      value1 [any-value?]
@@ -50,7 +50,7 @@ DECLARE_NATIVE(and_q)
 //
 //  nor?: native [
 //
-//  {Returns true if both values are conditionally false (no "short-circuit")}
+//  "Returns true if both values are conditionally false (no 'short-circuit')"
 //
 //      return: [logic?]
 //      value1 [any-value?]
@@ -71,7 +71,7 @@ DECLARE_NATIVE(nor_q)
 //
 //  nand?: native [
 //
-//  {Returns false if both values are conditionally true (no "short-circuit")}
+//  "Returns false if both values are conditionally true (no 'short-circuit')"
 //
 //      return: [logic?]
 //      value1 [any-value?]
@@ -175,7 +175,7 @@ inline static bool Do_Logic_Right_Side_Throws(
 //
 //  and: enfix native [
 //
-//  {Boolean AND, right hand side must be in GROUP! to allow short-circuit}
+//  "Boolean AND, right hand side must be in GROUP! to allow short-circuit"
 //
 //      return: [logic?]
 //      left [any-value?]
@@ -203,7 +203,7 @@ DECLARE_NATIVE(and_1)  // see TO-C-NAME
 //
 //  or: enfix native [
 //
-//  {Boolean OR, right hand side must be in GROUP! to allow short-circuit}
+//  "Boolean OR, right hand side must be in GROUP! to allow short-circuit"
 //
 //      return: [logic?]
 //      left [any-value?]
@@ -231,7 +231,7 @@ DECLARE_NATIVE(or_1)  // see TO-C-NAME
 //
 //  xor: enfix native [
 //
-//  {Boolean XOR (operation cannot be short-circuited)}
+//  "Boolean XOR (operation cannot be short-circuited)"
 //
 //      return: [logic?]
 //      left [any-value?]
@@ -259,7 +259,7 @@ DECLARE_NATIVE(xor_1)  // see TO-C-NAME
 //
 //  unless: enfix native [
 //
-//  {Give left hand side when right hand side is not null or void}
+//  "Give left hand side when right hand side is not null or void"
 //
 //      return: [any-value?]
 //      left "Expression which will always be evaluated"

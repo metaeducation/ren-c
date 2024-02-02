@@ -70,7 +70,7 @@ extern RL_LIB Ext_Lib;
 //
 //  builtin-extensions: native [
 //
-//  {Gets the list of builtin extensions for the executable}
+//  "Gets the list of builtin extensions for the executable"
 //
 //      return: "Block of extension specifications ('collations')"
 //          [block!]

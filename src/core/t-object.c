@@ -709,7 +709,7 @@ Bounce TO_Context(Level* level_, enum Reb_Kind kind, const REBVAL *arg)
 //
 //  adjunct-of: native [
 //
-//  {Get a reference to the "adjunct" context associated with a value}
+//  "Get a reference to the 'adjunct' context associated with a value"
 //
 //      return: [<opt> any-context!]
 //      value [<unrun> <maybe> frame! any-context!]
@@ -743,7 +743,7 @@ DECLARE_NATIVE(adjunct_of)
 //
 //  set-adjunct: native [
 //
-//  {Set "adjunct" object associated with all references to a value}
+//  "Set 'adjunct' object associated with all references to a value"
 //
 //      return: [<opt> any-context!]
 //      value [<unrun> frame! any-context!]

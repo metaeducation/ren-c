@@ -87,7 +87,7 @@ u-m-name: uppercase copy m-name
 c-src: join repo-dir (as file! ensure text! args/SRC)
 
 
-=== {CALCULATE NAMES OF BUILD PRODUCTS} ===
+=== "CALCULATE NAMES OF BUILD PRODUCTS" ===
 
 ; !!! This would be a good place to explain what the output goal of this
 ; script is.
@@ -123,7 +123,7 @@ parse2 inc-name [
 ]
 
 
-=== {USE PROTOTYPE PARSER TO GET NATIVE SPECS FROM COMMENTS IN C CODE} ===
+=== "USE PROTOTYPE PARSER TO GET NATIVE SPECS FROM COMMENTS IN C CODE" ===
 
 ; EXTRACT-NATIVE-PROTOS scans the core source for natives.  Reuse it.
 ;
@@ -134,7 +134,7 @@ parse2 inc-name [
 all-protos: extract-native-protos c-src
 
 
-=== {COUNT NATIVES AND DETERMINE IF THERE IS A NATIVE STARTUP* FUNCTION} ===
+=== "COUNT NATIVES AND DETERMINE IF THERE IS A NATIVE STARTUP* FUNCTION" ===
 
 ; If there is a native startup function, we want to call it while the module
 ; is being initialized...after the natives are loaded but before the Rebol
@@ -167,7 +167,7 @@ for-each info all-protos [
 ]
 
 
-=== {MAKE TEXT FROM VALIDATED NATIVE SPECS} ===
+=== "MAKE TEXT FROM VALIDATED NATIVE SPECS" ===
 
 ; The proto-parser does some light validation of the native specification.
 ; There could be some extension-specific processing on the native spec block
@@ -181,7 +181,7 @@ for-each info all-protos [
 ]
 
 
-=== {EMIT THE INCLUDE_PARAMS_OF_XXX MACROS FOR THE EXTENSION NATIVES} ===
+=== "EMIT THE INCLUDE_PARAMS_OF_XXX MACROS FOR THE EXTENSION NATIVES" ===
 
 e1: make-emitter "Module C Header File Preface" (
     join output-dir spread reduce ["tmp-mod-" (l-m-name) ".h"]
@@ -193,7 +193,7 @@ e1/emit {
 e1/emit newline
 
 
-=== {IF NOT USING LIBREBOL, DEFINE INCLUDE_PARAMS_OF_XXX MACROS} ===
+=== "IF NOT USING LIBREBOL, DEFINE INCLUDE_PARAMS_OF_XXX MACROS" ===
 
 e1/emit {
     /*
@@ -223,7 +223,7 @@ else [
 ]
 
 
-=== {FORWARD-DECLARE DECLARE_NATIVE DISPATCHER PROTOTYPES} ===
+=== "FORWARD-DECLARE DECLARE_NATIVE DISPATCHER PROTOTYPES" ===
 
 ; We need to put all the C functions that implement the extension's native
 ; into an array.  But those functions live in the C file for the module.
@@ -274,13 +274,13 @@ e1/emit newline
 e1/write-emitted
 
 
-=== {MAKE AGGREGATED SCRIPT FROM HEADER, NATIVE SPECS, AND INIT CODE} ===
+=== "MAKE AGGREGATED SCRIPT FROM HEADER, NATIVE SPECS, AND INIT CODE" ===
 
 ; The module is created with an IMPORT* call on one big blob of script.  That
 ; script is blended together and looks like:
 ;
 ;    Rebol [
-;        Title: {This header is whatever was in the %ext-xxx-init.reb}
+;        Title: "This header is whatever was in the %ext-xxx-init.reb"
 ;        Type: module
 ;        ...
 ;    ]

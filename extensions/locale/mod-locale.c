@@ -40,7 +40,9 @@
 
 //
 //  export locale: native [
-//      "Get locale specific information"
+//
+//   "Get locale specific information"
+//
 //      return: [<opt> text!]
 //      category [word!]
 //          {Language: English name of the language,
@@ -131,7 +133,7 @@ DECLARE_NATIVE(locale)
 //
 //  export setlocale: native [
 //
-//  {Set/Get current locale, just a simple wrapper around C version}
+//  "Set/Get current locale, just a simple wrapper around C version"
 //
 //      return: [<opt> text!]
 //      category [word!]

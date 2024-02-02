@@ -87,7 +87,7 @@ Bounce Upshot_Dispatcher(Level* const L)  // won't run until count is reached
 //
 //  do-branch: native [
 //
-//  {Sample Interface for a Simplified DO that just runs a Branch}
+//  "Sample Interface for a Simplified DO that just runs a Branch"
 //
 //      return: [any-atom?]
 //      branch [any-branch!]
@@ -111,7 +111,7 @@ DECLARE_NATIVE(do_branch)
 //
 //  n-shot: native [
 //
-//  {Create a DO variant that executes what it's given for N times}
+//  "Create a DO variant that executes what it's given for N times"
 //
 //      return: [action?]
 //      n "Number of times to execute before being a no-op"

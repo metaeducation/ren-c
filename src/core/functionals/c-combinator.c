@@ -219,7 +219,7 @@ Array* Expanded_Combinator_Spec(const REBVAL *original)
 //
 //  combinator: native [
 //
-//  {Make stylized code that fulfills the interface of a combinator}
+//  "Make stylized code that fulfills the interface of a combinator"
 //
 //      return: [frame!]
 //      spec [block!]
@@ -747,7 +747,7 @@ static bool Combinator_Param_Hook(
 //
 //  combinatorize: native [
 //
-//  {Analyze combinator parameters in rules to produce a specialized "parser"}
+//  "Analyze combinator parameters in rules to produce a specialized parser"
 //
 //      return: "Parser function taking only input, returning value + remainder"
 //          [action?]

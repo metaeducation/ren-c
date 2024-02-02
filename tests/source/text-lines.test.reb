@@ -11,25 +11,25 @@
 
     ; encode-lines
 
-    ({**^/} = encode-lines copy {} {**} {  })
-    ({**  x^/} = encode-lines copy {x} {**} {  })
-    ({**  x^/**^/} = encode-lines copy {x^/} {**} {  })
-    ({**^/**  x^/} = encode-lines copy {^/x} {**} {  })
-    ({**^/**  x^/**^/} = encode-lines copy {^/x^/} {**} {  })
-    ({**  x^/**    y^/**      z^/} = encode-lines copy {x^/  y^/    z} {**} {  })
-    ("**^/**^/**^/" = encode-lines copy {^/^/} {**} {  })
+    ("**^/" = encode-lines copy "" "**" "  ")
+    ("**  x^/" = encode-lines copy "x" "**" "  ")
+    ("**  x^/**^/" = encode-lines copy "x^/" {**} "  ")
+    ("**^/**  x^/" = encode-lines copy "^/x" "**" "  ")
+    ("**^/**  x^/**^/" = encode-lines copy "^/x^/" "**" "  ")
+    ("**  x^/**    y^/**      z^/" = encode-lines copy "x^/  y^/    z" "**" "  ")
+    ("**^/**^/**^/" = encode-lines copy "^/^/" "**" "  ")
 
     ; decode-lines
 
-    ({} = decode-lines copy {} {**} {} )
-    ({} = decode-lines copy {**^/} {**} {  } )
-    ({x} = decode-lines copy {**  x^/} {**} {  } )
-    ({x^/} = decode-lines copy {**  x^/**^/} {**} {  } )
-    ({^/x} = decode-lines copy {**^/**  x^/} {**} {  } )
-    ({^/x^/} = decode-lines copy {**^/**  x^/**^/} {**} {  } )
-    ({x^/  y^/    z} = decode-lines copy {**  x^/**    y^/**      z^/} {**} {  } )
-    ({^/^/} = decode-lines copy "**^/**  ^/**^/" {**} {  })
-    ({^/^/} = decode-lines copy "**^/**^/**^/" {**} {  })
+    ("" = decode-lines copy "" "**" "")
+    ("" = decode-lines copy "**^/" "**" "  ")
+    ("x" = decode-lines copy "**  x^/" "**" "  ")
+    ("x^/" = decode-lines copy "**  x^/**^/" "**" "  ")
+    ("^/x" = decode-lines copy "**^/**  x^/" "**" "  ")
+    ("^/x^/" = decode-lines copy "**^/**  x^/**^/" "**" "  ")
+    ("x^/  y^/    z" = decode-lines copy "**  x^/**    y^/**      z^/" "**" "  ")
+    ("^/^/" = decode-lines copy "**^/**  ^/**^/" "**" "  ")
+    ("^/^/" = decode-lines copy "**^/**^/**^/" "**" "  ")
 
     ; lines-exceeding
 

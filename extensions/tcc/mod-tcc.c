@@ -294,7 +294,7 @@ Bounce Pending_Native_Dispatcher(Level* L) {
 //
 //  export make-native: native [
 //
-//  {Create an ACTION! which is compiled from a C source STRING!}
+//  "Create an ACTION! which is compiled from a C source TEXT!"
 //
 //      return: "Function value, will be compiled on demand or by COMPILE"
 //          [action?]
@@ -382,7 +382,7 @@ DECLARE_NATIVE(make_native)
 //
 //  compile*: native [
 //
-//  {INTERNAL USE ONLY: Expects arguments to be fully vetted by COMPILE}
+//  "INTERNAL USE ONLY: Expects arguments to be fully vetted by COMPILE"
 //
 //      return: "No return value, unless /INSPECT is used to see result"
 //          [<opt> text!]

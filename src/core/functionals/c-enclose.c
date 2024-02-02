@@ -165,7 +165,7 @@ Bounce Encloser_Dispatcher(Level* const L)
 //
 //  enclose: native [
 //
-//  {Wrap code around a frame with access to its instance and return value}
+//  "Wrap code around a frame with access to its instance and return value"
 //
 //      return: [action?]
 //      inner "Frame to be copied, then passed to OUTER"

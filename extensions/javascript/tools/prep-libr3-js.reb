@@ -35,7 +35,7 @@ e-cwrap: make-emitter "JavaScript C Wrapper functions" (
     join output-dir %reb-lib.js
 )
 
-=== {ASYNCIFY_BLACKLIST TOLERANT CWRAP} ===
+=== "ASYNCIFY_BLACKLIST TOLERANT CWRAP" ===
 
 ; !!! This is a clone of code you would get if you said:
 ;
@@ -209,7 +209,7 @@ e-cwrap/emit {
 }
 
 
-=== {GENERATE C WRAPPER FUNCTIONS} ===
+=== "GENERATE C WRAPPER FUNCTIONS" ===
 
 e-cwrap/emit {
     /* The C API uses names like rebValue().  This is because calls from the
@@ -399,8 +399,8 @@ for-each-api [
         for-each [type var] paramlist [
             keep to-js-type type else [
                 fail [
-                    {No JavaScript argument mapping for type} type
-                    {used by} name {with paramlist} mold paramlist
+                    "No JavaScript argument mapping for type" type
+                    "used by" name "with paramlist" mold paramlist
                 ]
             ]
         ]
@@ -428,7 +428,7 @@ for-each-api [
             ;
             unspaced [{console.error("Exiting } name {");^/}]
         ] else [
-            copy {}
+            copy ""
         ]
         append return-code trim/auto copy (switch js-returns [
           "'string'" [
@@ -870,7 +870,7 @@ if false [  ; Only used if DEBUG_JAVASCRIPT_SILENT_TRACE (how to know here?)
 e-cwrap/write-emitted
 
 
-=== {GENERATE EMSCRIPTEN KEEPALIVE LIST} ===
+=== "GENERATE EMSCRIPTEN KEEPALIVE LIST" ===
 
 ; It is possible to tell the linker what functions to keep alive via the
 ; EMSCRIPTEN_KEEPALIVE annotation.  But we don't want %rebol.h to be dependent
@@ -909,7 +909,7 @@ write (join output-dir %libr3.exports.json) json-collect [
 ]
 
 
-=== {GENERATE ASYNCIFY BLACKLIST FILE} ===
+=== "GENERATE ASYNCIFY BLACKLIST FILE" ===
 
 ; Asyncify has some automatic ability to determine what functions cannot be
 ; on the stack when a function may yield.  It then does not instrument these
@@ -944,7 +944,7 @@ write (join output-dir %asyncify-blacklist.json) delimit newline collect [
 ]
 
 
-=== {GENERATE %NODE-PRELOAD.JS} ===
+=== "GENERATE %NODE-PRELOAD.JS" ===
 
 ; !!! Node.js support lapsed for a time, due to no pthreads support:
 ;

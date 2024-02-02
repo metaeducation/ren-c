@@ -1264,7 +1264,7 @@ static void Handle_Seek_Rule_Dont_Update_Begin(
 //
 //  subparse: native [
 //
-//  {Internal support function for PARSE (acts as variadic to consume rules)}
+//  "Internal support function for PARSE (acts as variadic to consume rules)"
 //
 //      return: [<opt> integer!]
 //      input [any-series! any-array! quoted!]
@@ -2864,7 +2864,7 @@ DECLARE_NATIVE(parse3)
 //
 //  parse-accept: native [
 //
-//  "Accept argument as parse result (Internal Implementation Detail ATM)."
+//  "Accept argument as parse result (Internal Implementation Detail ATM)"
 //
 //      return: []  ; !!! Notation for divergent function?
 //  ]
@@ -2881,7 +2881,7 @@ DECLARE_NATIVE(parse_accept)
 //
 //  parse-break: native [
 //
-//  "Break the current parse rule (Internal Implementation Detail ATM)."
+//  "Break the current parse rule (Internal Implementation Detail ATM)"
 //
 //      return: []  ; !!! Notation for divergent function?
 //  ]
@@ -2898,7 +2898,7 @@ DECLARE_NATIVE(parse_break)
 //
 //  parse-reject: native [
 //
-//  "Reject the current parse rule (Internal Implementation Detail ATM)."
+//  "Reject the current parse rule (Internal Implementation Detail ATM)"
 //
 //      return: []  ; !!! Notation for divergent function?
 //  ]

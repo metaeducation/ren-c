@@ -1,5 +1,5 @@
 REBOL [
-    Title: {TCC Output of Files on Disk Test}
+    Title: "TCC Output of Files on Disk Test"
     Description: {
         The initial integration of TCC only allowed for in-memory compilation
         of a string of C test as the implementation of a function that Rebol

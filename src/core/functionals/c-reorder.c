@@ -89,7 +89,7 @@ Bounce Reorderer_Dispatcher(Level* L) {
 //
 //  reorder: native [
 //
-//  {Create variation of a frame with its parameters reordered}
+//  "Create variation of a frame with its parameters reordered"
 //
 //      return: [action?]
 //      original [<unrun> frame!]

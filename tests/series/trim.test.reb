@@ -17,7 +17,7 @@
 
 ; Incompatible refinement errors.
 [
-    (did s: copy {})
+    (did s: copy "")
 
     ~bad-refines~ !! (trim/auto/head s)
     ~bad-refines~ !! (trim/auto/tail s)

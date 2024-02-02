@@ -73,7 +73,7 @@ trap [
 
     system.options.redbol-paths: true  ; new interpreter, make it act older
 
-    === {TWEAKS SO MODERN REN-C DOESN'T ACT TOO MODERN} ===
+    === "TWEAKS SO MODERN REN-C DOESN'T ACT TOO MODERN" ===
 
     export parse: func [] [
         fail/where "Use PARSE2 in Bootstrap Process, not UPARSE/PARSE" 'return
@@ -1204,7 +1204,7 @@ split-path: func3 [  ; interface changed to multi-return in new Ren-C
 ]
 
 
-=== {SANITY CHECKS} ===
+=== "SANITY CHECKS" ===
 
 if not void3? (
     if true [null] else [fail "ELSE shim running when it shouldn't"]

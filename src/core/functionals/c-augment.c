@@ -60,7 +60,7 @@
 //
 //  augment: native [
 //
-//  {Create an action variant that acts the same, but has added parameters}
+//  "Create an action variant that acts the same, but has added parameters"
 //
 //      return: [action?]
 //      original "Frame whose implementation is to be augmented"

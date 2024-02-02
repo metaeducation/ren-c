@@ -77,7 +77,7 @@
 //
 //  export call-internal*: native [
 //
-//  {Run another program by spawning a new process}
+//  "Run another program by spawning a new process"
 //
 //      return: "If /WAIT, the forked process ID, else exit code"
 //          [integer!]
@@ -107,7 +107,7 @@ DECLARE_NATIVE(call_internal_p)
 //
 //  export get-os-browsers: native [
 //
-//  "Ask the OS or registry what command(s) to use for starting a browser."
+//  "Ask the OS or registry what command(s) to use for starting a browser"
 //
 //      return: [block!]
 //          {Block of strings, where %1 should be substituted with the string}
@@ -206,7 +206,7 @@ DECLARE_NATIVE(get_os_browsers)
 //
 //  export sleep: native [
 //
-//  "Use system sleep to wait a certain amount of time (doesn't use PORT!s)."
+//  "Use system sleep to wait a certain amount of time (doesn't use PORT!s)"
 //
 //      return: [~]
 //      duration [integer! decimal! time!]
@@ -335,7 +335,7 @@ DECLARE_NATIVE(terminate)
 //
 //  export get-env: native [
 //
-//  {Returns the value of an OS environment variable (for current process).}
+//  "Returns the value of an OS environment variable (for current process)"
 //
 //      return: "String the variable was set to, or null if not set"
 //          [<opt> text!]
@@ -447,7 +447,7 @@ DECLARE_NATIVE(get_env)
 //
 //  export set-env: native [
 //
-//  {Sets value of operating system environment variable for current process.}
+//  "Sets value of operating system environment variable for current process"
 //
 //      return: "Returns same value passed in"
 //          [<opt> text!]
@@ -549,7 +549,7 @@ DECLARE_NATIVE(set_env)
 //
 //  export list-env: native [
 //
-//  {Returns a map of OS environment variables (for current process).}
+//  "Returns a map of OS environment variables (for current process)"
 //
 //      return: [map!]
 //  ]

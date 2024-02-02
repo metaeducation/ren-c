@@ -877,7 +877,7 @@ REBTYPE(Binary)
 //
 //  enbin: native [
 //
-//  {Encode value as a Little Endian or Big Endian BINARY!, signed/unsigned}
+//  "Encode value as a Little Endian or Big Endian BINARY!, signed/unsigned"
 //
 //      return: [binary!]
 //      settings "[<LE or BE> <+ or +/-> <number of bytes>] (pre-COMPOSE'd)"
@@ -981,7 +981,7 @@ DECLARE_NATIVE(enbin)
 //
 //  debin: native [
 //
-//  {Decode BINARY! as Little Endian or Big Endian, signed/unsigned value}
+//  "Decode BINARY! as Little Endian or Big Endian, signed/unsigned value"
 //
 //      return: [integer!]
 //      settings "[<LE or BE> <+ or +/-> <number of bytes>] (pre-COMPOSE'd)"

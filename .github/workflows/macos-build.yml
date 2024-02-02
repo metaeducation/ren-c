@@ -247,7 +247,7 @@ jobs:
     - name: HTTPS Read Test (If This Works, A Lot Of Things Are Working)
       shell: /usr/local/bin/r3built --fragment {0}  # README: Ren-C Code As Step
       run: |
-        print {== Hello From R3 HTTPS Read Test! ==}
+        print "== Hello From R3 HTTPS Read Test! =="
         header: parse as text! read https://example.com [
             thru '<h1> accept across to '</h1>
         ]
@@ -259,9 +259,9 @@ jobs:
       if: false  # See https://github.com/metaeducation/ren-c-library/
       shell: r3built --fragment {0}  # See README: Ren-C Code As Step
       run: |
-        print {== Hello From R3 DLL Test! ==}
+        print "== Hello From R3 DLL Test! =="
         mod-uuid: load-extension join what-dir %build/libr3-uuid.dylib
-        print {== UUID Extension Loaded ==}
+        print "== UUID Extension Loaded =="
         uuid: mod-uuid.generate
         assert [16 = length of uuid]
         print ["Succeeded:" uuid]

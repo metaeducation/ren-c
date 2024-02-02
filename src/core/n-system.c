@@ -28,7 +28,7 @@
 //
 //  halt: native [
 //
-//  "Stops evaluation and returns to the input prompt."
+//  "Stops evaluation and returns to the input prompt"
 //
 //      return: []  ; !!! notation for divergent functions?
 //  ]
@@ -44,7 +44,7 @@ DECLARE_NATIVE(halt)
 //
 //  quit: native [
 //
-//  {Stop evaluating and return control to command shell or calling script}
+//  "Stop evaluating and return control to command shell or calling script"
 //
 //      return: []  ; !!! Notation for divergent functions?
 //      /with "See: http://en.wikipedia.org/wiki/Exit_status"
@@ -75,7 +75,7 @@ DECLARE_NATIVE(quit)
 //
 //  exit-rebol: native [
 //
-//  {Stop the current Rebol interpreter (cannot be caught by CATCH/QUIT)}
+//  "Stop the current Rebol interpreter (cannot be caught by CATCH/QUIT)"
 //
 //      return: []  ; !!! Notation for divergent functions?
 //      status "See: http://en.wikipedia.org/wiki/Exit_status"
@@ -99,7 +99,7 @@ DECLARE_NATIVE(exit_rebol)
 //
 //  recycle: native [
 //
-//  "Recycles unused memory."
+//  "Recycles unused memory"
 //
 //      return: "Number of series nodes recycled (if applicable)"
 //          [<opt> integer!]
@@ -185,7 +185,7 @@ DECLARE_NATIVE(recycle)
 //
 //  limit-usage: native [
 //
-//  "Set a usage limit only once (used for SECURE)."
+//  "Set a usage limit only once (used for SECURE)"
 //
 //      return: [~]
 //      field [word!]
@@ -298,7 +298,7 @@ int ceil_log2(unsigned long long x) {
 //
 //  c-debug-tick: native [
 //
-//  {Get the evaluator tick count (currently only available in debug builds)}
+//  "Get the evaluator tick count (currently only available in debug builds)"
 //
 //      return: [<opt> integer!]
 //  ]
@@ -318,7 +318,7 @@ DECLARE_NATIVE(c_debug_tick)
 //
 //  c-debug-break: native [
 //
-//  {Break at next evaluation point (only use when running under C debugger)}
+//  "Break at next evaluation point (only use when running under C debugger)"
 //
 //      return: [nihil?]
 //          "Invisibly returns what the expression to the right would have"

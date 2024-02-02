@@ -80,11 +80,11 @@ export console!: make object! [
 
     === APPEARANCE (can be overridden) ===
 
-    prompt: {>>}
-    result: {==}
-    warning: {!!}
-    error: {**}  ; errors FORM themselves, so this is not used yet
-    info: {(i)}  ; was `to-text #{e29398}` for "(i)" symbol, caused problems
+    prompt: ">>"
+    result: "=="
+    warning: "!!"
+    error: "**"  ; errors FORM themselves, so this is not used yet
+    info: "(i)"  ; was `to-text #{e29398}` for "(i)" symbol, caused problems
     greeting:
 {Welcome to Rebol.  For more information please type in the commands below:
 
@@ -93,7 +93,7 @@ export console!: make object! [
 
     print-greeting: meth [
         return: [~]
-        {Adds live elements to static greeting content (build #, version)}
+        "Adds live elements to static greeting content (build #, version)"
     ][
         boot-print [
             "Rebol 3 (Ren-C branch)"
@@ -275,7 +275,7 @@ export console!: make object! [
     === BEHAVIOR (can be overridden) ===
 
     input-hook: meth [
-        {Receives line input, parse/transform, send back to CONSOLE eval}
+        "Receives line input, parse/transform, send back to CONSOLE eval"
 
         return: "null if EOF, ~escape~ if canceled, else line of text input"
             [<opt> text! quasi-word?]
@@ -284,7 +284,7 @@ export console!: make object! [
     ]
 
     dialect-hook: meth [
-        {Receives code block, parse/transform/bind, send back to CONSOLE eval}
+        "Receives code block, parse/transform/bind, send back to CONSOLE eval"
         return: [block!]
         b [block!]
     ][
@@ -320,7 +320,7 @@ export console!: make object! [
     === HELPERS (could be overridden!) ===
 
     add-shortcut: meth [
-        {Add/Change console shortcut}
+        "Add/Change console shortcut"
         return: [~]
         name [any-word!] "Shortcut name"
         block [block!] "Command(s) expanded to"
@@ -410,30 +410,30 @@ start-console: func [
 
     === VERBOSE CONSOLE SKINNING MESSAGES ===
 
-    loud-print [newline {Console skinning:} newline]
+    loud-print [newline "Console skinning:" newline]
     if skin-error [
         loud-print [
-            {  Error loading console skin  -} skin-file LF LF
+            "  Error loading console skin  -" skin-file LF LF
             skin-error LF LF
-            {  Fix error and restart CONSOLE}
+            "  Fix error and restart CONSOLE"
         ]
     ] else [
        loud-print [
             space space
             if proto-skin.is-loaded [
-                {Loaded skin}
+                "Loaded skin"
             ] else [
-                {Skin does not exist}
+                "Skin does not exist"
             ]
             "-" skin-file
-            "(CONSOLE" if not proto-skin.was-updated [{not}] "updated)"
+            "(CONSOLE" if not proto-skin.was-updated ["not"] "updated)"
         ]
     ]
 ]
 
 
 ext-console-impl: func [
-    {Rebol ACTION! that is called from C in a loop to implement the console}
+    "Rebol ACTION! that is called from C in a loop to implement the console"
 
     return: "Code for C caller to sandbox, exit status, RESUME code, or hook"
         [block! group! integer! meta-group! handle!]  ; RETURN is hooked below!
@@ -456,7 +456,7 @@ ext-console-impl: func [
     let instruction: copy []
 
     let emit: func [
-        {Builds up sandboxed code to submit to C, hooked RETURN will finalize}
+        "Builds up sandboxed code to submit to C, hooked RETURN will finalize"
 
         return: [~]
         item "ISSUE! directive, TEXT! comment, (<*> composed) code BLOCK!"
@@ -480,7 +480,7 @@ ext-console-impl: func [
     ]
 
     return: func [
-        {Hooked RETURN function which finalizes any gathered EMIT lines}
+        "Hooked RETURN function which finalizes any gathered EMIT lines"
 
         state "Describes the RESULT that the next call to HOST-CONSOLE gets"
             [integer! tag! group! type-word! meta-group! handle!]
@@ -497,11 +497,11 @@ ext-console-impl: func [
             ]
             <halt> [
                 emit [halt]
-                emit [fail {^-- Shouldn't get here, due to HALT}]
+                emit [fail "^-- Shouldn't get here, due to HALT"]
             ]
             <die> [
                 emit [quit/with 1]  ; bash exit code for any generic error
-                emit [fail {^-- Shouldn't get here, due to QUIT}]
+                emit [fail "^-- Shouldn't get here, due to QUIT"]
             ]
             <bad> [
                 emit #no-unskin-if-error
@@ -532,7 +532,7 @@ ext-console-impl: func [
                 state
             ]
         ] else [
-            emit [fail [{Bad console instruction:} (<*> mold state)]]
+            emit [fail ["Bad console instruction:" (<*> mold state)]]
         ]
     ]
 

@@ -53,7 +53,7 @@ static bool Check_Char_Range(const REBVAL *val, REBLEN limit)
 //
 //  ascii?: native [
 //
-//  {Returns TRUE if value or string is in ASCII character range (below 128).}
+//  "Returns TRUE if value or string is in ASCII character range (below 128)"
 //
 //      return: [logic?]
 //      value [any-string! char? integer!]
@@ -70,7 +70,7 @@ DECLARE_NATIVE(ascii_q)
 //
 //  latin1?: native [
 //
-//  {Returns TRUE if value or string is in Latin-1 character range (below 256).}
+//  "Returns TRUE if value or string is in Latin-1 character range (below 256)"
 //
 //      return: [logic?]
 //      value [any-string! char? integer!]
@@ -87,7 +87,7 @@ DECLARE_NATIVE(latin1_q)
 //
 //  as-pair: native [
 //
-//  "Combine X and Y values into a pair."
+//  "Combine X and Y values into a pair"
 //
 //      return: [pair!]
 //      x [integer!]
@@ -105,7 +105,7 @@ DECLARE_NATIVE(as_pair)
 //
 //  bind: native [
 //
-//  {Binds words or words in arrays to the specified context}
+//  "Binds words or words in arrays to the specified context"
 //
 //      return: [frame! action? any-array! any-path! any-word! quoted!]
 //      value "Value whose binding is to be set (modified) (returned)"
@@ -359,7 +359,7 @@ DECLARE_NATIVE(without)
 //
 //  use: native [
 //
-//  {Defines words local to a block (See also: LET)}
+//  "Defines words local to a block (See also: LET)"
 //
 //      return: [any-value?]
 //      vars "Local word(s) to the block"
@@ -587,7 +587,7 @@ DECLARE_INTRINSIC(any_inert_q)
 //
 //  unbind: native [
 //
-//  "Unbinds words from context."
+//  "Unbinds words from context"
 //
 //      return: [block! any-word!]
 //      word [block! any-word!]
@@ -647,7 +647,7 @@ DECLARE_NATIVE(bindable)
 //
 //  collect-words: native [
 //
-//  {Collect unique words used in a block (used for context construction)}
+//  "Collect unique words used in a block (used for context construction)"
 //
 //      return: [block!]
 //      block [block!]
@@ -1157,7 +1157,7 @@ bool Get_Path_Push_Refinements_Throws(
 //
 //  resolve: native [
 //
-//  {Produce an invariant array structure for doing multiple GET or SET from}
+//  "Produce an invariant array structure for doing multiple GET or SET from"
 //
 //      return: [the-word! the-tuple! the-block!]
 //      @value [any-value?]
@@ -1189,7 +1189,7 @@ DECLARE_NATIVE(resolve)
 //
 //  get: native [
 //
-//  {Gets the value of a word or path, or block of words/paths}
+//  "Gets the value of a word or path, or block of words/paths"
 //
 //      return: [any-value?]
 //      source "Word or tuple to get, or block of PICK steps (see RESOLVE)"
@@ -1556,7 +1556,7 @@ void Set_Var_May_Fail(
 //
 //  set: native [
 //
-//  {Sets a word or path to specified value (see also: UNPACK)}
+//  "Sets a word or path to specified value (see also: UNPACK)"
 //
 //      return: "Same value as input (pass through if target is void)"
 //          [any-value?]
@@ -1609,7 +1609,7 @@ DECLARE_NATIVE(set)
 //
 //  try: native [
 //
-//  {Suppress failure from raised errors or VOID, by returning NULL}
+//  "Suppress failure from raised errors or VOID, by returning NULL"
 //
 //      return: [any-value?]
 //      ^optional [any-atom?]  ; e.g. TRY on a pack returns the pack
@@ -1634,7 +1634,7 @@ DECLARE_NATIVE(try)
 //
 //  proxy-exports: native [
 //
-//  {Copy context by setting values in the target from those in the source.}
+//  "Copy context by setting values in the target from those in the source"
 //
 //      return: "Same as the target module"
 //          [module!]
@@ -1707,7 +1707,7 @@ DECLARE_NATIVE(proxy_exports)
 //
 //  enfix?: native/intrinsic [
 //
-//  {TRUE if looks up to a function and gets first argument before the call}
+//  "TRUE if looks up to a function and gets first argument before the call"
 //
 //      return: [logic?]
 //      frame [<unrun> frame!]
@@ -1724,7 +1724,7 @@ DECLARE_INTRINSIC(enfix_q)
 //
 //  enfix: native/intrinsic [
 //
-//  {For making enfix functions, e.g `+: enfix :add`}
+//  "For making enfix functions, e.g `+: enfix :add`"
 //
 //      return: "Isotopic action"
 //          [antiform!]  ; [action?] comes after ENFIX in bootstrap
@@ -1743,7 +1743,7 @@ DECLARE_INTRINSIC(enfix)
 //
 //  unenfix: native/intrinsic [
 //
-//  {For removing enfixedness from functions (prefix is a common var name)}
+//  "For removing enfixedness from functions (prefix is a common var name)"
 //
 //      return: "Isotopic action"
 //          [antiform!]  ; [action?] comes after ENFIX in bootstrap
@@ -1762,7 +1762,7 @@ DECLARE_INTRINSIC(unenfix)
 //
 //  identity: native [
 //
-//  {Returns input value (https://en.wikipedia.org/wiki/Identity_function)}
+//  "Returns input value (https://en.wikipedia.org/wiki/Identity_function)"
 //
 //      return: [any-value? pack?]
 //      ^value [any-value? pack?]
@@ -1781,7 +1781,7 @@ DECLARE_NATIVE(identity) // sample uses: https://stackoverflow.com/q/3136338
 //
 //  free: native [
 //
-//  {Releases the underlying data of a value so it can no longer be accessed}
+//  "Releases the underlying data of a value so it can no longer be accessed"
 //
 //      return: [~]
 //      memory [<maybe> any-series! any-context! handle!]
@@ -1808,7 +1808,7 @@ DECLARE_NATIVE(free)
 //
 //  free?: native [
 //
-//  {Tells if data has been released with FREE}
+//  "Tells if data has been released with FREE"
 //
 //      return: "Returns false if value wouldn't be FREEable (e.g. LOGIC!)"
 //          [logic?]
@@ -1992,7 +1992,7 @@ bool Try_As_String(
 //
 //  as: native [
 //
-//  {Aliases underlying data of one value to act as another of same class}
+//  "Aliases underlying data of one value to act as another of same class"
 //
 //      return: [
 //          <opt> integer!
@@ -2373,7 +2373,8 @@ DECLARE_NATIVE(as)
 
 //
 //  as-text: native [
-//      {AS TEXT! variant that may disallow CR LF sequences in BINARY! alias}
+//
+//  "AS TEXT! variant that may disallow CR LF sequences in BINARY! alias"
 //
 //      return: [<opt> text!]
 //      value [<maybe> any-value?]
@@ -2412,7 +2413,7 @@ DECLARE_NATIVE(as_text)
 //
 //  aliases?: native [
 //
-//  {Return whether or not the underlying data of one value aliases another}
+//  "Return whether or not the underlying data of one value aliases another"
 //
 //      return: [logic?]
 //      value1 [any-series!]
@@ -2659,7 +2660,7 @@ DECLARE_INTRINSIC(blackhole_q)
 //
 //  heavy: native [
 //
-//  {Make the heavy form of NULL or VOID (passes through all other values)}
+//  "Make the heavy form of NULL or VOID (passes through all other values)"
 //
 //      return: [any-value? pack?]
 //      ^optional [any-value? pack?]
@@ -2683,7 +2684,7 @@ DECLARE_NATIVE(heavy) {
 //
 //  light: native [
 //
-//  {Make the light form of NULL or VOID (passes through all other values)}
+//  "Make the light form of NULL or VOID (passes through all other values)"
 //
 //      return: [any-value? pack?]
 //      ^value [any-value? pack?]
@@ -2716,7 +2717,7 @@ DECLARE_NATIVE(light) {
 //
 //  nihil: native [
 //
-//  {Makes empty parameter pack (antiform ~[]~), representing "vaporization"}
+//  "Makes empty parameter pack (antiform ~[]~), representing 'vaporization'"
 //
 //      return: [nihil?]
 //  ]

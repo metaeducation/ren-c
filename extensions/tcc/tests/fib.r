@@ -1,5 +1,5 @@
 REBOL [
-    Title: {Comparing User Native vs. Rebol Fibonacci Number Calculation}
+    Title: "Comparing User Native vs. Rebol Fibonacci Number Calculation"
     Description: {
         @ShixinZeng created this as an initial test to compare the performance
         of a user native implementation of Fibonacci numbers, to an algorithm

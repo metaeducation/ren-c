@@ -70,7 +70,7 @@ Bounce Generic_Dispatcher(Level* L)
 //
 //  generic: enfix native [
 //
-//  {Creates datatype action (currently for internal use only)}
+//  "Creates datatype action (currently for internal use only)"
 //
 //      return: [~]
 //      :verb [set-word!]

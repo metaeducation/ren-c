@@ -28,7 +28,7 @@
 //
 //  only*: native [  ; fallen from favor, kept as ONLY* instead of ONLY [1]
 //
-//  {Optimized native for creating a single-element wrapper block}
+//  "Optimized native for creating a single-element wrapper block"
 //
 //     return: [block!]
 //     value "If VOID, the resulting block will be empty"  ; [2]
@@ -1327,7 +1327,7 @@ REBTYPE(Array)
 //
 //  blockify: native [
 //
-//  {If a value isn't already a BLOCK!, enclose it in a block, else return it}
+//  "If a value isn't already a BLOCK!, enclose it in a block, else return it"
 //
 //      return: [block!]
 //      value "VOID input will produce an empty block"
@@ -1360,7 +1360,7 @@ DECLARE_NATIVE(blockify)
 //
 //  groupify: native [
 //
-//  {If a value isn't already a GROUP!, enclose it in a group, else return it}
+//  "If a value isn't already a GROUP!, enclose it in a group, else return it"
 //
 //      return: [group!]
 //      value "VOID input will produce an empty group"
@@ -1393,7 +1393,7 @@ DECLARE_NATIVE(groupify)
 //
 //  enblock: native [
 //
-//  {Enclose a value in a BLOCK!, even if it's already a block}
+//  "Enclose a value in a BLOCK!, even if it's already a block"
 //
 //      return: [block!]
 //      value "VOID input will produce an empty block"
@@ -1424,7 +1424,7 @@ DECLARE_NATIVE(enblock)
 //
 //  engroup: native [
 //
-//  {Enclose a value in a GROUP!, even if it's already a group}
+//  "Enclose a value in a GROUP!, even if it's already a group"
 //
 //      return: [group!]
 //      value "VOID input will produce an empty group"
@@ -1455,7 +1455,7 @@ DECLARE_NATIVE(engroup)
 //
 //  glom: native [
 //
-//  {Efficient destructive appending operation that will reuse appended memory}
+//  "Efficient destructive appending operation that will reuse appended memory"
 //
 //      return: [<opt> block!]
 //      accumulator [<opt> block!]

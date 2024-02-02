@@ -783,7 +783,7 @@ Bounce JavaScript_Dispatcher(Level* const L)
 //
 //  export js-native: native [
 //
-//  {Create ACTION! from textual JavaScript code}
+//  "Create ACTION! from textual JavaScript code"
 //
 //      return: [action?]
 //      spec "Function specification (similar to the one used by FUNCTION)"
@@ -962,7 +962,7 @@ DECLARE_NATIVE(js_native)
 //
 //  export js-eval*: native [
 //
-//  {Evaluate textual JavaScript code}
+//  "Evaluate textual JavaScript code"
 //
 //      return: "Note: Only supports types that reb.Box() supports"
 //          [~ <opt> logic? integer! text!]
@@ -1061,7 +1061,7 @@ DECLARE_NATIVE(js_eval_p)
 //
 //  startup*: native [
 //
-//  {Initialize the JavaScript Extension}
+//  "Initialize the JavaScript Extension"
 //
 //      return: [~]
 //  ]
@@ -1093,7 +1093,7 @@ DECLARE_NATIVE(startup_p)
 //
 //  export js-trace: native [
 //
-//  {Internal debug tool for seeing what's going on in JavaScript dispatch}
+//  "Internal debug tool for seeing what's going on in JavaScript dispatch"
 //
 //      return: [~]
 //      enable [logic?]
@@ -1116,7 +1116,7 @@ DECLARE_NATIVE(js_trace)
 //
 //  export js-stacklimit: native [
 //
-//  {Internal tracing tool reporting the stack level and how long to limit}
+//  "Internal tracing tool reporting the stack level and how long to limit"
 //
 //      return: [block!]
 //  ]

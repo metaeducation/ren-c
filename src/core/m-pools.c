@@ -977,7 +977,8 @@ void Swap_Series_Content(Series* a, Series* b)
 
 //
 //  swap-contents: native [
-//      {Low-level operation for swapping the underlying data for two series.}
+//
+//  "Low-level operation for swapping the underlying data for two series"
 //
 //      return: [~]
 //      series1 [any-series!]

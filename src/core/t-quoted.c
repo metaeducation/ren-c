@@ -224,7 +224,7 @@ DECLARE_NATIVE(the_p)
 //
 //  quote: native [
 //
-//  {Constructs a quoted form of the evaluated argument}
+//  "Constructs a quoted form of the evaluated argument"
 //
 //      return: "Quoted value (if depth = 0, may not be quoted)"
 //          [<void> element?]
@@ -249,7 +249,7 @@ DECLARE_NATIVE(quote)
 //
 //  meta: native/intrinsic [
 //
-//  {antiforms -> quasiforms, adds a quote to rest (behavior of ^^)}
+//  "antiforms -> quasiforms, adds a quote to rest (behavior of ^^)"
 //
 //      return: [quoted! quasiform!]
 //      ^atom
@@ -266,7 +266,7 @@ DECLARE_INTRINSIC(meta)
 //
 //  meta*: native [
 //
-//  {META variant that passes through VOID and NULL, and doesn't take failures}
+//  "META variant that passes through VOID and NULL, and doesn't take failures"
 //
 //      return: [<opt> <void> quoted! quasiform!]
 //      ^optional [pack? any-value?]
@@ -291,7 +291,7 @@ DECLARE_NATIVE(meta_p)
 //
 //  unquote: native [
 //
-//  {Remove quoting levels from the evaluated argument}
+//  "Remove quoting levels from the evaluated argument"
 //
 //      return: "Value with quotes removed"
 //          [<void> element?]
@@ -323,7 +323,7 @@ DECLARE_NATIVE(unquote)
 //
 //  quasi: native [
 //
-//  {Constructs a quasi form of the evaluated argument}
+//  "Constructs a quasi form of the evaluated argument"
 //
 //      return: [quasiform!]
 //      value "Any non-QUOTED! value"
@@ -346,7 +346,7 @@ DECLARE_NATIVE(quasi)
 //
 //  unquasi: native/intrinsic [
 //
-//  {Turn quasiforms into common forms}
+//  "Turn quasiforms into common forms"
 //
 //      return: [element?]  ; more narrowly, a non-quasi non-quoted element
 //      value [quasiform!]
@@ -364,7 +364,7 @@ DECLARE_INTRINSIC(unquasi)
 //
 //  antiform?: native/intrinsic [
 //
-//  {Tells you whether argument is a stable or unstable antiform}
+//  "Tells you whether argument is a stable or unstable antiform"
 //
 //      return: [logic?]
 //      ^atom
@@ -385,7 +385,7 @@ DECLARE_INTRINSIC(antiform_q)
 //
 //  anti: native [
 //
-//  {Give the antiform of the plain argument (same as UNMETA QUASI)}
+//  "Give the antiform of the plain argument (same as UNMETA QUASI)"
 //
 //      return: [antiform?]
 //      value "Any non-QUOTED!, non-QUASI value"
@@ -413,7 +413,7 @@ DECLARE_NATIVE(anti)
 //
 //  unmeta: native/intrinsic [
 //
-//  {Variant of UNQUOTE that also accepts quasiforms to make antiforms}
+//  "Variant of UNQUOTE that also accepts quasiforms to make antiforms"
 //
 //      return: [any-atom?]
 //      value [quoted! quasiform!]
@@ -431,7 +431,7 @@ DECLARE_INTRINSIC(unmeta)
 //
 //  unmeta*: native/intrinsic [
 //
-//  {Variant of UNMETA that passes thru VOID and NULL}
+//  "Variant of UNMETA that passes thru VOID and NULL"
 //
 //      return: [any-atom?]
 //      value [<opt> <void> quoted! quasiform!]
@@ -457,7 +457,7 @@ DECLARE_INTRINSIC(unmeta_p)
 //
 //  spread: native/intrinsic [
 //
-//  {Make block arguments splice}
+//  "Make block arguments splice"
 //
 //      return: "Antiform of GROUP! or unquoted value (pass null and void)"
 //          [<opt> <void> element? splice?]
@@ -512,7 +512,7 @@ DECLARE_INTRINSIC(spread)
 //
 //  lazy: native [
 //
-//  {Make objects lazy}
+//  "Make objects lazy"
 //
 //      return: "Antiform of OBJECT! or unquoted value (pass null and void)"
 //          [<opt> <void> element? lazy?]
@@ -549,7 +549,7 @@ DECLARE_NATIVE(lazy)
 //
 //  pack: native [
 //
-//  {Create a pack of arguments from an array}
+//  "Create a pack of arguments from an array"
 //
 //      return: "Antiform of BLOCK!"
 //          [pack?]
@@ -602,7 +602,7 @@ DECLARE_NATIVE(pack)
 //
 //  matches: native [
 //
-//  {Create antiform pattern to signal a desire to test types non-literally}
+//  "Create antiform pattern to signal a desire to test types non-literally"
 //
 //      return: "Antiform of TYPE-XXX!"
 //          [<opt> any-matcher?]
@@ -738,7 +738,7 @@ DECLARE_INTRINSIC(action_q)
 //
 //  runs: native/intrinsic [
 //
-//  {Make frames run when fetched through word access}
+//  "Make frames run when fetched through word access"
 //
 //      return: [action?]
 //      frame [<maybe> frame! action?]
@@ -756,7 +756,7 @@ DECLARE_INTRINSIC(runs)
 //
 //  unrun: native/intrinsic [
 //
-//  {Give back a frame! for action? input}
+//  "Give back a frame! for action? input"
 //
 //      return: [frame!]
 //      action [<maybe> frame! action?]
@@ -774,7 +774,7 @@ DECLARE_INTRINSIC(unrun)
 //
 //  maybe: native/intrinsic [
 //
-//  {If argument is null, make it void (also pass through voids)}
+//  "If argument is null, make it void (also pass through voids)"
 //
 //      return: "Null if input value was void"
 //      value
@@ -808,7 +808,7 @@ DECLARE_INTRINSIC(maybe)
 //
 //  quoted?: native/intrinsic [
 //
-//  {Tells you if the argument is QUOTED! or not}
+//  "Tells you if the argument is QUOTED! or not"
 //
 //      return: [logic?]
 //      value
@@ -825,7 +825,7 @@ DECLARE_INTRINSIC(quoted_q)
 //
 //  quasi?: native/intrinsic [
 //
-//  {Tells you if the argument is a quasiform or not}
+//  "Tells you if the argument is a quasiform or not"
 //
 //      return: [logic?]
 //      value
@@ -842,7 +842,7 @@ DECLARE_INTRINSIC(quasi_q)
 //
 //  noquote: native/intrinsic [
 //
-//  {Removes all levels of quoting from a quoted value}
+//  "Removes all levels of quoting from a quoted value"
 //
 //      return: [<void> element?]
 //      optional [<void> element?]

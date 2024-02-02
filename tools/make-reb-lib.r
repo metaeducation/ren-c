@@ -37,7 +37,7 @@ mkdir/deep output-dir
 ver: load-value join repo-dir %src/boot/version.r
 
 
-=== {PROCESS %a-lib.h TO PRODUCE DESCRIPTION OBJECTS FOR EACH API} ===
+=== "PROCESS %a-lib.h TO PRODUCE DESCRIPTION OBJECTS FOR EACH API" ===
 
 ; This leverages the prototype parser, which uses PARSE on C lexicals, and
 ; loads Rebol-structured data out of comments in the file.
@@ -173,7 +173,7 @@ src-dir: join repo-dir %src/core/
 process (join src-dir %a-lib.c)
 
 
-=== {GENERATE LISTS USED TO BUILD REBOL.H} ===
+=== "GENERATE LISTS USED TO BUILD REBOL.H" ===
 
 ; For readability, the technique used is not to emit line-by-line, but to
 ; give a "big picture overview" of the header file.  It is substituted into
@@ -338,7 +338,7 @@ c99-or-c++11-macros: map-each-api [
 ]
 
 
-=== {GENERATE REBOL.H} ===
+=== "GENERATE REBOL.H" ===
 
 ; Rather than put too many comments here in the Rebol, err on the side of
 ; putting comments in the header itself.  `/* use old C style comments */`
@@ -966,7 +966,7 @@ e-lib/emit [ver {
 e-lib/write-emitted
 
 
-=== {GENERATE TMP-REB-LIB-TABLE.INC} ===
+=== "GENERATE TMP-REB-LIB-TABLE.INC" ===
 
 ; The form of the API which is exported as a table is declared as a struct,
 ; but there has to be an instance of that struct filled with the actual
@@ -990,7 +990,7 @@ e-table/emit [table-init-items {
 e-table/write-emitted
 
 
-=== {GENERATE REB-CWRAPS.JS AND OTHER FILES FOR EMCC} ===
+=== "GENERATE REB-CWRAPS.JS AND OTHER FILES FOR EMCC" ===
 
 ; !!! The JavaScript extension is intended to be moved to its own location
 ; with its own bug tracker (and be under an LGPL license instead of Apache2.)

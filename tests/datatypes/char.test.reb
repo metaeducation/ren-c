@@ -240,8 +240,8 @@
             fail "test character doesn't match expected size"
         ]
         count-up len 64 [
-            s: copy {}
-            e: copy {}
+            s: copy ""
+            e: copy ""
             picks: copy []
             count-up i len [
                 append s random/only codepoints
@@ -251,7 +251,7 @@
             random picks  ; randomize positions so not always in order
             for-each i picks [
                 comment [
-                    print [{Trying} i {/} len {in} mold s]
+                    print ["Trying" i "/" len "in" mold s]
                 ]
                 s.(i): c
                 if len != length of s [

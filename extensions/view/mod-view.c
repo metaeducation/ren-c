@@ -92,7 +92,7 @@
 //
 //  export request-file*: native [
 //
-//  {Asks user to select file(s) and returns full file path(s)}
+//  "Asks user to select file(s) and returns full file path(s)"
 //
 //      return: "Null if canceled, otherwise a path or block of paths"
 //          [<opt> file! block!]

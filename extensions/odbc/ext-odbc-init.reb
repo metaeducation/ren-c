@@ -11,7 +11,7 @@ REBOL [
         "Copyright (C) 2017-2019 Ren-C Open Source Contributors" (Apache)
     ]
 
-    License: {Apache 2.0}
+    License: "Apache 2.0"
 ]
 
 ; These are the native coded support routines that are needed to be built from

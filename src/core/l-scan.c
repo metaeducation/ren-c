@@ -2999,7 +2999,7 @@ void Shutdown_Scanner(void)
 //
 //  transcode: native [
 //
-//  {Translates UTF-8 source (from a text or binary) to values}
+//  "Translates UTF-8 source (from a text or binary) to values"
 //
 //      return: "Transcoded value (or block of values)"
 //          [<opt> element?]

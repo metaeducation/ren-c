@@ -1,5 +1,5 @@
 Rebol [
-    Title: {Fake IMPORT/EXPORT for Bootstrap, enable use of COMMA! syntax}
+    Title: "Fake IMPORT/EXPORT for Bootstrap, enable use of COMMA! syntax"
     File: %import-shim.r
     Description: {
         If a module imports %common.r, that should also imply the import of
@@ -85,7 +85,7 @@ lib3: lib
 ]
 
 
-=== {WORKAROUND FOR BUGGY PRINT IN BOOTSTRAP EXECUTABLE} ===
+=== "WORKAROUND FOR BUGGY PRINT IN BOOTSTRAP EXECUTABLE" ===
 
 ; Commit #8994d23 circa Dec 2018 has sporadic problems printing large chunks
 ; (in certain mediums, e.g. to the VSCode integrated terminal).  Replace PRINT
@@ -107,7 +107,7 @@ print: lib3/print: lib3/func [value <local> pos] [
 ]
 
 
-=== {GIVE SHORT NAMES THAT CALL OUT BOOTSTRAP EXE'S VERSIONS OF FUNCTIONS} ===
+=== "GIVE SHORT NAMES THAT CALL OUT BOOTSTRAP EXE'S VERSIONS OF FUNCTIONS" ===
 
 ; The shims use the functions in the bootstrap EXE's lib to make forwards
 ; compatible variations.  But it's not obvious to a reader that something like
@@ -185,7 +185,7 @@ lib3/for-each [alias name shim] aliases [
 ]
 
 
-=== {STANDARDIZE DIRECTORY TO WHERE THE COMMAND LINE WAS INVOKED FROM} ===
+=== "STANDARDIZE DIRECTORY TO WHERE THE COMMAND LINE WAS INVOKED FROM" ===
 
 ; Typically if any filenames are passed to a script, those paths should be
 ; interpreted relative to what directory the user was in when they invoked
@@ -198,7 +198,7 @@ lib3/for-each [alias name shim] aliases [
 change-dir system/options/path
 
 
-=== {EXPORT} ===
+=== "EXPORT" ===
 
 export: func3 [
     "%import-shim.r variant of EXPORT which just puts the definition into LIB"

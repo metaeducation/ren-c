@@ -29,7 +29,7 @@
 //
 //  enrescue: native [
 //
-//  {Sandbox code to intercept failures at ANY depth (including typos)}
+//  "Sandbox code to intercept failures at ANY depth (including typos)"
 //
 //      return: "ERROR! if raised, else ^META of the result"
 //          [error! quoted! quasiform! blank!]
@@ -88,7 +88,7 @@ DECLARE_NATIVE(enrescue)
 //
 //  entrap: native [
 //
-//  {Tries to DO a block, trapping raised errors}
+//  "Tries to DO a block, trapping raised errors"
 //
 //      return: "ERROR! if raised, else the ^META of the result"
 //          [error! quasiform! quoted! blank!]
@@ -180,7 +180,7 @@ DECLARE_NATIVE(entrap)  // wrapped as TRAP and ATTEMPT
 //
 //  except: enfix native [
 //
-//  {Analogue to something like a THEN which traps definitional errors}
+//  "Analogue to something like a THEN which traps definitional errors"
 //
 //      return: "Non-failure input, or product of processing failure"
 //          [any-atom?]  ; [1]
@@ -257,7 +257,7 @@ DECLARE_INTRINSIC(ok_q)
 //
 //  set-location-of-error: native [
 //
-//  {Sets the WHERE, NEAR, FILE, and LINE fields of an error}
+//  "Sets the WHERE, NEAR, FILE, and LINE fields of an error"
 //
 //      return: [<opt>]
 //      error [error!]

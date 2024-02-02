@@ -521,7 +521,7 @@ Option(Series*) Get_Word_Container(
 //
 //  let: native [
 //
-//  {Dynamically add a new binding into the stream of evaluation}
+//  "Dynamically add a new binding into the stream of evaluation"
 //
 //      return: "Expression result if SET form, else gives the new vars"
 //          [any-value?]
@@ -854,7 +854,7 @@ DECLARE_NATIVE(let)
 //
 //  add-let-binding: native [
 //
-//  {Experimental function for adding a new variable binding}
+//  "Experimental function for adding a new variable binding"
 //
 //      return: [frame! any-array!]
 //      environment [frame! any-array!]
@@ -905,7 +905,7 @@ DECLARE_NATIVE(add_let_binding)
 //
 //  add-use-object: native [
 //
-//  {Experimental function for adding an object's worth of binding to a frame}
+//  "Experimental function for adding an object's worth of binding to a frame"
 //
 //      return: [~]
 //      frame [frame!]

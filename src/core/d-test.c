@@ -111,7 +111,7 @@ DECLARE_NATIVE(test_librebol)
 //
 //  diagnose: native [
 //
-//  {Prints some basic internal information about the value (debug only)}
+//  "Prints some basic internal information about the value (debug only)"
 //
 //      return: "Same as input value (for passthru similar to PROBE)"
 //          [any-value?]
@@ -151,7 +151,7 @@ DECLARE_NATIVE(diagnose)
 //
 //  fuzz: native [
 //
-//  {Introduce periodic or deterministic fuzzing of out of memory errors}
+//  "Introduce periodic or deterministic fuzzing of out of memory errors"
 //
 //      return: [~]
 //      factor "Ticks or percentage of time to cause allocation errors"

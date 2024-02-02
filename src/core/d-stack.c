@@ -177,7 +177,7 @@ bool Is_Context_Running_Or_Pending(Context* frame_ctx)
 //
 //  running?: native [
 //
-//  "Returns TRUE if a FRAME! is on the stack and executing (arguments done)."
+//  "Returns TRUE if a FRAME! is on the stack and executing (arguments done)"
 //
 //      return: [logic?]
 //      frame [frame!]
@@ -201,7 +201,7 @@ DECLARE_NATIVE(running_q)
 //
 //  pending?: native [
 //
-//  "Returns TRUE if a FRAME! is on the stack, but is gathering arguments."
+//  "Returns TRUE if a FRAME! is on the stack, but is gathering arguments"
 //
 //      return: [logic?]
 //      frame [frame!]

@@ -250,7 +250,7 @@ standard: make object! [
     ; are effectively absent for the semantics of *this* object.
     ;
     header: make object! [
-        Title: {Untitled}
+        Title: "Untitled"
         File: null
         Name: null
         Type: 'script  ; !!! Is this a good default?

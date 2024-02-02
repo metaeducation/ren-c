@@ -198,10 +198,9 @@ Phase* Make_Native(
 //
 //  native: native [
 //
-//  {(Internal Function) Create a native, using compiled C code}
+//  "(Internal Function) Create a native, using compiled C code"
 //
-//      return: "Isotopic ACTION!"
-//          [antiform!]  ; [action?] needs NATIVE to define it!
+//      return: [antiform!]  ; [action?] needs NATIVE to define it!
 //      spec [block!]
 //      /combinator "This native is an implementation of a PARSE keyword"
 //      /intrinsic "This native can be called without building a frame"

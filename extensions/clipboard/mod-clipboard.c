@@ -203,7 +203,7 @@ static Bounce Clipboard_Actor(
 //
 //  export get-clipboard-actor-handle: native [
 //
-//  {Retrieve handle to the native actor for clipboard}
+//  "Retrieve handle to the native actor for clipboard"
 //
 //      return: [handle!]
 //  ]

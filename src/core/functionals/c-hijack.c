@@ -193,7 +193,7 @@ Bounce Hijacker_Dispatcher(Level* level_)
 //
 //  hijack: native [
 //
-//  {Cause all existing references to a frame to invoke another frame}
+//  "Cause all existing references to a frame to invoke another frame"
 //
 //      return: "The hijacked action value, null if self-hijack (no-op)"
 //          [<opt> action?]
