@@ -41,6 +41,6 @@ tab-complete: func [
         [integer!]
 ][
     clear buffer
-    insert buffer "For example"
-    return 3
+    insert buffer "[tab]"
+    return 2
 ]

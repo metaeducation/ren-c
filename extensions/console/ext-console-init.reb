@@ -31,19 +31,12 @@ REBOL [
         It also makes sure that that user code doesn't see the console's
         implementation in its backtrace.
 
-        !!! While not implemented in C as the R3-Alpha console was, this
-        code relies upon the READ-LINE function to communicate with the user.
-        READ-LINE is a black box that reads lines from the "console port",
-        which is implemented via termios on POSIX, the Win32 Console API
-        on Windows, and by JavaScript code in the Web build:
-
-        https://blog.nelhage.com/2009/12/a-brief-introduction-to-termios/
-        https://docs.microsoft.com/en-us/windows/console/console-functions
-
-        Someday in the future, the console port itself should offer keystroke
-        events and allow the line history (e.g. Cursor Up, Cursor Down) to be
-        implemented in Rebol as well.
-     }
+        The default INPUT-HOOK uses READ-LINE from the Stdio extension.  That
+        implementation of READ-LINE is based on reading keystrokes one at a
+        time on Windows and Linux (vs. using APIs that read entire lines at
+        once), so it could theoretically offer more flexibility such as tab
+        completion--but hooks to expose that haven't been developed.
+    }
 ]
 
 
