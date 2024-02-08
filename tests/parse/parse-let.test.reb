@@ -35,3 +35,18 @@
         rule = "golden"
     ]
 )
+
+; https://forum.rebol.info/t/question-about-binding-in-parse/461
+(
+    [hello -hi-there-] = collect [
+        function-rule: [
+           subparse group! [
+               let code: word!
+               try some [integer! | function-rule]
+               (keep code)
+           ]
+        ]
+
+        parse x: copy/deep [(-hi-there- 1 2 3 (hello 2 3 4))] function-rule
+    ]
+)
