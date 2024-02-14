@@ -402,6 +402,8 @@ for-each-typerange tr [
 ]
 
 for-each [ts-name types] typeset-sets [
+    if not types [continue]  ; done with ranges, no TS_XXX
+
     flagits: collect [
         for-each t-name types [
             keep cscape [t-name {FLAGIT_KIND(REB_${T-NAME})}]

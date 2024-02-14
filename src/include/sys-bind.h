@@ -91,62 +91,68 @@ INLINE Specifier* Derive_Specifier(
     const Cell* any_array
 );
 
-INLINE REBVAL *Derelativize_Untracked(
+INLINE Value* Derelativize_Untracked(
     Cell* out,  // relative dest overwritten w/specific value
     const Cell* v,
     Specifier* specifier
 ){
     Copy_Cell_Header(out, v);
     out->payload = v->payload;
-    if (not Is_Bindable(v) or (BINDING(v) and not IS_DETAILS(BINDING(v)))) {
+
+    enum Reb_Kind heart = Cell_Heart_Unchecked(v);
+
+    if (not Is_Bindable_Heart(heart)) {
         out->extra = v->extra;
-        return cast(REBVAL*, out);
+        return cast(Value*, out);
     }
 
-    // The specifier is not going to have a say in the derelativized cell.
-    // This means any information it encodes must be taken into account now.
-    //
-    if (Any_Wordlike(v)) {
-        REBLEN index;
-        Series* s = try_unwrap(
-            Get_Word_Container(&index, v, specifier, ATTACH_READ)
-        );
-        if (not s) {
-            // Getting back NULL here could mean that it's actually unbound,
-            // or that it's bound to a "sea" context like User or Lib and
-            // there's nothing there...yet.
-            //
+    Stub* binding = BINDING(v);
+
+    if (Bindable_Heart_Is_Any_Word(heart)) {  // any-word!
+      any_wordlike:
+        if (
+            binding
+            and not IS_DETAILS(binding)  // relativized binding is cache/hint
+        ){
             out->extra = v->extra;
         }
         else {
-            INIT_VAL_WORD_INDEX(out, index);
-            BINDING(out) = s;
+            REBLEN index;
+            Series* s = try_unwrap(
+                Get_Word_Container(&index, v, specifier, ATTACH_READ)
+            );
+            if (not s) {
+                out->extra = v->extra;
+            }
+            else {
+                INIT_VAL_WORD_INDEX(out, index);
+                BINDING(out) = s;
+            }
         }
+    }
+    else if (Bindable_Heart_Is_Any_Array(heart)) {  // any-block! or any-group!
+      any_arraylike:
+        if (binding) {  // currently not overriding (review: hole punch)
+            assert(not IS_DETAILS(binding));  // shouldn't be relativized
+            out->extra = v->extra;
+        }
+        else
+            BINDING(out) = specifier;
+    }
+    else if (Not_Cell_Flag(v, SEQUENCE_HAS_NODE)) {
+        out->extra = v->extra;  // packed numeric sequence, 1.2.3 or similar
+    }
+    else {  // any-path! or any-tuple!, may be wordlike or arraylike
+        Node* node1 = Cell_Node1(v);
+        if (Is_Node_A_Cell(node1))  // x.y pairing
+            goto any_arraylike;
+        Stub* stub1 = cast(Stub*, node1);
+        if (FLAVOR_SYMBOL == Series_Flavor(stub1))  // x. or /x, wordlike
+            goto any_wordlike;
+        goto any_arraylike;
+    }
 
-        return cast(REBVAL*, out);
-    }
-    else if (Any_Arraylike(v)) {
-        //
-        // The job of an array in a derelativize operation is to carry along
-        // the specifier.  However, it cannot lose any prior existing info
-        // that's in the specifier it holds.
-        //
-        // The mechanism otherwise is shared with specifier derivation.
-        // That includes the case of if specifier==SPECIFIED.
-        //
-        BINDING(out) = Derive_Specifier(specifier, v);
-    }
-    else {
-        // Something like a packed numeric sequence, 1.2.3 or similar
-        //
-        assert(
-            Any_Sequence_Kind(Cell_Heart(v))
-            and Not_Cell_Flag(v, SEQUENCE_HAS_NODE)
-        );
-        out->extra = v->extra;
-    }
-
-    return cast(REBVAL*, out);
+    return cast(Value*, out);
 }
 
 

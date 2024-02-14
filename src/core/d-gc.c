@@ -52,7 +52,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
 
     enum Reb_Kind heart = Cell_Heart_Unchecked(v);
 
-    while (Is_Bindable_Kind(heart)) {  // for `break` convenience
+    while (Is_Bindable_Heart(heart)) {  // for `break` convenience
         Stub* binding = BINDING(v);
         if (not binding)
             break;
