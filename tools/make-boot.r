@@ -366,21 +366,7 @@ for-each-datatype t [
     add-sym unspaced [t/name "!"]
 ]
 
-e-types/emit {
-    #define TS_VALUE \
-        ((FLAGIT_KIND(REB_MAX) - 1) & ~FLAGIT_KIND(REB_VOID))
-
-    #define TS_ELEMENT \
-        ((FLAGIT_KIND(REB_MAX) - 1) & ~FLAGIT_KIND(REB_VOID) & ~FLAGIT_KIND(REB_ANTIFORM))
-}
-
 typeset-sets: copy []
-
-add-sym 'any-value?  ; starts the typeset symbols, not mentioned in %types.r
-add-sym 'any-value!  ; will be initialized as just &(any-value?)
-
-add-sym 'element?
-add-sym 'any-element!  ; will be initialized as just &(element?)
 
 for-each-datatype t [
     for-each ts-name t/typesets [
@@ -546,8 +532,6 @@ e-typesets/emit {
 
 e-typesets/emit {
     const REBU64 Typesets[] = ^{
-        TS_VALUE,  /* any-value? (everything that isn't an unstable antiform) */
-        TS_ELEMENT,  /* any-element? (everything you can put in an array)  */
 }
 
 for-each [ts-name types] typeset-sets [

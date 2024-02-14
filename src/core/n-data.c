@@ -229,9 +229,9 @@ DECLARE_NATIVE(bind)
 //
 //  "Returns a view of the input bound virtually to the context"
 //
-//      return: [<opt> any-value!]
+//      return: [<opt> any-value?]
 //      context [any-context! any-array!]
-//      value [<maybe> any-value!]  ; QUOTED! support?
+//      value [<maybe> any-value?]  ; QUOTED! support?
 //  ]
 //
 DECLARE_NATIVE(inside)
@@ -259,7 +259,7 @@ DECLARE_NATIVE(inside)
 //
 //  "Add definitions from context to environment of value"
 //
-//      return: [<opt> any-value!]
+//      return: [<opt> any-value?]
 //      context [any-context!]
 //      value [<maybe> any-array!]  ; QUOTED! support?
 //  ]
@@ -2463,6 +2463,26 @@ DECLARE_INTRINSIC(any_value_q)
         Init_True(out);
     else
         Init_Logic(out, Is_Stable_Antiform_Heart(Cell_Heart(arg)));
+}
+
+
+//
+//  element?: native/intrinsic [
+//
+//  "Tells you if the argument is storable in an array"
+//
+//      return: [logic?]
+//      value
+//  ]
+//
+DECLARE_INTRINSIC(element_q)
+{
+    UNUSED(phase);
+
+    if (Is_Void(arg) or Is_Antiform(arg))
+        Init_False(out);
+    else
+        Init_True(out);
 }
 
 

@@ -78,27 +78,22 @@ REBINT CT_Parameter(const Cell* a, const Cell* b, bool strict)
 void Startup_Typesets(void)
 {
     REBINT id;
-    for (id = SYM_ANY_VALUE_Q; id != SYM_DATATYPES; id += 2) {
-        REBINT n = (id - SYM_ANY_VALUE_Q) / 2;  // means Typesets[n]
+    for (id = SYM_ANY_UNIT_Q; id != SYM_DATATYPES; id += 2) {
+        REBINT n = (id - SYM_ANY_UNIT_Q) / 2;  // means Typesets[n]
 
-        // We want the forms like ANY-SERIES? to be typechecker functions that
-        // act on Typesets[n].
-        //
-        if (id != SYM_ANY_VALUE_Q) {  // see any-value? for unstable rule-out
-            DECLARE_STABLE (typeset_index);
-            Init_Integer(typeset_index, n);
-            Phase* typechecker = Make_Typechecker(typeset_index);
+        DECLARE_STABLE (typeset_index);
+        Init_Integer(typeset_index, n);
+        Phase* typechecker = Make_Typechecker(typeset_index);
 
-            Init_Action(
-                Force_Lib_Var(cast(SymId, id)),
-                typechecker,
-                Canon_Symbol(cast(SymId, id)),  // cached symbol for function
-                UNBOUND
-            );
-        }
+        Init_Action(
+            Force_Lib_Var(cast(SymId, id)),
+            typechecker,
+            Canon_Symbol(cast(SymId, id)),  // cached symbol for function
+            UNBOUND
+        );
 
-        // Make e.g. ANY-VALUE! a TYPE-GROUP! with the bound question mark
-        // form in it, e.g. any-value!: &(any-value?)
+        // Make e.g. ANY-UNIT! a TYPE-GROUP! with the bound question mark
+        // form in it, e.g. any-unit!: &(any-unit?)
         //
         Array* a = Alloc_Singular(NODE_FLAG_MANAGED);
         Init_Any_Word(
@@ -111,7 +106,7 @@ void Startup_Typesets(void)
         Init_Array_Cell(Force_Lib_Var(cast(SymId, id + 1)), REB_TYPE_GROUP, a);
     }
 
-    Index last = (cast(int, SYM_DATATYPES) - SYM_ANY_VALUE_Q) / 2;
+    Index last = (cast(int, SYM_DATATYPES) - SYM_ANY_UNIT_Q) / 2;
     assert(Typesets[last] == 0);  // table ends in zero
     UNUSED(last);
 }

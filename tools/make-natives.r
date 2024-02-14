@@ -120,6 +120,7 @@ action?-proto: null
 enfix-proto: null
 any-value?-proto: null
 any-atom?-proto: null
+element?-proto: null
 
 info: all-protos
 while [not tail? info] [
@@ -130,6 +131,7 @@ while [not tail? info] [
         info/1/name = "enfix" [enfix-proto: take info]
         info/1/name = "any-value?" [any-value?-proto: take info]
         info/1/name = "any-atom?" [any-atom?-proto: take info]
+        info/1/name = "element?" [element?-proto: take info]
     ]
     else [
         info: next info
@@ -137,8 +139,9 @@ while [not tail? info] [
 ]
 
 assert [native-proto logic?-proto action?-proto enfix-proto
-    any-value?-proto any-atom?-proto]
+    any-value?-proto any-atom?-proto element?-proto]
 
+insert all-protos element?-proto  ; will be seventh
 insert all-protos any-atom?-proto  ; will be sixth
 insert all-protos any-value?-proto  ; will be fifth
 insert all-protos enfix-proto  ; will be fourth

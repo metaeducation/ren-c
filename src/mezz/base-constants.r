@@ -61,6 +61,7 @@ lit-path?!: &(lit-path?)
 logic?!: &(logic?)
 quasi-word?!: &(quasi-word?)
 action?!: &(action?)
+any-value!: &(any-value?)  ; !!! Legacy?  Or will ?! win over ! for predicates?
 
 
 ; A "blackhole" is a name for the usage of the NUL character in the sense of
