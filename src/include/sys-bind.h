@@ -652,21 +652,20 @@ INLINE Specifier* Derive_Specifier(
 //
 
 #define Bind_Values_Deep(at,tail,context) \
-    Bind_Values_Core((at), (tail), (context), TS_WORD, 0, BIND_DEEP)
+    Bind_Values_Core((at), (tail), (context), SYM_0, BIND_DEEP)
 
 #define Bind_Values_All_Deep(at,tail,context) \
-    Bind_Values_Core((at), (tail), (context), TS_WORD, TS_WORD, BIND_DEEP)
+    Bind_Values_Core((at), (tail), (context), SYM_ANY, BIND_DEEP)
 
 #define Bind_Values_Shallow(at,tail,context) \
-    Bind_Values_Core((at), (tail), (context), TS_WORD, 0, BIND_0)
+    Bind_Values_Core((at), (tail), (context), SYM_0, BIND_0)
 
 // Gave this a complex name to warn of its peculiarities.  Calling with
 // just BIND_SET is shallow and tricky because the set words must occur
 // before the uses (to be applied to bindings of those uses)!
 //
 #define Bind_Values_Set_Midstream_Shallow(at,tail,context) \
-    Bind_Values_Core( \
-        (at), (tail), (context), TS_WORD, FLAGIT_KIND(REB_SET_WORD), BIND_0)
+    Bind_Values_Core((at), (tail), (context), SYM_SET, BIND_0)
 
 #define Unbind_Values_Deep(at,tail) \
     Unbind_Values_Core((at), (tail), nullptr, true)

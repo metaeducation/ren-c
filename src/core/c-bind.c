@@ -40,21 +40,14 @@ void Bind_Values_Inner_Loop(
     Element* head,
     const Element* tail,
     Context* context,
-    REBU64 bind_types, // !!! REVIEW: force word types low enough for 32-bit?
-    REBU64 add_midstream_types,
+    Option(SymId) add_midstream_types,
     Flags flags
 ){
     Element* v = head;
     for (; v != tail; ++v) {
         enum Reb_Kind heart = Cell_Heart(v);
 
-        // !!! Review use of `heart` bit here, e.g. when a REB_PATH has an
-        // REB_BLOCK heart, why would it be bound?  Problem is that if we
-        // do not bind `/` when REB_WORD is asked then `/` won't be bound.
-        //
-        REBU64 type_bit = FLAGIT_KIND(heart);
-
-        if (type_bit & bind_types) {
+        if (Any_Word_Kind(heart)) {
             const Symbol* symbol = Cell_Word_Symbol(v);
 
           if (CTX_TYPE(context) == REB_MODULE) {
@@ -64,7 +57,13 @@ void Bind_Values_Inner_Loop(
                 INIT_VAL_WORD_INDEX(v, INDEX_PATCHED);
                 BINDING(v) = Singular_From_Cell(lookup);
             }
-            else if (type_bit & add_midstream_types) {
+            else if (
+                add_midstream_types == SYM_ANY
+                or (
+                    add_midstream_types == SYM_SET
+                    and heart == REB_SET_WORD
+                )
+            ){
                 Init_Trash(Append_Context_Bind_Word(context, v));
             }
           }
@@ -85,7 +84,13 @@ void Bind_Values_Inner_Loop(
                 INIT_VAL_WORD_INDEX(v, n);
                 BINDING(v) = context;
             }
-            else if (type_bit & add_midstream_types) {
+            else if (
+                add_midstream_types == SYM_ANY
+                or (
+                    add_midstream_types == SYM_SET
+                    and heart == REB_SET_WORD
+                )
+            ){
                 //
                 // Word is not in context, so add it if option is specified
                 //
@@ -103,7 +108,6 @@ void Bind_Values_Inner_Loop(
                     sub_at,
                     sub_tail,
                     context,
-                    bind_types,
                     add_midstream_types,
                     flags
                 );
@@ -127,8 +131,7 @@ void Bind_Values_Core(
     Element* head,
     const Element* tail,
     const Value* context,
-    REBU64 bind_types,
-    REBU64 add_midstream_types,
+    Option(SymId) add_midstream_types,
     Flags flags // see %sys-core.h for BIND_DEEP, etc.
 ) {
     struct Reb_Binder binder;
@@ -154,7 +157,6 @@ void Bind_Values_Core(
         head,
         tail,
         c,
-        bind_types,
         add_midstream_types,
         flags
     );

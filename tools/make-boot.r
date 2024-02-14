@@ -206,7 +206,7 @@ for-each-typerange: func [
         [word!]
     body "Block to evaluate each time"
         [block!]
-    <local> name* heart* any-name!* stack types starting
+    <local> name* heart* any-name!* stack types* starting
 ][
     stack: copy []
     types*: null

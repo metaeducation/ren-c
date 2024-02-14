@@ -127,17 +127,15 @@ DECLARE_NATIVE(bind)
 
     REBLEN flags = REF(only) ? BIND_0 : BIND_DEEP;
 
-    REBU64 bind_types = TS_WORD;
-
-    REBU64 add_midstream_types;
+    Option(SymId) add_midstream_types;
     if (REF(new)) {
-        add_midstream_types = TS_WORD;
+        add_midstream_types = SYM_ANY;
     }
     else if (REF(set)) {
-        add_midstream_types = FLAGIT_KIND(REB_SET_WORD);
+        add_midstream_types = SYM_SET;
     }
     else
-        add_midstream_types = 0;
+        add_midstream_types = SYM_0;
 
     const Value* context;
 
@@ -215,7 +213,6 @@ DECLARE_NATIVE(bind)
         at,
         tail,
         context,
-        bind_types,
         add_midstream_types,
         flags
     );
