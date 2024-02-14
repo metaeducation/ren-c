@@ -583,9 +583,6 @@ Bounce Action_Executor(Level* L)
                 flags |= LEVEL_FLAG_META_RESULT;
             }
 
-            if (Did_Init_Inert_Optimize_Complete(ARG, L->feed, &flags))
-                break;  // no sublevel needed
-
             Level* sub = Make_Level(L->feed, flags);
             Push_Level(ARG, sub);
 

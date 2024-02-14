@@ -155,9 +155,6 @@ inline static Level* Maybe_Rightward_Continuation_Needed(Level* L)
         (L->flags.bits & EVAL_EXECUTOR_FLAG_FULFILLING_ARG)
         | LEVEL_FLAG_RAISED_RESULT_OK;  // trap [e: transcode "1&aa"] works
 
-    if (Did_Init_Inert_Optimize_Complete(OUT, L->feed, &flags))
-        return nullptr;  // If eval not hooked, ANY-INERT! may not need a frame
-
     Level* sub = Make_Level(
         L->feed,
         flags  // inert optimize adjusted the flags to jump in mid-eval
@@ -242,7 +239,6 @@ Bounce Evaluator_Executor(Level* L)
         L_current_gotten = nullptr;  // !!! allow/require to be passe in?
         goto evaluate; }
 
-      intrinsic_in_current_arg_in_spare:
       case ST_EVALUATOR_CALCULATING_INTRINSIC_ARG : {
         Action* action = VAL_ACTION(L_current);
         assert(IS_DETAILS(action));
@@ -622,9 +618,6 @@ Bounce Evaluator_Executor(Level* L)
                     flags |= LEVEL_FLAG_RAISED_RESULT_OK;
 
                 Clear_Feed_Flag(L->feed, NO_LOOKAHEAD);  // when non-enfix call
-
-                if (Did_Init_Inert_Optimize_Complete(SPARE, L->feed, &flags))
-                    goto intrinsic_in_current_arg_in_spare;
 
                 Level* sub = Make_Level(L->feed, flags);
                 Push_Level(SPARE, sub);
@@ -1151,7 +1144,7 @@ Bounce Evaluator_Executor(Level* L)
     // multiple return values.  It unpacks antiform blocks into components.
     //
     //     >> pack [1 2]
-    //     == ~[1 2]~  ; anti
+    //     == ~['1 '2]~  ; anti
     //
     //     >> [a b]: pack [1 2]
     //     == 1

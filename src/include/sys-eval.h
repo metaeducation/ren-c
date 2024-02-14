@@ -128,111 +128,6 @@ INLINE REBVAL *Refinify_Pushed_Refinement(REBVAL *v) {
 }
 
 
-// Even though Any_Inert() is a quick test, you can't skip the cost of level
-// processing--due to enfix.  But a feed only looks ahead one unit at a time,
-// so advancing the feed past an inert item to find an enfix function means
-// you have to enter the level specially with ST_EVALUATOR_LOOKING_AHEAD.
-//
-INLINE bool Did_Init_Inert_Optimize_Complete(
-    Atom* out,
-    Feed* feed,
-    Flags *flags
-){
-    assert(State_Byte_From_Flags(*flags) == 0);  // we might set the STATE byte
-    assert(Not_Feed_At_End(feed));  // would be wasting time to call
-    assert(not (*flags & LEVEL_FLAG_BRANCH));  // it's a single step
-
-    if (not Any_Inert(At_Feed(feed)))
-        return false;  // general case evaluation requires a level
-
-    Literal_Next_In_Feed(out, feed);
-
-    if (
-        not Is_Feed_At_End(feed)
-        and VAL_TYPE_UNCHECKED(At_Feed(feed)) == REB_WORD
-    ){
-        feed->gotten = Lookup_Word(At_Feed(feed), FEED_SPECIFIER(feed));
-        if (
-            not feed->gotten
-            or not Is_Action(unwrap(feed->gotten))
-        ){
-            Clear_Feed_Flag(feed, NO_LOOKAHEAD);
-            goto optimized;  // not action
-        }
-
-        if (Not_Enfixed(unwrap(feed->gotten))) {
-            Clear_Feed_Flag(feed, NO_LOOKAHEAD);
-            goto optimized;  // not enfixed
-        }
-
-        Action* action = VAL_ACTION(unwrap(feed->gotten));
-        if (Get_Subclass_Flag(
-            VARLIST,
-            ACT_PARAMLIST(action),
-            PARAMLIST_QUOTES_FIRST
-        )) {
-            //
-            // Quoting defeats NO_LOOKAHEAD but only on soft quotes.
-            //
-            if (Not_Feed_Flag(feed, NO_LOOKAHEAD)) {
-                *flags |=
-                    FLAG_STATE_BYTE(ST_EVALUATOR_LOOKING_AHEAD)  // no FRESHEN()
-                    | EVAL_EXECUTOR_FLAG_INERT_OPTIMIZATION;
-                return false;
-            }
-
-            Clear_Feed_Flag(feed, NO_LOOKAHEAD);
-
-            // !!! Cache this test?
-            //
-            const Param* first = First_Unspecialized_Param(nullptr, action);
-            if (Cell_ParamClass(first) == PARAMCLASS_SOFT)
-                goto optimized;  // don't look back, yield the lookahead
-
-            *flags |=
-                FLAG_STATE_BYTE(ST_EVALUATOR_LOOKING_AHEAD)  // no FRESHEN()
-                | EVAL_EXECUTOR_FLAG_INERT_OPTIMIZATION;
-            return false;
-        }
-
-        if (Get_Feed_Flag(feed, NO_LOOKAHEAD)) {
-            Clear_Feed_Flag(feed, NO_LOOKAHEAD);
-            goto optimized;   // we're done!
-        }
-
-        // ST_EVALUATOR_LOOKING_AHEAD assumes that if the first arg were
-        // quoted and skippable, that the skip check has already been done.
-        // So we have to do that check here.
-        //
-        if (Get_Subclass_Flag(
-            VARLIST,
-            ACT_PARAMLIST(action),
-            PARAMLIST_SKIPPABLE_FIRST
-        )) {
-            const Param* first = First_Unspecialized_Param(nullptr, action);
-            if (not Typecheck_Coerce_Argument(first, out))
-                goto optimized;  // didn't actually want this parameter type
-        }
-
-        *flags |=
-            FLAG_STATE_BYTE(ST_EVALUATOR_LOOKING_AHEAD)  // no FRESHEN()
-            | EVAL_EXECUTOR_FLAG_INERT_OPTIMIZATION;
-        return false;  // do normal enfix handling
-    }
-
-    if (Get_Feed_Flag(feed, NO_LOOKAHEAD)) {
-        Clear_Feed_Flag(feed, NO_LOOKAHEAD);
-        goto optimized;   // we're done!
-    }
-
-  optimized:
-
-    if (*flags & LEVEL_FLAG_META_RESULT)
-        Quotify(out, 1);  // inert, so not a void (or NULL)
-
-    return true;
-}
-
 // This is a very light wrapper over Eval_Core(), which is used with
 // operations like ANY or REDUCE that wish to perform several successive
 // operations on an array, without creating a new level each time.
@@ -264,9 +159,6 @@ INLINE bool Eval_Step_In_Sublevel_Throws(
     Level* L,
     Flags flags
 ){
-    if (Did_Init_Inert_Optimize_Complete(out, L->feed, &flags))
-        return false;  // If eval not hooked, ANY-INERT! may not need a level
-
     Level* sub = Make_Level(L->feed, flags);
 
     return Trampoline_Throws(out, sub);
