@@ -79,11 +79,10 @@ void Startup_Typesets(void)
 {
     REBINT id;
     for (id = SYM_ANY_UNIT_Q; id != SYM_DATATYPES; id += 2) {
-        REBINT n = (id - SYM_ANY_UNIT_Q) / 2;  // means Typesets[n]
+        REBINT n = REB_MAX + (id - SYM_ANY_UNIT_Q) / 2;  // skip REB_T_RETURN
 
-        DECLARE_STABLE (typeset_index);
-        Init_Integer(typeset_index, n);
-        Phase* typechecker = Make_Typechecker(typeset_index);
+        Decider* decider = g_type_deciders[n];
+        Phase* typechecker = Make_Typechecker(decider);
 
         Init_Action(
             Force_Lib_Var(cast(SymId, id)),
@@ -105,10 +104,6 @@ void Startup_Typesets(void)
         BINDING(Stub_Cell(a)) = &PG_Lib_Patches[id];
         Init_Array_Cell(Force_Lib_Var(cast(SymId, id + 1)), REB_TYPE_GROUP, a);
     }
-
-    Index last = (cast(int, SYM_DATATYPES) - SYM_ANY_UNIT_Q) / 2;
-    assert(Typesets[last] == 0);  // table ends in zero
-    UNUSED(last);
 }
 
 

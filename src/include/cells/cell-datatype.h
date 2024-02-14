@@ -128,7 +128,7 @@ INLINE bool Matcher_Matches(
 
 // Another table generated from %types.r for builtin typesets
 //
-extern const REBU64 Typesets[];
+extern Decider* const g_type_deciders[];
 
 
 // This table is generated from %types.r - the actual table is located in

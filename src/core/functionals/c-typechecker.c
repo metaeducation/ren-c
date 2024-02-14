@@ -44,33 +44,15 @@
 
 enum {
     IDX_TYPECHECKER_CFUNC = IDX_INTRINSIC_CFUNC,  // uses Intrinsic_Dispatcher()
-    IDX_TYPECHECKER_TYPE,  // datatype or typeset to check
+    IDX_TYPECHECKER_DECIDER,  // datatype or typeset to check
     IDX_TYPECHECKER_MAX
 };
 
 
 //
-//  Datatype_Checker_Intrinsic: C
-//
-// Intrinsic used by TYPECHECKER generator for when argument is a datatype.
-//
-void Datatype_Checker_Intrinsic(Value* out, Phase* phase, Value* arg)
-{
-    assert(ACT_DISPATCHER(phase) == &Intrinsic_Dispatcher);
-
-    Details* details = Phase_Details(phase);
-    assert(Array_Len(details) == IDX_TYPECHECKER_MAX);
-
-    REBVAL *datatype = Details_At(details, IDX_TYPECHECKER_TYPE);
-
-    Init_Logic(out, VAL_TYPE(arg) == VAL_TYPE_KIND(datatype));
-}
-
-
-//
 //  Typeset_Checker_Intrinsic: C
 //
-// Intrinsic used by TYPECHECKER generator for when argument is a typeset.
+// Intrinsic used by TYPECHECKER generator.
 //
 void Typeset_Checker_Intrinsic(Value* out, Phase* phase, Value* arg)
 {
@@ -79,13 +61,10 @@ void Typeset_Checker_Intrinsic(Value* out, Phase* phase, Value* arg)
     Details* details = Phase_Details(phase);
     assert(Array_Len(details) == IDX_TYPECHECKER_MAX);
 
-    REBVAL *typeset_index = Details_At(details, IDX_TYPECHECKER_TYPE);
-    assert(Is_Integer(typeset_index));
-    Index n = VAL_INT32(typeset_index);
+    REBVAL *handle = Details_At(details, IDX_TYPECHECKER_DECIDER);
+    Decider* decider = cast(Decider*, VAL_HANDLE_CFUNC(handle));
 
-    REBU64 typeset = Typesets[n];
-    enum Reb_Kind kind = VAL_TYPE(arg);
-    Init_Logic(out, FLAGIT_KIND(kind) & typeset);
+    Init_Logic(out, decider(arg));
 }
 
 
@@ -95,12 +74,8 @@ void Typeset_Checker_Intrinsic(Value* out, Phase* phase, Value* arg)
 // Bootstrap creates typechecker functions before functions like TYPECHECKER
 // are allowed to run to create them.  So this is factored out.
 //
-Phase* Make_Typechecker(const Value* type) {
-    assert(
-        Is_Type_Word(type)  // datatype
-        or Is_Integer(type)  // typeset index (for finding bitset)
-    );
-
+Phase* Make_Typechecker(Decider* decider) {
+    //
     // We need a spec for our typecheckers, which is really just `value`
     // with no type restrictions.
     //
@@ -129,11 +104,12 @@ Phase* Make_Typechecker(const Value* type) {
 
     Init_Handle_Cfunc(
         Details_At(details, IDX_TYPECHECKER_CFUNC),
-        Is_Type_Word(type)
-            ? cast(CFunction*, &Datatype_Checker_Intrinsic)
-            : cast(CFunction*, &Typeset_Checker_Intrinsic)
+        cast(CFunction*, &Typeset_Checker_Intrinsic)
     );
-    Copy_Cell(Details_At(details, IDX_TYPECHECKER_TYPE), type);
+    Init_Handle_Cfunc(
+        Details_At(details, IDX_TYPECHECKER_DECIDER),
+        cast(CFunction*, decider)
+    );
 
     return typechecker;
 }
@@ -145,14 +121,19 @@ Phase* Make_Typechecker(const Value* type) {
 //  "Generator for an optimized typechecking ACTION!"
 //
 //      return: [action?]
-//      type [type-word! integer!]
+//      type [type-word!]
 //  ]
 //
 DECLARE_NATIVE(typechecker)
 {
     INCLUDE_PARAMS_OF_TYPECHECKER;
 
-    Phase* typechecker = Make_Typechecker(ARG(type));
+    Index index = KIND_FROM_SYM(unwrap(Cell_Word_Id(ARG(type))));
+
+    Decider* decider = g_type_deciders[index];
+
+    Phase* typechecker = Make_Typechecker(decider);
+
     return Init_Action(OUT, typechecker, ANONYMOUS, UNBOUND);
 }
 

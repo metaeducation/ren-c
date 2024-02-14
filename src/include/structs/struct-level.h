@@ -285,6 +285,10 @@ typedef Executor Dispatcher;  // sub-dispatched in Action_Executor()
 //
 typedef void (Intrinsic)(Atom* out, Phase* phase, Value* arg);
 
+// Deciders are a narrow kind of boolean predicate used in type checking.
+//
+typedef bool (Decider)(const Value* arg);
+
 // This is for working around pedantic C and C++ errors, when an extension
 // that doesn't use %sys-core.h tries to redefine dispatcher in terms of
 // taking a void* and returning a REBVAL*.

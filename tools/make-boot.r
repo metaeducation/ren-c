@@ -537,21 +537,35 @@ e-typesets: make-emitter "Built-in Typesets" (
 e-typesets/emit {
     #include "sys-core.h"
 }
+e-typesets/emit newline
 
-e-typesets/emit {
-    const REBU64 Typesets[] = ^{
-}
+decider-names: copy []
+
+for-each-datatype t [
+    e-typesets/emit [t {
+        bool ${Propercase T/Name}_Decider(const Value* arg)
+          { return Is_${Propercase T/Name}(arg); }
+    }]
+    e-typesets/emit newline
+    append decider-names cscape [t {${Propercase T/Name}_Decider}]
+]
 
 for-each [ts-name types] typeset-sets [
     e-typesets/emit [ts-name {
-        TS_${TS-NAME},  /* any-${ts-name}! */
+        bool Any_${Propercase Ts-Name}_Decider(const Value* arg)
+          { return Any_${Propercase Ts-Name}(arg); }
     }]
+    e-typesets/emit newline
+    append decider-names cscape [ts-name {Any_${Propercase Ts-Name}_Decider}]
 ]
 
-e-typesets/emit {
-        0
-    ^};
-}
+e-typesets/emit [{
+    Decider* const g_type_deciders[] = {
+        nullptr,  /* 0 is reserved */
+        &$[Decider-Names],
+        nullptr
+    };
+}]
 
 e-typesets/write-emitted
 
