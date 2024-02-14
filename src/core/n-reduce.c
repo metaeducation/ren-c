@@ -142,7 +142,10 @@ DECLARE_NATIVE(reduce)
     if (Is_Barrier(OUT))  // voids and nihils offered to predicate, not commas
         goto next_reduce_step;
 
-    if (Is_Void(OUT) or Is_Nihil(OUT)) {
+    if (
+        (Is_Stable(OUT) and Is_Void(OUT))  // !!! Review stability issue
+        or Is_Nihil(OUT)
+    ){
         const Param* param = First_Unspecialized_Param(
             nullptr,
             VAL_ACTION(predicate)

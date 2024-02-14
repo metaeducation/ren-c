@@ -162,7 +162,7 @@ for-each-datatype: func [
     name* antiname* description* typesets* class* make* mold* heart* cellmask*
     completed* running* is-unstable*
 ][
-    heart*: 1  ; VOID is 0, and is not in the type table
+    heart*: 0  ; VOID is 0
     parse2 type-table [some [not end
         opt some tag!  ; <TYPE!> or </TYPE!> used by FOR-EACH-TYPERANGE
 
@@ -190,7 +190,7 @@ for-each-datatype: func [
                     any-name!
                 ]
                 class: class*
-                antiname: either antiname* [unquasi antiname*] [null]
+                antiname: either antiname* [to text! unquasi antiname*] [null]
                 unstable: switch is-unstable* [
                     null [false]
                     #unstable [true]
@@ -219,7 +219,7 @@ for-each-typerange: func [
     stack: copy []
     types*: null
 
-    heart*: 1  ; VOID is 0, and is not in the type table
+    heart*: 0  ; VOID is 0
     while [true] [  ; need to be in loop for BREAK to work
         parse2 type-table [some [
             opt some [set name* tag! (
@@ -282,8 +282,12 @@ e-types: make-emitter "Datatype Definitions" (
 
 rebs: collect [
     for-each-datatype t [
-        assert [sym-n == t/heart]  ; SYM_XXX should equal REB_XXX value
+        if t/heart = 0 [
+            assert [t/name = "void"]  ; SYM_0 reserved, not used for SYM_VOID
+            continue
+        ]
 
+        assert [sym-n == t/heart]  ; SYM_XXX should equal REB_XXX value
         add-sym unspaced t/name
 
         keep cscape [t {REB_${T/NAME} = $<T/HEART>}]
@@ -331,7 +335,7 @@ e-types/emit newline
 
 e-types/emit {
     /*
-     * SINGLE TYPE CHECK MACROS, e.g. Is_Block) or Is_Tag()
+     * SINGLE TYPE CHECK MACROS, e.g. Is_Block() or Is_Tag()
      */
 }
 e-types/emit newline
@@ -432,17 +436,20 @@ for-each-datatype t [
     ; Revisit.
     ;
     e-types/emit [t {
-        INLINE bool Is_$<Propercase To Text! T/Antiname>_Core(Need(const $<Need>*) v) { \
+        INLINE bool Is_$<Propercase T/Antiname>_Core(Need(const $<Need>*) v) { \
             return ((v->header.bits & (FLAG_QUOTE_BYTE(255) | FLAG_HEART_BYTE(255))) \
                 == (FLAG_QUOTE_BYTE(ANTIFORM_0) | FLAG_HEART_BYTE(REB_$<T/NAME>))); \
         }
 
-        #define Is_$<Propercase To Text! T/Antiname>(v) \
-            Is_$<Propercase To Text! T/Antiname>_Core(READABLE(v))
+        #define Is_$<Propercase T/Antiname>(v) \
+            Is_$<Propercase T/Antiname>_Core(READABLE(v))
 
-        #define Is_Meta_Of_$<Propercase To Text! T/Antiname>(v) \
+        #define Is_Meta_Of_$<Propercase T/Antiname>(v) \
         ((READABLE(v)->header.bits & (FLAG_QUOTE_BYTE(255) | FLAG_HEART_BYTE(255))) \
             == (FLAG_QUOTE_BYTE(QUASIFORM_2) | FLAG_HEART_BYTE(REB_$<T/NAME>)))
+
+        #define Is_Quasi_$<Propercase T/Name>(v) \
+            Is_Meta_Of_$<Propercase T/Antiname>(v)  /* alternative */
     }]
     e-types/emit newline
 ]
@@ -479,18 +486,21 @@ hookname: enfix func [
 ]
 
 hook-list: collect [
-    keep cscape [{
-        {  /* VOID = 0 */
-            cast(CFunction*, nullptr),  /* generic */
-            cast(CFunction*, nullptr),  /* compare */
-            cast(CFunction*, nullptr),  /* make */
-            cast(CFunction*, nullptr),  /* to */
-            cast(CFunction*, MF_Void),  /* mold */
-            nullptr
-        }
-    }]
-
     for-each-datatype t [
+        if t/heart = 0 [
+            keep cscape [{
+                {  /* VOID = 0 */
+                    cast(CFunction*, nullptr),  /* generic */
+                    cast(CFunction*, nullptr),  /* compare */
+                    cast(CFunction*, nullptr),  /* make */
+                    cast(CFunction*, nullptr),  /* to */
+                    cast(CFunction*, MF_Void),  /* mold */
+                    nullptr
+                }
+            }]
+            continue
+        ]
+
         keep cscape [t {
             {  /* $<T/NAME> = $<T/HEART> */
                 cast(CFunction*, ${"T_" Hookname T 'Class}),  /* generic */
@@ -948,6 +958,9 @@ e-bootblock/emit [nats {
 
 boot-typespecs: collect [
     for-each-datatype t [
+        if t/heart = 0 [  ; no typespec inclusion for VOID
+            continue
+        ]
         keep reduce [t/description]
     ]
 ]

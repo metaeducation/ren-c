@@ -61,7 +61,7 @@ Array* Startup_Datatypes(Array* boot_typespecs)
         // This is being worked on, so that INTEGER! is a type constraint, but
         // it's a lot of work.
         //
-        SymId constraint_sym = cast(SymId, REB_MAX + (n - 1) * 2 + 1);
+        SymId constraint_sym = cast(SymId, REB_MAX + (n * 2) + 1);
         Value* value = Force_Lib_Var(constraint_sym);
         Init_Any_Word(value, REB_TYPE_WORD, Canon_Symbol(SYM_FROM_KIND(kind)));
         Set_Cell_Flag(value, PROTECTED);

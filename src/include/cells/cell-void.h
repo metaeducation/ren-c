@@ -64,14 +64,11 @@
 // when accessed by plain WORD!.
 //
 
-INLINE bool Is_Void(Need(const Value*) v)
-  { return HEART_BYTE(v) == REB_VOID and QUOTE_BYTE(v) == NOQUOTE_1; }
-
 INLINE Cell* Init_Void_Untracked(Cell* out, Byte quote_byte) {
     FRESHEN_CELL(out);
     out->header.bits |= (
         NODE_FLAG_NODE | NODE_FLAG_CELL
-            | FLAG_HEART_BYTE(REB_VOID) | FLAG_QUOTE_BYTE(quote_byte)
+            | CELL_MASK_VOID | FLAG_QUOTE_BYTE(quote_byte)
     );
 
   #ifdef ZERO_UNUSED_CELL_FIELDS
@@ -97,9 +94,6 @@ INLINE bool Is_Quoted_Void(const Cell* v)
 #define Init_Quasi_Void(out) \
     u_cast(Element*, TRACK( \
         Init_Void_Untracked(ensure(Sink(Element*), (out)), QUASIFORM_2)))
-
-INLINE bool Is_Quasi_Void(const Cell* v)
-  { return QUOTE_BYTE(v) == QUASIFORM_2 and HEART_BYTE(v) == REB_VOID; }
 
 #define Init_Meta_Of_Void(out)       Init_Quoted_Void(out)
 #define Is_Meta_Of_Void(v)           Is_Quoted_Void(v)
@@ -150,15 +144,11 @@ INLINE Element* Ensure_Element(const_if_c Atom* cell) {
 // "unset value".
 //
 
-INLINE bool Is_Trash(Need(const Value*) v)
-  { return HEART_BYTE(v) == REB_VOID and QUOTE_BYTE(v) == ANTIFORM_0; }
-
 #define Init_Trash(out) \
     u_cast(Value*, TRACK( \
         Init_Void_Untracked(ensure(Sink(Value*), (out)), ANTIFORM_0)))
 
 #define Init_Meta_Of_Trash(out)     Init_Quasi_Void(out)
-#define Is_Meta_Of_Trash(v)         Is_Quasi_Void(v)
 
 #define TRASH_CELL \
     cast(const Value*, &PG_Trash_Cell)  // Note that Lib(TRASH) is a function

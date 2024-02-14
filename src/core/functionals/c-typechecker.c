@@ -437,7 +437,7 @@ bool Typecheck_Coerce_Argument(
     else {
         unquoted = false;
 
-        if (not Is_Stable(arg))
+        if (Not_Stable(arg))
             goto do_coercion;
     }
 
@@ -529,7 +529,7 @@ bool Typecheck_Coerce_Argument(
     if (unquoted)
         Meta_Quotify(arg);
 
-    if (not Is_Stable(arg))
+    if (Not_Stable(arg))
         assert(Cell_ParamClass(param) == PARAMCLASS_RETURN);
 
     return true;

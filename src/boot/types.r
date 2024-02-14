@@ -13,12 +13,18 @@ REBOL [
     Purpose: {
         This table is used to make C defines and intialization tables.
 
+            name            "description"
+            ~antiform~      [typesets]  ; makes TS_XXX
+                            (CELL_FLAG_XXX | CELL_FLAG_XXX)
+                            [class       make    mold]
+
         name        - name of datatype (generates words)
         description - short statement of type's purpose (used by HELP)
+        antiform    - if present, the name of the antiform of the type
+        typesets    - what typesets the type belongs to
         class       - how "generic" actions are dispatched (T_type)
         make        - it can be made with #[datatype] method
         mold        - code implementing both MOLD and FORM (hook gets a flag)
-        typesets    - what typesets the type belongs to
 
         What is in the table can be `+` to mean the method exists and has the
         same name as the type (e.g. MF_Blank() if type is BLANK!)
@@ -36,18 +42,9 @@ REBOL [
         will find the ACTION! dispatch for that type in `REBTYPE(Somename)`.
     }
     Notes: {
-      * VOID is not a datatype (type of void is NULL), and not included here.
-        It uses the special heart byte of 0, which is also the heart byte of
-        its antiform (called "trash", the contents of unset variables).
-        While other enum values are not baked in, zero as the heart byte of
-        voids and nones are used with memset() for optimizations.
-
-      * Code shouldn't be dependent on the specific values of the other heart
-        bytes.  Though there are some issues related to relative ordering;
-        all such dependencies should be in %sys-ordered.h
-
-      * There's no particularly fast test for Any_Array(), Any_Path(), or
-        Any_Word(), as they're less common than testing for Any_Inert().
+      * Code should avoid dependence on exact values of the heart bytes.
+        Any relative ordering dependencies not captured in this type table
+        should be captured as macros/functions in %sys-ordered.h
 
       * ANY-SCALAR! is weird at this point, because TUPLE! may or may not be
         fully numeric (1.2.3 vs alpha.beta.gamma).  What the typeset was for
@@ -57,14 +54,19 @@ REBOL [
 ]
 
 
-; name      "description"
-;           [typesets]  ; makes TS_XXX
-;           (CELL_FLAG_XXX | CELL_FLAG_XXX)  ; makes CELL_MASK_XXX
-;           [class       make    mold]
+; VOID is not a "datatype" (type of void is NULL) but it uses the REB_VOID
+; heart value of 0.  This is also the heart byte of its antiform (called
+; "trash", the contents of unset variables).  attempts at memset() to 0
+; optimization are made for creating unset variables quickly.
+
+void        "absence of value, used by many operations to opt-out"
+~trash~     (CELL_MASK_NO_NODES)
+            []
+            [-       -       -]
 
 
 ; ============================================================================
-; BEGIN TYPES THAT ARE EVALUATOR INERT
+; BEGIN TYPES THAT ARE EVALUATOR INERT (Any_Inert() fails on VOID + ANTIFORM)
 ; ============================================================================
 
 blank       "placeholder unit type"

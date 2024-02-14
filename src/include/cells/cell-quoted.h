@@ -195,6 +195,8 @@ INLINE bool Is_Stable(Need(const Atom*) v) {  // repeat for non-inlined speed
     );
 }
 
+#define Not_Stable(atom) (not Is_Stable(atom))
+
 
 #if !defined(NDEBUG)
     #define Assert_Cell_Stable(v) \

@@ -131,11 +131,13 @@ INLINE Atom* Isotopify_If_Falsey(Atom* v) {
 //
 INLINE Bounce Native_Branched_Result(Level* level_, Atom* v) {
     assert(v == level_->out);  // would not be zero cost if we supported copy
-    if (Is_Void(v))
-        Init_Heavy_Void(v);
-    else if (Is_Nulled(v))
-        Init_Heavy_Null(v);
-    else if (Is_False(v))
-        Init_Heavy_False(v);
+    if (Is_Stable(v)) {
+        if (Is_Void(v))
+            Init_Heavy_Void(v);
+        else if (Is_Nulled(v))
+            Init_Heavy_Null(v);
+        else if (Is_False(v))
+            Init_Heavy_False(v);
+    }
     return level_->out;
 }

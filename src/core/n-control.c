@@ -324,7 +324,7 @@ static Bounce Then_Else_Isotopic_Object_Helper(
 
     assert(not Is_Lazy(in));
 
-    if (Is_Void(in) or (REF(decay) and Is_Heavy_Void(in))) {
+    if (Is_Stable(in) and (Is_Void(in) or (REF(decay) and Is_Heavy_Void(in)))) {
         if (then) {
             STATE = ST_THENABLE_REJECTING_INPUT;
             if (Is_Pack(in)) {
@@ -795,10 +795,8 @@ DECLARE_NATIVE(all)
 
 } eval_step_result_in_spare: {  //////////////////////////////////////////////
 
-    if (
-        Is_Void(SPARE)  // (if false [<a>])
-        or Is_Elision(SPARE)  // (comment "hi") or ,
-    ){
+    if (Is_Elision(SPARE)) {  // (comment "hi") or ,
+      handle_elision:
         if (Is_Level_At_End(SUBLEVEL))
             goto reached_end;
 
@@ -807,9 +805,11 @@ DECLARE_NATIVE(all)
         return CONTINUE_SUBLEVEL(SUBLEVEL);
     }
 
-    Clear_Level_Flag(LEVEL, ALL_VOIDS);
-
     Decay_If_Unstable(SPARE);
+    if (Is_Void(SPARE))  // (if false [<a>])
+        goto handle_elision;
+
+    Clear_Level_Flag(LEVEL, ALL_VOIDS);
 
     if (not Is_Nulled(predicate)) {
         SUBLEVEL->executor = &Just_Use_Out_Executor;  // tunnel thru [2]
@@ -928,7 +928,8 @@ DECLARE_NATIVE(any)
 
 } eval_step_result_in_out: {  ////////////////////////////////////////////////
 
-    if (Is_Void(OUT) or Is_Elision(OUT)) {  // (comment "hi") (if false [<a>])
+    if (Is_Elision(OUT)) {  // (comment "hi")
+      handle_elision:
         if (Is_Level_At_End(SUBLEVEL))
             goto reached_end;
 
@@ -937,9 +938,11 @@ DECLARE_NATIVE(any)
         return CONTINUE_SUBLEVEL(SUBLEVEL);
     }
 
-    Clear_Level_Flag(LEVEL, ALL_VOIDS);
-
     Decay_If_Unstable(OUT);
+    if (Is_Void(OUT))
+        goto handle_elision;  // (if false [<a>])
+
+    Clear_Level_Flag(LEVEL, ALL_VOIDS);
 
     if (not Is_Nulled(predicate)) {
         SUBLEVEL->executor = &Just_Use_Out_Executor;  // tunnel thru [2]
@@ -1655,17 +1658,19 @@ DECLARE_NATIVE(throw)
 // some behaviors of the types, while not being technically void or null.
 //
 void Debranch_Output(Atom* out) {
-    if (Is_Lazy(out)) {
-        //
-        // We don't have to fully reify the object, we just need to make sure
-        // its THEN and ELSE fields are unset.
-        //
-        const Symbol* syms[2] = {Canon(ELSE), Canon(THEN)};
-        int i;
-        for (i = 0; i < 2; ++i) {
-            Option(Value*) hook = Select_Symbol_In_Context(out, syms[i]);
-            if (hook)
-                Init_Void(unwrap(hook));
+    if (Not_Stable(out)) {
+        if (Is_Lazy(out)) {
+            //
+            // We don't have to fully reify the object, we just need to make sure
+            // its THEN and ELSE fields are unset.
+            //
+            const Symbol* syms[2] = {Canon(ELSE), Canon(THEN)};
+            int i;
+            for (i = 0; i < 2; ++i) {
+                Option(Value*) hook = Select_Symbol_In_Context(out, syms[i]);
+                if (hook)
+                    Init_Void(unwrap(hook));
+            }
         }
     }
     else if (Is_Void(out))

@@ -89,7 +89,7 @@ Bounce Stepper_Executor(Level* const L)
     switch (STATE) {
       case ST_STEPPER_INITIAL_ENTRY:
         assert(Not_Level_Flag(L, TRAMPOLINE_KEEPALIVE));
-        assert(Is_Void(TOP) or Is_Nihil(atom_TOP));  // primed [1]
+        assert(Is_Nihil(atom_TOP) or Is_Void(TOP));  // primed [1]
         goto initial_entry;
 
       default:

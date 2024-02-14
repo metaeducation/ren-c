@@ -161,7 +161,7 @@ DECLARE_NATIVE(entrap)  // wrapped as TRAP and ATTEMPT
         return BRANCHED(OUT);
     }
 
-    if (not Is_Void(SPARE))
+    if (not Is_Elision(SPARE))
         Move_Cell(OUT, SPARE);
 
     if (Is_Level_At_End(SUBLEVEL))

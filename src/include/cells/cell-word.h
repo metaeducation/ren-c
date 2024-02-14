@@ -168,25 +168,14 @@ INLINE bool IS_QUOTED_WORD(const Atom* v) {
         and Cell_Heart(v) == REB_WORD;
 }
 
-
-INLINE bool Is_Anti_Word(Need(const Value*) v) {
-    ASSERT_CELL_READABLE(v);
-    if (HEART_BYTE(v) != REB_WORD)
-        return false;
-    return QUOTE_BYTE(v) == ANTIFORM_0;
-}
-
 INLINE bool Is_Anti_Word_With_Id(Need(const Value*) v, SymId id) {
     assert(id != 0);
 
-    if (not Is_Anti_Word(v))
+    if (not Is_Antiword(v))
         return false;
 
     return id == Cell_Word_Id(v);
 }
-
-INLINE bool Is_Quasi_Word(const Atom* v)
-  { return Is_Quasiform(v) and HEART_BYTE(v) == REB_WORD; }
 
 INLINE bool Is_Quasi_Word_With_Id(const Atom* v, SymId id) {
     assert(id != 0);
