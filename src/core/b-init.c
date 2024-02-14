@@ -62,8 +62,6 @@
 //
 static void Check_Basics(void)
 {
-    STATIC_ASSERT(REB_VOID == 0);  // hard rule--optimize on it where desired
-
     //=//// CHECK CELL SIZE ///////////////////////////////////////////////=//
 
     // The system is designed with the intent that a cell is 4x(32-bit) on
@@ -407,7 +405,7 @@ static void Init_Root_Vars(void)
     // Simple isolated values, not available via lib, e.g. not Lib(TRUE) or
     // Lib(BLANK)...
 
-    Finalize_Trash(&PG_Trash_Cell);
+    Init_Trash(&PG_Trash_Cell);
     Set_Cell_Flag(&PG_Trash_Cell, PROTECTED);  // prevent overwriting
     assert(Is_Trash(TRASH_CELL));
 

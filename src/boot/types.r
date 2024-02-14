@@ -54,10 +54,7 @@ REBOL [
 ]
 
 
-; VOID is not a "datatype" (type of void is NULL) but it uses the REB_VOID
-; heart value of 0.  This is also the heart byte of its antiform (called
-; "trash", the contents of unset variables).  attempts at memset() to 0
-; optimization are made for creating unset variables quickly.
+; VOID is not a "datatype" (type of void is NULL)
 
 void        "absence of value, used by many operations to opt-out"
 ~trash~     (CELL_MASK_NO_NODES)

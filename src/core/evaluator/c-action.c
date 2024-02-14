@@ -781,7 +781,8 @@ Bounce Action_Executor(Level* L)
 } fulfill_and_any_pickups_done: {  ///////////////////////////////////////////
 
     if (Get_Action_Executor_Flag(L, FULFILL_ONLY)) {  // no typecheck
-        Finalize_Trash(OUT);  // didn't touch out, should be fresh
+        assert(Is_Fresh(OUT));  // didn't touch out, should be fresh
+        Init_Trash(OUT);
         goto skip_output_check;
     }
 

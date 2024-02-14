@@ -302,7 +302,7 @@ bool Typecheck_Atom_Core(
                 if (Is_Specialized(param))
                     Copy_Cell(arg, param);
                 else
-                    Finalize_Trash(arg);
+                    Init_Trash(arg);
                 assert(Is_Stable(arg));
             }
 

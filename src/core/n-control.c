@@ -1196,7 +1196,7 @@ DECLARE_NATIVE(case)
     }
 
     if (Is_Fresh(OUT))  // none of the clauses of an /ALL ran a branch
-        return Finalize_Void(OUT);
+        return Init_Void(OUT);
 
     return BRANCHED(OUT);
 }}
@@ -1393,7 +1393,7 @@ DECLARE_NATIVE(switch)
     }
 
     if (Is_Fresh(OUT))  // no fallout, and no branches ran
-        return Finalize_Void(OUT);
+        return Init_Void(OUT);
 
     return BRANCHED(OUT);
 }}

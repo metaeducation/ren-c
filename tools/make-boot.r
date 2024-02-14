@@ -70,7 +70,7 @@ e-version: make-emitter "Version Information" (
 version: load-value %version.r
 version: to tuple! reduce [
     version/1 version/2 version/3 platform-config/id/2 platform-config/id/3
- ]
+]
 
 e-version/emit [version {
     /*
@@ -111,15 +111,7 @@ e-symbols: make-emitter "Symbol ID (SymId) Enumeration Type and Values" (
 syms-words: copy []
 syms-cscape: copy []
 
-; It's important for clarity and optimization that REB_VOID is 0 (with the
-; quote byte being 0, empty memory is interpreted as antiform VOID, e.g.
-; state of an unset variable, and that's one of many good reasons for it).
-;
-; But SYM_0 does not line up with that; it is distinctly used for symbols that
-; do not have baked-in ID numbers.
-;
-; There's no datatype for VOID anyway, so having VOID line up with Lib(0) being
-; its datatype isn't important.  It's just a random later symbol number.
+; SYM_0 is reserved for symbols that do not have baked-in ID numbers.
 ;
 sym-n: 1  ; counts up as symbols are added
 
@@ -162,7 +154,7 @@ for-each-datatype: func [
     name* antiname* description* typesets* class* make* mold* heart* cellmask*
     completed* running* is-unstable*
 ][
-    heart*: 0  ; VOID is 0
+    heart*: 1  ; 0 is reserved
     parse2 type-table [some [not end
         opt some tag!  ; <TYPE!> or </TYPE!> used by FOR-EACH-TYPERANGE
 
@@ -219,7 +211,7 @@ for-each-typerange: func [
     stack: copy []
     types*: null
 
-    heart*: 0  ; VOID is 0
+    heart*: 1  ; 0 is reserved
     while [true] [  ; need to be in loop for BREAK to work
         parse2 type-table [some [
             opt some [set name* tag! (
@@ -282,11 +274,6 @@ e-types: make-emitter "Datatype Definitions" (
 
 rebs: collect [
     for-each-datatype t [
-        if t/heart = 0 [
-            assert [t/name = "void"]  ; SYM_0 reserved, not used for SYM_VOID
-            continue
-        ]
-
         assert [sym-n == t/heart]  ; SYM_XXX should equal REB_XXX value
         add-sym unspaced t/name
 
@@ -311,7 +298,7 @@ e-types/emit [rebs {
 
         /*** TYPES AND INTERNALS GENERATED FROM %TYPES.R ***/
 
-        REB_VOID = 0,  /* system relies on specific 0 heart for VOID */
+        REB_0 = 0,  /* reserved */
         $[Rebs],
         REB_MAX,  /* one past valid types */
 
@@ -486,10 +473,21 @@ hookname: enfix func [
 ]
 
 hook-list: collect [
+    keep cscape [{
+        {  /* REB_0 is reserved */
+            cast(CFunction*, nullptr),  /* generic */
+            cast(CFunction*, nullptr),  /* compare */
+            cast(CFunction*, nullptr),  /* make */
+            cast(CFunction*, nullptr),  /* to */
+            cast(CFunction*, nullptr),  /* mold */
+            nullptr
+        }
+    }]
+
     for-each-datatype t [
-        if t/heart = 0 [
+        if t/name = "void" [
             keep cscape [{
-                {  /* VOID = 0 */
+                {  /* VOID = $<T/HEART> */
                     cast(CFunction*, nullptr),  /* generic */
                     cast(CFunction*, nullptr),  /* compare */
                     cast(CFunction*, nullptr),  /* make */
@@ -958,9 +956,6 @@ e-bootblock/emit [nats {
 
 boot-typespecs: collect [
     for-each-datatype t [
-        if t/heart = 0 [  ; no typespec inclusion for VOID
-            continue
-        ]
         keep reduce [t/description]
     ]
 ]

@@ -300,7 +300,7 @@ Bounce Evaluator_Executor(Level* L)
     Update_Expression_Start(L);  // !!! See Level_Array_Index() for caveats
 
     if (Is_Level_At_End(L)) {
-        Finalize_Void(OUT);
+        Init_Void(OUT);
         goto finished;
     }
 

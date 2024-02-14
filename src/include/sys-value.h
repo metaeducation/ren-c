@@ -164,7 +164,8 @@
 // have its properties manipulated.
 
 #define Is_Fresh(c) \
-    (((c)->header.bits & (~ CELL_MASK_PERSIST)) == 0)
+    (((c)->header.bits & (~ CELL_MASK_PERSIST) & \
+        (~ NODE_FLAG_NODE) & (~ NODE_FLAG_CELL)) == 0)
 
 #if DEBUG_CELL_WRITABILITY
 

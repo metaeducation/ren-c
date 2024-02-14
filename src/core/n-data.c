@@ -168,7 +168,7 @@ DECLARE_NATIVE(bind)
         // not in context, bind/new means add it if it's not.
         //
         if (REF(new) or (Is_Set_Word(v) and REF(set))) {
-            Finalize_Trash(Append_Context_Bind_Word(VAL_CONTEXT(context), v));
+            Init_Trash(Append_Context_Bind_Word(VAL_CONTEXT(context), v));
             return COPY(v);
         }
 

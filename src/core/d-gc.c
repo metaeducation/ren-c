@@ -94,6 +94,10 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
     // still can speed things up to go in order.
     //
     switch (heart) {
+      case 0:  // legal if using Mark_Maybe_Fresh()
+        assert(Is_Fresh(v));
+        break;
+
       case REB_VOID:
       case REB_BLANK:
       case REB_COMMA:

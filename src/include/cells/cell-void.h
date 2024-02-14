@@ -154,65 +154,6 @@ INLINE Element* Ensure_Element(const_if_c Atom* cell) {
     cast(const Value*, &PG_Trash_Cell)  // Note that Lib(TRASH) is a function
 
 
-//=//// EFFICIENT VOID AND TRASH "FINALIZATION" ///////////////////////////=//
-//
-// A cell with all its header bits 0 (Is_Fresh(), CELL_MASK_0) is very close
-// to being TRASH.  Its HEART_BYTE() is 0 for REB_VOID, and its QUOTE_BYTE()
-// is ANTIFORM_0 to say it is an antiform.  However, it can't be a valid cell
-// from the API perspective because Detect_Rebol_Pointer() would see the `\0`
-// first byte, and that's a legal empty UTF-8 C string.
-//
-// There is still leverage from the near overlap with fresh cells...because
-// it only takes a single masking operation to add NODE_FLAG_NODE and
-// NODE_FLAG_CELL to make a valid trash.  This eliminates the need to mask
-// out the bits that are CELL_MASK_PERSIST.  And since the quote byte is
-// 0, we don't have to mask it out to mask in other levels of void
-//
-// This trick alone may seem like a micro-optimization, but fresh cells
-// are used to help with semantics too.  They can be written to but not read,
-// and assist in safety involving accidentally overwriting raised errors.
-// Calling Finalize_Trash() and Finalize_Void() also implicitly asserts that
-// the cell was previously fresh... which is often an important invariant.
-//
-
-STATIC_ASSERT(REB_VOID == 0);  // the optimization depends on this
-STATIC_ASSERT(ANTIFORM_0 == 0);  // QUOTE_BYTE() of 0 means it's an antiform
-
-INLINE Value* Finalize_Trash_Untracked(Need(Value*) out) {
-    assert(Is_Fresh(out));  // can bitwise OR, need node+cell flags
-
-    assert(HEART_BYTE(out) == 0 and QUOTE_BYTE(out) == 0);
-
-    out->header.bits |= (
-        NODE_FLAG_NODE | NODE_FLAG_CELL  // might already be set, might not...
-            /* | FLAG_HEART_BYTE(REB_VOID) */  // already 0
-            /* | FLAG_QUOTE_BYTE(ANTIFORM_0) */  // already 0
-    );
-
-    return out;
-}
-
-#define Finalize_Trash(out) \
-    TRACK(Finalize_Trash_Untracked(out))
-
-INLINE Value* Finalize_Void_Untracked(Need(Value*) out) {
-    assert(Is_Fresh(out));  // can bitwise OR, need node+cell flags
-
-    assert(HEART_BYTE(out) == 0 and QUOTE_BYTE(out) == 0);
-
-    out->header.bits |= (
-        NODE_FLAG_NODE | NODE_FLAG_CELL  // might already be set, might not...
-            /* | FLAG_HEART_BYTE(REB_VOID) */  // already 0
-            | FLAG_QUOTE_BYTE(NOQUOTE_1)  // mask over top of existing 0
-    );
-
-    return out;
-}
-
-#define Finalize_Void(out) \
-    TRACK(Finalize_Void_Untracked(out))
-
-
 //=//// "HEAVY VOIDS" (BLOCK! Antiform Pack with ['] in it) ////////////////=//
 //
 // This is a way of making it so that branches which evaluate to void can
