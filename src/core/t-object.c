@@ -796,7 +796,7 @@ DECLARE_NATIVE(set_adjunct)
 Context* Copy_Context_Extra_Managed(
     Context* original,
     REBLEN extra,
-    REBU64 types
+    bool deeply
 ){
     REBLEN len = (CTX_TYPE(original) == REB_MODULE) ? 0 : CTX_LEN(original);
 
@@ -886,7 +886,7 @@ Context* Copy_Context_Extra_Managed(
         );
 
         Flags flags = NODE_FLAG_MANAGED;  // !!! Review, which flags?
-        Clonify(dest, flags, types);
+        Clonify(dest, flags, deeply);
     }
 
     varlist->leader.bits |= SERIES_MASK_VARLIST;
@@ -1230,10 +1230,6 @@ REBTYPE(Context)
         if (REF(part))
             fail (Error_Bad_Refines_Raw());
 
-        REBU64 types = 0;
-        if (REF(deep))
-            types = TS_STD_SERIES;
-
         // !!! Special attention on copying frames is going to be needed,
         // because copying a frame will be expected to create a new identity
         // for an ACTION! if that frame is aliased AS ACTION!.  The design
@@ -1243,7 +1239,7 @@ REBTYPE(Context)
         if (Is_Frame(context)) {
             return Init_Frame(
                 OUT,
-                Copy_Context_Extra_Managed(c, 0, types),
+                Copy_Context_Extra_Managed(c, 0, did REF(deep)),
                 VAL_FRAME_LABEL(context)
             );
         }
@@ -1251,7 +1247,7 @@ REBTYPE(Context)
         return Init_Context_Cell(
             OUT,
             VAL_TYPE(context),
-            Copy_Context_Extra_Managed(c, 0, types)
+            Copy_Context_Extra_Managed(c, 0, did REF(deep))
         ); }
 
       case SYM_SELECT: {

@@ -668,7 +668,8 @@ Context* Make_Context_Detect_Managed(
             Flags flags = NODE_FLAG_MANAGED;  // !!! Review, what flags?
             assert(Is_Trash(dest));
             Copy_Cell(dest, src);
-            Clonify(dest, flags, TS_CLONE);
+            bool deeply = true;
+            Clonify(dest, flags, deeply);
         }
     }
 

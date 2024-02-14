@@ -653,11 +653,11 @@ Context* Make_Error_Managed_Core(
     // any name?  (e.g. NEAR and WHERE?)  In that case, we would be copying
     // the "standard format" error as a meta object instead.
     //
-    REBU64 types = 0;
+    bool deeply = false;
     Context* error = Copy_Context_Extra_Managed(
         root_error,
         expected_args,  // Note: won't make new keylist if expected_args is 0
-        types
+        deeply
     );
 
     // Arrays from errors.r look like `["The value" :arg1 "is not" :arg2]`

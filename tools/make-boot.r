@@ -437,30 +437,6 @@ for-each [ts-name types] typeset-sets [
 
 add-sym 'datatypes  ; signal where the datatypes stop
 
-
-e-types/emit {
-    /* !!! R3-Alpha made frequent use of these predefined typesets.  In Ren-C
-     * they have been called into question, as to exactly how copying
-     * mechanics should work.
-     */
-
-    #define TS_NOT_COPIED \
-        FLAGIT_KIND(REB_PORT)
-
-    #define TS_STD_SERIES \
-        (TS_SERIES & ~TS_NOT_COPIED)
-
-    #define TS_SERIES_OBJ \
-        ((TS_SERIES | TS_CONTEXT | TS_SEQUENCE) & ~TS_NOT_COPIED)
-
-    #define TS_ARRAYS_OBJ \
-        ((TS_ARRAY | TS_CONTEXT | TS_SEQUENCE) & ~TS_NOT_COPIED)
-
-    #define TS_CLONE \
-        (TS_SERIES & ~TS_NOT_COPIED) // currently same as TS_NOT_COPIED
-}
-e-types/emit newline
-
 for-each-datatype t [
     if not t/antiname [continue]  ; no special name for antiform form
 

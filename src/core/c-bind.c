@@ -957,7 +957,7 @@ DECLARE_NATIVE(add_use_object) {
 void Clonify_And_Bind_Relative(
     Value* v,
     Flags flags,
-    REBU64 deep_types,
+    bool deeply,
     Option(struct Reb_Binder*) binder,
     Option(Action*) relative
 ){
@@ -965,11 +965,6 @@ void Clonify_And_Bind_Relative(
         Fail_Stack_Overflow();
 
     assert(flags & NODE_FLAG_MANAGED);
-
-    // !!! Could theoretically do what COPY does and generate a new hijackable
-    // identity.  There's no obvious use for this; hence not implemented.
-    //
-    assert(not (deep_types & FLAGIT_KIND(REB_FRAME)));
 
     enum Reb_Kind heart = Cell_Heart_Unchecked(v);
 
@@ -982,21 +977,14 @@ void Clonify_And_Bind_Relative(
         VAL_WORD_INDEX_I32(v) = -(n);  // negative or zero signals unbound [2]
         BINDING(v) = unwrap(relative);
     }
-    else if (deep_types & FLAGIT_KIND(heart) & TS_SERIES_OBJ) {
+    else if (deeply and (Any_Series_Kind(heart) or Any_Sequence_Kind(heart))) {
         //
         // Objects and series get shallow copied at minimum
         //
         Element* deep = nullptr;
         Element* deep_tail = nullptr;
 
-        if (Any_Context_Kind(heart)) {
-            Context* copy = Copy_Context_Shallow_Managed(VAL_CONTEXT(v));
-            Array* varlist = CTX_VARLIST(copy);
-            INIT_VAL_CONTEXT_VARLIST(v, varlist);
-            deep = Array_Head(varlist);
-            deep_tail = Array_Tail(varlist);
-        }
-        else if (Any_Pairlike(v)) {
+        if (Any_Pairlike(v)) {
             Value* copy = Copy_Pairing(
                 VAL_PAIRING(v),
                 NODE_FLAG_MANAGED
@@ -1037,12 +1025,12 @@ void Clonify_And_Bind_Relative(
         // If we're going to copy deeply, we go back over the shallow
         // copied series and "clonify" the values in it.
         //
-        if (deep and (deep_types & FLAGIT_KIND(heart))) {
+        if (deep) {
             for (; deep != deep_tail; ++deep)
                 Clonify_And_Bind_Relative(
                     deep,
                     flags,
-                    deep_types,
+                    deeply,
                     binder,
                     relative
                 );
@@ -1101,7 +1089,7 @@ Array* Copy_And_Bind_Relative_Deep_Managed(
         index = tail;
 
     Flags flags = ARRAY_MASK_HAS_FILE_LINE | NODE_FLAG_MANAGED;
-    REBU64 deep_types = (TS_SERIES | TS_SEQUENCE) & ~TS_NOT_COPIED;
+    bool deeply = true;
 
     REBLEN len = tail - index;
 
@@ -1118,7 +1106,7 @@ Array* Copy_And_Bind_Relative_Deep_Managed(
         Clonify_And_Bind_Relative(
             dest,
             flags | NODE_FLAG_MANAGED,
-            deep_types,
+            deeply,
             &binder,
             relative
         );

@@ -1074,14 +1074,10 @@ REBTYPE(Array)
         INCLUDE_PARAMS_OF_COPY;
         UNUSED(PARAM(value));
 
-        REBU64 types = 0;
         REBLEN tail = Part_Tail_May_Modify_Index(array, ARG(part));
 
         const Array* arr = Cell_Array(array);
         REBLEN index = VAL_INDEX(array);
-
-        if (REF(deep))
-            types |= TS_STD_SERIES;
 
         Flags flags = ARRAY_MASK_HAS_FILE_LINE;
 
@@ -1097,7 +1093,7 @@ REBTYPE(Array)
             tail, // tail
             0, // extra
             flags, // flags
-            types // types to copy deeply
+            did REF(deep)
         );
 
         Init_Array_Cell(OUT, VAL_TYPE(array), copy);

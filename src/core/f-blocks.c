@@ -129,9 +129,9 @@ Array* Copy_Values_Len_Extra_Shallow_Core(
 void Clonify(
     Value* v,
     Flags flags,
-    REBU64 deep_types
+    bool deeply
 ){
-    Clonify_And_Bind_Relative(v, flags, deep_types, nullptr, nullptr);
+    Clonify_And_Bind_Relative(v, flags, deeply, nullptr, nullptr);
 }
 
 
@@ -150,7 +150,7 @@ Array* Copy_Array_Core_Managed(
     REBLEN tail,
     REBLEN extra,
     Flags flags,
-    REBU64 deep_types
+    bool deeply
 ){
     if (index > tail) // !!! should this be asserted?
         index = tail;
@@ -179,7 +179,7 @@ Array* Copy_Array_Core_Managed(
         Clonify(
             dest,
             flags | NODE_FLAG_MANAGED,
-            deep_types
+            deeply
         );
     }
 

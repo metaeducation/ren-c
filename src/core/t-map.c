@@ -359,7 +359,7 @@ Bounce MAKE_Map(
 }
 
 
-inline static Map* Copy_Map(const Map* map, REBU64 types) {
+inline static Map* Copy_Map(const Map* map, bool deeply) {
     Array* copy = Copy_Array_Shallow_Flags(
         MAP_PAIRLIST(map),
         SERIES_MASK_PAIRLIST
@@ -376,8 +376,8 @@ inline static Map* Copy_Map(const Map* map, REBU64 types) {
     );
     LINK(Hashlist, copy) = hashlist;
 
-    if (types == 0)
-        return cast(Map*, copy); // no types request deep copy, shallow is ok
+    if (not deeply)
+        return cast(Map*, copy);  // shallow is ok
 
     // Even if the type flags request deep copies of series, none of the keys
     // need to be copied deeply.  This is because they are immutable at the
@@ -396,7 +396,7 @@ inline static Map* Copy_Map(const Map* map, REBU64 types) {
             continue; // "zombie" map element (not present)
 
         Flags flags = NODE_FLAG_MANAGED;  // !!! Review
-        Clonify(v, flags, types);
+        Clonify(v, flags, deeply);
     }
 
     return cast(Map*, copy);
@@ -431,9 +431,9 @@ Bounce TO_Map(Level* level_, enum Reb_Kind kind, const REBVAL *arg)
         // !!! Is there really a use in allowing MAP! to be converted TO a
         // MAP! as opposed to having people COPY it?
         //
-        REBU64 types = 0;
+        bool deeply = false;
 
-        return Init_Map(OUT, Copy_Map(VAL_MAP(arg), types));
+        return Init_Map(OUT, Copy_Map(VAL_MAP(arg), deeply));
     }
 
     return RAISE(arg);
@@ -689,12 +689,7 @@ REBTYPE(Map)
         if (REF(part))
             fail (Error_Bad_Refines_Raw());
 
-        REBU64 types = 0; // which types to copy non-"shallowly"
-
-        if (REF(deep))
-            types |= TS_CLONE;
-
-        return Init_Map(OUT, Copy_Map(VAL_MAP(map), types)); }
+        return Init_Map(OUT, Copy_Map(VAL_MAP(map), did REF(deep))); }
 
       case SYM_CLEAR: {
         Map* m = VAL_MAP_Ensure_Mutable(map);

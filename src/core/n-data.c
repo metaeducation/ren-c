@@ -191,13 +191,14 @@ DECLARE_NATIVE(bind)
     Element* at;
     const Element* tail;
     if (REF(copy)) {
+        bool deeply = true;
         Array* copy = Copy_Array_Core_Managed(
             Cell_Array(v),
             VAL_INDEX(v), // at
             Array_Len(Cell_Array(v)), // tail
             0, // extra
             ARRAY_MASK_HAS_FILE_LINE, // flags
-            TS_ARRAY // types to copy deeply
+            deeply  // !!! types to copy deeply (was once just TS_ARRAY)
         );
         at = Array_Head(copy);
         tail = Array_Tail(copy);
