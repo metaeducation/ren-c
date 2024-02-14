@@ -234,188 +234,180 @@ comma       "separator between full evaluations (that is otherwise invisible)"
 ; ============================================================================
 
 
-<ANY-THE-VALUE!>  ; (order matters, e.g. UNTHEIFY_ANY_XXX_KIND())
-
-    ; Review: Should these be ANY-BRANCH! types?
-
-    the-block   "alternative inert form of block"
-                (CELL_FLAG_FIRST_IS_NODE)
-                [any-block! any-array! any-series! any-branch!]
-                [array       *       *]
-
-    the-group   "inert form of group"
-                (CELL_FLAG_FIRST_IS_NODE)
-                [any-group! any-array! any-series!]
-                [array       *       *]
-
-    the-path    "inert form of path"
-                ()
-                [any-path! any-sequence!]
-                [sequence    *       *]
-
-    the-tuple   "inert form of tuple"
-                ()
-                [any-tuple! any-sequence! any-scalar!]
-                [sequence    *       *]
-
-    the-word    "inert form of word"
-                (CELL_FLAG_FIRST_IS_NODE)
-                [any-word! any-utf8!]
-                [word        *       +]
-
-</ANY-THE-VALUE!>
-
-
-<ANY-TYPE-VALUE!>  ; (order matters, e.g. UNTYPEIFY_ANY_XXX_KIND())
-
-    ; Review: Should these be ANY-BRANCH! types?
-
-    type-block  "alternative inert form of block"
-                (CELL_FLAG_FIRST_IS_NODE)
-                [any-block! any-array! any-series! any-branch!]
-                [array       *       *]
-
-    type-group  "inert form of group"
-                (CELL_FLAG_FIRST_IS_NODE)
-                [any-group! any-array! any-series!]
-                [array       *       *]
-
-    type-path   "inert form of path"
-                ()
-                [any-path! any-sequence!]
-                [sequence    *       *]
-
-    type-tuple  "inert form of tuple"
-                ()
-                [any-tuple! any-sequence! any-scalar!]
-                [sequence    *       *]
-
-    type-word   "inert form of word"
-                (CELL_FLAG_FIRST_IS_NODE)
-                [any-word! any-utf8!]
-                [word        *       +]
-
-</ANY-TYPE-VALUE!>
-
-
-<ANY-PLAIN-VALUE!>  ; (order matters, e.g. Setify_Any_Plain_Kind())
-
-    block       "array of values that blocks evaluation unless DO is used"
-    ~pack~      (CELL_FLAG_FIRST_IS_NODE)
-    #unstable   [any-block! any-array! any-series! any-branch!]
-                [array       *       *]
-
-    group       "array that evaluates expressions as an isolated group"
-    ~splice~    (CELL_FLAG_FIRST_IS_NODE)
-                [any-group! any-array! any-series! any-branch!]
-                [array       *       *]
-
-    path        "member or refinement selection with execution bias"
-                ()
-                [any-path! any-sequence!]
-                [sequence    *       *]
-
-    tuple       "member selection with inert bias"
-                ()
-                [any-tuple! any-sequence! any-scalar!]  ; scalar e.g. ADD 0.0.1
-                [sequence    *       *]
+<ANY-WORD!>  ; (order matters, e.g. Theify_Any_Plain_Kind())
 
     word        "evaluates a variable or action"
     ~antiword~   (CELL_FLAG_FIRST_IS_NODE)  ; !!! Better name than antiword?
-                [any-word! any-utf8!]
+                [any-utf8! any-plain-value!]
                 [word        *       +]
 
-</ANY-PLAIN-VALUE!>  ; contiguous with ANY-SET below matters
-
-
-<ANY-SET-VALUE!>  ; (order matters, e.g. UNSETIFY_ANY_XXX_KIND())
-
-    set-block   "array of values that will element-wise SET if evaluated"
+    set-word    "definition of a word's value"
                 (CELL_FLAG_FIRST_IS_NODE)
-                [any-block! any-array! any-series!]
-                [array       *       *]
+                [any-utf8! any-set-value!]
+                [word        *       +]
 
-    set-group   "array that evaluates and runs SET on the resulting word/path"
+    get-word    "the value of a word (variable)"
                 (CELL_FLAG_FIRST_IS_NODE)
-                [any-group! any-array! any-series!]
-                [array       *       *]
+                [any-utf8! any-get-value!]
+                [word        *       +]
 
-    set-path    "definition of a path's value"
+    meta-word   "word that quotes product or turns quasiforms to antiforms"
+                (CELL_FLAG_FIRST_IS_NODE)
+                [any-utf8! any-meta-value!]
+                [word        *       +]
+
+    type-word   "inert form of word"
+                (CELL_FLAG_FIRST_IS_NODE)
+                [any-utf8! any-type-value!]
+                [word        *       +]
+
+    the-word    "inert form of word"
+                (CELL_FLAG_FIRST_IS_NODE)
+                [any-utf8! any-the-value!]
+                [word        *       +]
+
+</ANY-WORD!>
+
+
+<ANY-TUPLE!>  ; (order matters, e.g. Theify_Any_Plain_Kind())
+
+    tuple       "member selection with inert bias"
                 ()
-                [any-path! any-sequence!]
+                [any-sequence! any-scalar! any-plain-value!]
                 [sequence    *       *]
 
     set-tuple   "definition of a tuple's value"
                 ()
-                [any-tuple! any-sequence!]
-                [sequence    *       *]
-
-    set-word    "definition of a word's value"
-                (CELL_FLAG_FIRST_IS_NODE)
-                [any-word! any-utf8!]
-                [word        *       +]
-
-</ANY-SET-VALUE!>  ; (contiguous with ANY-GET below matters)
-
-
-<ANY-GET-VALUE!>  ; (order matters, e.g. UNGETIFY_ANY_XXX_KIND())
-
-    get-block   "array of values that is reduced if evaluated"
-                (CELL_FLAG_FIRST_IS_NODE)
-                [any-block! any-array! any-series! any-branch!]
-                [array       *       *]
-
-    get-group   "array that evaluates and runs GET on the resulting word/path"
-                (CELL_FLAG_FIRST_IS_NODE)
-                [any-group! any-array! any-series!]
-                [array       *       *]
-
-    get-path    "the value of a path"
-                ()
-                [any-path! any-sequence!]
+                [any-sequence! any-set-value!]
                 [sequence    *       *]
 
     get-tuple   "the value of a tuple"
                 ()
-                [any-tuple! any-sequence!]
-                [sequence    *       *]
-
-    get-word    "the value of a word (variable)"
-                (CELL_FLAG_FIRST_IS_NODE)
-                [any-word! any-utf8!]
-                [word        *       +]
-
-</ANY-GET-VALUE!>  ; (contiguous with ANY-META below matters)
-
-
-<ANY-META-VALUE!>  ; (order matters, e.g. UNMETAFY_ANY_XXX_KIND())
-
-    meta-block  "block that evaluates to produce a quoted block"
-                (CELL_FLAG_FIRST_IS_NODE)
-                [any-block! any-array! any-series! any-branch!]
-                [array       *       *]
-
-    meta-group  "group that quotes product or turns quasiforms to antiforms"
-                (CELL_FLAG_FIRST_IS_NODE)
-                [any-group! any-array! any-series!]
-                [array       *       *]
-
-    meta-path   "path that quotes product or turns quasiforms to antiforms"
-                ()
-                [any-path! any-sequence!]
+                [any-sequence! any-get-value!]
                 [sequence    *       *]
 
     meta-tuple  "tuple that quotes product or turns quasiforms to antiforms"
                 ()
-                [any-tuple! any-sequence!]
+                [any-sequence! any-meta-value!]
                 [sequence    *       *]
 
-    meta-word   "word that quotes product or turns quasiforms to antiforms"
-                (CELL_FLAG_FIRST_IS_NODE)
-                [any-word! any-utf8!]
-                [word        *       +]
+    type-tuple  "inert form of tuple"
+                ()
+                [any-sequence! any-scalar! any-type-value!]
+                [sequence    *       *]
 
-</ANY-META-VALUE!>
+    the-tuple   "inert form of tuple"
+                ()
+                [any-sequence! any-scalar! any-the-value!]
+                [sequence    *       *]
+
+</ANY-TUPLE!>
+
+
+<ANY-PATH!>  ; (order matters, e.g. Theify_Any_Plain_Kind())
+
+    path        "member or refinement selection with execution bias"
+                ()
+                [any-sequence! any-plain-value!]
+                [sequence    *       *]
+
+    set-path    "definition of a path's value"
+                ()
+                [any-sequence! any-set-value!]
+                [sequence    *       *]
+
+    get-path    "the value of a path"
+                ()
+                [any-sequence! any-get-value!]
+                [sequence    *       *]
+
+    meta-path   "path that quotes product or turns quasiforms to antiforms"
+                ()
+                [any-sequence! any-meta-value!]
+                [sequence    *       *]
+
+    type-path   "inert form of path"
+                ()
+                [any-sequence! any-type-value!]
+                [sequence    *       *]
+
+    the-path    "inert form of path"
+                ()
+                [any-sequence! any-the-value!]
+                [sequence    *       *]
+
+</ANY-PATH!>
+
+
+<ANY-BLOCK!>  ; (order matters, e.g. Theify_Any_Plain_Kind())
+
+    block       "array of values that blocks evaluation unless DO is used"
+    ~pack~      (CELL_FLAG_FIRST_IS_NODE)
+    #unstable   [any-array! any-series! any-branch! any-plain-value!]
+                [array       *       *]
+
+    set-block   "array of values that will element-wise SET if evaluated"
+                (CELL_FLAG_FIRST_IS_NODE)
+                [any-array! any-series! any-set-value!]
+                [array       *       *]
+
+    get-block   "array of values that is reduced if evaluated"
+                (CELL_FLAG_FIRST_IS_NODE)
+                [any-array! any-series! any-branch! any-get-value!]
+                [array       *       *]
+
+    meta-block  "block that evaluates to produce a quoted block"
+                (CELL_FLAG_FIRST_IS_NODE)
+                [any-array! any-series! any-branch! any-meta-value!]
+                [array       *       *]
+
+    type-block  "alternative inert form of block"
+                (CELL_FLAG_FIRST_IS_NODE)
+                [any-array! any-series! any-branch! any-type-value!]
+                [array       *       *]
+
+    the-block   "alternative inert form of block"
+                (CELL_FLAG_FIRST_IS_NODE)
+                [any-array! any-series! any-branch! any-the-value!]
+                [array       *       *]
+
+</ANY-BLOCK!>
+
+
+<ANY-GROUP!>  ; (order matters, e.g. Theify_Any_Plain_Kind())
+
+    group       "array that evaluates expressions as an isolated group"
+    ~splice~    (CELL_FLAG_FIRST_IS_NODE)
+                [any-array! any-series! any-branch! any-plain-value!]
+                [array       *       *]
+
+    set-group   "array that evaluates and runs SET on the resulting word/path"
+                (CELL_FLAG_FIRST_IS_NODE)
+                [any-array! any-series! any-set-value!]
+                [array       *       *]
+
+    get-group   "array that evaluates and runs GET on the resulting word/path"
+                (CELL_FLAG_FIRST_IS_NODE)
+                [any-array! any-series! any-get-value!]
+                [array       *       *]
+
+    meta-group  "group that quotes product or turns quasiforms to antiforms"
+                (CELL_FLAG_FIRST_IS_NODE)
+                [any-array! any-series! any-meta-value!]
+                [array       *       *]
+
+    type-group  "inert form of group"
+                (CELL_FLAG_FIRST_IS_NODE)
+                [any-array! any-series! any-type-value!]
+                [array       *       *]
+
+    the-group   "inert form of group"
+                (CELL_FLAG_FIRST_IS_NODE)
+                [any-array! any-series! any-the-value!]
+                [array       *       *]
+
+</ANY-GROUP!>
+
 
 
 ; ============================================================================
