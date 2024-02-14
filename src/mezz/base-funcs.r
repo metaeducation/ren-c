@@ -514,8 +514,8 @@ prohibit: redescribe [
             ; https://github.com/metaeducation/ren-c/issues/587
             ;
             fail [
-                "NON failed with argument of type"
-                    kind of :value else ["VOID"]
+                "PROHIBIT failed with argument of type"
+                    (kind of maybe value) else ["NULL"]
             ]
         ]
         :value

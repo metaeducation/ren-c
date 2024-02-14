@@ -262,6 +262,8 @@ Bounce Reflect_Core(Level* level_)
       case SYM_TYPE:  // currently synonym for KIND, may change
         if (Is_Void(v))
             return nullptr;
+        if (Is_Nulled(v))
+            fail (PARAM(value));
         return Init_Builtin_Datatype(OUT, VAL_TYPE(v));
 
       case SYM_QUOTES:
@@ -279,29 +281,6 @@ Bounce Reflect_Core(Level* level_)
         ACT_IDENTITY(VAL_ACTION(Lib(REFLECT)))  // switch to generic
     );
     return BOUNCE_CONTINUE;
-}
-
-
-//
-//  reflect-native: native [
-//
-//  "Returns specific details about a datatype"
-//
-//      return: [any-value?]
-//      value "Accepts antiforms for the purposes of TYPE OF"
-//          [<maybe> any-value?]
-//      property "Such as: type, length, spec, body, words, values, title"
-//          [word!]
-//  ]
-//
-DECLARE_NATIVE(reflect_native)
-//
-// Although REFLECT goes through dispatch to the REBTYPE(), it was needing
-// a null check in Type_Action_Dispatcher--which no other type needs.  So
-// it is its own native.  Consider giving it its own dispatcher as well, as
-// the question of exactly what a "REFLECT" or "OF" actually *is*.
-{
-    return Reflect_Core(level_);
 }
 
 

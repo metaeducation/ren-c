@@ -1750,7 +1750,7 @@ default-combinators: make map! reduce [
         <local> item error
     ][
         either any-array? input [
-            if value <> kind of input.1 [
+            if value <> kind of maybe input.1 [
                 return raise "Value at parse position did not match datatype"
             ]
             remainder: next input

@@ -691,12 +691,6 @@ Context* Make_Error_Managed_Core(
                 break;
 
               case DETECTED_AS_CELL : {
-                //
-                // It's too much effort to force callers to pass SPECIFIC
-                // values--so strip off the binding.  (We could preserve it
-                // in those cases it was specified, but that could set up
-                // the wrong expectations that the system is trying.)
-                //
                 Copy_Cell(var, c_cast(Value*, p));
                 break; }
 
@@ -1418,8 +1412,10 @@ void MF_Error(REB_MOLD *mo, const Cell* v, bool form)
     Append_Ascii(mo->series, RM_ERROR_LABEL);  // "Error:"
 
     // Append: error message ARG1, ARG2, etc.
-    if (Is_Block(&vars->message))
-        Form_Array_At(mo, Cell_Array(&vars->message), 0, error);
+    if (Is_Block(&vars->message)) {
+        bool relax = true;  // don't want error rendering to cause errors
+        Form_Array_At(mo, Cell_Array(&vars->message), 0, error, relax);
+    }
     else if (Is_Text(&vars->message))
         Form_Value(mo, cast(Element*, &vars->message));
     else

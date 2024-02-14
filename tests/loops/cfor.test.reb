@@ -161,11 +161,12 @@
         true
     ]
 )
-[#1993 (
-    equal?
-        kind of cfor i -1 -2 0 [break]
-        kind of cfor i 2 1 0 [break]
-)]
+[#1993
+    (null? cfor i -1 -2 0 [break])
+    (null? cfor i -2 -1 0 [break])
+    (null? cfor i 2 1 0 [break])
+    (null? cfor i 1 2 0 [break])
+]
 ; skip before head test
 ([] = cfor i b: tail of [1] head of b -2 [i])
 
@@ -251,8 +252,3 @@
         true
     ]
 )
-
-[#1993
-    (equal? (kind of cfor i 1 2 0 [break]) (kind of cfor i 2 1 0 [break]))
-]
-(equal? (kind of cfor i -1 -2 0 [break]) (kind of cfor i -2 -1 0 [break]))

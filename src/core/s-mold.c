@@ -311,7 +311,8 @@ void Form_Array_At(
     REB_MOLD *mo,
     const Array* array,
     REBLEN index,
-    Option(Context*) context
+    Option(Context*) context,
+    bool relax  // make antiforms into quasiforms instead of erroring
 ){
     // Form a series (part_mold means mold non-string values):
     REBINT len = Array_Len(array) - index;
@@ -320,15 +321,20 @@ void Form_Array_At(
 
     REBINT n;
     for (n = 0; n < len;) {
+        DECLARE_ELEMENT (safe);
         const Element* item = Array_At(array, index + n);
-        Option(Value*) wval = nullptr;
+        Value* wval = nullptr;
         if (context and (Is_Word(item) or Is_Get_Word(item))) {
-            wval = Select_Symbol_In_Context(
+            wval = try_unwrap(Select_Symbol_In_Context(
                 CTX_ARCHETYPE(unwrap(context)),
                 Cell_Word_Symbol(item)
-            );
-            if (wval)
-                item = Ensure_Element(unwrap(wval));
+            ));
+            if (wval) {
+                if (relax and (Is_Antiform(wval) or Is_Void(wval)))
+                    item = Copy_Meta_Cell(safe, wval);
+                else
+                    item = Ensure_Element(wval);
+            }
         }
         Mold_Or_Form_Value(mo, item, wval == nullptr);
         n++;

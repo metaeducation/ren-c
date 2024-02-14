@@ -718,7 +718,8 @@ void MF_Array(REB_MOLD *mo, const Cell* v, bool form)
 
     if (form) {
         Option(Context*) context = nullptr;
-        Form_Array_At(mo, Cell_Array(v), VAL_INDEX(v), context);
+        bool relax = false;
+        Form_Array_At(mo, Cell_Array(v), VAL_INDEX(v), context, relax);
         return;
     }
 
