@@ -497,7 +497,7 @@ INLINE REBVAL* Freshen_Cell_Untracked(Cell* v) {
 #define Cell_Binding(v) \
     x_cast(Stub*, (v)->extra.Any.node)
 
-#if (! CPLUSPLUS_11)
+#if (! DEBUG || ! CPLUSPLUS_11)
     #define BINDING(v) \
         *x_cast(Stub**, m_cast(Node**, &(v)->extra.Any.node))
 #else
@@ -542,10 +542,8 @@ INLINE REBVAL* Freshen_Cell_Untracked(Cell* v) {
         }
     };
 
-  #if DEBUG
     INLINE void Corrupt_Pointer_If_Debug(BindingHolder const& bh)
       { bh.ref->extra.Any.node = p_cast(Stub*, cast(uintptr_t, 0xDECAFBAD)); }
-  #endif
 #endif
 
 
