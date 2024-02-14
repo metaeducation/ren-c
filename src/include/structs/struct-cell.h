@@ -501,11 +501,10 @@ union Reb_Bytes_Payload  // IMPORTANT: Do not cast, use `Pointers` instead
     Byte at_least_8[sizeof(void*) * 2];  // size depends on platform
 };
 
-// COMMA! is evaluative, but you wouldn't usually think of it as being
-// bindable because of its "inert-seeming" content.  To make the Any_Inert()
-// test fast, REB_COMMA is pushed to a high value, making it bindable.  That
-// is exploited by feeds, which use it to store va_list information along
-// with a specifier in a value cell slot.  (Most commas don't have this.)
+// COMMA! is evaluative, but does not use its extra.  To make the Any_Inert()
+// test fast, REB_COMMA is pushed to a high value.  That is exploited by feeds,
+// which use it to store va_list information along with a specifier in a value
+// cell slot.  (Most commas don't have this.)
 //
 struct Reb_Comma_Payload {
     // A feed may be sourced from a va_list of pointers, or not.  If this is

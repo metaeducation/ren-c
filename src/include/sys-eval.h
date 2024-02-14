@@ -222,7 +222,7 @@ INLINE bool Eval_Value_Core_Throws(
     Specifier* specifier
 ){
     if (Any_Inert(value)) {
-        Derelativize(out, value, specifier);
+        Copy_Cell(out, value);
         return false;  // fast things that don't need levels (should inline)
     }
 

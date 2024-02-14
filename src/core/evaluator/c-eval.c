@@ -798,7 +798,7 @@ Bounce Evaluator_Executor(Level* L)
 
       case REB_TUPLE: {
         Copy_Sequence_At(SPARE, L_current, 0);
-        if (Is_Blank(SPARE) or Any_Inert(SPARE)) {
+        if (Any_Inert(SPARE)) {
             Derelativize(OUT, L_current, L_specifier);
             break;
         }
@@ -861,7 +861,7 @@ Bounce Evaluator_Executor(Level* L)
 
       case REB_PATH: {
         Copy_Sequence_At(SPARE, L_current, 0);
-        if (Is_Blank(SPARE) or Any_Inert(SPARE)) {
+        if (Any_Inert(SPARE)) {
             Derelativize(OUT, L_current, L_specifier);
             break;
         }
