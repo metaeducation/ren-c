@@ -523,7 +523,7 @@ void Force_Value_Frozen_Core(
     if (Is_Value_Frozen_Deep(v))
         return;
 
-    enum Reb_Kind heart = Cell_Heart(v);
+    Heart heart = Cell_Heart(v);
 
     if (heart == REB_FRAME and Is_Frame_Details(v))
         return;  // special form, immutable

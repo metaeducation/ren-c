@@ -499,7 +499,7 @@ int64_t Mul_Max(enum Reb_Kind type, int64_t n, int64_t m, int64_t maxi)
 // unbound one).
 //
 REBVAL *Setify(REBVAL *out) {  // called on stack values; can't call evaluator
-    enum Reb_Kind heart = Cell_Heart(out);
+    Heart heart = Cell_Heart(out);
     if (Any_Word_Kind(heart)) {
         HEART_BYTE(out) = REB_SET_WORD;
     }
@@ -545,7 +545,7 @@ DECLARE_NATIVE(setify)
 // Like Setify() but Makes GET-XXX! instead of SET-XXX!.
 //
 REBVAL *Getify(REBVAL *out) {  // called on stack values; can't call evaluator
-    enum Reb_Kind heart = Cell_Heart(out);
+    Heart heart = Cell_Heart(out);
     if (Any_Block_Kind(heart)) {
         HEART_BYTE(out) = REB_GET_BLOCK;
     }
@@ -591,7 +591,7 @@ DECLARE_NATIVE(getify)
 // Turn a value into its META-XXX! equivalent, if possible.
 //
 REBVAL *Metafy(REBVAL *out) {  // called on stack values; can't call evaluator
-    enum Reb_Kind heart = Cell_Heart(out);
+    Heart heart = Cell_Heart(out);
     if (Any_Word_Kind(heart)) {
         HEART_BYTE(out) = REB_META_WORD;
     }
@@ -640,7 +640,7 @@ DECLARE_NATIVE(metafy)
 // Turn a value into its THE-XXX! equivalent, if possible.
 //
 REBVAL *Theify(REBVAL *out) {  // called on stack values; can't call evaluator
-    enum Reb_Kind heart = Cell_Heart(out);
+    Heart heart = Cell_Heart(out);
     if (Any_Word_Kind(heart)) {
         HEART_BYTE(out) = REB_THE_WORD;
     }
@@ -689,7 +689,7 @@ DECLARE_NATIVE(theify)
 // Turn a value into its "plain" equivalent.  This works for all values.
 //
 REBVAL *Plainify(REBVAL *out) {
-    enum Reb_Kind heart = Cell_Heart(out);
+    Heart heart = Cell_Heart(out);
     if (Any_Word_Kind(heart)) {
         HEART_BYTE(out) = REB_WORD;
     }

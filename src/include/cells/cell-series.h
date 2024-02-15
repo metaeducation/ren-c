@@ -4,7 +4,7 @@
 // the debug build (which doesn't inline functions) there's a notable cost.
 //
 INLINE const Series* Cell_Series(const Cell* v) {
-    enum Reb_Kind heart = Cell_Heart(v);
+    Heart heart = Cell_Heart(v);
     assert(Any_Series_Kind(heart) or heart == REB_URL);
     UNUSED(heart);
     if (Not_Node_Accessible(Cell_Node1(v)))
@@ -40,15 +40,13 @@ INLINE const Series* Cell_Series(const Cell* v) {
     // type checking to ensure VAL_INDEX() applied.  (This is called often.)
     //
     INLINE REBIDX VAL_INDEX_UNBOUNDED(const Cell* v) {
-        enum Reb_Kind k = Cell_Heart_Unchecked(v);  // only const if heart!
-        assert(Any_Series_Kind(k));
+        assert(Any_Series_Kind(Cell_Heart_Unchecked(v)));
         assert(Get_Cell_Flag_Unchecked(v, FIRST_IS_NODE));
         return VAL_INDEX_RAW(v);
     }
     INLINE REBIDX & VAL_INDEX_UNBOUNDED(Cell* v) {
         ASSERT_CELL_WRITABLE(v);
-        enum Reb_Kind k = Cell_Heart_Unchecked(v);
-        assert(Any_Series_Kind(k));
+        assert(Any_Series_Kind(Cell_Heart_Unchecked(v)));
         assert(Get_Cell_Flag_Unchecked(v, FIRST_IS_NODE));
         return VAL_INDEX_RAW(v);  // returns a C++ reference
     }
@@ -62,9 +60,7 @@ INLINE REBLEN Cell_Series_Len_Head(const Cell* v);  // forward decl
 // unsigned REBLEN.
 //
 INLINE REBLEN VAL_INDEX(const Cell* v) {
-    enum Reb_Kind k = Cell_Heart(v);  // only const access if heart!
-    assert(Any_Series_Kind(k));
-    UNUSED(k);
+    assert(Any_Series_Kind(Cell_Heart(v)));
     assert(Get_Cell_Flag(v, FIRST_IS_NODE));
     REBIDX i = VAL_INDEX_RAW(v);
     if (i < 0 or i > cast(REBIDX, Cell_Series_Len_Head(v)))

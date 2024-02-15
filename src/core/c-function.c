@@ -265,7 +265,7 @@ void Push_Keys_And_Parameters_May_Fail(
             quoted = true;
         }
 
-        enum Reb_Kind heart = Cell_Heart(item);
+        Heart heart = Cell_Heart(item);
 
         const Symbol* symbol = nullptr;  // avoids compiler warning
         ParamClass pclass = PARAMCLASS_0;  // error if not changed

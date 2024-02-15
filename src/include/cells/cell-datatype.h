@@ -158,9 +158,8 @@ INLINE CFunction** VAL_TYPE_HOOKS(const Cell* type) {
 }
 
 INLINE CFunction** HOOKS_FOR_TYPE_OF(const Cell* v) {
-    enum Reb_Kind k = Cell_Heart(v);
-    assert(k < REB_MAX);
-    return Builtin_Type_Hooks[k];
+    Heart heart = Cell_Heart(v);
+    return Builtin_Type_Hooks[heart];
 }
 
 #define Symbol_Hook_For_Type_Of(v) \

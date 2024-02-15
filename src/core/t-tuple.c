@@ -436,16 +436,16 @@ REBTYPE(Sequence)
 //
 void MF_Sequence(REB_MOLD *mo, const Cell* v, bool form)
 {
-    enum Reb_Kind kind = Cell_Heart(v);
-    char interstitial = Any_Tuple_Kind(kind) ? '.' : '/';
+    Heart heart = Cell_Heart(v);
+    char interstitial = Any_Tuple_Kind(heart) ? '.' : '/';
 
-    if (kind == REB_GET_PATH or kind == REB_GET_TUPLE)
+    if (heart == REB_GET_PATH or heart == REB_GET_TUPLE)
         Append_Codepoint(mo->series, ':');
-    else if (kind == REB_META_PATH or kind == REB_META_TUPLE)
+    else if (heart == REB_META_PATH or heart == REB_META_TUPLE)
         Append_Codepoint(mo->series, '^');
-    else if (kind == REB_THE_PATH or kind == REB_THE_TUPLE)
+    else if (heart == REB_THE_PATH or heart == REB_THE_TUPLE)
         Append_Codepoint(mo->series, '@');
-    else if (kind == REB_TYPE_PATH or kind == REB_TYPE_TUPLE)
+    else if (heart == REB_TYPE_PATH or heart == REB_TYPE_TUPLE)
         Append_Codepoint(mo->series, '&');
 
     bool first = true;
@@ -493,6 +493,6 @@ void MF_Sequence(REB_MOLD *mo, const Cell* v, bool form)
 
     }
 
-    if (kind == REB_SET_PATH or kind == REB_SET_TUPLE)
+    if (heart == REB_SET_PATH or heart == REB_SET_TUPLE)
         Append_Codepoint(mo->series, ':');
 }

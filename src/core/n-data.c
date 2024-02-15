@@ -1269,9 +1269,9 @@ bool Set_Var_Core_Updater_Throws(
 
     DECLARE_LOCAL (temp);  // target might be same as out (e.g. spare)
 
-    enum Reb_Kind varheart = Cell_Heart(var);
+    Heart var_heart = Cell_Heart(var);
 
-    if (Any_Group_Kind(varheart)) {  // !!! maybe SET-GROUP!, but GET-GROUP!?
+    if (Any_Group_Kind(var_heart)) {  // !!! maybe SET-GROUP!, but GET-GROUP!?
         if (not steps_out)
             fail (Error_Bad_Get_Group_Raw(var));
 
@@ -1289,7 +1289,7 @@ bool Set_Var_Core_Updater_Throws(
         return false;
     }
 
-    if (Any_Word_Kind(varheart)) {
+    if (Any_Word_Kind(var_heart)) {
 
       set_target:
 
@@ -1340,7 +1340,7 @@ bool Set_Var_Core_Updater_Throws(
     // GROUP! by value).  These evaluations should only be allowed if the
     // caller has asked us to return steps.
 
-    if (Any_Sequence_Kind(varheart)) {
+    if (Any_Sequence_Kind(var_heart)) {
         if (Not_Cell_Flag(var, SEQUENCE_HAS_NODE))  // compressed byte form
             fail (var);
 

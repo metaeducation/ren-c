@@ -314,14 +314,14 @@ REBINT Cmp_Value(const Cell* s, const Cell* t, bool strict)
     if (squotes != tquotes)
         return squotes > tquotes ? 1 : -1;
 
-    enum Reb_Kind s_kind = Cell_Heart(s);
-    enum Reb_Kind t_kind = Cell_Heart(t);
+    Heart s_heart = Cell_Heart(s);
+    Heart t_heart = Cell_Heart(t);
 
     if (
-        s_kind != t_kind
-        and not (Any_Number_Kind(s_kind) and Any_Number_Kind(t_kind))
+        s_heart != t_heart
+        and not (Any_Number_Kind(s_heart) and Any_Number_Kind(t_heart))
     ){
-        return s_kind > t_kind ? 1 : -1;
+        return s_heart > t_heart ? 1 : -1;
     }
 
     // !!! The strange and ad-hoc way this routine was written has some
@@ -333,9 +333,9 @@ REBINT Cmp_Value(const Cell* s, const Cell* t, bool strict)
     REBDEC d1;
     REBDEC d2;
 
-    switch (s_kind) {
+    switch (s_heart) {
       case REB_INTEGER:
-        if (t_kind == REB_DECIMAL) {
+        if (t_heart == REB_DECIMAL) {
             d1 = cast(REBDEC, VAL_INT64(s));
             d2 = VAL_DECIMAL(t);
             goto chkDecimal;
@@ -345,13 +345,13 @@ REBINT Cmp_Value(const Cell* s, const Cell* t, bool strict)
       case REB_PERCENT:
       case REB_DECIMAL:
       case REB_MONEY:
-        if (s_kind == REB_MONEY)
+        if (s_heart == REB_MONEY)
             d1 = deci_to_decimal(VAL_MONEY_AMOUNT(s));
         else
             d1 = VAL_DECIMAL(s);
-        if (t_kind == REB_INTEGER)
+        if (t_heart == REB_INTEGER)
             d2 = cast(REBDEC, VAL_INT64(t));
-        else if (t_kind == REB_MONEY)
+        else if (t_heart == REB_MONEY)
             d2 = deci_to_decimal(VAL_MONEY_AMOUNT(t));
         else
             d2 = VAL_DECIMAL(t);

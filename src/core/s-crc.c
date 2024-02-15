@@ -115,7 +115,7 @@ uint32_t Hash_UTF8_Len_Caseless(Utf8(const*) cp, Length len) {
 //
 uint32_t Hash_Value(const Cell* cell)
 {
-    enum Reb_Kind heart = Cell_Heart(cell);
+    Heart heart = Cell_Heart(cell);
 
     uint32_t hash;
 

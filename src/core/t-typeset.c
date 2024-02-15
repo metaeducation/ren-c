@@ -290,7 +290,7 @@ void Set_Parameter_Spec(
         else
             lookup = item;
 
-        enum Reb_Kind heart = Cell_Heart(lookup);
+        Heart heart = Cell_Heart(lookup);
 
         if (heart == REB_TYPE_WORD) {
             if (optimized == optimized_tail and item != tail) {

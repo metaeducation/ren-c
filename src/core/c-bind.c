@@ -45,7 +45,7 @@ void Bind_Values_Inner_Loop(
 ){
     Element* v = head;
     for (; v != tail; ++v) {
-        enum Reb_Kind heart = Cell_Heart(v);
+        Heart heart = Cell_Heart(v);
 
         if (Any_Word_Kind(heart)) {
             const Symbol* symbol = Cell_Word_Symbol(v);
@@ -968,7 +968,7 @@ void Clonify_And_Bind_Relative(
 
     assert(flags & NODE_FLAG_MANAGED);
 
-    enum Reb_Kind heart = Cell_Heart_Unchecked(v);
+    Heart heart = Cell_Heart_Unchecked(v);
 
     if (
         relative
@@ -1524,7 +1524,7 @@ void Assert_Cell_Binding_Valid_Core(const Cell* cell)
     if (not binding)
         return;
 
-    enum Reb_Kind heart = Cell_Heart_Unchecked(cell);
+    Heart heart = Cell_Heart_Unchecked(cell);
 
     assert(Is_Node(binding));
     assert(Is_Node_Managed(binding));

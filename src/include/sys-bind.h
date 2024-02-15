@@ -99,7 +99,7 @@ INLINE Value* Derelativize_Untracked(
     Copy_Cell_Header(out, v);
     out->payload = v->payload;
 
-    enum Reb_Kind heart = Cell_Heart_Unchecked(v);
+    Heart heart = Cell_Heart_Unchecked(v);
 
     if (not Is_Bindable_Heart(heart)) {
         out->extra = v->extra;

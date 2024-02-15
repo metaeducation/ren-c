@@ -147,7 +147,7 @@ typedef struct StubStruct Stub;  // forward decl for DEBUG_USE_UNION_PUNS
 #define HEART_BYTE(cell) \
     SECOND_BYTE(&(cell)->header.bits)  // don't use ensure() [1]
 
-#define FLAG_HEART_BYTE(kind)       FLAG_SECOND_BYTE(kind)
+#define FLAG_HEART_BYTE(heart)       FLAG_SECOND_BYTE(heart)
 
 
 //=//// BITS 16-23: QUOTING DEPTH BYTE ("QUOTE") //////////////////////////=//
@@ -163,7 +163,7 @@ typedef struct StubStruct Stub;  // forward decl for DEBUG_USE_UNION_PUNS
 // get conflated, e.g. Cell* can't have VAL_TYPE() taken on it.
 //
 #define QUOTE_BYTE(cell) \
-    THIRD_BYTE(ensure(const Cell*, cell))
+    THIRD_BYTE(&(cell)->header.bits)  // don't use ensure(), see HEART_BYTE [1]
 
 #define FLAG_QUOTE_BYTE(byte)       FLAG_THIRD_BYTE(byte)
 

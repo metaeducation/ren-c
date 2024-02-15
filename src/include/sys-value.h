@@ -266,7 +266,7 @@ INLINE void Init_Cell_Node2(Cell* v, Option(const Node*) node) {
 
 
 #define Cell_Heart_Unchecked(cell) \
-    u_cast(enum Reb_Kind, HEART_BYTE(cell))
+    u_cast(Heart, HEART_BYTE(cell))
 
 #define Cell_Heart(cell) \
     Cell_Heart_Unchecked(READABLE(cell))

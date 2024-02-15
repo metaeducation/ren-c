@@ -93,10 +93,10 @@
 //
 
 INLINE bool Is_Valid_Sequence_Element(
-    enum Reb_Kind sequence_kind,
+    Heart sequence_heart,
     const Value* v  // current code paths check arbitrary pushed stack values
 ){
-    assert(Any_Sequence_Kind(sequence_kind));
+    assert(Any_Sequence_Kind(sequence_heart));
 
     if (Is_Antiform(v) or Is_Quoted(v))
         return false;
@@ -106,21 +106,21 @@ INLINE bool Is_Valid_Sequence_Element(
     // !!! Ambiguity with Quasi-Path, e.g. ~/foo/~
     // https://github.com/metaeducation/ren-c/issues/1157
     //
-    enum Reb_Kind k = Is_Quasiform(v) ? Cell_Heart(v) : VAL_TYPE(v);
+    Heart h = Cell_Heart(v);
     if (
-        k == REB_BLANK
-        or k == REB_INTEGER
-        or k == REB_GROUP
-        or k == REB_BLOCK
-        or k == REB_TEXT
-        or k == REB_TAG
-        or k == REB_WORD
+        h == REB_BLANK
+        or h == REB_INTEGER
+        or h == REB_GROUP
+        or h == REB_BLOCK
+        or h == REB_TEXT
+        or h == REB_TAG
+        or h == REB_WORD
     ){
         return true;
     }
 
-    if (k == REB_TUPLE)  // PATH! can have TUPLE!, not vice-versa
-        return Any_Path_Kind(sequence_kind);
+    if (h == REB_TUPLE)  // PATH! can have TUPLE!, not vice-versa
+        return Any_Path_Kind(sequence_heart);
 
     return false;
 }

@@ -186,11 +186,11 @@ static void Append_Vars_To_Context_From_Group(REBVAL *context, REBVAL *block)
 //    are "untracked" by saying they're managed, and taking that flag off.
 //
 void Init_Evars(EVARS *e, const Cell* v) {
-    enum Reb_Kind kind = Cell_Heart(v);
+    Heart heart = Cell_Heart(v);
 
     e->visibility = VAR_VISIBILITY_ALL;  // ensure not uninitialized
 
-    if (kind == REB_FRAME and Is_Frame_Details(v)) {
+    if (heart == REB_FRAME and Is_Frame_Details(v)) {
         e->index = 0;  // will be bumped to 1
 
         Corrupt_Pointer_If_Debug(e->ctx);
@@ -217,7 +217,7 @@ void Init_Evars(EVARS *e, const Cell* v) {
         e->word = nullptr;
         Corrupt_Pointer_If_Debug(e->word_tail);
     }
-    else if (kind == REB_MODULE) {
+    else if (heart == REB_MODULE) {
         //
         // !!! Module enumeration is slow, and you should not do it often...it
         // requires walking over the global word table.  The global table gets
@@ -281,7 +281,7 @@ void Init_Evars(EVARS *e, const Cell* v) {
 
         assert(Series_Used(CTX_KEYLIST(e->ctx)) <= CTX_LEN(e->ctx));
 
-        if (kind != REB_FRAME) {
+        if (heart != REB_FRAME) {
             e->param = nullptr;
             e->key = CTX_KEYS(&e->key_tail, e->ctx) - 1;
         }

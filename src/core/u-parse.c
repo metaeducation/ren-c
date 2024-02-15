@@ -707,7 +707,7 @@ static REBIXO Parse_One_Rule(
         // !!! The concept is based somewhat on what was legal in FIND for
         // Rebol2, and leverages quoting.  It's being experimented with.
         //
-        enum Reb_Kind rule_heart = Cell_Heart(rule);
+        Heart rule_heart = Cell_Heart(rule);
         if (
             (Any_Word_Kind(rule_heart) and Cell_Num_Quotes(rule) == 1)
             or (Any_String_Kind(rule_heart) and Cell_Num_Quotes(rule) <= 1)

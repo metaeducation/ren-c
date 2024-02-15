@@ -348,10 +348,10 @@ static void Collect_Inner_Loop(
 ){
     const Cell* v = head;
     for (; v != tail; ++v) {
-        enum Reb_Kind kind = Cell_Heart(v);
+        Heart heart = Cell_Heart(v);
 
-        if (Any_Word_Kind(kind)) {
-            if (kind != REB_SET_WORD and not (cl->flags & COLLECT_ANY_WORD))
+        if (Any_Word_Kind(heart)) {
+            if (heart != REB_SET_WORD and not (cl->flags & COLLECT_ANY_WORD))
                 continue;  // kind of word we're not interested in collecting
 
             const Symbol* symbol = Cell_Word_Symbol(v);
@@ -383,7 +383,7 @@ static void Collect_Inner_Loop(
         // given stepping away from SET-WORD! gathering as locals.
         // https://github.com/rebol/rebol-issues/issues/2276
         //
-        if (Any_Array_Kind(kind)) {
+        if (Any_Array_Kind(heart)) {
             const Element* sub_tail;
             const Element* sub_at = Cell_Array_At(&sub_tail, v);
             Collect_Inner_Loop(cl, sub_at, sub_tail);

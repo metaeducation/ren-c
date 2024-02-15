@@ -64,19 +64,19 @@
 // cell payload and extra actually are *for*.  Quoted/quasiform/antiform
 // indicators in the quote byte do not affect it.
 
-#define Is_Bindable_Heart(k) \
-    ((k) >= REB_WORD)
+INLINE bool Is_Bindable_Heart(Heart h)
+  { return h >= REB_WORD; }
 
 #define Is_Bindable(v) \
-    Is_Bindable_Heart(HEART_BYTE(v))  // READABLE() checked elsewhere
+    Is_Bindable_Heart(Cell_Heart_Unchecked(v))  // READABLE() checked elsewhere
 
-INLINE bool Bindable_Heart_Is_Any_Word(Byte heart) {
-    assert(Is_Bindable_Heart(heart));
+INLINE bool Bindable_Heart_Is_Any_Word(Heart heart) {
+    assert(heart >= REB_WORD);  // inlined Is_Bindable_Heart()
     return heart < REB_TUPLE;
 }
 
-INLINE bool Bindable_Heart_Is_Any_Array(Byte heart) {
-    assert(Is_Bindable_Heart(heart));
+INLINE bool Bindable_Heart_Is_Any_Array(Heart heart) {
+    assert(heart >= REB_WORD);  // inlined Is_Bindable_Heart()
     return heart >= REB_BLOCK;
 }
 

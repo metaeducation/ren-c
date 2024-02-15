@@ -50,7 +50,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
 {
     ASSERT_CELL_READABLE(v);  // then we use unchecked() on v below
 
-    enum Reb_Kind heart = Cell_Heart_Unchecked(v);
+    Heart heart = Cell_Heart_Unchecked(v);
 
     while (Is_Bindable_Heart(heart)) {  // for `break` convenience
         Stub* binding = BINDING(v);

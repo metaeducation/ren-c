@@ -245,7 +245,7 @@ INLINE Utf8(const*) Cell_Utf8_Len_Size_At_Limit(
         size_out = &dummy_size;  // force size calculation for debug check
   #endif
 
-    enum Reb_Kind heart = Cell_Heart(v);
+    Heart heart = Cell_Heart(v);
 
     if (heart == REB_ISSUE and Not_Cell_Flag(v, ISSUE_HAS_NODE)) {
         REBLEN len;

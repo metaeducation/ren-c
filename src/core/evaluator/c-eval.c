@@ -1222,7 +1222,7 @@ Bounce Evaluator_Executor(Level* L)
                 fail ("QUOTED! not currently permitted in SET-BLOCK!s");
 
             bool raised_ok = Is_Quasiform(check);  // quasi has meaning
-            enum Reb_Kind heart = Cell_Heart(check);
+            Heart heart = Cell_Heart(check);
 
             bool is_optional;
             if (
@@ -1383,7 +1383,7 @@ Bounce Evaluator_Executor(Level* L)
 
             assert(not Is_Quoted(var));
             bool raised_ok = Is_Quasiform(var);  // quasi has meaning
-            enum Reb_Kind var_heart = Cell_Heart(var);
+            Heart var_heart = Cell_Heart(var);
 
             if (pack_meta_at == pack_meta_tail) {
                 if (not is_optional)

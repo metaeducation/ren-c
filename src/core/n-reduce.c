@@ -451,7 +451,7 @@ static Atom* Finalize_Composer_Level(
         return out;
     }
 
-    enum Reb_Kind heart = Cell_Heart(composee);
+    Heart heart = Cell_Heart(composee);
     REBLEN quotes = Cell_Num_Quotes(composee);
 
     if (Any_Sequence_Kind(heart)) {
@@ -596,7 +596,7 @@ Bounce Composer_Executor(Level* const L)
         goto handle_next_item;
     }
 
-    enum Reb_Kind heart = Cell_Heart(at);  // quoted groups match [1]
+    Heart heart = Cell_Heart(at);  // quoted groups match [1]
 
     Specifier* match_specifier = nullptr;
     const Element* match = nullptr;
@@ -667,7 +667,7 @@ Bounce Composer_Executor(Level* const L)
         or STATE == ST_COMPOSER_RUNNING_PREDICATE
     );
 
-    enum Reb_Kind group_heart = Cell_Heart(At_Level(L));
+    Heart group_heart = Cell_Heart(At_Level(L));
     Byte group_quote_byte = QUOTE_BYTE(At_Level(L));
 
     Decay_If_Unstable(OUT);

@@ -482,28 +482,25 @@ REBINT Compare_Modify_Values(Cell* a, Cell* b, bool strict)
     QUOTE_BYTE(a) = NOQUOTE_1;
     QUOTE_BYTE(b) = NOQUOTE_1;
 
-    enum Reb_Kind ta = Cell_Heart(a);
-    enum Reb_Kind tb = Cell_Heart(b);
+    Heart a_heart = Cell_Heart(a);
+    Heart b_heart = Cell_Heart(b);
 
-    assert(ta < REB_MAX);  // we dequoted it
-    assert(tb < REB_MAX);  // we dequoted this as well
-
-    if (ta != tb) {
+    if (a_heart != b_heart) {
         //
         // If types not matching is a problem, callers to this routine should
         // check that for themselves before calling.  It is assumed that
         // "strict" here still allows coercion, e.g. `1 < 1.1` should work.
         //
-        switch (ta) {
+        switch (a_heart) {
           case REB_VOID:
             return -1;  // consider always less than anything else
 
           case REB_INTEGER:
-            if (tb == REB_DECIMAL || tb == REB_PERCENT) {
+            if (b_heart == REB_DECIMAL || b_heart == REB_PERCENT) {
                 Init_Decimal(a, cast(REBDEC, VAL_INT64(a)));
                 goto compare;
             }
-            else if (tb == REB_MONEY) {
+            else if (b_heart == REB_MONEY) {
                 Init_Money(a, int_to_deci(VAL_INT64(a)));
                 goto compare;
             }
@@ -511,24 +508,24 @@ REBINT Compare_Modify_Values(Cell* a, Cell* b, bool strict)
 
           case REB_DECIMAL:
           case REB_PERCENT:
-            if (tb == REB_INTEGER) {
+            if (b_heart == REB_INTEGER) {
                 Init_Decimal(b, cast(REBDEC, VAL_INT64(b)));
                 goto compare;
             }
-            else if (tb == REB_MONEY) {
+            else if (b_heart == REB_MONEY) {
                 Init_Money(a, decimal_to_deci(VAL_DECIMAL(a)));
                 goto compare;
             }
-            else if (tb == REB_DECIMAL || tb == REB_PERCENT) // equivalent types
-                goto compare;
+            else if (b_heart == REB_DECIMAL || b_heart == REB_PERCENT)
+                goto compare;  // equivalent types
             break;
 
           case REB_MONEY:
-            if (tb == REB_INTEGER) {
+            if (b_heart == REB_INTEGER) {
                 Init_Money(b, int_to_deci(VAL_INT64(b)));
                 goto compare;
             }
-            if (tb == REB_DECIMAL || tb == REB_PERCENT) {
+            if (b_heart == REB_DECIMAL || b_heart == REB_PERCENT) {
                 Init_Money(b, decimal_to_deci(VAL_DECIMAL(b)));
                 goto compare;
             }
@@ -538,7 +535,8 @@ REBINT Compare_Modify_Values(Cell* a, Cell* b, bool strict)
           case REB_SET_WORD:
           case REB_GET_WORD:
           case REB_META_WORD:
-            if (Any_Word_Kind(tb)) goto compare;
+            if (Any_Word_Kind(b_heart))
+                goto compare;
             break;
 
           case REB_TEXT:
@@ -546,7 +544,8 @@ REBINT Compare_Modify_Values(Cell* a, Cell* b, bool strict)
           case REB_EMAIL:
           case REB_URL:
           case REB_TAG:
-            if (Any_String_Kind(tb)) goto compare;
+            if (Any_String_Kind(b_heart))
+                goto compare;
             break;
 
           default:
@@ -554,20 +553,20 @@ REBINT Compare_Modify_Values(Cell* a, Cell* b, bool strict)
         }
 
         if (not strict)
-            return ta > tb ? 1 : -1;  // !!! Review
+            return a_heart > b_heart ? 1 : -1;  // !!! Review
 
         fail (Error_Invalid_Compare_Raw(
-            Datatype_From_Kind(ta),
-            Datatype_From_Kind(tb)
+            Datatype_From_Kind(a_heart),
+            Datatype_From_Kind(b_heart)
         ));
     }
 
   compare:;
 
-    enum Reb_Kind kind = Cell_Heart(a);
+    Heart heart = Cell_Heart(a);
 
-    if (kind == REB_VOID) {
-        assert(HEART_BYTE(b) == REB_VOID);
+    if (heart == REB_VOID) {
+        assert(Cell_Heart(b) == REB_VOID);
         return 0;  // voids always equal
     }
 

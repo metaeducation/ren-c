@@ -317,6 +317,13 @@ e-types/emit [rebs {
      * necessary if this number exceeds 64.
      */
     STATIC_ASSERT(REB_MAX <= 64);
+
+    /*
+     * Heart bytes are the subset of type values that can actually be in the
+     * cell to guide its interpretation.  This can never be QUOTED or QUASI
+     * or ANTIFORM because those are determined by the quote byte.
+     */
+     typedef enum Reb_Kind Heart;
 }]
 e-types/emit newline
 

@@ -56,7 +56,7 @@ Node* Dump_Value_Debug(const Cell* v)
   #endif
     fflush(stdout);
 
-    enum Reb_Kind heart = Cell_Heart(v);
+    Heart heart = Cell_Heart(v);
     const char *type = String_UTF8(Canon_Symbol(SYM_FROM_KIND(heart)));
     printf("cell_heart=%s\n", type);
     fflush(stdout);

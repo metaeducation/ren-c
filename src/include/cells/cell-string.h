@@ -1,7 +1,7 @@
 // %cell-string.h
 
 INLINE const String* Cell_String(const Cell* v) {
-    enum Reb_Kind heart = Cell_Heart(v);
+    Heart heart = Cell_Heart(v);
     if (Any_Word_Kind(heart))
         return Cell_Word_Symbol(v);
 

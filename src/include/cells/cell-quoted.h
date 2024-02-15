@@ -174,7 +174,7 @@ INLINE bool Is_Antiform_Unstable(Need(const Atom*) v) {
 #define Is_Antiform_Stable(v) \
     (not Is_Antiform_Unstable(v))
 
-INLINE bool Is_Stable_Antiform_Heart(enum Reb_Kind heart) {
+INLINE bool Is_Stable_Antiform_Heart(Heart heart) {
     return (
         heart != REB_BLOCK  // Is_Pack()
         and heart != REB_ERROR  // Is_Raised()
