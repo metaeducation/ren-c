@@ -94,11 +94,12 @@ REBINT CT_Issue(const Cell* a, const Cell* b, bool strict)
 //
 Bounce MAKE_Issue(
     Level* level_,
-    enum Reb_Kind k,
+    Kind k,
     Option(const Value*) parent,
     const REBVAL *arg
 ){
     assert(k == REB_ISSUE);
+    UNUSED(k);
 
     if (parent)
         fail (Error_Bad_Make_Parent(REB_ISSUE, unwrap(parent)));
@@ -217,7 +218,7 @@ DECLARE_NATIVE(utf8_to_char)
 // divided into functions like CODEPOINT-TO-CHAR and UTF8-TO-CHAR, which
 // leave things like TO ISSUE! 10 to be #10.
 //
-Bounce TO_Issue(Level* level_, enum Reb_Kind kind, const REBVAL *arg)
+Bounce TO_Issue(Level* level_, Kind kind, const REBVAL *arg)
 {
     assert(VAL_TYPE(arg) != REB_ISSUE);  // !!! should call COPY?
 

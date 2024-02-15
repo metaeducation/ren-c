@@ -32,7 +32,7 @@
 //
 Bounce MAKE_Quasiform(
     Level* level_,
-    enum Reb_Kind kind,
+    Kind kind,
     Option(const Value*) parent,
     const REBVAL *arg
 ){
@@ -56,7 +56,7 @@ Bounce MAKE_Quasiform(
 //
 // TO is disallowed at the moment (use QUASI)
 //
-Bounce TO_Quasiform(Level* level_, enum Reb_Kind kind, const REBVAL *data) {
+Bounce TO_Quasiform(Level* level_, Kind kind, const REBVAL *data) {
     return RAISE(Error_Bad_Make(kind, data));
 }
 

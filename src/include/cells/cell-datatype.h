@@ -60,23 +60,23 @@
 INLINE bool IS_KIND_SYM(Option(SymId) id)
   { return id != 0 and id < cast(uint16_t, REB_MAX); }
 
-INLINE enum Reb_Kind KIND_FROM_SYM(SymId s) {
+INLINE Kind KIND_FROM_SYM(SymId s) {
     assert(IS_KIND_SYM(s));
-    return cast(enum Reb_Kind, cast(int, (s)));
+    return cast(Kind, s);
 }
 
 #define SYM_FROM_KIND(k) \
-    cast(SymId, cast(enum Reb_Kind, (k)))
+    cast(SymId, cast(uint16_t, (k)))
 
 
 #define VAL_TYPE_SYMBOL(v) \
     Cell_Word_Symbol(v)
 
-INLINE enum Reb_Kind VAL_TYPE_KIND(const Cell* v) {
+INLINE Kind VAL_TYPE_KIND(const Cell* v) {
     assert(Cell_Heart(v) == REB_TYPE_WORD);
     Option(SymId) id = Symbol_Id(Cell_Word_Symbol(v));
     assert(unwrap(id) < cast(SymId, REB_MAX));
-    return cast(enum Reb_Kind, unwrap(id));
+    return cast(Kind, unwrap(id));
 }
 
 
@@ -84,7 +84,7 @@ INLINE enum Reb_Kind VAL_TYPE_KIND(const Cell* v) {
 //
 INLINE REBVAL *Init_Builtin_Datatype_Untracked(
     Cell* out,
-    enum Reb_Kind kind
+    Kind kind
 ){
     assert(kind < REB_MAX);
     return Init_Any_Word(out, REB_TYPE_WORD, Canon_Symbol(cast(SymId, kind)));
@@ -152,7 +152,7 @@ extern CFunction* Builtin_Type_Hooks[REB_MAX][IDX_HOOKS_MAX];
 //
 INLINE CFunction** VAL_TYPE_HOOKS(const Cell* type) {
     assert(Cell_Heart(type) == REB_TYPE_WORD);
-    enum Reb_Kind k = VAL_TYPE_KIND(type);
+    Kind k = VAL_TYPE_KIND(type);
     assert(k < REB_MAX);
     return Builtin_Type_Hooks[k];
 }

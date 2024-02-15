@@ -67,7 +67,7 @@ REBINT CT_Quoted(const Cell* a, const Cell* b, bool strict)
 //
 Bounce MAKE_Quoted(
     Level* level_,
-    enum Reb_Kind kind,
+    Kind kind,
     Option(const Value*) parent,
     const REBVAL *arg
 ){
@@ -85,7 +85,7 @@ Bounce MAKE_Quoted(
 // TO is disallowed at the moment, as there is no clear equivalence of things
 // "to" a literal.  (to quoted! [[a]] => \\a, for instance?)
 //
-Bounce TO_Quoted(Level* level_, enum Reb_Kind kind, const REBVAL *data) {
+Bounce TO_Quoted(Level* level_, Kind kind, const REBVAL *data) {
     return RAISE(Error_Bad_Make(kind, data));
 }
 

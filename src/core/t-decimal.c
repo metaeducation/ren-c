@@ -145,7 +145,7 @@ REBVAL *Init_Decimal_Bits(Cell* out, const Byte* bp)
 //
 Bounce MAKE_Decimal(
     Level* level_,
-    enum Reb_Kind k,
+    Kind k,
     Option(const Value*) parent,
     const REBVAL *arg
 ){
@@ -302,7 +302,7 @@ Bounce MAKE_Decimal(
 // conversions, with MAKE used for less obvious (e.g. make decimal [1 5]
 // giving you 100000).
 //
-Bounce TO_Decimal(Level* level_, enum Reb_Kind k, const REBVAL *arg)
+Bounce TO_Decimal(Level* level_, Kind k, const REBVAL *arg)
 {
     assert(k == REB_DECIMAL or k == REB_PERCENT);
     Heart heart = cast(Heart, k);

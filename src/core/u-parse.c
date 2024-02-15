@@ -1052,7 +1052,7 @@ static REBIXO To_Thru_Non_Block_Rule(
         fail ("QUASI true and false only forms supported by PARSE3");
     }
 
-    enum Reb_Kind kind = VAL_TYPE(rule);
+    Kind kind = VAL_TYPE(rule);
     assert(kind != REB_BLOCK);
 
     // R3-Alpha does not support `TO []` or `THRU []` as a no-op, so we fall
@@ -1177,7 +1177,7 @@ static void Handle_Mark_Rule(
 
     Quotify(ARG(position), P_NUM_QUOTES);
 
-    enum Reb_Kind k = VAL_TYPE(rule);
+    Kind k = VAL_TYPE(rule);
     if (k == REB_WORD or k == REB_SET_WORD) {
         Copy_Cell(Sink_Word_May_Fail(rule, specifier), ARG(position));
     }
@@ -1212,7 +1212,7 @@ static void Handle_Seek_Rule_Dont_Update_Begin(
 ){
     USE_PARAMS_OF_SUBPARSE;
 
-    enum Reb_Kind k = VAL_TYPE(rule);
+    Kind k = VAL_TYPE(rule);
     if (k == REB_WORD or k == REB_GET_WORD or k == REB_TUPLE) {
         Get_Var_May_Fail(SPARE, rule, specifier, false);
         if (Is_Antiform(SPARE))

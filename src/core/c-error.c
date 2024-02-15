@@ -398,7 +398,7 @@ void Set_Location_Of_Error(
 //
 Bounce MAKE_Error(
     Level* level_,
-    enum Reb_Kind kind,
+    Kind kind,
     Option(const Value*) parent,
     const REBVAL *arg
 ){
@@ -571,7 +571,7 @@ Bounce MAKE_Error(
 // !!! Historically this was identical to MAKE ERROR!, but MAKE and TO are
 // being rethought.
 //
-Bounce TO_Error(Level* level_, enum Reb_Kind kind, const REBVAL *arg)
+Bounce TO_Error(Level* level_, Kind kind, const REBVAL *arg)
 {
     return MAKE_Error(level_, kind, nullptr, arg);
 }
@@ -979,7 +979,7 @@ Context* Error_No_Catch_For_Throw(Level* level_)
 //
 // <type> type is not allowed here.
 //
-Context* Error_Invalid_Type(enum Reb_Kind kind)
+Context* Error_Invalid_Type(Kind kind)
 {
     return Error_Invalid_Type_Raw(Datatype_From_Kind(kind));
 }
@@ -1017,7 +1017,7 @@ Context* Error_Protected_Key(const Symbol* sym)
 //
 //  Error_Math_Args: C
 //
-Context* Error_Math_Args(enum Reb_Kind type, const Symbol* verb)
+Context* Error_Math_Args(Kind type, const Symbol* verb)
 {
     DECLARE_LOCAL (verb_cell);
     Init_Word(verb_cell, verb);
@@ -1042,7 +1042,7 @@ Context* Error_Cannot_Use(const Symbol* verb, const Value* first_arg)
 //
 //  Error_Unexpected_Type: C
 //
-Context* Error_Unexpected_Type(enum Reb_Kind expected, enum Reb_Kind actual)
+Context* Error_Unexpected_Type(Kind expected, Kind actual)
 {
     assert(expected < REB_MAX);
     assert(actual < REB_MAX);
@@ -1184,7 +1184,7 @@ Context* Error_Bad_Return_Type(Level* L, Atom* atom) {
     if (Is_Pack(atom) and Is_Pack_Undecayable(atom))
         return Error_User("Bad return pack (undecayable elements)");
 
-    enum Reb_Kind kind = VAL_TYPE(atom);
+    Kind kind = VAL_TYPE(atom);
     return Error_Bad_Return_Type_Raw(label, Datatype_From_Kind(kind));
 }
 
@@ -1192,7 +1192,7 @@ Context* Error_Bad_Return_Type(Level* L, Atom* atom) {
 //
 //  Error_Bad_Make: C
 //
-Context* Error_Bad_Make(enum Reb_Kind type, const Cell* spec)
+Context* Error_Bad_Make(Kind type, const Cell* spec)
 {
     return Error_Bad_Make_Arg_Raw(Datatype_From_Kind(type), spec);
 }
@@ -1201,7 +1201,7 @@ Context* Error_Bad_Make(enum Reb_Kind type, const Cell* spec)
 //
 //  Error_Bad_Make_Parent: C
 //
-Context* Error_Bad_Make_Parent(enum Reb_Kind type, const Cell* parent)
+Context* Error_Bad_Make_Parent(Kind type, const Cell* parent)
 {
     assert(parent != nullptr);
     return Error_Bad_Make_Parent_Raw(Datatype_From_Kind(type), parent);
@@ -1211,7 +1211,7 @@ Context* Error_Bad_Make_Parent(enum Reb_Kind type, const Cell* parent)
 //
 //  Error_Cannot_Reflect: C
 //
-Context* Error_Cannot_Reflect(enum Reb_Kind type, const REBVAL *arg)
+Context* Error_Cannot_Reflect(Kind type, const REBVAL *arg)
 {
     return Error_Cannot_Use_Raw(arg, Datatype_From_Kind(type));
 }

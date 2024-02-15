@@ -59,7 +59,7 @@ typedef REBINT (COMPARE_HOOK)(
 //
 typedef Bounce (MAKE_HOOK)(
     Level* level_,
-    enum Reb_Kind kind,
+    Kind kind,
     Option(const Value*) opt_parent,
     const REBVAL *def
 );
@@ -77,7 +77,7 @@ typedef Bounce (MAKE_HOOK)(
 // and decided by the source type.  For now, the destination decides both,
 // which means TO-ness and MAKE-ness are a bit too similar.
 //
-typedef Bounce (TO_HOOK)(Level* level_, enum Reb_Kind, const REBVAL*);
+typedef Bounce (TO_HOOK)(Level* level_, Kind, const REBVAL*);
 
 
 // PER-TYPE MOLD HOOKS: for `mold value` and `form value`

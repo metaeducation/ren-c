@@ -92,7 +92,7 @@ void MF_Bitset(REB_MOLD *mo, const Cell* v, bool form)
 //
 Bounce MAKE_Bitset(
     Level* level_,
-    enum Reb_Kind kind,
+    Kind kind,
     Option(const Value*) parent,
     const REBVAL *arg
 ){
@@ -126,7 +126,7 @@ Bounce MAKE_Bitset(
 //
 //  TO_Bitset: C
 //
-Bounce TO_Bitset(Level* level_, enum Reb_Kind kind, const REBVAL *arg)
+Bounce TO_Bitset(Level* level_, Kind kind, const REBVAL *arg)
 {
     return MAKE_Bitset(level_, kind, nullptr, arg);
 }

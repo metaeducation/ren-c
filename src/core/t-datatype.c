@@ -42,7 +42,7 @@ Array* Startup_Datatypes(Array* boot_typespecs)
     REBINT n = 1;
 
     for (; n < REB_MAX; ++n) {
-        enum Reb_Kind kind = cast(enum Reb_Kind, n);
+        Kind kind = cast(Kind, n);
 
         // Many places in the system want to be able to just off-the-cuff
         // refer to a built-in datatype, without allocating a cell to

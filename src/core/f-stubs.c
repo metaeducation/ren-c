@@ -210,7 +210,7 @@ REBI64 Int64s(const REBVAL *val, REBINT sign)
 // Returns the specified datatype value from the system context.
 // The datatypes are all at the head of the context.
 //
-const REBVAL *Datatype_From_Kind(enum Reb_Kind kind)
+const REBVAL *Datatype_From_Kind(Kind kind)
 {
     assert(kind < REB_MAX);
     REBVAL *type = &Datatypes[kind];
@@ -267,7 +267,7 @@ REBINT Get_System_Int(REBLEN i1, REBLEN i2, REBINT default_int)
 //
 // !!! Overlaps with Assert_Context, review folding them together.
 //
-void Extra_Init_Context_Cell_Checks_Debug(enum Reb_Kind kind, Context* c) {
+void Extra_Init_Context_Cell_Checks_Debug(Kind kind, Context* c) {
     assert(
         (CTX_VARLIST(c)->leader.bits & SERIES_MASK_VARLIST)
         == SERIES_MASK_VARLIST

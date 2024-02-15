@@ -204,7 +204,7 @@ DECLARE_NATIVE(poke)
 //
 Bounce MAKE_Path(
     Level* level_,
-    enum Reb_Kind k,
+    Kind k,
     Option(const Value*) parent,
     const REBVAL *arg
 ){
@@ -292,10 +292,10 @@ Bounce MAKE_Path(
 //     >> to path! ^[a b c]
 //     == /[a b c]
 //
-Bounce TO_Sequence(Level* level_, enum Reb_Kind k, const REBVAL *arg) {
+Bounce TO_Sequence(Level* level_, Kind k, const REBVAL *arg) {
     Heart heart = cast(Heart, k);
 
-    enum Reb_Kind arg_kind = VAL_TYPE(arg);
+    Kind arg_kind = VAL_TYPE(arg);
 
     if (Is_Text(arg)) {
         //

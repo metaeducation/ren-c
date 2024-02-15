@@ -34,7 +34,7 @@
 //
 Bounce MAKE_Sequence(
     Level* level_,
-    enum Reb_Kind kind,
+    Kind kind,
     Option(const Value*) parent,
     const REBVAL *arg
 ){

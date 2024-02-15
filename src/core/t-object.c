@@ -526,7 +526,7 @@ REBINT CT_Context(const Cell* a, const Cell* b, bool strict)
 //
 Bounce MAKE_Frame(
     Level* level_,
-    enum Reb_Kind kind,
+    Kind kind,
     Option(const Value*) parent,
     const REBVAL *arg
 ){
@@ -596,7 +596,7 @@ Bounce MAKE_Frame(
 // to have an equivalent representation (an OBJECT! could be an expired frame
 // perhaps, but still would have no ACTION OF property)
 //
-Bounce TO_Frame(Level* level_, enum Reb_Kind kind, const REBVAL *arg)
+Bounce TO_Frame(Level* level_, Kind kind, const REBVAL *arg)
 {
     return RAISE(Error_Bad_Make(kind, arg));
 }
@@ -607,7 +607,7 @@ Bounce TO_Frame(Level* level_, enum Reb_Kind kind, const REBVAL *arg)
 //
 Bounce MAKE_Context(
     Level* level_,
-    enum Reb_Kind k,
+    Kind k,
     Option(const Value*) parent,
     const REBVAL *arg
 ){
@@ -689,7 +689,7 @@ Bounce MAKE_Context(
 //
 //  TO_Context: C
 //
-Bounce TO_Context(Level* level_, enum Reb_Kind kind, const REBVAL *arg)
+Bounce TO_Context(Level* level_, Kind kind, const REBVAL *arg)
 {
     // Other context kinds (LEVEL!, ERROR!, PORT!) have their own hooks.
     //

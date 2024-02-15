@@ -89,7 +89,7 @@ REBINT CT_Word(const Cell* a, const Cell* b, bool strict)
 //
 Bounce MAKE_Word(
     Level* level_,
-    enum Reb_Kind k,
+    Kind k,
     Option(const Value*) parent,
     const REBVAL *arg
 ){
@@ -154,7 +154,7 @@ Bounce MAKE_Word(
 //
 //  TO_Word: C
 //
-Bounce TO_Word(Level* level_, enum Reb_Kind k, const REBVAL *arg)
+Bounce TO_Word(Level* level_, Kind k, const REBVAL *arg)
 {
     Heart heart = cast(Heart, k);
 

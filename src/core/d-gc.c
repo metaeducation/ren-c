@@ -436,13 +436,6 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
             assert(index == 0);
         break; }
 
-      case REB_QUOTED:
-        //
-        // REB_QUOTED should not have any instances in cells; it is a
-        // "pseudotype" added on by VAL_TYPE() for nonzero quote levels.
-        //
-        panic ("REB_QUOTED found in cell heart");
-
       default:
         panic (v);
     }

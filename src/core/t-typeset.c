@@ -366,7 +366,7 @@ DECLARE_INTRINSIC(unspecialized_q)
 //
 Bounce MAKE_Parameter(
     Level* level_,
-    enum Reb_Kind kind,
+    Kind kind,
     Option(const Value*) parent,
     const REBVAL *arg
 ){
@@ -379,7 +379,7 @@ Bounce MAKE_Parameter(
 //
 //  TO_Parameter: C
 //
-Bounce TO_Parameter(Level* level_, enum Reb_Kind kind, const REBVAL *arg)
+Bounce TO_Parameter(Level* level_, Kind kind, const REBVAL *arg)
 {
     return MAKE_Parameter(level_, kind, nullptr, arg);
 }

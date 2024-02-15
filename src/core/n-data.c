@@ -2026,8 +2026,8 @@ DECLARE_NATIVE(as)
     Element* v = cast(Element*, ARG(value));
 
     REBVAL *t = ARG(type);
-    enum Reb_Kind new_kind = VAL_TYPE_KIND(t);
-    if (new_kind >= REB_QUASIFORM)
+    Kind new_kind = VAL_TYPE_KIND(t);
+    if (new_kind >= REB_MAX_HEART)
         fail ("New kind can't be quoted/quasiform/antiform");
 
     Heart new_heart = cast(Heart, new_kind);
@@ -2397,7 +2397,7 @@ DECLARE_NATIVE(as_text)
 
     const REBLEN quotes = 0;  // constant folding (see AS behavior)
 
-    enum Reb_Kind new_kind = REB_TEXT;
+    Kind new_kind = REB_TEXT;
     if (new_kind == VAL_TYPE(v) and not REF(strict))
         return COPY(Quotify(v, quotes));  // just may change quotes
 

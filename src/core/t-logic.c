@@ -303,7 +303,7 @@ inline static bool Math_Arg_For_Logic(REBVAL *arg)
 //
 Bounce MAKE_Antiform(
     Level* level_,
-    enum Reb_Kind kind,
+    Kind kind,
     Option(const Value*) parent,
     const REBVAL *arg
 ){
@@ -318,7 +318,7 @@ Bounce MAKE_Antiform(
 //
 //  TO_Antiform: C
 //
-Bounce TO_Antiform(Level* level_, enum Reb_Kind kind, const REBVAL *data) {
+Bounce TO_Antiform(Level* level_, Kind kind, const REBVAL *data) {
     return RAISE(Error_Bad_Make(kind, data));
 }
 

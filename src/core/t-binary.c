@@ -188,7 +188,7 @@ static Bounce MAKE_TO_Binary_Common(Level* level_, const REBVAL *arg)
 //
 Bounce MAKE_Binary(
     Level* level_,
-    enum Reb_Kind kind,
+    Kind kind,
     Option(const Value*) parent,
     const REBVAL *def
 ){
@@ -222,7 +222,7 @@ Bounce MAKE_Binary(
 //
 //  TO_Binary: C
 //
-Bounce TO_Binary(Level* level_, enum Reb_Kind kind, const REBVAL *arg)
+Bounce TO_Binary(Level* level_, Kind kind, const REBVAL *arg)
 {
     assert(kind == REB_BINARY);
     UNUSED(kind);

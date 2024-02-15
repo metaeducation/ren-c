@@ -344,7 +344,7 @@ static void reverse_string(String* str, REBLEN index, Length len)
 //
 Bounce MAKE_String(
     Level* level_,
-    enum Reb_Kind k,
+    Kind k,
     Option(const Value*) parent,
     const REBVAL *def
 ){
@@ -434,7 +434,7 @@ Bounce MAKE_String(
 //
 //  TO_String: C
 //
-Bounce TO_String(Level* level_, enum Reb_Kind k, const REBVAL *arg)
+Bounce TO_String(Level* level_, Kind k, const REBVAL *arg)
 {
     Heart heart = cast(Heart, k);
 

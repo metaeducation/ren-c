@@ -106,7 +106,7 @@ REBINT CT_Array(const Cell* a, const Cell* b, bool strict)
 //
 Bounce MAKE_Array(
     Level* level_,
-    enum Reb_Kind k,
+    Kind k,
     Option(const Value*) parent,
     const REBVAL *arg
 ){
@@ -330,7 +330,7 @@ Bounce MAKE_Array(
 //
 //  TO_Array: C
 //
-Bounce TO_Array(Level* level_, enum Reb_Kind k, const REBVAL *arg) {
+Bounce TO_Array(Level* level_, Kind k, const REBVAL *arg) {
     Heart heart = cast(Heart, k);
 
     if (Any_Sequence(arg)) {

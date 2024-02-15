@@ -340,7 +340,7 @@ static void Append_Map(
 //
 Bounce MAKE_Map(
     Level* level_,
-    enum Reb_Kind kind,
+    Kind kind,
     Option(const Value*) parent,
     const REBVAL *arg
 ){
@@ -406,7 +406,7 @@ inline static Map* Copy_Map(const Map* map, bool deeply) {
 //
 //  TO_Map: C
 //
-Bounce TO_Map(Level* level_, enum Reb_Kind kind, const REBVAL *arg)
+Bounce TO_Map(Level* level_, Kind kind, const REBVAL *arg)
 {
     assert(kind == REB_MAP);
     UNUSED(kind);

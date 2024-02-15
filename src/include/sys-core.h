@@ -200,7 +200,9 @@
 #include "structs/struct-level.h"  // C struct for running level, uses feed
 
 
-#include "tmp-kinds.h"  // Defines `enum Reb_Kind` (REB_BLOCK, REB_TEXT, etc)
+#include "tmp-kinds.h"  // HeartEnum and KindEnum (REB_BLOCK, REB_TEXT, etc.)
+#include "sys-kinds.h"  // defines Heart and Kind as safe wrappers if C++
+
 #include "sys-ordered.h"  // changing the type enum *must* update these macros
 #include "sys-flavor.h"  // series subclass byte (uses sizeof(Cell))
 

@@ -277,13 +277,33 @@ rebs: collect [
         assert [sym-n == t/heart]  ; SYM_XXX should equal REB_XXX value
         add-sym unspaced t/name
 
-        keep cscape [t {REB_${T/NAME} = $<T/HEART>}]
+        any [
+            t/name = "quasiform"
+            t/name = "quoted"
+            t/name = "antiform"
+        ] else [
+            keep cscape [t {REB_${T/NAME} = $<T/HEART>}]
+        ]
+    ]
+]
+
+kinds: collect [
+    for-each-datatype t [
+        any [
+            t/name = "quasiform"
+            t/name = "quoted"
+            t/name = "antiform"
+        ] else [
+            keep cscape [t {KIND_${T/NAME} = $<T/HEART>}]
+        ]
     ]
 ]
 
 e-types/emit [rebs {
     /*
      * INTERNAL DATATYPE CONSTANTS, e.g. REB_BLOCK or REB_TAG
+     *
+     * GENERATED FROM %TYPES.R
      *
      * Do not export these values via libRebol, as the numbers can change.
      * Their ordering is for supporting tricks--like being able to quickly
@@ -294,36 +314,44 @@ e-types/emit [rebs {
      * type" because that prohibits certain optimizations, which the compiler
      * can make based on knowing a value is only in the range of the enum.
      */
-    enum Reb_Kind {
+    #if (! CPLUSPLUS_11 || ! DEBUG  || defined(__clang__))
+        enum HeartKindEnum {
+            REB_0 = 0,  /* reserved */
+            $[Rebs],
+            REB_MAX_HEART,
+            REB_QUASIFORM = REB_MAX_HEART,
+            REB_QUOTED,
+            REB_ANTIFORM,
+            REB_MAX,
 
-        /*** TYPES AND INTERNALS GENERATED FROM %TYPES.R ***/
+            REB_T_RETURN_SIGNAL  /* signals throws, etc. */
+        };
+    #else
+        enum HeartEnum {
+            REB_0 = 0,  /* reserved */
+            $[Rebs],
+            REB_MAX_HEART,  /* one past valid types */
+        };
 
-        REB_0 = 0,  /* reserved */
-        $[Rebs],
-        REB_MAX,  /* one past valid types */
+        enum KindEnum {
+            KIND_0 = 0,  /* reserved */
+            $[Kinds],
+            REB_QUASIFORM,
+            REB_QUOTED,
+            REB_ANTIFORM,
+            REB_MAX,
 
-        /*
-        * Invalid type bytes can currently be used for other purposes.  (If
-        * bits become scarce, then the HEART_BYTE could be processed % 64
-        * to get a couple more states at a slight performance cost)
-        */
-
-        REB_T_RETURN_SIGNAL  /* signals throws, etc. */
-    };
+            REB_T_RETURN_SIGNAL  /* signals throws, etc. */
+        };
+    #endif
 
     /*
      * While the VAL_TYPE() is a full byte, only 64 states can fit in the
      * payload of a TYPESET! at the moment.  Significant rethinking would be
      * necessary if this number exceeds 64.
      */
+    STATIC_ASSERT(u_cast(int, REB_QUASIFORM) == u_cast(int, REB_MAX_HEART));
     STATIC_ASSERT(REB_MAX <= 64);
-
-    /*
-     * Heart bytes are the subset of type values that can actually be in the
-     * cell to guide its interpretation.  This can never be QUOTED or QUASI
-     * or ANTIFORM because those are determined by the quote byte.
-     */
-     typedef enum Reb_Kind Heart;
 }]
 e-types/emit newline
 

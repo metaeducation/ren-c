@@ -286,7 +286,7 @@ INLINE Heart Cell_Heart_Ensure_Noquote(const Cell* cell) {
 // pointer you pass in is carrying a word payload.  It disregards the quotes.)
 //
 
-INLINE enum Reb_Kind VAL_TYPE_UNCHECKED(const Atom* v) {
+INLINE Kind VAL_TYPE_UNCHECKED(const Atom* v) {
     switch (QUOTE_BYTE(v)) {
       case ANTIFORM_0: {
         Byte heart = HEART_BYTE(v);
@@ -300,7 +300,7 @@ INLINE enum Reb_Kind VAL_TYPE_UNCHECKED(const Atom* v) {
         return REB_ANTIFORM; }
 
       case NOQUOTE_1:
-        return u_cast(enum Reb_Kind, HEART_BYTE(v));
+        return u_cast(Kind, HEART_BYTE(v));
 
       case QUASIFORM_2:
         return REB_QUASIFORM;

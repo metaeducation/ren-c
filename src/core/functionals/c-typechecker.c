@@ -217,7 +217,7 @@ bool Typecheck_Atom_Core(
             goto test_failed;
         }
 
-        enum Reb_Kind kind;
+        Kind kind;
         const Value* test;
         if (VAL_TYPE_UNCHECKED(item) == REB_WORD) {
             label = Cell_Word_Symbol(item);
@@ -334,7 +334,7 @@ bool Typecheck_Atom_Core(
             break; }
 
           case REB_TYPE_WORD: {
-            enum Reb_Kind k;
+            Kind k;
             if (Is_Antiform(v) and Is_Antiform_Unstable(v))
                 k = REB_ANTIFORM;
             else
@@ -453,7 +453,11 @@ bool Typecheck_Coerce_Argument(
     const Byte* optimized = spec->misc.any.at_least_4;
     const Byte* optimized_tail = optimized + sizeof(uintptr_t);
 
-    enum Reb_Kind kind = Is_Stable(arg) ? VAL_TYPE(arg) : REB_ANTIFORM;
+    Kind kind;
+    if (Is_Stable(arg))
+        kind = VAL_TYPE(arg);
+    else
+        kind = REB_ANTIFORM;
 
     if (Get_Parameter_Flag(param, NOOP_IF_VOID))
         assert(kind != REB_VOID);  // should have bypassed typecheck

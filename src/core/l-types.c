@@ -43,7 +43,7 @@
 //
 Bounce MAKE_Fail(
     Level* level_,
-    enum Reb_Kind kind,
+    Kind kind,
     Option(const Value*) parent,
     const REBVAL *arg
 ){
@@ -64,7 +64,7 @@ Bounce MAKE_Fail(
 //
 Bounce MAKE_Unhooked(
     Level* level_,
-    enum Reb_Kind kind,
+    Kind kind,
     Option(const Value*) parent,
     const REBVAL *arg
 ){
@@ -115,7 +115,7 @@ DECLARE_NATIVE(make)
         Set_Cell_Flag(arg, EXPLICITLY_MUTABLE);
 
     Option(const Value*) parent;
-    enum Reb_Kind kind;
+    Kind kind;
     if (Is_Type_Word(type)) {
         kind = VAL_TYPE_KIND(type);
         parent = nullptr;
@@ -146,7 +146,7 @@ DECLARE_NATIVE(make)
 //
 //  TO_Fail: C
 //
-Bounce TO_Fail(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
+Bounce TO_Fail(REBVAL *out, Kind kind, const REBVAL *arg)
 {
     UNUSED(out);
     UNUSED(kind);
@@ -159,7 +159,7 @@ Bounce TO_Fail(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 //
 //  TO_Unhooked: C
 //
-Bounce TO_Unhooked(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
+Bounce TO_Unhooked(REBVAL *out, Kind kind, const REBVAL *arg)
 {
     UNUSED(out);
     UNUSED(arg);
@@ -189,8 +189,8 @@ DECLARE_NATIVE(to)
     REBVAL *v = ARG(value);
     REBVAL *type = ARG(type);
 
-    enum Reb_Kind new_kind = VAL_TYPE_KIND(type);
-    enum Reb_Kind old_kind = VAL_TYPE(v);
+    Kind new_kind = VAL_TYPE_KIND(type);
+    Kind old_kind = VAL_TYPE(v);
 
     if (new_kind == old_kind) {
         return rebValue("copy @", v);
