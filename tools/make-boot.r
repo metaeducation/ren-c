@@ -272,6 +272,13 @@ e-types: make-emitter "Datatype Definitions" (
     join prep-dir %include/tmp-kinds.h
 )
 
+e-types/emit [{
+    /* Tables generated from %types.r for builtin typesets */
+    extern Decider* const g_type_deciders[];
+    extern uint_fast32_t const g_typeset_memberships[];
+}]
+e-types/emit newline
+
 rebs: collect [
     for-each-datatype t [
         assert [sym-n == t/heart]  ; SYM_XXX should equal REB_XXX value
@@ -410,7 +417,7 @@ for-each-datatype t [
         e-types/emit newline
         e-types/emit [propercase-of ts-name {
             #define Any_${propercase-of Ts-Name}_Kind(k) \
-               (did (FLAGIT_KIND(k) & TS_${TS-NAME}))
+               (did (g_typeset_memberships[k] & TYPESET_FLAG_${TS-NAME}))
 
             #define Any_${propercase-of Ts-Name}(v) \
                 Any_${propercase-of Ts-Name}_Kind(VAL_TYPE(v))
@@ -436,18 +443,25 @@ for-each-typerange tr [
     }]
 ]
 
+=== "GENERATE TYPESET_FLAG_XXX" ===
+
+; Non-range typesets are handled by checking a flag in a static array which
+; for each kind has a bitset of typeset flags for each set the kind is in.
+
+ts-index: 0
+
 for-each [ts-name types] typeset-sets [
     if not types [continue]  ; done with ranges, no TS_XXX
 
-    flagits: collect [
-        for-each t-name types [
-            keep cscape [t-name {FLAGIT_KIND(REB_${T-NAME})}]
-        ]
-    ]
-    e-types/emit [flagits ts-name {
-        #define TS_${TS-NAME} ($<Delimit "|" Flagits>)
-    }]  ; !!! TS_ANY_XXX is wordy, considering TS_XXX denotes a typeset
+    e-types/emit [ts-name {
+        #define TYPESET_FLAG_${TS-NAME} FLAG_LEFT_BIT($<ts-index>)
+    }]
+    ts-index: ts-index + 1
 ]
+assert [ts-index < 32]  ; typesets use uint_fast32_t
+
+e-types/emit newline
+
 
 add-sym 'datatypes  ; signal where the datatypes stop
 
@@ -577,6 +591,7 @@ e-typesets/emit {
 e-typesets/emit newline
 
 decider-names: copy []
+memberships: copy []
 
 for-each-datatype t [
     e-typesets/emit [t {
@@ -585,6 +600,19 @@ for-each-datatype t [
     }]
     e-typesets/emit newline
     append decider-names cscape [t {${Propercase T/Name}_Decider}]
+
+    flagits: collect [
+        for-each [ts-name types] typeset-sets [
+            if not find types t/name [continue]
+
+            keep cscape [ts-name {TYPESET_FLAG_${TS-NAME}}]
+        ]
+    ]
+    if empty? flagits [
+        append memberships "0"
+    ] else [
+        append memberships cscape [flagits ts-name {($<Delimit "|" Flagits>)}]
+    ]
 ]
 
 for-each [ts-name types] typeset-sets [
@@ -598,9 +626,15 @@ for-each [ts-name types] typeset-sets [
 
 e-typesets/emit [{
     Decider* const g_type_deciders[] = {
-        nullptr,  /* 0 is reserved */
-        &$[Decider-Names],
-        nullptr
+        nullptr,  /* REB_0 is reserved */
+        &$(Decider-Names),
+    };
+}]
+
+e-typesets/emit [{
+    uint_fast32_t const g_typeset_memberships[REB_MAX] = {
+        0,  /* REB_0 is reserved */
+        $(Memberships),
     };
 }]
 

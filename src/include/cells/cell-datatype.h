@@ -126,11 +126,6 @@ INLINE bool Matcher_Matches(
 }
 
 
-// Another table generated from %types.r for builtin typesets
-//
-extern Decider* const g_type_deciders[];
-
-
 // This table is generated from %types.r - the actual table is located in
 // %tmp-dispatch.c and linked in only once.
 //
@@ -138,11 +133,8 @@ extern Decider* const g_type_deciders[];
 // the slot which will fail if it is ever called.
 //
 // !!! These used to be const, but the desire to have extension types change
-// from being "unhooked" to "hooked" meant they needed to be non-const.  Now
-// the only "extension type" which mutates the table is REB_EVENT, so that it
-// can be one of the types that encodes its type in a byte.  This lets it
-// keep its design goal of fitting an event in a single cell with no outside
-// allocations.  The importance of that design goal should be reviewed.
+// from being "unhooked" to "hooked" meant they needed to be non-const.  The
+// importance of that design goal should be reviewed.
 //
 extern CFunction* Builtin_Type_Hooks[REB_MAX][IDX_HOOKS_MAX];
 
