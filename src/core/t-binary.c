@@ -513,8 +513,10 @@ REBTYPE(Binary)
         REBINT len;
         if (REF(part)) {
             len = Part_Len_May_Modify_Index(v, ARG(part));
-            if (len == 0)
-                return Init_Series_Cell(OUT, VAL_TYPE(v), Make_Binary(0));
+            if (len == 0) {
+                Heart heart = Cell_Heart_Ensure_Noquote(v);
+                return Init_Series_Cell(OUT, heart, Make_Binary(0));
+            }
         } else
             len = 1;
 
@@ -535,7 +537,8 @@ REBTYPE(Binary)
             if (not REF(part))
                 return RAISE(Error_Nothing_To_Take_Raw());
 
-            return Init_Series_Cell(OUT, VAL_TYPE(v), Make_Binary(0));
+            Heart heart = Cell_Heart_Ensure_Noquote(v);
+            return Init_Series_Cell(OUT, heart, Make_Binary(0));
         }
 
         // if no /PART, just return value, else return string

@@ -89,12 +89,14 @@ REBINT CT_Word(const Cell* a, const Cell* b, bool strict)
 //
 Bounce MAKE_Word(
     Level* level_,
-    enum Reb_Kind kind,
+    enum Reb_Kind k,
     Option(const Value*) parent,
     const REBVAL *arg
 ){
+    Heart heart = cast(Heart, k);
+
     if (parent)
-        fail (Error_Bad_Make_Parent(kind, unwrap(parent)));
+        fail (Error_Bad_Make_Parent(heart, unwrap(parent)));
 
     if (Any_Word(arg)) {
         //
@@ -104,7 +106,7 @@ Bounce MAKE_Word(
         // Rethink what it means to preserve the bits vs. not.
         //
         Copy_Cell(OUT, arg);
-        HEART_BYTE(OUT) = kind;
+        HEART_BYTE(OUT) = heart;
         return OUT;
     }
 
@@ -120,7 +122,7 @@ Bounce MAKE_Word(
         Size size;
         const Byte* bp = Analyze_String_For_Scan(&size, arg, MAX_SCAN_WORD);
 
-        if (NULL == Scan_Any_Word(OUT, kind, bp, size))
+        if (NULL == Scan_Any_Word(OUT, heart, bp, size))
             return RAISE(Error_Bad_Char_Raw(arg));
 
         return OUT;
@@ -130,7 +132,7 @@ Bounce MAKE_Word(
         // Run the same mechanics that AS WORD! would, since it's immutable.
         //
       as_word: {
-        REBVAL *as = rebValue("as", Datatype_From_Kind(kind), arg);
+        REBVAL *as = rebValue("as", Datatype_From_Kind(heart), arg);
         Copy_Cell(OUT, as);
         rebRelease(as);
 
@@ -140,7 +142,7 @@ Bounce MAKE_Word(
     else if (Is_Logic(arg)) {
         return Init_Any_Word(
             OUT,
-            kind,
+            heart,
             Cell_Logic(arg) ? Canon(TRUE) : Canon(FALSE)
         );
     }
@@ -152,8 +154,10 @@ Bounce MAKE_Word(
 //
 //  TO_Word: C
 //
-Bounce TO_Word(Level* level_, enum Reb_Kind kind, const REBVAL *arg)
+Bounce TO_Word(Level* level_, enum Reb_Kind k, const REBVAL *arg)
 {
+    Heart heart = cast(Heart, k);
+
     // This is here to convert `to word! /a` into `a`.  It also allows
     // `to word! ////a////` and variants, because it seems interesting to try
     // that vs. erroring for a bit, to see if it turns out to be useful.
@@ -187,11 +191,11 @@ Bounce TO_Word(Level* level_, enum Reb_Kind kind, const REBVAL *arg)
         if (Is_Fresh(OUT))
             return RAISE("Can't MAKE ANY-WORD! from PATH! that's all BLANK!s");
 
-        HEART_BYTE(OUT) = kind;
+        HEART_BYTE(OUT) = heart;
         return OUT;
     }
 
-    return MAKE_Word(level_, kind, nullptr, arg);
+    return MAKE_Word(level_, heart, nullptr, arg);
 }
 
 

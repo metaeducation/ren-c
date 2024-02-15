@@ -214,7 +214,7 @@ DECLARE_NATIVE(reduce)
 
     Init_Array_Cell(
         OUT,
-        VAL_TYPE(v),
+        Cell_Heart_Ensure_Noquote(v),
         Pop_Stack_Values_Core(STACK_BASE, pop_flags)
     );
     BINDING(OUT) = BINDING(v);

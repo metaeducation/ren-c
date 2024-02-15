@@ -607,15 +607,16 @@ Bounce TO_Frame(Level* level_, enum Reb_Kind kind, const REBVAL *arg)
 //
 Bounce MAKE_Context(
     Level* level_,
-    enum Reb_Kind kind,
+    enum Reb_Kind k,
     Option(const Value*) parent,
     const REBVAL *arg
 ){
     // Other context kinds (LEVEL!, ERROR!, PORT!) have their own hooks.
     //
-    assert(kind == REB_OBJECT or kind == REB_MODULE);
+    assert(k == REB_OBJECT or k == REB_MODULE);
+    Heart heart = cast(Heart, k);
 
-    if (kind == REB_MODULE) {
+    if (heart == REB_MODULE) {
         if (not Any_Array(arg))
             return RAISE("Currently only (MAKE MODULE! any-array) is allowed");
 
@@ -635,12 +636,12 @@ Bounce MAKE_Context(
         const Element* at = Cell_Array_At(&tail, arg);
 
         Context* ctx = Make_Context_Detect_Managed(
-            kind,
+            heart,
             at,
             tail,
             parent_ctx
         );
-        Init_Context_Cell(OUT, kind, ctx); // GC guards it
+        Init_Context_Cell(OUT, heart, ctx); // GC guards it
 
         DECLARE_STABLE (virtual_arg);
         Copy_Cell(virtual_arg, arg);
@@ -663,25 +664,25 @@ Bounce MAKE_Context(
     //
     if (Any_Number(arg)) {
         Context* context = Make_Context_Detect_Managed(
-            kind,
+            heart,
             nullptr,  // values to scan for toplevel set-words (empty)
             nullptr,
             parent_ctx
         );
 
-        return Init_Context_Cell(OUT, kind, context);
+        return Init_Context_Cell(OUT, heart, context);
     }
 
     if (parent)
-        return RAISE(Error_Bad_Make_Parent(kind, unwrap(parent)));
+        return RAISE(Error_Bad_Make_Parent(heart, unwrap(parent)));
 
     // make object! map!
     if (Is_Map(arg)) {
         Context* c = Alloc_Context_From_Map(VAL_MAP(arg));
-        return Init_Context_Cell(OUT, kind, c);
+        return Init_Context_Cell(OUT, heart, c);
     }
 
-    return RAISE(Error_Bad_Make(kind, arg));
+    return RAISE(Error_Bad_Make(heart, arg));
 }
 
 
@@ -1246,7 +1247,7 @@ REBTYPE(Context)
 
         return Init_Context_Cell(
             OUT,
-            VAL_TYPE(context),
+            Cell_Heart_Ensure_Noquote(context),
             Copy_Context_Extra_Managed(c, 0, did REF(deep))
         ); }
 

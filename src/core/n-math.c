@@ -934,18 +934,18 @@ DECLARE_NATIVE(minimum)
 }
 
 
-inline static REBVAL *Init_Zeroed_Hack(Cell* out, enum Reb_Kind kind) {
+inline static REBVAL *Init_Zeroed_Hack(Cell* out, Heart heart) {
     //
     // !!! This captures of a dodgy behavior of R3-Alpha, which was to assume
     // that clearing the payload of a value and then setting the header made
     // it the `zero?` of that type.  Review uses.
     //
-    if (kind == REB_PAIR) {
+    if (heart == REB_PAIR) {
         Init_Pair_Int(out, 0, 0);
     }
     else {
         Reset_Unquoted_Header_Untracked(
-            TRACK(out), FLAG_HEART_BYTE(kind) | CELL_MASK_NO_NODES
+            TRACK(out), FLAG_HEART_BYTE(heart) | CELL_MASK_NO_NODES
         );
         memset(&out->extra, 0, sizeof(union ValueExtraUnion));
         memset(&out->payload, 0, sizeof(union ValuePayloadUnion));
@@ -968,7 +968,7 @@ DECLARE_NATIVE(negative_q)
     INCLUDE_PARAMS_OF_NEGATIVE_Q;
 
     DECLARE_LOCAL (zero);
-    Init_Zeroed_Hack(zero, VAL_TYPE(ARG(number)));
+    Init_Zeroed_Hack(zero, Cell_Heart_Ensure_Noquote(ARG(number)));
 
     bool strict = true;  // don't report "close to zero" as "equal to zero"
     REBINT diff = Compare_Modify_Values(ARG(number), zero, strict);
@@ -990,7 +990,7 @@ DECLARE_NATIVE(positive_q)
     INCLUDE_PARAMS_OF_POSITIVE_Q;
 
     DECLARE_LOCAL (zero);
-    Init_Zeroed_Hack(zero, VAL_TYPE(ARG(number)));
+    Init_Zeroed_Hack(zero, Cell_Heart_Ensure_Noquote(ARG(number)));
 
     bool strict = true;  // don't report "close to zero" as "equal to zero"
     REBINT diff = Compare_Modify_Values(ARG(number), zero, strict);
@@ -1012,15 +1012,18 @@ DECLARE_NATIVE(zero_q)
     INCLUDE_PARAMS_OF_ZERO_Q;
 
     REBVAL *v = ARG(value);
-    enum Reb_Kind type = VAL_TYPE(v);
-
-    if (type == REB_ISSUE)  // special case, `#` represents the '\0' codepoint
-        return Init_Logic(OUT, IS_CHAR(v) and Cell_Codepoint(v) == 0);
-
-    if (not Any_Scalar_Kind(type))
+    if (QUOTE_BYTE(v) != NOQUOTE_1)
         return Init_False(OUT);
 
-    if (type == REB_TUPLE) {
+    Heart heart = Cell_Heart_Ensure_Noquote(v);
+
+    if (heart == REB_ISSUE)  // special case, `#` represents the '\0' codepoint
+        return Init_Logic(OUT, IS_CHAR(v) and Cell_Codepoint(v) == 0);
+
+    if (not Any_Scalar_Kind(heart))
+        return Init_False(OUT);
+
+    if (heart == REB_TUPLE) {
         REBLEN len = Cell_Sequence_Len(v);
         REBLEN i;
         for (i = 0; i < len; ++i) {
@@ -1032,7 +1035,7 @@ DECLARE_NATIVE(zero_q)
     }
 
     DECLARE_LOCAL (zero);
-    Init_Zeroed_Hack(zero, type);
+    Init_Zeroed_Hack(zero, heart);
 
     bool strict = true;  // don't report "close to zero" as "equal to zero"
     REBINT diff = Compare_Modify_Values(ARG(value), zero, strict);

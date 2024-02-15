@@ -117,13 +117,13 @@ INLINE const Key* VAL_CONTEXT_KEYS_HEAD(const Cell* context)
 //
 INLINE Element* Init_Context_Cell(
     Sink(Element*) out,
-    enum Reb_Kind kind,
+    Heart heart,
     Context* c
 ){
   #if !defined(NDEBUG)
-    Extra_Init_Context_Cell_Checks_Debug(kind, c);
+    Extra_Init_Context_Cell_Checks_Debug(heart, c);
   #endif
-    UNUSED(kind);
+    UNUSED(heart);
     Assert_Series_Managed(CTX_VARLIST(c));
     if (CTX_TYPE(c) != REB_MODULE)
         Assert_Series_Managed(CTX_KEYLIST(c));

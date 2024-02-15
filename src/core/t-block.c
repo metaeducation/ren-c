@@ -106,18 +106,21 @@ REBINT CT_Array(const Cell* a, const Cell* b, bool strict)
 //
 Bounce MAKE_Array(
     Level* level_,
-    enum Reb_Kind kind,
+    enum Reb_Kind k,
     Option(const Value*) parent,
     const REBVAL *arg
 ){
+    Heart heart = cast(Heart, k);
+    assert(Any_Array_Kind(heart));
+
     if (parent)
-        return RAISE(Error_Bad_Make_Parent(kind, unwrap(parent)));
+        return RAISE(Error_Bad_Make_Parent(heart, unwrap(parent)));
 
     if (Is_Integer(arg) or Is_Decimal(arg)) {
         //
         // `make block! 10` => creates array with certain initial capacity
         //
-        return Init_Array_Cell(OUT, kind, Make_Array(Int32s(arg, 0)));
+        return Init_Array_Cell(OUT, heart, Make_Array(Int32s(arg, 0)));
     }
     else if (Is_Text(arg)) {
         //
@@ -129,7 +132,7 @@ Bounce MAKE_Array(
         Option(const String*) file = ANONYMOUS;
         Init_Array_Cell(
             OUT,
-            kind,
+            heart,
             Scan_UTF8_Managed(file, utf8, size)
         );
         return OUT;
@@ -187,7 +190,7 @@ Bounce MAKE_Array(
         Specifier* derived = Derive_Specifier(Cell_Specifier(arg), any_array);
         return Init_Series_Cell_At_Core(
             OUT,
-            kind,
+            heart,
             Cell_Array(any_array),
             index,
             derived
@@ -203,7 +206,7 @@ Bounce MAKE_Array(
         const Element* at = Cell_Array_Len_At(&len, arg);
         return Init_Array_Cell(
             OUT,
-            kind,
+            heart,
             Copy_Values_Len_Shallow(at, len)
         );
     }
@@ -217,7 +220,7 @@ Bounce MAKE_Array(
         Option(const String*) file = ANONYMOUS;
         return Init_Array_Cell(
             OUT,
-            kind,
+            heart,
             Scan_UTF8_Managed(file, utf8, utf8_size)
         );
     }
@@ -232,12 +235,12 @@ Bounce MAKE_Array(
         const Byte* at = Cell_Binary_Size_At(&size, arg);
         return Init_Array_Cell(
             OUT,
-            kind,
+            heart,
             Scan_UTF8_Managed(file, at, size)
         );
     }
     else if (Is_Map(arg)) {
-        return Init_Array_Cell(OUT, kind, Map_To_Array(VAL_MAP(arg), 0));
+        return Init_Array_Cell(OUT, heart, Map_To_Array(VAL_MAP(arg), 0));
     }
     else if (Is_Frame(arg)) {
         //
@@ -252,10 +255,10 @@ Bounce MAKE_Array(
             Copy_Cell(PUSH(), generated);
             rebRelease(generated);
         }
-        return Init_Array_Cell(OUT, kind, Pop_Stack_Values(base));
+        return Init_Array_Cell(OUT, heart, Pop_Stack_Values(base));
     }
     else if (Any_Context(arg)) {
-        return Init_Array_Cell(OUT, kind, Context_To_Array(arg, 3));
+        return Init_Array_Cell(OUT, heart, Context_To_Array(arg, 3));
     }
     else if (Is_Varargs(arg)) {
         //
@@ -315,19 +318,21 @@ Bounce MAKE_Array(
             Move_Cell(PUSH(), Decay_If_Unstable(OUT));
         } while (true);
 
-        return Init_Array_Cell(OUT, kind, Pop_Stack_Values(base));
+        return Init_Array_Cell(OUT, heart, Pop_Stack_Values(base));
     }
 
   bad_make:
 
-    return RAISE(Error_Bad_Make(kind, arg));
+    return RAISE(Error_Bad_Make(heart, arg));
 }
 
 
 //
 //  TO_Array: C
 //
-Bounce TO_Array(Level* level_, enum Reb_Kind kind, const REBVAL *arg) {
+Bounce TO_Array(Level* level_, enum Reb_Kind k, const REBVAL *arg) {
+    Heart heart = cast(Heart, k);
+
     if (Any_Sequence(arg)) {
         StackIndex base = TOP_INDEX;
         Length len = Cell_Sequence_Len(arg);
@@ -340,14 +345,14 @@ Bounce TO_Array(Level* level_, enum Reb_Kind kind, const REBVAL *arg) {
                 i
             );
         }
-        return Init_Array_Cell(OUT, kind, Pop_Stack_Values(base));
+        return Init_Array_Cell(OUT, heart, Pop_Stack_Values(base));
     }
     else if (Any_Array(arg)) {
         Length len;
         const Element* at = Cell_Array_Len_At(&len, arg);
         return Init_Array_Cell(
             OUT,
-            kind,
+            heart,
             Copy_Values_Len_Shallow(at, len)
         );
     }
@@ -356,7 +361,7 @@ Bounce TO_Array(Level* level_, enum Reb_Kind kind, const REBVAL *arg) {
         //
         Array* single = Alloc_Singular(NODE_FLAG_MANAGED);
         Copy_Cell(Stub_Cell(single), arg);
-        return Init_Array_Cell(OUT, kind, single);
+        return Init_Array_Cell(OUT, heart, single);
     }
 }
 
@@ -714,7 +719,7 @@ void MF_Array(REB_MOLD *mo, const Cell* v, bool form)
     // the type could be avoided if each type had its own dispatcher, but
     // this routine seems to need to be generic.
     //
-    enum Reb_Kind kind = Cell_Heart(v);
+    Heart heart = Cell_Heart(v);
 
     if (form) {
         Option(Context*) context = nullptr;
@@ -747,7 +752,7 @@ void MF_Array(REB_MOLD *mo, const Cell* v, bool form)
     else {
         const char *sep;
 
-        switch (kind) {
+        switch (heart) {
           case REB_GET_BLOCK:
             Append_Codepoint(mo->series, ':');
             goto block;
@@ -798,12 +803,12 @@ void MF_Array(REB_MOLD *mo, const Cell* v, bool form)
             break;
 
           default:
-            panic ("Unknown array kind passed to MF_Array");
+            panic ("Unknown array heart passed to MF_Array");
         }
 
         Mold_Array_At(mo, Cell_Array(v), VAL_INDEX(v), sep);
 
-        if (kind == REB_SET_GROUP or kind == REB_SET_BLOCK)
+        if (heart == REB_SET_GROUP or heart == REB_SET_BLOCK)
             Append_Codepoint(mo->series, ':');
     }
 }
@@ -1097,7 +1102,7 @@ REBTYPE(Array)
             did REF(deep)
         );
 
-        Init_Array_Cell(OUT, VAL_TYPE(array), copy);
+        Init_Array_Cell(OUT, Cell_Heart_Ensure_Noquote(array), copy);
         INIT_SPECIFIER(OUT, Cell_Specifier(array));
         return OUT; }
 

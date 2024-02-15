@@ -145,13 +145,15 @@ REBVAL *Init_Decimal_Bits(Cell* out, const Byte* bp)
 //
 Bounce MAKE_Decimal(
     Level* level_,
-    enum Reb_Kind kind,
+    enum Reb_Kind k,
     Option(const Value*) parent,
     const REBVAL *arg
 ){
-    assert(kind == REB_DECIMAL or kind == REB_PERCENT);
+    assert(k == REB_DECIMAL or k == REB_PERCENT);
+    Heart heart = cast(Heart, k);
+
     if (parent)
-        return RAISE(Error_Bad_Make_Parent(kind, unwrap(parent)));
+        return RAISE(Error_Bad_Make_Parent(heart, unwrap(parent)));
 
     REBDEC d;
 
@@ -183,7 +185,7 @@ Bounce MAKE_Decimal(
         // TO does it as well.
         //
       case REB_TEXT:
-        return TO_Decimal(level_, kind, arg);
+        return TO_Decimal(level_, heart, arg);
 
         // !!! MAKE DECIMAL! from a PATH! ... as opposed to TO DECIMAL ...
         // will allow evaluation of arbitrary code.  This is an experiment on
@@ -234,7 +236,7 @@ Bounce MAKE_Decimal(
         const Element* item = Cell_Array_Len_At(&len, arg);
 
         if (len != 2)
-            return RAISE(Error_Bad_Make(kind, arg));
+            return RAISE(Error_Bad_Make(heart, arg));
 
         if (Is_Integer(item))
             d = cast(REBDEC, VAL_INT64(item));
@@ -273,7 +275,7 @@ Bounce MAKE_Decimal(
         goto bad_make;
     }
 
-    if (kind == REB_PERCENT)
+    if (heart == REB_PERCENT)
         d /= 100.0;
 
   dont_divide_if_percent:
@@ -282,14 +284,14 @@ Bounce MAKE_Decimal(
 
     Reset_Unquoted_Header_Untracked(
         TRACK(OUT),
-        FLAG_HEART_BYTE(kind) | CELL_MASK_NO_NODES
+        FLAG_HEART_BYTE(heart) | CELL_MASK_NO_NODES
     );
     VAL_DECIMAL(OUT) = d;
     return OUT;
 
   bad_make:
 
-    return RAISE(Error_Bad_Make(kind, arg));
+    return RAISE(Error_Bad_Make(heart, arg));
 }
 
 
@@ -300,15 +302,16 @@ Bounce MAKE_Decimal(
 // conversions, with MAKE used for less obvious (e.g. make decimal [1 5]
 // giving you 100000).
 //
-Bounce TO_Decimal(Level* level_, enum Reb_Kind kind, const REBVAL *arg)
+Bounce TO_Decimal(Level* level_, enum Reb_Kind k, const REBVAL *arg)
 {
-    assert(kind == REB_DECIMAL or kind == REB_PERCENT);
+    assert(k == REB_DECIMAL or k == REB_PERCENT);
+    Heart heart = cast(Heart, k);
 
     REBDEC d;
 
     switch (VAL_TYPE(arg)) {
       case REB_DECIMAL:
-        assert(VAL_TYPE(arg) != kind);  // would have called COPY if same
+        assert(VAL_TYPE(arg) != heart);  // would have called COPY if same
         d = VAL_DECIMAL(arg);
         goto dont_divide_if_percent;
 
@@ -329,7 +332,7 @@ Bounce TO_Decimal(Level* level_, enum Reb_Kind kind, const REBVAL *arg)
         const Byte* bp
             = Analyze_String_For_Scan(&size, arg, MAX_SCAN_DECIMAL);
 
-        if (NULL == Scan_Decimal(OUT, bp, size, kind != REB_PERCENT))
+        if (NULL == Scan_Decimal(OUT, bp, size, heart != REB_PERCENT))
             goto bad_to;
 
         d = VAL_DECIMAL(OUT); // may need to divide if percent, fall through
@@ -365,13 +368,13 @@ Bounce TO_Decimal(Level* level_, enum Reb_Kind kind, const REBVAL *arg)
         // for now so people don't have to change it twice.
         //
       case REB_BINARY:
-        return MAKE_Decimal(level_, kind, nullptr, arg);
+        return MAKE_Decimal(level_, heart, nullptr, arg);
 
       default:
         goto bad_to;
     }
 
-    if (kind == REB_PERCENT)
+    if (heart == REB_PERCENT)
         d /= 100.0;
 
   dont_divide_if_percent:
@@ -381,14 +384,14 @@ Bounce TO_Decimal(Level* level_, enum Reb_Kind kind, const REBVAL *arg)
 
     Reset_Unquoted_Header_Untracked(
         TRACK(OUT),
-        FLAG_HEART_BYTE(kind) | CELL_MASK_NO_NODES
+        FLAG_HEART_BYTE(heart) | CELL_MASK_NO_NODES
     );
     VAL_DECIMAL(OUT) = d;
     return OUT;
 
   bad_to:
 
-    return RAISE(Error_Bad_Cast_Raw(arg, Datatype_From_Kind(kind)));
+    return RAISE(Error_Bad_Cast_Raw(arg, Datatype_From_Kind(heart)));
 }
 
 
@@ -478,7 +481,7 @@ REBTYPE(Decimal)
     REBVAL  *val = D_ARG(1);
     REBVAL  *arg;
     REBDEC  d2;
-    enum Reb_Kind type;
+    Heart heart;
 
     REBDEC d1 = VAL_DECIMAL(val);
 
@@ -496,12 +499,15 @@ REBTYPE(Decimal)
         || id == SYM_POWER
     ){
         arg = D_ARG(2);
-        type = VAL_TYPE(arg);
+        if (QUOTE_BYTE(arg) != NOQUOTE_1)
+            fail (Error_Math_Args(VAL_TYPE(arg), verb));
+
+        heart = Cell_Heart(arg);
         if ((
-            type == REB_PAIR
-            or type == REB_TUPLE
-            or type == REB_MONEY
-            or type == REB_TIME
+            heart == REB_PAIR
+            or heart == REB_TUPLE
+            or heart == REB_MONEY
+            or heart == REB_TIME
         ) and (
             id == SYM_ADD ||
             id == SYM_MULTIPLY
@@ -513,33 +519,33 @@ REBTYPE(Decimal)
         }
 
         // If the type of the second arg is something we can handle:
-        if (type == REB_DECIMAL
-            || type == REB_INTEGER
-            || type == REB_PERCENT
-            || type == REB_MONEY
-            || type == REB_ISSUE
+        if (heart == REB_DECIMAL
+            || heart == REB_INTEGER
+            || heart == REB_PERCENT
+            || heart == REB_MONEY
+            || heart == REB_ISSUE
         ){
-            if (type == REB_DECIMAL) {
+            if (heart == REB_DECIMAL) {
                 d2 = VAL_DECIMAL(arg);
             }
-            else if (type == REB_PERCENT) {
+            else if (heart == REB_PERCENT) {
                 d2 = VAL_DECIMAL(arg);
                 if (id == SYM_DIVIDE)
-                    type = REB_DECIMAL;
+                    heart = REB_DECIMAL;
                 else if (not Is_Percent(val))
-                    type = VAL_TYPE(val);
+                    heart = Cell_Heart_Ensure_Noquote(val);
             }
-            else if (type == REB_MONEY) {
+            else if (heart == REB_MONEY) {
                 Init_Money(val, decimal_to_deci(VAL_DECIMAL(val)));
                 return T_Money(level_, verb);
             }
-            else if (type == REB_ISSUE) {
+            else if (heart == REB_ISSUE) {
                 d2 = cast(REBDEC, Cell_Codepoint(arg));
-                type = REB_DECIMAL;
+                heart = REB_DECIMAL;
             }
             else {
                 d2 = cast(REBDEC, VAL_INT64(arg));
-                type = REB_DECIMAL;
+                heart = REB_DECIMAL;
             }
 
             switch (id) {
@@ -589,7 +595,7 @@ REBTYPE(Decimal)
         fail (Error_Math_Args(VAL_TYPE(val), verb));
     }
 
-    type = VAL_TYPE(val);
+    heart = Cell_Heart_Ensure_Noquote(val);
 
     // unary actions
     switch (id) {
@@ -637,12 +643,12 @@ REBTYPE(Decimal)
                 return Init_Integer(OUT, cast(REBI64, d1));
 
             if (Is_Percent(ARG(to)))
-                type = REB_PERCENT;
+                heart = REB_PERCENT;
         }
         else {
             Init_True(ARG(to));  // default a rounding amount
             d1 = Round_Dec(
-                d1, level_, type == REB_PERCENT ? 0.01L : 1.0L
+                d1, level_, heart == REB_PERCENT ? 0.01L : 1.0L
             );
         }
         goto setDec; }
@@ -680,7 +686,7 @@ setDec:
 
     Reset_Unquoted_Header_Untracked(
         TRACK(OUT),
-        FLAG_HEART_BYTE(type) | CELL_MASK_NO_NODES
+        FLAG_HEART_BYTE(heart) | CELL_MASK_NO_NODES
     );
     VAL_DECIMAL(OUT) = d1;
 

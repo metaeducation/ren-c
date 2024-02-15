@@ -344,12 +344,14 @@ static void reverse_string(String* str, REBLEN index, Length len)
 //
 Bounce MAKE_String(
     Level* level_,
-    enum Reb_Kind kind,
+    enum Reb_Kind k,
     Option(const Value*) parent,
     const REBVAL *def
 ){
+    Heart heart = cast(Heart, k);
+
     if (parent)
-        return RAISE(Error_Bad_Make_Parent(kind, unwrap(parent)));
+        return RAISE(Error_Bad_Make_Parent(heart, unwrap(parent)));
 
     if (Is_Integer(def)) {  // new string with given integer capacity
         //
@@ -362,7 +364,7 @@ Bounce MAKE_String(
         // is semantically nebulous (round up, down?) and generally bad.
         // Red continues this behavior.
         //
-        return Init_Any_String(OUT, kind, Make_String(Int32s(def, 0)));
+        return Init_Any_String(OUT, heart, Make_String(Int32s(def, 0)));
     }
 
     if (Any_Utf8(def)) {  // new type for the UTF-8 data with new allocation
@@ -372,7 +374,7 @@ Bounce MAKE_String(
         UNUSED(len);  // !!! Data already valid and checked, should leverage
         return Init_Any_String(
             OUT,
-            kind,
+            heart,
             Append_UTF8_May_Fail(  // !!! Should never fail
                 nullptr,
                 cs_cast(utf8),
@@ -387,7 +389,7 @@ Bounce MAKE_String(
         const Byte* at = Cell_Binary_Size_At(&size, def);
         return Init_Any_String(
             OUT,
-            kind,
+            heart,
             Append_UTF8_May_Fail(nullptr, cs_cast(at), size, STRMODE_NO_CR)
         );
     }
@@ -420,21 +422,23 @@ Bounce MAKE_String(
         if (i < 0 or i > cast(REBINT, Cell_Series_Len_At(first)))
             goto bad_make;
 
-        return Init_Series_Cell_At(OUT, kind, Cell_Series(first), i);
+        return Init_Series_Cell_At(OUT, heart, Cell_Series(first), i);
     }
 
   bad_make:
 
-    return RAISE(Error_Bad_Make(kind, def));
+    return RAISE(Error_Bad_Make(heart, def));
 }
 
 
 //
 //  TO_String: C
 //
-Bounce TO_String(Level* level_, enum Reb_Kind kind, const REBVAL *arg)
+Bounce TO_String(Level* level_, enum Reb_Kind k, const REBVAL *arg)
 {
-    if (kind == REB_ISSUE) {  // encompasses what would have been TO CHAR!
+    Heart heart = cast(Heart, k);
+
+    if (heart == REB_ISSUE) {  // encompasses what would have been TO CHAR!
         if (Is_Integer(arg)) {
             //
             // `to issue! 1` is slated to keep the visual consistency intact,
@@ -462,7 +466,7 @@ Bounce TO_String(Level* level_, enum Reb_Kind kind, const REBVAL *arg)
         const Byte* at = Cell_Binary_Size_At(&size, arg);
         return Init_Any_String(
             OUT,
-            kind,
+            heart,
             Append_UTF8_May_Fail(nullptr, cs_cast(at), size, STRMODE_NO_CR)
         );
     }
@@ -477,11 +481,11 @@ Bounce TO_String(Level* level_, enum Reb_Kind kind, const REBVAL *arg)
     // moment, it is kept as-is to avoid disruption.
     //
     if (Is_Tag(arg))
-        return MAKE_String(level_, kind, nullptr, arg);
+        return MAKE_String(level_, heart, nullptr, arg);
 
     return Init_Any_String(
         OUT,
-        kind,
+        heart,
         Copy_Form_Value(Ensure_Element(arg), MOLD_FLAG_TIGHT)
     );
 }
@@ -836,7 +840,7 @@ void MF_String(REB_MOLD *mo, const Cell* v, bool form)
 
     assert(Any_Stringlike(v));
 
-    enum Reb_Kind kind = Cell_Heart(v);
+    Heart heart = Cell_Heart(v);
 
     // Special format for MOLD/ALL string series when not at head
     //
@@ -850,12 +854,12 @@ void MF_String(REB_MOLD *mo, const Cell* v, bool form)
     // The R3-Alpha forming logic was that every string type besides TAG!
     // would form with no delimiters, e.g. `form #foo` is just foo
     //
-    if (form and kind != REB_TAG) {
+    if (form and heart != REB_TAG) {
         Append_String(buf, v);
         return;
     }
 
-    switch (kind) {
+    switch (heart) {
       case REB_TEXT:
         Mold_Text_Series_At(mo, Cell_String(v), VAL_INDEX(v));
         break;
@@ -1130,13 +1134,13 @@ REBTYPE(String)
         if (id == SYM_FIND) {
             Init_Series_Cell_At(
                 ARG(tail),
-                VAL_TYPE(v),
+                Cell_Heart_Ensure_Noquote(v),
                 Cell_Series(v),
                 ret + len
             );
             Init_Series_Cell_At(
                 OUT,
-                VAL_TYPE(v),
+                Cell_Heart_Ensure_Noquote(v),
                 Cell_Series(v),
                 ret
             );
@@ -1167,8 +1171,10 @@ REBTYPE(String)
         REBLEN len;
         if (REF(part)) {
             len = Part_Len_May_Modify_Index(v, ARG(part));
-            if (len == 0)
-                return Init_Any_String(OUT, VAL_TYPE(v), Make_String(0));
+            if (len == 0) {
+                Heart heart = Cell_Heart_Ensure_Noquote(v);
+                return Init_Any_String(OUT, heart, Make_String(0));
+            }
         } else
             len = 1;
 
@@ -1188,13 +1194,16 @@ REBTYPE(String)
         if (VAL_INDEX(v) >= tail) {
             if (not REF(part))
                 return RAISE(Error_Nothing_To_Take_Raw());
-            return Init_Any_String(OUT, VAL_TYPE(v), Make_String(0));
+            Heart heart = Cell_Heart_Ensure_Noquote(v);
+            return Init_Any_String(OUT, heart, Make_String(0));
         }
 
         // if no /PART, just return value, else return string
         //
-        if (REF(part))
-            Init_Any_String(OUT, VAL_TYPE(v), Copy_String_At_Limit(v, len));
+        if (REF(part)) {
+            Heart heart = Cell_Heart_Ensure_Noquote(v);
+            Init_Any_String(OUT, heart, Copy_String_At_Limit(v, len));
+        }
         else
             Init_Char_Unchecked(OUT, Codepoint_At(Cell_String_At(v)));
 
@@ -1236,7 +1245,7 @@ REBTYPE(String)
 
         return Init_Any_String(
             OUT,
-            VAL_TYPE(v),
+            Cell_Heart_Ensure_Noquote(v),
             Copy_String_At_Limit(v, len)
         ); }
 

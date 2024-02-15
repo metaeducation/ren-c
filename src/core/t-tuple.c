@@ -370,7 +370,7 @@ REBTYPE(Sequence)
         if (not Any_Arraylike(sequence))
             return Copy_Cell(level_->out, sequence);
 
-        enum Reb_Kind kind = VAL_TYPE(sequence);
+        Heart heart = Cell_Heart_Ensure_Noquote(sequence);
         HEART_BYTE(sequence) = REB_BLOCK;
 
         Atom* r = Atom_From_Bounce(T_Array(level_, verb));
@@ -380,7 +380,7 @@ REBTYPE(Sequence)
             Copy_Cell(OUT, r);
 
         Freeze_Array_Shallow(Cell_Array_Known_Mutable(OUT));
-        HEART_BYTE(OUT) = kind;
+        HEART_BYTE(OUT) = heart;
         return OUT; }
 
       case SYM_PICK_P: {
@@ -455,17 +455,17 @@ void MF_Sequence(REB_MOLD *mo, const Cell* v, bool form)
     REBLEN i;
     for (i = 0; i < len; ++i) {
         Copy_Sequence_At(element, c_cast(Cell*, v), i);  // !!! cast
-        enum Reb_Kind element_kind = VAL_TYPE(element);
+        Heart element_heart = Cell_Heart_Ensure_Noquote(element);
 
         if (first)
             first = false;  // don't print `.` or `/` before first element
         else
             Append_Codepoint(mo->series, interstitial);
 
-        if (element_kind == REB_BLANK) {
+        if (element_heart == REB_BLANK) {
             // no blank molding; implicit
         }
-        else if (element_kind == REB_WORD) {
+        else if (element_heart == REB_WORD) {
             const Symbol* sym = Cell_Word_Symbol(element);
             if (
                 not form

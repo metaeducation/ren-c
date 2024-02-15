@@ -152,33 +152,33 @@ INLINE const Element* CTX_ARCHETYPE(Context* c) {  // read-only form
 }
 
 #define CTX_TYPE(c) \
-    VAL_TYPE(CTX_ARCHETYPE(c))
+    Cell_Heart(CTX_ARCHETYPE(c))
 
 INLINE Element* CTX_ROOTVAR(Context* c)  // mutable archetype access
   { return m_cast(Element*, CTX_ARCHETYPE(c)); }  // inline checks mutability
 
 INLINE Phase* CTX_FRAME_PHASE(Context* c) {
     const REBVAL *archetype = CTX_ARCHETYPE(c);
-    assert(VAL_TYPE(archetype) == REB_FRAME);
+    assert(Cell_Heart_Ensure_Noquote(archetype) == REB_FRAME);
     return cast(Phase*, VAL_FRAME_PHASE_OR_LABEL_NODE(archetype));
 }
 
 INLINE Context* CTX_FRAME_BINDING(Context* c) {
     const REBVAL *archetype = CTX_ARCHETYPE(c);
-    assert(VAL_TYPE(archetype) == REB_FRAME);
+    assert(Cell_Heart_Ensure_Noquote(archetype) == REB_FRAME);
     return cast(Context*, BINDING(archetype));
 }
 
 INLINE void INIT_VAL_CONTEXT_ROOTVAR_Core(
     Cell* out,
-    enum Reb_Kind kind,
+    Heart heart,
     Array* varlist
 ){
-    assert(kind != REB_FRAME);  // use INIT_VAL_FRAME_ROOTVAR() instead
+    assert(heart != REB_FRAME);  // use INIT_VAL_FRAME_ROOTVAR() instead
     assert(out == Array_Head(varlist));
     Reset_Unquoted_Header_Untracked(
         out,
-        FLAG_HEART_BYTE(kind) | CELL_MASK_ANY_CONTEXT
+        FLAG_HEART_BYTE(heart) | CELL_MASK_ANY_CONTEXT
     );
     INIT_VAL_CONTEXT_VARLIST(out, varlist);
     BINDING(out) = UNBOUND;  // not a frame
@@ -188,8 +188,8 @@ INLINE void INIT_VAL_CONTEXT_ROOTVAR_Core(
   #endif
 }
 
-#define INIT_VAL_CONTEXT_ROOTVAR(out,kind,varlist) \
-    INIT_VAL_CONTEXT_ROOTVAR_Core(TRACK(out), (kind), (varlist))
+#define INIT_VAL_CONTEXT_ROOTVAR(out,heart,varlist) \
+    INIT_VAL_CONTEXT_ROOTVAR_Core(TRACK(out), (heart), (varlist))
 
 INLINE void INIT_VAL_FRAME_ROOTVAR_Core(
     Cell* out,

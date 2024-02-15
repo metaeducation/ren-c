@@ -116,50 +116,50 @@ INLINE bool Any_Inert_Kind(Byte k) {
 // putting blocks/paths/words/tuples/groups together.  It means Any_Array() is
 // slower but these tests can be faster.
 
-INLINE enum Reb_Kind Plainify_Any_Set_Kind(Byte k) {
+INLINE Heart Plainify_Any_Set_Kind(Byte k) {
     assert(Any_Set_Kind(k));
-    return cast(enum Reb_Kind, k - 1);
+    return cast(Heart, k - 1);
 }
 
-INLINE enum Reb_Kind Plainify_Any_Get_Kind(Byte k) {
+INLINE Heart Plainify_Any_Get_Kind(Byte k) {
     assert(Any_Get_Kind(k));
-    return cast(enum Reb_Kind, k - 2);
+    return cast(Heart, k - 2);
 }
 
-INLINE enum Reb_Kind Plainify_Any_Meta_Kind(Byte k) {
+INLINE Heart Plainify_Any_Meta_Kind(Byte k) {
     assert(Any_Meta_Kind(k));
-    return cast(enum Reb_Kind, k - 3);
+    return cast(Heart, k - 3);
 }
 
-INLINE enum Reb_Kind Plainify_Any_The_Kind(Byte k) {
+INLINE Heart Plainify_Any_The_Kind(Byte k) {
     assert(Any_The_Kind(k));
-    return cast(enum Reb_Kind, k - 5);
+    return cast(Heart, k - 5);
 }
 
 
-INLINE enum Reb_Kind Setify_Any_Plain_Kind(Byte k) {
+INLINE Heart Setify_Any_Plain_Kind(Byte k) {
     assert(Any_Plain_Kind(k));
-    return cast(enum Reb_Kind, k + 1);
+    return cast(Heart, k + 1);
 }
 
-INLINE enum Reb_Kind Getify_Any_Plain_Kind(Byte k) {
+INLINE Heart Getify_Any_Plain_Kind(Byte k) {
     assert(Any_Plain_Kind(k));
-    return cast(enum Reb_Kind, k + 2);
+    return cast(Heart, k + 2);
 }
 
-INLINE enum Reb_Kind METAFY_ANY_PLAIN_KIND(Byte k) {
+INLINE Heart METAFY_ANY_PLAIN_KIND(Byte k) {
     assert(Any_Plain_Kind(k));
-    return cast(enum Reb_Kind, k + 3);
+    return cast(Heart, k + 3);
 }
 
-INLINE enum Reb_Kind Typeify_Any_Plain_Kind(Byte k) {
+INLINE Heart Typeify_Any_Plain_Kind(Byte k) {
     assert(Any_Plain_Kind(k));
-    return cast(enum Reb_Kind, k + 4);
+    return cast(Heart, k + 4);
 }
 
-INLINE enum Reb_Kind Theify_Any_Plain_Kind(Byte k) {
+INLINE Heart Theify_Any_Plain_Kind(Byte k) {
     assert(Any_Plain_Kind(k));
-    return cast(enum Reb_Kind, k + 5);
+    return cast(Heart, k + 5);
 }
 
 
@@ -169,46 +169,46 @@ INLINE enum Reb_Kind Theify_Any_Plain_Kind(Byte k) {
 //
 // Order is: block, group, path, word.
 
-INLINE enum Reb_Kind Wordify_Kind(Byte k) {
+INLINE Heart Wordify_Kind(Byte k) {
     if (Any_Block_Kind(k))
-        return cast(enum Reb_Kind, k - 18);
+        return cast(Heart, k - 18);
     if (Any_Group_Kind(k))
-        return cast(enum Reb_Kind, k - 24);
+        return cast(Heart, k - 24);
     if (Any_Path_Kind(k))
-        return cast(enum Reb_Kind, k - 12);
+        return cast(Heart, k - 12);
     assert(Any_Word_Kind(k));
-    return cast(enum Reb_Kind, k);
+    return cast(Heart, k);
 }
 
-INLINE enum Reb_Kind Pathify_Kind(Byte k) {
+INLINE Heart Pathify_Kind(Byte k) {
     if (Any_Block_Kind(k))
-        return cast(enum Reb_Kind, k - 6);
+        return cast(Heart, k - 6);
     if (Any_Group_Kind(k))
-        return cast(enum Reb_Kind, k - 12);
+        return cast(Heart, k - 12);
     if (Any_Path_Kind(k))
-        return cast(enum Reb_Kind, k);
+        return cast(Heart, k);
     assert(Any_Word_Kind(k));
-    return cast(enum Reb_Kind, k + 12);
+    return cast(Heart, k + 12);
 }
 
-INLINE enum Reb_Kind Groupify_Kind(Byte k) {
+INLINE Heart Groupify_Kind(Byte k) {
     if (Any_Block_Kind(k))
-        return cast(enum Reb_Kind, k + 6);
+        return cast(Heart, k + 6);
     if (Any_Group_Kind(k))
-        return cast(enum Reb_Kind, k);
+        return cast(Heart, k);
     if (Any_Path_Kind(k))
-        return cast(enum Reb_Kind, k + 12);
+        return cast(Heart, k + 12);
     assert(Any_Word_Kind(k));
-    return cast(enum Reb_Kind, k + 24);
+    return cast(Heart, k + 24);
 }
 
-INLINE enum Reb_Kind Blockify_Kind(Byte k) {
+INLINE Heart Blockify_Kind(Byte k) {
     if (Any_Block_Kind(k))
-        return cast(enum Reb_Kind, k);
+        return cast(Heart, k);
     if (Any_Group_Kind(k))
-        return cast(enum Reb_Kind, k - 6);
+        return cast(Heart, k - 6);
     if (Any_Path_Kind(k))
-        return cast(enum Reb_Kind, k + 6);
+        return cast(Heart, k + 6);
     assert(Any_Word_Kind(k));
-    return cast(enum Reb_Kind, k + 18);
+    return cast(Heart, k + 18);
 }

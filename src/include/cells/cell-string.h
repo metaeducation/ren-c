@@ -151,14 +151,14 @@ INLINE Size VAL_BYTEOFFSET_FOR_INDEX(
 
 INLINE Element* Init_Any_String_At(
     Sink(Element*) out,
-    enum Reb_Kind kind,
-    const_if_c String* str,
+    Heart heart,
+    const_if_c String* s,
     REBLEN index
 ){
     Init_Series_Cell_At_Core(
         out,
-        kind,
-        Force_Series_Managed_Core(str),
+        heart,
+        Force_Series_Managed_Core(s),
         index,
         UNBOUND
     );
@@ -168,17 +168,17 @@ INLINE Element* Init_Any_String_At(
 #if CPLUSPLUS_11
     INLINE Element* Init_Any_String_At(
         Sink(Element*) out,
-        enum Reb_Kind kind,
-        const String* str,
+        Heart heart,
+        const String* s,
         REBLEN index
     ){
         // Init will assert if str is not managed...
-        return Init_Series_Cell_At_Core(out, kind, str, index, UNBOUND);
+        return Init_Series_Cell_At_Core(out, heart, s, index, UNBOUND);
     }
 #endif
 
-#define Init_Any_String(v,t,s) \
-    Init_Any_String_At((v), (t), (s), 0)
+#define Init_Any_String(out,heart,s) \
+    Init_Any_String_At((out), (heart), (s), 0)
 
 #define Init_Text(v,s)      Init_Any_String((v), REB_TEXT, (s))
 #define Init_File(v,s)      Init_Any_String((v), REB_FILE, (s))

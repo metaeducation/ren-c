@@ -1164,7 +1164,7 @@ const Byte* Scan_Any(
     Cell* out,
     const Byte* cp,
     REBLEN num_bytes,
-    enum Reb_Kind type,
+    Heart heart,
     enum Reb_Strmode strmode
 ){
     // The range for a curly braced string may span multiple lines, and some
@@ -1188,7 +1188,7 @@ const Byte* Scan_Any(
         num_bytes,
         strmode
     );
-    Init_Any_String(out, type, s);
+    Init_Any_String(out, heart, s);
 
     return cp + num_bytes;
 }

@@ -779,7 +779,7 @@ DECLARE_NATIVE(let)
         if (altered) {  // elements altered, can't reuse input block rebound
             Init_Array_Cell(
                 where,  // may be SPARE, and vars may point to it
-                VAL_TYPE(vars),
+                Cell_Heart_Ensure_Noquote(vars),
                 Pop_Stack_Values_Core(base, NODE_FLAG_MANAGED)
             );
         }

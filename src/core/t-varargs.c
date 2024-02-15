@@ -568,25 +568,25 @@ void MF_Varargs(REB_MOLD *mo, const Cell* v, bool form) {
         Append_Ascii(mo->series, "???"); // never bound to an argument
     }
     else {
-        enum Reb_Kind kind;
+        Heart heart;
         bool quoted = false;
         switch ((pclass = Cell_ParamClass(param))) {
         case PARAMCLASS_NORMAL:
-            kind = REB_WORD;
+            heart = REB_WORD;
             break;
 
         case PARAMCLASS_HARD:
-            kind = REB_WORD;
+            heart = REB_WORD;
             quoted = true;
             break;
 
         case PARAMCLASS_MEDIUM:
-            kind = REB_GET_WORD;
+            heart = REB_GET_WORD;
             quoted = true;
             break;
 
         case PARAMCLASS_SOFT:
-            kind = REB_GET_WORD;
+            heart = REB_GET_WORD;
             break;
 
         default:
@@ -594,7 +594,7 @@ void MF_Varargs(REB_MOLD *mo, const Cell* v, bool form) {
         };
 
         DECLARE_ELEMENT (param_word);
-        Init_Any_Word(param_word, kind, KEY_SYMBOL(key));
+        Init_Any_Word(param_word, heart, KEY_SYMBOL(key));
         if (quoted)
             Quotify(param_word, 1);
         Mold_Value(mo, param_word);

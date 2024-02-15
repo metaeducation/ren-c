@@ -116,7 +116,7 @@
 #define P_RULE              At_Level(level_)  // rvalue
 #define P_RULE_SPECIFIER    Level_Specifier(level_)
 
-#define P_TYPE              VAL_TYPE(ARG(input))
+#define P_HEART             Cell_Heart_Ensure_Noquote(ARG(input))
 #define P_INPUT             Cell_Series(ARG(input))
 #define P_INPUT_BINARY      Cell_Binary(ARG(input))
 #define P_INPUT_STRING      Cell_String(ARG(input))
@@ -374,7 +374,7 @@ static void Print_Parse_Index(Level* level_) {
     DECLARE_LOCAL (input);
     Init_Series_Cell_At_Core(
         input,
-        P_TYPE,
+        P_HEART,
         P_INPUT,
         P_POS,
         Is_Series_Array(P_INPUT)
@@ -569,7 +569,7 @@ static REBIXO Parse_One_Rule(
         else if (
             (Is_Text(rule) or Is_Binary(rule))
             and (Cell_Series_Len_At(rule) == 0)
-            and (Any_String_Kind(P_TYPE) or P_TYPE == REB_BINARY)
+            and (Any_String_Kind(P_HEART) or P_HEART == REB_BINARY)
         ){
             // !!! The way this old R3-Alpha code was structured is now very
             // archaic (compared to UPARSE).  But while that design stabilizes,
@@ -683,7 +683,7 @@ static REBIXO Parse_One_Rule(
         return END_FLAG;
     }
     else {
-        assert(Any_String_Kind(P_TYPE) or P_TYPE == REB_BINARY);
+        assert(Any_String_Kind(P_HEART) or P_HEART == REB_BINARY);
 
         if (Is_The_Word(rule)) {
             bool any = false;
@@ -736,7 +736,7 @@ static REBIXO Parse_One_Rule(
             //
             bool uncased;
             Codepoint uni;
-            if (P_TYPE == REB_BINARY) {
+            if (P_HEART == REB_BINARY) {
                 uni = *Binary_At(P_INPUT_BINARY, P_POS);
                 uncased = false;
             }
@@ -866,7 +866,7 @@ static REBIXO To_Thru_Block_Rule(
                 fail ("Use TUPLE! a.b.c instead of PATH! a/b/c");
 
             // Try to match it:
-            if (Any_Array_Kind(P_TYPE) or Any_Sequence_Kind(P_TYPE)) {
+            if (Any_Array_Kind(P_HEART) or Any_Sequence_Kind(P_HEART)) {
                 if (Any_Array(rule))
                     fail (Error_Parse_Rule());
 
@@ -884,7 +884,7 @@ static REBIXO To_Thru_Block_Rule(
                     return VAL_INDEX(iter) - 1;  // back up
                 }
             }
-            else if (P_TYPE == REB_BINARY) {
+            else if (P_HEART == REB_BINARY) {
                 Byte ch1 = *Cell_Binary_At(iter);
 
                 if (VAL_INDEX(iter) == P_INPUT_LEN) {
@@ -944,7 +944,7 @@ static REBIXO To_Thru_Block_Rule(
                     fail (Error_Parse_Rule());
             }
             else {
-                assert(Any_String_Kind(P_TYPE));
+                assert(Any_String_Kind(P_HEART));
 
                 Codepoint unadjusted = Get_Char_At(
                     P_INPUT_STRING,
@@ -1750,11 +1750,11 @@ DECLARE_NATIVE(subparse)
                     if (pos_after == pos_before and spread) {
                         target = nullptr;
                     }
-                    else if (Any_String_Kind(P_TYPE)) {
+                    else if (Any_String_Kind(P_HEART)) {
                         target = nullptr;
                         Init_Any_String(
                             Alloc_Tail_Array(P_COLLECTION),
-                            P_TYPE,
+                            P_HEART,
                             Copy_String_At_Limit(
                                 ARG(position),
                                 pos_after - pos_before
@@ -1765,7 +1765,7 @@ DECLARE_NATIVE(subparse)
                         target = nullptr;  // not an array, one item
                         Init_Series_Cell(
                             Alloc_Tail_Array(P_COLLECTION),
-                            P_TYPE,
+                            P_HEART,
                             Copy_Binary_At_Len(
                                 P_INPUT,
                                 pos_before,
@@ -2458,7 +2458,7 @@ DECLARE_NATIVE(subparse)
                     set_or_copy_word,
                     P_RULE_SPECIFIER
                 );
-                if (Any_Array_Kind(P_TYPE)) {
+                if (Any_Array_Kind(P_HEART)) {
                     //
                     // Act like R3-Alpha in preserving GROUP! vs. BLOCK!
                     // distinction (which Rebol2 did not).  But don't keep
@@ -2466,7 +2466,7 @@ DECLARE_NATIVE(subparse)
                     //
                     Init_Array_Cell(
                         sink,
-                        Any_Group_Kind(P_TYPE) ? REB_GROUP : REB_BLOCK,
+                        Any_Group_Kind(P_HEART) ? REB_GROUP : REB_BLOCK,
                         Copy_Array_At_Max_Shallow(
                             P_INPUT_ARRAY,
                             begin,
@@ -2474,17 +2474,17 @@ DECLARE_NATIVE(subparse)
                         )
                     );
                 }
-                else if (P_TYPE == REB_BINARY) {
+                else if (P_HEART == REB_BINARY) {
                     Init_Binary(  // R3-Alpha behavior (e.g. not AS TEXT!)
                         sink,
                         Copy_Binary_At_Len(P_INPUT, begin, count)
                     );
                 }
                 else {
-                    assert(Any_String_Kind(P_TYPE));
+                    assert(Any_String_Kind(P_HEART));
 
                     DECLARE_LOCAL (begin_val);
-                    Init_Series_Cell_At(begin_val, P_TYPE, P_INPUT, begin);
+                    Init_Series_Cell_At(begin_val, P_HEART, P_INPUT, begin);
 
                     // Rebol2 behavior of always "netural" TEXT!.  Avoids
                     // creation of things like URL!-typed fragments that
@@ -2548,15 +2548,15 @@ DECLARE_NATIVE(subparse)
 
                     /*
                     DECLARE_LOCAL (begin_val);
-                    Init_Series_Cell_At(begin_val, P_TYPE, P_INPUT, begin);
+                    Init_Series_Cell_At(begin_val, P_HEART, P_INPUT, begin);
                     Init_Series_Cell(
                         captured,
-                        P_TYPE,
+                        P_HEART,
                         Copy_String_At_Limit(begin_val, count)
                     );
                     */
 
-                    if (P_TYPE == REB_BINARY)
+                    if (P_HEART == REB_BINARY)
                         Init_Integer(var, *Binary_At(P_INPUT_BINARY, begin));
                     else
                         Init_Char_Unchecked(

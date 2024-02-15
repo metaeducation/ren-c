@@ -904,7 +904,7 @@ static bool Try_Loop_Each_Next(const Value* iterator, Context* vars_ctx)
             continue;  // the `for` variable acquisition loop
         }
 
-        enum Reb_Kind kind = VAL_TYPE(les->data);
+        Heart heart;
 
         if (Is_Action(les->data)) {
             REBVAL *generated = rebValue(rebRUN(les->data));
@@ -926,7 +926,7 @@ static bool Try_Loop_Each_Next(const Value* iterator, Context* vars_ctx)
                     Init_Nulled(var);
             }
         }
-        else switch (kind) {
+        else switch ((heart = Cell_Heart_Ensure_Noquote(les->data))) {
           case REB_BLOCK:
           case REB_SET_BLOCK:
           case REB_GET_BLOCK:
@@ -972,7 +972,7 @@ static bool Try_Loop_Each_Next(const Value* iterator, Context* vars_ctx)
                     KEY_SYMBOL(les->u.evars.key)
                 );
 
-                if (kind == REB_MODULE) {
+                if (heart == REB_MODULE) {
                     INIT_VAL_WORD_INDEX(var, INDEX_PATCHED);
                     BINDING(var) = MOD_PATCH(
                         VAL_CONTEXT(les->data),

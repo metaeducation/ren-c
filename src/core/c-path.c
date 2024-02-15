@@ -32,11 +32,11 @@
 //
 Value* Try_Init_Any_Sequence_At_Arraylike(
     Sink(Value*) out,  // NULL if array too short, violating value otherwise
-    enum Reb_Kind kind,
+    Heart heart,
     const Array* a,
     REBLEN index
 ){
-    assert(Any_Sequence_Kind(kind));
+    assert(Any_Sequence_Kind(heart));
     assert(Is_Node_Managed(a));
     Assert_Series_Term_If_Needed(a);
     assert(index == 0);  // !!! current rule
@@ -52,18 +52,18 @@ Value* Try_Init_Any_Sequence_At_Arraylike(
 
     if (len_at == 2) {
         if (a == PG_2_Blanks_Array)  // can get passed back in
-            return Init_Any_Sequence_1(out, kind);
+            return Init_Any_Sequence_1(out, heart);
 
         // !!! Note: at time of writing, this may just fall back and make
         // a 2-element array vs. a pair optimization.
         //
         if (Try_Init_Any_Sequence_Pairlike(
             out,
-            kind,
+            heart,
             Array_At(a, index),
             Array_At(a, index + 1)
         )){
-            return cast(REBVAL*, out);
+            return out;
         }
 
         return nullptr;
@@ -71,17 +71,17 @@ Value* Try_Init_Any_Sequence_At_Arraylike(
 
     if (Try_Init_Any_Sequence_All_Integers(
         out,
-        kind,
+        heart,
         Array_At(a, index),
         len_at
     )){
-        return cast(REBVAL*, out);
+        return out;
     }
 
     const Element* tail = Array_Tail(a);
     const Element* v = Array_Head(a);
     for (; v != tail; ++v) {
-        if (not Is_Valid_Sequence_Element(kind, v)) {
+        if (not Is_Valid_Sequence_Element(heart, v)) {
             Copy_Cell(out, v);
             return nullptr;
         }
@@ -98,9 +98,9 @@ Value* Try_Init_Any_Sequence_At_Arraylike(
     // PATH! from non-head positions.
 
     Init_Series_Cell_At_Core(out, REB_BLOCK, a, index, SPECIFIED);
-    HEART_BYTE(out) = kind;
+    HEART_BYTE(out) = heart;
 
-    return cast(REBVAL*, out);
+    return out;
 }
 
 
@@ -204,15 +204,17 @@ DECLARE_NATIVE(poke)
 //
 Bounce MAKE_Path(
     Level* level_,
-    enum Reb_Kind kind,
+    enum Reb_Kind k,
     Option(const Value*) parent,
     const REBVAL *arg
 ){
+    Heart heart = cast(Heart, k);
+
     if (parent)
-        return RAISE(Error_Bad_Make_Parent(kind, unwrap(parent)));
+        return RAISE(Error_Bad_Make_Parent(heart, unwrap(parent)));
 
     if (not Is_Block(arg))
-        fail (Error_Bad_Make(kind, arg)); // "make path! 0" has no meaning
+        fail (Error_Bad_Make(heart, arg)); // "make path! 0" has no meaning
 
     Level* L = Make_Level_At(arg, LEVEL_MASK_NONE);
 
@@ -241,7 +243,7 @@ Bounce MAKE_Path(
         L->baseline.stack_base += 1;  // compensate for push
     }
 
-    REBVAL *p = Try_Pop_Sequence_Or_Element_Or_Nulled(OUT, kind, base);
+    REBVAL *p = Try_Pop_Sequence_Or_Element_Or_Nulled(OUT, heart, base);
 
     Drop_Level_Unbalanced(L); // !!! L's stack_base got captured each loop
 
@@ -290,7 +292,9 @@ Bounce MAKE_Path(
 //     >> to path! ^[a b c]
 //     == /[a b c]
 //
-Bounce TO_Sequence(Level* level_, enum Reb_Kind kind, const REBVAL *arg) {
+Bounce TO_Sequence(Level* level_, enum Reb_Kind k, const REBVAL *arg) {
+    Heart heart = cast(Heart, k);
+
     enum Reb_Kind arg_kind = VAL_TYPE(arg);
 
     if (Is_Text(arg)) {
@@ -308,7 +312,7 @@ Bounce TO_Sequence(Level* level_, enum Reb_Kind kind, const REBVAL *arg) {
         // (Inefficient!  But just see how it feels before optimizing.)
         //
         return rebValue(
-            "as", Datatype_From_Kind(kind),
+            "as", Datatype_From_Kind(heart),
                 "parse3 let v: load @", arg, "[",
                     "[any-sequence! | any-array!] <end> accept (first v)",
                     "| accept (v)",  // try to convert whatever other block
@@ -317,13 +321,13 @@ Bounce TO_Sequence(Level* level_, enum Reb_Kind kind, const REBVAL *arg) {
     }
 
     if (Any_Sequence_Kind(arg_kind)) {  // e.g. `to set-path! 'a/b/c`
-        assert(kind != arg_kind);  // TO should have called COPY
+        assert(heart != arg_kind);  // TO should have called COPY
 
         // !!! If we don't copy an array, we don't get a new form to use for
         // new bindings in lookups.  Review!
         //
         Copy_Cell(OUT, arg);
-        HEART_BYTE(OUT) = kind;
+        HEART_BYTE(OUT) = heart;
         return OUT;
     }
 
@@ -331,7 +335,7 @@ Bounce TO_Sequence(Level* level_, enum Reb_Kind kind, const REBVAL *arg) {
         Copy_Cell(OUT, arg);  // move value so we can modify it
         Dequotify(stable_OUT);  // !!! should TO take Cell*?
         Plainify(stable_OUT);  // remove any decorations like @ or :
-        if (not Try_Leading_Blank_Pathify(stable_OUT, kind))
+        if (not Try_Leading_Blank_Pathify(stable_OUT, heart))
             return RAISE(Error_Bad_Sequence_Init(stable_OUT));
         return OUT;
     }
@@ -348,7 +352,7 @@ Bounce TO_Sequence(Level* level_, enum Reb_Kind kind, const REBVAL *arg) {
         const Element* at = Cell_Array_Item_At(arg);
         if (not Try_Init_Any_Sequence_Pairlike(
             OUT,
-            kind,
+            heart,
             at,
             at + 1
         )){
@@ -367,11 +371,11 @@ Bounce TO_Sequence(Level* level_, enum Reb_Kind kind, const REBVAL *arg) {
         Freeze_Array_Shallow(a);
         Force_Series_Managed(a);
 
-        if (not Try_Init_Any_Sequence_Arraylike(OUT, kind, a))
+        if (not Try_Init_Any_Sequence_Arraylike(OUT, heart, a))
             return RAISE(Error_Bad_Sequence_Init(stable_OUT));
     }
 
-    if (VAL_TYPE(OUT) != kind) {
+    if (VAL_TYPE(OUT) != heart) {
         assert(VAL_TYPE(OUT) == REB_WORD);
         return RAISE(Error_Bad_Sequence_Init(stable_OUT));
     }

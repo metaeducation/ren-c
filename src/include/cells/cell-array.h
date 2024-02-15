@@ -125,14 +125,14 @@ INLINE const Element* Cell_Array_Item_At(const Cell* v) {
 
 INLINE REBVAL *Init_Array_Cell_At_Core(
     Cell* out,
-    enum Reb_Kind kind,
+    Heart heart,
     const_if_c Array* array,
     REBLEN index,
     Stub* binding
 ){
     return Init_Series_Cell_At_Core(
         out,
-        kind,
+        heart,
         Force_Series_Managed_Core(array),
         index,
         binding
@@ -142,12 +142,12 @@ INLINE REBVAL *Init_Array_Cell_At_Core(
 #if CPLUSPLUS_11
     INLINE REBVAL *Init_Array_Cell_At_Core(
         Cell* out,
-        enum Reb_Kind kind,
+        Heart heart,
         const Array* array,  // all const arrays should be already managed
         REBLEN index,
         Stub* binding
     ){
-        return Init_Series_Cell_At_Core(out, kind, array, index, binding);
+        return Init_Series_Cell_At_Core(out, heart, array, index, binding);
     }
 #endif
 

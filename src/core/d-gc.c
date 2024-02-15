@@ -391,8 +391,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
             const Element* tail = Array_Tail(a);
             const Element* item = Array_Head(a);
             for (; item != tail; ++item) {
-                assert(QUOTE_BYTE(item) == NOQUOTE_1);
-                assert(not Any_Path_Kind(VAL_TYPE_UNCHECKED(item)));
+                assert(not Any_Path_Kind(Cell_Heart_Ensure_Noquote(item)));
             }
             assert(Is_Node_Marked(a));
             break; }

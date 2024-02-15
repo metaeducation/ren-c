@@ -63,14 +63,15 @@ INLINE void INIT_VAL_WORD_INDEX(Cell* v, REBINT i) {
 
 INLINE Element* Init_Any_Word_Untracked(
     Sink(Element*) out,
-    enum Reb_Kind kind,
+    Heart heart,
     const Symbol* sym,
     Byte quote_byte
 ){
+    assert(Any_Word_Kind(heart));
     FRESHEN_CELL(out);
     out->header.bits |= (
         NODE_FLAG_NODE | NODE_FLAG_CELL
-            | FLAG_HEART_BYTE(kind) | FLAG_QUOTE_BYTE(quote_byte)
+            | FLAG_HEART_BYTE(heart) | FLAG_QUOTE_BYTE(quote_byte)
             | CELL_FLAG_FIRST_IS_NODE
     );
     VAL_WORD_INDEX_I32(out) = 0;
@@ -80,8 +81,8 @@ INLINE Element* Init_Any_Word_Untracked(
     return out;
 }
 
-#define Init_Any_Word(out,kind,spelling) \
-    TRACK(Init_Any_Word_Untracked((out), (kind), (spelling), NOQUOTE_1))
+#define Init_Any_Word(out,heart,spelling) \
+    TRACK(Init_Any_Word_Untracked((out), (heart), (spelling), NOQUOTE_1))
 
 #define Init_Word(out,str)          Init_Any_Word((out), REB_WORD, (str))
 #define Init_Get_Word(out,str)      Init_Any_Word((out), REB_GET_WORD, (str))
@@ -90,16 +91,16 @@ INLINE Element* Init_Any_Word_Untracked(
 
 INLINE REBVAL *Init_Any_Word_Bound_Untracked(
     Sink(Element*) out,
-    enum Reb_Kind type,
+    Heart heart,
     const Symbol* symbol,
     Stub* binding,  // spelling determined by linked-to thing
     REBLEN index  // must be INDEX_PATCHED if LET patch
 ){
+    assert(Any_Word_Kind(heart));
     assert(index != 0);
-
     Reset_Unquoted_Header_Untracked(
         out,
-        FLAG_HEART_BYTE(type) | CELL_FLAG_FIRST_IS_NODE
+        FLAG_HEART_BYTE(heart) | CELL_FLAG_FIRST_IS_NODE
     );
     INIT_CELL_WORD_SYMBOL(out, symbol);
     VAL_WORD_INDEX_I32(out) = index;
@@ -118,9 +119,9 @@ INLINE REBVAL *Init_Any_Word_Bound_Untracked(
     return cast(REBVAL*, out);
 }
 
-#define Init_Any_Word_Bound(out,type,symbol,context,index) \
+#define Init_Any_Word_Bound(out,heart,symbol,context,index) \
     TRACK(Init_Any_Word_Bound_Untracked((out), \
-            (type), (symbol), CTX_VARLIST(context), (index)))
+            (heart), (symbol), CTX_VARLIST(context), (index)))
 
 
 // Helper calls strsize() so you can more easily use literals at callsite.

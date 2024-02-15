@@ -225,7 +225,7 @@ Bounce Series_Common_Action_Maybe_Unhandled(
 
         return Init_Series_Cell(
             OUT,
-            VAL_TYPE(v),
+            Cell_Heart_Ensure_Noquote(v),
             Make_Set_Operation_Series(
                 v,
                 (id == SYM_UNIQUE)

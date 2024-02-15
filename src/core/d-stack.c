@@ -55,8 +55,8 @@ void Collapsify_Array(Array* array, REBLEN limit)
 
             Collapsify_Array(copy, limit);
 
-            enum Reb_Kind kind = VAL_TYPE(item);
-            Init_Array_Cell_At(item, kind, copy, 0);  // at 0 now
+            Heart heart = Cell_Heart_Ensure_Noquote(item);  // !!! Quoteds?
+            Init_Array_Cell_At(item, heart, copy, 0);  // at 0 now
             assert(Not_Cell_Flag(item, NEWLINE_BEFORE));  // gets cleared
         }
     }

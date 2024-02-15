@@ -517,27 +517,27 @@ REBLEN Find_Value_In_Binstr(
     REBLEN flags,
     REBINT skip
 ){
-    enum Reb_Kind binstr_kind = Cell_Heart(binstr);
-    enum Reb_Kind pattern_kind = Cell_Heart(pattern);
+    Heart binstr_heart = Cell_Heart(binstr);
+    Heart pattern_heart = Cell_Heart(pattern);
 
-    if (REB_BINARY == pattern_kind) {
+    if (REB_BINARY == pattern_heart) {
         //
         // Can't search for BINARY! in an ANY-STRING! (might match on a "half
         // codepoint").  Solution is to alias input as UTF-8 binary.
         //
-        if (binstr_kind != REB_BINARY)
+        if (binstr_heart != REB_BINARY)
             fail (Error_Find_String_Binary_Raw());
         goto find_binstr_in_binstr;
     }
 
     if (
-        Any_String_Kind(pattern_kind)
-        or Any_Word_Kind(pattern_kind)
-        or REB_INTEGER == pattern_kind  // `find "ab10cd" 10` -> "10cd"
-        or REB_ISSUE == pattern_kind
-        or REB_URL == pattern_kind
+        Any_String_Kind(pattern_heart)
+        or Any_Word_Kind(pattern_heart)
+        or REB_INTEGER == pattern_heart  // `find "ab10cd" 10` -> "10cd"
+        or REB_ISSUE == pattern_heart
+        or REB_URL == pattern_heart
     ){
-        if (binstr_kind != REB_BINARY and (
+        if (binstr_heart != REB_BINARY and (
             IS_CHAR_CELL(pattern) and Cell_Codepoint(pattern) == 0
         )){
             return NOT_FOUND;  // can't find NUL # in strings, only BINARY!
@@ -583,7 +583,7 @@ REBLEN Find_Value_In_Binstr(
 
         return result;
     }
-    else if (pattern_kind == REB_BITSET) {
+    else if (pattern_heart == REB_BITSET) {
         return Find_Bitset_In_Binstr(
             len,
             binstr,

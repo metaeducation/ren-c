@@ -94,13 +94,14 @@ REBINT CT_Issue(const Cell* a, const Cell* b, bool strict)
 //
 Bounce MAKE_Issue(
     Level* level_,
-    enum Reb_Kind kind,
+    enum Reb_Kind k,
     Option(const Value*) parent,
     const REBVAL *arg
 ){
-    assert(kind == REB_ISSUE);
+    assert(k == REB_ISSUE);
+
     if (parent)
-        fail (Error_Bad_Make_Parent(kind, unwrap(parent)));
+        fail (Error_Bad_Make_Parent(REB_ISSUE, unwrap(parent)));
 
     switch(VAL_TYPE(arg)) {
       case REB_INTEGER:
@@ -120,7 +121,7 @@ Bounce MAKE_Issue(
         Codepoint c;
         if (*bp <= 0x80) {
             if (size != 1)
-                return MAKE_String(level_, kind, nullptr, arg);
+                return MAKE_String(level_, REB_ISSUE, nullptr, arg);
 
             c = *bp;
         }
@@ -130,7 +131,7 @@ Bounce MAKE_Issue(
             if (bp == nullptr)
                 goto bad_make;  // must be valid UTF8
             if (size != 0)
-                return MAKE_String(level_, kind, nullptr, arg);
+                return MAKE_String(level_, REB_ISSUE, nullptr, arg);
         }
         Context* error = Maybe_Init_Char(OUT, c);
         if (error)
@@ -142,7 +143,7 @@ Bounce MAKE_Issue(
             fail ("Empty ISSUE! is zero codepoint, unlike empty TEXT!");
         if (Cell_Series_Len_At(arg) == 1)
             return Init_Char_Unchecked(OUT, Codepoint_At(Cell_Utf8_At(arg)));
-        return MAKE_String(level_, kind, nullptr, arg);
+        return MAKE_String(level_, REB_ISSUE, nullptr, arg);
 
       default:
         break;

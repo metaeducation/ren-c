@@ -33,7 +33,7 @@
 // Create context with capacity, allocating space for both words and values.
 // Context will report actual CTX_LEN() of 0 after this call.
 //
-Context* Alloc_Context_Core(enum Reb_Kind kind, REBLEN capacity, Flags flags)
+Context* Alloc_Context_Core(Heart heart, REBLEN capacity, Flags flags)
 {
     KeyList* keylist = Make_Series(KeyList,
         capacity,  // no terminator
@@ -55,7 +55,7 @@ Context* Alloc_Context_Core(enum Reb_Kind kind, REBLEN capacity, Flags flags)
     );
 
     Cell* rootvar = Alloc_Tail_Array(varlist);
-    INIT_VAL_CONTEXT_ROOTVAR(rootvar, kind, varlist);
+    INIT_VAL_CONTEXT_ROOTVAR(rootvar, heart, varlist);
 
     return cast(Context*, varlist);  // varlist pointer is context handle
 }
@@ -598,12 +598,12 @@ void Rebind_Context_Deep(
 // keylist of words to the result if provided.
 //
 Context* Make_Context_Detect_Managed(
-    enum Reb_Kind kind,
+    Heart heart,
     Option(const Cell*) head,
     Option(const Cell*) tail,
     Option(Context*) parent
 ) {
-    assert(kind != REB_MODULE);
+    assert(heart != REB_MODULE);
 
     KeyList* keylist = Collect_KeyList_Managed(
         head,
@@ -649,7 +649,7 @@ Context* Make_Context_Detect_Managed(
     }
 
     Value* var = cast(Value*, Array_Head(varlist));
-    INIT_VAL_CONTEXT_ROOTVAR(var, kind, varlist);
+    INIT_VAL_CONTEXT_ROOTVAR(var, heart, varlist);
 
     ++var;
 
@@ -711,17 +711,17 @@ Context* Make_Context_Detect_Managed(
 // they were used as values, so they are not currently permitted.
 //
 Context* Construct_Context_Managed(
-    enum Reb_Kind kind,
+    Heart heart,
     Element* head,  // !!! Warning: modified binding
     const Element* tail,
     Specifier* specifier,
     Option(Context*) parent
 ){
     Context* context = Make_Context_Detect_Managed(
-        kind, // type
-        head, // values to scan for toplevel set-words
+        heart,
+        head,  // scans from head to tail for toplevel set-words
         tail,
-        parent // parent
+        parent
     );
 
     if (not head)

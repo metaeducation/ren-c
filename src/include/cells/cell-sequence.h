@@ -131,7 +131,7 @@ INLINE bool Is_Valid_Sequence_Element(
 // the output cell passed in will be either a null (if the data was
 // too short) or it will be the first badly-typed value that was problematic.
 //
-INLINE Context* Error_Bad_Sequence_Init(const REBVAL *v) {
+INLINE Context* Error_Bad_Sequence_Init(const Value* v) {
     if (Is_Nulled(v))
         return Error_Sequence_Too_Short_Raw();
     fail (Error_Bad_Sequence_Item_Raw(v));
@@ -140,8 +140,8 @@ INLINE Context* Error_Bad_Sequence_Init(const REBVAL *v) {
 
 //=//// UNCOMPRESSED ARRAY SEQUENCE FORM //////////////////////////////////=//
 
-#define Try_Init_Any_Sequence_Arraylike(v,k,a) \
-    Try_Init_Any_Sequence_At_Arraylike((v), (k), (a), 0)
+#define Try_Init_Any_Sequence_Arraylike(out,heart,a) \
+    Try_Init_Any_Sequence_At_Arraylike((out), (heart), (a), 0)
 
 
 //=//// ALL-BLANK! SEQUENCE OPTIMIZATION //////////////////////////////////=//
@@ -160,12 +160,12 @@ INLINE Context* Error_Bad_Sequence_Init(const REBVAL *v) {
 //
 INLINE Element* Init_Any_Sequence_1(
     Sink(Element*) out,
-    enum Reb_Kind kind
+    Heart heart
 ){
-    if (Any_Path_Kind(kind))
+    if (Any_Path_Kind(heart))
         Init_Word(out, Canon(SLASH_1));
     else {
-        assert(Any_Tuple_Kind(kind));
+        assert(Any_Tuple_Kind(heart));
         Init_Word(out, Canon(DOT_1));
     }
     return out;
@@ -183,22 +183,22 @@ INLINE Element* Init_Any_Sequence_1(
 
 INLINE Element* Try_Leading_Blank_Pathify(
     Value* v,
-    enum Reb_Kind kind
+    Heart heart
 ){
-    assert(Any_Sequence_Kind(kind));
+    assert(Any_Sequence_Kind(heart));
 
     if (Is_Blank(v))
-        return Init_Any_Sequence_1(v, kind);
+        return Init_Any_Sequence_1(v, heart);
 
-    if (not Is_Valid_Sequence_Element(kind, v))
+    if (not Is_Valid_Sequence_Element(heart, v))
         return nullptr;  // leave element in v to indicate "the bad element"
 
     // See notes at top of file regarding optimizing `/a` into a single cell.
     //
-    enum Reb_Kind inner_kind = VAL_TYPE(v);
-    if (inner_kind == REB_WORD) {
+    Heart inner_heart = Cell_Heart_Ensure_Noquote(v);
+    if (inner_heart == REB_WORD) {
         Set_Cell_Flag(v, REFINEMENT_LIKE);
-        HEART_BYTE(v) = kind;
+        HEART_BYTE(v) = heart;
         return cast(Element*, v);
     }
 
@@ -207,7 +207,7 @@ INLINE Element* Try_Leading_Blank_Pathify(
     Copy_Cell(Pairing_Second(p), v);
 
     Init_Pair(v, p);
-    HEART_BYTE(v) = kind;
+    HEART_BYTE(v) = heart;
 
     return cast(Element*, v);
 }
@@ -231,13 +231,14 @@ INLINE Element* Try_Leading_Blank_Pathify(
 
 INLINE Element* Init_Any_Sequence_Bytes(
     Sink(Element*) out,
-    enum Reb_Kind kind,
+    Heart heart,
     const Byte* data,
     Size size
 ){
+    assert(Any_Sequence_Kind(heart));
     Reset_Unquoted_Header_Untracked(
         out,
-        FLAG_HEART_BYTE(kind) | CELL_MASK_NO_NODES
+        FLAG_HEART_BYTE(heart) | CELL_MASK_NO_NODES
     );
     BINDING(out) = nullptr;  // paths are bindable, can't have garbage
 
@@ -263,10 +264,12 @@ INLINE Element* Init_Any_Sequence_Bytes(
 
 INLINE Element* Try_Init_Any_Sequence_All_Integers(
     Sink(Element*) out,
-    enum Reb_Kind kind,
+    Heart heart,
     const Value* head,  // NOTE: Can't use PUSH() or evaluation
     REBLEN len
 ){
+    assert(Any_Sequence_Kind(heart));
+
     if (len > sizeof(PAYLOAD(Bytes, out)).at_least_8 - 1)
         return nullptr;  // no optimization yet if won't fit in payload bytes
 
@@ -275,7 +278,7 @@ INLINE Element* Try_Init_Any_Sequence_All_Integers(
 
     Reset_Unquoted_Header_Untracked(
         out,
-        FLAG_HEART_BYTE(kind) | CELL_MASK_NO_NODES
+        FLAG_HEART_BYTE(heart) | CELL_MASK_NO_NODES
     );
     BINDING(out) = nullptr;  // paths are bindable, can't be garbage
 
@@ -302,26 +305,28 @@ INLINE Element* Try_Init_Any_Sequence_All_Integers(
 
 INLINE Element* Try_Init_Any_Sequence_Pairlike(
     Sink(Value*) out,  // holds illegal value if nullptr returned
-    enum Reb_Kind kind,
+    Heart heart,
     const Value* v1,
     const Value* v2
 ){
+    assert(Any_Sequence_Kind(heart));
+
     if (Is_Blank(v1)) {
         Copy_Cell(out, v2);
-        return Try_Leading_Blank_Pathify(out, kind);
+        return Try_Leading_Blank_Pathify(out, heart);
     }
 
-    if (not Is_Valid_Sequence_Element(kind, v1)) {
+    if (not Is_Valid_Sequence_Element(heart, v1)) {
         Copy_Cell(out, v1);
         return nullptr;
     }
 
     // See notes at top of file regarding optimizing `/a` and `.a`
     //
-    enum Reb_Kind inner = VAL_TYPE(v1);
-    if (Is_Blank(v2) and inner == REB_WORD) {
+    Heart inner_heart = Cell_Heart_Ensure_Noquote(v1);
+    if (Is_Blank(v2) and inner_heart == REB_WORD) {
         Copy_Cell(out, v1);
-        HEART_BYTE(out) = kind;
+        HEART_BYTE(out) = heart;
         return cast(Element*, out);
     }
 
@@ -332,13 +337,13 @@ INLINE Element* Try_Init_Any_Sequence_Pairlike(
         if (i1 >= 0 and i2 >= 0 and i1 <= 255 and i2 <= 255) {
             buf[0] = cast(Byte, i1);
             buf[1] = cast(Byte, i2);
-            return Init_Any_Sequence_Bytes(out, kind, buf, 2);
+            return Init_Any_Sequence_Bytes(out, heart, buf, 2);
         }
 
         // fall through
     }
 
-    if (not Is_Valid_Sequence_Element(kind, v2)) {
+    if (not Is_Valid_Sequence_Element(heart, v2)) {
         Copy_Cell(out, v2);
         return nullptr;
     }
@@ -347,7 +352,7 @@ INLINE Element* Try_Init_Any_Sequence_Pairlike(
     Copy_Cell(pairing, v1);
     Copy_Cell(Pairing_Second(pairing), v2);
     Init_Pair(out, pairing);
-    HEART_BYTE(out) = kind;
+    HEART_BYTE(out) = heart;
 
     return cast(Element*, out);
 }
@@ -373,20 +378,20 @@ INLINE Element* Try_Init_Any_Sequence_Pairlike(
 //
 INLINE Value* Try_Pop_Sequence_Or_Element_Or_Nulled(
     Sink(Value*) out,  // the error-triggering value if nullptr returned
-    enum Reb_Kind kind,
+    Heart heart,
     StackIndex base
 ){
     if (TOP_INDEX == base)
         return Init_Nulled(out);
 
     if (TOP_INDEX - 1 == base) {  // only one item, use as-is if possible
-        if (not Is_Valid_Sequence_Element(kind, TOP))
+        if (not Is_Valid_Sequence_Element(heart, TOP))
             return nullptr;
 
         Copy_Cell(out, TOP);
         DROP();
 
-        if (kind != REB_PATH) {  // carry over : or ^ decoration (if possible)
+        if (heart != REB_PATH) {  // carry over : or ^ decoration (if possible)
             if (
                 not Is_Word(out)
                 and not Is_Block(out)
@@ -401,11 +406,11 @@ INLINE Value* Try_Pop_Sequence_Or_Element_Or_Nulled(
                 return nullptr;
             }
 
-            if (kind == REB_SET_PATH)
+            if (heart == REB_SET_PATH)
                 Setify(out);
-            else if (kind == REB_GET_PATH)
+            else if (heart == REB_GET_PATH)
                 Getify(out);
-            else if (kind == REB_META_PATH)
+            else if (heart == REB_META_PATH)
                 Metafy(out);
         }
 
@@ -413,7 +418,7 @@ INLINE Value* Try_Pop_Sequence_Or_Element_Or_Nulled(
     }
 
     if (TOP_INDEX - base == 2) {  // two-element path optimization
-        if (not Try_Init_Any_Sequence_Pairlike(out, kind, TOP - 1, TOP)) {
+        if (not Try_Init_Any_Sequence_Pairlike(out, heart, TOP - 1, TOP)) {
             Drop_Data_Stack_To(base);
             return nullptr;
         }
@@ -428,7 +433,7 @@ INLINE Value* Try_Pop_Sequence_Or_Element_Or_Nulled(
     //
     if (Try_Init_Any_Sequence_All_Integers(
         out,
-        kind,
+        heart,
         Data_Stack_At(base) + 1,
         TOP_INDEX - base
     )){
@@ -438,7 +443,7 @@ INLINE Value* Try_Pop_Sequence_Or_Element_Or_Nulled(
 
     Array* a = Pop_Stack_Values_Core(base, NODE_FLAG_MANAGED);
     Freeze_Array_Shallow(a);
-    if (not Try_Init_Any_Sequence_Arraylike(out, kind, a))
+    if (not Try_Init_Any_Sequence_Arraylike(out, heart, a))
         return nullptr;
 
     return out;

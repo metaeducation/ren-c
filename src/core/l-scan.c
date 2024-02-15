@@ -2198,19 +2198,19 @@ Bounce Scanner_Executor(Level* const L) {
         Set_Array_Flag(a, HAS_FILE_LINE_UNMASKED);
         Set_Series_Flag(a, LINK_NODE_NEEDS_MARK);
 
-        enum Reb_Kind kind =
+        Heart heart =
             (level->token == TOKEN_GROUP_BEGIN) ? REB_GROUP : REB_BLOCK;
 
         if (
             *ss->end == ':'  // `...(foo):` or `...[bar]:`
             and not Is_Dot_Or_Slash(level->mode)  // leave `:` for SET-PATH!
         ){
-            Init_Array_Cell(PUSH(), Setify_Any_Plain_Kind(kind), a);
+            Init_Array_Cell(PUSH(), Setify_Any_Plain_Kind(heart), a);
             ++ss->begin;
             ++ss->end;
         }
         else
-            Init_Array_Cell(PUSH(), kind, a);
+            Init_Array_Cell(PUSH(), heart, a);
         ep = ss->end;
         break; }
 
@@ -2827,34 +2827,34 @@ Bounce Scanner_Executor(Level* const L) {
         if (level->prefix_pending)
             return RAISE(Error_Syntax(ss, level->token));
 
-        enum Reb_Kind kind = VAL_TYPE(TOP);
-        if (not Any_Plain_Value_Kind(kind))
+        Heart heart = Cell_Heart_Ensure_Noquote(TOP);
+        if (not Any_Plain_Value_Kind(heart))
             return RAISE(Error_Syntax(ss, level->token));
 
-        HEART_BYTE(TOP) = Setify_Any_Plain_Kind(kind);
+        HEART_BYTE(TOP) = Setify_Any_Plain_Kind(heart);
 
         ss->begin = ++ss->end;  // !!! ?
     }
     else if (level->prefix_pending != TOKEN_0) {
-        enum Reb_Kind kind = VAL_TYPE(TOP);
-        if (not Any_Plain_Kind(kind))
+        Heart heart = Cell_Heart_Ensure_Noquote(TOP);
+        if (not Any_Plain_Kind(heart))
             return DROP(), RAISE(Error_Syntax(ss, level->token));
 
         switch (level->prefix_pending) {
           case TOKEN_COLON:
-            HEART_BYTE(TOP) = Getify_Any_Plain_Kind(kind);
+            HEART_BYTE(TOP) = Getify_Any_Plain_Kind(heart);
             break;
 
           case TOKEN_CARET:
-            HEART_BYTE(TOP) = METAFY_ANY_PLAIN_KIND(kind);
+            HEART_BYTE(TOP) = METAFY_ANY_PLAIN_KIND(heart);
             break;
 
           case TOKEN_AT:
-            HEART_BYTE(TOP) = Theify_Any_Plain_Kind(kind);
+            HEART_BYTE(TOP) = Theify_Any_Plain_Kind(heart);
             break;
 
           case TOKEN_AMPERSAND:
-            HEART_BYTE(TOP) = Typeify_Any_Plain_Kind(kind);
+            HEART_BYTE(TOP) = Typeify_Any_Plain_Kind(heart);
             break;
 
           default:
@@ -3226,7 +3226,7 @@ DECLARE_NATIVE(transcode)
 //
 const Byte* Scan_Any_Word(
     Sink(Value*) out,
-    enum Reb_Kind kind,
+    Heart heart,
     const Byte* utf8,
     Size size
 ) {
@@ -3250,7 +3250,7 @@ const Byte* Scan_Any_Word(
     if (size > cast(Size, ss.end - ss.begin))
         return nullptr;  // e.g. `as word! "ab cd"` just sees "ab"
 
-    Init_Any_Word(out, kind, Intern_UTF8_Managed(utf8, size));
+    Init_Any_Word(out, heart, Intern_UTF8_Managed(utf8, size));
     Drop_Mold_If_Pushed(mo);
     Free_Level_Internal(L);
     return ss.begin;

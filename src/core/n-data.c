@@ -200,7 +200,7 @@ DECLARE_NATIVE(bind)
         );
         at = Array_Head(copy);
         tail = Array_Tail(copy);
-        Init_Array_Cell(OUT, VAL_TYPE(v), copy);
+        Init_Array_Cell(OUT, Cell_Heart_Ensure_Noquote(v), copy);
         BINDING(OUT) = BINDING(v);
     }
     else {
@@ -296,15 +296,18 @@ DECLARE_NATIVE(has)
     Context* ctx = VAL_CONTEXT(ARG(context));
     REBVAL *v = ARG(value);
 
+    assert(Any_Word(v));
+    Heart heart = Cell_Heart(v);
+
     const Symbol* symbol = Cell_Word_Symbol(v);
     const bool strict = true;
     REBLEN index = Find_Symbol_In_Context(ARG(context), symbol, strict);
     if (index == 0)
         return nullptr;
     if (CTX_TYPE(ctx) != REB_MODULE)
-        return Init_Any_Word_Bound(OUT, VAL_TYPE(v), symbol, ctx, index);
+        return Init_Any_Word_Bound(OUT, heart, symbol, ctx, index);
 
-    Init_Any_Word(OUT, VAL_TYPE(v), symbol);
+    Init_Any_Word(OUT, heart, symbol);
     INIT_VAL_WORD_INDEX(OUT, INDEX_PATCHED);
     BINDING(OUT) = MOD_PATCH(ctx, symbol, strict);
     return OUT;
@@ -342,7 +345,7 @@ DECLARE_NATIVE(without)
             return nullptr;
         return Init_Any_Word_Bound(
             OUT,
-            VAL_TYPE(v),
+            Cell_Heart_Ensure_Noquote(v),
             symbol,  // !!! incoming case...consider impact of strict if false?
             ctx,
             index
@@ -1849,7 +1852,7 @@ DECLARE_NATIVE(free_q)
 //
 bool Try_As_String(
     Sink(Value*) out,
-    enum Reb_Kind new_kind,
+    Heart new_heart,
     const REBVAL *v,
     REBLEN quotes,
     enum Reb_Strmode strmode
@@ -1857,7 +1860,7 @@ bool Try_As_String(
     assert(strmode == STRMODE_ALL_CODEPOINTS or strmode == STRMODE_NO_CR);
 
     if (Any_Word(v)) {  // ANY-WORD! can alias as a read only ANY-STRING!
-        Init_Any_String(out, new_kind, Cell_Word_Symbol(v));
+        Init_Any_String(out, new_heart, Cell_Word_Symbol(v));
         Inherit_Const(Quotify(out, quotes), v);
     }
     else if (Is_Binary(v)) {  // If valid UTF-8, BINARY! aliases as ANY-STRING!
@@ -1949,7 +1952,7 @@ bool Try_As_String(
             }
         }
 
-        Init_Any_String_At(out, new_kind, str, index);
+        Init_Any_String_At(out, new_heart, str, index);
         Inherit_Const(Quotify(out, quotes), v);
     }
     else if (Is_Issue(v)) {
@@ -1972,12 +1975,12 @@ bool Try_As_String(
         memcpy(Series_Data(str), utf8, size + 1);  // +1 to include '\0'
         Term_String_Len_Size(str, len, size);
         Freeze_Series(str);
-        Init_Any_String(out, new_kind, str);
+        Init_Any_String(out, new_heart, str);
     }
     else if (Any_String(v) or Is_Url(v)) {
       any_string:
         Copy_Cell(out, v);
-        HEART_BYTE(out) = new_kind;
+        HEART_BYTE(out) = new_heart;
         Trust_Const(Quotify(out, quotes));
     }
     else
@@ -2024,10 +2027,14 @@ DECLARE_NATIVE(as)
 
     REBVAL *t = ARG(type);
     enum Reb_Kind new_kind = VAL_TYPE_KIND(t);
-    if (new_kind == VAL_TYPE(v))
+    if (new_kind >= REB_QUASIFORM)
+        fail ("New kind can't be quoted/quasiform/antiform");
+
+    Heart new_heart = cast(Heart, new_kind);
+    if (new_heart == Cell_Heart_Ensure_Noquote(v))
         return COPY(v);
 
-    switch (new_kind) {
+    switch (new_heart) {
       case REB_INTEGER: {
         if (not IS_CHAR(v))
             fail ("AS INTEGER! only supports what-were-CHAR! issues ATM");
@@ -2080,7 +2087,7 @@ DECLARE_NATIVE(as)
         else if (not Any_Array(v))
             goto bad_cast;
 
-        goto adjust_v_kind;
+        goto adjust_v_heart;
 
       case REB_TUPLE:
       case REB_GET_TUPLE:
@@ -2102,7 +2109,7 @@ DECLARE_NATIVE(as)
 
             if (Try_Init_Any_Sequence_At_Arraylike(
                 OUT,  // if failure, nulled if too short...else bad element
-                new_kind,
+                new_heart,
                 Cell_Array(v),
                 VAL_INDEX(v)
             )){
@@ -2115,7 +2122,7 @@ DECLARE_NATIVE(as)
 
         if (Any_Sequence(v)) {
             Copy_Cell(OUT, v);
-            HEART_BYTE(OUT) = new_kind;
+            HEART_BYTE(OUT) = new_heart;
             return Trust_Const(OUT);
         }
 
@@ -2174,7 +2181,7 @@ DECLARE_NATIVE(as)
       case REB_EMAIL:
         if (not Try_As_String(
             OUT,
-            new_kind,
+            new_heart,
             v,
             0,  // no quotes
             STRMODE_ALL_CODEPOINTS  // See AS-TEXT/STRICT for stricter
@@ -2212,7 +2219,7 @@ DECLARE_NATIVE(as)
             //
             Size size;
             Utf8(const*) utf8 = Cell_Utf8_Size_At(&size, v);
-            if (nullptr == Scan_Any_Word(OUT, new_kind, utf8, size))
+            if (nullptr == Scan_Any_Word(OUT, new_heart, utf8, size))
                 fail (Error_Bad_Char_Raw(v));
 
             return Inherit_Const(stable_OUT, v);
@@ -2252,7 +2259,7 @@ DECLARE_NATIVE(as)
                 goto intern_utf8;
             }
 
-            Init_Any_Word(OUT, new_kind, c_cast(Symbol*, s));
+            Init_Any_Word(OUT, new_heart, c_cast(Symbol*, s));
             return Inherit_Const(stable_OUT, v);
           }
         }
@@ -2293,13 +2300,13 @@ DECLARE_NATIVE(as)
                 Freeze_Series(bin);
             }
 
-            Init_Any_Word(OUT, new_kind, c_cast(Symbol*, str));
+            Init_Any_Word(OUT, new_heart, c_cast(Symbol*, str));
             return Inherit_Const(OUT, v);
         }
 
         if (not Any_Word(v))
             goto bad_cast;
-        goto adjust_v_kind; }
+        goto adjust_v_heart; }
 
       case REB_BINARY: {
         if (Is_Issue(v)) {
@@ -2358,13 +2365,13 @@ DECLARE_NATIVE(as)
   bad_cast:
     fail (Error_Bad_Cast_Raw(v, ARG(type)));
 
-  adjust_v_kind:
+  adjust_v_heart:
     //
     // Fallthrough for cases where changing the type byte and potentially
     // updating the quotes is enough.
     //
     Copy_Cell(OUT, v);
-    HEART_BYTE(OUT) = new_kind;
+    HEART_BYTE(OUT) = new_heart;
     return Trust_Const(OUT);
 }
 

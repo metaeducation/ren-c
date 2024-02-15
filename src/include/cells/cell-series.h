@@ -98,13 +98,13 @@ INLINE void INIT_SPECIFIER(Cell* v, Stub* binding) {
 
 INLINE Element* Init_Series_Cell_At_Core(
     Sink(Element*) out,
-    enum Reb_Kind type,
+    Heart heart,
     const Series* s,  // ensured managed by calling macro
     REBLEN index,
     Stub* specifier
 ){
   #if !defined(NDEBUG)
-    assert(Any_Series_Kind(type) or type == REB_URL);
+    assert(Any_Series_Kind(heart) or heart == REB_URL);
     assert(Is_Node_Managed(s));
 
     // Note: a R3-Alpha Make_Binary() comment said:
@@ -118,9 +118,9 @@ INLINE Element* Init_Series_Cell_At_Core(
     //
     Assert_Series_Term_If_Needed(s);
 
-    if (Any_Array_Kind(type))
+    if (Any_Array_Kind(heart))
         assert(Is_Series_Array(s));
-    else if (Any_String_Kind(type))
+    else if (Any_String_Kind(heart))
         assert(Is_Series_UTF8(s));
     else {
         // Note: Binaries are allowed to alias strings
@@ -129,7 +129,7 @@ INLINE Element* Init_Series_Cell_At_Core(
 
     Reset_Unquoted_Header_Untracked(
         out,
-        FLAG_HEART_BYTE(type) | CELL_FLAG_FIRST_IS_NODE
+        FLAG_HEART_BYTE(heart) | CELL_FLAG_FIRST_IS_NODE
     );
     Init_Cell_Node1(out, s);
     VAL_INDEX_RAW(out) = index;

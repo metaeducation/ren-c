@@ -271,6 +271,11 @@ INLINE void Init_Cell_Node2(Cell* v, Option(const Node*) node) {
 #define Cell_Heart(cell) \
     Cell_Heart_Unchecked(READABLE(cell))
 
+INLINE Heart Cell_Heart_Ensure_Noquote(const Cell* cell) {
+    assert(QUOTE_BYTE(cell) == NOQUOTE_1);
+    return Cell_Heart_Unchecked(cell);
+}
+
 
 //=//// VALUE TYPE (always REB_XXX <= REB_MAX) ////////////////////////////=//
 //

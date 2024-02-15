@@ -437,8 +437,11 @@ DECLARE_NATIVE(enhex)
         }
     }
 
-    Init_Any_String(OUT, VAL_TYPE(ARG(string)), Pop_Molded_String(mo));
-    return OUT;
+    return Init_Any_String(
+        OUT,
+        Cell_Heart_Ensure_Noquote(ARG(string)),
+        Pop_Molded_String(mo)
+    );
 }
 
 
@@ -567,8 +570,11 @@ DECLARE_NATIVE(dehex)
         }
     }
 
-    Init_Any_String(OUT, VAL_TYPE(ARG(string)), Pop_Molded_String(mo));
-    return OUT;
+    return Init_Any_String(
+        OUT,
+        Cell_Heart_Ensure_Noquote(ARG(string)),
+        Pop_Molded_String(mo)
+    );
 }
 
 
@@ -809,8 +815,8 @@ DECLARE_NATIVE(entab)
         }
     }
 
-    enum Reb_Kind kind = VAL_TYPE(ARG(string));
-    return Init_Any_String(OUT, kind, Pop_Molded_String(mo));
+    Heart heart = Cell_Heart_Ensure_Noquote(ARG(string));
+    return Init_Any_String(OUT, heart, Pop_Molded_String(mo));
 }
 
 
@@ -868,8 +874,8 @@ DECLARE_NATIVE(detab)
         Append_Codepoint(mo->series, c);
     }
 
-    enum Reb_Kind kind = VAL_TYPE(ARG(string));
-    return Init_Any_String(OUT, kind, Pop_Molded_String(mo));
+    Heart heart = Cell_Heart_Ensure_Noquote(ARG(string));
+    return Init_Any_String(OUT, heart, Pop_Molded_String(mo));
 }
 
 

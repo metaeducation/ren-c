@@ -467,12 +467,12 @@ REBLEN Part_Limit_Append_Insert(const REBVAL *part) {
 //
 //  Add_Max: C
 //
-int64_t Add_Max(enum Reb_Kind kind_or_max, int64_t n, int64_t m, int64_t maxi)
+int64_t Add_Max(Option(Heart) heart, int64_t n, int64_t m, int64_t maxi)
 {
     int64_t r = n + m;
     if (r < -maxi or r > maxi) {
-        if (kind_or_max != REB_MAX)
-            fail (Error_Type_Limit_Raw(Datatype_From_Kind(kind_or_max)));
+        if (heart)
+            fail (Error_Type_Limit_Raw(Datatype_From_Kind(unwrap(heart))));
         r = r > 0 ? maxi : -maxi;
     }
     return r;
@@ -482,11 +482,11 @@ int64_t Add_Max(enum Reb_Kind kind_or_max, int64_t n, int64_t m, int64_t maxi)
 //
 //  Mul_Max: C
 //
-int64_t Mul_Max(enum Reb_Kind type, int64_t n, int64_t m, int64_t maxi)
+int64_t Mul_Max(Heart heart, int64_t n, int64_t m, int64_t maxi)
 {
     int64_t r = n * m;
     if (r < -maxi or r > maxi)
-        fail (Error_Type_Limit_Raw(Datatype_From_Kind(type)));
+        fail (Error_Type_Limit_Raw(Datatype_From_Kind(heart)));
     return cast(int, r); // !!! (?) review this cast
 }
 
