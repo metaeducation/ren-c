@@ -99,12 +99,9 @@
 INLINE Stub* Make_Use_Core(
     Stub* binding,  // must be a varlist or a LET patch
     Specifier* next,
-    enum Reb_Kind kind,
-    bool reuse
+    Heart affected
 ){
-    UNUSED(reuse);  // review
-
-    assert(kind == REB_WORD or kind == REB_SET_WORD);
+    assert(affected == REB_WORD or affected == REB_SET_WORD);
     if (IS_VARLIST(binding)) {
         if (
             REB_MODULE != CTX_TYPE(cast(Context*, binding))
@@ -181,7 +178,7 @@ INLINE Stub* Make_Use_Core(
             symbol = KEY_SYMBOL(CTX_KEY(cast(Context*, binding), 1));
             Init_Any_Word_Bound_Untracked(  // arbitrary word
                 TRACK(Stub_Cell(use)),
-                kind,
+                affected,
                 symbol,
                 binding,
                 1  // arbitrary first word
@@ -191,7 +188,7 @@ INLINE Stub* Make_Use_Core(
             symbol = INODE(LetSymbol, binding);
             Init_Any_Word_Bound_Untracked(  // arbitrary word
                 TRACK(Stub_Cell(use)),
-                kind,
+                affected,
                 symbol,
                 binding,
                 INDEX_PATCHED  // the only word in the LET
@@ -218,42 +215,4 @@ INLINE Stub* Make_Use_Core(
     INODE(UseReserved, use) = nullptr;  // no application yet
 
     return use;
-}
-
-
-#define Make_Or_Reuse_Use(ctx,next,kind) \
-    Make_Use_Core(CTX_VARLIST(ctx), (next), (kind), true)
-
-#define Make_Original_Use(ctx,next,kind) \
-    Make_Use_Core(CTX_VARLIST(ctx), (next), (kind), false)  // unused
-
-
-//
-//  Virtual_Bind_Patchify: C
-//
-// Update the binding in an array so that it adds the given context as
-// overriding the bindings.  This is done without actually mutating the
-// structural content of the array...but means words in the array will need
-// additional calculations that take the virtual binding chain into account
-// as part of Get_Word_Context().
-//
-// !!! There is a performance tradeoff we could tinker with here, where we
-// could build a binder which hashed words to object indices, and then walk
-// the block with that binding information to cache in words the virtual
-// binding "hits" and "misses".  With small objects this is likely a poor
-// tradeoff, as searching them is cheap.  Also it preemptively presumes all
-// words would be looked up (many might not be, or might not be intended to
-// be looked up with this specifier).  But if the binding chain contains very
-// large objects the linear searches might be expensive enough to be worth it.
-//
-INLINE void Virtual_Bind_Patchify(
-    REBVAL *any_array,
-    Context* ctx,
-    enum Reb_Kind kind
-){
-    BINDING(any_array) = Make_Or_Reuse_Use(
-        ctx,
-        Cell_Specifier(any_array),
-        kind
-    );
 }

@@ -486,7 +486,7 @@ Option(Series*) Get_Word_Container(
 
         if (
             Is_Set_Word(Stub_Cell(specifier))
-            and REB_SET_WORD != Cell_Heart(any_word)
+            and REB_SET_WORD != Cell_Heart(any_word)  // "affected"
         ){
             goto next_virtual;
         }
@@ -925,7 +925,7 @@ DECLARE_NATIVE(add_use_object) {
     if (L_specifier)
         Set_Node_Managed_Bit(L_specifier);
 
-    Specifier* use = Make_Or_Reuse_Use(ctx, L_specifier, REB_WORD);
+    Specifier* use = Make_Use_Core(ctx, L_specifier, REB_WORD);
 
     BINDING(FEED_SINGLE(L->feed)) = use;
 
@@ -1484,7 +1484,7 @@ void Virtual_Bind_Deep_To_Existing_Context(
     REBVAL *any_array,
     Context* context,
     struct Reb_Binder *binder,
-    enum Reb_Kind kind
+    Heart affected
 ){
     // Most of the time if the context isn't trivially small then it's
     // probably best to go ahead and cache bindings.
@@ -1509,7 +1509,11 @@ void Virtual_Bind_Deep_To_Existing_Context(
     );
  */
 
-    Virtual_Bind_Patchify(any_array, context, kind);
+    BINDING(any_array) = Make_Use_Core(
+        context,
+        Cell_Specifier(any_array),
+        affected
+    );
 }
 
 

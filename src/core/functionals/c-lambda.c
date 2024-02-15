@@ -57,7 +57,7 @@ enum {
 //
 Bounce Lambda_Dispatcher(Level* const L)
 //
-// 1. We have to use Make_Or_Reuse_Use() here, because it could be the case
+// 1. We have to use Make_Use_Core() here, because it could be the case
 //    that a higher level wrapper used the frame and virtually bound it.
 {
     USE_LEVEL_SHORTHANDS (L);
@@ -70,7 +70,7 @@ Bounce Lambda_Dispatcher(Level* const L)
 
     Force_Level_Varlist_Managed(L);
 
-    Specifier* specifier = Make_Or_Reuse_Use(  // may reuse [1]
+    Specifier* specifier = Make_Use_Core(  // have to USE here
         cast(Context*, L->varlist),
         Cell_Specifier(block),
         REB_WORD
