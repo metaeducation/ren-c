@@ -590,31 +590,31 @@ static int Compare_Val_Custom(void *arg, const void *v1, const void *v2)
 //
 //  Shuffle_Array: C
 //
+// 1. This is a rare case where we could use raw bit copying since the values
+//    are in the same array.  However the C++ build asserts that all elements
+//    that get instantiated are initialized, so that can cause an assert if
+//    the shuffle ends up being a no-op.  So we have to use DECLARE_ELEMENT()
+//
 void Shuffle_Array(Array* arr, REBLEN idx, bool secure)
 {
     REBLEN n;
     REBLEN k;
     Element* data = Array_Head(arr);
 
-    // Rare case where Cell bit copying is okay...between spots in the
-    // same array.
-    //
-    Element swap;
+    DECLARE_ELEMENT (swap);  // use raw bit copying? [1]
 
     for (n = Array_Len(arr) - idx; n > 1;) {
         k = idx + (REBLEN)Random_Int(secure) % n;
         n--;
 
-        // Only do the following block when an actual swap occurs.
-        // Otherwise an assertion will fail when trying to Copy_Cell() a
-        // value to itself.
-        //
-        if (k != (n + idx)) {
-            swap.header = data[k].header;
-            swap.payload = data[k].payload;
-            swap.extra = data[k].extra;
+        if (k != (n + idx)) {  // would assert if Copy_Cell() to itself
+            assert(
+                (data[k].header.bits & CELL_MASK_PERSIST)
+                == (data[n + idx].header.bits & CELL_MASK_PERSIST)
+            );
+            Copy_Cell(swap, &data[k]);
             Copy_Cell(&data[k], &data[n + idx]);
-            Copy_Cell(&data[n + idx], &swap);
+            Copy_Cell(&data[n + idx], swap);
         }
     }
 }
