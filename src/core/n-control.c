@@ -1170,7 +1170,7 @@ DECLARE_NATIVE(case)
 
 } check_discarded_product_was_branch: {  /////////////////////////////////////
 
-    if (not (FLAGIT_KIND(VAL_TYPE(discarded)) & TS_BRANCH))
+    if (not Any_Branch(discarded))
         fail (Error_Bad_Value_Raw(discarded));  // like IF [3]
 
     goto handle_next_clause;
