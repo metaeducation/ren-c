@@ -182,8 +182,22 @@
 // create compile-time errors for any C construction that isn't being used
 // in the way one might want.
 //
+// 1. The type trait is_explicitly_convertible() is useful, but it was taken
+//    out of GCC.  This uses a simple implementation that was considered to
+//    be buggy for esoteric reasons, but is good enough for our purposes.
+//
+//    https://stackoverflow.com/a/16944130
+//
+//    Note this is not defined in the `std::` namespace since it is a shim.
+//
 #if CPLUSPLUS_11
     #include <type_traits>
+
+  namespace shim {
+    template<typename _From, typename _To>
+    struct is_explicitly_convertible : public std::is_constructible<_To, _From>
+      { };
+  }
 #endif
 
 
@@ -436,7 +450,7 @@
     struct cast_helper {
         template<typename V_ = V, typename T_ = T>
         static constexpr typename std::enable_if<
-            not std::is_convertible<V_,T_>::value and (
+            not shim::is_explicitly_convertible<V_,T_>::value and (
                 (std::is_arithmetic<V_>::value or std::is_enum<V_>::value)
                 and (std::is_arithmetic<T_>::value or std::is_enum<T_>::value)
             ),
@@ -444,15 +458,15 @@
 
         template<typename V_ = V, typename T_ = T>
         static constexpr typename std::enable_if<
-            not std::is_convertible<V_,T_>::value and (
+            not shim::is_explicitly_convertible<V_,T_>::value and (
                 std::is_pointer<V_>::value and std::is_pointer<T_>::value
             ),
         T>::type convert(V_ v) { return reinterpret_cast<T>(v); }
 
         template<typename V_ = V, typename T_ = T>
         static constexpr typename std::enable_if<
-            std::is_convertible<V_,T_>::value,
-        T>::type convert(V_ v) { return v; }
+            shim::is_explicitly_convertible<V_,T_>::value,
+        T>::type convert(V_ v) { return static_cast<T>(v); }
     };
 
     template<typename V>
