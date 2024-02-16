@@ -769,6 +769,10 @@ void MF_Array(REB_MOLD *mo, const Cell* v, bool form)
             Append_Codepoint(mo->series, '&');
             goto block;
 
+          case REB_VAR_BLOCK:
+            Append_Codepoint(mo->series, '$');
+            goto block;
+
           case REB_BLOCK:
           case REB_SET_BLOCK:
           block:
@@ -794,6 +798,10 @@ void MF_Array(REB_MOLD *mo, const Cell* v, bool form)
 
           case REB_TYPE_GROUP:
             Append_Codepoint(mo->series, '&');
+            goto group;
+
+          case REB_VAR_GROUP:
+            Append_Codepoint(mo->series, '$');
             goto group;
 
           case REB_GROUP:

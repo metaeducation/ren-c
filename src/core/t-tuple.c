@@ -447,6 +447,8 @@ void MF_Sequence(REB_MOLD *mo, const Cell* v, bool form)
         Append_Codepoint(mo->series, '@');
     else if (heart == REB_TYPE_PATH or heart == REB_TYPE_TUPLE)
         Append_Codepoint(mo->series, '&');
+    else if (heart == REB_VAR_PATH or heart == REB_VAR_TUPLE)
+        Append_Codepoint(mo->series, '$');
 
     bool first = true;
 

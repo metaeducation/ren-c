@@ -265,6 +265,11 @@ comma       "separator between full evaluations (that is otherwise invisible)"
                 [any-utf8! any-the-value!]
                 [word        *       +]
 
+    var-word    "word that evaluates to the bound version of the word"
+                (CELL_FLAG_FIRST_IS_NODE)
+                [any-utf8! any-var-value!]
+                [word        *       +]
+
 </ANY-WORD!>
 
 
@@ -302,6 +307,11 @@ comma       "separator between full evaluations (that is otherwise invisible)"
                 [any-scalar! any-the-value!]
                 [sequence    *       *]
 
+    var-tuple   "tuple that evaluates to the bound form of the tuple"
+                ()
+                [any-scalar! any-var-value!]
+                [sequence    *       *]
+
   </ANY-TUPLE!>
 
   <ANY-PATH!>  ; (order matters, e.g. Theify_Any_Plain_Kind())
@@ -334,6 +344,11 @@ comma       "separator between full evaluations (that is otherwise invisible)"
     the-path    "inert form of path"
                 ()
                 [any-the-value!]
+                [sequence    *       *]
+
+    var-path    "path that evaluates to the bound version of the path"
+                ()
+                [any-var-value!]
                 [sequence    *       *]
 
   </ANY-PATH!>
@@ -375,6 +390,11 @@ comma       "separator between full evaluations (that is otherwise invisible)"
                 [any-series! any-branch! any-the-value!]
                 [array       *       *]
 
+    var-block   "block that evaluates to the bound version of the block"
+                (CELL_FLAG_FIRST_IS_NODE)
+                [any-series! any-branch! any-var-value!]
+                [array       *       *]
+
   </ANY-BLOCK!>
 
 
@@ -408,6 +428,11 @@ comma       "separator between full evaluations (that is otherwise invisible)"
     the-group   "inert form of group"
                 (CELL_FLAG_FIRST_IS_NODE)
                 [any-series! any-the-value!]
+                [array       *       *]
+
+    var-group   "group that evaluates to the bound version of the group"
+                (CELL_FLAG_FIRST_IS_NODE)
+                [any-series! any-var-value!]
                 [array       *       *]
 
   </ANY-GROUP!>

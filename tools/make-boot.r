@@ -352,13 +352,8 @@ e-types/emit [rebs {
         };
     #endif
 
-    /*
-     * While the VAL_TYPE() is a full byte, only 64 states can fit in the
-     * payload of a TYPESET! at the moment.  Significant rethinking would be
-     * necessary if this number exceeds 64.
-     */
     STATIC_ASSERT(u_cast(int, REB_QUASIFORM) == u_cast(int, REB_MAX_HEART));
-    STATIC_ASSERT(REB_MAX <= 64);
+    STATIC_ASSERT(REB_MAX < 256);  /* Stored in bytes */
 }]
 e-types/emit newline
 

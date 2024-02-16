@@ -281,6 +281,19 @@ void MF_The_Word(REB_MOLD *mo, const Cell* v, bool form) {
 
 
 //
+//  MF_Var_Word: C
+//
+void MF_Var_Word(REB_MOLD *mo, const Cell* v, bool form) {
+    const Symbol* symbol = Cell_Word_Symbol(v);
+    bool escape = form
+        ? false
+        : Get_Subclass_Flag(SYMBOL, symbol, ESCAPE_WITH_SIGIL);
+
+    Append_Codepoint(mo->series, '$');
+    Mold_Word(mo, symbol, escape);
+}
+
+//
 //  MF_Type_Word: C
 //
 void MF_Type_Word(REB_MOLD *mo, const Cell* v, bool form) {

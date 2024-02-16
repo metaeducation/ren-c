@@ -1545,6 +1545,37 @@ Bounce Evaluator_Executor(Level* L)
         HEART_BYTE(OUT) = Plainify_Any_The_Kind(STATE);
         break;
 
+
+    //=///// VAR-XXX! /////////////////////////////////////////////////////=//
+    //
+    // The $xxx types evaluate to remove the decoration, but be bound:
+    //
+    //     >> var: 1020
+    //
+    //     >> $var
+    //     == var
+    //
+    //     >> get $var
+    //     == 1020
+    //
+    // This is distinct from quoting the item, which would give you the item
+    // undecorated but not changing the binding (usually resulting in unbound).
+    //
+    //     >> var: 1020
+    //
+    //     >> get 'var
+    //     ** Error: var is unbound
+
+      case REB_VAR_BLOCK:
+      case REB_VAR_WORD:
+      case REB_VAR_PATH:
+      case REB_VAR_TUPLE:
+      case REB_VAR_GROUP:
+        Inertly_Derelativize_Inheriting_Const(OUT, L_current, L->feed);
+        HEART_BYTE(OUT) = Plainify_Any_Var_Kind(STATE);
+        break;
+
+
       case REB_BLOCK:
         //
       case REB_BINARY:

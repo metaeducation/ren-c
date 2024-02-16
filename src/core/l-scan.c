@@ -1096,6 +1096,10 @@ static enum Reb_Token Maybe_Locate_Token_May_Push_Mold(
         ss->end = cp + 1;
         return TOKEN_AMPERSAND;
     }
+    if (*cp == '$' and GET_LEX_CLASS(cp[1]) != LEX_CLASS_NUMBER) {
+        ss->end = cp + 1;
+        return TOKEN_DOLLAR;
+    }
 
     // If we hit a vertical bar we know we are trying to scan a WORD! (which
     // may become transformed into a SET-WORD! or similar).  Typically this is
@@ -2020,6 +2024,14 @@ Bounce Scanner_Executor(Level* const L) {
         }
         goto token_prefixable_sigil;
 
+      case TOKEN_DOLLAR:
+        assert(*bp == '$');
+        if (IS_LEX_ANY_SPACE(*ep) or *ep == '~' or *ep == ']' or *ep == ')') {
+            Init_Word(PUSH(), Canon(DOLLAR_1));
+            break;
+        }
+        goto token_prefixable_sigil;
+
       case TOKEN_COLON:
         assert(*bp == ':');
 
@@ -2855,6 +2867,10 @@ Bounce Scanner_Executor(Level* const L) {
 
           case TOKEN_AMPERSAND:
             HEART_BYTE(TOP) = Typeify_Any_Plain_Kind(heart);
+            break;
+
+          case TOKEN_DOLLAR:
+            HEART_BYTE(TOP) = Varify_Any_Plain_Kind(heart);
             break;
 
           default:

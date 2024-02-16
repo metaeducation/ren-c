@@ -329,12 +329,14 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
       case REB_GET_BLOCK:
       case REB_META_BLOCK:
       case REB_TYPE_BLOCK:
+      case REB_VAR_BLOCK:
       case REB_GROUP:
       case REB_THE_GROUP:
       case REB_SET_GROUP:
       case REB_GET_GROUP:
       case REB_META_GROUP:
-      case REB_TYPE_GROUP: {
+      case REB_TYPE_GROUP:
+      case REB_VAR_GROUP: {
         assert(Get_Cell_Flag_Unchecked(v, FIRST_IS_NODE));
         if (Not_Node_Accessible_Canon(Cell_Node1(v)))
             break;
@@ -350,6 +352,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
       case REB_GET_TUPLE:
       case REB_META_TUPLE:
       case REB_TYPE_TUPLE:
+      case REB_VAR_TUPLE:
         goto any_sequence;
 
       case REB_PATH:
@@ -358,6 +361,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
       case REB_GET_PATH:
       case REB_META_PATH:
       case REB_TYPE_PATH:
+      case REB_VAR_PATH:
         goto any_sequence;
 
       any_sequence: {
@@ -406,7 +410,8 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
       case REB_SET_WORD:
       case REB_GET_WORD:
       case REB_META_WORD:
-      case REB_TYPE_WORD: {
+      case REB_TYPE_WORD:
+      case REB_VAR_WORD: {
         assert(Get_Cell_Flag_Unchecked(v, FIRST_IS_NODE));
 
         const String *spelling = Cell_Word_Symbol(v);

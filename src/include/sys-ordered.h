@@ -108,6 +108,7 @@ INLINE bool Any_Inert_Kind(Byte k) {
 #define Any_Meta_Kind Any_Meta_Value_Kind
 #define Any_The_Kind Any_The_Value_Kind
 #define Any_Plain_Kind Any_Plain_Value_Kind
+#define Any_Var_Kind Any_Var_Value_Kind
 
 
 //=//// XXX <=> SET-XXX! <=> GET-XXX! TRANSFORMATION //////////////////////=//
@@ -136,6 +137,11 @@ INLINE Heart Plainify_Any_The_Kind(Byte k) {
     return cast(Heart, k - 5);
 }
 
+INLINE Heart Plainify_Any_Var_Kind(Byte k) {
+    assert(Any_Var_Kind(k));
+    return cast(Heart, k - 6);
+}
+
 
 INLINE Heart Setify_Any_Plain_Kind(Byte k) {
     assert(Any_Plain_Kind(k));
@@ -160,6 +166,11 @@ INLINE Heart Typeify_Any_Plain_Kind(Byte k) {
 INLINE Heart Theify_Any_Plain_Kind(Byte k) {
     assert(Any_Plain_Kind(k));
     return cast(Heart, k + 5);
+}
+
+INLINE Heart Varify_Any_Plain_Kind(Byte k) {
+    assert(Any_Plain_Kind(k));
+    return cast(Heart, k + 6);
 }
 
 

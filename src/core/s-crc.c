@@ -203,13 +203,15 @@ uint32_t Hash_Value(const Cell* cell)
       case REB_THE_TUPLE:
       case REB_META_TUPLE:
       case REB_TYPE_TUPLE:
+      case REB_VAR_TUPLE:
         //
       case REB_PATH:
       case REB_SET_PATH:
       case REB_GET_PATH:
       case REB_THE_PATH:
       case REB_META_PATH:
-      case REB_TYPE_PATH: {
+      case REB_TYPE_PATH:
+      case REB_VAR_PATH: {
         if (Not_Cell_Flag(cell, SEQUENCE_HAS_NODE)) {
             hash = Hash_Bytes(
                 PAYLOAD(Bytes, cell).at_least_8 + 1,
@@ -243,6 +245,7 @@ uint32_t Hash_Value(const Cell* cell)
       case REB_THE_GROUP:
       case REB_META_GROUP:
       case REB_TYPE_GROUP:
+      case REB_VAR_GROUP:
         //
       case REB_BLOCK:
       case REB_SET_BLOCK:
@@ -250,6 +253,7 @@ uint32_t Hash_Value(const Cell* cell)
       case REB_THE_BLOCK:
       case REB_META_BLOCK:
       case REB_TYPE_BLOCK:
+      case REB_VAR_BLOCK:
         //
         // !!! Lame hash just to get it working.  There will be lots of
         // collisions.  Intentionally bad to avoid writing something that
@@ -282,7 +286,8 @@ uint32_t Hash_Value(const Cell* cell)
       case REB_GET_WORD:
       case REB_THE_WORD:
       case REB_META_WORD:
-      case REB_TYPE_WORD: {
+      case REB_TYPE_WORD:
+      case REB_VAR_WORD: {
         //
         // Note that the canon symbol may change for a group of word synonyms
         // if that canon is GC'd--it picks another synonym.  Thus the pointer

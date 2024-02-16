@@ -199,7 +199,7 @@ shell: func [
 ]
 
 
-$: func [
+|$|: func [
     {Run SHELL code to end of line (or continue on next line with `...`)}
     :args "See documentation for SHELL"
         [any-value? <variadic>]

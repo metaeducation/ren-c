@@ -113,6 +113,7 @@ const char * const Token_Names[] = {
     "caret",
     "at",
     "ampersand",
+    "dollar",
     "word",
     "escaped-word",
     "logic",
