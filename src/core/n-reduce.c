@@ -231,8 +231,8 @@ DECLARE_NATIVE(reduce)
 //          [any-atom?]
 //      :vars "Variable to receive each reduced value (multiple TBD)"
 //          [word! meta-word!]
-//      block "Input block of expressions ('[block] acts like FOR-EACH)"
-//          [block! lit-block?]
+//      block "Input block of expressions (@[block] acts like FOR-EACH)"
+//          [block! the-block!]
 //      body "Code to run on each step"
 //          [block!]
 //  ]
@@ -287,7 +287,7 @@ DECLARE_NATIVE(reduce_each)
     if (Is_Block(body) or Is_Meta_Block(body))
         Add_Definitional_Break_Continue(body, level_);
 
-    if (Is_Quoted(block))
+    if (Is_The_Block(block))
         flags |= EVAL_EXECUTOR_FLAG_NO_EVALUATIONS;
 
     Level* sub = Make_Level_At(block, flags);

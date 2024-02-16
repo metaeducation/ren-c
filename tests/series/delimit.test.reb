@@ -44,7 +44,7 @@
     (
         word: "part"
         "Mixing unspacedword with spaced part" = spaced [
-            "Mixing" unspaced ^["unspaced" word] "with" "spaced" word
+            "Mixing" unspaced @["unspaced" word] "with" "spaced" word
         ]
     )
 ]

@@ -1523,7 +1523,16 @@ Bounce Evaluator_Executor(Level* L)
     //    == var:
     //
     // Most of the datatypes use is in dialects, but the evaluator behavior
-    // comes in handy for cases like:
+    // comes in handy for cases like passing a signal that reducing constructs
+    // should not perform further reduction:
+    //
+    //    >> pack [1 + 2 10 + 20]
+    //    == ~['3 '30]~  ; anti
+    //
+    //    >> pack @[1 + 2 10 + 20]
+    //    == ~['1 '+ '2 '10 '+ '20]~  ; anti
+    //
+    // It also helps in cases like:
     //
     //    import @xml
     //    import @json/1.1.2

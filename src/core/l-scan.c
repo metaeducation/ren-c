@@ -2723,7 +2723,7 @@ Bounce Scanner_Executor(Level* const L) {
                 DECLARE_LOCAL (items);
                 Init_Array_Cell(
                     items,
-                    REB_META_BLOCK,  // don't want to evaluate
+                    REB_THE_BLOCK,  // don't want to evaluate
                     Pop_Stack_Values(stackindex_path_head - 1)
                 );
                 Push_GC_Guard(items);

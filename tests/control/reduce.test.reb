@@ -115,7 +115,7 @@
 
     ([3 7] = collect [reduce-each x [1 + 2 3 + 4] [keep x]])
 
-    ([1 + 2] = collect [reduce-each x ^[1 + 2] [keep x]])
+    ([1 + 2] = collect [reduce-each x @[1 + 2] [keep x]])
 ]
 
 ; REDUCE-EACH can do ^META processing, this is the basis of ATTEMPT

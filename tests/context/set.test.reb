@@ -2,14 +2,14 @@
 [#1763
     (
         a: <before>
-        '~null~ = [a]: pack quote reduce/predicate [null] :reify
+        '~null~ = [a]: pack inert reduce/predicate [null] :reify
         '~null~ = a
     )
 ]
 (
     a: <a-before>
     b: <b-before>
-    2 = [a b]: pack quote reduce/predicate [2 null] :reify
+    2 = [a b]: pack inert reduce/predicate [2 null] :reify
     a = 2
     '~null~ = b
 )
@@ -29,12 +29,12 @@
 )
 
 ; set [:get-word] [word]
-(a: 1 b: ~ [b]: pack ^[a] b = 'a)
+(a: 1 b: ~ [b]: pack inert [a] b = 'a)
 
 (
     a: 10
     b: 20
-    did all [blank = [a b]: pack ^[_ _], blank? a, blank? b]
+    did all [blank = [a b]: pack @[_ _], blank? a, blank? b]
 )
 ~???~ !! (
     a: 10

@@ -51,21 +51,21 @@
             result': either blank? vars.1 [void'] [val']
         ]
         if tail? vars [
-            fail "Too many values for vars in PACK (use ... if on purpose)"
+            fail "Too many values for vars in PACK (use <...> if on purpose)"
         ]
-        if vars.1 = '... [
+        if vars.1 = <...> [
             continue  ; ignore all other values (but must reduce all)
         ]
         switch/type vars.1 [
             blank! []  ; no assignment
-            word! tuple! [set vars.1 unmeta val']
-            meta-word! meta-tuple! [set vars.1 val']
+            word! tuple! [set inside vars vars.1 unmeta val']
+            meta-word! meta-tuple! [set inside vars vars.1 val']
         ]
         vars: my next
     ]
-    if vars.1 = '... [
+    if vars.1 = <...> [
         if not last? vars [
-            fail "... must appear only at the tail of PACK variable list"
+            fail "<...> must appear only at the tail of PACK variable list"
         ]
     ] else [
         ; We do not error on too few values (such as `[a b c]: [1 2]`) but
@@ -98,10 +98,10 @@
     ]
 )
 
-; ... is used to indicate willingness to discard extra values
+; <...> is used to indicate willingness to discard extra values
 (
     did all [
-        1 = [a b ...]: pack-old @[1 2 3 4 5]
+        1 = [a b <...>]: pack-old @[1 2 3 4 5]
         a = 1
         b = 2
     ]

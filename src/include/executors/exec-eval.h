@@ -79,7 +79,7 @@
 //     >> any [1 + 2]
 //     == 3
 //
-//     >> any ^[1 + 2]
+//     >> any @[1 + 2]
 //     == 1
 //
 // Inert operations wind up costing a bit more because they're pushing a frame
