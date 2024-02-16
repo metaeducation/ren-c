@@ -13,7 +13,7 @@
 
 ~protected-word~ !! (
     b: 10
-    protect @b
+    protect $b
     b: 20
 )
 
@@ -55,8 +55,8 @@
 ]
 
 [#1764
-    (unset @blk protect/deep @blk true)
-    (unprotect @blk true)
+    (unset $blk protect/deep $blk true)
+    (unprotect $blk true)
 ]
 
 
@@ -86,7 +86,7 @@
         20 = get word
         [x y] = words of obj  ; starts out visible
 
-        elide protect/hide @obj.y
+        elide protect/hide $obj.y
         [x] = words of obj  ; hidden
         20 = get word  ; but you can still see it
 

@@ -14,7 +14,7 @@
         x: <overwritten>
         did all [
             void? x: all []
-            voided? @x
+            voided? $x
             void? :x
         ]
     )
@@ -22,7 +22,7 @@
         x: <overwritten>
         did all [
             void? x: all [void void]
-            voided? @x
+            voided? $x
             void? :x
         ]
     )
@@ -107,7 +107,7 @@
     a-value: first [()]
     same? :a-value all [:a-value]
 )
-(same? get @+ all [get @+])
+(same? get $+ all [get $+])
 (0x0 == all [0x0])
 (
     a-value: 'a/b
@@ -203,7 +203,7 @@
     a-value: first [()]
     same? :a-value all [true :a-value]
 )
-(same? get @+ all [true get @+])
+(same? get $+ all [true get $+])
 (0x0 == all [true 0x0])
 (
     a-value: 'a/b
@@ -298,7 +298,7 @@
     a-value: first [()]
     true = all [:a-value true]
 )
-(true = all [get @+ true])
+(true = all [get $+ true])
 (true = all [0x0 true])
 (
     a-value: 'a/b

@@ -84,21 +84,21 @@
     (r = apd copy xy spread abc 2 3)
     (r = applique :apd [
         series: copy xy
-        set/any @ value: spread abc
+        set/any inside [] 'value: spread abc
         part: 2, dup: 3
     ])
 
     (r = apd3 copy xy spread abc 2)
     (r = applique :apd3 [
         series: copy xy
-        set/any @ value: spread abc
+        set/any inside [] 'value: spread abc
         part: 2
     ])
 
     (r = ap2d copy xy spread abc 3)
     (r = applique :ap2d [
         series: copy xy
-        set/any @ value: spread abc
+        set/any inside [] 'value: spread abc
         dup: 3
     ])
 ]
@@ -118,21 +118,21 @@
     (r = adp copy xy spread abc 3 2)
     (r = applique :adp [
         series: copy xy
-        set/any @ value: spread abc
+        set/any inside [] 'value: spread abc
         dup: 3, part: 2
     ])
 
     (r = adp2 copy xy spread abc 3)
     (r = applique :adp2 [
         series: copy xy
-        set/any @ value: spread abc
+        set/any inside [] 'value: spread abc
         dup: 3
     ])
 
     (r = ad3p copy xy spread abc 2)
     (r = applique :ad3p [
         series: copy xy
-        set/any @ value: spread abc
+        set/any inside [] 'value: spread abc
         part: 2
     ])
 ]

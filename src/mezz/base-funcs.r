@@ -878,7 +878,7 @@ raise: func [
         ; If no specific location specified, and error doesn't already have a
         ; location, make it appear to originate from the frame calling FAIL.
         ;
-        where: default [any [frame, binding of @return]]
+        where: default [any [frame, binding of $return]]
 
         set-location-of-error error where  ; !!! why is this native?
     ]

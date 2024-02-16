@@ -5,8 +5,8 @@
 [#1515 ; the "result" of continue should not be assignable
     (a: 1 repeat 1 [a: continue] :a =? 1)
 ]
-(a: 1 repeat 1 [set @a continue] :a =? 1)
-(a: 1 repeat 1 [set/any @a continue] :a =? 1)
+(a: 1 repeat 1 [set $a continue] :a =? 1)
+(a: 1 repeat 1 [set/any $a continue] :a =? 1)
 [#1509 ; the "result" of continue should not be passable to functions
     (a: 1 repeat 1 [a: error? continue] :a =? 1)
 ]

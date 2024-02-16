@@ -390,7 +390,7 @@ export analyse: context [
             ]
         ]
 
-        for-each list :[@tabbed @whitespace-at-eol] [
+        for-each list :[$tabbed $whitespace-at-eol] [
             if not empty? get list [
                 emit as tag! list [(file) (get list)]
             ]
@@ -475,7 +475,7 @@ c-parser-extension: context bind bind [
         try some [nl | eol | wsp]
     ]
 
-    append grammar.other-segment @(
+    append grammar.other-segment $(
         last-func-end: null
     )
 

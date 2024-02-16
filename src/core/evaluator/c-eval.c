@@ -1509,32 +1509,30 @@ Bounce Evaluator_Executor(Level* L)
         break;
 
 
-    //=///// THE-XXX! /////////////////////////////////////////////////////=//
+    //=//// THE-XXX! //////////////////////////////////////////////////////=//
     //
-    // The @xxx types were once inert and kept their decoration:
+    // Type that just leaves the sigil:
     //
-    //     >> @xxx
-    //     == @xxx
+    //    >> @word
+    //    == @word
     //
-    // This didn't turn out to be as useful as thought.  With the new binding
-    // model, a higher calling for them to produce bound material without
-    // the decoration came up:
+    // This offers some parity with the @ operator, which gives its next
+    // argument back literally (used heavily in the API):
     //
-    //     >> whatever: 10
+    //    >> @ var:
+    //    == var:
     //
-    //     >> @whatever
-    //     == whatever
+    // Most of the datatypes use is in dialects, but the evaluator behavior
+    // comes in handy for cases like:
     //
-    //     >> foo: func [var [word!]] [print ["var is" get var]]
+    //    import @xml
+    //    import @json/1.1.2
     //
-    //     >> foo 'whatever
-    //     ** Error: whatever is not bound
+    // Leaving the sigil means IMPORT can typecheck for THE-WORD! + THE-PATH!
+    // and not have a degree of freedom that it can't distinguish from being
+    // called as (import 'xml) or (import 'json/1.1.2)
     //
-    //     >> foo get in [] 'whatever  ; works, but verbose
-    //     var is 10
-    //
-    //     >> foo @whatever
-    //     var is 10
+    //=////////////////////////////////////////////////////////////////////=//
 
       case REB_THE_BLOCK:
       case REB_THE_WORD:
@@ -1542,7 +1540,6 @@ Bounce Evaluator_Executor(Level* L)
       case REB_THE_TUPLE:
       case REB_THE_GROUP:
         Inertly_Derelativize_Inheriting_Const(OUT, L_current, L->feed);
-        HEART_BYTE(OUT) = Plainify_Any_The_Kind(STATE);
         break;
 
 
@@ -1641,7 +1638,7 @@ Bounce Evaluator_Executor(Level* L)
     // We're sitting at what "looks like the end" of an evaluation step.
     // But we still have to consider enfix.  e.g.
     //
-    //    val: evaluate/next [1 + 2 * 3] @pos
+    //    val: evaluate/next [1 + 2 * 3] $pos
     //
     // We want that to give a position of [] and `val = 9`.  The evaluator
     // cannot just dispatch on REB_INTEGER in the switch() above, give you 1,

@@ -3,7 +3,7 @@
 ; REDO via a direct FRAME! value
 (
     foo: func [return: [tag!] n] [
-        frame: binding of @n
+        frame: binding of $n
         if n = 0 [
             return <success>
         ]
@@ -22,7 +22,7 @@
            return <success>
         ]
         n: n - 1
-        redo @n
+        redo $n
     ]
 
     <success> = foo 100
@@ -32,7 +32,7 @@
 ; (locals should be cleared on each redo)
 (
     foo: func [return: [tag!] n <local> unset-me] [
-        if set? @unset-me [
+        if set? $unset-me [
             return "local not cleared"
         ]
         if n = 0 [
@@ -40,7 +40,7 @@
         ]
         n: n - 1
         unset-me: #some-junk
-        redo @return
+        redo $return
     ]
 
     <success> = foo 100
@@ -56,7 +56,7 @@
         ]
         n: n - 1
         i: #some-junk  ; type check should fail on redo
-        redo @return
+        redo $return
     ]
 
     foo 100 1020
@@ -70,7 +70,7 @@
             return <success>
         ]
         n: 0
-        redo @n  comment {should redo INNER, not outer}
+        redo $n  comment {should redo INNER, not outer}
     ]
 
     outer: adapt :inner [
@@ -104,7 +104,7 @@
             return <success>
         ]
 
-        f.captured-frame: binding of @f
+        f.captured-frame: binding of $f
         global: me - 1
 
         ; Fall through to inner
@@ -191,8 +191,8 @@
         adapt :base [
            log [{C} n delta]
 
-           captured-frame: binding of @n
-           redo/sibling @n :s
+           captured-frame: binding of $n
+           redo/sibling $n :s
 
            comment {fall through to base}
         ]

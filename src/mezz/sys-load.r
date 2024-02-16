@@ -189,7 +189,7 @@ load-header: func [
                     ; uses transcode, leading whitespace and comments
                     ; are tolerated before the literal.
                     ;
-                    [binary rest]: transcode/one/file/line rest file @line
+                    [binary rest]: transcode/one/file/line rest file $line
                     rest: gunzip binary
                 ]
             ]
@@ -289,7 +289,7 @@ load: func [
 
     if not block? data [
         assert [match [binary! text!] data]  ; UTF-8
-        data: (transcode/file/line data file @line) except e -> [
+        data: (transcode/file/line data file $line) except e -> [
             return raise e
         ]
     ]
@@ -569,7 +569,7 @@ import*: func [
         args: (^ :args)  ; variable same name as field, trips up binding
     ]
 
-    if (set? @script-pre-load-hook) and (match [file! url!] source) [
+    if (set? $script-pre-load-hook) and (match [file! url!] source) [
         ;
         ; !!! It seems we could/should pass system.script here, and the
         ; filtering of source as something not to notify about would be the

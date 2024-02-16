@@ -27,7 +27,7 @@ verify: func [
         ; an empty parameter pack with no values at all.  The leading slash
         ; means we consider the result to be optional.  If we instead wrote:
         ;
-        ;    result': ^ evaluate/next conditions @pos
+        ;    result': ^ evaluate/next conditions $pos
         ;
         ; ...then if the eval step produced multiple returns (like for instance
         ; FIND does) we'd have a meta-PACK! and have to write code to decay
@@ -36,7 +36,7 @@ verify: func [
         ; Using a meta-value here is a way of reacting to unstable isotopes,
         ; could also put that responsibility onto the access points.  Review.
         ;
-        [^/result']: evaluate/next conditions @pos
+        [^/result']: evaluate/next conditions $pos
         pos
     ][
         any [

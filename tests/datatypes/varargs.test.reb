@@ -118,15 +118,15 @@
 ; <| and |> were originally enfix, so the following tests would have meant x
 ; would be unset
 (
-    unset @value
-    unset @x
+    unset $value
+    unset $x
 
     3 = (value: 1 + 2 <| 30 + 40 x: value  () ())
 
     did all [value = 3, x = 3]
 )
 (
-    unset @value
+    unset $value
 
     33 = (value: 1 + 2 |> add 30)
 
@@ -148,7 +148,7 @@
 
 (
     vblock: collect [
-        log: adapt :keep [set/any @value spread reduce value]
+        log: adapt :keep [set/any $value spread reduce value]
         variadic2: func [return: [text!] v [any-value? <variadic>]] [
            log [<1> take v]
            log [<2> take v]
@@ -160,7 +160,7 @@
     ]
 
     nblock: collect [
-        log: adapt :keep [set/any @value spread reduce value]
+        log: adapt :keep [set/any $value spread reduce value]
         normal2: func [return: [text!] n1 n2] [
             log [<1> n1 <2> n2]
             return "returned"

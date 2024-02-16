@@ -56,7 +56,7 @@ Expect crashes and mayhem.  But see BACKTRACE, RESUME, and STEP.}
             print greeting
             greeting: null
         ]
-        base-frame: parent of parent of binding of @return
+        base-frame: parent of parent of binding of $return
         focus-frame: parent of parent of base-frame
         focus-index: 1
     ]
@@ -300,7 +300,7 @@ backtrace: func [
 
     return: [~]
 ][
-    ; We could backtrace relative to `binding of @return`, but this would
+    ; We could backtrace relative to `binding of $return`, but this would
     ; mean `>> if true [backtrace]` would see that IF in the trace.
     ;
     let stack: backtrace* debug-console-skin/base-frame _

@@ -221,7 +221,7 @@ requote: reframer lambda [
     f.(p): noquote f.(p)
 
     light (do f then result -> [  ; !!! proper light-null handling here?
-        quote/depth get/any @result num-quotes
+        quote/depth get/any $result num-quotes
     ] else [null])
 ]
 

@@ -182,7 +182,7 @@ Bounce Func_Dispatcher(Level* const L)
 //
 //     return: lambda
 //         [{Returns a value from a function.} ^value [any-atom?]]
-//         [unwind/with (binding of @return) unmeta value]
+//         [unwind/with (binding of $return) unmeta value]
 //     ]
 //     (body goes here)
 //

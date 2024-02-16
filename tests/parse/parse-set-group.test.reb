@@ -4,7 +4,7 @@
 
 (
     m: ~
-    word: @m
+    word: $m
     did all [
         did parse [1020] [(word): integer!]
         word = 'm

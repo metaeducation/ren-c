@@ -342,7 +342,7 @@ main-startup: func [
     ; It's not foolproof, so it might come back null.  The console code can
     ; then decide if it wants to fall back on argv[0]
     ;
-    if defined? @get-current-exec [
+    if defined? $get-current-exec [
         switch/type system.options.boot: get-current-exec [
             file! []  ; found it
             null?! []  ; also okay (not foolproof!)
@@ -457,7 +457,7 @@ main-startup: func [
     ; If it did not initialize it, fall back on argv[0], if available.
     ;
     if not tail? argv [
-        if defined? @local-to-file [
+        if defined? $local-to-file [
             o.boot: default [
                 clean-path local-to-file first argv
             ]

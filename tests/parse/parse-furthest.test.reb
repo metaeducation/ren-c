@@ -16,7 +16,7 @@
 
 (
     far: ~
-    parse-furthest "aaabbb" [some "a" some "c"] @far except [
+    parse-furthest "aaabbb" [some "a" some "c"] $far except [
         far = "bbb"
     ]
 )
@@ -25,12 +25,12 @@
 ; accepted, even though TO ultimately didn't count that as advanced input.
 [(
     far: ~
-    parse-furthest "aaabbbccc" [some "a" to [some "b"] some "d"] @far except [
+    parse-furthest "aaabbbccc" [some "a" to [some "b"] some "d"] $far except [
         far = "ccc"
     ]
 )(
     far: ~
-    parse-furthest "abcd" [to "c"] @far except [
+    parse-furthest "abcd" [to "c"] $far except [
         far = "d"
     ]
 )]

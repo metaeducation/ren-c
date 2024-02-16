@@ -541,7 +541,7 @@ DECLARE_NATIVE(let)
 //
 // 2. For convenience, the group can evaluate to a SET-BLOCK,  e.g.
 //
-//        block: @ [x y]:
+//        block: inside [] '[x y]:
 //        (block): <whatever>  ; no real reason to prohibit this
 //
 //    But there are conflicting demands where we want `(thing):` equivalent

@@ -62,9 +62,9 @@
    ]
 )(
     m: make map! 10
-    set the @[m (1 + 2)] <hard>
+    set @[m (1 + 2)] <hard>
     did all [
         <hard> = pick m the (1 + 2)
-        <hard> = get the @[m (1 + 2)]
+        <hard> = get @[m (1 + 2)]
     ]
 )

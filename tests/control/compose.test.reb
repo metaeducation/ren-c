@@ -37,7 +37,7 @@
 ([_ * _] = compose [('_) * ('_)])
 ([a * 'a] = compose [(the a) * (the 'a)])
 ([1020 * 304] = compose [(1020) * ((304))])
-([@ae * @ae] = compose [('@ae) * (('@ae))])
+([@ae * @ae] = compose [(@ae) * ((@ae))])
 
 ([(group) * <good>] = compose [(the (group)) * <good>])
 
@@ -116,7 +116,7 @@
 )(
     [(1 + 2)] = compose <*> [(1 + 2) (<*>)]
 )(
-    'a/(b)/3/c = compose <?> @a/(b)/(<?> 1 + 2)/c
+    'a/(b)/3/c = compose <?> @ a/(b)/(<?> 1 + 2)/c
 )(
     [(a b c) [((d) 1 + 2)]] = compose/deep </> [(a (</> 'b) c) [((d) 1 + 2)]]
 )

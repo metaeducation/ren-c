@@ -13,7 +13,7 @@
     ][
         if tail? input [return raise "PARSE-EVALUATE attempted at series tail"]
 
-        return evaluate/next input @remainder
+        return evaluate/next input $remainder
     ]
     true)
 

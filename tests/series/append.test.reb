@@ -160,12 +160,12 @@
 )]
 
 [
-    ([a b c @d] = append [a b c] '@d)
-    ([a b c '@d] = append [a b c] ^ '@d)
-    ([a b c @[d e]] = append [a b c] '@[d e])
-    ([a b c @(d e)] = append [a b c] '@(d e))
-    ([a b c @d.e] = append [a b c] '@d.e)
-    ([a b c @d/e] = append [a b c] '@d/e)
+    ([a b c @d] = append [a b c] @d)
+    ([a b c '@d] = append [a b c] ^ @d)
+    ([a b c @[d e]] = append [a b c] @[d e])
+    ([a b c @(d e)] = append [a b c] @(d e))
+    ([a b c @d.e] = append [a b c] @d.e)
+    ([a b c @d/e] = append [a b c] @d/e)
     ([a b c '@] = append [a b c] ^ '@)
 ]
 

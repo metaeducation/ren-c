@@ -43,7 +43,7 @@
             <local> private
         ][
             private: 304
-            return binding of @public  ; frame as seen from interior
+            return binding of $public  ; frame as seen from interior
         ]
 
         f-outer: make frame! unrun :foo  ; frame as seen from exterior
@@ -73,7 +73,7 @@
         f-inner-prelude: '~junk~
         private: <not-in-prelude>
         adapted-foo: adapt :foo [
-            f-inner-prelude: binding of @public
+            f-inner-prelude: binding of $public
             assert [private = <not-in-prelude>]  ; should not be bound
         ]
 
@@ -113,7 +113,7 @@
             /private [tag!]  ; reusing name, for different variable!
         ]) [
             private: <reused>
-            f-inner-augment: binding of @private
+            f-inner-augment: binding of $private
         ]
 
         assert [private = <not-in-prelude>]  ; should be untouched
@@ -150,13 +150,13 @@
             <local> private
         ][
             private: 304
-            return binding of @public  ; return FRAME! with the internal view
+            return binding of $public  ; return FRAME! with the internal view
         ]
 
         f-prelude: null
 
         bar: adapt augment :foo [/private [tag!]] [
-            f-prelude: binding of @private
+            f-prelude: binding of $private
         ]
 
         f-outer: make frame! unrun :bar
@@ -184,7 +184,7 @@
         f: lambda [x /augmented [frame!]] [
             reduce [x if augmented [augmented.y]]
         ]
-        a: adapt augment :f [y] [augmented: binding of @y]
+        a: adapt augment :f [y] [augmented: binding of $y]
         did all [
             [10] = f 10
             [10 20] = a 10 20

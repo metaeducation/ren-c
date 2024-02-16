@@ -85,7 +85,7 @@ export to-c-name: func [
         ; Special mechanics are required so that PATH! and TUPLE! collapse
         ; to make these words:
         ;
-        ;     >> compose @(_)/(_)
+        ;     >> compose $(_)/(_)
         ;     == /  ; a word
         ;
         "." ["dot_1"]

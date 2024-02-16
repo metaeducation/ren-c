@@ -201,8 +201,8 @@
     )
 
     ~bad-pick~ !! (o.i: 1)
-    ~bad-pick~ !! (set? @o.i)
-    ~bad-pick~ !! (unset? @o.i)
+    ~bad-pick~ !! (set? $o.i)
+    ~bad-pick~ !! (unset? $o.i)
 
     (null = has o 'i)
 ]

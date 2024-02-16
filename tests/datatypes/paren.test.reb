@@ -32,7 +32,7 @@
 ;
 [#859 #1665 (
     n: 0
-    fact: @(n: n + 1 if n = 5000 [throw <deep-enough>])
+    fact: $(n: n + 1 if n = 5000 [throw <deep-enough>])
     append fact fact
     <deep-enough> = catch [eval fact]
 )]

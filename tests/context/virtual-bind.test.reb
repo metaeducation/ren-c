@@ -47,17 +47,17 @@
 ; in a nested faction.
 [
     (
-        add1020: func [x] [return use [y] [y: 1020, @(((x + y)))]]
+        add1020: func [x] [return use [y] [y: 1020, $(((x + y)))]]
         add1324: func [x] [
             return use [z] compose/deep <*> [
                 z: 304
-                @(((z + (<*> add1020 x))))
+                $(((z + (<*> add1020 x))))
             ]
         ]
         add2020: func [x] [
             return use [zz] compose/deep <*> [
                 zz: 696
-                @(((zz + (<*> add1324 x))))
+                $(((zz + (<*> add1324 x))))
             ]
         ]
 
@@ -71,7 +71,7 @@
 
 [
     (
-        group: use [x y] [x: 10, y: 20, @(((x + y)))]
+        group: use [x y] [x: 10, y: 20, $(((x + y)))]
         group = '(((x + y)))
     )
 
@@ -139,7 +139,7 @@
     ;
     ; https://forum.rebol.info/t/1062/4
     ;
-    (11 = eval bind use [x] [x: 10, '(x + 1)] make object! [x: 20])
+    (11 = eval bind use [x] [x: 10, $(x + 1)] make object! [x: 20])
 
     ~const-value~ !! (
         bind use [x] [x: 10, the (x + 1)] make object! [x: 20]
@@ -155,8 +155,8 @@
 (
     x: 100
     y: 200
-    plus-global: '[x + y]
-    minus-global: '[x - y]
+    plus-global: [x + y]
+    minus-global: [x - y]
     alpha: make object! compose [  ; virtual binds body to obj
         x: 10
         y: 20

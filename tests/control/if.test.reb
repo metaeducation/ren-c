@@ -24,7 +24,7 @@
     1 = f1
 )
 ; condition datatype tests; action
-(if get @abs [true])
+(if get $abs [true])
 ; binary
 (if #{00} [true])
 ; bitset
@@ -66,7 +66,7 @@
 (if (specialize :of [property: 'type]) [true])
 (true = if blank [true])
 (if make object! [] [true])
-(if get @+ [true])
+(if get $+ [true])
 (if 0x0 [true])
 (if first [()] [true])
 (if 'a/b [true])

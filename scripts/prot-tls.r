@@ -214,11 +214,11 @@ emit: func [
 
     while [code] [
         if set-word? code.1 [  ; set the word to the binary at current position
-            add-let-binding (binding of @return) code.1 (tail ctx.msg)
+            add-let-binding (binding of $return) code.1 (tail ctx.msg)
             code: my next
         ]
         else [
-            let result': ^ evaluate/next code @code
+            let result': ^ evaluate/next code $code
             if code [
                 if result' = nihil' [continue]  ; invisible
                 append ctx.msg ensure binary! unmeta result'
@@ -328,10 +328,10 @@ parse-asn: func [
                 class: pick class-types 1 + shift byte -6
 
                 switch class [
-                    '@universal [
+                    @universal [
                         tag: pick universal-tags 1 + (byte and+ 31)
                     ]
-                    '@context-specific [
+                    @context-specific [
                         tag: <context-specific>
                         val: byte and+ 31
                     ]
@@ -363,7 +363,7 @@ parse-asn: func [
 
             #value [
                 switch class [
-                    '@universal [
+                    @universal [
                         val: copy/part data size
                         keep/line compose/deep [
                             (tag) [
@@ -375,7 +375,7 @@ parse-asn: func [
                         ]
                     ]
 
-                    '@context-specific [
+                    @context-specific [
                         keep/line compose/deep [(tag) [(val) (size)]]
                         parse-asn copy/part data size  ; !!! ensures valid?
                     ]
@@ -918,7 +918,7 @@ encrypt-data: func [
     ]
 
     switch ctx.crypt-method [
-        '@aes [
+        @aes [
             ctx.encrypt-stream: default [
                 aes-key ctx.client-crypt-key ctx.client-iv
             ]
@@ -952,7 +952,7 @@ decrypt-data: func [
     data [binary!]
 ][
     switch ctx.crypt-method [
-        '@aes [
+        @aes [
             ctx.decrypt-stream: default [
                 aes-key/decrypt ctx.server-crypt-key ctx.server-iv
             ]
@@ -2027,7 +2027,7 @@ sys.util.make-scheme [
             ;
             if port.state.suite [
                 switch port.state.crypt-method [
-                    '@aes [
+                    @aes [
                         if port.state.encrypt-stream [
                             port.state.encrypt-stream: null  ; will be GC'd
                         ]

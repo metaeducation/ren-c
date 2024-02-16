@@ -78,7 +78,7 @@
         x: (1 + 2 y: (void eval [comment "HI"]))
         did all [
             void? x
-            voided? @y
+            voided? $y
         ]
     )
 ]
@@ -153,7 +153,7 @@
     a-value: first [()]
     same? :a-value do [:a-value]
 )
-(same? get @+ do [get @+])
+(same? get $+ do [get $+])
 (0x0 == do [0x0])
 (
     a-value: 'a/b
@@ -232,11 +232,11 @@
 ; evaluate block tests
 (
     success: false
-    evaluate/next [success: true success: false] @pos
+    evaluate/next [success: true success: false] $pos
     success and (pos = [success: false])
 )
 (
-    value: evaluate/next [1 2] @b
+    value: evaluate/next [1 2] $b
     did all [
         1 = value
         [2] = b
@@ -244,12 +244,12 @@
 )
 (
     did all [
-        nihil? evaluate/next [] @pos
+        nihil? evaluate/next [] $pos
         pos = null
     ]
 )
 (
-    value: evaluate/next [trap [1 / 0]] @pos
+    value: evaluate/next [trap [1 / 0]] $pos
     did all [
         error? value
         pos = []

@@ -24,13 +24,13 @@
     pos: ~
     val: evaluate/next [
         1 + comment "a" comment "b" 2 * 3 fail "too far"
-    ] @pos
+    ] $pos
 )
 (
     pos: ~
     val: evaluate/next [
         1 comment "a" + comment "b" 2 * 3 fail "too far"
-    ] @pos
+    ] $pos
     did all [
         val = 1
         pos = [comment "a" + comment "b" 2 * 3 fail "too far"]
@@ -40,7 +40,7 @@
     pos: ~
     val: evaluate/next [
         1 comment "a" comment "b" + 2 * 3 fail "too far"
-    ] @pos
+    ] $pos
     did all [
         val = 1
         pos = [comment "a" comment "b" + 2 * 3 fail "too far"]
@@ -73,15 +73,15 @@
 )
 (
     code: [1 elide "a" elide "b" + 2 * 3 fail "too far"]
-    evaluate/next code @pos
-    evaluate/next pos @pos
+    evaluate/next code $pos
+    evaluate/next pos $pos
     pos = [elide "b" + 2 * 3 fail "too far"]
 )
 (
     pos: ~
     val: evaluate/next [
         1 + 2 * 3 elide "a" elide "b" fail "too far"
-    ] @pos
+    ] $pos
     did all [
         val = 9
         pos = [elide "a" elide "b" fail "too far"]
@@ -439,7 +439,7 @@
 ; It's not clear that this is an interesting feature, especially in light of
 ; COMMA!'s new mechanic getting its barrier-ness from returning nihil.
 ;
-;    foo: lambda [x [nihil? integer!]] [if unset? @x [<unset>] else [x]]
+;    foo: lambda [x [nihil? integer!]] [if unset? $x [<unset>] else [x]]
 ;    did all [
 ;        <unset> = foo comment "hi"
 ;        1020 = foo 1000 + 20

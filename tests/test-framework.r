@@ -223,7 +223,7 @@ process-tests: func [
                 |
             'dialect set value: text! (  ; bad parse of test file itself
                 log [value]
-                set @dialect-failures (dialect-failures + 1)
+                set $dialect-failures (dialect-failures + 1)
             )
                 |
             'collect-tests set body: block! (
