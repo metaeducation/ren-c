@@ -18,7 +18,7 @@ clean-path: func [
     {Returns new directory path with `.` and `..` processed.}
 
     return: [file! url! text!]
-    path [file! url! text! tag! word!]
+    path [file! url! text! tag! the-word!]
     /only "Do not prepend current directory"
     /dir "Add a trailing / if missing"
 ][
@@ -43,16 +43,14 @@ clean-path: func [
         ]
     ]
 
-    ; This translates `tool` into a URL!.  The list is itself loaded from
+    ; This translates `@tool` into a URL!.  The list is itself loaded from
     ; the internet, URL is in `system.locale.library.utilities`.
     ;
     ; !!! As the project matures, this would have to come from a curated
     ; list, not just links on individuals' websites.  There should also be
     ; some kind of local caching facility.
     ;
-    ; !!! This does not belong in CLEAN-PATH.
-    ;
-    if word? path [
+    if the-word? path [
         path: switch as tag! path  ; !!! list actually used tags, should change
             (load system.locale.library.utilities)
         else [
