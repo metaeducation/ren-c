@@ -320,7 +320,8 @@ find: generic [
     series [
         <maybe> any-series? any-context? map!
     ]
-    pattern [<maybe> element? splice? any-matcher?]
+    pattern "What to find, if an action call as a predicate on each item"
+        [<maybe> element? splice? action?]
     /part "Limits the search to a given length or position"
         [any-number? any-series? pair!]
     /case "Characters are case-sensitive"
@@ -335,7 +336,7 @@ select: generic [
     return: [any-value?]
     @tail []  ; for frame compatibility with FIND
     series [<maybe> any-series? any-context? map! bitset!]
-    value [<maybe> element? splice? any-matcher?]
+    value [<maybe> element? splice? action?]
     /part "Limits the search to a given length or position"
         [any-number? any-series? pair!]
     /case "Characters are case-sensitive"

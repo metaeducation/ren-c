@@ -380,11 +380,9 @@ Bounce TO_Array(Level* level_, Kind k, const REBVAL *arg) {
 REBINT Find_In_Array(
     Length* len,
     const Array* array,
-    Specifier* array_specifier,
     REBLEN index_unsigned, // index to start search
     REBLEN end_unsigned, // ending position
     const Value* pattern,
-    Specifier* pattern_specifier,
     Flags flags, // see AM_FIND_XXX
     REBINT skip // skip factor
 ){
@@ -433,22 +431,16 @@ REBINT Find_In_Array(
         return NOT_FOUND;
     }
 
-    // Find instances of datatype(s) in block
+    // Apply predicates to items in block
 
-    if (Is_Matcher(pattern)) {
+    if (Is_Action(pattern)) {
         *len = 1;
 
         for (; index >= start and index < end; index += skip) {
             const Cell* item = Array_At(array, index);
 
-            if (Matcher_Matches(
-                pattern,
-                pattern_specifier,
-                item,
-                array_specifier
-            )){
+            if (rebUnboxLogic(rebRUN(pattern), rebQ(item)))
                 return index;
-            }
 
             if (flags & AM_FIND_MATCH)
                 break;
@@ -977,11 +969,9 @@ REBTYPE(Array)
         REBINT find = Find_In_Array(
             &len,
             arr,
-            Cell_Specifier(array),
             index,
             limit,
             pattern,
-            SPECIFIED,
             flags,
             skip
         );

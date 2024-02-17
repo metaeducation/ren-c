@@ -1100,9 +1100,7 @@ static REBIXO To_Thru_Non_Block_Rule(
             Get_Var_May_Fail(temp, rule, P_RULE_SPECIFIER, any);
         }
         else if (Is_Type_Word(rule) or Is_Type_Group(rule)) {
-            Derelativize(temp, rule, P_RULE_SPECIFIER);
-            Quasify(temp);
-            Meta_Unquotify_Known_Stable(temp);
+            Init_Matcher(temp, rule);
         }
         else {
             Copy_Cell(temp, rule);
@@ -1112,11 +1110,9 @@ static REBIXO To_Thru_Non_Block_Rule(
         REBINT i = Find_In_Array(
             &len,
             P_INPUT_ARRAY,
-            P_INPUT_SPECIFIER,
             P_POS,
             Array_Len(P_INPUT_ARRAY),
             temp,
-            SPECIFIED,  // !!! is it specific?
             find_flags,
             1
         );

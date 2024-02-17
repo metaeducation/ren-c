@@ -21,6 +21,8 @@
 ("abra-abra" = replace "abracadabra" "cad" #"-")
 ("abra-c-adabra" = replace "abracadabra" #"c" "-c-")
 
+([<ice> 1 <ice> <baby>] = replace/all [a 1 a <baby>] matches word! <ice>)
+
 ; Red has a bizarre behavior for this which is in their tests:
 ; https://github.com/red/red/blob/12ad56be0fc474f7738c0ef891725e49f9738010/tests/source/units/replace-test.red#L24
 ;

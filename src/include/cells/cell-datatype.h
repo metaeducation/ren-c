@@ -94,36 +94,8 @@ INLINE REBVAL *Init_Builtin_Datatype_Untracked(
     TRACK(Init_Builtin_Datatype_Untracked((out), (kind)))
 
 
-
-// antiform type matcher (e.g. used by FIND, SWITCH)
-
 #define Typecheck_Atom(tests,atom) \
     Typecheck_Atom_Core((tests), SPECIFIED, (atom))
-
-INLINE bool Is_Matcher(const Cell* v) {
-    if (QUOTE_BYTE(v) != ANTIFORM_0)
-        return false;
-    return Any_Type_Value_Kind(HEART_BYTE(v));
-}
-
-INLINE bool Matcher_Matches(
-    const Cell* matcher,
-    Specifier* matcher_specifier,
-    const Cell* v,
-    Specifier* v_specifier
-){
-    assert(Is_Matcher(matcher));
-    DECLARE_LOCAL (plain);
-    Derelativize(plain, matcher, matcher_specifier);
-    QUOTE_BYTE(plain) = NOQUOTE_1;
-
-    DECLARE_STABLE (v_derelativized);
-    Derelativize(v_derelativized, v, v_specifier);
-    if (Typecheck_Atom(Stable_Unchecked(plain), v_derelativized))
-        return true;
-
-    return false;
-}
 
 
 // This table is generated from %types.r - the actual table is located in

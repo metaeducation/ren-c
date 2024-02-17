@@ -98,7 +98,7 @@ replace: func [
     target "Series to replace within (modified)"
         [any-series?]
     pattern "Value to be replaced (converted if necessary)"
-        [<void> element? splice? any-matcher?]
+        [<void> element? splice? action?]
     replacement "Value to replace with (called each time if action)"
         [<void> element? splice? action?]
 
@@ -108,7 +108,7 @@ replace: func [
 
     <local> value' pos tail  ; !!! Aliases TAIL native (should use TAIL OF)
 ][
-    if void? pattern [return target]
+    if void? :pattern [return target]
 
     let all_REPLACE: all
     all: :lib.all
@@ -119,7 +119,7 @@ replace: func [
 
     while [[pos /tail]: apply :find [
         pos
-        pattern
+        :pattern
         /case case_REPLACE
     ]][
         if action? :replacement [

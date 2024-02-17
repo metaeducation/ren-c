@@ -604,13 +604,45 @@ DECLARE_NATIVE(pack)
 
 
 //
+//  Init_Matcher: C
+//
+// Give back an action antiform which can act as a matcher for a datatype.
+//
+Value* Init_Matcher(Sink(Value*) out, const Value* types) {
+    if (Is_Type_Word(types)) {
+        Option(SymId) id = Cell_Word_Id(types);
+        if (not id or not IS_KIND_SYM(id))
+            fail ("MATCHES only works on builtin types at this time");
+
+        Kind kind = KIND_FROM_SYM(id);
+        Offset n = cast(Offset, kind);
+
+        SymId constraint_sym = cast(SymId, REB_MAX + ((n - 1) * 2));
+        return Copy_Cell(out, Try_Lib_Var(constraint_sym));
+    }
+
+    assert(Is_Type_Group(types));
+    assert(Cell_Series_Len_At(types) == 1);
+
+    if (Get_Var_Core_Throws(
+        out,
+        nullptr,
+        Cell_Array_Item_At(types),
+        Cell_Specifier(types)
+    )){
+        fail (Error_No_Catch_For_Throw(TOP_LEVEL));
+    }
+    return out;
+}
+
+
+//
 //  matches: native [
 //
-//  "Create antiform pattern to signal a desire to test types non-literally"
+//  "Make a function for matching types"
 //
-//      return: "Antiform of TYPE-XXX!"
-//          [<opt> any-matcher?]
-//      types [<opt> block! any-type-value?]
+//      return: [action?]
+//      types [type-word! type-group!]
 //  ]
 //
 DECLARE_NATIVE(matches)
@@ -618,19 +650,7 @@ DECLARE_NATIVE(matches)
     INCLUDE_PARAMS_OF_MATCHES;
 
     Value* v = ARG(types);
-
-    if (Is_Nulled(v))
-        return nullptr;  // Put TRY on the FIND or whatever, not MATCHES
-
-    if (Any_Type_Value(v))
-        return UNMETA(Quasify(v));
-
-    assert(Is_Block(v));
-    Copy_Cell(OUT, v);
-    HEART_BYTE(OUT) = REB_TYPE_BLOCK;
-    QUOTE_BYTE(OUT) = ANTIFORM_0;
-
-    return OUT;
+    return Init_Matcher(OUT, v);
 }
 
 
@@ -648,26 +668,6 @@ DECLARE_INTRINSIC(splice_q)
     UNUSED(phase);
 
     Init_Logic(out, Is_Splice(arg));
-}
-
-
-//
-//  any-matcher?: native/intrinsic [
-//
-//  "Tells you if argument is any kind of matcher (TYPE-XXX! antiform)"
-//
-//      return: [logic?]
-//      ^value [any-atom?]
-//  ]
-//
-DECLARE_INTRINSIC(any_matcher_q)
-{
-    UNUSED(phase);
-
-    if (Is_Quasiform(arg) and Any_Type_Value_Kind(HEART_BYTE(arg)))
-        Init_True(out);
-    else
-        Init_False(out);
 }
 
 
