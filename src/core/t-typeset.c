@@ -69,17 +69,18 @@ REBINT CT_Parameter(const Cell* a, const Cell* b, bool strict)
 
 
 //
-//  Startup_Typesets: C
+//  Startup_Type_Predicates: C
 //
-// Create typeset variables that are defined above.
-// For example: NUMBER is both integer and decimal.
-// Add the new variables to the system context.
+// Functions like ANY-SERIES? are built on top of macros like Any_Series(),
+// and are needed for typechecking in natives.  They have to be defined
+// before the natives try to form their parameter lists so they can be
+// queried for which "Decider" optimizations to cache in the parameter.
 //
-void Startup_Typesets(void)
+void Startup_Type_Predicates(void)
 {
     REBINT id;
-    for (id = SYM_ANY_UNIT_Q; id != SYM_DATATYPES; id += 2) {
-        REBINT n = REB_MAX + (id - SYM_ANY_UNIT_Q) / 2;  // skip REB_T_RETURN
+    for (id = SYM_ANY_UNIT_Q; id != SYM_DATATYPES; id += 1) {
+        REBINT n = REB_MAX + (id - SYM_ANY_UNIT_Q);  // skip REB_T_RETURN
 
         Phase* typechecker = Make_Typechecker(n);  // n is decider_index
 
@@ -89,19 +90,6 @@ void Startup_Typesets(void)
             Canon_Symbol(cast(SymId, id)),  // cached symbol for function
             UNBOUND
         );
-
-        // Make e.g. ANY-UNIT! a TYPE-GROUP! with the bound question mark
-        // form in it, e.g. any-unit!: &(any-unit?)
-        //
-        Array* a = Alloc_Singular(NODE_FLAG_MANAGED);
-        Init_Any_Word(
-            Stub_Cell(a),
-            REB_WORD,
-            Canon_Symbol(cast(SymId, id))
-        );
-        INIT_VAL_WORD_INDEX(Stub_Cell(a), INDEX_PATCHED);
-        BINDING(Stub_Cell(a)) = &PG_Lib_Patches[id];
-        Init_Array_Cell(Force_Lib_Var(cast(SymId, id + 1)), REB_TYPE_GROUP, a);
     }
 }
 

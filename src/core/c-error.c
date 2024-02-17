@@ -385,7 +385,7 @@ void Set_Location_Of_Error(
 //
 // MAKE_Error: C
 //
-// Hook for MAKE ERROR! (distinct from MAKE for ANY-CONTEXT!, due to %types.r)
+// Hook for MAKE ERROR! (distinct from MAKE for ANY-CONTEXT?, due to %types.r)
 //
 // Note: Most often system errors from %errors.r are thrown by C code using
 // Make_Error(), but this routine accommodates verification of errors created
@@ -989,7 +989,7 @@ Context* Error_Invalid_Type(Kind kind)
 //  Error_Out_Of_Range: C
 //
 // Accessors like VAL_UINT8() are written to be able to extract the value
-// from QUOTED! integers (used in applications like molding, where the quoted
+// from QUOTED? integers (used in applications like molding, where the quoted
 // status is supposed to be ignored).  Dequoted_Derelativize() is defined
 // after %cell-integer.h, so we handle the issue here.
 //
@@ -1462,7 +1462,7 @@ void MF_Error(REB_MOLD *mo, const Cell* v, bool form)
     //
     // !!! In order to conserve space in the system, filenames are interned.
     // Although interned strings are GC'd when no longer referenced, they can
-    // only be used in ANY-WORD! values at the moment, so the filename is
+    // only be used in ANY-WORD? values at the moment, so the filename is
     // not a FILE!.
     //
     Value* file = &vars->file;

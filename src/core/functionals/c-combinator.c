@@ -139,10 +139,10 @@ Bounce Combinator_Dispatcher(Level* L)
 //             [return: [any-value?]],
 //         ])
 //
-//         remainder: [<opt> any-series!]
+//         remainder: [<opt> any-series?]
 //
 //         state [frame!]
-//         input [any-series!]
+//         input [any-series?]
 //
 //         (spread spec)  ; arguments the combinator takes, if any.
 //      ]
@@ -179,9 +179,9 @@ Array* Expanded_Combinator_Spec(const REBVAL *original)
     ++item;
 
     const Byte utf8[] =
-        "@remainder [any-series!]\n"
+        "@remainder [any-series?]\n"
         "state [frame!]\n"
-        "input [any-series!]\n";
+        "input [any-series?]\n";
 
     const void* packed[2] = {utf8, rebEND};  // BEWARE: Stack, can't Trampoline!
 

@@ -20,7 +20,7 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Errors are a subtype of ANY-CONTEXT! which follow a standard layout.
+// Errors are a subtype of ANY-CONTEXT? which follow a standard layout.
 // That layout is in %boot/sysobj.r as standard/error.
 //
 // Historically errors could have a maximum of 3 arguments, with the fixed

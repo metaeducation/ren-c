@@ -184,7 +184,7 @@
 
 ; An escaped word that can't fit in a cell and has to do an additional
 ; allocation will reuse that cell if it can (e.g. on each deliteralization
-; step).  However, if that contains an ANY-WORD!, then a binding operation
+; step).  However, if that contains an ANY-WORD?, then a binding operation
 ; on that word will create a new cell allocation...similar to how bindings
 ; in LIT-WORD! could not be mutated, only create a new LIT-WORD!.
 (

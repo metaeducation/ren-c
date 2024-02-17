@@ -280,9 +280,9 @@ DECLARE_NATIVE(raise_p)
 //  "Early-boot version of FAIL (overridden by more complex usermode version)"
 //
 //      return: []  ; !!! Notation for divergent function?
-//      'blame [<skip> quoted!]
+//      'blame [<skip> quoted?]
 //      reason [any-value?]  ; permissive to avoid callsite error
-//      /where [frame! any-word!]
+//      /where [frame! any-word?]
 //  ]
 //
 DECLARE_NATIVE(fail)

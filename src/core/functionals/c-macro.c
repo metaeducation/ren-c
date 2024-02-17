@@ -193,7 +193,7 @@ DECLARE_NATIVE(macro)
 //
 //      return: [any-value?]
 //      splice "If quoted single value, if blank no insertion (e.g. invisible)"
-//          [blank! block! quoted!]
+//          [blank! block! quoted?]
 //  ]
 //
 DECLARE_NATIVE(inline)

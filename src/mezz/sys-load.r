@@ -408,7 +408,7 @@ import*: func [
     return: "Loaded module"
         [<opt> module!]
     @product' "Evaluative product of module body (only if WHERE is BLANK!)"
-        [~cached~ ~registered~ ~nameless~ quoted! quasiform!]
+        [~cached~ ~registered~ ~nameless~ quoted? quasi?]
     where "Where to put exported definitions from SOURCE"
         [<opt> module!]
     source [
@@ -669,7 +669,7 @@ export*: func [
             case [
                 void' = left [word: null]
                 any-word? unmeta left [word: as word! unmeta left]
-                fail "EXPORT of SET-GROUP! must be VOID or ANY-WORD!"
+                fail "EXPORT of SET-GROUP! must be VOID or ANY-WORD?"
             ]
         ] else [
             word: as word! left

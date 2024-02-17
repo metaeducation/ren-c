@@ -521,7 +521,7 @@ bool Process_Group_For_Parse_Throws(
 //
 //  Parse_One_Rule: C
 //
-// Used for parsing ANY-SERIES! to match the next rule in the ruleset.  If it
+// Used for parsing ANY-SERIES? to match the next rule in the ruleset.  If it
 // matches, return the index just past it.
 //
 // This function is also called by To_Thru, consequently it may need to
@@ -968,7 +968,7 @@ static REBIXO To_Thru_Block_Rule(
                 if (IS_CHAR(rule)) {
                     Codepoint ch2 = Cell_Codepoint(rule);
                     if (ch2 == 0)
-                        goto next_alternate_rule;  // no 0 char in ANY-STRING!
+                        goto next_alternate_rule;  // no 0 char in ANY-STRING?
 
                     if (not (P_FLAGS & AM_FIND_CASE))
                         ch2 = UP_CASE(ch2);
@@ -1267,10 +1267,10 @@ static void Handle_Seek_Rule_Dont_Update_Begin(
 //  "Internal support function for PARSE (acts as variadic to consume rules)"
 //
 //      return: [<opt> integer!]
-//      input [any-series! any-array! quoted!]
+//      input [any-series? any-array? quoted?]
 //      flags [integer!]
 //      /collection "Array into which any KEEP values are collected"
-//          [any-series!]
+//          [any-series?]
 //      <local> position num-quotes save lookback
 //  ]
 //
@@ -1486,7 +1486,7 @@ DECLARE_NATIVE(subparse)
     if (rule == nullptr)  // means at end
         goto return_position;  // done all needed to do for end position
 
-    //=//// ANY-WORD!/ANY-PATH! PROCESSING ////////////////////////////////=//
+    //=//// ANY-WORD?/ANY-PATH? PROCESSING ////////////////////////////////=//
 
     if (Is_Word(rule) or Is_Get_Word(rule) or Is_Set_Word(rule)) {
         Option(SymId) cmd = VAL_CMD(rule);
@@ -2269,7 +2269,7 @@ DECLARE_NATIVE(subparse)
                 }
                 else if (Any_Path_Kind(Cell_Heart(into))) {
                     //
-                    // Can't PARSE an ANY-PATH! because it has no position
+                    // Can't PARSE an ANY-PATH? because it has no position
                     // But would be inconvenient if INTO did not support.
                     // Transform implicitly into a BLOCK! form.
                     //
@@ -2732,7 +2732,7 @@ DECLARE_NATIVE(subparse)
 //          [any-value?]
 //
 //      input "Input series to parse"
-//          [<maybe> any-series! any-sequence! url!]
+//          [<maybe> any-series? any-sequence? url!]
 //      rules "Rules to parse by"
 //          [<maybe> block!]
 //      /case "Uses case-sensitive comparison"
@@ -2796,7 +2796,7 @@ DECLARE_NATIVE(parse3)
     }
 
     if (not Any_Series_Kind(Cell_Heart(input)))
-        fail ("PARSE input must be an ANY-SERIES! (use AS BLOCK! for PATH!)");
+        fail ("PARSE input must be an ANY-SERIES? (use AS BLOCK! for PATH!)");
 
     Level* sub = Make_Level_At(rules, LEVEL_MASK_NONE);
 

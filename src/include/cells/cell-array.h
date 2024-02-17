@@ -118,7 +118,7 @@ INLINE const Element* Cell_Array_Item_At(const Cell* v) {
     m_cast(Element*, Cell_Array_At((tail_out), (v)))
 
 
-//=//// ANY-ARRAY! INITIALIZER HELPERS ////////////////////////////////////=//
+//=//// ANY-ARRAY? INITIALIZER HELPERS ////////////////////////////////////=//
 //
 // Declaring as inline with type signature ensures you use a Array* to
 // initialize, and the C++ build can also validate managed consistent w/const.

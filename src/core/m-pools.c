@@ -981,8 +981,8 @@ void Swap_Series_Content(Series* a, Series* b)
 //  "Low-level operation for swapping the underlying data for two series"
 //
 //      return: [~]
-//      series1 [any-series!]
-//      series2 [any-series!]
+//      series1 [any-series?]
+//      series2 [any-series?]
 //  ]
 //
 DECLARE_NATIVE(swap_contents)
@@ -993,7 +993,7 @@ DECLARE_NATIVE(swap_contents)
         fail ("Can only SWAP-CONTENTS of arrays with other arrays");
 
     // !!! This is a conservative check, as some binaries could be swapped
-    // with ANY-STRING!.  However, that would require checking that the
+    // with ANY-STRING?.  However, that would require checking that the
     // binary is valid UTF-8...mechanics that are available in AS TEXT! etc.
     // Let the user do their own aliasing for now, since the checks are
     // annoying to write.

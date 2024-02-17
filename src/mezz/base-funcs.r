@@ -164,7 +164,7 @@ func: func* [
         try some [
             set other: [object! | word! | tuple!] (
                 if not object? other [
-                    other: ensure any-context! get inside spec other
+                    other: ensure [any-context?] get inside spec other
                 ]
                 bind new-body other
             )
@@ -543,7 +543,7 @@ find-last: redescribe [
 ](
     adapt :find-reverse [
         if not any-series? series [
-            fail 'series "Can only use FIND-LAST on ANY-SERIES!"
+            fail 'series "Can only use FIND-LAST on ANY-SERIES?"
         ]
 
         series: tail of series  ; can't use plain TAIL due to /TAIL refinement
@@ -739,7 +739,7 @@ meth: enfix func [
     body [block!]
 ][
     let context: binding of member else [
-        fail [member "must be bound to an ANY-CONTEXT! to use METHOD"]
+        fail [member "must be bound to an ANY-CONTEXT? to use METHOD"]
     ]
     return set member runs bind (  ; !!! BIND doesn't take ACTION! as antiform
         func spec body
@@ -779,11 +779,11 @@ raise: func [
 
     return: []  ; !!! notation for divergent function?
     'blame "Point to variable or parameter to blame"
-        [<skip> quoted!]
+        [<skip> quoted?]
     reason "ERROR! value, ID, URL, message text, or failure spec"
         [<end> error! path! url! text! block! antiword?]
     /where "Frame or parameter at which to indicate the error originated"
-        [frame! any-word!]
+        [frame! any-word?]
 ][
     if (antiword? reason) and (not null? reason) [  ; <end> acts as null nonmeta
         ;

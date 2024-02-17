@@ -80,7 +80,7 @@
     emit-node: func [
         return: [~]
         output [block!]
-        node [object! any-number! word!]
+        node [object! any-number? word!]
     ][
         either object? node [
             either select node 'argument [
@@ -107,7 +107,7 @@
 
     tree-to-code: func [
         return: [block!]
-        tree [object! any-number! word!]
+        tree [object! any-number? word!]
     ][
         let output: make block! 0
         emit-node output tree

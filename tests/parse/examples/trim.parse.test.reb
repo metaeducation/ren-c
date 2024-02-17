@@ -11,9 +11,9 @@
 utrim: func [
     {Removes spaces from strings or blanks from blocks or objects.}
 
-    return: [any-string! any-array! binary! any-context!]
+    return: [any-string! any-array? binary! any-context?]
     series "Series (modified) or object (made)"
-        [any-string! any-array! binary! any-context!]
+        [any-string! any-array? binary! any-context?]
     /head "Removes only from the head"
     /tail "Removes only from the tail"
     /auto "Auto indents lines relative to first line"

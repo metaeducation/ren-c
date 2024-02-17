@@ -135,7 +135,7 @@ typedef struct StubStruct Stub;  // forward decl for DEBUG_USE_UNION_PUNS
 // layout and interpretation.
 //
 // Most of the time code wants to check the VAL_TYPE() of a cell and not it's
-// HEART, because that treats QUOTED! cells differently.  If you only check
+// HEART, because that treats quoted cells differently.  If you only check
 // the heart, then (''''x) will equal (x) because both hearts are WORD!.
 //
 // 1. In lieu of typechecking cell is-a cell, we assume the macro finding
@@ -204,7 +204,7 @@ typedef struct StubStruct Stub;  // forward decl for DEBUG_USE_UNION_PUNS
 // This flag is used for one bit that is custom to the datatype, and is
 // persisted when the cell is copied.
 //
-// CELL_FLAG_REFINEMENT_LIKE (for ANY-SEQUENCE!)
+// CELL_FLAG_REFINEMENT_LIKE (for ANY-SEQUENCE?)
 //
 // 2-element sequences can be stored in an optimized form if one of the two
 // elements is a BLANK!.  This permits things like `/a` and `b.` to fit in
@@ -216,7 +216,7 @@ typedef struct StubStruct Stub;  // forward decl for DEBUG_USE_UNION_PUNS
 #define CELL_FLAG_TYPE_SPECIFIC \
     FLAG_LEFT_BIT(25)
 
-#define CELL_FLAG_REFINEMENT_LIKE   CELL_FLAG_TYPE_SPECIFIC  // ANY-SEQUENCE!
+#define CELL_FLAG_REFINEMENT_LIKE   CELL_FLAG_TYPE_SPECIFIC  // ANY-SEQUENCE?
 
 #define CELL_FLAG_ENFIX_FRAME   CELL_FLAG_TYPE_SPECIFIC  // FRAME!
 
@@ -269,7 +269,7 @@ typedef struct StubStruct Stub;  // forward decl for DEBUG_USE_UNION_PUNS
 // !!! The native `new-line` is used set this, which has a somewhat poor
 // name considering its similarity to `newline` the line feed char.
 //
-// !!! Currently, ANY-PATH! rendering just ignores this bit.  Some way of
+// !!! Currently, ANY-PATH? rendering just ignores this bit.  Some way of
 // representing paths with newlines in them may be needed.
 //
 #define CELL_FLAG_NEWLINE_BEFORE \
@@ -529,15 +529,15 @@ union ValuePayloadUnion { //=/////////////// ACTUAL PAYLOAD DEFINITION ////=//
     // if that is a series node it will be used to answer questions about
     // mutability (beyond CONST, which the cell encodes itself)
     //
-    // ANY-WORD!  // see %sys-word.h
+    // ANY-WORD?  // see %sys-word.h
     //     String* spelling;  // word's non-canonized spelling, UTF-8 string
     //     REBINT index;  // index of word in context (if binding is not null)
     //
-    // ANY-CONTEXT!  // see %sys-context.h
+    // ANY-CONTEXT?  // see %sys-context.h
     //     Array* varlist;  // has MISC.meta, LINK.keysource
     //     Action* phase;  // used by FRAME! contexts, see %sys-frame.h
     //
-    // ANY-SERIES!  // see %sys-series.h
+    // ANY-SERIES?  // see %sys-series.h
     //     Series* rebser;  // vector/double-ended-queue of equal-sized items
     //     REBLEN index;  // 0-based position (e.g. 0 means Rebol index 1)
     //

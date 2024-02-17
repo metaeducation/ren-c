@@ -276,7 +276,7 @@ void Append_Int_Pad(String* dst, REBINT num, REBINT digs)
 //
 //  Append_UTF8_May_Fail: C
 //
-// Append UTF-8 data to a series underlying an ANY-STRING! (or create new one)
+// Append UTF-8 data to a series underlying an ANY-STRING? (or create new one)
 //
 String* Append_UTF8_May_Fail(
     String* dst,  // if nullptr, that means make a new string

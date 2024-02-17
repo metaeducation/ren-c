@@ -58,44 +58,44 @@ reflect: generic [
 
 add: generic [
     {Returns the addition of two values.}
-    return: [char? any-scalar! date! binary!]
-    value1 [char? any-scalar! date! binary!]
-    value2 [char? any-scalar! date!]
+    return: [char? any-scalar? date! binary!]
+    value1 [char? any-scalar? date! binary!]
+    value2 [char? any-scalar? date!]
 ]
 
 subtract: generic [
     {Returns the second value subtracted from the first.}
-    return: [char? any-scalar! date! binary!]
-    value1 [char? any-scalar! date! binary!]
-    value2 [char? any-scalar! date!]
+    return: [char? any-scalar? date! binary!]
+    value1 [char? any-scalar? date! binary!]
+    value2 [char? any-scalar? date!]
 ]
 
 multiply: generic [
     {Returns the first value multiplied by the second.}
-    return: [char? any-scalar!]
-    value1 [char? any-scalar!]
-    value2 [char? any-scalar!]
+    return: [char? any-scalar?]
+    value1 [char? any-scalar?]
+    value2 [char? any-scalar?]
 ]
 
 divide: generic [
     {Returns the first value divided by the second.}
-    return: [char? any-scalar!]
-    value1 [char? any-scalar!]
-    value2 [char? any-scalar!]
+    return: [char? any-scalar?]
+    value1 [char? any-scalar?]
+    value2 [char? any-scalar?]
 ]
 
 remainder: generic [
     {Returns the remainder of first value divided by second.}
-    return: [char? any-scalar!]
-    value1 [char? any-scalar!]
-    value2 [char? any-scalar!]
+    return: [char? any-scalar?]
+    value1 [char? any-scalar?]
+    value2 [char? any-scalar?]
 ]
 
 power: generic [
     {Returns the first number raised to the second number.}
-    return: [any-number!]
-    number [any-number!]
-    exponent [any-number!]
+    return: [any-number?]
+    number [any-number?]
+    exponent [any-number?]
 ]
 
 
@@ -133,17 +133,17 @@ intersect: generic [
 
     return: [
         logic? integer! char? tuple!  ; math
-        any-array! any-string! bitset!  ; sets
+        any-array? any-string? bitset!  ; sets
         binary!  ; ???
     ]
     value1 [
         logic? integer! char? tuple!  ; math
-        any-array! any-string! bitset!  ; sets
+        any-array? any-string? bitset!  ; sets
         binary!  ; ???
     ]
     value2 [
         logic? integer! char? tuple!  ; math
-        any-array! any-string! bitset!  ; sets
+        any-array? any-string? bitset!  ; sets
         binary!  ; ???
     ]
     /case "Uses case-sensitive comparison"
@@ -156,17 +156,17 @@ union: generic [
 
     return: [
         logic? integer! char? tuple!  ; math
-        any-array! any-string! bitset!  ; sets
+        any-array? any-string? bitset!  ; sets
         binary!  ; ???
     ]
     value1 [
         logic? integer! char? tuple!  ; math
-        any-array! any-string! bitset!  ; sets
+        any-array? any-string? bitset!  ; sets
         binary!  ; ???
     ]
     value2 [
         logic? integer! char? tuple!  ; math
-        any-array! any-string! bitset!  ; sets
+        any-array? any-string? bitset!  ; sets
         binary!  ; ???
     ]
     /case "Use case-sensitive comparison"
@@ -179,19 +179,19 @@ difference: generic [
 
     return: [
         logic? integer! char? tuple!
-        any-array! any-string! bitset!
+        any-array? any-string? bitset!
         binary!
         time!  ; !!! Under review, this really doesn't fit
     ]
     value1 [
         logic? integer! char? tuple!  ; math
-        any-array! any-string! bitset!  ; sets
+        any-array? any-string? bitset!  ; sets
         binary!  ; ???
         date!  ; !!! Under review, this really doesn't fit
     ]
     value2 [
         logic? integer! char? tuple!  ; math
-        any-array! any-string! bitset!  ; sets
+        any-array? any-string? bitset!  ; sets
         binary!  ; ???
         date!  ; !!! Under review, this really doesn't fit
     ]
@@ -203,11 +203,11 @@ difference: generic [
 exclude: generic [
     {Returns the first data set less the second data set.}
 
-    return: [any-array! any-string! binary! bitset!]
+    return: [any-array? any-string? binary! bitset!]
     data "original data"
-        [any-array! any-string! binary! bitset!]
+        [any-array? any-string? binary! bitset!]
     exclusions "data to exclude from series"
-        [any-array! any-string! binary! bitset!]
+        [any-array? any-string? binary! bitset!]
     /case "Uses case-sensitive comparison"
     /skip "Treat the series as records of fixed size"
         [integer!]
@@ -218,8 +218,8 @@ exclude: generic [
 
 negate: generic [
     {Changes the sign of a number (see COMPLEMENT for inversion of sets)}
-    return: [any-number! pair! money! time!]
-    number [any-number! pair! money! time!]
+    return: [any-number? pair! money! time!]
+    number [any-number? pair! money! time!]
 ]
 
 bitwise-not: generic [
@@ -237,8 +237,8 @@ complement: generic [
 unique: generic [
     {Returns the data set with duplicates removed}
 
-    return: [any-array! any-string! binary! bitset!]
-    series [any-array! any-string! binary! bitset!]
+    return: [any-array? any-string? binary! bitset!]
+    series [any-array? any-string? binary! bitset!]
     <local> dummy  ; unused, makes frame-compatible with INTERSECT/UNIQUE/etc.
     /case "Use case-sensitive comparison (except bitsets)"
     /skip "Treat the series as records of fixed size"
@@ -247,18 +247,18 @@ unique: generic [
 
 absolute: generic [
     {Returns the absolute value.}
-    return: [any-number! pair! money! time!]
-    value [any-number! pair! money! time!]
+    return: [any-number? pair! money! time!]
+    value [any-number? pair! money! time!]
 ]
 
 round: generic [
     {Rounds a numeric value; halves round up (away from zero) by default}
 
-    return: [any-number! pair! money! time!]
+    return: [any-number? pair! money! time!]
     value "The value to round"
-        [any-number! pair! money! time!]
+        [any-number? pair! money! time!]
     /to "Return the nearest multiple of the parameter (must be non-zero)"
-        [any-number! money! time!]
+        [any-number? money! time!]
     /even "Halves round toward even results"
     /down "Round toward zero, ignoring discarded digits. (truncate)"
     /half-down "Halves round toward zero"
@@ -279,13 +279,13 @@ random: generic [
 odd?: generic [
     {Returns TRUE if the number is odd.}
     return: [logic?]
-    number [any-number! char? date! money! time! pair!]
+    number [any-number? char? date! money! time! pair!]
 ]
 
 even?: generic [
     {Returns TRUE if the number is even.}
     return: [logic?]
-    number [any-number! char? date! money! time! pair!]
+    number [any-number? char? date! money! time! pair!]
 ]
 
 ; Series Navigation
@@ -293,18 +293,18 @@ even?: generic [
 skip: generic [
     {Returns the series forward or backward from the current position.}
     return: "Input skipped by offset, or null if out of bounds"
-        [<opt> any-series! port!]
-    series [<maybe> any-series! port!]
-    offset [any-number! logic? pair!]
+        [<opt> any-series? port!]
+    series [<maybe> any-series? port!]
+    offset [any-number? logic? pair!]
     /unbounded "Return out of bounds series if before tail or after head"
 ]
 
 at: generic [
     {Returns the series at the specified index.}
     return: "Input at the given index, not clipped to head/tail by default"
-        [<opt> any-series! port!]
-    series [<maybe> any-series! port!]
-    index [any-number! logic? pair!]
+        [<opt> any-series? port!]
+    series [<maybe> any-series? port!]
+    index [any-number? logic? pair!]
     /bounded "Return null if index is before tail or after head"
 ]
 
@@ -314,15 +314,15 @@ find: generic [
     {Searches for the position where a matching value is found}
 
     return: "position found, else null - logic true if non-positional find"
-        [<opt> any-series! logic?]
+        [<opt> any-series? logic?]
     @tail "Returns the end of the found data"
-        [<opt> any-series!]
+        [<opt> any-series?]
     series [
-        <maybe> any-series! any-context! map!
+        <maybe> any-series? any-context? map!
     ]
     pattern [<maybe> element? splice? any-matcher?]
     /part "Limits the search to a given length or position"
-        [any-number! any-series! pair!]
+        [any-number? any-series? pair!]
     /case "Characters are case-sensitive"
     /skip "Treat the series as records of fixed size"
         [integer!]
@@ -334,10 +334,10 @@ select: generic [
 
     return: [any-value?]
     @tail []  ; for frame compatibility with FIND
-    series [<maybe> any-series! any-context! map! bitset!]
+    series [<maybe> any-series? any-context? map! bitset!]
     value [<maybe> element? splice? any-matcher?]
     /part "Limits the search to a given length or position"
-        [any-number! any-series! pair!]
+        [any-number? any-series? pair!]
     /case "Characters are case-sensitive"
     /skip "Treat the series as records of fixed size"
         [integer!]
@@ -406,10 +406,10 @@ copy: generic [
 
     return: "Return type will match the input type"
         [any-value?]
-    value "If an ANY-SERIES!, it is only copied from its current position"
+    value "If an ANY-SERIES?, it is only copied from its current position"
         [<unrun> <maybe> any-value?]  ; frame antiforms copied as frame ATM
     /part "Limits to a given length or position"
-        [any-number! any-series! pair!]
+        [any-number? any-series? pair!]
     /deep "Also copies series values within the block"
     ; Once had /TYPES, but that is disabled for now
 ]
@@ -419,9 +419,9 @@ take: generic [
 
     return: [any-value?]  ; !!! Variadic TAKE may evaluate, rethink
     series "At position (modified)"
-        [any-series! port! varargs!]
+        [any-series? port! varargs!]
     /part "Specifies a length or end position"
-        [any-number! any-series! pair!]
+        [any-number? any-series? pair!]
     /deep "Also copies series values within the block"
     /last "Take it from the tail end"
 ]
@@ -433,17 +433,17 @@ insert: generic [
     {Inserts element(s); for series, returns just past the insert.}
 
     return: "Just past the insert"
-        [any-series! port! map! object! bitset! port!
+        [any-series? port! map! object! bitset! port!
         integer!]  ; !!! INSERT returns INTEGER! in ODBC, review this
     series "At position (modified)"
-        [<maybe> any-series! port! map! object! bitset! port!]
+        [<maybe> any-series? port! map! object! bitset! port!]
     value "What to insert (antiform groups will splice, e.g. SPREAD)"
         [<void> element? splice?]
     /part "Limits to a given length or position"
-        [any-number! any-series! pair!]
+        [any-number? any-series? pair!]
     /dup "Duplicates the insert a specified number of times"
-        [any-number! pair!]
-    /line "Data should be its own line (use as formatting cue if ANY-ARRAY!)"
+        [any-number? pair!]
+    /line "Data should be its own line (use as formatting cue if ANY-ARRAY?)"
 ]
 
 ; !!! INSERT, APPEND, CHANGE expect to have compatible frames...same params
@@ -452,16 +452,16 @@ insert: generic [
 append: generic [
     {Inserts element(s) at tail; for series, returns head.}
 
-    return: [any-series! port! map! object! module! bitset!]
+    return: [any-series? port! map! object! module! bitset!]
     series "Any position (modified)"
-        [<maybe> any-series! port! map! object! module! bitset!]
+        [<maybe> any-series? port! map! object! module! bitset!]
     value "What to append (antiform groups will splice, e.g. SPREAD)"
         [<void> element? splice?]
     /part "Limits to a given length or position"
-        [any-number! any-series! pair!]
+        [any-number? any-series? pair!]
     /dup "Duplicates the insert a specified number of times"
-        [any-number! pair!]
-    /line "Data should be its own line (use as formatting cue if ANY-ARRAY!)"
+        [any-number? pair!]
+    /line "Data should be its own line (use as formatting cue if ANY-ARRAY?)"
 ]
 
 ; !!! INSERT, APPEND, CHANGE expect to have compatible frames...same params
@@ -470,67 +470,67 @@ append: generic [
 change: generic [
     {Replaces element(s); returns just past the change}
 
-    return: [any-series! port!]
+    return: [any-series? port!]
     series "At position (modified)"
-        [<maybe> any-series! port!]
+        [<maybe> any-series? port!]
     value "The new value (antiform groups will splice, e.g. SPREAD)"
         [<void> element? splice?]
     /part "Limits the amount to change to a given length or position"
-        [any-number! any-series! pair!]
+        [any-number? any-series? pair!]
     /dup "Duplicates the change a specified number of times"
-        [any-number! pair!]
-    /line "Data should be its own line (use as formatting cue if ANY-ARRAY!)"
+        [any-number? pair!]
+    /line "Data should be its own line (use as formatting cue if ANY-ARRAY?)"
 ]
 
 remove: generic [
     {Removes element(s); returns same position}
 
-    return: [any-series! map! port! bitset!]
+    return: [any-series? map! port! bitset!]
     series "At position (modified)"
-        [<maybe> any-series! map! port! bitset!]
+        [<maybe> any-series? map! port! bitset!]
     /part "Removes multiple elements or to a given position"
-        [any-number! any-series! pair! char?]
+        [any-number? any-series? pair! char?]
 ]
 
 clear: generic [
     {Removes elements from current position to tail; returns at new tail}
 
-    return: [any-series! port! map! bitset!]
+    return: [any-series? port! map! bitset!]
     series "At position (modified)"
-        [<maybe> any-series! port! map! bitset!]
+        [<maybe> any-series? port! map! bitset!]
 ]
 
 swap: generic [
     {Swaps elements between two series or the same series}
 
-    return: [any-series!]
-    series1 [any-series!] {At position (modified)}
-    series2 [any-series!] {At position (modified)}
+    return: [any-series?]
+    series1 [any-series?] {At position (modified)}
+    series2 [any-series?] {At position (modified)}
 ]
 
 reverse: generic [
     {Reverses the order of elements; returns at same position}
 
-    return: [any-series! any-sequence! pair!]
+    return: [any-series? any-sequence? pair!]
     series "At position (modified)"
-        [<maybe> any-series! any-sequence! pair!]
+        [<maybe> any-series? any-sequence? pair!]
     /part "Limits to a given length or position"
-        [any-number! any-series!]
+        [any-number? any-series?]
 ]
 
 sort: generic [
     {Sorts a series; default sort order is ascending}
 
-    return: [any-series!]
+    return: [any-series?]
     series "<maybe> At position (modified)"
-        [any-series!]
+        [any-series?]
     /case "Case sensitive sort"
     /skip "Treat the series as records of fixed size"
         [integer!]
     /compare "Comparator offset, block or action"
         [<unrun> integer! block! frame!]
     /part "Sort only part of a series (by length or position)"
-        [any-number! any-series!]
+        [any-number? any-series?]
     /all "Compare all fields"
     /reverse "Reverse sort order"
 ]
@@ -580,13 +580,13 @@ read: generic [
         block!  ; READ/LINES returned BLOCK!
         port!  ; asynchronous READ on PORT!s returned the PORT!
         tuple!  ; READ/DNS returned tuple!
-        quasiform!  ; !!! If READ is Ctrl-C'd in nonhaltable API calls, ATM
+        quasi?  ; !!! If READ is Ctrl-C'd in nonhaltable API calls, ATM
     ]
     source [port! file! url! block!]
     /part "Partial read a given number of units (source relative)"
-        [any-number!]
+        [any-number?]
     /seek "Read from a specific position (source relative)"
-        [any-number!]
+        [any-number?]
     /string "Convert UTF and line terminators to standard text string"
     /lines "Convert to block of strings (implies /string)"
 ]
@@ -599,9 +599,9 @@ write: generic [
     data "Data to write (non-binary converts to UTF-8)"
         [binary! text! block! object! issue!]
     /part "Partial write a given number of units"
-        [any-number!]
+        [any-number?]
     /seek "Write at a specific position"
-        [any-number!]
+        [any-number?]
     /append "Write data at end of file"
     /lines "Write each value in a block as a separate line"
 ]

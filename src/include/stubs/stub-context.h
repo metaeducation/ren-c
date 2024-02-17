@@ -26,7 +26,7 @@
 //
 //   "KEYLIST" - a series of pointer-sized elements holding Symbol* pointers
 //
-//   "VARLIST" - an array which holds an archetypal ANY-CONTEXT! value in its
+//   "VARLIST" - an array which holds an archetypal ANY-CONTEXT? value in its
 //   [0] element, and then a cell-sized slot for each variable.
 //
 // A `Context*` is an alias of the varlist's `Array*`, and keylists are
@@ -40,7 +40,7 @@
 //    VARLIST ARRAY (aka Context*)  --Link--+
 //  +------------------------------+        |
 //  +          "ROOTVAR"           |        |
-//  | Archetype ANY-CONTEXT! Value |        v         KEYLIST SERIES
+//  | Archetype ANY-CONTEXT? Value |        v         KEYLIST SERIES
 //  +------------------------------+        +-------------------------------+
 //  |         Value Cell 1         |        |         Symbol* Key 1         |
 //  +------------------------------+        +-------------------------------+
@@ -53,7 +53,7 @@
 // so the paramlist of the CTX_FRAME_PHASE() must be consulted.  When the
 // frame stops running, the paramlist is written back to the link again.)
 //
-// The "ROOTVAR" is a canon value image of an ANY-CONTEXT!'s `REBVAL`.  This
+// The "ROOTVAR" is a canon value image of an ANY-CONTEXT?'s `REBVAL`.  This
 // trick allows a single Context* pointer to be passed around rather than the
 // REBVAL struct which is 4x larger, yet use existing memory to make a REBVAL*
 // when needed (using CTX_ARCHETYPE()).  ACTION!s have a similar trick.
@@ -113,7 +113,7 @@
 #define HAS_LINK_Patches        FLAVOR_VARLIST
 
 
-// ANY-CONTEXT! value cell schematic
+// ANY-CONTEXT? value cell schematic
 //
 #define VAL_CONTEXT_VARLIST(v)              cast(Array*, Cell_Node1(v))
 #define INIT_VAL_CONTEXT_VARLIST            Init_Cell_Node1

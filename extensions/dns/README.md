@@ -1,7 +1,7 @@
 ## DNS Extension
 
 R3-Alpha's DNS "port" was written to do forward and reverse resolves on
-either URL! literals (a subclass of ANY-STRING!) or the TUPLE! datatype (a
+either URL! literals (a subclass of ANY-STRING?) or the TUPLE! datatype (a
 fairly narrow type, that could be a few byte-sized integers...used also for
 color constants).
 
@@ -33,6 +33,6 @@ want asynchronous lookup are expected to use threads and call the standard
 getnameinfo() API.
 
 Considering the relatively low priority of the feature and its use of a
-deprecated API, Ren-C removed the code--focusing instead on trying to clarify 
+deprecated API, Ren-C removed the code--focusing instead on trying to clarify
 the port model and its synchronous/asynchronous modes in a more forward
 looking way.

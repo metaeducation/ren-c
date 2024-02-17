@@ -318,7 +318,7 @@ bool Typecheck_Atom_Core(
 
           case REB_QUOTED:
           case REB_QUASIFORM: {
-            fail ("QUOTED! and QUASIFORM! not supported in TYPE-XXX!"); }
+            fail ("QUOTED? and QUASI? not supported in TYPE-XXX!"); }
 
           case REB_PARAMETER: {
             if (not Typecheck_Atom(test, v))

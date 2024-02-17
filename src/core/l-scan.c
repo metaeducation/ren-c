@@ -927,7 +927,7 @@ static LEXFLAGS Prescan_Token(SCAN_STATE *ss)
 // conclusion at a delimiter.  The calculated token will be returned.
 //
 // The TOKEN_XXX type returned will correspond directly to a Rebol datatype
-// if it isn't an ANY-ARRAY! (e.g. TOKEN_INTEGER for INTEGER! or TOKEN_STRING
+// if it isn't an ANY-ARRAY? (e.g. TOKEN_INTEGER for INTEGER! or TOKEN_STRING
 // for STRING!).  When a block or group delimiter is found it will indicate
 // that, e.g. TOKEN_BLOCK_BEGIN will be returned to indicate the scanner
 // should recurse... or TOKEN_GROUP_END which will signal the end of a level
@@ -935,7 +935,7 @@ static LEXFLAGS Prescan_Token(SCAN_STATE *ss)
 //
 // TOKEN_END is returned if end of input is reached.
 //
-// Newlines that should be internal to a non-ANY-ARRAY! type are included in
+// Newlines that should be internal to a non-ANY-ARRAY? type are included in
 // the scanned range between the `begin` and `end`.  But newlines that are
 // found outside of a string are returned as TOKEN_NEWLINE.  (These are used
 // to set the CELL_FLAG_NEWLINE_BEFORE bits on the next value.)
@@ -2890,7 +2890,7 @@ Bounce Scanner_Executor(Level* const L) {
 
     if (level->quotes_pending != 0) {
         //
-        // Transform the topmost value on the stack into a QUOTED!, to
+        // Transform the topmost value on the stack into a QUOTED?, to
         // account for the ''' that was preceding it.
         //
         Quotify(TOP, level->quotes_pending);
@@ -3027,7 +3027,7 @@ void Shutdown_Scanner(void)
 //      /file "File to be associated with BLOCK!s and GROUP!s in source"
 //          [file! url!]
 //      /line "Line number for start of scan, word variable will be updated"
-//          [integer! any-word!]
+//          [integer! any-word?]
 //  ]
 //
 DECLARE_NATIVE(transcode)
@@ -3114,7 +3114,7 @@ DECLARE_NATIVE(transcode)
             fail (PARAM(line));  // definitional?
     }
     else
-        fail ("/LINE must be an INTEGER! or an ANY-WORD! integer variable");
+        fail ("/LINE must be an INTEGER! or an ANY-WORD? integer variable");
 
     // Because we're building a frame, we can't make a {bp, END} packed array
     // and start up a variadic feed...because the stack variable would go

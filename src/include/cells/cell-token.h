@@ -30,10 +30,10 @@
 // stores its data where the node and index would be.  CELL_FLAG_ISSUE_HAS_NODE
 // is what discerns the two categories, and can only be treated as a string
 // when it has that flag.  Hence generically speaking, ISSUE! is not considered
-// an ANY-SERIES! or ANY-STRING! type.
+// an ANY-SERIES? or ANY-STRING? type.
 //
 // However, there are UTF-8-based accessors VAL_UTF8_XXX which can be used to
-// polymorphically access const data across ANY-STRING!, ANY-WORD!, and ISSUE!
+// polymorphically access const data across ANY-STRING?, ANY-WORD?, and ISSUE!
 //
 
 INLINE bool IS_CHAR_CELL(const Cell* v) {
@@ -106,7 +106,7 @@ INLINE REBVAL *Init_Issue_Utf8(
 }
 
 
-// If you know that a codepoint is good (e.g. it came from an ANY-STRING!)
+// If you know that a codepoint is good (e.g. it came from an ANY-STRING?)
 // this routine can be used.
 //
 INLINE REBVAL *Init_Char_Unchecked_Untracked(Cell* out, Codepoint c) {
@@ -230,7 +230,7 @@ INLINE bool Is_Blackhole(const Atom* v) {
 
 
 // Analogous to VAL_BYTES_AT, some routines were willing to accept either an
-// ANY-WORD! or an ANY-STRING! to get UTF-8 data.  This is a convenience
+// ANY-WORD? or an ANY-STRING? to get UTF-8 data.  This is a convenience
 // routine for handling that.
 //
 INLINE Utf8(const*) Cell_Utf8_Len_Size_At_Limit(

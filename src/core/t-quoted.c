@@ -1,6 +1,6 @@
 //
 //  File: %t-quoted.c
-//  Summary: "QUOTED! datatype that acts as container for unquoted elements"
+//  Summary: "QUOTED? datatype that acts as container for unquoted elements"
 //  Section: datatypes
 //  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
 //  Homepage: https://github.com/metaeducation/ren-c/
@@ -25,7 +25,7 @@
 // was that the literalness would be removed, leaving a WORD! or PATH! behind,
 // making it suitable for comparisons (e.g. `word = 'foo`)
 //
-// Ren-C has a generic QUOTED! datatype, a container which can be arbitrarily
+// Ren-C has a generic quoting, as a container which can be arbitrarily
 // deep in escaping.  This faciliated a more succinct way to QUOTE, as well as
 // new features.  THE takes the place of the former literalizing operator:
 //
@@ -47,7 +47,7 @@
 // !!! Currently, in order to have a GENERIC dispatcher (e.g. REBTYPE())
 // then one also must implement a comparison function.  However, compare
 // functions specifically take noquote cells, so you can't pass REB_QUOTED to
-// them.  The handling for QUOTED! is in the comparison dispatch itself.
+// them.  The handling for QUOTED? is in the comparison dispatch itself.
 //
 REBINT CT_Quoted(const Cell* a, const Cell* b, bool strict)
 {
@@ -132,7 +132,7 @@ REBTYPE(Quoted)
         break;
     }
 
-    fail ("QUOTED! has no GENERIC operations (use NOQUOTE/REQUOTE)");
+    fail ("QUOTED? has no GENERIC operations (use NOQUOTE/REQUOTE)");
 }
 
 
@@ -251,7 +251,7 @@ DECLARE_NATIVE(quote)
 //
 //  "antiforms -> quasiforms, adds a quote to rest (behavior of ^^)"
 //
-//      return: [quoted! quasiform!]
+//      return: [quoted? quasi?]
 //      ^atom
 //  ]
 //
@@ -268,7 +268,7 @@ DECLARE_INTRINSIC(meta)
 //
 //  "META variant that passes through VOID and NULL, and doesn't take failures"
 //
-//      return: [<opt> <void> quoted! quasiform!]
+//      return: [<opt> <void> quoted! quasi?]
 //      ^optional [pack? any-value?]
 //  ]
 //
@@ -325,7 +325,7 @@ DECLARE_NATIVE(unquote)
 //
 //  "Constructs a quasi form of the evaluated argument"
 //
-//      return: [quasiform!]
+//      return: [quasi?]
 //      value "Any non-QUOTED! value"
 //          [<opt> element?]  ; there isn't an any-nonquoted! typeset
 //  ]
@@ -349,7 +349,7 @@ DECLARE_NATIVE(quasi)
 //  "Turn quasiforms into common forms"
 //
 //      return: [element?]  ; more narrowly, a non-quasi non-quoted element
-//      value [quasiform!]
+//      value [quasi?]
 //  ]
 //
 DECLARE_INTRINSIC(unquasi)
@@ -416,7 +416,7 @@ DECLARE_NATIVE(anti)
 //  "Variant of UNQUOTE that also accepts quasiforms to make antiforms"
 //
 //      return: [any-atom?]
-//      value [quoted! quasiform!]
+//      value [quoted? quasi?]
 //  ]
 //
 DECLARE_INTRINSIC(unmeta)
@@ -434,7 +434,7 @@ DECLARE_INTRINSIC(unmeta)
 //  "Variant of UNMETA that passes thru VOID and NULL"
 //
 //      return: [any-atom?]
-//      value [<opt> <void> quoted! quasiform!]
+//      value [<opt> <void> quoted? quasi?]
 //  ]
 //
 DECLARE_INTRINSIC(unmeta_p)
@@ -461,7 +461,7 @@ DECLARE_INTRINSIC(unmeta_p)
 //
 //      return: "Antiform of GROUP! or unquoted value (pass null and void)"
 //          [<opt> <void> element? splice?]
-//      value [<opt> <void> quoted! blank! any-array!]
+//      value [<opt> <void> quoted? blank! any-array?]
 //  ]
 //
 DECLARE_INTRINSIC(spread)
@@ -517,7 +517,7 @@ DECLARE_INTRINSIC(spread)
 //      return: "Antiform of OBJECT! or unquoted value (pass null and void)"
 //          [<opt> <void> element? lazy?]
 //      object "Will do MAKE OBJECT! on BLOCK!"
-//          [<opt> <void> quoted! object! block!]
+//          [<opt> <void> quoted? object! block!]
 //  ]
 //
 DECLARE_NATIVE(lazy)
@@ -610,7 +610,7 @@ DECLARE_NATIVE(pack)
 //
 //      return: "Antiform of TYPE-XXX!"
 //          [<opt> any-matcher?]
-//      types [<opt> block! any-type-value!]
+//      types [<opt> block! any-type-value?]
 //  ]
 //
 DECLARE_NATIVE(matches)

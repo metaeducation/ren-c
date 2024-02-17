@@ -157,7 +157,7 @@ static void Queue_Mark_Pairing_Deep(const Cell* paired)
   #endif
 
     Queue_Mark_Cell_Deep(paired);
-    Queue_Mark_Cell_Deep(Pairing_Second(paired));  // QUOTED! uses void
+    Queue_Mark_Cell_Deep(Pairing_Second(paired));  // QUOTED? uses void
 
     Add_GC_Mark(paired);
 
@@ -350,7 +350,7 @@ static void Queue_Mark_Cell_Deep(const Cell* c)
     assert(not Is_Fresh(c));
 
     // We mark based on the type of payload in the cell, e.g. its "unescaped"
-    // form.  So if '''a fits in a WORD! (despite being a QUOTED!), we want
+    // form.  So if '''a fits in a WORD! (despite being a QUOTED?), we want
     // to mark the cell as if it were a plain word.  Use the Cell_Heart().
     //
     Heart heart = Cell_Heart(c);

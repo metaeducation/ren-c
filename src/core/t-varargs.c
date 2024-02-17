@@ -151,9 +151,9 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
     Element* shared;
     if (Is_Block_Style_Varargs(&shared, vararg)) {
         //
-        // We are processing an ANY-ARRAY!-based varargs, which came from
-        // either a MAKE VARARGS! on an ANY-ARRAY! value -or- from a
-        // MAKE ANY-ARRAY! on a varargs (which reified the varargs into an
+        // We are processing an ANY-ARRAY?-based varargs, which came from
+        // either a MAKE VARARGS! on an ANY-ARRAY? value -or- from a
+        // MAKE ANY-ARRAY? on a varargs (which reified the varargs into an
         // array during that creation, flattening its entire output).
 
         vararg_level = nullptr;
@@ -362,14 +362,14 @@ Bounce MAKE_Varargs(
     if (parent)
         return RAISE(Error_Bad_Make_Parent(kind, unwrap(parent)));
 
-    // With MAKE VARARGS! on an ANY-ARRAY!, the array is the backing store
+    // With MAKE VARARGS! on an ANY-ARRAY?, the array is the backing store
     // (shared) that the varargs interface cannot affect, but changes to
     // the array will change the varargs.
     //
     if (Any_Array(arg)) {
         //
         // Make a single-element array to hold a reference+index to the
-        // incoming ANY-ARRAY!.  This level of indirection means all
+        // incoming ANY-ARRAY?.  This level of indirection means all
         // VARARGS! copied from this will update their indices together.
         // By protocol, if the array is exhausted then the shared element
         // should be an END marker (not an array at its end)

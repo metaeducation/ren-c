@@ -350,7 +350,7 @@ const Symbol* Intern_UTF8_Managed_Core(  // results implicitly managed [1]
     memcpy(Binary_Head(s), utf8, utf8_size);
     Term_Binary_Len(s, utf8_size);
 
-    // The UTF-8 series can be aliased with AS to become an ANY-STRING! or a
+    // The UTF-8 series can be aliased with AS to become an ANY-STRING? or a
     // BINARY!.  If it is, then it should not be modified.
     //
     Freeze_Series(s);

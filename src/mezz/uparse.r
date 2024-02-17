@@ -143,7 +143,7 @@ combinator: func [
             ]
         )
 
-        @remainder [any-series!]  ; all combinators have remainder
+        @remainder [any-series?]  ; all combinators have remainder
 
         (if spec.1 = '@pending [
             assert [spec.2 = [<opt> block!]]
@@ -156,7 +156,7 @@ combinator: func [
         ])
 
         state [frame!]
-        input [any-series!]
+        input [any-series?]
 
         ; Whatever arguments the combinator takes, if any
         ;
@@ -291,7 +291,7 @@ default-combinators: make map! reduce [
             return raise e
         ]
         if (not quoted? result') or (not any-array? result': unquote result') [
-            fail "SPREAD only accepts ANY-ARRAY! and QUOTED!"
+            fail "SPREAD only accepts ANY-ARRAY? and QUOTED!"
         ]
         return spread result'  ; was unquoted above
     ]
@@ -670,7 +670,7 @@ default-combinators: make map! reduce [
 
     'seek combinator [
         return: "seeked position"
-            [any-series!]
+            [any-series?]
         parser [action?]
         <local> where
     ][
@@ -701,7 +701,7 @@ default-combinators: make map! reduce [
 
     'between combinator [
         return: "Copy of content between the left and right parsers"
-            [any-series!]
+            [any-series?]
         parser-left [action?]
         parser-right [action?]
         <local> start limit
@@ -752,7 +752,7 @@ default-combinators: make map! reduce [
     <here> combinator [
         {Get the current parse input position, without advancing input}
         return: "parse position"
-            [any-series!]
+            [any-series?]
     ][
         remainder: input
         return input
@@ -761,7 +761,7 @@ default-combinators: make map! reduce [
     <end> combinator [
         {Only match if the input is at the end}
         return: "End position of the parse input"
-            [any-series!]
+            [any-series?]
     ][
         if tail? input [
             remainder: input
@@ -773,7 +773,7 @@ default-combinators: make map! reduce [
     <input> combinator [
         {Get the original input of the PARSE operation}
         return: "parse position"
-            [any-series!]
+            [any-series?]
     ][
         remainder: input
         return state.input
@@ -782,7 +782,7 @@ default-combinators: make map! reduce [
     <subinput> combinator [
         {Get the input of the SUBPARSE operation}
         return: "parse position"
-            [any-series!]
+            [any-series?]
     ][
         remainder: input
         return head of input  ; !!! What if SUBPARSE series not at head?
@@ -811,7 +811,7 @@ default-combinators: make map! reduce [
     'across combinator [
         {Copy from the current parse position through a rule}
         return: "Copied series"
-            [any-series!]
+            [any-series?]
         parser [action?]
     ][
         [^ remainder]: parser input except e -> [
@@ -1052,9 +1052,9 @@ default-combinators: make map! reduce [
         <local> result'
     ][
         if set-group? target [
-            (match any-word! target: do as block! target) else [
+            if not any-word? (target: do as block! target) [
                 fail [
-                    "GROUP! from EMIT (...): must produce an ANY-WORD!, not"
+                    "GROUP! from EMIT (...): must produce an ANY-WORD?, not"
                     ^target
                 ]
             ]
@@ -1317,7 +1317,7 @@ default-combinators: make map! reduce [
         return: "Result of evaluating the group (invisible if <delay>)"
             [any-value? pack?]
         @pending [<opt> block!]
-        value [any-array!]  ; allow any array to use this "DO combinator"
+        value [any-array?]  ; allow any array to use this "DO combinator"
     ][
         remainder: input
 
@@ -1373,7 +1373,7 @@ default-combinators: make map! reduce [
             [any-value? pack?]
         @pending [<opt> block!]   ; we retrigger combinator; it may KEEP, etc.
 
-        value [any-array!]  ; allow any array to use this "REPARSE-COMBINATOR"
+        value [any-array?]  ; allow any array to use this "REPARSE-COMBINATOR"
         <local> r comb
     ][
         ; !!! The rules of what are allowed or not when triggering through
@@ -1477,14 +1477,14 @@ default-combinators: make map! reduce [
 
     === QUOTED! COMBINATOR ===
 
-    ; When used with ANY-ARRAY! input, recognizes values literally.  When used
-    ; with ANY-STRING! it will convert the value to a string before matching.
+    ; When used with ANY-ARRAY? input, recognizes values literally.  When used
+    ; with ANY-STRING? it will convert the value to a string before matching.
 
     quoted! combinator [
         return: "The matched value"
             [nihil? element? splice?]  ; !!! splice b.c. called by @(...)
         @pending [<opt> block!]
-        value [quoted! quasiform!]
+        value [quoted? quasi?]
         <local> comb
     ][
         ; It is legal to say:
@@ -1622,7 +1622,7 @@ default-combinators: make map! reduce [
     antiform! combinator [
         return: "Invisible if true (signal to keep parsing)"
             [nihil?]
-        value [antiform!]
+        value [antiform?]
     ][
         switch/type :value [
             logic?! [
@@ -1729,7 +1729,7 @@ default-combinators: make map! reduce [
 
     === TYPE-XXX! COMBINATORS ===
 
-    ; Traditionally you could only use a datatype with ANY-ARRAY! types,
+    ; Traditionally you could only use a datatype with ANY-ARRAY? types,
     ; but since Ren-C uses UTF-8 Everywhere it makes it practical to merge in
     ; transcoding:
     ;
@@ -1959,14 +1959,14 @@ default-combinators: make map! reduce [
     ; just be sensitive to the received kind of value.
 
     '^ combinator [
-        return: "Meta quoted" [<opt> quasiform! quoted!]
+        return: "Meta quoted" [<opt> quasi? quoted?]
         parser [action?]
     ][
         return [^ remainder]: parser input
     ]
 
     meta-word! combinator [
-        return: "Meta quoted" [<opt> quasiform! quoted!]
+        return: "Meta quoted" [<opt> quasi? quoted?]
         @pending [<opt> block!]
         value [meta-word!]
         <local> comb
@@ -1977,7 +1977,7 @@ default-combinators: make map! reduce [
     ]
 
     meta-tuple! combinator [
-        return: "Meta quoted" [<opt> quasiform! quoted!]
+        return: "Meta quoted" [<opt> quasi? quoted?]
         @pending [<opt> block!]
         value [meta-tuple!]
         <local> comb
@@ -1988,7 +1988,7 @@ default-combinators: make map! reduce [
     ]
 
     meta-path! combinator [
-        return: "Meta quoted" [<opt> quasiform! quoted!]
+        return: "Meta quoted" [<opt> quasi? quoted?]
         @pending [<opt> block!]
         value [meta-path!]
         <local> comb
@@ -1999,7 +1999,7 @@ default-combinators: make map! reduce [
     ]
 
     meta-group! combinator [
-        return: "Meta quoted" [<opt> quasiform! quoted!]
+        return: "Meta quoted" [<opt> quasi? quoted?]
         @pending [<opt> block!]
         value [meta-group!]
         <local> comb
@@ -2010,7 +2010,7 @@ default-combinators: make map! reduce [
     ]
 
     meta-block! combinator [
-        return: "Meta quoted" [<opt> quasiform! quoted!]
+        return: "Meta quoted" [<opt> quasi? quoted?]
         @pending [<opt> block!]
         value [meta-block!]
         <local> comb
@@ -2873,7 +2873,7 @@ parse*: func [
         [<opt> block!]
 
     input "Input data"
-        [<maybe> any-series! url! any-sequence!]
+        [<maybe> any-series? url! any-sequence?]
     rules "Block of parse rules"
         [block!]
 
@@ -2881,7 +2881,7 @@ parse*: func [
         [map!]
     /case "Do case-sensitive matching"
     /part "FAKE /PART FEATURE - runs on a copy of the series!"
-        [integer! any-series!]
+        [integer! any-series?]
 
     /hook "Call a hook on dispatch of each combinator"
         [<unrun> frame!]

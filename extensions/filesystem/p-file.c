@@ -27,7 +27,7 @@
 //
 // The current position meant that READ or WRITE which did not provide a /SEEK
 // refinement of where to seek to would use that position, and advance the
-// port's index past the read or write.  But unlike with ANY-SERIES!, each
+// port's index past the read or write.  But unlike with ANY-SERIES?, each
 // instance of a PORT! value did not have its own index.  The position was a
 // property shared among all references to a port.
 //
@@ -662,7 +662,7 @@ Bounce File_Actor(Level* level_, REBVAL *port, const Symbol* verb)
 
     //=//// SKIP ///////////////////////////////////////////////////////////=//
     //
-    // !!! While each ANY-SERIES! value in historical Rebol has its own index,
+    // !!! While each ANY-SERIES? value in historical Rebol has its own index,
     // all instances of the same PORT! would share the same index.  This makes
     // it likely that the operation should be called something different
     // like SEEK.
@@ -699,7 +699,7 @@ Bounce File_Actor(Level* level_, REBVAL *port, const Symbol* verb)
     // R3-Alpha CLEAR only supported open ports.  We try working on  non-open
     // ports to just set the file to zero length.  Though the most interesting
     // case of that would be `clear %some-file.dat`, which won't work until
-    // the planned removal of FILE! from ANY-STRING! (it will interpret that
+    // the planned removal of FILE! from ANY-STRING? (it will interpret that
     // as a request to clear the string).
 
       case SYM_CLEAR: {

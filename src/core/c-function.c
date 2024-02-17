@@ -256,7 +256,7 @@ void Push_Keys_And_Parameters_May_Fail(
             continue;
         }
 
-  //=//// ANY-WORD! PARAMETERS THEMSELVES /////////////////////////////////=//
+  //=//// ANY-WORD? PARAMETERS THEMSELVES /////////////////////////////////=//
 
         bool quoted = false;  // single quoting level used as signal in spec
         if (Cell_Num_Quotes(item) > 0) {

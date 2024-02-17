@@ -148,7 +148,7 @@ comment: func* [
     return: "Evaluator will skip over the result (not seen)"
         [nihil?]
     :discarded "Literal value to be ignored."  ; `comment print "x"` disallowed
-        [block! any-string! binary! any-scalar!]
+        [block! any-string? binary! any-scalar?]
 ][
     return nihil
 ]
@@ -271,15 +271,15 @@ an: lambda [
 ;
 ; head?
 ; {Returns TRUE if a series is at its beginning.}
-; series [any-series! port!]
+; series [any-series? port!]
 ;
 ; tail?
 ; {Returns TRUE if series is at or past its end; or empty for other types.}
-; series [any-series! object! port! bitset! map! blank! varargs!]
+; series [any-series? object! port! bitset! map! blank! varargs!]
 ;
 ; past?
 ; {Returns TRUE if series is past its end.}
-; series [any-series! port!]
+; series [any-series? port!]
 ;
 ; open?
 ; {Returns TRUE if port is open.}
@@ -294,7 +294,7 @@ open?: specialize :reflect [property: 'open?]
 empty?: func* [
     {TRUE if blank, or if series is empty or at or beyond its tail}
     return: [logic?]
-    series [blank! any-series! object! port! bitset! map!]
+    series [blank! any-series? object! port! bitset! map!]
 ][
     return did any [blank? series, tail? series]
 ]
@@ -302,7 +302,7 @@ empty?: func* [
 empty-or-null?: func* [
     {TRUE if null, blank, or if series is empty or at or beyond its tail}
     return: [logic?]
-    series [<opt> blank! any-series! object! port! bitset! map!]
+    series [<opt> blank! any-series? object! port! bitset! map!]
 ][
     return did any [null? series, blank? series, tail? series]
 ]
@@ -390,11 +390,11 @@ run func* [
 ; bridge compatibility, as LIT-WORD! and LIT-PATH! are no longer fundamental
 ; datatypes... but type constraints (LIT-WORD? and LIT-PATH?)
 
-to-lit-word: func* [return: [quoted!] value [element?]] [
+to-lit-word: func* [return: [quoted?] value [element?]] [
     return quote to word! noquote value
 ]
 
-to-lit-path: func* [return: [quoted!] value [element?]] [
+to-lit-path: func* [return: [quoted?] value [element?]] [
     return quote to path! noquote value
 ]
 
@@ -404,7 +404,7 @@ print: func* [
     return: "See NIHIL docs for caution on casually making vaporizing routines"
         [nihil?]
     line "Line of text or block, [] has NO output, CHAR! newline allowed"
-        [<maybe> char? text! block! quoted!]
+        [<maybe> char? text! block! quoted?]
 ][
     if char? line [
         if line <> newline [
@@ -464,7 +464,7 @@ internal!: &[
 ]
 
 immediate!: &[  ; Does not include internal datatypes
-    blank! any-scalar! date! any-word!
+    blank! any-scalar? date! any-word?
 ]
 
 ; Convenient alternatives for readability

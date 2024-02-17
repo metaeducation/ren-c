@@ -83,8 +83,8 @@
 
 
 // Context types use this field of their varlist (which is the identity of
-// an ANY-CONTEXT!) to find their "keylist".  It is stored in the Stub
-// node of the varlist Array* vs. in the Cell of the ANY-CONTEXT! so
+// an ANY-CONTEXT?) to find their "keylist".  It is stored in the Stub
+// node of the varlist Array* vs. in the Cell of the ANY-CONTEXT? so
 // that the keylist can be changed without needing to update all the
 // REBVALs for that object.
 //
@@ -98,7 +98,7 @@
 // (Note: FRAME!s used to use a field `misc.L` to track the associated
 // level...but that prevented the ability to SET-ADJUNCT on a frame.  While
 // that feature may not be essential, it seems awkward to not allow it
-// since it's allowed for other ANY-CONTEXT!s.  Also, it turns out that
+// since it's allowed for other ANY-CONTEXT?s.  Also, it turns out that
 // heap-based FRAME! values--such as those that come from MAKE FRAME!--
 // have to get their keylist via the specifically applicable ->phase field
 // anyway, and it's a faster test to check this for NODE_FLAG_CELL than to
@@ -411,7 +411,7 @@ INLINE void Init_Key(Key* dest, const Symbol* symbol)
 
 //=//// META OBJECT ///////////////////////////////////////////////////////=//
 //
-// ACTION! details and ANY-CONTEXT! varlists can store a "meta" object.  It's
+// ACTION! details and ANY-CONTEXT? varlists can store a "meta" object.  It's
 // where information for HELP is saved, and it's how modules store out-of-band
 // information that doesn't appear in their body.
 

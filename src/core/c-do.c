@@ -86,7 +86,7 @@ void Prep_Action_Level(
 //
 //////////////////////////////////////////////////////////////////////////////
 //
-// 2. GET-GROUP! is handled here although it isn't in the ANY-BRANCH! typeset.
+// 2. GET-GROUP! is handled here although it isn't in the ANY-BRANCH? typeset.
 //    This is because some instances (like CASE) don't have this handled
 //    automatically by a parameter convention, the way IF does.  To make it
 //    easier for them, the GET-GROUP! type is allowed to act like GROUP!, to

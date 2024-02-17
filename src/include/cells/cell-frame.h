@@ -16,7 +16,7 @@ INLINE Action* VAL_ACTION(const Cell* v) {
 //=//// ACTION LABELING ///////////////////////////////////////////////////=//
 //
 // When an ACTION! is stored in a cell (e.g. not an "archetype"), it can
-// contain a label of the ANY-WORD! it was taken from.  If it is an array
+// contain a label of the ANY-WORD? it was taken from.  If it is an array
 // node, it is presumed an archetype and has no label.
 //
 // !!! Theoretically, longer forms like `.not.equal?` for PREDICATE! could

@@ -90,7 +90,7 @@ Bounce Upshot_Dispatcher(Level* const L)  // won't run until count is reached
 //  "Sample Interface for a Simplified DO that just runs a Branch"
 //
 //      return: [any-atom?]
-//      branch [any-branch!]
+//      branch [any-branch?]
 //  ]
 //
 DECLARE_NATIVE(do_branch)

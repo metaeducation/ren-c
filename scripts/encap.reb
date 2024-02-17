@@ -577,7 +577,7 @@ pe-format: context [
         let def: make block! 1
         let find-a-word: func [
             return: [~]
-            word [any-word!]
+            word [any-word?]
         ][
             any [
                 find words to word! word

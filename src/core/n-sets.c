@@ -23,7 +23,7 @@
 //
 // The idea of "set operations" like UNIQUE, INTERSECT, UNION, DIFFERENCE, and
 // EXCLUDE were historically applicable not just to bitsets and typesets, but
-// also to ANY-SERIES!.  Additionally, series were treated as *ordered*
+// also to ANY-SERIES?.  Additionally, series were treated as *ordered*
 // collections of their elements:
 //
 //     rebol2>> exclude "abcd" "bd"
@@ -78,7 +78,7 @@ Series* Make_Set_Operation_Series(
         }
         else if (Any_String(val1)) {
 
-            // We will similarly do any two ANY-STRING! types:
+            // We will similarly do any two ANY-STRING? types:
             //
             //      >> union <abc> "bde"
             //      <abcde>

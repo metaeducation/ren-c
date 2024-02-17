@@ -55,7 +55,7 @@ DECLARE_NATIVE(const) {
 //  "Return if a value is a read-only view of its underlying data"
 //
 //      return: [logic?]
-//      value [any-series! any-context!]
+//      value [any-series? any-context?]
 //  ]
 //
 DECLARE_NATIVE(const_q) {
@@ -108,7 +108,7 @@ DECLARE_NATIVE(mutable)
 //  "Return if a value is a writable view of its underlying data"
 //
 //      return: [logic?]
-//      value [any-series! any-context!]
+//      value [any-series? any-context?]
 //  ]
 //
 DECLARE_NATIVE(mutable_q) {
@@ -363,10 +363,10 @@ static Bounce Protect_Unprotect_Core(Level* level_, Flags flags)
 //  "Protect a series or a variable from being modified"
 //
 //      return: [
-//          any-word! any-tuple! any-series! bitset! map! object! module!
+//          any-word? any-tuple? any-series? bitset! map! object! module!
 //      ]
 //      value [
-//          any-word! any-tuple! any-series! bitset! map! object! module!
+//          any-word? any-tuple? any-series? bitset! map! object! module!
 //      ]
 //      /deep "Protect all sub-series/objects as well"
 //      /words "Process list as words (and path words)"
@@ -419,8 +419,8 @@ DECLARE_NATIVE(protect)
 //
 //  "Unprotect a series or a variable (it can again be modified)"
 //
-//      return: [word! any-series! bitset! map! object! module!]
-//      value [word! any-series! bitset! map! object! module!]
+//      return: [word! any-series? bitset! map! object! module!]
+//      value [word! any-series? bitset! map! object! module!]
 //      /deep "Protect all sub-series as well"
 //      /words "Block is a list of words"
 //      /values "Process list of values (implied GET)"
@@ -571,7 +571,7 @@ void Force_Value_Frozen_Core(
 //          [any-value?]
 //      /deep "Freeze deeply"
 //  ;   /blame "What to report as source of lock in error"
-//  ;       [any-series!]  ; not exposed for the moment
+//  ;       [any-series?]  ; not exposed for the moment
 //  ]
 //
 DECLARE_NATIVE(freeze)

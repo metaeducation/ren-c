@@ -251,7 +251,7 @@ inline static REBVAL *Value_From_Value_Id(heapaddr_t id) {
 //=//// JS-NATIVE PER-ACTION! DETAILS /////////////////////////////////////=//
 //
 // All Rebol ACTION!s that claim to be natives have to provide a BODY field
-// for source, and an ANY-CONTEXT! that indicates where any API calls will
+// for source, and an ANY-CONTEXT? that indicates where any API calls will
 // be bound while that native is on the stack.  For now, if you're writing
 // any JavaScript native it will presume binding in the user context.
 //

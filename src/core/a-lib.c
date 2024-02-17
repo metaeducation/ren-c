@@ -1697,7 +1697,7 @@ static size_t Spell_Into(
 //
 //  rebSpellInto: RL_API
 //
-// Extract UTF-8 data from an ANY-STRING! or ANY-WORD!.
+// Extract UTF-8 data from an ANY-STRING? or ANY-WORD?.
 //
 // API does not return the number of UTF-8 characters for a value, because
 // the answer to that is always cached for any value position as LENGTH OF.
@@ -1722,7 +1722,7 @@ size_t RL_rebSpellInto(
 //
 // This gives the spelling as UTF-8 bytes.  Length in codepoints should be
 // extracted with LENGTH OF.  If size in bytes of the encoded UTF-8 is needed,
-// use the binary extraction API (works on ANY-STRING! to get UTF-8)
+// use the binary extraction API (works on ANY-STRING? to get UTF-8)
 //
 // Can return nullptr.  Use rebSpell() if you want a failure instead.
 //
@@ -1817,7 +1817,7 @@ static unsigned int Spell_Into_Wide(
 //
 //  rebSpellIntoWide: RL_API
 //
-// Extract UTF-16 data from an ANY-STRING! or ANY-WORD!.  Note this is *not*
+// Extract UTF-16 data from an ANY-STRING? or ANY-WORD?.  Note this is *not*
 // UCS-2, so codepoints that won't fit in one WCHAR will take up two WCHARs
 // by means of a surrogate pair.  Hence the returned value is a count of
 // wchar units...not *necesssarily* a length in codepoints.
@@ -1881,7 +1881,7 @@ REBWCHAR *RL_rebSpellWide(const void *p, va_list *vaptr)
 
 // Helper function for `rebBytesInto()` and `rebBytes()`
 //
-// CHAR!, ANY-STRING!, and ANY-WORD! are allowed without an AS BINARY!.
+// CHAR!, ANY-STRING?, and ANY-WORD? are allowed without an AS BINARY!.
 //
 // !!! How many types should be allowed to convert automatically?
 //
@@ -1929,7 +1929,7 @@ static size_t Bytes_Into(
         return size;
     }
 
-    fail ("rebBytes() only works with ANY-STRING!/ANY-WORD!/BINARY!/CHAR!");
+    fail ("rebBytes() only works with ANY-STRING?/ANY-WORD?/BINARY!/CHAR!");
 }
 
 
@@ -1960,7 +1960,7 @@ size_t RL_rebBytesInto(
 //  rebBytesMaybe: RL_API
 //
 // Can be used to get the bytes of a BINARY! and its size, or the UTF-8
-// encoding of an ANY-STRING! or ANY-WORD! and that size in bytes.  (Hence,
+// encoding of an ANY-STRING? or ANY-WORD? and that size in bytes.  (Hence,
 // for strings it is like rebSpell() except telling you how many bytes.)
 //
 unsigned char *RL_rebBytesMaybe(
@@ -2295,7 +2295,7 @@ const REBINS *RL_rebUNQUOTING(const void *p)
         or QUOTE_BYTE(v) == QUASIFORM_2
         or QUOTE_BYTE(v) == ANTIFORM_0
     ){
-        fail ("rebUNQUOTING()/rebU() can only unquote QUOTED! values");
+        fail ("rebUNQUOTING()/rebU() can only unquote QUOTED? values");
     }
 
     Unquotify(v, 1);
@@ -2345,7 +2345,7 @@ const void *RL_rebINLINE(const REBVAL *v)
     Clear_Node_Managed_Bit(a);  // lying avoided manuals tracking!
 
     if (not (Is_Block(v) or Is_Quoted(v) or Is_Blank(v)))
-        fail ("rebINLINE() requires argument to be a BLOCK!/QUOTED!/BLANK!");
+        fail ("rebINLINE() requires argument to be a BLOCK!/QUOTED?/BLANK!");
 
     Copy_Cell(Stub_Cell(a), v);
 

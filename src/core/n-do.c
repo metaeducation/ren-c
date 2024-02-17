@@ -354,7 +354,7 @@ DECLARE_NATIVE(do)
 //          [any-atom?]
 //      source [
 //          <maybe>  ; useful for `evaluate try ...` scenarios when no match
-//          any-array!  ; source code in block form
+//          any-array?  ; source code in block form
 //          action?
 //          frame!
 //          varargs!  ; simulates as if frame! or block! is being executed
@@ -373,7 +373,7 @@ DECLARE_NATIVE(evaluate)
 //    going to be done on some kind of "evaluator state"--not just a block,
 //    that state should be updated.
 //
-// 2. We want EVALUATE to treat all ANY-ARRAY! the same.  (e.g. a ^[1 + 2] just
+// 2. We want EVALUATE to treat all ANY-ARRAY? the same.  (e.g. a ^[1 + 2] just
 //    does the same thing as [1 + 2] and gives 3, not '3)  Rather than mutate
 //    the cell to plain BLOCK! and pass it to CONTINUE_CORE(), we initialize
 //    a feed from the array directly.
@@ -552,7 +552,7 @@ DECLARE_NATIVE(evaluate)
 //
 //      return: []  ; !!! notation for divergent function?
 //      restartee "Frame to restart, or bound word (e.g. REDO $RETURN)"
-//          [frame! any-word!]
+//          [frame! any-word?]
 //      /sibling "Restart execution in a frame-compatible function"
 //          [<unrun> frame!]
 //  ]

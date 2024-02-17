@@ -106,7 +106,7 @@ enum StubFlavorEnum {
     //
     FLAVOR_DETAILS,
 
-    // The concept of "Virtual Binding" is that instances of ANY-ARRAY! values
+    // The concept of "Virtual Binding" is that instances of ANY-ARRAY? values
     // can carry along a collection of contexts that override the bindings of
     // words that are encountered.  This collection is done by means of
     // "lets" that make a linked list of overrides.
@@ -152,7 +152,7 @@ enum StubFlavorEnum {
 
     FLAVOR_STRING = FLAVOR_MIN_UTF8,
 
-    // While the content format is UTF-8 for both ANY-STRING! and ANY-WORD!,
+    // While the content format is UTF-8 for both ANY-STRING? and ANY-WORD?,
     // MISC() and LINK() fields are used differently.  String caches its length
     // in codepoints so that doesn't have to be recalculated, and it also has
     // caches of "bookmarks" mapping codepoint indexes to byte offsets.  Words

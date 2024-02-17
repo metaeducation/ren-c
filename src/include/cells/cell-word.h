@@ -1,6 +1,6 @@
 //
 //  File: %cell-word.h
-//  Summary: {Definitions for the ANY-WORD! Datatypes}
+//  Summary: {Definitions for the ANY-WORD? Datatypes}
 //  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
 //  Homepage: https://github.com/metaeducation/ren-c/
 //
@@ -20,9 +20,9 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// ANY-WORD! is the fundamental symbolic concept of Rebol.  Rather than
-// storing a pointer to a mutable string, it stores a pointer to a read-only
-// symbol (see %sys-symbol.h) that can be quickly looked up and compared.
+// Words are the fundamental symbolic concept of Rebol.  Rather than storing a
+// pointer to a mutable string, words store a pointer to a read-only symbol
+// (see %sys-symbol.h) that can be quickly looked up and compared.
 //
 // Words can act as a variable when bound specifically to a context
 // (see %sys-context.h) or bound relatively to an action (see %sys-action.h).

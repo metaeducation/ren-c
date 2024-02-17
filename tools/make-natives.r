@@ -115,38 +115,48 @@ gather-natives join src-dir %core/
 ; the evaluator to do the other `xxx: native/yyy [...]` evaluations.
 
 native-proto: null
+antiform?-proto: null
 logic?-proto: null
 action?-proto: null
 enfix-proto: null
 any-value?-proto: null
 any-atom?-proto: null
 element?-proto: null
+quasi?-proto: null
+quoted?-proto: null
 
 info: all-protos
 while [not tail? info] [
     case [
         info/1/name = "native" [native-proto: take info]
+        info/1/name = "antiform?" [antiform?-proto: take info]
         info/1/name = "logic?" [logic?-proto: take info]
         info/1/name = "action?" [action?-proto: take info]
         info/1/name = "enfix" [enfix-proto: take info]
         info/1/name = "any-value?" [any-value?-proto: take info]
         info/1/name = "any-atom?" [any-atom?-proto: take info]
         info/1/name = "element?" [element?-proto: take info]
+        info/1/name = "quasi?" [quasi?-proto: take info]
+        info/1/name = "quoted?" [quoted?-proto: take info]
     ]
     else [
         info: next info
     ]
 ]
 
-assert [native-proto logic?-proto action?-proto enfix-proto
-    any-value?-proto any-atom?-proto element?-proto]
+assert [native-proto antiform?-proto logic?-proto action?-proto enfix-proto
+    any-value?-proto any-atom?-proto element?-proto
+    quasi?-proto quoted?-proto]
 
-insert all-protos element?-proto  ; will be seventh
-insert all-protos any-atom?-proto  ; will be sixth
-insert all-protos any-value?-proto  ; will be fifth
-insert all-protos enfix-proto  ; will be fourth
-insert all-protos logic?-proto  ; will be third
-insert all-protos action?-proto  ; will be second
+insert all-protos quoted?-proto  ; will be tenth
+insert all-protos quasi?-proto  ; will be ninth
+insert all-protos element?-proto  ; will be eighth
+insert all-protos any-atom?-proto  ; will be seventh
+insert all-protos any-value?-proto  ; will be sixth
+insert all-protos enfix-proto  ; will be fifth
+insert all-protos logic?-proto  ; will be fourth
+insert all-protos action?-proto  ; will be third
+insert all-protos antiform?-proto  ; will be second
 insert all-protos native-proto  ; so now it's first
 
 

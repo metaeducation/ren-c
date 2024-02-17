@@ -921,7 +921,7 @@ bool Did_Get_Series_Index_From_Picker(
 //
 //  REBTYPE: C
 //
-// Action handler for ANY-STRING!
+// Action handler for ANY-STRING?
 //
 REBTYPE(String)
 {
@@ -1239,7 +1239,7 @@ REBTYPE(String)
         INCLUDE_PARAMS_OF_COPY;
 
         UNUSED(PARAM(value));
-        UNUSED(REF(deep));  // /DEEP is historically ignored on ANY-STRING!
+        UNUSED(REF(deep));  // /DEEP is historically ignored on ANY-STRING?
 
         REBINT len = Part_Len_May_Modify_Index(v, ARG(part));
 

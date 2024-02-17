@@ -506,7 +506,7 @@ REBINT Find_Bitset_In_Binstr(
 //
 //  Find_Value_In_Binstr: C
 //
-// Service routine for both FIND and PARSE for searching in an ANY-STRING!,
+// Service routine for both FIND and PARSE for searching in an ANY-STRING?,
 // ISSUE!, or BINARY!
 //
 REBLEN Find_Value_In_Binstr(
@@ -522,7 +522,7 @@ REBLEN Find_Value_In_Binstr(
 
     if (REB_BINARY == pattern_heart) {
         //
-        // Can't search for BINARY! in an ANY-STRING! (might match on a "half
+        // Can't search for BINARY! in an ANY-STRING? (might match on a "half
         // codepoint").  Solution is to alias input as UTF-8 binary.
         //
         if (binstr_heart != REB_BINARY)

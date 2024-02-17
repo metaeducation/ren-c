@@ -1,6 +1,6 @@
 //
 //  File: %stub-series.h
-//  Summary: {any-series! defs AFTER %tmp-internals.h (see: %sys-rebser.h)}
+//  Summary: {any-series? defs AFTER %tmp-internals.h (see: %sys-rebser.h)}
 //  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
 //  Homepage: https://github.com/metaeducation/ren-c/
 //
@@ -601,7 +601,7 @@ INLINE Byte* Series_Data_Last(size_t wide, const_if_c Series* s) {
     #define BINARY_BAD_UTF8_TAIL_BYTE 0xFE  // binaries reserve tail byte [1]
 
     INLINE void Poison_Or_Unpoison_Tail_Debug(Series* s, bool poison) {
-        if (Series_Wide(s) == 1) {  // presume BINARY! or ANY-STRING! (?)
+        if (Series_Wide(s) == 1) {  // presume BINARY! or ANY-STRING? (?)
             Byte* tail = Series_Tail(Byte, s);
             if (poison)
                 *tail = BINARY_BAD_UTF8_TAIL_BYTE;

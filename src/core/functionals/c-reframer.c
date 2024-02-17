@@ -37,10 +37,10 @@
 //         return quote/depth do f num-quotes
 //     ]
 //
-//     >> item: just '''[a b c]
+//     >> item: the '''[a b c]
 //     == '''[a b c]
 //
-//     >> requote append item <d>  ; append doesn't accept QUOTED! items
+//     >> requote append item <d>  ; append doesn't accept QUOTED? series
 //     == '''[a b c <d>]   ; munging frame and result makes it seem to
 //
 //=//// NOTES /////////////////////////////////////////////////////////////=//
@@ -145,7 +145,7 @@ Level* Make_Pushed_Level_From_Action_Feed_May_Throw(
 // varlist available for other purposes.
 //
 // If the next item in the feed is not a WORD! or PATH! that look up to an
-// action (nor an ACTION! literally) then the output will be set to a QUOTED!
+// action (nor an ACTION! literally) then the output will be set to a QUOTED?
 // version of what would be evaluated to.  So in the case of NULL, it will be
 // a single quote of nothing.
 //
@@ -158,7 +158,7 @@ bool Init_Invokable_From_Feed_Throws(
     const Element* v = first ? unwrap(first) : Try_At_Feed(feed);
 
     // !!! The case of `([x]: @)` wants to make something which when it
-    // evaluates becomes invisible.  There's no QUOTED! value that can do
+    // evaluates becomes invisible.  There's no QUOTED? value that can do
     // that, so if the feature is to be supported it needs to be VOID.
     //
     // Not all callers necessarily want to tolerate an end condition, so this
@@ -251,11 +251,11 @@ bool Init_Invokable_From_Feed_Throws(
 //
 //  Init_Frame_From_Feed_Throws: C
 //
-// Making an invokable from a feed might return a QUOTED!, because that is
+// Making an invokable from a feed might return a QUOTED?, because that is
 // more efficient (and truthful) than creating a FRAME! for the identity
 // function.  However, MAKE FRAME! of a VARARGS! was an experimental feature
 // that has to follow the rules of MAKE FRAME!...e.g. returning a frame.
-// This converts QUOTED!s into frames for the identity function.
+// This converts QUOTED?s into frames for the identity function.
 //
 bool Init_Frame_From_Feed_Throws(
     Sink(Value*) out,
@@ -345,7 +345,7 @@ Bounce Reframer_Dispatcher(Level* const L)
 //  "Make a function that manipulates an invocation at the callsite"
 //
 //      return: [action?]
-//      shim "The action that has a FRAME! (or QUOTED!) argument to supply"
+//      shim "The action that has a FRAME! (or QUOTED?) argument to supply"
 //          [<unrun> frame!]
 //      /parameter "Shim parameter receiving the frame--defaults to last"
 //          [word!]

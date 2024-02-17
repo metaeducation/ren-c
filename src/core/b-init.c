@@ -804,10 +804,10 @@ void Startup_Core(void)
     Manage_Series(datatypes_catalog);
     Push_GC_Guard(datatypes_catalog);
 
-    // !!! REVIEW: Startup_Typesets() uses symbols, data stack, and adds words
+    // Startup_Type_Predicates() uses symbols, data stack, and adds words
     // to lib--not available until this point in time.
     //
-    Startup_Typesets();
+    Startup_Type_Predicates();
 
 //=//// RUN CODE BEFORE ERROR HANDLING INITIALIZED ////////////////////////=//
 

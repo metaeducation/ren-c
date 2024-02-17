@@ -26,9 +26,9 @@ atan: runs :arctangent/radians
 
 modulo: func [
     "Compute a remainder of A divided by B with the sign of B."
-    return: [any-number! money! time!]
-    a [any-number! money! time!]
-    b [any-number! money! time!] "Must be nonzero."
+    return: [any-number? money! time!]
+    a [any-number? money! time!]
+    b [any-number? money! time!] "Must be nonzero."
     /adjusted "Set 'almost zero' and 'almost B' to zero"
 ][
     ; This function tries to find the remainder that is "almost non-negative"
@@ -59,7 +59,7 @@ pow: enfix :power
 
 sign-of: func [
     "Returns sign of number as 1, 0, or -1 (to use as multiplier)."
-    number [any-number! money! time!]
+    number [any-number? money! time!]
 ][
     return case [
         positive? number [1]
@@ -71,8 +71,8 @@ extreme-of: func [
     {Finds the value with a property in a series that is the most "extreme"}
 
     return: "Position where the extreme value was found"
-        [any-series!]
-    series [any-series!]
+        [any-series?]
+    series [any-series?]
     comparator "Comparator to use, e.g. LESSER? for MINIMUM-OF"
         [<unrun> frame!]
     /skip "Treat the series as records of fixed size"

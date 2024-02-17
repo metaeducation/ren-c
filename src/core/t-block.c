@@ -262,7 +262,7 @@ Bounce MAKE_Array(
     }
     else if (Is_Varargs(arg)) {
         //
-        // Converting a VARARGS! to an ANY-ARRAY! involves spooling those
+        // Converting a VARARGS! to an ANY-ARRAY? involves spooling those
         // varargs to the end and making an array out of that.  It's not known
         // how many elements that will be, so they're gathered to the data
         // stack to find the size, then an array made.  Note that | will stop
@@ -641,7 +641,7 @@ static REBINT Try_Get_Array_Index_From_Picker(
     }
     else if (Is_Word(picker)) {
         //
-        // Linear search to case-insensitive find ANY-WORD! matching the canon
+        // Linear search to case-insensitive find ANY-WORD? matching the canon
         // and return the item after it.  Default to out of range.
         //
         n = -1;
@@ -825,7 +825,7 @@ void MF_Array(REB_MOLD *mo, const Cell* v, bool form)
 //
 //  REBTYPE: C
 //
-// Implementation of type dispatch for ANY-ARRAY! (ANY-BLOCK! and ANY-GROUP!)
+// Implementation of type dispatch for ANY-ARRAY? (ANY-BLOCK? and ANY-GROUP?)
 //
 REBTYPE(Array)
 {

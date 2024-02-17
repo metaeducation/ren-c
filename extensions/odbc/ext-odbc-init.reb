@@ -165,7 +165,7 @@ sqlform: func [
         tuple! [mold value]
 
         ; !!! We need to express literal SQL somehow.  Things like 'T' might be
-        ; legal SQL but it's a bad pun to have that be a QUOTED! WORD! named
+        ; legal SQL but it's a bad pun to have that be a QUOTED? WORD! named
         ; {T'}.  The only answers we have are to either use full on string
         ; interpolation and escape Rebol variables into it (not yet available)
         ; or to make it so a string in SQL is double-stringed, e.g. {"foo"}.

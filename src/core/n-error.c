@@ -32,7 +32,7 @@
 //  "Sandbox code to intercept failures at ANY depth (including typos)"
 //
 //      return: "ERROR! if raised, else ^META of the result"
-//          [error! quoted! quasiform! blank!]
+//          [error! quoted? quasi? blank!]
 //      code "Code to sandbox and monitor"
 //          [<unrun> frame! block!]
 //  ]
@@ -91,7 +91,7 @@ DECLARE_NATIVE(enrescue)
 //  "Tries to DO a block, trapping raised errors"
 //
 //      return: "ERROR! if raised, else the ^META of the result"
-//          [error! quasiform! quoted! blank!]
+//          [error! quasi? quoted? blank!]
 //      code "Code to execute and monitor"
 //          [block! frame!]
 //  ]
@@ -187,7 +187,7 @@ DECLARE_NATIVE(entrap)  // wrapped as TRAP and ATTEMPT
 //      ^optional "<deferred argument> Run branch if this is definitional fail"
 //          [any-atom?]
 //      :branch "If arity-1 ACTION!, receives value that triggered branch"
-//          [<unrun> any-branch!]
+//          [<unrun> any-branch?]
 //  ]
 //
 DECLARE_NATIVE(except)
@@ -261,7 +261,7 @@ DECLARE_INTRINSIC(ok_q)
 //
 //      return: [<opt>]
 //      error [error!]
-//      location [frame! any-word!]
+//      location [frame! any-word?]
 //  ]
 //
 DECLARE_NATIVE(set_location_of_error)

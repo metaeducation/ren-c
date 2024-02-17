@@ -350,7 +350,7 @@ void Remove_Any_Series_Len(REBVAL *v, REBLEN index, REBINT len)
             1  // dups
         );
     }
-    else  // ANY-ARRAY! is more straightforward
+    else  // ANY-ARRAY? is more straightforward
         Remove_Series_Units(Cell_Series_Ensure_Mutable(v), index, len);
 
     Assert_Series_Term_If_Needed(Cell_Series(v));

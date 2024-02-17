@@ -403,8 +403,7 @@ for-each-datatype t [
             continue
         ]
 
-        add-sym as word! unspaced ["any-" ts-name "?"]
-        add-sym as word! unspaced ["any-" ts-name "!"]
+        add-sym unspaced ["any-" ts-name "?"]
 
         append typeset-sets ts-name
         append typeset-sets reduce [t/name]
@@ -422,7 +421,6 @@ for-each-datatype t [
 
 for-each-typerange tr [
     add-sym replace to text! tr/any-name! "!" "?"
-    add-sym tr/any-name!
 
     append typeset-sets spread reduce [tr/name tr/types]
 
@@ -572,7 +570,7 @@ e-hooks/write-emitted
 
 === "SYMBOL-TO-TYPESET-BITS MAPPING TABLE" ===
 
-; The typesets for things like ANY-BLOCK! etc. are specified in the %types.r
+; The typesets for things like ANY-BLOCK? etc. are specified in the %types.r
 ; table, and turned into 64-bit bitsets.
 
 e-typesets: make-emitter "Built-in Typesets" (
@@ -849,7 +847,7 @@ for-each [sw-cat list] boot-errors [
     cat: to word! ensure set-word! sw-cat
     ensure block! list
 
-    add-sym to word! cat  ; category might incidentally exist as SYM_XXX
+    add-sym cat  ; category might incidentally exist as SYM_XXX
 
     for-each [sw-id t-message] list [
         id: to word! ensure set-word! sw-id

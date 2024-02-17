@@ -56,7 +56,7 @@ static bool Check_Char_Range(const REBVAL *val, REBLEN limit)
 //  "Returns TRUE if value or string is in ASCII character range (below 128)"
 //
 //      return: [logic?]
-//      value [any-string! char? integer!]
+//      value [any-string? char? integer!]
 //  ]
 //
 DECLARE_NATIVE(ascii_q)
@@ -73,7 +73,7 @@ DECLARE_NATIVE(ascii_q)
 //  "Returns TRUE if value or string is in Latin-1 character range (below 256)"
 //
 //      return: [logic?]
-//      value [any-string! char? integer!]
+//      value [any-string? char? integer!]
 //  ]
 //
 DECLARE_NATIVE(latin1_q)
@@ -107,11 +107,11 @@ DECLARE_NATIVE(as_pair)
 //
 //  "Binds words or words in arrays to the specified context"
 //
-//      return: [frame! action? any-array! any-path! any-word! quoted!]
+//      return: [frame! action? any-array? any-path? any-word? quoted?]
 //      value "Value whose binding is to be set (modified) (returned)"
-//          [frame! action? any-array! any-path! any-word! quoted!]
+//          [frame! action? any-array? any-path? any-word? quoted?]
 //      target "Target context or a word whose binding should be the target"
-//          [any-word! any-context!]
+//          [any-word? any-context?]
 //      /copy "Bind and return a deep copy of a block, don't modify original"
 //      /only "Bind only first block (not deep)"
 //      /new "Add to context any new words found"
@@ -183,7 +183,7 @@ DECLARE_NATIVE(bind)
         return COPY(v);
     }
 
-    if (not Any_Arraylike(v))  // QUOTED! could have wrapped any type
+    if (not Any_Arraylike(v))  // QUOTED? could have wrapped any type
         fail (Error_Invalid_Arg(level_, PARAM(value)));
 
     Element* at;
@@ -227,8 +227,8 @@ DECLARE_NATIVE(bind)
 //  "Returns a view of the input bound virtually to the context"
 //
 //      return: [<opt> any-value?]
-//      context [any-context! any-array!]
-//      value [<maybe> any-value?]  ; QUOTED! support?
+//      context [any-context? any-array?]
+//      value [<maybe> any-value?]  ; QUOTED? support?
 //  ]
 //
 DECLARE_NATIVE(inside)
@@ -257,8 +257,8 @@ DECLARE_NATIVE(inside)
 //  "Add definitions from context to environment of value"
 //
 //      return: [<opt> any-value?]
-//      context [any-context!]
-//      value [<maybe> any-array!]  ; QUOTED! support?
+//      context [any-context?]
+//      value [<maybe> any-array?]  ; QUOTED? support?
 //  ]
 //
 DECLARE_NATIVE(overbind)
@@ -284,9 +284,9 @@ DECLARE_NATIVE(overbind)
 //
 //  "Returns a word bound into the context, if it's available, else null"
 //
-//      return: [<opt> any-word!]
-//      context [any-context!]
-//      value [<maybe> any-word!]  ; QUOTED! support?
+//      return: [<opt> any-word?]
+//      context [any-context?]
+//      value [<maybe> any-word?]  ; QUOTED? support?
 //  ]
 //
 DECLARE_NATIVE(has)
@@ -319,10 +319,10 @@ DECLARE_NATIVE(has)
 //
 //  "Remove a virtual binding from a value"
 //
-//      return: [<opt> any-word! any-array!]
+//      return: [<opt> any-word? any-array?]
 //      context "If integer, then removes that number of virtual bindings"
-//          [integer! any-context!]
-//      value [<const> <maybe> any-word! any-array!]  ; QUOTED! support?
+//          [integer! any-context?]
+//      value [<const> <maybe> any-word? any-array?]  ; QUOTED? support?
 //  ]
 //
 DECLARE_NATIVE(without)
@@ -590,8 +590,8 @@ DECLARE_INTRINSIC(any_inert_q)
 //
 //  "Unbinds words from context"
 //
-//      return: [block! any-word!]
-//      word [block! any-word!]
+//      return: [block! any-word?]
+//      word [block! any-word?]
 //          "A word or block (modified) (returned)"
 //      /deep
 //          "Process nested blocks"
@@ -623,8 +623,8 @@ DECLARE_NATIVE(unbind)
 //
 //  "Remove Tip Binding of a Value"
 //
-//      return: [any-array! any-word!]
-//      value [any-array! any-word!]
+//      return: [any-array? any-word?]
+//      value [any-array? any-word?]
 //  ]
 //
 DECLARE_NATIVE(bindable)
@@ -655,7 +655,7 @@ DECLARE_NATIVE(bindable)
 //      /deep "Include nested blocks"
 //      /set "Only include set-words"
 //      /ignore "Ignore prior words"
-//          [any-context! block!]
+//          [any-context? block!]
 //  ]
 //
 DECLARE_NATIVE(collect_words)
@@ -1162,7 +1162,7 @@ bool Get_Path_Push_Refinements_Throws(
 //
 //      return: [the-word! the-tuple! the-block!]
 //      @value [any-value?]
-//      source [any-word! any-sequence! any-group!]
+//      source [any-word? any-sequence? any-group?]
 //  ]
 //
 DECLARE_NATIVE(resolve)
@@ -1194,7 +1194,7 @@ DECLARE_NATIVE(resolve)
 //
 //      return: [any-value?]
 //      source "Word or tuple to get, or block of PICK steps (see RESOLVE)"
-//          [<maybe> any-word! any-sequence! any-group! the-block!]
+//          [<maybe> any-word? any-sequence? any-group? the-block!]
 //      /any "Do not error on unset words"
 //      /groups "Allow GROUP! Evaluations"
 //  ]
@@ -1562,7 +1562,7 @@ void Set_Var_May_Fail(
 //      return: "Same value as input (pass through if target is void)"
 //          [any-value?]
 //      target "Word or tuple, or calculated sequence steps (from GET)"
-//          [<void> any-word! any-sequence! any-group! the-block!]
+//          [<void> any-word? any-sequence? any-group? the-block!]
 //      ^value [raised? any-value?]  ; tunnels failure
 //      /any "Do not error on unset words"
 //      /groups "Allow GROUP! Evaluations"
@@ -1655,7 +1655,7 @@ DECLARE_NATIVE(proxy_exports)
 // to add keys that don't exist yet or only update variables that are common
 // between the two contexts.
 //
-// Historically this was offered for ANY-CONTEXT!.  But its only notable use
+// Historically this was offered for ANY-CONTEXT?.  But its only notable use
 // was as the mechanism by which the IMPORT command would transfer the
 // variables named by the `Exports:` block of a module to the module that was
 // doing the importing.  Some of the most convoluted code dealt with managing
@@ -1728,7 +1728,7 @@ DECLARE_INTRINSIC(enfix_q)
 //  "For making enfix functions, e.g `+: enfix :add`"
 //
 //      return: "Isotopic action"
-//          [antiform!]  ; [action?] comes after ENFIX in bootstrap
+//          [antiform?]  ; [action?] comes after ENFIX in bootstrap
 //      original [<unrun> frame!]
 //  ]
 //
@@ -1747,7 +1747,7 @@ DECLARE_INTRINSIC(enfix)
 //  "For removing enfixedness from functions (prefix is a common var name)"
 //
 //      return: "Isotopic action"
-//          [antiform!]  ; [action?] comes after ENFIX in bootstrap
+//          [antiform?]  ; [action?] comes after ENFIX in bootstrap
 //      original [<unrun> frame!]
 //  ]
 //
@@ -1785,7 +1785,7 @@ DECLARE_NATIVE(identity) // sample uses: https://stackoverflow.com/q/3136338
 //  "Releases the underlying data of a value so it can no longer be accessed"
 //
 //      return: [~]
-//      memory [<maybe> any-series! any-context! handle!]
+//      memory [<maybe> any-series? any-context? handle!]
 //  ]
 //
 DECLARE_NATIVE(free)
@@ -1795,7 +1795,7 @@ DECLARE_NATIVE(free)
     REBVAL *v = ARG(memory);
 
     if (Any_Context(v) or Is_Handle(v))
-        fail ("FREE only implemented for ANY-SERIES! at the moment");
+        fail ("FREE only implemented for ANY-SERIES? at the moment");
 
     if (Not_Node_Accessible(Cell_Node1(v)))
         fail ("Cannot FREE already freed series");
@@ -1859,11 +1859,11 @@ bool Try_As_String(
 ){
     assert(strmode == STRMODE_ALL_CODEPOINTS or strmode == STRMODE_NO_CR);
 
-    if (Any_Word(v)) {  // ANY-WORD! can alias as a read only ANY-STRING!
+    if (Any_Word(v)) {  // ANY-WORD? can alias as a read only ANY-STRING?
         Init_Any_String(out, new_heart, Cell_Word_Symbol(v));
         Inherit_Const(Quotify(out, quotes), v);
     }
-    else if (Is_Binary(v)) {  // If valid UTF-8, BINARY! aliases as ANY-STRING!
+    else if (Is_Binary(v)) {  // If valid UTF-8, BINARY! aliases as ANY-STRING?
         const Binary* bin = Cell_Binary(v);
         Size byteoffset = VAL_INDEX(v);
 
@@ -1877,7 +1877,7 @@ bool Try_As_String(
         //
         const Byte* at_ptr = Binary_At(bin, byteoffset);
         if (Is_Continuation_Byte(*at_ptr))
-            fail ("Index at codepoint to convert binary to ANY-STRING!");
+            fail ("Index at codepoint to convert binary to ANY-STRING?");
 
         const String* str;
         REBLEN index;
@@ -1963,7 +1963,7 @@ bool Try_As_String(
 
         // If payload of an ISSUE! lives in the cell itself, a read-only
         // series must be created for the data...because otherwise there isn't
-        // room for an index (which ANY-STRING! needs).  For behavior parity
+        // room for an index (which ANY-STRING? needs).  For behavior parity
         // with if the payload *was* in the series, this alias must be frozen.
 
         REBLEN len;
@@ -1998,7 +1998,7 @@ bool Try_As_String(
 //      return: [
 //          <opt> integer!
 //          issue! url!
-//          any-sequence! any-series! any-word!
+//          any-sequence? any-series? any-word?
 //          frame!
 //      ]
 //      type [type-word!]
@@ -2006,7 +2006,7 @@ bool Try_As_String(
 //          <maybe>
 //          integer!
 //          issue! url!
-//          any-sequence! any-series! any-word! frame!
+//          any-sequence? any-series? any-word? frame!
 //      ]
 //  ]
 //
@@ -2226,7 +2226,7 @@ DECLARE_NATIVE(as)
           }
         }
 
-        if (Any_String(v)) {  // aliasing data as an ANY-WORD! freezes data
+        if (Any_String(v)) {  // aliasing data as an ANY-WORD? freezes data
           any_string: {
             const String* s = Cell_String(v);
 
@@ -2265,7 +2265,7 @@ DECLARE_NATIVE(as)
         }
 
         if (Is_Binary(v)) {
-            if (VAL_INDEX(v) != 0)  // ANY-WORD! stores binding, not position
+            if (VAL_INDEX(v) != 0)  // ANY-WORD? stores binding, not position
                 fail ("Cannot convert BINARY! to WORD! unless at the head");
 
             // We have to permanently freeze the underlying series from any
@@ -2421,8 +2421,8 @@ DECLARE_NATIVE(as_text)
 //  "Return whether or not the underlying data of one value aliases another"
 //
 //      return: [logic?]
-//      value1 [any-series!]
-//      value2 [any-series!]
+//      value1 [any-series?]
+//      value2 [any-series?]
 //  ]
 //
 DECLARE_NATIVE(aliases_q)
@@ -2544,7 +2544,7 @@ DECLARE_INTRINSIC(any_atom_q)
 //  "Tells you if the argument is a ~true~ or ~false~ antiform"
 //
 //      return: "~true~ or ~false~ antiform"
-//          [antiform!]  ; can't use LOGIC? to test LOGIC? return result
+//          [antiform?]  ; can't use LOGIC? to test LOGIC? return result
 //      value
 //  ]
 //

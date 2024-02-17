@@ -1219,7 +1219,7 @@ Bounce Evaluator_Executor(Level* L)
 
         for (; check != tail; ++check) {  // push variables first [2]
             if (Is_Quoted(check))
-                fail ("QUOTED! not currently permitted in SET-BLOCK!s");
+                fail ("QUOTED? not currently permitted in SET-BLOCK!s");
 
             bool raised_ok = Is_Quasiform(check);  // quasi has meaning
             Heart heart = Cell_Heart(check);

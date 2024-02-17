@@ -177,9 +177,9 @@ INLINE Element* Init_Any_Sequence_1(
 // Ren-C has no REFINEMENT! datatype, so `/foo` is a PATH!, which generalizes
 // to where `/foo/bar` is a PATH! as well, etc.
 //
-// In order to make this not cost more than a REFINEMENT! ANY-WORD! did in
+// In order to make this not cost more than a "REFINEMENT!" word type did in
 // R3-Alpha, the underlying representation of `/foo` in the cell is the same
-// as an ANY-WORD!.
+// as an ANY-WORD?
 
 INLINE Element* Try_Leading_Blank_Pathify(
     Value* v,
@@ -554,7 +554,7 @@ INLINE Byte Cell_Sequence_Byte_At(
     DECLARE_LOCAL (at);
     Copy_Sequence_At(at, sequence, n);
     if (not Is_Integer(at))
-        fail ("Cell_Sequence_Byte_At() used on non-byte ANY-SEQUENCE!");
+        fail ("Cell_Sequence_Byte_At() used on non-byte ANY-SEQUENCE?");
     return VAL_UINT8(at);  // !!! All callers of this routine need vetting
 }
 

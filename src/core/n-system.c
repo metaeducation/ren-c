@@ -190,7 +190,7 @@ DECLARE_NATIVE(recycle)
 //      return: [~]
 //      field [word!]
 //          "eval (count) or memory (bytes)"
-//      limit [any-number!]
+//      limit [any-number?]
 //  ]
 //
 DECLARE_NATIVE(limit_usage)

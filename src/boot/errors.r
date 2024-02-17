@@ -90,7 +90,7 @@ Script: [
 
     bad-utf8:           {invalid UTF-8 byte sequence found during decoding}
     codepoint-too-high: [{codepoint} :arg1 {too large (or data is not UTF-8)}]
-    illegal-zero-byte:  {#{00} bytes illegal in ANY-STRING!, use BINARY!}
+    illegal-zero-byte:  {#{00} bytes illegal in ANY-STRING?, use BINARY!}
     illegal-cr:         [{Illegal CR: See DELINE, and TO-TEXT/RELAX:} :arg1]
     mixed-cr-lf-found:  {DELINE requires files to be CR LF or LF consistently}
     bad-utf8-bin-edit:  {String aliased as BINARY! can't become invalid UTF-8}
@@ -104,8 +104,8 @@ Script: [
     ambiguous-infix:    {Ambiguous infix expression--use GROUP! to clarify}
     literal-left-tuple: {Use >- to pass literal left TUPLE! parameters right}
 
-    sequence-too-short: {ANY-PATH! and ANY-TUPLE! must have more than 2 items}
-    bad-sequence-item:  [{Value is not a valid ANY-SEQUENCE! element:} :arg1]
+    sequence-too-short: {ANY-PATH? and ANY-TUPLE? must have more than 2 items}
+    bad-sequence-item:  [{Value is not a valid ANY-SEQUENCE? element:} :arg1]
     cant-decorate-type: [{Cannot apply `:` or `^` decoration to:} :arg1]
 
     action-with-dotted: {ACTION! used with dotted sequence access form}
@@ -231,7 +231,7 @@ Script: [
     varargs-no-look:    {VARARGS! may only lookahead by 1 if "hard quoted"}
     varargs-take-last:  {VARARGS! does not support TAKE-ing only /LAST item}
 
-    null-vararg-array:  {Can't MAKE ANY-ARRAY! from VARARGS! that allow <opt>}
+    null-vararg-array:  {Can't MAKE ANY-ARRAY? from VARARGS! that allow <opt>}
     null-object-block:  {Can't create block from object if it has null values}
 
     conflicting-key:    [:arg1 {key conflicts; use SELECT or PUT with /CASE}]

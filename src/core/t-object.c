@@ -57,7 +57,7 @@ static void Append_Vars_To_Context_From_Group(REBVAL *context, REBVAL *block)
     // to be malformed (we don't want partial expansions applied).
     //
     // !!! This allows plain WORD! in the key spot, in addition to SET-WORD!.
-    // Should it allow ANY-WORD!?  Restrict to just SET-WORD!?
+    // Should it allow ANY-WORD?  Restrict to just SET-WORD?
     //
   blockscope {
     const Element* word;
@@ -712,8 +712,8 @@ Bounce TO_Context(Level* level_, Kind kind, const REBVAL *arg)
 //
 //  "Get a reference to the 'adjunct' context associated with a value"
 //
-//      return: [<opt> any-context!]
-//      value [<unrun> <maybe> frame! any-context!]
+//      return: [<opt> any-context?]
+//      value [<unrun> <maybe> frame! any-context?]
 //  ]
 //
 DECLARE_NATIVE(adjunct_of)
@@ -746,9 +746,9 @@ DECLARE_NATIVE(adjunct_of)
 //
 //  "Set 'adjunct' object associated with all references to a value"
 //
-//      return: [<opt> any-context!]
-//      value [<unrun> frame! any-context!]
-//      adjunct [<opt> any-context!]
+//      return: [<opt> any-context?]
+//      value [<unrun> frame! any-context?]
+//      adjunct [<opt> any-context?]
 //  ]
 //
 DECLARE_NATIVE(set_adjunct)
@@ -1708,14 +1708,14 @@ void MF_Frame(REB_MOLD *mo, const Cell* v, bool form) {
 //
 //  construct: native [
 //
-//  "Creates an ANY-CONTEXT! instance"
+//  "Creates an ANY-CONTEXT? instance"
 //
-//      return: [<opt> any-context!]
+//      return: [<opt> any-context?]
 //      spec [<maybe> block!]
 //          "Object specification block (bindings modified)"
 //      /only "Values are kept as-is"
 //      /with "Use a parent/prototype context"
-//          [any-context!]
+//          [any-context?]
 //  ]
 //
 DECLARE_NATIVE(construct)

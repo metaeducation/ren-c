@@ -39,16 +39,16 @@
 // Context* (specific to a context), or simply a plain Array* such as
 // EMPTY_ARRAY which indicates UNBOUND.  The FLAVOR_BYTE() says what it is
 //
-//     ANY-WORD!: binding is the word's binding
+//     ANY-WORD?: binding is the word's binding
 //
-//     ANY-ARRAY!: binding is the relativization or specifier for the REBVALs
-//     which can be found in the frame (for recursive resolution of ANY-WORD!s)
+//     ANY-ARRAY?: binding is the relativization or specifier for the REBVALs
+//     which can be found in the frame (for recursive resolution of ANY-WORD?s)
 //
 //     ACTION!: binding is the instance data for archetypal invocation, so
 //     although all the RETURN instances have the same paramlist, it is
 //     the binding which is unique to the REBVAL specifying which to exit
 //
-//     ANY-CONTEXT!: if a FRAME!, the binding carries the instance data from
+//     ANY-CONTEXT?: if a FRAME!, the binding carries the instance data from
 //     the function it is for.  So if the frame was produced for an instance
 //     of RETURN, the keylist only indicates the archetype RETURN.  Putting
 //     the binding back together can indicate the instance.
@@ -108,7 +108,7 @@ INLINE Value* Derelativize_Untracked(
 
     Stub* binding = BINDING(v);
 
-    if (Bindable_Heart_Is_Any_Word(heart)) {  // any-word!
+    if (Bindable_Heart_Is_Any_Word(heart)) {  // any-word?
       any_wordlike:
         if (
             binding
@@ -130,7 +130,7 @@ INLINE Value* Derelativize_Untracked(
             }
         }
     }
-    else if (Bindable_Heart_Is_Any_Array(heart)) {  // any-block! or any-group!
+    else if (Bindable_Heart_Is_Any_Array(heart)) {  // any-block? or any-group?
       any_arraylike:
         if (binding) {  // currently not overriding (review: hole punch)
             assert(not IS_DETAILS(binding));  // shouldn't be relativized
@@ -142,7 +142,7 @@ INLINE Value* Derelativize_Untracked(
     else if (Not_Cell_Flag(v, SEQUENCE_HAS_NODE)) {
         out->extra = v->extra;  // packed numeric sequence, 1.2.3 or similar
     }
-    else {  // any-path! or any-tuple!, may be wordlike or arraylike
+    else {  // any-path? or any-tuple?, may be wordlike or arraylike
         Node* node1 = Cell_Node1(v);
         if (Is_Node_A_Cell(node1))  // x.y pairing
             goto any_arraylike;
@@ -381,11 +381,6 @@ struct Reb_Collector {
     ((TOP_INDEX - (collector)->stack_base) + 1)  // index of *next* item to add
 
 
-// The unbound state for an ANY-WORD! is to hold its spelling.  Once bound,
-// the spelling is derived by indexing into the keylist of the binding (if
-// bound directly to a context) or into the paramlist (if relative to an
-// action, requiring a frame specifier to fully resolve).
-//
 INLINE bool IS_WORD_UNBOUND(const Cell* v) {
     assert(Any_Wordlike(v));
     if (VAL_WORD_INDEX_I32(v) == INDEX_ATTACHED)
@@ -609,7 +604,7 @@ INLINE Option(Context*) SPC_FRAME_CTX(Specifier* specifier)
 }
 
 
-// An ANY-ARRAY! cell has a pointer's-worth of spare space in it, which is
+// An ANY-ARRAY? cell has a pointer's-worth of spare space in it, which is
 // used to keep track of the information required to further resolve the
 // words and arrays that reside in it.
 //

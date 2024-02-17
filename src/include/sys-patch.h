@@ -121,7 +121,7 @@ INLINE Stub* Make_Use_Core(
         assert(BINDING(Stub_Cell(next)) != binding);
     }
 
-    // A virtual bind patch array is a singular node holding an ANY-WORD!
+    // A virtual bind patch array is a singular node holding an ANY-WORD?
     // bound to the OBJECT! being virtualized against.  The reason for holding
     // the WORD! instead of the OBJECT! in the array cell are:
     //

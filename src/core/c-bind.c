@@ -141,7 +141,7 @@ void Bind_Values_Core(
 
     // Associate the canon of a word with an index number.  (This association
     // is done by poking the index into the stub of the series behind the
-    // ANY-WORD!, so it must be cleaned up to not break future bindings.)
+    // ANY-WORD?, so it must be cleaned up to not break future bindings.)
     //
   if (not Is_Module(context)) {
     REBLEN index = 1;
@@ -655,7 +655,7 @@ DECLARE_NATIVE(let)
             return THROWN;
 
         if (Is_Quoted(SPARE))  // should (let 'x: <whatever>) be legal? [3]
-            fail ("QUOTED! escapes not supported at top level of LET");
+            fail ("QUOTED? escapes not supported at top level of LET");
 
         switch (Cell_Heart(SPARE)) {  // quasi states mean antiforms ok
           case REB_WORD:
@@ -678,7 +678,7 @@ DECLARE_NATIVE(let)
         vars = stable_SPARE;
     }
 
-    //=//// GENERATE NEW BLOCK IF QUOTED! OR GROUP! ELEMENTS ///////////////=//
+    //=//// GENERATE NEW BLOCK IF QUOTED? OR GROUP! ELEMENTS ///////////////=//
 
     // Writes rebound copy of `vars` to SPARE if it's a SET-WORD!/SET-BLOCK!
     // so it can be used in a reevaluation.  For WORD!/BLOCK! forms of LET it
@@ -730,7 +730,7 @@ DECLARE_NATIVE(let)
                 continue;  // do not make binding
             }
 
-            if (Is_Group(temp)) {  // evaluate non-QUOTED! groups in LET block
+            if (Is_Group(temp)) {  // evaluate non-QUOTED? groups in LET block
                 if (Do_Any_Array_At_Throws(OUT, temp, item_specifier))
                     return THROWN;
 
@@ -858,9 +858,9 @@ DECLARE_NATIVE(let)
 //
 //  "Experimental function for adding a new variable binding"
 //
-//      return: [frame! any-array!]
-//      environment [frame! any-array!]
-//      word [any-word!]
+//      return: [frame! any-array?]
+//      environment [frame! any-array?]
+//      word [any-word?]
 //      value [any-value?]
 //  ]
 //

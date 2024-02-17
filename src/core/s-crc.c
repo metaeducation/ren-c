@@ -326,7 +326,7 @@ uint32_t Hash_Value(const Cell* cell)
         // Allowing object keys to be OBJECT! and then comparing by field
         // values creates problems for hashing if that object is mutable.
         // However, since it was historically allowed it is allowed for
-        // all ANY-CONTEXT! types at the moment.
+        // all ANY-CONTEXT? types at the moment.
         //
         hash = cast(uint32_t, i_cast(uintptr_t, VAL_CONTEXT(cell)) >> 4);
         break;

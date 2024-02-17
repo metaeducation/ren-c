@@ -554,7 +554,7 @@ SQLRETURN ODBC_BindParameter(
                 "'~true~ [", rebI(SQL_C_BIT), "]",
                 "'~false~ [", rebI(SQL_C_BIT), "]",
             "] else [",
-                "fail {Legal QUASIFORM!-parameters ~null~ ~true~ ~false~}",
+                "fail {Legal QUASI?-parameters ~null~ ~true~ ~false~}",
             "]",
         "]",
 

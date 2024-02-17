@@ -85,8 +85,8 @@ const Byte* Analyze_String_For_Scan(
     // Skip up to max_len non-space characters.
     //
     // !!! The R3-Alpha code would fail with Error_Invalid_Chars_Raw() if
-    // there were UTF-8 characters in most calls.  Only ANY-WORD! from
-    // ANY-STRING! allowed it.  Though it's not clear why it wouldn't be
+    // there were UTF-8 characters in most calls.  Only ANY-WORD? from
+    // ANY-STRING? allowed it.  Though it's not clear why it wouldn't be
     // better to delegate to the scanning routine itself to give a more
     // pointed error... allow c >= 0x80 for now.
     //

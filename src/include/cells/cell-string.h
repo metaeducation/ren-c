@@ -20,7 +20,7 @@ INLINE const String* Cell_Issue_String(const Cell* v) {
 
 // This routine works with the notion of "length" that corresponds to the
 // idea of the datatype which the series index is for.  Notably, a BINARY!
-// can alias an ANY-STRING! or ANY-WORD! and address the individual bytes of
+// can alias an ANY-STRING? or ANY-WORD? and address the individual bytes of
 // that type.  So if the series is a string and not a binary, the special
 // cache of the length in the series node for strings must be used.
 //
@@ -53,7 +53,7 @@ INLINE Length Cell_Series_Len_At(const Cell* v) {
 }
 
 INLINE Utf8(const*) Cell_String_At(const Cell* v) {
-    const String* str = Cell_String(v);  // checks that it's ANY-STRING!
+    const String* str = Cell_String(v);  // checks that it's ANY-STRING?
     REBIDX i = VAL_INDEX_RAW(v);
     REBLEN len = String_Len(str);
     if (i < 0 or i > cast(REBIDX, len))
@@ -63,7 +63,7 @@ INLINE Utf8(const*) Cell_String_At(const Cell* v) {
 
 
 INLINE Utf8(const*) Cell_String_Tail(const Cell* v) {
-    const String* s = Cell_String(v);  // debug build checks it's ANY-STRING!
+    const String* s = Cell_String(v);  // debug build checks it's ANY-STRING?
     return String_Tail(s);
 }
 
@@ -144,7 +144,7 @@ INLINE Size VAL_BYTEOFFSET_FOR_INDEX(
 }
 
 
-//=//// ANY-STRING! CONVENIENCE MACROS ////////////////////////////////////=//
+//=//// ANY-STRING? CONVENIENCE MACROS ////////////////////////////////////=//
 //
 // Declaring as inline with type signature ensures you use a String* to
 // initialize, and the C++ build can also validate managed consistent w/const.

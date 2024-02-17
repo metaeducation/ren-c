@@ -69,7 +69,7 @@
     (['1 ~[']~ '3] = map x each [1 2 3] ^[if x = 2 [void] else [x]])
 ]
 
-; MAP-EACH works with ANY-CONTEXT! now
+; MAP-EACH works with ANY-CONTEXT? now
 (
     [x 10 y 20] = map-each [key val] make object! [x: 10 y: 20] [
         spread reduce [key val]

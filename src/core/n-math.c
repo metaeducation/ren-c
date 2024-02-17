@@ -116,7 +116,7 @@ static void Arc_Trans(
 //  "Returns the trigonometric cosine"
 //
 //      return: [decimal!]
-//      angle [any-number!]
+//      angle [any-number?]
 //      /radians
 //          "Value is specified in radians (in degrees by default)"
 //  ]
@@ -139,7 +139,7 @@ DECLARE_NATIVE(cosine)
 //  "Returns the trigonometric sine"
 //
 //      return: [decimal!]
-//      angle [any-number!]
+//      angle [any-number?]
 //      /radians
 //          "Value is specified in radians (in degrees by default)"
 //  ]
@@ -162,7 +162,7 @@ DECLARE_NATIVE(sine)
 //  "Returns the trigonometric tangent"
 //
 //      return: [decimal!]
-//      angle [any-number!]
+//      angle [any-number?]
 //      /radians
 //          "Value is specified in radians (in degrees by default)"
 //  ]
@@ -185,7 +185,7 @@ DECLARE_NATIVE(tangent)
 //  "Returns the trigonometric arccosine"
 //
 //      return: [decimal!]
-//      cosine [any-number!]
+//      cosine [any-number?]
 //      /radians
 //          "Returns result in radians (in degrees by default)"
 //  ]
@@ -205,7 +205,7 @@ DECLARE_NATIVE(arccosine)
 //  "Returns the trigonometric arcsine"
 //
 //      return: [decimal!]
-//      sine [any-number!]
+//      sine [any-number?]
 //      /radians
 //          "Returns result in radians (in degrees by default)"
 //  ]
@@ -225,7 +225,7 @@ DECLARE_NATIVE(arcsine)
 //  "Returns the trigonometric arctangent"
 //
 //      return: [decimal!]
-//      tangent [any-number!]
+//      tangent [any-number?]
 //      /radians
 //          "Returns result in radians (in degrees by default)"
 //  ]
@@ -245,7 +245,7 @@ DECLARE_NATIVE(arctangent)
 //  "Raises E (the base of natural logarithm) to the power specified"
 //
 //      return: [decimal!]
-//      power [any-number!]
+//      power [any-number?]
 //  ]
 //
 DECLARE_NATIVE(exp)
@@ -267,7 +267,7 @@ DECLARE_NATIVE(exp)
 //  "Returns the base-10 logarithm"
 //
 //      return: [decimal!]
-//      value [any-number!]
+//      value [any-number?]
 //  ]
 //
 DECLARE_NATIVE(log_10)
@@ -288,7 +288,7 @@ DECLARE_NATIVE(log_10)
 //  "Return the base-2 logarithm"
 //
 //      return: [decimal!]
-//      value [any-number!]
+//      value [any-number?]
 //  ]
 //
 DECLARE_NATIVE(log_2)
@@ -309,7 +309,7 @@ DECLARE_NATIVE(log_2)
 //  "Returns the natural (base-E) logarithm of the given value"
 //
 //      return: [decimal!]
-//      value [any-number!]
+//      value [any-number?]
 //  ]
 //
 DECLARE_NATIVE(log_e)
@@ -330,7 +330,7 @@ DECLARE_NATIVE(log_e)
 //  "Returns the square root of a number"
 //
 //      return: [decimal!]
-//      value [any-number!]
+//      value [any-number?]
 //  ]
 //
 DECLARE_NATIVE(square_root)
@@ -861,9 +861,9 @@ DECLARE_NATIVE(greater_or_equal_q)
 //
 //  "Returns the greater of the two values"
 //
-//      return: [any-scalar! date! any-series!]
-//      value1 [any-scalar! date! any-series!]
-//      value2 [any-scalar! date! any-series!]
+//      return: [any-scalar? date! any-series?]
+//      value1 [any-scalar? date! any-series?]
+//      value2 [any-scalar? date! any-series?]
 //  ]
 //
 DECLARE_NATIVE(maximum)
@@ -900,9 +900,9 @@ DECLARE_NATIVE(maximum)
 //
 //  "Returns the lesser of the two values"
 //
-//      return: [any-scalar! date! any-series!]
-//      value1 [any-scalar! date! any-series!]
-//      value2 [any-scalar! date! any-series!]
+//      return: [any-scalar? date! any-series?]
+//      value1 [any-scalar? date! any-series?]
+//      value2 [any-scalar? date! any-series?]
 //  ]
 //
 DECLARE_NATIVE(minimum)
@@ -960,7 +960,7 @@ inline static REBVAL *Init_Zeroed_Hack(Cell* out, Heart heart) {
 //  "Returns TRUE if the number is negative"
 //
 //      return: [logic?]
-//      number [any-number! money! time! pair!]
+//      number [any-number? money! time! pair!]
 //  ]
 //
 DECLARE_NATIVE(negative_q)
@@ -982,7 +982,7 @@ DECLARE_NATIVE(negative_q)
 //  "Returns TRUE if the value is positive"
 //
 //      return: [logic?]
-//      number [any-number! money! time! pair!]
+//      number [any-number? money! time! pair!]
 //  ]
 //
 DECLARE_NATIVE(positive_q)

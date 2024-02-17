@@ -82,7 +82,7 @@ INLINE void INIT_VAL_FRAME_LABEL(
 }
 
 
-//=//// ANY-CONTEXT! VALUE EXTRACTORS /////////////////////////////////////=//
+//=//// ANY-CONTEXT? VALUE EXTRACTORS /////////////////////////////////////=//
 //
 // There once were more helpers like `VAL_CONTEXT_VAR(v,n)` which were macros
 // for things like `CTX_VAR(VAL_CONTEXT(v), n)`.  However, once VAL_CONTEXT()
@@ -111,7 +111,7 @@ INLINE const Key* VAL_CONTEXT_KEYS_HEAD(const Cell* context)
 
 // Common routine for initializing OBJECT, MODULE!, PORT!, and ERROR!
 //
-// A fully constructed context can reconstitute the ANY-CONTEXT! REBVAL
+// A fully constructed context can reconstitute the ANY-CONTEXT? REBVAL
 // that is its canon form from a single pointer...the REBVAL sitting in
 // the 0 slot of the context's varlist.
 //

@@ -121,7 +121,7 @@ DECLARE_NATIVE(pick)
 // In R3-Alpha, PICK was an "action", which dispatched on types through the
 // "action mechanic" for the following types:
 //
-//     [any-series! map! gob! pair! date! time! tuple! bitset! port! varargs!]
+//     [any-series? map! gob! pair! date! time! tuple! bitset! port! varargs!]
 //
 // In Ren-C, PICK is rethought to use the same dispatch mechanic as tuples,
 // to cut down on the total number of operations the system has to define.
@@ -286,7 +286,7 @@ Bounce MAKE_Path(
 //     == /a:  ; !!! a SET-PATH!, which is not the promised PATH! return type
 //
 // So the only choice is to discard the decorators, or error.  Discarding is
-// consistent with ANY-WORD! interconversion, and also allows another avenue
+// consistent with ANY-WORD? interconversion, and also allows another avenue
 // for putting blocks as-is in paths by using the decorated type:
 //
 //     >> to path! ^[a b c]
@@ -387,7 +387,7 @@ Bounce TO_Sequence(Level* level_, Kind k, const REBVAL *arg) {
 //
 //  CT_Sequence: C
 //
-// "Compare Type" dispatcher for ANY-PATH! and ANY-TUPLE!.
+// "Compare Type" dispatcher for ANY-PATH? and ANY-TUPLE?.
 //
 // Note: R3-Alpha considered TUPLE! with any number of trailing zeros to
 // be equivalent.  This meant `255.255.255.0` was equal to `255.255.255`.

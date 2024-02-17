@@ -1,6 +1,6 @@
 //
 //  File: %c-context.c
-//  Summary: "Management routines for ANY-CONTEXT! key/value storage"
+//  Summary: "Management routines for ANY-CONTEXT? key/value storage"
 //  Section: core
 //  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
 //  Homepage: https://github.com/metaeducation/ren-c/
@@ -339,7 +339,7 @@ void Collect_Context_Keys(
 //
 //  Collect_Inner_Loop: C
 //
-// The inner recursive loop used for collecting context keys or ANY-WORD!s.
+// The inner recursive loop used for collecting context keys or ANY-WORD?s.
 //
 static void Collect_Inner_Loop(
     struct Reb_Collector *cl,
@@ -464,7 +464,7 @@ Array* Collect_Unique_Words_Managed(
     const Element* head,
     const Element* tail,
     Flags flags,  // See COLLECT_XXX
-    const REBVAL *ignorables  // BLOCK!, ANY-CONTEXT!, or BLANK!
+    const REBVAL *ignorables  // BLOCK!, ANY-CONTEXT?, or BLANK!
 ){
     // We do not want to fail() during the bind at this point in time (the
     // system doesn't know how to clean up, and the only cleanup it does

@@ -33,7 +33,7 @@
 //=//// NOTES /////////////////////////////////////////////////////////////=//
 //
 // * The 0 codepoint ("NUL") is a valid CHAR! -but- it can not appear in an
-//   ANY-STRING!.  Only BINARY! can have embedded zero bytes.  For strings it
+//   ANY-STRING?.  Only BINARY! can have embedded zero bytes.  For strings it
 //   is kept for termination, so that only one return result is needed from
 //   APIs like rebSpell().  All efforts are being made to make it as easy to
 //   work with a BINARY! on string-like tasks where internal 0 bytes are ok.
@@ -325,7 +325,7 @@ INLINE const Byte* Back_Scan_UTF8_Char(
     // is that since this check only applies to non-ASCII, it is worth it to
     // do the validation.
     //
-    // !!! Once a UTF-8 ANY-STRING! has been loaded (e.g. Utf8(*)), this
+    // !!! Once a UTF-8 ANY-STRING? has been loaded (e.g. Utf8(*)), this
     // routine could be stripped down to remove checks for character decoding.
     // But again, low priority--it would only apply to non-ASCII chars.
     //
@@ -359,7 +359,7 @@ INLINE const Byte* Back_Scan_UTF8_Char(
     if (size)
         *unwrap(size) -= trail;
 
-    // Note that Ren-C disallows internal zero bytes in ANY-STRING!, so that
+    // Note that Ren-C disallows internal zero bytes in ANY-STRING?, so that
     // a single pointer can be given to C for the data and no length...and
     // not have this be misleading or cause bugs.
     //

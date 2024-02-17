@@ -460,13 +460,13 @@ Value* Real_Var_From_Pseudo(Value* pseudo_var) {
 //      return: [any-value?]
 //      :word [word!]
 //          "Variable to hold current value"
-//      start [any-series! any-number!]
+//      start [any-series? any-number?]
 //          "Starting value"
-//      end [any-series! any-number!]
+//      end [any-series? any-number?]
 //          "Ending value"
-//      bump [any-number!]
+//      bump [any-number?]
 //          "Amount to skip each time"
-//      body [<const> any-branch!]
+//      body [<const> any-branch?]
 //          "Code to evaluate"
 //  ]
 //
@@ -543,11 +543,11 @@ DECLARE_NATIVE(cfor)
 //      'word "Variable set to each position in the series at skip distance"
 //          [word! lit-word? blank!]
 //      series "The series to iterate over"
-//          [<maybe> any-series!]
+//          [<maybe> any-series?]
 //      skip "Number of positions to skip each time"
 //          [<maybe> integer!]
 //      body "Code to evaluate each time"
-//          [<const> any-branch!]
+//          [<const> any-branch?]
 //  ]
 //
 DECLARE_NATIVE(for_skip)
@@ -611,7 +611,7 @@ DECLARE_NATIVE(for_skip)
                 return nullptr;
         }
 
-        // Modifications to var are allowed, to another ANY-SERIES! value.
+        // Modifications to var are allowed, to another ANY-SERIES? value.
         //
         // If `var` is movable (e.g. specified via LIT-WORD!) it must be
         // refreshed each time arbitrary code runs, since the context may
@@ -707,7 +707,7 @@ void Add_Definitional_Stop(
 //      return: "Null if BREAK, or non-null value passed to STOP"
 //          [any-value?]
 //      body "Block or action to evaluate each time"
-//          [<const> any-branch!]
+//          [<const> any-branch?]
 //  ]
 //
 DECLARE_NATIVE(cycle)
@@ -882,7 +882,7 @@ void Init_Loop_Each(Value* iterator, Value* data)
 //      -- a: 1 b: 2
 //      -- a: 3 b: 4
 //
-// ANY-CONTEXT! and MAP! allow one var (keys) or two vars (keys/vals).
+// ANY-CONTEXT? and MAP! allow one var (keys) or two vars (keys/vals).
 //
 // It's possible to opt out of variable slots using BLANK!.
 //
@@ -1110,7 +1110,7 @@ void Shutdown_Loop_Each(Value* iterator)
 //      :vars "Word or block of words to set each time, no new var if quoted"
 //          [blank! word! lit-word? block! group!]
 //      data "The series to traverse"
-//          [<maybe> blank! any-series! any-context! map! any-sequence!
+//          [<maybe> blank! any-series? any-context? map! any-sequence?
 //           action?]  ; action support experimental, e.g. generators
 //      body "Block to evaluate each time"
 //          [<const> block! meta-block!]
@@ -1210,7 +1210,7 @@ DECLARE_NATIVE(for_each)
 //      :vars "Word or block of words to set each time, no new var if quoted"
 //          [blank! word! lit-word? block! group!]
 //      data "The series to traverse"
-//          [<maybe> any-series! any-context! map! action?]
+//          [<maybe> any-series? any-context? map! action?]
 //      body [<const> block! meta-block!]
 //          "Block to evaluate each time"
 //  ]
@@ -1332,7 +1332,7 @@ DECLARE_NATIVE(every)
 //      :vars "Word or block of words to set each time, no new var if quoted"
 //          [blank! word! lit-word? block! group!]
 //      data "The series to traverse (modified)"
-//          [<maybe> any-series!]
+//          [<maybe> any-series?]
 //      body "Block to evaluate (return TRUE to remove)"
 //          [<const> block!]
 //  ]
@@ -1671,7 +1671,7 @@ DECLARE_NATIVE(remove_each)
 //      :vars "Word or block of words to set each time, no new var if quoted"
 //          [blank! word! lit-word? block! group!]
 //      data "The series to traverse"
-//          [<maybe> blank! any-series! any-sequence! any-context!
+//          [<maybe> blank! any-series? any-sequence? any-context?
 //           action?]
 //      body "Block to evaluate each time (result will be kept literally)"
 //          [<const> block!]
@@ -1690,7 +1690,7 @@ DECLARE_NATIVE(map_each)
     // The theory is that MAP would use a dialect on BLOCK! arguments for data
     // by default, like [1 thru 10].  But you could give it an arbitrary
     // enumerating action and it would iteratively call it.  Since such an
-    // iterator does not exist yet (and would not be cheap) a QUOTED! BLOCK!
+    // iterator does not exist yet (and would not be cheap) a QUOTED? BLOCK!
     // is used temporarily as a substitute for passing a block iterator.
     //
     if (not Is_Blank(ARG(data)))
@@ -1713,8 +1713,8 @@ DECLARE_NATIVE(map_each)
 //          [<opt> block!]
 //      :vars "Word or block of words to set each time, no new var if quoted"
 //          [blank! word! lit-word? block! group!]
-//      data "The series to traverse (only QUOTED! BLOCK! at the moment...)"
-//          [<maybe> blank! quoted! action?]
+//      data "The series to traverse (only QUOTED? BLOCK! at the moment...)"
+//          [<maybe> blank! quoted? action?]
 //      :body "Block to evaluate each time"
 //          [<const> block! meta-block!]
 //  ]
@@ -1776,7 +1776,7 @@ DECLARE_NATIVE(map)
             or Any_Context(data)
         )
     ){
-        fail ("MAP only supports one-level QUOTED! series/path/context ATM");
+        fail ("MAP only supports one-level QUOTED? series/path/context ATM");
     }
 
     Context* pseudo_vars_ctx = Virtual_Bind_Deep_To_New_Context(
@@ -1864,7 +1864,7 @@ DECLARE_NATIVE(map)
 //      return: "Last body result, or null if BREAK"
 //          [any-value?]
 //      count "Repetitions (true loops infinitely, false doesn't run)"
-//          [<maybe> any-number! logic?]
+//          [<maybe> any-number? logic?]
 //      body "Block to evaluate or action to run"
 //          [<unrun> <const> block! frame!]
 //  ]
@@ -1950,7 +1950,7 @@ DECLARE_NATIVE(repeat)
 //      :vars "Word or block of words to set each time, no new var if quoted"
 //          [blank! word! lit-word? block! group!]
 //      value "Maximum number or series to traverse"
-//          [<maybe> any-number! any-sequence! quoted! block! action?]
+//          [<maybe> any-number? any-sequence? quoted? block! action?]
 //      body [<const> block!]
 //  ]
 //

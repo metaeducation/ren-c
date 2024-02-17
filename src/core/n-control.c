@@ -45,7 +45,7 @@
 //       >> if 1 < 2 [10 + 20] then x -> [print ["THEN got" x]]
 //       THEN got 30
 //
-//   (See Do_Branch_Throws() for supported ANY-BRANCH! types and behaviors.)
+//   (See Do_Branch_Throws() for supported ANY-BRANCH? types and behaviors.)
 //
 // * There is added checking that a literal block is not used as a condition,
 //   to catch common mistakes like `if [x = 10] [...]`.
@@ -130,7 +130,7 @@ Bounce Group_Branch_Executor(Level* level_)
 //          [any-atom?]
 //      condition [any-value?]  ; non-void-value? possible, but slower
 //      :branch "If arity-1 ACTION!, receives the evaluated condition"
-//          [any-branch!]
+//          [any-branch?]
 //  ]
 //
 DECLARE_NATIVE(if)
@@ -163,9 +163,9 @@ DECLARE_NATIVE(if)
 //      return: [any-atom?]
 //      condition [any-value?]  ; non-void-value? possible, but slower
 //      :true-branch "If arity-1 ACTION!, receives the evaluated condition"
-//          [any-branch!]
+//          [any-branch?]
 //      :false-branch
-//          [any-branch!]
+//          [any-branch?]
 //  ]
 //
 DECLARE_NATIVE(either)
@@ -493,7 +493,7 @@ DECLARE_NATIVE(didnt)
 //          [any-atom?]
 //      /decay
 //      :branch "If arity-1 ACTION!, receives value that triggered branch"
-//          [<unrun> any-branch!]
+//          [<unrun> any-branch?]
 //  ]
 //
 DECLARE_NATIVE(then)  // see `tweak :then 'defer on` in %base-defs.r
@@ -535,7 +535,7 @@ DECLARE_NATIVE(then)  // see `tweak :then 'defer on` in %base-defs.r
 //      ^atom "<deferred argument> Run branch if this is null"
 //          [any-atom?]
 //      /decay
-//      :branch [<unrun> any-branch!]
+//      :branch [<unrun> any-branch?]
 //  ]
 //
 DECLARE_NATIVE(else)  // see `tweak :else 'defer on` in %base-defs.r
@@ -578,7 +578,7 @@ DECLARE_NATIVE(else)  // see `tweak :else 'defer on` in %base-defs.r
 //          [any-atom?]
 //      /decay
 //      :branch "If arity-1 ACTION!, receives value that triggered branch"
-//          [<unrun> any-branch!]
+//          [<unrun> any-branch?]
 //  ]
 //
 DECLARE_NATIVE(also)  // see `tweak :also 'defer on` in %base-defs.r
@@ -1389,7 +1389,7 @@ DECLARE_NATIVE(switch)
 //      :target "Word or path which might be set appropriately (or not)"
 //          [set-group! set-word! set-tuple!]  ; to left of DEFAULT
 //      :branch "If target needs default, this is evaluated and stored there"
-//          [any-branch!]
+//          [any-branch?]
 //      /predicate "Test for what's considered empty (default is null + void)"
 //          [<unrun> frame!]
 //  ]

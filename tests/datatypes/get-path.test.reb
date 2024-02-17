@@ -5,7 +5,7 @@
     (get-path? load-value ":[a]/1")
 ]
 
-; ANY-PATH! are no longer positional
+; ANY-PATH? are no longer positional
 ;
 ;(
 ;    all [

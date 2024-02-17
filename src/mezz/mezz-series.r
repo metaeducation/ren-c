@@ -20,8 +20,8 @@ REBOL [
 ;
 offset-of: lambda [
     "Returns the offset between two series positions."
-    series1 [any-series!]
-    series2 [any-series!]
+    series1 [any-series?]
+    series2 [any-series?]
 ][
     (index of series2) - (index of series1)
 ]
@@ -29,7 +29,7 @@ offset-of: lambda [
 
 last?: single?: lambda [
     "Returns TRUE if the series length is 1."
-    series [any-series! port! map! tuple! bitset! object! any-word!]
+    series [any-series? port! map! tuple! bitset! object! any-word?]
 ][
     1 = length of series
 ]
@@ -39,7 +39,7 @@ extend: func [
     "Extend an object, map, or block type with word and value pair."
     return: [any-value?]
     obj [object! map!] {object to extend (modified)}
-    word [any-word!]
+    word [any-word?]
     val [any-value?]
 ][
     append obj word
@@ -94,9 +94,9 @@ array: func [
 replace: func [
     {Replaces a search value with the replace value within the target series}
 
-    return: [any-series!]
+    return: [any-series?]
     target "Series to replace within (modified)"
-        [any-series!]
+        [any-series?]
     pattern "Value to be replaced (converted if necessary)"
         [<void> element? splice? any-matcher?]
     replacement "Value to replace with (called each time if action)"
@@ -151,14 +151,14 @@ replace: func [
 reword: func [
     {Make a string or binary based on a template and substitution values}
 
-    return: [any-string! binary!]
+    return: [any-string? binary!]
     source "Template series with escape sequences"
-        [any-string! binary!]
+        [any-string? binary!]
     values "Keyword literals and value expressions"
         [map! object! block!]
     /case "Characters are case-sensitive"
     /escape "Escape char(s) or [prefix suffix] delimiters (default is $)"
-        [char? any-string! word! binary! block!]
+        [char? any-string? word! binary! block!]
 
     <static>
 
@@ -166,10 +166,10 @@ reword: func [
     ; BLOCK! excluded.
     ;
     delimiter-types (
-        &[char? any-string! word! binary!]
+        &[char? any-string? word! binary!]
     )
     keyword-types (
-        &[char? any-string! integer! word! binary!]
+        &[char? any-string? integer! word! binary!]
     )
 ][
     let case_REWORD: case
@@ -307,7 +307,7 @@ move: func [
 
     return: [~]  ; !!! Define return value?
     source "Source series (modified)"
-        [any-series!]
+        [any-series?]
     offset "Offset to move by, or index to move to"
         [integer!]
     /part "Move part of a series by length"
@@ -332,7 +332,7 @@ move: func [
 extract: func [
     {Extracts a value from a series at regular intervals}
 
-    series [any-series!]
+    series [any-series?]
     width "Size of each entry (the skip), negative for backwards step"
         [integer!]
     /index "Extract from offset position"
@@ -359,7 +359,7 @@ alter: func [
     {Append value if not found, else remove it; returns true if added}
 
     return: [logic?]
-    series [any-series! port! bitset!] {(modified)}
+    series [any-series? port! bitset!] {(modified)}
     value
     /case "Case-sensitive comparison"
 ][
@@ -504,7 +504,7 @@ split: func [
 
     return: [block!]
     series "The series to split"
-        [any-series!]
+        [any-series?]
     dlm "Split size, delimiter(s) (if all integer block), or block rule(s)"
         [block! integer! char? bitset! text! tag! word!]
     /into "If dlm is integer, split in n pieces (vs. pieces of length n)"

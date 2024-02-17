@@ -286,9 +286,9 @@ DECLARE_NATIVE(enbase)
 //
 //  "Converts string to use URL-style hex encoding (%XX)"
 //
-//      return: [any-string!]
+//      return: [any-string?]
 //          "See http://en.wikipedia.org/wiki/Percent-encoding"
-//      string [any-string!]
+//      string [any-string?]
 //          "String to encode, all non-ASCII or illegal URL bytes encoded"
 //  ]
 //
@@ -448,9 +448,9 @@ DECLARE_NATIVE(enhex)
 //
 //  "Converts URL-style encoded strings, %XX is interpreted as UTF-8 byte"
 //
-//      return: [any-string!]
+//      return: [any-string?]
 //          "Decoded string, with the same string type as the input"
-//      string [any-string!]
+//      string [any-string?]
 //          "See http://en.wikipedia.org/wiki/Percent-encoding"
 //  ]
 //
@@ -659,8 +659,8 @@ DECLARE_NATIVE(deline)
 //
 //  "Converts string terminators to native OS format, e.g. LF to CRLF"
 //
-//      return: [any-string!]
-//      string [any-string!] "(modified)"
+//      return: [any-string?]
+//      string [any-string?] "(modified)"
 //  ]
 //
 DECLARE_NATIVE(enline)
@@ -747,9 +747,9 @@ DECLARE_NATIVE(enline)
 //
 //  "Converts spaces to tabs (default tab size is 4)"
 //
-//      return: [any-string!]
+//      return: [any-string?]
 //      string "(modified)"
-//          [any-string!]
+//          [any-string?]
 //      /size "Specifies the number of spaces per tab"
 //          [integer!]
 //  ]
@@ -823,9 +823,9 @@ DECLARE_NATIVE(entab)
 //
 //  "Converts tabs to spaces (default tab size is 4)"
 //
-//      return: [any-string!]
+//      return: [any-string?]
 //      string "(modified)"
-//          [any-string!]
+//          [any-string?]
 //      /size "Specifies the number of spaces per tab"
 //          [integer!]
 //  ]
@@ -882,11 +882,11 @@ DECLARE_NATIVE(detab)
 //
 //  "Converts string of characters to lowercase"
 //
-//      return: [any-string! char?]
+//      return: [any-string? char?]
 //      string "(modified if series)"
-//          [any-string! char?]
+//          [any-string? char?]
 //      /part "Limits to a given length or position"
-//          [any-number! any-string!]
+//          [any-number? any-string?]
 //  ]
 //
 DECLARE_NATIVE(lowercase)
@@ -903,11 +903,11 @@ DECLARE_NATIVE(lowercase)
 //
 //  "Converts string of characters to uppercase"
 //
-//      return: [any-string! char?]
+//      return: [any-string? char?]
 //      string "(modified if series)"
-//          [any-string! char?]
+//          [any-string? char?]
 //      /part "Limits to a given length or position"
-//          [any-number! any-string!]
+//          [any-number? any-string?]
 //  ]
 //
 DECLARE_NATIVE(uppercase)
@@ -969,7 +969,7 @@ DECLARE_NATIVE(to_hex)
         fail (PARAM(value));
 
     // !!! Issue should be able to use string from mold buffer directly when
-    // UTF-8 Everywhere unification of ANY-WORD! and ANY-STRING! is done.
+    // UTF-8 Everywhere unification of ANY-WORD? and ANY-STRING? is done.
     //
     assert(len == String_Size(mo->series) - mo->base.size);
     if (NULL == Scan_Issue(OUT, Binary_At(mo->series, mo->base.size), len))

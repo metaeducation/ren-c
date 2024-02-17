@@ -315,7 +315,7 @@ export console!: make object! [
     add-shortcut: meth [
         "Add/Change console shortcut"
         return: [~]
-        name [any-word!] "Shortcut name"
+        name [any-word?] "Shortcut name"
         block [block!] "Command(s) expanded to"
     ][
         extend shortcuts name block
@@ -433,7 +433,7 @@ ext-console-impl: func [
     prior "BLOCK! or GROUP! that last invocation of HOST-CONSOLE requested"
         [<opt> block! group!]
     result "^META result from evaluating PRIOR, or non-quoted error"
-        [<opt> error! quoted! quasiform!]
+        [<opt> error! quoted? quasi?]
     resumable "Is the RESUME function allowed to exit this console"
         [logic?]
     skin "Console skin to use if the console has to be launched"

@@ -20,7 +20,7 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// The ANY-STRING! and ANY-WORD! data types follow "UTF-8 everywhere", and
+// The ANY-STRING? and ANY-WORD? data types follow "UTF-8 everywhere", and
 // store their content as UTF-8 at all times.  Then it only converts to other
 // encodings at I/O points if the platform requires it (e.g. Windows):
 //
@@ -210,7 +210,7 @@ INLINE Length String_Len(const String* s) {
         if (Is_Definitely_Ascii(s))
             assert(s->misc.length == String_Size(s));
       #endif
-        return s->misc.length;  // length cached in misc for non-ANY-WORD!
+        return s->misc.length;  // length cached in misc for non-ANY-WORD?
     }
 
     if (Is_Definitely_Ascii(s))
@@ -235,7 +235,7 @@ INLINE REBLEN String_Index_At(
 
     assert(not Is_Continuation_Byte(*Binary_At(s, byteoffset)));
 
-    if (Is_String_NonSymbol(s)) {  // length is cached for non-ANY-WORD!
+    if (Is_String_NonSymbol(s)) {  // length is cached for non-ANY-WORD?
       #if DEBUG_UTF8_EVERYWHERE
         if (s->misc.length > Series_Used(s))  // includes 0xDECAFBAD
             panic(s);

@@ -348,7 +348,7 @@ void Extra_Init_Frame_Details_Checks_Debug(Phase* a) {
 // position, so that a positive length for the partial region is returned.
 //
 REBLEN Part_Len_May_Modify_Index(
-    REBVAL *series,  // ANY-SERIES! value whose index may be modified
+    REBVAL *series,  // ANY-SERIES? value whose index may be modified
     const REBVAL *part  // /PART (number, position in value, or BLANK! cell)
 ){
     if (Any_Sequence(series)) {

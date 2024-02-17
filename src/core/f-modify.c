@@ -219,12 +219,12 @@ REBLEN Modify_Array(
 // so, then all mutations must preserve the series content as valid UTF-8.
 // That aliasing ability is why this routine is for both strings and binaries.
 //
-// While a BINARY! and an ANY-STRING! can alias the same series, the meaning
+// While a BINARY! and an ANY-STRING? can alias the same series, the meaning
 // of VAL_INDEX() is different.  So in addition to the detection of the
 // SERIES_FLAG_IS_STRING on the series, we must know if dst is a BINARY!.
 //
 REBLEN Modify_String_Or_Binary(
-    REBVAL *dst,  // ANY-STRING! or BINARY! value to modify
+    REBVAL *dst,  // ANY-STRING? or BINARY! value to modify
     SymId op,  // SYM_APPEND @ tail, SYM_INSERT/SYM_CHANGE @ index
     const REBVAL *src,  // argument with content to inject
     Flags flags,  // AM_PART, AM_LINE
@@ -233,7 +233,7 @@ REBLEN Modify_String_Or_Binary(
 ){
     assert(op == SYM_INSERT or op == SYM_CHANGE or op == SYM_APPEND);
 
-    Ensure_Mutable(dst);  // note this also rules out ANY-WORD!s
+    Ensure_Mutable(dst);  // note this also rules out ANY-WORD?s
 
     Binary* dst_ser = cast(Binary*, Cell_Series_Ensure_Mutable(dst));
     assert(not Is_String_Symbol(dst_ser));  // would be immutable
@@ -293,7 +293,7 @@ REBLEN Modify_String_Or_Binary(
         dst_idx = String_Index_At(cast(String*, dst_ser), dst_off);
     }
 
-    // If the src is not an ANY-STRING!, then we need to create string data
+    // If the src is not an ANY-STRING?, then we need to create string data
     // from the value to use its content.
     //
     DECLARE_MOLD (mo);  // mo->series will be non-null if Push_Mold() run
@@ -462,7 +462,7 @@ REBLEN Modify_String_Or_Binary(
         else {
             Push_Mold(mo);
 
-            // !!! The logic for append/insert/change on ANY-STRING! with a
+            // !!! The logic for append/insert/change on ANY-STRING? with a
             // BLOCK! has been to form them without reducing, and no spaces
             // between.  There is some rationale to this, though implications
             // for operations like TO TEXT! of a BLOCK! are unclear...

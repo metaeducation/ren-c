@@ -266,7 +266,7 @@ confirm: func [
 
     return: [logic?]
     question "Prompt to user"
-        [any-series!]
+        [any-series?]
     /with [text! block!]
 ][
     with: default [["y" "yes"] ["n" "no"]]

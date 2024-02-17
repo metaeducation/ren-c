@@ -166,7 +166,7 @@ DECLARE_NATIVE(reorder)
                 Cell_Num_Quotes(item) != 1
                 or not Any_Word_Kind(Cell_Heart(item))
             ) {
-                error = Error_User("REORDER allows single quoted ANY-WORD!");
+                error = Error_User("REORDER allows single quoted ANY-WORD?");
                 goto cleanup_binder;
             }
             symbol = Cell_Word_Symbol(item);

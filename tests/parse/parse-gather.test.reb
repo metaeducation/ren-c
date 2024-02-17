@@ -70,7 +70,7 @@
     ]
 )]
 
-; SET-GROUP! can be used to synthesize variable names to set, ANY-WORD! legal
+; SET-GROUP! can be used to synthesize variable names to set, ANY-WORD? legal
 [
     (
         word: 'xxx

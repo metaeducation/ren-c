@@ -83,7 +83,7 @@ typedef Bounce (TO_HOOK)(Level* level_, Kind, const REBVAL*);
 // PER-TYPE MOLD HOOKS: for `mold value` and `form value`
 //
 // Note: ERROR! may be a context, but it has its own special FORM-ing
-// beyond the class (falls through to ANY-CONTEXT! for mold), and BINARY!
+// beyond the class (falls through to ANY-CONTEXT? for mold), and BINARY!
 // has a different handler than strings.  So not all molds are driven by
 // their class entirely.
 //

@@ -457,7 +457,7 @@ DECLARE_NATIVE(read_char)
             // For the moment there aren't any other signals; if there were,
             // they may be interesting to the caller.
             //
-            assert(!"Unknown QUASIFORM! signal in Try_Get_One_Console_Event()");
+            assert(!"Unknown QUASI? signal in Try_Get_One_Console_Event()");
             return e;
         }
 

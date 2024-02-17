@@ -79,13 +79,13 @@ join: func [
     {Concatenates values to the end of a copy of a value}
 
     return:
-        [any-series! issue! url! any-sequence! port!
+        [any-series? issue! url! any-sequence? port!
             map! object! module! bitset!]
     base [
         type-word!
-        any-string! issue! url!
-        any-sequence!
-        any-array!
+        any-string? issue! url!
+        any-sequence?
+        any-array?
         binary!
     ]
     value [<void> element? splice?]
@@ -220,9 +220,9 @@ charset: func [
 trim: func [
     {Removes spaces from strings or blanks from blocks or objects.}
 
-    return: [any-string! any-array! binary! any-context!]
+    return: [any-string? any-array? binary! any-context?]
     series "Series (modified) or object (made)"
-        [any-string! any-array! binary! any-context!]
+        [any-string? any-array? binary! any-context?]
     /head "Removes only from the head"
     /tail "Removes only from the tail"
     /auto "Auto indents lines relative to first line"
@@ -355,7 +355,7 @@ trim: func [
     ]
 
     ; TRIM/AUTO measures first line indentation and removes indentation on
-    ; later lines relative to that.  Only makes sense for ANY-STRING!, though
+    ; later lines relative to that.  Only makes sense for ANY-STRING?, though
     ; a concept like "lines" could apply to a BLOCK! of BLOCK!s.
     ;
     let indent: null

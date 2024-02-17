@@ -29,7 +29,7 @@
 //  MAKE_Sequence: C
 //
 // !!! There was no original TO TUPLE! code besides calling this MAKE, so
-// PATH!'s TO ANY-PATH! was used for TO ANY-TUPLE!.  But this contains some
+// PATH!'s TO ANY-PATH? was used for TO ANY-TUPLE?.  But this contains some
 // unique behavior which might be interesting for numeric MAKEs.
 //
 Bounce MAKE_Sequence(
@@ -362,7 +362,7 @@ REBTYPE(Sequence)
         }
         break; }
 
-        // ANY-SEQUENCE! is immutable, so a shallow copy should be a no-op,
+        // ANY-SEQUENCE? is immutable, so a shallow copy should be a no-op,
         // but it should be cheap for any similarly marked array.  Also, a
         // /DEEP copy of a path may copy groups that are mutable.
         //

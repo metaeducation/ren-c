@@ -31,7 +31,7 @@
 //
 //  Series_Common_Action_Maybe_Unhandled: C
 //
-// This routine is called to handle actions on ANY-SERIES! that can be taken
+// This routine is called to handle actions on ANY-SERIES? that can be taken
 // care of without knowing what specific kind of series it is.  So generally
 // index manipulation, and things like LENGTH/etc.
 //
@@ -326,7 +326,7 @@ REBINT Cmp_Value(const Cell* s, const Cell* t, bool strict)
 
     // !!! The strange and ad-hoc way this routine was written has some
     // special-case handling for numeric types.  It only allows the values to
-    // be of unequal types below if they are both ANY-NUMBER!, so those cases
+    // be of unequal types below if they are both ANY-NUMBER?, so those cases
     // are more complex and jump around, reusing code via a goto and passing
     // the canonized decimal form via d1/d2.
     //

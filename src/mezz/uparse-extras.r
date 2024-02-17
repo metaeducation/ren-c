@@ -16,7 +16,7 @@ Rebol [
 ]
 
 destructure: func [
-    input [any-series!]
+    input [any-series?]
     dialect [block!]
     /multi "Run multiple branches"
 ][

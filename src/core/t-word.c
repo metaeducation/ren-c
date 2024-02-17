@@ -179,17 +179,17 @@ Bounce TO_Word(Level* level_, Kind k, const REBVAL *arg)
                 continue;
             if (not Is_Word(item))
                 return RAISE(
-                    "Can't make ANY-WORD! from path unless it's one WORD!"
+                    "Can't make ANY-WORD? from path unless it's one WORD!"
                 );
             if (not Is_Fresh(OUT))
                 return RAISE(
-                    "Can't make ANY-WORD! from path w/more than one WORD!"
+                    "Can't make ANY-WORD? from path w/more than one WORD!"
                 );
             Derelativize(OUT, item, Cell_Sequence_Specifier(arg));
         }
 
         if (Is_Fresh(OUT))
-            return RAISE("Can't MAKE ANY-WORD! from PATH! that's all BLANK!s");
+            return RAISE("Can't MAKE ANY-WORD? from PATH! that's all BLANK!s");
 
         HEART_BYTE(OUT) = heart;
         return OUT;
