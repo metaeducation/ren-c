@@ -195,6 +195,17 @@ Bounce TO_Word(Level* level_, Kind k, const REBVAL *arg)
         return OUT;
     }
 
+    if (Any_Array(arg)) {
+        if (Cell_Series_Len_At(arg) != 1)
+            return RAISE("Can't TO ANY-WORD? on array with length > 1");
+        const Element* item = Cell_Array_Len_At(nullptr, arg);
+        if (not Is_Word(item))
+            return RAISE("TO ANY-WORD? requires array with one word in it");
+        Copy_Cell(OUT, item);
+        HEART_BYTE(OUT) = heart;
+        return OUT;
+    }
+
     return MAKE_Word(level_, heart, nullptr, arg);
 }
 

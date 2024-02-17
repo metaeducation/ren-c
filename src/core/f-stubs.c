@@ -213,8 +213,10 @@ REBI64 Int64s(const REBVAL *val, REBINT sign)
 const REBVAL *Datatype_From_Kind(Kind kind)
 {
     assert(kind < REB_MAX);
-    REBVAL *type = &Datatypes[kind];
-    assert(Is_Type_Word(type));
+    Offset n = cast(Offset, kind);
+    SymId datatype_sym = cast(SymId, REB_MAX + ((n - 1) * 2) + 1);
+    const Value* type = Try_Lib_Var(datatype_sym);
+    assert(Is_Type_Block(type));
     return type;
 }
 

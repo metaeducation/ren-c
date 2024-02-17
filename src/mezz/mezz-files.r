@@ -167,7 +167,7 @@ ask: func [
     return: "Null if the input was aborted (via ESCAPE, Ctrl-D, etc.)"
         [any-value?]
     question "Prompt to user, datatype to request, or dialect block"
-        [block! text! type-word!]
+        [block! text! type-block!]
     /hide "mask input with * (Rebol2 feature, not yet implemented)"
     ; !!! What about /MULTILINE ?
 ][
@@ -185,13 +185,13 @@ ask: func [
     let type: text!
     switch/type question [
         text! [prompt: question]  ; `ask "Input:"` doesn't filter type
-        type-word! [type: question]  ; `ask text!` has no prompt (like INPUT)
+        type-block! [type: question]  ; `ask text!` has no prompt (like INPUT)
         block! [
             parse question [
                 try prompt: text!
-                try let word: *in* word! (type: ensure type-word! get word)
+                try let word: *in* word! (type: ensure type-block! get word)
             ] except [
-                fail "ASK currently only supports [{Prompt:} type-word!]"
+                fail "ASK currently only supports [{Prompt:} type-block!]"
             ]
         ]
         fail

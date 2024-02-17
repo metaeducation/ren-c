@@ -73,21 +73,30 @@ INLINE Kind KIND_FROM_SYM(SymId s) {
     Cell_Word_Symbol(v)
 
 INLINE Kind VAL_TYPE_KIND(const Cell* v) {
-    assert(Cell_Heart(v) == REB_TYPE_WORD);
-    Option(SymId) id = Symbol_Id(Cell_Word_Symbol(v));
-    assert(unwrap(id) < cast(SymId, REB_MAX));
+    assert(Cell_Heart(v) == REB_TYPE_BLOCK);
+    if (Cell_Series_Len_At(v) != 1)
+        fail ("Type blocks only allowed one element for now");
+    const Element* item = Cell_Array_At(nullptr, v);
+    if (not Is_Word(item))
+        fail ("Type blocks only allowed WORD! items for now");
+    Option(SymId) id = Cell_Word_Id(item);
+    if (not id or not IS_KIND_SYM(unwrap(id)))
+        fail ("Type blocks only allowed builtin types for now");
     return cast(Kind, unwrap(id));
 }
 
 
-// Ren-C just uses TYPE-WORD! for built in datatypes
+// Ren-C uses TYPE-BLOCK! with WORD! for built in datatypes
 //
-INLINE REBVAL *Init_Builtin_Datatype_Untracked(
-    Cell* out,
+INLINE Value* Init_Builtin_Datatype_Untracked(
+    Sink(Value*) out,
     Kind kind
 ){
     assert(kind < REB_MAX);
-    return Init_Any_Word(out, REB_TYPE_WORD, Canon_Symbol(cast(SymId, kind)));
+    Array* a = Alloc_Singular(NODE_FLAG_MANAGED);
+
+    Init_Word(Stub_Cell(a), Canon_Symbol(cast(SymId, kind)));
+    return Init_Array_Cell(out, REB_TYPE_BLOCK, a);
 }
 
 #define Init_Builtin_Datatype(out,kind) \
@@ -115,7 +124,6 @@ extern CFunction* Builtin_Type_Hooks[REB_MAX][IDX_HOOKS_MAX];
 // list of hooks registered by the extension providing the custom type.
 //
 INLINE CFunction** VAL_TYPE_HOOKS(const Cell* type) {
-    assert(Cell_Heart(type) == REB_TYPE_WORD);
     Kind k = VAL_TYPE_KIND(type);
     assert(k < REB_MAX);
     return Builtin_Type_Hooks[k];

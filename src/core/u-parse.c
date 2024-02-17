@@ -1099,7 +1099,7 @@ static REBIXO To_Thru_Non_Block_Rule(
             bool any = false;
             Get_Var_May_Fail(temp, rule, P_RULE_SPECIFIER, any);
         }
-        else if (Is_Type_Word(rule) or Is_Type_Group(rule)) {
+        else if (Is_Type_Word(rule) or Is_Type_Block(rule)) {
             Init_Matcher(temp, rule);
         }
         else {

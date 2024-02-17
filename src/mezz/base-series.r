@@ -82,7 +82,7 @@ join: func [
         [any-series? issue! url! any-sequence? port!
             map! object! module! bitset!]
     base [
-        type-word!
+        type-block!
         any-string? issue! url!
         any-sequence?
         any-array?
@@ -95,7 +95,7 @@ join: func [
     ]
 
     let kind
-    if type-word? base [
+    if type-block? base [
         if not block? value [
             fail "JOIN with base as type only takes BLOCK! arguments"
         ]

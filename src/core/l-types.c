@@ -116,7 +116,7 @@ DECLARE_NATIVE(make)
 
     Option(const Value*) parent;
     Kind kind;
-    if (Is_Type_Word(type)) {
+    if (Is_Type_Block(type)) {
         kind = VAL_TYPE_KIND(type);
         parent = nullptr;
     }
@@ -260,10 +260,8 @@ Bounce Reflect_Core(Level* level_)
     switch (id) {
       case SYM_KIND:
       case SYM_TYPE:  // currently synonym for KIND, may change
-        if (Is_Void(v))
-            return nullptr;
         if (Is_Nulled(v))
-            fail (PARAM(value));
+            return RAISE(Error_Type_Of_Null_Raw());  // caller can TRY if meant
         return Init_Builtin_Datatype(OUT, VAL_TYPE(v));
 
       case SYM_QUOTES:
@@ -273,6 +271,9 @@ Bounce Reflect_Core(Level* level_)
         // !!! Are there any other universal reflectors?
         break;
     }
+
+    if (Is_Void(v))
+        return nullptr;
 
     QUOTE_BYTE(ARG(value)) = NOQUOTE_1;  // ignore quasi or quoted
 
@@ -292,8 +293,7 @@ Bounce Reflect_Core(Level* level_)
 //      return: [any-value?]
 //      'property "Will be escapable, ':property (bootstrap permitting)"
 //          [word! get-word! get-path! get-group!]
-//      value "Accepts null so TYPE OF NULL can be returned as null"
-//          [<maybe> any-value?]
+//      value [any-value?]
 //  ]
 //
 DECLARE_NATIVE(of)

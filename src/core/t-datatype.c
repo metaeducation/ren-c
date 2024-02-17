@@ -46,27 +46,15 @@ Array* Startup_Datatypes(Array* boot_typespecs)
 
         // Many places in the system want to be able to just off-the-cuff
         // refer to a built-in datatype, without allocating a cell to
-        // initialize.  This is done with Datatype_From_Kind().  Once upon
-        // a time the Lib definitions like INTEGER! would hold a DATATYPE!
-        // but now that INTEGER! is a type constraint, it would have to be
-        // held by another variable like plain INTEGER...but this competes
-        // with things like BLANK wanting to be a literal _ blank.  So we
-        // just put a global table off to the side in `Datatypes`.
+        // initialize.  This is done with Datatype_From_Kind().
         //
-        Init_Builtin_Datatype(&Datatypes[n], kind);
-        assert(&Datatypes[n] == Datatype_From_Kind(kind));
-        Set_Cell_Flag(&Datatypes[n], PROTECTED);
-
         // Things like INTEGER! are defined to be &INTEGER
         //
         SymId datatype_sym = cast(SymId, REB_MAX + ((n - 1) * 2) + 1);
         Value* datatype = Force_Lib_Var(datatype_sym);
-        Init_Any_Word(
-            datatype,
-            REB_TYPE_WORD,
-            Canon_Symbol(SYM_FROM_KIND(kind))
-        );
+        Init_Builtin_Datatype(datatype, kind);
         Set_Cell_Flag(datatype, PROTECTED);
+        assert(datatype == Datatype_From_Kind(kind));
 
         // Things like INTEGER? are fast typechecking "intrinsics".  At one
         // point these were constructed in the mezzanine, but it's faster and
@@ -81,8 +69,8 @@ Array* Startup_Datatypes(Array* boot_typespecs)
             UNBOUND
         );
 
-        // The "catalog of types" is somewhere that could serve as Datatypes[]
-        // if that is reconsidered.
+        // The "catalog of types" could be generated on demand by the system
+        // instead of collected and put in the global context.
         //
         Value* word = Init_Any_Word(
             Alloc_Tail_Array(catalog),
@@ -102,9 +90,4 @@ Array* Startup_Datatypes(Array* boot_typespecs)
 //
 void Shutdown_Datatypes(void)
 {
-    REBINT n = 1;
-
-    for (; n < REB_MAX; ++n) {
-        Erase_Cell(&Datatypes[n]);
-    }
 }

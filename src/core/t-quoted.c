@@ -609,26 +609,21 @@ DECLARE_NATIVE(pack)
 // Give back an action antiform which can act as a matcher for a datatype.
 //
 Value* Init_Matcher(Sink(Value*) out, const Value* types) {
-    if (Is_Type_Word(types)) {
-        Option(SymId) id = Cell_Word_Id(types);
-        if (not id or not IS_KIND_SYM(id))
-            fail ("MATCHES only works on builtin types at this time");
-
-        Kind kind = KIND_FROM_SYM(id);
+    if (Is_Type_Block(types)) {
+        Kind kind = VAL_TYPE_KIND(types);
         Offset n = cast(Offset, kind);
 
         SymId constraint_sym = cast(SymId, REB_MAX + ((n - 1) * 2));
         return Copy_Cell(out, Try_Lib_Var(constraint_sym));
     }
 
-    assert(Is_Type_Group(types));
-    assert(Cell_Series_Len_At(types) == 1);
+    assert(Is_Type_Word(types));
 
     if (Get_Var_Core_Throws(
         out,
         nullptr,
-        Cell_Array_Item_At(types),
-        Cell_Specifier(types)
+        types,
+        SPECIFIED
     )){
         fail (Error_No_Catch_For_Throw(TOP_LEVEL));
     }
@@ -642,7 +637,7 @@ Value* Init_Matcher(Sink(Value*) out, const Value* types) {
 //  "Make a function for matching types"
 //
 //      return: [action?]
-//      types [type-word! type-group!]
+//      types [type-word! type-block!]
 //  ]
 //
 DECLARE_NATIVE(matches)

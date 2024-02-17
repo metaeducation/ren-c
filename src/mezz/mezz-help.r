@@ -57,7 +57,7 @@ description-of: func [
     ]
     return (switch/type :v [
         any-array! [spaced ["array of length:" length of v]]
-        type-word! [
+        type-block! [
             mold v
         ]
         frame! [
@@ -120,7 +120,7 @@ help: func [
             To see all words of a specific datatype:
 
                 help object!
-                help type-word!
+                help type-block!
 
             Other debug helpers:
 
@@ -251,7 +251,7 @@ help: func [
     ]
 
     ; Open the web page for it?
-    all [doc, match [action? type-word!] :value] then [
+    all [doc, match [action? type-block!] :value] then [
         let item: form :topic
         if action? get :topic [
             ;

@@ -2001,7 +2001,7 @@ bool Try_As_String(
 //          any-sequence? any-series? any-word?
 //          frame!
 //      ]
-//      type [type-word!]
+//      type [type-block!]
 //      value [
 //          <maybe>
 //          integer!

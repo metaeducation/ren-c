@@ -213,7 +213,7 @@ summarize-obj: func [
         [<opt> block!]
     obj [object! port! module!]
     /pattern "Include only fields that match a string or datatype"
-        [text! type-word!]
+        [text! type-block!]
 ][
     let form-pad: lambda [
         {Form a value with fixed size (space padding follows)}
@@ -242,7 +242,7 @@ summarize-obj: func [
             switch/type pattern [  ; filter out any non-matching items
                 null?! []
 
-                type-word! [
+                type-block! [
                     if kind != pattern [continue]
                 ]
 

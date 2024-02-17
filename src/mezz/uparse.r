@@ -1743,14 +1743,14 @@ default-combinators: make map! reduce [
     ;     == 1020
     ;
 
-    type-word! combinator [
+    type-block! combinator [
         return: "Matched or synthesized value"
             [element?]
-        value [type-word!]
+        value [type-block!]
         <local> item error
     ][
         either any-array? input [
-            if value <> kind of maybe input.1 [
+            if value <> type of maybe input.1 [
                 return raise "Value at parse position did not match datatype"
             ]
             remainder: next input
@@ -1764,7 +1764,7 @@ default-combinators: make map! reduce [
             ; afterward it's not something like a requested integer!.  Red
             ; has some type sniffing in their fast lexer, review relevance.
             ;
-            if value != kind of item [
+            if value != type of item [
                 return raise "Could not TRANSCODE the datatype from input"
             ]
             return item
@@ -1799,10 +1799,10 @@ default-combinators: make map! reduce [
         ]
     ]
 
-    type-block! combinator [
+    type-word! combinator [
         return: "Matched or synthesized value"
             [element?]
-        value [type-block!]
+        value [type-word!]
         <local> item error
     ][
         either any-array? input [

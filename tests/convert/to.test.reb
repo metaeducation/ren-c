@@ -1,8 +1,9 @@
 ; functions/convert/to.r
 
-; Originally discussed in #38, but logic is no longer a fundamental type
+; Originally discussed in #38, but logic is no longer a fundamental type, so
+; the predicate of &logic? turns into logic?
 [
-    ~expect-val~ !! (to word! logic?!)
+    ('logic? = to word! logic?!)
 ]
 
 ; Fundamental datatypes are now `percent!: &percent` and give word with no

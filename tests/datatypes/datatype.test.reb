@@ -1,43 +1,24 @@
 ; datatypes/datatype.r
+
 (not type-word? 1)
-(type-word! = kind of frame!)
-(type-word? frame!)
-(type-word? binary!)
-(type-word? bitset!)
-(type-word? block!)
-(type-word? type-word!)
-(type-word? date!)
-(type-word? decimal!)
-(type-word? email!)
-(type-word? error!)
-(type-word? file!)
-(type-word? get-path!)  ; get-path! =? path! in R2/Forward, R2 2.7.7+
-(type-word? get-word!)
-(type-word? handle!)
-(type-word? integer!)
-(type-word? issue!)
-(type-word? map!)  ; map! =? hash! in R2/Forward, R2 2.7.7+
-(type-word? module!)
-(type-word? money!)
-(type-word? blank!)
-(type-word? object!)
-(type-word? pair!)
-(type-word? group!)
-(type-word? path!)
-(type-word? percent!)
-(type-word? port!)
-(type-word? set-path!)
-(type-word? set-word!)
-(type-word? text!)
-(type-word? tag!)
-(type-word? time!)
-(type-word? tuple!)
-(type-word? parameter!)
-(type-word? url!)
-(type-word? word!)
 
-; literal representation
-(type-word? &frame!)
+(type-block! = type of frame!)
 
-; Now a type constraint, not a datatype
-(type-group? logic?!)
+(
+    for-each typename [
+        frame! binary! bitset! block! type-word! date! decimal!
+        email! error! file! get-path! get-word! handle! integer!
+        issue! map! module! money! blank! object! pair! group!
+        path! percent! port! set-path! set-word! text! tag!
+        time! tuple! parameter! url! word!
+    ][
+        if not type-block? get inside [] typename [
+            fail [typename "is not a type-block!"]
+        ]
+    ]
+    true
+)
+
+(type-word? &even?)  ; a type constraint
+
+(type-word? logic?!)  ; a type constraint, not a datatype (for the moment...)

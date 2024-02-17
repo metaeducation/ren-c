@@ -9,7 +9,7 @@
 ; be tested for and reacted to easily with things like DID, DIDN'T, THEN, ELSE.
 
 (null? null)
-~invalid-arg~ !! (antiform! = kind of null)
+~type-of-null~ !! (antiform! = kind of null)
 (not null? 1)
 
 ; Early designs for NULL did not let you get or set them from plain WORD!

@@ -279,25 +279,27 @@ void Set_Parameter_Spec(
 
         Heart heart = Cell_Heart(lookup);
 
-        if (heart == REB_TYPE_WORD) {
+        if (heart == REB_TYPE_BLOCK) {
             if (optimized == optimized_tail) {
                 *flags |= PARAMETER_FLAG_INCOMPLETE_OPTIMIZATION;
                 continue;
             }
-            Option(SymId) id = Cell_Word_Id(lookup);
-            if (not IS_KIND_SYM(id))
-                fail (item);
-            *optimized = KIND_FROM_SYM(unwrap(id));
+            *optimized = VAL_TYPE_KIND(lookup);
             ++optimized;
             Set_Cell_Flag(dest, PARAMSPEC_SPOKEN_FOR);
         }
         else if (
-            heart == REB_TYPE_GROUP or heart == REB_TYPE_BLOCK
+            heart == REB_TYPE_WORD
             or heart == REB_TYPE_PATH or heart == REB_TYPE_TUPLE
         ){
-            *flags |= PARAMETER_FLAG_INCOMPLETE_OPTIMIZATION;
+            lookup = Lookup_Word_May_Fail(Ensure_Element(lookup), SPECIFIED);
+            if (not Is_Action(lookup))
+                fail ("TYPE-WORD! must look up to an action for now");
+            heart = REB_FRAME;
+            goto handle_predicate;
         }
         else if (heart == REB_FRAME and QUOTE_BYTE(lookup) == ANTIFORM_0) {
+          handle_predicate:
             Phase* phase = ACT_IDENTITY(VAL_ACTION(lookup));
             if (ACT_DISPATCHER(phase) == &Intrinsic_Dispatcher) {
                 Intrinsic* intrinsic = Extract_Intrinsic(phase);

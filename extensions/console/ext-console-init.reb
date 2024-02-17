@@ -476,7 +476,7 @@ ext-console-impl: func [
         "Hooked RETURN function which finalizes any gathered EMIT lines"
 
         state "Describes the RESULT that the next call to HOST-CONSOLE gets"
-            [integer! tag! group! type-word! meta-group! handle!]
+            [integer! tag! group! type-block! meta-group! handle!]
         <with> instruction prior
         <local> return-to-c (runs :return)  ; capture HOST-CONSOLE's RETURN
     ][
@@ -510,7 +510,7 @@ ext-console-impl: func [
                 assert [empty? instruction]
                 state
             ]
-            type-word! [  ; type assertion, how to enforce this?
+            type-block! [  ; type assertion, how to enforce this?
                 emit spaced ["^-- Result should be" an state]
                 instruction
             ]

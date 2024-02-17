@@ -51,26 +51,26 @@ lf: LF:    newline
 ; decorations (e.g. &any-series?) when needed.  Use e.g. plain any-series?
 ; in function specs.
 
-null?!: &(null?)
-trash?!: &(trash?)
-void?!: &(void?)
-refinement?!: &(refinement?)
-char?!: &(char?)
-blackhole?!: &(blackhole?)
-splice?!: &(splice?)
-lit-word?!: &(lit-word?)
-lit-path?!: &(lit-path?)
-logic?!: &(logic?)
-quasi-word?!: &(quasi-word?)
-action?!: &(action?)
-any-value!: &(any-value?)
-any-series!: &(any-series?)
-any-string!: &(any-string?)
-any-sequence!: &(any-sequence?)
-any-word!: &(any-word?)
-any-array!: &(any-array?)
-any-number!: &(any-number?)
-any-path!: &(any-path?)
+null?!: &null?
+trash?!: &trash?
+void?!: &void?
+refinement?!: &refinement?
+char?!: &char?
+blackhole?!: &blackhole?
+splice?!: &splice?
+lit-word?!: &lit-word?
+lit-path?!: &lit-path?
+logic?!: &logic?
+quasi-word?!: &quasi-word?
+action?!: &action?
+any-value!: &any-value?
+any-series!: &any-series?
+any-string!: &any-string?
+any-sequence!: &any-sequence?
+any-word!: &any-word?
+any-array!: &any-array?
+any-number!: &any-number?
+any-path!: &any-path?
 
 
 ; A "blackhole" is a name for the usage of the NUL character in the sense of

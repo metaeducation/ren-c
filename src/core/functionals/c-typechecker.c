@@ -137,8 +137,10 @@ bool Typecheck_Atom_Core(
         match_all = false;
     }
     else switch (VAL_TYPE(tests)) {
-      case REB_BLOCK:
       case REB_TYPE_BLOCK:
+        return Is_Stable(v) and (VAL_TYPE(v) == VAL_TYPE_KIND(tests));
+
+      case REB_BLOCK:
         item = Cell_Array_At(&tail, tests);
         derived = Derive_Specifier(tests_specifier, tests);
         match_all = false;
@@ -190,7 +192,7 @@ bool Typecheck_Atom_Core(
 
         Kind kind;
         const Value* test;
-        if (VAL_TYPE_UNCHECKED(item) == REB_WORD) {
+        if (VAL_TYPE_UNCHECKED(item) == REB_WORD or VAL_TYPE_UNCHECKED(item) == REB_TYPE_WORD) {
             label = Cell_Word_Symbol(item);
             test = Lookup_Word_May_Fail(item, derived);
             kind = VAL_TYPE(test);  // e.g. TYPE-BLOCK! <> BLOCK!
@@ -288,7 +290,7 @@ bool Typecheck_Atom_Core(
                 goto test_failed;
             break; }
 
-          case REB_TYPE_BLOCK:
+          case REB_TYPE_WORD:
           case REB_TYPE_GROUP: {
             Specifier* subspecifier = Derive_Specifier(tests_specifier, test);
             if (not Typecheck_Atom_Core(test, subspecifier, v))
@@ -304,7 +306,7 @@ bool Typecheck_Atom_Core(
                 goto test_failed;
             break; }
 
-          case REB_TYPE_WORD: {
+          case REB_TYPE_BLOCK: {
             Kind k;
             if (Is_Antiform(v) and Is_Antiform_Unstable(v))
                 k = REB_ANTIFORM;
