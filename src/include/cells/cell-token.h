@@ -27,7 +27,7 @@
 // `CODEPOINT OF` reflector, or by using FIRST on the token.
 //
 // REB_ISSUE has two forms: one with a separate node allocation and one that
-// stores its data where the node and index would be.  CELL_FLAG_ISSUE_HAS_NODE
+// stores data where a node and index would be.  CELL_FLAG_STRINGLIKE_HAS_NODE
 // is what discerns the two categories, and can only be treated as a string
 // when it has that flag.  Hence generically speaking, ISSUE! is not considered
 // an ANY-SERIES? or ANY-STRING? type.
@@ -40,7 +40,7 @@ INLINE bool IS_CHAR_CELL(const Cell* v) {
     if (Cell_Heart(v) != REB_ISSUE)
         return false;
 
-    if (Get_Cell_Flag(v, ISSUE_HAS_NODE))
+    if (Get_Cell_Flag(v, STRINGLIKE_HAS_NODE))
         return false;  // allocated form, too long to be a character
 
     return EXTRA(Bytes, v).exactly_4[IDX_EXTRA_LEN] <= 1;  // codepoint
@@ -53,7 +53,7 @@ INLINE bool IS_CHAR(const Atom* v) {
 }
 
 INLINE Codepoint Cell_Codepoint(const Cell* v) {
-    assert(Not_Cell_Flag(v, ISSUE_HAS_NODE));
+    assert(Not_Cell_Flag(v, STRINGLIKE_HAS_NODE));
 
     if (EXTRA(Bytes, v).exactly_4[IDX_EXTRA_LEN] == 0)
         return 0;  // no '\0` bytes internal to series w/REB_TEXT "heart"
@@ -74,7 +74,8 @@ INLINE Byte Cell_Char_Encoded_Size(const Cell* v)
   { return Encoded_Size_For_Codepoint(Cell_Codepoint(v)); }
 
 INLINE const Byte* VAL_CHAR_ENCODED(const Cell* v) {
-    assert(Cell_Heart(v) == REB_ISSUE and Not_Cell_Flag(v, ISSUE_HAS_NODE));
+    assert(Cell_Heart(v) == REB_ISSUE);
+    assert(Not_Cell_Flag(v, STRINGLIKE_HAS_NODE));
     assert(EXTRA(Bytes, v).exactly_4[IDX_EXTRA_LEN] <= 1);  // e.g. codepoint
     return PAYLOAD(Bytes, v).at_least_8;  // !!! '\0' terminated or not?
 }
@@ -247,7 +248,7 @@ INLINE Utf8(const*) Cell_Utf8_Len_Size_At_Limit(
 
     Heart heart = Cell_Heart(v);
 
-    if (heart == REB_ISSUE and Not_Cell_Flag(v, ISSUE_HAS_NODE)) {
+    if (heart == REB_ISSUE and Not_Cell_Flag(v, STRINGLIKE_HAS_NODE)) {
         REBLEN len;
         Size size;
         //
@@ -275,35 +276,7 @@ INLINE Utf8(const*) Cell_Utf8_Len_Size_At_Limit(
     const String* s = c_cast(String*, Cell_Node1(v));  // +Cell_Issue_String()
     Utf8(const*) utf8;
 
-    if (Is_String_Symbol(s)) {
-        utf8 = String_Head(s);
-
-        if (size_out or length_out) {
-            if (limit == UNLIMITED and not length_out)
-                *unwrap(size_out) = String_Size(s);
-            else {
-                // Symbols don't cache their codepoint length, must calculate
-                //
-                // Note that signed cast to REBLEN of -1 UNLIMITED is a large #
-                //
-                Utf8(const*) cp = utf8;
-                REBLEN index = 0;
-                for (
-                    ;
-                    index < cast(REBLEN, limit);
-                    ++index, cp = Skip_Codepoint(cp)
-                ){
-                    if (Codepoint_At(cp) == '\0')
-                        break;
-                }
-                if (size_out)
-                    *unwrap(size_out) = cp - utf8;
-                if (length_out)
-                    *unwrap(length_out) = index;
-            }
-        }
-    }
-    else if (heart == REB_ISSUE or heart == REB_URL) {  // no index
+    if (heart == REB_ISSUE or heart == REB_URL) {  // no index
         utf8 = String_Head(s);
         if (size_out)
             *unwrap(size_out) = Series_Used(s);

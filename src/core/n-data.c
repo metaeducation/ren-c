@@ -1956,7 +1956,7 @@ bool Try_As_String(
         Inherit_Const(Quotify(out, quotes), v);
     }
     else if (Is_Issue(v)) {
-        if (Get_Cell_Flag(v, ISSUE_HAS_NODE)) {
+        if (Get_Cell_Flag(v, STRINGLIKE_HAS_NODE)) {
             assert(Is_Series_Frozen(Cell_Issue_String(v)));
             goto any_string;  // ISSUE! series must be immutable
         }
@@ -2196,7 +2196,7 @@ DECLARE_NATIVE(as)
       case REB_META_WORD:
       case REB_THE_WORD: {
         if (Is_Issue(v)) {
-            if (Get_Cell_Flag(v, ISSUE_HAS_NODE)) {
+            if (Get_Cell_Flag(v, STRINGLIKE_HAS_NODE)) {
                 //
                 // Handle the same way we'd handle any other read-only text
                 // with a series allocation...e.g. reuse it if it's already
@@ -2310,7 +2310,7 @@ DECLARE_NATIVE(as)
 
       case REB_BINARY: {
         if (Is_Issue(v)) {
-            if (Get_Cell_Flag(v, ISSUE_HAS_NODE))
+            if (Get_Cell_Flag(v, STRINGLIKE_HAS_NODE))
                 goto any_string_as_binary;  // had a series allocation
 
             // Data lives in payload--make new frozen series for BINARY!

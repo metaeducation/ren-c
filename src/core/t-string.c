@@ -838,9 +838,8 @@ void MF_String(REB_MOLD *mo, const Cell* v, bool form)
 {
     String* buf = mo->series;
 
-    assert(Any_Stringlike(v));
-
     Heart heart = Cell_Heart(v);
+    assert(Any_Utf8_Kind(heart));
 
     // Special format for MOLD/ALL string series when not at head
     //
@@ -865,7 +864,7 @@ void MF_String(REB_MOLD *mo, const Cell* v, bool form)
         break;
 
       case REB_FILE:
-        if (Cell_Series_Len_At(v) == 0) {
+        if (Cell_String_Len_At(v) == 0) {
             Append_Ascii(buf, "%\"\"");
             break;
         }

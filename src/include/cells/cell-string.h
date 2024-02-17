@@ -52,21 +52,42 @@ INLINE Length Cell_Series_Len_At(const Cell* v) {
     return Cell_Series_Len_Head(v) - i;  // take current index into account
 }
 
+INLINE Utf8(const*) Cell_Utf8_Head(const Cell* c) {
+    assert(Any_Utf8_Kind(Cell_Heart(c)));
+
+    if (Not_Cell_Flag(c, FIRST_IS_NODE))  // must store bytes in cell direct
+        return PAYLOAD(Bytes, c).at_least_8;
+
+    const String* str = cast(String*, Cell_Node1(c));  // symbols are strings
+    return String_Head(str);
+}
+
 INLINE Utf8(const*) Cell_String_At(const Cell* v) {
-    const String* str = Cell_String(v);  // checks that it's ANY-STRING?
+    Heart heart = Cell_Heart(v);
+
+    if (not Any_String_Kind(heart))  // non-positional: URL, ISSUE, WORD...
+        return Cell_Utf8_Head(v);  // might store utf8 directly in cell
+
+    const String* str = c_cast(String*, Cell_Series(v));
     REBIDX i = VAL_INDEX_RAW(v);
-    REBLEN len = String_Len(str);
-    if (i < 0 or i > cast(REBIDX, len))
+    if (i < 0 or i > cast(REBIDX, String_Len(str)))
         fail (Error_Index_Out_Of_Range_Raw());
+
     return i == 0 ? String_Head(str) : String_At(str, i);
 }
 
 
-INLINE Utf8(const*) Cell_String_Tail(const Cell* v) {
-    const String* s = Cell_String(v);  // debug build checks it's ANY-STRING?
-    return String_Tail(s);
-}
+INLINE Utf8(const*) Cell_String_Tail(const Cell* c) {
+    assert(Any_Utf8_Kind(Cell_Heart(c)));
 
+    if (Not_Cell_Flag(c, STRINGLIKE_HAS_NODE)) {  // content in cell direct
+        Size size = EXTRA(Bytes, c).exactly_4[IDX_EXTRA_USED];
+        return PAYLOAD(Bytes, c).at_least_8 + size;
+    }
+
+    const String* str = cast(String*, Cell_Node1(c));
+    return String_Tail(str);
+}
 
 
 #define Cell_String_At_Ensure_Mutable(v) \
@@ -75,15 +96,17 @@ INLINE Utf8(const*) Cell_String_Tail(const Cell* v) {
 #define Cell_String_At_Known_Mutable(v) \
     m_cast(Utf8(*), Cell_String_At(Known_Mutable(v)))
 
-INLINE bool Any_Stringlike(const Cell* v) {
-    // called by core code, sacrifice READABLE() checks
-    if (Any_String_Kind(Cell_Heart_Unchecked(v)))
-        return true;
-    if (Cell_Heart(v) == REB_URL)
-        return true;
-    if (Cell_Heart(v) != REB_ISSUE)
-        return false;
-    return Get_Cell_Flag_Unchecked(v, ISSUE_HAS_NODE);
+
+INLINE REBLEN Cell_String_Len_At(const Cell* c) {
+    Heart heart = Cell_Heart(c);
+    if (Any_String_Kind(heart))  // can have an index position
+        return Cell_Series_Len_At(c);
+
+    if (Not_Cell_Flag(c, STRINGLIKE_HAS_NODE))  // content directly in cell
+        return EXTRA(Bytes, c).exactly_4[IDX_EXTRA_LEN];
+
+    const String* str = cast(String*, Cell_Node1(c));
+    return String_Len(str);
 }
 
 INLINE Size Cell_String_Size_Limit_At(
@@ -91,12 +114,10 @@ INLINE Size Cell_String_Size_Limit_At(
     const Cell* v,
     REBINT limit  // UNLIMITED (e.g. a very large number) for no limit
 ){
-    assert(Any_Stringlike(v));
-
     Utf8(const*) at = Cell_String_At(v);  // !!! update cache if needed
     Utf8(const*) tail;
 
-    REBLEN len_at = Cell_Series_Len_At(v);
+    REBLEN len_at = Cell_String_Len_At(v);
     if (cast(REBLEN, limit) >= len_at) {  // UNLIMITED casts to large unsigned
         if (length_out)
             *unwrap(length_out) = len_at;

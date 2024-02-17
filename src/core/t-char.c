@@ -300,7 +300,7 @@ void MF_Issue(REB_MOLD *mo, const Cell* v, bool form)
         }
     }
 
-    if (no_quotes or Not_Cell_Flag(v, ISSUE_HAS_NODE)) {  // !!! hack
+    if (no_quotes or Not_Cell_Flag(v, STRINGLIKE_HAS_NODE)) {  // !!! hack
         if (len == 1 and not no_quotes) {  // use historical CHAR! molding
             bool parened = GET_MOLD_FLAG(mo, MOLD_FLAG_ALL);
 

@@ -115,7 +115,7 @@ typedef struct StubStruct Stub;  // forward decl for DEBUG_USE_UNION_PUNS
 #define CELL_FLAG_FIRST_IS_NODE \
     NODE_FLAG_GC_ONE
 
-#define CELL_FLAG_ISSUE_HAS_NODE CELL_FLAG_FIRST_IS_NODE  // make findable
+#define CELL_FLAG_STRINGLIKE_HAS_NODE CELL_FLAG_FIRST_IS_NODE  // make findable
 #define CELL_FLAG_SEQUENCE_HAS_NODE CELL_FLAG_FIRST_IS_NODE  // make findable
 
 

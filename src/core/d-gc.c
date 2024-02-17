@@ -110,7 +110,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
         break;
 
       case REB_ISSUE: {
-        if (Get_Cell_Flag_Unchecked(v, ISSUE_HAS_NODE)) {
+        if (Get_Cell_Flag_Unchecked(v, STRINGLIKE_HAS_NODE)) {
             const Series* s = Cell_Issue_String(v);
             assert(Is_Series_Frozen(s));
 

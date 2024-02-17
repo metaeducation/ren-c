@@ -191,7 +191,7 @@ uint32_t Hash_Value(const Cell* cell)
       case REB_EMAIL:
       case REB_URL:
       case REB_TAG:
-      case REB_ISSUE: {  // ISSUE! may or may not have CELL_FLAG_ISSUE_HAS_NODE
+      case REB_ISSUE: {  // may or may not have CELL_FLAG_STRINGLIKE_HAS_NODE
         REBLEN len;
         Utf8(const*) utf8 = Cell_Utf8_Len_Size_At(&len, nullptr, cell);
         hash = Hash_UTF8_Len_Caseless(utf8, len);
