@@ -303,7 +303,7 @@ const Symbol* Intern_UTF8_Managed_Core(  // results implicitly managed [1]
     // we only run this the first time a symbol is interned.
     //
   blockscope {
-    if (GET_LEX_CLASS(utf8[0]) == LEX_CLASS_NUMBER) {  // |1| is a WORD!
+    if (Get_Lex_Class(utf8[0]) == LEX_CLASS_NUMBER) {  // |1| is a WORD!
         Set_Subclass_Flag(SYMBOL, s, ESCAPE_PLAIN);
         Set_Subclass_Flag(SYMBOL, s, ESCAPE_WITH_SIGIL);
         Set_Subclass_Flag(SYMBOL, s, ESCAPE_IN_SEQUENCE);

@@ -343,9 +343,9 @@ DECLARE_NATIVE(enhex)
             encoded[0] = cast(Byte, c);
             encoded_size = 1;
 
-            switch (GET_LEX_CLASS(c)) {
+            switch (Get_Lex_Class(c)) {
               case LEX_CLASS_DELIMIT:
-                switch (GET_LEX_VALUE(c)) {
+                switch (Get_Lex_Delimit(c)) {
                   case LEX_DELIMIT_LEFT_PAREN:
                   case LEX_DELIMIT_RIGHT_PAREN:
                   case LEX_DELIMIT_LEFT_BRACKET:
@@ -372,7 +372,7 @@ DECLARE_NATIVE(enhex)
                 goto leave_as_is;
 
               case LEX_CLASS_SPECIAL:
-                switch (GET_LEX_VALUE(c)) {
+                switch (Get_Lex_Special(c)) {
                   case LEX_SPECIAL_AT:
                   case LEX_SPECIAL_COLON:
                   case LEX_SPECIAL_APOSTROPHE:

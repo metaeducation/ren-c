@@ -82,15 +82,44 @@ enum Reb_Token {
 #define LEX_CLASS       (3<<LEX_SHIFT)  /* class bit field */
 #define LEX_VALUE       (0x1F)          /* value bit field */
 
-#define GET_LEX_CLASS(c)  (Lex_Map[(Byte)c] >> LEX_SHIFT)
-#define GET_LEX_VALUE(c)  (Lex_Map[(Byte)c] & LEX_VALUE)
+
+//
+// General Lexical Classes (encoded in the LEX_CLASS field)
+//
+// 1. Macros do make assumptions on the order, and it's important that this
+//    fits in two bits
+//
+// 2. The masks are named like LEX_DELIMIT instead of LEX_DELIMIT_MASK for
+//    brevity in the table.  But it's easy to slip up and write something
+//    like (Get_Lex_Class(b) == LEX_DELIMIT) instead of LEX_CLASS_DELIMIT.
+//    So wrapping in an enum catches that with a -Wenum-compare warning.
+//
+enum LexClassEnum {  // order is important [1]
+    LEX_CLASS_DELIMIT = 0,
+    LEX_CLASS_SPECIAL,
+    LEX_CLASS_WORD,
+    LEX_CLASS_NUMBER
+};
+STATIC_ASSERT(LEX_CLASS_NUMBER < 4);
+typedef enum LexClassEnum LexClass;
+
+#define Get_Lex_Class(b) \
+    u_cast(LexClass, Lex_Map[b] >> LEX_SHIFT)
+
+enum LexClassMasksEnum {  // using an enum helps catch incorrect uses [2]
+    LEX_DELIMIT =   (LEX_CLASS_DELIMIT << LEX_SHIFT),
+    LEX_SPECIAL =   (LEX_CLASS_SPECIAL << LEX_SHIFT),
+    LEX_WORD =      (LEX_CLASS_WORD << LEX_SHIFT),
+    LEX_NUMBER =    (LEX_CLASS_NUMBER << LEX_SHIFT)
+};
+
 
 
 /*
 **  Delimiting Chars (encoded in the LEX_VALUE field)
 **  NOTE: Macros do make assumption that _RETURN is the last space delimiter
 */
-enum LEX_DELIMIT_ENUM {
+enum LexDelimitEnum {
     LEX_DELIMIT_SPACE,              /* 20 space */
     LEX_DELIMIT_END,                /* 00 null terminator, end of input */
     LEX_DELIMIT_LINEFEED,           /* 0A line-feed */
@@ -121,26 +150,14 @@ enum LEX_DELIMIT_ENUM {
 
     LEX_DELIMIT_MAX
 };
-
 STATIC_ASSERT(LEX_DELIMIT_MAX <= 16);
+typedef enum LexDelimitEnum LexDelimit;
 
+INLINE LexDelimit Get_Lex_Delimit(Byte byte) {
+    assert(Get_Lex_Class(byte) == LEX_CLASS_DELIMIT);
+    return u_cast(LexDelimit, Lex_Map[byte] & LEX_VALUE);
+}
 
-
-/*
-**  General Lexical Classes (encoded in the LEX_CLASS field)
-**  NOTE: macros do make assumptions on the order, and that there are 4!
-*/
-enum LEX_CLASS_ENUM {
-    LEX_CLASS_DELIMIT = 0,
-    LEX_CLASS_SPECIAL,
-    LEX_CLASS_WORD,
-    LEX_CLASS_NUMBER
-};
-
-#define LEX_DELIMIT     (LEX_CLASS_DELIMIT<<LEX_SHIFT)
-#define LEX_SPECIAL     (LEX_CLASS_SPECIAL<<LEX_SHIFT)
-#define LEX_WORD        (LEX_CLASS_WORD<<LEX_SHIFT)
-#define LEX_NUMBER      (LEX_CLASS_NUMBER<<LEX_SHIFT)
 
 typedef uint16_t LEXFLAGS;  // 16 flags per lex class
 
@@ -162,15 +179,13 @@ typedef uint16_t LEXFLAGS;  // 16 flags per lex class
 #define IS_LEX_NOT_DELIMIT(c)           (Lex_Map[(Byte)c] >= LEX_SPECIAL)
 #define IS_LEX_WORD_OR_NUMBER(c)        (Lex_Map[(Byte)c] >= LEX_WORD)
 
-INLINE bool IS_LEX_DELIMIT_HARD(Byte c) {
-    assert(IS_LEX_DELIMIT(c));
-    return GET_LEX_VALUE(c) <= LEX_DELIMIT_HARD;
-}
+#define IS_LEX_DELIMIT_HARD(byte) \
+    (Get_Lex_Delimit(byte) <= LEX_DELIMIT_HARD)
 
 //
 //  Special Chars (encoded in the LEX_VALUE field)
 //
-enum LEX_SPECIAL_ENUM {             /* The order is important! */
+enum LexSpecialEnum {               /* The order is important! */
     LEX_SPECIAL_AT,                 /* 40 @ - email */
     LEX_SPECIAL_PERCENT,            /* 25 % - file name */
     LEX_SPECIAL_BACKSLASH,          /* 5C \  */
@@ -197,14 +212,19 @@ enum LEX_SPECIAL_ENUM {             /* The order is important! */
 
     LEX_SPECIAL_MAX
 };
-
 STATIC_ASSERT(LEX_SPECIAL_MAX <= 16);
+typedef enum LexSpecialEnum LexSpecial;
+
+INLINE LexSpecial Get_Lex_Special(Byte byte) {
+    assert(Get_Lex_Class(byte) == LEX_CLASS_SPECIAL);
+    return u_cast(LexSpecial, Lex_Map[byte] & LEX_VALUE);
+}
 
 
 /*
 **  Special Encodings
 */
-#define LEX_DEFAULT (LEX_DELIMIT|LEX_DELIMIT_SPACE)     /* control chars = spaces */
+#define LEX_DEFAULT (LEX_DELIMIT|LEX_DELIMIT_SPACE)  // control chars = spaces
 
 // In UTF8 C0, C1, F5, and FF are invalid.  Ostensibly set to default because
 // it's not necessary to use a bit for a special designation, since they

@@ -839,7 +839,7 @@ static Context* Error_Mismatch(SCAN_LEVEL *level, char wanted, char seen) {
 //
 // Note: The reason the first character's lexical class is not considered is
 // because it's important to know it *exactly*, so the caller will use
-// GET_LEX_CLASS(ss->begin[0]).  Fingerprinting just helps accelerate further
+// Get_Lex_Class(ss->begin[0]).  Fingerprinting just helps accelerate further
 // categorization.
 //
 static LEXFLAGS Prescan_Token(SCAN_STATE *ss)
@@ -854,7 +854,7 @@ static LEXFLAGS Prescan_Token(SCAN_STATE *ss)
     ss->begin = cp;  // don't count leading whitespace as part of token
 
     while (true) {
-        switch (GET_LEX_CLASS(*cp)) {
+        switch (Get_Lex_Class(*cp)) {
           case LEX_CLASS_DELIMIT:
             if (cp == ss->begin) {
                 //
@@ -864,7 +864,7 @@ static LEXFLAGS Prescan_Token(SCAN_STATE *ss)
                 ss->end = cp + 1;
 
                 // Note: We'd liked to have excluded LEX_DELIMIT_END, but
-                // would require a GET_LEX_VALUE() call to know to do so.
+                // would require a Get_Lex_Delimit() call to know to do so.
                 // Locate_Token_May_Push_Mold() does a `switch` on that,
                 // so it can subtract this addition back out itself.
             }
@@ -876,7 +876,7 @@ static LEXFLAGS Prescan_Token(SCAN_STATE *ss)
             if (cp != ss->begin) {
                 // As long as it isn't the first character, we union a flag
                 // in the result mask to signal this special char's presence
-                SET_LEX_FLAG(flags, GET_LEX_VALUE(*cp));
+                SET_LEX_FLAG(flags, Get_Lex_Special(*cp));
             }
             ++cp;
             break;
@@ -1096,7 +1096,7 @@ static enum Reb_Token Maybe_Locate_Token_May_Push_Mold(
         ss->end = cp + 1;
         return TOKEN_AMPERSAND;
     }
-    if (*cp == '$' and GET_LEX_CLASS(cp[1]) != LEX_CLASS_NUMBER) {
+    if (*cp == '$' and Get_Lex_Class(cp[1]) != LEX_CLASS_NUMBER) {
         ss->end = cp + 1;
         return TOKEN_DOLLAR;
     }
@@ -1165,7 +1165,7 @@ static enum Reb_Token Maybe_Locate_Token_May_Push_Mold(
                 }
 
                 if (
-                    LEX_CLASS_DELIMIT == GET_LEX_CLASS(*cp)
+                    LEX_CLASS_DELIMIT == Get_Lex_Class(*cp)
                     and *cp != '.'  // we treat |.| as WORD! of period
                     and *cp != '/'  // we treat |/| as WORD! of slash
                 ){
@@ -1267,9 +1267,9 @@ static enum Reb_Token Maybe_Locate_Token_May_Push_Mold(
         }
     }
 
-    switch (GET_LEX_CLASS(*cp)) {
+    switch (Get_Lex_Class(*cp)) {
       case LEX_CLASS_DELIMIT:
-        switch (GET_LEX_VALUE(*cp)) {
+        switch (Get_Lex_Delimit(*cp)) {
           case LEX_DELIMIT_SPACE:
             panic ("Prescan_Token did not skip whitespace");
 
@@ -1392,9 +1392,9 @@ static enum Reb_Token Maybe_Locate_Token_May_Push_Mold(
         }
 
       case LEX_CLASS_SPECIAL:
-        assert(GET_LEX_VALUE(*cp) != LEX_SPECIAL_BAR);  // weird word, handled
+        assert(Get_Lex_Special(*cp) != LEX_SPECIAL_BAR);  // weird word handled
 
-        if (GET_LEX_VALUE(*cp) == LEX_SPECIAL_SEMICOLON) {  // begin comment
+        if (Get_Lex_Special(*cp) == LEX_SPECIAL_SEMICOLON) {  // begin comment
             while (not ANY_CR_LF_END(*cp))
                 ++cp;
             if (*cp == '\0')
@@ -1422,7 +1422,7 @@ static enum Reb_Token Maybe_Locate_Token_May_Push_Mold(
 
       next_lex_special:
 
-        switch (GET_LEX_VALUE(*cp)) {
+        switch (Get_Lex_Special(*cp)) {
           case LEX_SPECIAL_AT:  // the case where @ is actually at the head
             assert(false);  // already taken care of
             panic ("@ dead end");
@@ -1535,7 +1535,7 @@ static enum Reb_Token Maybe_Locate_Token_May_Push_Mold(
             if (IS_LEX_NUMBER(*cp))
                 goto num;
             if (IS_LEX_SPECIAL(*cp)) {
-                if ((GET_LEX_VALUE(*cp)) == LEX_SPECIAL_WORD)
+                if ((Get_Lex_Special(*cp)) == LEX_SPECIAL_WORD)
                     goto next_lex_special;
                 if (*cp == '+' or *cp == '-') {
                     token = TOKEN_WORD;
@@ -3302,9 +3302,9 @@ const Byte* Scan_Issue(Cell* out, const Byte* cp, Size size)
         // Allows nearly every visible character that isn't a delimiter
         // as a char surrogate, e.g. #\ or #@ are legal, as are #<< and #>>
         //
-        switch (GET_LEX_CLASS(*bp)) {
+        switch (Get_Lex_Class(*bp)) {
           case LEX_CLASS_DELIMIT:
-            switch (GET_LEX_VALUE(*bp)) {
+            switch (Get_Lex_Delimit(*bp)) {
               case LEX_DELIMIT_SLASH:  // internal slashes are legal
               case LEX_DELIMIT_PERIOD:  // internal dots also legal
                 break;
