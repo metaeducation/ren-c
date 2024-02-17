@@ -57,14 +57,29 @@ Array* Startup_Datatypes(Array* boot_typespecs)
         assert(&Datatypes[n] == Datatype_From_Kind(kind));
         Set_Cell_Flag(&Datatypes[n], PROTECTED);
 
-        // As an interim step, things like INTEGER! are defined to be &INTEGER!
-        // This is being worked on, so that INTEGER! is a type constraint, but
-        // it's a lot of work.
+        // Things like INTEGER! are defined to be &INTEGER
         //
-        SymId constraint_sym = cast(SymId, REB_MAX + ((n - 1) * 2) + 1);
-        Value* value = Force_Lib_Var(constraint_sym);
-        Init_Any_Word(value, REB_TYPE_WORD, Canon_Symbol(SYM_FROM_KIND(kind)));
-        Set_Cell_Flag(value, PROTECTED);
+        SymId datatype_sym = cast(SymId, REB_MAX + ((n - 1) * 2) + 1);
+        Value* datatype = Force_Lib_Var(datatype_sym);
+        Init_Any_Word(
+            datatype,
+            REB_TYPE_WORD,
+            Canon_Symbol(SYM_FROM_KIND(kind))
+        );
+        Set_Cell_Flag(datatype, PROTECTED);
+
+        // Things like INTEGER? are fast typechecking "intrinsics".  At one
+        // point these were constructed in the mezzanine, but it's faster and
+        // less error prone to just make them here.
+        //
+        SymId constraint_sym = cast(SymId, REB_MAX + ((n - 1) * 2));
+        Phase* typechecker = Make_Typechecker(kind);
+        Init_Action(
+            Force_Lib_Var(constraint_sym),
+            typechecker,
+            Canon_Symbol(constraint_sym),  // cached symbol for function
+            UNBOUND
+        );
 
         // The "catalog of types" is somewhere that could serve as Datatypes[]
         // if that is reconsidered.
@@ -72,10 +87,10 @@ Array* Startup_Datatypes(Array* boot_typespecs)
         Value* word = Init_Any_Word(
             Alloc_Tail_Array(catalog),
             REB_WORD,
-            Canon_Symbol(constraint_sym)
+            Canon_Symbol(datatype_sym)
         );
         INIT_VAL_WORD_INDEX(word, INDEX_PATCHED);
-        BINDING(word) = &PG_Lib_Patches[constraint_sym];
+        BINDING(word) = &PG_Lib_Patches[datatype_sym];
     }
 
     return catalog;

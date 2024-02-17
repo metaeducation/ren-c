@@ -7,7 +7,7 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Copyright 2016-2022 Ren-C Open Source Contributors
+// Copyright 2016-2024 Ren-C Open Source Contributors
 //
 // See README.md and CREDITS.md for more information.
 //
@@ -21,7 +21,7 @@
 //
 // Making a typechecker can be easy:
 //
-//     >> integer?: lambda [v [any-value?]] [integer! = kind of :v]
+//     >> integer?: lambda [v [any-value?]] [integer! = type of :v]
 //
 //     >> integer? 10
 //     == ~true~  ; anti
@@ -29,15 +29,8 @@
 //     >> integer? <foo>
 //     == ~false~  ; anti
 //
-// But given that it is done so often, it's more efficient to have a custom
-// dispatcher for making a typechecker:
-//
-//     >> integer?: typechecker &integer
-//
-// This makes a near-native optimized version of the type checker, that
-// leverages the "Intrinsic" facility...so that the evaluator and type checking
-// can call the C implementation directly without building a frame for the
-// ACTION! call.
+// But given that it is done so often, it's more efficient to have these done
+// via optimized internal functions...created at boot time.
 //
 
 #include "sys-core.h"
@@ -46,7 +39,9 @@
 //
 //  Typechecker_Intrinsic: C
 //
-// Intrinsic used by TYPECHECKER generator.
+// Can be called by the Intrinsic_Dispatcher() in normal function application.
+// Or in optimized circumstances, this Intrinsic handler is extracted directly
+// and called without the frame that a dispatcher would expect.
 //
 void Typechecker_Intrinsic(Atom* out, Phase* phase, Value* arg)
 {
@@ -65,15 +60,20 @@ void Typechecker_Intrinsic(Atom* out, Phase* phase, Value* arg)
 //
 //  Make_Typechecker: C
 //
-// Bootstrap creates typechecker functions before functions like TYPECHECKER
-// are allowed to run to create them.  So this is factored out.
+// The typecheckers for things like INTEGER? and ANY-SERIES? are all created
+// at boot time.
+//
+// Each typechecker is implemented by one of up to 256 "Decider" functions
+// in a table.  This means that if a parameter recognizes that some of
+// the type checking funcions are typecheckers, it can extract which decider
+// function is implied via that byte... and then just have the table of bytes
+// to blast through the deciders when type checking the arguments.
+//
+// 1. We need a spec for our typecheckers, which is really just `value` with
+//    no type restrictions as the argument.  !!! REVIEW: add help strings?
 //
 Phase* Make_Typechecker(Index decider_index) {
-    //
-    // We need a spec for our typecheckers, which is really just `value`
-    // with no type restrictions.
-    //
-    DECLARE_ELEMENT (spec);
+    DECLARE_ELEMENT (spec);  // simple spec [1]
     Array* spec_array = Alloc_Singular(NODE_FLAG_MANAGED);
     Init_Word(Stub_Cell(spec_array), Canon(VALUE));
     Init_Block(spec, spec_array);
@@ -106,27 +106,6 @@ Phase* Make_Typechecker(Index decider_index) {
     );
 
     return typechecker;
-}
-
-
-//
-//  typechecker: native [
-//
-//  "Generator for an optimized typechecking ACTION!"
-//
-//      return: [action?]
-//      type [type-word!]
-//  ]
-//
-DECLARE_NATIVE(typechecker)
-{
-    INCLUDE_PARAMS_OF_TYPECHECKER;
-
-    Index decider_index = KIND_FROM_SYM(unwrap(Cell_Word_Id(ARG(type))));
-
-    Phase* typechecker = Make_Typechecker(decider_index);
-
-    return Init_Action(OUT, typechecker, ANONYMOUS, UNBOUND);
 }
 
 
