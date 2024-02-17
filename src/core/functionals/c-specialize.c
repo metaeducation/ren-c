@@ -124,7 +124,7 @@ Context* Make_Context_For_Action_Push_Partials(
 
     Value* arg = cast(Value*, rootvar) + 1;
 
-    REBLEN index = 1;  // used to bind REFINEMENT! values to parameter slots
+    REBLEN index = 1;  // used to bind REFINEMENT? values to parameter slots
 
     for (; key != tail; ++key, ++param, ++arg, ++index) {
         Erase_Cell(arg);

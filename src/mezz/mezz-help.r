@@ -56,7 +56,7 @@ description-of: func [
         v: unrun v
     ]
     return (switch/type :v [
-        any-array! [spaced ["array of length:" length of v]]
+        &any-array? [spaced ["array of length:" length of v]]
         type-block! [
             mold v
         ]
@@ -336,7 +336,7 @@ help: func [
     let refinements  ; optional parameters (PARAMETERS OF puts at tail)
 
     parse parameters of :value [
-        args: try across some [word! | meta-word! | get-word! | lit-word?!]
+        args: try across some [word! | meta-word! | get-word! | &lit-word?]
         refinements: try across some path!  ; as mentioned, these are at tail
     ] except [
         fail ["Unknown results in PARAMETERS OF:" mold parameters of :value]

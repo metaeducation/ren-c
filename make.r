@@ -181,7 +181,8 @@ platform-config: configure-platform user-config/os-id
 rebmake/set-target-platform platform-config/os-base
 
 to-obj-path: func [
-    file [any-string!]
+    return: [file!]
+    file [any-string?]
 ][
     let ext: find-last file #"."
     remove/part ext (length of ext)
@@ -193,7 +194,7 @@ gen-obj: func [
         [object!]
     s "file representation, or list if block"
         [file! text! word! path! tuple! block!]
-    /dir "directory" [any-string!]
+    /dir "directory" [any-string?]
     /D "definitions" [block!]
     /I "includes" [block!]
     /F "cflags" [block!]

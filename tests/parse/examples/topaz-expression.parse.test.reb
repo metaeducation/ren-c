@@ -74,7 +74,7 @@
         primary
     ]
     primary: [
-        subparse group! expression | any-number! | word!
+        subparse group! expression | &any-number? | word!
     ]
 
     emit-node: func [

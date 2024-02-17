@@ -113,7 +113,7 @@ INLINE bool Any_Inert_Kind(Byte k) {
 
 //=//// XXX <=> SET-XXX! <=> GET-XXX! TRANSFORMATION //////////////////////=//
 //
-// See reasoning in %types.r on why ANY-INERT! optimization is favored over
+// See reasoning in %types.r on why ANY-INERT? optimization is favored over
 // putting blocks/paths/words/tuples/groups together.  It means Any_Array() is
 // slower but these tests can be faster.
 

@@ -112,7 +112,7 @@ func: func* [
 
     parse3 spec [try some [
         :(if var '[  ; so long as we haven't reached any <local> or <with> etc.
-            set var: [any-word! | any-path! | quoted!] (
+            set var: [&any-word? | &any-path? | quoted!] (
                 append new-spec var
             )
             |

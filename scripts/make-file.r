@@ -84,14 +84,6 @@ make-file-block-parts: func [
 
             blank! []
 
-            refinement?! [  ; bootstrap only
-                if last-was-slash [
-                    fail doubled-file-slash-error item
-                ]
-                keep to text! item
-                last-was-slash: false  ; does not end in slash
-            ]
-
             path! [
                 case [
                     item = '/ [

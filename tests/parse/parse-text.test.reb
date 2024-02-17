@@ -55,7 +55,7 @@
 
 ; Multi-byte characters and strings present a lot of challenges.  There should
 ; be many more tests and philosophies written up of what the semantics are,
-; especially when it comes to BINARY! and ANY-STRING! mixtures.  These tests
+; especially when it comes to BINARY! and ANY-STRING? mixtures.  These tests
 ; are better than nothing...
 [
     (

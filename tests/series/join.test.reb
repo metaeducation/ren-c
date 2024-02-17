@@ -32,7 +32,7 @@
 
 (':a/b = join get-path! [a / b])
 
-; VOID is not a no-op, because you still get a copy made for ANY-SERIES!
+; VOID is not a no-op, because you still get a copy made for ANY-SERIES?
 (
     input: "abc"
     output: ~
@@ -66,7 +66,7 @@
     ('a/b//[d] = join 'a/b// [d])
 ]
 
-; BLANK! when joining BINARY! or ANY-STRING! should be ignored, but ANY-ARRAY?
+; BLANK! when joining BINARY! or ANY-STRING? should be ignored, but ANY-ARRAY?
 ; has to keep them.
 [
     (#{1020} = join #{10} spread [_ #{20} _])

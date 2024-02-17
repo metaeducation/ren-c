@@ -124,7 +124,7 @@ typedef uint_fast32_t Codepoint;
 // Get_Series_Flag(CTX_VARLIST(context)), not just Get_Series_Flag(context).
 //
 // Note that because the Series structure includes a Cell by value,
-// the %sys-rebser.h must be included *after* %sys-rebval.h; however the
+// the %sys-rebser.h must be included *after* %struct-cell.h; however the
 // higher level definitions in %sys-series.h are *before* %sys-value.h.
 //
 

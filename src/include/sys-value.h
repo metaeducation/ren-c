@@ -1,6 +1,6 @@
 //
 //  File: %sys-value.h
-//  Summary: {any-value! defs AFTER %tmp-internals.h (see: %sys-rebval.h)}
+//  Summary: {any-value? defs AFTER %tmp-internals.h (see: %struct-cell.h)}
 //  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
 //  Homepage: https://github.com/metaeducation/ren-c/
 //
@@ -21,12 +21,12 @@
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // This file provides basic accessors for value types.  Because these
-// accessors dereference REBVAL (or Cell) pointers, the inline functions
+// accessors dereference Value (or Cell) pointers, the inline functions
 // need the complete struct definition available from all the payload types.
 //
-// See notes in %sys-rebval.h for the definition of the REBVAL structure.
+// See notes in %struct-cell.h for the definition of the Cell structure.
 //
-// While some REBVALs are in C stack variables, most reside in the allocated
+// While some Values are in C stack variables, most reside in the allocated
 // memory block for a Rebol array.  The memory block for an array can be
 // resized and require a reallocation, or it may become invalid if the
 // containing series is garbage-collected.  This means that many pointers to

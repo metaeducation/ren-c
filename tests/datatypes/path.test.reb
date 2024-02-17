@@ -103,7 +103,7 @@
     1 == a-value.1
 )
 
-; Ren-C changed INTEGER! path picking to act as PICK, only ANY-STRING! and
+; Ren-C changed INTEGER! path picking to act as PICK, only ANY-STRING? and
 ; WORD! actually merge with a slash.
 (
     a-value: file://a

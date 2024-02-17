@@ -25,14 +25,14 @@
 ; TODO: is hash! test and list! test needed too?
 
 
-; REPEAT in Rebol2 with an ANY-SERIES! argument acted like a FOR-EACH on that
+; REPEAT in Rebol2 with an ANY-SERIES? argument acted like a FOR-EACH on that
 ; series.  This is redundant with FOR-EACH.
 ;
 ; R3-Alpha changed the semantics to be like a FOR-NEXT (e.g. FORALL) where you
 ; could specify the loop variable instead of insisting your loop variable be
 ; the data you are iterating.
 ;
-; Red forbids ANY-SERIES! as the argument of what to iterate over.
+; Red forbids ANY-SERIES? as the argument of what to iterate over.
 ;
 ; https://trello.com/c/CjEfA0ef
 (

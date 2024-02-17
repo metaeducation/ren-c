@@ -157,7 +157,7 @@
 ])
 
 [
-    (''~preserved~ = ^ match quasi-word?! '~preserved~)
+    (''~preserved~ = ^ match &quasi-word? '~preserved~)
     ('~[~null~]~ = ^ match null null)
 ]
 

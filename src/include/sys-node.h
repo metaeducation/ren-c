@@ -174,7 +174,7 @@ INLINE PointerDetect Detect_Rebol_Pointer(const void *p)
 // All nodes are 64-bit aligned.  This way, data allocated in nodes can be
 // structured to know where legal 64-bit alignment points would be.  This
 // is required for correct functioning of some types.  (See notes on
-// alignment in %sys-rebval.h.)
+// alignment in %struct-cell.h.)
 //
 INLINE void *Try_Alloc_Pooled(PoolId pool_id)
 {

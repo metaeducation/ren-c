@@ -198,7 +198,7 @@
 ([:[x y]] = compose [:( '[x y]: )])
 ([:[x y]] = compose [:( ':[x y] )])
 
-; !!! This was an interesting concept, but now that REFINEMENT! and PATH! are
+; !!! This was an interesting concept, but now that REFINEMENT and PATH! are
 ; unified it can't be done with PATH!, as you might say `compose obj/block`
 ; and mean that.  The notation for predicates have to be rethought.
 ;

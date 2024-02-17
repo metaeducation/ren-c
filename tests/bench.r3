@@ -221,10 +221,10 @@ spec [block!]
 ] [
 locals: make block! 16
 item-rule: either args [[
-refinement?! to end (item-rule: [end skip]) |
-set item any-word! (insert tail locals to word! :item) | skip
+&refinement? to end (item-rule: [end skip]) |
+set item &any-word? (insert tail locals to word! :item) | skip
 ]] [[
-set item any-word! (insert tail locals to word! :item) | skip
+set item &any-word? (insert tail locals to word! :item) | skip
 ]]
 parse3 spec [any item-rule]
 locals

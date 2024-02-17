@@ -314,7 +314,7 @@ Bounce TO_Sequence(Level* level_, Kind k, const REBVAL *arg) {
         return rebValue(
             "as", Datatype_From_Kind(heart),
                 "parse3 let v: load @", arg, "[",
-                    "[any-sequence! | any-array!] <end> accept (first v)",
+                    "[&any-sequence? | &any-array?] <end> accept (first v)",
                     "| accept (v)",  // try to convert whatever other block
                 "]"
         );

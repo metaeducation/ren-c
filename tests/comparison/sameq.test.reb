@@ -134,9 +134,9 @@
     parse a-value [b-value: <here>, to <end>]
     equal? same? a-value b-value same? b-value a-value
 )
-(not same? any-number! integer!)
+(not same? &any-number? integer!)
 ; symmetry
-(equal? same? any-number! integer! same? integer! any-number!)
+(equal? same? &any-number? integer! same? integer! &any-number?)
 ; reflexivity
 (same? -1 -1)
 ; reflexivity

@@ -439,7 +439,7 @@ DECLARE_NATIVE(read_char)
       retry: ;
         const bool buffered = false;
         REBVAL *e = Try_Get_One_Console_Event(Term_IO, buffered, timeout_msec);
-        // (^-- it's an ANY-VALUE!, not a R3-Alpha-style EVENT!)
+        // (^-- it's an ANY-VALUE?, not a R3-Alpha-style EVENT!)
 
         if (e == nullptr) {
             rebJumps(

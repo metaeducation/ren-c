@@ -774,7 +774,7 @@
     )
 ]
 
-; Parsing URL!s and ANY-SEQUENCE! is read-only
+; Parsing URL!s and ANY-SEQUENCE? is read-only
 [(
     did all [
         "example" == parse http://example.com [

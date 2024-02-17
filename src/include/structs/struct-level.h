@@ -271,7 +271,7 @@ STATIC_ASSERT(31 < 32);  // otherwise LEVEL_FLAG_XXX too high
 typedef Node* Bounce;
 
 
-// These definitions are needed in %sys-rebval.h, and can't be put in
+// These definitions are needed in %struct-cell.h, and can't be put in
 // %sys-rebact.h because that depends on Array, which depends on
 // Series, which depends on values... :-/
 

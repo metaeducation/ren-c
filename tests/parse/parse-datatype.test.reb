@@ -46,10 +46,10 @@
     (raised? parse [a 123] ['a char?!])
     (123 == parse [a 123] [['a] [integer!]])
     (raised? parse [a 123] ['a [char?!]])
-    (123 == parse [123] [any-number!])
-    (raised? parse [123] [any-string!])
-    (123 == parse [123] [[any-number!]])
-    (raised? parse [123] [[any-string!]])
+    (123 == parse [123] [&any-number?])
+    (raised? parse [123] [&any-string?])
+    (123 == parse [123] [[&any-number?]])
+    (raised? parse [123] [[&any-string?]])
 ]
 
 [

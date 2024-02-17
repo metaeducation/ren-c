@@ -168,10 +168,10 @@ export emit-include-params-macro: func [
             spec: my next
 
             keep spread compose [
-                (to output-param! 'remainder) [any-series!]
+                (to output-param! 'remainder) [any-series?]
 
                 state [frame!]
-                input [any-series!]
+                input [any-series?]
             ]
 
             keep spread spec
@@ -202,7 +202,7 @@ export emit-include-params-macro: func [
         ]
 
         for-each item paramlist [
-            if not match [any-word! refinement?! lit-word?! output-param!] item [
+            if not match [&any-word? &refinement? &lit-word? output-param!] item [
                 continue
             ]
 

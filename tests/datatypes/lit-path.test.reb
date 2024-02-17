@@ -5,7 +5,7 @@
 
 (lit-path? first ['a/b])
 (not lit-path? 1)
-(switch/type first ['a/b] [lit-path?! [true]])
+(switch/type first ['a/b] [&lit-path? [true]])
 
 ; minimum
 

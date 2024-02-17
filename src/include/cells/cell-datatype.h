@@ -37,18 +37,15 @@
 // and type constraints.
 //
 //    >> integer!
-//    == &integer
+//    == &[integer]
 //
 //    >> kind of 10
-//    == &integer
+//    == &[integer]
 //
-//    >> any-series!
-//    == &(any-series?)
-//
-//    >> match any-series! [a b c]
+//    >> match &any-series? [a b c]
 //    == [a b c]
 //
-//    >> match any-series! 10
+//    >> match &any-series? 10
 //    == ~null~  ; anti
 //
 //=//// NOTES /////////////////////////////////////////////////////////////=//

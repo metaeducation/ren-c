@@ -73,7 +73,7 @@
     true
 )
 
-; Don't leak internal detail that BINARY! or ANY-STRING! are 0-terminated
+; Don't leak internal detail that BINARY! or ANY-STRING? are 0-terminated
 [
     (NUL = as issue! 0)
 
@@ -549,7 +549,7 @@
 
 ; Multi-byte characters and strings present a lot of challenges.  There should
 ; be many more tests and philosophies written up of what the semantics are,
-; especially when it comes to BINARY! and ANY-STRING! mixtures.  These tests
+; especially when it comes to BINARY! and ANY-STRING? mixtures.  These tests
 ; are better than nothing...
 [
     (
@@ -826,7 +826,7 @@
 ;
 (did parse3/redbol "aaa" [pos: some "a" to end :pos 3 "a"])
 
-; Parsing URL!s and ANY-SEQUENCE! is read-only
+; Parsing URL!s and ANY-SEQUENCE? is read-only
 [(
     parse3 http://example.com ["http:" some "/" copy name to "." ".com"]
     name = "example"

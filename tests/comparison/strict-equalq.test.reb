@@ -121,9 +121,9 @@
     parse a-value [b-value: <here>, to <end>]
     strict-equal? a-value b-value
 )]
-(not strict-equal? any-number! integer!)
+(not strict-equal? &any-number? integer!)
 ; symmetry
-(equal? strict-equal? any-number! integer! strict-equal? integer! any-number!)
+(equal? strict-equal? &any-number? integer! strict-equal? integer! &any-number?)
 ; reflexivity
 (strict-equal? -1 -1)
 ; reflexivity

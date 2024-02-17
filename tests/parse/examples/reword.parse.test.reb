@@ -13,10 +13,10 @@
     <static>
 
     delimiter-types (
-        [char?! any-string! word! binary!]
+        [char?! &any-string? word! binary!]
     )
     keyword-types (
-        [char?! any-string? integer! word! binary!]
+        [char?! &any-string? integer! word! binary!]
     )
 ][
     let case_REWORD: case

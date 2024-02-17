@@ -177,7 +177,7 @@ parse-write-dialect: func [
         spec.method: [word! | ('post)]
         try [spec.path: [file! | url!]]
         spec.headers: [block! | ([])]
-        spec.content: try [any-string! | binary!]
+        spec.content: try [&any-string? | binary!]
         <end>
     ]
 ]

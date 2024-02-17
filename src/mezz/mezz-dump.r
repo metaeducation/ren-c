@@ -52,7 +52,7 @@ dump: func [
 
     let dump-one: func [return: [~] item] [
         switch/type item [
-            refinement?!  ; treat as label, /a no shift and shorter than "a"
+            &refinement?  ; treat as label, /a no shift and shorter than "a"
             text! [  ; good for longer labeling when you need spaces/etc.
                 let trunc
                 print unspaced [

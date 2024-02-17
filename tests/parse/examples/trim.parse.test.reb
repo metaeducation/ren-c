@@ -11,9 +11,9 @@
 utrim: func [
     {Removes spaces from strings or blanks from blocks or objects.}
 
-    return: [any-string! any-array? binary! any-context?]
+    return: [any-string? any-array? binary! any-context?]
     series "Series (modified) or object (made)"
-        [any-string! any-array? binary! any-context?]
+        [any-string? any-array? binary! any-context?]
     /head "Removes only from the head"
     /tail "Removes only from the tail"
     /auto "Auto indents lines relative to first line"
@@ -146,7 +146,7 @@ utrim: func [
     ]
 
     ; UTRIM/AUTO measures first line indentation and removes indentation on
-    ; later lines relative to that.  Only makes sense for ANY-STRING!, though
+    ; later lines relative to that.  Only makes sense for ANY-STRING?, though
     ; a concept like "lines" could apply to a BLOCK! of BLOCK!s.
     ;
     let indent: #  ; by default, remove all indentation (opt in to the REPEAT)

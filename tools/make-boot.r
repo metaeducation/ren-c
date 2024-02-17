@@ -1122,7 +1122,7 @@ e-symbols/emit [syms-cscape {
     /*
      * CONSTANTS FOR BUILT-IN SYMBOLS: e.g. SYM_THRU or SYM_INTEGER_X
      *
-     * ANY-WORD! uses internings of UTF-8 character strings.  An arbitrary
+     * ANY-WORD? uses internings of UTF-8 character strings.  An arbitrary
      * number of these are created at runtime, and can be garbage collected
      * when no longer in use.  But a pre-determined set of internings are
      * assigned small integer "SYM" compile-time-constants, to be used in

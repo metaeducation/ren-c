@@ -381,17 +381,21 @@ quote: func3 [x [<opt> any-value!]] [
 
 ;=== BELOW THIS LINE, TRY NOT TO USE FUNCTIONS IN THE SHIM IMPLEMENTATION ===
 
+; Not sure if LOGIC! will be able to act as its own type in the future, so
+; using "weird" definition for now.
+
 char?!: char!  ; modern char is ISSUE! constraint
 logic?!: logic!  ; modern logic is ANTIFORM! constraint
-lit-word?!: lit-word!  ; modern LIT-WORD! is QUOTED! constraint
-refinement?!: refinement!  ; modern REFINEMENT! is PATH! constraint
+
+; LIT-WORD and REFINEMENT will never be datatypes, so shim the type constraint
+; so it works in old parse.
+
+set '&any-word? any-word!  ; modern any-word is type constraint
+set '&lit-word? lit-word!  ; modern lit-word is QUOTED! constraint
+set '&refinement? refinement!  ; modern refinement is PATH! constraint
 
 element?: :any-value?  ; used to exclude null
 any-value?: func3 [x] [true]  ; now inclusive of null
-
-any-inert!: make typeset! [  ; note TYPESET! does not exist in new exe
-    any-string! binary! char! any-context! time! date! any-number! object!
-]
 
 spread: func3 [x [<opt> blank! block!]] [
     case [
@@ -633,6 +637,20 @@ let: func3 [
     if word? first look [take look]  ; otherwise leave SET-WORD! to runs
 ]
 
+modernize-typespec: function3 [
+    return: [block!]
+    types [block!]
+][
+    types: copy types
+    replace types <opt> 'blank!
+    replace types 'any-value? [<opt> any-value!]
+    replace types 'any-string? 'any-string!
+    replace types 'element? 'any-value!
+    replace types 'action? 'action!
+    replace types 'lit-word? 'lit-word!
+    replace types <variadic> <...>
+    return types
+]
 
 modernize-action: function3 [
     "Account for <maybe> annotation, refinements as own arguments"
@@ -680,7 +698,7 @@ modernize-action: function3 [
 
                 proxy: as word! unspaced [last-refine-word "-arg"]
                 keep3/only proxy
-                keep3/only spec/1
+                keep3/only modernize-typespec spec/1
 
                 append3 proxiers compose [  ; lib3/try turns null3 to blank
                     (as set-word! last-refine-word) lib3/try (as get-word! proxy)
@@ -700,11 +718,7 @@ modernize-action: function3 [
                     if tail? spec [continue]
                     if text? spec/1 [keep3 spec/1, spec: my next]
                     if block? spec/1 [
-                        types: copy spec/1
-                        replace types 'any-value? [<opt> any-value!]
-                        replace types 'element? 'any-value!
-                        replace types 'action? 'action!
-                        keep3/only append3 types [
+                        keep3/only append3 modernize-typespec spec/1 [
                             <opt> blank!  ; e.g. <maybe> may return "null" blank
                         ]
                         spec: my next
@@ -755,25 +769,13 @@ modernize-action: function3 [
                 ; to inject for that parameter to return null if it's null
                 ;
                 if types: match3 block! spec/1 [
-                    types: copy types
-                    if find3 types <opt> [  ; <opt> first (<maybe> is real opt)
-                        replace types <opt> 'blank!
-                    ]
+                    types: modernize-typespec types
                     if find3 types <maybe> [
                         replace types <maybe> <opt>
                         append3 tryers compose [  ; splices
                             if null3? (as get-word! w) [return _]
                         ]
                     ]
-                    if find3 types 'any-value! [
-                        fail/where [
-                            "Use ANY-VALUE? not ANY-VALUE! in updated specs"
-                        ] 'spec
-                    ]
-                    replace types 'any-value? [<opt> any-value!]
-                    replace types 'element? 'any-value!
-                    replace types 'action? 'action!
-                    replace types <variadic> <...>
                     keep3/only types
                     spec: my next
                     continue

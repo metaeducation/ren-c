@@ -14,7 +14,7 @@
     <success> = foo 100
 )
 
-; REDO via extraction of FRAME! from an ANY-WORD!
+; REDO via extraction of FRAME! from an ANY-WORD?
 ; (has binding to a FRAME! to lookup variable value)
 (
     foo: func [return: [tag!] n] [

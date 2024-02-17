@@ -78,7 +78,7 @@
     prim-val (null)
 
     primary ([
-        set prim-val any-number!
+        set prim-val &any-number?
         | set prim-val [word! | path!] (prim-val: reduce [prim-val])
             ; might be a funtion call, looking for arguments
             try some [

@@ -56,8 +56,8 @@ map-files-to-local: func [
 
 ends-with?: func [
     return: [logic?!]
-    s [any-string!]
-    suffix [<opt> any-string!]
+    s [any-string?]
+    suffix [<opt> any-string?]
 ][
     return to-logic any [
         null? :suffix
@@ -101,9 +101,9 @@ run-command: func [
 
 pkg-config: func [  ; !!! Note: Does not appear to be used
     return: [text! block!]
-    pkg [any-string!]
+    pkg [any-string?]
     var [word!]
-    lib [any-string!]
+    lib [any-string?]
 ][
     let [dlm opt]
     switch var [
@@ -425,8 +425,8 @@ compiler-class: make object! [
         output [file!]
         source [file!]
         include [file! block!]
-        definition [any-string!]
-        cflags [any-string!]
+        definition [any-string?]
+        cflags [any-string?]
     ][
     ]
 
@@ -442,7 +442,7 @@ compiler-class: make object! [
     ;check if the compiler is available
     check: meth [
         return: [logic?!]
-        path [<maybe> any-string!]
+        path [<maybe> any-string?]
     ][
         fail ~tbd~
     ]
@@ -713,7 +713,7 @@ linker-class: make object! [
         output [file!]
         depends [<opt> block!]
         searches [<opt> block!]
-        ldflags [<opt> block! any-string!]
+        ldflags [<opt> block! any-string?]
     ][
         ...  ; overridden
     ]
@@ -737,7 +737,7 @@ ld: make linker-class [
         output [file!]
         depends [<opt> block!]
         searches [<opt> block!]
-        ldflags [<opt> block! any-string!]
+        ldflags [<opt> block! any-string?]
         /dynamic
         /debug [logic?!]
     ][
@@ -846,7 +846,7 @@ llvm-link: make linker-class [
         output [file!]
         depends [<opt> block!]
         searches [<opt> block!]
-        ldflags [<opt> block! any-string!]
+        ldflags [<opt> block! any-string?]
         /dynamic
         /debug [logic?!]
     ][
@@ -930,7 +930,7 @@ link: make linker-class [
         output [file!]
         depends [<opt> block!]
         searches [<opt> block!]
-        ldflags [<opt> block! any-string!]
+        ldflags [<opt> block! any-string?]
         /dynamic
         /debug [logic?!]
     ][
@@ -1025,7 +1025,7 @@ strip-class: make object! [
     commands: meth [
         return: [block!]
         target [file!]
-        params [<opt> blank! block! any-string!]
+        params [<opt> blank! block! any-string?]
     ][
         return reduce [spaced collect [
             keep any [(file-to-local/pass maybe exec-file) "strip"]
@@ -1228,8 +1228,8 @@ generator-class: make object! [
         {Substitute variables in the command with its value}
         {(will recursively substitute if the value has variables)}
 
-        return: [<opt> object! any-string!]
-        cmd [object! any-string!]
+        return: [<opt> object! any-string?]
+        cmd [object! any-string?]
     ][
         ; !!! These were previously static, but bootstrap executable's non
         ; gathering function form could not handle statics.

@@ -386,7 +386,7 @@ DECLARE_NATIVE(did_1)  // see TO-C-NAME for why the "_1" is needed
 //     >> if (did match [logic? integer!] false) [print "Praise isotopes!"]
 //     Praise isotopes!
 //
-// By making routines that intend to return ANY-VALUE! (even falsey ones) on
+// By making routines that intend to return ANY-VALUE? (even falsey ones) on
 // success return the falsey ones as antiforms, incorrect uses can be caught
 // and guided to use DID or DIDN'T (or whatever they actually meant).
 {
