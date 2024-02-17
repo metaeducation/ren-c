@@ -166,10 +166,10 @@ reword: func [
     ; BLOCK! excluded.
     ;
     delimiter-types (
-        &[char? any-string? word! binary!]
+        [char?! | any-string! | word! | binary!]
     )
     keyword-types (
-        &[char? any-string? integer! word! binary!]
+        [char?! | any-string! | integer! | word! | binary!]
     )
 ][
     let case_REWORD: case
@@ -197,7 +197,7 @@ reword: func [
             ]
         ]
     ] else [
-        prefix: ensure delimiter-types escape
+        prefix: escape
     ]
 
     ; To be used in a parse rule, words must be turned into strings, though
@@ -242,7 +242,7 @@ reword: func [
     let keyword-match: null  ; variable that gets set by rule
     let any-keyword-suffix-rule: inside [] collect [
         for-each [keyword value] values [
-            if not match keyword-types keyword [
+            if not ok? parse :[keyword] keyword-types [
                 fail ["Invalid keyword type:" keyword]
             ]
 

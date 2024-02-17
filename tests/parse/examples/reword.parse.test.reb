@@ -12,11 +12,11 @@
 
     <static>
 
-    delimiter-types?! (
-        &[char?! any-string? word! binary!]
+    delimiter-types (
+        [char?! any-string! word! binary!]
     )
-    keyword-types?! (
-        &[char?! any-string? integer! word! binary!]
+    keyword-types (
+        [char?! any-string? integer! word! binary!]
     )
 ][
     let case_REWORD: case
@@ -35,14 +35,14 @@
 
         block? escape [
             parse escape [
-                prefix: [_ (void) | delimiter-types?!]
-                suffix: [_ (void) | delimiter-types?!]
+                prefix: [_ (void) | any (delimiter-types)]
+                suffix: [_ (void) | any (delimiter-types)]
             ] else [
                 fail ["Invalid /ESCAPE delimiter block" escape]
             ]
         ]
     ] else [
-        prefix: ensure delimiter-types?! escape
+        prefix: ensure delimiter-types escape
     ]
 
     if match [integer! word!] prefix [prefix: to-text prefix]
@@ -65,7 +65,7 @@
     ;
     let keyword-suffix-rules: collect [
         for-each [keyword value] values [
-            if not match keyword-types?! keyword [
+            if not match keyword-types keyword [
                 fail ["Invalid keyword type:" keyword]
             ]
 
