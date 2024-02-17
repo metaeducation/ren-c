@@ -174,3 +174,40 @@
         vblock = nblock
     ]
 )
+
+
+; This used to be code in the boot process.  It was needed to be variadic in
+; order to quote top-level words.  It's done more efficiently now, but this
+; tests a pretty weird piece of functionality...so preserved here.
+(
+    run func* [
+        return: [~]
+        'set-words [<variadic> set-word! tag!]
+        <local>
+            set-word type-name tester meta
+    ][
+        while [<end> != set-word: take set-words] [
+            type-name: parse as text! set-word [
+                between "usermode-" "?"
+            ]
+            append type-name "!"
+            set set-word tester: lambda [value] compose [
+                (get inside lib (as word! type-name)) = type of :value
+            ]
+            set-adjunct :tester make system.standard.action-adjunct [
+                description: spaced [{Return TRUE if value is} an type-name]
+                return-type: [logic?]
+            ]
+        ]
+    ]
+        usermode-integer?:
+        usermode-block?:
+        usermode-tuple?:
+        <end>
+
+    all [
+        usermode-integer? 1
+        not usermode-block? 1
+        usermode-tuple? 'a.b.c
+    ]
+)
