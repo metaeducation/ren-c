@@ -459,14 +459,6 @@ echo: func* [
 ]
 
 
-internal!: &[
-    handle!
-]
-
-immediate!: &[  ; Does not include internal datatypes
-    blank! any-scalar? date! any-word?
-]
-
 ; Convenient alternatives for readability
 ;
 neither?: runs :nand?

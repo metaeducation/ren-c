@@ -50,6 +50,8 @@ REBOL [
         fully numeric (1.2.3 vs alpha.beta.gamma).  What the typeset was for
         was defining input types things like ADD would accept, and now that's
         kind of gotten fuzzy.
+
+      * Historical Rebol had INTERNAL! and IMMEDIATE! typesets.  Important?
     }
 ]
 
