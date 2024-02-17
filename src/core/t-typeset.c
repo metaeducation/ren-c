@@ -81,8 +81,7 @@ void Startup_Typesets(void)
     for (id = SYM_ANY_UNIT_Q; id != SYM_DATATYPES; id += 2) {
         REBINT n = REB_MAX + (id - SYM_ANY_UNIT_Q) / 2;  // skip REB_T_RETURN
 
-        Decider* decider = g_type_deciders[n];
-        Phase* typechecker = Make_Typechecker(decider);
+        Phase* typechecker = Make_Typechecker(n);  // n is decider_index
 
         Init_Action(
             Force_Lib_Var(cast(SymId, id)),
@@ -293,7 +292,7 @@ void Set_Parameter_Spec(
         Heart heart = Cell_Heart(lookup);
 
         if (heart == REB_TYPE_WORD) {
-            if (optimized == optimized_tail and item != tail) {
+            if (optimized == optimized_tail) {
                 *flags |= PARAMETER_FLAG_INCOMPLETE_OPTIMIZATION;
                 continue;
             }
@@ -320,6 +319,23 @@ void Set_Parameter_Spec(
                     *flags |= PARAMETER_FLAG_ANY_ATOM_OK;
                 else if (intrinsic == &N_nihil_q)
                     *flags |= PARAMETER_FLAG_NIHIL_DEFINITELY_OK;
+                else if (intrinsic == &Typechecker_Intrinsic) {
+                    if (optimized == optimized_tail) {
+                        *flags |= PARAMETER_FLAG_INCOMPLETE_OPTIMIZATION;
+                        continue;
+                    }
+
+                    Details* details = Phase_Details(phase);
+                    assert(Array_Len(details) == IDX_TYPECHECKER_MAX);
+
+                    REBVAL *index = Details_At(
+                        details,
+                        IDX_TYPECHECKER_DECIDER_INDEX
+                    );
+
+                    *optimized = VAL_UINT8(index);
+                    ++optimized;
+                }
                 else
                     *flags |= PARAMETER_FLAG_INCOMPLETE_OPTIMIZATION;
             }

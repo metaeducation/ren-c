@@ -42,27 +42,21 @@
 
 #include "sys-core.h"
 
-enum {
-    IDX_TYPECHECKER_CFUNC = IDX_INTRINSIC_CFUNC,  // uses Intrinsic_Dispatcher()
-    IDX_TYPECHECKER_DECIDER,  // datatype or typeset to check
-    IDX_TYPECHECKER_MAX
-};
-
 
 //
-//  Typeset_Checker_Intrinsic: C
+//  Typechecker_Intrinsic: C
 //
 // Intrinsic used by TYPECHECKER generator.
 //
-void Typeset_Checker_Intrinsic(Value* out, Phase* phase, Value* arg)
+void Typechecker_Intrinsic(Atom* out, Phase* phase, Value* arg)
 {
     assert(ACT_DISPATCHER(phase) == &Intrinsic_Dispatcher);
 
     Details* details = Phase_Details(phase);
     assert(Array_Len(details) == IDX_TYPECHECKER_MAX);
 
-    REBVAL *handle = Details_At(details, IDX_TYPECHECKER_DECIDER);
-    Decider* decider = cast(Decider*, VAL_HANDLE_CFUNC(handle));
+    Value* index = Details_At(details, IDX_TYPECHECKER_DECIDER_INDEX);
+    Decider* decider = g_type_deciders[VAL_UINT8(index)];
 
     Init_Logic(out, decider(arg));
 }
@@ -74,7 +68,7 @@ void Typeset_Checker_Intrinsic(Value* out, Phase* phase, Value* arg)
 // Bootstrap creates typechecker functions before functions like TYPECHECKER
 // are allowed to run to create them.  So this is factored out.
 //
-Phase* Make_Typechecker(Decider* decider) {
+Phase* Make_Typechecker(Index decider_index) {
     //
     // We need a spec for our typecheckers, which is really just `value`
     // with no type restrictions.
@@ -104,11 +98,11 @@ Phase* Make_Typechecker(Decider* decider) {
 
     Init_Handle_Cfunc(
         Details_At(details, IDX_TYPECHECKER_CFUNC),
-        cast(CFunction*, &Typeset_Checker_Intrinsic)
+        cast(CFunction*, &Typechecker_Intrinsic)
     );
-    Init_Handle_Cfunc(
-        Details_At(details, IDX_TYPECHECKER_DECIDER),
-        cast(CFunction*, decider)
+    Init_Integer(
+        Details_At(details, IDX_TYPECHECKER_DECIDER_INDEX),
+        decider_index
     );
 
     return typechecker;
@@ -128,11 +122,9 @@ DECLARE_NATIVE(typechecker)
 {
     INCLUDE_PARAMS_OF_TYPECHECKER;
 
-    Index index = KIND_FROM_SYM(unwrap(Cell_Word_Id(ARG(type))));
+    Index decider_index = KIND_FROM_SYM(unwrap(Cell_Word_Id(ARG(type))));
 
-    Decider* decider = g_type_deciders[index];
-
-    Phase* typechecker = Make_Typechecker(decider);
+    Phase* typechecker = Make_Typechecker(decider_index);
 
     return Init_Action(OUT, typechecker, ANONYMOUS, UNBOUND);
 }
@@ -453,21 +445,18 @@ bool Typecheck_Coerce_Argument(
     const Byte* optimized = spec->misc.any.at_least_4;
     const Byte* optimized_tail = optimized + sizeof(uintptr_t);
 
-    Kind kind;
-    if (Is_Stable(arg))
-        kind = VAL_TYPE(arg);
-    else
-        kind = REB_ANTIFORM;
-
     if (Get_Parameter_Flag(param, NOOP_IF_VOID))
-        assert(kind != REB_VOID);  // should have bypassed typecheck
+        assert(not Is_Stable(arg) or not Is_Void(arg));  // should've bypassed
 
-    for (; optimized != optimized_tail; ++optimized) {
-        if (*optimized == 0)
-            break;
+    if (Is_Stable(arg)) {
+        for (; optimized != optimized_tail; ++optimized) {
+            if (*optimized == 0)
+                break;
 
-        if (kind == *optimized)
-            goto return_true;
+            Decider* decider = g_type_deciders[*optimized];
+            if (decider(Stable_Unchecked(arg)))
+                goto return_true;
+        }
     }
 
     if (Get_Parameter_Flag(param, INCOMPLETE_OPTIMIZATION)) {
