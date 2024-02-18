@@ -106,6 +106,13 @@ Bounce MAKE_Word(
         // Rethink what it means to preserve the bits vs. not.
         //
         Copy_Cell(OUT, arg);
+        if (heart != REB_WORD) {
+            const Symbol* sym = Cell_Word_Symbol(arg);
+            if (Get_Subclass_Flag(SYMBOL, sym, ILLEGAL_WITH_SIGIL)) {
+                HEART_BYTE(OUT) = REB_WORD;
+                fail (Error_Illegal_Sigil_Word_Raw(OUT));
+            }
+        }
         HEART_BYTE(OUT) = heart;
         return OUT;
     }
@@ -210,28 +217,21 @@ Bounce TO_Word(Level* level_, Kind k, const REBVAL *arg)
 }
 
 
-inline static void Mold_Word(REB_MOLD *mo, const Symbol* symbol, bool escape)
-{
-    if (escape) {
-        Append_Codepoint(mo->series, '|');
-        Append_Utf8(mo->series, String_UTF8(symbol), String_Size(symbol));
-        Append_Codepoint(mo->series, '|');
-    }
-    else
-        Append_Utf8(mo->series, String_UTF8(symbol), String_Size(symbol));
-}
-
-
 //
 //  MF_Word: C
 //
 void MF_Word(REB_MOLD *mo, const Cell* v, bool form) {
+    UNUSED(form);
     const Symbol* symbol = Cell_Word_Symbol(v);
-    bool escape = form
-        ? false
-        : Get_Subclass_Flag(SYMBOL, symbol, ESCAPE_PLAIN);
+    Append_Utf8(mo->series, String_UTF8(symbol), String_Size(symbol));
+}
 
-    Mold_Word(mo, symbol, escape);
+
+inline static void Mold_Decorable_Word(REB_MOLD *mo, const Cell* v)
+{
+    const Symbol* symbol = Cell_Word_Symbol(v);
+    assert(Not_Subclass_Flag(SYMBOL, symbol, ILLEGAL_WITH_SIGIL));
+    Append_Utf8(mo->series, String_UTF8(symbol), String_Size(symbol));
 }
 
 
@@ -239,12 +239,8 @@ void MF_Word(REB_MOLD *mo, const Cell* v, bool form) {
 //  MF_Set_Word: C
 //
 void MF_Set_Word(REB_MOLD *mo, const Cell* v, bool form) {
-    const Symbol* symbol = Cell_Word_Symbol(v);
-    bool escape = form
-        ? false
-        : Get_Subclass_Flag(SYMBOL, symbol, ESCAPE_WITH_SIGIL);
-
-    Mold_Word(mo, symbol, escape);
+    UNUSED(form);
+    Mold_Decorable_Word(mo, v);
     Append_Codepoint(mo->series, ':');
 }
 
@@ -253,13 +249,9 @@ void MF_Set_Word(REB_MOLD *mo, const Cell* v, bool form) {
 //  MF_Get_Word: C
 //
 void MF_Get_Word(REB_MOLD *mo, const Cell* v, bool form) {
-    const Symbol* symbol = Cell_Word_Symbol(v);
-    bool escape = form
-        ? false
-        : Get_Subclass_Flag(SYMBOL, symbol, ESCAPE_WITH_SIGIL);
-
+    UNUSED(form);
     Append_Codepoint(mo->series, ':');
-    Mold_Word(mo, symbol, escape);
+    Mold_Decorable_Word(mo, v);
 }
 
 
@@ -267,13 +259,9 @@ void MF_Get_Word(REB_MOLD *mo, const Cell* v, bool form) {
 //  MF_Meta_Word: C
 //
 void MF_Meta_Word(REB_MOLD *mo, const Cell* v, bool form) {
-    const Symbol* symbol = Cell_Word_Symbol(v);
-    bool escape = form
-        ? false
-        : Get_Subclass_Flag(SYMBOL, symbol, ESCAPE_WITH_SIGIL);
-
+    UNUSED(form);
     Append_Codepoint(mo->series, '^');
-    Mold_Word(mo, symbol, escape);
+    Mold_Decorable_Word(mo, v);
 }
 
 
@@ -281,13 +269,9 @@ void MF_Meta_Word(REB_MOLD *mo, const Cell* v, bool form) {
 //  MF_The_Word: C
 //
 void MF_The_Word(REB_MOLD *mo, const Cell* v, bool form) {
-    const Symbol* symbol = Cell_Word_Symbol(v);
-    bool escape = form
-        ? false
-        : Get_Subclass_Flag(SYMBOL, symbol, ESCAPE_WITH_SIGIL);
-
+    UNUSED(form);
     Append_Codepoint(mo->series, '@');
-    Mold_Word(mo, symbol, escape);
+    Mold_Decorable_Word(mo, v);
 }
 
 
@@ -295,26 +279,18 @@ void MF_The_Word(REB_MOLD *mo, const Cell* v, bool form) {
 //  MF_Var_Word: C
 //
 void MF_Var_Word(REB_MOLD *mo, const Cell* v, bool form) {
-    const Symbol* symbol = Cell_Word_Symbol(v);
-    bool escape = form
-        ? false
-        : Get_Subclass_Flag(SYMBOL, symbol, ESCAPE_WITH_SIGIL);
-
+    UNUSED(form);
     Append_Codepoint(mo->series, '$');
-    Mold_Word(mo, symbol, escape);
+    Mold_Decorable_Word(mo, v);
 }
 
 //
 //  MF_Type_Word: C
 //
 void MF_Type_Word(REB_MOLD *mo, const Cell* v, bool form) {
-    const Symbol* symbol = Cell_Word_Symbol(v);
-    bool escape = form
-        ? false
-        : Get_Subclass_Flag(SYMBOL, symbol, ESCAPE_WITH_SIGIL);
-
+    UNUSED(form);
     Append_Codepoint(mo->series, '&');
-    Mold_Word(mo, symbol, escape);
+    Mold_Decorable_Word(mo, v);
 }
 
 

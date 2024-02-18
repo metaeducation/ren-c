@@ -303,41 +303,33 @@ const Symbol* Intern_UTF8_Managed_Core(  // results implicitly managed [1]
     // we only run this the first time a symbol is interned.
     //
   blockscope {
-    if (Get_Lex_Class(utf8[0]) == LEX_CLASS_NUMBER) {  // |1| is a WORD!
-        Set_Subclass_Flag(SYMBOL, s, ESCAPE_PLAIN);
-        Set_Subclass_Flag(SYMBOL, s, ESCAPE_WITH_SIGIL);
-        Set_Subclass_Flag(SYMBOL, s, ESCAPE_IN_SEQUENCE);
-    }
-    else for (Offset i = 0; i < utf8_size; ++i) {
-        if (utf8[i] == ' ') {
-            Set_Subclass_Flag(SYMBOL, s, ESCAPE_PLAIN);
-            Set_Subclass_Flag(SYMBOL, s, ESCAPE_WITH_SIGIL);
-            Set_Subclass_Flag(SYMBOL, s, ESCAPE_IN_SEQUENCE);
-            break;
-        }
+    assert(Get_Lex_Class(utf8[0]) != LEX_CLASS_NUMBER);  // no leading digit
+    for (Offset i = 0; i < utf8_size; ++i) {
+        assert(not IS_LEX_ANY_SPACE(utf8[i]));  // spaces/newlines illegal
 
         if (
             utf8[i] == '/'
-            or utf8[i] == '.'
             or utf8[i] == '<'
             or utf8[i] == '>'
         ){
-            Set_Subclass_Flag(SYMBOL, s, ESCAPE_IN_SEQUENCE);
+            Set_Subclass_Flag(SYMBOL, s, ILLEGAL_IN_ANY_SEQUENCE);
             continue;
         }
 
-        // !!! Theoretically there would be more things permitted here, like
-        // dots in words and slashes, but the scanner won't allow it.
-        //
+        if (utf8[i] == '.') {
+            Set_Subclass_Flag(SYMBOL, s, ILLEGAL_IN_ANY_TUPLE);
+            continue;
+        }
+
         if (
             utf8[i] == ':'
             or utf8[i] == '$'
-            or utf8[i] == '%'
             or utf8[i] == '@'
             or utf8[i] == '^'
+            or utf8[i] == '&'
         ){
-            Set_Subclass_Flag(SYMBOL, s, ESCAPE_WITH_SIGIL);
-            Set_Subclass_Flag(SYMBOL, s, ESCAPE_IN_SEQUENCE);
+            Set_Subclass_Flag(SYMBOL, s, ILLEGAL_WITH_SIGIL);
+            Set_Subclass_Flag(SYMBOL, s, ILLEGAL_IN_ANY_SEQUENCE);
             continue;
         }
     }

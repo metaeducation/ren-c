@@ -78,6 +78,13 @@ INLINE Element* Init_Any_Word_Untracked(
     BINDING(out) = nullptr;
     INIT_CELL_WORD_SYMBOL(out, sym);
 
+    if (heart != REB_WORD) {  // if not plain, some symbols can't have sigils
+        if (Get_Subclass_Flag(SYMBOL, sym, ILLEGAL_WITH_SIGIL)) {
+            HEART_BYTE(out) = REB_WORD;
+            fail (Error_Illegal_Sigil_Word_Raw(out));
+        }
+    }
+
     return out;
 }
 

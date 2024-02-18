@@ -194,7 +194,7 @@ enum LexSpecialEnum {               /* The order is important! */
     LEX_SPECIAL_GREATER,            /* 3E > - compare or end tag */
     LEX_SPECIAL_PLUS,               /* 2B + - positive number */
     LEX_SPECIAL_MINUS,              /* 2D - - date, negative number */
-    LEX_SPECIAL_BAR,                /* 7C | - expression barrier */
+    LEX_SPECIAL_BAR,                /* 7C | - can be part of an "arrow word" */
     LEX_SPECIAL_BLANK,              /* 5F _ - blank */
 
                                     /** Any of these can follow - or ~ : */

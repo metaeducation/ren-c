@@ -436,6 +436,8 @@ REBTYPE(Sequence)
 //
 void MF_Sequence(REB_MOLD *mo, const Cell* v, bool form)
 {
+    UNUSED(form);
+
     Heart heart = Cell_Heart(v);
     char interstitial = Any_Tuple_Kind(heart) ? '.' : '/';
 
@@ -469,17 +471,11 @@ void MF_Sequence(REB_MOLD *mo, const Cell* v, bool form)
         }
         else if (element_heart == REB_WORD) {
             const Symbol* sym = Cell_Word_Symbol(element);
-            if (
-                not form
-                and Get_Subclass_Flag(SYMBOL, sym, ESCAPE_IN_SEQUENCE)
-                and Not_Subclass_Flag(SYMBOL, sym, ESCAPE_PLAIN)  // does itself
-            ){
-                Append_Codepoint(mo->series, '|');
-                Mold_Value(mo, element);
-                Append_Codepoint(mo->series, '|');
-            }
-            else
-                Mold_Value(mo, element);
+            assert(Not_Subclass_Flag(SYMBOL, sym, ILLEGAL_IN_ANY_SEQUENCE));
+            if (Any_Tuple_Kind(heart))
+                assert(Not_Subclass_Flag(SYMBOL, sym, ILLEGAL_IN_ANY_TUPLE));
+
+            Mold_Value(mo, element);
         }
         else {
             Mold_Value(mo, element);

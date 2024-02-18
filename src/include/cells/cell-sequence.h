@@ -114,8 +114,18 @@ INLINE bool Is_Valid_Sequence_Element(
         or h == REB_BLOCK
         or h == REB_TEXT
         or h == REB_TAG
-        or h == REB_WORD
     ){
+        return true;
+    }
+
+    if (h == REB_WORD) {
+        const Symbol* symbol = Cell_Word_Symbol(v);
+        if (Get_Subclass_Flag(SYMBOL, symbol, ILLEGAL_IN_ANY_SEQUENCE))
+            return false;  // e.g. no making path! [<| |>] to be tag! <|/|>
+        if (Any_Path_Kind(sequence_heart))
+            return true;
+        if (Get_Subclass_Flag(SYMBOL, symbol, ILLEGAL_IN_ANY_TUPLE))
+            return false;  // e.g. contains a slash
         return true;
     }
 

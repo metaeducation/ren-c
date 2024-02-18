@@ -68,38 +68,34 @@
 #define HAS_MISC_Hitch          FLAVOR_SYMBOL
 
 
-//=//// SYMBOL_FLAG_ESCAPE_PLAIN ///////////////////////////////////////////=//
+//=//// SYMBOL_FLAG_ILLEGAL_WITH_SIGIL /////////////////////////////////////=//
 //
-// Some symbols need to be escaped even when not in paths/tuples/set/get/etc:
+// These contain sigil characters and can't be themselves given sigils.
+// e.g. a `:` does not make sense to be turned into a SET-WORD! as `::`.
 //
-//   * Anything with a space in it, obviously
-//   * Anything with a dot or slash in it, that isn't all dots or all slashes
-//   * Anything with a comma in it
-//
-// etc.  Examples of things that don't need to be plain-escaped would be
-// stuff like `::` or `@`
-//
-#define SYMBOL_FLAG_ESCAPE_PLAIN \
+#define SYMBOL_FLAG_ILLEGAL_WITH_SIGIL \
     SERIES_FLAG_24
 
 
-//=//// SYMBOL_FLAG_ESCAPE_WITH_SIGIL //////////////////////////////////////=//
+//=//// SYMBOL_FLAG_ILLEGAL_IN_ANY_SEQUENCE ////////////////////////////////=//
 //
-// These are things that have to be escaped when used with a simple SET-WORD!
-// or META-WORD!, etc.  Examples of things that don't would be `///` or `.`
+// Symbols with < or > in them do not work in sequences:
 //
-#define SYMBOL_FLAG_ESCAPE_WITH_SIGIL \
+//    >> make path! [<| |>]
+//    == <|/|>  ; should be a tag
+//
+// Also, slashes are not allowed in paths or tuples (but dots are ok in paths)
+//
+#define SYMBOL_FLAG_ILLEGAL_IN_ANY_SEQUENCE \
     SERIES_FLAG_25
 
 
-//=//// SYMBOL_FLAG_ESCAPE_IN_SEQUENCE /////////////////////////////////////=//
+//=//// SYMBOL_FLAG_ILLEGAL_IN_ANY_TUPLE ///////////////////////////////////=//
 //
-// Some symbols cannot appear in PATHs or TUPLEs, or SET-WORD!s: notably
-// anything that has dots, slashes, or spaces.
+// This basically just means the symbol has a dot in it...other prohibitions
+// are covered by ILLEGAL_IN_ANY_SEQUENCE.
 //
-//    object.|employee.name|
-//
-#define SYMBOL_FLAG_ESCAPE_IN_SEQUENCE \
+#define SYMBOL_FLAG_ILLEGAL_IN_ANY_TUPLE \
     SERIES_FLAG_26
 
 

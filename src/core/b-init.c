@@ -271,20 +271,6 @@ static void Startup_Lib(void)
     Init_Trash(Force_Lib_Var(SYM_DOLLAR_1));
     Init_Trash(Force_Lib_Var(SYM__L_B));  // <|
     Init_Trash(Force_Lib_Var(SYM__B_G));  // |>
-    Init_Trash(Force_Lib_Var(SYM__B_G));  // |>
-    Init_Trash(Force_Lib_Var(SYM_GREATER_1));
-    Init_Trash(Force_Lib_Var(SYM_LESSER_1));
-    Init_Trash(Force_Lib_Var(SYM__L_G));  // <>
-    Init_Trash(Force_Lib_Var(SYM__L_E));  // <=
-    Init_Trash(Force_Lib_Var(SYM__E_L));  // =<
-    Init_Trash(Force_Lib_Var(SYM__G_E));  // >=
-    Init_Trash(Force_Lib_Var(SYM__E_G));  // =>
-    Init_Trash(Force_Lib_Var(SYM___G));  // ->
-    Init_Trash(Force_Lib_Var(SYM__L_));  // <-
-    Init_Trash(Force_Lib_Var(SYM__G_));  // >-
-    Init_Trash(Force_Lib_Var(SYM__G__));  // >--
-    Init_Trash(Force_Lib_Var(SYM___L));  // -<
-    Init_Trash(Force_Lib_Var(SYM___G_));  // ->-
 }
 
 
