@@ -96,6 +96,8 @@ export to-c-name: func [
         ":" ["colon_1"]
         "&" ["ampersand_1"]
         "$" ["dollar_1"]
+        ">" ["greater_1"]
+        "<" ["lesser_1"]
 
         ; These are in the set of what are known as "alterative tokens".  They
         ; aren't exactly keywords (and in C they're just done with #define).
@@ -136,6 +138,7 @@ export to-c-name: func [
             |   "_b"    ; (b)ar
             >   "_g"    ; (g)reater
             <   "_l"    ; (l)esser
+            =   "_e"    ; (e)qual
             #"^^"  "_c" ; (c)aret
             #"@" "_z"   ; a was taken, doesn't make less sense than * => p
         ][
