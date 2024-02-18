@@ -89,6 +89,9 @@ void Shutdown_Data_Stack(void)
 //
 void Startup_Feeds(void)
 {
+    PG_Empty_Array = Make_Array_Core(0, NODE_FLAG_MANAGED);
+    Freeze_Array_Deep(PG_Empty_Array);
+
     PG_Feed_At_End.header.bits = FLAG_FIRST_BYTE(END_SIGNAL_BYTE);
 
     TG_End_Feed = Make_Array_Feed_Core(EMPTY_ARRAY, 0, SPECIFIED);
@@ -104,6 +107,8 @@ void Shutdown_Feeds(void) {
 
     Release_Feed(TG_End_Feed);
     TG_End_Feed = nullptr;
+
+    PG_Empty_Array = nullptr;
 }
 
 

@@ -152,11 +152,16 @@ INLINE Context* Error_Bad_Sequence_Init(const Value* v) {
 // This was done for the sake of preventing the creation of a WORD! which
 // would be ambiguous if put in a PATH! or TUPLE!.
 //
-// But people still wanted `/` for division, and getting the mutant path to
-// act like a WORD! was too much of a hassle vs. just saying that the words
-// would be escaped if used in tuples or paths, like `obj.|/|`.  So the
-// mechanics that optimized as a word were just changed to make a real WORD!
-// with SYMBOL_FLAG_ESCAPE_IN_SEQUENCE.
+// But people still wanted `/` for division.  The battle was lost, so there
+// is no such thing as a PATH! with 2 blanks in it.
+//
+// However, we want to be able to insert dots into paths, e.g. to make:
+//
+//     >> [../foo/file.txt ./x]
+//
+// So the same rules doen't apply to dots, because it would prohibit them
+// from being put into paths.  There's also some plans to make the behavior
+// of leading dots do things with binding lookup in the evaluator.
 //
 INLINE Element* Init_Any_Sequence_1(
     Sink(Element*) out,

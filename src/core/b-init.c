@@ -271,6 +271,20 @@ static void Startup_Lib(void)
     Init_Trash(Force_Lib_Var(SYM_DOLLAR_1));
     Init_Trash(Force_Lib_Var(SYM__L_B));  // <|
     Init_Trash(Force_Lib_Var(SYM__B_G));  // |>
+    Init_Trash(Force_Lib_Var(SYM__B_G));  // |>
+    Init_Trash(Force_Lib_Var(SYM_GREATER_1));
+    Init_Trash(Force_Lib_Var(SYM_LESSER_1));
+    Init_Trash(Force_Lib_Var(SYM__L_G));  // <>
+    Init_Trash(Force_Lib_Var(SYM__L_E));  // <=
+    Init_Trash(Force_Lib_Var(SYM__E_L));  // =<
+    Init_Trash(Force_Lib_Var(SYM__G_E));  // >=
+    Init_Trash(Force_Lib_Var(SYM__E_G));  // =>
+    Init_Trash(Force_Lib_Var(SYM___G));  // ->
+    Init_Trash(Force_Lib_Var(SYM__L_));  // <-
+    Init_Trash(Force_Lib_Var(SYM__G_));  // >-
+    Init_Trash(Force_Lib_Var(SYM__G__));  // >--
+    Init_Trash(Force_Lib_Var(SYM___L));  // -<
+    Init_Trash(Force_Lib_Var(SYM___G_));  // ->-
 }
 
 
@@ -368,9 +382,6 @@ static void Shutdown_Action_Spec_Tags(void)
 //
 static void Startup_Empty_Arrays(void)
 {
-    PG_Empty_Array = Make_Array_Core(0, NODE_FLAG_MANAGED);
-    Freeze_Array_Deep(PG_Empty_Array);
-
   blockscope {
     Array* a = Make_Array_Core(1, NODE_FLAG_MANAGED);
     Set_Series_Len(a, 1);
@@ -403,7 +414,6 @@ static void Startup_Empty_Arrays(void)
 }
 
 static void Shutdown_Empty_Arrays(void) {
-    PG_Empty_Array = nullptr;
     PG_2_Blanks_Array = nullptr;
 }
 
@@ -726,7 +736,6 @@ void Startup_Core(void)
     Set_Random(0);
     Startup_Interning();
 
-    Startup_Empty_Arrays();
     Startup_Feeds();
 
     Startup_Collector();
@@ -738,6 +747,7 @@ void Startup_Core(void)
     Startup_Api();
 
     Startup_Symbols();
+    Startup_Empty_Arrays();
 
   blockscope {
     Array* a = Make_Array_Core(1, NODE_FLAG_MANAGED);
