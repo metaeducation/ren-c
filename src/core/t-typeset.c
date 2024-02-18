@@ -299,7 +299,7 @@ void Set_Parameter_Spec(
             goto handle_predicate;
         }
         else if (heart == REB_FRAME and QUOTE_BYTE(lookup) == ANTIFORM_0) {
-          handle_predicate:
+          handle_predicate: {
             Phase* phase = ACT_IDENTITY(VAL_ACTION(lookup));
             if (ACT_DISPATCHER(phase) == &Intrinsic_Dispatcher) {
                 Intrinsic* intrinsic = Extract_Intrinsic(phase);
@@ -331,6 +331,7 @@ void Set_Parameter_Spec(
             }
             else
                 *flags |= PARAMETER_FLAG_INCOMPLETE_OPTIMIZATION;
+          }
         }
         else {
             // By pre-checking we can avoid needing to double check in the
