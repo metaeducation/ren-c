@@ -209,7 +209,7 @@ for-each-typerange: func [
     <local> name* heart* any-name!* stack types* starting
 ][
     stack: copy []
-    types*: null
+    types*: _
 
     heart*: 1  ; 0 is reserved
     while [true] [  ; need to be in loop for BREAK to work
@@ -244,11 +244,11 @@ for-each-typerange: func [
                         end: heart*
                         types: types*
                     ]
-                    types*: null
+                    types*: _
                     do body  ; no support for BREAK/CONTINUE in bootstrap
                 ]
             )]
-            [set name* word! (if types* [
+            [set name* word! (if not blank? types* [
                 name*: to text! name*
                 assert [#"!" <> last name*]
                 append types* to text! name*
@@ -444,7 +444,7 @@ for-each-typerange tr [
 ts-index: 0
 
 for-each [ts-name types] typeset-sets [
-    if not types [continue]  ; done with ranges, no TS_XXX
+    if blank? types [continue]  ; done with ranges, no TS_XXX
 
     e-types/emit [ts-name {
         #define TYPESET_FLAG_${TS-NAME} FLAG_LEFT_BIT($<ts-index>)
@@ -596,6 +596,7 @@ for-each-datatype t [
 
     flagits: collect [
         for-each [ts-name types] typeset-sets [
+            if blank? types [continue]
             if not find types t/name [continue]
 
             keep cscape [ts-name {TYPESET_FLAG_${TS-NAME}}]
