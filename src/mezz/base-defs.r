@@ -27,8 +27,8 @@ REBOL [
 
 c-break-debug: runs :c-debug-break  ; easy to mix up
 
-|^|: :meta
-|@|: :the*
+set inside [] '^ :meta  ; [^]: means return meta result no name, perhaps {^}: ?
+set inside [] '@ :the*  ; [@]: means return result no name, perhapse {@}: ?
 
 ; These are faster than clear versions (e.g. `(meta void) = ^ expr`) and
 ; clearer than compressed forms (like '' for quote void)
@@ -178,9 +178,9 @@ elide-if-void: func* [
 ; COMMA! is the new expression barrier.  But `||` is included as a way to
 ; make comma antiforms to show how to create custom barrier-like constructs.
 ;
-|\|\||: func* [] [return ~,~]
+||: func* [] [return ~,~]
 
-|\|\|\||: func* [  ; e.g. |||
+|||: func* [
     {Inertly consumes all subsequent data, evaluating to previous result.}
 
     return: [nihil?]

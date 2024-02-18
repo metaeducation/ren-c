@@ -321,7 +321,6 @@ const Symbol* Intern_UTF8_Managed_Core(  // results implicitly managed [1]
             or utf8[i] == '.'
             or utf8[i] == '<'
             or utf8[i] == '>'
-            or utf8[i] == '|'
         ){
             Set_Subclass_Flag(SYMBOL, s, ESCAPE_IN_SEQUENCE);
             continue;

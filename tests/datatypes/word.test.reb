@@ -159,8 +159,7 @@
 
         {<} '{+} '{=} '{-} {>}  ; tick marks mean unescaped in path
 
-        ; Review handling:
-        ;  {|} {|->} {|>} {|>>}
+        {|} {|->} {|>} {|>>}
 
         {>=} {=|<} {<><} {-=>} {<-<=}
 
@@ -246,17 +245,4 @@
     ("%%" = as text! match set-word! first [%%:])
     ("%%" = as text! match get-word! first [:%%])
     ("%%" = as text! match meta-word! first [^%%])
-
-    ("|%%|/foo" = mold match path! '|%%|/foo)
-    ("%%/foo" = form match path! '|%%|/foo)
-]
-
-[
-    (
-        w: '|word with spaces|
-        did all [
-            "word with spaces" = form w
-            "|word with spaces|" = mold w
-        ]
-    )
 ]

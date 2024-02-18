@@ -49,7 +49,7 @@ REBOL [
 ]
 
 
-%%: lambda [ ; %make-file.r shared with bootstrap, can't load %%
+[%%]: lambda [
     {Quoting MAKE FILE! Operator}
     'value [word! path! tuple! block! group!]
 ][
@@ -199,7 +199,7 @@ shell: func [
 ]
 
 
-|$|: func [
+shell+: func [  ; was $ but that now has a binding purpose
     {Run SHELL code to end of line (or continue on next line with `...`)}
     :args "See documentation for SHELL"
         [any-value? <variadic>]
@@ -221,4 +221,4 @@ shell: func [
     return apply :shell [code, /inspect inspect, /pipe pipe]
 ]
 
-export [shell %% $]
+export [shell %% shell+]

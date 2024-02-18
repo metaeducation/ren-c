@@ -112,7 +112,7 @@
         weird: [|1|]
         did all [
             word? first weird
-            "1" = as text! first weird
+            "|1|" = as text! first weird
             "[|1|]" = mold weird
         ]
     )

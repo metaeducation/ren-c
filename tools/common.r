@@ -134,6 +134,8 @@ export to-c-name: func [
             !   "_x"    ; e(x)clamation
             +   "_a"    ; (a)ddition
             |   "_b"    ; (b)ar
+            >   "_g"    ; (g)reater
+            <   "_l"    ; (l)esser
             #"^^"  "_c" ; (c)aret
             #"@" "_z"   ; a was taken, doesn't make less sense than * => p
         ][
