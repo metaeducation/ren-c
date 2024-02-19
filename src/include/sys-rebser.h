@@ -1023,7 +1023,7 @@ struct Reb_Array {
             or std::is_same<T, REBNOD>::value;
 
         static_assert(
-            derived or base, 
+            derived or base,
             "SER() works on void/REBNOD/REBSER/REBSTR/REBARR/REBCTX/REBACT"
         );
 
@@ -1052,7 +1052,7 @@ struct Reb_Array {
             "ARR works on void/REBNOD/REBSER/REBARR"
         );
 
-        if (base)
+        if (base) {
             assert(WIDE_BYTE_OR_0(reinterpret_cast<REBSER*>(p)) == 0);
             assert(
                 (reinterpret_cast<REBSER*>(p)->header.bits & (
@@ -1063,6 +1063,7 @@ struct Reb_Array {
                     NODE_FLAG_NODE
                 )
            );
+        }
 
         return reinterpret_cast<REBARR*>(p);
     }
