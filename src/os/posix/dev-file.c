@@ -107,7 +107,7 @@ static int Is_Dir(const char *path_utf8, const char *name_utf8)
     // Avoid UNC-path "//name" on Cygwin.
     //
     if (size_path > 0 && full_utf8[size_path - 1] != '/')
-        strncat(full_utf8, "/", 1);
+        strncat(full_utf8, "/", 2);
 
     strncat(full_utf8, name_utf8, size_name);
 
