@@ -726,8 +726,8 @@ eval-all: func [
 ; to allow longer runs of evaluation.  "Invisible functions" (those which
 ; `return: [nihil?]`) permit a more flexible version of the mechanic.
 
-[<|]: runs tweak copy unrun :eval-all 'postpone on
-[|>]: runs tweak enfix copy :shove 'postpone on
+<|: runs tweak copy unrun :eval-all 'postpone on
+|>: runs tweak enfix copy :shove 'postpone on
 
 
 meth: enfix func [
