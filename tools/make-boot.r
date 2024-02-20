@@ -152,7 +152,7 @@ for-each-datatype: func [
         [block!]
     <local>
     name* antiname* description* typesets* class* make* mold* heart* cellmask*
-    completed* running* is-unstable*
+    completed* running* is-unstable* decorated
 ][
     heart*: 1  ; 0 is reserved
     parse2 type-table [some [not end
@@ -176,10 +176,10 @@ for-each-datatype: func [
                 heart: ensure integer! heart*
                 description: ensure text! description*
                 typesets: map-each any-name! typesets* [
-                    any-name!: to text! any-name!
-                    assert [#"!" = take/last any-name!]
-                    assert ["any-" = take/part any-name! 4]
-                    any-name!
+                    decorated: to text! any-name!
+                    assert [#"?" = take/last decorated]
+                    assert ["any-" = take/part decorated 4]
+                    decorated  ; has now been undecorated
                 ]
                 class: class*
                 antiname: either antiname* [to text! unquasi antiname*] [null]
@@ -226,8 +226,8 @@ for-each-typerange: func [
                 ;
                 parse2 name* [
                     remove "any-"
-                    to "!"  ; once dropped -VALUE from e.g. ANY-META-VALUE!
-                    remove "!"
+                    to "?"  ; once dropped -VALUE from e.g. ANY-META-VALUE?
+                    remove "?"
                 ] else [
                     fail "Bad type category name"
                 ]
@@ -250,7 +250,7 @@ for-each-typerange: func [
             )]
             [set name* word! (if not blank? types* [
                 name*: to text! name*
-                assert [#"!" <> last name*]
+                assert [#"?" <> last name*]
                 append types* to text! name*
             ])]
             text!
