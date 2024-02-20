@@ -289,10 +289,10 @@ INLINE void Term_String_Len_Size(String* s, Length len, Size used) {
 // very short, or that are never enumerated.
 
 #define BMK_INDEX(b) \
-    Series_Head(BookmarkT, (b))->index
+    Series_Head(Bookmark, (b))->index
 
 #define BMK_OFFSET(b) \
-    Series_Head(BookmarkT, (b))->offset
+    Series_Head(Bookmark, (b))->offset
 
 INLINE BookmarkList* Alloc_BookmarkList(void) {
     BookmarkList* books = Make_Series(BookmarkList,

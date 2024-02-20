@@ -977,7 +977,7 @@ static void Mark_Level_Stack_Deep(void)
 // 1. We use a generic byte pointer (unsigned char*) to dodge the rules for
 //    strict aliases, as the pool contain pairs of Cell from Alloc_Pairing(),
 //    or a Series from Prep_Stub().  The shared first byte node masks are
-//    defined and explained in %sys-rebnod.h
+//    defined and explained in %struct-node.h
 //
 // 2. For efficiency of memory use, Stub is nominally 2*sizeof(Cell), and
 //    so pairs can use the same Stub nodes.  But features that might make the

@@ -57,7 +57,7 @@
 //
 // * Forward declarations are in %reb-defs.h
 //
-// * See %sys-rebnod.h for an explanation of FLAG_LEFT_BIT.  This file defines
+// * See %struct-node.h for an explanation of FLAG_LEFT_BIT.  This file defines
 //   those flags which are common to every value of every type.  Due to their
 //   scarcity, they are chosen carefully.
 //

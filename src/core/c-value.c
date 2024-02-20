@@ -375,7 +375,7 @@ void* Probe_Core_Debug(
         Probe_Print_Helper(p, expr, "Hashlist", file, line);
         break;
 
-    //=//// SERIES WITH ELEMENTS sizeof(BookmarkT) /////////////////////////=//
+    //=//// SERIES WITH ELEMENTS sizeof(Bookmark) //////////////////////////=//
 
       case FLAVOR_BOOKMARKLIST:
         Probe_Print_Helper(p, expr, "BookmarkList", file, line);

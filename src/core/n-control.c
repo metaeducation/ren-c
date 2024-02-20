@@ -30,7 +30,7 @@
 //   (Note: `return VOID;` doesn't actually overwrite the contents of the
 //    output cell.  This makes it possible for functions like ALL to skip
 //    over void results and let the previous evaluation "drop out".
-//    See %sys-void.h for more information about this mechanic.)
+//    See %cell-void.h for more information about this mechanic.)
 //
 // * If a branch *does* run--and its evaluation happens to produce VOID or
 //   NULL, then they are wrapped in a BLOCK! antiform.  This way THEN runs

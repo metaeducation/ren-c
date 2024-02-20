@@ -142,7 +142,7 @@ enum StubFlavorEnum {
     FLAVOR_MOLDSTACK,
 
     FLAVOR_HASHLIST,  // outlier, sizeof(REBLEN)...
-    FLAVOR_BOOKMARKLIST,  // also outlier, sizeof(BookmarkT)
+    FLAVOR_BOOKMARKLIST,  // also outlier, sizeof(Bookmark)
 
     FLAVOR_MIN_BYTESIZE,  //=/////////////////// BELOW THIS LINE HAS WIDTH = 1
 
@@ -205,7 +205,7 @@ INLINE size_t Wide_For_Flavor(Flavor flavor) {
     if (flavor >= FLAVOR_MIN_BYTESIZE)
         return 1;
     if (flavor == FLAVOR_BOOKMARKLIST)
-        return sizeof(BookmarkT);
+        return sizeof(Bookmark);
     if (flavor == FLAVOR_HASHLIST)
         return sizeof(REBLEN);
     return sizeof(void*);

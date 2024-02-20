@@ -21,10 +21,10 @@
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // This provides some convenience routines that require more definitions than
-// are available when %sys-rebnod.h is being processed.  (e.g. Value*,
+// are available when %struct-node.h is being processed.  (e.g. Value*,
 // Series*, Level*...)
 //
-// See %sys-rebnod.h for what a "Node" means in this context.
+// See %struct-node.h for what a "Node" means in this context.
 //
 
 

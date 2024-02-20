@@ -1,6 +1,6 @@
 //
 //  File: %stub-action.h
-//  Summary: {action! defs AFTER %tmp-internals.h (see: %sys-rebact.h)}
+//  Summary: "action! defs AFTER %tmp-internals.h (see: %struct-action.h)"
 //  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
 //  Homepage: https://github.com/metaeducation/ren-c/
 //

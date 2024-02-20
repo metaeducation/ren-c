@@ -108,30 +108,14 @@ typedef uint64_t Tick;  // evaluator cycles; unsigned overflow is well defined
 typedef uint_fast32_t Codepoint;
 
 
-//=//// SERIES AND NON-INHERITED SUBCLASS DEFINITIONS /////////////////////=//
-//
-// The C++ build defines Array, Binary, and String as being
-// derived from Series.  This affords convenience by having it possible
-// to pass the derived class to something taking a base class, but not vice
-// versa.  However, you cannot forward-declare inheritance:
-//
-// https://stackoverflow.com/q/2159390/
-//
-// Hence, those derived definitions have to be in %sys-rebser.h.
-//
-// Aggregate types that are logically collections of multiple series do not
-// inherit.  You have to specify which series you want to extract, e.g.
-// Get_Series_Flag(CTX_VARLIST(context)), not just Get_Series_Flag(context).
-//
-// Note that because the Series structure includes a Cell by value,
-// the %sys-rebser.h must be included *after* %struct-cell.h; however the
-// higher level definitions in %sys-series.h are *before* %sys-value.h.
-//
+//=//// BOOKMARKS (codepoint position caches for UTF-8) ///////////////////=//
 
 typedef struct BookmarkStruct {
     REBLEN index;
     Size offset;
-} BookmarkT;
+};
+typedef BookmarkStruct Bookmark;
+
 
 //=//// BINDING ///////////////////////////////////////////////////////////=//
 
@@ -141,9 +125,8 @@ struct Reb_Collector;
 typedef struct JumpStruct Jump;
 
 
-
 //=//// DATA STACK ////////////////////////////////////////////////////////=//
-//
+
 typedef uint_fast32_t StackIndex;  // 0 for empty stack ([0] entry poison)
 
 

@@ -1,6 +1,6 @@
 //
 //  File: %stub-series.h
-//  Summary: {any-series? defs AFTER %tmp-internals.h (see: %sys-rebser.h)}
+//  Summary: "any-series? defs AFTER %tmp-internals.h (see: %struct-stub.h)"
 //  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
 //  Homepage: https://github.com/metaeducation/ren-c/
 //
@@ -294,7 +294,7 @@
 
 //=//// SERIES CAPACITY AND TOTAL SIZE /////////////////////////////////////=//
 //
-// See documentation of `bias` and `rest` in %sys-rebser.h
+// See documentation of `bias` and `rest` in %struct-stub.h
 //
 
 INLINE bool Is_Series_Biased(const Series* s) {
