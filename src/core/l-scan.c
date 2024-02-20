@@ -63,6 +63,14 @@ inline static bool Interstitial_Match(char c, char mode) {
     return c == mode;
 }
 
+inline static Sigil Sigil_From_Token(Token t) {
+    assert(t < u_cast(int, SIGIL_MAX));
+    assert(t != u_cast(int, SIGIL_0));
+    assert(t != u_cast(int, SIGIL_SET));
+    return u_cast(Sigil, t);
+}
+
+
 //
 // Maps each character to its lexical attributes, using
 // a frequency optimized encoding.
@@ -708,7 +716,7 @@ static void Update_Error_Near_For_Line(
 // code size in some way, but having lots of calls help esp. when scanning
 // during boot and getting error line numbers printf'd in the Wasm build.
 //
-static Context* Error_Syntax(SCAN_STATE *ss, enum Reb_Token token) {
+static Context* Error_Syntax(SCAN_STATE *ss, Token token) {
     //
     // The scanner code has `bp` and `ep` locals which mirror ss->begin and
     // ss->end.  However, they get out of sync.  If they are updated, they
@@ -992,7 +1000,7 @@ static LEXFLAGS Prescan_Token(SCAN_STATE *ss)
 // encoded source is because all the characters that dictate the tokenization
 // are currently in the ASCII range (< 128).
 //
-static enum Reb_Token Maybe_Locate_Token_May_Push_Mold(
+static Token Maybe_Locate_Token_May_Push_Mold(
     Context** error,
     REB_MOLD *mo,
     Level* L
@@ -1101,7 +1109,7 @@ static enum Reb_Token Maybe_Locate_Token_May_Push_Mold(
         return TOKEN_DOLLAR;
     }
 
-    enum Reb_Token token;  // only set if falling through to `scan_word`
+    Token token;  // only set if falling through to `scan_word`
 
     // Up-front, do a check for "arrow words".  This test bails out if any
     // non-arrow word characters are seen.  Arrow WORD!s are contiguous
@@ -1850,7 +1858,7 @@ Bounce Scanner_Executor(Level* const L) {
   initial_entry: {  //////////////////////////////////////////////////////////
 
     level->quotes_pending = 0;
-    level->prefix_pending = TOKEN_0;
+    level->sigil_pending = SIGIL_0;
     level->quasi_pending = false;
 
 } loop: {  //////////////////////////////////////////////////////////////////
@@ -1999,10 +2007,10 @@ Bounce Scanner_Executor(Level* const L) {
         goto token_prefixable_sigil;
 
       token_prefixable_sigil:
-        if (level->prefix_pending != TOKEN_0)
+        if (level->sigil_pending)
             return RAISE(Error_Syntax(ss, level->token));  // no "GET-GET-WORD!"
 
-        level->prefix_pending = level->token;
+        level->sigil_pending = Sigil_From_Token(level->token);
         goto loop;
 
       case TOKEN_WORD:
@@ -2020,7 +2028,7 @@ Bounce Scanner_Executor(Level* const L) {
       case TOKEN_APOSTROPHE: {
         assert(*bp == '\'');  // should be `len` sequential apostrophes
 
-        if (level->prefix_pending != TOKEN_0)  // can't do @'foo: or :'foo
+        if (level->sigil_pending)  // can't do @'foo: or :'foo
             return RAISE(Error_Syntax(ss, level->token));
 
         if (level->quasi_pending)  // can't do ~'foo~, no quoted quasiforms
@@ -2045,7 +2053,7 @@ Bounce Scanner_Executor(Level* const L) {
       case TOKEN_TILDE: {
         assert(*bp == '~');  // should be `len` sequential apostrophes
 
-        if (level->prefix_pending != TOKEN_0)  // can't do @~foo:~ or :~foo~
+        if (level->sigil_pending)  // can't do @~foo:~ or :~foo~
             return RAISE(Error_Syntax(ss, level->token));
 
         assert(not level->quasi_pending);
@@ -2122,7 +2130,11 @@ Bounce Scanner_Executor(Level* const L) {
             *ss->end == ':'  // `...(foo):` or `...[bar]:`
             and not Is_Dot_Or_Slash(level->mode)  // leave `:` for SET-PATH!
         ){
-            Init_Array_Cell(PUSH(), Setify_Any_Plain_Kind(heart), a);
+            Init_Array_Cell(
+                PUSH(),
+                Sigilize_Any_Plain_Kind(SIGIL_SET, heart),
+                a
+            );
             ++ss->begin;
             ++ss->end;
         }
@@ -2463,7 +2475,7 @@ Bounce Scanner_Executor(Level* const L) {
   lookahead:
 
     // At this point the item at TOP is the last token pushed.  It has
-    // not had any `pending_prefix` or `pending_quotes` applied...so when
+    // not had any `sigil_pending` or `quotes_pending` applied...so when
     // processing something like `:foo/bar` on the first step we'd only see
     // `foo` pushed.  This is the point where we look for the `/` or `.`
     // to either start or continue a tuple or path.
@@ -2736,53 +2748,33 @@ Bounce Scanner_Executor(Level* const L) {
     // If we get here without jumping somewhere else, we have pushed a
     // *complete* token (vs. just a component of a path).  While we know that
     // no whitespace has been consumed, this is a good time to tell that a
-    // colon means "SET" and not "GET".  We also apply any pending prefix
+    // colon means "SET" and not "GET".  We also apply any pending sigils
     // or quote levels that were noticed at the beginning of a token scan,
     // but had to wait for the completed token to be used.
 
     if (ss->begin and *ss->begin == ':') {  // no whitespace, interpret as SET
-        if (level->prefix_pending)
+        if (level->sigil_pending)
             return RAISE(Error_Syntax(ss, level->token));
 
         Heart heart = Cell_Heart_Ensure_Noquote(TOP);
         if (not Any_Plain_Value_Kind(heart))
             return RAISE(Error_Syntax(ss, level->token));
 
-        HEART_BYTE(TOP) = Setify_Any_Plain_Kind(heart);
+        HEART_BYTE(TOP) = Sigilize_Any_Plain_Kind(SIGIL_SET, heart);
 
         ss->begin = ++ss->end;  // !!! ?
     }
-    else if (level->prefix_pending != TOKEN_0) {
+    else if (level->sigil_pending) {
         Heart heart = Cell_Heart_Ensure_Noquote(TOP);
         if (not Any_Plain_Kind(heart))
             return DROP(), RAISE(Error_Syntax(ss, level->token));
 
-        switch (level->prefix_pending) {
-          case TOKEN_COLON:
-            HEART_BYTE(TOP) = Getify_Any_Plain_Kind(heart);
-            break;
+        HEART_BYTE(TOP) = Sigilize_Any_Plain_Kind(
+            unwrap(level->sigil_pending),
+            heart
+        );
 
-          case TOKEN_CARET:
-            HEART_BYTE(TOP) = METAFY_ANY_PLAIN_KIND(heart);
-            break;
-
-          case TOKEN_AT:
-            HEART_BYTE(TOP) = Theify_Any_Plain_Kind(heart);
-            break;
-
-          case TOKEN_AMPERSAND:
-            HEART_BYTE(TOP) = Typeify_Any_Plain_Kind(heart);
-            break;
-
-          case TOKEN_DOLLAR:
-            HEART_BYTE(TOP) = Varify_Any_Plain_Kind(heart);
-            break;
-
-          default:
-            level->token = level->prefix_pending;
-            return DROP(), RAISE(Error_Syntax(ss, level->token));
-        }
-        level->prefix_pending = TOKEN_0;
+        level->sigil_pending = SIGIL_0;
     }
 
     if (level->quasi_pending) {
@@ -2824,7 +2816,7 @@ Bounce Scanner_Executor(Level* const L) {
     Drop_Mold_If_Pushed(mo);
 
     assert(level->quotes_pending == 0);
-    assert(level->prefix_pending == TOKEN_0);
+    assert(level->sigil_pending == SIGIL_0);
     assert(level->quasi_pending == false);
 
     // Note: ss->newline_pending may be true; used for ARRAY_NEWLINE_AT_TAIL
@@ -2905,7 +2897,7 @@ void Startup_Scanner(void)
     REBLEN n = 0;
     while (Token_Names[n])
         ++n;
-    assert(cast(enum Reb_Token, n) == TOKEN_MAX);
+    assert(cast(Token, n) == TOKEN_MAX);
 }
 
 
@@ -3163,7 +3155,7 @@ const Byte* Scan_Any_Word(
     DECLARE_MOLD (mo);
 
     Context* error;
-    enum Reb_Token token = Maybe_Locate_Token_May_Push_Mold(&error, mo, L);
+    Token token = Maybe_Locate_Token_May_Push_Mold(&error, mo, L);
     if (token != TOKEN_WORD)
         return nullptr;
 

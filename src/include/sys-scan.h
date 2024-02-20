@@ -23,27 +23,47 @@
 
 extern const Byte Lex_Map[256];  // declared in %l-scan.c
 
+
+//=//// SIGIL ORDER ///////////////////////////////////////////////////////=//
+//
+// This order needs to match the ordering of the corresponding types for
+// within each category that carry sigils.
+//
+// Also, there is an optimization that the scanner uses the same values for
+// its tokens as the sigils (where applicable, there is no `::` token)
+
+enum SigilEnum {
+    SIGIL_0 = 0,
+    SIGIL_SET = 1,      // trailing : (represented as `::` in isolation)
+    SIGIL_GET = 2,      // leading : (represented as `:` in isolation)
+    SIGIL_META = 3,     // ^
+    SIGIL_TYPE = 4,     // &
+    SIGIL_THE = 5,      // @
+    SIGIL_VAR = 6,      // $
+    SIGIL_MAX
+};
+typedef enum SigilEnum Sigil;
+
+#define NUM_SIGILS 6
+
+
 //
 //  Tokens returned by the scanner.  Keep in sync with Token_Names[].
 //
-// !!! There was a micro-optimization in R3-Alpha which made the order of
-// tokens align with types, e.g. TOKEN_WORD + 1 => TOKEN_GET_WORD, and
-// REB_WORD + 1 => SET_WORD.  As optimizations go, it causes annoyances when
-// the type table is rearranged.  A better idea might be to use REB_XXX
-// values as the tokens themselves--the main reason not to do this seems to
-// be because of the Token_Names[] array.
+// There is an optimization in place where the tokens for sigils align with
+// the sigil value, making it easy to get a sigil from a token.
 //
-enum Reb_Token {
+enum TokenEnum {
     TOKEN_0 = 0,
-    TOKEN_END,
+    TOKEN_END,  // SIGIL_SET is not done the same way (it's two characters)
+    TOKEN_COLON = 2,  // SIGIL_GET
+    TOKEN_CARET = 3,  // SIGIL_META
+    TOKEN_AMPERSAND = 4,  // SIGIL_TYPE
+    TOKEN_AT = 5,  // SIGIL_THE
+    TOKEN_DOLLAR = 6,  // SIGIL_VAR
     TOKEN_NEWLINE,
     TOKEN_BLANK,
     TOKEN_COMMA,
-    TOKEN_COLON,
-    TOKEN_CARET,
-    TOKEN_AT,
-    TOKEN_AMPERSAND,
-    TOKEN_DOLLAR,
     TOKEN_WORD,
     TOKEN_LOGIC,
     TOKEN_INTEGER,
@@ -72,6 +92,13 @@ enum Reb_Token {
     TOKEN_CONSTRUCT,
     TOKEN_MAX
 };
+typedef enum TokenEnum Token;
+
+STATIC_ASSERT(TOKEN_COLON == cast(int, SIGIL_GET));
+STATIC_ASSERT(TOKEN_CARET == cast(int, SIGIL_META));
+STATIC_ASSERT(TOKEN_AMPERSAND == cast(int, SIGIL_TYPE));
+STATIC_ASSERT(TOKEN_AT == cast(int, SIGIL_THE));
+STATIC_ASSERT(TOKEN_DOLLAR == cast(int, SIGIL_VAR));
 
 
 /*

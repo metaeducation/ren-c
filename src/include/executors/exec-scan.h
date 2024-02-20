@@ -146,8 +146,8 @@ typedef struct ScannerExecutorStateStruct {  // each array scan has a level
     // !!! Before stackless, these were locals in Scan_To_Stack()
     //
     REBLEN quotes_pending;
-    enum Reb_Token token;
-    enum Reb_Token prefix_pending;
+    Token token;
+    Option(Sigil) sigil_pending;
     bool quasi_pending;
 
 } SCAN_LEVEL;
