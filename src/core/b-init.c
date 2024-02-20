@@ -266,9 +266,7 @@ static void Startup_Lib(void)
     Init_Trash(Force_Lib_Var(SYM_SLASH_1));
     Init_Trash(Force_Lib_Var(SYM_AT_1));
     Init_Trash(Force_Lib_Var(SYM_CARET_1));
-    Init_Trash(Force_Lib_Var(SYM_COLON_1));
     Init_Trash(Force_Lib_Var(SYM_AMPERSAND_1));
-    Init_Trash(Force_Lib_Var(SYM_DOLLAR_1));
 }
 
 

@@ -82,6 +82,7 @@ attach
 line
 near
 label
+#sigil
 
 value ; used by TYPECHECKER to name the argument of the generated function
 

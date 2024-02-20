@@ -554,6 +554,16 @@ Bounce Evaluator_Executor(Level* L)
         return CATCH_CONTINUE_SUBLEVEL(TOP_LEVEL); }
 
 
+    //=//// SIGIL! ////////////////////////////////////////////////////////=//
+    //
+    // Temporary: Just evaluate to itself.
+    //
+
+      case REB_SIGIL: {
+        Inertly_Derelativize_Inheriting_Const(OUT, L_current, L->feed);
+        break; }
+
+
     //=//// WORD! //////////////////////////////////////////////////////////=//
     //
     // A plain word tries to fetch its value through its binding.  It fails

@@ -256,6 +256,19 @@ static REBINT Math_Arg_For_Char(REBVAL *arg, const Symbol* verb)
 
 
 //
+//  MF_Sigil: C
+//
+void MF_Sigil(REB_MOLD *mo, const Cell* v, bool form)
+{
+    UNUSED(form);
+
+    const char* utf8 = cs_cast(PAYLOAD(Bytes, v).at_least_8);
+    Size size = EXTRA(Bytes, v).exactly_4[IDX_EXTRA_USED];
+    Append_Utf8(mo->series, utf8, size);
+}
+
+
+//
 //  MF_Issue: C
 //
 void MF_Issue(REB_MOLD *mo, const Cell* v, bool form)

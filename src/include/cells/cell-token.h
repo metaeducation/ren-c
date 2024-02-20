@@ -227,6 +227,44 @@ INLINE bool Is_Blackhole(const Atom* v) {
 }
 
 
+//=//// SIGILS ////////////////////////////////////////////////////////////=//
+//
+// At one time, things like $ and ^ and : were "special" WORD!s.  These words
+// caused problems since they could not be turned into forms with sigils,
+// without a complex escaping mechanism.  Once the 64 total datatypes limit
+// was lifted, it became feasible to give them the type SIGIL!
+//
+
+INLINE Element* Init_Sigil(Sink(Element*) out, Sigil sigil) {
+    if (sigil == SIGIL_SET)
+        Init_Issue_Utf8(out, cb_cast("::"), 2, 2);  // codepoints 2, size 2
+    else {
+        Codepoint c;
+        switch (sigil) {
+          case SIGIL_GET:   c = ':';    break;
+          case SIGIL_META:  c = '^';    break;
+          case SIGIL_TYPE:  c = '&';    break;
+          case SIGIL_THE:   c = '@';    break;
+          case SIGIL_VAR:   c = '$';    break;
+          default:
+            assert(false);
+            c = 0;  // silence warning
+        }
+        Init_Char_Unchecked(out, c);
+    }
+    HEART_BYTE(out) = REB_SIGIL;
+    EXTRA(Bytes, out).exactly_4[IDX_EXTRA_SIGIL] = sigil;
+    return out;
+}
+
+INLINE Sigil Cell_Sigil(const Cell* cell) {
+    assert(Cell_Heart(cell) == REB_SIGIL);
+    Byte sigil_byte = EXTRA(Bytes, cell).exactly_4[IDX_EXTRA_SIGIL];
+    assert(sigil_byte != 0 and sigil_byte < SIGIL_MAX);
+    return u_cast(Sigil, sigil_byte);
+}
+
+
 //=//// GENERIC UTF-8 ACCESSORS //////////////////////////////////////////=//
 
 

@@ -228,16 +228,8 @@ Utf8(*) String_At(const_if_c String* s, REBLEN at) {
 //
 REBINT CT_String(const Cell* a, const Cell* b, bool strict)
 {
-    assert(
-        Any_String_Kind(Cell_Heart(a))
-        or REB_ISSUE == Cell_Heart(a)
-        or REB_URL == Cell_Heart(a)
-    );
-    assert(
-        Any_String_Kind(Cell_Heart(b))
-        or REB_ISSUE == Cell_Heart(b)
-        or REB_URL == Cell_Heart(a)
-    );
+    assert(Any_Utf8_Kind(Cell_Heart(a)));
+    assert(Any_Utf8_Kind(Cell_Heart(b)));
 
     REBLEN l1;
     Utf8(const*) cp1 = Cell_Utf8_Len_Size_At(&l1, nullptr, a);

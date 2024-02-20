@@ -62,6 +62,7 @@
 %datatypes/meta-group.test.reb
 %datatypes/meta-path.test.reb
 %datatypes/meta-word.test.reb
+%datatypes/sigil.test.reb
 %datatypes/string.test.reb
 %datatypes/the.test.reb
 %datatypes/tag.test.reb

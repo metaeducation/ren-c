@@ -1935,14 +1935,15 @@ Bounce Scanner_Executor(Level* const L) {
 
       case TOKEN_DOLLAR:
         assert(*bp == '$');
-        if (IS_LEX_ANY_SPACE(*ep) or *ep == '~' or *ep == ']' or *ep == ')') {
-            Init_Word(PUSH(), Canon(DOLLAR_1));
+        if (IS_LEX_ANY_SPACE(*ep) or *ep == ']' or *ep == ')') {
+            Init_Sigil(PUSH(), SIGIL_VAR);  // $
             break;
         }
         goto token_prefixable_sigil;
 
       case TOKEN_COLON:
         assert(*bp == ':');
+        assert(ep == bp + 1);
 
         // !!! If we are scanning a PATH! and see `:`, then classically that
         // could mean a GET-WORD! as they were allowed in paths.  Now the
@@ -1980,19 +1981,26 @@ Bounce Scanner_Executor(Level* const L) {
           #endif
         }
 
+        if (IS_LEX_ANY_SPACE(*ep) or *ep == ']' or *ep == ')') {
+            Init_Sigil(PUSH(), SIGIL_GET);  // :
+            ss->begin = ss->end = ep;
+            break;
+        }
+
+        if (*ep == ':') {  // second colon
+            if (IS_LEX_ANY_SPACE(ep[1]) or ep[1] == ']' or ep[1] == ')') {
+                Init_Sigil(PUSH(), SIGIL_SET);  // ::
+                ep = ep + 1;
+                ss->begin = ss->end = ep;
+                break;
+            }
+        }
+
         goto token_prefixable_sigil;
 
       token_prefixable_sigil:
         if (level->prefix_pending != TOKEN_0)
             return RAISE(Error_Syntax(ss, level->token));  // no "GET-GET-WORD!"
-
-        // !!! This is a hack to support plain colon.  It should support more
-        // than one colon, but this gets a little further for now.  :-/
-        //
-        if (IS_LEX_ANY_SPACE(bp[1])) {
-            Init_Word(PUSH(), Canon(COLON_1));
-            break;
-        }
 
         level->prefix_pending = level->token;
         goto loop;

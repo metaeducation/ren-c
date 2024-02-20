@@ -441,8 +441,11 @@ union Reb_Bytes_Extra {
     Byte at_least_4[sizeof(uintptr_t)];
 };
 
-#define IDX_EXTRA_USED 0  // index into exactly_4 when used for in cell storage
-#define IDX_EXTRA_LEN 1  // index into exactly_4 when used for in cell storage
+// These indices are used into exactly_4 when used as in-cell storage.
+//
+#define IDX_EXTRA_USED 0
+#define IDX_EXTRA_LEN 1
+#define IDX_EXTRA_SIGIL 2
 
 // optimized TUPLE! and PATH! byte forms must leave extra field empty, as
 // it's used for binding/specifiers on these types.  So the length is in

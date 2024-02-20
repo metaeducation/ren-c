@@ -45,6 +45,26 @@
     (u_cast(uint_fast64_t, 1) << (t))  // makes a 64-bit bitflag
 
 
+//=//// SIGIL ORDER ///////////////////////////////////////////////////////=//
+//
+// This order needs to match the ordering of the corresponding types for
+// within each category that carry sigils.
+//
+// *REVIEW:* These could be shared/overlap with the lex categories, maybe.
+
+enum SigilEnum {
+    SIGIL_0 = 0,
+    SIGIL_SET = 1,      // trailing : (represented as `::` in isolation)
+    SIGIL_GET = 2,      // leading : (represented as `:` in isolation)
+    SIGIL_META = 3,     // ^
+    SIGIL_TYPE = 4,     // &
+    SIGIL_THE = 5,      // @
+    SIGIL_VAR = 6,      // $
+    SIGIL_MAX
+};
+typedef enum SigilEnum Sigil;
+
+
 //=//// EXTRA NEEDING GC MARK /////////////////////////////////////////////=//
 //
 // Note that the HEART_BYTE() is what is being tested--e.g. the type that the
@@ -93,6 +113,34 @@ INLINE bool Bindable_Heart_Is_Any_Array(Heart heart) {
 #define Any_The_Kind Any_The_Value_Kind
 #define Any_Plain_Kind Any_Plain_Value_Kind
 #define Any_Var_Kind Any_Var_Value_Kind
+
+
+//=//// SIGIL EXTRACTION //////////////////////////////////////////////////=//
+
+INLINE Option(Sigil) Sigil_Of_Any_Word_Kind(Byte k) {
+    assert(Any_Word_Kind(k));
+    return cast(Sigil, k - REB_WORD);
+}
+
+INLINE Option(Sigil) Sigil_Of_Any_Tuple_Kind(Byte k) {
+    assert(Any_Tuple_Kind(k));
+    return cast(Sigil, k - REB_TUPLE);
+}
+
+INLINE Option(Sigil) Sigil_Of_Any_Path_Kind(Byte k) {
+    assert(Any_Path_Kind(k));
+    return cast(Sigil, k - REB_PATH);
+}
+
+INLINE Option(Sigil) Sigil_Of_Any_Block_Kind(Byte k) {
+    assert(Any_Block_Kind(k));
+    return cast(Sigil, k - REB_BLOCK);
+}
+
+INLINE Option(Sigil) Sigil_Of_Any_Group_Kind(Byte k) {
+    assert(Any_Group_Kind(k));
+    return cast(Sigil, k - REB_GROUP);
+}
 
 
 //=//// XXX <=> SET-XXX! <=> GET-XXX! TRANSFORMATION //////////////////////=//

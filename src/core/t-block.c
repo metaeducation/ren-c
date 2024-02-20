@@ -828,6 +828,24 @@ REBTYPE(Array)
     Option(SymId) id = Symbol_Id(verb);
 
     switch (id) {
+      case SYM_REFLECT: {
+        INCLUDE_PARAMS_OF_REFLECT;
+        UNUSED(ARG(value));
+
+        switch (Cell_Word_Id(ARG(property))) {
+          case SYM_SIGIL: {
+            Heart heart = Cell_Heart_Ensure_Noquote(array);
+            Option(Sigil) sigil = Any_Block_Kind(heart)
+                ? Sigil_Of_Any_Block_Kind(heart)
+                : Sigil_Of_Any_Group_Kind(heart);
+            if (not sigil)
+                return Init_Nulled(OUT);
+            return Init_Sigil(OUT, unwrap(sigil)); }
+
+          default:
+            break;
+        }
+        return Series_Common_Action_Maybe_Unhandled(level_, verb); }
 
     //=//// PICK* (see %sys-pick.h for explanation) ////////////////////////=//
 
@@ -888,7 +906,6 @@ REBTYPE(Array)
       case SYM_DIFFERENCE:
       case SYM_EXCLUDE:
         //
-      case SYM_REFLECT:
       case SYM_SKIP:
       case SYM_AT:
       case SYM_REMOVE:

@@ -166,6 +166,11 @@ issue       "immutable codepoint or codepoint sequence"
             [any-utf8! any-inert!]
             [issue       *       *]
 
+sigil       "Decorators like $ : ^ & @ (:: means decoration of ANY-SET-TYPE!)"
+            ()
+            [any-utf8!]  ; NOT inert
+            [issue        *       +]  ; UTF-8 content in cell, like ISSUE!
+
 
 ; ============================================================================
 ; ABOVE THIS LINE, CELL's "Extra" IS RAW BITS: Cell_Extra_Needs_Mark() = false

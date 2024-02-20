@@ -410,6 +410,11 @@ REBINT Cmp_Value(const Cell* s, const Cell* t, bool strict)
       case REB_MAP:
         return CT_Map(s, t, strict);  // !!! Not implemented
 
+      case REB_SIGIL:
+        if (Cell_Sigil(s) == Cell_Sigil(t))
+            return 0;
+        return Cell_Sigil(s) > Cell_Sigil(t) ? 1 : 0;
+
       case REB_TEXT:
       case REB_FILE:
       case REB_EMAIL:

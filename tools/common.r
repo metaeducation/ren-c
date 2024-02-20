@@ -93,9 +93,7 @@ export to-c-name: func [
 
         "@" ["at_1"]
         "^^" ["caret_1"]
-        ":" ["colon_1"]
         "&" ["ampersand_1"]
-        "$" ["dollar_1"]
         ">" ["greater_1"]
         "<" ["lesser_1"]
 
