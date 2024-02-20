@@ -487,3 +487,10 @@
         null? (foo)
     ]
 )
+
+; Test that undefined types or predicates cause an error and don't crash
+[
+    ~bad-value~ !! (
+        to-the-limit: lambda [everybody [integer! fhqwhgads?]] []
+    )
+]

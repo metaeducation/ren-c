@@ -100,7 +100,7 @@ ATTRIBUTE_NO_RETURN void Fail_Core(const void *p)
 
       case DETECTED_AS_CELL: {
         const Atom* atom = c_cast(Atom*, p);
-        assert(not Is_Antiform_Unstable(atom));  // should handle this case...
+        assert(Is_Stable(atom));  // !!! Should unstable args be allowed?
         UNUSED(atom);
 
         const Value* v = c_cast(Value*, p);
