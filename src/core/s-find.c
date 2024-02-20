@@ -228,15 +228,13 @@ REBINT Find_Binstr_In_Binstr(
     const Byte* cp1;  // binstr1 position that is current test head of match
     Length len_head1;
     Size size_at1;
-    if (Cell_Heart(binstr1) == REB_ISSUE)  // no Cell_Series_Len_Head() atm
-        cp1 = Cell_Utf8_Len_Size_At(&len_head1, &size_at1, binstr1);
-    else if (Cell_Heart(binstr1) != REB_BINARY) {
-        len_head1 = Cell_Series_Len_Head(binstr1);
-        cp1 = Cell_Utf8_Size_At(&size_at1, binstr1);
-    }
-    else {
+    if (Cell_Heart(binstr1) == REB_BINARY) {
         cp1 = Cell_Binary_Size_At(&size_at1, binstr1);
         len_head1 = Cell_Series_Len_Head(binstr1);
+    }
+    else {
+        len_head1 = Cell_Series_Len_Head(binstr1);
+        cp1 = Cell_Utf8_Size_At(&size_at1, binstr1);
     }
 
     // The size of binary that can be used for checked UTF8 scans needs to
@@ -531,11 +529,8 @@ REBLEN Find_Value_In_Binstr(
     }
 
     if (
-        Any_String_Kind(pattern_heart)
-        or Any_Word_Kind(pattern_heart)
+        Any_Utf8_Kind(pattern_heart)
         or REB_INTEGER == pattern_heart  // `find "ab10cd" 10` -> "10cd"
-        or REB_ISSUE == pattern_heart
-        or REB_URL == pattern_heart
     ){
         if (binstr_heart != REB_BINARY and (
             IS_CHAR_CELL(pattern) and Cell_Codepoint(pattern) == 0
@@ -554,6 +549,7 @@ REBLEN Find_Value_In_Binstr(
         if (
             Cell_Heart(pattern) != REB_ISSUE
             and Cell_Heart(pattern) != REB_TEXT
+            and Cell_Heart(pattern) != REB_SIGIL
             and Cell_Heart(pattern) != REB_BINARY
          ){
             // !!! `<tag>`, `set-word:` but FILE!, etc?
