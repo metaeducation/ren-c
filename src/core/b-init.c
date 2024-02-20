@@ -253,20 +253,6 @@ static void Startup_Lib(void)
     assert(Is_Falsey(Lib(FALSE)) and Cell_Logic(Lib(FALSE)) == false);
 
     // !!! Other constants are just initialized as part of Startup_Base().
-
-  //=//// ALLOCATE VARIABLES FOR WEIRD SYMBOLS ////////////////////////////=//
-
-    // Things like @ and $ and :: aren't actual words, so they don't have
-    // SET-WORD! forms.  The way the startup code assigns them is with a
-    // SET-BLOCK! like [::]: but that doesn't get them picked up by the
-    // top-level word scan that's required to create symbols for LIB.  As
-    // a short term workaround, just manually force the variables to exist.
-
-    Init_Trash(Force_Lib_Var(SYM_DOT_1));
-    Init_Trash(Force_Lib_Var(SYM_SLASH_1));
-    Init_Trash(Force_Lib_Var(SYM_AT_1));
-    Init_Trash(Force_Lib_Var(SYM_CARET_1));
-    Init_Trash(Force_Lib_Var(SYM_AMPERSAND_1));
 }
 
 

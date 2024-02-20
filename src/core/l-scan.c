@@ -1911,24 +1911,24 @@ Bounce Scanner_Executor(Level* const L) {
 
       case TOKEN_CARET:
         assert(*bp == '^');
-        if (IS_LEX_ANY_SPACE(*ep) or *ep == '~' or *ep == ']' or *ep == ')') {
-            Init_Word(PUSH(), Canon(CARET_1));
+        if (IS_LEX_ANY_SPACE(*ep) or *ep == ']' or *ep == ')') {
+            Init_Sigil(PUSH(), SIGIL_META);
             break;
         }
         goto token_prefixable_sigil;
 
       case TOKEN_AT:
         assert(*bp == '@');
-        if (IS_LEX_ANY_SPACE(*ep) or *ep == '~' or *ep == ']' or *ep == ')') {
-            Init_Word(PUSH(), Canon(AT_1));
+        if (IS_LEX_ANY_SPACE(*ep) or *ep == ']' or *ep == ')') {
+            Init_Sigil(PUSH(), SIGIL_THE);
             break;
         }
         goto token_prefixable_sigil;
 
       case TOKEN_AMPERSAND:
         assert(*bp == '&');
-        if (IS_LEX_ANY_SPACE(*ep) or *ep == '~' or *ep == ']' or *ep == ')') {
-            Init_Word(PUSH(), Canon(AMPERSAND_1));
+        if (IS_LEX_ANY_SPACE(*ep) or *ep == ']' or *ep == ')') {
+            Init_Sigil(PUSH(), SIGIL_TYPE);
             break;
         }
         goto token_prefixable_sigil;

@@ -27,9 +27,6 @@ REBOL [
 
 c-break-debug: runs :c-debug-break  ; easy to mix up
 
-set inside [] '^ :meta  ; [^]: means return meta result no name, perhaps {^}: ?
-set inside [] '@ :the*  ; [@]: means return result no name, perhapse {@}: ?
-
 ; These are faster than clear versions (e.g. `(meta void) = ^ expr`) and
 ; clearer than compressed forms (like '' for quote void)
 ;

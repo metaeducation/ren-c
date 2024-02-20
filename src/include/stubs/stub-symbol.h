@@ -68,12 +68,9 @@
 #define HAS_MISC_Hitch          FLAVOR_SYMBOL
 
 
-//=//// SYMBOL_FLAG_ILLEGAL_WITH_SIGIL /////////////////////////////////////=//
+//=//// SYMBOL_FLAG_24 ////////////////////////////////////////////////////=//
 //
-// These contain sigil characters and can't be themselves given sigils.
-// e.g. a `:` does not make sense to be turned into a SET-WORD! as `::`.
-//
-#define SYMBOL_FLAG_ILLEGAL_WITH_SIGIL \
+#define SYMBOL_FLAG_24 \
     SERIES_FLAG_24
 
 

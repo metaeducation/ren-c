@@ -82,7 +82,7 @@ Script: [
     bad-word-get:       [:arg1 {is} :arg2 {antiform (see ^^(...) and GET/ANY)}]
     bad-antiform:       [{Invalid use of} :arg1 {antiform}]
     bad-void:           {Invalid use of void}
-    need-non-end:       [{end was reached while trying to set} :arg1]
+    need-non-end:       [{end was reached evaluating} :arg1]  ; SET-XXX!/SIGIL!
     not-bound:          [:arg1 {word is not bound to a context}]
     unassigned-attach:  [:arg1 {word is attached to a context, but unassigned}]
     not-in-context:     [:arg1 {is not in the specified context}]
@@ -111,8 +111,6 @@ Script: [
 
     action-with-dotted: {ACTION! used with dotted sequence access form}
     inert-with-slashed: {ANY-INERT? used with slashed sequence access form}
-
-    illegal-sigil-word: [:arg1 {symbol cannot be decorated with a sigil}]
 
     bad-get-group:      [{GROUP!s require /GROUPS in GET or SET:} :arg1]
     bad-set-group:      {SET-GROUP! sets WORD!/TUPLE!/BLOCK!}

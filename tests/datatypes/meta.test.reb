@@ -18,7 +18,3 @@
 ])
 ((the '3) = ^ (comment "Hi" 1 + 2))
 ((the '3) = ^(comment "Hi" 1 + 2))
-
-; !!! Is this the best behavior, or should it return META VOID ?
-;
-~no-arg~ !! (^)

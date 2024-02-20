@@ -307,6 +307,14 @@ const Symbol* Intern_UTF8_Managed_Core(  // results implicitly managed [1]
     for (Offset i = 0; i < utf8_size; ++i) {
         assert(not IS_LEX_ANY_SPACE(utf8[i]));  // spaces/newlines illegal
 
+        assert(
+            utf8[i] != ':'
+            and utf8[i] != '$'
+            and utf8[i] != '@'
+            and utf8[i] != '^'
+            and utf8[i] != '&'
+        );  // sigil characters not legal in symbols either
+
         if (
             utf8[i] == '/'
             or utf8[i] == '<'
@@ -318,18 +326,6 @@ const Symbol* Intern_UTF8_Managed_Core(  // results implicitly managed [1]
 
         if (utf8[i] == '.') {
             Set_Subclass_Flag(SYMBOL, s, ILLEGAL_IN_ANY_TUPLE);
-            continue;
-        }
-
-        if (
-            utf8[i] == ':'
-            or utf8[i] == '$'
-            or utf8[i] == '@'
-            or utf8[i] == '^'
-            or utf8[i] == '&'
-        ){
-            Set_Subclass_Flag(SYMBOL, s, ILLEGAL_WITH_SIGIL);
-            Set_Subclass_Flag(SYMBOL, s, ILLEGAL_IN_ANY_SEQUENCE);
             continue;
         }
     }

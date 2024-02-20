@@ -255,6 +255,9 @@ Bounce Evaluator_Executor(Level* L)
         (*intrinsic)(OUT, cast(Phase*, action), stable_SPARE);
         goto lookahead; }
 
+      case REB_SIGIL:
+        goto sigil_rightside_in_out;
+
       case REB_GROUP :
       case REB_GET_GROUP :
       case REB_META_GROUP :
@@ -556,11 +559,86 @@ Bounce Evaluator_Executor(Level* L)
 
     //=//// SIGIL! ////////////////////////////////////////////////////////=//
     //
-    // Temporary: Just evaluate to itself.
+    // ^ acts like META
+    //
+    // & acts like TYPE OF
+    //
+    // @ acts like THE with the tweak that it turns quasiforms to antiforms:
+    //
+    //     >> @ abc
+    //     == abc
+    //
+    //     >> @ ~null~
+    //     == ~null~  ; anti
+    //
+    // This is done as a convenience for the API so people can write:
+    //
+    //     rebElide("append block maybe @", value_might_be_null);
+    //
+    // ...instead of:
+    //
+    //     rebElide("append block maybe", rebQ(value_might_be_null));
+    //
+    // Because this breaks quasiforms, tighter integration with the feed
+    // machinery would be better (now possible as @ is built-in!)
     //
 
       case REB_SIGIL: {
-        Inertly_Derelativize_Inheriting_Const(OUT, L_current, L->feed);
+        switch (Cell_Sigil(L_current)) {
+          case SIGIL_SET:  // ::
+            fail ("No evaluator behavior defined for :: yet");
+
+          case SIGIL_GET:  // :
+            fail ("No evaluator behavior defined for : yet");
+
+          case SIGIL_THE: {  // @
+            if (Is_Feed_At_End(L->feed))  // no literal to take if `(@)`
+                fail (Error_Need_Non_End(L_current));
+
+            const Element* at = At_Feed(L->feed);
+            Inertly_Derelativize_Inheriting_Const(OUT, at, L->feed);
+
+            if (Is_Quasiform(OUT))  // !!! hacky behavior
+                Meta_Unquotify_Undecayed(OUT);
+
+            Fetch_Next_In_Feed(L->feed);  // !!! review enfix interop
+            break; }
+
+          case SIGIL_META:  // ^
+          case SIGIL_TYPE:  // &
+          case SIGIL_VAR: {  // $
+            Level* right = Maybe_Rightward_Continuation_Needed(L);
+            if (not right)
+                goto sigil_rightside_in_out;
+
+            return CATCH_CONTINUE_SUBLEVEL(right); }
+
+          default:
+            assert(false);
+        }
+        break; }
+
+      sigil_rightside_in_out: {
+        switch (Cell_Sigil(L_current)) {
+          case SIGIL_META:  // ^
+            Meta_Quotify(OUT);
+            break;
+
+          case SIGIL_TYPE:  // &
+            Copy_Cell(SPARE, OUT);
+            Decay_If_Unstable(SPARE);
+            if (rebRunThrows(stable_OUT, "try type of", stable_SPARE))
+                goto return_thrown;
+            break;
+
+          case SIGIL_VAR:  // $
+            Derelativize(SPARE, OUT, Level_Specifier(L));
+            Copy_Cell(OUT, SPARE);  // !!! inefficient
+            break;
+
+          default:
+            assert(false);
+        }
         break; }
 
 
@@ -1205,8 +1283,8 @@ Bounce Evaluator_Executor(Level* L)
       //
       //    !!! How to circle a ^META result?  Should it be legal to write
       //    ^(@) or @(^) and not call into the evaluator so those cases do
-      //    not fail on missing arguments?  Will "weird words" allow ^@ or
-      //    @^ to be interpreted unambiguously?
+      //    not fail on missing arguments?  (Real solution is anticipated
+      //    as changing from using @ to using {fence} once it exists.)
       //
       //    !!! The multi-return mechanism doesn't allow an arbitrary number
       //    of meta steps, just one.  Should you be able to say ^(^(x)) or
@@ -1288,7 +1366,7 @@ Bounce Evaluator_Executor(Level* L)
             if (
                 // @xxx is indicator of circled result [3]
                 //
-                (heart == REB_WORD and Cell_Word_Symbol(TOP) == Canon(AT_1))
+                (heart == REB_SIGIL and Cell_Sigil(TOP) == SIGIL_THE)
                 or heart == REB_THE_WORD
                 or heart == REB_THE_TUPLE
             ){
@@ -1300,7 +1378,7 @@ Bounce Evaluator_Executor(Level* L)
             if (
                 // ^xxx is indicator of a ^META result [4]
                 //
-                (heart == REB_WORD and Cell_Word_Symbol(check) == Canon(CARET_1))
+                (heart == REB_SIGIL and Cell_Sigil(check) == SIGIL_META)
                 or heart == REB_META_WORD
                 or heart == REB_META_TUPLE
             ){
@@ -1408,13 +1486,8 @@ Bounce Evaluator_Executor(Level* L)
             else
                 Copy_Cell(SPARE, pack_meta_at);
 
-            if (
-                var_heart == REB_WORD
-                and Cell_Word_Symbol(var) == Canon(CARET_1)
-            ){
-                // leave as meta the way it came in
-                goto circled_check;
-            }
+            if (var_heart == REB_SIGIL and Cell_Sigil(var) == SIGIL_META)
+                goto circled_check;  // leave as meta the way it came in
 
             if (
                 var_heart == REB_META_WORD
@@ -1435,8 +1508,8 @@ Bounce Evaluator_Executor(Level* L)
             Meta_Unquotify_Undecayed(SPARE);
 
             if (
-                var_heart == REB_WORD
-                and Cell_Word_Symbol(var) == Canon(AT_1)  // [@ ...]:
+                var_heart == REB_SIGIL
+                and Cell_Sigil(var) == SIGIL_THE  // [@ ...]:
             ){
                 goto circled_check;
             }
@@ -1472,8 +1545,8 @@ Bounce Evaluator_Executor(Level* L)
                 assert(
                     stackindex_circled == BASELINE->stack_base + 1
                     or (
-                        var_heart == REB_WORD
-                        and Cell_Word_Symbol(var) == Canon(AT_1)
+                        var_heart == REB_SIGIL
+                        and Cell_Sigil(var) == SIGIL_THE
                     )
                     or var_heart == REB_THE_WORD
                     or var_heart == REB_THE_TUPLE

@@ -225,10 +225,6 @@
     true
 )]
 
-; Standalone dollar signs are allowed, especially useful in shell dialects
-[
-    ("$" = as text! match word! '$)
-]
 
 ; `%%` was added as a WORD! to serve as a quoting-based MAKE FILE! operator.
 ;

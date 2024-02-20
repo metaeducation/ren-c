@@ -610,7 +610,7 @@ REBVAL *Metafy(REBVAL *out) {  // called on stack values; can't call evaluator
         HEART_BYTE(out) = REB_META_GROUP;
     }
     else if (heart == REB_VOID) {
-        Init_Word(out, Canon(CARET_1));
+        Init_Sigil(out, SIGIL_META);
     }
     else
         fail ("Cannot METAFY");
@@ -659,7 +659,7 @@ REBVAL *Theify(REBVAL *out) {  // called on stack values; can't call evaluator
         HEART_BYTE(out) = REB_THE_GROUP;
     }
     else if (heart == REB_VOID) {
-        Init_Word(out, Canon(AT_1));
+        Init_Sigil(out, SIGIL_THE);
     }
     else
         fail ("Cannot THEIFY");

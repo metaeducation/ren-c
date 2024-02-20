@@ -77,14 +77,6 @@ INLINE Element* Init_Any_Word_Untracked(
     VAL_WORD_INDEX_I32(out) = 0;
     BINDING(out) = nullptr;
     INIT_CELL_WORD_SYMBOL(out, sym);
-
-    if (heart != REB_WORD) {  // if not plain, some symbols can't have sigils
-        if (Get_Subclass_Flag(SYMBOL, sym, ILLEGAL_WITH_SIGIL)) {
-            HEART_BYTE(out) = REB_WORD;
-            fail (Error_Illegal_Sigil_Word_Raw(out));
-        }
-    }
-
     return out;
 }
 
@@ -155,18 +147,6 @@ INLINE bool IS_BAR(const Atom* v) {
 INLINE bool IS_BAR_BAR(const Atom* v) {
     return VAL_TYPE_UNCHECKED(v) == REB_WORD
         and Cell_Word_Symbol(v) == Canon(_B_B);  // caseless || always canon
-}
-
-INLINE bool IS_META(const Atom* v) {
-    if (not Is_Word(v))
-        return false;
-    return Cell_Word_Symbol(v) == Canon(CARET_1);
-}
-
-INLINE bool IS_THE(const Atom* v) {
-    if (not Is_Word(v))
-        return false;
-    return Cell_Word_Symbol(v) == Canon(AT_1);
 }
 
 // !!! Temporary workaround for what was Is_Meta_Word() (now not its own type)

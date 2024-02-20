@@ -778,11 +778,14 @@ Context* Error_User(const char *utf8) {
 //
 //  Error_Need_Non_End: C
 //
+// This error was originally just for SET-WORD!, but now it's used by sigils
+// which are trying to operate on their right hand sides.
+//
+// So the message was changed to "error while evaluating VAR:" instead of
+// "error while setting VAR:", so "error while evaluating @" etc. make sense.
+//
 Context* Error_Need_Non_End(const Element* target) {
-    assert(
-        Is_Set_Word(target) or Is_Set_Tuple(target) or Is_Set_Group(target)
-        or Is_Set_Path(target)  // only needed in legacy Redbol
-    );
+    assert(Any_Set_Kind(VAL_TYPE(target)) or Is_Sigil(target));
     return Error_Need_Non_End_Raw(target);
 }
 

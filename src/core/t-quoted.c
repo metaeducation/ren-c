@@ -149,8 +149,9 @@ REBTYPE(Quoted)
 //
 DECLARE_NATIVE(the)
 //
-// Note: THE is not a perfect synonym for the action assigned to @.  See notes
-// on THE* for why.
+// Note: THE is not a perfect synonym for the action assigned to @ as far as
+// the API is concerned, because the evaluator has special handling for
+// isotopes.
 {
     INCLUDE_PARAMS_OF_THE;
 
@@ -164,59 +165,6 @@ DECLARE_NATIVE(the)
 
     Copy_Cell(OUT, v);
 
-    return OUT;
-}
-
-
-//
-//  the*: native [
-//
-//  "Give value passed in without evaluation, but quasiforms become antiforms"
-//
-//      return: [any-value?]
-//      'value [element?]
-//  ]
-//
-DECLARE_NATIVE(the_p)
-//
-// THE* is the variant assigned to @.  It turns quasiforms into antiforms,
-// but passes through all other values:
-//
-//     >> @ ~null~
-//     == ~null~  ; anti
-//
-//     >> @ ~(1 2 3)~
-//     == ~(1 2 3)~  ; anti
-//
-//     >> @ abc
-//     == abc
-//
-// This is done as a convenience for the API so people can write:
-//
-//     rebElide("append block maybe @", value_might_be_null);
-//
-// ...instead of:
-//
-//     rebElide("append block maybe", rebQ(value_might_be_null));
-//
-// Because the API machinery puts FEED_NULL_SUBSTITUTE_CELL into the stream as
-// a surrogate for a nullptr instead of asserting/erroring.
-//
-// The reason it antiforms things is that the belief is that this will
-// be more likely to generate something that will raise attention if it's not
-// actually correct--otherwise the auto-reification would be more troublesome.
-{
-    INCLUDE_PARAMS_OF_THE_P;
-
-    REBVAL *v = ARG(value);
-
-    if (Is_Quasiform(v)) {  // for `rebElide("@", nullptr, "else [...]");`
-        Copy_Cell(OUT, v);
-        QUOTE_BYTE(OUT) = ANTIFORM_0;
-    }
-    else {
-        Copy_Cell(OUT, v);
-    }
     return OUT;
 }
 

@@ -27,19 +27,3 @@
    ('(a b c) = the (a b c))
    ('~[]~ = the ~[]~)
 ]
-
-; @ runs the action THE*, and has special case behavior that queasiforms
-; become antiforms.  This is useful in the API as it splices ~null~ QUASIFORM!
-; values into slots where nullptr was passed, which become their antiforms.
-; So can avoid having to use rebQ() on arguments that you aren't intending as
-; QUASIFORM!.  The good part is that if you do this in error, you'll probably
-; find out--since the antiforms will not be silently accepted most places.
-[
-   ('x = @ x)
-   ('(a b c) = @ (a b c))
-   (
-      assert ['~null~ = ^ x: @ ~null~]
-      x = null
-   )
-   ('~something~ = ^ @ ~something~)
-]

@@ -106,13 +106,6 @@ Bounce MAKE_Word(
         // Rethink what it means to preserve the bits vs. not.
         //
         Copy_Cell(OUT, arg);
-        if (heart != REB_WORD) {
-            const Symbol* sym = Cell_Word_Symbol(arg);
-            if (Get_Subclass_Flag(SYMBOL, sym, ILLEGAL_WITH_SIGIL)) {
-                HEART_BYTE(OUT) = REB_WORD;
-                fail (Error_Illegal_Sigil_Word_Raw(OUT));
-            }
-        }
         HEART_BYTE(OUT) = heart;
         return OUT;
     }
@@ -230,7 +223,6 @@ void MF_Word(REB_MOLD *mo, const Cell* v, bool form) {
 inline static void Mold_Decorable_Word(REB_MOLD *mo, const Cell* v)
 {
     const Symbol* symbol = Cell_Word_Symbol(v);
-    assert(Not_Subclass_Flag(SYMBOL, symbol, ILLEGAL_WITH_SIGIL));
     Append_Utf8(mo->series, String_UTF8(symbol), String_Size(symbol));
 }
 

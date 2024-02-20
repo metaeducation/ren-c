@@ -91,9 +91,6 @@ export to-c-name: func [
         "." ["dot_1"]
         "/" ["slash_1"]
 
-        "@" ["at_1"]
-        "^^" ["caret_1"]
-        "&" ["ampersand_1"]
         ">" ["greater_1"]
         "<" ["lesser_1"]
 
@@ -138,6 +135,7 @@ export to-c-name: func [
             <   "_l"    ; (l)esser
             =   "_e"    ; (e)qual
             #"^^"  "_c" ; (c)aret
+            #"^^"  "_c" ; !!! Bug in shim loading requres a paired ^^ !!!
             #"@" "_z"   ; a was taken, doesn't make less sense than * => p
         ][
             replace/all string (form reb) c
