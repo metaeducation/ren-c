@@ -1,206 +1,83 @@
 Rebol [
-    Title: "Fake IMPORT/EXPORT for Bootstrap, enable use of COMMA! syntax"
+    Title: "Compatibility IMPORT/EXPORT for Bootstrap"
     File: %import-shim.r
+    Type: module
+
+    ; SEE NOTES BELOW: r3-alpha module system fully broken in bootstrap  EXE
+    ;Name: Import-Shim  ; without Name: will act like `Options: [private]`
+    ;Exports: [lib3 import export load]
+
     Description: {
-        If a module imports %common.r, that should also imply the import of
-        definitions from %bootstrap-shim.r.  This is not something obvious how
-        to do in the R3-Alpha module system.
+        This shim redefines IMPORT and EXPORT for the bootstrap executable:
 
-        Ren-C wants something like `Baseline: %bootstrap-shim.r` in the module
-        header to indicate inheriting from places other than lib.  The feature
-        is not ready at time of writing, so it is faked by having %common.r
-        export the export list from %bootstrap-shim.r.  But it is on the radar.
+        * It uses plain DO of the code so that the `Type: module` in the
+          header is ignored.  That just puts everything into the user context,
+          which is ugly but made to work in order to use the old executable
+          to build.  It also avoids importing things more than once, so it
+          achieves a similar semantic to modules.
 
-        This shim redefines IMPORT for the bootstrap executable to be a synonym
-        for DO, when the `Type: module` annotation is removed.  That just
-        puts everything into the user context, which is ugly but made to work
-        in order to use the old executable to build.  It also avoids importing
-        things more than once, so it achieves a similar semantic to modules.
+        * It preprocesses the source, so that <{...}> strings are turned into
+          legacy {...} strings.  ({...} are FENCE! arrays in modern Ren-C)
 
-        So long as it is doing that, it also strips out the commas.  This
-        doesn't let them act as expression barriers but can help readability.
-        Additionally it turns lone quotes into the word `null`.
+        * It removes commas from non-strings in source, so that commas can be
+          used in boostrap code.  This doesn't act as expression barriers, but
+          helps with readability (and new executables will see them as
+          expression barriers and enforce them).
     }
     Usage: {
-        DO no longer changes the working directory to system.script.path,
-        so to include this it should say this magic incantation:
+        To affect how code is loaded, the import shim has to be hooked in
+        before your script is running (so you can't `do %import-shim.r`).
 
-            if not find words of import 'product [
-                do load append copy system/script/path %import-shim.r
-            ]
+        Fortunately, there is an --import option to preload modules that
+        existed in the bootstrap executable.
 
-        This helps standardize the following rules between the new and the
-        old bootstrap executable:
+            r3 --import import-shim.r make.r [OPTIONS]
 
-            https://github.com/metaeducation/rebol-issues/issues/2374
+        Newer executables don't need this shim, just run the script plain:
+
+            r3 make.r [OPTIONS]
     }
     Notes: {
+      * !!! R3-Alpha Module System Was Completely Broken !!!, so we manually
+        overwrite the definitions in lib instead of using Exports:  Not even
+        that worked in pre-R3C builds, so it forced an update of the bootstrap
+        executable to R3C when we started using the `--import` option.
+
       * DO LOAD is used instead of DO to avoid the legacy behavior of changing
         to the directory of %import-shim.r when running a FILE! (vs. a BLOCK!)
         This also keeps it from resetting the directory when the DO is over,
         so we can CHANGE-DIR from this shim to compensate for the changing
         into the calling script's directory...making it appear that the
         command line processing never switched the dir in the first place.
-
-      * APPEND is used instead of JOIN because the bootstrap executable
-        semantically considers JOIN to be mutating.  The decision on this was
-        that JOIN would be non-mutating but also non-reducing.  But the
-        bootstrap-shim.r can't be imported until after the import-shim.r, so
-        using APPEND is the clearest alternative.)
-
-      * There seems to be flakiness on recursive DO in the bootstrap EXE.
-        So having multi-inclusion handled by this script isn't an option,
-        because READs and other things start panic'ing randomly.  It seems
-        avoiding recursion solves the issue: run %import-shim.r only once.
     }
 ]
-already-imported: make map! []  ; avoid importing things twice
 
-trap [
-    func [x [<maybe> integer!]] []  ; use <maybe> as litmus test for newish EXE
-] else [
-    quit  ; assume modern IMPORT/EXPORT, don't need hacks
-]
 
-if set? 'import-shim-loaded [  ; already ran this shim
-    fail "Recursive loading %import-shim.r is flaky, check 'import-shim-loaded"
-]
-
-lib3: lib
-
-; Simple "divider-style" thing for remarks.  At a certain verbosity level,
-; it could dump those remarks out...perhaps based on how many == there are.
-; (This is a good reason for retaking ==, as that looks like a divider.)
-;
-; Only supports strings in bootstrap, because sea of words is not in bootstrap
-; executable, so plain words here creates a bunch of variables...could confuse
-; the global state more than it already is.
-;
-===: lib3/func [
-    ; note: <...> is now a TUPLE!, and : used to be "hard quote" (vs ')
-    label [text!]
-    'terminal [word!]
+if not trap [
+    :import/into  ; no error here means already shimmed, or EXE is new
 ][
-    assert [equal? terminal '===]
+    print ""
+    print "!!! %import-shim.r is only for use with old Ren-C EXEs"
+    print ""
+    quit/with 1
 ]
 
 
-=== "WORKAROUND FOR BUGGY PRINT IN BOOTSTRAP EXECUTABLE" ===
+write-stdout "LOADING %import-shim.r --- "  ; when finished, adds "COMPLETE!"
 
-; Commit #8994d23 circa Dec 2018 has sporadic problems printing large chunks
-; (in certain mediums, e.g. to the VSCode integrated terminal).  Replace PRINT
-; as early as possible in the boot process with one that uses smaller chunks.
-; This seems to avoid the issue.
+
+; Because the semantics vary greatly, we'd like it to be clear to readers
+; when something like APPEND or FUNC are using old rules.  LIB3/APPEND and
+; LIB3/FUNC are good ways of seeing that.
 ;
-prin3-buggy: :lib3/prin
-print: lib3/print: lib3/func [value <local> pos] [
-    if value = newline [  ; new: allow newline, to mean print newline only
-        prin3-buggy newline
-        return
-    ]
-    value: spaced value  ; uses bootstrap shim spaced (once available)
-    while [true] [
-        prin3-buggy copy/part value 256
-        if tail? value: skip value 256 [break]
-    ]
-    prin3-buggy newline
-]
-
-
-=== "GIVE SHORT NAMES THAT CALL OUT BOOTSTRAP EXE'S VERSIONS OF FUNCTIONS" ===
-
-; The shims use the functions in the bootstrap EXE's lib to make forwards
-; compatible variations.  But it's not obvious to a reader that something like
-; `lib/func` isn't the same as `func`.  These names help point it out what's
-; happening more clearly (the 3 in the name means "sorta like R3-Alpha")
-;
-; 1. THIS IS WEIRD TO WORK AROUND BOOTSTRAP EXE'S UNRELIABLE CONTEXT EXPANSION.
-;    When you do things like `system/contexts/user/(word): does ["hi"]` it
-;    causes crashes sometimes, and having the load process see SET-WORD!s at
-;    the top level seems to work around it.
-;
-;    (Using SET-WORD!s here also helps searchability if you're looking for
-;    where `find3: ...` is set.)
-;
-; 2. To load the import shim you need `if not find words of import 'product`,
-;    and this means that we have to tolerate IF and FIND having a double
-;    meaning.  Also, having to type IF3 everywhere would be annoying.
-
-aliases: lib/eval func [:item [any-value! <...>]] [  ; very weird [1]
-    collect [while [item/1 != #end] [keep/only take item]]
-    ]
-    null3?: null?: *
-    null3: null: *
-    void3?: void?: *
-    void3: void: *
-    find3: find: *
-    if3: if: <conflated>  ; [2]
-    the3: quote: *
-    reeval3: eval: *
-    func3: func: *
-    function3: function: *
-    unset3: unset: *
-    append3: append: *
-    change3: change: *
-    insert3: insert: *
-    compose3: compose: *
-    select3: select: *
-    split-path3: split-path: *
-    local-to-file3: local-to-file: *
-    file-to-local3: file-to-local: *
-    any3: any: *
-    all3: all: *
-    case3: case: *
-    switch3: switch: *
-    maybe3: maybe: *
-    match3: match: *
-    for-each3: for-each: *
-
-    collect3: collect: (adapt :lib3/collect [  ; to make KEEP3 obvious
-        body: lib3/compose [
-            keep3: :keep  ; help point out keep3 will splice blocks, has /ONLY
-            keep []  ; bootstrap workaround: force block result even w/no keeps
-            lib3/unset 'keep
-            (body)  ; compose3 will splice the body in here
-        ]
-    ])
-#end
-
-lib3/for-each [alias name shim] aliases [
-    set alias either group? shim [
-        do shim
-    ][
-        get (in lib3 name)
-    ]
-
-    if shim = <conflated> [continue]  ; allow usage e.g. of IF before shim IF
-
-    ; Manually expanding contexts this way seems a bit buggy in bootstrap EXE
-    ; Appending the word first, and setting via a PATH! seems okay.
-    ;
-    error: spaced [(mold name) "not shimmed yet, see" as word! (mold alias)]
-    set name lib3/func [] lib3/compose [
-        fail/where (error) 'return
-    ]
-]
-
-
-=== "STANDARDIZE DIRECTORY TO WHERE THE COMMAND LINE WAS INVOKED FROM" ===
-
-; Typically if any filenames are passed to a script, those paths should be
-; interpreted relative to what directory the user was in when they invoked
-; the program.  Historical Rebol changed the directory to the directory of the
-; running script--which throws this off.
-;
-; Here we change the directory back to where it was when the script was
-; started, which is compatible with the current EXE's behavior.
-
-change-dir system/options/path
+append lib [lib3: _]  ; see header notes: `Exports` broken
+lib/lib3: lib3: lib  ; use LIB3 to make it clearer when using old semantics
 
 
 === "EXPORT" ===
 
-export: func3 [
+append lib [export: _]  ; see header notes: `Exports` broken
+lib3/export: export: lib3/func [
     "%import-shim.r variant of EXPORT which just puts the definition into LIB"
 
     :set-word [<skip> set-word!]  ; old style unescapable literal
@@ -211,7 +88,7 @@ export: func3 [
 ][
     if :set-word [
         args: take args
-        append3 system/contexts/user reduce [  ; splices blocks by default
+        lib3/append system/contexts/user reduce [  ; splices blocks by default
             set-word (set set-word :args)
         ]
         return get 'args
@@ -227,14 +104,17 @@ export: func3 [
         if not word? :word [  ; no type checking in shim via BLOCK!s
             fail "EXPORT only exports block of words in bootstrap shim"
         ]
-        append3 system/contexts/user reduce [  ; splices blocks by default
+        lib3/append system/contexts/user reduce [  ; splices blocks by default
             word get word
         ]
     ]
 ]
 
-strip-commas-and-null-apostrophes: func3 [
-    {Remove the comma-space sequence from the non-string portions of the code}
+
+=== "SOURCE CONVERSION" ===
+
+strip-commas-and-downgrade-strings: lib3/func [
+    "Remove commas from non-string portions of the code, turn <{...}> to {...}"
     source [text!]
     <local> pushed rule
 ][
@@ -249,14 +129,14 @@ strip-commas-and-null-apostrophes: func3 [
             |
             {^^"}  ; (actually `^"`) escaped quote, never count
             |
-            "{" (if <Q> != last pushed [append3 pushed <B>])
+            "{" (if <Q> != last pushed [append pushed <B>])
             |
             "}" (if <B> = last pushed [take/last pushed])
             |
             {"} (
-                case3 [
+                case [
                     <Q> = last pushed [take/last pushed]
-                    empty? pushed [append3 pushed <Q>]
+                    empty? pushed [append pushed <Q>]
                 ]
             )
             |
@@ -264,43 +144,104 @@ strip-commas-and-null-apostrophes: func3 [
             ;
             ahead ", " if (empty? pushed) remove ","
             |
-            [space | newline] ahead {'} ahead [{' } | {')} | {']} | {'^/}]
-            change {'} ({null}) skip
-            |
             skip
         ]
         end
     ]
 
-    lib3/parse source rule else [  ; PARSE2 shim may not be loaded yet
-        fail "STRIP-COMMAS did not work"
+    lib3/parse source rule else [
+        fail "STRIP-COMMAS-AND-DOWNGRADE-STRINGS did not work"
     ]
     return source
 ]
-protect 'strip-commas-and-null-apostrophes  ; was getting overwritten once
 
+
+=== "IMPORT (and DO, which is used to implement IMPORT)" ===
+
+; We must hook DO, in order for the import shim to be able to get its hooks
+; into the initial DO of the top-level script:
+;
+;     r3 --import %import-shim.r make.r
+;
+; Command-line processing will DO %make.r in this situation.  So we have to
+; take over the reading if we want make.r to follow new syntax rules.
+;
+
+; WRAP-MODULE is a signal set by IMPORT that the ensuing DO (of a file)
+; should put the code inside of a MAKE OBJECT! (the classic way of getting
+; modularization in Rebol2).
+;
+; However, this will erase all top level SET-WORD!s in the module.  So you
+; can't use any words you redefine.  e.g. if you say `func: func [...] [...]`
+; then that won't work because `make object! [func: ...]` unsets FUNC in
+; advance.  We only use the trick if they're trying to set a result back,
+; such as with:
+;
+;    rebmake: import <tools/rebmake.r>
+;
+wrap-module: false
 
 old-do: :lib3/do
-do: lib3/do: enclose :lib3/do func3 [f <local> old-dir] [
-    old-dir: _  ; shim null
-    if file? :f.source [
-        ;
+lib3/do: enclose :lib3/do lib3/func [
+    f [frame!]
+    <local> old-system-script file
+    <with> wrap-module
+][
+    old-system-script: system/script
+
+    if file? f/source [
+        file: f/source
+
+        system/script: make system/standard/script [
+            title: "Script imported by import shim"
+            header: make system/standard/header compose [
+                title: "Script imported by import shim"
+                file: (file)
+            ]
+            parent: old-system-script
+            path: first split-path file
+            args: either old-system-script/path [_] [system/options/args]
+        ]
+
         ; We want to strip the commas, but we also want the file-like behavior
         ; of preserving the directory.  :-(  Implement via wrapper.
         ;
-        f.source: strip-commas-and-null-apostrophes read/string f.source
-        old-dir: what-dir
-        change-dir first split-path f.source
+        f/source: strip-commas-and-downgrade-strings read/string file
+
+        ; We do not want top-level set-words to be automatically cleared out,
+        ; in case you plan to overwrite something like IF but are using the
+        ; old definition.
+        ;
+        replace f/source "Type: module" ""
+
+        ; Wrap the whole thing in an object if needed
+        ;
+        replace f/source unspaced [newline "]"] unspaced compose [
+            newline
+            "]" newline
+            (if wrap-module ["make object! ["]) newline
+        ]
+        if wrap-module [
+            append f/source newline
+            append f/source "]  ; end wrapping MAKE OBJECT!"
+        ]
+        wrap-module: false  ; only wrap one level of DO
     ]
     old-do f
-    elide if old-dir [change-dir old-dir]
+    elide system/script: old-system-script
 ]
 
 
-import: enfix func3 [
+already-imported: make map! []  ; avoid importing things twice
+
+
+; see header notes: `Exports` broken
+lib3/import: enfix lib3/func [
     "%import-shim.r variant of IMPORT which acts like DO and loads only once"
 
-    :set-word [<skip> set-word!]
+    :set-word "optional left argument, used by `rebmake: import <rebmake.r>`"
+        [<skip> set-word!]
+
     f [tag!]  ; help catch mistakes, all bootstrap uses TAG!
 
     ; !!! The new import has an /INTO option; add it even though we don't
@@ -310,7 +251,8 @@ import: enfix func3 [
 
     ; NOTE: LET is unavailable (we have not run the bootstrap shim yet)
     ;
-    <local> ret path+file old-dir old-system-script code new-script-path
+    <local> ret path+file new-script-path old-dir code
+    <with> wrap-module already-imported
 ][
     if into [
         fail "/INTO not actually available, just makes IMPORT look modern"
@@ -318,75 +260,52 @@ import: enfix func3 [
 
     f: as file! f
 
-    if ret: select3 already-imported f [
+    if ret: select already-imported f [
         return ret
     ]
 
-    path+file: split-path3 f
+    path+file: lib3/split-path f
 
     assert [#"/" <> first path+file/1]  ; should be relative
     assert [#"%" <> first path+file/1]  ; accidental `import <%foo.r>`
 
-    new-script-path: append3 copy any3 [
+    new-script-path: clean-path lib3/append copy any [
         system/script/path system/options/path
     ] path+file/1
 
-    new-script-path: clean-path new-script-path
-
     old-dir: what-dir
-    old-system-script: system/script
-    change-dir new-script-path
-    system/script: make system/standard/script [
-        title: "Script imported by import shim"
-        header: _  ; shim null
-        parent: system/standard/script
-        path: new-script-path
-        args: _  ; shim null
-    ]
+    change-dir new-script-path  ; modules expect to run in their directory
 
-    code: read/string second path+file
-
-    if find3 code "Type: 'Module" [
-        fail "Old tick-style module definition, use `Type: module` instead"
-    ]
-    if find3 code "Type: module" [
-        replace code "Type: module" ""
-    ]
-
-    strip-commas-and-null-apostrophes code
-
-    ; The MAKE OBJECT! sense of things will overwrite definitions, e.g.
-    ; if you try and say `func: func [...] [...]` then that won't work because
-    ; `make object! [func: ...]` unsets func in advance.  Only use this trick
-    ; if they're trying to set a result back.
-    ;
     ret: #quit
     catch/quit [
         ret: if :set-word [
-            set set-word make object! load code
+            wrap-module: true
+            set set-word do path+file/2
         ] else [
-            do load code
+            assert [not wrap-module]
+            do path+file/2
             #imported
         ]
     ]
 
     change-dir old-dir
-    system/script: old-system-script
-    if system/script/path = %/home/hostilefork/Projects/ren-c/ [
-        protect 'system/script/path
-    ]
+
     already-imported/(f): ret
     return ret
 ]
 
-lib3/import: sys/import: func3 [
-    module [word! file! url! text! binary! module! block! tag!]
-    /version ver [tuple!]
-    /no-share
-    /no-lib
-    /no-user
-][
-    fail ["Bootstrap must use %import-shim.r's IMPORT, not call LIB3/IMPORT"]
+
+=== "LOAD WRAPPING" ===
+
+; see header notes: `Exports` broken
+lib3/load: adapt :lib3/load [  ; source [file! url! text! binary! block!]
+    if all [  ; ALL THEN does not seem to work in bootstrap EXE
+        file? source
+        not dir? source
+    ][use [item] [
+        source: strip-commas-and-downgrade-strings read/string source
+        source: next find source unspaced ["]" newline]  ; skip header
+    ]]
 ]
 
-import-shim-loaded: true
+print "COMPLETE!"

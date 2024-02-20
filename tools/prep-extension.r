@@ -28,10 +28,6 @@ REBOL [
 
 verbose: false
 
-if trap [:import/into] [  ; See %import-shim.r
-    do load append copy system/script/path %import-shim.r
-]
-
 import <bootstrap-shim.r>
 
 import <common.r>

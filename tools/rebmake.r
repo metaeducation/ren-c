@@ -37,10 +37,6 @@ REBOL [
     }
 ]
 
-if trap [:import/into] [  ; See %import-shim.r
-    do load append copy system/script/path %import-shim.r
-]
-
 import <bootstrap-shim.r>
 
 default-compiler: null
@@ -1498,7 +1494,6 @@ makefile: make generator-class [
 
         for-each dep project/depends [
             if not object? dep [continue]
-            ;dump dep
             if not find [#dynamic-extension #static-extension] dep/class [
                 either dep/generated? [
                     continue

@@ -13,10 +13,6 @@ REBOL [
     Purpose: "Recursive READ strategies."
 ]
 
-if trap [:import/into] [  ; See %import-shim.r
-    do load append copy system/script/path %import-shim.r
-]
-
 import <common.r>
 import <bootstrap-shim.r>
 

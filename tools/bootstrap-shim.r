@@ -47,9 +47,29 @@ REBOL [
     }
 ]
 
-; The snapshotted Ren-C existed before <maybe> was legal to mark on arguments.
-; See if this causes an error, and if so assume it's the old Ren-C, not a
-; new one...?
+
+if trap [
+    :import/into  ; no /INTO means error here, so old r3 without import shim
+][
+    ; Don't use <{...}> in this error message, because if this message is
+    ; being reported then this interpreter will think that's a tag.
+
+    print ""
+    print "!!! Bootstrapping with older Ren-C requires passing %import-shim.r"
+    print "on the command line with the --import option, e.g."
+    print ""
+    print "    r3 --import import-shim.r make.r"
+    print ""
+    print "...instead of just `r3 make.r`.  Otherwise make.r can't use things"
+    print "like <{...}> strings in older Ren-C."
+    print ""
+    print "(See %import-shim.r for more details)"
+    print ""
+    quit/with 1
+]
+
+
+; The snapshotted Ren-C (and R3C) existed before [~] was a legal return.
 ;
 ; What this really means is that we are only catering the shim code to the
 ; snapshot.  (It would be possible to rig up shim code for pretty much any
@@ -57,7 +77,7 @@ REBOL [
 ; obvious reward.)
 ;
 trap [
-    func [i [<maybe> integer!]] [...]  ; modern interpreter or already shimmed
+    func [return: [~]] ["This definition should fail in old Ren-C"]
 ] then [
     ; Fall through to the body of this file, we are shimming version ~8994d23
 ] else [
@@ -123,9 +143,96 @@ trap [
 
     export bar!: word!  ; signal there is no BAR! type, and | is a WORD!
 
-    export strip-commas-and-null-apostrophes: x -> [x]  ; not needed
-
     quit
+]
+
+
+=== "STANDARDIZE DIRECTORY TO WHERE THE COMMAND LINE WAS INVOKED FROM" ===
+
+; Typically if any filenames are passed to a script, those paths should be
+; interpreted relative to what directory the user was in when they invoked
+; the program.  Historical Rebol changed the directory to the directory of the
+; running script--which throws this off.
+;
+; Here we change the directory back to where it was when the script was
+; started, which is compatible with the current EXE's behavior.  This helps
+; standardize the following rules between the new and the old executables:
+;
+;   https://github.com/metaeducation/rebol-issues/issues/2374
+;
+; This only happens once, since the shim is applied just once per session.
+
+change-dir system/options/path  ; EXE startup path (not SYSTEM/SCRIPT/PATH)
+
+
+=== "GIVE SHORT NAMES THAT CALL OUT BOOTSTRAP EXE'S VERSIONS OF FUNCTIONS" ===
+
+; The shims use the functions in the bootstrap EXE's lib to make forwards
+; compatible variations.  But it's not obvious to a reader that something like
+; `lib/func` isn't the same as `func`.  These names help point it out what's
+; happening more clearly (the 3 in the name means "sorta like R3-Alpha")
+;
+; 1. THIS IS WEIRD TO WORK AROUND BOOTSTRAP EXE'S UNRELIABLE CONTEXT EXPANSION.
+;    When you do things like `system/contexts/user/(word): does ["hi"]` it
+;    causes crashes sometimes, and having the load process see SET-WORD!s at
+;    the top level seems to work around it.
+;
+;    (Using SET-WORD!s here also helps searchability if you're looking for
+;    where `find3: ...` is set.)
+
+aliases: lib3/reeval lib3/func [:item [any-value! <...>]] [  ; very weird [1]
+    collect [while [item/1 != #end] [keep/only take item]]
+    ]
+    null3?: null?: *
+    null3: null: *
+    void3?: void?: *
+    void3: void: *
+    find3: find: *
+    if3: if: *
+    the3: quote: *
+    reeval3: reeval: *
+    func3: func: *
+    function3: func: *
+    append3: append: *
+    change3: change: *
+    insert3: insert: *
+    compose3: compose: *
+    select3: select: *
+    split-path3: split-path: *
+    local-to-file3: local-to-file: *
+    file-to-local3: file-to-local: *
+    any3: any: *
+    all3: all: *
+    case3: case: *
+    switch3: switch: *
+    maybe3: maybe: *
+    match3: match: *
+    for-each3: for-each: *
+
+    collect3: collect: (adapt :lib3/collect [  ; to make KEEP3 obvious
+        body: lib3/compose [
+            keep3: :keep  ; help point out keep3 will splice blocks, has /ONLY
+            keep []  ; bootstrap workaround: force block result even w/no keeps
+            lib3/unset 'keep
+            (body)  ; compose3 will splice the body in here
+        ]
+    ])
+#end
+
+lib3/for-each [alias name shim] aliases [
+    set alias either group? shim [
+        do shim
+    ][
+        get (in lib3 name)
+    ]
+
+    ; Manually expanding contexts this way seems a bit buggy in bootstrap EXE
+    ; Appending the word first, and setting via a PATH! seems okay.
+    ;
+    error: spaced [(mold name) "not shimmed yet, see" as word! (mold alias)]
+    set name lib3/func [] lib3/compose [
+        fail/where (error) 'return
+    ]
 ]
 
 
@@ -508,11 +615,7 @@ change: func3 [series value [<opt> any-value!] /line <local> only] [
 ; later overturned), remapping lambda to `->` is complicated.
 ;
 do compose3 [(to set-word! first [->]) enfix :lambda]
-unset3 first [=>]
-
-; SET was changed to accept states representing unset variables by default
-;
-set: specialize :lib/set [opt: true]
+unset first [=>]
 
 
 ; Historically WRITE did platform line endings (CRLF) when the string had no
@@ -579,7 +682,7 @@ collect*: func3 [  ; variant giving NULL if no actual material kept
         series: <replaced>
     ]
 
-    lib/eval func3 [keep [action!] <with> return] body :keeper
+    lib/reeval func3 [keep [action!] <with> return] body :keeper
 
     :out
 ]
@@ -697,7 +800,7 @@ modernize-action: function3 [
                 if set-word? w [
                     assert [w = first [return:]]
                     keep3 spec/1, spec: my next
-                    if [~] = spec/1 [keep3/only [<opt>], spec: my next]
+                    if [~] = spec/1 [keep3/only [<opt>] spec: my next]
                     if tail? spec [continue]
                     if text? spec/1 [keep3 spec/1, spec: my next]
                     if block? spec/1 [
@@ -995,68 +1098,6 @@ split: function3 [
     apply :lib/split [series: series dlm: dlm into: into]
 ]
 
-; Unfortunately, bootstrap delimit treated "" as not wanting a delimiter.
-; Also it didn't have the "literal BLANK!s are space characters" behavior.
-;
-delimit: func [
-    return: [~null~ text!]
-    delimiter [~null~ char?! text!]
-    line [<maybe> text! block!]
-    /tail "Include delimiter at tail of result (if non-NULL)"
-    <local> text value pending anything tail-PARAM
-][
-    tail-PARAM: tail
-    tail: :lib/tail
-
-    if text? line [return copy line]
-
-    text: copy ""
-    pending: false
-    anything: false
-
-    cycle [
-        if tail? line [stop]
-        if blank? line/1 [
-            lib/append text space
-            line: next line
-            anything: true
-            pending: false
-            continue
-        ]
-        line: evaluate/set line 'value
-        any [
-            null? get 'value
-        ] then [
-            continue
-        ]
-        any [
-            char? value
-            issue? value
-        ] then [
-            lib/append text form value
-            anything: true
-            pending: false
-            continue
-        ]
-        if pending [
-            if delimiter [lib/append text delimiter]
-            pending: false
-        ]
-        lib/append text form value
-        anything: true
-        pending: true
-    ]
-    if not anything [
-        assert [text = ""]
-        return null
-    ]
-    if tail-PARAM [append text delimiter]
-    return text
-]
-
-unspaced: specialize :delimit [delimiter: _]
-spaced: specialize :delimit [delimiter: space]
-
 
 noquote: func3 [x [<opt> any-value!]] [
     switch kind of :x [
@@ -1234,7 +1275,7 @@ cscape-inside: func3 [
         ] else [
             assert [word? item]
             append obj spread reduce [item 0]
-            obj/(item): get item
+            obj/(item): get/any item
         ]
     ]
     bind code obj  ; simulates ability to bind to single words

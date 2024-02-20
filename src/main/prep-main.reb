@@ -23,10 +23,6 @@ REBOL [
     }
 ]
 
-if trap [:import/into] [  ; See %import-shim.r
-    do load append copy system/script/path %../../tools/import-shim.r
-]
-
 import <../../tools/common.r>  ; for PARSE-ARGS, STRIPLOAD, BINARY-TO-C...
 import <../../tools/common-emitter.r>  ; for splicing Rebol in templated strings
 

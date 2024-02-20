@@ -19,10 +19,6 @@ REBOL [
     }
 ]
 
-if trap [:import/into] [  ; See %import-shim.r
-    do load append copy system/script/path %tools/import-shim.r
-]
-
 import <tools/bootstrap-shim.r>
 
 import <tools/common.r>  ; Note: sets up `repo-dir`
