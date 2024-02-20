@@ -81,22 +81,6 @@ INLINE bool Bindable_Heart_Is_Any_Array(Heart heart) {
 }
 
 
-//=//// INERTNESS ////////////////////////////////////////////////////////=//
-//
-// All the inert types are grouped together to make this test fast.
-
-INLINE bool Any_Inert_Kind(Byte k) {
-    assert(k != REB_VOID and k != REB_ANTIFORM);
-    return k < REB_FRAME;
-}
-
-#define Any_Inert(v) \
-    Any_Inert_Kind(VAL_TYPE(v))
-
-#define Any_Evaluative(v) \
-    (not Any_Inert_Kind(VAL_TYPE(v)))
-
-
 //=//// SHORTHANDS ////////////////////////////////////////////////////////=//
 //
 // Easier to define these than to try and write code for the exceptions when

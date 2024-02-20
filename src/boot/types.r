@@ -60,82 +60,79 @@ REBOL [
 
 void        "absence of value, used by many operations to opt-out"
 ~trash~     (CELL_MASK_NO_NODES)
-            []
+            []  ; Any_Inert() should assert on void and antiforms
             [-       -       -]
-
-
-; ============================================================================
-; BEGIN TYPES THAT ARE EVALUATOR INERT (Any_Inert() fails on VOID + ANTIFORM)
-; ============================================================================
 
 blank       "placeholder unit type"
             (CELL_MASK_NO_NODES)
-            [any-unit!]  ; allow as `branch`?
+            [any-unit! any-inert!]  ; allow as `branch`?
             [blank       -       +]
+
+comma       "separator between full evaluations (that is otherwise invisible)"
+~barrier~   (CELL_MASK_NO_NODES)
+#unstable   [any-unit!]  ; NOT inert
+            [comma       -       +]
 
 decimal     "64bit floating point number (IEEE standard)"
             (CELL_MASK_NO_NODES)
-            [any-number! any-scalar!]
+            [any-number! any-scalar! any-inert!]
             [decimal     *       +]
 
 percent     "special form of decimals (used mainly for layout)"
             (CELL_MASK_NO_NODES)
-            [any-number! any-scalar!]
+            [any-number! any-scalar! any-inert!]
             [decimal     *       +]
 
 money       "high precision decimals with denomination (opt)"
             (CELL_MASK_NO_NODES)
-            [any-scalar!]
+            [any-scalar! any-inert!]
             [money       +       +]
 
-time        "time of day or duration"
+time       "time of day or duration"
             (CELL_MASK_NO_NODES)
-            [any-scalar!]
+            [any-scalar! any-inert!]
             [time        +       +]
 
 date        "day, month, year, time of day, and timezone"
             (CELL_MASK_NO_NODES)
-            []
+            [any-inert!]
             [date        +       +]
 
 integer     "64 bit integer"
             (CELL_MASK_NO_NODES)  ; would change with bignum ints
-            [any-number! any-scalar!]
+            [any-number! any-scalar! any-inert!]
             [integer     +       +]
 
 parameter         "function parameter description"
 ~unspecialized~   (CELL_FLAG_FIRST_IS_NODE | CELL_FLAG_SECOND_IS_NODE)
-                  []
+                  [any-inert!]
                   [parameter   +       +]
 
 bitset      "set of bit flags"
             (CELL_FLAG_FIRST_IS_NODE)
-            []
+            [any-inert!]
             [bitset      +       +]
 
 map         "name-value pairs (hash associative)"
             (CELL_FLAG_FIRST_IS_NODE)
-            []
+            [any-inert!]
             [map         +       +]
 
 handle      "arbitrary internal object or value"
             ()
-            []
+            [any-inert!]
             [handle      -       +]
 
 
-; URL! has a HEART-BYTE! that is a string, but is not itself in the ANY-STRING!
-; category, due to not allowing index positions that would pass the URN.
-;
 url         "uniform resource locator or identifier"
             (CELL_FLAG_FIRST_IS_NODE)
-            [any-utf8!]
+            [any-utf8! any-inert!]
             [url         string  string]
 
 
 binary      "series of bytes"
             (CELL_FLAG_FIRST_IS_NODE)
-            [any-series!]  ; not an ANY-STRING!
+            [any-series! any-inert!]  ; note: not an ANY-STRING!
             [binary      *       +]
 
 
@@ -143,78 +140,79 @@ binary      "series of bytes"
 
     text        "text string series of characters"
                 (CELL_FLAG_FIRST_IS_NODE)
-                [any-series! any-utf8!]
+                [any-series! any-utf8! any-inert!]
                 [string      *       *]
 
     file        "file name or path"
                 (CELL_FLAG_FIRST_IS_NODE)
-                [any-series! any-utf8!]
+                [any-series! any-utf8! any-inert!]
                 [string      *       *]
 
     email       "email address"
                 (CELL_FLAG_FIRST_IS_NODE)
-                [any-series! any-utf8!]
+                [any-series! any-utf8! any-inert!]
                 [string      *       *]
 
     tag         "markup string (HTML or XML)"
                 (CELL_FLAG_FIRST_IS_NODE)
-                [any-series! any-utf8!]
+                [any-series! any-utf8! any-inert!]
                 [string      *       *]
 
 </ANY-STRING!>  ; ISSUE! is "string-like" but not an ANY-STRING!
 
 
 issue       "immutable codepoint or codepoint sequence"
-            ()  ; may embed data in issue
-            [any-utf8!]
+            ()  ; may or may not embed data in issue, affects FIRST_IS_NODE
+            [any-utf8! any-inert!]
             [issue       *       *]
 
 
 ; ============================================================================
-; BEGIN Cell_Extra_Needs_Mark() Cell's "extra" USES A NODE
+; ABOVE THIS LINE, CELL's "Extra" IS RAW BITS: Cell_Extra_Needs_Mark() = false
 ; ============================================================================
-;
+
 ; There's CELL_FLAG_FIRST_IS_NODE and CELL_FLAG_SECOND_IS_NODE so each cell
 ; can say whether the GC needs to consider marking the first or second slots
 ; in the payload.  But rather than sacrifice another bit for whether the
 ; EXTRA slot is a node, the types are in order so that all the ones that need
 ; it marked come after this point.
 
+; ============================================================================
+; BELOW THIS LINE, CELL's "Extra" USES A NODE: Cell_Extra_Needs_Mark() = true
+; ============================================================================
+
+
 varargs     "evaluator position for variable numbers of arguments"
             (CELL_FLAG_SECOND_IS_NODE)
-            []
+            [any-inert!]
             [varargs     +       +]
 
 pair        "two dimensional point or size"
             (CELL_FLAG_FIRST_IS_NODE)
-            [any-scalar!]
+            [any-scalar! any-inert!]
             [pair        +       +]
 
 <ANY-CONTEXT!>
 
     object      "context of names with values"
     ~lazy~      (CELL_FLAG_FIRST_IS_NODE | CELL_FLAG_SECOND_IS_NODE)
-    #unstable   []
+    #unstable   [any-inert!]
                 [context     *       *]
 
     module      "loadable context of code and data"
                 (CELL_FLAG_FIRST_IS_NODE | CELL_FLAG_SECOND_IS_NODE)
-                []
+                [any-inert!]
                 [context     *       *]
 
     error       "error context with id, arguments, and stack origin"
     ~raised~    (CELL_FLAG_FIRST_IS_NODE | CELL_FLAG_SECOND_IS_NODE)
-    #unstable   []
+    #unstable   [any-inert!]
                 [context     +       +]
 
     port        "external series, an I/O channel"
                 (CELL_FLAG_FIRST_IS_NODE | CELL_FLAG_SECOND_IS_NODE)
-                []
+                [any-inert!]
                 [port        +       context]
-
-  ; ==========================================================================
-  ; BEGIN EVALUATOR ACTIVE TYPES, SEE Any_Evaluative()
-  ; ==========================================================================
 
     frame       "arguments and locals of a function state"
     ~action~    (CELL_FLAG_FIRST_IS_NODE | CELL_FLAG_SECOND_IS_NODE)
@@ -222,12 +220,6 @@ pair        "two dimensional point or size"
                 [frame       +       *]
 
 </ANY-CONTEXT!>
-
-
-comma       "separator between full evaluations (that is otherwise invisible)"
-~barrier~   (CELL_MASK_NO_NODES)
-#unstable   [any-unit!]
-            [comma       -       +]
 
 
 ; ============================================================================
@@ -238,7 +230,7 @@ comma       "separator between full evaluations (that is otherwise invisible)"
 <ANY-WORD!>  ; (order matters, e.g. Theify_Any_Plain_Kind())
 
     word        "evaluates a variable or action"
-    ~antiword~   (CELL_FLAG_FIRST_IS_NODE)  ; !!! Better name than antiword?
+    ~antiword~  (CELL_FLAG_FIRST_IS_NODE)  ; !!! Better name than antiword?
                 [any-utf8! any-plain-value!]
                 [word        *       +]
 
