@@ -19,9 +19,9 @@
     ([] = parse "" [collect []])
     ([] = parse #{} [collect []])
 
-    (raised? parse [1] [collect []])
-    (raised? parse "1" [collect []])
-    (raised? parse #{01} [collect []])
+    ~parse-incomplete~ !! (parse [1] [collect []])
+    ~parse-incomplete~ !! (parse "1" [collect []])
+    ~parse-incomplete~ !! (parse #{01} [collect []])
 
     ([1] = parse [1] [collect [keep <any>]])
     ([#1] = parse "1" [collect [keep <any>]])
@@ -149,15 +149,30 @@
 ; a rule you asked to have match fails.  There are other tools for getting
 ; the result out if you wish.
 [
-    ([1 2 3] = parse [1 2 3 yay] [collect [some keep integer!] elide word!])
-    ('yay = parse [1 2 3 yay] [collect [some keep integer!] word!])
-    (raised? parse [1 2 3 <bomb>] [collect [some keep integer!] word!])
-    ([1 2 3] = parse [1 2 3 <bomb>] [
-        collect [some keep integer!] elide to <end>
-    ])
-
+    (
+        [1 2 3] = parse [1 2 3 yay] [
+            collect [some keep integer!] elide word!
+        ]
+    )
+    (
+        'yay = parse [1 2 3 yay] [
+            collect [some keep integer!] word!
+        ]
+    )
+    ~parse-mismatch~ !! (
+        parse [1 2 3 <bomb>] [
+            collect [some keep integer!] word!
+        ]
+    )
+    (
+        [1 2 3] = parse [1 2 3 <bomb>] [
+            collect [some keep integer!] elide to <end>
+        ]
+    )
     (all [
-        'yay = parse [1 2 3 yay] [block: collect [some keep integer!] word!]
+        'yay = parse [1 2 3 yay] [
+            block: collect [some keep integer!] word!
+        ]
         block = [1 2 3]
     ])
 ]
@@ -535,7 +550,8 @@ https://github.com/metaeducation/ren-c/issues/939
         parse str b: [c: collect rule (insert out spread c)]
         out == res
     )
-    (take/last append str "¿")
+
+    (take/last append str "¿", true)
 
     (
         parse str b: [c: collect rule (insert out spread c)]

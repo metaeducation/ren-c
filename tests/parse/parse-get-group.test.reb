@@ -20,7 +20,7 @@
 ;
 [(comment [
     ("a" == parse "aaa" [:('some) "a"])
-    (raised? parse "aaa" [:(1 + 1) "a"])
+    ~parse-mismatch~ !! (parse "aaa" [:(1 + 1) "a"])
     ("a" == parse "aaa" [:(1 + 2) "a"])
     (
         count: 0
@@ -31,8 +31,8 @@
 ] true)]
 
 [https://github.com/red/red/issues/562
-    (raised? parse [+] [try some ['+ :(no)]])
-    (raised? parse "+" [try some [#+ :(no)]])
+    ~parse-incomplete~ !! (parse [+] [try some ['+ :(no)]])
+    ~parse-incomplete~ !! (parse "+" [try some [#+ :(no)]])
 ]
 
 
@@ -41,13 +41,13 @@
         x: ~
         6 == parse [2 4 6] [some [x: integer! :(even? x)]]
     )
-    (
+    ~parse-mismatch~ !! (
         x: ~
-        raised? parse [1] [x: integer! :(even? x)]
+        parse [1] [x: integer! :(even? x)]
     )
-    (
+    ~parse-mismatch~ !! (
         x: ~
-        raised? parse [1 5] [some [x: integer! :(even? x)]]
+        parse [1 5] [some [x: integer! :(even? x)]]
     )
 ]
 
@@ -58,13 +58,13 @@
             x: across <any> :(even? load-value x)
         ]]
     )
-    (
+    ~parse-mismatch~ !! (
         x: ~
-        raised? parse "1" [x: across <any> :(even? load-value x)]
+        parse "1" [x: across <any> :(even? load-value x)]
     )
-    (
+    ~parse-mismatch~ !! (
         x: ~
-        raised? parse "15" [some [x: across <any> :(even? load-value x)]]
+        parse "15" [some [x: across <any> :(even? load-value x)]]
     )
 ]
 

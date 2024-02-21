@@ -78,8 +78,12 @@
 
     ; If neither rule succeeds the maxmatch fails
     ;
-    (raised? parse "aaaaaaaa" [maxmatch-D [repeat 100 "a"] [some "a" some "b"]])
-    (raised? parse "aaaaaaaa" [maxmatch-D [some "a" some "b"] [repeat 100 "a"]])
+    ~parse-mismatch~ !! (
+        parse "aaaaaaaa" [maxmatch-D [repeat 100 "a"] [some "a" some "b"]]
+    )
+    ~parse-mismatch~ !! (
+        parse "aaaaaaaa" [maxmatch-D [some "a" some "b"] [repeat 100 "a"]]
+    )
 
     ; COLLECT VARIATIONS - DEMONSTRATE THE AUTOMATIC ROLLBACK VARIANT
     ;
@@ -148,12 +152,12 @@
     ; If neither rule succeeds the maxmatch fails
     ; (Nothing is collected, returns null)
     ;
-    (raised? parse "aaaaaaaa" [
+    ~parse-mismatch~ !! (parse "aaaaaaaa" [
         collect [
             maxmatch-D [repeat 100 keep "a"] [some keep "a" some keep "b"]
         ]
     ])
-    (raised? parse "aaaaaaaa" [
+    ~parse-mismatch~ !! (parse "aaaaaaaa" [
         collect [
             maxmatch-D [some keep "a" some keep "b"] [repeat 100 keep "a"]
         ]
@@ -256,8 +260,12 @@
 
     ; If neither rule succeeds the maxmatch fails
     ;
-    (raised? parse "aaaaaaaa" [maxmatch-C [repeat 100 "a"] [some "a" some "b"]])
-    (raised? parse "aaaaaaaa" [maxmatch-C [some "a" some "b"] [repeat 100 "a"]])
+    ~parse-mismatch~ !! (
+        parse "aaaaaaaa" [maxmatch-C [repeat 100 "a"] [some "a" some "b"]]
+    )
+    ~parse-mismatch~ !! (
+        parse "aaaaaaaa" [maxmatch-C [some "a" some "b"] [repeat 100 "a"]]
+    )
 
     ; COLLECT VARIATIONS - DEMONSTRATE THE AUTOMATIC ROLLBACK VARIANT
     ;
@@ -328,12 +336,12 @@
     ; If neither rule succeeds the maxmatch fails
     ; (Nothing is collected, returns null)
     ;
-    (raised? parse "aaaaaaaa" [
+    ~parse-mismatch~ !! (parse "aaaaaaaa" [
         collect [
             maxmatch-C [repeat 100 keep "a"] [some keep "a" some keep "b"]
         ]
     ])
-    (raised? parse "aaaaaaaa" [
+    ~parse-mismatch~ !! (parse "aaaaaaaa" [
         collect [
             maxmatch-C [some keep "a" some keep "b"] [repeat 100 keep "a"]
         ]

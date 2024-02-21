@@ -209,13 +209,13 @@ Script: [
     nothing-to-take:    {Can't TAKE, no value available (consider TRY TAKE)}
     unbound-archetype:  {Archetypal function called with no binding}
 
-    parse-rule:         {PARSE - invalid rule or usage of rule}
-    parse-end:          {PARSE - unexpected end of rule}
-    parse-variable:     [{PARSE - expected a variable, not:} :arg1]
-    parse-command:      [{PARSE - command cannot be used as variable:} :arg1]
-    parse-series:       [{PARSE - input must be a series:} :arg1]
-    parse-multiple-set: {PARSE - SET can capture at most one value}
-    parse-incomplete:   {PARSE rules did not reach end of input}
+    parse3-rule:        {PARSE3 - invalid rule or usage of rule}
+    parse3-end:         {PARSE3 - unexpected end of rule}
+    parse3-variable:    [{PARSE3 - expected a variable, not:} :arg1]
+    parse3-command:     [{PARSE3 - command cannot be used as variable:} :arg1]
+    parse3-series:      [{PARSE3 - input must be a series:} :arg1]
+    parse3-multi-set:   {PARSE3 - SET can capture at most one value}
+    parse3-incomplete:  {PARSE3 rules did not reach end of input}
 
     bad-library:        {bad library (already closed?)}
     only-callback-ptr:  {Only callback functions may be passed by FFI pointer}

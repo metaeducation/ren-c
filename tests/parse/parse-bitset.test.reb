@@ -31,12 +31,12 @@
         wbs2: reduce wbs
         true
     )
-    (raised? parse #{0A0B0C} [some bs])
-    (raised? parse #{010203} [some bs])
-    (9 == parse #{070809} [some bs])
-    (raised? parse #{0A0B0C} [bs bs bs])
-    (raised? parse #{010203} [bs bs bs])
-    (9 == parse #{070809} [bs bs bs])
+
+    ~parse-mismatch~ !! (parse #{0A0B0C} [some bs])
+    ~parse-mismatch~ !! (parse #{010203} [some bs])
+    ~parse-mismatch~ !! (parse #{0A0B0C} [bs bs bs])
+    ~parse-mismatch~ !! (parse #{010203} [bs bs bs])
+
     (
         digit: charset [0 - 9]
         all [
@@ -54,22 +54,30 @@
         wbs2: reduce wbs
         true
     )
+
     (12 == parse #{0A0B0C} [some bs])
-    (raised? parse #{010203} [some bs])
+    ~parse-mismatch~ !! (parse #{010203} [some bs])
+
     (12 == parse #{0A0B0C} [some [bs]])
-    (raised? parse #{010203} [some [bs]])
+    ~parse-mismatch~ !! (parse #{010203} [some [bs]])
+
     (12 == parse #{0A0B0C} [some wbs])
-    (raised? parse #{010203} [some wbs])
+    ~parse-mismatch~ !! (parse #{010203} [some wbs])
+
     (12 == parse #{0A0B0C} [some wbs2])
-    (raised? parse #{010203} [some wbs2])
+    ~parse-mismatch~ !! (parse #{010203} [some wbs2])
+
     (12 == parse #{0A0B0C} [bs bs bs])
-    (raised? parse #{010203} [bs bs bs])
+    ~parse-mismatch~ !! (parse #{010203} [bs bs bs])
+
     (12 == parse #{0A0B0C} [[bs] [bs] [bs]])
-    (raised? parse #{010203} [[bs] [bs] [bs]])
+    ~parse-mismatch~ !! (parse #{010203} [[bs] [bs] [bs]])
+
     (12 == parse #{0A0B0C} [wbs wbs wbs])
-    (raised? parse #{010203} [wbs wbs wbs])
+    ~parse-mismatch~ !! (parse #{010203} [wbs wbs wbs])
+
     (12 == parse #{0A0B0C} [wbs2 wbs2 wbs2])
-    (raised? parse #{010203} [wbs2 wbs2 wbs2])
+    ~parse-mismatch~ !! (parse #{010203} [wbs2 wbs2 wbs2])
 ]
 
 [#753
@@ -80,10 +88,12 @@
         rla: ["a", try some ws, b: across some abc, try some ws, "c"]
         true
     )
+
     ("c" == parse "a b c" rls)
     ("c" == parse "a b c" rla)
-    (raised? parse "a b" rls)
-    (raised? parse "a b" rla)
+
+    ~parse-mismatch~ !! (parse "a b" rls)
+    ~parse-mismatch~ !! (parse "a b" rla)
 ]
 
 [#1298 (
@@ -104,23 +114,31 @@
         wbs2: reduce wbs
         true
     )
+
     (#c == parse "abc" [some bs])
-    (raised? parse "123" [some bs])
-    (raised? parse "ABC" [some bs])
+    ~parse-mismatch~ !! (parse "123" [some bs])
+    ~parse-mismatch~ !! (parse "ABC" [some bs])
+
     (#c == parse "abc" [some [bs]])
-    (raised? parse "123" [some [bs]])
+    ~parse-mismatch~ !! (parse "123" [some [bs]])
+
     (#c == parse "abc" [some wbs])
-    (raised? parse "123" [some wbs])
+    ~parse-mismatch~ !! (parse "123" [some wbs])
+
     (#c == parse "abc" [some wbs2])
-    (raised? parse "123" [some wbs2])
+    ~parse-mismatch~ !! (parse "123" [some wbs2])
+
     (#c == parse "abc" [bs bs bs])
-    (raised? parse "123" [bs bs bs])
+    ~parse-mismatch~ !! (parse "123" [bs bs bs])
+
     (#c == parse "abc" [[bs] [bs] [bs]])
-    (raised? parse "123" [[bs] [bs] [bs]])
+    ~parse-mismatch~ !! (parse "123" [[bs] [bs] [bs]])
+
     (#c == parse "abc" [wbs wbs wbs])
-    (raised? parse "123" [wbs wbs wbs])
+    ~parse-mismatch~ !! (parse "123" [wbs wbs wbs])
+
     (#c == parse "abc" [wbs2 wbs2 wbs2])
-    (raised? parse "123" [wbs2 wbs2 wbs2])
+    ~parse-mismatch~ !! (parse "123" [wbs2 wbs2 wbs2])
 ]
 
 [
@@ -130,14 +148,19 @@
         wbs2: reduce wbs
         true
     )
-    (raised? parse "abc" [some bs])
+
+    ~parse-mismatch~ !! (parse "abc" [some bs])
     (#C == parse "ABC" [some bs])
-    (raised? parse "123" [some bs])
+
+    ~parse-mismatch~ !! (parse "123" [some bs])
     (#9 == parse "789" [some bs])
-    (raised? parse "abc" [bs bs bs])
+
+    ~parse-mismatch~ !! (parse "abc" [bs bs bs])
     (#C == parse "ABC" [bs bs bs])
-    (raised? parse "123" [bs bs bs])
+
+    ~parse-mismatch~ !! (parse "123" [bs bs bs])
     (#9 == parse "789" [bs bs bs])
+
     (
         digit: charset "0123456789"
         all [

@@ -88,10 +88,11 @@
 
 ; Conventional ranges
 [
-    (raised? parse "a" [repeat ([2 3]) "a"])
+    ~parse-mismatch~ !! (parse "a" [repeat ([2 3]) "a"])
+    ~parse-incomplete~ !! (parse "aaaa" [repeat ([2 3]) "a"])
+
     ("a" == parse "aa" [repeat ([2 3]) "a"])
     ("a" == parse "aaa" [repeat ([2 3]) "a"])
-    (raised? parse "aaaa" [repeat ([2 3]) "a"])
 ]
 
 ; Opt out completely
@@ -114,16 +115,19 @@
 [
     ("a" == parse "aaaaaaa" [repeat ([3 #]) "a"])
     ("a" == parse "aaaaaaaaaaaaaaaaaaa" [repeat ([3 #]) "a"])
-    (raised? parse "aa" [repeat ([3 #]) "a"])
-    (raised? parse "" [repeat ([3 #]) "a"])
+
+    ~parse-mismatch~ !! (parse "aa" [repeat ([3 #]) "a"])
+    ~parse-mismatch~ !! (parse "" [repeat ([3 #]) "a"])
 ]
 
 ; Opt out of maximum (e.g. min max equivalence)
 [
     ("a" == parse "aaa" [repeat ([3 _]) "a"])
-    (raised? parse "aaaaaaaaaaaaaaaaaaa" [repeat ([3 _]) "a"])
-    (raised? parse "aa" [repeat ([3 _]) "a"])
-    (raised? parse "" [repeat ([3 _]) "a"])
+
+    ~parse-incomplete~ !! (parse "aaaaaaaaaaaaaaaaaaa" [repeat ([3 _]) "a"])
+
+    ~parse-mismatch~ !! (parse "aa" [repeat ([3 _]) "a"])
+    ~parse-mismatch~ !! (parse "" [repeat ([3 _]) "a"])
 ]
 
 ; No minimum or maximum (MAYBE SOME equivalent), just using #
@@ -143,23 +147,24 @@
 ]
 
 [
-    (raised? parse [a a] [repeat 1 ['a]])
-    ('a == parse [a a] [repeat 2 ['a]])
-    (raised? parse [a a] [repeat 3 ['a]])
+    ~parse-incomplete~ !! (parse [a a] [repeat 1 ['a]])
+    ~parse-incomplete~ !! (parse [a a] [repeat 1 'a])
+    ~parse-incomplete~ !! (parse [a a] [repeat 1 repeat 1 'a])
 
-    (raised? parse [a a] [repeat 1 'a])
+    ('a == parse [a a] [repeat 2 ['a]])
     ('a == parse [a a] [repeat 2 'a])
-    (raised? parse [a a] [repeat 3 'a])
-    (raised? parse [a a] [repeat 1 repeat 1 'a])
+
+    ~parse-mismatch~ !! (parse [a a] [repeat 3 ['a]])
+    ~parse-mismatch~ !! (parse [a a] [repeat 3 'a])
 ]
 
 [
     ('b == parse [a a b b] [repeat 2 'a repeat 2 'b])
-    (raised? parse [a a b b] [repeat 2 'a repeat 3 'b])
+    ~parse-mismatch~ !! (parse [a a b b] [repeat 2 'a repeat 3 'b])
 ]
 
 [https://github.com/red/red/issues/564
-    (raised? parse [a] [repeat 0 <any>])
+    ~parse-incomplete~ !! (parse [a] [repeat 0 <any>])
     ('a == parse [a] [repeat 0 <any> 'a])
     (
         z: ~
@@ -171,7 +176,7 @@
 ]
 
 [https://github.com/red/red/issues/564
-    (raised? parse "a" [repeat 0 <any>])
+    ~parse-incomplete~ !! (parse "a" [repeat 0 <any>])
     (#a == parse "a" [repeat 0 <any> #a])
     (
         z: ~
@@ -187,8 +192,9 @@
     (void? parse [] [repeat 0 "ignore me"])
     (void? parse [] [repeat 0 repeat 0 [ignore me]])
     (void? parse [] [repeat 0 repeat 0 "ignore me"])
-    (raised? parse [x] [repeat 0 repeat 0 'x])
-    (raised? parse " " [repeat 0 repeat 0 space])
+
+    ~parse-incomplete~ !! (parse [x] [repeat 0 repeat 0 'x])
+    ~parse-incomplete~ !! (parse " " [repeat 0 repeat 0 space])
 ]
 
 [#1280 (

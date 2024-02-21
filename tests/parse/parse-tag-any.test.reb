@@ -16,15 +16,15 @@
 )
 
 [
-    (raised? parse [a a] [repeat 1 <any>])
+    ~parse-incomplete~ !! (parse [a a] [repeat 1 <any>])
     ('a == parse [a a] [repeat 2 <any>])
-    (raised? parse [a a] [repeat 3 <any>])
+    ~parse-mismatch~ !! (parse [a a] [repeat 3 <any>])
 
-    (raised? parse [a a] [repeat ([1 1]) <any>])
+    ~parse-incomplete~ !! (parse [a a] [repeat ([1 1]) <any>])
     ('a == parse [a a] [repeat ([1 2]) <any>])
     ('a == parse [a a] [repeat ([2 2]) <any>])
     ('a == parse [a a] [repeat ([2 3]) <any>])
-    (raised? parse [a a] [repeat ([3 4]) <any>])
+    ~parse-mismatch~ !! (parse [a a] [repeat ([3 4]) <any>])
 
     ('a == parse [a] [<any>])
     ('b == parse [a b] [<any> <any>])
@@ -33,15 +33,15 @@
 ]
 
 [
-    (raised? parse "aa" [repeat 1 <any>])
+    ~parse-incomplete~ !! (parse "aa" [repeat 1 <any>])
     (#a == parse "aa" [repeat 2 <any>])
-    (raised? parse "aa" [repeat 3 <any>])
+    ~parse-mismatch~ !! (parse "aa" [repeat 3 <any>])
 
-    (raised? parse "aa" [repeat ([1 1]) <any>])
+    ~parse-incomplete~ !! (parse "aa" [repeat ([1 1]) <any>])
     (#a == parse "aa" [repeat ([1 2]) <any>])
     (#a == parse "aa" [repeat ([2 2]) <any>])
     (#a == parse "aa" [repeat ([2 3]) <any>])
-    (raised? parse "aa" [repeat ([3 4]) <any>])
+    ~parse-mismatch~ !! (parse "aa" [repeat ([3 4]) <any>])
 
     (#a == parse "a" [<any>])
     (#b == parse "ab" [<any> <any>])

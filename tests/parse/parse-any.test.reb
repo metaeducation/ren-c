@@ -6,11 +6,11 @@
 ; issues to resolve on the edges.
 
 ("b" = parse "ab" [some any (["a" "b"])])
-(raised? parse "abc" [some any (["a" "b"])])
+~parse-incomplete~ !! (parse "abc" [some any (["a" "b"])])
 
 (3 = parse ["foo" <baz> 3] [some any ([tag! integer! text!])])
 
 ("b" = parse "ab" [some any ["a" "b"]])
-(raised? parse "abc" [some any ["a" "b"]])
+~parse-incomplete~ !! (parse "abc" [some any ["a" "b"]])
 
 (3 = parse ["foo" <baz> 3] [some any [tag! integer! text!]])

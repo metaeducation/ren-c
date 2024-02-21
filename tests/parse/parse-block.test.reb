@@ -18,8 +18,10 @@
 
     (void? parse [] [])
     (void? parse [] [[[]]])
-    (raised? parse [x] [])
-    (raised? parse [x] [[[]]])
+
+    ~parse-incomplete~ !! (parse [x] [])
+    ~parse-incomplete~ !! (parse [x] [[[]]])
+
     ('x = parse [x] [[] 'x []])
 ]
 
@@ -48,9 +50,10 @@
 
 ; | means alternate clause
 [
-    (raised? parse [a b] ['b | 'a])
+    ~parse-incomplete~ !! (parse [a b] ['b | 'a])
+    ~parse-incomplete~ !! (parse [a b] [['b | 'a]])
+
     (#a == parse [#a] [[#b | #a]])
-    (raised? parse [a b] [['b | 'a]])
     ('b == parse [a b] [['a | 'b] ['b | 'a]])
 ]
 
@@ -95,11 +98,11 @@
 [
     ("c" = parse "ac" ["a" | "b" || "c"])
     ("c" = parse "bc" ["a" | "b" || "c"])
-    (raised? parse "xc" ["a" | "b" || "c"])
+    ~parse-mismatch~ !! (parse "xc" ["a" | "b" || "c"])
 
     ("c" = parse "ac" ["a" || "b" | "c"])
     ("b" = parse "ab" ["a" || "b" | "c"])
-    (raised? parse "ax" ["a" || "b" | "c"])
+    ~parse-mismatch~ !! (parse "ax" ["a" || "b" | "c"])
 ]
 
 [

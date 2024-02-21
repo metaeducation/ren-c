@@ -4,7 +4,7 @@
 ; argument literally from a DO evaluation.  They always succeed.
 
 (10 = parse [aaa] ['aaa (10)])
-(raised? parse [aaa] [(10)])
+~parse-incomplete~ !! (parse [aaa] [(10)])
 
 (
     three: 3

@@ -86,7 +86,7 @@
 
     ("c😺t" == parse bincat [{c😺t}])
 
-    (raised? parse/case bincat [{c😺t} <end>])
+    ~parse-mismatch~ !! (parse/case bincat [{c😺t} <end>])
 ]
 
 (
@@ -102,24 +102,24 @@
     ("cat" == parse "catcatcatcat" [repeat 4 "cat"])
     ("cat" == parse "catcatcat" [repeat 3 "cat"])
     ("cat" == parse "catcat" [repeat 2 "cat"])
-    (raised? parse "cat" [repeat 4 "cat"])
-    (raised? parse "cat" [repeat 3 "cat"])
-    (raised? parse "cat" [repeat 2 "cat"])
+    ~parse-mismatch~ !! (parse "cat" [repeat 4 "cat"])
+    ~parse-mismatch~ !! (parse "cat" [repeat 3 "cat"])
+    ~parse-mismatch~ !! (parse "cat" [repeat 2 "cat"])
     ("cat" == parse "cat" [repeat 1 "cat"])
 ]
 
 ; String casing
 [
     ("A" == parse "a" ["A"])
-    (raised? parse "a" [#A])
-    (raised? parse/case "a" ["A"])
-    (raised? parse/case "a" [#A])
+    ~parse-mismatch~ !! (parse "a" [#A])
+    ~parse-mismatch~ !! (parse/case "a" ["A"])
+    ~parse-mismatch~ !! (parse/case "a" [#A])
     ("a" == parse/case "a" ["a"])
     (#a == parse/case "a" [#a])
     ("A" == parse/case "A" ["A"])
     (#A == parse/case "A" [#A])
     ("test" == parse "TeSt" ["test"])
-    (raised? parse/case "TeSt" ["test"])
+    ~parse-mismatch~ !! (parse/case "TeSt" ["test"])
     ("TeSt" == parse/case "TeSt" ["TeSt"])
 ]
 
@@ -127,19 +127,19 @@
 [
     (#é == parse "abcdé" [#a #b #c #d #é])
     ("abcdé" == parse "abcdé" ["abcdé"])
-    (raised? parse "abcde" [#a #b #c #d #é])
+    ~parse-mismatch~ !! (parse "abcde" [#a #b #c #d #é])
     (#é == parse "abcdé" [#a #b #c #d #é])
     (#"✐" == parse "abcdé✐" [#a #b #c #d #é #"✐"])
     ("abcdé✐" == parse "abcdé✐" ["abcdé✐"])
-    (raised? parse "abcdé" ["abcdé✐"])
-    (raised? parse "ab✐cdé" ["abcdé✐"])
-    (raised? parse "abcdé✐" ["abcdé"])
+    ~parse-mismatch~ !! (parse "abcdé" ["abcdé✐"])
+    ~parse-mismatch~ !! (parse "ab✐cdé" ["abcdé✐"])
+    ~parse-incomplete~ !! (parse "abcdé✐" ["abcdé"])
     ("✐abcdé" == parse "✐abcdé" ["✐abcdé"])
     (#"𐀀" == parse "abcdé✐𐀀" [#a #b #c #d #é #"✐" #"𐀀"])
     ("ab𐀀cdé✐" == parse "ab𐀀cdé✐" ["ab𐀀cdé✐"])
-    (raised? parse "abcdé" ["abc𐀀dé"])
-    (raised? parse "𐀀abcdé" ["a𐀀bcdé"])
-    (raised? parse "abcdé𐀀" ["abcdé"])
+    ~parse-mismatch~ !! (parse "abcdé" ["abc𐀀dé"])
+    ~parse-mismatch~ !! (parse "𐀀abcdé" ["a𐀀bcdé"])
+    ~parse-incomplete~ !! (parse "abcdé𐀀" ["abcdé"])
     ("𐀀abcdé" == parse "𐀀abcdé" ["𐀀abcdé"])
 ]
 

@@ -43,13 +43,16 @@
 
 [
     (123 == parse [a 123] ['a integer!])
-    (raised? parse [a 123] ['a char?!])
+    ~parse-mismatch~ !! (parse [a 123] ['a char?!])
+
     (123 == parse [a 123] [['a] [integer!]])
-    (raised? parse [a 123] ['a [char?!]])
+    ~parse-mismatch~ !! (parse [a 123] ['a [char?!]])
+
     (123 == parse [123] [&any-number?])
-    (raised? parse [123] [&any-string?])
+    ~parse-mismatch~ !! (parse [123] [&any-string?])
+
     (123 == parse [123] [[&any-number?]])
-    (raised? parse [123] [[&any-string?]])
+    ~parse-mismatch~ !! (parse [123] [[&any-string?]])
 ]
 
 [
@@ -107,9 +110,9 @@
 [https://github.com/red/red/issues/4678
     ('_ = parse to binary! "_" [blank!])
 
-    (raised? parse to binary! "#(" [blank!])
-    (raised? parse to binary! "(" [blank!])
-    (raised? parse to binary! "[" [blank!])
+    ~parse-mismatch~ !! (parse to binary! "#(" [blank!])
+    ~parse-mismatch~ !! (parse to binary! "(" [blank!])
+    ~parse-mismatch~ !! (parse to binary! "[" [blank!])
 ]
 
 ; QUOTED! needs to be recognized (KIND OF VALUE and TYPE OF VALUE are currently
@@ -122,9 +125,11 @@
 [https://github.com/red/red/issues/4863
     ('word == parse to-binary "word" [word!])
     ('word == parse to-binary "   word" [word!])
+
     (123 == parse to-binary "123" [integer!])
-    (raised? parse to-binary "123.456" [integer!])
+    ~parse-mismatch~ !! (parse to-binary "123.456" [integer!])
     (123 == parse to-binary "    123" [integer!])
+
     ([hello 123 world] == parse to-binary "hello 123 world" [
         collect [keep word!, keep integer!, keep word!]
     ])

@@ -11,11 +11,11 @@
     (void? parse [] [thru <end>])
     ('a == parse [a] [thru 'a])
     ('a == parse [a] [thru 'a <end>])
-    (raised? parse [a] [thru 'a <any>])
+    ~parse-mismatch~ !! (parse [a] [thru 'a <any>])
     ('b == parse [a b] [thru 'b])
     ('a == parse [a] [thru ['a]])
     ('a == parse [a] [thru ['a] <end>])
-    (raised? parse [a] [thru ['a] <any>])
+    ~parse-mismatch~ !! (parse [a] [thru ['a] <any>])
     ('b == parse [a b] [thru ['b]])
 ]
 
@@ -53,7 +53,7 @@
 
 [#1457
     (#a == parse "a" compose [thru (charset "a")])
-    (raised? parse "a" compose [thru (charset "a") <any>])
+    ~parse-mismatch~ !! (parse "a" compose [thru (charset "a") <any>])
 ]
 
 [#2141 (
@@ -105,12 +105,12 @@
     (void? parse "" [thru <end>])
     (#a == parse "a" [thru #a])
     (#a == parse "a" [thru #a <end>])
-    (raised? parse "a" [thru #a <any>])
+    ~parse-mismatch~ !! (parse "a" [thru #a <any>])
     (#b == parse "ab" [thru #a <any>])
     (#a == parse "aaba" [<any> thru #a repeat 2 <any>])
     (#a == parse "a" [thru [#a]])
     (#a == parse "a" [thru [#a] <end>])
-    (raised? parse "a" [thru [#a] <any>])
+    ~parse-mismatch~ !! (parse "a" [thru [#a] <any>])
     (#b == parse "ab" [thru [#a] <any>])
     (#a == parse "aaba" [<any> thru [#a] repeat 2 <any>])
     (#c == parse "zzabc" [thru [#c | #b | #a] repeat 2 <any>])
@@ -136,12 +136,12 @@
     (void? parse #{} [thru <end>])
     (#{0A} == parse #{0A} [thru #{0A}])
     (#{0A} == parse #{0A} [thru #{0A} <end>])
-    (raised? parse #{0A} [thru #{0A} <any>])
+    ~parse-mismatch~ !! (parse #{0A} [thru #{0A} <any>])
     (11 == parse #{0A0B} [thru #{0A} <any>])
     (10 == parse #{0A0A0B0A} [<any> thru #{0A} repeat 2 <any>])
     (#{0A} == parse #{0A} [thru [#{0A}]])
     (#{0A} == parse #{0A} [thru [#{0A}] <end>])
-    (raised? parse #{0A} [thru [#{0A}] <any>])
+    ~parse-mismatch~ !! (parse #{0A} [thru [#{0A}] <any>])
     (11 == parse #{0A0B} [thru [#{0A}] <any>])
     (10 == parse #{0A0A0B0A} [<any> thru [#{0A}] repeat 2 <any>])
     (12 == parse #{99990A0B0C} [thru [#"^L" | #{0B} | #{0A}] repeat 2 <any>])

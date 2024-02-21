@@ -25,4 +25,4 @@
 
 ; ELIDE doesn't elide failure...just the result on success.
 ;
-(raised? parse "a" [elide "b"])
+~parse-mismatch~ !! (parse "a" [elide "b"])

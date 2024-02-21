@@ -9,7 +9,9 @@
 
     (#{0A} == parse #{0A} [#{0A}])
     (#"^/" == parse #{0A} [#"^/"])
-    (raised? parse #{0A} [#{0B}])
+
+    ~parse-mismatch~ !! (parse #{0A} [#{0B}])
+
     (#{0B} == parse #{0A0B} [#{0A} #{0B}])
     (#{0A0B} == parse #{0A0B} [#{0A0B}])
     (#{0A} == parse #{0A} [[#{0A}]])
@@ -17,9 +19,13 @@
     (#{0B} == parse #{0A0B} [#{0A} [#{0B}]])
     (#{0B} == parse #{0A0B} [[#{0A}] [#{0B}]])
     (#{0A} == parse #{0A} [#{0B} | #{0A}])
-    (raised? parse #{0A0B} [#{0B} | #{0A}])
+
+    ~parse-incomplete~ !! (parse #{0A0B} [#{0B} | #{0A}])
+
     (#{0A} == parse #{0A} [[#{0B} | #{0A}]])
-    (raised? parse #{0A0B} [[#{0B} | #{0A}]])
+
+    ~parse-incomplete~ !! (parse #{0A0B} [[#{0B} | #{0A}]])
+
     (#{0B} == parse #{0A0B} [[#{0A} | #{0B}] [#{0B} | #{0A}]])
     (
         res: 0
@@ -79,47 +85,67 @@
             res = 1
         ]
     )
-    (raised? parse #{0A0A} [repeat 1 [#{0A}]])
-    (#{0A} == parse #{0A0A} [repeat 2 [#{0A}]])
-    (raised? parse #{0A0A} [repeat 3 [#{0A}]])
 
-    (raised? parse #{0A0A} [repeat ([1 1]) [#{0A}]])
+    ~parse-incomplete~ !! (parse #{0A0A} [repeat 1 [#{0A}]])
+
+    (#{0A} == parse #{0A0A} [repeat 2 [#{0A}]])
+
+    ~parse-mismatch~ !! (parse #{0A0A} [repeat 3 [#{0A}]])
+    ~parse-incomplete~ !! (parse #{0A0A} [repeat ([1 1]) [#{0A}]])
+
     (#{0A} == parse #{0A0A} [repeat ([1 2]) [#{0A}]])
     (#{0A} == parse #{0A0A} [repeat ([2 2]) [#{0A}]])
     (#{0A} == parse #{0A0A} [repeat ([2 3]) [#{0A}]])
-    (raised? parse #{0A0A} [repeat ([3 4]) [#{0A}]])
-    (raised? parse #{0A0A} [repeat ([1 1]) #{0A}])
+
+    ~parse-mismatch~ !! (parse #{0A0A} [repeat ([3 4]) [#{0A}]])
+    ~parse-incomplete~ !! (parse #{0A0A} [repeat ([1 1]) #{0A}])
+
     (#{0A} == parse #{0A0A} [repeat ([1 2]) #{0A}])
     (#{0A} == parse #{0A0A} [repeat ([2 2]) #{0A}])
     (#{0A} == parse #{0A0A} [repeat ([2 3]) #{0A}])
-    (raised? parse #{0A0A} [repeat ([3 4]) #{0A}])
-    (raised? parse #{0A0A} [repeat ([1 1]) <any>])
+
+    ~parse-mismatch~ !! (parse #{0A0A} [repeat ([3 4]) #{0A}])
+    ~parse-incomplete~ !! (parse #{0A0A} [repeat ([1 1]) <any>])
+
     (10 == parse #{0A0A} [repeat ([1 2]) <any>])
     (10 == parse #{0A0A} [repeat ([2 2]) <any>])
     (10 == parse #{0A0A} [repeat ([2 3]) <any>])
-    (raised? parse #{0A0A} [repeat ([3 4]) <any>])
 
-    (raised? parse #{0A0A} [repeat 1 #{0A}])
+    ~parse-mismatch~ !! (parse #{0A0A} [repeat ([3 4]) <any>])
+    ~parse-incomplete~ !! (parse #{0A0A} [repeat 1 #{0A}])
+
     (#{0A} == parse #{0A0A} [repeat 2 #{0A}])
-    (raised? parse #{0A0A} [repeat 3 #{0A}])
-    (raised? parse #{0A0A} [repeat 1 <any>])
+
+    ~parse-mismatch~ !! (parse #{0A0A} [repeat 3 #{0A}])
+    ~parse-incomplete~ !! (parse #{0A0A} [repeat 1 <any>])
+
     (10 == parse #{0A0A} [repeat 2 <any>])
-    (raised? parse #{0A0A} [repeat 3 <any>])
+
+    ~parse-mismatch~ !! (parse #{0A0A} [repeat 3 <any>])
+
     (10 == parse #{0A} [<any>])
     (11 == parse #{0A0B} [<any> <any>])
     (11 == parse #{0A0B} [<any> [<any>]])
     (11 == parse #{0A0B} [[<any>] [<any>]])
     (#{0A} == parse #{0A0A} [some [#{0A}]])
-    (raised? parse #{0A0A} [some [#{0A}] #{0B}])
+
+    ~parse-mismatch~ !! (parse #{0A0A} [some [#{0A}] #{0B}])
+
     (10 == parse #{0A0A0B0A0B0B0B0A} [some [<any>]])
     (#{0A} == parse #{0A0A0B0A0B0B0B0A} [some [#{0A} | #{0B}]])
-    (raised? parse #{0A0A0B0A0B0B0B0A} [some [#{0A} | #"^L"]])
+
+    ~parse-incomplete~ !! (parse #{0A0A0B0A0B0B0B0A} [some [#{0A} | #"^L"]])
+
     (#{0A} == parse #{0A0A} [some [#{0A}]])
     (null = parse #{0A0A} [some [#{0A}] try some [#{0B}]])
     (#{0B} == parse #{0A0A0B0B} [repeat 2 #{0A} repeat 2 #{0B}])
-    (raised? parse #{0A0A0B0B} [repeat 2 #{0A} repeat 3 #{0B}])
+
+    ~parse-mismatch~ !! (parse #{0A0A0B0B} [repeat 2 #{0A} repeat 3 #{0B}])
+
     (#{0B} == parse #{0A0A0B0B} [some #{0A} some #{0B}])
-    (raised? parse #{0A0A0B0B} [some #{0A} some #"^L"])
+
+    ~parse-mismatch~ !! (parse #{0A0A0B0B} [some #{0A} some #"^L"])
+
     (#"^L" == parse #{0B0A0A0A0C} [<any> some [#{0A}] #"^L"])
 ]
 

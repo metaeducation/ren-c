@@ -2456,7 +2456,11 @@ default-combinators: make map! reduce [
                 ] else [
                     if (not thru) or (tail? input) [
                         remainder: null
-                        return raise "BLOCK! combinator at tail or not thru"
+                        return raise* make error! [
+                            id: 'parse-mismatch
+                            message:
+                              "PARSE BLOCK! combinator did not match input"
+                        ]
                     ]
                     rules: value
                     pos: input: my next
@@ -2968,7 +2972,11 @@ parse*: func [
     assert [empty? state.loops]
 
     if not tail? remainder [
-        return raise "Tail of input was not reached"
+        return raise make error! [
+            id: 'parse-incomplete
+            message:
+              "PARSE partially matched the input, but didn't reach the tail"
+        ]
     ]
 
     ; While combinators can vaporize, don't allow PARSE itself to vaporize

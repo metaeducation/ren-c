@@ -4,9 +4,9 @@
 
 (3 = parse "aaa" [tally "a"])
 
-(raised? parse "aaa" [tally "b"])  ; doesn't finish parse
-(0 = parse "aaa" [tally "b" elide to <end>])  ; must be at end
-(0 = parse "aaa" [accept tally "b"])  ; alternately, use non-force-completion
+~parse-incomplete~ !! (parse "aaa" [tally "b"])
+(0 = parse "aaa" [tally "b" elide to <end>])
+(0 = parse "aaa" [accept tally "b"])
 
 (all [
     parse "(((stuff)))" [

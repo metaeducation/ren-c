@@ -18,8 +18,10 @@
     (#a == parse ["a"] [subparse &any-series? [#a]])
     ('c == parse [b "a" c] ['b subparse &any-series? ["a"] 'c])
     (#a == parse [["a"]] [subparse block! [subparse &any-series? [#a]]])
-    (raised? parse [[a]] [subparse &any-series? ['a 'b]])
-    (raised? parse [[a]] [subparse &any-series? [some 'b]])
+
+    ~parse-mismatch~ !! (parse [[a]] [subparse &any-series? ['a 'b]])
+    ~parse-mismatch~ !! (parse [[a]] [subparse &any-series? [some 'b]])
+
     ([a] == parse [[a]] [subparse &any-series? ['a 'b] | block!])
 ]
 
@@ -30,7 +32,7 @@
 ; have to be put into blocks as often.
 [
     ("a" = parse ["aaaa"] [subparse text! some repeat 2 "a"])
-    (raised? parse ["aaaa"] [subparse text! some repeat 3 "a"])
+    ~parse-mismatch~ !! (parse ["aaaa"] [subparse text! some repeat 3 "a"])
 ]
 
 
@@ -71,13 +73,19 @@
     "a" == parse "baaabccc" [
         subparse [between "b" "b"] [some "a" <end>] to <end>
     ]
-)(
-    raised? parse "baaabccc" [
+)
+
+~parse-mismatch~ !! (
+    parse "baaabccc" [
         subparse [between "b" "b"] ["a" <end>], to <end>
     ]
-)(
-    raised? parse "baaabccc" [subparse [between "b" "b"] ["a"], to <end>]
-)(
+)
+
+~parse-mismatch~ !! (
+    parse "baaabccc" [subparse [between "b" "b"] ["a"], to <end>]
+)
+
+(
     "c" == parse "baaabccc" [
         subparse [between "b" "b"] ["a" to <end>], "c", to <end>
     ]

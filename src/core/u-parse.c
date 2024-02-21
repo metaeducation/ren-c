@@ -351,20 +351,20 @@ static bool Subparse_Throws(
 // question, but now the `where` at the time of failure will indicate the
 // location in the parse dialect that's the problem.
 
-inline static Context* Error_Parse_Rule(void) {
-    return Error_Parse_Rule_Raw();
+inline static Context* Error_Parse3_Rule(void) {
+    return Error_Parse3_Rule_Raw();
 }
 
-inline static Context* Error_Parse_End(void) {
-    return Error_Parse_End_Raw();
+inline static Context* Error_Parse3_End(void) {
+    return Error_Parse3_End_Raw();
 }
 
-inline static Context* Error_Parse_Command(Level* level_) {
-    return Error_Parse_Command_Raw(P_RULE);
+inline static Context* Error_Parse3_Command(Level* level_) {
+    return Error_Parse3_Command_Raw(P_RULE);
 }
 
-inline static Context* Error_Parse_Variable(Level* level_) {
-    return Error_Parse_Variable_Raw(P_RULE);
+inline static Context* Error_Parse3_Variable(Level* level_) {
+    return Error_Parse3_Variable_Raw(P_RULE);
 }
 
 
@@ -752,7 +752,7 @@ static REBIXO Parse_One_Rule(
             return END_FLAG; }
 
           default:
-            fail (Error_Parse_Rule());
+            fail (Error_Parse3_Rule());
         }
     }
 }
@@ -793,7 +793,7 @@ static REBIXO To_Thru_Block_Rule(
         const Element* blk = Array_Head(Cell_Array(rule_block));
         for (; blk != blk_tail; blk++) {
             if (IS_BAR(blk))
-                fail (Error_Parse_Rule());  // !!! Shouldn't `TO [|]` succeed?
+                fail (Error_Parse3_Rule());  // !!! Shouldn't `TO [|]` succeed?
 
             const Element* rule;
             if (not (Is_Group(blk) or Is_Get_Group(blk)))
@@ -829,17 +829,17 @@ static REBIXO To_Thru_Block_Rule(
 
                         rule = ++blk;  // next rule is the literal value
                         if (rule == blk_tail)
-                            fail (Error_Parse_Rule());
+                            fail (Error_Parse3_Rule());
                     }
                     else if (
                         cmd == SYM_THE // temporarily same for bootstrap
                     ){
                         rule = ++blk;  // next rule is the literal value
                         if (rule == blk_tail)
-                            fail (Error_Parse_Rule());
+                            fail (Error_Parse3_Rule());
                     }
                     else
-                        fail (Error_Parse_Rule());
+                        fail (Error_Parse3_Rule());
                 }
                 else {
                     Get_Word_May_Fail(cell, rule, P_RULE_SPECIFIER);
@@ -869,7 +869,7 @@ static REBIXO To_Thru_Block_Rule(
             // Try to match it:
             if (Any_Array_Kind(P_HEART) or Any_Sequence_Kind(P_HEART)) {
                 if (Any_Array(rule))
-                    fail (Error_Parse_Rule());
+                    fail (Error_Parse3_Rule());
 
                 REBIXO ixo = Parse_One_Rule(level_, VAL_INDEX(iter), rule);
                 if (ixo == THROWN_FLAG)
@@ -901,7 +901,7 @@ static REBIXO To_Thru_Block_Rule(
                 }
                 else if (IS_CHAR(rule)) {
                     if (Cell_Codepoint(rule) > 0xff)
-                        fail (Error_Parse_Rule());
+                        fail (Error_Parse3_Rule());
 
                     if (ch1 == Cell_Codepoint(rule)) {
                         if (is_thru)
@@ -933,7 +933,7 @@ static REBIXO To_Thru_Block_Rule(
                 }
                 else if (Is_Integer(rule)) {
                     if (VAL_INT64(rule) > 0xff)
-                        fail (Error_Parse_Rule());
+                        fail (Error_Parse3_Rule());
 
                     if (ch1 == VAL_INT32(rule)) {
                         if (is_thru)
@@ -942,7 +942,7 @@ static REBIXO To_Thru_Block_Rule(
                     }
                 }
                 else
-                    fail (Error_Parse_Rule());
+                    fail (Error_Parse3_Rule());
             }
             else {
                 assert(Any_String_Kind(P_HEART));
@@ -1012,7 +1012,7 @@ static REBIXO To_Thru_Block_Rule(
                     }
                 }
                 else
-                    fail (Error_Parse_Rule());
+                    fail (Error_Parse3_Rule());
             }
 
           next_alternate_rule:  // alternates are BAR! separated `[a | b | c]`
@@ -1196,7 +1196,7 @@ static void Handle_Mark_Rule(
         FRESHEN(OUT);
     }
     else
-        fail (Error_Parse_Variable(level_));
+        fail (Error_Parse3_Variable(level_));
 
     Dequotify(ARG(position));  // go back to 0 quote level
 }
@@ -1233,7 +1233,7 @@ static void Handle_Seek_Rule_Dont_Update_Begin(
     else {  // #1263
         DECLARE_LOCAL (specific);
         Derelativize(specific, rule, P_RULE_SPECIFIER);
-        fail (Error_Parse_Series_Raw(specific));
+        fail (Error_Parse3_Series_Raw(specific));
     }
 
     if (cast(REBLEN, index) > P_INPUT_LEN)
@@ -1492,7 +1492,7 @@ DECLARE_NATIVE(subparse)
                 //
                 // Command but not WORD! (COPY:, :THRU)
                 //
-                fail (Error_Parse_Command(L));
+                fail (Error_Parse3_Command(L));
             }
 
             if (cmd > SYM_BREAK)  // R3-Alpha claimed "optimization"
@@ -1626,10 +1626,10 @@ DECLARE_NATIVE(subparse)
                 FETCH_NEXT_RULE(L);
 
                 if (not (Is_Word(P_RULE) or Is_Set_Word(P_RULE)))
-                    fail (Error_Parse_Variable(L));
+                    fail (Error_Parse3_Variable(L));
 
                 if (VAL_CMD(P_RULE))  // set set [...]
-                    fail (Error_Parse_Command(L));
+                    fail (Error_Parse3_Command(L));
 
                 // We need to add a new binding before we derelativize w.r.t.
                 // the in-effect specifier.
@@ -1836,10 +1836,10 @@ DECLARE_NATIVE(subparse)
               case SYM_IF: {
                 FETCH_NEXT_RULE(L);
                 if (P_AT_END)
-                    fail (Error_Parse_End());
+                    fail (Error_Parse3_End());
 
                 if (not Is_Group(P_RULE))
-                    fail (Error_Parse_Rule());
+                    fail (Error_Parse3_Rule());
 
                 DECLARE_LOCAL (condition);
                 if (Do_Any_Array_At_Throws(  // note: might GC
@@ -2115,7 +2115,7 @@ DECLARE_NATIVE(subparse)
 
         FETCH_NEXT_RULE(L);
         if (P_AT_END)
-            fail (Error_Parse_End());
+            fail (Error_Parse3_End());
 
         rule = Get_Parse_Value(P_SAVE, P_RULE, P_RULE_SPECIFIER);
 
@@ -2194,7 +2194,7 @@ DECLARE_NATIVE(subparse)
               case SYM_TO:
               case SYM_THRU: {
                 if (P_AT_END)
-                    fail (Error_Parse_End());
+                    fail (Error_Parse3_End());
 
                 if (!subrule) {  // capture only on iteration #1
                     subrule = Get_Parse_Value(
@@ -2214,10 +2214,10 @@ DECLARE_NATIVE(subparse)
               case SYM_QUOTE:  // temporarily behaving like LIT for bootstrap
               case SYM_THE: {
                 if (not Is_Series_Array(P_INPUT))
-                    fail (Error_Parse_Rule());  // see #2253
+                    fail (Error_Parse3_Rule());  // see #2253
 
                 if (P_AT_END)
-                    fail (Error_Parse_End());
+                    fail (Error_Parse3_End());
 
                 if (not subrule) {  // capture only on iteration #1
                     subrule = Copy_Cell(LOCAL(lookback), P_RULE);
@@ -2240,7 +2240,7 @@ DECLARE_NATIVE(subparse)
 
               case SYM_INTO: {
                 if (P_AT_END)
-                    fail (Error_Parse_End());
+                    fail (Error_Parse3_End());
 
                 if (!subrule) {
                     subrule = Get_Parse_Value(
@@ -2250,13 +2250,13 @@ DECLARE_NATIVE(subparse)
                 }
 
                 if (not Is_Block(subrule))
-                    fail (Error_Parse_Rule());
+                    fail (Error_Parse3_Rule());
 
                 // parse ["aa"] [into ["a" "a"]] ; is legal
                 // parse "aa" [into ["a" "a"]] ; is not...already "into"
                 //
                 if (not Is_Series_Array(P_INPUT))
-                    fail (Error_Parse_Rule());
+                    fail (Error_Parse3_Rule());
 
                 const Element* input_tail = Array_Tail(P_INPUT_ARRAY);
                 const Element* into = Array_At(P_INPUT_ARRAY, P_POS);
@@ -2320,7 +2320,7 @@ DECLARE_NATIVE(subparse)
                 break; }
 
               default:
-                fail (Error_Parse_Rule());
+                fail (Error_Parse3_Rule());
             }
         }
         else if (Is_Block(rule)) {  // word fetched block, or inline block
@@ -2501,7 +2501,7 @@ DECLARE_NATIVE(subparse)
             }
             else if (P_FLAGS & PF_SET) {
                 if (count > 1)
-                    fail (Error_Parse_Multiple_Set_Raw());
+                    fail (Error_Parse3_Multi_Set_Raw());
 
                 if (count == 0) {
                     //
@@ -2573,7 +2573,7 @@ DECLARE_NATIVE(subparse)
             if (P_FLAGS & (PF_INSERT | PF_CHANGE)) {
                 count = (P_FLAGS & PF_INSERT) ? 0 : count;
                 if (P_AT_END)
-                    fail (Error_Parse_End());
+                    fail (Error_Parse3_End());
 
                 // new value...comment said "CHECK FOR QUOTE!!"
                 rule = Get_Parse_Value(P_SAVE, P_RULE, P_RULE_SPECIFIER);
@@ -2826,7 +2826,7 @@ DECLARE_NATIVE(parse3)
     if (Is_Nulled(OUT)) {  // a match failed (but may be at end of input)
         if (REF(redbol))
             return nullptr;
-        return RAISE(Error_Parse_Incomplete_Raw());
+        return RAISE(Error_Parse3_Incomplete_Raw());
     }
 
     REBLEN index = VAL_UINT32(OUT);
@@ -2835,7 +2835,7 @@ DECLARE_NATIVE(parse3)
     if (index != Cell_Series_Len_Head(input)) {  // didn't reach end of input
         if (REF(redbol))
             return nullptr;
-        return RAISE(Error_Parse_Incomplete_Raw());
+        return RAISE(Error_Parse3_Incomplete_Raw());
     }
 
     // !!! R3-Alpha parse design had no means to bubble up a "synthesized"

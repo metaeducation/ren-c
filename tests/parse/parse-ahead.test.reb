@@ -16,6 +16,6 @@
 ]
 
 [#1238
-    (raised? parse "ab" [ahead "ab" "ac"])
-    (raised? parse "ac" [ahead "ab" "ac"])
+    ~parse-mismatch~ !! (parse "ab" [ahead "ab" "ac"])
+    ~parse-mismatch~ !! (parse "ac" [ahead "ab" "ac"])
 ]

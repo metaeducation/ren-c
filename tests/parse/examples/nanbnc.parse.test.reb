@@ -13,7 +13,8 @@
     (#c = parse "abc" nanbnc)
     (#c = parse "aabbcc" nanbnc)
     (#c = parse "aaabbbccc" nanbnc)
-    (raised? parse "abbc" nanbnc)
-    (raised? parse "abcc" nanbnc)
-    (raised? parse "aabbc" nanbnc)
+
+    ~parse-mismatch~ !! (parse "abbc" nanbnc)
+    ~parse-incomplete~ !! (parse "abcc" nanbnc)
+    ~parse-mismatch~ !! (parse "aabbc" nanbnc)
 ]

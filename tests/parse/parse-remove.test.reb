@@ -14,7 +14,7 @@
 ; BLOCK! remove tests from %parse-test.red
 [
     ~???~ !! (parse [] [remove])
-    (raised? parse [] [remove <any>])
+    ~parse-mismatch~ !! (parse [] [remove <any>])
     (
         blk: [a]
         all [
@@ -39,7 +39,7 @@
         true
     )
     ~???~ !! (parse "" [remove])
-    (raised? parse "" [remove <any>])
+    ~parse-mismatch~ !! (parse "" [remove <any>])
     (
         str: "a"
         all [
@@ -95,7 +95,7 @@
         true
     )
     ~???~ !! (parse #{} [remove])
-    (raised? parse #{} [remove <any>])
+    ~parse-mismatch~ !! (parse #{} [remove <any>])
     (
         bin: #{0A}
         all [

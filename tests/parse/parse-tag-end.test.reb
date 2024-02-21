@@ -14,10 +14,12 @@
         block: [a]
         'a = parse block ['a <end>]
     )
-    (raised? parse [a b] ['a <end>])
     ('a == parse [a] [<any> <end>])
-    (raised? parse [a b] [<any> <end>])
     (void? parse [] [<end>])
+
+    ~parse-mismatch~ !! (parse [a b] ['a <end>])
+    ~parse-mismatch~ !! (parse [a b] [<any> <end>])
+
     (
         be6: ~
         all [
@@ -33,10 +35,12 @@
         text: "a"
         #a == parse text [#a <end>]
     )
-    (raised? parse "ab" [#a <end>])
     (#a == parse "a" [<any> <end>])
-    (raised? parse "ab" [<any> <end>])
     (void? parse "" [<end>])
+
+    ~parse-mismatch~ !! (parse "ab" [#a <end>])
+    ~parse-mismatch~ !! (parse "ab" [<any> <end>])
+
     (
         be6: ~
         all [
@@ -52,10 +56,12 @@
         binary: #{0A}
         #{0A} == parse #{0A} [#{0A} <end>]
     )
-    (raised? parse #{0A0B} [#{0A} <end>])
     (10 == parse #{0A} [<any> <end>])
-    (raised? parse #{0A0B} [<any> <end>])
     (void? parse #{} [<end>])
+
+    ~parse-mismatch~ !! (parse #{0A0B} [#{0A} <end>])
+    ~parse-mismatch~ !! (parse #{0A0B} [<any> <end>])
+
     (
         be6: ~
         all [

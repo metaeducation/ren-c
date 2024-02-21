@@ -6,7 +6,7 @@
 ; but removed input etc. would create an issue.  FURTHER takes the test
 ; for advancement out and makes it usable with any rule.
 
-(raised? parse "" [further [try "a" try "b"] ("at least one")])
+~parse-mismatch~ !! (parse "" [further [try "a" try "b"] ("at least one")])
 ("at least 1" = parse "a" [further [try "a" try "b"] ("at least 1")])
 ("at least 1" = parse "a" [further [try "a" try "b"] ("at least 1")])
 ("at least 1" = parse "ab" [further [try "a" try "b"] ("at least 1")])
@@ -14,7 +14,7 @@
 (void? parse "" [repeat (#) some further [to <end>]])
 
 [https://github.com/red/red/issues/3927
-    (raised? parse "bx" [some further [not "b" | <any>]])
+    ~parse-incomplete~ !! (parse "bx" [some further [not "b" | <any>]])
 ]
 
 ; Only SOME is needed in Red, but try SOME FURTHER is needed here.  But the

@@ -8,15 +8,15 @@
 ; want it to be seen as successful.
 
 [
-    (raised? parse "a" [some ["a" break]])
+    ~parse-mismatch~ !! (parse "a" [some ["a" break]])
     ("a" = parse "a" [try some ["a" break] "a"])
 ]
 
 ; You should be able to break at any depth
 [
-    (raised? parse "aaa" [some ["a" break] "aaa"])
-    (raised? parse "aaa" [some ["a" [break]] "aaa"])
-    (raised? parse "aaa" [some ["a" [["a" | break]]] "aaa"])
+    ~parse-mismatch~ !! (parse "aaa" [some ["a" break] "aaa"])
+    ~parse-mismatch~ !! (parse "aaa" [some ["a" [break]] "aaa"])
+    ~parse-mismatch~ !! (parse "aaa" [some ["a" [["a" | break]]] "aaa"])
 
     ("aaa" == parse "aaa" [try some ["a" break] "aaa"])
     ("aaa" == parse "aaa" [try some ["a" [break]] "aaa"])

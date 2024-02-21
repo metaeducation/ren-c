@@ -14,8 +14,9 @@
 [#1246
     ("1" == parse "1" [not not "1" "1"])
     ("1" == parse "1" [not [not "1"] "1"])
-    (raised? parse "" [not repeat 0 "a"])
-    (raised? parse "" [not [repeat 0 "a"]])
+
+    ~parse-mismatch~ !! (parse "" [not repeat 0 "a"])
+    ~parse-mismatch~ !! (parse "" [not [repeat 0 "a"]])
 ]
 
 [#1240
@@ -25,43 +26,49 @@
 ]
 
 [
-    (raised? parse [] [not <end>])
+    ~parse-mismatch~ !! (parse [] [not <end>])
+    ~parse-mismatch~ !! (parse [a] [not <any>])
+    ~parse-mismatch~ !! (parse [a] [not <any> <any>])
+
     ('a == parse [a] [not 'b 'a])
-    (raised? parse [a] [not <any>])
-    (raised? parse [a] [not <any> <any>])
     ('a == parse [a] [not ['b] 'a])
     (
         wb: ['b]
         'a == parse [a] [not wb 'a]
     )
-    (raised? parse [a a] [not ['a 'a] to <end>])
     (~not~ == parse [a a] [not [some 'b] to <end>])
+
+    ~parse-mismatch~ !! (parse [a a] [not ['a 'a] to <end>])
 ]
 
 [
-    (raised? parse "" [not <end>])
+    ~parse-mismatch~ !! (parse "" [not <end>])
+    ~parse-mismatch~ !! (parse "a" [not <any>])
+    ~parse-mismatch~ !! (parse "a" [not <any> <any>])
+
     (#a == parse "a" [not #b #a])
-    (raised? parse "a" [not <any>])
-    (raised? parse "a" [not <any> <any>])
     (#a == parse "a" [not [#b] #a])
     (
         wb: [#b]
         #a == parse "a" [not wb #a]
     )
-    (raised? parse "aa" [not [#a #a] to <end>])
     (~not~ == parse "aa" [not [some #b] to <end>])
+
+    ~parse-mismatch~ !! (parse "aa" [not [#a #a] to <end>])
 ]
 
 [
-    (raised? parse #{} [not <end>])
+    ~parse-mismatch~ !! (parse #{} [not <end>])
+    ~parse-mismatch~ !! (parse #{0A} [not <any>])
+    ~parse-mismatch~ !! (parse #{0A} [not <any> <any>])
+
     (#{0A} == parse #{0A} [not #{0B} #{0A}])
-    (raised? parse #{0A} [not <any>])
-    (raised? parse #{0A} [not <any> <any>])
     (#{0A} == parse #{0A} [not [#{0B}] #{0A}])
     (
         wb: [#b]
         #{0A} == parse #{0A} [not wb #{0A}]
     )
-    (raised? parse #{0A0A} [not [#{0A} #{0A}] to <end>])
     (~not~ == parse #{0A0A} [not [some #{0B}] to <end>])
+
+    ~parse-mismatch~ !! (parse #{0A0A} [not [#{0A} #{0A}] to <end>])
 ]

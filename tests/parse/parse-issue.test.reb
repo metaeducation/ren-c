@@ -9,29 +9,35 @@
 [
     (NUL = as issue! 0)
 
-    (raised? parse "" [to NUL])
-    (raised? parse "" [thru NUL])
-    (raised? parse "" [to [NUL]])
-    (raised? parse "" [thru [NUL]])
+    ~parse-mismatch~ !! (parse "" [to NUL])
+    ~parse-mismatch~ !! (parse "" [thru NUL])
+    ~parse-mismatch~ !! (parse "" [to [NUL]])
+    ~parse-mismatch~ !! (parse "" [thru [NUL]])
 
-    (raised? parse #{} [to NUL])
-    (raised? parse #{} [thru NUL])
-    (raised? parse #{} [to [NUL]])
-    (raised? parse #{} [thru [NUL]])
+    ~parse-mismatch~ !! (parse #{} [to NUL])
+    ~parse-mismatch~ !! (parse #{} [thru NUL])
+    ~parse-mismatch~ !! (parse #{} [to [NUL]])
+    ~parse-mismatch~ !! (parse #{} [thru [NUL]])
 ]
 
 [
     (#a == parse "a" [#a])
-    (raised? parse "a" [#b])
+
+    ~parse-mismatch~ !! (parse "a" [#b])
+
     (#b == parse "ab" [#a #b])
     (#a == parse "a" [[#a]])
     ("b" == parse "ab" [[#a] "b"])
     (#b == parse "ab" [#a [#b]])
     (#b == parse "ab" [[#a] [#b]])
     (#a == parse "a" [#b | #a])
-    (raised? parse "ab" [#b | "a"])
+
+    ~parse-incomplete~ !! (parse "ab" [#b | "a"])
+
     (#a == parse "a" [[#b | #a]])
-    (raised? parse "ab" [[#b | "a"]])
+
+    ~parse-incomplete~ !! (parse "ab" [[#b | "a"]])
+
     (#b == parse "ab" [["a" | #b] [#b | "a"]])
 ]
 
@@ -200,26 +206,35 @@
             res = 1
         ]
     )
-    (raised? parse "aa" [repeat 1 [#a]])
-    (#a == parse "aa" [repeat 2 [#a]])
-    (raised? parse "aa" [repeat 3 [#a]])
 
-    (raised? parse "aa" [repeat ([1 1]) [#a]])
+    ~parse-incomplete~ !! (parse "aa" [repeat 1 [#a]])
+
+    (#a == parse "aa" [repeat 2 [#a]])
+
+    ~parse-mismatch~ !! (parse "aa" [repeat 3 [#a]])
+    ~parse-incomplete~ !! (parse "aa" [repeat ([1 1]) [#a]])
+
     (#a == parse "aa" [repeat ([1 2]) [#a]])
     (#a == parse "aa" [repeat ([2 2]) [#a]])
     (#a == parse "aa" [repeat ([2 3]) [#a]])
-    (raised? parse "aa" [repeat ([3 4]) [#a]])
-    (raised? parse "aa" [repeat ([1 1]) #a])
+
+    ~parse-mismatch~ !! (parse "aa" [repeat ([3 4]) [#a]])
+    ~parse-incomplete~ !! (parse "aa" [repeat ([1 1]) #a])
+
     (#a == parse "aa" [repeat ([1 2]) #a])
     (#a == parse "aa" [repeat ([2 2]) #a])
     (#a == parse "aa" [repeat ([2 3]) #a])
-    (raised? parse "aa" [repeat ([3 4]) #a])
 
-    (raised? parse "aa" [repeat 1 #a])
+    ~parse-mismatch~ !! (parse "aa" [repeat ([3 4]) #a])
+    ~parse-incomplete~ !! (parse "aa" [repeat 1 #a])
+
     (#a == parse "aa" [repeat 2 #a])
-    (raised? parse "aa" [repeat 3 #a])
+
+    ~parse-mismatch~ !! (parse "aa" [repeat 3 #a])
+
     (#a == parse "aa" [some [#a]])
     (void? parse "aa" [some [#a] repeat (#) [#b]])
     ("b" == parse "aabb" [repeat 2 #a, repeat 2 "b"])
-    (raised? parse "aabb" [repeat 2 "a", repeat 3 #b])
+
+    ~parse-mismatch~ !! (parse "aabb" [repeat 2 "a", repeat 3 #b])
 ]

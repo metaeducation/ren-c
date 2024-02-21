@@ -20,7 +20,8 @@
 
 [
     ('a == parse [a] ['a])
-    (raised? parse [a] ['b])
+    ~parse-mismatch~ !! (parse [a] ['b])
+
     ('b == parse [a b] ['a 'b])
     ('a == parse [a] [['a]])
     ('b == parse [a b] [['a] 'b])

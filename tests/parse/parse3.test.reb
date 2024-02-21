@@ -77,15 +77,15 @@
 [
     (NUL = as issue! 0)
 
-    ~parse-incomplete~ !! (parse3 "" [to NUL])
-    ~parse-incomplete~ !! (parse3 "" [thru NUL])
-    ~parse-incomplete~ !! (parse3 "" [to [NUL]])
-    ~parse-incomplete~ !! (parse3 "" [thru [NUL]])
+    ~parse3-incomplete~ !! (parse3 "" [to NUL])
+    ~parse3-incomplete~ !! (parse3 "" [thru NUL])
+    ~parse3-incomplete~ !! (parse3 "" [to [NUL]])
+    ~parse3-incomplete~ !! (parse3 "" [thru [NUL]])
 
-    ~parse-incomplete~ !! (parse3 #{} [to NUL])
-    ~parse-incomplete~ !! (parse3 #{} [thru NUL])
-    ~parse-incomplete~ !! (parse3 #{} [to [NUL]])
-    ~parse-incomplete~ !! (parse3 #{} [thru [NUL]])
+    ~parse3-incomplete~ !! (parse3 #{} [to NUL])
+    ~parse3-incomplete~ !! (parse3 #{} [thru NUL])
+    ~parse3-incomplete~ !! (parse3 #{} [to [NUL]])
+    ~parse3-incomplete~ !! (parse3 #{} [thru [NUL]])
 ]
 
 
@@ -113,10 +113,10 @@
     parse3 [] [[[]]]
     true
 )
-~parse-incomplete~ !! (
+~parse3-incomplete~ !! (
     parse3 [x] []
 )
-~parse-incomplete~ !! (
+~parse3-incomplete~ !! (
     parse3 [x] [[[]]]
 )
 (
@@ -136,7 +136,7 @@
         true
     )
 
-    ~parse-incomplete~ !! (
+    ~parse3-incomplete~ !! (
         parse3 [] [blank blank blank]
     )
     (
@@ -147,11 +147,11 @@
         parse3 [_ _ _] [_ _ _]
         true
     )
-    ~parse-incomplete~ !!(
+    ~parse3-incomplete~ !!(
         parse3 [x <y> "z"] [_ _ _]
     )
 
-    ~parse-incomplete~ !!(
+    ~parse3-incomplete~ !!(
         parse3 [x <y> "z"] ['_ '_ '_]
     )
     (
@@ -164,7 +164,7 @@
         true
     )
 
-    ~parse-incomplete~ !!(
+    ~parse3-incomplete~ !!(
         parse3 [] [[[_ _ _]]]
     )
     (
@@ -330,10 +330,10 @@
         parse3 "1" [not [not "1"] "1"]
         true
     )
-    ~parse-incomplete~ !! (
+    ~parse3-incomplete~ !! (
         parse3 "" [not 0 "a"]
     )
-    ~parse-incomplete~ !! (
+    ~parse3-incomplete~ !! (
         parse3 "" [not [0 "a"]]
     )
 ]
@@ -361,14 +361,14 @@
         parse3 "a" compose [thru (charset "a")]
         true
     )
-    ~parse-incomplete~ !! (
+    ~parse3-incomplete~ !! (
         parse3 "a" compose [thru (charset "a") skip]
     )
     (
         parse3 "ba" compose [to (charset "a") skip]
         true
     )
-    ~parse-incomplete~ !! (
+    ~parse3-incomplete~ !! (
         parse3 "ba" compose [to (charset "a") "ba"]
     )
 ]
@@ -403,13 +403,13 @@
 )
 
 [#1238
-    ~parse-incomplete~ !! (parse3 "ab" [ahead "ab" "ac"])
-    ~parse-incomplete~ !! (parse3 "ac" [ahead "ab" "ac"])
+    ~parse3-incomplete~ !! (parse3 "ab" [ahead "ab" "ac"])
+    ~parse3-incomplete~ !! (parse3 "ac" [ahead "ab" "ac"])
 ]
 
 ; INTO is not legal if a string parse is already running
 ;
-~parse-rule~ !! (parse3 "aa" [into ["a" "a"]])
+~parse3-rule~ !! (parse3 "aa" [into ["a" "a"]])
 
 
 ; Should return the same series type as input (Rebol2 did not do this)
@@ -453,7 +453,7 @@
     parse3 "aaa" [:('some) "a"]
     true
 )
-~parse-incomplete~ !! (
+~parse3-incomplete~ !! (
     parse3 "aaa" [:(1 + 1) "a"]
 )
 (
@@ -473,14 +473,14 @@
     parse3 "ab" ["a" true "b"]
     true
 )
-~parse-incomplete~ !! (
+~parse3-incomplete~ !! (
     parse3 "ab" ["a" false "b"]
 )
 (
     parse3 "ab" ["a" :(1 = 1) "b"]
     true
 )
-~parse-incomplete~ !! (
+~parse3-incomplete~ !! (
     parse3 "ab" ["a" :(1 = 2) "b"]
 )
 
@@ -590,7 +590,7 @@
         true
     )
 
-    ~parse-incomplete~ !! (
+    ~parse3-incomplete~ !! (
         parse3/case bincat [{c😺t}]
     )
 ]
@@ -621,7 +621,7 @@
         true
     )
 
-    ~parse-incomplete~ !! (
+    ~parse3-incomplete~ !! (
         parse3 "" [further [try "a" try "b"] ("at least one")]
     )
     (
@@ -686,13 +686,13 @@
 [
     https://github.com/rebol/rebol-issues/issues/2393
 
-    ~parse-incomplete~ !! (
+    ~parse3-incomplete~ !! (
         parse3 "aa" [some [#"a"] reject]
     )
-    ~parse-incomplete~ !! (
+    ~parse3-incomplete~ !! (
         parse3 "aabb" [some [#"a"] reject some [#"b"]]
     )
-    ~parse-incomplete~ !! (
+    ~parse3-incomplete~ !! (
         parse3 "aabb" [some [#"a" reject] to <end>]
     )
 ]
@@ -764,7 +764,7 @@
         parse3 ["a" "b" 1] [set x some text! integer!]
     ]
     all [
-        e.id = 'parse-multiple-set
+        e.id = 'parse3-multi-set
         x = <before>
     ]
 )]

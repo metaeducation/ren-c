@@ -80,24 +80,34 @@
 
 [
     ('a == parse [a a] [some ['a]])
-    (raised? parse [a a] [some ['a] 'b])
+
+    ~parse-mismatch~ !! (parse [a a] [some ['a] 'b])
+
     ('a == parse [a a b a b b b a] [some [<any>]])
     ('a == parse [a a b a b b b a] [some ['a | 'b]])
-    (raised? parse [a a b a b b b a] [some ['a | 'c]])
+
+    ~parse-incomplete~ !! (parse [a a b a b b b a] [some ['a | 'c]])
+
     ('b == parse [a a b b] [some 'a some 'b])
-    (raised? parse [a a b b] [some 'a some 'c])
+
+    ~parse-mismatch~ !! (parse [a a b b] [some 'a some 'c])
+
     ('c == parse [b a a a c] [<any> some ['a] 'c])
 ]
 
 [
     (#a == parse "aa" [some [#a]])
-    (raised? parse "aa" [some [#a] #b])
+
+    ~parse-mismatch~ !! (parse "aa" [some [#a] #b])
+
     (#a == parse "aababbba" [some [<any>]])
     ("a" == parse "aababbba" [some ["a" | "b"]])
-    (raised? parse "aababbba" [some ["a" | #c]])
+
+    ~parse-incomplete~ !! (parse "aababbba" [some ["a" | #c]])
 
     ("b" == parse "aabb" [some #a some "b"])
-    (raised? parse "aabb" [some "a" some #c])
+
+    ~parse-mismatch~ !! (parse "aabb" [some "a" some #c])
 ]
 
 [https://github.com/red/red/issues/3108
@@ -122,7 +132,9 @@
     (null = parse [] [try some 'a])
     (null = parse [] [try some 'b])
     ('a == parse [a] [try some 'a])
-    (raised? parse [a] [try some 'b])
+
+    ~parse-incomplete~ !! (parse [a] [try some 'b])
+
     ('a == parse [a] [try some 'b <any>])
     ('b == parse [a b a b] [try some ['b | 'a]])
 ]
@@ -172,7 +184,7 @@
     (null = parse "" [try some #a])
     (null = parse "" [try some #b])
     (#a == parse "a" [try some #a])
-    (raised? parse "a" [try some #b])
+    ~parse-incomplete~ !! (parse "a" [try some #b])
     (#a == parse "a" [try some #b <any>])
     (#b == parse "abab" [try some [#b | #a]])
 ]
@@ -186,16 +198,21 @@
     (#{06} == parse #{020406} [
         try some [x: across <any> :(even? first x)]
     ])
-    (raised? parse #{01} [x: across <any> :(even? first x)])
-    (raised? parse #{0105} [some [x: across <any> :(even? first x)]])
+
+    ~parse-mismatch~ !! (parse #{01} [x: across <any> :(even? first x)])
+    ~parse-mismatch~ !! (parse #{0105} [some [x: across <any> :(even? first x)]])
+
     (null = parse #{} [try some #{0A}])
     (null = parse #{} [try some #{0B}])
     (#{0A} == parse #{0A} [try some #{0A}])
-    (raised? parse #{0A} [try some #{0B}])
+
+    ~parse-incomplete~ !! (parse #{0A} [try some #{0B}])
+
     (10 == parse #{0A} [try some #{0B} <any>])
     (#{0B} == parse #{0A0B0A0B} [try some [#{0B} | #{0A}]])
 
-    (raised? parse #{0A} [try some #{0A} #{0A}])
+    ~parse-mismatch~ !! (parse #{0A} [try some #{0A} #{0A}])
+
     (1 == parse #{01} [ahead [#{0A} | #"^A"] <any>])
 ]
 
