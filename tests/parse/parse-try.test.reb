@@ -50,3 +50,8 @@
     (10 == parse #{0A} [try <any>])
     (12 == parse #{0A0B0C} [<any> try #{0B} <any>])
 ]
+
+[https://gitter.im/red/bugs?at=638e27b34cb5585f9666500d (
+    not ok? parse [1] [try (x: true)]
+    x = true
+)]

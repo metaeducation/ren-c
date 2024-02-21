@@ -123,6 +123,12 @@
     ("TeSt" == parse/case "TeSt" ["TeSt"])
 ]
 
+; Casing in a block
+[
+    ("a" = parse/case ["a"] ["a"])
+    ~parse-mismatch~ !! (parse/case ["a"] ["A"])
+]
+
 ; String unicode
 [
     (#é == parse "abcdé" [#a #b #c #d #é])

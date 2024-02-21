@@ -1153,10 +1153,12 @@ default-combinators: make map! reduce [
         return: "The rule series matched against (not input value)"
             [text!]
         value [text!]
+        <local> neq?
     ][
         case [
             any-array? input [
-                if input.1 <> value [
+                neq?: either state.case [:strict-not-equal?] [:not-equal?]
+                if neq? input.1 value [
                     return raise "Value at parse position does not match TEXT!"
                 ]
                 remainder: next input
@@ -1485,7 +1487,7 @@ default-combinators: make map! reduce [
             [nihil? element? splice?]  ; !!! splice b.c. called by @(...)
         @pending [<opt> block!]
         value [quoted? quasi?]
-        <local> comb
+        <local> comb neq?
     ][
         ; It is legal to say:
         ;
@@ -1502,8 +1504,9 @@ default-combinators: make map! reduce [
         ]
 
         if any-array? input [
+            neq?: either state.case [:strict-not-equal?] [:not-equal?]
             if quoted? value [
-                if input.1 <> unquote value [
+                if neq? input.1 unquote value [
                     return raise [
                         "Value at parse position wasn't unquote of QUOTED! item"
                     ]
@@ -1516,7 +1519,7 @@ default-combinators: make map! reduce [
                 fail "Only antiform matched against array content is splice"
             ]
             for-each item unquasi value [
-                if input.1 <> item [
+                if neq? input.1 item [
                     return raise [
                         "Value at input position didn't match splice element"
                     ]
