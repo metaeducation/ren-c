@@ -514,3 +514,35 @@ https://github.com/metaeducation/ren-c/issues/939
         ]]
     ]
 )
+
+; https://github.com/red/red/commit/4c1d8e2aa9f865a572dba743b39c84880ed47f63
+; Triggered Red bug reated to COLLECT INTO / COLLECT AFTER.
+; Just approximate the test with regular collect (more tests the better)
+[(
+    vowel: charset "aeiou"
+    str: "parse must not be bugged"
+    res: "p-rs- m-st n-t b- b-gg-d"
+    out: ""
+    rule: [
+        (clear out)
+        try some [keep across to vowel skip 1 keep (#"-")]
+        keep across to <end>
+    ]
+    true
+)
+
+    (
+        parse str b: [c: collect rule (insert out spread c)]
+        out == res
+    )
+    (take/last append str "¿")
+
+    (
+        parse str b: [c: collect rule (insert out spread c)]
+        out == res
+    )
+    (
+        parse str b: [c: collect rule (append out spread c)]
+        out == res
+    )
+]
