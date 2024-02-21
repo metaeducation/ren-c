@@ -4,7 +4,7 @@
 ; up objects.  It works with a GATHER and SET-WORD!
 
 (
-    did all [
+    all [
         '* == parse [* * * 1 <foo> * * *] [
             some '*
             g: gather [
@@ -27,7 +27,7 @@
     ] else [
        fail "Parse failure"
     ]
-    did all [
+    all [
         result.x = [<a> <a> <a>]
         result.y = [<b> <b> <b>]
     ]
@@ -44,7 +44,7 @@
         using parse [1 <foo>] [gather [emit i: integer!, emit t: tag!]]
         assert [i = 1, t = <foo>]
     ]
-    did all [
+    all [
         i = #i
         t = #t
     ]
@@ -64,7 +64,7 @@
         assert [base = "demo"]
         assert [extension = "txt"]
     ]
-    did all [
+    all [
         base = #base
         extension = #extension
     ]

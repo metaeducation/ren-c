@@ -428,7 +428,7 @@
 ; This test works in Rebol2 even if it starts `i: 0`, presumably a bug.
 (
     i: 1
-    did all [
+    all [
         raised? parse3 "a" [
             some [try "a" (i: i + 1 j: if i = 2 [[<end> skip]]) j]
         ]
@@ -505,7 +505,7 @@
 ;
 (
     pos: parse3 [''[1 + 2]] [into [copy x to <end>], accept <here>]
-    did all [
+    all [
         [] == pos
         x == [1 + 2]
     ]
@@ -535,7 +535,7 @@
         some "a", x: <here>, some "b", y: <here>
         seek x, copy z to <end>
     ]
-    did all [
+    all [
         x = "bbcc"
         y = "cc"
         z = "bbcc"
@@ -598,7 +598,7 @@
 (
     test: to-binary {The C😺T Test}
     parse3 test [to {c😺t} copy x to space to <end>]
-    did all [
+    all [
         x = #{43F09F98BA54}
         "C😺T" = to-text x
     ]
@@ -763,7 +763,7 @@
     e: sys.util.rescue [
         parse3 ["a" "b" 1] [set x some text! integer!]
     ]
-    did all [
+    all [
         e.id = 'parse-multiple-set
         x = <before>
     ]
@@ -799,12 +799,12 @@
 ]
 
 [#1244
-    (did all [
+    (all [
         raised? parse3 a: "12" [remove copy v skip]
         a = "2"
         v = "1"
     ])
-    (did all [
+    (all [
         raised? parse3 a: "12" [remove [copy v skip]]
         a = "2"
         v = "1"

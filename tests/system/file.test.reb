@@ -86,7 +86,7 @@
         [loaded header]: load (
             save/header/compress blank data [Title: "my code"] true
         )
-        did all [
+        all [
             header.title = "my code"
             header.options = [compress]
             loaded = data
@@ -100,7 +100,7 @@
             0A335430D433523034B0323250502A492D2E5152282D4E2D7248AD48CC2DC849
             D54BCECF55882E2E4D5248CAC94FCE8EE502000B388CB030000000
         }
-        did all [
+        all [
             header.title = "my code"
             header.options = [compress]
             loaded = data
@@ -111,7 +111,7 @@
         [loaded header]: load (
             save/header/compress blank data [Title: "my code"] 'script
         )
-        did all [
+        all [
             header.title = "my code"
             header.options = [compress]
             loaded = data
@@ -126,7 +126,7 @@
             5556496F4C553474636B6974534D777479456E5653383750565967750A4C6B31
             53534D724A5438364F35514941437A694D734441414141413D0A7D
         } 'header  ; use non SET-BLOCK! form for variation
-        did all [
+        all [
             header.title = "my code"
             header.options = [compress]
             loaded = data
@@ -137,7 +137,7 @@
         [loaded header]: load (
             save/header blank data [Title: "my code" Options: [compress]]
         )
-        did all [
+        all [
             header.title = "my code"
             header.options = [compress]
             loaded = data
@@ -151,7 +151,7 @@
             0A335430D433523034B0323250502A492D2E5152282D4E2D7248AD48CC2DC849
             D54BCECF55882E2E4D5248CAC94FCE8EE502000B388CB030000000
         }
-        did all [
+        all [
             header.title = "my code"
             header.options = [compress]
             loaded = data

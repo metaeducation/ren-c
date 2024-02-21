@@ -82,7 +82,7 @@
 (
     obj: make object! [x: 10, y: 20]
     word: bind 'y obj
-    did all [
+    all [
         20 = get word
         [x y] = words of obj  ; starts out visible
 

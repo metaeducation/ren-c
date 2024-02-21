@@ -101,21 +101,21 @@
 [
     (
         a: ~
-        did all [
+        all [
             [] == parse [] [a: collect []]
             a = []
         ]
     )
     (
         a: ~
-        did all [
+        all [
             [] == parse "" [a: collect []]
             a = []
         ]
     )
     (
         a: ~
-        did all [
+        all [
             [] == parse #{} [a: collect []]
             a = []
         ]
@@ -123,21 +123,21 @@
 
     (
         a: ~
-        did all [
+        all [
             [1] == parse [1] [a: collect [keep <any>]]
             a = [1]
         ]
     )
     (
         a: ~
-        did all [
+        all [
             [#1] == parse "1" [a: collect [keep <any>]]
             a = [#1]
         ]
     )
     (
         a: ~
-        did all [
+        all [
             [1] == parse #{01} [a: collect [keep <any>]]
             a = [1]
         ]
@@ -156,7 +156,7 @@
         collect [some keep integer!] elide to <end>
     ])
 
-    (did all [
+    (all [
         'yay = parse [1 2 3 yay] [block: collect [some keep integer!] word!]
         block = [1 2 3]
     ])
@@ -165,7 +165,7 @@
 
 [(
     x: ~
-    did all [
+    all [
         [1 2] == parse [1 2] [x: collect [
             keep integer! keep tag! | keep integer! keep integer!
         ]]
@@ -173,19 +173,19 @@
     ]
 )(
     x: ~
-    did all [  ; semi-nonsensical use of BETWEEN just because it takes 2 rules
+    all [  ; semi-nonsensical use of BETWEEN just because it takes 2 rules
         ["(" ")"] == parse "(abc)" [x: collect between keep "(" keep ")"]
         x = ["(" ")"]
     ]
 )(
     x: <before>
-    did all [  ; semi-nonsensical use of BETWEEN just because it takes 2 rules
+    all [  ; semi-nonsensical use of BETWEEN just because it takes 2 rules
         raised? parse "(abc}" [x: collect between "(" keep ")"]
         x = <before>
     ]
 )(
     x: ~
-    did all [
+    all [
         [#a <kept> #a <kept> #a <kept>] == parse "aaa" [x: collect [some [
             keep (if false [<not kept>])
             keep <any>
@@ -234,19 +234,19 @@
 
 ; SOME KEEP vs KEEP SOME
 [
-    (did all [
+    (all [
         [3] == parse [1 2 3] [x: collect [keep some integer!]]
         x = [3]
     ])
-    (did all [
+    (all [
         [1 2 3] == parse [1 2 3] [x: collect [some keep integer!]]
         x = [1 2 3]
     ])
-    (did all [
+    (all [
         [3] == parse [1 2 3] [x: collect [keep [some integer!]]]
         x = [3]
     ])
-    (did all [
+    (all [
         [1 2 3] == parse [1 2 3] [x: collect [some [keep integer!]]]
         x = [1 2 3]
     ])
@@ -254,12 +254,12 @@
 
 ; Collecting non-array series fragments
 [
-    (did all [
+    (all [
         pos: parse- "aaabbb" [x: collect [keep [across some "a"]]]
         "bbb" = pos
         x = ["aaa"]
     ])
-    (did all [
+    (all [
         pos: parse- "aaabbbccc" [
             x: collect [keep [across some "a"] some "b" keep [across some "c"]]
         ]
@@ -270,7 +270,7 @@
 
 ; "Backtracking" (more tests needed!)
 [
-    (did all [
+    (all [
         pos: parse- [1 2 3] [
             x: collect [
                 keep integer! keep integer! keep text!
@@ -286,7 +286,7 @@
 ; No change to variable on failed match (consistent with Rebol2/R3-Alpha/Red
 ; behaviors w.r.t SET and COPY)
 [
-    (did all [
+    (all [
         x: <before>
         raised? parse [1 2] [x: collect [keep integer! keep text!]]
         x = <before>
@@ -313,7 +313,7 @@
 ; GROUP! can be used to keep material that did not originate from the
 ; input series or a match rule.
 [
-    (did all [
+    (all [
         pos: parse- [1 2 3] [
             x: collect [
                 keep integer!
@@ -324,7 +324,7 @@
         [3] = pos
         x = [1 <pick> <me> 2]
     ])
-    (did all [
+    (all [
         pos: parse- [1 2 3] [
             x: collect [
                 keep integer!
@@ -335,7 +335,7 @@
         [3] = pos
         x = [1 [<pick> <me>] 2]
     ])
-    (did all [
+    (all [
         [[a b c]] == parse [1 2 3] [x: collect [keep ([a b c]) to <end>]]
         x = [[a b c]]
     ])
@@ -344,7 +344,7 @@
 ; KEEP without blocks
 https://github.com/metaeducation/ren-c/issues/935
 [
-    (did all [
+    (all [
         ["aaa" "b"] == parse "aaabbb" [
             x: collect [keep across some "a" keep some "b"]
         ]
@@ -356,7 +356,7 @@ https://github.com/metaeducation/ren-c/issues/935
         x = ["aaa"]
     ])
 
-    (did all [
+    (all [
         ["b"] == parse "aaabbb" [
             outer: collect [
                 some [inner: collect keep across some "a" | keep some "b"]
@@ -381,7 +381,7 @@ https://github.com/metaeducation/ren-c/issues/935
     )
     (
         list: ~
-        did all [
+        all [
             [3 4 8] == parse [a 3 4 t "test" 8] [
                 list: collect [some [keep integer! | <any>]]
             ]
@@ -495,7 +495,7 @@ https://github.com/metaeducation/ren-c/issues/935
 https://github.com/metaeducation/ren-c/issues/939
 (
     thing: ~
-    did all [
+    all [
         raised? parse "a" [thing: collect [foo: <here>, "a", keep seek (foo)]]
         foo = "a"
         thing = ["a"]

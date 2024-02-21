@@ -6,38 +6,38 @@
 
 [(
     x: ~
-    did all [
+    all [
         "hello" == parse [1 "hello"] [x: [tag! | integer!] text!]
         x = 1  ; not [1]
     ]
 )(
     x: ~
-    did all [
+    all [
         "hello" == parse [1 "hello"] [x: [tag! integer! | integer! text!]]
         x = "hello"
     ]
 )(
     x: ~
-    did all [
+    all [
         null == parse [] [x: [try integer!]]
         x = null
     ]
 )(
     x: <before>
-    did all [
+    all [
         raised? parse [] [x: [integer!]]
         x = <before>
     ]
 )(
     x: ~
-    did all [
+    all [
         null == parse [] [x: try [integer!]]
         x = null
     ]
 )
 
 (
-    did all [
+    all [
         [1 2 3] == parse [1 2 3] [x: collect [some keep integer!]]
         x = [1 2 3]
     ]
@@ -49,7 +49,7 @@
 [(
     t: "t"
     i: "i"
-    did all [
+    all [
         <foo> == parse [<foo>] [i: integer! | t: tag!]
         i = "i"  ; undisturbed
         t = <foo>
@@ -57,7 +57,7 @@
 )(
     t: "t"
     i: "i"
-    did all [
+    all [
         <foo> == parse [<foo>] [i: try integer!, t: tag!]
         i = null
         t = <foo>
@@ -84,14 +84,14 @@
 ; Void assignments are legal
 (
     x: ~, y: 10
-    did all [
+    all [
         <result> = parse "a" [x: y: (void) "a" (<result>)]
         voided? $x
         void? y
     ]
 )(
     obj: make object! [x: ~, y: 10]
-    did all [
+    all [
         <result> = parse "a" [obj.x: obj.y: (void) "a" (<result>)]
         voided? $obj.x
         void? obj.y

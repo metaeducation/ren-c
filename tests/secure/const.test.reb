@@ -5,7 +5,7 @@
 (
     data: mutable [a b c]
     data-readonly: const data
-    did all [
+    all [
         e: sys.util.rescue [append data-readonly <readonly>]
         e.id = 'const-value
         append data <readwrite>
@@ -18,7 +18,7 @@
         ()
         append code.1 sum: sum + 1
     ]
-    did all [
+    all [
         sum = 5
         code.1 = '(1 2 3 4 5)
     ]
@@ -36,7 +36,7 @@
         ()
         append mutable code.1 sum: sum + 1
     ]
-    did all [
+    all [
         sum = 5
         code.1 = '(1 2 3 4 5)
     ]
@@ -90,7 +90,7 @@
     append data <success>
     e2: sys.util.rescue [append data.2 <failure>]
     e22: sys.util.rescue [append data.2.2 <failure>]
-    did all [
+    all [
         data = [a [b [c]] <success>]
         e2.id = 'const-value
         e22.id = 'const-value
@@ -148,7 +148,7 @@
 ;
 ;    func-r2: reskinned [body [block!]] adapt :func []
 ;    aggregator: func-r2 [x] [data: [] append data x]
-;    did all [
+;    all [
 ;        [10] = aggregator 10
 ;        [10 20] = aggregator 20
 ;    ]

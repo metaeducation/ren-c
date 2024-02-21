@@ -163,7 +163,7 @@
     ; (The z and "aaa" triples from shorter match are still in final result)
     (
         g: ~
-        did all [
+        all [
             ["aa" "aa" "aa" "aaa" "aaa"] = parse "aaaaaaaa" [collect [
                 g: gather [
                     maxmatch-D [
@@ -343,7 +343,7 @@
     ; (The z and "aaa" triples from shorter match won't be in the final result)
     (
         g: ~
-        did all [
+        all [
             ["aa" "aa" "aa"] = parse "aaaaaaaa" [collect [
                 g: gather [
                     maxmatch-C [

@@ -13,7 +13,7 @@
 (
     earlier: copy []
     later: copy []
-    did all [
+    all [
         "d" = parse "abcd" [
            "a" (append earlier <A>)
            "b" (<delay> append later <B>)
@@ -31,7 +31,7 @@
 (
     earlier: copy []
     later: copy []
-    did all [
+    all [
         raised? parse "abcd" [
            "a" (append earlier <A>)
            "b" (<delay> append later <B>)
@@ -50,7 +50,7 @@
 (
     earlier: copy []
     later: copy []
-    did all [
+    all [
         raised? parse "abcd" [
            phase [
                "a" (append earlier <A>)

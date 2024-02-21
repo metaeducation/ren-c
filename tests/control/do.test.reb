@@ -21,13 +21,13 @@
     (void' = ^ do [if false [<a>]])
     (void' = ^ do [10 + 20 if false [<a>]])
 
-    (did all [
+    (all [
         x: <overwritten>
         nihil' = x: ^ comment "HI" comment "HI"  ; not eval'd in same step
         x = nihil'
     ])
 
-    (did all [
+    (all [
         x: <overwritten>
         void' = (x: ^(comment "HI") ^ do [comment "HI"])
         nihil' = x
@@ -76,7 +76,7 @@
     (
         y: <overwritten>
         x: (1 + 2 y: (void eval [comment "HI"]))
-        did all [
+        all [
             void? x
             voided? $y
         ]
@@ -237,20 +237,20 @@
 )
 (
     value: evaluate/next [1 2] $b
-    did all [
+    all [
         1 = value
         [2] = b
     ]
 )
 (
-    did all [
+    all [
         nihil? evaluate/next [] $pos
         pos = null
     ]
 )
 (
     value: evaluate/next [trap [1 / 0]] $pos
-    did all [
+    all [
         error? value
         pos = []
     ]

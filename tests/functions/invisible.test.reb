@@ -31,7 +31,7 @@
     val: evaluate/next [
         1 comment "a" + comment "b" 2 * 3 fail "too far"
     ] $pos
-    did all [
+    all [
         val = 1
         pos = [comment "a" + comment "b" 2 * 3 fail "too far"]
     ]
@@ -41,7 +41,7 @@
     val: evaluate/next [
         1 comment "a" comment "b" + 2 * 3 fail "too far"
     ] $pos
-    did all [
+    all [
         val = 1
         pos = [comment "a" comment "b" + 2 * 3 fail "too far"]
     ]
@@ -82,7 +82,7 @@
     val: evaluate/next [
         1 + 2 * 3 elide "a" elide "b" fail "too far"
     ] $pos
-    did all [
+    all [
         val = 9
         pos = [elide "a" elide "b" fail "too far"]
     ]
@@ -94,7 +94,7 @@
     x: 1 + 2 * 3
     elide (y: :x)
 
-    did all [x = 9, y = 9]
+    all [x = 9, y = 9]
 )
 ~no-value~ !! (
     x: ~
@@ -110,7 +110,7 @@
 [
     (
         weird: [|1|]
-        did all [
+        all [
             word? first weird
             "|1|" = as text! first weird
             "[|1|]" = mold weird
@@ -361,7 +361,7 @@
 (<before> = (<before> reeval :comment "erase me"))
 (
     x: <before>
-    did all [
+    all [
         10 = (
             10 reeval :elide x: <after>
         )
@@ -440,7 +440,7 @@
 ; COMMA!'s new mechanic getting its barrier-ness from returning nihil.
 ;
 ;    foo: lambda [x [nihil? integer!]] [if unset? $x [<unset>] else [x]]
-;    did all [
+;    all [
 ;        <unset> = foo comment "hi"
 ;        1020 = foo 1000 + 20
 ;    ]
@@ -453,7 +453,7 @@
         return append x "."
     ]
 
-    did all [
+    all [
         "Hello World." = add-period "Hello World"
         num-runs = 1
         null = add-period void  ; shouldn't run ADD-PERIOD body

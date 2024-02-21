@@ -9,7 +9,7 @@
 
 (
    x: ~
-   did all [
+   all [
        #X = raise "hello" then [x: #T] else [x: #E] except e -> [x: e, #X]
        error? x
    ]

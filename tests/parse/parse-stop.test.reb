@@ -28,4 +28,4 @@
 
 ; https://github.com/Oldes/Rebol-issues/issues/967
 ;
-(x: ~, did all [trash? parse "" [some  [(x: 2) stop]], x = 2])
+(x: ~, all [trash? parse "" [some  [(x: 2) stop]], x = 2])

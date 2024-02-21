@@ -27,7 +27,7 @@ true)
 
 (
     append: my onlify
-    did all [
+    all [
         [a b c d e] = append [a b c] [d e]
         [a b c [d e]] = append/only [a b c] [d e]
     ]
@@ -69,7 +69,7 @@ true)
 
     r: [a b c [d e] [d e] [d e]]
 
-    did all [
+    all [
         , r = aopd3 copy [a b c] [d e]
         , r = applique :aopd3 [series: copy [a b c] value: [d e]]
     ]
@@ -95,7 +95,7 @@ true)
 
 (
     find: my onlify/param 'pattern
-    did all [
+    all [
         [a b c [a b c]] = find [a b c [a b c]] [a b c]
         [[a b c]] = find/only [a b c [a b c]] [a b c]
     ]

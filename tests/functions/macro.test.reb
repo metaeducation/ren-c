@@ -33,7 +33,7 @@
 [
     (
         x: 1 + inline [2 y: negate] 10
-        did all [
+        all [
             x = 3
             y = -10
         ]

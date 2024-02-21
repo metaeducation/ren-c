@@ -39,7 +39,7 @@
 
 (
     test: /x -> [x]
-    did all [
+    all [
         null = test
         # = test/x
     ]
@@ -47,7 +47,7 @@
 
 (
     test: [:x] -> [x]  ; :x -> [x] subverts *lambda's* parameter convention!
-    did all [
+    all [
         3 = test :(1 + 2)
         (the (1 + 2)) = test (1 + 2)
     ]
@@ -60,7 +60,7 @@
 
 (
     test: ["More complex" /return] -> [if return [<yes>] else [<no>]]
-    did all [
+    all [
         <no> = test
         <yes> = test/return
     ]

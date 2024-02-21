@@ -8,7 +8,7 @@
 (0 = parse "aaa" [tally "b" elide to <end>])  ; must be at end
 (0 = parse "aaa" [accept tally "b"])  ; alternately, use non-force-completion
 
-(did all [
+(all [
     parse "(((stuff)))" [
         n: tally "("
         inner: between <here> repeat (n) ")"

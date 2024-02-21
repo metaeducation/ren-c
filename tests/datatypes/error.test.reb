@@ -157,7 +157,7 @@
     e1: trap [divide 1 0]
     e2: trap [divide 2 0]
 
-    did all [
+    all [
         e1.id = 'zero-divide
         e2.id = 'zero-divide
         [divide 1 0] = copy/part e1.near 3

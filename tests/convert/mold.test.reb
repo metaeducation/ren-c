@@ -140,7 +140,7 @@
 
 [https://github.com/metaeducation/rebol-httpd/issues/10 (
     x: load "--^/a/b"
-    did all [
+    all [
         x = [-- a/b]
         not new-line? x
         new-line? next x
@@ -148,7 +148,7 @@
     ]
 )(
     x: load "--^/a/b/c"
-    did all [
+    all [
         x = [-- a/b/c]
         not new-line? x
         new-line? next x
@@ -161,14 +161,14 @@
     ({"ab} = mold/limit "abcdefg" 3)
     (
         [str trunc]: mold/limit "abcdefg" 3
-        did all [
+        all [
             str = {"ab}
             trunc = true
         ]
     )
     (
         [str trunc]: mold/limit "abcdefg" 300
-        did all [
+        all [
             str = {"abcdefg"}
             trunc = false
         ]

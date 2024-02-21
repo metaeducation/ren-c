@@ -6,7 +6,7 @@
 
     old-foo: copy :foo
 
-    did all [
+    all [
         (old-foo 10) = 11
         hijack :foo func [x] [return (old-foo x) + 20]
         (old-foo 10) = 11

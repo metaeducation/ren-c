@@ -37,7 +37,7 @@
         foo: func [x] [fail 'x]
 
         e: sys.util.rescue [foo 10]
-        did all [
+        all [
             e.id = 'invalid-arg
             e.arg1 = 'foo
             e.arg2 = 'x
@@ -48,7 +48,7 @@
         foo: func [x] [fail 'x "error reason"]
 
         e: sys.util.rescue [foo 10]
-        did all [
+        all [
             e.id = null  ; no longer an invalid arg error
             [foo 10] = copy/part e.near 2  ; still implicates callsite
         ]
@@ -66,7 +66,7 @@
 ; raise an error.
 [
     (
-        did all [
+        all [
             (raised? unmeta [x']: ^ raise "hi" void)
             raised? unmeta x'
         ]
@@ -79,16 +79,16 @@
     (null? until [x: raise "hi" except [break]])
     (null? until [[x]: raise "hi" except [break]])
     (
-        did all [
+        all [
             true = until [x: raise "hi" except [true]]
             x = true
         ]
     )
-    (did all [
+    (all [
         true = until [[x]: raise "hi" except [true]]
         x = true
     ])
 
-    (e: 1020, did all [(trap [e: raise "hi"]).message = "hi", e = 1020])
-    (e: 1020, did all [(trap [[e]: raise "hi"]).message = "hi", e = 1020])
+    (e: 1020, all [(trap [e: raise "hi"]).message = "hi", e = 1020])
+    (e: 1020, all [(trap [[e]: raise "hi"]).message = "hi", e = 1020])
 ]

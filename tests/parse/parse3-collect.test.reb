@@ -36,7 +36,7 @@
 
 (
     pos: parse3 "aaabbb" [x: collect [keep [some "a"]] accept <here>]
-    did all [
+    all [
         "bbb" = pos
         x = ["aaa"]
     ]
@@ -46,7 +46,7 @@
         x: collect [keep [some "a"] some "b" keep [some "c"]]
         accept <here>
     ]
-    did all [
+    all [
         "" = pos
         x = ["aaa" "ccc"]
     ]
@@ -63,7 +63,7 @@
         ]
         accept <here>
     ]
-    did all [
+    all [
         [] = pos
         x = [1 2 3]
     ]
@@ -72,7 +72,7 @@
 ; No change to variable on failed match (consistent with Rebol2/R3-Alpha/Red
 ; behaviors w.r.t SET and COPY)
 
-(did all [
+(all [
     x: <before>
     not try parse3 [1 2] [x: collect [keep spread integer! keep spread text!]]
     x = <before>
@@ -90,7 +90,7 @@
         <end>
     ]
 
-    did all [
+    all [
         a = [1 4]
         b = [2 3]
     ]
@@ -109,7 +109,7 @@
         accept <here>
     ]
 
-    did all [
+    all [
         [3] = pos
         x = [1 <pick> <me> 2]
     ]
@@ -124,7 +124,7 @@
         accept <here>
     ]
 
-    did all [
+    all [
         [3] = pos
         x = [1 [<pick> <me>] 2]
     ]
@@ -153,7 +153,7 @@ https://github.com/metaeducation/ren-c/issues/935
                 some [inner: collect keep some "a" | keep some "b"]
             ]
         ]
-        did all [
+        all [
             outer = ["bbb"]
             inner = ["aaa"]
         ]
@@ -166,7 +166,7 @@ https://github.com/metaeducation/ren-c/issues/935
     x: <x>
     y: <y>
     parse3 "aaa" [let x: collect [some [keep "a"]], (y: x)]
-    did all [
+    all [
         x = <x>
         y = ["a" "a" "a"]
     ]

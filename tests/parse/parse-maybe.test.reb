@@ -33,7 +33,7 @@
 ; !!! So long as MAYBE is designed to return nihil, this can't do a legal
 ; assignment...demonstrate meta
 
-; (did all [
+; (all [
 ;     "b" == parse "bbb" [
 ;         (x: 10, y: 20)
 ;         y: x: ^[maybe some "a"]  ; !!! maybe retention concept TBD
@@ -43,7 +43,7 @@
 ;     nihil' = x
 ; ])
 ;
-; (did all [
+; (all [
 ;     "b" == parse "aaabbb" [
 ;         (x: 10, y: 20)
 ;         y: x: ^[maybe some "a"]  ; matched, so non-void...changes x
@@ -53,7 +53,7 @@
 ;     y = quote "a"
 ; ])
 ;
-; (did all [
+; (all [
 ;     "b" == parse "bbb" [
 ;         (x: 10, y: 20)
 ;         y: x: maybe (~)  ; Isotopic ~ is trash, unset variable

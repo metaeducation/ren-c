@@ -4,7 +4,7 @@
 
 (
     v: make quasiform! 'labeled
-    did all [
+    all [
         quasi? v
         '~labeled~ = v
     ]
@@ -43,14 +43,14 @@
 (void? do [])
 (
     x: <overwritten>
-    did all [
+    all [
         void' = ^ x: do []
         void' = ^x
     ]
 )
 (
     x: 10
-    did all [
+    all [
         nihil' = x: ^ eval []
         nihil? unmeta x
     ]
@@ -150,7 +150,7 @@
 ; to do such an emergence, though something like a JavaScript strict mode
 ; would demand some kind of prior declaration of intent to use the name).
 ;
-(did all [
+(all [
     e: sys.util.rescue [get/any $asiieiajiaosdfbjakbsjxbjkchasdf]
     e.id = 'unassigned-attach
     e.arg1 = 'asiieiajiaosdfbjakbsjxbjkchasdf
@@ -206,12 +206,12 @@
     )
     (
         a: 1020
-        did all [
+        all [
             void? a: (void)
             void? a
         ]
     )
-    (did all [
+    (all [
         nihil? ()  ; empty groups make nihil
         3 = (1 + 2 ())
     ])

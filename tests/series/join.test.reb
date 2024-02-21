@@ -36,7 +36,7 @@
 (
     input: "abc"
     output: ~
-    did all [
+    all [
         input = output: join input void
         not same? input output
     ]

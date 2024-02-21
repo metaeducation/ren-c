@@ -20,7 +20,7 @@
     (
         new-name: :append
         set $old-name :append
-        did all [
+        all [
             'new-name = label of :new-name
             'new-name = label of get $new-name
             'append = label of :old-name
@@ -35,7 +35,7 @@
 
     (
         f: make frame! unrun :append
-        did all [
+        all [
             'append = label of f
             'append = label of runs f
         ]

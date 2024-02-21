@@ -7,14 +7,14 @@
 ; Check usages inside GROUP!
 (
     x: 10
-    did all [
+    all [
         #a = parse "a" [let x: <any> (x)]
         x = 10
     ]
 )
 (
     x: 10
-    did all [
+    all [
         #a = parse "a" [let x: <any> [[(x)]]]
         x = 10
     ]
@@ -23,14 +23,14 @@
 ; Check usages in rules
 (
     rule: "golden"
-    did all [
+    all [
         'b = parse [['a 'b] a b] [let rule: <any> rule]
         rule = "golden"
     ]
 )
 (
     rule: "golden"
-    did all [
+    all [
         'b = parse [['a 'b] a b] [let rule: <any> [[rule]]]
         rule = "golden"
     ]

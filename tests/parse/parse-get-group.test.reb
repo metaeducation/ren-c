@@ -75,7 +75,7 @@
 
         r: [#+, :(res: f563 "-", assert [not res], res)]
 
-        did all [
+        all [
             not f563 "-"
             not f563 "+"
         ]

@@ -25,7 +25,7 @@
 
 [#2129 (
     rule: [x: across thru some "0"]
-    did all [
+    all [
         "000000" == parse "000000" rule
         x = "000000"
     ]
@@ -33,13 +33,13 @@
 
 [#295 (
     f: ~
-    did all [
+    all [
         "xyz" == parse "xyz" [f: across thru to <end>]
         f = "xyz"
     ]
 )(
     f: ~
-    did all [
+    all [
         "xyz" == parse "xyz" [f: across thru thru <end>]
         f = "xyz"
     ]
@@ -93,7 +93,7 @@
 
 (
     res: ~
-    did all [
+    all [
         'b == parse [1 "hello" a 1 2 3 b] [
             thru "hello" <any> res: across to 'b <any>
         ]
@@ -156,14 +156,14 @@
     (0 == parse bin [thru #{DEADBEEF} <any>])
     (
         res: ~
-        did all [
+        all [
             #{BABE} == parse bin [thru #{CAFE} <any> res: across to # to <end>]
             res = #{BABE}
         ]
     )
     (
         res: ~
-        did all [
+        all [
             #{00DEADBEEF00} == parse bin [thru #{BABE} res: <here> to <end>]
             9 = index? res
         ]

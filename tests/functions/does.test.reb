@@ -26,7 +26,7 @@
     f
     block: copy [x y]
     f
-    did all [
+    all [
         backup = [a b [c d]]
         block = [x y [c d]]
     ]
@@ -47,7 +47,7 @@
         f
         block: copy [x y]
         f
-        did all [
+        all [
             backup = [a b [c d] [c d]]
             block = [x y]
         ]
@@ -58,7 +58,7 @@
         y: 20
         flag: true
         z: does+ all [x: x + 1, flag, y: y + 2, <finish>]
-        did all [
+        all [
             z = <finish>, x = 11, y = 22
             elide (flag: false)
             z = null, x = 12, y = 22

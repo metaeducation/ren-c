@@ -83,7 +83,7 @@
     str: "caffè"
     bin: as binary! str
     append bin 65
-    did all [
+    all [
         bin = #{63616666C3A841}
         str = "caffèA"
     ]

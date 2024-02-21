@@ -7,7 +7,7 @@
 
 (
     j: ~
-    did all [
+    all [
         raised? parse "b" [[(1000 + 20) elide (j: 304)]]
         j = 304
     ]
@@ -15,7 +15,7 @@
 
 (
     j: ~
-    did all [
+    all [
         1020 = parse "b" ["b" [(1000 + 20) elide (j: 304)]]
         j = 304
     ]

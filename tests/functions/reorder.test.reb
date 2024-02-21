@@ -13,7 +13,7 @@
 ; Baseline operation of REORDER.  Refinements are still available.
 (
     itemfirst: reorder :append [value series]
-    did all [
+    all [
         [a b c <item>] = itemfirst <item> [a b c]
         [value series /part /dup /line] = parameters of :itemfirst
     ]
@@ -22,7 +22,7 @@
 ; Asking for the original order gives back an equivalent function.
 (
     seriesfirst: reorder :append [series value]
-    did all [
+    all [
         [a b c <item>] = seriesfirst [a b c] <item>
         (parameters of :seriesfirst) = (parameters of :append)
     ]
@@ -31,7 +31,7 @@
 ; All required arguments must be mentioned in the ordering.
 (
     e: sys.util.rescue [reorder :append [series]]
-    did all [
+    all [
         e.id = 'no-arg
         e.arg1 = 'append
         e.arg2 = 'value
@@ -47,7 +47,7 @@
 ; Naming a refinement more than once is an error
 (
     e: sys.util.rescue [reorder :append [series value series]]
-    did all [
+    all [
         e.id = 'bad-parameter
         e.arg1 = 'series
     ]
@@ -56,7 +56,7 @@
 ; Unrecognized parameters cause errors
 (
     e: sys.util.rescue [reorder :append [series value fhqwhgads]]
-    did all [
+    all [
         e.id = 'bad-parameter
         e.arg1 = 'fhqwhgads
     ]
@@ -88,7 +88,7 @@
 ; that with the usermode code that does the inherit.
 (
     nohelp: reorder* :append [value series]  ; cheaper/faster to create
-    did all [
+    all [
         [a b c <item>] = nohelp <item> [a b c]  ; works the same
         null = adjunct-of :nohelp  ; ...but has no parameter information
     ]

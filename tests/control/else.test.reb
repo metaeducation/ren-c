@@ -38,7 +38,7 @@
         return (if i < 15 [30] else [4])
     ]
 
-    did all [
+    all [
         30 = c 10
         4 = c 20
         30 = d 10
@@ -50,7 +50,7 @@
 (
     foo: func [return: [integer!] y] [return the 1 then (x -> [x + y])]
     bar: func [return: [integer!] y] [return 1 then (x -> [x + y])]
-    did all [
+    all [
         11 = foo 10
         1 = bar 10
     ]
@@ -60,7 +60,7 @@
 (
     foo: func [return: [integer!] y] [return the 1 then x -> [x + y]]
     bar: func [return: [integer!] y] [return 1 then x -> [x + y]]
-    did all [
+    all [
         11 = foo 10
         1 = bar 10
     ]

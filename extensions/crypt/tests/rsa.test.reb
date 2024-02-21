@@ -41,7 +41,7 @@
 ; Check the defaulting for PKCS1-V15
 (
     [public private]: rsa-generate-keypair 1028
-    did all [
+    all [
         public.padding = [pkcs1-v15]
         private.padding = [pkcs1-v15]
     ]

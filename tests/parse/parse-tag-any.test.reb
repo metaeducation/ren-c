@@ -9,7 +9,7 @@
 
 (
     res: ~
-    did all [
+    all [
         'a == parse [a] [res: <any>]
         res = 'a
     ]

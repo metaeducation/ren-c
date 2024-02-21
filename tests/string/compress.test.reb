@@ -16,7 +16,7 @@
     ]
     zip (zipped: copy #{}) list
     unzip (unzipped: copy []) zipped
-    did all [
+    all [
         unzipped.1 = %abc.txt
         unzipped.2 = to binary! str
         (next next unzipped) = (next next list)
@@ -25,9 +25,7 @@
 
 ;  test a "foreign" file
 (
-    did all [
-        unzip (unzipped: copy []) %../fixtures/test.docx
-    ]
+    did unzip (unzipped: copy []) %../fixtures/test.docx
 )
 
 ; A 326-byte tricky file created problems for Red with zlib inflation, and

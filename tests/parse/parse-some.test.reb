@@ -4,13 +4,13 @@
 
 (
     x: ~
-    did all [
+    all [
         "a" == parse "aaa" [x: try some "b", some "a"]
         x = null
     ]
 )(
     x: ~
-    did all [
+    all [
         "a" == parse "aaa" [x: try some "a"]
         x = "a"
     ]
@@ -26,7 +26,7 @@
     ]
 )(
     n: 0
-    did all [
+    all [
         1 == parse "abc" [
             some further [to <end> (n: n + 1)]
         ]
@@ -41,19 +41,19 @@
 [
     (
         x: ~
-        did all [
+        all [
             "a" == parse "a" [x: "a"]
             "a" = x
         ]
     )(
         x: null
-        did all [
+        all [
             "a" == parse "aaa" [x: some "a"]
             "a" = x  ; SOME doesn't want to be "expensive" on average
         ]
     )(
         x: null
-        did all [
+        all [
             "a" == parse "aaa" [x: [some "a" | some "b"]]
             "a" = x  ; demonstrates use of the result (which alternate taken)
         ]
@@ -63,7 +63,7 @@
 [
     (
         res: ~
-        did all [
+        all [
             'c == parse [b a a a c] [<any> res: some 'a 'c]
             res = 'a
         ]
@@ -71,7 +71,7 @@
     (
         res: ~
         wa: ['a]
-        did all [
+        all [
             'c == parse [b a a a c] [<any> res: some wa 'c]
             res = 'a
         ]
@@ -112,7 +112,7 @@
 
 (
     x: ~
-    did all [
+    all [
         "a" == parse "aaa" [x: try some "b", try some "a"]
         null? x
     ]
@@ -129,7 +129,7 @@
 
 [(
     x: ~
-    did all [
+    all [
         "a" == parse "aaa" [x: try some "a"]
         x = "a"
     ]
@@ -161,7 +161,7 @@
     ]
 )(
     i: 0
-    did all [
+    all [
         raised? parse "a" [try some [(i: i + 1, j: if i = 2 [[false]]) j]]
         i == 2
     ]

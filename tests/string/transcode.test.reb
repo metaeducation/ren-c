@@ -13,12 +13,12 @@
 ([1 [2] <3>] = transcode "1 [2] <3>")
 
 ; When asking for a block's worth of values, an empty string gives empty block
-(did all [
+(all [
     result: transcode ""
     [] = result
     not new-line? result
 ])
-(did all [
+(all [
     result: transcode "^/    ^/    ^/"
     [] = result
     new-line? result
@@ -27,7 +27,7 @@
 ; If TRANSCODE returns null, there is no POS so you have to make it optional
 ; (unless you don't expect it to return null)
 (
-    did all [
+    all [
         1 = [value /pos]: transcode/one "1 [2] <3>"
         value = 1
         pos = " [2] <3>"
@@ -55,7 +55,7 @@
 (
     str: "Cat😺: [😺 😺] (😺)"
 
-    did all [
+    all [
         'Cat😺: = [value pos]: transcode/one str
         set-word? value
         value = 'Cat😺:
@@ -72,7 +72,7 @@
     bin: as binary! "Cat😺: [😺 😺] (😺)"
     bin =  #{436174F09F98BA3A205BF09F98BA20F09F98BA5D2028F09F98BA29}
 
-    did all [
+    all [
         'Cat😺: = [value pos]: transcode/one bin
         set-word? value
         value = 'Cat😺:

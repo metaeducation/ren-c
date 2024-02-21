@@ -14,7 +14,7 @@
     10 = parse [aaa] [accept (10)]
 )
 (
-    did all [
+    all [
         let result: parse "aaabbbccc" [
             accept gather [
                 emit x: collect some ["a", keep (<a>)]

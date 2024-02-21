@@ -232,7 +232,7 @@
 )
 ; THROW out leaves a "running" function in a "clean" state
 (
-    did all [
+    all [
         null? catch [
             f: lambda [x] [
                 either x = 1 [
@@ -406,7 +406,7 @@
         a [d]
         do c
     ]
-    did all [
+    all [
         1 = f 1
         1 = f 2
     ]
@@ -480,7 +480,7 @@
 
 (
     foo: lambda [^arg [<opt> pack? <end> <void> integer!]] [arg]
-    did all [
+    all [
         (the '1020) = (foo 1020)
         nihil' = (foo comment "HI")
         null' = (foo any [1 > 2, 3 > 4])

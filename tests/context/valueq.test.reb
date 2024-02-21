@@ -6,7 +6,7 @@
 ; toward something closer to a JavaScript "strict mode" type of operation.
 ; An error is raised for now.
 ;
-(did all [
+(all [
     e: sys.util.rescue [set? $utternonsense]
     e.id = 'unassigned-attach
     e.arg1 = 'utternonsense

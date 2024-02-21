@@ -32,14 +32,14 @@
     )
     (
         res: 0
-        did all [
+        all [
             'a == parse [a] [res: wa]
             res = 'a
         ]
     )
     (
         res: 0
-        did all [
+        all [
             'a == parse [a a] [res: repeat 2 wa]
             res = 'a
         ]
@@ -72,7 +72,7 @@
 [
     (
         x: ~
-        did all [
+        all [
             null == parse [1] [x: [integer! try text!]]
             x = null
         ]
@@ -80,7 +80,7 @@
 
     (
         x: ~
-        did all [
+        all [
             null == parse [1] [integer! x: [(null)]]
             x = null
         ]
@@ -125,14 +125,14 @@
 [
     (
         res: ~
-        did all [
+        all [
             'b == parse [a a b] [<any> res: ['a | 'b] <any>]
             res = 'a
         ]
     )
     (
         res: '~before~
-        did all [
+        all [
             raised? parse [a] [res: ['c | 'b]]
             res = '~before~
         ]

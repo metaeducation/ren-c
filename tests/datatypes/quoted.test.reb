@@ -194,7 +194,7 @@
     word: '''''''''a
     w1: bind word o1
     w2: bind word o2
-    did all [
+    all [
         a = 0
         1 = get noquote w1
         2 = get noquote w2
@@ -275,7 +275,7 @@
 
 
 (
-    did all [
+    all [
         quasi? x: '~()~
         quasi? get/any $x
     ]

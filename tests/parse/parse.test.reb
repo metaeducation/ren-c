@@ -12,7 +12,7 @@
     combs: copy default-combinators
     combs.aaa: [foo: across some "a"]
     combs.bbb: [tally "b"]
-    did all [
+    all [
         3 = parse/combinators "aaabbb" [aaa bbb] combs
         foo = "aaa"
     ]

@@ -93,7 +93,7 @@ https://github.com/metaeducation/ren-c/commit/e57c147465f3ed47f297e7a3ce3bb03196
 ; But line endings will vary because it's not redirected.  :-/
 (
     call/shell/output "echo test" out: ""
-    did any [
+    any [
         "test^M^/" = out
         "test^/" = out
     ]

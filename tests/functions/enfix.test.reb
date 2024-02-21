@@ -14,14 +14,14 @@
 
 (
     foo: :+
-    did all [
+    all [
         enfix? :foo
         3 = (1 foo 2)
     ]
 )
 (
     set $foo enfix :add
-    did all [
+    all [
         enfix? :foo
         1 foo 2 = 3
     ]
@@ -60,7 +60,7 @@
     (
         var: ~
         block: [<tag> lefty "hi"]
-        did all [
+        all [
             <tag> = evaluate/next block $block
             [lefty "hi"] = block
             [_ "hi"] = evaluate/next block $block
@@ -74,7 +74,7 @@
     (
         unset $var
         block: [the 1 lefty "hi"]
-        did all [
+        all [
             1 = evaluate/next block $block
             [lefty "hi"] = block
             [_ "hi"] = evaluate/next block $block
@@ -207,7 +207,7 @@
     o: make object! [x: null]
     nuller: func [y] [return null]
     o.(count: count + 1, first [x]): my nuller
-    did all [
+    all [
         :o.x = null
         count = 2
     ]
@@ -219,13 +219,13 @@
     (
         foo: func [] [
             fail "foo should not run, it's prefix and runs on *next* step"]
-        did all [
+        all [
             1020 == evaluate/next [1020 foo 304] $pos
             pos == [foo 304]
         ]
     )(
         enfoo: enfix func [] [return <enfoo>]
-        did all [
+        all [
             <enfoo> == evaluate/next [1020 enfoo 304] $pos
             pos = [304]
         ]
@@ -236,17 +236,15 @@
         ifoo: func ['i [<skip> integer!]] [
             fail "ifoo should not run, it tests <skip> on *next* step"
         ]
-        did all [
-            ignored: func [return: [issue!]] [
-                ignored: null
-                return #ignored
-            ]
-            did all [
-                #ignored == var: evaluate/next [ignored ifoo 304] $pos
-                var == #ignored
-                pos = [ifoo 304]
-                null? ignored
-            ]
+        ignored: func [return: [issue!]] [
+            ignored: null
+            return #ignored
+        ]
+        all [
+            #ignored == var: evaluate/next [ignored ifoo 304] $pos
+            var == #ignored
+            pos = [ifoo 304]
+            null? ignored
         ]
     )(
         enifoo: enfix func ['i [<skip> integer!]] [
@@ -257,36 +255,32 @@
                 {would print both `good` and `bad`.}
             ]
         ]
-        did all [
-            ignored: func [return: [issue!]] [
-                ignored: null
-                return #ignored
-            ]
-            did all [
-                var: evaluate/next [ignored enifoo 304] $pos
-                pos = [enifoo 304]
-                var == #ignored
-                null? ignored
-            ]
+        ignored: func [return: [issue!]] [
+            ignored: null
+            return #ignored
+        ]
+        all [
+            var: evaluate/next [ignored enifoo 304] $pos
+            pos = [enifoo 304]
+            var == #ignored
+            null? ignored
         ]
     )(
         enifoo: enfix lambda ['i [<skip> integer!]] [compose $<enifoo>/(i)]
-        did all [
-            did all [
-                var: evaluate/next [1020 enifoo 304] $pos
-                pos = [304]
-                var == '<enifoo>/1020
-            ]
-            comment {
-                When arguments are not skipped, the behavior should be the
-                same as a non-skippable enfix function
-            }
+        all [
+            var: evaluate/next [1020 enifoo 304] $pos
+            pos = [304]
+            var == '<enifoo>/1020
         ]
+        comment {
+            When arguments are not skipped, the behavior should be the
+            same as a non-skippable enfix function
+        }
     )
 
     (
         bar: func [return: [nihil?]] [bar: null, return nihil]
-        did all [
+        all [
             var: evaluate/next [1020 bar 304] $pos
             pos = [bar 304]
             var == 1020
@@ -297,7 +291,7 @@
         comment {Invisible normal arity-0 function should run on next eval}
     )(
         enbar: enfix func [left] [enbar: null, return left]
-        did all [
+        all [
             var: evaluate/next [1020 enbar 304] $pos
             pos = [304]
             var == 1020
@@ -308,19 +302,17 @@
 
     (
         ibar: func ['i [<skip> integer!]] [ibar: null]
-        did all [
-            ignored: func [return: [issue!]] [
-                ignored: null
-                return #ignored
-            ]
-            did all [
-                var: evaluate/next [ignored ibar 304] $pos
-                pos = [ibar 304]
-                var == #ignored
-                null? ignored
-            ]
-            comment {skip irrelevant (tests right on *next* step)}
+        ignored: func [return: [issue!]] [
+            ignored: null
+            return #ignored
         ]
+        all [
+            var: evaluate/next [ignored ibar 304] $pos
+            pos = [ibar 304]
+            var == #ignored
+            null? ignored
+        ]
+        comment {skip irrelevant (tests right on *next* step)}
     )(
         enibar: enfix func [return: [] 'i [<skip> integer!]] [
             fail {
@@ -330,35 +322,31 @@
                 print both `good` and `bad`.
             }
         ]
-        did all [
-            kept: func [return: [issue!]] [
-                kept: null
-                return #kept
-            ]
-            did all [
-                var: evaluate/next [kept enibar 304] $pos
-                pos = [enibar 304]
-                var == #kept
-                null? kept
-            ]
+        kept: func [return: [issue!]] [
+            kept: null
+            return #kept
+        ]
+        all [
+            var: evaluate/next [kept enibar 304] $pos
+            pos = [enibar 304]
+            var == #kept
+            null? kept
         ]
     )(
         enibar: enfix func [return: [integer!] 'i [<skip> integer!]] [
             enibar: null
             return i
         ]
-        did all [
-            did all [
-                var: evaluate/next [1020 enibar 304] $pos
-                pos = [304]
-                var == 1020
-                null? enibar
-            ]
-            comment {
-                When arguments are not skipped, the behavior should be the
-                same as a non-skippable enfix function
-            }
+        all [
+            var: evaluate/next [1020 enibar 304] $pos
+            pos = [304]
+            var == 1020
+            null? enibar
         ]
+        comment {
+            When arguments are not skipped, the behavior should be the
+            same as a non-skippable enfix function
+        }
     )
 ]
 

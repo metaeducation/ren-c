@@ -13,7 +13,7 @@
     bind block obj1000
 
     obj284: make object! [x: 284]
-    did all [
+    all [
         1020 = do block
         304 = do inside obj284 block
         1020 = do block
@@ -34,7 +34,7 @@
             ]
         ]
     ]
-    did all [
+    all [
         r: make-rule
         did parse3 "a" r  ; this was where the problem was
     ]

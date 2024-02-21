@@ -3,7 +3,7 @@
 ; Quoted values are matched as is, but for strings they are formed.
 
 (
-    did all [
+    all [
         pos: parse- [... [a b]] [to '[a b]]
         pos = [[a b]]
     ]
@@ -29,42 +29,42 @@
 
     (
         res: ~
-        did all [
+        all [
             1 == parse [] [(res: 1)]
             res = 1
         ]
     )
     (
         res: ~
-        did all [
+        all [
             1 == parse [a] ['a (res: 1)]
             res = 1
         ]
     )
     (
         res: '~before~
-        did all [
+        all [
             raised? parse [a] ['b (res: 1)]
             res = '~before~
         ]
     )
     (
         res: ~
-        did all [
+        all [
             1 == parse [] [[(res: 1)]]
             res = 1
         ]
     )
     (
         res: ~
-        did all [
+        all [
             1 == parse [a] [['a (res: 1)]]
             res = 1
         ]
     )
     (
         res: '~before~
-        did all [
+        all [
             raised? parse [a] [['b (res: 1)]]
             res = '~before~
         ]
@@ -76,15 +76,15 @@
 ; match in strings.  This gives a cleaner look, as you drop off 3 vertical
 ; tick marks from everything like ["ab"] to become ['ab]
 [
-    (did all [
+    (all [
         pos: parse- "abbbbbc" ['a some ['b]]
         "c" = pos
     ])
-    (did all [
+    (all [
         pos: parse- "abbbbc" ['ab, some ['bc | 'b]]
         "" = pos
     ])
-    (did all [
+    (all [
         pos: parse- "abc10def" ['abc '10]
         "def" = pos
     ])
@@ -101,35 +101,35 @@
 [
     (
         res: ~
-        did all [
+        all [
             'a == parse [a] [res: 'a]
             res = 'a
         ]
     )
     (
         res: ~
-        did all [
+        all [
             'a == parse [a a] [res: repeat 2 'a]
             res = 'a
         ]
     )
     (
         res: '~before~
-        did all [
+        all [
             raised? parse [a a] [res: repeat 3 'a]
             res = '~before~
         ]
     )
     (
         res: ~
-        did all [
+        all [
             'a == parse [a] [res: ['a]]
             res = 'a
         ]
     )
     (
         res: 0
-        did all [
+        all [
             'b == parse [a a b] [<any> res: 'a <any>]
             res = 'a
         ]

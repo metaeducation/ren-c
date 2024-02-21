@@ -8,13 +8,13 @@
 
 (
     three: 3
-    did all [
+    all [
         3 == parse "" [x: (three)]
         x = 3
     ]
 )
 (
-    did all [
+    all [
         3 == parse "" [x: (1 + 2)]
         x = 3
     ]

@@ -11,7 +11,7 @@
 ; rule capture: efficient (doesn't require a copy if you're not using it)
 (
     rule: "cd"
-    did all [
+    all [
         "cd" = result: parse "abcd" ["ab" rule]
         "cdef" = append result "ef"
         "cdef" = rule
@@ -40,14 +40,14 @@
 
 [(
     rule: [x: "a"]
-    did all [
+    all [
         "a" == parse "a" rule
         same? x second rule
     ]
 )(
     data: ["a"]
     rule: [x: "a"]
-    did all [
+    all [
         "a" == parse data rule
         same? x first data
     ]
@@ -91,7 +91,7 @@
 
 (
     test: to-binary {The C😺T Test}
-    did all [
+    all [
         #{43F09F98BA54} == parse test [to {c😺t} x: across to space to <end>]
         x = #{43F09F98BA54}
         "C😺T" = to-text x
@@ -152,7 +152,7 @@
     (#. == parse str [thru "amet" <any>])
     (
         res: ~
-        did all [
+        all [
             "dolor" == parse str [
                 thru "ipsum" <any> res: across to #" " to <end>
             ]
@@ -161,7 +161,7 @@
     )
     (
         res: ~
-        did all [
+        all [
             "sum dolor sit amet." == parse str [thru #p res: <here> to <end>]
             9 = index? res
         ]

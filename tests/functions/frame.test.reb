@@ -7,7 +7,7 @@
        return words of frame
     ]
 
-    did all [
+    all [
        [arg] = parameters of :foo  ; doesn't expose locals
        [return arg local frame] = foo 20  ; exposes locals as WORD!s
     ]
@@ -21,7 +21,7 @@
     f.series: 1  ; not a valid APPEND target
     f.value: <ae>
     e: sys.util.rescue [do f]
-    did all [
+    all [
         e.id = 'expect-arg
         e.arg1 = 'append
     ]

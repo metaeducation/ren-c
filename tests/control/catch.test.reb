@@ -92,7 +92,7 @@
 
 ; Multiple return values
 (
-    did all [
+    all [
         304 = ([j b]: catch [throw pack [304 1020]])
         j = 304
         b = 1020

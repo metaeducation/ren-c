@@ -7,7 +7,7 @@
 (
     x: ~
     tag: <hello>
-    did all [
+    all [
         <world> = parse [<hello> <world>] [x: @tag, '<world>]
         x = <hello>
     ]
@@ -15,7 +15,7 @@
 (
     x: ~
     obj: make object! [field: <hello>]
-    did all [
+    all [
         <world> = parse [<hello> <world>] [x: @obj.field, '<world>]
         x = <hello>
     ]

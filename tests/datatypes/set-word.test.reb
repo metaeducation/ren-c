@@ -33,7 +33,7 @@
 
 [#1477 (
     set-slash: load-value "/:"
-    did all [
+    all [
         set-word? set-slash
         '/: = set-slash
     ]
@@ -41,14 +41,14 @@
 
 [https://github.com/metaeducation/ren-c/issues/876 (
     x: 1020
-    did all [
+    all [
         void? (null, x: (void))
         void? x
     ]
 )
 ~no-value~ !! (
     x: 1020
-    did all [
+    all [
         2 = (x: comment "Hi" 2)
         void? :x
     ]

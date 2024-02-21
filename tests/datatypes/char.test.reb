@@ -191,13 +191,13 @@
 
 (
     c: codepoint-to-char 0
-    did all [
+    all [
         char? c
         0 = codepoint of c
     ]
 )(
     c: as issue! 0
-    did all [
+    all [
         char? c
         0 = codepoint of c
     ]

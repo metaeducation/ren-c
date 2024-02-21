@@ -11,7 +11,7 @@
     ][
         var: <inner>
     ]
-    did all [
+    all [
         var = <before>
         m.var = <inner>
 
@@ -28,7 +28,7 @@
     ][
         var: <inner>
     ]
-    did all [
+    all [
         m = mm
         var = <before>
         m.var = <inner>
@@ -47,7 +47,7 @@
     ][
         var: <inner>
     ]
-    did all [
+    all [
         m = mm
         m.var = <inner>
         var = <inner>  ; imported
@@ -71,7 +71,7 @@
 (
     m1: module [] [a: 10 b: 20]
     m2: copy m1
-    did all [
+    all [
         m1.a = m2.a
         m1.b = m2.b
         m1 = m2
@@ -88,7 +88,7 @@
         import (<m2compose> m1)
         fetch: does [var]
     ]
-    did all [
+    all [
         var = <outer>
         <1> = m2.fetch
     ]
@@ -109,7 +109,7 @@
 
         test: does [emulate [do [1 + 2]]]
     ]
-    did all [
+    all [
         3 = test
         <override> = catch [m.do [1 + 2]]
         ^do = ^do-before

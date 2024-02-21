@@ -34,7 +34,7 @@
 (
     a: 10
     b: 20
-    did all [blank = [a b]: pack @[_ _], blank? a, blank? b]
+    all [blank = [a b]: pack @[_ _], blank? a, blank? b]
 )
 ~???~ !! (
     a: 10

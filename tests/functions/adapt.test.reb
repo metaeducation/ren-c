@@ -9,7 +9,7 @@
 (
     capture: blank
     foo: adapt :any [capture: block]
-    did all [
+    all [
       foo [1 2 3]
       capture = [1 2 3]
     ]
@@ -36,7 +36,7 @@
             captured-x: x
             assert [unspecialized? :return]
         ]
-        did all [
+        all [
             "available now" = bar 1020
             captured-x = 1020
         ]

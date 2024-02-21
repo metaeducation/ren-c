@@ -12,7 +12,7 @@
 
     (
         x: <overwritten>
-        did all [
+        all [
             void? x: all []
             voided? $x
             void? :x
@@ -20,7 +20,7 @@
     )
     (
         x: <overwritten>
-        did all [
+        all [
             void? x: all [void void]
             voided? $x
             void? :x

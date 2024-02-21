@@ -38,7 +38,7 @@
     ] else [
         returned-null: true
     ]
-    did all [
+    all [
         block = [1 2 3 4]
         returned-null = true
     ]
@@ -90,7 +90,7 @@
     ] else [
         returned-null: true
     ]
-    did all [
+    all [
         string = "1234" comment {not changed if BREAK}
         returned-null = true
     ]
@@ -141,7 +141,7 @@
     ] else [
         returned-null: true
     ]
-    did all [
+    all [
         binary = #{01020304} comment {Not changed with BREAK}
         returned-null = true
     ]

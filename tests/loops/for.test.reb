@@ -46,7 +46,7 @@
 ; continue cycle
 (
     success: true
-    did all [
+    all [
         '~[']~ = ^ for i each [1] [continue, success: false]
         success
     ]
@@ -55,7 +55,7 @@
 (
     success: true
     blk: []
-    did all [
+    all [
         void? for i each blk [success: false]
         success
     ]
@@ -94,20 +94,20 @@
     x: 10
     sum: 0
     for x each [1 2 3] [sum: sum + x]
-    did all [x = 10, sum = 6]
+    all [x = 10, sum = 6]
 )
 (
     x: 10
     sum: 0
     for 'x each [1 2 3] [sum: sum + x]
-    did all [x = 3, sum = 6]
+    all [x = 3, sum = 6]
 )
 (
     x: 10
     y: 20
     sum: 0
     for ['x y] each [1 2 3 4] [sum: sum + x + y]
-    did all [x = 3, y = 20, sum = 10]
+    all [x = 3, y = 20, sum = 10]
 )
 
 ; Redundancy is checked for.  LIT-WORD! redundancy is legal because those

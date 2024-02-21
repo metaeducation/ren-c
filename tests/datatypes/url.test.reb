@@ -15,7 +15,7 @@
 (
     url1: load-value "http://a.b.c/d?e=f%26"
     url2: load-value "http://a.b.c/d?e=f&"
-    did all [
+    all [
         not equal? url1 url2
         url1 == http://a.b.c/d?e=f%26
         url2 == http://a.b.c/d?e=f&
@@ -27,7 +27,7 @@
 ;
 (
     b: load-value "[http://example.com/abc{def}]"
-    did all [
+    all [
         (length of b) = 1
         (as text! first b) = "http://example.com/abc{def}"
     ]
@@ -35,7 +35,7 @@
 
 [#2380 (
     url: decode-url http://example.com/get?q=ščř#kovtička
-    did all [
+    all [
         url.scheme == 'http  ; Note: DECODE-URL returns BLOCK! with 'http
         url.user == null
         ^url.pass == '~no-user~
@@ -46,7 +46,7 @@
     ]
 )(
     url: decode-url http://švéd:břéťa@example.com:8080/get?q=ščř#kovtička
-    did all [
+    all [
         url.scheme == 'http
         url.user == "švéd"
         url.pass == "břéťa"
@@ -57,7 +57,7 @@
     ]
 )(
     url: decode-url http://host?query
-    did all [
+    all [
         url.scheme == 'http
         url.user == null
         ^url.pass == '~no-user~
@@ -77,7 +77,7 @@
 ;     domain names from the IP addresses."
 [(
     url: decode-url http://10.20.30.40:8000/this/is/an/ip?address
-    did all [
+    all [
         url.scheme == 'http
         url.user == null
         ^url.pass == '~no-user~
@@ -89,7 +89,7 @@
     ]
 )(
     url: decode-url http://10.20.30.40a:8000/this/is/a?hostname
-    did all [
+    all [
         url.scheme == 'http
         url.user == null
         ^url.pass == '~no-user~

@@ -95,7 +95,7 @@
     (null = read/part %empty.dat 100)
     (
         p: open %empty.dat
-        did all [
+        all [
             null = read p
             null = read/part p 100
             0 = length of p
@@ -104,7 +104,7 @@
     )
     (
         p: open %empty.dat
-        did all [
+        all [
             (0 = offset of p)
             (elide skip p 100)
             (100 = offset of p)
@@ -148,7 +148,7 @@
     ("World" = read/string/seek/part %small.dat 6 5)
     (
         p: open %small.dat
-        did all [
+        all [
             11 = length of p
             "H" = read/string/part p 1
             10 = length of p
@@ -162,7 +162,7 @@
     )
     (
         p: open %small.dat
-        did all [
+        all [
             (elide skip p 6)
             "World" = read/string p
             null = read/string/part p 100
@@ -179,7 +179,7 @@
 [
     (
         write %block.txt ["abc" "def"]
-        did all [
+        all [
             "abcdef" = read/string %block.txt  ; no spaces
             ["abcdef"] = read/lines %block.txt  ; /STRING implicit
             ["abcdef"] = read/string/lines %block.txt
@@ -187,14 +187,14 @@
     )
     (
         write/lines %lines.txt ["abc" "def"]
-        did all [
+        all [
             "abc^/def^/" = read/string %lines.txt
             ["abc" "def"] = read/lines %lines.txt
         ]
     )
     (
         write/part %partial.txt ["foo" "baz" "bar"] 2
-        did all [
+        all [
             "foobaz" = read/string %partial.txt  ; no spaces
             ["foobaz"] = read/lines %partial.txt  ; /STRING implicit
             ["foobaz"] = read/string/lines %partial.txt

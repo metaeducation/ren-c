@@ -109,23 +109,23 @@
     ; carries semantic intent of a "there's an answer and it is null"
 
     ([1 2 3 4] = collect [
-        assert [did all [
+        assert [
             '~[~null~]~ = result': ^ for-both x [1 2] [3 4] [
                 keep x
                 null
             ]
             result' = '~[~null~]~
-        ]]
+        ]
     ])
 
     ([1 2 3 4] = collect [
-        assert [did all [
+        assert [
             null = result: for-both x [1 2] [3 4] [
                 keep x
                 null
             ]
             result = null  ; it decayed to pure NULL in the assignment
-        ]]
+        ]
     ])
 
     ; The contract of returning VOID is preserved when no loop bodies

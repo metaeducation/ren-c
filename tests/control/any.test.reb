@@ -9,7 +9,7 @@
 
     (
         x: <overwritten>
-        did all [
+        all [
             void? x: any []
             voided? $x
             void? :x
@@ -17,7 +17,7 @@
     )
     (
         x: <overwritten>
-        did all [
+        all [
             void? x: any [comment "hi"]
             voided? $x
             void? :x

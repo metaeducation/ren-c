@@ -3,7 +3,7 @@
 ; BETWEEN is a new combinator that lets you capture between rules.
 
 (
-    did all [
+    all [
         "a" == parse "aaaa(((How cool is this?))aaaa" [
             some "a", x: between some "(" some ")", some "a"
         ]
@@ -12,7 +12,7 @@
 )
 
 (
-    did all [
+    all [
         <c> == parse [<a> <b> * * * {Thing!} * * <c>] [
             some tag!, x: between [repeat 3 '*] [repeat 2 '*], some tag!
         ]

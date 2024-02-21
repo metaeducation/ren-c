@@ -15,7 +15,7 @@
     ("a" = parse "a" ["a" 0 "b"])
     (
         x: ~
-        did all [
+        all [
             void' = parse "a" ["a" x: ^[0 "b"]]
             void' = x
         ]
@@ -44,7 +44,7 @@
     (#a == parse "a" [0 <any> #a])
     (
         z: ~
-        did all [
+        all [
             raised? parse "a" [z: across 0 <any>]
             z = ""
         ]
@@ -56,7 +56,7 @@
     ('a == parse [a] [0 <any> 'a])
     (
         z: ~
-        did all [
+        all [
             raised? parse [a] [z: across 0 <any>]
             z = []
         ]

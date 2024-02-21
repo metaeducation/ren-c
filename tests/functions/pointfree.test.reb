@@ -102,7 +102,7 @@
 
 (
     x: [1 2 3 4 5 6]
-    did all [
+    all [
         5 = until/predicate [take x] (<- greater? _ 4)
         x = [6]
     ]

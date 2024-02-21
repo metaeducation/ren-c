@@ -5,7 +5,7 @@
 (
     m: ~
     word: $m
-    did all [
+    all [
         did parse [1020] [(word): integer!]
         word = 'm
         m = 1020
@@ -15,7 +15,7 @@
     sum: ~
     m: <unchanged>
     word: 'm
-    did all [
+    all [
         raised? parse [1020] [(sum: 1 + 2, word): text!]
         word = 'm
         sum = 3

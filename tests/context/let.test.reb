@@ -16,14 +16,14 @@
 [
     (
        x: <in-user-context>
-       did all [
+       all [
            1020 = do compose [let (unbind 'x:) 20, 1000 + (unbind 'x)]
            x = <in-user-context>
        ]
     )
     (
        x: <in-user-context>
-       did all [
+       all [
            1020 = do compose [let x: 20, 1000 + x]
            x = <in-user-context>
        ]
@@ -63,7 +63,7 @@
         let [value 'pos]: transcode/one "[first item] #residue"
         reduce [value pos]
     ]
-    did all [
+    all [
         result = [[first item] " #residue"]
         pos = " #residue"
         value = <value>
@@ -81,7 +81,7 @@
         let [(word) 'pos]: transcode/one "[first item] #residue"
         reduce [value pos]
     ]
-    did all [
+    all [
         result = [[first item] " #residue"]
         pos = " #residue"
         value = <value>
@@ -101,7 +101,7 @@
     x: <user>
     output: '~
     block: evaluate evaluate evaluate [let x: 10 output: x]
-    did all [
+    all [
         block = []
         output = 10
         x = <user>
@@ -116,7 +116,7 @@
         add-let-binding frame (to word! unspaced [name 2]) <two>
     ]
     maker "demo"
-    did all [
+    all [
         demo1 = <one>
         demo2 = <two>
     ]
@@ -213,7 +213,7 @@
 ; in the rules and subrules
 (
     x: <before>
-    did all [
+    all [
         #a = catch [
             parse3 "a" [let x: skip (throw x)]
         ]
@@ -225,7 +225,7 @@
 ; as unset.
 (
     x: <before>
-    did all [
+    all [
         10 = catch [
             parse3 "a" [let x (x: 10) "a" (throw x)]
         ]
@@ -255,7 +255,7 @@
         x: 20
         old-x: 'x
         let x: x + 1000
-        did all [
+        all [
             20 = get old-x
             x = 1020
         ]
@@ -269,7 +269,7 @@
 
     (
         let y: let x: 1 + 2
-        did all [
+        all [
             x = 3
             y = 3
         ]

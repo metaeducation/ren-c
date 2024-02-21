@@ -44,7 +44,7 @@
     ([a b c d e d e] = apply :append [[a b c], spread [d e], /dup 2])
     ([a b c d e d e] = apply :append [/dup 2, [a b c] spread [d e]])
 
-    (did all [
+    (all [
         e: sys.util.rescue [
             [a b c d e d e] = apply :append [/dup, 2 [a b c] spread [d e]]
         ]
@@ -56,14 +56,14 @@
 
 ; If you specify a refinement, there has to be a value after it
 [
-    (did all [
+    (all [
         e: sys.util.rescue [
             [a b c d e d e] = apply :append [/dup /part 1 [a b c] spread [d e]]
         ]
         e.arg1 = 'need-non-end
         e.arg2 = '/dup
     ])
-    (did all [
+    (all [
         e: sys.util.rescue [
             [a b c d e d e] = apply :append [[a b c] spread [d e] /dup]
         ]
@@ -100,7 +100,7 @@
     (# = apply :testme [/refine true])
     (null = apply :testme [/refine false])
 
-    (did all [
+    (all [
         e: sys.util.rescue [apply :testme [/refine #garbage]]
         e.id = 'bad-argless-refine
         e.arg1 = '/refine

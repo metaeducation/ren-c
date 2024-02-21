@@ -12,14 +12,14 @@
 ; check, whether these are moldable
 (
     x: $999999999999999
-    did any [
+    any [
         error? trap [x: x + $1]
         not error? trap [mold x]
     ]
 )
 (
     x: -$999999999999999
-    did any [
+    any [
         error? trap [x: x - $1]
         not error? trap [mold x]
     ]
@@ -27,7 +27,7 @@
 ; alternative form
 ($1.1 == $1,1)
 (
-    did any [
+    any [
         error? trap [x: $1234567890123456]
         not error? trap [mold x]
     ]

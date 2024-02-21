@@ -16,7 +16,7 @@
 [
     (
         res: ~
-        did all [
+        all [
             'a == parse [a] [res: word!]
             res = 'a
         ]
@@ -24,7 +24,7 @@
     (
         res: ~
         res2: ~
-        did all [
+        all [
             'a == parse [a] [res: res2: 'a]
             res = 'a
             res2 = 'a
@@ -34,7 +34,7 @@
 
 
 (
-    did all [
+    all [
         1020 == parse "***{A String} 1020" [some "*", t: text!, i: integer!]
         t = {A String}
         i = 1020
@@ -55,7 +55,7 @@
 [
     (
         res: ~
-        did all [
+        all [
             3 == parse [a 123] [
                 'a (res: 1) [char?! (res: 2) | integer! (res: 3)]
             ]
@@ -64,7 +64,7 @@
     )
     (
         res: ~
-        did all [
+        all [
             raised? parse [a 123] [
                 'a (res: 1) [char?! (res: 2) | text! (res: 3)]
             ]

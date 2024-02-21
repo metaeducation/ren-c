@@ -58,7 +58,7 @@
 [
     (
         str: "^M^/"
-        did all [
+        all [
             "^/" = deline str
             "^/" = str  comment {Modifies}
         ]
@@ -91,7 +91,7 @@
         comment {Bypass by writing BINARY!, *but* ENLINE modifies}
         str: "a^/b"
         write %enlined.tmp as binary! enline str
-        did all [
+        all [
             #{610D0A62} = read %enlined.tmp
             str = "a^M^/b"
         ]
@@ -100,7 +100,7 @@
         comment {WRITE-ENLINED doesn't modify, easy interface}
         str: "a^/b"
         write-enlined %enlined.tmp str
-        did all [
+        all [
             #{610D0A62} = read %enlined.tmp
             str = "a^/b"
         ]
@@ -135,7 +135,7 @@
             append a a
             deline to-text a
         ]
-        did all [
+        all [
             (length of a) = 65536
             every b a [b = 96]
         ]

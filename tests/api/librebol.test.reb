@@ -14,7 +14,7 @@
 
 (
     result: test-librebol trash
-    did any [
+    any [
         text? result  ; informational string
 
         result =  [

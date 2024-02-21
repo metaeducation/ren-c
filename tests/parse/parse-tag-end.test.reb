@@ -39,7 +39,7 @@
     (void? parse "" [<end>])
     (
         be6: ~
-        did all [
+        all [
             1 == parse "" [<end> (be6: 1)]
             be6 = 1
         ]
@@ -58,7 +58,7 @@
     (void? parse #{} [<end>])
     (
         be6: ~
-        did all [
+        all [
             1 == parse #{} [<end> (be6: 1)]
             be6 = 1
         ]

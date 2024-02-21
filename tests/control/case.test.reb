@@ -141,14 +141,14 @@
 [
     (
         called: false
-        did all [
+        all [
             3 = case [true :(called: true, [1 + 2])]
             called
         ]
     )
     (
         called: false
-        did all [
+        all [
             void? case [false :(called: true, [1 + 2])]
             called
         ]

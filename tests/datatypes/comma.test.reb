@@ -67,13 +67,13 @@
 ; We want commas to usually act as END for non-meta parameters.
 (
     foo: func [x [<end> integer!]] [return x]
-    did all [
+    all [
         null = (foo,)
         10 = (foo 10)
     ]
 )(
     bar: func [x [<end> integer!] y [<end> integer!]] [return pack [x y]]
-    did all [
+    all [
         1020 = ([a b]: bar, 1020)
         a = null
         b = null

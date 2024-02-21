@@ -43,13 +43,13 @@
 
 (
     x: [2 4 6 8 7 9 11 30]
-    did all [
+    all [
         7 = until/predicate [take x] chain [:even?, :not]
         x = [9 11 30]
     ]
 )(
     x: [1 "hi" <foo> _ <bar> "baz" 2]
-    did all [
+    all [
         blank? until/predicate [take x] z -> [blank? z]
         x = [<bar> "baz" 2]
     ]

@@ -24,7 +24,7 @@
     f: make frame! unrun :append
     f.series: [a b c]
     f.value: <d>
-    did all [
+    all [
         [a b c <d>] = do copy f  ; making a copy works around the expiration
         f.series = [a b c <d>]
         f.value = <d>
@@ -185,7 +185,7 @@
             reduce [x if augmented [augmented.y]]
         ]
         a: adapt augment :f [y] [augmented: binding of $y]
-        did all [
+        all [
             [10] = f 10
             [10 20] = a 10 20
         ]

@@ -3,7 +3,7 @@
 
 (
     sum: 0
-    did all [
+    all [
         true = every x [1 3 7] [
             sum: me + x
             odd? x
@@ -14,7 +14,7 @@
 
 (
     sum: 0
-    did all [
+    all [
         null = every x [1 2 7] [
             sum: me + x
             odd? x
@@ -25,7 +25,7 @@
 
 (
     sum: 0
-    did all [
+    all [
         null = every x [1 2 7] [
             sum: me + x
             if even? x [break]
@@ -41,7 +41,7 @@
 ; EVERY loops.
 (
     sum: 0
-    did all [
+    all [
         '~[']~ = ^ every x [1 2 7] [
             sum: me + x
             if x = 7 [continue]  ; Doesn't force NULL return, drops the 2

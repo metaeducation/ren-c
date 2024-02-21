@@ -17,12 +17,12 @@
 ; will eventually be removed.
 
 [(
-    did all [
+    all [
         "b" == parse "aaabbb" [some "a", pos: <here>, some "b"]
         pos = "bbb"
     ]
 )(
-    did all [
+    all [
         "stuff" == parse "<<<stuff>>>" [
             left: across some "<"
             (n: length of left)
@@ -32,26 +32,26 @@
     ]
 )]
 
-(did all [
+(all [
     [x y] = res: parse ser: [x y] [pos: <here>, elide [<any>, <any>]]
     pos = ser
 ])
-(did all [
+(all [
     [y] == res: parse ser: [x y] [<any>, pos: <here>, elide <any>]
     pos = next ser
 ])
-(did all [
+(all [
     [] == res: parse ser: [x y] [<any>, <any>, pos: <here>]
     pos = tail of ser
 ])
 [#2130 (
-    did all [
+    all [
         'x == res: parse ser: [x] [pos: <here>, val: word!]
         val = 'x
         pos = ser
     ]
 )(
-    did all [
+    all [
         true = res: parse ser: "foo" [
             pos: <here>
             val: across <any>
@@ -67,7 +67,7 @@
 (
     a-value: first [a/b]
     b-value: ~
-    did all [
+    all [
         raised? parse as block! a-value [b-value: <here>]
         a-value = to path! b-value
     ]
@@ -75,7 +75,7 @@
 (
     a-value: first [()]
     b-value: ~
-    did all [
+    all [
         '() == parse a-value [b-value: <here>]
         same? a-value b-value
     ]
@@ -85,56 +85,56 @@
 [
     (
         p: ~
-        did all [
+        all [
             "" == parse "" [p: <here>]
             tail? p
         ]
     )
     (
         p: ~
-        did all [
+        all [
             "" == parse "" [[[p: <here>]]]
             tail? p
         ]
     )
     (
         p: ~
-        did all [
+        all [
             #a == parse "a" [p: <here> #a]
             p = "a"
         ]
     )
     (
         p: ~
-        did all [
+        all [
             "" == parse "a" [#a p: <here>]
             tail? p
         ]
     )
     (
         p: ~
-        did all [
+        all [
             "" == parse "a" [#a [p: <here>]]
             tail? p
         ]
     )
     (
         p: ~
-        did all [
+        all [
             raised? parse "ab" [#a p: <here>]
             p = "b"
         ]
     )
     (
         p: ~
-        did all [
+        all [
             #b == parse "ab" [#a [p: <here>] [#b | #c]]
             p = "b"
         ]
     )
     (
         p: ~
-        did all [
+        all [
             "b" == parse "aaabb" [
                 repeat 3 #a p: <here> repeat 2 #b seek (p) [repeat 2 "b"]
             ]
@@ -147,56 +147,56 @@
 [
     (
         p: ~
-        did all [
+        all [
             [] == parse [] [p: <here>]
             tail? p
         ]
     )
     (
         p: ~
-        did all [
+        all [
             [] == parse [] [[[p: <here>]]]
             tail? p
         ]
     )
     (
         p: ~
-        did all [
+        all [
             'a == parse [a] [p: <here> 'a]
             p = [a]
         ]
     )
     (
         p: ~
-        did all [
+        all [
             [] == parse [a] ['a p: <here>]
             tail? p
         ]
     )
     (
         p: ~
-        did all [
+        all [
             [] == parse [a] ['a [p: <here>]]
             tail? p
         ]
     )
     (
         p: ~
-        did all [
+        all [
             raised? parse [a b] ['a p: <here>]
             p = [b]
         ]
     )
     (
         p: ~
-        did all [
+        all [
             'b == parse [a b] ['a [p: <here>] ['b | 'c]]
             p = [b]
         ]
     )
     (
         p: ~
-        did all [
+        all [
             'b == parse [a a a b b] [
                 repeat 3 'a p: <here> repeat 2 'b seek (p) [repeat 2 'b]
             ]
@@ -209,56 +209,56 @@
 [
     (
         p: ~
-        did all [
+        all [
             #{} == parse #{} [p: <here>]
             tail? p
         ]
     )
     (
         p: ~
-        did all [
+        all [
             #{} == parse #{} [[[p: <here>]]]
             tail? p
         ]
     )
     (
         p: ~
-        did all [
+        all [
             #{0A} == parse #{0A} [p: <here> #{0A}]
             p = #{0A}
         ]
     )
     (
         p: ~
-        did all [
+        all [
             #{} == parse #{0A} [#{0A} p: <here>]
             tail? p
         ]
     )
     (
         p: ~
-        did all [
+        all [
             #{} == parse #{0A} [#{0A} [p: <here>]]
             tail? p
         ]
     )
     (
         p: ~
-        did all [
+        all [
             raised? parse #{0A0B} [#{0A} p: <here>]
             p = #{0B}
         ]
     )
     (
         p: ~
-        did all [
+        all [
             #{0B} == parse #{0A0B} [#{0A} [p: <here>] [#{0B} | #"^L"]]
             p = #{0B}
         ]
     )
     (
         p: ~
-        did all [
+        all [
             #{0B} == parse #{0A0A0A0B0B} [
                 repeat 3 #{0A}
                 p: <here>

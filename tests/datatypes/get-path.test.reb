@@ -19,7 +19,7 @@
 ; cell after extraction.
 [(
     e: sys.util.rescue [do compose [(unrun :append) 1 <d>]]
-    did all [
+    all [
         e.id = 'expect-arg
         e.arg1 = 'append
     ]

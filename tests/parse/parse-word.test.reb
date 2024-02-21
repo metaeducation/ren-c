@@ -40,14 +40,14 @@
     (raised? parse [a 123] [wa [char?!]])
     (
         res: ~
-        did all [
+        all [
             1 == parse [a] [wa (res: 1)]
             res = 1
         ]
     )
     (
         res: '~before~
-        did all [
+        all [
             raised? parse [a] [wb (res: 1)]
             res = '~before~
         ]
@@ -55,7 +55,7 @@
     (
         res: ~
         wres: [(res: 1)]
-        did all [
+        all [
             1 == parse [] [wres]
             res = 1
         ]
@@ -63,7 +63,7 @@
     (
         res: ~
         wres: ['a (res: 1)]
-        did all [
+        all [
             1 == parse [a] [wres]
             res = 1
         ]
@@ -71,7 +71,7 @@
     (
         res: '~before~
         wres: ['b (res: 1)]
-        did all [
+        all [
             raised? parse [a] [wres]
             res = '~before~
         ]
@@ -79,7 +79,7 @@
     (
         res: ~
         wres: [char?! (res: 2) | integer! (res: 3)]
-        did all [
+        all [
             3 == parse [a 123] [wa (res: 1) wres]
             res = 3
         ]
@@ -87,7 +87,7 @@
     (
         res: ~
         wres: [char?! (res: 2) | text! (res: 3)]
-        did all [
+        all [
             raised? parse [a 123] [wa (res: 1) wres]
             res = 1
         ]
@@ -123,14 +123,14 @@
     (#b == parse "ab" [wrab wrba])
     (
         res: ~
-        did all [
+        all [
             1 == parse "a" [wa (res: 1)]
             res = 1
         ]
     )
     (
         res: '~before~
-        did all [
+        all [
             raised? parse "a" [wb (res: 1)]
             res = '~before~
         ]
@@ -138,7 +138,7 @@
     (
         res: ~
         wres: [(res: 1)]
-        did all [
+        all [
             1 == parse "" [wres]
             res = 1
         ]
@@ -146,7 +146,7 @@
     (
         res: ~
         wres: [#a (res: 1)]
-        did all [
+        all [
             1 == parse "a" [wres]
             res = 1
         ]
@@ -154,7 +154,7 @@
     (
         res: '~before~
         wres: [#b (res: 1)]
-        did all [
+        all [
             raised? parse "a" [wres]
             res = '~before~
         ]
@@ -190,14 +190,14 @@
     (#{0B} == parse #{0A0B} [wrab wrba])
     (
         res: ~
-        did all [
+        all [
             1 == parse #{0A} [wa (res: 1)]
             res = 1
         ]
     )
     (
         res: '~before~
-        did all [
+        all [
             raised? parse #{0A} [wb (res: 1)]
             res = '~before~
         ]
@@ -205,7 +205,7 @@
     (
         res: ~
         wres: [(res: 1)]
-        did all [
+        all [
             1 == parse #{} [wres]
             res = 1
         ]
@@ -213,7 +213,7 @@
     (
         res: ~
         wres: [#{0A} (res: 1)]
-        did all [
+        all [
             1 == parse #{0A} [wres]
             res = 1
         ]
@@ -221,7 +221,7 @@
     (
         res: '~before~
         wres: [#{0B} (res: 1)]
-        did all [
+        all [
             raised? parse #{0A} [wres]
             res = '~before~
         ]

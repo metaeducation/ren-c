@@ -145,7 +145,7 @@
 
     r: [a b c [d e] [d e] [d e]]
 
-    did all [
+    all [
         , r = aopd3 copy [a b c] [d e]
         , r = applique :aopd3 [series: copy [a b c] value: [d e]]
     ]
@@ -174,7 +174,7 @@
     ap10d: specialize :append/dup [value: 10]
     f: make frame! unrun :ap10d
     f.series: copy [a b c]
-    did all [
+    all [
         [a b c 10] = do copy f
         f.dup: 2
         [a b c 10 10 10] = do f

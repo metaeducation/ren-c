@@ -16,7 +16,7 @@
 ; Responsibility for kind of "ornery-ness" shifted to the antiform of void.
 (
     a: ~
-    did all [
+    all [
         null? a: null
         null? a
         null = a
@@ -24,7 +24,7 @@
 )
 (
     a: ~
-    did all [
+    all [
         null = set $a null
         null? a
         null = a

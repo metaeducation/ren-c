@@ -29,7 +29,7 @@
         keep reify new-line? tail data
     ]
 
-    did all [
+    all [
         before = [~true~ ~false~ ~true~ ~false~ ~false~ ~true~ ~true~]
         after = [~true~ ~true~ ~false~ ~false~ ~true~ ~false~ ~true~]
     ]

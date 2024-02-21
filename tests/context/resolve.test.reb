@@ -7,7 +7,7 @@
 
 (
     obj: make object! [x: 1020]
-    did all [
+    all [
         @[obj x] = steps: resolve $obj.(first [x y])
         1020 = get steps
     ]
@@ -30,7 +30,7 @@
 
     (
         x: null
-        did all [
+        all [
             304 = (x: udefault [300 + 4])
             x = 304
             304 = (x: udefault [1000 + 20])
@@ -41,7 +41,7 @@
     (
         counter: 0
         obj: make object! [x: null]
-        did all [
+        all [
             304 = (obj.(counter: me + 1, 'x): udefault [300 + 4])
             counter = 1  ; not 2, e.g. GET and SET phases shared resolved steps
             obj.x = 304

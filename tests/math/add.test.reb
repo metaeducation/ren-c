@@ -239,7 +239,7 @@
     some-var = 210
 )
 
-(did all [
+(all [
     equal? 20 1 * 2 + (3) * 4
     equal? 20 1 * 2 + 3 * 4
 ])

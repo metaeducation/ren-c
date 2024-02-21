@@ -38,7 +38,7 @@
 
 [#2312 (
     data: [<a> <b>]
-    did all [
+    all [
         null = :data.(0.5)
         null = :data.(0.999999)
         <a> = data.(1.0)
@@ -50,7 +50,7 @@
 )]
 [#2312 (
     data: "ab"
-    did all [
+    all [
         null = :data.(0.5)
         null = :data.(0.999999)
         #"a" = data.(1.0)

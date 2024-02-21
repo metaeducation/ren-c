@@ -44,7 +44,7 @@
     true
 )
 
-    (did all [
+    (all [
         [35 13 23] = [k s]: keeper-saver [
             1 + 2
             <K> (3 + 4) * 5 if true [6 + 7]

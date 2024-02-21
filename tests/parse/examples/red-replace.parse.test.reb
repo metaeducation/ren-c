@@ -45,7 +45,7 @@
 
     (
         data: "(real)1020(powerful)0304(magic)"
-        did all [
+        all [
             ["(real)" "(powerful)" "(magic)"] = collect [
                 replace/all data [between "(" ")"] func [head tail] [
                     let item: copy/part head tail

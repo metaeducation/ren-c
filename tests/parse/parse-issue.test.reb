@@ -49,14 +49,14 @@
 
     (
         res: ~
-        did all [
+        all [
             #a == parse "a" [res: <any>]
             res = #a
         ]
     )
     (
         res: ~
-        did all [
+        all [
             #a == parse "a" [res: #a]
             res = #a
         ]
@@ -64,7 +64,7 @@
     (
         res: ~
         res2: ~
-        did all [
+        all [
             #a == parse "a" [res: res2: #a]
             res = #a
             res2 = #a
@@ -72,70 +72,70 @@
     )
     (
         res: ~
-        did all [
+        all [
             #a == parse "aa" [res: repeat 2 #a]
             res = #a
         ]
     )
     (
         res: '~before~
-        did all [
+        all [
             raised? parse "aa" [res: repeat 3 #a]
             res = '~before~
         ]
     )
     (
         res: ~
-        did all [
+        all [
             #a == parse "a" [res: [#a]]
             res = #a
         ]
     )
     (
         res: ~
-        did all [
+        all [
             #a == parse "a" [res: wa]
             res = #a
         ]
     )
     (
         res: ~
-        did all [
+        all [
             #a == parse "aa" [res: repeat 2 wa]
             res = #a
         ]
     )
     (
         res: ~
-        did all [
+        all [
             #b == parse "aab" [<any> res: #a <any>]
             res = #a
         ]
     )
     (
         res: ~
-        did all [
+        all [
             #b == parse "aab" [<any> res: [#a | #b] <any>]
             res = #a
         ]
     )
     (
         res: '~before~
-        did all [
+        all [
             raised? parse "a" [res: [#c | #b]]
             res = '~before~
         ]
     )
     (
         res: ~
-        did all [
+        all [
             #c == parse "baaac" [<any> res: some #a #c]
             res = #a
         ]
     )
     (
         res: ~
-        did all [
+        all [
             #c == parse "baaac" [<any> res: some wa #c]
             res = #a
         ]
@@ -146,56 +146,56 @@
 [
     (
         res: ~
-        did all [
+        all [
             1 == parse "" [(res: 1)]
             res = 1
         ]
     )
     (
         res: ~
-        did all [
+        all [
             1 == parse "a" [#a (res: 1)]
             res = 1
         ]
     )
     (
         res: '~before~
-        did all [
+        all [
             raised? parse "a" [#b (res: 1)]
             res = '~before~
         ]
     )
     (
         res: ~
-        did all [
+        all [
             1 == parse "" [[(res: 1)]]
             res = 1
         ]
     )
     (
         res: ~
-        did all [
+        all [
             1 == parse "a" [[#a (res: 1)]]
             res = 1
         ]
     )
     (
         res: '~before~
-        did all [
+        all [
             raised? parse "a" [[#b (res: 1)]]
             res = '~before~
         ]
     )
     (
         res: ~
-        did all [
+        all [
             3 == parse "ab" [#a (res: 1) [#c (res: 2) | #b (res: 3)]]
             res = 3
         ]
     )
     (
         res: ~
-        did all [
+        all [
             raised? parse "ab" [#a (res: 1) [#c (res: 2) | #d (res: 3)]]
             res = 1
         ]

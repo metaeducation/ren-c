@@ -12,28 +12,28 @@
 
 (
     s: copy "abc"
-    did all [
+    all [
         "bc" = change s "-"
         s = "-bc"
     ]
 )
 (
     s: copy "abc"
-    did all [
+    all [
         "bc" = change s "ò"
         s = "òbc"
     ]
 )
 (
     s: copy "abc"
-    did all [
+    all [
         "c" = change s "--"
         s = "--c"
     ]
 )
 (
     s: copy "abc"
-    did all [
+    all [
         "" = change s "----"
         s = "----"
     ]
@@ -41,21 +41,21 @@
 
 (
     s: copy [a b c]
-    did all [
+    all [
         [b c] = change s '-
         s = [- b c]
     ]
 )
 (
     s: copy [a b c]
-    did all [
+    all [
         [c] = change s spread [- -]
         s = [- - c]
     ]
 )
 (
     s: copy [a b c]
-    did all [
+    all [
         [] = change s spread [- - - -]
         s = [- - - -]
     ]
@@ -63,21 +63,21 @@
 
 (
     s: copy #{0A0B0C}
-    did all [
+    all [
         #{0B0C} = change s #{11}
         s = #{110B0C}
     ]
 )
 (
     s: copy #{0A0B0C}
-    did all [
+    all [
         #{0C} = change s #{1111}
         s = #{11110C}
     ]
 )
 (
     s: copy #{0A0B0C}
-    did all [
+    all [
         #{} = change s #{11111111}
         s = #{11111111}
     ]
@@ -92,7 +92,7 @@
 
 (
     x: ""
-    did all [
+    all [
         "" = change x "xyz"
         x = "xyz"
     ]

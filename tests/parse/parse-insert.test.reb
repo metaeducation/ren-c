@@ -18,11 +18,11 @@
 )]
 
 [https://github.com/red/red/issues/3357
-    (did all [
+    (all [
         '~insert~ == meta parse x3357: [] [insert ('foo)]
         x3357 = [foo]
     ])
-    (did all [
+    (all [
         '~insert~ == meta parse x3357b: [] [insert (the foo)]
         x3357b = [foo]
     ])
@@ -30,32 +30,32 @@
 
 ; Block insertion tests from %parse-test.red
 [
-    (did all [
+    (all [
         '~insert~ == meta parse blk: [] [insert (1)]
         blk = [1]
     ])
-    (did all [
+    (all [
         'a == parse blk: [a a] [<any> insert (the b) <any>]
         blk = [a b a]
     ])
-    (did all [
+    (all [
         '~remove~ == meta parse blk: [] [
             p: <here> insert (the a) seek (p) remove 'a
         ]
         blk = []
     ])
-    (did all [
+    (all [
         '~insert~ == meta parse blk: [] [insert (spread [a b])]
         blk = [a b]
     ])
-    (did all [
+    (all [
         '~insert~ == meta parse blk: [] [insert ([a b])]
         blk = [[a b]]
     ])
     (
         series: [a b c]
         letter: 'x
-        did all [
+        all [
             'c == parse series [insert (letter) 'a 'b 'c]
             series == [x a b c]
         ]
@@ -63,7 +63,7 @@
     (
         series: [a b c]
         letters: [x y z]
-        did all [
+        all [
             'c == parse series [
                 'a 'b insert (spread letters) insert (letters) 'c
             ]
@@ -73,7 +73,7 @@
     (
         series: [b]
         digit: 2
-        did all [
+        all [
             'b == parse series [insert (digit) 'b]
             series == [2 b]
         ]
@@ -83,21 +83,21 @@
 
 ; TEXT! insertion tests from %parse-test.red
 [
-    (did all [
+    (all [
         '~insert~ == meta parse str: "" [insert (#1)]
         str = "1"
     ])
-    (did all [
+    (all [
         #a == parse str: "aa" [<any> insert (#b) <any>]
         str = "aba"
     ])
-    (did all [
+    (all [
         '~remove~ == meta parse str: "" [
             p: <here> insert (#a) seek (p) remove #a
         ]
         str = ""
     ])
-    (did all [
+    (all [
         '~remove~ == meta parse str: "test" [
             some [<any> p: <here> insert (#_)] seek (p) remove <any>
         ]
@@ -107,21 +107,21 @@
 
 ; BINARY! insertion tests from %parse-test.red
 [
-   (did all [
+   (all [
         '~insert~ == meta parse bin: #{} [insert (#"^A")]
         bin = #{01}
     ])
-    (did all [
+    (all [
         10 == parse bin: #{0A0A} [<any> insert (#{0B}) <any>]
         bin = #{0A0B0A}
     ])
-    (did all [
+    (all [
         '~remove~ == meta parse bin: #{} [
             p: <here> insert (#{0A}) seek (p) remove #{0A}
         ]
         bin = #{}
     ])
-    (did all [
+    (all [
         '~remove~ == meta parse bin: #{DEADBEEF} [
             some [<any> p: <here> insert (#)] seek (p) remove <any>
         ]
@@ -140,7 +140,7 @@
     (
         series: [a b c]
         letters: [x y z]
-        did all [
+        all [
             'c == parse series [
                 mark: <here>
                 'a
@@ -167,7 +167,7 @@
     (
         series: [a b c]
         letter: 'x
-        did all [
+        all [
             'c == parse series [
                 mark: <here> insert (letter) 'a 'b
 
@@ -186,7 +186,7 @@
     (
         series: [a b c]
         letters: [x y z]
-        did all [
+        all [
             [x y z] == parse series [
                 to <end> mark: <here> [false]
                 |

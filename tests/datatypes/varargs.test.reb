@@ -123,14 +123,14 @@
 
     3 = (value: 1 + 2 <| 30 + 40 x: value  () ())
 
-    did all [value = 3, x = 3]
+    all [value = 3, x = 3]
 )
 (
     unset $value
 
     33 = (value: 1 + 2 |> add 30)
 
-    did all [value = 33]
+    all [value = 33]
 )
 
 (

@@ -18,28 +18,28 @@
 ; expectating the other to change too.
 (
     bin: as binary! copy "abc"
-    did all [
+    all [
        #{616263} = bin
        #{61626364} = append bin #"d"
     ]
 )
 (
     bin: as binary! copy <abc>
-    did all [
+    all [
         #{616263} = bin
         #{61626364} = append bin #"d"
     ]
 )
 (
     bin: copy as binary! 'abc
-    did all [
+    all [
         #{616263} = bin
         #{61626364} = append bin #"d"
     ]
 )
 (
     bin: copy as binary! #abc
-    did all [
+    all [
         #{616263} = bin
         #{61626364} = append bin #"d"
     ]
@@ -48,7 +48,7 @@
 (
    bin: copy #{616263}
    txt: as text! bin
-   did all [
+   all [
       "abc" = txt
       "abcd" = append txt #"d"
       #{61626364} = bin

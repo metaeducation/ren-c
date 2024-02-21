@@ -22,7 +22,7 @@
 ; (Though there are several issues in flux at time of writing regarding how
 ; DATATYPE!s and type checking work...)
 [(
-    did all [  ; try with no RETURN:
+    all [  ; try with no RETURN:
         foo: func ["description" a "a" b "b"] []
         m: adjunct-of :foo
         m.description = "description"
@@ -34,7 +34,7 @@
         (select :foo 'b).text = "b"
     ]
 )(
-    did all [  ; try RETURN: with no type
+    all [  ; try RETURN: with no type
         foo: func ["description" return: "returns" a "a" b "b"] []
         m: adjunct-of :foo
         m.description = "description"
@@ -46,7 +46,7 @@
         (select :foo 'b).text = "b"
     ]
 )(
-    did all [  ; try RETURN: with type
+    all [  ; try RETURN: with type
         foo: func ["description" return: [integer!] "returns" a "a" b "b"] []
         m: adjunct-of :foo
         m.description = "description"
@@ -58,7 +58,7 @@
         (select :foo 'b).text = "b"
     ]
 )(
-    did all [  ; try without description
+    all [  ; try without description
         foo: func [return: [integer!] "returns" a "a" /b "b"] []
         if m: adjunct-of :foo [
             m.description = null

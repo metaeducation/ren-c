@@ -25,25 +25,25 @@
 
     (304 = test 1020)
 
-    (did all [
+    (all [
         304 = [a]: test 1020
         a = 304
     ])
 
-    (did all [
+    (all [
         304 = [b c]: test 1020
         b = 304
         c = <y-result>
     ])
 
-    (did all [
+    (all [
         304 = [d e f]: test 1020
         d = 304
         e = <y-result>
         f = <z-result>
     ])
 
-    (did all [
+    (all [
         304 = [g _ h]: test 1020
         g = 304
         h = <z-result>
@@ -54,7 +54,7 @@
 
     (
         a: b: c: null
-        did all [
+        all [
             <y-result> = [a @b c]: test 1020
             a = 304
             b = <y-result>
@@ -62,7 +62,7 @@
         ]
     )(
         a: b: c: null
-        did all [
+        all [
             304 = [@a b c]: test 1020
             a = 304
             b = <y-result>
@@ -70,7 +70,7 @@
         ]
     )(
         a: b: c: null
-        did all [
+        all [
             <z-result> = [a b @(inside [] first [c])]: test 1020
             a = 304
             b = <y-result>
@@ -78,7 +78,7 @@
         ]
     )(
         a: b: c: null
-        did all [
+        all [
             <z-result> = [a b @(void)]: test 1020
             a = 304
             b = <y-result>
@@ -98,12 +98,12 @@
 ]
 
 [(
-    did all [
+    all [
         'abc = [_ rest]: transcode/one "abc def"
         rest = " def"
     ]
 )(
-    did all [
+    all [
         'abc = [(void) rest]: transcode/one "abc def"
         rest = " def"
     ]
@@ -116,14 +116,14 @@
 [
     (
         a: b: ~
-        did all [
+        all [
             (the 'A) = [^a ^b]: transcode/one "A B"
             a = the 'A
             b = the '{ B}
         ]
     )(
         a: b: ~
-        did all [
+        all [
             (the 'A) = [^ ^b]: transcode/one "A B"
             ^a = '~
             b = the '{ B}
@@ -136,7 +136,7 @@
 [
     (
         value: rest: ~
-        did all [
+        all [
             <item!> = [value /rest]: transcode/one "ab cd" then [<item!>]
             value = <item!>
             rest = null
@@ -144,7 +144,7 @@
     )
     (
         value: rest: ~
-        did all [
+        all [
             <item!> = ([value /rest]: transcode/one "ab cd") then [<item!>]
             value = 'ab
             rest = " cd"
@@ -156,7 +156,7 @@
             other: 10
             return 20
         ]
-        did all [
+        all [
             '~weird~ = ([^x /y]: foo then [~weird~])
             x = '~weird~
             y = null
@@ -168,7 +168,7 @@
             other: 10
             return 20
         ]
-        did all [
+        all [
             '~weird~ <> [^x y]: foo then [~weird~]
             x = the '20
             y = 10
@@ -176,7 +176,7 @@
     )
 
     (
-        did all [
+        all [
             x: find "abc" 'b then [10]
             x = 10
             [y]: find "abc" 'b then [10]
@@ -187,14 +187,14 @@
 
 ; You can use a @ without a variable to get a return result
 ;
-(did all [
+(all [
     " cd" = [item @]: transcode/one "ab cd"
     item = 'ab
 ])
 
 ; Propagates void signals, but sets variables to null
 [
-    (did all [
+    (all [
         null? [/x]: comment "hi"
         null? x
     ])

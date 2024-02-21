@@ -74,28 +74,28 @@
 (true and (true) = true)
 (
     x: 1020
-    did all [
+    all [
         true and (x: null) = false
         null? x
     ]
 )
 (
     x: null
-    did all [
+    all [
         true and (x: 304) = true
         x = 304
     ]
 )
 (
     x: 1020
-    did all [
+    all [
         (<truthy>) and (x: 304) = true
         x = 304
     ]
 )
 (
     x: 1020
-    did all [
+    all [
         (<truthy>) and (x: null) = false
         null? x
     ]
@@ -108,28 +108,28 @@
 (true or (true) = true)
 (
     x: 1020
-    did all [
+    all [
         false or (x: null) = false
         null? x
     ]
 )
 (
     x: null
-    did all [
+    all [
         false or (x: 304) = true
         x = 304
     ]
 )
 (
     x: 1020
-    did all [
+    all [
         (null) or (x: 304) = true
         x = 304
     ]
 )
 (
     x: 1020
-    did all [
+    all [
         (null) or (x: true) = true
         x = true
     ]

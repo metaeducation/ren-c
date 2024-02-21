@@ -52,7 +52,7 @@
 
 [#1637 (
     d: now/date
-    did all [
+    all [
         null? d.time
         null? d.zone
     ]
@@ -60,7 +60,7 @@
 
 (
     [d n]: transcode/one "1975-04-21/10:20:03.04"
-    did all [
+    all [
         date? d
         n = ""
         d.year = 1975
@@ -223,7 +223,7 @@
     (
         d: date-100
         d.zone: 10:00
-        did all [
+        all [
             d.date = date-100.date
             d.time = 0:00
             d.zone = 10:00
@@ -238,7 +238,7 @@
     date1.zone: default [0]
     date2.zone: default [0]
 
-    did all [
+    all [
         date1 == 3-Feb-2021/16:09:02.786-5:00
 
         date2 == 4-Feb-2021/0:00+0:00

@@ -24,7 +24,7 @@
 
 (
     test: ~
-    did all [
+    all [
         'b = parse [a b] ['a test: ^['] 'b]
         nihil' = test
     ]
@@ -32,7 +32,7 @@
 (
     test: ~
     var: void
-    did all [
+    all [
        'b = parse [a b] ['a test: ^[var] 'b]
         nihil' = test
     ]

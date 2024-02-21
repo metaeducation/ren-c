@@ -122,7 +122,7 @@
 ;    1020 = either true @o/b [fail "Shouldn't run"]
 ;)(
 ;    var: <something>
-;    did all [
+;    all [
 ;        304 = either false @(var: <something-else> [1000 + 20]) [300 + 4]
 ;        var = <something>
 ;        1020 = if true @(var: <something-else> [1000 + 20]) [300 + 4]

@@ -35,21 +35,21 @@
 
 
 (
-    did all [
+    all [
         "aaa" == parse ["aaa"] [subparse text! [x: across some "a"]]
         x = "aaa"
     ]
 )
 
 (
-    did all [
+    all [
         "aaa" == parse ["aaa"] [subparse <any> [x: across some "a"]]
         x = "aaa"
     ]
 )
 
 (
-    did all [
+    all [
         "aaa" == parse "((aaa)))" [
             subparse [between some "(" some ")"] [x: across some "a"]
         ]
@@ -58,7 +58,7 @@
 )
 
 (
-    did all [
+    all [
         [some some some] == parse [| | some some some | | |] [
             content: between some '| some '|
             subparse (content) [x: collect [some keep ['some]]]
@@ -96,7 +96,7 @@
         subparse <here> ["bbb" (b: "yep, Bs")]
         "bbb" (bb: "Bs again")
     ]
-    did all [
+    all [
         x = "aaabbb"
         b = "yep, Bs"
         bb = "Bs again"
@@ -108,7 +108,7 @@
         "bbb" (bb: "Bs again")
         "ccc" (c: "Here be Cs")
     ]
-    did all [
+    all [
         x = "aaabbbccc"
         b = "yep, Bs"
         bb = "Bs again"

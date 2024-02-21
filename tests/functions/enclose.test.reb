@@ -16,7 +16,7 @@
         ]
     ]
 
-    did all [
+    all [
         void? n-add 10 20
         25 = n-add 20 20
     ]
@@ -32,7 +32,7 @@
         assert [1020 = do f]
         return nihil
     ]
-    did all [
+    all [
         304 = (304 outer)
         nihil? outer
         var = 1020
@@ -46,7 +46,7 @@
     outer: enclose :inner func [return: [quoted? quasiform!] f] [
         return ^(eval f)  ; don't unquote it here
     ]
-    did all [
+    all [
         nihil' = outer
         var = 1020
     ]
@@ -59,7 +59,7 @@
     outer: enclose :inner func [return: [nihil? any-value?] f] [
         return eval f  ; now try unquoting
     ]
-    did all [
+    all [
         nihil' = ^(outer)
         var = 1020
     ]

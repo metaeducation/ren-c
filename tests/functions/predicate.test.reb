@@ -4,7 +4,7 @@
 
 (
     e: sys.util.rescue [until/predicate ["a"] chain [:even?, :not]]
-    did all [
+    all [
         e.id = 'expect-arg
         e.arg1 = 'even?
     ]
@@ -12,7 +12,7 @@
 
 (
     e: sys.util.rescue [until/predicate ["a"] chain [:even?, :not]]
-    did all [
+    all [
         e.id = 'expect-arg
         e.arg1 = 'even?
     ]

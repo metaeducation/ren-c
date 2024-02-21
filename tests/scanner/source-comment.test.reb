@@ -20,7 +20,7 @@
 
 (
     issue: load-value "#; ; comment after a one-codepoint issue"
-    did all [
+    all [
         issue? issue
         1 = length of issue
         59 = codepoint of issue
@@ -28,7 +28,7 @@
     ]
 )(
     issue: load-value "# ; comment after a zero-codepoint issue"
-    did all [
+    all [
         issue? issue
         0 = length of issue
         0 = codepoint of issue
@@ -38,7 +38,7 @@
 
 (
     q-word: load-value "'a ; comment after a quoted word"
-    did all [
+    all [
         quoted? q-word
         (first [a]) = unquote q-word
         'a = unquote q-word
@@ -57,7 +57,7 @@
 
 (
     b: load ";"
-    did all [
+    all [
         b = []
         not new-line? b
     ]
@@ -66,7 +66,7 @@
 (['] = transcode "';")
 (
     data: transcode "';^/a"
-    did all [
+    all [
         data = [' a]
         not new-line? data
         new-line? next data

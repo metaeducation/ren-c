@@ -143,7 +143,7 @@
 ; support for plain WORD! etc.)
 [(
     x: ~
-    did all [
+    all [
         <else> = if true [x: <branch>, null] *else [<else>]
         x = <branch>
     ]
@@ -153,7 +153,7 @@
 ; branch arguments, but only if the branch is taken.
 ;(
 ;    var: <something>
-;    did all [
+;    all [
 ;        void? if false @(var: <something-else> [null])
 ;        var = <something>
 ;        null? if true @(var: <something-else> [null])

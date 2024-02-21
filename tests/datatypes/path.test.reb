@@ -44,7 +44,7 @@
 )
 (
     a-value: 1/Jan/0000
-    did all [
+    all [
         1 == a-value.1
         'Jan == a-value.2
         0 == a-value.3
@@ -169,7 +169,7 @@
 ; Note: This matches Red but is different from R3-Alpha, which gets b as 1
 (
     a: 1x2
-    did all [
+    all [
         b: a.(a: [3 4] 1)
         b = 3
         a = [3 4]

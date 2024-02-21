@@ -15,7 +15,7 @@
 ("b" == parse "aaabbb" ["a" repeat 2 "a" seek (2) repeat 2 "a" repeat 3 "b"])
 
 (
-    did all [
+    all [
         "bbcc" == parse "aabbcc" [
             some "a", x: <here>, some "b", y: <here>
             seek (x), z: across to <end>

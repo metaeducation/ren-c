@@ -12,7 +12,7 @@
 (
     unset $a
     e: sys.util.rescue [a]
-    did all [
+    all [
        'bad-word-get = e.id
        'a = e.arg1
        '~ = e.arg2

@@ -81,7 +81,7 @@
 
 (
     a: b: ~bad~
-    did all [
+    all [
         3 = [a b]: pack-old [1 + 2 3 + 4]
         a = 3
         b = 7
@@ -90,7 +90,7 @@
 
 (
     a: b: ~bad~
-    did all [
+    all [
         1 = [a b c]: pack-old @[1 + 2]
         a = 1
         b = '+
@@ -100,7 +100,7 @@
 
 ; <...> is used to indicate willingness to discard extra values
 (
-    did all [
+    all [
         1 = [a b <...>]: pack-old @[1 2 3 4 5]
         a = 1
         b = 2
@@ -125,14 +125,14 @@
 (
     a: 10
     b: 20
-    did all [blank = [a b]: pack-old @[_ _], blank? a, blank? b]
+    all [blank = [a b]: pack-old @[_ _], blank? a, blank? b]
 )
 (
     a: 10
     b: 20
     c: 30
     [a b c]: pack-old [null 99]
-    did all [null? a, b = 99, ^c = '~]
+    all [null? a, b = 99, ^c = '~]
 )
 
 (
@@ -140,5 +140,5 @@
     b: 20
     c: 30
     [a b c]: pack-old [~null~ 99]
-    did all [null? a, b = 99, ^c = '~]
+    all [null? a, b = 99, ^c = '~]
 )]

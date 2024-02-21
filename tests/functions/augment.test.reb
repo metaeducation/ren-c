@@ -4,7 +4,7 @@
 (
     foo: lambda [x] [x]
     bar: augment :foo [y]
-    did all [
+    all [
         [x y] = parameters of :bar
         10 = bar 10 20
     ]
@@ -25,7 +25,7 @@
     mix: adapt augment (x -> [x]) [y /sub] [
         x: reeval (either sub [:subtract] [:add]) x y
     ]
-    did all [
+    all [
         1020 = mix 1000 20
         980 = mix/sub 1000 20
     ]
@@ -67,7 +67,7 @@
         ]
     ]
 
-    did all [
+    all [
         10 = two-a-plus-six-plus-four-c 2
         50 = two-a-plus-six-plus-four-c/c 2 10
     ]
@@ -75,7 +75,7 @@
 
 ; Check to see that AUGMENT of the help expands it.
 [(
-    did all [
+    all [
         orig: func ["description" a "a" /b "b"] [return <unused>]
         aug: augment :orig [c "c" /d "d"]
         if m: adjunct-of :aug [

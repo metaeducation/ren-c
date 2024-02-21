@@ -56,14 +56,14 @@
    counter: 0
    obj: make object! [x: null]
    obj.(counter: counter + 1 'x): default [<thing>]
-   did all [
+   all [
        obj.x = <thing>
        counter = 1
    ]
 )(
     m: make map! 10
     set @[m (1 + 2)] <hard>
-    did all [
+    all [
         <hard> = pick m the (1 + 2)
         <hard> = get @[m (1 + 2)]
     ]

@@ -36,7 +36,7 @@
     value: ~
     o: make object! [rest: ~]
     block: [value o.rest]
-    did all [
+    all [
         10 = (block): transcode/one "10 20"
         10 = value
         o.rest = " 20"
@@ -67,7 +67,7 @@
     (
         test: lambda [x] [x + 1000]
         wrapper: returnproxy :test
-        did all [
+        all [
             1020 = wrapper 20
             1020 = wrapper/return 20 'y
             1020 = y
@@ -82,7 +82,7 @@
         f.x: 20
         f.return: 'out
 
-        did all [
+        all [
             1020 = do f
             1020 = y
         ]

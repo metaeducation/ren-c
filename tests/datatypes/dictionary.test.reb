@@ -41,7 +41,7 @@
     thing2: select m2 1
     append thing.2 spread [c]
     append thing2 spread [d]
-    did all [
+    all [
         thing = [a [b c]]
         thing2 = [a [b] d]
     ]
@@ -160,7 +160,7 @@
 ; Void can be used to remove keys from maps
 (
     m: make map! [key <initial>]
-    did all [
+    all [
         m.key = <initial>
         m.key: void  ; opts out of the all
         null? m.key

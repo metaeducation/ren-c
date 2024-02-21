@@ -5,7 +5,7 @@
 (
     b: <global>
     plus1000: func [j] [let b: 1000, return b + j]
-    did all [
+    all [
         1020 = plus1000 20
         b = <global>
         [j] = parameters of :plus1000
