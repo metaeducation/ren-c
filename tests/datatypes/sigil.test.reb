@@ -13,10 +13,14 @@
 ; REVIEW: AS TEXT! behavior for SIGIL! ?
 ;
 
-(did apply :all [
-    @[:: : ^ & @ $]
-    /predicate item -> [sigil? item]
-])
+(
+    for-each sigil [:: : ^ & @ $] [
+        if not sigil? sigil [
+            fail [mold sigil]
+        ]
+    ]
+    true
+)
 
 ; try termination by delimiter (and molding)
 [
@@ -60,7 +64,7 @@
 
 ; Quasiforms of sigil don't exist (and probably should not, as combining the
 ; tildes with the sigil symbols is considered undesirable, so unless there
-; is a really good reason sigils shuldn't have quasi/antiforms)
+; is a really good reason sigils shouldn't have quasi/antiforms)
 [
     ~scan-invalid~ !! (transcode "~::~")
     ~scan-invalid~ !! (transcode "~:~")
@@ -71,43 +75,26 @@
 ]
 
 
-; Tests for SIGIL OF
-
-(did apply :all [
-    @[word tu.p.le pa/th [bl o ck] (gr o up)]
-    /predicate item -> [null = sigil of item]
-])
-
-(did apply :all [
-    @[word: tu.p.le: pa/th: [bl o ck]: (gr o up):]
-    /predicate item -> [':: = sigil of item]
-])
-
-(did apply :all [
-    @[:word :tu.p.le :pa/th :[bl o ck] :(gr o up)]
-    /predicate item -> [': = sigil of item]
-])
-
-(did apply :all [
-    @[^word ^tu.p.le ^pa/th ^[bl o ck] ^(gr o up)]
-    /predicate item -> ['^ = sigil of item]
-])
-
-(did apply :all [
-    @[&word &tu.p.le &pa/th &[bl o ck] &(gr o up)]
-    /predicate item -> ['& = sigil of item]
-])
-
-(did apply :all [
-    @[@word @tu.p.le @pa/th @[bl o ck] @(gr o up)]
-    /predicate item -> ['@ = sigil of item]
-])
-
-(did apply :all [
-    @[$word $tu.p.le $pa/th $[bl o ck] $(gr o up)]
-    /predicate item -> ['$ = sigil of item]
-])
-
+; Test SIGIL OF for each bindable type
+(
+    for-each [sigil' items] [
+        ~null~ [  word   tu.p.le   pa/th   [bl o ck]   (gr o up)  ]
+        '::    [  word:  tu.p.le:  pa/th:  [bl o ck]:  (gr o up): ]
+        ':     [ :word  :tu.p.le  :pa/th  :[bl o ck]  :(gr o up)  ]
+        '^     [ ^word  ^tu.p.le  ^pa/th  ^[bl o ck]  ^(gr o up)  ]
+        '&     [ &word  &tu.p.le  &pa/th  &[bl o ck]  &(gr o up)  ]
+        '@     [ @word  @tu.p.le  @pa/th  @[bl o ck]  @(gr o up)  ]
+        '$     [ $word  $tu.p.le  $pa/th  $[bl o ck]  $(gr o up)  ]
+    ][
+        for-each item items [
+            assert [any-bindable? item]
+            if (unmeta sigil') <> sigil of item [
+                fail [mold item]
+            ]
+        ]
+    ]
+    true
+)
 
 ; :: has no meaning in the evaluator yet
 [

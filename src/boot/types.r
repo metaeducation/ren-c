@@ -166,7 +166,7 @@ binary      "series of bytes"
                 [any-series? any-utf8? any-inert?]
                 [string      *       *]
 
-</ANY-STRING?>  ; ISSUE? is "string-like" but not an ANY-STRING?
+</ANY-STRING?>
 
 
 issue       "immutable codepoint or codepoint sequence"
@@ -239,8 +239,9 @@ pair        "two dimensional point or size"
 ; BEGIN BINDABLE TYPES - SEE Is_Bindable() - Cell's "extra" USED FOR BINDING
 ; ============================================================================
 
+<ANY-BINDABLE?>
 
-<ANY-WORD?>  ; (order matters, e.g. Theify_Any_Plain_Kind())
+<ANY-WORD?>  ; (order matters, see Sigilize_Any_Plain_Kind())
 
     word        "evaluates a variable or action"
     ~antiword~  (CELL_FLAG_FIRST_IS_NODE)  ; ??? Better name than antiword?
@@ -282,7 +283,7 @@ pair        "two dimensional point or size"
 
 <ANY-SEQUENCE?>
 
-  <ANY-TUPLE?>  ; (order matters, e.g. Theify_Any_Plain_Kind())
+  <ANY-TUPLE?>  ; (order matters, see Sigilize_Any_Plain_Kind())
 
     tuple       "member selection with inert bias"
                 ()
@@ -321,7 +322,7 @@ pair        "two dimensional point or size"
 
   </ANY-TUPLE?>
 
-  <ANY-PATH?>  ; (order matters, e.g. Theify_Any_Plain_Kind())
+  <ANY-PATH?>  ; (order matters, see Sigilize_Any_Plain_Kind())
 
     path        "member or refinement selection with execution bias"
                 ()
@@ -365,7 +366,7 @@ pair        "two dimensional point or size"
 
 <ANY-ARRAY?>
 
-  <ANY-BLOCK?>  ; (order matters, e.g. Theify_Any_Plain_Kind())
+  <ANY-BLOCK?>  ; (order matters, see Sigilize_Any_Plain_Kind())
 
     block       "array of values that blocks evaluation unless DO is used"
     ~pack~      (CELL_FLAG_FIRST_IS_NODE)
@@ -405,7 +406,7 @@ pair        "two dimensional point or size"
   </ANY-BLOCK?>
 
 
-  <ANY-GROUP?>  ; (order matters, e.g. Theify_Any_Plain_Kind())
+  <ANY-GROUP?>  ; (order matters, see Sigilize_Any_Plain_Kind())
 
     group       "array that evaluates expressions as an isolated group"
     ~splice~    (CELL_FLAG_FIRST_IS_NODE)
@@ -445,6 +446,8 @@ pair        "two dimensional point or size"
   </ANY-GROUP?>
 
 </ANY-ARRAY?>
+
+</ANY-BINDABLE?>
 
 
 ; ============================================================================
