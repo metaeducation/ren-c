@@ -4,17 +4,17 @@
 
 ; Edge case of matching END with THRU
 ;
-("" == parse "" [thru ["a" | <end>]])
-([] == parse [] [thru ["a" | <end>]])
+(void? parse "" [thru ["a" | <end>]])
+(void? parse [] [thru ["a" | <end>]])
 
 [
-    ([] == parse [] [thru <end>])
+    (void? parse [] [thru <end>])
     ('a == parse [a] [thru 'a])
-    ([] == parse [a] [thru 'a <end>])
+    ('a == parse [a] [thru 'a <end>])
     (raised? parse [a] [thru 'a <any>])
     ('b == parse [a b] [thru 'b])
     ('a == parse [a] [thru ['a]])
-    ([] == parse [a] [thru ['a] <end>])
+    ('a == parse [a] [thru ['a] <end>])
     (raised? parse [a] [thru ['a] <any>])
     ('b == parse [a b] [thru ['b]])
 ]
@@ -102,14 +102,14 @@
 )
 
 [
-    ("" == parse "" [thru <end>])
+    (void? parse "" [thru <end>])
     (#a == parse "a" [thru #a])
-    ("" == parse "a" [thru #a <end>])
+    (#a == parse "a" [thru #a <end>])
     (raised? parse "a" [thru #a <any>])
     (#b == parse "ab" [thru #a <any>])
     (#a == parse "aaba" [<any> thru #a repeat 2 <any>])
     (#a == parse "a" [thru [#a]])
-    ("" == parse "a" [thru [#a] <end>])
+    (#a == parse "a" [thru [#a] <end>])
     (raised? parse "a" [thru [#a] <any>])
     (#b == parse "ab" [thru [#a] <any>])
     (#a == parse "aaba" [<any> thru [#a] repeat 2 <any>])
@@ -133,14 +133,14 @@
         wa: [#{0A}]
         true
     )
-    (#{} == parse #{} [thru <end>])
+    (void? parse #{} [thru <end>])
     (#{0A} == parse #{0A} [thru #{0A}])
-    (#{} == parse #{0A} [thru #{0A} <end>])
+    (#{0A} == parse #{0A} [thru #{0A} <end>])
     (raised? parse #{0A} [thru #{0A} <any>])
     (11 == parse #{0A0B} [thru #{0A} <any>])
     (10 == parse #{0A0A0B0A} [<any> thru #{0A} repeat 2 <any>])
     (#{0A} == parse #{0A} [thru [#{0A}]])
-    (#{} == parse #{0A} [thru [#{0A}] <end>])
+    (#{0A} == parse #{0A} [thru [#{0A}] <end>])
     (raised? parse #{0A} [thru [#{0A}] <any>])
     (11 == parse #{0A0B} [thru [#{0A}] <any>])
     (10 == parse #{0A0A0B0A} [<any> thru [#{0A}] repeat 2 <any>])
@@ -157,19 +157,19 @@
     (
         res: ~
         did all [
-            #{} == parse bin [thru #{CAFE} <any> res: across to # to <end>]
+            #{BABE} == parse bin [thru #{CAFE} <any> res: across to # to <end>]
             res = #{BABE}
         ]
     )
     (
         res: ~
         did all [
-            #{} == parse bin [thru #{BABE} res: <here> to <end>]
+            #{00DEADBEEF00} == parse bin [thru #{BABE} res: <here> to <end>]
             9 = index? res
         ]
     )
 ]
 
 [https://github.com/red/red/issues/3427
-    (%"" == parse/part %234 ["23" thru [<end>]] 3)
+    ("23" == parse/part %234 ["23" thru [<end>]] 3)
 ]

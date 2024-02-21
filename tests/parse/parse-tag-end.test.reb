@@ -3,21 +3,24 @@
 ; In UPARSE, the <end> tag should be used.  This frees up the END
 ; word for variables (like start and end for ranges being copied, for
 ; example, or begin and end, etc.)
+;
+; It vanishes, because this is the overwhelmingly most useful behavior.
+; e.g. recognizing a single element in a block can be done with [<any> <end>].
 
 
 ; BLOCK! end tests from %parse-test.red
 [
     (
         block: [a]
-        (tail block) = parse block ['a <end>]
+        'a = parse block ['a <end>]
     )
     (raised? parse [a b] ['a <end>])
-    ([] == parse [a] [<any> <end>])
+    ('a == parse [a] [<any> <end>])
     (raised? parse [a b] [<any> <end>])
-    ([] == parse [] [<end>])
+    (void? parse [] [<end>])
     (
         be6: ~
-        did all [
+        all [
             1 == parse [] [<end> (be6: 1)]
             be6 = 1
         ]
@@ -28,12 +31,12 @@
 [
     (
         text: "a"
-        (tail text) == parse text [#a <end>]
+        #a == parse text [#a <end>]
     )
     (raised? parse "ab" [#a <end>])
-    ("" == parse "a" [<any> <end>])
+    (#a == parse "a" [<any> <end>])
     (raised? parse "ab" [<any> <end>])
-    ("" == parse "" [<end>])
+    (void? parse "" [<end>])
     (
         be6: ~
         did all [
@@ -47,12 +50,12 @@
 [
     (
         binary: #{0A}
-        (tail binary) == parse #{0A} [#{0A} <end>]
+        #{0A} == parse #{0A} [#{0A} <end>]
     )
     (raised? parse #{0A0B} [#{0A} <end>])
-    (#{} == parse #{0A} [<any> <end>])
+    (10 == parse #{0A} [<any> <end>])
     (raised? parse #{0A0B} [<any> <end>])
-    (#{} == parse #{} [<end>])
+    (void? parse #{} [<end>])
     (
         be6: ~
         did all [

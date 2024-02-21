@@ -101,7 +101,7 @@
                     | #"]" :(f x)
                 ]
             ]
-            return "" == parse s [try some r <end>]
+            return ok? parse s [try some r <end>]
         ]
 
         f "420,]]"

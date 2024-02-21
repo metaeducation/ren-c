@@ -295,8 +295,8 @@
 
 ; Nested collect
 [
-    (did all [
-        [] == parse [1 2 3 4] [
+    (all [
+        [1 4] == parse [1 2 3 4] [
             a: collect [
                 keep integer!
                 b: collect [keep spread across repeat 2 integer!]
@@ -351,8 +351,8 @@ https://github.com/metaeducation/ren-c/issues/935
         x = ["aaa" "b"]
     ])
 
-    (did all [
-        "" == parse "aaabbb" [x: collect [keep across to "b"] to <end>]
+    (all [
+        ["aaa"] == parse "aaabbb" [x: collect [keep across to "b"] to <end>]
         x = ["aaa"]
     ])
 
@@ -428,8 +428,10 @@ https://github.com/metaeducation/ren-c/issues/935
 ;     red>> test
 ;     == ""
 ;
+; But in Ren-C, <end> is invisible.  So KEEP fails with no argument.
+;
 [https://github.com/red/red/issues/2561
-    ([""] = parse "" [collect [keep to <end>]])
+    ~???~ !! (parse "" [collect [keep to <end>]])
     ([""] = parse "" [collect [keep across to <end>]])
 ]
 

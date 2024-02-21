@@ -35,7 +35,7 @@
         'a == parse [a] [not wb 'a]
     )
     (raised? parse [a a] [not ['a 'a] to <end>])
-    ([] == parse [a a] [not [some 'b] to <end>])
+    (~not~ == parse [a a] [not [some 'b] to <end>])
 ]
 
 [
@@ -49,7 +49,7 @@
         #a == parse "a" [not wb #a]
     )
     (raised? parse "aa" [not [#a #a] to <end>])
-    ("" == parse "aa" [not [some #b] to <end>])
+    (~not~ == parse "aa" [not [some #b] to <end>])
 ]
 
 [
@@ -63,5 +63,5 @@
         #{0A} == parse #{0A} [not wb #{0A}]
     )
     (raised? parse #{0A0A} [not [#{0A} #{0A}] to <end>])
-    (#{} == parse #{0A0A} [not [some #{0B}] to <end>])
+    (~not~ == parse #{0A0A} [not [some #{0B}] to <end>])
 ]

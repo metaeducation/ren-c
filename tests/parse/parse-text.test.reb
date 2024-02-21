@@ -25,7 +25,7 @@
 ("a" == parse "a" ["a"])
 ("ab" == parse "ab" ["ab"])
 ("abc" == parse "abc" ["abc"])
-("" == parse "abc" ["abc" <end>])
+("abc" == parse "abc" ["abc" <end>])
 
 ; Ren-C does not mandate that rules make progress, so matching empty strings
 ; works, as it does in Red.
@@ -92,7 +92,7 @@
 (
     test: to-binary {The C😺T Test}
     did all [
-        #{} == parse test [to {c😺t} x: across to space to <end>]
+        #{43F09F98BA54} == parse test [to {c😺t} x: across to space to <end>]
         x = #{43F09F98BA54}
         "C😺T" = to-text x
     ]
@@ -153,14 +153,16 @@
     (
         res: ~
         did all [
-            "" == parse str [thru "ipsum" <any> res: across to #" " to <end>]
+            "dolor" == parse str [
+                thru "ipsum" <any> res: across to #" " to <end>
+            ]
             res = "dolor"
         ]
     )
     (
         res: ~
         did all [
-            "" == parse str [thru #p res: <here> to <end>]
+            "sum dolor sit amet." == parse str [thru #p res: <here> to <end>]
             9 = index? res
         ]
     )

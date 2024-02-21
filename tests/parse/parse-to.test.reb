@@ -2,12 +2,12 @@
 
 ; Edge case of matching END with TO or THRU
 ;
-("" == parse "" [to ["a" | <end>]])
-([] == parse [] [to ["a" | <end>]])
+(void? parse "" [to ["a" | <end>]])
+(void? parse [] [to ["a" | <end>]])
 
 [
-    ([] == parse [] [to <end>])
-    ([] == parse [a] [to <end>])
+    (void? parse [] [to <end>])
+    (void? parse [a] [to <end>])
     (raised? parse [a] [to 'a])
     (raised? parse [a] [to 'a <end>])
     ('a == parse [a] [to 'a <any>])
@@ -27,17 +27,17 @@
 ]
 
 [
-    ("" == parse "" [to <end>])
-    ("" == parse "a" [to <end>])
+    (void? parse "" [to <end>])
+    (void? parse "a" [to <end>])
     (raised? parse "a" [to #a])
     (raised? parse "a" [to #a <end>])
     (#b == parse "ab" [to #a repeat 2 <any>])
     (#a == parse "a" [to #a <any>])
-    ("" == parse "aaab" [to #a to <end>])
+    (#a == parse "aaab" [to #a to <end>])
     (raised? parse "a" [to [#a]])
     (raised? parse "a" [to [#a] <end>])
     (#a == parse "a" [to [#a] <any>])
-    ("" == parse "aaab" [to [#a] to <end>])
+    (#a == parse "aaab" [to [#a] to <end>])
     (#b == parse "ab" [to [#a] repeat 2 <any>])
     (#c == parse "zzabc" [to [#c | #b | #a] repeat 3 <any>])
     (#c == parse "zzabc" [to [#a | #b | #c] repeat 3 <any>])
@@ -50,7 +50,7 @@
 ; TO and THRU would be too costly to be implicitly value bearing by making
 ; copies; you need to use ACROSS.
 [(
-    "" = parse "abc" [to <end>]
+    void? parse "abc" [to <end>]
 )(
     void? parse "abc" [elide to <end>]
 )(
@@ -85,20 +85,20 @@
         wa: [#{0A}]
         true
     )
-    (#{} == parse #{} [to <end>])
-    (#{} == parse #{0A} [to <end>])
+    (void? parse #{} [to <end>])
+    (void? parse #{0A} [to <end>])
     (raised? parse #{0A} [to #{0A}])
     (raised? parse #{0A} [to #{0A} <end>])
     (10 == parse #{0A} [to #{0A} <any>])
     (11 == parse #{0A0B} [to #{0A} repeat 2 <any>])
-    (#{} == parse #{0A0A0A0B} [to #{0A} to <end>])
+    (#{0A} == parse #{0A0A0A0B} [to #{0A} to <end>])
     (raised? parse #{0A} [to [#{0A}]])
     (raised? parse #{0A} [to [#{0A}] <end>])
     (10 == parse #{0A} [to [#{0A}] <any>])
     (11 == parse #{0A0B} [to [#{0A}] repeat 2 <any>])
     (12 == parse #{99990A0B0C} [to [#"^L" | #{0B} | #{0A}] repeat 3 <any>])
     (12 == parse #{99990A0B0C} [to [#{0A} | #{0B} | #"^L"] repeat 3 <any>])
-    (#{} == parse #{0A0A0A0B} [to [#{0A}] to <end>])
+    (#{0A} == parse #{0A0A0A0B} [to [#{0A}] to <end>])
     (raised? parse #{} [to #{0A}])
     (raised? parse #{} [to #"^/"])
     (raised? parse #{} [to [#{0A}]])
@@ -106,11 +106,11 @@
 ]
 
 [https://github.com/red/red/issues/3427
-    (%"" == parse/part %234 ["23" to [<end>]] 3)
-    (%"" == parse/part %234 ["23" to <end>] 3)
+    ("23" == parse/part %234 ["23" to [<end>]] 3)
+    ("23" == parse/part %234 ["23" to <end>] 3)
     (
         count-up i 4 [
-            assert ["" == parse/part "12" ["1" to [<end>]] i]
+            assert ["1" == parse/part "12" ["1" to [<end>]] i]
         ]
         true
     )

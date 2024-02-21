@@ -26,7 +26,7 @@
 
 (raised? parse [x] ['x blank])
 ('_ = parse [x _] ['x _])
-([] == parse [x] [try blank 'x <end>])
+('x == parse [x] [try blank 'x <end>])
 
 (raised? parse [] [blank blank blank])
 

@@ -12,7 +12,7 @@
     count-up n 512 [
         if n = 1 [continue]
 
-        if not try parse (append copy "" codepoint-to-char n - 1) [
+        if not ok? parse (append copy "" codepoint-to-char n - 1) [
             c: any-char <end>
         ][
             fail "Parse didn't work"

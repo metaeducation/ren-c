@@ -68,7 +68,7 @@
 )
 
 [(
-    "" == parse "baaabccc" [
+    "a" == parse "baaabccc" [
         subparse [between "b" "b"] [some "a" <end>] to <end>
     ]
 )(
@@ -78,11 +78,11 @@
 )(
     raised? parse "baaabccc" [subparse [between "b" "b"] ["a"], to <end>]
 )(
-    "" == parse "baaabccc" [
+    "c" == parse "baaabccc" [
         subparse [between "b" "b"] ["a" to <end>], "c", to <end>
     ]
 )(
-    "" == parse "aaabccc" [subparse [across to "b"] [some "a"], to <end>]
+    "a" == parse "aaabccc" [subparse [across to "b"] [some "a"], to <end>]
 )]
 
 

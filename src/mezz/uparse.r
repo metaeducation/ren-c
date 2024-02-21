@@ -760,12 +760,12 @@ default-combinators: make map! reduce [
 
     <end> combinator [
         {Only match if the input is at the end}
-        return: "End position of the parse input"
-            [any-series?]
+        return: "Invisible"
+            [nihil?]
     ][
         if tail? input [
             remainder: input
-            return input
+            return nihil
         ]
         return raise "PARSE position not at <end>"
     ]

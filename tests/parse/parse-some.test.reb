@@ -101,8 +101,8 @@
 ]
 
 [https://github.com/red/red/issues/3108
-    ([] == parse [1] [some further [to <end>]])
-    ([] == parse [1] [some further [to [<end>]]])
+    (void? parse [1] [some further [to <end>]])
+    (void? parse [1] [some further [to [<end>]]])
 ]
 
 (#c == parse "baaac" [<any> some [#a] #c])
