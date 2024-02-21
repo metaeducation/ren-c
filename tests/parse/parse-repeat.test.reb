@@ -44,7 +44,6 @@
 ; both maximum and minimum are blank, it's the same as `repeat (_)`, a no-op.
 ;
 
-
 (
     var: 3
     rule: "a"
@@ -64,8 +63,27 @@
 ; Plain loops that never actually run their body give back a match that is
 ; a void, as do 0-iteration REPEAT and INTEGER! rules.
 [
+    (void? parse "" [repeat 0 <any>])
+
     (void? parse "a" ["a" repeat (0) "b"])
     (void' = parse "a" ["a" ^[repeat (0) "b"]])
+
+    ("a" = parse "a" ["a" elide-if-void/ repeat 0 "b"])
+    (
+        x: ~
+        all [
+            void' = parse "a" ["a" x: ^[repeat 0 "b"]]
+            void' = x
+        ]
+    )
+
+    ("a" = parse "a" ["a" elide-if-void/ repeat 0 "b"])
+    ("a" = parse "a" ["a" elide-if-void/ [repeat 0 "b"]])
+]
+
+[
+    ("a" == parse "a" [repeat 1 "a"])
+    ("a" == parse "aa" [repeat 2 "a"])
 ]
 
 ; Conventional ranges
@@ -123,3 +141,57 @@
     ("a" == parse "aa" [repeat ([_ #]) "a"])
     (void? parse "" [repeat ([_ #]) "a"])
 ]
+
+[
+    (raised? parse [a a] [repeat 1 ['a]])
+    ('a == parse [a a] [repeat 2 ['a]])
+    (raised? parse [a a] [repeat 3 ['a]])
+
+    (raised? parse [a a] [repeat 1 'a])
+    ('a == parse [a a] [repeat 2 'a])
+    (raised? parse [a a] [repeat 3 'a])
+    (raised? parse [a a] [repeat 1 repeat 1 'a])
+]
+
+[
+    ('b == parse [a a b b] [repeat 2 'a repeat 2 'b])
+    (raised? parse [a a b b] [repeat 2 'a repeat 3 'b])
+]
+
+[https://github.com/red/red/issues/564
+    (raised? parse [a] [repeat 0 <any>])
+    ('a == parse [a] [repeat 0 <any> 'a])
+    (
+        z: ~
+        all [
+            raised? parse [a] [z: across repeat 0 <any>]
+            z = []
+        ]
+    )
+]
+
+[https://github.com/red/red/issues/564
+    (raised? parse "a" [repeat 0 <any>])
+    (#a == parse "a" [repeat 0 <any> #a])
+    (
+        z: ~
+        all [
+            raised? parse "a" [z: across repeat 0 <any>]
+            z = ""
+        ]
+    )
+]
+
+[https://github.com/red/red/issues/4591
+    (void? parse [] [repeat 0 [ignore me]])
+    (void? parse [] [repeat 0 "ignore me"])
+    (void? parse [] [repeat 0 repeat 0 [ignore me]])
+    (void? parse [] [repeat 0 repeat 0 "ignore me"])
+    (raised? parse [x] [repeat 0 repeat 0 'x])
+    (raised? parse " " [repeat 0 repeat 0 space])
+]
+
+[#1280 (
+    parse "" [(i: 0) repeat 3 [["a" |] (i: i + 1)]]
+    i == 3
+)]
