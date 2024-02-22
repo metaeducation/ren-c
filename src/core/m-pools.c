@@ -32,7 +32,7 @@
 // in both Rebol and Red terminology.  It is an item whose pointer is valid
 // for the lifetime of the object, regardless of resizing.  This is where
 // header information is stored, and pointers to these objects may be saved
-// in REBVAL values; such that they are kept alive by the garbage collector.
+// in cells; such that they are kept alive by the garbage collector.
 //
 // The more complicated thing to do memory pooling of is the variable-sized
 // portion of a series (currently called the "series data")...as series sizes
@@ -502,7 +502,7 @@ Node* Try_Find_Containing_Node_Debug(const void *p)
                 continue;
 
             if (unit[0] & NODE_BYTEMASK_0x01_CELL) {  // a "pairing"
-                REBVAL *pairing = x_cast(Value*, unit);
+                Value* pairing = x_cast(Value*, unit);
                 if (p >= cast(void*, pairing) and p < cast(void*, pairing + 1))
                     return pairing;  // this Stub is actually Cell[2]
                 continue;
@@ -621,7 +621,7 @@ void Manage_Pairing(Cell* paired) {
 // It may be desirable to extend, shorten, or otherwise explicitly control
 // their lifetime.
 //
-void Unmanage_Pairing(REBVAL *paired) {
+void Unmanage_Pairing(Value* paired) {
     assert(Is_Node_Managed(paired));
     Clear_Node_Managed_Bit(paired);
 }
@@ -719,7 +719,7 @@ void Free_Unbiased_Series_Data(char *unbiased, Size total)
 // seem a bit high cost for their benefit.  If this were to be
 // changed to Expand_Series_Noterm it would put more burden
 // on the clients...for a *potential* benefit in being able to
-// write just an END marker into the terminal REBVAL vs. copying
+// write just an END marker into the terminal cell vs. copying
 // the entire value cell.  (Of course, with a good memcpy it
 // might be an irrelevant difference.)  For the moment we reverse
 // the burden by enforcing the assumption that the incoming series

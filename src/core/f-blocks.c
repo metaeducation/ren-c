@@ -190,7 +190,7 @@ Array* Copy_Array_Core_Managed(
 //
 //  Alloc_Tail_Array: C
 //
-// Append a REBVAL-size slot to Rebol Array series at its tail.
+// Append a cell to Rebol Array series at its tail.
 // Will use existing memory capacity already in the series if it
 // is available, but will expand the series if necessary.
 // Returns the new value for you to initialize.

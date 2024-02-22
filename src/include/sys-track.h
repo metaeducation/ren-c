@@ -54,7 +54,7 @@
         v->line = line;
         v->tick = TG_tick;
         v->touch = 0;
-        return cast(REBVAL*, v);
+        return cast(Value*, v);
     }
   #endif
 

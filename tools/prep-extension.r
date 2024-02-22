@@ -248,7 +248,7 @@ if use-librebol [
         */
         #undef DECLARE_NATIVE
         #define DECLARE_NATIVE(n) \
-            REBVAL* N_${MOD}_##n(void* level_)
+            Value* N_${MOD}_##n(void* level_)
     }]
 ]
 else [
@@ -395,7 +395,7 @@ e/emit [mod {
      * box or interface could provide more flexibility for arbitrary future
      * extension implementations.
      */
-    EXT_API REBVAL *RX_COLLATE_NAME(${Mod})(RL_LIB *api) {
+    EXT_API Value* RX_COLLATE_NAME(${Mod})(RL_LIB *api) {
       #ifdef REB_EXT
         /* only DLLs need to call rebXXX() APIs through a table */
         /* built-in extensions can call the RL_rebXXX() forms directly */

@@ -31,7 +31,7 @@
 // On a semi-superficial level, this permits a kind of dynamic polymorphism,
 // such as that used by panic():
 //
-//     REBVAL *value = ...;
+//     Value* value = ...;
 //     panic (value);  // can tell this is a value
 //
 //     Series* series = ...;
@@ -57,7 +57,7 @@
     //
     // In plain C builds, there's no such thing as "base classes".  So the
     // only way to make a function that can accept either a Series* or a
-    // REBVAL* without knowing which is to use a `void*`.  So the Node is
+    // Value* without knowing which is to use a `void*`.  So the Node is
     // defined as `void`, and the C++ build is trusted to do the more strict
     // type checking.
     //
@@ -362,7 +362,7 @@ INLINE uintptr_t FLAG_SECOND_UINT16(uint16_t u)
 // how this is achieved.
 //
 // This control allows the leftmost byte of a Rebol header (the one you'd
-// get by casting REBVAL* to an unsigned char*) to always start with the bit
+// get by casting Value* to an unsigned char*) to always start with the bit
 // pattern `10`.  This pattern corresponds to what UTF-8 calls "continuation
 // bytes", which may never legally start a UTF-8 string:
 //
@@ -463,7 +463,7 @@ union HeaderUnion {
 //
 // Because "pairings" can wind up marking what looks like both a value cell
 // and a series, it's a bit dangerous to try exploiting this bit on a generic
-// REBVAL.  If one is *certain* that a value is not "paired" (e.g. it's in
+// cell.  If one is *certain* that a value is not "paired" (e.g. it's in
 // a function arglist, or array slot), it may be used for other things.
 //
 #define NODE_FLAG_MARKED \
@@ -473,7 +473,7 @@ union HeaderUnion {
 
 //=//// NODE_FLAG_GC_ONE / NODE_FLAG_GC_TWO (fifth/sixth-leftmost bit) ////=//
 //
-// Both REBVAL* and Series* nodes have two slots in them which can be called
+// Both Value* and Series* nodes have two slots in them which can be called
 // out for attention from the GC.  Though these bits are scarce, sacrificing
 // them means not needing to do a switch() on the REB_TYPE of the cell to
 // know how to mark them.

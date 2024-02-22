@@ -29,6 +29,7 @@
 #include <stdarg.h>
 
 #include "rebol.h"  // added for panic()
+typedef RebolValue Value;
 
 static void unsigned_dec_print(char **s, size_t n, size_t *chars_printed,
                    unsigned int unum)

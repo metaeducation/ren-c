@@ -47,14 +47,14 @@ Bounce MAKE_Port(
     Level* level_,
     Kind kind,
     Option(const Value*) parent,
-    const REBVAL *arg
+    const Value* arg
 ){
     assert(kind == REB_PORT);
     if (parent)
         return RAISE(Error_Bad_Make_Parent(kind, unwrap(parent)));
 
     if (rebRunThrows(
-        cast(REBVAL*, OUT),  // <-- output cell
+        cast(Value*, OUT),  // <-- output cell
         rebRUN(SysUtil(MAKE_PORT_P)), rebQ(arg)
     )){
         fail (Error_No_Catch_For_Throw(TOP_LEVEL));
@@ -70,7 +70,7 @@ Bounce MAKE_Port(
 //
 //  TO_Port: C
 //
-Bounce TO_Port(Level* level_, Kind kind, const REBVAL *arg)
+Bounce TO_Port(Level* level_, Kind kind, const Value* arg)
 {
     assert(kind == REB_PORT);
     UNUSED(kind);
@@ -84,7 +84,7 @@ Bounce TO_Port(Level* level_, Kind kind, const REBVAL *arg)
     // system.standard.port is made with CONTEXT and not with MAKE PORT!
     //
     Context* context = Copy_Context_Shallow_Managed(VAL_CONTEXT(arg));
-    REBVAL *rootvar = CTX_ROOTVAR(context);
+    Value* rootvar = CTX_ROOTVAR(context);
     HEART_BYTE(rootvar) = REB_PORT;
 
     return Init_Port(OUT, context);
@@ -99,7 +99,7 @@ Bounce TO_Port(Level* level_, Kind kind, const REBVAL *arg)
 //
 REBTYPE(Port)
 {
-    REBVAL *port = D_ARG(1);
+    Value* port = D_ARG(1);
     assert(Is_Port(port));
 
     Option(SymId) id = Symbol_Id(verb);
@@ -128,7 +128,7 @@ REBTYPE(Port)
         return T_Context(level_, verb);
 
     Context* ctx = VAL_CONTEXT(port);
-    REBVAL *actor = CTX_VAR(ctx, STD_PORT_ACTOR);
+    Value* actor = CTX_VAR(ctx, STD_PORT_ACTOR);
 
     // If actor is a HANDLE!, it should be a PAF
     //
@@ -158,8 +158,8 @@ REBTYPE(Port)
     const bool strict = false;
     REBLEN n = Find_Symbol_In_Context(actor, verb, strict);
 
-    REBVAL *action = (n == 0)
-        ? cast(REBVAL*, nullptr)  // C++98 ambiguous w/o cast
+    Value* action = (n == 0)
+        ? cast(Value*, nullptr)  // C++98 ambiguous w/o cast
         : CTX_VAR(VAL_CONTEXT(actor), n);
 
     if (not action or not Is_Action(action)) {
@@ -233,7 +233,7 @@ REBINT CT_Url(const Cell* a, const Cell* b, bool strict)
 //
 REBTYPE(Url)
 {
-    REBVAL *url = D_ARG(1);
+    Value* url = D_ARG(1);
 
     Option(SymId) id = Symbol_Id(verb);
     if (id == SYM_COPY) {
@@ -263,7 +263,7 @@ REBTYPE(Url)
         fail ("URL! must be used with IO annotation if intentional");
     }
 
-    REBVAL *port = rebValue("make port!", url);
+    Value* port = rebValue("make port!", url);
     assert(Is_Port(port));
 
     // The frame was built for the verb we want to apply, so tweak it so that

@@ -312,7 +312,7 @@ struct JumpStruct {
         static_assert(
             std::is_same<T, Context>::value
             or std::is_same<T, const char>::value
-            or std::is_base_of<const REBVAL, T>::value
+            or std::is_base_of<const Value, T>::value
             or std::is_base_of<Cell, T>::value,
             "fail() works on: Context*, Cell*, const char*"
         );

@@ -29,7 +29,7 @@ inline static void Fail_Permission_Denied(void) {
 }
 
 ATTRIBUTE_NO_RETURN
-inline static void Fail_No_Process(const REBVAL *arg) {
+inline static void Fail_No_Process(const Value* arg) {
     rebJumps(
         "fail [{The target process (group) does not exist:}", arg, "]"
     );

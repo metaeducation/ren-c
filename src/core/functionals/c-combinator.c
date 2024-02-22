@@ -153,7 +153,7 @@ Bounce Combinator_Dispatcher(Level* L)
 // and the rebValue("...") function won't work, so it had to be hacked up as
 // a handcoded routine.  Review.
 //
-Array* Expanded_Combinator_Spec(const REBVAL *original)
+Array* Expanded_Combinator_Spec(const Value* original)
 {
     StackIndex base = TOP_INDEX;
 
@@ -286,7 +286,7 @@ DECLARE_NATIVE(combinator)
 //
 // This service routine does a faster version of something like:
 //
-//     REBVAL *result = rebValue("applique @", ARG(parser), "[",
+//     Value* result = rebValue("applique @", ARG(parser), "[",
 //         "input:", rebQ(ARG(input)),  // quote avoids becoming const
 //         "remainder: @", ARG(remainder),
 //     "]");
@@ -297,9 +297,9 @@ DECLARE_NATIVE(combinator)
 //
 void Push_Parser_Sublevel(
     Atom* out,
-    const REBVAL *remainder,
-    const REBVAL *parser,
-    const REBVAL *input
+    const Value* remainder,
+    const Value* parser,
+    const Value* input
 ){
     assert(Any_Series(input));
     assert(Is_Frame(parser));
@@ -559,9 +559,9 @@ DECLARE_NATIVE(further_combinator)
 {
     INCLUDE_PARAMS_OF_FURTHER_COMBINATOR;
 
-    REBVAL *remainder = ARG(remainder);
-    REBVAL *input = ARG(input);
-    REBVAL *parser = ARG(parser);
+    Value* remainder = ARG(remainder);
+    Value* input = ARG(input);
+    Value* parser = ARG(parser);
     UNUSED(ARG(state));
 
     enum {
@@ -721,9 +721,9 @@ static bool Combinator_Param_Hook(
             // write to native frame variables, so hack in a temporary here.
             // (could be done much more efficiently another way!)
 
-            if (rebRunThrows(cast(REBVAL*, SPARE), "let temp"))
+            if (rebRunThrows(cast(Value*, SPARE), "let temp"))
                 assert(!"LET failed");
-            REBVAL *parser = rebValue(
+            Value* parser = rebValue(
                 "[@", stable_SPARE, "]: parsify", rebQ(ARG(state)), ARG(rules)
             );
             bool any = false;

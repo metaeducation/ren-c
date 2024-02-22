@@ -91,7 +91,7 @@ Bounce MAKE_Word(
     Level* level_,
     Kind k,
     Option(const Value*) parent,
-    const REBVAL *arg
+    const Value* arg
 ){
     Heart heart = cast(Heart, k);
 
@@ -132,7 +132,7 @@ Bounce MAKE_Word(
         // Run the same mechanics that AS WORD! would, since it's immutable.
         //
       as_word: {
-        REBVAL *as = rebValue("as", Datatype_From_Kind(heart), arg);
+        Value* as = rebValue("as", Datatype_From_Kind(heart), arg);
         Copy_Cell(OUT, as);
         rebRelease(as);
 
@@ -154,7 +154,7 @@ Bounce MAKE_Word(
 //
 //  TO_Word: C
 //
-Bounce TO_Word(Level* level_, Kind k, const REBVAL *arg)
+Bounce TO_Word(Level* level_, Kind k, const Value* arg)
 {
     Heart heart = cast(Heart, k);
 
@@ -296,7 +296,7 @@ void MF_Type_Word(REB_MOLD *mo, const Cell* v, bool form) {
 //
 REBTYPE(Word)
 {
-    REBVAL *v = D_ARG(1);
+    Value* v = D_ARG(1);
     assert(Any_Word(v));
 
     switch (Symbol_Id(verb)) {

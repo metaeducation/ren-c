@@ -46,12 +46,13 @@
 #define REBOL_SMART_CONSOLE
 
 #include "rebol.h"
+typedef RebolValue Value;
 
 // !!! The history mechanism will be disconnected from the line editing
 // mechanism--but for the moment, the line editing is the only place we
 // get an Init() and Shutdown() opportunity.
 //
-extern REBVAL *Line_History;  // BLOCK! of TEXT!s
+extern Value* Line_History;  // BLOCK! of TEXT!s
 
 
 // The terminal is an opaque type which varies per operating system.  This
@@ -63,11 +64,11 @@ typedef struct Reb_Terminal_Struct STD_TERM;
 
 
 extern int Term_Pos(STD_TERM *t);
-extern REBVAL *Term_Buffer(STD_TERM *t);
+extern Value* Term_Buffer(STD_TERM *t);
 
 extern STD_TERM *Init_Terminal(void);
 
-extern void Term_Insert(STD_TERM *t, const REBVAL *v);
+extern void Term_Insert(STD_TERM *t, const Value* v);
 extern void Term_Seek(STD_TERM *t, unsigned int pos);
 extern void Move_Cursor(STD_TERM *t, int count);
 extern void Delete_Char(STD_TERM *t, bool back);
@@ -102,7 +103,7 @@ extern void Quit_Terminal(STD_TERM *t);
 // do another operation (process network requests for a real-time chat, etc.)
 // This is at the concept stage at the moment.
 //
-extern REBVAL *Try_Get_One_Console_Event(
+extern Value* Try_Get_One_Console_Event(
     STD_TERM *t,
     bool buffered,
     int timeout
@@ -116,6 +117,6 @@ extern void Term_Abandon_Pending_Events(STD_TERM *t);
 
 extern STD_TERM *Term_IO;
 
-extern REBVAL *Read_Line(STD_TERM *t);  // defined in %p-stdio.c for now
+extern Value* Read_Line(STD_TERM *t);  // defined in %p-stdio.c for now
 
 #endif  // end smart console branch

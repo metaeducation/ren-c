@@ -141,7 +141,7 @@ out_of_range:
 //
 //  Int64: C
 //
-REBI64 Int64(const REBVAL *val)
+REBI64 Int64(const Value* val)
 {
     if (Is_Integer(val))
         return VAL_INT64(val);
@@ -157,7 +157,7 @@ REBI64 Int64(const REBVAL *val)
 //
 //  Dec64: C
 //
-REBDEC Dec64(const REBVAL *val)
+REBDEC Dec64(const Value* val)
 {
     if (Is_Decimal(val) or Is_Percent(val))
         return VAL_DECIMAL(val);
@@ -179,7 +179,7 @@ REBDEC Dec64(const REBVAL *val)
 //     1: >  0
 //    -1: <  0
 //
-REBI64 Int64s(const REBVAL *val, REBINT sign)
+REBI64 Int64s(const Value* val, REBINT sign)
 {
     REBI64 n;
     if (Is_Decimal(val)) {
@@ -210,7 +210,7 @@ REBI64 Int64s(const REBVAL *val, REBINT sign)
 // Returns the specified datatype value from the system context.
 // The datatypes are all at the head of the context.
 //
-const REBVAL *Datatype_From_Kind(Kind kind)
+const Value* Datatype_From_Kind(Kind kind)
 {
     assert(kind < REB_MAX);
     Offset n = cast(Offset, kind);
@@ -227,7 +227,7 @@ const REBVAL *Datatype_From_Kind(Kind kind)
 // Returns the datatype value for the given value.
 // The datatypes are all at the head of the context.
 //
-const REBVAL *Type_Of(const Atom* value)
+const Value* Type_Of(const Atom* value)
 {
     return Datatype_From_Kind(VAL_TYPE(value));
 }
@@ -238,9 +238,9 @@ const REBVAL *Type_Of(const Atom* value)
 //
 // Return a second level object field of the system object.
 //
-REBVAL *Get_System(REBLEN i1, REBLEN i2)
+Value* Get_System(REBLEN i1, REBLEN i2)
 {
-    REBVAL *obj = CTX_VAR(VAL_CONTEXT(Lib(SYSTEM)), i1);
+    Value* obj = CTX_VAR(VAL_CONTEXT(Lib(SYSTEM)), i1);
     if (i2 == 0)
         return obj;
 
@@ -256,7 +256,7 @@ REBVAL *Get_System(REBLEN i1, REBLEN i2)
 //
 REBINT Get_System_Int(REBLEN i1, REBLEN i2, REBINT default_int)
 {
-    REBVAL *val = Get_System(i1, i2);
+    Value* val = Get_System(i1, i2);
     if (Is_Integer(val)) return VAL_INT32(val);
     return default_int;
 }
@@ -275,7 +275,7 @@ void Extra_Init_Context_Cell_Checks_Debug(Kind kind, Context* c) {
         == SERIES_MASK_VARLIST
     );
 
-    const REBVAL *archetype = CTX_ARCHETYPE(c);
+    const Value* archetype = CTX_ARCHETYPE(c);
     assert(VAL_CONTEXT(archetype) == c);
     assert(CTX_TYPE(c) == kind);
 
@@ -298,7 +298,7 @@ void Extra_Init_Context_Cell_Checks_Debug(Kind kind, Context* c) {
     assert(not CTX_ADJUNCT(c) or Any_Context_Kind(CTX_TYPE(CTX_ADJUNCT(c))));
 
     // FRAME!s must always fill in the phase slot, but that piece of the
-    // REBVAL is reserved for future use in other context types...so make
+    // Cell is reserved for future use in other context types...so make
     // sure it's null at this point in time.
     //
     Node* archetype_phase = VAL_FRAME_PHASE_OR_LABEL_NODE(archetype);
@@ -350,8 +350,8 @@ void Extra_Init_Frame_Details_Checks_Debug(Phase* a) {
 // position, so that a positive length for the partial region is returned.
 //
 REBLEN Part_Len_May_Modify_Index(
-    REBVAL *series,  // ANY-SERIES? value whose index may be modified
-    const REBVAL *part  // /PART (number, position in value, or BLANK! cell)
+    Value* series,  // ANY-SERIES? value whose index may be modified
+    const Value* part  // /PART (number, position in value, or BLANK! cell)
 ){
     if (Any_Sequence(series)) {
         if (not Is_Nulled(part))
@@ -429,7 +429,7 @@ REBLEN Part_Len_May_Modify_Index(
 // Simple variation that instead of returning the length, returns the absolute
 // tail position in the series of the partial sequence.
 //
-REBLEN Part_Tail_May_Modify_Index(REBVAL *series, const REBVAL *limit)
+REBLEN Part_Tail_May_Modify_Index(Value* series, const Value* limit)
 {
     REBLEN len = Part_Len_May_Modify_Index(series, limit);
     return len + VAL_INDEX(series); // uses the possibly-updated index
@@ -451,7 +451,7 @@ REBLEN Part_Tail_May_Modify_Index(REBVAL *series, const REBVAL *limit)
 //
 // https://github.com/rebol/rebol-issues/issues/1570
 //
-REBLEN Part_Limit_Append_Insert(const REBVAL *part) {
+REBLEN Part_Limit_Append_Insert(const Value* part) {
     if (Is_Nulled(part))
         return UINT32_MAX;  // treat as no limit
 
@@ -500,7 +500,7 @@ int64_t Mul_Max(Heart heart, int64_t n, int64_t m, int64_t maxi)
 // "be smart" so even a TEXT! can be turned into a SET-WORD! (just an
 // unbound one).
 //
-REBVAL *Setify(REBVAL *out) {  // called on stack values; can't call evaluator
+Value* Setify(Value* out) {  // called on stack values; can't call evaluator
     Heart heart = Cell_Heart(out);
     if (Any_Word_Kind(heart)) {
         HEART_BYTE(out) = REB_SET_WORD;
@@ -546,7 +546,7 @@ DECLARE_NATIVE(setify)
 //
 // Like Setify() but Makes GET-XXX! instead of SET-XXX!.
 //
-REBVAL *Getify(REBVAL *out) {  // called on stack values; can't call evaluator
+Value* Getify(Value* out) {  // called on stack values; can't call evaluator
     Heart heart = Cell_Heart(out);
     if (Any_Block_Kind(heart)) {
         HEART_BYTE(out) = REB_GET_BLOCK;
@@ -592,7 +592,7 @@ DECLARE_NATIVE(getify)
 //
 // Turn a value into its META-XXX! equivalent, if possible.
 //
-REBVAL *Metafy(REBVAL *out) {  // called on stack values; can't call evaluator
+Value* Metafy(Value* out) {  // called on stack values; can't call evaluator
     Heart heart = Cell_Heart(out);
     if (Any_Word_Kind(heart)) {
         HEART_BYTE(out) = REB_META_WORD;
@@ -641,7 +641,7 @@ DECLARE_NATIVE(metafy)
 //
 // Turn a value into its THE-XXX! equivalent, if possible.
 //
-REBVAL *Theify(REBVAL *out) {  // called on stack values; can't call evaluator
+Value* Theify(Value* out) {  // called on stack values; can't call evaluator
     Heart heart = Cell_Heart(out);
     if (Any_Word_Kind(heart)) {
         HEART_BYTE(out) = REB_THE_WORD;
@@ -694,7 +694,7 @@ DECLARE_NATIVE(inert)
 //
 // Turn a value into its "plain" equivalent.  This works for all values.
 //
-REBVAL *Plainify(REBVAL *out) {
+Value* Plainify(Value* out) {
     Heart heart = Cell_Heart(out);
     if (Any_Word_Kind(heart)) {
         HEART_BYTE(out) = REB_WORD;

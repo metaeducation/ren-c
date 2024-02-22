@@ -20,8 +20,8 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// All THROWN values have two parts: the REBVAL arg being thrown and
-// a REBVAL indicating the /NAME of a labeled throw.  (If the throw was
+// All THROWN values have two parts: the Atom arg being thrown and
+// a Value indicating the /NAME of a labeled throw.  (If the throw was
 // created with plain THROW instead of THROW/NAME then its name is BLANK!).
 //
 // You cannot fit both values into a single value's bits of course.  One way
@@ -57,7 +57,7 @@ INLINE const Value* VAL_THROWN_LABEL(Level* level_) {
 INLINE Bounce Init_Thrown_With_Label(  // assumes `arg` in g_ts.thrown_arg
     Level* level_,
     const Atom* arg,
-    const REBVAL *label  // Note: is allowed to be same as `out`
+    const Value* label  // Note: is allowed to be same as `out`
 ){
     assert(not THROWING);
 

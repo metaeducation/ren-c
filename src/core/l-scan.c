@@ -926,7 +926,7 @@ static LEXFLAGS Prescan_Token(SCAN_STATE *ss)
 //
 // Find the beginning and end character pointers for the next token in the
 // scanner state.  If the scanner is being fed variadically by a list of UTF-8
-// strings and REBVAL pointers, then any Rebol values encountered will be
+// strings and cell pointers, then any Rebol values encountered will be
 // spliced into the array being currently gathered by pushing them to the data
 // stack (as tokens can only be located in UTF-8 strings encountered).
 //
@@ -958,7 +958,7 @@ static LEXFLAGS Prescan_Token(SCAN_STATE *ss)
 // !!! This is a somewhat weird separation of responsibilities, that seems to
 // arise from a desire to make "Scan_XXX" functions independent of the
 // "Maybe_Locate_Token_May_Push_Mold" function.  But if work on locating the
-// value means you have to basically do what you'd do to read it into a REBVAL
+// value means you have to basically do what you'd do to read it into a cell
 // anyway, why split it?  This is especially true now that the variadic
 // splicing pushes values directly from this routine.
 //
@@ -1779,7 +1779,7 @@ void Init_Scan_Level(
 
     // !!! Splicing REBVALs into a scan as it goes creates complexities for
     // error messages based on line numbers.  Fortunately the splice of a
-    // REBVAL* itself shouldn't cause a fail()-class error if there's no
+    // Value* itself shouldn't cause a fail()-class error if there's no
     // data corruption, so it should be able to pick up *a* line head before
     // any errors occur...it just might not give the whole picture when used
     // to offer an error message of what's happening with the spliced values.
@@ -2265,7 +2265,7 @@ Bounce Scanner_Executor(Level* const L) {
             HEART_BYTE(TOP) = REB_PERCENT;
 
             // !!! DEBUG_EXTANT_STACK_POINTERS can't resolve if this is
-            // a const Cell* or REBVAL* overload with DEBUG_CHECK_CASTS.
+            // a const Cell* or Value* overload with DEBUG_CHECK_CASTS.
             // Have to cast explicitly.
             //
             VAL_DECIMAL(x_cast(Value*, TOP)) /= 100.0;
@@ -2644,7 +2644,7 @@ Bounce Scanner_Executor(Level* const L) {
                     Pop_Stack_Values(stackindex_path_head - 1)
                 );
                 Push_GC_Guard(items);
-                REBVAL *email = rebValue("as email! delimit {.}", items);
+                Value* email = rebValue("as email! delimit {.}", items);
                 Drop_GC_Guard(items);
                 Copy_Cell(temp, email);
                 rebRelease(email);
@@ -2653,7 +2653,7 @@ Bounce Scanner_Executor(Level* const L) {
         }
 
       blockscope {  // gotos would cross this initialization without
-        REBVAL *check = Try_Pop_Sequence_Or_Element_Or_Nulled(
+        Value* check = Try_Pop_Sequence_Or_Element_Or_Nulled(
             temp,  // doesn't write directly to stack since popping stack
             level->token == TOKEN_TUPLE ? REB_TUPLE : REB_PATH,
             stackindex_path_head - 1
@@ -2931,13 +2931,13 @@ DECLARE_NATIVE(transcode)
 {
     INCLUDE_PARAMS_OF_TRANSCODE;
 
-    REBVAL *source = ARG(source);
+    Value* source = ARG(source);
 
     Size size;
     const Byte* bp = Cell_Bytes_At(&size, source);
 
     SCAN_STATE *ss;
-    REBVAL *ss_buffer = ARG(return);  // kept as a BINARY!, gets GC'd
+    Value* ss_buffer = ARG(return);  // kept as a BINARY!, gets GC'd
 
     enum {
         ST_TRANSCODE_INITIAL_ENTRY = STATE_0,
@@ -2992,7 +2992,7 @@ DECLARE_NATIVE(transcode)
     else
         file = ANONYMOUS;
 
-    const REBVAL *line_number;
+    const Value* line_number;
     if (Any_Word(ARG(line)))
         line_number = Lookup_Word_May_Fail(
             cast(Element*, ARG(line)),
@@ -3085,7 +3085,7 @@ DECLARE_NATIVE(transcode)
     Drop_Level(SUBLEVEL);
 
     if (REF(line) and Is_Word(ARG(line))) {  // wanted the line number updated
-        REBVAL *line_int = ARG(return);  // use return as scratch slot
+        Value* line_int = ARG(return);  // use return as scratch slot
         Init_Integer(line_int, ss->line);
         if (Set_Var_Core_Throws(SPARE, nullptr, ARG(line), SPECIFIED, line_int))
             return THROWN;
@@ -3094,7 +3094,7 @@ DECLARE_NATIVE(transcode)
     // Return the input BINARY! or TEXT! advanced by how much the transcode
     // operation consumed.
     //
-    REBVAL *rest = ARG(rest);
+    Value* rest = ARG(rest);
     Copy_Cell(rest, source);
 
     if (Is_Binary(source)) {

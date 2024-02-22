@@ -120,7 +120,7 @@ Bounce Func_Dispatcher(Level* const L)
     assert(ACT_HAS_RETURN(PHASE));  // all FUNC have RETURN
     assert(KEY_SYM(ACT_KEYS_HEAD(PHASE)) == SYM_RETURN);
 
-    REBVAL *cell = Level_Arg(L, 1);
+    Value* cell = Level_Arg(L, 1);
     assert(Not_Specialized(cell));
     Force_Level_Varlist_Managed(L);
     Init_Action(
@@ -260,7 +260,7 @@ Phase* Make_Interpreted_Action_May_Fail(
     }
 
     // Save the relativized body in the action's details block.  Since it is
-    // a Cell* and not a REBVAL*, the dispatcher must combine it with a
+    // a Cell* and not a Value*, the dispatcher must combine it with a
     // running frame instance (the Level* received by the dispatcher) before
     // executing the interpreted code.
     //
@@ -294,7 +294,7 @@ Phase* Make_Interpreted_Action_May_Fail(
     // not with R3-Alpha FUNCTION.
     //
     if (Get_Cell_Flag(body, CONST))
-        Set_Cell_Flag(rebound, CONST);  // Inherit_Const() would need REBVAL*
+        Set_Cell_Flag(rebound, CONST);  // Inherit_Const() would need Value*
 
     return a;
 }
@@ -348,7 +348,7 @@ DECLARE_NATIVE(endable_q)
 {
     INCLUDE_PARAMS_OF_ENDABLE_Q;
 
-    REBVAL *v = ARG(parameter);
+    Value* v = ARG(parameter);
 
     if (not Did_Get_Binding_Of(SPARE, v))
         fail (PARAM(parameter));
@@ -383,7 +383,7 @@ DECLARE_NATIVE(skippable_q)
 {
     INCLUDE_PARAMS_OF_SKIPPABLE_Q;
 
-    REBVAL *v = ARG(parameter);
+    Value* v = ARG(parameter);
 
     if (not Did_Get_Binding_Of(SPARE, v))
         fail (PARAM(parameter));
@@ -412,7 +412,7 @@ DECLARE_NATIVE(skippable_q)
 //
 Bounce Init_Thrown_Unwind_Value(
     Level* level_,
-    const REBVAL *seek, // FRAME!, ACTION! (or INTEGER! relative to frame)
+    const Value* seek, // FRAME!, ACTION! (or INTEGER! relative to frame)
     const Atom* value,
     Level* target // required if level is INTEGER! or ACTION!
 ) {
@@ -485,7 +485,7 @@ Bounce Init_Thrown_Unwind_Value(
 DECLARE_NATIVE(unwind)
 //
 // UNWIND is implemented via a throw that bubbles through the stack.  Using
-// UNWIND's action REBVAL with a target `binding` field is the protocol
+// UNWIND's action Value with a target `binding` field is the protocol
 // understood by Eval_Core to catch a throw itself.
 //
 // !!! Allowing to pass an INTEGER! to jump from a function based on its
@@ -499,7 +499,7 @@ DECLARE_NATIVE(unwind)
 {
     INCLUDE_PARAMS_OF_UNWIND;
 
-    REBVAL *level = ARG(level);
+    Value* level = ARG(level);
 
     Copy_Cell(SPARE, ARG(result));  // SPARE can hold unstable isotopes
     Meta_Unquotify_Undecayed(SPARE);

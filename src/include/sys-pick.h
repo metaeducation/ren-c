@@ -39,7 +39,7 @@
 //     == 10x304
 //
 // Because GOB! stores its size as packed bits that are not a full PAIR!,
-// the `gob.size` path dispatch can't give back a pointer to a REBVAL* to
+// the `gob.size` path dispatch can't give back a pointer to a Value* to
 // which later writes will update the GOB!.  It can only give back a
 // temporary value built from its internal bits.  So workarounds are needed,
 // as they are for a similar situation in trying to set values in C arrays
@@ -47,7 +47,7 @@
 //
 // The way the workaround works involves allowing a SET-PATH! to run forward
 // and write into a temporary value.  Then in these cases the temporary
-// REBVAL is observed and used to write back into the native bits before the
+// cell is observed and used to write back into the native bits before the
 // SET-PATH! evaluation finishes.  This means that it's not currently
 // prohibited for the effect of a SET-PATH! to be writing into a temporary.
 //
@@ -85,7 +85,7 @@
 INLINE Bounce Run_Pickpoke_Dispatch(
     Level* level_,
     const Symbol* verb,
-    const REBVAL *new_location
+    const Value* new_location
 ){
     Copy_Cell(PUSH(), D_ARG(1));
     Copy_Cell(D_ARG(1), new_location);

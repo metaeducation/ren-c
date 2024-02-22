@@ -88,7 +88,7 @@ INLINE Element* Init_Any_Word_Untracked(
 #define Init_Set_Word(out,str)      Init_Any_Word((out), REB_SET_WORD, (str))
 #define Init_Meta_Word(out,str)     Init_Any_Word((out), REB_META_WORD, (str))
 
-INLINE REBVAL *Init_Any_Word_Bound_Untracked(
+INLINE Value* Init_Any_Word_Bound_Untracked(
     Sink(Element*) out,
     Heart heart,
     const Symbol* symbol,
@@ -115,7 +115,7 @@ INLINE REBVAL *Init_Any_Word_Bound_Untracked(
         assert(symbol == INODE(LetSymbol, binding));
     }
 
-    return cast(REBVAL*, out);
+    return cast(Value*, out);
 }
 
 #define Init_Any_Word_Bound(out,heart,symbol,context,index) \

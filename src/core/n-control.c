@@ -663,7 +663,7 @@ DECLARE_NATIVE(match)
     }
     else if (Is_Action(test)) {
         if (rebRunThrows(
-            cast(REBVAL*, SPARE),  // <-- output cell, API doesn't do unstable
+            cast(Value*, SPARE),  // <-- output cell, API doesn't do unstable
             rebRUN(test), rebQ(v)
         )){
             return THROWN;
@@ -1031,8 +1031,8 @@ DECLARE_NATIVE(case)
 {
     INCLUDE_PARAMS_OF_CASE;
 
-    REBVAL *cases = ARG(cases);
-    REBVAL *predicate = ARG(predicate);
+    Value* cases = ARG(cases);
+    Value* predicate = ARG(predicate);
 
     Atom* discarded = LOCAL(discarded);  // slot to write unused results to
 
@@ -1236,9 +1236,9 @@ DECLARE_NATIVE(switch)
 {
     INCLUDE_PARAMS_OF_SWITCH;
 
-    REBVAL *left = ARG(value);
-    REBVAL *predicate = ARG(predicate);
-    REBVAL *cases = ARG(cases);
+    Value* left = ARG(value);
+    Value* predicate = ARG(predicate);
+    Value* cases = ARG(cases);
 
     Atom* scratch = LOCAL(scratch);
 
@@ -1329,7 +1329,7 @@ DECLARE_NATIVE(switch)
         // The ARG(value) passed in is the left/first argument to compare.
         //
         if (rebRunThrows(
-            cast(REBVAL*, scratch),  // <-- output cell
+            cast(Value*, scratch),  // <-- output cell
             predicate,
                 rebQ(left),  // first arg (left hand side if infix)
                 rebQ(SPARE)  // second arg (right hand side if infix)
@@ -1407,11 +1407,11 @@ DECLARE_NATIVE(default)
 {
     INCLUDE_PARAMS_OF_DEFAULT;
 
-    REBVAL *target = ARG(target);
-    REBVAL *branch = ARG(branch);
-    REBVAL *predicate = ARG(predicate);
+    Value* target = ARG(target);
+    Value* branch = ARG(branch);
+    Value* predicate = ARG(predicate);
 
-    REBVAL *steps = ARG(return);  // reuse slot to save resolved steps [1]
+    Value* steps = ARG(return);  // reuse slot to save resolved steps [1]
 
     enum {
         ST_DEFAULT_INITIAL_ENTRY = STATE_0,
@@ -1516,7 +1516,7 @@ DECLARE_NATIVE(catch)
     if (not THROWING)
         return nullptr;  // no throw means just return null (pure, for ELSE)
 
-    const REBVAL *label = VAL_THROWN_LABEL(LEVEL);
+    const Value* label = VAL_THROWN_LABEL(LEVEL);
 
     if (REF(any) and not (
         Is_Frame(label)
@@ -1537,8 +1537,8 @@ DECLARE_NATIVE(catch)
         // We use equal? by way of Compare_Modify_Values, and re-use the
         // refinement slots for the mutable space
 
-        REBVAL *temp1 = ARG(quit);
-        REBVAL *temp2 = ARG(any);
+        Value* temp1 = ARG(quit);
+        Value* temp2 = ARG(any);
 
         if (Is_Block(ARG(name))) {
             //

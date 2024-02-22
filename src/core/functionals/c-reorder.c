@@ -77,7 +77,7 @@ Bounce Reorderer_Dispatcher(Level* L) {
     Details* details = Phase_Details(Level_Phase(L));
     assert(Array_Len(details) == IDX_REORDERER_MAX);
 
-    REBVAL *reorderee = Details_At(details, IDX_REORDERER_REORDEREE);
+    Value* reorderee = Details_At(details, IDX_REORDERER_REORDEREE);
 
     INIT_LVL_PHASE(L, ACT_IDENTITY(VAL_ACTION(reorderee)));
     INIT_LVL_BINDING(L, VAL_FRAME_BINDING(reorderee));
@@ -185,7 +185,7 @@ DECLARE_NATIVE(reorder)
         if (ignore)
             continue;
 
-        const REBVAL *param = ACT_PARAM(reorderee, index);
+        const Value* param = ACT_PARAM(reorderee, index);
         if (Get_Parameter_Flag(param, REFINEMENT) and Is_Parameter_Unconstrained(param)) {
             error = Error_User("Can't reorder refinements with no argument");
             goto cleanup_binder;

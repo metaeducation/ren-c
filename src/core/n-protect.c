@@ -38,7 +38,7 @@
 DECLARE_NATIVE(const) {
     INCLUDE_PARAMS_OF_CONST;
 
-    REBVAL *v = ARG(value);
+    Value* v = ARG(value);
     if (Is_Nulled(v))
         return nullptr;
 
@@ -84,7 +84,7 @@ DECLARE_NATIVE(mutable)
 {
     INCLUDE_PARAMS_OF_MUTABLE;
 
-    REBVAL *v = ARG(value);
+    Value* v = ARG(value);
 
     if (Is_Nulled(v))
         return nullptr; // make it easier to pass through values
@@ -136,7 +136,7 @@ DECLARE_NATIVE(mutable_q) {
 // Derelativize() vs. just blitting the raw bits of a cell around.  (The C++
 // build enforces this by disallowing direct bit assignment via `=`).
 //
-static void Protect_Var(const REBVAL *var, Flags flags)
+static void Protect_Var(const Value* var, Flags flags)
 {
     if (flags & PROT_WORD) {
         if (flags & PROT_SET)
@@ -246,7 +246,7 @@ void Protect_Context(Context* c, Flags flags)
     Flip_Series_To_Black(varlist); // for recursion
 
     const Value* var_tail;
-    REBVAL *var = CTX_VARS(&var_tail, c);
+    Value* var = CTX_VARS(&var_tail, c);
     for (; var != var_tail; ++var)
         Protect_Value(var, flags);
 }
@@ -255,10 +255,10 @@ void Protect_Context(Context* c, Flags flags)
 //
 //  Protect_Word_Value: C
 //
-static void Protect_Word_Value(REBVAL *word, Flags flags)
+static void Protect_Word_Value(Value* word, Flags flags)
 {
     if (Any_Word(word) and IS_WORD_BOUND(word)) {
-        const REBVAL* var = Lookup_Word_May_Fail(
+        const Value* var = Lookup_Word_May_Fail(
             cast(Element*, word),
             SPECIFIED
         );
@@ -286,7 +286,7 @@ static Bounce Protect_Unprotect_Core(Level* level_, Flags flags)
 
     UNUSED(PARAM(hide)); // unused here, but processed in caller
 
-    REBVAL *value = ARG(value);
+    Value* value = ARG(value);
 
     // flags has PROT_SET bit (set or not)
 
@@ -312,7 +312,7 @@ static Bounce Protect_Unprotect_Core(Level* level_, Flags flags)
             return COPY(ARG(value));
         }
         if (REF(values)) {
-            REBVAL *var;
+            Value* var;
             const Element* tail;
             const Element* item = Cell_Array_At(&tail, value);
 
@@ -325,7 +325,7 @@ static Bounce Protect_Unprotect_Core(Level* level_, Flags flags)
                     // references to even protected values to protect them.
                     //
                     var = m_cast(
-                        REBVAL*,
+                        Value*,
                         Lookup_Word_May_Fail(item, Cell_Specifier(value))
                     );
                 }
@@ -378,7 +378,7 @@ DECLARE_NATIVE(protect)
 {
     INCLUDE_PARAMS_OF_PROTECT;
 
-    REBVAL *v = ARG(value);
+    Value* v = ARG(value);
     if (Any_Word(v) or Any_Tuple(v)) {
         if (REF(hide))
             Init_Word(SPARE, Canon(HIDE));
@@ -441,7 +441,7 @@ DECLARE_NATIVE(unprotect)
     if (REF(hide))
         fail ("Cannot un-hide an object field once hidden");
 
-    REBVAL *v = ARG(value);
+    Value* v = ARG(value);
     if (Any_Word(v) or Any_Tuple(v)) {
         Init_Word(SPARE, Canon(UNPROTECT));
         if (Set_Var_Core_Updater_Throws(

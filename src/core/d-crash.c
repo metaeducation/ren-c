@@ -45,7 +45,7 @@ static bool panicking = false;
 //
 // Abnormal termination of Rebol.  The debug build is designed to present
 // as much diagnostic information as it can on the passed-in pointer, which
-// includes where a Series* was allocated or freed.  Or if a REBVAL* is
+// includes where a Series* was allocated or freed.  Or if a Value* is
 // passed in it tries to say what tick it was initialized on and what series
 // it lives in.  If the pointer is a simple UTF-8 string pointer, then that
 // is delivered as a message.
@@ -58,7 +58,7 @@ static bool panicking = false;
 // coverity[+kill]
 //
 ATTRIBUTE_NO_RETURN void Panic_Core(
-    const void *p,  // Series*, REBVAL*, or UTF-8 char*
+    const void *p,  // Series*, Value*, or UTF-8 char*
     Tick tick,
     const char *file, // UTF8
     int line
@@ -164,7 +164,7 @@ ATTRIBUTE_NO_RETURN void Panic_Core(
 
       case DETECTED_AS_CELL:
       case DETECTED_AS_END: {
-        const REBVAL *v = c_cast(REBVAL*, p);
+        const Value* v = c_cast(Value*, p);
       #if DEBUG_FANCY_PANIC
         if (HEART_BYTE(v) == REB_ERROR) {
             printf("...panicking on an ERROR! value...");
@@ -215,7 +215,7 @@ DECLARE_NATIVE(panic)
 {
     INCLUDE_PARAMS_OF_PANIC;
 
-    REBVAL *v = ARG(reason);  // remove quote level from @reason
+    Value* v = ARG(reason);  // remove quote level from @reason
 
     // Use frame tick (if available) instead of TG_tick, so tick count dumped
     // is the exact moment before the PANIC ACTION! was invoked.

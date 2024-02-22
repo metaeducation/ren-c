@@ -195,8 +195,8 @@ struct FeedStruct {
     //
     Element fetched;
 
-    // Feed sources are expresesd as Stub-sized "splice" units.  This is big
-    // enough for a REBVAL to hold an array and an index, but it also lets
+    // Feed sources are expressed as Stub-sized "splice" units.  This is big
+    // enough for a cell to hold an array and an index, but it also lets
     // you point to other singulars that can hold arrays and indices.
     //
     // If values are being sourced from an array, this holds the pointer to

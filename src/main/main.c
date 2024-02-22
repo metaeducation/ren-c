@@ -63,6 +63,7 @@
 #define DEBUG_MAIN_USING_SYS_CORE 0
 #if (! DEBUG_MAIN_USING_SYS_CORE)
     #include "rebol.h"
+    typedef RebolValue Value;
 #else
     #undef OUT  // %minwindef.h defines this, we have a better use for it
     #undef VOID  // %winnt.h defines this, we have a better use for it
@@ -196,7 +197,7 @@ int main(int argc, char *argv_ansi[])
     // That way the command line argument processing can be taken care of by
     // PARSE in the MAIN-STARTUP user function, instead of C code!
     //
-    REBVAL *argv_block = rebValue("[]");
+    Value* argv_block = rebValue("[]");
 
   #if TO_WINDOWS
     //
@@ -226,7 +227,7 @@ int main(int argc, char *argv_ansi[])
     // global variable) to make a BINARY!.  GUNZIP accepts a HANDLE! as input,
     // so pass it in here.
     //
-    REBVAL *startup_bin = rebValue(
+    Value* startup_bin = rebValue(
         "gunzip", rebR(rebHandle(
             m_cast(unsigned char*, &Main_Startup_Code[0]),
             MAIN_STARTUP_SIZE,
@@ -255,7 +256,7 @@ int main(int argc, char *argv_ansi[])
     // means we get back a usermode function that is ready to process the
     // command line arguments.
     //
-    REBVAL *main_startup = rebValue(
+    Value* main_startup = rebValue(
         "ensure frame! do inside lib transcode", rebR(startup_bin)
     );
 
@@ -263,7 +264,7 @@ int main(int argc, char *argv_ansi[])
     // arbitrary code by way of its return results.  The ENTRAP is thus here
     // to intercept bugs *in MAIN-STARTUP itself*.
     //
-    REBVAL *trapped = rebValue(
+    Value* trapped = rebValue(
         "entrap [",  // MAIN-STARTUP frame takes one argument (argv[])
             main_startup, rebR(argv_block),
         "]"
@@ -273,7 +274,7 @@ int main(int argc, char *argv_ansi[])
     if (rebUnboxLogic("error?", trapped))  // error in MAIN-STARTUP itself
         rebJumps("panic", trapped);  // terminates
 
-    REBVAL *code = rebValue("unquote @", trapped);  // entrap quotes non-errors
+    Value* code = rebValue("unquote @", trapped);  // entrap quotes non-errors
     rebRelease(trapped);  // don't need the outer block any more
 
     // !!! For the moment, the CONSOLE extension does all the work of running
@@ -284,7 +285,7 @@ int main(int argc, char *argv_ansi[])
     // kinds of errors.  Hence there is a /PROVOKE refinement to CONSOLE
     // which feeds it an instruction, as if the console gave it to itself.
 
-    REBVAL *result = rebValue("console/provoke", rebR(code));
+    Value* result = rebValue("console/provoke", rebR(code));
 
     int exit_status = rebUnboxInteger(rebR(result));
 

@@ -42,12 +42,12 @@ extern void Shutdown_Stdio(void);
 // that layer.  And if we were going to do asynchronous file I/O it should
 // be done with a solidified layer like libuv, vs. what was in R3-Alpha.
 //
-extern void Write_IO(const REBVAL *data, REBLEN len);
+extern void Write_IO(const Value* data, REBLEN len);
 
 extern bool Read_Stdin_Byte_Interrupted(bool *eof, Byte* out);
 
 
-extern Bounce Console_Actor(Level* level_, REBVAL *port, const Symbol* verb);
+extern Bounce Console_Actor(Level* level_, Value* port, const Symbol* verb);
 
 
 //
@@ -105,14 +105,14 @@ DECLARE_NATIVE(write_stdout)
 {
     INCLUDE_PARAMS_OF_WRITE_STDOUT;
 
-    REBVAL *v = ARG(value);
+    Value* v = ARG(value);
 
     // !!! We want to make the chunking easier, by having a position in the
     // cell...but ISSUE! has no position.  Alias it as a read-only TEXT!.
     //
     if (Is_Issue(v)) {
         bool threw = rebRunThrows(
-            cast(REBVAL*, SPARE),  // <-- output cell
+            cast(Value*, SPARE),  // <-- output cell
             Canon(AS), Canon(TEXT_X), v
         );
         assert(not threw);
@@ -185,7 +185,7 @@ DECLARE_NATIVE(read_stdin)
   #ifdef REBOL_SMART_CONSOLE
     if (Term_IO) {
         if (rebRunThrows(
-            cast(REBVAL*, OUT),  // <-- output cell
+            cast(Value*, OUT),  // <-- output cell
             "as binary! maybe read-line"
         )){
             return THROWN;
@@ -256,7 +256,7 @@ DECLARE_NATIVE(read_line)
     // meant READ-LINE would raise the actual halt signal.  That idea should
     // be reviewed in light of this new entry point.
 
-    REBVAL *line;
+    Value* line;
     bool eof;  // can tell whether all code paths assign or not, vs ARG(eof)
 
   #ifdef REBOL_SMART_CONSOLE
@@ -438,7 +438,7 @@ DECLARE_NATIVE(read_char)
         //
       retry: ;
         const bool buffered = false;
-        REBVAL *e = Try_Get_One_Console_Event(Term_IO, buffered, timeout_msec);
+        Value* e = Try_Get_One_Console_Event(Term_IO, buffered, timeout_msec);
         // (^-- it's an ANY-VALUE?, not a R3-Alpha-style EVENT!)
 
         if (e == nullptr) {

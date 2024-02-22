@@ -198,7 +198,7 @@ Bounce Call_Core(Level* level_) {
     int argc;
     char **argv;
 
-    REBVAL *command = ARG(command);
+    Value* command = ARG(command);
 
     if (REF(shell)) {
 
@@ -284,14 +284,14 @@ Bounce Call_Core(Level* level_) {
         // up above.)
         //
         if (Is_Text(command)) {
-            REBVAL *parsed = rebValue("parse-command-to-argv*", command);
+            Value* parsed = rebValue("parse-command-to-argv*", command);
             Copy_Cell(command, parsed);
             rebRelease(parsed);
         }
         else if (not Is_Block(command))
             fail (PARAM(command));
 
-        const REBVAL *block = ARG(command);
+        const Value* block = ARG(command);
         argc = Cell_Series_Len_At(block);
         assert(argc != 0);  // usermode layer checks this
         argv = rebAllocN(char*, (argc + 1));
@@ -922,12 +922,12 @@ Bounce Call_Core(Level* level_) {
     rebFree(argv);
 
     if (Is_Text(ARG(output))) {
-        REBVAL *output_val = rebRepossess(outbuf, outbuf_used);
+        Value* output_val = rebRepossess(outbuf, outbuf_used);
         rebElide("insert", ARG(output), output_val);
         rebRelease(output_val);
     }
     else if (Is_Binary(ARG(output))) {  // same (but could be different...)
-        REBVAL *output_val = rebRepossess(outbuf, outbuf_used);
+        Value* output_val = rebRepossess(outbuf, outbuf_used);
         rebElide("insert", ARG(output), output_val);
         rebRelease(output_val);
     }
@@ -935,12 +935,12 @@ Bounce Call_Core(Level* level_) {
         assert(outbuf == nullptr);
 
     if (Is_Text(ARG(error))) {
-        REBVAL *error_val = rebRepossess(errbuf, errbuf_used);
+        Value* error_val = rebRepossess(errbuf, errbuf_used);
         rebElide("insert", ARG(error), error_val);
         rebRelease(error_val);
     }
     else if (Is_Binary(ARG(error))) {  // same (but could be different...)
-        REBVAL *error_val = rebRepossess(errbuf, errbuf_used);
+        Value* error_val = rebRepossess(errbuf, errbuf_used);
         rebElide("insert", ARG(error), error_val);
         rebRelease(error_val);
     }

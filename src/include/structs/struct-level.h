@@ -287,7 +287,7 @@ typedef bool (Decider)(const Value* arg);
 
 // This is for working around pedantic C and C++ errors, when an extension
 // that doesn't use %sys-core.h tries to redefine dispatcher in terms of
-// taking a void* and returning a REBVAL*.
+// taking a void* and returning a Value*.
 //
 #ifdef __cplusplus
     #define dispatcher_cast(ptr) \
@@ -326,7 +326,7 @@ typedef bool (Decider)(const Value* arg);
 
     // This is the source from which new values will be fetched.  In addition
     // to working with an array, it is also possible to feed the evaluator
-    // arbitrary REBVAL*s through a variable argument list on the C stack.
+    // arbitrary Value*s through a variable argument list on the C stack.
     // This means no array needs to be dynamically allocated (though some
     // conditions require the va_list to be converted to an array, see notes
     // on Reify_Variadic_Feed_As_Array_Feed().)

@@ -81,15 +81,15 @@ DECLARE_NATIVE(test_librebol)
 
   blockscope {
     Set_Cell_Flag(Init_Integer(PUSH(), 3), NEWLINE_BEFORE);
-    REBVAL *macro = rebValue("macro [x] [[append x first]]");
-    REBVAL *mtest1 = rebValue(rebRUN(macro), "[1 2 3]", "[d e f]");
+    Value* macro = rebValue("macro [x] [[append x first]]");
+    Value* mtest1 = rebValue(rebRUN(macro), "[1 2 3]", "[d e f]");
     Copy_Cell(PUSH(), mtest1);  // ^-- see NOTICE
     rebRelease(mtest1);
 
     Set_Cell_Flag(Init_Integer(PUSH(), 4), NEWLINE_BEFORE);
-    REBVAL *numbers = rebValue("[1 2 3]");
-    REBVAL *letters = rebValue("[d e f]");
-    REBVAL *mtest2 = rebValue(rebRUN(macro), rebR(numbers), rebR(letters));
+    Value* numbers = rebValue("[1 2 3]");
+    Value* letters = rebValue("[d e f]");
+    Value* mtest2 = rebValue(rebRUN(macro), rebR(numbers), rebR(letters));
     Copy_Cell(PUSH(), mtest2);  // ^-- see NOTICE
     rebRelease(mtest2);
 
@@ -126,7 +126,7 @@ DECLARE_NATIVE(diagnose)
     UNUSED(ARG(value));
     fail ("DIAGNOSE is only available in debug builds");
   #else
-    REBVAL *v = ARG(value);
+    Value* v = ARG(value);
 
   #if DEBUG_COUNT_TICKS
     Tick tick = level_->tick;

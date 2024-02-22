@@ -181,7 +181,7 @@ static void Queue_Mark_Node_Deep(const Node** pp) {
         return;  // may not be finished marking yet, but has been queued
 
     if (nodebyte & NODE_BYTEMASK_0x01_CELL) {  // e.g. a pairing
-        const REBVAL *v = x_cast(const Value*, *pp);
+        const Value* v = x_cast(const Value*, *pp);
         if (Is_Node_Managed(v))
             Queue_Mark_Pairing_Deep(v);
         else {
@@ -460,7 +460,7 @@ static void Propagate_All_GC_Marks(void)
 //  Reify_Variadic_Feed_As_Array_Feed: C
 //
 // For performance and memory usage reasons, a variadic C function call that
-// wants to invoke the evaluator with just a comma-delimited list of REBVAL*
+// wants to invoke the evaluator with just a comma-delimited list of Value*
 // does not need to make a series to hold them.  Fetch_Next_In_Feed() is
 // written to use the va_list traversal as an alternative.
 //
@@ -633,7 +633,7 @@ static void Mark_Root_Series(void)
 
                 assert(!"unmanaged pairings not believed to exist yet");
 
-                REBVAL *paired = x_cast(Value*, cast(void*, unit));
+                Value* paired = x_cast(Value*, cast(void*, unit));
                 Queue_Mark_Cell_Deep(paired);
                 Queue_Mark_Cell_Deep(Pairing_Second(paired));
                 continue;
@@ -783,7 +783,7 @@ static void Mark_Guarded_Nodes(void)
             //
             assert(Not_Node_Marked(*np));
 
-            Queue_Mark_Maybe_Fresh_Cell_Deep(x_cast(const REBVAL*, *np));
+            Queue_Mark_Maybe_Fresh_Cell_Deep(x_cast(const Value*, *np));
         }
         else  // a series stub
             Queue_Mark_Node_Deep(np);
@@ -798,7 +798,7 @@ static void Mark_Guarded_Nodes(void)
 //
 // Mark values being kept live by all stack levels.  If a function is running,
 // then this will keep the function itself live, as well as the arguments.
-// There is also an "out" slot--which may point to an arbitrary REBVAL cell
+// There is also an "out" slot--which may point to an arbitrary cell
 // on the C stack (and must contain valid GC-readable bits at all times).
 //
 // Since function argument slots are not pre-initialized, how far the function
@@ -927,7 +927,7 @@ static void Mark_Level_Stack_Deep(void)
             key_tail = L->u.action.key + 1;  // key may be fresh
         }
 
-        REBVAL *arg;
+        Value* arg;
         for (arg = Level_Args_Head(L); key != key_tail; ++key, ++arg) {
             if (not Is_Fresh(arg)) {
                 Queue_Mark_Cell_Deep(arg);
@@ -1165,7 +1165,7 @@ REBLEN Fill_Sweeplist(Series* sweeplist)
                 //
                 // !!! It is a Stub Node, but *not* a "series".
                 //
-                REBVAL *pairing = x_cast(Value*, cast(void*, stub));
+                Value* pairing = x_cast(Value*, cast(void*, stub));
                 assert(pairing->header.bits & NODE_FLAG_MANAGED);
                 if (Is_Node_Marked(pairing)) {
                     Remove_GC_Mark(pairing);

@@ -38,8 +38,8 @@
 
 #include "tmp-mod-filesystem.h"
 
-extern Bounce File_Actor(Level* level_, REBVAL *port, const Symbol* verb);
-extern Bounce Dir_Actor(Level* level_, REBVAL *port, const Symbol* verb);
+extern Bounce File_Actor(Level* level_, Value* port, const Symbol* verb);
+extern Bounce Dir_Actor(Level* level_, Value* port, const Symbol* verb);
 
 
 #if TO_WINDOWS
@@ -146,7 +146,7 @@ inline static bool Last_In_Mold_Is_Slash(REB_MOLD *mo) {
 // volume when no root slash was provided.  It was an odd case to support
 // the MSDOS convention of `c:file`.  That is not done here.
 //
-String* To_REBOL_Path(const REBVAL* string, Flags flags)
+String* To_REBOL_Path(const Value* string, Flags flags)
 {
     assert(Is_Text(string));
 
@@ -224,8 +224,8 @@ String* To_REBOL_Path(const REBVAL* string, Flags flags)
 }
 
 
-extern bool Set_Current_Dir_Value(const REBVAL *path);
-extern REBVAL *Get_Current_Dir_Value(void);
+extern bool Set_Current_Dir_Value(const Value* path);
+extern Value* Get_Current_Dir_Value(void);
 
 
 enum {
@@ -245,7 +245,7 @@ enum {
 // Implementation routine of To_Local_Path which leaves the path in the mold
 // buffer (e.g. for further appending or just counting the number of bytes)
 //
-void Mold_File_To_Local(REB_MOLD *mo, const REBVAL* file, Flags flags) {
+void Mold_File_To_Local(REB_MOLD *mo, const Value* file, Flags flags) {
     assert(Is_File(file));
 
     Length len;
@@ -308,7 +308,7 @@ void Mold_File_To_Local(REB_MOLD *mo, const REBVAL* file, Flags flags) {
         // use REB_FILETOLOCAL_FULL as that would recurse (we assume a fully
         // qualified path was returned by Get_Current_Dir_Value())
         //
-        REBVAL *lpath = Get_Current_Dir_Value();
+        Value* lpath = Get_Current_Dir_Value();
         Mold_File_To_Local(mo, lpath, REB_FILETOLOCAL_0);
         rebRelease(lpath);
     }
@@ -481,7 +481,7 @@ void Mold_File_To_Local(REB_MOLD *mo, const REBVAL* file, Flags flags) {
 // Convert Rebol-format filename to a local-format filename.  This is the
 // opposite operation of To_REBOL_Path.
 //
-String* To_Local_Path(const REBVAL* file, Flags flags) {
+String* To_Local_Path(const Value* file, Flags flags) {
     DECLARE_MOLD (mo);
     Push_Mold(mo);
 
@@ -509,7 +509,7 @@ DECLARE_NATIVE(local_to_file)
 {
     FILESYSTEM_INCLUDE_PARAMS_OF_LOCAL_TO_FILE;
 
-    REBVAL *path = ARG(path);
+    Value* path = ARG(path);
     if (Is_File(path)) {
         if (not REF(pass))
             fail ("LOCAL-TO-FILE only passes through FILE! if /PASS used");
@@ -545,7 +545,7 @@ DECLARE_NATIVE(file_to_local)
 {
     FILESYSTEM_INCLUDE_PARAMS_OF_FILE_TO_LOCAL;
 
-    REBVAL *path = ARG(path);
+    Value* path = ARG(path);
     if (Is_Text(path)) {
         if (not REF(pass))
             fail ("FILE-TO-LOCAL only passes through STRING! if /PASS used");
@@ -577,7 +577,7 @@ DECLARE_NATIVE(what_dir)
 {
     FILESYSTEM_INCLUDE_PARAMS_OF_WHAT_DIR;
 
-    REBVAL *current_path = Get_System(SYS_OPTIONS, OPTIONS_CURRENT_PATH);
+    Value* current_path = Get_System(SYS_OPTIONS, OPTIONS_CURRENT_PATH);
 
     if (Is_File(current_path) || Is_Nulled(current_path)) {
         //
@@ -589,7 +589,7 @@ DECLARE_NATIVE(what_dir)
         // code was already here and it would be more compatible.  But
         // reconsider the duplication.
 
-        REBVAL *refresh = Get_Current_Dir_Value();
+        Value* refresh = Get_Current_Dir_Value();
         Copy_Cell(current_path, refresh);
         rebRelease(refresh);
     }
@@ -618,8 +618,8 @@ DECLARE_NATIVE(change_dir)
 {
     FILESYSTEM_INCLUDE_PARAMS_OF_CHANGE_DIR;
 
-    REBVAL *arg = ARG(path);
-    REBVAL *current_path = Get_System(SYS_OPTIONS, OPTIONS_CURRENT_PATH);
+    Value* arg = ARG(path);
+    Value* current_path = Get_System(SYS_OPTIONS, OPTIONS_CURRENT_PATH);
 
     if (Is_Url(arg)) {
         // There is no directory listing protocol for HTTP (although this
@@ -643,7 +643,7 @@ DECLARE_NATIVE(change_dir)
 }
 
 
-extern REBVAL *Get_Current_Exec(void);
+extern Value* Get_Current_Exec(void);
 
 //
 //  export get-current-exec: native [

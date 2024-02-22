@@ -143,10 +143,10 @@ static void Get_Local_Ip_Via_Google_DNS_May_Fail(Sink(Value*) out)
 //
 //  DNS_Actor: C
 //
-static Bounce DNS_Actor(Level* level_, REBVAL *port, const Symbol* verb)
+static Bounce DNS_Actor(Level* level_, Value* port, const Symbol* verb)
 {
     Context* ctx = VAL_CONTEXT(port);
-    REBVAL *spec = CTX_VAR(ctx, STD_PORT_SPEC);
+    Value* spec = CTX_VAR(ctx, STD_PORT_SPEC);
 
     switch (Symbol_Id(verb)) {
       case SYM_REFLECT: {
@@ -174,7 +174,7 @@ static Bounce DNS_Actor(Level* level_, REBVAL *port, const Symbol* verb)
         UNUSED(PARAM(string)); // handled in dispatcher
         UNUSED(PARAM(lines)); // handled in dispatcher
 
-        REBVAL *host = Obj_Value(spec, STD_PORT_SPEC_NET_HOST);
+        Value* host = Obj_Value(spec, STD_PORT_SPEC_NET_HOST);
 
         if (Is_Nulled(host)) {
             //
@@ -212,7 +212,7 @@ static Bounce DNS_Actor(Level* level_, REBVAL *port, const Symbol* verb)
             // ...else fall through to error handling...
         }
         else if (Is_Text(host)) {
-            REBVAL *tuple = rebValue(
+            Value* tuple = rebValue(
                 "match tuple! first transcode", host
             );  // W3C says non-IP hosts can't end with number in tuple
             if (tuple) {

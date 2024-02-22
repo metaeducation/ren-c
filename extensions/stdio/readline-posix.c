@@ -74,7 +74,7 @@ inline static void WRITE_UTF8(const unsigned char *utf8, size_t size) {
 #define READ_BUF_LEN 64
 
 struct Reb_Terminal_Struct {
-    REBVAL *buffer;  // a TEXT! used as a buffer
+    Value* buffer;  // a TEXT! used as a buffer
     unsigned int pos;  // cursor position within the line
 
     unsigned char buf[READ_BUF_LEN];  // '\0' terminated, needs -1 on read()
@@ -84,7 +84,7 @@ struct Reb_Terminal_Struct {
     // not sent until the input buffer triggers a non-bufferable event.  Then
     // the buffer is sent, with the non-bufferable event held for next call.
     //
-    REBVAL *e_pending;
+    Value* e_pending;
 
     struct termios original_attrs;
 };
@@ -225,7 +225,7 @@ int Term_Pos(STD_TERM *t)
 // position or what is visible on the display.  All changes need to go through
 // the terminal itself.
 //
-REBVAL *Term_Buffer(STD_TERM *t)
+Value* Term_Buffer(STD_TERM *t)
 {
     return rebValue("const", t->buffer);
 }
@@ -516,7 +516,7 @@ void Move_Cursor(STD_TERM *t, int count)
 // should probably be addressed rigorously if one wanted to actually do
 // something with `delta`, but code is preserved as it was for annotation.
 //
-REBVAL *Unrecognized_Key_Sequence(STD_TERM *t, int delta)
+Value* Unrecognized_Key_Sequence(STD_TERM *t, int delta)
 {
     assert(delta <= 0);
     UNUSED(delta);
@@ -533,10 +533,10 @@ REBVAL *Unrecognized_Key_Sequence(STD_TERM *t, int delta)
 //
 //  Try_Get_One_Console_Event: C
 //
-REBVAL *Try_Get_One_Console_Event(STD_TERM *t, bool buffered, int timeout_msec)
+Value* Try_Get_One_Console_Event(STD_TERM *t, bool buffered, int timeout_msec)
 {
-    REBVAL *e = nullptr;  // *unbuffered* event to return
-    REBVAL *e_buffered = nullptr;  // buffered event
+    Value* e = nullptr;  // *unbuffered* event to return
+    Value* e_buffered = nullptr;  // buffered event
 
     if (t->e_pending) {
         e = t->e_pending;
@@ -618,7 +618,7 @@ REBVAL *Try_Get_One_Console_Event(STD_TERM *t, bool buffered, int timeout_msec)
             ++t->cp;
         }
 
-        REBVAL *char_bin = rebSizedBinary(encoded, encoded_size);
+        Value* char_bin = rebSizedBinary(encoded, encoded_size);
         if (not buffered) {
             e = rebValue("make issue!", char_bin);
         }
@@ -883,7 +883,7 @@ static void Term_Insert_Char(STD_TERM *t, uint32_t c)
         Write_Char(LF, 1);
     }
     else {
-        REBVAL *codepoint = rebChar(c);
+        Value* codepoint = rebChar(c);
 
         size_t encoded_size;
         unsigned char *encoded = rebBytes(&encoded_size,
@@ -908,7 +908,7 @@ static void Term_Insert_Char(STD_TERM *t, uint32_t c)
 // with what the last line in the terminal is showing...which means mirroring
 // its logic regarding cursor position, newlines, backspacing.
 //
-void Term_Insert(STD_TERM *t, const REBVAL *v) {
+void Term_Insert(STD_TERM *t, const Value* v) {
     if (rebUnboxLogic("char?", v)) {
         Term_Insert_Char(t, rebUnboxChar(v));
         return;
@@ -932,7 +932,7 @@ void Term_Insert(STD_TERM *t, const REBVAL *v) {
         // Systems may handle tabs differently, but we want our buffer to
         // have the right number of spaces accounted for.  Just transform.
         //
-        REBVAL *v_no_tab = rebValue(
+        Value* v_no_tab = rebValue(
             "if find", v, "tab [",
                 "replace/all copy", v, "tab", "{    }"
             "] else [null]"
@@ -951,7 +951,7 @@ void Term_Insert(STD_TERM *t, const REBVAL *v) {
         WRITE_UTF8(encoded, encoded_size);
         rebFree(encoded);
 
-        REBVAL *v_last_line = rebValue("next maybe find-last", v, "newline");
+        Value* v_last_line = rebValue("next maybe find-last", v, "newline");
 
         // If there were any newlines, then whatever is in the current line
         // buffer will no longer be there.
@@ -961,7 +961,7 @@ void Term_Insert(STD_TERM *t, const REBVAL *v) {
             t->pos = 0;
         }
 
-        const REBVAL *insertion = v_last_line ? v_last_line : v;
+        const Value* insertion = v_last_line ? v_last_line : v;
 
         t->pos += rebUnboxInteger(
             "insert skip", t->buffer, rebI(t->pos), insertion,

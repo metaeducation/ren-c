@@ -109,7 +109,7 @@ INLINE void SET_HANDLE_CFUNC(Cell* v, CFunction* cfunc) {
     VAL_HANDLE_CFUNC_P(canon) = cfunc;
 }
 
-INLINE REBVAL *Init_Handle_Cdata(
+INLINE Value* Init_Handle_Cdata(
     Cell* out,
     void *cdata,
     uintptr_t length
@@ -124,10 +124,10 @@ INLINE REBVAL *Init_Handle_Cdata(
   #endif
     VAL_HANDLE_CDATA_P(out) = cdata;
     VAL_HANDLE_LENGTH_U(out) = length;  // non-zero signals cdata
-    return cast(REBVAL*, out);
+    return cast(Value*, out);
 }
 
-INLINE REBVAL *Init_Handle_Cfunc(
+INLINE Value* Init_Handle_Cfunc(
     Cell* out,
     CFunction* cfunc
 ){
@@ -140,7 +140,7 @@ INLINE REBVAL *Init_Handle_Cfunc(
   #endif
     VAL_HANDLE_CFUNC_P(out) = cfunc;
     VAL_HANDLE_LENGTH_U(out) = 0;  // signals cfunc
-    return cast(REBVAL*, out);
+    return cast(Value*, out);
 }
 
 INLINE void Init_Handle_Managed_Common(
@@ -175,7 +175,7 @@ INLINE void Init_Handle_Managed_Common(
     VAL_HANDLE_CDATA_P(out) = nullptr;  // or complains about not initializing
 }
 
-INLINE REBVAL *Init_Handle_Cdata_Managed(
+INLINE Value* Init_Handle_Cdata_Managed(
     Cell* out,
     void *cdata,
     uintptr_t length,
@@ -187,10 +187,10 @@ INLINE REBVAL *Init_Handle_Cdata_Managed(
 
     Stub* stub = VAL_HANDLE_STUB(out);
     VAL_HANDLE_CDATA_P(Stub_Cell(stub)) = cdata;
-    return cast(REBVAL*, out);
+    return cast(Value*, out);
 }
 
-INLINE REBVAL *Init_Handle_Cdata_Managed_Cfunc(
+INLINE Value* Init_Handle_Cdata_Managed_Cfunc(
     Cell* out,
     CFunction* cfunc,
     CLEANUP_CFUNC *cleaner
@@ -201,5 +201,5 @@ INLINE REBVAL *Init_Handle_Cdata_Managed_Cfunc(
 
     Stub* stub = VAL_HANDLE_STUB(out);
     VAL_HANDLE_CFUNC_P(Stub_Cell(stub)) = cfunc;
-    return cast(REBVAL*, out);
+    return cast(Value*, out);
 }

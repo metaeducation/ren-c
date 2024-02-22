@@ -111,9 +111,9 @@ INLINE const Key* VAL_CONTEXT_KEYS_HEAD(const Cell* context)
 
 // Common routine for initializing OBJECT, MODULE!, PORT!, and ERROR!
 //
-// A fully constructed context can reconstitute the ANY-CONTEXT? REBVAL
-// that is its canon form from a single pointer...the REBVAL sitting in
-// the 0 slot of the context's varlist.
+// A fully constructed context can reconstitute the ANY-CONTEXT? cell
+// that is its canon form from a single pointer...the cell sitting in
+// the 0 slot of the context's varlist ("archetype")
 //
 INLINE Element* Init_Context_Cell(
     Sink(Element*) out,
@@ -153,7 +153,7 @@ INLINE Element* Init_Frame(
 // was some validation checking.  This factors out that check instead of
 // repeating the code.
 //
-INLINE void FAIL_IF_BAD_PORT(REBVAL *port) {
+INLINE void FAIL_IF_BAD_PORT(Value* port) {
     if (not Any_Context(port))
         fail (Error_Invalid_Port_Raw());
 
@@ -169,7 +169,7 @@ INLINE void FAIL_IF_BAD_PORT(REBVAL *port) {
 // It's helpful to show when a test for a native port actor is being done,
 // rather than just having the code say Is_Handle().
 //
-INLINE bool Is_Native_Port_Actor(const REBVAL *actor) {
+INLINE bool Is_Native_Port_Actor(const Value* actor) {
     if (Is_Handle(actor))
         return true;
     assert(Is_Object(actor));
@@ -178,7 +178,7 @@ INLINE bool Is_Native_Port_Actor(const REBVAL *actor) {
 
 
 INLINE const Value* TRY_VAL_CONTEXT_VAR_CORE(
-    const REBVAL *context,
+    const Value* context,
     const Symbol* symbol,
     bool writable
 ){

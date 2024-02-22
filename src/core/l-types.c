@@ -45,7 +45,7 @@ Bounce MAKE_Fail(
     Level* level_,
     Kind kind,
     Option(const Value*) parent,
-    const REBVAL *arg
+    const Value* arg
 ){
     UNUSED(kind);
     UNUSED(parent);
@@ -66,12 +66,12 @@ Bounce MAKE_Unhooked(
     Level* level_,
     Kind kind,
     Option(const Value*) parent,
-    const REBVAL *arg
+    const Value* arg
 ){
     UNUSED(parent);
     UNUSED(arg);
 
-    const REBVAL *type = Datatype_From_Kind(kind);
+    const Value* type = Datatype_From_Kind(kind);
     UNUSED(type); // !!! put in error message?
 
     return RAISE(
@@ -97,8 +97,8 @@ DECLARE_NATIVE(make)
 {
     INCLUDE_PARAMS_OF_MAKE;
 
-    REBVAL *type = ARG(type);
-    REBVAL *arg = ARG(def);
+    Value* type = ARG(type);
+    Value* arg = ARG(def);
 
     // See notes in DECLARE_NATIVE(do) for why this is the easiest way to pass
     // a flag to Do_Any_Array(), to help us discern the likes of:
@@ -146,7 +146,7 @@ DECLARE_NATIVE(make)
 //
 //  TO_Fail: C
 //
-Bounce TO_Fail(REBVAL *out, Kind kind, const REBVAL *arg)
+Bounce TO_Fail(Value* out, Kind kind, const Value* arg)
 {
     UNUSED(out);
     UNUSED(kind);
@@ -159,12 +159,12 @@ Bounce TO_Fail(REBVAL *out, Kind kind, const REBVAL *arg)
 //
 //  TO_Unhooked: C
 //
-Bounce TO_Unhooked(REBVAL *out, Kind kind, const REBVAL *arg)
+Bounce TO_Unhooked(Value* out, Kind kind, const Value* arg)
 {
     UNUSED(out);
     UNUSED(arg);
 
-    const REBVAL *type = Datatype_From_Kind(kind);
+    const Value* type = Datatype_From_Kind(kind);
     UNUSED(type); // !!! put in error message?
 
     fail ("Datatype does not have extension with a TO handler registered");
@@ -186,8 +186,8 @@ DECLARE_NATIVE(to)
 {
     INCLUDE_PARAMS_OF_TO;
 
-    REBVAL *v = ARG(value);
-    REBVAL *type = ARG(type);
+    Value* v = ARG(value);
+    Value* type = ARG(type);
 
     Kind new_kind = VAL_TYPE_KIND(type);
     Kind old_kind = VAL_TYPE(v);
@@ -244,7 +244,7 @@ Bounce Reflect_Core(Level* level_)
 {
     INCLUDE_PARAMS_OF_REFLECT;
 
-    REBVAL *v = ARG(value);
+    Value* v = ARG(value);
 
     Option(SymId) id = Cell_Word_Id(ARG(property));
     if (not id) {
@@ -316,7 +316,7 @@ DECLARE_NATIVE(of)
 {
     INCLUDE_PARAMS_OF_OF;
 
-    REBVAL *prop = ARG(property);
+    Value* prop = ARG(property);
 
     if (ANY_ESCAPABLE_GET(prop)) {  // !!! See note above
         if (Eval_Value_Throws(SPARE, cast(Element*, prop), SPECIFIED))
@@ -1219,7 +1219,7 @@ DECLARE_NATIVE(scan_net_header)
 
     Array* result = Make_Array(10); // Just a guess at size (use STD_BUF?)
 
-    REBVAL *header = ARG(header);
+    Value* header = ARG(header);
     Size size;
     const Byte* cp = Cell_Bytes_At(&size, header);
     UNUSED(size);  // !!! Review semantics

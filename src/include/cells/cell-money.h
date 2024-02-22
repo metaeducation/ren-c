@@ -35,7 +35,7 @@
 // with DECIMAL!, although that name may be changing also.
 //
 // !!! It would be better if there were no "deci" structure independent of
-// a REBVAL itself, so long as it is designed to fit in a REBVAL anyway.
+// a cell itself, so long as it is designed to fit in a cell anyway.
 //
 // !!! In R3-alpha, the money type was implemented under a type called "deci".
 // The payload for a deci was more than 64 bits in size, which meant it had
@@ -80,7 +80,7 @@ INLINE deci VAL_MONEY_AMOUNT(const Cell* v) {
     return amount;
 }
 
-INLINE REBVAL *Init_Money(Cell* out, deci amount) {
+INLINE Value* Init_Money(Cell* out, deci amount) {
     Reset_Unquoted_Header_Untracked(out, CELL_MASK_MONEY);
 
     EXTRA(Any, out).u = amount.m0;  // "significand, lowest part"
@@ -96,7 +96,7 @@ INLINE REBVAL *Init_Money(Cell* out, deci amount) {
 
     PAYLOAD(Any, out).second.u = u2;
 
-    return cast(REBVAL*, out);
+    return cast(Value*, out);
 }
 
 

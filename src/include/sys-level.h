@@ -261,7 +261,7 @@ INLINE Option(const Symbol*) Level_Label(Level* L) {
     #define Level_Arg(L,n) \
         ((L)->rootvar + (n))
 #else
-    INLINE REBVAL *Level_Arg(Level* L, REBLEN n) {
+    INLINE Value* Level_Arg(Level* L, REBLEN n) {
         assert(n != 0 and n <= Level_Num_Args(L));
         return L->rootvar + n;  // 1-indexed
     }
@@ -319,7 +319,7 @@ INLINE const char* Level_Label_Or_Anonymous_UTF8(Level* L) {
 //
 // One invariant of access is that the input may only advance.  Before any
 // operations are called, any low-level client must have already seeded
-// L->value with a valid "fetched" REBVAL*.
+// L->value with a valid "fetched" Value*.
 //
 // This privileged level of access can be used by natives that feel they can
 // optimize performance by working with the evaluator directly.
@@ -564,7 +564,7 @@ INLINE Bounce Native_Void_Result_Untracked(
     return Init_Void_Untracked(level_->out, NOQUOTE_1);
 }
 
-INLINE Bounce Native_Unmeta_Result(Level* level_, const REBVAL *v) {
+INLINE Bounce Native_Unmeta_Result(Level* level_, const Value* v) {
     assert(not THROWING);
     return Meta_Unquotify_Undecayed(Copy_Cell(level_->out, v));
 }
@@ -591,7 +591,7 @@ INLINE Bounce Native_Raised_Result(Level* level_, const void *p) {
         error = cast(Context*, m_cast(void*, p));
         break; }
       case DETECTED_AS_CELL: {  // note: can be Is_Raised()
-        const Value* cell = c_cast(REBVAL*, p);
+        const Value* cell = c_cast(Value*, p);
         assert(Is_Error(cell));
         error = VAL_CONTEXT(cell);
         break; }
@@ -698,9 +698,9 @@ INLINE Atom* Native_Copy_Result_Untracked(
 // more important to use the named ARG() and REF() macros.  As a stopgap
 // measure, we just sense whether the phase has a return or not.
 //
-INLINE REBVAL *D_ARG_Core(Level* L, REBLEN n) {  // 1 for first arg
+INLINE Value* D_ARG_Core(Level* L, REBLEN n) {  // 1 for first arg
     Param* param = ACT_PARAMS_HEAD(Level_Phase(L));
-    REBVAL *arg = Level_Arg(L, 1);
+    Value* arg = Level_Arg(L, 1);
     while (
         Is_Specialized(param)  // e.g. slots for saving multi-return variables
         or Cell_ParamClass(param) == PARAMCLASS_RETURN

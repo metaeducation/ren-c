@@ -407,7 +407,7 @@ Element* Init_Map(Sink(Element*) out, Map* map)
 //
 // Note: hash array contents (indexes) are 1-based!
 //
-Series* Hash_Block(const REBVAL *block, REBLEN skip, bool cased)
+Series* Hash_Block(const Value* block, REBLEN skip, bool cased)
 {
     // Create the hash array (integer indexes):
     Series* hashlist = Make_Hash_Series(Cell_Series_Len_At(block));

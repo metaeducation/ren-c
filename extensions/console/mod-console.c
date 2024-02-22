@@ -229,10 +229,10 @@ DECLARE_NATIVE(console)
     CONSOLE_INCLUDE_PARAMS_OF_CONSOLE;
 
     // skin return result--request or ultimate return
-    REBVAL* const code = cast(Value*, OUT);
+    Value* const code = cast(Value*, OUT);
 
     // what we got from running code requests
-    REBVAL* const metaresult = cast(Value*, SPARE);
+    Value* const metaresult = cast(Value*, SPARE);
 
     enum {
         ST_CONSOLE_INITIAL_ENTRY = STATE_0,
@@ -256,7 +256,7 @@ DECLARE_NATIVE(console)
     // nested sessions which might have a different skin.  So save whatever
     // the console object was if it is being overridden.
 
-    if (rebRunThrows(cast(REBVAL*, LOCAL(old_console)), ":system.console"))
+    if (rebRunThrows(cast(Value*, LOCAL(old_console)), ":system.console"))
         panic (LOCAL(old_console));
 
     if (REF(skin))
@@ -301,7 +301,7 @@ DECLARE_NATIVE(console)
     // to ~null~?  Either way, rebQ() would be needed if the distinction
     // were to be important.
     //
-    REBVAL *metacode;  // Note: goto would cross initialization
+    Value* metacode;  // Note: goto would cross initialization
     metacode = rebEntrap(
         "ext-console-impl",  // action that takes 4 args, run it
             rebQ(code),  // group! or block! executed prior (or null)
@@ -347,7 +347,7 @@ DECLARE_NATIVE(console)
     }
 
     bool is_console_instruction = rebUnboxLogic("block? @", code);
-    REBVAL *group;
+    Value* group;
 
     if (is_console_instruction) {
         group = rebValue("as group! @", code);  // to run without DO

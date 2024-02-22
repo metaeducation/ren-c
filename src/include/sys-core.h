@@ -73,7 +73,7 @@
 //
 // Historically, Rebol source did not include the external library, because it
 // was assumed the core would never want to use the less-privileged and higher
-// overhead API.  However, libRebol now operates on REBVAL* directly (though
+// overhead API.  However, libRebol now operates on Value* directly (though
 // opaque to clients).  It has many conveniences, and is the preferred way to
 // work with isolated values that need indefinite duration.
 //
@@ -81,6 +81,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "rebol.h"
+typedef RebolValue Value;
 
 
 //=//// STANDARD DEPENDENCIES FOR CORE ////////////////////////////////////=//
@@ -244,8 +245,8 @@ struct Reb_Enum_Vars {
     //
     Context* ctx;
     Array* wordlist;
-    REBVAL *word;
-    REBVAL *word_tail;
+    Value* word;
+    Value* word_tail;
     const Symbol* keybuf;  // backing store for key
 };
 

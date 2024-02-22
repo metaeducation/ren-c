@@ -36,7 +36,7 @@ Bounce MAKE_Sequence(
     Level* level_,
     Kind kind,
     Option(const Value*) parent,
-    const REBVAL *arg
+    const Value* arg
 ){
     if (kind == REB_TEXT or Any_Path_Kind(kind))  // delegate for now
         return MAKE_Path(level_, kind, parent, arg);
@@ -179,7 +179,7 @@ Bounce MAKE_Sequence(
 //
 REBTYPE(Sequence)
 {
-    REBVAL *sequence = D_ARG(1);
+    Value* sequence = D_ARG(1);
 
     // !!! We get bytes for the sequence even if it's not a legitimate byte
     // tuple (or path), for compatibility in the below code for when it is.
@@ -218,7 +218,7 @@ REBTYPE(Sequence)
         REBINT a;
         REBDEC dec;
 
-        REBVAL *arg = D_ARG(2);
+        Value* arg = D_ARG(2);
 
         if (Is_Integer(arg)) {
             dec = -207.6382; // unused but avoid maybe uninitialized warning

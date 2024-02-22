@@ -34,7 +34,7 @@ Bounce MAKE_Quasiform(
     Level* level_,
     Kind kind,
     Option(const Value*) parent,
-    const REBVAL *arg
+    const Value* arg
 ){
     assert(not parent);
     UNUSED(parent);
@@ -56,7 +56,7 @@ Bounce MAKE_Quasiform(
 //
 // TO is disallowed at the moment (use QUASI)
 //
-Bounce TO_Quasiform(Level* level_, Kind kind, const REBVAL *data) {
+Bounce TO_Quasiform(Level* level_, Kind kind, const Value* data) {
     return RAISE(Error_Bad_Make(kind, data));
 }
 
@@ -77,7 +77,7 @@ REBINT CT_Quasiform(const Cell* a, const Cell* b, bool strict)
 //
 REBTYPE(Quasiform)
 {
-    REBVAL *quasi = D_ARG(1);
+    Value* quasi = D_ARG(1);
 
     switch (Symbol_Id(verb)) {
       case SYM_COPY: { // since `copy/deep [1 ~ 2]` is legal, allow `copy ~`

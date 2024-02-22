@@ -205,7 +205,7 @@ struct ActionExecutorStateStruct {
     const Key* key_tail;
 
     // `arg is the "actual argument"...which holds the pointer to the
-    // REBVAL slot in the `arglist` for that corresponding `param`.  These
+    // cell slot in the `arglist` for that corresponding `param`.  These
     // are moved in sync.  This movement can be done for typechecking or
     // fulfillment, see In_Typecheck_Mode()
     //

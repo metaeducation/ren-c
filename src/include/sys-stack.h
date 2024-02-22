@@ -50,7 +50,7 @@
 //
 //=// NOTES ///////////////////////////////////////////////////////////////=//
 //
-// * Do not store the result of a PUSH() directly into a REBVAL* variable.
+// * Do not store the result of a PUSH() directly into a Value* variable.
 //   Instead, use the StackValue(*) type, which makes sure that you don't try
 //   to hold a pointer into the stack across another push or an evaluation.
 //
@@ -66,8 +66,8 @@
 //   memory-pooled levels and stacklessness (see %c-trampoline.c)
 //
 
-// The result of PUSH() and TOP is not REBVAL*, but StackValue(*).  In an
-// unchecked build this is just a REBVAL*, but with DEBUG_EXTANT_STACK_POINTERS
+// The result of PUSH() and TOP is not Value*, but StackValue(*).  In an
+// unchecked build this is just a Value*, but with DEBUG_EXTANT_STACK_POINTERS
 // it becomes a checked C++ wrapper class...which keeps track of how many
 // such stack values are extant.  If the number is not zero, then you will
 // get an assert if you try to PUSH() or DROP(), as well as if you
@@ -96,11 +96,11 @@
         } } while (0)
 
     struct StackValuePointer {
-        REBVAL *p;
+        Value* p;
 
       public:
         StackValuePointer () : p (nullptr) {}
-        StackValuePointer (REBVAL *v) : p (v) {
+        StackValuePointer (Value* v) : p (v) {
             if (p != nullptr)
                 ++g_ds.num_refs_extant;
         }
@@ -122,7 +122,7 @@
             return *this;
         }
 
-        operator REBVAL* () const { return p; }
+        operator Value* () const { return p; }
         operator Sink(Value*) () const { return p; }
         operator Sink(const Value*) () const { return p; }
         operator Sink(Element*) () const { return p; }
@@ -130,7 +130,7 @@
 
         explicit operator Byte* () const { return cast(Byte*, p); }
 
-        REBVAL* operator->() { return p; }
+        Value* operator->() { return p; }
 
         bool operator==(const StackValuePointer &other)
             { return this->p == other.p; }
@@ -208,7 +208,7 @@
 //    to know the address after the content.
 //
 INLINE StackValue(*) Data_Stack_At(StackIndex i) {
-    REBVAL *at = cast(REBVAL*, g_ds.array->content.dynamic.data) + i;  // [1]
+    Value* at = cast(Value*, g_ds.array->content.dynamic.data) + i;  // [1]
 
     if (i == 0) {
         assert(Is_Cell_Poisoned(at));

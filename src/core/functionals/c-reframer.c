@@ -89,7 +89,7 @@ enum {
 //    and handed out for other purposes.  Caller's choice.
 //
 Level* Make_Pushed_Level_From_Action_Feed_May_Throw(
-    REBVAL *out,
+    Value* out,
     Value* action,
     Feed* feed,
     StackIndex base,
@@ -304,10 +304,10 @@ Bounce Reframer_Dispatcher(Level* const L)
     Details* details = Phase_Details(PHASE);
     assert(Array_Len(details) == IDX_REFRAMER_MAX);
 
-    REBVAL* shim = Details_At(details, IDX_REFRAMER_SHIM);
+    Value* shim = Details_At(details, IDX_REFRAMER_SHIM);
     assert(Is_Frame(shim));
 
-    REBVAL* param_index = Details_At(details, IDX_REFRAMER_PARAM_INDEX);
+    Value* param_index = Details_At(details, IDX_REFRAMER_PARAM_INDEX);
     assert(Is_Integer(param_index));
 
     // First run ahead and make the frame we want from the feed.
@@ -329,7 +329,7 @@ Bounce Reframer_Dispatcher(Level* const L)
         return THROWN;
     }
 
-    REBVAL *arg = Level_Arg(L, VAL_INT32(param_index));
+    Value* arg = Level_Arg(L, VAL_INT32(param_index));
     Move_Cell(arg, stable_SPARE);
 
     INIT_LVL_PHASE(L, ACT_IDENTITY(VAL_ACTION(shim)));
@@ -453,7 +453,7 @@ DECLARE_NATIVE(reframer)
     // !!! An expired frame would be better, or tweaking the argument so it
     // takes a void and giving it ~pending~; would make bugs more obvious.
     //
-    REBVAL *var = CTX_VAR(exemplar, param_index);
+    Value* var = CTX_VAR(exemplar, param_index);
     assert(Not_Specialized(var));
     Copy_Cell(var, CTX_ARCHETYPE(exemplar));
 

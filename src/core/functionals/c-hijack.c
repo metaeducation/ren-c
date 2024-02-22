@@ -92,7 +92,7 @@
 //     foo: func [a /b c] [...]  =>  bar: func [/b d e] [...]
 //                    foo/b 1 2  =>  bar/b 1 2
 //
-void Push_Redo_Action_Level(Atom* out, Level* L1, const REBVAL *run)
+void Push_Redo_Action_Level(Atom* out, Level* L1, const Value* run)
 {
     Array* normals = Make_Array(Level_Num_Args(L1));  // max, e.g. no refines
 

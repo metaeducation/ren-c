@@ -68,7 +68,7 @@ INLINE bool Do_Any_Array_At_Core_Throws(
 
 
 INLINE Bounce Run_Generic_Dispatch_Core(
-    const REBVAL *first_arg,  // !!! Is this always same as Level_Arg(L, 1)?
+    const Value* first_arg,  // !!! Is this always same as Level_Arg(L, 1)?
     Level* L,
     const Symbol* verb
 ){
@@ -97,7 +97,7 @@ INLINE Bounce Run_Generic_Dispatch_Core(
 // make throwing the only exceptional case they have to handle.
 //
 INLINE bool Run_Generic_Dispatch_Throws(
-    const REBVAL *first_arg,  // !!! Is this always same as Level_Arg(L, 1)?
+    const Value* first_arg,  // !!! Is this always same as Level_Arg(L, 1)?
     Level* L,
     const Symbol* verb
 ){
@@ -244,7 +244,7 @@ INLINE Bounce Continue_Sublevel_Helper(
 
 INLINE bool Do_Branch_Throws(  // !!! Legacy code, should be phased out
     Atom* out,
-    const REBVAL *branch
+    const Value* branch
 ){
     if (not Pushed_Continuation(
         out,

@@ -121,7 +121,7 @@ typedef struct rebol_scan_state {  // shared across all levels of a scan
 
     // The "limit" feature was not implemented, scanning just stopped at '\0'.
     // It may be interesting in the future, but it doesn't mix well with
-    // scanning variadics which merge REBVAL and UTF-8 strings together...
+    // scanning variadics which merge cells and UTF-8 strings together...
     //
     /* const Byte* limit; */
 } SCAN_STATE;

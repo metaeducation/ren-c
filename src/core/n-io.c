@@ -66,7 +66,7 @@ DECLARE_NATIVE(mold)
 {
     INCLUDE_PARAMS_OF_MOLD;
 
-    REBVAL *v = ARG(value);
+    Value* v = ARG(value);
 
     DECLARE_MOLD (mo);
     if (REF(all))
@@ -116,7 +116,7 @@ DECLARE_NATIVE(write_stdout)
 {
     INCLUDE_PARAMS_OF_WRITE_STDOUT;
 
-    REBVAL *v = ARG(value);
+    Value* v = ARG(value);
 
   #if !DEBUG_HAS_PROBE
     UNUSED(v);
@@ -159,7 +159,7 @@ DECLARE_NATIVE(new_line)
 
     bool mark = Cell_Logic(ARG(mark));
 
-    REBVAL *pos = ARG(position);
+    Value* pos = ARG(position);
     const Element* tail;
     Element* item = Cell_Array_At_Ensure_Mutable(&tail, pos);
     Array* a = Cell_Array_Known_Mutable(pos);  // need if setting flag at tail
@@ -215,7 +215,7 @@ DECLARE_NATIVE(new_line_q)
 {
     INCLUDE_PARAMS_OF_NEW_LINE_Q;
 
-    REBVAL *pos = ARG(position);
+    Value* pos = ARG(position);
 
     const Array* arr;
     const Element* item;
@@ -231,7 +231,7 @@ DECLARE_NATIVE(new_line_q)
                 // process of using string components which *might* have
                 // newlines.  Review edge cases, like:
                 //
-                //    REBVAL *new_line_q = rebValue(":new-line?");
+                //    Value* new_line_q = rebValue(":new-line?");
                 //    bool case_one = rebUnboxLogic("new-line?", "[\n]");
                 //    bool case_two = rebUnboxLogic(new_line_q, "[\n]");
                 //

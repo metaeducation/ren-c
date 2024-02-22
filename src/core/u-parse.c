@@ -319,7 +319,7 @@ static bool Subparse_Throws(
         // or not found.  This returns the interrupted flag which is still
         // ignored by most callers, but makes that fact more apparent.
         //
-        const REBVAL *label = VAL_THROWN_LABEL(LEVEL);
+        const Value* label = VAL_THROWN_LABEL(LEVEL);
         if (Is_Frame(label)) {
             if (VAL_ACTION(label) == VAL_ACTION(Lib(PARSE_REJECT))) {
                 CATCH_THROWN(out, LEVEL);
@@ -1188,7 +1188,7 @@ static void Handle_Mark_Rule(
         DECLARE_LOCAL (temp);
         Quotify(Derelativize(OUT, rule, specifier), 1);
         if (rebRunThrows(
-            cast(REBVAL*, temp),  // <-- output cell
+            cast(Value*, temp),  // <-- output cell
             Canon(SET), OUT, ARG(position)
         )){
             fail (Error_No_Catch_For_Throw(LEVEL));
@@ -1356,7 +1356,7 @@ DECLARE_NATIVE(subparse)
 
     REBIDX begin = P_POS;  // point at beginning of match
 
-    // The loop iterates across each REBVAL's worth of "rule" in the rule
+    // The loop iterates across each Element's worth of "rule" in the rule
     // block.  Some of these rules just set `flags` and `continue`, so that
     // the flags will apply to the next rule item.  If the flag is PF_SET
     // or PF_COPY, then the `set_or_copy_word` pointers will be assigned
@@ -2314,7 +2314,7 @@ DECLARE_NATIVE(subparse)
                 }
 
                 if (Is_Api_Value(into))
-                    rebRelease(x_cast(REBVAL*, into));  // !!! or use SPARE?
+                    rebRelease(x_cast(Value*, into));  // !!! or use SPARE?
 
                 FRESHEN(OUT);  // restore invariant
                 break; }
@@ -2451,7 +2451,7 @@ DECLARE_NATIVE(subparse)
             count = (begin > P_POS) ? 0 : P_POS - begin;
 
             if (P_FLAGS & PF_COPY) {
-                REBVAL *sink = Sink_Word_May_Fail(
+                Value* sink = Sink_Word_May_Fail(
                     set_or_copy_word,
                     P_RULE_SPECIFIER
                 );
@@ -2534,7 +2534,7 @@ DECLARE_NATIVE(subparse)
                 else {
                     assert(count == 1);  // check for > 1 would have errored
 
-                    REBVAL *var = Sink_Word_May_Fail(
+                    Value* var = Sink_Word_May_Fail(
                         set_or_copy_word, P_RULE_SPECIFIER
                     );
 
@@ -2743,12 +2743,12 @@ DECLARE_NATIVE(parse3)
 {
     INCLUDE_PARAMS_OF_PARSE3;
 
-    REBVAL *input = ARG(input);
-    REBVAL *rules = ARG(rules);
+    Value* input = ARG(input);
+    Value* rules = ARG(rules);
 
     if (Any_Sequence(input)) {
         if (rebRunThrows(
-            cast(REBVAL*, SPARE),  // <-- output cell
+            cast(Value*, SPARE),  // <-- output cell
             Canon(AS), Canon(BLOCK_X), rebQ(input)
         )){
             return THROWN;
@@ -2757,7 +2757,7 @@ DECLARE_NATIVE(parse3)
     }
     else if (Is_Url(input)) {
         if (rebRunThrows(
-            cast(REBVAL*, SPARE),  // <-- output cell
+            cast(Value*, SPARE),  // <-- output cell
             Canon(AS), Canon(TEXT_X), input
         )){
             return THROWN;

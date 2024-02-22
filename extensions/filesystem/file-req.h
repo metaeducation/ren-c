@@ -85,7 +85,7 @@ struct Reb_File_Port_State {
     // changing the spec location from which it came.  That's probably not
     // ideal if the spec isn't copied/owned and might be read only (?)
     //
-    REBVAL *path;
+    Value* path;
 
     // !!! To the extent Ren-C can provide any value in this space at all,
     // one thing it can do is make sure it is unambiguous that all directories
@@ -109,8 +109,8 @@ struct Reb_File_Port_State {
 
 typedef struct Reb_File_Port_State FILEREQ;
 
-inline static FILEREQ *File_Of_Port(const REBVAL *port)
+inline static FILEREQ *File_Of_Port(const Value* port)
 {
-    REBVAL *state = CTX_VAR(VAL_CONTEXT(port), STD_PORT_STATE);
+    Value* state = CTX_VAR(VAL_CONTEXT(port), STD_PORT_STATE);
     return cast(FILEREQ*, Cell_Binary_At_Ensure_Mutable(state));
 }

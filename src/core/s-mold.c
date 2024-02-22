@@ -380,7 +380,7 @@ void MF_Unhooked(REB_MOLD *mo, const Cell* v, bool form)
     UNUSED(mo);
     UNUSED(form);
 
-    const REBVAL *type = Datatype_From_Kind(Cell_Heart(v));
+    const Value* type = Datatype_From_Kind(Cell_Heart(v));
     UNUSED(type); // !!! put in error message?
 
     fail ("Datatype does not have extension with a MOLD handler registered");

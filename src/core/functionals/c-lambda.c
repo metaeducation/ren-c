@@ -65,7 +65,7 @@ Bounce Lambda_Dispatcher(Level* const L)
     Details* details = Phase_Details(PHASE);
     assert(Array_Len(details) == IDX_LAMBDA_MAX);
 
-    const REBVAL *block = Details_At(details, IDX_LAMBDA_BLOCK);
+    const Value* block = Details_At(details, IDX_LAMBDA_BLOCK);
     assert(Is_Block(block));
 
     Force_Level_Varlist_Managed(L);
@@ -138,7 +138,7 @@ DECLARE_NATIVE(lambda)
 {
     INCLUDE_PARAMS_OF_LAMBDA;
 
-    REBVAL *spec = ARG(spec);
+    Value* spec = ARG(spec);
     Element* body = cast(Element*, ARG(body));
 
     bool optimizable = true;

@@ -60,7 +60,7 @@ DECLARE_NATIVE(does)
 {
     INCLUDE_PARAMS_OF_DOES;
 
-    REBVAL *source = ARG(source);
+    Value* source = ARG(source);
 
     if (Is_Block(source))  // act as lambda with an empty spec
         return rebValue(Canon(LAMBDA), EMPTY_BLOCK, source);

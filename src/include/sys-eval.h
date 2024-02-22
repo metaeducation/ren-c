@@ -28,12 +28,12 @@
 //
 // Ren-C can run the evaluator across an Array*-style input series based on
 // index.  It can also enumerate through C's `va_list`, providing the ability
-// to pass pointers as REBVAL* to comma-separated input at the source level.
+// to pass pointers as Value* to comma-separated input at the source level.
 //
 // To provide even greater flexibility, it allows the very first element's
 // pointer in an evaluation to come from an arbitrary source.  It doesn't
 // have to be resident in the same sequence from which ensuing values are
-// pulled, allowing a free head value (such as an ACTION! REBVAL in a local
+// pulled, allowing a free head value (such as an ACTION! cell in a local
 // C variable) to be evaluated in combination from another source (like a
 // va_list or series representing the arguments.)  This avoids the cost and
 // complexity of allocating a series to combine the values together.
@@ -122,7 +122,7 @@ INLINE void Restart_Evaluator_Level(Level* L) {
 
 #define Is_Pushed_Refinement Is_The_Word
 
-INLINE REBVAL *Refinify_Pushed_Refinement(REBVAL *v) {
+INLINE Value* Refinify_Pushed_Refinement(Value* v) {
     assert(Is_Pushed_Refinement(v));
     return Refinify(Plainify(v));
 }

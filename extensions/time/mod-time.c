@@ -28,7 +28,7 @@
 #include "tmp-mod-time.h"
 
 
-extern REBVAL *Get_Current_Datetime_Value(void);
+extern Value* Get_Current_Datetime_Value(void);
 
 //
 //  export now: native [
@@ -53,7 +53,7 @@ DECLARE_NATIVE(now)
 {
     TIME_INCLUDE_PARAMS_OF_NOW;
 
-    REBVAL *timestamp = Get_Current_Datetime_Value();
+    Value* timestamp = Get_Current_Datetime_Value();
 
     // However OS-level date and time is plugged into the system, it needs to
     // have enough granularity to give back date, time, and time zone.

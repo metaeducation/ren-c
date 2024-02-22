@@ -31,6 +31,7 @@
 #include <locale.h>
 
 #include "rebol.h"  // not %sys-core.h !
+typedef RebolValue Value;
 
 #include "assert-fix.h"
 #include "c-enhanced.h"
@@ -85,7 +86,7 @@ DECLARE_NATIVE(locale)
     assert(len_check == len_plus_term);
     UNUSED(len_check);
 
-    REBVAL* text = rebLengthedTextWide(buffer, len_plus_term - 1);
+    Value* text = rebLengthedTextWide(buffer, len_plus_term - 1);
     rebFree(buffer);
 
     return text;
@@ -146,7 +147,7 @@ DECLARE_NATIVE(setlocale)
 
     // GNU extensions are #define'd to -1 above this routine if not available
     //
-    REBVAL* map = rebValue(
+    Value* map = rebValue(
         "make map! [",
             "all", rebI(LC_ALL),
             "address", rebI(LC_ADDRESS), // GNU extension

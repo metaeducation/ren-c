@@ -658,7 +658,7 @@ for-each term load %lib-words.r [
 
 === "ESTABLISH SYM_XXX VALUES FOR EACH NATIVE" ===
 
-; It's desirable for the core to be able to get the REBVAL* for a native
+; It's desirable for the core to be able to get the Value* for a native
 ; quickly just by indexing into a table.  An aspect of optimizations related
 ; to that is that the SYM_XXX values for the names of the natives index into
 ; a fixed block.  We put them after the ordered words in lib.
@@ -830,7 +830,7 @@ e-errfuncs/emit [fields {
 e-errfuncs/emit {
     /*
      * The variadic Error() function must be passed the exact right number of
-     * fully resolved REBVAL* that the error spec specifies.  This is easy
+     * fully resolved Value* that the error spec specifies.  This is easy
      * to get wrong in C, since variadics aren't checked.  Also, the category
      * symbol needs to be right for the error ID.
      *

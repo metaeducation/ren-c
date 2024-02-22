@@ -296,11 +296,11 @@ INLINE Option(const Value*) Try_Reify_Variadic_Feed_Series(
         panic (feed->p);
     }
 
-    return c_cast(REBVAL*, feed->p);
+    return c_cast(Value*, feed->p);
 }
 
 
-// Ordinary Rebol internals deal with REBVAL* that are resident in arrays.
+// Ordinary Rebol internals deal with Value* that are resident in arrays.
 // But a va_list can contain UTF-8 string components or special instructions
 //
 INLINE void Force_Variadic_Feed_At_Cell_Or_End_May_Fail(Feed* feed)

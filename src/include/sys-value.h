@@ -30,11 +30,11 @@
 // memory block for a Rebol array.  The memory block for an array can be
 // resized and require a reallocation, or it may become invalid if the
 // containing series is garbage-collected.  This means that many pointers to
-// REBVAL are unstable, and could become invalid if arbitrary user code
+// cell are movable, and could become invalid if arbitrary user code
 // is run...this includes values on the data stack, which is implemented as
 // an array under the hood.  (See %sys-stack.h)
 //
-// A REBVAL in a C stack variable does not have to worry about its memory
+// A cell in a C stack variable does not have to worry about its memory
 // address becoming invalid--but by default the garbage collector does not
 // know that value exists.  So while the address may be stable, any series
 // it has in the payload might go bad.  Use Push_GC_Guard() to protect a
@@ -48,7 +48,7 @@
 
 //=//// DEBUG PROBE <== **THIS IS VERY USEFUL** //////////////////////////=//
 //
-// The PROBE macro can be used in debug builds to mold a REBVAL much like the
+// The PROBE macro can be used in debug builds to mold a cell much like the
 // Rebol `probe` operation.  But it's actually polymorphic, and if you have
 // a Series*, Context*, or Array* it can be used with those as well.  In C++,
 // you can even get the same value and type out as you put in...just like in
@@ -464,9 +464,9 @@ INLINE void Reset_Unquoted_Header_Untracked(Cell* v, uintptr_t flags)
         | flags | FLAG_QUOTE_BYTE(NOQUOTE_1));
 }
 
-INLINE REBVAL* Freshen_Cell_Untracked(Cell* v) {
+INLINE Value* Freshen_Cell_Untracked(Cell* v) {
     FRESHEN_CELL(v);
-    return cast(REBVAL*, v);
+    return cast(Value*, v);
 }
 
 #define FRESHEN(v) \
@@ -715,7 +715,7 @@ INLINE Cell* Copy_Cell_Untracked(
 //
 // In the meantime, this just does a Copy + RESET.
 
-INLINE REBVAL *Move_Cell_Untracked(
+INLINE Value* Move_Cell_Untracked(
     Cell* out,
     Atom* v,
     Flags copy_mask
@@ -729,7 +729,7 @@ INLINE REBVAL *Move_Cell_Untracked(
     v->tick = TG_tick;
   #endif
 
-    return cast(REBVAL*, out);
+    return cast(Value*, out);
 }
 
 #if (! DEBUG_USE_CELL_SUBCLASSES)
@@ -779,7 +779,7 @@ INLINE Atom* Inherit_Const(Atom* out, const Cell* influencer) {
 #define Trust_Const(value) \
     (value) // just a marking to say the const is accounted for already
 
-INLINE REBVAL *Constify(REBVAL *v) {
+INLINE Value* Constify(Value* v) {
     Set_Cell_Flag(v, CONST);
     return v;
 }

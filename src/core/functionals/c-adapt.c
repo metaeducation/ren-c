@@ -110,7 +110,7 @@ Bounce Adapter_Dispatcher(Level* const L)
 
 } run_adaptee_in_same_frame: {  //////////////////////////////////////////////
 
-    REBVAL* adaptee = Details_At(details, IDX_ADAPTER_ADAPTEE);
+    Value* adaptee = Details_At(details, IDX_ADAPTER_ADAPTEE);
 
     INIT_LVL_PHASE(L, ACT_IDENTITY(VAL_ACTION(adaptee)));
     INIT_LVL_BINDING(L, VAL_FRAME_BINDING(adaptee));
@@ -135,7 +135,7 @@ DECLARE_NATIVE(adapt)
 {
     INCLUDE_PARAMS_OF_ADAPT;
 
-    REBVAL *adaptee = ARG(original);
+    Value* adaptee = ARG(original);
     Value* prelude = ARG(prelude);
 
     // !!! There was code here which would hide it so adapted code had no
@@ -161,7 +161,7 @@ DECLARE_NATIVE(adapt)
     );
 
     // We can't use a simple Init_Block() here, because the prelude has been
-    // relativized.  It is thus not a REBVAL*, but a Cell*...so the
+    // relativized.  It is thus not a Value*, but a Cell*...so the
     // Adapter_Dispatcher() must combine it with the FRAME! instance before
     // it can be executed (e.g. the `Level* L` it is dispatching).
     //

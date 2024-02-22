@@ -71,7 +71,7 @@ DECLARE_NATIVE(stats)
 
   #if !defined(NDEBUG)
     if (REF(pool)) {
-        REBVAL *pool_id = ARG(pool);
+        Value* pool_id = ARG(pool);
         Dump_Series_In_Pool(VAL_INT32(pool_id));
         return nullptr;
     }

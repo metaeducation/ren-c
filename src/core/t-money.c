@@ -78,7 +78,7 @@ Bounce MAKE_Money(
     Level* level_,
     Kind kind,
     Option(const Value*) parent,
-    const REBVAL *arg
+    const Value* arg
 ){
     assert(kind == REB_MONEY);
     if (parent)
@@ -129,7 +129,7 @@ Bounce MAKE_Money(
 //
 //  TO_Money: C
 //
-Bounce TO_Money(Level* level_, Kind kind, const REBVAL *arg)
+Bounce TO_Money(Level* level_, Kind kind, const Value* arg)
 {
     return MAKE_Money(level_, kind, nullptr, arg);
 }
@@ -203,39 +203,39 @@ static Value* Math_Arg_For_Money(
 //
 REBTYPE(Money)
 {
-    REBVAL *v = D_ARG(1);
+    Value* v = D_ARG(1);
 
     switch (Symbol_Id(verb)) {
       case SYM_ADD: {
-        REBVAL *arg = Math_Arg_For_Money(SPARE, D_ARG(2), verb);
+        Value* arg = Math_Arg_For_Money(SPARE, D_ARG(2), verb);
         return Init_Money(
             OUT,
             deci_add(VAL_MONEY_AMOUNT(v), VAL_MONEY_AMOUNT(arg))
         ); }
 
       case SYM_SUBTRACT: {
-        REBVAL *arg = Math_Arg_For_Money(SPARE, D_ARG(2), verb);
+        Value* arg = Math_Arg_For_Money(SPARE, D_ARG(2), verb);
         return Init_Money(
             OUT,
             deci_subtract(VAL_MONEY_AMOUNT(v), VAL_MONEY_AMOUNT(arg))
         ); }
 
       case SYM_MULTIPLY: {
-        REBVAL *arg = Math_Arg_For_Money(SPARE, D_ARG(2), verb);
+        Value* arg = Math_Arg_For_Money(SPARE, D_ARG(2), verb);
         return Init_Money(
             OUT,
             deci_multiply(VAL_MONEY_AMOUNT(v), VAL_MONEY_AMOUNT(arg))
         ); }
 
       case SYM_DIVIDE: {
-        REBVAL *arg = Math_Arg_For_Money(SPARE, D_ARG(2), verb);
+        Value* arg = Math_Arg_For_Money(SPARE, D_ARG(2), verb);
         return Init_Money(
             OUT,
             deci_divide(VAL_MONEY_AMOUNT(v), VAL_MONEY_AMOUNT(arg))
         ); }
 
       case SYM_REMAINDER: {
-        REBVAL *arg = Math_Arg_For_Money(SPARE, D_ARG(2), verb);
+        Value* arg = Math_Arg_For_Money(SPARE, D_ARG(2), verb);
         return Init_Money(
             OUT,
             deci_mod(VAL_MONEY_AMOUNT(v), VAL_MONEY_AMOUNT(arg))
@@ -255,7 +255,7 @@ REBTYPE(Money)
         USED(ARG(even)); USED(ARG(down)); USED(ARG(half_down));
         USED(ARG(floor)); USED(ARG(ceiling)); USED(ARG(half_ceiling));
 
-        REBVAL *to = ARG(to);
+        Value* to = ARG(to);
 
         DECLARE_LOCAL (temp);
         if (REF(to)) {

@@ -45,7 +45,7 @@
 // parameter name and value as being implicated as a problem.  This only
 // works for the current topmost stack level.
 //
-// Passing an arbitrary REBVAL* will give a generic "Invalid Arg" error.
+// Passing an arbitrary Value* will give a generic "Invalid Arg" error.
 //
 // Note: Over the long term, one does not want to hard-code error strings in
 // the executable.  That makes them more difficult to hook with translations,
@@ -105,7 +105,7 @@ ATTRIBUTE_NO_RETURN void Fail_Core(const void *p)
 
         const Value* v = c_cast(Value*, p);
 
-        // Check to see if the REBVAL* cell is in the paramlist of the current
+        // Check to see if the Value* cell is in the paramlist of the current
         // running native.  (We could theoretically do this with ARG(), or
         // have a nuance of behavior with ARG()...or even for the Key* .)
         //
@@ -132,7 +132,7 @@ ATTRIBUTE_NO_RETURN void Fail_Core(const void *p)
             REBLEN num_params = ACT_NUM_PARAMS(Level_Phase(TOP_LEVEL));
 
             if (v >= head and v < head + num_params) {
-                const Param* param = cast_PAR(c_cast(REBVAL*, v));
+                const Param* param = cast_PAR(c_cast(Value*, v));
                 error = Error_Invalid_Arg(TOP_LEVEL, param);
             }
             else
@@ -266,7 +266,7 @@ REBLEN Stack_Depth(void)
 //
 // If the message is not found, return nullptr.
 //
-const REBVAL *Find_Error_For_Sym(SymId id)
+const Value* Find_Error_For_Sym(SymId id)
 {
     const Symbol* canon = Canon_Symbol(id);
 
@@ -279,7 +279,7 @@ const REBVAL *Find_Error_For_Sym(SymId id)
         REBLEN n = 1;
         for (; n != CTX_LEN(category) + 1; ++n) {
             if (Are_Synonyms(KEY_SYMBOL(CTX_KEY(category, n)), canon)) {
-                REBVAL *message = CTX_VAR(category, n);
+                Value* message = CTX_VAR(category, n);
                 assert(Is_Block(message) or Is_Text(message));
                 return message;
             }
@@ -400,7 +400,7 @@ Bounce MAKE_Error(
     Level* level_,
     Kind kind,
     Option(const Value*) parent,
-    const REBVAL *arg
+    const Value* arg
 ){
     assert(kind == REB_ERROR);
     UNUSED(kind);
@@ -571,7 +571,7 @@ Bounce MAKE_Error(
 // !!! Historically this was identical to MAKE ERROR!, but MAKE and TO are
 // being rethought.
 //
-Bounce TO_Error(Level* level_, Kind kind, const REBVAL *arg)
+Bounce TO_Error(Level* level_, Kind kind, const Value* arg)
 {
     return MAKE_Error(level_, kind, nullptr, arg);
 }
@@ -614,11 +614,11 @@ Context* Make_Error_Managed_Core(
 
     DECLARE_STABLE (id_value);
     DECLARE_STABLE (type);
-    const REBVAL *message;  // Stack values ("movable") are allowed
+    const Value* message;  // Stack values ("movable") are allowed
     if (cat_id == SYM_0 and id == SYM_0) {
         Init_Nulled(id_value);
         Init_Nulled(type);
-        message = va_arg(*vaptr, const REBVAL*);
+        message = va_arg(*vaptr, const Value*);
     }
     else {
         assert(cat_id != SYM_0 and id != SYM_0);
@@ -672,7 +672,7 @@ Context* Make_Error_Managed_Core(
                 continue;
 
             const Symbol* symbol = Cell_Word_Symbol(msg_item);
-            REBVAL *var = Append_Context(error, symbol);
+            Value* var = Append_Context(error, symbol);
 
             const void *p = va_arg(*vaptr, const void*);
 
@@ -720,7 +720,7 @@ Context* Make_Error_Managed_Core(
 //
 //  Error: C
 //
-// This variadic function takes a number of REBVAL* arguments appropriate for
+// This variadic function takes a number of Value* arguments appropriate for
 // the error category and ID passed.  It is commonly used with fail():
 //
 //     fail (Error(SYM_CATEGORY, SYM_SOMETHING, arg1, arg2, ...));
@@ -741,7 +741,7 @@ Context* Make_Error_Managed_Core(
 Context* Error(
     int cat_id,
     int id, // can't be SymId, see note below
-    ... /* REBVAL *arg1, REBVAL *arg2, ... */
+    ... /* Value* arg1, Value* arg2, ... */
 ){
     va_list va;
 
@@ -876,7 +876,7 @@ Context* Error_Not_Varargs(
     Level* L,
     const Key* key,
     const Param* param,
-    const REBVAL *arg
+    const Value* arg
 ){
     assert(Get_Parameter_Flag(param, VARIADIC));
     assert(not Is_Varargs(arg));
@@ -919,7 +919,7 @@ Context* Error_Invalid_Arg(Level* L, const Param* param)
     DECLARE_LOCAL (param_name);
     Init_Word(param_name, KEY_SYMBOL(ACT_KEY(Level_Phase(L), index)));
 
-    REBVAL *arg = Level_Arg(L, index);
+    Value* arg = Level_Arg(L, index);
     return Error_Invalid_Arg_Raw(label, param_name, arg);
 }
 
@@ -1071,7 +1071,7 @@ Context* Error_Arg_Type(
     Option(const Symbol*) name,
     const Key* key,
     const Param* param,
-    const REBVAL *arg
+    const Value* arg
 ){
     if (Cell_ParamClass(param) == PARAMCLASS_META and Is_Meta_Of_Raised(arg))
         return VAL_CONTEXT(arg);
@@ -1113,7 +1113,7 @@ Context* Error_Phase_Arg_Type(
     Level* L,
     const Key* key,
     const Param* param,
-    const REBVAL *arg
+    const Value* arg
 ){
     if (Level_Phase(L) == L->u.action.original)  // not an internal phase
         return Error_Arg_Type(L->label, key, param, arg);
@@ -1214,7 +1214,7 @@ Context* Error_Bad_Make_Parent(Kind type, const Cell* parent)
 //
 //  Error_Cannot_Reflect: C
 //
-Context* Error_Cannot_Reflect(Kind type, const REBVAL *arg)
+Context* Error_Cannot_Reflect(Kind type, const Value* arg)
 {
     return Error_Cannot_Use_Raw(arg, Datatype_From_Kind(type));
 }
@@ -1223,14 +1223,14 @@ Context* Error_Cannot_Reflect(Kind type, const REBVAL *arg)
 //
 //  Error_On_Port: C
 //
-Context* Error_On_Port(SymId id, REBVAL *port, REBINT err_code)
+Context* Error_On_Port(SymId id, Value* port, REBINT err_code)
 {
     FAIL_IF_BAD_PORT(port);
 
     Context* ctx = VAL_CONTEXT(port);
-    REBVAL *spec = CTX_VAR(ctx, STD_PORT_SPEC);
+    Value* spec = CTX_VAR(ctx, STD_PORT_SPEC);
 
-    REBVAL *val = CTX_VAR(VAL_CONTEXT(spec), STD_PORT_SPEC_HEAD_REF);
+    Value* val = CTX_VAR(VAL_CONTEXT(spec), STD_PORT_SPEC_HEAD_REF);
     if (Is_Blank(val))
         val = CTX_VAR(VAL_CONTEXT(spec), STD_PORT_SPEC_HEAD_TITLE);  // less
 
@@ -1299,7 +1299,7 @@ Context* Startup_Errors(const Element* boot_errors)
     // Morph blocks into objects for all error categories.
     //
     const Element* category_tail = Array_Tail(CTX_VARLIST(catalog));
-    REBVAL *category = CTX_VARS_HEAD(catalog);
+    Value* category = CTX_VARS_HEAD(catalog);
     for (; category != category_tail; ++category) {
         const Element* tail;
         Element* head = Cell_Array_At_Known_Mutable(&tail, category);

@@ -46,6 +46,7 @@
 // `DECLARE_NATIVE` without include params macros.
 
 #include "rebol.h"  // not %sys-core.h !
+typedef RebolValue Value;
 
 #include "assert-fix.h"
 #include "c-enhanced.h"
@@ -67,7 +68,7 @@ DECLARE_NATIVE(generate)
 
   #if TO_WINDOWS
 
-    REBVAL *binary = rebUninitializedBinary_internal(16);
+    Value* binary = rebUninitializedBinary_internal(16);
     unsigned char* bp = rebBinaryHead_internal(binary);
 
     UUID uuid;  // uuid.data* is little endian, string form is big endian
@@ -117,7 +118,7 @@ DECLARE_NATIVE(generate)
 
   #elif TO_LINUX || TO_HAIKU
 
-    REBVAL *binary = rebUninitializedBinary_internal(16);
+    Value* binary = rebUninitializedBinary_internal(16);
     unsigned char* bp = rebBinaryHead_internal(binary);
 
     uuid_t uuid;

@@ -338,7 +338,7 @@ Bounce MAKE_String(
     Level* level_,
     Kind k,
     Option(const Value*) parent,
-    const REBVAL *def
+    const Value* def
 ){
     Heart heart = cast(Heart, k);
 
@@ -426,7 +426,7 @@ Bounce MAKE_String(
 //
 //  TO_String: C
 //
-Bounce TO_String(Level* level_, Kind k, const REBVAL *arg)
+Bounce TO_String(Level* level_, Kind k, const Value* arg)
 {
     Heart heart = cast(Heart, k);
 
@@ -886,7 +886,7 @@ void MF_String(REB_MOLD *mo, const Cell* v, bool form)
 //
 bool Did_Get_Series_Index_From_Picker(
     REBINT *out,
-    const REBVAL *v,
+    const Value* v,
     const Value* picker
 ){
     if (not (Is_Integer(picker) or Is_Decimal(picker)))  // !!! why DECIMAL! ?
@@ -916,7 +916,7 @@ bool Did_Get_Series_Index_From_Picker(
 //
 REBTYPE(String)
 {
-    REBVAL *v = D_ARG(1);
+    Value* v = D_ARG(1);
     assert(Any_String(v));
 
     Option(SymId) id = Symbol_Id(verb);
@@ -950,7 +950,7 @@ REBTYPE(String)
         if (not Did_Get_Series_Index_From_Picker(&n, v, picker))
             fail (Error_Out_Of_Range(picker));
 
-        REBVAL *setval = ARG(value);
+        Value* setval = ARG(value);
 
         Codepoint c;
         if (IS_CHAR(setval)) {
@@ -1243,7 +1243,7 @@ REBTYPE(String)
     //-- Special actions:
 
       case SYM_SWAP: {
-        REBVAL *arg = D_ARG(2);
+        Value* arg = D_ARG(2);
 
         if (VAL_TYPE(v) != VAL_TYPE(arg))
             fail (Error_Not_Same_Type_Raw());
@@ -1385,7 +1385,7 @@ REBTYPE(String)
         // Let the port system try the action, e.g. OPEN %foo.txt
         //
         if ((Is_File(v) or Is_Url(v))) {
-            const REBVAL *made = rebValue("make port! @", D_ARG(1));
+            const Value* made = rebValue("make port! @", D_ARG(1));
             assert(Is_Port(made));
             Copy_Cell(D_ARG(1), made);
             rebRelease(made);

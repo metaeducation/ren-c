@@ -80,7 +80,7 @@ INLINE const Byte* VAL_CHAR_ENCODED(const Cell* v) {
     return PAYLOAD(Bytes, v).at_least_8;  // !!! '\0' terminated or not?
 }
 
-INLINE REBVAL *Init_Issue_Utf8(
+INLINE Value* Init_Issue_Utf8(
     Cell* out,
     Utf8(const*) utf8,  // previously validated UTF-8 (maybe not null term?)
     Size size,
@@ -103,14 +103,14 @@ INLINE REBVAL *Init_Issue_Utf8(
         Init_Text(out, str);
         HEART_BYTE(out) = REB_ISSUE;
     }
-    return cast(REBVAL*, out);
+    return cast(Value*, out);
 }
 
 
 // If you know that a codepoint is good (e.g. it came from an ANY-STRING?)
 // this routine can be used.
 //
-INLINE REBVAL *Init_Char_Unchecked_Untracked(Cell* out, Codepoint c) {
+INLINE Value* Init_Char_Unchecked_Untracked(Cell* out, Codepoint c) {
     Reset_Unquoted_Header_Untracked(
         out,
         FLAG_HEART_BYTE(REB_ISSUE) | CELL_MASK_NO_NODES
@@ -138,7 +138,7 @@ INLINE REBVAL *Init_Char_Unchecked_Untracked(Cell* out, Codepoint c) {
 
     HEART_BYTE(out) = REB_ISSUE;  // heart is TEXT, presents as issue
     assert(Cell_Codepoint(out) == c);
-    return cast(REBVAL*, out);
+    return cast(Value*, out);
 }
 
 #define Init_Char_Unchecked(out,c) \

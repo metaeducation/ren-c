@@ -25,7 +25,7 @@
 #include "sys-core.h"
 
 
-static bool Check_Char_Range(const REBVAL *val, REBLEN limit)
+static bool Check_Char_Range(const Value* val, REBLEN limit)
 {
     if (IS_CHAR(val))
         return Cell_Codepoint(val) <= limit;
@@ -122,8 +122,8 @@ DECLARE_NATIVE(bind)
 {
     INCLUDE_PARAMS_OF_BIND;
 
-    REBVAL *v = ARG(value);
-    REBVAL *target = ARG(target);
+    Value* v = ARG(value);
+    Value* target = ARG(target);
 
     REBLEN flags = REF(only) ? BIND_0 : BIND_DEEP;
 
@@ -294,7 +294,7 @@ DECLARE_NATIVE(has)
     INCLUDE_PARAMS_OF_HAS;
 
     Context* ctx = VAL_CONTEXT(ARG(context));
-    REBVAL *v = ARG(value);
+    Value* v = ARG(value);
 
     assert(Any_Word(v));
     Heart heart = Cell_Heart(v);
@@ -330,7 +330,7 @@ DECLARE_NATIVE(without)
     INCLUDE_PARAMS_OF_WITHOUT;
 
     Context* ctx = VAL_CONTEXT(ARG(context));
-    REBVAL *v = ARG(value);
+    Value* v = ARG(value);
 
     // !!! Note that BIND of a WORD! in historical Rebol/Red would return the
     // input word as-is if the word wasn't in the requested context, while
@@ -400,7 +400,7 @@ DECLARE_NATIVE(use)
 //
 //  Did_Get_Binding_Of: C
 //
-bool Did_Get_Binding_Of(Sink(Value*) out, const REBVAL *v)
+bool Did_Get_Binding_Of(Sink(Value*) out, const Value* v)
 {
     switch (VAL_TYPE(v)) {
     case REB_FRAME: {
@@ -601,7 +601,7 @@ DECLARE_NATIVE(unbind)
 {
     INCLUDE_PARAMS_OF_UNBIND;
 
-    REBVAL *word = ARG(word);
+    Value* word = ARG(word);
 
     if (Any_Word(word))
         Unbind_Any_Word(word);
@@ -631,7 +631,7 @@ DECLARE_NATIVE(bindable)
 {
     INCLUDE_PARAMS_OF_BINDABLE;
 
-    REBVAL *v = ARG(value);
+    Value* v = ARG(value);
 
     if (Any_Word(v))
         Unbind_Any_Word(v);
@@ -855,7 +855,7 @@ bool Get_Var_Push_Refinements_Throws(
     while (stackindex != TOP_INDEX + 1) {
         Move_Cell(temp, out);
         QUOTE_BYTE(temp) = ONEQUOTE_3;
-        const void *ins = rebQ(cast(REBVAL*, Data_Stack_At(stackindex)));
+        const void *ins = rebQ(cast(Value*, Data_Stack_At(stackindex)));
         if (rebRunThrows(
             out,  // <-- output cell
             Canon(PICK_P), temp, ins
@@ -919,7 +919,7 @@ void Get_Var_May_Fail(
     Specifier* specifier,
     bool any
 ){
-    REBVAL *steps_out = nullptr;
+    Value* steps_out = nullptr;
 
     if (Get_Var_Core_Throws(out, steps_out, source, specifier))
         fail (Error_No_Catch_For_Throw(TOP_LEVEL));
@@ -966,7 +966,7 @@ bool Get_Path_Push_Refinements_Throws(
 
         // !!! `a/` should error if it's not an action...
         //
-        const REBVAL *val = Lookup_Word_May_Fail(path, path_specifier);
+        const Value* val = Lookup_Word_May_Fail(path, path_specifier);
         if (Is_Antiform(val)) {
             if (not Is_Action(val))
                 fail (Error_Bad_Word_Get(path, val));
@@ -1051,7 +1051,7 @@ bool Get_Path_Push_Refinements_Throws(
     }
     else if (Is_Word(head)) {
         Specifier* derived = Derive_Specifier(path_specifier, path);
-        const REBVAL *lookup = Lookup_Word_May_Fail(
+        const Value* lookup = Lookup_Word_May_Fail(
             head,
             derived
         );
@@ -1074,17 +1074,17 @@ bool Get_Path_Push_Refinements_Throws(
         // we are running in a mode where tuple allows the getting of
         // actions (though it's slower because it does specialization)
         //
-        REBVAL *redbol = Get_System(SYS_OPTIONS, OPTIONS_REDBOL_PATHS);
+        Value* redbol = Get_System(SYS_OPTIONS, OPTIONS_REDBOL_PATHS);
         if (not Is_Logic(redbol) or Cell_Logic(redbol) == false) {
             Derelativize(out, path, path_specifier);
             rebElide(
-                "echo [The PATH!", cast(REBVAL*, out), "doesn't evaluate to",
+                "echo [The PATH!", cast(Value*, out), "doesn't evaluate to",
                     "an ACTION! in the first slot.]",
                 "echo [SYSTEM.OPTIONS.REDBOL-PATHS is FALSE so this",
                     "is not allowed by default.]",
                 "echo [For now, we'll enable it automatically...but it",
                     "will slow down the system!]",
-                "echo [Please use TUPLE!, like", cast(REBVAL*, safe), "]",
+                "echo [Please use TUPLE!, like", cast(Value*, safe), "]",
 
                 "system.options.redbol-paths: true",
                 "wait 3"
@@ -1209,7 +1209,7 @@ DECLARE_NATIVE(get)
 
     Element* source = cast(Element*, ARG(source));
 
-    REBVAL *steps;
+    Value* steps;
     if (REF(groups))
         steps = GROUPS_OK;
     else
@@ -1261,8 +1261,8 @@ bool Set_Var_Core_Updater_Throws(
     Option(Value*) steps_out,  // no GROUP!s if nulled
     const Value* var,  // e.g. v (may be void)
     Specifier* var_specifier,  // e.g. v_specifier
-    const REBVAL *setval,  // e.g. L->out (in the evaluator, right hand side)
-    const REBVAL *updater
+    const Value* setval,  // e.g. L->out (in the evaluator, right hand side)
+    const Value* updater
 ){
     // Note: `steps_out` can be equal to `out` can be equal to `target`
 
@@ -1446,7 +1446,7 @@ bool Set_Var_Core_Updater_Throws(
     while (stackindex != stackindex_top) {
         Move_Cell(temp, out);
         Quotify(temp, 1);
-        const void *ins = rebQ(cast(REBVAL*, Data_Stack_At(stackindex)));
+        const void *ins = rebQ(cast(Value*, Data_Stack_At(stackindex)));
         if (rebRunThrows(
             out,  // <-- output cell
             Canon(PICK_P), temp, ins
@@ -1463,7 +1463,7 @@ bool Set_Var_Core_Updater_Throws(
     Move_Cell(temp, out);
     Byte quote_byte = QUOTE_BYTE(temp);
     QUOTE_BYTE(temp) = ONEQUOTE_3;
-    const void *ins = rebQ(cast(REBVAL*, Data_Stack_At(stackindex)));
+    const void *ins = rebQ(cast(Value*, Data_Stack_At(stackindex)));
     assert(Is_Action(updater));
     if (rebRunThrows(
         out,  // <-- output cell
@@ -1522,7 +1522,7 @@ bool Set_Var_Core_Throws(
     Option(Value*) steps_out,  // no GROUP!s if nulled
     const Value* var,  // e.g. v (can be void)
     Specifier* var_specifier,  // e.g. v_specifier
-    const REBVAL *setval  // e.g. L->out (in the evaluator, right hand side)
+    const Value* setval  // e.g. L->out (in the evaluator, right hand side)
 ){
     return Set_Var_Core_Updater_Throws(
         out,
@@ -1544,7 +1544,7 @@ bool Set_Var_Core_Throws(
 void Set_Var_May_Fail(
     const Value* target,
     Specifier* target_specifier,
-    const REBVAL *setval
+    const Value* setval
 ){
     Option(Value*) steps_out = nullptr;
 
@@ -1576,8 +1576,8 @@ DECLARE_NATIVE(set)
 {
     INCLUDE_PARAMS_OF_SET;
 
-    REBVAL *target = ARG(target);
-    REBVAL *v = ARG(value);
+    Value* target = ARG(target);
+    Value* v = ARG(value);
 
     // !!! Should SET look for antiform objects specially, with a particular
     // interaction distinct from DECAY?  Review.
@@ -1587,7 +1587,7 @@ DECLARE_NATIVE(set)
 
     Meta_Unquotify_Decayed(v);
 
-    REBVAL *steps;
+    Value* steps;
     if (REF(groups))
         steps = GROUPS_OK;
     else
@@ -1620,7 +1620,7 @@ DECLARE_NATIVE(try)
 {
     INCLUDE_PARAMS_OF_TRY;
 
-    REBVAL *v = ARG(optional);
+    Value* v = ARG(optional);
 
     if (Is_Meta_Of_Void(v) or Is_Meta_Of_Null(v))
         return Init_Nulled(OUT);
@@ -1685,11 +1685,11 @@ DECLARE_NATIVE(proxy_exports)
 
         bool strict = true;
 
-        const REBVAL *src = MOD_VAR(source, symbol, strict);
+        const Value* src = MOD_VAR(source, symbol, strict);
         if (src == nullptr)
             fail (v);  // fail if unset value, also?
 
-        REBVAL *dest = MOD_VAR(where, symbol, strict);
+        Value* dest = MOD_VAR(where, symbol, strict);
         if (dest != nullptr) {
             // Fail if found?
             FRESHEN(dest);
@@ -1773,7 +1773,7 @@ DECLARE_NATIVE(identity) // sample uses: https://stackoverflow.com/q/3136338
 {
     INCLUDE_PARAMS_OF_IDENTITY;
 
-    REBVAL *v = ARG(value);
+    Value* v = ARG(value);
 
     return UNMETA(v);
 }
@@ -1792,7 +1792,7 @@ DECLARE_NATIVE(free)
 {
     INCLUDE_PARAMS_OF_FREE;
 
-    REBVAL *v = ARG(memory);
+    Value* v = ARG(memory);
 
     if (Any_Context(v) or Is_Handle(v))
         fail ("FREE only implemented for ANY-SERIES? at the moment");
@@ -1820,7 +1820,7 @@ DECLARE_NATIVE(free_q)
 {
     INCLUDE_PARAMS_OF_FREE_Q;
 
-    REBVAL *v = ARG(value);
+    Value* v = ARG(value);
 
     if (Is_Void(v) or Is_Nulled(v))
         return Init_False(OUT);
@@ -1853,7 +1853,7 @@ DECLARE_NATIVE(free_q)
 bool Try_As_String(
     Sink(Value*) out,
     Heart new_heart,
-    const REBVAL *v,
+    const Value* v,
     REBLEN quotes,
     enum Reb_Strmode strmode
 ){
@@ -2025,7 +2025,7 @@ DECLARE_NATIVE(as)
 
     Element* v = cast(Element*, ARG(value));
 
-    REBVAL *t = ARG(type);
+    Value* t = ARG(type);
     Kind new_kind = VAL_TYPE_KIND(t);
     if (new_kind >= REB_MAX_HEART)
         fail ("New kind can't be quoted/quasiform/antiform");
@@ -2390,7 +2390,7 @@ DECLARE_NATIVE(as_text)
 {
     INCLUDE_PARAMS_OF_AS_TEXT;
 
-    REBVAL *v = ARG(value);
+    Value* v = ARG(value);
     Dequotify(v);  // number of incoming quotes not relevant
     if (not Any_Series(v) and not Any_Word(v) and not Any_Path(v))
         fail (PARAM(value));
@@ -2694,7 +2694,7 @@ DECLARE_INTRINSIC(blackhole_q)
 DECLARE_NATIVE(heavy) {
     INCLUDE_PARAMS_OF_HEAVY;
 
-    REBVAL *v = ARG(optional);
+    Value* v = ARG(optional);
 
     if (Is_Meta_Of_Void(v))
         return Init_Heavy_Void(OUT);
@@ -2802,7 +2802,7 @@ DECLARE_NATIVE(reify)
 {
     INCLUDE_PARAMS_OF_REIFY;
 
-    REBVAL *v = ARG(value);
+    Value* v = ARG(value);
     return Reify(Copy_Cell(OUT, v));
 }
 
@@ -2823,7 +2823,7 @@ DECLARE_NATIVE(degrade)
 {
     INCLUDE_PARAMS_OF_DEGRADE;
 
-    REBVAL *v = ARG(value);
+    Value* v = ARG(value);
 
     assert(not Is_Void(v));  // typechecking
 
@@ -2847,7 +2847,7 @@ DECLARE_NATIVE(concretize)
 {
     INCLUDE_PARAMS_OF_REIFY;
 
-    REBVAL *v = ARG(value);
+    Value* v = ARG(value);
 
     if (Is_Void(v))  // see 1
         fail ("CONCRETIZE of VOID is undefined (needs motivating case)");

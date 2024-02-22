@@ -1,6 +1,6 @@
 //
 //  File: %sys-roots.h
-//  Summary: {Definitions for allocating REBVAL* API handles}
+//  Summary: {Definitions for allocating Value* API handles}
 //  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
 //  Homepage: https://github.com/metaeducation/ren-c/
 //
@@ -29,7 +29,7 @@
 //
 // The API value content is in the single cell, with LINK().owner holding
 // a Context* of the FRAME! that controls its lifetime, or EMPTY_ARRAY.  This
-// link field exists in the pointer immediately prior to the REBVAL*, which
+// link field exists in the pointer immediately prior to the Value*, which
 // means it can be sniffed as NODE_FLAG_CELL, distinguished from handles that
 // were given back with rebMalloc(), so routines can discern them.
 //
@@ -130,7 +130,7 @@ INLINE void Unlink_Api_Handle_From_Level(Stub* stub)
 //    be responsible for marking the node live, freeing the node in case
 //    of a fail() that interrupts the level, and reporting any leaks.
 //
-// 3. Giving the cell itself NODE_FLAG_ROOT lets a REBVAL* be discerned as
+// 3. Giving the cell itself NODE_FLAG_ROOT lets a Value* be discerned as
 //    either a "public" API handle or not.  We don't want evaluation targets
 //    to have this flag, because it's legal for the Level's ->out cell to be
 //    nulled--not legal for API values.  So if an evaluation is done into an
@@ -139,7 +139,7 @@ INLINE void Unlink_Api_Handle_From_Level(Stub* stub)
 //    Having NODE_FLAG_ROOT is still tolerated as a "fresh" state for
 //    purposes of init.  The flag is not copied by Copy_Cell().
 //
-INLINE REBVAL *Alloc_Value_Core(Flags flags)
+INLINE Value* Alloc_Value_Core(Flags flags)
 {
     Stub* stub = Alloc_Singular(
         FLAG_FLAVOR(API)
@@ -151,13 +151,13 @@ INLINE REBVAL *Alloc_Value_Core(Flags flags)
 
     Link_Api_Handle_To_Level(stub, TOP_LEVEL);  // [2]
 
-    return cast(REBVAL*, cell);
+    return cast(Value*, cell);
 }
 
 #define Alloc_Value() \
     TRACK(Alloc_Value_Core(CELL_MASK_0_ROOT))  // don't use as eval target [3]
 
-INLINE void Free_Value(REBVAL *v)
+INLINE void Free_Value(Value* v)
 {
     Stub* stub = Singular_From_Cell(v);
     assert(FLAVOR_BYTE(stub) == FLAVOR_API);
@@ -180,7 +180,7 @@ INLINE void Free_Value(REBVAL *v)
 //
 // But assuming errors don't happen that often, it's cleaner to have one call.
 //
-INLINE REBVAL *rebSpecific(const Cell* v, Specifier* specifier)
+INLINE Value* rebSpecific(const Cell* v, Specifier* specifier)
     { return Derelativize(Alloc_Value(), v, specifier);}
 
 

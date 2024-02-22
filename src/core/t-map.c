@@ -177,7 +177,7 @@ static void Rehash_Map(Map* map)
     REBLEN *hashes = Series_Head(REBLEN, hashlist);
     Array* pairlist = MAP_PAIRLIST(map);
 
-    REBVAL *key = Array_Head(pairlist);
+    Value* key = Array_Head(pairlist);
     REBLEN n;
 
     for (n = 0; n < Array_Len(pairlist); n += 2, key += 2) {
@@ -342,7 +342,7 @@ Bounce MAKE_Map(
     Level* level_,
     Kind kind,
     Option(const Value*) parent,
-    const REBVAL *arg
+    const Value* arg
 ){
     if (parent)
         return RAISE(Error_Bad_Make_Parent(kind, unwrap(parent)));
@@ -386,11 +386,11 @@ inline static Map* Copy_Map(const Map* map, bool deeply) {
     assert(Array_Len(copy) % 2 == 0); // should be [key value key value]...
 
     const Cell* tail = Array_Tail(copy);
-    REBVAL *key = Array_Head(copy);  // keys/vals specified
+    Value* key = Array_Head(copy);  // keys/vals specified
     for (; key != tail; key += 2) {
         assert(Is_Value_Frozen_Deep(key));  // immutable key
 
-        REBVAL *v = key + 1;
+        Value* v = key + 1;
         assert(v != tail);
         if (Is_Void(v))
             continue; // "zombie" map element (not present)
@@ -406,7 +406,7 @@ inline static Map* Copy_Map(const Map* map, bool deeply) {
 //
 //  TO_Map: C
 //
-Bounce TO_Map(Level* level_, Kind kind, const REBVAL *arg)
+Bounce TO_Map(Level* level_, Kind kind, const Value* arg)
 {
     assert(kind == REB_MAP);
     UNUSED(kind);
@@ -503,7 +503,7 @@ Context* Alloc_Context_From_Map(const Map* map)
 
     for (; mval != mval_tail; mval += 2) {  // note mval must not be END
         if (Any_Word(mval) and not Is_Void(mval + 1)) {
-            REBVAL *var = Append_Context(c, Cell_Word_Symbol(mval));
+            Value* var = Append_Context(c, Cell_Word_Symbol(mval));
             Copy_Cell(var, mval + 1);
         }
     }
@@ -570,7 +570,7 @@ void MF_Map(REB_MOLD *mo, const Cell* v, bool form)
 //
 REBTYPE(Map)
 {
-    REBVAL *map = D_ARG(1);
+    Value* map = D_ARG(1);
 
     switch (Symbol_Id(verb)) {
       case SYM_REFLECT: {
@@ -579,7 +579,7 @@ REBTYPE(Map)
 
         const Map* m = VAL_MAP(map);
 
-        REBVAL *property = ARG(property);
+        Value* property = ARG(property);
         switch (Cell_Word_Id(property)) {
           case SYM_LENGTH:
             return Init_Integer(OUT, Length_Map(m));
@@ -660,7 +660,7 @@ REBTYPE(Map)
         INCLUDE_PARAMS_OF_INSERT;
         UNUSED(PARAM(series));
 
-        REBVAL *value = ARG(value);
+        Value* value = ARG(value);
         if (Is_Void(value))
             return COPY(map);  // don't fail on read only if it would be a no-op
 
@@ -725,7 +725,7 @@ REBTYPE(Map)
         if (n == 0)
             return nullptr;
 
-        const REBVAL *val = Array_At(
+        const Value* val = Array_At(
             MAP_PAIRLIST(VAL_MAP(map)),
             ((n - 1) * 2) + 1
         );
@@ -753,7 +753,7 @@ REBTYPE(Map)
         //
         bool strict = false;
 
-        REBVAL *setval = ARG(value);  // Note: VOID interpreted as remove key
+        Value* setval = ARG(value);  // Note: VOID interpreted as remove key
 
         if (Is_Antiform(setval))  // antiforms not allowed as value in maps
             return RAISE(Error_Bad_Antiform(setval));

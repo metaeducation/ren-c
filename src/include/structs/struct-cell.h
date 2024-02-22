@@ -47,7 +47,7 @@
 //
 // This sets things up for the "Payload"--which is the size of two pointers.
 // It is broken into a separate structure at this position so that on 32-bit
-// platforms, it can be aligned on a 64-bit boundary (assuming the REBVAL's
+// platforms, it can be aligned on a 64-bit boundary (assuming the cell's
 // starting pointer was aligned on a 64-bit boundary to start with).  This is
 // important for 64-bit value processing on 32-bit platforms, which will
 // either be slow or crash if reads of 64-bit floating points/etc. are done
@@ -717,8 +717,6 @@ union ValuePayloadUnion { //=/////////////// ACTUAL PAYLOAD DEFINITION ////=//
       #endif
     };
 #endif
-
-typedef struct RebolValueStruct Value;  // shorthand name to use internally
 
 
 //=//// ENSURE CELL TYPES ARE STANDARD LAYOUT /////////////////////////////=//

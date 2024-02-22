@@ -47,19 +47,19 @@
     }
 #endif
 
-INLINE REBVAL *Init_Decimal_Untracked(Cell* out, REBDEC dec) {
+INLINE Value* Init_Decimal_Untracked(Cell* out, REBDEC dec) {
     Reset_Unquoted_Header_Untracked(out, CELL_MASK_DECIMAL);
     PAYLOAD(Decimal, out).dec = dec;
-    return cast(REBVAL*, out);
+    return cast(Value*, out);
 }
 
 #define Init_Decimal(out,dec) \
     TRACK(Init_Decimal_Untracked((out), (dec)))
 
-INLINE REBVAL *Init_Percent(Cell* out, REBDEC dec) {
+INLINE Value* Init_Percent(Cell* out, REBDEC dec) {
     Reset_Unquoted_Header_Untracked(out, CELL_MASK_PERCENT);
     PAYLOAD(Decimal, out).dec = dec;
-    return cast(REBVAL*, out);
+    return cast(Value*, out);
 }
 
 #define Init_Percent(out,dec) \

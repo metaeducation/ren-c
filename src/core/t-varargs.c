@@ -75,7 +75,7 @@ inline static bool Vararg_Op_If_No_Advance_Handled(
         // Look ahead, and if actively bound see if it's to an enfix function
         // and the rules apply.
 
-        const REBVAL *child_gotten = try_unwrap(Lookup_Word(look, specifier));
+        const Value* child_gotten = try_unwrap(Lookup_Word(look, specifier));
 
         if (child_gotten and Is_Action(child_gotten)) {
             if (Is_Enfixed(child_gotten)) {
@@ -356,7 +356,7 @@ Bounce MAKE_Varargs(
     Level* level_,
     Kind kind,
     Option(const Value*) parent,
-    const REBVAL *arg
+    const Value* arg
 ){
     assert(kind == REB_VARARGS);
     if (parent)
@@ -397,7 +397,7 @@ Bounce MAKE_Varargs(
 //
 //  TO_Varargs: C
 //
-Bounce TO_Varargs(Level* level_, Kind kind, const REBVAL *arg)
+Bounce TO_Varargs(Level* level_, Kind kind, const Value* arg)
 {
     assert(kind == REB_VARARGS);
     UNUSED(kind);
@@ -414,7 +414,7 @@ Bounce TO_Varargs(Level* level_, Kind kind, const REBVAL *arg)
 //
 REBTYPE(Varargs)
 {
-    REBVAL *value = D_ARG(1);
+    Value* value = D_ARG(1);
 
     switch (Symbol_Id(verb)) {
     case SYM_REFLECT: {
@@ -652,7 +652,7 @@ DECLARE_NATIVE(variadic_q)
 
     const Key* key_tail;
     const Key* key = ACT_KEYS(&key_tail, action);
-    const REBVAL *param = ACT_PARAMS_HEAD(action);
+    const Value* param = ACT_PARAMS_HEAD(action);
     for (; key != key_tail; ++param, ++key) {
         if (Get_Parameter_Flag(param, VARIADIC))
             return Init_True(OUT);

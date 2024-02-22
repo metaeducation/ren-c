@@ -490,7 +490,6 @@ e-lib/emit [ver {
      */
     struct RebolValueStruct;
     typedef struct RebolValueStruct RebolValue;
-    #define REBVAL RebolValue
 
     /*
      * "Instructions" in the API are not RebolValue*, and you are not supposed

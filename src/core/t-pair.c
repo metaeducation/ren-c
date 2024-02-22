@@ -50,7 +50,7 @@ Bounce MAKE_Pair(
     Level* level_,
     Kind kind,
     Option(const Value*) parent,
-    const REBVAL *arg
+    const Value* arg
 ){
     assert(kind == REB_PAIR);
     if (parent)
@@ -116,7 +116,7 @@ Bounce MAKE_Pair(
 //
 //  TO_Pair: C
 //
-Bounce TO_Pair(Level* level_, Kind kind, const REBVAL *arg)
+Bounce TO_Pair(Level* level_, Kind kind, const Value* arg)
 {
     return MAKE_Pair(level_, kind, nullptr, arg);
 }
@@ -161,7 +161,7 @@ void MF_Pair(REB_MOLD *mo, const Cell* v, bool form)
 
 
 REBINT Index_From_Picker_For_Pair(
-    const REBVAL *pair,
+    const Value* pair,
     const Value* picker
 ){
     UNUSED(pair); // Might the picker be pair-sensitive?
@@ -204,13 +204,13 @@ REBINT Index_From_Picker_For_Pair(
 //
 REBTYPE(Pair)
 {
-    REBVAL *v = D_ARG(1);
+    Value* v = D_ARG(1);
 
-    REBVAL *x1 = VAL_PAIR_X(v);
-    REBVAL *y1 = VAL_PAIR_Y(v);
+    Value* x1 = VAL_PAIR_X(v);
+    Value* y1 = VAL_PAIR_Y(v);
 
-    REBVAL *x2 = nullptr;
-    REBVAL *y2 = nullptr;
+    Value* x2 = nullptr;
+    Value* y2 = nullptr;
 
     switch (Symbol_Id(verb)) {
 
@@ -222,7 +222,7 @@ REBTYPE(Pair)
 
         const Value* picker = ARG(picker);
         REBINT n = Index_From_Picker_For_Pair(v, picker);
-        const REBVAL *which = (n == 1) ? VAL_PAIR_X(v) : VAL_PAIR_Y(v);
+        const Value* which = (n == 1) ? VAL_PAIR_X(v) : VAL_PAIR_Y(v);
 
         return Copy_Cell(OUT, which); }
 
@@ -236,12 +236,12 @@ REBTYPE(Pair)
         const Value* picker = ARG(picker);
         REBINT n = Index_From_Picker_For_Pair(v, picker);
 
-        REBVAL *setval = ARG(value);
+        Value* setval = ARG(value);
 
         if (not Is_Integer(setval))
             fail (PARAM(value));
 
-        REBVAL* which = (n == 1) ? VAL_PAIR_X(v) : VAL_PAIR_Y(v);
+        Value* which = (n == 1) ? VAL_PAIR_X(v) : VAL_PAIR_Y(v);
         Copy_Cell(which, setval);
 
         return nullptr; }
@@ -271,7 +271,7 @@ REBTYPE(Pair)
     // mechanical trick vs. the standard DO, because the frame thinks it is
     // already running...and the check for that would be subverted.
 
-    REBVAL *frame = Init_Frame(
+    Value* frame = Init_Frame(
         OUT,
         Context_For_Level_May_Manage(level_),
         Level_Label(level_)
@@ -280,12 +280,12 @@ REBTYPE(Pair)
     Copy_Cell(D_ARG(1), x1);
     if (x2)
         Copy_Cell(D_ARG(2), x2);  // use extracted arg x instead of pair arg
-    REBVAL *x_frame = rebValue(Canon(COPY), rebQ(frame));
+    Value* x_frame = rebValue(Canon(COPY), rebQ(frame));
 
     Copy_Cell(D_ARG(1), y1);
     if (y2)
         Copy_Cell(D_ARG(2), y2);  // use extracted arg y instead of pair arg
-    REBVAL *y_frame = rebValue(Canon(COPY), rebQ(frame));
+    Value* y_frame = rebValue(Canon(COPY), rebQ(frame));
 
     return rebValue(
         "make pair! reduce [",

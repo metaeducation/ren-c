@@ -69,9 +69,9 @@ struct Reb_Sock_Port_State {
 
 typedef struct Reb_Sock_Port_State SOCKREQ;
 
-inline static SOCKREQ *Sock_Of_Port(const REBVAL *port)
+inline static SOCKREQ *Sock_Of_Port(const Value* port)
 {
-    REBVAL *state = CTX_VAR(VAL_CONTEXT(port), STD_PORT_STATE);
+    Value* state = CTX_VAR(VAL_CONTEXT(port), STD_PORT_STATE);
     return VAL_HANDLE_POINTER(SOCKREQ, state);
 }
 
@@ -80,8 +80,8 @@ typedef struct {
     uv_write_t req;  // make first member of struct so we can cast the address
 
     Context* port_ctx;
-    REBVAL *binary;
-    REBVAL *result;
+    Value* binary;
+    Value* result;
 } Reb_Write_Request;
 
 
@@ -92,7 +92,7 @@ typedef struct {
     uv_connect_t req;  // make first member of struct so we can cast the address
 
     Context* port_ctx;
-    REBVAL *result;
+    Value* result;
 } Reb_Connect_Request;
 
 
@@ -106,6 +106,6 @@ typedef struct {
     // prevents multiple in-flight reads and is a design flaw, but translating
     // the R3-Alpha code for now just as a first step.
 
-    REBVAL *result;
+    Value* result;
 
 } Reb_Read_Request;

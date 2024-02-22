@@ -237,7 +237,7 @@ Bounce MAKE_Time(
     Level* level_,
     Kind kind,
     Option(const Value*) parent,
-    const REBVAL *arg
+    const Value* arg
 ){
     assert(kind == REB_TIME);
     if (parent)
@@ -359,7 +359,7 @@ Bounce MAKE_Time(
 //
 //  TO_Time: C
 //
-Bounce TO_Time(Level* level_, Kind kind, const REBVAL *arg)
+Bounce TO_Time(Level* level_, Kind kind, const Value* arg)
 {
     return MAKE_Time(level_, kind, nullptr, arg);
 }
@@ -411,9 +411,9 @@ void Pick_Time(Sink(Value*) out, const Cell* value, const Value* picker)
 //  Poke_Time_Immediate: C
 //
 void Poke_Time_Immediate(
-    REBVAL *value,
+    Value* value,
     const Value* picker,
-    const REBVAL *poke
+    const Value* poke
 ) {
     REBINT i;
     if (Is_Word(picker)) {
@@ -476,7 +476,7 @@ void Poke_Time_Immediate(
 //
 REBTYPE(Time)
 {
-    REBVAL *time = D_ARG(1);
+    Value* time = D_ARG(1);
 
     REBI64 secs = VAL_NANO(time);
 
@@ -503,7 +503,7 @@ REBTYPE(Time)
 
         const Value* picker = ARG(picker);
 
-        REBVAL *setval = ARG(value);
+        Value* setval = ARG(value);
 
         Poke_Time_Immediate(time, picker, setval);
         return COPY(time);  // caller needs to update their time bits
@@ -516,7 +516,7 @@ REBTYPE(Time)
         or id == SYM_DIVIDE
         or id == SYM_REMAINDER
     ){
-        REBVAL *arg = D_ARG(2);
+        Value* arg = D_ARG(2);
         REBINT type = VAL_TYPE(arg);
 
         if (type == REB_TIME) {     // handle TIME - TIME cases
@@ -670,7 +670,7 @@ REBTYPE(Time)
                 return Init_Time_Nanoseconds(OUT, secs);
             }
 
-            REBVAL *to = ARG(to);
+            Value* to = ARG(to);
             if (Is_Time(to)) {
                 secs = Round_Int(secs, level_, VAL_NANO(to));
                 return Init_Time_Nanoseconds(OUT, secs);

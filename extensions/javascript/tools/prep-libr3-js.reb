@@ -272,7 +272,7 @@ to-js-type: func [
         ; anyone working with bytes is okay calling emscripten API functions
         ; directly (e.g. see getValue(), setValue() for peeking and poking).
         ;
-        ; !!! It would be nice if REBVAL* could be type safe in the API and
+        ; !!! It would be nice if Value* could be type safe in the API and
         ; maybe have some kind of .toString() method, so that it would mold
         ; automatically?  Maybe wrap the emscripten number in an object?
         ;
@@ -480,7 +480,7 @@ for-each-api [
                         stringToUTF8(arg, p, len)
                         break }
 
-                      case 'number':  /* heap address, e.g. REBVAL pointer */
+                      case 'number':  /* heap address, e.g. Cell pointer */
                         p = arg
                         break
 
@@ -734,7 +734,7 @@ e-cwrap/emit {
 
             /* JS-AWAITER results become Rebol ACTION! returns, and must be
              * received by arbitrary Rebol code.  Hence they can't be any old
-             * JavaScript object...they must be a REBVAL*, today a raw heap
+             * JavaScript object...they must be a Value*, today a raw heap
              * address (Emscripten uses "number", someday that could be
              * wrapped in a specific JS object type).  Also allow null and
              * undefined...such auto-conversions may expand in scope.
@@ -752,7 +752,7 @@ e-cwrap/emit {
                 console.log("typeof " + typeof res)
                 console.log(res)
                 throw Error(
-                    "JS-NATIVE return/resolve takes REBVAL*, null, undefined"
+                    "JS-NATIVE return/resolve takes Value*, null, undefined"
                 )
             }
 
@@ -768,7 +768,7 @@ e-cwrap/emit {
             /* If a JavaScript throw() happens in the body of a JS-AWAITER's
              * textual JS code, that throw's arg will wind up here.  The
              * likely "bubble up" policy will always make catch arguments a
-             * JavaScript Error(), even if it's wrapping a REBVAL* ERROR! as
+             * JavaScript Error(), even if it's wrapping a Value* ERROR! as
              * a data member.  It may-or-may-not make sense to prohibit raw
              * Rebol values here.
              */

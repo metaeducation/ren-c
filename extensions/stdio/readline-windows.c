@@ -95,7 +95,7 @@
 
 
 struct Reb_Terminal_Struct {
-    REBVAL *buffer;  // a TEXT! used as a buffer
+    Value* buffer;  // a TEXT! used as a buffer
     unsigned int pos;  // cursor position within the line
 
     INPUT_RECORD buf[READ_BUF_LEN];
@@ -118,7 +118,7 @@ struct Reb_Terminal_Struct {
     // TEXT! back when a new event is calculated.  We preserve that event
     // in the terminal state to return on the next call.
     //
-    REBVAL *e_pending;
+    Value* e_pending;
 
     // Windows key input records from the terminal have a field for the
     // `Event.KeyEvent.uChar.UnicodeChar` that is only a WCHAR, so high
@@ -310,7 +310,7 @@ int Term_Pos(STD_TERM *t)
 // position or what is visible on the display.  All changes need to go through
 // the terminal itself.
 //
-REBVAL *Term_Buffer(STD_TERM *t)
+Value* Term_Buffer(STD_TERM *t)
 {
     return rebValue("const", t->buffer);
 }
@@ -630,13 +630,13 @@ void Move_Cursor(STD_TERM *t, int count)
 //
 //  Try_Get_One_Console_Event: C
 //
-REBVAL *Try_Get_One_Console_Event(STD_TERM *t, bool buffered, int timeout_msec)
+Value* Try_Get_One_Console_Event(STD_TERM *t, bool buffered, int timeout_msec)
 {
     if (timeout_msec != 0)
         rebJumps ("fail {TIMEOUT not implemented in Windows Stdio}");
 
-    REBVAL *e = nullptr;  // *unbuffered* event to return
-    REBVAL *e_buffered = nullptr;  // buffered event
+    Value* e = nullptr;  // *unbuffered* event to return
+    Value* e_buffered = nullptr;  // buffered event
 
     if (t->e_pending) {
         e = t->e_pending;
@@ -989,7 +989,7 @@ static void Term_Insert_Char(STD_TERM *t, uint32_t c)
         Write_Char(LF, 1);
     }
     else {
-        REBVAL *codepoint = rebChar(c);
+        Value* codepoint = rebChar(c);
 
         size_t encoded_size;
         unsigned char *encoded = rebBytes(&encoded_size,
@@ -1014,7 +1014,7 @@ static void Term_Insert_Char(STD_TERM *t, uint32_t c)
 // with what the last line in the terminal is showing...which means mirroring
 // its logic regarding cursor position, newlines, backspacing.
 //
-void Term_Insert(STD_TERM *t, const REBVAL *v) {
+void Term_Insert(STD_TERM *t, const Value* v) {
     ENSURE_COHERENT_POSITION_DEBUG(t);
 
     if (rebUnboxLogic("char?", v)) {
@@ -1041,7 +1041,7 @@ void Term_Insert(STD_TERM *t, const REBVAL *v) {
         // Systems may handle tabs differently, but we want our buffer to
         // have the right number of spaces accounted for.  Just transform.
         //
-        REBVAL *v_no_tab = rebValue(
+        Value* v_no_tab = rebValue(
             "if find", v, "tab [",
                 "replace/all copy", v, "tab", "{    }",
             "] else [null]"
@@ -1060,7 +1060,7 @@ void Term_Insert(STD_TERM *t, const REBVAL *v) {
         WRITE_UTF8(encoded, encoded_size);
         rebFree(encoded);
 
-        REBVAL *v_last_line = rebValue("next maybe find-last", v, "newline");
+        Value* v_last_line = rebValue("next maybe find-last", v, "newline");
 
         // If there were any newlines, then whatever is in the current line
         // buffer will no longer be there.
@@ -1070,7 +1070,7 @@ void Term_Insert(STD_TERM *t, const REBVAL *v) {
             t->pos = 0;
         }
 
-        const REBVAL *insertion = v_last_line ? v_last_line : v;
+        const Value* insertion = v_last_line ? v_last_line : v;
 
         t->pos += rebUnboxInteger(
             "insert skip", t->buffer, rebI(t->pos), insertion,

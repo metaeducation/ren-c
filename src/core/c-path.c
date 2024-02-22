@@ -164,8 +164,8 @@ DECLARE_NATIVE(poke)
     INCLUDE_PARAMS_OF_POKE;
 
     UNUSED(ARG(picker));
-    REBVAL *location = ARG(location);
-    REBVAL *v = ARG(value);
+    Value* location = ARG(location);
+    Value* v = ARG(value);
 
     Set_Cell_Flag(v, PROTECTED);  // want to return as final result
 
@@ -206,7 +206,7 @@ Bounce MAKE_Path(
     Level* level_,
     Kind k,
     Option(const Value*) parent,
-    const REBVAL *arg
+    const Value* arg
 ){
     Heart heart = cast(Heart, k);
 
@@ -243,7 +243,7 @@ Bounce MAKE_Path(
         L->baseline.stack_base += 1;  // compensate for push
     }
 
-    REBVAL *p = Try_Pop_Sequence_Or_Element_Or_Nulled(OUT, heart, base);
+    Value* p = Try_Pop_Sequence_Or_Element_Or_Nulled(OUT, heart, base);
 
     Drop_Level_Unbalanced(L); // !!! L's stack_base got captured each loop
 
@@ -292,7 +292,7 @@ Bounce MAKE_Path(
 //     >> to path! ^[a b c]
 //     == /[a b c]
 //
-Bounce TO_Sequence(Level* level_, Kind k, const REBVAL *arg) {
+Bounce TO_Sequence(Level* level_, Kind k, const Value* arg) {
     Heart heart = cast(Heart, k);
 
     Kind arg_kind = VAL_TYPE(arg);

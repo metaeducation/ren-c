@@ -455,7 +455,7 @@ INLINE REBLEN Num_Codepoints_For_Bytes(
 //=//// REBSTR CREATION HELPERS ///////////////////////////////////////////=//
 //
 // Note that most clients should be using the rebStringXXX() APIs for this
-// and generate REBVAL*.  Note also that these routines may fail() if the
+// and generate Value*.  Note also that these routines may fail() if the
 // data they are given is not UTF-8.
 
 #define Make_String(encoded_capacity) \
@@ -521,7 +521,7 @@ INLINE Context* Error_Illegal_Cr(const Byte* at, const Byte* start)
         back = Step_Back_Codepoint(back);
         ++back_len;
     }
-    REBVAL *str = rebSizedText(
+    Value* str = rebSizedText(
         c_cast(char*, back),
         at - c_cast(Byte*, back) + 1  // include CR (escaped, e.g. ^M)
     );

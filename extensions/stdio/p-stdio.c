@@ -49,7 +49,7 @@ extern size_t Read_IO(Byte* buf, size_t size);
 // do with that.  No key is supposed to have an intrinsic "behavior".
 //
 #define MAX_HISTORY  300   // number of lines stored
-REBVAL *Line_History;  // Prior input lines (BLOCK!)
+Value* Line_History;  // Prior input lines (BLOCK!)
 int Line_History_Index;  // Current position in the line history
 #define Line_Count \
     rebUnboxInteger("length of", Line_History)
@@ -71,7 +71,7 @@ int Line_History_Index;  // Current position in the line history
 // be usermode Rebol, making decisions about communication with the terminal
 // on a keystroke-by-keystroke basis.
 //
-REBVAL *Read_Line(STD_TERM *t)
+Value* Read_Line(STD_TERM *t)
 {
     Line_History_Index = Line_Count;
 
@@ -81,10 +81,10 @@ REBVAL *Read_Line(STD_TERM *t)
     //
     int original_column = Term_Pos(t);
 
-    REBVAL *line = nullptr;
+    Value* line = nullptr;
     while (line == nullptr) {
         const bool buffered = true;
-        REBVAL *e = Try_Get_One_Console_Event(t, buffered, 0);
+        Value* e = Try_Get_One_Console_Event(t, buffered, 0);
         // (^-- it's an ANY-VALUE!, not a R3-Alpha-style EVENT!)
 
         if (e == nullptr) {
@@ -184,7 +184,7 @@ REBVAL *Read_Line(STD_TERM *t)
                     Line_History_Index = Line_Count;  // we already cleared
                 }
                 else {
-                    REBVAL *recall = rebValue(
+                    Value* recall = rebValue(
                         "pick", Line_History, rebI(Line_History_Index + 1)
                     );
 
@@ -239,7 +239,7 @@ REBVAL *Read_Line(STD_TERM *t)
                 // Protocol for TAB-COMPLETE is currently to edit the string
                 // you give it directly, and return the new position.
                 //
-                REBVAL *buffer_copy = rebValue("copy", rebR(Term_Buffer(t)));
+                Value* buffer_copy = rebValue("copy", rebR(Term_Buffer(t)));
                 int new_pos = rebUnboxInteger(
                     "tab-complete", buffer_copy, rebI(Term_Pos(t))
                 );
@@ -267,7 +267,7 @@ REBVAL *Read_Line(STD_TERM *t)
             // the terminal, so that people could see what the key registered
             // as on their machine and configure the console to respond to it.
             //
-            REBVAL *text = rebValue("as text!", e);
+            Value* text = rebValue("as text!", e);
             Term_Insert(t, text);
             rebRelease(text);
         }
@@ -279,7 +279,7 @@ REBVAL *Read_Line(STD_TERM *t)
     // of what the user contributed.  The HALT returns before this point, and
     // the console extension throws in the newline in that case.
     //
-    REBVAL *newline = rebChar('\n');
+    Value* newline = rebChar('\n');
     Term_Insert(t, newline);
     rebRelease(newline);
 
@@ -292,7 +292,7 @@ REBVAL *Read_Line(STD_TERM *t)
 //
 //  Console_Actor: C
 //
-Bounce Console_Actor(Level* level_, REBVAL *port, const Symbol* verb)
+Bounce Console_Actor(Level* level_, Value* port, const Symbol* verb)
 {
     Context* ctx = VAL_CONTEXT(port);
 
@@ -328,7 +328,7 @@ Bounce Console_Actor(Level* level_, REBVAL *port, const Symbol* verb)
 
       #if defined(REBOL_SMART_CONSOLE)
         if (Term_IO) {  // e.g. no redirection (Term_IO is null if so)
-            REBVAL *result = Read_Line(Term_IO);
+            Value* result = Read_Line(Term_IO);
             if (rebUnboxLogic("'~halt~ =", rebQ(result))) {  // HALT received
                 rebRelease(result);
                 return rebTrash();
@@ -361,7 +361,7 @@ Bounce Console_Actor(Level* level_, REBVAL *port, const Symbol* verb)
 
         const REBLEN readbuf_size = 30 * 1024;  // may back off to smaller size
 
-        REBVAL *data = CTX_VAR(ctx, STD_PORT_DATA);
+        Value* data = CTX_VAR(ctx, STD_PORT_DATA);
         if (not Is_Binary(data)) {
             Init_Binary(data, Make_Binary(readbuf_size));
         }

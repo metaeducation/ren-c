@@ -268,7 +268,7 @@ void Replug_Stack(Level* L, Level* base, Value* plug) {
         if (temp->out == Lib(TRUE))  // replace output placeholder [1]
             temp->out = base->out;
         else if (temp->out == Lib(FALSE))
-            temp->out = cast(REBVAL*, &base->spare);
+            temp->out = cast(Value*, &base->spare);
 
         temp->baseline.stack_base += base->baseline.stack_base;  // [2]
 

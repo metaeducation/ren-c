@@ -580,7 +580,7 @@ Special internal defines used by RT, not Host-Kit developers:
 // Bitfields are poorly specified, and so even if it looks like your bits
 // should pack into a struct exactly, they might not.  Only try this on
 // Linux, where it has seemed to work out (MinGW64 build on Cygwin made
-// invalid REBVAL sizes with this on)
+// invalid cell sizes with this on)
 //
 #if defined(ENDIAN_LITTLE) && TO_LINUX_X64
     #define DEBUG_USE_BITFIELD_HEADER_PUNS 1

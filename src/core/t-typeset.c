@@ -318,7 +318,7 @@ void Set_Parameter_Spec(
                     Details* details = Phase_Details(phase);
                     assert(Array_Len(details) == IDX_TYPECHECKER_MAX);
 
-                    REBVAL *index = Details_At(
+                    Value* index = Details_At(
                         details,
                         IDX_TYPECHECKER_DECIDER_INDEX
                     );
@@ -375,7 +375,7 @@ Bounce MAKE_Parameter(
     Level* level_,
     Kind kind,
     Option(const Value*) parent,
-    const REBVAL *arg
+    const Value* arg
 ){
     UNUSED(kind);
     UNUSED(parent);
@@ -386,7 +386,7 @@ Bounce MAKE_Parameter(
 //
 //  TO_Parameter: C
 //
-Bounce TO_Parameter(Level* level_, Kind kind, const REBVAL *arg)
+Bounce TO_Parameter(Level* level_, Kind kind, const Value* arg)
 {
     return MAKE_Parameter(level_, kind, nullptr, arg);
 }
@@ -471,7 +471,7 @@ REBTYPE(Parameter)
         if (not Is_Word(picker))
             fail (picker);
 
-        REBVAL *setval = ARG(value);
+        Value* setval = ARG(value);
 
         switch (Cell_Word_Id(picker)) {
           case SYM_TEXT: {

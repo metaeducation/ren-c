@@ -183,11 +183,11 @@ INLINE REBI64 VAL_NANO(const Cell* v) {
 #define TIME_IN_DAY \
     SEC_TIME(cast(REBI64, SECS_IN_DAY))
 
-INLINE REBVAL *Init_Time_Nanoseconds(
+INLINE Value* Init_Time_Nanoseconds(
     Cell* v,
     REBI64 nanoseconds
 ){
     Reset_Unquoted_Header_Untracked(v, CELL_MASK_TIME);
     PAYLOAD(Time, v).nanoseconds = nanoseconds;
-    return cast(REBVAL*, v);
+    return cast(Value*, v);
 }

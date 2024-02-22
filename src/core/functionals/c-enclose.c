@@ -120,9 +120,9 @@ Bounce Encloser_Dispatcher(Level* const L)
     Details* details = Phase_Details(PHASE);
     assert(Array_Len(details) == IDX_ENCLOSER_MAX);
 
-    REBVAL *inner = Details_At(details, IDX_ENCLOSER_INNER);
+    Value* inner = Details_At(details, IDX_ENCLOSER_INNER);
     assert(Is_Frame(inner));  // same args as f
-    REBVAL *outer = Details_At(details, IDX_ENCLOSER_OUTER);
+    Value* outer = Details_At(details, IDX_ENCLOSER_OUTER);
     assert(Is_Frame(outer));  // takes 1 arg (a FRAME!)
 
     Array* varlist = L->varlist;

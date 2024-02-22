@@ -18,7 +18,7 @@
 //
 // Get the current system date/time in UTC plus zone offset (mins).
 //
-REBVAL *Get_Current_Datetime_Value(void)
+Value* Get_Current_Datetime_Value(void)
 {
     // GetSystemTime() gets the UTC time.  (GetLocalTime() would get the
     // local time, but we instead get the time zone to get the whole picture.)

@@ -86,7 +86,7 @@ DECLARE_NATIVE(delimit)
     else
         delimiter = nullptr;
 
-    REBVAL *line = ARG(line);
+    Value* line = ARG(line);
 
     if (Is_Text(line) or Is_Issue(line)) {  // can shortcut, no evals needed
         //
@@ -594,7 +594,7 @@ DECLARE_NATIVE(deline)
     // AS TEXT! verifies the UTF-8 validity of a BINARY!, and checks for any
     // embedded '\0' bytes, illegal in texts...without copying the input.
     //
-    REBVAL *input = rebValue("as text!", ARG(input));
+    Value* input = rebValue("as text!", ARG(input));
 
     if (REF(lines)) {
         Init_Block(OUT, Split_Lines(cast(Element*, input)));
@@ -667,7 +667,7 @@ DECLARE_NATIVE(enline)
 {
     INCLUDE_PARAMS_OF_ENLINE;
 
-    REBVAL *val = ARG(string);
+    Value* val = ARG(string);
 
     String* s = Cell_String_Ensure_Mutable(val);
     REBLEN idx = VAL_INDEX(val);
@@ -934,7 +934,7 @@ DECLARE_NATIVE(to_hex)
 {
     INCLUDE_PARAMS_OF_TO_HEX;
 
-    REBVAL *arg = ARG(value);
+    Value* arg = ARG(value);
 
     REBLEN len;
     if (REF(size))
@@ -1005,7 +1005,7 @@ DECLARE_NATIVE(invalid_utf8_q)
 {
     INCLUDE_PARAMS_OF_INVALID_UTF8_Q;
 
-    REBVAL *arg = ARG(data);
+    Value* arg = ARG(data);
 
     Size size;
     const Byte* utf8 = Cell_Binary_Size_At(&size, arg);

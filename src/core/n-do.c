@@ -116,7 +116,7 @@ DECLARE_NATIVE(shove)
     if (not Is_Level_Style_Varargs_May_Fail(&L, ARG(right)))
         fail ("SHOVE (>-) not implemented for MAKE VARARGS! [...] yet");
 
-    REBVAL *left = ARG(left);
+    Value* left = ARG(left);
 
     if (Is_Level_At_End(L))  // shouldn't be for WORD!/PATH! unless APPLY
         return COPY(ARG(left));  // ...because evaluator wants `help <-` to work
@@ -131,7 +131,7 @@ DECLARE_NATIVE(shove)
     // We can do better, but seeing as how you couldn't call enfix actions
     // with refinements *at all* before, this is a step up.
 
-    REBVAL *shovee = ARG(right); // reuse arg cell for the shoved-into
+    Value* shovee = ARG(right); // reuse arg cell for the shoved-into
     Option(const Symbol*) label = nullptr;
 
     if (Is_Word(At_Level(L)) or Is_Path(At_Level(L)) or Is_Tuple(At_Level(L))) {
@@ -247,7 +247,7 @@ DECLARE_NATIVE(do)
 {
     INCLUDE_PARAMS_OF_DO;
 
-    REBVAL *source = ARG(source);
+    Value* source = ARG(source);
 
     Tweak_Non_Const_To_Explicitly_Mutable(source);
 
@@ -318,7 +318,7 @@ DECLARE_NATIVE(do)
         UNUSED(REF(args)); // detected via `value? :arg`
 
         rebPushContinuation(
-            cast(REBVAL*, OUT),  // <-- output cell
+            cast(Value*, OUT),  // <-- output cell
             LEVEL_MASK_NONE,
             rebRUN(SysUtil(DO_P)),
                 source,
@@ -392,8 +392,8 @@ DECLARE_NATIVE(evaluate)
 {
     INCLUDE_PARAMS_OF_EVALUATE;
 
-    REBVAL *rest_var = ARG(next);
-    REBVAL *source = ARG(source);  // may be only GC reference, don't lose it!
+    Value* rest_var = ARG(next);
+    Value* source = ARG(source);  // may be only GC reference, don't lose it!
 
     enum {
         ST_EVALUATE_INITIAL_ENTRY = STATE_0,
@@ -580,7 +580,7 @@ DECLARE_NATIVE(redo)
 {
     INCLUDE_PARAMS_OF_REDO;
 
-    REBVAL *restartee = ARG(restartee);
+    Value* restartee = ARG(restartee);
     if (not Is_Frame(restartee)) {
         if (not Did_Get_Binding_Of(OUT, restartee))
             fail ("No context found from restartee in REDO");
@@ -598,7 +598,7 @@ DECLARE_NATIVE(redo)
         fail ("Use DO to start a not-currently running FRAME! (not REDO)");
 
     if (REF(sibling)) {  // ensure frame compatibility [1]
-        REBVAL *sibling = ARG(sibling);
+        Value* sibling = ARG(sibling);
         if (
             ACT_KEYLIST(L->u.action.original)
             != ACT_KEYLIST(VAL_ACTION(sibling))

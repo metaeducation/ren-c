@@ -46,7 +46,7 @@
 //
 //     ACTION!: binding is the instance data for archetypal invocation, so
 //     although all the RETURN instances have the same paramlist, it is
-//     the binding which is unique to the REBVAL specifying which to exit
+//     the binding which is unique to the cell specifying which to exit
 //
 //     ANY-CONTEXT?: if a FRAME!, the binding carries the instance data from
 //     the function it is for.  So if the frame was produced for an instance
@@ -67,9 +67,8 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// This can be used to turn a Cell into a REBVAL.  If the Cell is indeed
-// relative and needs to be made specific to be put into the target, then the
-// specifier is used to do that.
+// If the Cell is indeed relative and needs to be made specific to be put into
+// the target, then the specifier is used to do that.
 //
 // It is nearly as fast as just assigning the value directly in the release
 // build, though debug builds assert that the function in the specifier
@@ -407,7 +406,7 @@ INLINE void Unbind_Any_Word(Cell* v) {
     BINDING(v) = nullptr;
 }
 
-INLINE Context* VAL_WORD_CONTEXT(const REBVAL *v) {
+INLINE Context* VAL_WORD_CONTEXT(const Value* v) {
     assert(IS_WORD_BOUND(v));
     Stub* binding = BINDING(v);
     if (IS_PATCH(binding)) {
@@ -428,11 +427,7 @@ INLINE Context* VAL_WORD_CONTEXT(const REBVAL *v) {
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // When a word is bound to a context by an index, it becomes a means of
-// reading and writing from a persistent storage location.  We use "variable"
-// or just VAR to refer to REBVAL slots reached via binding in this way.
-// More narrowly, a VAR that represents an argument to a function invocation
-// may be called an ARG (and an ARG's "persistence" is only as long as that
-// function call is on the stack).
+// reading and writing from a persistent storage location.
 //
 // All variables can be put in a CELL_FLAG_PROTECTED state.  This is a flag
 // on the variable cell itself--not the key--so different instances of
@@ -441,13 +436,13 @@ INLINE Context* VAL_WORD_CONTEXT(const REBVAL *v) {
 // CELL_MASK_COPY, so it shouldn't be able to leak out of the varlist.
 //
 // The Lookup_Word_May_Fail() function takes the conservative default that
-// only const access is needed.  A const pointer to a REBVAL is given back
+// only const access is needed.  A const pointer to a Value is given back
 // which may be inspected, but the contents not modified.  While a bound
 // variable that is not currently set will return an antiform void value,
 // Lookup_Word_May_Fail() on an *unbound* word will raise an error.
 //
 // Lookup_Mutable_Word_May_Fail() offers a parallel facility for getting a
-// non-const REBVAL back.  It will fail if the variable is either unbound
+// non-const Value back.  It will fail if the variable is either unbound
 // -or- marked with OPT_TYPESET_LOCKED to protect against modification.
 //
 
@@ -502,7 +497,7 @@ INLINE const Value* Get_Word_May_Fail(
     return Copy_Cell(out, var);
 }
 
-INLINE REBVAL *Lookup_Mutable_Word_May_Fail(
+INLINE Value* Lookup_Mutable_Word_May_Fail(
     const Element* any_word,
     Specifier* specifier
 ){
@@ -513,7 +508,7 @@ INLINE REBVAL *Lookup_Mutable_Word_May_Fail(
     if (not s)
         fail (Error_Not_Bound_Raw(any_word));
 
-    REBVAL *var;
+    Value* var;
     if (IS_LET(s) or IS_PATCH(s))
         var = Stub_Cell(s);
     else {
@@ -543,11 +538,11 @@ INLINE REBVAL *Lookup_Mutable_Word_May_Fail(
     return var;
 }
 
-INLINE REBVAL *Sink_Word_May_Fail(
+INLINE Value* Sink_Word_May_Fail(
     const Element* any_word,
     Specifier* specifier
 ){
-    REBVAL *var = Lookup_Mutable_Word_May_Fail(any_word, specifier);
+    Value* var = Lookup_Mutable_Word_May_Fail(any_word, specifier);
     return FRESHEN(var);
 }
 
@@ -622,14 +617,14 @@ INLINE Specifier* Derive_Specifier(
 //
 // BINDING CONVENIENCE MACROS
 //
-// WARNING: Don't pass these routines something like a singular REBVAL* (such
+// WARNING: Don't pass these routines something like a singular Value* (such
 // as a REB_BLOCK) which you wish to have bound.  You must pass its *contents*
 // as an array...as the plural "values" in the name implies!
 //
 // So don't do this:
 //
-//     REBVAL *block = ARG(block);
-//     REBVAL *something = ARG(next_arg_after_block);
+//     Value* block = ARG(block);
+//     Value* something = ARG(next_arg_after_block);
 //     Bind_Values_Deep(block, context);
 //
 // What will happen is that the block will be treated as an array of values

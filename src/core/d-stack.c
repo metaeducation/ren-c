@@ -79,7 +79,7 @@ void Collapsify_Array(Array* array, REBLEN limit)
 //
 // !!! DO also offers a feature whereby values can be supplied at the start
 // of an evaluation which are not resident in the array.  It also can run
-// on an irreversible C va_list of REBVAL*, where these disappear as the
+// on an irreversible C va_list of Value*, where these disappear as the
 // evaluation proceeds.  A special debug setting would be needed to hang
 // onto these values for the purposes of better error messages (at the cost
 // of performance).

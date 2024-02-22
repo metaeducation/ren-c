@@ -1074,7 +1074,7 @@ Bounce Action_Executor(Level* L)
   // top of this executor where we test for THROWING, the way we might if
   // we could always expect continuations as the sources of throws.
 
-    const REBVAL *label = VAL_THROWN_LABEL(level_);
+    const Value* label = VAL_THROWN_LABEL(level_);
     if (Is_Frame(label)) {
         if (
             VAL_ACTION(label) == VAL_ACTION(Lib(REDO))  // REDO [1]

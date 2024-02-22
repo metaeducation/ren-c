@@ -199,7 +199,7 @@ inline static heapaddr_t Heapaddr_From_Pointer(const void *p) {
 inline static void* Pointer_From_Heapaddr(heapaddr_t addr)
   { return p_cast(void*, cast(uintptr_t, addr)); }
 
-static void cleanup_js_object(const REBVAL *v) {
+static void cleanup_js_object(const Value* v) {
     heapaddr_t id = Heapaddr_From_Pointer(VAL_HANDLE_VOID_POINTER(v));
 
     // If a lot of JS items are GC'd, would it be better to queue this in
@@ -238,11 +238,11 @@ inline static Level* Level_From_Level_Id(heapaddr_t id) {
     return cast(Level*, Pointer_From_Heapaddr(id));
 }
 
-inline static REBVAL *Value_From_Value_Id(heapaddr_t id) {
+inline static Value* Value_From_Value_Id(heapaddr_t id) {
     if (id == 0)
         return nullptr;
 
-    REBVAL *v = cast(REBVAL*, Pointer_From_Heapaddr(id));
+    Value* v = cast(Value*, Pointer_From_Heapaddr(id));
     assert(not Is_Nulled(v));  // API speaks in nullptr only
     return v;
 }
@@ -434,7 +434,7 @@ void RunPromise(void)
         return;  // the setTimeout() on resolve/reject will queue us back
     }
 
-    REBVAL *metaresult;
+    Value* metaresult;
     if (r == BOUNCE_THROWN) {
         assert(Is_Throwing(TOP_LEVEL));
         Context* error = Error_No_Catch_For_Throw(TOP_LEVEL);
@@ -469,7 +469,7 @@ void RunPromise(void)
             // But what if it doesn't pay attention to it and release it?
             // It could cause leaks.
             //
-            REBVAL *result = rebValue("unmeta", rebQ(metaresult));
+            Value* result = rebValue("unmeta", rebQ(metaresult));
             Free_Value(metaresult);
             rebUnmanage(result);
 
@@ -492,7 +492,7 @@ void RunPromise(void)
 
         assert(info->state == PROMISE_STATE_REJECTED);
 
-        REBVAL *result = nullptr;  // !!! What was this supposed to be?
+        Value* result = nullptr;  // !!! What was this supposed to be?
 
         // Note: Expired, can't use VAL_CONTEXT
         //
@@ -548,7 +548,7 @@ EXTERN_C void RL_rebIdle_internal(void)  // NO user JS code on stack!
 
 // Note: Initially this was rebSignalResolveNative() and not rebResolveNative()
 // The reason was that the empterpreter build had the Ren-C interpreter
-// suspended, and there was no way to build a REBVAL* to pass through to it.
+// suspended, and there was no way to build a Value* to pass through to it.
 // So the result was stored as a function in a table to generate the value.
 // Now it pokes the result directly into the frame's output slot.
 //
@@ -561,7 +561,7 @@ EXTERN_C void RL_rebResolveNative_internal(
 
     TRACE("reb.ResolveNative_internal(%s)", Level_Label_Or_Anonymous_UTF8(L));
 
-    REBVAL *result = Value_From_Value_Id(result_id);
+    Value* result = Value_From_Value_Id(result_id);
 
     if (result == nullptr)
         Init_Nulled(OUT);
@@ -596,7 +596,7 @@ EXTERN_C void RL_rebRejectNative_internal(
 
     TRACE("reb.RejectNative_internal(%s)", Level_Label_Or_Anonymous_UTF8(L));
 
-    REBVAL *error = Value_From_Value_Id(error_id);
+    Value* error = Value_From_Value_Id(error_id);
 
     if (error == nullptr) {  // Signals halt...not normal error [3]
         TRACE("JavaScript_Dispatcher() => throwing a halt");
@@ -925,7 +925,7 @@ DECLARE_NATIVE(js_native)
         js,  /* JS code registering the function body (the `$0` parameter) */
         source
     );
-    REBVAL *error = cast(REBVAL*, Pointer_From_Heapaddr(error_addr));
+    Value* error = cast(Value*, Pointer_From_Heapaddr(error_addr));
     if (error) {
         Context* ctx = VAL_CONTEXT(error);
         rebRelease(error);  // !!! failing, so not actually needed (?)
@@ -982,7 +982,7 @@ DECLARE_NATIVE(js_eval_p)
 {
     JAVASCRIPT_INCLUDE_PARAMS_OF_JS_EVAL_P;
 
-    REBVAL *source = ARG(source);
+    Value* source = ARG(source);
 
     const char *utf8 = c_cast(char*, Cell_Utf8_At(source));
     heapaddr_t addr;
@@ -1042,7 +1042,7 @@ DECLARE_NATIVE(js_eval_p)
             Heapaddr_From_Pointer(source)
         );
     }
-    REBVAL *value = Value_From_Value_Id(addr);
+    Value* value = Value_From_Value_Id(addr);
     if (not value or not Is_Error(value))
         return value;  // evaluator takes ownership of handle
 
@@ -1050,7 +1050,7 @@ DECLARE_NATIVE(js_eval_p)
 
 } handle_error: {  ///////////////////////////////////////////////////////////
 
-    REBVAL *error = Value_From_Value_Id(addr);
+    Value* error = Value_From_Value_Id(addr);
     assert(Is_Error(error));
     Context* ctx = VAL_CONTEXT(error);
     rebRelease(error);

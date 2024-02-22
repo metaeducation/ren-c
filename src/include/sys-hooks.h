@@ -53,7 +53,7 @@ typedef REBINT (COMPARE_HOOK)(
 
 // PER-TYPE MAKE HOOKS: for `make datatype def`
 //
-// These functions must return a REBVAL* to the type they are making
+// These functions must return a Value* to the type they are making
 // (either in the output cell given or an API cell)...or they can return
 // BOUNCE_THROWN if they throw.  (e.g. `make object! [return ...]` can throw)
 //
@@ -61,13 +61,13 @@ typedef Bounce (MAKE_HOOK)(
     Level* level_,
     Kind kind,
     Option(const Value*) opt_parent,
-    const REBVAL *def
+    const Value* def
 );
 
 
 // PER-TYPE TO HOOKS: for `to datatype value`
 //
-// These functions must return a REBVAL* to the type they are making
+// These functions must return a Value* to the type they are making
 // (either in the output cell or an API cell).  They are NOT allowed to
 // throw, and are not supposed to make use of any binding information in
 // blocks they are passed...so no evaluations should be performed.
@@ -77,7 +77,7 @@ typedef Bounce (MAKE_HOOK)(
 // and decided by the source type.  For now, the destination decides both,
 // which means TO-ness and MAKE-ness are a bit too similar.
 //
-typedef Bounce (TO_HOOK)(Level* level_, Kind, const REBVAL*);
+typedef Bounce (TO_HOOK)(Level* level_, Kind, const Value*);
 
 
 // PER-TYPE MOLD HOOKS: for `mold value` and `form value`
@@ -114,7 +114,7 @@ typedef Bounce (GENERIC_HOOK)(Level* level_, const Symbol* verb);
 
 // Port hook: for implementing generic ACTION!s on a PORT! class
 //
-typedef Bounce (PORT_HOOK)(Level* level_, REBVAL *port, const Symbol* verb);
+typedef Bounce (PORT_HOOK)(Level* level_, Value* port, const Symbol* verb);
 
 
 //=//// PARAMETER ENUMERATION /////////////////////////////////////////////=//

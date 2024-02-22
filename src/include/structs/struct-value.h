@@ -30,15 +30,15 @@
 //
 
 #if DEBUG_USE_CELL_SUBCLASSES
-    struct Param : public REBVAL {};
+    struct Param : public Value {};
 
-    INLINE const Param* cast_PAR(const REBVAL *v)
+    INLINE const Param* cast_PAR(const Value* v)
         { return c_cast(Param*, v); }
 
-    INLINE Param* cast_PAR(REBVAL *v)
+    INLINE Param* cast_PAR(Value* v)
         { return cast(Param*, v); }
 #else
-    #define Param REBVAL
+    #define Param Value
 
     #define cast_PAR(v) (v)
 #endif
@@ -56,7 +56,7 @@
 #define Stable_Unchecked(atom) \
     x_cast(Value*, ensure(const Atom*, (atom)))
 
-INLINE REBVAL* Freshen_Cell_Untracked(Cell* v);
+INLINE Value* Freshen_Cell_Untracked(Cell* v);
 
 #if DEBUG_USE_CELL_SUBCLASSES  // wrapper has runtime cost
     template<typename T>
@@ -125,7 +125,7 @@ INLINE REBVAL* Freshen_Cell_Untracked(Cell* v);
 // to use.  Then you have to cast, e.g. VAL_DECIMAL(cast(Value*, stackval)).
 //
 #if (! DEBUG_EXTANT_STACK_POINTERS)
-    #define StackValue(p) REBVAL*
+    #define StackValue(p) Value*
 #else
     struct StackValuePointer;
     #define StackValue(p) StackValuePointer

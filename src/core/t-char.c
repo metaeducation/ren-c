@@ -96,7 +96,7 @@ Bounce MAKE_Issue(
     Level* level_,
     Kind k,
     Option(const Value*) parent,
-    const REBVAL *arg
+    const Value* arg
 ){
     assert(k == REB_ISSUE);
     UNUSED(k);
@@ -218,7 +218,7 @@ DECLARE_NATIVE(utf8_to_char)
 // divided into functions like CODEPOINT-TO-CHAR and UTF8-TO-CHAR, which
 // leave things like TO ISSUE! 10 to be #10.
 //
-Bounce TO_Issue(Level* level_, Kind kind, const REBVAL *arg)
+Bounce TO_Issue(Level* level_, Kind kind, const Value* arg)
 {
     assert(VAL_TYPE(arg) != REB_ISSUE);  // !!! should call COPY?
 
@@ -237,7 +237,7 @@ Bounce TO_Issue(Level* level_, Kind kind, const REBVAL *arg)
 }
 
 
-static REBINT Math_Arg_For_Char(REBVAL *arg, const Symbol* verb)
+static REBINT Math_Arg_For_Char(Value* arg, const Symbol* verb)
 {
     switch (VAL_TYPE(arg)) {
       case REB_ISSUE:
@@ -336,7 +336,7 @@ void MF_Issue(REB_MOLD *mo, const Cell* v, bool form)
 //
 REBTYPE(Issue)
 {
-    REBVAL *issue = D_ARG(1);
+    Value* issue = D_ARG(1);
 
     Option(SymId) sym = Symbol_Id(verb);
 

@@ -123,7 +123,7 @@ INLINE const Element* Cell_Array_Item_At(const Cell* v) {
 // Declaring as inline with type signature ensures you use a Array* to
 // initialize, and the C++ build can also validate managed consistent w/const.
 
-INLINE REBVAL *Init_Array_Cell_At_Core(
+INLINE Value* Init_Array_Cell_At_Core(
     Cell* out,
     Heart heart,
     const_if_c Array* array,
@@ -140,7 +140,7 @@ INLINE REBVAL *Init_Array_Cell_At_Core(
 }
 
 #if CPLUSPLUS_11
-    INLINE REBVAL *Init_Array_Cell_At_Core(
+    INLINE Value* Init_Array_Cell_At_Core(
         Cell* out,
         Heart heart,
         const Array* array,  // all const arrays should be already managed

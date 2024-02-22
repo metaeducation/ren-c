@@ -25,7 +25,7 @@
 #include "sys-core.h"
 
 
-static void Append_Vars_To_Context_From_Group(REBVAL *context, REBVAL *block)
+static void Append_Vars_To_Context_From_Group(Value* context, Value* block)
 {
     Context* c = VAL_CONTEXT(context);
 
@@ -265,8 +265,8 @@ void Init_Evars(EVARS *e, const Cell* v) {
         e->wordlist = Pop_Stack_Values_Core(base, NODE_FLAG_MANAGED);
         Clear_Node_Managed_Bit(e->wordlist);  // [1]
 
-        e->word = cast(REBVAL*, Array_Head(e->wordlist)) - 1;
-        e->word_tail = cast(REBVAL*, Array_Tail(e->wordlist));
+        e->word = cast(Value*, Array_Head(e->wordlist)) - 1;
+        e->word_tail = cast(Value*, Array_Tail(e->wordlist));
 
         Corrupt_Pointer_If_Debug(e->key_tail);
         e->var = nullptr;
@@ -528,7 +528,7 @@ Bounce MAKE_Frame(
     Level* level_,
     Kind kind,
     Option(const Value*) parent,
-    const REBVAL *arg
+    const Value* arg
 ){
     if (parent)
         return RAISE(Error_Bad_Make_Parent(kind, unwrap(parent)));
@@ -596,7 +596,7 @@ Bounce MAKE_Frame(
 // to have an equivalent representation (an OBJECT! could be an expired frame
 // perhaps, but still would have no ACTION OF property)
 //
-Bounce TO_Frame(Level* level_, Kind kind, const REBVAL *arg)
+Bounce TO_Frame(Level* level_, Kind kind, const Value* arg)
 {
     return RAISE(Error_Bad_Make(kind, arg));
 }
@@ -609,7 +609,7 @@ Bounce MAKE_Context(
     Level* level_,
     Kind k,
     Option(const Value*) parent,
-    const REBVAL *arg
+    const Value* arg
 ){
     // Other context kinds (LEVEL!, ERROR!, PORT!) have their own hooks.
     //
@@ -689,7 +689,7 @@ Bounce MAKE_Context(
 //
 //  TO_Context: C
 //
-Bounce TO_Context(Level* level_, Kind kind, const REBVAL *arg)
+Bounce TO_Context(Level* level_, Kind kind, const Value* arg)
 {
     // Other context kinds (LEVEL!, ERROR!, PORT!) have their own hooks.
     //
@@ -720,7 +720,7 @@ DECLARE_NATIVE(adjunct_of)
 {
     INCLUDE_PARAMS_OF_ADJUNCT_OF;
 
-    REBVAL *v = ARG(value);
+    Value* v = ARG(value);
 
     Context* meta;
     if (Is_Frame(v)) {
@@ -757,7 +757,7 @@ DECLARE_NATIVE(set_adjunct)
 {
     INCLUDE_PARAMS_OF_SET_ADJUNCT;
 
-    REBVAL *adjunct = ARG(adjunct);
+    Value* adjunct = ARG(adjunct);
 
     Context* ctx;
     if (Any_Context(adjunct)) {
@@ -771,7 +771,7 @@ DECLARE_NATIVE(set_adjunct)
         ctx = nullptr;
     }
 
-    REBVAL *v = ARG(value);
+    Value* v = ARG(value);
 
     if (Is_Frame(v)) {
         if (Is_Frame_Details(v))
@@ -860,7 +860,7 @@ Context* Copy_Context_Extra_Managed(
                 patch = cast(Stub*, node_MISC(Hitch, patch))
             ){
                 if (original == INODE(PatchContext, patch)) {
-                    REBVAL *var = Append_Context(copy, *psym);
+                    Value* var = Append_Context(copy, *psym);
                     Copy_Cell(var, Stub_Cell(patch));
                     break;
                 }
@@ -878,7 +878,7 @@ Context* Copy_Context_Extra_Managed(
     // (might be in an array, or might be in the chunk stack for FRAME!)
     //
     const Value* src_tail;
-    REBVAL *src = CTX_VARS(&src_tail, original);
+    Value* src = CTX_VARS(&src_tail, original);
     for (; src != src_tail; ++src, ++dest) {
         Copy_Cell_Core(  // trying to duplicate slot precisely
             dest,
@@ -1054,7 +1054,7 @@ void MF_Context(REB_MOLD *mo, const Cell* v, bool form)
 }
 
 
-const Symbol* Symbol_From_Picker(const REBVAL *context, const Value* picker)
+const Symbol* Symbol_From_Picker(const Value* context, const Value* picker)
 {
     UNUSED(context);  // Might the picker be context-sensitive?
 
@@ -1072,7 +1072,7 @@ const Symbol* Symbol_From_Picker(const REBVAL *context, const Value* picker)
 //
 REBTYPE(Context)
 {
-    REBVAL *context = D_ARG(1);
+    Value* context = D_ARG(1);
     Context* c = VAL_CONTEXT(context);
 
     Option(SymId) symid = Symbol_Id(verb);
@@ -1093,7 +1093,7 @@ REBTYPE(Context)
         INCLUDE_PARAMS_OF_REFLECT;
         UNUSED(ARG(value));  // covered by `v`
 
-        REBVAL *property = ARG(property);
+        Value* property = ARG(property);
         Option(SymId) prop = Cell_Word_Id(property);
 
         switch (prop) {
@@ -1128,7 +1128,7 @@ REBTYPE(Context)
         const Value* picker = ARG(picker);
         const Symbol* symbol = Symbol_From_Picker(context, picker);
 
-        const REBVAL *var = TRY_VAL_CONTEXT_VAR(context, symbol);
+        const Value* var = TRY_VAL_CONTEXT_VAR(context, symbol);
         if (not var)
             fail (Error_Bad_Pick_Raw(picker));
 
@@ -1146,9 +1146,9 @@ REBTYPE(Context)
         const Value* picker = ARG(picker);
         const Symbol* symbol = Symbol_From_Picker(context, picker);
 
-        REBVAL *setval = ARG(value);
+        Value* setval = ARG(value);
 
-        REBVAL *var = TRY_VAL_CONTEXT_MUTABLE_VAR(context, symbol);
+        Value* var = TRY_VAL_CONTEXT_MUTABLE_VAR(context, symbol);
         if (not var)
             fail (Error_Bad_Pick_Raw(picker));
 
@@ -1166,7 +1166,7 @@ REBTYPE(Context)
         const Value* picker = ARG(picker);
         const Symbol* symbol = Symbol_From_Picker(context, picker);
 
-        REBVAL *setval = ARG(value);
+        Value* setval = ARG(value);
 
         Value* var = m_cast(Value*, TRY_VAL_CONTEXT_VAR(context, symbol));
         if (not var)
@@ -1195,7 +1195,7 @@ REBTYPE(Context)
         return nullptr; }  // caller's Context* is not stale, no update needed
 
       case SYM_APPEND: {
-        REBVAL *arg = D_ARG(2);
+        Value* arg = D_ARG(2);
         if (Is_Void(arg))
             return COPY(context);  // don't fail on R/O if it would be a no-op
 
@@ -1259,7 +1259,7 @@ REBTYPE(Context)
         if (REF(part) or REF(skip) or REF(match))
             fail (Error_Bad_Refines_Raw());
 
-        REBVAL *pattern = ARG(value);
+        Value* pattern = ARG(value);
         if (Is_Antiform(pattern))
             fail (pattern);
 
@@ -1295,7 +1295,7 @@ REBTYPE(Context)
 //
 REBTYPE(Frame)
 {
-    REBVAL *frame = D_ARG(1);
+    Value* frame = D_ARG(1);
     Context* c = VAL_CONTEXT(frame);
 
     Option(SymId) symid = Symbol_Id(verb);
@@ -1404,7 +1404,7 @@ REBTYPE(Frame)
         Phase* act = cast(Phase*, VAL_ACTION(frame));
         assert(IS_DETAILS(act));
 
-        REBVAL *property = ARG(property);
+        Value* property = ARG(property);
         Option(SymId) sym = Cell_Word_Id(property);
         switch (sym) {
           case SYM_BINDING: {
@@ -1587,7 +1587,7 @@ REBTYPE(Frame)
         INCLUDE_PARAMS_OF_PICK_P;
         UNUSED(ARG(location));
 
-        REBVAL *redbol = Get_System(SYS_OPTIONS, OPTIONS_REDBOL_PATHS);
+        Value* redbol = Get_System(SYS_OPTIONS, OPTIONS_REDBOL_PATHS);
         if (not Is_Logic(redbol) or Cell_Logic(redbol) == false) {
             fail (
                 "SYSTEM.OPTIONS.REDBOL-PATHS is false, so you can't"
@@ -1595,7 +1595,7 @@ REBTYPE(Frame)
             );
           }
 
-        REBVAL *picker = ARG(picker);
+        Value* picker = ARG(picker);
         if (Is_Blank(picker))
             return COPY(frame);
 
@@ -1632,7 +1632,7 @@ static bool Same_Action(const Cell* a, const Cell* b)
         //
         // All actions that have the same paramlist are not necessarily the
         // "same action".  For instance, every RETURN shares a common
-        // paramlist, but the binding is different in the REBVAL instances
+        // paramlist, but the binding is different in the cell instances
         // in order to know where to "exit from".
         //
         return VAL_FRAME_BINDING(a) == VAL_FRAME_BINDING(b);
@@ -1731,7 +1731,7 @@ DECLARE_NATIVE(construct)
 {
     INCLUDE_PARAMS_OF_CONSTRUCT;
 
-    REBVAL *spec = ARG(spec);
+    Value* spec = ARG(spec);
     Context* parent = REF(with)
         ? VAL_CONTEXT(ARG(with))
         : nullptr;

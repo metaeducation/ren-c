@@ -210,7 +210,7 @@ REBLEN Julian_Date(const Cell* date)
 //
 // Calculate the (signed) difference in days between two dates.
 //
-REBINT Days_Between_Dates(const REBVAL *a_in, const REBVAL *b_in)
+REBINT Days_Between_Dates(const Value* a_in, const Value* b_in)
 {
     if (Does_Date_Have_Time(a_in) != Does_Date_Have_Time(b_in))
         fail (Error_Invalid_Compare_Raw(a_in, b_in));
@@ -279,7 +279,7 @@ REBINT Days_Between_Dates(const REBVAL *a_in, const REBVAL *b_in)
 //
 // Return the day of the week for a specific date.
 //
-REBLEN Week_Day(const REBVAL *date)
+REBLEN Week_Day(const Value* date)
 {
     DECLARE_STABLE (year1);
     Copy_Cell(year1, date);
@@ -516,7 +516,7 @@ Bounce MAKE_Date(
     Level* level_,
     Kind kind,
     Option(const Value*) parent,
-    const REBVAL *arg
+    const Value* arg
 ){
     assert(kind == REB_DATE);
     if (parent)
@@ -632,12 +632,12 @@ Bounce MAKE_Date(
 //
 //  TO_Date: C
 //
-Bounce TO_Date(Level* level_, Kind kind, const REBVAL *arg) {
+Bounce TO_Date(Level* level_, Kind kind, const Value* arg) {
     return MAKE_Date(level_, kind, nullptr, arg);
 }
 
 
-static REBINT Int_From_Date_Arg(const REBVAL *poke) {
+static REBINT Int_From_Date_Arg(const Value* poke) {
     if (Is_Integer(poke) or Is_Decimal(poke))
         return Int32s(poke, 0);
 
@@ -705,7 +705,7 @@ void Pick_Or_Poke_Date(
 
     if (not opt_poke) {
         assert(opt_out);
-        REBVAL *out = unwrap(opt_out);
+        Value* out = unwrap(opt_out);
 
         switch (sym) {
           case SYM_YEAR:
@@ -805,7 +805,7 @@ void Pick_Or_Poke_Date(
     }
     else {
         assert(not opt_out);
-        const REBVAL *poke = unwrap(opt_poke);
+        const Value* poke = unwrap(opt_poke);
 
         // Here the desire is to modify the incoming date directly.  This is
         // done by changing the components that need to change which were
@@ -979,7 +979,7 @@ void Pick_Or_Poke_Date(
 //
 REBTYPE(Date)
 {
-    REBVAL *v = D_ARG(1);
+    Value* v = D_ARG(1);
     assert(Is_Date(v));
 
     Option(SymId) id = Symbol_Id(verb);
@@ -1010,7 +1010,7 @@ REBTYPE(Date)
 
         const Value* picker = ARG(picker);
 
-        REBVAL *setval = ARG(value);
+        Value* setval = ARG(value);
 
         Pick_Or_Poke_Date(nullptr, v, picker, setval);
 
@@ -1021,7 +1021,7 @@ REBTYPE(Date)
     }
 
     if (id == SYM_SUBTRACT or id == SYM_ADD) {
-        REBVAL *arg = D_ARG(2);
+        Value* arg = D_ARG(2);
         REBINT type = VAL_TYPE(arg);
 
         if (type == REB_DATE) {
@@ -1115,8 +1115,8 @@ REBTYPE(Date)
           case SYM_DIFFERENCE: {
             INCLUDE_PARAMS_OF_DIFFERENCE;
 
-            REBVAL *val1 = ARG(value1);
-            REBVAL *val2 = ARG(value2);
+            Value* val1 = ARG(value1);
+            Value* val2 = ARG(value2);
 
             if (REF(case))
                 fail (Error_Bad_Refines_Raw());

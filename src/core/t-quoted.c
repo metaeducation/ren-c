@@ -69,7 +69,7 @@ Bounce MAKE_Quoted(
     Level* level_,
     Kind kind,
     Option(const Value*) parent,
-    const REBVAL *arg
+    const Value* arg
 ){
     assert(kind == REB_QUOTED);
     if (parent)
@@ -85,7 +85,7 @@ Bounce MAKE_Quoted(
 // TO is disallowed at the moment, as there is no clear equivalence of things
 // "to" a literal.  (to quoted! [[a]] => \\a, for instance?)
 //
-Bounce TO_Quoted(Level* level_, Kind kind, const REBVAL *data) {
+Bounce TO_Quoted(Level* level_, Kind kind, const Value* data) {
     return RAISE(Error_Bad_Make(kind, data));
 }
 
@@ -224,7 +224,7 @@ DECLARE_NATIVE(meta_p)
 {
     INCLUDE_PARAMS_OF_META_P;
 
-    REBVAL *v = ARG(optional);
+    Value* v = ARG(optional);
 
     if (Is_Meta_Of_Void(v))
         return VOID;
@@ -253,7 +253,7 @@ DECLARE_NATIVE(unquote)
 {
     INCLUDE_PARAMS_OF_UNQUOTE;
 
-    REBVAL *v = ARG(value);
+    Value* v = ARG(value);
 
     REBINT depth = (REF(depth) ? VAL_INT32(ARG(depth)) : 1);
 
@@ -482,7 +482,7 @@ DECLARE_NATIVE(lazy)
         return Unquotify(Copy_Cell(OUT, v), 1);
 
     if (Is_Block(v)) {
-        if (rebRunThrows(cast(REBVAL*, OUT), Canon(MAKE), Canon(OBJECT_X), v))
+        if (rebRunThrows(cast(Value*, OUT), Canon(MAKE), Canon(OBJECT_X), v))
             return THROWN;
     }
     else
@@ -541,7 +541,7 @@ DECLARE_NATIVE(pack)
     assert(Is_Block(v));
 
     if (rebRunThrows(
-        cast(REBVAL*, SPARE),  // output cell
+        cast(Value*, SPARE),  // output cell
         Canon(QUASI), "reduce/predicate", v, Lib(META)  // commas excluded [2]
     )){
         return THROWN;

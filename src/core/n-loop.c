@@ -198,9 +198,9 @@ void Add_Definitional_Break_Continue(
 //
 static Bounce Loop_Series_Common(
     Level* level_,
-    REBVAL *var, // Must not be movable from context expansion, see #2274
-    const REBVAL *body,
-    REBVAL *start,
+    Value* var, // Must not be movable from context expansion, see #2274
+    const Value* body,
+    Value* start,
     REBINT end,
     REBINT bump
 ){
@@ -284,8 +284,8 @@ static Bounce Loop_Series_Common(
 //
 static Bounce Loop_Integer_Common(
     Level* level_,
-    REBVAL *var,  // Must not be movable from context expansion, see #2274
-    const REBVAL *body,
+    Value* var,  // Must not be movable from context expansion, see #2274
+    const Value* body,
     REBI64 start,
     REBI64 end,
     REBI64 bump
@@ -346,11 +346,11 @@ static Bounce Loop_Integer_Common(
 //
 static Bounce Loop_Number_Common(
     Level* level_,
-    REBVAL *var,  // Must not be movable from context expansion, see #2274
-    const REBVAL *body,
-    REBVAL *start,
-    REBVAL *end,
-    REBVAL *bump
+    Value* var,  // Must not be movable from context expansion, see #2274
+    const Value* body,
+    Value* start,
+    Value* end,
+    Value* bump
 ){
     REBDEC s;
     if (Is_Integer(start))
@@ -485,7 +485,7 @@ DECLARE_NATIVE(cfor)
     if (Is_Block(body) or Is_Meta_Block(body))
         Add_Definitional_Break_Continue(body, level_);
 
-    REBVAL *var = CTX_VAR(context, 1);  // not movable, see #2274
+    Value* var = CTX_VAR(context, 1);  // not movable, see #2274
 
     if (
         Is_Integer(ARG(start))
@@ -554,8 +554,8 @@ DECLARE_NATIVE(for_skip)
 {
     INCLUDE_PARAMS_OF_FOR_SKIP;
 
-    REBVAL *series = ARG(series);
-    REBVAL *body = ARG(body);
+    Value* series = ARG(series);
+    Value* body = ARG(body);
 
     REBINT skip = Int32(ARG(skip));
     if (skip == 0) {
@@ -574,8 +574,8 @@ DECLARE_NATIVE(for_skip)
     if (Is_Block(body) or Is_Meta_Block(body))
         Add_Definitional_Break_Continue(body, level_);
 
-    REBVAL *pseudo_var = CTX_VAR(context, 1); // not movable, see #2274
-    REBVAL *var = Real_Var_From_Pseudo(pseudo_var);
+    Value* pseudo_var = CTX_VAR(context, 1); // not movable, see #2274
+    Value* var = Real_Var_From_Pseudo(pseudo_var);
     Copy_Cell(var, series);
 
     // Starting location when past end with negative skip:
@@ -768,7 +768,7 @@ DECLARE_NATIVE(cycle)
         return CATCH_CONTINUE(OUT, body);  // plain continue
     }
 
-    const REBVAL *label = VAL_THROWN_LABEL(LEVEL);
+    const Value* label = VAL_THROWN_LABEL(LEVEL);
     if (
         Is_Frame(label)
         and ACT_DISPATCHER(VAL_ACTION(label)) == &N_definitional_stop
@@ -797,7 +797,7 @@ struct Reb_Enum_Series {
 typedef struct Reb_Enum_Series ESER;
 
 struct Loop_Each_State {
-    REBVAL *data;  // possibly API handle if converted from sequence
+    Value* data;  // possibly API handle if converted from sequence
     const Series* series;  // series data being enumerated (if applicable)
     union {
         EVARS evars;
@@ -895,9 +895,9 @@ static bool Try_Loop_Each_Next(const Value* iterator, Context* vars_ctx)
         return false;
 
     const Value* pseudo_tail;
-    REBVAL *pseudo_var = CTX_VARS(&pseudo_tail, vars_ctx);
+    Value* pseudo_var = CTX_VARS(&pseudo_tail, vars_ctx);
     for (; pseudo_var != pseudo_tail; ++pseudo_var) {
-        REBVAL *var = Real_Var_From_Pseudo(pseudo_var);
+        Value* var = Real_Var_From_Pseudo(pseudo_var);
 
         if (not les->more_data) {
             Init_Nulled(var);  // Y is null in `for-each [x y] [1] ...`
@@ -907,7 +907,7 @@ static bool Try_Loop_Each_Next(const Value* iterator, Context* vars_ctx)
         Heart heart;
 
         if (Is_Action(les->data)) {
-            REBVAL *generated = rebValue(rebRUN(les->data));
+            Value* generated = rebValue(rebRUN(les->data));
             if (generated) {
                 if (var)
                     Copy_Cell(var, generated);
@@ -1007,8 +1007,8 @@ static bool Try_Loop_Each_Next(const Value* iterator, Context* vars_ctx)
           case REB_MAP: {
             assert(les->u.eser.index % 2 == 0);  // should be on key slot
 
-            const REBVAL *key;
-            const REBVAL *val;
+            const Value* key;
+            const Value* val;
             while (true) {  // pass over the unused map slots
                 key = (
                     Array_At(c_cast(Array*, les->series), les->u.eser.index)
@@ -1432,7 +1432,7 @@ DECLARE_NATIVE(remove_each)
         assert(start == index);
 
         const Value* var_tail;
-        REBVAL *var = CTX_VARS(&var_tail, context);  // fixed (#2274)
+        Value* var = CTX_VARS(&var_tail, context);  // fixed (#2274)
         for (; var != var_tail; ++var) {
             if (index == len) {
                 Init_Nulled(var);  // Y on 2nd step of remove-each [x y] "abc"
@@ -1958,9 +1958,9 @@ DECLARE_NATIVE(for)
 {
     INCLUDE_PARAMS_OF_FOR;
 
-    REBVAL *vars = ARG(vars);
-    REBVAL *value = ARG(value);
-    REBVAL *body = ARG(body);
+    Value* vars = ARG(vars);
+    Value* value = ARG(value);
+    Value* body = ARG(body);
 
     enum {
         ST_FOR_INITIAL_ENTRY = STATE_0,
@@ -1992,7 +1992,7 @@ DECLARE_NATIVE(for)
         // way around, with FOR-EACH delegating to FOR).
         //
         rebPushContinuation(
-            cast(REBVAL*, OUT),  // <-- output cell
+            cast(Value*, OUT),  // <-- output cell
             LEVEL_MASK_NONE,
             Canon(FOR_EACH), ARG(vars), rebQ(value), body
         );
@@ -2011,7 +2011,7 @@ DECLARE_NATIVE(for)
 
     assert(CTX_LEN(context) == 1);
 
-    REBVAL *var = CTX_VAR(VAL_CONTEXT(vars), 1);  // not movable, see #2274
+    Value* var = CTX_VAR(VAL_CONTEXT(vars), 1);  // not movable, see #2274
     Init_Integer(var, 1);
 
     STATE = ST_FOR_RUNNING_BODY;
@@ -2028,7 +2028,7 @@ DECLARE_NATIVE(for)
             return nullptr;
     }
 
-    REBVAL *var = CTX_VAR(VAL_CONTEXT(vars), 1);  // not movable, see #2274
+    Value* var = CTX_VAR(VAL_CONTEXT(vars), 1);  // not movable, see #2274
 
     if (not Is_Integer(var))
         fail (Error_Invalid_Type(VAL_TYPE(var)));

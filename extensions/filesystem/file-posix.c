@@ -69,7 +69,7 @@
 // !!! libuv has the advantage of standardizing error names across platforms,
 // but they're all new error numbers.  Do strings for now.
 //
-REBVAL *rebError_UV(int err) {
+Value* rebError_UV(int err) {
      return rebValue("make error!", rebT(uv_strerror(err)));
 }
 
@@ -80,7 +80,7 @@ REBVAL *rebError_UV(int err) {
 // If the file size hasn't been queried (because it wasn't needed) then do
 // an fstat() to get the information.
 //
-REBVAL *Get_File_Size_Cacheable(uint64_t *size, const REBVAL *port)
+Value* Get_File_Size_Cacheable(uint64_t *size, const Value* port)
 {
     FILEREQ *file = File_Of_Port(port);
 
@@ -112,7 +112,7 @@ REBVAL *Get_File_Size_Cacheable(uint64_t *size, const REBVAL *port)
 // The processing of these can be done in the OS (if supported) or by a
 // separate filter operation during the read."  How does libuv handle this?
 //
-REBVAL *Try_Read_Directory_Entry(FILEREQ *dir)
+Value* Try_Read_Directory_Entry(FILEREQ *dir)
 {
     assert(dir->is_dir);
 
@@ -178,7 +178,7 @@ REBVAL *Try_Read_Directory_Entry(FILEREQ *dir)
     //
     bool is_dir = (dirent.type == UV_DIRENT_DIR);
 
-    REBVAL *path = rebValue(
+    Value* path = rebValue(
         "applique :local-to-file [",
             "path:", rebT(dirent.name),
             "dir: all [", rebL(is_dir), "#]",
@@ -203,7 +203,7 @@ REBVAL *Try_Read_Directory_Entry(FILEREQ *dir)
 //
 // !!! Does libuv gloss over the slash/backslash issues?
 //
-REBVAL *Open_File(const REBVAL *port, int flags)
+Value* Open_File(const Value* port, int flags)
 {
     FILEREQ *file = File_Of_Port(port);
 
@@ -268,7 +268,7 @@ REBVAL *Open_File(const REBVAL *port, int flags)
 //
 // Closes a previously opened file.
 //
-REBVAL *Close_File(const REBVAL *port)
+Value* Close_File(const Value* port)
 {
     FILEREQ *file = File_Of_Port(port);
 
@@ -291,7 +291,7 @@ REBVAL *Close_File(const REBVAL *port)
 //
 //  Read_File: C
 //
-REBVAL *Read_File(const REBVAL *port, size_t length)
+Value* Read_File(const Value* port, size_t length)
 {
     FILEREQ *file = File_Of_Port(port);
 
@@ -336,7 +336,7 @@ REBVAL *Read_File(const REBVAL *port, size_t length)
 //
 //  Write_File: C
 //
-REBVAL *Write_File(const REBVAL *port, const REBVAL *value, REBLEN limit)
+Value* Write_File(const Value* port, const Value* value, REBLEN limit)
 {
     FILEREQ *file = File_Of_Port(port);
 
@@ -422,7 +422,7 @@ REBVAL *Write_File(const REBVAL *port, const REBVAL *value, REBLEN limit)
 //
 //  Truncate_File: C
 //
-REBVAL *Truncate_File(const REBVAL *port)
+Value* Truncate_File(const Value* port)
 {
     FILEREQ *file = File_Of_Port(port);
     assert(file->id != FILEHANDLE_NONE);
@@ -441,7 +441,7 @@ REBVAL *Truncate_File(const REBVAL *port)
 //
 //  Create_Directory: C
 //
-REBVAL *Create_Directory(const REBVAL *port)
+Value* Create_Directory(const Value* port)
 {
     FILEREQ *dir = File_Of_Port(port);
     assert(dir->is_dir);
@@ -470,7 +470,7 @@ REBVAL *Create_Directory(const REBVAL *port)
 //
 // Note: Directories must be empty to succeed
 //
-REBVAL *Delete_File_Or_Directory(const REBVAL *port)
+Value* Delete_File_Or_Directory(const Value* port)
 {
     FILEREQ *file = File_Of_Port(port);
 
@@ -499,7 +499,7 @@ REBVAL *Delete_File_Or_Directory(const REBVAL *port)
 //
 //  Rename_File_Or_Directory: C
 //
-REBVAL *Rename_File_Or_Directory(const REBVAL *port, const REBVAL *to)
+Value* Rename_File_Or_Directory(const Value* port, const Value* to)
 {
     FILEREQ *file = File_Of_Port(port);
 
@@ -554,7 +554,7 @@ REBVAL *Rename_File_Or_Directory(const REBVAL *port, const REBVAL *to)
     //
     // Convert file.time to REBOL date/time format.  Time zone is UTC.
     //
-    REBVAL *File_Time_To_Rebol(uv_timespec_t uvtime)
+    Value* File_Time_To_Rebol(uv_timespec_t uvtime)
     {
         SYSTEMTIME stime;
         TIME_ZONE_INFORMATION tzone;
@@ -637,7 +637,7 @@ REBVAL *Rename_File_Or_Directory(const REBVAL *port, const REBVAL *to)
     // Convert file.time to REBOL date/time format.
     // Time zone is UTC.
     //
-    REBVAL *File_Time_To_Rebol(uv_timespec_t uvtime)
+    Value* File_Time_To_Rebol(uv_timespec_t uvtime)
     {
         time_t stime;
 
@@ -682,7 +682,7 @@ REBVAL *Rename_File_Or_Directory(const REBVAL *port, const REBVAL *to)
 //
 // Obtain information about a file.  Produces a STD_FILE_INFO object.
 //
-REBVAL *Query_File_Or_Directory(const REBVAL *port)
+Value* Query_File_Or_Directory(const Value* port)
 {
     FILEREQ *file = File_Of_Port(port);
 
@@ -717,7 +717,7 @@ REBVAL *Query_File_Or_Directory(const REBVAL *port)
 
     // Note: time is in local format and must be converted
     //
-    REBVAL *timestamp = File_Time_To_Rebol(req.statbuf.st_mtim);
+    Value* timestamp = File_Time_To_Rebol(req.statbuf.st_mtim);
 
     return rebValue(
         "make ensure object! (", port , ").scheme.info [",
@@ -735,7 +735,7 @@ REBVAL *Query_File_Or_Directory(const REBVAL *port)
 //
 // Result is a FILE! API Handle, must be freed with rebRelease()
 //
-REBVAL *Get_Current_Dir_Value(void)
+Value* Get_Current_Dir_Value(void)
 {
     char *path_utf8 = rebAllocN(char, PATH_MAX);
 
@@ -751,7 +751,7 @@ REBVAL *Get_Current_Dir_Value(void)
     // "On Unix the path no longer ends in a slash"...the /DIR option should
     // make it end in a slash for the result.
 
-    REBVAL *result = rebValue("local-to-file/dir", rebT(path_utf8));
+    Value* result = rebValue("local-to-file/dir", rebT(path_utf8));
 
     rebFree(path_utf8);
     return result;
@@ -763,7 +763,7 @@ REBVAL *Get_Current_Dir_Value(void)
 //
 // Set the current directory to local path. Return FALSE on failure.
 //
-bool Set_Current_Dir_Value(const REBVAL *path)
+bool Set_Current_Dir_Value(const Value* path)
 {
     char *path_utf8 = rebSpell("file-to-local/full", path);
 
@@ -791,7 +791,7 @@ bool Set_Current_Dir_Value(const REBVAL *path)
 //
 // Note: You must call uv_setup_args() before calling this function!
 //
-REBVAL *Get_Current_Exec(void)
+Value* Get_Current_Exec(void)
 {
     char *path_utf8 = rebAllocN(char, PATH_MAX);
 
@@ -804,7 +804,7 @@ REBVAL *Get_Current_Exec(void)
     }
     assert(size == strsize(path_utf8));  // does it give correct size?
 
-    REBVAL *result = rebValue(
+    Value* result = rebValue(
         "local-to-file", rebT(path_utf8)  // just return unresolved path
     );
     rebFree(path_utf8);
@@ -827,7 +827,7 @@ REBVAL *Get_Current_Exec(void)
     //
     //  Get_Current_Exec: C
     //
-    REBVAL *Get_Current_Exec(void)
+    Value* Get_Current_Exec(void)
     {
         uint32_t path_size = 1024;
 
@@ -852,7 +852,7 @@ REBVAL *Get_Current_Exec(void)
 
         char *resolved_path_utf8 = realpath(path_utf8, NULL);
         if (resolved_path_utf8) {
-            REBVAL *result = rebValue(
+            Value* result = rebValue(
                 "local-to-file", rebT(resolved_path_utf8)
             );
             rebFree(path_utf8);
@@ -860,7 +860,7 @@ REBVAL *Get_Current_Exec(void)
             return result;
         }
 
-        REBVAL *result = rebValue(
+        Value* result = rebValue(
             "local-to-file", rebT(path_utf8)  // just return unresolved path
         );
         rebFree(path_utf8);
@@ -875,7 +875,7 @@ REBVAL *Get_Current_Exec(void)
     //
     //  Get_Current_Exec: C
     //
-    REBVAL *Get_Current_Exec(void)
+    Value* Get_Current_Exec(void)
     {
         WCHAR *path = rebAllocN(WCHAR, MAX_PATH);
 
@@ -886,7 +886,7 @@ REBVAL *Get_Current_Exec(void)
         }
         path[r] = '\0';  // May not be NULL-terminated if buffer not big enough
 
-        REBVAL *result = rebValue(
+        Value* result = rebValue(
             "local-to-file", rebR(rebTextWide(path))
         );
         rebFree(path);
@@ -909,7 +909,7 @@ REBVAL *Get_Current_Exec(void)
     //
     // https://stackoverflow.com/questions/1023306/
     //
-    REBVAL *Get_Current_Exec(void)
+    Value* Get_Current_Exec(void)
     {
       #if !defined(PROC_EXEC_PATH) && !defined(HAVE_PROC_PATHNAME)
         return nullptr;
@@ -947,7 +947,7 @@ REBVAL *Get_Current_Exec(void)
 
         path_utf8[r] = '\0';
 
-        REBVAL *result = rebValue("local-to-file", rebT(path_utf8));
+        Value* result = rebValue("local-to-file", rebT(path_utf8));
         rebFree(path_utf8);
         return result;
       #endif

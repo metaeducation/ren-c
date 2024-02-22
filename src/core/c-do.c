@@ -157,7 +157,7 @@ bool Pushed_Continuation(
       case REB_GET_BLOCK: {  // effectively REDUCE
         Level* L = Make_End_Level(FLAG_STATE_BYTE(ST_ACTION_TYPECHECKING));
 
-        const REBVAL *action = Lib(REDUCE);
+        const Value* action = Lib(REDUCE);
         Push_Action(L, VAL_ACTION(action), VAL_FRAME_BINDING(action));
         Begin_Prefix_Action(L, VAL_FRAME_LABEL(action));
 

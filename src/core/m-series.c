@@ -324,7 +324,7 @@ void Remove_Series_Units(Series* s, Size byteoffset, REBLEN quantity)
 // Remove a series of values (bytes, longs, reb-vals) from the
 // series at the given index.
 //
-void Remove_Any_Series_Len(REBVAL *v, REBLEN index, REBINT len)
+void Remove_Any_Series_Len(Value* v, REBLEN index, REBINT len)
 {
     if (Any_String(v) or Is_Binary(v)) {
         //

@@ -52,7 +52,7 @@
 // if necessary.  Clip ranges for correct REBOL behavior.
 //
 static REBDEC Trig_Value(
-    const REBVAL *value,
+    const Value* value,
     bool radians,
     SymId which
 ){
@@ -379,7 +379,7 @@ DECLARE_NATIVE(shift)
     INCLUDE_PARAMS_OF_SHIFT;
 
     REBI64 b = VAL_INT64(ARG(bits));
-    REBVAL *a = ARG(value);
+    Value* a = ARG(value);
 
     if (b < 0) {
         REBU64 c = - cast(REBU64, b); // defined, see note on #pragma above
@@ -690,8 +690,8 @@ DECLARE_NATIVE(same_q)
 {
     INCLUDE_PARAMS_OF_SAME_Q;
 
-    REBVAL *v1 = ARG(value1);
-    REBVAL *v2 = ARG(value2);
+    Value* v1 = ARG(value1);
+    Value* v2 = ARG(value2);
 
     if (VAL_TYPE(v1) != VAL_TYPE(v2))
         return Init_False(OUT);  // can't be "same" value if not same type
@@ -909,8 +909,8 @@ DECLARE_NATIVE(minimum)
 {
     INCLUDE_PARAMS_OF_MINIMUM;
 
-    const REBVAL *value1 = ARG(value1);
-    const REBVAL *value2 = ARG(value2);
+    const Value* value1 = ARG(value1);
+    const Value* value2 = ARG(value2);
 
     if (Is_Pair(ARG(value1)) || Is_Pair(ARG(value2))) {
         Min_Max_Pair(OUT, ARG(value1), ARG(value2), false);
@@ -934,7 +934,7 @@ DECLARE_NATIVE(minimum)
 }
 
 
-inline static REBVAL *Init_Zeroed_Hack(Cell* out, Heart heart) {
+inline static Value* Init_Zeroed_Hack(Cell* out, Heart heart) {
     //
     // !!! This captures of a dodgy behavior of R3-Alpha, which was to assume
     // that clearing the payload of a value and then setting the header made
@@ -950,7 +950,7 @@ inline static REBVAL *Init_Zeroed_Hack(Cell* out, Heart heart) {
         memset(&out->extra, 0, sizeof(union ValueExtraUnion));
         memset(&out->payload, 0, sizeof(union ValuePayloadUnion));
     }
-    return cast(REBVAL*, out);
+    return cast(Value*, out);
 }
 
 
@@ -1011,7 +1011,7 @@ DECLARE_NATIVE(zero_q)
 {
     INCLUDE_PARAMS_OF_ZERO_Q;
 
-    REBVAL *v = ARG(value);
+    Value* v = ARG(value);
     if (QUOTE_BYTE(v) != NOQUOTE_1)
         return Init_False(OUT);
 

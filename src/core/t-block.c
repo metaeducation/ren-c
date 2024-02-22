@@ -108,7 +108,7 @@ Bounce MAKE_Array(
     Level* level_,
     Kind k,
     Option(const Value*) parent,
-    const REBVAL *arg
+    const Value* arg
 ){
     Heart heart = cast(Heart, k);
     assert(Any_Array_Kind(heart));
@@ -249,7 +249,7 @@ Bounce MAKE_Array(
         //
         StackIndex base = TOP_INDEX;
         while (true) {
-            REBVAL *generated = rebValue(arg);
+            Value* generated = rebValue(arg);
             if (not generated)
                 break;
             Copy_Cell(PUSH(), generated);
@@ -288,7 +288,7 @@ Bounce MAKE_Array(
             Context* context = cast(Context*, VAL_VARARGS_BINDING(arg));
             Level* param_level = CTX_LEVEL_MAY_FAIL(context);
 
-            REBVAL *param = Array_Head(
+            Value* param = Array_Head(
                 CTX_VARLIST(ACT_EXEMPLAR(Level_Phase(param_level)))
             );
             if (VAL_VARARGS_SIGNED_PARAM_INDEX(arg) < 0)
@@ -330,7 +330,7 @@ Bounce MAKE_Array(
 //
 //  TO_Array: C
 //
-Bounce TO_Array(Level* level_, Kind k, const REBVAL *arg) {
+Bounce TO_Array(Level* level_, Kind k, const Value* arg) {
     Heart heart = cast(Heart, k);
 
     if (Any_Sequence(arg)) {
@@ -513,7 +513,7 @@ struct sort_flags {
     bool cased;
     bool reverse;
     REBLEN offset;
-    REBVAL *comparator;
+    Value* comparator;
     bool all; // !!! not used?
 };
 
@@ -618,7 +618,7 @@ void Shuffle_Array(Array* arr, REBLEN idx, bool secure)
 
 
 static REBINT Try_Get_Array_Index_From_Picker(
-    const REBVAL *v,
+    const Value* v,
     const Value* picker
 ){
     REBINT n;
@@ -821,7 +821,7 @@ void MF_Array(REB_MOLD *mo, const Cell* v, bool form)
 //
 REBTYPE(Array)
 {
-    REBVAL *array = D_ARG(1);
+    Value* array = D_ARG(1);
 
     Specifier* specifier = Cell_Specifier(array);
 
@@ -958,7 +958,7 @@ REBTYPE(Array)
         INCLUDE_PARAMS_OF_FIND; // must be same as select
         UNUSED(PARAM(series));
 
-        REBVAL *pattern = ARG(pattern);
+        Value* pattern = ARG(pattern);
 
         if (Is_Void(pattern))
             return nullptr;  // VOID in, NULL out
@@ -1124,7 +1124,7 @@ REBTYPE(Array)
     //-- Special actions:
 
       case SYM_SWAP: {
-        REBVAL *arg = D_ARG(2);
+        Value* arg = D_ARG(2);
         if (not Any_Array(arg))
             fail (arg);
 
@@ -1235,7 +1235,7 @@ REBTYPE(Array)
         flags.reverse = REF(reverse);
         flags.all = REF(all);  // !!! not used?
 
-        REBVAL *cmp = ARG(compare);  // null if no /COMPARE
+        Value* cmp = ARG(compare);  // null if no /COMPARE
         Deactivate_If_Action(cmp);
         if (Is_Frame(cmp)) {
             flags.comparator = cmp;
@@ -1327,7 +1327,7 @@ REBTYPE(Array)
         // are going to read the D_ARG(1) slot *implicitly* regardless of
         // what value points to.
         //
-        const REBVAL *made = rebValue("make port! @", D_ARG(1));
+        const Value* made = rebValue("make port! @", D_ARG(1));
         assert(Is_Port(made));
         Copy_Cell(D_ARG(1), made);
         rebRelease(made);
@@ -1421,7 +1421,7 @@ DECLARE_NATIVE(enblock)
 {
     INCLUDE_PARAMS_OF_ENBLOCK;
 
-    REBVAL *v = ARG(value);
+    Value* v = ARG(value);
 
     Array* a = Make_Array_Core(
         1,
@@ -1452,7 +1452,7 @@ DECLARE_NATIVE(engroup)
 {
     INCLUDE_PARAMS_OF_ENGROUP;
 
-    REBVAL *v = ARG(value);
+    Value* v = ARG(value);
 
     Array* a = Make_Array_Core(
         1,
@@ -1495,8 +1495,8 @@ DECLARE_NATIVE(glom)
     // that or just take advantage of it if it's expedient (e.g. avoid a
     // resize by moving the data within an array and returning a 0 index).
 
-    REBVAL *accumulator = ARG(accumulator);
-    REBVAL *result = ARG(result);
+    Value* accumulator = ARG(accumulator);
+    Value* result = ARG(result);
 
     // !!! This logic is repeated in APPEND/etc.  It should be factored out.
     //

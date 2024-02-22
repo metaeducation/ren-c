@@ -10,9 +10,10 @@ Push_GC_Guard(), Pop_Stack_Values(). etc are available.  The result is
 efficiency at the cost of needing to worry about details, as well as being
 more likely to need to change the code if the internals change.
 
-Code written to the external API in Ren-C operates on REBVAL pointers only,
+Code written to the external API in Ren-C operates on RebolValue pointers only,
 and has no API for extracting Series* or Context*.  Values created by this API
-cannot live on the stack, and they will be garbage collected.
+cannot live on the stack, and the nodes they reference will be protected from
+garbage collection until they are rebRelease()'d
 
 ## Include Guards Are Not Used
 

@@ -84,7 +84,7 @@ Bounce Specializer_Dispatcher(Level* L)
 // frame if needed.
 //
 Context* Make_Context_For_Action_Push_Partials(
-    const REBVAL *action,  // need ->binding, so can't just be a Action*
+    const Value* action,  // need ->binding, so can't just be a Action*
     StackIndex lowest_ordered_stackindex,  // caller can add refinements
     Option(struct Reb_Binder*) binder
 ){
@@ -205,7 +205,7 @@ Context* Make_Context_For_Action_Push_Partials(
 // and not absolute.
 //
 Context* Make_Context_For_Action(
-    const REBVAL *action, // need ->binding, so can't just be a Action*
+    const Value* action, // need ->binding, so can't just be a Action*
     StackIndex lowest_ordered_stackindex,
     Option(struct Reb_Binder*) binder
 ){
@@ -306,7 +306,7 @@ bool Specialize_Action_Throws(
     const Key* key = ACT_KEYS(&tail, unspecialized);
     const Param* param = ACT_PARAMS_HEAD(unspecialized);
 
-    REBVAL *arg = CTX_VARS_HEAD(exemplar);
+    Value* arg = CTX_VARS_HEAD(exemplar);
 
     StackIndex ordered_stackindex = lowest_ordered_stackindex;
 
@@ -389,7 +389,7 @@ bool Specialize_Action_Throws(
                 fail (Error_Bad_Parameter_Raw(ordered));
             }
 
-            REBVAL *slot = CTX_VAR(exemplar, VAL_WORD_INDEX(ordered));
+            Value* slot = CTX_VAR(exemplar, VAL_WORD_INDEX(ordered));
             if (not Is_Specialized(cast(Param*, slot))) {
                 //
                 // It's still partial...
@@ -697,7 +697,7 @@ const Param* Last_Unspecialized_Param(const Key* * key, Action* act)
 //
 // Helper built on First_Unspecialized_Param(), can also give you the param.
 //
-REBVAL *First_Unspecialized_Arg(Option(const Param* *) param_out, Level* L)
+Value* First_Unspecialized_Arg(Option(const Param* *) param_out, Level* L)
 {
     Phase* phase = Level_Phase(L);
     const Param* param = First_Unspecialized_Param(nullptr, phase);
@@ -728,7 +728,7 @@ Phase* Alloc_Action_From_Exemplar(
     const Key* tail;
     const Key* key = ACT_KEYS(&tail, unspecialized);
     const Param* param = ACT_PARAMS_HEAD(unspecialized);
-    REBVAL *arg = CTX_VARS_HEAD(exemplar);
+    Value* arg = CTX_VARS_HEAD(exemplar);
     for (; key != tail; ++key, ++arg, ++param) {
         if (Is_Specialized(param))
             continue;

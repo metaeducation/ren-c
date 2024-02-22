@@ -1,6 +1,6 @@
 //
 //  File: %c-value.c
-//  Summary: "Generic REBVAL Support Services and Debug Routines"
+//  Summary: "Generic Value Cell Support Services and Debug Routines"
 //  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
 //  Homepage: https://github.com/metaeducation/ren-c/
 //
@@ -22,7 +22,7 @@
 // These are mostly DEBUG-build routines to support the macros and definitions
 // in %sys-value.h.
 //
-// These are not specific to any given type.  For the type-specific REBVAL
+// These are not specific to any given type.  For the type-specific cell
 // code, see files with names like %t-word.c, %t-logic.c, %t-integer.c...
 //
 
@@ -44,7 +44,7 @@ Node* Dump_Value_Debug(const Cell* v)
     Node* containing = Try_Find_Containing_Node_Debug(v);
 
   #if DEBUG_TRACK_EXTEND_CELLS
-    printf("REBVAL init");
+    printf("Cell init");
 
     printf(" @ tick #%d", cast(unsigned int, v->tick));
     if (v->touch != 0)
@@ -117,7 +117,7 @@ ATTRIBUTE_NO_RETURN void Panic_Value_Debug(const Cell* v) {
 #if DEBUG_HAS_PROBE
 
 inline static void Probe_Print_Helper(
-    const void *p,  // the REBVAL*, Series*, or UTF-8 char*
+    const void *p,  // the Value*, Series*, or UTF-8 char*
     const char *expr,  // stringified contents of the PROBE() macro
     const char *label,  // detected type of `p` (see %rebnod.h)
     const char *file,  // file where this PROBE() was invoked
@@ -165,7 +165,7 @@ void Probe_Cell_Print_Helper(
 ){
     Probe_Print_Helper(p, expr, "Value", file, line);
 
-    const REBVAL *v = c_cast(REBVAL*, p);
+    const Value* v = c_cast(Value*, p);
 
   #if DEBUG_UNREADABLE_CELLS
     if (Is_Unreadable_Debug(v)) {  // Is_Nulled() asserts on unreadables

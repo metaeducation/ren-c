@@ -116,7 +116,7 @@ static int Get_Timezone(struct tm *utc_tm_unused)
 //
 // Get the current system date/time in UTC plus zone offset (mins).
 //
-REBVAL *Get_Current_Datetime_Value(void)
+Value* Get_Current_Datetime_Value(void)
 {
     struct timeval tv;
     struct timezone * const tz_ptr = NULL; // obsolete

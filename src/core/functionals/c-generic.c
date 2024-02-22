@@ -61,7 +61,7 @@ Bounce Generic_Dispatcher(Level* L)
     // !!! It's technically possible to throw in locals or refinements at
     // any point in the sequence.  D_ARG() accounts for this...hackily.
     //
-    REBVAL *first_arg = D_ARG_Core(L, 1);
+    Value* first_arg = D_ARG_Core(L, 1);
 
     return Run_Generic_Dispatch_Core(first_arg, L, verb);
 }
@@ -113,7 +113,7 @@ DECLARE_NATIVE(generic)
     Init_Word(Details_At(details, IDX_NATIVE_BODY), Cell_Word_Symbol(verb));
     Copy_Cell(Details_At(details, IDX_NATIVE_CONTEXT), Lib_Context_Value);
 
-    REBVAL *verb_var = Sink_Word_May_Fail(verb, SPECIFIED);
+    Value* verb_var = Sink_Word_May_Fail(verb, SPECIFIED);
     Init_Action(verb_var, generic, Cell_Word_Symbol(verb), UNBOUND);
 
     return TRASH;

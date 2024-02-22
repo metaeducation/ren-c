@@ -45,7 +45,7 @@
 //
 static Bounce Clipboard_Actor(
     Level* level_,
-    REBVAL *port,
+    Value* port,
     const Symbol* verb
 ){
     switch (Symbol_Id(verb)) {
@@ -107,7 +107,7 @@ static Bounce Clipboard_Actor(
             rebJumps("fail {Couldn't GlobalLock() UCS2 clipboard data}");
         }
 
-        REBVAL *str = rebTextWide(wide);
+        Value* str = rebTextWide(wide);
 
         GlobalUnlock(h);
         CloseClipboard();
@@ -121,7 +121,7 @@ static Bounce Clipboard_Actor(
         if (REF(append) or REF(lines))
             fail (Error_Bad_Refines_Raw());
 
-        REBVAL *data = ARG(data);
+        Value* data = ARG(data);
 
         // !!! Traditionally the currency of READ and WRITE is binary data.
         // R3-Alpha had a behavior of ostensibly taking string or binary, but

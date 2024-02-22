@@ -53,9 +53,9 @@
 // so the paramlist of the CTX_FRAME_PHASE() must be consulted.  When the
 // frame stops running, the paramlist is written back to the link again.)
 //
-// The "ROOTVAR" is a canon value image of an ANY-CONTEXT?'s `REBVAL`.  This
+// The "ROOTVAR" is a canon value image of an ANY-CONTEXT?'s cell.  This
 // trick allows a single Context* pointer to be passed around rather than the
-// REBVAL struct which is 4x larger, yet use existing memory to make a REBVAL*
+// cell struct which is 4x larger, yet use existing memory to make a Value*
 // when needed (using CTX_ARCHETYPE()).  ACTION!s have a similar trick.
 //
 // Contexts coordinate with words, which can have their VAL_WORD_CONTEXT()
@@ -124,10 +124,10 @@
 
 //=//// CONTEXT ARCHETYPE VALUE CELL (ROOTVAR)  ///////////////////////////=//
 //
-// A REBVAL* must contain enough information to find what is needed to define
+// A Value* must contain enough information to find what is needed to define
 // a context.  That fact is leveraged by the notion of keeping the information
 // in the context itself as the [0] element of the varlist.  This means it is
-// always on hand when a REBVAL* is needed, so you can do things like:
+// always on hand when a Value* is needed, so you can do things like:
 //
 //     Context* c = ...;
 //     rebElide("print [pick", CTX_ARCHETYPE(c), "'field]");
@@ -158,13 +158,13 @@ INLINE Element* CTX_ROOTVAR(Context* c)  // mutable archetype access
   { return m_cast(Element*, CTX_ARCHETYPE(c)); }  // inline checks mutability
 
 INLINE Phase* CTX_FRAME_PHASE(Context* c) {
-    const REBVAL *archetype = CTX_ARCHETYPE(c);
+    const Value* archetype = CTX_ARCHETYPE(c);
     assert(Cell_Heart_Ensure_Noquote(archetype) == REB_FRAME);
     return cast(Phase*, VAL_FRAME_PHASE_OR_LABEL_NODE(archetype));
 }
 
 INLINE Context* CTX_FRAME_BINDING(Context* c) {
-    const REBVAL *archetype = CTX_ARCHETYPE(c);
+    const Value* archetype = CTX_ARCHETYPE(c);
     assert(Cell_Heart_Ensure_Noquote(archetype) == REB_FRAME);
     return cast(Context*, BINDING(archetype));
 }
@@ -255,8 +255,8 @@ INLINE void INIT_CTX_KEYLIST_UNIQUE(Context* c, KeyList *keylist) {
 // hand is just a Context*.  THIS DOES NOT ACCOUNT FOR PHASE...so there can
 // actually be a difference between these two expressions for FRAME!s:
 //
-//     REBVAL *x = VAL_CONTEXT_KEYS_HEAD(context);  // accounts for phase
-//     REBVAL *y = CTX_KEYS_HEAD(VAL_CONTEXT(context), n);  // no phase
+//     Value* x = VAL_CONTEXT_KEYS_HEAD(context);  // accounts for phase
+//     Value* y = CTX_KEYS_HEAD(VAL_CONTEXT(context), n);  // no phase
 //
 // Context's "length" does not count the [0] cell of either the varlist or
 // the keylist arrays.  Hence it must subtract 1.  SERIES_MASK_VARLIST
@@ -497,7 +497,7 @@ INLINE Context* Steal_Context_Vars(Context* c, Node* keysource) {
     MISC(VarlistAdjunct, copy) = nullptr;  // let stub have the meta
     LINK(Patches, copy) = nullptr;  // don't carry forward patches
 
-    REBVAL *rootvar = cast(REBVAL*, copy->content.dynamic.data);
+    Value* rootvar = cast(Value*, copy->content.dynamic.data);
     INIT_VAL_CONTEXT_VARLIST(rootvar, x_cast(Array*, copy));
 
     Set_Series_Inaccessible(stub);  // Make unusable [2]

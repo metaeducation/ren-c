@@ -59,7 +59,7 @@ DECLARE_NATIVE(quit)
 {
     INCLUDE_PARAMS_OF_QUIT;
 
-    REBVAL *v = ARG(with);
+    Value* v = ARG(with);
 
     if (not REF(with)) {  // e.g. QUIT VOID or QUIT
         //
@@ -242,7 +242,7 @@ DECLARE_NATIVE(check)
 
     fail (Error_Debug_Only_Raw());
 #else
-    REBVAL *value = ARG(value);
+    Value* value = ARG(value);
 
     // For starters, check the memory (if it's bad, all other bets are off)
     //

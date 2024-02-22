@@ -69,12 +69,12 @@ INLINE void INIT_VAL_FRAME_BINDING(
     Get_Action_Flag(VAL_ACTION(ACT_ARCHETYPE(a)), IS_NATIVE)
 
 
-// A fully constructed action can reconstitute the ACTION! REBVAL
-// that is its canon form from a single pointer...the REBVAL sitting in
+// A fully constructed action can reconstitute the ACTION! cell
+// that is its canon form from a single pointer...the cell sitting in
 // the 0 slot of the action's details.  That action has no binding and
 // no label.
 //
-INLINE REBVAL *Init_Frame_Details_Core(
+INLINE Value* Init_Frame_Details_Core(
     Cell* out,
     Phase* a,
     Option(const Symbol*) label,
@@ -90,7 +90,7 @@ INLINE REBVAL *Init_Frame_Details_Core(
     INIT_VAL_ACTION_LABEL(out, label);
     INIT_VAL_FRAME_BINDING(out, try_unwrap(binding));
 
-    return cast(REBVAL*, out);
+    return cast(Value*, out);
 }
 
 #define Init_Frame_Details(out,a,label,binding) \

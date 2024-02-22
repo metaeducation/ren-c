@@ -33,9 +33,9 @@ PVAR REBINT PG_Boot_Phase;  // To know how far in the boot we are.
 //
 PVAR Array PG_Lib_Patches[LIB_SYMS_MAX];
 
-PVAR REBVAL *Lib_Context_Value;
-PVAR REBVAL *Sys_Util_Module;
-PVAR REBVAL *User_Context_Value;
+PVAR Value* Lib_Context_Value;
+PVAR Value* Sys_Util_Module;
+PVAR Value* User_Context_Value;
 
 PVAR Context* Lib_Context;
 PVAR Context* Sys_Context;
@@ -62,20 +62,20 @@ PVAR Codepoint *Lower_Cases;
 // (they'd get an error on antiform variable access)...hence it is a function.
 //
 
-PVAR REBVAL PG_Feed_At_End;  // Canon pointer; internals use instead of rebEND
+PVAR Value PG_Feed_At_End;  // Canon pointer; internals use instead of rebEND
 
-PVAR REBVAL PG_Trash_Cell;
+PVAR Value PG_Trash_Cell;
 
 // These are special return values that can be checked easily by pointer.  They
 // could be checked even faster if they were fake immediate values, like
-// (REBVAL*)0x00000010...but that is not standard C.
+// (Value*)0x00000010...but that is not standard C.
 //
-PVAR REBVAL PG_R_Redo_Unchecked;
-PVAR REBVAL PG_R_Redo_Checked;
-PVAR REBVAL PG_R_Thrown;
-PVAR REBVAL PG_R_Continuation;
-PVAR REBVAL PG_R_Delegation;
-PVAR REBVAL PG_R_Suspend;
+PVAR Value PG_R_Redo_Unchecked;
+PVAR Value PG_R_Redo_Checked;
+PVAR Value PG_R_Thrown;
+PVAR Value PG_R_Continuation;
+PVAR Value PG_R_Delegation;
+PVAR Value PG_R_Suspend;
 
 
 // These are root variables which used to be described in %root.r and kept
@@ -83,39 +83,39 @@ PVAR REBVAL PG_R_Suspend;
 // by the same mechanism they use.  This means they can be initialized at
 // the appropriate moment during the boot, one at a time.
 
-PVAR REBVAL *Root_With_Tag; // overrides locals gathering (can disable RETURN)
-PVAR REBVAL *Root_Variadic_Tag; // marks variadic argument <variadic>
-PVAR REBVAL *Root_Opt_Tag; // marks optional argument (can be NULL)
-PVAR REBVAL *Root_End_Tag; // marks endable argument (NULL if at end of input)
-PVAR REBVAL *Root_Maybe_Tag; // passing void won't run the action, return null
-PVAR REBVAL *Root_Local_Tag; // marks beginning of a list of "pure locals"
-PVAR REBVAL *Root_Skip_Tag; // marks a hard quote as "skippable" if wrong type
-PVAR REBVAL *Root_Const_Tag; // pass a CONST version of the input argument
-PVAR REBVAL *Root_Void_Tag;  // tolerance for void returns or passing void args
-PVAR REBVAL *Root_Unrun_Tag;  // parameters that degrade antiform actions
+PVAR Value* Root_With_Tag; // overrides locals gathering (can disable RETURN)
+PVAR Value* Root_Variadic_Tag; // marks variadic argument <variadic>
+PVAR Value* Root_Opt_Tag; // marks optional argument (can be NULL)
+PVAR Value* Root_End_Tag; // marks endable argument (NULL if at end of input)
+PVAR Value* Root_Maybe_Tag; // passing void won't run the action, return null
+PVAR Value* Root_Local_Tag; // marks beginning of a list of "pure locals"
+PVAR Value* Root_Skip_Tag; // marks a hard quote as "skippable" if wrong type
+PVAR Value* Root_Const_Tag; // pass a CONST version of the input argument
+PVAR Value* Root_Void_Tag;  // tolerance for void returns or passing void args
+PVAR Value* Root_Unrun_Tag;  // parameters that degrade antiform actions
 
-PVAR REBVAL *Root_Here_Tag;  // https://forum.rebol.info/t/1558/5
+PVAR Value* Root_Here_Tag;  // https://forum.rebol.info/t/1558/5
 
-PVAR REBVAL *Root_Empty_Text; // read-only ""
-PVAR REBVAL *Root_Empty_Binary; // read-only #{}
-PVAR REBVAL *Root_Empty_Block; // read-only []
-PVAR REBVAL *Root_2_Blanks_Block;  // read-only [_ _]
+PVAR Value* Root_Empty_Text; // read-only ""
+PVAR Value* Root_Empty_Binary; // read-only #{}
+PVAR Value* Root_Empty_Block; // read-only []
+PVAR Value* Root_2_Blanks_Block;  // read-only [_ _]
 PVAR Array* PG_Empty_Array; // optimization of Cell_Array(Root_Empty_Block)
 PVAR Array* PG_1_Quasi_Null_Array;  // used by heavy nulls ~[~null~]~
 PVAR Array* PG_1_Quoted_Void_Array;  // used by heavy voids ~[']~
 PVAR Array* PG_1_Meta_False_Array;  // used by heavy false ~[~false~]~
 PVAR Array* PG_2_Blanks_Array;  // surrogate array used by `/` paths
 
-PVAR REBVAL *Root_Heavy_Null;  // antiform block containing a blank
-PVAR REBVAL *Root_Heavy_Void;  // antiform block containing a quasi null
-PVAR REBVAL *Root_Heavy_False;  // antiform block containing a meta false
+PVAR Value* Root_Heavy_Null;  // antiform block containing a blank
+PVAR Value* Root_Heavy_Void;  // antiform block containing a quasi null
+PVAR Value* Root_Heavy_False;  // antiform block containing a meta false
 
 PVAR Stub PG_Inaccessible_Stub;  // GC canonizes all inaccessible stubs to this
 
-PVAR REBVAL *Root_Action_Adjunct;
+PVAR Value* Root_Action_Adjunct;
 
-PVAR REBVAL *Root_Stackoverflow_Error;  // made in advance, avoids extra calls
-PVAR REBVAL *Root_No_Memory_Error;  // also must be made in advance
+PVAR Value* Root_Stackoverflow_Error;  // made in advance, avoids extra calls
+PVAR Value* Root_No_Memory_Error;  // also must be made in advance
 
 TVAR Feed* TG_End_Feed;
 

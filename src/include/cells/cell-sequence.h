@@ -651,7 +651,7 @@ INLINE void Get_Tuple_Bytes(
 
 //=//// REFINEMENTS AND PREDICATES ////////////////////////////////////////=//
 
-INLINE REBVAL *Refinify(REBVAL *v) {
+INLINE Value* Refinify(Value* v) {
     bool success = (Try_Leading_Blank_Pathify(v, REB_PATH) != nullptr);
     assert(success);
     UNUSED(success);

@@ -94,7 +94,7 @@ Bounce MAKE_Bitset(
     Level* level_,
     Kind kind,
     Option(const Value*) parent,
-    const REBVAL *arg
+    const Value* arg
 ){
     assert(kind == REB_BITSET);
     if (parent)
@@ -126,7 +126,7 @@ Bounce MAKE_Bitset(
 //
 //  TO_Bitset: C
 //
-Bounce TO_Bitset(Level* level_, Kind kind, const REBVAL *arg)
+Bounce TO_Bitset(Level* level_, Kind kind, const Value* arg)
 {
     return MAKE_Bitset(level_, kind, nullptr, arg);
 }
@@ -549,7 +549,7 @@ void Trim_Tail_Zeros(Binary* ser)
 //
 REBTYPE(Bitset)
 {
-    REBVAL *v = D_ARG(1);
+    Value* v = D_ARG(1);
 
     Option(SymId) sym = Symbol_Id(verb);
     switch (sym) {
@@ -573,7 +573,7 @@ REBTYPE(Bitset)
 
         const Value* picker = ARG(picker);
 
-        REBVAL *setval = ARG(value);
+        Value* setval = ARG(value);
 
         Binary* bset = cast(Binary*, VAL_BITSET_Ensure_Mutable(v));
         if (not Set_Bits(
@@ -632,7 +632,7 @@ REBTYPE(Bitset)
 
       case SYM_APPEND:  // Accepts: #"a" "abc" [1 - 10] [#"a" - #"z"] etc.
       case SYM_INSERT: {
-        REBVAL *arg = D_ARG(2);
+        Value* arg = D_ARG(2);
         if (Is_Void(arg))
             return COPY(v);  // don't fail on read only if it would be a no-op
 
@@ -689,7 +689,7 @@ REBTYPE(Bitset)
       case SYM_UNION:
       case SYM_DIFFERENCE:
       case SYM_EXCLUDE: {
-        REBVAL *arg = D_ARG(2);
+        Value* arg = D_ARG(2);
         if (Is_Bitset(arg)) {
             if (BITS_NOT(VAL_BITSET(arg))) {  // !!! see #2365
                 fail ("Bitset negation not handled by set operations");
@@ -723,7 +723,7 @@ REBTYPE(Bitset)
         // bitset is based on a BINARY!.  Reuse the code on the generated
         // proxy values.
         //
-        REBVAL *action;
+        Value* action;
         switch (sym) {
           case SYM_INTERSECT:
             action = rebValue("unrun :bitwise-and");
@@ -745,7 +745,7 @@ REBTYPE(Bitset)
             panic (nullptr);
         }
 
-        REBVAL *processed = rebValue(rebR(action), rebQ(v), rebQ(arg));
+        Value* processed = rebValue(rebR(action), rebQ(v), rebQ(arg));
 
         Binary* bits = Cell_Binary_Known_Mutable(processed);
         rebRelease(processed);

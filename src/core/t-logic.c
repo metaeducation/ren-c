@@ -151,7 +151,7 @@ DECLARE_INTRINSIC(not_1)  // see TO-C-NAME
 //
 inline static bool Do_Logic_Right_Side_Throws(
     Sink(Value*) out,
-    const REBVAL *right
+    const Value* right
 ){
     if (Is_Group(right)) {
         Atom* atom_out = out;
@@ -187,8 +187,8 @@ DECLARE_NATIVE(and_1)  // see TO-C-NAME
 {
     INCLUDE_PARAMS_OF_AND_1;
 
-    REBVAL *left = ARG(left);
-    REBVAL *right = ARG(right);
+    Value* left = ARG(left);
+    Value* right = ARG(right);
 
     if (Is_Falsey(left))
         return Init_False(OUT);
@@ -215,8 +215,8 @@ DECLARE_NATIVE(or_1)  // see TO-C-NAME
 {
     INCLUDE_PARAMS_OF_OR_1;
 
-    REBVAL *left = ARG(left);
-    REBVAL *right = ARG(right);
+    Value* left = ARG(left);
+    Value* right = ARG(right);
 
     if (Is_Truthy(left))
         return Init_True(OUT);
@@ -243,8 +243,8 @@ DECLARE_NATIVE(xor_1)  // see TO-C-NAME
 {
     INCLUDE_PARAMS_OF_XOR_1;
 
-    REBVAL *left = ARG(left);
-    REBVAL *right = ARG(right);
+    Value* left = ARG(left);
+    Value* right = ARG(right);
 
     if (Do_Logic_Right_Side_Throws(SPARE, right))
         return THROWN;
@@ -276,8 +276,8 @@ DECLARE_NATIVE(unless)
 {
     INCLUDE_PARAMS_OF_UNLESS;
 
-    REBVAL *left = ARG(left);
-    REBVAL *right = ARG(right);
+    Value* left = ARG(left);
+    Value* right = ARG(right);
 
     if (Is_Meta_Of_Void(right) or Is_Meta_Of_Null(right))
         return COPY(left);
@@ -286,7 +286,7 @@ DECLARE_NATIVE(unless)
 }
 
 
-inline static bool Math_Arg_For_Logic(REBVAL *arg)
+inline static bool Math_Arg_For_Logic(Value* arg)
 {
     if (Is_Logic(arg))
         return Cell_Logic(arg);
@@ -305,7 +305,7 @@ Bounce MAKE_Antiform(
     Level* level_,
     Kind kind,
     Option(const Value*) parent,
-    const REBVAL *arg
+    const Value* arg
 ){
     assert(kind == REB_ANTIFORM);
     if (parent)
@@ -318,7 +318,7 @@ Bounce MAKE_Antiform(
 //
 //  TO_Antiform: C
 //
-Bounce TO_Antiform(Level* level_, Kind kind, const REBVAL *data) {
+Bounce TO_Antiform(Level* level_, Kind kind, const Value* data) {
     return RAISE(Error_Bad_Make(kind, data));
 }
 

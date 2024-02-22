@@ -274,7 +274,7 @@ DECLARE_NATIVE(yielder)
     // We start by making an ordinary-seeming interpreted function, but that
     // has a local "yield" which is bound to the frame upon execution.
     //
-    REBVAL* body = rebValue("compose [",
+    Value* body = rebValue("compose [",
         "let yield: runs bind :lib.yield binding of $return",
         "(as group!", ARG(body), ")",  // GROUP! so it can't backquote 'YIELD
     "]");

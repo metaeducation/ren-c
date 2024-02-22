@@ -48,7 +48,7 @@ Bounce MAKE_Integer(
     Level* level_,
     Kind kind,
     Option(const Value*) parent,
-    const REBVAL *arg
+    const Value* arg
 ){
     assert(kind == REB_INTEGER);
     if (parent)
@@ -87,7 +87,7 @@ Bounce MAKE_Integer(
 //
 //  TO_Integer: C
 //
-Bounce TO_Integer(Level* level_, Kind kind, const REBVAL *arg)
+Bounce TO_Integer(Level* level_, Kind kind, const Value* arg)
 {
     assert(kind == REB_INTEGER);
     UNUSED(kind);
@@ -110,7 +110,7 @@ Bounce TO_Integer(Level* level_, Kind kind, const REBVAL *arg)
 // Unsigned makes more sense as these would be hexes likely typed in by users,
 // who rarely do 2s-complement math in their head.
 //
-void Hex_String_To_Integer(REBVAL *out, const REBVAL *value)
+void Hex_String_To_Integer(Value* out, const Value* value)
 {
     Size utf8_size;
     Utf8(const*) bp = Cell_Utf8_Size_At(&utf8_size, value);
@@ -189,11 +189,11 @@ Context* Maybe_Value_To_Int64(
             Init_Integer(out, 0);
             return nullptr;
         }
-        REBVAL *sign = (*bp >= 0x80)
+        Value* sign = (*bp >= 0x80)
             ? rebValue("'+/-")
             : rebValue("'+");
 
-        REBVAL *result = rebValue("debin [be", rebR(sign), "]", value);
+        Value* result = rebValue("debin [be", rebR(sign), "]", value);
 
         Copy_Cell(out, result);
         rebRelease(result);
@@ -268,7 +268,7 @@ void MF_Integer(REB_MOLD *mo, const Cell* v, bool form)
 //
 REBTYPE(Integer)
 {
-    REBVAL *val = D_ARG(1);
+    Value* val = D_ARG(1);
     REBI64 num = VAL_INT64(val);
 
     REBI64 arg;
@@ -290,7 +290,7 @@ REBTYPE(Integer)
         or id == SYM_BITWISE_AND_NOT
         or id == SYM_REMAINDER
     ){
-        REBVAL *val2 = D_ARG(2);
+        Value* val2 = D_ARG(2);
 
         if (Is_Integer(val2))
             arg = VAL_INT64(val2);
@@ -426,7 +426,7 @@ REBTYPE(Integer)
         if (not REF(to))
             return Init_Integer(OUT, Round_Int(num, level_, 0L));
 
-        REBVAL *to = ARG(to);
+        Value* to = ARG(to);
 
         if (Is_Money(to))
             return Init_Money(

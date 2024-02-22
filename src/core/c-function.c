@@ -157,7 +157,7 @@ static void Ensure_Adjunct(Context* *adjunct_out) {
 //
 void Push_Keys_And_Parameters_May_Fail(
     Context* *adjunct_out,
-    const REBVAL *spec,
+    const Value* spec,
     Flags *flags,
     StackIndex *return_stackindex
 ){
@@ -510,7 +510,7 @@ Array* Pop_Paramlist_With_Adjunct_May_Fail(
     const Symbol* duplicate = nullptr;
 
   blockscope {
-    REBVAL *param = 1 + Init_Anti_Word(
+    Value* param = 1 + Init_Anti_Word(
         x_cast(Value*, Array_Head(paramlist)), Canon(ROOTVAR)
     );
     Key* key = Series_Head(Key, keylist);
@@ -537,7 +537,7 @@ Array* Pop_Paramlist_With_Adjunct_May_Fail(
         //
         bool hidden;
         if (Get_Cell_Flag(slot, STACK_NOTE_SEALED)) {
-            assert(Is_Specialized(cast(Param*, cast(REBVAL*, slot))));
+            assert(Is_Specialized(cast(Param*, cast(Value*, slot))));
 
             // !!! This flag was being set on an uninitialized param, with the
             // remark "survives copy over".  But the copy puts the flag on
@@ -700,11 +700,11 @@ Array* Make_Paramlist_Managed_May_Fail(
 // Create an archetypal form of a function, given C code implementing a
 // dispatcher that will be called by Eval_Core.  Dispatchers are of the form:
 //
-//     const REBVAL *Dispatcher(Level* L) {...}
+//     const Value* Dispatcher(Level* L) {...}
 //
-// The REBACT returned is "archetypal" because individual REBVALs which hold
-// the same REBACT may differ in a per-REBVAL "binding".  (This is how one
-// RETURN is distinguished from another--the binding data stored in the REBVAL
+// The REBACT returned is "archetypal" because individual cells which hold
+// the same REBACT may differ in a per-Cell "binding".  (This is how one
+// RETURN is distinguished from another--the binding data stored in the cell
 // identifies the pointer of the FRAME! to exit).
 //
 // Actions have an associated Array* of data, accessible via Phase_Details().
@@ -783,7 +783,7 @@ Phase* Make_Action(
 
     // !!! We may have to initialize the exemplar rootvar.
     //
-    REBVAL *rootvar = Series_Head(REBVAL, paramlist);
+    Value* rootvar = Series_Head(Value, paramlist);
     if (Is_Anti_Word_With_Id(rootvar, SYM_ROOTVAR)) {
         INIT_VAL_FRAME_ROOTVAR(rootvar, paramlist, ACT_IDENTITY(act), UNBOUND);
     }
@@ -874,7 +874,7 @@ void Get_Maybe_Fake_Action_Body(Sink(Value*) out, const Value* action)
         // the code isn't *actually* there and an optimized internal trick is
         // used.  Fake the code if needed.
 
-        REBVAL *example;
+        Value* example;
         REBLEN real_body_index;
         if (ACT_DISPATCHER(a) == &Lambda_Dispatcher) {
             example = nullptr;
@@ -935,7 +935,7 @@ void Get_Maybe_Fake_Action_Body(Sink(Value*) out, const Value* action)
         // The FRAME! stored in the body for the specialization has a phase
         // which is actually the function to be run.
         //
-        const REBVAL *frame = CTX_ARCHETYPE(ACT_EXEMPLAR(a));
+        const Value* frame = CTX_ARCHETYPE(ACT_EXEMPLAR(a));
         assert(Is_Frame(frame));
         Copy_Cell(out, frame);
         return;
@@ -943,7 +943,7 @@ void Get_Maybe_Fake_Action_Body(Sink(Value*) out, const Value* action)
 
     if (ACT_DISPATCHER(a) == &Generic_Dispatcher) {
         Details* details = Phase_Details(ACT_IDENTITY(a));
-        REBVAL *verb = Details_At(details, 1);
+        Value* verb = Details_At(details, 1);
         assert(Is_Word(verb));
         Copy_Cell(out, verb);
         return;

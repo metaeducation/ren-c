@@ -51,12 +51,12 @@
 #include "file-req.h"
 
 
-extern REBVAL *Query_File_Or_Directory(const REBVAL *port);
-extern REBVAL *Create_Directory(const REBVAL *port);
-extern REBVAL *Delete_File_Or_Directory(const REBVAL *port);
-extern REBVAL *Rename_File_Or_Directory(const REBVAL *port, const REBVAL *to);
+extern Value* Query_File_Or_Directory(const Value* port);
+extern Value* Create_Directory(const Value* port);
+extern Value* Delete_File_Or_Directory(const Value* port);
+extern Value* Rename_File_Or_Directory(const Value* port, const Value* to);
 
-REBVAL *Try_Read_Directory_Entry(FILEREQ *dir);
+Value* Try_Read_Directory_Entry(FILEREQ *dir);
 
 
 //
@@ -64,11 +64,11 @@ REBVAL *Try_Read_Directory_Entry(FILEREQ *dir);
 //
 // Internal port handler for file directories.
 //
-Bounce Dir_Actor(Level* level_, REBVAL *port, const Symbol* verb)
+Bounce Dir_Actor(Level* level_, Value* port, const Symbol* verb)
 {
     Context* ctx = VAL_CONTEXT(port);
 
-    REBVAL *state = CTX_VAR(ctx, STD_PORT_STATE);
+    Value* state = CTX_VAR(ctx, STD_PORT_STATE);
     FILEREQ *dir;
     if (Is_Binary(state)) {
         dir = File_Of_Port(port);
@@ -76,11 +76,11 @@ Bounce Dir_Actor(Level* level_, REBVAL *port, const Symbol* verb)
     else {
         assert(Is_Nulled(state));
 
-        REBVAL *spec = CTX_VAR(ctx, STD_PORT_SPEC);
+        Value* spec = CTX_VAR(ctx, STD_PORT_SPEC);
         if (not Is_Object(spec))
             fail (Error_Invalid_Spec_Raw(spec));
 
-        REBVAL *path = Obj_Value(spec, STD_PORT_SPEC_HEAD_REF);
+        Value* path = Obj_Value(spec, STD_PORT_SPEC_HEAD_REF);
         if (path == NULL)
             fail (Error_Invalid_Spec_Raw(spec));
 
@@ -111,7 +111,7 @@ Bounce Dir_Actor(Level* level_, REBVAL *port, const Symbol* verb)
         dir->size_cache = FILESIZE_UNKNOWN;
         dir->offset = FILEOFFSET_UNKNOWN;
 
-        // Generally speaking, you don't want to store REBVAL* or Series* in
+        // Generally speaking, you don't want to store Value* or Series* in
         // something like this struct-embedded-in-a-BINARY! as it will be
         // invisible to the GC.  But this pointer is into the port spec, which
         // we will assume is good for the lifetime of the port.  :-/  (Not a
@@ -165,7 +165,7 @@ Bounce Dir_Actor(Level* level_, REBVAL *port, const Symbol* verb)
 
         StackIndex base = TOP_INDEX;
         while (true) {
-            REBVAL *result = Try_Read_Directory_Entry(dir);
+            Value* result = Try_Read_Directory_Entry(dir);
             if (result == nullptr)
                 break;
 
@@ -189,7 +189,7 @@ Bounce Dir_Actor(Level* level_, REBVAL *port, const Symbol* verb)
         if (Is_Block(state))
             fail (Error_Already_Open_Raw(dir->path));
 
-        REBVAL *error = Create_Directory(port);
+        Value* error = Create_Directory(port);
         if (error) {
             rebRelease(error);  // !!! throws away details
             fail (Error_No_Create_Raw(dir->path));  // higher level error
@@ -203,7 +203,7 @@ Bounce Dir_Actor(Level* level_, REBVAL *port, const Symbol* verb)
         INCLUDE_PARAMS_OF_RENAME;
         UNUSED(ARG(from));  // already have as port parameter
 
-        REBVAL *error = Rename_File_Or_Directory(port, ARG(to));
+        Value* error = Rename_File_Or_Directory(port, ARG(to));
         if (error) {
             rebRelease(error);  // !!! throws away details
             fail (Error_No_Rename_Raw(dir->path));  // higher level error
@@ -216,7 +216,7 @@ Bounce Dir_Actor(Level* level_, REBVAL *port, const Symbol* verb)
     //=//// DELETE /////////////////////////////////////////////////////////=//
 
       case SYM_DELETE: {
-        REBVAL *error = Delete_File_Or_Directory(port);
+        Value* error = Delete_File_Or_Directory(port);
         if (error) {
             rebRelease(error);  // !!! throws away details
             fail (Error_No_Delete_Raw(dir->path));  // higher level error
@@ -243,7 +243,7 @@ Bounce Dir_Actor(Level* level_, REBVAL *port, const Symbol* verb)
             fail (Error_Bad_Refines_Raw());
 
         if (REF(new)) {
-            REBVAL *error = Create_Directory(port);
+            Value* error = Create_Directory(port);
             if (error) {
                 rebRelease(error);  // !!! throws away details
                 fail (Error_No_Create_Raw(dir->path));  // higher level error
@@ -267,7 +267,7 @@ Bounce Dir_Actor(Level* level_, REBVAL *port, const Symbol* verb)
     // give back that something is a directory.
 
       case SYM_QUERY: {
-        REBVAL *info = Query_File_Or_Directory(port);
+        Value* info = Query_File_Or_Directory(port);
         if (Is_Error(info)) {
             rebRelease(info);  // !!! R3-Alpha threw out error, returns null
             return nullptr;

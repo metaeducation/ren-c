@@ -72,22 +72,22 @@
 #include "file-req.h"
 
 
-extern REBVAL *Get_File_Size_Cacheable(uint64_t *size, const REBVAL *port);
-extern REBVAL *Open_File(const REBVAL *port, int flags);
-extern REBVAL *Close_File(const REBVAL *port);
-extern REBVAL *Read_File(const REBVAL *port, size_t length);
-extern REBVAL *Write_File(const REBVAL *port, const REBVAL *data, REBLEN length);
-extern REBVAL *Query_File_Or_Directory(const REBVAL *port);
-extern REBVAL *Create_File(const REBVAL *port);
-extern REBVAL *Delete_File_Or_Directory(const REBVAL *port);
-extern REBVAL *Rename_File_Or_Directory(const REBVAL *port, const REBVAL *to);
-extern REBVAL *Truncate_File(const REBVAL *port);
+extern Value* Get_File_Size_Cacheable(uint64_t *size, const Value* port);
+extern Value* Open_File(const Value* port, int flags);
+extern Value* Close_File(const Value* port);
+extern Value* Read_File(const Value* port, size_t length);
+extern Value* Write_File(const Value* port, const Value* data, REBLEN length);
+extern Value* Query_File_Or_Directory(const Value* port);
+extern Value* Create_File(const Value* port);
+extern Value* Delete_File_Or_Directory(const Value* port);
+extern Value* Rename_File_Or_Directory(const Value* port, const Value* to);
+extern Value* Truncate_File(const Value* port);
 
 
-inline static uint64_t File_Size_Cacheable_May_Fail(const REBVAL *port)
+inline static uint64_t File_Size_Cacheable_May_Fail(const Value* port)
 {
     uint64_t size;
-    REBVAL *error = Get_File_Size_Cacheable(&size, port);
+    Value* error = Get_File_Size_Cacheable(&size, port);
     if (error)
         fail (error);
     return size;
@@ -99,7 +99,7 @@ inline static uint64_t File_Size_Cacheable_May_Fail(const REBVAL *port)
 //
 // Internal port handler for files.
 //
-Bounce File_Actor(Level* level_, REBVAL *port, const Symbol* verb)
+Bounce File_Actor(Level* level_, Value* port, const Symbol* verb)
 {
     Context* ctx = VAL_CONTEXT(port);
 
@@ -108,7 +108,7 @@ Bounce File_Actor(Level* level_, REBVAL *port, const Symbol* verb)
     // operation is something like a RENAME that does not require a port to be
     // open, then this capturing of the specification is all the setup needed.
     //
-    REBVAL *state = CTX_VAR(ctx, STD_PORT_STATE);
+    Value* state = CTX_VAR(ctx, STD_PORT_STATE);
     FILEREQ *file;
     if (Is_Binary(state)) {
         file = File_Of_Port(port);
@@ -132,11 +132,11 @@ Bounce File_Actor(Level* level_, REBVAL *port, const Symbol* verb)
     else {
         assert(Is_Nulled(state));
 
-        REBVAL *spec = CTX_VAR(ctx, STD_PORT_SPEC);
+        Value* spec = CTX_VAR(ctx, STD_PORT_SPEC);
         if (not Is_Object(spec))
             fail (Error_Invalid_Spec_Raw(spec));
 
-        REBVAL *path = Obj_Value(spec, STD_PORT_SPEC_HEAD_REF);
+        Value* path = Obj_Value(spec, STD_PORT_SPEC_HEAD_REF);
         if (path == NULL)
             fail (Error_Invalid_Spec_Raw(spec));
 
@@ -161,7 +161,7 @@ Bounce File_Actor(Level* level_, REBVAL *port, const Symbol* verb)
         file->size_cache = FILESIZE_UNKNOWN;
         file->offset = FILEOFFSET_UNKNOWN;
 
-        // Generally speaking, you don't want to store REBVAL* or Series* in
+        // Generally speaking, you don't want to store Value* or Series* in
         // something like this struct-embedded-in-a-BINARY! as it will be
         // invisible to the GC.  But this pointer is into the port spec, which
         // we will assume is good for the lifetime of the port.  :-/  (Not a
@@ -235,14 +235,14 @@ Bounce File_Actor(Level* level_, REBVAL *port, const Symbol* verb)
         if (file->id != FILEHANDLE_NONE)
             opened_temporarily = false; // was already open
         else {
-            REBVAL *open_error = Open_File(port, UV_FS_O_RDONLY);
+            Value* open_error = Open_File(port, UV_FS_O_RDONLY);
             if (open_error != nullptr)
                 fail (Error_Cannot_Open_Raw(file->path, open_error));
 
             opened_temporarily = true;
         }
 
-        REBVAL *result;
+        Value* result;
 
      blockscope {
         // Seek addresses are 0-based:
@@ -304,7 +304,7 @@ Bounce File_Actor(Level* level_, REBVAL *port, const Symbol* verb)
 
      cleanup_read:
         if (opened_temporarily) {
-            REBVAL *close_error = Close_File(port);
+            Value* close_error = Close_File(port);
             if (result and Is_Error(result))
                 fail (result);
             if (close_error)
@@ -347,7 +347,7 @@ Bounce File_Actor(Level* level_, REBVAL *port, const Symbol* verb)
         if (REF(seek) and REF(append))
             fail (Error_Bad_Refines_Raw());
 
-        REBVAL *data = ARG(data);  // binary, string, or block
+        Value* data = ARG(data);  // binary, string, or block
 
         // Handle the WRITE %file shortcut case, where the FILE! is converted
         // to a PORT! but it hasn't been opened yet.
@@ -378,14 +378,14 @@ Bounce File_Actor(Level* level_, REBVAL *port, const Symbol* verb)
             else
                 flags |= UV_FS_O_WRONLY | UV_FS_O_CREAT | UV_FS_O_TRUNC;
 
-            REBVAL *open_error = Open_File(port, flags);
+            Value* open_error = Open_File(port, flags);
             if (open_error != nullptr)
                 fail (Error_Cannot_Open_Raw(file->path, open_error));
 
             opened_temporarily = true;
         }
 
-        REBVAL *result;
+        Value* result;
 
       blockscope {
         uint64_t file_size = File_Size_Cacheable_May_Fail(port);
@@ -459,7 +459,7 @@ Bounce File_Actor(Level* level_, REBVAL *port, const Symbol* verb)
       cleanup_write:
 
         if (opened_temporarily) {
-            REBVAL *close_error = Close_File(port);
+            Value* close_error = Close_File(port);
             if (result)
                 fail (result);
             if (close_error)
@@ -511,7 +511,7 @@ Bounce File_Actor(Level* level_, REBVAL *port, const Symbol* verb)
         else
             flags |= UV_FS_O_RDWR;
 
-        REBVAL *error = Open_File(port, flags);
+        Value* error = Open_File(port, flags);
         if (error != nullptr)
             fail (Error_Cannot_Open_Raw(file->path, error));
 
@@ -547,7 +547,7 @@ Bounce File_Actor(Level* level_, REBVAL *port, const Symbol* verb)
             // a good idea or should it raise an error?
         }
         else {
-            REBVAL *error = Close_File(port);
+            Value* error = Close_File(port);
             assert(file->id == FILEHANDLE_NONE);
             if (error)
                 fail (error);
@@ -564,12 +564,12 @@ Bounce File_Actor(Level* level_, REBVAL *port, const Symbol* verb)
         UNUSED(PARAM(port));
 
         if (file->id != FILEHANDLE_NONE) {
-            REBVAL *error = Close_File(port);
+            Value* error = Close_File(port);
             if (error)
                 fail (error);
         }
 
-        REBVAL *error = Delete_File_Or_Directory(port);
+        Value* error = Delete_File_Or_Directory(port);
         if (error)
             fail (error);
 
@@ -597,17 +597,17 @@ Bounce File_Actor(Level* level_, REBVAL *port, const Symbol* verb)
             flags = file->flags;
             index = file->offset;
 
-            REBVAL *close_error = Close_File(port);
+            Value* close_error = Close_File(port);
             if (close_error)
                 fail (close_error);
 
             closed_temporarily = true;
         }
 
-        REBVAL *rename_error = Rename_File_Or_Directory(port, ARG(to));
+        Value* rename_error = Rename_File_Or_Directory(port, ARG(to));
 
         if (closed_temporarily) {
-            REBVAL *open_error = Open_File(port, flags);
+            Value* open_error = Open_File(port, flags);
             if (rename_error) {
                 rebRelease(rename_error);
                 fail (Error_No_Rename_Raw(file->path));
@@ -652,7 +652,7 @@ Bounce File_Actor(Level* level_, REBVAL *port, const Symbol* verb)
         INCLUDE_PARAMS_OF_QUERY;
         UNUSED(PARAM(target));
 
-        REBVAL *info = Query_File_Or_Directory(port);
+        Value* info = Query_File_Or_Directory(port);
         if (Is_Error(info)) {
             rebRelease(info);  // !!! R3-Alpha just returned "none"
             return nullptr;
@@ -705,17 +705,17 @@ Bounce File_Actor(Level* level_, REBVAL *port, const Symbol* verb)
       case SYM_CLEAR: {
         bool opened_temporarily = false;
         if (file->id == FILEHANDLE_NONE) {
-            REBVAL *open_error = Open_File(port, UV_FS_O_WRONLY);
+            Value* open_error = Open_File(port, UV_FS_O_WRONLY);
             if (open_error)
                 fail (open_error);
 
             opened_temporarily = true;
         }
 
-        REBVAL *truncate_error = Truncate_File(port);
+        Value* truncate_error = Truncate_File(port);
 
         if (opened_temporarily) {
-            REBVAL *close_error = Close_File(port);
+            Value* close_error = Close_File(port);
             if (close_error)
                 fail (close_error);
         }

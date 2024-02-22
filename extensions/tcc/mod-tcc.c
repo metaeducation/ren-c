@@ -131,10 +131,10 @@ static void Error_Reporting_Hook(
     // Note that since the compilation can be delayed after MAKE-NATIVE exits,
     // pointers to local variables should not be used here.
     //
-    assert(cast(REBVAL*, opaque) == EMPTY_BLOCK);
+    assert(cast(Value*, opaque) == EMPTY_BLOCK);
     UNUSED(opaque);
 
-    REBVAL *message = rebText(msg_utf8);
+    Value* message = rebText(msg_utf8);
 
     // TCC added a warning for potential missing returns.  But their checking
     // is not great, and also at time of writing in 2022 they haven't bumped
@@ -163,7 +163,7 @@ static void Error_Reporting_Hook(
 static void Process_Text_Helper_Core(
     TCC_CSTR_API some_tcc_api,
     TCCState *state,
-    const REBVAL *text,
+    const Value* text,
     const char *label
 ){
     assert(Is_Text(text));
@@ -180,10 +180,10 @@ static void Process_Text_Helper_Core(
 static void Process_Text_Helper(
     TCC_CSTR_API some_tcc_api,
     TCCState *state,
-    const REBVAL *config,
+    const Value* config,
     const char *label
 ){
-    REBVAL *text = rebValue(
+    Value* text = rebValue(
         "ensure [<opt> text!] select", config, "as word!", rebT(label)
     );
 
@@ -202,10 +202,10 @@ static void Process_Text_Helper(
 static void Process_Block_Helper(
     TCC_CSTR_API some_tcc_api,
     TCCState *state,
-    const REBVAL *config,
+    const Value* config,
     const char *label
 ){
-    REBVAL *block = rebValue(
+    Value* block = rebValue(
         "ensure block! select", config, "as word!", rebT(label)
     );
 
@@ -244,7 +244,7 @@ static void Add_API_Symbol_Helper(
 // blob via a HANDLE!.  When the last reference to the last native goes away,
 // the GC will run this handle cleanup function.
 //
-static void cleanup(const REBVAL *val)
+static void cleanup(const Value* val)
 {
     TCCState *state = VAL_HANDLE_POINTER(TCCState, val);
     assert(state != nullptr);
@@ -348,7 +348,7 @@ DECLARE_NATIVE(make_native)
     Copy_Cell(Details_At(details, IDX_NATIVE_CONTEXT), User_Context_Value);
 
     if (REF(linkname)) {
-        REBVAL *linkname = ARG(linkname);
+        Value* linkname = ARG(linkname);
 
         if (Is_Series_Frozen(Cell_String(linkname)))
             Copy_Cell(Details_At(details, IDX_TCC_NATIVE_LINKNAME), linkname);
@@ -364,7 +364,7 @@ DECLARE_NATIVE(make_native)
         // paramlist pointer.  Just "N_" followed by the hexadecimal value.
 
         intptr_t heapaddr = i_cast(intptr_t, details);
-        REBVAL *linkname = rebValue(
+        Value* linkname = rebValue(
             "unspaced [{N_} as text! to-hex", rebI(heapaddr), "]"
         );
 
@@ -431,7 +431,7 @@ DECLARE_NATIVE(compile_p)
 
   //=//// SET UP OPTIONS FOR THE TCC STATE FROM CONFIG ////////////////////=//
 
-    REBVAL *config = ARG(config);
+    Value* config = ARG(config);
 
     // Sets options (same syntax as the TCC command line, minus commands like
     // displaying the version or showing the TCC tool's help)
@@ -477,7 +477,7 @@ DECLARE_NATIVE(compile_p)
 
   //=//// SPECIFY USER NATIVES (OR DISK FILES) TO COMPILE /////////////////=//
 
-    REBVAL *compilables = ARG(compilables);
+    Value* compilables = ARG(compilables);
 
     StackIndex base = TOP_INDEX;  // natives are pushed to the stack
 
@@ -537,7 +537,7 @@ DECLARE_NATIVE(compile_p)
                 //
                 // https://forum.rebol.info/t/817
                 //
-                Append_Ascii(mo->series, "const REBVAL *");
+                Append_Ascii(mo->series, "const Value* ");
                 Append_String(mo->series, linkname);
                 Append_Ascii(mo->series, "(void *level_)\n{");
 
@@ -621,7 +621,7 @@ DECLARE_NATIVE(compile_p)
     // the build configuration for Rebol as a lib seems to force it, at least
     // on linux.  If you add a prototype like:
     //
-    //    int Probe_Core_Debug(const REBVAL *v, char* file, int line);
+    //    int Probe_Core_Debug(const Value* v, char* file, int line);
     //
     // ...and then try calling it from your user native, it finds the internal
     // symbol.  Messing with -fvisibility="hidden" and other switches doesn't
@@ -665,7 +665,7 @@ DECLARE_NATIVE(compile_p)
         assert(Is_User_Native(action));  // can't cache stack pointer, extract
 
         Details* details = Phase_Details(cast(Phase*, action));
-        REBVAL *linkname = Details_At(details, IDX_TCC_NATIVE_LINKNAME);
+        Value* linkname = Details_At(details, IDX_TCC_NATIVE_LINKNAME);
 
         char *name_utf8 = rebSpell("ensure text!", linkname);
         void *sym = tcc_get_symbol(state, name_utf8);

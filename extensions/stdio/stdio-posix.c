@@ -97,10 +97,10 @@ bool Read_Stdin_Byte_Interrupted(bool *eof, Byte* out) {
 //
 //  Write_IO: C
 //
-// This write routine takes a REBVAL* that is either a BINARY! or a TEXT!.
+// This write routine takes a Value* that is either a BINARY! or a TEXT!.
 // Length is in conceptual units (codepoints for TEXT!, bytes for BINARY!)
 //
-void Write_IO(const REBVAL *data, REBLEN len)
+void Write_IO(const Value* data, REBLEN len)
 {
     assert(Is_Text(data) or Is_Binary(data));
 
@@ -117,7 +117,7 @@ void Write_IO(const REBVAL *data, REBLEN len)
             if (cast(REBLEN, rebUnbox("length of", data)) == len)
                 Term_Insert(Term_IO, data);
             else {
-                REBVAL *part = rebValue("copy/part", data, rebI(len));
+                Value* part = rebValue("copy/part", data, rebI(len));
                 Term_Insert(Term_IO, part);
                 rebRelease(part);
             }

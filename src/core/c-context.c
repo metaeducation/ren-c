@@ -464,7 +464,7 @@ Array* Collect_Unique_Words_Managed(
     const Element* head,
     const Element* tail,
     Flags flags,  // See COLLECT_XXX
-    const REBVAL *ignorables  // BLOCK!, ANY-CONTEXT?, or BLANK!
+    const Value* ignorables  // BLOCK!, ANY-CONTEXT?, or BLANK!
 ){
     // We do not want to fail() during the bind at this point in time (the
     // system doesn't know how to clean up, and the only cleanup it does
@@ -661,9 +661,9 @@ Context* Make_Context_Detect_Managed(
         // Copy parent values, and for values we copied that were blocks and
         // strings, replace their series components with deep copies.
         //
-        REBVAL *dest = CTX_VARS_HEAD(context);
+        Value* dest = CTX_VARS_HEAD(context);
         const Value* src_tail;
-        REBVAL *src = CTX_VARS(&src_tail, unwrap(parent));
+        Value* src = CTX_VARS(&src_tail, unwrap(parent));
         for (; src != src_tail; ++dest, ++src) {
             Flags flags = NODE_FLAG_MANAGED;  // !!! Review, what flags?
             assert(Is_Trash(dest));
@@ -891,7 +891,7 @@ Option(Value*) Select_Symbol_In_Context(
 // field out of a port.  If the port doesn't have the index, should it always
 // be an error?
 //
-REBVAL *Obj_Value(REBVAL *value, REBLEN index)
+Value* Obj_Value(Value* value, REBLEN index)
 {
     Context* context = VAL_CONTEXT(value);
 
@@ -931,7 +931,7 @@ void Assert_Context_Core(Context* c)
         panic (varlist);
     }
 
-    REBVAL *rootvar = CTX_ROOTVAR(c);
+    Value* rootvar = CTX_ROOTVAR(c);
     if (not Any_Context(rootvar) or VAL_CONTEXT(rootvar) != c)
         panic (rootvar);
 
@@ -947,7 +947,7 @@ void Assert_Context_Core(Context* c)
         panic (c);
 
     const Key* key = CTX_KEYS_HEAD(c);
-    REBVAL *var = CTX_VARS_HEAD(c);
+    Value* var = CTX_VARS_HEAD(c);
 
     REBLEN n;
     for (n = 1; n < vars_len; n++, var++, key++) {

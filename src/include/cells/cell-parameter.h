@@ -324,7 +324,7 @@ INLINE Param* Init_Unconstrained_Parameter_Untracked(
     INIT_CELL_PARAMETER_SPEC(out, nullptr);
     Init_Cell_Node2(out, nullptr);  // parameter string
 
-    Param* param = cast(Param*, cast(REBVAL*, out));
+    Param* param = cast(Param*, cast(Value*, out));
     return param;
 }
 

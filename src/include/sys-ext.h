@@ -59,15 +59,15 @@
 // values, but this is a work in progress.
 //
 #if TO_WINDOWS
-    typedef REBVAL *(__cdecl COLLATE_CFUNC)(RL_LIB*);
+    typedef Value* (__cdecl COLLATE_CFUNC)(RL_LIB*);
 #else
-    typedef REBVAL *(COLLATE_CFUNC)(RL_LIB*);
+    typedef Value* (COLLATE_CFUNC)(RL_LIB*);
 #endif
 
 //=//// EXTENSION MACROS //////////////////////////////////////////////////=//
 
 #define DECLARE_EXT_COLLATE(ext_name) \
-    EXT_API REBVAL *RX_COLLATE_NAME(ext_name)(RL_LIB* api)
+    EXT_API Value* RX_COLLATE_NAME(ext_name)(RL_LIB* api)
 
 // !!! Currently used for just a BLOCK!, but may become Phase_Details()
 //

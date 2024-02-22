@@ -92,7 +92,7 @@
 // FRAME! on the stack, it points to a Level*.  If it's a FRAME! that
 // is not running on the stack, it will be the function paramlist of the
 // actual phase that function is for.  Since Level* all start with a
-// REBVAL cell, this means NODE_FLAG_CELL can be used on the node to
+// Cell, this means NODE_FLAG_CELL can be used on the node to
 // discern the case where it can be cast to a Level* vs. Array*.
 //
 // (Note: FRAME!s used to use a field `misc.L` to track the associated
@@ -129,7 +129,7 @@ INLINE void INIT_BONUS_KEYSOURCE(Array* varlist, Node* keysource) {
 // evaluator.
 //
 
-INLINE REBVAL *Init_Return_Signal_Untracked(Cell* out, char ch) {
+INLINE Value* Init_Return_Signal_Untracked(Cell* out, char ch) {
     Reset_Unquoted_Header_Untracked(
         out,
         FLAG_HEART_BYTE(REB_T_RETURN_SIGNAL) | CELL_MASK_NO_NODES
@@ -140,18 +140,18 @@ INLINE REBVAL *Init_Return_Signal_Untracked(Cell* out, char ch) {
   #ifdef ZERO_UNUSED_CELL_FIELDS
     PAYLOAD(Any, out).second.corrupt = CORRUPTZERO;
   #endif
-    return cast(REBVAL*, out);
+    return cast(Value*, out);
 }
 
 #define Init_Return_Signal(out,ch) \
     TRACK(Init_Return_Signal_Untracked((out), (ch)))
 
 INLINE bool Is_Bounce_An_Atom(Bounce b)
-  { return HEART_BYTE(cast(REBVAL*, b)) != REB_T_RETURN_SIGNAL; }
+  { return HEART_BYTE(cast(Value*, b)) != REB_T_RETURN_SIGNAL; }
 
 INLINE char VAL_RETURN_SIGNAL(Bounce b) {
     assert(not Is_Bounce_An_Atom(b));
-    return PAYLOAD(Any, cast(REBVAL*, b)).first.u;
+    return PAYLOAD(Any, cast(Value*, b)).first.u;
 }
 
 INLINE Atom* Atom_From_Bounce(Bounce b) {

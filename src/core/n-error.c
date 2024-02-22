@@ -47,7 +47,7 @@ DECLARE_NATIVE(enrescue)
 {
     INCLUDE_PARAMS_OF_ENRESCUE;
 
-    REBVAL *code = ARG(code);
+    Value* code = ARG(code);
 
     enum {
         ST_ENRESCUE_INITIAL_ENTRY = STATE_0,
@@ -105,7 +105,7 @@ DECLARE_NATIVE(entrap)  // wrapped as TRAP and ATTEMPT
 {
     INCLUDE_PARAMS_OF_ENTRAP;
 
-    REBVAL *code = ARG(code);
+    Value* code = ARG(code);
 
     enum {
         ST_ENTRAP_INITIAL_ENTRY = STATE_0,
@@ -268,7 +268,7 @@ DECLARE_NATIVE(set_location_of_error)
 {
     INCLUDE_PARAMS_OF_SET_LOCATION_OF_ERROR;
 
-    REBVAL *location = ARG(location);
+    Value* location = ARG(location);
 
     Context* context;
     if (Is_Word(location)) {

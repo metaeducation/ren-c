@@ -58,6 +58,7 @@
 #endif
 
 #include "rebol.h"  // not %sys-core.h !
+typedef RebolValue Value;
 
 #include "assert-fix.h"
 #include "c-enhanced.h"
@@ -72,8 +73,8 @@
 // specific errors.  But a debug build might want to.  For now, one error
 // (good place to set a breakpoint).
 //
-inline static REBVAL* rebMbedtlsError(int mbedtls_ret) {
-    REBVAL* result = rebValue("make error! {mbedTLS error}");  // break here
+inline static Value* rebMbedtlsError(int mbedtls_ret) {
+    Value* result = rebValue("make error! {mbedTLS error}");  // break here
     UNUSED(mbedtls_ret);  // corrupts mbedtls_ret in release build
     return result;
 }
@@ -302,15 +303,15 @@ DECLARE_NATIVE(checksum)
     );
 
   found_tls_info: {
-    REBVAL* key = rebArg("key");
+    Value* key = rebArg("key");
 
     int hmac = key ? 1 : 0;  // !!! int, but seems to be a boolean?
 
     unsigned char md_size = mbedtls_md_get_size(info);
     unsigned char* output = rebAllocN(unsigned char, md_size);
 
-    REBVAL* error = nullptr;
-    REBVAL* result = nullptr;
+    Value* error = nullptr;
+    Value* result = nullptr;
 
     struct mbedtls_md_context_t ctx;
     mbedtls_md_init(&ctx);
@@ -371,7 +372,7 @@ DECLARE_NATIVE(checksum)
 // For turning a BINARY! into an mbedTLS multiple-precision-integer ("bignum")
 // Returns an mbedTLS error code if there is a problem (use with IF_NOT_0)
 //
-static int Mpi_From_Binary(mbedtls_mpi* X, const REBVAL* binary)
+static int Mpi_From_Binary(mbedtls_mpi* X, const Value* binary)
 {
     size_t size;
     unsigned char* buf = rebBytes(&size, binary);  // allocates w/rebMalloc()
@@ -391,7 +392,7 @@ static int Mpi_From_Binary(mbedtls_mpi* X, const REBVAL* binary)
 // Opposite direction for making a BINARY! from an MPI.  Naming convention
 // suggests it's an API handle and you're responsible for releasing it.
 //
-static REBVAL* rebBinaryFromMpi(const mbedtls_mpi* X)
+static Value* rebBinaryFromMpi(const mbedtls_mpi* X)
 {
     size_t size = mbedtls_mpi_size(X);
 
@@ -422,7 +423,7 @@ static REBVAL* rebBinaryFromMpi(const mbedtls_mpi* X)
 void Get_Padding_And_Hash_From_Spec(
     int *padding,
     mbedtls_md_type_t *hash,
-    const REBVAL* padding_spec
+    const Value* padding_spec
 ){
     *padding = rebUnboxInteger(
         "let padding-list: [",
@@ -491,7 +492,7 @@ DECLARE_NATIVE(rsa_generate_keypair)
 {
     CRYPT_INCLUDE_PARAMS_OF_RSA_GENERATE_KEYPAIR;
 
-    REBVAL* padding_spec;
+    Value* padding_spec;
     if (not rebDid(rebArgR("padding")))
         padding_spec = rebValue("[pkcs1-v15]");  // mbedtls_init() uses, no hash
     else
@@ -513,9 +514,9 @@ DECLARE_NATIVE(rsa_generate_keypair)
             "fail {RSA key bits exceeds MBEDTLS_MPI_MAX_BITS}"
         );
 
-    REBVAL* error = nullptr;
-    REBVAL* public_key = nullptr;
-    REBVAL* private_key = nullptr;
+    Value* error = nullptr;
+    Value* public_key = nullptr;
+    Value* private_key = nullptr;
 
     struct mbedtls_rsa_context ctx;
     mbedtls_rsa_init(&ctx);
@@ -573,8 +574,8 @@ DECLARE_NATIVE(rsa_generate_keypair)
     IF_NOT_0(cleanup, error, mbedtls_rsa_export_crt(&ctx, &DP, &DQ, &QP));
 
   blockscope {
-    REBVAL* n = rebBinaryFromMpi(&N);
-    REBVAL* e = rebBinaryFromMpi(&E);
+    Value* n = rebBinaryFromMpi(&N);
+    Value* e = rebBinaryFromMpi(&E);
 
     public_key = rebValue("make object! [",
         "padding:", padding_spec,
@@ -626,7 +627,7 @@ DECLARE_NATIVE(rsa_generate_keypair)
     if (error)
         rebJumps ("fail", error);
 
-    // !!! Usermode multi returns faces a problem if REBVAL* cannot hold
+    // !!! Usermode multi returns faces a problem if Value* cannot hold
     // packs (which is the current philosophy).  This means you couldn't
     // say `return rebValue("pack [1 2]")` etc.  So you have to SET a WORD!
     // in the function interface... but that requires getting a bound word
@@ -655,9 +656,9 @@ DECLARE_NATIVE(rsa_encrypt)
 {
     CRYPT_INCLUDE_PARAMS_OF_RSA_ENCRYPT;
 
-    REBVAL* obj = rebArg("public-key");  // type checking ensures OBJECT!
+    Value* obj = rebArg("public-key");  // type checking ensures OBJECT!
 
-    REBVAL* padding_spec = rebValue("match block! select", obj, "'padding");
+    Value* padding_spec = rebValue("match block! select", obj, "'padding");
     if (not padding_spec)
         rebJumps (
             "fail {RSA key objects must specify at least padding: [raw]}"
@@ -670,8 +671,8 @@ DECLARE_NATIVE(rsa_encrypt)
 
     // N and E are required
     //
-    REBVAL* n = rebValue("match binary! select", obj, "'n");
-    REBVAL* e = rebValue("match binary! select", obj, "'e");
+    Value* n = rebValue("match binary! select", obj, "'n");
+    Value* e = rebValue("match binary! select", obj, "'e");
 
     if (not n or not e)
         rebJumps ("fail {RSA requires N and E components of key object}");
@@ -688,8 +689,8 @@ DECLARE_NATIVE(rsa_encrypt)
     mbedtls_mpi_init(&N);
     mbedtls_mpi_init(&E);
 
-    REBVAL* error = nullptr;
-    REBVAL* result = nullptr;
+    Value* error = nullptr;
+    Value* result = nullptr;
 
     // Translate BINARY! public components to mbedtls BigNums
     //
@@ -792,11 +793,11 @@ DECLARE_NATIVE(rsa_decrypt)
 {
     CRYPT_INCLUDE_PARAMS_OF_RSA_DECRYPT;
 
-    REBVAL* obj = rebArg("private_key");  // type checking ensures OBJECT!
+    Value* obj = rebArg("private_key");  // type checking ensures OBJECT!
 
   //=//// EXTRACT INPUT PARAMETERS /////////////////////////////////////////=//
 
-    REBVAL* padding_spec = rebValue("match block! select", obj, "'padding");
+    Value* padding_spec = rebValue("match block! select", obj, "'padding");
     if (not padding_spec)
         rebJumps ("fail {RSA key objects need at least padding: [raw]}");
 
@@ -805,12 +806,12 @@ DECLARE_NATIVE(rsa_decrypt)
     Get_Padding_And_Hash_From_Spec(&padding, &hash, padding_spec);  // validate
     rebRelease(padding_spec);
 
-    REBVAL* n = rebValue("match binary! select", obj, "'n");
-    REBVAL* e = rebValue("match binary! select", obj, "'e");
+    Value* n = rebValue("match binary! select", obj, "'n");
+    Value* e = rebValue("match binary! select", obj, "'e");
 
-    REBVAL* d = rebValue("match binary! select", obj, "'d");
-    REBVAL* p = rebValue("match binary! select", obj, "'p");
-    REBVAL* q = rebValue("match binary! select", obj, "'q");
+    Value* d = rebValue("match binary! select", obj, "'d");
+    Value* p = rebValue("match binary! select", obj, "'p");
+    Value* q = rebValue("match binary! select", obj, "'q");
 
     // "The following incomplete parameter sets for private keys are supported"
     //
@@ -837,9 +838,9 @@ DECLARE_NATIVE(rsa_decrypt)
             "fail {Missing field combination in private key not allowed}"
         );
 
-    REBVAL* dp = rebValue("match binary! select", obj, "'dp");
-    REBVAL* dq = rebValue("match binary! select", obj, "'dq");
-    REBVAL* qinv = rebValue("match binary! select", obj, "'qinv");
+    Value* dp = rebValue("match binary! select", obj, "'dp");
+    Value* dq = rebValue("match binary! select", obj, "'dq");
+    Value* qinv = rebValue("match binary! select", obj, "'qinv");
 
     bool chinese_remainder_speedup;
 
@@ -861,8 +862,8 @@ DECLARE_NATIVE(rsa_decrypt)
     // The memory allocated by these parts will not be automatically freed
     // in case of an error, so the code below must jump to cleanup on failure
 
-    REBVAL* error = nullptr;
-    REBVAL* result = nullptr;
+    Value* error = nullptr;
+    Value* result = nullptr;
 
     struct mbedtls_rsa_context ctx;
     mbedtls_rsa_init(&ctx);
@@ -1050,13 +1051,13 @@ DECLARE_NATIVE(dh_generate_keypair)
     mbedtls_mpi X;
     mbedtls_mpi_init(&X);
 
-    REBVAL* result = nullptr;
-    REBVAL* error = nullptr;
+    Value* result = nullptr;
+    Value* error = nullptr;
 
     bool insecure = rebDid(rebArgR("insecure"));
 
-    REBVAL* modulus = rebArg("modulus");
-    REBVAL* base = rebArg("base");
+    Value* modulus = rebArg("modulus");
+    Value* base = rebArg("base");
 
     size_t P_size;  // goto for cleanup would warn on crossing initialization
 
@@ -1252,7 +1253,7 @@ DECLARE_NATIVE(dh_compute_secret)
 {
     CRYPT_INCLUDE_PARAMS_OF_DH_COMPUTE_SECRET;
 
-    REBVAL* obj = rebArg("obj");
+    Value* obj = rebArg("obj");
 
     // Extract fields up front, so that if they fail we don't have to RESCUE it
     // to clean up an initialized dhm_context...
@@ -1263,12 +1264,12 @@ DECLARE_NATIVE(dh_compute_secret)
     // !!! used to ensure object only had other fields SELF, PUB-KEY, G
     // otherwise gave Error(RE_EXT_CRYPT_INVALID_KEY_FIELD)
     //
-    REBVAL* modulus = rebValue("ensure binary! pick", obj, "'modulus");
-    REBVAL* generator = rebValue("ensure binary! pick", obj, "'generator");
-    REBVAL* private_key = rebValue("ensure binary! pick", obj, "'private-key");
+    Value* modulus = rebValue("ensure binary! pick", obj, "'modulus");
+    Value* generator = rebValue("ensure binary! pick", obj, "'generator");
+    Value* private_key = rebValue("ensure binary! pick", obj, "'private-key");
 
-    REBVAL* result = nullptr;
-    REBVAL* error = nullptr;
+    Value* result = nullptr;
+    Value* error = nullptr;
 
     struct mbedtls_dhm_context ctx;
     mbedtls_dhm_init(&ctx);
@@ -1311,7 +1312,7 @@ DECLARE_NATIVE(dh_compute_secret)
     // the peer (G^Y), so we have to redo the logic of Mpi_From_Binary here.
     //
   blockscope {
-    REBVAL* peer_key = rebArg("peer-key");
+    Value* peer_key = rebArg("peer-key");
 
     size_t gy_size;
     unsigned char* gy_buf = rebBytes(&gy_size, peer_key);  // is a rebMalloc()
@@ -1387,7 +1388,7 @@ DECLARE_NATIVE(dh_compute_secret)
 }
 
 
-static void cleanup_aes_ctx(const REBVAL* v)
+static void cleanup_aes_ctx(const Value* v)
 {
     struct mbedtls_cipher_context_t *ctx
         = rebUnboxHandle(struct mbedtls_cipher_context_t*, v);
@@ -1434,7 +1435,7 @@ DECLARE_NATIVE(aes_key)
     rebUnmanageMemory(ctx);  // needs to outlive this AES-KEY function call
     mbedtls_cipher_init(ctx);
 
-    REBVAL* error = nullptr;
+    Value* error = nullptr;
 
     IF_NOT_0(cleanup, error, mbedtls_cipher_setup(ctx, info));
 
@@ -1455,7 +1456,7 @@ DECLARE_NATIVE(aes_key)
 
   blockscope {
     size_t blocksize = mbedtls_cipher_get_block_size(ctx);
-    REBVAL* iv = rebArg("iv");
+    Value* iv = rebArg("iv");
     if (rebUnboxLogic("binary?", iv)) {
         size_t iv_size;
         unsigned char* iv_bytes = rebBytes(&iv_size, iv);
@@ -1505,7 +1506,7 @@ DECLARE_NATIVE(aes_stream)
 {
     CRYPT_INCLUDE_PARAMS_OF_AES_STREAM;
 
-    REBVAL* ctx_handle = rebArg("ctx");
+    Value* ctx_handle = rebArg("ctx");
 
     if (rebExtractHandleCleaner(ctx_handle) != cleanup_aes_ctx)
         rebJumps(
@@ -1525,8 +1526,8 @@ DECLARE_NATIVE(aes_stream)
         return nullptr;  // !!! Is NULL a good result for 0 data?
     }
 
-    REBVAL* error = nullptr;
-    REBVAL* result = nullptr;
+    Value* error = nullptr;
+    Value* result = nullptr;
 
     // output data buffer must be at least the input length plus block size.
     //
@@ -1589,7 +1590,7 @@ struct mbedtls_ecp_curve_info curve25519_info =
 
 
 static const struct mbedtls_ecp_curve_info* Ecp_Curve_Info_From_Word(
-    const REBVAL* word
+    const Value* word
 ){
     const struct mbedtls_ecp_curve_info *info;
 
@@ -1634,10 +1635,10 @@ DECLARE_NATIVE(ecc_generate_keypair)
     struct mbedtls_ecdh_context ctx;
     mbedtls_ecdh_init(&ctx);
 
-    REBVAL* error = nullptr;
-    REBVAL* result = nullptr;
+    Value* error = nullptr;
+    Value* result = nullptr;
 
-    REBVAL* group = rebArg("group");
+    Value* group = rebArg("group");
     const struct mbedtls_ecp_curve_info *info = Ecp_Curve_Info_From_Word(group);
     rebRelease(group);
 
@@ -1716,12 +1717,12 @@ DECLARE_NATIVE(ecdh_shared_secret)
 {
     CRYPT_INCLUDE_PARAMS_OF_ECDH_SHARED_SECRET;
 
-    REBVAL* group = rebArg("group");
+    Value* group = rebArg("group");
     const struct mbedtls_ecp_curve_info *info = Ecp_Curve_Info_From_Word(group);
     // `group` used in various later code, release later
 
-    REBVAL* private_arg = rebArg("private");  // `private` is C++ keyword
-    REBVAL* public_arg = rebArg("public");  // `public` is C++ keyword
+    Value* private_arg = rebArg("private");  // `private` is C++ keyword
+    Value* public_arg = rebArg("public");  // `public` is C++ keyword
 
     size_t num_bytes = info->bit_size / 8;
 
@@ -1745,8 +1746,8 @@ DECLARE_NATIVE(ecdh_shared_secret)
     struct mbedtls_ecdh_context ctx;
     mbedtls_ecdh_init(&ctx);
 
-    REBVAL* result = nullptr;
-    REBVAL* error = nullptr;
+    Value* result = nullptr;
+    Value* error = nullptr;
 
     IF_NOT_0(cleanup, error,
         mbedtls_ecdh_setup(&ctx, info->grp_id)

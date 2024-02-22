@@ -99,7 +99,7 @@ DECLARE_NATIVE(builtin_extensions)
     REBLEN i;
     for (i = 0; i != NUM_BUILTIN_EXTENSIONS; ++i) {
         COLLATE_CFUNC *collator = Builtin_Extension_Collators[i];
-        REBVAL *details = (*collator)(&Ext_Lib);
+        Value* details = (*collator)(&Ext_Lib);
         assert(Is_Block(details) and Cell_Series_Len_At(details) == IDX_COLLATOR_MAX);
         Copy_Cell(Alloc_Tail_Array(list), cast(Element*, details));
         rebRelease(details);
@@ -150,9 +150,9 @@ DECLARE_NATIVE(load_extension)
     else {  // It's a DLL, must locate and call its RX_Collate() function
         assert(Is_File(ARG(where)));
 
-        REBVAL *lib_api = rebValue("make library!", ARG(where));
+        Value* lib_api = rebValue("make library!", ARG(where));
 
-        REBVAL *collated_block = rebValue(
+        Value* collated_block = rebValue(
             "run-library-collator", lib_api, "{RX_Collate}"
         );
 
@@ -208,7 +208,7 @@ DECLARE_NATIVE(load_extension)
     // a binary series (e.g. a rebAlloc() product).  Get the series back so
     // we can pass it to import as a string.
     //
-    REBVAL *script = rebRepossess(script_utf8, script_size);
+    Value* script = rebRepossess(script_utf8, script_size);
 
     // The rebRepossess() function gives us back a BINARY!.  But we happen to
     // know that the data is actually valid UTF-8.  The scanner does not
@@ -271,7 +271,7 @@ DECLARE_NATIVE(load_extension)
 // This will be the dispatcher for the natives in an extension after the
 // extension is unloaded.
 //
-static const REBVAL *Unloaded_Dispatcher(Level* L)
+static const Value* Unloaded_Dispatcher(Level* L)
 {
     UNUSED(L);
 
@@ -303,9 +303,9 @@ DECLARE_NATIVE(unload_extension)
 {
     INCLUDE_PARAMS_OF_UNLOAD_EXTENSION;
 
-    REBVAL *extension = ARG(extension);
+    Value* extension = ARG(extension);
 
-    REBVAL *pos = rebValue(Canon(FIND), "system.extensions", extension);
+    Value* pos = rebValue(Canon(FIND), "system.extensions", extension);
 
     // Remove the extension from the loaded extensions list.
     //
@@ -394,6 +394,6 @@ DECLARE_NATIVE(unload_extension)
 // functions would be done through whatever this mechanism for extending them
 // with native code would be.)
 //
-void Extend_Generics_Someday(REBVAL *block) {
+void Extend_Generics_Someday(Value* block) {
     UNUSED(block);
 }

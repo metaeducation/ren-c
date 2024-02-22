@@ -74,7 +74,7 @@ static bool Try_Init_Startupinfo_Sink(
     HANDLE *hwrite,  // set to match `hsink` unless hsink doesn't need closing
     HANDLE *hread,  // write may have "read" side if pipe captures variables
     DWORD std_handle_id,  // e.g. STD_OUTPUT_HANDLE, STD_ERROR_HANDLE
-    const REBVAL *arg  // argument e.g. /OUTPUT or /ERROR for behavior
+    const Value* arg  // argument e.g. /OUTPUT or /ERROR for behavior
 ){
     SECURITY_ATTRIBUTES sa;
     sa.nLength = sizeof(SECURITY_ATTRIBUTES);
@@ -260,7 +260,7 @@ Bounce Call_Core(Level* level_) {
         //
         // https://github.com/rebol/rebol-issues/issues/2225
 
-        REBVAL *text = rebValue("argv-block-to-command*", ARG(command));
+        Value* text = rebValue("argv-block-to-command*", ARG(command));
         Copy_Cell(ARG(command), text);
         rebRelease(text);
         goto text_command;
@@ -705,12 +705,12 @@ Bounce Call_Core(Level* level_) {
     // assumed to be UCS-2.
     //
     if (Is_Text(ARG(output))) {
-        REBVAL *output_val = rebRepossess(outbuf, outbuf_used);
+        Value* output_val = rebRepossess(outbuf, outbuf_used);
         rebElide("insert", ARG(output), "deline", output_val);
         rebRelease(output_val);
     }
     else if (Is_Binary(ARG(output))) {
-        REBVAL *output_val = rebRepossess(outbuf, outbuf_used);
+        Value* output_val = rebRepossess(outbuf, outbuf_used);
         rebElide("insert", ARG(output), output_val);
         rebRelease(output_val);
     }
@@ -718,12 +718,12 @@ Bounce Call_Core(Level* level_) {
         assert(outbuf == nullptr);
 
     if (Is_Text(ARG(error))) {
-        REBVAL *error_val = rebRepossess(errbuf, errbuf_used);
+        Value* error_val = rebRepossess(errbuf, errbuf_used);
         rebElide("insert", ARG(error), "deline", error_val);
         rebRelease(error_val);
     }
     else if (Is_Binary(ARG(error))) {
-        REBVAL *error_val = rebRepossess(errbuf, errbuf_used);
+        Value* error_val = rebRepossess(errbuf, errbuf_used);
         rebElide("append", ARG(error), error_val);
         rebRelease(error_val);
     }

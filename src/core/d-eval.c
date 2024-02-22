@@ -168,7 +168,7 @@ static void Evaluator_Shared_Checks_Debug(Level* L)
 // These fields are required upon initialization:
 //
 //     L->out
-//     REBVAL pointer to which the evaluation's result should be written.
+//     Atom pointer to which the evaluation's result should be written.
 //     Should be to writable memory in a cell that lives above this call to
 //     the evalutor in stable memory (not user-visible, e.g. DECLARE_LOCAL
 //     or the parent's L->spare).  This can't point into an array whose memory

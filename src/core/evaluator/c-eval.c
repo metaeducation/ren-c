@@ -476,7 +476,7 @@ Bounce Evaluator_Executor(Level* L)
     //
     // The API should error if you try to make this situation happen:
     //
-    //     REBVAL *v = rebVoid();
+    //     Value* v = rebVoid();
     //     bool is_void = rebUnboxLogic("void?", v);  // should be rebQ(v)
 
       case REB_VOID:
@@ -1007,7 +1007,7 @@ Bounce Evaluator_Executor(Level* L)
 
         STATE = REB_FRAME;  // bounces back to do lookahead
         rebPushContinuation(
-            cast(REBVAL*, OUT),  // API won't take Atom(*)
+            cast(Value*, OUT),  // API won't take Atom(*)
             LEVEL_MASK_NONE,
             Canon(APPLY), rebQ(SPARE), rebDERELATIVIZE(L_next, L_specifier)
         );
@@ -1040,7 +1040,7 @@ Bounce Evaluator_Executor(Level* L)
     // But for the moment, it is just used in Redbol emulation.
 
       case REB_SET_PATH: {
-        REBVAL *redbol = Get_System(SYS_OPTIONS, OPTIONS_REDBOL_PATHS);
+        Value* redbol = Get_System(SYS_OPTIONS, OPTIONS_REDBOL_PATHS);
         if (not Is_Logic(redbol) or Cell_Logic(redbol) == false) {
             Derelativize(OUT, L_current, L_specifier);
             HEART_BYTE(OUT) = REB_SET_TUPLE;
@@ -1218,7 +1218,7 @@ Bounce Evaluator_Executor(Level* L)
         Derelativize(SPARE, L_current, L_specifier);
         HEART_BYTE(SPARE) = REB_BLOCK;
         if (rebRunThrows(
-            cast(REBVAL*, OUT),  // <-- output cell, API won't make atoms
+            cast(Value*, OUT),  // <-- output cell, API won't make atoms
             Canon(REDUCE), SPARE
         )){
             goto return_thrown;

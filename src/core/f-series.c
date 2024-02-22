@@ -42,7 +42,7 @@ Bounce Series_Common_Action_Maybe_Unhandled(
     Level* level_,
     const Symbol* verb
 ){
-    REBVAL *v = D_ARG(1);
+    Value* v = D_ARG(1);
 
     Flags sop_flags;  // "SOP_XXX" Set Operation Flags
 
@@ -229,7 +229,7 @@ Bounce Series_Common_Action_Maybe_Unhandled(
             Make_Set_Operation_Series(
                 v,
                 (id == SYM_UNIQUE)
-                    ? cast(REBVAL*, nullptr)  // C++98 ambiguous w/o cast
+                    ? cast(Value*, nullptr)  // C++98 ambiguous w/o cast
                     : ARG(value2),
                 sop_flags,
                 REF(case),

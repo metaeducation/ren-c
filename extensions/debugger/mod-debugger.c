@@ -64,7 +64,7 @@ bool Do_Breakpoint_Throws(
     // here (or inject a check with HIJACK on BREAKPOINT) to make sure that
     // debugging was allowed.  Review doing that check here.
 
-    REBVAL *inst = rebValue("debug-console");
+    Value* inst = rebValue("debug-console");
 
     if (Is_Integer(inst)) {
         Init_Thrown_With_Label(TOP_LEVEL, inst, Lib(QUIT));
@@ -196,7 +196,7 @@ DECLARE_NATIVE(resume)
 {
     DEBUGGER_INCLUDE_PARAMS_OF_RESUME;
 
-    REBVAL *expr = ARG(expression);
+    Value* expr = ARG(expression);
     if (Is_Nulled(expr))  // e.g. <end> (actuall null not legal)
         Init_Array_Cell(expr, REB_META_GROUP, EMPTY_ARRAY);
     else {

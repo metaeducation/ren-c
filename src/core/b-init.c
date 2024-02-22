@@ -292,8 +292,8 @@ static void Shutdown_Lib(void)
 }
 
 
-static REBVAL *Make_Locked_Tag(const char *utf8) { // helper
-    REBVAL *t = rebText(utf8);
+static Value* Make_Locked_Tag(const char *utf8) { // helper
+    Value* t = rebText(utf8);
     HEART_BYTE(t) = REB_TAG;
 
     Force_Value_Frozen_Deep(t);
@@ -586,11 +586,11 @@ static void Init_System_Object(
     // up its archetype so that it is an actual ERROR!.
     //
   blockscope {
-    REBVAL *std_error = Get_System(SYS_STANDARD, STD_ERROR);
+    Value* std_error = Get_System(SYS_STANDARD, STD_ERROR);
     Context* c = VAL_CONTEXT(std_error);
     HEART_BYTE(std_error) = REB_ERROR;
 
-    REBVAL *rootvar = CTX_ROOTVAR(c);
+    Value* rootvar = CTX_ROOTVAR(c);
     assert(Get_Cell_Flag(rootvar, PROTECTED));
     HEART_BYTE(rootvar) = REB_ERROR;
   }

@@ -110,7 +110,7 @@ bool almost_equal(REBDEC a, REBDEC b, REBLEN max_diff) {
 //
 //  Init_Decimal_Bits: C
 //
-REBVAL *Init_Decimal_Bits(Cell* out, const Byte* bp)
+Value* Init_Decimal_Bits(Cell* out, const Byte* bp)
 {
     Reset_Unquoted_Header_Untracked(TRACK(out), CELL_MASK_DECIMAL);
 
@@ -128,7 +128,7 @@ REBVAL *Init_Decimal_Bits(Cell* out, const Byte* bp)
     #error "Unsupported CPU endian"
   #endif
 
-    return cast(REBVAL*, out);
+    return cast(Value*, out);
 }
 
 
@@ -147,7 +147,7 @@ Bounce MAKE_Decimal(
     Level* level_,
     Kind k,
     Option(const Value*) parent,
-    const REBVAL *arg
+    const Value* arg
 ){
     assert(k == REB_DECIMAL or k == REB_PERCENT);
     Heart heart = cast(Heart, k);
@@ -215,7 +215,7 @@ Bounce MAKE_Decimal(
         Push_GC_Guard(numerator);  // might be GROUP!, so (1.2)/4
         Push_GC_Guard(denominator);
 
-        REBVAL *quotient = rebValue("divide", numerator, denominator);
+        Value* quotient = rebValue("divide", numerator, denominator);
 
         Drop_GC_Guard(denominator);
         Drop_GC_Guard(numerator);
@@ -302,7 +302,7 @@ Bounce MAKE_Decimal(
 // conversions, with MAKE used for less obvious (e.g. make decimal [1 5]
 // giving you 100000).
 //
-Bounce TO_Decimal(Level* level_, Kind k, const REBVAL *arg)
+Bounce TO_Decimal(Level* level_, Kind k, const Value* arg)
 {
     assert(k == REB_DECIMAL or k == REB_PERCENT);
     Heart heart = cast(Heart, k);
@@ -478,8 +478,8 @@ void MF_Percent(REB_MOLD *mo, const Cell* v, bool form)
 //
 REBTYPE(Decimal)
 {
-    REBVAL  *val = D_ARG(1);
-    REBVAL  *arg;
+    Value* val = D_ARG(1);
+    Value* arg;
     REBDEC  d2;
     Heart heart;
 

@@ -71,7 +71,7 @@ REBINT CT_Binary(const Cell* a, const Cell* b, bool strict)
 ***********************************************************************/
 
 
-static Binary* Make_Binary_BE64(const REBVAL *arg)
+static Binary* Make_Binary_BE64(const Value* arg)
 {
     Binary* bin = Make_Binary(8);
     Byte* bp = Binary_Head(bin);
@@ -124,7 +124,7 @@ static Binary* Make_Binary_BE64(const REBVAL *arg)
 // Note also the existence of AS and storing strings as UTF-8 should reduce
 // copying, e.g. `as binary! some-string` will be cheaper than TO or MAKE.
 //
-static Bounce MAKE_TO_Binary_Common(Level* level_, const REBVAL *arg)
+static Bounce MAKE_TO_Binary_Common(Level* level_, const Value* arg)
 {
     switch (VAL_TYPE(arg)) {
     case REB_BINARY: {
@@ -190,7 +190,7 @@ Bounce MAKE_Binary(
     Level* level_,
     Kind kind,
     Option(const Value*) parent,
-    const REBVAL *def
+    const Value* def
 ){
     assert(kind == REB_BINARY);
 
@@ -207,7 +207,7 @@ Bounce MAKE_Binary(
 
     if (Is_Block(def)) {  // was construction syntax, #[binary [#{0001} 2]]
         rebPushContinuation(
-            cast(REBVAL*, OUT),
+            cast(Value*, OUT),
             LEVEL_MASK_NONE,
             Canon(TO), Canon(BINARY_X),
                 Canon(REDUCE), rebQ(def)  // rebQ() copies cell, survives frame
@@ -222,7 +222,7 @@ Bounce MAKE_Binary(
 //
 //  TO_Binary: C
 //
-Bounce TO_Binary(Level* level_, Kind kind, const REBVAL *arg)
+Bounce TO_Binary(Level* level_, Kind kind, const Value* arg)
 {
     assert(kind == REB_BINARY);
     UNUSED(kind);
@@ -311,7 +311,7 @@ void MF_Binary(REB_MOLD *mo, const Cell* v, bool form)
 //
 REBTYPE(Binary)
 {
-    REBVAL *v = D_ARG(1);
+    Value* v = D_ARG(1);
     assert(Is_Binary(v));
 
     Option(SymId) id = Symbol_Id(verb);
@@ -345,7 +345,7 @@ REBTYPE(Binary)
         if (not Did_Get_Series_Index_From_Picker(&n, v, picker))
             fail (Error_Out_Of_Range(picker));
 
-        REBVAL *setval = ARG(value);
+        Value* setval = ARG(value);
 
         REBINT i;
         if (IS_CHAR(setval)) {
@@ -453,7 +453,7 @@ REBTYPE(Binary)
         INCLUDE_PARAMS_OF_FIND;
         UNUSED(PARAM(series));  // covered by `v`
 
-        REBVAL *pattern = ARG(pattern);
+        Value* pattern = ARG(pattern);
         if (Is_Antiform(pattern))
             fail (pattern);
 
@@ -596,7 +596,7 @@ REBTYPE(Binary)
       case SYM_BITWISE_OR:
       case SYM_BITWISE_XOR:
       case SYM_BITWISE_AND_NOT: {
-        REBVAL *arg = D_ARG(2);
+        Value* arg = D_ARG(2);
         if (not Is_Binary(arg))
             fail (Error_Math_Args(VAL_TYPE(arg), verb));
 
@@ -687,7 +687,7 @@ REBTYPE(Binary)
 
       case SYM_SUBTRACT:
       case SYM_ADD: {
-        REBVAL *arg = D_ARG(2);
+        Value* arg = D_ARG(2);
         Binary* bin = Cell_Binary_Ensure_Mutable(v);
 
         REBINT amount;
@@ -744,7 +744,7 @@ REBTYPE(Binary)
     //-- Special actions:
 
       case SYM_SWAP: {
-        REBVAL *arg = D_ARG(2);
+        Value* arg = D_ARG(2);
 
         if (VAL_TYPE(v) != VAL_TYPE(arg))
             fail (Error_Not_Same_Type_Raw());
@@ -897,7 +897,7 @@ DECLARE_NATIVE(enbin)
 {
     INCLUDE_PARAMS_OF_ENBIN;
 
-    REBVAL *settings = rebValue("compose", ARG(settings));
+    Value* settings = rebValue("compose", ARG(settings));
     if (Cell_Series_Len_At(settings) != 3)
         fail ("ENBIN requires array of length 3 for settings for now");
     bool little = rebUnboxLogic(
@@ -1004,7 +1004,7 @@ DECLARE_NATIVE(debin)
     Size bin_size;
     const Byte* bin_data = Cell_Binary_Size_At(&bin_size, ARG(binary));
 
-    REBVAL* settings = rebValue("compose", ARG(settings));
+    Value* settings = rebValue("compose", ARG(settings));
 
     REBLEN arity = Cell_Series_Len_At(settings);
     if (arity != 2 and arity != 3)

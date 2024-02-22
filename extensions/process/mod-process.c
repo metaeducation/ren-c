@@ -121,7 +121,7 @@ DECLARE_NATIVE(get_os_browsers)
 {
     PROCESS_INCLUDE_PARAMS_OF_GET_OS_BROWSERS;
 
-    REBVAL *list = rebValue("copy []");
+    Value* list = rebValue("copy []");
 
   #if TO_WINDOWS
 
@@ -357,9 +357,9 @@ DECLARE_NATIVE(get_env)
 {
     PROCESS_INCLUDE_PARAMS_OF_GET_ENV;
 
-    REBVAL *variable = ARG(variable);
+    Value* variable = ARG(variable);
 
-    REBVAL *error = nullptr;
+    Value* error = nullptr;
 
   #if TO_WINDOWS
     // Note: The Windows variant of this API is NOT case-sensitive
@@ -407,7 +407,7 @@ DECLARE_NATIVE(get_env)
                 error = rebError_OS(dwerr);
         }
         else {
-            REBVAL *temp = rebLengthedTextWide(val, val_len_plus_one - 1);
+            Value* temp = rebLengthedTextWide(val, val_len_plus_one - 1);
             Copy_Cell(OUT, temp);
             rebRelease(temp);
         }
@@ -461,8 +461,8 @@ DECLARE_NATIVE(set_env)
 {
     PROCESS_INCLUDE_PARAMS_OF_SET_ENV;
 
-    REBVAL *variable = ARG(variable);
-    REBVAL *value = ARG(value);
+    Value* variable = ARG(variable);
+    Value* value = ARG(value);
 
   #if TO_WINDOWS
     WCHAR* key_wide = rebSpellWide(variable);
@@ -472,7 +472,7 @@ DECLARE_NATIVE(set_env)
         key_wide,
         try_unwrap(val_wide)  // null means unset the environment variable
     )){
-        REBVAL *error = rebError_OS(GetLastError());
+        Value* error = rebError_OS(GetLastError());
         rebJumps ("fail", rebR(error));
     }
 
@@ -558,7 +558,7 @@ DECLARE_NATIVE(list_env)
 {
     PROCESS_INCLUDE_PARAMS_OF_LIST_ENV;
 
-    REBVAL *map = rebValue("make map! []");
+    Value* map = rebValue("make map! []");
 
   #if TO_WINDOWS
     //
@@ -585,10 +585,10 @@ DECLARE_NATIVE(list_env)
         }
 
         int key_len = eq_pos - key_equals_val;
-        REBVAL *key = rebLengthedTextWide(key_equals_val, key_len);
+        Value* key = rebLengthedTextWide(key_equals_val, key_len);
 
         int val_len = len - (eq_pos - key_equals_val) - 1;
-        REBVAL *val = rebLengthedTextWide(eq_pos + 1, val_len);
+        Value* val = rebLengthedTextWide(eq_pos + 1, val_len);
 
         rebElide(
             "append", map, "spread [", rebR(key), rebR(val), "]"
@@ -617,10 +617,10 @@ DECLARE_NATIVE(list_env)
         REBLEN size = strlen(key_equals_val);
 
         int key_size = eq_pos - key_equals_val;
-        REBVAL *key = rebSizedText(key_equals_val, key_size);
+        Value* key = rebSizedText(key_equals_val, key_size);
 
         int val_size = size - (eq_pos - key_equals_val) - 1;
-        REBVAL *val = rebSizedText(eq_pos + 1, val_size);
+        Value* val = rebSizedText(eq_pos + 1, val_size);
 
         rebElide("append", map, "spread [", rebR(key), rebR(val), "]");
     }

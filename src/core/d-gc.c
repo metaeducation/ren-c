@@ -134,7 +134,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
         break; }
 
       case REB_PAIR: {
-        REBVAL *paired = x_cast(Value*, Cell_Node1(v));
+        Value* paired = x_cast(Value*, Cell_Node1(v));
         assert(Is_Node_Marked(paired));
         break; }
 
@@ -266,7 +266,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
         // that is consistent with the details itself.  That is no longer true
         // (by design), see HIJACK and COPY of actions for why.
         //
-        REBVAL *archetype = Phase_Archetype(a);
+        Value* archetype = Phase_Archetype(a);
         assert(Is_Frame(archetype));
         break; }
 
@@ -288,7 +288,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
         // Currently the "binding" in a context is only used by FRAME! to
         // preserve the binding of the ACTION! value that spawned that
         // frame.  Currently that binding is typically NULL in of a
-        // function's REBVAL unless it is a definitional RETURN or LEAVE.
+        // function's Cell unless it is a definitional RETURN.
         //
         // !!! Expanded usages may be found in other situations that mix an
         // archetype with an instance (e.g. an archetypal function body that
@@ -310,7 +310,7 @@ void Assert_Cell_Marked_Correctly(const Cell* v)
             assert(Is_Node_Marked(PAYLOAD(Any, v).second.node));  // phase or label
         }
 
-        const REBVAL *archetype = CTX_ARCHETYPE(context);
+        const Value* archetype = CTX_ARCHETYPE(context);
         assert(CTX_TYPE(context) == heart);
         assert(VAL_CONTEXT(archetype) == context);
 
@@ -494,7 +494,7 @@ void Assert_Array_Marked_Correctly(const Array* a) {
         assert(IS_VARLIST(list));
     }
     else if (IS_VARLIST(a)) {
-        const REBVAL *archetype = CTX_ARCHETYPE(
+        const Value* archetype = CTX_ARCHETYPE(
             cast(Context*, m_cast(Array*, a))
         );
 

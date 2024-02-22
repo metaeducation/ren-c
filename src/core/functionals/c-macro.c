@@ -40,7 +40,7 @@
 //
 //  Splice_Block_Into_Feed: C
 //
-void Splice_Block_Into_Feed(Feed* feed, const REBVAL *splice) {
+void Splice_Block_Into_Feed(Feed* feed, const Value* splice) {
     //
     // !!! The mechanics for taking and releasing holds on arrays needs work,
     // but this effectively releases the hold on the code array while the
@@ -112,7 +112,7 @@ Bounce Macro_Dispatcher(Level* const L)
     // use a different form of return.  Because under this model, UNWIND
     // can't unwind a macro frame to make it return an arbitrary result.
     //
-    REBVAL *cell = Level_Arg(L, 1);
+    Value* cell = Level_Arg(L, 1);
     Init_Action(
         cell,
         ACT_IDENTITY(VAL_ACTION(Lib(DEFINITIONAL_RETURN))),
@@ -128,7 +128,7 @@ Bounce Macro_Dispatcher(Level* const L)
     // handling would return a BLOCK! instead of splice it.
     //
     if (Do_Any_Array_At_Throws(OUT, SPARE, SPECIFIED)) {
-        const REBVAL *label = VAL_THROWN_LABEL(L);
+        const Value* label = VAL_THROWN_LABEL(L);
         if (
             Is_Frame(label)  // catch UNWIND here [2]
             and VAL_ACTION(label) == VAL_ACTION(Lib(UNWIND))
@@ -200,7 +200,7 @@ DECLARE_NATIVE(inline)
 {
     INCLUDE_PARAMS_OF_INLINE;
 
-    REBVAL *splice = ARG(splice);
+    Value* splice = ARG(splice);
     if (Is_Blank(splice)) {
         // do nothing, just return invisibly
     }

@@ -154,7 +154,7 @@ Context* Get_Context_From_Stack(void)
         return Lib_Context;
 
     Details* details = Phase_Details(phase);
-    REBVAL *context = Details_At(details, IDX_NATIVE_CONTEXT);
+    Value* context = Details_At(details, IDX_NATIVE_CONTEXT);
     return VAL_CONTEXT(context);
 }
 
@@ -167,7 +167,7 @@ Context* Get_Context_From_Stack(void)
 //
 // WARNING: This will invalidate any extant pointers to REBVALs living in
 // the stack.  It is for this reason that stack access should be done by
-// StackIndex "data stack indices" and not by REBVAL* across *any* operation
+// StackIndex "data stack indices" and not by Value* across *any* operation
 // which could do a push or pop.  (Currently stable w.r.t. pop but there may
 // be compaction at some point.)
 //

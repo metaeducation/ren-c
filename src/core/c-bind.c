@@ -52,7 +52,7 @@ void Bind_Values_Inner_Loop(
 
           if (CTX_TYPE(context) == REB_MODULE) {
             bool strict = true;
-            REBVAL *lookup = MOD_VAR(context, symbol, strict);
+            Value* lookup = MOD_VAR(context, symbol, strict);
             if (lookup) {
                 INIT_VAL_WORD_INDEX(v, INDEX_PATCHED);
                 BINDING(v) = Singular_From_Cell(lookup);
@@ -120,9 +120,7 @@ void Bind_Values_Inner_Loop(
 //
 //  Bind_Values_Core: C
 //
-// Bind words in an array of values terminated with END
-// to a specified context.  See warnings on the functions like
-// Bind_Values_Deep() about not passing just a singular REBVAL.
+// Bind words in an array of values to a specified context.
 //
 // NOTE: If types are added, then they will be added in "midstream".  Only
 // bindings that come after the added value is seen will be bound.
@@ -209,7 +207,7 @@ void Unbind_Values_Core(
 // Returns 0 if word is not part of the context, otherwise the index of the
 // word in the context.
 //
-bool Try_Bind_Word(const Value* context, REBVAL *word)
+bool Try_Bind_Word(const Value* context, Value* word)
 {
     const bool strict = true;
     if (Is_Module(context)) {
@@ -342,7 +340,7 @@ Option(Series*) Get_Word_Container(
         // Variable may have popped into existence since the original attach.
         //
         Context* ctx = cast(Context*, binding);
-        REBVAL* var = MOD_VAR(ctx, symbol, true);
+        Value* var = MOD_VAR(ctx, symbol, true);
         if (var) {
             *index_out = INDEX_PATCHED;
             return Singular_From_Cell(var);
@@ -379,7 +377,7 @@ Option(Series*) Get_Word_Container(
             Context* ctx = cast(Context*, specifier);
 
             if (CTX_TYPE(ctx) == REB_MODULE) {
-                REBVAL *var = MOD_VAR(ctx, symbol, true);
+                Value* var = MOD_VAR(ctx, symbol, true);
                 if (var) {
                     *index_out = INDEX_PATCHED;
                     return Singular_From_Cell(var);
@@ -467,7 +465,7 @@ Option(Series*) Get_Word_Container(
         if (Is_Module(Stub_Cell(specifier))) {
             Context* mod = VAL_CONTEXT(Stub_Cell(specifier));
 
-            REBVAL *var = MOD_VAR(mod, symbol, true);
+            Value* var = MOD_VAR(mod, symbol, true);
             if (var) {
                 *index_out = INDEX_PATCHED;
                 return Singular_From_Cell(var);
@@ -616,13 +614,13 @@ DECLARE_NATIVE(let)
 {
     INCLUDE_PARAMS_OF_LET;
 
-    REBVAL *vars = ARG(vars);
+    Value* vars = ARG(vars);
 
     UNUSED(ARG(expression));
     Level* L = level_;  // fake variadic [1]
     Specifier* L_specifier = Level_Specifier(L);
 
-    REBVAL *bindings_holder = ARG(return);
+    Value* bindings_holder = ARG(return);
 
     enum {
         ST_LET_INITIAL_ENTRY = STATE_0,
@@ -693,7 +691,7 @@ DECLARE_NATIVE(let)
         const Symbol* symbol = Cell_Word_Symbol(vars);
         bindings = Make_Let_Patch(symbol, bindings);
 
-        REBVAL *where;
+        Value* where;
         if (Cell_Heart(vars) == REB_SET_WORD) {
             STATE = ST_LET_EVAL_STEP;
             where = stable_SPARE;
@@ -768,7 +766,7 @@ DECLARE_NATIVE(let)
             }
         }
 
-        REBVAL *where;
+        Value* where;
         if (Is_Set_Block(vars)) {
             STATE = ST_LET_EVAL_STEP;
             where = stable_SPARE;
@@ -1056,7 +1054,7 @@ void Clonify_And_Bind_Relative(
 // that words can be found in the function's frame.
 //
 Array* Copy_And_Bind_Relative_Deep_Managed(
-    const REBVAL *body,
+    const Value* body,
     Action* relative,
     enum Reb_Var_Visibility visibility
 ){
@@ -1231,8 +1229,8 @@ void Rebind_Values_Deep(
 // !!! Loops should probably free their objects by default when finished
 //
 Context* Virtual_Bind_Deep_To_New_Context(
-    REBVAL *body_in_out, // input *and* output parameter
-    REBVAL *spec
+    Value* body_in_out, // input *and* output parameter
+    Value* spec
 ){
     // !!! This just hacks in GROUP! behavior, because the :param convention
     // does not support groups and gives GROUP! by value.  In the stackless
@@ -1363,7 +1361,7 @@ Context* Virtual_Bind_Deep_To_New_Context(
             symbol = Cell_Word_Symbol(item);
 
           blockscope {
-            REBVAL *var = Append_Context(c, symbol);
+            Value* var = Append_Context(c, symbol);
             Derelativize(var, item, specifier);
             Set_Cell_Flag(var, BIND_NOTE_REUSE);
             Set_Cell_Flag(var, PROTECTED);
@@ -1445,7 +1443,7 @@ Context* Virtual_Bind_Deep_To_New_Context(
   blockscope {
     const Key* key_tail;
     const Key* key = CTX_KEYS(&key_tail, c);
-    REBVAL *var = CTX_VARS_HEAD(c); // only needed for debug, optimized out
+    Value* var = CTX_VARS_HEAD(c); // only needed for debug, optimized out
     for (; key != key_tail; ++key, ++var) {
         REBINT stored = Remove_Binder_Index_Else_0(
             &binder, KEY_SYMBOL(key)
@@ -1481,7 +1479,7 @@ Context* Virtual_Bind_Deep_To_New_Context(
 //  Virtual_Bind_Deep_To_Existing_Context: C
 //
 void Virtual_Bind_Deep_To_Existing_Context(
-    REBVAL *any_array,
+    Value* any_array,
     Context* context,
     struct Reb_Binder *binder,
     Heart affected

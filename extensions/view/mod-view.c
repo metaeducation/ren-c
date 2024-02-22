@@ -79,6 +79,7 @@
 #endif
 
 #include "rebol.h"  // not %sys-core.h !
+typedef RebolValue Value;
 
 #include "assert-fix.h"
 #include "c-enhanced.h"
@@ -110,15 +111,15 @@ DECLARE_NATIVE(request_file_p)
 {
     VIEW_INCLUDE_PARAMS_OF_REQUEST_FILE_P;
 
-    REBVAL* results = rebValue("copy []");  // collected in block and returned
+    Value* results = rebValue("copy []");  // collected in block and returned
 
-    REBVAL* error = nullptr;  // error saved to raise after buffers freed
+    Value* error = nullptr;  // error saved to raise after buffers freed
 
     bool saving = rebDid(rebArgR("save"));
     bool multi = rebDid(rebArgR("multi"));
-    REBVAL* initial = rebArg("initial");
-    REBVAL* title = rebArg("title");
-    REBVAL* filter = rebArg("filter");
+    Value* initial = rebArg("initial");
+    Value* title = rebArg("title");
+    Value* filter = rebArg("filter");
 
   #if TO_WINDOWS
     OPENFILENAME ofn;
@@ -269,7 +270,7 @@ DECLARE_NATIVE(request_file_p)
                 // When there's only one item in a multi-selection scenario,
                 // that item is the filename including path...the lone result.
                 //
-                REBVAL *item = rebLengthedTextWide(item_utf16, item_len);
+                Value* item = rebLengthedTextWide(item_utf16, item_len);
                 rebElide("append", results, "local-to-file", rebR(item));
             }
             else {
@@ -277,12 +278,12 @@ DECLARE_NATIVE(request_file_p)
                 // rest are files in that directory.  We want to merge them
                 // together to make fully specified paths.
                 //
-                REBVAL *dir = rebLengthedTextWide(item_utf16, item_len);
+                Value* dir = rebLengthedTextWide(item_utf16, item_len);
 
                 item_utf16 += item_len + 1;  // next
 
                 while ((item_len = wcslen(item_utf16)) != 0) {
-                    REBVAL *item = rebLengthedTextWide(item_utf16, item_len);
+                    Value* item = rebLengthedTextWide(item_utf16, item_len);
 
                     rebElide(
                         "append", results,
@@ -500,11 +501,11 @@ DECLARE_NATIVE(request_dir_p)
 {
     VIEW_INCLUDE_PARAMS_OF_REQUEST_DIR_P;
 
-    REBVAL *result = nullptr;
-    REBVAL *error = nullptr;
+    Value* result = nullptr;
+    Value* error = nullptr;
 
-    REBVAL* title = rebArg("title");
-    REBVAL* path = rebArg("path");
+    Value* title = rebArg("title");
+    Value* path = rebArg("path");
 
   #if defined(USE_WINDOWS_DIRCHOOSER)
     //

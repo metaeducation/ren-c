@@ -34,7 +34,7 @@ REBLEN Modify_Array(
     Array* dst_arr,  // target
     REBLEN dst_idx,  // position
     SymId op,  // INSERT, APPEND, CHANGE
-    const REBVAL *src_val,  // source
+    const Value* src_val,  // source
     REBLEN flags,  // AM_SPLICE, AM_PART, AM_LINE
     REBLEN part,  // dst to remove (CHANGE) or limit to grow (APPEND/INSERT)
     REBINT dups  // dup count of how many times to insert the src content
@@ -224,9 +224,9 @@ REBLEN Modify_Array(
 // SERIES_FLAG_IS_STRING on the series, we must know if dst is a BINARY!.
 //
 REBLEN Modify_String_Or_Binary(
-    REBVAL *dst,  // ANY-STRING? or BINARY! value to modify
+    Value* dst,  // ANY-STRING? or BINARY! value to modify
     SymId op,  // SYM_APPEND @ tail, SYM_INSERT/SYM_CHANGE @ index
-    const REBVAL *src,  // argument with content to inject
+    const Value* src,  // argument with content to inject
     Flags flags,  // AM_PART, AM_LINE
     REBLEN part,  // dst to remove (CHANGE) or limit to grow (APPEND/INSERT)
     REBINT dups  // dup count of how many times to insert the src content

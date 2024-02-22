@@ -362,7 +362,7 @@ Bounce Trampoline_From_Top_Maybe_Root(void)
             fail (ctx);
         }
 
-        const REBVAL *label = VAL_THROWN_LABEL(LEVEL);  // unwind [1]
+        const Value* label = VAL_THROWN_LABEL(LEVEL);  // unwind [1]
         if (
             Is_Frame(label)
             and VAL_ACTION(label) == VAL_ACTION(Lib(UNWIND))

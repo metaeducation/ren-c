@@ -49,7 +49,7 @@
 #include "sys-core.h"
 
 #include "reb-net.h"
-extern REBVAL *rebError_UV(int err);
+extern Value* rebError_UV(int err);
 
 #include "tmp-mod-network.h"
 
@@ -100,7 +100,7 @@ static void Get_Local_IP(SOCKREQ *sock)
 // After usage:
 //     Close_Socket() - to free OS allocations
 //
-REBVAL *Open_Socket(const REBVAL *port)
+Value* Open_Socket(const Value* port)
 {
     SOCKREQ *sock = Sock_Of_Port(port);
     assert(sock->stream == nullptr);
@@ -139,7 +139,7 @@ static void Close_Sock_If_Needed(SOCKREQ* sock) {
     }
 }
 
-static void cleanup_sockreq(const REBVAL *v) {
+static void cleanup_sockreq(const Value* v) {
     SOCKREQ* sock = VAL_HANDLE_POINTER(SOCKREQ, v);
     Close_Sock_If_Needed(sock);
     Free(SOCKREQ, sock);
@@ -149,11 +149,11 @@ static void cleanup_sockreq(const REBVAL *v) {
 //
 //  Close_Socket: C
 //
-REBVAL *Close_Socket(const REBVAL *port)
+Value* Close_Socket(const Value* port)
 {
     SOCKREQ* sock = Sock_Of_Port(port);
 
-    REBVAL *error = nullptr;
+    Value* error = nullptr;
 
     // Note: R3-Alpha allowed closing closed sockets
     Close_Sock_If_Needed(sock);
@@ -172,9 +172,9 @@ REBVAL *Close_Socket(const REBVAL *port)
 // would have to be fit in with a client understanding for how to request a
 // LOOKUP event, and when it had to be waited on.  For now it's synchronous.
 //
-REBVAL *Lookup_Socket_Synchronously(
-    const REBVAL *port,
-    const REBVAL *hostname
+Value* Lookup_Socket_Synchronously(
+    const Value* port,
+    const Value* hostname
 ){
     SOCKREQ *sock = Sock_Of_Port(port);
 
@@ -255,7 +255,7 @@ REBVAL *Lookup_Socket_Synchronously(
 //
 static void on_connect(uv_connect_t *req, int status) {
     Reb_Connect_Request *rebreq = cast(Reb_Connect_Request*, req);
-    const REBVAL *port = CTX_ARCHETYPE(rebreq->port_ctx);
+    const Value* port = CTX_ARCHETYPE(rebreq->port_ctx);
     SOCKREQ *sock = Sock_Of_Port(port);
 
     if (status < 0) {
@@ -283,7 +283,7 @@ static void on_connect(uv_connect_t *req, int status) {
 // Before usage:
 //     Open_Socket() -- to allocate the socket
 //
-REBVAL *Request_Connect_Socket(const REBVAL *port)
+Value* Request_Connect_Socket(const Value* port)
 {
     SOCKREQ *sock = Sock_Of_Port(port);
     assert(not (sock->modes & RST_LISTEN));
@@ -327,7 +327,7 @@ REBVAL *Request_Connect_Socket(const REBVAL *port)
 //
 void on_new_connection(uv_stream_t *server, int status) {
     Context* listener_port_ctx = cast(Context*, server->data);
-    const REBVAL *listening_port = CTX_ARCHETYPE(listener_port_ctx);
+    const Value* listening_port = CTX_ARCHETYPE(listener_port_ctx);
     SOCKREQ *listening_sock = Sock_Of_Port(listening_port);
     UNUSED(listening_sock);
 
@@ -343,7 +343,7 @@ void on_new_connection(uv_stream_t *server, int status) {
 
     Init_Nulled(CTX_VAR(client, STD_PORT_DATA));  // just to be sure
 
-    REBVAL *c_state = CTX_VAR(client, STD_PORT_STATE);
+    Value* c_state = CTX_VAR(client, STD_PORT_STATE);
     SOCKREQ* sock = Try_Alloc(SOCKREQ);
     memset(sock, 0, sizeof(SOCKREQ));
 
@@ -392,7 +392,7 @@ void on_new_connection(uv_stream_t *server, int status) {
 // bind() command to operate on different types, there is a tcp_t vs. udp_t
 // for the socket itself.
 //
-REBVAL *Start_Listening_On_Socket(const REBVAL *port)
+Value* Start_Listening_On_Socket(const Value* port)
 {
     SOCKREQ *sock = Sock_Of_Port(port);
     sock->modes |= RST_LISTEN;
@@ -463,7 +463,7 @@ void on_read_alloc(uv_handle_t *handle, size_t suggested_size, uv_buf_t *buf)
     Reb_Read_Request *rebreq = cast(Reb_Read_Request*, handle->data);
 
     Context* port_ctx = rebreq->port_ctx;
-    REBVAL *port_data = CTX_VAR(port_ctx, STD_PORT_DATA);
+    Value* port_data = CTX_VAR(port_ctx, STD_PORT_DATA);
 
     size_t bufsize;
     if (rebreq->length == UNLIMITED)  // read maximum amount possible
@@ -508,7 +508,7 @@ void on_read(uv_stream_t *stream, ssize_t nread, const uv_buf_t *buf)
     Reb_Read_Request *rebreq = cast(Reb_Read_Request*, stream->data);
     Context* port_ctx = rebreq->port_ctx;
 
-    REBVAL *port_data = CTX_VAR(port_ctx, STD_PORT_DATA);
+    Value* port_data = CTX_VAR(port_ctx, STD_PORT_DATA);
 
     Binary* bin;
     if (Is_Nulled(port_data)) {
@@ -661,7 +661,7 @@ void on_write_finished(uv_write_t *req, int status)
 //
 static Bounce Transport_Actor(
     Level* level_,
-    REBVAL *port,
+    Value* port,
     const Symbol* verb,
     enum Transport_Type transport
 ){
@@ -669,7 +669,7 @@ static Bounce Transport_Actor(
         fail ("https://forum.rebol.info/t/fringe-udp-support-archiving/1730");
 
     Context* ctx = VAL_CONTEXT(port);
-    REBVAL *spec = CTX_VAR(ctx, STD_PORT_SPEC);
+    Value* spec = CTX_VAR(ctx, STD_PORT_SPEC);
 
     // If a transfer is in progress, the port_data is a BINARY!.  Its index
     // represents how much of the transfer has finished.  The data starts
@@ -678,11 +678,11 @@ static Bounce Transport_Actor(
     // being written...and text was allowed (even though it might be wide
     // characters, a likely oversight from the addition of unicode).
     //
-    REBVAL *port_data = CTX_VAR(ctx, STD_PORT_DATA);
+    Value* port_data = CTX_VAR(ctx, STD_PORT_DATA);
     assert(Is_Binary(port_data) or Is_Nulled(port_data));
 
     SOCKREQ *sock;
-    REBVAL *state = CTX_VAR(ctx, STD_PORT_STATE);
+    Value* state = CTX_VAR(ctx, STD_PORT_STATE);
     if (Is_Handle(state)) {
         sock = Sock_Of_Port(port);
         assert(sock->transport == transport);
@@ -729,15 +729,15 @@ static Bounce Transport_Actor(
             fail (Error_On_Port(SYM_NOT_OPEN, port, -12)); }
 
           case SYM_OPEN: {
-            REBVAL *arg = Obj_Value(spec, STD_PORT_SPEC_NET_HOST);
-            REBVAL *port_id = Obj_Value(spec, STD_PORT_SPEC_NET_PORT_ID);
+            Value* arg = Obj_Value(spec, STD_PORT_SPEC_NET_HOST);
+            Value* port_id = Obj_Value(spec, STD_PORT_SPEC_NET_PORT_ID);
 
             // OPEN needs to know to bind() the socket to a local port before
             // the first sendto() is called, if the user is particular about
             // what the port ID of originating messages is.  So local_port
             // must be set before the OS_Do_Device() call.
             //
-            REBVAL *local_id = Obj_Value(spec, STD_PORT_SPEC_NET_LOCAL_ID);
+            Value* local_id = Obj_Value(spec, STD_PORT_SPEC_NET_LOCAL_ID);
             if (Is_Nulled(local_id))
                 sock->local_port_number = 0;  // let the system pick
             else if (Is_Integer(local_id))
@@ -758,7 +758,7 @@ static Bounce Transport_Actor(
 
                 // Note: sets remote_ip field
                 //
-                REBVAL *lookup_error = Lookup_Socket_Synchronously(port, arg);
+                Value* lookup_error = Lookup_Socket_Synchronously(port, arg);
                 if (lookup_error)
                     fail (lookup_error);
             }
@@ -777,12 +777,12 @@ static Bounce Transport_Actor(
             else
                 fail (Error_On_Port(SYM_INVALID_SPEC, port, -10));
 
-            REBVAL *open_error = Open_Socket(port);
+            Value* open_error = Open_Socket(port);
             if (open_error)
                 fail (open_error);
 
             if (listen) {
-                REBVAL *listen_error = Start_Listening_On_Socket(port);
+                Value* listen_error = Start_Listening_On_Socket(port);
                 if (listen_error)
                     fail (listen_error);
             }
@@ -901,7 +901,7 @@ static Bounce Transport_Actor(
         // that point (always UTF-8 bytes)...but the port model needs a top
         // to bottom review of what types are accepted where and why.
         //
-        REBVAL *data = ARG(data);
+        Value* data = ARG(data);
 
         // When we get the callback we'll get the libuv req pointer, which is
         // the same pointer as the rebreq (first struct member).
@@ -957,7 +957,7 @@ static Bounce Transport_Actor(
         // !!! There are bigger plans for a QUERY dialect (like PARSE).  This
         // old behavior of getting the IP addresses is for legacy only.
 
-        REBVAL *result = rebValue(
+        Value* result = rebValue(
             "copy ensure object! (@", port, ").scheme.info"
         );  // shallow copy
 
@@ -987,7 +987,7 @@ static Bounce Transport_Actor(
 
       case SYM_CLOSE: {
         if (sock->stream) {  // allows close of closed socket (?)
-            REBVAL *error = Close_Socket(port);
+            Value* error = Close_Socket(port);
             if (error)
                 fail (error);
         }
@@ -1000,7 +1000,7 @@ static Bounce Transport_Actor(
         //
         // UDP is connectionless so it will not add to the connectors.
         //
-        REBVAL *error = Request_Connect_Socket(port);
+        Value* error = Request_Connect_Socket(port);
         if (error != nullptr)
             fail (error);
 
@@ -1017,7 +1017,7 @@ static Bounce Transport_Actor(
 //
 //  TCP_Actor: C
 //
-static Bounce TCP_Actor(Level* level_, REBVAL *port, const Symbol* verb)
+static Bounce TCP_Actor(Level* level_, Value* port, const Symbol* verb)
 {
     return Transport_Actor(level_, port, verb, TRANSPORT_TCP);
 }
@@ -1026,7 +1026,7 @@ static Bounce TCP_Actor(Level* level_, REBVAL *port, const Symbol* verb)
 //
 //  UDP_Actor: C
 //
-static Bounce UDP_Actor(Level* level_, REBVAL *port, const Symbol* verb)
+static Bounce UDP_Actor(Level* level_, Value* port, const Symbol* verb)
 {
     return Transport_Actor(level_, port, verb, TRANSPORT_UDP);
 }
@@ -1180,7 +1180,7 @@ DECLARE_NATIVE(wait_p)  // See wrapping function WAIT in usermode code
     NETWORK_INCLUDE_PARAMS_OF_WAIT_P;
 
     REBLEN timeout = 0;  // in milliseconds
-    REBVAL *ports = nullptr;
+    Value* ports = nullptr;
 
     const Element* val;
     if (not Is_Block(ARG(value)))

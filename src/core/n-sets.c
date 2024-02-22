@@ -54,8 +54,8 @@
 // `skip` is the record size.
 //
 Series* Make_Set_Operation_Series(
-    const REBVAL *val1,
-    const REBVAL *val2,
+    const Value* val1,
+    const Value* val2,
     Flags flags,
     bool cased,
     REBLEN skip
@@ -180,7 +180,7 @@ Series* Make_Set_Operation_Series(
             if ((flags & SOP_FLAG_BOTH) == 0)
                 break;  // don't need to iterate over second series
 
-            const REBVAL *temp = val1;
+            const Value* temp = val1;
             val1 = val2;
             val2 = temp;
         } while (true);
@@ -263,7 +263,7 @@ Series* Make_Set_Operation_Series(
             if ((flags & SOP_FLAG_BOTH) == 0)
                 break;  // don't need to iterate over second series
 
-            const REBVAL *temp = val1;
+            const Value* temp = val1;
             val1 = val2;
             val2 = temp;
         } while (true);
@@ -346,7 +346,7 @@ Series* Make_Set_Operation_Series(
             if ((flags & SOP_FLAG_BOTH) == 0)
                 break;  // don't need to iterate over the second series
 
-            const REBVAL *temp = val1;
+            const Value* temp = val1;
             val1 = val2;
             val2 = temp;
         } while (true);
