@@ -1047,6 +1047,31 @@ default-combinators: make map! reduce [
         return unmeta result'
     ]
 
+    === ACCUMULATE ===
+
+    ; The pattern of `collect [try some keep [...]]` is common, and actually
+    ; kind of easy to mess up by writing COLLECT KEEP SOME or just forgetting
+    ; the KEEP entirely.
+    ;
+    ; ACCUMULATE gives you that pattern more easily and efficiently.
+
+    'accumulate combinator [
+        return: "Block of collected values"
+            [block!]
+        parser [action?]
+        <local> collected
+    ][
+        collected: copy []
+        remainder: input
+        cycle [
+            append collected (
+                [@ remainder]: parser remainder except e -> [
+                    return collected
+                ]
+            )
+        ]
+    ]
+
     === GATHER AND EMIT ===
 
     ; With gather, the idea is to do more of a "bubble-up" sort of strategy
@@ -3068,36 +3093,6 @@ parse-: (comment [redescribe [  ; redescribe not working at the moment (?)
     ]
 )
 
-
-parse+: (comment [redescribe [  ; redescribe not working at the moment (?)
-    {Process input in the parse dialect, passes error to ELSE}
-] ]
-    enclose :parse* func [f <local> obj] [
-        let [^synthesized' pending]: do f except e -> [
-            ;
-            ; Providing both a THEN and an ELSE is interpreted as allowing
-            ; the THEN clause to run, and passing through the object with
-            ; the ELSE clause intact.  In this case it is used so that having
-            ; a THEN is considered sufficient observation to defuse raising
-            ; an error on an unobserved parse failure.
-            ;
-            obj: make object! compose [
-                then: [
-                    decay: null'  ; defuse unchecked error
-                    obj.then: ~  ; don't let this hook get called again
-                    lazy obj  ; leave REIFY and ELSE available
-                ]
-                else: '(branch -> [if e (:branch)])
-                decay: '([raise e])
-            ]
-            return lazy obj
-        ]
-        if not empty-or-null? [
-            fail "PARSE completed, but pending array was not empty"
-        ]
-        return heavy unmeta synthesized'
-    ]
-)
 
 sys.util.parse: runs :parse  ; !!! expose UPARSE to SYS.UTIL module, hack...
 
