@@ -424,7 +424,7 @@ bool Typecheck_Coerce_Argument(
   blockscope {
     const Array* spec = try_unwrap(Cell_Parameter_Spec(param));
     const Byte* optimized = spec->misc.any.at_least_4;
-    const Byte* optimized_tail = optimized + sizeof(uintptr_t);
+    const Byte* optimized_tail = optimized + sizeof(spec->misc.any.at_least_4);
 
     if (Get_Parameter_Flag(param, NOOP_IF_VOID))
         assert(not Is_Stable(arg) or not Is_Void(arg));  // should've bypassed

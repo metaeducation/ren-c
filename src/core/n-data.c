@@ -2153,8 +2153,8 @@ DECLARE_NATIVE(as)
                     Cell_String_At(v),
                     utf8_size + 1  // copy the '\0' terminator
                 );
-                EXTRA(Bytes, OUT).exactly_4[IDX_EXTRA_USED] = utf8_size;
-                EXTRA(Bytes, OUT).exactly_4[IDX_EXTRA_LEN] = len;
+                EXTRA(Bytes, OUT).at_least_4[IDX_EXTRA_USED] = utf8_size;
+                EXTRA(Bytes, OUT).at_least_4[IDX_EXTRA_LEN] = len;
             }
             else {
                 if (not Try_As_String(

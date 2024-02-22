@@ -947,8 +947,8 @@ inline static Value* Init_Zeroed_Hack(Cell* out, Heart heart) {
         Reset_Unquoted_Header_Untracked(
             TRACK(out), FLAG_HEART_BYTE(heart) | CELL_MASK_NO_NODES
         );
-        memset(&out->extra, 0, sizeof(union ValueExtraUnion));
-        memset(&out->payload, 0, sizeof(union ValuePayloadUnion));
+        memset(&out->extra, 0, sizeof(union ExtraUnion));
+        memset(&out->payload, 0, sizeof(union PayloadUnion));
     }
     return cast(Value*, out);
 }

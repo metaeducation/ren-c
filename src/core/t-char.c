@@ -263,7 +263,7 @@ void MF_Sigil(REB_MOLD *mo, const Cell* v, bool form)
     UNUSED(form);
 
     const char* utf8 = cs_cast(PAYLOAD(Bytes, v).at_least_8);
-    Size size = EXTRA(Bytes, v).exactly_4[IDX_EXTRA_USED];
+    Size size = EXTRA(Bytes, v).at_least_4[IDX_EXTRA_USED];
     Append_Utf8(mo->series, utf8, size);
 }
 

@@ -43,7 +43,7 @@ INLINE bool IS_CHAR_CELL(const Cell* v) {
     if (Get_Cell_Flag(v, STRINGLIKE_HAS_NODE))
         return false;  // allocated form, too long to be a character
 
-    return EXTRA(Bytes, v).exactly_4[IDX_EXTRA_LEN] <= 1;  // codepoint
+    return EXTRA(Bytes, v).at_least_4[IDX_EXTRA_LEN] <= 1;  // codepoint
 }
 
 INLINE bool IS_CHAR(const Atom* v) {
@@ -55,10 +55,10 @@ INLINE bool IS_CHAR(const Atom* v) {
 INLINE Codepoint Cell_Codepoint(const Cell* v) {
     assert(Not_Cell_Flag(v, STRINGLIKE_HAS_NODE));
 
-    if (EXTRA(Bytes, v).exactly_4[IDX_EXTRA_LEN] == 0)
+    if (EXTRA(Bytes, v).at_least_4[IDX_EXTRA_LEN] == 0)
         return 0;  // no '\0` bytes internal to series w/REB_TEXT "heart"
 
-    assert(EXTRA(Bytes, v).exactly_4[IDX_EXTRA_LEN] == 1);  // e.g. codepoint
+    assert(EXTRA(Bytes, v).at_least_4[IDX_EXTRA_LEN] == 1);  // e.g. codepoint
 
     Codepoint c;
     Back_Scan_UTF8_Char_Unchecked(&c, PAYLOAD(Bytes, v).at_least_8);
@@ -76,7 +76,7 @@ INLINE Byte Cell_Char_Encoded_Size(const Cell* v)
 INLINE const Byte* VAL_CHAR_ENCODED(const Cell* v) {
     assert(Cell_Heart(v) == REB_ISSUE);
     assert(Not_Cell_Flag(v, STRINGLIKE_HAS_NODE));
-    assert(EXTRA(Bytes, v).exactly_4[IDX_EXTRA_LEN] <= 1);  // e.g. codepoint
+    assert(EXTRA(Bytes, v).at_least_4[IDX_EXTRA_LEN] <= 1);  // e.g. codepoint
     return PAYLOAD(Bytes, v).at_least_8;  // !!! '\0' terminated or not?
 }
 
@@ -93,8 +93,8 @@ INLINE Value* Init_Issue_Utf8(
         );
         memcpy(PAYLOAD(Bytes, out).at_least_8, utf8, size);
         PAYLOAD(Bytes, out).at_least_8[size] = '\0';
-        EXTRA(Bytes, out).exactly_4[IDX_EXTRA_USED] = size;
-        EXTRA(Bytes, out).exactly_4[IDX_EXTRA_LEN] = len;
+        EXTRA(Bytes, out).at_least_4[IDX_EXTRA_USED] = size;
+        EXTRA(Bytes, out).at_least_4[IDX_EXTRA_LEN] = len;
     }
     else {
         String* str = Make_Sized_String_UTF8(cs_cast(utf8), size);
@@ -123,8 +123,8 @@ INLINE Value* Init_Char_Unchecked_Untracked(Cell* out, Codepoint c) {
         // in TEXT!.  The state is recognized specially by CODEPOINT OF, but
         // still needs to be '\0' terminated (e.g. for AS TEXT!)
         //
-        EXTRA(Bytes, out).exactly_4[IDX_EXTRA_USED] = 0;
-        EXTRA(Bytes, out).exactly_4[IDX_EXTRA_LEN] = 0;
+        EXTRA(Bytes, out).at_least_4[IDX_EXTRA_USED] = 0;
+        EXTRA(Bytes, out).at_least_4[IDX_EXTRA_LEN] = 0;
         PAYLOAD(Bytes, out).at_least_8[0] = '\0';  // terminate
     }
     else {
@@ -132,8 +132,8 @@ INLINE Value* Init_Char_Unchecked_Untracked(Cell* out, Codepoint c) {
         Encode_UTF8_Char(PAYLOAD(Bytes, out).at_least_8, c, encoded_size);
         PAYLOAD(Bytes, out).at_least_8[encoded_size] = '\0';  // terminate
 
-        EXTRA(Bytes, out).exactly_4[IDX_EXTRA_USED] = encoded_size;  // bytes
-        EXTRA(Bytes, out).exactly_4[IDX_EXTRA_LEN] = 1;  // just one codepoint
+        EXTRA(Bytes, out).at_least_4[IDX_EXTRA_USED] = encoded_size;  // bytes
+        EXTRA(Bytes, out).at_least_4[IDX_EXTRA_LEN] = 1;  // just one codepoint
     }
 
     HEART_BYTE(out) = REB_ISSUE;  // heart is TEXT, presents as issue
@@ -253,13 +253,13 @@ INLINE Element* Init_Sigil(Sink(Element*) out, Sigil sigil) {
         Init_Char_Unchecked(out, c);
     }
     HEART_BYTE(out) = REB_SIGIL;
-    EXTRA(Bytes, out).exactly_4[IDX_EXTRA_SIGIL] = sigil;
+    EXTRA(Bytes, out).at_least_4[IDX_EXTRA_SIGIL] = sigil;
     return out;
 }
 
 INLINE Sigil Cell_Sigil(const Cell* cell) {
     assert(Cell_Heart(cell) == REB_SIGIL);
-    Byte sigil_byte = EXTRA(Bytes, cell).exactly_4[IDX_EXTRA_SIGIL];
+    Byte sigil_byte = EXTRA(Bytes, cell).at_least_4[IDX_EXTRA_SIGIL];
     assert(sigil_byte != 0 and sigil_byte < SIGIL_MAX);
     return u_cast(Sigil, sigil_byte);
 }
@@ -292,9 +292,9 @@ INLINE Utf8(const*) Cell_Utf8_Len_Size_At_Limit(
         //
         // Note that unsigned cast of UNLIMITED as -1 to REBLEN is a large #
         //
-        if (cast(REBLEN, limit) >= EXTRA(Bytes, v).exactly_4[IDX_EXTRA_LEN]) {
-            len = EXTRA(Bytes, v).exactly_4[IDX_EXTRA_LEN];
-            size = EXTRA(Bytes, v).exactly_4[IDX_EXTRA_USED];
+        if (cast(REBLEN, limit) >= EXTRA(Bytes, v).at_least_4[IDX_EXTRA_LEN]) {
+            len = EXTRA(Bytes, v).at_least_4[IDX_EXTRA_LEN];
+            size = EXTRA(Bytes, v).at_least_4[IDX_EXTRA_USED];
         }
         else {
             len = 0;

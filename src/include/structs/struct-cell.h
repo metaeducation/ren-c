@@ -374,7 +374,9 @@ typedef struct StubStruct Stub;  // forward decl for DEBUG_USE_UNION_PUNS
 // It's also likely preferred by x86.
 //
 
-struct CharacterExtraStruct { Codepoint codepoint; };  // see %sys-char.h
+struct CharacterExtraStruct {  // see %sys-char.h
+    Codepoint codepoint;  // !!! Surrogates are "codepoints"...disallow them?
+};
 
 struct DateExtraStruct  // see %sys-time.h
 {
@@ -387,6 +389,10 @@ struct DateExtraStruct  // see %sys-time.h
 struct ParameterExtraStruct  // see %sys-parameter.h
 {
     Flags parameter_flags;  // PARAMETER_FLAG_XXX and PARAMCLASS_BYTE
+};
+
+struct BytesExtraStruct {
+    Byte at_least_4[sizeof(uintptr_t)];
 };
 
 union AnyUnion {  // needed to beat strict aliasing, used in payload
@@ -423,7 +429,6 @@ union AnyUnion {  // needed to beat strict aliasing, used in payload
     RebolValue* cell_pun;
   #endif
 
-    Byte exactly_4[sizeof(uint32_t)];
     Byte at_least_4[sizeof(uintptr_t)];
 
     // This should be initialized with ZERO_UNUSED, which permits optimization
@@ -433,12 +438,7 @@ union AnyUnion {  // needed to beat strict aliasing, used in payload
     void *corrupt;
 };
 
-union BytesExtraUnion {
-    Byte exactly_4[sizeof(uint32_t)];
-    Byte at_least_4[sizeof(uintptr_t)];
-};
-
-// These indices are used into exactly_4 when used as in-cell storage.
+// These indices are used into at_least_4 when used as in-cell storage.
 //
 #define IDX_EXTRA_USED 0
 #define IDX_EXTRA_LEN 1
@@ -450,14 +450,14 @@ union BytesExtraUnion {
 //
 #define IDX_SEQUENCE_USED 0  // index into at_least_8 when used for storage
 
-union ValueExtraUnion { //=/////////////////// ACTUAL EXTRA DEFINITION ////=//
+union ExtraUnion { //=//////////////////////// ACTUAL EXTRA DEFINITION ////=//
 
     struct CharacterExtraStruct Character;
     struct DateExtraStruct Date;
     struct ParameterExtraStruct Parameter;
+    struct BytesExtraStruct Bytes;
 
     union AnyUnion Any;
-    union BytesExtraUnion Bytes;
 };
 
 
@@ -489,16 +489,9 @@ struct TimePayloadStruct {  // see %sys-time.h
     REBI64 nanoseconds;
 };
 
-struct AnyPayloadStruct  // generic, for adding payloads after-the-fact
+struct BytesPayloadStruct
 {
-    union AnyUnion first;
-    union AnyUnion second;
-};
-
-union BytesPayloadUnion  // IMPORTANT: Do not cast, use `Pointers` instead
-{
-    Byte exactly_8[sizeof(uint32_t) * 2];  // same on 32-bit/64-bit platforms
-    Byte at_least_8[sizeof(void*) * 2];  // size depends on platform
+    Byte at_least_8[sizeof(uintptr_t) * 2];  // size depends on platform
 };
 
 // COMMA! is not Cell_Extra_Needs_Mark(), and doesn't use its payload.
@@ -523,7 +516,13 @@ struct CommaPayloadStruct {
     const void* const* packed;
 };
 
-union ValuePayloadUnion { //=/////////////// ACTUAL PAYLOAD DEFINITION ////=//
+struct AnyPayloadStruct  // generic, for adding payloads after-the-fact
+{
+    union AnyUnion first;
+    union AnyUnion second;
+};
+
+union PayloadUnion { //=//////////////////// ACTUAL PAYLOAD DEFINITION ////=//
 
     // Due to strict aliasing, if a routine is going to generically access a
     // node (e.g. to exploit common checks for mutability) it has to do a
@@ -553,15 +552,14 @@ union ValuePayloadUnion { //=/////////////// ACTUAL PAYLOAD DEFINITION ////=//
     //     REBINT signed_param_index;  // if negative, consider arg enfixed
     //     Action* phase;  // where to look up parameter by its offset
 
-    struct AnyPayloadStruct Any;
-
     struct CharacterPayloadStruct Character;
     struct IntegerPayloadStruct Integer;
     struct DecimalPayloadStruct Decimal;
     struct TimePayloadStruct Time;
-
-    union BytesPayloadUnion Bytes;
+    struct BytesPayloadStruct Bytes;
     struct CommaPayloadStruct Comma;
+
+    struct AnyPayloadStruct Any;
 
   #if !defined(NDEBUG) // unsafe "puns" for easy debug viewing in C watchlist
     int64_t int64_pun;
@@ -610,13 +608,13 @@ union ValuePayloadUnion { //=/////////////// ACTUAL PAYLOAD DEFINITION ////=//
 #endif
     {
         union HeaderUnion header;
-        union ValueExtraUnion extra;
-        union ValuePayloadUnion payload;
+        union ExtraUnion extra;
+        union PayloadUnion payload;
 
       #if DEBUG_TRACK_EXTEND_CELLS  // can be VERY handy [2]
         const char *file;  // is Byte (UTF-8), but char* for debug watch
         uintptr_t line;
-        uintptr_t tick;  // stored in the ValueExtraUnion for basic tracking
+        uintptr_t tick;
         uintptr_t touch;  // see TOUCH_CELL(), pads out to 4 * sizeof(void*)
       #endif
 
