@@ -48,6 +48,12 @@
     null = parse+ "a" [some "a" (null)] else e -> [<unreachable>]
 )
 
+; MATCH-PARSE gives back the input (synonym for PARSE with [rules || <input>])
+[
+    ("aaa" = match-parse "aaa" [some #a])
+    (null = match-parse "aaa" [some #b])
+]
+
 ; TRASH should be allowable as a combinator result.
 [
     (trash? parse "a" ["a" (~)])
