@@ -2933,15 +2933,31 @@ parsify: func [
 ; could write `if parse data rules [...]` and easily react to finding out if
 ; the rules matched the input to completion.
 ;
-; While this bias stuck with UPARSE in the beginning, the deeper power of
-; returning the evaluated result made it hugely desirable as the main form
-; that owns the word "PARSE".  A version that does not check to completion
-; is fundamentally the most powerful, since it can just make HERE the last
-; result...and then check that the result is at the tail.  Other variables
-; can be set as well.
+; But UPARSE goes deeper by letting rules evaluate to arbitrary results, and
+; bubbles out the final result.  All values are in-band, so nothing like NULL
+; or FALSE can be drawn out as signals of a lack of completion...definitional
+; errors, and hence EXCEPT must be used:
 ;
-; So this formulates everything on top of a PARSE* that returns the sythesized
-; result
+;     result: parse data rules except [...]
+;
+; But there's a parse variant called VALIDATE which returns the input matched,
+; or it returns null:
+;
+;     >> validate "aaa" [some #a]
+;     == "aaa"
+;
+;     >> validate "aaa" [some #b]
+;     == ~null~  ; anti
+;
+; So for those who prefer to use IF to know about a parse's success or failure
+; they can just use VALIDATE instead.
+;
+; There is a core implementation for this called PARSE*, which is exposed
+; separately in order to allow handling the case when pending values have
+; not been all emitted.  This is utilized by things like the underlining
+; EPARSE demo in the web console, where combinators are used to mark ranges
+; in the text...but these need to be able to participate in the rollback
+; mechanism.  So they are gathered in pending.
 
 parse*: func [
     {Process as much of the input as parse rules consume (see also PARSE)}

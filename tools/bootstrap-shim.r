@@ -524,29 +524,13 @@ write: adapt :lib/write [
     if text? data [data: to binary! data]
 ]
 
-; PARSE is being changed to a more powerful interface that returns synthesized
-; parse products.  So just testing for matching or not is done with PARSE2,
-; to avoid conflating successful-but-null-bearing-parses with failure.
+; Bootstrap strategy is to base the code on Rebol2-style PARSE, which UPARSE
+; should be able to emulate.  While it has the rules of Rebol2 PARSE, the
+; result is null on failure in order to be ELSE-triggering.
 ;
-parse2: func3 [series rules] [
-    ;
-    ; Make it so that if the rules end in `|| <input>` then the parse will
-    ; return the input.
-    ;
-    if lib/all [
-        (the <input>) = last rules
-        (the ||) =  first back tail rules
-    ][
-        rules: copy rules
-        take back tail rules
-        take back tail rules
-        if not lib/parse series rules [return null]
-        return series
-    ]
+parse2: :lib/parse
+assert [parse2 "a" ["b"] then [false] else [true]]
 
-    if not lib/parse series rules [return null]
-    return lib/void
-]
 parse: does [
     fail "Only PARSE2 is available in bootstrap executable, not PARSE"
 ]

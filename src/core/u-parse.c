@@ -2772,7 +2772,7 @@ DECLARE_NATIVE(parse3)
     // !!! Look for the special pattern `parse ... [collect [x]]` and delegate
     // to a fabricated `parse [temp: collect [x]]` so we can return temp.
     // This hack is just to give a sense of the coming benefit of synthesized
-    // parse rules, to help realize why PARSE? vs PARSE vs PARSE* exist.
+    // parse rules.
     if (
         rules_at != rules_tail
         and rules_at + 1 != rules_tail

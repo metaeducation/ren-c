@@ -291,7 +291,7 @@ export make-emitter: func [
 
     temporary: to-logic any [
         temporary
-        did parse2 stem ["tmp-" to end]
+        parse2 stem ["tmp-" to end]
     ]
 
     let is-c: did parse2 stem [thru [".c" | ".h" | ".inc"] end]

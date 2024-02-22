@@ -302,11 +302,11 @@ e-strings/emit {
 }
 for-each line read/lines %a-constants.c [
     case [
-        did parse2 line ["#define" to end] [
+        parse2 line ["#define" to end] [
             e-strings/emit line
             e-strings/emit newline
         ]
-        did parse2 line [to {const } copy constd to { =} to end] [
+        parse2 line [to {const } copy constd to { =} to end] [
             e-strings/emit [constd {
                 extern $<Constd>;
             }]

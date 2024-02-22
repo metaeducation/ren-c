@@ -70,7 +70,7 @@ disable-user-includes: func [
     ]
 
     for-next line-iter lines [
-        did parse2 line-iter/1 [
+        parse2 line-iter/1 [
             opt some space {#}
             opt some space {include}
             some space, include-rule, to <end>
