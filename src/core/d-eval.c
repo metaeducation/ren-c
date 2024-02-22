@@ -56,7 +56,7 @@
 //
 void Dump_Level_Location(Level* L)
 {
-    DECLARE_LOCAL (dump);
+    DECLARE_ATOM (dump);
 
     if (
         L->executor == &Evaluator_Executor  // looks ahead by one
@@ -170,7 +170,7 @@ static void Evaluator_Shared_Checks_Debug(Level* L)
 //     L->out
 //     Atom pointer to which the evaluation's result should be written.
 //     Should be to writable memory in a cell that lives above this call to
-//     the evalutor in stable memory (not user-visible, e.g. DECLARE_LOCAL
+//     the evalutor in stable memory (not user-visible, e.g. DECLARE_ATOM
 //     or the parent's L->spare).  This can't point into an array whose memory
 //     may move during arbitrary evaluation, and that includes cells on the
 //     expandable data stack.  It also usually can't write a function argument

@@ -557,7 +557,7 @@ REBLEN Find_Value_In_Binstr(
             formed = Copy_Form_Cell(pattern, 0);
         }
 
-        DECLARE_LOCAL (temp);  // !!! Note: unmanaged
+        DECLARE_ATOM (temp);  // !!! Note: unmanaged
         if (formed) {
             Reset_Unquoted_Header_Untracked(temp, CELL_MASK_TEXT);
             Init_Cell_Node1(temp, formed);

@@ -198,8 +198,8 @@ Bounce MAKE_Decimal(
         if (Cell_Sequence_Len(arg) != 2)
             goto bad_make;
 
-        DECLARE_STABLE (numerator);
-        DECLARE_STABLE (denominator);
+        DECLARE_VALUE (numerator);
+        DECLARE_VALUE (denominator);
         Derelativize_Sequence_At(
             numerator,
             arg,
@@ -342,8 +342,8 @@ Bounce TO_Decimal(Level* level_, Kind k, const Value* arg)
         if (Cell_Sequence_Len(arg) != 2)
             goto bad_to;
 
-        DECLARE_LOCAL (numerator);  // decompress path from cell into values
-        DECLARE_LOCAL (denominator);
+        DECLARE_ATOM (numerator);  // decompress path from cell into values
+        DECLARE_ATOM (denominator);
         Copy_Sequence_At(numerator, arg, 0);
         Copy_Sequence_At(denominator, arg, 1);
 

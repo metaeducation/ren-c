@@ -1242,7 +1242,7 @@ void RL_rebPushContinuation(
 ){
     ENTER_API;
 
-    DECLARE_STABLE (block);
+    DECLARE_VALUE (block);
     RL_rebTranscodeInto(block, p, vaptr);  // use "RL_" [1]
 
     Init_Void(PUSH());  // primed result
@@ -1395,7 +1395,7 @@ void RL_rebElide(const void *p, va_list *vaptr)
 {
     ENTER_API;
 
-    DECLARE_LOCAL (elided);
+    DECLARE_ATOM (elided);
     Run_Va_Undecayed_May_Fail_Calls_Va_End(elided, p, vaptr);
 }
 
@@ -1425,7 +1425,7 @@ void RL_rebJumps(const void *p, va_list *vaptr)
 {
     ENTER_API;
 
-    DECLARE_STABLE (dummy);
+    DECLARE_VALUE (dummy);
     Run_Va_Decay_May_Fail_Calls_Va_End(dummy, p, vaptr);
 
     // Note: If we just `fail()` here, then while MSVC compiles %a-lib.c at
@@ -1460,7 +1460,7 @@ bool RL_rebDid(const void *p, va_list *vaptr)
 {
     ENTER_API;
 
-    DECLARE_LOCAL (condition);
+    DECLARE_ATOM (condition);
     Run_Va_Undecayed_May_Fail_Calls_Va_End(condition, p, vaptr);
 
     return not Is_Nulled(condition) and not Is_Void(condition);
@@ -1481,7 +1481,7 @@ bool RL_rebDidnt(const void *p, va_list *vaptr)
 {
     ENTER_API;
 
-    DECLARE_LOCAL (condition);
+    DECLARE_ATOM (condition);
     Run_Va_Undecayed_May_Fail_Calls_Va_End(condition, p, vaptr);
 
     return Is_Nulled(condition) or Is_Void(condition);
@@ -1500,7 +1500,7 @@ bool RL_rebTruthy(const void *p, va_list *vaptr)
 {
     ENTER_API;
 
-    DECLARE_STABLE (condition);
+    DECLARE_VALUE (condition);
     Run_Va_Decay_May_Fail_Calls_Va_End(condition, p, vaptr);
 
     return Is_Truthy(condition);  // will fail() on (most) antiforms
@@ -1517,7 +1517,7 @@ bool RL_rebNot(const void *p, va_list *vaptr)
 {
     ENTER_API;
 
-    DECLARE_STABLE (condition);
+    DECLARE_VALUE (condition);
     Run_Va_Decay_May_Fail_Calls_Va_End(condition, p, vaptr);
 
     return Is_Falsey(condition);  // will fail() on (most) antiforms
@@ -1539,7 +1539,7 @@ intptr_t RL_rebUnbox(const void *p, va_list *vaptr)
 {
     ENTER_API;
 
-    DECLARE_STABLE (result);
+    DECLARE_VALUE (result);
     Run_Va_Decay_May_Fail_Calls_Va_End(result, p, vaptr);
 
     if (Is_Logic(result)) {
@@ -1567,7 +1567,7 @@ bool RL_rebUnboxLogic(
 ){
     ENTER_API;
 
-    DECLARE_STABLE (result);
+    DECLARE_VALUE (result);
     Run_Va_Decay_May_Fail_Calls_Va_End(result, p, vaptr);
 
     if (not Is_Logic(result))
@@ -1586,7 +1586,7 @@ intptr_t RL_rebUnboxInteger(
 ){
     ENTER_API;
 
-    DECLARE_STABLE (result);
+    DECLARE_VALUE (result);
     Run_Va_Decay_May_Fail_Calls_Va_End(result, p, vaptr);
 
     if (not Is_Integer(result))
@@ -1604,7 +1604,7 @@ double RL_rebUnboxDecimal(
 ){
     ENTER_API;
 
-    DECLARE_STABLE (result);
+    DECLARE_VALUE (result);
     Run_Va_Decay_May_Fail_Calls_Va_End(result, p, vaptr);
 
     if (Is_Decimal(result))
@@ -1625,7 +1625,7 @@ uint32_t RL_rebUnboxChar(
 ){
     ENTER_API;
 
-    DECLARE_STABLE (result);
+    DECLARE_VALUE (result);
     Run_Va_Decay_May_Fail_Calls_Va_End(result, p, vaptr);
 
     if (not IS_CHAR(result))
@@ -1710,7 +1710,7 @@ size_t RL_rebSpellInto(
 ){
     ENTER_API;
 
-    DECLARE_STABLE (v);
+    DECLARE_VALUE (v);
     Run_Va_Decay_May_Fail_Calls_Va_End(v, p, vaptr);
 
     return Spell_Into(buf, buf_size, v);
@@ -1730,7 +1730,7 @@ char *RL_rebSpellMaybe(const void *p, va_list *vaptr)
 {
     ENTER_API;
 
-    DECLARE_STABLE (v);
+    DECLARE_VALUE (v);
     Run_Va_Decay_May_Fail_Calls_Va_End(v, p, vaptr);
 
     if (Is_Nulled(v))
@@ -1829,7 +1829,7 @@ unsigned int RL_rebSpellIntoWide(
 ){
     ENTER_API;
 
-    DECLARE_STABLE (v);
+    DECLARE_VALUE (v);
     Run_Va_Decay_May_Fail_Calls_Va_End(v, p, vaptr);
 
     return Spell_Into_Wide(buf, buf_chars, v);
@@ -1846,7 +1846,7 @@ REBWCHAR *RL_rebSpellWideMaybe(const void *p, va_list *vaptr)
 {
     ENTER_API;
 
-    DECLARE_STABLE (v);
+    DECLARE_VALUE (v);
     Run_Va_Decay_May_Fail_Calls_Va_End(v, p, vaptr);
 
     if (Is_Nulled(v))
@@ -1949,7 +1949,7 @@ size_t RL_rebBytesInto(
 ){
     ENTER_API;
 
-    DECLARE_STABLE (v);
+    DECLARE_VALUE (v);
     Run_Va_Decay_May_Fail_Calls_Va_End(v, p, vaptr);
 
     return Bytes_Into(buf, buf_size, v);
@@ -1969,7 +1969,7 @@ unsigned char *RL_rebBytesMaybe(
 ){
     ENTER_API;
 
-    DECLARE_STABLE (v);
+    DECLARE_VALUE (v);
     Run_Va_Decay_May_Fail_Calls_Va_End(v, p, vaptr);
 
     if (Is_Nulled(v)) {

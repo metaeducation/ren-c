@@ -530,7 +530,7 @@ INLINE Value* Lookup_Mutable_Word_May_Fail(
     // not just contexts, but individual fields as protected.
     //
     if (Get_Cell_Flag(var, PROTECTED)) {
-        DECLARE_LOCAL (unwritable);
+        DECLARE_ATOM (unwritable);
         Init_Word(unwritable, Cell_Word_Symbol(any_word));
         fail (Error_Protected_Word_Raw(unwritable));
     }

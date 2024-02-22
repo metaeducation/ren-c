@@ -731,10 +731,10 @@ static Context* Error_Syntax(SCAN_STATE *ss, Token token) {
     assert(ss->end and not Is_Pointer_Corrupt_Debug(ss->end));
     assert(ss->end >= ss->begin);
 
-    DECLARE_LOCAL (token_name);
+    DECLARE_ATOM (token_name);
     Init_Text(token_name, Make_String_UTF8(Token_Names[token]));
 
-    DECLARE_LOCAL (token_text);
+    DECLARE_ATOM (token_text);
     Init_Text(
         token_text,
         Make_Sized_String_UTF8(
@@ -759,7 +759,7 @@ static Context* Error_Syntax(SCAN_STATE *ss, Token token) {
 // report all the unclosed terms.
 //
 static Context* Error_Missing(SCAN_LEVEL *level, char wanted) {
-    DECLARE_LOCAL (expected);
+    DECLARE_ATOM (expected);
     Init_Text(expected, Make_Codepoint_String(wanted));
 
     Context* error = Error_Scan_Missing_Raw(expected);
@@ -794,7 +794,7 @@ static Context* Error_Missing(SCAN_LEVEL *level, char wanted) {
 // For instance, `load "abc ]"`
 //
 static Context* Error_Extra(SCAN_STATE *ss, char seen) {
-    DECLARE_LOCAL (unexpected);
+    DECLARE_ATOM (unexpected);
     Init_Text(unexpected, Make_Codepoint_String(seen));
 
     Context* error = Error_Scan_Extra_Raw(unexpected);
@@ -2413,7 +2413,7 @@ Bounce Scanner_Executor(Level* const L) {
         Set_Series_Flag(array, LINK_NODE_NEEDS_MARK);
 
         if (Array_Len(array) == 0 or not Is_Word(Array_Head(array))) {
-            DECLARE_LOCAL (temp);
+            DECLARE_ATOM (temp);
             Init_Block(temp, array);
             return RAISE(Error_Malconstruct_Raw(temp));
         }
@@ -2443,7 +2443,7 @@ Bounce Scanner_Executor(Level* const L) {
                 break;
 
               default: {
-                DECLARE_LOCAL (temp);
+                DECLARE_ATOM (temp);
                 Init_Block(temp, array);
                 return RAISE(Error_Malconstruct_Raw(temp)); }
             }
@@ -2461,7 +2461,7 @@ Bounce Scanner_Executor(Level* const L) {
             fail ("#[xxx! [...]] construction syntax no longer supported");
         }
         else {
-            DECLARE_LOCAL (temp);
+            DECLARE_ATOM (temp);
             Init_Block(temp, array);
             return RAISE(Error_Malconstruct_Raw(temp));
         }
@@ -2610,7 +2610,7 @@ Bounce Scanner_Executor(Level* const L) {
         // Run through the generalized pop path code, which does any
         // applicable compression...and validates the array.
         //
-        DECLARE_STABLE (temp);
+        DECLARE_VALUE (temp);
 
         // !!! The scanner needs an overhaul and rewrite to be less ad hoc.
         // Right now, dots act as delimiters for tuples which messes with
@@ -2637,7 +2637,7 @@ Bounce Scanner_Executor(Level* const L) {
                 // this is an egregious hack in lieu of actually redesigning
                 // the scanner, but still pretty cool we can do it this way.)
                 //
-                DECLARE_LOCAL (items);
+                DECLARE_ATOM (items);
                 Init_Array_Cell(
                     items,
                     REB_THE_BLOCK,  // don't want to evaluate
@@ -3256,7 +3256,7 @@ Option(Array*) Try_Scan_Variadic_Feed_Utf8_Managed(Feed* feed)
         nullptr  // let scanner fetch feed->p Utf8 as new ss->begin
     );
 
-    DECLARE_LOCAL (temp);
+    DECLARE_ATOM (temp);
     Push_Level(temp, L);
     if (Trampoline_With_Top_As_Root_Throws())
         fail (Error_No_Catch_For_Throw(L));

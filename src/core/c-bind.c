@@ -1237,7 +1237,7 @@ Context* Virtual_Bind_Deep_To_New_Context(
     // build the preprocessing would most easily be done in usermode.
     //
     if (Is_Group(spec)) {
-        DECLARE_LOCAL (temp);
+        DECLARE_ATOM (temp);
         if (Do_Any_Array_At_Throws(temp, spec, SPECIFIED))
             fail (Error_No_Catch_For_Throw(TOP_LEVEL));
         Decay_If_Unstable(temp);
@@ -1460,7 +1460,7 @@ Context* Virtual_Bind_Deep_To_New_Context(
     SHUTDOWN_BINDER(&binder);
 
     if (duplicate) {
-        DECLARE_LOCAL (word);
+        DECLARE_ATOM (word);
         Init_Word(word, duplicate);
         fail (Error_Dup_Vars_Raw(word));
     }

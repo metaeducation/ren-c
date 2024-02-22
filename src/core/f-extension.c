@@ -191,7 +191,7 @@ DECLARE_NATIVE(load_extension)
     PG_Next_Native_Cfunc = cfuncs;
     PG_Currently_Loading_Module = module_ctx;
 
-    DECLARE_LOCAL (module);
+    DECLARE_ATOM (module);
     Init_Context_Cell(module, REB_MODULE, module_ctx);
     Push_GC_Guard(module);  // !!! Is GC guard unnecessary due to references?
 

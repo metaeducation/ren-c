@@ -174,7 +174,7 @@ INLINE void Free_Value(Value* v)
 // If you're going to just fail() anyway, then loose API handles are safe to
 // GC.  It's mildly inefficient to do so compared to generating a local cell:
 //
-//      DECLARE_LOCAL (specific);
+//      DECLARE_ATOM (specific);
 //      Derelativize(specific, Cell, specifier);
 //      fail (Error_Something(specific));
 //

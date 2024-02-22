@@ -134,7 +134,7 @@ INLINE void Drop_GC_Guard(const Node* node) {
 }
 
 // Cells memset 0 for speed.  But Push_Guard_Node() expects a Node, where
-// the NODE_BYTE() has NODE_FLAG_NODE set.  Use this with DECLARE_LOCAL().
+// the NODE_BYTE() has NODE_FLAG_NODE set.  Use this with DECLARE_ATOM().
 //
 INLINE void Push_GC_Guard_Erased_Cell(Cell* cell) {
     assert(FIRST_BYTE(cell) == 0);
@@ -142,4 +142,3 @@ INLINE void Push_GC_Guard_Erased_Cell(Cell* cell) {
 
     Push_Guard_Node(cell);
 }
-

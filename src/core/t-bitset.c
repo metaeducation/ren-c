@@ -36,8 +36,8 @@
 //
 REBINT CT_Bitset(const Cell* a, const Cell* b, bool strict)
 {
-    DECLARE_LOCAL (atemp);
-    DECLARE_LOCAL (btemp);
+    DECLARE_ATOM (atemp);
+    DECLARE_ATOM (btemp);
     Init_Binary(atemp, VAL_BITSET(a));
     Init_Binary(btemp, VAL_BITSET(b));
 
@@ -76,7 +76,7 @@ void MF_Bitset(REB_MOLD *mo, const Cell* v, bool form)
     if (BITS_NOT(s))
         Append_Ascii(mo->series, "[not bits ");
 
-    DECLARE_LOCAL (binary);
+    DECLARE_ATOM (binary);
     Init_Binary(binary, s);
     MF_Binary(mo, binary, false); // false = mold, don't form
 

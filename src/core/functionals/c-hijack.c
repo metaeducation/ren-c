@@ -135,7 +135,7 @@ void Push_Redo_Action_Level(Atom* out, Level* L1, const Value* run)
     if (Get_Level_Flag(L1, RAISED_RESULT_OK))
         flags |= LEVEL_FLAG_RAISED_RESULT_OK;  // inherit failure tolerance
 
-    DECLARE_LOCAL (block);
+    DECLARE_ATOM (block);
     Init_Block(block, normals);
     Level* L2 = Make_Level_At(block, flags);
     L2->baseline.stack_base = base;

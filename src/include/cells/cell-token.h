@@ -146,7 +146,7 @@ INLINE Element* Init_Char_Unchecked_Untracked(Sink(Element*) out, Codepoint c) {
 
 INLINE Context* Maybe_Init_Char_Untracked(Cell* out, uint32_t c) {
     if (c > MAX_UNI) {
-        DECLARE_LOCAL (temp);
+        DECLARE_ATOM (temp);
         return Error_Codepoint_Too_High_Raw(Init_Integer(temp, c));
     }
 

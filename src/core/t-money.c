@@ -257,7 +257,7 @@ REBTYPE(Money)
 
         Value* to = ARG(to);
 
-        DECLARE_LOCAL (temp);
+        DECLARE_ATOM (temp);
         if (REF(to)) {
             if (Is_Integer(to))
                 Init_Money(temp, int_to_deci(VAL_INT64(to)));

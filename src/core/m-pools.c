@@ -1299,7 +1299,7 @@ void Assert_Pointer_Detection_Working(void)
     // A cell with NODE_FLAG_FREE will appear to be UTF-8.  Be sure not to
     // pass such cells to the API, as Detect_Rebol_Pointer() will be wrong!
     //
-    DECLARE_LOCAL (stale_cell);
+    DECLARE_ATOM (stale_cell);
     stale_cell->header.bits =
         NODE_FLAG_NODE | NODE_FLAG_FREE | NODE_FLAG_CELL
         | FLAG_HEART_BYTE(REB_BLANK);

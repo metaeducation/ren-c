@@ -208,7 +208,7 @@ Context* Maybe_Value_To_Int64(
             || memchr(bp, 'e', size)
             || memchr(bp, 'E', size)
         ){
-            DECLARE_LOCAL (d);
+            DECLARE_ATOM (d);
             if (Scan_Decimal(d, bp, size, true)) {
                 if (
                     VAL_DECIMAL(d) < INT64_MAX

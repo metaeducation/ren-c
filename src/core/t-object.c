@@ -643,7 +643,7 @@ Bounce MAKE_Context(
         );
         Init_Context_Cell(OUT, heart, ctx); // GC guards it
 
-        DECLARE_STABLE (virtual_arg);
+        DECLARE_VALUE (virtual_arg);
         Copy_Cell(virtual_arg, arg);
 
         Virtual_Bind_Deep_To_Existing_Context(
@@ -653,7 +653,7 @@ Bounce MAKE_Context(
             REB_WORD  // all internal refs are to the object
         );
 
-        DECLARE_LOCAL (dummy);
+        DECLARE_ATOM (dummy);
         if (Do_Any_Array_At_Throws(dummy, virtual_arg, SPECIFIED))
             return BOUNCE_THROWN;
 
@@ -1023,7 +1023,7 @@ void MF_Context(REB_MOLD *mo, const Cell* v, bool form)
         else if (Is_Antiform(e.var)) {
             assert(Is_Antiform_Stable(cast(Atom*, e.var)));  // extra check
 
-            DECLARE_LOCAL (reified);
+            DECLARE_ATOM (reified);
             Copy_Cell(reified, e.var);
             Quasify_Antiform(reified);  // will become quasi...
             Mold_Value(mo, cast(Element*, reified));  // ...molds as `~xxx~`

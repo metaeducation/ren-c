@@ -416,7 +416,7 @@ Bounce Init_Thrown_Unwind_Value(
     const Atom* value,
     Level* target // required if level is INTEGER! or ACTION!
 ) {
-    DECLARE_STABLE (label);
+    DECLARE_VALUE (label);
     Copy_Cell(label, Lib(UNWIND));
 
     if (Is_Frame(seek) and Is_Frame_On_Stack(VAL_CONTEXT(seek))) {
@@ -605,7 +605,7 @@ DECLARE_NATIVE(definitional_return)
             fail (Error_Bad_Return_Type(target_level, atom));
         }
 
-        DECLARE_STABLE (label);
+        DECLARE_VALUE (label);
         Copy_Cell(label, Lib(UNWIND)); // see Make_Thrown_Unwind_Value
         g_ts.unwind_level = target_level;
 

@@ -62,8 +62,8 @@ REBINT CT_Date(const Cell* a_in, const Cell* b_in, bool strict)
     bool a_had_time = Does_Date_Have_Time(a_in);
     bool b_had_time = Does_Date_Have_Time(b_in);
 
-    DECLARE_STABLE (a);
-    DECLARE_STABLE (b);
+    DECLARE_VALUE (a);
+    DECLARE_VALUE (b);
     Dequoted_Derelativize(a, a_in, SPECIFIED);
     Dequoted_Derelativize(b, b_in, SPECIFIED);
 
@@ -106,7 +106,7 @@ void MF_Date(REB_MOLD *mo, const Cell* v_orig, bool form)
     // We can't/shouldn't modify the incoming date value we are molding, so we
     // make a copy that we can tweak during the emit process
 
-    DECLARE_LOCAL (v);
+    DECLARE_ATOM (v);
     Dequoted_Derelativize(v, v_orig, SPECIFIED);
 
     if (
@@ -218,8 +218,8 @@ REBINT Days_Between_Dates(const Value* a_in, const Value* b_in)
     if (Does_Date_Have_Zone(a_in) != Does_Date_Have_Zone(b_in))
         fail (Error_Invalid_Compare_Raw(a_in, b_in));
 
-    DECLARE_STABLE (a);
-    DECLARE_STABLE (b);
+    DECLARE_VALUE (a);
+    DECLARE_VALUE (b);
     Copy_Cell(a, a_in);
     Copy_Cell(b, b_in);
 
@@ -244,7 +244,7 @@ REBINT Days_Between_Dates(const Value* a_in, const Value* b_in)
     }
 
     if (sign == -1) {
-        DECLARE_STABLE (tmp);
+        DECLARE_VALUE (tmp);
         Copy_Cell(tmp, a);
         Copy_Cell(a, b);
         Copy_Cell(b, tmp);
@@ -281,7 +281,7 @@ REBINT Days_Between_Dates(const Value* a_in, const Value* b_in)
 //
 REBLEN Week_Day(const Value* date)
 {
-    DECLARE_STABLE (year1);
+    DECLARE_VALUE (year1);
     Copy_Cell(year1, date);
     VAL_YEAR(year1) = 0;
     VAL_MONTH(year1) = 1;
@@ -688,7 +688,7 @@ void Pick_Or_Poke_Date(
     // actually 3.)  We extract the original values so we have them if we
     // need them (e.g if asked for the UTC or zone) and adjust.
     //
-    DECLARE_STABLE (adjusted);
+    DECLARE_VALUE (adjusted);
     Copy_Cell(adjusted, v);
     Fold_Zone_Into_Date(adjusted);
     assert(not Does_Date_Have_Zone(adjusted));
@@ -899,7 +899,7 @@ void Pick_Or_Poke_Date(
             //
             // (It could also be an error if the time zones don't line up)
 
-            DECLARE_LOCAL (poke_adjusted);
+            DECLARE_ATOM (poke_adjusted);
             Copy_Cell(poke_adjusted, poke);
             Fold_Zone_Into_Date(poke_adjusted);
             assert(not Does_Date_Have_Zone(poke_adjusted));

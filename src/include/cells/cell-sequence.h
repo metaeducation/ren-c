@@ -566,7 +566,7 @@ INLINE Byte Cell_Sequence_Byte_At(
     const Cell* sequence,
     REBLEN n
 ){
-    DECLARE_LOCAL (at);
+    DECLARE_ATOM (at);
     Copy_Sequence_At(at, sequence, n);
     if (not Is_Integer(at))
         fail ("Cell_Sequence_Byte_At() used on non-byte ANY-SEQUENCE?");
@@ -616,7 +616,7 @@ INLINE bool Did_Get_Sequence_Bytes(
 
     Byte* dp = cast(Byte*, buf);
     Size i;
-    DECLARE_LOCAL (temp);
+    DECLARE_ATOM (temp);
     for (i = 0; i < buf_size; ++i) {
         if (i >= len) {
             dp[i] = 0;

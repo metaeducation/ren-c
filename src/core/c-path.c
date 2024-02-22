@@ -404,8 +404,8 @@ REBINT CT_Sequence(const Cell* a, const Cell* b, bool strict)
     if (len_a != len_b)
         return len_a < len_b ? -1 : 1;
 
-    DECLARE_LOCAL (temp_a);
-    DECLARE_LOCAL (temp_b);
+    DECLARE_ATOM (temp_a);
+    DECLARE_ATOM (temp_b);
 
     REBLEN n;
     for (n = 0; n < len_a; ++n) {

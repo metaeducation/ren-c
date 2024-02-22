@@ -181,7 +181,7 @@ bool Init_Invokable_From_Feed_Throws(
     StackIndex base = TOP_INDEX;
 
     if (Is_Word(v) or Is_Tuple(v) or Is_Path(v)) {
-        DECLARE_STABLE (steps);
+        DECLARE_VALUE (steps);
         if (Get_Var_Push_Refinements_Throws(
             out,
             steps,
@@ -206,7 +206,7 @@ bool Init_Invokable_From_Feed_Throws(
     // It probably shouldn't, but since it does we need the action afterward
     // to put the phase back.
     //
-    DECLARE_STABLE (action);
+    DECLARE_VALUE (action);
     Move_Cell(action, out);
     Push_GC_Guard(action);
 
@@ -407,13 +407,13 @@ DECLARE_NATIVE(reframer)
     //
     Copy_Cell(SPARE, LEVEL->rootvar);
     if (not Typecheck_Coerce_Argument(param, SPARE)) {
-        DECLARE_LOCAL (label_word);
+        DECLARE_ATOM (label_word);
         if (label)
             Init_Word(label_word, unwrap(label));
         else
             Init_Blank(label_word);
 
-        DECLARE_LOCAL (param_word);
+        DECLARE_ATOM (param_word);
         Init_Word(param_word, KEY_SYMBOL(key));
 
         error = Error_Expect_Arg_Raw(

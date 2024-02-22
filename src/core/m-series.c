@@ -334,7 +334,7 @@ void Remove_Any_Series_Len(Value* v, REBLEN index, REBINT len)
         // modifications of binaries that are aliases of strings do not make
         // invalid UTF-8.  Factor better...but don't repeat that work here.
         //
-        DECLARE_STABLE (temp);
+        DECLARE_VALUE (temp);
         Init_Series_Cell_At(
             temp,
             Cell_Heart_Ensure_Noquote(v),

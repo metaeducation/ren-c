@@ -392,7 +392,7 @@ void Push_Keys_And_Parameters_May_Fail(
 
         if (symbol == Canon(RETURN)) {
             if (*return_stackindex != 0) {
-                DECLARE_LOCAL (word);
+                DECLARE_ATOM (word);
                 Init_Word(word, symbol);
                 fail (Error_Dup_Vars_Raw(word));  // most dup checks are later
             }
@@ -609,7 +609,7 @@ Array* Pop_Paramlist_With_Adjunct_May_Fail(
     SHUTDOWN_BINDER(&binder);
 
     if (duplicate) {
-        DECLARE_LOCAL (word);
+        DECLARE_ATOM (word);
         Init_Word(word, duplicate);
         fail (Error_Dup_Vars_Raw(word));
     }

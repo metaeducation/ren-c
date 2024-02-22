@@ -208,7 +208,7 @@ Series* Make_Set_Operation_Series(
             //
             const String* str = Cell_String(val1);
 
-            DECLARE_LOCAL (iter);
+            DECLARE_ATOM (iter);
             Copy_Cell(iter, val1);
 
             // Iterate over first series
@@ -236,7 +236,7 @@ Series* Make_Set_Operation_Series(
 
                 if (!h) continue;
 
-                DECLARE_LOCAL (mo_value);
+                DECLARE_ATOM (mo_value);
                 Reset_Unquoted_Header_Untracked(TRACK(mo_value), CELL_MASK_TEXT);
                 Init_Cell_Node1(mo_value, mo->series);
                 VAL_INDEX_RAW(mo_value) = mo->base.index;
@@ -285,7 +285,7 @@ Series* Make_Set_Operation_Series(
 
             // Iterate over first series
             //
-            DECLARE_LOCAL (iter);
+            DECLARE_ATOM (iter);
             Copy_Cell(iter, val1);
 
             for (
@@ -311,7 +311,7 @@ Series* Make_Set_Operation_Series(
 
                 if (!h) continue;
 
-                DECLARE_LOCAL (buf_value);
+                DECLARE_ATOM (buf_value);
                 Reset_Unquoted_Header_Untracked(
                     TRACK(buf_value),
                     CELL_MASK_BINARY

@@ -439,7 +439,7 @@ Bounce MAKE_Error(
 
         Rebind_Context_Deep(root_error, e, nullptr);  // NULL=>no more binds
 
-        DECLARE_STABLE (virtual_arg);
+        DECLARE_VALUE (virtual_arg);
         Copy_Cell(virtual_arg, arg);
         Virtual_Bind_Deep_To_Existing_Context(
             virtual_arg,
@@ -448,7 +448,7 @@ Bounce MAKE_Error(
             REB_WORD
         );
 
-        DECLARE_LOCAL (evaluated);
+        DECLARE_ATOM (evaluated);
         if (Do_Any_Array_At_Throws(evaluated, virtual_arg, SPECIFIED))
             return BOUNCE_THROWN;
 
@@ -612,8 +612,8 @@ Context* Make_Error_Managed_Core(
 
     Context* root_error = VAL_CONTEXT(Get_System(SYS_STANDARD, STD_ERROR));
 
-    DECLARE_STABLE (id_value);
-    DECLARE_STABLE (type);
+    DECLARE_VALUE (id_value);
+    DECLARE_VALUE (type);
     const Value* message;  // Stack values ("movable") are allowed
     if (cat_id == SYM_0 and id == SYM_0) {
         Init_Nulled(id_value);
@@ -769,7 +769,7 @@ Context* Error(
 // without any error template in %errors.r)
 //
 Context* Error_User(const char *utf8) {
-    DECLARE_LOCAL (message);
+    DECLARE_ATOM (message);
     Init_Text(message, Make_String_UTF8(utf8));
     return Error(SYM_0, SYM_0, message, rebEND);
 }
@@ -829,7 +829,7 @@ Context* Error_Bad_Func_Def(const Element* spec, const Element* body)
     Append_Value(a, spec);
     Append_Value(a, body);
 
-    DECLARE_LOCAL (def);
+    DECLARE_ATOM (def);
     Init_Block(def, a);
 
     return Error_Bad_Func_Def_Raw(def);
@@ -841,10 +841,10 @@ Context* Error_Bad_Func_Def(const Element* spec, const Element* body)
 //
 Context* Error_No_Arg(Option(const Symbol*) label, const Symbol* symbol)
 {
-    DECLARE_LOCAL (param_word);
+    DECLARE_ATOM (param_word);
     Init_Word(param_word, symbol);
 
-    DECLARE_LOCAL (label_word);
+    DECLARE_ATOM (label_word);
     if (label)
         Init_Word(label_word, unwrap(label));
     else
@@ -885,7 +885,7 @@ Context* Error_Not_Varargs(
     // VARARGS! when fulfilled in a frame directly, not INTEGER!) then
     // an "honest" parameter has to be made to give the error.
     //
-    DECLARE_LOCAL (honest_param);
+    DECLARE_ATOM (honest_param);
     Init_Unconstrained_Parameter(
         honest_param,
         FLAG_PARAMCLASS_BYTE(PARAMCLASS_NORMAL)
@@ -910,13 +910,13 @@ Context* Error_Invalid_Arg(Level* L, const Param* param)
 
     REBLEN index = 1 + (param - headparam);
 
-    DECLARE_LOCAL (label);
+    DECLARE_ATOM (label);
     if (not L->label)
         Init_Nulled(label);
     else
         Init_Word(label, unwrap(L->label));
 
-    DECLARE_LOCAL (param_name);
+    DECLARE_ATOM (param_name);
     Init_Word(param_name, KEY_SYMBOL(ACT_KEY(Level_Phase(L), index)));
 
     Value* arg = Level_Arg(L, index);
@@ -957,10 +957,10 @@ Context* Error_Bad_Null(const Cell* target) {
 //
 Context* Error_No_Catch_For_Throw(Level* level_)
 {
-    DECLARE_LOCAL (label);
+    DECLARE_ATOM (label);
     Copy_Cell(label, VAL_THROWN_LABEL(level_));
 
-    DECLARE_LOCAL (arg);
+    DECLARE_ATOM (arg);
     CATCH_THROWN(arg, level_);
 
     if (Is_Error(label)) {  // what would have been fail()
@@ -998,7 +998,7 @@ Context* Error_Invalid_Type(Kind kind)
 //
 Context* Error_Out_Of_Range(const Cell* arg)
 {
-    DECLARE_STABLE (unquoted);
+    DECLARE_VALUE (unquoted);
     Dequoted_Derelativize(unquoted, arg, SPECIFIED);
 
     return Error_Out_Of_Range_Raw(unquoted);
@@ -1010,7 +1010,7 @@ Context* Error_Out_Of_Range(const Cell* arg)
 //
 Context* Error_Protected_Key(const Symbol* sym)
 {
-    DECLARE_LOCAL (key_name);
+    DECLARE_ATOM (key_name);
     Init_Word(key_name, sym);
 
     return Error_Protected_Word_Raw(key_name);
@@ -1022,7 +1022,7 @@ Context* Error_Protected_Key(const Symbol* sym)
 //
 Context* Error_Math_Args(Kind type, const Symbol* verb)
 {
-    DECLARE_LOCAL (verb_cell);
+    DECLARE_ATOM (verb_cell);
     Init_Word(verb_cell, verb);
     return Error_Not_Related_Raw(verb_cell, Datatype_From_Kind(type));
 }
@@ -1032,7 +1032,7 @@ Context* Error_Math_Args(Kind type, const Symbol* verb)
 //
 Context* Error_Cannot_Use(const Symbol* verb, const Value* first_arg)
 {
-    DECLARE_LOCAL (verb_cell);
+    DECLARE_ATOM (verb_cell);
     Init_Word(verb_cell, verb);
 
     fail (Error_Cannot_Use_Raw(
@@ -1076,16 +1076,16 @@ Context* Error_Arg_Type(
     if (Cell_ParamClass(param) == PARAMCLASS_META and Is_Meta_Of_Raised(arg))
         return VAL_CONTEXT(arg);
 
-    DECLARE_LOCAL (param_word);
+    DECLARE_ATOM (param_word);
     Init_Word(param_word, KEY_SYMBOL(key));
 
-    DECLARE_LOCAL (label);
+    DECLARE_ATOM (label);
     if (name)
         Init_Word(label, unwrap(name));
     else
         Init_Nulled(label);
 
-    DECLARE_LOCAL (spec);
+    DECLARE_ATOM (spec);
     Option(const Array*) param_array = Cell_Parameter_Spec(param);
     if (param_array)
         Init_Block(spec, unwrap(param_array));
@@ -1135,7 +1135,7 @@ Context* Error_Phase_Arg_Type(
 //
 Context* Error_No_Logic_Typecheck(Option(const Symbol*) label)
 {
-    DECLARE_LOCAL (name);
+    DECLARE_ATOM (name);
     if (label)
         Init_Word(name, unwrap(label));
     else
@@ -1150,7 +1150,7 @@ Context* Error_No_Logic_Typecheck(Option(const Symbol*) label)
 //
 Context* Error_No_Arg_Typecheck(Option(const Symbol*) label)
 {
-    DECLARE_LOCAL (name);
+    DECLARE_ATOM (name);
     if (label)
         Init_Word(name, unwrap(label));
     else
@@ -1168,7 +1168,7 @@ Context* Error_No_Arg_Typecheck(Option(const Symbol*) label)
 //
 Context* Error_Bad_Argless_Refine(const Key* key)
 {
-    DECLARE_LOCAL (word);
+    DECLARE_ATOM (word);
     Refinify(Init_Word(word, KEY_SYMBOL(key)));
     return Error_Bad_Argless_Refine_Raw(word);
 }
@@ -1178,7 +1178,7 @@ Context* Error_Bad_Argless_Refine(const Key* key)
 //  Error_Bad_Return_Type: C
 //
 Context* Error_Bad_Return_Type(Level* L, Atom* atom) {
-    DECLARE_STABLE (label);
+    DECLARE_VALUE (label);
     Get_Level_Label_Or_Nulled(label, L);
 
     if (Is_Void(atom))  // void's "kind" is null, no type (good idea?)
@@ -1234,7 +1234,7 @@ Context* Error_On_Port(SymId id, Value* port, REBINT err_code)
     if (Is_Blank(val))
         val = CTX_VAR(VAL_CONTEXT(spec), STD_PORT_SPEC_HEAD_TITLE);  // less
 
-    DECLARE_LOCAL (err_code_value);
+    DECLARE_ATOM (err_code_value);
     Init_Integer(err_code_value, err_code);
 
     return Error(SYM_ACCESS, id, val, err_code_value, rebEND);
@@ -1333,7 +1333,7 @@ void Startup_Stackoverflow(void)
     // and out of memory errors can't work this way.  It may be that the
     // error is generated after the stack is unwound and memory freed up.
     //
-    DECLARE_LOCAL (temp);
+    DECLARE_ATOM (temp);
     Init_Integer(temp, 1020);
 
     Root_No_Memory_Error = Init_Error(

@@ -163,7 +163,7 @@ REBTYPE(Port)
         : CTX_VAR(VAL_CONTEXT(actor), n);
 
     if (not action or not Is_Action(action)) {
-        DECLARE_LOCAL (verb_cell);
+        DECLARE_ATOM (verb_cell);
         Init_Word(verb_cell, verb);
         fail (Error_No_Port_Action_Raw(verb_cell));
     }

@@ -169,7 +169,7 @@ Bounce TO_Word(Level* level_, Kind k, const Value* arg)
     if (Is_Path(arg) or Is_Tuple(arg)) {
         FRESHEN(OUT);
 
-        DECLARE_LOCAL (temp);
+        DECLARE_ATOM (temp);
 
         REBLEN len = Cell_Sequence_Len(arg);
         REBLEN i;

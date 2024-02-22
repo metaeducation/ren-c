@@ -364,7 +364,7 @@ EXTERN_C intptr_t RL_rebPromise(void *p, va_list *vaptr)
     // for granted the resolve() function created on return from this helper
     // already exists.
 
-    DECLARE_STABLE (block);
+    DECLARE_VALUE (block);
     RL_rebTranscodeInto(block, p, vaptr);
 
     Array* code = Cell_Array_Ensure_Mutable(block);
@@ -418,7 +418,7 @@ void RunPromise(void)
     assert(Not_Node_Managed(a));  // took off so it didn't GC
     Set_Node_Managed_Bit(a);  // but need it back on to execute it
 
-    DECLARE_LOCAL (code);
+    DECLARE_ATOM (code);
     Init_Block(code, a);
     BINDING(code) = info->specifier;
 

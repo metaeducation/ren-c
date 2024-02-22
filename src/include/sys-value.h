@@ -785,32 +785,61 @@ INLINE Value* Constify(Value* v) {
 }
 
 
+//=//// DECLARATION HELPERS FOR ERASED CELLS ON THE C STACK ///////////////=//
 //
-// Rather than allow Cell storage to be declared plainly as a local variable in
-// a C function, this macro provides a generic "constructor-like" hook.
+// Cells have to be erased before they can be initialized.
 //
-// Note: This runs an Erase_Cell(), which is cheap.  But still something, so
-// DECLARE_LOCAL() during a loop should be avoided.  It should be at the
-// outermost scope of the function.
+//     Element element;               // cell contains random bits
+//     Init_Integer(&element, 1020);  // invalid, as init checks protect bits
 //
-// !!! Cells on the C stack can't be preserved across stackless continuations.
-// Rather than using DECLARE_LOCAL(), natives should use <local> in their spec
-// to define cells that are part of the frame, and access them via LOCAL().
+// The process of initialization checks to see if the cell is protected, and
+// also masks in some bits to preserve with CELL_MASK_PERSIST.  You have to
+// erase the cell:
 //
-#define DECLARE_LOCAL(name) \
-    Cell name##_cell; \
-    Erase_Cell(&name##_cell); \
-    Atom* name = u_cast(Atom*, &name##_cell)
+//     Element element;
+//     Erase_Cell(&element);
+//     Init_Integer(&element, 1020);
+//
+// These macros take care of that, and also remove the need to refer to the
+// variable with &, by making the name an alias for the address of the cell.
+//
+//     DECLARE_ELEMENT (element)
+//     Init_Integer(element, 1020);
+//
+// * These cells are not protected from having their insides GC'd unless
+//   you guard them with Push_GC_Guard(), or if a routine you call protects
+//   the cell implicitly (as stackful evaluations will do on cells used
+//   as an output).
+//
+// * You can't use a cell on the C stack as the output target for the eval
+//   of a stackless continuation, because the function where the cell lives
+//   has to return control to the trampoline...destroying that stack memory.
+//   If a native needs a cell besides OUT or SPARE to do evaluations into,
+//   it should declare `<local>`s in its spec, and access them with the
+//   LOCAL() macro.  These are GC safe, and are initialized to trash.
+//
+// * Although Erase_Cell() is very cheap in release builds (just writing a
+//   zero in the header), it still costs *something*.  And in debug builds it
+//   can cost more, because DEBUG_TRACK_EXTEND_CELLS makes Erase_Cell() write
+//   the file/line/tick where the cell was initialized in the extended space.
+//   So it should generally be favored to put these declarations at the
+//   outermost scope of a function, vs. inside a loop.
+//
 
-#define DECLARE_STABLE(name) \
-    Cell name##_cell; \
-    Erase_Cell(&name##_cell); \
-    Value* name = u_cast(Value*, &name##_cell)
+#define DECLARE_ATOM(name) \
+    Atom name##_atom; \
+    Erase_Cell(&name##_atom); \
+    Atom* name = &name##_atom
+
+#define DECLARE_VALUE(name) \
+    Value name##_value; \
+    Erase_Cell(&name##_value); \
+    Value* name = &name##_value
 
 #define DECLARE_ELEMENT(name) \
-    Cell name##_cell; \
-    Erase_Cell(&name##_cell); \
-    Element* name = u_cast(Element*, &name##_cell)
+    Element name##_element; \
+    Erase_Cell(&name##_element); \
+    Element* name = &name##_element
 
 
 INLINE bool Is_Antiform(Need(const Value*) v)

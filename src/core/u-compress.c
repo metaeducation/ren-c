@@ -114,7 +114,7 @@ static Context* Error_Compression(const z_stream *strm, int ret)
     //
     assert(ret != Z_MEM_ERROR);
 
-    DECLARE_LOCAL (arg);
+    DECLARE_ATOM (arg);
     if (strm->msg)
         Init_Text(arg, Make_String_UTF8(strm->msg));
     else
@@ -334,7 +334,7 @@ Byte* Decompress_Alloc_Core(
         assert(strm.next_out == output + buf_size - strm.avail_out);
 
         if (max >= 0 and buf_size >= cast(Size, max)) {
-            DECLARE_LOCAL (temp);
+            DECLARE_ATOM (temp);
             Init_Integer(temp, max);
             fail (Error_Size_Limit_Raw(temp));
         }

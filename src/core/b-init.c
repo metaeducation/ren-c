@@ -536,7 +536,7 @@ static void Init_System_Object(
     Init_Object(force_Lib(SYSTEM), system);
     Init_Object(force_Lib(SYS), system);
 
-    DECLARE_STABLE (sysobj_spec_virtual);
+    DECLARE_VALUE (sysobj_spec_virtual);
     Copy_Cell(sysobj_spec_virtual, boot_sysobj_spec);
 
     Virtual_Bind_Deep_To_Existing_Context(
@@ -548,7 +548,7 @@ static void Init_System_Object(
 
     // Evaluate the block (will eval CONTEXTs within).
     //
-    DECLARE_LOCAL (result);
+    DECLARE_ATOM (result);
     if (Do_Any_Array_At_Throws(result, sysobj_spec_virtual, SPECIFIED))
         panic (result);
     if (not Is_Anti_Word_With_Id(result, SYM_DONE))  // ~done~ sanity check

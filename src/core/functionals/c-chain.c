@@ -259,7 +259,7 @@ DECLARE_NATIVE(chain_p)  // see extended definition CHAIN in %base-defs.r
     const Element* check = first;
     for (; check != tail; ++check) {
         if (not Is_Frame(check)) {
-            DECLARE_LOCAL (specific);
+            DECLARE_ATOM (specific);
             Derelativize(specific, check, Cell_Specifier(pipeline));
             fail (specific);
         }

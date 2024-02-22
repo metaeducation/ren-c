@@ -877,9 +877,9 @@ DECLARE_NATIVE(maximum)
         Min_Max_Pair(OUT, value1, value2, true);
     }
     else {
-        DECLARE_LOCAL (coerced1);
+        DECLARE_ATOM (coerced1);
         Copy_Cell(coerced1, value1);
-        DECLARE_LOCAL (coerced2);
+        DECLARE_ATOM (coerced2);
         Copy_Cell(coerced2, value2);
 
         bool strict = false;
@@ -916,9 +916,9 @@ DECLARE_NATIVE(minimum)
         Min_Max_Pair(OUT, ARG(value1), ARG(value2), false);
     }
     else {
-        DECLARE_LOCAL (coerced1);
+        DECLARE_ATOM (coerced1);
         Copy_Cell(coerced1, value1);
-        DECLARE_LOCAL (coerced2);
+        DECLARE_ATOM (coerced2);
         Copy_Cell(coerced2, value2);
 
         bool strict = false;
@@ -967,7 +967,7 @@ DECLARE_NATIVE(negative_q)
 {
     INCLUDE_PARAMS_OF_NEGATIVE_Q;
 
-    DECLARE_LOCAL (zero);
+    DECLARE_ATOM (zero);
     Init_Zeroed_Hack(zero, Cell_Heart_Ensure_Noquote(ARG(number)));
 
     bool strict = true;  // don't report "close to zero" as "equal to zero"
@@ -989,7 +989,7 @@ DECLARE_NATIVE(positive_q)
 {
     INCLUDE_PARAMS_OF_POSITIVE_Q;
 
-    DECLARE_LOCAL (zero);
+    DECLARE_ATOM (zero);
     Init_Zeroed_Hack(zero, Cell_Heart_Ensure_Noquote(ARG(number)));
 
     bool strict = true;  // don't report "close to zero" as "equal to zero"
@@ -1034,7 +1034,7 @@ DECLARE_NATIVE(zero_q)
         return Init_True(OUT);
     }
 
-    DECLARE_LOCAL (zero);
+    DECLARE_ATOM (zero);
     Init_Zeroed_Hack(zero, heart);
 
     bool strict = true;  // don't report "close to zero" as "equal to zero"

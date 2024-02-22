@@ -371,7 +371,7 @@ inline static Context* Error_Parse3_Variable(Level* level_) {
 static void Print_Parse_Index(Level* level_) {
     USE_PARAMS_OF_SUBPARSE;
 
-    DECLARE_LOCAL (input);
+    DECLARE_ATOM (input);
     Init_Series_Cell_At_Core(
         input,
         P_HEART,
@@ -395,7 +395,7 @@ static void Print_Parse_Index(Level* level_) {
             rebElide("print [{[]:} mold", input, "]");
     }
     else {
-        DECLARE_LOCAL (rule);
+        DECLARE_ATOM (rule);
         Derelativize(rule, P_RULE, P_RULE_SPECIFIER);
 
         if (P_POS >= cast(REBIDX, P_INPUT_LEN))
@@ -617,7 +617,7 @@ static REBIXO Parse_One_Rule(
             LEVEL_MASK_NONE
         );
 
-        DECLARE_LOCAL (subresult);
+        DECLARE_ATOM (subresult);
         bool interrupted;
         if (Subparse_Throws(
             &interrupted,
@@ -776,13 +776,13 @@ static REBIXO To_Thru_Block_Rule(
 ){
     USE_PARAMS_OF_SUBPARSE;
 
-    DECLARE_STABLE (cell);  // holds evaluated rules (use frame cell instead?)
+    DECLARE_VALUE (cell);  // holds evaluated rules (use frame cell instead?)
 
     // Note: This enumeration goes through <= P_INPUT_LEN, because the
     // block rule might be something like `to [{a} | end]`.  e.g. being
     // positioned on the end cell or null terminator of a string may match.
     //
-    DECLARE_LOCAL (iter);
+    DECLARE_ATOM (iter);
     Copy_Cell(iter, ARG(position));  // need to slide pos
     for (
         ;
@@ -1091,7 +1091,7 @@ static REBIXO To_Thru_Non_Block_Rule(
         // other considerations for how non-block rules act with array input?
         //
         Flags find_flags = (P_FLAGS & AM_FIND_CASE);
-        DECLARE_STABLE (temp);
+        DECLARE_VALUE (temp);
         if (Is_Quoted(rule)) {  // make `'[foo bar]` match `[foo bar]`
             Derelativize(temp, rule, P_RULE_SPECIFIER);
             Unquotify(temp, 1);
@@ -1185,7 +1185,7 @@ static void Handle_Mark_Rule(
         // !!! Assume we might not be able to corrupt SPARE (rule may be
         // in SPARE?)
         //
-        DECLARE_LOCAL (temp);
+        DECLARE_ATOM (temp);
         Quotify(Derelativize(OUT, rule, specifier), 1);
         if (rebRunThrows(
             cast(Value*, temp),  // <-- output cell
@@ -1231,7 +1231,7 @@ static void Handle_Seek_Rule_Dont_Update_Begin(
         index = VAL_INDEX(rule);
     }
     else {  // #1263
-        DECLARE_LOCAL (specific);
+        DECLARE_ATOM (specific);
         Derelativize(specific, rule, P_RULE_SPECIFIER);
         fail (Error_Parse3_Series_Raw(specific));
     }
@@ -1841,7 +1841,7 @@ DECLARE_NATIVE(subparse)
                 if (not Is_Group(P_RULE))
                     fail (Error_Parse3_Rule());
 
-                DECLARE_LOCAL (condition);
+                DECLARE_ATOM (condition);
                 if (Do_Any_Array_At_Throws(  // note: might GC
                     condition,
                     P_RULE,
@@ -1870,7 +1870,7 @@ DECLARE_NATIVE(subparse)
 
                 FETCH_NEXT_RULE(L);
 
-                DECLARE_LOCAL (thrown_arg);
+                DECLARE_ATOM (thrown_arg);
                 if (Is_Tag(P_RULE)) {
                     if (rebDid(P_RULE, "= <here>"))
                         Copy_Cell(thrown_arg, ARG(position));
@@ -1894,7 +1894,7 @@ DECLARE_NATIVE(subparse)
                 // to just say the current rule succeeded...it climbs
                 // up and affects an enclosing parse loop.
                 //
-                DECLARE_LOCAL (thrown_arg);
+                DECLARE_ATOM (thrown_arg);
                 Init_Integer(thrown_arg, P_POS);
 
                 Init_Thrown_With_Label(LEVEL, thrown_arg, Lib(PARSE_BREAK));
@@ -2055,7 +2055,7 @@ DECLARE_NATIVE(subparse)
             goto pre_rule;
         }
         else if (Is_Word(P_RULE)) {
-            DECLARE_STABLE (temp);
+            DECLARE_VALUE (temp);
             const Element* gotten = Get_Parse_Value(
                 temp,
                 P_RULE,
@@ -2480,7 +2480,7 @@ DECLARE_NATIVE(subparse)
                 else {
                     assert(Any_String_Kind(P_HEART));
 
-                    DECLARE_LOCAL (begin_val);
+                    DECLARE_ATOM (begin_val);
                     Init_Series_Cell_At(begin_val, P_HEART, P_INPUT, begin);
 
                     // Rebol2 behavior of always "netural" TEXT!.  Avoids
@@ -2544,7 +2544,7 @@ DECLARE_NATIVE(subparse)
                     // if a pertinent bug has a smoking gun here.
 
                     /*
-                    DECLARE_LOCAL (begin_val);
+                    DECLARE_ATOM (begin_val);
                     Init_Series_Cell_At(begin_val, P_HEART, P_INPUT, begin);
                     Init_Series_Cell(
                         captured,
@@ -2597,7 +2597,7 @@ DECLARE_NATIVE(subparse)
                 if (not Is_Group(rule))
                     fail ("Only (...) or ^(...) in old PARSE's CHANGE/INSERT");
 
-                DECLARE_STABLE (evaluated);
+                DECLARE_VALUE (evaluated);
                 Specifier* derived = Derive_Specifier(
                     P_RULE_SPECIFIER,
                     rule
@@ -2782,7 +2782,7 @@ DECLARE_NATIVE(parse3)
         and Is_Block(rules_at + 1)
     ){
         Context* frame_ctx = Context_For_Level_May_Manage(level_);
-        DECLARE_LOCAL (specific);
+        DECLARE_ATOM (specific);
         Derelativize(specific, rules_at + 1, P_RULE_SPECIFIER);
         return rebValue(
             "let temp: null",

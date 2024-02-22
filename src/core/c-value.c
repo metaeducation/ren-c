@@ -140,7 +140,7 @@ inline static void Probe_Molded_Value(const Value* v)
     Push_Mold(mo);
 
     if (Is_Antiform(v)) {
-        DECLARE_STABLE (temp);
+        DECLARE_VALUE (temp);
         Copy_Cell(temp, v);
         Element* elem = Quasify_Antiform(temp);
         Mold_Value(mo, elem);
@@ -181,7 +181,7 @@ void Probe_Cell_Print_Helper(
         Append_Ascii(mo->series, "; void");
     }
     else if (Is_Antiform(v)) {
-        DECLARE_STABLE (reified);
+        DECLARE_VALUE (reified);
         Quasify_Antiform(Copy_Cell(reified, v));
         Mold_Value(mo, cast(Element*, reified));
         Append_Ascii(mo->series, "  ; anti");

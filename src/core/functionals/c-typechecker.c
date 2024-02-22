@@ -120,7 +120,7 @@ bool Typecheck_Atom_Core(
     Specifier* tests_specifier,
     const Atom* v
 ){
-    DECLARE_LOCAL (spare);  // !!! stackful
+    DECLARE_ATOM (spare);  // !!! stackful
 
     const Element* tail;
     const Element* item;
@@ -226,14 +226,14 @@ bool Typecheck_Atom_Core(
                 Intrinsic* intrinsic = Extract_Intrinsic(cast(Phase*, action));
 
                 Param* param = ACT_PARAM(action, 2);
-                DECLARE_LOCAL (arg);
+                DECLARE_ATOM (arg);
                 Copy_Cell(arg, v);
                 if (Cell_ParamClass(param) == PARAMCLASS_META)
                     Meta_Quotify(arg);
                 if (not Typecheck_Coerce_Argument(param, arg))
                     goto test_failed;
 
-                DECLARE_LOCAL (out);
+                DECLARE_ATOM (out);
                 (*intrinsic)(out, cast(Phase*, action), Stable_Unchecked(arg));
                 if (not Is_Logic(out))
                     fail (Error_No_Logic_Typecheck(label));

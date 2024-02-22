@@ -732,9 +732,9 @@ bool Get_Var_Push_Refinements_Throws(
     }
 
     if (Any_Path(var)) {  // !!! SET-PATH! too?
-        DECLARE_LOCAL (safe);
+        DECLARE_ATOM (safe);
         Push_GC_Guard_Erased_Cell(safe);
-        DECLARE_LOCAL (result);
+        DECLARE_ATOM (result);
         Push_GC_Guard_Erased_Cell(result);
 
         bool threw = Get_Path_Push_Refinements_Throws(
@@ -849,7 +849,7 @@ bool Get_Var_Push_Refinements_Throws(
   }
     ++stackindex;
 
-    DECLARE_LOCAL (temp);
+    DECLARE_ATOM (temp);
     Push_GC_Guard_Erased_Cell(temp);
 
     while (stackindex != TOP_INDEX + 1) {
@@ -899,7 +899,7 @@ bool Get_Var_Core_Throws(
         // !!! Note: passing EMPTY_BLOCK here for the def causes problems;
         // that needs to be looked into.
         //
-        DECLARE_STABLE (action);
+        DECLARE_VALUE (action);
         Move_Cell(action, out);
         Deactivate_If_Action(action);
         return Specialize_Action_Throws(out, action, nullptr, base);
@@ -1035,7 +1035,7 @@ bool Get_Path_Push_Refinements_Throws(
 
         Specifier* derived = Derive_Specifier(path_specifier, path);
 
-        DECLARE_STABLE (steps);
+        DECLARE_VALUE (steps);
         if (Get_Var_Core_Throws(out, steps, head, derived))
             return true;
 
@@ -1091,7 +1091,7 @@ bool Get_Path_Push_Refinements_Throws(
             );
         }
 
-        DECLARE_STABLE (steps);
+        DECLARE_VALUE (steps);
         if (Get_Var_Core_Throws(out, steps, safe, SPECIFIED))
             return true;
 
@@ -1117,7 +1117,7 @@ bool Get_Path_Push_Refinements_Throws(
     REBLEN len = Cell_Sequence_Len(path) - 1;
     for (; len != 0; --len) {
         const Value* at = Copy_Sequence_At(safe, path, len);
-        DECLARE_LOCAL (temp);
+        DECLARE_ATOM (temp);
         if (Is_Group(at)) {
             Specifier* derived = Derive_Specifier(
                 path_specifier,
@@ -1270,7 +1270,7 @@ bool Set_Var_Core_Updater_Throws(
 
     assert(Is_Action(updater));  // we will use rebM() on it
 
-    DECLARE_LOCAL (temp);  // target might be same as out (e.g. spare)
+    DECLARE_ATOM (temp);  // target might be same as out (e.g. spare)
 
     Heart var_heart = Cell_Heart(var);
 
@@ -1409,7 +1409,7 @@ bool Set_Var_Core_Updater_Throws(
     else
         fail (var);
 
-    DECLARE_STABLE (writeback);
+    DECLARE_VALUE (writeback);
     Push_GC_Guard_Erased_Cell(writeback);
 
     Erase_Cell(temp);
@@ -1548,7 +1548,7 @@ void Set_Var_May_Fail(
 ){
     Option(Value*) steps_out = nullptr;
 
-    DECLARE_LOCAL (dummy);
+    DECLARE_ATOM (dummy);
     if (Set_Var_Core_Throws(dummy, steps_out, target, target_specifier, setval))
         fail (Error_No_Catch_For_Throw(TOP_LEVEL));
 }

@@ -305,7 +305,7 @@ static Bounce Protect_Unprotect_Core(Level* level_, Flags flags)
             const Element* tail;
             const Element* item = Cell_Array_At(&tail, value);
             for (; item != tail; ++item) {
-                DECLARE_STABLE (word); // need binding, can't pass Cell
+                DECLARE_VALUE (word); // need binding, can't pass Cell
                 Derelativize(word, item, Cell_Specifier(value));
                 Protect_Word_Value(word, flags);  // will unmark if deep
             }
@@ -316,7 +316,7 @@ static Bounce Protect_Unprotect_Core(Level* level_, Flags flags)
             const Element* tail;
             const Element* item = Cell_Array_At(&tail, value);
 
-            DECLARE_STABLE (safe);
+            DECLARE_VALUE (safe);
 
             for (; item != tail; ++item) {
                 if (Is_Word(item)) {

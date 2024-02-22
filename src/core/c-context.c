@@ -364,7 +364,7 @@ static void Collect_Inner_Loop(
                 if (cl->flags & COLLECT_NO_DUP) {
                     Collect_End(cl);  // IMPORTANT: Can't fail with binder
 
-                    DECLARE_LOCAL (duplicate);
+                    DECLARE_ATOM (duplicate);
                     Init_Word(duplicate, symbol);
                     fail (Error_Dup_Vars_Raw(duplicate));  // cleans bindings
                 }

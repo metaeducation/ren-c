@@ -207,7 +207,7 @@ DECLARE_NATIVE(resume)
     // We throw with /NAME as identity of the RESUME function.  (Note: there
     // is no NATIVE() variant for extensions yet.  Extract from current level.)
     //
-    DECLARE_STABLE (resume);
+    DECLARE_VALUE (resume);
     Init_Frame_Details(
         resume,
         Level_Phase(LEVEL),

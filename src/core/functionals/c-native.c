@@ -336,10 +336,10 @@ Array* Startup_Natives(const Element* boot_natives)
     //
     Bind_Values_Set_Midstream_Shallow(item, tail, Lib_Context_Value);
 
-    DECLARE_LOCAL (skipped);
+    DECLARE_ATOM (skipped);
     Init_Array_Cell_At(skipped, REB_BLOCK, Cell_Array(boot_natives), 3);
 
-    DECLARE_LOCAL (discarded);
+    DECLARE_ATOM (discarded);
     if (Do_Any_Array_At_Throws(discarded, skipped, specifier))
         panic (Error_No_Catch_For_Throw(TOP_LEVEL));
     if (not Is_Anti_Word_With_Id(discarded, SYM_DONE))
