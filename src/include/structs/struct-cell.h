@@ -423,7 +423,7 @@ union AnyUnion {  // needed to beat strict aliasing, used in payload
     //
   #if DEBUG_USE_UNION_PUNS
     Stub* stub_pun;
-    struct RebolValue* cell_pun;
+    RebolValue* cell_pun;
   #endif
 
     Byte exactly_4[sizeof(uint32_t)];
@@ -570,8 +570,8 @@ union ValuePayloadUnion { //=/////////////// ACTUAL PAYLOAD DEFINITION ////=//
 
 //=//// COMPLETED 4-PLATFORM POINTER CELL DEFINITION //////////////////////=//
 //
-// 1. Regardless of what build is made, the %rebol.h file expects to find
-//    the name `struct RebolValue` exported as what the API uses.  In the
+// 1. Regardless of what build is made, the %rebol.h file expects to find the
+//    name `struct RebolValueStruct` exported as what the API uses.  In the
 //    C build that's the only cell struct, but in the C++ build it can be a
 //    derived structure if DEBUG_USE_CELL_SUBCLASSES is enabled.
 //
@@ -601,11 +601,11 @@ union ValuePayloadUnion { //=/////////////// ACTUAL PAYLOAD DEFINITION ////=//
 #if DEBUG_USE_CELL_SUBCLASSES
     struct alignas(ALIGN_SIZE) Cell : public Node  // VAL_TYPE() illegal
 #elif CPLUSPLUS_11
-    struct alignas(ALIGN_SIZE) RebolValue : public Node
+    struct alignas(ALIGN_SIZE) RebolValueStruct : public Node
 #elif C_11
-    struct alignas(ALIGN_SIZE) RebolValue  // exported name for API [1]
+    struct alignas(ALIGN_SIZE) RebolValueStruct  // exported name for API [1]
 #else
-    struct RebolValue  // ...have to just hope the alignment "works out"
+    struct RebolValueStruct  // ...have to just hope the alignment "works out"
 #endif
     {
         union HeaderUnion header;
@@ -628,11 +628,11 @@ union ValuePayloadUnion { //=/////////////// ACTUAL PAYLOAD DEFINITION ////=//
         Cell& operator= (const Cell& rhs) = default;
     #elif CPLUSPLUS_11
       public:
-        RebolValue () = default;
+        RebolValueStruct () = default;
 
       private:  // disable assignment and copying [3]
-        RebolValue (const RebolValue& other) = default;
-        RebolValue& operator= (const RebolValue& rhs) = default;
+        RebolValueStruct (const RebolValueStruct& other) = default;
+        RebolValueStruct& operator= (const RebolValueStruct& rhs) = default;
     #endif
     };
 
@@ -676,9 +676,9 @@ union ValuePayloadUnion { //=/////////////// ACTUAL PAYLOAD DEFINITION ////=//
 // cell payloads.
 //
 #if (! DEBUG_USE_CELL_SUBCLASSES)
-    typedef struct RebolValue Cell;
-    typedef struct RebolValue Atom;
-    typedef struct RebolValue Element;
+    typedef struct RebolValueStruct Cell;
+    typedef struct RebolValueStruct Atom;
+    typedef struct RebolValueStruct Element;
 #else
     struct Atom : public Cell
     {
@@ -693,10 +693,10 @@ union ValuePayloadUnion { //=/////////////// ACTUAL PAYLOAD DEFINITION ////=//
       #endif
     };
 
-    struct RebolValue : public Atom {
+    struct RebolValueStruct : public Atom {
       #if !defined(NDEBUG)
-        RebolValue () = default;
-        ~RebolValue () {
+        RebolValueStruct () = default;
+        ~RebolValueStruct () {
             assert(
                 (this->header.bits & (NODE_FLAG_NODE | NODE_FLAG_CELL))
                 or this->header.bits == CELL_MASK_0
@@ -705,12 +705,7 @@ union ValuePayloadUnion { //=/////////////// ACTUAL PAYLOAD DEFINITION ////=//
       #endif
     };
 
-    static_assert(
-        std::is_standard_layout<struct RebolValue>::value,
-        "C++ REBVAL must match C layout: http://stackoverflow.com/a/7189821/"
-    );
-
-    struct Element : public RebolValue {
+    struct Element : public RebolValueStruct {
       #if !defined(NDEBUG)
         Element () = default;
         ~Element () {
@@ -723,10 +718,10 @@ union ValuePayloadUnion { //=/////////////// ACTUAL PAYLOAD DEFINITION ////=//
     };
 #endif
 
-typedef struct RebolValue Value;  // shorthand name to use internally
+typedef struct RebolValueStruct Value;  // shorthand name to use internally
 
 
-//=//// ENSURE CELL IS STANDARD LAYOUT ////////////////////////////////////=//
+//=//// ENSURE CELL TYPES ARE STANDARD LAYOUT /////////////////////////////=//
 //
 // Using too much C++ magic can potentially lead to the exported structure
 // not having "standard layout" and being incompatible with C.  We want to be
@@ -734,7 +729,10 @@ typedef struct RebolValue Value;  // shorthand name to use internally
 //
 #if CPLUSPLUS_11
     static_assert(
-        std::is_standard_layout<RebolValue>::value,
-        "C++ Cell must match C Value: http://stackoverflow.com/a/7189821/"
+        std::is_standard_layout<Cell>::value
+            and std::is_standard_layout<Atom>::value
+            and std::is_standard_layout<Value>::value
+            and std::is_standard_layout<Element>::value,
+        "C++ Cells must match C Cells: http://stackoverflow.com/a/7189821/"
     );
 #endif
