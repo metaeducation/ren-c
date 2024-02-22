@@ -48,10 +48,10 @@
 //
 
 #if DEBUG_UNREADABLE_CELLS
-    INLINE Value* Init_Unreadable_Untracked(Cell* out) {
+    INLINE Element* Init_Unreadable_Untracked(Sink(Element*) out) {
         Init_Void_Untracked(out, QUASIFORM_2);
         Set_Node_Free_Bit(out);  // cell won't be READABLE(), but WRITABLE()
-        return cast(Value*, out);
+        return out;
     }
 
     INLINE bool Is_Unreadable_Debug(const Cell* v) {

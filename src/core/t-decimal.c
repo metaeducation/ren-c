@@ -110,7 +110,7 @@ bool almost_equal(REBDEC a, REBDEC b, REBLEN max_diff) {
 //
 //  Init_Decimal_Bits: C
 //
-Value* Init_Decimal_Bits(Cell* out, const Byte* bp)
+Element* Init_Decimal_Bits(Sink(Element*) out, const Byte* bp)
 {
     Reset_Unquoted_Header_Untracked(TRACK(out), CELL_MASK_DECIMAL);
 
@@ -128,7 +128,7 @@ Value* Init_Decimal_Bits(Cell* out, const Byte* bp)
     #error "Unsupported CPU endian"
   #endif
 
-    return cast(Value*, out);
+    return out;
 }
 
 

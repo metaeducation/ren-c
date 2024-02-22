@@ -74,8 +74,8 @@ INLINE void INIT_VAL_FRAME_BINDING(
 // the 0 slot of the action's details.  That action has no binding and
 // no label.
 //
-INLINE Value* Init_Frame_Details_Core(
-    Cell* out,
+INLINE Element* Init_Frame_Details_Core(
+    Sink(Element*) out,
     Phase* a,
     Option(const Symbol*) label,
     Option(Context*) binding
@@ -90,7 +90,7 @@ INLINE Value* Init_Frame_Details_Core(
     INIT_VAL_ACTION_LABEL(out, label);
     INIT_VAL_FRAME_BINDING(out, try_unwrap(binding));
 
-    return cast(Value*, out);
+    return out;
 }
 
 #define Init_Frame_Details(out,a,label,binding) \
@@ -120,7 +120,9 @@ INLINE Value* Init_Frame_Details_Core(
 //
 
 #define Init_Action(out,a,label,binding) \
-    Actionify(Init_Frame_Details_Core(TRACK(out), (a), (label), (binding)))
+    Actionify(cast(Value*, Init_Frame_Details_Core( \
+        ensure(Sink(Value*), TRACK(out)), (a), (label), (binding)) \
+    ))
 
 INLINE Value* Actionify(Sink(Value*) v) {
     assert(Is_Frame(v) and QUOTE_BYTE(v) == NOQUOTE_1);

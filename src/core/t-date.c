@@ -322,8 +322,8 @@ void Normalize_Time(REBI64 *sp, REBLEN *dp)
 // Given a year, month and day, normalize and combine to give a new
 // date value.
 //
-static Value* Init_Normalized_Date(
-    Cell* out,
+static Element* Init_Normalized_Date(
+    Sink(Element*) out,
     REBINT day,
     REBINT month,
     REBINT year,
@@ -370,7 +370,7 @@ static Value* Init_Normalized_Date(
     EXTRA(Date, out).zone = tz;
     PAYLOAD(Time, out).nanoseconds = NO_DATE_TIME;
 
-    return cast(Value*, out);
+    return out;
 }
 
 

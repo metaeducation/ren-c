@@ -66,15 +66,15 @@ INLINE void INIT_VAL_VARARGS_BINDING(
 }
 
 
-INLINE Value* Init_Varargs_Untyped_Normal(Cell* out, Level* L) {
+INLINE Element* Init_Varargs_Untyped_Normal(Sink(Element*) out, Level* L) {
     Reset_Unquoted_Header_Untracked(out, CELL_MASK_VARARGS);
     BINDING(out) = L->varlist;  // frame-based VARARGS!
     UNUSED(VAL_VARARGS_SIGNED_PARAM_INDEX(out));
     INIT_VAL_VARARGS_PHASE(out, nullptr);  // set in typecheck
-    return cast(Value*, out);
+    return out;
 }
 
-INLINE Value* Init_Varargs_Untyped_Enfix(
+INLINE Element* Init_Varargs_Untyped_Enfix(
     Sink(Element*) out,
     Option(const Value*) left
 ){

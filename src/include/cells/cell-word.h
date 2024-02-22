@@ -115,7 +115,7 @@ INLINE Value* Init_Any_Word_Bound_Untracked(
         assert(symbol == INODE(LetSymbol, binding));
     }
 
-    return cast(Value*, out);
+    return out;
 }
 
 #define Init_Any_Word_Bound(out,heart,symbol,context,index) \

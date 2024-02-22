@@ -80,7 +80,7 @@ INLINE deci VAL_MONEY_AMOUNT(const Cell* v) {
     return amount;
 }
 
-INLINE Value* Init_Money(Cell* out, deci amount) {
+INLINE Element* Init_Money(Sink(Element*) out, deci amount) {
     Reset_Unquoted_Header_Untracked(out, CELL_MASK_MONEY);
 
     EXTRA(Any, out).u = amount.m0;  // "significand, lowest part"
@@ -96,7 +96,7 @@ INLINE Value* Init_Money(Cell* out, deci amount) {
 
     PAYLOAD(Any, out).second.u = u2;
 
-    return cast(Value*, out);
+    return out;
 }
 
 

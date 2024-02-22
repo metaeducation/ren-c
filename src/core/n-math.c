@@ -934,7 +934,7 @@ DECLARE_NATIVE(minimum)
 }
 
 
-inline static Value* Init_Zeroed_Hack(Cell* out, Heart heart) {
+inline static Element* Init_Zeroed_Hack(Sink(Element*) out, Heart heart) {
     //
     // !!! This captures of a dodgy behavior of R3-Alpha, which was to assume
     // that clearing the payload of a value and then setting the header made
@@ -950,7 +950,7 @@ inline static Value* Init_Zeroed_Hack(Cell* out, Heart heart) {
         memset(&out->extra, 0, sizeof(union ExtraUnion));
         memset(&out->payload, 0, sizeof(union PayloadUnion));
     }
-    return cast(Value*, out);
+    return out;
 }
 
 

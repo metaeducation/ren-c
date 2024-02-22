@@ -109,8 +109,8 @@ INLINE void SET_HANDLE_CFUNC(Cell* v, CFunction* cfunc) {
     VAL_HANDLE_CFUNC_P(canon) = cfunc;
 }
 
-INLINE Value* Init_Handle_Cdata(
-    Cell* out,
+INLINE Element* Init_Handle_Cdata(
+    Sink(Element*) out,
     void *cdata,
     uintptr_t length
 ){
@@ -124,11 +124,11 @@ INLINE Value* Init_Handle_Cdata(
   #endif
     VAL_HANDLE_CDATA_P(out) = cdata;
     VAL_HANDLE_LENGTH_U(out) = length;  // non-zero signals cdata
-    return cast(Value*, out);
+    return out;
 }
 
-INLINE Value* Init_Handle_Cfunc(
-    Cell* out,
+INLINE Element* Init_Handle_Cfunc(
+    Sink(Element*) out,
     CFunction* cfunc
 ){
     Reset_Unquoted_Header_Untracked(
@@ -140,7 +140,7 @@ INLINE Value* Init_Handle_Cfunc(
   #endif
     VAL_HANDLE_CFUNC_P(out) = cfunc;
     VAL_HANDLE_LENGTH_U(out) = 0;  // signals cfunc
-    return cast(Value*, out);
+    return out;
 }
 
 INLINE void Init_Handle_Managed_Common(
@@ -175,8 +175,8 @@ INLINE void Init_Handle_Managed_Common(
     VAL_HANDLE_CDATA_P(out) = nullptr;  // or complains about not initializing
 }
 
-INLINE Value* Init_Handle_Cdata_Managed(
-    Cell* out,
+INLINE Element* Init_Handle_Cdata_Managed(
+    Sink(Element*) out,
     void *cdata,
     uintptr_t length,
     CLEANUP_CFUNC *cleaner
@@ -187,11 +187,11 @@ INLINE Value* Init_Handle_Cdata_Managed(
 
     Stub* stub = VAL_HANDLE_STUB(out);
     VAL_HANDLE_CDATA_P(Stub_Cell(stub)) = cdata;
-    return cast(Value*, out);
+    return out;
 }
 
-INLINE Value* Init_Handle_Cdata_Managed_Cfunc(
-    Cell* out,
+INLINE Element* Init_Handle_Cdata_Managed_Cfunc(
+    Sink(Element*) out,
     CFunction* cfunc,
     CLEANUP_CFUNC *cleaner
 ){
@@ -201,5 +201,5 @@ INLINE Value* Init_Handle_Cdata_Managed_Cfunc(
 
     Stub* stub = VAL_HANDLE_STUB(out);
     VAL_HANDLE_CFUNC_P(Stub_Cell(stub)) = cfunc;
-    return cast(Value*, out);
+    return out;
 }

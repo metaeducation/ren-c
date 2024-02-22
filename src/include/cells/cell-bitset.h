@@ -55,11 +55,11 @@ INLINE Binary* VAL_BITSET(const Cell* v) {
 #define VAL_BITSET_Ensure_Mutable(v) \
     m_cast(Binary*, VAL_BITSET(Ensure_Mutable(v)))
 
-INLINE Value* Init_Bitset(Cell* out, Binary* bits) {
+INLINE Element* Init_Bitset(Sink(Element*) out, Binary* bits) {
     Reset_Unquoted_Header_Untracked(out, CELL_MASK_BITSET);
     Assert_Series_Managed(bits);
     Init_Cell_Node1(out, bits);
-    return cast(Value*, out);
+    return out;
 }
 
 

@@ -715,7 +715,7 @@ INLINE Cell* Copy_Cell_Untracked(
 //
 // In the meantime, this just does a Copy + RESET.
 
-INLINE Value* Move_Cell_Untracked(
+INLINE Cell* Move_Cell_Untracked(
     Cell* out,
     Atom* v,
     Flags copy_mask
@@ -729,7 +729,7 @@ INLINE Value* Move_Cell_Untracked(
     v->tick = TG_tick;
   #endif
 
-    return cast(Value*, out);
+    return out;
 }
 
 #if (! DEBUG_USE_CELL_SUBCLASSES)
