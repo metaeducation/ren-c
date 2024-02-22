@@ -110,7 +110,7 @@ typedef uint_fast32_t Codepoint;
 
 //=//// BOOKMARKS (codepoint position caches for UTF-8) ///////////////////=//
 
-typedef struct BookmarkStruct {
+struct BookmarkStruct {
     REBLEN index;
     Size offset;
 };
