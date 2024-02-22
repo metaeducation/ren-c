@@ -1,4 +1,4 @@
-; %parse-into.test.reb
+; %parse-subparse.test.reb
 ;
 ; SUPARSE is an arity-2 of historical Rebol PARSE INTO, permitting use of a
 ; value-bearing rule to produce the thing to recurse the parser into...which
@@ -99,25 +99,25 @@
 ; Note: If functions with INPUT that return progress would act implicitly as
 ; combinators, then SUBPARSE <HERE> would be how PARSE would act.
 [(
-    x: match-parse "aaabbb" [
+    x: parse "aaabbb" [
         some "a"
         subparse <here> ["bbb" (b: "yep, Bs")]
         "bbb" (bb: "Bs again")
     ]
     all [
-        x = "aaabbb"
+        x = "Bs again"
         b = "yep, Bs"
         bb = "Bs again"
     ]
 )(
-    x: match-parse "aaabbbccc" [
+    x: parse "aaabbbccc" [
         some "a"
         subparse <here> ["bbb" to <end> (b: "yep, Bs")]
         "bbb" (bb: "Bs again")
         "ccc" (c: "Here be Cs")
     ]
     all [
-        x = "aaabbbccc"
+        x = "Here be Cs"
         b = "yep, Bs"
         bb = "Bs again"
         c = "Here be Cs"

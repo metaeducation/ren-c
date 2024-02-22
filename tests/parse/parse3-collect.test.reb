@@ -74,7 +74,7 @@
 
 (all [
     x: <before>
-    not try parse3 [1 2] [x: collect [keep spread integer! keep spread text!]]
+    not validate3 [1 2] [x: collect [keep spread integer! keep spread text!]]
     x = <before>
 ])
 

@@ -255,6 +255,12 @@ unspaced: specialize :delimit [delimiter: null]
 spaced: specialize :delimit [delimiter: space]
 newlined: specialize :delimit [delimiter: newline, tail: #]
 
+validate3: enclose :parse3 func* [f] [
+    let input: f.input
+    do f except [return null]
+    return input
+]
+
 an: lambda [
     {Prepends the correct "a" or "an" to a string, based on leading character}
     value <local> s

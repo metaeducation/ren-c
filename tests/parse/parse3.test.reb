@@ -196,11 +196,11 @@
     all [val = 'x, pos = ser]
 )]
 [#2130 (
-    res: try parse3 ser: "foo" [pos: <here>, copy val skip]
+    res: validate3 ser: "foo" [pos: <here>, copy val skip]
     all [res = null, val = "f", pos = ser]
 )]
 [#2130 (
-    res: try parse3 ser: "foo" [pos: <here>, copy val: skip]
+    res: validate3 ser: "foo" [pos: <here>, copy val: skip]
     all [res = null, val = "f", pos = ser]
 )]
 

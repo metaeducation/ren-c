@@ -509,7 +509,7 @@ split: func [
         [block! integer! char? bitset! text! tag! word!]
     /into "If dlm is integer, split in n pieces (vs. pieces of length n)"
 ][
-    if try parse3 (maybe match block! dlm) [some integer!] [
+    if validate3 (maybe match block! dlm) [some integer!] [
         return map-each len dlm [
             if len <= 0 [
                 series: skip series negate len

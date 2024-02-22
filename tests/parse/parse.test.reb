@@ -18,42 +18,6 @@
     ]
 )]
 
-; PARSE+ reflects the believed desirable wrapper for PARSE:
-;
-; * If a THEN handler is provided, it runs on a successful parse--and the
-;   branch is passed the parse result(s).
-;
-; * If an ELSE handler is provided, it runs on a failing parse--and the branch
-;   is passed an ERROR! reflecting information about the parse failure.
-;
-; * If neither a THEN nor ELSE handler are provided, then a successful parse
-;   will evaluate to the parse result(s)...while a failing parse will actually
-;   *raise* the informative error.
-;
-; * Presence of a THEN handler only will defuse the reaction of a failing
-;   parse raising an error, leading the overall result to be void.
-(
-    <null> = parse+ "a" [some "a" (null)] then r -> [if null? r [<null>]]
-)
-(
-    null = (<overwritten> parse+ "a" ["b"] then [<unreachable>])
-)
-~???~ !! (
-    parse+ "a" [some "b" (null)]
-)
-(
-    <error> = parse+ "a" ["b"] else e -> [if error? e [<error>]]
-)
-(
-    null = parse+ "a" [some "a" (null)] else e -> [<unreachable>]
-)
-
-; MATCH-PARSE gives back the input (synonym for PARSE with [rules || <input>])
-[
-    ("aaa" = match-parse "aaa" [some #a])
-    (null = match-parse "aaa" [some #b])
-]
-
 ; TRASH should be allowable as a combinator result.
 [
     (trash? parse "a" ["a" (~)])

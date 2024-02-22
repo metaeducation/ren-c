@@ -7,8 +7,8 @@
 ; As does Haskell Parsec, e.g. (notFollowedBy . notFollowedBy != lookAhead)
 ; https://github.com/haskell/parsec/issues/8
 [
-    ("a" = match-parse "a" [[ahead "a"] "a"])
-    ("a" = match-parse "a" [[not not "a"] "a"])
+    ("a" = parse "a" [[ahead "a"] "a"])
+    ("a" = parse "a" [[not not "a"] "a"])
 ]
 
 [#1246

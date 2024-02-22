@@ -871,7 +871,7 @@ default-combinators: make map! reduce [
     ; it's also a little bit obtuse when read in context.
 
     'subparse combinator [
-        {Perform a recursion into other data with a rule}
+        "Recursion into other data with a rule, result of rule if match"
         return: "Result of the subparser"
             [any-value? pack?]
         parser [action?]  ; !!! Easier expression of value-bearing parser?
@@ -913,6 +913,53 @@ default-combinators: make map! reduce [
             return raise "SUBPARSE rule succeeded, but didn't complete subseries"
         ]
         return unmeta result'
+    ]
+
+    'validate combinator [
+        "Recurse into other data with a rule, other data if match"
+        return: "Input if the rules matched"
+            [any-series?]
+        parser [action?]  ; !!! Easier expression of value-bearing parser?
+        subparser [action?]
+        <local> subseries subremainder
+    ][
+        [^subseries remainder]: parser input except e -> [
+            ;
+            ; If the parser in the first argument can't get a value to subparse
+            ; then we don't process it.
+            ;
+            ; !!! Review: should we allow non-value-bearing parsers that just
+            ; set limits on the input?
+            ;
+            return raise e
+        ]
+
+        if void' = subseries [
+            fail "Cannot VALIDATE a void"
+        ]
+
+        if quasi? subseries [
+            fail "Cannot VALIDATE an antiform synthesized result"
+        ]
+
+        subseries: my unquote
+
+        case [
+            any-series? subseries []
+            any-sequence? subseries [subseries: as block! subseries]
+            return raise "Need SERIES! or SEQUENCE! input for use with VALIDATE"
+        ]
+
+        ; If the entirety of the item at the input array is matched by the
+        ; supplied parser rule, then we advance past the item.
+        ;
+        [_ subremainder]: subparser subseries except e -> [
+            return raise e
+        ]
+        if not tail? subremainder [
+            return raise "VALIDATE rule succeeded, but didn't complete subseries"
+        ]
+        return subseries
     ]
 
     === COLLECT AND KEEP ===
@@ -2855,7 +2902,7 @@ parsify: func [
 ]
 
 
-=== ENTRY POINTS: PARSE*, PARSE, MATCH-PARSE ===
+=== ENTRY POINTS: PARSE*, PARSE ===
 
 ; The historical Redbol PARSE was focused on returning a LOGIC! so that you
 ; could write `if parse data rules [...]` and easily react to finding out if
@@ -3053,29 +3100,6 @@ parse+: (comment [redescribe [  ; redescribe not working at the moment (?)
 )
 
 sys.util.parse: runs :parse  ; !!! expose UPARSE to SYS.UTIL module, hack...
-
-match-parse: (comment [redescribe [  ; redescribe not working at the moment (?)
-    {Process input in the parse dialect, input if match (see also UPARSE*)}
-] ]
-    ; Note: Users could write `parse data [...rules... || <input>]` and get
-    ; the same effect generally.
-    ;
-    ; !!! It might be tempting to write this as an ADAPT which changes the
-    ; rules to be:
-    ;
-    ;    rules: reduce [rules <input>]
-    ;
-    ; But if someone changed the meaning of <input> with different /COMBINATORS
-    ; that would not work.  This method will work regardless.
-    ;
-    enclose :parse* func [f [frame!]] [
-        let input: f.input  ; DO FRAME! invalidates args; cache for returning
-
-        eval f except [return null]
-
-        return input
-    ]
-)
 
 
 === HOOKS ===

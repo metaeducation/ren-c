@@ -216,9 +216,11 @@
 
 %network/http.test.reb
 
+%parse/parse.test.reb
 %parse/parse3.test.reb
 %parse/parse3-collect.test.reb
 %parse/parse-accept.test.reb
+%parse/parse-accumulate.test.reb
 %parse/parse-across.test.reb
 %parse/parse-action.test.reb
 %parse/parse-ahead.test.reb
@@ -239,7 +241,6 @@
 %parse/parse-get-group.test.reb
 %parse/parse-group.test.reb
 %parse/parse-insert.test.reb
-%parse/parse-into.test.reb
 %parse/parse-issue.test.reb
 %parse/parse-let.test.reb
 %parse/parse-logic.test.reb
@@ -258,6 +259,7 @@
 %parse/parse-skip.test.reb
 %parse/parse-some.test.reb
 %parse/parse-stop.test.reb
+%parse/parse-subparse.test.reb
 %parse/parse-tag-any.test.reb
 %parse/parse-tag-end.test.reb
 %parse/parse-tag-here.test.reb
@@ -269,6 +271,7 @@
 %parse/parse-thru.test.reb
 %parse/parse-try.test.reb
 %parse/parse-to.test.reb
+%parse/parse-validate.test.reb
 %parse/parse-void.test.reb
 %parse/parse-word.test.reb
 %parse/examples/argtest.parse.test.reb
