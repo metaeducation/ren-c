@@ -2975,6 +2975,7 @@ parse*: func [
     /combinators "List of keyword and datatype handlers used for this parse"
         [map!]
     /case "Do case-sensitive matching"
+    /relax "Don't require reaching the tail of the input for success"
     /part "FAKE /PART FEATURE - runs on a copy of the series!"
         [integer! any-series?]
 
@@ -3062,7 +3063,7 @@ parse*: func [
 
     assert [empty? state.loops]
 
-    if not tail? remainder [
+    if (not tail? remainder) and (not relax) [
         return raise make error! [
             id: 'parse-incomplete
             message:

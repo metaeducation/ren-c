@@ -2733,6 +2733,7 @@ DECLARE_NATIVE(subparse)
 //      rules "Rules to parse by"
 //          [<maybe> block!]
 //      /case "Uses case-sensitive comparison"
+//      /relax "Don't require reaching the tail of the input for success"
 //      /redbol "Use Rebol2/Red-style rules vs. UPARSE-style rules"
 //  ]
 //
@@ -2835,23 +2836,8 @@ DECLARE_NATIVE(parse3)
     if (index != Cell_Series_Len_Head(input)) {  // didn't reach end of input
         if (REF(redbol))
             return nullptr;
-        return RAISE(Error_Parse3_Incomplete_Raw());
-    }
-
-    // !!! R3-Alpha parse design had no means to bubble up a "synthesized"
-    // rule product.  But that's important in the new design.  Hack in support
-    // for the single case of when the last rule in the block was <here> and
-    // returning the parse position.
-    //
-    bool strict = true;
-    if (
-        rules_at != rules_tail  // position on input wasn't []
-        and Is_Tag(rules_tail - 1)  // last element processed was a TAG!
-        and 0 == CT_String(rules_tail - 1, Root_Here_Tag, strict)  // <here>
-    ){
-        Copy_Cell(OUT, ARG(input));
-        VAL_INDEX_UNBOUNDED(OUT) = index;  // cell guaranteed not REB_QUOTED
-        return OUT;
+        if (not REF(relax))
+            return RAISE(Error_Parse3_Incomplete_Raw());
     }
 
     return TRASH;

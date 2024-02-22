@@ -22,3 +22,9 @@
 [
     (trash? parse "a" ["a" (~)])
 ]
+
+; /RELAX means you don't have to match the full input
+[
+    (10 = parse/relax "aaa" ["a" (10)])
+    ~parse-mismatch~ !! (10 = parse/relax "aaa" ["b" (10)])
+]
