@@ -6,7 +6,7 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Copyright 2012-2023 Ren-C Open Source Contributors
+// Copyright 2012-2024 Ren-C Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information.
@@ -377,9 +377,9 @@ typedef struct StubStruct Stub;  // forward decl for DEBUG_USE_UNION_PUNS
 // It's also likely preferred by x86.
 //
 
-struct Reb_Character_Extra { Codepoint codepoint; };  // see %sys-char.h
+struct CharacterExtraStruct { Codepoint codepoint; };  // see %sys-char.h
 
-struct Reb_Date_Extra  // see %sys-time.h
+struct DateExtraStruct  // see %sys-time.h
 {
     unsigned year:16;
     unsigned month:4;
@@ -387,7 +387,7 @@ struct Reb_Date_Extra  // see %sys-time.h
     int zone:7; // +/-15:00 res: 0:15
 };
 
-struct Reb_Parameter_Extra  // see %sys-parameter.h
+struct ParameterExtraStruct  // see %sys-parameter.h
 {
     Flags parameter_flags;  // PARAMETER_FLAG_XXX and PARAMCLASS_BYTE
 };
@@ -436,7 +436,7 @@ union AnyUnion {  // needed to beat strict aliasing, used in payload
     void *corrupt;
 };
 
-union Reb_Bytes_Extra {
+union BytesExtraUnion {
     Byte exactly_4[sizeof(uint32_t)];
     Byte at_least_4[sizeof(uintptr_t)];
 };
@@ -455,12 +455,12 @@ union Reb_Bytes_Extra {
 
 union ValueExtraUnion { //=/////////////////// ACTUAL EXTRA DEFINITION ////=//
 
-    struct Reb_Character_Extra Character;
-    struct Reb_Date_Extra Date;
-    struct Reb_Parameter_Extra Parameter;
+    struct CharacterExtraStruct Character;
+    struct DateExtraStruct Date;
+    struct ParameterExtraStruct Parameter;
 
     union AnyUnion Any;
-    union Reb_Bytes_Extra Bytes;
+    union BytesExtraUnion Bytes;
 };
 
 
@@ -480,36 +480,40 @@ union ValueExtraUnion { //=/////////////////// ACTUAL EXTRA DEFINITION ////=//
 //     https://stackoverflow.com/q/41298619/
 //
 
-struct Reb_Character_Payload {  // see %sys-char.h
+struct CharacterPayloadStruct {  // see %sys-char.h
     Byte size_then_encoded[8];
 };
 
-struct Reb_Integer_Payload { REBI64 i64; };  // see %sys-integer.h
+struct IntegerPayloadStruct { REBI64 i64; };  // see %sys-integer.h
 
-struct Reb_Decimal_Payload { REBDEC dec; };  // see %sys-decimal.h
+struct DecimalPayloadStruct { REBDEC dec; };  // see %sys-decimal.h
 
-struct Reb_Time_Payload {  // see %sys-time.h
+struct TimePayloadStruct {  // see %sys-time.h
     REBI64 nanoseconds;
 };
 
-struct AnyUnion_Payload  // generic, for adding payloads after-the-fact
+struct AnyPayloadStruct  // generic, for adding payloads after-the-fact
 {
     union AnyUnion first;
     union AnyUnion second;
 };
 
-union Reb_Bytes_Payload  // IMPORTANT: Do not cast, use `Pointers` instead
+union BytesPayloadUnion  // IMPORTANT: Do not cast, use `Pointers` instead
 {
     Byte exactly_8[sizeof(uint32_t) * 2];  // same on 32-bit/64-bit platforms
     Byte at_least_8[sizeof(void*) * 2];  // size depends on platform
 };
 
-// COMMA! is evaluative, but does not use its extra.  To make the Any_Inert()
-// test fast, REB_COMMA is pushed to a high value.  That is exploited by feeds,
-// which use it to store va_list information along with a specifier in a value
-// cell slot.  (Most commas don't have this.)
+// COMMA! is not Cell_Extra_Needs_Mark(), and doesn't use its payload.
 //
-struct Reb_Comma_Payload {
+// That is exploited by feeds when they are variadic instead of arrays.  The
+// feed cell is used to store va_list information along with a specifier in
+// a value cell slot.
+//
+// !!! Now that more than 64 types are available, it is probably clearer to
+// make a special type for this.  But it hasn't been a problem so far.
+//
+struct CommaPayloadStruct {
     // A feed may be sourced from a va_list of pointers, or not.  If this is
     // NULL it is assumed that the values are sourced from a simple array.
     //
@@ -552,15 +556,15 @@ union ValuePayloadUnion { //=/////////////// ACTUAL PAYLOAD DEFINITION ////=//
     //     REBINT signed_param_index;  // if negative, consider arg enfixed
     //     Action* phase;  // where to look up parameter by its offset
 
-    struct AnyUnion_Payload Any;
+    struct AnyPayloadStruct Any;
 
-    struct Reb_Character_Payload Character;
-    struct Reb_Integer_Payload Integer;
-    struct Reb_Decimal_Payload Decimal;
-    struct Reb_Time_Payload Time;
+    struct CharacterPayloadStruct Character;
+    struct IntegerPayloadStruct Integer;
+    struct DecimalPayloadStruct Decimal;
+    struct TimePayloadStruct Time;
 
-    union Reb_Bytes_Payload Bytes;
-    struct Reb_Comma_Payload Comma;
+    union BytesPayloadUnion Bytes;
+    struct CommaPayloadStruct Comma;
 
   #if !defined(NDEBUG) // unsafe "puns" for easy debug viewing in C watchlist
     int64_t int64_pun;
