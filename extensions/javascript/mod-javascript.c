@@ -333,8 +333,9 @@ enum Reb_Native_State {
 // which ties the returned integer into the resolve and reject branches of an
 // actual JavaScript ES6 Promise.
 //
-EXTERN_C intptr_t RL_rebPromise(void *p, va_list *vaptr)
-{
+EXTERN_C intptr_t RL_rebPromise(
+    RebolSpecifier_internal *specifier, void *p, va_list *vaptr
+){
     TRACE("rebPromise() called");
 
     // If we're asked to run `rebPromise("input")`, that requires interacting
@@ -365,7 +366,8 @@ EXTERN_C intptr_t RL_rebPromise(void *p, va_list *vaptr)
     // already exists.
 
     DECLARE_VALUE (block);
-    RL_rebTranscodeInto(block, p, vaptr);
+    UNUSED(specifier);  // shouldn't use one if we're transcoding?
+    RL_rebTranscodeInto(specifier, block, p, vaptr);
 
     Array* code = Cell_Array_Ensure_Mutable(block);
     assert(Is_Node_Managed(code));

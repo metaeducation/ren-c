@@ -855,7 +855,7 @@ bool Get_Var_Push_Refinements_Throws(
     while (stackindex != TOP_INDEX + 1) {
         Move_Cell(temp, out);
         QUOTE_BYTE(temp) = ONEQUOTE_3;
-        const void *ins = rebQ(cast(Value*, Data_Stack_At(stackindex)));
+        const Node* ins = rebQ(cast(Value*, Data_Stack_At(stackindex)));
         if (rebRunThrows(
             out,  // <-- output cell
             Canon(PICK_P), temp, ins
@@ -1446,7 +1446,7 @@ bool Set_Var_Core_Updater_Throws(
     while (stackindex != stackindex_top) {
         Move_Cell(temp, out);
         Quotify(temp, 1);
-        const void *ins = rebQ(cast(Value*, Data_Stack_At(stackindex)));
+        const Node* ins = rebQ(cast(Value*, Data_Stack_At(stackindex)));
         if (rebRunThrows(
             out,  // <-- output cell
             Canon(PICK_P), temp, ins
@@ -1463,7 +1463,7 @@ bool Set_Var_Core_Updater_Throws(
     Move_Cell(temp, out);
     Byte quote_byte = QUOTE_BYTE(temp);
     QUOTE_BYTE(temp) = ONEQUOTE_3;
-    const void *ins = rebQ(cast(Value*, Data_Stack_At(stackindex)));
+    const Node* ins = rebQ(cast(Value*, Data_Stack_At(stackindex)));
     assert(Is_Action(updater));
     if (rebRunThrows(
         out,  // <-- output cell

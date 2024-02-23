@@ -132,3 +132,18 @@ INLINE bool Are_Synonyms(const Symbol* s1, const Symbol* s2) {
 
 #define Intern_UTF8_Managed(utf8,size) \
     Intern_UTF8_Managed_Core(nullptr, (utf8), (size))
+
+
+// When you pass a symbol to the variadic API interfaces, it assumes that you
+// want to make a plain WORD! with that symbol.  This is faster than needing
+// to allocate a separate word for the purpose of passing in.
+//
+// This doesn't actually do anything--just passes the symbol through.  But
+// it's needed for typechecking in C++, because it doesn't accept arbitrary
+// void pointers...only things it knows about.  Symbol isn't one of the things
+// exported in the API, so we have to approve its use in API variadics here.
+//
+#if (! LIBREBOL_NO_CPLUSPLUS)
+    inline const void* to_rebarg(const Symbol* symbol)
+        { return symbol; }
+#endif

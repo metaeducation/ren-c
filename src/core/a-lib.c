@@ -663,7 +663,7 @@ RebolValue* RL_rebDecimal(double dec)
 // own length.  C doesn't have this for raw byte buffers, but JavaScript has
 // things like Int8Array.
 //
-RebolValue* RL_rebSizedBinary(const void *bytes, size_t size)
+RebolValue* RL_rebSizedBinary(const void* bytes, size_t size)
 {
     ENTER_API;
 
@@ -722,7 +722,7 @@ RebolValue* RL_rebUninitializedBinary_internal(size_t size)
 // but that would involve pointers-to-pointers which are awkward in
 // emscripten and probably cheaper to make two direct WASM calls.
 //
-unsigned char *RL_rebBinaryHead_internal(const RebolValue* binary)
+unsigned char* RL_rebBinaryHead_internal(const RebolValue* binary)
 {
     ENTER_API;
 
@@ -733,7 +733,7 @@ unsigned char *RL_rebBinaryHead_internal(const RebolValue* binary)
 //
 //  rebBinaryAt_internal: RL_API
 //
-unsigned char *RL_rebBinaryAt_internal(const RebolValue* binary)
+unsigned char* RL_rebBinaryAt_internal(const RebolValue* binary)
 {
     ENTER_API;
 
@@ -760,7 +760,7 @@ unsigned int RL_rebBinarySizeAt_internal(const RebolValue* binary)
 // !!! Should there be variants for Strict/Relaxed, e.g. a version that does
 // not accept CR and one that does?
 //
-RebolValue* RL_rebSizedText(const char *utf8, size_t size)
+RebolValue* RL_rebSizedText(const char* utf8, size_t size)
 {
     ENTER_API;
 
@@ -774,7 +774,7 @@ RebolValue* RL_rebSizedText(const char *utf8, size_t size)
 //
 //  rebText: RL_API
 //
-RebolValue* RL_rebText(const char *utf8)
+RebolValue* RL_rebText(const char* utf8)
 {
     ENTER_API;
 
@@ -785,7 +785,7 @@ RebolValue* RL_rebText(const char *utf8)
 //
 //  rebLengthedTextWide: RL_API
 //
-RebolValue* RL_rebLengthedTextWide(const REBWCHAR *wstr, unsigned int num_chars)
+RebolValue* RL_rebLengthedTextWide(const REBWCHAR* wstr, unsigned int num_chars)
 {
     ENTER_API;
 
@@ -804,7 +804,7 @@ RebolValue* RL_rebLengthedTextWide(const REBWCHAR *wstr, unsigned int num_chars)
 //
 // Imports a TEXT! from UTF-16 (potentially multi-wchar-per-codepoint encoding)
 //
-RebolValue* RL_rebTextWide(const REBWCHAR *wstr)
+RebolValue* RL_rebTextWide(const REBWCHAR* wstr)
 {
     ENTER_API;
 
@@ -917,9 +917,13 @@ void RL_rebModifyHandleCleaner(RebolValue* v, CLEANUP_CFUNC *cleaner) {
 // For the moment, this routine specifically accesses arguments of the most
 // recent ACTION! on the stack.
 //
-const void *RL_rebArgR(const void *p, va_list *vaptr)
-{
+const RebolNodeInternal* RL_rebArgR(
+    RebolSpecifier_internal* specifier,
+    const void* p, va_list* vaptr
+){
     ENTER_API;
+
+    UNUSED(specifier);
 
     Level* L = TOP_LEVEL;
     Phase* act = Level_Phase(L);
@@ -928,8 +932,8 @@ const void *RL_rebArgR(const void *p, va_list *vaptr)
     // taking just a `const char*`, so this falsely is a variadic to get the
     // JavaScript string proxying.
     //
-    const char *name;
-    const void *p2;
+    const char* name;
+    const void* p2;
     if (vaptr) {
         name = c_cast(char*, p);
         p2 = va_arg(*vaptr, const void*);
@@ -949,7 +953,7 @@ const void *RL_rebArgR(const void *p, va_list *vaptr)
     Value* arg = Level_Args_Head(L);
     for (; key != tail; ++key, ++arg) {
         if (Are_Synonyms(KEY_SYMBOL(key), symbol))
-            return NULLIFY_NULLED(arg);
+            return c_cast(RebolNodeInternal*, NULLIFY_NULLED(arg));
     }
 
     fail ("Unknown rebArg(...) name.");
@@ -962,11 +966,13 @@ const void *RL_rebArgR(const void *p, va_list *vaptr)
 // Wrapper over the more optimal rebArgR() call, which can be used to get
 // an "safer" API handle to the argument.
 //
-RebolValue* RL_rebArg(const void *p, va_list *vaptr)
-{
+RebolValue* RL_rebArg(
+    RebolSpecifier_internal* specifier,
+    const void* p, va_list* vaptr
+){
     ENTER_API;
 
-    const void* argR = RL_rebArgR(p, vaptr);
+    const void* argR = RL_rebArgR(specifier, p, vaptr);
     if (not argR)
         return nullptr;
 
@@ -1026,11 +1032,12 @@ RebolValue* RL_rebArg(const void *p, va_list *vaptr)
 //   encoded...and can stick to the standardized layout of a pointer array.)
 //
 static bool Run_Va_Throws(
+    RebolSpecifier_internal* specifier,
     Atom* out,
     bool interruptible,  // whether a HALT can cause a longjmp/throw
     Flags flags,
-    const void *p,  // first pointer (may be END, nullptr means NULLED)
-    va_list *vaptr  // va_end() handled by feed for all cases (throws, fails)
+    const void* p,  // first pointer (may be END, nullptr means NULLED)
+    va_list* vaptr  // va_end() handled by feed for all cases (throws, fails)
 ){
     // !!! Some kind of policy is needed to decide how to disable halting in
     // the API.  It uses the longjmp() mechanism as a "no catch for throw",
@@ -1051,6 +1058,7 @@ static bool Run_Va_Throws(
         FEED_MASK_DEFAULT
     );
 
+    UNUSED(specifier);  // should use this
     mutable_FEED_SPECIFIER(feed) = Get_Context_From_Stack();
 
     Init_Void(PUSH());  // primed result
@@ -1080,13 +1088,19 @@ static bool Run_Va_Throws(
 // executed code passed to not have it evaluate to nihil)
 //
 inline static void Run_Va_Undecayed_May_Fail_Calls_Va_End(
+    RebolSpecifier_internal* specifier,
     Atom* out,
-    const void *p,  // first pointer (may be END, nullptr means NULLED)
-    va_list *vaptr  // va_end() handled by feed for all cases (throws, fails)
+    const void* p,  // first pointer (may be END, nullptr means NULLED)
+    va_list* vaptr  // va_end() handled by feed for all cases (throws, fails)
 ){
     bool interruptible = false;
-    if (Run_Va_Throws(out, interruptible, LEVEL_MASK_NONE, p, vaptr)) {
-        //
+    if (Run_Va_Throws(
+        specifier,
+        out,
+        interruptible,
+        LEVEL_MASK_NONE,
+        p, vaptr
+    )){
         // !!! Being able to THROW across C stacks is necessary in the general
         // case (consider implementing QUIT or HALT).  Probably need to be
         // converted to a kind of error, and then re-converted into a THROW
@@ -1101,11 +1115,12 @@ inline static void Run_Va_Undecayed_May_Fail_Calls_Va_End(
 // about multi-return packs etc.
 //
 inline static void Run_Va_Decay_May_Fail_Calls_Va_End(
+    RebolSpecifier_internal* specifier,
     Value* out,
-    const void *p,  // first pointer (may be END, nullptr means NULLED)
-    va_list *vaptr  // va_end() handled by feed for all cases (throws, fails)
+    const void* p,  // first pointer (may be END, nullptr means NULLED)
+    va_list* vaptr  // va_end() handled by feed for all cases (throws, fails)
 ){
-    Run_Va_Undecayed_May_Fail_Calls_Va_End(out, p, vaptr);
+    Run_Va_Undecayed_May_Fail_Calls_Va_End(specifier, out, p, vaptr);
 
     Decay_If_Unstable(cast(Atom*, out));
 }
@@ -1129,15 +1144,17 @@ inline static void Run_Va_Decay_May_Fail_Calls_Va_End(
 // and EVAL_EXECUTOR_FLAG_NO_RESIDUE defined in %sys-do.h
 //
 bool RL_rebRunCoreThrows(
+    RebolSpecifier_internal* specifier,
     RebolValue* out,
     uintptr_t flags,  // Flags not exported in API
-    const void *p, va_list *vaptr
+    const void* p, va_list* vaptr
 ){
     Feed* feed = Make_Variadic_Feed(
         p, vaptr,
         FEED_MASK_DEFAULT
     );
 
+    UNUSED(specifier);
     mutable_FEED_SPECIFIER(feed) = Get_Context_From_Stack();
 
     Level* L = Make_Level(feed, flags);
@@ -1166,12 +1183,14 @@ bool RL_rebRunCoreThrows(
 //
 // Most basic evaluator that returns a Value*, which must be rebRelease()'d.
 //
-RebolValue* RL_rebValue(const void *p, va_list *vaptr)
-{
+RebolValue* RL_rebValue(
+    RebolSpecifier_internal* specifier,
+    const void* p, va_list* vaptr
+){
     ENTER_API;
 
     Value* result = Alloc_Value_Core(CELL_MASK_0);
-    Run_Va_Decay_May_Fail_Calls_Va_End(result, p, vaptr);
+    Run_Va_Decay_May_Fail_Calls_Va_End(specifier, result, p, vaptr);
 
     if (Is_Nulled(result)) {
         Free_Value(result);
@@ -1189,8 +1208,9 @@ RebolValue* RL_rebValue(const void *p, va_list *vaptr)
 // Just scans the source given into a BLOCK! without executing it.
 //
 RebolValue* RL_rebTranscodeInto(
+    RebolSpecifier_internal* specifier,
     RebolValue* out,
-    const void *p, va_list *vaptr
+    const void* p, va_list* vaptr
 ){
     ENTER_API;
 
@@ -1200,6 +1220,8 @@ RebolValue* RL_rebTranscodeInto(
     );
     Add_Feed_Reference(feed);
     Sync_Feed_At_Cell_Or_End_May_Fail(feed);
+
+    UNUSED(specifier);  // should be using
 
     StackIndex base = TOP_INDEX;
     while (Not_Feed_At_End(feed)) {
@@ -1236,14 +1258,15 @@ RebolValue* RL_rebTranscodeInto(
 //    as they're encodings of variadic parameters--not the actual parameters!
 //
 void RL_rebPushContinuation(
+    RebolSpecifier_internal* specifier,
     RebolValue* out,
     uintptr_t flags,
-    const void *p, va_list *vaptr
+    const void* p, va_list* vaptr
 ){
     ENTER_API;
 
     DECLARE_VALUE (block);
-    RL_rebTranscodeInto(block, p, vaptr);  // use "RL_" [1]
+    RL_rebTranscodeInto(specifier, block, p, vaptr);  // use "RL_" [1]
 
     Init_Void(PUSH());  // primed result
     Level* L = Make_Level_At(block, flags);
@@ -1259,12 +1282,14 @@ void RL_rebPushContinuation(
 // store unstable isotopes, which hinders extensions that want to do multiple
 // return values.  Review.
 //
-RebolValue *RL_rebDelegate(  // !!! Hack: returns Bounce, not Value*
-    const void *p, va_list *vaptr
+RebolValue* RL_rebDelegate(  // !!! Hack: returns Bounce, not Value*
+    RebolSpecifier_internal* specifier,
+    const void* p, va_list* vaptr
 ){
     ENTER_API;
 
     RL_rebPushContinuation(
+        specifier,
         cast(Value*, TOP_LEVEL->out),
         LEVEL_FLAG_RAISED_RESULT_OK,  // definitional error if raised
         p, vaptr
@@ -1282,15 +1307,23 @@ RebolValue *RL_rebDelegate(  // !!! Hack: returns Bounce, not Value*
 //
 // Will return parameter packs as-is.
 //
-RebolValue* RL_rebMeta(const void *p, va_list *vaptr)
-{
+RebolValue* RL_rebMeta(
+    RebolSpecifier_internal* specifier,
+    const void* p, va_list* vaptr
+){
     ENTER_API;
 
     Value* v = Alloc_Value_Core(CELL_MASK_0);
     bool interruptible = false;
-    if (Run_Va_Throws(v, interruptible, LEVEL_FLAG_META_RESULT, p, vaptr))
+    if (Run_Va_Throws(
+        specifier,
+        v,
+        interruptible,
+        LEVEL_FLAG_META_RESULT,
+        p, vaptr
+    )){
         fail (Error_No_Catch_For_Throw(TOP_LEVEL));  // panic?
-
+    }
     assert(not Is_Nulled(v));  // meta operations cannot produce NULL
 
     Set_Node_Root_Bit(v);
@@ -1305,13 +1338,21 @@ RebolValue* RL_rebMeta(const void *p, va_list *vaptr)
 //
 //     rebEntrap(...) => rebValue("entrap [", ..., "]")
 //
-RebolValue* RL_rebEntrap(const void *p, va_list *vaptr)
-{
+RebolValue* RL_rebEntrap(
+    RebolSpecifier_internal* specifier,
+    const void* p, va_list* vaptr
+){
     ENTER_API;
 
     Value* v = Alloc_Value_Core(CELL_MASK_0);
     bool interruptible = false;
-    if (Run_Va_Throws(v, interruptible, LEVEL_FLAG_META_RESULT, p, vaptr)) {
+    if (Run_Va_Throws(
+        specifier,
+        v,
+        interruptible,
+        LEVEL_FLAG_META_RESULT,
+        p, vaptr
+    )){
         Init_Error(v, Error_No_Catch_For_Throw(TOP_LEVEL));
         Set_Node_Root_Bit(v);
         return v;
@@ -1336,14 +1377,20 @@ RebolValue* RL_rebEntrap(const void *p, va_list *vaptr)
 // points to one routine for now.
 //
 RebolValue* RL_rebEntrapInterruptible(
-    const void *p,
-    va_list *vaptr
+    RebolSpecifier_internal* specifier,
+    const void* p, va_list* vaptr
 ){
     ENTER_API;
 
     Value* v = Alloc_Value_Core(CELL_MASK_0);
     bool interruptible = true;
-    if (Run_Va_Throws(v, interruptible, LEVEL_FLAG_META_RESULT, p, vaptr)) {
+    if (Run_Va_Throws(
+        specifier,
+        v,
+        interruptible,
+        LEVEL_FLAG_META_RESULT,
+        p, vaptr
+    )){
         Init_Error(v, Error_No_Catch_For_Throw(TOP_LEVEL));
         Set_Node_Root_Bit(v);
         return v;
@@ -1371,12 +1418,14 @@ RebolValue* RL_rebEntrapInterruptible(
 // is important for the console when trapping its generated result, to be
 // able to quote it without the backtrace showing a QUOTE stack frame.)
 //
-RebolValue* RL_rebQuote(const void *p, va_list *vaptr)
-{
+RebolValue* RL_rebQuote(
+    RebolSpecifier_internal* specifier,
+    const void* p, va_list* vaptr
+){
     ENTER_API;
 
     Value* result = Alloc_Value();
-    Run_Va_Decay_May_Fail_Calls_Va_End(result, p, vaptr);
+    Run_Va_Decay_May_Fail_Calls_Va_End(specifier, result, p, vaptr);
 
     return Quotify(result, 1);  // nulled cells legal for API if quoted
 }
@@ -1391,12 +1440,14 @@ RebolValue* RL_rebQuote(const void *p, va_list *vaptr)
 // Also means that if the product is something like a ~[]~ antiform ("nihil")
 // that is not an issue.
 //
-void RL_rebElide(const void *p, va_list *vaptr)
-{
+void RL_rebElide(
+    RebolSpecifier_internal* specifier,
+    const void* p, va_list* vaptr
+){
     ENTER_API;
 
-    DECLARE_ATOM (elided);
-    Run_Va_Undecayed_May_Fail_Calls_Va_End(elided, p, vaptr);
+    DECLARE_ATOM (discarded);
+    Run_Va_Undecayed_May_Fail_Calls_Va_End(specifier, discarded, p, vaptr);
 }
 
 
@@ -1421,12 +1472,14 @@ void RL_rebElide(const void *p, va_list *vaptr)
 //    rebNoReturn(...) -- whose return?
 //    rebStop(...) -- STOP is rather final sounding, the code keeps going
 //
-void RL_rebJumps(const void *p, va_list *vaptr)
-{
+void RL_rebJumps(
+    RebolSpecifier_internal* specifier,
+    const void* p, va_list* vaptr
+){
     ENTER_API;
 
     DECLARE_VALUE (dummy);
-    Run_Va_Decay_May_Fail_Calls_Va_End(dummy, p, vaptr);
+    Run_Va_Decay_May_Fail_Calls_Va_End(specifier, dummy,p, vaptr);
 
     // Note: If we just `fail()` here, then while MSVC compiles %a-lib.c at
     // higher optimization levels it can conclude that RL_rebJumps() never
@@ -1456,12 +1509,14 @@ void RL_rebJumps(const void *p, va_list *vaptr)
 // if the object supports a THEN method it would pass the DID test.  Review
 // this in light of whether antiform objects are going to be kept.
 //
-bool RL_rebDid(const void *p, va_list *vaptr)
-{
+bool RL_rebDid(
+    RebolSpecifier_internal* specifier,
+    const void* p, va_list* vaptr
+){
     ENTER_API;
 
     DECLARE_ATOM (condition);
-    Run_Va_Undecayed_May_Fail_Calls_Va_End(condition, p, vaptr);
+    Run_Va_Undecayed_May_Fail_Calls_Va_End(specifier, condition, p, vaptr);
 
     return not Is_Nulled(condition) and not Is_Void(condition);
 }
@@ -1477,12 +1532,14 @@ bool RL_rebDid(const void *p, va_list *vaptr)
 // if the object supports a ELSE method it would pass the DIDN'T test.  Review
 // this in light of whether antiform objects are going to be kept.
 //
-bool RL_rebDidnt(const void *p, va_list *vaptr)
-{
+bool RL_rebDidnt(
+    RebolSpecifier_internal* specifier,
+    const void* p, va_list* vaptr
+){
     ENTER_API;
 
     DECLARE_ATOM (condition);
-    Run_Va_Undecayed_May_Fail_Calls_Va_End(condition, p, vaptr);
+    Run_Va_Undecayed_May_Fail_Calls_Va_End(specifier, condition, p, vaptr);
 
     return Is_Nulled(condition) or Is_Void(condition);
 }
@@ -1496,12 +1553,14 @@ bool RL_rebDidnt(const void *p, va_list *vaptr)
 // rebDid() is taken for other purposes.  Avoid this and use rebTruthy() if
 // at all possible.
 //
-bool RL_rebTruthy(const void *p, va_list *vaptr)
-{
+bool RL_rebTruthy(
+    RebolSpecifier_internal* specifier,
+    const void* p, va_list* vaptr
+){
     ENTER_API;
 
     DECLARE_VALUE (condition);
-    Run_Va_Decay_May_Fail_Calls_Va_End(condition, p, vaptr);
+    Run_Va_Decay_May_Fail_Calls_Va_End(specifier, condition, p, vaptr);
 
     return Is_Truthy(condition);  // will fail() on (most) antiforms
 }
@@ -1513,12 +1572,14 @@ bool RL_rebTruthy(const void *p, va_list *vaptr)
 // !!! If this were going to be a macro like (not (rebTruthy(...))) it
 // would have to be a variadic macro.  Not worth it. use separate entry point.
 //
-bool RL_rebNot(const void *p, va_list *vaptr)
-{
+bool RL_rebNot(
+    RebolSpecifier_internal* specifier,
+    const void* p, va_list* vaptr
+){
     ENTER_API;
 
     DECLARE_VALUE (condition);
-    Run_Va_Decay_May_Fail_Calls_Va_End(condition, p, vaptr);
+    Run_Va_Decay_May_Fail_Calls_Va_End(specifier, condition, p, vaptr);
 
     return Is_Falsey(condition);  // will fail() on (most) antiforms
 }
@@ -1535,12 +1596,14 @@ bool RL_rebNot(const void *p, va_list *vaptr)
 // an integer for INTEGER!, LOGIC!, CHAR!...assume it's most common so the
 // short name is worth it.
 //
-intptr_t RL_rebUnbox(const void *p, va_list *vaptr)
-{
+intptr_t RL_rebUnbox(
+    RebolSpecifier_internal* specifier,
+    const void* p, va_list* vaptr
+){
     ENTER_API;
 
     DECLARE_VALUE (result);
-    Run_Va_Decay_May_Fail_Calls_Va_End(result, p, vaptr);
+    Run_Va_Decay_May_Fail_Calls_Va_End(specifier, result, p, vaptr);
 
     if (Is_Logic(result)) {
         return Cell_Logic(result) ? 1 : 0;
@@ -1562,13 +1625,13 @@ intptr_t RL_rebUnbox(const void *p, va_list *vaptr)
 //  rebUnboxLogic: RL_API
 //
 bool RL_rebUnboxLogic(
-    const void *p,
-    va_list *vaptr
+    RebolSpecifier_internal* specifier,
+    const void* p, va_list* vaptr
 ){
     ENTER_API;
 
     DECLARE_VALUE (result);
-    Run_Va_Decay_May_Fail_Calls_Va_End(result, p, vaptr);
+    Run_Va_Decay_May_Fail_Calls_Va_End(specifier, result, p, vaptr);
 
     if (not Is_Logic(result))
         fail ("rebUnboxLogic() called on non-LOGIC!");
@@ -1581,13 +1644,13 @@ bool RL_rebUnboxLogic(
 //  rebUnboxInteger: RL_API
 //
 intptr_t RL_rebUnboxInteger(
-    const void *p,
-    va_list *vaptr
+    RebolSpecifier_internal* specifier,
+    const void* p, va_list* vaptr
 ){
     ENTER_API;
 
     DECLARE_VALUE (result);
-    Run_Va_Decay_May_Fail_Calls_Va_End(result, p, vaptr);
+    Run_Va_Decay_May_Fail_Calls_Va_End(specifier, result, p, vaptr);
 
     if (not Is_Integer(result))
         fail ("rebUnboxInteger() called on non-INTEGER!");
@@ -1600,12 +1663,13 @@ intptr_t RL_rebUnboxInteger(
 //  rebUnboxDecimal: RL_API
 //
 double RL_rebUnboxDecimal(
-    const void *p, va_list *vaptr
+    RebolSpecifier_internal* specifier,
+    const void* p, va_list* vaptr
 ){
     ENTER_API;
 
     DECLARE_VALUE (result);
-    Run_Va_Decay_May_Fail_Calls_Va_End(result, p, vaptr);
+    Run_Va_Decay_May_Fail_Calls_Va_End(specifier, result, p, vaptr);
 
     if (Is_Decimal(result))
         return VAL_DECIMAL(result);
@@ -1621,12 +1685,13 @@ double RL_rebUnboxDecimal(
 //  rebUnboxChar: RL_API
 //
 uint32_t RL_rebUnboxChar(
-    const void *p, va_list *vaptr
+    RebolSpecifier_internal* specifier,
+    const void* p, va_list* vaptr
 ){
     ENTER_API;
 
     DECLARE_VALUE (result);
-    Run_Va_Decay_May_Fail_Calls_Va_End(result, p, vaptr);
+    Run_Va_Decay_May_Fail_Calls_Va_End(specifier, result, p, vaptr);
 
     if (not IS_CHAR(result))
         fail ("rebUnboxChar() called on non-CHAR");
@@ -1639,7 +1704,7 @@ uint32_t RL_rebUnboxChar(
 //  rebUnboxHandleCData: RL_API
 //
 void *RL_rebUnboxHandleCData(
-    size_t *size_out,
+    size_t* size_out,
     const RebolValue* v
 ){
     ENTER_API_RECYCLING_OK;
@@ -1672,7 +1737,7 @@ CLEANUP_CFUNC *RL_rebExtractHandleCleaner(
 // Helper function for `rebSpellInto()` and `rebSpell()`
 //
 static size_t Spell_Into(
-    char *buf,
+    char* buf,
     size_t buf_size,  // number of bytes
     const Value* v
 ){
@@ -1704,14 +1769,15 @@ static size_t Spell_Into(
 // The more immediate quantity of concern to return is the number of bytes.
 //
 size_t RL_rebSpellInto(
-    char *buf,
+    RebolSpecifier_internal* specifier,
+    char* buf,
     size_t buf_size,  // number of bytes
-    const void *p, va_list *vaptr
+    const void* p, va_list* vaptr
 ){
     ENTER_API;
 
     DECLARE_VALUE (v);
-    Run_Va_Decay_May_Fail_Calls_Va_End(v, p, vaptr);
+    Run_Va_Decay_May_Fail_Calls_Va_End(specifier, v, p, vaptr);
 
     return Spell_Into(buf, buf_size, v);
 }
@@ -1726,18 +1792,20 @@ size_t RL_rebSpellInto(
 //
 // Can return nullptr.  Use rebSpell() if you want a failure instead.
 //
-char *RL_rebSpellMaybe(const void *p, va_list *vaptr)
-{
+char* RL_rebSpellMaybe(
+    RebolSpecifier_internal* specifier,
+    const void* p, va_list* vaptr
+){
     ENTER_API;
 
     DECLARE_VALUE (v);
-    Run_Va_Decay_May_Fail_Calls_Va_End(v, p, vaptr);
+    Run_Va_Decay_May_Fail_Calls_Va_End(specifier, v, p, vaptr);
 
     if (Is_Nulled(v))
         return nullptr;
 
     size_t size = Spell_Into(nullptr, 0, v);
-    char *result = rebAllocN(char, size);  // no +1 for term needed...
+    char* result = rebAllocN(char, size);  // no +1 for term needed...
     assert(result[size] == '\0');  // ...see rebRepossess() for why this is
 
     size_t check = Spell_Into(result, size, v);
@@ -1752,8 +1820,11 @@ char *RL_rebSpellMaybe(const void *p, va_list *vaptr)
 //
 // Raises error on NULL input
 //
-char *RL_rebSpell(const void *p, va_list *vaptr) {
-    char* spell = RL_rebSpellMaybe(p, vaptr);
+char* RL_rebSpell(
+    RebolSpecifier_internal* specifier,
+    const void* p, va_list* vaptr
+){
+    char* spell = RL_rebSpellMaybe(specifier, p, vaptr);
     if (spell == nullptr)
         fail ("rebSpell() does not take NULL, see rebSpellMaybe()");
     return spell;
@@ -1763,7 +1834,7 @@ char *RL_rebSpell(const void *p, va_list *vaptr) {
 // Helper function for `rebSpellIntoWide()` and `rebSpellWide()`
 //
 static unsigned int Spell_Into_Wide(
-    REBWCHAR *buf,
+    REBWCHAR* buf,
     unsigned int buf_wchars,  // chars buf can hold (not including terminator)
     const Value* v
 ){
@@ -1823,14 +1894,15 @@ static unsigned int Spell_Into_Wide(
 // wchar units...not *necesssarily* a length in codepoints.
 //
 unsigned int RL_rebSpellIntoWide(
-    REBWCHAR *buf,
+    RebolSpecifier_internal* specifier,
+    REBWCHAR* buf,
     unsigned int buf_chars,  // chars buf can hold (not including terminator)
-    const void *p, va_list *vaptr
+    const void* p, va_list* vaptr
 ){
     ENTER_API;
 
     DECLARE_VALUE (v);
-    Run_Va_Decay_May_Fail_Calls_Va_End(v, p, vaptr);
+    Run_Va_Decay_May_Fail_Calls_Va_End(specifier, v, p, vaptr);
 
     return Spell_Into_Wide(buf, buf_chars, v);
 }
@@ -1842,18 +1914,20 @@ unsigned int RL_rebSpellIntoWide(
 // Gives the spelling as WCHARs.  The result is UTF-16, so some codepoints
 // won't fit in single WCHARs.
 //
-REBWCHAR *RL_rebSpellWideMaybe(const void *p, va_list *vaptr)
-{
+REBWCHAR* RL_rebSpellWideMaybe(
+    RebolSpecifier_internal* specifier,
+    const void* p, va_list* vaptr
+){
     ENTER_API;
 
     DECLARE_VALUE (v);
-    Run_Va_Decay_May_Fail_Calls_Va_End(v, p, vaptr);
+    Run_Va_Decay_May_Fail_Calls_Va_End(specifier, v, p, vaptr);
 
     if (Is_Nulled(v))
         return nullptr;
 
     REBLEN len = Spell_Into_Wide(nullptr, 0, v);
-    REBWCHAR *result = cast(
+    REBWCHAR* result = cast(
         REBWCHAR*, rebMalloc(sizeof(REBWCHAR) * (len + 1))
     );
 
@@ -1870,12 +1944,14 @@ REBWCHAR *RL_rebSpellWideMaybe(const void *p, va_list *vaptr)
 //
 // Raises error on NULL
 //
-REBWCHAR *RL_rebSpellWide(const void *p, va_list *vaptr)
-{
-    REBWCHAR* spell = RL_rebSpellWideMaybe(p, vaptr);
-    if (spell == nullptr)
+REBWCHAR* RL_rebSpellWide(
+    RebolSpecifier_internal* specifier,
+    const void* p, va_list* vaptr
+){
+    REBWCHAR* spelling = RL_rebSpellWideMaybe(specifier, p, vaptr);
+    if (spelling == nullptr)
         fail ("rebSpellWide() does not take NULL, see rebSpellWideMaybe()");
-    return spell;
+    return spelling;
 }
 
 
@@ -1886,7 +1962,7 @@ REBWCHAR *RL_rebSpellWide(const void *p, va_list *vaptr)
 // !!! How many types should be allowed to convert automatically?
 //
 static size_t Bytes_Into(
-    unsigned char *buf,
+    unsigned char* buf,
     size_t buf_size,
     const Value* v
 ){
@@ -1943,14 +2019,15 @@ static size_t Bytes_Into(
 // zero termination of Rebol series, including binaries.  Review.
 //
 size_t RL_rebBytesInto(
-    unsigned char *buf,
+    RebolSpecifier_internal* specifier,
+    unsigned char* buf,
     size_t buf_size,
-    const void *p, va_list *vaptr
+    const void* p, va_list* vaptr
 ){
     ENTER_API;
 
     DECLARE_VALUE (v);
-    Run_Va_Decay_May_Fail_Calls_Va_End(v, p, vaptr);
+    Run_Va_Decay_May_Fail_Calls_Va_End(specifier, v, p, vaptr);
 
     return Bytes_Into(buf, buf_size, v);
 }
@@ -1963,14 +2040,15 @@ size_t RL_rebBytesInto(
 // encoding of an ANY-STRING? or ANY-WORD? and that size in bytes.  (Hence,
 // for strings it is like rebSpell() except telling you how many bytes.)
 //
-unsigned char *RL_rebBytesMaybe(
-    size_t *size_out,  // !!! Enforce non-null, to ensure type safety?
-    const void *p, va_list *vaptr
+unsigned char* RL_rebBytesMaybe(
+    RebolSpecifier_internal* specifier,
+    size_t* size_out,  // !!! Enforce non-null, to ensure type safety?
+    const void* p, va_list* vaptr
 ){
     ENTER_API;
 
     DECLARE_VALUE (v);
-    Run_Va_Decay_May_Fail_Calls_Va_End(v, p, vaptr);
+    Run_Va_Decay_May_Fail_Calls_Va_End(specifier, v, p, vaptr);
 
     if (Is_Nulled(v)) {
         *size_out = 0;
@@ -1979,7 +2057,7 @@ unsigned char *RL_rebBytesMaybe(
 
     Size size = Bytes_Into(nullptr, 0, v);
 
-    unsigned char *result = rebAllocN(unsigned char, size);  // no +1 needed...
+    unsigned char* result = rebAllocN(unsigned char, size);  // no +1 needed...
     assert(result[size] == '\0');  // ...see rebRepossess() for why
     Bytes_Into(result, size, v);
 
@@ -1993,11 +2071,12 @@ unsigned char *RL_rebBytesMaybe(
 //
 // Raises error on NULL
 //
-unsigned char *RL_rebBytes(
-    size_t *size_out,  // !!! Enforce non-null, to ensure type safety?
-    const void *p, va_list *vaptr
+unsigned char* RL_rebBytes(
+    RebolSpecifier_internal* specifier,
+    size_t* size_out,  // !!! Enforce non-null, to ensure type safety?
+    const void* p, va_list* vaptr
 ){
-    unsigned char* bytes = RL_rebBytesMaybe(size_out, p, vaptr);
+    unsigned char* bytes = RL_rebBytesMaybe(specifier, size_out, p, vaptr);
     if (bytes == nullptr)
         fail ("rebBytes() does not take NULL, see rebBytesMaybe()");
     return bytes;
@@ -2207,7 +2286,7 @@ const RebolNodeInternal* RL_rebQUOTING(const void* p)
     ENTER_API;
 
     if (p == nullptr)
-        return FEED_NULL_SUBSTITUTE_CELL;  // precooked meta null
+        return c_cast(RebolNodeInternal*, FEED_NULL_SUBSTITUTE_CELL);
 
     const Stub* stub;
 
@@ -2222,7 +2301,7 @@ const RebolNodeInternal* RL_rebQUOTING(const void* p)
         const Value* at = cast(const Value*, p);
         if (Is_Nulled(at)) {
             assert(not Is_Api_Value(at));  // only internals use nulled cells
-            return FEED_NULL_SUBSTITUTE_CELL;  // reified substitute
+            return c_cast(RebolNodeInternal*, FEED_NULL_SUBSTITUTE_CELL);
         }
 
         Value* v = Copy_Cell(Alloc_Value(), at);
@@ -2236,7 +2315,7 @@ const RebolNodeInternal* RL_rebQUOTING(const void* p)
 
     Value* v = x_cast(Value*, Stub_Cell(stub));
     Meta_Quotify(v);
-    return stub;
+    return c_cast(RebolNodeInternal*, stub);  // C needs cast
 }
 
 
@@ -2246,14 +2325,14 @@ const RebolNodeInternal* RL_rebQUOTING(const void* p)
 // This is stylized like an API, but actually not exported--it uses internal
 // types.  This makes an cell that will last through a call and be freed.
 //
-const RebolNodeInternal* rebDERELATIVIZE(
+RebolNodeInternal* rebDERELATIVIZE(
     const Cell* cell,
     Specifier* specifier
 ){
     Value* v = Derelativize(Alloc_Value(), cell, specifier);
     Array* a = Singular_From_Cell(v);
     Set_Subclass_Flag(API, a, RELEASE);
-    return a;
+    return cast(RebolNodeInternal*, a);  // cast needed in C
 }
 
 
@@ -2265,7 +2344,7 @@ const RebolNodeInternal* rebDERELATIVIZE(
 // Note: This arity-1 version is pared back from a more complex variadic form:
 // https://forum.rebol.info/t/1050/4
 //
-const RebolNodeInternal* RL_rebUNQUOTING(const void* p)
+RebolNodeInternal* RL_rebUNQUOTING(const void* p)
 {
     ENTER_API;
 
@@ -2301,7 +2380,7 @@ const RebolNodeInternal* RL_rebUNQUOTING(const void* p)
     }
 
     Unquotify(v, 1);
-    return stub;
+    return cast(RebolNodeInternal*, stub);  // cast needed in C
 }
 
 
@@ -2313,7 +2392,7 @@ const RebolNodeInternal* RL_rebUNQUOTING(const void* p)
 // they are seen (or even if they are not seen, if there is a failure on that
 // call it will still process the va_list in order to release these handles)
 //
-const RebolNodeInternal* RL_rebRELEASING(RebolValue* v)
+RebolNodeInternal* RL_rebRELEASING(RebolValue* v)
 {
     ENTER_API;
 
@@ -2328,7 +2407,7 @@ const RebolNodeInternal* RL_rebRELEASING(RebolValue* v)
         fail ("Cannot apply rebR() more than once to the same API value");
 
     Set_Subclass_Flag(API, a, RELEASE);
-    return a;
+    return cast(RebolNodeInternal*, a);  // cast needed in C
 }
 
 
@@ -2337,7 +2416,7 @@ const RebolNodeInternal* RL_rebRELEASING(RebolValue* v)
 //
 // This will splice an array, single value, or no-op into the execution feed.
 //
-const RebolNodeInternal* RL_rebINLINE(const RebolValue* v)
+RebolNodeInternal* RL_rebINLINE(const RebolValue* v)
 {
     ENTER_API;
 
@@ -2351,7 +2430,7 @@ const RebolNodeInternal* RL_rebINLINE(const RebolValue* v)
 
     Copy_Cell(Stub_Cell(a), v);
 
-    return a;
+    return cast(RebolNodeInternal*, a);  // cast needed in C
 }
 
 
@@ -2363,7 +2442,7 @@ const RebolNodeInternal* RL_rebINLINE(const RebolValue* v)
 // quasi-action, that would just evaluate to an antiform.  Something like a
 // rebREIFY would also work, but it would not do type checking.
 //
-const RebolNodeInternal* RL_rebRUN(const void *p)
+RebolNodeInternal* RL_rebRUN(const void* p)
 {
     ENTER_API;
 
@@ -2399,7 +2478,7 @@ const RebolNodeInternal* RL_rebRUN(const void *p)
     else if (not Is_Frame(v))
         fail ("rebRUN() requires FRAME! or actions (aka FRAME! antiforms)");
 
-    return stub;
+    return cast(RebolNodeInternal*, stub);  // cast needed in C
 }
 
 
@@ -2505,8 +2584,8 @@ void RL_rebRelease(const RebolValue* v)
 // would eliminate this API.
 //
 void *RL_rebZdeflateAlloc(
-    size_t *out_len,
-    const void *input,
+    size_t* out_len,
+    const void* input,
     size_t in_len
 ){
     ENTER_API;
@@ -2526,8 +2605,8 @@ void *RL_rebZdeflateAlloc(
 // would eliminate this API.
 //
 void *RL_rebZinflateAlloc(
-    size_t *len_out,
-    const void *input,
+    size_t* len_out,
+    const void* input,
     size_t len_in,
     int max
 ){
@@ -2576,14 +2655,14 @@ RebolValue* RL_rebError_OS(int errnum)  // see also macro rebFail_OS()
     if (errnum == 0)
         errnum = GetLastError();
 
-    WCHAR *lpMsgBuf;  // FormatMessage writes allocated buffer address here
+    WCHAR* lpMsgBuf;  // FormatMessage writes allocated buffer address here
 
     // Specific errors have %1 %2 slots, and if you know the error ID and
     // that it's one of those then this lets you pass arguments to fill
     // those in.  But since this is a generic error, we have no more
     // parameterization (hence FORMAT_MESSAGE_IGNORE_INSERTS)
     //
-    va_list *Arguments = nullptr;
+    va_list* Arguments = nullptr;
 
     // Apparently FormatMessage can find its error strings in a variety of
     // DLLs, but we don't have any context here so just use the default.
@@ -2617,7 +2696,7 @@ RebolValue* RL_rebError_OS(int errnum)  // see also macro rebFail_OS()
         rebRelease(message);
     }
   #elif defined(USE_STRERROR_NOT_STRERROR_R)
-    char *shared = strerror(errnum);  // not thread safe, deprecated
+    char* shared = strerror(errnum);  // not thread safe, deprecated
     error = Error_User(shared);
   #else
     // strerror() is not thread-safe, but strerror_r is. Unfortunately, at
@@ -2783,7 +2862,7 @@ DECLARE_NATIVE(api_transient)
 // This has to be considered in the unloading mechanics.
 //
 RebolValue* RL_rebCollateExtension_internal(
-    const unsigned char *script_compressed,
+    const unsigned char* script_compressed,
     size_t script_compressed_size,
     int script_num_codepoints,
     void *cfuncs,  // Dispatcher* or Intrinsic* (not in API either way)

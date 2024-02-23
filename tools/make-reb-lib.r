@@ -90,7 +90,7 @@ emit-proto: func [return: [~] proto] [
 
     paramlist: collect [
         parse2 proto [
-            copy returns to "RL_" "RL_" copy name to "(" skip
+            copy return-type to "RL_" "RL_" copy name to "(" skip
             ["void)" | some [  ; C void, or at least one parameter expected
                 [copy param to "," skip | copy param to ")" to end] (
                     ;
@@ -127,23 +127,23 @@ emit-proto: func [return: [~] proto] [
     ]
 
     if is-variadic: did find paramlist 'vaptr [
-        parse2 paramlist [
+        parse2 paramlist [  ; Note: block! parsing
             ;
             ; Any generalized "modes" or "flags" should come first, which
             ; facilitates C99 macros that want two places to splice arguments:
-            ; head and tail, e.g.
+            ; head and tail, e.g. this was once done with `quotes`
             ;
             ;     #define rebFoo(...) RL_rebFoo(0, __VA_ARGS__, rebEND)
             ;     #define rebFooQ(...) RL_rebFoo(1, __VA_ARGS__, rebEND)
             ;
-            ; This was once done with `quotes`:
-            ;
-            ;     "unsigned char" 'quotes
+            ; But now, it's needed for passing in the specifier.
 
-            copy paramlist: to "const void *"  ; signal start of variadic
+            "RebolSpecifier_internal*" 'specifier
 
-            "const void *" 'p
-            "va_list *" 'vaptr
+            copy paramlist: to "const void*"  ; signal start of variadic
+
+            "const void*" 'p
+            "va_list*" 'vaptr
         ] else [
             fail [name "has unsupported variadic paramlist:" mold paramlist]
         ]
@@ -155,7 +155,7 @@ emit-proto: func [return: [~] proto] [
     append api-objects make object! compose [
         spec: match block! third header  ; Rebol metadata API comment
         name: (ensure text! name)
-        returns: (ensure text! trim/tail returns)
+        return-type: (ensure text! trim/tail return-type)
         paramlist: (ensure block! paramlist)
         proto: (ensure text! proto)
         is-variadic: (reify-logic is-variadic)
@@ -186,154 +186,130 @@ extern-prototypes: map-each-api [
 
 lib-struct-fields: map-each-api [
     cfunc-params: delimit ", " compose [
+        (if is-variadic ["RebolSpecifier_internal* specifier"])
         (spread map-each [type var] paramlist [spaced [type var]])
-        (if is-variadic ["const void *p"])
-        (if is-variadic ["va_list *vaptr"])
+        (if is-variadic [
+            spread ["const void* p" "va_list* vaptr"]
+        ])
     ]
     cfunc-params: default ["void"]
-    cscape [
-        :api c-func-params
-        {$<Returns> (*$<Name>)($<Cfunc-Params>)}
+    cscape [:api
+        {$<Return-Type> (*$<Name>)($<Cfunc-Params>)}
     ]
 ]
 
-non-variadics: make block! length of api-objects
-c89-variadic-inlines: make block! length of api-objects
-c++-variadic-inlines: make block! length of api-objects
+variadic-api-c-helpers: copy []
+variadic-api-c++-helpers: copy []
 
-for-each api api-objects [do overbind api [
-    if spec and (find spec #noreturn) [
-        assert [returns = "void"]
-        opt-dead-end: "DEAD_END;"
-        opt-noreturn: "ATTRIBUTE_NO_RETURN"
+for-each-api [
+    if not is-variadic [
+        continue
+    ]
+
+    if find spec #noreturn [
+        assert [return-type = "void"]
+        attributes: "ATTRIBUTE_NO_RETURN  /* divergent */"
+        epilogue: cscape [:api
+            "DEAD_END;  /* $<Name>() never returns */"
+        ]
     ] else [
-        opt-dead-end: null
-        opt-noreturn: null
+        attributes: null
+        epilogue: null
     ]
 
-    opt-return_: either returns != "void" ["return "] [null]  ; has space
+    helper-params: map-each [type var] paramlist [
+        spaced [type var]
+    ]
+    proxied-args: map-each [type var] paramlist [
+        to-text var
+    ]
 
-    make-c-proxy: func [
-        return: [text!]
-        /inline
-        <with> returns wrapper-params proxied-args
-    ][
-        let _inline: either inline ["_inline"] [""]
+    return-keyword: if return-type != "void" ["return "] else [null]
 
-        returns: default ["void"]
-        wrapper-params: default ["void"]
-        proxied-args: default [""]
+    append variadic-api-c-helpers cscape [:api {
+        $<Maybe Attributes>
+        inline static $<Return-Type> $<Name>_helper(  /* C version */
+            RebolSpecifier_internal* specifier,
+            $<Helper-Params, >
+            const void* p, ...
+        ){
+            va_list va;
+            va_start(va, p);  /* $<Name>() calls va_end() */
 
-        return cscape [
-            _inline returns wrapper-params proxied_args
-            opt-va-start opt-return_ opt-dead-end
-            :api
-        {
-            $<MAYBE OPT-NORETURN>
-            inline static $<Returns> $<Name>$<_inline>($<Wrapper-Params>) {
-                $<Maybe Opt-Va-Start>
-                $<maybe opt-return_>LIBREBOL_PREFIX($<Name>)($<Proxied-Args>);
-                $<MAYBE OPT-DEAD-END>
-            }
+            $<maybe return-keyword >LIBREBOL_PREFIX($<Name>)(
+                specifier,
+                $<Proxied-Args, >
+                p, &va
+            );
+            $<Maybe Epilogue>
+        }
+    }]
+
+    append variadic-api-c++-helpers cscape [:api {
+        template <typename... Ts>
+        $<Maybe Attributes>
+        inline $<Return-Type> $<Name>_helper(  /* C++ version */
+            RebolSpecifier_internal* specifier,
+            $<Helper-Params, >
+            const Ts & ...args
+        ){
+            const size_t num_args = sizeof...(args);  /* includes rebEND */
+            const void* packed[num_args];
+            rebArgRecurser_internal(0, packed, args...);
+
+            $<maybe return-keyword >LIBREBOL_PREFIX($<Name>)(
+                specifier,
+                $<Proxied-Args, >
+                packed, nullptr
+            );
+            $<Maybe Epilogue>
+        }
+    }]
+]
+
+non-variadic-api-entry-point-macros: map-each-api [
+    ;
+    ; These need to be in a separate list, because they have to be defined
+    ; before the to_rebarg() code for fundemental types.
+    ;
+    if not is-variadic [
+        cscape [:api {
+            #define $<Name>(...) \
+                LIBREBOL_PREFIX($<Name>)(__VA_ARGS__)
         }]
-    ]
-
-    make-c++-proxy: func [
-        return: [text!]
-        <with> returns wrapper-params proxied-args
-    ][
-        returns: default ["void"]
-        wrapper-params: default ["void"]
-        proxied-args: default [""]
-
-        return cscape [
-            returns wrapper-params proxied-args
-            opt-return_ opt-dead-end
-            :api
-        {
-            template <typename... Ts>
-            $<MAYBE OPT-NORETURN>
-            inline $<Returns> $<Name>($<Wrapper-Params>) {
-                LIBREBOL_PACK_CPP_ARGS;
-                $<maybe opt-return_>LIBREBOL_PREFIX($<Name>)($<Proxied-Args>);
-                $<MAYBE OPT-DEAD-END>
-            }
-        }]
-    ]
-
-    if is-variadic [
-        ;
-        ; FIRST THE C VERSIONS
-        ; These take `const void *p` and `...`
-
-        opt-va-start: {va_list va; va_start(va, p);}
-
-        wrapper-params: delimit ", " compose [
-            (spread map-each [type var] paramlist [spaced [type var]])
-            "const void *p"
-            "..."
-        ]
-
-        ; We need two versions of the inline function for C89, one for Q to
-        ; quote spliced slots and one normal.
-
-        proxied-args: delimit ", " compose [
-            (spread map-each [type var] paramlist [to-text var]) "p" "&va"
-        ]
-        append c89-variadic-inlines make-c-proxy/inline
-
-
-        ; NOW THE C++ VERSIONS
-        ; these take `const Ts &... args`
-
-        wrapper-params: delimit ", " compose [
-            (spread map-each [type var] paramlist [spaced [type var]])
-            "const Ts &... args"
-        ]
-
-        ; We need two versions of the inline function for C++, one for Q to
-        ; quote spliced slots and one normal.
-
-        proxied-args: delimit ", " compose [
-            (spread map-each [type var] paramlist [to-text var])
-            "packed"
-            "nullptr"
-        ]
-        append c++-variadic-inlines make-c++-proxy
-    ]
-    else [
-        opt-va-start: null
-
-        wrapper-params: delimit ", " map-each [type var] paramlist [
-            spaced [type var]
-        ]
-
-        proxied-args: delimit ", " map-each [type var] paramlist [
-            to text! var
-        ]
-
-        append non-variadics make-c-proxy
-    ]
-]]
-
-c89-macros: map-each-api [
-    if is-variadic [
-        cscape [:api {#define $<Name> $<Name>_inline}]
     ]
 ]
 
-c99-or-c++11-macros: map-each-api [
-    ;
-    ; C99/C++11 have the ability to do variadic macros, giving the power to
-    ; implicitly slip a rebEND signal at the end of the parameter list.  This
-    ; overcomes a C variadic function's fundamental limitation of not being
-    ; able to implicitly know the number of variadic parameters used.
-    ;
+variadic-api-specifier-capturing-macros: map-each-api [
     if is-variadic [
-        cscape [
-            :api
-            {#define $<Name>(...) $<Name>_inline(__VA_ARGS__, rebEND)}
+        fixed-params: map-each [type var] paramlist [
+            to-text var
         ]
+
+        cscape [:api {
+            #define $<Name>($<Fixed-Params,>...) \
+                $<Name>_helper( \
+                    LIBREBOL_SPECIFIER,  /* captured from callsite! */ \
+                    $<Fixed-Params, >__VA_ARGS__, rebEND \
+                )
+        }]
+    ]
+]
+
+
+variadic-api-run-in-lib-macros: map-each-api [
+    if is-variadic [
+        fixed-params: map-each [type var] paramlist [
+            to-text var
+        ]
+
+        cscape [:api {
+            #define $<Name>Core($<Fixed-Params,>...) \
+                $<Name>_helper( \
+                    0,  /* just run in lib */ \
+                    $<Fixed-Params, >__VA_ARGS__, rebEND \
+                )
+        }]
     ]
 ]
 
@@ -374,7 +350,7 @@ e-lib/emit [ver {
 
 
     /*
-     * REBOL_NO_CPLUSPLUS option
+     * LIBREBOL_NO_CPLUSPLUS option
      *
      * Some features are enhanced by the presence of a C++11 compiler or
      * above.  This includes allowing `int` or `std::string` parameters to
@@ -385,15 +361,15 @@ e-lib/emit [ver {
      * even when this switch is used, but not in a way that affects the
      * runtime behavior uniquely beyond what C99 would do.)
      */
-    #if !defined(REBOL_NO_CPLUSPLUS)  /* definable before including rebol.h */
+    #if !defined(LIBREBOL_NO_CPLUSPLUS)  /* define before including rebol.h */
         #if defined(__cplusplus) && __cplusplus >= 201103L
             /* C++11 or above, if following the standard (VS2017 does not) */
-            #define REBOL_NO_CPLUSPLUS 0
+            #define LIBREBOL_NO_CPLUSPLUS 0
         #elif defined(CPLUSPLUS_11) && CPLUSPLUS_11
             /* Custom C++11 or above flag, to override Visual Studio's lie */
-            #define REBOL_NO_CPLUSPLUS 0
+            #define LIBREBOL_NO_CPLUSPLUS 0
         #else
-            #define REBOL_NO_CPLUSPLUS 1  /* compiler not current enough */
+            #define LIBREBOL_NO_CPLUSPLUS 1  /* compiler not current enough */
         #endif
     #endif
 
@@ -528,6 +504,7 @@ e-lib/emit [ver {
      */
     struct RebolNodeInternalStruct;
     typedef struct RebolNodeInternalStruct RebolNodeInternal;
+    typedef struct RebolNodeInternalStruct RebolSpecifier_internal;
 
     /*
      * `wchar_t` is a pre-Unicode abstraction, whose size varies per-platform
@@ -623,58 +600,9 @@ e-lib/emit [ver {
      * likely to occur at random than {192, ...}.  And leveraging a literal
      * form means we don't need to define a single byte somewhere to then
      * point at it.
-     *
-     * Note: We don't use char* as the type, so that the C++ build can check
-     * for a different type that's only allowed at the end of the variadic.
-     * But the type cast to must have the same alignment as char...so void*
-     * is the natural choice.
      */
-    #define rebEND \
-        ((const void*)"\xC0")
+    #define rebEND "\xC0"
 
-    /*
-     * SHORTHAND MACROS
-     *
-     * These shorthand macros make the API somewhat more readable, but as
-     * they are macros you can redefine them to other definitions if you want.
-     *
-     * THESE DON'T WORK IN JAVASCRIPT, so when updating them be sure to update
-     * the JavaScript versions, which have to make ordinary stub functions.
-     * (The C portion of the Emscripten build can use these internally, as
-     * the implementation is C.  But when calling the lib from JS, it is
-     * obviously not reading this generated header file!)
-     */
-
-    #define rebR rebRELEASING
-
-    #define rebT(utf8) \
-        rebR(rebText(utf8))  /* might rebTEXT() delayed-load? */
-
-    #define rebI(int64) \
-        rebR(rebInteger(int64))
-
-    #define rebL(flag) \
-        rebR(rebLogic(flag))
-
-    #define rebQ rebQUOTING
-    #define rebU rebUNQUOTING
-
-
-    /*
-     * !!! This is a convenience wrapper over the function that makes a
-     * failure code from an OS error ID.  Since rebError_OS() links in OS
-     * specific knowledge to the build, it probably doesn't belong in the
-     * core build.  But to make things easier it's there for the moment.
-     * Ultimately it should come from a "Windows Extension"/"POSIX extension"
-     * or something otherwise.
-     *
-     * Note: There is no need to rebR() the handle due to the failure; the
-     * handles will auto-GC.
-     *
-     * !!! Should this use LIB/FAIL instead of FAIL?
-     */
-    #define rebFail_OS(errnum) \
-        rebJumps("fail", rebR(rebError_OS(errnum)), rebEND);
 
     #ifdef __cplusplus
     extern "C" {
@@ -690,6 +618,30 @@ e-lib/emit [ver {
     typedef struct rebol_ext_api {
         $[Lib-Struct-Fields];
     } RL_LIB;
+
+
+    /*
+     * LIBREBOL_SPECIFIER
+     *
+     * This defines the name of the variable which will be sneakily picked up
+     * by the variadic API macros, in order to provide a binding context that
+     * is relevant.  e.g. if you're inside a native, then the context should
+     * be for that native's function parameters, chained to the module, then
+     * inheriting from lib.
+     *
+     * Getting this inheritance is tricky.  It means there has to be a global
+     * relevant definition for when you're calling a subroutine that's not
+     * in a native, and it means the INCLUDE_PARAMS_OF_XXX has to override
+     * that same name with a new variable implicating the function.
+     *
+     * What the name of the variable is needs to vary by module and case, so
+     * this does that.  But if you don't specify it at all, then it means
+     * the API execution will be done in its own isolated environment that
+     * just inherits from lib.
+     */
+    #if !defined(LIBREBOL_SPECIFIER)
+        #define LIBREBOL_SPECIFIER 0  /* nullptr may not be available */
+    #endif
 
     #ifdef REB_EXT /* can't direct call into EXE, must go through interface */
         /*
@@ -724,123 +676,125 @@ e-lib/emit [ver {
 
     #endif  /* !REB_EXT */
 
-    /*
-     * API functions that are not variadic (no complex wrapping)
-     */
-
-    $[Non-Variadics]
-
     #ifdef __cplusplus
     }  /* end the extern "C" */
     #endif
 
-    #if REBOL_NO_CPLUSPLUS
+
+    /*
+     * NON-VARIADIC API ENTRY POINT MACROS
+     *
+     * When the user writes `rebInteger(i)` it needs a macro to wrap it even
+     * though it's not variadic.  Because if it's being compiled by the core
+     * that needs to resolve as:
+     *
+     *     rebInteger(i) => RL_rebInteger(i)
+     *
+     * And if it's being compiled against the API table it needs to be:
+     *
+     *     rebInteger(i) => RL->rebInteger(i)
+     *
+     * So these macros accomplish that using the pattern:
+     *
+     *      #define rebInteger(...) \
+     *          LIBREBOL_PREFIX(rebInteger)(__VA_ARGS__)
+     *
+     * They are defined before the variadic entry points so that to_rebarg()
+     * C++ converters used during variadic destructuring have access to them.
+     */
+    $[Non-Variadic-Api-Entry-Point-Macros]
+
+
+    /*
+     * NON-VARIADIC API SHORTHANDS
+     *
+     * These shorthand macros make the API somewhat more readable, but as
+     * they are macros you can redefine them to other definitions if you want.
+     *
+     * THESE DON'T WORK IN JAVASCRIPT, so when updating them be sure to update
+     * the JavaScript versions, which have to make ordinary stub functions.
+     * (The C portion of the Emscripten build can use these internally, as
+     * the implementation is C.  But when calling the lib from JS, it is
+     * obviously not reading this generated header file!)
+     */
+
+    #define rebR rebRELEASING
+
+    #define rebT(utf8) \
+        rebR(rebText(utf8))  /* might rebTEXT() delayed-load? */
+
+    #define rebI(int64) \
+        rebR(rebInteger(int64))
+
+    #define rebL(flag) \
+        rebR(rebLogic(flag))
+
+    #define rebQ rebQUOTING
+    #define rebU rebUNQUOTING
+
+
+    #if LIBREBOL_NO_CPLUSPLUS
         /*
+         * VARIADIC API C HELPERS
+         *
          * Plain C only has va_list as a method of taking variable arguments.
-         */
-
-        $[C89-Variadic-Inlines]
-
-        /*
-         * C's variadic interface is low-level, as a thin wrapper over the
+         * The variadic interface is low-level, as a thin wrapper over the
          * stack memory of a function call.  So va_start() and va_end() aren't
          * usually function calls...in fact, va_end() is usually a no-op.
          *
          * The simplicity is an advantage for optimization, but unsafe!  Type
-         * checking is non-existent, and there is no protocol for knowing how
-         * many items are in a va_list.  The libRebol API uses rebEND to
-         * signal termination, but it is awkward and easy to forget.
-         *
-         * C89 offers no real help, but C99 (and C++11 onward) standardize an
-         * interface for variadic macros:
-         *
-         * https://stackoverflow.com/questions/4786649/
-         *
-         * These macros can transform variadic input in such a way that a
-         * rebEND may be automatically placed on the tail of a call.  If rebEND
-         * is also used explicitly, that's a slightly wasteful repetition.
+         * checking is non-existent.  There's no way to get how many args
+         * were passed, so we work around it with macros that add rebEND.
          */
-        #if !defined(REBOL_EXPLICIT_END)
-          /*
-           * Allows detection of when rebol.h has been included with the
-           * implicit end semantics.
-           */
-          #define REBOL_IMPLICIT_END
 
-          #ifdef _MSC_VER
-            /*
-             * MS doesn't define __STDC_VERSION__ at all, but implement some of
-             * C99 and C11 anyway.  Trigger an informative error here if C99
-             * macro expansion doesn't work...
-             */
-             #define YourMSVCIsTooOldIfThisErrors(...) (__VA_ARGS__ + 2)
-            inline static int MSVCAgeTest(void)
-              { return YourMSVCIsTooOldIfThisErrors(1); }
-          #elif defined (__STDC_VERSION__) && __STDC_VERSION__ >= 199901L
-            /* C99 or above */
-          #elif defined(__cplusplus) && __cplusplus >= 201103L
-            /* C++11 or above, if following the standard (VS2017 does not) */
-          #elif CPLUSPLUS_11
-            /* Custom C++11 or above flag, to override Visual Studio's lie */
-          #else
-            /* Some C++98 or otherwise compilers support __VA_ARGS__ anyway */
-            #warning "REBOL_EXPLICIT_END may be needed prior to C99 or C++11"
-          #endif
-
-            $[C99-Or-C++11-Macros]
-
-        #else  /* REBOL_EXPLICIT_END */
-
-            /*
-             * !!! Some kind of C++ variadic trick using template recursion could
-             * check to make sure you used a rebEND under this interface, when
-             * building the C89-targeting code under C++11 and beyond.  TBD.
-             */
-
-            $[C89-Macros]
-
-        #endif  /* REBOL_EXPLICIT_END */
-
-
-        /*
-         * The NOMACRO version of the API is one in which you can use macros
-         * in varargs of the call.  If you're using C this means you'll have to
-         * explicitly put a rebEND on, whether using C99 or not.
-         */
-        #define LIBREBOL_NOMACRO(api) api##_inline
+        $[Variadic-Api-C-Helpers]
     #else
-        #include <string>
-        #include <type_traits>
+       /*
+        * PREDEFINED C++ ARGUMENT CONVERSION FUNCTIONS
+        *
+        * When built as C++, the argument list to variadic APIs is destructured
+        * using variadic templates, allowing each argument to do typechecking
+        * (vs. the completely type-unsafe va_list of C).
+        *
+        * As an added bonus, the processing of the arguments at compile time
+        * permits arbitrary transformations.  This means things like `int` can
+        * be turned into rebI(...) to produce a RebolValue, or `std::string`
+        * can produce a text cell that will auto-release when the variadic
+        * feed processing goes across it.
+        *
+        * These are converters are predefined, but you can add your own, like
+        * this one for converting std::string to TEXT!:
+        *
+        *    #include <string>
+        *
+        *    inline const void* to_rebarg(const std::string &text)
+        *      { return rebT(text.c_str()); }
+        *
+        * (It's not predefined to avoid forcing inclusion of <string>, but it
+        * is easy to add if you want it.)
+        */
 
-        inline const void *to_rebarg(std::nullptr_t val)
+        inline const void* to_rebarg(nullptr_t val)
           { return val; }
 
-        inline const void *to_rebarg(const RebolValue* val)
+        inline const void* to_rebarg(const RebolValue* val)
           { return val; }
 
-        inline const void *to_rebarg(const RebolNodeInternal *instruction)
+        inline const void* to_rebarg(const RebolNodeInternal* instruction)
           { return instruction; }
 
-        inline const void *to_rebarg(const char *source)
+        inline const void* to_rebarg(const char *source)
           { return source; }  /* not TEXT!, but LOADable source code */
 
-        inline const void *to_rebarg(bool b)
+        inline const void* to_rebarg(bool b)
           { return rebL(b); }
 
-        inline const void *to_rebarg(int i)
+        inline const void* to_rebarg(int i)
           { return rebI(i); }
 
-        inline const void *to_rebarg(double d)
+        inline const void* to_rebarg(double d)
           { return rebR(rebDecimal(d)); }
 
-        inline const void *to_rebarg(const std::string &text)
-          { return rebT(text.c_str()); }  /* std::string acts as TEXT! */
-
-        /* !!! ideally this would not be included, but rebEND has to be
-         * handled, and it needs to be a void* (any alignment).  See remarks.
-         */
-        inline const void *to_rebarg(const void *end)
-          { return end; }
 
         /*
          * Parameters are packed into an array whose size is known at
@@ -848,87 +802,66 @@ e-lib/emit [ver {
          * something like a va_list, and the API is able to treat the `p`
          * first parameter as a packed array of this kind if vaptr is nullptr.
          *
-         * The packing is done by a recursive process, and the terminal
-         * state of the recursion can check for whether there's a rebEND there
-         * or not.
+         * The packing is done by a recursive process.
          */
-        #ifdef REBOL_EXPLICIT_END
-            template <typename Last>
-            void rebArgRecurser_internal(
-                int i,
-                const void* data[],
-                const Last &last
-            ){
-                static_assert(
-                    std::is_same<const void*, Last>::value,
-                    "REBOL_EXPLICIT_END means rebEND must be last argument"
-                );
-                data[i] = last;  /* hopefully rebEND (test it?) */
-            }
-
-            #define LIBREBOL_PACK_CPP_ARGS \
-                const size_t num_args = sizeof...(args); \
-                const void* packed[num_args]; \
-                rebArgRecurser_internal(0, packed, args...);
-        #else
-            template <typename Last>
-            void rebArgRecurser_internal(
-                int i,
-                const void* data[],
-                const Last &last
-            ){
-                data[i] = to_rebarg(last);
-            }
-
-            /* full specialization alternative for last item */
-            /*
-             * Note: it may seem useful to prohibit rebEND in the cases
-             * where it is implicit, but this inhibits the sharing of
-             * inline code intended to be used with either.  Review.
-             *
-             * !!! This isn't working, so `to_rebarg` allows `const void*`
-             * which is not ideal.  Remove that when this is made to work.
-             */
-            /*template<>
-            void rebArgRecurser_internal<void*>(
-                int i,
-                const void* data[],
-                const void* &last
-            ){
-                data[i] = last;
-            }*/
-
-            #define LIBREBOL_PACK_CPP_ARGS \
-                const size_t num_args = sizeof...(args); \
-                const void* packed[num_args + 1]; \
-                rebArgRecurser_internal(0, packed, args...); \
-                packed[num_args] = rebEND;
-        #endif
+        template <typename Last>
+        void rebArgRecurser_internal(
+            int i,
+            const void* data[],
+            const Last &last
+        ){
+            data[i] = to_rebarg(last);
+        }
 
         template <typename First, typename... Rest>
         void rebArgRecurser_internal(
             int i,
             const void* data[],
-            const First &first, const Rest &... rest
+            const First& first, const Rest& ...rest
         ){
             data[i] = to_rebarg(first);
             rebArgRecurser_internal(i + 1, data, rest...);
         }
 
-
         /*
-         * C++ Entry Points
+         * C++ Helper Templates
          */
 
-        $[C++-Variadic-Inlines]
-
-        /*
-         * The NOMACRO version of the API is one in which you can use macros
-         * in varargs of the call.  If using C99 this means you'll have to
-         * explicitly put a rebEND on.  No special action w/C++ wrappers.
-         */
-        #define LIBREBOL_NOMACRO(api) api
+        $[Variadic-Api-C++-Helpers]
     #endif  /* C++ versions */
+
+
+    /*
+     * VARIADIC API SPECIFIER CAPTURING MACROS
+     *
+     * Variadic macros give the power to implicitly slip a rebEND signal at the
+     * end of the parameter list.  This overcomes a C variadic function's
+     * fundamental limitation of not being able to implicitly know the number
+     * of variadic parameters used.
+     *
+     * These are trickier than the non-variadic macros, because they have to
+     * be customized where each macro spits out the fixed part separately
+     * from the variadic part.  Because you don't want to call to_rebarg()
+     * on the fixed portions.
+     */
+
+    $[Variadic-Api-Specifier-Capturing-Macros]
+
+
+    /*
+     * VARIADIC API RUN IN LIB MACROS
+     *
+     * Variant that just runs the code in another context (LIBREBOL_ISOLATE).
+     * It would be possible to make the LIBREBOL_SPECIFIER variable do
+     * shadowing, so that a global would hold nullptr and then be overridden
+     * in natives.  But we don't want to require people to disable a useful
+     * compiler warning if they don't want to, and would rather use functions
+     * with different names outside of natives.  (This includes ourselves
+     * developing the core.)
+     */
+
+    $[Variadic-Api-Run-In-Lib-Macros]
+
 
     /*
      * TYPE-SAFE rebMalloc() MACRO VARIANTS
@@ -982,6 +915,26 @@ e-lib/emit [ver {
 
     #define rebUnboxHandle(TP,v) \
         ((TP)rebUnboxHandleCData((size_t*)(0), (v)))  // 0=NULL, don't get size
+
+
+    /*
+     * !!! This is a convenience wrapper over the function that makes a
+     * failure code from an OS error ID.  Since rebError_OS() links in OS
+     * specific knowledge to the build, it probably doesn't belong in the
+     * core build.  But to make things easier it's there for the moment.
+     * Ultimately it should come from a "Windows Extension"/"POSIX extension"
+     * or something otherwise.
+     *
+     * Note: There is no need to rebR() the handle due to the failure; the
+     * handles will auto-GC.
+     *
+     * Because it runs rebJumpsCore() instead of rebJumps() it would not
+     * pick up an overridden definition of FAIL.  It always calls LIB.FAIL,
+     * which may be good (?)
+     */
+    #define rebFail_OS(errnum) \
+        rebJumpsCore("fail", rebR(rebError_OS(errnum)));
+
 
     #endif  /* REBOL_H_1020_0304 */
 }]

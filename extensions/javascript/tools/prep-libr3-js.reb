@@ -265,7 +265,7 @@ to-js-type: func [
         ; will allow returning nullptr if the input is null, for example
         ; `rebSpellMaybe("second [{a}]")` gives nullptr
         ;
-        (s = "char *") or (s = "const char *") ["'string'"]
+        (s = "char*") or (s = "const char*") ["'string'"]
 
         ; Other pointer types aren't strings.  `unsigned char *` is a byte
         ; array, and should perhaps use ArrayBuffer.  But for now, just assume
@@ -324,16 +324,16 @@ to-js-type: func [
 append api-objects make object! [
     spec: null  ; e.g. `name: RL_API [...this is the spec, if any...]`
     name: "rebPromise"
-    returns: "intptr_t"
+    return-type: "intptr_t"
     paramlist: []
-    proto: "intptr_t rebPromise(void *p, va_list *vaptr)"
+    proto: "intptr_t rebPromise(void* p, va_list* vaptr)"
     is-variadic: true
 ]
 
 append api-objects make object! [
     spec: null  ; e.g. `name: RL_API [...this is the spec, if any...]`
     name: "rebResolveNative_internal"  ; !!! see %mod-javascript.c
-    returns: "void"
+    return-type: "void"
     paramlist: ["intptr_t" frame_id "intptr_t" value_id]
     proto: unspaced [
         "void rebResolveNative_internal(intptr_t frame_id, intptr_t value_id)"
@@ -344,7 +344,7 @@ append api-objects make object! [
 append api-objects make object! [
     spec: null  ; e.g. `name: RL_API [...this is the spec, if any...]`
     name: "rebRejectNative_internal"  ; !!! see %mod-javascript.c
-    returns: "void"
+    return-type: "void"
     paramlist: ["intptr_t" frame_id "intptr_t" error_id]
     proto: unspaced [
         "void rebRejectNative_internal(intptr_t frame_id, intptr_t error_id)"
@@ -355,7 +355,7 @@ append api-objects make object! [
 append api-objects make object! [
     spec: null  ; e.g. `name: RL_API [...this is the spec, if any...]`
     name: "rebIdle_internal"  ; !!! see %mod-javascript.c
-    returns: "void"
+    return-type: "void"
     paramlist: []
     proto: "void rebIdle_internal(void)"
     is-variadic: false
@@ -365,7 +365,7 @@ if false [  ; Only used if DEBUG_JAVASCRIPT_SILENT_TRACE (how to know here?)
     append api-objects make object! [
         spec: null  ; e.g. `name: RL_API [...this is the spec, if any...]`
         name: "rebGetSilentTrace_internal"  ; !!! see %mod-javascript.c
-        returns: "intptr_t"
+        return-type: "intptr_t"
         paramlist: []
         proto: unspaced [
             "intptr_t rebGetSilentTrace_internal(void)"
@@ -391,13 +391,13 @@ for-each-api [
         fail ["API name must start with `reb`" name]
     ]
 
-    js-returns: any [
+    js-return-type: any [
         if find name "Promise" [<promise>]
-        to-js-type returns
-        fail ["No JavaScript return mapping for type" returns]
+        to-js-type return-type
+        fail ["No JavaScript return mapping for type" return-type]
     ]
 
-    js-param-types: collect* [
+    js-param-types: collect* [  ; CSCAPE won't auto-delimit [], use COLLECT*
         for-each [type var] paramlist [
             keep to-js-type type else [
                 fail [
@@ -408,32 +408,46 @@ for-each-api [
         ]
     ]
 
-    if is-variadic [
-        if js-param-types [
-            print cscape [
-                :api
-                "!!! WARNING! !!! Skipping mixed variadic function $<Name> !!!"
-            ]
-            continue
-        ]
+    if not is-variadic [
+        e-cwrap/emit cscape [:api {
+            reb.$<No-Reb-Name> = cwrap_tolerant(  /* vs. R3Module.cwrap() */
+                'RL_$<Name>',
+                $<Js-Return-Type>, [
+                    $(Maybe Js-Param-Types),
+                ]
+            )
+        }]
+        continue
+    ]
 
-        if false [
-            ; It can be useful for debugging to see the API entry points;
-            ; using console.error() adds a stack trace to it.
-            ;
-            append enter unspaced [{^/console.error("Entering } name {");}]
+    if js-param-types [
+        print cscape [
+            :api
+            "!!! Note: Skipping mixed variadic for JavaScript: $<Name> !!!"
         ]
+        continue
+    ]
 
-        return-code: if false [
-            ; Similar to debugging on entry, it can be useful on exit to see
-            ; when APIs return...code comes *before* the return statement.
-            ;
-            unspaced [{console.error("Exiting } name {");^/}]
-        ] else [
-            copy ""
-        ]
-        append return-code trim/auto copy (switch js-returns [
-          "'string'" [
+    prologue: if false [
+        ; It can be useful for debugging to see the API entry points;
+        ; using console.error() adds a stack trace to it.
+        ;
+        unspaced [{console.error("Entering } name {");^/}]
+    ] else [
+        null
+    ]
+
+    epilogue: if false [
+        ; Similar to debugging on entry, it can be useful on exit to see
+        ; when APIs return...code comes *before* the return statement.
+        ;
+        unspaced [{console.error("Exiting } name {");^/}]
+    ] else [
+        null
+    ]
+
+    code-for-returning: trim/auto copy (switch js-return-type [
+        "'string'" [
             ;
             ; If `char *` is returned, it was rebAlloc'd and needs to be freed
             ; if it is to be converted into a JavaScript string
@@ -442,78 +456,71 @@ for-each-api [
                 reb.Free(a)
                 return js_str
             }
-          ]
-          <promise> [
+        ]
+        <promise> [
             ;
             ; The promise returns an ID of what to use to write into the table
             ; for the [resolve, reject] pair.  It will run the code that
             ; will call the RL_Resolve later...after a setTimeout, so it is
             ; sure that this table entry has been entered.
-            ;
             {
                 return new Promise(function(resolve, reject) {
                     reb.RegisterId_internal(a, [resolve, reject])
                 })
             }
-          ]
-        ] else [
-            ; !!! Doing return and argument transformation needs more work!
-            ; See suggestions: https://forum.rebol.info/t/817
+        ]
+    ] else [
+        ; !!! Doing return and argument transformation needs more work!
+        ; See suggestions: https://forum.rebol.info/t/817
 
-            {return a}
-        ])
+        {return a}
+    ])
 
-        e-cwrap/emit cscape [:api {
-            reb.$<No-Reb-Name> = function() {
-                let argc = arguments.length
-                let stack = stackSave()
-                let packed = stackAlloc(4 * (argc + 1))
-                for (let i = 0; i < argc; ++i) {
-                    let arg = arguments[i]
-                    let p  /* heap address for (maybe) adjusted argument */
+    e-cwrap/emit cscape [:api {
+        reb.$<No-Reb-Name> = function() {
+            $<Maybe Prologue>
+            let argc = arguments.length
+            let stack = stackSave()
+            let packed = stackAlloc(4 * (argc + 1))
+            for (let i = 0; i < argc; ++i) {
+                let arg = arguments[i]
+                let p  /* heap address for (maybe) adjusted argument */
 
-                    switch (typeof arg) {
-                      case 'string': {  /* JS strings act as source code */
-                        let len = lengthBytesUTF8(arg) + 4
-                        len = len & ~3  /* corrected to align in 32-bits? */
-                        p = stackAlloc(len)
-                        stringToUTF8(arg, p, len)
-                        break }
+                switch (typeof arg) {
+                  case 'string': {  /* JS strings act as source code */
+                    let len = lengthBytesUTF8(arg) + 4
+                    len = len & ~3  /* corrected to align in 32-bits? */
+                    p = stackAlloc(len)
+                    stringToUTF8(arg, p, len)
+                    break }
 
-                      case 'number':  /* heap address, e.g. Cell pointer */
-                        p = arg
-                        break
+                  case 'number':  /* heap address, e.g. Cell pointer */
+                    p = arg
+                    break
 
-                      default:
-                        throw Error("Invalid type!")
-                    }
-
-                    HEAP32[(packed>>2) + i] = p
+                  default:
+                    throw Error("Invalid type!")
                 }
 
-                HEAP32[(packed>>2) + argc] = reb.END
-
-                a = reb.m._RL_$<Name>(
-                    packed,
-                    0  /* null vaptr means `p` is array of `const void*` */
-                )
-
-                stackRestore(stack)
-
-                $<Return-Code>
+                HEAP32[(packed>>2) + i] = p
             }
-        }]
-    ] else [
-        e-cwrap/emit cscape [:api {
-            reb.$<No-Reb-Name> = cwrap_tolerant(  /* vs. R3Module.cwrap() */
-                'RL_$<Name>',
-                $<Js-Returns>, [
-                    $(Maybe Js-Param-Types),
-                ]
+
+            HEAP32[(packed>>2) + argc] = reb.END
+
+            a = reb.m._RL_$<Name>(
+                0,  /* null specifier, just to start */
+                packed,
+                0   /* null vaptr means `p` is array of `const void*` */
             )
-        }]
-    ]
+
+            stackRestore(stack)
+
+            $<Maybe Epilogue>
+            $<Code-For-Returning>
+        }
+    }]
 ]
+
 e-cwrap/emit {
     reb.R = reb.RELEASING
     reb.Q = reb.QUOTING
