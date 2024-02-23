@@ -483,6 +483,7 @@ void MF_Sequence(REB_MOLD *mo, const Cell* v, bool form)
             assert(Not_Subclass_Flag(SYMBOL, sym, ILLEGAL_IN_ANY_SEQUENCE));
             if (Any_Tuple_Kind(heart))
                 assert(Not_Subclass_Flag(SYMBOL, sym, ILLEGAL_IN_ANY_TUPLE));
+            UNUSED(sym);
 
             Mold_Value(mo, element);
         }
