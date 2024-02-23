@@ -1003,8 +1003,12 @@ delimit: func [
     return: [<opt> text!]
     delimiter [<opt> char?! text!]
     line [<maybe> text! block!]
-    <local> text value pending anything
+    /tail "Include delimiter at tail of result (if non-NULL)"
+    <local> text value pending anything tail-PARAM
 ][
+    tail-PARAM: tail
+    tail: :lib/tail
+
     if text? line [return copy line]
 
     text: copy ""
@@ -1047,6 +1051,7 @@ delimit: func [
         assert [text = ""]
         return null
     ]
+    if tail-PARAM [append text delimiter]
     return text
 ]
 

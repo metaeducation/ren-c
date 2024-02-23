@@ -43,6 +43,14 @@ import <bootstrap-shim.r>
 import <common.r>  ; for REPO-DIR
 import <platforms.r>  ; for BOOT-VERSION
 
+; 1. If you say $<content > then if the contents don't vanish, a space will be
+;    included at the end.  But if it vanishes, there will be no space either.
+;
+; 2. If you say $<block,> then it will delimit the block with comma.  And if
+;    block is empty then it will vanish (potentially vanishing the line).
+;
+; 3. These can be combined, so that $<xxx, > will delimit with ", "
+;
 export cscape: func [
     {Escape Rebol expressions in templated C source, returns new string}
 
@@ -78,6 +86,18 @@ export cscape: func [
                 "$<" change [copy expr: [to ">"]] (num-text) skip (
                     mode: #unspaced
                     pattern: unspaced ["$<" num ">"]
+                    if space = last expr [  ; add space at end [1]
+                        take/last expr
+                        suffix: " "
+                    ]
+                    if #"," = last expr [  ; delimit with comma [2]
+                        take/last expr
+                        prefix: if suffix [
+                            unspaced ["," suffix]  ; do both [3]
+                        ] else [
+                            ","
+                        ]
+                    ]
                 )
                     |
                 (prefix: copy/part start finish)
@@ -172,7 +192,13 @@ export cscape: func [
                 ]
                 #unspaced [
                     if block? sub [
-                        unspaced sub else [
+                        any [
+                            either prefix [
+                                delimit/tail prefix sub
+                            ][
+                                unspaced sub
+                            ]
+                            either prefix [void-marker] [null]
                             fail ["No vaporizing blocks in CSCAPE $<>"]
                         ]
                     ] else [

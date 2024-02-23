@@ -143,7 +143,7 @@ DECLARE_NATIVE(request_file_p)
                 "if find item tab [fail {TAB chars not legal in filters}]",
             "]"
         );
-        filter_utf16 = rebSpellWide("append delimit tab", filter, "tab");
+        filter_utf16 = rebSpellWide("delimit/tail tab", filter);
         WCHAR* pwc;
         for (pwc = filter_utf16; *pwc != 0; ++pwc) {
             if (*pwc == '\t')

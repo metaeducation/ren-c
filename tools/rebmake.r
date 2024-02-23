@@ -1402,7 +1402,7 @@ makefile: make generator-class [
             [text!]
         entry [object!]
     ][
-        return delimit newline collect [switch entry/class [
+        return delimit/tail newline collect [switch entry/class [
 
             ; Makefile variable, defined on a line by itself
             ;
@@ -1472,7 +1472,7 @@ makefile: make generator-class [
             ]
 
             fail ["Unrecognized entry class:" entry/class]
-        ] keep "" keep ""]  ; final keeps just adds extra newlines
+        ] keep ""]  ; final keeps just adds extra newline
 
         ; !!! Adding an extra newline here unconditionally means variables
         ; in the makefile get spaced out, which isn't bad--but it wasn't done
