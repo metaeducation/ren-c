@@ -114,7 +114,7 @@ struct BookmarkStruct {
     REBLEN index;
     Size offset;
 };
-typedef BookmarkStruct Bookmark;
+typedef struct BookmarkStruct Bookmark;
 
 
 //=//// BINDING ///////////////////////////////////////////////////////////=//
