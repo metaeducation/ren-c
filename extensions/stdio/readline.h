@@ -45,8 +45,8 @@
 
 #define REBOL_SMART_CONSOLE
 
-#include "rebol.h"
-typedef RebolValue Value;
+// Note: requires inclusion of rebol.h
+
 
 // !!! The history mechanism will be disconnected from the line editing
 // mechanism--but for the moment, the line editing is the only place we

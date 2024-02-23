@@ -39,6 +39,9 @@
 #include <stdint.h>
 #include "c-enhanced.h"
 
+#include "rebol.h"  // not %sys-core.h !
+typedef RebolValue Value;
+
 #include "readline.h"  // will define REBOL_SMART_CONSOLE (if not C89)
 
 #if defined(REBOL_SMART_CONSOLE)
