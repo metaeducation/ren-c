@@ -50,7 +50,7 @@ export cscape: func [
         [text!]
     template "${Expr} case as-is, ${expr} lowercased, ${EXPR} is uppercased"
         [block!]
-    <local> col prefix suffix mode pattern
+    <local> col prefix suffix mode pattern void-marker
 ][
     assert [text? last template]
 
@@ -114,6 +114,8 @@ export cscape: func [
 
     list: unique/case list
 
+    void-marker: "!?*VOID*?!"  ; should be taken out, good to disrupt if not
+
     let substitutions: collect [
         for-each item list [
             ;
@@ -149,42 +151,43 @@ export cscape: func [
                 fail "Substitution can't be NULL (shim BLANK!)"
             ]
 
-            sub: degrade switch mode [  ; still want to make sure mode is good
+            ; We want to recognize lines that had substitutions that all
+            ; vanished, and remove them (distinctly from lines left empty
+            ; on purpose in the template).  We need to put some kind of signal
+            ; to get that behavior.
+            ;
+            if void? :sub [
+                keep void-marker  ; replaced in post phase
+                continue
+            ]
+
+            sub: switch mode [
                 #cname [
                     ; !!! The #prefixed scope is unchecked for valid global or
                     ; local identifiers.  This is okay for cases that actually
                     ; are prefixed, like `cscape {SYM_${...}}`.  But if there
                     ; is no prefix, then the check might be helpful.  Review.
                     ;
-                    (to-c-name/scope :sub #prefixed) else [  ; can vanish
-                        '~null~
-                    ]
+                    to-c-name/scope sub #prefixed
                 ]
                 #unspaced [
-                    case [
-                        void? :sub ['~null~]
-                        block? sub [unspaced sub]
+                    if block? sub [
+                        unspaced sub else [
+                            fail ["No vaporizing blocks in CSCAPE $<>"]
+                        ]
                     ] else [
-                        form sub
+                        form sub  ; UNSPACED doesn't take INTEGER!, should it?
                     ]
                 ]
                 #delimit [
-                    if void? :sub [
-                        '~null~
-                    ] else [
-                        delimit (unspaced [maybe :suffix newline]) sub
+                    delimit (unspaced [maybe :suffix newline]) sub else [
+                        fail ["No vaporizing blocks in CSCAPE $() or $[]"]
                     ]
                 ]
                 fail ["Invalid CSCAPE mode:" mode]
             ]
-            assert [not void? :sub]  ; turned to "null" by now (shim's BLANK!)
 
-            ; We want to recognize lines that had substitutions that all
-            ; vanished, and remove them (distinctly from lines left empty
-            ; on purpose in the template.  We need to put some kind of signal
-            ; to get that behavior.
-            ;
-            sub: default [copy "/* _ */"]  ; replaced in post phase
+            assert [not null? :sub]
 
             case [
                 all [any-upper, not any-lower] [
@@ -198,10 +201,7 @@ export cscape: func [
             ; If the substitution started at a certain column, make any line
             ; breaks continue at the same column.
             ;
-            let indent: unspaced collect [
-                keep newline
-                keep maybe :prefix
-            ]
+            let indent: unspaced [newline maybe :prefix]
             replace/all sub newline indent
 
             keep sub
@@ -212,8 +212,8 @@ export cscape: func [
         replace string pattern replacement
     ]
 
-    ; BLANK! in CSCAPE tries to be "smart" about omitting the item from its
-    ; surrounding context, including removing lines when blank output and
+    ; void in CSCAPE tries to be "smart" about omitting the item from its
+    ; surrounding context, including removing lines when void output and
     ; whitespace is all that ends up on them.  If the user doesn't want the
     ; intelligence, they should use "".
     ;
@@ -223,10 +223,11 @@ export cscape: func [
     ;
     let kill-lines: copy []
     let allwhite
+    let seen-void
     let start-line
     let end-line
     parse2 string [
-        (allwhite: true) start-line:  ; <here>
+        (allwhite: true seen-void: false) start-line:  ; <here>
         opt some [
             space
             |
@@ -236,15 +237,16 @@ export cscape: func [
                 ; not available in the bootstrap build.
                 ;
                 end-line:  ; <here>
-                (if allwhite and (end-line != next start-line) [
+                (if allwhite and (seen-void) and (end-line != next start-line) [
                     insert kill-lines start-line  ; back to front for delete
                     insert kill-lines end-line
                 ])
             ]
-            (allwhite: true) start-line:  ; <here>
+            (allwhite: true seen-void: false) start-line:  ; <here>
             |
             [
-                "/* _ */"
+                void-marker  ; e.g. "!?*VOID*?!"
+                (seen-void: true)
                 |
                 (allwhite: false)  ; has something not a newline or space in it
                 skip
@@ -257,7 +259,7 @@ export cscape: func [
         remove/part start end
     ]
 
-    replace/all string "/* _ */" ""
+    replace/all string void-marker ""
 
     return string
 ]
