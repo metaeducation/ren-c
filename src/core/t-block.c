@@ -552,9 +552,9 @@ static int Compare_Val_Custom(void *arg, const void *v1, const void *v2)
     DECLARE_VALUE (result);
     if (rebRunThrows(
         result,  // <-- output cell
-        flags->comparator,
-            flags->reverse ? v1 : v2,
-            flags->reverse ? v2 : v1
+        rebRUN(flags->comparator),
+            flags->reverse ? c_cast(Value*, v1) : c_cast(Value*, v2),
+            flags->reverse ? c_cast(Value*, v2) : c_cast(Value*, v1)
     )){
         fail (Error_No_Catch_For_Throw(TOP_LEVEL));
     }
