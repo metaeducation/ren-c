@@ -352,7 +352,7 @@ compile: func [
              * just including that.  Otherwise try getting a newer version of
              * libtcc, a different gcc install, or just disable warnings.)
              */
-            #define LIBREBOL_NO_STDINT
+            #define LIBREBOL_NO_STDINT 1
             #include <stddef.h>
             #include "rebol.h"
         }

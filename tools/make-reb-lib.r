@@ -354,18 +354,38 @@ e-lib/emit [ver {
     #define REBOL_H_1020_0304  /* numbers in case REBOL_H defined elsewhere */
 
     /*
+     * TRIGGER UP-FRONT ERROR IF COMPILER LACKS __VA_ARGS__ FEATURE
+     *
+     * C99 and C++11 standardize an interface for variadic macros:
+     *
+     * https://stackoverflow.com/questions/4786649/
+     *
+     * Ren-C relies on this feature.  Since some pre-C99 compilers could
+     * actually support it, don't unconditionally error by detecting an older
+     * compiler.  Instead, opportunistically try to call a dummy variadic
+     * macro...whose name implicates what the problem is if it doesn't work.
+     */
+
+    #define Compiler_Lacks_Variadic_Macros_If_This_Errors(...) \
+        (__VA_ARGS__ + 304)
+
+    inline static int Feature_Test_Compiler_For_Variadic_Macros(void)
+        { return Compiler_Lacks_Variadic_Macros_If_This_Errors(1020); }
+
+
+    /*
+     * REBOL_NO_CPLUSPLUS option
+     *
      * Some features are enhanced by the presence of a C++11 compiler or
-     * above.  This ranges from simple things like the ability to detect a
-     * missing `rebEND` when REBOL_EXPLICIT_END is in effect, to allowing
-     * `int` or `std::string` parameters to APIs instead of using `rebI()` or
-     * `rebT()`.  These are on by default if the compiler is capable, but
-     * can be suppressed.
+     * above.  This includes allowing `int` or `std::string` parameters to
+     * APIs instead of using `rebI()` or `rebT()`.  These are on by default
+     * if the compiler is capable, but can be suppressed.
      *
      * (Note that there's still some conditional code based on __cplusplus
      * even when this switch is used, but not in a way that affects the
      * runtime behavior uniquely beyond what C99 would do.)
      */
-    #if !defined(REBOL_NO_CPLUSPLUS)
+    #if !defined(REBOL_NO_CPLUSPLUS)  /* definable before including rebol.h */
         #if defined(__cplusplus) && __cplusplus >= 201103L
             /* C++11 or above, if following the standard (VS2017 does not) */
             #define REBOL_NO_CPLUSPLUS 0
@@ -379,12 +399,21 @@ e-lib/emit [ver {
 
     /*
      * The goal is to make it possible that the only include file one needs
-     * to make a simple Rebol library client is `#include "rebol.h"`.  Yet
-     * pre-C99 or pre-C++11 compilers will need `#define REBOL_EXPLICIT_END`
-     * since variadic macros don't work.  They will also need shims for
-     * stdint.h and stdbool.h included.
+     * to make a simple Rebol library client is `#include "rebol.h"`.  Your
+     * compiler will need __VA_ARGS__ support in macros, and if stdint.h
+     * and stdbool.h aren't available they will need to be included.
      */
-    #if defined(LIBREBOL_NO_STDLIB)
+    #if !defined(LIBREBOL_NO_STDLIB)  /* definable before including rebol.h */
+        #define LIBREBOL_NO_STDLIB 0
+    #endif
+    #if !defined(LIBREBOL_NO_STDINT)
+        #define LIBREBOL_NO_STDINT 0
+    #endif
+    #if !defined(LIBREBOL_NO_STDBOOL)
+        #define LIBREBOL_NO_STDBOOL 0
+    #endif
+
+    #if LIBREBOL_NO_STDLIB
         /*
          * This file won't compile without definitions for uintptr_t and
          * bool, so make those as a minimum.  They have to be binary compatible
@@ -396,10 +425,10 @@ e-lib/emit [ver {
         #define bool _Bool  /* actually part of C99 compiler */
     #else
         #include <stdlib.h>  /* for size_t */
-        #if !defined(_PSTDINT_H_INCLUDED) && !defined(LIBREBOL_NO_STDINT)
+        #if !defined(_PSTDINT_H_INCLUDED) && (! LIBREBOL_NO_STDINT)
             #include <stdint.h>  /* for uintptr_t, int64_t, etc. */
         #endif
-        #if !defined(_PSTDBOOL_H_INCLUDED) && !defined(LIBREBOL_NO_STDBOOL)
+        #if !defined(_PSTDBOOL_H_INCLUDED) && (! LIBREBOL_NO_STDBOOL)
             #if !defined(__cplusplus)
                 #include <stdbool.h>  /* for bool, true, false (if C99) */
             #endif
@@ -516,7 +545,7 @@ e-lib/emit [ver {
      * client code.  If the client code is on Windows, use WCHAR.  If it's in
      * a unixodbc client use SQLWCHAR.  But use UTF-8 if you possibly can.
      */
-    #if defined(LIBREBOL_NO_STDLIB)
+    #if LIBREBOL_NO_STDINT
         #define REBWCHAR unsigned int
     #elif defined(_WIN32)  /* _WIN32 is all Windows, _WIN64 only if 64-bit */
         #define REBWCHAR wchar_t
