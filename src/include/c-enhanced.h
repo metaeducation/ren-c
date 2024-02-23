@@ -6,7 +6,7 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Copyright 2012-2023 Ren-C Open Source Contributors
+// Copyright 2012-2024 Ren-C Open Source Contributors
 //
 // See README.md and CREDITS.md for more information.
 //
@@ -18,10 +18,9 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Ren-C is designed to be able to build its core as C99 (or higher), and
-// allow usage by API clients that are potentially C89.
+// Ren-C is designed to be able to build as C99 (or higher).
 //
-// BUT if the system is built as C++11 or higher, there are extended runtime
+// BUT if the system is built as C++11 (or higher), there are extended runtime
 // and compile-time checks available.
 //
 // This file contains various definitions for constructs that will behave
@@ -29,9 +28,18 @@
 //
 //=//// NOTES /////////////////////////////////////////////////////////////=//
 //
+// * Not all that many C99 features are required:
+//
+//      * __VA_ARGS__ variadic macros,
+//      * double-slash comments
+//      * declaring variables in the middle of functions
+//
+//   Many C89-era compilers could do these things before they were standards.
+//   So there's a possibility Ren-C will compile on pre-C99 systems.
+//
 // * C++98 support was included for a while, but it lacks <type_traits> and
 //   other features which are required to make the C++ build of any real use
-//   beyond what C provides.  It was ultimately dropped.
+//   beyond what C provides.  So support for C++98 was ultimately dropped.
 //
 
 #ifndef C_ENHANCED_H  // "include guard" allows multiple #includes

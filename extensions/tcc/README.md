@@ -164,10 +164,8 @@ is a single standalone file).  Not having a large table of every internal API
 and constant in the system--along with its name--saves space as well.  So
 only the libRebol is offered, as the most practical option.
 
-TCC supports C99, so REBOL_EXPLICIT_END is not needed (e.g. rebEND at the tail
-of API calls).  That permits bootstrap, as the internal sources have committed
-to using the implicit termination via C99/C++11 variadic macros...though the
-API is still able to be used by C89 clients.
+TCC supports C99, which gives variadic macros--which are critical to build
+the core and the API.
 
 ### Future Directions
 

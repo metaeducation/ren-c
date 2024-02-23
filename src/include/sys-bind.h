@@ -563,7 +563,7 @@ INLINE Value* Sink_Word_May_Fail(
 // wish to augment or override the binding in a deep way on read-only blocks.
 // That means specifiers may need to be chained together.  This would create
 // needs for GC or reference counting mechanics, which may defy a simple
-// solution in C89.
+// solution in pure C.
 //
 // But as a first step, this function locates all the places in the code that
 // would need such derivation.

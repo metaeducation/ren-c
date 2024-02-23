@@ -77,7 +77,7 @@ lifetime's worth of design points to think about!)*
 
 The "Ren-C" name comes from the idea that it is a C implementation of the
 "REadable Notation" (a name given to Rebol's file format).  The codebase is
-able to compile as ANSI C89, despite using a wide spectrum of static analysis
+able to compile as ANSI C99, despite using a wide spectrum of static analysis
 enhancements that apply if built as C++.
 
 Long term, it is not intended to be the name of a language.  It's simply a
