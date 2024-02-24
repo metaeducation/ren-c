@@ -992,7 +992,7 @@ nats: collect [
     ; Make_Native() decides which actual function type to cast them to.
     ;
     for-each name native-names [
-        keep cscape [name {(CFunction*)N_${name}}]
+        keep cscape [name {cast(CFunction*, N_${name})}]
     ]
 ]
 
@@ -1024,11 +1024,19 @@ print [length of nats "natives"]
 
 e-bootblock/emit [nats {
     #define NUM_NATIVES $<length of nats>
-    const REBLEN Num_Natives = NUM_NATIVES;
 
-    CFunction* const Native_C_Funcs[NUM_NATIVES] = {
+    /*
+     * Note: These functions may be Dispatcher* or they may be Intrinsic*.
+     * Easiest to keep them in the same table, so they're typed as CFunction*.
+     */
+    CFunction* const g_core_native_cfuncs[NUM_NATIVES] = {
         $(Nats),
     };
+
+    /*
+     * NUM_NATIVES macro not visible outside this file, export as variable
+     */
+    const REBLEN g_num_core_natives = NUM_NATIVES;
 }]
 
 ; Build typespecs block (in same order as datatypes table)
@@ -1106,8 +1114,8 @@ e-boot/emit [fields {
     /*
      * Raw C function pointers for natives, take Level* and return Bounce.
      */
-    EXTERN_C const REBLEN Num_Natives;
-    EXTERN_C CFunction* const Native_C_Funcs[];
+    EXTERN_C const REBLEN g_num_core_natives;
+    EXTERN_C CFunction* const g_core_native_cfuncs[];
 
     typedef struct REBOL_Boot_Block {
         $[Fields];

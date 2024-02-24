@@ -111,7 +111,7 @@ Phase* Make_Native(
 
     // With the components extracted, generate the native and add it to
     // the Natives table.  The associated C function is provided by a
-    // table built in the bootstrap scripts, `Native_C_Funcs`.
+    // table built in the bootstrap scripts, `g_core_native_cfuncs`.
 
     Context* meta;
     Flags flags = MKF_RETURN;
@@ -219,11 +219,11 @@ DECLARE_NATIVE(native)
         : REF(intrinsic) ? NATIVE_INTRINSIC
         : NATIVE_NORMAL;
 
-    if (not PG_Next_Native_Cfunc)
+    if (not g_native_cfunc_pos)
         fail ("NATIVE is for internal use during boot and extension loading");
 
-    CFunction* cfunc = *PG_Next_Native_Cfunc;
-    ++PG_Next_Native_Cfunc;
+    CFunction* cfunc = *g_native_cfunc_pos;
+    ++g_native_cfunc_pos;
 
     Phase* native = Make_Native(
         spec,
@@ -273,7 +273,7 @@ static void Shutdown_Action_Adjunct_Shim(void) {
 //
 Array* Startup_Natives(const Element* boot_natives)
 {
-    Array* catalog = Make_Array(Num_Natives);
+    Array* catalog = Make_Array(g_num_core_natives);
 
     // Must be called before first use of Make_Paramlist_Managed_May_Fail()
     //
@@ -288,8 +288,8 @@ Array* Startup_Natives(const Element* boot_natives)
     // function which carries those arguments, which would be cleaner.  The
     // C function could be passed as a HANDLE!.
     //
-    assert(PG_Next_Native_Cfunc == nullptr);
-    PG_Next_Native_Cfunc = Native_C_Funcs;
+    assert(g_native_cfunc_pos == nullptr);
+    g_native_cfunc_pos = g_core_native_cfuncs;
     assert(PG_Currently_Loading_Module == nullptr);
     PG_Currently_Loading_Module = Lib_Context;
 
@@ -309,10 +309,10 @@ Array* Startup_Natives(const Element* boot_natives)
     Phase* the_native_action = Make_Native(
         spec,
         NATIVE_NORMAL,  // not a combinator or intrinsic
-        *PG_Next_Native_Cfunc,
+        *g_native_cfunc_pos,
         PG_Currently_Loading_Module
     );
-    ++PG_Next_Native_Cfunc;
+    ++g_native_cfunc_pos;
 
     Init_Action(
         Append_Context(Lib_Context, Canon(NATIVE)),
@@ -351,7 +351,7 @@ Array* Startup_Natives(const Element* boot_natives)
     // and check that a couple of functions can be successfully looked up
     // by their symbol ID numbers.
 
-    assert(PG_Next_Native_Cfunc == Native_C_Funcs + Num_Natives);
+    assert(g_native_cfunc_pos == g_core_native_cfuncs + g_num_core_natives);
 
     if (not Is_Action(Lib(GENERIC)))
         panic (Lib(GENERIC));
@@ -360,9 +360,9 @@ Array* Startup_Natives(const Element* boot_natives)
         panic (Lib(PARSE_REJECT));
   #endif
 
-    assert(PG_Next_Native_Cfunc == Native_C_Funcs + Num_Natives);
+    assert(g_native_cfunc_pos == g_core_native_cfuncs + g_num_core_natives);
 
-    PG_Next_Native_Cfunc = nullptr;
+    g_native_cfunc_pos = nullptr;
     PG_Currently_Loading_Module = nullptr;
 
     return catalog;

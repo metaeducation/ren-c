@@ -41,7 +41,7 @@ PVAR Context* Lib_Context;
 PVAR Context* Sys_Context;
 PVAR Context* User_Context;
 
-PVAR CFunction* const* PG_Next_Native_Cfunc;
+PVAR CFunction* const* g_native_cfunc_pos;
 PVAR Context* PG_Currently_Loading_Module;
 
 //-- Various char tables:

@@ -197,7 +197,7 @@ DECLARE_NATIVE(load_extension)
     Context* module_ctx = Alloc_Context_Core(REB_MODULE, 1, NODE_FLAG_MANAGED);
     node_LINK(NextVirtual, module_ctx) = Lib_Context;
 
-    PG_Next_Native_Cfunc = cfuncs;
+    g_native_cfunc_pos = cfuncs;
     PG_Currently_Loading_Module = module_ctx;
 
     DECLARE_ATOM (module);
@@ -251,9 +251,9 @@ DECLARE_NATIVE(load_extension)
 
     // !!! Note: This does not get cleaned up in case of an error.
     //
-    if (PG_Next_Native_Cfunc != cfuncs + num_natives)
+    if (g_native_cfunc_pos != cfuncs + num_natives)
         panic ("NATIVE calls did not line up with stored C function count");
-    PG_Next_Native_Cfunc = nullptr;
+    g_native_cfunc_pos = nullptr;
 
     assert(PG_Currently_Loading_Module == module_ctx);
     PG_Currently_Loading_Module = nullptr;
