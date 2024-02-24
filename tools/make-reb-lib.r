@@ -198,6 +198,12 @@ lib-struct-fields: map-each-api [
     ]
 ]
 
+non-variadic-api-macros: map-each-api [
+    if not is-variadic [
+        cscape [:api {#define $<Name> LIBREBOL_PREFIX($<Name>)}]
+    ]
+]
+
 variadic-api-c-helpers: copy []
 variadic-api-c++-helpers: copy []
 
@@ -266,19 +272,6 @@ for-each-api [
     }]
 ]
 
-non-variadic-api-entry-point-macros: map-each-api [
-    ;
-    ; These need to be in a separate list, because they have to be defined
-    ; before the to_rebarg() code for fundemental types.
-    ;
-    if not is-variadic [
-        cscape [:api {
-            #define $<Name>(...) \
-                LIBREBOL_PREFIX($<Name>)(__VA_ARGS__)
-        }]
-    ]
-]
-
 variadic-api-specifier-capturing-macros: map-each-api [
     if is-variadic [
         fixed-params: map-each [type var] paramlist [
@@ -294,7 +287,6 @@ variadic-api-specifier-capturing-macros: map-each-api [
         }]
     ]
 ]
-
 
 variadic-api-run-in-lib-macros: map-each-api [
     if is-variadic [
@@ -312,6 +304,36 @@ variadic-api-run-in-lib-macros: map-each-api [
     ]
 ]
 
+variadic-api-c89-alias-macros: map-each-api [
+    if is-variadic [
+        cscape [:api {#define $<Name>_c89 $<Name>_helper}]
+    ]
+]
+
+
+=== "REMOVE TERMINAL NEWLINES FROM API SETS" ===
+
+; We don't want to write the API template like this:
+;
+;     #if SOME_DEFINED_THING  /* space off by one newline */
+;
+;         $[List-Of-Stuff]
+;     #endif  /* no newline, since List-Of-Stuff has newline on each entry */
+;
+; So drop the terminal newline, permitting:
+;
+;     #if SOME_DEFINED_THING
+;
+;         $[List-Of-Stuff]
+;
+;     #endif
+;
+
+assert [newline = take/last last variadic-api-c-helpers]
+assert [newline = take/last last variadic-api-c++-helpers]
+assert [newline = take/last last variadic-api-specifier-capturing-macros]
+assert [newline = take/last last variadic-api-run-in-lib-macros]
+
 
 === "GENERATE REBOL.H" ===
 
@@ -328,6 +350,79 @@ e-lib/emit [ver {
     #ifndef REBOL_H_1020_0304  /* "include guard" allows multiple #includes */
     #define REBOL_H_1020_0304  /* numbers in case REBOL_H defined elsewhere */
 
+
+    /*
+     * API #DEFINE OPTIONS
+     *
+     * The following options are available before you #include "rebol.h"
+     *
+     *   LIBREBOL_USE_C89         Expose functions like rebValue_c89(...)
+     *
+     *   LIBREBOL_NO_CPLUSPLUS    Disable conversions like rebValue("1 +", 2);
+     *
+     *   LIBREBOL_NO_STDLIB       Suppress inclusion of <stdlib.h>
+     *   LIBREBOL_NO_STDINT       Suppress inclusion of <stdint.h>
+     *   LIBREBOL_NO_STDBOOL      Suppress inclusion of <stdbool.h>
+     *
+     *   LIBREBOL_SPECIFIER       Variable name variadics implicitly capture
+     *
+     * For more details on each, read the comments further down in this file.
+     */
+
+
+    /*
+     * API VERSION
+     *
+     * These constants are part of an old Rebol versioning system that hasn't
+     * been paid much attention to:
+     *
+     *   http://rebol.com/release-archive.html
+     *
+     * Keeping as a placeholder.
+     */
+
+    #define LIBREBOL_VERSION        $<ver/1>
+    #define LIBREBOL_MAJOR          $<ver/2>
+    #define LIBREBOL_MINOR          $<ver/3>
+
+
+    /*
+     * LIBREBOL_USE_C89 option
+     *
+     * As a sort of guiding principle against complexity, Rebol has tried as
+     * hard as possible to be able to build and run as pure ANSI C89.  The
+     * need for variadic macros, '//'-style comments, and declaring variables
+     * in mid-function meant C99 was ultimately required.
+     *
+     * HOWEVER, the API can still be used from C89, albeit the variadic APIs
+     * become more awkward.
+     *
+     * For instance, instead of:
+     *
+     *      RebolValue* x = rebValue("10");
+     *      RebolValue* y = rebValue(one, "+", rebI(20));
+     *
+     * You have to use the internal functions without the variadic wrappers,
+     * making you responsible for the termination signal:
+     *
+     *      RebolValue* x = rebValue_c89(NULL, "10", rebEND);
+     *      RebolValue* y = rebValue_c89(NULL, one, "+", rebI(20), rebEND);
+     *
+     * The first parameter is the environment in which the code will be
+     * looked up, which defaults to running in an isolated context inheriting
+     * from LIB if null.  Note that APIs with a fixed number of parameters
+     * (such as rebI()) do not have a distinct `_c89` version.
+     *
+     * At time of writing, there are no clients of this API.  But it is kept
+     * in the spirit of being careful about dependency control, to help count
+     * exactly how many steps away from baseline the system is making.
+     */
+
+    #if !defined(LIBREBOL_USE_C89)
+        #define LIBREBOL_USE_C89 0
+    #endif
+
+
     /*
      * TRIGGER UP-FRONT ERROR IF COMPILER LACKS __VA_ARGS__ FEATURE
      *
@@ -335,17 +430,23 @@ e-lib/emit [ver {
      *
      * https://stackoverflow.com/questions/4786649/
      *
-     * Ren-C relies on this feature.  Since some pre-C99 compilers could
-     * actually support it, don't unconditionally error by detecting an older
-     * compiler.  Instead, opportunistically try to call a dummy variadic
-     * macro...whose name implicates what the problem is if it doesn't work.
+     * If not using the C89 manual calls, this feature is a requirement.
+     *
+     * We'd like to give a targeted error message if the feature is missing,
+     * vs. have the compiler spew out gibberish that is harder to decipher.
+     * But since some pre-C99 compilers actually support __VA_ARGS__, don't
+     * use the compiler version to preemptively error.  Instead, try to call
+     * a dummy variadic macro...which will lead users to this spot if it
+     * does not work.
      */
 
-    #define Compiler_Lacks_Variadic_Macros_If_This_Errors(...) \
-        (__VA_ARGS__ + 304)
+    #if (! LIBREBOL_USE_C89)
+        #define Compiler_Lacks_Variadic_Macros_If_This_Errors(...) \
+            (__VA_ARGS__ + 304)
 
-    inline static int Feature_Test_Compiler_For_Variadic_Macros(void)
-        { return Compiler_Lacks_Variadic_Macros_If_This_Errors(1020); }
+        inline static int Feature_Test_Compiler_For_Variadic_Macros(void)
+            { return Compiler_Lacks_Variadic_Macros_If_This_Errors(1020); }
+    #endif
 
 
     /*
@@ -360,8 +461,11 @@ e-lib/emit [ver {
      * even when this switch is used, but not in a way that affects the
      * runtime behavior uniquely beyond what C99 would do.)
      */
+
     #if !defined(LIBREBOL_NO_CPLUSPLUS)  /* define before including rebol.h */
-        #if defined(__cplusplus) && __cplusplus >= 201103L
+        #if LIBREBOL_USE_C89
+            #define LIBREBOL_NO_CPLUSPLUS 1
+        #elif defined(__cplusplus) && __cplusplus >= 201103L
             /* C++11 or above, if following the standard (VS2017 does not) */
             #define LIBREBOL_NO_CPLUSPLUS 0
         #elif defined(CPLUSPLUS_11) && CPLUSPLUS_11
@@ -372,20 +476,30 @@ e-lib/emit [ver {
         #endif
     #endif
 
+
     /*
+     * ALLOW SUPPRESSING INCLUSION OF STDLIB.H, STDINT.H, STDBOOL.H
+     *
      * The goal is to make it possible that the only include file one needs
-     * to make a simple Rebol library client is `#include "rebol.h"`.  Your
-     * compiler will need __VA_ARGS__ support in macros, and if stdint.h
-     * and stdbool.h aren't available they will need to be included.
+     * to make a simple Rebol library client is `#include "rebol.h"`.
+     * Accomplishing that requires including a few headers.
+     *
+     * Some special compilation scenarios require not assuming any headers are
+     * available on the platform.  This lets you disable those automatic
+     * inclusions if you need to.
+     *
+     * If you are using C89 for some reason, "pstdbool.h" and "pstdint.h" are
+     * available on the internet as shims for <stdbool.h> and <stdint.h>
      */
+
     #if !defined(LIBREBOL_NO_STDLIB)  /* definable before including rebol.h */
         #define LIBREBOL_NO_STDLIB 0
     #endif
     #if !defined(LIBREBOL_NO_STDINT)
-        #define LIBREBOL_NO_STDINT 0
+        #define LIBREBOL_NO_STDINT LIBREBOL_USE_C89
     #endif
     #if !defined(LIBREBOL_NO_STDBOOL)
-        #define LIBREBOL_NO_STDBOOL 0
+        #define LIBREBOL_NO_STDBOOL LIBREBOL_USE_C89
     #endif
 
     #if LIBREBOL_NO_STDLIB
@@ -409,12 +523,6 @@ e-lib/emit [ver {
             #endif
         #endif
     #endif
-
-    /*
-     * No matter what, you need stdarg.h for va_list...TCC extension provides
-     * its own version.
-     */
-    #include <stdarg.h>  /* for va_list, va_start() in inline functions */
 
     /*
      * !!! Needed by following two macros.
@@ -479,21 +587,16 @@ e-lib/emit [ver {
         #endif
     #endif
 
-    /*
-     * !!! These constants are part of an old R3-Alpha versioning system
-     * that hasn't been paid much attention to.  Keeping as a placeholder.
-     */
-    #define RL_VER $<ver/1>
-    #define RL_REV $<ver/2>
-    #define RL_UPD $<ver/3>
 
     /*
      * The API can be used by the core on value cell pointers that are in
      * stable locations guarded by GC (e.g. frame argument or output cells).
      * Since the core uses Value*, it must be accurate (not just a void*)
      */
+
     struct RebolValueStruct;
     typedef struct RebolValueStruct RebolValue;
+
 
     /*
      * "Instructions" in the API are not RebolValue*, and you are not supposed
@@ -501,9 +604,11 @@ e-lib/emit [ver {
      * use in the variadic calls, because the feeding of the va_list in
      * case of error is the only way they are cleaned up.
      */
+
     struct RebolNodeInternalStruct;
     typedef struct RebolNodeInternalStruct RebolNodeInternal;
     typedef struct RebolNodeInternalStruct RebolSpecifier_internal;
+
 
     /*
      * `wchar_t` is a pre-Unicode abstraction, whose size varies per-platform
@@ -521,6 +626,7 @@ e-lib/emit [ver {
      * client code.  If the client code is on Windows, use WCHAR.  If it's in
      * a unixodbc client use SQLWCHAR.  But use UTF-8 if you possibly can.
      */
+
     #if LIBREBOL_NO_STDINT
         #define REBWCHAR unsigned int
     #elif defined(_WIN32)  /* _WIN32 is all Windows, _WIN64 only if 64-bit */
@@ -528,6 +634,7 @@ e-lib/emit [ver {
     #else
         #define REBWCHAR uint16_t
     #endif
+
 
     /*
      * "Dangerous Function" which is called by rebRescue().  Argument can be a
@@ -539,7 +646,9 @@ e-lib/emit [ver {
      * converted to null, which parallels TRAP without a handler.  nulls will
      * be converted to voids.
      */
+
     typedef RebolValue* (REBDNG)(void *opaque);
+
 
     /*
      * "Rescue Function" called as the handler in rebRescueWith().  Receives
@@ -548,7 +657,9 @@ e-lib/emit [ver {
      * !!! If either the dangerous function or the rescuing function return an
      * ERROR! value, that is not interfered with the way rebRescue() does.
      */
+
     typedef RebolValue* (REBRSC)(RebolValue* error, void *opaque);
+
 
     /*
      * For some HANDLE!s GC callback.  Note that because these cleanups are
@@ -562,45 +673,30 @@ e-lib/emit [ver {
      * of knowing when the GC is.  Though since a GC can happen at any time,
      * this might create some unpredictable nesting.
      */
+
     typedef void (CLEANUP_CFUNC)(const RebolValue*);
 
+
     /*
-     * The API maps Rebol's `null` to C's 0 pointer, **but don't use NULL**.
-     * Some C compilers define NULL as simply the constant 0, which breaks
-     * use with variadic APIs...since they will interpret it as an integer
-     * and not a pointer.
+     * The API maps Rebol's ~null~ "antiform" to C's 0 pointer, **but don't
+     * use C's NULL macro for that**.
      *
-     * **It's best to use C++'s `nullptr`**, or a suitable C shim for it,
-     * e.g. `#define nullptr ((void*)0)`.  That helps avoid obscuring the
-     * fact that the Rebol API's null really is C's null, and is conditionally
-     * false.  Seeing `rebNull` in source doesn't as clearly suggest this.
+     * The reason is that some C compilers define NULL as simply the integer
+     * constant 0, which breaks use with variadic APIs...as they will interpret
+     * it as an integer and not a pointer.
+     *
+     * **It's clearest to use C++'s `nullptr`**, or a suitable C shim for it,
+     * e.g. `#define nullptr ((void*)0)`.  That helps avoid making it seem
+     * like rebNull is some distinct concept which can't safely be assumed
+     * as exactly equivalent to C's null.
      *
      * However, **using NULL is broken, so don't use it**.  This macro is
      * provided in case defining `nullptr` is not an option--for some reason.
      */
+
     #define rebNull \
         ((RebolValue*)0)
 
-    /*
-     * Since a C nullptr (pointer cast of 0) is used to represent the Rebol
-     * `null` in the API, something different must be used to indicate the
-     * end of variadic input.  So a *pointer to data* is used where the first
-     * byte of that data is 192 (END_SIGNAL_BYTE)--illegal in UTF-8 sequences.
-     *
-     * To Rebol, the first bit being 1 means it's a Rebol node, the second
-     * being 1 mean it is in the "free" state.  The low bit in the first byte
-     * set suggests it points to a "series"...though it doesn't (this helps
-     * prevent code from trying to write a cell into a rebEND signal).
-     *
-     * The second byte is 0, coming from the '\0' terminator of the C string
-     * literal.  This isn't strictly necessary, as the 192 is enough to know
-     * it's not a Cell, Series stub, or UTF8.  But it can guard against
-     * interpreting garbage input as rebEND, as the sequence {192, 0} is less
-     * likely to occur at random than {192, ...}.  And leveraging a literal
-     * form means we don't need to define a single byte somewhere to then
-     * point at it.
-     */
-    #define rebEND "\xC0"
 
 
     #ifdef __cplusplus
@@ -618,29 +714,6 @@ e-lib/emit [ver {
         $[Lib-Struct-Fields];
     } RL_LIB;
 
-
-    /*
-     * LIBREBOL_SPECIFIER
-     *
-     * This defines the name of the variable which will be sneakily picked up
-     * by the variadic API macros, in order to provide a binding context that
-     * is relevant.  e.g. if you're inside a native, then the context should
-     * be for that native's function parameters, chained to the module, then
-     * inheriting from lib.
-     *
-     * Getting this inheritance is tricky.  It means there has to be a global
-     * relevant definition for when you're calling a subroutine that's not
-     * in a native, and it means the INCLUDE_PARAMS_OF_XXX has to override
-     * that same name with a new variable implicating the function.
-     *
-     * What the name of the variable is needs to vary by module and case, so
-     * this does that.  But if you don't specify it at all, then it means
-     * the API execution will be done in its own isolated environment that
-     * just inherits from lib.
-     */
-    #if !defined(LIBREBOL_SPECIFIER)
-        #define LIBREBOL_SPECIFIER 0  /* nullptr may not be available */
-    #endif
 
     #ifdef REB_EXT /* can't direct call into EXE, must go through interface */
         /*
@@ -695,13 +768,10 @@ e-lib/emit [ver {
      *
      * So these macros accomplish that using the pattern:
      *
-     *      #define rebInteger(...) \
-     *          LIBREBOL_PREFIX(rebInteger)(__VA_ARGS__)
-     *
-     * They are defined before the variadic entry points so that to_rebarg()
-     * C++ converters used during variadic destructuring have access to them.
+     *      #define rebInteger LIBREBOL_PREFIX(rebInteger)
      */
-    $[Non-Variadic-Api-Entry-Point-Macros]
+
+    $[Non-Variadic-Api-Macros]
 
 
     /*
@@ -715,6 +785,9 @@ e-lib/emit [ver {
      * (The C portion of the Emscripten build can use these internally, as
      * the implementation is C.  But when calling the lib from JS, it is
      * obviously not reading this generated header file!)
+     *
+     * Note: Must be defined before the variadic helpers so that to_rebarg()
+     * C++ converters for recursive variadic destructuring can use them.
      */
 
     #define rebR rebRELEASING
@@ -732,79 +805,138 @@ e-lib/emit [ver {
     #define rebU rebUNQUOTING
 
 
-    #if LIBREBOL_NO_CPLUSPLUS
-        /*
-         * VARIADIC API C HELPERS
-         *
-         * Plain C only has va_list as a method of taking variable arguments.
-         * The variadic interface is low-level, as a thin wrapper over the
-         * stack memory of a function call.  So va_start() and va_end() aren't
-         * usually function calls...in fact, va_end() is usually a no-op.
-         *
-         * The simplicity is an advantage for optimization, but unsafe!  Type
-         * checking is non-existent.  There's no way to get how many args
-         * were passed, so we work around it with macros that add rebEND.
-         */
+    /*
+     * VARIADIC API END SIGNAL
+     *
+     * In C, `va_list` is the only way to take a variadic number of arguments.
+     *
+     *   https://en.cppreference.com/w/c/variadic/va_list
+     *
+     * It is very low-level, has no typechecking, and does not offer a count
+     * of the number of arguments passed.  So something needs to be passed
+     * that signals the end.
+     *
+     * Since a C nullptr (pointer cast of 0) is used to represent the Rebol
+     * `null` in the API, something different must be used to indicate the
+     * end of variadic input.  So a *pointer to data* is used where the first
+     * byte of that data is 192 (END_SIGNAL_BYTE)--illegal in UTF-8 sequences.
+     *
+     * To Rebol, the first bit being 1 means it's a Rebol node, the second
+     * being 1 mean it is in the "free" state.  The low bit in the first byte
+     * set suggests it points to a "series"...though it doesn't (this helps
+     * prevent code from trying to write a cell into a rebEND signal).
+     *
+     * The second byte is 0, coming from the '\0' terminator of the C string
+     * literal.  This isn't strictly necessary, as the 192 is enough to know
+     * it's not a Cell, Series stub, or UTF8.  But it can guard against
+     * interpreting garbage input as rebEND, as the sequence {192, 0} is less
+     * likely to occur at random than {192, ...}.  And leveraging a literal
+     * form means we don't need to define a single byte somewhere to then
+     * point at it.
+     *
+     * Note: This is for internal use only unless LIBREBOL_USE_C89.  But even
+     * without that, calling it `rebEND_internal` would affect readability
+     * of the implementation code enough to not be worth it.
+     */
 
-        $[Variadic-Api-C-Helpers]
-    #else
-       /*
-        * PREDEFINED C++ ARGUMENT CONVERSION FUNCTIONS
-        *
-        * When built as C++, the argument list to variadic APIs is destructured
-        * using variadic templates, allowing each argument to do typechecking
-        * (vs. the completely type-unsafe va_list of C).
-        *
-        * As an added bonus, the processing of the arguments at compile time
-        * permits arbitrary transformations.  This means things like `int` can
-        * be turned into rebI(...) to produce a RebolValue, or `std::string`
-        * can produce a text cell that will auto-release when the variadic
-        * feed processing goes across it.
-        *
-        * These are converters are predefined, but you can add your own, like
-        * this one for converting std::string to TEXT!:
-        *
-        *    #include <string>
-        *
-        *    inline const void* to_rebarg(const std::string &text)
-        *      { return rebT(text.c_str()); }
-        *
-        * (It's not predefined to avoid forcing inclusion of <string>, but it
-        * is easy to add if you want it.)
-        */
+    #define rebEND "\xC0"
 
-        inline const void* to_rebarg(nullptr_t val)
-          { return val; }
+
+    /*
+     * PREDEFINED C++ ARGUMENT CONVERSION FUNCTIONS
+     *
+     * When built as C++, the argument list to variadic APIs is destructured
+     * using variadic templates, allowing each argument to do typechecking
+     * (vs. the completely type-unsafe va_list of C).
+     *
+     * As an added bonus, the processing of the arguments at compile time
+     * permits arbitrary transformations.  This means things like `int` can
+     * be turned into rebI(...) to produce a RebolValue, instead of giving
+     * an invalid type error.
+     *
+     * These are converters are predefined, but you can add your own, like
+     * this one for converting std::string to TEXT!:
+     *
+     *    #include <string>
+     *
+     *    inline const void* to_rebarg(const std::string &text)
+     *      { return rebT(text.c_str()); }
+     *
+     * (It's not predefined to avoid forcing inclusion of <string>, but it
+     * is easy to add if you want it.)
+     */
+
+    #if (! LIBREBOL_NO_CPLUSPLUS)
+
+        #include <cstddef>  /* for std::nullptr_t */
+
+        inline const void* to_rebarg(std::nullptr_t val)
+            { return val; }
 
         inline const void* to_rebarg(const RebolValue* val)
-          { return val; }
+            { return val; }
 
         inline const void* to_rebarg(const RebolNodeInternal* instruction)
-          { return instruction; }
+            { return instruction; }
 
         inline const void* to_rebarg(const char *source)
-          { return source; }  /* not TEXT!, but LOADable source code */
+            { return source; }  /* not TEXT!, but LOADable source code */
 
         inline const void* to_rebarg(bool b)
-          { return rebL(b); }
+            { return rebL(b); }
 
         inline const void* to_rebarg(int i)
-          { return rebI(i); }
+            { return rebI(i); }
 
         inline const void* to_rebarg(double d)
-          { return rebR(rebDecimal(d)); }
+            { return rebR(rebDecimal(d)); }
+
+    #endif
 
 
-        /*
-         * Parameters are packed into an array whose size is known at
-         * compile-time, into a `std::array` onto the stack.  This yields
-         * something like a va_list, and the API is able to treat the `p`
-         * first parameter as a packed array of this kind if vaptr is nullptr.
-         *
-         * The packing is done by a recursive process.
-         */
+    /*
+     * VARIADIC API HELPERS
+     *
+     * These helpers are called by variadic macros.  Those macros pass the
+     * parameters they receive with a specifier at the beginning and `rebEND`
+     * tacked on in the final position.  (See rebEND above for why.)
+     *
+     * As with the non-variadic API entry points, these translate a raw name
+     * like `rebValue()` to either `RL_rebValue()` or  `RL->rebValue()`.
+     * But it also translates the variadic arguments into two pointers
+     * called `p` and `vaptr`, that can be passed to the function pointers in
+     * the API table
+     *
+     * If C, then `p` is passed as the pointer to the first element in the
+     * variadic sequence (which is actually a fixed argument that's not part
+     * of the `...` list).  Then `vaptr` is passed as a pointer to va_list
+     * given by va_start().
+     *
+     * If building with C++, all the arguments (including the first) are packed
+     * into an array whose size is known at compile-time, and the pointer to
+     * that array is passed as `p`.  Then `vaptr` is passed as null, indicating
+     * to the internals that the arguments are in this alternate format.
+     *
+     * The reason for supporting two alternate implementations is that the C++
+     * version is significantly more powerful.  Not only can it type-check
+     * the variadic arguments, it can offer hooks to convert C++ values into
+     * Rebol values.  (See the Argument Conversion Functions above).
+     *
+     * 1. In the spirit of dependency control, we only include <stdarg.h> if
+     *    actually using the C variadic method.  This means the API table
+     *    uses `void* vaptr` instead of `va_list* vaptr`.
+     */
+
+    #if LIBREBOL_NO_CPLUSPLUS
+
+        #include <stdarg.h>  /* only included in C builds [1] */
+
+        $[Variadic-Api-C-Helpers]
+
+    #else
+
         template <typename Last>
-        void rebArgRecurser_internal(
+        void rebVariadicPacker_internal(
             int i,
             const void* data[],
             const Last &last
@@ -813,53 +945,82 @@ e-lib/emit [ver {
         }
 
         template <typename First, typename... Rest>
-        void rebArgRecurser_internal(
+        void rebVariadicPacker_internal(
             int i,
             const void* data[],
             const First& first, const Rest& ...rest
         ){
             data[i] = to_rebarg(first);
-            rebArgRecurser_internal(i + 1, data, rest...);
+            rebVariadicPacker_internal(i + 1, data, rest...);
         }
 
-        /*
-         * C++ Helper Templates
-         */
-
         $[Variadic-Api-C++-Helpers]
-    #endif  /* C++ versions */
+
+    #endif
 
 
     /*
      * VARIADIC API SPECIFIER CAPTURING MACROS
      *
-     * Variadic macros give the power to implicitly slip a rebEND signal at the
-     * end of the parameter list.  This overcomes a C variadic function's
-     * fundamental limitation of not being able to implicitly know the number
-     * of variadic parameters used.
+     * LIBREBOL_SPECIFIER defines the name of the variable which will be
+     * sneakily picked up by these variadic API macros, in order to provide a
+     * binding context that is relevant.  e.g. if you're inside a native, then
+     * the context should be for that native's function parameters, chained to
+     * the module, then inheriting from lib.
      *
-     * These are trickier than the non-variadic macros, because they have to
-     * be customized where each macro spits out the fixed part separately
-     * from the variadic part.  Because you don't want to call to_rebarg()
-     * on the fixed portions.
+     * Getting this inheritance is tricky.  It means there has to be a global
+     * relevant definition for when you're calling a subroutine that's not
+     * in a native, and it means the INCLUDE_PARAMS_OF_XXX has to override
+     * that same name with a new variable implicating the function.
+     *
+     * What the name of the variable is needs to vary by module and case, so
+     * this does that.  But if you don't specify it at all, then it means
+     * the API execution will be done in its own isolated environment that
+     * just inherits from lib.
      */
 
-    $[Variadic-Api-Specifier-Capturing-Macros]
+    #if (! LIBREBOL_USE_C89)
+
+        #if !defined(LIBREBOL_SPECIFIER)
+            #define LIBREBOL_SPECIFIER 0  /* nullptr may not be available */
+        #endif
+
+        $[Variadic-Api-Specifier-Capturing-Macros]
+
+    #endif  /* (! LIBREBOL_USE_C89) */
 
 
     /*
      * VARIADIC API RUN IN LIB MACROS
      *
-     * Variant that just runs the code in another context (LIBREBOL_ISOLATE).
-     * It would be possible to make the LIBREBOL_SPECIFIER variable do
-     * shadowing, so that a global would hold nullptr and then be overridden
-     * in natives.  But we don't want to require people to disable a useful
-     * compiler warning if they don't want to, and would rather use functions
-     * with different names outside of natives.  (This includes ourselves
-     * developing the core.)
+     * Variant that just runs the code in lib.
      */
 
-    $[Variadic-Api-Run-In-Lib-Macros]
+    #if (! LIBREBOL_USE_C89)
+
+        $[Variadic-Api-Run-In-Lib-Macros]
+
+    #endif  /* (! LIBREBOL_USE_C89) */
+
+
+    /*
+     * ALIASED NAMES OF THE HELPER FUNCTIONS IF USING C89
+     *
+     * The "C89 API" is really just requiring you to call the C helper
+     * functions directly for variadic APIs.  But to make it clearer and
+     * shorter to type, the helpers are aliased as `rebXXX_c89`.
+     *
+     * (Note that naming the C helpers `rebXXX_c89` in the first place would
+     * not give the desired polymorphism of having the wrapping macros work
+     * with either C++ or C...unless you named the C++ helpers `rebXXX_c89`
+     * as well, which is unnecessarily misleading.)
+     */
+
+    #if LIBREBOL_USE_C89
+
+        $[Variadic-Api-C89-Alias-Macros]
+
+    #endif  /* LIBREBOL_USE_C89 */
 
 
     /*
@@ -931,6 +1092,7 @@ e-lib/emit [ver {
      * pick up an overridden definition of FAIL.  It always calls LIB.FAIL,
      * which may be good (?)
      */
+
     #define rebFail_OS(errnum) \
         rebJumpsCore("fail", rebR(rebError_OS(errnum)));
 
