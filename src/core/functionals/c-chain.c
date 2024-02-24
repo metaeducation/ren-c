@@ -77,7 +77,7 @@ Level* Push_Downshifted_Level(Atom* out, Level* L) {
     L->varlist = nullptr;
     Corrupt_Pointer_If_Debug(L->rootvar);
 
-    Corrupt_Pointer_If_Debug(L->executor);  // caller must set
+    Corrupt_Function_Pointer_If_Debug(L->executor);  // caller must set
     Corrupt_Pointer_If_Debug(L->label);
 
     sub->u.action.dispatcher_base = L->u.action.dispatcher_base;

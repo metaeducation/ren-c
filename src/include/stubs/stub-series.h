@@ -749,10 +749,10 @@ INLINE Stub* Prep_Stub(void *preallocated, Flags flags) {
     s->leader.bits = NODE_FLAG_NODE | flags;  // #1
 
   #if !defined(NDEBUG)
-    SafeCorrupt_Pointer_If_Debug(s->link.corrupt);  // #2
+    SafeCorrupt_Pointer_Debug(s->link.corrupt);  // #2
     Mem_Fill(&s->content.fixed, 0xBD, sizeof(s->content));  // #3 - #6
-    SafeCorrupt_Pointer_If_Debug(s->info.corrupt);  // #7
-    SafeCorrupt_Pointer_If_Debug(s->link.corrupt);  // #8
+    SafeCorrupt_Pointer_Debug(s->info.corrupt);  // #7
+    SafeCorrupt_Pointer_Debug(s->link.corrupt);  // #8
 
   #if DEBUG_SERIES_ORIGINS
     s->guard = nullptr;  // so Touch_Stub_Debug() can tell data is invalid

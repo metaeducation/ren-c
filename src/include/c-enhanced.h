@@ -976,15 +976,19 @@
 
 
 #ifdef NDEBUG
-    #define Corrupt_Pointer_If_Debug(p)       NOOP
+    #define Corrupt_Pointer_If_Debug(p)                 NOOP
+    #define Corrupt_Function_Pointer_If_Debug(p)        NOOP
 #elif (! CPLUSPLUS_11)
     #define Corrupt_Pointer_If_Debug(p) \
         ((p) = p_cast(void*, cast(uintptr_t, 0xDECAFBAD)))
 
-    #define SafeCorrupt_Pointer_If_Debug(p) \
+    #define Corrupt_Function_Pointer_If_Debug(p) \
+        ((p) = 0)  // is there any way to do this generically in C?
+
+    #define SafeCorrupt_Pointer_Debug(p) \
         ((p) = p_cast(void*, cast(uintptr_t, 0x5AFE5AFE)))
 
-    #define FreeCorrupt_Pointer_If_Debug(p) \
+    #define FreeCorrupt_Pointer_Debug(p) \
         ((p) = p_cast(void*, cast(uintptr_t, 0xF4EEF4EE)))
 
     #define Is_Pointer_Corrupt_Debug(p) \
@@ -994,12 +998,14 @@
     INLINE void Corrupt_Pointer_If_Debug(T* &p)
       { p = p_cast(T*, cast(uintptr_t, 0xDECAFBAD)); }
 
+    #define Corrupt_Function_Pointer_If_Debug Corrupt_Pointer_If_Debug
+
     template<class T>
-    INLINE void SafeCorrupt_Pointer_If_Debug(T* &p)
+    INLINE void SafeCorrupt_Pointer_Debug(T* &p)
       { p = p_cast(T*, cast(uintptr_t, 0x5AFE5AFE)); }
 
     template<class T>
-    INLINE void FreeCorrupt_Pointer_If_Debug(T* &p)
+    INLINE void FreeCorrupt_Pointer_Debug(T* &p)
       { p = p_cast(T*, cast(uintptr_t, 0xF4EEF4EEE)); }
 
     template<class T>
@@ -1016,13 +1022,15 @@
           { return Is_Pointer_Corrupt_Debug(option.wrapped); }
     #endif
 
-    template<class P>
-    INLINE void Corrupt_Pointer_If_Debug(NeverNull(P) &nn)
-      { Corrupt_Pointer_If_Debug(nn.p); }
+    #if DEBUG_CHECK_NEVERNULL
+        template<class P>
+        INLINE void Corrupt_Pointer_If_Debug(NeverNull(P) &nn)
+          { Corrupt_Pointer_If_Debug(nn.p); }
 
-    template<class P>
-    INLINE bool Is_Pointer_Corrupt_Debug(NeverNull(P) &nn)
-      { return Is_Pointer_Corrupt_Debug(nn.p); }
+        template<class P>
+        INLINE bool Is_Pointer_Corrupt_Debug(NeverNull(P) &nn)
+          { return Is_Pointer_Corrupt_Debug(nn.p); }
+    #endif
 #endif
 
 
