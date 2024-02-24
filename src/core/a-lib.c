@@ -1703,11 +1703,15 @@ uint32_t RL_rebUnboxChar(
 //
 //  rebUnboxHandleCData: RL_API
 //
-void *RL_rebUnboxHandleCData(
+void* RL_rebUnboxHandleCData(
+    RebolSpecifier_internal* specifier,
     size_t* size_out,
-    const RebolValue* v
+    const void* p, void* vaptr
 ){
     ENTER_API_RECYCLING_OK;
+
+    DECLARE_VALUE (v);
+    Run_Va_Decay_May_Fail_Calls_Va_End(specifier, v, p, vaptr);
 
     if (VAL_TYPE(v) != REB_HANDLE)
         fail ("rebUnboxHandleCData() called on non-HANDLE!");
@@ -1722,9 +1726,13 @@ void *RL_rebUnboxHandleCData(
 //  rebExtractHandleCleaner: RL_API
 //
 CLEANUP_CFUNC *RL_rebExtractHandleCleaner(
-    const RebolValue* v
+    RebolSpecifier_internal* specifier,
+    const void* p, void* vaptr
 ){
     ENTER_API_RECYCLING_OK;
+
+    DECLARE_VALUE (v);
+    Run_Va_Decay_May_Fail_Calls_Va_End(specifier, v, p, vaptr);
 
     if (VAL_TYPE(v) != REB_HANDLE)
         fail ("rebUnboxHandleCleaner() called on non-HANDLE!");

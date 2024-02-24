@@ -495,12 +495,10 @@ DECLARE_NATIVE(open_statement)
 {
     ODBC_INCLUDE_PARAMS_OF_OPEN_STATEMENT;
 
-    Value* hdbc_value = rebValue(
+    Connection* conn = rebUnboxHandle(Connection*,
         "ensure handle! pick @", rebArgR("connection"), "'hdbc"
     );
-    Connection* conn = rebUnboxHandle(Connection*, hdbc_value);
     SQLHDBC hdbc = conn->hdbc;
-    rebRelease(hdbc_value);
 
     SQLRETURN rc;
 
@@ -1198,11 +1196,9 @@ DECLARE_NATIVE(insert_odbc)
     Value* sql = rebArg("sql");
     Value* statement = rebArg("statement");
 
-    Value* hstmt_value = rebValue(
-        "ensure handle! pick", statement, "'hstmt"
+    SQLHSTMT hstmt = rebUnboxHandle(
+        SQLHSTMT*, "ensure handle! pick", statement, "'hstmt"
     );
-    SQLHSTMT hstmt = rebUnboxHandle(SQLHSTMT*, hstmt_value);
-    rebRelease(hstmt_value);
 
     SQLRETURN rc;
 
@@ -1622,18 +1618,14 @@ DECLARE_NATIVE(copy_odbc)
 {
     ODBC_INCLUDE_PARAMS_OF_COPY_ODBC;
 
-    Value* hstmt_value = rebValue(
+    SQLHSTMT hstmt = rebUnboxHandle(SQLHSTMT,
         "ensure handle! pick", rebArgR("statement"), "'hstmt"
     );
-    SQLHSTMT hstmt = rebUnboxHandle(SQLHSTMT, hstmt_value);
-    rebRelease(hstmt_value);
 
-    Value* columns_value = rebValue(
+    ColumnList* list = rebUnboxHandle(ColumnList*,
         "ensure handle! pick", rebArgR("statement"), "'columns"
     );
-    ColumnList* list = rebUnboxHandle(ColumnList*, columns_value);
     Column* columns = list->columns;
-    rebRelease(columns_value);
 
     if (hstmt == SQL_NULL_HANDLE or not columns)
         rebJumps ("fail {Invalid statement object!}");
@@ -1809,11 +1801,9 @@ DECLARE_NATIVE(update_odbc)
 
     // Get connection handle
     //
-    Value* hdbc_value = rebValue(
+    SQLHDBC hdbc = rebUnboxHandle(SQLHDBC,
         "ensure handle! pick", rebArgR("connection"), "'hdbc"
     );
-    SQLHDBC hdbc = rebUnboxHandle(SQLHDBC, hdbc_value);
-    rebRelease(hdbc_value);
 
     SQLRETURN rc;
 

@@ -1006,6 +1006,19 @@ e-lib/emit [ver {
 
 
     /*
+     * TYPE-SAFE rebUnboxHandle() MACRO VARIANTS
+     */
+
+    #if (! LIBREBOL_USE_C89)
+        #define rebUnboxHandle(TP,...) \
+            ((TP)rebUnboxHandleCData((size_t*)(0), __VA_ARGS__))
+
+        #define rebUnboxHandleCore(TP,...) \
+            ((TP)rebUnboxHandleCDataCore((size_t*)(0), __VA_ARGS__))
+    #endif
+
+
+    /*
      * ALIASED NAMES OF THE HELPER FUNCTIONS IF USING C89
      *
      * The "C89 API" is really just requiring you to call the C helper
@@ -1070,13 +1083,6 @@ e-lib/emit [ver {
         rebRelease(*v);
         *v = rebNull;  /* nullptr may not be defined */
     }
-
-    /*
-     * TYPE-SAFE rebUnboxHandle() MACRO VARIANTS
-     */
-
-    #define rebUnboxHandle(TP,v) \
-        ((TP)rebUnboxHandleCData((size_t*)(0), (v)))  // 0=NULL, don't get size
 
 
     /*
