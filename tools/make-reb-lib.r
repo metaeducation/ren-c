@@ -143,7 +143,7 @@ emit-proto: func [return: [~] proto] [
             copy paramlist: to "const void*"  ; signal start of variadic
 
             "const void*" 'p
-            "va_list*" 'vaptr
+            "void*" 'vaptr
         ] else [
             fail [name "has unsupported variadic paramlist:" mold paramlist]
         ]
@@ -189,7 +189,7 @@ lib-struct-fields: map-each-api [
         (if is-variadic ["RebolSpecifier_internal* specifier"])
         (spread map-each [type var] paramlist [spaced [type var]])
         (if is-variadic [
-            spread ["const void* p" "va_list* vaptr"]
+            spread ["const void* p" "void* vaptr"]
         ])
     ]
     cfunc-params: default ["void"]
@@ -253,9 +253,8 @@ for-each-api [
             $<Helper-Params, >
             const Ts & ...args
         ){
-            const size_t num_args = sizeof...(args);  /* includes rebEND */
-            const void* packed[num_args];
-            rebArgRecurser_internal(0, packed, args...);
+            const void* packed[sizeof...(args)];  /* includes rebEND */
+            rebVariadicPacker_internal(0, packed, args...);
 
             $<maybe return-keyword >LIBREBOL_PREFIX($<Name>)(
                 specifier,

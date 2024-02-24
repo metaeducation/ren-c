@@ -326,7 +326,7 @@ append api-objects make object! [
     name: "rebPromise"
     return-type: "intptr_t"
     paramlist: []
-    proto: "intptr_t rebPromise(void* p, va_list* vaptr)"
+    proto: "intptr_t rebPromise(void* p, void* vaptr)"
     is-variadic: true
 ]
 

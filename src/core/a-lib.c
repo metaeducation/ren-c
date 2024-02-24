@@ -919,7 +919,7 @@ void RL_rebModifyHandleCleaner(RebolValue* v, CLEANUP_CFUNC *cleaner) {
 //
 const RebolNodeInternal* RL_rebArgR(
     RebolSpecifier_internal* specifier,
-    const void* p, va_list* vaptr
+    const void* p, void* vaptr
 ){
     ENTER_API;
 
@@ -936,7 +936,7 @@ const RebolNodeInternal* RL_rebArgR(
     const void* p2;
     if (vaptr) {
         name = c_cast(char*, p);
-        p2 = va_arg(*vaptr, const void*);
+        p2 = va_arg(*cast(va_list*, vaptr), const void*);
     }
     else {
         const void* const *packed = cast(const void* const*, p);
@@ -968,7 +968,7 @@ const RebolNodeInternal* RL_rebArgR(
 //
 RebolValue* RL_rebArg(
     RebolSpecifier_internal* specifier,
-    const void* p, va_list* vaptr
+    const void* p, void* vaptr
 ){
     ENTER_API;
 
@@ -1037,7 +1037,7 @@ static bool Run_Va_Throws(
     bool interruptible,  // whether a HALT can cause a longjmp/throw
     Flags flags,
     const void* p,  // first pointer (may be END, nullptr means NULLED)
-    va_list* vaptr  // va_end() handled by feed for all cases (throws, fails)
+    void* vaptr  // va_end() handled by feed for all cases (throws, fails)
 ){
     // !!! Some kind of policy is needed to decide how to disable halting in
     // the API.  It uses the longjmp() mechanism as a "no catch for throw",
@@ -1054,7 +1054,7 @@ static bool Run_Va_Throws(
         g_ts.eval_sigmask &= ~SIG_HALT;  // disable
 
     Feed* feed = Make_Variadic_Feed(
-        p, vaptr,
+        p, cast(va_list*, vaptr),
         FEED_MASK_DEFAULT
     );
 
@@ -1091,7 +1091,7 @@ inline static void Run_Va_Undecayed_May_Fail_Calls_Va_End(
     RebolSpecifier_internal* specifier,
     Atom* out,
     const void* p,  // first pointer (may be END, nullptr means NULLED)
-    va_list* vaptr  // va_end() handled by feed for all cases (throws, fails)
+    void* vaptr  // va_end() handled by feed for all cases (throws, fails)
 ){
     bool interruptible = false;
     if (Run_Va_Throws(
@@ -1118,7 +1118,7 @@ inline static void Run_Va_Decay_May_Fail_Calls_Va_End(
     RebolSpecifier_internal* specifier,
     Value* out,
     const void* p,  // first pointer (may be END, nullptr means NULLED)
-    va_list* vaptr  // va_end() handled by feed for all cases (throws, fails)
+    void* vaptr  // va_end() handled by feed for all cases (throws, fails)
 ){
     Run_Va_Undecayed_May_Fail_Calls_Va_End(specifier, out, p, vaptr);
 
@@ -1147,10 +1147,10 @@ bool RL_rebRunCoreThrows(
     RebolSpecifier_internal* specifier,
     RebolValue* out,
     uintptr_t flags,  // Flags not exported in API
-    const void* p, va_list* vaptr
+    const void* p, void* vaptr
 ){
     Feed* feed = Make_Variadic_Feed(
-        p, vaptr,
+        p, cast(va_list*, vaptr),
         FEED_MASK_DEFAULT
     );
 
@@ -1185,7 +1185,7 @@ bool RL_rebRunCoreThrows(
 //
 RebolValue* RL_rebValue(
     RebolSpecifier_internal* specifier,
-    const void* p, va_list* vaptr
+    const void* p, void* vaptr
 ){
     ENTER_API;
 
@@ -1210,12 +1210,12 @@ RebolValue* RL_rebValue(
 RebolValue* RL_rebTranscodeInto(
     RebolSpecifier_internal* specifier,
     RebolValue* out,
-    const void* p, va_list* vaptr
+    const void* p, void* vaptr
 ){
     ENTER_API;
 
     Feed* feed = Make_Variadic_Feed(
-        p, vaptr,
+        p, cast(va_list*, vaptr),
         FEED_MASK_DEFAULT
     );
     Add_Feed_Reference(feed);
@@ -1261,7 +1261,7 @@ void RL_rebPushContinuation(
     RebolSpecifier_internal* specifier,
     RebolValue* out,
     uintptr_t flags,
-    const void* p, va_list* vaptr
+    const void* p, void* vaptr
 ){
     ENTER_API;
 
@@ -1284,7 +1284,7 @@ void RL_rebPushContinuation(
 //
 RebolValue* RL_rebDelegate(  // !!! Hack: returns Bounce, not Value*
     RebolSpecifier_internal* specifier,
-    const void* p, va_list* vaptr
+    const void* p, void* vaptr
 ){
     ENTER_API;
 
@@ -1309,7 +1309,7 @@ RebolValue* RL_rebDelegate(  // !!! Hack: returns Bounce, not Value*
 //
 RebolValue* RL_rebMeta(
     RebolSpecifier_internal* specifier,
-    const void* p, va_list* vaptr
+    const void* p, void* vaptr
 ){
     ENTER_API;
 
@@ -1340,7 +1340,7 @@ RebolValue* RL_rebMeta(
 //
 RebolValue* RL_rebEntrap(
     RebolSpecifier_internal* specifier,
-    const void* p, va_list* vaptr
+    const void* p, void* vaptr
 ){
     ENTER_API;
 
@@ -1378,7 +1378,7 @@ RebolValue* RL_rebEntrap(
 //
 RebolValue* RL_rebEntrapInterruptible(
     RebolSpecifier_internal* specifier,
-    const void* p, va_list* vaptr
+    const void* p, void* vaptr
 ){
     ENTER_API;
 
@@ -1420,7 +1420,7 @@ RebolValue* RL_rebEntrapInterruptible(
 //
 RebolValue* RL_rebQuote(
     RebolSpecifier_internal* specifier,
-    const void* p, va_list* vaptr
+    const void* p, void* vaptr
 ){
     ENTER_API;
 
@@ -1442,7 +1442,7 @@ RebolValue* RL_rebQuote(
 //
 void RL_rebElide(
     RebolSpecifier_internal* specifier,
-    const void* p, va_list* vaptr
+    const void* p, void* vaptr
 ){
     ENTER_API;
 
@@ -1474,7 +1474,7 @@ void RL_rebElide(
 //
 void RL_rebJumps(
     RebolSpecifier_internal* specifier,
-    const void* p, va_list* vaptr
+    const void* p, void* vaptr
 ){
     ENTER_API;
 
@@ -1511,7 +1511,7 @@ void RL_rebJumps(
 //
 bool RL_rebDid(
     RebolSpecifier_internal* specifier,
-    const void* p, va_list* vaptr
+    const void* p, void* vaptr
 ){
     ENTER_API;
 
@@ -1534,7 +1534,7 @@ bool RL_rebDid(
 //
 bool RL_rebDidnt(
     RebolSpecifier_internal* specifier,
-    const void* p, va_list* vaptr
+    const void* p, void* vaptr
 ){
     ENTER_API;
 
@@ -1555,7 +1555,7 @@ bool RL_rebDidnt(
 //
 bool RL_rebTruthy(
     RebolSpecifier_internal* specifier,
-    const void* p, va_list* vaptr
+    const void* p, void* vaptr
 ){
     ENTER_API;
 
@@ -1574,7 +1574,7 @@ bool RL_rebTruthy(
 //
 bool RL_rebNot(
     RebolSpecifier_internal* specifier,
-    const void* p, va_list* vaptr
+    const void* p, void* vaptr
 ){
     ENTER_API;
 
@@ -1598,7 +1598,7 @@ bool RL_rebNot(
 //
 intptr_t RL_rebUnbox(
     RebolSpecifier_internal* specifier,
-    const void* p, va_list* vaptr
+    const void* p, void* vaptr
 ){
     ENTER_API;
 
@@ -1626,7 +1626,7 @@ intptr_t RL_rebUnbox(
 //
 bool RL_rebUnboxLogic(
     RebolSpecifier_internal* specifier,
-    const void* p, va_list* vaptr
+    const void* p, void* vaptr
 ){
     ENTER_API;
 
@@ -1645,7 +1645,7 @@ bool RL_rebUnboxLogic(
 //
 intptr_t RL_rebUnboxInteger(
     RebolSpecifier_internal* specifier,
-    const void* p, va_list* vaptr
+    const void* p, void* vaptr
 ){
     ENTER_API;
 
@@ -1664,7 +1664,7 @@ intptr_t RL_rebUnboxInteger(
 //
 double RL_rebUnboxDecimal(
     RebolSpecifier_internal* specifier,
-    const void* p, va_list* vaptr
+    const void* p, void* vaptr
 ){
     ENTER_API;
 
@@ -1686,7 +1686,7 @@ double RL_rebUnboxDecimal(
 //
 uint32_t RL_rebUnboxChar(
     RebolSpecifier_internal* specifier,
-    const void* p, va_list* vaptr
+    const void* p, void* vaptr
 ){
     ENTER_API;
 
@@ -1772,7 +1772,7 @@ size_t RL_rebSpellInto(
     RebolSpecifier_internal* specifier,
     char* buf,
     size_t buf_size,  // number of bytes
-    const void* p, va_list* vaptr
+    const void* p, void* vaptr
 ){
     ENTER_API;
 
@@ -1794,7 +1794,7 @@ size_t RL_rebSpellInto(
 //
 char* RL_rebSpellMaybe(
     RebolSpecifier_internal* specifier,
-    const void* p, va_list* vaptr
+    const void* p, void* vaptr
 ){
     ENTER_API;
 
@@ -1822,7 +1822,7 @@ char* RL_rebSpellMaybe(
 //
 char* RL_rebSpell(
     RebolSpecifier_internal* specifier,
-    const void* p, va_list* vaptr
+    const void* p, void* vaptr
 ){
     char* spell = RL_rebSpellMaybe(specifier, p, vaptr);
     if (spell == nullptr)
@@ -1897,7 +1897,7 @@ unsigned int RL_rebSpellIntoWide(
     RebolSpecifier_internal* specifier,
     REBWCHAR* buf,
     unsigned int buf_chars,  // chars buf can hold (not including terminator)
-    const void* p, va_list* vaptr
+    const void* p, void* vaptr
 ){
     ENTER_API;
 
@@ -1916,7 +1916,7 @@ unsigned int RL_rebSpellIntoWide(
 //
 REBWCHAR* RL_rebSpellWideMaybe(
     RebolSpecifier_internal* specifier,
-    const void* p, va_list* vaptr
+    const void* p, void* vaptr
 ){
     ENTER_API;
 
@@ -1946,7 +1946,7 @@ REBWCHAR* RL_rebSpellWideMaybe(
 //
 REBWCHAR* RL_rebSpellWide(
     RebolSpecifier_internal* specifier,
-    const void* p, va_list* vaptr
+    const void* p, void* vaptr
 ){
     REBWCHAR* spelling = RL_rebSpellWideMaybe(specifier, p, vaptr);
     if (spelling == nullptr)
@@ -2022,7 +2022,7 @@ size_t RL_rebBytesInto(
     RebolSpecifier_internal* specifier,
     unsigned char* buf,
     size_t buf_size,
-    const void* p, va_list* vaptr
+    const void* p, void* vaptr
 ){
     ENTER_API;
 
@@ -2043,7 +2043,7 @@ size_t RL_rebBytesInto(
 unsigned char* RL_rebBytesMaybe(
     RebolSpecifier_internal* specifier,
     size_t* size_out,  // !!! Enforce non-null, to ensure type safety?
-    const void* p, va_list* vaptr
+    const void* p, void* vaptr
 ){
     ENTER_API;
 
@@ -2074,7 +2074,7 @@ unsigned char* RL_rebBytesMaybe(
 unsigned char* RL_rebBytes(
     RebolSpecifier_internal* specifier,
     size_t* size_out,  // !!! Enforce non-null, to ensure type safety?
-    const void* p, va_list* vaptr
+    const void* p, void* vaptr
 ){
     unsigned char* bytes = RL_rebBytesMaybe(specifier, size_out, p, vaptr);
     if (bytes == nullptr)
