@@ -245,7 +245,7 @@ for-each-api [
             $<maybe return-keyword >LIBREBOL_PREFIX($<Name>)(
                 specifier,
                 $<Proxied-Args, >
-                p, &va
+                p, &va  /* non-null vaptr means p is first item */
             );
             $<Maybe Epilogue>
         }
@@ -259,13 +259,13 @@ for-each-api [
             $<Helper-Params, >
             const Ts & ...args
         ){
-            const void* packed[sizeof...(args)];  /* includes rebEND */
-            rebVariadicPacker_internal(0, packed, args...);
+            const void* p[sizeof...(args)];  /* includes rebEND */
+            rebVariadicPacker_internal(0, p, args...);
 
             $<maybe return-keyword >LIBREBOL_PREFIX($<Name>)(
                 specifier,
                 $<Proxied-Args, >
-                packed, nullptr
+                p, nullptr  /* null vaptr means p is array of items */
             );
             $<Maybe Epilogue>
         }
@@ -940,20 +940,20 @@ e-lib/emit [ver {
         template <typename Last>
         void rebVariadicPacker_internal(
             int i,
-            const void* data[],
+            const void* p[],  /* packed array of arguments */
             const Last &last
         ){
-            data[i] = to_rebarg(last);
+            p[i] = to_rebarg(last);
         }
 
         template <typename First, typename... Rest>
         void rebVariadicPacker_internal(
             int i,
-            const void* data[],
+            const void* p[],  /* packed array of arguments */
             const First& first, const Rest& ...rest
         ){
-            data[i] = to_rebarg(first);
-            rebVariadicPacker_internal(i + 1, data, rest...);
+            p[i] = to_rebarg(first);
+            rebVariadicPacker_internal(i + 1, p, rest...);
         }
 
         $[Variadic-Api-C++-Helpers]
