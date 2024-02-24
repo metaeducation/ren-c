@@ -11,6 +11,12 @@ REBOL [
     Description: {
         See notes on building in README.md
     }
+    Warning: {
+        This code is not representative of modern practices, because it has
+        to run in a very old bootstrap executable.  It is also very much a
+        hodgepodge just to keep things running.  It's the absolute wrong place
+        to be looking for exemplary Ren-C code.
+    }
 ]
 
 if trap [:import/into] [  ; See %import-shim.r

@@ -22,13 +22,18 @@ REBOL [
 
         %rebmake.r arose to try and reconcile these two build processes, and
         eliminate dependency on an external make tool completely.  It can
-        generate project files for Microsoft Visual Studio, makefiles for
-        GNU Make or Microsoft's Nmake, or just carry out a full build by
-        invoking compiler processes and command lines itself.
+        generate makefiles for GNU Make or Microsoft's Nmake, or just conduct
+        a full build by invoking compiler processes and command lines itself.
 
         In theory this code is abstracted such that it could be used by other
         projects.  In practice, it is tailored to the specific needs and
         settings of the Rebol project.
+    }
+    Warning: {
+        This code is not representative of modern practices, because it has
+        to run in a very old bootstrap executable.  It is also very much a
+        hodgepodge just to keep things running.  It's the absolute wrong place
+        to be looking for exemplary Ren-C code.
     }
 ]
 

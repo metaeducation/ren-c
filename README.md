@@ -117,12 +117,12 @@ is a sample of how to compile under Linux:
 For a list of options, run %make.r with `--help`.
 
 Though it does not *require* other make tools, it is optional to generate a
-`makefile` target, or a Visual Studio solution.  %make.r takes parameters like
-`target: makefile` or `target: vs2017`.  But there are several complicating
-factors related to incremental builds, due to the fact that there's a large
-amount of C code and header files generated from tables and scans of the
-source code.  If you're not familiar with the source and what kinds of changes
-require rebuilding which parts, you should probably do full builds.
+`makefile` target, since %make.r takes parameters like `target: makefile`.
+But there are several complicating factors related to incremental builds, due
+to the fact that there's a large amount of C code and header files generated
+from tables and scans of the source code.  If you're not familiar with the
+source and what kinds of changes require rebuilding which parts, you should
+probably do full builds.
 
 As a design goal, compiling Ren-C requires [very little beyond ANSI C89][14].
 Attempts to rein in compiler dependencies have been a large amount of work,
@@ -130,40 +130,42 @@ and it still supports a [number of older platforms][15].  However, if it is
 compiled with a C++ compiler then there is significantly more static analysis
 at build time, to catch errors.
 
-*(Note: The build process is much more complicated than it should be, but
+[14]: https://forum.rebol.info/t/on-building-ren-c-with-c-compilers/1343
+[15]: https://github.com/metaeducation/ren-c/blob/master/make/tools/platforms.r
+
+*(Note: The build process is [far more complicated than it should be][16], but
 other priorities mean it isn't getting the attention it deserves.  It would be
 strongly desirable if community member(s) could get involved to help
 streamline and document it!  Since it's now *all* written in Rebol, that
 should be more possible--and maybe even a little "fun" (?))*
 
-[14]: https://forum.rebol.info/t/on-building-ren-c-with-c-compilers/1343
-[15]: https://github.com/metaeducation/ren-c/blob/master/make/tools/platforms.r
+[16]: https://forum.rebol.info/t/new-build-executables-new-build-strategy/1432
 
 
 ## License
 
-When Rebol was open-sourced in 2012, it was [licensed as Apache 2.0][16].
-Despite the Ren-C team's belief in [Free Software Foundation's principles][17],
+When Rebol was open-sourced in 2012, it was [licensed as Apache 2.0][17].
+Despite the Ren-C team's belief in [Free Software Foundation's principles][18],
 contributions were made as Apache 2.0 up until 2020, to make it easier for
 code to be taken back to the Rebol GitHub or other branches.
 
-[16]: http://www.rebol.com/cgi-bin/blog.r?view=0519
-[17]: https://www.gnu.org/philosophy/shouldbefree.en.html
+[17]: http://www.rebol.com/cgi-bin/blog.r?view=0519
+[18]: https://www.gnu.org/philosophy/shouldbefree.en.html
 
 Due to limited cases of such any take over an eight-year span, the Ren-C
 license was [changed to the Apache-2-compatible LGPL 3][18].
 
-[18]: https://forum.rebol.info/t/ren-c-license-changed-to-lgpl-3-0/1342
+[19]: https://forum.rebol.info/t/ren-c-license-changed-to-lgpl-3-0/1342
 
 The current way to explore the new features of Ren-C is using the `r3`
 console.  It is *significantly* enhanced from the open-sourced R3-Alpha...with
-much of its behavior coming from [userspace Rebol code][19] (as opposed to
+much of its behavior coming from [userspace Rebol code][20] (as opposed to
 hardcoded C).  In addition to multi-line editing and UTF-8 support, it
-[can be "skinned"][20] and configured in various ways, and non-C programmers
+[can be "skinned"][21] and configured in various ways, and non-C programmers
 can easily help contribute to enhancing it.
 
-[19]: https://github.com/metaeducation/ren-c/blob/master/src/os/host-console.r
-[20]: https://github.com/r3n/reboldocs/wiki/User-and-Console
+[20]: https://github.com/metaeducation/ren-c/blob/master/src/os/host-console.r
+[21]: https://github.com/r3n/reboldocs/wiki/User-and-Console
 
 
 
