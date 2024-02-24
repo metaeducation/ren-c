@@ -31,6 +31,14 @@
 
 #include "sys-core.h"
 
+
+// We wish to define a table of API functions to pass to extensions.  The way
+// functions like `rebValue()` work when called from an extension is to
+// delegate to a function from this table.  (When called from the core, they
+//
+#include "tmp-reb-lib-table.inc"  // declares g_librebol
+
+
 // Building Rebol as a library may still entail a desire to ship that library
 // with built-in extensions (e.g. building libr3.js wants to have JavaScript
 // natives as an extension).  So there is no meaning to "built-in extensions"
@@ -65,12 +73,10 @@ void Shutdown_Extension_Loader(void)
 }
 
 
-extern RL_LIB Ext_Lib;
-
 //
 //  builtin-extensions: native [
 //
-//  "Gets the list of builtin extensions for the executable"
+//  "Gets the list of (uninitialized) builtin extensions for the executable"
 //
 //      return: "Block of extension specifications ('collations')"
 //          [block!]
@@ -78,30 +84,33 @@ extern RL_LIB Ext_Lib;
 //
 DECLARE_NATIVE(builtin_extensions)
 //
-// The config file used by %make.r marks extensions to be built into the
-// executable (`+`), built as a dynamic library (`*`), or not built at
-// all (`-`).  Each of the options marked with + has a C function for
-// startup and shutdown.
+// The config file used by %make.r marks extensions:
 //
-// rebStartup() should not initialize these extensions, because it might not
-// be the right ordering.  Command-line processing or other code that uses
-// Rebol may need to make decisions on when to initialize them.  So this
-// function merely returns the built-in extensions, which can be loaded with
-// the LOAD-EXTENSION function.
+//    (`+`): Build into the executable
+//    (`*`): Build as a dynamic library
+//    (`-`): Don't build at all
+//
+// Command-line processing or other code that uses Rebol may need to make
+// decisions on when to initialize these built-in extensions.  So rebStartup()
+// does initialize them automatically.  Instead, this merely returns the
+// list of descriptions of the extensions, which can then be loaded with the
+// LOAD-EXTENSION function.
+//
+// 1. Built-in extensions do not receive the RebolApiTable, because they are
+//    able to use direct calls to the RL_Xxx() versions, which is faster.
 {
     INCLUDE_PARAMS_OF_BUILTIN_EXTENSIONS;
-
-    // Call the generator functions for each builtin extension to get back
-    // all the collated information that would be needed to initialize and
-    // use the extension (but don't act on the information yet!)
 
     Array* list = Make_Array(NUM_BUILTIN_EXTENSIONS);
     REBLEN i;
     for (i = 0; i != NUM_BUILTIN_EXTENSIONS; ++i) {
-        COLLATE_CFUNC *collator = Builtin_Extension_Collators[i];
-        Value* details = (*collator)(&Ext_Lib);
-        assert(Is_Block(details) and Cell_Series_Len_At(details) == IDX_COLLATOR_MAX);
-        Copy_Cell(Alloc_Tail_Array(list), cast(Element*, details));
+        RebolExtensionCollator* collator = g_builtin_collators[i];
+
+        Value* details = (*collator)(nullptr);  // don't pass g_librebol [1]
+        assert(Is_Block(details));
+        assert(Cell_Series_Len_At(details) == IDX_COLLATOR_MAX);
+
+        Copy_Cell(Alloc_Tail_Array(list), Ensure_Element(details));
         rebRelease(details);
     }
     return Init_Block(OUT, list);
@@ -150,21 +159,21 @@ DECLARE_NATIVE(load_extension)
     else {  // It's a DLL, must locate and call its RX_Collate() function
         assert(Is_File(ARG(where)));
 
-        Value* lib_api = rebValue("make library!", ARG(where));
+        Value* library = rebValue("make library!", ARG(where));
 
         Value* collated_block = rebValue(
-            "run-library-collator", lib_api, "{RX_Collate}"
+            "run-library-collator", library, "{RX_Collate}"
         );
 
         if (not collated_block or not Is_Block(collated_block)) {
-            rebElide("close", lib_api);
+            rebElide("close", library);
             fail (Error_Bad_Extension_Raw(ARG(where)));
         }
 
         collated = Cell_Array_Ensure_Mutable(collated_block);
         rebRelease(collated_block);
 
-        rebRelease(lib_api);  // should we hang onto lib to pass along?
+        rebRelease(library);  // should we hang onto it, and pass italong?
     }
 
     assert(Array_Len(collated) == IDX_COLLATOR_MAX);

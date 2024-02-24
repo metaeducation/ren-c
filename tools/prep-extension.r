@@ -353,13 +353,13 @@ e/emit [mod {
     #include "tmp-mod-$<mod>.h" /* for DECLARE_NATIVE() forward decls */
 
     /*
-     * See comments on RL_LIB in %make-reb-lib.r, and how it is used to pass
-     * an API table from the executable to the extension (this works cross
-     * platform, while things like "import libraries for an EXE that a DLL
-     * can import" are Windows peculiarities.
+     * See comments on RebolApiTable, and how it is used to pass an API table
+     * from the executable to the extension (this works cross platform, while
+     * things like "import libraries for an EXE that a DLL can import" are
+     * Windows peculiarities).
      */
     #ifdef REB_EXT  /* e.g. a DLL */
-        RL_LIB *RL;  /* is passed to the RX_Collate() function */
+        RebolApiTable *g_librebol;  /* API macros like rebValue() use this */
     #endif
 
     /*
@@ -395,11 +395,11 @@ e/emit [mod {
      * box or interface could provide more flexibility for arbitrary future
      * extension implementations.
      */
-    EXT_API Value* RX_COLLATE_NAME(${Mod})(RL_LIB *api) {
+    EXT_API Value* RX_COLLATE_NAME(${Mod})(RebolApiTable *api) {
       #ifdef REB_EXT
         /* only DLLs need to call rebXXX() APIs through a table */
         /* built-in extensions can call the RL_rebXXX() forms directly */
-        RL = api;
+        g_librebol = api;
       #else
         UNUSED(api);
       #endif

@@ -703,25 +703,27 @@ e-lib/emit [ver {
     extern "C" {
     #endif
 
+
     /*
-     * Function entry points for reb-lib.  Formulating this way allows the
+     * Function entry points for librebol.  Formulating this way allows the
      * interface structure to be passed from an EXE to a DLL, then the DLL
      * can call into the EXE (which is not generically possible via linking).
-     *
-     * For convenience, calls to RL->xxx are wrapped in inline functions:
      */
-    typedef struct rebol_ext_api {
+
+    struct RebolApiTableStruct {
         $[Lib-Struct-Fields];
-    } RL_LIB;
+    };
+    typedef struct RebolApiTableStruct RebolApiTable;
+
 
 
     #ifdef REB_EXT /* can't direct call into EXE, must go through interface */
         /*
          * The inline functions below will require this base pointer:
          */
-        extern RL_LIB *RL;  /* is passed to the RX_Collate() function */
+        extern RebolApiTable *g_librebol;  /* passed to the DLL init function*/
 
-        #define LIBREBOL_PREFIX(api_name) RL->api_name
+        #define LIBREBOL_PREFIX(api_name) g_librebol->api_name
 
     #else  /* ...calling Rebol as DLL, or code built into the EXE itself */
 
@@ -764,7 +766,7 @@ e-lib/emit [ver {
      *
      * And if it's being compiled against the API table it needs to be:
      *
-     *     rebInteger(i) => RL->rebInteger(i)
+     *     rebInteger(i) => g_librebol->rebInteger(i)
      *
      * So these macros accomplish that using the pattern:
      *
@@ -902,7 +904,7 @@ e-lib/emit [ver {
      * tacked on in the final position.  (See rebEND above for why.)
      *
      * As with the non-variadic API entry points, these translate a raw name
-     * like `rebValue()` to either `RL_rebValue()` or  `RL->rebValue()`.
+     * like `rebValue()` to either `RL_rebValue()` or `g_librebol->rebValue()`.
      * But it also translates the variadic arguments into two pointers
      * called `p` and `vaptr`, that can be passed to the function pointers in
      * the API table
@@ -1119,7 +1121,7 @@ table-init-items: map-each-api [
 ]
 
 e-table/emit [table-init-items {
-    RL_LIB Ext_Lib = {
+    RebolApiTable g_librebol = {
         $(Table-Init-Items),
     };
 }]

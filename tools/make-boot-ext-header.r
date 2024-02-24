@@ -73,7 +73,7 @@ e/emit [extensions {
      * decompression code is run when these functions are called...they just
      * return information needed for later reifying those extensions.
      */
-    static COLLATE_CFUNC *Builtin_Extension_Collators[] = {
+    static RebolExtensionCollator *g_builtin_collators[] = {
         RX_COLLATE_NAME($[Extensions]),
         nullptr  /* Just for guaranteeing length > 0, as C++ requires it */
     };

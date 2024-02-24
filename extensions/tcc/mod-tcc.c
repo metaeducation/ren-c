@@ -606,8 +606,8 @@ DECLARE_NATIVE(compile_p)
     //
     Process_Block_Helper(tcc_add_library, state, config, "library");
 
-    // We could export just one symbol ("RL" for the Ext_Lib RL_LIB table) and
-    // tell the API to use indirect calls like RL->rebXXX with #define REB_EXT
+    // We could export just one symbol ("g_librebol" for the RebolApiTable) and
+    // tell the API to call it as g_librebol->rebXXX with #define REB_EXT
     // but it's more efficient to use direct calls.  There aren't that many
     // entry points for the libRebol API, so just expose their symbols.
     //
