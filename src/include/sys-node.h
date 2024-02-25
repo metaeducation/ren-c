@@ -59,6 +59,16 @@
 #define Is_Node_A_Cell(n)   (did (NODE_BYTE(n) & NODE_BYTEMASK_0x01_CELL))
 #define Is_Node_A_Stub(n)   (not Is_Node_A_Cell(n))
 
+// !!! There's currently no generic way to tell if a node is a level.  It has
+// the cell flag set in its header, and uses all the other flags.  It's a lie
+// to say it's a stub or a cell in any case--even if the layout were changed
+// so the leading area was an actual stub or a cell with a special flavor or
+// heart byte.  It hasn't been a problem because places levels can be seen
+// can't generally hold cells, so the single flag is enough.  Calling out
+// this test helps find places that rely on that behavior.
+//
+#define Is_Non_Cell_Node_A_Level Is_Node_A_Cell
+
 #define Is_Node_Marked(n)   (did (NODE_BYTE(n) & NODE_BYTEMASK_0x10_MARKED))
 #define Not_Node_Marked(n)  (not Is_Node_Marked(n))
 

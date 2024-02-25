@@ -112,8 +112,13 @@
 #define HAS_BONUS_KeySource         FLAVOR_VARLIST
 
 INLINE void INIT_BONUS_KEYSOURCE(Array* varlist, Node* keysource) {
-    if (keysource != nullptr and Is_Node_A_Stub(keysource))
-        assert(IS_KEYLIST(cast(Series*, keysource)));
+    if (keysource != nullptr) {
+        if (Is_Node_A_Stub(keysource))
+            assert(IS_KEYLIST(cast(Series*, keysource)));
+        else
+            assert(Is_Non_Cell_Node_A_Level(keysource));
+    }
+
     BONUS(KeySource, varlist) = keysource;
 }
 

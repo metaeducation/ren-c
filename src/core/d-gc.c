@@ -514,7 +514,7 @@ void Assert_Array_Marked_Correctly(const Array* a) {
         if (not keysource) {
             assert(VAL_TYPE(archetype) == REB_MODULE);
         }
-        else if (Is_Node_A_Cell(keysource)) {
+        else if (Is_Non_Cell_Node_A_Level(keysource)) {
             //
             // Must be a FRAME! and it must be on the stack running.  If
             // it has stopped running, then the keylist must be set to

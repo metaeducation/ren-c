@@ -301,7 +301,7 @@ static void Queue_Unmarked_Accessible_Series_Deep(const Series* s)
             // This makes less sense than pretending to be a series that is
             // already marked, and has a detectable FLAVOR_XXX.  Review.
             //
-            if (Is_Node_A_Cell(node_BONUS(Node, s)))
+            if (Is_Non_Cell_Node_A_Level(node_BONUS(Node, s)))
                 goto skip_mark_frame_bonus;
 
             assert(IS_KEYLIST(cast(Series*, node_BONUS(Node, a))));
