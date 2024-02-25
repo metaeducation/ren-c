@@ -46,12 +46,11 @@
     #undef VOID  // %winnt.h defines this, we have a better use for it
 #endif
 
-#include "sys-core.h"
+
+#include "tmp-mod-network.h"
 
 #include "reb-net.h"
 extern Value* rebError_UV(int err);
-
-#include "tmp-mod-network.h"
 
 
 #define NET_BUF_SIZE 32*1024

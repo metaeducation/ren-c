@@ -40,8 +40,6 @@
 #endif
 
 
-#include "sys-core.h"
-
 #include "tmp-mod-console.h"
 
 

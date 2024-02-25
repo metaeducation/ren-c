@@ -44,7 +44,11 @@
     // other problems the idea of not colliding with extension filenames
     // is par for the course.
 
-    #define EXT_API EXTERN_C
+    #ifdef __cplusplus
+      #define EXT_API extern "C"
+    #else
+      #define EXT_API
+    #endif
 
     // *Don't* ignore the extension name parameter
     //
@@ -58,16 +62,16 @@
 // !!! This aggregate may become an ACTION! as opposed to an array of handle
 // values, but this is a work in progress.
 //
-#if TO_WINDOWS
-    typedef Value* (__cdecl RebolExtensionCollator)(RebolApiTable*);
+#if defined(_WIN32)
+    typedef RebolValue* (__cdecl RebolExtensionCollator)(RebolApiTable*);
 #else
-    typedef Value* (RebolExtensionCollator)(RebolApiTable*);
+    typedef RebolValue* (RebolExtensionCollator)(RebolApiTable*);
 #endif
 
 //=//// EXTENSION MACROS //////////////////////////////////////////////////=//
 
 #define DECLARE_EXT_COLLATE(ext_name) \
-    EXT_API Value* RX_COLLATE_NAME(ext_name)(RebolApiTable* api)
+    EXT_API RebolValue* RX_COLLATE_NAME(ext_name)(RebolApiTable* api)
 
 // !!! Currently used for just a BLOCK!, but may become Phase_Details()
 //

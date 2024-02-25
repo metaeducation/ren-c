@@ -23,8 +23,6 @@
 //
 
 
-#include "sys-core.h"
-
 #include "tmp-mod-stdio.h"
 
 #include "readline.h"

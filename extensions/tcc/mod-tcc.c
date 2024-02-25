@@ -39,8 +39,6 @@
 // COMPILE*.
 //
 
-#include "sys-core.h"
-
 #include "tmp-mod-tcc.h"
 
 #include "libtcc.h"

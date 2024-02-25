@@ -36,8 +36,6 @@
 // that performs a THROW or FAIL which is not trapped by the sandbox.
 //
 
-#include "sys-core.h"
-
 #include "tmp-mod-debugger.h"
 
 

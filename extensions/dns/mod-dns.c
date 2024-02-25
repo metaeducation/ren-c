@@ -57,8 +57,6 @@
     #endif
 #endif
 
-#include "sys-core.h"
-
 #include "tmp-mod-dns.h"
 
 

@@ -78,13 +78,11 @@
     #endif
 #endif
 
-#include "rebol.h"  // not %sys-core.h !
-typedef RebolValue Value;
-
 #include "assert-fix.h"
 #include "c-enhanced.h"
 
 #include "tmp-mod-view.h"
+typedef RebolValue Value;
 
 
 #define MAX_FILE_REQ_BUF (16*1024)

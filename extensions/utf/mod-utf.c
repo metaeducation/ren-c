@@ -27,8 +27,6 @@
 // would not take up space in core builds.
 //
 
-#include "sys-core.h"
-
 #include "tmp-mod-utf.h"
 
 

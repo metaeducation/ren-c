@@ -57,15 +57,13 @@
     #include <unistd.h>
 #endif
 
-#include "rebol.h"  // not %sys-core.h !
-typedef RebolValue Value;
-
 #include "assert-fix.h"
 #include "c-enhanced.h"
 
 #include "sys-zlib.h"  // needed for the ADLER32 hash
 
 #include "tmp-mod-crypt.h"
+typedef RebolValue Value;
 
 
 // !!! We probably do not need to have non-debug builds use up memory by

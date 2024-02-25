@@ -187,6 +187,22 @@ e1: make-emitter "Module C Header File Preface" (
     join output-dir spread reduce ["tmp-mod-" (l-m-name) ".h"]
 )
 
+if use-librebol [
+    e1/emit {
+        /* extension configuration says `use-librebol: true` */
+
+        /*#define LIBREBOL_SPECIFIER level_ */
+        #include "rebol.h"  /* not %sys-core.h ! */
+    }
+] else [
+    e1/emit {
+        /* extension configuration says `use-librebol: false` */
+        #include "sys-core.h"
+    }
+]
+e1/emit newline
+
+
 e1/emit {
     #include "sys-ext.h" /* for things like DECLARE_MODULE_INIT() */
 }
@@ -243,12 +259,11 @@ dispatcher-forward-decls: collect [
 if use-librebol [
     e1/emit [mod {
         /*
-        * Redefine DECLARE_NATIVE macro locally to include extension name.
+        * Define DECLARE_NATIVE macro to include extension name.
         * This avoids name collisions with the core, or with other extensions.
         */
-        #undef DECLARE_NATIVE
         #define DECLARE_NATIVE(n) \
-            Value* N_${MOD}_##n(void* level_)
+            RebolValue* N_${MOD}_##n(void* level_)
     }]
 ]
 else [
@@ -347,10 +362,21 @@ dispatcher_c_names: collect [  ; must be in the order that NATIVE is called!
     ]
 ]
 
-e/emit [mod {
-    #include "sys-core.h" /* !!! Could this just use "rebol.h"? */
+script-len: length of script-compressed
 
+e/emit [{
+    #include "assert.h"
     #include "tmp-mod-$<mod>.h" /* for DECLARE_NATIVE() forward decls */
+
+    /*
+     * We may be only including "rebol.h" and not "sys-core.h", in which case
+     * CFunction is not defined.
+     */
+    #if defined(_WIN32)  /* 32-bit or 64-bit windows */
+        typedef void (__cdecl CFunction_ext)(void);
+    #else
+        typedef void (CFunction_ext)(void);
+    #endif
 
     /*
      * See comments on RebolApiTable, and how it is used to pass an API table
@@ -359,14 +385,14 @@ e/emit [mod {
      * Windows peculiarities).
      */
     #ifdef REB_EXT  /* e.g. a DLL */
-        RebolApiTable *g_librebol;  /* API macros like rebValue() use this */
+        RebolApiTable* g_librebol;  /* API macros like rebValue() use this */
     #endif
 
     /*
      * Gzip compression of $<Script-Name> (no \0 terminator in array)
      * Originally $<length of script-uncompressed> bytes
      */
-    static const Byte script_compressed[$<length of script-compressed>] = {
+    static const unsigned char script_compressed[$<script-len>] = {
         $<Binary-To-C Script-Compressed>
     };
 
@@ -376,9 +402,9 @@ e/emit [mod {
      * an extension uses "rebol.h" and doesn't return a Bounce C++ class it
      * should still work (it's a standard layout type).
      */
-    static CFunction* native_cfuncs[$<num-natives> + 1] = {
-        (CFunction*)$[Dispatcher_C_Names],
-        nullptr /* just here to ensure > 0 length array (C++ requirement) */
+    static CFunction_ext* native_cfuncs[$<num-natives> + 1] = {
+        (CFunction_ext*)$[Dispatcher_C_Names],
+        0  /* just here to ensure > 0 length array (C++ requirement) */
     };
 
     /*
@@ -395,13 +421,16 @@ e/emit [mod {
      * box or interface could provide more flexibility for arbitrary future
      * extension implementations.
      */
-    EXT_API Value* RX_COLLATE_NAME(${Mod})(RebolApiTable *api) {
+    EXT_API RebolValue* RX_COLLATE_NAME(${Mod})(RebolApiTable *api) {
       #ifdef REB_EXT
-        /* only DLLs need to call rebXXX() APIs through a table */
-        /* built-in extensions can call the RL_rebXXX() forms directly */
+        /*
+         * Only DLLs need rebXXX() APIs => g_librebol->rebXXX()
+         * Built-in extensions transform rebXXX() => direct RL_rebXXX() calls
+         */
         g_librebol = api;
       #else
-        UNUSED(api);
+        assert(api == 0);
+        (void)api;  /* USED(api) to prevent warning in release builds */
       #endif
 
         return rebCollateExtension_internal(

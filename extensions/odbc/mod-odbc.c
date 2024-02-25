@@ -45,9 +45,6 @@
 #include <sql.h>  // depends on defines like VOID on Windows
 #include <sqlext.h>
 
-#include "rebol.h"  // not %sys-core.h !
-typedef RebolValue Value;
-
 #include "assert-fix.h"
 #include "c-enhanced.h"
 
@@ -56,9 +53,12 @@ typedef RebolValue Value;
 #endif
 
 #include "tmp-mod-odbc.h"
+typedef RebolValue Value;
+
 
 // https://stackoverflow.com/q/58438456
 #define USE_SQLITE_DESCRIBECOL_WORKAROUND
+
 
 // The version of ODBC that this is written to use is 3.0, which was released
 // around 1995.  At time of writing (2017) it is uncommon to encounter ODBC

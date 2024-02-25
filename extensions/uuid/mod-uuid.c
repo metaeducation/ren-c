@@ -34,6 +34,11 @@
     #include <windows.h>
     #include <rpc.h>  // for UuidCreate()
 #elif TO_OSX
+    //
+    // CoreFoundation has definitions that conflict with %sys-core.h, so the
+    // UUID extension was the first to employ a USE-LIBREBOL switch, that
+    // defines the `DECLARE_NATIVE` without include params macros.
+    //
     #include <CoreFoundation/CFUUID.h>
 #else
     #include <uuid.h>
@@ -41,17 +46,11 @@
 
 #include <string.h>  // memcpy
 
-// CoreFoundation has definitions that conflict with %sys-core.h, so the UUID
-// extension was the first to employ a USE-LIBREBOL switch, that defines the
-// `DECLARE_NATIVE` without include params macros.
-
-#include "rebol.h"  // not %sys-core.h !
-typedef RebolValue Value;
-
 #include "assert-fix.h"
 #include "c-enhanced.h"
 
 #include "tmp-mod-uuid.h"
+typedef RebolValue Value;
 
 
 //

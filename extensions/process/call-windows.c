@@ -53,8 +53,6 @@
     #undef VOID  // %winnt.h defines this, we have a better use for it
 #endif
 
-#include "sys-core.h"
-
 #include "tmp-mod-process.h"
 
 #include "reb-process.h"

@@ -30,13 +30,11 @@
 
 #include <locale.h>
 
-#include "rebol.h"  // not %sys-core.h !
-typedef RebolValue Value;
-
 #include "assert-fix.h"
 #include "c-enhanced.h"
 
 #include "tmp-mod-locale.h"
+typedef RebolValue Value;
 
 
 //
