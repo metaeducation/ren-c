@@ -1,10 +1,10 @@
 REBOL [
     System: "REBOL [R3] Language Interpreter and Run-time Environment"
-    Title: "Make libRebol related files (for %rebol.h)"
-    File: %make-reb-lib.r
+    Title: "Make files related to the external API (for %rebol.h)"
+    File: %make-librebol.r
     Rights: {
         Copyright 2012 REBOL Technologies
-        Copyright 2012-2019 Ren-C Open Source Contributors
+        Copyright 2012-2024 Ren-C Open Source Contributors
         REBOL is a trademark of REBOL Technologies
     }
     License: {
@@ -30,9 +30,10 @@ args: parse-args system/script/args  ; either from command line or DO/ARGS
 
 ; Assume we start up in the directory where we want build products to go
 ;
-output-dir: join what-dir %prep/include/
+prep-dir: join what-dir %prep/
 
-mkdir/deep output-dir
+mkdir/deep join prep-dir %include/
+mkdir/deep join prep-dir %core/
 
 ver: load-value join repo-dir %src/boot/version.r
 
@@ -343,7 +344,7 @@ assert [newline = take/last last variadic-api-run-in-lib-macros]
 ; edit, since the Rebol codebase at large uses `//`-style comments.
 
 e-lib: make-emitter "Rebol External Library Interface" (
-    join output-dir %rebol.h
+    join prep-dir %include/rebol.h
 )
 
 e-lib/emit [ver {
@@ -1113,7 +1114,7 @@ e-lib/emit [ver {
 e-lib/write-emitted
 
 
-=== "GENERATE TMP-REB-LIB-TABLE.INC" ===
+=== "GENERATE TMP-REBOL-API-TABLE.C" ===
 
 ; The form of the API which is exported as a table is declared as a struct,
 ; but there has to be an instance of that struct filled with the actual
@@ -1121,7 +1122,7 @@ e-lib/write-emitted
 ; one instance of this table should be linked into Rebol.
 
 e-table: make-emitter "REBOL Interface Table Singleton" (
-    join output-dir %tmp-reb-lib-table.inc
+    join prep-dir %core/tmp-rebol-api-table.c
 )
 
 table-init-items: map-each-api [
@@ -1129,6 +1130,8 @@ table-init-items: map-each-api [
 ]
 
 e-table/emit [table-init-items {
+    #include "rebol.h"
+
     RebolApiTable g_librebol = {
         $(Table-Init-Items),
     };
@@ -1158,9 +1161,9 @@ saved-dir: what-dir
 ; first...
 ;
 change-dir (join repo-dir %extensions/tcc/tools/)
-do overbind (binding of inside [] 'output-dir) load %prep-libr3-tcc.reb
+do overbind (binding of inside [] 'prep-dir) load %prep-libr3-tcc.reb
 
 change-dir (join repo-dir %extensions/javascript/tools/)
-do overbind (binding of inside [] 'output-dir) load %prep-libr3-js.reb
+do overbind (binding of inside [] 'prep-dir) load %prep-libr3-js.reb
 
 change-dir saved-dir

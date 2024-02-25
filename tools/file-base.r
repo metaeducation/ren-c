@@ -222,14 +222,19 @@ generated: [
     tmp-boot-block.c
     tmp-type-hooks.c
     tmp-typesets.c
+    tmp-builtin-extension-table.c
+    tmp-rebol-api-table.c
 ]
 
 made: [
-    make-boot.r         core/tmp-boot-block.c
-    make-headers.r      include/tmp-internals.h
+    make-boot.r                 core/tmp-boot-block.c
+    make-extension-table.r      core/tmp-builtin-extension-table.c
+    make-librebol.r             core/tmp-rebol-api-table.c
 
-    make-host-init.r    include/host-init.h
-    make-reb-lib.r      include/rebol.h
+    make-headers.r              include/tmp-internals.h
+
+    make-host-init.r            include/host-init.h
+    make-librebol.r             include/rebol.h
 ]
 
 main: 'main.c

@@ -1930,7 +1930,7 @@ prep: make rebmake/entry-class [
             "GIT_COMMIT=$(GIT_COMMIT)"
         ]
         keep [
-            "$(REBOL)" join tools-dir %make-reb-lib.r
+            "$(REBOL)" join tools-dir %make-librebol.r
             unspaced ["OS_ID=" platform-config/id]
         ]
 
@@ -1969,7 +1969,7 @@ prep: make rebmake/entry-class [
         ]
 
         keep [
-            "$(REBOL)" join tools-dir %make-boot-ext-header.r
+            "$(REBOL)" join tools-dir %make-extensions-table.r
             unspaced [
                 "EXTENSIONS=" delimit ":" map-each ext extensions [
                     if ext/mode = <builtin> [to text! ext/name]

@@ -32,25 +32,6 @@
 #include "sys-core.h"
 
 
-// We wish to define a table of API functions to pass to extensions.  The way
-// functions like `rebValue()` work when called from an extension is to
-// delegate to a function from this table.  (When called from the core, they
-//
-#include "tmp-reb-lib-table.inc"  // declares g_librebol
-
-
-// Building Rebol as a library may still entail a desire to ship that library
-// with built-in extensions (e.g. building libr3.js wants to have JavaScript
-// natives as an extension).  So there is no meaning to "built-in extensions"
-// for a library otherwise...as every client will be making their own EXE, and
-// there's no way to control their build process from Rebol's build process.
-//
-// Hence, the generated header for boot extensions is included here--to allow
-// clients to get access to those extensions through an API.
-//
-#include "tmp-boot-extensions.inc"
-
-
 //
 //  Startup_Extension_Loader: C
 //
@@ -91,20 +72,24 @@ DECLARE_NATIVE(builtin_extensions)
 //    (`-`): Don't build at all
 //
 // Command-line processing or other code that uses Rebol may need to make
-// decisions on when to initialize these built-in extensions.  So rebStartup()
-// does initialize them automatically.  Instead, this merely returns the
-// list of descriptions of the extensions, which can then be loaded with the
-// LOAD-EXTENSION function.
+// decisions on when to initialize these built-in extensions.  Also, building
+// Rebol as a library may still entail a desire to ship that library with
+// built-in extensions (e.g. building libr3.js wants to have JavaScript
+// natives as an extension).
+//
+// So rebStartup() doesn't initialize extensions automatically.  Instead, this
+// merely returns the list of descriptions of the extensions, which can then
+// be loaded with the LOAD-EXTENSION function.
 //
 // 1. Built-in extensions do not receive the RebolApiTable, because they are
 //    able to use direct calls to the RL_Xxx() versions, which is faster.
 {
     INCLUDE_PARAMS_OF_BUILTIN_EXTENSIONS;
 
-    Array* list = Make_Array(NUM_BUILTIN_EXTENSIONS);
+    Array* list = Make_Array(g_num_builtin_extensions);
     REBLEN i;
-    for (i = 0; i != NUM_BUILTIN_EXTENSIONS; ++i) {
-        RebolExtensionCollator* collator = g_builtin_collators[i];
+    for (i = 0; i != g_num_builtin_extensions; ++i) {
+        ExtensionCollator* collator = g_builtin_collators[i];
 
         Value* details = (*collator)(nullptr);  // don't pass g_librebol [1]
         assert(Is_Block(details));

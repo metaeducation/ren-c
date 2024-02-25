@@ -51,27 +51,8 @@
     #define RX_COLLATE_NAME(ext_name) RX_Collate_##ext_name
 #endif
 
-// The init function does not actually decompress any of the script or spec
-// code, make any natives, or run any startup.  It just returns an aggregate
-// of all the information that would be needed to make the extension module.
-//
-// !!! This aggregate may become an ACTION! as opposed to an array of handle
-// values, but this is a work in progress.
-//
-#if defined(_WIN32)
-    typedef RebolValue* (__cdecl RebolExtensionCollator)(RebolApiTable*);
-#else
-    typedef RebolValue* (RebolExtensionCollator)(RebolApiTable*);
-#endif
 
 //=//// EXTENSION MACROS //////////////////////////////////////////////////=//
 
-#define DECLARE_EXT_COLLATE(ext_name) \
+#define DECLARE_EXTENSION_COLLATOR(ext_name) \
     EXT_API RebolValue* RX_COLLATE_NAME(ext_name)(RebolApiTable* api)
-
-// !!! Currently used for just a BLOCK!, but may become Phase_Details()
-//
-#define IDX_COLLATOR_SCRIPT 0
-#define IDX_COLLATOR_SCRIPT_NUM_CODEPOINTS 1
-#define IDX_COLLATOR_CFUNCS 2
-#define IDX_COLLATOR_MAX 3

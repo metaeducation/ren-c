@@ -327,7 +327,7 @@ enum Reb_Native_State {
 // The resolve will be called if it reaches the end of the input and the
 // reject if there is a failure.
 //
-// Note: See %make-reb-lib.r for code that produces the `rebPromise(...)` API,
+// Note: See %make-librebol.r for code that produces the `rebPromise(...)` API,
 // which ties the returned integer into the resolve and reject branches of an
 // actual JavaScript ES6 Promise.
 //

@@ -1,10 +1,10 @@
 REBOL [
     System: "REBOL [R3] Language Interpreter and Run-time Environment"
-    Title: "Generate extention native header files"
-    File: %make-boot-ext-header.r  ; EMIT-HEADER uses to note emitting script
+    Title: "Generate table of ExtensionCollators for all built-in extensions"
+    File: %make-extensions-table.r  ; EMIT-HEADER uses this filename
     Rights: {
         Copyright 2017 Atronix Engineering
-        Copyright 2017-2018 Ren-C Open Source Contributors
+        Copyright 2017-2024 Ren-C Open Source Contributors
         REBOL is a trademark of REBOL Technologies
     }
     License: {
@@ -30,10 +30,10 @@ REBOL [
         be gathered in a table to be gathered up so the system can find them.
 
         This script gets the list of *only* the built-in extensions on the
-        command line, then builds that table.  It is included as part of
-        %a-lib.h, which exposes it via the rebBuiltinExtensions() API to
-        whatever client (C, JavaScript, etc.) that may want to start them
-        up selectively...which must be at some point *after* rebStartup().
+        command line, then builds that table.  It is exposed via the
+        rebBuiltinExtensions() API to whatever client (C, JavaScript, etc.)
+        that may want to start them up selectively...which must be at some
+        point *after* rebStartup().
     }
 ]
 
@@ -46,26 +46,33 @@ import <bootstrap-shim.r>
 import <common.r>
 import <common-emitter.r>
 
-r3: system/version > 2.100.0
-
 args: parse-args system/script/args  ; either from command line or DO/ARGS
 output-dir: join system/options/path %prep/
-mkdir/deep (join output-dir %include/)
 
 extensions: map-each e (split args/EXTENSIONS #":") [
     to-c-name e  ; so SOME-EXTENSION becomes SOME_EXTENSION for C macros
 ]
 
-e: make-emitter "Boot Modules" (
-    join output-dir %include/tmp-boot-extensions.inc
+e: make-emitter "Built-in Extensions" (
+    join output-dir %core/tmp-builtin-extension-table.c
 )
 
 e/emit [extensions {
-    #include "sys-ext.h"
+    #include "sys-core.h"  /* ExtensionCollator type, Value*, etc. */
+    #include "sys-ext.h"   /* DECLARE_EXTENSION_COLLATOR(), etc. */
 
-    DECLARE_EXT_COLLATE($[Extensions]);
+    #ifdef __cplusplus
+        extern "C" {
+    #endif
+
+    DECLARE_EXTENSION_COLLATOR($[Extensions]);
 
     #define NUM_BUILTIN_EXTENSIONS $<length of extensions>
+
+    /*
+     * NUM_BUILTIN_EXTENSIONS macro not visible outside this file, export
+     */
+    const unsigned int g_num_builtin_extensions = NUM_BUILTIN_EXTENSIONS;
 
     /*
      * List of C functions that can be called to fetch the collated info that
@@ -73,10 +80,14 @@ e/emit [extensions {
      * decompression code is run when these functions are called...they just
      * return information needed for later reifying those extensions.
      */
-    static RebolExtensionCollator *g_builtin_collators[] = {
+    ExtensionCollator* const g_builtin_collators[] = {
         RX_COLLATE_NAME($[Extensions]),
         nullptr  /* Just for guaranteeing length > 0, as C++ requires it */
     };
+
+    #ifdef __cplusplus
+        }  /* end extern "C" */
+    #endif
 }]
 
 e/write-emitted

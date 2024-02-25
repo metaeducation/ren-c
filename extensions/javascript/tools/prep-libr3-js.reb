@@ -26,13 +26,13 @@ REBOL [
 ]
 
 ; Note: There are no `import` statements here because this is run via DO LOAD
-; within the %make-reb-lib.r script's context.  This is done in order to
+; within the %make-librebol.r script's context.  This is done in order to
 ; inherit the `api` object, and the `for-each-api` enumerator.  As a result
 ; it also inherits access to CWRAP and other tools.  Review.
 
 
 e-cwrap: make-emitter "JavaScript C Wrapper functions" (
-    join output-dir %reb-lib.js
+    join prep-dir %include/reb-lib.js
 )
 
 === "ASYNCIFY_BLACKLIST TOLERANT CWRAP" ===
@@ -912,7 +912,7 @@ json-collect: func [
     }]
 ]
 
-write (join output-dir %libr3.exports.json) json-collect [
+write (join prep-dir %include/libr3.exports.json) json-collect [
     for-each-api [keep unspaced ["RL_" name]]
     keep "malloc"  ; !!! Started requiring, did not before (?)
 ]
@@ -944,7 +944,7 @@ write (join output-dir %libr3.exports.json) json-collect [
 ; the final return value of a JS-AWAITER can be returned with it.
 ; </review>
 
-write (join output-dir %asyncify-blacklist.json) delimit newline collect [
+write (join prep-dir %include/asyncify-blacklist.json) delimit newline collect [
     keep "["
     for-next names load %../asyncify-blacklist.r [
         keep unspaced [_ _ _ _ {"} names/1 {"} if not last? names [","]]
@@ -968,7 +968,7 @@ write (join output-dir %asyncify-blacklist.json) delimit newline collect [
 ;
 
 e-node-preload: make-emitter "Emterpreter Preload for Node.js" (
-    join output-dir %node-preload.js
+    join prep-dir %include/node-preload.js
 )
 
 e-node-preload/emit {

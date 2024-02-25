@@ -1117,6 +1117,13 @@ e-boot/emit [fields {
     EXTERN_C const REBLEN g_num_core_natives;
     EXTERN_C CFunction* const g_core_native_cfuncs[];
 
+    /*
+     * Builtin Extensions
+     */
+    EXTERN_C const unsigned int g_num_builtin_extensions;
+    EXTERN_C ExtensionCollator* const g_builtin_collators[];
+
+
     typedef struct REBOL_Boot_Block {
         $[Fields];
     } BOOT_BLK;

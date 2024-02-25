@@ -51,6 +51,30 @@ typedef REBINT (COMPARE_HOOK)(
     void N_##n(Atom* out, Phase* phase, Value* arg)
 
 
+//
+// EXTENSION COLLATOR FUNCTION DEFINITION
+//
+// Rebol Extensions generate DLLs (or embed into the EXE) with a function
+// that does initialization.  But that init function does not actually
+// decompress any of the script or spec code, make any natives, or run
+// any startup.  It just returns an aggregate of all the information that
+// would be needed to make the extension module.  So it is called a
+// "collator", and it calls the API `rebExtensionCollate_internal()`
+//
+// !!! The result may become an ACTION! as opposed to a BLOCK! of handle
+// values, but this is a work in progress.
+//
+#if defined(_WIN32)
+    typedef Value* (__cdecl ExtensionCollator)(RebolApiTable*);
+#else
+    typedef Value* (ExtensionCollator)(RebolApiTable*);
+#endif
+#define IDX_COLLATOR_SCRIPT 0
+#define IDX_COLLATOR_SCRIPT_NUM_CODEPOINTS 1
+#define IDX_COLLATOR_CFUNCS 2
+#define IDX_COLLATOR_MAX 3
+
+
 // PER-TYPE MAKE HOOKS: for `make datatype def`
 //
 // These functions must return a Value* to the type they are making

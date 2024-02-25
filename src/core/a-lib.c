@@ -22,7 +22,7 @@
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // This is the "external" API, and %rebol.h contains its exported
-// definitions.  That file (and %make-reb-lib.r which generates it) contains
+// definitions.  That file (and %make-librebol.r which generates it) contains
 // comments and notes which will help understand it.
 //
 // What characterizes the external API is that it is not necessary to #include
@@ -2844,8 +2844,6 @@ DECLARE_NATIVE(api_transient)
     return Init_Integer(level_->out, i_cast(intptr_t, a));
 }
 
-
-#include "sys-ext.h"
 
 //
 //  rebCollateExtension_internal: RL_API
