@@ -111,30 +111,21 @@ Special internal defines used by RT, not Host-Kit developers:
                       * export r3lib functions
                       * build r3lib dispatch table
                       * call host lib (OS_) via struct and macros
-
-    REB_EXE         - build r3 as a standalone executable
 */
 
 //* Common *************************************************************
 
 
-#ifdef REB_EXE
-    // standalone exe from RT
-    // Export all of the APIs such that they can be referenced by extensions.
-    // The purpose is to have one exe and some dynamic libraries for extensions (.dll, .so etc.)
+#ifdef REB_API
+    // r3lib dll from RT
     #define RL_API API_EXPORT
+#elif defined(LIBREBOL_USES_API_TABLE) || defined(REB_HOST)
+    // Building extensions as external libraries (.dll, .so etc.)
+    // or r3 host against r3lib dll
+    #define RL_API API_IMPORT
 #else
-    #ifdef REB_API
-        // r3lib dll from RT
-        #define RL_API API_EXPORT
-    #elif defined(REB_EXT) || defined(REB_HOST)
-        // Building extensions as external libraries (.dll, .so etc.)
-        // or r3 host against r3lib dll
-        #define RL_API API_IMPORT
-    #else
-        // Extensions are builtin
-        #define RL_API
-    #endif
+    // Extensions are builtin
+    #define RL_API
 #endif
 
 

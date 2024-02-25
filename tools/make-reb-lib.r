@@ -366,6 +366,8 @@ e-lib/emit [ver {
      *
      *   LIBREBOL_SPECIFIER       Variable name variadics implicitly capture
      *
+     *   LIBREBOL_USES_API_TABLE  No plain linker access to API exports
+     *
      * For more details on each, read the comments further down in this file.
      */
 
@@ -717,11 +719,11 @@ e-lib/emit [ver {
 
 
 
-    #ifdef REB_EXT /* can't direct call into EXE, must go through interface */
+    #ifdef LIBREBOL_USES_API_TABLE  /* can't direct call into EXE entry points */
         /*
-         * The inline functions below will require this base pointer:
-         */
-        extern RebolApiTable *g_librebol;  /* passed to the DLL init function*/
+        * We will translate rebXXX() into g_librebol->rebXXX()
+        */
+        extern RebolApiTable *g_librebol;  /* passed to the DLL init function */
 
         #define LIBREBOL_PREFIX(api_name) g_librebol->api_name
 
@@ -748,7 +750,7 @@ e-lib/emit [ver {
 
         $[Extern-Prototypes];
 
-    #endif  /* !REB_EXT */
+    #endif  /* (! LIBREBOL_USES_API_TABLE) */
 
     #ifdef __cplusplus
     }  /* end the extern "C" */

@@ -384,7 +384,7 @@ e/emit [{
      * things like "import libraries for an EXE that a DLL can import" are
      * Windows peculiarities).
      */
-    #ifdef REB_EXT  /* e.g. a DLL */
+    #ifdef LIBREBOL_USES_API_TABLE  /* e.g. a DLL */
         RebolApiTable* g_librebol;  /* API macros like rebValue() use this */
     #endif
 
@@ -422,7 +422,7 @@ e/emit [{
      * extension implementations.
      */
     EXT_API RebolValue* RX_COLLATE_NAME(${Mod})(RebolApiTable *api) {
-      #ifdef REB_EXT
+      #ifdef LIBREBOL_USES_API_TABLE
         /*
          * Only DLLs need rebXXX() APIs => g_librebol->rebXXX()
          * Built-in extensions transform rebXXX() => direct RL_rebXXX() calls

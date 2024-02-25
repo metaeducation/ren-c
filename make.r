@@ -1771,13 +1771,20 @@ for-each ext extensions [
     ; Not only do these settings get used by the mod-xxx.c file, but they are
     ; propagated to the dependencies (I think?)
     ;
-    ; We add a #define of either REB_API or REB_EXT based on if it's a DLL
+    ; We add a #define of either REB_API or LIBREBOL_USES_API_TABLE based on
+    ; if it's a DLL
     ;
     apply :add-project-flags [
         ext-objlib
         /I app-config/includes
         /D compose [
-            (either ext/mode = <builtin> ["REB_API"] ["REB_EXT"])
+            (
+                either ext/mode = <builtin> [
+                    "REB_API"
+                ][
+                    "LIBREBOL_USES_API_TABLE"
+                ]
+            )
             (spread app-config/definitions)
         ]
         /c app-config/cflags
@@ -1844,7 +1851,7 @@ for-each ext extensions [
         apply :add-project-flags [
             ext-proj
             /I app-config/includes
-            /D join ["REB_EXT"] spread app-config/definitions
+            /D join ["LIBREBOL_USES_API_TABLE"] spread app-config/definitions
             /c app-config/cflags
             /O app-config/optimization
             /g app-config/debug

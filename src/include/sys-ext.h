@@ -20,24 +20,20 @@
 //=////////////////////////////////////////////////////////////////////////=//
 //
 
-#if defined(REB_EXT)
+#if defined(LIBREBOL_USES_API_TABLE)
     //
-    // REB_EXT being defined indicates an "external extension".  Its entry
-    // point has a predictable name of RX_Collate() exported from the DLL.
+    // This indicates an "external extension".  Its entry point has a
+    // predictable name of RX_Collate() exported from the DLL.
 
-  #if defined(REB_EXE)
-    #define EXT_API EXTERN_C API_IMPORT // Hosting Rebol is an EXE
-  #else
-    #define EXT_API EXTERN_C API_EXPORT // Hosting Rebol is a DLL/LIB
-  #endif
+    #define EXT_API EXTERN_C API_EXPORT  // Hosting Rebol is a DLL/LIB
 
     // Just ignore the extension name parameter
     //
     #define RX_COLLATE_NAME(ext_name) RX_Collate
 #else
-    // If REB_EXT is not defined, this is a "built-in extension".  It is
-    // part of the exe or lib, and its loader function must be distinguished
-    // by name from other extensions that are built-in.
+    // If LIBREBOL_USES_API_TABLE is not defined, this is a "built-in
+    // extension".  It is part of the exe or lib, and its loader function must
+    // be distinguished by name from other extensions that are built-in.
     //
     // !!! This could also be done with some kind of numbering scheme (UUID?)
     // by the build process, but given that name collisions in Rebol cause
