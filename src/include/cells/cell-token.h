@@ -286,7 +286,7 @@ INLINE Utf8(const*) Cell_Utf8_Len_Size_At_Limit(
 
     Heart heart = Cell_Heart(v);
 
-    if (heart == REB_ISSUE and Not_Cell_Flag(v, STRINGLIKE_HAS_NODE)) {
+    if (Not_Cell_Flag(v, STRINGLIKE_HAS_NODE)) {  // SIGIL!, some ISSUE!...
         REBLEN len;
         Size size;
         //
