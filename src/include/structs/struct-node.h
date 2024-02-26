@@ -61,7 +61,7 @@
     // defined as `void`, and the C++ build is trusted to do the more strict
     // type checking.
     //
-    struct RebolNodeInternalStruct {  // Node is void*, but defined for API
+    struct RebolNodeStruct {  // Node is void*, but defined for API
         Byte first;
     };
     typedef void Node;
@@ -80,8 +80,8 @@
     // headaches.  So it was decided that so long as they are Series, not
     // Array, that's still abstract enough to block most casual misuses.
     //
-    struct RebolNodeInternalStruct {};  // empty base for Series, Cell, Level...
-    typedef struct RebolNodeInternalStruct Node;
+    struct RebolNodeStruct {};  // empty base for Series, Cell, Level...
+    typedef struct RebolNodeStruct Node;
 #endif
 
 

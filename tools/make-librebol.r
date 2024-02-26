@@ -139,7 +139,7 @@ emit-proto: func [return: [~] proto] [
             ;
             ; But now, it's needed for passing in the specifier.
 
-            "RebolSpecifier_internal*" 'specifier
+            "RebolSpecifier*" 'specifier
 
             copy paramlist: to "const void*"  ; signal start of variadic
 
@@ -187,7 +187,7 @@ extern-prototypes: map-each-api [
 
 lib-struct-fields: map-each-api [
     cfunc-params: delimit ", " compose [
-        (if is-variadic ["RebolSpecifier_internal* specifier"])
+        (if is-variadic ["RebolSpecifier* specifier"])
         (spread map-each [type var] paramlist [spaced [type var]])
         (if is-variadic [
             spread ["const void* p" "void* vaptr"]
@@ -236,7 +236,7 @@ for-each-api [
     append variadic-api-c-helpers cscape [:api {
         $<Maybe Attributes>
         inline static $<Return-Type> $<Name>_helper(  /* C version */
-            RebolSpecifier_internal* specifier,
+            RebolSpecifier* specifier,
             $<Helper-Params, >
             const void* p, ...
         ){
@@ -256,7 +256,7 @@ for-each-api [
         template <typename... Ts>
         $<Maybe Attributes>
         inline $<Return-Type> $<Name>_helper(  /* C++ version */
-            RebolSpecifier_internal* specifier,
+            RebolSpecifier* specifier,
             $<Helper-Params, >
             const Ts & ...args
         ){
@@ -602,15 +602,41 @@ e-lib/emit [ver {
 
 
     /*
-     * "Instructions" in the API are not RebolValue*, and you are not supposed
-     * to cache references to them (e.g. in variables).  They are only for
-     * use in the variadic calls, because the feeding of the va_list in
-     * case of error is the only way they are cleaned up.
+     * VARIADIC API "INSTRUCTIONS"
+     *
+     * The functions that are named rebXXX with XXX in all caps are designed
+     * for passing in variadic argument streams.  This means things like
+     * rebRELEASING() a.k.a. rebR(), or rebQUOTING() a.k.a. rebQ().  They
+     * return "instructions" that are not RebolValue*, and are only for use
+     * in the variadic calls.
+     *
+     * You should not cache references to them in variables, but only pass
+     * them directly in the variadic stream.  This is because the feeding of
+     * the va_list in case of error is the only way they are cleaned up.
      */
 
-    struct RebolNodeInternalStruct;
-    typedef struct RebolNodeInternalStruct RebolNodeInternal;
-    typedef struct RebolNodeInternalStruct RebolSpecifier_internal;
+    struct RebolNodeStruct;
+    typedef struct RebolNodeStruct RebolNodeInternal;
+
+
+    /*
+     * "SPECIFIERS"
+     *
+     * Specifiers are an evolving idea, which represent "binding environments"
+     * for looking up values.  They are a chain of contexts...such as a
+     * FRAME! for a function, inheriting from the module in which that
+     * function was defined.  There's not currently an exposed datatype in
+     * the language for specifiers, so the only currency for them are BLOCK!
+     * or other arrays that have captured the specifier as their binding.
+     *
+     * The API needs to speak in terms of specifiers in order to know where
+     * to bind the source code that's scanned in variadic calls.  So there is
+     * some exposure of the type, but it's not meant to be manipulated
+     * directly by API clients at this time.  Instead, specifiers are captured
+     * implicitly by the macros that implement variadic API functions.
+     */
+
+    typedef struct RebolNodeStruct RebolSpecifier;
 
 
     /*

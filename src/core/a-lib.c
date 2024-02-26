@@ -920,7 +920,7 @@ void API_rebModifyHandleCleaner(RebolValue* v, CLEANUP_CFUNC *cleaner) {
 // recent ACTION! on the stack.
 //
 const RebolNodeInternal* API_rebArgR(
-    RebolSpecifier_internal* specifier,
+    RebolSpecifier* specifier,
     const void* p, void* vaptr
 ){
     ENTER_API;
@@ -969,7 +969,7 @@ const RebolNodeInternal* API_rebArgR(
 // an "safer" API handle to the argument.
 //
 RebolValue* API_rebArg(
-    RebolSpecifier_internal* specifier,
+    RebolSpecifier* specifier,
     const void* p, void* vaptr
 ){
     ENTER_API;
@@ -1034,7 +1034,7 @@ RebolValue* API_rebArg(
 //   encoded...and can stick to the standardized layout of a pointer array.)
 //
 static bool Run_Va_Throws(
-    RebolSpecifier_internal* specifier,
+    RebolSpecifier* specifier,
     Atom* out,
     bool interruptible,  // whether a HALT can cause a longjmp/throw
     Flags flags,
@@ -1094,7 +1094,7 @@ static bool Run_Va_Throws(
 // executed code passed to not have it evaluate to nihil)
 //
 inline static void Run_Va_Undecayed_May_Fail_Calls_Va_End(
-    RebolSpecifier_internal* specifier,
+    RebolSpecifier* specifier,
     Atom* out,
     const void* p,  // first pointer (may be END, nullptr means NULLED)
     void* vaptr  // va_end() handled by feed for all cases (throws, fails)
@@ -1121,7 +1121,7 @@ inline static void Run_Va_Undecayed_May_Fail_Calls_Va_End(
 // about multi-return packs etc.
 //
 inline static void Run_Va_Decay_May_Fail_Calls_Va_End(
-    RebolSpecifier_internal* specifier,
+    RebolSpecifier* specifier,
     Value* out,
     const void* p,  // first pointer (may be END, nullptr means NULLED)
     void* vaptr  // va_end() handled by feed for all cases (throws, fails)
@@ -1150,7 +1150,7 @@ inline static void Run_Va_Decay_May_Fail_Calls_Va_End(
 // and EVAL_EXECUTOR_FLAG_NO_RESIDUE defined in %sys-do.h
 //
 bool API_rebRunCoreThrows(
-    RebolSpecifier_internal* specifier,
+    RebolSpecifier* specifier,
     RebolValue* out,
     uintptr_t flags,  // Flags not exported in API
     const void* p, void* vaptr
@@ -1194,7 +1194,7 @@ bool API_rebRunCoreThrows(
 // Most basic evaluator that returns a Value*, which must be rebRelease()'d.
 //
 RebolValue* API_rebValue(
-    RebolSpecifier_internal* specifier,
+    RebolSpecifier* specifier,
     const void* p, void* vaptr
 ){
     ENTER_API;
@@ -1218,7 +1218,7 @@ RebolValue* API_rebValue(
 // Just scans the source given into a BLOCK! without executing it.
 //
 RebolValue* API_rebTranscodeInto(
-    RebolSpecifier_internal* specifier,
+    RebolSpecifier* specifier,
     RebolValue* out,
     const void* p, void* vaptr
 ){
@@ -1268,7 +1268,7 @@ RebolValue* API_rebTranscodeInto(
 //    as they're encodings of variadic parameters--not the actual parameters!
 //
 void API_rebPushContinuation(
-    RebolSpecifier_internal* specifier,
+    RebolSpecifier* specifier,
     RebolValue* out,
     uintptr_t flags,
     const void* p, void* vaptr
@@ -1293,7 +1293,7 @@ void API_rebPushContinuation(
 // return values.  Review.
 //
 RebolValue* API_rebDelegate(  // !!! Hack: returns Bounce, not Value*
-    RebolSpecifier_internal* specifier,
+    RebolSpecifier* specifier,
     const void* p, void* vaptr
 ){
     ENTER_API;
@@ -1318,7 +1318,7 @@ RebolValue* API_rebDelegate(  // !!! Hack: returns Bounce, not Value*
 // Will return parameter packs as-is.
 //
 RebolValue* API_rebMeta(
-    RebolSpecifier_internal* specifier,
+    RebolSpecifier* specifier,
     const void* p, void* vaptr
 ){
     ENTER_API;
@@ -1349,7 +1349,7 @@ RebolValue* API_rebMeta(
 //     rebEntrap(...) => rebValue("entrap [", ..., "]")
 //
 RebolValue* API_rebEntrap(
-    RebolSpecifier_internal* specifier,
+    RebolSpecifier* specifier,
     const void* p, void* vaptr
 ){
     ENTER_API;
@@ -1387,7 +1387,7 @@ RebolValue* API_rebEntrap(
 // points to one routine for now.
 //
 RebolValue* API_rebEntrapInterruptible(
-    RebolSpecifier_internal* specifier,
+    RebolSpecifier* specifier,
     const void* p, void* vaptr
 ){
     ENTER_API;
@@ -1429,7 +1429,7 @@ RebolValue* API_rebEntrapInterruptible(
 // able to quote it without the backtrace showing a QUOTE stack frame.)
 //
 RebolValue* API_rebQuote(
-    RebolSpecifier_internal* specifier,
+    RebolSpecifier* specifier,
     const void* p, void* vaptr
 ){
     ENTER_API;
@@ -1451,7 +1451,7 @@ RebolValue* API_rebQuote(
 // that is not an issue.
 //
 void API_rebElide(
-    RebolSpecifier_internal* specifier,
+    RebolSpecifier* specifier,
     const void* p, void* vaptr
 ){
     ENTER_API;
@@ -1483,7 +1483,7 @@ void API_rebElide(
 //    rebStop(...) -- STOP is rather final sounding, the code keeps going
 //
 void API_rebJumps(
-    RebolSpecifier_internal* specifier,
+    RebolSpecifier* specifier,
     const void* p, void* vaptr
 ){
     ENTER_API;
@@ -1520,7 +1520,7 @@ void API_rebJumps(
 // this in light of whether antiform objects are going to be kept.
 //
 bool API_rebDid(
-    RebolSpecifier_internal* specifier,
+    RebolSpecifier* specifier,
     const void* p, void* vaptr
 ){
     ENTER_API;
@@ -1543,7 +1543,7 @@ bool API_rebDid(
 // this in light of whether antiform objects are going to be kept.
 //
 bool API_rebDidnt(
-    RebolSpecifier_internal* specifier,
+    RebolSpecifier* specifier,
     const void* p, void* vaptr
 ){
     ENTER_API;
@@ -1564,7 +1564,7 @@ bool API_rebDidnt(
 // at all possible.
 //
 bool API_rebTruthy(
-    RebolSpecifier_internal* specifier,
+    RebolSpecifier* specifier,
     const void* p, void* vaptr
 ){
     ENTER_API;
@@ -1583,7 +1583,7 @@ bool API_rebTruthy(
 // would have to be a variadic macro.  Not worth it. use separate entry point.
 //
 bool API_rebNot(
-    RebolSpecifier_internal* specifier,
+    RebolSpecifier* specifier,
     const void* p, void* vaptr
 ){
     ENTER_API;
@@ -1607,7 +1607,7 @@ bool API_rebNot(
 // short name is worth it.
 //
 intptr_t API_rebUnbox(
-    RebolSpecifier_internal* specifier,
+    RebolSpecifier* specifier,
     const void* p, void* vaptr
 ){
     ENTER_API;
@@ -1635,7 +1635,7 @@ intptr_t API_rebUnbox(
 //  rebUnboxLogic: API
 //
 bool API_rebUnboxLogic(
-    RebolSpecifier_internal* specifier,
+    RebolSpecifier* specifier,
     const void* p, void* vaptr
 ){
     ENTER_API;
@@ -1654,7 +1654,7 @@ bool API_rebUnboxLogic(
 //  rebUnboxInteger: API
 //
 intptr_t API_rebUnboxInteger(
-    RebolSpecifier_internal* specifier,
+    RebolSpecifier* specifier,
     const void* p, void* vaptr
 ){
     ENTER_API;
@@ -1673,7 +1673,7 @@ intptr_t API_rebUnboxInteger(
 //  rebUnboxDecimal: API
 //
 double API_rebUnboxDecimal(
-    RebolSpecifier_internal* specifier,
+    RebolSpecifier* specifier,
     const void* p, void* vaptr
 ){
     ENTER_API;
@@ -1695,7 +1695,7 @@ double API_rebUnboxDecimal(
 //  rebUnboxChar: API
 //
 uint32_t API_rebUnboxChar(
-    RebolSpecifier_internal* specifier,
+    RebolSpecifier* specifier,
     const void* p, void* vaptr
 ){
     ENTER_API;
@@ -1714,7 +1714,7 @@ uint32_t API_rebUnboxChar(
 //  rebUnboxHandleCData: API
 //
 void* API_rebUnboxHandleCData(
-    RebolSpecifier_internal* specifier,
+    RebolSpecifier* specifier,
     size_t* size_out,
     const void* p, void* vaptr
 ){
@@ -1736,7 +1736,7 @@ void* API_rebUnboxHandleCData(
 //  rebExtractHandleCleaner: API
 //
 CLEANUP_CFUNC* API_rebExtractHandleCleaner(
-    RebolSpecifier_internal* specifier,
+    RebolSpecifier* specifier,
     const void* p, void* vaptr
 ){
     ENTER_API_RECYCLING_OK;
@@ -1787,7 +1787,7 @@ static size_t Spell_Into(
 // The more immediate quantity of concern to return is the number of bytes.
 //
 size_t API_rebSpellInto(
-    RebolSpecifier_internal* specifier,
+    RebolSpecifier* specifier,
     char* buf,
     size_t buf_size,  // number of bytes
     const void* p, void* vaptr
@@ -1811,7 +1811,7 @@ size_t API_rebSpellInto(
 // Can return nullptr.  Use rebSpell() if you want a failure instead.
 //
 char* API_rebSpellMaybe(
-    RebolSpecifier_internal* specifier,
+    RebolSpecifier* specifier,
     const void* p, void* vaptr
 ){
     ENTER_API;
@@ -1839,7 +1839,7 @@ char* API_rebSpellMaybe(
 // Raises error on NULL input
 //
 char* API_rebSpell(
-    RebolSpecifier_internal* specifier,
+    RebolSpecifier* specifier,
     const void* p, void* vaptr
 ){
     char* spell = API_rebSpellMaybe(specifier, p, vaptr);
@@ -1912,7 +1912,7 @@ static unsigned int Spell_Into_Wide(
 // wchar units...not *necesssarily* a length in codepoints.
 //
 unsigned int API_rebSpellIntoWide(
-    RebolSpecifier_internal* specifier,
+    RebolSpecifier* specifier,
     REBWCHAR* buf,
     unsigned int buf_chars,  // chars buf can hold (not including terminator)
     const void* p, void* vaptr
@@ -1933,7 +1933,7 @@ unsigned int API_rebSpellIntoWide(
 // won't fit in single WCHARs.
 //
 REBWCHAR* API_rebSpellWideMaybe(
-    RebolSpecifier_internal* specifier,
+    RebolSpecifier* specifier,
     const void* p, void* vaptr
 ){
     ENTER_API;
@@ -1963,7 +1963,7 @@ REBWCHAR* API_rebSpellWideMaybe(
 // Raises error on NULL
 //
 REBWCHAR* API_rebSpellWide(
-    RebolSpecifier_internal* specifier,
+    RebolSpecifier* specifier,
     const void* p, void* vaptr
 ){
     REBWCHAR* spelling = API_rebSpellWideMaybe(specifier, p, vaptr);
@@ -2037,7 +2037,7 @@ static size_t Bytes_Into(
 // zero termination of Rebol series, including binaries.  Review.
 //
 size_t API_rebBytesInto(
-    RebolSpecifier_internal* specifier,
+    RebolSpecifier* specifier,
     unsigned char* buf,
     size_t buf_size,
     const void* p, void* vaptr
@@ -2059,7 +2059,7 @@ size_t API_rebBytesInto(
 // for strings it is like rebSpell() except telling you how many bytes.)
 //
 unsigned char* API_rebBytesMaybe(
-    RebolSpecifier_internal* specifier,
+    RebolSpecifier* specifier,
     size_t* size_out,  // !!! Enforce non-null, to ensure type safety?
     const void* p, void* vaptr
 ){
@@ -2090,7 +2090,7 @@ unsigned char* API_rebBytesMaybe(
 // Raises error on NULL
 //
 unsigned char* API_rebBytes(
-    RebolSpecifier_internal* specifier,
+    RebolSpecifier* specifier,
     size_t* size_out,  // !!! Enforce non-null, to ensure type safety?
     const void* p, void* vaptr
 ){
@@ -2869,7 +2869,7 @@ DECLARE_NATIVE(api_transient)
 // This expands to:
 //
 //     RebolValue* N_native_name_here(void* level_) {
-//         RebolSpecifier_internal librebol_specifier;
+//         RebolSpecifier librebol_specifier;
 //         librebol_specifier = rebSpecifierFromLevel_internal(level_)
 //         (void)librebol_specifier  /* USED(librebol_specifier) */
 //         ...
@@ -2881,7 +2881,7 @@ DECLARE_NATIVE(api_transient)
 // inside a native or not, in order to find the arguments of the native when
 // scanning the text source passed.
 //
-RebolSpecifier_internal* API_rebSpecifierFromLevel_internal(void* level_)
+RebolSpecifier* API_rebSpecifierFromLevel_internal(void* level_)
 {
     Level* level = cast(Level*, level_);
     Set_Node_Managed_Bit(level->varlist);
@@ -2901,7 +2901,7 @@ RebolSpecifier_internal* API_rebSpecifierFromLevel_internal(void* level_)
     Value* module = Details_At(details, IDX_NATIVE_CONTEXT);
     node_LINK(NextVirtual, level->varlist) = VAL_CONTEXT(module);
 
-    return cast(RebolSpecifier_internal*, level->varlist);
+    return cast(RebolSpecifier*, level->varlist);
 }
 
 

@@ -332,7 +332,7 @@ enum Reb_Native_State {
 // actual JavaScript ES6 Promise.
 //
 EXTERN_C intptr_t API_rebPromise(
-    RebolSpecifier_internal *specifier, void* p, void* vaptr
+    RebolSpecifier* specifier, void* p, void* vaptr
 ){
     TRACE("rebPromise() called");
 

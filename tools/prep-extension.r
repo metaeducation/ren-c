@@ -201,7 +201,7 @@ if use-librebol [
          * to use the stack to find which module the native is running in.
          * This needs to be revisited.
          */
-        static RebolSpecifier_internal* librebol_specifier = 0;  /* nullptr */
+        static RebolSpecifier* librebol_specifier = 0;  /* nullptr */
 
         /*
          * Helpful warnings tell us when static variables are unused.  We
@@ -269,7 +269,7 @@ if use-librebol [
         e1/emit [info {
             #define ${U-M-NAME}_INCLUDE_PARAMS_OF_${PROTO-NAME} \
                 LIBREBOL_SPECIFIER_USED();  /* global, before local define */ \
-                RebolSpecifier_internal* librebol_specifier; \
+                RebolSpecifier* librebol_specifier; \
                 librebol_specifier = rebSpecifierFromLevel_internal(level_); \
                 LIBREBOL_SPECIFIER_USED();  /* local, after shadowing */
         }]
