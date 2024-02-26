@@ -839,38 +839,49 @@ DECLARE_NATIVE(js_native)
     //
     Init_Logic(Details_At(details, IDX_JS_NATIVE_IS_AWAITER), REF(awaiter));
 
-    // The generation of the function called by JavaScript.  It takes no
-    // arguments, as giving it arguments would make calling it more complex
-    // as well as introduce several issues regarding mapping legal Rebol
-    // names to names for JavaScript parameters.  libRebol APIs must be used
-    // to access the arguments out of the frame.
+  //=//// MAKE ASCII SOURCE FOR JAVASCRIPT FUNCTION ///////////////////////=//
+
+    // 1. A JS-AWAITER can only be triggered from Rebol on the worker thread
+    //    as part of a rebPromise().  Making it an async function means it
+    //    will return an ES6 Promise, and allows use of the AWAIT JavaScript
+    //    feature in the body:
+    //
+    //      https://javascript.info/async-await
+    //
+    //    Using plain return within an async function returns a fulfilled
+    //    promise while using AWAIT causes the execution to pause and return
+    //    a pending promise.  When that promise is fulfilled it will jump back
+    //    in and pick up code on the line after that AWAIT.
+    //
+    // 2. We do not try to auto-translate the Rebol arguments into JS args.
+    //    That would make calling it more complex, and introduce several
+    //    issues of mapping Rebol names to legal JavaScript identifiers.
+    //
+    //    Instead, the function receives an updated `reb` API interface, that
+    //    is intended to "shadow" the global `reb` interface and override it
+    //    during the body of the function.  This local `reb` has a specifier
+    //    for the JS-NATIVE's frame, such that when reb.Value("argname")
+    //    is called, this reb passes that specifier through to API_rebValue(),
+    //    and the argument can be resolved this way.
+    //
+    //     !!! There should be some customization here where if the interface
+    //     was imported via another name than `reb`, it would be used here.
+    //
+    // 3. WebAssembly cannot hold onto JavaScript objects directly.  So we
+    //    need to store the created function somewhere we can find it later
+    //    when it's time to invoke it.  This is done by making a table that
+    //    maps a numeric ID (that we *can* hold onto) to the corresponding
+    //    JavaScript function entity.
 
     DECLARE_MOLD (mo);
     Push_Mold(mo);
 
     Append_Ascii(mo->series, "let f = ");  // variable we store function in
 
-    // A JS-AWAITER can only be triggered from Rebol on the worker thread as
-    // part of a rebPromise().  Making it an async function means it will
-    // return an ES6 Promise, and allows use of the AWAIT JavaScript feature
-    // in the body:
-    //
-    // https://javascript.info/async-await
-    //
-    // Using plain return within an async function returns a fulfilled promise
-    // while using AWAIT causes the execution to pause and return a pending
-    // promise.  When that promise is fulfilled it will jump back in and
-    // pick up code on the line after that AWAIT.
-    //
     if (REF(awaiter))
-        Append_Ascii(mo->series, "async ");
+        Append_Ascii(mo->series, "async ");  // run inside rebPromise() [1]
 
-    // We do not try to auto-translate the Rebol arguments into JS args.  It
-    // would make calling it more complex, and introduce several issues of
-    // mapping Rebol names to legal JavaScript identifiers.  reb.Arg() or
-    // reb.ArgR() must be used to access the arguments out of the frame.
-    //
-    Append_Ascii(mo->series, "function () {");
+    Append_Ascii(mo->series, "function (reb) {");  // just one arg [2]
     Append_String(mo->series, source);
     Append_Ascii(mo->series, "};\n");  // end `function() {`
 
@@ -882,21 +893,16 @@ DECLARE_NATIVE(js_native)
     Byte id_buf[60];  // !!! Why 60?  Copied from MF_Integer()
     REBINT len = Emit_Integer(id_buf, native_id);
 
-    // Rebol cannot hold onto JavaScript objects directly, so there has to be
-    // a table mapping some numeric ID (that we *can* hold onto) to the
-    // corresponding JS function entity.
-    //
-    Append_Ascii(mo->series, "reb.RegisterId_internal(");
+    Append_Ascii(mo->series, "reb.RegisterId_internal(");  // put in table [3]
     Append_Ascii_Len(mo->series, s_cast(id_buf), len);
     Append_Ascii(mo->series, ", f);\n");
 
-    // The javascript code for registering the function body is now the last
-    // thing in the mold buffer.  Get a pointer to it.
-    //
     Term_Binary(mo->series);  // !!! is this necessary?
     const char *js = cs_cast(Binary_At(mo->series, mo->base.size));
 
     TRACE("Registering native_id %ld", cast(long, native_id));
+
+  //=//// RUN FUNCTION GENERATION (ALSO ADDS TO TABLE) ////////////////////=//
 
     // The table mapping IDs to JavaScript objects only exists on the main
     // thread.  So in the pthread build, if we're on the worker we have to

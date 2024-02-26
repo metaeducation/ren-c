@@ -2905,6 +2905,26 @@ RebolSpecifier* API_rebSpecifierFromLevel_internal(void* level_)
 
 
 //
+//  rebAllocSpecifierRefFromLevel_internal: API
+//
+// This bridges being able to do a pointer-to-pointer in JavaScript without
+// needing to use low-level Webassembly byte fiddling.
+//
+RebolSpecifier** API_rebAllocSpecifierRefFromLevel_internal(void* level_)
+{
+    ENTER_API;
+
+    RebolSpecifier** ref = cast(
+        RebolSpecifier**,
+        API_rebAllocBytes(sizeof(RebolSpecifier*))
+    );
+
+    *ref = API_rebSpecifierFromLevel_internal(level_);
+    return ref;
+}
+
+
+//
 //  rebCollateExtension_internal: API
 //
 // This routine gathers information which can be called to bring an extension

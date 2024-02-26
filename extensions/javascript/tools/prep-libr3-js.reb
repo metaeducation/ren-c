@@ -508,7 +508,7 @@ for-each-api [
             HEAP32[(packed>>2) + argc] = reb.END
 
             a = reb.m._API_$<Name>(
-                0,  /* null specifier, just to start */
+                this.getSpecifierRef(),  /* "virtual", overridden in shadow */
                 packed,
                 0   /* null vaptr means `p` is array of `const void*` */
             )
@@ -522,6 +522,15 @@ for-each-api [
 ]
 
 e-cwrap/emit {
+    /*
+     * JavaScript lacks the idea of "virtual fields" which you can mention in
+     * methods in a base class, but then shadow in a derived class such that
+     * the base methods see the updates.  But if you override a function then
+     * that override will effectively be "virtual", such that the methods
+     * will call it.
+     */
+    reb.getSpecifierRef = function() { return 0 }
+
     reb.R = reb.RELEASING
     reb.Q = reb.QUOTING
     reb.U = reb.UNQUOTING
@@ -731,7 +740,7 @@ e-cwrap/emit {
         delete reb.JS_NATIVES[id]
     }
 
-    reb.RunNative_internal = function(id, frame_id) {
+    reb.RunNative_internal = function(id, level_id) {
         if (!(id in reb.JS_NATIVES))
             throw Error("Can't dispatch " + id + " in JS_NATIVES table")
 
@@ -763,7 +772,7 @@ e-cwrap/emit {
                 )
             }
 
-            reb.m._API_rebResolveNative_internal(frame_id, result_id)
+            reb.m._API_rebResolveNative_internal(level_id, result_id)
         }
 
         let rejecter = function(rej) {
@@ -789,7 +798,19 @@ e-cwrap/emit {
             else
                 error_id = reb.JavaScriptError(rej)
 
-            reb.m._API_rebRejectNative_internal(frame_id, error_id)
+            reb.m._API_rebRejectNative_internal(level_id, error_id)
+        }
+
+        /*
+         * The shadowing object is a variant of the `reb` API object which
+         * knows what frame it's in.
+         */
+        let reb_shadow = {
+            specifier_ref: (
+                reb.m._API_rebAllocSpecifierRefFromLevel_internal(level_id)
+            ),
+            getSpecifierRef: function() { return this.specifier_ref },
+            __proto__: reb
         }
 
         let native = reb.JS_NATIVES[id]
@@ -798,7 +819,7 @@ e-cwrap/emit {
              * There is no built in capability of ES6 promises to cancel, but
              * we make the promise given back cancelable.
              */
-            let promise = reb.Cancelable(native())
+            let promise = reb.Cancelable(native(reb_shadow))
             promise.then(resolver).catch(rejecter)  /* cancel causes reject */
 
             /* resolve() or reject() cannot be signaled yet...JavaScript does
@@ -813,7 +834,7 @@ e-cwrap/emit {
         }
         else {
             try {
-                resolver(native())
+                resolver(native(reb_shadow))
             }
             catch(e) {
                 rejecter(e)
@@ -821,6 +842,8 @@ e-cwrap/emit {
 
             /* resolve() or reject() guaranteed to be signaled in this case */
         }
+
+        reb.m._API_rebFree(reb_shadow.specifier_ref)
     }
 
     reb.ResolvePromise_internal = function(promise_id, rebval) {
