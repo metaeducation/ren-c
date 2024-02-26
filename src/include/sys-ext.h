@@ -20,12 +20,34 @@
 //=////////////////////////////////////////////////////////////////////////=//
 //
 
+// See notes on definition in %c-enhanced.h
+//
+// We don't want to necessarily include that file, so redefine.
+//
+#if !defined EXTERN_C
+  #if defined(__cplusplus)
+    #define EXTERN_C extern "C"
+  #else
+    #define EXTERN_C extern
+  #endif
+#endif
+
+
 #if defined(LIBREBOL_USES_API_TABLE)
     //
     // This indicates an "external extension".  Its entry point has a
     // predictable name of RX_Collate() exported from the DLL.
-
-    #define EXT_API EXTERN_C API_EXPORT  // Hosting Rebol is a DLL/LIB
+    //
+    // Compiler requires some marking that we are exporting it.
+    //
+    // 1. Note: Unsupported by gcc 2.95.3-haiku-121101
+    //    (We #undef it in the Haiku section)
+    //
+  #ifdef _WIN32  // also covers 64-bit
+    #define ATTRIBUTE_EXPORT __declspec(dllexport)
+  #else
+    #define ATTRIBUTE_EXPORT __attribute__((visibility("default")))  // see [1]
+  #endif
 
     // Just ignore the extension name parameter
     //
@@ -40,11 +62,7 @@
     // other problems the idea of not colliding with extension filenames
     // is par for the course.
 
-    #ifdef __cplusplus
-      #define EXT_API extern "C"
-    #else
-      #define EXT_API
-    #endif
+    #define ATTRIBUTE_EXPORT
 
     // *Don't* ignore the extension name parameter
     //
@@ -55,4 +73,5 @@
 //=//// EXTENSION MACROS //////////////////////////////////////////////////=//
 
 #define DECLARE_EXTENSION_COLLATOR(ext_name) \
-    EXT_API RebolValue* RX_COLLATE_NAME(ext_name)(RebolApiTable* api)
+   EXTERN_C ATTRIBUTE_EXPORT \
+   RebolValue* RX_COLLATE_NAME(ext_name)(RebolApiTable* api)

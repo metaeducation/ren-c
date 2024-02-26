@@ -444,7 +444,7 @@ e/emit [{
      * box or interface could provide more flexibility for arbitrary future
      * extension implementations.
      */
-    EXT_API RebolValue* RX_COLLATE_NAME(${Mod})(RebolApiTable *api) {
+    DECLARE_EXTENSION_COLLATOR(${Mod}) {
         /*
          * Compiler will warn if static librebol_specifier is defined w/o use.
          */
