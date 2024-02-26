@@ -1,7 +1,11 @@
 REBOL []
 
 name: 'View
-source: %view/mod-view.c
+source: [
+    %view/mod-view.c
+
+    <msc:/wd4459>  ; global shadowing ok, see LIBREBOL_SPECIFIER
+]
 includes: copy [
     %prep/extensions/view ;for %tmp-extensions-view-init.inc
 ]

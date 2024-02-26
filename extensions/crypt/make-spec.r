@@ -2,7 +2,11 @@ REBOL []
 
 name: 'Crypt
 loadable: no ;tls depends on this, so it has to be builtin
-source: %crypt/mod-crypt.c
+source: [
+    %crypt/mod-crypt.c
+
+    <msc:/wd4459>  ; global shadowing ok, see LIBREBOL_SPECIFIER
+]
 includes: reduce [
     (join repo-dir %extensions/crypt/)
     (join repo-dir %extensions/crypt/mbedtls/include/)  ; sub %mbedtls/

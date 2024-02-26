@@ -77,9 +77,17 @@
 // opaque to clients).  It has many conveniences, and is the preferred way to
 // work with isolated values that need indefinite duration.
 //
+// 1. At present, the default behavior for rebol.h is that if you don't have
+//    a definition for LIBREBOL_SPECIFIER, it will assume it's null.  Then,
+//    the internals of the code use Get_Context_From_Stack() in the null
+//    case for the behavior.
+//
+
 #include <stdlib.h>  // size_t and other types used in rebol.h
 #include <stdint.h>
 #include <stdbool.h>
+
+/*#define LIBREBOL_SPECIFIER Get_Context_From_Stack() */  // not needed [1]
 #include "rebol.h"
 typedef RebolValue Value;
 

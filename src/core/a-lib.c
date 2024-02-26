@@ -1058,8 +1058,12 @@ static bool Run_Va_Throws(
         FEED_MASK_DEFAULT
     );
 
-    UNUSED(specifier);  // should use this
-    mutable_FEED_SPECIFIER(feed) = Get_Context_From_Stack();
+    if (specifier) {
+        assert(Is_Node_Managed(specifier));
+        mutable_FEED_SPECIFIER(feed) = cast(Stub*, specifier);
+    }
+    else
+        mutable_FEED_SPECIFIER(feed) = Get_Context_From_Stack();
 
     Init_Void(PUSH());  // primed result
     Level* L = Make_Level(feed, flags);
@@ -1154,8 +1158,12 @@ bool RL_rebRunCoreThrows(
         FEED_MASK_DEFAULT
     );
 
-    UNUSED(specifier);
-    mutable_FEED_SPECIFIER(feed) = Get_Context_From_Stack();
+    if (specifier) {
+        assert(Is_Node_Managed(specifier));
+        mutable_FEED_SPECIFIER(feed) = cast(Stub*, specifier);
+    }
+    else
+        mutable_FEED_SPECIFIER(feed) = Get_Context_From_Stack();
 
     Level* L = Make_Level(feed, flags);
     Push_Level(out, L);
@@ -2842,6 +2850,56 @@ DECLARE_NATIVE(api_transient)
     // targeting arbitrary precision...use signed as status quo for now.
     //
     return Init_Integer(level_->out, i_cast(intptr_t, a));
+}
+
+
+//
+//  rebSpecifierFromLevel_internal: RL_API
+//
+// This is used by the INCLUDE_PARAMS_OF_XXX macros in extensions that use
+// #include "rebol.h" instead of #include "sys-core.h".  The source is like:
+//
+//     DECLARE_NATIVE(native_name_here) {
+//         INCLUDE_PARAMS_OF_NATIVE_NAME_HERE;
+//         ...
+//     }
+//
+// This expands to:
+//
+//     RebolValue* N_native_name_here(void* level_) {
+//         RebolSpecifier_internal librebol_specifier;
+//         librebol_specifier = rebSpecifierFromLevel_internal(level_)
+//         (void)librebol_specifier  /* USED(librebol_specifier) */
+//         ...
+//     }
+//
+// `librebol_specifier` is implicitly picked up by the macros that implement
+// things like `rebValue()`.  By also declaring `librebol_specifier` as a
+// global static, those macros are able to detect whether they are being used
+// inside a native or not, in order to find the arguments of the native when
+// scanning the text source passed.
+//
+RebolSpecifier_internal* RL_rebSpecifierFromLevel_internal(void* level_)
+{
+    Level* level = cast(Level*, level_);
+    Set_Node_Managed_Bit(level->varlist);
+
+    // We want to be able to use the specifier to not only look up arguments
+    // but also things in the module where the native lives.  This requires
+    // setting the `NextVirtual` property of the frame's varlist.  Typically
+    // this is set by the `Dispatcher`, but since natives are their own
+    // dispatchers nothing has set it yet.
+    //
+    // Natives store the module they are part of in their Details array
+    // under IDX_NATIVE_CONTEXT.  Extract that, and put it in NextVirtual.
+    //
+    Phase* phase = Level_Phase(level);
+    assert(Get_Action_Flag(phase, IS_NATIVE));
+    Details* details = Phase_Details(phase);
+    Value* module = Details_At(details, IDX_NATIVE_CONTEXT);
+    node_LINK(NextVirtual, level->varlist) = VAL_CONTEXT(module);
+
+    return cast(RebolSpecifier_internal*, level->varlist);
 }
 
 

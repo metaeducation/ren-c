@@ -188,17 +188,55 @@ e1: make-emitter "Module C Header File Preface" (
 )
 
 if use-librebol [
-    e1/emit {
+    e1/emit [{
         /* extension configuration says `use-librebol: true` */
 
-        /*#define LIBREBOL_SPECIFIER level_ */
+        #define LIBREBOL_SPECIFIER librebol_specifier
         #include "rebol.h"  /* not %sys-core.h ! */
-    }
+
+        /*
+         * This global definition is shadowed by the local definitions that
+         * are picked up by APIs like `rebValue()`, to know how to look up
+         * arguments to natives in frames.  Right now, being nullptr indicates
+         * to use the stack to find which module the native is running in.
+         * This needs to be revisited.
+         */
+        static RebolSpecifier_internal* librebol_specifier = 0;  /* nullptr */
+
+        /*
+         * Helpful warnings tell us when static variables are unused.  We
+         * could turn off that warning, but instead just have the natives
+         * do it before they define their own specifier.  As long as at least
+         * one native is in the file, this works.
+         */
+        #define LIBREBOL_SPECIFIER_USED() (void)librebol_specifier
+
+        /*
+         * Define DECLARE_NATIVE macro to include extension name.
+         * This avoids name collisions with the core, or with other extensions.
+         */
+        #define DECLARE_NATIVE(name) \
+            RebolValue* N_${MOD}_##name(void* level_)
+    }]
 ] else [
-    e1/emit {
+    e1/emit [{
         /* extension configuration says `use-librebol: false` */
         #include "sys-core.h"
-    }
+
+        /*
+         * No specifier used currently for core API extensions, but need the
+         * macro for the module init to compile.
+         */
+        #define LIBREBOL_SPECIFIER_USED()
+
+        /*
+         * Redefine DECLARE_NATIVE macro locally to include extension name.
+         * This avoids name collisions with the core, or with other extensions.
+         */
+        #undef DECLARE_NATIVE
+        #define DECLARE_NATIVE(name) \
+            Bounce N_${MOD}_##name(Level* level_)
+    }]
 ]
 e1/emit newline
 
@@ -224,9 +262,16 @@ if use-librebol [
             opt ["export" space] copy proto-name to ":"
         ]
         proto-name: to-c-name proto-name
-        e1/emit [info u-m-name {
+
+        ; We trickily shadow the global `librebol_specifier` with a version
+        ; extracted from the passed-in level.
+        ;
+        e1/emit [info {
             #define ${U-M-NAME}_INCLUDE_PARAMS_OF_${PROTO-NAME} \
-                (void)level_
+                LIBREBOL_SPECIFIER_USED();  /* global, before local define */ \
+                RebolSpecifier_internal* librebol_specifier; \
+                librebol_specifier = rebSpecifierFromLevel_internal(level_); \
+                LIBREBOL_SPECIFIER_USED();  /* local, after shadowing */
         }]
         e1/emit newline
     ]
@@ -254,28 +299,6 @@ dispatcher-forward-decls: collect [
         ]
         keep cscape [name {DECLARE_NATIVE(${Name})}]
     ]
-]
-
-if use-librebol [
-    e1/emit [mod {
-        /*
-        * Define DECLARE_NATIVE macro to include extension name.
-        * This avoids name collisions with the core, or with other extensions.
-        */
-        #define DECLARE_NATIVE(n) \
-            RebolValue* N_${MOD}_##n(void* level_)
-    }]
-]
-else [
-    e1/emit [mod {
-        /*
-        * Redefine DECLARE_NATIVE macro locally to include extension name.
-        * This avoids name collisions with the core, or with other extensions.
-        */
-        #undef DECLARE_NATIVE
-        #define DECLARE_NATIVE(n) \
-            Bounce N_${MOD}_##n(Level* level_)
-    }]
 ]
 
 e1/emit [dispatcher-forward-decls {
@@ -422,10 +445,16 @@ e/emit [{
      * extension implementations.
      */
     EXT_API RebolValue* RX_COLLATE_NAME(${Mod})(RebolApiTable *api) {
+        /*
+         * Compiler will warn if static librebol_specifier is defined w/o use.
+         */
+        LIBREBOL_SPECIFIER_USED();
+
       #ifdef LIBREBOL_USES_API_TABLE
         /*
-         * Only DLLs need rebXXX() APIs => g_librebol->rebXXX()
-         * Built-in extensions transform rebXXX() => direct RL_rebXXX() calls
+         * Librebol extensions use `rebXXX()` APIs => `g_librebol->rebXXX()`
+         *
+         * (Core extensions transform rebXXX() => direct RL_rebXXX() calls)
          */
         g_librebol = api;
       #else

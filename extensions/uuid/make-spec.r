@@ -1,7 +1,11 @@
 REBOL []
 
 name: 'UUID
-source: %uuid/mod-uuid.c
+source: [
+    %uuid/mod-uuid.c
+
+    <msc:/wd4459>  ; global shadowing ok, see LIBREBOL_SPECIFIER
+]
 includes: reduce [
     (join repo-dir %extensions/uuid/libuuid/)
     %prep/extensions/uuid ;for %tmp-extensions-uuid-init.inc
