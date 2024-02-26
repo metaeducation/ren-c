@@ -367,7 +367,7 @@ DECLARE_NATIVE(checksum)
 static int Mpi_From_Binary(mbedtls_mpi* X, const Value* binary)
 {
     size_t size;
-    unsigned char* buf = rebBytes(&size, binary);  // allocates w/rebMalloc()
+    unsigned char* buf = rebBytes(&size, binary);  // allocates w/rebAlloc()
 
     int result = mbedtls_mpi_read_binary(X, buf, size);
 
@@ -1286,7 +1286,7 @@ DECLARE_NATIVE(dh_compute_secret)
     Value* peer_key = rebValue("peer-key");
 
     size_t gy_size;
-    unsigned char* gy_buf = rebBytes(&gy_size, peer_key);  // is a rebMalloc()
+    unsigned char* gy_buf = rebBytes(&gy_size, peer_key);  // is a rebAlloc()
 
     rebRelease(peer_key);
 

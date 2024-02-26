@@ -94,7 +94,7 @@ DECLARE_NATIVE(generate)
     CFUUIDBytes bytes = CFUUIDGetUUIDBytes(newId);
     CFRelease(newId);
 
-    unsigned char* buf = (unsigned char*)(rebMalloc(16));
+    unsigned char* buf = rebAllocBytes(16);
 
     buf[0] = bytes.byte0;
     buf[1] = bytes.byte1;

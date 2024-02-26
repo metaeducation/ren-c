@@ -540,7 +540,7 @@ void Reify_Variadic_Feed_As_Array_Feed(
 //
 //  Run_All_Handle_Cleaners: C
 //
-// !!! There's an issue with handles storing pointers to rebMalloc()'d data,
+// !!! There's an issue with handles storing pointers to rebAlloc()'d data,
 // which is that they want to do their cleanup work before the system is
 // damaged by the shutdown process.  This is a naive extra pass done during
 // shutdown to deal with the problem--but it should be folded in with
@@ -646,7 +646,7 @@ static void Mark_Root_Series(void)
 
             if (Is_Node_Root_Bit_Set(s)) {
 
-                // This stub came from Alloc_Value() or rebMalloc(); the only
+                // This stub came from Alloc_Value() or rebAlloc(); the only
                 // references should be from the C stack.  So this pass is the
                 // only place where these stubs could be marked.
 
@@ -670,7 +670,7 @@ static void Mark_Root_Series(void)
                     //
                     Queue_Mark_Maybe_Fresh_Cell_Deep(Stub_Cell(s));  // [2]
                 }
-                else {  // It's a rebMalloc()
+                else {  // It's a rebAlloc()
                     assert(Series_Flavor(s) == FLAVOR_BINARY);
                 }
 
@@ -1021,7 +1021,7 @@ Count Sweep_Series(void)
                 // with Make_Series() and hasn't been managed.  It doesn't
                 // participate in the GC.  Leave it as is.
                 //
-                // (Alloc_Value() and rebMalloc() produce these by default)
+                // (Alloc_Value() and rebAlloc() produce these by default)
                 //
                 break;
 

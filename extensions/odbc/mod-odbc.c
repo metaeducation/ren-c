@@ -1717,7 +1717,7 @@ DECLARE_NATIVE(copy_odbc)
                 assert(len != SQL_NULL_DATA);
                 assert(len != SQL_NO_TOTAL);
                 assert(col->buffer == nullptr);
-                allocated = rebMalloc(len + 1);  // can be rebRepossess()'d
+                allocated = rebAllocBytes(len + 1);  // can be rebRepossess()'d
                 SQLLEN len_check;
                 rc = SQLGetData(
                     hstmt,

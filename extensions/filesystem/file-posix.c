@@ -741,7 +741,7 @@ Value* Get_Current_Dir_Value(void)
 
     size_t size = PATH_MAX - 1;
     if (uv_cwd(path_utf8, &size) == UV_ENOBUFS) {
-        path_utf8 = cast(char*, rebRealloc(path_utf8, size));  // includes \0
+        path_utf8 = s_cast(rebReallocBytes(path_utf8, size));  // includes \0
         size_t check = size;
         uv_cwd(path_utf8, &check);
         assert(check == size);
@@ -797,7 +797,7 @@ Value* Get_Current_Exec(void)
 
     size_t size = PATH_MAX - 1;
     if (uv_exepath(path_utf8, &size) == UV_ENOBUFS) {
-        path_utf8 = cast(char*, rebRealloc(path_utf8, size));  // includes \0
+        path_utf8 = s_cast(rebReallocBytes(path_utf8, size));  // includes \0
         size_t check = size;
         uv_exepath(path_utf8, &check);
         assert(check == size);

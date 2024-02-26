@@ -31,7 +31,7 @@
 // a Context* of the FRAME! that controls its lifetime, or EMPTY_ARRAY.  This
 // link field exists in the pointer immediately prior to the Value*, which
 // means it can be sniffed as NODE_FLAG_CELL, distinguished from handles that
-// were given back with rebMalloc(), so routines can discern them.
+// were given back with rebAlloc(), so routines can discern them.
 //
 // MISC() is currently unused, but could serve as a reference count or other
 // purpose.  It's not particularly necessary to have API handles use array

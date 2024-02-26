@@ -54,7 +54,7 @@
 // * To help Rebol clean up after itself for some kinds of "dangling" state,
 //   it will automatically free manually memory managed series made with
 //   Make_Series() but never passed to either Free_Unmanaged_Series() or
-//   Manage_Series().  These series are used to implement rebMalloc() so
+//   Manage_Series().  These series are used to implement rebAlloc() so
 //   that allocations will be automatically freed on failure.  But if you've
 //   written code that performs a raw malloc and triggers an abrupt failure
 //   up the stack, it will leak the malloc.

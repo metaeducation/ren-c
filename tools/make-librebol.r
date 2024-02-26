@@ -1068,15 +1068,15 @@ e-lib/emit [ver {
 
 
     /*
-     * TYPE-SAFE rebMalloc() MACRO VARIANTS
+     * TYPE-SAFE rebAlloc() MACRO VARIANTS
      *
-     * rebMalloc() offers some advantages over hosts just using malloc():
+     * rebAllocBytes() offers some advantages over hosts just using malloc():
      *
      *  1. Memory can be retaken to act as a BINARY! series without another
      *     allocation, via rebRepossess().
      *
      *  2. Memory is freed automatically in the case of a failure in the
-     *     frame where the rebMalloc() occured.  This is especially useful
+     *     frame where the rebAlloc() occured.  This is especially useful
      *     when mixing C code involving allocations with rebValue(), etc.
      *
      *  3. Memory gets counted in Rebol's knowledge of how much memory the
@@ -1096,16 +1096,16 @@ e-lib/emit [ver {
      */
 
     #define rebAlloc(T) \
-        ((T*)rebMalloc(sizeof(T)))
+        ((T*)rebAllocBytes(sizeof(T)))
 
     #define rebAllocN(T,n) \
-        ((T*)rebMalloc(sizeof(T) * (n)))
+        ((T*)rebAllocBytes(sizeof(T) * (n)))
 
     #define rebTryAlloc(T) \
-        ((T*)rebTryMalloc(sizeof(T)))
+        ((T*)rebTryAllocBytes(sizeof(T)))
 
     #define rebTryAllocN(T,n) \
-        ((T*)rebTryMalloc(sizeof(T) * (n)))
+        ((T*)rebTryAllocBytes(sizeof(T) * (n)))
 
     /* Used during boot to zero out global variables */
     inline static void rebReleaseAndNull(RebolValue** v) {

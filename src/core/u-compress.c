@@ -80,9 +80,9 @@ static const int window_bits_zlib_raw = -(MAX_WBITS);
 
 // Inflation and deflation tends to ultimately target series, so we want to
 // be using memory that can be transitioned to a series without reallocation.
-// See rebRepossess() for how rebMalloc()'d pointers can be used this way.
+// See rebRepossess() for how rebAlloc()'d pointers can be used this way.
 //
-// We go ahead and use the rebMalloc() for zlib's internal state allocation
+// We go ahead and use the rebAllocBytes() for zlib's internal state allocation
 // too, so that any fail() calls (e.g. out-of-memory during a rebRealloc())
 // will automatically free that state.  Thus inflateEnd() and deflateEnd()
 // only need to be called if there is no failure.  There's no need to
@@ -91,10 +91,10 @@ static const int window_bits_zlib_raw = -(MAX_WBITS);
 // As a side-benefit, fail() can be used freely for other errors during the
 // inflate or deflate.
 
-static void *zalloc(void *opaque, unsigned nr, unsigned size)
+static void* zalloc(void *opaque, unsigned nr, unsigned size)
 {
     UNUSED(opaque);
-    return rebMalloc(nr * size);
+    return rebAllocBytes(nr * size);
 }
 
 static void zfree(void *opaque, void *addr)
@@ -109,7 +109,7 @@ static void zfree(void *opaque, void *addr)
 //
 static Context* Error_Compression(const z_stream *strm, int ret)
 {
-    // rebMalloc() fails vs. returning nullptr, so as long as zalloc() is used
+    // rebAlloc() fails vs. returning nullptr, so as long as zalloc() is used
     // then Z_MEM_ERROR should never happen.
     //
     assert(ret != Z_MEM_ERROR);
@@ -209,7 +209,7 @@ Byte* Compress_Alloc_Core(
     //
     assert(buf_size >= strm.total_out);
     if (buf_size - strm.total_out > 1024)
-        output = cast(Byte*, rebRealloc(output, strm.total_out));
+        output = rebReallocBytes(output, strm.total_out);
 
     deflateEnd(&strm);  // done last (so strm variables can be read up to end)
     return output;
@@ -347,7 +347,7 @@ Byte* Decompress_Alloc_Core(
         if (max >= 0 and buf_size > cast(Size, max))
             buf_size = max;
 
-        output = cast(Byte*, rebRealloc(output, buf_size));
+        output = rebReallocBytes(output, buf_size);
 
         // Extending keeps the content but may realloc the pointer, so
         // put it at the same spot to keep writing to
@@ -362,7 +362,7 @@ Byte* Decompress_Alloc_Core(
     //
     assert(buf_size >= strm.total_out);
     if (strm.total_out - buf_size > 1024)
-        output = cast(Byte*, rebRealloc(output, strm.total_out));
+        output = rebReallocBytes(output, strm.total_out);
 
     if (size_out)
         *size_out = strm.total_out;

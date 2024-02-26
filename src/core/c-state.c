@@ -67,7 +67,7 @@ void Rollback_Globals_To_State(struct Reb_State *s)
     // Free any manual series that were extant (e.g. Make_Series() nodes
     // which weren't created with NODE_FLAG_MANAGED and were not transitioned
     // into the managed state).  This will include the series used as backing
-    // store for rebMalloc() calls.
+    // store for rebAlloc() calls.
     //
     assert(Series_Dynamic_Used(g_gc.manuals) >= s->manuals_len);
     while (Series_Dynamic_Used(g_gc.manuals) != s->manuals_len) {

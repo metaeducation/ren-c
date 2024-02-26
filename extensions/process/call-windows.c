@@ -302,11 +302,11 @@ Bounce Call_Core(Level* level_) {
 
     UNUSED(REF(info));
 
-    char *inbuf = nullptr;
+    unsigned char* inbuf = nullptr;
     size_t inbuf_size = 0;
-    char *outbuf = nullptr;
+    unsigned char* outbuf = nullptr;
     size_t outbuf_used = 0;
-    char *errbuf = nullptr;
+    unsigned char* errbuf = nullptr;
     size_t errbuf_used = 0;
 
     //=//// INPUT SOURCE SETUP ////////////////////////////////////////////=//
@@ -348,14 +348,14 @@ Bounce Call_Core(Level* level_) {
         // *not* use those encodings, and transmit raw bytes.
         //
         inbuf_size = rebSpellInto(nullptr, 0, ARG(input));
-        inbuf = rebAllocN(char, inbuf_size + 1);
-        size_t check = rebSpellInto(inbuf, inbuf_size, ARG(input));
+        inbuf = rebAllocBytes(inbuf_size + 1);
+        size_t check = rebSpellInto(cast(char*, inbuf), inbuf_size, ARG(input));
         assert(check == inbuf_size);
         UNUSED(check);
         goto input_via_buffer; }
 
       case REB_BINARY:  // feed standard input from BINARY! (full-band)
-        inbuf = s_cast(rebBytes(&inbuf_size, ARG(input)));
+        inbuf = rebBytes(&inbuf_size, ARG(input));
 
       input_via_buffer:
 
@@ -469,14 +469,14 @@ Bounce Call_Core(Level* level_) {
             outbuf_capacity = BUF_SIZE_CHUNK;
             outbuf_used = 0;
 
-            outbuf = rebAllocN(char, outbuf_capacity);
+            outbuf = rebAllocBytes(outbuf_capacity);
             handles[count++] = hOutputRead;
         }
         if (hErrorRead != NULL) {
             errbuf_capacity = BUF_SIZE_CHUNK;
             errbuf_used = 0;
 
-            errbuf = rebAllocN(char, errbuf_capacity);
+            errbuf = rebAllocBytes(errbuf_capacity);
             handles[count++] = hErrorRead;
         }
 
@@ -572,9 +572,7 @@ Bounce Call_Core(Level* level_) {
                         outbuf_used += n;
                         if (outbuf_used >= outbuf_capacity) {
                             outbuf_capacity += BUF_SIZE_CHUNK;
-                            outbuf = cast(char*,
-                                rebRealloc(outbuf, outbuf_capacity)
-                            );
+                            outbuf = rebReallocBytes(outbuf, outbuf_capacity);
                             if (outbuf == NULL)  // !!! never with rebRealloc
                                 goto kill;
                         }
@@ -601,9 +599,7 @@ Bounce Call_Core(Level* level_) {
                         errbuf_used += n;
                         if (errbuf_used >= errbuf_capacity) {
                             errbuf_capacity += BUF_SIZE_CHUNK;
-                            errbuf = cast(char*,
-                                rebRealloc(errbuf, errbuf_capacity)
-                            );
+                            errbuf = rebReallocBytes(errbuf, errbuf_capacity);
                             if (errbuf == NULL)  // !!! never with rebRealloc
                                 goto kill;
                         }

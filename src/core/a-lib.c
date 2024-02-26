@@ -142,10 +142,10 @@ inline static const RebolValue* NULLIFY_NULLED(const Value* value) {
 
 
 //
-//  rebMalloc: API
+//  rebAllocBytes: API
 //
-// * Unlike plain malloc(), this will fail() instead of return null if an
-//   allocation cannot be fulfilled.
+// * Unlike something like malloc(), this will fail() instead of return null
+//   if an allocation cannot be fulfilled.
 //
 // * Like plain malloc(), if size is zero, the implementation just has to
 //   return something that free() will take.  A backing series is added in
@@ -155,17 +155,17 @@ inline static const RebolValue* NULLIFY_NULLED(const Value* value) {
 // * Because of the above points, null is *never* returned.
 //
 // * In order to make it possible to rebRepossess() the memory as a BINARY!
-//   that is then safe to alias as text, it always has an extra 0 byte at
+//   that is then safe to alias as TEXT!, it always has an extra 0 byte at
 //   the end of the data area.
 //
 // * It tries to be like malloc() by giving back a pointer "suitably aligned
 //   for the size of any fundamental type".  See notes on ALIGN_SIZE.
 //
-// !!! rebAlignedMalloc() could exist to take an alignment, which could save
-// on wasted bytes when ALIGN_SIZE > sizeof(Series*)...or work with "weird"
-// large fundamental types that need more alignment than ALIGN_SIZE.
+// !!! rebAllocBytesAligned() could exist to take an alignment, which could
+// save on wasted bytes when ALIGN_SIZE > sizeof(Series*)...or work with
+// "weird" large fundamental types that need more alignment than ALIGN_SIZE.
 //
-void* API_rebMalloc(size_t size)
+unsigned char* API_rebAllocBytes(size_t size)
 {
     ENTER_API;
 
@@ -192,7 +192,7 @@ void* API_rebMalloc(size_t size)
     //
     // https://stackoverflow.com/a/37184840
     //
-    // It may be that rebMalloc() and rebRealloc() should initialize with 0
+    // It may be that rebAalloc() and rebRealloc() should initialize with 0
     // to defend against that, but that has a cost.  For now we make no such
     // promise--and leave it uninitialized so that address sanitizer notices
     // when bytes are used that haven't been assigned.
@@ -203,18 +203,18 @@ void* API_rebMalloc(size_t size)
 }
 
 //
-//  rebTryMalloc: API
+//  rebTryAllocBytes: API
 //
-// Variant of rebMalloc() that returns nullptr on failure.  To accomplish this
-// it just uses a RESCUE_SCOPE to intercept any fail() that happens in the
+// Variant of rebAllocBytes() that returns nullptr on failure.  To accomplish
+// this it just uses a RESCUE_SCOPE to intercept any fail() that happens in the
 // course of the underlying series creation.
 //
-void* API_rebTryMalloc(size_t size)
+unsigned char* API_rebTryAllocBytes(size_t size)
 {
-    void* p;
+    Byte* p;
 
     RESCUE_SCOPE_IN_CASE_OF_ABRUPT_FAILURE {
-        p = API_rebMalloc(size);
+        p = API_rebAllocBytes(size);
         CLEANUP_BEFORE_EXITING_RESCUE_SCOPE;
         return p;
     } ON_ABRUPT_FAILURE (Context* e) {
@@ -225,30 +225,29 @@ void* API_rebTryMalloc(size_t size)
 
 
 //
-//  rebRealloc: API
+//  rebReallocBytes: API
 //
-// * Like plain realloc(), null is legal for ptr (despite the fact that
-//   rebMalloc() never returns null, this can still be useful)
+// * Like plain realloc(), null is legal for ptr
 //
 // * Like plain realloc(), it preserves the lesser of the old data range or
 //   the new data range, and memory usage drops if new_size is smaller:
 //
 // https://stackoverflow.com/a/9575348
 //
-// * Unlike plain realloc() (but like rebMalloc()), this fails instead of
-//   returning null, hence it's "safe" to say `ptr = rebRealloc(ptr, new_size)`
+// * Unlike plain realloc() (but like rebAllocBytes()), this fails instead of
+//   returning null, so "safe" to say `ptr = rebReallocBytes(ptr, new_size)`
 //
 // * A 0 size is considered illegal.  This is consistent with the C11 standard
-//   for realloc(), but not with malloc() or rebMalloc()...which allow it.
+//   for realloc(), but not with malloc() or rebAllocBytes()...which allow it.
 //
-void* API_rebRealloc(void *ptr, size_t new_size)
+unsigned char* API_rebReallocBytes(void *ptr, size_t new_size)
 {
     ENTER_API;
 
     assert(new_size > 0);  // realloc() deprecated this as of C11 DR 400
 
     if (not ptr)  // C realloc() accepts null
-        return API_rebMalloc(new_size);
+        return API_rebAllocBytes(new_size);
 
     Binary** ps = cast(Binary**, ptr) - 1;
     Unpoison_Memory_If_Sanitize(ps, sizeof(Binary*));  // fetch `s` underruns
@@ -259,10 +258,10 @@ void* API_rebRealloc(void *ptr, size_t new_size)
     REBLEN old_size = Binary_Len(s) - ALIGN_SIZE;
 
     // !!! It's less efficient to create a new series with another call to
-    // rebMalloc(), but simpler for the time being.  Switch to do this with
+    // rebAalloc(), but simpler for the time being.  Switch to do this with
     // the same series node.
     //
-    void *reallocated = API_rebMalloc(new_size);
+    Byte* reallocated = API_rebAllocBytes(new_size);
     memcpy(reallocated, ptr, old_size < new_size ? old_size : new_size);
     API_rebFree(ptr);
 
@@ -349,7 +348,7 @@ void API_rebFree(void *ptr) {
 //
 // !!! All bytes in the allocation are expected to be initialized by this
 // point, as failure to do so will mean reads crash the interpreter.  See
-// remarks in rebMalloc() about the issue, and possibly doing zero fills.
+// remarks in rebAllocBytes() about the issue, and possibly doing zero fills.
 //
 // !!! It might seem tempting to use (Binary_Len(s) - ALIGN_SIZE).  However,
 // some routines make allocations bigger than they ultimately need and do not
@@ -370,7 +369,7 @@ RebolValue* API_rebRepossess(void* ptr, size_t size)
     assert(Get_Series_Flag(s, DONT_RELOCATE));
 
     if (size > Binary_Len(s) - ALIGN_SIZE)
-        fail ("Attempt to rebRepossess() more than rebMalloc() capacity");
+        fail ("Attempt to rebRepossess() more than rebAlloc() capacity");
 
     Clear_Node_Root_Bit(s);
     Clear_Series_Flag(s, DONT_RELOCATE);
@@ -1946,7 +1945,7 @@ REBWCHAR* API_rebSpellWideMaybe(
 
     REBLEN len = Spell_Into_Wide(nullptr, 0, v);
     REBWCHAR* result = cast(
-        REBWCHAR*, rebMalloc(sizeof(REBWCHAR) * (len + 1))
+        REBWCHAR*, rebAllocBytes(sizeof(REBWCHAR) * (len + 1))
     );
 
     REBLEN check = Spell_Into_Wide(result, len, v);
@@ -2155,7 +2154,7 @@ RebolValue* API_rebRescue(
 //
 // Variant of rebRescue() with a handler, similar to Ruby's rescue2 operation.
 //
-// 1. We want API allocations via rebValue() or rebMalloc() that occur in the
+// 1. We want API allocations via rebValue() or rebAlloc() that occur in the
 //    body of the C function for the rebRescue() to be automatically cleaned
 //    up in the case of an error.  There must be a frame to attach them to.
 //
@@ -2540,7 +2539,7 @@ void API_rebUnmanage(void *p)
 
     Node* n = cast(Node*, p);
     if (Is_Node_A_Stub(n))
-        fail ("rebUnmanage() not yet implemented for rebMalloc() data");
+        fail ("rebUnmanage() not yet implemented for rebAlloc() data");
 
     Value* v = cast(Value*, n);
     assert(Is_Api_Value(v));
