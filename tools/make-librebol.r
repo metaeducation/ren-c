@@ -139,7 +139,7 @@ emit-proto: func [return: [~] proto] [
             ;
             ; But now, it's needed for passing in the specifier.
 
-            "RebolSpecifier*" 'specifier
+            "RebolSpecifier**" 'specifier_ref
 
             copy paramlist: to "const void*"  ; signal start of variadic
 
@@ -187,7 +187,7 @@ extern-prototypes: map-each-api [
 
 lib-struct-fields: map-each-api [
     cfunc-params: delimit ", " compose [
-        (if is-variadic ["RebolSpecifier* specifier"])
+        (if is-variadic ["RebolSpecifier** specifier_ref"])
         (spread map-each [type var] paramlist [spaced [type var]])
         (if is-variadic [
             spread ["const void* p" "void* vaptr"]
@@ -236,7 +236,7 @@ for-each-api [
     append variadic-api-c-helpers cscape [:api {
         $<Maybe Attributes>
         inline static $<Return-Type> $<Name>_helper(  /* C version */
-            RebolSpecifier* specifier,
+            RebolSpecifier** specifier_ref,
             $<Helper-Params, >
             const void* p, ...
         ){
@@ -244,7 +244,7 @@ for-each-api [
             va_start(va, p);  /* $<Name>() calls va_end() */
 
             $<maybe return-keyword >LIBREBOL_PREFIX($<Name>)(
-                specifier,
+                specifier_ref,  /* pointer-to-pointer, may update variable */
                 $<Proxied-Args, >
                 p, &va  /* non-null vaptr means p is first item */
             );
@@ -256,7 +256,7 @@ for-each-api [
         template <typename... Ts>
         $<Maybe Attributes>
         inline $<Return-Type> $<Name>_helper(  /* C++ version */
-            RebolSpecifier* specifier,
+            RebolSpecifier** specifier_ref,
             $<Helper-Params, >
             const Ts & ...args
         ){
@@ -264,7 +264,7 @@ for-each-api [
             rebVariadicPacker_internal(0, p, args...);
 
             $<maybe return-keyword >LIBREBOL_PREFIX($<Name>)(
-                specifier,
+                specifier_ref,  /* pointer-to-pointer, may be updated */
                 $<Proxied-Args, >
                 p, nullptr  /* null vaptr means p is array of items */
             );

@@ -191,7 +191,7 @@ if use-librebol [
     e1/emit [{
         /* extension configuration says `use-librebol: true` */
 
-        #define LIBREBOL_SPECIFIER librebol_specifier
+        #define LIBREBOL_SPECIFIER (&librebol_specifier)
         #include "rebol.h"  /* not %sys-core.h ! */
 
         /*
