@@ -113,11 +113,8 @@ DECLARE_NATIVE(request_file_p)
 
     Value* error = nullptr;  // error saved to raise after buffers freed
 
-    bool saving = rebDid(rebArgR("save"));
-    bool multi = rebDid(rebArgR("multi"));
-    Value* initial = rebArg("initial");
-    Value* title = rebArg("title");
-    Value* filter = rebArg("filter");
+    bool saving = rebDid("save");
+    bool multi = rebDid("multi");
 
   #if TO_WINDOWS
     OPENFILENAME ofn;
@@ -128,7 +125,7 @@ DECLARE_NATIVE(request_file_p)
     ofn.hInstance = nullptr;  // !!! Also should be set for context (app type)
 
     WCHAR *filter_utf16;
-    if (filter) {
+    if (rebDid("filter")) {
         //
         // The technique used is to separate the filters by '\0', and end
         // with a doubled up `\0\0`.  Ren-C strings don't allow embedded `\0`
@@ -137,11 +134,11 @@ DECLARE_NATIVE(request_file_p)
         // replace them in the extracted wide character buffer.
         //
         rebElide(
-            "for-each item", filter, "[",
+            "for-each item filter [",
                 "if find item tab [fail {TAB chars not legal in filters}]",
             "]"
         );
-        filter_utf16 = rebSpellWide("delimit/tail tab", filter);
+        filter_utf16 = rebSpellWide("delimit/tail tab filter");
         WCHAR* pwc;
         for (pwc = filter_utf16; *pwc != 0; ++pwc) {
             if (*pwc == '\t')
@@ -174,8 +171,8 @@ DECLARE_NATIVE(request_file_p)
     ofn.nMaxFileTitle = 0;  // ...but we want the full path
 
     WCHAR *initial_dir_utf16;
-    if (initial and rebUnboxLogic("not empty?", initial)) {
-        WCHAR* initial_utf16 = rebSpellWide("file-to-local/full", initial);
+    if (rebNot("empty-or-null? initial")) {
+        WCHAR* initial_utf16 = rebSpellWide("file-to-local/full initial");
         size_t initial_len = wcslen(initial_utf16);
 
         // If the last character doesn't indicate a directory, that means
@@ -207,7 +204,7 @@ DECLARE_NATIVE(request_file_p)
         initial_dir_utf16 = nullptr;
     ofn.lpstrInitialDir = initial_dir_utf16;
 
-    WCHAR *title_utf16 = rebSpellWideMaybe(title);
+    WCHAR *title_utf16 = rebSpellWideMaybe("title");
     ofn.lpstrTitle = title_utf16;  // nullptr defaults to "Save As" or "Open"
 
     // !!! What about OFN_NONETWORKBUTTON?
@@ -312,9 +309,9 @@ DECLARE_NATIVE(request_file_p)
     if (not gtk_init_check(&argc, nullptr))
         fail ("gtk_init_check() failed");
 
-    UNUSED(REF(filter));  // not implemented in GTK for Atronix R3
+    // Note: FILTER not implemented in GTK for Atronix R3
 
-    char *title_utf8 = rebSpellMaybe(title);
+    char *title_utf8 = rebSpellMaybe("title");
 
     // !!! Using a null parent causes console to output:
     // "GtkDialog mapped without a transient parent. This is discouraged."
@@ -415,10 +412,6 @@ DECLARE_NATIVE(request_file_p)
     );
   #endif
 
-    rebRelease(initial);
-    rebRelease(title);
-    rebRelease(filter);
-
     // The error is broken out this way so that any allocated strings can
     // be freed before the failure.
     //
@@ -502,9 +495,6 @@ DECLARE_NATIVE(request_dir_p)
     Value* result = nullptr;
     Value* error = nullptr;
 
-    Value* title = rebArg("title");
-    Value* path = rebArg("path");
-
   #if defined(USE_WINDOWS_DIRCHOOSER)
     //
     // COM must be initialized to use SHBrowseForFolder.  BIF_NEWDIALOGSTYLE
@@ -529,7 +519,7 @@ DECLARE_NATIVE(request_dir_p)
     display[0] = '\0';
     bi.pszDisplayName = display; // assumed length is MAX_PATH
 
-    WCHAR* title_utf16 = rebSpellWideMaybe(title);
+    WCHAR* title_utf16 = rebSpellWideMaybe("title");
     if (title_utf8)
         bi.lpszTitle = title_utf16;
     else
@@ -550,7 +540,7 @@ DECLARE_NATIVE(request_dir_p)
     // field is called `bi.lParam`, it gets passed as the `lpData`)
     //
     bi.lpfn = ReqDirCallbackProc;
-    WCHAR* path_utf16 = rebSpellWideMaybe(path);
+    WCHAR* path_utf16 = rebSpellWideMaybe("path");
     bi.lParam = i_cast(LPARAM, path_utf16);  // nullptr uses default
 
     LPCITEMIDLIST pFolder = SHBrowseForFolder(&bi);
@@ -571,9 +561,6 @@ DECLARE_NATIVE(request_dir_p)
         "make error {Temporary implementation of REQ-DIR only on Windows}"
     );
   #endif
-
-    rebRelease(title);
-    rebRelease(path);
 
     if (error != nullptr)
         rebJumps ("fail", rebR(error));

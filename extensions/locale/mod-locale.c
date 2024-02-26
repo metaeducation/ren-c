@@ -65,8 +65,8 @@ DECLARE_NATIVE(locale)
             "language*", rebI(LOCALE_SNATIVELANGNAME),
             "territory", rebI(LOCALE_SENGCOUNTRY),
             "territory*", rebI(LOCALE_SCOUNTRY),
-        "] @", rebArgR("category"), "else [",
-            "fail [{Invalid locale category:} @", rebArgR("category"), "]",
+        "] category else [",
+            "fail [{Invalid locale category:} category]",
         "]"  // !!! review using fail with ID-based errors
     );
 
@@ -163,15 +163,13 @@ DECLARE_NATIVE(setlocale)
         "]"
     );
 
-    int cat = rebUnbox("select", map, "@", rebArgR("category"), "else [-1]");
+    int cat = rebUnbox("select", map, "category else [-1]");
     rebRelease(map);
 
     if (cat == -1)
-        rebJumps(
-            "fail [{Invalid locale category:} @", rebArgR("category"), "]"
-        );
+        rebJumps("fail [{Invalid locale category:} category]");
 
-    char* value_utf8 = rebSpell(rebArgR("value"));
+    char* value_utf8 = rebSpell("value");
     const char *result = setlocale(cat, value_utf8);
     rebFree(value_utf8);
 

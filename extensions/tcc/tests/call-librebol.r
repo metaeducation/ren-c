@@ -41,7 +41,7 @@ call-librebol: make-native [
     "Show It's Possible to Call libRebol without GNU toolchain installed"
     n [integer!]
 ]{
-    int n = rebUnboxInteger(rebArgR("n"));
+    int n = rebUnboxInteger("n");
     rebElide("print [{Hello, libRebol World:}", rebI(n), "]");
     return rebInteger(n + 20);
 }

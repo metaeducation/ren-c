@@ -345,7 +345,7 @@ DECLARE_NATIVE(odbc_set_char_encoding)
     ODBC_INCLUDE_PARAMS_OF_ODBC_SET_CHAR_ENCODING;
 
     char_column_encoding = cast(CharColumnEncoding, rebUnboxInteger(
-        "switch @", rebArgR("encoding"), "[",
+        "switch encoding [",
             "'utf-8 [", rebI(CHAR_COL_UTF8), "]",
             "'ucs-2 [", rebI(CHAR_COL_UTF16), "]",  // TBD: limited codepoints
             "'utf-16 [", rebI(CHAR_COL_UTF16), "]",
@@ -436,7 +436,7 @@ DECLARE_NATIVE(open_connection)
 
     // Connect to the Driver
 
-    SQLWCHAR *connect_string = rebSpellWide(rebArgR("spec"));
+    SQLWCHAR *connect_string = rebSpellWide("spec");
 
     SQLSMALLINT out_connect_len;
     rc = SQLDriverConnectW(
@@ -496,7 +496,7 @@ DECLARE_NATIVE(open_statement)
     ODBC_INCLUDE_PARAMS_OF_OPEN_STATEMENT;
 
     Connection* conn = rebUnboxHandle(Connection*,
-        "ensure handle! pick @", rebArgR("connection"), "'hdbc"
+        "ensure handle! connection.hdbc"
     );
     SQLHDBC hdbc = conn->hdbc;
 
@@ -509,7 +509,7 @@ DECLARE_NATIVE(open_statement)
 
     Value* hstmt_value = rebHandle(hstmt, sizeof(hstmt), nullptr);
 
-    rebElide("poke", rebArgR("statement"), "'hstmt", rebR(hstmt_value));
+    rebElide("statement.hstmt:", rebR(hstmt_value));
 
     return rebLogic(true);
 }
@@ -546,9 +546,9 @@ SQLRETURN ODBC_BindParameter(
     //
     // https://forum.rebol.info/t/689/2
     //
-    SQLSMALLINT c_type = rebUnboxInteger("switch/type", rebQ(v), "[",
+    SQLSMALLINT c_type = rebUnboxInteger("switch/type @", v, "[",
         "quasiform! [",
-            "switch", rebQ(v), "[",
+            "switch @", v, "[",
                 "'~null~ [", rebI(SQL_C_DEFAULT), "]",
                 "'~true~ [", rebI(SQL_C_BIT), "]",
                 "'~false~ [", rebI(SQL_C_BIT), "]",
@@ -1193,11 +1193,8 @@ DECLARE_NATIVE(insert_odbc)
 {
     ODBC_INCLUDE_PARAMS_OF_INSERT_ODBC;
 
-    Value* sql = rebArg("sql");
-    Value* statement = rebArg("statement");
-
     SQLHSTMT hstmt = rebUnboxHandle(
-        SQLHSTMT*, "ensure handle! pick", statement, "'hstmt"
+        SQLHSTMT*, "ensure handle! statement.hstmt"
     );
 
     SQLRETURN rc;
@@ -1212,19 +1209,21 @@ DECLARE_NATIVE(insert_odbc)
     bool use_cache = false;
 
     bool get_catalog = rebUnboxLogic(
-        "switch/type first", sql, "[",
+        "switch/type first sql [",
             "&lit-word? [true]",  // like Rebol2: 'tables, 'columns, 'types
             "text! [false]",
         "] else [",
             "fail [",
                 "{SQL dialect must start with WORD! or TEXT! value}",
-                "mold", sql,
+                "mold sql"
             "]",
         "]"
     );
 
     if (get_catalog) {
+        Value* sql = rebValue("sql");
         rc = Get_ODBC_Catalog(hstmt, sql);
+        rebRelease(sql);
     }
     else {
         // Prepare/Execute statement, when first element in the block is a
@@ -1234,14 +1233,13 @@ DECLARE_NATIVE(insert_odbc)
         // then prepare a new statement.
         //
         use_cache = rebUnboxLogic(
-            "strict-equal? first", sql,
-                "ensure [<opt> text!] pick", statement, "'string"
+            "strict-equal? (first sql) ensure [<opt> text!] statement.string"
         );
 
         SQLLEN sql_index = 1;
 
         if (not use_cache) {
-            SQLWCHAR *sql_string = rebSpellWide("first", sql);
+            SQLWCHAR *sql_string = rebSpellWide("first sql");
 
             rc = SQLPrepareW(
                 hstmt,
@@ -1258,9 +1256,7 @@ DECLARE_NATIVE(insert_odbc)
             //
             // !!! Could re-use value with existing series if read only
             //
-            rebElide(
-                "poke", statement, "'string", "(copy first", sql, ")"
-            );
+            rebElide("statement.string: copy first sql");
         }
 
         // The SQL string may contain ? characters, which indicates that it is
@@ -1268,8 +1264,7 @@ DECLARE_NATIVE(insert_odbc)
         // different quarantined part of the query is to protect against SQL
         // injection.
 
-        SQLLEN num_params
-            = rebUnbox("length of", sql) - sql_index;  // after SQL
+        SQLLEN num_params = rebUnbox("length of sql") - sql_index;
 
         ++sql_index;
 
@@ -1279,7 +1274,7 @@ DECLARE_NATIVE(insert_odbc)
 
             SQLLEN n;
             for (n = 0; n < num_params; ++n, ++sql_index) {
-                Value* value = rebValue("pick", sql, rebI(sql_index));
+                Value* value = rebValue("pick sql", rebI(sql_index));
                 rc = ODBC_BindParameter(
                     hstmt,
                     &params[n],
@@ -1337,12 +1332,6 @@ DECLARE_NATIVE(insert_odbc)
         }
     }
 
-    //=//// RELEASE SQL BEFORE ANY `return` FROM THIS FUNCTION ///////////=//
-
-    // Statement is still used..
-
-    rebRelease(sql);
-
     //=//// RETURN RECORD COUNT IF NO RESULT ROWS /////////////////////////=//
     //
     // Insert/Update/Delete statements do not return records, and this is
@@ -1359,7 +1348,6 @@ DECLARE_NATIVE(insert_odbc)
         if (not SQL_SUCCEEDED(rc))
             rebJumps ("fail", Error_ODBC_Stmt(hstmt));
 
-        rebRelease(statement);
         return rebInteger(num_rows);
     }
 
@@ -1376,16 +1364,11 @@ DECLARE_NATIVE(insert_odbc)
     // very large so you don't want them all in memory at once.  The COPY-ODBC
     // routine does this.
 
-    if (use_cache) {
-        Value* cache = rebValue(
-            "ensure block! pick", statement, "'titles"
-        );
-        rebRelease(statement);
-        return cache;
-    }
+    if (use_cache)
+        return rebValue("ensure block! statement.titles");
 
     Value* old_columns_value = rebValue(
-        "ensure [<opt> handle!] pick", statement, "'columns"
+        "ensure [~null~ handle!] statement.columns"
     );
     if (old_columns_value) {
         //
@@ -1406,17 +1389,12 @@ DECLARE_NATIVE(insert_odbc)
     rebUnmanageMemory(list->columns);
 
     list->num_columns = num_columns;
-    if (not list->columns) {
-        rebFree(list);
-        rebJumps ("fail {Couldn't allocate column buffers!}");
-    }
-
     list->next = all_columnlists;
     all_columnlists = list;
 
     Value* columns_value = rebHandle(list, 1, &Free_ColumnList);
 
-    rebElide("poke", statement, "'columns", rebR(columns_value));
+    rebElide("statement.columns:", rebR(columns_value));
 
     Describe_ODBC_Results(hstmt, num_columns, list->columns);
 
@@ -1427,9 +1405,7 @@ DECLARE_NATIVE(insert_odbc)
 
     // remember column titles if next call matches, return them as the result
     //
-    rebElide("poke", statement, "'titles", titles);
-
-    rebRelease(statement);
+    rebElide("statement.titles:", titles);
     return titles;
 }
 
@@ -1619,11 +1595,11 @@ DECLARE_NATIVE(copy_odbc)
     ODBC_INCLUDE_PARAMS_OF_COPY_ODBC;
 
     SQLHSTMT hstmt = rebUnboxHandle(SQLHSTMT,
-        "ensure handle! pick", rebArgR("statement"), "'hstmt"
+        "ensure handle! statement.hstmt"
     );
 
     ColumnList* list = rebUnboxHandle(ColumnList*,
-        "ensure handle! pick", rebArgR("statement"), "'columns"
+        "ensure handle! statement.columns"
     );
     Column* columns = list->columns;
 
@@ -1640,7 +1616,7 @@ DECLARE_NATIVE(copy_odbc)
     // compares-0 based row against num_rows, so -1 is chosen to never match
     // and hence mean "as many rows as available"
     //
-    SQLLEN num_rows = rebUnbox("any [@", rebArgR("part"), "-1]");
+    SQLLEN num_rows = rebUnbox("any [part, -1]");
 
     Value* results = rebValue(
         "make block!", rebI(num_rows == -1 ? 10 : num_rows)
@@ -1801,13 +1777,11 @@ DECLARE_NATIVE(update_odbc)
 
     // Get connection handle
     //
-    SQLHDBC hdbc = rebUnboxHandle(SQLHDBC,
-        "ensure handle! pick", rebArgR("connection"), "'hdbc"
-    );
+    SQLHDBC hdbc = rebUnboxHandle(SQLHDBC, "ensure handle! connection.hdbc");
 
     SQLRETURN rc;
 
-    bool access = rebUnboxLogic(rebArgR("access"));
+    bool access = rebUnboxLogic("access");
     rc = SQLSetConnectAttr(
         hdbc,
         SQL_ATTR_ACCESS_MODE,
@@ -1821,7 +1795,7 @@ DECLARE_NATIVE(update_odbc)
     if (not SQL_SUCCEEDED(rc))
         rebJumps ("fail", Error_ODBC_Dbc(hdbc));
 
-    bool commit = rebUnboxLogic(rebArgR("commit"));
+    bool commit = rebUnboxLogic("commit");
     rc = SQLSetConnectAttr(
         hdbc,
         SQL_ATTR_AUTOCOMMIT,
@@ -1850,22 +1824,18 @@ DECLARE_NATIVE(close_statement)
 {
     ODBC_INCLUDE_PARAMS_OF_CLOSE_STATEMENT;
 
-    Value* statement = rebArg("statement");
-
     Value* columns_value = rebValue(
-        "ensure [<opt> handle!] pick", statement, "'columns"
+        "ensure [~null~ handle!] statement.columns"
     );
     if (columns_value) {
         ColumnList* list = rebUnboxHandle(ColumnList*, columns_value);
         Force_ColumnList_Cleanup(list);
-        rebElide("poke", statement, "'columns", "null");
+        rebElide("statement.columns: null");
 
         rebRelease(columns_value);
     }
 
-    Value* hstmt_value = rebValue(
-        "ensure [<opt> handle!] pick", statement, "'hstmt"
-    );
+    Value* hstmt_value = rebValue("ensure [~null~ handle!] statement.hstmt");
     if (hstmt_value) {
         SQLHSTMT hstmt = rebUnboxHandle(SQLHSTMT, hstmt_value);
         assert(hstmt);
@@ -1875,12 +1845,10 @@ DECLARE_NATIVE(close_statement)
         rebModifyHandleCData(hstmt_value, SQL_NULL_HANDLE);
         rebModifyHandleCleaner(hstmt_value, nullptr);
 
-        rebElide("poke", statement, "'hstmt", "null");
+        rebElide("statement.hstmt: null");
 
         rebRelease(hstmt_value);
     }
-
-    rebRelease(statement);
 
     return rebLogic(true);
 }
@@ -1897,11 +1865,7 @@ DECLARE_NATIVE(close_connection)
 {
     ODBC_INCLUDE_PARAMS_OF_CLOSE_CONNECTION;
 
-    Value* connection = rebArg("connection");
-
-    Value* hdbc_value = rebValue(
-        "ensure [<opt> handle!] pick", connection, "'hdbc"
-    );
+    Value* hdbc_value = rebValue("ensure [~null~ handle!] connection.hdbc");
     if (not hdbc_value)  // connection was already closed (be tolerant?)
         return rebLogic(false);
 
@@ -1915,14 +1879,12 @@ DECLARE_NATIVE(close_connection)
     //
     Force_Connection_Cleanup(conn);
 
-    rebElide("poke", connection, "'hdbc", "null");
+    rebElide("connection.hdbc: null");
 
     // We could reference count how many connections were open and close the
     // global `henv` here if that seemed important (vs waiting for SHUTDOWN*).
     // But that could also slow down opening another connection, so favor
     // less complexity for now.
-
-    rebRelease(connection);
 
     return rebLogic(true);
 }

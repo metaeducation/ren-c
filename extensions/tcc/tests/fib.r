@@ -16,7 +16,7 @@ c-fib: make-native [
     "nth Fibonacci Number"
     n [integer!]
 ]{
-    int n = rebUnboxInteger(rebArgR("n"));
+    int n = rebUnboxInteger(rebArgR("n"));  // optimization over just "n"
 
     if (n < 0) { return rebInteger(-1); }
     if (n <= 1) { return rebInteger(n); }
