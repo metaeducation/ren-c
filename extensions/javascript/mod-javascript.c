@@ -24,7 +24,7 @@
 //
 //=//// NOTES /////////////////////////////////////////////////////////////=//
 //
-// * This extension expands the RL_rebXXX() API with new entry points.  It
+// * This extension expands librebol with new API_rebXXX() entry points.  It
 //   was tried to avoid this--doing everything with helper natives.  This
 //   would use things like `reb.UnboxInteger("rebpromise-helper", ...)` and
 //   build a pure-JS reb.Promise() on top of that.  Initially this was
@@ -32,7 +32,7 @@
 //   convention...disrupting the "sneaky exit and reentry" done by the
 //   Emterpreter.  Now that Emterpreter is replaced with Asyncify, that's
 //   not an issue--but it's still faster to have raw WASM entry points like
-//   RL_rebPromise_internal().
+//   API_rebPromise_internal().
 //
 // * If the code block in the EM_ASM() family of functions contains a comma,
 //   then wrap the whole code block with parentheses ().  See the examples
@@ -99,7 +99,7 @@
     //
     static char PG_Silent_Trace_Buf[64000] = "";
 
-    EXTERN_C intptr_t RL_rebGetSilentTrace_internal(void) {
+    EXTERN_C intptr_t API_rebGetSilentTrace_internal(void) {
       { return i_cast(intptr_t, PG_Silent_Trace_Buf); }
 #endif
 
@@ -331,7 +331,7 @@ enum Reb_Native_State {
 // which ties the returned integer into the resolve and reject branches of an
 // actual JavaScript ES6 Promise.
 //
-EXTERN_C intptr_t RL_rebPromise(
+EXTERN_C intptr_t API_rebPromise(
     RebolSpecifier_internal *specifier, void* p, void* vaptr
 ){
     TRACE("rebPromise() called");
@@ -365,7 +365,7 @@ EXTERN_C intptr_t RL_rebPromise(
 
     DECLARE_VALUE (block);
     UNUSED(specifier);  // shouldn't use one if we're transcoding?
-    RL_rebTranscodeInto(specifier, block, p, vaptr);
+    API_rebTranscodeInto(specifier, block, p, vaptr);
 
     Array* code = Cell_Array_Ensure_Mutable(block);
     assert(Is_Node_Managed(code));
@@ -384,7 +384,7 @@ EXTERN_C intptr_t RL_rebPromise(
     PG_Promises = info;
 
     EM_ASM(
-        { setTimeout(function() { reb.m._RL_rebIdle_internal(); }, 0); }
+        { setTimeout(function() { reb.m._API_rebIdle_internal(); }, 0); }
     );  // note `_RL` (leading underscore means no cwrap)
 
     return info->promise_id;
@@ -527,7 +527,7 @@ void RunPromise(void)
 // (This is why there shouldn't be any meaningful JS on the stack above
 // this besides the rebIdle() call itself.)
 //
-EXTERN_C void RL_rebIdle_internal(void)  // NO user JS code on stack!
+EXTERN_C void API_rebIdle_internal(void)  // NO user JS code on stack!
 {
     TRACE("rebIdle() => begin running promise code");
 
@@ -552,7 +552,7 @@ EXTERN_C void RL_rebIdle_internal(void)  // NO user JS code on stack!
 // So the result was stored as a function in a table to generate the value.
 // Now it pokes the result directly into the frame's output slot.
 //
-EXTERN_C void RL_rebResolveNative_internal(
+EXTERN_C void API_rebResolveNative_internal(
     intptr_t level_id,
     intptr_t result_id
 ){
@@ -577,7 +577,7 @@ EXTERN_C void RL_rebResolveNative_internal(
     else {
         assert(STATE == ST_JS_NATIVE_SUSPENDED);  // needs wakeup
         EM_ASM(
-            { setTimeout(function() { reb.m._RL_rebIdle_internal(); }, 0); }
+            { setTimeout(function() { reb.m._API_rebIdle_internal(); }, 0); }
         );  // note `_RL` (leading underscore means no cwrap)
     }
 
@@ -587,7 +587,7 @@ EXTERN_C void RL_rebResolveNative_internal(
 
 // See notes on rebResolveNative()
 //
-EXTERN_C void RL_rebRejectNative_internal(
+EXTERN_C void API_rebRejectNative_internal(
     intptr_t level_id,
     intptr_t error_id
 ){
@@ -616,7 +616,7 @@ EXTERN_C void RL_rebRejectNative_internal(
     else {
         assert(STATE == ST_JS_NATIVE_SUSPENDED);  // needs wakeup
         EM_ASM(
-            { setTimeout(function() { reb.m._RL_rebIdle_internal(); }, 0); }
+            { setTimeout(function() { reb.m._API_rebIdle_internal(); }, 0); }
         );  // note `_RL` (leading underscore means no cwrap)
     }
 

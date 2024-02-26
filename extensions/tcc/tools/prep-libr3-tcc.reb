@@ -40,7 +40,11 @@ e: make-emitter "libRebol exports for tcc_add_symbol()" (
 
 for-each-api [
     e/emit [name {
-        Add_API_Symbol_Helper(state, "RL_$<Name>", cast(CFunction*, &RL_$<Name>));
+        Add_API_Symbol_Helper(
+            state,
+            "API_$<Name>",
+            cast(CFunction*, &API_$<Name>)
+        );
     }]
 ]
 

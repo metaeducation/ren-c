@@ -148,7 +148,7 @@ e-cwrap/emit {
     // This is the part we need to cut out.  If we are in an asyncify yield
     // situation (e.g. waiting on a JS-AWAITER resolve) we know we can't
     // call something that will potentially wait again.  But APIs like
-    // reb.Text() call _RL_rebText() function underneath, and that's in
+    // reb.Text() call _API_rebText() function underneath, and that's in
     // ASYNCIFY_BLACKLIST.  But the main cwrap/ccall() does not account for
     // that fact.  Hence we have to patch out the assert.
     //
@@ -317,12 +317,12 @@ to-js-type: func [
 ; Add special API objects only for JavaScript
 ;
 ; The `_internal` APIs don't really need reb.XXX entry points (they are called
-; directly as _RL_rebXXX()).  But having them in this list makes it easier to
+; directly as _API_rebXXX()).  But having them in this list makes it easier to
 ; process them with the other APIs on matters like EMSCRIPTEN_KEEPALIVE and
 ; ASYNCIFY_BLACKLIST.
 
 append api-objects make object! [
-    spec: null  ; e.g. `name: RL_API [...this is the spec, if any...]`
+    spec: null  ; e.g. `name: API [...this is the spec, if any...]`
     name: "rebPromise"
     return-type: "intptr_t"
     paramlist: []
@@ -331,7 +331,7 @@ append api-objects make object! [
 ]
 
 append api-objects make object! [
-    spec: null  ; e.g. `name: RL_API [...this is the spec, if any...]`
+    spec: null  ; e.g. `name: API [...this is the spec, if any...]`
     name: "rebResolveNative_internal"  ; !!! see %mod-javascript.c
     return-type: "void"
     paramlist: ["intptr_t" frame_id "intptr_t" value_id]
@@ -342,7 +342,7 @@ append api-objects make object! [
 ]
 
 append api-objects make object! [
-    spec: null  ; e.g. `name: RL_API [...this is the spec, if any...]`
+    spec: null  ; e.g. `name: API [...this is the spec, if any...]`
     name: "rebRejectNative_internal"  ; !!! see %mod-javascript.c
     return-type: "void"
     paramlist: ["intptr_t" frame_id "intptr_t" error_id]
@@ -353,7 +353,7 @@ append api-objects make object! [
 ]
 
 append api-objects make object! [
-    spec: null  ; e.g. `name: RL_API [...this is the spec, if any...]`
+    spec: null  ; e.g. `name: API [...this is the spec, if any...]`
     name: "rebIdle_internal"  ; !!! see %mod-javascript.c
     return-type: "void"
     paramlist: []
@@ -363,7 +363,7 @@ append api-objects make object! [
 
 if false [  ; Only used if DEBUG_JAVASCRIPT_SILENT_TRACE (how to know here?)
     append api-objects make object! [
-        spec: null  ; e.g. `name: RL_API [...this is the spec, if any...]`
+        spec: null  ; e.g. `name: API [...this is the spec, if any...]`
         name: "rebGetSilentTrace_internal"  ; !!! see %mod-javascript.c
         return-type: "intptr_t"
         paramlist: []
@@ -377,7 +377,7 @@ if false [  ; Only used if DEBUG_JAVASCRIPT_SILENT_TRACE (how to know here?)
 
 for-each-api [
     any [
-        find name "_internal"  ; called as _RL_rebXXX(), don't need reb.XXX()
+        find name "_internal"  ; called as API_rebXXX(), don't need reb.XXX()
         name = "rebStartup"  ; the reb.Startup() is offered by load_r3.js
         name = "rebBytes"  ; JS variant returns array that knows its size
         name = "rebHalt"  ; JS variant augmented to cancel JS promises too
@@ -411,7 +411,7 @@ for-each-api [
     if not is-variadic [
         e-cwrap/emit cscape [:api {
             reb.$<No-Reb-Name> = cwrap_tolerant(  /* vs. R3Module.cwrap() */
-                'RL_$<Name>',
+                'API_$<Name>',
                 $<Js-Return-Type>, [
                     $(Maybe Js-Param-Types),
                 ]
@@ -461,8 +461,8 @@ for-each-api [
             ;
             ; The promise returns an ID of what to use to write into the table
             ; for the [resolve, reject] pair.  It will run the code that
-            ; will call the RL_Resolve later...after a setTimeout, so it is
-            ; sure that this table entry has been entered.
+            ; will call the rebResolveNative() later...after a setTimeout, so
+            ; it is sure that this table entry has been entered.
             {
                 return new Promise(function(resolve, reject) {
                     reb.RegisterId_internal(a, [resolve, reject])
@@ -507,7 +507,7 @@ for-each-api [
 
             HEAP32[(packed>>2) + argc] = reb.END
 
-            a = reb.m._RL_$<Name>(
+            a = reb.m._API_$<Name>(
                 0,  /* null specifier, just to start */
                 packed,
                 0   /* null vaptr means `p` is array of `const void*` */
@@ -548,7 +548,7 @@ e-cwrap/emit {
     }
 
     reb.Startup = function() {
-        _RL_rebStartup()
+        _API_rebStartup()
 
         /* reb.END is a 2-byte sequence that must live at some address
          * it must be initialized before any variadic libRebol API will work
@@ -569,8 +569,8 @@ e-cwrap/emit {
         else
             throw Error("Unknown array type in reb.Binary " + typeof array)
 
-        let binary = reb.m._RL_rebUninitializedBinary_internal(view.length)
-        let head = reb.m._RL_rebBinaryHead_internal(binary)
+        let binary = reb.m._API_rebUninitializedBinary_internal(view.length)
+        let head = reb.m._API_rebBinaryHead_internal(binary)
         Module.writeArrayToMemory(view, head)  /* w/Int8Array.set() on HEAP8 */
 
         return binary
@@ -582,8 +582,8 @@ e-cwrap/emit {
      * https://stackoverflow.com/a/53605865
      */
     reb.Bytes = function(binary) {
-        let ptr = reb.m._RL_rebBinaryAt_internal(binary)
-        let size = reb.m._RL_rebBinarySizeAt_internal(binary)
+        let ptr = reb.m._API_rebBinaryAt_internal(binary)
+        let size = reb.m._API_rebBinarySizeAt_internal(binary)
 
         var view = new Uint8Array(reb.m.HEAPU8.buffer, ptr, size)
 
@@ -697,7 +697,7 @@ e-cwrap/emit {
          * Standard request to the interpreter not to perform any more Rebol
          * evaluations...next evaluator step forces a THROW of a HALT signal.
          */
-        _RL_rebHalt()
+        _API_rebHalt()
 
         /* For JavaScript, we additionally take any JS Promises which were
          * registered via reb.Cancelable() and ask them to cancel.  The
@@ -763,7 +763,7 @@ e-cwrap/emit {
                 )
             }
 
-            reb.m._RL_rebResolveNative_internal(frame_id, result_id)
+            reb.m._API_rebResolveNative_internal(frame_id, result_id)
         }
 
         let rejecter = function(rej) {
@@ -789,7 +789,7 @@ e-cwrap/emit {
             else
                 error_id = reb.JavaScriptError(rej)
 
-            reb.m._RL_rebRejectNative_internal(frame_id, error_id)
+            reb.m._API_rebRejectNative_internal(frame_id, error_id)
         }
 
         let native = reb.JS_NATIVES[id]
@@ -871,7 +871,7 @@ e-cwrap/emit {
 if false [  ; Only used if DEBUG_JAVASCRIPT_SILENT_TRACE (how to know here?)
     e-cwrap/emit {
         reb.GetSilentTrace_internal = function() {
-            return UTF8ToString(reb.m._RL_rebGetSilentTrace_internal())
+            return UTF8ToString(reb.m._API_rebGetSilentTrace_internal())
         }
     }
 ]
@@ -913,7 +913,7 @@ json-collect: func [
 ]
 
 write (join prep-dir %include/libr3.exports.json) json-collect [
-    for-each-api [keep unspaced ["RL_" name]]
+    for-each-api [keep unspaced ["API_" name]]
     keep "malloc"  ; !!! Started requiring, did not before (?)
 ]
 

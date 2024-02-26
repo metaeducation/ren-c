@@ -255,7 +255,7 @@ export analyse: context [
                             form to word! proto-parser.data.1)
                         (proto-parser.proto-id
                             unspaced [
-                                "RL_" to word! proto-parser.data.1
+                                "API_" to word! proto-parser.data.1
                             ])
                     ] else [
                         let line: text-line-of proto-parser.parse-position

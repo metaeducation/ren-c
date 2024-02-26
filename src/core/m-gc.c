@@ -52,7 +52,7 @@
 //
 // !!! There is actually not a specific list of roots of the garbage collect,
 // so a first pass of all the Stubs must be done to find them.  This is
-// because with the redesigned "RL_API" in Ren-C, singular array stubs do
+// because with the redesigned "librebol" in Ren-C, singular array stubs do
 // double duty as lifetime-managed containers for cells handed out by the
 // API--without requiring a separate series data allocation.  These could be
 // in their own "pool", but that would prevent mingling and reuse among Stubs

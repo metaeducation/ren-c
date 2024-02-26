@@ -125,7 +125,7 @@ var reb = {}
 // the internal API's `reb.Startup`, which is then invoked during the load
 // process.  It works...but, for clarity the internal version might should be
 // changed to something like `Startup_internal`, and the C version can then
-// simply `#define rebStartup RL_Startup_internal` since it has no parallel
+// simply `#define rebStartup API_Startup_internal` since it has no parallel
 // to this loading step.
 //
 reb.Startup = function(console_in, config_in) {  // only ONE arg, see above!

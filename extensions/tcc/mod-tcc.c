@@ -634,7 +634,11 @@ DECLARE_NATIVE(compile_p)
         //
         // .inc file contains calls for each function in %a-lib.c like:
         //
-        // Add_API_Symbol_Helper(state, "RL_rebX", cast(CFunction*, &RL_rebX));
+        //      Add_API_Symbol_Helper(
+        //          state,
+        //          "API_rebXXX",
+        //          cast(CFunction*, &API_rebXXX)
+        //      );
         //
         #include "tmp-librebol-symbols.inc"
     }

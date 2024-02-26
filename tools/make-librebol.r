@@ -43,7 +43,7 @@ ver: load-value join repo-dir %src/boot/version.r
 ; This leverages the prototype parser, which uses PARSE on C lexicals, and
 ; loads Rebol-structured data out of comments in the file.
 ;
-; Currently only %a-lib.c is searched for RL_API entries.  This makes it
+; Currently only %a-lib.c is searched for API entries.  This makes it
 ; easier to track the order of the API routines and change them sparingly
 ; (such as by adding new routines to the end of the list, so as not to break
 ; binary compatibility with code built to the old ordered interface).  The
@@ -84,14 +84,14 @@ emit-proto: func [return: [~] proto] [
         ]
     ]
 
-    if header/2 != 'RL_API [return ~]
+    if header/2 != 'API [return ~]
     if not set-word? header/1 [
         fail ["API declaration should be a SET-WORD!, not" (header/1)]
     ]
 
     paramlist: collect [
         parse2 proto [
-            copy return-type to "RL_" "RL_" copy name to "(" skip
+            copy return-type to "API_" "API_" copy name to "(" skip
             ["void)" | some [  ; C void, or at least one parameter expected
                 [copy param to "," skip | copy param to ")" to end] (
                     ;
@@ -120,10 +120,10 @@ emit-proto: func [return: [~] proto] [
         ]
     ]
 
-    if (to set-word! name) != header/1 [  ; e.g. `//  rebValue: RL_API`
+    if (to set-word! name) != header/1 [  ; e.g. `//  rebValue: API`
         fail [
             "Name in comment header (" header/1 ") isn't C function name"
-            "minus RL_ prefix to match" (name)
+            "minus API_ prefix to match" (name)
         ]
     ]
 
@@ -134,8 +134,8 @@ emit-proto: func [return: [~] proto] [
             ; facilitates C99 macros that want two places to splice arguments:
             ; head and tail, e.g. this was once done with `quotes`
             ;
-            ;     #define rebFoo(...) RL_rebFoo(0, __VA_ARGS__, rebEND)
-            ;     #define rebFooQ(...) RL_rebFoo(1, __VA_ARGS__, rebEND)
+            ;     #define rebFoo(...) API_rebFoo(0, __VA_ARGS__, rebEND)
+            ;     #define rebFooQ(...) API_rebFoo(1, __VA_ARGS__, rebEND)
             ;
             ; But now, it's needed for passing in the specifier.
 
@@ -741,7 +741,7 @@ e-lib/emit [ver {
         #define RL_API
       #endif
 
-        #define LIBREBOL_PREFIX(api_name) RL_##api_name
+        #define LIBREBOL_PREFIX(api_name) API_##api_name
 
         /*
          * Extern prototypes for RL_XXX, don't call these functions directly.
@@ -765,7 +765,7 @@ e-lib/emit [ver {
      * though it's not variadic.  Because if it's being compiled by the core
      * that needs to resolve as:
      *
-     *     rebInteger(i) => RL_rebInteger(i)
+     *     rebInteger(i) => API_rebInteger(i)
      *
      * And if it's being compiled against the API table it needs to be:
      *
@@ -906,8 +906,8 @@ e-lib/emit [ver {
      * parameters they receive with a specifier at the beginning and `rebEND`
      * tacked on in the final position.  (See rebEND above for why.)
      *
-     * As with the non-variadic API entry points, these translate a raw name
-     * like `rebValue()` to either `RL_rebValue()` or `g_librebol->rebValue()`.
+     * As with non-variadic API entry points, these translate a raw name like
+     * `rebValue()` to either `API_rebValue()` or `g_librebol->rebValue()`.
      * But it also translates the variadic arguments into two pointers
      * called `p` and `vaptr`, that can be passed to the function pointers in
      * the API table
@@ -1118,7 +1118,7 @@ e-lib/write-emitted
 
 ; The form of the API which is exported as a table is declared as a struct,
 ; but there has to be an instance of that struct filled with the actual
-; pointers to the RL_XXX C functions to be able to hand it to clients.  Only
+; pointers to the API_XXX C functions to be able to hand it to clients.  Only
 ; one instance of this table should be linked into Rebol.
 
 e-table: make-emitter "REBOL Interface Table Singleton" (
@@ -1126,7 +1126,7 @@ e-table: make-emitter "REBOL Interface Table Singleton" (
 )
 
 table-init-items: map-each-api [
-    unspaced ["RL_" name]
+    unspaced ["&" "API_" name]
 ]
 
 e-table/emit [table-init-items {

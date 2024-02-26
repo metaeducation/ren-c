@@ -82,7 +82,7 @@ DECLARE_NATIVE(builtin_extensions)
 // be loaded with the LOAD-EXTENSION function.
 //
 // 1. Built-in extensions do not receive the RebolApiTable, because they are
-//    able to use direct calls to the RL_Xxx() versions, which is faster.
+//    able to use direct calls to the API_rebXXX() versions, which is faster.
 {
     INCLUDE_PARAMS_OF_BUILTIN_EXTENSIONS;
 

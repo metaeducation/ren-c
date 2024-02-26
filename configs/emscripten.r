@@ -282,7 +282,7 @@ ldflags: compose [
 
     ; %reb-lib.js is produced by %make-librebol.js - It contains the wrapper
     ; code that proxies JavaScript calls to `rebElide(...)` etc. into calls
-    ; to the functions that take a `va_list` pointer, e.g. `_RL_rebElide()`.
+    ; to the functions that take a `va_list` pointer, e.g. `_API_rebElide()`.
     ;
     {--post-js prep/include/reb-lib.js}
 
