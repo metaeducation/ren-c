@@ -32,6 +32,53 @@
 //
 
 
+//=//// ALIGNMENT SIZE ////////////////////////////////////////////////////=//
+//
+// Data alignment is a complex topic, which has to do with the fact that the
+// following kind of assignment can be slowed down or fail entirely on
+// many platforms:
+//
+//    char *cp = (char*)malloc(sizeof(double) + 1);
+//    double *dp = (double*)(cp + 1);
+//    *dp = 6.28318530718
+//
+// malloc() guarantees that the pointer it returns is aligned to store any
+// fundamental type safely.  But skewing that pointer to not be aligned in
+// a way for that type (e.g. by a byte above) means assignments and reads of
+// types with more demanding alignment will fail.  e.g. a double often needs
+// to read/write to pointers where `((uintptr_t)ptr % sizeof(double)) == 0`
+//
+// (Note: Often, not always.  For instance, Linux systems with System V ABI
+// for i386 are permitted to use 4 byte boundaries instead of 8 byte for
+// doubles unless you use `-malign-double`.  See page 28 of the spec:
+//
+// http://www.uclibc.org/docs/psABI-i386.pdf
+//
+// Windows 32-bit compilers seem to also permit 4 bytes.  WebAssembly does
+// not seem to work when doubles are on 4 byte boundaries, however.)
+//
+// The C standard does not provide a way to know what the largest fundamental
+// type is, even though malloc() must be compatible with it.  So if one is
+// writing one's own allocator to give back memory blocks, it's necessary to
+// guess.  We guess the larger of size of a double and size of a void*, though
+// note this may not be enough for absolutely any type in the compiler:
+//
+//    "In Visual C++, the fundamental alignment is the alignment that's
+//    required for a double, or 8 bytes. In code that targets 64-bit
+//    platforms, it's 16 bytes.)
+//
+
+#define ALIGN_SIZE \
+    (sizeof(double) > sizeof(void*) ? sizeof(double) : sizeof(void*))
+
+#if defined(__HAIKU__)
+    #undef ALIGN
+#endif
+
+#define ALIGN(s,a) \
+    (((s) + (a) - 1) & ~((a) - 1))
+
+
 // Linked list of used memory segments
 //
 typedef struct SegmentStruct {
