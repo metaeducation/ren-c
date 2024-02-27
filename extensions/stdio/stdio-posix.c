@@ -25,7 +25,7 @@
 //
 
 
-#include "sys-core.h"
+#include "rebol-internals.h"
 
 // Note: We are only using the limited facilities of stdin and fgetc().
 // Generally speaking, we avoid usage of other stdio functions in the system.

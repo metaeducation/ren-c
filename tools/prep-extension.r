@@ -21,13 +21,8 @@ REBOL [
         native specifications is reused.
     }
     Notes: {
-        Currently the build process does not distinguish between an extension
-        that wants to use just "rebol.h" and one that depends on "sys-core.h"
-        Hence it includes things like ARG() and REF() macros, which access
-        frame internals that do not currently go through the libRebol API.
-
-        It should be possible to build an extension that does not use the
-        internal API at all, as well as one that does, so that needs review.
+        The build process distinguishes between an extension that wants to use
+        just "rebol.h" vs. using all of "rebol-internals.h".
     }
 ]
 
@@ -192,7 +187,7 @@ if use-librebol [
         /* extension configuration says `use-librebol: true` */
 
         #define LIBREBOL_SPECIFIER (&librebol_specifier)
-        #include "rebol.h"  /* not %sys-core.h ! */
+        #include "rebol.h"  /* not %rebol-internals.h ! */
 
         /*
          * This global definition is shadowed by the local definitions that
@@ -214,19 +209,13 @@ if use-librebol [
 ] else [
     e1/emit [{
         /* extension configuration says `use-librebol: false` */
-        #include "sys-core.h"
+        #include "rebol-internals.h"  /* superset of %rebol.h */
 
         /*
          * No specifier used currently for core API extensions, but need the
          * macro for the module init to compile.
          */
         #define LIBREBOL_SPECIFIER_USED()
-
-        /*
-         * DECLARE_NATIVE() is defined by %sys-core.h, but we want to define
-         * it differently.
-         */
-        #undef DECLARE_NATIVE
     }]
 ]
 e1/emit newline
@@ -392,8 +381,8 @@ e/emit [{
     #include "tmp-mod-$<mod>.h" /* for DECLARE_NATIVE() forward decls */
 
     /*
-     * We may be only including "rebol.h" and not "sys-core.h", in which case
-     * CFunction is not defined.
+     * We may be only including "rebol.h" and not "rebol-internals.h", in
+     * which case CFunction is not defined.
      */
     #if defined(_WIN32)  /* 32-bit or 64-bit windows */
         typedef void (__cdecl CFunction_ext)(void);

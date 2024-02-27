@@ -26,7 +26,9 @@
 // going through a port.  system.ports.INPUT was thus created from it.
 //
 
-#include "sys-core.h"
+#include "rebol-internals.h"
+
+#include "tmp-paramlists.h"  // !!! for INCLUDE_PARAMS_OF_OPEN, etc.
 
 #include "readline.h"
 

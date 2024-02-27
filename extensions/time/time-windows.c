@@ -10,7 +10,8 @@
 #include <process.h>
 #include <assert.h>
 
-#include "sys-core.h"
+#include "rebol.h"
+typedef RebolValue Value;
 
 
 //

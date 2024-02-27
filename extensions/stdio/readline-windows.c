@@ -68,7 +68,7 @@ typedef RebolValue Value;
     #undef min
     #undef max
     #undef RL_API  // hack :-/
-    #include "sys-core.h"  // extra internal API to pick apart cells in debug
+    #include "rebol-internals.h"  // extra API to pick apart cells in debug
 #else
     enum {
         BEL = 7,

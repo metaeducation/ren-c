@@ -33,6 +33,7 @@
 
 #include "tmp-mod-clipboard.h"
 
+#include "tmp-paramlists.h"  // !!! for INCLUDE_PARAMS_OF_OPEN, etc.
 
 //
 //  Clipboard_Actor: C

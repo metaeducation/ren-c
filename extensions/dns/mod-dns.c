@@ -59,6 +59,7 @@
 
 #include "tmp-mod-dns.h"
 
+#include "tmp-paramlists.h"  // !!! for INCLUDE_PARAMS_OF_OPEN, etc.
 
 #if !(TO_WINDOWS)
 //

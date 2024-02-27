@@ -49,6 +49,8 @@
 
 #include "tmp-mod-network.h"
 
+#include "tmp-paramlists.h"  // !!! for INCLUDE_PARAMS_OF_OPEN, etc.
+
 #include "reb-net.h"
 extern Value* rebError_UV(int err);
 

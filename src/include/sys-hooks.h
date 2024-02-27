@@ -39,17 +39,6 @@ typedef REBINT (COMPARE_HOOK)(
     bool strict
 );
 
-// Helper for declaring a native dispatcher function
-//
-#define DECLARE_NATIVE(n) \
-    Bounce N_##n(Level* level_)
-
-
-// Helper for declaring an intrinsic native (can be dispatched w/o a frame)
-//
-#define DECLARE_INTRINSIC(n) \
-    void N_##n(Atom* out, Phase* phase, Value* arg)
-
 
 //
 // EXTENSION COLLATOR FUNCTION DEFINITION

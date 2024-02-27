@@ -101,7 +101,7 @@ DECLARE_NATIVE(write_stdout)
 // bytes interpreted in any way.  (e.g. not changed from UTF-8 to wide
 // characters, or not having CR turned into CR LF sequences).
 {
-    INCLUDE_PARAMS_OF_WRITE_STDOUT;
+    STDIO_INCLUDE_PARAMS_OF_WRITE_STDOUT;
 
     Value* v = ARG(value);
 

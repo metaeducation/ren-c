@@ -36,7 +36,7 @@
 // hopefully suffice in the future.  This is part of an ongoing effort to
 // make the device layer work more in the vocabulary of Rebol types.
 //
-#include "sys-core.h"
+#include "rebol-internals.h"
 
 #include "readline.h"
 

@@ -56,7 +56,10 @@
     #include <sys/time.h>  // for older systems
 #endif
 
-#include "sys-core.h"
+#include "rebol.h"
+typedef RebolValue Value;
+
+#include "c-enhanced.h"
 
 
 
