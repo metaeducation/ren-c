@@ -563,24 +563,19 @@ Bounce Evaluator_Executor(Level* L)
     //
     // & acts like TYPE OF
     //
-    // @ acts like THE with the tweak that it turns quasiforms to antiforms:
+    // @ acts like THE:
     //
     //     >> @ abc
     //     == abc
     //
-    //     >> @ ~null~
-    //     == ~null~  ; anti
+    // 1. There's a twist, that @ can actually handle antiforms if they are
+    //    coming in via an API feed.  This is a convenience so you can write:
     //
-    // This is done as a convenience for the API so people can write:
+    //        rebElide("append block maybe @", value_might_be_null);
     //
-    //     rebElide("append block maybe @", value_might_be_null);
+    //     ...instead of:
     //
-    // ...instead of:
-    //
-    //     rebElide("append block maybe", rebQ(value_might_be_null));
-    //
-    // Because this breaks quasiforms, tighter integration with the feed
-    // machinery would be better (now possible as @ is built-in!)
+    //         rebElide("append block maybe", rebQ(value_might_be_null));
     //
 
       case REB_SIGIL: {
@@ -595,11 +590,7 @@ Bounce Evaluator_Executor(Level* L)
             if (Is_Feed_At_End(L->feed))  // no literal to take if `(@)`
                 fail (Error_Need_Non_End(L_current));
 
-            const Element* at = At_Feed(L->feed);
-            Inertly_Derelativize_Inheriting_Const(OUT, at, L->feed);
-
-            if (Is_Quasiform(OUT))  // !!! hacky behavior
-                Meta_Unquotify_Undecayed(OUT);
+            Copy_At_Feed_Antiforms_Ok(OUT, L->feed);  // special API trick [1]
 
             Fetch_Next_In_Feed(L->feed);  // !!! review enfix interop
             break; }

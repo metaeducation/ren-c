@@ -1034,7 +1034,10 @@ static Token Maybe_Locate_Token_May_Push_Mold(
             return TOKEN_END;
 
           case DETECTED_AS_CELL: {
-            Copy_Reified_Variadic_Feed_Cell(PUSH(), L->feed);
+            Copy_Reified_Variadic_Feed_Cell(
+                PUSH(),
+                c_cast(Cell*, L->feed->p)
+            );
             if (Get_Scan_Executor_Flag(L, NEWLINE_PENDING)) {
                 Clear_Scan_Executor_Flag(L, NEWLINE_PENDING);
                 Set_Cell_Flag(TOP, NEWLINE_BEFORE);

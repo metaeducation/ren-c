@@ -113,12 +113,36 @@
 INLINE const Element* At_Feed(Feed* feed) {
     assert(Not_Feed_Flag(feed, NEEDS_SYNC));
     assert(feed->p != &PG_Feed_At_End);
-    return c_cast(Element*, feed->p);
+
+    const Element* elem = c_cast(Element*, feed->p);
+    if (Get_Cell_Flag(elem, FEED_NOTE_META)) {
+        DECLARE_VALUE (temp);
+        Copy_Cell(temp, elem);
+        Meta_Unquotify_Known_Stable(temp);
+        fail (Error_Bad_Antiform(temp));
+    }
+    return elem;
+}
+
+INLINE const Value* Copy_At_Feed_Antiforms_Ok(Sink(Value*) out, Feed* feed) {
+    assert(Not_Feed_Flag(feed, NEEDS_SYNC));
+    assert(feed->p != &PG_Feed_At_End);
+
+    const Element* elem = c_cast(Element*, feed->p);
+    Copy_Cell(out, elem);
+
+    if (Get_Cell_Flag(elem, FEED_NOTE_META))
+        Meta_Unquotify_Known_Stable(out);
+
+    return out;
 }
 
 INLINE const Element* Try_At_Feed(Feed* feed) {
     assert(Not_Feed_Flag(feed, NEEDS_SYNC));
-    return c_cast(Element*, feed->p);
+    if (feed->p == &PG_Feed_At_End)
+        return nullptr;
+
+    return At_Feed(feed);
 }
 
 INLINE Option(va_list*) FEED_VAPTR(Feed* feed) {
@@ -186,27 +210,39 @@ INLINE void Finalize_Variadic_Feed(Feed* feed) {
 }
 
 
-// A cell pointer in a variadic feed should be fine to use directly, because
-// all such "spliced" cells should be specific.
+// Function used by the scanning machinery when transforming a pointer from
+// the variadic API feed (the pointer already identified as a cell).
+//
+// 1. The API enforces use of C's nullptr (0) as the signal for ~null~
+//    antiforms.  (That's handled by a branch that skips this routine.)
+//    But internally, cells have an antiform WORD! payload for this case,
+//    and those internal cells are legal to pass to the API.
+//
+// 2. Various mechanics rely on the array feed being a "generic array", that
+//    can be put into a REB_BLOCK.  This means it cannot hold antiforms
+//    (or voids).  But we want to hold antiforms and voids in suspended
+//    animation in case there is an @ operator in the feed that will turn
+//    them back into those forms.  So in those cases, meta it and set a
+//    cell flag to notify the At_Feed() machinery about the strange case
+//    (it will error, the @ code in the evaluator uses a different function).
 //
 INLINE const Element* Copy_Reified_Variadic_Feed_Cell(
     Sink(Element*) out,
-    Feed* feed
+    const Cell* cell
 ){
-    const Value* v = c_cast(Value*, feed->p);
+    if (Is_Nulled(cell))
+        assert(not Is_Api_Value(cell));  // only internals can be nulled [1]
 
-    if (Is_Nulled(v))  // API enforces use of C's nullptr (0) for NULL
-        assert(not Is_Api_Value(v));  // but internal cells can be nulled
-
-    if (Is_Antiform(v)) {  // @ will turn these back into antiforms
-        Copy_Meta_Cell(out, v);
-        return out;
+    if (
+        QUOTE_BYTE(cell) == ANTIFORM_0
+        or (QUOTE_BYTE(cell) == NOQUOTE_1 and HEART_BYTE(cell) == REB_VOID)
+    ){
+        Copy_Meta_Cell(out, cell);
+        Set_Cell_Flag(out, FEED_NOTE_META);  // @ turns back [2]
     }
+    else
+        Copy_Cell(out, c_cast(Element*, cell));
 
-    if (Is_Void(v))
-        fail ("Attempt to splice void in variadic feed");
-
-    Copy_Cell(out, c_cast(Element*, v));
     return out;
 }
 
@@ -268,7 +304,10 @@ INLINE Option(const Value*) Try_Reify_Variadic_Feed_Series(
 
         Value* single = Stub_Cell(inst1);
         feed->p = single;
-        feed->p = Copy_Reified_Variadic_Feed_Cell(&feed->fetched, feed);
+        feed->p = Copy_Reified_Variadic_Feed_Cell(
+            &feed->fetched,
+            c_cast(Cell*, feed->p)
+        );
         rebRelease(single);  // *is* the instruction
         break; }
 
