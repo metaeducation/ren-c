@@ -96,6 +96,14 @@ INLINE void INIT_SPECIFIER(Cell* v, Stub* binding) {
 }
 
 
+// 1. An advantage of making all binaries terminate in 0 is that it means
+//    that if they were valid UTF-8, they could be aliased as Rebol strings,
+//    which are zero terminated.  So it's the rule.
+//
+// 2. Many Array* series (such as varlists) allow antiforms.  We don't want
+//    these making it into things like BLOCK! or GROUP! values, as the user
+//    should never see antiforms or voids in what they see as "ANY-ARRAY!".
+//
 INLINE Element* Init_Series_Cell_At_Core(
     Sink(Element*) out,
     Heart heart,
@@ -107,19 +115,11 @@ INLINE Element* Init_Series_Cell_At_Core(
     assert(Any_Series_Kind(heart) or heart == REB_URL);
     assert(Is_Node_Managed(s));
 
-    // Note: a R3-Alpha Make_Binary() comment said:
-    //
-    //     Make a binary string series. For byte, C, and UTF8 strings.
-    //     Add 1 extra for terminator.
-    //
-    // One advantage of making all binaries terminate in 0 is that it means
-    // that if they were valid UTF-8, they could be aliased as Rebol strings,
-    // which are zero terminated.  So it's the rule.
-    //
-    Assert_Series_Term_If_Needed(s);
+    Assert_Series_Term_If_Needed(s);  // even binaries [1]
 
-    if (Any_Array_Kind(heart))
-        assert(Is_Series_Array(s));
+    if (Any_Array_Kind(heart)) {
+        assert(Series_Flavor(s) == FLAVOR_ARRAY);  // no antiforms or voids [2]
+    }
     else if (Any_String_Kind(heart))
         assert(Is_Series_UTF8(s));
     else {
