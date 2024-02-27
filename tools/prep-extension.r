@@ -210,13 +210,6 @@ if use-librebol [
          * one native is in the file, this works.
          */
         #define LIBREBOL_SPECIFIER_USED() (void)librebol_specifier
-
-        /*
-         * Define DECLARE_NATIVE macro to include extension name.
-         * This avoids name collisions with the core, or with other extensions.
-         */
-        #define DECLARE_NATIVE(name) \
-            RebolValue* N_${MOD}_##name(void* level_)
     }]
 ] else [
     e1/emit [{
@@ -230,16 +223,23 @@ if use-librebol [
         #define LIBREBOL_SPECIFIER_USED()
 
         /*
-         * Redefine DECLARE_NATIVE macro locally to include extension name.
-         * This avoids name collisions with the core, or with other extensions.
+         * DECLARE_NATIVE() is defined by %sys-core.h, but we want to define
+         * it differently.
          */
         #undef DECLARE_NATIVE
-        #define DECLARE_NATIVE(name) \
-            Bounce N_${MOD}_##name(Level* level_)
     }]
 ]
 e1/emit newline
 
+e1/emit [{
+    /*
+     * Define DECLARE_NATIVE macro to include extension name.
+     * This avoids name collisions with the core, or with other extensions.
+     */
+    #define DECLARE_NATIVE(name) \
+        RebolBounce N_${MOD}_##name(RebolLevel* level_)
+}]
+e1/emit newline
 
 e1/emit {
     #include "sys-ext.h" /* for things like DECLARE_MODULE_INIT() */

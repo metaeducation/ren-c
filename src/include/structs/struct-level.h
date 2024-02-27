@@ -31,7 +31,7 @@
 //   level variables is uppercase L.
 //
 
-typedef struct LevelStruct Level;
+typedef struct RebolLevelStruct Level;
 
 
 // !!! A Level* answers that it is a node, and a cell.  This is questionable
@@ -262,8 +262,8 @@ STATIC_ASSERT(31 < 32);  // otherwise LEVEL_FLAG_XXX too high
 // do checks on the types it received while being compatible with a void*
 // in the dispatchers using %rebol.h.  So these would be compatible:
 //
-//    typedef Bounce (Dispatcher)(Level* level_);  // %sys-core.h clients
-//    typedef void* (Dispatcher)(void* level_);      // %rebol.h clients
+//    typedef Bounce (Dispatcher)(Level* level_);       // %sys-core.h clients
+//    typedef void* (Dispatcher)(RebolLevel* level_);   // %rebol.h clients
 //
 // As it turns out the compiler doesn't generate compatible output, even
 // with Bounce being a standard_layout struct.  :-/  So it's just Node*.
@@ -312,9 +312,9 @@ typedef bool (Decider)(const Value* arg);
 //
 
 #if CPLUSPLUS_11
-    struct LevelStruct : public Node
+    struct RebolLevelStruct : public Node
 #else
-    struct LevelStruct
+    struct RebolLevelStruct
 #endif
 {
     // These are LEVEL_FLAG_XXX or'd together--see their documentation above.

@@ -1291,7 +1291,7 @@ void API_rebPushContinuation(
 // store unstable isotopes, which hinders extensions that want to do multiple
 // return values.  Review.
 //
-RebolValue* API_rebDelegate(  // !!! Hack: returns Bounce, not Value*
+RebolBounce API_rebDelegate(
     RebolSpecifier** specifier_ref,
     const void* p, void* vaptr
 ){
@@ -1303,7 +1303,7 @@ RebolValue* API_rebDelegate(  // !!! Hack: returns Bounce, not Value*
         LEVEL_FLAG_RAISED_RESULT_OK,  // definitional error if raised
         p, vaptr
     );
-    return cast(Value*, BOUNCE_DELEGATE);  // !!! Evil hack!.
+    return BOUNCE_DELEGATE;
 }
 
 
@@ -2867,7 +2867,7 @@ DECLARE_NATIVE(api_transient)
 //
 // This expands to:
 //
-//     RebolValue* N_native_name_here(void* level_) {
+//     RebolBounce N_native_name_here(RebolLevel* level_) {
 //         RebolSpecifier librebol_specifier;
 //         librebol_specifier = rebSpecifierFromLevel_internal(level_)
 //         (void)librebol_specifier  /* USED(librebol_specifier) */
@@ -2880,9 +2880,9 @@ DECLARE_NATIVE(api_transient)
 // inside a native or not, in order to find the arguments of the native when
 // scanning the text source passed.
 //
-RebolSpecifier* API_rebSpecifierFromLevel_internal(void* level_)
-{
-    Level* level = cast(Level*, level_);
+RebolSpecifier* API_rebSpecifierFromLevel_internal(
+    RebolLevel* level
+){
     Set_Node_Managed_Bit(level->varlist);
 
     // We want to be able to use the specifier to not only look up arguments
@@ -2910,8 +2910,9 @@ RebolSpecifier* API_rebSpecifierFromLevel_internal(void* level_)
 // This bridges being able to do a pointer-to-pointer in JavaScript without
 // needing to use low-level Webassembly byte fiddling.
 //
-RebolSpecifier** API_rebAllocSpecifierRefFromLevel_internal(void* level_)
-{
+RebolSpecifier** API_rebAllocSpecifierRefFromLevel_internal(
+    RebolLevel* level
+){
     ENTER_API;
 
     RebolSpecifier** ref = cast(
@@ -2919,7 +2920,7 @@ RebolSpecifier** API_rebAllocSpecifierRefFromLevel_internal(void* level_)
         API_rebAllocBytes(sizeof(RebolSpecifier*))
     );
 
-    *ref = API_rebSpecifierFromLevel_internal(level_);
+    *ref = API_rebSpecifierFromLevel_internal(level);
     return ref;
 }
 

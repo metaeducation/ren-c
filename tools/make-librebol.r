@@ -620,7 +620,7 @@ e-lib/emit [ver {
 
 
     /*
-     * "SPECIFIERS"
+     * SPECIFIER TYPE (internal)
      *
      * Specifiers are an evolving idea, which represent "binding environments"
      * for looking up values.  They are a chain of contexts...such as a
@@ -637,6 +637,29 @@ e-lib/emit [ver {
      */
 
     typedef struct RebolNodeStruct RebolSpecifier;
+
+
+    /*
+     * LEVEL TYPE (internal)
+     *
+     * Levels are the C structure backing the state of a FRAME! that is in the
+     * running state.  A pointer to a level is what gets received by a native
+     * from which things like the arguments to an invocation can be extracted.
+     */
+
+    struct RebolLevelStruct;
+    typedef struct RebolLevelStruct RebolLevel;
+
+
+    /*
+     * REBOL BOUNCE
+     *
+     * A "Bounce" is the return result from a native.  It can be a RebolValue
+     * in the case of being the final resolution of the return result.  Or it
+     * can be a signal of a continuation (or delegation) of code.
+     */
+
+    typedef void* RebolBounce;
 
 
     /*

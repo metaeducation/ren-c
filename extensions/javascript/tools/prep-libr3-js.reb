@@ -267,6 +267,12 @@ to-js-type: func [
         ;
         (s = "char*") or (s = "const char*") ["'string'"]
 
+        ; A RebolBounce is actually a void* (attempts to make it a struct
+        ; holding a void* in some builds fail at runtime at present, but it
+        ; can be used as a static compilation check anyway)
+        ;
+        s = "RebolBounce" ["'number"]
+
         ; Other pointer types aren't strings.  `unsigned char *` is a byte
         ; array, and should perhaps use ArrayBuffer.  But for now, just assume
         ; anyone working with bytes is okay calling emscripten API functions
