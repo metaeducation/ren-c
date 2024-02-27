@@ -306,7 +306,7 @@ Bounce Pending_Native_Dispatcher(Level* L) {
 //
 DECLARE_NATIVE(make_native)
 {
-    TCC_INCLUDE_PARAMS_OF_MAKE_NATIVE;
+    INCLUDE_PARAMS_OF_MAKE_NATIVE;
 
     Element* spec = cast(Element*, ARG(spec));
     Element* source = cast(Element*, ARG(source));
@@ -393,7 +393,7 @@ DECLARE_NATIVE(make_native)
 //
 DECLARE_NATIVE(compile_p)
 {
-    TCC_INCLUDE_PARAMS_OF_COMPILE_P;
+    INCLUDE_PARAMS_OF_COMPILE_P;
 
 
   //=//// ALLOCATE THE TCC STATE //////////////////////////////////////////=//

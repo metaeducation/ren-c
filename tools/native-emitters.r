@@ -110,7 +110,7 @@ export emit-include-params-macro: func [
     return: [~]
     e [object!] "where to emit (see %common-emitters.r)"
     proto [text!]
-    /ext [text!] "extension name"
+    /ext [text!] "extension name"  ; once used in extensions, not used now
 ][
     if find proto "native/intrinsic" [
         return ~  ; intrinsics don't have INCLUDE_PARAMS_OF macros

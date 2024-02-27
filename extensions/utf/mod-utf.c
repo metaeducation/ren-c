@@ -152,7 +152,7 @@ static String* Decode_UCS2(  // [1]
 //
 DECLARE_NATIVE(identify_text_q)
 {
-    UTF_INCLUDE_PARAMS_OF_IDENTIFY_TEXT_Q;
+    INCLUDE_PARAMS_OF_IDENTIFY_TEXT_Q;
 
     UNUSED(ARG(data)); // see notes on decode-text
 
@@ -171,7 +171,7 @@ DECLARE_NATIVE(identify_text_q)
 //
 DECLARE_NATIVE(decode_text)
 {
-    UTF_INCLUDE_PARAMS_OF_DECODE_TEXT;
+    INCLUDE_PARAMS_OF_DECODE_TEXT;
 
     // !!! The original code for R3-Alpha would simply alias the incoming
     // binary as a string.  This is essentially a Latin1 interpretation.
@@ -200,7 +200,7 @@ DECLARE_NATIVE(decode_text)
 //
 DECLARE_NATIVE(encode_text)
 {
-    UTF_INCLUDE_PARAMS_OF_ENCODE_TEXT;
+    INCLUDE_PARAMS_OF_ENCODE_TEXT;
 
     UNUSED(PARAM(string));
 
@@ -257,7 +257,7 @@ static Binary* Encode_UCS2(  // [1]
 //
 DECLARE_NATIVE(identify_utf16le_q)
 {
-    UTF_INCLUDE_PARAMS_OF_IDENTIFY_UTF16LE_Q;
+    INCLUDE_PARAMS_OF_IDENTIFY_UTF16LE_Q;
 
     // R3-Alpha just said it matched if extension matched.  It could look for
     // a byte order mark by default, but perhaps that's the job of the more
@@ -281,7 +281,7 @@ DECLARE_NATIVE(identify_utf16le_q)
 //
 DECLARE_NATIVE(decode_utf16le)
 {
-    UTF_INCLUDE_PARAMS_OF_DECODE_UTF16LE;
+    INCLUDE_PARAMS_OF_DECODE_UTF16LE;
 
     Size size;
     const Byte* data = Cell_Binary_Size_At(&size, ARG(data));
@@ -310,7 +310,7 @@ DECLARE_NATIVE(decode_utf16le)
 //
 DECLARE_NATIVE(encode_utf16le)
 {
-    UTF_INCLUDE_PARAMS_OF_ENCODE_UTF16LE;
+    INCLUDE_PARAMS_OF_ENCODE_UTF16LE;
 
     Length len;
     Utf8(const*) utf8 = Cell_Utf8_Len_Size_At(&len, nullptr, ARG(text));
@@ -337,7 +337,7 @@ DECLARE_NATIVE(encode_utf16le)
 //
 DECLARE_NATIVE(identify_utf16be_q)
 {
-    UTF_INCLUDE_PARAMS_OF_IDENTIFY_UTF16BE_Q;
+    INCLUDE_PARAMS_OF_IDENTIFY_UTF16BE_Q;
 
     // R3-Alpha just said it matched if extension matched.  It could look for
     // a byte order mark by default, but perhaps that's the job of the more
@@ -361,7 +361,7 @@ DECLARE_NATIVE(identify_utf16be_q)
 //
 DECLARE_NATIVE(decode_utf16be)
 {
-    UTF_INCLUDE_PARAMS_OF_DECODE_UTF16BE;
+    INCLUDE_PARAMS_OF_DECODE_UTF16BE;
 
     Size size;
     const Byte* data = Cell_Binary_Size_At(&size, ARG(data));
@@ -390,7 +390,7 @@ DECLARE_NATIVE(decode_utf16be)
 //
 DECLARE_NATIVE(encode_utf16be)
 {
-    UTF_INCLUDE_PARAMS_OF_ENCODE_UTF16BE;
+    INCLUDE_PARAMS_OF_ENCODE_UTF16BE;
 
     Length len;
     Utf8(const*) utf8 = Cell_Utf8_Len_Size_At(&len, nullptr, ARG(text));

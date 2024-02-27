@@ -227,7 +227,7 @@ DECLARE_NATIVE(checksum)
 //
 // As nothing used it, it's not clear what this was for.  Currently removed.
 {
-    CRYPT_INCLUDE_PARAMS_OF_CHECKSUM;
+    INCLUDE_PARAMS_OF_CHECKSUM;
 
     size_t size;
     unsigned char* data = rebBytes(&size, "data");
@@ -481,7 +481,7 @@ void Get_Padding_And_Hash_From_Spec(
 //
 DECLARE_NATIVE(rsa_generate_keypair)
 {
-    CRYPT_INCLUDE_PARAMS_OF_RSA_GENERATE_KEYPAIR;
+    INCLUDE_PARAMS_OF_RSA_GENERATE_KEYPAIR;
 
     Value* padding_spec = rebValue("padding: default [[pkcs1-v15]]");
 
@@ -633,7 +633,7 @@ DECLARE_NATIVE(rsa_generate_keypair)
 //
 DECLARE_NATIVE(rsa_encrypt)
 {
-    CRYPT_INCLUDE_PARAMS_OF_RSA_ENCRYPT;
+    INCLUDE_PARAMS_OF_RSA_ENCRYPT;
 
     Value* padding_spec = rebValue(
         "match block! public-key.padding else [",
@@ -766,7 +766,7 @@ DECLARE_NATIVE(rsa_encrypt)
 //
 DECLARE_NATIVE(rsa_decrypt)
 {
-    CRYPT_INCLUDE_PARAMS_OF_RSA_DECRYPT;
+    INCLUDE_PARAMS_OF_RSA_DECRYPT;
 
   //=//// EXTRACT INPUT PARAMETERS /////////////////////////////////////////=//
 
@@ -1011,7 +1011,7 @@ DECLARE_NATIVE(rsa_decrypt)
 //
 DECLARE_NATIVE(dh_generate_keypair)
 {
-    CRYPT_INCLUDE_PARAMS_OF_DH_GENERATE_KEYPAIR;
+    INCLUDE_PARAMS_OF_DH_GENERATE_KEYPAIR;
 
     struct mbedtls_dhm_context ctx;
     mbedtls_dhm_init(&ctx);
@@ -1224,7 +1224,7 @@ DECLARE_NATIVE(dh_generate_keypair)
 //
 DECLARE_NATIVE(dh_compute_secret)
 {
-    CRYPT_INCLUDE_PARAMS_OF_DH_COMPUTE_SECRET;
+    INCLUDE_PARAMS_OF_DH_COMPUTE_SECRET;
 
     // Extract fields up front, so that if they fail we don't have to RESCUE it
     // to clean up an initialized dhm_context...
@@ -1383,7 +1383,7 @@ static void cleanup_aes_ctx(const Value* v)
 //
 DECLARE_NATIVE(aes_key)
 {
-    CRYPT_INCLUDE_PARAMS_OF_AES_KEY;
+    INCLUDE_PARAMS_OF_AES_KEY;
 
     size_t key_size;
     unsigned char* key_bytes = rebBytes(&key_size, "key");
@@ -1473,7 +1473,7 @@ DECLARE_NATIVE(aes_key)
 //
 DECLARE_NATIVE(aes_stream)
 {
-    CRYPT_INCLUDE_PARAMS_OF_AES_STREAM;
+    INCLUDE_PARAMS_OF_AES_STREAM;
 
     if (rebExtractHandleCleaner("ctx") != cleanup_aes_ctx)
         rebJumps(
@@ -1586,7 +1586,7 @@ DECLARE_NATIVE(ecc_generate_keypair)
 // !!! Note: using curve25519 seems to always give a y coordinate of zero
 // in the public key.  Is this correct (it seems to yield the right secret)?
 {
-    CRYPT_INCLUDE_PARAMS_OF_ECC_GENERATE_KEYPAIR;
+    INCLUDE_PARAMS_OF_ECC_GENERATE_KEYPAIR;
 
     // A change in mbedTLS ecdh code means there's a context variable in
     // the context (ctx.ctx) when not using MBEDTLS_ECDH_LEGACY_CONTEXT
@@ -1678,7 +1678,7 @@ DECLARE_NATIVE(ecdh_shared_secret)
 //    specifier should be updated to include the LET.  Bracket with a group
 //    just to be sure it wouldn't, even if those were the semantics.
 {
-    CRYPT_INCLUDE_PARAMS_OF_ECDH_SHARED_SECRET;
+    INCLUDE_PARAMS_OF_ECDH_SHARED_SECRET;
 
     char* group = rebSpell("lowercase to text! group");
     const struct mbedtls_ecp_curve_info *info = Ecp_Curve_Info_From_Name(group);
@@ -1787,7 +1787,7 @@ EXTERN_C int tf_snprintf(char* s, size_t n, const char* fmt, ...);
 //
 DECLARE_NATIVE(startup_p)
 {
-    CRYPT_INCLUDE_PARAMS_OF_STARTUP_P;
+    INCLUDE_PARAMS_OF_STARTUP_P;
 
     mbedtls_platform_set_snprintf(&tf_snprintf);  // see file %tf_snprintf.c
 
@@ -1838,7 +1838,7 @@ DECLARE_NATIVE(startup_p)
 //
 DECLARE_NATIVE(shutdown_p)
 {
-    CRYPT_INCLUDE_PARAMS_OF_SHUTDOWN_P;
+    INCLUDE_PARAMS_OF_SHUTDOWN_P;
 
   #if TO_WINDOWS
     if (gCryptProv != 0) {

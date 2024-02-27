@@ -149,7 +149,7 @@ DECLARE_NATIVE(pause)
 //
 // !!! Need definition to test for N_DEBUGGER_pause function
 {
-    DEBUGGER_INCLUDE_PARAMS_OF_PAUSE;
+    INCLUDE_PARAMS_OF_PAUSE;
 
     if (Do_Breakpoint_Throws(
         OUT,
@@ -192,7 +192,7 @@ DECLARE_NATIVE(resume)
 // While an interesting feature, it's not currently a priority.  (It can be
 // accomplished with something like `resume [unwind ...]`)
 {
-    DEBUGGER_INCLUDE_PARAMS_OF_RESUME;
+    INCLUDE_PARAMS_OF_RESUME;
 
     Value* expr = ARG(expression);
     if (Is_Nulled(expr))  // e.g. <end> (actuall null not legal)
@@ -234,7 +234,7 @@ DECLARE_NATIVE(resume)
 //
 DECLARE_NATIVE(step)
 {
-    DEBUGGER_INCLUDE_PARAMS_OF_STEP;
+    INCLUDE_PARAMS_OF_STEP;
     UNUSED(ARG(amount));
     fail ("STEP's methodology was deprecated, it is being re-implemented");
 }

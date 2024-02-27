@@ -224,7 +224,7 @@ DECLARE_NATIVE(console)
 // What it will return will be either an exit code (INTEGER!), a signal for
 // cancellation (BLANK!), or a debugging instruction (BLOCK!).
 {
-    CONSOLE_INCLUDE_PARAMS_OF_CONSOLE;
+    INCLUDE_PARAMS_OF_CONSOLE;
 
     // skin return result--request or ultimate return
     Value* const code = cast(Value*, OUT);

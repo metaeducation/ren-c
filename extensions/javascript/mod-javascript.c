@@ -797,7 +797,7 @@ DECLARE_NATIVE(js_native)
 //
 // Note: specialized as JS-AWAITER in %ext-javascript-init.reb
 {
-    JAVASCRIPT_INCLUDE_PARAMS_OF_JS_NATIVE;
+    INCLUDE_PARAMS_OF_JS_NATIVE;
 
     Element* spec = cast(Element*, ARG(spec));
     Element* source = cast(Element*, ARG(source));
@@ -987,7 +987,7 @@ DECLARE_NATIVE(js_eval_p)
 //
 // !!! If the JS-DO-DIALECT stabilizes it may be worth implementing natively.
 {
-    JAVASCRIPT_INCLUDE_PARAMS_OF_JS_EVAL_P;
+    INCLUDE_PARAMS_OF_JS_EVAL_P;
 
     Value* source = ARG(source);
 
@@ -1075,7 +1075,7 @@ DECLARE_NATIVE(js_eval_p)
 //
 DECLARE_NATIVE(startup_p)
 {
-    JAVASCRIPT_INCLUDE_PARAMS_OF_STARTUP_P;
+    INCLUDE_PARAMS_OF_STARTUP_P;
 
   #if DEBUG_JAVASCRIPT_EXTENSION
     //
@@ -1108,7 +1108,7 @@ DECLARE_NATIVE(startup_p)
 //
 DECLARE_NATIVE(js_trace)
 {
-    JAVASCRIPT_INCLUDE_PARAMS_OF_JS_TRACE;
+    INCLUDE_PARAMS_OF_JS_TRACE;
 
   #if DEBUG_JAVASCRIPT_EXTENSION
     PG_Probe_Failures = PG_JS_Trace = Cell_Logic(ARG(enable));
@@ -1130,7 +1130,7 @@ DECLARE_NATIVE(js_trace)
 //
 DECLARE_NATIVE(js_stacklimit)
 {
-    JAVASCRIPT_INCLUDE_PARAMS_OF_JS_STACKLIMIT;
+    INCLUDE_PARAMS_OF_JS_STACKLIMIT;
 
     StackIndex base = TOP_INDEX;
 

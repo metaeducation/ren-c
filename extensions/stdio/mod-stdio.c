@@ -71,7 +71,7 @@ DECLARE_NATIVE(get_console_actor_handle)
 //
 DECLARE_NATIVE(startup_p)
 {
-    STDIO_INCLUDE_PARAMS_OF_STARTUP_P;
+    INCLUDE_PARAMS_OF_STARTUP_P;
 
     // This does the platform-specific initialization for stdio.  Included in
     // that is doing things like figuring out if the input or output have
@@ -101,7 +101,7 @@ DECLARE_NATIVE(write_stdout)
 // bytes interpreted in any way.  (e.g. not changed from UTF-8 to wide
 // characters, or not having CR turned into CR LF sequences).
 {
-    STDIO_INCLUDE_PARAMS_OF_WRITE_STDOUT;
+    INCLUDE_PARAMS_OF_WRITE_STDOUT;
 
     Value* v = ARG(value);
 
@@ -178,7 +178,7 @@ DECLARE_NATIVE(read_stdin)
 // timeouts and such.  Those designs should probably be looking to libuv or
 // Boost.ASIO for design inspiration.
 {
-    STDIO_INCLUDE_PARAMS_OF_READ_STDIN;
+    INCLUDE_PARAMS_OF_READ_STDIN;
 
   #ifdef REBOL_SMART_CONSOLE
     if (Term_IO) {
@@ -239,7 +239,7 @@ DECLARE_NATIVE(read_stdin)
 //
 DECLARE_NATIVE(read_line)
 {
-    STDIO_INCLUDE_PARAMS_OF_READ_LINE;
+    INCLUDE_PARAMS_OF_READ_LINE;
 
     if (REF(hide))
         fail (
@@ -407,7 +407,7 @@ DECLARE_NATIVE(read_char)
 // NULL is sufficient to signal the caller is to treat it as no more input
 // available... that's EOF.
 {
-    STDIO_INCLUDE_PARAMS_OF_READ_CHAR;
+    INCLUDE_PARAMS_OF_READ_CHAR;
 
     int timeout_msec;
     if (not REF(timeout))
@@ -551,7 +551,7 @@ DECLARE_NATIVE(read_char)
 //
 DECLARE_NATIVE(shutdown_p)
 {
-    STDIO_INCLUDE_PARAMS_OF_SHUTDOWN_P;
+    INCLUDE_PARAMS_OF_SHUTDOWN_P;
 
     // This shutdown does platform-specific teardown, freeing buffers that
     // may only be have been created for Windows, etc.

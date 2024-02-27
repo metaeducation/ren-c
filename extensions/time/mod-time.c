@@ -49,7 +49,7 @@ extern Value* Get_Current_Datetime_Value(void);
 //
 DECLARE_NATIVE(now)
 {
-    TIME_INCLUDE_PARAMS_OF_NOW;
+    INCLUDE_PARAMS_OF_NOW;
 
     Value* timestamp = Get_Current_Datetime_Value();
 

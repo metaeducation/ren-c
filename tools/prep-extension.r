@@ -256,7 +256,7 @@ if use-librebol [
         ; extracted from the passed-in level.
         ;
         e1/emit [info {
-            #define ${U-M-NAME}_INCLUDE_PARAMS_OF_${PROTO-NAME} \
+            #define INCLUDE_PARAMS_OF_${PROTO-NAME} \
                 LIBREBOL_SPECIFIER_USED();  /* global, before local define */ \
                 RebolSpecifier* librebol_specifier; \
                 librebol_specifier = rebSpecifierFromLevel_internal(level_); \
@@ -267,7 +267,7 @@ if use-librebol [
 ]
 else [
     for-each info all-protos [
-        emit-include-params-macro/ext e1 info/proto u-m-name
+        emit-include-params-macro e1 info/proto
         e1/emit newline
     ]
 ]

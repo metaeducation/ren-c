@@ -63,7 +63,7 @@ typedef RebolValue Value;
 //
 DECLARE_NATIVE(generate)
 {
-    UUID_INCLUDE_PARAMS_OF_GENERATE;
+    INCLUDE_PARAMS_OF_GENERATE;
 
   #if TO_WINDOWS
 

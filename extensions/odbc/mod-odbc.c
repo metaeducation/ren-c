@@ -342,7 +342,7 @@ DECLARE_NATIVE(odbc_set_char_encoding)
 //
 // UTF-8 is preferred to UTF8: https://stackoverflow.com/q/809620/
 {
-    ODBC_INCLUDE_PARAMS_OF_ODBC_SET_CHAR_ENCODING;
+    INCLUDE_PARAMS_OF_ODBC_SET_CHAR_ENCODING;
 
     char_column_encoding = cast(CharColumnEncoding, rebUnboxInteger(
         "switch encoding [",
@@ -370,7 +370,7 @@ DECLARE_NATIVE(odbc_set_char_encoding)
 //
 DECLARE_NATIVE(open_connection)
 {
-    ODBC_INCLUDE_PARAMS_OF_OPEN_CONNECTION;
+    INCLUDE_PARAMS_OF_OPEN_CONNECTION;
 
     // We treat ODBC's SQLWCHAR type (wide SQL char) as 2 bytes per wchar, even
     //on  platforms where wchar_t is larger.  This gives unixODBC compatibility:
@@ -493,7 +493,7 @@ DECLARE_NATIVE(open_statement)
 // !!! Similar to previous routines, this takes an empty statement object in
 // to initialize.
 {
-    ODBC_INCLUDE_PARAMS_OF_OPEN_STATEMENT;
+    INCLUDE_PARAMS_OF_OPEN_STATEMENT;
 
     Connection* conn = rebUnboxHandle(Connection*,
         "ensure handle! connection.hdbc"
@@ -1191,7 +1191,7 @@ void Describe_ODBC_Results(
 //
 DECLARE_NATIVE(insert_odbc)
 {
-    ODBC_INCLUDE_PARAMS_OF_INSERT_ODBC;
+    INCLUDE_PARAMS_OF_INSERT_ODBC;
 
     SQLHSTMT hstmt = rebUnboxHandle(
         SQLHSTMT*, "ensure handle! statement.hstmt"
@@ -1592,7 +1592,7 @@ Value* ODBC_Column_To_Rebol_Value(
 //
 DECLARE_NATIVE(copy_odbc)
 {
-    ODBC_INCLUDE_PARAMS_OF_COPY_ODBC;
+    INCLUDE_PARAMS_OF_COPY_ODBC;
 
     SQLHSTMT hstmt = rebUnboxHandle(SQLHSTMT,
         "ensure handle! statement.hstmt"
@@ -1773,7 +1773,7 @@ DECLARE_NATIVE(copy_odbc)
 //
 DECLARE_NATIVE(update_odbc)
 {
-    ODBC_INCLUDE_PARAMS_OF_UPDATE_ODBC;
+    INCLUDE_PARAMS_OF_UPDATE_ODBC;
 
     // Get connection handle
     //
@@ -1822,7 +1822,7 @@ DECLARE_NATIVE(update_odbc)
 //
 DECLARE_NATIVE(close_statement)
 {
-    ODBC_INCLUDE_PARAMS_OF_CLOSE_STATEMENT;
+    INCLUDE_PARAMS_OF_CLOSE_STATEMENT;
 
     Value* columns_value = rebValue(
         "ensure [~null~ handle!] statement.columns"
@@ -1863,7 +1863,7 @@ DECLARE_NATIVE(close_statement)
 //
 DECLARE_NATIVE(close_connection)
 {
-    ODBC_INCLUDE_PARAMS_OF_CLOSE_CONNECTION;
+    INCLUDE_PARAMS_OF_CLOSE_CONNECTION;
 
     Value* hdbc_value = rebValue("ensure [~null~ handle!] connection.hdbc");
     if (not hdbc_value)  // connection was already closed (be tolerant?)
@@ -1904,7 +1904,7 @@ DECLARE_NATIVE(startup_p)
 // OPEN-CONNECTION vs. at startup, so you don't pay for it unless you actually
 // use ODBC features in the session.
 {
-    ODBC_INCLUDE_PARAMS_OF_STARTUP_P;
+    INCLUDE_PARAMS_OF_STARTUP_P;
 
     assert(henv == SQL_NULL_HANDLE);
 
@@ -1936,7 +1936,7 @@ DECLARE_NATIVE(shutdown_p)
 // that were a coherent idea, you'd still have problems if one extension were
 // holding on to handles from another--what order would they shut down in?
 {
-    ODBC_INCLUDE_PARAMS_OF_SHUTDOWN_P;
+    INCLUDE_PARAMS_OF_SHUTDOWN_P;
 
     // There are extant pointers in HANDLE! values to the parameters, columns,
     // and connections or else they wouldn't be in the list!  So we can't

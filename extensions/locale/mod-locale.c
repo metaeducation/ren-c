@@ -56,7 +56,7 @@ DECLARE_NATIVE(locale)
 //    parses environment variables and uses compiled-in tables.  See the HIJACK
 //    in %ext-locale-init.reb for that.
 {
-    LOCALE_INCLUDE_PARAMS_OF_LOCALE;
+    INCLUDE_PARAMS_OF_LOCALE;
 
   #if TO_WINDOWS
     LCTYPE type = rebUnbox(
@@ -141,7 +141,7 @@ DECLARE_NATIVE(locale)
 //
 DECLARE_NATIVE(setlocale)
 {
-    LOCALE_INCLUDE_PARAMS_OF_SETLOCALE;
+    INCLUDE_PARAMS_OF_SETLOCALE;
 
     // GNU extensions are #define'd to -1 above this routine if not available
     //

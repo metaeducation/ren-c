@@ -188,7 +188,7 @@ static bool Try_Init_Startupinfo_Sink(
 //  Call_Core: C
 //
 Bounce Call_Core(Level* level_) {
-    PROCESS_INCLUDE_PARAMS_OF_CALL_INTERNAL_P;
+    INCLUDE_PARAMS_OF_CALL_INTERNAL_P;
 
     UNUSED(REF(console));  // !!! This is not paid attention to (?)
 

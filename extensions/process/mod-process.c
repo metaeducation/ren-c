@@ -117,7 +117,7 @@ DECLARE_NATIVE(get_os_browsers)
 // of more "structural" result, it was just easy because it's how the string
 // comes back from the Windows registry.  Review.
 {
-    PROCESS_INCLUDE_PARAMS_OF_GET_OS_BROWSERS;
+    INCLUDE_PARAMS_OF_GET_OS_BROWSERS;
 
     Value* list = rebValue("copy []");
 
@@ -223,7 +223,7 @@ DECLARE_NATIVE(sleep)
 // on Sleep() vs. usleep()...and all the relevant includes have been
 // established here.
 {
-    PROCESS_INCLUDE_PARAMS_OF_SLEEP;
+    INCLUDE_PARAMS_OF_SLEEP;
 
     REBLEN msec = Milliseconds_From_Value(ARG(duration));
 
@@ -272,7 +272,7 @@ static void kill_process(pid_t pid, int signal)
 //
 DECLARE_NATIVE(terminate)
 {
-    PROCESS_INCLUDE_PARAMS_OF_TERMINATE;
+    INCLUDE_PARAMS_OF_TERMINATE;
 
   #if TO_WINDOWS
 
@@ -353,7 +353,7 @@ DECLARE_NATIVE(get_env)
 // were falsey like nulls but might trigger awareness of their problematic
 // nature in some string routines.  Review.
 {
-    PROCESS_INCLUDE_PARAMS_OF_GET_ENV;
+    INCLUDE_PARAMS_OF_GET_ENV;
 
     Value* variable = ARG(variable);
 
@@ -457,7 +457,7 @@ DECLARE_NATIVE(get_env)
 //
 DECLARE_NATIVE(set_env)
 {
-    PROCESS_INCLUDE_PARAMS_OF_SET_ENV;
+    INCLUDE_PARAMS_OF_SET_ENV;
 
     Value* variable = ARG(variable);
     Value* value = ARG(value);
@@ -554,7 +554,7 @@ DECLARE_NATIVE(set_env)
 //
 DECLARE_NATIVE(list_env)
 {
-    PROCESS_INCLUDE_PARAMS_OF_LIST_ENV;
+    INCLUDE_PARAMS_OF_LIST_ENV;
 
     Value* map = rebValue("make map! []");
 

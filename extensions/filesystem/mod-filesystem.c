@@ -57,7 +57,7 @@ extern Bounce Dir_Actor(Level* level_, Value* port, const Symbol* verb);
 //
 DECLARE_NATIVE(startup_p)
 {
-    FILESYSTEM_INCLUDE_PARAMS_OF_STARTUP_P;
+    INCLUDE_PARAMS_OF_STARTUP_P;
 
     return rebTrash();
 }
@@ -88,7 +88,7 @@ DECLARE_NATIVE(get_file_actor_handle)
 //
 DECLARE_NATIVE(shutdown_p)
 {
-    FILESYSTEM_INCLUDE_PARAMS_OF_SHUTDOWN_P;
+    INCLUDE_PARAMS_OF_SHUTDOWN_P;
 
     return rebTrash();
 }
@@ -505,7 +505,7 @@ String* To_Local_Path(const Value* file, Flags flags) {
 //
 DECLARE_NATIVE(local_to_file)
 {
-    FILESYSTEM_INCLUDE_PARAMS_OF_LOCAL_TO_FILE;
+    INCLUDE_PARAMS_OF_LOCAL_TO_FILE;
 
     Value* path = ARG(path);
     if (Is_File(path)) {
@@ -541,7 +541,7 @@ DECLARE_NATIVE(local_to_file)
 //
 DECLARE_NATIVE(file_to_local)
 {
-    FILESYSTEM_INCLUDE_PARAMS_OF_FILE_TO_LOCAL;
+    INCLUDE_PARAMS_OF_FILE_TO_LOCAL;
 
     Value* path = ARG(path);
     if (Is_Text(path)) {
@@ -573,7 +573,7 @@ DECLARE_NATIVE(file_to_local)
 //
 DECLARE_NATIVE(what_dir)
 {
-    FILESYSTEM_INCLUDE_PARAMS_OF_WHAT_DIR;
+    INCLUDE_PARAMS_OF_WHAT_DIR;
 
     Value* current_path = Get_System(SYS_OPTIONS, OPTIONS_CURRENT_PATH);
 
@@ -614,7 +614,7 @@ DECLARE_NATIVE(what_dir)
 //
 DECLARE_NATIVE(change_dir)
 {
-    FILESYSTEM_INCLUDE_PARAMS_OF_CHANGE_DIR;
+    INCLUDE_PARAMS_OF_CHANGE_DIR;
 
     Value* arg = ARG(path);
     Value* current_path = Get_System(SYS_OPTIONS, OPTIONS_CURRENT_PATH);
@@ -653,7 +653,7 @@ extern Value* Get_Current_Exec(void);
 //
 DECLARE_NATIVE(get_current_exec)
 {
-    FILESYSTEM_INCLUDE_PARAMS_OF_GET_CURRENT_EXEC;
+    INCLUDE_PARAMS_OF_GET_CURRENT_EXEC;
 
     return Get_Current_Exec();
 }

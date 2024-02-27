@@ -107,7 +107,7 @@ typedef RebolValue Value;
 //
 DECLARE_NATIVE(request_file_p)
 {
-    VIEW_INCLUDE_PARAMS_OF_REQUEST_FILE_P;
+    INCLUDE_PARAMS_OF_REQUEST_FILE_P;
 
     Value* results = rebValue("copy []");  // collected in block and returned
 
@@ -490,7 +490,7 @@ DECLARE_NATIVE(request_dir_p)
 // The code that was there has been resurrected well enough to run, but is
 // currently disabled to avoid the OLE32 dependency.
 {
-    VIEW_INCLUDE_PARAMS_OF_REQUEST_DIR_P;
+    INCLUDE_PARAMS_OF_REQUEST_DIR_P;
 
     Value* result = nullptr;
     Value* error = nullptr;

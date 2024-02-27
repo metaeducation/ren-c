@@ -1043,7 +1043,7 @@ static Bounce UDP_Actor(Level* level_, Value* port, const Symbol* verb)
 //
 DECLARE_NATIVE(get_tcp_actor_handle)
 {
-    NETWORK_INCLUDE_PARAMS_OF_GET_TCP_ACTOR_HANDLE;
+    INCLUDE_PARAMS_OF_GET_TCP_ACTOR_HANDLE;
 
     Make_Port_Actor_Handle(OUT, &TCP_Actor);
     return OUT;
@@ -1062,7 +1062,7 @@ DECLARE_NATIVE(get_udp_actor_handle)
 //
 // !!! Note: has not been ported to libuv.
 {
-    NETWORK_INCLUDE_PARAMS_OF_GET_UDP_ACTOR_HANDLE;
+    INCLUDE_PARAMS_OF_GET_UDP_ACTOR_HANDLE;
 
     Make_Port_Actor_Handle(OUT, &UDP_Actor);
     return OUT;
@@ -1111,7 +1111,7 @@ DECLARE_NATIVE(startup_p)
 // !!! Note the DNS extension currently relies on this startup being called
 // instead of doing its own.
 {
-    NETWORK_INCLUDE_PARAMS_OF_STARTUP_P;
+    INCLUDE_PARAMS_OF_STARTUP_P;
 
   #if TO_WINDOWS
     //
@@ -1149,7 +1149,7 @@ DECLARE_NATIVE(startup_p)
 //
 DECLARE_NATIVE(shutdown_p)
 {
-    NETWORK_INCLUDE_PARAMS_OF_SHUTDOWN_P;
+    INCLUDE_PARAMS_OF_SHUTDOWN_P;
 
   #if TO_WINDOWS
     WSACleanup();  // have to call as libuv does not
@@ -1178,7 +1178,7 @@ DECLARE_NATIVE(wait_p)  // See wrapping function WAIT in usermode code
 // does not have to implement the reducing process "stacklessly" itself.  The
 // stackless nature comes for free by virtue of REDUCE-ing in usermode.
 {
-    NETWORK_INCLUDE_PARAMS_OF_WAIT_P;
+    INCLUDE_PARAMS_OF_WAIT_P;
 
     REBLEN timeout = 0;  // in milliseconds
     Value* ports = nullptr;

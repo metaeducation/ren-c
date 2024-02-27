@@ -19,7 +19,7 @@ static void kill_process(pid_t pid, int signal);
 //
 DECLARE_NATIVE(get_pid)
 {
-    PROCESS_INCLUDE_PARAMS_OF_GET_PID;
+    INCLUDE_PARAMS_OF_GET_PID;
 
     return rebInteger(getpid());
 }
@@ -36,7 +36,7 @@ DECLARE_NATIVE(get_pid)
 //
 DECLARE_NATIVE(get_uid)
 {
-    PROCESS_INCLUDE_PARAMS_OF_GET_UID;
+    INCLUDE_PARAMS_OF_GET_UID;
 
     return rebInteger(getuid());
 }
@@ -52,7 +52,7 @@ DECLARE_NATIVE(get_uid)
 //
 DECLARE_NATIVE(get_euid)
 {
-    PROCESS_INCLUDE_PARAMS_OF_GET_EUID;
+    INCLUDE_PARAMS_OF_GET_EUID;
 
     return rebInteger(geteuid());
 }
@@ -68,7 +68,7 @@ DECLARE_NATIVE(get_euid)
 //
 DECLARE_NATIVE(get_gid)
 {
-    PROCESS_INCLUDE_PARAMS_OF_GET_UID;
+    INCLUDE_PARAMS_OF_GET_UID;
 
     return rebInteger(getgid());
 }
@@ -84,7 +84,7 @@ DECLARE_NATIVE(get_gid)
 //
 DECLARE_NATIVE(get_egid)
 {
-    PROCESS_INCLUDE_PARAMS_OF_GET_EUID;
+    INCLUDE_PARAMS_OF_GET_EUID;
 
     return rebInteger(getegid());
 }
@@ -103,7 +103,7 @@ DECLARE_NATIVE(get_egid)
 //
 DECLARE_NATIVE(set_uid)
 {
-    PROCESS_INCLUDE_PARAMS_OF_SET_UID;
+    INCLUDE_PARAMS_OF_SET_UID;
 
     if (setuid(VAL_INT32(ARG(uid))) >= 0)
         return COPY(ARG(uid));
@@ -134,7 +134,7 @@ DECLARE_NATIVE(set_uid)
 //
 DECLARE_NATIVE(set_euid)
 {
-    PROCESS_INCLUDE_PARAMS_OF_SET_EUID;
+    INCLUDE_PARAMS_OF_SET_EUID;
 
     if (seteuid(VAL_INT32(ARG(euid))) >= 0)
         return COPY(ARG(euid));
@@ -165,7 +165,7 @@ DECLARE_NATIVE(set_euid)
 //
 DECLARE_NATIVE(set_gid)
 {
-    PROCESS_INCLUDE_PARAMS_OF_SET_GID;
+    INCLUDE_PARAMS_OF_SET_GID;
 
     if (setgid(VAL_INT32(ARG(gid))) >= 0)
         return COPY(ARG(gid));
@@ -196,7 +196,7 @@ DECLARE_NATIVE(set_gid)
 //
 DECLARE_NATIVE(set_egid)
 {
-    PROCESS_INCLUDE_PARAMS_OF_SET_EGID;
+    INCLUDE_PARAMS_OF_SET_EGID;
 
     if (setegid(VAL_INT32(ARG(egid))) >= 0)
         return COPY(ARG(egid));
@@ -229,7 +229,7 @@ DECLARE_NATIVE(set_egid)
 //
 DECLARE_NATIVE(send_signal)
 {
-    PROCESS_INCLUDE_PARAMS_OF_SEND_SIGNAL;
+    INCLUDE_PARAMS_OF_SEND_SIGNAL;
 
     pid_t pid = rebUnboxInteger(ARG(pid));
     int signal = rebUnboxInteger(ARG(signal));
