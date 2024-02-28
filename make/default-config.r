@@ -17,13 +17,9 @@ extensions: make map! [
 
     ; Clipboard is only implemented in Windows at the moment.
 
-    BMP +
     Clipboard -
     Console +
     Crypt +
-    GIF +
-    JPG +
-    PNG +
     Process +
     UUID +
 ]
