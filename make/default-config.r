@@ -26,7 +26,6 @@ extensions: make map! [
     Crypt +
     GIF +
     JPG +
-    Locale +
     ODBC -
     PNG +
     Process +
