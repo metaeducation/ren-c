@@ -406,7 +406,7 @@ INLINE void Set_Frame_Detected_Fetch(
         // !!! for now, assume scan went to the end; ultimately it would need
         // to pass the "source".
         //
-        f->source->vaptr = NULL;
+        f->source->vaptr = nullptr;
 
         if (DSP == dsp_orig) {
             //

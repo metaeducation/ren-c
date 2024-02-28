@@ -223,7 +223,7 @@ REB_R Measured_Dispatcher_Hook(REBFRM * const f)
             m,
             ACT_ARCHETYPE(f->original),
             SPECIFIED,
-            NULL, // searching now, not inserting, so pass NULL
+            nullptr,  // searching now, not inserting, so pass nullptr
             SPECIFIED,
             cased // shouldn't matter
         );
@@ -233,7 +233,7 @@ REB_R Measured_Dispatcher_Hook(REBFRM * const f)
             // There's no entry yet for this ACTION!, initialize one.
 
             REBARR *a = Make_Arr(IDX_STATS_MAX);
-            if (f->opt_label != NULL)
+            if (f->opt_label != nullptr)
                 Init_Word(ARR_AT(a, IDX_STATS_SYMBOL), f->opt_label);
             else
                 Init_Blank(ARR_AT(a, IDX_STATS_SYMBOL));
@@ -247,7 +247,7 @@ REB_R Measured_Dispatcher_Hook(REBFRM * const f)
                 m,
                 ACT_ARCHETYPE(f->original),
                 SPECIFIED,
-                stats, // inserting now, so don't pass NULL
+                stats, // inserting now, so don't pass nullptr
                 SPECIFIED,
                 cased // shouldn't matter
             );
@@ -256,10 +256,10 @@ REB_R Measured_Dispatcher_Hook(REBFRM * const f)
         else {
             Value* stats = KNOWN(ARR_AT(MAP_PAIRLIST(m), ((n - 1) * 2) + 1));
 
-            REBARR *a = IS_BLOCK(stats) ? VAL_ARRAY(stats) : NULL;
+            REBARR *a = IS_BLOCK(stats) ? VAL_ARRAY(stats) : nullptr;
 
             if (
-                a != NULL
+                a != nullptr
                 && ARR_LEN(a) == IDX_STATS_MAX
                 && (
                     IS_WORD(ARR_AT(a, IDX_STATS_SYMBOL))
@@ -269,7 +269,7 @@ REB_R Measured_Dispatcher_Hook(REBFRM * const f)
             ){
                 if (
                     IS_BLANK(ARR_AT(a, IDX_STATS_SYMBOL))
-                    && f->opt_label != NULL
+                    && f->opt_label != nullptr
                 ){
                     Init_Word(ARR_AT(a, IDX_STATS_SYMBOL), f->opt_label);
                 }

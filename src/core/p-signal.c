@@ -48,20 +48,20 @@ static void update(struct devreq_posix_signal *signal, REBINT len, Value* arg)
     for (i = 0; i < len; i ++) {
         REBCTX *obj = Alloc_Context(REB_OBJECT, 8);
         Value* val = Append_Context(
-            obj, NULL, Intern_UTF8_Managed(signal_no, LEN_BYTES(signal_no))
+            obj, nullptr, Intern_UTF8_Managed(signal_no, LEN_BYTES(signal_no))
         );
         Init_Integer(val, sig[i].si_signo);
 
         val = Append_Context(
-            obj, NULL, Intern_UTF8_Managed(code, LEN_BYTES(code))
+            obj, nullptr, Intern_UTF8_Managed(code, LEN_BYTES(code))
         );
         Init_Integer(val, sig[i].si_code);
         val = Append_Context(
-            obj, NULL, Intern_UTF8_Managed(source_pid, LEN_BYTES(source_pid))
+            obj, nullptr, Intern_UTF8_Managed(source_pid, LEN_BYTES(source_pid))
         );
         Init_Integer(val, sig[i].si_pid);
         val = Append_Context(
-            obj, NULL, Intern_UTF8_Managed(source_uid, LEN_BYTES(source_uid))
+            obj, nullptr, Intern_UTF8_Managed(source_uid, LEN_BYTES(source_uid))
         );
         Init_Integer(val, sig[i].si_uid);
 

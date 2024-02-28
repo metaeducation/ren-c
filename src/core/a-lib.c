@@ -478,7 +478,7 @@ RebolValue* RL_rebValue(const void *p, va_list *vaptr)
         return result;
 
     rebRelease(result);
-    return nullptr; // API uses nullptr for NULL (see notes on NULLIZE)
+    return nullptr;  // API uses nullptr for NULL (see notes on NULLIZE)
 }
 
 
@@ -828,7 +828,7 @@ RebolValue* RL_rebRescue(
     DECLARE_END_FRAME (f);
     f->out = m_cast(Value*, END_NODE); // should not be written
 
-    REBSTR *opt_label = NULL;
+    REBSTR *opt_label = nullptr;
     Push_Frame_At_End(f, DO_MASK_NONE); // not FULLY_SPECIALIZED
 
     Reuse_Varlist_If_Available(f); // needed to attach API handles to
@@ -929,7 +929,7 @@ RebolValue* RL_rebRescueWith(
 
     DROP_TRAP_SAME_STACKLEVEL_AS_PUSH(&state);
 
-    return result; // no special handling, may be NULL
+    return result;  // no special handling, may be nullptr
 }
 
 
@@ -1116,7 +1116,7 @@ char *RL_rebSpell(const void *p, va_list *vaptr)
         fail (Error_No_Catch_For_Throw(string));
 
     if (IS_NULLED(string))
-        return nullptr; // NULL is passed through, for opting out
+        return nullptr;  // NULL is passed through, for opting out
 
     size_t size = rebSpellInto(nullptr, 0, string);
     char *result = cast(char*, rebMalloc(size + 1)); // add space for term
@@ -1199,7 +1199,7 @@ REBWCHAR *RL_rebSpellW(const void *p, va_list *vaptr)
         fail (Error_No_Catch_For_Throw(string));
 
     if (IS_NULLED(string))
-        return nullptr; // NULL is passed through, for opting out
+        return nullptr;  // NULL is passed through, for opting out
 
     REBLEN len = rebSpellIntoW(nullptr, 0, string);
     REBWCHAR *result = cast(
@@ -1261,7 +1261,7 @@ unsigned char *RL_rebBytes(
 
     if (IS_NULLED(series)) {
         *size_out = 0;
-        return nullptr; // NULL is passed through, for opting out
+        return nullptr;  // NULL is passed through, for opting out
     }
 
     if (ANY_WORD(series) or ANY_STRING(series)) {

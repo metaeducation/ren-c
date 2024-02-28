@@ -72,7 +72,7 @@ REB_R MAKE_Tuple(Value* out, enum Reb_Kind kind, const Value* arg)
     if (IS_TEXT(arg) or IS_URL(arg)) {
         REBSIZ size;
         REBYTE *bp = Analyze_String_For_Scan(&size, arg, MAX_SCAN_TUPLE);
-        if (Scan_Tuple(out, bp, size) == NULL)
+        if (Scan_Tuple(out, bp, size) == nullptr)
             fail (Error_Invalid(arg));
         return out;
     }
@@ -318,7 +318,7 @@ void MF_Tuple(REB_MOLD *mo, const Cell* v, bool form)
 REBTYPE(Tuple)
 {
     Value* value = D_ARG(1);
-    Value* arg = D_ARGC > 1 ? D_ARG(2) : NULL;
+    Value* arg = D_ARGC > 1 ? D_ARG(2) : nullptr;
     const REBYTE *ap;
     REBLEN len;
     REBLEN alen;

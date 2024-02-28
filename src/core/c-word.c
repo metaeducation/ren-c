@@ -101,7 +101,7 @@ REBINT Get_Hash_Prime(REBLEN size)
 //
 // http://stackoverflow.com/a/279812/211160
 //
-// Since it's not enough to simply NULL out the spot when an interned string
+// Since it's not enough to simply nullptr out the spot when an interned string
 // is GC'd, a special pointer signaling "deletedness" is used.  It does not
 // cause a linear probe to terminate, but it is reused on insertions.
 //
@@ -199,7 +199,7 @@ REBSTR *Intern_UTF8_Managed(const REBYTE *utf8, size_t size)
     // https://en.wikipedia.org/wiki/Linear_probing
     //
     // For the hash search to be guaranteed to terminate, the table must be
-    // large enough that we are able to find a NULL if there's a miss.  (It's
+    // large enough that we are able to find nullptr if there's a miss.  (It's
     // actually kept larger than that, but to be on the right side of theory,
     // the table is always checked for expansion needs *before* the search.)
     //
@@ -408,7 +408,7 @@ void GC_Kill_Interning(REBSTR *intern)
     }
     else {
         // This canon form must be removed from the hash table.  Ripple the
-        // collision slots back until a NULL is found, to reduce search times.
+        // collision slots back until nullptr is found, to reduce search times.
         //
         REBLEN previous_slot = slot;
         while (canons_by_hash[slot]) {
@@ -420,7 +420,7 @@ void GC_Kill_Interning(REBSTR *intern)
 
         // Signal that the hash slot is "deleted" via a special pointer.
         // See notes on DELETED_SLOT for why the final slot in the collision
-        // chain can't just be left NULL:
+        // chain can't just be left as nullptr:
         //
         // http://stackoverflow.com/a/279812/211160
         //
@@ -494,7 +494,7 @@ void Startup_Interning(void)
     PG_Canons_By_Hash = Make_Ser_Core(
         n, sizeof(REBSTR*), SERIES_FLAG_POWER_OF_2
     );
-    Clear_Series(PG_Canons_By_Hash); // all slots start at NULL
+    Clear_Series(PG_Canons_By_Hash);  // all slots start at nullptr
     SET_SERIES_LEN(PG_Canons_By_Hash, n);
 }
 
@@ -523,7 +523,7 @@ void Startup_Symbols(REBARR *words)
     );
 
     // All words that not in %words.r will get back Cell_Word_Id(w) == SYM_0
-    // Hence, SYM_0 cannot be canonized.  Allowing Canon(SYM_0) to return NULL
+    // Hence, SYM_0 cannot be canonized.  Letting Canon(SYM_0) return nullptr
     // and try and use that meaningfully is too risky, so it is simply
     // prohibited to canonize SYM_0, and trash the REBSTR* in the [0] slot.
     //
@@ -557,7 +557,7 @@ void Startup_Symbols(REBARR *words)
         } while (name != canon); // circularly linked list, stop on a cycle
     }
 
-    *SER_AT(REBSTR*, PG_Symbol_Canons, sym) = NULL; // terminate
+    *SER_AT(REBSTR*, PG_Symbol_Canons, sym) = nullptr;  // terminate
 
     SET_SERIES_LEN(PG_Symbol_Canons, 1 + cast(REBLEN, sym));
     assert(SER_LEN(PG_Symbol_Canons) == 1 + ARR_LEN(words));

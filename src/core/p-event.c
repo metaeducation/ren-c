@@ -98,7 +98,7 @@ Value* Append_Event(void)
 //  Find_Last_Event: C
 //
 // Find the last event in the queue by the model
-// Check its type, if it matches, then return the event or NULL
+// Check its type, if it matches, then return the event or nullptr
 //
 Value* Find_Last_Event(REBINT model, REBINT type)
 {
@@ -107,11 +107,11 @@ Value* Find_Last_Event(REBINT model, REBINT type)
     Value* state;
 
     port = Get_System(SYS_PORTS, PORTS_SYSTEM);
-    if (!IS_PORT(port)) return NULL; // verify it is a port object
+    if (!IS_PORT(port)) return nullptr;  // verify it is a port object
 
     // Get queue block:
     state = VAL_CONTEXT_VAR(port, STD_PORT_STATE);
-    if (!IS_BLOCK(state)) return NULL;
+    if (!IS_BLOCK(state)) return nullptr;
 
     value = VAL_ARRAY_TAIL(state) - 1;
     for (; value >= VAL_ARRAY_HEAD(state); --value) {
@@ -119,12 +119,12 @@ Value* Find_Last_Event(REBINT model, REBINT type)
             if (VAL_EVENT_TYPE(value) == type) {
                 return KNOWN(value);
             } else {
-                return NULL;
+                return nullptr;
             }
         }
     }
 
-    return NULL;
+    return nullptr;
 }
 
 //
@@ -134,7 +134,7 @@ Value* Find_Last_Event(REBINT model, REBINT type)
 //
 static REB_R Event_Actor(REBFRM *frame_, Value* port, Value* verb)
 {
-    Value* arg = D_ARGC > 1 ? D_ARG(2) : NULL;
+    Value* arg = D_ARGC > 1 ? D_ARG(2) : nullptr;
 
     // Validate and fetch relevant PORT fields:
     //
@@ -227,11 +227,11 @@ static REB_R Event_Actor(REBFRM *frame_, Value* port, Value* verb)
             fail (Error_Bad_Refines_Raw());
         }
 
-        if (req == NULL) { //!!!
+        if (req == nullptr) {  //!!!
             req = OS_MAKE_DEVREQ(RDI_EVENT);
             req->flags |= RRF_OPEN;
             Value* result = OS_DO_DEVICE(req, RDC_CONNECT);
-            if (result == NULL) {
+            if (result == nullptr) {
                 //
                 // comment said "stays queued", hence seems pending happens
             }
@@ -252,7 +252,7 @@ static REB_R Event_Actor(REBFRM *frame_, Value* port, Value* verb)
 
         // free req!!!
         req->flags &= ~RRF_OPEN;
-        req = NULL;
+        req = nullptr;
         RETURN (port); }
 
     case SYM_FIND:
@@ -282,7 +282,7 @@ void Shutdown_Event_Scheme(void)
 {
     if (req) {
         free(req);
-        req = NULL;
+        req = nullptr;
     }
 }
 

@@ -591,7 +591,7 @@ REBLEN Find_Str_Char(
             }
             else {
                 // We're skipping by more than one, going in reverse, or
-                // looking for a NULL byte.  Can't use any fancy tricks
+                // looking for a '\0' byte.  Can't use any fancy tricks
                 // (besides the trick of precalculating the casings)
                 //
                 while (true) {

@@ -1286,7 +1286,7 @@ static REB_R Remove_Each_Core(struct Remove_Each_State *res)
                 // removals (we couldn't report how many if we did)
                 //
                 assert(res->start < len);
-                return NULL;
+                return nullptr;
             }
             else {
                 // CONTINUE - res->out may not be void if /WITH refinement used

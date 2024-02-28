@@ -2115,7 +2115,7 @@ bool Eval_Core_Throws(REBFRM * const f)
 
         if (Eval_Path_Throws_Core(
             FRM_CELL(f), // output if thrown, used as scratch space otherwise
-            NULL, // not requesting symbol means refinements not allowed
+            nullptr,  // not requesting symbol means refinements not allowed
             VAL_ARRAY(current),
             VAL_INDEX(current),
             f->specifier,

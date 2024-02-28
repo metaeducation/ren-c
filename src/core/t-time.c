@@ -93,7 +93,7 @@ const REBYTE *Scan_Time(Value* out, const REBYTE *cp, REBLEN len)
         neg = false;
 
     if (*cp == '-' || *cp == '+')
-        return NULL; // small hole: --1:23
+        return nullptr; // small hole: --1:23
 
     // Can be:
     //    HH:MM       as part1:part2
@@ -104,17 +104,17 @@ const REBYTE *Scan_Time(Value* out, const REBYTE *cp, REBLEN len)
     REBINT part1 = -1;
     cp = Grab_Int(cp, &part1);
     if (part1 > MAX_HOUR)
-        return NULL;
+        return nullptr;
 
     if (*cp++ != ':')
-        return NULL;
+        return nullptr;
 
     const REBYTE *sp;
 
     REBINT part2 = -1;
     sp = Grab_Int(cp, &part2);
     if (part2 < 0 || sp == cp)
-        return NULL;
+        return nullptr;
 
     cp = sp;
 
@@ -123,7 +123,7 @@ const REBYTE *Scan_Time(Value* out, const REBYTE *cp, REBLEN len)
         sp = cp + 1;
         cp = Grab_Int(sp, &part3);
         if (part3 < 0 || cp == sp)
-            return NULL;
+            return nullptr;
     }
 
     REBINT part4 = -1;
@@ -150,7 +150,7 @@ const REBYTE *Scan_Time(Value* out, const REBYTE *cp, REBLEN len)
     if (part3 >= 0 || part4 < 0) { // HH:MM mode
         if (merid != '\0') {
             if (part1 > 12)
-                return NULL;
+                return nullptr;
 
             if (part1 == 12)
                 part1 = 0;
@@ -168,7 +168,7 @@ const REBYTE *Scan_Time(Value* out, const REBYTE *cp, REBLEN len)
         // MM:SS mode
 
         if (merid != '\0')
-            return NULL; // no AM/PM for minutes
+            return nullptr;  // no AM/PM for minutes
 
         VAL_NANO(out) = MIN_TIME(part1) + SEC_TIME(part2);
     }
@@ -237,7 +237,7 @@ REB_R MAKE_Time(Value* out, enum Reb_Kind kind, const Value* arg)
         REBSIZ size;
         REBYTE *bp = Analyze_String_For_Scan(&size, arg, MAX_SCAN_TIME);
 
-        if (Scan_Time(out, bp, size) == NULL)
+        if (Scan_Time(out, bp, size) == nullptr)
             goto no_time;
 
         return out; }
@@ -497,7 +497,7 @@ REBTYPE(Time)
 
     REBI64 secs = VAL_NANO(val);
 
-    Value* arg = D_ARGC > 1 ? D_ARG(2) : NULL;
+    Value* arg = D_ARGC > 1 ? D_ARG(2) : nullptr;
 
     Option(SymId) sym = Cell_Word_Id(verb);
 

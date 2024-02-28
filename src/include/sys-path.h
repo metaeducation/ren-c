@@ -89,11 +89,11 @@ INLINE bool Get_Path_Throws_Core(
 ){
     return Eval_Path_Throws_Core(
         out,
-        NULL, // not requesting symbol means refinements not allowed
+        nullptr,  // not requesting symbol means refinements not allowed
         VAL_ARRAY(any_path),
         VAL_INDEX(any_path),
         Derive_Specifier(specifier, any_path),
-        NULL, // not requesting value to set means it's a get
+        nullptr,  // not requesting value to set means it's a get
         0 // Name contains Get_Path_Throws() so it shouldn't be neutral
     );
 }
@@ -108,11 +108,11 @@ INLINE void Get_Path_Core(
 
     if (Eval_Path_Throws_Core(
         out,
-        NULL, // not requesting symbol means refinements not allowed
+        nullptr,  // not requesting symbol means refinements not allowed
         VAL_ARRAY(any_path),
         VAL_INDEX(any_path),
         Derive_Specifier(specifier, any_path),
-        NULL, // not requesting value to set means it's a get
+        nullptr,  // not requesting value to set means it's a get
         DO_FLAG_NO_PATH_GROUPS
     )){
         panic (out); // shouldn't be possible... no executions!
@@ -130,12 +130,12 @@ INLINE bool Set_Path_Throws_Core(
 
     return Eval_Path_Throws_Core(
         out,
-        NULL, // not requesting symbol means refinements not allowed
+        nullptr,  // not requesting symbol means refinements not allowed
         VAL_ARRAY(any_path),
         VAL_INDEX(any_path),
         Derive_Specifier(specifier, any_path),
         setval,
-        0 // Name contains Set_Path_Throws() so it shouldn't be neutral
+        0  // Name contains Set_Path_Throws() so it shouldn't be neutral
     );
 }
 
@@ -159,7 +159,7 @@ INLINE void Set_Path_Core(
 
     if (Eval_Path_Throws_Core(
         out,
-        NULL, // not requesting symbol means refinements not allowed
+        nullptr,  // not requesting symbol means refinements not allowed
         VAL_ARRAY(any_path),
         VAL_INDEX(any_path),
         Derive_Specifier(specifier, any_path),

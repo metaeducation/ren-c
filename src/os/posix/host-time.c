@@ -157,7 +157,7 @@ Value* Convert_Date(time_t *stime, long usec)
 Value* OS_Get_Time(void)
 {
     struct timeval tv;
-    struct timezone * const tz_ptr = NULL; // obsolete
+    struct timezone * const tz_ptr = nullptr; // obsolete
     if (gettimeofday(&tv, tz_ptr) != 0)
         rebJumps("fail {gettimeofday() returned 0}");
 

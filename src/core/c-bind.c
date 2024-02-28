@@ -309,7 +309,7 @@ void Rebind_Values_Deep(
         else if (ANY_WORD(v) and VAL_BINDING(v) == NOD(src)) {
             INIT_BINDING(v, dst);
 
-            if (opt_binder != NULL) {
+            if (opt_binder != nullptr) {
                 INIT_WORD_INDEX(
                     v,
                     Get_Binder_Index_Else_0(opt_binder, VAL_WORD_CANON(v))
@@ -328,7 +328,7 @@ void Rebind_Values_Deep(
             REBSPC *binding = VAL_BINDING(v);
             if (binding == UNBOUND) {
                 //
-                // Leave NULL bindings alone.  Hence, unlike in R3-Alpha, an
+                // Leave non bindings alone.  Hence, unlike in R3-Alpha, an
                 // ordinary FUNC won't forward its references.  An explicit
                 // BIND to an object must be performed, or METHOD should be
                 // used to do it implicitly.
@@ -482,7 +482,7 @@ void Virtual_Bind_Deep_To_New_Context(
     if (rebinding)
         INIT_BINDER(&binder);
 
-    REBSTR *duplicate = NULL;
+    REBSTR *duplicate = nullptr;
 
     Value* key = CTX_KEYS_HEAD(c);
     Value* var = CTX_VARS_HEAD(c);
@@ -516,7 +516,7 @@ void Virtual_Bind_Deep_To_New_Context(
                 // problem even if they are LIT-WORD! (negative index) as
                 // `for-each [x 'x] ...` is paradoxical.
                 //
-                if (duplicate == NULL)
+                if (duplicate == nullptr)
                     duplicate = VAL_PARAM_SPELLING(key);
             }
         }
@@ -562,7 +562,7 @@ void Virtual_Bind_Deep_To_New_Context(
                     &binder, VAL_PARAM_CANON(key)
                 );
                 if (stored > 0) {
-                    if (duplicate == NULL)
+                    if (duplicate == nullptr)
                         duplicate = VAL_PARAM_SPELLING(key);
                 }
                 else if (stored == 0) {

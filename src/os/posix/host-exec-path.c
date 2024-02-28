@@ -71,7 +71,7 @@ Value* OS_Get_Current_Exec(void)
     char *buffer;
     const char *self;
       #if defined(PROC_EXEC_PATH)
-        buffer = NULL;
+        buffer = nullptr;
         self = PROC_EXEC_PATH;
       #else //HAVE_PROC_PATHNAME
         int mib[4] = {
@@ -82,7 +82,7 @@ Value* OS_Get_Current_Exec(void)
         };
         buffer = rebAllocN(char, PATH_MAX + 1);
         size_t len = PATH_MAX + 1;
-        if (sysctl(mib, sizeof(mib), buffer, &len, NULL, 0) != 0) {
+        if (sysctl(mib, sizeof(mib), buffer, &len, nullptr, 0) != 0) {
             rebFree(buffer);
             return rebBlank();
         }

@@ -36,7 +36,7 @@ INLINE void *LIB_FD(REBLIB *l) {
 }
 
 INLINE bool IS_LIB_CLOSED(REBLIB *l) {
-    return LINK(l).fd == NULL;
+    return LINK(l).fd == nullptr;
 }
 
 INLINE REBCTX *VAL_LIBRARY_META(const Cell* v) {

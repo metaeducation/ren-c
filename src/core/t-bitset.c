@@ -534,7 +534,7 @@ REB_R PD_Bitset(
 ){
     REBSER *ser = VAL_SERIES(pvs->out);
 
-    if (opt_setval == NULL) {
+    if (opt_setval == nullptr) {
         if (Check_Bits(ser, picker, false))
             return Init_True(pvs->out);
         return nullptr; // !!! Red false on out of range, R3-Alpha NONE! (?)
@@ -580,7 +580,7 @@ void Trim_Tail_Zeros(REBSER *ser)
 REBTYPE(Bitset)
 {
     Value* value = D_ARG(1);
-    Value* arg = D_ARGC > 1 ? D_ARG(2) : NULL;
+    Value* arg = D_ARGC > 1 ? D_ARG(2) : nullptr;
     REBSER *ser;
 
     // !!! Set_Bits does locked series check--what should the more general

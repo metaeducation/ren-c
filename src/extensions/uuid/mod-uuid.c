@@ -85,7 +85,7 @@ DECLARE_NATIVE(generate)
     Init_Binary(D_OUT, ser);
 
 #elif defined(TO_OSX)
-    CFUUIDRef newId = CFUUIDCreate(NULL);
+    CFUUIDRef newId = CFUUIDCreate(nullptr);
     CFUUIDBytes bytes = CFUUIDGetUUIDBytes(newId);
     CFRelease(newId);
 

@@ -663,7 +663,7 @@ DECLARE_NATIVE(redo)
     REBCTX *c = VAL_CONTEXT(restartee);
 
     REBFRM *f = CTX_FRAME_IF_ON_STACK(c);
-    if (f == NULL)
+    if (f == nullptr)
         fail ("Use DO to start a not-currently running FRAME! (not REDO)");
 
     // If we were given a sibling to restart, make sure it is frame compatible

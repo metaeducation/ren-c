@@ -58,7 +58,7 @@ void Snap_State_Core(struct Reb_State *s)
     s->mold_loop_tail = ARR_LEN(TG_Mold_Stack);
 
     // !!! Is this initialization necessary?
-    s->error = NULL;
+    s->error = nullptr;
 }
 
 
@@ -132,7 +132,7 @@ void Assert_State_Balanced_Debug(
     assert(s->mold_buf_len == SER_LEN(MOLD_BUF));
     assert(s->mold_loop_tail == ARR_LEN(TG_Mold_Stack));
 
-    assert(s->error == NULL); // !!! necessary?
+    assert(s->error == nullptr);  // !!! necessary?
 }
 
 #endif
@@ -169,7 +169,7 @@ void Trapped_Helper(struct Reb_State *s)
     // accumulated in the collect buffer.
     //
     if (ARR_LEN(BUF_COLLECT) != 0)
-        Collect_End(NULL); // !!! No binder, review implications
+        Collect_End(nullptr);  // !!! No binder, review implications
 
     // Free any manual series that were extant at the time of the error
     // (that were created since this PUSH_TRAP started).  This includes
@@ -287,7 +287,7 @@ ATTRIBUTE_NO_RETURN void Fail_Core(const void *p)
     // There should be a PUSH_TRAP of some kind in effect if a `fail` can
     // ever be run.
     //
-    if (Saved_State == NULL)
+    if (Saved_State == nullptr)
         panic (error);
 
     // The information for the Rebol call frames generally is held in stack
@@ -405,7 +405,7 @@ void Set_Location_Of_Error(
     REBCTX *error,
     REBFRM *where // must be valid and executing on the stack
 ) {
-    assert(where != NULL);
+    assert(where != nullptr);
 
     REBDSP dsp_orig = DSP;
 
@@ -525,7 +525,7 @@ bool Make_Error_Object_Throws(
         //
         Init_Error(out, error);
 
-        Rebind_Context_Deep(root_error, error, NULL); // NULL=>no more binds
+        Rebind_Context_Deep(root_error, error, nullptr);  // no more binds
         Bind_Values_Deep(VAL_ARRAY_AT(arg), error);
 
         DECLARE_VALUE (evaluated);
@@ -1289,7 +1289,7 @@ REBCTX *Startup_Errors(const Value* boot_errors)
 {
   #ifdef DEBUG_HAS_PROBE
     const char *env_probe_failures = getenv("R3_PROBE_FAILURES");
-    if (env_probe_failures != NULL and atoi(env_probe_failures) != 0) {
+    if (env_probe_failures != nullptr and atoi(env_probe_failures) != 0) {
         printf(
             "**\n"
             "** R3_PROBE_FAILURES is nonzero in environment variable!\n"
@@ -1306,7 +1306,7 @@ REBCTX *Startup_Errors(const Value* boot_errors)
         REB_OBJECT,
         VAL_ARRAY_AT(boot_errors),
         VAL_SPECIFIER(boot_errors),
-        NULL
+        nullptr
     );
 
     // Create objects for all error types (CAT_ERRORS is "selfish", currently
@@ -1318,7 +1318,7 @@ REBCTX *Startup_Errors(const Value* boot_errors)
             REB_OBJECT,
             VAL_ARRAY_HEAD(val),
             SPECIFIED, // source array not in a function body
-            NULL
+            nullptr
         );
         Init_Object(val, error);
     }
@@ -1345,7 +1345,7 @@ void Startup_Stackoverflow(void)
 void Shutdown_Stackoverflow(void)
 {
     rebRelease(Root_Stackoverflow_Error);
-    Root_Stackoverflow_Error = NULL;
+    Root_Stackoverflow_Error = nullptr;
 }
 
 
@@ -1420,7 +1420,7 @@ const REBYTE *Security_Policy(REBSTR *spelling, const Value* name)
         }
 
         // Is it a string (file or URL):
-        else if (ANY_BINSTR(policy) and name != NULL) {
+        else if (ANY_BINSTR(policy) and name != nullptr) {
             if (Match_Sub_Path(VAL_SERIES(policy), VAL_SERIES(name))) {
                 // Is the match adequate?
                 if (VAL_LEN_HEAD(name) >= len) {

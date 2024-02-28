@@ -56,7 +56,7 @@ REB_R MAKE_Library(Value* out, enum Reb_Kind kind, const Value* arg)
 
     void *fd = OS_OPEN_LIBRARY(arg);
 
-    if (fd == NULL)
+    if (fd == nullptr)
         fail (Error_Bad_Make(REB_LIBRARY, arg));
 
     REBARR *singular = Alloc_Singular(NODE_FLAG_MANAGED);
@@ -64,7 +64,7 @@ REB_R MAKE_Library(Value* out, enum Reb_Kind kind, const Value* arg)
     ARR_SINGLE(singular)->payload.library.singular = singular;
 
     LINK(singular).fd = fd;
-    MISC(singular).meta = NULL; // build from spec, e.g. arg?
+    MISC(singular).meta = nullptr;  // build from spec, e.g. arg?
 
     return Move_Value(out, KNOWN(ARR_HEAD(singular)));
 }
@@ -107,12 +107,12 @@ REBTYPE(Library)
 
         Value* lib = ARG(port); // !!! generic arg name is "port"?
 
-        if (VAL_LIBRARY_FD(lib) == NULL) {
+        if (VAL_LIBRARY_FD(lib) == nullptr) {
             // allow to CLOSE an already closed library
         }
         else {
             OS_CLOSE_LIBRARY(VAL_LIBRARY_FD(lib));
-            LINK(VAL_LIBRARY(lib)).fd = NULL;
+            LINK(VAL_LIBRARY(lib)).fd = nullptr;
         }
         return nullptr; }
 

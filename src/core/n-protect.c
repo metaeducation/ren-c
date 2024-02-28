@@ -184,7 +184,7 @@ static void Protect_Word_Value(Value* word, REBFLGS flags)
         if (index == 0)
             fail ("Couldn't resolve PATH! in Protect_Word_Value");
 
-        if (context != NULL) {
+        if (context != nullptr) {
             Protect_Key(context, index, flags);
             if (flags & PROT_DEEP) {
                 Value* var = CTX_VAR(context, index);
@@ -422,7 +422,7 @@ void Ensure_Value_Immutable(const Cell* v, REBSER *opt_locker) {
     }
     else if (ANY_SERIES(v)) {
         Freeze_Sequence(VAL_SERIES(v));
-        if (opt_locker != NULL)
+        if (opt_locker != nullptr)
             SET_SER_INFO(VAL_SERIES(v), SERIES_INFO_AUTO_LOCKED);
     } else
         fail (Error_Invalid_Type(VAL_TYPE(v))); // not yet implemented
@@ -499,7 +499,7 @@ DECLARE_NATIVE(lock)
             fail (Error_Invalid_Type(VAL_TYPE(v))); // not yet implemented
     }
 
-    REBSER *locker = NULL;
+    REBSER *locker = nullptr;
     Ensure_Value_Immutable(D_OUT, locker);
 
     return D_OUT;

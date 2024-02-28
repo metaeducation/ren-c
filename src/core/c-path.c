@@ -36,7 +36,7 @@
 //
 //  PD_Fail: C
 //
-// In order to avoid having to pay for a check for NULL in the path dispatch
+// In order to avoid having to pay for a check for nullptr in the path dispatch
 // table for types with no path dispatch, a failing handler is in the slot.
 //
 REB_R PD_Fail(
@@ -91,7 +91,7 @@ bool Next_Path_Throws(REBPVS *pvs)
         fail (Error_No_Value_Core(pvs->value, pvs->specifier));
 
     PATH_HOOK hook = Path_Hooks[VAL_TYPE(pvs->out)];
-    assert(hook != nullptr); // &PD_Fail is used instead of NULL
+    assert(hook != nullptr);  // &PD_Fail is used instead of nullptr
 
     if (IS_GET_WORD(pvs->value)) { // e.g. object/:field
         Move_Opt_Var_May_Fail(PVS_PICKER(pvs), pvs->value, pvs->specifier);
@@ -250,7 +250,7 @@ bool Next_Path_Throws(REBPVS *pvs)
     // a "more refined" function value, it holds the original function and
     // accumulates refinement state on the stack.  The label should only
     // be captured the first time the function is seen, otherwise it would
-    // capture the last refinement's name, so check label for non-NULL.
+    // capture the last refinement's name, so check label for non-nullptr.
     //
     if (IS_ACTION(pvs->out) and IS_WORD(PVS_PICKER(pvs))) {
         if (not pvs->opt_label)
@@ -275,7 +275,7 @@ bool Next_Path_Throws(REBPVS *pvs)
 // If label_sym is passed in as being non-null, then the caller is implying
 // readiness to process a path which may be a function with refinements.
 // These refinements will be left in order on the data stack in the case
-// that `out` comes back as IS_ACTION().  If it is NULL then a new ACTION!
+// that `out` comes back as IS_ACTION().  If it is nullptr then a new ACTION!
 // will be allocated, in the style of the REFINE native, which will have the
 // behavior of refinement partial specialization.
 //
@@ -346,7 +346,7 @@ bool Eval_Path_Throws_Core(
     pvs->special = opt_setval; // a.k.a. PVS_OPT_SETVAL()
     assert(PVS_OPT_SETVAL(pvs) == opt_setval);
 
-    pvs->opt_label = NULL;
+    pvs->opt_label = nullptr;
 
     // Seed the path evaluation process by looking up the first item (to
     // get a datatype to dispatch on for the later path items)
@@ -459,7 +459,7 @@ bool Eval_Path_Throws_Core(
                 PVS_PICKER(pvs),
                 pvs->out,
                 pvs->opt_label,
-                NULL, // opt_def
+                nullptr,  // opt_def
                 dsp_orig // first_refine_dsp
             )){
                 panic ("REFINE-only specializations should not THROW");
@@ -523,13 +523,13 @@ REBCTX *Resolve_Path(const Value* path, REBLEN *index_out)
     Cell* picker = ARR_HEAD(array);
 
     if (IS_END(picker) or not ANY_WORD(picker))
-        return NULL; // !!! only handles heads of paths that are ANY-WORD!
+        return nullptr;  // !!! only handles heads of paths that are ANY-WORD!
 
     const Cell* var = Get_Opt_Var_May_Fail(picker, VAL_SPECIFIER(path));
 
     ++picker;
     if (IS_END(picker))
-        return NULL; // !!! does not handle single-element paths
+        return nullptr;  // !!! does not handle single-element paths
 
     while (ANY_CONTEXT(var) and IS_WORD(picker)) {
         REBLEN i = Find_Canon_In_Context(
@@ -544,7 +544,7 @@ REBCTX *Resolve_Path(const Value* path, REBLEN *index_out)
         var = CTX_VAR(VAL_CONTEXT(var), i);
     }
 
-    return NULL;
+    return nullptr;
 }
 
 
@@ -596,13 +596,13 @@ DECLARE_NATIVE(pick)
     pvs->value = END_NODE;
     pvs->specifier = SPECIFIED;
 
-    pvs->opt_label = NULL; // applies to e.g. :append/only returning APPEND
-    pvs->special = NULL;
+    pvs->opt_label = nullptr;  // applies to e.g. :append/only returning APPEND
+    pvs->special = nullptr;
 
     PATH_HOOK hook = Path_Hooks[VAL_TYPE(location)];
     assert(hook != nullptr); // &PD_Fail is used instead of null
 
-    REB_R r = hook(pvs, PVS_PICKER(pvs), NULL);
+    REB_R r = hook(pvs, PVS_PICKER(pvs), nullptr);
     if (not r)
         return r;
 
@@ -677,7 +677,7 @@ DECLARE_NATIVE(poke)
     pvs->value = END_NODE;
     pvs->specifier = SPECIFIED;
 
-    pvs->opt_label = NULL; // applies to e.g. :append/only returning APPEND
+    pvs->opt_label = nullptr;  // applies to e.g. :append/only returning APPEND
     pvs->special = ARG(value);
 
     PATH_HOOK hook = Path_Hooks[VAL_TYPE(location)];

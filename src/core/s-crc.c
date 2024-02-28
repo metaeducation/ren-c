@@ -52,7 +52,7 @@ static REBLEN *crc24_table;
 //  Generate_CRC24: C
 //
 // Simulates CRC hardware circuit.  Generates true CRC
-// directly, without requiring extra NULL bytes to be appended
+// directly, without requiring extra '\0' bytes to be appended
 // to the message. Returns new updated CRC accumulator.
 //
 // These CRC functions are derived from code in chapter 19 of the book
@@ -155,7 +155,7 @@ REBINT Hash_UTF8(const REBYTE *utf8, REBSIZ size)
 
         if (n >= 0x80) {
             utf8 = Back_Scan_UTF8_Char(&n, utf8, &size);
-            assert(utf8 != NULL); // should have already been verified good
+            assert(utf8 != nullptr);  // should have already been verified good
         }
 
         // Optimize `n = cast(REBYTE, LO_CASE(n))` (drop upper 8 bits)
@@ -196,7 +196,7 @@ uint32_t Hash_Value(const Cell* v)
         // While a void might technically be hashed, it can't be a value *or*
         // a key in a map.
         //
-        panic (NULL);
+        panic (nullptr);
 
     case REB_BAR:
     case REB_LIT_BAR:
@@ -379,7 +379,7 @@ uint32_t Hash_Value(const Cell* v)
         // The list above should be comprehensive.  panic in order to keep
         // there from being an uninitialized ret warning.
         //
-        panic (NULL);
+        panic (nullptr);
     }
 
     return hash ^ crc32_table[VAL_TYPE(v)];

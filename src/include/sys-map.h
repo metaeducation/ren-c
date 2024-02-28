@@ -32,7 +32,7 @@
 //
 // When there are too few values to warrant hashing, no hash indices are
 // made and the array is searched linearly.  This is indicated by the hashlist
-// being NULL.
+// being nullptr.
 //
 // Though maps are not considered a series in the "ANY-SERIES!" value sense,
 // they are implemented using series--and hence are in %sys-series.h, at least

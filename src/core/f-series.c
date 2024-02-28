@@ -45,7 +45,7 @@ REB_R Series_Common_Action_Maybe_Unhandled(
     Value* verb
 ){
     Value* value = D_ARG(1);
-    Value* arg = D_ARGC > 1 ? D_ARG(2) : NULL;
+    Value* arg = D_ARGC > 1 ? D_ARG(2) : nullptr;
 
     REBINT index = cast(REBINT, VAL_INDEX(value));
     REBINT tail = cast(REBINT, VAL_LEN_HEAD(value));

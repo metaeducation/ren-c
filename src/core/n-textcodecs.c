@@ -249,7 +249,7 @@ static void Encode_Utf16_Core(
     #endif
     }
 
-    up[i] = '\0'; // needs two bytes worth of NULL, not just one.
+    up[i] = '\0'; // needs two bytes worth of terminator, not just one.
 
     SET_SERIES_LEN(bin, len * sizeof(uint16_t));
     Init_Binary(out, bin);

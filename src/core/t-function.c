@@ -161,7 +161,7 @@ void MF_Action(REB_MOLD *mo, const Cell* v, bool form)
 REBTYPE(Action)
 {
     Value* value = D_ARG(1);
-    Value* arg = D_ARGC > 1 ? D_ARG(2) : NULL;
+    Value* arg = D_ARGC > 1 ? D_ARG(2) : nullptr;
 
     switch (Cell_Word_Id(verb)) {
     case SYM_COPY: {
@@ -250,9 +250,9 @@ REBTYPE(Action)
             Value* param = VAL_ACT_PARAMS_HEAD(value);
             Value* typeset = KNOWN(ARR_HEAD(copy));
             for (; NOT_END(param); param++, typeset++) {
-                assert(VAL_PARAM_SPELLING(param) != NULL);
+                assert(VAL_PARAM_SPELLING(param) != nullptr);
                 Move_Value(typeset, param);
-                INIT_TYPESET_NAME(typeset, NULL);
+                INIT_TYPESET_NAME(typeset, nullptr);
             }
             TERM_ARRAY_LEN(copy, VAL_ACT_NUM_PARAMS(value));
             assert(IS_END(typeset));

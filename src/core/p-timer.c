@@ -49,7 +49,7 @@
 //
 static REB_R Timer_Actor(REBFRM *frame_, Value* port, Value* verb)
 {
-    Value* arg = D_ARGC > 1 ? D_ARG(2) : NULL;
+    Value* arg = D_ARGC > 1 ? D_ARG(2) : nullptr;
 
     REBCTX *ctx = VAL_CONTEXT(port);
     Value* spec = CTX_VAR(ctx, STD_PORT_SPEC);

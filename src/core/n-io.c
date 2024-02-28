@@ -424,7 +424,7 @@ REBLEN Milliseconds_From_Value(const Cell* v) {
         break;
 
     default:
-        panic (NULL); // avoid uninitialized msec warning
+        panic (nullptr);  // avoid uninitialized msec warning
     }
 
     if (msec < 0)
@@ -449,7 +449,7 @@ DECLARE_NATIVE(wait)
     INCLUDE_PARAMS_OF_WAIT;
 
     REBLEN timeout = 0; // in milliseconds
-    REBARR *ports = NULL;
+    REBARR *ports = nullptr;
     REBINT n = 0;
 
 
@@ -526,7 +526,7 @@ DECLARE_NATIVE(wait)
     assert(IS_LOGIC(D_OUT));
 
     if (IS_FALSEY(D_OUT)) { // timeout
-        Sieve_Ports(NULL); // just reset the waked list
+        Sieve_Ports(nullptr);  // just reset the waked list
         return nullptr;
     }
 

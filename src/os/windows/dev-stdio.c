@@ -42,9 +42,9 @@
 
 #define BUF_SIZE (16 * 1024)    // MS restrictions apply
 
-static HANDLE Std_Out = NULL;
-static HANDLE Std_Inp = NULL;
-static WCHAR *Std_Buf = NULL; // Used for UTF-8 conversion of stdin/stdout.
+static HANDLE Std_Out = nullptr;
+static HANDLE Std_Inp = nullptr;
+static WCHAR *Std_Buf = nullptr;  // Used for UTF-8 conversion of stdin/stdout.
 
 static BOOL Redir_Out = 0;
 static BOOL Redir_Inp = 0;
@@ -176,7 +176,7 @@ DEVICE_CMD Write_IO(REBREQ *req)
         return DR_DONE;
     }
 
-    if (Std_Out == NULL)
+    if (Std_Out == nullptr)
         return DR_DONE;
 
     if (Redir_Out) {
@@ -360,7 +360,7 @@ DEVICE_CMD Read_IO(REBREQ *req)
         return DR_DONE;
     }
 
-    if (Std_Inp == NULL) {
+    if (Std_Inp == nullptr) {
         req->actual = 0;
         return DR_DONE;
     }
@@ -421,7 +421,7 @@ DEVICE_CMD Read_IO(REBREQ *req)
     //
 
 #ifdef PRE_VISTA
-    LPVOID pInputControl = NULL;
+    LPVOID pInputControl = nullptr;
 #else
     CONSOLE_READCONSOLE_CONTROL ctl; // Unavailable before Vista, e.g. Mingw32
     PCONSOLE_READCONSOLE_CONTROL pInputControl = &ctl;
@@ -460,7 +460,7 @@ DEVICE_CMD Read_IO(REBREQ *req)
         //
         // Given that, write compensating line.  !!! Check error?
         //
-        WriteConsoleW(Std_Out, cr_lf_term, 2, NULL, 0);
+        WriteConsoleW(Std_Out, cr_lf_term, 2, nullptr, 0);
 
         // The Ctrl-C will be passed on to the SetConsoleCtrlHandler().
         // Regardless of what the Ctrl-C event does (it runs on its own thread
@@ -491,7 +491,7 @@ DEVICE_CMD Read_IO(REBREQ *req)
 
             // Write compensating line.  !!! Check error?
             //
-            WriteConsoleW(Std_Out, cr_lf_term, 2, NULL, 0);
+            WriteConsoleW(Std_Out, cr_lf_term, 2, nullptr, 0);
             return DR_DONE;
         }
     }
@@ -556,4 +556,3 @@ DEFINE_DEV(
     Dev_StdIO,
     "Standard IO", 1, Dev_Cmds, RDC_MAX, sizeof(struct devreq_file)
 );
-

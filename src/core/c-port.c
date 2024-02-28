@@ -49,7 +49,7 @@ REBREQ *Ensure_Port_State(Value* port, REBLEN device)
 
     REBDEV *dev = Devices[device];
     if (not dev)
-        return NULL;
+        return nullptr;
 
     REBCTX *ctx = VAL_CONTEXT(port);
     Value* state = CTX_VAR(ctx, STD_PORT_STATE);
@@ -196,7 +196,7 @@ bool Wait_Ports_Throws(
     // Waiting opens the doors to pressing Ctrl-C, which may get this code
     // to throw an error.  There needs to be a state to catch it.
     //
-    assert(Saved_State != NULL);
+    assert(Saved_State != nullptr);
 
     while (wt) {
         if (GET_SIGNAL(SIG_HALT)) {
@@ -265,7 +265,7 @@ bool Wait_Ports_Throws(
 //  Sieve_Ports: C
 //
 // Remove all ports not found in the WAKE list.
-// ports could be NULL, in which case the WAKE list is cleared.
+// ports could be nullptr, in which case the WAKE list is cleared.
 //
 void Sieve_Ports(REBARR *ports)
 {

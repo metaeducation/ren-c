@@ -183,16 +183,16 @@ INLINE REBSIZ VAL_SIZE_LIMIT_AT(
     REBCHR(const*) tail;
 
     if (limit == -1) {
-        if (length != NULL)
+        if (length != nullptr)
             *length = VAL_LEN_AT(v);
         tail = VAL_UNI_TAIL(v); // byte count known (fast)
     }
     else {
-        if (length != NULL)
+        if (length != nullptr)
             *length = limit;
         tail = at;
         for (; limit > 0; --limit)
-            tail = NEXT_CHR(NULL, tail);
+            tail = NEXT_CHR(nullptr, tail);
     }
 
     return (
@@ -262,7 +262,7 @@ INLINE void SET_ANY_CHAR(REBSER *s, REBLEN n, REBUNI c) {
 // Though the machinery can decode a UTF32 32-bit codepoint, the interface
 // uses a 16-bit REBUNI (due to that being all that Rebol supports at this
 // time).  If a codepoint that won't fit in 16-bits is found, it will raise
-// an error vs. return NULL.  This makes it clear that the problem is not
+// an error vs. return nullptr.  This makes it clear that the problem is not
 // with the data itself being malformed (the usual assumption of callers)
 // but rather a limit of the implementation.
 //
@@ -287,13 +287,13 @@ INLINE const REBYTE *Back_Scan_UTF8_Char(
 INLINE REBSER *Make_String_UTF8(const char *utf8)
 {
     const bool crlf_to_lf = false;
-    return Append_UTF8_May_Fail(NULL, utf8, strsize(utf8), crlf_to_lf);
+    return Append_UTF8_May_Fail(nullptr, utf8, strsize(utf8), crlf_to_lf);
 }
 
 INLINE REBSER *Make_Sized_String_UTF8(const char *utf8, size_t size)
 {
     const bool crlf_to_lf = false;
-    return Append_UTF8_May_Fail(NULL, utf8, size, crlf_to_lf);
+    return Append_UTF8_May_Fail(nullptr, utf8, size, crlf_to_lf);
 }
 
 

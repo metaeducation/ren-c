@@ -159,7 +159,7 @@
 // The routine also takes a pointer-to-a-REBCTX-pointer which represents
 // an error.  Using the tricky mechanisms of setjmp/longjmp, there will
 // be a first pass of execution where the line of code after the PUSH_TRAP
-// will see the error pointer as being NULL.  If a trap occurs during
+// will see the error pointer as being nullptr.  If a trap occurs during
 // code before the paired DROP_TRAP happens, then the C state will be
 // magically teleported back to the line after the PUSH_TRAP with the
 // error context now non-null and usable.
@@ -190,13 +190,13 @@
 #define PUSH_TRAP(e,s) \
     do { \
         /* assert(Saved_State or (DSP == 0 and FS_TOP == FS_BOTTOM)); */ \
-        if (Saved_State == NULL) \
+        if (Saved_State == nullptr) \
             Set_Stack_Limit(s); \
         Snap_State_Core(s); \
         (s)->last_state = Saved_State; \
         Saved_State = (s); \
         if (!SET_JUMP((s)->cpu_state)) \
-            *(e) = NULL; /* this branch will always be run */ \
+            *(e) = nullptr; /* this branch will always be run */ \
         else { \
             Trapped_Helper(s); \
             *(e) = (s)->error; \
@@ -348,7 +348,7 @@ INLINE void DROP_TRAP_SAME_STACKLEVEL_AS_PUSH(struct Reb_State *s) {
 #if defined(DEBUG_COUNT_TICKS)
     #ifdef NDEBUG
         #define panic(v) \
-            Panic_Core((v), TG_Tick, NULL, 0)
+            Panic_Core((v), TG_Tick, nullptr, 0)
 
         #define panic_at(v,file,line) \
             UNUSED(file); \
@@ -364,7 +364,7 @@ INLINE void DROP_TRAP_SAME_STACKLEVEL_AS_PUSH(struct Reb_State *s) {
 #else
     #ifdef NDEBUG
         #define panic(v) \
-            Panic_Core((v), 0, NULL, 0)
+            Panic_Core((v), 0, nullptr, 0)
 
         #define panic_at(v,file,line) \
             UNUSED(file); \

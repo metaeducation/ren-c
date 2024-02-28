@@ -71,7 +71,7 @@ Value* OS_Get_Current_Exec(void)
     // Note: _NSGetExecutablePath returns "a path" not a "real path", and it
     // could be a symbolic link.
 
-    char *resolved_path_utf8 = realpath(path_utf8, NULL);
+    char *resolved_path_utf8 = realpath(path_utf8, nullptr);
     if (resolved_path_utf8) {
         Value* result = rebValue(
             "local-to-file", rebT(resolved_path_utf8)

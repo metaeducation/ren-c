@@ -160,7 +160,7 @@ static REB_R Transport_Actor(
                 Value* l_result = OS_DO_DEVICE(sock, RDC_LOOKUP);
                 DROP_GC_GUARD(temp);
 
-                assert(l_result != NULL);
+                assert(l_result != nullptr);
                 if (rebDid("error?", l_result))
                     rebJumps("FAIL", l_result);
                 rebRelease(l_result); // ignore result
@@ -301,7 +301,7 @@ static REB_R Transport_Actor(
         sock->actual = 0; // actual for THIS read (not for total)
 
         Value* result = OS_DO_DEVICE(sock, RDC_READ);
-        if (result == NULL) {
+        if (result == nullptr) {
             //
             // Request pending
         }
@@ -362,7 +362,7 @@ static REB_R Transport_Actor(
 
         REBSER *temp;
         if (IS_BINARY(data)) {
-            temp = NULL;
+            temp = nullptr;
             sock->common.data = VAL_BIN_AT(data);
             sock->length = len;
 
@@ -395,10 +395,10 @@ static REB_R Transport_Actor(
 
         Value* result = OS_DO_DEVICE(sock, RDC_WRITE);
 
-        if (temp != NULL)
+        if (temp != nullptr)
             DROP_GC_GUARD(temp);
 
-        if (result == NULL) {
+        if (result == nullptr) {
             //
             // Write pending !!! old comment said "do we get here?"
         }
@@ -456,7 +456,7 @@ static REB_R Transport_Actor(
 
     case SYM_OPEN: {
         Value* result = OS_DO_DEVICE(sock, RDC_CONNECT);
-        if (result == NULL) {
+        if (result == nullptr) {
             //
             // Asynchronous connect, this happens in TCP_Actor
         }

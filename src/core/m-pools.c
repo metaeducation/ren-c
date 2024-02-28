@@ -116,8 +116,8 @@ void *Alloc_Mem(size_t size)
     // Use a 64-bit quantity to preserve DEBUG_MEMORY_ALIGN invariant.
 
     void *p_extra = malloc(size + sizeof(REBI64));
-    if (p_extra == NULL)
-        return NULL;
+    if (p_extra == nullptr)
+        return nullptr;
     *cast(REBI64 *, p_extra) = size;
     void *p = cast(char*, p_extra) + sizeof(REBI64);
   #endif
@@ -150,7 +150,7 @@ void Free_Mem(void *mem, size_t size)
   #ifdef NDEBUG
     free(mem);
   #else
-    assert(mem != NULL);
+    assert(mem != nullptr);
     char *ptr = cast(char *, mem) - sizeof(REBI64);
     assert(*cast(REBI64*, ptr) == cast(REBI64, size));
     free(ptr);
@@ -255,9 +255,9 @@ void Startup_Pools(REBINT scale)
     //
     REBLEN n;
     for (n = 0; n < MAX_POOLS; n++) {
-        Mem_Pools[n].segs = NULL;
-        Mem_Pools[n].first = NULL;
-        Mem_Pools[n].last = NULL;
+        Mem_Pools[n].segs = nullptr;
+        Mem_Pools[n].first = nullptr;
+        Mem_Pools[n].last = nullptr;
 
         // A panic is used instead of an assert, since the debug sizes and
         // release sizes may be different...and both must be checked.
@@ -323,7 +323,7 @@ void Shutdown_Pools(void)
 
   #if !defined(NDEBUG)
     REBSEG *debug_seg = Mem_Pools[SER_POOL].segs;
-    for(; debug_seg != NULL; debug_seg = debug_seg->next) {
+    for(; debug_seg != nullptr; debug_seg = debug_seg->next) {
         REBSER *series = cast(REBSER*, debug_seg + 1);
         REBLEN n;
         for (n = Mem_Pools[SER_POOL].units; n > 0; n--, series++) {
@@ -400,7 +400,7 @@ void Fill_Pool(REBPOL *pool)
     REBLEN mem_size = pool->wide * units + sizeof(REBSEG);
 
     REBSEG *seg = cast(REBSEG *, ALLOC_N(char, mem_size));
-    if (seg == NULL) {
+    if (seg == nullptr) {
         panic ("Out of memory error during Fill_Pool()");
 
         // Rebol's safe handling of running out of memory was never really
@@ -457,7 +457,7 @@ void Fill_Pool(REBPOL *pool)
 //  Try_Find_Containing_Node_Debug: C
 //
 // This debug-build-only routine will look to see if it can find what series
-// a data pointer lives in.  It returns NULL if it can't find one.  It's very
+// a data pointer lives in.  It returns nullptr if it can't find one.  It's very
 // slow, because it has to look at all the series.  Use sparingly!
 //
 REBNOD *Try_Find_Containing_Node_Debug(const void *p)
@@ -529,7 +529,7 @@ REBNOD *Try_Find_Containing_Node_Debug(const void *p)
         }
     }
 
-    return NULL; // not found
+    return nullptr; // not found
 }
 
 #endif
@@ -989,7 +989,7 @@ void Remake_Series(REBSER *s, REBLEN units, REBYTE wide, REBFLGS flags)
     char *data_old;
     union Reb_Series_Content content_old;
     if (was_dynamic) {
-        assert(s->content.dynamic.data != NULL);
+        assert(s->content.dynamic.data != nullptr);
         data_old = s->content.dynamic.data;
         bias_old = SER_BIAS(s);
         size_old = SER_TOTAL(s);
@@ -1371,14 +1371,14 @@ REBLEN Check_Memory_Debug(void)
         REBLEN pool_free_nodes = 0;
 
         REBNOD *node = Mem_Pools[pool_num].first;
-        for (; node != NULL; node = node->next_if_free) {
+        for (; node != nullptr; node = node->next_if_free) {
             assert(IS_FREE_NODE(node));
 
             ++pool_free_nodes;
 
             bool found = false;
             seg = Mem_Pools[pool_num].segs;
-            for (; seg != NULL; seg = seg->next) {
+            for (; seg != nullptr; seg = seg->next) {
                 if (
                     cast(uintptr_t, node) > cast(uintptr_t, seg)
                     and (

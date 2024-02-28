@@ -94,7 +94,7 @@ INLINE CFUNC *VAL_HANDLE_CFUNC(const Cell* v) {
 INLINE CLEANUP_CFUNC *VAL_HANDLE_CLEANER(const Cell* v) {
     assert(IS_HANDLE(v));
     REBARR *singular = v->extra.singular;
-    return singular != NULL ? MISC(singular).cleaner : NULL;
+    return singular != nullptr ? MISC(singular).cleaner : nullptr;
 }
 
 INLINE void SET_HANDLE_LEN(Cell* v, uintptr_t length) {
@@ -129,7 +129,7 @@ INLINE Value* Init_Handle_Simple(
     uintptr_t length
 ){
     RESET_CELL(out, REB_HANDLE);
-    out->extra.singular = NULL;
+    out->extra.singular = nullptr;
     out->payload.handle.data.pointer = pointer;
     out->payload.handle.length = length;
     return KNOWN(out);
@@ -141,7 +141,7 @@ INLINE Value* Init_Handle_Cfunc(
     uintptr_t length
 ){
     RESET_VAL_HEADER_EXTRA(out, REB_HANDLE, HANDLE_FLAG_CFUNC);
-    out->extra.singular = NULL;
+    out->extra.singular = nullptr;
     out->payload.handle.data.cfunc = cfunc;
     out->payload.handle.length = length;
     return KNOWN(out);

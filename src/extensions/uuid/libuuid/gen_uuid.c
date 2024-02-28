@@ -618,5 +618,3 @@ void uuid_generate_sha1(uuid_t out, const uuid_t ns, const char *name, size_t le
     out[8] |= (variant_bits[UUID_VARIANT_DCE] << UUID_VARIANT_SHIFT);
 }
 #endif
-
-

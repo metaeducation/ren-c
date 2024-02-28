@@ -556,7 +556,7 @@ REBARR *Make_Paramlist_Managed_May_Fail(
     //
     Value* definitional_return =
         definitional_return_dsp == 0
-            ? NULL
+            ? nullptr
             : DS_AT(definitional_return_dsp);
 
     // Must make the function "paramlist" even if "empty", for identity.
@@ -585,7 +585,7 @@ REBARR *Make_Paramlist_Managed_May_Fail(
         struct Reb_Binder binder;
         INIT_BINDER(&binder);
 
-        REBSTR *duplicate = NULL;
+        REBSTR *duplicate = nullptr;
 
         Value* src = DS_AT(dsp_orig + 1) + 3;
 
@@ -676,7 +676,7 @@ REBARR *Make_Paramlist_Managed_May_Fail(
             num_slots,
             SERIES_MASK_CONTEXT | NODE_FLAG_MANAGED
         );
-        MISC(types_varlist).meta = NULL; // GC sees this, must initialize
+        MISC(types_varlist).meta = nullptr;  // GC sees this, must initialize
         INIT_CTX_KEYLIST_SHARED(CTX(types_varlist), paramlist);
 
         Value* rootvar = RESET_CELL(ARR_HEAD(types_varlist), REB_FRAME);
@@ -738,7 +738,7 @@ REBARR *Make_Paramlist_Managed_May_Fail(
             num_slots,
             SERIES_MASK_CONTEXT | NODE_FLAG_MANAGED
         );
-        MISC(notes_varlist).meta = NULL; // GC sees this, must initialize
+        MISC(notes_varlist).meta = nullptr;  // GC sees this, must initialize
         INIT_CTX_KEYLIST_SHARED(CTX(notes_varlist), paramlist);
 
         Value* rootvar = RESET_CELL(ARR_HEAD(notes_varlist), REB_FRAME);
@@ -952,7 +952,7 @@ REBACT *Make_Action(
     if (opt_underlying)
         LINK(paramlist).underlying = opt_underlying;
     else {
-        // To avoid NULL checking when a function is called and looking for
+        // To avoid nullptr checking when a function is called and looking for
         // underlying, just use the action's own paramlist if needed.
         //
         LINK(paramlist).underlying = ACT(paramlist);
@@ -979,7 +979,7 @@ REBACT *Make_Action(
 
     // The meta information may already be initialized, since the native
     // version of paramlist construction sets up the FUNCTION-META information
-    // used by HELP.  If so, it must be a valid REBCTX*.  Otherwise NULL.
+    // used by HELP.  If so, it must be a valid REBCTX*.  Otherwise nullptr.
     //
     assert(
         not MISC(paramlist).meta
@@ -1092,7 +1092,7 @@ void Get_Maybe_Fake_Action_Body(Value* out, const Value* action)
             real_body_index = 4;
         }
         else {
-            example = NULL;
+            example = nullptr;
             real_body_index = 0; // avoid compiler warning
             UNUSED(real_body_index);
         }
@@ -1101,7 +1101,7 @@ void Get_Maybe_Fake_Action_Body(Value* out, const Value* action)
         assert(GET_SER_INFO(real_body, SERIES_INFO_FROZEN));
 
         REBARR *maybe_fake_body;
-        if (example == NULL) {
+        if (example == nullptr) {
             maybe_fake_body = real_body;
             assert(GET_SER_INFO(maybe_fake_body, SERIES_INFO_FROZEN));
         }
@@ -1733,7 +1733,7 @@ bool Get_If_Word_Or_Path_Throws(
             VAL_ARRAY(v),
             VAL_INDEX(v),
             derived,
-            NULL, // `setval`: null means don't treat as SET-PATH!
+            nullptr,  // `setval`: null means don't treat as SET-PATH!
             push_refinements
                 ? DO_FLAG_PUSH_PATH_REFINEMENTS // pushed in reverse order
                 : DO_MASK_NONE
@@ -1742,7 +1742,7 @@ bool Get_If_Word_Or_Path_Throws(
         }
     }
     else {
-        *opt_name_out = NULL;
+        *opt_name_out = nullptr;
         Derelativize(out, v, specifier);
     }
 

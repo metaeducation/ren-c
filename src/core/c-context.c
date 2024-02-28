@@ -201,7 +201,7 @@ void Expand_Context(REBCTX *context, REBLEN delta)
 //
 // !!! Review if it would make more sense to use TRASH.
 //
-// If word is not NULL, use the word sym and bind the word value, otherwise
+// If word is not nullptr, use the word sym and bind the word value, otherwise
 // use sym.  When using a word, it will be modified to be specifically bound
 // to this context after the operation.
 //
@@ -316,7 +316,7 @@ REBCTX *Copy_Context_Shallow_Extra_Managed(REBCTX *src, REBLEN extra) {
     // have to copy that manually?  If it's copied would it be a shallow or
     // a deep copy?
     //
-    MISC(varlist).meta = NULL;
+    MISC(varlist).meta = nullptr;
 
     return dest;
 }
@@ -385,16 +385,16 @@ void Collect_End(struct Reb_Collector *cl)
     // Reset binding table (note BUF_COLLECT may have expanded)
     //
     Cell* v =
-        (cl == NULL or (cl->flags & COLLECT_AS_TYPESET))
+        (cl == nullptr or (cl->flags & COLLECT_AS_TYPESET))
             ? ARR_HEAD(BUF_COLLECT) + 1
             : ARR_HEAD(BUF_COLLECT);
     for (; NOT_END(v); ++v) {
         REBSTR *canon =
-            (cl == NULL or (cl->flags & COLLECT_AS_TYPESET))
+            (cl == nullptr or (cl->flags & COLLECT_AS_TYPESET))
                 ? VAL_KEY_CANON(v)
                 : VAL_WORD_CANON(v);
 
-        if (cl != NULL) {
+        if (cl != nullptr) {
             Remove_Binder_Index(&cl->binder, canon);
             continue;
         }
@@ -415,7 +415,7 @@ void Collect_End(struct Reb_Collector *cl)
 
     SET_ARRAY_LEN_NOTERM(BUF_COLLECT, 0);
 
-    if (cl != NULL)
+    if (cl != nullptr)
         SHUTDOWN_BINDER(&cl->binder);
 }
 
@@ -611,7 +611,7 @@ REBARR *Collect_Keylist_Managed(
         }
     }
     else {
-        assert(self_index_out == NULL);
+        assert(self_index_out == nullptr);
     }
 
     // Setup binding table with existing words, no need to check duplicates
@@ -627,7 +627,7 @@ REBARR *Collect_Keylist_Managed(
     // array, otherwise reuse the original
     //
     REBARR *keylist;
-    if (prior != NULL and ARR_LEN(CTX_KEYLIST(prior)) == ARR_LEN(BUF_COLLECT))
+    if (prior != nullptr and ARR_LEN(CTX_KEYLIST(prior)) == ARR_LEN(BUF_COLLECT))
         keylist = CTX_KEYLIST(prior);
     else
         keylist = Grab_Collected_Array_Managed(cl);
@@ -805,7 +805,7 @@ REBCTX *Make_Selfish_Context_Detect_Managed(
             | NODE_FLAG_MANAGED // Note: Rebind below requires managed context
     );
     TERM_ARRAY_LEN(varlist, len);
-    MISC(varlist).meta = NULL; // clear meta object (GC sees this)
+    MISC(varlist).meta = nullptr;  // clear meta object (GC sees this)
 
     REBCTX *context = CTX(varlist);
 
@@ -814,7 +814,7 @@ REBCTX *Make_Selfish_Context_Detect_Managed(
     // else, so it could probably be inlined here and it would be more
     // obvious what's going on.
     //
-    if (opt_parent == NULL) {
+    if (opt_parent == nullptr) {
         INIT_CTX_KEYLIST_UNIQUE(context, keylist);
         LINK(keylist).ancestor = keylist;
     }
@@ -837,7 +837,7 @@ REBCTX *Make_Selfish_Context_Detect_Managed(
     //
     Value* var = RESET_CELL(ARR_HEAD(varlist), kind);
     var->payload.any_context.varlist = varlist;
-    var->payload.any_context.phase = NULL;
+    var->payload.any_context.phase = nullptr;
     INIT_BINDING(var, UNBOUND);
 
     ++var;
@@ -845,7 +845,7 @@ REBCTX *Make_Selfish_Context_Detect_Managed(
     for (; len > 1; --len, ++var) // [0] is rootvar (context), already done
         Init_Nulled(var);
 
-    if (opt_parent != NULL) {
+    if (opt_parent != nullptr) {
         //
         // Copy parent values (will have bits fixed by Clonify).
         // None of these should be relative, because they came from object
@@ -876,7 +876,7 @@ REBCTX *Make_Selfish_Context_Detect_Managed(
     Move_Value(CTX_VAR(context, self_index), CTX_ARCHETYPE(context));
 
     if (opt_parent)
-        Rebind_Context_Deep(opt_parent, context, NULL); // NULL=no more binds
+        Rebind_Context_Deep(opt_parent, context, nullptr);  // no more binds
 
     ASSERT_CONTEXT(context);
 
@@ -1016,7 +1016,7 @@ REBARR *Context_To_Array(REBCTX *context, REBINT mode)
 //
 REBCTX *Merge_Contexts_Selfish_Managed(REBCTX *parent1, REBCTX *parent2)
 {
-    if (parent2 != NULL) {
+    if (parent2 != nullptr) {
         assert(CTX_TYPE(parent1) == CTX_TYPE(parent2));
         fail ("Multiple inheritance of object support removed from Ren-C");
     }
@@ -1064,7 +1064,7 @@ REBCTX *Merge_Contexts_Selfish_Managed(REBCTX *parent1, REBCTX *parent2)
     );
     Init_Unreadable_Blank(ARR_HEAD(keylist)); // Currently no rootkey usage
 
-    if (parent1 == NULL)
+    if (parent1 == nullptr)
         LINK(keylist).ancestor = keylist;
     else
         LINK(keylist).ancestor = CTX_KEYLIST(parent1);
@@ -1074,7 +1074,7 @@ REBCTX *Merge_Contexts_Selfish_Managed(REBCTX *parent1, REBCTX *parent2)
         SERIES_MASK_CONTEXT
             | NODE_FLAG_MANAGED // rebind below requires managed context
     );
-    MISC(varlist).meta = NULL; // GC sees this, it must be initialized
+    MISC(varlist).meta = nullptr;  // GC sees this, it must be initialized
 
     REBCTX *merged = CTX(varlist);
     INIT_CTX_KEYLIST_UNIQUE(merged, keylist);
@@ -1086,7 +1086,7 @@ REBCTX *Merge_Contexts_Selfish_Managed(REBCTX *parent1, REBCTX *parent2)
     //
     Value* rootvar = RESET_CELL(ARR_HEAD(varlist), CTX_TYPE(parent1));
     rootvar->payload.any_context.varlist = varlist;
-    rootvar->payload.any_context.phase = NULL;
+    rootvar->payload.any_context.phase = nullptr;
     INIT_BINDING(rootvar, UNBOUND);
 
     // Copy parent1 values.  (Can't use memcpy() because it would copy things
@@ -1125,7 +1125,7 @@ REBCTX *Merge_Contexts_Selfish_Managed(REBCTX *parent1, REBCTX *parent2)
 
     // Rebind the child
     //
-    Rebind_Context_Deep(parent1, merged, NULL);
+    Rebind_Context_Deep(parent1, merged, nullptr);
     Rebind_Context_Deep(parent2, merged, &collector.binder);
 
     // release the bind table
@@ -1322,14 +1322,14 @@ REBLEN Find_Canon_In_Context(REBCTX *context, REBSTR *canon, bool always)
 //  Select_Canon_In_Context: C
 //
 // Search a context's keylist looking for the given canon symbol, and return
-// the value for the word.  Return NULL if the canon is not found.
+// the value for the word.  Return nullptr if the canon is not found.
 //
 Value* Select_Canon_In_Context(REBCTX *context, REBSTR *canon)
 {
     const bool always = false;
     REBLEN n = Find_Canon_In_Context(context, canon, always);
     if (n == 0)
-        return NULL;
+        return nullptr;
 
     return CTX_VAR(context, n);
 }
@@ -1339,7 +1339,7 @@ Value* Select_Canon_In_Context(REBCTX *context, REBSTR *canon)
 //  Obj_Value: C
 //
 // Return pointer to the nth VALUE of an object.
-// Return NULL if the index is not valid.
+// Return nullptr if the index is not valid.
 //
 // !!! All cases of this should be reviewed...mostly for getting an indexed
 // field out of a port.  If the port doesn't have the index, should it always
@@ -1375,7 +1375,7 @@ void Startup_Collector(void)
 void Shutdown_Collector(void)
 {
     Free_Unmanaged_Array(TG_Buf_Collect);
-    TG_Buf_Collect = NULL;
+    TG_Buf_Collect = nullptr;
 }
 
 
@@ -1392,7 +1392,7 @@ void Assert_Context_Core(REBCTX *c)
         panic (varlist);
 
     REBARR *keylist = CTX_KEYLIST(c);
-    if (keylist == NULL)
+    if (keylist == nullptr)
         panic (c);
 
     Value* rootvar = CTX_ARCHETYPE(c);
@@ -1451,7 +1451,7 @@ void Assert_Context_Core(REBCTX *c)
         }
 
         REBFRM *f = CTX_FRAME_IF_ON_STACK(c);
-        if (f != NULL) {
+        if (f != nullptr) {
             //
             // If the frame is on the stack, the phase should be something
             // with the same underlying function as the rootkey.

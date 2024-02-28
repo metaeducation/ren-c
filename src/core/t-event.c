@@ -216,7 +216,7 @@ REB_R PD_Event(
     const Value* opt_setval
 ){
     if (IS_WORD(picker)) {
-        if (opt_setval == NULL) {
+        if (opt_setval == nullptr) {
             if (IS_BLANK(Get_Event_Var(
                 pvs->out, pvs->out, VAL_WORD_CANON(picker)
             ))){

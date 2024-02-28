@@ -376,7 +376,7 @@
 #endif
 
 
-//=//// nullptr SHIM FOR C, C++98 /////////////////////////////////////////=//
+//=//// nullptr SHIM FOR C ////////////////////////////////////////////////=//
 //
 // The C language definition allows compilers to simply define NULL as 0.
 // This creates ambiguity in C++ when one overloading of a function takes an
@@ -396,50 +396,24 @@
 //
 //     variadic_print("print me", "and me", "stop @ NULL", (char*)NULL);
 //
-// Because libRebol hinges on a premise of making the internal NULL signifier
+// Since libRebol hinges on a premise of making the internal ~null~ signifier
 // interface as a C NULL pointer, and hinges on variadics, this is a problem.
-// Rather than introduce a "new" abstraction or macro, this adds a shim of
-// C++11's `nullptr` to C++98, and a simple macro to C.
+// Rather than introduce a "new" abstraction or macro, this adds a simple
+// macro to C.
 //
 // This also means that NULL can be used in comments for the Rebol concept,
 // as opposed to the C idea (though NULLED may be clearer, depending on
 // context).  Either way, when discussing C's "0 pointer", say `nullptr`.
 //
 
-#if !defined(__cplusplus)
-    //
-    // Plain C, nullptr is not a keyword.
-    //
+#if (! CPLUSPLUS_11)
     #define nullptr cast(void*, 0)
-
-#elif CPLUSPLUS_11 //...or above
-    //
-    // nullptr included: http://en.cppreference.com/w/cpp/language/nullptr
-    //
 #else
-    // C++98 shim from "Effective C++": https://stackoverflow.com/a/44517878
+    // http://en.cppreference.com/w/cpp/language/nullptr
+    // is defined as `using nullptr_t = decltype(nullptr);` in <cstddef>
     //
-    // Note: Some "newer old" C++ compilers had awareness that nullptr would
-    // be added to the standard, and raise warnings by default if one tries
-    // to make this definition, even when building as C++98.  To disable such
-    // warnings, you would need something like `-Wno-c++0x-compat`
-    //
-    const                         /* this is a const object...     */
-    class nullptr_t
-    {
-    public:
-       template<class T>          /* convertible to any type       */
-       operator T*() const        /* of null non-member            */
-          { return 0; }           /* pointer...                    */
-
-       template<class C, class T> /* or any type of null           */
-          operator T C::*() const /* member pointer...             */
-          { return 0; }
-
-    private:
-       void operator&() const;    /* Can't take address of nullptr */
-
-    } nullptr = {};               /* and whose name is nullptr     */
+    #include <cstddef>
+    using std::nullptr_t;
 #endif
 
 

@@ -323,7 +323,7 @@ sys-globals.parser: context [
 
 ]
 
-e-syms/emit "^/    {NULL, NULL} //Terminator^/};"
+e-syms/emit "^/    {nullptr, nullptr} //Terminator^/};"
 e-syms/emit "^/// Globals from sys-globals.h^/"
 e-syms/emit {
 extern const struct rebol_sym_data_t rebol_sym_data [];
@@ -332,7 +332,7 @@ const struct rebol_sym_data_t rebol_sym_data [] = ^{^/}
 the-file: %sys-globals.h
 sys-globals.parser/process read/string %../include/sys-globals.h
 
-e-syms/emit "^/    {NULL, NULL} //Terminator^/};"
+e-syms/emit "^/    {nullptr, nullptr} //Terminator^/};"
 e-syms/emit newline
 
 e-syms/write-emitted

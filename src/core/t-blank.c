@@ -117,7 +117,7 @@ REB_R PD_Blank(
     UNUSED(picker);
     UNUSED(pvs);
 
-    if (opt_setval != NULL)
+    if (opt_setval != nullptr)
         return R_UNHANDLED;
 
     return nullptr;

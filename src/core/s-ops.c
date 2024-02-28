@@ -172,7 +172,7 @@ REBSER *Temp_UTF8_At_Managed(
     SET_SER_INFO(s, SERIES_INFO_FROZEN);
 
     *offset_out = 0;
-    if (opt_size_out != NULL)
+    if (opt_size_out != nullptr)
         *opt_size_out = SER_LEN(s);
     return s;
 }
@@ -449,7 +449,7 @@ REBARR *Split_Lines(const Value* str)
     // not requiring the last character to be a newline.
 
     if (c == CR or c == LF)
-        up = BACK_CHR(NULL, up); // back up
+        up = BACK_CHR(nullptr, up); // back up
 
     if (AS_REBUNI(up) > AS_REBUNI(start)) {
         DS_PUSH_TRASH;

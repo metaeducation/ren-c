@@ -214,7 +214,7 @@ DECLARE_NATIVE(rsa)
     Value* n = rebValue("ensure binary! pick", obj, "'n");
     Value* e = rebValue("ensure binary! pick", obj, "'e");
 
-    RSA_CTX *rsa_ctx = NULL;
+    RSA_CTX *rsa_ctx = nullptr;
 
     REBINT binary_len;
     if (REF(private)) {
@@ -247,19 +247,19 @@ DECLARE_NATIVE(rsa)
             VAL_BIN_AT(d)
             , binary_len // taken as `length of d` above
             ,
-            p ? VAL_BIN_AT(p) : NULL
+            p ? VAL_BIN_AT(p) : nullptr
             , p ? rebUnbox("length of", p) : 0
             ,
-            q ? VAL_BIN_AT(q) : NULL
+            q ? VAL_BIN_AT(q) : nullptr
             , q ? rebUnbox("length of", q) : 0
             ,
-            dp ? VAL_BIN_AT(dp) : NULL
+            dp ? VAL_BIN_AT(dp) : nullptr
             , dp ? rebUnbox("length of", dp) : 0
             ,
-            dq ? VAL_BIN_AT(dq) : NULL
+            dq ? VAL_BIN_AT(dq) : nullptr
             , dp ? rebUnbox("length of", dq) : 0
             ,
-            qinv ? VAL_BIN_AT(qinv) : NULL
+            qinv ? VAL_BIN_AT(qinv) : nullptr
             , qinv ? rebUnbox("length of", qinv) : 0
         );
 
@@ -500,7 +500,7 @@ DECLARE_NATIVE(aes)
         REBINT len = VAL_LEN_AT(ARG(data));
 
         if (len == 0)
-            return nullptr; // !!! Is NULL a good result for 0 data?
+            return nullptr;  // !!! Is nullptr a good result for 0 data?
 
         REBINT pad_len = (((len - 1) >> 4) << 4) + AES_BLOCKSIZE;
 

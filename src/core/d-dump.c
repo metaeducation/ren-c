@@ -125,7 +125,7 @@ void Dump_Series(REBSER *s, const char *memo)
     printf("Dump_Series(%s) @ %p\n", memo, cast(void*, s));
     fflush(stdout);
 
-    if (s == NULL)
+    if (s == nullptr)
         return;
 
     printf(" wide: %d\n", SER_WIDE(s));

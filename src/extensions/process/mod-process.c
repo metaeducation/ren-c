@@ -190,7 +190,7 @@ int OS_Create_Process(
 
     UNUSED(REF(console)); // actually not paid attention to
 
-    if (call == NULL)
+    if (call == nullptr)
         fail ("'argv[]'-style launching not implemented on Windows CALL");
 
   #ifdef GET_IS_NT_FLAG // !!! Why was this here?
@@ -208,32 +208,32 @@ int OS_Create_Process(
     HANDLE hOutputRead = 0, hOutputWrite = 0;
     HANDLE hInputWrite = 0, hInputRead = 0;
     HANDLE hErrorWrite = 0, hErrorRead = 0;
-    WCHAR *cmd = NULL;
-    char *oem_input = NULL;
+    WCHAR *cmd = nullptr;
+    char *oem_input = nullptr;
 
     UNUSED(REF(info));
 
     SECURITY_ATTRIBUTES sa;
     sa.nLength = sizeof(SECURITY_ATTRIBUTES);
-    sa.lpSecurityDescriptor = NULL;
+    sa.lpSecurityDescriptor = nullptr;
     sa.bInheritHandle = TRUE;
 
     STARTUPINFO si;
     si.cb = sizeof(si);
-    si.lpReserved = NULL;
-    si.lpDesktop = NULL;
-    si.lpTitle = NULL;
+    si.lpReserved = nullptr;
+    si.lpDesktop = nullptr;
+    si.lpTitle = nullptr;
     si.dwFlags = STARTF_USESHOWWINDOW;
     si.dwFlags |= STARTF_USESTDHANDLES;
     si.wShowWindow = SW_SHOWNORMAL;
     si.cbReserved2 = 0;
-    si.lpReserved2 = NULL;
+    si.lpReserved2 = nullptr;
 
     UNUSED(REF(input)); // implicitly covered by void ARG(in)
     switch (VAL_TYPE(ARG(in))) {
     case REB_TEXT:
     case REB_BINARY:
-        if (!CreatePipe(&hInputRead, &hInputWrite, NULL, 0)) {
+        if (!CreatePipe(&hInputRead, &hInputWrite, nullptr, 0)) {
             goto input_error;
         }
 
@@ -256,7 +256,7 @@ int OS_Create_Process(
             &sa, // security attributes
             OPEN_EXISTING, // creation disposition
             FILE_ATTRIBUTE_NORMAL | FILE_FLAG_SEQUENTIAL_SCAN, // flags
-            NULL // template
+            nullptr  // template
         );
         si.hStdInput = hInputRead;
 
@@ -279,7 +279,7 @@ int OS_Create_Process(
     switch (VAL_TYPE(ARG(out))) {
     case REB_TEXT:
     case REB_BINARY:
-        if (!CreatePipe(&hOutputRead, &hOutputWrite, NULL, 0)) {
+        if (!CreatePipe(&hOutputRead, &hOutputWrite, nullptr, 0)) {
             goto output_error;
         }
 
@@ -303,7 +303,7 @@ int OS_Create_Process(
             &sa, // security attributes
             CREATE_NEW, // creation disposition
             FILE_ATTRIBUTE_NORMAL, // flag and attributes
-            NULL // template
+            nullptr  // template
         );
 
         if (
@@ -317,7 +317,7 @@ int OS_Create_Process(
                 &sa, // security attributes
                 OPEN_EXISTING, // creation disposition
                 FILE_ATTRIBUTE_NORMAL, // flag and attributes
-                NULL // template
+                nullptr  // template
             );
         }
 
@@ -340,7 +340,7 @@ int OS_Create_Process(
     switch (VAL_TYPE(ARG(err))) {
     case REB_TEXT:
     case REB_BINARY:
-        if (!CreatePipe(&hErrorRead, &hErrorWrite, NULL, 0)) {
+        if (!CreatePipe(&hErrorRead, &hErrorWrite, nullptr, 0)) {
             goto error_error;
         }
 
@@ -364,7 +364,7 @@ int OS_Create_Process(
             &sa, // security attributes
             CREATE_NEW, // creation disposition
             FILE_ATTRIBUTE_NORMAL, // flag and attributes
-            NULL // template
+            nullptr  // template
         );
 
         if (
@@ -378,7 +378,7 @@ int OS_Create_Process(
                 &sa, // security attributes
                 OPEN_EXISTING, // creation disposition
                 FILE_ATTRIBUTE_NORMAL, // flag and attributes
-                NULL // template
+                nullptr  // template
             );
         }
 
@@ -420,14 +420,14 @@ int OS_Create_Process(
 
     PROCESS_INFORMATION pi;
     result = CreateProcess(
-        NULL, // executable name
+        nullptr,  // executable name
         cmd, // command to execute
-        NULL, // process security attributes
-        NULL, // thread security attributes
+        nullptr, // process security attributes
+        nullptr, // thread security attributes
         TRUE, // inherit handles, must be TRUE for I/O redirection
         NORMAL_PRIORITY_CLASS | CREATE_DEFAULT_ERROR_MODE, // creation flags
-        NULL, // environment
-        NULL, // current directory
+        nullptr, // environment
+        nullptr, // current directory
         &si, // startup information
         &pi // process information
     );
@@ -436,13 +436,13 @@ int OS_Create_Process(
 
     *pid = pi.dwProcessId;
 
-    if (hInputRead != NULL)
+    if (hInputRead != nullptr)
         CloseHandle(hInputRead);
 
-    if (hOutputWrite != NULL)
+    if (hOutputWrite != nullptr)
         CloseHandle(hOutputWrite);
 
-    if (hErrorWrite != NULL)
+    if (hErrorWrite != nullptr)
         CloseHandle(hErrorWrite);
 
     // Wait for termination:
@@ -452,7 +452,7 @@ int OS_Create_Process(
         DWORD output_size = 0;
         DWORD err_size = 0;
 
-        if (hInputWrite != NULL && input_len > 0) {
+        if (hInputWrite != nullptr && input_len > 0) {
             if (IS_TEXT(ARG(in))) {
                 DWORD dest_len = 0;
                 /* convert input encoding from UNICODE to OEM */
@@ -464,12 +464,12 @@ int OS_Create_Process(
                     input_len,
                     oem_input,
                     dest_len,
-                    NULL,
-                    NULL
+                    nullptr,
+                    nullptr
                 );
                 if (dest_len > 0) {
                     oem_input = cast(char*, malloc(dest_len));
-                    if (oem_input != NULL) {
+                    if (oem_input != nullptr) {
                         WideCharToMultiByte(
                             CP_OEMCP,
                             0,
@@ -477,8 +477,8 @@ int OS_Create_Process(
                             input_len,
                             oem_input,
                             dest_len,
-                            NULL,
-                            NULL
+                            nullptr,
+                            nullptr
                         );
                         input_len = dest_len;
                         input = oem_input;
@@ -490,14 +490,14 @@ int OS_Create_Process(
                 handles[count ++] = hInputWrite;
             }
         }
-        if (hOutputRead != NULL) {
+        if (hOutputRead != nullptr) {
             output_size = BUF_SIZE_CHUNK;
             *output_len = 0;
 
             *output = cast(char*, malloc(output_size));
             handles[count ++] = hOutputRead;
         }
-        if (hErrorRead != NULL) {
+        if (hErrorRead != nullptr) {
             err_size = BUF_SIZE_CHUNK;
             *err_len = 0;
 
@@ -527,7 +527,7 @@ int OS_Create_Process(
                         cast(char*, input) + input_pos,
                         input_len - input_pos,
                         &n,
-                        NULL
+                        nullptr
                     )){
                         if (i < count - 1) {
                             memmove(
@@ -543,9 +543,9 @@ int OS_Create_Process(
                         if (input_pos >= input_len) {
                             /* done with input */
                             CloseHandle(hInputWrite);
-                            hInputWrite = NULL;
+                            hInputWrite = nullptr;
                             free(oem_input);
-                            oem_input = NULL;
+                            oem_input = nullptr;
                             if (i < count - 1) {
                                 memmove(
                                     &handles[i],
@@ -563,7 +563,7 @@ int OS_Create_Process(
                         *cast(char**, output) + *output_len,
                         output_size - *output_len,
                         &n,
-                        NULL
+                        nullptr
                     )){
                         if (i < count - 1) {
                             memmove(
@@ -579,7 +579,7 @@ int OS_Create_Process(
                         if (*output_len >= output_size) {
                             output_size += BUF_SIZE_CHUNK;
                             *output = cast(char*, realloc(*output, output_size));
-                            if (*output == NULL) goto kill;
+                            if (*output == nullptr) goto kill;
                         }
                     }
                 }
@@ -589,7 +589,7 @@ int OS_Create_Process(
                         *cast(char**, err) + *err_len,
                         err_size - *err_len,
                         &n,
-                        NULL
+                        nullptr
                     )){
                         if (i < count - 1) {
                             memmove(
@@ -605,7 +605,7 @@ int OS_Create_Process(
                         if (*err_len >= err_size) {
                             err_size += BUF_SIZE_CHUNK;
                             *err = cast(char*, realloc(*err, err_size));
-                            if (*err == NULL) goto kill;
+                            if (*err == nullptr) goto kill;
                         }
                     }
                 }
@@ -639,17 +639,17 @@ int OS_Create_Process(
         if (IS_TEXT(ARG(out)) and *output and *output_len > 0) {
             /* convert to wide char string */
             int dest_len = 0;
-            WCHAR *dest = NULL;
+            WCHAR *dest = nullptr;
             dest_len = MultiByteToWideChar(
                 CP_OEMCP, 0, *output, *output_len, dest, 0
             );
             if (dest_len <= 0) {
                 free(*output);
-                *output = NULL;
+                *output = nullptr;
                 *output_len = 0;
             }
             dest = cast(WCHAR*, malloc(*output_len * sizeof(WCHAR)));
-            if (dest == NULL)
+            if (dest == nullptr)
                 goto cleanup;
             MultiByteToWideChar(
                 CP_OEMCP, 0, *output, *output_len, dest, dest_len
@@ -659,20 +659,20 @@ int OS_Create_Process(
             *output_len = dest_len;
         }
 
-        if (IS_TEXT(ARG(err)) && *err != NULL && *err_len > 0) {
+        if (IS_TEXT(ARG(err)) && *err != nullptr && *err_len > 0) {
             /* convert to wide char string */
             int dest_len = 0;
-            WCHAR *dest = NULL;
+            WCHAR *dest = nullptr;
             dest_len = MultiByteToWideChar(
                 CP_OEMCP, 0, *err, *err_len, dest, 0
             );
             if (dest_len <= 0) {
                 free(*err);
-                *err = NULL;
+                *err = nullptr;
                 *err_len = 0;
             }
             dest = cast(WCHAR*, malloc(*err_len * sizeof(WCHAR)));
-            if (dest == NULL) goto cleanup;
+            if (dest == nullptr) goto cleanup;
             MultiByteToWideChar(CP_OEMCP, 0, *err, *err_len, dest, dest_len);
             free(*err);
             *err = cast(char*, dest);
@@ -708,7 +708,7 @@ kill:
     CloseHandle(pi.hProcess);
 
 cleanup:
-    if (oem_input != NULL) {
+    if (oem_input != nullptr) {
         free(oem_input);
     }
 
@@ -716,17 +716,17 @@ cleanup:
         free(*output);
     }
 
-    if (err and *err != NULL and *err_len == 0) {
+    if (err and *err != nullptr and *err_len == 0) {
         free(*err);
     }
 
-    if (hInputWrite != NULL)
+    if (hInputWrite != nullptr)
         CloseHandle(hInputWrite);
 
-    if (hOutputRead != NULL)
+    if (hOutputRead != nullptr)
         CloseHandle(hOutputRead);
 
-    if (hErrorRead != NULL)
+    if (hErrorRead != nullptr)
         CloseHandle(hErrorRead);
 
     if (IS_FILE(ARG(err))) {
@@ -846,7 +846,7 @@ int OS_Create_Process(
     // an integer's worth of data in that case, but it may need a bigger
     // buffer if more interesting data needs to pass between them.
     //
-    char *info = NULL;
+    char *info = nullptr;
     off_t info_size = 0;
     uint32_t info_len = 0;
 
@@ -997,7 +997,7 @@ int OS_Create_Process(
         if (REF(shell)) {
             const char *sh = getenv("SHELL");
 
-            if (sh == NULL) { // shell does not exist
+            if (sh == nullptr) { // shell does not exist
                 int err = 2;
                 if (write(info_pipe[W], &err, sizeof(err)) == -1) {
                     //
@@ -1014,7 +1014,7 @@ int OS_Create_Process(
             argv_new[0] = sh;
             argv_new[1] = "-c";
             memcpy(&argv_new[2], argv, argc * sizeof(argv[0]));
-            argv_new[argc + 2] = NULL;
+            argv_new[argc + 2] = nullptr;
 
             memcpy(&argv_hack, &argv_new, sizeof(argv_hack));
             execvp(sh, argv_hack);
@@ -1228,7 +1228,7 @@ child_error: ;
                 }
                 else if (pfds[i].revents & POLLIN) {
                     /* printf("POLLIN: %d [%d/%d]\n", pfds[i].fd, i, nfds); */
-                    char **buffer = NULL;
+                    char **buffer = nullptr;
                     uint32_t *offset;
                     ssize_t to_read = 0;
                     off_t *size;
@@ -1275,7 +1275,7 @@ child_error: ;
                                 char*,
                                 malloc(*size + BUF_SIZE_CHUNK)
                             );
-                            if (larger == NULL)
+                            if (larger == nullptr)
                                 goto kill;
                             memcpy(larger, *buffer, *size);
                             free(*buffer);
@@ -1316,7 +1316,7 @@ child_error: ;
 
 kill:
     kill(fpid, SIGKILL);
-    waitpid(fpid, NULL, 0);
+    waitpid(fpid, nullptr, 0);
 
 error:
     if (ret == 0) {
@@ -1334,13 +1334,13 @@ cleanup:
     if (output and *output)
         if (*output_len == 0) { // buffer allocated but never used
             free(*output);
-            *output = NULL;
+            *output = nullptr;
         }
 
     if (err and *err)
         if (*err_len == 0) { // buffer allocated but never used
             free(*err);
-            *err = NULL;
+            *err = nullptr;
         }
 
     if (info_pipe[R] > 0)
@@ -1378,7 +1378,7 @@ cleanup:
         non_errno_ret = -2048; //randomly picked
     }
 
-    if (info != NULL)
+    if (info != nullptr)
         free(info);
 
 info_pipe_err:
@@ -1484,7 +1484,7 @@ DECLARE_NATIVE(call)
     switch (VAL_TYPE(ARG(in))) {
     case REB_BLANK:
     case REB_MAX_NULLED: // no /INPUT, so no argument provided
-        os_input = NULL;
+        os_input = nullptr;
         input_len = 0;
         break;
 
@@ -1550,12 +1550,12 @@ DECLARE_NATIVE(call)
         // !!! Make two copies because it frees cmd and all the argv.  Review.
         //
         argv[0] = rebValSpellingAllocOS(ARG(command));
-        argv[1] = NULL;
+        argv[1] = nullptr;
     }
     else if (IS_BLOCK(ARG(command))) {
         // `call ["foo" "bar"]` => execute %foo with arg "bar"
 
-        cmd = NULL;
+        cmd = nullptr;
 
         Value* block = ARG(command);
         argc = VAL_LEN_AT(block);
@@ -1580,12 +1580,12 @@ DECLARE_NATIVE(call)
             else
                 fail (Error_Invalid_Core(param, VAL_SPECIFIER(block)));
         }
-        argv[argc] = NULL;
+        argv[argc] = nullptr;
     }
     else if (IS_FILE(ARG(command))) {
         // `call %"foo bar"` => execute %"foo bar"
 
-        cmd = NULL;
+        cmd = nullptr;
 
         argc = 1;
         argv = rebAllocN(const OSCHR*, (argc + 1));
@@ -1596,7 +1596,7 @@ DECLARE_NATIVE(call)
         argv[0] = rebSpell("file-to-local", ARG(command));
       #endif
 
-        argv[1] = NULL;
+        argv[1] = nullptr;
     }
     else
         fail (Error_Invalid(ARG(command)));
@@ -1615,9 +1615,9 @@ DECLARE_NATIVE(call)
 
     // These are initialized to avoid a "possibly uninitialized" warning.
     //
-    char *os_output = NULL;
+    char *os_output = nullptr;
     uint32_t output_len = 0;
-    char *os_err = NULL;
+    char *os_err = nullptr;
     uint32_t err_len = 0;
 
     REBINT r = OS_Create_Process(
@@ -1645,7 +1645,7 @@ DECLARE_NATIVE(call)
     for (i = 0; i != argc; ++i)
         rebFree(m_cast(OSCHR*, argv[i]));
 
-    if (cmd != NULL)
+    if (cmd != nullptr)
         rebFree(cmd);
 
     rebFree(m_cast(OSCHR**, argv));
@@ -1675,16 +1675,16 @@ DECLARE_NATIVE(call)
         }
     }
 
-    if (os_input != NULL)
+    if (os_input != nullptr)
         rebFree(os_input);
 
     if (REF(info)) {
         REBCTX *info = Alloc_Context(REB_OBJECT, 2);
 
-        Init_Integer(Append_Context(info, NULL, Canon(SYM_ID)), pid);
+        Init_Integer(Append_Context(info, nullptr, Canon(SYM_ID)), pid);
         if (REF(wait))
             Init_Integer(
-                Append_Context(info, NULL, Canon(SYM_EXIT_CODE)),
+                Append_Context(info, nullptr, Canon(SYM_EXIT_CODE)),
                 exit_code
             );
 
@@ -1738,10 +1738,10 @@ DECLARE_NATIVE(get_os_browsers)
         fail ("Could not open registry key for http\\shell\\open\\command");
     }
 
-    DWORD num_bytes = 0; // pass NULL and use 0 for initial length, to query
+    DWORD num_bytes = 0; // pass nullptr and use 0 for initial length, to query
 
     DWORD type;
-    DWORD flag = RegQueryValueExW(key, L"", 0, &type, NULL, &num_bytes);
+    DWORD flag = RegQueryValueExW(key, L"", 0, &type, nullptr, &num_bytes);
 
     if (
         (flag != ERROR_MORE_DATA and flag != ERROR_SUCCESS)
@@ -1860,7 +1860,7 @@ DECLARE_NATIVE(terminate)
 
     DWORD err = 0;
     HANDLE ph = OpenProcess(PROCESS_TERMINATE, FALSE, VAL_INT32(ARG(pid)));
-    if (ph == NULL) {
+    if (ph == nullptr) {
         err = GetLastError();
         switch (err) {
           case ERROR_ACCESS_DENIED:
@@ -1937,14 +1937,14 @@ DECLARE_NATIVE(get_env)
 
     Check_Security(Canon(SYM_ENVR), POL_READ, variable);
 
-    REBCTX *error = NULL;
+    REBCTX *error = nullptr;
 
   #ifdef TO_WINDOWS
     // Note: The Windows variant of this API is NOT case-sensitive
 
     WCHAR *key = rebSpellW(variable);
 
-    DWORD val_len_plus_one = GetEnvironmentVariable(key, NULL, 0);
+    DWORD val_len_plus_one = GetEnvironmentVariable(key, nullptr, 0);
     if (val_len_plus_one == 0) { // some failure...
         if (GetLastError() == ERROR_ENVVAR_NOT_FOUND)
             Init_Nulled(D_OUT);
@@ -1971,7 +1971,7 @@ DECLARE_NATIVE(get_env)
     char *key = rebSpell(variable);
 
     const char* val = getenv(key);
-    if (val == NULL) // key not present in environment
+    if (val == nullptr) // key not present in environment
         Init_Nulled(D_OUT);
     else {
         size_t size = strsize(val);
@@ -1987,7 +1987,7 @@ DECLARE_NATIVE(get_env)
     // Error is broken out like this so that the proper freeing can be done
     // without leaking temporary buffers.
     //
-    if (error != NULL)
+    if (error != nullptr)
         fail (error);
 
     return D_OUT;
@@ -2149,7 +2149,7 @@ DECLARE_NATIVE(list_env)
     // https://stackoverflow.com/q/3473692/
     //
     int n;
-    for (n = 0; environ[n] != NULL; ++n) {
+    for (n = 0; environ[n] != nullptr; ++n) {
         //
         // Note: it's safe to search for just a `=` byte, since the high bit
         // isn't set...and even if the key contains UTF-8 characters, there

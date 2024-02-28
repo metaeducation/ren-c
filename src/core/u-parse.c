@@ -1460,7 +1460,7 @@ DECLARE_NATIVE(subparse)
     // to notice a "grammar error".  It could use review.
     //
     REBFLGS flags = 0;
-    const Cell* set_or_copy_word = NULL;
+    const Cell* set_or_copy_word = nullptr;
 
     REBINT mincount = 1; // min pattern count
     REBINT maxcount = 1; // max pattern count
@@ -1522,7 +1522,7 @@ DECLARE_NATIVE(subparse)
         // The rule in the block of rules can be literal, while the "real
         // rule" we want to process is the result of a variable fetched from
         // that item.  If the code makes it to the iterated rule matching
-        // section, then rule should be set to something non-NULL by then...
+        // section, rule should be set to something non-nullptr by then...
         //
         const Cell* rule;
         if (not IS_GROUP(P_RULE))
@@ -2171,7 +2171,7 @@ DECLARE_NATIVE(subparse)
                 }
 
                 case SYM_DO: {
-                    if (subrule != NULL) {
+                    if (subrule != nullptr) {
                         //
                         // Not currently set up for iterating DO rules
                         // since the Do_Eval_Rule routine expects to be
@@ -2505,7 +2505,7 @@ DECLARE_NATIVE(subparse)
             }
 
             flags = 0;
-            set_or_copy_word = NULL;
+            set_or_copy_word = nullptr;
         }
 
         if (P_POS == NOT_FOUND) {

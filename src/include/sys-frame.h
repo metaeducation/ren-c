@@ -277,7 +277,7 @@ INLINE bool Is_Action_Frame_Fulfilling(REBFRM *f)
 
 INLINE void Get_Frame_Label_Or_Blank(Value* out, REBFRM *f) {
     assert(Is_Action_Frame(f));
-    if (f->opt_label != NULL)
+    if (f->opt_label != nullptr)
         Init_Word(out, f->opt_label); // invoked via WORD! or PATH!
     else
         Init_Blank(out); // anonymous invocation
@@ -285,7 +285,7 @@ INLINE void Get_Frame_Label_Or_Blank(Value* out, REBFRM *f) {
 
 INLINE const char* Frame_Label_Or_Anonymous_UTF8(REBFRM *f) {
     assert(Is_Action_Frame(f));
-    if (f->opt_label != NULL)
+    if (f->opt_label != nullptr)
         return STR_HEAD(f->opt_label);
     return "[anonymous]";
 }

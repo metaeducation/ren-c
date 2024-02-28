@@ -51,6 +51,8 @@
 #include "pstdint.h" // polyfill <stdint.h> for pre-C99/C++11 compilers
 #include "pstdbool.h" // polyfill <stdbool.h> for pre-C99/C++11 compilers
 
+#include "reb-c.h"
+
 #include "rebol.h"
 typedef RebolValue Value;
 
@@ -145,7 +147,7 @@ const char * const Token_Names[] = {
     "path",
     "refine",
     "construct",
-    NULL
+    nullptr
 };
 
 

@@ -98,7 +98,7 @@ DEVICE_CMD Read_DNS(REBREQ *req)
         he = gethostbyaddr(
             cast(char*, &sock->remote_ip), 4, AF_INET
         );
-        if (he != NULL) {
+        if (he != nullptr) {
             sock->host_info = host; //???
             req->common.data = b_cast(he->h_name);
             req->flags |= RRF_DONE;
@@ -108,7 +108,7 @@ DEVICE_CMD Read_DNS(REBREQ *req)
     else {
         // example.com => 93.184.216.34
         he = gethostbyname(s_cast(req->common.data));
-        if (he != NULL) {
+        if (he != nullptr) {
             sock->host_info = host; // ?? who deallocs?
             memcpy(&sock->remote_ip, *he->h_addr_list, 4); //he->h_length);
             req->flags |= RRF_DONE;
@@ -117,7 +117,7 @@ DEVICE_CMD Read_DNS(REBREQ *req)
     }
 
     rebFree(host);
-    sock->host_info = NULL;
+    sock->host_info = nullptr;
 
     switch (h_errno) {
     case HOST_NOT_FOUND: // The specified host is unknown

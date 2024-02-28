@@ -167,7 +167,7 @@ bool Do_Vararg_Op_Maybe_End_Throws(
 
     const Cell* param = Param_For_Varargs_Maybe_Null(vararg);
     enum Reb_Param_Class pclass =
-        (param == NULL) ? PARAM_CLASS_HARD_QUOTE :  VAL_PARAM_CLASS(param);
+        (param == nullptr) ? PARAM_CLASS_HARD_QUOTE :  VAL_PARAM_CLASS(param);
 
     Value* arg; // for updating VALUE_FLAG_UNEVALUATED
 
@@ -182,8 +182,8 @@ bool Do_Vararg_Op_Maybe_End_Throws(
         // MAKE ANY-ARRAY! on a varargs (which reified the varargs into an
         // array during that creation, flattening its entire output).
 
-        opt_vararg_frame = NULL;
-        arg = NULL; // no corresponding varargs argument either
+        opt_vararg_frame = nullptr;
+        arg = nullptr; // no corresponding varargs argument either
 
         if (Vararg_Op_If_No_Advance_Handled(
             out,
@@ -380,7 +380,7 @@ bool Do_Vararg_Op_Maybe_End_Throws(
         // binding.  So that means only one frame can be pointed to per
         // vararg.  Revisit the question of how to give better errors.
         //
-        if (opt_vararg_frame == NULL)
+        if (opt_vararg_frame == nullptr)
             fail (Error_Invalid(out));
 
         fail (Error_Arg_Type(opt_vararg_frame, param, VAL_TYPE(out)));
@@ -627,7 +627,7 @@ void MF_Varargs(REB_MOLD *mo, const Cell* v, bool form) {
 
     enum Reb_Param_Class pclass;
     const Cell* param = Param_For_Varargs_Maybe_Null(v);
-    if (param == NULL) {
+    if (param == nullptr) {
         pclass = PARAM_CLASS_HARD_QUOTE;
         Append_Unencoded(mo->series, "???"); // never bound to an argument
     }
@@ -651,7 +651,7 @@ void MF_Varargs(REB_MOLD *mo, const Cell* v, bool form) {
             break;
 
         default:
-            panic (NULL);
+            panic (nullptr);
         };
 
         DECLARE_VALUE (param_word);
@@ -674,7 +674,7 @@ void MF_Varargs(REB_MOLD *mo, const Cell* v, bool form) {
             Append_Unencoded(mo->series, "[...]"); // can't look ahead
     }
     else if (Is_Frame_Style_Varargs_Maybe_Null(&f, v)) {
-        if (f == NULL)
+        if (f == nullptr)
             Append_Unencoded(mo->series, "!!!");
         else if (IS_END(f->value) or (f->flags.bits & DO_FLAG_BARRIER_HIT))
             Append_Unencoded(mo->series, "[]");

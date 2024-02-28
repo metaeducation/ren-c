@@ -121,12 +121,12 @@ DEVICE_CMD Init_Events(REBREQ *dr)
         wc.lpszClassName,
         0,0,0,0,0,
         HWND_MESSAGE, // used for message-only windows
-        NULL, App_Instance, NULL
+        nullptr, App_Instance, nullptr
     );
-    if (Event_Handle == NULL)
+    if (Event_Handle == nullptr)
         rebFail_OS (GetLastError());
   #else
-    Event_Handle = NULL;
+    Event_Handle = nullptr;
   #endif
 
     dev->flags |= RDF_INIT;
@@ -149,11 +149,11 @@ DEVICE_CMD Query_Events(REBREQ *req)
     // Wait for message or the timer:
     //
     MSG msg;
-    if (GetMessage(&msg, NULL, 0, 0))
+    if (GetMessage(&msg, nullptr, 0, 0))
         DispatchMessage(&msg);
 
     // Quickly check for other events:
-    while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
+    while (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
     {
         // !!! A flag was set here to return DR_PEND, when this was
         // Poll_Events...which seemingly only affected the GUI.

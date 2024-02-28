@@ -93,10 +93,10 @@ void Startup_Typesets(void)
         // in a context key slot to identify that field's name
         //
         DS_PUSH_TRASH;
-        Init_Typeset(DS_TOP, Typesets[n].bits, NULL);
+        Init_Typeset(DS_TOP, Typesets[n].bits, nullptr);
 
         Move_Value(
-            Append_Context(Lib_Context, NULL, Canon(Typesets[n].sym)),
+            Append_Context(Lib_Context, nullptr, Canon(Typesets[n].sym)),
             DS_TOP
         );
     }
@@ -117,7 +117,7 @@ void Startup_Typesets(void)
 void Shutdown_Typesets(void)
 {
     rebRelease(Root_Typesets);
-    Root_Typesets = NULL;
+    Root_Typesets = nullptr;
 }
 
 
@@ -228,7 +228,7 @@ REB_R MAKE_Typeset(Value* out, enum Reb_Kind kind, const Value* arg)
 
     if (!IS_BLOCK(arg)) goto bad_make;
 
-    Init_Typeset(out, 0, NULL);
+    Init_Typeset(out, 0, nullptr);
     Update_Typeset_Bits_Core(out, VAL_ARRAY_AT(arg), VAL_SPECIFIER(arg));
     return out;
 
@@ -290,7 +290,7 @@ void MF_Typeset(REB_MOLD *mo, const Cell* v, bool form)
 
 #if !defined(NDEBUG)
     REBSTR *spelling = VAL_KEY_SPELLING(v);
-    if (spelling == NULL) {
+    if (spelling == nullptr) {
         //
         // Note that although REB_MAX_NULLED is used as an implementation detail
         // for special typesets in function paramlists or context keys to
@@ -348,7 +348,7 @@ skip_types:
 REBTYPE(Typeset)
 {
     Value* val = D_ARG(1);
-    Value* arg = D_ARGC > 1 ? D_ARG(2) : NULL;
+    Value* arg = D_ARGC > 1 ? D_ARG(2) : nullptr;
 
     switch (Cell_Word_Id(verb)) {
 

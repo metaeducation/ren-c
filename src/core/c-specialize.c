@@ -300,7 +300,7 @@ REBCTX *Make_Context_For_Action_Int_Partials(
     }
 
     TERM_ARRAY_LEN(varlist, num_slots);
-    MISC(varlist).meta = NULL; // GC sees this, we must initialize
+    MISC(varlist).meta = nullptr;  // GC sees this, we must initialize
 
     // !!! Can't currently pass SERIES_FLAG_STACK into Make_Arr_Core(),
     // because TERM_ARRAY_LEN won't let it set stack array lengths.
@@ -351,7 +351,7 @@ REBCTX *Make_Context_For_Action(
             if (refine->payload.partial.dsp != 0) \
                 Init_Blank(DS_AT(refine->payload.partial.dsp)); /* full! */ \
             else if (refine == evoked) \
-                evoked = NULL; /* allow another evoke to be last partial! */ \
+                evoked = nullptr;  /* allow other evoke to be last partial! */ \
         } \
     }
 
@@ -582,7 +582,7 @@ bool Specialize_Action_Throws(
             // added at `unspecialized_but_may_evoke` unhidden, now hide it
             TYPE_SET(DS_TOP, REB_TS_HIDDEN);
 
-            evoked = refine; // gets reset to NULL if ends up fulfilled
+            evoked = refine;  // gets reset to nullptr if ends up fulfilled
             SET_VAL_FLAG(refine, PARTIAL_FLAG_IN_USE);
             goto specialized_arg;
         }
@@ -626,7 +626,7 @@ bool Specialize_Action_Throws(
         last_partial = refine;
 
         SET_VAL_FLAG(refine, PARTIAL_FLAG_SAW_NULL_ARG); // this is a null arg
-        evoked = refine; // ...we won't ever set this back to NULL later
+        evoked = refine;  // ...we won't ever set this back to nulltpr later
         goto unspecialized_arg;
 
     unspecialized_arg_but_may_evoke:;
@@ -1190,7 +1190,7 @@ DECLARE_NATIVE(does)
         // things invariant we have to lock it.
         //
         Cell* body = ARR_HEAD(ACT_DETAILS(doer));
-        REBSER *locker = NULL;
+        REBSER *locker = nullptr;
         Ensure_Value_Immutable(specializee, locker);
         Move_Value(body, specializee);
 

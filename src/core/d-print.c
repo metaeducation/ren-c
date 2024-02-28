@@ -60,7 +60,7 @@ void Startup_StdIO(void)
     // request fields properly.
 
     Value* result = OS_DO_DEVICE(Req_SIO, RDC_OPEN);
-    assert(result == NULL); // !!! API not initialized yet, "pending" is a lie
+    assert(result == nullptr);  // !!! API not initialized, "pending" is a lie
     UNUSED(result);
 }
 
@@ -93,7 +93,7 @@ void Print_OS_Line(void)
     Req_SIO->actual = 0;
 
     Value* result = OS_DO_DEVICE(Req_SIO, RDC_WRITE);
-    assert(result != NULL);
+    assert(result != nullptr);
     assert(not IS_ERROR(result));
     rebRelease(result);
 }
@@ -610,5 +610,5 @@ void Startup_Raw_Print(void)
 void Shutdown_Raw_Print(void)
 {
     Free_Unmanaged_Series(TG_Byte_Buf);
-    TG_Byte_Buf = NULL;
+    TG_Byte_Buf = nullptr;
 }

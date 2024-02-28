@@ -71,7 +71,7 @@ void Dump_Frame_Location(const Cell* current, REBFRM *f)
                 printf("...and no parent frame, so you're out of luck\n");
             else {
                 printf("...dumping parent in case that's more useful?\n");
-                Dump_Frame_Location(NULL, f->prior);
+                Dump_Frame_Location(nullptr, f->prior);
             }
         }
     }
@@ -333,7 +333,7 @@ void Eval_Core_Exit_Checks_Debug(REBFRM *f) {
     if (NOT_END(f->value) and not FRM_IS_VALIST(f)) {
         if (f->source->index > ARR_LEN(f->source->array)) {
             assert(
-                (f->source->pending != NULL and IS_END(f->source->pending))
+                (f->source->pending != nullptr and IS_END(f->source->pending))
                 or THROWN(f->out)
             );
             assert(f->source->index == ARR_LEN(f->source->array) + 1);

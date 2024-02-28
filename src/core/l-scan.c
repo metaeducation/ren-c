@@ -298,7 +298,7 @@ const REBYTE Lower_Case[256] =
 //
 // Scan a char, handling ^A, ^/, ^(null), ^(1234)
 //
-// Returns the numeric value for char, or NULL for errors.
+// Returns the numeric value for char, or nullptr for errors.
 // 0 is a legal codepoint value which may be returned.
 //
 // Advances the cp to just past the last position.
@@ -315,7 +315,7 @@ static const REBYTE *Scan_UTF8_Char_Escapable(REBUNI *out, const REBYTE *bp)
 
     // Handle unicoded char:
     if (c >= 0x80) {
-        if (!(bp = Back_Scan_UTF8_Char(out, bp, NULL))) return NULL;
+        if (!(bp = Back_Scan_UTF8_Char(out, bp, nullptr))) return nullptr;
         return bp + 1; // Back_Scan advances one less than the full encoding
     }
 
@@ -363,7 +363,7 @@ static const REBYTE *Scan_UTF8_Char_Escapable(REBUNI *out, const REBYTE *bp)
             *out = (*out << 4) + c;
             cp++;
         }
-        if ((cp - bp) > 4) return NULL;
+        if ((cp - bp) > 4) return nullptr;
         if (*cp == ')') {
             cp++;
             return cp;
@@ -372,14 +372,14 @@ static const REBYTE *Scan_UTF8_Char_Escapable(REBUNI *out, const REBYTE *bp)
         // Check for identifiers:
         for (c = 0; c < ESC_MAX; c++) {
             if ((cp = Match_Bytes(bp, cb_cast(Esc_Names[c])))) {
-                if (cp != NULL and *cp == ')') {
+                if (cp != nullptr and *cp == ')') {
                     bp = cp + 1;
                     *out = Esc_Codes[c];
                     return bp;
                 }
             }
         }
-        return NULL;
+        return nullptr;
 
     default:
         *out = c;
@@ -430,12 +430,12 @@ static const REBYTE *Scan_Quote_Push_Mold(
 
         case 0:
             TERM_BIN(mo->series);
-            return NULL; // Scan_state shows error location.
+            return nullptr; // Scan_state shows error location.
 
         case '^':
-            if ((src = Scan_UTF8_Char_Escapable(&chr, src)) == NULL) {
+            if ((src = Scan_UTF8_Char_Escapable(&chr, src)) == nullptr) {
                 TERM_BIN(mo->series);
-                return NULL;
+                return nullptr;
             }
             --src;
             break;
@@ -456,7 +456,7 @@ static const REBYTE *Scan_Quote_Push_Mold(
         case LF:
             if (term == '"') {
                 TERM_BIN(mo->series);
-                return NULL;
+                return nullptr;
             }
             lines++;
             chr = LF;
@@ -464,9 +464,9 @@ static const REBYTE *Scan_Quote_Push_Mold(
 
         default:
             if (chr >= 0x80) {
-                if ((src = Back_Scan_UTF8_Char(&chr, src, NULL)) == NULL) {
+                if ((src = Back_Scan_UTF8_Char(&chr, src, nullptr)) == nullptr) {
                     TERM_BIN(mo->series);
-                    return NULL;
+                    return nullptr;
                 }
             }
         }
@@ -526,7 +526,7 @@ const REBYTE *Scan_Item_Push_Mold(
             break; // Unless terminator like '"' %"...", any whitespace ends
 
         if (c < ' ')
-            return NULL; // Ctrl characters not valid in filenames, fail
+            return nullptr; // Ctrl characters not valid in filenames, fail
 
         // !!! The branches below do things like "forces %\foo\bar to become
         // %/foo/bar".  But it may be that this kind of lossy scanning is a
@@ -544,28 +544,28 @@ const REBYTE *Scan_Item_Push_Mold(
         else if (c == '%') { // Accept %xx encoded char:
             const bool unicode = false;
             if (!Scan_Hex2(&c, bp + 1, unicode))
-                return NULL;
+                return nullptr;
             bp += 2;
         }
         else if (c == '^') { // Accept ^X encoded char:
             if (bp + 1 == ep)
-                return NULL; // error if nothing follows ^
-            if (NULL == (bp = Scan_UTF8_Char_Escapable(&c, bp)))
-                return NULL;
+                return nullptr; // error if nothing follows ^
+            if (nullptr == (bp = Scan_UTF8_Char_Escapable(&c, bp)))
+                return nullptr;
             if (opt_term == '\0' and IS_WHITE(c))
                 break;
             bp--;
         }
         else if (c >= 0x80) { // Accept UTF8 encoded char:
-            if (NULL == (bp = Back_Scan_UTF8_Char(&c, bp, 0)))
-                return NULL;
+            if (nullptr == (bp = Back_Scan_UTF8_Char(&c, bp, 0)))
+                return nullptr;
         }
-        else if (opt_invalids and NULL != strchr(cs_cast(opt_invalids), c)) {
+        else if (opt_invalids and nullptr != strchr(cs_cast(opt_invalids), c)) {
             //
             // Is char as literal valid? (e.g. () [] etc.)
             // Only searches ASCII characters.
             //
-            return NULL;
+            return nullptr;
         }
 
         ++bp;
@@ -594,7 +594,7 @@ const REBYTE *Scan_Item_Push_Mold(
 //  Skip_Tag: C
 //
 // Skip the entire contents of a tag, including quoted strings.
-// The argument points to the opening '<'.  NULL is returned on errors.
+// The argument points to the opening '<'.  nullptr is returned on errors.
 //
 static const REBYTE *Skip_Tag(const REBYTE *cp)
 {
@@ -607,7 +607,7 @@ static const REBYTE *Skip_Tag(const REBYTE *cp)
             while (*cp != '\0' and *cp != '"')
                 ++cp;
             if (*cp == '\0')
-                return NULL;
+                return nullptr;
         }
         cp++;
     }
@@ -615,7 +615,7 @@ static const REBYTE *Skip_Tag(const REBYTE *cp)
     if (*cp != '\0')
         return cp + 1;
 
-    return NULL;
+    return nullptr;
 }
 
 
@@ -686,8 +686,8 @@ static REBCTX *Error_Syntax(SCAN_STATE *ss) {
     // to get almost as much brevity and not much less clarity than bp and
     // ep, while avoiding the possibility of the state getting out of sync?
     //
-    assert(ss->begin != NULL and not IS_POINTER_TRASH_DEBUG(ss->begin));
-    assert(ss->end != NULL and not IS_POINTER_TRASH_DEBUG(ss->end));
+    assert(ss->begin != nullptr and not IS_POINTER_TRASH_DEBUG(ss->begin));
+    assert(ss->end != nullptr and not IS_POINTER_TRASH_DEBUG(ss->end));
     assert(ss->end >= ss->begin);
 
     DECLARE_VALUE (token_name);
@@ -946,22 +946,22 @@ static void Locate_Token_May_Push_Mold(
 acquisition_loop:
     //
     // If a non-variadic scan of a UTF-8 string is being done, then ss->vaptr
-    // will be NULL and ss->begin will be set to the data to scan.  A variadic
-    // scan will start ss->begin at NULL also.
+    // will be nullptr and ss->begin will be set to the data to scan.  A variadic
+    // scan will start ss->begin at nullptr also.
     //
     // Each time a string component being scanned gets exhausted, ss->begin
-    // will be set to NULL and this loop is run to see if there's more input
+    // will be set to nullptr and this loop is run to see if there's more input
     // to be processed.
     //
-    while (ss->begin == NULL) {
-        if (ss->vaptr == NULL) { // not a variadic va_list-based scan...
+    while (ss->begin == nullptr) {
+        if (ss->vaptr == nullptr) { // not a variadic va_list-based scan...
             ss->token = TOKEN_END; // ...so end of the utf-8 input was the end
             return;
         }
 
         const void *p = va_arg(*ss->vaptr, const void*);
 
-        if (not p) { // libRebol representation of <opt>/NULL
+        if (not p) { // libRebol representation of <opt>/nullptr
 
             if (not (ss->opts & SCAN_FLAG_NULLEDS_LEGAL))
                 fail ("can't splice null in ANY-ARRAY!...use rebUneval()");
@@ -996,7 +996,7 @@ acquisition_loop:
             }
 
             if (ss->opts & SCAN_FLAG_LOCK_SCANNED) { // !!! for future use...?
-                REBSER *locker = NULL;
+                REBSER *locker = nullptr;
                 Ensure_Value_Immutable(DS_TOP, locker);
             }
 
@@ -1047,7 +1047,7 @@ acquisition_loop:
             }
 
             if (ss->opts & SCAN_FLAG_LOCK_SCANNED) { // !!! for future use...?
-                REBSER *locker = NULL;
+                REBSER *locker = nullptr;
                 Ensure_Value_Immutable(DS_TOP, locker);
             }
 
@@ -1066,9 +1066,9 @@ acquisition_loop:
             // as a BLOCK! before scanning, which might be able to give more
             // context for the error-causing input.
             //
-            if (ss->line_head == NULL) {
-                assert(ss->vaptr != NULL);
-                assert(ss->start_line_head == NULL);
+            if (ss->line_head == nullptr) {
+                assert(ss->vaptr != nullptr);
+                assert(ss->start_line_head == nullptr);
                 ss->line_head = ss->start_line_head = ss->begin;
             }
             break; } // fallthrough to "ordinary" scanning
@@ -1212,11 +1212,11 @@ acquisition_loop:
         case LEX_DELIMIT_END:
             //
             // We've reached the end of this string token's content.  By
-            // putting a NULL in ss->begin, that will cue the acquisition loop
+            // putting a nullptr in ss->begin, that will cue the acquisition loop
             // to check if there's a variadic pointer in effect to see if
             // there's more content yet to come.
             //
-            ss->begin = NULL;
+            ss->begin = nullptr;
             TRASH_POINTER_IF_DEBUG(ss->end);
             goto acquisition_loop;
 
@@ -1245,7 +1245,7 @@ acquisition_loop:
             if (*cp == '"') {
                 cp = Scan_Quote_Push_Mold(mo, cp, ss);
                 ss->token = TOKEN_FILE;
-                if (cp == NULL)
+                if (cp == nullptr)
                     fail (Error_Syntax(ss));
                 ss->end = cp;
                 ss->token = TOKEN_FILE;
@@ -1381,7 +1381,7 @@ acquisition_loop:
             }
             cp = Skip_Tag(cp);
             ss->token = TOKEN_TAG;
-            if (cp == NULL)
+            if (cp == nullptr)
                 fail (Error_Syntax(ss));
             ss->end = cp;
             return;
@@ -1398,7 +1398,7 @@ acquisition_loop:
             }
             if (HAS_LEX_FLAG(flags, LEX_SPECIAL_COLON)) {
                 cp = Skip_To_Byte(cp, ss->end, ':');
-                if (cp != NULL and (cp + 1) != ss->end) { // 12:34
+                if (cp != nullptr and (cp + 1) != ss->end) { // 12:34
                     ss->token = TOKEN_TIME;
                     return;
                 }
@@ -1477,7 +1477,7 @@ acquisition_loop:
                 REBUNI dummy;
                 cp++;
                 cp = Scan_UTF8_Char_Escapable(&dummy, cp);
-                if (cp != NULL and *cp == '"') {
+                if (cp != nullptr and *cp == '"') {
                     ss->end = cp + 1;
                     ss->token = TOKEN_CHAR;
                     return;
@@ -1754,7 +1754,7 @@ void Init_Va_Scan_State_Core(
 
     ss->vaptr = vaptr;
 
-    ss->begin = opt_begin; // if NULL Locate_Token does first fetch from vaptr
+    ss->begin = opt_begin; // if nullptr Locate_Token does first fetch from vaptr
     TRASH_POINTER_IF_DEBUG(ss->end);
 
     // !!! Splicing REBVALs into a scan as it goes creates complexities for
@@ -1764,7 +1764,7 @@ void Init_Va_Scan_State_Core(
     // any errors occur...it just might not give the whole picture when used
     // to offer an error message of what's happening with the spliced values.
     //
-    ss->start_line_head = ss->line_head = NULL;
+    ss->start_line_head = ss->line_head = nullptr;
 
     ss->start_line = ss->line = line;
     ss->file = file;
@@ -1773,7 +1773,7 @@ void Init_Va_Scan_State_Core(
 
     ss->opts = 0;
 
-    ss->binder = NULL;
+    ss->binder = nullptr;
 
 #if !defined(NDEBUG)
     ss->token = TOKEN_MAX;
@@ -1802,7 +1802,7 @@ void Init_Scan_State(
 
     ss->mode_char = '\0';
 
-    ss->vaptr = NULL; // signal Locate_Token to not use vaptr
+    ss->vaptr = nullptr; // signal Locate_Token to not use vaptr
     ss->begin = utf8;
     TRASH_POINTER_IF_DEBUG(ss->end);
 
@@ -1815,7 +1815,7 @@ void Init_Scan_State(
     ss->file = file;
     ss->opts = 0;
 
-    ss->binder = NULL;
+    ss->binder = nullptr;
 
 #if !defined(NDEBUG)
     ss->token = TOKEN_MAX;
@@ -1906,7 +1906,7 @@ static REBARR *Scan_Child_Array(SCAN_STATE *ss, REBYTE mode_char);
 // transformation (e.g. if the first element was a GET-WORD!, change it to
 // an ordinary WORD! and make it a GET-PATH!)  The caller does this.
 //
-// The return value is always NULL, since output is sent to the data stack.
+// The return value is always nullptr, since output is sent to the data stack.
 // (It only has a return value because it may be called by rebRescue(), and
 // that's the convention it uses.)
 //
@@ -1925,7 +1925,7 @@ Value* Scan_To_Stack(SCAN_STATE *ss) {
         Locate_Token_May_Push_Mold(mo, ss),
         (ss->token != TOKEN_END)
     ){
-        assert(ss->begin != NULL and ss->end != NULL);
+        assert(ss->begin != nullptr and ss->end != nullptr);
         assert(ss->begin < ss->end);
 
         const REBYTE *bp = ss->begin;
@@ -2248,7 +2248,7 @@ Value* Scan_To_Stack(SCAN_STATE *ss) {
 
                 MAKE_HOOK hook = Make_Hooks[kind];
 
-                if (hook == NULL or ARR_LEN(array) != 2) {
+                if (hook == nullptr or ARR_LEN(array) != 2) {
                     DECLARE_VALUE (temp);
                     Init_Block(temp, array);
                     fail (Error_Malconstruct_Raw(temp));
@@ -2459,7 +2459,7 @@ Value* Scan_To_Stack(SCAN_STATE *ss) {
         SET_VAL_FLAG(DS_TOP, VALUE_FLAG_EVAL_FLIP);
 
         if (ss->opts & SCAN_FLAG_LOCK_SCANNED) { // !!! for future use...?
-            REBSER *locker = NULL;
+            REBSER *locker = nullptr;
             Ensure_Value_Immutable(DS_TOP, locker);
         }
 
@@ -2490,7 +2490,7 @@ array_done:
 
     // Note: ss->newline_pending may be true; used for ARRAY_FLAG_TAIL_NEWLINE
 
-    return NULL; // used with rebRescue(), so protocol requires a return
+    return nullptr; // used with rebRescue(), so protocol requires a return
 }
 
 
@@ -2502,7 +2502,7 @@ void Scan_To_Stack_Relaxed(SCAN_STATE *ss) {
     SCAN_STATE ss_before = *ss;
 
     Value* error = rebRescue(cast(REBDNG*, &Scan_To_Stack), ss);
-    if (error == NULL)
+    if (error == nullptr)
         return; // scan went fine, hopefully the common case...
 
     // Because rebRescue() restores the data stack, the in-progress scan
@@ -2674,7 +2674,7 @@ REBARR *Scan_Va_Managed(
     va_start(va, filename);
 
     SCAN_STATE ss;
-    Init_Va_Scan_State_Core(&ss, filename, start_line, NULL, &va);
+    Init_Va_Scan_State_Core(&ss, filename, start_line, nullptr, &va);
     Scan_To_Stack(&ss);
 
     // Because a variadic rebValue() can have rebEval() entries, when it
@@ -2774,7 +2774,7 @@ REBINT Scan_Header(const REBYTE *utf8, REBLEN len)
 void Startup_Scanner(void)
 {
     REBLEN n = 0;
-    while (Token_Names[n] != NULL)
+    while (Token_Names[n] != nullptr)
         ++n;
     assert(cast(enum Reb_Token, n) == TOKEN_MAX);
 
@@ -2788,7 +2788,7 @@ void Startup_Scanner(void)
 void Shutdown_Scanner(void)
 {
     Free_Unmanaged_Series(TG_Buf_Utf8);
-    TG_Buf_Utf8 = NULL;
+    TG_Buf_Utf8 = nullptr;
 }
 
 
@@ -2905,7 +2905,7 @@ const REBYTE *Scan_Any_Word(
 
     Locate_Token_May_Push_Mold(mo, &ss);
     if (ss.token != TOKEN_WORD)
-        return NULL;
+        return nullptr;
 
     Init_Any_Word(out, kind, Intern_UTF8_Managed(utf8, len));
     Drop_Mold_If_Pushed(mo);
@@ -2920,7 +2920,7 @@ const REBYTE *Scan_Any_Word(
 //
 const REBYTE *Scan_Issue(Value* out, const REBYTE *cp, REBLEN len)
 {
-    if (len == 0) return NULL; // will trigger error
+    if (len == 0) return nullptr; // will trigger error
 
     while (IS_LEX_SPACE(*cp)) cp++; /* skip white space */
 
@@ -2930,7 +2930,7 @@ const REBYTE *Scan_Issue(Value* out, const REBYTE *cp, REBLEN len)
     while (l > 0) {
         switch (GET_LEX_CLASS(*bp)) {
           case LEX_CLASS_DELIMIT:
-            return NULL; // will trigger error
+            return nullptr; // will trigger error
 
           case LEX_CLASS_SPECIAL: { // Flag all but first special char
             REBLEN c = GET_LEX_VALUE(*bp);
@@ -2944,7 +2944,7 @@ const REBYTE *Scan_Issue(Value* out, const REBYTE *cp, REBLEN len)
                 and LEX_SPECIAL_BLANK != c
                 and LEX_SPECIAL_COLON != c
             ){
-                return NULL; // will trigger error
+                return nullptr; // will trigger error
             }}
             goto lex_word_or_number;
 

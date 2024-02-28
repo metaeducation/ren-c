@@ -307,14 +307,14 @@ REBLEN Modify_Binary(
         limit = -1;
     }
     else if (IS_BINARY(src_val)) {
-        src_ser = NULL;
+        src_ser = nullptr;
         needs_free = false;
     }
     else
         fail (Error_Invalid(src_val));
 
     // Use either new src or the one that was passed:
-    if (src_ser != NULL) {
+    if (src_ser != nullptr) {
         src_len = SER_LEN(src_ser);
     }
     else {

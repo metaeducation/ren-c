@@ -256,17 +256,17 @@ void New_Indented_Line(REB_MOLD *mo)
     //
     REBYTE *bp;
     if (SER_LEN(mo->series) == 0)
-        bp = NULL;
+        bp = nullptr;
     else {
         bp = BIN_LAST(mo->series);
         if (*bp == ' ' || *bp == '\t')
             *bp = '\n';
         else
-            bp = NULL;
+            bp = nullptr;
     }
 
     // Add terminator:
-    if (bp == NULL)
+    if (bp == nullptr)
         Append_Utf8_Codepoint(mo->series, '\n');
 
     // Add proper indentation:
@@ -411,13 +411,13 @@ void Form_Array_At(
     REBINT n;
     for (n = 0; n < len;) {
         Cell* item = ARR_AT(array, index + n);
-        Value* wval = NULL;
+        Value* wval = nullptr;
         if (opt_context && (IS_WORD(item) || IS_GET_WORD(item))) {
             wval = Select_Canon_In_Context(opt_context, VAL_WORD_CANON(item));
             if (wval)
                 item = wval;
         }
-        Mold_Or_Form_Value(mo, item, wval == NULL);
+        Mold_Or_Form_Value(mo, item, wval == nullptr);
         n++;
         if (GET_MOLD_FLAG(mo, MOLD_FLAG_LINES)) {
             Append_Utf8_Codepoint(mo->series, LF);
@@ -671,7 +671,7 @@ void Push_Mold(REB_MOLD *mo)
     // Set by DECLARE_MOLD/pops so you don't same `mo` twice w/o popping.
     // Is assigned even in debug build, scanner uses to determine if pushed.
     //
-    assert(mo->series == NULL);
+    assert(mo->series == nullptr);
 
     REBSER *s = mo->series = MOLD_BUF;
     mo->start = SER_LEN(s);
@@ -769,7 +769,7 @@ void Throttle_Mold(REB_MOLD *mo) {
 //
 REBSER *Pop_Molded_String_Core(REB_MOLD *mo, REBLEN len)
 {
-    assert(mo->series); // if NULL there was no Push_Mold()
+    assert(mo->series);  // if nullptr there was no Push_Mold()
 
     ASSERT_SERIES_TERM(mo->series);
     Throttle_Mold(mo);
@@ -792,7 +792,7 @@ REBSER *Pop_Molded_String_Core(REB_MOLD *mo, REBLEN len)
     //
     TERM_BIN_LEN(mo->series, mo->start);
 
-    mo->series = NULL; // indicates mold is not currently pushed
+    mo->series = nullptr;  // indicates mold is not currently pushed
     return result;
 }
 
@@ -823,7 +823,7 @@ REBSER *Pop_Molded_UTF8(REB_MOLD *mo)
     //
     TERM_BIN_LEN(mo->series, mo->start);
 
-    mo->series = NULL; // indicates mold is not currently pushed
+    mo->series = nullptr;  // indicates mold is not currently pushed
     return bytes;
 }
 
@@ -869,19 +869,19 @@ void Drop_Mold_Core(REB_MOLD *mo, bool not_pushed_ok)
     // to "drop" a mold that hasn't ever been pushed is the easiest way to
     // avoid intervening.  Drop_Mold_If_Pushed(mo) macro makes this clearer.
     //
-    if (not_pushed_ok && mo->series == NULL)
+    if (not_pushed_ok && mo->series == nullptr)
         return;
 
-    assert(mo->series != NULL); // if NULL there was no Push_Mold
+    assert(mo->series != nullptr);  // if nullptr there was no Push_Mold
 
     // When pushed data are to be discarded, mo->series may be unterminated.
-    // (Indeed that happens when Scan_Item_Push_Mold returns NULL/0.)
+    // (Indeed that happens when Scan_Item_Push_Mold returns nullptr.)
     //
     NOTE_SERIES_MAYBE_TERM(mo->series);
 
     TERM_BIN_LEN(mo->series, mo->start); // see Pop_Molded_String() notes
 
-    mo->series = NULL; // indicates mold is not currently pushed
+    mo->series = nullptr;  // indicates mold is not currently pushed
 }
 
 
@@ -902,8 +902,8 @@ void Startup_Mold(REBLEN size)
 void Shutdown_Mold(void)
 {
     Free_Unmanaged_Series(TG_Mold_Buf);
-    TG_Mold_Buf = NULL;
+    TG_Mold_Buf = nullptr;
 
     Free_Unmanaged_Series(TG_Mold_Stack);
-    TG_Mold_Stack = NULL;
+    TG_Mold_Stack = nullptr;
 }

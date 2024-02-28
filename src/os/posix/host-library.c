@@ -123,6 +123,6 @@ CFUNC *OS_Find_Function(void *dll, const char *funcname)
     *cast(void**, &fp) = dlsym(dll, funcname);
     return fp;
 #else
-    return NULL;
+    return nullptr;
 #endif
 }

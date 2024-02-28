@@ -319,7 +319,7 @@ e-lib/emit {
 
     /*
      * "Dangerous Function" which is called by rebRescue().  Argument can be a
-     * Value* but does not have to be.  Result must be a Value* or NULL.
+     * Value* but does not have to be.  Result must be a Value* or nullptr.
      *
      * !!! If the dangerous function returns an ERROR!, it will currently be
      * converted to null, which parallels TRAP without a handler.  nulls will
@@ -458,7 +458,7 @@ e-lib/emit {
      *     system is using, for the purposes of triggering GC.
      *
      *     Out-of-memory errors on allocation automatically trigger
-     *     failure vs. needing special handling by returning NULL (which may
+     *     failure vs. needing special handling by returning nullptr (which may
      *     or may not be desirable, depending on what you're doing)
      *
      * Additionally, the rebAlloc(type) and rebAllocN(type, num) macros

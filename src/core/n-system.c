@@ -179,7 +179,7 @@ DECLARE_NATIVE(recycle)
 
         Free_Unmanaged_Series(sweeplist);
 
-        REBLEN recount = Recycle_Core(false, NULL);
+        REBLEN recount = Recycle_Core(false, nullptr);
         assert(recount == count);
       #endif
     }

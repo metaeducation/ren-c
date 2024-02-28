@@ -193,7 +193,7 @@ static Value* Dangerous_Command(REBREQ *req) {
 //
 // !!! R3-Alpha returned 0 for success (DR_DONE), 1 for command still pending
 // (DR_PEND) and negative numbers for errors.  As the device model is revamped
-// the concept is to return the actual result, NULL if pending, or an ERROR!.
+// the concept is to return an actual result, nullptr if pending, or an ERROR!.
 //
 Value* OS_Do_Device(REBREQ *req, int command)
 {
@@ -203,7 +203,7 @@ Value* OS_Do_Device(REBREQ *req, int command)
         rebJumps("FAIL {Rebol Device Number Too Large}");
 
     REBDEV *dev = Devices[req->device];
-    if (dev == NULL)
+    if (dev == nullptr)
         rebJumps("FAIL {Rebol Device Not Found}");
 
     if (not (dev->flags & RDF_INIT)) {
@@ -220,7 +220,7 @@ Value* OS_Do_Device(REBREQ *req, int command)
 
     if (
         req->command > dev->max_command
-        || dev->commands[req->command] == NULL
+        || dev->commands[req->command] == nullptr
     ){
         rebJumps("FAIL {Invalid Command for Rebol Device}");
     }
@@ -236,7 +236,7 @@ Value* OS_Do_Device(REBREQ *req, int command)
         int result = (dev->commands[req->command])(req);
         assert(result == DR_DONE);
         UNUSED(result);
-        return NULL;
+        return nullptr;
     }
 
     // !!! R3-Alpha had it so when an error was raised from a "device request"
@@ -274,7 +274,7 @@ Value* OS_Do_Device(REBREQ *req, int command)
     //
     if (result == DR_PEND) {
         Attach_Request(&dev->pending, req);
-        return NULL;
+        return nullptr;
     }
 
     assert(result == DR_DONE);
@@ -297,7 +297,7 @@ Value* OS_Do_Device(REBREQ *req, int command)
 void OS_Do_Device_Sync(REBREQ *req, int command)
 {
     Value* result = OS_DO_DEVICE(req, command);
-    assert(result != NULL); // should be synchronous
+    assert(result != nullptr);  // should be synchronous
     if (rebDid("error?", result))
         rebJumps("FAIL", result);
     rebRelease(result); // ignore result
@@ -312,7 +312,7 @@ REBREQ *OS_Make_Devreq(int device)
     assert(device < RDI_MAX);
 
     REBDEV *dev = Devices[device];
-    assert(dev != NULL);
+    assert(dev != nullptr);
 
     REBREQ *req = cast(REBREQ*, malloc(dev->req_size));
     memset(req, 0, dev->req_size);
@@ -330,7 +330,7 @@ REBREQ *OS_Make_Devreq(int device)
 int OS_Abort_Device(REBREQ *req)
 {
     REBDEV *dev = Devices[req->device];
-    assert(dev != NULL);
+    assert(dev != nullptr);
 
     Detach_Request(&dev->pending, req);
     return 0;
@@ -385,9 +385,9 @@ int OS_Quit_Devices(int flags)
     for (d = RDI_MAX - 1; d != -1; d--) {
         REBDEV *dev = Devices[d];
         if (
-            dev != NULL
+            dev != nullptr
             and (dev->flags & RDF_INIT)
-            and dev->commands[RDC_QUIT] != NULL
+            and dev->commands[RDC_QUIT] != nullptr
         ){
             dev->commands[RDC_QUIT](cast(REBREQ*, dev));
         }
@@ -426,7 +426,7 @@ int OS_Wait(unsigned int millisec, unsigned int res)
     memset(&req, 0, sizeof(REBREQ));
     req.device = RDI_EVENT;
 
-    OS_REAP_PROCESS(-1, NULL, 0);
+    OS_REAP_PROCESS(-1, nullptr, 0);
 
     // Let any pending device I/O have a chance to run:
     //

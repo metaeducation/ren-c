@@ -241,10 +241,10 @@ static int Read_Directory(struct devreq_file *dir, struct devreq_file *file)
     // If no dir handle, open the dir:
     //
     DIR *h;
-    if ((h = cast(DIR*, dir_req->requestee.handle)) == NULL) {
+    if ((h = cast(DIR*, dir_req->requestee.handle)) == nullptr) {
         h = opendir(dir_utf8); // !!! does opendir() hold pointer?
 
-        if (h == NULL) {
+        if (h == nullptr) {
             rebFree(dir_utf8);
             rebFail_OS (errno);
         }
@@ -260,7 +260,7 @@ static int Read_Directory(struct devreq_file *dir, struct devreq_file *file)
     do {
         // Read next file entry or error:
         errno = 0; // set errno to 0 to test if it changes
-        if ((d = readdir(h)) == NULL) {
+        if ((d = readdir(h)) == nullptr) {
             int errno_cache = errno; // in case closedir() changes it
 
             rebFree(dir_utf8);
@@ -344,7 +344,7 @@ DEVICE_CMD Open_File(REBREQ *req)
 
     // "Posix file names should be compatible with REBOL file paths"
 
-    assert(file->path != NULL);
+    assert(file->path != nullptr);
 
     int modes = O_BINARY | ((req->modes & RFM_READ) ? O_RDONLY : O_RDWR);
 

@@ -177,7 +177,7 @@ REB_R MAKE_Decimal(Value* out, enum Reb_Kind kind, const Value* arg)
         REBSIZ size;
         REBYTE *bp = Analyze_String_For_Scan(&size, arg, MAX_SCAN_DECIMAL);
 
-        if (NULL == Scan_Decimal(out, bp, size, kind != REB_PERCENT))
+        if (nullptr == Scan_Decimal(out, bp, size, kind != REB_PERCENT))
             goto bad_make;
 
         d = VAL_DECIMAL(out); // may need to divide if percent, fall through

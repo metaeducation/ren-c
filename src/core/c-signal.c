@@ -120,7 +120,7 @@ bool Do_Signals_Throws(Value* out)
         //
         // Early in the booting process, it's not possible to handle Ctrl-C.
         //
-        if (Saved_State == NULL)
+        if (Saved_State == nullptr)
             panic ("Ctrl-C or other HALT signal with no trap to process it");
 
         CLR_SIGNAL(SIG_HALT);

@@ -131,7 +131,7 @@ STD_TERM *Init_Terminal(void)
     //
     struct termios attrs;
 
-    if (Term_Initialized || tcgetattr(0, &Term_Attrs)) return NULL;
+    if (Term_Initialized || tcgetattr(0, &Term_Attrs)) return nullptr;
 
     attrs = Term_Attrs;
 
@@ -474,7 +474,7 @@ static const unsigned char *Insert_Char_Null_If_Interrupted(
                 // where the remaining UTF-8 characters *should* be found.
                 //
                 if (Read_Bytes_Interrupted(term, buf, limit - 1))
-                    return NULL; // signal interruption
+                    return nullptr;  // signal interruption
 
                 cp = buf;
             }
@@ -632,7 +632,7 @@ restart:;
             // backwards, if such a read is done.
             //
             cp = Insert_Char_Null_If_Interrupted(term, buf, READ_BUF_LEN, cp);
-            if (cp == NULL)
+            if (cp == nullptr)
                 goto return_halt;
 
             continue;

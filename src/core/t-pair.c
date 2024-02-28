@@ -64,7 +64,7 @@ REB_R MAKE_Pair(Value* out, enum Reb_Kind kind, const Value* arg)
         REBSIZ size;
         REBYTE *bp = Analyze_String_For_Scan(&size, arg, VAL_LEN_AT(arg));
 
-        if (NULL == Scan_Pair(out, bp, size))
+        if (nullptr == Scan_Pair(out, bp, size))
             goto bad_make;
 
         return out;
@@ -189,7 +189,7 @@ REB_R PD_Pair(
     else
         return R_UNHANDLED;
 
-    if (opt_setval == NULL) {
+    if (opt_setval == nullptr) {
         if (n == 1)
             Move_Value(pvs->out, VAL_PAIR_FIRST(pvs->out));
         else

@@ -439,7 +439,7 @@ REB_R MAKE_Date(Value* out, enum Reb_Kind kind, const Value* arg) {
     if (IS_TEXT(arg)) {
         REBSIZ size;
         REBYTE *bp = Analyze_String_For_Scan(&size, arg, MAX_SCAN_DATE);
-        if (NULL == Scan_Date(out, bp, size))
+        if (nullptr == Scan_Date(out, bp, size))
             goto bad_make;
         return out;
     }
@@ -586,8 +586,8 @@ void Pick_Or_Poke_Date(
     else
         fail (Error_Invalid(picker));
 
-    if (opt_poke == NULL) {
-        assert(opt_out != NULL);
+    if (opt_poke == nullptr) {
+        assert(opt_out != nullptr);
         TRASH_CELL_IF_DEBUG(opt_out);
 
         switch (sym) {
@@ -694,7 +694,7 @@ void Pick_Or_Poke_Date(
         }
     }
     else {
-        assert(opt_out == NULL);
+        assert(opt_out == nullptr);
 
         // Here the desire is to modify the incoming date directly.  This is
         // done by changing the components that need to change which were
@@ -858,13 +858,13 @@ REB_R PD_Date(
     const Value* picker,
     const Value* opt_setval
 ){
-    if (opt_setval != NULL) {
+    if (opt_setval != nullptr) {
         //
         // Updates pvs->out; R_IMMEDIATE means path dispatch will write it
         // back to whatever the originating variable location was, or error
         // if it didn't come from a variable.
         //
-        Pick_Or_Poke_Date(NULL, pvs->out, picker, opt_setval);
+        Pick_Or_Poke_Date(nullptr, pvs->out, picker, opt_setval);
         return R_IMMEDIATE;
     }
 
@@ -872,7 +872,7 @@ REB_R PD_Date(
     //
     DECLARE_VALUE (temp);
     Move_Value(temp, pvs->out);
-    Pick_Or_Poke_Date(pvs->out, temp, picker, NULL);
+    Pick_Or_Poke_Date(pvs->out, temp, picker, nullptr);
     return pvs->out;
 }
 
@@ -895,7 +895,7 @@ REBTYPE(Date)
     REBLEN year = VAL_YEAR(val);
     REBI64 secs = GET_VAL_FLAG(val, DATE_FLAG_HAS_TIME) ? VAL_NANO(val) : 0;
 
-    Value* arg = D_ARGC > 1 ? D_ARG(2) : NULL;
+    Value* arg = D_ARGC > 1 ? D_ARG(2) : nullptr;
 
     if (sym == SYM_SUBTRACT || sym == SYM_ADD) {
         REBINT  type = VAL_TYPE(arg);

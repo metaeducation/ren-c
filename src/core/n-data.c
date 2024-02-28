@@ -183,7 +183,7 @@ DECLARE_NATIVE(bind)
         // not in context, bind/new means add it if it's not.
         //
         if (REF(new) or (IS_SET_WORD(v) and REF(set))) {
-            Append_Context(context, v, NULL);
+            Append_Context(context, v, nullptr);
             RETURN (v);
         }
 
@@ -411,7 +411,7 @@ DECLARE_NATIVE(unbind)
     if (ANY_WORD(word))
         Unbind_Any_Word(word);
     else
-        Unbind_Values_Core(VAL_ARRAY_AT(word), NULL, REF(deep));
+        Unbind_Values_Core(VAL_ARRAY_AT(word), nullptr, REF(deep));
 
     RETURN (word);
 }

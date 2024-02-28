@@ -73,7 +73,7 @@ REBFRM *Frame_At_Depth(REBLEN n)
         frame = FRM_PRIOR(frame);
     }
 
-    return NULL;
+    return nullptr;
 }
 
 

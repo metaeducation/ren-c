@@ -88,11 +88,11 @@ REB_R MAKE_Word(Value* out, enum Reb_Kind kind, const Value* arg)
         REBYTE *bp = Analyze_String_For_Scan(&size, arg, MAX_SCAN_WORD);
 
         if (kind == REB_ISSUE) {
-            if (NULL == Scan_Issue(out, bp, size))
+            if (nullptr == Scan_Issue(out, bp, size))
                 fail (Error_Bad_Char_Raw(arg));
         }
         else {
-            if (NULL == Scan_Any_Word(out, kind, bp, size))
+            if (nullptr == Scan_Any_Word(out, kind, bp, size))
                 fail (Error_Bad_Char_Raw(arg));
         }
         return out;
@@ -100,7 +100,7 @@ REB_R MAKE_Word(Value* out, enum Reb_Kind kind, const Value* arg)
     else if (IS_CHAR(arg)) {
         REBYTE buf[8];
         REBLEN len = Encode_UTF8_Char(&buf[0], VAL_CHAR(arg));
-        if (NULL == Scan_Any_Word(out, kind, &buf[0], len))
+        if (nullptr == Scan_Any_Word(out, kind, &buf[0], len))
             fail (Error_Bad_Char_Raw(arg));
         return out;
     }
@@ -255,7 +255,7 @@ REBTYPE(Word)
                     ++len;
                 else {
                     REBUNI uni;
-                    if ((bp = Back_Scan_UTF8_Char(&uni, bp, &size)) == NULL)
+                    if (not (bp = Back_Scan_UTF8_Char(&uni, bp, &size)))
                         fail (Error_Bad_Utf8_Raw());
                     ++len;
                }

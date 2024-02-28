@@ -133,7 +133,7 @@ int64_t OS_Delta_Time(int64_t base)
 //
 Value* OS_Get_Current_Dir(void)
 {
-    DWORD len = GetCurrentDirectory(0, NULL); // length, incl terminator.
+    DWORD len = GetCurrentDirectory(0, nullptr);  // length, incl terminator.
     WCHAR *path = rebAllocN(WCHAR, len);
     GetCurrentDirectory(len, path);
 
@@ -271,12 +271,12 @@ Value* OS_Get_Current_Exec(void)
 {
     WCHAR *path = rebAllocN(WCHAR, MAX_PATH);
 
-    DWORD r = GetModuleFileName(NULL, path, MAX_PATH);
+    DWORD r = GetModuleFileName(nullptr, path, MAX_PATH);
     if (r == 0) {
         rebFree(path);
         return rebBlank();
     }
-    path[r] = '\0'; // May not be NULL-terminated if buffer is not big enough
+    path[r] = '\0'; // May not be nullptr-terminated if buffer is not big enough
 
     Value* result = rebValue("local-to-file", rebR(rebTextW(path)));
     rebFree(path);

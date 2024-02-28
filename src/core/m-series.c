@@ -381,7 +381,7 @@ void Resize_Series(REBSER *s, REBLEN size)
 //
 REBYTE *Reset_Buffer(REBSER *buf, REBLEN len)
 {
-    if (buf == NULL)
+    if (buf == nullptr)
         panic ("buffer not yet allocated");
 
     SET_SERIES_LEN(buf, 0);

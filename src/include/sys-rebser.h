@@ -681,7 +681,7 @@ union Reb_Series_Link {
     // rebMalloc() memory as well as individual cells, the bytes preceding
     // the pointer handed out to the client are examined to determine which
     // it is.  If it's an array-type series, it is either the varlist of
-    // the owning frame *or* the EMPTY_ARRAY (to avoid a NULL check)
+    // the owning frame *or* the EMPTY_ARRAY (to avoid a nullptr check)
     //
     REBNOD *owner;
 
@@ -760,7 +760,7 @@ union Reb_Series_Link {
     //
     REBARR *reuse;
 
-    // For LIBRARY!, the file descriptor.  This is set to NULL when the
+    // For LIBRARY!, the file descriptor.  This is set to nullptr when the
     // library is not loaded.
     //
     // !!! As with some other types, this may not need the optimization of

@@ -221,7 +221,7 @@ typedef struct rebol_scan_state {
     //
     REBYTE mode_char;
 
-    // If vaptr is NULL, then it is assumed that the `begin` is the source of
+    // If vaptr is nullptr, then it's assumed that the `begin` is the source of
     // the UTF-8 data to scan.  Otherwise, it is a variadic feed of UTF-8
     // strings and values that are spliced in.
     //
@@ -254,7 +254,7 @@ typedef struct rebol_scan_state {
     REBFLGS opts;
     enum Reb_Token token;
 
-    // If the binder isn't NULL, then any words or arrays are bound into it
+    // If the binder isn't nullptr, then any words or arrays are bound into it
     // during the loading process.
     //
     struct Reb_Binder *binder;
@@ -356,13 +356,13 @@ extern const REBYTE Lex_Map[256];
         RebchrPtr (const REBWCHAR *p) : p (const_cast<REBWCHAR *>(p)) {}
 
         RebchrPtr back(REBWCHAR *codepoint_out) {
-            if (codepoint_out != NULL)
+            if (codepoint_out != nullptr)
                 *codepoint_out = *p;
             return p - 1;
         }
 
         RebchrPtr next(REBWCHAR *codepoint_out) {
-            if (codepoint_out != NULL)
+            if (codepoint_out != nullptr)
                 *codepoint_out = *p;
             return p + 1;
         }
@@ -394,13 +394,13 @@ extern const REBYTE Lex_Map[256];
         RebchrPtr (REBWCHAR *p) : RebchrPtr<const void*> (p) {}
 
         RebchrPtr back(REBWCHAR *codepoint_out) {
-            if (codepoint_out != NULL)
+            if (codepoint_out != nullptr)
                 *codepoint_out = *p;
             return p - 1;
         }
 
         RebchrPtr next(REBWCHAR *codepoint_out) {
-            if (codepoint_out != NULL)
+            if (codepoint_out != nullptr)
                 *codepoint_out = *p;
             return p + 1;
         }
@@ -452,7 +452,7 @@ extern const REBYTE Lex_Map[256];
         REBWCHAR *codepoint_out,
         REBCHR(const*) p
     ){
-        if (codepoint_out != NULL)
+        if (codepoint_out != nullptr)
             *codepoint_out = *p;
         return m_cast(REBCHR(*), p - 1); // don't write if input was const!
     }
@@ -461,7 +461,7 @@ extern const REBYTE Lex_Map[256];
         REBWCHAR *codepoint_out,
         REBCHR(const*) p
     ){
-        if (codepoint_out != NULL)
+        if (codepoint_out != nullptr)
             *codepoint_out = *p;
         return m_cast(REBCHR(*), p + 1);
     }

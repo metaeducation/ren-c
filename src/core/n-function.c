@@ -281,7 +281,7 @@ DECLARE_NATIVE(typechecker)
     INIT_VAL_PARAM_CLASS(param, PARAM_CLASS_NORMAL);
     assert(not Is_Param_Endable(param));
 
-    MISC(paramlist).meta = NULL; // !!! auto-generate info for HELP?
+    MISC(paramlist).meta = nullptr;  // !!! auto-generate info for HELP?
 
     REBACT *typechecker = Make_Action(
         paramlist,
@@ -436,7 +436,7 @@ DECLARE_NATIVE(adapt)
     REBCTX *meta = Copy_Context_Shallow_Managed(VAL_CONTEXT(example));
     Init_Nulled(CTX_VAR(meta, STD_ADAPTED_META_DESCRIPTION)); // default
     Move_Value(CTX_VAR(meta, STD_ADAPTED_META_ADAPTEE), adaptee);
-    if (opt_adaptee_name == NULL)
+    if (opt_adaptee_name == nullptr)
         Init_Nulled(CTX_VAR(meta, STD_ADAPTED_META_ADAPTEE_NAME));
     else
         Init_Word(
@@ -553,7 +553,7 @@ DECLARE_NATIVE(enclose)
     REBCTX *meta = Copy_Context_Shallow_Managed(VAL_CONTEXT(example));
     Init_Nulled(CTX_VAR(meta, STD_ENCLOSED_META_DESCRIPTION)); // default
     Move_Value(CTX_VAR(meta, STD_ENCLOSED_META_INNER), inner);
-    if (opt_inner_name == NULL)
+    if (opt_inner_name == nullptr)
         Init_Nulled(CTX_VAR(meta, STD_ENCLOSED_META_INNER_NAME));
     else
         Init_Word(
@@ -561,7 +561,7 @@ DECLARE_NATIVE(enclose)
             opt_inner_name
         );
     Move_Value(CTX_VAR(meta, STD_ENCLOSED_META_OUTER), outer);
-    if (opt_outer_name == NULL)
+    if (opt_outer_name == nullptr)
         Init_Nulled(CTX_VAR(meta, STD_ENCLOSED_META_OUTER_NAME));
     else
         Init_Word(
@@ -901,7 +901,7 @@ DECLARE_NATIVE(n_shot)
     INIT_VAL_PARAM_CLASS(param, PARAM_CLASS_NORMAL);
     assert(not Is_Param_Endable(param));
 
-    MISC(paramlist).meta = NULL; // !!! auto-generate info for HELP?
+    MISC(paramlist).meta = nullptr;  // !!! auto-generate info for HELP?
 
     REBACT *n_shot = Make_Action(
         paramlist,

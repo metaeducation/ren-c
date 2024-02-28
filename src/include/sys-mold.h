@@ -92,7 +92,7 @@ enum REB_Mold_Opts {
 
 #define DECLARE_MOLD(name) \
     REB_MOLD mold_struct; \
-    mold_struct.series = NULL; /* used to tell if pushed or not */ \
+    mold_struct.series = nullptr; /* used to tell if pushed or not */ \
     mold_struct.opts = 0; \
     mold_struct.indent = 0; \
     REB_MOLD *name = &mold_struct; \

@@ -37,7 +37,7 @@
 //
 static REB_R DNS_Actor(REBFRM *frame_, Value* port, Value* verb)
 {
-    Value* arg = D_ARGC > 1 ? D_ARG(2) : NULL;
+    Value* arg = D_ARGC > 1 ? D_ARG(2) : nullptr;
 
     REBREQ *sock = Ensure_Port_State(port, RDI_DNS);
     sock->timeout = 4000; // where does this go? !!!
@@ -104,7 +104,7 @@ static REB_R DNS_Actor(REBFRM *frame_, Value* port, Value* verb)
             );
 
             DECLARE_VALUE (tmp);
-            if (Scan_Tuple(tmp, BIN_AT(temp, offset), size) != NULL) {
+            if (Scan_Tuple(tmp, BIN_AT(temp, offset), size) != nullptr) {
                 sock->modes |= RST_REVERSE;
                 memcpy(&(DEVREQ_NET(sock)->remote_ip), VAL_TUPLE(tmp), 4);
             }
@@ -130,7 +130,7 @@ static REB_R DNS_Actor(REBFRM *frame_, Value* port, Value* verb)
 
         assert(sock->flags & RRF_DONE); // R3-Alpha async DNS removed
 
-        if (DEVREQ_NET(sock)->host_info == NULL) {
+        if (DEVREQ_NET(sock)->host_info == nullptr) {
             Init_Blank(D_OUT); // HOST_NOT_FOUND or NO_ADDRESS blank vs. error
             return D_OUT; // READ action currently required to use D_OUT
         }

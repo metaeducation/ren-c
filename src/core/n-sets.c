@@ -408,7 +408,7 @@ DECLARE_NATIVE(unique)
         VAL_TYPE(val),
         Make_Set_Operation_Series(
             val,
-            NULL,
+            nullptr,
             SOP_NONE,
             REF(case),
             REF(skip) ? Int32s(ARG(size), 1) : 1

@@ -471,7 +471,7 @@ REB_R TO_String(Value* out, enum Reb_Kind kind, const Value* arg)
     else
         ser = MAKE_TO_String_Common(arg);
 
-    if (ser == NULL)
+    if (ser == nullptr)
         fail (Error_Invalid(arg));
 
     return Init_Any_Series(out, kind, ser);
@@ -602,7 +602,7 @@ REB_R PD_String(
         }
     */
 
-    if (opt_setval == NULL) { // PICK-ing
+    if (opt_setval == nullptr) {  // PICK-ing
         if (IS_INTEGER(picker) or IS_DECIMAL(picker)) { // #2312
             REBINT n = Int32(picker);
             if (n == 0)
@@ -1183,7 +1183,7 @@ REBTYPE(String)
     Value* v = D_ARG(1);
     assert(IS_BINARY(v) || ANY_STRING(v));
 
-    Value* arg = D_ARGC > 1 ? D_ARG(2) : NULL;
+    Value* arg = D_ARGC > 1 ? D_ARG(2) : nullptr;
 
     // Common operations for any series type (length, head, etc.)
     //

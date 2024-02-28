@@ -120,12 +120,12 @@ REBSER *Copy_String_At_Len(const Cell* src, REBINT limit)
 //  Append_Unencoded_Len: C
 //
 // Append unencoded data to a byte string, using plain memcpy().  If dst is
-// NULL, a new byte-sized series will be created and returned.
+// nullptr, a new byte-sized series will be created and returned.
 //
 REBSER *Append_Unencoded_Len(REBSER *dst, const char *src, REBLEN len)
 {
     REBLEN tail;
-    if (dst == NULL) {
+    if (dst == nullptr) {
         dst = Make_Binary(len);
         tail = 0;
     }
@@ -286,7 +286,7 @@ void Append_Int_Pad(REBSER *dst, REBINT num, REBINT digs)
 //
 // Append UTF-8 data to a series underlying an ANY-STRING!.
 //
-// `dst = NULL` means make a new string.
+// `dst = nullptr` means make a new string.
 //
 REBSER *Append_UTF8_May_Fail(
     REBSER *dst,
@@ -320,7 +320,7 @@ REBSER *Append_UTF8_May_Fail(
         REBUNI ch = *src;
         if (ch >= 0x80) {
             src = Back_Scan_UTF8_Char(&ch, src, &bytes_left);
-            if (src == NULL)
+            if (src == nullptr)
                 fail (Error_Bad_Utf8_Raw());
 
             all_ascii = false;
@@ -338,7 +338,7 @@ REBSER *Append_UTF8_May_Fail(
     up = UNI_HEAD(temp);
 
     REBLEN old_len;
-    if (dst == NULL) {
+    if (dst == nullptr) {
         dst = Make_Unicode(num_codepoints);
         old_len = 0;
     }

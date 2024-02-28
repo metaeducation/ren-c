@@ -344,7 +344,7 @@ static_assert(0 < 8 - PCLASS_NUM_BITS, "TYPESET_FLAG_XXX too high");
 
 //=//// PARAMETER SYMBOL //////////////////////////////////////////////////=//
 //
-// Name should be NULL unless typeset in object keylist or func paramlist
+// Name should be nullptr unless typeset in object keylist or func paramlist
 
 INLINE void INIT_TYPESET_NAME(Cell* typeset, REBSTR *str) {
     assert(IS_TYPESET(typeset));

@@ -411,7 +411,7 @@ void Extra_Init_Action_Checks_Debug(REBACT *a) {
     // though the interface may expand.
     //
     assert(
-        MISC(paramlist).meta == NULL
+        MISC(paramlist).meta == nullptr
         or ANY_CONTEXT(CTX_ARCHETYPE(MISC(paramlist).meta))
     );
 }

@@ -163,7 +163,7 @@ static void Queue_Mark_Array_Subclass_Deep(REBARR *a)
     // Add series to the end of the mark stack series.  The length must be
     // maintained accurately to know when the stack needs to grow.
     //
-    // !!! Should this use a "bumping a NULL at the end" technique to grow,
+    // !!! Should this use a "bumping a nullptr at the end" technique to grow,
     // like the data stack?
     //
     if (SER_FULL(GC_Mark_Stack))
@@ -416,7 +416,7 @@ static void Queue_Mark_Opt_End_Cell_Deep(const Cell* v)
 
     case REB_HANDLE: { // See %sys-handle.h
         REBARR *singular = v->extra.singular;
-        if (singular == NULL) {
+        if (singular == nullptr) {
             //
             // This HANDLE! was created with Init_Handle_Simple.  There is
             // no GC interaction.
@@ -439,7 +439,7 @@ static void Queue_Mark_Opt_End_Cell_Deep(const Cell* v)
                 // In order to make it clearer that individual handles do not
                 // hold the shared data (there'd be no way to update all the
                 // references at once), the data pointers in all but the
-                // shared singular value are NULL.
+                // shared singular value are nullptr.
                 //
                 if (GET_VAL_FLAG(v, HANDLE_FLAG_CFUNC))
                     assert(
@@ -491,7 +491,7 @@ static void Queue_Mark_Opt_End_Cell_Deep(const Cell* v)
     }
 
     case REB_DATATYPE:
-        // Type spec is allowed to be NULL.  See %typespec.r file
+        // Type spec is allowed to be nullptr.  See %typespec.r file
         if (VAL_TYPE_SPEC(v))
             Queue_Mark_Array_Deep(VAL_TYPE_SPEC(v));
         break;
@@ -501,7 +501,7 @@ static void Queue_Mark_Opt_End_Cell_Deep(const Cell* v)
         // Not all typesets have symbols--only those that serve as the
         // keys of objects (or parameters of functions)
         //
-        if (v->extra.key_spelling != NULL)
+        if (v->extra.key_spelling != nullptr)
             Mark_Rebser_Only(v->extra.key_spelling);
         break;
 
@@ -522,7 +522,7 @@ static void Queue_Mark_Opt_End_Cell_Deep(const Cell* v)
 
         // Currently the "binding" in a context is only used by FRAME! to
         // preserve the binding of the ACTION! value that spawned that
-        // frame.  Currently that binding is typically NULL inside of a
+        // frame.  Currently that binding is typically nullptr inside of a
         // function's cell unless it is a definitional RETURN or LEAVE.
         //
         // !!! Expanded usages may be found in other situations that mix an
@@ -583,7 +583,7 @@ static void Queue_Mark_Opt_End_Cell_Deep(const Cell* v)
     case REB_LIBRARY: {
         Queue_Mark_Array_Deep(VAL_LIBRARY(v));
         REBCTX *meta = VAL_LIBRARY_META(v);
-        if (meta != NULL)
+        if (meta != nullptr)
             Queue_Mark_Context_Deep(meta);
         break; }
 
@@ -745,7 +745,7 @@ static void Propagate_All_GC_Marks(void)
             }
 
             REBCTX *meta = MISC(a).meta;
-            if (meta != NULL)
+            if (meta != nullptr)
                 Queue_Mark_Context_Deep(meta);
 
             // Stack-based frames will be inaccessible if they are no longer
@@ -762,10 +762,10 @@ static void Propagate_All_GC_Marks(void)
             // produce a hashlist for small maps and just did linear search.
             // @giuliolunati deleted that for the time being because it
             // seemed to be a source of bugs, but it may be added again...in
-            // which case the hashlist may be NULL.
+            // which case the hashlist may be nullptr.
             //
             REBSER *hashlist = LINK(a).hashlist;
-            assert(hashlist != NULL);
+            assert(hashlist != nullptr);
 
             Mark_Rebser_Only(hashlist);
 
@@ -1017,7 +1017,7 @@ static void Mark_Symbol_Series(void)
     REBSTR **canon = SER_HEAD(REBSTR*, PG_Symbol_Canons);
     assert(IS_POINTER_TRASH_DEBUG(*canon)); // SYM_0 is for all non-builtin words
     ++canon;
-    for (; *canon != NULL; ++canon)
+    for (; *canon != nullptr; ++canon)
         Mark_Rebser_Only(*canon);
 
     ASSERT_NO_GC_MARKS_PENDING(); // doesn't ues any queueing
@@ -1162,8 +1162,8 @@ static void Mark_Frame_Stack_Deep(void)
             goto propagate_and_continue;
         }
 
-        Queue_Mark_Action_Deep(f->original); // never NULL
-        if (f->opt_label) // will be null if no symbol
+        Queue_Mark_Action_Deep(f->original);  // never nullptr
+        if (f->opt_label)  // will be nullptr if no symbol
             Mark_Rebser_Only(f->opt_label);
 
         // refine and special can be used to GC protect an arbitrary value
@@ -1282,7 +1282,7 @@ static REBLEN Sweep_Series(void)
     );
 
     REBSEG *seg;
-    for (seg = Mem_Pools[SER_POOL].segs; seg != NULL; seg = seg->next) {
+    for (seg = Mem_Pools[SER_POOL].segs; seg != nullptr; seg = seg->next) {
         REBSER *s = cast(REBSER*, seg + 1);
         REBLEN n;
         for (n = Mem_Pools[SER_POOL].units; n > 0; --n, ++s) {
@@ -1371,7 +1371,7 @@ static REBLEN Sweep_Series(void)
     // doing pairings in a different pool.
     //
   #ifdef UNUSUAL_CELL_SIZE
-    for (seg = Mem_Pools[PAR_POOL].segs; seg != NULL; seg = seg->next) {
+    for (seg = Mem_Pools[PAR_POOL].segs; seg != nullptr; seg = seg->next) {
         Value* v = cast(Value*, seg + 1);
         if (v->header.bits & NODE_FLAG_FREE) {
             assert(FIRST_BYTE(v->header) == FREED_SERIES_BYTE);
@@ -1409,7 +1409,7 @@ REBLEN Fill_Sweeplist(REBSER *sweeplist)
     REBLEN count = 0;
 
     REBSEG *seg;
-    for (seg = Mem_Pools[SER_POOL].segs; seg != NULL; seg = seg->next) {
+    for (seg = Mem_Pools[SER_POOL].segs; seg != nullptr; seg = seg->next) {
         REBSER *s = cast(REBSER*, seg + 1);
         REBLEN n;
         for (n = Mem_Pools[SER_POOL].units; n > 0; --n, ++s) {
@@ -1454,7 +1454,7 @@ REBLEN Fill_Sweeplist(REBSER *sweeplist)
 //
 //  Recycle_Core: C
 //
-// Recycle memory no longer needed.  If sweeplist is not NULL, then it needs
+// Recycle memory no longer needed.  If sweeplist is not nullptr, then it needs
 // to be a series whose width is sizeof(REBSER*), and it will be filled with
 // the list of series that *would* be recycled.
 //
@@ -1540,7 +1540,7 @@ REBLEN Recycle_Core(bool shutdown, REBSER *sweeplist)
 
     REBLEN count = 0;
 
-    if (sweeplist != NULL) {
+    if (sweeplist != nullptr) {
     #if defined(NDEBUG)
         panic (sweeplist);
     #else
@@ -1612,7 +1612,7 @@ REBLEN Recycle(void)
 {
     // Default to not passing the `shutdown` flag.
     //
-    REBLEN n = Recycle_Core(false, NULL);
+    REBLEN n = Recycle_Core(false, nullptr);
 
   #ifdef DOUBLE_RECYCLE_TEST
     //
@@ -1621,7 +1621,7 @@ REBLEN Recycle(void)
     // shouldn't crash.)  This is an expensive check, but helpful to try if
     // it seems a GC left things in a bad state that crashed a later GC.
     //
-    REBLEN n2 = Recycle_Core(false, NULL);
+    REBLEN n2 = Recycle_Core(false, nullptr);
     assert(n2 == 0);
   #endif
 
@@ -1696,7 +1696,7 @@ REBARR *Snapshot_All_Actions(void)
     REBDSP dsp_orig = DSP;
 
     REBSEG *seg;
-    for (seg = Mem_Pools[SER_POOL].segs; seg != NULL; seg = seg->next) {
+    for (seg = Mem_Pools[SER_POOL].segs; seg != nullptr; seg = seg->next) {
         REBSER *s = cast(REBSER*, seg + 1);
         REBLEN n;
         for (n = Mem_Pools[SER_POOL].units; n > 0; --n, ++s) {

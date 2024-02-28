@@ -73,7 +73,7 @@ REB_R MAKE_Money(Value* out, enum Reb_Kind kind, const Value* arg)
         return Move_Value(out, arg);
 
       case REB_TEXT: {
-        REBYTE *bp = Analyze_String_For_Scan(NULL, arg, MAX_SCAN_MONEY);
+        REBYTE *bp = Analyze_String_For_Scan(nullptr, arg, MAX_SCAN_MONEY);
 
         const REBYTE *end;
         Init_Money(out, string_to_deci(bp, &end));

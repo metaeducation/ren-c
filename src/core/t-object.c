@@ -145,7 +145,7 @@ static void Append_To_Context(REBCTX *context, Value* arg)
     // Can't actually fail() during a collect, so make sure any errors are
     // set and then jump to a Collect_End()
     //
-    REBCTX *error = NULL;
+    REBCTX *error = nullptr;
 
     struct Reb_Collector collector;
     Collect_Start(&collector, COLLECT_ANY_WORD | COLLECT_AS_TYPESET);
@@ -204,7 +204,7 @@ static void Append_To_Context(REBCTX *context, Value* arg)
         ++collect_key
     ){
         assert(IS_TYPESET(collect_key));
-        Append_Context(context, NULL, VAL_KEY_SPELLING(collect_key));
+        Append_Context(context, nullptr, VAL_KEY_SPELLING(collect_key));
     }
 
     // Set new values to obj words
@@ -240,7 +240,7 @@ static void Append_To_Context(REBCTX *context, Value* arg)
 collect_end:
     Collect_End(&collector);
 
-    if (error != NULL)
+    if (error != nullptr)
         fail (error);
 }
 
@@ -323,7 +323,7 @@ REB_R MAKE_Context(Value* out, enum Reb_Kind kind, const Value* arg)
                 REB_OBJECT,
                 VAL_ARRAY_AT(VAL_ARRAY_AT(arg) + 1),
                 VAL_SPECIFIER(arg),
-                NULL // no parent
+                nullptr  // no parent
             )
         );
     }
@@ -352,7 +352,7 @@ REB_R MAKE_Context(Value* out, enum Reb_Kind kind, const Value* arg)
         REBCTX *context = Make_Selfish_Context_Detect_Managed(
             kind, // type
             END_NODE, // values to scan for toplevel set-words (empty)
-            NULL // parent
+            nullptr  // parent
         );
 
         // !!! Allocation when SELF is not the responsibility of MAKE
@@ -362,8 +362,8 @@ REB_R MAKE_Context(Value* out, enum Reb_Kind kind, const Value* arg)
         REBINT n = Int32s(arg, 0);
         context = Alloc_Context(kind, n);
         RESET_VAL_HEADER(CTX_ARCHETYPE(context), target);
-        CTX_SPEC(context) = NULL;
-        CTX_BODY(context) = NULL; */
+        CTX_SPEC(context) = nullptr;
+        CTX_BODY(context) = nullptr; */
 
         return Init_Any_Context(out, kind, context);
     }
@@ -566,12 +566,12 @@ REBCTX *Copy_Context_Core_Managed(REBCTX *original, REBU64 types)
     // If we're copying a frame here, we know it's not running.
     //
     if (CTX_TYPE(original) == REB_FRAME)
-        MISC(varlist).meta = NULL;
+        MISC(varlist).meta = nullptr;
     else {
         // !!! Should the meta object be copied for other context types?
         // Deep copy?  Shallow copy?  Just a reference to the same object?
         //
-        MISC(varlist).meta = NULL;
+        MISC(varlist).meta = nullptr;
     }
 
     if (types != 0) {
@@ -743,7 +743,7 @@ REB_R Context_Common_Action_Maybe_Unhandled(
     Value* verb
 ){
     Value* value = D_ARG(1);
-    Value* arg = D_ARGC > 1 ? D_ARG(2) : NULL;
+    Value* arg = D_ARGC > 1 ? D_ARG(2) : nullptr;
 
     REBCTX *c = VAL_CONTEXT(value);
 
@@ -809,7 +809,7 @@ REBTYPE(Context)
         return r;
 
     Value* value = D_ARG(1);
-    Value* arg = D_ARGC > 1 ? D_ARG(2) : NULL;
+    Value* arg = D_ARGC > 1 ? D_ARG(2) : nullptr;
 
     REBCTX *c = VAL_CONTEXT(value);
 
@@ -965,7 +965,7 @@ DECLARE_NATIVE(construct)
 
     Value* spec = ARG(spec);
     Value* body = ARG(body);
-    REBCTX *parent = NULL;
+    REBCTX *parent = nullptr;
 
     enum Reb_Kind target;
     REBCTX *context;

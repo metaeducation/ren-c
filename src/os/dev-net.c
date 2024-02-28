@@ -273,14 +273,14 @@ DEVICE_CMD Close_Socket(REBREQ *req)
 DEVICE_CMD Lookup_Socket(REBREQ *req)
 {
     struct devreq_net *sock = DEVREQ_NET(req);
-    sock->host_info = NULL; // no allocated data
+    sock->host_info = nullptr;  // no allocated data
 
     // !!! R3-Alpha would use asynchronous DNS API on Windows, but that API
     // was not supported by IPv6, and developers are encouraged to use normal
     // socket APIs with their own threads.
 
     HOSTENT *host = gethostbyname(s_cast(req->common.data));
-    if (host == NULL)
+    if (host == nullptr)
         rebFail_OS (GET_ERROR);
 
     memcpy(&sock->remote_ip, *host->h_addr_list, 4); //he->h_length);

@@ -276,7 +276,7 @@ static REBARR *Startup_Datatypes(REBARR *boot_types, REBARR *boot_typespecs)
     for (n = 1; NOT_END(word); word++, n++) {
         assert(n < REB_MAX);
 
-        Value* value = Append_Context(Lib_Context, KNOWN(word), NULL);
+        Value* value = Append_Context(Lib_Context, KNOWN(word), nullptr);
         RESET_CELL(value, REB_DATATYPE);
         VAL_TYPE_KIND(value) = cast(enum Reb_Kind, n);
         VAL_TYPE_SPEC(value) = VAL_ARRAY(ARR_AT(boot_typespecs, n - 1));
@@ -423,13 +423,13 @@ static void Add_Lib_Keys_R3Alpha_Cant_Make(void)
         "|>", // Evaluate to next single expression, but do ones afterward
         "<|", // Evaluate to previous expression, but do rest (like ALSO)
 
-        NULL
+        nullptr
     };
 
     REBLEN i;
-    for (i = 0; names[i] != NULL; ++i) {
+    for (i = 0; names[i] != nullptr; ++i) {
         REBSTR *str = Intern_UTF8_Managed(cb_cast(names[i]), strlen(names[i]));
-        Value* val = Append_Context(Lib_Context, NULL, str);
+        Value* val = Append_Context(Lib_Context, nullptr, str);
         assert(IS_VOID(val));  // functions will fill in
         UNUSED(val);
     }
@@ -975,7 +975,7 @@ static void Init_System_Object(
     REBCTX *system = Make_Selfish_Context_Detect_Managed(
         REB_OBJECT, // type
         VAL_ARRAY_AT(boot_sysobj_spec), // scan for toplevel set-words
-        NULL // parent
+        nullptr  // parent
     );
 
     Bind_Values_Deep(spec_head, Lib_Context);
@@ -996,7 +996,7 @@ static void Init_System_Object(
     // and have it bound in lines like `sys: system/contexts/sys`)
     //
     Init_Object(
-        Append_Context(Lib_Context, NULL, Canon(SYM_SYSTEM)),
+        Append_Context(Lib_Context, nullptr, Canon(SYM_SYSTEM)),
         system
     );
 
@@ -1047,7 +1047,7 @@ static void Init_System_Object(
 void Shutdown_System_Object(void)
 {
     rebRelease(Root_System);
-    Root_System = NULL;
+    Root_System = nullptr;
 }
 
 
@@ -1171,8 +1171,8 @@ void Startup_Task(void)
 // address limits, so this has to be updated for threading.
 //
 // Currently, this is called every time PUSH_TRAP() is called when Saved_State
-// is NULL, and hopefully only one instance of it per thread will be in effect
-// (otherwise, the bounds would add and be useless).
+// is nullptr, and hopefully only one instance of it per thread will be in
+// effect (otherwise, the bounds would add and be useless).
 //
 void Set_Stack_Limit(void *base) {
     //
@@ -1187,7 +1187,7 @@ void Set_Stack_Limit(void *base) {
   #elif defined(OS_STACK_GROWS_DOWN)
     TG_Stack_Limit = cast(uintptr_t, base) - bounds;
   #else
-    TG_Stack_Grows_Up = Guess_If_Stack_Grows_Up(NULL);
+    TG_Stack_Grows_Up = Guess_If_Stack_Grows_Up(nullptr);
     if (TG_Stack_Grows_Up)
         TG_Stack_Limit = cast(uintptr_t, base) + bounds;
     else
@@ -1307,7 +1307,7 @@ void Startup_Core(void)
     PG_Mem_Limit = 0;
     Reb_Opts = ALLOC(REB_OPTS);
     CLEAR(Reb_Opts, sizeof(REB_OPTS));
-    Saved_State = NULL;
+    Saved_State = nullptr;
 
     Startup_StdIO();
 
@@ -1584,7 +1584,7 @@ static Value* Startup_Mezzanine(BOOT_BLK *boot)
     if (not IS_VOID(result))
         panic (result); // FINISH-INIT-CORE is a PROCEDURE, returns void
 
-    return NULL;
+    return nullptr;
 }
 
 
@@ -1611,7 +1611,7 @@ void Shutdown_Core(void)
     Check_Memory_Debug(); // old R3-Alpha check, call here to keep it working
   #endif
 
-    assert(Saved_State == NULL);
+    assert(Saved_State == nullptr);
 
     Shutdown_Data_Stack();
 
@@ -1626,7 +1626,7 @@ void Shutdown_Core(void)
     Shutdown_Frame_Stack();
 
     const bool shutdown = true; // go ahead and free all managed series
-    Recycle_Core(shutdown, NULL);
+    Recycle_Core(shutdown, nullptr);
 
     Shutdown_Mold();
     Shutdown_Collector();

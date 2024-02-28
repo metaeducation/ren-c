@@ -671,7 +671,7 @@ REBYTE *SHA1(REBYTE *d, REBLEN n, REBYTE *md)
     SHA_CTX c;
     static unsigned char m[SHA_DIGEST_LENGTH];
 
-    if (md == NULL) md = (REBYTE*)m;
+    if (md == nullptr) md = (REBYTE*)m;
     SHA1_Init(&c);
     SHA1_Update(&c,(unsigned char*)d,n);
     SHA1_Final((unsigned char*)md,&c);

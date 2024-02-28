@@ -279,7 +279,7 @@ static REB_R File_Actor(REBFRM *frame_, Value* port, Value* verb)
         fail (Error_Invalid_Spec_Raw(spec));
 
     Value* path = Obj_Value(spec, STD_PORT_SPEC_HEAD_REF);
-    if (path == NULL)
+    if (path == nullptr)
         fail (Error_Invalid_Spec_Raw(spec));
 
     if (IS_URL(path))
@@ -372,7 +372,7 @@ static REB_R File_Actor(REBFRM *frame_, Value* port, Value* verb)
 
         if (opened) {
             Value* result = OS_DO_DEVICE(req, RDC_CLOSE);
-            assert(result != NULL); // should be synchronous
+            assert(result != nullptr);  // should be synchronous
 
             Cleanup_File(file);
 
@@ -443,7 +443,7 @@ static REB_R File_Actor(REBFRM *frame_, Value* port, Value* verb)
 
         if (opened) {
             Value* result = OS_DO_DEVICE(req, RDC_CLOSE);
-            assert(result != NULL); // should be synchronous
+            assert(result != nullptr);  // should be synchronous
 
             Cleanup_File(file);
 
@@ -504,7 +504,7 @@ static REB_R File_Actor(REBFRM *frame_, Value* port, Value* verb)
 
         if (req->flags & RRF_OPEN) {
             Value* result = OS_DO_DEVICE(req, RDC_CLOSE);
-            assert(result != NULL); // should be synchronous
+            assert(result != nullptr);  // should be synchronous
 
             Cleanup_File(file);
 
@@ -524,7 +524,7 @@ static REB_R File_Actor(REBFRM *frame_, Value* port, Value* verb)
         Setup_File(file, 0, path);
 
         Value* result = OS_DO_DEVICE(req, RDC_DELETE);
-        assert(result != NULL); // should be synchronous
+        assert(result != nullptr);  // should be synchronous
 
         if (rebDid("error?", result))
             rebJumps("FAIL", result);
@@ -543,7 +543,7 @@ static REB_R File_Actor(REBFRM *frame_, Value* port, Value* verb)
         req->common.data = cast(REBYTE*, ARG(to)); // !!! hack!
 
         Value* result = OS_DO_DEVICE(req, RDC_RENAME);
-        assert(result != NULL); // should be synchronous
+        assert(result != nullptr);  // should be synchronous
         if (rebDid("error?", result))
             rebJumps("FAIL", result);
         rebRelease(result); // ignore result
@@ -555,13 +555,13 @@ static REB_R File_Actor(REBFRM *frame_, Value* port, Value* verb)
             Setup_File(file, AM_OPEN_WRITE | AM_OPEN_NEW, path);
 
             Value* cr_result = OS_DO_DEVICE(req, RDC_CREATE);
-            assert(cr_result != NULL);
+            assert(cr_result != nullptr);
             if (rebDid("error?", cr_result))
                 rebJumps("FAIL", cr_result);
             rebRelease(cr_result);
 
             Value* cl_result = OS_DO_DEVICE(req, RDC_CLOSE);
-            assert(cl_result != NULL);
+            assert(cl_result != nullptr);
             if (rebDid("error?", cl_result))
                 rebJumps("FAIL", cl_result);
             rebRelease(cl_result);
@@ -583,7 +583,7 @@ static REB_R File_Actor(REBFRM *frame_, Value* port, Value* verb)
         if (not (req->flags & RRF_OPEN)) {
             Setup_File(file, 0, path);
             Value* result = OS_DO_DEVICE(req, RDC_QUERY);
-            assert(result != NULL);
+            assert(result != nullptr);
             if (rebDid("error?", result)) {
                 rebRelease(result); // !!! R3-Alpha returned blank on error
                 return nullptr;
@@ -608,7 +608,7 @@ static REB_R File_Actor(REBFRM *frame_, Value* port, Value* verb)
             Setup_File(file, 0, path);
 
             Value* result = OS_DO_DEVICE(req, RDC_MODIFY);
-            assert(result != NULL);
+            assert(result != nullptr);
             if (rebDid("error?", result)) {
                 rebRelease(result); // !!! R3-Alpha returned blank on error
                 return Init_False(D_OUT);

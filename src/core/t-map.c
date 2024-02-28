@@ -329,7 +329,7 @@ REBLEN Find_Map_Entry(
 
     // n==0 or pairlist[(n-1)*]=~key
 
-    if (val == NULL)
+    if (val == nullptr)
         return n; // was just fetching the value
 
     // If not just a GET, it may try to set the value in the map.  Which means
@@ -372,7 +372,7 @@ REB_R PD_Map(
 ){
     assert(IS_MAP(pvs->out));
 
-    if (opt_setval != NULL)
+    if (opt_setval != nullptr)
         FAIL_IF_READ_ONLY_SERIES(VAL_SERIES(pvs->out));
 
     // Fetching and setting with path-based access is case-preserving for any
@@ -393,7 +393,7 @@ REB_R PD_Map(
         cased
     );
 
-    if (opt_setval != NULL) {
+    if (opt_setval != nullptr) {
         assert(n != 0);
         return R_INVISIBLE;
     }
@@ -683,7 +683,7 @@ void MF_Map(REB_MOLD *mo, const Cell* v, bool form)
 REBTYPE(Map)
 {
     Value* val = D_ARG(1);
-    Value* arg = D_ARGC > 1 ? D_ARG(2) : NULL;
+    Value* arg = D_ARGC > 1 ? D_ARG(2) : nullptr;
 
     REBMAP *map = VAL_MAP(val);
 
@@ -748,7 +748,7 @@ REBTYPE(Map)
             map,
             arg,
             SPECIFIED,
-            NULL,
+            nullptr,
             SPECIFIED,
             REF(case)
         );

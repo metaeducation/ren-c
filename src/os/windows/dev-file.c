@@ -140,10 +140,10 @@ static int Read_Directory(struct devreq_file *dir, struct devreq_file *file)
 
     bool got_info = false;
 
-    WCHAR *cp = NULL;
+    WCHAR *cp = nullptr;
 
     HANDLE h = dir_req->requestee.handle;
-    if (h == NULL) {
+    if (h == nullptr) {
         // Read first file entry:
 
         WCHAR *dir_wide = rebSpellW("file-to-local/full/wild", dir->path);
@@ -168,7 +168,7 @@ static int Read_Directory(struct devreq_file *dir, struct devreq_file *file)
         if (not FindNextFile(h, &info)) {
             DWORD last_error_cache = GetLastError();
             FindClose(h);
-            dir_req->requestee.handle = NULL;
+            dir_req->requestee.handle = nullptr;
 
             if (last_error_cache != ERROR_NO_MORE_FILES)
                 rebFail_OS (last_error_cache);
@@ -373,7 +373,7 @@ DEVICE_CMD Write_File(REBREQ *req)
 {
     struct devreq_file *file = DEVREQ_FILE(req);
 
-    assert(req->requestee.handle != NULL);
+    assert(req->requestee.handle != nullptr);
 
     if (req->modes & RFM_APPEND) {
         req->modes &= ~RFM_APPEND;
@@ -523,7 +523,7 @@ DEVICE_CMD Create_File(REBREQ *req)
         "file-to-local/full/no-tail-slash", file->path
     );
 
-    LPSECURITY_ATTRIBUTES lpSecurityAttributes = NULL;
+    LPSECURITY_ATTRIBUTES lpSecurityAttributes = nullptr;
     BOOL success = CreateDirectory(path_wide, lpSecurityAttributes);
 
     rebFree(path_wide);

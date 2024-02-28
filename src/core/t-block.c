@@ -528,12 +528,12 @@ static void Sort_Block(
         flags.offset = 0;
     }
     else if (IS_INTEGER(compv)) {
-        flags.comparator = NULL;
+        flags.comparator = nullptr;
         flags.offset = Int32(compv) - 1;
     }
     else {
         assert(IS_NULLED(compv));
-        flags.comparator = NULL;
+        flags.comparator = nullptr;
         flags.offset = 0;
     }
 
@@ -556,7 +556,7 @@ static void Sort_Block(
         len / skip,
         sizeof(Cell) * skip,
         &flags,
-        flags.comparator != NULL ? &Compare_Val_Custom : &Compare_Val
+        flags.comparator != nullptr ? &Compare_Val_Custom : &Compare_Val
     );
 }
 
@@ -689,7 +689,7 @@ Cell* Pick_Block(Value* out, const Value* block, const Value* picker)
     n += VAL_INDEX(block) - 1;
     if (n < 0 || cast(REBLEN, n) >= VAL_LEN_HEAD(block)) {
         Init_Nulled(out);
-        return NULL;
+        return nullptr;
     }
 
     Cell* slot = VAL_ARRAY_AT_HEAD(block, n);
@@ -761,7 +761,7 @@ void MF_Array(REB_MOLD *mo, const Cell* v, bool form)
             break;
 
         default:
-            sep = NULL;
+            sep = nullptr;
         }
 
         if (VAL_LEN_AT(v) == 0 and sep[0] == '/')
@@ -793,7 +793,7 @@ void MF_Array(REB_MOLD *mo, const Cell* v, bool form)
 REBTYPE(Array)
 {
     Value* array = D_ARG(1);
-    Value* arg = D_ARGC > 1 ? D_ARG(2) : NULL;
+    Value* arg = D_ARGC > 1 ? D_ARG(2) : nullptr;
 
     // Common operations for any series type (length, head, etc.)
     //

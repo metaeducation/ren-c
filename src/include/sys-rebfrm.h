@@ -404,7 +404,7 @@
 struct Reb_Frame_Source {
     //
     // A frame may be sourced from a va_list of pointers, or not.  If this is
-    // NULL it is assumed that the values are sourced from a simple array.
+    // nullptr it's assumed that the values are sourced from a simple array.
     //
     va_list *vaptr;
 
@@ -532,7 +532,7 @@ struct Reb_Frame {
     // This is used for relatively bound words to be looked up to become
     // specific.  Typically the specifier is extracted from the payload of the
     // ANY-ARRAY! value that provided the source.array for the call to DO.
-    // It may also be NULL if it is known that there are no relatively bound
+    // It may be nullptr if it's known that there are no relatively bound
     // words that will be encountered from the source--as in va_list calls.
     //
     REBSPC *specifier;
@@ -605,7 +605,7 @@ struct Reb_Frame {
     //
     // Functions don't have "names", though they can be assigned to words.
     // However, not all function invocations are through words or paths, so
-    // the label may not be known.  It is NULL to indicate anonymity.
+    // the label may not be known.  It is nullptr to indicate anonymity.
     //
     // The evaluator only enforces that the symbol be set during function
     // calls--in the release build, it is allowed to be garbage otherwise.
@@ -659,13 +659,13 @@ struct Reb_Frame {
 
     // `special`
     //
-    // The specialized argument parallels arg if non-NULL, and contains the
-    // value to substitute in the case of a specialized call.  It is NULL
+    // The specialized argument parallels arg if non-nullptr, and contains
+    // what to substitute in the case of a specialized call.  It is nullptr
     // if no specialization in effect, else it parallels arg (so it may be
     // incremented on a common code path) if arguments are just being checked
     // vs. fulfilled.
     //
-    // However, in PATH! frames, `special` is non-NULL if this is a SET-PATH!,
+    // But in PATH! frames, `special` is non-nullptr if this is a SET-PATH!,
     // and it is the value to ultimately set the path to.  The set should only
     // occur at the end of the path, so most setters should check
     // `IS_END(pvs->value + 1)` before setting.

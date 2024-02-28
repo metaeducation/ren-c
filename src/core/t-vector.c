@@ -477,7 +477,7 @@ bool Make_Vector_Spec(Value* out, const Cell* head, REBSPC *specifier)
         ++item;
     }
     else
-        iblk = NULL;
+        iblk = nullptr;
 
     REBLEN index;
     if (NOT_END(item) && IS_INTEGER(item)) {
@@ -500,7 +500,7 @@ bool Make_Vector_Spec(Value* out, const Cell* head, REBSPC *specifier)
     if (not vect)
         return false;
 
-    if (iblk != NULL)
+    if (iblk != nullptr)
         Set_Vector_Row(vect, iblk);
 
     Init_Any_Series_At(out, REB_VECTOR, vect, index);

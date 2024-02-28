@@ -35,14 +35,14 @@
 
 
 //
-// The scanning code in R3-Alpha used NULL to return failure during the scan
+// The scanning code in R3-Alpha used nullptr to return failure during the scan
 // of a value, possibly leaving the value itself in an incomplete or invalid
 // state.  Rather than write stray incomplete values into these spots, Ren-C
 // puts "unreadable blank"
 //
 
 #define return_NULL \
-    do { Init_Unreadable_Blank(out); return NULL; } while (1)
+    do { Init_Unreadable_Blank(out); return nullptr; } while (1)
 
 
 //
@@ -423,7 +423,7 @@ bool Scan_Hex2(REBUNI *out, const void *p, bool unicode)
 //  Scan_Dec_Buf: C
 //
 // Validate a decimal number. Return on first invalid char (or end).
-// Returns NULL if not valid.
+// Returns nullptr if not valid.
 //
 // Scan is valid for 1 1.2 1,2 1'234.5 1x 1.2x 1% 1.2% etc.
 //
@@ -449,7 +449,7 @@ const REBYTE *Scan_Dec_Buf(
         if (*cp != '\'') {
             *bp++ = *cp++;
             if (bp >= be)
-                return NULL;
+                return nullptr;
             digit_present = true;
         }
         else
@@ -463,13 +463,13 @@ const REBYTE *Scan_Dec_Buf(
 
     *bp++ = '.';
     if (bp >= be)
-        return NULL;
+        return nullptr;
 
     while (IS_LEX_NUMBER(*cp) || *cp == '\'') {
         if (*cp != '\'') {
             *bp++ = *cp++;
             if (bp >= be)
-                return NULL;
+                return nullptr;
             digit_present = true;
         }
         else
@@ -477,30 +477,30 @@ const REBYTE *Scan_Dec_Buf(
     }
 
     if (not digit_present)
-        return NULL;
+        return nullptr;
 
     if (*cp == 'E' || *cp == 'e') {
         *bp++ = *cp++;
         if (bp >= be)
-            return NULL;
+            return nullptr;
 
         digit_present = false;
 
         if (*cp == '-' || *cp == '+') {
             *bp++ = *cp++;
             if (bp >= be)
-                return NULL;
+                return nullptr;
         }
 
         while (IS_LEX_NUMBER(*cp)) {
             *bp++ = *cp++;
             if (bp >= be)
-                return NULL;
+                return nullptr;
             digit_present = true;
         }
 
         if (not digit_present)
-            return NULL;
+            return nullptr;
     }
 
     *bp = '\0';
@@ -893,7 +893,7 @@ const REBYTE *Scan_Date(
 
         cp = Scan_Time(out, cp, 0);
         if (
-            cp == NULL
+            cp == nullptr
             or not IS_TIME(out)
             or VAL_NANO(out) < 0
             or VAL_NANO(out) >= SECS_TO_NANO(24 * 60 * 60)
@@ -1007,7 +1007,7 @@ const REBYTE *Scan_File(
     DECLARE_MOLD (mo);
 
     cp = Scan_Item_Push_Mold(mo, cp, cp + len, term, invalid);
-    if (cp == NULL) {
+    if (cp == nullptr) {
         Drop_Mold(mo);
         return_NULL;
     }
@@ -1118,7 +1118,7 @@ const REBYTE *Scan_Pair(
 
     bool found_x_point;
     const REBYTE *ep = Scan_Dec_Buf(&buf[0], &found_x_point, cp, MAX_NUM_LEN);
-    if (ep == NULL)
+    if (ep == nullptr)
         return_NULL;
     if (*ep != 'x' && *ep != 'X')
         return_NULL;
@@ -1237,11 +1237,11 @@ const REBYTE *Scan_Binary(
     len -= 2;
 
     cp = Decode_Binary(out, cp, len, base, '}');
-    if (cp == NULL)
+    if (cp == nullptr)
         return_NULL;
 
     cp = Skip_To_Byte(cp, cp + len, '}');
-    if (cp == NULL)
+    if (cp == nullptr)
         return_NULL; // series will be gc'd
 
     return cp + 1; // include the "}" in the scan total
@@ -1274,7 +1274,7 @@ const REBYTE *Scan_Any(
     //
     bool crlf_to_lf = true;
 
-    REBSER *s = Append_UTF8_May_Fail(NULL, cs_cast(cp), num_bytes, crlf_to_lf);
+    REBSER *s = Append_UTF8_May_Fail(nullptr, cs_cast(cp), num_bytes, crlf_to_lf);
     Init_Any_Series(out, type, s);
 
     return cp + num_bytes;
@@ -1333,7 +1333,7 @@ DECLARE_NATIVE(scan_net_header)
         if (*cp != ':')
             break;
 
-        Value* val = NULL; // rigorous checks worry it could be uninitialized
+        Value* val = nullptr; // rigorous checks worry it could be uninitialized
 
         REBSTR *name = Intern_UTF8_Managed(start, cp - start);
         Cell* item;

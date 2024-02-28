@@ -721,7 +721,7 @@ bool Legal_UTF8_Char(const REBYTE *str, REBLEN len)
 //
 //  Check_UTF8: C
 //
-// Returns NULL for success, else pointer in the data where error occurred.
+// Returns nullptr for success, else data pointer where error occurred.
 //
 // Currently not used in the system (all UTF-8 checking is done on the fly)
 // but provided as a native via INVALID-UTF8?
@@ -737,7 +737,7 @@ REBYTE *Check_UTF8(REBYTE *utf8, size_t size)
             return utf8;
     }
 
-    return NULL;
+    return nullptr;
 }
 
 
@@ -771,7 +771,7 @@ REBYTE *Check_UTF8(REBYTE *utf8, size_t size)
 //
 // Prescans source for null, and will not return code point 0.
 //
-// If failure due to insufficient data or malformed bytes, then NULL is
+// If failure due to insufficient data or malformed bytes, then nullptr is
 // returned (size is not decremented).
 //
 const REBYTE *Back_Scan_UTF8_Char_Core(
@@ -787,12 +787,12 @@ const REBYTE *Back_Scan_UTF8_Char_Core(
     // Check that we have enough valid source bytes:
     if (size) {
         if (trail + 1 > *size)
-            return NULL;
+            return nullptr;
     }
     else if (trail != 0) {
         do {
             if (source[trail] < 0x80)
-                return NULL;
+                return nullptr;
         } while (--trail != 0);
 
         trail = trailingBytesForUTF8[*source];
@@ -817,9 +817,9 @@ const REBYTE *Back_Scan_UTF8_Char_Core(
     // !!! Is this still relevant, in a system that is fully UTF8 based?
     //
     if (*out > UNI_MAX_LEGAL_UTF32)
-        return NULL;
+        return nullptr;
     if (*out >= UNI_SUR_HIGH_START && *out <= UNI_SUR_LOW_END)
-        return NULL;
+        return nullptr;
 
     if (size)
         *size -= trail;
@@ -831,7 +831,7 @@ const REBYTE *Back_Scan_UTF8_Char_Core(
     //
     assert(*out != 0);
     if (*out == 0)
-        return NULL;
+        return nullptr;
 
     return bp + trail;
 }

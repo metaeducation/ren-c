@@ -52,7 +52,7 @@ static REB_R Clipboard_Actor(
     Value* port,
     Value* verb
 ){
-    Value* arg = D_ARGC > 1 ? D_ARG(2) : NULL;
+    Value* arg = D_ARGC > 1 ? D_ARG(2) : nullptr;
 
     switch (Cell_Word_Id(verb)) {
 
@@ -101,11 +101,11 @@ static REB_R Clipboard_Actor(
             return Init_Blank(D_OUT);
         }
 
-        if (not OpenClipboard(NULL))
+        if (not OpenClipboard(nullptr))
             rebJumps("FAIL {OpenClipboard() fail while reading}");
 
         HANDLE h = GetClipboardData(CF_UNICODETEXT);
-        if (h == NULL) {
+        if (h == nullptr) {
             CloseClipboard();
             rebJumps (
                 "FAIL",
@@ -114,7 +114,7 @@ static REB_R Clipboard_Actor(
         }
 
         WCHAR *wide = cast(WCHAR*, GlobalLock(h));
-        if (wide == NULL) {
+        if (wide == nullptr) {
             CloseClipboard();
             rebJumps(
                 "FAIL {Couldn't GlobalLock() UCS2 clipboard data}"
@@ -131,7 +131,7 @@ static REB_R Clipboard_Actor(
         // byte representation of the string could be locked + aliased
         // as a UTF-8 binary series.  Conversion is needed for the moment.
 
-        size_t size = rebSpellInto(NULL, 0, str); // size query
+        size_t size = rebSpellInto(nullptr, 0, str);  // size query
         char *utf8 = rebAllocN(char, size + 1);
         size_t check_size = rebSpellInto(utf8, size, str); // now fetch
         assert(check_size == size);
@@ -176,7 +176,7 @@ static REB_R Clipboard_Actor(
         if (REF(part) and VAL_INT32(ARG(limit)) < len)
             len = VAL_INT32(ARG(limit));
 
-        if (not OpenClipboard(NULL))
+        if (not OpenClipboard(nullptr))
             rebJumps(
                 "FAIL {OpenClipboard() fail on clipboard write}"
             );
@@ -191,11 +191,11 @@ static REB_R Clipboard_Actor(
         // ownership of that handle to the clipboard.
 
         HANDLE h = GlobalAlloc(GHND, sizeof(WCHAR) * (len + 1));
-        if (h == NULL) // per documentation, not INVALID_HANDLE_VALUE
+        if (h == nullptr)  // per documentation, not INVALID_HANDLE_VALUE
             rebJumps("FAIL {GlobalAlloc() fail on clipboard write}");
 
         WCHAR *wide = cast(WCHAR*, GlobalLock(h));
-        if (wide == NULL)
+        if (wide == nullptr)
             rebJumps("FAIL {GlobalLock() fail on clipboard write}");
 
         REBINT len_check = rebSpellIntoW(wide, len, arg); // UTF-16 extract
@@ -207,7 +207,7 @@ static REB_R Clipboard_Actor(
         HANDLE h_check = SetClipboardData(CF_UNICODETEXT, h);
         CloseClipboard();
 
-        if (h_check == NULL)
+        if (h_check == nullptr)
             rebJumps("FAIL {SetClipboardData() failed.}");
 
         assert(h_check == h);

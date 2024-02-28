@@ -491,7 +491,7 @@ enum {
 #define LDIV_T          lldiv_t
 
 // Skip to the specified byte but not past the provided end
-// pointer of the byte string.  Return NULL if byte is not found.
+// pointer of the byte string.  Return nullptr if byte is not found.
 //
 INLINE const REBYTE *Skip_To_Byte(
     const REBYTE *cp,
@@ -666,7 +666,7 @@ enum {
 // %tmp-dispatch.c file.  Those data declarations can only be included once,
 // yet the tables may be used in multiple modules.
 //
-// The tables never contain NULL values.  Instead there is a dispatcher in
+// The tables never contain nullptr values.  Instead there is a dispatcher in
 // the slot which will fail if it is ever called.
 //
 // !!! These used to be const, but the desire to move structs and gobs

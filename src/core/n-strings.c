@@ -91,7 +91,7 @@ static struct {
     {MD5, MD5_Init, MD5_Update, MD5_Final, MD5_CtxSize, SYM_MD5, 16, 64},
 #endif
 
-    {NULL, NULL, NULL, NULL, NULL, SYM_0_internal, 0, 0}
+    {nullptr, nullptr, nullptr, nullptr, nullptr, SYM_0_internal, 0, 0}
 
 };
 
@@ -674,7 +674,7 @@ DECLARE_NATIVE(enhex)
 
         leave_as_is:;
           #if !defined(NDEBUG)
-            assert(strchr(no_encode, c) != NULL);
+            assert(strchr(no_encode, c) != nullptr);
           #endif
             *dp++ = c;
             continue;
@@ -683,7 +683,7 @@ DECLARE_NATIVE(enhex)
     needs_encoding:;
       #if !defined(NDEBUG)
         if (c < 0x80)
-           assert(strchr(no_encode, c) == NULL);
+           assert(strchr(no_encode, c) == nullptr);
       #endif
 
         REBLEN n;
@@ -805,7 +805,7 @@ DECLARE_NATIVE(dehex)
             }
             else {
                 next = Back_Scan_UTF8_Char(&decoded, scan, &scan_size);
-                if (next == NULL)
+                if (next == nullptr)
                     fail ("Bad UTF-8 sequence in %XX of dehex");
             }
             dp += Encode_UTF8_Char(dp, decoded);
@@ -1218,7 +1218,7 @@ DECLARE_NATIVE(to_hex)
     else
         fail (Error_Invalid(arg));
 
-    if (NULL == Scan_Issue(D_OUT, &buffer[0], len))
+    if (nullptr == Scan_Issue(D_OUT, &buffer[0], len))
         fail (Error_Invalid(arg));
 
     return D_OUT;

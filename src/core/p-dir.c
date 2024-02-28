@@ -143,7 +143,7 @@ static REB_R Dir_Actor(REBFRM *frame_, Value* port, Value* verb)
         fail (Error_Invalid_Spec_Raw(spec));
 
     Value* path = Obj_Value(spec, STD_PORT_SPEC_HEAD_REF);
-    if (path == NULL)
+    if (path == nullptr)
         fail (Error_Invalid_Spec_Raw(spec));
 
     if (IS_URL(path))
@@ -228,7 +228,7 @@ static REB_R Dir_Actor(REBFRM *frame_, Value* port, Value* verb)
         Init_Dir_Path(&dir, path, POL_WRITE); // Sets RFM_DIR too
 
         Value* result = OS_DO_DEVICE(&dir.devreq, RDC_CREATE);
-        assert(result != NULL); // should be synchronous
+        assert(result != nullptr);  // should be synchronous
 
         if (rebDid("error?", result)) {
             rebRelease(result); // !!! throws away details
@@ -254,7 +254,7 @@ static REB_R Dir_Actor(REBFRM *frame_, Value* port, Value* verb)
         dir.devreq.common.data = cast(REBYTE*, ARG(to)); // !!! hack!
 
         Value* result = OS_DO_DEVICE(&dir.devreq, RDC_RENAME);
-        assert(result != NULL); // should be synchronous
+        assert(result != nullptr); // should be synchronous
 
         if (rebDid("error?", result)) {
             rebRelease(result); // !!! throws away details
@@ -272,7 +272,7 @@ static REB_R Dir_Actor(REBFRM *frame_, Value* port, Value* verb)
         // !!! add *.r deletion
         // !!! add recursive delete (?)
         Value* result = OS_DO_DEVICE(&dir.devreq, RDC_DELETE);
-        assert(result != NULL); // should be synchronous
+        assert(result != nullptr);  // should be synchronous
 
         if (rebDid("error?", result)) {
             rebRelease(result); // !!! throws away details
@@ -317,7 +317,7 @@ static REB_R Dir_Actor(REBFRM *frame_, Value* port, Value* verb)
 
         Init_Dir_Path(&dir, path, POL_READ);
         Value* result = OS_DO_DEVICE(&dir.devreq, RDC_QUERY);
-        assert(result != NULL); // should be synchronous
+        assert(result != nullptr);  // should be synchronous
 
         if (rebDid("error?", result)) {
             rebRelease(result); // !!! R3-Alpha threw out error, returns null
