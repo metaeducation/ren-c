@@ -649,9 +649,7 @@ host-start: function [
     o/args: argv ;-- whatever's left is positional args
 
 
-    boot-embedded: get-encap system/options/boot
-
-    if any [boot-embedded o/script] [o/quiet: true]
+    if o/script [o/quiet: true]
 
     ;-- Set option/paths for /path, /boot, /home, and script path
     o/path: what-dir  ;dirize any [o/path o/home]
@@ -714,53 +712,6 @@ host-start: function [
         ] then lambda e [
             die/error "Error found in user.reb script" e
         ]
-    ]
-
-    switch type of boot-embedded [
-        blank! [
-            false ;-- signal the `AND []` that there's no embedded code
-        ]
-        binary! [ ; single script
-            code: load/header/type boot-embedded 'unbound
-            true
-        ]
-        block! [
-            ;
-            ; The encapping is an embedded zip archive.  get-encap did
-            ; the unzipping into a block, and this information must be
-            ; made available somehow.  It shouldn't be part of the "core"
-            ; but just responsibility of the host that supports encap
-            ; based loading.
-            ;
-            o/encap: boot-embedded
-
-            main: select boot-embedded %main.reb
-            if not binary? main [
-                die "Could not find %main.reb in encapped zip file"
-            ]
-            code: load/header/type main 'unbound
-            true
-        ]
-
-        die "Bad embedded boot data (not a BLOCK! or a BINARY!)"
-    ] and [
-        ;boot-print ["executing embedded script:" mold code]
-        system/script: construct system/standard/script [
-            title: select first code 'title
-            header: first code
-            parent: _
-            path: what-dir
-            args: script-args
-        ]
-        if 'module = select first code 'type [
-            code: reduce [first code | next code]
-            if object? tmp: sys/do-needs/no-user first code [append code tmp]
-            import do compose [module (code)]
-        ] else [
-            sys/do-needs first code
-            do intern next code
-        ]
-        quit ;ignore user script and "--do" argument
     ]
 
     ; Evaluate any script argument, e.g. `r3 test.r` or `r3 --script test.r`

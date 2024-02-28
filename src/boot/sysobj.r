@@ -106,7 +106,6 @@ options: construct [] [  ; Options supplied to REBOL during startup
 
     current-path: _ ; Current URL! or FILE! path to use for relative lookups
 
-    encap: _        ; The encapping data extracted
     script: _       ; Filename of script to evaluate
     args: _         ; Command line arguments passed to script
     debug: _        ; debug flags

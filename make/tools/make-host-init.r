@@ -94,7 +94,6 @@ load-files: function [
 ]
 
 host-code: load-files [
-    %encap.reb
     %unzip.reb
     %host-start.r
 ]
