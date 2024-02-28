@@ -247,4 +247,11 @@ void* Probe_Core_Debug(
     return m_cast(void*, p); // must be cast back to const if source was const
 }
 
+// Version with fewer parameters, useful to call from the C debugger (which
+// cannot call macros like PROBE())
+//
+void Probe(const void *p)
+  { Probe_Core_Debug(p, "N/A", 0); }
+
+
 #endif // defined(DEBUG_HAS_PROBE)
