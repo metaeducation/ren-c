@@ -22,6 +22,10 @@ REBOL [
     }
 ]
 
+
+unset: func [word [any-word!]] [set/any word void]  ; !!! was missing in R3C
+
+
 ; Start with basic debugging
 
 c-break-debug: :c-debug-break ;-- easy to mix up
