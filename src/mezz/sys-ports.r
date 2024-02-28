@@ -349,25 +349,6 @@ init-schemes: func [
         ]
     ]
 
-    make-scheme [
-        title: "Serial Port"
-        name: 'serial
-        actor: get-serial-actor-handle
-        spec: system/standard/port-spec-serial
-        init: func [port <local> path speed] [
-            if url? port/spec/ref [
-                parse port/spec/ref [
-                    thru #":" 0 2 slash
-                    copy path [to slash | end] skip
-                    copy speed to end
-                ]
-                attempt [port/spec/speed: to-integer/unsigned speed]
-                port/spec/path: to file! path
-            ]
-            return
-        ]
-    ]
-
     system/ports/system:   open [scheme: 'system]
     system/ports/input:    open [scheme: 'console]
 

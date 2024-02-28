@@ -64,7 +64,7 @@ core: [
     ]
     [
         f-dtoa.c
-        
+
         ; f-dtoa.c comes from a third party, and should be updated from their
         ; code if they change their policies, including Spectre mitigation:
         ;
@@ -124,7 +124,6 @@ core: [
     p-event.c
     p-file.c
     p-net.c
-    p-serial.c
     p-signal.c
 ;   p-timer.c ;--Marked as unimplemented
 
@@ -226,7 +225,6 @@ os-windows: [
     windows/dev-stdio.c
     windows/dev-file.c
     windows/dev-event.c
-    windows/dev-serial.c
 ]
 
 os-posix: [
@@ -252,7 +250,6 @@ os-osx: [
     posix/dev-stdio.c
     posix/dev-event.c
     posix/dev-file.c
-    posix/dev-serial.c
 
     + posix/host-browse.c
     + posix/host-library.c
@@ -286,15 +283,12 @@ os-linux: [
     ; not be using X11 as a dependency (probably)
     posix/dev-event.c
 
-    ; dev-serial should work on Linux and posix
-    posix/dev-serial.c
-
     ; Linux supports siginfo_t-style signals
     linux/dev-signal.c
 ]
 
 ; cloned from os-linux TODO: check'n'fix !!
-os-android: [ 
+os-android: [
     + generic/host-gob.c
 
     ; Android uses the POSIX file I/O for now
@@ -314,9 +308,6 @@ os-android: [
     ; Atronix dev-event.c for linux depends on X11, and core builds should
     ; not be using X11 as a dependency (probably)
     posix/dev-event.c
-
-    ; Serial should work on Android too
-    posix/dev-serial.c
 
     ; Android don't supports siginfo_t-style signals
     ; linux/dev-signal.c

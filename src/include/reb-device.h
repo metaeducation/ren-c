@@ -46,7 +46,6 @@ enum {
     RDI_EVENT,
     RDI_NET,
     RDI_DNS,
-    RDI_SERIAL,
 #ifdef HAS_POSIX_SIGNAL
     RDI_SIGNAL,
 #endif
@@ -134,20 +133,6 @@ enum {
 
 enum {
     RDM_NULL = 1 << 0 // !!! "Null device", can this just be a boolean?
-};
-
-// Serial Parity
-enum {
-    SERIAL_PARITY_NONE,
-    SERIAL_PARITY_ODD,
-    SERIAL_PARITY_EVEN
-};
-
-// Serial Flow Control
-enum {
-    SERIAL_FLOW_CONTROL_NONE,
-    SERIAL_FLOW_CONTROL_HARDWARE,
-    SERIAL_FLOW_CONTROL_SOFTWARE
 };
 
 // Forward references:
@@ -252,17 +237,6 @@ struct devreq_net {
     void *host_info;        // for DNS usage
 };
 
-struct devreq_serial {
-    struct rebol_devreq devreq;
-    REBVAL *path;           //device path string (in OS local format)
-    void *prior_attr;       // termios: retain previous settings to revert on close
-    int32_t baud;           // baud rate of serial port
-    uint8_t data_bits;      // 5, 6, 7 or 8
-    uint8_t parity;         // odd, even, mark or space
-    uint8_t stop_bits;      // 1 or 2
-    uint8_t flow_control;   // hardware or software
-};
-
 inline static struct devreq_file* DEVREQ_FILE(struct rebol_devreq *req) {
     assert(req->device == RDI_FILE);
     return cast(struct devreq_file*, req);
@@ -271,9 +245,4 @@ inline static struct devreq_file* DEVREQ_FILE(struct rebol_devreq *req) {
 inline static struct devreq_net *DEVREQ_NET(struct rebol_devreq *req) {
     assert(req->device == RDI_NET || req->device == RDI_DNS);
     return cast(struct devreq_net*, req);
-}
-
-inline static struct devreq_serial *DEVREQ_SERIAL(struct rebol_devreq *req) {
-    assert(req->device == RDI_SERIAL);
-    return cast(struct devreq_serial*, req);
 }

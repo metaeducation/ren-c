@@ -84,12 +84,6 @@ REBDEV *Devices[RDI_LIMIT] =
     &Dev_Net,
     &Dev_DNS,
 
-#if defined(TO_WINDOWS) || defined(TO_LINUX)
-    &Dev_Serial,
-#else
-    NULL,
-#endif
-
 #ifdef HAS_POSIX_SIGNAL
     &Dev_Signal,
 #endif

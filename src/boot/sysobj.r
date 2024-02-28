@@ -88,7 +88,6 @@ ports: construct [] [
     output:         ; Port for user output
     system:         ; Port for system events
     callback: _     ; Port for callback events
-;   serial: _       ; serial device name block
 ]
 
 locale: construct [] [
@@ -344,14 +343,6 @@ standard: construct [] [
         ; otherwise the OS will pick an available port and stick with it.)
         ;
         local-id: _
-    ]
-
-    port-spec-serial: construct port-spec-head [
-        speed: 115200
-        data-size: 8
-        parity: _
-        stop-bits: 1
-        flow-control: _ ;not supported on all systems
     ]
 
     port-spec-signal: construct port-spec-head [
