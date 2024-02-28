@@ -2,7 +2,7 @@ REBOL []
 
 os-id: default [0.16.2]
 
-gcc-path: 
+gcc-path:
 
 toolset: [
     gcc %emcc
@@ -15,7 +15,6 @@ extensions: make map! [
     BMP -
     Clipboard -
     Crypt -
-    Debugger -
     FFI -
     GIF -
     JavaScript +
@@ -66,7 +65,7 @@ ldflags: compose [
 
     (if false [[
         ; In theory, using the closure compiler will reduce the amount of
-        ; unused support code in %libr3.js, at the cost of slower compilation. 
+        ; unused support code in %libr3.js, at the cost of slower compilation.
         ; Level 2 is also available, but is not recommended as it impedes
         ; various optimizations.  See the published limitations:
         ;

@@ -102,7 +102,7 @@ For now an ad-hoc build was created with something like the following:
 
     ./r3-linux-x64-368bd5a make.r \
         config: configs/mingw-x64-c++.r \
-        extensions: "ZeroMQ + Clipboard + ODBC + Debugger - GIF - View -" \
+        extensions: "ZeroMQ + Clipboard + ODBC + GIF - View -" \
         standard: c++11 \
         cflags: "[{-DZMQ_STATIC} \
             {-I../external/zmq-prebuilt/mingw64/include/}]" \
