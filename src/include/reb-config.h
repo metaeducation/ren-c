@@ -471,3 +471,16 @@ Special internal defines used by RT, not Host-Kit developers:
     #define DEBUG_TRACK_CELLS
     #define UNUSUAL_CELL_SIZE // sizeof(Cell)*2 may be > sizeof(REBSER)
 #endif
+
+// Option(TYPE*) is a poor-man's implementation of optionals that lets you
+// mark when a pointer is supposed to be passable as a nullptr.  It has some
+// runtime costs because it will assert if you unwrap() the pointer and it is
+// null when it shouldn't be.  Add it to the sanitized build.
+//
+#if !defined(DEBUG_CHECK_OPTIONALS)
+  #if defined(__SANITIZE_ADDRESS__)
+    #define DEBUG_CHECK_OPTIONALS (DEBUG && CPLUSPLUS_11)
+  #else
+    #define DEBUG_CHECK_OPTIONALS 0
+  #endif
+#endif
