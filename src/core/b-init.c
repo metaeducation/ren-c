@@ -1094,7 +1094,6 @@ static void Init_Contexts_Object(void)
 //
 void Startup_Task(void)
 {
-    Trace_Level = 0;
     Saved_State = 0;
 
     Eval_Cycles = 0;
@@ -1448,14 +1447,6 @@ void Startup_Core(void)
 // RUN CODE BEFORE ERROR HANDLING INITIALIZED
 //
 //==//////////////////////////////////////////////////////////////////////==//
-
-    // Initialize eval handler to the default, Eval_Core_Throws(), and ACTION!
-    // dispatcher handler to Dispatcher_Core().  These routines have no
-    // tracing, no debug handling, etc.  If those features are needed, an
-    // augmented function must be substituted.
-    //
-    PG_Eval_Throws = &Eval_Core_Throws;
-    PG_Dispatcher = &Dispatcher_Core;
 
     // boot->natives is from the automatically gathered list of natives found
     // by scanning comments in the C sources for `native: ...` declarations.

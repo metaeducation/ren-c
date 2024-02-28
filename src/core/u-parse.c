@@ -493,16 +493,6 @@ static REBIXO Parse_String_One_Rule(REBFRM *f, const Cell* rule) {
 
     REBLEN flags = P_FIND_FLAGS | AM_FIND_MATCH | AM_FIND_TAIL;
 
-    if (Trace_Level) {
-        Trace_Value("match", rule);
-
-        // !!! This used STR_AT (obsolete) but it's not clear that this is
-        // necessarily a byte sized series.  Switched to BIN_AT, which will
-        // assert if it's not BYTE_SIZE()
-
-        Trace_String(Binary_At(P_INPUT, P_POS), Binary_Len(P_INPUT) - P_POS);
-    }
-
     if (P_POS >= SER_LEN(P_INPUT))
         return END_FLAG;
 
@@ -653,16 +643,6 @@ static REBIXO Parse_Array_One_Rule_Core(
 
     Array* array = ARR(P_INPUT);
     Cell* item = Array_At(array, pos);
-
-    if (Trace_Level) {
-        Trace_Value("input", rule);
-        if (IS_END(item)) {
-            const char *end_str = "** END **";
-            Trace_String(cb_cast(end_str), strlen(end_str));
-        }
-        else
-            Trace_Value("match", item);
-    }
 
     if (IS_END(item)) {
         //

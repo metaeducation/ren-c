@@ -717,7 +717,7 @@ INLINE bool Eval_Step_Throws(
 
     f->out = out;
     f->dsp_orig = DSP;
-    bool threw = (*PG_Eval_Throws)(f); // should already be pushed
+    bool threw = Eval_Core_Throws(f);  // should already be pushed
 
     // The & on the following line is purposeful.  See Init_Endlike_Header.
     // DO_FLAG_NO_LOOKAHEAD may be set by an operation like ELIDE.
@@ -748,7 +748,7 @@ INLINE bool Eval_Step_Maybe_Stale_Throws(
 
     f->out = out;
     f->dsp_orig = DSP;
-    bool threw = (*PG_Eval_Throws)(f); // should already be pushed
+    bool threw = Eval_Core_Throws(f);  // should already be pushed
 
     // The & on the following line is purposeful.  See Init_Endlike_Header.
     // DO_FLAG_NO_LOOKAHEAD may be set by an operation like ELIDE.
@@ -777,7 +777,7 @@ INLINE bool Eval_Step_Mid_Frame_Throws(REBFRM *f, REBFLGS flags) {
     REBFLGS prior_flags = f->flags.bits;
     f->flags = Endlike_Header(flags);
 
-    bool threw = (*PG_Eval_Throws)(f); // should already be pushed
+    bool threw = Eval_Core_Throws(f); // should already be pushed
 
     f->flags.bits = prior_flags; // e.g. restore DO_FLAG_TO_END
     return threw;
@@ -838,7 +838,7 @@ INLINE bool Eval_Step_In_Subframe_Throws(
     //
     Push_Frame_Core(child);
     Reuse_Varlist_If_Available(child);
-    (*PG_Eval_Throws)(child);
+    bool threw = Eval_Core_Throws(child);
     Drop_Frame(child);
 
     assert(
@@ -846,7 +846,7 @@ INLINE bool Eval_Step_In_Subframe_Throws(
         or FRM_IS_VALIST(child)
         or old_index != child->source->index
         or (flags & DO_FLAG_REEVALUATE_CELL)
-        or THROWN(out)
+        or threw
     );
 
     // !!! Should they share a source instead of updating?
@@ -858,7 +858,7 @@ INLINE bool Eval_Step_In_Subframe_Throws(
     if (child->flags.bits & DO_FLAG_BARRIER_HIT)
         higher->flags.bits |= DO_FLAG_BARRIER_HIT;
 
-    return THROWN(out);
+    return threw;
 }
 
 
@@ -898,7 +898,7 @@ INLINE REBIXO Eval_Array_At_Core(
 
     Push_Frame_Core(f);
     Reuse_Varlist_If_Available(f);
-    bool threw = (*PG_Eval_Throws)(f);
+    bool threw = Eval_Core_Throws(f);
     Drop_Frame(f);
 
     if (threw)
@@ -1054,7 +1054,7 @@ INLINE REBIXO Eval_Va_Core(
 
     Push_Frame_Core(f);
     Reuse_Varlist_If_Available(f);
-    bool threw = (*PG_Eval_Throws)(f);
+    bool threw = Eval_Core_Throws(f);
     Drop_Frame(f); // will va_end() if not reified during evaluation
 
     if (threw)

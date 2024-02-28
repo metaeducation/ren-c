@@ -175,10 +175,3 @@ const char RM_ERROR_FILE[] = "** File: ";
 const char RM_ERROR_LINE[] = "** Line: ";
 
 const char RM_WATCH_RECYCLE[] = "RECYCLE: %d series";
-
-const char RM_TRACE_FUNCTION[] = "--> %s";
-const char RM_TRACE_RETURN[] = "<-- %s == ";
-const char RM_TRACE_ERROR[] = "**: error : %r %r";
-
-const char RM_TRACE_PARSE_VALUE[] = "Parse %s: %r";
-const char RM_TRACE_PARSE_INPUT[] = "Parse input: %s";

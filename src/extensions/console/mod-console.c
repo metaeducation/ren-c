@@ -228,24 +228,6 @@ DECLARE_NATIVE(console)
     if (was_ctrl_c_enabled)
         Disable_Ctrl_C();
 
-    // The DO and APPLY hooks are used to implement things like tracing
-    // or debugging.  If they were allowed to run during the host
-    // console, they would create a fair amount of havoc (the console
-    // is supposed to be "invisible" and not show up on the stack...as if
-    // it were part of the C codebase, even though it isn't written in C)
-    //
-    REBEVL saved_eval_hook = PG_Eval_Throws;
-    REBNAT saved_dispatcher_hook = PG_Dispatcher;
-
-    // !!! While the new mode of TRACE (and other code hooking function
-    // execution) is covered by `saved_eval_hook/saved_apply_hook`, there
-    // is independent tracing code in PARSE which is also enabled by TRACE ON
-    // and has to be silenced during console-related code.  Review how hooks
-    // into PARSE and other services can be avoided by the console itself
-    //
-    REBINT Save_Trace_Level = Trace_Level;
-    REBINT Save_Trace_Depth = Trace_Depth;
-
     Value* result = nullptr;
     bool no_recover = false; // allow one try at HOST-CONSOLE internal error
 
@@ -315,21 +297,11 @@ DECLARE_NATIVE(console)
 
         bool is_console_instruction = rebDid("block?", code);
 
-        // Restore custom DO and APPLY hooks, but only if running a GROUP!.
-        // (We do not want to trace/debug/instrument Rebol code that the
-        // console is using to implement *itself*, which it does with BLOCK!)
-        // Same for Trace_Level seen by PARSE.
-        //
         if (not is_console_instruction) {
             //
             // If they made it to a user mode instruction, re-enable recovery.
             //
             no_recover = false;
-
-            PG_Eval_Throws = saved_eval_hook;
-            PG_Dispatcher = saved_dispatcher_hook;
-            Trace_Level = Save_Trace_Level;
-            Trace_Depth = Save_Trace_Depth;
         }
 
         // Both GROUP! and BLOCK! code is cancellable with Ctrl-C (though it's
@@ -340,21 +312,6 @@ DECLARE_NATIVE(console)
         Enable_Ctrl_C();
         result = rebRescue(cast(REBDNG*, &Run_Sandboxed_Code), code);
         Disable_Ctrl_C();
-
-        // If the custom DO and APPLY hooks were changed by the user code,
-        // then save them...but restore the unhooked versions for the next
-        // iteration of HOST-CONSOLE.  Same for Trace_Level seen by PARSE.
-        //
-        if (not is_console_instruction) {
-            saved_eval_hook = PG_Eval_Throws;
-            saved_dispatcher_hook = PG_Dispatcher;
-            PG_Eval_Throws = &Eval_Core_Throws;
-            PG_Dispatcher = &Dispatcher_Core;
-            Save_Trace_Level = Trace_Level;
-            Save_Trace_Depth = Trace_Depth;
-            Trace_Level = 0;
-            Trace_Depth = 0;
-        }
     }
 
     // Exit code is now an INTEGER! or a resume instruction PATH!

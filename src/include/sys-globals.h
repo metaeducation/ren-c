@@ -147,13 +147,6 @@ PVAR REBFLGS Eval_Signals;   // Signal flags
 //
 PVAR REBACT *PG_Dummy_Action;
 
-// It is possible to swap out the evaluator for one that does tracing, or
-// single step debugging, etc.
-//
-PVAR REBEVL PG_Eval_Throws; // Evaluator (takes REBFRM, returns void)
-PVAR REBNAT PG_Dispatcher; // Dispatcher (takes REBFRM, returns Value*)
-
-
 /***********************************************************************
 **
 **  Thread Globals - Local to each thread
@@ -241,9 +234,3 @@ TVAR REBI64 Eval_Cycles;    // Total evaluation counter (upward)
 TVAR int_fast32_t Eval_Count;     // Evaluation counter (downward)
 TVAR uint_fast32_t Eval_Dose;      // Evaluation counter reset value
 TVAR REBFLGS Eval_Sigmask;   // Masking out signal flags
-
-TVAR REBFLGS Trace_Flags;    // Trace flag
-TVAR REBINT Trace_Level;    // Trace depth desired
-TVAR REBINT Trace_Depth;    // Tracks trace indentation
-TVAR REBLEN Trace_Limit;    // Backtrace buffering limit
-TVAR REBSER *Trace_Buffer;  // Holds backtrace lines

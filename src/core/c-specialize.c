@@ -1072,7 +1072,7 @@ bool Make_Invocation_Frame_Throws(
     assert(FRM_BINDING(f) == VAL_BINDING(action));
     assert(FRM_PHASE(f) == VAL_ACTION(action));
     FRM_PHASE_OR_DUMMY(f) = PG_Dummy_Action;
-    bool threw = (*PG_Eval_Throws)(f);
+    bool threw = Eval_Core_Throws(f);
     FRM_PHASE_OR_DUMMY(f) = VAL_ACTION(action);
     FRM_BINDING(f) = VAL_BINDING(action); // can change during invoke
 

@@ -79,34 +79,6 @@
 #endif
 
 
-//
-//  Dispatcher_Core: C
-//
-// Default function provided for the hook at the moment of action application.
-// All arguments are gathered, and this gets access to the return result.
-//
-// As this is the default, it does nothing besides call the phase dispatcher.
-// Debugging and instrumentation might want to do other things...e.g TRACE
-// wants to preface the call by dumping the frame, and postfix it by showing
-// the evaluative result.
-//
-// This adds one level of C function into every dispatch--but well worth it
-// for the functionality.  Note also that R3-Alpha had `if (Trace_Flags)`
-// in the main loop before and after function dispatch, which was more costly
-// and much less flexible.  Nevertheless, sneaky lower-level-than-C tricks
-// might be used to patch the machine code and avoid cost when not hooked.
-//
-REB_R Dispatcher_Core(REBFRM * const f) {
-    //
-    // Callers can "lie" to make the dispatch a no-op by substituting the
-    // "Dummy" native in the frame, even though it doesn't match the args,
-    // in order to build the frame of a function without running it.  This
-    // is one of the few places tolerant of the lie...hence _OR_DUMMY()
-    //
-    return ACT_DISPATCHER(FRM_PHASE_OR_DUMMY(f))(f);
-}
-
-
 INLINE bool Start_New_Expression_Throws(REBFRM *f) {
     assert(Eval_Count >= 0);
     if (--Eval_Count == 0) {
@@ -1593,7 +1565,11 @@ bool Eval_Core_Throws(REBFRM * const f)
         // which are used to process the return result after the switch.
         //
         const Value* r; // initialization would be skipped by gotos
-        r = (*PG_Dispatcher)(f); // default just calls FRM_PHASE(f)
+
+      {
+        REBNAT dispatcher = ACT_DISPATCHER(FRM_PHASE_OR_DUMMY(f));
+        r = (*dispatcher)(f); // default just calls FRM_PHASE(f)
+      }
 
         if (r == f->out) {
             assert(not (f->out->header.bits & OUT_MARKED_STALE));

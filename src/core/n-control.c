@@ -481,7 +481,7 @@ DECLARE_NATIVE(match)
 
         Begin_Action(f, opt_label, ORDINARY_ARG);
 
-        bool threw = (*PG_Eval_Throws)(f);
+        bool threw = Eval_Core_Throws(f);
 
         Drop_Frame(f);
 

@@ -449,7 +449,7 @@ DECLARE_NATIVE(do)
         Symbol* opt_label = nullptr;
         Begin_Action(f, opt_label, ORDINARY_ARG);
 
-        bool threw = (*PG_Eval_Throws)(f);
+        bool threw = Eval_Core_Throws(f);
 
         Drop_Frame(f);
 
@@ -854,7 +854,7 @@ DECLARE_NATIVE(applique)
     Begin_Action(f, opt_label, ORDINARY_ARG);
     assert(IS_POINTER_TRASH_DEBUG(f->u.defer.arg)); // see Eval_Core_Throws()
 
-    bool action_threw = (*PG_Eval_Throws)(f);
+    bool action_threw = Eval_Core_Throws(f);
 
     Drop_Frame(f);
 

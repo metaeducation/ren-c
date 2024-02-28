@@ -871,13 +871,6 @@ struct Reb_Frame {
 #define FS_BOTTOM (TG_Bottom_Frame + 0) // avoid assign to FS_BOTTOM via + 0
 
 
-// Hookable evaluator core function (see PG_Eval_Throws, Eval_Core_Throws())
-// Unlike a dispatcher, its result is always in the frame's ->out cell, and
-// the boolean result only tells you whether or not it threw.
-//
-typedef bool (*REBEVL)(REBFRM * const);
-
-
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // SPECIAL VALUE MODES FOR (REBFRM*)->REFINE
