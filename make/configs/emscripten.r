@@ -25,7 +25,6 @@ extensions: make map! [
     Process -
     UUID -
     View -
-    ZeroMQ -
 ]
 
 
