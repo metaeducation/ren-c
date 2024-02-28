@@ -633,7 +633,8 @@ void Pick_Or_Poke_Date(
             const bool to_utc = false;
             Adjust_Date_Zone(opt_out, to_utc); // !!! necessary?
 
-            CLEAR_VAL_FLAGS(opt_out, DATE_FLAG_HAS_TIME | DATE_FLAG_HAS_ZONE);
+            CLEAR_VAL_FLAG(opt_out, DATE_FLAG_HAS_TIME);
+            CLEAR_VAL_FLAG(opt_out, DATE_FLAG_HAS_ZONE);
             break; }
 
         case SYM_WEEKDAY:
@@ -726,7 +727,8 @@ void Pick_Or_Poke_Date(
 
         case SYM_TIME:
             if (IS_NULLED(opt_poke)) { // clear out the time component
-                CLEAR_VAL_FLAGS(v, DATE_FLAG_HAS_TIME | DATE_FLAG_HAS_ZONE);
+                CLEAR_VAL_FLAG(v, DATE_FLAG_HAS_TIME);
+                CLEAR_VAL_FLAG(v, DATE_FLAG_HAS_ZONE);
                 return;
             }
 

@@ -781,7 +781,7 @@ DECLARE_NATIVE(tighten)
     }
 
     Cell* rootparam = ARR_HEAD(paramlist);
-    CLEAR_VAL_FLAGS(rootparam, ACTION_FLAG_CACHED_MASK);
+    Clear_Action_Cached_Flags(rootparam);
     rootparam->payload.action.paramlist = paramlist;
     INIT_BINDING(rootparam, UNBOUND);
 

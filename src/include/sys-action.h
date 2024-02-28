@@ -252,9 +252,11 @@ INLINE Value* ACT_SPECIALTY_HEAD(REBACT *a) {
 
 // These are the flags which are scanned for and set during Make_Action
 //
-#define ACTION_FLAG_CACHED_MASK \
-    (ACTION_FLAG_DEFERS_LOOKBACK | ACTION_FLAG_QUOTES_FIRST_ARG \
-        | ACTION_FLAG_INVISIBLE)
+INLINE void Clear_Action_Cached_Flags(Cell *v) {
+    CLEAR_VAL_FLAG(v, ACTION_FLAG_DEFERS_LOOKBACK);
+    CLEAR_VAL_FLAG(v, ACTION_FLAG_QUOTES_FIRST_ARG);
+    CLEAR_VAL_FLAG(v, ACTION_FLAG_INVISIBLE);
+}
 
 
 INLINE REBACT *VAL_ACTION(const Cell* v) {

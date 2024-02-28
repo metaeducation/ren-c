@@ -1983,10 +1983,10 @@ bool Eval_Core_Throws(REBFRM * const f)
             // honors WORD!.  PATH! support is expected for the future, but
             // requires overhaul of the R3-Alpha path implementation.
             //
-            if (ANY_VAL_FLAGS(
-                f->out,
-                ACTION_FLAG_INVISIBLE | VALUE_FLAG_ENFIXED
-            )){
+            if (
+                GET_VAL_FLAG(f->out, ACTION_FLAG_INVISIBLE)
+                or GET_VAL_FLAG(f->out, VALUE_FLAG_ENFIXED)
+            ){
                 fail ("Use `->` to shove left enfix operands into PATH!s");
             }
 
@@ -2479,7 +2479,7 @@ bool Eval_Core_Throws(REBFRM * const f)
         if (Is_Frame_Gotten_Shoved(f)) {
             Prep_Stack_Cell(FRM_SHOVE(f->prior));
             Move_Value(FRM_SHOVE(f->prior), f->gotten);
-            SET_VAL_FLAGS(FRM_SHOVE(f->prior), VALUE_FLAG_ENFIXED);
+            SET_VAL_FLAG(FRM_SHOVE(f->prior), VALUE_FLAG_ENFIXED);
             f->gotten = FRM_SHOVE(f->prior);
         }
         goto finished;

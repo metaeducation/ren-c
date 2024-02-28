@@ -375,7 +375,8 @@ DECLARE_NATIVE(now)
     REBINT n = -1;
 
     if (REF(date)) {
-        CLEAR_VAL_FLAGS(D_OUT, DATE_FLAG_HAS_TIME | DATE_FLAG_HAS_ZONE);
+        CLEAR_VAL_FLAG(D_OUT, DATE_FLAG_HAS_TIME);
+        CLEAR_VAL_FLAG(D_OUT, DATE_FLAG_HAS_ZONE);
     }
     else if (REF(time)) {
         RESET_VAL_HEADER(D_OUT, REB_TIME); // reset clears date flags

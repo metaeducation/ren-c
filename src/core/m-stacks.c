@@ -301,7 +301,8 @@ void Expand_Data_Stack_May_Fail(REBLEN amount)
     REBLEN n;
     for (n = len_old; n < len_new; ++n) {
         Init_Unreadable_Blank(cell);
-        SET_VAL_FLAGS(cell, CELL_FLAG_STACK | CELL_FLAG_TRANSIENT);
+        SET_VAL_FLAG(cell, CELL_FLAG_STACK);
+        SET_VAL_FLAG(cell, CELL_FLAG_TRANSIENT);
         ++cell;
     }
 

@@ -254,8 +254,12 @@ INLINE void Queue_Mark_Binding_Deep(const Cell* v) {
         // allowed to do this.
         //
       #if !defined(NDEBUG)
-        if (not ANY_VAL_FLAGS(v, CELL_FLAG_STACK | CELL_FLAG_TRANSIENT))
+        if (
+            NOT_VAL_FLAG(v, CELL_FLAG_STACK)
+            and NOT_VAL_FLAG(v, CELL_FLAG_TRANSIENT)
+        ){
             panic (v);
+        }
       #endif
     }
 }

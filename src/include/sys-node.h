@@ -263,32 +263,3 @@ INLINE enum Reb_Pointer_Detect Detect_Rebol_Pointer(const void *p) {
 
     DEAD_END;
 }
-
-
-// Unlike with GET_VAL_FLAG() etc, there's not really anything to be checked
-// on generic nodes (other than having NODE_FLAG_NODE?)  But these macros
-// help make the source a little more readable.
-
-#define SET_NOD_FLAGS(n,f) \
-    ((n)->header.bits |= (f))
-
-#define SET_NOD_FLAG(n,f) \
-    SET_VAL_FLAGS((n), (f))
-
-#define GET_NOD_FLAG(n, f) \
-    (did ((n)->header.bits & (f)))
-
-#define ANY_NOD_FLAGS(n,f) \
-    (((n)->header.bits & (f)) != 0)
-
-#define ALL_NOD_FLAGS(n,f) \
-    (((n)->header.bits & (f)) == (f))
-
-#define CLEAR_NOD_FLAGS(v,f) \
-    ((n)->header.bits &= ~(f))
-
-#define CLEAR_NOD_FLAG(n,f) \
-    CLEAR_NOD_FLAGS((n), (f))
-
-#define NOT_NOD_FLAG(n,f) \
-    (not GET_NOD_FLAG((n), (f)))

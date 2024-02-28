@@ -270,77 +270,18 @@
 // type that they reference.  Both use these XXX_VAL_FLAG accessors.
 //
 
-#ifdef NDEBUG
-    #define SET_VAL_FLAGS(v,f) \
-        (v)->header.bits |= (f)
-
-    #if CPLUSPLUS_11
-        //
-        // In the C++ release build we sanity check that only one bit is set.
-        // The assert is done at compile-time, you must use a constant flag.
-        // If you need dynamic flag checking, use GET_VAL_FLAGS even for one.
-        //
-        // Note this is not included as a runtime assert because it is costly,
-        // and it's not included in the debug build because the flags are
-        // "contaminated" with additional data that's hard to mask out at
-        // compile-time due to the weirdness of CLEAR_8_RIGHT_BITS.  This
-        // pattern does not catch bad flag checks in asserts.  Review.
-
-        template <uintptr_t f>
-        INLINE void SET_VAL_FLAG_cplusplus(Cell* v) {
-            static_assert(
-                f and (f & (f - 1)) == 0, // only one bit is set
-                "use SET_VAL_FLAGS() to set multiple bits"
-            );
-            v->header.bits |= f;
-        }
-        #define SET_VAL_FLAG(v,f) \
-            SET_VAL_FLAG_cplusplus<f>(v)
-
-        template <uintptr_t f>
-        INLINE bool GET_VAL_FLAG_cplusplus(const Cell* v) {
-            static_assert(
-                f and (f & (f - 1)) == 0, // only one bit is set
-                "use ANY_VAL_FLAGS() or ALL_VAL_FLAGS() to test multiple bits"
-            );
-            return did (v->header.bits & f);
-        }
-        #define GET_VAL_FLAG(v,f) \
-            GET_VAL_FLAG_cplusplus<f>(v)
-    #else
-        #define SET_VAL_FLAG(v,f) \
-            SET_VAL_FLAGS((v), (f))
-
-        #define GET_VAL_FLAG(v, f) \
-            (did ((v)->header.bits & (f)))
-    #endif
-
-    #define ANY_VAL_FLAGS(v,f) \
-        (((v)->header.bits & (f)) != 0)
-
-    #define ALL_VAL_FLAGS(v,f) \
-        (((v)->header.bits & (f)) == (f))
-
-    #define CLEAR_VAL_FLAGS(v,f) \
-        ((v)->header.bits &= ~(f))
-
-    #define CLEAR_VAL_FLAG(v,f) \
-        CLEAR_VAL_FLAGS((v), (f))
-
-    #define CHECK_VALUE_FLAGS_EVIL_MACRO_DEBUG(flags) \
-        NOOP
-#else
-    // For safety in the debug build, all the type-specific flags include a
-    // type (or type representing a category) as part of the flag.  This type
-    // is checked first, and then masked out to use the single-bit-flag value
-    // which is intended.
-    //
-    // But flag testing routines are called *a lot*, and debug builds do not
-    // inline functions.  So it's worth doing a sketchy macro so this somewhat
-    // borderline assert doesn't wind up taking up 20% of the debug's runtime.
-    //
-    #define CHECK_VALUE_FLAGS_EVIL_MACRO_DEBUG(flags) \
-        enum Reb_Kind category = cast(enum Reb_Kind, SECOND_BYTE(flags)); \
+// For safety in the debug build, all the type-specific flags include a
+// type (or type representing a category) as part of the flag.  This type
+// is checked first, and then masked out to use the single-bit-flag value
+// which is intended.
+//
+// But flag testing routines are called *a lot*, and debug builds do not
+// inline functions.  So it's worth doing a sketchy macro so this somewhat
+// borderline assert doesn't wind up taking up 20% of the debug's runtime.
+//
+#if DEBUG
+    #define CHECK_VALUE_FLAGS_EVIL_MACRO_DEBUG(flag) \
+        enum Reb_Kind category = cast(enum Reb_Kind, SECOND_BYTE(flag)); \
         assert(kind < REB_MAX_PLUS_MAX); /* see REB_MAX_PLUS_MAX */ \
         if (category != REB_0) { \
             if (kind != category) { \
@@ -351,52 +292,32 @@
                 else \
                     assert(false); \
             } \
-            SECOND_BYTE(flags) = 0; \
-        } \
-
-    INLINE void SET_VAL_FLAGS(Cell* v, uintptr_t f) {
-        enum Reb_Kind kind = VAL_TYPE_RAW(v);
-        CHECK_VALUE_FLAGS_EVIL_MACRO_DEBUG(f);
-        v->header.bits |= f;
-    }
-
-    INLINE void SET_VAL_FLAG(Cell* v, uintptr_t f) {
-        enum Reb_Kind kind = VAL_TYPE_RAW(v);
-        CHECK_VALUE_FLAGS_EVIL_MACRO_DEBUG(f);
-        v->header.bits |= f;
-    }
-
-    INLINE bool GET_VAL_FLAG(const Cell* v, uintptr_t f) {
-        enum Reb_Kind kind = VAL_TYPE_RAW(v);
-        CHECK_VALUE_FLAGS_EVIL_MACRO_DEBUG(f);
-        return did (v->header.bits & f);
-    }
-
-    INLINE bool ANY_VAL_FLAGS(const Cell* v, uintptr_t f) {
-        enum Reb_Kind kind = VAL_TYPE_RAW(v);
-        CHECK_VALUE_FLAGS_EVIL_MACRO_DEBUG(f);
-        return (v->header.bits & f) != 0;
-    }
-
-    INLINE bool ALL_VAL_FLAGS(const Cell* v, uintptr_t f) {
-        enum Reb_Kind kind = VAL_TYPE_RAW(v);
-        CHECK_VALUE_FLAGS_EVIL_MACRO_DEBUG(f);
-        return (v->header.bits & f) == f;
-    }
-
-    INLINE void CLEAR_VAL_FLAGS(Cell* v, uintptr_t f) {
-        enum Reb_Kind kind = VAL_TYPE_RAW(v);
-        CHECK_VALUE_FLAGS_EVIL_MACRO_DEBUG(f);
-        v->header.bits &= ~f;
-    }
-
-    INLINE void CLEAR_VAL_FLAG(Cell* v, uintptr_t f) {
-        enum Reb_Kind kind = VAL_TYPE_RAW(v);
-        CHECK_VALUE_FLAGS_EVIL_MACRO_DEBUG(f);
-        assert(f and (f & (f - 1)) == 0); // checks that only one bit is set
-        v->header.bits &= ~f;
-    }
+            SECOND_BYTE(flag) = 0; \
+        }
+#else
+    #define CHECK_VALUE_FLAGS_EVIL_MACRO_DEBUG(flag) NOOP
 #endif
+
+INLINE void SET_VAL_FLAG(Cell* v, uintptr_t f) {
+    enum Reb_Kind kind = VAL_TYPE_RAW(v); \
+    CHECK_VALUE_FLAGS_EVIL_MACRO_DEBUG(f);
+    assert(f and (f & (f - 1)) == 0);  // checks that only one bit is set
+    v->header.bits |= f;
+}
+
+INLINE bool GET_VAL_FLAG(const Cell* v, uintptr_t f) {
+    enum Reb_Kind kind = VAL_TYPE_RAW(v); \
+    CHECK_VALUE_FLAGS_EVIL_MACRO_DEBUG(f);
+    assert(f and (f & (f - 1)) == 0);  // checks that only one bit is set
+    return did (v->header.bits & f);
+}
+
+INLINE void CLEAR_VAL_FLAG(Cell* v, uintptr_t f) {
+    enum Reb_Kind kind = VAL_TYPE_RAW(v); \
+    CHECK_VALUE_FLAGS_EVIL_MACRO_DEBUG(f);
+    assert(f and (f & (f - 1)) == 0);  // checks that only one bit is set
+    v->header.bits &= ~f;
+}
 
 #define NOT_VAL_FLAG(v,f) \
     (not GET_VAL_FLAG((v), (f)))
