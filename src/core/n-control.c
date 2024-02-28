@@ -1158,7 +1158,7 @@ REBNATIVE(catch)
 
     if (not Do_Any_Array_At_Throws(D_OUT, ARG(block))) {
         if (REF(result))
-            rebElide(rebEval(NAT_VALUE(set)), ARG(uncaught), D_OUT, rebEND);
+            rebElide(rebEval(NAT_VALUE(set)), ARG(uncaught), D_OUT);
 
         return nullptr;  // no throw means just return null
     }
@@ -1250,7 +1250,7 @@ REBNATIVE(catch)
     // so this assignment has to wait until the end.
     //
     if (REF(result))  // caught case voids result to minimize likely use
-        rebElide(NAT_VALUE(set), ARG(uncaught), VOID_VALUE, rebEND);
+        rebElide(NAT_VALUE(set), ARG(uncaught), VOID_VALUE);
 
     return D_OUT;
 }

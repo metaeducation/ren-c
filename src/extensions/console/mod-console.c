@@ -189,7 +189,7 @@ static REBVAL *Run_Sandboxed_Code(REBVAL *group_or_block) {
     if (not result)
         return nullptr;
 
-    return rebValue("[", rebR(result), "]", rebEND); // ownership gets proxied
+    return rebValue("[", rebR(result), "]"); // ownership gets proxied
 }
 
 
@@ -251,7 +251,7 @@ REBNATIVE(console)
 
     REBVAL *code;
     if (REF(provoke)) {
-        code = rebValue("quote", ARG(provocation), rebEND);
+        code = rebValue("quote", ARG(provocation));
         goto provoked;
     }
     else
@@ -275,13 +275,13 @@ REBNATIVE(console)
                 rebUneval(code), // group!/block! executed prior (or blank!)
                 rebUneval(result), // prior result in a block, or error/null
                 rebR(rebLogic(REF(resumable))),
-            "]", rebEND
+            "]"
         );
 
         rebRelease(code);
         rebRelease(result);
 
-        if (rebDid("lib/error?", trapped, rebEND)) {
+        if (rebDid("lib/error?", trapped)) {
             //
             // If the HOST-CONSOLE function has any of its own implementation
             // that could raise an error (or act as an uncaught throw) it
@@ -293,27 +293,27 @@ REBNATIVE(console)
             // it might have generated (a BLOCK!) asking itself to crash.
 
             if (no_recover)
-                rebJumps("PANIC", trapped, rebEND);
+                rebJumps("PANIC", trapped);
 
-            code = rebValue("[#host-console-error]", rebEND);
+            code = rebValue("[#host-console-error]");
             result = trapped;
             no_recover = true; // no second chances until user code runs
             goto recover;
         }
 
-        code = rebValue("first", trapped, rebEND); // entrap []'s the output
+        code = rebValue("first", trapped); // entrap []'s the output
         rebRelease(trapped); // don't need the outer block any more
 
       provoked:;
-        if (rebDid("integer?", code, rebEND))
+        if (rebDid("integer?", code))
             break; // when HOST-CONSOLE returns INTEGER! it means an exit code
 
-        if (rebDid("path?", code, rebEND)) {
+        if (rebDid("path?", code)) {
             assert(REF(resumable));
             break;
         }
 
-        bool is_console_instruction = rebDid("block?", code, rebEND);
+        bool is_console_instruction = rebDid("block?", code);
 
         // Restore custom DO and APPLY hooks, but only if running a GROUP!.
         // (We do not want to trace/debug/instrument Rebol code that the

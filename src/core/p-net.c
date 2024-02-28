@@ -46,7 +46,7 @@ enum Transport_Types {
 static void Query_Net(REBVAL *out, REBVAL *port, struct devreq_net *sock)
 {
     REBVAL *info = rebValue(
-        "copy ensure object! (", port , ")/scheme/info", rebEND
+        "copy ensure object! (", port , ")/scheme/info"
     ); // shallow copy
 
     REBCTX *ctx = VAL_CONTEXT(info);
@@ -162,8 +162,8 @@ static REB_R Transport_Actor(
                 DROP_GC_GUARD(temp);
 
                 assert(l_result != NULL);
-                if (rebDid("error?", l_result, rebEND))
-                    rebJumps("FAIL", l_result, rebEND);
+                if (rebDid("error?", l_result))
+                    rebJumps("FAIL", l_result);
                 rebRelease(l_result); // ignore result
 
                 RETURN (port);
@@ -307,8 +307,8 @@ static REB_R Transport_Actor(
             // Request pending
         }
         else {
-            if (rebDid("error?", result, rebEND))
-                rebJumps("FAIL", result, rebEND);
+            if (rebDid("error?", result))
+                rebJumps("FAIL", result);
 
             // a note said "recv CAN happen immediately"
             //
@@ -404,8 +404,8 @@ static REB_R Transport_Actor(
             // Write pending !!! old comment said "do we get here?"
         }
         else {
-            if (rebDid("error?", result, rebEND))
-                rebJumps("FAIL", result, rebEND);
+            if (rebDid("error?", result))
+                rebJumps("FAIL", result);
 
             // Note here said "send CAN happen immediately"
             //
@@ -427,8 +427,7 @@ static REB_R Transport_Actor(
         return rebValue(
             "take/part/(", ARG(deep), ")/(", ARG(last), ")",
                 CTX_VAR(ctx, STD_PORT_CONNECTIONS),
-                NULLIZE(ARG(limit)),
-                rebEND
+                NULLIZE(ARG(limit))
         ); }
 
     case SYM_PICK: {
@@ -463,8 +462,8 @@ static REB_R Transport_Actor(
             // Asynchronous connect, this happens in TCP_Actor
         }
         else {
-            if (rebDid("error?", result, rebEND))
-                rebJumps("libFAIL", result, rebEND);
+            if (rebDid("error?", result))
+                rebJumps("libFAIL", result);
 
             // This can happen with UDP, which is connectionless so it
             // returns DR_DONE.

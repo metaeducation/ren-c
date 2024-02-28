@@ -190,7 +190,7 @@ inline static void Push_Frame_Core(REBFRM *f)
     TRASH_POINTER_IF_DEBUG(f->varlist); // must Try_Reuse_Varlist() or fill in
 
     // If the source for the frame is a REBARR*, then we want to temporarily
-    // lock that array against mutations.  
+    // lock that array against mutations.
     //
     if (FRM_IS_VALIST(f)) {
         //
@@ -363,8 +363,8 @@ inline static void Set_Frame_Detected_Fetch(
 
         // !!! In the working definition, the "topmost level" of a variadic
         // call is considered to be already evaluated...unless you ask to
-        // evaluate it further.  This is what allows `rebSpellInto(v, rebEND)`
-        // to work as well as `rebSpellInto("first", v, rebEND)`, the idea of
+        // evaluate it further.  This is what allows `rebSpellInto(v)`
+        // to work as well as `rebSpellInto("first", v)`, the idea of
         // "fetch" is the reading of the C variable V, and it would be a
         // "double eval" if that v were a WORD! that then executed.
         //
@@ -614,7 +614,7 @@ inline static void Abort_Frame(REBFRM *f) {
 
     // Abort_Frame() handles any work that wouldn't be done done naturally by
     // feeding a frame to its natural end.
-    // 
+    //
     if (IS_END(f->value))
         goto pop;
 
@@ -779,7 +779,7 @@ inline static bool Eval_Step_Mid_Frame_Throws(REBFRM *f, REBFLGS flags) {
 
     bool threw = (*PG_Eval_Throws)(f); // should already be pushed
 
-    f->flags.bits = prior_flags; // e.g. restore DO_FLAG_TO_END    
+    f->flags.bits = prior_flags; // e.g. restore DO_FLAG_TO_END
     return threw;
 }
 
@@ -981,7 +981,7 @@ inline static void Reify_Va_To_Array_In_Frame(
     // The array just popped into existence, and it's tied to a running
     // frame...so safe to say we're holding it.  (This would be more complex
     // if we reused the empty array if dsp_orig == DSP, since someone else
-    // might have a hold on it...not worth the complexity.) 
+    // might have a hold on it...not worth the complexity.)
     //
     SET_SER_INFO(f->source->array, SERIES_INFO_HOLD);
     f->flags.bits |= DO_FLAG_TOOK_FRAME_HOLD;

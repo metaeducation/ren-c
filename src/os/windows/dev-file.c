@@ -146,10 +146,7 @@ static int Read_Directory(struct devreq_file *dir, struct devreq_file *file)
     if (h == NULL) {
         // Read first file entry:
 
-        WCHAR *dir_wide = rebSpellW(
-            "file-to-local/full/wild", dir->path,
-            rebEND
-        );
+        WCHAR *dir_wide = rebSpellW("file-to-local/full/wild", dir->path);
         h = FindFirstFile(dir_wide, &info);
         rebFree(dir_wide);
 
@@ -186,8 +183,7 @@ static int Read_Directory(struct devreq_file *dir, struct devreq_file *file)
     if (not got_info) {
         assert(false); // see above for why this R3-Alpha code had a "hole"
         rebJumps(
-            "FAIL {%dev-clipboard: NOT(got_info), please report}",
-            rebEND
+            "FAIL {%dev-clipboard: NOT(got_info), please report}"
         );
     }
 
@@ -199,7 +195,7 @@ static int Read_Directory(struct devreq_file *dir, struct devreq_file *file)
         "applique 'local-to-file [",
             "path:", rebR(rebTextW(info.cFileName)),
             "dir:", rebR(rebLogic(file_req->modes & RFM_DIR)),
-        "]", rebEND
+        "]"
     );
 
     // !!! We currently unmanage this, because code using the API may
@@ -264,14 +260,14 @@ DEVICE_CMD Open_File(REBREQ *req)
         attrib |= FILE_ATTRIBUTE_READONLY;
 
     if (access == 0)
-        rebJumps("FAIL {No access modes provided to Open_File()}", rebEND);
+        rebJumps("FAIL {No access modes provided to Open_File()}");
 
     WCHAR *path_wide = rebSpellW(
         "applique 'file-to-local [",
             "path:", file->path,
             "wild:", rebR(rebLogic(req->modes & RFM_DIR)),
             "full: true",
-        "]", rebEND
+        "]"
     );
 
     HANDLE h = CreateFile(
@@ -488,7 +484,7 @@ DEVICE_CMD Query_File(REBREQ *req)
     // used, it would mean `%/` would turn into an empty string, that would
     // cause GetFileAttributesEx() to error, vs. backslash (which works)
     //
-    WCHAR *path_wide = rebSpellW("file-to-local/full", file->path, rebEND);
+    WCHAR *path_wide = rebSpellW("file-to-local/full", file->path);
 
     BOOL success = GetFileAttributesEx(
         path_wide, GetFileExInfoStandard, &info
@@ -524,8 +520,7 @@ DEVICE_CMD Create_File(REBREQ *req)
         return Open_File(req);
 
     WCHAR *path_wide = rebSpellW(
-        "file-to-local/full/no-tail-slash", file->path,
-        rebEND
+        "file-to-local/full/no-tail-slash", file->path
     );
 
     LPSECURITY_ATTRIBUTES lpSecurityAttributes = NULL;
@@ -554,8 +549,8 @@ DEVICE_CMD Delete_File(REBREQ *req)
     struct devreq_file *file = DEVREQ_FILE(req);
 
     WCHAR *path_wide = rebSpellW(
-        "file-to-local/full", file->path,
-        rebEND // leave tail slash on for directory removal
+        "file-to-local/full", file->path
+        // leave tail slash on for directory removal
     );
 
     BOOL success;
@@ -586,12 +581,10 @@ DEVICE_CMD Rename_File(REBREQ *req)
     REBVAL *to = cast(REBVAL*, req->common.data); // !!! hack!
 
     WCHAR *from_wide = rebSpellW(
-        "file-to-local/full/no-tail-slash", file->path,
-        rebEND
+        "file-to-local/full/no-tail-slash", file->path
     );
     WCHAR *to_wide = rebSpellW(
-        "file-to-local/full/no-tail-slash", to,
-        rebEND
+        "file-to-local/full/no-tail-slash", to
     );
 
     BOOL success = MoveFile(from_wide, to_wide);

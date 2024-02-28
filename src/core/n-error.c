@@ -93,7 +93,7 @@ REBNATIVE(trap)
 
     if (not error) {  // code didn't fail() or throw
         if (REF(result))
-            rebElide(rebEval(NAT_VALUE(set)), ARG(valid), D_OUT, rebEND);
+            rebElide(rebEval(NAT_VALUE(set)), ARG(valid), D_OUT);
 
         return nullptr;
     }
@@ -104,7 +104,7 @@ REBNATIVE(trap)
     assert(IS_ERROR(error));
 
     if (REF(result))  // error case voids result to minimize likely use
-        rebElide(NAT_VALUE(set), ARG(valid), VOID_VALUE, rebEND);
+        rebElide(NAT_VALUE(set), ARG(valid), VOID_VALUE);
 
     return error;
 }

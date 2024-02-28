@@ -157,7 +157,7 @@ REBNATIVE(rc4)
         REBVAL *data = ARG(data);
 
         if (VAL_HANDLE_CLEANER(ARG(ctx)) != cleanup_rc4_ctx)
-            rebJumps("fail [{Not a RC4 Context:}", ARG(ctx), "]", rebEND);
+            rebJumps("fail [{Not a RC4 Context:}", ARG(ctx), "]");
 
         RC4_CTX *rc4_ctx = VAL_HANDLE_POINTER(RC4_CTX, ARG(ctx));
 
@@ -186,7 +186,7 @@ REBNATIVE(rc4)
         return Init_Handle_Managed(D_OUT, rc4_ctx, 0, &cleanup_rc4_ctx);
     }
 
-    rebJumps("fail {Refinement /key or /stream has to be present}", rebEND);
+    rebJumps("fail {Refinement /key or /stream has to be present}");
 }
 
 
@@ -211,56 +211,56 @@ REBNATIVE(rsa)
 
     // N and E are required
     //
-    REBVAL *n = rebValue("ensure binary! pick", obj, "'n", rebEND);
-    REBVAL *e = rebValue("ensure binary! pick", obj, "'e", rebEND);
+    REBVAL *n = rebValue("ensure binary! pick", obj, "'n");
+    REBVAL *e = rebValue("ensure binary! pick", obj, "'e");
 
     RSA_CTX *rsa_ctx = NULL;
 
     REBINT binary_len;
     if (REF(private)) {
-        REBVAL *d = rebValue("ensure binary! pick", obj, "'d", rebEND);
+        REBVAL *d = rebValue("ensure binary! pick", obj, "'d");
 
         if (not d)
             fail ("No d returned BLANK, can we assume error for cleanup?");
 
-        REBVAL *p = rebValue("ensure binary! pick", obj, "'p", rebEND);
-        REBVAL *q = rebValue("ensure binary! pick", obj, "'q", rebEND);
-        REBVAL *dp = rebValue("ensure binary! pick", obj, "'dp", rebEND);
-        REBVAL *dq = rebValue("ensure binary! pick", obj, "'dq", rebEND);
-        REBVAL *qinv = rebValue("ensure binary! pick", obj, "'qinv", rebEND);
+        REBVAL *p = rebValue("ensure binary! pick", obj, "'p");
+        REBVAL *q = rebValue("ensure binary! pick", obj, "'q");
+        REBVAL *dp = rebValue("ensure binary! pick", obj, "'dp");
+        REBVAL *dq = rebValue("ensure binary! pick", obj, "'dq");
+        REBVAL *qinv = rebValue("ensure binary! pick", obj, "'qinv");
 
         // !!! Because BINARY! is not locked in memory or safe from GC, the
         // libRebol API doesn't allow direct pointer access.  Use the
         // internal VAL_BIN_AT for now, but consider if a temporary locking
         // should be possible...locked until released.
         //
-        binary_len = rebUnbox("length of", d, rebEND);
+        binary_len = rebUnbox("length of", d);
         RSA_priv_key_new(
             &rsa_ctx
             ,
             VAL_BIN_AT(n)
-            , rebUnbox("length of", n, rebEND)
+            , rebUnbox("length of", n)
             ,
             VAL_BIN_AT(e)
-            , rebUnbox("length of", e, rebEND)
+            , rebUnbox("length of", e)
             ,
             VAL_BIN_AT(d)
             , binary_len // taken as `length of d` above
             ,
             p ? VAL_BIN_AT(p) : NULL
-            , p ? rebUnbox("length of", p, rebEND) : 0
+            , p ? rebUnbox("length of", p) : 0
             ,
             q ? VAL_BIN_AT(q) : NULL
-            , q ? rebUnbox("length of", q, rebEND) : 0
+            , q ? rebUnbox("length of", q) : 0
             ,
             dp ? VAL_BIN_AT(dp) : NULL
-            , dp ? rebUnbox("length of", dp, rebEND) : 0
+            , dp ? rebUnbox("length of", dp) : 0
             ,
             dq ? VAL_BIN_AT(dq) : NULL
-            , dp ? rebUnbox("length of", dq, rebEND) : 0
+            , dp ? rebUnbox("length of", dq) : 0
             ,
             qinv ? VAL_BIN_AT(qinv) : NULL
-            , qinv ? rebUnbox("length of", qinv, rebEND) : 0
+            , qinv ? rebUnbox("length of", qinv) : 0
         );
 
         rebRelease(d);
@@ -271,7 +271,7 @@ REBNATIVE(rsa)
         rebRelease(qinv);
     }
     else {
-        binary_len = rebUnbox("length of", n, rebEND);
+        binary_len = rebUnbox("length of", n);
         RSA_pub_key_new(
             &rsa_ctx
             ,
@@ -279,7 +279,7 @@ REBNATIVE(rsa)
             , binary_len // taken as `length of n` above
             ,
             VAL_BIN_AT(e)
-            , rebUnbox("length of", e, rebEND)
+            , rebUnbox("length of", e)
         );
     }
 
@@ -289,7 +289,7 @@ REBNATIVE(rsa)
     // !!! See notes above about direct binary access via libRebol
     //
     REBYTE *dataBuffer = VAL_BIN_AT(ARG(data));
-    REBINT data_len = rebUnbox("length of", ARG(data), rebEND);
+    REBINT data_len = rebUnbox("length of", ARG(data));
 
     BI_CTX *bi_ctx = rsa_ctx->bi_ctx;
     bigint *data_bi = bi_import(bi_ctx, dataBuffer, data_len);
@@ -314,7 +314,7 @@ REBNATIVE(rsa)
 
             rebFree(crypted); // would free automatically due to failure...
             rebJumps(
-                "fail [{Failed to decrypt:}", ARG(data), "]", rebEND
+                "fail [{Failed to decrypt:}", ARG(data), "]"
             );
         }
 
@@ -335,7 +335,7 @@ REBNATIVE(rsa)
 
             rebFree(crypted); // would free automatically due to failure...
             rebJumps(
-                "fail [{Failed to encrypt:}", ARG(data), "]", rebEND
+                "fail [{Failed to encrypt:}", ARG(data), "]"
             );
         }
 
@@ -371,14 +371,14 @@ REBNATIVE(dh_generate_key)
 
     // !!! This used to ensure that all other fields, besides SELF, were blank
     //
-    REBVAL *g = rebValue("ensure binary! pick", obj, "'g", rebEND); // generator
-    REBVAL *p = rebValue("ensure binary! pick", obj, "'p", rebEND); // modulus
+    REBVAL *g = rebValue("ensure binary! pick", obj, "'g"); // generator
+    REBVAL *p = rebValue("ensure binary! pick", obj, "'p"); // modulus
 
     dh_ctx.g = VAL_BIN_AT(g);
-    dh_ctx.glen = rebUnbox("length of", g, rebEND);
+    dh_ctx.glen = rebUnbox("length of", g);
 
     dh_ctx.p = VAL_BIN_AT(p);
-    dh_ctx.len = rebUnbox("length of", p, rebEND);
+    dh_ctx.len = rebUnbox("length of", p);
 
     // Generate the private and public keys into memory that can be
     // rebRepossess()'d as the memory backing a BINARY! series
@@ -396,8 +396,8 @@ REBNATIVE(dh_generate_key)
     REBVAL *priv = rebRepossess(dh_ctx.x, dh_ctx.len);
     REBVAL *pub = rebRepossess(dh_ctx.gx, dh_ctx.len);
 
-    rebElide("poke", obj, "'priv-key", priv, rebEND);
-    rebElide("poke", obj, "'pub-key", pub, rebEND);
+    rebElide("poke", obj, "'priv-key", priv);
+    rebElide("poke", obj, "'pub-key", pub);
 
     rebRelease(priv);
     rebRelease(pub);
@@ -431,11 +431,11 @@ REBNATIVE(dh_compute_key)
     // !!! used to ensure object only had other fields SELF, PUB-KEY, G
     // otherwise gave Error(RE_EXT_CRYPT_INVALID_KEY_FIELD)
 
-    REBVAL *p = rebValue("ensure binary! pick", obj, "'p", rebEND);
-    REBVAL *priv_key = rebValue("ensure binary! pick", obj, "'priv-key", rebEND);
+    REBVAL *p = rebValue("ensure binary! pick", obj, "'p");
+    REBVAL *priv_key = rebValue("ensure binary! pick", obj, "'priv-key");
 
     dh_ctx.p = VAL_BIN_AT(p);
-    dh_ctx.len = rebUnbox("length of", p, rebEND);
+    dh_ctx.len = rebUnbox("length of", p);
 
     dh_ctx.x = VAL_BIN_AT(priv_key);
     // !!! No length check here, should there be?
@@ -491,7 +491,7 @@ REBNATIVE(aes)
     if (REF(stream)) {
         if (VAL_HANDLE_CLEANER(ARG(ctx)) != cleanup_aes_ctx)
             rebJumps(
-                "fail [{Not a AES context:}", ARG(ctx), "]", rebEND
+                "fail [{Not a AES context:}", ARG(ctx), "]"
             );
 
         AES_CTX *aes_ctx = VAL_HANDLE_POINTER(AES_CTX, ARG(ctx));
@@ -563,7 +563,7 @@ REBNATIVE(aes)
             Init_Integer(i, len);
             rebJumps(
                 "fail [{AES key length has to be 16 or 32, not:}",
-                    rebI(len), "]", rebEND
+                    rebI(len), "]"
             );
         }
 
@@ -582,7 +582,7 @@ REBNATIVE(aes)
         return Init_Handle_Managed(D_OUT, aes_ctx, 0, &cleanup_aes_ctx);
     }
 
-    rebJumps("fail {Refinement /key or /stream has to be present}", rebEND);
+    rebJumps("fail {Refinement /key or /stream has to be present}");
 }
 
 

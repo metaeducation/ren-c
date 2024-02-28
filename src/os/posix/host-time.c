@@ -145,7 +145,7 @@ REBVAL *Convert_Date(time_t *stime, long usec)
         ), // secs
         rebI(usec * 1000), // nano
         rebI(zone), // zone
-    ")", rebEND);
+    ")");
 }
 
 
@@ -159,7 +159,7 @@ REBVAL *OS_Get_Time(void)
     struct timeval tv;
     struct timezone * const tz_ptr = NULL; // obsolete
     if (gettimeofday(&tv, tz_ptr) != 0)
-        rebJumps("fail {gettimeofday() returned 0}", rebEND);
+        rebJumps("fail {gettimeofday() returned 0}");
 
     // tv.tv_sec is the time in seconds 1 January 1970, 00:00:00 UTC
     // (epoch-1970).  It does not account for the time zone.  In POSIX, these
@@ -211,4 +211,3 @@ REBVAL *OS_File_Time(struct devreq_file *file)
 
     return Convert_Date(cast(time_t *, &file->time.l), 0);
 }
-

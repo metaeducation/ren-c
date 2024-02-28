@@ -102,15 +102,14 @@ static REB_R Clipboard_Actor(
         }
 
         if (not OpenClipboard(NULL))
-            rebJumps("FAIL {OpenClipboard() fail while reading}", rebEND);
+            rebJumps("FAIL {OpenClipboard() fail while reading}");
 
         HANDLE h = GetClipboardData(CF_UNICODETEXT);
         if (h == NULL) {
             CloseClipboard();
             rebJumps (
                 "FAIL",
-                "{IsClipboardFormatAvailable()/GetClipboardData() mismatch}",
-                rebEND
+                "{IsClipboardFormatAvailable()/GetClipboardData() mismatch}"
             );
         }
 
@@ -118,7 +117,7 @@ static REB_R Clipboard_Actor(
         if (wide == NULL) {
             CloseClipboard();
             rebJumps(
-                "FAIL {Couldn't GlobalLock() UCS2 clipboard data}", rebEND
+                "FAIL {Couldn't GlobalLock() UCS2 clipboard data}"
             );
         }
 
@@ -168,7 +167,7 @@ static REB_R Clipboard_Actor(
         // R3-Alpha had a behavior of ostensibly taking string or binary, but
         // the length only made sense if it was a string.  Review.
         //
-        if (rebNot("text?", arg, rebEND))
+        if (rebNot("text?", arg))
             fail (Error_Invalid_Port_Arg_Raw(arg));
 
         // Handle /part refinement:
@@ -179,12 +178,12 @@ static REB_R Clipboard_Actor(
 
         if (not OpenClipboard(NULL))
             rebJumps(
-                "FAIL {OpenClipboard() fail on clipboard write}", rebEND
+                "FAIL {OpenClipboard() fail on clipboard write}"
             );
 
         if (not EmptyClipboard()) // !!! is this superfluous?
             rebJumps(
-                "FAIL {EmptyClipboard() fail on clipboard write}", rebEND
+                "FAIL {EmptyClipboard() fail on clipboard write}"
             );
 
         // Clipboard wants a Windows memory handle with UCS2 data.  Allocate a
@@ -193,15 +192,11 @@ static REB_R Clipboard_Actor(
 
         HANDLE h = GlobalAlloc(GHND, sizeof(WCHAR) * (len + 1));
         if (h == NULL) // per documentation, not INVALID_HANDLE_VALUE
-            rebJumps(
-                "FAIL {GlobalAlloc() fail on clipboard write}", rebEND
-            );
+            rebJumps("FAIL {GlobalAlloc() fail on clipboard write}");
 
         WCHAR *wide = cast(WCHAR*, GlobalLock(h));
         if (wide == NULL)
-            rebJumps(
-                "FAIL {GlobalLock() fail on clipboard write}", rebEND
-            );
+            rebJumps("FAIL {GlobalLock() fail on clipboard write}");
 
         REBINT len_check = rebSpellIntoW(wide, len, arg); // UTF-16 extract
         assert(len <= len_check); // may only be writing /PART of the string
@@ -213,7 +208,7 @@ static REB_R Clipboard_Actor(
         CloseClipboard();
 
         if (h_check == NULL)
-            rebJumps("FAIL {SetClipboardData() failed.}", rebEND);
+            rebJumps("FAIL {SetClipboardData() failed.}");
 
         assert(h_check == h);
 

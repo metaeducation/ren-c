@@ -225,8 +225,7 @@ void RL_rebFree(void *ptr)
             "PANIC [",
                 "{rebFree() mismatched with allocator!}"
                 "{Did you mean to use free() instead of rebFree()?}",
-            "]",
-            rebEND
+            "]"
         );
     }
 
@@ -544,9 +543,6 @@ void RL_rebJumps(const void *p, va_list *vaptr)
 // the console, so that BACKTRACE does not look up and see a Rebol function
 // like DO on the stack.
 //
-// !!! May be replaceable with `rebValue(rebInline(v), rebEND);` or something
-// similar.
-//
 REBVAL *RL_rebValueInline(const REBVAL *array)
 {
     if (not IS_BLOCK(array) and not IS_GROUP(array))
@@ -556,7 +552,7 @@ REBVAL *RL_rebValueInline(const REBVAL *array)
     Move_Value(group, array);
     CHANGE_VAL_TYPE_BITS(group, REB_GROUP);
 
-    return rebValue(rebEval(group), rebEND);
+    return rebValue(rebEval(group));
 }
 
 
@@ -1876,7 +1872,7 @@ void RL_rebFail_OS(int errnum)
 
     DECLARE_LOCAL (temp);
     Init_Error(temp, error);
-    rebJumps("fail", temp, rebEND);
+    rebJumps("fail", temp);
 }
 
 

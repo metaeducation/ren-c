@@ -75,7 +75,7 @@ REBVAL *Convert_Date(long zone, const SYSTEMTIME *stime)
         ), // "secs"
         rebI(1000000 * stime->wMilliseconds), // nano
         rebI(zone), // zone
-    ")", rebEND);
+    ")");
 }
 
 
@@ -118,7 +118,7 @@ int64_t OS_Delta_Time(int64_t base)
 {
     LARGE_INTEGER time;
     if (not QueryPerformanceCounter(&time))
-        rebJumps("PANIC {Missing high performance timer}", rebEND);
+        rebJumps("PANIC {Missing high performance timer}");
 
     if (base == 0) return time.QuadPart; // counter (may not be time)
 
@@ -141,10 +141,7 @@ REBVAL *OS_Get_Current_Dir(void)
     WCHAR *path = rebAllocN(WCHAR, len);
     GetCurrentDirectory(len, path);
 
-    REBVAL *result = rebValue(
-        "local-to-file/dir", rebR(rebTextW(path)),
-        rebEND
-    );
+    REBVAL *result = rebValue("local-to-file/dir", rebR(rebTextW(path)));
     rebFree(path);
     return result;
 }
@@ -157,7 +154,7 @@ REBVAL *OS_Get_Current_Dir(void)
 //
 bool OS_Set_Current_Dir(const REBVAL *path)
 {
-    WCHAR *path_wide = rebSpellW("file-to-local/full", path, rebEND);
+    WCHAR *path_wide = rebSpellW("file-to-local/full", path);
 
     BOOL success = SetCurrentDirectory(path_wide);
 
@@ -199,7 +196,7 @@ void *OS_Open_Library(const REBVAL *path)
     // default.  So if %foo is passed in, you don't want to prepend the
     // current dir to make it absolute, because it will *only* look there.
     //
-    WCHAR *path_utf8 = rebSpellW("file-to-local", path, rebEND);
+    WCHAR *path_utf8 = rebSpellW("file-to-local", path);
 
     void *dll = LoadLibraryW(path_utf8);
 
@@ -301,10 +298,7 @@ REBVAL *OS_Get_Current_Exec(void)
     }
     path[r] = '\0'; // May not be NULL-terminated if buffer is not big enough
 
-    REBVAL *result = rebValue(
-        "local-to-file", rebR(rebTextW(path)),
-        rebEND
-    );
+    REBVAL *result = rebValue("local-to-file", rebR(rebTextW(path)));
     rebFree(path);
 
     return result;

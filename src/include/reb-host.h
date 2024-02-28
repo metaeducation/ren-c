@@ -35,9 +35,7 @@
 #include <stdlib.h> // size_t and other types used in rebol.h
 #include "pstdint.h" // polyfill <stdint.h> for pre-C99/C++11 compilers
 #include "pstdbool.h" // polyfill <stdbool.h> for pre-C99/C++11 compilers
-#if !defined(REBOL_IMPLICIT_END)
-    #define REBOL_EXPLICIT_END // ensure core compiles with pre-C99/C++11
-#endif
+
 #include "rebol.h"
 
 #include "reb-c.h" // API should only require <stdbool.h> and <stdint.h>

@@ -159,7 +159,7 @@ static int Get_File_Info(struct devreq_file *file)
     //
     // https://superuser.com/questions/240743/
     //
-    char *path_utf8 = rebSpell("file-to-local/full", file->path, rebEND);
+    char *path_utf8 = rebSpell("file-to-local/full", file->path);
 
     struct stat info;
     int stat_result = stat(path_utf8, &info);
@@ -236,7 +236,7 @@ static int Read_Directory(struct devreq_file *dir, struct devreq_file *file)
 
     // Note: /WILD append of * is not necessary on POSIX
     //
-    char *dir_utf8 = rebSpell("file-to-local", dir->path, rebEND);
+    char *dir_utf8 = rebSpell("file-to-local", dir->path);
 
     // If no dir handle, open the dir:
     //
@@ -307,7 +307,7 @@ static int Read_Directory(struct devreq_file *dir, struct devreq_file *file)
         "applique 'local-to-file [",
             "path:", rebT(file_utf8),
             "dir:", rebR(rebLogic(file_req->modes & RFM_DIR)),
-        "]", rebEND
+        "]"
     );
 
     // !!! We currently unmanage this, because code using the API may
@@ -374,7 +374,7 @@ DEVICE_CMD Open_File(REBREQ *req)
             "path:", file->path,
             "wild:", rebR(rebLogic(req->modes & RFM_DIR)), // !!! necessary?
             "full: true"
-        "]", rebEND
+        "]"
     );
 
     struct stat info;
@@ -519,8 +519,7 @@ DEVICE_CMD Create_File(REBREQ *req)
         return Open_File(req);
 
     char *path_utf8 = rebSpell(
-        "file-to-local/full/no-tail-slash", file->path,
-        rebEND
+        "file-to-local/full/no-tail-slash", file->path
     );
 
     int mkdir_result = mkdir(path_utf8, 0777);
@@ -547,8 +546,8 @@ DEVICE_CMD Delete_File(REBREQ *req)
     struct devreq_file *file = DEVREQ_FILE(req);
 
     char *path_utf8 = rebSpell(
-        "file-to-local/full", file->path,
-        rebEND // leave tail slash on for directory removal
+        "file-to-local/full", file->path
+        // leave tail slash on for directory removal
     );
 
     int removal_result;
@@ -579,12 +578,10 @@ DEVICE_CMD Rename_File(REBREQ *req)
     REBVAL *to = cast(REBVAL*, req->common.data); // !!! hack!
 
     char *from_utf8 = rebSpell(
-        "file-to-local/full/no-tail-slash", file->path,
-        rebEND
+        "file-to-local/full/no-tail-slash", file->path
     );
     char *to_utf8 = rebSpell(
-        "file-to-local/full/no-tail-slash", to,
-        rebEND
+        "file-to-local/full/no-tail-slash", to
     );
 
     int rename_result = rename(from_utf8, to_utf8);

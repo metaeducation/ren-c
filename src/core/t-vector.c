@@ -226,8 +226,7 @@ static void Set_Vector_At_Core(
         "FAIL [",
             v, "{out of range for} unspaced [", rebI(bits), "{-bit}]",
             rebT(sign ? "signed" : "unsigned"), "{VECTOR! type}"
-        "]",
-        rebEND
+        "]"
     );
 }
 

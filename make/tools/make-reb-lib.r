@@ -237,19 +237,6 @@ for-each api api-objects [do in api [
     append struct-call-inlines make-inline-proxy unspaced ["RL->" name]
 ]]
 
-c89-macros: map-each-api [
-    cfunc-params: if empty? paramlist [
-        "void"
-    ] else [
-        delimit ", " map-each [type var] paramlist [
-            spaced [type var]
-        ]
-    ]
-    cscape/with
-        <- {#define $<Name> $<Name>_inline}
-        <- api
-]
-
 c99-or-c++11-macros: map-each-api [
     if find paramlist 'vaptr [
         cscape/with
@@ -275,10 +262,7 @@ e-lib: (make-emitter
 e-lib/emit {
     /*
      * The goal is to make it possible that the only include file one needs
-     * to make a simple Rebol library client is `#include "rebol.h"`.  Yet
-     * pre-C99 or pre-C++11 compilers will need `#define REBOL_EXPLICIT_END`
-     * since variadic macros don't work.  They will also need shims for
-     * stdint.h and stdbool.h included.
+     * to make a simple Rebol library client is `#include "rebol.h"`.
      */
     #include <stdlib.h> /* for size_t */
     #include <stdarg.h> /* for va_list, va_start() in inline functions */
@@ -438,42 +422,16 @@ e-lib/emit {
      * The simplicity is an advantage for optimization, but unsafe!  Type
      * checking is non-existent, and there is no protocol for knowing how
      * many items are in a va_list.  The libRebol API uses rebEND to signal
-     * termination, but it is awkward and easy to forget.
+     * termination.
      *
-     * C89 offers no real help, but C99 (and C++11 onward) standardize an
-     * interface for variadic macros:
+     * C99 (and C++11 onward) standardize an interface for variadic macros:
      *
      * https://stackoverflow.com/questions/4786649/
      *
      * These macros can transform variadic input in such a way that a rebEND
-     * may be automatically placed on the tail of a call.  If rebEND is used
-     * explicitly, this gives a harmless but slightly inefficient repetition.
+     * may be automatically placed on the tail of a call.
      */
-    #if !defined(REBOL_EXPLICIT_END)
-
-      #if defined (__STDC_VERSION__) && __STDC_VERSION__ >= 199901L
-        /* C99 or above */
-      #elif defined(__cplusplus) && __cplusplus >= 201103L
-        /* C++11 or above, if following the standard (VS2017 does not) */
-      #elif defined (CPLUSPLUS_11)
-        /* Custom C++11 or above flag, e.g. to override Visual Studio's lie */
-      #else
-        #error "REBOL_EXPLICIT_END must be used prior to C99 or C+++11"
-      #endif
-
-        $[C99-Or-C++11-Macros]
-
-    #else /* REBOL_EXPLICIT_END */
-
-        /*
-         * !!! Some kind of C++ variadic trick using template recursion could
-         * check to make sure you used a rebEND under this interface, when
-         * building the C89-targeting code under C++11 and beyond.  TBD.
-         */
-
-        $[C89-Macros]
-
-    #endif /* REBOL_EXPLICIT_END */
+    $[C99-Or-C++11-Macros]
 
 
     /***********************************************************************

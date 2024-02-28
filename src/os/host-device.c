@@ -200,15 +200,15 @@ REBVAL *OS_Do_Device(REBREQ *req, int command)
     req->command = command;
 
     if (req->device >= RDI_MAX)
-        rebJumps("FAIL {Rebol Device Number Too Large}", rebEND);
+        rebJumps("FAIL {Rebol Device Number Too Large}");
 
     REBDEV *dev = Devices[req->device];
     if (dev == NULL)
-        rebJumps("FAIL {Rebol Device Not Found}", rebEND);
+        rebJumps("FAIL {Rebol Device Not Found}");
 
     if (not (dev->flags & RDF_INIT)) {
         if (dev->flags & RDO_MUST_INIT)
-            rebJumps("FAIL {Rebol Device Uninitialized}", rebEND);
+            rebJumps("FAIL {Rebol Device Uninitialized}");
 
         if (
             !dev->commands[RDC_INIT]
@@ -222,7 +222,7 @@ REBVAL *OS_Do_Device(REBREQ *req, int command)
         req->command > dev->max_command
         || dev->commands[req->command] == NULL
     ){
-        rebJumps("FAIL {Invalid Command for Rebol Device}", rebEND);
+        rebJumps("FAIL {Invalid Command for Rebol Device}");
     }
 
     // !!! Currently the StdIO port is initialized before Rebol's startup
@@ -258,7 +258,7 @@ REBVAL *OS_Do_Device(REBREQ *req, int command)
 
     REBVAL *error_or_int = rebRescue(cast(REBDNG*, &Dangerous_Command), req);
 
-    if (rebDid("error?", error_or_int, rebEND)) {
+    if (rebDid("error?", error_or_int)) {
         if (dev->pending)
             Detach_Request(&dev->pending, req); // "often a no-op", it said
 
@@ -268,7 +268,7 @@ REBVAL *OS_Do_Device(REBREQ *req, int command)
         // do not want to get involved?
     }
 
-    int result = rebUnboxInteger(rebR(error_or_int), rebEND);
+    int result = rebUnboxInteger(rebR(error_or_int));
 
     // If request is pending, attach it to device for polling:
     //
@@ -298,8 +298,8 @@ void OS_Do_Device_Sync(REBREQ *req, int command)
 {
     REBVAL *result = OS_DO_DEVICE(req, command);
     assert(result != NULL); // should be synchronous
-    if (rebDid("error?", result, rebEND))
-        rebJumps("FAIL", result, rebEND);
+    if (rebDid("error?", result))
+        rebJumps("FAIL", result);
     rebRelease(result); // ignore result
 }
 

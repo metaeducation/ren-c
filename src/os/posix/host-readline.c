@@ -795,8 +795,7 @@ restart:;
               case 'H':   // !!! "home" (in what standard??)
               #if !defined(NDEBUG)
                 rebJumps(
-                    "FAIL {ESC H: please report your system info}",
-                    rebEND
+                    "FAIL {ESC H: please report your system info}"
                 );
               #endif
                 Home_Line(term);
@@ -805,8 +804,7 @@ restart:;
               case 'F':   // !!! "end" (in what standard??)
               #if !defined(NDEBUG)
                 rebJumps(
-                    "FAIL {ESC F: please report your system info}",
-                    rebEND
+                    "FAIL {ESC F: please report your system info}"
                 );
               #endif
                 End_Line(term);
@@ -864,10 +862,7 @@ restart:;
             // involved at that level.  Using sigaction() on SIGINT and
             // causing EINTR is how we would like to be triggering HALT.
             //
-            rebJumps(
-                "FAIL {Unexpected literal Ctrl-C in console}",
-                rebEND
-            );
+            rebJumps("FAIL {Unexpected literal Ctrl-C in console}");
 
           case 4: // CTRL-D, Synonym for Cancel Input (Windows Terminal Garbage)
             //

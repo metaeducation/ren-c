@@ -89,7 +89,7 @@ void Query_File_Or_Dir(REBVAL *out, REBVAL *port, struct devreq_file *file)
     REBREQ *req = AS_REBREQ(file);
 
     REBVAL *info = rebValue(
-        "copy ensure object! (", port , ")/scheme/info", rebEND
+        "copy ensure object! (", port , ")/scheme/info"
     ); // shallow copy
 
     REBCTX *ctx = VAL_CONTEXT(info);
@@ -376,8 +376,8 @@ static REB_R File_Actor(REBFRM *frame_, REBVAL *port, REBVAL *verb)
 
             Cleanup_File(file);
 
-            if (rebDid("error?", result, rebEND))
-                rebJumps("FAIL", result, rebEND);
+            if (rebDid("error?", result))
+                rebJumps("FAIL", result);
 
             rebRelease(result); // ignore result
         }
@@ -447,8 +447,8 @@ static REB_R File_Actor(REBFRM *frame_, REBVAL *port, REBVAL *verb)
 
             Cleanup_File(file);
 
-            if (rebDid("error?", result, rebEND))
-                rebJumps("FAIL", result, rebEND);
+            if (rebDid("error?", result))
+                rebJumps("FAIL", result);
 
             rebRelease(result);
         }
@@ -508,8 +508,8 @@ static REB_R File_Actor(REBFRM *frame_, REBVAL *port, REBVAL *verb)
 
             Cleanup_File(file);
 
-            if (rebDid("error?", result, rebEND))
-                rebJumps("FAIL", result, rebEND);
+            if (rebDid("error?", result))
+                rebJumps("FAIL", result);
 
             rebRelease(result); // ignore error
         }
@@ -526,8 +526,8 @@ static REB_R File_Actor(REBFRM *frame_, REBVAL *port, REBVAL *verb)
         REBVAL *result = OS_DO_DEVICE(req, RDC_DELETE);
         assert(result != NULL); // should be synchronous
 
-        if (rebDid("error?", result, rebEND))
-            rebJumps("FAIL", result, rebEND);
+        if (rebDid("error?", result))
+            rebJumps("FAIL", result);
 
         rebRelease(result); // ignore result
         RETURN (port); }
@@ -544,8 +544,8 @@ static REB_R File_Actor(REBFRM *frame_, REBVAL *port, REBVAL *verb)
 
         REBVAL *result = OS_DO_DEVICE(req, RDC_RENAME);
         assert(result != NULL); // should be synchronous
-        if (rebDid("error?", result, rebEND))
-            rebJumps("FAIL", result, rebEND);
+        if (rebDid("error?", result))
+            rebJumps("FAIL", result);
         rebRelease(result); // ignore result
 
         RETURN (ARG(from)); }
@@ -556,14 +556,14 @@ static REB_R File_Actor(REBFRM *frame_, REBVAL *port, REBVAL *verb)
 
             REBVAL *cr_result = OS_DO_DEVICE(req, RDC_CREATE);
             assert(cr_result != NULL);
-            if (rebDid("error?", cr_result, rebEND))
-                rebJumps("FAIL", cr_result, rebEND);
+            if (rebDid("error?", cr_result))
+                rebJumps("FAIL", cr_result);
             rebRelease(cr_result);
 
             REBVAL *cl_result = OS_DO_DEVICE(req, RDC_CLOSE);
             assert(cl_result != NULL);
-            if (rebDid("error?", cl_result, rebEND))
-                rebJumps("FAIL", cl_result, rebEND);
+            if (rebDid("error?", cl_result))
+                rebJumps("FAIL", cl_result);
             rebRelease(cl_result);
         }
 
@@ -584,7 +584,7 @@ static REB_R File_Actor(REBFRM *frame_, REBVAL *port, REBVAL *verb)
             Setup_File(file, 0, path);
             REBVAL *result = OS_DO_DEVICE(req, RDC_QUERY);
             assert(result != NULL);
-            if (rebDid("error?", result, rebEND)) {
+            if (rebDid("error?", result)) {
                 rebRelease(result); // !!! R3-Alpha returned blank on error
                 return nullptr;
             }
@@ -609,7 +609,7 @@ static REB_R File_Actor(REBFRM *frame_, REBVAL *port, REBVAL *verb)
 
             REBVAL *result = OS_DO_DEVICE(req, RDC_MODIFY);
             assert(result != NULL);
-            if (rebDid("error?", result, rebEND)) {
+            if (rebDid("error?", result)) {
                 rebRelease(result); // !!! R3-Alpha returned blank on error
                 return Init_False(D_OUT);
             }

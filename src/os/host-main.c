@@ -179,7 +179,7 @@ int main(int argc, char *argv_ansi[])
     // That way the command line argument processing can be taken care of by
     // PARSE in the HOST-STARTUP user function, instead of C code!
     //
-    REBVAL *argv_block = rebValue("lib/copy []", rebEND);
+    REBVAL *argv_block = rebValue("lib/copy []");
 
   #ifdef TO_WINDOWS
     //
@@ -200,7 +200,7 @@ int main(int argc, char *argv_ansi[])
         // Note: rebTextW() currently only supports UCS-2, so codepoints that
         // need more than two bytes to be represented will cause a failure.
         //
-        rebElide("append", argv_block, rebR(rebTextW(argv_ucs2[i])), rebEND);
+        rebElide("append", argv_block, rebR(rebTextW(argv_ucs2[i])));
     }
   #else
     // Just take the ANSI C "char*" args...which should ideally be in UTF8.
@@ -210,7 +210,7 @@ int main(int argc, char *argv_ansi[])
         if (argv_ansi[i] == nullptr)
             continue; // !!! Comment here said "shell bug" (?)
 
-        rebElide("append", argv_block, rebT(argv_ansi[i]), rebEND);
+        rebElide("append", argv_block, rebT(argv_ansi[i]));
     }
   #endif
 
@@ -231,11 +231,10 @@ int main(int argc, char *argv_ansi[])
     // Use TRANSCODE to get a BLOCK! from the BINARY!, then release the binary
     //
     REBVAL *host_code = rebValue(
-        "lib/transcode/file", host_bin, "%tmp-host-start.inc", rebEND
+        "lib/transcode/file", host_bin, "%tmp-host-start.inc"
     );
     rebElide(
-        "lib/ensure :lib/empty? lib/take/last", host_code, // empty bin @ tail
-        rebEND
+        "lib/ensure :lib/empty? lib/take/last", host_code  // empty bin @ tail
     );
     rebRelease(host_bin);
 
@@ -280,13 +279,13 @@ int main(int argc, char *argv_ansi[])
     // way that would work well for users, by leveraging modules or some other
     // level of abstraction, where issues like this would be taken care of.
     //
-    rebElide("lib/lock", host_code, rebEND);
+    rebElide("lib/lock", host_code);
 
     REBVAL *host_start = rebValueInline(host_code); // HOST-START is an ACTION!
     rebRelease(host_code);
 
-    if (rebNot("lib/action?", host_start, rebEND))
-        rebJumps("lib/PANIC-VALUE", host_start, rebEND);
+    if (rebNot("lib/action?", host_start))
+        rebJumps("lib/PANIC-VALUE", host_start);
 
     // While some people may think that argv[0] in C contains the path to
     // the running executable, this is not necessarily the case.  The actual
@@ -300,8 +299,7 @@ int main(int argc, char *argv_ansi[])
     //
     REBVAL *exec_path = OS_GET_CURRENT_EXEC();
     rebElide(
-        "system/options/boot: lib/ensure [blank! file!]", rebR(exec_path),
-        rebEND
+        "system/options/boot: lib/ensure [blank! file!]", rebR(exec_path)
     );
 
     // This runs the HOST-START, which returns *requests* to execute
@@ -312,13 +310,13 @@ int main(int argc, char *argv_ansi[])
         "lib/entrap [",
             rebR(host_start), // action! that takes 2 args
             rebR(argv_block),
-        "]", rebEND
+        "]"
     );
 
-    if (rebDid("lib/error?", trapped, rebEND)) // error in HOST-START itself
-        rebJumps("lib/PANIC", trapped, rebEND);
+    if (rebDid("lib/error?", trapped))  // error in HOST-START itself
+        rebJumps("lib/PANIC", trapped);
 
-    REBVAL *code = rebValue("lib/first", trapped, rebEND); // entrap []'s output
+    REBVAL *code = rebValue("lib/first", trapped);  // entrap []'s output
     rebRelease(trapped); // don't need the outer block any more
 
     // !!! For the moment, the CONSOLE extension does all the work of running
@@ -329,9 +327,9 @@ int main(int argc, char *argv_ansi[])
     // kinds of errors.  Hence there is a /PROVOKE refinement to CONSOLE
     // which feeds it an instruction, as if the console gave it to itself.
 
-    REBVAL *result = rebValue("console/provoke", rebR(code), rebEND);
+    REBVAL *result = rebValue("console/provoke", rebR(code));
 
-    int exit_status = rebUnboxInteger(rebR(result), rebEND);
+    int exit_status = rebUnboxInteger(rebR(result));
 
     OS_QUIT_DEVICES(0);
 

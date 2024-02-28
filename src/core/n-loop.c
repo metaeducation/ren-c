@@ -561,7 +561,7 @@ static REB_R Loop_Each_Core(struct Loop_Each_State *les) {
                 break;
 
               case REB_ACTION: {
-                REBVAL *generated = rebValue(rebEval(les->data), rebEND);
+                REBVAL *generated = rebValue(rebEval(les->data));
                 if (generated) {
                     Move_Value(var, generated);
                     rebRelease(generated);
@@ -748,7 +748,7 @@ static REB_R Loop_Each(REBFRM *frame_, LOOP_MODE mode)
         assert(IS_ERROR(r));
         if (mode == LOOP_MAP_EACH)
             DS_DROP_TO(dsp_orig);
-        rebJumps ("FAIL", rebR(r), rebEND);
+        rebJumps ("FAIL", rebR(r));
     }
 
     // Otherwise, nullptr signals result in les.out (a.k.a. D_OUT)
@@ -1463,7 +1463,7 @@ REBNATIVE(remove_each)
 
     if (r) {
         assert(IS_ERROR(r));
-        rebJumps("FAIL", rebR(r), rebEND);
+        rebJumps("FAIL", rebR(r));
     }
 
     if (res.broke)
