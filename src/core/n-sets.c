@@ -342,7 +342,7 @@ REBSER *Make_Set_Operation_Series(
 //      size [integer!]
 //  ]
 //
-REBNATIVE(exclude)
+DECLARE_NATIVE(exclude)
 {
     INCLUDE_PARAMS_OF_EXCLUDE;
 
@@ -394,7 +394,7 @@ REBNATIVE(exclude)
 //      size [integer!]
 //  ]
 //
-REBNATIVE(unique)
+DECLARE_NATIVE(unique)
 {
     INCLUDE_PARAMS_OF_UNIQUE;
 

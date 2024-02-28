@@ -213,7 +213,7 @@ rebsource: context [
                     ] then [
                         ;
                         ; It's a `some-name?: native [...]`, so we expect
-                        ; `REBNATIVE(some_name_q)` to be correctly lined up
+                        ; `DECLARE_NATIVE(some_name_q)` to be correctly lined up
                         ; as the "to-c-name" of the Rebol set-word
                         ;
                         if proto-parser/proto.arg.1 <> to-c-name name [

@@ -302,7 +302,7 @@ void Dump_Stack(REBFRM *f, REBLEN level)
 //      :value [any-word!]
 //  ]
 //
-REBNATIVE(dump)
+DECLARE_NATIVE(dump)
 {
     INCLUDE_PARAMS_OF_DUMP;
 

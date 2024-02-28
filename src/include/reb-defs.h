@@ -237,7 +237,7 @@ typedef void (*MOLD_HOOK)(REB_MOLD *mo, const Cell* v, bool form);
 // C function implementing a native ACTION!
 //
 typedef REB_R (*REBNAT)(REBFRM *frame_);
-#define REBNATIVE(n) \
+#define DECLARE_NATIVE(n) \
     REB_R N_##n(REBFRM *frame_)
 
 // Generic hooks: implementing a "verb" ACTION! for a particular

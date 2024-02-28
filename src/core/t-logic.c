@@ -41,7 +41,7 @@
 //      value2 [any-value!]
 //  ]
 //
-REBNATIVE(and_q)
+DECLARE_NATIVE(and_q)
 {
     INCLUDE_PARAMS_OF_AND_Q;
 
@@ -61,7 +61,7 @@ REBNATIVE(and_q)
 //      value2 [any-value!]
 //  ]
 //
-REBNATIVE(nor_q)
+DECLARE_NATIVE(nor_q)
 {
     INCLUDE_PARAMS_OF_NOR_Q;
 
@@ -81,7 +81,7 @@ REBNATIVE(nor_q)
 //      value2 [any-value!]
 //  ]
 //
-REBNATIVE(nand_q)
+DECLARE_NATIVE(nand_q)
 {
     INCLUDE_PARAMS_OF_NAND_Q;
 
@@ -102,7 +102,7 @@ REBNATIVE(nand_q)
 //      value [any-value!]
 //  ]
 //
-REBNATIVE(did_q)
+DECLARE_NATIVE(did_q)
 {
     INCLUDE_PARAMS_OF_DID_Q;
 
@@ -122,7 +122,7 @@ REBNATIVE(did_q)
 //      not not :optional
 //  ]
 //
-REBNATIVE(did)
+DECLARE_NATIVE(did)
 {
     INCLUDE_PARAMS_OF_DID;
 
@@ -140,7 +140,7 @@ REBNATIVE(did)
 //      value [any-value!]
 //  ]
 //
-REBNATIVE(not_q)
+DECLARE_NATIVE(not_q)
 {
     INCLUDE_PARAMS_OF_NOT_Q;
 
@@ -158,7 +158,7 @@ REBNATIVE(not_q)
 //      optional [<opt> any-value!]
 //  ]
 //
-REBNATIVE(not)
+DECLARE_NATIVE(not)
 {
     INCLUDE_PARAMS_OF_NOT;
 
@@ -175,7 +175,7 @@ REBNATIVE(not)
 //      value2 [any-value!]
 //  ]
 //
-REBNATIVE(or_q)
+DECLARE_NATIVE(or_q)
 {
     INCLUDE_PARAMS_OF_OR_Q;
 
@@ -195,7 +195,7 @@ REBNATIVE(or_q)
 //      value2 [any-value!]
 //  ]
 //
-REBNATIVE(xor_q)
+DECLARE_NATIVE(xor_q)
 {
     INCLUDE_PARAMS_OF_XOR_Q;
 
@@ -221,7 +221,7 @@ REBNATIVE(xor_q)
 //          [block! group!]
 //  ]
 //
-REBNATIVE(and)
+DECLARE_NATIVE(and)
 {
     INCLUDE_PARAMS_OF_AND;
 
@@ -257,7 +257,7 @@ REBNATIVE(and)
 //      :right "If BLOCK!, evaluated only if TO LOGIC! of LEFT is false"
 //          [block! group!]
 //  ]
-REBNATIVE(or)
+DECLARE_NATIVE(or)
 {
     INCLUDE_PARAMS_OF_OR;
 
@@ -295,7 +295,7 @@ REBNATIVE(or)
 //          [group!]
 //  ]
 //
-REBNATIVE(xor)
+DECLARE_NATIVE(xor)
 {
     INCLUDE_PARAMS_OF_XOR;
 
@@ -336,7 +336,7 @@ REBNATIVE(xor)
 //          [<opt> any-value!] ;-- not a literal GROUP! as with XOR
 //  ]
 //
-REBNATIVE(unless)
+DECLARE_NATIVE(unless)
 //
 // Though this routine is similar to XOR, it is different enough in usage and
 // looks from AND/OR/XOR to warrant not needing XOR's protection (e.g. forcing

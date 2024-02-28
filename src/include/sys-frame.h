@@ -180,7 +180,7 @@ INLINE bool Is_Frame_Gotten_Shoved(REBFRM *f) {
     if (f->gotten != FRM_SHOVE(f))
         return false;
     assert(GET_VAL_FLAG(f->gotten, VALUE_FLAG_ENFIXED));
-    return true; // see REBNATIVE(shove)
+    return true; // see DECLARE_NATIVE(shove)
 }
 
 #define FRM_PRIOR(f) \
@@ -305,7 +305,7 @@ INLINE void SET_FRAME_VALUE(REBFRM *f, const Cell* value) {
 //
 // These accessors are what is behind the INCLUDE_PARAMS_OF_XXX macros that
 // are used in natives.  They capture the implicit Reb_Frame* passed to every
-// REBNATIVE ('frame_') and read the information out cleanly, like this:
+// DECLARE_NATIVE ('frame_') and read the information out cleanly, like this:
 //
 //     PARAM(1, foo);
 //     REFINE(2, bar);

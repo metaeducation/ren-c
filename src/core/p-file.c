@@ -652,7 +652,7 @@ static REB_R File_Actor(REBFRM *frame_, Value* port, Value* verb)
 //      return: [handle!]
 //  ]
 //
-REBNATIVE(get_file_actor_handle)
+DECLARE_NATIVE(get_file_actor_handle)
 {
     Make_Port_Actor_Handle(D_OUT, &File_Actor);
     return D_OUT;

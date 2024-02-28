@@ -43,7 +43,7 @@
 //          "The value to form"
 //  ]
 //
-REBNATIVE(form)
+DECLARE_NATIVE(form)
 {
     INCLUDE_PARAMS_OF_FORM;
 
@@ -69,7 +69,7 @@ REBNATIVE(form)
 //      amount [integer!]
 //  ]
 //
-REBNATIVE(mold)
+DECLARE_NATIVE(mold)
 {
     INCLUDE_PARAMS_OF_MOLD;
 
@@ -104,7 +104,7 @@ REBNATIVE(mold)
 //          "Text to write, if a STRING! or CHAR! is converted to OS format"
 //  ]
 //
-REBNATIVE(write_stdout)
+DECLARE_NATIVE(write_stdout)
 {
     INCLUDE_PARAMS_OF_WRITE_STDOUT;
 
@@ -174,7 +174,7 @@ REBNATIVE(write_stdout)
 //      count [integer!]
 //  ]
 //
-REBNATIVE(new_line)
+DECLARE_NATIVE(new_line)
 {
     INCLUDE_PARAMS_OF_NEW_LINE;
 
@@ -233,7 +233,7 @@ REBNATIVE(new_line)
 //      position [block! group! varargs!] "Position to check marker"
 //  ]
 //
-REBNATIVE(new_line_q)
+DECLARE_NATIVE(new_line_q)
 {
     INCLUDE_PARAMS_OF_NEW_LINE_Q;
 
@@ -318,7 +318,7 @@ REBNATIVE(new_line_q)
 //          "Give time in current zone without including the time zone"
 //  ]
 //
-REBNATIVE(now)
+DECLARE_NATIVE(now)
 {
     INCLUDE_PARAMS_OF_NOW;
 
@@ -444,7 +444,7 @@ REBLEN Milliseconds_From_Value(const Cell* v) {
 //      /only "only check for ports given in the block to this function"
 //  ]
 //
-REBNATIVE(wait)
+DECLARE_NATIVE(wait)
 {
     INCLUDE_PARAMS_OF_WAIT;
 
@@ -558,7 +558,7 @@ REBNATIVE(wait)
 //      event [event!]
 //  ]
 //
-REBNATIVE(wake_up)
+DECLARE_NATIVE(wake_up)
 //
 // Calls port update for native actors.
 // Calls port awake function.
@@ -618,7 +618,7 @@ REBNATIVE(wake_up)
 //          {Ensure input path is treated as a directory}
 //  ]
 //
-REBNATIVE(local_to_file)
+DECLARE_NATIVE(local_to_file)
 {
     INCLUDE_PARAMS_OF_LOCAL_TO_FILE;
 
@@ -663,7 +663,7 @@ REBNATIVE(local_to_file)
 //          {For directories, add a * to the end}
 //  ]
 //
-REBNATIVE(file_to_local)
+DECLARE_NATIVE(file_to_local)
 {
     INCLUDE_PARAMS_OF_FILE_TO_LOCAL;
 
@@ -701,7 +701,7 @@ REBNATIVE(file_to_local)
 //      ; No arguments
 //  ]
 //
-REBNATIVE(what_dir)
+DECLARE_NATIVE(what_dir)
 {
     Value* current_path = Get_System(SYS_OPTIONS, OPTIONS_CURRENT_PATH);
 
@@ -748,7 +748,7 @@ REBNATIVE(what_dir)
 //      path [file! url!]
 //  ]
 //
-REBNATIVE(change_dir)
+DECLARE_NATIVE(change_dir)
 {
     INCLUDE_PARAMS_OF_CHANGE_DIR;
 

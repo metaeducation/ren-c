@@ -357,7 +357,7 @@ REB_R Traced_Dispatcher_Hook(REBFRM * const f)
 //          "Traces functions only (less output)"
 //  ]
 //
-REBNATIVE(trace)
+DECLARE_NATIVE(trace)
 //
 // !!! R3-Alpha had a kind of interesting concept of storing the backtrace in
 // a buffer, up to a certain number of lines.  So it wouldn't be visible and

@@ -63,7 +63,7 @@
 //          [block! action!]
 //  ]
 //
-REBNATIVE(if)
+DECLARE_NATIVE(if)
 {
     INCLUDE_PARAMS_OF_IF;
 
@@ -88,7 +88,7 @@ REBNATIVE(if)
 //      branch [block! action!]
 //  ]
 //
-REBNATIVE(if_not)
+DECLARE_NATIVE(if_not)
 {
     INCLUDE_PARAMS_OF_IF_NOT;
 
@@ -115,7 +115,7 @@ REBNATIVE(if_not)
 //      false-branch [block! action!]
 //  ]
 //
-REBNATIVE(either)
+DECLARE_NATIVE(either)
 {
     INCLUDE_PARAMS_OF_EITHER;
 
@@ -279,7 +279,7 @@ bool Either_Test_Core_Throws(
 //          [block! action!]
 //  ]
 //
-REBNATIVE(either_test)
+DECLARE_NATIVE(either_test)
 {
     INCLUDE_PARAMS_OF_EITHER_TEST;
 
@@ -308,7 +308,7 @@ REBNATIVE(either_test)
 //      branch [block! action!]
 //  ]
 //
-REBNATIVE(else)
+DECLARE_NATIVE(else)
 {
     INCLUDE_PARAMS_OF_ELSE; // faster than EITHER-TEST specialized w/`VALUE?`
 
@@ -335,7 +335,7 @@ REBNATIVE(else)
 //          [block! action!]
 //  ]
 //
-REBNATIVE(then)
+DECLARE_NATIVE(then)
 {
     INCLUDE_PARAMS_OF_THEN; // faster than EITHER-TEST specialized w/`NULL?`
 
@@ -362,7 +362,7 @@ REBNATIVE(then)
 //          [block! action!]
 //  ]
 //
-REBNATIVE(also)
+DECLARE_NATIVE(also)
 {
     INCLUDE_PARAMS_OF_ALSO; // `then func [x] [(...) :x]` => `also [...]`
 
@@ -392,7 +392,7 @@ REBNATIVE(also)
 //      :args [any-value! <...>]
 //  ]
 //
-REBNATIVE(match)
+DECLARE_NATIVE(match)
 //
 // This routine soft quotes its `test` argument, and has to be variadic, in
 // order to get the special `MATCH PARSE "AAA" [SOME "A"]` -> "AAA" behavior.
@@ -561,7 +561,7 @@ either_test:;
 //          [<opt> any-value!]
 // ]
 //
-REBNATIVE(non)
+DECLARE_NATIVE(non)
 //
 // !!! This is a partial implementation of NON implemented for R3C, just good
 // enough for `non void!` and `non null` cases to give validation options to
@@ -599,7 +599,7 @@ REBNATIVE(non)
 //          [block!]
 //  ]
 //
-REBNATIVE(all)
+DECLARE_NATIVE(all)
 {
     INCLUDE_PARAMS_OF_ALL;
 
@@ -640,7 +640,7 @@ REBNATIVE(all)
 //          [block!]
 //  ]
 //
-REBNATIVE(any)
+DECLARE_NATIVE(any)
 {
     INCLUDE_PARAMS_OF_ANY;
 
@@ -681,7 +681,7 @@ REBNATIVE(any)
 //          [block!]
 //  ]
 //
-REBNATIVE(none)
+DECLARE_NATIVE(none)
 //
 // !!! In order to reduce confusion and accidents in the near term, the
 // %mezz-legacy.r renames this to NONE-OF and makes NONE report an error.
@@ -854,7 +854,7 @@ static REB_R Case_Choose_Core_May_Throw(
 //          "Evaluate all cases (do not stop at first logically true case)"
 //  ]
 //
-REBNATIVE(case)
+DECLARE_NATIVE(case)
 {
     const bool choose = false; // jsut a plain CASE
     return Case_Choose_Core_May_Throw(frame_, choose);
@@ -874,7 +874,7 @@ REBNATIVE(case)
 //          "Return the value for the last matched choice (instead of first)"
 //  ]
 //
-REBNATIVE(choose)
+DECLARE_NATIVE(choose)
 //
 // Note: The choose can't be run backwards, only forwards.  So implementation
 // means that "/LAST" really can only be done as an /ALL, there's no way to
@@ -908,7 +908,7 @@ REBNATIVE(choose)
 //      default-branch [block!]
 //  ]
 //
-REBNATIVE(switch)
+DECLARE_NATIVE(switch)
 {
     INCLUDE_PARAMS_OF_SWITCH;
 
@@ -1062,7 +1062,7 @@ REBNATIVE(switch)
 //      ]
 //  ]
 //
-REBNATIVE(default)
+DECLARE_NATIVE(default)
 {
     INCLUDE_PARAMS_OF_DEFAULT;
 
@@ -1129,7 +1129,7 @@ REBNATIVE(default)
 //      /any "Catch all throws except QUIT (can be used with /QUIT)"
 //  ]
 //
-REBNATIVE(catch)
+DECLARE_NATIVE(catch)
 //
 // There's a refinement for catching quits, and CATCH/ANY will not alone catch
 // it (you have to CATCH/ANY/QUIT).  Currently the label for quitting is the
@@ -1267,7 +1267,7 @@ REBNATIVE(catch)
 //      name-value [word! action! object!]
 //  ]
 //
-REBNATIVE(throw)
+DECLARE_NATIVE(throw)
 //
 // Choices are currently limited for what one can use as a "name" of a THROW.
 // Note blocks as names would conflict with the `name_list` feature in CATCH.

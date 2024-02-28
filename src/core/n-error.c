@@ -65,7 +65,7 @@ static const Value* Trap_Dangerous(REBFRM *frame_) {
 //      valid [word! path!]
 //  ]
 //
-REBNATIVE(trap)
+DECLARE_NATIVE(trap)
 //
 // !!! R3C lacks multiple return value handling, but this gives parity with
 // a /RESULT refinement for getting the mechanical result in case of no error.
@@ -139,7 +139,7 @@ static Value* Entrap_Dangerous(REBFRM *frame_) {
 //          [block! action!]
 //  ]
 //
-REBNATIVE(entrap)
+DECLARE_NATIVE(entrap)
 {
     INCLUDE_PARAMS_OF_ENTRAP;
 
@@ -163,7 +163,7 @@ REBNATIVE(entrap)
 //      location [frame! any-word!]
 //  ]
 //
-REBNATIVE(set_location_of_error)
+DECLARE_NATIVE(set_location_of_error)
 {
     INCLUDE_PARAMS_OF_SET_LOCATION_OF_ERROR;
 

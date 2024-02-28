@@ -512,7 +512,7 @@ bool Make_Error_Object_Throws(
         // apply the same logic as if an OBJECT! had been passed in above.
 
         // Bind and do an evaluation step (as with MAKE OBJECT! with A_MAKE
-        // code in REBTYPE(Context) and code in REBNATIVE(construct))
+        // code in REBTYPE(Context) and code in DECLARE_NATIVE(construct))
 
         error = Make_Selfish_Context_Detect_Managed(
             REB_ERROR, // type

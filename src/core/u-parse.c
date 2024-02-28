@@ -1375,7 +1375,7 @@ static REBIXO Do_Eval_Rule(REBFRM *f)
 //      <local> num-quotes
 //  ]
 //
-REBNATIVE(subparse)
+DECLARE_NATIVE(subparse)
 //
 // Rules are matched until one of these things happens:
 //
@@ -2550,7 +2550,7 @@ REBNATIVE(subparse)
 //      /case "Uses case-sensitive comparison"
 //  ]
 //
-REBNATIVE(parse)
+DECLARE_NATIVE(parse)
 {
     INCLUDE_PARAMS_OF_PARSE;
 
@@ -2595,7 +2595,7 @@ REBNATIVE(parse)
 //
 //  ]
 //
-REBNATIVE(parse_accept)
+DECLARE_NATIVE(parse_accept)
 //
 // !!! This was not created for user usage, but rather as a label for the
 // internal throw used to indicate "accept".
@@ -2612,7 +2612,7 @@ REBNATIVE(parse_accept)
 //
 //  ]
 //
-REBNATIVE(parse_reject)
+DECLARE_NATIVE(parse_reject)
 //
 // !!! This was not created for user usage, but rather as a label for the
 // internal throw used to indicate "reject".

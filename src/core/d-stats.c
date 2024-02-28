@@ -55,7 +55,7 @@
 //          "-1 for all pools"
 //  ]
 //
-REBNATIVE(stats)
+DECLARE_NATIVE(stats)
 {
     INCLUDE_PARAMS_OF_STATS;
 
@@ -332,7 +332,7 @@ REB_R Measured_Dispatcher_Hook(REBFRM * const f)
 //          {Whether metrics should be on or off.}
 //  ]
 //
-REBNATIVE(metrics)
+DECLARE_NATIVE(metrics)
 {
     INCLUDE_PARAMS_OF_METRICS;
 
@@ -367,7 +367,7 @@ REBNATIVE(metrics)
 //          {Currently just either ON or OFF}
 //  ]
 //
-REBNATIVE(callgrind)
+DECLARE_NATIVE(callgrind)
 //
 // Note: In order to start callgrind without collecting data by default (so
 // that you can instrument just part of the code) use:

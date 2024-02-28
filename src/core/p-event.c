@@ -295,7 +295,7 @@ void Shutdown_Event_Scheme(void)
 //      return: [handle!]
 //  ]
 //
-REBNATIVE(get_event_actor_handle)
+DECLARE_NATIVE(get_event_actor_handle)
 {
     Make_Port_Actor_Handle(D_OUT, &Event_Actor);
     return D_OUT;

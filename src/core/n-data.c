@@ -64,7 +64,7 @@ static bool Check_Char_Range(const Value* val, REBINT limit)
 //      value [any-string! char! integer!]
 //  ]
 //
-REBNATIVE(ascii_q)
+DECLARE_NATIVE(ascii_q)
 {
     INCLUDE_PARAMS_OF_ASCII_Q;
 
@@ -80,7 +80,7 @@ REBNATIVE(ascii_q)
 //      value [any-string! char! integer!]
 //  ]
 //
-REBNATIVE(latin1_q)
+DECLARE_NATIVE(latin1_q)
 {
     INCLUDE_PARAMS_OF_LATIN1_Q;
 
@@ -97,7 +97,7 @@ REBNATIVE(latin1_q)
 //      y [any-number!]
 //  ]
 //
-REBNATIVE(as_pair)
+DECLARE_NATIVE(as_pair)
 {
     INCLUDE_PARAMS_OF_AS_PAIR;
 
@@ -134,7 +134,7 @@ REBNATIVE(as_pair)
 //          "Add to context any new set-words found"
 //  ]
 //
-REBNATIVE(bind)
+DECLARE_NATIVE(bind)
 {
     INCLUDE_PARAMS_OF_BIND;
 
@@ -246,7 +246,7 @@ REBNATIVE(bind)
 //          {Block to evaluate}
 //  ]
 //
-REBNATIVE(use)
+DECLARE_NATIVE(use)
 //
 // !!! R3-Alpha's USE was written in userspace and was based on building a
 // CLOSURE! that it would DO.  Hence it took advantage of the existing code
@@ -367,7 +367,7 @@ bool Did_Get_Binding_Of(Value* out, const Value* v)
 //      optional [<opt> any-value!]
 //  ]
 //
-REBNATIVE(value_q)
+DECLARE_NATIVE(value_q)
 {
     INCLUDE_PARAMS_OF_VALUE_Q;
 
@@ -383,7 +383,7 @@ REBNATIVE(value_q)
 //      optional [<opt> any-value!]
 //  ]
 //
-REBNATIVE(element_q)
+DECLARE_NATIVE(element_q)
 {
     INCLUDE_PARAMS_OF_ELEMENT_Q;
 
@@ -402,7 +402,7 @@ REBNATIVE(element_q)
 //          "Process nested blocks"
 //  ]
 //
-REBNATIVE(unbind)
+DECLARE_NATIVE(unbind)
 {
     INCLUDE_PARAMS_OF_UNBIND;
 
@@ -433,7 +433,7 @@ REBNATIVE(unbind)
 //          "Words to ignore"
 //  ]
 //
-REBNATIVE(collect_words)
+DECLARE_NATIVE(collect_words)
 {
     INCLUDE_PARAMS_OF_COLLECT_WORDS;
 
@@ -503,7 +503,7 @@ INLINE void Get_Opt_Polymorphic_May_Fail(
 //      /any "Retrieve ANY-VALUE! (e.g. do not error on VOID!)"
 //  ]
 //
-REBNATIVE(get)
+DECLARE_NATIVE(get)
 //
 // Note: `get [x y] [some-var :some-unset-var]` would fail without /TRY
 {
@@ -545,7 +545,7 @@ REBNATIVE(get)
 //          [<blank> <dequote> any-word! any-path!]
 //  ]
 //
-REBNATIVE(get_p)
+DECLARE_NATIVE(get_p)
 //
 // This is added as a compromise, as `:var` won't efficiently get ANY-VALUE!.
 // At least `get* 'var` doesn't make you pay for path processing, and it's
@@ -626,7 +626,7 @@ INLINE void Set_Opt_Polymorphic_May_Fail(
 //      /any "do not error on unset words"
 //  ]
 //
-REBNATIVE(set)
+DECLARE_NATIVE(set)
 //
 // R3-Alpha and Red let you write `set [a b] 10`, since the thing you were
 // setting to was not a block, would assume you meant to set all the values to
@@ -714,7 +714,7 @@ REBNATIVE(set)
 //      optional [<opt> any-value!]
 //  ]
 //
-REBNATIVE(try)
+DECLARE_NATIVE(try)
 {
     INCLUDE_PARAMS_OF_TRY;
 
@@ -738,7 +738,7 @@ REBNATIVE(try)
 //      optional [<opt> <blank> any-value!]
 //  ]
 //
-REBNATIVE(opt)
+DECLARE_NATIVE(opt)
 {
     INCLUDE_PARAMS_OF_OPT;
 
@@ -766,7 +766,7 @@ REBNATIVE(opt)
 //      word [any-word! block! group!] "(modified if series)"
 //  ]
 //
-REBNATIVE(in)
+DECLARE_NATIVE(in)
 //
 // !!! The argument names here are bad... not necessarily a context and not
 // necessarily a word.  `code` or `source` to be bound in a `target`, perhaps?
@@ -850,7 +850,7 @@ REBNATIVE(in)
 //          "Add source words to the target if necessary"
 //  ]
 //
-REBNATIVE(resolve)
+DECLARE_NATIVE(resolve)
 {
     INCLUDE_PARAMS_OF_RESOLVE;
 
@@ -880,7 +880,7 @@ REBNATIVE(resolve)
 //      source [any-word! any-path!]
 //  ]
 //
-REBNATIVE(enfixed_q)
+DECLARE_NATIVE(enfixed_q)
 {
     INCLUDE_PARAMS_OF_ENFIXED_Q;
 
@@ -911,7 +911,7 @@ REBNATIVE(enfixed_q)
 //      parameter [word!]
 //  ]
 //
-REBNATIVE(semiquoted_q)
+DECLARE_NATIVE(semiquoted_q)
 //
 // This operation is somewhat dodgy.  So even though the flag is carried by
 // all values, and could be generalized in the system somehow to query on
@@ -942,7 +942,7 @@ REBNATIVE(semiquoted_q)
 //          {Make it seem that the return result was quoted}
 //  ]
 //
-REBNATIVE(identity)
+DECLARE_NATIVE(identity)
 //
 // https://en.wikipedia.org/wiki/Identity_function
 // https://stackoverflow.com/q/3136338
@@ -973,7 +973,7 @@ REBNATIVE(identity)
 //      memory [any-series! any-context! handle!]
 //  ]
 //
-REBNATIVE(free)
+DECLARE_NATIVE(free)
 {
     INCLUDE_PARAMS_OF_FREE;
 
@@ -1002,7 +1002,7 @@ REBNATIVE(free)
 //      value [any-value!]
 //  ]
 //
-REBNATIVE(free_q)
+DECLARE_NATIVE(free_q)
 {
     INCLUDE_PARAMS_OF_FREE_Q;
 
@@ -1032,7 +1032,7 @@ REBNATIVE(free_q)
 //      value [<blank> any-series! any-word!]
 //  ]
 //
-REBNATIVE(as)
+DECLARE_NATIVE(as)
 {
     INCLUDE_PARAMS_OF_AS;
 
@@ -1205,7 +1205,7 @@ REBNATIVE(as)
 //     value2 [any-series!]
 //  ]
 //
-REBNATIVE(aliases_q)
+DECLARE_NATIVE(aliases_q)
 {
     INCLUDE_PARAMS_OF_ALIASES_Q;
 
@@ -1241,7 +1241,7 @@ INLINE bool Is_Set(const Value* location)
 //      value? get location
 //  ]
 //
-REBNATIVE(set_q)
+DECLARE_NATIVE(set_q)
 {
     INCLUDE_PARAMS_OF_SET_Q;
 
@@ -1259,7 +1259,7 @@ REBNATIVE(set_q)
 //      null? get location
 //  ]
 //
-REBNATIVE(unset_q)
+DECLARE_NATIVE(unset_q)
 {
     INCLUDE_PARAMS_OF_UNSET_Q;
 
@@ -1285,7 +1285,7 @@ REBNATIVE(unset_q)
 //      ]
 //  ]
 //
-REBNATIVE(quote)
+DECLARE_NATIVE(quote)
 {
     INCLUDE_PARAMS_OF_QUOTE;
 
@@ -1308,7 +1308,7 @@ REBNATIVE(quote)
 //      return: [<opt>]
 //  ]
 //
-REBNATIVE(null)
+DECLARE_NATIVE(null)
 {
     INCLUDE_PARAMS_OF_NULL;
 
@@ -1327,7 +1327,7 @@ REBNATIVE(null)
 //      null = type of :optional
 //  ]
 //
-REBNATIVE(null_q)
+DECLARE_NATIVE(null_q)
 {
     INCLUDE_PARAMS_OF_NULL_Q;
 
@@ -1357,7 +1357,7 @@ bool Is_Voided(const Value* location) {
 //      var [word! path!]
 //  ]
 //
-REBNATIVE(voided_q)
+DECLARE_NATIVE(voided_q)
 {
     INCLUDE_PARAMS_OF_VOIDED_Q;
 
@@ -1374,7 +1374,7 @@ REBNATIVE(voided_q)
 //      optional [<opt> any-value!]
 //  ]
 //
-REBNATIVE(voidify)
+DECLARE_NATIVE(voidify)
 {
     INCLUDE_PARAMS_OF_VOIDIFY;
 
@@ -1398,7 +1398,7 @@ REBNATIVE(voidify)
 //      ]
 //  ]
 //
-REBNATIVE(nothing_q)
+DECLARE_NATIVE(nothing_q)
 {
     INCLUDE_PARAMS_OF_NOTHING_Q;
 
@@ -1421,7 +1421,7 @@ REBNATIVE(nothing_q)
 //      ]
 //  ]
 //
-REBNATIVE(something_q)
+DECLARE_NATIVE(something_q)
 {
     INCLUDE_PARAMS_OF_SOMETHING_Q;
 

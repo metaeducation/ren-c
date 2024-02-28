@@ -237,7 +237,7 @@ ATTRIBUTE_NO_RETURN void Panic_Core(
 //          "Message to report (evaluation not counted in ticks)"
 //  ]
 //
-REBNATIVE(panic)
+DECLARE_NATIVE(panic)
 {
     INCLUDE_PARAMS_OF_PANIC;
 
@@ -283,7 +283,7 @@ REBNATIVE(panic)
 //          "Suspicious value to panic on (debug build shows diagnostics)"
 //  ]
 //
-REBNATIVE(panic_value)
+DECLARE_NATIVE(panic_value)
 {
     INCLUDE_PARAMS_OF_PANIC_VALUE;
 

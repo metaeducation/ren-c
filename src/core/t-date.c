@@ -1055,7 +1055,7 @@ setDate:
 //      zone [integer!]
 //  ]
 //
-REBNATIVE(make_date_ymdsnz)
+DECLARE_NATIVE(make_date_ymdsnz)
 //
 // !!! This native exists to avoid adding specialized C routines to the API
 // for the purposes of date creation in NOW.  Ideally there would be a nicer

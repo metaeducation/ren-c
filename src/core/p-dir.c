@@ -345,7 +345,7 @@ static REB_R Dir_Actor(REBFRM *frame_, Value* port, Value* verb)
 //      return: [handle!]
 //  ]
 //
-REBNATIVE(get_dir_actor_handle)
+DECLARE_NATIVE(get_dir_actor_handle)
 {
     Make_Port_Actor_Handle(D_OUT, &Dir_Actor);
     return D_OUT;

@@ -2811,7 +2811,7 @@ void Shutdown_Scanner(void)
 //          line-number [integer!]
 //  ]
 //
-REBNATIVE(transcode)
+DECLARE_NATIVE(transcode)
 {
     INCLUDE_PARAMS_OF_TRANSCODE;
 

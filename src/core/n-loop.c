@@ -85,7 +85,7 @@ bool Catching_Break_Or_Continue(Value* val, bool *broke)
 //
 //  ]
 //
-REBNATIVE(break)
+DECLARE_NATIVE(break)
 //
 // BREAK is implemented via a THROWN() value that bubbles up through
 // the stack.  It uses the value of its own native function as the
@@ -108,7 +108,7 @@ REBNATIVE(break)
 //          [<end> <opt> any-value!]
 //  ]
 //
-REBNATIVE(continue)
+DECLARE_NATIVE(continue)
 //
 // CONTINUE is implemented via a THROWN() value that bubbles up through
 // the stack.  It uses the value of its own native function as the
@@ -801,7 +801,7 @@ static REB_R Loop_Each(REBFRM *frame_, LOOP_MODE mode)
 //          "Code to evaluate"
 //  ]
 //
-REBNATIVE(for)
+DECLARE_NATIVE(for)
 {
     INCLUDE_PARAMS_OF_FOR;
 
@@ -878,7 +878,7 @@ REBNATIVE(for)
 //          [block! action!]
 //  ]
 //
-REBNATIVE(for_skip)
+DECLARE_NATIVE(for_skip)
 {
     INCLUDE_PARAMS_OF_FOR_SKIP;
 
@@ -964,7 +964,7 @@ REBNATIVE(for_skip)
 //          [<opt> <end> any-value!]
 //  ]
 //
-REBNATIVE(stop)
+DECLARE_NATIVE(stop)
 //
 // Most loops are not allowed to explicitly return a value and stop looping,
 // because that would make it impossible to tell from the outside whether
@@ -1004,7 +1004,7 @@ REBNATIVE(stop)
 //          "Block or action to evaluate each time"
 //  ]
 //
-REBNATIVE(cycle)
+DECLARE_NATIVE(cycle)
 {
     INCLUDE_PARAMS_OF_CYCLE;
 
@@ -1050,7 +1050,7 @@ REBNATIVE(cycle)
 //          "Block to evaluate each time"
 //  ]
 //
-REBNATIVE(for_each)
+DECLARE_NATIVE(for_each)
 {
     return Loop_Each(frame_, LOOP_FOR_EACH);
 }
@@ -1071,7 +1071,7 @@ REBNATIVE(for_each)
 //          "Block to evaluate each time"
 //  ]
 //
-REBNATIVE(every)
+DECLARE_NATIVE(every)
 {
     return Loop_Each(frame_, LOOP_EVERY);
 }
@@ -1357,7 +1357,7 @@ static REB_R Remove_Each_Core(struct Remove_Each_State *res)
 //          "Block to evaluate (return TRUE to remove)"
 //  ]
 //
-REBNATIVE(remove_each)
+DECLARE_NATIVE(remove_each)
 {
     INCLUDE_PARAMS_OF_REMOVE_EACH;
 
@@ -1480,7 +1480,7 @@ REBNATIVE(remove_each)
 //          "Block to evaluate each time"
 //  ]
 //
-REBNATIVE(map_each)
+DECLARE_NATIVE(map_each)
 {
     return Loop_Each(frame_, LOOP_MAP_EACH);
 }
@@ -1499,7 +1499,7 @@ REBNATIVE(map_each)
 //          "Block to evaluate or action to run."
 //  ]
 //
-REBNATIVE(loop)
+DECLARE_NATIVE(loop)
 {
     INCLUDE_PARAMS_OF_LOOP;
 
@@ -1557,7 +1557,7 @@ REBNATIVE(loop)
 //          "Block to evaluate each time"
 //  ]
 //
-REBNATIVE(repeat)
+DECLARE_NATIVE(repeat)
 {
     INCLUDE_PARAMS_OF_REPEAT;
 
@@ -1647,7 +1647,7 @@ INLINE REB_R Until_Core(
 //      body [block! action!]
 //  ]
 //
-REBNATIVE(until)
+DECLARE_NATIVE(until)
 {
     return Until_Core(frame_, true); // run loop until result IS_TRUTHY()
 }
@@ -1663,7 +1663,7 @@ REBNATIVE(until)
 //      body [block! action!]
 //  ]
 //
-REBNATIVE(until_not)
+DECLARE_NATIVE(until_not)
 //
 // Faster than running NOT, and doesn't need groups for `until [...not (x =`
 {
@@ -1729,7 +1729,7 @@ INLINE REB_R While_Core(
 //      body [block! action!]
 //  ]
 //
-REBNATIVE(while)
+DECLARE_NATIVE(while)
 {
     return While_Core(frame_, true); // run loop while condition IS_TRUTHY()
 }
@@ -1746,7 +1746,7 @@ REBNATIVE(while)
 //      body [block! action!]
 //  ]
 //
-REBNATIVE(while_not)
+DECLARE_NATIVE(while_not)
 //
 // Faster than running NOT, and doesn't need groups for `while [not (x =`
 {

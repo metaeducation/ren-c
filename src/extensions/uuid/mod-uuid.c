@@ -56,7 +56,7 @@
 //      return: [binary!]
 //  ]
 //
-REBNATIVE(generate)
+DECLARE_NATIVE(generate)
 {
     UUID_INCLUDE_PARAMS_OF_GENERATE;
 

@@ -446,7 +446,7 @@ REB_R PD_Context(
 //      value [<blank> action! any-context!]
 //  ]
 //
-REBNATIVE(meta_of)
+DECLARE_NATIVE(meta_of)
 //
 // See notes accompanying the `meta` field in the REBSER definition.
 {
@@ -479,7 +479,7 @@ REBNATIVE(meta_of)
 //      meta [<opt> any-context!]
 //  ]
 //
-REBNATIVE(set_meta)
+DECLARE_NATIVE(set_meta)
 //
 // See notes accompanying the `meta` field in the REBSER definition.
 {
@@ -946,7 +946,7 @@ REBTYPE(Context)
 //          "Values are kept as-is"
 //  ]
 //
-REBNATIVE(construct)
+DECLARE_NATIVE(construct)
 //
 // CONSTRUCT in Ren-C is an effective replacement for what MAKE ANY-OBJECT!
 // was able to do in Rebol2 and R3-Alpha.  It takes a spec that can be an

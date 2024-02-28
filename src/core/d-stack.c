@@ -223,7 +223,7 @@ bool Is_Context_Running_Or_Pending(REBCTX *frame_ctx)
 //      frame [frame!]
 //  ]
 //
-REBNATIVE(running_q)
+DECLARE_NATIVE(running_q)
 {
     INCLUDE_PARAMS_OF_RUNNING_Q;
 
@@ -246,7 +246,7 @@ REBNATIVE(running_q)
 //      frame [frame!]
 //  ]
 //
-REBNATIVE(pending_q)
+DECLARE_NATIVE(pending_q)
 {
     INCLUDE_PARAMS_OF_PENDING_Q;
 

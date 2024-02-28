@@ -873,7 +873,7 @@ REB_R Specializer_Dispatcher(REBFRM *f)
 //          {Definition for FRAME! fields for args and refinements}
 //  ]
 //
-REBNATIVE(specialize)
+DECLARE_NATIVE(specialize)
 {
     INCLUDE_PARAMS_OF_SPECIALIZE;
 
@@ -1150,7 +1150,7 @@ found_first_arg_ptr:
 //          {arguments which will be consumed to fulfill a named function}
 //  ]
 //
-REBNATIVE(does)
+DECLARE_NATIVE(does)
 {
     INCLUDE_PARAMS_OF_DOES;
 

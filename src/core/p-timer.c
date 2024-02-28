@@ -148,7 +148,7 @@ static REB_R Timer_Actor(REBFRM *frame_, Value* port, Value* verb)
 //x      return: [handle!]
 //x  ]
 //x
-REBNATIVE(get_timer_actor_handle)
+DECLARE_NATIVE(get_timer_actor_handle)
 {
     Make_Port_Actor_Handle(D_OUT, &Timer_Actor);
     return D_OUT;

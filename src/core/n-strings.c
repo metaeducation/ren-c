@@ -109,7 +109,7 @@ static struct {
 //      /tail "Include delimiter at tail of result (if non-NULL)"
 //  ]
 //
-REBNATIVE(delimit)
+DECLARE_NATIVE(delimit)
 {
     INCLUDE_PARAMS_OF_DELIMIT;
 
@@ -166,7 +166,7 @@ REBNATIVE(delimit)
 //          "Key to use"
 //  ]
 //
-REBNATIVE(checksum)
+DECLARE_NATIVE(checksum)
 {
     INCLUDE_PARAMS_OF_CHECKSUM;
 
@@ -322,7 +322,7 @@ REBNATIVE(checksum)
 //          {ZLIB (adler32, no size) or GZIP (crc32, uncompressed size)}
 //  ]
 //
-REBNATIVE(deflate)
+DECLARE_NATIVE(deflate)
 {
     INCLUDE_PARAMS_OF_DEFLATE;
 
@@ -389,7 +389,7 @@ REBNATIVE(deflate)
 //          {ZLIB, GZIP, or DETECT (for http://stackoverflow.com/a/9213826)}
 //  ]
 //
-REBNATIVE(inflate)
+DECLARE_NATIVE(inflate)
 {
     INCLUDE_PARAMS_OF_INFLATE;
 
@@ -452,7 +452,7 @@ REBNATIVE(inflate)
 //          "The base to convert from: 64, 16, or 2"
 //  ]
 //
-REBNATIVE(debase)
+DECLARE_NATIVE(debase)
 {
     INCLUDE_PARAMS_OF_DEBASE;
 
@@ -489,7 +489,7 @@ REBNATIVE(debase)
 //          "The base to convert to: 64, 16, or 2"
 //  ]
 //
-REBNATIVE(enbase)
+DECLARE_NATIVE(enbase)
 {
     INCLUDE_PARAMS_OF_ENBASE;
 
@@ -558,7 +558,7 @@ REBNATIVE(enbase)
 //          "String to encode, all non-ASCII or illegal URL bytes encoded"
 //  ]
 //
-REBNATIVE(enhex)
+DECLARE_NATIVE(enhex)
 {
     INCLUDE_PARAMS_OF_ENHEX;
 
@@ -723,7 +723,7 @@ REBNATIVE(enhex)
 //          "See http://en.wikipedia.org/wiki/Percent-encoding"
 //  ]
 //
-REBNATIVE(dehex)
+DECLARE_NATIVE(dehex)
 {
     INCLUDE_PARAMS_OF_DEHEX;
 
@@ -852,7 +852,7 @@ REBNATIVE(dehex)
 //          {Return block of lines (works for LF, CR, CR-LF endings)}
 //  ]
 //
-REBNATIVE(deline)
+DECLARE_NATIVE(deline)
 {
     INCLUDE_PARAMS_OF_DELINE;
 
@@ -899,7 +899,7 @@ REBNATIVE(deline)
 //      string [any-string!] "(modified)"
 //  ]
 //
-REBNATIVE(enline)
+DECLARE_NATIVE(enline)
 {
     INCLUDE_PARAMS_OF_ENLINE;
 
@@ -977,7 +977,7 @@ REBNATIVE(enline)
 //      number [integer!]
 //  ]
 //
-REBNATIVE(entab)
+DECLARE_NATIVE(entab)
 {
     INCLUDE_PARAMS_OF_ENTAB;
 
@@ -1052,7 +1052,7 @@ REBNATIVE(entab)
 //      number [integer!]
 //  ]
 //
-REBNATIVE(detab)
+DECLARE_NATIVE(detab)
 {
     INCLUDE_PARAMS_OF_DETAB;
 
@@ -1131,7 +1131,7 @@ REBNATIVE(detab)
 //      limit [any-number! any-string!]
 //  ]
 //
-REBNATIVE(lowercase)
+DECLARE_NATIVE(lowercase)
 {
     INCLUDE_PARAMS_OF_LOWERCASE;
 
@@ -1153,7 +1153,7 @@ REBNATIVE(lowercase)
 //      limit [any-number! any-string!]
 //  ]
 //
-REBNATIVE(uppercase)
+DECLARE_NATIVE(uppercase)
 {
     INCLUDE_PARAMS_OF_UPPERCASE;
 
@@ -1175,7 +1175,7 @@ REBNATIVE(uppercase)
 //      len [integer!]
 //  ]
 //
-REBNATIVE(to_hex)
+DECLARE_NATIVE(to_hex)
 {
     INCLUDE_PARAMS_OF_TO_HEX;
 
@@ -1234,7 +1234,7 @@ REBNATIVE(to_hex)
 //      script [binary!]
 //  ]
 //
-REBNATIVE(find_script)
+DECLARE_NATIVE(find_script)
 {
     INCLUDE_PARAMS_OF_FIND_SCRIPT;
 
@@ -1258,7 +1258,7 @@ REBNATIVE(find_script)
 //      data [binary!]
 //  ]
 //
-REBNATIVE(invalid_utf8_q)
+DECLARE_NATIVE(invalid_utf8_q)
 {
     INCLUDE_PARAMS_OF_INVALID_UTF8_Q;
 

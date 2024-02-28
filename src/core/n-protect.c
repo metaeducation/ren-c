@@ -295,7 +295,7 @@ static REB_R Protect_Unprotect_Core(REBFRM *frame_, REBFLGS flags)
 //          "Hide variables (avoid binding and lookup)"
 //  ]
 //
-REBNATIVE(protect)
+DECLARE_NATIVE(protect)
 {
     INCLUDE_PARAMS_OF_PROTECT;
 
@@ -333,7 +333,7 @@ REBNATIVE(protect)
 //          "HACK to make PROTECT and UNPROTECT have the same signature"
 //  ]
 //
-REBNATIVE(unprotect)
+DECLARE_NATIVE(unprotect)
 {
     INCLUDE_PARAMS_OF_UNPROTECT;
 
@@ -388,7 +388,7 @@ bool Is_Value_Immutable(const Cell* v) {
 //      value [any-value!]
 //  ]
 //
-REBNATIVE(locked_q)
+DECLARE_NATIVE(locked_q)
 {
     INCLUDE_PARAMS_OF_LOCKED_Q;
 
@@ -440,7 +440,7 @@ void Ensure_Value_Immutable(const Cell* v, REBSER *opt_locker) {
 //          {Will lock a clone of the original (if not already immutable)}
 //  ]
 //
-REBNATIVE(lock)
+DECLARE_NATIVE(lock)
 //
 // !!! COPY in Rebol truncates before the index.  You can't `y: copy next x`
 // and then `first back y` to get at a copy of the the original `first x`.

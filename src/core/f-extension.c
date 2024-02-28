@@ -73,7 +73,7 @@ void cleanup_extension_quit_handler(const Value* v)
 //          [block!]
 //  ]
 //
-REBNATIVE(builtin_extensions)
+DECLARE_NATIVE(builtin_extensions)
 //
 // The config file used by %make.r marks extensions to be built into the
 // executable (`+`), built as a dynamic library (`*`), or not built at
@@ -117,7 +117,7 @@ REBNATIVE(builtin_extensions)
 //      /no-lib "Do not export to the lib context"
 //  ]
 //
-REBNATIVE(load_extension)
+DECLARE_NATIVE(load_extension)
 // !!! It is not ideal that this code be all written as C, as it is really
 // kind of a variation of LOAD-MODULE and will have to repeat a lot of work.
 {
@@ -376,7 +376,7 @@ static const Value* Unloaded_Dispatcher(REBFRM *f)
 //          "The RX_Quit pointer for the builtin extension"
 //  ]
 //
-REBNATIVE(unload_extension)
+DECLARE_NATIVE(unload_extension)
 {
     UNUSED(frame_);
     UNUSED(Unloaded_Dispatcher);

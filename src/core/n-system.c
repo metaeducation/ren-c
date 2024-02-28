@@ -39,7 +39,7 @@
 //      ; No arguments
 //  ]
 //
-REBNATIVE(halt)
+DECLARE_NATIVE(halt)
 {
     INCLUDE_PARAMS_OF_HALT;
 
@@ -60,7 +60,7 @@ REBNATIVE(halt)
 //          "See: http://en.wikipedia.org/wiki/Exit_status"
 //  ]
 //
-REBNATIVE(quit)
+DECLARE_NATIVE(quit)
 //
 // QUIT is implemented via a THROWN() value that bubbles up through
 // the stack.  It uses the value of its own native function as the
@@ -97,7 +97,7 @@ REBNATIVE(quit)
 //          "See: http://en.wikipedia.org/wiki/Exit_status"
 //  ]
 //
-REBNATIVE(exit_rebol)
+DECLARE_NATIVE(exit_rebol)
 {
     INCLUDE_PARAMS_OF_EXIT_REBOL;
 
@@ -133,7 +133,7 @@ REBNATIVE(exit_rebol)
 //          "Dump out information about series being recycled (debug only)"
 //  ]
 //
-REBNATIVE(recycle)
+DECLARE_NATIVE(recycle)
 {
     INCLUDE_PARAMS_OF_RECYCLE;
 
@@ -213,7 +213,7 @@ REBNATIVE(recycle)
 //      limit [any-number!]
 //  ]
 //
-REBNATIVE(limit_usage)
+DECLARE_NATIVE(limit_usage)
 {
     INCLUDE_PARAMS_OF_LIMIT_USAGE;
 
@@ -245,7 +245,7 @@ REBNATIVE(limit_usage)
 //          {System will terminate abnormally if this value is corrupt.}
 //  ]
 //
-REBNATIVE(check)
+DECLARE_NATIVE(check)
 //
 // This forces an integrity check to run on a series.  In R3-Alpha there was
 // no debug build, so this was a simple validity check and it returned an
@@ -328,7 +328,7 @@ int ceil_log2(unsigned long long x) {
 //          {Round tick up, as in https://math.stackexchange.com/q/2521219/}
 // ]
 //
-REBNATIVE(c_debug_break_at)
+DECLARE_NATIVE(c_debug_break_at)
 {
     INCLUDE_PARAMS_OF_C_DEBUG_BREAK_AT;
 
@@ -394,7 +394,7 @@ REBNATIVE(c_debug_break_at)
 //          {Invisibly returns what the expression to the right would have}
 //  ]
 //
-REBNATIVE(c_debug_break)
+DECLARE_NATIVE(c_debug_break)
 {
     INCLUDE_PARAMS_OF_C_DEBUG_BREAK;
 
@@ -427,7 +427,7 @@ REBNATIVE(c_debug_break)
 //          {An argument (which test code may or may not use)}
 //  ]
 //
-REBNATIVE(test)
+DECLARE_NATIVE(test)
 {
     INCLUDE_PARAMS_OF_TEST;
     UNUSED(ARG(value));

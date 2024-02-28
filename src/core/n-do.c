@@ -54,7 +54,7 @@
 //          {Suppress evaluation on any ensuing arguments value consumes}
 //  ]
 //
-REBNATIVE(reeval)
+DECLARE_NATIVE(reeval)
 {
     INCLUDE_PARAMS_OF_REEVAL;
 
@@ -99,7 +99,7 @@ REBNATIVE(reeval)
 //          "Will handle args the way the enfixee expects"
 //  ]
 //
-REBNATIVE(shove)
+DECLARE_NATIVE(shove)
 {
     INCLUDE_PARAMS_OF_SHOVE;
 
@@ -132,7 +132,7 @@ REBNATIVE(shove)
 //          {Variant used when rest is prefix (e.g. for MY operator vs. ME)}
 //  ]
 //
-REBNATIVE(eval_enfix)
+DECLARE_NATIVE(eval_enfix)
 //
 // !!! Being able to write `some-var: me + 10` isn't as "simple" <ahem> as:
 //
@@ -267,7 +267,7 @@ REBNATIVE(eval_enfix)
 //          "Don't catch QUIT (default behavior for BLOCK!)"
 //  ]
 //
-REBNATIVE(do)
+DECLARE_NATIVE(do)
 {
     INCLUDE_PARAMS_OF_DO;
 
@@ -485,7 +485,7 @@ REBNATIVE(do)
 //          "If not blank, then a variable updated with new position"
 //  ]
 //
-REBNATIVE(evaluate)
+DECLARE_NATIVE(evaluate)
 {
     INCLUDE_PARAMS_OF_EVALUATE;
 
@@ -611,7 +611,7 @@ REBNATIVE(evaluate)
 //      source [block! group!]
 //  ]
 //
-REBNATIVE(sync_invisibles)
+DECLARE_NATIVE(sync_invisibles)
 {
     INCLUDE_PARAMS_OF_SYNC_INVISIBLES;
 
@@ -640,7 +640,7 @@ REBNATIVE(sync_invisibles)
 //          [action!]
 //  ]
 //
-REBNATIVE(redo)
+DECLARE_NATIVE(redo)
 //
 // This can be used to implement tail-call recursion:
 //
@@ -722,7 +722,7 @@ REBNATIVE(redo)
 //      /opt "Treat nulls as unspecialized <<experimental!>>"
 //  ]
 //
-REBNATIVE(applique)
+DECLARE_NATIVE(applique)
 //
 // !!! Because APPLIQUE is being written as a regular native (and not a
 // special exception case inside of Eval_Core) it has to "re-enter" Eval_Core

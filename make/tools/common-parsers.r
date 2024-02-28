@@ -28,7 +28,7 @@ decode-key-value-text: function [
     {Decode key value formatted text.}
     text [text!]
 ][
-    
+
     data-fields: [
         any [
             position:
@@ -205,7 +205,7 @@ proto-parser: context [
                 ; can also examine state variables of the parser to extract
                 ; other properties--such as the processed intro block.
                 ;
-                emit-proto proto 
+                emit-proto proto
             )
         ]
 
@@ -240,7 +240,7 @@ proto-parser: context [
                     ; It's hacky to just throw it in here, but the general
                     ; consensus is that the build process needs to be made
                     ; much simpler.  It really should be going by seeing it
-                    ; is a REBNATIVE() vs. worrying too much about the text
+                    ; is a DECLARE_NATIVE() vs. worrying too much about the text
                     ; pattern in the comment being detected.
                     ;
                     if any [

@@ -48,7 +48,7 @@
 //          [block!]
 //  ]
 //
-REBNATIVE(func)
+DECLARE_NATIVE(func)
 {
     INCLUDE_PARAMS_OF_FUNC;
 
@@ -140,7 +140,7 @@ void Make_Thrown_Unwind_Value(
 //      value [any-value!]
 //  ]
 //
-REBNATIVE(unwind)
+DECLARE_NATIVE(unwind)
 //
 // UNWIND is implemented via a THROWN() value that bubbles through the stack.
 // Using UNWIND's action cell with a target `binding` field is the
@@ -168,11 +168,11 @@ REBNATIVE(unwind)
 //          [<end> <opt> any-value!]
 //  ]
 //
-REBNATIVE(return)
+DECLARE_NATIVE(return)
 {
     INCLUDE_PARAMS_OF_RETURN;
 
-    REBFRM *f = frame_; // implicit parameter to REBNATIVE()
+    REBFRM *f = frame_; // implicit parameter to DECLARE_NATIVE()
 
     // The frame this RETURN is being called from may well not be the target
     // function of the return (that's why it's a "definitional return").  The
@@ -258,7 +258,7 @@ REBNATIVE(return)
 //      type [datatype! typeset!]
 //  ]
 //
-REBNATIVE(typechecker)
+DECLARE_NATIVE(typechecker)
 {
     INCLUDE_PARAMS_OF_TYPECHECKER;
 
@@ -310,7 +310,7 @@ REBNATIVE(typechecker)
 //          {Do not reduce the pipeline--use the values as-is.}
 //  ]
 //
-REBNATIVE(chain)
+DECLARE_NATIVE(chain)
 {
     INCLUDE_PARAMS_OF_CHAIN;
 
@@ -396,7 +396,7 @@ REBNATIVE(chain)
 //          {Code to run in constructed frame before adapted function runs}
 //  ]
 //
-REBNATIVE(adapt)
+DECLARE_NATIVE(adapt)
 {
     INCLUDE_PARAMS_OF_ADAPT;
 
@@ -491,7 +491,7 @@ REBNATIVE(adapt)
 //          {Gets a FRAME! for INNER before invocation, can DO it (or not)}
 //  ]
 //
-REBNATIVE(enclose)
+DECLARE_NATIVE(enclose)
 {
     INCLUDE_PARAMS_OF_ENCLOSE;
 
@@ -600,7 +600,7 @@ REBNATIVE(enclose)
 //          {The action to run in its place}
 //  ]
 //
-REBNATIVE(hijack)
+DECLARE_NATIVE(hijack)
 //
 // Hijacking an action does not change its interface--and cannot.  While
 // it may seem tempting to use low-level tricks to keep the same paramlist
@@ -724,7 +724,7 @@ REBNATIVE(hijack)
 //      action [action!]
 //  ]
 //
-REBNATIVE(variadic_q)
+DECLARE_NATIVE(variadic_q)
 {
     INCLUDE_PARAMS_OF_VARIADIC_Q;
 
@@ -747,7 +747,7 @@ REBNATIVE(variadic_q)
 //      action [action!]
 //  ]
 //
-REBNATIVE(tighten)
+DECLARE_NATIVE(tighten)
 //
 // This routine exists to avoid the overhead of a user-function stub where
 // all the parameters are #tight, e.g. the behavior of R3-Alpha's OP!s.
@@ -876,7 +876,7 @@ REB_R N_Upshot_Dispatcher(REBFRM *f)
 //          [integer!]
 //  ]
 //
-REBNATIVE(n_shot)
+DECLARE_NATIVE(n_shot)
 {
     INCLUDE_PARAMS_OF_N_SHOT;
 

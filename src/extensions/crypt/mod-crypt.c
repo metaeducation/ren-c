@@ -64,7 +64,7 @@
 //      return: [void!]
 //  ]
 //
-REBNATIVE(init_crypto)
+DECLARE_NATIVE(init_crypto)
 {
     CRYPT_INCLUDE_PARAMS_OF_INIT_CRYPTO;
 
@@ -99,7 +99,7 @@ REBNATIVE(init_crypto)
 //
 //  ]
 //
-REBNATIVE(shutdown_crypto)
+DECLARE_NATIVE(shutdown_crypto)
 {
     CRYPT_INCLUDE_PARAMS_OF_SHUTDOWN_CRYPTO;
 
@@ -140,7 +140,7 @@ static void cleanup_rc4_ctx(const Value* v)
 //          "Data to encrypt/decrypt."
 //  ]
 //
-REBNATIVE(rc4)
+DECLARE_NATIVE(rc4)
 //
 // !!! RC4 was originally included for use with TLS.  However, the insecurity
 // of RC4 led the IETF to prohibit RC4 for TLS use in 2015:
@@ -203,7 +203,7 @@ REBNATIVE(rc4)
 //         "Uses an RSA private key (default is a public key)"
 //  ]
 //
-REBNATIVE(rsa)
+DECLARE_NATIVE(rsa)
 {
     CRYPT_INCLUDE_PARAMS_OF_RSA;
 
@@ -360,7 +360,7 @@ REBNATIVE(rsa)
 //         "(modified) Diffie-Hellman object, with generator(g) / modulus(p)"
 //  ]
 //
-REBNATIVE(dh_generate_key)
+DECLARE_NATIVE(dh_generate_key)
 {
     CRYPT_INCLUDE_PARAMS_OF_DH_GENERATE_KEY;
 
@@ -419,7 +419,7 @@ REBNATIVE(dh_generate_key)
 //          "Peer's public key"
 //  ]
 //
-REBNATIVE(dh_compute_key)
+DECLARE_NATIVE(dh_compute_key)
 {
     CRYPT_INCLUDE_PARAMS_OF_DH_COMPUTE_KEY;
 
@@ -484,7 +484,7 @@ static void cleanup_aes_ctx(const Value* v)
 //          "Use the crypt-key for decryption (default is to encrypt)"
 //  ]
 //
-REBNATIVE(aes)
+DECLARE_NATIVE(aes)
 {
     CRYPT_INCLUDE_PARAMS_OF_AES;
 
@@ -597,7 +597,7 @@ REBNATIVE(aes)
 //          {Data to hash, TEXT! will be converted to UTF-8}
 //  ]
 //
-REBNATIVE(sha256)
+DECLARE_NATIVE(sha256)
 {
     CRYPT_INCLUDE_PARAMS_OF_SHA256;
 

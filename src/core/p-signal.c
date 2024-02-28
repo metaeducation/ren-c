@@ -305,9 +305,9 @@ static REB_R Signal_Actor(REBFRM *frame_, Value* port, Value* verb)
 //      return: [handle!]
 //  ]
 //
-REBNATIVE(get_signal_actor_handle)
+DECLARE_NATIVE(get_signal_actor_handle)
 //
-// !!! The native scanner isn't smart enough to notice REBNATIVE() inside a
+// !!! The native scanner isn't smart enough to notice DECLARE_NATIVE() inside a
 // disabled #ifdef, so a definition for this has to be provided... even if
 // it's not a build where it should be available.
 {

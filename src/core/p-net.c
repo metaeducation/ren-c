@@ -508,7 +508,7 @@ static REB_R UDP_Actor(REBFRM *frame_, Value* port, Value* verb)
 //      return: [handle!]
 //  ]
 //
-REBNATIVE(get_tcp_actor_handle)
+DECLARE_NATIVE(get_tcp_actor_handle)
 {
     Make_Port_Actor_Handle(D_OUT, &TCP_Actor);
     return D_OUT;
@@ -523,7 +523,7 @@ REBNATIVE(get_tcp_actor_handle)
 //      return: [handle!]
 //  ]
 //
-REBNATIVE(get_udp_actor_handle)
+DECLARE_NATIVE(get_udp_actor_handle)
 {
     Make_Port_Actor_Handle(D_OUT, &UDP_Actor);
     return D_OUT;
@@ -546,7 +546,7 @@ REBNATIVE(get_udp_actor_handle)
 //          {Leave the group (default is to add)}
 //  ]
 //
-REBNATIVE(set_udp_multicast)
+DECLARE_NATIVE(set_udp_multicast)
 //
 // !!! SET-MODES was never standardized or implemented for R3-Alpha, so there
 // was no RDC_MODIFY written.  While it is tempting to just go ahead and
@@ -599,7 +599,7 @@ REBNATIVE(set_udp_multicast)
 //          {0 = local machine only, 1 = subnet (default), or up to 255}
 //  ]
 //
-REBNATIVE(set_udp_ttl)
+DECLARE_NATIVE(set_udp_ttl)
 {
     INCLUDE_PARAMS_OF_SET_UDP_TTL;
 

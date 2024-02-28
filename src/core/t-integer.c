@@ -114,7 +114,7 @@ REB_R TO_Integer(Value* out, enum Reb_Kind kind, const Value* arg)
 // REBU64, a request for unsigned interpretation is limited to using
 // 63 of those bits.  A range error will be thrown otherwise.
 //
-// If a type is added or removed, update REBNATIVE(to_integer)'s spec
+// If a type is added or removed, update DECLARE_NATIVE(to_integer)'s spec
 //
 void Value_To_Int64(Value* out, const Value* value, bool no_sign)
 {
@@ -348,7 +348,7 @@ check_sign:
 //      {For BINARY! interpret as unsigned, otherwise error if signed.}
 //  ]
 //
-REBNATIVE(to_integer)
+DECLARE_NATIVE(to_integer)
 {
     INCLUDE_PARAMS_OF_TO_INTEGER;
 
@@ -600,7 +600,7 @@ REBTYPE(Integer)
 //          [integer!]
 //  ]
 //
-REBNATIVE(enbin)
+DECLARE_NATIVE(enbin)
 //
 // !!! This routine may wind up being folded into ENCODE as a block-oriented
 // syntax for talking to the "little endian" and "big endian" codecs, but
@@ -706,7 +706,7 @@ REBNATIVE(enbin)
 //          [binary!]
 //  ]
 //
-REBNATIVE(debin)
+DECLARE_NATIVE(debin)
 //
 // !!! This routine may wind up being folded into DECODE as a block-oriented
 // syntax for talking to the "little endian" and "big endian" codecs, but

@@ -1455,7 +1455,7 @@ stdin_pipe_err:
 //  ]
 //  ]
 //
-REBNATIVE(call)
+DECLARE_NATIVE(call)
 //
 // !!! Parameter usage may require WAIT mode even if not explicitly requested.
 // /WAIT should be default, with /ASYNC (or otherwise) as exception!
@@ -1713,7 +1713,7 @@ REBNATIVE(call)
 //          {Block of strings, where %1 should be substituted with the string}
 //  ]
 //
-REBNATIVE(get_os_browsers)
+DECLARE_NATIVE(get_os_browsers)
 //
 // !!! Using the %1 convention is not necessarily ideal vs. having some kind
 // of more "structural" result, it was just easy because it's how the string
@@ -1810,7 +1810,7 @@ REBNATIVE(get_os_browsers)
 //
 //  ]
 //
-REBNATIVE(sleep)
+DECLARE_NATIVE(sleep)
 //
 // !!! This is a temporary workaround for the fact that it is not currently
 // possible to do a WAIT on a time from within an AWAKE handler.  A proper
@@ -1849,7 +1849,7 @@ static void kill_process(pid_t pid, int signal);
 //          {The process ID}
 //  ]
 //
-REBNATIVE(terminate)
+DECLARE_NATIVE(terminate)
 {
     PROCESS_INCLUDE_PARAMS_OF_TERMINATE;
 
@@ -1919,7 +1919,7 @@ REBNATIVE(terminate)
 //          [text! word!]
 //  ]
 //
-REBNATIVE(get_env)
+DECLARE_NATIVE(get_env)
 //
 // !!! Prescriptively speaking, it is typically considered a bad idea to treat
 // an empty string environment variable as different from an unset one:
@@ -2007,7 +2007,7 @@ REBNATIVE(get_env)
 //          "Value to set the variable to, or NULL to unset it"
 //  ]
 //
-REBNATIVE(set_env)
+DECLARE_NATIVE(set_env)
 {
     PROCESS_INCLUDE_PARAMS_OF_SET_ENV;
 
@@ -2100,7 +2100,7 @@ REBNATIVE(set_env)
 //      ; No arguments
 //  ]
 //
-REBNATIVE(list_env)
+DECLARE_NATIVE(list_env)
 {
     PROCESS_INCLUDE_PARAMS_OF_LIST_ENV;
 
@@ -2186,7 +2186,7 @@ REBNATIVE(list_env)
 //  ]
 //  platforms: [linux android posix osx]
 //
-REBNATIVE(get_pid)
+DECLARE_NATIVE(get_pid)
 {
     PROCESS_INCLUDE_PARAMS_OF_GET_PID;
 
@@ -2205,7 +2205,7 @@ REBNATIVE(get_pid)
 //  ]
 //  platforms: [linux android posix osx]
 //
-REBNATIVE(get_uid)
+DECLARE_NATIVE(get_uid)
 {
     PROCESS_INCLUDE_PARAMS_OF_GET_UID;
 
@@ -2223,7 +2223,7 @@ REBNATIVE(get_uid)
 //  ]
 //  platforms: [linux android posix osx]
 //
-REBNATIVE(get_euid)
+DECLARE_NATIVE(get_euid)
 {
     PROCESS_INCLUDE_PARAMS_OF_GET_EUID;
 
@@ -2240,7 +2240,7 @@ REBNATIVE(get_euid)
 //  ]
 //  platforms: [linux android posix osx]
 //
-REBNATIVE(get_gid)
+DECLARE_NATIVE(get_gid)
 {
     PROCESS_INCLUDE_PARAMS_OF_GET_UID;
 
@@ -2258,7 +2258,7 @@ REBNATIVE(get_gid)
 //  ]
 //  platforms: [linux android posix osx]
 //
-REBNATIVE(get_egid)
+DECLARE_NATIVE(get_egid)
 {
     PROCESS_INCLUDE_PARAMS_OF_GET_EUID;
 
@@ -2278,7 +2278,7 @@ REBNATIVE(get_egid)
 //  ]
 //  platforms: [linux android posix osx]
 //
-REBNATIVE(set_uid)
+DECLARE_NATIVE(set_uid)
 {
     PROCESS_INCLUDE_PARAMS_OF_SET_UID;
 
@@ -2310,7 +2310,7 @@ REBNATIVE(set_uid)
 //  ]
 //  platforms: [linux android posix osx]
 //
-REBNATIVE(set_euid)
+DECLARE_NATIVE(set_euid)
 {
     PROCESS_INCLUDE_PARAMS_OF_SET_EUID;
 
@@ -2342,7 +2342,7 @@ REBNATIVE(set_euid)
 //  ]
 //  platforms: [linux android posix osx]
 //
-REBNATIVE(set_gid)
+DECLARE_NATIVE(set_gid)
 {
     PROCESS_INCLUDE_PARAMS_OF_SET_GID;
 
@@ -2374,7 +2374,7 @@ REBNATIVE(set_gid)
 //  ]
 //  platforms: [linux android posix osx]
 //
-REBNATIVE(set_egid)
+DECLARE_NATIVE(set_egid)
 {
     PROCESS_INCLUDE_PARAMS_OF_SET_EGID;
 
@@ -2430,7 +2430,7 @@ static void kill_process(pid_t pid, int signal)
 //  ]
 //  platforms: [linux android posix osx]
 //
-REBNATIVE(send_signal)
+DECLARE_NATIVE(send_signal)
 {
     PROCESS_INCLUDE_PARAMS_OF_SEND_SIGNAL;
 

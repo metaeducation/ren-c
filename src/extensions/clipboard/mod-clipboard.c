@@ -257,7 +257,7 @@ static REB_R Clipboard_Actor(
 //      return: [handle!]
 //  ]
 //
-REBNATIVE(get_clipboard_actor_handle)
+DECLARE_NATIVE(get_clipboard_actor_handle)
 {
     Make_Port_Actor_Handle(D_OUT, &Clipboard_Actor);
     return D_OUT;

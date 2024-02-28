@@ -243,7 +243,7 @@ native-forward-decls: collect [
     for-each item native-list [
         if set-word? item [
             item: to word! item
-            keep cscape/with {REBNATIVE(${Item})} 'item
+            keep cscape/with {DECLARE_NATIVE(${Item})} 'item
         ]
     ]
 ]
@@ -276,15 +276,15 @@ iterate native-list [
 
 e1/emit {
     /*
-     * Redefine REBNATIVE macro locally to include extension name.
+     * Redefine DECLARE_NATIVE macro locally to include extension name.
      * This avoids name collisions with the core, or with other extensions.
      */
-    #undef REBNATIVE
-    #define REBNATIVE(n) \
+    #undef DECLARE_NATIVE
+    #define DECLARE_NATIVE(n) \
         Value* N_${MOD}_##n(REBFRM *frame_)
 
     /*
-     * Forward-declare REBNATIVE() dispatcher prototypes
+     * Forward-declare DECLARE_NATIVE() dispatcher prototypes
      */
     $[Native-Forward-Decls];
 }
@@ -311,7 +311,7 @@ script-compressed: gzip (script-uncompressed: read script-name)
 e/emit {
     #include "sys-core.h" /* !!! Could this just use "rebol.h"? */
 
-    #include "tmp-mod-${mod}.h" /* for REBNATIVE() forward decls */
+    #include "tmp-mod-${mod}.h" /* for DECLARE_NATIVE() forward decls */
 
     /*
      * Gzip compression of $<Script-Name> (no \0 terminator in array)

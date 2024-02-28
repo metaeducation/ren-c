@@ -334,7 +334,7 @@ static void Startup_True_And_False(void)
 //      spec [block!]
 //  ]
 //
-REBNATIVE(generic)
+DECLARE_NATIVE(generic)
 //
 // The `generics` native is searched for explicitly by %make-natives.r and put
 // in second place for initialization (after the `native` native).
@@ -653,7 +653,7 @@ Value* Make_Native(
 // "fakes it" just by calling a C function for each item...and there is no
 // actual "native native".
 //
-// If there *were* a REBNATIVE(native) this would be its spec:
+// If there *were* a DECLARE_NATIVE(native) this would be its spec:
 //
 //  native: native [
 //      spec [block!]

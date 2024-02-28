@@ -90,7 +90,7 @@ REB_R MAKE_Unhooked(Value* out, enum Reb_Kind kind, const Value* arg)
 //          {Definition or size of the new value (binding may be modified)}
 //  ]
 //
-REBNATIVE(make)
+DECLARE_NATIVE(make)
 //
 // !!! AT THE MOMENT THIS ROUTINE HAS A USERMODE SHIM IN %MEZZ-LEGACY.R
 // So if you make changes here and don't see them, that's why.  The idea
@@ -184,7 +184,7 @@ REB_R TO_Unhooked(Value* out, enum Reb_Kind kind, const Value* arg)
 //      value [<blank> any-value!]
 //  ]
 //
-REBNATIVE(to)
+DECLARE_NATIVE(to)
 {
     INCLUDE_PARAMS_OF_TO;
 
@@ -288,7 +288,7 @@ REB_R Reflect_Core(REBFRM *frame_)
 //          "Such as: type, length, spec, body, words, values, title"
 //  ]
 //
-REBNATIVE(reflect)
+DECLARE_NATIVE(reflect)
 //
 // Although REFLECT goes through dispatch to the REBTYPE(), it was needing
 // a null check in Type_Action_Dispatcher--which no other type needs.  So
@@ -310,7 +310,7 @@ REBNATIVE(reflect)
 //          [<opt> any-value!]
 //  ]
 //
-REBNATIVE(of)
+DECLARE_NATIVE(of)
 //
 // Common enough to be worth it to do some kind of optimization so it's not
 // much slower than a REFLECT; e.g. you don't want it building a separate
@@ -1289,7 +1289,7 @@ const REBYTE *Scan_Any(
 //          {Fields with duplicate words will be merged into a block.}
 //  ]
 //
-REBNATIVE(scan_net_header)
+DECLARE_NATIVE(scan_net_header)
 //
 // !!! This routine used to be a feature of CONSTRUCT in R3-Alpha, and was
 // used by %prot-http.r.  The idea was that instead of providing a parent

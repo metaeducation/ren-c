@@ -97,7 +97,7 @@ bool Reduce_To_Stack_Throws(
 //      /opt "If an evaluation returns null, omit the result" ; !!! EXPERIMENT
 //  ]
 //
-REBNATIVE(reduce)
+DECLARE_NATIVE(reduce)
 {
     INCLUDE_PARAMS_OF_REDUCE;
 
@@ -344,7 +344,7 @@ bool Compose_To_Stack_Throws(
 //      /only "Insert arrays as single value (not as contents of array)"
 //  ]
 //
-REBNATIVE(compose)
+DECLARE_NATIVE(compose)
 //
 // Note: /INTO is intentionally no longer supported
 // https://forum.rebol.info/t/stopping-the-into-virus/705
@@ -419,7 +419,7 @@ static void Flatten_Core(
 //      /deep
 //  ]
 //
-REBNATIVE(flatten)
+DECLARE_NATIVE(flatten)
 {
     INCLUDE_PARAMS_OF_FLATTEN;
 

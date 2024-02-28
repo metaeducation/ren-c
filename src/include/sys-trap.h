@@ -152,7 +152,7 @@
 // PUSH_TRAP is a construct which is used to catch errors that have been
 // triggered by the Fail_Core() function.  This can be triggered by a usage
 // of the `fail` pseudo-"keyword" in C code, and in Rebol user code by the
-// REBNATIVE(fail).  To call the push, you need a `struct Reb_State` to be
+// DECLARE_NATIVE(fail).  To call the push, you need a `struct Reb_State` to be
 // passed which it will write into--which is a black box that clients
 // shouldn't inspect.
 //

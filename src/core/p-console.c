@@ -125,7 +125,7 @@ static REB_R Console_Actor(REBFRM *frame_, Value* port, Value* verb)
 //      return: [handle!]
 //  ]
 //
-REBNATIVE(get_console_actor_handle)
+DECLARE_NATIVE(get_console_actor_handle)
 {
     Make_Port_Actor_Handle(D_OUT, &Console_Actor);
     return D_OUT;

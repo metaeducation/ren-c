@@ -191,7 +191,7 @@ static REB_R DNS_Actor(REBFRM *frame_, Value* port, Value* verb)
 //      return: [handle!]
 //  ]
 //
-REBNATIVE(get_dns_actor_handle)
+DECLARE_NATIVE(get_dns_actor_handle)
 {
     Make_Port_Actor_Handle(D_OUT, &DNS_Actor);
     return D_OUT;
