@@ -67,7 +67,7 @@ static REBCTX *Error_Conflicting_Key(const Cell* key, REBSPC *specifier)
 
 #define FOUND_SYNONYM \
     do { \
-        if (synonym_slot != -1) /* another spelling already matched */ \
+        if (synonym_slot != -1) /* another symbol already matched */ \
             fail (Error_Conflicting_Key(key, specifier)); \
         synonym_slot = slot; /* save and continue checking */ \
     } while (0)
@@ -128,7 +128,7 @@ REBINT Find_Key_Hashed(
     // You can store information case-insensitively in a MAP!, and it will
     // overwrite the value for at most one other key.  Reading information
     // case-insensitively out of a map can only be done if there aren't two
-    // keys with the same spelling.
+    // keys which are synonyms.
     //
     REBINT synonym_slot = -1; // no synonyms seen yet...
 
@@ -137,7 +137,7 @@ REBINT Find_Key_Hashed(
         while ((n = indexes[slot]) != 0) {
             Cell* k = ARR_AT(array, (n - 1) * wide); // stored key
             if (ANY_WORD(k)) {
-                if (VAL_WORD_SPELLING(key) == VAL_WORD_SPELLING(k))
+                if (Cell_Word_Symbol(key) == Cell_Word_Symbol(k))
                     FOUND_EXACT;
                 else if (not cased)
                     if (VAL_WORD_CANON(key) == VAL_WORD_CANON(k))
@@ -610,7 +610,7 @@ REBCTX *Alloc_Context_From_Map(REBMAP *map)
             Init_Typeset(
                 key,
                 TS_OPT_VALUE, // !!! Not used at the moment
-                VAL_WORD_SPELLING(mval)
+                Cell_Word_Symbol(mval)
             );
             ++key;
             Move_Value(var, &mval[1]);

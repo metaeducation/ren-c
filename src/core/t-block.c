@@ -87,7 +87,7 @@ REB_R MAKE_Array(Value* out, enum Reb_Kind kind, const Value* arg) {
             &offset, &size, arg, VAL_LEN_AT(arg)
         );
         PUSH_GC_GUARD(temp);
-        REBSTR * const filename = Canon(SYM___ANONYMOUS__);
+        Symbol*  const filename = Canon(SYM___ANONYMOUS__);
         Init_Any_Array(
             out,
             kind,
@@ -169,7 +169,7 @@ REB_R MAKE_Array(Value* out, enum Reb_Kind kind, const Value* arg) {
         // `to block! #{00BDAE....}` assumes the binary data is UTF8, and
         // goes directly to the scanner to make an unbound code array.
         //
-        REBSTR * const filename = Canon(SYM___ANONYMOUS__);
+        Symbol*  const filename = Canon(SYM___ANONYMOUS__);
         return Init_Any_Array(
             out,
             kind,
@@ -322,11 +322,11 @@ REBLEN Find_In_Array(
     if (ANY_WORD(target)) {
         for (; index >= start && index < end; index += skip) {
             Cell* item = ARR_AT(array, index);
-            REBSTR *target_canon = VAL_WORD_CANON(target); // canonize once
+            Symbol* target_canon = VAL_WORD_CANON(target); // canonize once
             if (ANY_WORD(item)) {
                 if (flags & AM_FIND_CASE) { // Must be same type and spelling
                     if (
-                        VAL_WORD_SPELLING(item) == VAL_WORD_SPELLING(target)
+                        Cell_Word_Symbol(item) == Cell_Word_Symbol(target)
                         && VAL_TYPE(item) == VAL_TYPE(target)
                     ){
                         return index;
@@ -628,7 +628,7 @@ REB_R PD_Array(
         //
         n = -1;
 
-        REBSTR *canon = VAL_WORD_CANON(picker);
+        Symbol* canon = VAL_WORD_CANON(picker);
         Cell* item = VAL_ARRAY_AT(pvs->out);
         REBLEN index = VAL_INDEX(pvs->out);
         for (; NOT_END(item); ++item, ++index) {

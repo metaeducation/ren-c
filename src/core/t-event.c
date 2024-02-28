@@ -142,9 +142,9 @@ void Set_Event_Vars(Value* evt, Cell* blk, REBSPC *specifier)
 //
 // Will return BLANK! if the variable is not available.
 //
-static Value* Get_Event_Var(Cell* out, const Cell* v, REBSTR *name)
+static Value* Get_Event_Var(Cell* out, const Cell* v, Symbol* name)
 {
-    switch (STR_SYMBOL(name)) {
+    switch (Symbol_Id(name)) {
     case SYM_TYPE: {
         if (VAL_EVENT_TYPE(v) == 0)
             return Init_Blank(out);
@@ -273,7 +273,7 @@ void MF_Event(REB_MOLD *mo, const Cell* v, bool form)
 
         New_Indented_Line(mo);
 
-        REBSTR *canon = Canon(fields[field]);
+        Symbol* canon = Canon(fields[field]);
         Append_Utf8_Utf8(mo->series, STR_HEAD(canon), STR_SIZE(canon));
         Append_Unencoded(mo->series, ": ");
         if (IS_WORD(var))

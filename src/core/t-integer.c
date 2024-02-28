@@ -263,9 +263,9 @@ void Value_To_Int64(Value* out, const Value* value, bool no_sign)
         // more sense as these would be hexes likely typed in by users,
         // who rarely do 2s-complement math in their head.
 
-        REBSTR *spelling = VAL_WORD_SPELLING(value);
-        const REBYTE *bp = cb_cast(STR_HEAD(spelling));
-        size_t size = STR_SIZE(spelling);
+        Symbol* symbol= Cell_Word_Symbol(value);
+        const REBYTE *bp = cb_cast(STR_HEAD(symbol));
+        size_t size = STR_SIZE(symbol);
 
         if (size > MAX_HEX_LEN) {
             // Lacks BINARY!'s accommodation of leading 00s or FFs

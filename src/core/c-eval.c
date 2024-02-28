@@ -596,7 +596,7 @@ bool Eval_Core_Throws(REBFRM * const f)
 
         Prep_Stack_Cell(FRM_SHOVE(f));
 
-        REBSTR *opt_label = nullptr;
+        Symbol* opt_label = nullptr;
         if (IS_WORD(f->value) or IS_PATH(f->value)) {
             //
             // We've only got one shot for the value.  If we don't push the
@@ -748,7 +748,7 @@ bool Eval_Core_Throws(REBFRM * const f)
             goto give_up_backward_quote_priority;
 
     Push_Action(f, VAL_ACTION(f->gotten), VAL_BINDING(f->gotten));
-    Begin_Action(f, VAL_WORD_SPELLING(f->value), LOOKBACK_ARG);
+    Begin_Action(f, Cell_Word_Symbol(f->value), LOOKBACK_ARG);
 
     // Lookback args are fetched from f->out, then copied into an arg
     // slot.  Put the backwards quoted value into f->out, and in the
@@ -802,7 +802,7 @@ bool Eval_Core_Throws(REBFRM * const f)
         if (not EVALUATING(current))
             goto inert;
 
-        REBSTR *opt_label = nullptr; // not invoked through a word, "nameless"
+        Symbol* opt_label = nullptr; // not invoked through a word, "nameless"
 
         Push_Action(f, VAL_ACTION(current), VAL_BINDING(current));
         Begin_Action(f, opt_label, ORDINARY_ARG);
@@ -913,7 +913,7 @@ bool Eval_Core_Throws(REBFRM * const f)
                 TRASH_POINTER_IF_DEBUG(f->refine); // must update to new value
 
                 Value* ordered = DS_TOP;
-                REBSTR *param_canon = VAL_PARAM_CANON(f->param); // #2258
+                Symbol* param_canon = Cell_Param_Canon(f->param); // #2258
 
                 if (f->special == f->param) // acquire all args at callsite
                     goto unspecialized_refinement; // most common case
@@ -950,8 +950,8 @@ bool Eval_Core_Throws(REBFRM * const f)
 
                 if (IS_REFINEMENT(f->special)) {
                     assert(
-                        VAL_WORD_SPELLING(f->special)
-                        == VAL_PARAM_SPELLING(f->param)
+                        Cell_Word_Symbol(f->special)
+                        == Cell_Parameter_Symbol(f->param)
                     ); // !!! Maybe not, if REDESCRIBE renamed args, but...
                     f->refine = f->arg;
                     goto used_refinement; // !!! ...this would fix it up.
@@ -972,7 +972,7 @@ bool Eval_Core_Throws(REBFRM * const f)
                 //
                 if (IS_ISSUE(f->special)) {
                     REBLEN partial_index = VAL_WORD_INDEX(f->special);
-                    REBSTR *partial_canon = VAL_STORED_CANON(f->special);
+                    Symbol* partial_canon = VAL_STORED_CANON(f->special);
 
                     DS_PUSH_TRASH;
                     Init_Issue(DS_TOP, partial_canon);
@@ -1034,7 +1034,7 @@ bool Eval_Core_Throws(REBFRM * const f)
               used_refinement:;
 
                 assert(not IS_POINTER_TRASH_DEBUG(f->refine)); // must be set
-                Init_Refinement(f->arg, VAL_PARAM_SPELLING(f->param));
+                Init_Refinement(f->arg, Cell_Parameter_Symbol(f->param));
                 SET_VAL_FLAG(f->arg, ARG_MARKED_CHECKED);
                 goto continue_arg_loop;
             }
@@ -1057,7 +1057,7 @@ bool Eval_Core_Throws(REBFRM * const f)
                 goto continue_arg_loop;
 
               case PARAM_CLASS_RETURN:
-                assert(VAL_PARAM_SYM(f->param) == SYM_RETURN);
+                assert(Cell_Parameter_Id(f->param) == SYM_RETURN);
                 Move_Value(f->arg, NAT_VALUE(return)); // !!! f->special?
                 INIT_BINDING(f->arg, f->varlist);
                 SET_VAL_FLAG(f->arg, ARG_MARKED_CHECKED);
@@ -1519,12 +1519,12 @@ bool Eval_Core_Throws(REBFRM * const f)
             assert(
                 IS_REFINEMENT(f->refine)
                 and (
-                    VAL_WORD_SPELLING(f->refine)
-                    == VAL_PARAM_SPELLING(f->param - 1)
+                    Cell_Word_Symbol(f->refine)
+                    == Cell_Parameter_Symbol(f->param - 1)
                 )
             );
 
-            assert(VAL_STORED_CANON(DS_TOP) == VAL_PARAM_CANON(f->param - 1));
+            assert(VAL_STORED_CANON(DS_TOP) == Cell_Param_Canon(f->param - 1));
             assert(VAL_PARAM_CLASS(f->param - 1) == PARAM_CLASS_REFINEMENT);
 
             DS_DROP;
@@ -1781,7 +1781,7 @@ bool Eval_Core_Throws(REBFRM * const f)
             // the action args, as the paramlist is likely be completely
             // incompatible with this next chain step.
             //
-            REBSTR *opt_label = f->opt_label;
+            Symbol* opt_label = f->opt_label;
             Drop_Action(f);
             Push_Action(f, VAL_ACTION(DS_TOP), VAL_BINDING(DS_TOP));
             DS_DROP;
@@ -1833,7 +1833,7 @@ bool Eval_Core_Throws(REBFRM * const f)
             //
             Begin_Action(
                 f,
-                VAL_WORD_SPELLING(current), // use word as stack frame label
+                Cell_Word_Symbol(current), // use word as stack frame label
                 GET_VAL_FLAG(current_gotten, VALUE_FLAG_ENFIXED)
                     ? LOOKBACK_ARG
                     : ORDINARY_ARG
@@ -2014,7 +2014,7 @@ bool Eval_Core_Throws(REBFRM * const f)
         if (VAL_LEN_AT(current) == 0)
             fail ("Empty path must have left argument for 'split' behavior");
 
-        REBSTR *opt_label;
+        Symbol* opt_label;
         if (Eval_Path_Throws_Core(
             f->out,
             &opt_label, // requesting says we run functions (not GET-PATH!)
@@ -2427,7 +2427,7 @@ bool Eval_Core_Throws(REBFRM * const f)
         REBNOD *binding = nullptr;
         Push_Action(f, NAT_ACTION(path_0), binding);
 
-        REBSTR *opt_label = nullptr;
+        Symbol* opt_label = nullptr;
         Begin_Action(f, opt_label, LOOKBACK_ARG);
 
         Fetch_Next_In_Frame(nullptr, f); // advances f->value
@@ -2612,14 +2612,14 @@ bool Eval_Core_Throws(REBFRM * const f)
     Push_Action(f, VAL_ACTION(f->gotten), VAL_BINDING(f->gotten));
 
     if (IS_WORD(f->value))
-        Begin_Action(f, VAL_WORD_SPELLING(f->value), LOOKBACK_ARG);
+        Begin_Action(f, Cell_Word_Symbol(f->value), LOOKBACK_ARG);
     else {
         // Should be a SHOVE.  There needs to be a way to telegraph the label
         // on the value if it was a PATH! to here.
         //
         assert(Is_Frame_Gotten_Shoved(f));
         assert(IS_PATH(f->value) or IS_GROUP(f->value) or IS_ACTION(f->value));
-        REBSTR *opt_label = nullptr;
+        Symbol* opt_label = nullptr;
         Begin_Action(f, opt_label, LOOKBACK_ARG);
     }
 

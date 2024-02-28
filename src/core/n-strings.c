@@ -343,12 +343,12 @@ DECLARE_NATIVE(deflate)
         bp = BIN_AT(temp, offset);
     }
 
-    REBSTR *envelope;
+    Symbol* envelope;
     if (not REF(envelope))
         envelope = Canon(SYM_NONE);  // Note: nullptr is gzip (for bootstrap)
     else {
-        envelope = VAL_WORD_SPELLING(ARG(format));
-        switch (STR_SYMBOL(envelope)) {
+        envelope = Cell_Word_Symbol(ARG(format));
+        switch (Symbol_Id(envelope)) {
           case SYM_ZLIB:
           case SYM_GZIP:
             break;
@@ -408,7 +408,7 @@ DECLARE_NATIVE(inflate)
     REBLEN len = Part_Len_May_Modify_Index(data, ARG(limit));
     UNUSED(REF(part)); // checked by if limit is nulled
 
-    REBSTR *envelope;
+    Symbol* envelope;
     if (not REF(envelope))
         envelope = Canon(SYM_NONE);  // Note: nullptr is gzip (for bootstrap)
     else {
@@ -416,7 +416,7 @@ DECLARE_NATIVE(inflate)
           case SYM_ZLIB:
           case SYM_GZIP:
           case SYM_DETECT:
-            envelope = VAL_WORD_SPELLING(ARG(format));
+            envelope = Cell_Word_Symbol(ARG(format));
             break;
 
           default:

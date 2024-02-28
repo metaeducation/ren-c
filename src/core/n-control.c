@@ -170,7 +170,7 @@ bool Either_Test_Core_Throws(
         //
         const bool push_refinements = false;
 
-        REBSTR *opt_label = nullptr;
+        Symbol* opt_label = nullptr;
         REBDSP lowest_ordered_dsp = DSP;
         if (Get_If_Word_Or_Path_Throws(
             out,
@@ -421,7 +421,7 @@ DECLARE_NATIVE(match)
         if (NOT_VAL_FLAG(test, VALUE_FLAG_UNEVALUATED)) // soft quote eval'd
             goto either_test; // allow `MATCH ('NULL?) ...`
 
-        REBSTR *opt_label = nullptr;
+        Symbol* opt_label = nullptr;
         REBDSP lowest_ordered_dsp = DSP;
         if (Get_If_Word_Or_Path_Throws(
             D_OUT,

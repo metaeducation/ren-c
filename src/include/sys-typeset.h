@@ -66,7 +66,7 @@ INLINE enum Reb_Kind KIND_FROM_SYM(SymId s) {
 #define VAL_TYPE_SYM(v) \
     SYM_FROM_KIND((v)->payload.datatype.kind)
 
-INLINE REBSTR *Get_Type_Name(const Cell* value)
+INLINE Symbol* Get_Type_Name(const Cell* value)
     { return Canon(SYM_FROM_KIND(VAL_TYPE(value))); }
 
 
@@ -346,24 +346,24 @@ static_assert(0 < 8 - PCLASS_NUM_BITS, "TYPESET_FLAG_XXX too high");
 //
 // Name should be nullptr unless typeset in object keylist or func paramlist
 
-INLINE void INIT_TYPESET_NAME(Cell* typeset, REBSTR *str) {
+INLINE void INIT_TYPESET_NAME(Cell* typeset, Symbol* symbol) {
     assert(IS_TYPESET(typeset));
-    typeset->extra.key_spelling = str;
+    typeset->extra.key_symbol = symbol;
 }
 
-INLINE REBSTR *VAL_KEY_SPELLING(const Cell* typeset) {
+INLINE Symbol* Key_Symbol(const Cell* typeset) {
     assert(IS_TYPESET(typeset));
-    return typeset->extra.key_spelling;
+    return typeset->extra.key_symbol;
 }
 
-INLINE REBSTR *VAL_KEY_CANON(const Cell* typeset) {
-    return STR_CANON(VAL_KEY_SPELLING(typeset));
+INLINE Symbol* Key_Canon(const Cell* typeset) {
+    return STR_CANON(Key_Symbol(typeset));
 }
 
-INLINE Option(SymId) VAL_KEY_SYM(const Cell* typeset) {
-    return STR_SYMBOL(VAL_KEY_SPELLING(typeset)); // mirrors canon's symbol
+INLINE Option(SymId) Key_Id(const Cell* typeset) {
+    return Symbol_Id(Key_Symbol(typeset)); // mirrors canon's symbol
 }
 
-#define VAL_PARAM_SPELLING(p) VAL_KEY_SPELLING(p)
-#define VAL_PARAM_CANON(p) VAL_KEY_CANON(p)
-#define VAL_PARAM_SYM(p) VAL_KEY_SYM(p)
+#define Cell_Parameter_Symbol(p) Key_Symbol(p)
+#define Cell_Param_Canon(p) Key_Canon(p)
+#define Cell_Parameter_Id(p) Key_Id(p)

@@ -175,16 +175,16 @@ INLINE Value* CTX_VAR(REBCTX *c, REBLEN n) {
     return cast(Value*, cast(REBSER*, c)->content.dynamic.data) + n;
 }
 
-INLINE REBSTR *CTX_KEY_SPELLING(REBCTX *c, REBLEN n) {
-    return CTX_KEY(c, n)->extra.key_spelling;
+INLINE Symbol* CTX_KEY_SPELLING(REBCTX *c, REBLEN n) {
+    return CTX_KEY(c, n)->extra.key_symbol;
 }
 
-INLINE REBSTR *CTX_KEY_CANON(REBCTX *c, REBLEN n) {
+INLINE Symbol* CTX_KEY_CANON(REBCTX *c, REBLEN n) {
     return STR_CANON(CTX_KEY_SPELLING(c, n));
 }
 
 INLINE Option(SymId) CTX_KEY_SYM(REBCTX *c, REBLEN n) {
-    return STR_SYMBOL(CTX_KEY_SPELLING(c, n)); // should be same as canon
+    return Symbol_Id(CTX_KEY_SPELLING(c, n)); // should be same as canon
 }
 
 #define FAIL_IF_READ_ONLY_CONTEXT(c) \

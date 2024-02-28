@@ -254,7 +254,7 @@ bool Next_Path_Throws(REBPVS *pvs)
     //
     if (IS_ACTION(pvs->out) and IS_WORD(PVS_PICKER(pvs))) {
         if (not pvs->opt_label)
-            pvs->opt_label = VAL_WORD_SPELLING(PVS_PICKER(pvs));
+            pvs->opt_label = Cell_Word_Symbol(PVS_PICKER(pvs));
     }
 
     if (IS_END(pvs->value))
@@ -290,7 +290,7 @@ bool Next_Path_Throws(REBPVS *pvs)
 //
 bool Eval_Path_Throws_Core(
     Value* out, // if opt_setval, this is only used to return a thrown value
-    REBSTR **label_out,
+    Symbol* *label_out,
     REBARR *array,
     REBLEN index,
     REBSPC *specifier,
@@ -364,7 +364,7 @@ bool Eval_Path_Throws_Core(
             if (GET_VAL_FLAG(pvs->u.ref.cell, VALUE_FLAG_ENFIXED))
                 SET_VAL_FLAG(pvs->out, VALUE_FLAG_ENFIXED);
 
-            pvs->opt_label = VAL_WORD_SPELLING(pvs->value);
+            pvs->opt_label = Cell_Word_Symbol(pvs->value);
         }
     }
     else if (IS_GROUP(pvs->value)) {
@@ -429,10 +429,10 @@ bool Eval_Path_Throws_Core(
             // It's faster to just swap the spellings.  (If binding
             // mattered, we'd need to swap the whole cells).
             //
-            REBSTR *temp = bottom->payload.any_word.spelling;
-            bottom->payload.any_word.spelling
-                = top->payload.any_word.spelling;
-            top->payload.any_word.spelling = temp;
+            Symbol* temp = bottom->payload.any_word.symbol;
+            bottom->payload.any_word.symbol
+                = top->payload.any_word.symbol;
+            top->payload.any_word.symbol = temp;
 
             top--;
             bottom++;

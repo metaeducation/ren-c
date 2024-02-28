@@ -314,11 +314,11 @@ static REBARR *Startup_Datatypes(REBARR *boot_types, REBARR *boot_typespecs)
 //
 static void Startup_True_And_False(void)
 {
-    Value* true_value = Append_Context(Lib_Context, 0, Canon(SYM_TRUE));
+    Value* true_value = Append_Context(Lib_Context, nullptr, Canon(SYM_TRUE));
     Init_True(true_value);
     assert(IS_TRUTHY(true_value) and VAL_LOGIC(true_value) == true);
 
-    Value* false_value = Append_Context(Lib_Context, 0, Canon(SYM_FALSE));
+    Value* false_value = Append_Context(Lib_Context, nullptr, Canon(SYM_FALSE));
     Init_False(false_value);
     assert(IS_FALSEY(false_value) and VAL_LOGIC(false_value) == false);
 }
@@ -428,7 +428,7 @@ static void Add_Lib_Keys_R3Alpha_Cant_Make(void)
 
     REBLEN i;
     for (i = 0; names[i] != nullptr; ++i) {
-        REBSTR *str = Intern_UTF8_Managed(cb_cast(names[i]), strlen(names[i]));
+        Symbol* str = Intern_UTF8_Managed(cb_cast(names[i]), strlen(names[i]));
         Value* val = Append_Context(Lib_Context, nullptr, str);
         assert(IS_VOID(val));  // functions will fill in
         UNUSED(val);
@@ -633,7 +633,7 @@ Value* Make_Native(
 
     // Append the native to the module under the name given.
     //
-    Value* var = Append_Context(VAL_CONTEXT(module), name, 0);
+    Value* var = Append_Context(VAL_CONTEXT(module), name, nullptr);
     Init_Action_Unbound(var, act);
     if (enfix)
         SET_VAL_FLAG(var, VALUE_FLAG_ENFIXED);
@@ -1406,7 +1406,7 @@ void Startup_Core(void)
 
     Startup_Symbols(VAL_ARRAY(&boot->words));
 
-    // STR_SYMBOL(), Cell_Word_Id() and Canon(SYM_XXX) now available
+    // Symbol_Id(), Cell_Word_Id() and Canon(SYM_XXX) now available
 
     PG_Boot_Phase = BOOT_LOADED;
 

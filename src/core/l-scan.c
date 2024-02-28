@@ -1745,7 +1745,7 @@ scanword:
 //
 void Init_Va_Scan_State_Core(
     SCAN_STATE *ss,
-    REBSTR *file,
+    Symbol* file,
     REBLIN line,
     const REBYTE *opt_begin, // preload the scanner outside the va_list
     va_list *vaptr
@@ -1789,7 +1789,7 @@ void Init_Va_Scan_State_Core(
 //
 void Init_Scan_State(
     SCAN_STATE *ss,
-    REBSTR *file,
+    Symbol* file,
     REBLIN line,
     const REBYTE *utf8,
     REBLEN limit
@@ -2011,17 +2011,17 @@ Value* Scan_To_Stack(SCAN_STATE *ss) {
                 fail (Error_Syntax(ss));
             }
 
-            REBSTR *spelling = Intern_UTF8_Managed(bp, len);
+            Symbol* symbol = Intern_UTF8_Managed(bp, len);
             enum Reb_Kind kind = KIND_OF_WORD_FROM_TOKEN(ss->token);
 
             DS_PUSH_TRASH;
-            Init_Any_Word(DS_TOP, kind, spelling);
+            Init_Any_Word(DS_TOP, kind, symbol);
             break; }
 
         case TOKEN_REFINE: {
-            REBSTR *spelling = Intern_UTF8_Managed(bp + 1, len - 1);
+            Symbol* symbol = Intern_UTF8_Managed(bp + 1, len - 1);
             DS_PUSH_TRASH;
-            Init_Refinement(DS_TOP, spelling);
+            Init_Refinement(DS_TOP, symbol);
             break; }
 
         case TOKEN_ISSUE:
@@ -2338,7 +2338,7 @@ Value* Scan_To_Stack(SCAN_STATE *ss) {
         // are into the user context (which we will expand).
         //
         if (ss->binder and ANY_WORD(DS_TOP)) {
-            REBSTR *canon = VAL_WORD_CANON(DS_TOP);
+            Symbol* canon = VAL_WORD_CANON(DS_TOP);
             REBINT n = Get_Binder_Index_Else_0(ss->binder, canon);
             if (n > 0) {
                 //
@@ -2354,7 +2354,7 @@ Value* Scan_To_Stack(SCAN_STATE *ss) {
                 //
                 Expand_Context(ss->context, 1);
                 Move_Var( // preserve enfix state
-                    Append_Context(ss->context, DS_TOP, 0),
+                    Append_Context(ss->context, DS_TOP, nullptr),
                     CTX_VAR(ss->lib, -n) // -n is positive
                 );
                 REBINT check = Remove_Binder_Index_Else_0(ss->binder, canon);
@@ -2368,7 +2368,7 @@ Value* Scan_To_Stack(SCAN_STATE *ss) {
                 // and isolation, but going with it for the API for now).
                 //
                 Expand_Context(ss->context, 1);
-                Append_Context(ss->context, DS_TOP, 0);
+                Append_Context(ss->context, DS_TOP, nullptr);
                 Add_Binder_Index(ss->binder, canon, VAL_WORD_INDEX(DS_TOP));
             }
         }
@@ -2647,7 +2647,7 @@ static REBARR *Scan_Full_Array(SCAN_STATE *ss, REBYTE mode_char)
 //     Value* item1 = ...;
 //     Value* item2 = ...;
 //     Value* item3 = ...;
-//     REBSTR *filename = ...; // where to say code came from
+//     Symbol* filename = ...; // where to say code came from
 //
 //     REBARR *result = Scan_Va_Managed(filename,
 //         "if not", item1, "[\n",
@@ -2663,7 +2663,7 @@ static REBARR *Scan_Full_Array(SCAN_STATE *ss, REBYTE mode_char)
 // ("a", "/", "b") produces `a / b` and not the PATH! `a/b`.
 //
 REBARR *Scan_Va_Managed(
-    REBSTR *filename, // NOTE: va_start must get last parameter before ...
+    Symbol* filename, // NOTE: va_start must get last parameter before ...
     ...
 ){
     REBDSP dsp_orig = DSP;
@@ -2715,7 +2715,7 @@ REBARR *Scan_Va_Managed(
 //
 // Scan source code. Scan state initialized. No header required.
 //
-REBARR *Scan_UTF8_Managed(REBSTR *filename, const REBYTE *utf8, REBLEN size)
+REBARR *Scan_UTF8_Managed(Symbol* filename, const REBYTE *utf8, REBLEN size)
 {
     SCAN_STATE ss;
     const REBLIN start_line = 1;
@@ -2746,7 +2746,7 @@ REBARR *Scan_UTF8_Managed(REBSTR *filename, const REBYTE *utf8, REBLEN size)
 REBINT Scan_Header(const REBYTE *utf8, REBLEN len)
 {
     SCAN_STATE ss;
-    REBSTR * const filename = Canon(SYM___ANONYMOUS__);
+    Symbol*  const filename = Canon(SYM___ANONYMOUS__);
     const REBLIN start_line = 1;
     Init_Scan_State(&ss, filename, start_line, utf8, len);
 
@@ -2817,7 +2817,7 @@ DECLARE_NATIVE(transcode)
 
     // !!! Should the base name and extension be stored, or whole path?
     //
-    REBSTR *filename = REF(file)
+    Symbol* filename = REF(file)
         ? Intern(ARG(file_name))
         : Canon(SYM___ANONYMOUS__);
 
@@ -2897,7 +2897,7 @@ const REBYTE *Scan_Any_Word(
     REBLEN len
 ) {
     SCAN_STATE ss;
-    REBSTR * const filename = Canon(SYM___ANONYMOUS__);
+    Symbol*  const filename = Canon(SYM___ANONYMOUS__);
     const REBLIN start_line = 1;
     Init_Scan_State(&ss, filename, start_line, utf8, len);
 
@@ -2957,7 +2957,7 @@ const REBYTE *Scan_Issue(Value* out, const REBYTE *cp, REBLEN len)
         }
     }
 
-    REBSTR *str = Intern_UTF8_Managed(cp, len);
+    Symbol* str = Intern_UTF8_Managed(cp, len);
     Init_Issue(out, str);
     return bp;
 }

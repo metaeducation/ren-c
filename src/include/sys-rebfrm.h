@@ -610,7 +610,7 @@ struct Reb_Frame {
     // The evaluator only enforces that the symbol be set during function
     // calls--in the release build, it is allowed to be garbage otherwise.
     //
-    REBSTR *opt_label;
+    Symbol* opt_label;
 
     // `varlist`
     //

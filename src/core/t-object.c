@@ -96,7 +96,7 @@ static bool Equal_Context(const Cell* val, const Cell* arg)
         // objects to consider themselves to be equal (but which do not
         // count in comparison of the typesets)
         //
-        if (VAL_KEY_CANON(key1) != VAL_KEY_CANON(key2))
+        if (Key_Canon(key1) != Key_Canon(key2))
             return false;
 
         // !!! A comment here said "Use Compare_Modify_Values();"...but it
@@ -129,7 +129,7 @@ static void Append_To_Context(REBCTX *context, Value* arg)
     if (ANY_WORD(arg)) {
         if (0 == Find_Canon_In_Context(context, VAL_WORD_CANON(arg), true)) {
             Expand_Context(context, 1); // copy word table also
-            Append_Context(context, 0, VAL_WORD_SPELLING(arg));
+            Append_Context(context, nullptr, Cell_Word_Symbol(arg));
             // default of Append_Context is that arg's value is void
         }
         return;
@@ -170,7 +170,7 @@ static void Append_To_Context(REBCTX *context, Value* arg)
             goto collect_end;
         }
 
-        REBSTR *canon = VAL_WORD_CANON(word);
+        Symbol* canon = VAL_WORD_CANON(word);
 
         if (Try_Add_Binder_Index(
             &collector.binder, canon, ARR_LEN(BUF_COLLECT))
@@ -182,7 +182,7 @@ static void Append_To_Context(REBCTX *context, Value* arg)
             Init_Typeset(
                 ARR_LAST(BUF_COLLECT),
                 TS_VALUE, // !!! Currently ignored
-                VAL_WORD_SPELLING(word)
+                Cell_Word_Symbol(word)
             );
         }
         if (IS_END(word + 1))
@@ -204,7 +204,7 @@ static void Append_To_Context(REBCTX *context, Value* arg)
         ++collect_key
     ){
         assert(IS_TYPESET(collect_key));
-        Append_Context(context, nullptr, VAL_KEY_SPELLING(collect_key));
+        Append_Context(context, nullptr, Key_Symbol(collect_key));
     }
 
     // Set new values to obj words
@@ -271,7 +271,7 @@ REB_R MAKE_Context(Value* out, enum Reb_Kind kind, const Value* arg)
         //
         REBDSP lowest_ordered_dsp = DSP;
 
-        REBSTR *opt_label;
+        Symbol* opt_label;
         if (Get_If_Word_Or_Path_Throws(
             out,
             &opt_label,
@@ -623,7 +623,7 @@ void MF_Context(REB_MOLD *mo, const Cell* v, bool form)
         for (; NOT_END(key); key++, var++) {
             if (not Is_Param_Hidden(key)) {
                 had_output = true;
-                Emit(mo, "N: V\n", VAL_KEY_SPELLING(key), var);
+                Emit(mo, "N: V\n", Key_Symbol(key), var);
             }
         }
 
@@ -682,7 +682,7 @@ void MF_Context(REB_MOLD *mo, const Cell* v, bool form)
         // be shown as SET-WORD!
         //
         DECLARE_VALUE (any_word);
-        Init_Any_Word(any_word, REB_WORD, VAL_KEY_SPELLING(key));
+        Init_Any_Word(any_word, REB_WORD, Key_Symbol(key));
         Mold_Value(mo, any_word);
     }
 
@@ -707,8 +707,8 @@ void MF_Context(REB_MOLD *mo, const Cell* v, bool form)
 
         New_Indented_Line(mo);
 
-        REBSTR *spelling = VAL_KEY_SPELLING(key);
-        Append_Utf8_Utf8(out, STR_HEAD(spelling), STR_SIZE(spelling));
+        Symbol* symbol = Key_Symbol(key);
+        Append_Utf8_Utf8(out, STR_HEAD(symbol), STR_SIZE(symbol));
 
         Append_Unencoded(out, ": ");
 
@@ -824,7 +824,7 @@ REBTYPE(Context)
 
         switch (sym) {
           case SYM_FILE: {
-            REBSTR *file = FRM_FILE(f);
+            Symbol* file = FRM_FILE(f);
             if (not file)
                 return nullptr;
             return Init_Word(D_OUT, file); }

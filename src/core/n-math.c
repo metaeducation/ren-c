@@ -710,7 +710,7 @@ DECLARE_NATIVE(same_q)
         //
         // ANY-WORD! must match in binding as well as be otherwise equal.
         //
-        if (VAL_WORD_SPELLING(value1) != VAL_WORD_SPELLING(value2))
+        if (Cell_Word_Symbol(value1) != Cell_Word_Symbol(value2))
             return Init_False(D_OUT);
         if (VAL_BINDING(value1) != VAL_BINDING(value2))
             return Init_False(D_OUT);

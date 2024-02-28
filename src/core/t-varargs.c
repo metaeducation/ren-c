@@ -655,7 +655,7 @@ void MF_Varargs(REB_MOLD *mo, const Cell* v, bool form) {
         };
 
         DECLARE_VALUE (param_word);
-        Init_Any_Word(param_word, kind, VAL_PARAM_SPELLING(param));
+        Init_Any_Word(param_word, kind, Cell_Parameter_Symbol(param));
         Mold_Value(mo, param_word);
     }
 

@@ -300,7 +300,7 @@ void Do_After_Action_Checks_Debug(REBFRM *f) {
     //
     if (GET_ACT_FLAG(phase, ACTION_FLAG_RETURN)) {
         Value* typeset = ACT_PARAM(phase, ACT_NUM_PARAMS(phase));
-        assert(VAL_PARAM_SYM(typeset) == SYM_RETURN);
+        assert(Cell_Parameter_Id(typeset) == SYM_RETURN);
         if (
             not TYPE_CHECK(typeset, VAL_TYPE(f->out))
             and not (

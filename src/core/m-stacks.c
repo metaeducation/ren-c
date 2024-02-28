@@ -138,7 +138,7 @@ void Startup_Frame_Stack(void)
     Reuse_Varlist_If_Available(f); // needed to attach API handles to
     Push_Action(f, PG_Dummy_Action, UNBOUND);
 
-    REBSTR *opt_label = nullptr;
+    Symbol* opt_label = nullptr;
     Begin_Action(f, opt_label, m_cast(Value*, END_NODE));
     assert(IS_END(f->arg));
     f->param = END_NODE; // signal all arguments gathered

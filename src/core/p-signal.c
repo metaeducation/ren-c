@@ -71,9 +71,9 @@ static void update(struct devreq_posix_signal *signal, REBINT len, Value* arg)
     req->actual = 0; /* avoid duplicate updates */
 }
 
-static int sig_word_num(REBSTR *canon)
+static int sig_word_num(Symbol* canon)
 {
-    switch (STR_SYMBOL(canon)) {
+    switch (Symbol_Id(canon)) {
         case SYM_SIGALRM:
             return SIGALRM;
         case SYM_SIGABRT:

@@ -472,7 +472,7 @@ static REB_R Loop_Each_Core(struct Loop_Each_State *les) {
                 Init_Any_Word_Bound( // key is typeset, user wants word
                     var,
                     REB_WORD,
-                    VAL_PARAM_SPELLING(key),
+                    Cell_Parameter_Symbol(key),
                     VAL_CONTEXT(les->data),
                     bind_index
                 );

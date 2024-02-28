@@ -27,7 +27,7 @@
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // The ANY-WORD! is the fundamental symbolic concept of Rebol.  It is
-// implemented as a REBSTR UTF-8 string (see %sys-string.h), and can act as
+// implemented as a Symbol UTF-8 string (see %sys-string.h), and can act as
 // a variable when it is bound specifically to a context (see %sys-context.h)
 // or when bound relatively to a function (see %sys-function.h).
 //
@@ -58,32 +58,32 @@ INLINE bool IS_WORD_UNBOUND(const Cell* v) {
 #define IS_WORD_BOUND(v) \
     cast(bool, not IS_WORD_UNBOUND(v))
 
-INLINE REBSTR *VAL_WORD_SPELLING(const Cell* v) {
+INLINE Symbol* Cell_Word_Symbol(const Cell* v) {
     assert(ANY_WORD(v));
-    return v->payload.any_word.spelling;
+    return v->payload.any_word.symbol;
 }
 
-INLINE REBSTR *VAL_WORD_CANON(const Cell* v) {
+INLINE Symbol* VAL_WORD_CANON(const Cell* v) {
     assert(ANY_WORD(v));
-    return STR_CANON(v->payload.any_word.spelling);
+    return STR_CANON(v->payload.any_word.symbol);
 }
 
-// Some scenarios deliberately store canon spellings in words, to avoid
+// Some scenarios deliberately store canon symbols in words, to avoid
 // needing to re-canonize them.  If you have one of those words, use this to
 // add a check that your assumption about them is correct.
 //
-// Note that canon spellings can get GC'd, effectively changing the canon.
-// But they won't if there are any words outstanding that hold that spelling,
+// Note that canon symbols can get GC'd, effectively changing the canon.
+// But they won't if there are any words outstanding that hold that symbol,
 // so this is a safe technique as long as these words are GC-mark-visible.
 //
-INLINE REBSTR *VAL_STORED_CANON(const Cell* v) {
+INLINE Symbol* VAL_STORED_CANON(const Cell* v) {
     assert(ANY_WORD(v));
-    assert(GET_SER_INFO(v->payload.any_word.spelling, STRING_INFO_CANON));
-    return v->payload.any_word.spelling;
+    assert(GET_SER_INFO(v->payload.any_word.symbol, STRING_INFO_CANON));
+    return v->payload.any_word.symbol;
 }
 
 INLINE Option(SymId) Cell_Word_Id(const Cell* v) {
-    return STR_SYMBOL(v->payload.any_word.spelling);
+    return Symbol_Id(v->payload.any_word.symbol);
 }
 
 INLINE REBCTX *VAL_WORD_CONTEXT(const Value* v) {
@@ -121,10 +121,10 @@ INLINE void Unbind_Any_Word(Cell* v) {
 INLINE Value* Init_Any_Word(
     Cell* out,
     enum Reb_Kind kind,
-    REBSTR *spelling
+    Symbol* symbol
 ){
     RESET_CELL(out, kind);
-    out->payload.any_word.spelling = spelling;
+    out->payload.any_word.symbol = symbol;
     INIT_BINDING(out, UNBOUND);
   #if !defined(NDEBUG)
     out->payload.any_word.index = 0; // index not heeded if no binding
@@ -132,42 +132,42 @@ INLINE Value* Init_Any_Word(
     return KNOWN(out);
 }
 
-#define Init_Word(out,spelling) \
-    Init_Any_Word((out), REB_WORD, (spelling))
+#define Init_Word(out,symbol) \
+    Init_Any_Word((out), REB_WORD, (symbol))
 
-#define Init_Get_Word(out,spelling) \
-    Init_Any_Word((out), REB_GET_WORD, (spelling))
+#define Init_Get_Word(out,symbol) \
+    Init_Any_Word((out), REB_GET_WORD, (symbol))
 
-#define Init_Set_Word(out,spelling) \
-    Init_Any_Word((out), REB_SET_WORD, (spelling))
+#define Init_Set_Word(out,symbol) \
+    Init_Any_Word((out), REB_SET_WORD, (symbol))
 
-#define Init_Lit_Word(out,spelling) \
-    Init_Any_Word((out), REB_LIT_WORD, (spelling))
+#define Init_Lit_Word(out,symbol) \
+    Init_Any_Word((out), REB_LIT_WORD, (symbol))
 
-#define Init_Refinement(out,spelling) \
-    Init_Any_Word((out), REB_REFINEMENT, (spelling))
+#define Init_Refinement(out,symbol) \
+    Init_Any_Word((out), REB_REFINEMENT, (symbol))
 
-#define Init_Issue(out,spelling) \
-    Init_Any_Word((out), REB_ISSUE, (spelling))
+#define Init_Issue(out,symbol) \
+    Init_Any_Word((out), REB_ISSUE, (symbol))
 
 // Initialize an ANY-WORD! type with a binding to a context.
 //
 INLINE Value* Init_Any_Word_Bound(
     Cell* out,
     enum Reb_Kind type,
-    REBSTR *spelling,
+    Symbol* symbol,
     REBCTX *context,
     REBLEN index
 ) {
     RESET_CELL(out, type);
-    out->payload.any_word.spelling = spelling;
+    out->payload.any_word.symbol = symbol;
     INIT_BINDING(out, context);
     INIT_WORD_INDEX(out, index);
     return KNOWN(out);
 }
 
 
-// To make interfaces easier for some functions that take REBSTR* strings,
+// To make interfaces easier for some functions that take Symbol* strings,
 // it can be useful to allow passing UTF-8 text, a Value* with an ANY-WORD!
 // or ANY-STRING!, or just plain UTF-8 text.
 //
@@ -175,16 +175,16 @@ INLINE Value* Init_Any_Word_Bound(
 //
 #if CPLUSPLUS_11
 template<typename T>
-INLINE REBSTR* Intern(const T *p)
+INLINE Symbol* Intern(const T *p)
 {
     static_assert(
         std::is_same<T, Value>::value
         or std::is_same<T, char>::value
-        or std::is_same<T, REBSTR>::value,
-        "STR works on: char*, Value*, REBSTR*"
+        or std::is_same<T, Symbol>::value,
+        "STR works on: char*, Value*, Symbol*"
     );
 #else
-INLINE REBSTR* Intern(const void *p)
+INLINE Symbol* Intern(const void *p)
 {
 #endif
     switch (Detect_Rebol_Pointer(p)) {
@@ -200,7 +200,7 @@ INLINE REBSTR* Intern(const void *p)
     case DETECTED_AS_CELL: {
         const Value* v = cast(const Value*, p);
         if (ANY_WORD(v))
-            return VAL_WORD_SPELLING(v);
+            return Cell_Word_Symbol(v);
 
         assert(ANY_STRING(v));
 

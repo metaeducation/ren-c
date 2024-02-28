@@ -333,22 +333,22 @@ static void Queue_Mark_Opt_End_Cell_Deep(const Cell* v)
     case REB_LIT_WORD:
     case REB_REFINEMENT:
     case REB_ISSUE: {
-        REBSTR *spelling = v->payload.any_word.spelling;
+        Symbol* symbol = v->payload.any_word.symbol;
 
         // A word marks the specific spelling it uses, but not the canon
         // value.  That's because if the canon value gets GC'd, then
         // another value might become the new canon during that sweep.
         //
-        Mark_Rebser_Only(spelling);
+        Mark_Rebser_Only(symbol);
 
         // A GC cannot run during a binding process--which is the only
         // time a canon word's "index" field is allowed to be nonzero.
         //
         assert(
-            NOT_SER_INFO(spelling, STRING_INFO_CANON)
+            NOT_SER_INFO(symbol, STRING_INFO_CANON)
             or (
-                MISC(spelling).bind_index.high == 0
-                and MISC(spelling).bind_index.low == 0
+                MISC(symbol).bind_index.high == 0
+                and MISC(symbol).bind_index.low == 0
             )
         );
 
@@ -501,8 +501,8 @@ static void Queue_Mark_Opt_End_Cell_Deep(const Cell* v)
         // Not all typesets have symbols--only those that serve as the
         // keys of objects (or parameters of functions)
         //
-        if (v->extra.key_spelling != nullptr)
-            Mark_Rebser_Only(v->extra.key_spelling);
+        if (v->extra.key_symbol != nullptr)
+            Mark_Rebser_Only(v->extra.key_symbol);
         break;
 
     case REB_VARARGS: {
@@ -1014,7 +1014,7 @@ static void Mark_Data_Stack(void)
 //
 static void Mark_Symbol_Series(void)
 {
-    REBSTR **canon = SER_HEAD(REBSTR*, PG_Symbol_Canons);
+    Symbol* *canon = SER_HEAD(Symbol*, PG_Symbol_Canons);
     assert(IS_POINTER_TRASH_DEBUG(*canon)); // SYM_0 is for all non-builtin words
     ++canon;
     for (; *canon != nullptr; ++canon)

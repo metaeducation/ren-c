@@ -54,7 +54,7 @@ void Bind_Values_Inner_Loop(
         REBU64 type_bit = FLAGIT_KIND(VAL_TYPE(v));
 
         if (type_bit & bind_types) {
-            REBSTR *canon = VAL_WORD_CANON(v);
+            Symbol* canon = VAL_WORD_CANON(v);
             REBINT n = Get_Binder_Index_Else_0(binder, canon);
             if (n > 0) {
                 //
@@ -76,7 +76,7 @@ void Bind_Values_Inner_Loop(
                 // Word is not in context, so add it if option is specified
                 //
                 Expand_Context(context, 1);
-                Append_Context(context, v, 0);
+                Append_Context(context, v, nullptr);
                 Add_Binder_Index(binder, canon, VAL_WORD_INDEX(v));
             }
         }
@@ -122,7 +122,7 @@ void Bind_Values_Core(
     Value* key = CTX_KEYS_HEAD(context);
     for (; index <= CTX_LEN(context); key++, index++)
         if (not Is_Param_Unbindable(key))
-            Add_Binder_Index(&binder, VAL_KEY_CANON(key), index);
+            Add_Binder_Index(&binder, Key_Canon(key), index);
 
     Bind_Values_Inner_Loop(
         &binder, head, context, bind_types, add_midstream_types, flags
@@ -133,7 +133,7 @@ void Bind_Values_Core(
     key = CTX_KEYS_HEAD(context);
     for (; NOT_END(key); key++)
         if (not Is_Param_Unbindable(key))
-            Remove_Binder_Index(&binder, VAL_KEY_CANON(key));
+            Remove_Binder_Index(&binder, Key_Canon(key));
 
     SHUTDOWN_BINDER(&binder);
 }
@@ -274,7 +274,7 @@ REBARR *Copy_And_Bind_Relative_Deep_Managed(
     REBLEN index = 1;
     Cell* param = ARR_AT(paramlist, 1); // [0] is ACTION! value
     for (; NOT_END(param); param++, index++)
-        Add_Binder_Index(&binder, VAL_KEY_CANON(param), index);
+        Add_Binder_Index(&binder, Key_Canon(param), index);
 
     Bind_Relative_Inner_Loop(&binder, ARR_HEAD(copy), paramlist, bind_types);
 
@@ -282,7 +282,7 @@ REBARR *Copy_And_Bind_Relative_Deep_Managed(
     //
     param = ARR_AT(paramlist, 1); // [0] is ACTION! value
     for (; NOT_END(param); param++)
-        Remove_Binder_Index(&binder, VAL_KEY_CANON(param));
+        Remove_Binder_Index(&binder, Key_Canon(param));
 
     SHUTDOWN_BINDER(&binder);
     return copy;
@@ -482,7 +482,7 @@ void Virtual_Bind_Deep_To_New_Context(
     if (rebinding)
         INIT_BINDER(&binder);
 
-    REBSTR *duplicate = nullptr;
+    Symbol* duplicate = nullptr;
 
     Value* key = CTX_KEYS_HEAD(c);
     Value* var = CTX_VARS_HEAD(c);
@@ -493,7 +493,7 @@ void Virtual_Bind_Deep_To_New_Context(
             Init_Typeset(
                 key,
                 TS_VALUE, // !!! Currently not paid attention to
-                VAL_WORD_SPELLING(item)
+                Cell_Word_Symbol(item)
             );
 
             // !!! For loops, nothing should be able to be aware of this
@@ -508,7 +508,7 @@ void Virtual_Bind_Deep_To_New_Context(
             assert(rebinding); // shouldn't get here unless we're rebinding
 
             if (not Try_Add_Binder_Index(
-                &binder, VAL_PARAM_CANON(key), index
+                &binder, Cell_Param_Canon(key), index
             )){
                 // We just remember the first duplicate, but we go ahead
                 // and fill in all the keylist slots to make a valid array
@@ -517,7 +517,7 @@ void Virtual_Bind_Deep_To_New_Context(
                 // `for-each [x 'x] ...` is paradoxical.
                 //
                 if (duplicate == nullptr)
-                    duplicate = VAL_PARAM_SPELLING(key);
+                    duplicate = Cell_Parameter_Symbol(key);
             }
         }
         else {
@@ -537,7 +537,7 @@ void Virtual_Bind_Deep_To_New_Context(
             Init_Typeset(
                 key,
                 TS_VALUE, // !!! Currently not paid attention to
-                VAL_WORD_SPELLING(item)
+                Cell_Word_Symbol(item)
             );
             TYPE_SET(key, REB_TS_UNBINDABLE);
             TYPE_SET(key, REB_TS_HIDDEN);
@@ -559,14 +559,14 @@ void Virtual_Bind_Deep_To_New_Context(
             //
             if (rebinding) {
                 REBINT stored = Get_Binder_Index_Else_0(
-                    &binder, VAL_PARAM_CANON(key)
+                    &binder, Cell_Param_Canon(key)
                 );
                 if (stored > 0) {
                     if (duplicate == nullptr)
-                        duplicate = VAL_PARAM_SPELLING(key);
+                        duplicate = Cell_Parameter_Symbol(key);
                 }
                 else if (stored == 0) {
-                    Add_Binder_Index(&binder, VAL_PARAM_CANON(key), -1);
+                    Add_Binder_Index(&binder, Cell_Param_Canon(key), -1);
                 }
                 else {
                     assert(stored == -1);
@@ -622,7 +622,7 @@ void Virtual_Bind_Deep_To_New_Context(
     var = CTX_VARS_HEAD(c); // only needed for debug, optimized out
     for (; NOT_END(key); ++key, ++var) {
         REBINT stored = Remove_Binder_Index_Else_0(
-            &binder, VAL_PARAM_CANON(key)
+            &binder, Cell_Param_Canon(key)
         );
         if (stored == 0)
             assert(duplicate);
@@ -667,7 +667,7 @@ void Init_Interning_Binder(
     key = CTX_KEYS_HEAD(ctx);
     index = 1;
     for (; NOT_END(key); ++key, ++index)
-        Add_Binder_Index(binder, VAL_KEY_CANON(key), index); // positives
+        Add_Binder_Index(binder, Key_Canon(key), index); // positives
 
     // For all the keys that aren't in the supplied context but *are* in lib,
     // use a negative index to locate its position in lib.  Its meaning can be
@@ -678,7 +678,7 @@ void Init_Interning_Binder(
         key = CTX_KEYS_HEAD(Lib_Context);
         index = 1;
         for (; NOT_END(key); ++key, ++index) {
-            REBSTR *canon = VAL_KEY_CANON(key);
+            Symbol* canon = Key_Canon(key);
             REBINT n = Get_Binder_Index_Else_0(binder, canon);
             if (n == 0)
                 Add_Binder_Index(binder, canon, -index);
@@ -703,7 +703,7 @@ void Shutdown_Interning_Binder(struct Reb_Binder *binder, REBCTX *ctx)
     key = CTX_KEYS_HEAD(ctx);
     index = 1;
     for (; NOT_END(key); ++key, ++index) {
-        REBINT n = Remove_Binder_Index_Else_0(binder, VAL_KEY_CANON(key));
+        REBINT n = Remove_Binder_Index_Else_0(binder, Key_Canon(key));
         assert(n == index);
         UNUSED(n);
     }
@@ -715,7 +715,7 @@ void Shutdown_Interning_Binder(struct Reb_Binder *binder, REBCTX *ctx)
         key = CTX_KEYS_HEAD(Lib_Context);
         index = 1;
         for (; NOT_END(key); ++key, ++index) {
-            REBINT n = Remove_Binder_Index_Else_0(binder, VAL_KEY_CANON(key));
+            REBINT n = Remove_Binder_Index_Else_0(binder, Key_Canon(key));
             assert(n == 0 or n == -index);
             UNUSED(n);
         }

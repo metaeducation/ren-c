@@ -1,6 +1,6 @@
 //
 //  File: %sys-string.h
-//  Summary: {Definitions for REBSTR (e.g. WORD!) and REBUNI (e.g. STRING!)}
+//  Summary: {Definitions for Symbol (e.g. WORD!) and REBUNI (e.g. STRING!)}
 //  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
 //  Homepage: https://github.com/metaeducation/ren-c/
 //
@@ -35,7 +35,7 @@
 //
 // As a first step toward this goal, one place where strings were kept in
 // UTF-8 form has been converted into series...the word table.  So for now,
-// all REBSTR instances are for ANY-WORD!.
+// all Symbol instances are for ANY-WORD!.
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
@@ -76,7 +76,7 @@
 
 //=////////////////////////////////////////////////////////////////////////=//
 //
-//  REBSTR series for UTF-8 strings
+//  Symbol series for UTF-8 strings
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
@@ -85,33 +85,33 @@
 // everything else.
 //
 
-INLINE const char *STR_HEAD(REBSTR *str) {
+INLINE const char *STR_HEAD(Symbol* str) {
     return cs_cast(BIN_HEAD(str));
 }
 
-INLINE REBSTR *STR_CANON(REBSTR *str) {
+INLINE Symbol* STR_CANON(Symbol* str) {
     while (NOT_SER_INFO(str, STRING_INFO_CANON))
         str = LINK(str).synonym; // circularly linked list
     return str;
 }
 
-INLINE Option(SymId) STR_SYMBOL(REBSTR *str) {
+INLINE Option(SymId) Symbol_Id(Symbol* str) {
     uint16_t sym = SECOND_UINT16(str->header);
     assert(sym == SECOND_UINT16(STR_CANON(str)->header));
     return cast(SymId, sym);
 }
 
-INLINE size_t STR_SIZE(REBSTR *str) {
+INLINE size_t STR_SIZE(Symbol* str) {
     return SER_LEN(str); // number of bytes in seris is series length, ATM
 }
 
-INLINE REBSTR *Canon(SymId sym) {
+INLINE Symbol* Canon(SymId sym) {
     assert(cast(REBLEN, sym) != 0);
     assert(cast(REBLEN, sym) < SER_LEN(PG_Symbol_Canons));
-    return *SER_AT(REBSTR*, PG_Symbol_Canons, cast(REBLEN, sym));
+    return *SER_AT(Symbol*, PG_Symbol_Canons, cast(REBLEN, sym));
 }
 
-INLINE bool SAME_STR(REBSTR *s1, REBSTR *s2) {
+INLINE bool Are_Synonyms(Symbol* s1, Symbol* s2) {
     if (s1 == s2)
         return true; // !!! does this check speed things up or not?
     return STR_CANON(s1) == STR_CANON(s2); // canon check, quite fast
@@ -297,7 +297,7 @@ INLINE REBSER *Make_Sized_String_UTF8(const char *utf8, size_t size)
 }
 
 
-INLINE REBINT Hash_String(REBSTR *str)
+INLINE REBINT Hash_String(Symbol* str)
     { return Hash_UTF8(cb_cast(STR_HEAD(str)), STR_SIZE(str)); }
 
 INLINE REBINT First_Hash_Candidate_Slot(

@@ -127,7 +127,7 @@ void Shutdown_Typesets(void)
 // Name should be set when a typeset is being used as a function parameter
 // specifier, or as a key in an object.
 //
-Value* Init_Typeset(Cell* out, REBU64 bits, REBSTR *opt_name)
+Value* Init_Typeset(Cell* out, REBU64 bits, Symbol* opt_name)
 {
     RESET_CELL(out, REB_TYPESET);
     INIT_TYPESET_NAME(out, opt_name);
@@ -289,8 +289,8 @@ void MF_Typeset(REB_MOLD *mo, const Cell* v, bool form)
     }
 
 #if !defined(NDEBUG)
-    REBSTR *spelling = VAL_KEY_SPELLING(v);
-    if (spelling == nullptr) {
+    Symbol* symbol = Key_Symbol(v);
+    if (symbol == nullptr) {
         //
         // Note that although REB_MAX_NULLED is used as an implementation detail
         // for special typesets in function paramlists or context keys to
@@ -307,7 +307,7 @@ void MF_Typeset(REB_MOLD *mo, const Cell* v, bool form)
         //
         Append_Unencoded(mo->series, "(");
 
-        Append_Utf8_Utf8(mo->series, STR_HEAD(spelling), STR_SIZE(spelling));
+        Append_Utf8_Utf8(mo->series, STR_HEAD(symbol), STR_SIZE(symbol));
         Append_Unencoded(mo->series, ") ");
 
         // REVIEW: should detect when a lot of types are active and condense

@@ -197,7 +197,7 @@ INLINE void SHUTDOWN_BINDER(struct Reb_Binder *binder) {
 //
 INLINE bool Try_Add_Binder_Index(
     struct Reb_Binder *binder,
-    REBSTR *canon,
+    Symbol* canon,
     REBINT index
 ){
     assert(index != 0);
@@ -222,7 +222,7 @@ INLINE bool Try_Add_Binder_Index(
 
 INLINE void Add_Binder_Index(
     struct Reb_Binder *binder,
-    REBSTR *canon,
+    Symbol* canon,
     REBINT index
 ){
     bool success = Try_Add_Binder_Index(binder, canon, index);
@@ -233,7 +233,7 @@ INLINE void Add_Binder_Index(
 
 INLINE REBINT Get_Binder_Index_Else_0( // 0 if not present
     struct Reb_Binder *binder,
-    REBSTR *canon
+    Symbol* canon
 ){
     assert(GET_SER_INFO(canon, STRING_INFO_CANON));
 
@@ -246,7 +246,7 @@ INLINE REBINT Get_Binder_Index_Else_0( // 0 if not present
 
 INLINE REBINT Remove_Binder_Index_Else_0( // return old value if there
     struct Reb_Binder *binder,
-    REBSTR *canon
+    Symbol* canon
 ){
     assert(GET_SER_INFO(canon, STRING_INFO_CANON));
 
@@ -274,7 +274,7 @@ INLINE REBINT Remove_Binder_Index_Else_0( // return old value if there
 
 INLINE void Remove_Binder_Index(
     struct Reb_Binder *binder,
-    REBSTR *canon
+    Symbol* canon
 ){
     REBINT old_index = Remove_Binder_Index_Else_0(binder, canon);
     assert(old_index != 0);
@@ -438,7 +438,7 @@ INLINE REBCTX *Get_Var_Context(
   #ifdef DEBUG_BINDING_NAME_MATCH // this is expensive, and hasn't happened
     assert(
         VAL_WORD_CANON(any_word)
-        == VAL_KEY_CANON(CTX_KEY(c, VAL_WORD_INDEX(any_word))));
+        == Key_Canon(CTX_KEY(c, VAL_WORD_INDEX(any_word))));
   #endif
 
     FAIL_IF_INACCESSIBLE_CTX(c); // usually VAL_CONTEXT() checks, need to here
@@ -506,7 +506,7 @@ INLINE Value* Get_Mutable_Var_May_Fail(
     //
     if (GET_VAL_FLAG(var, CELL_FLAG_PROTECTED)) {
         DECLARE_VALUE (unwritable);
-        Init_Word(unwritable, VAL_WORD_SPELLING(any_word));
+        Init_Word(unwritable, Cell_Word_Symbol(any_word));
         fail (Error_Protected_Word_Raw(unwritable));
     }
 

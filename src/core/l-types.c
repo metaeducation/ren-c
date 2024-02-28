@@ -1335,14 +1335,14 @@ DECLARE_NATIVE(scan_net_header)
 
         Value* val = nullptr; // rigorous checks worry it could be uninitialized
 
-        REBSTR *name = Intern_UTF8_Managed(start, cp - start);
+        Symbol* name = Intern_UTF8_Managed(start, cp - start);
         Cell* item;
 
         cp++;
         // Search if word already present:
         for (item = ARR_HEAD(result); NOT_END(item); item += 2) {
             assert(IS_TEXT(item + 1) || IS_BLOCK(item + 1));
-            if (SAME_STR(VAL_WORD_SPELLING(item), name)) {
+            if (Are_Synonyms(Cell_Word_Symbol(item), name)) {
                 // Does it already use a block?
                 if (IS_BLOCK(item + 1)) {
                     // Block of values already exists:

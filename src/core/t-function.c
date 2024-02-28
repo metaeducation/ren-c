@@ -250,7 +250,7 @@ REBTYPE(Action)
             Value* param = VAL_ACT_PARAMS_HEAD(value);
             Value* typeset = KNOWN(ARR_HEAD(copy));
             for (; NOT_END(param); param++, typeset++) {
-                assert(VAL_PARAM_SPELLING(param) != nullptr);
+                assert(Cell_Parameter_Symbol(param) != nullptr);
                 Move_Value(typeset, param);
                 INIT_TYPESET_NAME(typeset, nullptr);
             }

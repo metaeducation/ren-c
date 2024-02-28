@@ -441,7 +441,7 @@ RebolValue* RL_rebArg(const void *p, va_list *vaptr)
     if (Detect_Rebol_Pointer(p2) != DETECTED_AS_END)
         fail ("rebArg() isn't actually variadic, it's arity-1");
 
-    REBSTR *spelling = Intern_UTF8_Managed(
+    Symbol* symbol = Intern_UTF8_Managed(
         cb_cast(name),
         LEN_BYTES(cb_cast(name))
     );
@@ -449,7 +449,7 @@ RebolValue* RL_rebArg(const void *p, va_list *vaptr)
     Value* param = ACT_PARAMS_HEAD(act);
     Value* arg = FRM_ARGS_HEAD(f);
     for (; NOT_END(param); ++param, ++arg) {
-        if (SAME_STR(VAL_PARAM_SPELLING(param), spelling))
+        if (Are_Synonyms(Cell_Parameter_Symbol(param), symbol))
             return Move_Value(Alloc_Value(), arg);
     }
 
@@ -828,7 +828,7 @@ RebolValue* RL_rebRescue(
     DECLARE_END_FRAME (f);
     f->out = m_cast(Value*, END_NODE); // should not be written
 
-    REBSTR *opt_label = nullptr;
+    Symbol* opt_label = nullptr;
     Push_Frame_At_End(f, DO_MASK_NONE); // not FULLY_SPECIALIZED
 
     Reuse_Varlist_If_Available(f); // needed to attach API handles to
@@ -1085,9 +1085,9 @@ size_t RL_rebSpellInto(
     else {
         assert(ANY_WORD(v));
 
-        REBSTR *spelling = VAL_WORD_SPELLING(v);
-        utf8 = STR_HEAD(spelling);
-        utf8_size = STR_SIZE(spelling);
+        Symbol* symbol = Cell_Word_Symbol(v);
+        utf8 = STR_HEAD(symbol);
+        utf8_size = STR_SIZE(symbol);
     }
 
     if (not buf) {
@@ -1153,8 +1153,8 @@ unsigned int RL_rebSpellIntoW(
     else {
         assert(ANY_WORD(v));
 
-        REBSTR *spelling = VAL_WORD_SPELLING(v);
-        s = Make_Sized_String_UTF8(STR_HEAD(spelling), STR_SIZE(spelling));
+        Symbol* symbol = Cell_Word_Symbol(v);
+        s = Make_Sized_String_UTF8(STR_HEAD(symbol), STR_SIZE(symbol));
         index = 0;
         len = SER_LEN(s);
     }
@@ -1610,7 +1610,7 @@ void *RL_rebDeflateAlloc(
     const void *input,
     size_t in_len
 ){
-    REBSTR *envelope = Canon(SYM_NONE);
+    Symbol* envelope = Canon(SYM_NONE);
     return Compress_Alloc_Core(out_len, input, in_len, envelope);
 }
 
@@ -1626,7 +1626,7 @@ void *RL_rebZdeflateAlloc(
     const void *input,
     size_t in_len
 ){
-    REBSTR *envelope = Canon(SYM_ZLIB);
+    Symbol* envelope = Canon(SYM_ZLIB);
     return Compress_Alloc_Core(out_len, input, in_len, envelope);
 }
 
@@ -1642,7 +1642,7 @@ void *RL_rebGzipAlloc(
     const void *input,
     size_t in_len
 ){
-    REBSTR *envelope = nullptr; // see notes in Gunzip on why GZIP is default
+    Symbol* envelope = nullptr; // see notes in Gunzip on why GZIP is default
     return Compress_Alloc_Core(out_len, input, in_len, envelope);
 }
 
@@ -1663,7 +1663,7 @@ void *RL_rebInflateAlloc(
     size_t len_in,
     int max
 ){
-    REBSTR *envelope = Canon(SYM_NONE);
+    Symbol* envelope = Canon(SYM_NONE);
     return Decompress_Alloc_Core(len_out, input, len_in, max, envelope);
 }
 
@@ -1680,7 +1680,7 @@ void *RL_rebZinflateAlloc(
     size_t len_in,
     int max
 ){
-    REBSTR *envelope = Canon(SYM_ZLIB);
+    Symbol* envelope = Canon(SYM_ZLIB);
     return Decompress_Alloc_Core(len_out, input, len_in, max, envelope);
 }
 
@@ -1708,7 +1708,7 @@ void *RL_rebGunzipAlloc(
     // use GZIP.  That's because symbols in %words.r haven't been loaded yet,
     // so a call to Canon(SYM_XXX) would fail.
     //
-    REBSTR *envelope = nullptr; // GZIP is the default
+    Symbol* envelope = nullptr; // GZIP is the default
     return Decompress_Alloc_Core(len_out, input, len_in, max, envelope);
 }
 
@@ -1727,7 +1727,7 @@ void *RL_rebDeflateDetectAlloc(
     size_t len_in,
     int max
 ){
-    REBSTR *envelope = Canon(SYM_DETECT);
+    Symbol* envelope = Canon(SYM_DETECT);
     return Decompress_Alloc_Core(len_out, input, len_in, max, envelope);
 }
 

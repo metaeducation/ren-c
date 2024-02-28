@@ -119,7 +119,7 @@ INLINE REBLEN FRM_EXPR_INDEX(REBFRM *f) {
         : f->expr_index - 1;
 }
 
-INLINE REBSTR* FRM_FILE(REBFRM *f) {
+INLINE Symbol* FRM_FILE(REBFRM *f) {
     //
     // !!! the rebValue function could be a variadic macro in C99 or higher, as
     // `rebValueFileLine(__FILE__, __LINE__, ...`.  This could let the file and
@@ -142,7 +142,7 @@ INLINE const char* FRM_FILE_UTF8(REBFRM *f) {
     // !!! Note: This is used too early in boot at the moment to use
     // Canon(__ANONYMOUS__).
     //
-    REBSTR *str = FRM_FILE(f);
+    Symbol* str = FRM_FILE(f);
     return str ? STR_HEAD(str) : "(anonymous)";
 }
 
@@ -417,7 +417,7 @@ INLINE void Enter_Native(REBFRM *f) {
 
 INLINE void Begin_Action(
     REBFRM *f,
-    REBSTR *opt_label,
+    Symbol* opt_label,
     Value* mode // LOOKBACK_ARG or ORDINARY_ARG or END
 ){
     assert(not f->original);

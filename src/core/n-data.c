@@ -799,7 +799,7 @@ DECLARE_NATIVE(in)
                         return Init_Any_Word_Bound(
                             D_OUT,
                             VAL_TYPE(word),
-                            VAL_WORD_SPELLING(word),
+                            Cell_Word_Symbol(word),
                             context,
                             index
                         );
@@ -826,7 +826,7 @@ DECLARE_NATIVE(in)
     return Init_Any_Word_Bound(
         D_OUT,
         VAL_TYPE(word),
-        VAL_WORD_SPELLING(word),
+        Cell_Word_Symbol(word),
         context,
         index
     );
@@ -1067,10 +1067,10 @@ DECLARE_NATIVE(as)
         // WORD! should become a thing, if they're not bound or locked.)
         //
         if (ANY_WORD(v)) {
-            REBSTR *spelling = VAL_WORD_SPELLING(v);
+            Symbol* symbol = Cell_Word_Symbol(v);
             REBSER *string = Make_Sized_String_UTF8(
-                STR_HEAD(spelling),
-                STR_SIZE(spelling)
+                STR_HEAD(symbol),
+                STR_SIZE(symbol)
             );
             SET_SER_INFO(string, SERIES_INFO_FROZEN);
             return Init_Any_Series(D_OUT, new_kind, string);
@@ -1160,11 +1160,11 @@ DECLARE_NATIVE(as)
             RETURN (v); // no-op
 
         // !!! A locked BINARY! shouldn't (?) complain if it exposes a
-        // REBSTR holding UTF-8 data, even prior to the UTF-8 conversion.
+        // Symbol holding UTF-8 data, even prior to the UTF-8 conversion.
         //
         if (ANY_WORD(v)) {
             assert(Is_Value_Immutable(v));
-            return Init_Binary(D_OUT, VAL_WORD_SPELLING(v));
+            return Init_Binary(D_OUT, Cell_Word_Symbol(v));
         }
 
         if (ANY_STRING(v)) {

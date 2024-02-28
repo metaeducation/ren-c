@@ -172,7 +172,7 @@ DECLARE_NATIVE(eval_enfix)
     DECLARE_SUBFRAME (child, f); // saves DSP before refinement push
 
     const bool push_refinements = true;
-    REBSTR *opt_label;
+    Symbol* opt_label;
     DECLARE_VALUE (temp);
     if (Get_If_Word_Or_Path_Throws(
         temp,
@@ -446,7 +446,7 @@ DECLARE_NATIVE(do)
         assert(FRM_PHASE(f) == phase);
         FRM_BINDING(f) = VAL_BINDING(source); // !!! should archetype match?
 
-        REBSTR *opt_label = nullptr;
+        Symbol* opt_label = nullptr;
         Begin_Action(f, opt_label, ORDINARY_ARG);
 
         bool threw = (*PG_Eval_Throws)(f);
@@ -747,7 +747,7 @@ DECLARE_NATIVE(applique)
     // be taken into account, e.g. APPLY 'APPEND/ONLY/DUP pushes /ONLY, /DUP
     //
     REBDSP lowest_ordered_dsp = DSP;
-    REBSTR *opt_label;
+    Symbol* opt_label;
     if (Get_If_Word_Or_Path_Throws(
         D_OUT,
         &opt_label,
@@ -803,7 +803,7 @@ DECLARE_NATIVE(applique)
             continue; // shouldn't have been in the binder
         if (Is_Param_Hidden(key))
             continue; // was part of a specialization internal to the action
-        Remove_Binder_Index(&binder, VAL_KEY_CANON(key));
+        Remove_Binder_Index(&binder, Key_Canon(key));
     }
     SHUTDOWN_BINDER(&binder); // must do before running code that might BIND
 

@@ -138,7 +138,7 @@ unsigned char *Compress_Alloc_Core(
     size_t *out_len,
     const void* input,
     size_t in_len,
-    REBSTR *envelope // NONE, ZLIB, or GZIP... null defaults GZIP
+    Symbol* envelope // NONE, ZLIB, or GZIP... null defaults GZIP
 ){
     z_stream strm;
     strm.zalloc = &zalloc; // fail() cleans up automatically, see notes
@@ -152,7 +152,7 @@ unsigned char *Compress_Alloc_Core(
         // be invocable via nullptr for bootstrap; not really applicable to
         // the compression side, but might as well be consistent.
     }
-    else switch (STR_SYMBOL(envelope)) {
+    else switch (Symbol_Id(envelope)) {
       case SYM_NONE:
         window_bits = window_bits_zlib_raw;
         break;
@@ -208,7 +208,7 @@ unsigned char *Compress_Alloc_Core(
     // GZIP contains a 32-bit length of the uncompressed data (modulo 2^32),
     // at the tail of the compressed data.  Sanity check that it's right.
     //
-    if (envelope and STR_SYMBOL(envelope) == SYM_GZIP) {
+    if (envelope and Symbol_Id(envelope) == SYM_GZIP) {
         uint32_t gzip_len = Bytes_To_U32_BE(
             output + strm.total_out - sizeof(uint32_t)
         );
@@ -238,7 +238,7 @@ unsigned char *Decompress_Alloc_Core(
     const void *input,
     size_t len_in,
     int max,
-    REBSTR *envelope // NONE, ZLIB, GZIP, or DETECT... null defaults GZIP
+    Symbol* envelope // NONE, ZLIB, GZIP, or DETECT... null defaults GZIP
 ){
     z_stream strm;
     strm.zalloc = &zalloc; // fail() cleans up automatically, see notes
@@ -256,7 +256,7 @@ unsigned char *Decompress_Alloc_Core(
         // in %words.r are loaded as part of the boot process from code that
         // is compressed with GZIP, so it's a Catch-22 otherwise.
     }
-    else switch (STR_SYMBOL(envelope)) {
+    else switch (Symbol_Id(envelope)) {
       case SYM_NONE:
         window_bits = window_bits_zlib_raw;
         break;
@@ -284,7 +284,7 @@ unsigned char *Decompress_Alloc_Core(
     REBLEN buf_size;
     if (
         envelope
-        and STR_SYMBOL(envelope) == SYM_GZIP // not DETECT...trust stored size
+        and Symbol_Id(envelope) == SYM_GZIP // not DETECT...trust stored size
         and len_in < 4161808 // (2^32 / 1032 + 18) ->1032 is max deflate ratio
     ){
         const REBSIZ gzip_min_overhead = 18; // at *least* 18 bytes

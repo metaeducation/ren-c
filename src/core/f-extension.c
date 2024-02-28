@@ -283,7 +283,7 @@ DECLARE_NATIVE(load_extension)
         //
         if (is_export) {
             DS_PUSH_TRASH;
-            Init_Word(DS_TOP, VAL_WORD_SPELLING(name));
+            Init_Word(DS_TOP, Cell_Word_Symbol(name));
             if (0 == Try_Bind_Word(module_ctx, DS_TOP))
                 panic ("Couldn't bind word just added -- problem");
         }

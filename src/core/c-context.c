@@ -212,8 +212,8 @@ void Expand_Context(REBCTX *context, REBLEN delta)
 //
 Value* Append_Context(
     REBCTX *context,
-    Cell* opt_any_word,
-    REBSTR *opt_spelling
+    Option(Cell*) any_word,
+    Option(Symbol*) symbol
 ) {
     REBARR *keylist = CTX_KEYLIST(context);
 
@@ -228,7 +228,7 @@ Value* Append_Context(
     Value* key = Init_Typeset(
         ARR_LAST(keylist), // !!! non-dynamic, could optimize
         TS_VALUE, // !!! Currently not paid attention to
-        opt_spelling ? opt_spelling : VAL_WORD_SPELLING(opt_any_word)
+        symbol ? unwrap(symbol) : Cell_Word_Symbol(unwrap(any_word))
     );
     UNUSED(key);
     TERM_ARRAY_LEN(keylist, ARR_LEN(keylist));
@@ -240,17 +240,17 @@ Value* Append_Context(
     Value* value = Init_Void(ARR_LAST(CTX_VARLIST(context)));
     TERM_ARRAY_LEN(CTX_VARLIST(context), ARR_LEN(CTX_VARLIST(context)));
 
-    if (not opt_any_word)
-        assert(opt_spelling);
+    if (not any_word)
+        assert(symbol);
     else {
         // We want to not just add a key/value pairing to the context, but we
         // want to bind a word while we are at it.  Make sure symbol is valid.
         //
-        assert(not opt_spelling);
+        assert(not symbol);
 
         REBLEN len = CTX_LEN(context); // length we just bumped
-        INIT_BINDING(opt_any_word, context);
-        INIT_WORD_INDEX(opt_any_word, len);
+        INIT_BINDING(unwrap(any_word), context);
+        INIT_WORD_INDEX(unwrap(any_word), len);
     }
 
     return value;  // location we just added (void cell)
@@ -389,9 +389,9 @@ void Collect_End(struct Reb_Collector *cl)
             ? ARR_HEAD(BUF_COLLECT) + 1
             : ARR_HEAD(BUF_COLLECT);
     for (; NOT_END(v); ++v) {
-        REBSTR *canon =
+        Symbol* canon =
             (cl == nullptr or (cl->flags & COLLECT_AS_TYPESET))
-                ? VAL_KEY_CANON(v)
+                ? Key_Canon(v)
                 : VAL_WORD_CANON(v);
 
         if (cl != nullptr) {
@@ -448,7 +448,7 @@ void Collect_Context_Keys(
 
     if (check_dups) {
         for (; NOT_END(key); key++) {
-            REBSTR *canon = VAL_KEY_CANON(key);
+            Symbol* canon = Key_Canon(key);
             if (not Try_Add_Binder_Index(&cl->binder, canon, cl->index))
                 continue; // don't collect if already in bind table
 
@@ -471,7 +471,7 @@ void Collect_Context_Keys(
         //
         for (; NOT_END(key); ++key, ++collect, ++cl->index) {
             Blit_Cell(collect, key);
-            Add_Binder_Index(&cl->binder, VAL_KEY_CANON(key), cl->index);
+            Add_Binder_Index(&cl->binder, Key_Canon(key), cl->index);
         }
         SET_ARRAY_LEN_NOTERM(
             BUF_COLLECT, ARR_LEN(BUF_COLLECT) + CTX_LEN(context)
@@ -497,11 +497,11 @@ static void Collect_Inner_Loop(struct Reb_Collector *cl, const Cell* head)
             if (kind != REB_SET_WORD and not (cl->flags & COLLECT_ANY_WORD))
                 continue; // kind of word we're not interested in collecting
 
-            REBSTR *canon = VAL_WORD_CANON(v);
+            Symbol* canon = VAL_WORD_CANON(v);
             if (not Try_Add_Binder_Index(&cl->binder, canon, cl->index)) {
                 if (cl->flags & COLLECT_NO_DUP) {
                     DECLARE_VALUE (duplicate);
-                    Init_Word(duplicate, VAL_WORD_SPELLING(v));
+                    Init_Word(duplicate, Cell_Word_Symbol(v));
                     fail (Error_Dup_Vars_Raw(duplicate)); // cleans bindings
                 }
                 continue; // tolerate duplicate
@@ -514,10 +514,10 @@ static void Collect_Inner_Loop(struct Reb_Collector *cl, const Cell* head)
                 Init_Typeset(
                     ARR_LAST(BUF_COLLECT),
                     TS_VALUE, // !!! Not used at the moment
-                    VAL_WORD_SPELLING(v)
+                    Cell_Word_Symbol(v)
                 );
             else
-                Init_Word(ARR_LAST(BUF_COLLECT), VAL_WORD_SPELLING(v));
+                Init_Word(ARR_LAST(BUF_COLLECT), Cell_Word_Symbol(v));
 
             continue;
         }
@@ -600,7 +600,7 @@ REBARR *Collect_Keylist_Managed(
             TYPE_SET(self_key, REB_TS_HIDDEN);
 
             assert(cl->index == 1);
-            Add_Binder_Index(&cl->binder, VAL_KEY_CANON(self_key), cl->index);
+            Add_Binder_Index(&cl->binder, Key_Canon(self_key), cl->index);
             *self_index_out = cl->index;
             ++cl->index;
             SET_ARRAY_LEN_NOTERM(BUF_COLLECT, 2); // [0] rootkey, plus SELF
@@ -681,7 +681,7 @@ REBARR *Collect_Unique_Words_Managed(
         Cell* item = VAL_ARRAY_AT(ignore);
         for (; NOT_END(item); ++item) {
             assert(ANY_WORD(item)); // pre-pass checked this
-            REBSTR *canon = VAL_WORD_CANON(item);
+            Symbol* canon = VAL_WORD_CANON(item);
 
             // A block may have duplicate words in it (this situation could
             // arise when `function [/test /test] []` calls COLLECT-WORDS
@@ -705,7 +705,7 @@ REBARR *Collect_Unique_Words_Managed(
             // Shouldn't be possible to have an object with duplicate keys,
             // use plain Add_Binder_Index.
             //
-            Add_Binder_Index(&cl->binder, VAL_KEY_CANON(key), -1);
+            Add_Binder_Index(&cl->binder, Key_Canon(key), -1);
         }
     }
     else
@@ -719,7 +719,7 @@ REBARR *Collect_Unique_Words_Managed(
         Cell* item = VAL_ARRAY_AT(ignore);
         for (; NOT_END(item); ++item) {
             assert(ANY_WORD(item));
-            REBSTR *canon = VAL_WORD_CANON(item);
+            Symbol* canon = VAL_WORD_CANON(item);
 
         #if !defined(NDEBUG)
             REBINT i = Get_Binder_Index_Else_0(&cl->binder, canon);
@@ -737,7 +737,7 @@ REBARR *Collect_Unique_Words_Managed(
     else if (ANY_CONTEXT(ignore)) {
         Value* key = CTX_KEYS_HEAD(VAL_CONTEXT(ignore));
         for (; NOT_END(key); ++key) {
-            Remove_Binder_Index(&cl->binder, VAL_KEY_CANON(key));
+            Remove_Binder_Index(&cl->binder, Key_Canon(key));
         }
     }
     else
@@ -977,7 +977,7 @@ REBARR *Context_To_Array(REBCTX *context, REBINT mode)
                 Init_Any_Word_Bound(
                     DS_TOP,
                     (mode & 2) ? REB_SET_WORD : REB_WORD,
-                    VAL_KEY_SPELLING(key),
+                    Key_Symbol(key),
                     context,
                     n
                 );
@@ -1108,7 +1108,7 @@ REBCTX *Merge_Contexts_Selfish_Managed(REBCTX *parent1, REBCTX *parent2)
     for (; NOT_END(key); key++, value++) {
         // no need to search when the binding table is available
         REBINT n = Get_Binder_Index_Else_0(
-            &collector.binder, VAL_KEY_CANON(key)
+            &collector.binder, Key_Canon(key)
         );
         assert(n != 0);
         Move_Var(CTX_VAR(merged, n), value);
@@ -1181,7 +1181,7 @@ void Resolve_Context(
     if (i != 0) {
         // Only the new words of the target:
         for (key = CTX_KEY(target, i); NOT_END(key); key++)
-            Add_Binder_Index(&binder, VAL_KEY_CANON(key), -1);
+            Add_Binder_Index(&binder, Key_Canon(key), -1);
         n = CTX_LEN(target);
     }
     else if (IS_BLOCK(only_words)) {
@@ -1202,7 +1202,7 @@ void Resolve_Context(
     if (expand and n > 0) {
         // Determine how many new words to add:
         for (key = CTX_KEYS_HEAD(target); NOT_END(key); key++)
-            if (Get_Binder_Index_Else_0(&binder, VAL_KEY_CANON(key)) != 0)
+            if (Get_Binder_Index_Else_0(&binder, Key_Canon(key)) != 0)
                 --n;
 
         // Expand context by the amount required:
@@ -1216,7 +1216,7 @@ void Resolve_Context(
     // Done by marking all source words (in bind table):
     key = CTX_KEYS_HEAD(source);
     for (n = 1; NOT_END(key); n++, key++) {
-        REBSTR *canon = VAL_KEY_CANON(key);
+        Symbol* canon = Key_Canon(key);
         if (IS_NULLED(only_words))
             Add_Binder_Index(&binder, canon, n);
         else {
@@ -1232,7 +1232,7 @@ void Resolve_Context(
     var = i != 0 ? CTX_VAR(target, i) : CTX_VARS_HEAD(target);
     key = i != 0 ? CTX_KEY(target, i) : CTX_KEYS_HEAD(target);
     for (; NOT_END(key); key++, var++) {
-        REBINT m = Remove_Binder_Index_Else_0(&binder, VAL_KEY_CANON(key));
+        REBINT m = Remove_Binder_Index_Else_0(&binder, Key_Canon(key));
         if (m != 0) {
             // "the remove succeeded, so it's marked as set now" (old comment)
             if (
@@ -1251,12 +1251,12 @@ void Resolve_Context(
     if (expand) {
         key = CTX_KEYS_HEAD(source);
         for (n = 1; NOT_END(key); n++, key++) {
-            REBSTR *canon = VAL_KEY_CANON(key);
+            Symbol* canon = Key_Canon(key);
             if (Remove_Binder_Index_Else_0(&binder, canon) != 0) {
                 //
                 // Note: no protect check is needed here
                 //
-                var = Append_Context(target, 0, canon);
+                var = Append_Context(target, nullptr, canon);
                 Move_Var(var, CTX_VAR(source, n)); // preserves enfix
             }
         }
@@ -1270,7 +1270,7 @@ void Resolve_Context(
         //
         if (i != 0) {
             for (key = CTX_KEY(target, i); NOT_END(key); key++)
-                Remove_Binder_Index_Else_0(&binder, VAL_KEY_CANON(key));
+                Remove_Binder_Index_Else_0(&binder, Key_Canon(key));
         }
         else if (IS_BLOCK(only_words)) {
             Cell* word = VAL_ARRAY_AT(only_words);
@@ -1281,7 +1281,7 @@ void Resolve_Context(
         }
         else {
             for (key = CTX_KEYS_HEAD(source); NOT_END(key); key++)
-                Remove_Binder_Index_Else_0(&binder, VAL_KEY_CANON(key));
+                Remove_Binder_Index_Else_0(&binder, Key_Canon(key));
         }
     }
 
@@ -1295,7 +1295,7 @@ void Resolve_Context(
 // Search a context looking for the given canon symbol.  Return the index or
 // 0 if not found.
 //
-REBLEN Find_Canon_In_Context(REBCTX *context, REBSTR *canon, bool always)
+REBLEN Find_Canon_In_Context(REBCTX *context, Symbol* canon, bool always)
 {
     assert(GET_SER_INFO(canon, STRING_INFO_CANON));
 
@@ -1304,7 +1304,7 @@ REBLEN Find_Canon_In_Context(REBCTX *context, REBSTR *canon, bool always)
 
     REBLEN n;
     for (n = 1; n <= len; n++, key++) {
-        if (canon == VAL_KEY_CANON(key)) {
+        if (canon == Key_Canon(key)) {
             if (Is_Param_Unbindable(key)) {
                 if (not always)
                     return 0;
@@ -1324,7 +1324,7 @@ REBLEN Find_Canon_In_Context(REBCTX *context, REBSTR *canon, bool always)
 // Search a context's keylist looking for the given canon symbol, and return
 // the value for the word.  Return nullptr if the canon is not found.
 //
-Value* Select_Canon_In_Context(REBCTX *context, REBSTR *canon)
+Value* Select_Canon_In_Context(REBCTX *context, Symbol* canon)
 {
     const bool always = false;
     REBLEN n = Find_Canon_In_Context(context, canon, always);

@@ -213,7 +213,7 @@ DECLARE_NATIVE(return)
     //
     Value* typeset = ACT_PARAM(target_fun, ACT_NUM_PARAMS(target_fun));
     assert(VAL_PARAM_CLASS(typeset) == PARAM_CLASS_RETURN);
-    assert(VAL_PARAM_SYM(typeset) == SYM_RETURN);
+    assert(Cell_Parameter_Id(typeset) == SYM_RETURN);
 
     if (
         GET_ACT_FLAG(target_fun, ACTION_FLAG_INVISIBLE)
@@ -402,7 +402,7 @@ DECLARE_NATIVE(adapt)
 
     Value* adaptee = ARG(adaptee);
 
-    REBSTR *opt_adaptee_name;
+    Symbol* opt_adaptee_name;
     const bool push_refinements = false;
     if (Get_If_Word_Or_Path_Throws(
         D_OUT,
@@ -496,7 +496,7 @@ DECLARE_NATIVE(enclose)
     INCLUDE_PARAMS_OF_ENCLOSE;
 
     Value* inner = ARG(inner);
-    REBSTR *opt_inner_name;
+    Symbol* opt_inner_name;
     const bool push_refinements = false;
     if (Get_If_Word_Or_Path_Throws(
         D_OUT,
@@ -513,7 +513,7 @@ DECLARE_NATIVE(enclose)
     Move_Value(inner, D_OUT); // Frees D_OUT, and GC safe (in ARG slot)
 
     Value* outer = ARG(outer);
-    REBSTR *opt_outer_name;
+    Symbol* opt_outer_name;
     if (Get_If_Word_Or_Path_Throws(
         D_OUT,
         &opt_outer_name,
@@ -611,7 +611,7 @@ DECLARE_NATIVE(hijack)
 {
     INCLUDE_PARAMS_OF_HIJACK;
 
-    REBSTR *opt_victim_name;
+    Symbol* opt_victim_name;
     const bool push_refinements = false;
     if (Get_If_Word_Or_Path_Throws(
         D_OUT,
@@ -628,7 +628,7 @@ DECLARE_NATIVE(hijack)
     Move_Value(ARG(victim), D_OUT); // Frees up D_OUT
     REBACT *victim = VAL_ACTION(ARG(victim)); // GC safe (in ARG slot)
 
-    REBSTR *opt_hijacker_name;
+    Symbol* opt_hijacker_name;
     if (Get_If_Word_Or_Path_Throws(
         D_OUT,
         &opt_hijacker_name,

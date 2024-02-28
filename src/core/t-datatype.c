@@ -71,7 +71,7 @@ REB_R TO_Datatype(Value* out, enum Reb_Kind kind, const Value* arg) {
 //
 void MF_Datatype(REB_MOLD *mo, const Cell* v, bool form)
 {
-    REBSTR *name = Canon(VAL_TYPE_SYM(v));
+    Symbol* name = Canon(VAL_TYPE_SYM(v));
     if (form)
         Emit(mo, "N", name);
     else
@@ -110,7 +110,7 @@ REBTYPE(Datatype)
             // !!! Account for the "invisible" self key in the current
             // stop-gap implementation of self, still default on MAKE OBJECT!s
             //
-            assert(VAL_KEY_SYM(key) == SYM_SELF);
+            assert(Key_Id(key) == SYM_SELF);
             ++key; ++var;
 
             Cell* item = ARR_HEAD(

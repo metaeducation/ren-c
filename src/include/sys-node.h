@@ -46,7 +46,7 @@
         constexpr bool derived =
             std::is_same<T, Value>::value
             or std::is_same<T, REBSER>::value
-            or std::is_same<T, REBSTR>::value
+            or std::is_same<T, Symbol>::value
             or std::is_same<T, REBARR>::value
             or std::is_same<T, REBCTX>::value
             or std::is_same<T, REBACT>::value
@@ -57,7 +57,7 @@
 
         static_assert(
             derived or base,
-            "NOD() works on void/Value/REBSER/REBSTR/REBARR/REBCTX/REBACT" \
+            "NOD() works on void/Value/REBSER/Symbol/REBARR/REBCTX/REBACT" \
                "/REBMAP/REBFRM"
         );
 

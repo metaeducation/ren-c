@@ -104,9 +104,9 @@ void Emit(REB_MOLD *mo, const char *fmt, ...)
         switch (*fmt) {
         case 'W': { // Word symbol
             const Value* any_word = va_arg(va, const Value*);
-            REBSTR *spelling = VAL_WORD_SPELLING(any_word);
+            Symbol* symbol = Cell_Word_Symbol(any_word);
             Append_Utf8_Utf8(
-                s, STR_HEAD(spelling), STR_SIZE(spelling)
+                s, STR_HEAD(symbol), STR_SIZE(symbol)
             );
             break;
         }
@@ -137,13 +137,13 @@ void Emit(REB_MOLD *mo, const char *fmt, ...)
             break;
 
         case 'T': {  // Type name
-            REBSTR *type_name = Get_Type_Name(va_arg(va, Value*));
+            Symbol* type_name = Get_Type_Name(va_arg(va, Value*));
             Append_Utf8_Utf8(s, STR_HEAD(type_name), STR_SIZE(type_name));
             break; }
 
         case 'N': {  // Symbol name
-            REBSTR *spelling = va_arg(va, REBSTR*);
-            Append_Utf8_Utf8(s, STR_HEAD(spelling), STR_SIZE(spelling));
+            Symbol* symbol = va_arg(va, Symbol*);
+            Append_Utf8_Utf8(s, STR_HEAD(symbol), STR_SIZE(symbol));
             break; }
 
         case '+': // Add #[ if mold/all
@@ -155,7 +155,7 @@ void Emit(REB_MOLD *mo, const char *fmt, ...)
 
         case 'D': // Datatype symbol: #[type
             if (ender != '\0') {
-                REBSTR *canon = Canon(cast(SymId, va_arg(va, int)));
+                Symbol* canon = Canon(cast(SymId, va_arg(va, int)));
                 Append_Utf8_Utf8(s, STR_HEAD(canon), STR_SIZE(canon));
                 Append_Utf8_Codepoint(s, ' ');
             }

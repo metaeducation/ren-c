@@ -47,7 +47,7 @@ PVAR REBINT PG_Boot_Level;  // User specified startup level
 PVAR REBU64 PG_Mem_Usage;   // Overall memory used
 PVAR REBU64 PG_Mem_Limit;   // Memory limit set by SECURE
 
-// In Ren-C, words are REBSER nodes (REBSTR subtype).  They may be GC'd (unless
+// In Ren-C, words are REBSER nodes (Symbol subtype).  They may be GC'd (unless
 // they are in the %words.r list, in which case their canon forms are
 // protected in order to do SYM_XXX switch statements in the C source, etc.)
 //
@@ -56,8 +56,8 @@ PVAR REBU64 PG_Mem_Limit;   // Memory limit set by SECURE
 // forms of words are created, and removed when they are GC'd.  It is scaled
 // according to the total number of canons in the system.
 //
-PVAR REBSTR *PG_Symbol_Canons; // Canon symbol pointers for words in %words.r
-PVAR REBSTR *PG_Canons_By_Hash; // Canon REBSER pointers indexed by hash
+PVAR Symbol* PG_Symbol_Canons; // Canon symbol pointers for words in %words.r
+PVAR Symbol* PG_Canons_By_Hash; // Canon REBSER pointers indexed by hash
 PVAR REBLEN PG_Num_Canon_Slots_In_Use; // Total canon hash slots (+ deleteds)
 #if !defined(NDEBUG)
     PVAR REBLEN PG_Num_Canon_Deleteds; // Deleted canon hash slots "in use"

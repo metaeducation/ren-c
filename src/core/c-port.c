@@ -360,7 +360,7 @@ bool Redo_Action_Throws(REBFRM *f, REBACT *run)
 
             assert(IS_REFINEMENT(f->arg));
             ignoring = false;
-            Init_Word(path, VAL_PARAM_SPELLING(f->param));
+            Init_Word(path, Cell_Parameter_Symbol(f->param));
             ++path;
             continue;
         }
@@ -509,7 +509,7 @@ post_process_output:
 // matter at the moment--but is a placeholder for finding the right place.
 //
 void Secure_Port(
-    REBSTR *kind,
+    Symbol* kind,
     REBREQ *req,
     const Value* name
     /* , const Value* path */

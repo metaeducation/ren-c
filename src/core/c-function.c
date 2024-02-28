@@ -82,7 +82,7 @@ REBARR *List_Func_Words(const Cell* func, bool pure_locals)
         }
 
         DS_PUSH_TRASH;
-        Init_Any_Word(DS_TOP, kind, VAL_PARAM_SPELLING(param));
+        Init_Any_Word(DS_TOP, kind, Cell_Parameter_Symbol(param));
     }
 
     return Pop_Stack_Values(dsp_orig);
@@ -367,7 +367,7 @@ REBARR *Make_Paramlist_Managed_May_Fail(
                 fail (Error_Bad_Func_Def_Core(item, VAL_SPECIFIER(spec)));
         }
 
-        REBSTR *canon = VAL_WORD_CANON(item);
+        Symbol* canon = VAL_WORD_CANON(item);
 
         // In rhythm of TYPESET! BLOCK! TEXT! we want to be on a string spot
         // at the time of the push of each new typeset.
@@ -398,7 +398,7 @@ REBARR *Make_Paramlist_Managed_May_Fail(
                     FLAGIT_KIND(REB_ACTION)
                     | FLAGIT_KIND(REB_VOID)
                 ),
-            VAL_WORD_SPELLING(item) // don't canonize, see #2258
+            Cell_Word_Symbol(item) // don't canonize, see #2258
         );
 
         // All these would cancel a definitional return (leave has same idea):
@@ -411,7 +411,7 @@ REBARR *Make_Paramlist_Managed_May_Fail(
         // ...although `return:` is explicitly tolerated ATM for compatibility
         // (despite violating the "pure locals are NULL" premise)
         //
-        if (STR_SYMBOL(canon) == SYM_RETURN) {
+        if (Symbol_Id(canon) == SYM_RETURN) {
             if (definitional_return_dsp != 0) {
                 DECLARE_VALUE (word);
                 Init_Word(word, canon);
@@ -585,14 +585,14 @@ REBARR *Make_Paramlist_Managed_May_Fail(
         struct Reb_Binder binder;
         INIT_BINDER(&binder);
 
-        REBSTR *duplicate = nullptr;
+        Symbol* duplicate = nullptr;
 
         Value* src = DS_AT(dsp_orig + 1) + 3;
 
         for (; src <= DS_TOP; src += 3) {
             assert(IS_TYPESET(src));
-            if (not Try_Add_Binder_Index(&binder, VAL_PARAM_CANON(src), 1020))
-                duplicate = VAL_PARAM_SPELLING(src);
+            if (not Try_Add_Binder_Index(&binder, Cell_Param_Canon(src), 1020))
+                duplicate = Cell_Parameter_Symbol(src);
 
             if (definitional_return and src == definitional_return)
                 continue;
@@ -624,7 +624,7 @@ REBARR *Make_Paramlist_Managed_May_Fail(
         src = DS_AT(dsp_orig + 1) + 3;
         for (; src <= DS_TOP; src += 3, ++dest) {
             if (
-                Remove_Binder_Index_Else_0(&binder, VAL_PARAM_CANON(src))
+                Remove_Binder_Index_Else_0(&binder, Cell_Param_Canon(src))
                 == 0
             ){
                 assert(duplicate);
@@ -808,9 +808,9 @@ REBARR *Make_Paramlist_Managed_May_Fail(
 // !!! This is semi-redundant with similar functions for Find_Word_In_Array
 // and key finding for objects, review...
 //
-REBLEN Find_Param_Index(REBARR *paramlist, REBSTR *spelling)
+REBLEN Find_Param_Index(REBARR *paramlist, Symbol* symbol)
 {
-    REBSTR *canon = STR_CANON(spelling); // don't recalculate each time
+    Symbol* canon = STR_CANON(symbol);  // don't recalculate each time
 
     Cell* param = ARR_AT(paramlist, 1);
     REBLEN len = ARR_LEN(paramlist);
@@ -818,8 +818,8 @@ REBLEN Find_Param_Index(REBARR *paramlist, REBSTR *spelling)
     REBLEN n;
     for (n = 1; n < len; ++n, ++param) {
         if (
-            spelling == VAL_PARAM_SPELLING(param)
-            or canon == VAL_PARAM_CANON(param)
+            symbol == Cell_Parameter_Symbol(param)
+            or canon == Cell_Param_Canon(param)
         ){
             return n;
         }
@@ -877,7 +877,7 @@ REBACT *Make_Action(
             break; // skip
 
         case PARAM_CLASS_RETURN: {
-            assert(VAL_PARAM_SYM(param) == SYM_RETURN);
+            assert(Cell_Parameter_Id(param) == SYM_RETURN);
 
             // See notes on ACTION_FLAG_INVISIBLE.
             //
@@ -1230,7 +1230,7 @@ REBACT *Make_Interpreted_Action_May_Fail(
         }
         else if (GET_VAL_FLAG(value, ACTION_FLAG_RETURN)) {
             Value* typeset = ACT_PARAM(a, ACT_NUM_PARAMS(a));
-            assert(VAL_PARAM_SYM(typeset) == SYM_RETURN);
+            assert(Cell_Parameter_Id(typeset) == SYM_RETURN);
             if (not TYPE_CHECK(typeset, REB_MAX_NULLED)) // what do [] returns
                 ACT_DISPATCHER(a) = &Returner_Dispatcher; // error when run
         }
@@ -1481,7 +1481,7 @@ REB_R Returner_Dispatcher(REBFRM *f)
         return R_THROWN;
 
     Value* typeset = ACT_PARAM(phase, ACT_NUM_PARAMS(phase));
-    assert(VAL_PARAM_SYM(typeset) == SYM_RETURN);
+    assert(Cell_Parameter_Id(typeset) == SYM_RETURN);
 
     // Typeset bits for locals in frames are usually ignored, but the RETURN:
     // local uses them for the return types of a "virtual" definitional return
@@ -1716,13 +1716,13 @@ REB_R Chainer_Dispatcher(REBFRM *f)
 //
 bool Get_If_Word_Or_Path_Throws(
     Value* out,
-    REBSTR **opt_name_out,
+    Symbol* *opt_name_out,
     const Cell* v,
     REBSPC *specifier,
     bool push_refinements
 ) {
     if (IS_WORD(v)) {
-        *opt_name_out = VAL_WORD_SPELLING(v);
+        *opt_name_out = Cell_Word_Symbol(v);
         Move_Opt_Var_May_Fail(out, v, specifier);
     }
     else if (IS_PATH(v)) {

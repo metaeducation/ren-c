@@ -405,7 +405,7 @@ struct Reb_Word_Payload {
     //
     // This is the word's non-canonized spelling.  It is a UTF-8 string.
     //
-    REBSTR *spelling;
+    Symbol* symbol;
 
     // Index of word in context (if word is bound, e.g. `binding` is not null)
     //
@@ -652,7 +652,7 @@ union Reb_Value_Extra {
     // 64-bit alignment, then that gets the priority for being in the payload,
     // with the "Extra" pointer-sized item here.
 
-    REBSTR *key_spelling; // if typeset is key of object or function parameter
+    Symbol* key_symbol; // if typeset is key of object or function parameter
     REBDAT date; // time's payload holds the nanoseconds, this is the date
     REBLEN struct_offset; // offset for struct in the possibly shared series
 

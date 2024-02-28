@@ -149,7 +149,7 @@ REBCTX *Make_Context_For_Action_Int_Partials(
     for (; NOT_END(param); ++param, ++arg, ++special, ++index) {
         arg->header.bits = prep;
 
-        REBSTR *canon = VAL_PARAM_CANON(param);
+        Symbol* canon = Cell_Param_Canon(param);
 
         assert(special != param or NOT_VAL_FLAG(arg, ARG_MARKED_CHECKED));
 
@@ -174,7 +174,7 @@ REBCTX *Make_Context_For_Action_Int_Partials(
         }
 
         if (IS_REFINEMENT(special)) { // specialized REFINEMENT! => "in use"
-            Init_Refinement(arg, VAL_PARAM_SPELLING(param));
+            Init_Refinement(arg, Cell_Parameter_Symbol(param));
             SET_VAL_FLAG(arg, ARG_MARKED_CHECKED);
             goto continue_specialized;
         }
@@ -208,7 +208,7 @@ REBCTX *Make_Context_For_Action_Int_Partials(
 
                 assert(
                     VAL_STORED_CANON(special) ==
-                    VAL_PARAM_CANON(
+                    Cell_Param_Canon(
                         CTX_KEYS_HEAD(exemplar) + partial_index - 1
                     )
                 );
@@ -225,7 +225,7 @@ REBCTX *Make_Context_For_Action_Int_Partials(
             // be coming along later.  Search only the higher priority
             // pushes since the call began.
             //
-            canon = VAL_PARAM_CANON(param);
+            canon = Cell_Param_Canon(param);
             REBDSP dsp = DSP;
             for (; dsp != highest_ordered_dsp; --dsp) {
                 Value* ordered = DS_AT(dsp);
@@ -372,7 +372,7 @@ REBCTX *Make_Context_For_Action(
 bool Specialize_Action_Throws(
     Value* out,
     Value* specializee,
-    REBSTR *opt_specializee_name,
+    Symbol* opt_specializee_name,
     Value* opt_def, // !!! REVIEW: binding modified directly (not copied)
     REBDSP lowest_ordered_dsp
 ){
@@ -437,7 +437,7 @@ bool Specialize_Action_Throws(
             }
             if (GET_VAL_FLAG(var, ARG_MARKED_CHECKED))
                 continue; // may be refinement from stack, now specialized out
-            Remove_Binder_Index(&binder, VAL_KEY_CANON(key));
+            Remove_Binder_Index(&binder, Key_Canon(key));
         }
         SHUTDOWN_BINDER(&binder);
 
@@ -526,14 +526,14 @@ bool Specialize_Action_Throws(
                 or (
                     IS_REFINEMENT(refine)
                     and (
-                        VAL_WORD_SPELLING(refine)
-                        == VAL_PARAM_SPELLING(param)
+                        Cell_Word_Symbol(refine)
+                        == Cell_Parameter_Symbol(param)
                     )
                 )
             );
 
             if (IS_TRUTHY(refine))
-                Init_Refinement(refine, VAL_PARAM_SPELLING(param));
+                Init_Refinement(refine, Cell_Parameter_Symbol(param));
             else
                 Init_Blank(arg);
 
@@ -728,7 +728,7 @@ bool Specialize_Action_Throws(
         if (NOT_VAL_FLAG(partial, PARTIAL_FLAG_SAW_NULL_ARG)) { // filled
             Init_Refinement(
                 partial,
-                VAL_PARAM_SPELLING(rootkey + partial->payload.partial.index)
+                Cell_Parameter_Symbol(rootkey + partial->payload.partial.index)
             );
             SET_VAL_FLAG(partial, ARG_MARKED_CHECKED);
             goto continue_loop;
@@ -744,7 +744,7 @@ bool Specialize_Action_Throws(
             Init_Any_Word_Bound(
                 partial,
                 REB_ISSUE,
-                VAL_PARAM_CANON(rootkey + evoked_index),
+                Cell_Param_Canon(rootkey + evoked_index),
                 exemplar,
                 evoked_index
             );
@@ -884,7 +884,7 @@ DECLARE_NATIVE(specialize)
     // Any partial refinement specializations are pushed to the stack, and
     // gives ordering information that TRUE assigned in a code block can't.
     //
-    REBSTR *opt_name;
+    Symbol* opt_name;
     if (Get_If_Word_Or_Path_Throws(
         D_OUT,
         &opt_name,
@@ -1062,7 +1062,7 @@ bool Make_Invocation_Frame_Throws(
 
     // === END FIRST PART OF CODE FROM DO_SUBFRAME ===
 
-    REBSTR *opt_label = nullptr; // !!! for now
+    Symbol* opt_label = nullptr; // !!! for now
     Push_Action(f, VAL_ACTION(action), VAL_BINDING(action));
     Begin_Action(f, opt_label, ORDINARY_ARG);
 
@@ -1202,7 +1202,7 @@ DECLARE_NATIVE(does)
         GET_VAL_FLAG(specializee, VALUE_FLAG_UNEVALUATED)
         and (IS_WORD(specializee) or IS_PATH(specializee))
     ){
-        REBSTR *opt_label;
+        Symbol* opt_label;
         REBDSP lowest_ordered_dsp = DSP;
         if (Get_If_Word_Or_Path_Throws(
             D_OUT,

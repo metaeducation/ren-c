@@ -47,7 +47,7 @@ REBINT CT_Word(const Cell* a, const Cell* b, REBINT mode)
             //
             // Symbols must be exact match, case-sensitively
             //
-            if (VAL_WORD_SPELLING(a) != VAL_WORD_SPELLING(b))
+            if (Cell_Word_Symbol(a) != Cell_Word_Symbol(b))
                 return 0;
         }
         else {
@@ -134,9 +134,9 @@ REB_R TO_Word(Value* out, enum Reb_Kind kind, const Value* arg)
 void MF_Word(REB_MOLD *mo, const Cell* v, bool form) {
     UNUSED(form); // no difference between MOLD and FORM at this time
 
-    REBSTR *spelling = VAL_WORD_SPELLING(v);
-    const char *head = STR_HEAD(spelling); // UTF-8
-    size_t size = STR_SIZE(spelling); // number of UTF-8 bytes
+    Symbol* symbol = Cell_Word_Symbol(v);
+    const char *head = STR_HEAD(symbol);  // UTF-8
+    size_t size = STR_SIZE(symbol);  // number of UTF-8 bytes
 
     REBSER *s = mo->series;
 
@@ -189,7 +189,7 @@ REB_R PD_Word(
     const Value* picker,
     const Value* opt_setval
 ){
-    REBSTR *str = VAL_WORD_SPELLING(pvs->out);
+    Symbol* str = Cell_Word_Symbol(pvs->out);
 
     if (not opt_setval) { // PICK-ing
         if (IS_INTEGER(picker)) {
@@ -246,9 +246,9 @@ REBTYPE(Word)
 
         switch (property) {
         case SYM_LENGTH: {
-            REBSTR *spelling = VAL_WORD_SPELLING(val);
-            const REBYTE *bp = cb_cast(STR_HEAD(spelling));
-            REBSIZ size = STR_SIZE(spelling);
+            Symbol* symbol = Cell_Word_Symbol(val);
+            const REBYTE *bp = cb_cast(STR_HEAD(symbol));
+            REBSIZ size = STR_SIZE(symbol);
             REBLEN len = 0;
             for (; size > 0; ++bp, --size) {
                 if (*bp < 0x80)

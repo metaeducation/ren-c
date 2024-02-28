@@ -320,12 +320,12 @@ uint32_t Hash_Value(const Cell* v)
         // Note that the canon symbol may change for a group of word synonyms
         // if that canon is GC'd--it picks another synonym.  Thus the pointer
         // of the canon cannot be used as a long term hash.  A case insensitive
-        // hashing of the word spelling itself is needed.
+        // hashing of the word symbol itself is needed.
         //
         // !!! Should this hash be cached on the words somehow, e.g. in the
         // data payload before the actual string?
         //
-        hash = Hash_String(VAL_WORD_SPELLING(v));
+        hash = Hash_String(Cell_Word_Symbol(v));
         break; }
 
     case REB_ACTION:

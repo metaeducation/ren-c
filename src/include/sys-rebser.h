@@ -297,7 +297,7 @@
 // ^-- STOP ARRAY FLAGS AT FLAG_LEFT_BIT(31) --^
 //
 // Arrays can use all the way up to the 32-bit limit on the flags (since
-// they're not using the arbitrary 16-bit number the way that a REBSTR is for
+// they're not using the arbitrary 16-bit number the way that a Symbol is for
 // storing the symbol).  64-bit machines have more space, but it shouldn't
 // be used for anything but optimizations.
 //
@@ -491,9 +491,9 @@
 // This is used to indicate when a SERIES_FLAG_UTF8_STRING series represents
 // the canon form of a word.  This doesn't mean anything special about the
 // case of its letters--just that it was loaded first.  Canon forms can be
-// GC'd and then delegate the job of being canon to another spelling.
+// GC'd and then delegate the job of being canon to another symbol.
 //
-// A canon string is unique because it does not need to store a pointer to
+// A canon symbol is unique because it does not need to store a pointer to
 // its canon form.  So it can use the REBSER.misc field for the purpose of
 // holding an index during binding.
 //
@@ -691,7 +691,7 @@ union Reb_Series_Link {
     // source that was running at the time is propagated into the new
     // second-generation series.
     //
-    REBSTR *file;
+    Symbol* file;
 
     // REBCTX types use this field of their varlist (which is the identity of
     // an ANY-CONTEXT!) to find their "keylist".  It is stored in the REBSER
@@ -735,11 +735,11 @@ union Reb_Series_Link {
     //
     REBACT *underlying;
 
-    // For a *read-only* REBSTR, circularly linked list of othEr-CaSed string
-    // forms.  It should be relatively quick to find the canon form on
+    // For a *read-only* Symbol, circularly linked list of othEr-CaSed
+    // symbol forms.  It should be relatively quick to find the canon form on
     // average, since many-cased forms are somewhat rare.
     //
-    REBSTR *synonym;
+    Symbol* synonym;
 
     // REBACT uses this.  It can hold either the varlist of a frame containing
     // specialized values (e.g. an "exemplar"), with ARRAY_FLAG_VARLIST set.
@@ -797,9 +797,9 @@ union Reb_Series_Misc {
 
     // When binding words into a context, it's necessary to keep a table
     // mapping those words to indices in the context's keylist.  R3-Alpha
-    // had a global "binding table" for the spellings of words, where
-    // those spellings were not garbage collected.  Ren-C uses REBSERs
-    // to store word spellings, and then has a hash table indexing them.
+    // had a global "binding table" for the symbols of words, where
+    // those symbols were not garbage collected.  Ren-C uses REBSERs
+    // to store word symbols, and then has a hash table indexing them.
     //
     // So the "binding table" is chosen to be indices reachable from the
     // REBSER nodes of the words themselves.  If it were necessary for
@@ -979,7 +979,7 @@ struct Reb_Array {
     template <class T>
     inline REBSER *SER(T *p) {
         constexpr bool derived = std::is_same<T, REBSER>::value
-            or std::is_same<T, REBSTR>::value
+            or std::is_same<T, Symbol>::value
             or std::is_same<T, REBARR>::value
             or std::is_same<T, REBCTX>::value
             or std::is_same<T, REBACT>::value;
@@ -989,7 +989,7 @@ struct Reb_Array {
 
         static_assert(
             derived or base,
-            "SER() works on void/REBNOD/REBSER/REBSTR/REBARR/REBCTX/REBACT"
+            "SER() works on void/REBNOD/REBSER/Symbol/REBARR/REBCTX/REBACT"
         );
 
         if (base)

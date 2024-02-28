@@ -365,7 +365,7 @@ REBLEN Stack_Depth(void)
 //
 const Value* Find_Error_For_Sym(SymId id_sym)
 {
-    REBSTR *id_canon = Canon(id_sym);
+    Symbol* id_canon = Canon(id_sym);
 
     REBCTX *categories = VAL_CONTEXT(Get_System(SYS_CATALOG, CAT_ERRORS));
     assert(CTX_KEY_SYM(categories, 1) == SYM_SELF);
@@ -376,7 +376,7 @@ const Value* Find_Error_For_Sym(SymId id_sym)
 
         REBLEN n = SELFISH(1);
         for (; n <= CTX_LEN(category); ++n) {
-            if (SAME_STR(CTX_KEY_SPELLING(category, n), id_canon)) {
+            if (Are_Synonyms(CTX_KEY_SPELLING(category, n), id_canon)) {
                 Value* message = CTX_VAR(category, n);
                 assert(IS_BLOCK(message) or IS_TEXT(message));
                 return message;
@@ -455,10 +455,10 @@ void Set_Location_Of_Error(
         break;
     }
     if (f != FS_BOTTOM) {
-        REBSTR *file = LINK(f->source->array).file;
+        Symbol* file = LINK(f->source->array).file;
         REBLIN line = MISC(f->source->array).line;
 
-        Option(SymId) file_sym = STR_SYMBOL(file);
+        Option(SymId) file_sym = Symbol_Id(file);
         if (file_sym != SYM___ANONYMOUS__)
             Init_Word(&vars->file, file);
         if (line != 0)
@@ -800,7 +800,7 @@ REBCTX *Make_Error_Managed_Core(
                 Init_Typeset(
                     key,
                     TS_VALUE, // !!! Currently not in use
-                    VAL_WORD_SPELLING(temp)
+                    Cell_Word_Symbol(temp)
                 );
                 Move_Value(value, arg);
 
@@ -918,7 +918,7 @@ REBCTX *Error_Need_Non_Void_Core(const Cell* target, REBSPC *specifier) {
 //
 REBCTX *Error_Non_Logic_Refinement(const Cell* param, const Value* arg) {
     DECLARE_VALUE (word);
-    Init_Word(word, VAL_PARAM_SPELLING(param));
+    Init_Word(word, Cell_Parameter_Symbol(param));
     return Error_Non_Logic_Refine_Raw(word, Type_Of(arg));
 }
 
@@ -950,7 +950,7 @@ REBCTX *Error_No_Arg(REBFRM *f, const Cell* param)
     assert(IS_TYPESET(param));
 
     DECLARE_VALUE (param_word);
-    Init_Word(param_word, VAL_PARAM_SPELLING(param));
+    Init_Word(param_word, Cell_Parameter_Symbol(param));
 
     DECLARE_VALUE (label);
     Get_Frame_Label_Or_Blank(label, f);
@@ -980,7 +980,7 @@ REBCTX *Error_No_Relative_Core(const Cell* any_word)
     Init_Any_Word(
         unbound,
         VAL_TYPE(any_word),
-        VAL_WORD_SPELLING(any_word)
+        Cell_Word_Symbol(any_word)
     );
 
     return Error_No_Relative_Raw(unbound);
@@ -1006,7 +1006,7 @@ REBCTX *Error_Not_Varargs(
     Init_Typeset(
         honest_param,
         FLAGIT_KIND(REB_VARARGS), // actually expected
-        VAL_PARAM_SPELLING(param)
+        Cell_Parameter_Symbol(param)
     );
 
     return Error_Arg_Type(f, honest_param, kind);
@@ -1070,13 +1070,13 @@ REBCTX *Error_Bad_Refine_Revoke(const Cell* param, const Value* arg)
     assert(IS_TYPESET(param));
 
     DECLARE_VALUE (param_name);
-    Init_Word(param_name, VAL_PARAM_SPELLING(param));
+    Init_Word(param_name, Cell_Parameter_Symbol(param));
 
     while (VAL_PARAM_CLASS(param) != PARAM_CLASS_REFINEMENT)
         --param;
 
     DECLARE_VALUE (refine_name);
-    Init_Refinement(refine_name, VAL_PARAM_SPELLING(param));
+    Init_Refinement(refine_name, Cell_Parameter_Symbol(param));
 
     if (IS_NULLED(arg)) // was void and shouldn't have been
         return Error_Bad_Refine_Revoke_Raw(refine_name, param_name);
@@ -1150,7 +1150,7 @@ REBCTX *Error_Protected_Key(Value* key)
     assert(IS_TYPESET(key));
 
     DECLARE_VALUE (key_name);
-    Init_Word(key_name, VAL_KEY_SPELLING(key));
+    Init_Word(key_name, Key_Symbol(key));
 
     return Error_Protected_Word_Raw(key_name);
 }
@@ -1205,7 +1205,7 @@ REBCTX *Error_Arg_Type(
     assert(IS_TYPESET(param));
 
     DECLARE_VALUE (param_word);
-    Init_Word(param_word, VAL_PARAM_SPELLING(param));
+    Init_Word(param_word, Cell_Parameter_Symbol(param));
 
     DECLARE_VALUE (label);
     Get_Frame_Label_Or_Blank(label, f);
@@ -1381,7 +1381,7 @@ void Shutdown_Stackoverflow(void)
 //         eval:  integer (limit)
 //     ]
 //
-const REBYTE *Security_Policy(REBSTR *spelling, const Value* name)
+const REBYTE *Security_Policy(Symbol* symbol, const Value* name)
 {
     const Value* policy = Get_System(SYS_STATE, STATE_POLICIES);
     const REBYTE *flags;
@@ -1391,7 +1391,7 @@ const REBYTE *Security_Policy(REBSTR *spelling, const Value* name)
     if (!IS_OBJECT(policy)) goto error;
 
     // Find the security class in the block: (file net call...)
-    policy = Select_Canon_In_Context(VAL_CONTEXT(policy), STR_CANON(spelling));
+    policy = Select_Canon_In_Context(VAL_CONTEXT(policy), STR_CANON(symbol));
     if (!policy) goto error;
 
     // Obtain the policies for it:
@@ -1440,7 +1440,7 @@ const REBYTE *Security_Policy(REBSTR *spelling, const Value* name)
         ; // need statement
         DECLARE_VALUE (temp);
         if (!policy) {
-            Init_Word(temp, spelling);
+            Init_Word(temp, symbol);
             policy = temp;
         }
         fail (Error(SYM_SECURITY, errcode, policy));
@@ -1456,7 +1456,7 @@ const REBYTE *Security_Policy(REBSTR *spelling, const Value* name)
 // Take action on the policy flags provided. The sym and value
 // are provided for error message purposes only.
 //
-void Trap_Security(REBLEN flag, REBSTR *sym, const Value* value)
+void Trap_Security(REBLEN flag, Symbol* sym, const Value* value)
 {
     if (flag == SEC_THROW) {
         if (!value) {
@@ -1477,7 +1477,7 @@ void Trap_Security(REBLEN flag, REBSTR *sym, const Value* value)
 // a given symbol (FILE) and value (path), and then tests
 // that they are allowed.
 //
-void Check_Security(REBSTR *sym, REBLEN policy, Value* value)
+void Check_Security(Symbol* sym, REBLEN policy, Value* value)
 {
     const REBYTE *flags = Security_Policy(sym, value);
     Trap_Security(flags[policy], sym, value);

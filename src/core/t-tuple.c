@@ -109,9 +109,9 @@ REB_R MAKE_Tuple(Value* out, enum Reb_Kind kind, const Value* arg)
     REBLEN alen;
 
     if (IS_ISSUE(arg)) {
-        REBSTR *spelling = VAL_WORD_SPELLING(arg);
-        const REBYTE *ap = cb_cast(STR_HEAD(spelling));
-        size_t size = STR_SIZE(spelling); // UTF-8 len
+        Symbol* symbol = Cell_Word_Symbol(arg);
+        const REBYTE *ap = cb_cast(STR_HEAD(symbol));
+        size_t size = STR_SIZE(symbol); // UTF-8 len
         if (size & 1)
             fail (arg); // must have even # of chars
         size /= 2;
