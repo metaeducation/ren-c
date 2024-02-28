@@ -198,7 +198,7 @@
 typedef unsigned Long ULong;
 #endif
 
-#ifdef DEBUG
+#ifdef DEBUG_DTOA
 // #include "stdio.h" // !!! No <stdio.h> in Ren-C release builds
 #define Bug(x) {fprintf(stderr, "%s\n", x); exit(1);}
 #endif
@@ -1055,7 +1055,7 @@ cmp
 
     i = a->wds;
     j = b->wds;
-#ifdef DEBUG
+#ifdef DEBUG_DTOA
     if (i > 1 && !a->x[i-1])
         Bug("cmp called with a->x[a->wds-1] == 0");
     if (j > 1 && !b->x[j-1])
@@ -1233,7 +1233,7 @@ b2d
     xa0 = a->x;
     xa = xa0 + a->wds;
     y = *--xa;
-#ifdef DEBUG
+#ifdef DEBUG_DTOA
     if (!y) Bug("zero y in b2d");
 #endif
     k = hi0bits(y);
@@ -1370,7 +1370,7 @@ d2b
             }
         }
     else {
-#ifdef DEBUG
+#ifdef DEBUG_DTOA
         if (!z)
             Bug("Zero passed to d2b");
 #endif
@@ -2159,7 +2159,7 @@ quorem
 #endif
 
     n = S->wds;
-#ifdef DEBUG
+#ifdef DEBUG_DTOA
     /*debug*/ if (b->wds > n)
     /*debug*/   Bug("oversize b in quorem");
 #endif
@@ -2170,7 +2170,7 @@ quorem
     bx = b->x;
     bxe = bx + n;
     q = *bxe / (*sxe + 1);  /* ensure q <= true quotient */
-#ifdef DEBUG
+#ifdef DEBUG_DTOA
 #ifdef NO_STRTOD_BIGCOMP
     /*debug*/ if (q > 9)
 #else
