@@ -198,7 +198,7 @@
 // that's used by the string series to save their REBSYM id integer (if they
 // have one).
 //
-#ifdef CPLUSPLUS_11
+#if CPLUSPLUS_11
     static_assert(13 < 16, "SERIES_FLAG_XXX too high");
 #endif
 
@@ -301,7 +301,7 @@
 // storing the symbol).  64-bit machines have more space, but it shouldn't
 // be used for anything but optimizations.
 //
-#ifdef CPLUSPLUS_11
+#if CPLUSPLUS_11
     static_assert(22 < 32, "ARRAY_FLAG_XXX too high");
 #endif
 
@@ -558,7 +558,7 @@
 // While 64-bit systems have another 32-bits available in the header, core
 // functionality shouldn't require using them...only optimization features.
 //
-#ifdef CPLUSPLUS_11
+#if CPLUSPLUS_11
     static_assert(31 < 32, "SERIES_INFO_XXX too high");
 #endif
 
@@ -950,7 +950,7 @@ struct Reb_Series {
 // do it, then it would be forced to go through a pointer access to do any
 // writing...which would likely be less efficient.
 //
-#ifdef CPLUSPLUS_11
+#if CPLUSPLUS_11
     inline static union Reb_Series_Misc& Get_Series_Misc(REBSER *s) {
         return s->misc_private;
     }
@@ -966,7 +966,7 @@ struct Reb_Array {
     struct Reb_Series series; // http://stackoverflow.com/a/9747062
 };
 
-#if !defined(DEBUG_CHECK_CASTS) || !defined(CPLUSPLUS_11)
+#if !defined(DEBUG_CHECK_CASTS) || (! CPLUSPLUS_11)
 
     #define SER(p) \
         cast(REBSER*, (p))

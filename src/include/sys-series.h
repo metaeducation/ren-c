@@ -504,7 +504,7 @@ inline static void INIT_VAL_SERIES(Cell* v, REBSER *s) {
     v->payload.any_series.series = s;
 }
 
-#if defined(NDEBUG) || !defined(CPLUSPLUS_11)
+#if defined(NDEBUG) || (! CPLUSPLUS_11)
     #define VAL_INDEX(v) \
         ((v)->payload.any_series.index)
 #else

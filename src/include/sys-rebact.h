@@ -47,7 +47,7 @@ struct Reb_Action {
         | ARRAY_FLAG_PARAMLIST)
 
 
-#if !defined(DEBUG_CHECK_CASTS) || !defined(CPLUSPLUS_11)
+#if !defined(DEBUG_CHECK_CASTS) || (! CPLUSPLUS_11)
 
     #define ACT(p) \
         cast(REBACT*, (p))

@@ -154,7 +154,7 @@ struct Reb_Binder {
     REBCNT count;
   #endif
 
-  #if defined(CPLUSPLUS_11)
+  #if CPLUSPLUS_11
     //
     // The C++ debug build can help us make sure that no binder ever fails to
     // get an INIT_BINDER() and SHUTDOWN_BINDER() pair called on it, which
@@ -173,7 +173,7 @@ inline static void INIT_BINDER(struct Reb_Binder *binder) {
   #if !defined(NDEBUG)
     binder->count = 0;
 
-    #ifdef CPLUSPLUS_11
+    #if CPLUSPLUS_11
         binder->initialized = true;
     #endif
   #endif
@@ -184,7 +184,7 @@ inline static void SHUTDOWN_BINDER(struct Reb_Binder *binder) {
   #if !defined(NDEBUG)
     assert(binder->count == 0);
 
-    #ifdef CPLUSPLUS_11
+    #if CPLUSPLUS_11
         binder->initialized = false;
     #endif
   #endif
@@ -635,7 +635,7 @@ inline static Value* Derelativize(
 // a Cell*, and then not defining it...will tell you that you do not need
 // to use Derelativize.  Juse Move_Value() if your source is a Value!
 //
-#ifdef CPLUSPLUS_11
+#if CPLUSPLUS_11
     Value* Derelativize(Cell* dest, const Value* v, REBSPC *specifier);
 #endif
 

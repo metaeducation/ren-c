@@ -270,7 +270,7 @@ inline static void DROP_TRAP_SAME_STACKLEVEL_AS_PUSH(struct Reb_State *s) {
     #define fail(error) \
         Fail_Core(error)
 #else
-    #ifdef CPLUSPLUS_11
+    #if CPLUSPLUS_11
         //
         // We can do a bit more checking in the C++ build, for instance to
         // make sure you don't pass a Cell* into fail().  This could also

@@ -456,7 +456,7 @@ struct Reb_Node {
 #define ALLOC_N_ZEROFILL(t,n) \
     cast(t *, memset(ALLOC_N(t, (n)), '\0', sizeof(t) * (n)))
 
-#ifdef CPLUSPLUS_11
+#if CPLUSPLUS_11
     #define FREE(t,p) \
         do { \
             static_assert( \

@@ -173,7 +173,7 @@ inline static Value* Init_Any_Word_Bound(
 //
 // !!! Should NULLED_CELL or other arguments make anonymous symbols?
 //
-#ifdef CPLUSPLUS_11
+#if CPLUSPLUS_11
 template<typename T>
 inline static REBSTR* Intern(const T *p)
 {

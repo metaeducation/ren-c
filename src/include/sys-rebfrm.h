@@ -353,7 +353,7 @@
 #endif
 
 
-#ifdef CPLUSPLUS_11
+#if CPLUSPLUS_11
     static_assert(28 < 32, "DO_FLAG_XXX too high");
 #endif
 
@@ -948,7 +948,7 @@ typedef bool (*REBEVL)(REBFRM * const);
     m_cast(Value*, EMPTY_TEXT)
 
 
-#if !defined(DEBUG_CHECK_CASTS) || !defined(CPLUSPLUS_11)
+#if !defined(DEBUG_CHECK_CASTS) || (! CPLUSPLUS_11)
 
     #define FRM(p) \
         cast(REBFRM*, (p)) // FRM() just does a cast (maybe with added checks)

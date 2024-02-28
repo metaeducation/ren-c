@@ -82,6 +82,26 @@ Special internal defines used by RT, not Host-Kit developers:
 
 */
 
+
+//=//// [REDUNDANT] CPLUSPLUS_11 PREPROCESSOR DEFINE ///////////////////////=//
+//
+// There is a Catch-22 in defining CPLUSPLUS_11 from %c-enhanced.h, because it
+// currently depends on TO_WINDOWS and %reb-config.h depends on CPLUSPLUS_11.
+// For the moment, sort that out by defining the macro here...but we might
+// just say it's the responsibility of whoever's doing the compiling to supply
+// it on the command line, as you have to for MSVC anyway.
+//
+// (See notes on definition in %c-enhanced.h)
+
+#if !defined(CPLUSPLUS_11)
+  #if defined(__cplusplus) && __cplusplus >= 201103L
+    #define CPLUSPLUS_11 1
+  #else
+    #define CPLUSPLUS_11 0
+  #endif
+#endif
+
+
 //* Common *************************************************************
 
 
@@ -264,6 +284,17 @@ Special internal defines used by RT, not Host-Kit developers:
 #ifdef TO_AMIGA
     #define HAS_SMART_CONSOLE
     #define NO_DL_LIB
+#endif
+
+
+// NDEBUG is the variable that is either #defined or not by the C assert.h
+// convention.  The reason NDEBUG was used was because it was a weird name and
+// unlikely to compete with codebases that had their own DEBUG definition.
+//
+#if defined(NDEBUG)
+    #define DEBUG 0
+#else
+    #define DEBUG 1
 #endif
 
 

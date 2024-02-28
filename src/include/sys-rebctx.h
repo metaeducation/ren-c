@@ -44,12 +44,12 @@ struct Reb_Context {
 };
 
 
-#if !defined(DEBUG_CHECK_CASTS) || !defined(CPLUSPLUS_11)
+#if !defined(DEBUG_CHECK_CASTS) || (! CPLUSPLUS_11)
 
     #define CTX(p) \
         cast(REBCTX*, (p))
 
-#elif defined(CPLUSPLUS_11)
+#elif CPLUSPLUS_11
 
     template<typename T>
     inline static REBCTX *CTX(T *p) {

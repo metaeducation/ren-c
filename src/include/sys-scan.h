@@ -342,7 +342,7 @@ extern const REBYTE Lex_Map[256];
 // and backward scanning code after the conversion.
 //
 
-#ifdef CPLUSPLUS_11
+#if CPLUSPLUS_11
     template<class T>
     class RebchrPtr;
 

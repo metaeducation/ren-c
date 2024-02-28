@@ -727,7 +727,7 @@ union Reb_Value_Payload {
     struct Reb_Partial_Payload partial; // used with REB_X_PARTIAL
 };
 
-#ifdef CPLUSPLUS_11
+#if CPLUSPLUS_11
     struct Reb_Relative_Value
 #else
     struct Reb_Value
@@ -747,7 +747,7 @@ union Reb_Value_Payload {
         uintptr_t touch; // see TOUCH_CELL(), pads out to 4 * sizeof(void*)
       #endif
 
-      #ifdef CPLUSPLUS_11
+      #if CPLUSPLUS_11
         //
         // Overwriting one cell with another can't be done with a direct
         // assignment, such as `*dest = *src;`  Cells contain formatting bits
@@ -810,7 +810,7 @@ union Reb_Value_Payload {
 // to be combined with any relative words that are seen later.
 //
 
-#ifdef CPLUSPLUS_11
+#if CPLUSPLUS_11
     static_assert(
         std::is_standard_layout<struct Reb_Relative_Value>::value,
         "C++ Cell must match C layout: http://stackoverflow.com/a/7189821/"

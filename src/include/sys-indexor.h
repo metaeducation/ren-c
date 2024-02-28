@@ -72,7 +72,7 @@
 #define TRASHED_INDEX (0x80000000 - 0xAE)
 
 
-#if defined(NDEBUG) || !defined(CPLUSPLUS_11)
+#if defined(NDEBUG) || (! CPLUSPLUS_11)
     typedef uintptr_t REBIXO;
 
     #define END_FLAG END_FLAG_PRIVATE
@@ -144,7 +144,7 @@
             // Individual asserts so the line number tells you which it is.
             //
             assert(bits != 0x80000000); // END_FLAG
-            assert(bits != 0x80000000 - 0x75); // THROWN_FLAG 
+            assert(bits != 0x80000000 - 0x75); // THROWN_FLAG
             assert(bits != 0x80000000 - 0xBD); // VA_LIST_FLAG
           #if !defined(NDEBUG)
             assert(bits != 0x80000000 - 0xAE); // TRASHED_INDEX

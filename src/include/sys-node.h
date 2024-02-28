@@ -34,7 +34,7 @@
 //
 
 
-#if !defined(DEBUG_CHECK_CASTS) || !defined(CPLUSPLUS_11)
+#if !defined(DEBUG_CHECK_CASTS) || (! CPLUSPLUS_11)
 
     #define NOD(p) \
         cast(REBNOD*, (p)) // NOD() just does a cast (maybe with added checks)

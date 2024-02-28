@@ -118,7 +118,7 @@ typedef struct Reb_Node REBNOD;
 // Note that in the C build, %rebol.h forward-declares `struct Reb_Value` and
 // then #defines Value to that.
 //
-#if !defined(CPLUSPLUS_11)
+#if (! CPLUSPLUS_11)
     #define Cell RebolValue  // same as Value, no checking in C build
 #else
     struct Reb_Relative_Value; // won't implicitly downcast to Value

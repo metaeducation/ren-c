@@ -162,8 +162,12 @@
 // definition.  For some reason they didn't bump the version number from 1997
 // (even by MSVC 2017!!!)
 //
-#if defined(__cplusplus) && __cplusplus >= 201103L
-    #define CPLUSPLUS_11
+#if !defined(CPLUSPLUS_11)
+    #if defined(__cplusplus) && __cplusplus >= 201103L
+        #define CPLUSPLUS_11 1
+    #else
+        #define CPLUSPLUS_11 0
+    #endif
 #endif
 
 
@@ -178,7 +182,7 @@
 // create compile-time errors for any C construction that isn't being used
 // in the way one might want.
 //
-#ifdef CPLUSPLUS_11
+#if CPLUSPLUS_11
     #include <type_traits>
 #endif
 
@@ -197,7 +201,7 @@
 // http://stackoverflow.com/questions/3385515/static-assert-in-c
 // or http://stackoverflow.com/a/809465/211160
 //
-#ifdef CPLUSPLUS_11
+#if CPLUSPLUS_11
     #define static_assert_c(e) \
         static_assert((e), "compile-time static assert failure")
 #else
@@ -261,7 +265,7 @@
 // a CFUNC*, and non-C++14 builds are allowing cast of `const void*` to
 // non-const `char` with plain `cast()`.  Investigate as time allows.
 
-#if !defined(CPLUSPLUS_11) || !defined(NDEBUG)
+#if (! CPLUSPLUS_11) || !defined(NDEBUG)
     /* These macros are easier-to-spot variants of the parentheses cast.
      * The 'm_cast' is when getting [M]utablity on a const is okay (RARELY!)
      * Plain 'cast' can do everything else (except remove volatile)
@@ -367,7 +371,7 @@
     //
     #define nullptr cast(void*, 0)
 
-#elif defined(CPLUSPLUS_11) //...or above
+#elif CPLUSPLUS_11 //...or above
     //
     // nullptr included: http://en.cppreference.com/w/cpp/language/nullptr
     //
@@ -485,7 +489,7 @@
 
 #if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L // C99 or later
     #define FINITE isfinite
-#elif defined(CPLUSPLUS_11) // C++11 or later
+#elif CPLUSPLUS_11 // C++11 or later
     #define FINITE isfinite
 #elif defined(__MINGW32__) || defined(__MINGW64__)
     #define FINITE isfinite // With --std==c++98 MinGW still has isfinite
@@ -606,7 +610,7 @@
 // Though the version here is more verbose, it uses the specializations to
 // avoid excessive calls to memset() in the debug build.
 //
-#if defined(NDEBUG) || !defined(CPLUSPLUS_11)
+#if defined(NDEBUG) || (! CPLUSPLUS_11)
     #define UNUSED(x) \
         ((void)(x))
 #else

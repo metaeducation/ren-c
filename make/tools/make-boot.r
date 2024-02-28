@@ -361,7 +361,7 @@ e-types/emit {
      * as there are no corresponding DATATYPE!s for them.  But the values are
      * used for out-of-band purposes, which should be kept in consideration.
      */
-  #ifdef CPLUSPLUS_11
+  #if CPLUSPLUS_11
     enum Reb_Kind : int_fast8_t {
   #else
     enum Reb_Kind {
@@ -388,7 +388,7 @@ e-types/emit {
         REB_R_IMMEDIATE = REB_MAX_PLUS_FIVE,
 
         REB_MAX_PLUS_MAX
-  #ifdef CPLUSPLUS_11
+  #if CPLUSPLUS_11
     };
   #else
     };

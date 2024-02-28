@@ -337,7 +337,7 @@ inline static void INIT_VAL_PARAM_CLASS(Cell* v, enum Reb_Param_Class c) {
 // This is so a whole byte is taken for the parameter class, to make fetching
 // and setting it faster.
 //
-#ifdef CPLUSPLUS_11
+#if CPLUSPLUS_11
 static_assert(0 < 8 - PCLASS_NUM_BITS, "TYPESET_FLAG_XXX too high");
 #endif
 

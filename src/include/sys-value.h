@@ -72,7 +72,7 @@
 //
 
 #if defined(DEBUG_HAS_PROBE)
-    #ifdef CPLUSPLUS_11
+    #if CPLUSPLUS_11
         template <typename T>
         T Probe_Cpp_Helper(T v, const char *file, int line) {
             return cast(T, Probe_Core_Debug(v, file, line));
@@ -274,7 +274,7 @@
     #define SET_VAL_FLAGS(v,f) \
         (v)->header.bits |= (f)
 
-    #ifdef CPLUSPLUS_11
+    #if CPLUSPLUS_11
         //
         // In the C++ release build we sanity check that only one bit is set.
         // The assert is done at compile-time, you must use a constant flag.
@@ -1169,7 +1169,7 @@ inline static Value* Init_Char(Cell* out, REBUNI uni) {
 // for these cases.
 //
 
-#if defined(NDEBUG) || !defined(CPLUSPLUS_11)
+#if defined(NDEBUG) || (! CPLUSPLUS_11)
     #define VAL_INT64(v) \
         ((v)->payload.integer)
 #else
@@ -1227,7 +1227,7 @@ inline static REBYTE VAL_UINT8(const Cell* v) {
 // FLOAT! which may be a good idea.
 //
 
-#if defined(NDEBUG) || !defined(CPLUSPLUS_11)
+#if defined(NDEBUG) || (! CPLUSPLUS_11)
     #define VAL_DECIMAL(v) \
         ((v)->payload.decimal)
 #else
@@ -1320,7 +1320,7 @@ inline static Value* Init_Money(Cell* out, deci amount) {
 #define MAX_TUPLE \
     ((sizeof(uint32_t) * 2) - 1) // for same properties on 64-bit and 32-bit
 
-#if !defined(CPLUSPLUS_11)
+#if (! CPLUSPLUS_11)
     #define VAL_TUPLE(v) \
         ((v)->payload.tuple.tuple + 1)
 
