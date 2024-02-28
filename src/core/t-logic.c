@@ -436,7 +436,7 @@ REBTYPE(Logic)
     bool b1 = VAL_LOGIC(D_ARG(1));
     bool b2;
 
-    switch (VAL_WORD_SYM(verb)) {
+    switch (Cell_Word_Id(verb)) {
 
     case SYM_INTERSECT:
         b2 = Math_Arg_For_Logic(D_ARG(2));

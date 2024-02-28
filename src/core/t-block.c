@@ -804,7 +804,7 @@ REBTYPE(Array)
     REBARR *arr = VAL_ARRAY(array);
     REBSPC *specifier = VAL_SPECIFIER(array);
 
-    REBSYM sym = VAL_WORD_SYM(verb);
+    Option(SymId) sym = Cell_Word_Id(verb);
     switch (sym) {
       case SYM_TAKE: {
         INCLUDE_PARAMS_OF_TAKE;
@@ -882,7 +882,7 @@ REBTYPE(Array)
         if (REF(only))
             len = 1;
 
-        if (VAL_WORD_SYM(verb) == SYM_FIND) {
+        if (Cell_Word_Id(verb) == SYM_FIND) {
             if (REF(tail) || REF(match))
                 ret += len;
             VAL_INDEX(array) = ret;
@@ -907,7 +907,7 @@ REBTYPE(Array)
         UNUSED(PAR(value));
 
         REBCNT len; // length of target
-        if (VAL_WORD_SYM(verb) == SYM_CHANGE)
+        if (Cell_Word_Id(verb) == SYM_CHANGE)
             len = Part_Len_May_Modify_Index(array, ARG(limit));
         else
             len = Part_Len_Append_Insert_May_Modify_Index(arg, ARG(limit));
@@ -938,7 +938,7 @@ REBTYPE(Array)
 
         Move_Value(D_OUT, array);
         VAL_INDEX(D_OUT) = Modify_Array(
-            VAL_WORD_SPELLING(verb),
+            unwrap(Cell_Word_Id(verb)),
             arr,
             index,
             arg,

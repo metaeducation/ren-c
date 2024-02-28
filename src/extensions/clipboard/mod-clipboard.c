@@ -54,13 +54,13 @@ static REB_R Clipboard_Actor(
 ){
     Value* arg = D_ARGC > 1 ? D_ARG(2) : NULL;
 
-    switch (VAL_WORD_SYM(verb)) {
+    switch (Cell_Word_Id(verb)) {
 
     case SYM_REFLECT: {
         INCLUDE_PARAMS_OF_REFLECT;
 
         UNUSED(ARG(value)); // implied by `port`
-        REBSYM property = VAL_WORD_SYM(ARG(property));
+        Option(SymId) property = Cell_Word_Id(ARG(property));
         assert(property != 0);
 
         switch (property) {

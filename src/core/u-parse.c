@@ -144,8 +144,8 @@ enum parse_flags {
 // !!! This and other efficiency tricks from R3-Alpha should be reviewed to
 // see if they're really the best option.
 //
-inline static REBSYM VAL_CMD(const Cell* v) {
-    REBSYM sym = VAL_WORD_SYM(v);
+inline static Option(SymId) VAL_CMD(const Cell* v) {
+    Option(SymId) sym = Cell_Word_Id(v);
     if (sym >= SYM_SET and sym <= SYM_END)
         return sym;
     return SYM_0;
@@ -827,9 +827,9 @@ static REBIXO To_Thru_Block_Rule(
             }
 
             if (IS_WORD(rule)) {
-                REBSYM cmd = VAL_CMD(rule);
+                Option(SymId) cmd = VAL_CMD(rule);
 
-                if (cmd != SYM_0) {
+                if (cmd) {
                     if (cmd == SYM_END) {
                         if (pos >= SER_LEN(P_INPUT))
                             return SER_LEN(P_INPUT);
@@ -1072,7 +1072,7 @@ static REBIXO To_Thru_Non_Block_Rule(
         return i;
     }
 
-    if (IS_WORD(rule) and VAL_WORD_SYM(rule) == SYM_END) {
+    if (IS_WORD(rule) and Cell_Word_Id(rule) == SYM_END) {
         //
         // `TO/THRU END` JUMPS TO END INPUT SERIES (ANY SERIES TYPE)
         //
@@ -1553,8 +1553,8 @@ REBNATIVE(subparse)
         // If word, set-word, or get-word, process it:
         if (VAL_TYPE(rule) >= REB_WORD and VAL_TYPE(rule) <= REB_GET_WORD) {
 
-            REBSYM cmd = VAL_CMD(rule);
-            if (cmd != SYM_0) {
+            Option(SymId) cmd = VAL_CMD(rule);
+            if (cmd) {
                 if (not IS_WORD(rule)) // Command but not WORD! (COPY:, :THRU)
                     fail (Error_Parse_Command(f));
 
@@ -1687,7 +1687,7 @@ REBNATIVE(subparse)
                     // `keep/only`.  But is that any good?  Review.
                     //
                     bool only;
-                    if (IS_WORD(P_RULE) and VAL_WORD_SYM(P_RULE) == SYM_ONLY) {
+                    if (IS_WORD(P_RULE) and Cell_Word_Id(P_RULE) == SYM_ONLY) {
                         only = true;
                         FETCH_NEXT_RULE(f);
                     }
@@ -2055,7 +2055,7 @@ REBNATIVE(subparse)
             REBIXO i; // temp index point
 
             if (IS_WORD(rule)) {
-                REBSYM cmd = VAL_CMD(rule);
+                Option(SymId) cmd = VAL_CMD(rule);
 
                 switch (cmd) {
                 case SYM_SKIP:
@@ -2396,20 +2396,19 @@ REBNATIVE(subparse)
                         fail (Error_Parse_End());
 
                     if (IS_WORD(P_RULE)) { // check for ONLY flag
-                        REBSYM cmd = VAL_CMD(P_RULE);
-                        switch (cmd) {
-                        case SYM_ONLY:
-                            only = true;
-                            FETCH_NEXT_RULE(f);
-                            if (IS_END(P_RULE))
-                                fail (Error_Parse_End());
-                            break;
+                        Option(SymId) cmd = VAL_CMD(P_RULE);
+                        if (cmd) {
+                            switch (cmd) {
+                              case SYM_ONLY:
+                                only = true;
+                                FETCH_NEXT_RULE(f);
+                                if (IS_END(P_RULE))
+                                    fail (Error_Parse_End());
+                                break;
 
-                        case SYM_0: // not a "parse command" word, keep going
-                            break;
-
-                        default: // other commands invalid after INSERT/CHANGE
-                            fail (Error_Parse_Rule());
+                              default: // other cmds invalid after INSERT/CHANGE
+                                fail (Error_Parse_Rule());
+                            }
                         }
                     }
 
@@ -2451,8 +2450,8 @@ REBNATIVE(subparse)
                         }
                         P_POS = Modify_Array(
                             (flags & PF_CHANGE)
-                                ? Canon(SYM_CHANGE)
-                                : Canon(SYM_INSERT),
+                                ? SYM_CHANGE
+                                : SYM_INSERT,
                             ARR(P_INPUT),
                             begin,
                             specified,
@@ -2479,8 +2478,8 @@ REBNATIVE(subparse)
                             P_POS = Modify_Binary(
                                 P_INPUT_VALUE,
                                 (flags & PF_CHANGE)
-                                    ? Canon(SYM_CHANGE)
-                                    : Canon(SYM_INSERT),
+                                    ? SYM_CHANGE
+                                    : SYM_INSERT,
                                 specified,
                                 mod_flags,
                                 count,
@@ -2490,8 +2489,8 @@ REBNATIVE(subparse)
                             P_POS = Modify_String(
                                 P_INPUT_VALUE,
                                 (flags & PF_CHANGE)
-                                    ? Canon(SYM_CHANGE)
-                                    : Canon(SYM_INSERT),
+                                    ? SYM_CHANGE
+                                    : SYM_INSERT,
                                 specified,
                                 mod_flags,
                                 count,

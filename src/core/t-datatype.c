@@ -46,11 +46,11 @@ REBINT CT_Datatype(const Cell* a, const Cell* b, REBINT mode)
 //
 REB_R MAKE_Datatype(Value* out, enum Reb_Kind kind, const Value* arg) {
     if (IS_WORD(arg)) {
-        REBSYM sym = VAL_WORD_SYM(arg);
-        if (sym == SYM_0 or sym >= SYM_FROM_KIND(REB_MAX))
+        Option(SymId) sym = Cell_Word_Id(arg);
+        if (not sym or unwrap(sym) >= SYM_FROM_KIND(REB_MAX))
             goto bad_make;
 
-        return Init_Datatype(out, KIND_FROM_SYM(sym));
+        return Init_Datatype(out, KIND_FROM_SYM(unwrap(sym)));
     }
 
   bad_make:;
@@ -88,10 +88,10 @@ REBTYPE(Datatype)
     Value* arg = D_ARG(2);
     enum Reb_Kind kind = VAL_TYPE_KIND(value);
 
-    switch (VAL_WORD_SYM(verb)) {
+    switch (Cell_Word_Id(verb)) {
 
     case SYM_REFLECT: {
-        REBSYM sym = VAL_WORD_SYM(arg);
+        Option(SymId) sym = Cell_Word_Id(arg);
         if (sym == SYM_SPEC) {
             //
             // The "type specs" were loaded as an array, but this reflector

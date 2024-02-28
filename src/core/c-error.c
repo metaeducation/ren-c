@@ -363,7 +363,7 @@ REBCNT Stack_Depth(void)
 //
 // If the message is not found, return nullptr.
 //
-const Value* Find_Error_For_Sym(enum Reb_Symbol id_sym)
+const Value* Find_Error_For_Sym(SymId id_sym)
 {
     REBSTR *id_canon = Canon(id_sym);
 
@@ -458,7 +458,7 @@ void Set_Location_Of_Error(
         REBSTR *file = LINK(f->source->array).file;
         REBLIN line = MISC(f->source->array).line;
 
-        REBSYM file_sym = STR_SYMBOL(file);
+        Option(SymId) file_sym = STR_SYMBOL(file);
         if (file_sym != SYM___ANONYMOUS__)
             Init_Word(&vars->file, file);
         if (line != 0)
@@ -661,8 +661,8 @@ bool Make_Error_Object_Throws(
 // regain control to properly call va_end with no longjmp to skip it.
 //
 REBCTX *Make_Error_Managed_Core(
-    enum Reb_Symbol cat_sym,
-    enum Reb_Symbol id_sym,
+    SymId cat_sym,
+    SymId id_sym,
     va_list *vaptr
 ){
     if (PG_Boot_Phase < BOOT_ERRORS) { // no STD_ERROR or template table yet
@@ -849,7 +849,7 @@ REBCTX *Make_Error_Managed_Core(
 //
 REBCTX *Error(
     int cat_sym,
-    int id_sym, // can't be enum Reb_Symbol, see note below
+    int id_sym, // can't be SymId, see note below
     ... /* Value* arg1, Value* arg2, ... */
 ){
     va_list va;
@@ -860,8 +860,8 @@ REBCTX *Error(
     va_start(va, id_sym);
 
     REBCTX *error = Make_Error_Managed_Core(
-        cast(enum Reb_Symbol, cat_sym),
-        cast(enum Reb_Symbol, id_sym),
+        cast(SymId, cat_sym),
+        cast(SymId, id_sym),
         &va
     );
 
@@ -1262,7 +1262,7 @@ REBCTX *Error_Cannot_Reflect(enum Reb_Kind type, const Value* arg)
 //
 //  Error_On_Port: C
 //
-REBCTX *Error_On_Port(enum Reb_Symbol id_sym, Value* port, REBINT err_code)
+REBCTX *Error_On_Port(SymId id_sym, Value* port, REBINT err_code)
 {
     FAIL_IF_BAD_PORT(port);
 
@@ -1386,7 +1386,7 @@ const REBYTE *Security_Policy(REBSTR *spelling, const Value* name)
     const Value* policy = Get_System(SYS_STATE, STATE_POLICIES);
     const REBYTE *flags;
     REBCNT len;
-    enum Reb_Symbol errcode = SYM_SECURITY_ERROR;
+    SymId errcode = SYM_SECURITY_ERROR;
 
     if (!IS_OBJECT(policy)) goto error;
 

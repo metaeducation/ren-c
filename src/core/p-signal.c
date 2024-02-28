@@ -155,12 +155,12 @@ static REB_R Signal_Actor(REBFRM *frame_, Value* port, Value* verb)
     Value* spec = CTX_VAR(ctx, STD_PORT_SPEC);
 
     if (not (req->flags & RRF_OPEN)) {
-        switch (VAL_WORD_SYM(verb)) {
+        switch (Cell_Word_Id(verb)) {
         case SYM_REFLECT: {
             INCLUDE_PARAMS_OF_REFLECT;
 
             UNUSED(ARG(value));
-            REBSYM property = VAL_WORD_SYM(ARG(property));
+            Option(SymId) property = Cell_Word_Id(ARG(property));
 
             switch (property) {
             case SYM_OPEN_Q:
@@ -188,7 +188,7 @@ static REB_R Signal_Actor(REBFRM *frame_, Value* port, Value* verb)
                 if (not IS_WORD(sig))
                     fail (Error_Invalid_Spec_Raw(sig));
 
-                if (VAL_WORD_SYM(sig) == SYM_ALL) {
+                if (Cell_Word_Id(sig) == SYM_ALL) {
                     if (sigfillset(&signal->mask) < 0)
                         fail (Error_Invalid_Spec_Raw(sig));
                     break;
@@ -206,10 +206,10 @@ static REB_R Signal_Actor(REBFRM *frame_, Value* port, Value* verb)
 
             OS_DO_DEVICE_SYNC(req, RDC_OPEN);
 
-            if (VAL_WORD_SYM(verb) == SYM_OPEN)
+            if (Cell_Word_Id(verb) == SYM_OPEN)
                 RETURN (port);
 
-            assert((req->flags & RRF_OPEN) and VAL_WORD_SYM(verb) == SYM_READ);
+            assert((req->flags & RRF_OPEN) and Cell_Word_Id(verb) == SYM_READ);
             break; } // fallthrough
 
         case SYM_CLOSE:
@@ -223,12 +223,12 @@ static REB_R Signal_Actor(REBFRM *frame_, Value* port, Value* verb)
         }
     }
 
-    switch (VAL_WORD_SYM(verb)) {
+    switch (Cell_Word_Id(verb)) {
     case SYM_REFLECT: {
         INCLUDE_PARAMS_OF_REFLECT;
 
         UNUSED(ARG(value));
-        REBSYM property = VAL_WORD_SYM(ARG(property));
+        Option(SymId) property = Cell_Word_Id(ARG(property));
 
         switch (property) {
         case SYM_OPEN_Q:

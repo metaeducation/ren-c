@@ -242,7 +242,7 @@ REBNATIVE(load_extension)
         // normal module export...also Make_Native() doesn't understand it
         //
         bool is_export;
-        if (IS_WORD(item) and VAL_WORD_SYM(item) == SYM_EXPORT) {
+        if (IS_WORD(item) and Cell_Word_Id(item) == SYM_EXPORT) {
             is_export = true;
             ++item;
         }

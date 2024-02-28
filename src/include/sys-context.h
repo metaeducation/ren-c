@@ -183,7 +183,7 @@ inline static REBSTR *CTX_KEY_CANON(REBCTX *c, REBCNT n) {
     return STR_CANON(CTX_KEY_SPELLING(c, n));
 }
 
-inline static REBSYM CTX_KEY_SYM(REBCTX *c, REBCNT n) {
+inline static Option(SymId) CTX_KEY_SYM(REBCTX *c, REBCNT n) {
     return STR_SYMBOL(CTX_KEY_SPELLING(c, n)); // should be same as canon
 }
 

@@ -148,7 +148,7 @@ REBTYPE(Unit)
     Value* val = D_ARG(1);
     assert(not IS_NULLED(val));
 
-    switch (VAL_WORD_SYM(verb)) {
+    switch (Cell_Word_Id(verb)) {
 
     // !!! The category of "non-mutating type actions" should be knowable via
     // some meta information.  Any new such actions should get the behavior
@@ -163,7 +163,7 @@ REBTYPE(Unit)
         // and that would mean it would be legal.  For now, carry over ad
         // hoc things that R3-Alpha returned BLANK! for.
 
-        switch (VAL_WORD_SYM(ARG(property))) {
+        switch (Cell_Word_Id(ARG(property))) {
         case SYM_INDEX:
         case SYM_LENGTH:
             return nullptr;

@@ -74,7 +74,7 @@ static struct {
     void (*update)(void *, REBYTE *, REBCNT);
     void (*final)(REBYTE *, void *);
     int (*ctxsize)(void);
-    REBSYM sym;
+    SymId sym;
     REBCNT len;
     REBCNT hmacblock;
 } digests[] = {
@@ -91,7 +91,7 @@ static struct {
     {MD5, MD5_Init, MD5_Update, MD5_Final, MD5_CtxSize, SYM_MD5, 16, 64},
 #endif
 
-    {NULL, NULL, NULL, NULL, NULL, SYM_0, 0, 0}
+    {NULL, NULL, NULL, NULL, NULL, SYM_0_internal, 0, 0}
 
 };
 
@@ -178,9 +178,9 @@ REBNATIVE(checksum)
     REBYTE *data = VAL_RAW_DATA_AT(arg); // after Partial() in case of change
     REBCNT wide = SER_WIDE(VAL_SERIES(arg));
 
-    REBSYM sym;
+    SymId sym;
     if (REF(method)) {
-        sym = VAL_WORD_SYM(ARG(word));
+        sym = try_unwrap(Cell_Word_Id(ARG(word)));
         if (sym == SYM_0) // not in %words.r, no SYM_XXX constant
             fail (Error_Invalid(ARG(word)));
     }
@@ -216,7 +216,7 @@ REBNATIVE(checksum)
 
         REBCNT i;
         for (i = 0; i != sizeof(digests) / sizeof(digests[0]); i++) {
-            if (!SAME_SYM_NONZERO(digests[i].sym, sym))
+            if (digests[i].sym != sym)
                 continue;
 
             REBSER *digest = Make_Ser(digests[i].len + 1, sizeof(char));
@@ -412,7 +412,7 @@ REBNATIVE(inflate)
     if (not REF(envelope))
         envelope = Canon(SYM_NONE);  // Note: nullptr is gzip (for bootstrap)
     else {
-        switch (VAL_WORD_SYM(ARG(format))) {
+        switch (Cell_Word_Id(ARG(format))) {
           case SYM_ZLIB:
           case SYM_GZIP:
           case SYM_DETECT:

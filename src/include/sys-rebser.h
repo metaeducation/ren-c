@@ -195,7 +195,7 @@
 //
 // If a series is not an array, then the rightmost 16 bits of the series flags
 // are used to store an arbitrary per-series-type 16 bit number.  Right now,
-// that's used by the string series to save their REBSYM id integer (if they
+// that's used by the string series to save their SymId id integer (if they
 // have one).
 //
 #if CPLUSPLUS_11

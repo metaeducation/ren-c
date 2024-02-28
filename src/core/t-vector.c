@@ -416,7 +416,7 @@ bool Make_Vector_Spec(Value* out, const Cell* head, REBSPC *specifier)
     }
 
     bool sign;
-    if (IS_WORD(item) && VAL_WORD_SYM(item) == SYM_UNSIGNED) {
+    if (IS_WORD(item) && Cell_Word_Id(item) == SYM_UNSIGNED) {
         sign = false;
         ++item;
     }
@@ -425,10 +425,10 @@ bool Make_Vector_Spec(Value* out, const Cell* head, REBSPC *specifier)
 
     bool non_integer;
     if (IS_WORD(item)) {
-        if (SAME_SYM_NONZERO(VAL_WORD_SYM(item), SYM_FROM_KIND(REB_INTEGER)))
+        if (Cell_Word_Id(item) == SYM_FROM_KIND(REB_INTEGER))
             non_integer = false;
         else if (
-            SAME_SYM_NONZERO(VAL_WORD_SYM(item), SYM_FROM_KIND(REB_DECIMAL))
+            Cell_Word_Id(item) == SYM_FROM_KIND(REB_DECIMAL)
         ){
             non_integer = true;
             if (not sign)
@@ -658,13 +658,13 @@ REBTYPE(Vector)
 
     REBSER *vect = VAL_SERIES(value);
 
-    switch (VAL_WORD_SYM(verb)) {
+    switch (Cell_Word_Id(verb)) {
 
     case SYM_REFLECT: {
         INCLUDE_PARAMS_OF_REFLECT;
 
         UNUSED(ARG(value));
-        REBSYM property = VAL_WORD_SYM(ARG(property));
+        Option(SymId) property = Cell_Word_Id(ARG(property));
         assert(property != SYM_0);
 
         switch (property) {

@@ -85,8 +85,6 @@ typedef RebolValue Value;
 
 //=//// STANDARD DEPENDENCIES FOR CORE ////////////////////////////////////=//
 
-#include "reb-c.h"
-
 #include <stdarg.h> // va_list, va_arg()...
 #include <string.h>
 #include <setjmp.h>
@@ -98,6 +96,8 @@ typedef RebolValue Value;
 //
 #include <assert.h>
 #include "assert-fixes.h"
+
+#include "reb-c.h"
 
 
 //
@@ -164,17 +164,17 @@ typedef RebolValue Value;
 #define HAS_MD5                 // allow it
 
 
+// Small integer symbol IDs, e.g. SYM_THRU or SYM_ON, for built-in words so
+// that they can be used in C switch() statements.
+//
+#include "tmp-symbols.h"
+
+
 // This does all the forward definitions that are necessary for the compiler
 // to be willing to build %tmp-internals.h.  Some structures are fully defined
 // and some are only forward declared.
 //
 #include "reb-defs.h"
-
-
-// Small integer symbol IDs, e.g. SYM_THRU or SYM_ON, for built-in words so
-// that they can be used in C switch() statements.
-//
-#include "tmp-symbols.h"
 
 
 //=////////////////////////////////////////////////////////////////////////=//

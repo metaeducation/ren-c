@@ -82,7 +82,7 @@ inline static REBSTR *VAL_STORED_CANON(const Cell* v) {
     return v->payload.any_word.spelling;
 }
 
-inline static OPT_REBSYM VAL_WORD_SYM(const Cell* v) {
+inline static Option(SymId) Cell_Word_Id(const Cell* v) {
     return STR_SYMBOL(v->payload.any_word.spelling);
 }
 

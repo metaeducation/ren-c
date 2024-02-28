@@ -687,13 +687,13 @@ REBTYPE(Map)
 
     REBMAP *map = VAL_MAP(val);
 
-    switch (VAL_WORD_SYM(verb)) {
+    switch (Cell_Word_Id(verb)) {
 
     case SYM_REFLECT: {
         INCLUDE_PARAMS_OF_REFLECT;
 
         UNUSED(ARG(value)); // covered by `val`
-        REBSYM property = VAL_WORD_SYM(ARG(property));
+        Option(SymId) property = Cell_Word_Id(ARG(property));
         assert(property != SYM_0);
 
         switch (property) {
@@ -761,7 +761,7 @@ REBTYPE(Map)
             KNOWN(ARR_AT(MAP_PAIRLIST(map), ((n - 1) * 2) + 1))
         );
 
-        if (VAL_WORD_SYM(verb) == SYM_FIND)
+        if (Cell_Word_Id(verb) == SYM_FIND)
             return IS_NULLED(D_OUT) ? nullptr : Init_Bar(D_OUT);
 
         return D_OUT; }

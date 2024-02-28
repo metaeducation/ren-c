@@ -70,11 +70,11 @@ REBINT Cmp_Event(const Cell* t1, const Cell* t2)
 //
 static bool Set_Event_Var(Value* event, const Value* word, const Value* val)
 {
-    switch (VAL_WORD_SYM(word)) {
+    switch (Cell_Word_Id(word)) {
     case SYM_TYPE: {
         if (!IS_WORD(val) && !IS_LIT_WORD(val))
             return false;
-        OPT_REBSYM id = VAL_WORD_SYM(val);
+        Option(SymId) id = Cell_Word_Id(val);
         if (id == SYM_0)
             return false;
         VAL_EVENT_TYPE(event) = id;
@@ -149,7 +149,7 @@ static Value* Get_Event_Var(Cell* out, const Cell* v, REBSTR *name)
         if (VAL_EVENT_TYPE(v) == 0)
             return Init_Blank(out);
 
-        return Init_Word(out, Canon(cast(REBSYM, VAL_EVENT_TYPE(v)))); }
+        return Init_Word(out, Canon(cast(SymId, VAL_EVENT_TYPE(v)))); }
 
     case SYM_PORT: {
         if (IS_EVENT_MODEL(v, EVM_PORT))
@@ -256,8 +256,8 @@ void MF_Event(REB_MOLD *mo, const Cell* v, bool form)
     UNUSED(form);
 
     REBCNT field;
-    REBSYM fields[] = {
-        SYM_TYPE, SYM_PORT, SYM_0
+    SymId fields[] = {
+        SYM_TYPE, SYM_PORT, SYM_0_internal
     };
 
     Pre_Mold(mo, v);

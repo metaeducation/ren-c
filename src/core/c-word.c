@@ -317,7 +317,7 @@ REBSTR *Intern_UTF8_Managed(const REBYTE *utf8, size_t size)
         MISC(intern).bind_index.high = 0;
         MISC(intern).bind_index.low = 0;
 
-        // leave header.bits as 0 for SYM_0 as answer to VAL_WORD_SYM()
+        // leave header.bits as 0 for SYM_0 as answer to Cell_Word_Id()
         // Startup_Symbols() tags values from %words.r after the fact.
     }
     else {
@@ -507,7 +507,7 @@ void Startup_Interning(void)
 //
 // This goes through the name series for %words.r words and tags them with
 // SYM_XXX constants.  This allows the small number to be quickly extracted to
-// use with VAL_WORD_SYM() in C switch statements.  These are the only words
+// use with Cell_Word_Id() in C switch statements.  These are the only words
 // that have fixed symbol numbers--others are only managed and compared
 // through their pointers.
 //
@@ -522,22 +522,22 @@ void Startup_Symbols(REBARR *words)
         SERIES_FLAG_FIXED_SIZE // can't ever add more SYM_XXX lookups
     );
 
-    // All words that not in %words.r will get back VAL_WORD_SYM(w) == SYM_0
+    // All words that not in %words.r will get back Cell_Word_Id(w) == SYM_0
     // Hence, SYM_0 cannot be canonized.  Allowing Canon(SYM_0) to return NULL
     // and try and use that meaningfully is too risky, so it is simply
     // prohibited to canonize SYM_0, and trash the REBSTR* in the [0] slot.
     //
-    REBSYM sym = SYM_0;
+    REBCNT sym = SYM_0;
     TRASH_POINTER_IF_DEBUG(
-        *SER_AT(REBSTR*, PG_Symbol_Canons, cast(REBCNT, sym))
+        *SER_AT(REBSTR*, PG_Symbol_Canons, sym)
     );
 
     Cell* word = ARR_HEAD(words);
     for (; NOT_END(word); ++word) {
         REBSTR *canon = VAL_STORED_CANON(word);
 
-        sym = cast(REBSYM, cast(REBCNT, sym) + 1);
-        *SER_AT(REBSTR*, PG_Symbol_Canons, cast(REBCNT, sym)) = canon;
+        sym = sym + 1;
+        *SER_AT(REBSTR*, PG_Symbol_Canons, sym) = canon;
 
         // More code was loaded than just the word list, and it might have
         // included alternate-case forms of the %words.r words.  Walk any
@@ -551,13 +551,13 @@ void Startup_Symbols(REBARR *words)
             //
             assert(SECOND_UINT16(name->header) == 0);
             SECOND_UINT16(name->header) = sym;
-            assert(SAME_SYM_NONZERO(STR_SYMBOL(name), sym));
+            assert(STR_SYMBOL(name) == cast(SymId, sym));
 
             name = LINK(name).synonym;
         } while (name != canon); // circularly linked list, stop on a cycle
     }
 
-    *SER_AT(REBSTR*, PG_Symbol_Canons, cast(REBCNT, sym)) = NULL; // terminate
+    *SER_AT(REBSTR*, PG_Symbol_Canons, sym) = NULL; // terminate
 
     SET_SERIES_LEN(PG_Symbol_Canons, 1 + cast(REBCNT, sym));
     assert(SER_LEN(PG_Symbol_Canons) == 1 + ARR_LEN(words));

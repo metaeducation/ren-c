@@ -163,7 +163,7 @@ REBTYPE(Action)
     Value* value = D_ARG(1);
     Value* arg = D_ARGC > 1 ? D_ARG(2) : NULL;
 
-    switch (VAL_WORD_SYM(verb)) {
+    switch (Cell_Word_Id(verb)) {
     case SYM_COPY: {
         INCLUDE_PARAMS_OF_COPY;
 
@@ -222,7 +222,7 @@ REBTYPE(Action)
         return Init_Action_Maybe_Bound(D_OUT, proxy, VAL_BINDING(value)); }
 
     case SYM_REFLECT: {
-        REBSYM sym = VAL_WORD_SYM(arg);
+        Option(SymId) sym = Cell_Word_Id(arg);
 
         switch (sym) {
 

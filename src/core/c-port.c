@@ -457,7 +457,7 @@ REB_R Do_Port_Action(REBFRM *frame_, Value* port, Value* verb)
     // !!! Note this code is incorrect for files read in chunks!!!
 
 post_process_output:
-    if (VAL_WORD_SYM(verb) == SYM_READ) {
+    if (Cell_Word_Id(verb) == SYM_READ) {
         INCLUDE_PARAMS_OF_READ;
 
         UNUSED(PAR(source));

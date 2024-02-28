@@ -41,13 +41,13 @@ static REB_R Console_Actor(REBFRM *frame_, Value* port, Value* verb)
     REBCTX *ctx = VAL_CONTEXT(port);
     REBREQ *req = Ensure_Port_State(port, RDI_STDIO);
 
-    switch (VAL_WORD_SYM(verb)) {
+    switch (Cell_Word_Id(verb)) {
 
     case SYM_REFLECT: {
         INCLUDE_PARAMS_OF_REFLECT;
 
         UNUSED(ARG(value)); // implied by `port`
-        REBSYM property = VAL_WORD_SYM(ARG(property));
+        Option(SymId) property = Cell_Word_Id(ARG(property));
         assert(property != SYM_0);
 
         switch (property) {

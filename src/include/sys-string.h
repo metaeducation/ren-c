@@ -74,86 +74,6 @@
 //
 
 
-// R3-Alpha's concept was that all words got persistent integer values, which
-// prevented garbage collection.  Ren-C only gives built-in words integer
-// values--or SYMs--while others must be compared by pointers to their
-// name or canon-name pointers.  A non-built-in symbol will return SYM_0 as
-// its symbol, allowing it to fall through to defaults in case statements.
-//
-// Though it works fine for switch statements, it creates a problem if someone
-// writes `VAL_WORD_SYM(a) == VAL_WORD_SYM(b)`, because all non-built-ins
-// will appear to be equal.  It's a tricky enough bug to catch to warrant an
-// extra check in C++ that disallows comparing SYMs with ==
-//
-#if !defined(NDEBUG) && defined(CPLUSPLUS_11)
-    struct REBSYM;
-
-    struct OPT_REBSYM { // can only be converted to REBSYM, no comparisons
-        enum Reb_Symbol n;
-        OPT_REBSYM (const REBSYM& sym);
-        bool operator==(enum Reb_Symbol other) const {
-            return n == other;
-        }
-        bool operator!=(enum Reb_Symbol other) const {
-            return n != other;
-        }
-
-        bool operator==(OPT_REBSYM &&other) const;
-        bool operator!=(OPT_REBSYM &&other) const;
-
-        operator unsigned int() const {
-            return cast(unsigned int, n);
-        }
-    };
-
-    struct REBSYM { // acts like a REBOL_Symbol with no OPT_REBSYM compares
-        enum Reb_Symbol n;
-        REBSYM () {}
-        REBSYM (int n) : n (cast(enum Reb_Symbol, n)) {}
-        REBSYM (OPT_REBSYM opt_sym) : n (opt_sym.n) {}
-        operator unsigned int() const {
-            return cast(unsigned int, n);
-        }
-        bool operator>=(enum Reb_Symbol other) const {
-            assert(other != SYM_0);
-            return n >= other;
-        }
-        bool operator<=(enum Reb_Symbol other) const {
-            assert(other != SYM_0);
-            return n <= other;
-        }
-        bool operator>(enum Reb_Symbol other) const {
-            assert(other != SYM_0);
-            return n > other;
-        }
-        bool operator<(enum Reb_Symbol other) const {
-            assert(other != SYM_0);
-            return n < other;
-        }
-        bool operator==(enum Reb_Symbol other) const {
-            return n == other;
-        }
-        bool operator!=(enum Reb_Symbol other) const {
-            return n != other;
-        }
-        bool operator==(REBSYM &other) const; // could be SYM_0!
-        void operator!=(REBSYM &other) const; // could be SYM_0!
-        bool operator==(const OPT_REBSYM &other) const; // could be SYM_0!
-        void operator!=(const OPT_REBSYM &other) const; // could be SYM_0!
-    };
-
-    inline OPT_REBSYM::OPT_REBSYM(const REBSYM &sym) : n (sym.n) {}
-#else
-    typedef enum Reb_Symbol REBSYM;
-    typedef enum Reb_Symbol OPT_REBSYM; // act sameas REBSYM in C build
-#endif
-
-inline static bool SAME_SYM_NONZERO(REBSYM a, REBSYM b) {
-    assert(a != SYM_0 and b != SYM_0);
-    return cast(REBCNT, a) == cast(REBCNT, b);
-}
-
-
 //=////////////////////////////////////////////////////////////////////////=//
 //
 //  REBSTR series for UTF-8 strings
@@ -175,17 +95,17 @@ inline static REBSTR *STR_CANON(REBSTR *str) {
     return str;
 }
 
-inline static OPT_REBSYM STR_SYMBOL(REBSTR *str) {
+inline static Option(SymId) STR_SYMBOL(REBSTR *str) {
     uint16_t sym = SECOND_UINT16(str->header);
     assert(sym == SECOND_UINT16(STR_CANON(str)->header));
-    return cast(REBSYM, sym);
+    return cast(SymId, sym);
 }
 
 inline static size_t STR_SIZE(REBSTR *str) {
     return SER_LEN(str); // number of bytes in seris is series length, ATM
 }
 
-inline static REBSTR *Canon(REBSYM sym) {
+inline static REBSTR *Canon(SymId sym) {
     assert(cast(REBCNT, sym) != 0);
     assert(cast(REBCNT, sym) < SER_LEN(PG_Symbol_Canons));
     return *SER_AT(REBSTR*, PG_Symbol_Canons, cast(REBCNT, sym));

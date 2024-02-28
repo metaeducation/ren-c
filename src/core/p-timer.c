@@ -62,13 +62,13 @@ static REB_R Timer_Actor(REBFRM *frame_, Value* port, Value* verb)
     if (!IS_BLOCK(state))
         Init_Block(state, Make_Arr(127));
 
-    switch (VAL_WORD_SYM(verb)) {
+    switch (Cell_Word_Id(verb)) {
 
     case SYM_REFLECT: {
         INCLUDE_PARAMS_OF_REFLECT;
 
         UNUSED(ARG(value));
-        REBSYM property = VAL_WORD_SYM(ARG(property));
+        Option(SymId) property = Cell_Word_Id(ARG(property));
         assert(property != 0);
 
         switch (property) {

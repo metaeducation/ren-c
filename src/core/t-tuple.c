@@ -330,7 +330,7 @@ REBTYPE(Tuple)
     REBYTE *vp = VAL_TUPLE(value);
     len = VAL_TUPLE_LEN(value);
 
-    REBSYM sym = VAL_WORD_SYM(verb);
+    Option(SymId) sym = Cell_Word_Id(verb);
 
     // !!! This used to depend on "IS_BINARY_ACT", a concept that does not
     // exist any longer with symbol-based action dispatch.  Patch with more
@@ -374,7 +374,7 @@ REBTYPE(Tuple)
             if (ap)
                 a = (REBINT) *ap++;
 
-            switch (VAL_WORD_SYM(verb)) {
+            switch (Cell_Word_Id(verb)) {
             case SYM_ADD: v += a; break;
 
             case SYM_SUBTRACT: v -= a; break;
@@ -460,7 +460,7 @@ REBTYPE(Tuple)
         INCLUDE_PARAMS_OF_REFLECT;
 
         UNUSED(ARG(value));
-        REBSYM property = VAL_WORD_SYM(ARG(property));
+        Option(SymId) property = Cell_Word_Id(ARG(property));
         assert(property != SYM_0);
 
         switch (property) {

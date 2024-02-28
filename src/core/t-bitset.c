@@ -322,7 +322,7 @@ bool Set_Bits(REBSER *bset, const Value* val, bool set)
     if (
         NOT_END(item)
         && IS_WORD(item)
-        && VAL_WORD_SYM(item) == SYM_NOT
+        && Cell_Word_Id(item) == SYM_NOT
     ){
         INIT_BITS_NOT(bset, true);
         item++;
@@ -338,7 +338,7 @@ bool Set_Bits(REBSER *bset, const Value* val, bool set)
             if (
                 NOT_END(item + 1)
                 && IS_WORD(item + 1)
-                && VAL_WORD_SYM(item + 1) == SYM_HYPHEN
+                && Cell_Word_Id(item + 1) == SYM_HYPHEN
             ){
                 item += 2;
                 if (IS_CHAR(item)) {
@@ -363,7 +363,7 @@ bool Set_Bits(REBSER *bset, const Value* val, bool set)
             if (
                 NOT_END(item + 1)
                 && IS_WORD(item + 1)
-                && VAL_WORD_SYM(item + 1) == SYM_HYPHEN
+                && Cell_Word_Id(item + 1) == SYM_HYPHEN
             ){
                 REBUNI c = n;
                 item += 2;
@@ -393,7 +393,7 @@ bool Set_Bits(REBSER *bset, const Value* val, bool set)
 
         case REB_WORD: {
             // Special: BITS #{000...}
-            if (not IS_WORD(item) or VAL_WORD_SYM(item) != SYM_BITS)
+            if (not IS_WORD(item) or Cell_Word_Id(item) != SYM_BITS)
                 return false;
             item++;
             if (not IS_BINARY(item))
@@ -464,7 +464,7 @@ bool Check_Bits(REBSER *bset, const Value* val, bool uncased)
 
         case REB_CHAR: {
             REBUNI c = VAL_CHAR(item);
-            if (IS_WORD(item + 1) && VAL_WORD_SYM(item + 1) == SYM_HYPHEN) {
+            if (IS_WORD(item + 1) && Cell_Word_Id(item + 1) == SYM_HYPHEN) {
                 item += 2;
                 if (IS_CHAR(item)) {
                     REBCNT n = VAL_CHAR(item);
@@ -486,7 +486,7 @@ bool Check_Bits(REBSER *bset, const Value* val, bool uncased)
             REBCNT n = Int32s(KNOWN(item), 0);
             if (n > 0xffff)
                 return false;
-            if (IS_WORD(item + 1) && VAL_WORD_SYM(item + 1) == SYM_HYPHEN) {
+            if (IS_WORD(item + 1) && Cell_Word_Id(item + 1) == SYM_HYPHEN) {
                 REBUNI c = n;
                 item += 2;
                 if (IS_INTEGER(item)) {
@@ -586,13 +586,13 @@ REBTYPE(Bitset)
     // !!! Set_Bits does locked series check--what should the more general
     // responsibility be for checking?
 
-    switch (VAL_WORD_SYM(verb)) {
+    switch (Cell_Word_Id(verb)) {
 
     case SYM_REFLECT: {
         INCLUDE_PARAMS_OF_REFLECT;
 
         UNUSED(ARG(value)); // covered by `value`
-        REBSYM property = VAL_WORD_SYM(ARG(property));
+        Option(SymId) property = Cell_Word_Id(ARG(property));
         assert(property != SYM_0);
 
         switch (property) {

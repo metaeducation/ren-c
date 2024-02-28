@@ -747,10 +747,10 @@ REB_R Context_Common_Action_Maybe_Unhandled(
 
     REBCTX *c = VAL_CONTEXT(value);
 
-    switch (VAL_WORD_SYM(verb)) {
+    switch (Cell_Word_Id(verb)) {
 
     case SYM_REFLECT: {
-        REBSYM property = VAL_WORD_SYM(arg);
+        Option(SymId) property = Cell_Word_Id(arg);
         assert(property != SYM_0);
 
         switch (property) {
@@ -813,10 +813,10 @@ REBTYPE(Context)
 
     REBCTX *c = VAL_CONTEXT(value);
 
-    switch (VAL_WORD_SYM(verb)) {
+    switch (Cell_Word_Id(verb)) {
 
     case SYM_REFLECT: {
-        REBSYM sym = VAL_WORD_SYM(arg);
+        Option(SymId) sym = Cell_Word_Id(arg);
         if (VAL_TYPE(value) != REB_FRAME)
             break;
 
@@ -920,7 +920,7 @@ REBTYPE(Context)
         if (n == 0)
             return nullptr;
 
-        if (VAL_WORD_SYM(verb) == SYM_FIND)
+        if (Cell_Word_Id(verb) == SYM_FIND)
             return Init_Bar(D_OUT); // TRUE would obscure non-LOGIC! result
 
         RETURN (CTX_VAR(c, n)); }

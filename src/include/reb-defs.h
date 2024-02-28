@@ -180,6 +180,36 @@ struct Reb_State;
 typedef uint_fast32_t REBDSP; // Note: 0 for empty stack ([0] entry is trash)
 
 
+//=//// SYMBOL IDs ////////////////////////////////////////////////////////=//
+//
+// Built-in symbols get a hardcoded integer number that can be used in the
+// C code--for instance in switch() statements.  However, any symbols which
+// are not in the hardcoded table have a symbol ID of 0.
+//
+// We want to avoid bugs that can happen when you say things like:
+//
+//     if (Cell_Word_Id(a) == Cell_Word_Id(b)) { ... }
+//
+// If you were allowed to do that, then all non-built-ins would give back
+// SYM_) and appear to be equal.  It's a tricky enough bug to catch to warrant
+// an extra check in C++ that disallows comparing SYMIDs with ==
+//
+// So we wrap the enum into an Option(), which the C++ build is able to do
+// added type checking on.  It also prohibits comparisons unless you unwrap
+// the values, which in debug builds has a runtime check of non-zeroness.
+//
+
+typedef enum SymIdEnum SymId;
+
+#define SYM_0 \
+    cast(Option(SymId), SYM_0_internal)  // 0 cast needed if not -fpermissive
+
+#if DEBUG_CHECK_OPTIONALS
+    bool operator==(Option(SymId)& a, Option(SymId)& b) = delete;
+    void operator!=(Option(SymId)& a, Option(SymId)& b) = delete;
+#endif
+
+
 // The REB_R type is a Value* but with the idea that it is legal to hold
 // types like REB_R_THROWN, etc.  This helps document interface contract.
 //

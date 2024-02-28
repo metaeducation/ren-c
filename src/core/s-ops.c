@@ -225,7 +225,7 @@ REBSER *Xandor_Binary(Value* verb, Value* value, Value* arg)
 
     REBYTE *p2 = BIN_HEAD(series);
 
-    switch (VAL_WORD_SYM(verb)) {
+    switch (Cell_Word_Id(verb)) {
     case SYM_INTERSECT: { // and
         REBCNT i;
         for (i = 0; i < mt; i++)

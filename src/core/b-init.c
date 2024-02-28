@@ -267,7 +267,7 @@ static REBARR *Startup_Datatypes(REBARR *boot_types, REBARR *boot_typespecs)
 
     Cell* word = ARR_HEAD(boot_types);
 
-    if (VAL_WORD_SYM(word) != SYM_ACTION_X)
+    if (Cell_Word_Id(word) != SYM_ACTION_X)
         panic (word); // First type should be ACTION!
 
     REBARR *catalog = Make_Arr(REB_MAX - 1);
@@ -490,7 +490,7 @@ static void Shutdown_Action_Spec_Tags(void)
 // that this manual construction actually matches the definition in the file.
 //
 static void Init_Action_Meta_Shim(void) {
-    REBSYM field_syms[6] = {
+    SymId field_syms[6] = {
         SYM_SELF, SYM_DESCRIPTION, SYM_RETURN_TYPE, SYM_RETURN_NOTE,
         SYM_PARAMETER_TYPES, SYM_PARAMETER_NOTES
     };
@@ -554,7 +554,7 @@ Value* Make_Native(
     ++*item;
 
     bool enfix;
-    if (IS_WORD(*item) and VAL_WORD_SYM(*item) == SYM_ENFIX) {
+    if (IS_WORD(*item) and Cell_Word_Id(*item) == SYM_ENFIX) {
         enfix = true;
         ++*item;
     }
@@ -565,7 +565,7 @@ Value* Make_Native(
     //
     bool has_body;
     if (IS_WORD(*item)) {
-        if (VAL_WORD_SYM(*item) != SYM_NATIVE)
+        if (Cell_Word_Id(*item) != SYM_NATIVE)
             panic (*item);
         has_body = false;
     }
@@ -574,9 +574,9 @@ Value* Make_Native(
             not IS_PATH(*item)
             or VAL_LEN_HEAD(*item) != 2
             or not IS_WORD(ARR_HEAD(VAL_ARRAY(*item)))
-            or VAL_WORD_SYM(ARR_HEAD(VAL_ARRAY(*item))) != SYM_NATIVE
+            or Cell_Word_Id(ARR_HEAD(VAL_ARRAY(*item))) != SYM_NATIVE
             or not IS_WORD(ARR_AT(VAL_ARRAY(*item), 1))
-            or VAL_WORD_SYM(ARR_AT(VAL_ARRAY(*item), 1)) != SYM_BODY
+            or Cell_Word_Id(ARR_AT(VAL_ARRAY(*item), 1)) != SYM_BODY
         ){
             panic (*item);
         }
@@ -711,7 +711,7 @@ static REBARR *Startup_Natives(const Value* boot_natives)
         Value* catalog_item = Move_Value(Alloc_Tail_Array(catalog), name);
         CHANGE_VAL_TYPE_BITS(catalog_item, REB_WORD);
 
-        if (VAL_WORD_SYM(name) == SYM_GENERIC)
+        if (Cell_Word_Id(name) == SYM_GENERIC)
             generic_word = name;
 
         ++n;
@@ -1406,7 +1406,7 @@ void Startup_Core(void)
 
     Startup_Symbols(VAL_ARRAY(&boot->words));
 
-    // STR_SYMBOL(), VAL_WORD_SYM() and Canon(SYM_XXX) now available
+    // STR_SYMBOL(), Cell_Word_Id() and Canon(SYM_XXX) now available
 
     PG_Boot_Phase = BOOT_LOADED;
 

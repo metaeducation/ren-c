@@ -149,13 +149,13 @@ static REB_R Event_Actor(REBFRM *frame_, Value* port, Value* verb)
     if (!IS_BLOCK(state))
         Init_Block(state, Make_Arr(EVENTS_CHUNK - 1));
 
-    switch (VAL_WORD_SYM(verb)) {
+    switch (Cell_Word_Id(verb)) {
 
     case SYM_REFLECT: {
         INCLUDE_PARAMS_OF_REFLECT;
 
         UNUSED(ARG(value)); // implicit in port
-        REBSYM property = VAL_WORD_SYM(ARG(property));
+        Option(SymId) property = Cell_Word_Id(ARG(property));
         assert(property != SYM_0);
 
         switch (property) {
@@ -197,9 +197,9 @@ static REB_R Event_Actor(REBFRM *frame_, Value* port, Value* verb)
         REB_R r = T_Array(frame_, verb);
         SET_SIGNAL(SIG_EVENT_PORT);
         if (
-            VAL_WORD_SYM(verb) == SYM_INSERT
-            || VAL_WORD_SYM(verb) == SYM_APPEND
-            || VAL_WORD_SYM(verb) == SYM_REMOVE
+            Cell_Word_Id(verb) == SYM_INSERT
+            || Cell_Word_Id(verb) == SYM_APPEND
+            || Cell_Word_Id(verb) == SYM_REMOVE
         ){
             RETURN (save_port);
         }

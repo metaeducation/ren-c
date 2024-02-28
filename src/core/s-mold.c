@@ -155,7 +155,7 @@ void Emit(REB_MOLD *mo, const char *fmt, ...)
 
         case 'D': // Datatype symbol: #[type
             if (ender != '\0') {
-                REBSTR *canon = Canon(cast(REBSYM, va_arg(va, int)));
+                REBSTR *canon = Canon(cast(SymId, va_arg(va, int)));
                 Append_Utf8_Utf8(s, STR_HEAD(canon), STR_SIZE(canon));
                 Append_Utf8_Codepoint(s, ' ');
             }

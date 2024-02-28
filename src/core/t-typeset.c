@@ -47,7 +47,7 @@
 // their own reduce before trying to make a typeset out of a block?
 //
 const struct {
-    REBSYM sym;
+    SymId sym;
     REBU64 bits;
 } Typesets[] = {
     {SYM_ANY_VALUE_X, TS_VALUE},
@@ -60,7 +60,7 @@ const struct {
     {SYM_ANY_CONTEXT_X, TS_CONTEXT},
     {SYM_ANY_ARRAY_X, TS_ARRAY},
 
-    {SYM_0, 0}
+    {SYM_0_internal, 0}
 };
 
 
@@ -326,7 +326,7 @@ void MF_Typeset(REB_MOLD *mo, const Cell* v, bool form)
     //
     for (n = REB_0 + 1; n < REB_MAX; n++) {
         if (TYPE_CHECK(v, cast(enum Reb_Kind, n))) {
-            Emit(mo, "+DN ", SYM_DATATYPE_X, Canon(cast(REBSYM, n)));
+            Emit(mo, "+DN ", SYM_DATATYPE_X, Canon(cast(SymId, n)));
         }
     }
     Trim_Tail(mo->series, ' ');
@@ -350,7 +350,7 @@ REBTYPE(Typeset)
     Value* val = D_ARG(1);
     Value* arg = D_ARGC > 1 ? D_ARG(2) : NULL;
 
-    switch (VAL_WORD_SYM(verb)) {
+    switch (Cell_Word_Id(verb)) {
 
     case SYM_FIND:
         if (not IS_DATATYPE(arg))
@@ -370,12 +370,12 @@ REBTYPE(Typeset)
         else if (not IS_TYPESET(arg))
             fail (Error_Invalid(arg));
 
-        if (VAL_WORD_SYM(verb) == SYM_UNION)
+        if (Cell_Word_Id(verb) == SYM_UNION)
             VAL_TYPESET_BITS(val) |= VAL_TYPESET_BITS(arg);
-        else if (VAL_WORD_SYM(verb) == SYM_INTERSECT)
+        else if (Cell_Word_Id(verb) == SYM_INTERSECT)
             VAL_TYPESET_BITS(val) &= VAL_TYPESET_BITS(arg);
         else {
-            assert(VAL_WORD_SYM(verb) == SYM_DIFFERENCE);
+            assert(Cell_Word_Id(verb) == SYM_DIFFERENCE);
             VAL_TYPESET_BITS(val) ^= VAL_TYPESET_BITS(arg);
         }
         RETURN (val);

@@ -2239,9 +2239,12 @@ Value* Scan_To_Stack(SCAN_STATE *ss) {
                 fail (Error_Malconstruct_Raw(temp));
             }
 
-            REBSYM sym = VAL_WORD_SYM(ARR_HEAD(array));
-            if (IS_KIND_SYM(sym)) {
-                enum Reb_Kind kind = KIND_FROM_SYM(sym);
+            Option(SymId) id = Cell_Word_Id(ARR_HEAD(array));
+            if (not id)
+                fail (Error_Syntax(ss));
+
+            if (IS_KIND_SYM(unwrap(id))) {
+                enum Reb_Kind kind = KIND_FROM_SYM(unwrap(id));
 
                 MAKE_HOOK hook = Make_Hooks[kind];
 
@@ -2290,7 +2293,7 @@ Value* Scan_To_Stack(SCAN_STATE *ss) {
                 // while the legacy #[unset] is no longer possible (but
                 // could load some kind of erroring function value)
                 //
-                switch (sym) {
+                switch (id) {
             #if !defined(NDEBUG)
                 case SYM_NONE:
                     // Should be under a LEGACY flag...

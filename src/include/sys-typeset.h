@@ -53,15 +53,15 @@
 
 
 #define IS_KIND_SYM(s) \
-    ((s) < cast(REBSYM, REB_MAX))
+    ((s) < cast(SymId, REB_MAX))
 
-inline static enum Reb_Kind KIND_FROM_SYM(REBSYM s) {
+inline static enum Reb_Kind KIND_FROM_SYM(SymId s) {
     assert(IS_KIND_SYM(s));
     return cast(enum Reb_Kind, cast(int, (s)));
 }
 
 #define SYM_FROM_KIND(k) \
-    cast(REBSYM, cast(enum Reb_Kind, (k)))
+    cast(SymId, cast(enum Reb_Kind, (k)))
 
 #define VAL_TYPE_SYM(v) \
     SYM_FROM_KIND((v)->payload.datatype.kind)
@@ -360,7 +360,7 @@ inline static REBSTR *VAL_KEY_CANON(const Cell* typeset) {
     return STR_CANON(VAL_KEY_SPELLING(typeset));
 }
 
-inline static OPT_REBSYM VAL_KEY_SYM(const Cell* typeset) {
+inline static Option(SymId) VAL_KEY_SYM(const Cell* typeset) {
     return STR_SYMBOL(VAL_KEY_SPELLING(typeset)); // mirrors canon's symbol
 }
 

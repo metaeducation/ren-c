@@ -162,13 +162,13 @@ static REB_R Dir_Actor(REBFRM *frame_, Value* port, Value* verb)
     dir.devreq.port_ctx = ctx;
     dir.devreq.device = RDI_FILE;
 
-    switch (VAL_WORD_SYM(verb)) {
+    switch (Cell_Word_Id(verb)) {
 
     case SYM_REFLECT: {
         INCLUDE_PARAMS_OF_REFLECT;
 
         UNUSED(ARG(value)); // implicitly supplied as `port`
-        REBSYM property = VAL_WORD_SYM(ARG(property));
+        Option(SymId) property = Cell_Word_Id(ARG(property));
 
         switch (property) {
         case SYM_LENGTH: {
@@ -237,7 +237,7 @@ static REB_R Dir_Actor(REBFRM *frame_, Value* port, Value* verb)
 
         rebRelease(result); // ignore result
 
-        if (VAL_WORD_SYM(verb) != SYM_CREATE)
+        if (Cell_Word_Id(verb) != SYM_CREATE)
             Init_Blank(state);
 
         RETURN (port); }

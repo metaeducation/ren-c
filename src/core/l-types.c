@@ -238,8 +238,9 @@ REB_R Reflect_Core(REBFRM *frame_)
 
     enum Reb_Kind kind = VAL_TYPE(ARG(value));
 
-    switch (VAL_WORD_SYM(ARG(property))) {
-    case SYM_0:
+    Option(SymId) id = Cell_Word_Id(ARG(property));
+
+    if (not id) {
         //
         // If a word wasn't in %words.r, it has no integer SYM.  There is
         // no way for a built-in reflector to handle it...since they just
@@ -247,7 +248,9 @@ REB_R Reflect_Core(REBFRM *frame_)
         // idea will be necessary.
         //
         fail (Error_Cannot_Reflect(kind, ARG(property)));
+    }
 
+    switch (id) {
     case SYM_TYPE:
         if (kind == REB_MAX_NULLED)
             return nullptr; // `() = type of ()`, `null = type of ()`

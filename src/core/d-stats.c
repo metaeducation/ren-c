@@ -379,7 +379,7 @@ REBNATIVE(callgrind)
     INCLUDE_PARAMS_OF_CALLGRIND;
 
   #if defined(INCLUDE_CALLGRIND_NATIVE)
-    switch (VAL_WORD_SYM(ARG(instruction))) {
+    switch (Cell_Word_Id(ARG(instruction))) {
     case SYM_ON:
         CALLGRIND_START_INSTRUMENTATION;
         CALLGRIND_TOGGLE_COLLECT;

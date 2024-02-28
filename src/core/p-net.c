@@ -102,13 +102,13 @@ static REB_R Transport_Actor(
 
     if (not (sock->flags & RRF_OPEN)) {
 
-        switch (VAL_WORD_SYM(verb)) { // Ordered by frequency
+        switch (Cell_Word_Id(verb)) { // Ordered by frequency
 
         case SYM_REFLECT: {
             INCLUDE_PARAMS_OF_REFLECT;
 
             UNUSED(ARG(value)); // covered by `port`
-            REBSYM property = VAL_WORD_SYM(ARG(property));
+            Option(SymId) property = Cell_Word_Id(ARG(property));
             assert(property != SYM_0);
 
             switch (property) {
@@ -204,13 +204,13 @@ static REB_R Transport_Actor(
 
   open_socket_actions:;
 
-    switch (VAL_WORD_SYM(verb)) { // Ordered by frequency
+    switch (Cell_Word_Id(verb)) { // Ordered by frequency
 
     case SYM_REFLECT: {
         INCLUDE_PARAMS_OF_REFLECT;
 
         UNUSED(ARG(value)); // covered by `port`
-        REBSYM property = VAL_WORD_SYM(ARG(property));
+        Option(SymId) property = Cell_Word_Id(ARG(property));
         assert(property != SYM_0);
 
         switch (property) {

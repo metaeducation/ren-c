@@ -174,7 +174,7 @@ REBTYPE(Money)
     Value* val = D_ARG(1);
     Value* arg;
 
-    switch (VAL_WORD_SYM(verb)) {
+    switch (Cell_Word_Id(verb)) {
     case SYM_ADD:
         arg = Math_Arg_For_Money(D_OUT, D_ARG(2), verb);
         Init_Money(D_OUT, deci_add(
@@ -274,7 +274,7 @@ REBTYPE(Money)
     case SYM_EVEN_Q:
     case SYM_ODD_Q: {
         REBINT result = 1 & cast(REBINT, deci_to_int(VAL_MONEY_AMOUNT(val)));
-        if (VAL_WORD_SYM(verb) == SYM_EVEN_Q)
+        if (Cell_Word_Id(verb) == SYM_EVEN_Q)
             result = not result;
         return Init_Logic(D_OUT, result != 0); }
 

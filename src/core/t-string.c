@@ -153,7 +153,7 @@ static void reverse_string(Value* v, REBCNT len)
         Init_Word(verb, Canon(SYM_CHANGE));
         Modify_String(
             v,
-            VAL_WORD_SPELLING(verb),
+            unwrap(Cell_Word_Id(verb)),
             temp,
             0, // not AM_PART, we want to change all len bytes
             len,
@@ -1196,7 +1196,7 @@ REBTYPE(String)
     REBINT index = cast(REBINT, VAL_INDEX(v));
     REBINT tail = cast(REBINT, VAL_LEN_HEAD(v));
 
-    REBSYM sym = VAL_WORD_SYM(verb);
+    Option(SymId) sym = Cell_Word_Id(verb);
     switch (sym) {
       case SYM_APPEND:
       case SYM_INSERT:
@@ -1209,7 +1209,7 @@ REBTYPE(String)
         UNUSED(REF(only)); // all strings appends are /ONLY...currently unused
 
         REBCNT len; // length of target
-        if (VAL_WORD_SYM(verb) == SYM_CHANGE)
+        if (Cell_Word_Id(verb) == SYM_CHANGE)
             len = Part_Len_May_Modify_Index(v, ARG(limit));
         else
             len = Part_Len_Append_Insert_May_Modify_Index(arg, ARG(limit));
@@ -1236,7 +1236,7 @@ REBTYPE(String)
 
             VAL_INDEX(v) = Modify_Binary(
                 v,
-                VAL_WORD_SPELLING(verb),
+                unwrap(Cell_Word_Id(verb)),
                 arg,
                 flags,
                 len,
@@ -1249,7 +1249,7 @@ REBTYPE(String)
 
             VAL_INDEX(v) = Modify_String(
                 v,
-                VAL_WORD_SPELLING(verb),
+                unwrap(Cell_Word_Id(verb)),
                 arg,
                 flags,
                 len,
@@ -1328,7 +1328,7 @@ REBTYPE(String)
         if (REF(only))
             len = 1;
 
-        if (VAL_WORD_SYM(verb) == SYM_FIND) {
+        if (Cell_Word_Id(verb) == SYM_FIND) {
             if (REF(tail) || REF(match))
                 ret += len;
             VAL_INDEX(v) = ret;
@@ -1502,7 +1502,7 @@ REBTYPE(String)
         else
             fail (Error_Invalid(arg)); // what about other types?
 
-        if (VAL_WORD_SYM(verb) == SYM_SUBTRACT)
+        if (Cell_Word_Id(verb) == SYM_SUBTRACT)
             amount = -amount;
 
         if (amount == 0) { // adding or subtracting 0 works, even #{} + 0
