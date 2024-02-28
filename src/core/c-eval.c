@@ -1894,11 +1894,7 @@ bool Eval_Core_Throws(REBFRM * const f)
 // [GET-WORD!]
 //
 // A GET-WORD! does no dispatch on functions.  It will fetch other values as
-// normal, but will error on VOID! and direct you to GET/ANY.  This matches
-// Rebol2 behavior, choosing to break with R3-Alpha and Red which will give
-// back "voided" values ("UNSET!")...to make typos less likely to bite those
-// who wanted to use ACTION!s inertly:
-// https://forum.rebol.info/t/should-get-word-of-a-void-raise-an-error/1301
+// normal, and allows fetches of void as well.
 //
 //==//////////////////////////////////////////////////////////////////////==//
 
@@ -1907,9 +1903,6 @@ bool Eval_Core_Throws(REBFRM * const f)
             goto inert;
 
         Move_Opt_Var_May_Fail(f->out, current, f->specifier);
-
-        if (IS_VOID(f->out))  // need GET/ANY if path is VOID!
-            fail (Error_Need_Non_Void_Core(current, f->specifier));
 
         assert(NOT_VAL_FLAG(f->out, VALUE_FLAG_UNEVALUATED));
         break;
