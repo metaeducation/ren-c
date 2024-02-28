@@ -38,7 +38,6 @@
 (datatype? set-path!)
 (datatype? set-word!)
 (datatype? text!)
-(datatype? struct!)
 (datatype? tag!)
 (datatype? time!)
 (datatype? tuple!)

@@ -599,42 +599,6 @@ static void Queue_Mark_Opt_End_Cell_Deep(const RELVAL *v)
         Queue_Mark_Event_Deep(v);
         break;
 
-    case REB_STRUCT: {
-        //
-        // !!! The ultimate goal for STRUCT! is that it be part of the FFI
-        // extension and fall into the category of a "user defined type".
-        // This essentially means it would be an opaque variant of a context.
-        // User-defined types aren't fully designed, so struct is achieved
-        // through a hacky set of hooks for now...but it does use arrays in
-        // a fairly conventional way that should translate to the user
-        // defined type system once it exists.
-        //
-        // The struct gets its GC'able identity and is passable by one
-        // pointer from the fact that it is a single-element array that
-        // contains the REBVAL of the struct itself.  (Because it is
-        // "singular" it is only a REBSER node--no data allocation.)
-        //
-        REBSTU *stu = v->payload.structure.stu;
-        Queue_Mark_Array_Deep(stu);
-
-        // The schema is the hierarchical description of the struct.
-        //
-        REBFLD *schema = LINK(stu).schema;
-        Queue_Mark_Array_Deep(schema);
-
-        // The data series needs to be marked.  It needs to be marked
-        // even for structs that aren't at the 0 offset--because their
-        // lifetime can be longer than the struct which they represent
-        // a "slice" out of.
-        //
-        // Note this may be a singular array handle, or it could be a BINARY!
-        //
-        if (IS_SER_ARRAY(v->payload.structure.data))
-            Queue_Mark_Singular_Array(ARR(v->payload.structure.data));
-        else
-            Mark_Rebser_Only(v->payload.structure.data);
-        break; }
-
     case REB_LIBRARY: {
         Queue_Mark_Array_Deep(VAL_LIBRARY(v));
         REBCTX *meta = VAL_LIBRARY_META(v);

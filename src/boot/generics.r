@@ -333,7 +333,7 @@ append: generic [
 ;
 change: generic [
     {Replaces element(s); returns just past the change.}
-    series [any-series! gob! port! struct!]{At position (modified)}
+    series [any-series! gob! port!]{At position (modified)}
     value [<opt> any-value!] {The new value}
     /part {Limits the amount to change to a given length or position}
     limit [any-number! any-series! pair!]

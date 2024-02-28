@@ -674,7 +674,7 @@ enum {
 // The tables never contain NULL values.  Instead there is a dispatcher in
 // the slot which will fail if it is ever called.
 //
-// !!! These used to be const, but the desire to move REB_STRUCT and REB_GOB
+// !!! These used to be const, but the desire to move structs and gobs
 // into extensions required the tables to be dynamically modified.  This
 // should likely be changed back in the future in case it helps performance,
 // as these will be "user defined types" that are more like a context than

@@ -235,7 +235,6 @@ typeset     typeset     -       +       +       -
 gob         gob         +       +       +       -
 event       event       +       +       +       -
 handle      handle      -       -       +       -
-struct      *           *       *       *       -
 library     library     -       +       +       -
 
 ; "unit types" https://en.wikipedia.org/wiki/Unit_type

@@ -15,7 +15,6 @@ extensions: make map! [
     BMP -
     Clipboard -
     Crypt -
-    FFI -
     GIF -
     JavaScript +
     JPG -

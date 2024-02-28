@@ -371,7 +371,6 @@ uint32_t Hash_Value(const RELVAL *v)
     case REB_GOB:
     case REB_EVENT:
     case REB_HANDLE:
-    case REB_STRUCT:
     case REB_LIBRARY:
         //
         // !!! Review hashing behavior or needs of these types if necessary.

@@ -770,19 +770,6 @@ union Reb_Series_Link {
     //
     REBARR *reuse;
 
-    // for STRUCT, this is a "REBFLD" array.  It parallels an object's
-    // keylist, giving not only names of the fields in the structure but
-    // also the types and sizes.
-    //
-    // !!! The Atronix FFI has been gradually moved away from having its
-    // hooks directly into the low-level implemetation and the garbage
-    // collector.  With the conversion of REBFLD to a REBARR instead of
-    // a custom C type, it is one step closer to making STRUCT! a very
-    // OBJECT!-like type extension.  When there is a full story told on
-    // user-defined types, this should be excisable from the core.
-    //
-    REBFLD *schema;
-
     // For LIBRARY!, the file descriptor.  This is set to NULL when the
     // library is not loaded.
     //

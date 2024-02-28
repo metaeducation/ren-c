@@ -1,6 +1,3 @@
-[submodule "external/libffi"]
-	path = external/libffi
-	url = git://github.com/metaeducation/libffi.git
 [submodule "external/tcc"]
 	path = external/tcc
 	url = git://github.com/metaeducation/tcc.git

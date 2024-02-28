@@ -260,7 +260,6 @@ reeval func [
     gob?:
     event?:
     handle?:
-    struct?:
     library?:
 
     ; Typesets predefined during bootstrap.

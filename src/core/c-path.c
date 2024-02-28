@@ -228,8 +228,7 @@ bool Next_Path_Throws(REBPVS *pvs)
         case REB_R_INVISIBLE:
             assert(PVS_IS_SET_PATH(pvs));
             if (
-                hook != Path_Hooks[REB_STRUCT]
-                and hook != Path_Hooks[REB_GOB]
+                hook != Path_Hooks[REB_GOB]
             ){
                 panic("SET-PATH! evaluation ran assignment before path end");
             }
