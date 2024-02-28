@@ -36,7 +36,7 @@
 // * With those types defined, it includes %tmp-internals.h - which is all
 //   all the non-inline "internal API" functions.  This list of function
 //   prototypes is generated automatically by a Rebol script that scans the
-//   %.c files during the build process. 
+//   %.c files during the build process.
 //
 // * Next it starts including various headers in a specific order.  These
 //   build on the data definitions and call into the internal API.  Since they
@@ -209,7 +209,7 @@
 // of in the debugger.
 //
 #if !defined(NDEBUG) || defined(DEBUG_COUNT_TICKS)
-    #if defined(TO_HAIKU) || defined(TO_EMSCRIPTEN)
+    #if defined(TO_HAIKU)
         inline static int debug_break() {
             int x = 0;
             while (1) { ++x; }
@@ -545,7 +545,7 @@ extern void reb_qsort_r(void *a, size_t n, size_t es, void *thunk, cmp_t *cmp);
 // Despite this basic work for threading, greater issues were not hammered
 // out.  And so this separation really just caused problems when two different
 // threads wanted to work with the same data (at different times).  Such a
-// feature is better implemented as in the V8 JavaScript engine as "isolates"  
+// feature is better implemented as in the V8 JavaScript engine as "isolates"
 
 #ifdef __cplusplus
     #define PVAR extern "C" RL_API

@@ -204,12 +204,6 @@ android: make linux [
     name: 'Android
 ]
 
-emscripten: make posix [
-    name: 'Emscripten
-    exe-suffix: ".js"
-    dll-suffix: ".js"
-]
-
 osx: make posix [
     name: 'OSX
     dll-suffix: ".dyn"
@@ -274,9 +268,6 @@ set-target-platform: func [
         ]
         'osx [
             target-platform: osx
-        ]
-        'emscripten [
-            target-platform: emscripten
         ]
         default [
             print ["Unknown platform:" platform "falling back to POSIX"]
@@ -594,7 +585,7 @@ tcc: make compiler-class [
             ]
 
             keep "-o"
-            
+
             output: file-to-local output
 
             if (E or [ends-with? output target-platform/obj-suffix]) [
@@ -660,7 +651,7 @@ cl: make compiler-class [
                         keep "/Od /Zi"
                     ]
                     debug = false []
-                    
+
                     fail ["unrecognized debug option:" debug]
                 ]
             ]
@@ -736,7 +727,7 @@ ld: make linker-class [
             if dynamic [keep "-shared"]
 
             keep "-o"
-            
+
             output: file-to-local output
             either ends-with? output suffix [
                 keep output
@@ -1554,7 +1545,7 @@ Execution: make generator-class [
             ]
             #entry [
                 if all [
-                    not word? target/target 
+                    not word? target/target
                     ; so you can use words for "phony" targets
                     exists? to-file target/target
                 ] [return] ;TODO: Check the timestamp to see if it needs to be updated

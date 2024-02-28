@@ -25,7 +25,6 @@ extensions: make map! [
     Console +
     Crypt +
     GIF +
-    JavaScript -
     JPG +
     Locale +
     ODBC -

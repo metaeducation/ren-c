@@ -65,18 +65,6 @@
 
 #include "sys-core.h"
 
-#ifdef TO_JAVASCRIPT
-    //
-    // !!! While most of the JavaScript-specific code is in the JavaScript
-    // extension (%mod-javascript.c), it's not really clear how to implement
-    // rebPromise() for the JavaScript API without wiring it in here.  It
-    // might be done by making rebPromise() depend on an exported native
-    // from the extension like MAKE-PROMISE which did the same thing but
-    // returned an INTEGER!.  For now, committing the implementation as-is.
-    //
-    #include "emscripten.h"
-#endif
-
 
 // "Linkage back to HOST functions. Needed when we compile as a DLL
 // in order to use the OS_* macro functions."
