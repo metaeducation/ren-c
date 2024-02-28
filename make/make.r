@@ -16,11 +16,9 @@ do %tools/rebmake.r
 
 make-dir: system/options/current-path
 tools-dir: make-dir/tools
-change-dir output-dir: system/options/path 
+change-dir output-dir: system/options/path
 src-dir: append copy make-dir %../src
 src-dir: relative-to-path src-dir output-dir
-tcc-dir: append copy make-dir %../external/tcc
-tcc-dir: relative-to-path tcc-dir output-dir
 user-config: make object! load make-dir/default-config.r
 
 ;;;; PROCESS ARGS
@@ -43,7 +41,7 @@ for-each [name value] options [
             user-config: make user-config load to-file value
         ]
         'EXTENSIONS [
-            ; [+|-|*] [NAME {+|-|*|[modules]}]... 
+            ; [+|-|*] [NAME {+|-|*|[modules]}]...
             use [ext-file user-ext][
                 user-ext: load value
                 if word? user-ext [user-ext: reduce [user-ext]]
@@ -448,7 +446,7 @@ EXAMPLES:
     extensions: +
     => enable all extensions as builtin
     extensions: "- gif + jpg * png [lodepng]"
-    => disable all extensions but gif (builtin),jpg and png (dynamic)^/ 
+    => disable all extensions but gif (builtin),jpg and png (dynamic)^/
 CURRENT VALUE:
     }
     indent mold user-config/extensions
@@ -716,7 +714,7 @@ append app-config/cflags opt switch user-config/standard [
             ; use unsigned chars.
             ;
             <gnu:-funsigned-char>
- 
+
             ; MSVC never bumped their __cplusplus version past 1997, even if
             ; you compile with C++17.  Hence CPLUSPLUS_11 is used by Rebol
             ; code as the switch for most C++ behaviors, and we have to
@@ -987,65 +985,6 @@ append app-config/ldflags opt switch user-config/static [
     ]
 
     fail ["STATIC must be yes, no or logic! not" (user-config/static)]
-]
-
-;TCC
-cfg-tcc: _
-case [
-    any [
-        file? user-config/with-tcc
-        find [yes on true #[true]] user-config/with-tcc
-    ][
-        tcc-rootdir: either file? user-config/with-tcc [
-            first split-path user-config/with-tcc
-        ][
-            tcc-dir/%
-        ]
-        cfg-tcc: make object! [
-            exec-file: join-of tcc-rootdir any [get-env "TCC" %tcc]
-            includes: reduce [tcc-dir]
-            searches: reduce [tcc-rootdir]
-            libraries: reduce [tcc-rootdir/libtcc1.a tcc-rootdir/libtcc.a]
-
-            ; extra cpp flags passed to tcc for preprocessing %sys-core.i
-            cpp-flags: try get-env "TCC_CPP_EXTRA_FLAGS"
-        ]
-        if block? cfg-tcc/libraries [
-            cfg-tcc/libraries: map-each lib cfg-tcc/libraries [
-                either file? lib [
-                    either rebmake/ends-with? lib ".a" [
-                        make rebmake/ext-static-class [
-                            output: lib
-                        ]
-                    ][
-                        make rebmake/ext-dynamic-class [
-                            output: lib
-                        ]
-                    ]
-                ][
-                    lib
-                ]
-            ]
-        ]
-
-        for-each word [includes searches libraries] [
-            append get in app-config word
-                opt get in cfg-tcc word
-        ]
-        append app-config/definitions [ {WITH_TCC} ]
-        append file-base/generated [
-            %tmp-symbols.c
-            %tmp-embedded-header.c
-        ]
-    ]
-    find [no off false #[false] _] user-config/with-tcc [
-        ;pass
-    ]
-
-    fail [
-        "WITH-TCC must be yes or no]"
-        "not" (user-config/with-tcc)
-    ]
 ]
 
 
@@ -1488,21 +1427,6 @@ prep: make rebmake/entry-class [
                     to text! ext/name
                 ]
             ]
-        ]
-
-        if cfg-tcc [
-            sys-core-i: make rebmake/object-file-class [
-                compiler: make rebmake/tcc [
-                    exec-file: cfg-tcc/exec-file
-                ]
-                output: %prep/include/sys-core.i
-                source: src-dir/include/sys-core.h
-                definitions: join-of app-config/definitions [ {DEBUG_STDIO_OK} ]
-                includes: append-of app-config/includes reduce [tcc-dir tcc-dir/include]
-                cflags: append-of append-of [ {-dD} {-nostdlib} ] opt cfg-ffi/cflags opt cfg-tcc/cpp-flags
-            ]
-            keep sys-core-i/command/E
-            keep [{$(REBOL)} tools-dir/make-embedded-header.r]
         ]
     ]
     depends: reduce [

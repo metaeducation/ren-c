@@ -177,7 +177,6 @@ Script: [
     parse-command:      [{PARSE - command cannot be used as variable:} :arg1]
     parse-series:       [{PARSE - input must be a series:} :arg1]
 
-    not-tcc-build:      {This Rebol build wasn't linked with libtcc features}
     bad-library:        {bad library (already closed?)}
     only-callback-ptr:  {Only callback functions may be passed by FFI pointer}
     free-needs-routine: {Function to destroy struct storage must be routine}
@@ -276,33 +275,4 @@ Access: [
     bad-memory:         [{non-accessible memory at} :arg1 {in} :arg2]
     no-external-storage: [{no external storage in the series}]
     already-destroyed:  [{storage at} :arg1 {already destroyed}]
-]
-
-; !!! The TCC user-natives facility was added to the core as a conditional
-; compilation component, as opposed to an extension.  @ShixinZeng has voiced
-; concern that a method of making the natives link in-memory with no on-disk
-; dependencies is contingent on being part of the EXE.
-;
-TCC: [
-    tcc-not-supported-opt: [{Option} :arg1 {is not supported}]
-    tcc-expect-word:     [{Option expecting a word:} :arg1]
-    tcc-invalid-include: [{Include expects a block or a path:} :arg1]
-    tcc-invalid-options: [{Options expect string} :arg1]
-    tcc-invalid-library: [{Library expects a block or a path:} :arg1]
-    tcc-invalid-library-path: [{Library path expects a block or a path:} :arg1]
-    tcc-invalid-runtime-path: [{Runtime library path expects a block or a path:} :arg1]
-    tcc-empty-spec:        {Spec for natives must not be empty}
-    tcc-empty-source:    {Source for natives must not be empty}
-    tcc-construction:    {TCC failed to create a TCC context}
-    tcc-set-options:     {TCC failed to set TCC options}
-    tcc-include:         [{TCC failed to add include path:} :arg1]
-    tcc-library:         [{TCC failed to add library:} :arg1]
-    tcc-library-path:    [{TCC failed to add library path:} :arg1]
-    tcc-runtime-path:    [{TCC failed to add runtime library path:} :arg1]
-    tcc-output-type:     {TCC failed to set output to memory}
-    tcc-compile:         [{TCC failed to compile the code} :arg1]
-    tcc-relocate:         {TCC failed to relocate the code}
-    tcc-invalid-name:    [{C name must be a string:} :arg1]
-    tcc-sym-not-found:   [{TCC failed to find symbol:} :arg1]
-    tcc-error-warn:      [{TCC errors/warnings, '-w' to stop warnings:} :arg1]
 ]

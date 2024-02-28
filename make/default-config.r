@@ -64,8 +64,6 @@ pkg-config: try get-env "PKGCONFIG" ;path to pkg-config, or default
 
 odbc-requires-ltdl: no
 
-with-tcc: no
-
 ; Console API for windows does not exist before vista.
 ;
 pre-vista: no
