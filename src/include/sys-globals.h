@@ -126,7 +126,7 @@ PVAR Value* Root_Skip_Tag; // marks a hard quote as "skippable" if wrong type
 PVAR Value* Root_Empty_Text; // read-only ""
 PVAR Value* Root_Empty_Binary; // read-only #{}
 PVAR Value* Root_Empty_Block; // read-only []
-PVAR REBARR* PG_Empty_Array; // optimization of VAL_ARRAY(Root_Empty_Block)
+PVAR Array* PG_Empty_Array; // optimization of Cell_Array(Root_Empty_Block)
 
 PVAR Value* Root_Space_Char; // ' ' as a CHAR!
 PVAR Value* Root_Newline_Char; // '\n' as a CHAR!
@@ -180,7 +180,7 @@ TVAR REBSER **Prior_Expand; // Track prior series expansions (acceleration)
 
 TVAR REBSER *TG_Mold_Stack; // Used to prevent infinite loop in cyclical molds
 
-TVAR REBARR *TG_Buf_Collect; // for collecting object keys or words
+TVAR Array* TG_Buf_Collect; // for collecting object keys or words
 TVAR REBSER *TG_Buf_Ucs2; // UCS2 reused buffer
 TVAR REBSER *TG_Byte_Buf; // temporary byte buffer used mainly by raw print
 TVAR REBSER *TG_Mold_Buf; // temporary UTF8 buffer - used mainly by mold
@@ -218,15 +218,15 @@ TVAR REBFRM *TG_Bottom_Frame;
 TVAR struct Reb_Frame_Source TG_Frame_Source_End;
 
 
-// When Drop_Frame() happens, it may have an allocated varlist REBARR that
+// When Drop_Frame() happens, it may have an allocated varlist Array that
 // can be reused by the next Push_Frame().  Reusing this has a significant
 // performance impact, as opposed to paying for freeing the memory when a
 // frame is dropped and then reallocating it when the next one is pushed.
 //
-TVAR REBARR *TG_Reuse;
+TVAR Array* TG_Reuse;
 
 //-- Evaluation stack:
-TVAR REBARR *DS_Array;
+TVAR Array* DS_Array;
 TVAR REBDSP DS_Index;
 TVAR Value* DS_Movable_Top;
 

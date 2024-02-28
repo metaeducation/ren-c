@@ -186,7 +186,7 @@ REBINT Find_Max_Bit(const Cell* val)
         break;
 
     case REB_BLOCK:
-        for (val = VAL_ARRAY_AT(val); NOT_END(val); val++) {
+        for (val = Cell_Array_At(val); NOT_END(val); val++) {
             n = Find_Max_Bit(val);
             if (n > maxi) maxi = n;
         }
@@ -317,7 +317,7 @@ bool Set_Bits(REBSER *bset, const Value* val, bool set)
     if (!ANY_ARRAY(val))
         fail (Error_Invalid_Type(VAL_TYPE(val)));
 
-    Cell* item = VAL_ARRAY_AT(val);
+    Cell* item = Cell_Array_At(val);
 
     if (
         NOT_END(item)
@@ -458,7 +458,7 @@ bool Check_Bits(REBSER *bset, const Value* val, bool uncased)
     // Loop through block of bit specs
 
     Cell* item;
-    for (item = VAL_ARRAY_AT(val); NOT_END(item); item++) {
+    for (item = Cell_Array_At(val); NOT_END(item); item++) {
 
         switch (VAL_TYPE(item)) {
 

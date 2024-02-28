@@ -441,7 +441,7 @@ INLINE void Expire_Out_Cell_Unless_Invisible(REBFRM *f) {
 //     Pre-fetched first value to execute (cannot be an END marker)
 //
 //     f->source
-//     Contains the REBARR* or C va_list of subsequent values to fetch.
+//     Contains the Array* or C va_list of subsequent values to fetch.
 //
 //     f->specifier
 //     Resolver for bindings of values in f->source, SPECIFIED if all resolved
@@ -618,7 +618,7 @@ bool Eval_Core_Throws(REBFRM * const f)
             REBIXO indexor = Eval_Array_At_Core(
                 SET_END(FRM_SHOVE(f)),
                 nullptr, // opt_first (null means nothing, not nulled cell)
-                VAL_ARRAY(f->value),
+                Cell_Array(f->value),
                 VAL_INDEX(f->value),
                 Derive_Specifier(f->specifier, f->value),
                 DO_FLAG_TO_END
@@ -707,13 +707,13 @@ bool Eval_Core_Throws(REBFRM * const f)
         //
         if (
             VAL_LEN_AT(current) > 0
-            and IS_WORD(VAL_ARRAY_AT(current))
+            and IS_WORD(Cell_Array_At(current))
         ){
             assert(not current_gotten); // no caching for paths
 
             REBSPC *derived = Derive_Specifier(f->specifier, current);
 
-            Cell* path_at = VAL_ARRAY_AT(current);
+            Cell* path_at = Cell_Array_At(current);
             const Value* var_at = Try_Get_Opt_Var(path_at, derived);
 
             if (
@@ -1260,11 +1260,11 @@ bool Eval_Core_Throws(REBFRM * const f)
                 // TAKE on the VARARGS.  Experimental feature.
                 //
                 if (Is_Param_Variadic(f->param)) {
-                    REBARR *array1;
+                    Array* array1;
                     if (IS_END(f->arg))
                         array1 = EMPTY_ARRAY;
                     else {
-                        REBARR *feed = Alloc_Singular(NODE_FLAG_MANAGED);
+                        Array* feed = Alloc_Singular(NODE_FLAG_MANAGED);
                         Move_Value(ARR_SINGLE(feed), f->arg);
 
                         array1 = Alloc_Singular(NODE_FLAG_MANAGED);
@@ -1958,7 +1958,7 @@ bool Eval_Core_Throws(REBFRM * const f)
 
         // Since current may be f->cell, extract properties to reuse it.
         //
-        REBARR *array = VAL_ARRAY(current); // array of the GROUP!
+        Array* array = Cell_Array(current); // array of the GROUP!
         REBLEN index = VAL_INDEX(current); // index may not be @ head
         REBSPC *derived = Derive_Specifier(f->specifier, current);
 
@@ -2018,7 +2018,7 @@ bool Eval_Core_Throws(REBFRM * const f)
         if (Eval_Path_Throws_Core(
             f->out,
             &opt_label, // requesting says we run functions (not GET-PATH!)
-            VAL_ARRAY(current),
+            Cell_Array(current),
             VAL_INDEX(current),
             Derive_Specifier(f->specifier, current),
             nullptr, // `setval`: null means don't treat as SET-PATH!
@@ -2116,7 +2116,7 @@ bool Eval_Core_Throws(REBFRM * const f)
         if (Eval_Path_Throws_Core(
             FRM_CELL(f), // output if thrown, used as scratch space otherwise
             nullptr,  // not requesting symbol means refinements not allowed
-            VAL_ARRAY(current),
+            Cell_Array(current),
             VAL_INDEX(current),
             f->specifier,
             f->out,

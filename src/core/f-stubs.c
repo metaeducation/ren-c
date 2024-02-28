@@ -355,8 +355,8 @@ void Extra_Init_Any_Context_Checks_Debug(enum Reb_Kind kind, REBCTX *c) {
     //
     assert(VAL_BINDING(archetype) == UNBOUND or CTX_TYPE(c) == REB_FRAME);
 
-    REBARR *varlist = CTX_VARLIST(c);
-    REBARR *keylist = CTX_KEYLIST(c);
+    Array* varlist = CTX_VARLIST(c);
+    Array* keylist = CTX_KEYLIST(c);
     assert(NOT_SER_FLAG(keylist, ARRAY_FLAG_FILE_LINE));
 
     assert(
@@ -397,7 +397,7 @@ void Extra_Init_Action_Checks_Debug(REBACT *a) {
     Value* archetype = ACT_ARCHETYPE(a);
     assert(VAL_ACTION(archetype) == a);
 
-    REBARR *paramlist = ACT_PARAMLIST(a);
+    Array* paramlist = ACT_PARAMLIST(a);
     assert(NOT_SER_FLAG(paramlist, ARRAY_FLAG_FILE_LINE));
 
     // !!! Currently only a context can serve as the "meta" information,

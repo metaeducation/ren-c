@@ -77,8 +77,8 @@ REB_R MAKE_Pair(Value* out, enum Reb_Kind kind, const Value* arg)
         if (VAL_LEN_AT(arg) != 2)
             goto bad_make;
 
-        x = VAL_ARRAY_AT(arg);
-        y = VAL_ARRAY_AT(arg) + 1;
+        x = Cell_Array_At(arg);
+        y = Cell_Array_At(arg) + 1;
     }
     else {
         x = arg;

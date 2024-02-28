@@ -341,7 +341,7 @@ void Drop_Pointer_From_Series(REBSER *s, void *p)
 //
 void Mold_Array_At(
     REB_MOLD *mo,
-    REBARR *a,
+    Array* a,
     REBLEN index,
     const char *sep
 ) {
@@ -358,7 +358,7 @@ void Mold_Array_At(
     if (sep[1])
         Append_Utf8_Codepoint(mo->series, sep[0]);
 
-    Cell* item = ARR_AT(a, index);
+    Cell* item = Array_At(a, index);
     while (NOT_END(item)) {
         if (GET_VAL_FLAG(item, VALUE_FLAG_NEWLINE_BEFORE)) {
            if (not indented and (sep[1] != '\0')) {
@@ -399,7 +399,7 @@ void Mold_Array_At(
 //
 void Form_Array_At(
     REB_MOLD *mo,
-    REBARR *array,
+    Array* array,
     REBLEN index,
     REBCTX *opt_context
 ) {
@@ -410,7 +410,7 @@ void Form_Array_At(
 
     REBINT n;
     for (n = 0; n < len;) {
-        Cell* item = ARR_AT(array, index + n);
+        Cell* item = Array_At(array, index + n);
         Value* wval = nullptr;
         if (opt_context && (IS_WORD(item) || IS_GET_WORD(item))) {
             wval = Select_Canon_In_Context(opt_context, VAL_WORD_CANON(item));
@@ -564,7 +564,7 @@ REBSER *Copy_Mold_Or_Form_Value(const Cell* v, REBFLGS opts, bool form)
 //
 bool Form_Reduce_Throws(
     Value* out,
-    REBARR *array,
+    Array* array,
     REBLEN index,
     REBSPC *specifier,
     const Value* delimiter
@@ -634,7 +634,7 @@ REBSER *Form_Tight_Block(const Value* blk)
     Push_Mold(mo);
 
     Cell* item;
-    for (item = VAL_ARRAY_AT(blk); NOT_END(item); ++item)
+    for (item = Cell_Array_At(blk); NOT_END(item); ++item)
         Form_Value(mo, item);
 
     return Pop_Molded_String(mo);

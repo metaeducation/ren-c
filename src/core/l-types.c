@@ -1302,7 +1302,7 @@ DECLARE_NATIVE(scan_net_header)
 {
     INCLUDE_PARAMS_OF_SCAN_NET_HEADER;
 
-    REBARR *result = Make_Arr(10); // Just a guess at size (use STD_BUF?)
+    Array* result = Make_Arr(10); // Just a guess at size (use STD_BUF?)
 
     Value* header = ARG(header);
     REBLEN index = VAL_INDEX(header);
@@ -1347,12 +1347,12 @@ DECLARE_NATIVE(scan_net_header)
                 if (IS_BLOCK(item + 1)) {
                     // Block of values already exists:
                     val = Init_Unreadable_Blank(
-                        Alloc_Tail_Array(VAL_ARRAY(item + 1))
+                        Alloc_Tail_Array(Cell_Array(item + 1))
                     );
                 }
                 else {
                     // Create new block for values:
-                    REBARR *a = Make_Arr(2);
+                    Array* a = Make_Arr(2);
                     Derelativize(
                         Alloc_Tail_Array(a),
                         item + 1, // prior value

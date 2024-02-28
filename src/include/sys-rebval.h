@@ -46,7 +46,7 @@
 // (at least until they become arbitrary precision) but it's not enough for
 // a generic BLOCK! or an ACTION! (for instance).  So the remaining bits
 // often will point to one or more Rebol "nodes" (see %sys-series.h for an
-// explanation of REBSER, REBARR, REBCTX, and REBMAP.)
+// explanation of REBSER, Array, REBCTX, and REBMAP.)
 //
 // So the next part of the structure is the "Extra".  This is the size of one
 // pointer, which sits immediately after the header (that's also the size of
@@ -342,7 +342,7 @@ INLINE union Reb_Header Endlike_Header(uintptr_t bits) {
 
 struct Reb_Datatype_Payload {
     enum Reb_Kind kind;
-    REBARR *spec;
+    Array* spec;
 };
 
 // !!! In R3-alpha, the money type was implemented under a type called "deci".
@@ -391,7 +391,7 @@ struct Reb_Series_Payload {
     //
     // !!! Review that it doesn't seem like these checks are being done
     // in a systemic way.  VAL_LEN_AT() bounds the length at the index
-    // position by the physical length, but VAL_ARRAY_AT() doesn't check.
+    // position by the physical length, but Cell_Array_At() doesn't check.
     //
     REBLEN index;
 };
@@ -445,7 +445,7 @@ struct Reb_Action_Payload {
     // The `misc.meta` field of the paramlist holds a meta object (if any)
     // that describes the function.  This is read by help.
     //
-    REBARR *paramlist;
+    Array* paramlist;
 
     // `details` holds the instance data used by the dispatcher (which lives
     // in MISC(details).dispatcher) to run this particular action.  What the
@@ -464,7 +464,7 @@ struct Reb_Action_Payload {
     // of in the value cell itself, it also means the dispatcher can be
     // HIJACKed--or otherwise hooked to affect all instances of a function.
     //
-    REBARR *details;
+    Array* details;
 };
 
 struct Reb_Context_Payload {
@@ -484,7 +484,7 @@ struct Reb_Context_Payload {
     // field of the keylist, which is another object's-worth of data *about*
     // the module's contents (e.g. the processed header)
     //
-    REBARR *varlist;
+    Array* varlist;
 
     // A single FRAME! can go through multiple phases of evaluation, some of
     // which should expose more fields than others.  For instance, when you
@@ -553,7 +553,7 @@ struct Reb_Partial_Payload {
 // Since a function pointer and a data pointer aren't necessarily the same
 // size, the data has to be a union.
 //
-// Note that the ->extra field of the cell may contain a singular REBARR
+// Note that the ->extra field of the cell may contain a singular Array
 // that is leveraged for its GC-awareness.
 //
 struct Reb_Handle_Payload {
@@ -570,10 +570,10 @@ struct Reb_Handle_Payload {
 // Meta information in singular->misc.meta
 //
 struct Reb_Library_Payload {
-    REBARR *singular; // singular array holding this library value
+    Array* singular; // singular array holding this library value
 };
 
-typedef REBARR REBLIB;
+typedef Array REBLIB;
 
 
 //=////////////////////////////////////////////////////////////////////////=//
@@ -618,7 +618,7 @@ union Reb_Value_Extra {
     void *trash;
 
     // The binding will be either a REBACT (relative to a function) or a
-    // REBCTX (specific to a context), or simply a plain REBARR such as
+    // REBCTX (specific to a context), or simply a plain Array such as
     // EMPTY_ARRAY which indicates UNBOUND.  ARRAY_FLAG_VARLIST and
     // ARRAY_FLAG_PARAMLIST can be used to tell which it is.
     //
@@ -674,7 +674,7 @@ union Reb_Value_Extra {
     // array, which is the exact size of a REBSER and carries the canon data.
     // If the cheaper kind that's just raw data and no callback, this is null.
     //
-    REBARR *singular;
+    Array* singular;
 
   #if !defined(NDEBUG)
     //

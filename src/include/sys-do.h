@@ -37,7 +37,7 @@
 
 INLINE bool Do_At_Throws(
     Value* out,
-    REBARR *array,
+    Array* array,
     REBLEN index,
     REBSPC *specifier
 ){
@@ -58,7 +58,7 @@ INLINE bool Do_Any_Array_At_Throws(
 ){
     return Do_At_Throws(
         out,
-        VAL_ARRAY(any_array),
+        Cell_Array(any_array),
         VAL_INDEX(any_array),
         VAL_SPECIFIER(any_array)
     );

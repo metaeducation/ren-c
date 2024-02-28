@@ -301,7 +301,7 @@ ATTRIBUTE_NO_RETURN void Fail_Core(const void *p)
     while (f != Saved_State->frame) {
         if (Is_Action_Frame(f)) {
             assert(f->varlist); // action must be running
-            REBARR *stub = f->varlist; // will be stubbed, info bits reset
+            Array* stub = f->varlist; // will be stubbed, info bits reset
             Drop_Action(f);
             SET_SER_INFO(stub, FRAME_INFO_FAILED); // API leaks o.k.
         }
@@ -516,7 +516,7 @@ bool Make_Error_Object_Throws(
 
         error = Make_Selfish_Context_Detect_Managed(
             REB_ERROR, // type
-            VAL_ARRAY_AT(arg), // values to scan for toplevel set-words
+            Cell_Array_At(arg), // values to scan for toplevel set-words
             root_error // parent
         );
 
@@ -526,7 +526,7 @@ bool Make_Error_Object_Throws(
         Init_Error(out, error);
 
         Rebind_Context_Deep(root_error, error, nullptr);  // no more binds
-        Bind_Values_Deep(VAL_ARRAY_AT(arg), error);
+        Bind_Values_Deep(Cell_Array_At(arg), error);
 
         DECLARE_VALUE (evaluated);
         if (Do_Any_Array_At_Throws(evaluated, arg)) {
@@ -931,7 +931,7 @@ REBCTX *Error_Bad_Func_Def(const Value* spec, const Value* body)
     // !!! Improve this error; it's simply a direct emulation of arity-1
     // error that existed before refactoring code out of MAKE_Function().
 
-    REBARR *a = Make_Arr(2);
+    Array* a = Make_Arr(2);
     Append_Value(a, spec);
     Append_Value(a, body);
 
@@ -1304,7 +1304,7 @@ REBCTX *Startup_Errors(const Value* boot_errors)
     assert(VAL_INDEX(boot_errors) == 0);
     REBCTX *catalog = Construct_Context_Managed(
         REB_OBJECT,
-        VAL_ARRAY_AT(boot_errors),
+        Cell_Array_At(boot_errors),
         VAL_SPECIFIER(boot_errors),
         nullptr
     );
@@ -1388,7 +1388,7 @@ void MF_Error(REB_MOLD *mo, const Cell* v, bool form)
 
     // Append: error message ARG1, ARG2, etc.
     if (IS_BLOCK(&vars->message))
-        Form_Array_At(mo, VAL_ARRAY(&vars->message), 0, error);
+        Form_Array_At(mo, Cell_Array(&vars->message), 0, error);
     else if (IS_TEXT(&vars->message))
         Form_Value(mo, &vars->message);
     else

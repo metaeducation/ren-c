@@ -205,11 +205,11 @@ DECLARE_NATIVE(bind)
 
     Cell* at;
     if (REF(copy)) {
-        REBARR *copy = Copy_Array_Core_Managed(
-            VAL_ARRAY(v),
+        Array* copy = Copy_Array_Core_Managed(
+            Cell_Array(v),
             VAL_INDEX(v), // at
             VAL_SPECIFIER(v),
-            ARR_LEN(VAL_ARRAY(v)), // tail
+            ARR_LEN(Cell_Array(v)), // tail
             0, // extra
             ARRAY_FLAG_FILE_LINE, // flags
             TS_ARRAY // types to copy deeply
@@ -218,7 +218,7 @@ DECLARE_NATIVE(bind)
         Init_Any_Array(D_OUT, VAL_TYPE(v), copy);
     }
     else {
-        at = VAL_ARRAY_AT(v); // only affects binding from current index
+        at = Cell_Array_At(v); // only affects binding from current index
         Move_Value(D_OUT, v);
     }
 
@@ -411,7 +411,7 @@ DECLARE_NATIVE(unbind)
     if (ANY_WORD(word))
         Unbind_Any_Word(word);
     else
-        Unbind_Values_Core(VAL_ARRAY_AT(word), nullptr, REF(deep));
+        Unbind_Values_Core(Cell_Array_At(word), nullptr, REF(deep));
 
     RETURN (word);
 }
@@ -448,7 +448,7 @@ DECLARE_NATIVE(collect_words)
 
     UNUSED(REF(ignore)); // implied used or unused by ARG(hidden)'s voidness
 
-    Cell* head = VAL_ARRAY_AT(ARG(block));
+    Cell* head = Cell_Array_At(ARG(block));
     return Init_Block(
         D_OUT,
         Collect_Unique_Words_Managed(head, flags, ARG(hidden))
@@ -516,9 +516,9 @@ DECLARE_NATIVE(get)
         return D_OUT;
     }
 
-    REBARR *results = Make_Arr(VAL_LEN_AT(source));
+    Array* results = Make_Arr(VAL_LEN_AT(source));
     Value* dest = KNOWN(ARR_HEAD(results));
-    Cell* item = VAL_ARRAY_AT(source);
+    Cell* item = Cell_Array_At(source);
 
     for (; NOT_END(item); ++item, ++dest) {
         Get_Opt_Polymorphic_May_Fail(
@@ -669,11 +669,11 @@ DECLARE_NATIVE(set)
         RETURN (value);
     }
 
-    const Cell* item = VAL_ARRAY_AT(target);
+    const Cell* item = Cell_Array_At(target);
 
     const Cell* v;
     if (IS_BLOCK(value) and not REF(single))
-        v = VAL_ARRAY_AT(value);
+        v = Cell_Array_At(value);
     else
         v = value;
 

@@ -188,7 +188,7 @@ bool Do_Vararg_Op_Maybe_End_Throws(
         if (Vararg_Op_If_No_Advance_Handled(
             out,
             op,
-            IS_END(shared) ? END_NODE : VAL_ARRAY_AT(shared),
+            IS_END(shared) ? END_NODE : Cell_Array_At(shared),
             IS_END(shared) ? SPECIFIED : VAL_SPECIFIER(shared),
             pclass
         )){
@@ -204,7 +204,7 @@ bool Do_Vararg_Op_Maybe_End_Throws(
             // TAIL? or FIRST testing on evaluative parameters, we don't
             // want to double evaluation...so return that single element.
             //
-            Value* single = KNOWN(ARR_SINGLE(VAL_ARRAY(shared)));
+            Value* single = KNOWN(ARR_SINGLE(Cell_Array(shared)));
             Move_Value(out, single);
             if (GET_VAL_FLAG(single, VALUE_FLAG_UNEVALUATED))
                 SET_VAL_FLAG(out, VALUE_FLAG_UNEVALUATED); // not auto-copied
@@ -218,7 +218,7 @@ bool Do_Vararg_Op_Maybe_End_Throws(
             DECLARE_FRAME (f_temp);
             Push_Frame_At(
                 f_temp,
-                VAL_ARRAY(shared),
+                Cell_Array(shared),
                 VAL_INDEX(shared),
                 VAL_SPECIFIER(shared),
                 pclass == PARAM_CLASS_NORMAL
@@ -253,21 +253,21 @@ bool Do_Vararg_Op_Maybe_End_Throws(
             break; }
 
         case PARAM_CLASS_HARD_QUOTE:
-            Derelativize(out, VAL_ARRAY_AT(shared), VAL_SPECIFIER(shared));
+            Derelativize(out, Cell_Array_At(shared), VAL_SPECIFIER(shared));
             SET_VAL_FLAG(out, VALUE_FLAG_UNEVALUATED);
             VAL_INDEX(shared) += 1;
             break;
 
         case PARAM_CLASS_SOFT_QUOTE:
-            if (IS_QUOTABLY_SOFT(VAL_ARRAY_AT(shared))) {
+            if (IS_QUOTABLY_SOFT(Cell_Array_At(shared))) {
                 if (Eval_Value_Core_Throws(
-                    out, VAL_ARRAY_AT(shared), VAL_SPECIFIER(shared)
+                    out, Cell_Array_At(shared), VAL_SPECIFIER(shared)
                 )){
                     return true;
                 }
             }
             else { // not a soft-"exception" case, quote ordinarily
-                Derelativize(out, VAL_ARRAY_AT(shared), VAL_SPECIFIER(shared));
+                Derelativize(out, Cell_Array_At(shared), VAL_SPECIFIER(shared));
                 SET_VAL_FLAG(out, VALUE_FLAG_UNEVALUATED);
             }
             VAL_INDEX(shared) += 1;
@@ -419,8 +419,8 @@ REB_R MAKE_Varargs(Value* out, enum Reb_Kind kind, const Value* arg)
         // By protocol, if the array is exhausted then the shared element
         // should be an END marker (not an array at its end)
         //
-        REBARR *array1 = Alloc_Singular(NODE_FLAG_MANAGED);
-        if (IS_END(VAL_ARRAY_AT(arg)))
+        Array* array1 = Alloc_Singular(NODE_FLAG_MANAGED);
+        if (IS_END(Cell_Array_At(arg)))
             SET_END(ARR_SINGLE(array1));
         else
             Move_Value(ARR_SINGLE(array1), arg);
@@ -668,7 +668,7 @@ void MF_Varargs(REB_MOLD *mo, const Cell* v, bool form) {
             Append_Unencoded(mo->series, "[]");
         else if (pclass == PARAM_CLASS_HARD_QUOTE)
             Mold_Value(mo, shared); // full feed can be shown if hard quoted
-        else if (IS_BAR(VAL_ARRAY_AT(shared)))
+        else if (IS_BAR(Cell_Array_At(shared)))
             Append_Unencoded(mo->series, "[]"); // simulate end appearance
         else
             Append_Unencoded(mo->series, "[...]"); // can't look ahead

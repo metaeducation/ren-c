@@ -120,7 +120,7 @@ REBCTX *Make_Context_For_Action_Int_Partials(
     REBACT *act = VAL_ACTION(action);
 
     REBLEN num_slots = ACT_NUM_PARAMS(act) + 1;
-    REBARR *varlist = Make_Arr_Core(
+    Array* varlist = Make_Arr_Core(
         num_slots, // includes +1 for the CTX_ARCHETYPE() at [0]
         SERIES_MASK_CONTEXT
     );
@@ -416,7 +416,7 @@ bool Specialize_Action_Throws(
 
         Bind_Values_Inner_Loop(
             &binder,
-            VAL_ARRAY_AT(opt_def),
+            Cell_Array_At(opt_def),
             exemplar,
             FLAGIT_KIND(REB_SET_WORD), // types to bind (just set-word!)
             0, // types to "add midstream" to binding as we go (nothing)
@@ -670,7 +670,7 @@ bool Specialize_Action_Throws(
         last_partial->extra.next_partial = nullptr; // not needed until now
     }
 
-    REBARR *paramlist = Pop_Stack_Values_Core(
+    Array* paramlist = Pop_Stack_Values_Core(
         dsp_paramlist,
         SERIES_MASK_ACTION
     );
@@ -849,7 +849,7 @@ bool Specialize_Action_Throws(
 //
 REB_R Specializer_Dispatcher(REBFRM *f)
 {
-    REBARR *details = ACT_DETAILS(FRM_PHASE(f));
+    Array* details = ACT_DETAILS(FRM_PHASE(f));
 
     Value* exemplar = KNOWN(ARR_HEAD(details));
     assert(IS_FRAME(exemplar));
@@ -938,7 +938,7 @@ DECLARE_NATIVE(specialize)
 //
 REB_R Block_Dispatcher(REBFRM *f)
 {
-    REBARR *details = ACT_DETAILS(FRM_PHASE(f));
+    Array* details = ACT_DETAILS(FRM_PHASE(f));
     Cell* block = ARR_HEAD(details);
     assert(IS_BLOCK(block));
 
@@ -966,7 +966,7 @@ REB_R Block_Dispatcher(REBFRM *f)
         // Derelativize()'d out to make it specific, and then re-relativized
         // through a copy on behalf of o2/b.
 
-        REBARR *body_array = Copy_And_Bind_Relative_Deep_Managed(
+        Array* body_array = Copy_And_Bind_Relative_Deep_Managed(
             KNOWN(block),
             ACT_PARAMLIST(FRM_PHASE(f)),
             TS_WORD
@@ -974,9 +974,9 @@ REB_R Block_Dispatcher(REBFRM *f)
 
         // Preserve file and line information from the original, if present.
         //
-        if (GET_SER_FLAG(VAL_ARRAY(block), ARRAY_FLAG_FILE_LINE)) {
-            LINK(body_array).file = LINK(VAL_ARRAY(block)).file;
-            MISC(body_array).line = MISC(VAL_ARRAY(block)).line;
+        if (GET_SER_FLAG(Cell_Array(block), ARRAY_FLAG_FILE_LINE)) {
+            LINK(body_array).file = LINK(Cell_Array(block)).file;
+            MISC(body_array).line = MISC(Cell_Array(block)).line;
             SET_SER_FLAG(body_array, ARRAY_FLAG_FILE_LINE);
         }
 
@@ -994,7 +994,7 @@ REB_R Block_Dispatcher(REBFRM *f)
 
     if (Do_At_Throws(
         f->out,
-        VAL_ARRAY(block),
+        Cell_Array(block),
         VAL_INDEX(block),
         SPC(f->varlist)
     )){
@@ -1157,7 +1157,7 @@ DECLARE_NATIVE(does)
     Value* specializee = ARG(specializee);
 
     if (IS_BLOCK(specializee)) {
-        REBARR *paramlist = Make_Arr_Core(
+        Array* paramlist = Make_Arr_Core(
             1, // archetype only...DOES always makes action with no arguments
             SERIES_MASK_ACTION
         );
@@ -1296,7 +1296,7 @@ DECLARE_NATIVE(does)
     REBACT *unspecialized = VAL_ACTION(specializee);
 
     REBLEN num_slots = ACT_NUM_PARAMS(unspecialized) + 1;
-    REBARR *paramlist = Make_Arr_Core(num_slots, SERIES_MASK_ACTION);
+    Array* paramlist = Make_Arr_Core(num_slots, SERIES_MASK_ACTION);
 
     Cell* archetype = RESET_CELL(ARR_HEAD(paramlist), REB_ACTION);
     archetype->payload.action.paramlist = paramlist;

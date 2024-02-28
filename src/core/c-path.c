@@ -103,7 +103,7 @@ bool Next_Path_Throws(REBPVS *pvs)
         REBSPC *derived = Derive_Specifier(pvs->specifier, pvs->value);
         if (Do_At_Throws(
             PVS_PICKER(pvs),
-            VAL_ARRAY(pvs->value),
+            Cell_Array(pvs->value),
             VAL_INDEX(pvs->value),
             derived
         )) {
@@ -291,7 +291,7 @@ bool Next_Path_Throws(REBPVS *pvs)
 bool Eval_Path_Throws_Core(
     Value* out, // if opt_setval, this is only used to return a thrown value
     Symbol* *label_out,
-    REBARR *array,
+    Array* array,
     REBLEN index,
     REBSPC *specifier,
     const Value* opt_setval, // Note: may be the same as out!
@@ -304,7 +304,7 @@ bool Eval_Path_Throws_Core(
     // a zero length path would do", e.g. an analogue to division (though in
     // the future, types might define this some other way.)
     //
-    if (IS_END(ARR_AT(array, index))) {
+    if (IS_END(Array_At(array, index))) {
         if (label_out)
             *label_out = nullptr;
         Move_Value(out, NAT_VALUE(path_0));
@@ -317,7 +317,7 @@ bool Eval_Path_Throws_Core(
     // is different from `(/foo)/1` or `ref: /foo | ref/1`, both of which
     // would be #"o".
     //
-    if (ANY_INERT(ARR_AT(array, index))) {
+    if (ANY_INERT(Array_At(array, index))) {
         if (opt_setval)
             fail ("Can't perform SET_PATH! on path with inert head");
         Init_Any_Array_At(out, REB_PATH, array, index);
@@ -376,7 +376,7 @@ bool Eval_Path_Throws_Core(
         REBSPC *derived = Derive_Specifier(pvs->specifier, pvs->value);
         if (Do_At_Throws(
             pvs->out,
-            VAL_ARRAY(pvs->value),
+            Cell_Array(pvs->value),
             VAL_INDEX(pvs->value),
             derived
         )){
@@ -519,7 +519,7 @@ void Get_Simple_Value_Into(Value* out, const Cell* val, REBSPC *specifier)
 //
 REBCTX *Resolve_Path(const Value* path, REBLEN *index_out)
 {
-    REBARR *array = VAL_ARRAY(path);
+    Array* array = Cell_Array(path);
     Cell* picker = ARR_HEAD(array);
 
     if (IS_END(picker) or not ANY_WORD(picker))

@@ -88,9 +88,9 @@ Value* Append_Event(void)
 
         Extend_Series(VAL_SERIES(state), EVENTS_CHUNK);
     }
-    TERM_ARRAY_LEN(VAL_ARRAY(state), VAL_LEN_HEAD(state) + 1);
+    TERM_ARRAY_LEN(Cell_Array(state), VAL_LEN_HEAD(state) + 1);
 
-    return Init_Blank(ARR_LAST(VAL_ARRAY(state)));
+    return Init_Blank(ARR_LAST(Cell_Array(state)));
 }
 
 
@@ -206,7 +206,7 @@ static REB_R Event_Actor(REBFRM *frame_, Value* port, Value* verb)
         return r; }
 
     case SYM_CLEAR:
-        TERM_ARRAY_LEN(VAL_ARRAY(state), 0);
+        TERM_ARRAY_LEN(Cell_Array(state), 0);
         CLR_SIGNAL(SIG_EVENT_PORT);
         RETURN (port);
 

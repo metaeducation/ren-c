@@ -142,7 +142,7 @@ typedef REBSER Symbol;
 typedef REBSER String;
 
 struct Reb_Array;
-typedef struct Reb_Array REBARR;
+typedef struct Reb_Array Array;
 
 struct Reb_Context;
 typedef struct Reb_Context REBCTX;

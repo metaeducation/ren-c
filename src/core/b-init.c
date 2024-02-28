@@ -182,7 +182,7 @@ static void Assert_Basics(void)
 // set up, or FIRST being a specialization of PICK.  It's also where the
 // definition of the locals-gathering FUNCTION currently lives.
 //
-static void Startup_Base(REBARR *boot_base)
+static void Startup_Base(Array* boot_base)
 {
     Cell* head = ARR_HEAD(boot_base);
 
@@ -228,7 +228,7 @@ static void Startup_Base(REBARR *boot_base)
 // core.  Any work the core C needs to have done that would be more easily
 // done by delegating it to Rebol can use a function in sys as a service.
 //
-static void Startup_Sys(REBARR *boot_sys) {
+static void Startup_Sys(Array* boot_sys) {
     Cell* head = ARR_HEAD(boot_sys);
 
     // Add all new top-level SET-WORD! found in the sys boot-block to Lib,
@@ -260,7 +260,7 @@ static void Startup_Sys(REBARR *boot_sys) {
 // used for NULL, and also not value type.  Hence the total number of types is
 // REB_MAX - 1.
 //
-static REBARR *Startup_Datatypes(REBARR *boot_types, REBARR *boot_typespecs)
+static Array* Startup_Datatypes(Array* boot_types, Array* boot_typespecs)
 {
     if (ARR_LEN(boot_types) != REB_MAX - 1)
         panic (boot_types); // Every REB_XXX but REB_0 should have a WORD!
@@ -270,7 +270,7 @@ static REBARR *Startup_Datatypes(REBARR *boot_types, REBARR *boot_typespecs)
     if (Cell_Word_Id(word) != SYM_ACTION_X)
         panic (word); // First type should be ACTION!
 
-    REBARR *catalog = Make_Arr(REB_MAX - 1);
+    Array* catalog = Make_Arr(REB_MAX - 1);
 
     REBINT n;
     for (n = 1; NOT_END(word); word++, n++) {
@@ -279,7 +279,7 @@ static REBARR *Startup_Datatypes(REBARR *boot_types, REBARR *boot_typespecs)
         Value* value = Append_Context(Lib_Context, KNOWN(word), nullptr);
         RESET_CELL(value, REB_DATATYPE);
         VAL_TYPE_KIND(value) = cast(enum Reb_Kind, n);
-        VAL_TYPE_SPEC(value) = VAL_ARRAY(ARR_AT(boot_typespecs, n - 1));
+        VAL_TYPE_SPEC(value) = Cell_Array(Array_At(boot_typespecs, n - 1));
 
         // !!! The system depends on these definitions, as they are used by
         // Get_Type and Type_Of.  Lock it for safety...though consider an
@@ -364,9 +364,9 @@ DECLARE_NATIVE(generic)
 
     SET_VAL_FLAG(ACT_ARCHETYPE(generic), ACTION_FLAG_NATIVE);
 
-    REBARR *details = ACT_DETAILS(generic);
-    Init_Word(ARR_AT(details, IDX_NATIVE_BODY), VAL_WORD_CANON(ARG(verb)));
-    Init_Object(ARR_AT(details, IDX_NATIVE_CONTEXT), Lib_Context);
+    Array* details = ACT_DETAILS(generic);
+    Init_Word(Array_At(details, IDX_NATIVE_BODY), VAL_WORD_CANON(ARG(verb)));
+    Init_Object(Array_At(details, IDX_NATIVE_CONTEXT), Lib_Context);
 
     // A lookback quoting function that quotes a SET-WORD! on its left is
     // responsible for setting the value if it wants it to change since the
@@ -573,10 +573,10 @@ Value* Make_Native(
         if (
             not IS_PATH(*item)
             or VAL_LEN_HEAD(*item) != 2
-            or not IS_WORD(ARR_HEAD(VAL_ARRAY(*item)))
-            or Cell_Word_Id(ARR_HEAD(VAL_ARRAY(*item))) != SYM_NATIVE
-            or not IS_WORD(ARR_AT(VAL_ARRAY(*item), 1))
-            or Cell_Word_Id(ARR_AT(VAL_ARRAY(*item), 1)) != SYM_BODY
+            or not IS_WORD(ARR_HEAD(Cell_Array(*item)))
+            or Cell_Word_Id(ARR_HEAD(Cell_Array(*item))) != SYM_NATIVE
+            or not IS_WORD(Array_At(Cell_Array(*item), 1))
+            or Cell_Word_Id(Array_At(Cell_Array(*item), 1)) != SYM_BODY
         ){
             panic (*item);
         }
@@ -610,7 +610,7 @@ Value* Make_Native(
 
     SET_VAL_FLAG(ACT_ARCHETYPE(act), ACTION_FLAG_NATIVE);
 
-    REBARR *details = ACT_DETAILS(act);
+    Array* details = ACT_DETAILS(act);
 
     // If a user-equivalent body was provided, we save it in the native's
     // body cell for later lookup.
@@ -619,17 +619,17 @@ Value* Make_Native(
         if (not IS_BLOCK(*item))
             panic (*item);
 
-        Derelativize(ARR_AT(details, IDX_NATIVE_BODY), *item, specifier);
+        Derelativize(Array_At(details, IDX_NATIVE_BODY), *item, specifier);
         ++*item;
     }
     else
-        Init_Blank(ARR_AT(details, IDX_NATIVE_BODY));
+        Init_Blank(Array_At(details, IDX_NATIVE_BODY));
 
     // When code in the core calls APIs like `rebValue()`, it consults the
     // stack and looks to see where the native function that is running
     // says its "module" is.  For natives, we default to Lib_Context.
     //
-    Move_Value(ARR_AT(details, IDX_NATIVE_CONTEXT), module);
+    Move_Value(Array_At(details, IDX_NATIVE_CONTEXT), module);
 
     // Append the native to the module under the name given.
     //
@@ -664,14 +664,14 @@ Value* Make_Native(
 //
 // Returns an array of words bound to natives for SYSTEM/CATALOG/NATIVES
 //
-static REBARR *Startup_Natives(const Value* boot_natives)
+static Array* Startup_Natives(const Value* boot_natives)
 {
     // Must be called before first use of Make_Paramlist_Managed_May_Fail()
     //
     Init_Action_Meta_Shim();
 
     assert(VAL_INDEX(boot_natives) == 0); // should be at head, sanity check
-    Cell* item = VAL_ARRAY_AT(boot_natives);
+    Cell* item = Cell_Array_At(boot_natives);
     REBSPC *specifier = VAL_SPECIFIER(boot_natives);
 
     // Although the natives are not being "executed", there are typesets
@@ -681,7 +681,7 @@ static REBARR *Startup_Natives(const Value* boot_natives)
     //
     Bind_Values_Deep(item, Lib_Context);
 
-    REBARR *catalog = Make_Arr(Num_Natives);
+    Array* catalog = Make_Arr(Num_Natives);
 
     REBLEN n = 0;
     Value* generic_word = nullptr; // gives clear error if GENERIC not found
@@ -732,10 +732,10 @@ static REBARR *Startup_Natives(const Value* boot_natives)
 //
 // Returns an array of words bound to generics for SYSTEM/CATALOG/ACTIONS
 //
-static REBARR *Startup_Generics(const Value* boot_generics)
+static Array* Startup_Generics(const Value* boot_generics)
 {
     assert(VAL_INDEX(boot_generics) == 0); // should be at head, sanity check
-    Cell* head = VAL_ARRAY_AT(boot_generics);
+    Cell* head = Cell_Array_At(boot_generics);
     REBSPC *specifier = VAL_SPECIFIER(boot_generics);
 
     // Add SET-WORD!s that are top-level in the generics block to the lib
@@ -962,19 +962,19 @@ static void Shutdown_Root_Vars(void)
 //
 static void Init_System_Object(
     const Value* boot_sysobj_spec,
-    REBARR *datatypes_catalog,
-    REBARR *natives_catalog,
-    REBARR *generics_catalog,
+    Array* datatypes_catalog,
+    Array* natives_catalog,
+    Array* generics_catalog,
     REBCTX *errors_catalog
 ) {
     assert(VAL_INDEX(boot_sysobj_spec) == 0);
-    Cell* spec_head = VAL_ARRAY_AT(boot_sysobj_spec);
+    Cell* spec_head = Cell_Array_At(boot_sysobj_spec);
 
     // Create the system object from the sysobj block (defined in %sysobj.r)
     //
     REBCTX *system = Make_Selfish_Context_Detect_Managed(
         REB_OBJECT, // type
-        VAL_ARRAY_AT(boot_sysobj_spec), // scan for toplevel set-words
+        Cell_Array_At(boot_sysobj_spec), // scan for toplevel set-words
         nullptr  // parent
     );
 
@@ -1391,7 +1391,7 @@ void Startup_Core(void)
         max
     ));
 
-    REBARR *boot_array = Scan_UTF8_Managed(
+    Array* boot_array = Scan_UTF8_Managed(
         Intern("tmp-boot.r"),
         utf8,
         utf8_size
@@ -1402,7 +1402,7 @@ void Startup_Core(void)
 
     BOOT_BLK *boot = cast(BOOT_BLK*, VAL_ARRAY_HEAD(ARR_HEAD(boot_array)));
 
-    Startup_Symbols(VAL_ARRAY(&boot->words));
+    Startup_Symbols(Cell_Array(&boot->words));
 
     // Symbol_Id(), Cell_Word_Id() and Canon(SYM_XXX) now available
 
@@ -1429,8 +1429,8 @@ void Startup_Core(void)
     Sys_Context = Alloc_Context_Core(REB_OBJECT, 50, NODE_FLAG_MANAGED);
     PUSH_GC_GUARD(Sys_Context);
 
-    REBARR *datatypes_catalog = Startup_Datatypes(
-        VAL_ARRAY(&boot->types), VAL_ARRAY(&boot->typespecs)
+    Array* datatypes_catalog = Startup_Datatypes(
+        Cell_Array(&boot->types), Cell_Array(&boot->typespecs)
     );
     MANAGE_ARRAY(datatypes_catalog);
     PUSH_GC_GUARD(datatypes_catalog);
@@ -1460,13 +1460,13 @@ void Startup_Core(void)
     // boot->natives is from the automatically gathered list of natives found
     // by scanning comments in the C sources for `native: ...` declarations.
     //
-    REBARR *natives_catalog = Startup_Natives(KNOWN(&boot->natives));
+    Array* natives_catalog = Startup_Natives(KNOWN(&boot->natives));
     MANAGE_ARRAY(natives_catalog);
     PUSH_GC_GUARD(natives_catalog);
 
     // boot->generics is the list in %generics.r
     //
-    REBARR *generics_catalog = Startup_Generics(KNOWN(&boot->generics));
+    Array* generics_catalog = Startup_Generics(KNOWN(&boot->generics));
     MANAGE_ARRAY(generics_catalog);
     PUSH_GC_GUARD(generics_catalog);
 
@@ -1556,9 +1556,9 @@ void Startup_Core(void)
 //
 static Value* Startup_Mezzanine(BOOT_BLK *boot)
 {
-    Startup_Base(VAL_ARRAY(&boot->base));
+    Startup_Base(Cell_Array(&boot->base));
 
-    Startup_Sys(VAL_ARRAY(&boot->sys));
+    Startup_Sys(Cell_Array(&boot->sys));
 
     Value* finish_init = CTX_VAR(Sys_Context, SYS_CTX_FINISH_INIT_CORE);
     assert(IS_ACTION(finish_init));

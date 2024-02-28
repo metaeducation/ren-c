@@ -382,7 +382,7 @@ REBSER *Join_Binary(const Value* blk, REBINT limit)
     SET_SERIES_LEN(series, 0);
 
     Cell* val;
-    for (val = VAL_ARRAY_AT(blk); limit > 0; val++, limit--) {
+    for (val = Cell_Array_At(blk); limit > 0; val++, limit--) {
         switch (VAL_TYPE(val)) {
         case REB_INTEGER:
             if (VAL_INT64(val) > 255 || VAL_INT64(val) < 0)

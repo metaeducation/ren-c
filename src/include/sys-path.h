@@ -90,7 +90,7 @@ INLINE bool Get_Path_Throws_Core(
     return Eval_Path_Throws_Core(
         out,
         nullptr,  // not requesting symbol means refinements not allowed
-        VAL_ARRAY(any_path),
+        Cell_Array(any_path),
         VAL_INDEX(any_path),
         Derive_Specifier(specifier, any_path),
         nullptr,  // not requesting value to set means it's a get
@@ -109,7 +109,7 @@ INLINE void Get_Path_Core(
     if (Eval_Path_Throws_Core(
         out,
         nullptr,  // not requesting symbol means refinements not allowed
-        VAL_ARRAY(any_path),
+        Cell_Array(any_path),
         VAL_INDEX(any_path),
         Derive_Specifier(specifier, any_path),
         nullptr,  // not requesting value to set means it's a get
@@ -131,7 +131,7 @@ INLINE bool Set_Path_Throws_Core(
     return Eval_Path_Throws_Core(
         out,
         nullptr,  // not requesting symbol means refinements not allowed
-        VAL_ARRAY(any_path),
+        Cell_Array(any_path),
         VAL_INDEX(any_path),
         Derive_Specifier(specifier, any_path),
         setval,
@@ -160,7 +160,7 @@ INLINE void Set_Path_Core(
     if (Eval_Path_Throws_Core(
         out,
         nullptr,  // not requesting symbol means refinements not allowed
-        VAL_ARRAY(any_path),
+        Cell_Array(any_path),
         VAL_INDEX(any_path),
         Derive_Specifier(specifier, any_path),
         setval,

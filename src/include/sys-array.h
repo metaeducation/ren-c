@@ -1,6 +1,6 @@
 //
 //  File: %sys-array.h
-//  Summary: {Definitions for REBARR}
+//  Summary: {Definitions for Array}
 //  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
 //  Homepage: https://github.com/metaeducation/ren-c/
 //
@@ -40,7 +40,7 @@
 // While many operations are shared in common with REBSER, there is a
 // (deliberate) type incompatibility introduced.  The type compatibility is
 // implemented in a way that works in C or C++ (though it should be reviewed
-// for strict aliasing compliance).  To get the underlying REBSER of a REBARR
+// for strict aliasing compliance).  To get the underlying REBSER of an Array
 // use the SER() operation.
 //
 // An ARRAY is the main place in the system where "relative" values come
@@ -59,19 +59,19 @@
 // marker in its tail slot, which is one past the last position that is
 // valid for writing a full cell.
 
-INLINE Cell* ARR_AT(REBARR *a, REBLEN n)
+INLINE Cell* Array_At(Array* a, REBLEN n)
     { return SER_AT(Cell, cast(REBSER*, a), n); }
 
-INLINE Cell* ARR_HEAD(REBARR *a)
+INLINE Cell* ARR_HEAD(Array* a)
     { return SER_HEAD(Cell, cast(REBSER*, a)); }
 
-INLINE Cell* ARR_TAIL(REBARR *a)
+INLINE Cell* ARR_TAIL(Array* a)
     { return SER_TAIL(Cell, cast(REBSER*, a)); }
 
-INLINE Cell* ARR_LAST(REBARR *a)
+INLINE Cell* ARR_LAST(Array* a)
     { return SER_LAST(Cell, cast(REBSER*, a)); }
 
-INLINE Cell* ARR_SINGLE(REBARR *a) {
+INLINE Cell* ARR_SINGLE(Array* a) {
     assert(not IS_SER_DYNAMIC(a)); // singular test avoided in release build
     return cast(Cell*, &SER(a)->content.fixed);
 }
@@ -79,8 +79,8 @@ INLINE Cell* ARR_SINGLE(REBARR *a) {
 // It's possible to calculate the array from just a cell if you know it's a
 // cell inside a singular array.
 //
-INLINE REBARR *Singular_From_Cell(const Cell* v) {
-    REBARR *singular = ARR( // some checking in debug builds is done by ARR()
+INLINE Array* Singular_From_Cell(const Cell* v) {
+    Array* singular = ARR( // some checking in debug builds is done by ARR()
         cast(void*,
             cast(Byte*, m_cast(Cell*, v))
             - offsetof(struct Reb_Series, content)
@@ -90,7 +90,7 @@ INLINE REBARR *Singular_From_Cell(const Cell* v) {
     return singular;
 }
 
-// As with an ordinary REBSER, a REBARR has separate management of its length
+// As with an ordinary REBSER, an Array has separate management of its length
 // and its terminator.  Many routines seek to choose the precise moment to
 // sync these independently for performance reasons (for better or worse).
 //
@@ -107,22 +107,22 @@ INLINE REBARR *Singular_From_Cell(const Cell* v) {
 // the moment, fixed size series merely can't expand, but it might be more
 // efficient if they didn't use any "appending" operators to get built.
 //
-INLINE void TERM_ARRAY_LEN(REBARR *a, REBLEN len) {
+INLINE void TERM_ARRAY_LEN(Array* a, REBLEN len) {
     assert(len < SER_REST(SER(a)));
     SET_SERIES_LEN(SER(a), len);
 
   #if !defined(NDEBUG)
-    if (NOT_END(ARR_AT(a, len)))
-        ASSERT_CELL_WRITABLE_EVIL_MACRO(ARR_AT(a, len), __FILE__, __LINE__);
+    if (NOT_END(Array_At(a, len)))
+        ASSERT_CELL_WRITABLE_EVIL_MACRO(Array_At(a, len), __FILE__, __LINE__);
   #endif
-    SECOND_BYTE(ARR_AT(a, len)->header.bits) = REB_0_END;
+    SECOND_BYTE(Array_At(a, len)->header.bits) = REB_0_END;
 }
 
-INLINE void SET_ARRAY_LEN_NOTERM(REBARR *a, REBLEN len) {
+INLINE void SET_ARRAY_LEN_NOTERM(Array* a, REBLEN len) {
     SET_SERIES_LEN(SER(a), len); // call out non-terminating usages
 }
 
-INLINE void RESET_ARRAY(REBARR *a) {
+INLINE void RESET_ARRAY(Array* a) {
     TERM_ARRAY_LEN(a, 0);
 }
 
@@ -151,13 +151,13 @@ INLINE void TERM_SERIES(REBSER *s) {
 // Locking
 //
 
-INLINE bool Is_Array_Deeply_Frozen(REBARR *a) {
+INLINE bool Is_Array_Deeply_Frozen(Array* a) {
     return GET_SER_INFO(a, SERIES_INFO_FROZEN);
 
     // should be frozen all the way down (can only freeze arrays deeply)
 }
 
-INLINE void Deep_Freeze_Array(REBARR *a) {
+INLINE void Deep_Freeze_Array(Array* a) {
     Protect_Series(
         SER(a),
         0, // start protection at index 0
@@ -189,7 +189,7 @@ INLINE void Deep_Freeze_Array(REBARR *a) {
 // as well on stack values and heap values.
 //
 INLINE void Prep_Array(
-    REBARR *a,
+    Array* a,
     REBLEN capacity_plus_one // Expand_Series passes 0 on dynamic reallocation
 ){
     assert(IS_SER_DYNAMIC(a));
@@ -232,7 +232,7 @@ INLINE void Prep_Array(
         // It may not be necessary, but doing it for now to have an easier
         // invariant to work with.  Review.
         //
-        prep = ARR_AT(a, SER(a)->content.dynamic.rest - 1);
+        prep = Array_At(a, SER(a)->content.dynamic.rest - 1);
         // fallthrough
     }
 
@@ -250,7 +250,7 @@ INLINE void Prep_Array(
 // Make a series that is the right size to store REBVALs (and marked for the
 // garbage collector to look into recursively).  ARR_LEN() will be 0.
 //
-INLINE REBARR *Make_Arr_Core(REBLEN capacity, REBFLGS flags) {
+INLINE Array* Make_Arr_Core(REBLEN capacity, REBFLGS flags) {
     const REBLEN wide = sizeof(Cell);
 
     REBSER *s = Alloc_Series_Node(flags);
@@ -319,8 +319,8 @@ INLINE REBARR *Make_Arr_Core(REBLEN capacity, REBFLGS flags) {
     PG_Reb_Stats->Blocks++;
   #endif
 
-    assert(ARR_LEN(cast(REBARR*, s)) == 0);
-    return cast(REBARR*, s);
+    assert(ARR_LEN(cast(Array*, s)) == 0);
+    return cast(Array*, s);
 }
 
 #define Make_Arr(capacity) \
@@ -333,10 +333,10 @@ INLINE REBARR *Make_Arr_Core(REBLEN capacity, REBFLGS flags) {
 // compete with the usage of the ->misc and ->link fields of the series node
 // for internal arrays.
 //
-INLINE REBARR *Make_Arr_For_Copy(
+INLINE Array* Make_Arr_For_Copy(
     REBLEN capacity,
     REBFLGS flags,
-    REBARR *original
+    Array* original
 ){
     if (original and GET_SER_FLAG(original, ARRAY_FLAG_TAIL_NEWLINE)) {
         //
@@ -352,7 +352,7 @@ INLINE REBARR *Make_Arr_For_Copy(
     ){
         flags &= ~ARRAY_FLAG_FILE_LINE;
 
-        REBARR *a = Make_Arr_Core(capacity, flags);
+        Array* a = Make_Arr_Core(capacity, flags);
         LINK(a).file = LINK(original).file;
         MISC(a).line = MISC(original).line;
         SET_SER_FLAG(a, ARRAY_FLAG_FILE_LINE);
@@ -371,9 +371,9 @@ INLINE REBARR *Make_Arr_For_Copy(
 //
 // For `flags`, be sure to consider if you need SERIES_FLAG_FILE_LINE.
 //
-INLINE REBARR *Alloc_Singular(REBFLGS flags) {
+INLINE Array* Alloc_Singular(REBFLGS flags) {
     assert(not (flags & SERIES_FLAG_ALWAYS_DYNAMIC));
-    REBARR *a = Make_Arr_Core(1, flags | SERIES_FLAG_FIXED_SIZE);
+    Array* a = Make_Arr_Core(1, flags | SERIES_FLAG_FIXED_SIZE);
     LEN_BYTE_OR_255(SER(a)) = 1; // non-dynamic length (defaulted to 0)
     return a;
 }
@@ -424,7 +424,7 @@ enum {
 
 #define COPY_ANY_ARRAY_AT_DEEP_MANAGED(v) \
     Copy_Array_At_Extra_Deep_Flags_Managed( \
-        VAL_ARRAY(v), VAL_INDEX(v), VAL_SPECIFIER(v), 0, SERIES_FLAGS_NONE)
+        Cell_Array(v), VAL_INDEX(v), VAL_SPECIFIER(v), 0, SERIES_FLAGS_NONE)
 
 #define Copy_Array_At_Shallow(a,i,s) \
     Copy_Array_At_Extra_Shallow((a), (i), (s), 0, SERIES_FLAGS_NONE)
@@ -434,8 +434,8 @@ enum {
 
 // See TS_NOT_COPIED for the default types excluded from being deep copied
 //
-INLINE REBARR* Copy_Array_At_Extra_Deep_Flags_Managed(
-    REBARR *original, // ^-- not a macro because original mentioned twice
+INLINE Array* Copy_Array_At_Extra_Deep_Flags_Managed(
+    Array* original, // ^-- not a macro because original mentioned twice
     REBLEN index,
     REBSPC *specifier,
     REBLEN extra,
@@ -470,7 +470,7 @@ INLINE REBARR* Copy_Array_At_Extra_Deep_Flags_Managed(
     Root_Empty_Block
 
 #define EMPTY_ARRAY \
-    PG_Empty_Array // Note: initialized from VAL_ARRAY(Root_Empty_Block)
+    PG_Empty_Array // Note: initialized from Cell_Array(Root_Empty_Block)
 
 #define EMPTY_TEXT \
     Root_Empty_Text
@@ -479,7 +479,7 @@ INLINE REBARR* Copy_Array_At_Extra_Deep_Flags_Managed(
     Root_Empty_Binary
 
 
-INLINE void INIT_VAL_ARRAY(Cell* v, REBARR *a) {
+INLINE void INIT_VAL_ARRAY(Cell* v, Array* a) {
     INIT_BINDING(v, UNBOUND);
     assert(IS_ARRAY_MANAGED(a));
     v->payload.any_series.series = SER(a);
@@ -489,8 +489,8 @@ INLINE void INIT_VAL_ARRAY(Cell* v, REBARR *a) {
 // of the word AT with a missing index is a hint that the index is coming
 // from the VAL_INDEX() of the value itself.
 //
-#define VAL_ARRAY_AT(v) \
-    ARR_AT(VAL_ARRAY(v), VAL_INDEX(v))
+#define Cell_Array_At(v) \
+    Array_At(Cell_Array(v), VAL_INDEX(v))
 
 #define VAL_ARRAY_LEN_AT(v) \
     VAL_LEN_AT(v)
@@ -498,7 +498,7 @@ INLINE void INIT_VAL_ARRAY(Cell* v, REBARR *a) {
 // These operations do not need to take the value's index position into
 // account; they strictly operate on the array series
 //
-INLINE REBARR *VAL_ARRAY(const Cell* v) {
+INLINE Array* Cell_Array(const Cell* v) {
     assert(ANY_ARRAY(v));
     REBSER *s = v->payload.any_series.series;
     if (s->info.bits & SERIES_INFO_INACCESSIBLE)
@@ -507,15 +507,15 @@ INLINE REBARR *VAL_ARRAY(const Cell* v) {
 }
 
 #define VAL_ARRAY_HEAD(v) \
-    ARR_HEAD(VAL_ARRAY(v))
+    ARR_HEAD(Cell_Array(v))
 
 INLINE Cell* VAL_ARRAY_TAIL(const Cell* v) {
-    return ARR_AT(VAL_ARRAY(v), VAL_ARRAY_LEN_AT(v));
+    return Array_At(Cell_Array(v), VAL_ARRAY_LEN_AT(v));
 }
 
 
 // !!! VAL_ARRAY_AT_HEAD() is a leftover from the old definition of
-// VAL_ARRAY_AT().  Unlike SKIP in Rebol, this definition did *not* take
+// Cell_Array_At().  Unlike SKIP in Rebol, this definition did *not* take
 // the current index position of the value into account.  It rather extracted
 // the array, counted rom the head, and disregarded the index entirely.
 //
@@ -526,7 +526,7 @@ INLINE Cell* VAL_ARRAY_TAIL(const Cell* v) {
 // looking here for what the story is.
 //
 #define VAL_ARRAY_AT_HEAD(v,n) \
-    ARR_AT(VAL_ARRAY(v), (n))
+    Array_At(Cell_Array(v), (n))
 
 #define Init_Any_Array_At(v,t,a,i) \
     Init_Any_Series_At((v), (t), SER(a), (i))
@@ -581,7 +581,7 @@ INLINE bool Splices_Into_Type_Without_Only(
 //
 INLINE bool Is_Doubled_Group(const Cell* group) {
     assert(IS_GROUP(group));
-    Cell* inner = VAL_ARRAY_AT(group);
+    Cell* inner = Cell_Array_At(group);
     if (VAL_TYPE_RAW(inner) != REB_GROUP or VAL_LEN_AT(group) != 1)
         return false; // plain (...) GROUP!
     return true; // a ((...)) GROUP!, inject as rule

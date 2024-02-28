@@ -229,7 +229,7 @@ REB_R MAKE_Typeset(Value* out, enum Reb_Kind kind, const Value* arg)
     if (!IS_BLOCK(arg)) goto bad_make;
 
     Init_Typeset(out, 0, nullptr);
-    Update_Typeset_Bits_Core(out, VAL_ARRAY_AT(arg), VAL_SPECIFIER(arg));
+    Update_Typeset_Bits_Core(out, Cell_Array_At(arg), VAL_SPECIFIER(arg));
     return out;
 
   bad_make:
@@ -251,7 +251,7 @@ REB_R TO_Typeset(Value* out, enum Reb_Kind kind, const Value* arg)
 //
 // Converts typeset value to a block of datatypes, no order is guaranteed.
 //
-REBARR *Typeset_To_Array(const Value* tset)
+Array* Typeset_To_Array(const Value* tset)
 {
     REBDSP dsp_orig = DSP;
 

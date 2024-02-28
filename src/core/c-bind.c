@@ -83,7 +83,7 @@ void Bind_Values_Inner_Loop(
         else if (ANY_ARRAY(v) and (flags & BIND_DEEP)) {
             Bind_Values_Inner_Loop(
                 binder,
-                VAL_ARRAY_AT(v),
+                Cell_Array_At(v),
                 context,
                 bind_types,
                 add_midstream_types,
@@ -157,7 +157,7 @@ void Unbind_Values_Core(Cell* head, REBCTX *context, bool deep)
             Unbind_Any_Word(v);
         }
         else if (ANY_ARRAY(v) and deep)
-            Unbind_Values_Core(VAL_ARRAY_AT(v), context, true);
+            Unbind_Values_Core(Cell_Array_At(v), context, true);
     }
 }
 
@@ -189,7 +189,7 @@ REBLEN Try_Bind_Word(REBCTX *context, Value* word)
 static void Bind_Relative_Inner_Loop(
     struct Reb_Binder *binder,
     Cell* head,
-    REBARR *paramlist,
+    Array* paramlist,
     REBU64 bind_types
 ) {
     Cell* v = head;
@@ -220,7 +220,7 @@ static void Bind_Relative_Inner_Loop(
         }
         else if (ANY_ARRAY(v)) {
             Bind_Relative_Inner_Loop(
-                binder, VAL_ARRAY_AT(v), paramlist, bind_types
+                binder, Cell_Array_At(v), paramlist, bind_types
             );
 
             // !!! Technically speaking it is not necessary for an array to
@@ -246,9 +246,9 @@ static void Bind_Relative_Inner_Loop(
 // these relative words...so that they refer to the archetypal function
 // to which they should be relative.
 //
-REBARR *Copy_And_Bind_Relative_Deep_Managed(
+Array* Copy_And_Bind_Relative_Deep_Managed(
     const Value* body,
-    REBARR *paramlist, // body of function is not actually ready yet
+    Array* paramlist, // body of function is not actually ready yet
     REBU64 bind_types
 ) {
     // !!! Currently this is done in two phases, because the historical code
@@ -256,8 +256,8 @@ REBARR *Copy_And_Bind_Relative_Deep_Managed(
     // Both phases are folded into this routine to make it easier to make
     // a one-pass version when time permits.
     //
-    REBARR *copy = Copy_Array_Core_Managed(
-        VAL_ARRAY(body),
+    Array* copy = Copy_Array_Core_Managed(
+        Cell_Array(body),
         VAL_INDEX(body), // at
         VAL_SPECIFIER(body),
         VAL_LEN_AT(body), // tail
@@ -272,7 +272,7 @@ REBARR *Copy_And_Bind_Relative_Deep_Managed(
     // Setup binding table from the argument word list
     //
     REBLEN index = 1;
-    Cell* param = ARR_AT(paramlist, 1); // [0] is ACTION! value
+    Cell* param = Array_At(paramlist, 1); // [0] is ACTION! value
     for (; NOT_END(param); param++, index++)
         Add_Binder_Index(&binder, Key_Canon(param), index);
 
@@ -280,7 +280,7 @@ REBARR *Copy_And_Bind_Relative_Deep_Managed(
 
     // Reset binding table
     //
-    param = ARR_AT(paramlist, 1); // [0] is ACTION! value
+    param = Array_At(paramlist, 1); // [0] is ACTION! value
     for (; NOT_END(param); param++)
         Remove_Binder_Index(&binder, Key_Canon(param));
 
@@ -304,7 +304,7 @@ void Rebind_Values_Deep(
     Cell* v = head;
     for (; NOT_END(v); ++v) {
         if (ANY_ARRAY(v)) {
-            Rebind_Values_Deep(src, dst, VAL_ARRAY_AT(v), opt_binder);
+            Rebind_Values_Deep(src, dst, Cell_Array_At(v), opt_binder);
         }
         else if (ANY_WORD(v) and VAL_BINDING(v) == NOD(src)) {
             INIT_BINDING(v, dst);
@@ -412,7 +412,7 @@ void Virtual_Bind_Deep_To_New_Context(
     REBSPC *specifier;
     bool rebinding;
     if (IS_BLOCK(spec)) {
-        item = VAL_ARRAY_AT(spec);
+        item = Cell_Array_At(spec);
         specifier = VAL_SPECIFIER(spec);
 
         rebinding = false;
@@ -430,7 +430,7 @@ void Virtual_Bind_Deep_To_New_Context(
             }
         }
 
-        item = VAL_ARRAY_AT(spec);
+        item = Cell_Array_At(spec);
     }
     else {
         item = spec;
@@ -452,10 +452,10 @@ void Virtual_Bind_Deep_To_New_Context(
         Init_Block(
             body_in_out,
             Copy_Array_Core_Managed(
-                VAL_ARRAY(body_in_out),
+                Cell_Array(body_in_out),
                 VAL_INDEX(body_in_out), // at
                 VAL_SPECIFIER(body_in_out),
-                ARR_LEN(VAL_ARRAY(body_in_out)), // tail
+                ARR_LEN(Cell_Array(body_in_out)), // tail
                 0, // extra
                 ARRAY_FLAG_FILE_LINE, // flags
                 TS_ARRAY // types to copy deeply
@@ -612,7 +612,7 @@ void Virtual_Bind_Deep_To_New_Context(
         // duplicates.
         //
         Bind_Values_Inner_Loop(
-            &binder, VAL_ARRAY_AT(body_in_out), c, TS_WORD, 0, BIND_DEEP
+            &binder, Cell_Array_At(body_in_out), c, TS_WORD, 0, BIND_DEEP
         );
     }
 

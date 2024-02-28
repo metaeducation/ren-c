@@ -59,7 +59,7 @@ REB_R MAKE_Library(Value* out, enum Reb_Kind kind, const Value* arg)
     if (fd == nullptr)
         fail (Error_Bad_Make(REB_LIBRARY, arg));
 
-    REBARR *singular = Alloc_Singular(NODE_FLAG_MANAGED);
+    Array* singular = Alloc_Singular(NODE_FLAG_MANAGED);
     RESET_CELL(ARR_SINGLE(singular), REB_LIBRARY);
     ARR_SINGLE(singular)->payload.library.singular = singular;
 

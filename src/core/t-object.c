@@ -140,7 +140,7 @@ static void Append_To_Context(REBCTX *context, Value* arg)
 
     // Process word/value argument block:
 
-    Cell* item = VAL_ARRAY_AT(arg);
+    Cell* item = Cell_Array_At(arg);
 
     // Can't actually fail() during a collect, so make sure any errors are
     // set and then jump to a Collect_End()
@@ -199,7 +199,7 @@ static void Append_To_Context(REBCTX *context, Value* arg)
 
     Cell* collect_key;
     for (
-        collect_key = ARR_AT(BUF_COLLECT, len);
+        collect_key = Array_At(BUF_COLLECT, len);
         NOT_END(collect_key);
         ++collect_key
     ){
@@ -309,8 +309,8 @@ REB_R MAKE_Context(Value* out, enum Reb_Kind kind, const Value* arg)
 
         if (
             VAL_LEN_AT(arg) != 2
-            || !IS_BLOCK(VAL_ARRAY_AT(arg)) // spec
-            || !IS_BLOCK(VAL_ARRAY_AT(arg) + 1) // body
+            || !IS_BLOCK(Cell_Array_At(arg)) // spec
+            || !IS_BLOCK(Cell_Array_At(arg) + 1) // body
         ) {
             fail (Error_Bad_Make(kind, arg));
         }
@@ -321,7 +321,7 @@ REB_R MAKE_Context(Value* out, enum Reb_Kind kind, const Value* arg)
             out,
             Construct_Context_Managed(
                 REB_OBJECT,
-                VAL_ARRAY_AT(VAL_ARRAY_AT(arg) + 1),
+                Cell_Array_At(Cell_Array_At(arg) + 1),
                 VAL_SPECIFIER(arg),
                 nullptr  // no parent
             )
@@ -527,7 +527,7 @@ REBCTX *Copy_Context_Core_Managed(REBCTX *original, REBU64 types)
 {
     assert(NOT_SER_INFO(original, SERIES_INFO_INACCESSIBLE));
 
-    REBARR *varlist = Make_Arr_For_Copy(
+    Array* varlist = Make_Arr_For_Copy(
         CTX_LEN(original) + 1,
         SERIES_MASK_CONTEXT | NODE_FLAG_MANAGED,
         nullptr // original_array, N/A because LINK()/MISC() used otherwise
@@ -981,7 +981,7 @@ DECLARE_NATIVE(construct)
         Move_Value(D_OUT, spec); // !!! very "shallow" clone of the event
         Set_Event_Vars(
             D_OUT,
-            VAL_ARRAY_AT(body),
+            Cell_Array_At(body),
             VAL_SPECIFIER(body)
         );
         return D_OUT;
@@ -1012,7 +1012,7 @@ DECLARE_NATIVE(construct)
             D_OUT,
             Construct_Context_Managed(
                 REB_OBJECT,
-                VAL_ARRAY_AT(body),
+                Cell_Array_At(body),
                 VAL_SPECIFIER(body),
                 parent
             )
@@ -1040,7 +1040,7 @@ DECLARE_NATIVE(construct)
             // scan for toplevel set-words
             IS_BLANK(body)
                 ? cast(const Cell*, END_NODE) // gcc/g++ 2.95 needs (bug)
-                : VAL_ARRAY_AT(body),
+                : Cell_Array_At(body),
             parent
         );
         Init_Object(D_OUT, context);
@@ -1050,7 +1050,7 @@ DECLARE_NATIVE(construct)
             // !!! This binds the actual body data, not a copy of it.  See
             // Virtual_Bind_Deep_To_New_Context() for future directions.
             //
-            Bind_Values_Deep(VAL_ARRAY_AT(body), context);
+            Bind_Values_Deep(Cell_Array_At(body), context);
 
             DECLARE_VALUE (temp);
             if (Do_Any_Array_At_Throws(temp, body)) {

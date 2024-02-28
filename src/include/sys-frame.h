@@ -93,7 +93,7 @@ INLINE bool FRM_IS_VALIST(REBFRM *f) {
     return f->source->vaptr != nullptr;
 }
 
-INLINE REBARR *FRM_ARRAY(REBFRM *f) {
+INLINE Array* FRM_ARRAY(REBFRM *f) {
     assert(IS_END(f->value) or not FRM_IS_VALIST(f));
     return f->source->array;
 }
@@ -519,7 +519,7 @@ INLINE void Push_Action(
 
     // Current invariant for all arrays (including fixed size), last cell in
     // the allocation is an end.
-    Cell* ultimate = ARR_AT(f->varlist, s->content.dynamic.rest - 1);
+    Cell* ultimate = Array_At(f->varlist, s->content.dynamic.rest - 1);
     ultimate->header = Endlike_Header(0); // unreadable
     TRACK_CELL_IF_DEBUG(ultimate, __FILE__, __LINE__);
 

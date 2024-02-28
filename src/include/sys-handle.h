@@ -39,7 +39,7 @@
 // in the ->misc field of the singular array.
 //
 // As an added benefit of the Managed form, the code and data pointers in the
-// value itself are not used; instead preferring the data held in the REBARR.
+// value itself are not used; instead preferring the data held in the Array.
 // This allows one instance of a managed handle to have its code or data
 // pointer changed and be reflected in all instances.  The simple form of
 // handle however is such that each cell copied instance is independent,
@@ -93,7 +93,7 @@ INLINE CFUNC *VAL_HANDLE_CFUNC(const Cell* v) {
 
 INLINE CLEANUP_CFUNC *VAL_HANDLE_CLEANER(const Cell* v) {
     assert(IS_HANDLE(v));
-    REBARR *singular = v->extra.singular;
+    Array* singular = v->extra.singular;
     return singular != nullptr ? MISC(singular).cleaner : nullptr;
 }
 
@@ -152,7 +152,7 @@ INLINE void Init_Handle_Managed_Common(
     uintptr_t length,
     CLEANUP_CFUNC *cleaner
 ){
-    REBARR *singular = Alloc_Singular(NODE_FLAG_MANAGED);
+    Array* singular = Alloc_Singular(NODE_FLAG_MANAGED);
     MISC(singular).cleaner = cleaner;
 
     Cell* v = ARR_HEAD(singular);

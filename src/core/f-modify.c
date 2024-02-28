@@ -38,7 +38,7 @@
 //
 REBLEN Modify_Array(
     SymId op,           // INSERT, APPEND, CHANGE
-    REBARR *dst_arr,        // target
+    Array* dst_arr,        // target
     REBLEN dst_idx,         // position
     const Value* src_val,  // source
     REBLEN flags,           // AM_SPLICE, AM_PART
@@ -94,10 +94,10 @@ REBLEN Modify_Array(
             ilen = VAL_LEN_AT(src_val);
 
         if (not tail_newline) {
-            Cell* tail_cell = VAL_ARRAY_AT(src_val) + ilen;
+            Cell* tail_cell = Cell_Array_At(src_val) + ilen;
             if (IS_END(tail_cell)) {
                 tail_newline = GET_SER_FLAG(
-                    VAL_ARRAY(src_val),
+                    Cell_Array(src_val),
                     ARRAY_FLAG_TAIL_NEWLINE
                 );
             }
@@ -111,9 +111,9 @@ REBLEN Modify_Array(
         }
 
         // Are we modifying ourselves? If so, copy src_val block first:
-        if (dst_arr == VAL_ARRAY(src_val)) {
-            REBARR *copy = Copy_Array_At_Extra_Shallow(
-                VAL_ARRAY(src_val),
+        if (dst_arr == Cell_Array(src_val)) {
+            Array* copy = Copy_Array_At_Extra_Shallow(
+                Cell_Array(src_val),
                 VAL_INDEX(src_val),
                 VAL_SPECIFIER(src_val),
                 0, // extra
@@ -123,7 +123,7 @@ REBLEN Modify_Array(
             specifier = SPECIFIED; // copy already specified it
         }
         else {
-            src_rel = VAL_ARRAY_AT(src_val); // skips by VAL_INDEX values
+            src_rel = Cell_Array_At(src_val); // skips by VAL_INDEX values
             specifier = VAL_SPECIFIER(src_val);
         }
     }
@@ -199,7 +199,7 @@ REBLEN Modify_Array(
         if (dst_idx == ARR_LEN(dst_arr))
             SET_SER_FLAG(dst_arr, ARRAY_FLAG_TAIL_NEWLINE);
         else
-            SET_VAL_FLAG(ARR_AT(dst_arr, dst_idx), VALUE_FLAG_NEWLINE_BEFORE);
+            SET_VAL_FLAG(Array_At(dst_arr, dst_idx), VALUE_FLAG_NEWLINE_BEFORE);
     }
 
     if (flags & AM_LINE) {

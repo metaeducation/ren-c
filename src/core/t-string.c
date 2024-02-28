@@ -428,13 +428,13 @@ REB_R MAKE_String(Value* out, enum Reb_Kind kind, const Value* def) {
         if (VAL_ARRAY_LEN_AT(def) != 2)
             goto bad_make;
 
-        Cell* any_binstr = VAL_ARRAY_AT(def);
+        Cell* any_binstr = Cell_Array_At(def);
         if (!ANY_BINSTR(any_binstr))
             goto bad_make;
         if (IS_BINARY(any_binstr) != (kind == REB_BINARY))
             goto bad_make;
 
-        Cell* index = VAL_ARRAY_AT(def) + 1;
+        Cell* index = Cell_Array_At(def) + 1;
         if (!IS_INTEGER(index))
             goto bad_make;
 

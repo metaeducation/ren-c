@@ -95,7 +95,7 @@
 
 #define P_COLLECTION_VALUE  (f->rootvar + 4)
 #define P_COLLECTION \
-    (IS_BLANK(P_COLLECTION_VALUE) ? nullptr : VAL_ARRAY(P_COLLECTION_VALUE))
+    (IS_BLANK(P_COLLECTION_VALUE) ? nullptr : Cell_Array(P_COLLECTION_VALUE))
 
 #define P_OUT (f->out)
 
@@ -172,7 +172,7 @@ static bool Subparse_Throws(
     REBSPC *input_specifier,
     const Cell* rules,
     REBSPC *rules_specifier,
-    REBARR *opt_collection,
+    Array* opt_collection,
     REBFLGS flags
 ){
     assert(ANY_ARRAY(rules));
@@ -200,11 +200,11 @@ static bool Subparse_Throws(
     f->out = out;
 
     f->gotten = nullptr;
-    SET_FRAME_VALUE(f, VAL_ARRAY_AT(rules)); // not an END due to test above
+    SET_FRAME_VALUE(f, Cell_Array_At(rules)); // not an END due to test above
     f->specifier = Derive_Specifier(rules_specifier, rules);
 
     f->source->vaptr = nullptr;
-    f->source->array = VAL_ARRAY(rules);
+    f->source->array = Cell_Array(rules);
     f->source->index = VAL_INDEX(rules) + 1;
     f->source->pending = f->value + 1;
 
@@ -453,7 +453,7 @@ REB_R Process_Group_For_Parse(
     assert(IS_GROUP(group));
     REBSPC *derived = Derive_Specifier(P_RULE_SPECIFIER, group);
 
-    if (Do_At_Throws(cell, VAL_ARRAY(group), VAL_INDEX(group), derived))
+    if (Do_At_Throws(cell, Cell_Array(group), VAL_INDEX(group), derived))
         return R_THROWN;
 
     // !!! The input is not locked from modification by agents other than the
@@ -651,8 +651,8 @@ static REBIXO Parse_Array_One_Rule_Core(
 ) {
     assert(IS_END(P_OUT));
 
-    REBARR *array = ARR(P_INPUT);
-    Cell* item = ARR_AT(array, pos);
+    Array* array = ARR(P_INPUT);
+    Cell* item = Array_At(array, pos);
 
     if (Trace_Level) {
         Trace_Value("input", rule);
@@ -1266,7 +1266,7 @@ static REBIXO Do_Eval_Rule(REBFRM *f)
     // Note: Implicitly handling a block evaluative result as an array would
     // make it impossible to tell whether the evaluation produced [1] or 1.
     //
-    REBARR *holder;
+    Array* holder;
 
     REBIXO indexor;
     if (P_POS >= SER_LEN(P_INPUT)) {
@@ -1633,7 +1633,7 @@ DECLARE_NATIVE(subparse)
                     if (not IS_BLOCK(P_RULE))
                         fail (Error_Parse_Variable(f));
 
-                    REBARR *collection = Make_Arr_Core(
+                    Array* collection = Make_Arr_Core(
                         10,  // !!! how big?
                         NODE_FLAG_MANAGED
                     );
@@ -1766,7 +1766,7 @@ DECLARE_NATIVE(subparse)
                         P_POS = cast(REBLEN, ixo);
                         assert(P_POS >= pos_before);  // 0 or more matches
 
-                        REBARR *target;
+                        Array* target;
                         if (P_POS == pos_before and not only) {
                             target = nullptr;
                         }
@@ -1797,7 +1797,7 @@ DECLARE_NATIVE(subparse)
                             for (n = pos_before; n < P_POS; ++n)
                                 Derelativize(
                                     Alloc_Tail_Array(target),
-                                    ARR_AT(ARR(P_INPUT), n),
+                                    Array_At(ARR(P_INPUT), n),
                                     P_INPUT_SPECIFIER
                                 );
                         }
@@ -1860,7 +1860,7 @@ DECLARE_NATIVE(subparse)
                         DECLARE_VALUE (condition);
                         if (Do_At_Throws(
                             condition,
-                            VAL_ARRAY(P_RULE),
+                            Cell_Array(P_RULE),
                             VAL_INDEX(P_RULE),
                             P_RULE_SPECIFIER
                         )) {
@@ -2100,7 +2100,7 @@ DECLARE_NATIVE(subparse)
                     if (not subrule) // capture only on iteration #1
                         FETCH_NEXT_RULE_KEEP_LAST(&subrule, f);
 
-                    Cell* cmp = ARR_AT(ARR(P_INPUT), P_POS);
+                    Cell* cmp = Array_At(ARR(P_INPUT), P_POS);
 
                     if (IS_END(cmp))
                         i = END_FLAG;
@@ -2131,7 +2131,7 @@ DECLARE_NATIVE(subparse)
                     if (not IS_SER_ARRAY(P_INPUT))
                         fail (Error_Parse_Rule());
 
-                    Cell* into = ARR_AT(ARR(P_INPUT), P_POS);
+                    Cell* into = Array_At(ARR(P_INPUT), P_POS);
 
                     if (
                         IS_END(into)
@@ -2359,7 +2359,7 @@ DECLARE_NATIVE(subparse)
                                 Sink_Var_May_Fail(
                                     set_or_copy_word, P_RULE_SPECIFIER
                                 ),
-                                ARR_AT(ARR(P_INPUT), begin),
+                                Array_At(ARR(P_INPUT), begin),
                                 P_INPUT_SPECIFIER
                             );
                         else
@@ -2426,7 +2426,7 @@ DECLARE_NATIVE(subparse)
                         );
                         if (Do_At_Throws(
                             evaluated,
-                            VAL_ARRAY(rule),
+                            Cell_Array(rule),
                             VAL_INDEX(rule),
                             derived
                         )) {
@@ -2462,7 +2462,7 @@ DECLARE_NATIVE(subparse)
 
                         if (IS_LIT_WORD(rule))
                             CHANGE_VAL_TYPE_BITS( // keeps binding flags
-                                ARR_AT(ARR(P_INPUT), P_POS - 1),
+                                Array_At(ARR(P_INPUT), P_POS - 1),
                                 REB_WORD
                             );
                     }

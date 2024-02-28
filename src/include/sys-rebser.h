@@ -60,7 +60,7 @@
 //
 // * For the API of operations available on REBSER types, see %sys-series.h
 //
-// * REBARR is a series that contains Rebol values (REBVALs).  It has many
+// * Array is a series that contains Rebol Cells or Values.  It has many
 //   concerns specific to special treatment and handling, in interaction with
 //   the garbage collector as well as handling "relative vs specific" values.
 //
@@ -695,16 +695,16 @@ union Reb_Series_Link {
 
     // REBCTX types use this field of their varlist (which is the identity of
     // an ANY-CONTEXT!) to find their "keylist".  It is stored in the REBSER
-    // node of the varlist REBARR vs. in the cell of the ANY-CONTEXT! so
+    // node of the varlist Array vs. in the cell of the ANY-CONTEXT! so
     // that the keylist can be changed without needing to update all the
     // REBVALs for that object.
     //
-    // It may be a simple REBARR* -or- in the case of the varlist of a running
+    // It may be a simple Array* -or- in the case of the varlist of a running
     // FRAME! on the stack, it points to a REBFRM*.  If it's a FRAME! that
     // is not running on the stack, it will be the function paramlist of the
     // actual phase that function is for.  Since REBFRM* all start with a
     // leading cell, this means NODE_FLAG_CELL can be used on the node to
-    // discern the case where it can be cast to a REBFRM* vs. REBARR*.
+    // discern the case where it can be cast to a REBFRM* vs. Array*.
     //
     // (Note: FRAME!s used to use a field `misc.f` to track the associated
     // frame...but that prevented the ability to SET-META on a frame.  While
@@ -727,7 +727,7 @@ union Reb_Series_Link {
     // created which do not require expanding the object, their keylist will
     // be the same as the object they are derived from.
     //
-    REBARR *ancestor;
+    Array* ancestor;
 
     // An underlying function is one whose frame is compatible with a
     // derived function (e.g. the underlying function of a specialization or
@@ -747,7 +747,7 @@ union Reb_Series_Link {
     // if this were `REBCTX *exemplar;` then it would have to test it for null
     // explicitly to default f->special to f->param.
     //
-    REBARR *specialty;
+    Array* specialty;
 
     // The MAP! datatype uses this.
     //
@@ -758,7 +758,7 @@ union Reb_Series_Link {
     // only be reused by putting it in a place that future pushes can find
     // it.  This is used to link a varlist into the reusable list.
     //
-    REBARR *reuse;
+    Array* reuse;
 
     // For LIBRARY!, the file descriptor.  This is set to nullptr when the
     // library is not loaded.
@@ -962,7 +962,7 @@ struct Reb_Array {
         cast(REBSER*, (p))
 
     #define ARR(p) \
-        cast(REBARR*, (p))
+        cast(Array*, (p))
 
 #else
 
@@ -970,7 +970,7 @@ struct Reb_Array {
     inline REBSER *SER(T *p) {
         constexpr bool derived = std::is_same<T, REBSER>::value
             or std::is_same<T, Symbol>::value
-            or std::is_same<T, REBARR>::value
+            or std::is_same<T, Array>::value
             or std::is_same<T, REBCTX>::value
             or std::is_same<T, REBACT>::value;
 
@@ -979,7 +979,7 @@ struct Reb_Array {
 
         static_assert(
             derived or base,
-            "SER() works on void/REBNOD/REBSER/Symbol/REBARR/REBCTX/REBACT"
+            "SER() works on void/REBNOD/REBSER/Symbol/Array/REBCTX/REBACT"
         );
 
         if (base)
@@ -995,8 +995,8 @@ struct Reb_Array {
     }
 
     template <class T>
-    inline REBARR *ARR(T *p) {
-        constexpr bool derived = std::is_same<T, REBARR>::value;
+    inline Array* ARR(T *p) {
+        constexpr bool derived = std::is_same<T, Array>::value;
 
         constexpr bool base = std::is_same<T, void>::value
             or std::is_same<T, REBNOD>::value
@@ -1004,7 +1004,7 @@ struct Reb_Array {
 
         static_assert(
             derived or base,
-            "ARR works on void/REBNOD/REBSER/REBARR"
+            "ARR works on void/REBNOD/REBSER/Array"
         );
 
         if (base) {
@@ -1020,7 +1020,7 @@ struct Reb_Array {
            );
         }
 
-        return reinterpret_cast<REBARR*>(p);
+        return reinterpret_cast<Array*>(p);
     }
 
 #endif
@@ -1043,7 +1043,7 @@ struct Reb_Array {
     (did (SER(s)->header.bits & (f)))
 
 INLINE bool ALL_SER_FLAGS(
-    void *s, // to allow REBARR*, REBCTX*, REBACT*... SER(s) checks
+    void *s, // to allow Array*, REBCTX*, REBACT*... SER(s) checks
     REBFLGS f
 ){
     return (SER(s)->header.bits & f) == f; // repeats f, so not a macro
@@ -1076,7 +1076,7 @@ INLINE bool ALL_SER_FLAGS(
     (did (SER(s)->info.bits & (f)))
 
 INLINE bool ALL_SER_INFOS(
-    void *s, // to allow REBARR*, REBCTX*, REBACT*... SER(s) checks
+    void *s, // to allow Array*, REBCTX*, REBACT*... SER(s) checks
     REBFLGS f
 ){
     return (SER(s)->info.bits & f) == f; // repeats f, so not a macro

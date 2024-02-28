@@ -77,17 +77,17 @@ REB_R MAKE_Action(Value* out, enum Reb_Kind kind, const Value* arg)
     if (
         not IS_BLOCK(arg)
         or VAL_LEN_AT(arg) != 2
-        or not IS_BLOCK(VAL_ARRAY_AT(arg))
-        or not IS_BLOCK(VAL_ARRAY_AT(arg) + 1)
+        or not IS_BLOCK(Cell_Array_At(arg))
+        or not IS_BLOCK(Cell_Array_At(arg) + 1)
     ){
         fail (Error_Bad_Make(REB_ACTION, arg));
     }
 
     DECLARE_VALUE (spec);
-    Derelativize(spec, VAL_ARRAY_AT(arg), VAL_SPECIFIER(arg));
+    Derelativize(spec, Cell_Array_At(arg), VAL_SPECIFIER(arg));
 
     DECLARE_VALUE (body);
-    Derelativize(body, VAL_ARRAY_AT(arg) + 1, VAL_SPECIFIER(arg));
+    Derelativize(body, Cell_Array_At(arg) + 1, VAL_SPECIFIER(arg));
 
     // Spec-constructed functions do *not* have definitional returns
     // added automatically.  They are part of the generators.  So the
@@ -139,7 +139,7 @@ void MF_Action(REB_MOLD *mo, const Cell* v, bool form)
     // functions temporarily uses the word list as a substitute (which
     // drops types)
     //
-    REBARR *words_list = List_Func_Words(v, true); // show pure locals
+    Array* words_list = List_Func_Words(v, true); // show pure locals
     Mold_Array_At(mo, words_list, 0, "[]");
     Free_Unmanaged_Array(words_list);
 
@@ -186,7 +186,7 @@ REBTYPE(Action)
         // code, yet has a distinct identity.  This means it would not be
         // HIJACK'd if the function that it was copied from was.
 
-        REBARR *proxy_paramlist = Copy_Array_Deep_Flags_Managed(
+        Array* proxy_paramlist = Copy_Array_Deep_Flags_Managed(
             ACT_PARAMLIST(act),
             SPECIFIED, // !!! Note: not actually "deep", just typesets
             SERIES_MASK_ACTION
@@ -240,7 +240,7 @@ REBTYPE(Action)
             return D_OUT;
 
         case SYM_TYPES: {
-            REBARR *copy = Make_Arr(VAL_ACT_NUM_PARAMS(value));
+            Array* copy = Make_Arr(VAL_ACT_NUM_PARAMS(value));
 
             // The typesets have a symbol in them for the parameters, and
             // ordinary typesets aren't supposed to have it--that's a
@@ -265,14 +265,14 @@ REBTYPE(Action)
         // returns for FILE OF and LINE OF.
         //
         case SYM_FILE: {
-            REBARR *details = VAL_ACT_DETAILS(value);
+            Array* details = VAL_ACT_DETAILS(value);
             if (ARR_LEN(details) < 1)
                 return nullptr;
 
             if (not ANY_ARRAY(ARR_HEAD(details)))
                 return nullptr;
 
-            REBARR *a = VAL_ARRAY(ARR_HEAD(details));
+            Array* a = Cell_Array(ARR_HEAD(details));
             if (NOT_SER_FLAG(a, ARRAY_FLAG_FILE_LINE))
                 return nullptr;
 
@@ -284,14 +284,14 @@ REBTYPE(Action)
             return D_OUT; }
 
         case SYM_LINE: {
-            REBARR *details = VAL_ACT_DETAILS(value);
+            Array* details = VAL_ACT_DETAILS(value);
             if (ARR_LEN(details) < 1)
                 return nullptr;
 
             if (not ANY_ARRAY(ARR_HEAD(details)))
                 return nullptr;
 
-            REBARR *a = VAL_ARRAY(ARR_HEAD(details));
+            Array* a = Cell_Array(ARR_HEAD(details));
             if (NOT_SER_FLAG(a, ARRAY_FLAG_FILE_LINE))
                 return nullptr;
 

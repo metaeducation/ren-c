@@ -232,12 +232,12 @@ REB_R Measured_Dispatcher_Hook(REBFRM * const f)
             //
             // There's no entry yet for this ACTION!, initialize one.
 
-            REBARR *a = Make_Arr(IDX_STATS_MAX);
+            Array* a = Make_Arr(IDX_STATS_MAX);
             if (f->opt_label != nullptr)
-                Init_Word(ARR_AT(a, IDX_STATS_SYMBOL), f->opt_label);
+                Init_Word(Array_At(a, IDX_STATS_SYMBOL), f->opt_label);
             else
-                Init_Blank(ARR_AT(a, IDX_STATS_SYMBOL));
-            Init_Integer(ARR_AT(a, IDX_STATS_NUMCALLS), 1);
+                Init_Blank(Array_At(a, IDX_STATS_SYMBOL));
+            Init_Integer(Array_At(a, IDX_STATS_NUMCALLS), 1);
             TERM_ARRAY_LEN(a, IDX_STATS_MAX);
 
             DECLARE_VALUE (stats);
@@ -254,28 +254,28 @@ REB_R Measured_Dispatcher_Hook(REBFRM * const f)
             assert(n != 0); // should have inserted
         }
         else {
-            Value* stats = KNOWN(ARR_AT(MAP_PAIRLIST(m), ((n - 1) * 2) + 1));
+            Value* stats = KNOWN(Array_At(MAP_PAIRLIST(m), ((n - 1) * 2) + 1));
 
-            REBARR *a = IS_BLOCK(stats) ? VAL_ARRAY(stats) : nullptr;
+            Array* a = IS_BLOCK(stats) ? Cell_Array(stats) : nullptr;
 
             if (
                 a != nullptr
                 && ARR_LEN(a) == IDX_STATS_MAX
                 && (
-                    IS_WORD(ARR_AT(a, IDX_STATS_SYMBOL))
-                    || IS_BLANK(ARR_AT(a, IDX_STATS_SYMBOL))
+                    IS_WORD(Array_At(a, IDX_STATS_SYMBOL))
+                    || IS_BLANK(Array_At(a, IDX_STATS_SYMBOL))
                 )
-                && IS_INTEGER(ARR_AT(a, IDX_STATS_NUMCALLS))
+                && IS_INTEGER(Array_At(a, IDX_STATS_NUMCALLS))
             ){
                 if (
-                    IS_BLANK(ARR_AT(a, IDX_STATS_SYMBOL))
+                    IS_BLANK(Array_At(a, IDX_STATS_SYMBOL))
                     && f->opt_label != nullptr
                 ){
-                    Init_Word(ARR_AT(a, IDX_STATS_SYMBOL), f->opt_label);
+                    Init_Word(Array_At(a, IDX_STATS_SYMBOL), f->opt_label);
                 }
                 Init_Integer(
-                    ARR_AT(a, IDX_STATS_NUMCALLS),
-                    VAL_INT64(ARR_AT(a, IDX_STATS_NUMCALLS)) + 1
+                    Array_At(a, IDX_STATS_NUMCALLS),
+                    VAL_INT64(Array_At(a, IDX_STATS_NUMCALLS)) + 1
                 );
             }
             else if (not IS_ERROR(stats)) {

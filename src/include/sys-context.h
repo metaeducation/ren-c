@@ -88,7 +88,7 @@ INLINE Value* CTX_ARCHETYPE(REBCTX *c) {
 // CTX_KEYLIST is called often, and it's worth it to make it as fast as
 // possible--even in an unoptimized build.
 //
-INLINE REBARR *CTX_KEYLIST(REBCTX *c) {
+INLINE Array* CTX_KEYLIST(REBCTX *c) {
     if (not (LINK(c).keysource->header.bits & NODE_FLAG_CELL))
         return ARR(LINK(c).keysource); // not a REBFRM, so use keylist
 
@@ -105,12 +105,12 @@ INLINE REBARR *CTX_KEYLIST(REBCTX *c) {
     return ACT_PARAMLIST(archetype->payload.any_context.phase);
 }
 
-INLINE void INIT_CTX_KEYLIST_SHARED(REBCTX *c, REBARR *keylist) {
+INLINE void INIT_CTX_KEYLIST_SHARED(REBCTX *c, Array* keylist) {
     SET_SER_INFO(keylist, SERIES_INFO_SHARED_KEYLIST);
     LINK(c).keysource = NOD(keylist);
 }
 
-INLINE void INIT_CTX_KEYLIST_UNIQUE(REBCTX *c, REBARR *keylist) {
+INLINE void INIT_CTX_KEYLIST_UNIQUE(REBCTX *c, Array* keylist) {
     assert(NOT_SER_INFO(keylist, SERIES_INFO_SHARED_KEYLIST));
     LINK(c).keysource = NOD(keylist);
 }

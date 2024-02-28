@@ -1001,7 +1001,7 @@ acquisition_loop:
             }
 
             if (Is_Api_Value(splice)) { // moved to DS_TOP, can release *now*
-                REBARR *a = Singular_From_Cell(splice);
+                Array* a = Singular_From_Cell(splice);
                 if (GET_SER_INFO(a, SERIES_INFO_API_RELEASE))
                     rebRelease(m_cast(Value*, splice)); // !!! m_cast
             }
@@ -1012,7 +1012,7 @@ acquisition_loop:
             //
             // An "instruction", currently just rebEval() and rebUneval().
 
-            REBARR *instruction = cast(REBARR*, c_cast(void*, p));
+            Array* instruction = cast(Array*, c_cast(void*, p));
             Value* single = KNOWN(ARR_SINGLE(instruction));
 
             if (GET_VAL_FLAG(single, VALUE_FLAG_EVAL_FLIP)) { // rebEval()
@@ -1031,7 +1031,7 @@ acquisition_loop:
                     ) or (
                         IS_GROUP(single)
                         and (ANY_SER_INFOS(
-                            VAL_ARRAY(single),
+                            Cell_Array(single),
                             SERIES_INFO_HOLD | SERIES_INFO_FROZEN
                         ))
                     )
@@ -1889,8 +1889,8 @@ static REBINT Scan_Head(SCAN_STATE *ss)
 }
 
 
-static REBARR *Scan_Full_Array(SCAN_STATE *ss, Byte mode_char);
-static REBARR *Scan_Child_Array(SCAN_STATE *ss, Byte mode_char);
+static Array* Scan_Full_Array(SCAN_STATE *ss, Byte mode_char);
+static Array* Scan_Child_Array(SCAN_STATE *ss, Byte mode_char);
 
 //
 //  Scan_To_Stack: C
@@ -2032,7 +2032,7 @@ Value* Scan_To_Stack(SCAN_STATE *ss) {
 
         case TOKEN_BLOCK_BEGIN:
         case TOKEN_GROUP_BEGIN: {
-            REBARR *array = Scan_Child_Array(
+            Array* array = Scan_Child_Array(
                 ss, (ss->token == TOKEN_BLOCK_BEGIN) ? ']' : ')'
             );
 
@@ -2225,7 +2225,7 @@ Value* Scan_To_Stack(SCAN_STATE *ss) {
             break;
 
         case TOKEN_CONSTRUCT: {
-            REBARR *array = Scan_Full_Array(ss, ']');
+            Array* array = Scan_Full_Array(ss, ']');
 
             // !!! Should the scanner be doing binding at all, and if so why
             // just Lib_Context?  Not binding would break functions entirely,
@@ -2266,7 +2266,7 @@ Value* Scan_To_Stack(SCAN_STATE *ss) {
                 PUSH_GC_GUARD(cell);
 
                 PUSH_GC_GUARD(array);
-                const Value* r = hook(cell, kind, KNOWN(ARR_AT(array, 1)));
+                const Value* r = hook(cell, kind, KNOWN(Array_At(array, 1)));
                 if (r == R_THROWN) { // !!! good argument for not using MAKE
                     assert(false);
                     fail ("MAKE during construction syntax threw--illegal");
@@ -2392,7 +2392,7 @@ Value* Scan_To_Stack(SCAN_STATE *ss) {
 
             ++ss->begin;
 
-            REBARR *arr;
+            Array* arr;
             if (
                 *ss->begin == '\0' // `foo/`
                 or IS_LEX_ANY_SPACE(*ss->begin) // `foo/ bar`
@@ -2560,7 +2560,7 @@ void Scan_To_Stack_Relaxed(SCAN_STATE *ss) {
 // reflection, allowing for better introspection and error messages.  (This
 // is similar to the benefits of Reb_Frame.)
 //
-static REBARR *Scan_Child_Array(SCAN_STATE *ss, Byte mode_char)
+static Array* Scan_Child_Array(SCAN_STATE *ss, Byte mode_char)
 {
     SCAN_STATE child = *ss;
 
@@ -2589,7 +2589,7 @@ static REBARR *Scan_Child_Array(SCAN_STATE *ss, Byte mode_char)
     else
         Scan_To_Stack(&child);
 
-    REBARR *a = Pop_Stack_Values_Core(
+    Array* a = Pop_Stack_Values_Core(
         dsp_orig,
         NODE_FLAG_MANAGED
             | (child.newline_pending ? ARRAY_FLAG_TAIL_NEWLINE : 0)
@@ -2623,12 +2623,12 @@ static REBARR *Scan_Child_Array(SCAN_STATE *ss, Byte mode_char)
 // Simple variation of scan_block to avoid problem with
 // construct of aggregate values.
 //
-static REBARR *Scan_Full_Array(SCAN_STATE *ss, Byte mode_char)
+static Array* Scan_Full_Array(SCAN_STATE *ss, Byte mode_char)
 {
     bool saved_only = did (ss->opts & SCAN_FLAG_ONLY);
     ss->opts &= ~SCAN_FLAG_ONLY;
 
-    REBARR *array = Scan_Child_Array(ss, mode_char);
+    Array* array = Scan_Child_Array(ss, mode_char);
 
     if (saved_only)
         ss->opts |= SCAN_FLAG_ONLY;
@@ -2649,7 +2649,7 @@ static REBARR *Scan_Full_Array(SCAN_STATE *ss, Byte mode_char)
 //     Value* item3 = ...;
 //     Symbol* filename = ...; // where to say code came from
 //
-//     REBARR *result = Scan_Va_Managed(filename,
+//     Array* result = Scan_Va_Managed(filename,
 //         "if not", item1, "[\n",
 //             item2, "| print {Close brace separate from content}\n",
 //         "] else [\n",
@@ -2662,7 +2662,7 @@ static REBARR *Scan_Full_Array(SCAN_STATE *ss, Byte mode_char)
 // ("{abc", "def", "ghi}") and get the STRING! {abcdefghi}.  On that note,
 // ("a", "/", "b") produces `a / b` and not the PATH! `a/b`.
 //
-REBARR *Scan_Va_Managed(
+Array* Scan_Va_Managed(
     Symbol* filename, // NOTE: va_start must get last parameter before ...
     ...
 ){
@@ -2684,7 +2684,7 @@ REBARR *Scan_Va_Managed(
     // (See also Pop_Stack_Values_Keep_Eval_Flip(), which we don't want to use
     // since we're setting the file and line information from scan state.)
     //
-    REBARR *a = Pop_Stack_Values_Core(
+    Array* a = Pop_Stack_Values_Core(
         dsp_orig,
         ARRAY_FLAG_NULLEDS_LEGAL | NODE_FLAG_MANAGED
             | (ss.newline_pending ? ARRAY_FLAG_TAIL_NEWLINE : 0)
@@ -2715,7 +2715,7 @@ REBARR *Scan_Va_Managed(
 //
 // Scan source code. Scan state initialized. No header required.
 //
-REBARR *Scan_UTF8_Managed(Symbol* filename, const Byte *utf8, REBLEN size)
+Array* Scan_UTF8_Managed(Symbol* filename, const Byte *utf8, REBLEN size)
 {
     SCAN_STATE ss;
     const REBLIN start_line = 1;
@@ -2724,7 +2724,7 @@ REBARR *Scan_UTF8_Managed(Symbol* filename, const Byte *utf8, REBLEN size)
     REBDSP dsp_orig = DSP;
     Scan_To_Stack(&ss);
 
-    REBARR *a = Pop_Stack_Values_Core(
+    Array* a = Pop_Stack_Values_Core(
         dsp_orig,
         NODE_FLAG_MANAGED
             | (ss.newline_pending ? ARRAY_FLAG_TAIL_NEWLINE : 0)
@@ -2870,7 +2870,7 @@ DECLARE_NATIVE(transcode)
     else
         VAL_INDEX(DS_TOP) = VAL_LEN_HEAD(ARG(source)); // ss.end is trash
 
-    REBARR *a = Pop_Stack_Values_Core(
+    Array* a = Pop_Stack_Values_Core(
         dsp_orig,
         NODE_FLAG_MANAGED
             | (ss.newline_pending ? ARRAY_FLAG_TAIL_NEWLINE : 0)

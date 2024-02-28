@@ -187,7 +187,7 @@ REB_R MAKE_Event(Value* out, enum Reb_Kind kind, const Value* arg) {
     RESET_CELL(out, REB_EVENT);
     Set_Event_Vars(
         out,
-        VAL_ARRAY_AT(arg),
+        Cell_Array_At(arg),
         VAL_SPECIFIER(arg)
     );
     return out;

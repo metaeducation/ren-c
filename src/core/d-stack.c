@@ -45,20 +45,20 @@
 // ellipses to show they have been cut off.  It does not change the arrays
 // in question, but replaces them with copies.
 //
-void Collapsify_Array(REBARR *array, REBSPC *specifier, REBLEN limit)
+void Collapsify_Array(Array* array, REBSPC *specifier, REBLEN limit)
 {
     Cell* item = ARR_HEAD(array);
     for (; NOT_END(item); ++item) {
         if (ANY_ARRAY(item) and VAL_LEN_AT(item) > limit) {
             REBSPC *derived = Derive_Specifier(specifier, item);
-            REBARR *copy = Copy_Array_At_Max_Shallow(
-                VAL_ARRAY(item),
+            Array* copy = Copy_Array_At_Max_Shallow(
+                Cell_Array(item),
                 VAL_INDEX(item),
                 derived,
                 limit + 1
             );
 
-            Init_Word(ARR_AT(copy, limit), Canon(SYM_ELLIPSIS));
+            Init_Word(Array_At(copy, limit), Canon(SYM_ELLIPSIS));
 
             Collapsify_Array(
                 copy,
@@ -134,7 +134,7 @@ Value* Init_Near_For_Frame(Cell* out, REBFRM *f)
         start = 0;
 
     REBLEN count = 0;
-    Cell* item = ARR_AT(FRM_ARRAY(f), start);
+    Cell* item = Array_At(FRM_ARRAY(f), start);
     for (; NOT_END(item) and count < 6; ++item, ++count) {
         DS_PUSH_TRASH;
         if (IS_NULLED(item)) {
@@ -183,7 +183,7 @@ Value* Init_Near_For_Frame(Cell* out, REBFRM *f)
     }
     */
 
-    REBARR *near = Pop_Stack_Values(dsp_start);
+    Array* near = Pop_Stack_Values(dsp_start);
 
     // Simplify overly-deep blocks embedded in the where so they show (...)
     // instead of printing out fully.

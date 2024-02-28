@@ -466,7 +466,7 @@ RebolValue* RL_rebArg(const void *p, va_list *vaptr)
 //
 // All Value* are spliced in inert by default, as if they were an evaluative
 // product already.  Use rebEval() to "retrigger" them (which wraps them in
-// a singular REBARR*, another type of detectable pointer.)
+// a singular Array*, another type of detectable pointer.)
 //
 RebolValue* RL_rebValue(const void *p, va_list *vaptr)
 {
@@ -573,7 +573,7 @@ const void *RL_rebEval(const RebolValue* v)
     if (IS_NULLED(v))
         fail ("Cannot pass NULL to rebEval()");
 
-    REBARR *instruction = Alloc_Instruction();
+    Array* instruction = Alloc_Instruction();
     Cell* single = ARR_SINGLE(instruction);
     Move_Value(single, v);
 
@@ -607,7 +607,7 @@ const void *RL_rebEval(const RebolValue* v)
 //
 const void *RL_rebUneval(const RebolValue* v)
 {
-    REBARR *instruction = Alloc_Instruction();
+    Array* instruction = Alloc_Instruction();
     Cell* single = ARR_SINGLE(instruction);
     if (not v) {
         //
@@ -621,7 +621,7 @@ const void *RL_rebUneval(const RebolValue* v)
         Move_Value(single, NAT_VALUE(null));
     }
     else {
-        REBARR *a = Make_Arr(2);
+        Array* a = Make_Arr(2);
         SET_SER_INFO(a, SERIES_INFO_HOLD);
         Move_Value(Alloc_Tail_Array(a), NAT_VALUE(quote));
         Move_Value(Alloc_Tail_Array(a), v);
@@ -649,7 +649,7 @@ const void *RL_rebR(RebolValue* v)
     if (not Is_Api_Value(v))
         fail ("Cannot apply rebR() to non-API value");
 
-    REBARR *a = Singular_From_Cell(v);
+    Array* a = Singular_From_Cell(v);
     if (GET_SER_INFO(a, SERIES_INFO_API_RELEASE))
         fail ("Cannot apply rebR() more than once to the same API value");
 
@@ -845,7 +845,7 @@ RebolValue* RL_rebRescue(
     //
     if (error_ctx) {
         assert(f->varlist); // action must be running
-        REBARR *stub = f->varlist; // will be stubbed, with info bits reset
+        Array* stub = f->varlist; // will be stubbed, with info bits reset
         Drop_Action(f);
         SET_SER_INFO(stub, FRAME_INFO_FAILED); // signal API leaks ok
         Abort_Frame(f);
@@ -1373,7 +1373,7 @@ RebolValue* RL_rebManage(RebolValue* v)
 {
     assert(Is_Api_Value(v));
 
-    REBARR *a = Singular_From_Cell(v);
+    Array* a = Singular_From_Cell(v);
     assert(GET_SER_FLAG(a, NODE_FLAG_ROOT));
 
     if (IS_ARRAY_MANAGED(a))
@@ -1401,7 +1401,7 @@ void RL_rebUnmanage(void *p)
     Value* v = cast(Value*, nod);
     assert(Is_Api_Value(v));
 
-    REBARR *a = Singular_From_Cell(v);
+    Array* a = Singular_From_Cell(v);
     assert(GET_SER_FLAG(a, NODE_FLAG_ROOT));
 
     if (not IS_ARRAY_MANAGED(a))
@@ -1558,7 +1558,7 @@ void RL_rebPromise_callback(intptr_t promise_id)
     UNUSED(promise_id);
     fail ("rebPromise() is only available in JavaScript builds");
   #else
-    REBARR *arr = cast(REBARR*, cast(void*, promise_id));
+    Array* arr = cast(Array*, cast(void*, promise_id));
 
     // !!! Should probably do a Push_Trap in order to make sure the REJECT can
     // be called.

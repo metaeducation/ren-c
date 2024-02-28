@@ -180,13 +180,13 @@ DECLARE_NATIVE(new_line)
 
     bool mark = VAL_LOGIC(ARG(mark));
     Value* pos = ARG(position);
-    REBARR *a = VAL_ARRAY(pos);
+    Array* a = Cell_Array(pos);
 
     FAIL_IF_READ_ONLY_ARRAY(a);
 
     Move_Value(D_OUT, pos); // always returns the input position
 
-    Cell* item = VAL_ARRAY_AT(pos);
+    Cell* item = Cell_Array_At(pos);
 
     if (IS_END(item)) { // no value at tail to mark; use bit in array
         if (mark)
@@ -239,7 +239,7 @@ DECLARE_NATIVE(new_line_q)
 
     Value* pos = ARG(position);
 
-    REBARR *arr;
+    Array* arr;
     const Cell* item;
 
     if (IS_VARARGS(pos)) {
@@ -264,16 +264,16 @@ DECLARE_NATIVE(new_line_q)
             item = f->value;
         }
         else if (Is_Block_Style_Varargs(&shared, pos)) {
-            arr = VAL_ARRAY(shared);
-            item = VAL_ARRAY_AT(shared);
+            arr = Cell_Array(shared);
+            item = Cell_Array_At(shared);
         }
         else
             panic ("Bad VARARGS!");
     }
     else {
         assert(IS_GROUP(pos) or IS_BLOCK(pos));
-        arr = VAL_ARRAY(pos);
-        item = VAL_ARRAY_AT(pos);
+        arr = Cell_Array(pos);
+        item = Cell_Array_At(pos);
     }
 
     if (NOT_END(item))
@@ -449,7 +449,7 @@ DECLARE_NATIVE(wait)
     INCLUDE_PARAMS_OF_WAIT;
 
     REBLEN timeout = 0; // in milliseconds
-    REBARR *ports = nullptr;
+    Array* ports = nullptr;
     REBINT n = 0;
 
 

@@ -104,7 +104,7 @@ void Append_Series(REBSER *s, const void *data, REBLEN len)
 // the number of units and does not include the terminator
 // (which will be added).
 //
-void Append_Values_Len(REBARR *a, const Value* head, REBLEN len)
+void Append_Values_Len(Array* a, const Value* head, REBLEN len)
 {
     REBLEN old_len = ARR_LEN(a);
 
@@ -114,7 +114,7 @@ void Append_Values_Len(REBARR *a, const Value* head, REBLEN len)
 
     // `char*` casts needed: https://stackoverflow.com/q/57721104
     memcpy(
-        cast(char*, ARR_AT(a, old_len)),
+        cast(char*, Array_At(a, old_len)),
         cast(const char*, head),
         sizeof(Cell) * len
     );
@@ -321,7 +321,7 @@ void Reset_Sequence(REBSER *s)
 // Reset series to empty. Reset bias, tail, and termination.
 // The tail is reset to zero.
 //
-void Reset_Array(REBARR *a)
+void Reset_Array(Array* a)
 {
     if (IS_SER_DYNAMIC(a))
         Unbias_Series(SER(a), false);

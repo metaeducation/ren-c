@@ -451,7 +451,7 @@ Byte *Form_RGB_Utf8(Byte *utf8, const Byte *dp)
 // This is an internal routine used for debugging, which is something like
 // `printf` (it understands %d, %s, %c) but stripped down in features.
 // It also knows how to show Value* values FORMed (%v) or MOLDed (%r),
-// as well as REBSER* or REBARR* series molded (%m).
+// as well as REBSER* or Array* series molded (%m).
 //
 // Initially it was considered to be for low-level debug output only.  It
 // was strictly ASCII, and it only supported a fixed-size output destination

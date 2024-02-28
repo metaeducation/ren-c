@@ -68,7 +68,7 @@
 // with pointers to garbage-collected series, to avoid having them be GC'd
 // out from under the code while working with them.
 //
-// Series subclasses REBARR, REBCTX, REBACT, REBMAP are defined which are
+// Series subclasses Array, REBCTX, REBACT, REBMAP are defined which are
 // type-incompatible with REBSER for safety.  (In C++ they would be derived
 // classes, so common operations would not require casting...but it is seen
 // as worthwhile to offer some protection even compiling as C.)  The
@@ -81,8 +81,8 @@
 // * It is desirable to have series subclasses be different types, even though
 //   there are some common routines for processing them.  e.g. not every
 //   function that would take a REBSER* would actually be handled in the same
-//   way for a REBARR*.  Plus, just because a REBCTX* is implemented as a
-//   REBARR* with a link to another REBARR* doesn't mean most clients should
+//   way for a Array*.  Plus, just because a REBCTX* is implemented as a
+//   Array* with a link to another Array* doesn't mean most clients should
 //   be accessing the array--in a C++ build this would mean it would have some
 //   kind of protected inheritance scheme.
 //
@@ -100,7 +100,7 @@
 //
 #if defined(DEBUG_SERIES_ORIGINS) || defined(DEBUG_COUNT_TICKS)
     INLINE void Touch_Series_Debug(void *p) {
-        REBSER *s = SER(p); // allow REBARR, REBCTX, REBACT...
+        REBSER *s = SER(p); // allow Array, REBCTX, REBACT...
 
       #if defined(DEBUG_SERIES_ORIGINS)
         s->guard = cast(intptr_t*, malloc(sizeof(*s->guard)));
@@ -166,7 +166,7 @@ INLINE void SET_SERIES_LEN(REBSER *s, REBLEN len) {
 INLINE Byte *SER_DATA_RAW(REBSER *s) {
     // if updating, also update manual inlining in SER_AT_RAW
 
-    // The VAL_CONTEXT(), VAL_SERIES(), VAL_ARRAY() extractors do the failing
+    // The VAL_CONTEXT(), VAL_SERIES(), Cell_Array() extractors do the failing
     // upon extraction--that's meant to catch it before it gets this far.
     //
     assert(not (s->info.bits & SERIES_INFO_INACCESSIBLE));
@@ -191,7 +191,7 @@ INLINE Byte *SER_AT_RAW(Byte w, REBSER *s, REBLEN i) {
             printf("SER_AT_RAW asked %d on width=%d\n", w, SER_WIDE(s));
         panic (s);
     }
-    // The VAL_CONTEXT(), VAL_SERIES(), VAL_ARRAY() extractors do the failing
+    // The VAL_CONTEXT(), VAL_SERIES(), Cell_Array() extractors do the failing
     // upon extraction--that's meant to catch it before it gets this far.
     //
     assert(not (s->info.bits & SERIES_INFO_INACCESSIBLE));

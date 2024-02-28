@@ -47,7 +47,7 @@ struct Reb_Map {
     struct Reb_Array pairlist; // hashlist is held in ->link.hashlist
 };
 
-INLINE REBARR *MAP_PAIRLIST(REBMAP *m) {
+INLINE Array* MAP_PAIRLIST(REBMAP *m) {
     assert(GET_SER_FLAG(&(m)->pairlist, ARRAY_FLAG_PAIRLIST));
     return (&(m)->pairlist);
 }
@@ -59,7 +59,7 @@ INLINE REBARR *MAP_PAIRLIST(REBMAP *m) {
     SER_HEAD(MAP_HASHLIST(m))
 
 INLINE REBMAP *MAP(void *p) {
-    REBARR *a = ARR(p);
+    Array* a = ARR(p);
     assert(GET_SER_FLAG(a, ARRAY_FLAG_PAIRLIST));
     return cast(REBMAP*, a);
 }

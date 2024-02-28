@@ -733,7 +733,7 @@ void Expand_Series(REBSER *s, REBLEN index, REBLEN delta)
             // but when it is this will be useful.
             //
             for (index = 0; index < delta; index++)
-                Prep_Non_Stack_Cell(ARR_AT(ARR(s), index));
+                Prep_Non_Stack_Cell(Array_At(ARR(s), index));
         }
       #endif
         return;
@@ -782,7 +782,7 @@ void Expand_Series(REBSER *s, REBLEN index, REBLEN delta)
             //
             while (delta != 0) {
                 --delta;
-                Prep_Non_Stack_Cell(ARR_AT(ARR(s), index + delta));
+                Prep_Non_Stack_Cell(Array_At(ARR(s), index + delta));
             }
         }
       #endif
@@ -1104,7 +1104,7 @@ void Decay_Series(REBSER *s)
         // Note that not all singular arrays containing a HANDLE! should be
         // interpreted that when the array is freed the handle is freed (!)
         // Only when the handle array pointer in the freed singular
-        // handle matches the REBARR being freed.  (It may have been just a
+        // handle matches the Array being freed.  (It may have been just a
         // singular array that happened to contain a handle, otherwise, as
         // opposed to the specific singular made for the handle's GC awareness)
 

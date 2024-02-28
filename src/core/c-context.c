@@ -80,7 +80,7 @@ REBCTX *Alloc_Context_Core(enum Reb_Kind kind, REBLEN capacity, REBFLGS flags)
 {
     assert(not (flags & ARRAY_FLAG_FILE_LINE)); // LINK and MISC are taken
 
-    REBARR *varlist = Make_Arr_Core(
+    Array* varlist = Make_Arr_Core(
         capacity + 1, // size + room for ROOTVAR
         SERIES_MASK_CONTEXT // includes assurance of dynamic allocation
             | flags // e.g. NODE_FLAG_MANAGED
@@ -98,7 +98,7 @@ REBCTX *Alloc_Context_Core(enum Reb_Kind kind, REBLEN capacity, REBFLGS flags)
     // keylist[0] is the "rootkey" which we currently initialize to an
     // unreadable BLANK!.  It is reserved for future use.
 
-    REBARR *keylist = Make_Arr_Core(
+    Array* keylist = Make_Arr_Core(
         capacity + 1, // size + room for ROOTKEY
         NODE_FLAG_MANAGED // No keylist flag, but we don't want line numbers
     );
@@ -123,7 +123,7 @@ REBCTX *Alloc_Context_Core(enum Reb_Kind kind, REBLEN capacity, REBFLGS flags)
 //
 bool Expand_Context_Keylist_Core(REBCTX *context, REBLEN delta)
 {
-    REBARR *keylist = CTX_KEYLIST(context);
+    Array* keylist = CTX_KEYLIST(context);
 
     // can't expand or unshare a FRAME!'s list
     //
@@ -141,7 +141,7 @@ bool Expand_Context_Keylist_Core(REBCTX *context, REBLEN delta)
         //
         // Keylists are only typesets, so no need for a specifier.
 
-        REBARR *copy = Copy_Array_Extra_Shallow(keylist, SPECIFIED, delta);
+        Array* copy = Copy_Array_Extra_Shallow(keylist, SPECIFIED, delta);
 
         // Preserve link to ancestor keylist.  Note that if it pointed to
         // itself, we update this keylist to point to itself.
@@ -215,7 +215,7 @@ Value* Append_Context(
     Option(Cell*) any_word,
     Option(Symbol*) symbol
 ) {
-    REBARR *keylist = CTX_KEYLIST(context);
+    Array* keylist = CTX_KEYLIST(context);
 
     // Add the key to key list
     //
@@ -272,7 +272,7 @@ REBCTX *Copy_Context_Shallow_Extra_Managed(REBCTX *src, REBLEN extra) {
     // be fully specified.
     //
     REBCTX *dest;
-    REBARR *varlist;
+    Array* varlist;
     if (extra == 0) {
         varlist = Copy_Array_Shallow_Flags(
             CTX_VARLIST(src),
@@ -288,7 +288,7 @@ REBCTX *Copy_Context_Shallow_Extra_Managed(REBCTX *src, REBLEN extra) {
         INIT_CTX_KEYLIST_SHARED(dest, CTX_KEYLIST(src));
     }
     else {
-        REBARR *keylist = Copy_Array_At_Extra_Shallow(
+        Array* keylist = Copy_Array_At_Extra_Shallow(
             CTX_KEYLIST(src),
             0,
             SPECIFIED,
@@ -348,7 +348,7 @@ void Collect_Start(struct Reb_Collector* collector, REBFLGS flags)
 //
 //  Grab_Collected_Array_Managed: C
 //
-REBARR *Grab_Collected_Array_Managed(struct Reb_Collector *collector)
+Array* Grab_Collected_Array_Managed(struct Reb_Collector *collector)
 {
     UNUSED(collector); // not needed at the moment
 
@@ -532,7 +532,7 @@ static void Collect_Inner_Loop(struct Reb_Collector *cl, const Cell* head)
         // behavior which is probably wrong.
         //
         if (kind == REB_BLOCK or kind == REB_GROUP)
-            Collect_Inner_Loop(cl, VAL_ARRAY_AT(v));
+            Collect_Inner_Loop(cl, Cell_Array_At(v));
     }
 }
 
@@ -558,7 +558,7 @@ static void Collect_Inner_Loop(struct Reb_Collector *cl, const Cell* head)
 // key collection in the case where head[] was empty.  Revisit if it is worth
 // the complexity to move handling for that case in this routine.
 //
-REBARR *Collect_Keylist_Managed(
+Array* Collect_Keylist_Managed(
     REBLEN *self_index_out, // which context index SELF is in (if COLLECT_SELF)
     const Cell* head,
     REBCTX *prior,
@@ -589,7 +589,7 @@ REBARR *Collect_Keylist_Managed(
             // No prior or no SELF in prior, so we'll add it as the first key
             //
             Cell* self_key = Init_Typeset(
-                ARR_AT(BUF_COLLECT, 1),
+                Array_At(BUF_COLLECT, 1),
                 TS_VALUE, // !!! Currently not paid attention to
                 Canon(SYM_SELF)
             );
@@ -626,7 +626,7 @@ REBARR *Collect_Keylist_Managed(
     // collect buffer than the original keylist) then make a new keylist
     // array, otherwise reuse the original
     //
-    REBARR *keylist;
+    Array* keylist;
     if (prior != nullptr and ARR_LEN(CTX_KEYLIST(prior)) == ARR_LEN(BUF_COLLECT))
         keylist = CTX_KEYLIST(prior);
     else
@@ -648,7 +648,7 @@ REBARR *Collect_Keylist_Managed(
 //
 // Collect unique words from a block, possibly deeply...maybe just SET-WORD!s.
 //
-REBARR *Collect_Unique_Words_Managed(
+Array* Collect_Unique_Words_Managed(
     const Cell* head,
     REBFLGS flags, // See COLLECT_XXX
     const Value* ignore // BLOCK!, ANY-CONTEXT!, or void for none
@@ -658,7 +658,7 @@ REBARR *Collect_Unique_Words_Managed(
     // assumes you were collecting for a keylist...it doesn't have access to
     // the "ignore" bindings.)  Do a pre-pass to fail first.
 
-    Cell* check = VAL_ARRAY_AT(ignore);
+    Cell* check = Cell_Array_At(ignore);
     for (; NOT_END(check); ++check) {
         if (not ANY_WORD(check))
             fail (Error_Invalid_Core(check, VAL_SPECIFIER(ignore)));
@@ -678,7 +678,7 @@ REBARR *Collect_Unique_Words_Managed(
     // an error...so they will just be skipped when encountered.
     //
     if (IS_BLOCK(ignore)) {
-        Cell* item = VAL_ARRAY_AT(ignore);
+        Cell* item = Cell_Array_At(ignore);
         for (; NOT_END(item); ++item) {
             assert(ANY_WORD(item)); // pre-pass checked this
             Symbol* canon = VAL_WORD_CANON(item);
@@ -713,10 +713,10 @@ REBARR *Collect_Unique_Words_Managed(
 
     Collect_Inner_Loop(cl, head);
 
-    REBARR *array = Grab_Collected_Array_Managed(cl);
+    Array* array = Grab_Collected_Array_Managed(cl);
 
     if (IS_BLOCK(ignore)) {
-        Cell* item = VAL_ARRAY_AT(ignore);
+        Cell* item = Cell_Array_At(ignore);
         for (; NOT_END(item); ++item) {
             assert(ANY_WORD(item));
             Symbol* canon = VAL_WORD_CANON(item);
@@ -791,7 +791,7 @@ REBCTX *Make_Selfish_Context_Detect_Managed(
     REBCTX *opt_parent
 ) {
     REBLEN self_index;
-    REBARR *keylist = Collect_Keylist_Managed(
+    Array* keylist = Collect_Keylist_Managed(
         &self_index,
         head,
         opt_parent,
@@ -799,7 +799,7 @@ REBCTX *Make_Selfish_Context_Detect_Managed(
     );
 
     REBLEN len = ARR_LEN(keylist);
-    REBARR *varlist = Make_Arr_Core(
+    Array* varlist = Make_Arr_Core(
         len,
         SERIES_MASK_CONTEXT
             | NODE_FLAG_MANAGED // Note: Rebind below requires managed context
@@ -960,7 +960,7 @@ REBCTX *Construct_Context_Managed(
 //     2 for value
 //     3 for words and values
 //
-REBARR *Context_To_Array(REBCTX *context, REBINT mode)
+Array* Context_To_Array(REBCTX *context, REBINT mode)
 {
     REBDSP dsp_orig = DSP;
 
@@ -1057,7 +1057,7 @@ REBCTX *Merge_Contexts_Selfish_Managed(REBCTX *parent1, REBCTX *parent2)
     // !!! Review: should child start fresh with no meta information, or get
     // the meta information held by parents?
     //
-    REBARR *keylist = Copy_Array_Shallow_Flags(
+    Array* keylist = Copy_Array_Shallow_Flags(
         BUF_COLLECT,
         SPECIFIED,
         NODE_FLAG_MANAGED
@@ -1069,7 +1069,7 @@ REBCTX *Merge_Contexts_Selfish_Managed(REBCTX *parent1, REBCTX *parent2)
     else
         LINK(keylist).ancestor = CTX_KEYLIST(parent1);
 
-    REBARR *varlist = Make_Arr_Core(
+    Array* varlist = Make_Arr_Core(
         ARR_LEN(keylist),
         SERIES_MASK_CONTEXT
             | NODE_FLAG_MANAGED // rebind below requires managed context
@@ -1186,7 +1186,7 @@ void Resolve_Context(
     }
     else if (IS_BLOCK(only_words)) {
         // Limit exports to only these words:
-        Cell* word = VAL_ARRAY_AT(only_words);
+        Cell* word = Cell_Array_At(only_words);
         for (; NOT_END(word); word++) {
             if (IS_WORD(word) or IS_SET_WORD(word)) {
                 Add_Binder_Index(&binder, VAL_WORD_CANON(word), -1);
@@ -1273,7 +1273,7 @@ void Resolve_Context(
                 Remove_Binder_Index_Else_0(&binder, Key_Canon(key));
         }
         else if (IS_BLOCK(only_words)) {
-            Cell* word = VAL_ARRAY_AT(only_words);
+            Cell* word = Cell_Array_At(only_words);
             for (; NOT_END(word); word++) {
                 if (IS_WORD(word) or IS_SET_WORD(word))
                     Remove_Binder_Index_Else_0(&binder, VAL_WORD_CANON(word));
@@ -1386,12 +1386,12 @@ void Shutdown_Collector(void)
 //
 void Assert_Context_Core(REBCTX *c)
 {
-    REBARR *varlist = CTX_VARLIST(c);
+    Array* varlist = CTX_VARLIST(c);
 
     if (not ALL_SER_FLAGS(varlist, SERIES_MASK_CONTEXT))
         panic (varlist);
 
-    REBARR *keylist = CTX_KEYLIST(c);
+    Array* keylist = CTX_KEYLIST(c);
     if (keylist == nullptr)
         panic (c);
 

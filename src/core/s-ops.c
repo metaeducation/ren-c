@@ -396,7 +396,7 @@ void Change_Case(Value* out, Value* val, Value* part, bool upper)
 // !!! CR support is likely to be removed...and CR will be handled as a normal
 // character, with special code needed to process it.
 //
-REBARR *Split_Lines(const Value* str)
+Array* Split_Lines(const Value* str)
 {
     REBDSP dsp_orig = DSP;
 

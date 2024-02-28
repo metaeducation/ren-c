@@ -432,7 +432,7 @@ static REB_R Loop_Each_Core(struct Loop_Each_State *les) {
               case REB_PATH:
                 Derelativize(
                     var,
-                    ARR_AT(ARR(les->data_ser), les->data_idx),
+                    Array_At(ARR(les->data_ser), les->data_idx),
                     VAL_SPECIFIER(les->data)
                 );
                 if (++les->data_idx == les->data_len)
@@ -442,7 +442,7 @@ static REB_R Loop_Each_Core(struct Loop_Each_State *les) {
               case REB_DATATYPE:
                 Derelativize(
                     var,
-                    ARR_AT(ARR(les->data_ser), les->data_idx),
+                    Array_At(ARR(les->data_ser), les->data_idx),
                     SPECIFIED // array generated via data stack, all specific
                 );
                 if (++les->data_idx == les->data_len)
@@ -499,9 +499,9 @@ static REB_R Loop_Each_Core(struct Loop_Each_State *les) {
                 Value* key;
                 Value* val;
                 while (true) { // pass over the unused map slots
-                    key = KNOWN(ARR_AT(ARR(les->data_ser), les->data_idx));
+                    key = KNOWN(Array_At(ARR(les->data_ser), les->data_idx));
                     ++les->data_idx;
-                    val = KNOWN(ARR_AT(ARR(les->data_ser), les->data_idx));
+                    val = KNOWN(Array_At(ARR(les->data_ser), les->data_idx));
                     ++les->data_idx;
                     if (les->data_idx == les->data_len)
                         more_data = false;
@@ -1113,7 +1113,7 @@ INLINE REBLEN Finalize_Remove_Each(struct Remove_Each_State *res)
     REBLEN count = 0;
     if (ANY_ARRAY(res->data)) {
         if (res->broke) { // cleanup markers, don't do removals
-            Cell* temp = VAL_ARRAY_AT(res->data);
+            Cell* temp = Cell_Array_At(res->data);
             for (; NOT_END(temp); ++temp) {
                 if (GET_VAL_FLAG(temp, NODE_FLAG_MARKED))
                     CLEAR_VAL_FLAG(temp, NODE_FLAG_MARKED);
@@ -1123,7 +1123,7 @@ INLINE REBLEN Finalize_Remove_Each(struct Remove_Each_State *res)
 
         REBLEN len = VAL_LEN_HEAD(res->data);
 
-        Cell* dest = VAL_ARRAY_AT(res->data);
+        Cell* dest = Cell_Array_At(res->data);
         Cell* src = dest;
 
         // avoid blitting cells onto themselves by making the first thing we
@@ -1144,7 +1144,7 @@ INLINE REBLEN Finalize_Remove_Each(struct Remove_Each_State *res)
                 ++count;
             }
             if (IS_END(src)) {
-                TERM_ARRAY_LEN(VAL_ARRAY(res->data), len);
+                TERM_ARRAY_LEN(Cell_Array(res->data), len);
                 return count;
             }
             Blit_Cell(dest, src); // same array--rare place we can do this

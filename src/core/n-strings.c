@@ -121,7 +121,7 @@ DECLARE_NATIVE(delimit)
 
     if (Form_Reduce_Throws(
         D_OUT,
-        VAL_ARRAY(line),
+        Cell_Array(line),
         VAL_INDEX(line),
         VAL_SPECIFIER(line),
         ARG(delimiter)

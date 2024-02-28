@@ -445,7 +445,7 @@ REB_R MAKE_Date(Value* out, enum Reb_Kind kind, const Value* arg) {
     }
 
     if (ANY_ARRAY(arg) && VAL_ARRAY_LEN_AT(arg) >= 3) {
-        const Cell* item = VAL_ARRAY_AT(arg);
+        const Cell* item = Cell_Array_At(arg);
         if (not IS_INTEGER(item))
             goto bad_make;
 

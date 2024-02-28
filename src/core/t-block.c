@@ -129,14 +129,14 @@ REB_R MAKE_Array(Value* out, enum Reb_Kind kind, const Value* arg) {
         //
         if (
             VAL_ARRAY_LEN_AT(arg) != 2
-            || !ANY_ARRAY(VAL_ARRAY_AT(arg))
-            || !IS_INTEGER(VAL_ARRAY_AT(arg) + 1)
+            || !ANY_ARRAY(Cell_Array_At(arg))
+            || !IS_INTEGER(Cell_Array_At(arg) + 1)
         ) {
             goto bad_make;
         }
 
-        Cell* any_array = VAL_ARRAY_AT(arg);
-        REBINT index = VAL_INDEX(any_array) + Int32(VAL_ARRAY_AT(arg) + 1) - 1;
+        Cell* any_array = Cell_Array_At(arg);
+        REBINT index = VAL_INDEX(any_array) + Int32(Cell_Array_At(arg) + 1) - 1;
 
         if (index < 0 || index > cast(REBINT, VAL_LEN_HEAD(any_array)))
             goto bad_make;
@@ -152,7 +152,7 @@ REB_R MAKE_Array(Value* out, enum Reb_Kind kind, const Value* arg) {
         return Init_Any_Series_At_Core(
             out,
             kind,
-            SER(VAL_ARRAY(any_array)),
+            SER(Cell_Array(any_array)),
             index,
             derived
         );
@@ -274,14 +274,14 @@ REB_R TO_Array(Value* out, enum Reb_Kind kind, const Value* arg) {
             out,
             kind,
             Copy_Values_Len_Shallow(
-                VAL_ARRAY_AT(arg), VAL_SPECIFIER(arg), VAL_ARRAY_LEN_AT(arg)
+                Cell_Array_At(arg), VAL_SPECIFIER(arg), VAL_ARRAY_LEN_AT(arg)
             )
         );
     }
     else {
         // !!! Review handling of making a 1-element PATH!, e.g. TO PATH! 10
         //
-        REBARR *single = Alloc_Singular(NODE_FLAG_MANAGED);
+        Array* single = Alloc_Singular(NODE_FLAG_MANAGED);
         Move_Value(ARR_SINGLE(single), arg);
         return Init_Any_Array(out, kind, single);
     }
@@ -295,7 +295,7 @@ REB_R TO_Array(Value* out, enum Reb_Kind kind, const Value* arg) {
 // SELECT - (value that follows)".  It's not clear what this meant.
 //
 REBLEN Find_In_Array(
-    REBARR *array,
+    Array* array,
     REBLEN index, // index to start search
     REBLEN end, // ending position
     const Cell* target,
@@ -318,7 +318,7 @@ REBLEN Find_In_Array(
     //
     if (ANY_WORD(target)) {
         for (; index >= start && index < end; index += skip) {
-            Cell* item = ARR_AT(array, index);
+            Cell* item = Array_At(array, index);
             Symbol* target_canon = VAL_WORD_CANON(target); // canonize once
             if (ANY_WORD(item)) {
                 if (flags & AM_FIND_CASE) { // Must be same type and spelling
@@ -344,10 +344,10 @@ REBLEN Find_In_Array(
     //
     if (ANY_ARRAY(target) and not (flags & AM_FIND_ONLY)) {
         for (; index >= start and index < end; index += skip) {
-            Cell* item = ARR_AT(array, index);
+            Cell* item = Array_At(array, index);
 
             REBLEN count = 0;
-            Cell* other = VAL_ARRAY_AT(target);
+            Cell* other = Cell_Array_At(target);
             for (; NOT_END(other); ++other, ++item) {
                 if (
                     IS_END(item) ||
@@ -368,7 +368,7 @@ REBLEN Find_In_Array(
     //
     if (IS_DATATYPE(target) || IS_TYPESET(target)) {
         for (; index >= start && index < end; index += skip) {
-            Cell* item = ARR_AT(array, index);
+            Cell* item = Array_At(array, index);
 
             if (IS_DATATYPE(target)) {
                 if (VAL_TYPE(item) == VAL_TYPE_KIND(target))
@@ -401,7 +401,7 @@ REBLEN Find_In_Array(
     // All other cases
 
     for (; index >= start && index < end; index += skip) {
-        Cell* item = ARR_AT(array, index);
+        Cell* item = Array_At(array, index);
         if (0 == Cmp_Value(item, target, did (flags & AM_FIND_CASE)))
             return index;
 
@@ -549,7 +549,7 @@ static void Sort_Block(
         skip = 1;
 
     reb_qsort_r(
-        VAL_ARRAY_AT(block),
+        Cell_Array_At(block),
         len / skip,
         sizeof(Cell) * skip,
         &flags,
@@ -626,7 +626,7 @@ REB_R PD_Array(
         n = -1;
 
         Symbol* canon = VAL_WORD_CANON(picker);
-        Cell* item = VAL_ARRAY_AT(pvs->out);
+        Cell* item = Cell_Array_At(pvs->out);
         REBLEN index = VAL_INDEX(pvs->out);
         for (; NOT_END(item); ++item, ++index) {
             if (ANY_WORD(item) && canon == VAL_WORD_CANON(item)) {
@@ -653,7 +653,7 @@ REB_R PD_Array(
         // so adding one will be out of bounds.)
 
         n = 1 + Find_In_Array_Simple(
-            VAL_ARRAY(pvs->out),
+            Cell_Array(pvs->out),
             VAL_INDEX(pvs->out),
             picker
         );
@@ -701,7 +701,7 @@ Cell* Pick_Block(Value* out, const Value* block, const Value* picker)
 void MF_Array(REB_MOLD *mo, const Cell* v, bool form)
 {
     if (form && (IS_BLOCK(v) || IS_GROUP(v))) {
-        Form_Array_At(mo, VAL_ARRAY(v), VAL_INDEX(v), 0);
+        Form_Array_At(mo, Cell_Array(v), VAL_INDEX(v), 0);
         return;
     }
 
@@ -722,7 +722,7 @@ void MF_Array(REB_MOLD *mo, const Cell* v, bool form)
         Pre_Mold(mo, v); // #[block! part
 
         Append_Utf8_Codepoint(mo->series, '[');
-        Mold_Array_At(mo, VAL_ARRAY(v), 0, "[]");
+        Mold_Array_At(mo, Cell_Array(v), 0, "[]");
         Post_Mold(mo, v);
         Append_Utf8_Codepoint(mo->series, ']');
     }
@@ -764,7 +764,7 @@ void MF_Array(REB_MOLD *mo, const Cell* v, bool form)
         if (VAL_LEN_AT(v) == 0 and sep[0] == '/')
             Append_Utf8_Codepoint(mo->series, '/'); // 0-arity path is `/`
         else {
-            Mold_Array_At(mo, VAL_ARRAY(v), VAL_INDEX(v), sep);
+            Mold_Array_At(mo, Cell_Array(v), VAL_INDEX(v), sep);
             if (VAL_LEN_AT(v) == 1 and sep [0] == '/')
                 Append_Utf8_Codepoint(mo->series, '/'); // 1-arity path `foo/`
         }
@@ -798,7 +798,7 @@ REBTYPE(Array)
     if (r != R_UNHANDLED)
         return r;
 
-    REBARR *arr = VAL_ARRAY(array);
+    Array* arr = Cell_Array(array);
     REBSPC *specifier = VAL_SPECIFIER(array);
 
     Option(SymId) sym = Cell_Word_Id(verb);
@@ -890,7 +890,7 @@ REBTYPE(Array)
             if (ret >= limit)
                 return nullptr;
 
-            Derelativize(D_OUT, ARR_AT(arr, ret), specifier);
+            Derelativize(D_OUT, Array_At(arr, ret), specifier);
         }
         return D_OUT; }
 
@@ -951,7 +951,7 @@ REBTYPE(Array)
         if (index < VAL_LEN_HEAD(array)) {
             if (index == 0) Reset_Array(arr);
             else {
-                SET_END(ARR_AT(arr, index));
+                SET_END(Array_At(arr, index));
                 SET_SERIES_LEN(VAL_SERIES(array), cast(REBLEN, index));
             }
         }
@@ -981,7 +981,7 @@ REBTYPE(Array)
                 types |= VAL_TYPESET_BITS(ARG(kinds));
         }
 
-        REBARR *copy = Copy_Array_Core_Managed(
+        Array* copy = Copy_Array_Core_Managed(
             arr,
             index, // at
             specifier,
@@ -1000,7 +1000,7 @@ REBTYPE(Array)
             fail (Error_Invalid(arg));
 
         FAIL_IF_READ_ONLY_ARRAY(arr);
-        FAIL_IF_READ_ONLY_ARRAY(VAL_ARRAY(arg));
+        FAIL_IF_READ_ONLY_ARRAY(Cell_Array(arg));
 
         REBLEN index = VAL_INDEX(array);
 
@@ -1010,13 +1010,13 @@ REBTYPE(Array)
         ){
             // Cell bits can be copied within the same array
             //
-            Cell* a = VAL_ARRAY_AT(array);
+            Cell* a = Cell_Array_At(array);
             Cell temp;
             temp.header = a->header;
             temp.payload = a->payload;
             temp.extra = a->extra;
-            Blit_Cell(VAL_ARRAY_AT(array), VAL_ARRAY_AT(arg));
-            Blit_Cell(VAL_ARRAY_AT(arg), &temp);
+            Blit_Cell(Cell_Array_At(array), Cell_Array_At(arg));
+            Blit_Cell(Cell_Array_At(arg), &temp);
         }
         RETURN (array);
     }
@@ -1028,7 +1028,7 @@ REBTYPE(Array)
         if (len == 0)
             RETURN (array); // !!! do 1-element reversals update newlines?
 
-        Cell* front = VAL_ARRAY_AT(array);
+        Cell* front = Cell_Array_At(array);
         Cell* back = front + len - 1;
 
         // We must reverse the sense of the newline markers as well, #2326
@@ -1151,7 +1151,7 @@ REBTYPE(Array)
 //
 //  Assert_Array_Core: C
 //
-void Assert_Array_Core(REBARR *a)
+void Assert_Array_Core(Array* a)
 {
     // Basic integrity checks (series is not marked free, etc.)  Note that
     // we don't use ASSERT_SERIES the macro here, because that checks to
@@ -1195,9 +1195,9 @@ void Assert_Array_Core(REBARR *a)
                 }
             }
         }
-        assert(item == ARR_AT(a, rest - 1));
+        assert(item == Array_At(a, rest - 1));
 
-        Cell* ultimate = ARR_AT(a, rest - 1);
+        Cell* ultimate = Array_At(a, rest - 1);
         if (NOT_END(ultimate) or (ultimate->header.bits & NODE_FLAG_CELL)) {
             printf("Implicit termination/unwritable END missing from array\n");
             panic (a);

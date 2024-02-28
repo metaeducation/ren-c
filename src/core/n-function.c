@@ -264,7 +264,7 @@ DECLARE_NATIVE(typechecker)
 
     Value* type = ARG(type);
 
-    REBARR *paramlist = Make_Arr_Core(
+    Array* paramlist = Make_Arr_Core(
         2,
         SERIES_MASK_ACTION | NODE_FLAG_MANAGED
     );
@@ -317,7 +317,7 @@ DECLARE_NATIVE(chain)
     Value* out = D_OUT; // plan ahead for factoring into Chain_Action(out..
 
     Value* pipeline = ARG(pipeline);
-    REBARR *chainees;
+    Array* chainees;
     if (REF(quote))
         chainees = COPY_ANY_ARRAY_AT_DEEP_MANAGED(pipeline);
     else {
@@ -347,7 +347,7 @@ DECLARE_NATIVE(chain)
     // Paramlist needs to be unique to identify the new function, but will be
     // a compatible interface with the first function in the chain.
     //
-    REBARR *paramlist = Copy_Array_Shallow_Flags(
+    Array* paramlist = Copy_Array_Shallow_Flags(
         VAL_ACT_PARAMLIST(ARR_HEAD(chainees)),
         SPECIFIED,
         SERIES_MASK_ACTION | NODE_FLAG_MANAGED // flags not auto-copied
@@ -422,7 +422,7 @@ DECLARE_NATIVE(adapt)
     // will be identical typesets to the original.  It's [0] element must
     // identify the function we're creating vs the original, however.
     //
-    REBARR *paramlist = Copy_Array_Shallow_Flags(
+    Array* paramlist = Copy_Array_Shallow_Flags(
         VAL_ACT_PARAMLIST(adaptee),
         SPECIFIED,
         SERIES_MASK_ACTION | NODE_FLAG_MANAGED
@@ -460,20 +460,20 @@ DECLARE_NATIVE(adapt)
     // a read-only input to be "viewed" with a relative binding, and no copy
     // would need be made if input was R/O.  For now, we copy to relativize.
     //
-    REBARR *prelude = Copy_And_Bind_Relative_Deep_Managed(
+    Array* prelude = Copy_And_Bind_Relative_Deep_Managed(
         ARG(prelude),
         ACT_PARAMLIST(underlying), // relative bindings ALWAYS use underlying
         TS_WORD
     );
 
-    REBARR *details = ACT_DETAILS(adaptation);
+    Array* details = ACT_DETAILS(adaptation);
 
-    Value* block = RESET_CELL(ARR_AT(details, 0), REB_BLOCK);
+    Value* block = RESET_CELL(Array_At(details, 0), REB_BLOCK);
     INIT_VAL_ARRAY(block, prelude);
     VAL_INDEX(block) = 0;
     INIT_BINDING(block, underlying); // relative binding
 
-    Move_Value(ARR_AT(details, 1), adaptee);
+    Move_Value(Array_At(details, 1), adaptee);
 
     return Init_Action_Unbound(D_OUT, adaptation);
 }
@@ -532,7 +532,7 @@ DECLARE_NATIVE(enclose)
     // will be identical typesets to the inner.  It's [0] element must
     // identify the function we're creating vs the original, however.
     //
-    REBARR *paramlist = Copy_Array_Shallow_Flags(
+    Array* paramlist = Copy_Array_Shallow_Flags(
         VAL_ACT_PARAMLIST(inner),
         SPECIFIED,
         SERIES_MASK_ACTION | NODE_FLAG_MANAGED
@@ -579,9 +579,9 @@ DECLARE_NATIVE(enclose)
         2 // details array capacity => [inner, outer]
     );
 
-    REBARR *details = ACT_DETAILS(enclosure);
-    Move_Value(ARR_AT(details, 0), inner);
-    Move_Value(ARR_AT(details, 1), outer);
+    Array* details = ACT_DETAILS(enclosure);
+    Move_Value(Array_At(details, 0), inner);
+    Move_Value(Array_At(details, 1), outer);
 
     return Init_Action_Unbound(D_OUT, enclosure);
 }
@@ -647,10 +647,10 @@ DECLARE_NATIVE(hijack)
     if (victim == hijacker)
         return nullptr; // permitting no-op hijack has some practical uses
 
-    REBARR *victim_paramlist = ACT_PARAMLIST(victim);
-    REBARR *victim_details = ACT_DETAILS(victim);
-    REBARR *hijacker_paramlist = ACT_PARAMLIST(hijacker);
-    REBARR *hijacker_details = ACT_DETAILS(hijacker);
+    Array* victim_paramlist = ACT_PARAMLIST(victim);
+    Array* victim_details = ACT_DETAILS(victim);
+    Array* hijacker_paramlist = ACT_PARAMLIST(hijacker);
+    Array* hijacker_details = ACT_DETAILS(hijacker);
 
     if (ACT_UNDERLYING(hijacker) == ACT_UNDERLYING(victim)) {
         //
@@ -767,13 +767,13 @@ DECLARE_NATIVE(tighten)
     // Copy the paramlist, which serves as the function's unique identity,
     // and set the tight flag on all the parameters.
 
-    REBARR *paramlist = Copy_Array_Shallow_Flags(
+    Array* paramlist = Copy_Array_Shallow_Flags(
         ACT_PARAMLIST(original),
         SPECIFIED, // no relative values in parameter lists
         SERIES_MASK_ACTION | NODE_FLAG_MANAGED // flags not auto-copied
     );
 
-    Cell* param = ARR_AT(paramlist, 1); // first parameter (0 is ACTION!)
+    Cell* param = Array_At(paramlist, 1); // first parameter (0 is ACTION!)
     for (; NOT_END(param); ++param) {
         enum Reb_Param_Class pclass = VAL_PARAM_CLASS(param);
         if (pclass == PARAM_CLASS_NORMAL)
@@ -832,7 +832,7 @@ DECLARE_NATIVE(tighten)
 
 REB_R N_Shot_Dispatcher(REBFRM *f)
 {
-    REBARR *details = ACT_DETAILS(FRM_PHASE(f));
+    Array* details = ACT_DETAILS(FRM_PHASE(f));
     assert(ARR_LEN(details) == 1);
 
     Cell* n = ARR_HEAD(details);
@@ -850,7 +850,7 @@ REB_R N_Shot_Dispatcher(REBFRM *f)
 
 REB_R N_Upshot_Dispatcher(REBFRM *f)
 {
-    REBARR *details = ACT_DETAILS(FRM_PHASE(f));
+    Array* details = ACT_DETAILS(FRM_PHASE(f));
     assert(ARR_LEN(details) == 1);
 
     Cell* n = ARR_HEAD(details);
@@ -882,7 +882,7 @@ DECLARE_NATIVE(n_shot)
 
     REBI64 n = VAL_INT64(ARG(n));
 
-    REBARR *paramlist = Make_Arr_Core(
+    Array* paramlist = Make_Arr_Core(
         2,
         SERIES_MASK_ACTION | NODE_FLAG_MANAGED
     );

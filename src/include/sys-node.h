@@ -47,7 +47,7 @@
             std::is_same<T, Value>::value
             or std::is_same<T, REBSER>::value
             or std::is_same<T, Symbol>::value
-            or std::is_same<T, REBARR>::value
+            or std::is_same<T, Array>::value
             or std::is_same<T, REBCTX>::value
             or std::is_same<T, REBACT>::value
             or std::is_same<T, REBMAP>::value
@@ -57,7 +57,7 @@
 
         static_assert(
             derived or base,
-            "NOD() works on void/Value/REBSER/Symbol/REBARR/REBCTX/REBACT" \
+            "NOD() works on void/Value/REBSER/Symbol/Array/REBCTX/REBACT" \
                "/REBMAP/REBFRM"
         );
 

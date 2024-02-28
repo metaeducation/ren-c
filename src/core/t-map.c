@@ -51,7 +51,7 @@ REBINT CT_Map(const Cell* a, const Cell* b, REBINT mode)
 //
 REBMAP *Make_Map(REBLEN capacity)
 {
-    REBARR *pairlist = Make_Arr_Core(capacity * 2, ARRAY_FLAG_PAIRLIST);
+    Array* pairlist = Make_Arr_Core(capacity * 2, ARRAY_FLAG_PAIRLIST);
     LINK(pairlist).hashlist = Make_Hash_Sequence(capacity);
 
     return MAP(pairlist);
@@ -94,7 +94,7 @@ static REBCTX *Error_Conflicting_Key(const Cell* key, REBSPC *specifier)
 //     2 - search, return hash, else append value and return -1
 //
 REBINT Find_Key_Hashed(
-    REBARR *array,
+    Array* array,
     REBSER *hashlist,
     const Cell* key, // !!! assumes key is followed by value(s) via ++
     REBSPC *specifier,
@@ -135,7 +135,7 @@ REBINT Find_Key_Hashed(
     if (ANY_WORD(key)) {
         REBLEN n;
         while ((n = indexes[slot]) != 0) {
-            Cell* k = ARR_AT(array, (n - 1) * wide); // stored key
+            Cell* k = Array_At(array, (n - 1) * wide); // stored key
             if (ANY_WORD(k)) {
                 if (Cell_Word_Symbol(key) == Cell_Word_Symbol(k))
                     FOUND_EXACT;
@@ -154,7 +154,7 @@ REBINT Find_Key_Hashed(
     else if (ANY_BINSTR(key)) {
         REBLEN n;
         while ((n = indexes[slot]) != 0) {
-            Cell* k = ARR_AT(array, (n - 1) * wide); // stored key
+            Cell* k = Array_At(array, (n - 1) * wide); // stored key
             if (VAL_TYPE(k) == VAL_TYPE(key)) {
                 if (0 == Compare_String_Vals(k, key, false))
                     FOUND_EXACT;
@@ -173,7 +173,7 @@ REBINT Find_Key_Hashed(
     else {
         REBLEN n;
         while ((n = indexes[slot]) != 0) {
-            Cell* k = ARR_AT(array, (n - 1) * wide); // stored key
+            Cell* k = Array_At(array, (n - 1) * wide); // stored key
             if (VAL_TYPE(k) == VAL_TYPE(key)) {
                 if (0 == Cmp_Value(k, key, true))
                     FOUND_EXACT;
@@ -199,7 +199,7 @@ REBINT Find_Key_Hashed(
         assert(mode == 0);
         slot = zombie_slot;
         REBLEN n = indexes[slot];
-        Derelativize(ARR_AT(array, (n - 1) * wide), key, specifier);
+        Derelativize(Array_At(array, (n - 1) * wide), key, specifier);
     }
 
     if (mode > 1) { // append new value to the target series
@@ -227,7 +227,7 @@ static void Rehash_Map(REBMAP *map)
     if (!hashlist) return;
 
     REBLEN *hashes = SER_HEAD(REBLEN, hashlist);
-    REBARR *pairlist = MAP_PAIRLIST(map);
+    Array* pairlist = MAP_PAIRLIST(map);
 
     Value* key = KNOWN(ARR_HEAD(pairlist));
     REBLEN n;
@@ -240,10 +240,10 @@ static void Rehash_Map(REBMAP *map)
             // It's a "zombie", move last key to overwrite it
             //
             Move_Value(
-                key, KNOWN(ARR_AT(pairlist, ARR_LEN(pairlist) - 2))
+                key, KNOWN(Array_At(pairlist, ARR_LEN(pairlist) - 2))
             );
             Move_Value(
-                &key[1], KNOWN(ARR_AT(pairlist, ARR_LEN(pairlist) - 1))
+                &key[1], KNOWN(Array_At(pairlist, ARR_LEN(pairlist) - 1))
             );
             SET_ARRAY_LEN_NOTERM(pairlist, ARR_LEN(pairlist) - 2);
         }
@@ -255,7 +255,7 @@ static void Rehash_Map(REBMAP *map)
 
         // discard zombies at end of pairlist
         //
-        while (IS_NULLED(ARR_AT(pairlist, ARR_LEN(pairlist) - 1))) {
+        while (IS_NULLED(Array_At(pairlist, ARR_LEN(pairlist) - 1))) {
             SET_ARRAY_LEN_NOTERM(pairlist, ARR_LEN(pairlist) - 2);
         }
     }
@@ -308,7 +308,7 @@ REBLEN Find_Map_Entry(
     assert(not IS_NULLED(key));
 
     REBSER *hashlist = MAP_HASHLIST(map); // can be null
-    REBARR *pairlist = MAP_PAIRLIST(map);
+    Array* pairlist = MAP_PAIRLIST(map);
 
     assert(hashlist);
 
@@ -343,7 +343,7 @@ REBLEN Find_Map_Entry(
     // Must set the value:
     if (n) {  // re-set it:
         Derelativize(
-            ARR_AT(pairlist, ((n - 1) * 2) + 1),
+            Array_At(pairlist, ((n - 1) * 2) + 1),
             val,
             val_specifier
         );
@@ -402,7 +402,7 @@ REB_R PD_Map(
         return nullptr;
 
     Value* val = KNOWN(
-        ARR_AT(MAP_PAIRLIST(VAL_MAP(pvs->out)), ((n - 1) * 2) + 1)
+        Array_At(MAP_PAIRLIST(VAL_MAP(pvs->out)), ((n - 1) * 2) + 1)
     );
     if (IS_NULLED(val)) // zombie entry, means unused
         return nullptr;
@@ -416,12 +416,12 @@ REB_R PD_Map(
 //
 static void Append_Map(
     REBMAP *map,
-    REBARR *array,
+    Array* array,
     REBLEN index,
     REBSPC *specifier,
     REBLEN len
 ) {
-    Cell* item = ARR_AT(array, index);
+    Cell* item = Array_At(array, index);
     REBLEN n = 0;
 
     while (n < len && NOT_END(item)) {
@@ -465,7 +465,7 @@ REB_R MAKE_Map(Value* out, enum Reb_Kind kind, const Value* arg)
 
 
 INLINE REBMAP *Copy_Map(REBMAP *map, REBU64 types) {
-    REBARR *copy = Copy_Array_Shallow(MAP_PAIRLIST(map), SPECIFIED);
+    Array* copy = Copy_Array_Shallow(MAP_PAIRLIST(map), SPECIFIED);
     SET_SER_FLAG(copy, ARRAY_FLAG_PAIRLIST);
 
     // So long as the copied pairlist is the same array size as the original,
@@ -515,7 +515,7 @@ REB_R TO_Map(Value* out, enum Reb_Kind kind, const Value* arg)
         //
         // make map! [word val word val]
         //
-        REBARR* array = VAL_ARRAY(arg);
+        Array* array = Cell_Array(arg);
         REBLEN len = VAL_ARRAY_LEN_AT(arg);
         REBLEN index = VAL_INDEX(arg);
         REBSPC *specifier = VAL_SPECIFIER(arg);
@@ -546,10 +546,10 @@ REB_R TO_Map(Value* out, enum Reb_Kind kind, const Value* arg)
 //
 // what: -1 - words, +1 - values, 0 -both
 //
-REBARR *Map_To_Array(REBMAP *map, REBINT what)
+Array* Map_To_Array(REBMAP *map, REBINT what)
 {
     REBLEN count = Length_Map(map);
-    REBARR *a = Make_Arr(count * ((what == 0) ? 2 : 1));
+    Array* a = Make_Arr(count * ((what == 0) ? 2 : 1));
 
     Value* dest = KNOWN(ARR_HEAD(a));
     Value* val = KNOWN(ARR_HEAD(MAP_PAIRLIST(map)));
@@ -758,7 +758,7 @@ REBTYPE(Map)
 
         Move_Value(
             D_OUT,
-            KNOWN(ARR_AT(MAP_PAIRLIST(map), ((n - 1) * 2) + 1))
+            KNOWN(Array_At(MAP_PAIRLIST(map), ((n - 1) * 2) + 1))
         );
 
         if (Cell_Word_Id(verb) == SYM_FIND)
@@ -811,7 +811,7 @@ REBTYPE(Map)
 
         Append_Map(
             map,
-            VAL_ARRAY(arg),
+            Cell_Array(arg),
             VAL_INDEX(arg),
             VAL_SPECIFIER(arg),
             len

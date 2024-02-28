@@ -36,11 +36,11 @@
 // list of the frames in effect, so that the Fail_Core() routine can unwind
 // all the associated storage and structures for each frame.
 //
-// Ren-C can not only run the evaluator across a REBARR-style series of
+// Ren-C can not only run the evaluator across an Array-style series of
 // input based on index, it can also enumerate through C's `va_list`,
 // providing the ability to pass pointers as Value* in a variadic function
-// call from the C (comma-separated arguments, as with printf()).  Future data
-// sources might also include a Value[] raw C array.
+// call from the C (comma-separated arguments, as with printf()).  (Modern
+// Ren-C, after this branch, can also traverse a Value[] raw C array.)
 //
 // To provide even greater flexibility, it allows the very first element's
 // pointer in an evaluation to come from an arbitrary source.  It doesn't
@@ -419,7 +419,7 @@ struct Reb_Frame_Source {
     // messages to reach backwards and present more context of where the
     // error is located.
     //
-    REBARR *array;
+    Array* array;
 
     // `index`
     //
@@ -587,7 +587,7 @@ struct Reb_Frame {
     //
     // If a function call is currently in effect, FRM_PHASE() is how you get
     // at the curren function being run.  Because functions are identified and
-    // passed by a platform pointer as their paramlist REBARR*, you must use
+    // passed by a platform pointer as their paramlist Array*, you must use
     // `ACT_ARCHETYPE(FRM_PHASE(f))` to get a pointer to a canon cell
     // representing that function (to examine its value flags, for instance).
     //
@@ -625,7 +625,7 @@ struct Reb_Frame {
     // Derelativize()'d or Move_Velue()'d value as a binding, it can be
     // reused or freed.  See Push_Action() and Drop_Action() for the logic.
     //
-    REBARR *varlist;
+    Array* varlist;
     Value* rootvar; // cache of CTX_ARCHETYPE(varlist) if varlist is not null
 
     // `param`

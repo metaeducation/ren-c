@@ -38,7 +38,7 @@
 // Provide option to prepend dir path.
 // Provide option to use wildcards.
 //
-static REBARR *Read_Dir_May_Fail(struct devreq_file *dir)
+static Array* Read_Dir_May_Fail(struct devreq_file *dir)
 {
     struct devreq_file file;
     CLEARS(&file);
@@ -207,7 +207,7 @@ static REB_R Dir_Actor(REBFRM *frame_, Value* port, Value* verb)
             Init_Block(
                 D_OUT,
                 Copy_Array_Core_Managed(
-                    VAL_ARRAY(state),
+                    Cell_Array(state),
                     0, // at
                     VAL_SPECIFIER(state),
                     VAL_ARRAY_LEN_AT(state), // tail

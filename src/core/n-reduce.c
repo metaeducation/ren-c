@@ -120,7 +120,7 @@ DECLARE_NATIVE(reduce)
         }
 
         REBFLGS pop_flags = NODE_FLAG_MANAGED | ARRAY_FLAG_FILE_LINE;
-        if (GET_SER_FLAG(VAL_ARRAY(value), ARRAY_FLAG_TAIL_NEWLINE))
+        if (GET_SER_FLAG(Cell_Array(value), ARRAY_FLAG_TAIL_NEWLINE))
             pop_flags |= ARRAY_FLAG_TAIL_NEWLINE;
 
         return Init_Any_Array(
@@ -159,7 +159,7 @@ bool Match_For_Compose(const Cell* group, const Value* pattern) {
     if (VAL_LEN_AT(group) == 0) // you have a pattern, so leave `()` as-is
         return false;
 
-    Cell* first = VAL_ARRAY_AT(group);
+    Cell* first = Cell_Array_At(group);
     Cell* last = VAL_ARRAY_TAIL(group) - 1;
     if (IS_BAR(first) != IS_BAR(last))
         fail ("Pattern for COMPOSE must be on both ends of GROUP!");
@@ -195,7 +195,7 @@ bool Compose_To_Stack_Throws(
 
     DECLARE_FRAME (f);
     Push_Frame_At(
-        f, VAL_ARRAY(any_array), VAL_INDEX(any_array), specifier, DO_MASK_NONE
+        f, Cell_Array(any_array), VAL_INDEX(any_array), specifier, DO_MASK_NONE
     );
 
     while (NOT_END(f->value)) {
@@ -217,7 +217,7 @@ bool Compose_To_Stack_Throws(
         }
         else {
             if (Is_Doubled_Group(f->value)) { // non-spliced compose, if match
-                Cell* inner = VAL_ARRAY_AT(f->value);
+                Cell* inner = Cell_Array_At(f->value);
                 if (Match_For_Compose(inner, pattern)) {
                     splice = false;
                     match = inner;
@@ -236,7 +236,7 @@ bool Compose_To_Stack_Throws(
             REBIXO indexor = Eval_Array_At_Core(
                 Init_Nulled(out), // want empty () to vanish as a NULL would
                 nullptr, // no opt_first
-                VAL_ARRAY(match),
+                Cell_Array(match),
                 VAL_INDEX(match),
                 match_specifier,
                 DO_FLAG_TO_END
@@ -257,7 +257,7 @@ bool Compose_To_Stack_Throws(
                 //
                 // compose [not-only ([a b]) merges] => [not-only a b merges]
 
-                Cell* push = VAL_ARRAY_AT(out);
+                Cell* push = Cell_Array_At(out);
                 if (NOT_END(push)) {
                     //
                     // Only proxy newline flag from the template on *first*
@@ -302,10 +302,10 @@ bool Compose_To_Stack_Throws(
             }
 
             REBFLGS flags = NODE_FLAG_MANAGED | ARRAY_FLAG_FILE_LINE;
-            if (GET_SER_FLAG(VAL_ARRAY(f->value), ARRAY_FLAG_TAIL_NEWLINE))
+            if (GET_SER_FLAG(Cell_Array(f->value), ARRAY_FLAG_TAIL_NEWLINE))
                 flags |= ARRAY_FLAG_TAIL_NEWLINE;
 
-            REBARR *popped = Pop_Stack_Values_Core(dsp_deep, flags);
+            Array* popped = Pop_Stack_Values_Core(dsp_deep, flags);
             DS_PUSH_TRASH;
             Init_Any_Array(
                 DS_TOP,
@@ -365,10 +365,10 @@ DECLARE_NATIVE(compose)
     }
 
     // The stack values contain N NEWLINE_BEFORE flags, and we need N + 1
-    // flags.  Borrow the one for the tail directly from the input REBARR.
+    // flags.  Borrow the one for the tail directly from the input Array.
     //
     REBFLGS flags = NODE_FLAG_MANAGED | ARRAY_FLAG_FILE_LINE;
-    if (GET_SER_FLAG(VAL_ARRAY(ARG(value)), ARRAY_FLAG_TAIL_NEWLINE))
+    if (GET_SER_FLAG(Cell_Array(ARG(value)), ARRAY_FLAG_TAIL_NEWLINE))
         flags |= ARRAY_FLAG_TAIL_NEWLINE;
 
     return Init_Any_Array(
@@ -396,7 +396,7 @@ static void Flatten_Core(
         if (IS_BLOCK(item) and level != FLATTEN_NOT) {
             REBSPC *derived = Derive_Specifier(specifier, item);
             Flatten_Core(
-                VAL_ARRAY_AT(item),
+                Cell_Array_At(item),
                 derived,
                 level == FLATTEN_ONCE ? FLATTEN_NOT : FLATTEN_DEEP
             );
@@ -426,7 +426,7 @@ DECLARE_NATIVE(flatten)
     REBDSP dsp_orig = DSP;
 
     Flatten_Core(
-        VAL_ARRAY_AT(ARG(block)),
+        Cell_Array_At(ARG(block)),
         VAL_SPECIFIER(ARG(block)),
         REF(deep) ? FLATTEN_DEEP : FLATTEN_ONCE
     );

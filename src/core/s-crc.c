@@ -293,7 +293,7 @@ uint32_t Hash_Value(const Cell* v)
         // problems.  Do not hash mutable arrays unless you are sure hashings
         // won't cross a mutation.
         //
-        hash = ARR_LEN(VAL_ARRAY(v));
+        hash = ARR_LEN(Cell_Array(v));
         break;
 
     case REB_DATATYPE: {
@@ -442,14 +442,14 @@ REBSER *Hash_Block(const Value* block, REBLEN skip, bool cased)
     REBLEN n;
     REBSER *hashlist;
     REBLEN *hashes;
-    REBARR *array = VAL_ARRAY(block);
+    Array* array = Cell_Array(block);
     Cell* value;
 
     // Create the hash array (integer indexes):
     hashlist = Make_Hash_Sequence(VAL_LEN_AT(block));
     hashes = SER_HEAD(REBLEN, hashlist);
 
-    value = VAL_ARRAY_AT(block);
+    value = Cell_Array_At(block);
     if (IS_END(value))
         return hashlist;
 

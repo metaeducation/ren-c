@@ -106,7 +106,7 @@ REBSER *Make_Set_Operation_Series(
         // and extending Find_Key to FIND on the value itself w/o the hash.
 
         do {
-            REBARR *array1 = VAL_ARRAY(val1); // val1 and val2 swapped 2nd pass!
+            Array* array1 = Cell_Array(val1); // val1 and val2 swapped 2nd pass!
 
             // Check what is in series1 but not in series2
             //
@@ -117,10 +117,10 @@ REBSER *Make_Set_Operation_Series(
             //
             i = VAL_INDEX(val1);
             for (; i < ARR_LEN(array1); i += skip) {
-                Cell* item = ARR_AT(array1, i);
+                Cell* item = Array_At(array1, i);
                 if (flags & SOP_FLAG_CHECK) {
                     h = Find_Key_Hashed(
-                        VAL_ARRAY(val2),
+                        Cell_Array(val2),
                         hser,
                         item,
                         VAL_SPECIFIER(val1),

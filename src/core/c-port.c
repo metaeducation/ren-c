@@ -106,7 +106,7 @@ bool Pending_Port(Value* port)
 //      0 for nothing to do
 //      1 for wait is satisifed
 //
-REBINT Awake_System(REBARR *ports, bool only)
+REBINT Awake_System(Array* ports, bool only)
 {
     // Get the system port object:
     Value* port = Get_System(SYS_PORTS, PORTS_SYSTEM);
@@ -144,7 +144,7 @@ REBINT Awake_System(REBARR *ports, bool only)
         // If we're using /ONLY, we need path AWAKE/ONLY to call.  (Ren-C's
         // va_list API does not support positionally-provided refinements.)
         //
-        REBARR *a = Make_Arr(2);
+        Array* a = Make_Arr(2);
         Append_Value(a, awake);
         Init_Word(Alloc_Tail_Array(a), Canon(SYM_ONLY));
 
@@ -184,7 +184,7 @@ REBINT Awake_System(REBARR *ports, bool only)
 //
 bool Wait_Ports_Throws(
     Value* out,
-    REBARR *ports,
+    Array* ports,
     REBLEN timeout,
     bool only
 ){
@@ -267,7 +267,7 @@ bool Wait_Ports_Throws(
 // Remove all ports not found in the WAKE list.
 // ports could be nullptr, in which case the WAKE list is cleared.
 //
-void Sieve_Ports(REBARR *ports)
+void Sieve_Ports(Array* ports)
 {
     Value* port;
     Value* waked;
@@ -279,11 +279,11 @@ void Sieve_Ports(REBARR *ports)
     if (!IS_BLOCK(waked)) return;
 
     for (n = 0; ports and n < ARR_LEN(ports);) {
-        Cell* val = ARR_AT(ports, n);
+        Cell* val = Array_At(ports, n);
         if (IS_PORT(val)) {
             assert(VAL_LEN_HEAD(waked) != 0);
             if (
-                Find_In_Array_Simple(VAL_ARRAY(waked), 0, val)
+                Find_In_Array_Simple(Cell_Array(waked), 0, val)
                 == VAL_LEN_HEAD(waked) // `=len` means not found
             ) {
                 Remove_Series(SER(ports), n, 1);
@@ -293,7 +293,7 @@ void Sieve_Ports(REBARR *ports)
         n++;
     }
     //clear waked list
-    RESET_ARRAY(VAL_ARRAY(waked));
+    RESET_ARRAY(Cell_Array(waked));
 }
 
 
@@ -319,13 +319,13 @@ void Sieve_Ports(REBARR *ports)
 //
 bool Redo_Action_Throws(REBFRM *f, REBACT *run)
 {
-    REBARR *code_arr = Make_Arr(FRM_NUM_ARGS(f)); // max, e.g. no refines
+    Array* code_arr = Make_Arr(FRM_NUM_ARGS(f)); // max, e.g. no refines
     Cell* code = ARR_HEAD(code_arr);
 
     // The first element of our path will be the ACTION!, followed by its
     // refinements...which in the worst case, all args will be refinements:
     //
-    REBARR *path_arr = Make_Arr(FRM_NUM_ARGS(f) + 1);
+    Array* path_arr = Make_Arr(FRM_NUM_ARGS(f) + 1);
     Cell* path = ARR_HEAD(path_arr);
     Init_Action_Unbound(path, run); // !!! What if there's a binding?
     ++path;

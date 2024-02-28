@@ -285,7 +285,7 @@ DECLARE_NATIVE(do)
         REBIXO indexor = Eval_Array_At_Core(
             Init_Void(D_OUT), // so `do []` matches up with `while [] [...]`
             nullptr, // opt_head (interpreted as no head, not nulled cell)
-            VAL_ARRAY(source),
+            Cell_Array(source),
             VAL_INDEX(source),
             VAL_SPECIFIER(source),
             DO_FLAG_TO_END
@@ -311,7 +311,7 @@ DECLARE_NATIVE(do)
             REBIXO indexor = Eval_Array_At_Core(
                 Init_Void(D_OUT),
                 nullptr, // opt_head (no head, not intepreted as nulled cell)
-                VAL_ARRAY(position),
+                Cell_Array(position),
                 VAL_INDEX(position),
                 VAL_SPECIFIER(source),
                 DO_FLAG_TO_END
@@ -504,7 +504,7 @@ DECLARE_NATIVE(evaluate)
         REBIXO indexor = Eval_Array_At_Core(
             SET_END(temp), // use END to distinguish residual non-values
             nullptr, // opt_head
-            VAL_ARRAY(source),
+            Cell_Array(source),
             VAL_INDEX(source),
             VAL_SPECIFIER(source),
             DO_MASK_NONE
@@ -543,7 +543,7 @@ DECLARE_NATIVE(evaluate)
             REBIXO indexor = Eval_Array_At_Core(
                 SET_END(temp),
                 nullptr, // opt_head (interpreted as nothing, not nulled cell)
-                VAL_ARRAY(position),
+                Cell_Array(position),
                 VAL_INDEX(position),
                 VAL_SPECIFIER(source),
                 DO_MASK_NONE

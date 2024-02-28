@@ -137,7 +137,7 @@ INLINE void Unmark_Rebser(REBSER *rebser) {
 // Propagate_All_GC_Marks().  If it were not queued and just used recursion
 // (as R3-Alpha did) then deeply nested arrays could overflow the C stack.
 //
-// Although there are subclasses of REBARR which have ->link and ->misc
+// Although there are subclasses of Array which have ->link and ->misc
 // and other properties that must be marked, the subclass processing is done
 // during the propagation.  This is to prevent recursion from within the
 // subclass queueing routine itself.  Hence this routine is the workhorse for
@@ -148,7 +148,7 @@ INLINE void Unmark_Rebser(REBSER *rebser) {
 // a "queue".  But when you use 'queue' as a verb, it has more leeway than as
 // the CS noun, and can just mean "put into a list for later processing".)
 //
-static void Queue_Mark_Array_Subclass_Deep(REBARR *a)
+static void Queue_Mark_Array_Subclass_Deep(Array* a)
 {
   #if !defined(NDEBUG)
     if (not IS_SER_ARRAY(a))
@@ -168,11 +168,11 @@ static void Queue_Mark_Array_Subclass_Deep(REBARR *a)
     //
     if (SER_FULL(GC_Mark_Stack))
         Extend_Series(GC_Mark_Stack, 8);
-    *SER_AT(REBARR*, GC_Mark_Stack, SER_LEN(GC_Mark_Stack)) = a;
+    *SER_AT(Array*, GC_Mark_Stack, SER_LEN(GC_Mark_Stack)) = a;
     SET_SERIES_LEN(GC_Mark_Stack, SER_LEN(GC_Mark_Stack) + 1); // unterminated
 }
 
-INLINE void Queue_Mark_Array_Deep(REBARR *a) { // plain array
+INLINE void Queue_Mark_Array_Deep(Array* a) { // plain array
     assert(NOT_SER_FLAG(a, ARRAY_FLAG_VARLIST));
     assert(NOT_SER_FLAG(a, ARRAY_FLAG_PARAMLIST));
     assert(NOT_SER_FLAG(a, ARRAY_FLAG_PAIRLIST));
@@ -184,7 +184,7 @@ INLINE void Queue_Mark_Array_Deep(REBARR *a) { // plain array
 }
 
 INLINE void Queue_Mark_Context_Deep(REBCTX *c) { // ARRAY_FLAG_VARLIST
-    REBARR *varlist = CTX_VARLIST(c);
+    Array* varlist = CTX_VARLIST(c);
     assert(
         GET_SER_INFO(varlist, SERIES_INFO_INACCESSIBLE)
         or SERIES_MASK_CONTEXT == (SER(varlist)->header.bits & (
@@ -199,7 +199,7 @@ INLINE void Queue_Mark_Context_Deep(REBCTX *c) { // ARRAY_FLAG_VARLIST
 }
 
 INLINE void Queue_Mark_Action_Deep(REBACT *a) { // ARRAY_FLAG_PARAMLIST
-    REBARR *paramlist = ACT_PARAMLIST(a);
+    Array* paramlist = ACT_PARAMLIST(a);
     assert(
         SERIES_MASK_ACTION == (SER(paramlist)->header.bits & (
             SERIES_MASK_ACTION // these should be set, not the others
@@ -213,7 +213,7 @@ INLINE void Queue_Mark_Action_Deep(REBACT *a) { // ARRAY_FLAG_PARAMLIST
 }
 
 INLINE void Queue_Mark_Map_Deep(REBMAP *m) { // ARRAY_FLAG_PAIRLIST
-    REBARR *pairlist = MAP_PAIRLIST(m);
+    Array* pairlist = MAP_PAIRLIST(m);
     assert(
         ARRAY_FLAG_PAIRLIST == (SER(pairlist)->header.bits & (
             ARRAY_FLAG_VARLIST | ARRAY_FLAG_PAIRLIST | ARRAY_FLAG_PARAMLIST
@@ -263,7 +263,7 @@ INLINE void Queue_Mark_Binding_Deep(const Cell* v) {
 // A singular array, if you know it to be singular, can be marked a little
 // faster by avoiding a queue step for the array node or walk.
 //
-INLINE void Queue_Mark_Singular_Array(REBARR *a) {
+INLINE void Queue_Mark_Singular_Array(Array* a) {
     assert(
         0 == (SER(a)->header.bits & (
             ARRAY_FLAG_VARLIST | ARRAY_FLAG_PAIRLIST | ARRAY_FLAG_PARAMLIST
@@ -381,7 +381,7 @@ static void Queue_Mark_Opt_End_Cell_Deep(const Cell* v)
             // in the first place was so this code wouldn't crash trying to
             // mark it.  So this should probably be used as an opportunity to
             // update the pointer in the cell to some global inaccessible
-            // REBARR, and *not* mark the dead node at all.
+            // Array, and *not* mark the dead node at all.
             //
             Mark_Rebser_Only(s);
             Queue_Mark_Binding_Deep(v); // !!! Review this too, is it needed?
@@ -415,7 +415,7 @@ static void Queue_Mark_Opt_End_Cell_Deep(const Cell* v)
         break; }
 
     case REB_HANDLE: { // See %sys-handle.h
-        REBARR *singular = v->extra.singular;
+        Array* singular = v->extra.singular;
         if (singular == nullptr) {
             //
             // This HANDLE! was created with Init_Handle_Simple.  There is
@@ -635,13 +635,13 @@ static void Propagate_All_GC_Marks(void)
         // Data pointer may change in response to an expansion during
         // Mark_Array_Deep_Core(), so must be refreshed on each loop.
         //
-        REBARR *a = *SER_AT(REBARR*, GC_Mark_Stack, SER_LEN(GC_Mark_Stack));
+        Array* a = *SER_AT(Array*, GC_Mark_Stack, SER_LEN(GC_Mark_Stack));
 
         // Termination is not required in the release build (the length is
         // enough to know where it ends).  But overwrite with trash in debug.
         //
         TRASH_POINTER_IF_DEBUG(
-            *SER_AT(REBARR*, GC_Mark_Stack, SER_LEN(GC_Mark_Stack))
+            *SER_AT(Array*, GC_Mark_Stack, SER_LEN(GC_Mark_Stack))
         );
 
         // We should have marked this series at queueing time to keep it from
@@ -676,13 +676,13 @@ static void Propagate_All_GC_Marks(void)
             // because of the potential for overflowing the C stack with calls
             // to Queue_Mark_Function_Deep.
 
-            REBARR *details = v->payload.action.details;
+            Array* details = v->payload.action.details;
             Queue_Mark_Array_Deep(details);
 
             REBACT *underlying = LINK(a).underlying;
             Queue_Mark_Action_Deep(underlying);
 
-            REBARR *specialty = LINK(details).specialty;
+            Array* specialty = LINK(details).specialty;
             if (GET_SER_FLAG(specialty, ARRAY_FLAG_VARLIST))
                 Queue_Mark_Context_Deep(CTX(specialty));
             else
@@ -723,7 +723,7 @@ static void Propagate_All_GC_Marks(void)
                 assert(IS_FRAME(v));
             }
             else {
-                REBARR *keylist = ARR(keysource);
+                Array* keylist = ARR(keysource);
                 if (IS_FRAME(v)) {
                     assert(GET_SER_FLAG(keylist, ARRAY_FLAG_PARAMLIST));
 
@@ -734,7 +734,7 @@ static void Propagate_All_GC_Marks(void)
                     assert(NOT_SER_FLAG(keylist, ARRAY_FLAG_PARAMLIST));
                     ASSERT_UNREADABLE_IF_DEBUG(ARR_HEAD(keylist));
 
-                    REBARR *ancestor = LINK(keylist).ancestor;
+                    Array* ancestor = LINK(keylist).ancestor;
                     Queue_Mark_Array_Subclass_Deep(ancestor); // maybe keylist
                 }
                 Queue_Mark_Array_Subclass_Deep(keylist);
@@ -816,14 +816,14 @@ static void Propagate_All_GC_Marks(void)
 //
 // http://en.cppreference.com/w/c/variadic
 //
-// Although it's a list of Value*, these call frames have no REBARR series
+// Although it's a list of Value*, these call frames have no Array series
 // behind.  Yet they still need to be enumerated to protect the values coming
 // up in the later EVALUATEs.  But enumerating a C va_list can't be undone.
 // The Value* is lost if it isn't saved, and these frames may be in
 // mid-evaluation.
 //
 // Hence, the garbage collector has to "reify" the remaining portion of the
-// va_list into a REBARR before starting the GC.  Then the rest of the
+// va_list into an Array before starting the GC.  Then the rest of the
 // evaluation happens on that array.
 //
 static void Reify_Any_C_Valist_Frames(void)
@@ -958,7 +958,7 @@ static void Mark_Root_Series(void)
                 if (GET_SER_FLAG(s, ARRAY_FLAG_FILE_LINE))
                     LINK(s).file->header.bits |= NODE_FLAG_MARKED;
 
-                Cell* item = ARR_HEAD(cast(REBARR*, s));
+                Cell* item = ARR_HEAD(cast(Array*, s));
                 for (; NOT_END(item); ++item)
                     Queue_Mark_Value_Deep(item);
             }
@@ -1502,7 +1502,7 @@ REBLEN Recycle_Core(bool shutdown, REBSER *sweeplist)
     // them again, and the memory needs reclaiming.
     //
     while (TG_Reuse) {
-        REBARR *varlist = TG_Reuse;
+        Array* varlist = TG_Reuse;
         TG_Reuse = LINK(TG_Reuse).reuse;
         GC_Kill_Series(SER(varlist)); // no track for Free_Unmanaged_Series()
     }
@@ -1687,7 +1687,7 @@ void Push_Guard_Node(const REBNOD *node)
 // enumerating if there is any chance the GC might run (e.g. if user code
 // is called to process the function list)
 //
-REBARR *Snapshot_All_Actions(void)
+Array* Snapshot_All_Actions(void)
 {
     REBDSP dsp_orig = DSP;
 
@@ -1737,7 +1737,7 @@ void Startup_GC(void)
     // The marking queue used in lieu of recursion to ensure that deeply
     // nested structures don't cause the C stack to overflow.
     //
-    GC_Mark_Stack = Make_Ser(100, sizeof(REBARR*));
+    GC_Mark_Stack = Make_Ser(100, sizeof(Array*));
     TERM_SEQUENCE(GC_Mark_Stack);
 }
 

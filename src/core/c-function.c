@@ -36,7 +36,7 @@
 // Return a block of function words, unbound.
 // Note: skips 0th entry.
 //
-REBARR *List_Func_Words(const Cell* func, bool pure_locals)
+Array* List_Func_Words(const Cell* func, bool pure_locals)
 {
     REBDSP dsp_orig = DSP;
 
@@ -95,9 +95,9 @@ REBARR *List_Func_Words(const Cell* func, bool pure_locals)
 // Return a block of function arg typesets.
 // Note: skips 0th entry.
 //
-REBARR *List_Func_Typesets(Value* func)
+Array* List_Func_Typesets(Value* func)
 {
-    REBARR *array = Make_Arr(VAL_ACT_NUM_PARAMS(func));
+    Array* array = Make_Arr(VAL_ACT_NUM_PARAMS(func));
     Value* typeset = VAL_ACT_PARAMS_HEAD(func);
 
     for (; NOT_END(typeset); typeset++) {
@@ -155,7 +155,7 @@ enum Reb_Spec_Mode {
 // You don't have to use it if you don't want to...and may overwrite the
 // variable.  But it won't be a void at the start.
 //
-REBARR *Make_Paramlist_Managed_May_Fail(
+Array* Make_Paramlist_Managed_May_Fail(
     const Value* spec,
     REBFLGS flags
 ) {
@@ -201,7 +201,7 @@ REBARR *Make_Paramlist_Managed_May_Fail(
 
     bool refinement_seen = false;
 
-    const Cell* value = VAL_ARRAY_AT(spec);
+    const Cell* value = Cell_Array_At(spec);
 
     while (NOT_END(value)) {
         const Cell* item = value; // "faked", e.g. <return> => RETURN:
@@ -290,7 +290,7 @@ REBARR *Make_Paramlist_Managed_May_Fail(
                 Init_Block(
                     DS_TOP,
                     Copy_Array_At_Deep_Managed(
-                        VAL_ARRAY(item),
+                        Cell_Array(item),
                         VAL_INDEX(item),
                         derived
                     )
@@ -312,14 +312,14 @@ REBARR *Make_Paramlist_Managed_May_Fail(
                 typeset = DS_TOP - 2;
 
                 assert(IS_BLOCK(DS_TOP - 1));
-                if (VAL_ARRAY(DS_TOP - 1) != EMPTY_ARRAY)
+                if (Cell_Array(DS_TOP - 1) != EMPTY_ARRAY)
                     fail (Error_Bad_Func_Def_Core(item, VAL_SPECIFIER(spec)));
 
                 REBSPC *derived = Derive_Specifier(VAL_SPECIFIER(spec), item);
                 Init_Block(
                     DS_TOP - 1,
                     Copy_Array_At_Deep_Managed(
-                        VAL_ARRAY(item),
+                        Cell_Array(item),
                         VAL_INDEX(item),
                         derived
                     )
@@ -561,7 +561,7 @@ REBARR *Make_Paramlist_Managed_May_Fail(
 
     // Must make the function "paramlist" even if "empty", for identity.
     //
-    REBARR *paramlist = Make_Arr_Core(num_slots, SERIES_MASK_ACTION);
+    Array* paramlist = Make_Arr_Core(num_slots, SERIES_MASK_ACTION);
 
     if (true) {
         Value* canon = RESET_CELL_EXTRA(
@@ -672,7 +672,7 @@ REBARR *Make_Paramlist_Managed_May_Fail(
     // Only make `parameter-types` if there were blocks in the spec
     //
     if (has_types) {
-        REBARR *types_varlist = Make_Arr_Core(
+        Array* types_varlist = Make_Arr_Core(
             num_slots,
             SERIES_MASK_CONTEXT | NODE_FLAG_MANAGED
         );
@@ -734,7 +734,7 @@ REBARR *Make_Paramlist_Managed_May_Fail(
     // Only make `parameter-notes` if there were strings (besides description)
     //
     if (has_notes) {
-        REBARR *notes_varlist = Make_Arr_Core(
+        Array* notes_varlist = Make_Arr_Core(
             num_slots,
             SERIES_MASK_CONTEXT | NODE_FLAG_MANAGED
         );
@@ -808,11 +808,11 @@ REBARR *Make_Paramlist_Managed_May_Fail(
 // !!! This is semi-redundant with similar functions for Find_Word_In_Array
 // and key finding for objects, review...
 //
-REBLEN Find_Param_Index(REBARR *paramlist, Symbol* symbol)
+REBLEN Find_Param_Index(Array* paramlist, Symbol* symbol)
 {
     Symbol* canon = Canon_Symbol(symbol);  // don't recalculate each time
 
-    Cell* param = ARR_AT(paramlist, 1);
+    Cell* param = Array_At(paramlist, 1);
     REBLEN len = ARR_LEN(paramlist);
 
     REBLEN n;
@@ -842,12 +842,12 @@ REBLEN Find_Param_Index(REBARR *paramlist, Symbol* symbol)
 // RETURN is distinguished from another--the binding data stored in the cell
 // identifies the pointer of the FRAME! to exit).
 //
-// Actions have an associated REBARR of data, accessible via ACT_DETAILS().
+// Actions have an associated Array of data, accessible via ACT_DETAILS().
 // This is where they can store information that will be available when the
 // dispatcher is called.
 //
 REBACT *Make_Action(
-    REBARR *paramlist,
+    Array* paramlist,
     REBNAT dispatcher, // native C function called by Eval_Core
     REBACT *opt_underlying, // optional underlying function
     REBCTX *opt_exemplar, // if provided, should be consistent w/next level
@@ -940,7 +940,7 @@ REBACT *Make_Action(
     // the dispatcher understands it to be, by contract.  Terminate it
     // at the given length implicitly.
 
-    REBARR *details = Make_Arr_Core(details_capacity, NODE_FLAG_MANAGED);
+    Array* details = Make_Arr_Core(details_capacity, NODE_FLAG_MANAGED);
     TERM_ARRAY_LEN(details, details_capacity);
 
     rootparam->payload.action.details = details;
@@ -1014,7 +1014,7 @@ REBCTX *Make_Expired_Frame_Ctx_Managed(REBACT *a)
     // don't pass it in to the allocation...it needs to be set, but will be
     // overridden by SERIES_INFO_INACCESSIBLE.
     //
-    REBARR *varlist = Alloc_Singular(SERIES_FLAG_STACK | NODE_FLAG_MANAGED);
+    Array* varlist = Alloc_Singular(SERIES_FLAG_STACK | NODE_FLAG_MANAGED);
     SET_SER_FLAGS(varlist, SERIES_MASK_CONTEXT);
     SET_SER_INFO(varlist, SERIES_INFO_INACCESSIBLE);
     MISC(varlist).meta = nullptr;
@@ -1056,7 +1056,7 @@ void Get_Maybe_Fake_Action_Body(Value* out, const Value* action)
         // !!! Review what should happen to binding
     }
 
-    REBARR *details = ACT_DETAILS(a);
+    Array* details = ACT_DETAILS(a);
 
     // !!! Should the binding make a difference in the returned body?  It is
     // exposed programmatically via CONTEXT OF.
@@ -1097,10 +1097,10 @@ void Get_Maybe_Fake_Action_Body(Value* out, const Value* action)
             UNUSED(real_body_index);
         }
 
-        REBARR *real_body = VAL_ARRAY(body);
+        Array* real_body = Cell_Array(body);
         assert(GET_SER_INFO(real_body, SERIES_INFO_FROZEN));
 
-        REBARR *maybe_fake_body;
+        Array* maybe_fake_body;
         if (example == nullptr) {
             maybe_fake_body = real_body;
             assert(GET_SER_INFO(maybe_fake_body, SERIES_INFO_FROZEN));
@@ -1109,7 +1109,7 @@ void Get_Maybe_Fake_Action_Body(Value* out, const Value* action)
             // See %sysobj.r for STANDARD/FUNC-BODY and STANDARD/PROC-BODY
             //
             maybe_fake_body = Copy_Array_Shallow_Flags(
-                VAL_ARRAY(example),
+                Cell_Array(example),
                 VAL_SPECIFIER(example),
                 NODE_FLAG_MANAGED
             );
@@ -1119,11 +1119,11 @@ void Get_Maybe_Fake_Action_Body(Value* out, const Value* action)
             // To give it the appearance of executing code in place, we use
             // a GROUP!.
 
-            Cell* slot = ARR_AT(maybe_fake_body, real_body_index); // #BODY
+            Cell* slot = Array_At(maybe_fake_body, real_body_index); // #BODY
             assert(IS_ISSUE(slot));
 
             RESET_VAL_HEADER_EXTRA(slot, REB_GROUP, 0); // clear VAL_FLAG_LINE
-            INIT_VAL_ARRAY(slot, VAL_ARRAY(body));
+            INIT_VAL_ARRAY(slot, Cell_Array(body));
             VAL_INDEX(slot) = 0;
             INIT_BINDING(slot, a); // relative binding
         }
@@ -1219,7 +1219,7 @@ REBACT *Make_Interpreted_Action_May_Fail(
     //
     Value* value = ACT_ARCHETYPE(a);
 
-    REBARR *copy;
+    Array* copy;
     if (VAL_ARRAY_LEN_AT(code) == 0) { // optimize empty body case
 
         if (GET_VAL_FLAG(value, ACTION_FLAG_INVISIBLE)) {
@@ -1267,14 +1267,14 @@ REBACT *Make_Interpreted_Action_May_Fail(
 
     // Favor the spec first, then the body, for file and line information.
     //
-    if (GET_SER_FLAG(VAL_ARRAY(spec), ARRAY_FLAG_FILE_LINE)) {
-        LINK(copy).file = LINK(VAL_ARRAY(spec)).file;
-        MISC(copy).line = MISC(VAL_ARRAY(spec)).line;
+    if (GET_SER_FLAG(Cell_Array(spec), ARRAY_FLAG_FILE_LINE)) {
+        LINK(copy).file = LINK(Cell_Array(spec)).file;
+        MISC(copy).line = MISC(Cell_Array(spec)).line;
         SET_SER_FLAG(copy, ARRAY_FLAG_FILE_LINE);
     }
-    else if (GET_SER_FLAG(VAL_ARRAY(code), ARRAY_FLAG_FILE_LINE)) {
-        LINK(copy).file = LINK(VAL_ARRAY(code)).file;
-        MISC(copy).line = MISC(VAL_ARRAY(code)).line;
+    else if (GET_SER_FLAG(Cell_Array(code), ARRAY_FLAG_FILE_LINE)) {
+        LINK(copy).file = LINK(Cell_Array(code)).file;
+        MISC(copy).line = MISC(Cell_Array(code)).line;
         SET_SER_FLAG(copy, ARRAY_FLAG_FILE_LINE);
     }
     else {
@@ -1291,10 +1291,10 @@ REBACT *Make_Interpreted_Action_May_Fail(
     // that seems to have one identity but then affecting another.
     //
   #if defined(NDEBUG)
-    Deep_Freeze_Array(VAL_ARRAY(body));
+    Deep_Freeze_Array(Cell_Array(body));
   #else
     if (not LEGACY(OPTIONS_UNLOCKED_SOURCE))
-        Deep_Freeze_Array(VAL_ARRAY(body));
+        Deep_Freeze_Array(Cell_Array(body));
   #endif
 
     return a;
@@ -1344,7 +1344,7 @@ REBTYPE(Fail)
 //
 REB_R Generic_Dispatcher(REBFRM *f)
 {
-    REBARR *details = ACT_DETAILS(FRM_PHASE(f));
+    Array* details = ACT_DETAILS(FRM_PHASE(f));
 
     enum Reb_Kind kind = VAL_TYPE(FRM_ARG(f, 1));
     Value* verb = KNOWN(ARR_HEAD(details));
@@ -1366,7 +1366,7 @@ REB_R Generic_Dispatcher(REBFRM *f)
 //
 REB_R Null_Dispatcher(REBFRM *f)
 {
-    REBARR *details = ACT_DETAILS(FRM_PHASE_OR_DUMMY(f));
+    Array* details = ACT_DETAILS(FRM_PHASE_OR_DUMMY(f));
     assert(VAL_LEN_AT(ARR_HEAD(details)) == 0);
     UNUSED(details);
 
@@ -1381,7 +1381,7 @@ REB_R Null_Dispatcher(REBFRM *f)
 //
 REB_R Void_Dispatcher(REBFRM *f)
 {
-    REBARR *details = ACT_DETAILS(FRM_PHASE(f));
+    Array* details = ACT_DETAILS(FRM_PHASE(f));
     assert(VAL_LEN_AT(ARR_HEAD(details)) == 0);
     UNUSED(details);
 
@@ -1396,7 +1396,7 @@ REB_R Void_Dispatcher(REBFRM *f)
 //
 REB_R Datatype_Checker_Dispatcher(REBFRM *f)
 {
-    REBARR *details = ACT_DETAILS(FRM_PHASE(f));
+    Array* details = ACT_DETAILS(FRM_PHASE(f));
     Cell* datatype = ARR_HEAD(details);
     assert(IS_DATATYPE(datatype));
 
@@ -1414,7 +1414,7 @@ REB_R Datatype_Checker_Dispatcher(REBFRM *f)
 //
 REB_R Typeset_Checker_Dispatcher(REBFRM *f)
 {
-    REBARR *details = ACT_DETAILS(FRM_PHASE(f));
+    Array* details = ACT_DETAILS(FRM_PHASE(f));
     Cell* typeset = ARR_HEAD(details);
     assert(IS_TYPESET(typeset));
 
@@ -1431,11 +1431,11 @@ REB_R Typeset_Checker_Dispatcher(REBFRM *f)
 //
 REB_R Unchecked_Dispatcher(REBFRM *f)
 {
-    REBARR *details = ACT_DETAILS(FRM_PHASE(f));
+    Array* details = ACT_DETAILS(FRM_PHASE(f));
     Cell* body = ARR_HEAD(details);
     assert(IS_BLOCK(body) and IS_RELATIVE(body) and VAL_INDEX(body) == 0);
 
-    if (Do_At_Throws(f->out, VAL_ARRAY(body), 0, SPC(f->varlist)))
+    if (Do_At_Throws(f->out, Cell_Array(body), 0, SPC(f->varlist)))
         return R_THROWN;
 
     return f->out;
@@ -1451,11 +1451,11 @@ REB_R Unchecked_Dispatcher(REBFRM *f)
 //
 REB_R Voider_Dispatcher(REBFRM *f)
 {
-    REBARR *details = ACT_DETAILS(FRM_PHASE(f));
+    Array* details = ACT_DETAILS(FRM_PHASE(f));
     Cell* body = ARR_HEAD(details);
     assert(IS_BLOCK(body) and IS_RELATIVE(body) and VAL_INDEX(body) == 0);
 
-    if (Do_At_Throws(f->out, VAL_ARRAY(body), 0, SPC(f->varlist)))
+    if (Do_At_Throws(f->out, Cell_Array(body), 0, SPC(f->varlist)))
         return R_THROWN;
 
     return Init_Void(f->out);
@@ -1472,12 +1472,12 @@ REB_R Voider_Dispatcher(REBFRM *f)
 REB_R Returner_Dispatcher(REBFRM *f)
 {
     REBACT *phase = FRM_PHASE(f);
-    REBARR *details = ACT_DETAILS(phase);
+    Array* details = ACT_DETAILS(phase);
 
     Cell* body = ARR_HEAD(details);
     assert(IS_BLOCK(body) and IS_RELATIVE(body) and VAL_INDEX(body) == 0);
 
-    if (Do_At_Throws(f->out, VAL_ARRAY(body), 0, SPC(f->varlist)))
+    if (Do_At_Throws(f->out, Cell_Array(body), 0, SPC(f->varlist)))
         return R_THROWN;
 
     Value* typeset = ACT_PARAM(phase, ACT_NUM_PARAMS(phase));
@@ -1504,7 +1504,7 @@ REB_R Returner_Dispatcher(REBFRM *f)
 //
 REB_R Elider_Dispatcher(REBFRM *f)
 {
-    REBARR *details = ACT_DETAILS(FRM_PHASE(f));
+    Array* details = ACT_DETAILS(FRM_PHASE(f));
 
     Cell* body = ARR_HEAD(details);
     assert(IS_BLOCK(body) and IS_RELATIVE(body) and VAL_INDEX(body) == 0);
@@ -1515,7 +1515,7 @@ REB_R Elider_Dispatcher(REBFRM *f)
     DECLARE_VALUE (dummy);
     SET_END(dummy);
 
-    if (Do_At_Throws(dummy, VAL_ARRAY(body), 0, SPC(f->varlist))) {
+    if (Do_At_Throws(dummy, Cell_Array(body), 0, SPC(f->varlist))) {
         Move_Value(f->out, dummy); // can't return a local variable
         return R_THROWN;
     }
@@ -1532,7 +1532,7 @@ REB_R Elider_Dispatcher(REBFRM *f)
 //
 REB_R Commenter_Dispatcher(REBFRM *f)
 {
-    REBARR *details = ACT_DETAILS(FRM_PHASE(f));
+    Array* details = ACT_DETAILS(FRM_PHASE(f));
     Cell* body = ARR_HEAD(details);
     assert(VAL_LEN_AT(body) == 0);
     UNUSED(body);
@@ -1555,7 +1555,7 @@ REB_R Commenter_Dispatcher(REBFRM *f)
 //
 REB_R Hijacker_Dispatcher(REBFRM *f)
 {
-    REBARR *details = ACT_DETAILS(FRM_PHASE(f));
+    Array* details = ACT_DETAILS(FRM_PHASE(f));
     Cell* hijacker = ARR_HEAD(details);
 
     // We need to build a new frame compatible with the hijacker, and
@@ -1575,11 +1575,11 @@ REB_R Hijacker_Dispatcher(REBFRM *f)
 //
 REB_R Adapter_Dispatcher(REBFRM *f)
 {
-    REBARR *details = ACT_DETAILS(FRM_PHASE(f));
+    Array* details = ACT_DETAILS(FRM_PHASE(f));
     assert(ARR_LEN(details) == 2);
 
-    Cell* prelude = ARR_AT(details, 0);
-    Value* adaptee = KNOWN(ARR_AT(details, 1));
+    Cell* prelude = Array_At(details, 0);
+    Value* adaptee = KNOWN(Array_At(details, 1));
 
     // The first thing to do is run the prelude code, which may throw.  If it
     // does throw--including a RETURN--that means the adapted function will
@@ -1592,7 +1592,7 @@ REB_R Adapter_Dispatcher(REBFRM *f)
     DECLARE_VALUE (dummy);
     if (Do_At_Throws(
         dummy,
-        VAL_ARRAY(prelude),
+        Cell_Array(prelude),
         VAL_INDEX(prelude),
         SPC(f->varlist)
     )){
@@ -1614,12 +1614,12 @@ REB_R Adapter_Dispatcher(REBFRM *f)
 //
 REB_R Encloser_Dispatcher(REBFRM *f)
 {
-    REBARR *details = ACT_DETAILS(FRM_PHASE(f));
+    Array* details = ACT_DETAILS(FRM_PHASE(f));
     assert(ARR_LEN(details) == 2);
 
-    Value* inner = KNOWN(ARR_AT(details, 0)); // same args as f
+    Value* inner = KNOWN(Array_At(details, 0)); // same args as f
     assert(IS_ACTION(inner));
-    Value* outer = KNOWN(ARR_AT(details, 1)); // takes 1 arg (a FRAME!)
+    Value* outer = KNOWN(Array_At(details, 1)); // takes 1 arg (a FRAME!)
     assert(IS_ACTION(outer));
 
     assert(GET_SER_FLAG(f->varlist, SERIES_FLAG_STACK));
@@ -1678,8 +1678,8 @@ REB_R Encloser_Dispatcher(REBFRM *f)
 //
 REB_R Chainer_Dispatcher(REBFRM *f)
 {
-    REBARR *details = ACT_DETAILS(FRM_PHASE(f));
-    REBARR *pipeline = VAL_ARRAY(ARR_HEAD(details));
+    Array* details = ACT_DETAILS(FRM_PHASE(f));
+    Array* pipeline = Cell_Array(ARR_HEAD(details));
 
     // The post-processing pipeline has to be "pushed" so it is not forgotten.
     // Go in reverse order, so the function to apply last is at the bottom of
@@ -1730,7 +1730,7 @@ bool Get_If_Word_Or_Path_Throws(
         if (Eval_Path_Throws_Core(
             out,
             opt_name_out, // requesting says we run functions (not GET-PATH!)
-            VAL_ARRAY(v),
+            Cell_Array(v),
             VAL_INDEX(v),
             derived,
             nullptr,  // `setval`: null means don't treat as SET-PATH!

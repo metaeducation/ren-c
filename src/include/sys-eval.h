@@ -32,7 +32,7 @@
 // written such that a longjmp up to a failure handler above it can run
 // safely and clean up even though intermediate stacks have vanished.
 //
-// Ren-C can run the evaluator across a REBARR-style series of input based on
+// Ren-C can run the evaluator across a Array-style series of input based on
 // index.  It can also enumerate through C's `va_list`, providing the ability
 // to pass pointers as Value* to comma-separated input at the source level.
 //
@@ -189,7 +189,7 @@ INLINE void Push_Frame_Core(REBFRM *f)
 
     TRASH_POINTER_IF_DEBUG(f->varlist); // must Try_Reuse_Varlist() or fill in
 
-    // If the source for the frame is a REBARR*, then we want to temporarily
+    // If the source for the frame is a Array*, then we want to temporarily
     // lock that array against mutations.
     //
     if (FRM_IS_VALIST(f)) {
@@ -245,7 +245,7 @@ INLINE void Reuse_Varlist_If_Available(REBFRM *f) {
 
 INLINE void Push_Frame_At(
     REBFRM *f,
-    REBARR *array,
+    Array* array,
     REBLEN index,
     REBSPC *specifier,
     REBFLGS flags
@@ -253,7 +253,7 @@ INLINE void Push_Frame_At(
     f->flags = Endlike_Header(flags);
 
     f->gotten = nullptr; // Eval_Core_Throws() must fetch for REB_WORD, etc.
-    SET_FRAME_VALUE(f, ARR_AT(array, index));
+    SET_FRAME_VALUE(f, Array_At(array, index));
 
     f->source->vaptr = nullptr;
     f->source->array = array;
@@ -276,7 +276,7 @@ INLINE void Push_Frame_At(
 INLINE void Push_Frame(REBFRM *f, const Value* v)
 {
     Push_Frame_At(
-        f, VAL_ARRAY(v), VAL_INDEX(v), VAL_SPECIFIER(v), DO_MASK_NONE
+        f, Cell_Array(v), VAL_INDEX(v), VAL_SPECIFIER(v), DO_MASK_NONE
     );
 }
 
@@ -303,7 +303,7 @@ INLINE void Set_Frame_Detected_Fetch(
         goto detect;
     }
 
-    REBARR *a; // ^--goto
+    Array* a; // ^--goto
     a = Singular_From_Cell(f->value);
     if (NOT_SER_INFO(a, SERIES_INFO_API_RELEASE)) {
         if (opt_lookback)
@@ -420,7 +420,7 @@ INLINE void Set_Frame_Detected_Fetch(
             goto detect;
         }
 
-        REBARR *reified = Pop_Stack_Values_Keep_Eval_Flip(dsp_orig);
+        Array* reified = Pop_Stack_Values_Keep_Eval_Flip(dsp_orig);
 
         // !!! We really should be able to free this array without managing it
         // when we're done with it, though that can get a bit complicated if
@@ -438,7 +438,7 @@ INLINE void Set_Frame_Detected_Fetch(
         break; }
 
       case DETECTED_AS_SERIES: { // "instructions" like rebEval(), rebUneval()
-        REBARR *instruction = ARR(m_cast(void*, p));
+        Array* instruction = ARR(m_cast(void*, p));
 
         // The instruction should be unmanaged, and will be freed on the next
         // entry to this routine (optionally copying out its contents into
@@ -541,11 +541,11 @@ INLINE void Fetch_Next_In_Frame(
         // We assume the ->pending value lives in a source array, and can
         // just be incremented since the array has SERIES_INFO_HOLD while it
         // is being executed hence won't be relocated or modified.  This
-        // means the release build doesn't need to call ARR_AT().
+        // means the release build doesn't need to call Array_At().
         //
         assert(
             f->source->array // incrementing plain array of cells
-            or f->source->pending == ARR_AT(f->source->array, f->source->index)
+            or f->source->pending == Array_At(f->source->array, f->source->index)
         );
 
         if (opt_lookback)
@@ -868,7 +868,7 @@ INLINE bool Eval_Step_In_Subframe_Throws(
 INLINE REBIXO Eval_Array_At_Core(
     Value* out, // must be initialized, marked stale if empty / all invisible
     const Cell* opt_first, // non-array element to kick off execution with
-    REBARR *array,
+    Array* array,
     REBLEN index,
     REBSPC *specifier, // must match array, but also opt_first if relative
     REBFLGS flags // DO_FLAG_TO_END, DO_FLAG_EXPLICIT_EVALUATE, etc.
@@ -882,11 +882,11 @@ INLINE REBIXO Eval_Array_At_Core(
     if (opt_first) {
         SET_FRAME_VALUE(f, opt_first);
         f->source->index = index;
-        f->source->pending = ARR_AT(array, index);
+        f->source->pending = Array_At(array, index);
         assert(NOT_END(f->value));
     }
     else {
-        SET_FRAME_VALUE(f, ARR_AT(array, index));
+        SET_FRAME_VALUE(f, Array_At(array, index));
         f->source->index = index + 1;
         f->source->pending = f->value + 1;
         if (IS_END(f->value))
@@ -987,7 +987,7 @@ INLINE void Reify_Va_To_Array_In_Frame(
     f->flags.bits |= DO_FLAG_TOOK_FRAME_HOLD;
 
     if (truncated)
-        SET_FRAME_VALUE(f, ARR_AT(f->source->array, 1)); // skip `--optimized--`
+        SET_FRAME_VALUE(f, Array_At(f->source->array, 1)); // skip `--optimized--`
     else
         SET_FRAME_VALUE(f, ARR_HEAD(f->source->array));
 

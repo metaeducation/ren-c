@@ -514,7 +514,7 @@ void Startup_Interning(void)
 // It also creates a table for mapping from SYM_XXX => Symbol series.  This
 // is used e.g. by Canon(SYM_XXX) to get the string name for a symbol.
 //
-void Startup_Symbols(REBARR *words)
+void Startup_Symbols(Array* words)
 {
     PG_Symbol_Canons = Make_Ser_Core(
         1 + ARR_LEN(words), // 1 + => extra trash at head for SYM_0
@@ -627,7 +627,7 @@ void INIT_WORD_INDEX_Extra_Checks_Debug(Cell* v, REBLEN i)
 {
     assert(IS_WORD_BOUND(v));
     REBNOD *binding = VAL_BINDING(v);
-    REBARR *keysource;
+    Array* keysource;
     if (NOT_SER_FLAG(binding, NODE_FLAG_MANAGED))
         keysource = ACT_PARAMLIST(FRM_PHASE(FRM(LINK(binding).keysource)));
     else if (GET_SER_FLAG(binding, ARRAY_FLAG_PARAMLIST))
@@ -635,7 +635,7 @@ void INIT_WORD_INDEX_Extra_Checks_Debug(Cell* v, REBLEN i)
     else
         keysource = CTX_KEYLIST(CTX(binding));
     assert(Are_Synonyms(
-        Key_Symbol(ARR_AT(keysource, i)),
+        Key_Symbol(Array_At(keysource, i)),
         Cell_Word_Symbol(v)
     ));
 }

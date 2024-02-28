@@ -28,7 +28,7 @@
 //
 // API REBVALs live in singular arrays (which fit inside a REBSER node, that
 // is the size of 2 REBVALs).  But they aren't kept alive by references from
-// other values, like the way that a REBARR used by a BLOCK! is kept alive.
+// other values, like the way that an Array used by a BLOCK! is kept alive.
 // They are kept alive by being roots (currently implemented with a flag
 // NODE_FLAG_ROOT, but it could also mean living in a distinct pool from
 // other series nodes).
@@ -64,7 +64,7 @@ INLINE bool Is_Api_Value(const Cell* v) {
 //
 INLINE Value* Alloc_Value(void)
 {
-    REBARR *a = Alloc_Singular(NODE_FLAG_ROOT | NODE_FLAG_MANAGED);
+    Array* a = Alloc_Singular(NODE_FLAG_ROOT | NODE_FLAG_MANAGED);
 
     // Giving the cell itself NODE_FLAG_ROOT lets a Value* be discerned as
     // either an API handle or not.  The flag is not copied by Move_Value().
@@ -80,7 +80,7 @@ INLINE void Free_Value(Value* v)
 {
     assert(Is_Api_Value(v));
 
-    REBARR *a = Singular_From_Cell(v);
+    Array* a = Singular_From_Cell(v);
     TRASH_CELL_IF_DEBUG(ARR_SINGLE(a));
     GC_Kill_Series(SER(a));
 }
@@ -96,7 +96,7 @@ INLINE void Free_Value(Value* v)
 // Instructions should be returned as a const void *, in order to discourage
 // using these anywhere besides as arguments to a variadic API like rebValue().
 //
-INLINE REBARR *Alloc_Instruction(void) {
+INLINE Array* Alloc_Instruction(void) {
     REBSER *s = Alloc_Series_Node(
         SERIES_FLAG_FIXED_SIZE // not tracked as stray manual, but unmanaged
     );
@@ -112,7 +112,7 @@ INLINE REBARR *Alloc_Instruction(void) {
     return ARR(s);
 }
 
-INLINE void Free_Instruction(REBARR *instruction) {
+INLINE void Free_Instruction(Array* instruction) {
     assert(WIDE_BYTE_OR_0(SER(instruction)) == 0);
     TRASH_CELL_IF_DEBUG(ARR_SINGLE(instruction));
     Free_Node(SER_POOL, instruction);

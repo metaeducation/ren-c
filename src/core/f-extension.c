@@ -92,7 +92,7 @@ DECLARE_NATIVE(builtin_extensions)
     // all the collated information that would be needed to initialize and
     // use the extension (but don't act on the information yet!)
 
-    REBARR *list = Make_Arr(NUM_BUILTIN_EXTENSIONS);
+    Array* list = Make_Arr(NUM_BUILTIN_EXTENSIONS);
     REBLEN i;
     for (i = 0; i != NUM_BUILTIN_EXTENSIONS; ++i) {
         COLLATE_CFUNC *collator = Builtin_Extension_Collators[i];
@@ -135,12 +135,12 @@ DECLARE_NATIVE(load_extension)
     // and shutdown functions, as well as native specs and Rebol script
     // source, plus the REBNAT functions for each native.
     //
-    REBARR *details;
+    Array* details;
 
     if (IS_BLOCK(ARG(where))) { // It's one of rebBuiltinExtensions()
         Init_Blank(lib);
         Init_Blank(path);
-        details = VAL_ARRAY(ARG(where)); // already "collated"
+        details = Cell_Array(ARG(where)); // already "collated"
     }
     else { // It's a DLL, must locate and call its RX_Collate() function
         assert(IS_FILE(ARG(where)));
@@ -167,7 +167,7 @@ DECLARE_NATIVE(load_extension)
 
         Value* details_block = (*cast(COLLATE_CFUNC*, collator))();
         assert(IS_BLOCK(details_block));
-        details = VAL_ARRAY(details_block);
+        details = Cell_Array(details_block);
         rebRelease(details_block);
     }
 
@@ -184,9 +184,15 @@ DECLARE_NATIVE(load_extension)
     // in the original extension model was very twisty and was a barrier
     // to enhancement.  So trying a monolithic rewrite for starters.
 
-    Value* script_compressed = KNOWN(ARR_AT(details, IDX_COLLATOR_SCRIPT));
-    Value* specs_compressed = KNOWN(ARR_AT(details, IDX_COLLATOR_SPECS));
-    Value* dispatchers_handle = KNOWN(ARR_AT(details, IDX_COLLATOR_DISPATCHERS));
+    Value* script_compressed = KNOWN(
+        Array_At(details, IDX_COLLATOR_SCRIPT)
+    );
+    Value* specs_compressed = KNOWN(
+        Array_At(details, IDX_COLLATOR_SPECS)
+    );
+    Value* dispatchers_handle = KNOWN(
+        Array_At(details, IDX_COLLATOR_DISPATCHERS)
+    );
 
     REBLEN num_natives = VAL_HANDLE_LEN(dispatchers_handle);
     REBNAT *dispatchers = VAL_HANDLE_POINTER(REBNAT, dispatchers_handle);
@@ -200,7 +206,7 @@ DECLARE_NATIVE(load_extension)
         Canon(SYM_GZIP)
     );
 
-    REBARR *specs = Scan_UTF8_Managed(
+    Array* specs = Scan_UTF8_Managed(
         Canon(SYM___ANONYMOUS__), // !!! Name of DLL if available?
         specs_utf8,
         specs_size
@@ -287,7 +293,7 @@ DECLARE_NATIVE(load_extension)
         }
     }
 
-    REBARR *exports_arr = Pop_Stack_Values(dsp_orig);
+    Array* exports_arr = Pop_Stack_Values(dsp_orig);
     DECLARE_VALUE (exports);
     Init_Block(exports, exports_arr);
     PUSH_GC_GUARD(exports);
@@ -455,19 +461,19 @@ Value* rebCollateExtension_internal(
     REBNAT dispatchers[], REBLEN dispatchers_len
 ) {
 
-    REBARR *a = Make_Arr(IDX_COLLATOR_MAX); // details
+    Array* a = Make_Arr(IDX_COLLATOR_MAX); // details
     Init_Handle_Simple(
-        ARR_AT(a, IDX_COLLATOR_SCRIPT),
+        Array_At(a, IDX_COLLATOR_SCRIPT),
         m_cast(Byte*, script_compressed), // !!! by contract, don't change!
         script_compressed_len
     );
     Init_Handle_Simple(
-        ARR_AT(a, IDX_COLLATOR_SPECS),
+        Array_At(a, IDX_COLLATOR_SPECS),
         m_cast(Byte*, specs_compressed), // !!! by contract, don't change!
         specs_compressed_len
     );
     Init_Handle_Simple(
-        ARR_AT(a, IDX_COLLATOR_DISPATCHERS),
+        Array_At(a, IDX_COLLATOR_DISPATCHERS),
         dispatchers,
         dispatchers_len
     );

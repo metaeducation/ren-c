@@ -118,7 +118,7 @@ void Protect_Series(REBSER *s, REBLEN index, REBFLGS flags)
 
     Flip_Series_To_Black(s); // recursion protection
 
-    Cell* val = ARR_AT(ARR(s), index);
+    Cell* val = Array_At(ARR(s), index);
     for (; NOT_END(val); val++)
         Protect_Value(val, flags);
 }
@@ -224,7 +224,7 @@ static REB_R Protect_Unprotect_Core(REBFRM *frame_, REBFLGS flags)
     if (IS_BLOCK(value)) {
         if (REF(words)) {
             Cell* val;
-            for (val = VAL_ARRAY_AT(value); NOT_END(val); val++) {
+            for (val = Cell_Array_At(value); NOT_END(val); val++) {
                 DECLARE_VALUE (word); // need binding, can't pass Cell
                 Derelativize(word, val, VAL_SPECIFIER(value));
                 Protect_Word_Value(word, flags);  // will unmark if deep
@@ -237,7 +237,7 @@ static REB_R Protect_Unprotect_Core(REBFRM *frame_, REBFLGS flags)
 
             DECLARE_VALUE (safe);
 
-            for (item = VAL_ARRAY_AT(value); NOT_END(item); ++item) {
+            for (item = Cell_Array_At(value); NOT_END(item); ++item) {
                 if (IS_WORD(item)) {
                     //
                     // Since we *are* PROTECT we allow ourselves to get mutable
@@ -365,7 +365,7 @@ bool Is_Value_Immutable(const Cell* v) {
     }
 
     if (ANY_ARRAY(v))
-        return Is_Array_Deeply_Frozen(VAL_ARRAY(v));
+        return Is_Array_Deeply_Frozen(Cell_Array(v));
 
     if (ANY_CONTEXT(v))
         return Is_Context_Deeply_Frozen(VAL_CONTEXT(v));
@@ -409,9 +409,9 @@ void Ensure_Value_Immutable(const Cell* v, REBSER *opt_locker) {
         return;
 
     if (ANY_ARRAY(v)) {
-        Deep_Freeze_Array(VAL_ARRAY(v));
+        Deep_Freeze_Array(Cell_Array(v));
         if (opt_locker)
-            SET_SER_INFO(VAL_ARRAY(v), SERIES_INFO_AUTO_LOCKED);
+            SET_SER_INFO(Cell_Array(v), SERIES_INFO_AUTO_LOCKED);
     }
     else if (ANY_CONTEXT(v)) {
         Deep_Freeze_Context(VAL_CONTEXT(v));
@@ -472,7 +472,7 @@ DECLARE_NATIVE(lock)
                 D_OUT,
                 VAL_TYPE(v),
                 Copy_Array_Deep_Managed(
-                    VAL_ARRAY(v),
+                    Cell_Array(v),
                     VAL_SPECIFIER(v)
                 ),
                 VAL_INDEX(v)

@@ -219,7 +219,7 @@ bool Either_Test_Core_Throws(
         return false;
 
     case REB_BLOCK: {
-        Cell* item = VAL_ARRAY_AT(test);
+        Cell* item = Cell_Array_At(test);
         if (IS_END(item)) {
             //
             // !!! If the test is just [], what's that?  People aren't likely
@@ -1006,7 +1006,7 @@ DECLARE_NATIVE(switch)
 
         if (Do_At_Throws( // it's a match, so run the BLOCK!
             D_OUT,
-            VAL_ARRAY(f->value),
+            Cell_Array(f->value),
             VAL_INDEX(f->value),
             f->specifier
         )){
@@ -1192,7 +1192,7 @@ DECLARE_NATIVE(catch)
             //
             // Test all the words in the block for a match to catch
 
-            Cell* candidate = VAL_ARRAY_AT(ARG(names));
+            Cell* candidate = Cell_Array_At(ARG(names));
             for (; NOT_END(candidate); candidate++) {
                 //
                 // !!! Should we test a typeset for illegal name types?
@@ -1233,11 +1233,11 @@ DECLARE_NATIVE(catch)
   was_caught:
 
     if (REF(name) or REF(any)) {
-        REBARR *a = Make_Arr(2);
+        Array* a = Make_Arr(2);
 
-        CATCH_THROWN(ARR_AT(a, 1), D_OUT); // thrown value--may be null!
-        Move_Value(ARR_AT(a, 0), D_OUT); // throw name (thrown bit clear)
-        if (IS_NULLED(ARR_AT(a, 1)))
+        CATCH_THROWN(Array_At(a, 1), D_OUT); // thrown value--may be null!
+        Move_Value(Array_At(a, 0), D_OUT); // throw name (thrown bit clear)
+        if (IS_NULLED(Array_At(a, 1)))
             TERM_ARRAY_LEN(a, 1); // trim out null value (illegal in block)
         else
             TERM_ARRAY_LEN(a, 2);

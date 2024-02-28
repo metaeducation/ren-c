@@ -59,7 +59,7 @@ void Startup_Data_Stack(REBLEN size)
     // initial stack size.  It requires you to be on an END to run.
     //
     DS_Index = 1;
-    DS_Movable_Top = KNOWN(ARR_AT(DS_Array, DS_Index)); // can't push RELVALs
+    DS_Movable_Top = KNOWN(Array_At(DS_Array, DS_Index)); // can't push RELVALs
     Expand_Data_Stack_May_Fail(size);
 
     // Now drop the hypothetical thing pushed that triggered the expand.
@@ -110,7 +110,7 @@ void Startup_Frame_Stack(void)
 
     // It's too early to be using Make_Paramlist_Managed_May_Fail()
     //
-    REBARR *paramlist = Make_Arr_Core(
+    Array* paramlist = Make_Arr_Core(
         1,
         NODE_FLAG_MANAGED | SERIES_MASK_ACTION
     );
@@ -240,8 +240,8 @@ REBCTX *Get_Context_From_Stack(void)
     }
   #endif
 
-    REBARR *details = ACT_DETAILS(phase);
-    Value* context = KNOWN(ARR_AT(details, 1));
+    Array* details = ACT_DETAILS(phase);
+    Value* context = KNOWN(Array_At(details, 1));
     return VAL_CONTEXT(context);
 }
 
@@ -288,7 +288,7 @@ void Expand_Data_Stack_May_Fail(REBLEN amount)
     // Update the pointer used for fast access to the top of the stack that
     // likely was moved by the above allocation (needed before using DS_TOP)
     //
-    DS_Movable_Top = cast(Value*, ARR_AT(DS_Array, DS_Index));
+    DS_Movable_Top = cast(Value*, Array_At(DS_Array, DS_Index));
 
     // We fill in the data stack with "GC safe trash" (which is void in the
     // release build, but will raise an alarm if VAL_TYPE() called on it in
@@ -320,9 +320,9 @@ void Expand_Data_Stack_May_Fail(REBLEN amount)
 //
 // Pops computed values from the stack to make a new ARRAY.
 //
-REBARR *Pop_Stack_Values_Core(REBDSP dsp_start, REBFLGS flags)
+Array* Pop_Stack_Values_Core(REBDSP dsp_start, REBFLGS flags)
 {
-    REBARR *array = Copy_Values_Len_Shallow_Core(
+    Array* array = Copy_Values_Len_Shallow_Core(
         DS_AT(dsp_start + 1), // start somewhere in the stack, end at DS_TOP
         SPECIFIED, // data stack should be fully specified--no relative values
         DSP - dsp_start, // len
@@ -342,13 +342,13 @@ REBARR *Pop_Stack_Values_Core(REBDSP dsp_start, REBFLGS flags)
 //
 void Pop_Stack_Values_Into(Value* into, REBDSP dsp_start) {
     REBLEN len = DSP - dsp_start;
-    Value* values = KNOWN(ARR_AT(DS_Array, dsp_start + 1));
+    Value* values = KNOWN(Array_At(DS_Array, dsp_start + 1));
 
     assert(ANY_ARRAY(into));
-    FAIL_IF_READ_ONLY_ARRAY(VAL_ARRAY(into));
+    FAIL_IF_READ_ONLY_ARRAY(Cell_Array(into));
 
     VAL_INDEX(into) = Insert_Series(
-        SER(VAL_ARRAY(into)),
+        SER(Cell_Array(into)),
         VAL_INDEX(into),
         cast(Byte*, values), // stack only holds fully specified REBVALs
         len // multiplied by width (sizeof(Cell)) in Insert_Series

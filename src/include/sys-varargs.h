@@ -91,7 +91,7 @@ INLINE bool Is_Block_Style_Varargs(
     // filled by the evaluator on a <...> parameter.  Should be a singular
     // array with one BLOCK!, that is the actual array and index to advance.
     //
-    REBARR *array1 = ARR(vararg->extra.binding);
+    Array* array1 = ARR(vararg->extra.binding);
     *shared_out = KNOWN(ARR_HEAD(array1));
     assert(
         IS_END(*shared_out)
@@ -140,8 +140,8 @@ INLINE const Value* Param_For_Varargs_Maybe_Null(const Cell* v) {
 
     REBACT *phase = v->payload.varargs.phase;
     if (phase) {
-        REBARR *paramlist = ACT_PARAMLIST(phase);
-        return KNOWN(ARR_AT(paramlist, v->payload.varargs.param_offset + 1));
+        Array* paramlist = ACT_PARAMLIST(phase);
+        return KNOWN(Array_At(paramlist, v->payload.varargs.param_offset + 1));
     }
 
     // A vararg created from a block AND never passed as an argument so no

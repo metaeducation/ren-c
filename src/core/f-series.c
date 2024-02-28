@@ -263,8 +263,8 @@ REB_R Series_Common_Action_Maybe_Unhandled(
 //
 REBINT Cmp_Array(const Cell* sval, const Cell* tval, bool is_case)
 {
-    Cell* s = VAL_ARRAY_AT(sval);
-    Cell* t = VAL_ARRAY_AT(tval);
+    Cell* s = Cell_Array_At(sval);
+    Cell* t = Cell_Array_At(tval);
 
     if (C_STACK_OVERFLOWING(&s))
         Fail_Stack_Overflow();
@@ -436,7 +436,7 @@ chkDecimal:
 // Simple search for a value in an array. Return the index of
 // the value or the TAIL index if not found.
 //
-REBLEN Find_In_Array_Simple(REBARR *array, REBLEN index, const Cell* target)
+REBLEN Find_In_Array_Simple(Array* array, REBLEN index, const Cell* target)
 {
     Cell* value = ARR_HEAD(array);
 
