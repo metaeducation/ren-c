@@ -247,21 +247,6 @@ INLINE void Queue_Mark_Binding_Deep(const Cell* v) {
 
     if (binding->header.bits & NODE_FLAG_MANAGED)
         Queue_Mark_Array_Subclass_Deep(ARR(binding));
-    else {
-        // If a stack cell is holding onto an unmanaged stack-based pointer,
-        // it's assumed the lifetime is taken care of by other means and
-        // the GC does not need to be involved.  But only stack cells are
-        // allowed to do this.
-        //
-      #if !defined(NDEBUG)
-        if (
-            NOT_VAL_FLAG(v, CELL_FLAG_STACK)
-            and NOT_VAL_FLAG(v, CELL_FLAG_TRANSIENT)
-        ){
-            panic (v);
-        }
-      #endif
-    }
 }
 
 // A singular array, if you know it to be singular, can be marked a little
@@ -937,8 +922,19 @@ static void Mark_Root_Series(void)
             }
 
             if (IS_SER_ARRAY(s)) {
-                if (s->header.bits & (NODE_FLAG_MANAGED | NODE_FLAG_STACK))
+                if (s->header.bits & NODE_FLAG_MANAGED)
                     continue; // BLOCK!, Mark_Frame_Stack_Deep() etc. mark it
+
+                if (s->header.bits & ARRAY_FLAG_VARLIST) {
+                    //
+                    // Legal when unmanaged varlists are held onto by
+                    // REBFRM*, and marked by them.  We check for that by
+                    // whether the keysource points to a frame (cell bit
+                    // set in node).
+                    //
+                    assert(LINK(s).keysource->header.bits & NODE_FLAG_CELL);
+                    continue;
+                }
 
                 // This means someone did something like Make_Arr() and then
                 // ran an evaluation before referencing it somewhere from the
@@ -950,8 +946,7 @@ static void Mark_Root_Series(void)
                 // Manage and use PUSH_GC_GUARD and DROP_GC_GUARD on them.
                 //
                 assert(
-                    NOT_SER_FLAG(s, ARRAY_FLAG_VARLIST)
-                    and NOT_SER_FLAG(s, ARRAY_FLAG_PARAMLIST)
+                    NOT_SER_FLAG(s, ARRAY_FLAG_PARAMLIST)
                     and NOT_SER_FLAG(s, ARRAY_FLAG_PAIRLIST)
                 );
 
@@ -1214,12 +1209,6 @@ static void Mark_Frame_Stack_Deep(void)
 
         Value* arg;
         for (arg = FRM_ARGS_HEAD(f); NOT_END(param); ++param, ++arg) {
-            //
-            // At time of writing, all frame storage is in stack cells...not
-            // varlists.
-            //
-            assert(arg->header.bits & CELL_FLAG_STACK);
-
             if (param == f->param) {
                 //
                 // When param and f->param match, that means that arg is the

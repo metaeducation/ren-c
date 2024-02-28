@@ -333,13 +333,6 @@ void Rebind_Values_Deep(
                 // BIND to an object must be performed, or METHOD should be
                 // used to do it implicitly.
             }
-            else if (GET_SER_FLAG(binding, SERIES_FLAG_STACK)) {
-                //
-                // Leave bindings to frame alone, e.g. RETURN's definitional
-                // reference...may be an unnecessary optimization as they
-                // wouldn't match any derivation since there are no "derived
-                // frames" (would that ever make sense?)
-            }
             else {
                 REBCTX *stored = CTX(binding);
                 if (Is_Overriding_Context(stored, dst))

@@ -63,7 +63,6 @@
 
         REBCTX *c = CTX(p);
         assert(CTX_TYPE(c) == REB_FRAME);
-        assert(GET_SER_FLAG(c, SERIES_FLAG_STACK));
 
         // Note: May be managed or unamanged.
 
@@ -82,7 +81,6 @@
         //
         REBCTX *c = CTX(v->extra.binding);
         assert(CTX_TYPE(c) == REB_FRAME); // may be inaccessible
-        assert(GET_SER_FLAG(c, SERIES_FLAG_STACK));
         return cast(REBSPC*, c);
     }
 #endif

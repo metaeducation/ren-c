@@ -554,7 +554,7 @@ Value* Alloc_Pairing(void) {
     Value* paired = cast(Value*, Make_Node(PAR_POOL)); // 2x Cell size
     Value* key = PAIRING_KEY(paired);
 
-    Prep_Non_Stack_Cell(paired);
+    Erase_Cell(paired);
     TRASH_CELL_IF_DEBUG(paired);
 
     // Client will need to put *something* in the key slot (accessed with
@@ -564,7 +564,7 @@ Value* Alloc_Pairing(void) {
     //
     // Init_Pairing_Key_Owner is one option.
     //
-    Prep_Non_Stack_Cell(key);
+    Erase_Cell(key);
     TRASH_CELL_IF_DEBUG(key);
 
     return paired;
@@ -733,7 +733,7 @@ void Expand_Series(REBSER *s, REBLEN index, REBLEN delta)
             // but when it is this will be useful.
             //
             for (index = 0; index < delta; index++)
-                Prep_Non_Stack_Cell(Array_At(ARR(s), index));
+                Erase_Cell(Array_At(ARR(s), index));
         }
       #endif
         return;
@@ -782,7 +782,7 @@ void Expand_Series(REBSER *s, REBLEN index, REBLEN delta)
             //
             while (delta != 0) {
                 --delta;
-                Prep_Non_Stack_Cell(Array_At(ARR(s), index + delta));
+                Erase_Cell(Array_At(ARR(s), index + delta));
             }
         }
       #endif

@@ -107,7 +107,7 @@ INLINE Array* Alloc_Instruction(void) {
             | SERIES_INFO_API_RELEASE
     );
     SER_CELL(s)->header.bits =
-        CELL_MASK_NON_STACK_END | NODE_FLAG_ROOT;
+        CELL_MASK_ERASE_END | NODE_FLAG_ROOT;
     TRACK_CELL_IF_DEBUG(SER_CELL(s), "<<instruction>>", 0);
     return ARR(s);
 }

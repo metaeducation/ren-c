@@ -101,7 +101,7 @@ void Startup_Frame_Stack(void)
     TRASH_POINTER_IF_DEBUG(TG_Frame_Source_End.pending);
 
     REBFRM *f = ALLOC(REBFRM); // needs dynamic allocation
-    Prep_Stack_Cell(FRM_CELL(f));
+    Erase_Cell(FRM_CELL(f));
     Init_Unreadable_Blank(FRM_CELL(f));
 
     f->out = m_cast(Value*, END_NODE); // should not be written
@@ -301,8 +301,6 @@ void Expand_Data_Stack_May_Fail(REBLEN amount)
     REBLEN n;
     for (n = len_old; n < len_new; ++n) {
         Init_Unreadable_Blank(cell);
-        SET_VAL_FLAG(cell, CELL_FLAG_STACK);
-        SET_VAL_FLAG(cell, CELL_FLAG_TRANSIENT);
         ++cell;
     }
 

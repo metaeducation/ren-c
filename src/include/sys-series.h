@@ -148,8 +148,6 @@ INLINE REBLEN SER_LEN(REBSER *s) {
 }
 
 INLINE void SET_SERIES_LEN(REBSER *s, REBLEN len) {
-    assert(NOT_SER_FLAG(s, SERIES_FLAG_STACK));
-
     if (LEN_BYTE_OR_255(s) == 255)
         s->content.dynamic.len = len;
     else {

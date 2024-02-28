@@ -770,8 +770,7 @@ DECLARE_NATIVE(applique)
     REBCTX *exemplar = Make_Context_For_Action_Int_Partials(
         applicand,
         f->dsp_orig, // lowest_ordered_dsp of refinements to weave in
-        &binder,
-        CELL_MASK_STACK
+        &binder
     );
     MANAGE_ARRAY(CTX_VARLIST(exemplar)); // binding code into it
 
@@ -840,7 +839,6 @@ DECLARE_NATIVE(applique)
     }
 
     f->varlist = CTX_VARLIST(stolen);
-    SET_SER_FLAG(f->varlist, SERIES_FLAG_STACK);
     f->rootvar = CTX_ARCHETYPE(stolen);
     f->arg = f->rootvar + 1;
     // f->param assigned above

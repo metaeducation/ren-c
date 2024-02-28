@@ -473,7 +473,6 @@ INLINE void Push_Action(
     if (not f->varlist) { // usually means first action call in the REBFRM
         s = Alloc_Series_Node(
             SERIES_MASK_CONTEXT
-                | SERIES_FLAG_STACK
                 | SERIES_FLAG_FIXED_SIZE // FRAME!s don't expand ATM
         );
         s->info = Endlike_Header(

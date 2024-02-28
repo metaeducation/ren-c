@@ -378,9 +378,7 @@ INLINE void CLEAR_VAL_FLAG(Cell* v, uintptr_t f) {
 // use for 256 types (although type bitsets are only 64-bits at the moment)
 //
 // The value is expected to already be "pre-formatted" with the NODE_FLAG_CELL
-// bit, so that is left as-is.  It is also expected that CELL_FLAG_STACK has
-// been set if the value is stack-based (e.g. on the C stack or in a frame),
-// so that is left as-is also.
+// bit, so that is left as-is.
 //
 
 INLINE Value* RESET_VAL_HEADER_EXTRA_Core(
@@ -470,13 +468,13 @@ INLINE Value* RESET_VAL_HEADER_EXTRA_Core(
         panic_at ((c), file, line); \
     }
 
-#define CELL_MASK_NON_STACK \
+#define CELL_MASK_ERASE \
     (NODE_FLAG_NODE | NODE_FLAG_CELL)
 
-#define CELL_MASK_NON_STACK_END \
-    (CELL_MASK_NON_STACK | FLAG_KIND_BYTE(REB_0)) // same, but more explicit
+#define CELL_MASK_ERASE_END \
+    (CELL_MASK_ERASE | FLAG_KIND_BYTE(REB_0)) // same, but more explicit
 
-INLINE void Prep_Non_Stack_Cell_Core(
+INLINE Cell* Erase_Cell_Core(
     Cell* c
 
   #if defined(DEBUG_TRACK_CELLS)
@@ -488,48 +486,17 @@ INLINE void Prep_Non_Stack_Cell_Core(
     ALIGN_CHECK_CELL_EVIL_MACRO(c, file, line);
   #endif
 
-    c->header.bits = CELL_MASK_NON_STACK;
-    TRACK_CELL_IF_DEBUG(cast(Cell*, c), file, line);
-}
-
-#if defined(DEBUG_TRACK_CELLS)
-    #define Prep_Non_Stack_Cell(c) \
-        Prep_Non_Stack_Cell_Core((c), __FILE__, __LINE__)
-#else
-    #define Prep_Non_Stack_Cell(c) \
-        Prep_Non_Stack_Cell_Core(c)
-#endif
-
-#define CELL_MASK_STACK \
-    (NODE_FLAG_NODE | NODE_FLAG_CELL | CELL_FLAG_STACK)
-
-INLINE Cell* Prep_Stack_Cell_Core(
-    Cell* c
-
-  #if defined(DEBUG_TRACK_CELLS)
-  , const char *file
-  , int line
-  #endif
-){
-  #ifdef DEBUG_MEMORY_ALIGN
-    ALIGN_CHECK_CELL_EVIL_MACRO(c, file, line);
-  #endif
-  #ifdef DEBUG_TRASH_MEMORY
-    c->header.bits = CELL_MASK_STACK | FLAG_KIND_BYTE(REB_T_TRASH)
-        | VALUE_FLAG_FALSEY; // speeds up VAL_TYPE_Debug() check
-  #else
-    c->header.bits = CELL_MASK_STACK | FLAG_KIND_BYTE(REB_0);
-  #endif
+    c->header.bits = CELL_MASK_ERASE;
     TRACK_CELL_IF_DEBUG(cast(Cell*, c), file, line);
     return c;
 }
 
 #if defined(DEBUG_TRACK_CELLS)
-    #define Prep_Stack_Cell(c) \
-        Prep_Stack_Cell_Core((c), __FILE__, __LINE__)
+    #define Erase_Cell(c) \
+        Erase_Cell_Core((c), __FILE__, __LINE__)
 #else
-    #define Prep_Stack_Cell(c) \
-        Prep_Stack_Cell_Core(c)
+    #define Erase_Cell(c) \
+        Erase_Cell_Core(c)
 #endif
 
 
@@ -1451,15 +1418,6 @@ INLINE void INIT_BINDING(Cell* v, void *p) {
         // lifetime of the stack entry is guaranteed to outlive the binding)
         //
         assert(CTX(p));
-        if (v->header.bits & NODE_FLAG_TRANSIENT) {
-            // let anything go... for now.
-            // SERIES_FLAG_STACK might not be set yet due to construction
-            // constraints, see Make_Context_For_Action_Int_Partials()
-        }
-        else {
-            assert(v->header.bits & CELL_FLAG_STACK);
-            assert(binding->header.bits & SERIES_FLAG_STACK);
-        }
     }
   #endif
 }
@@ -1495,35 +1453,10 @@ INLINE void INIT_BINDING_MAY_MANAGE(Cell* out, REBNOD* binding) {
         out->extra.binding = binding; // managed is safe for any `out`
         return;
     }
-    if (out->header.bits & NODE_FLAG_TRANSIENT) {
-        out->extra.binding = binding; // can't be passed between frame levels
-        return;
-    }
-
-    assert(GET_SER_FLAG(binding, SERIES_FLAG_STACK));
 
     REBFRM *f = FRM(LINK(binding).keysource);
     assert(IS_END(f->param)); // cannot manage frame varlist in mid fulfill!
     UNUSED(f); // !!! not actually used yet, coming soon
-
-    if (out->header.bits & NODE_FLAG_STACK) {
-        //
-        // If the cell we're writing to is a stack cell, there's a chance
-        // that management/reification of the binding can be avoided.
-        //
-        REBLEN bind_depth = 1; // !!! need to find v's binding stack level
-        REBLEN out_depth;
-        if (not (out->header.bits & CELL_FLAG_STACK))
-            out_depth = 0;
-        else
-            out_depth = 1; // !!! need to find out's stack level
-
-        bool smarts_enabled = false;
-        if (smarts_enabled and out_depth >= bind_depth)
-            return; // binding will outlive `out`, don't manage
-
-        // no luck...`out` might outlive the binding, must manage
-    }
 
     binding->header.bits |= NODE_FLAG_MANAGED; // burdens the GC, now...
     out->extra.binding = binding;
@@ -1532,14 +1465,7 @@ INLINE void INIT_BINDING_MAY_MANAGE(Cell* out, REBNOD* binding) {
 
 // !!! Because you cannot assign REBVALs to one another (e.g. `*dest = *src`)
 // a function is used.  The reason that a function is used is because this
-// gives more flexibility in decisions based on the destination cell regarding
-// whether it is necessary to reify information in the source cell.
-//
-// That advanced purpose has not yet been implemented, because it requires
-// being able to "sniff" a cell for its lifetime.  For now it only preserves
-// the CELL_FLAG_STACK bit, without actually doing anything with it.
-//
-// Interface designed to line up with Derelativize()
+// gives more flexibility in decisions based on the destination cell.
 //
 INLINE Value* Move_Value(Cell* out, const Value* v)
 {
@@ -1562,8 +1488,6 @@ INLINE Value* Move_Value(Cell* out, const Value* v)
 //
 INLINE Value* Move_Var(Cell* out, const Value* v)
 {
-    assert(not (out->header.bits & CELL_FLAG_STACK));
-
     // This special kind of copy can only be done into another object's
     // variable slot. (Since the source may be a FRAME!, v *might* be stack
     // but it should never be relative.  If it's stack, we have to go through
@@ -1607,10 +1531,6 @@ INLINE void Blit_Cell(Cell* out, const Cell* v)
 //
 // Rather than allow a cell to be declared plainly as a local variable in
 // a C function, this macro provides a generic "constructor-like" hook.
-// See CELL_FLAG_STACK for the experimental motivation.  However, even if
-// this were merely a synonym for a plain cell declaration in the release
-// build, it provides a useful generic hook into the point of declaration
-// of a stack value.
 //
 // Note: because this will run instructions, a routine should avoid doing a
 // DECLARE_VALUE inside of a loop.  It should be at the outermost scope of
@@ -1620,6 +1540,6 @@ INLINE void Blit_Cell(Cell* out, const Cell* v)
 //
 #define DECLARE_VALUE(name) \
     Value name##_pair[2]; \
-    Prep_Stack_Cell(cast(Value*, &name##_pair)); \
+    Erase_Cell(cast(Value*, &name##_pair)); \
     Value* const name = cast(Value*, &name##_pair) + 1; \
-    Prep_Stack_Cell(name)
+    Erase_Cell(name)

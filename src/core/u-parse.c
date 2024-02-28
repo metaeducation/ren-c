@@ -221,29 +221,29 @@ static bool Subparse_Throws(
     assert(f->refine == END_NODE); // passed to Begin_Action()
     f->special = END_NODE;
 
-    Prep_Stack_Cell(FRM_ARGS_HEAD(f) + 0);
+    Erase_Cell(FRM_ARGS_HEAD(f) + 0);
     Derelativize(FRM_ARGS_HEAD(f) + 0, input, input_specifier);
 
     // We always want "case-sensitivity" on binary bytes, vs. treating as
     // case-insensitive bytes for ASCII characters.
     //
-    Prep_Stack_Cell(FRM_ARGS_HEAD(f) + 1);
+    Erase_Cell(FRM_ARGS_HEAD(f) + 1);
     Init_Integer(FRM_ARGS_HEAD(f) + 1, flags);
 
     // Need to track NUM-QUOTES somewhere that it can be read from the frame
     //
-    Init_Nulled(Prep_Stack_Cell(FRM_ARGS_HEAD(f) + 2));
+    Init_Nulled(Erase_Cell(FRM_ARGS_HEAD(f) + 2));
 
     // If there's an array for collecting into, there has to be some way of
     // passing it between frames.
     //
     REBLEN collect_tail;
     if (opt_collection) {
-        Init_Block(Prep_Stack_Cell(FRM_ARGS_HEAD(f) + 3), opt_collection);
+        Init_Block(Erase_Cell(FRM_ARGS_HEAD(f) + 3), opt_collection);
         collect_tail = ARR_LEN(opt_collection);  // roll back here on failure
     }
     else {
-        Init_Blank(Prep_Stack_Cell(FRM_ARGS_HEAD(f) + 3));
+        Init_Blank(Erase_Cell(FRM_ARGS_HEAD(f) + 3));
         collect_tail = 0;
     }
 
@@ -251,7 +251,7 @@ static bool Subparse_Throws(
     assert(ACT_NUM_PARAMS(NAT_ACTION(subparse)) == 4); // elides RETURN:
   #else
     assert(ACT_NUM_PARAMS(NAT_ACTION(subparse)) == 5); // checks RETURN:
-    Init_Nulled(Prep_Stack_Cell(FRM_ARGS_HEAD(f) + 4));
+    Init_Nulled(Erase_Cell(FRM_ARGS_HEAD(f) + 4));
   #endif
 
     // !!! By calling the subparse native here directly from its C function

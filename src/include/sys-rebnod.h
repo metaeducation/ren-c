@@ -287,19 +287,10 @@ union Reb_Header {
 #define VAR_MARKED_REUSE NODE_FLAG_MARKED
 
 
-//=//// NODE_FLAG_TRANSIENT (fifth-leftmost bit) //////////////////////////=//
+//=//// NODE_FLAG_4 (fifth-leftmost bit) //////////////////////////////////=//
 //
-// The "TRANSIENT" flag is currently used only by node cells, and only in
-// the data stack.  The concept is that data stack cells are so volatile that
-// they cannot be passed as Value* addresses to anything that might write
-// between frames.  This means that moving any value with an unmanaged binding
-// into it need not worry about managing...because the data stack cell has
-// no longer lifetime than any cell with which it can interact.
-//
-#define NODE_FLAG_TRANSIENT \
+#define NODE_FLAG_4 \
     FLAG_LEFT_BIT(4)
-
-#define CELL_FLAG_TRANSIENT NODE_FLAG_TRANSIENT
 
 
 //=//// NODE_FLAG_ROOT (sixth-leftmost bit) ///////////////////////////////=//
@@ -315,34 +306,10 @@ union Reb_Header {
     FLAG_LEFT_BIT(5)
 
 
-//=//// NODE_FLAG_STACK (seventh-leftmost bit) ////////////////////////////=//
-//
-// When writing to a value cell, it is sometimes necessary to know how long
-// that cell will "be alive".  This is important if there is some stack-based
-// transient structure in the source cell, which would need to be converted
-// into something longer-lived if the destination cell will outlive it.
-//
-// Hence cells must be formatted to say whether they are CELL_FLAG_STACK or
-// not, before any writing can be done to them.  If they are not then they
-// are presumed to be indefinite lifetime (e.g. cells resident inside of an
-// array managed by the garbage collector).
-//
-// But if a cell is marked with CELL_FLAG_STACK, that means it is expected
-// that scanning *backwards* in memory will find a specially marked REB_FRAME
-// cell, which will lead to the frame to whose lifetime the cell is bound.
-//
-// !!! This feature is a work in progress.
-//
-// For series, varlists of FRAME! are also marked with this to indicates that
-// a context's varlist data lives on the stack.  That means that when the
-// action terminates, the data will no longer be accessible (so
-// SERIES_INFO_INACCESSIBLE will be true).
+//=//// NODE_FLAG_6 (seventh-leftmost bit) ////////////////////////////////=//
 //
 #define NODE_FLAG_STACK \
     FLAG_LEFT_BIT(6)
-
-#define CELL_FLAG_STACK NODE_FLAG_STACK
-#define SERIES_FLAG_STACK NODE_FLAG_STACK
 
 
 //=//// NODE_FLAG_CELL (eighth-leftmost bit) //////////////////////////////=//

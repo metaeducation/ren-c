@@ -112,8 +112,7 @@
 REBCTX *Make_Context_For_Action_Int_Partials(
     const Value* action, // need ->binding, so can't just be a REBACT*
     REBDSP lowest_ordered_dsp, // caller can add refinement specializations
-    struct Reb_Binder *opt_binder,
-    REBFLGS prep // cell formatting mask bits, result managed if non-stack
+    struct Reb_Binder *opt_binder
 ){
     REBDSP highest_ordered_dsp = DSP;
 
@@ -147,7 +146,7 @@ REBCTX *Make_Context_For_Action_Int_Partials(
         assert(special == ACT_PARAMS_HEAD(act));
 
     for (; NOT_END(param); ++param, ++arg, ++special, ++index) {
-        arg->header.bits = prep;
+        arg->header.bits = CELL_MASK_ERASE;
 
         Symbol* canon = Cell_Param_Canon(param);
 
@@ -204,7 +203,7 @@ REBCTX *Make_Context_For_Action_Int_Partials(
                 // to be completed/bound
                 //
                 Value* passed = rootvar + partial_index;
-                assert(passed->header.bits == prep);
+                assert(passed->header.bits == CELL_MASK_ERASE);
 
                 assert(
                     VAL_STORED_CANON(special) ==
@@ -238,7 +237,7 @@ REBCTX *Make_Context_For_Action_Int_Partials(
                 }
             }
 
-            assert(arg->header.bits == prep); // skip slot for now
+            assert(arg->header.bits == CELL_MASK_ERASE);  // skip slot for now
             continue;
         }
 
@@ -284,7 +283,7 @@ REBCTX *Make_Context_For_Action_Int_Partials(
 
       continue_unspecialized:;
 
-        assert(arg->header.bits == prep);
+        assert(arg->header.bits == CELL_MASK_ERASE);
         Init_Nulled(arg);
         if (opt_binder) {
             if (not Is_Param_Unbindable(param))
@@ -301,12 +300,6 @@ REBCTX *Make_Context_For_Action_Int_Partials(
 
     TERM_ARRAY_LEN(varlist, num_slots);
     MISC(varlist).meta = nullptr;  // GC sees this, we must initialize
-
-    // !!! Can't currently pass SERIES_FLAG_STACK into Make_Arr_Core(),
-    // because TERM_ARRAY_LEN won't let it set stack array lengths.
-    //
-    if (prep & CELL_FLAG_STACK)
-        SET_SER_FLAG(varlist, SERIES_FLAG_STACK);
 
     INIT_CTX_KEYLIST_SHARED(CTX(varlist), ACT_PARAMLIST(act));
     return CTX(varlist);
@@ -330,8 +323,7 @@ REBCTX *Make_Context_For_Action(
     REBCTX *exemplar = Make_Context_For_Action_Int_Partials(
         action,
         lowest_ordered_dsp,
-        opt_binder,
-        CELL_MASK_NON_STACK
+        opt_binder
     );
 
     MANAGE_ARRAY(CTX_VARLIST(exemplar)); // !!! was needed before, review
@@ -395,8 +387,7 @@ bool Specialize_Action_Throws(
     REBCTX *exemplar = Make_Context_For_Action_Int_Partials(
         specializee,
         lowest_ordered_dsp,
-        opt_def ? &binder : nullptr,
-        CELL_MASK_NON_STACK
+        opt_def ? &binder : nullptr
     );
     MANAGE_ARRAY(CTX_VARLIST(exemplar)); // destined to be managed, guarded
 

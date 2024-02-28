@@ -409,7 +409,6 @@ INLINE REBCTX *Steal_Context_Vars(REBCTX *c, REBNOD *keysource) {
     //
     REBSER *copy = Alloc_Series_Node(
         SERIES_MASK_CONTEXT
-            | SERIES_FLAG_STACK
             | SERIES_FLAG_FIXED_SIZE
     );
     copy->info = Endlike_Header(

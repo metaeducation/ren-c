@@ -566,7 +566,7 @@ bool Eval_Core_Throws(REBFRM * const f)
         if (IS_END(f->value))
             goto finished; // proposed behavior, drop out result...
 
-        Prep_Stack_Cell(FRM_SHOVE(f));
+        Erase_Cell(FRM_SHOVE(f));
 
         Symbol* opt_label = nullptr;
         if (IS_WORD(f->value) or IS_PATH(f->value)) {
@@ -830,20 +830,10 @@ bool Eval_Core_Throws(REBFRM * const f)
                 not (f->flags.bits & DO_FLAG_DOING_PICKUPS)
                 and f->special != f->arg
             ){
-                Prep_Stack_Cell(f->arg); // improve...
-            }
-            else {
-                // If the incoming series came from a heap frame, just put
-                // a bit on it saying its a stack node for now--this will
-                // stop some asserts.  The optimization is not enabled yet
-                // which avoids reification on stack nodes of lower stack
-                // levels--so it's not going to cause problems -yet-
-                //
-                SET_VAL_FLAG(f->arg, CELL_FLAG_STACK);
+                Erase_Cell(f->arg); // improve...
             }
 
             assert(f->arg->header.bits & NODE_FLAG_CELL);
-            assert(f->arg->header.bits & CELL_FLAG_STACK);
 
     //=//// A /REFINEMENT ARG /////////////////////////////////////////////=//
 
@@ -1271,7 +1261,7 @@ bool Eval_Core_Throws(REBFRM * const f)
                 DECLARE_SUBFRAME (child, f); // capture DSP *now*
 
                 if (Is_Frame_Gotten_Shoved(f)) {
-                    Prep_Stack_Cell(FRM_SHOVE(child));
+                    Erase_Cell(FRM_SHOVE(child));
                     Move_Value(FRM_SHOVE(child), f->gotten);
                     SET_VAL_FLAG(FRM_SHOVE(child), VALUE_FLAG_ENFIXED);
                     f->gotten = FRM_SHOVE(child);
@@ -1516,19 +1506,6 @@ bool Eval_Core_Throws(REBFRM * const f)
 
         Expire_Out_Cell_Unless_Invisible(f);
         assert(IS_POINTER_TRASH_DEBUG(f->u.defer.arg));
-
-        // While you can't evaluate into an array cell (because it may move)
-        // an evaluation is allowed to be performed into stable cells on the
-        // stack -or- API handles.
-        //
-        // !!! Could get complicated if a manual lifetime is used and freed
-        // during an evaluation.  Not currently possible since there's nothing
-        // like a rebValue() which targets a cell passed in by the user.  But if
-        // such a thing ever existed it would have that problem...and would
-        // need to take a "hold" on the cell to prevent a rebFree() while the
-        // evaluation was in progress.
-        //
-        /*assert(f->out->header.bits & (CELL_FLAG_STACK | NODE_FLAG_ROOT)); */
 
         if (not Is_Frame_Gotten_Shoved(f))
             f->gotten = nullptr; // arbitrary code changes fetched variables
@@ -2477,7 +2454,7 @@ bool Eval_Core_Throws(REBFRM * const f)
         // invisibles at this frame level before returning.
         //
         if (Is_Frame_Gotten_Shoved(f)) {
-            Prep_Stack_Cell(FRM_SHOVE(f->prior));
+            Erase_Cell(FRM_SHOVE(f->prior));
             Move_Value(FRM_SHOVE(f->prior), f->gotten);
             SET_VAL_FLAG(FRM_SHOVE(f->prior), VALUE_FLAG_ENFIXED);
             f->gotten = FRM_SHOVE(f->prior);
@@ -2517,7 +2494,7 @@ bool Eval_Core_Throws(REBFRM * const f)
         f->prior->u.defer.refine = f->prior->refine;
 
         if (Is_Frame_Gotten_Shoved(f)) {
-            Prep_Stack_Cell(FRM_SHOVE(f->prior));
+            Erase_Cell(FRM_SHOVE(f->prior));
             Move_Value(FRM_SHOVE(f->prior), f->gotten);
             SET_VAL_FLAG(FRM_SHOVE(f->prior), VALUE_FLAG_ENFIXED);
             f->gotten = FRM_SHOVE(f->prior);

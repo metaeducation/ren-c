@@ -704,7 +704,7 @@ static Array* Startup_Natives(const Value* boot_natives)
         // currently depends on having a permanent list of the natives that
         // does not change, see uses via NAT_VALUE() and NAT_ACT().
         //
-        Prep_Non_Stack_Cell(&Natives[n]);
+        Erase_Cell(&Natives[n]);
         Move_Value(&Natives[n], native); // Note: Loses enfixedness (!)
         SET_VAL_FLAG(&Natives[n], CELL_FLAG_PROTECTED);
 
@@ -835,53 +835,53 @@ static void Init_Root_Vars(void)
     // the root set.  Should that change, they could be explicitly added
     // to the GC's root set.
 
-    Prep_Non_Stack_Cell(&PG_Nulled_Cell[0]);
-    Prep_Non_Stack_Cell(&PG_Nulled_Cell[1]);
+    Erase_Cell(&PG_Nulled_Cell[0]);
+    Erase_Cell(&PG_Nulled_Cell[1]);
     Init_Nulled(&PG_Nulled_Cell[0]);
     TRASH_CELL_IF_DEBUG(&PG_Nulled_Cell[1]);
 
-    Prep_Non_Stack_Cell(&PG_Blank_Value[0]);
-    Prep_Non_Stack_Cell(&PG_Blank_Value[1]);
+    Erase_Cell(&PG_Blank_Value[0]);
+    Erase_Cell(&PG_Blank_Value[1]);
     Init_Blank(&PG_Blank_Value[0]);
     TRASH_CELL_IF_DEBUG(&PG_Blank_Value[1]);
 
-    Prep_Non_Stack_Cell(&PG_Bar_Value[0]);
-    Prep_Non_Stack_Cell(&PG_Bar_Value[1]);
+    Erase_Cell(&PG_Bar_Value[0]);
+    Erase_Cell(&PG_Bar_Value[1]);
     Init_Bar(&PG_Bar_Value[0]);
     TRASH_CELL_IF_DEBUG(&PG_Bar_Value[1]);
 
-    Prep_Non_Stack_Cell(&PG_False_Value[0]);
-    Prep_Non_Stack_Cell(&PG_False_Value[1]);
+    Erase_Cell(&PG_False_Value[0]);
+    Erase_Cell(&PG_False_Value[1]);
     Init_False(&PG_False_Value[0]);
     TRASH_CELL_IF_DEBUG(&PG_False_Value[1]);
 
-    Prep_Non_Stack_Cell(&PG_True_Value[0]);
-    Prep_Non_Stack_Cell(&PG_True_Value[1]);
+    Erase_Cell(&PG_True_Value[0]);
+    Erase_Cell(&PG_True_Value[1]);
     Init_True(&PG_True_Value[0]);
     TRASH_CELL_IF_DEBUG(&PG_True_Value[1]);
 
-    Prep_Non_Stack_Cell(&PG_Void_Value[0]);
-    Prep_Non_Stack_Cell(&PG_Void_Value[1]);
+    Erase_Cell(&PG_Void_Value[0]);
+    Erase_Cell(&PG_Void_Value[1]);
     Init_Void(&PG_Void_Value[0]);
     TRASH_CELL_IF_DEBUG(&PG_Void_Value[1]);
 
-    Prep_Non_Stack_Cell(&PG_R_Thrown[0]);
-    Prep_Non_Stack_Cell(&PG_R_Thrown[1]);
+    Erase_Cell(&PG_R_Thrown[0]);
+    Erase_Cell(&PG_R_Thrown[1]);
     RESET_CELL(&PG_R_Thrown[0], REB_R_THROWN);
     TRASH_CELL_IF_DEBUG(&PG_R_Thrown[1]);
 
-    Prep_Non_Stack_Cell(&PG_R_Invisible[0]);
-    Prep_Non_Stack_Cell(&PG_R_Invisible[1]);
+    Erase_Cell(&PG_R_Invisible[0]);
+    Erase_Cell(&PG_R_Invisible[1]);
     RESET_CELL(&PG_R_Invisible[0], REB_R_INVISIBLE);
     TRASH_CELL_IF_DEBUG(&PG_R_Invisible[1]);
 
-    Prep_Non_Stack_Cell(&PG_R_Immediate[0]);
-    Prep_Non_Stack_Cell(&PG_R_Immediate[1]);
+    Erase_Cell(&PG_R_Immediate[0]);
+    Erase_Cell(&PG_R_Immediate[1]);
     RESET_CELL(&PG_R_Immediate[0], REB_R_IMMEDIATE);
     TRASH_CELL_IF_DEBUG(&PG_R_Immediate[1]);
 
-    Prep_Non_Stack_Cell(&PG_R_Redo_Unchecked[0]);
-    Prep_Non_Stack_Cell(&PG_R_Redo_Unchecked[1]);
+    Erase_Cell(&PG_R_Redo_Unchecked[0]);
+    Erase_Cell(&PG_R_Redo_Unchecked[1]);
     RESET_CELL_EXTRA(
         &PG_R_Redo_Unchecked[0],
         REB_R_REDO,
@@ -889,8 +889,8 @@ static void Init_Root_Vars(void)
     );
     TRASH_CELL_IF_DEBUG(&PG_R_Redo_Unchecked[1]);
 
-    Prep_Non_Stack_Cell(&PG_R_Redo_Checked[0]);
-    Prep_Non_Stack_Cell(&PG_R_Redo_Checked[1]);
+    Erase_Cell(&PG_R_Redo_Checked[0]);
+    Erase_Cell(&PG_R_Redo_Checked[1]);
     RESET_CELL_EXTRA(
         &PG_R_Redo_Checked[0],
         REB_R_REDO,
@@ -898,8 +898,8 @@ static void Init_Root_Vars(void)
     );
     TRASH_CELL_IF_DEBUG(&PG_R_Redo_Checked[1]);
 
-    Prep_Non_Stack_Cell(&PG_R_Reference[0]);
-    Prep_Non_Stack_Cell(&PG_R_Reference[1]);
+    Erase_Cell(&PG_R_Reference[0]);
+    Erase_Cell(&PG_R_Reference[1]);
     RESET_CELL(&PG_R_Reference[0], REB_R_REFERENCE);
     TRASH_CELL_IF_DEBUG(&PG_R_Reference[1]);
 
@@ -1129,7 +1129,7 @@ void Startup_Task(void)
     // The thrown arg is not intended to ever be around long enough to be
     // seen by the GC.
     //
-    Prep_Non_Stack_Cell(&TG_Thrown_Arg);
+    Erase_Cell(&TG_Thrown_Arg);
     Init_Unreadable_Blank(&TG_Thrown_Arg);
 
     Startup_Raw_Print();
