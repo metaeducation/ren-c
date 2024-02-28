@@ -47,7 +47,7 @@ struct Reb_Map {
     struct Reb_Array pairlist; // hashlist is held in ->link.hashlist
 };
 
-inline static REBARR *MAP_PAIRLIST(REBMAP *m) {
+INLINE REBARR *MAP_PAIRLIST(REBMAP *m) {
     assert(GET_SER_FLAG(&(m)->pairlist, ARRAY_FLAG_PAIRLIST));
     return (&(m)->pairlist);
 }
@@ -58,14 +58,14 @@ inline static REBARR *MAP_PAIRLIST(REBMAP *m) {
 #define MAP_HASHES(m) \
     SER_HEAD(MAP_HASHLIST(m))
 
-inline static REBMAP *MAP(void *p) {
+INLINE REBMAP *MAP(void *p) {
     REBARR *a = ARR(p);
     assert(GET_SER_FLAG(a, ARRAY_FLAG_PAIRLIST));
     return cast(REBMAP*, a);
 }
 
 
-inline static REBMAP *VAL_MAP(const Cell* v) {
+INLINE REBMAP *VAL_MAP(const Cell* v) {
     assert(IS_MAP(v));
 
     REBSER *s = v->payload.any_series.series;
@@ -75,7 +75,7 @@ inline static REBMAP *VAL_MAP(const Cell* v) {
     return MAP(s);
 }
 
-inline static REBLEN Length_Map(REBMAP *map)
+INLINE REBLEN Length_Map(REBMAP *map)
 {
     Value* v = KNOWN(ARR_HEAD(MAP_PAIRLIST(map)));
 

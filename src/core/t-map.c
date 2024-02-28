@@ -464,7 +464,7 @@ REB_R MAKE_Map(Value* out, enum Reb_Kind kind, const Value* arg)
 }
 
 
-inline static REBMAP *Copy_Map(REBMAP *map, REBU64 types) {
+INLINE REBMAP *Copy_Map(REBMAP *map, REBU64 types) {
     REBARR *copy = Copy_Array_Shallow(MAP_PAIRLIST(map), SPECIFIED);
     SET_SER_FLAG(copy, ARRAY_FLAG_PAIRLIST);
 

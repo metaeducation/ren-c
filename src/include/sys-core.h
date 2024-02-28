@@ -209,7 +209,7 @@ typedef RebolValue Value;
 //
 #if !defined(NDEBUG) || defined(DEBUG_COUNT_TICKS)
     #if defined(TO_HAIKU)
-        inline static int debug_break() {
+        INLINE int debug_break() {
             int x = 0;
             while (1) { ++x; }
             x = 0; // set next statement in debugger to here
@@ -493,7 +493,7 @@ enum {
 // Skip to the specified byte but not past the provided end
 // pointer of the byte string.  Return NULL if byte is not found.
 //
-inline static const REBYTE *Skip_To_Byte(
+INLINE const REBYTE *Skip_To_Byte(
     const REBYTE *cp,
     const REBYTE *ep,
     REBYTE b
@@ -575,7 +575,7 @@ extern void reb_qsort_r(void *a, size_t n, size_t es, void *thunk, cmp_t *cmp);
 #include "sys-value.h" // basic definitions that don't need series accessrors
 #include "sys-time.h"
 
-inline static void SET_SIGNAL(REBFLGS f) { // used in %sys-series.h
+INLINE void SET_SIGNAL(REBFLGS f) { // used in %sys-series.h
     Eval_Signals |= f;
     Eval_Count = 1;
 }

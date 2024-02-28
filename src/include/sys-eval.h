@@ -62,7 +62,7 @@
 
 // !!! Find a better place for this!
 //
-inline static bool IS_QUOTABLY_SOFT(const Cell* v) {
+INLINE bool IS_QUOTABLY_SOFT(const Cell* v) {
     return IS_GROUP(v) or IS_GET_WORD(v) or IS_GET_PATH(v);
 }
 
@@ -93,7 +93,7 @@ inline static bool IS_QUOTABLY_SOFT(const Cell* v) {
 // optimize performance by working with the evaluator directly.
 //
 
-inline static void Push_Frame_Core(REBFRM *f)
+INLINE void Push_Frame_Core(REBFRM *f)
 {
     // All calls to a Eval_Core_Throws() are assumed to happen at the same C
     // stack level for a pushed frame (though this is not currently enforced).
@@ -216,7 +216,7 @@ inline static void Push_Frame_Core(REBFRM *f)
 
 // Pretend the input source has ended; used with REB_E_PROCESS_ACTION.
 //
-inline static void Push_Frame_At_End(REBFRM *f, REBFLGS flags) {
+INLINE void Push_Frame_At_End(REBFRM *f, REBFLGS flags) {
     f->flags = Endlike_Header(flags);
 
     assert(f->source == &TG_Frame_Source_End); // see DECLARE_END_FRAME
@@ -227,11 +227,11 @@ inline static void Push_Frame_At_End(REBFRM *f, REBFLGS flags) {
     Push_Frame_Core(f);
 }
 
-inline static void UPDATE_EXPRESSION_START(REBFRM *f) {
+INLINE void UPDATE_EXPRESSION_START(REBFRM *f) {
     f->expr_index = f->source->index; // this is garbage if DO_FLAG_VA_LIST
 }
 
-inline static void Reuse_Varlist_If_Available(REBFRM *f) {
+INLINE void Reuse_Varlist_If_Available(REBFRM *f) {
     assert(IS_POINTER_TRASH_DEBUG(f->varlist));
     if (not TG_Reuse)
         f->varlist = nullptr;
@@ -243,7 +243,7 @@ inline static void Reuse_Varlist_If_Available(REBFRM *f) {
     }
 }
 
-inline static void Push_Frame_At(
+INLINE void Push_Frame_At(
     REBFRM *f,
     REBARR *array,
     REBLEN index,
@@ -273,7 +273,7 @@ inline static void Push_Frame_At(
     Reuse_Varlist_If_Available(f);
 }
 
-inline static void Push_Frame(REBFRM *f, const Value* v)
+INLINE void Push_Frame(REBFRM *f, const Value* v)
 {
     Push_Frame_At(
         f, VAL_ARRAY(v), VAL_INDEX(v), VAL_SPECIFIER(v), DO_MASK_NONE
@@ -288,7 +288,7 @@ inline static void Push_Frame(REBFRM *f, const Value* v)
 // code has to be factored out (because a C va_list cannot have its first
 // parameter in the variadic).
 //
-inline static void Set_Frame_Detected_Fetch(
+INLINE void Set_Frame_Detected_Fetch(
     const Cell* *opt_lookback,
     REBFRM *f,
     const void *p
@@ -513,7 +513,7 @@ inline static void Set_Frame_Detected_Fetch(
 // More generally, an END marker in f->source->pending for this routine is a
 // signal that the vaptr (if any) should be consulted next.
 //
-inline static void Fetch_Next_In_Frame(
+INLINE void Fetch_Next_In_Frame(
     const Cell* *opt_lookback,
     REBFRM *f
 ){
@@ -600,14 +600,14 @@ inline static void Fetch_Next_In_Frame(
 }
 
 
-inline static void Quote_Next_In_Frame(Value* dest, REBFRM *f) {
+INLINE void Quote_Next_In_Frame(Value* dest, REBFRM *f) {
     Derelativize(dest, f->value, f->specifier);
     SET_VAL_FLAG(dest, VALUE_FLAG_UNEVALUATED);
     Fetch_Next_In_Frame(nullptr, f);
 }
 
 
-inline static void Abort_Frame(REBFRM *f) {
+INLINE void Abort_Frame(REBFRM *f) {
     if (f->varlist and NOT_SER_FLAG(f->varlist, NODE_FLAG_MANAGED))
         GC_Kill_Series(SER(f->varlist)); // not alloc'd with manuals tracking
     TRASH_POINTER_IF_DEBUG(f->varlist);
@@ -661,7 +661,7 @@ pop:;
 }
 
 
-inline static void Drop_Frame_Core(REBFRM *f) {
+INLINE void Drop_Frame_Core(REBFRM *f) {
   #if defined(DEBUG_EXPIRED_LOOKBACK)
     free(f->stress);
   #endif
@@ -677,7 +677,7 @@ inline static void Drop_Frame_Core(REBFRM *f) {
     TG_Top_Frame = f->prior;
 }
 
-inline static void Drop_Frame_Unbalanced(REBFRM *f) {
+INLINE void Drop_Frame_Unbalanced(REBFRM *f) {
   #if defined(DEBUG_BALANCE_STATE)
     //
     // To avoid slowing down the debug build a lot, Eval_Core_Throws() doesn't
@@ -691,7 +691,7 @@ inline static void Drop_Frame_Unbalanced(REBFRM *f) {
     Drop_Frame_Core(f);
 }
 
-inline static void Drop_Frame(REBFRM *f)
+INLINE void Drop_Frame(REBFRM *f)
 {
     if (f->flags.bits & DO_FLAG_TO_END)
         assert(IS_END(f->value) or THROWN(f->out));
@@ -706,7 +706,7 @@ inline static void Drop_Frame(REBFRM *f)
 // several successive operations on an array, without creating a new frame
 // each time.
 //
-inline static bool Eval_Step_Throws(
+INLINE bool Eval_Step_Throws(
     Value* out,
     REBFRM *f
 ){
@@ -736,7 +736,7 @@ inline static bool Eval_Step_Throws(
 // with some value, and then test OUT_MARKED_STALE to see if the only thing
 // run in the frame were invisibles (empty groups, comments) or nothing.
 //
-inline static bool Eval_Step_Maybe_Stale_Throws(
+INLINE bool Eval_Step_Maybe_Stale_Throws(
     Value* out,
     REBFRM *f
 ){
@@ -771,7 +771,7 @@ inline static bool Eval_Step_Maybe_Stale_Throws(
 // the SET-WORD! needs to be put back in place before returning, so that the
 // set knows where to write.  The caller handles this with the data stack.
 //
-inline static bool Eval_Step_Mid_Frame_Throws(REBFRM *f, REBFLGS flags) {
+INLINE bool Eval_Step_Mid_Frame_Throws(REBFRM *f, REBFLGS flags) {
     assert(f->dsp_orig == DSP);
 
     REBFLGS prior_flags = f->flags.bits;
@@ -802,7 +802,7 @@ inline static bool Eval_Step_Mid_Frame_Throws(REBFRM *f, REBFLGS flags) {
 // Future investigation could attack the problem again and see if there is
 // any common case that actually offered an advantage to optimize for here.
 //
-inline static bool Eval_Step_In_Subframe_Throws(
+INLINE bool Eval_Step_In_Subframe_Throws(
     Value* out,
     REBFRM *higher, // may not be direct parent (not child->prior upon push!)
     REBFLGS flags,
@@ -865,7 +865,7 @@ inline static bool Eval_Step_In_Subframe_Throws(
 // Most common case of evaluator invocation in Rebol: the data lives in an
 // array series.
 //
-inline static REBIXO Eval_Array_At_Core(
+INLINE REBIXO Eval_Array_At_Core(
     Value* out, // must be initialized, marked stale if empty / all invisible
     const Cell* opt_first, // non-array element to kick off execution with
     REBARR *array,
@@ -935,7 +935,7 @@ inline static REBIXO Eval_Array_At_Core(
 // (unless told that it's not truncated, e.g. a debug mode that calls it
 // before any items are consumed).
 //
-inline static void Reify_Va_To_Array_In_Frame(
+INLINE void Reify_Va_To_Array_In_Frame(
     REBFRM *f,
     bool truncated
 ) {
@@ -1015,7 +1015,7 @@ inline static void Reify_Va_To_Array_In_Frame(
 //
 // Returns THROWN_FLAG, END_FLAG, or VA_LIST_FLAG
 //
-inline static REBIXO Eval_Va_Core(
+INLINE REBIXO Eval_Va_Core(
     Value* out, // must be initialized, marked stale if empty / all invisible
     const void *opt_first,
     va_list *vaptr,
@@ -1075,7 +1075,7 @@ inline static REBIXO Eval_Va_Core(
 }
 
 
-inline static bool Eval_Value_Core_Throws(
+INLINE bool Eval_Value_Core_Throws(
     Value* out,
     const Cell* value, // e.g. a BLOCK! here would just evaluate to itself!
     REBSPC *specifier
@@ -1105,7 +1105,7 @@ inline static bool Eval_Value_Core_Throws(
 // so the dispatcher can write things like `return rebValue(...);` and not
 // encounter a leak.
 //
-inline static void Handle_Api_Dispatcher_Result(REBFRM *f, const Value* r) {
+INLINE void Handle_Api_Dispatcher_Result(REBFRM *f, const Value* r) {
     assert(not THROWN(r)); // only f->out can return thrown cells
 
   #if !defined(NDEBUG)

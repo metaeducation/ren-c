@@ -32,11 +32,11 @@
 
 #define MAX_BITSET 0x7fffffff
 
-static inline bool BITS_NOT(REBSER *s) {
+INLINE bool BITS_NOT(REBSER *s) {
     return MISC(s).negated;
 }
 
-static inline void INIT_BITS_NOT(REBSER *s, bool negated) {
+INLINE void INIT_BITS_NOT(REBSER *s, bool negated) {
     MISC(s).negated = negated;
 }
 

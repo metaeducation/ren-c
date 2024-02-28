@@ -52,7 +52,7 @@ struct Reb_Context {
 #elif CPLUSPLUS_11
 
     template<typename T>
-    inline static REBCTX *CTX(T *p) {
+    INLINE REBCTX *CTX(T *p) {
         constexpr bool derived = std::is_same<T, REBCTX>::value;
 
         constexpr bool base = std::is_same<T, void>::value

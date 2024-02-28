@@ -73,7 +73,7 @@
 // allocated context, and in that case it will have to come out of the
 // REBSER node data itself.
 //
-inline static Value* CTX_ARCHETYPE(REBCTX *c) {
+INLINE Value* CTX_ARCHETYPE(REBCTX *c) {
     REBSER *varlist = SER(CTX_VARLIST(c));
     if (not IS_SER_DYNAMIC(varlist))
         return cast(Value*, &varlist->content.fixed);
@@ -88,7 +88,7 @@ inline static Value* CTX_ARCHETYPE(REBCTX *c) {
 // CTX_KEYLIST is called often, and it's worth it to make it as fast as
 // possible--even in an unoptimized build.
 //
-inline static REBARR *CTX_KEYLIST(REBCTX *c) {
+INLINE REBARR *CTX_KEYLIST(REBCTX *c) {
     if (not (LINK(c).keysource->header.bits & NODE_FLAG_CELL))
         return ARR(LINK(c).keysource); // not a REBFRM, so use keylist
 
@@ -105,12 +105,12 @@ inline static REBARR *CTX_KEYLIST(REBCTX *c) {
     return ACT_PARAMLIST(archetype->payload.any_context.phase);
 }
 
-static inline void INIT_CTX_KEYLIST_SHARED(REBCTX *c, REBARR *keylist) {
+INLINE void INIT_CTX_KEYLIST_SHARED(REBCTX *c, REBARR *keylist) {
     SET_SER_INFO(keylist, SERIES_INFO_SHARED_KEYLIST);
     LINK(c).keysource = NOD(keylist);
 }
 
-static inline void INIT_CTX_KEYLIST_UNIQUE(REBCTX *c, REBARR *keylist) {
+INLINE void INIT_CTX_KEYLIST_UNIQUE(REBCTX *c, REBARR *keylist) {
     assert(NOT_SER_INFO(keylist, SERIES_INFO_SHARED_KEYLIST));
     LINK(c).keysource = NOD(keylist);
 }
@@ -137,7 +137,7 @@ static inline void INIT_CTX_KEYLIST_UNIQUE(REBCTX *c, REBARR *keylist) {
 #define CTX_KEYS_HEAD(c) \
     SER_AT(Value, SER(CTX_KEYLIST(c)), 1)  // a CTX_KEY is always "specific"
 
-inline static REBFRM *CTX_FRAME_IF_ON_STACK(REBCTX *c) {
+INLINE REBFRM *CTX_FRAME_IF_ON_STACK(REBCTX *c) {
     REBNOD *keysource = LINK(c).keysource;
     if (not (keysource->header.bits & NODE_FLAG_CELL))
         return nullptr; // e.g. came from MAKE FRAME! or Encloser_Dispatcher
@@ -150,7 +150,7 @@ inline static REBFRM *CTX_FRAME_IF_ON_STACK(REBCTX *c) {
     return f;
 }
 
-inline static REBFRM *CTX_FRAME_MAY_FAIL(REBCTX *c) {
+INLINE REBFRM *CTX_FRAME_MAY_FAIL(REBCTX *c) {
     REBFRM *f = CTX_FRAME_IF_ON_STACK(c);
     if (not f)
         fail (Error_Frame_Not_On_Stack_Raw());
@@ -160,7 +160,7 @@ inline static REBFRM *CTX_FRAME_MAY_FAIL(REBCTX *c) {
 #define CTX_VARS_HEAD(c) \
     SER_AT(Value, SER(CTX_VARLIST(c)), 1)  // may fail() if inaccessible
 
-inline static Value* CTX_KEY(REBCTX *c, REBLEN n) {
+INLINE Value* CTX_KEY(REBCTX *c, REBLEN n) {
     assert(NOT_SER_FLAG(c, SERIES_INFO_INACCESSIBLE));
     assert(GET_SER_FLAG(c, ARRAY_FLAG_VARLIST));
     assert(n != 0 and n <= CTX_LEN(c));
@@ -168,29 +168,29 @@ inline static Value* CTX_KEY(REBCTX *c, REBLEN n) {
         + n;
 }
 
-inline static Value* CTX_VAR(REBCTX *c, REBLEN n) {
+INLINE Value* CTX_VAR(REBCTX *c, REBLEN n) {
     assert(NOT_SER_FLAG(c, SERIES_INFO_INACCESSIBLE));
     assert(GET_SER_FLAG(c, ARRAY_FLAG_VARLIST));
     assert(n != 0 and n <= CTX_LEN(c));
     return cast(Value*, cast(REBSER*, c)->content.dynamic.data) + n;
 }
 
-inline static REBSTR *CTX_KEY_SPELLING(REBCTX *c, REBLEN n) {
+INLINE REBSTR *CTX_KEY_SPELLING(REBCTX *c, REBLEN n) {
     return CTX_KEY(c, n)->extra.key_spelling;
 }
 
-inline static REBSTR *CTX_KEY_CANON(REBCTX *c, REBLEN n) {
+INLINE REBSTR *CTX_KEY_CANON(REBCTX *c, REBLEN n) {
     return STR_CANON(CTX_KEY_SPELLING(c, n));
 }
 
-inline static Option(SymId) CTX_KEY_SYM(REBCTX *c, REBLEN n) {
+INLINE Option(SymId) CTX_KEY_SYM(REBCTX *c, REBLEN n) {
     return STR_SYMBOL(CTX_KEY_SPELLING(c, n)); // should be same as canon
 }
 
 #define FAIL_IF_READ_ONLY_CONTEXT(c) \
     FAIL_IF_READ_ONLY_ARRAY(CTX_VARLIST(c))
 
-inline static void FREE_CONTEXT(REBCTX *c) {
+INLINE void FREE_CONTEXT(REBCTX *c) {
     Free_Unmanaged_Array(CTX_KEYLIST(c));
     Free_Unmanaged_Array(CTX_VARLIST(c));
 }
@@ -207,7 +207,7 @@ inline static void FREE_CONTEXT(REBCTX *c) {
 // which permits the storage of associated KEYS and VARS.
 //
 
-inline static void FAIL_IF_INACCESSIBLE_CTX(REBCTX *c) {
+INLINE void FAIL_IF_INACCESSIBLE_CTX(REBCTX *c) {
     if (GET_SER_INFO(c, SERIES_INFO_INACCESSIBLE)) {
         if (CTX_TYPE(c) == REB_FRAME)
             fail (Error_Do_Expired_Frame_Raw()); // !!! different error?
@@ -215,7 +215,7 @@ inline static void FAIL_IF_INACCESSIBLE_CTX(REBCTX *c) {
     }
 }
 
-inline static REBCTX *VAL_CONTEXT(const Cell* v) {
+INLINE REBCTX *VAL_CONTEXT(const Cell* v) {
     assert(ANY_CONTEXT(v));
     assert(not v->payload.any_context.phase or VAL_TYPE(v) == REB_FRAME);
     REBCTX *c = CTX(v->payload.any_context.varlist);
@@ -223,7 +223,7 @@ inline static REBCTX *VAL_CONTEXT(const Cell* v) {
     return c;
 }
 
-inline static void INIT_VAL_CONTEXT(Value* v, REBCTX *c) {
+INLINE void INIT_VAL_CONTEXT(Value* v, REBCTX *c) {
     v->payload.any_context.varlist = CTX_VARLIST(c);
 }
 
@@ -259,7 +259,7 @@ inline static void INIT_VAL_CONTEXT(Value* v, REBCTX *c) {
 // that is its canon form from a single pointer...the cell sitting in
 // the 0 slot of the context's varlist.
 //
-static inline Value* Init_Any_Context(
+INLINE Value* Init_Any_Context(
     Cell* out,
     enum Reb_Kind kind,
     REBCTX *c
@@ -315,7 +315,7 @@ static inline Value* Init_Any_Context(
 //
 //=////////////////////////////////////////////////////////////////////////=//
 
-inline static void Deep_Freeze_Context(REBCTX *c) {
+INLINE void Deep_Freeze_Context(REBCTX *c) {
     Protect_Context(
         c,
         PROT_SET | PROT_DEEP | PROT_FREEZE
@@ -323,7 +323,7 @@ inline static void Deep_Freeze_Context(REBCTX *c) {
     Uncolor_Array(CTX_VARLIST(c));
 }
 
-inline static bool Is_Context_Deeply_Frozen(REBCTX *c) {
+INLINE bool Is_Context_Deeply_Frozen(REBCTX *c) {
     return GET_SER_INFO(c, SERIES_INFO_FROZEN);
 }
 
@@ -365,7 +365,7 @@ inline static bool Is_Context_Deeply_Frozen(REBCTX *c) {
 // was some validation checking.  This factors out that check instead of
 // repeating the code.
 //
-inline static void FAIL_IF_BAD_PORT(Value* port) {
+INLINE void FAIL_IF_BAD_PORT(Value* port) {
     if (not ANY_CONTEXT(port))
         fail (Error_Invalid_Port_Raw());
 
@@ -381,7 +381,7 @@ inline static void FAIL_IF_BAD_PORT(Value* port) {
 // It's helpful to show when a test for a native port actor is being done,
 // rather than just having the code say IS_HANDLE().
 //
-inline static bool Is_Native_Port_Actor(const Value* actor) {
+INLINE bool Is_Native_Port_Actor(const Value* actor) {
     if (IS_HANDLE(actor))
         return true;
     assert(IS_OBJECT(actor));
@@ -400,7 +400,7 @@ inline static bool Is_Native_Port_Actor(const Value* actor) {
 // filled-in heap memory can be directly used as the args for the invocation,
 // instead of needing to push a redundant run of stack-based memory cells.
 //
-inline static REBCTX *Steal_Context_Vars(REBCTX *c, REBNOD *keysource) {
+INLINE REBCTX *Steal_Context_Vars(REBCTX *c, REBNOD *keysource) {
     REBSER *stub = SER(c);
 
     // Rather than memcpy() and touch up the header and info to remove

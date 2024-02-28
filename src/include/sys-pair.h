@@ -38,7 +38,7 @@
 // two numbers.
 //
 
-inline static Value* PAIRING_KEY(Value* paired) {
+INLINE Value* PAIRING_KEY(Value* paired) {
     return paired + 1;
 }
 
@@ -53,31 +53,31 @@ inline static Value* PAIRING_KEY(Value* paired) {
 #define VAL_PAIR_SECOND(v) \
     ((v)->payload.pair)
 
-inline static REBDEC VAL_PAIR_X_DEC(const Cell* v) {
+INLINE REBDEC VAL_PAIR_X_DEC(const Cell* v) {
     if (IS_INTEGER(VAL_PAIR_FIRST(v)))
         return VAL_INT64(VAL_PAIR_FIRST(v));
     return VAL_DECIMAL(VAL_PAIR_FIRST(v));
 }
 
-inline static REBDEC VAL_PAIR_Y_DEC(const Cell* v) {
+INLINE REBDEC VAL_PAIR_Y_DEC(const Cell* v) {
     if (IS_INTEGER(VAL_PAIR_SECOND(v)))
         return VAL_INT64(VAL_PAIR_SECOND(v));
     return VAL_DECIMAL(VAL_PAIR_SECOND(v));
 }
 
-inline static REBI64 VAL_PAIR_X_INT(const Cell* v) {
+INLINE REBI64 VAL_PAIR_X_INT(const Cell* v) {
     if (IS_INTEGER(VAL_PAIR_FIRST(v)))
         return VAL_INT64(VAL_PAIR_FIRST(v));
     return ROUND_TO_INT(VAL_DECIMAL(VAL_PAIR_FIRST(v)));
 }
 
-inline static REBI64 VAL_PAIR_Y_INT(const Cell* v) {
+INLINE REBI64 VAL_PAIR_Y_INT(const Cell* v) {
     if (IS_INTEGER(VAL_PAIR_SECOND(v)))
         return VAL_INT64(VAL_PAIR_SECOND(v));
     return ROUND_TO_INT(VAL_DECIMAL(VAL_PAIR_SECOND(v)));
 }
 
-inline static Value* Init_Pair_Dec(Cell* out, float x, float y) {
+INLINE Value* Init_Pair_Dec(Cell* out, float x, float y) {
     RESET_CELL(out, REB_PAIR);
     out->payload.pair = Alloc_Pairing();
     Init_Decimal(PAIRING_KEY(out->payload.pair), x);
@@ -86,7 +86,7 @@ inline static Value* Init_Pair_Dec(Cell* out, float x, float y) {
     return KNOWN(out);
 }
 
-inline static Value* Init_Pair_Int(Cell* out, REBI64 x, REBI64 y) {
+INLINE Value* Init_Pair_Int(Cell* out, REBI64 x, REBI64 y) {
     RESET_CELL(out, REB_PAIR);
     out->payload.pair = Alloc_Pairing();
     Init_Integer(PAIRING_KEY(out->payload.pair), x);
@@ -95,7 +95,7 @@ inline static Value* Init_Pair_Int(Cell* out, REBI64 x, REBI64 y) {
     return KNOWN(out);
 }
 
-inline static Value* Init_Pair(
+INLINE Value* Init_Pair(
     Cell* out,
     const Value* first,
     const Value* second
@@ -111,7 +111,7 @@ inline static Value* Init_Pair(
 }
 
 
-inline static Value* Init_Zeroed_Hack(Cell* out, enum Reb_Kind kind) {
+INLINE Value* Init_Zeroed_Hack(Cell* out, enum Reb_Kind kind) {
     //
     // !!! This captures of a dodgy behavior of R3-Alpha, which was to assume
     // that clearing the payload of a value and then setting the header made

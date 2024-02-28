@@ -70,14 +70,14 @@ static const uint32_t min_int64_t_as_deci[] = {0u, 0x80000000u, 0u};
     0 means a = b;
     1 means a > b;
 */
-inline static int32_t m_cmp(int32_t n, const uint32_t a[], const uint32_t b[]) {
+INLINE int32_t m_cmp(int32_t n, const uint32_t a[], const uint32_t b[]) {
     int32_t i;
     for (i = n - 1; i >= 0; i--)
         if (a[i] != b[i]) return a[i] < b[i] ? -1 : 1;
     return 0;
 }
 
-inline static bool m_is_zero(int32_t n, const uint32_t a[]) {
+INLINE bool m_is_zero(int32_t n, const uint32_t a[]) {
     int32_t i;
     for (i = 0; (i < n) and (a[i] == 0); i++)
         NOOP;
@@ -124,7 +124,7 @@ static const uint32_t P26_1[] = {3825205247u, 3704098002u, 5421010u};
     Computes max decimal shift left for nonzero significand a with length 3;
     using double arithmetic;
 */
-inline static int32_t max_shift_left(const uint32_t a[]) {
+INLINE int32_t max_shift_left(const uint32_t a[]) {
     int32_t i;
     i = (int32_t)(log10((a[2] * two_to_32 + a[1]) * two_to_32 + a[0]) + 0.5);
     return m_cmp (3, P[i], a) <= 0 ? 25 - i : 26 - i;
@@ -164,7 +164,7 @@ static const uint32_t Q[][6] = {
     Computes minimal decimal shift right for "double significand" with
     length 6 to fit length 3, using double arithmetic.
 */
-inline static int32_t min_shift_right(const uint32_t a[6]) {
+INLINE int32_t min_shift_right(const uint32_t a[6]) {
     int32_t i;
     if (m_cmp (6, a, P26) < 0) return 0;
     i = (int32_t) (log10 (
@@ -196,7 +196,7 @@ deci deci_abs(deci a) {
     a must be "large enough" to contain the sum;
     using 64-bit arithmetic;
 */
-inline static void m_add_1(uint32_t *a, const uint32_t b) {
+INLINE void m_add_1(uint32_t *a, const uint32_t b) {
     REBU64 c = (REBU64) b;
     while (c) {
         c += (REBU64) *a;
@@ -209,7 +209,7 @@ inline static void m_add_1(uint32_t *a, const uint32_t b) {
     Subtracts unsigned 32-bit value b from significand a;
     using 64-bit arithmetic;
 */
-inline static void m_subtract_1(uint32_t *a, const uint32_t b) {
+INLINE void m_subtract_1(uint32_t *a, const uint32_t b) {
     REBI64 c = - (REBI64) b;
     while (c) {
         c += 0xffffffffu + (REBI64)*a + 1;
@@ -222,7 +222,7 @@ inline static void m_subtract_1(uint32_t *a, const uint32_t b) {
     Adds significand b to significand a yielding sum s;
     using 64-bit arithmetic;
 */
-inline static void m_add(int32_t n, uint32_t s[], const uint32_t a[], const uint32_t b[]) {
+INLINE void m_add(int32_t n, uint32_t s[], const uint32_t a[], const uint32_t b[]) {
     REBU64 c = (REBU64) 0;
     int32_t i;
     for (i = 0; i < n; i++) {
@@ -238,7 +238,7 @@ inline static void m_add(int32_t n, uint32_t s[], const uint32_t a[], const uint
     returns carry flag to signal whether the result is negative;
     using 64-bit arithmetic;
 */
-inline static int32_t m_subtract(
+INLINE int32_t m_subtract(
     int32_t n,
     uint32_t d[],
     const uint32_t a[],
@@ -258,7 +258,7 @@ inline static int32_t m_subtract(
     Negates significand a;
     using 64-bit arithmetic;
 */
-inline static void m_negate(int32_t n, uint32_t a[]) {
+INLINE void m_negate(int32_t n, uint32_t a[]) {
     REBU64 c = (REBU64) 1;
     int32_t i;
     for (i = 0; i < n; i++) {
@@ -273,7 +273,7 @@ inline static void m_negate(int32_t n, uint32_t a[]) {
     p and a may be the same;
     using 64-bit arithmetic;
 */
-inline static void m_multiply_1(int32_t n, uint32_t p[], const uint32_t a[], uint32_t b) {
+INLINE void m_multiply_1(int32_t n, uint32_t p[], const uint32_t a[], uint32_t b) {
     int32_t j;
     REBU64 f = b, g = (REBU64) 0;
     for (j = 0; j < n; j++) {
@@ -289,7 +289,7 @@ inline static void m_multiply_1(int32_t n, uint32_t p[], const uint32_t a[], uin
     a must be longer than the complete result;
     n is the initial length of a;
 */
-inline static void dsl(int32_t n, uint32_t a[], int32_t shift) {
+INLINE void dsl(int32_t n, uint32_t a[], int32_t shift) {
     int32_t shift1;
     for (; shift > 0; shift -= shift1) {
         shift1 = 9 <= shift ? 9 : shift;
@@ -302,7 +302,7 @@ inline static void dsl(int32_t n, uint32_t a[], int32_t shift) {
     Multiplies significand a by significand b yielding the product p;
     using 64-bit arithmetic;
 */
-inline static void m_multiply(
+INLINE void m_multiply(
     uint32_t p[/* n + m */],
     int32_t n,
     const uint32_t a[],
@@ -330,7 +330,7 @@ inline static void m_multiply(
     b must be nonzero!
     using 64-bit arithmetic;
 */
-inline static uint32_t m_divide_1(int32_t n, uint32_t q[], const uint32_t a[], uint32_t b) {
+INLINE uint32_t m_divide_1(int32_t n, uint32_t q[], const uint32_t a[], uint32_t b) {
     int32_t i;
     REBU64 f = 0, g = b;
     for (i = n - 1; i >= 0; i--) {
@@ -349,7 +349,7 @@ inline static uint32_t m_divide_1(int32_t n, uint32_t q[], const uint32_t a[], u
     2 - exactly half of the least significant unit truncated
     3 - more than half of the least significant unit truncated
 */
-inline static void dsr(int32_t n, uint32_t a[], int32_t shift, int32_t *t_flag) {
+INLINE void dsr(int32_t n, uint32_t a[], int32_t shift, int32_t *t_flag) {
     uint32_t remainder, divisor;
     int32_t shift1;
     for (; shift > 0; shift -= shift1) {
@@ -367,7 +367,7 @@ inline static void dsr(int32_t n, uint32_t a[], int32_t shift, int32_t *t_flag) 
     ea and eb are exponents;
     ta and tb are truncate flags like above;
 */
-inline static void make_comparable(
+INLINE void make_comparable(
     uint32_t a[4],
     int32_t *ea,
     int32_t *ta,
@@ -642,7 +642,7 @@ deci decimal_to_deci(REBDEC a) {
     ta is a truncate flag as described above;
     *f is supposed to be in range [-128; 127];
 */
-inline static void m_ldexp(uint32_t a[4], int32_t *f, int32_t e, int32_t ta) {
+INLINE void m_ldexp(uint32_t a[4], int32_t *f, int32_t e, int32_t ta) {
     /* take care of zero significand */
     if (m_is_zero (3, a)) {
         *f = 0;
@@ -1027,7 +1027,7 @@ deci deci_multiply(const deci a, const deci b) {
 #define MAX_N 7
 #define MAX_M 3
 
-inline static void m_divide(
+INLINE void m_divide(
     uint32_t q[/* n - m + 1 */],
     uint32_t r[/* m */],
     const int32_t n,
@@ -1172,7 +1172,7 @@ deci deci_divide(deci a, deci b) {
 
 #define MAX_NB 7
 
-inline static int32_t m_to_string(REBYTE *s, uint32_t n, const uint32_t a[]) {
+INLINE int32_t m_to_string(REBYTE *s, uint32_t n, const uint32_t a[]) {
     uint32_t r, b[MAX_NB];
     REBYTE v[10 * MAX_NB + 1], *vmax, *k;
 

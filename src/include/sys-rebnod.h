@@ -406,7 +406,7 @@ struct Reb_Node {
     #define IS_FREE_NODE(p) \
         (did (cast(struct Reb_Node*, (p))->header.bits & NODE_FLAG_FREE))
 #else
-    inline static bool IS_FREE_NODE(void *p) {
+    INLINE bool IS_FREE_NODE(void *p) {
         struct Reb_Node *n = cast(struct Reb_Node*, p);
 
         if (not (n->header.bits & NODE_FLAG_FREE))

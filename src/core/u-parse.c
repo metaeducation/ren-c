@@ -144,7 +144,7 @@ enum parse_flags {
 // !!! This and other efficiency tricks from R3-Alpha should be reviewed to
 // see if they're really the best option.
 //
-inline static Option(SymId) VAL_CMD(const Cell* v) {
+INLINE Option(SymId) VAL_CMD(const Cell* v) {
     Option(SymId) sym = Cell_Word_Id(v);
     if (sym >= SYM_SET and sym <= SYM_END)
         return sym;
@@ -310,21 +310,21 @@ static bool Subparse_Throws(
 // question, but now the `where` at the time of failure will indicate the
 // location in the parse dialect that's the problem.
 
-inline static REBCTX *Error_Parse_Rule(void) {
+INLINE REBCTX *Error_Parse_Rule(void) {
     return Error_Parse_Rule_Raw();
 }
 
-inline static REBCTX *Error_Parse_End(void) {
+INLINE REBCTX *Error_Parse_End(void) {
     return Error_Parse_End_Raw();
 }
 
-inline static REBCTX *Error_Parse_Command(REBFRM *f) {
+INLINE REBCTX *Error_Parse_Command(REBFRM *f) {
     DECLARE_LOCAL (command);
     Derelativize(command, P_RULE, P_RULE_SPECIFIER);
     return Error_Parse_Command_Raw(command);
 }
 
-inline static REBCTX *Error_Parse_Variable(REBFRM *f) {
+INLINE REBCTX *Error_Parse_Variable(REBFRM *f) {
     DECLARE_LOCAL (variable);
     Derelativize(variable, P_RULE, P_RULE_SPECIFIER);
     return Error_Parse_Variable_Raw(variable);
@@ -768,7 +768,7 @@ static REBIXO Parse_Array_One_Rule_Core(
 // of the parse, this is the version used in the main loop.  To_Thru uses
 // the random access variation.
 //
-inline static REBIXO Parse_Array_One_Rule(REBFRM *f, const Cell* rule) {
+INLINE REBIXO Parse_Array_One_Rule(REBFRM *f, const Cell* rule) {
     return Parse_Array_One_Rule_Core(f, P_POS, rule);
 }
 

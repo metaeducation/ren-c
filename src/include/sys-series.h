@@ -99,7 +99,7 @@
 // enable it only comes automatically with address sanitizer.
 //
 #if defined(DEBUG_SERIES_ORIGINS) || defined(DEBUG_COUNT_TICKS)
-    inline static void Touch_Series_Debug(void *p) {
+    INLINE void Touch_Series_Debug(void *p) {
         REBSER *s = SER(p); // allow REBARR, REBCTX, REBACT...
 
       #if defined(DEBUG_SERIES_ORIGINS)
@@ -123,7 +123,7 @@
 
 
 #if defined(DEBUG_MONITOR_SERIES)
-    inline static void MONITOR_SERIES(void *p) {
+    INLINE void MONITOR_SERIES(void *p) {
         printf("Adding monitor to %p on tick #%d\n", p, cast(int, TG_Tick));
         fflush(stdout);
         SET_SER_INFO(p, SERIES_INFO_MONITOR_DEBUG);
@@ -142,12 +142,12 @@
 // "content", there's room for a length in the node.
 //
 
-inline static REBLEN SER_LEN(REBSER *s) {
+INLINE REBLEN SER_LEN(REBSER *s) {
     REBYTE len_byte = LEN_BYTE_OR_255(s);
     return len_byte == 255 ? s->content.dynamic.len : len_byte;
 }
 
-inline static void SET_SERIES_LEN(REBSER *s, REBLEN len) {
+INLINE void SET_SERIES_LEN(REBSER *s, REBLEN len) {
     assert(NOT_SER_FLAG(s, SERIES_FLAG_STACK));
 
     if (LEN_BYTE_OR_255(s) == 255)
@@ -163,7 +163,7 @@ inline static void SET_SERIES_LEN(REBSER *s, REBLEN len) {
 // for instance a generic debugging routine might just want a byte pointer
 // but have no element type pointer to pass in.
 //
-inline static REBYTE *SER_DATA_RAW(REBSER *s) {
+INLINE REBYTE *SER_DATA_RAW(REBSER *s) {
     // if updating, also update manual inlining in SER_AT_RAW
 
     // The VAL_CONTEXT(), VAL_SERIES(), VAL_ARRAY() extractors do the failing
@@ -176,7 +176,7 @@ inline static REBYTE *SER_DATA_RAW(REBSER *s) {
         : cast(REBYTE*, &s->content);
 }
 
-inline static REBYTE *SER_AT_RAW(REBYTE w, REBSER *s, REBLEN i) {
+INLINE REBYTE *SER_AT_RAW(REBYTE w, REBSER *s, REBLEN i) {
   #if !defined(NDEBUG)
     if (w != SER_WIDE(s)) {
         //
@@ -222,14 +222,14 @@ inline static REBYTE *SER_AT_RAW(REBYTE w, REBSER *s, REBLEN i) {
 #define SER_HEAD(t,s) \
     SER_AT(t, (s), 0)
 
-inline static REBYTE *SER_TAIL_RAW(size_t w, REBSER *s) {
+INLINE REBYTE *SER_TAIL_RAW(size_t w, REBSER *s) {
     return SER_AT_RAW(w, s, SER_LEN(s));
 }
 
 #define SER_TAIL(t,s) \
     ((t*)SER_TAIL_RAW(sizeof(t), (s)))
 
-inline static REBYTE *SER_LAST_RAW(size_t w, REBSER *s) {
+INLINE REBYTE *SER_LAST_RAW(size_t w, REBSER *s) {
     assert(SER_LEN(s) != 0);
     return SER_AT_RAW(w, s, SER_LEN(s) - 1);
 }
@@ -252,7 +252,7 @@ inline static REBYTE *SER_LAST_RAW(size_t w, REBSER *s) {
 // Optimized expand when at tail (but, does not reterminate)
 //
 
-inline static void EXPAND_SERIES_TAIL(REBSER *s, REBLEN delta) {
+INLINE void EXPAND_SERIES_TAIL(REBSER *s, REBLEN delta) {
     if (SER_FITS(s, delta))
         SET_SERIES_LEN(s, SER_LEN(s) + delta);
     else
@@ -263,12 +263,12 @@ inline static void EXPAND_SERIES_TAIL(REBSER *s, REBLEN delta) {
 // Termination
 //
 
-inline static void TERM_SEQUENCE(REBSER *s) {
+INLINE void TERM_SEQUENCE(REBSER *s) {
     assert(not IS_SER_ARRAY(s));
     memset(SER_AT_RAW(SER_WIDE(s), s, SER_LEN(s)), 0, SER_WIDE(s));
 }
 
-inline static void TERM_SEQUENCE_LEN(REBSER *s, REBLEN len) {
+INLINE void TERM_SEQUENCE_LEN(REBSER *s, REBLEN len) {
     SET_SERIES_LEN(s, len);
     TERM_SEQUENCE(s);
 }
@@ -314,14 +314,14 @@ inline static void TERM_SEQUENCE_LEN(REBSER *s, REBLEN len) {
 // reachable by the GC, it will raise an alert.)
 //
 
-inline static bool IS_SERIES_MANAGED(REBSER *s) {
+INLINE bool IS_SERIES_MANAGED(REBSER *s) {
     return did (s->header.bits & NODE_FLAG_MANAGED);
 }
 
 #define MANAGE_SERIES(s) \
     Manage_Series(s)
 
-inline static void ENSURE_SERIES_MANAGED(REBSER *s) {
+INLINE void ENSURE_SERIES_MANAGED(REBSER *s) {
     if (not IS_SERIES_MANAGED(s))
         MANAGE_SERIES(s);
 }
@@ -330,7 +330,7 @@ inline static void ENSURE_SERIES_MANAGED(REBSER *s) {
     #define ASSERT_SERIES_MANAGED(s) \
         NOOP
 #else
-    inline static void ASSERT_SERIES_MANAGED(REBSER *s) {
+    INLINE void ASSERT_SERIES_MANAGED(REBSER *s) {
         if (not IS_SERIES_MANAGED(s))
             panic (s);
     }
@@ -363,15 +363,15 @@ inline static void ENSURE_SERIES_MANAGED(REBSER *s) {
 // are and asserts it's 0 by the time each evaluation ends, to ensure balance.
 //
 
-static inline bool Is_Series_Black(REBSER *s) {
+INLINE bool Is_Series_Black(REBSER *s) {
     return GET_SER_INFO(s, SERIES_INFO_BLACK);
 }
 
-static inline bool Is_Series_White(REBSER *s) {
+INLINE bool Is_Series_White(REBSER *s) {
     return NOT_SER_INFO(s, SERIES_INFO_BLACK);
 }
 
-static inline void Flip_Series_To_Black(REBSER *s) {
+INLINE void Flip_Series_To_Black(REBSER *s) {
     assert(NOT_SER_INFO(s, SERIES_INFO_BLACK));
     SET_SER_INFO(s, SERIES_INFO_BLACK);
 #if !defined(NDEBUG)
@@ -379,7 +379,7 @@ static inline void Flip_Series_To_Black(REBSER *s) {
 #endif
 }
 
-static inline void Flip_Series_To_White(REBSER *s) {
+INLINE void Flip_Series_To_White(REBSER *s) {
     assert(GET_SER_INFO(s, SERIES_INFO_BLACK));
     CLEAR_SER_INFO(s, SERIES_INFO_BLACK);
 #if !defined(NDEBUG)
@@ -392,17 +392,17 @@ static inline void Flip_Series_To_White(REBSER *s) {
 // Freezing and Locking
 //
 
-inline static void Freeze_Sequence(REBSER *s) { // there is no unfreeze!
+INLINE void Freeze_Sequence(REBSER *s) { // there is no unfreeze!
     assert(not IS_SER_ARRAY(s)); // use Deep_Freeze_Array
     SET_SER_INFO(s, SERIES_INFO_FROZEN);
 }
 
-inline static bool Is_Series_Frozen(REBSER *s) {
+INLINE bool Is_Series_Frozen(REBSER *s) {
     assert(not IS_SER_ARRAY(s)); // use Is_Array_Deeply_Frozen
     return GET_SER_INFO(s, SERIES_INFO_FROZEN);
 }
 
-inline static bool Is_Series_Read_Only(REBSER *s) { // may be temporary...
+INLINE bool Is_Series_Read_Only(REBSER *s) { // may be temporary...
     return ANY_SER_INFOS(
         s, SERIES_INFO_FROZEN | SERIES_INFO_HOLD | SERIES_INFO_PROTECTED
     );
@@ -415,7 +415,7 @@ inline static bool Is_Series_Read_Only(REBSER *s) { // may be temporary...
 // but if only one error is to be reported then this is probably the right
 // priority ordering.
 //
-inline static void FAIL_IF_READ_ONLY_SERIES(REBSER *s) {
+INLINE void FAIL_IF_READ_ONLY_SERIES(REBSER *s) {
     if (Is_Series_Read_Only(s)) {
         if (GET_SER_INFO(s, SERIES_INFO_AUTO_LOCKED))
             fail (Error_Series_Auto_Locked_Raw());
@@ -461,7 +461,7 @@ inline static void FAIL_IF_READ_ONLY_SERIES(REBSER *s) {
     Push_Guard_Node(NOD(p))
 
 #ifdef NDEBUG
-    inline static void Drop_Guard_Node(REBNOD *n) {
+    INLINE void Drop_Guard_Node(REBNOD *n) {
         UNUSED(n);
         GC_Guarded->content.dynamic.len--;
     }
@@ -469,7 +469,7 @@ inline static void FAIL_IF_READ_ONLY_SERIES(REBSER *s) {
     #define DROP_GC_GUARD(p) \
         Drop_Guard_Node(NOD(p))
 #else
-    inline static void Drop_Guard_Node_Debug(
+    INLINE void Drop_Guard_Node_Debug(
         REBNOD *n,
         const char *file,
         int line
@@ -490,7 +490,7 @@ inline static void FAIL_IF_READ_ONLY_SERIES(REBSER *s) {
 //
 //=////////////////////////////////////////////////////////////////////////=//
 
-inline static REBSER *VAL_SERIES(const Cell* v) {
+INLINE REBSER *VAL_SERIES(const Cell* v) {
     assert(ANY_SERIES(v) or IS_MAP(v));  // !!! gcc 5.4 -O2 bug
     REBSER *s = v->payload.any_series.series;
     if (GET_SER_INFO(s, SERIES_INFO_INACCESSIBLE))
@@ -498,7 +498,7 @@ inline static REBSER *VAL_SERIES(const Cell* v) {
     return s;
 }
 
-inline static void INIT_VAL_SERIES(Cell* v, REBSER *s) {
+INLINE void INIT_VAL_SERIES(Cell* v, REBSER *s) {
     assert(not IS_SER_ARRAY(s));
     assert(IS_SERIES_MANAGED(s));
     v->payload.any_series.series = s;
@@ -510,11 +510,11 @@ inline static void INIT_VAL_SERIES(Cell* v, REBSER *s) {
 #else
     // allows an assert, but also lvalue: `VAL_INDEX(v) = xxx`
     //
-    inline static REBLEN & VAL_INDEX(Cell* v) { // C++ reference type
+    INLINE REBLEN & VAL_INDEX(Cell* v) { // C++ reference type
         assert(ANY_SERIES(v));
         return v->payload.any_series.index;
     }
-    inline static REBLEN VAL_INDEX(const Cell* v) {
+    INLINE REBLEN VAL_INDEX(const Cell* v) {
         assert(ANY_SERIES(v));
         return v->payload.any_series.index;
     }
@@ -523,13 +523,13 @@ inline static void INIT_VAL_SERIES(Cell* v, REBSER *s) {
 #define VAL_LEN_HEAD(v) \
     SER_LEN(VAL_SERIES(v))
 
-inline static REBLEN VAL_LEN_AT(const Cell* v) {
+INLINE REBLEN VAL_LEN_AT(const Cell* v) {
     if (VAL_INDEX(v) >= VAL_LEN_HEAD(v))
         return 0; // avoid negative index
     return VAL_LEN_HEAD(v) - VAL_INDEX(v); // take current index into account
 }
 
-inline static REBYTE *VAL_RAW_DATA_AT(const Cell* v) {
+INLINE REBYTE *VAL_RAW_DATA_AT(const Cell* v) {
     return SER_AT_RAW(SER_WIDE(VAL_SERIES(v)), VAL_SERIES(v), VAL_INDEX(v));
 }
 
@@ -562,7 +562,7 @@ inline static REBYTE *VAL_RAW_DATA_AT(const Cell* v) {
 // is a particularly efficient default state, so separating the dynamic
 // allocation into a separate routine is not a huge cost.
 //
-inline static REBSER *Alloc_Series_Node(REBFLGS flags) {
+INLINE REBSER *Alloc_Series_Node(REBFLGS flags) {
     assert(not (flags & NODE_FLAG_CELL));
 
     REBSER *s = cast(REBSER*, Make_Node(SER_POOL));
@@ -594,7 +594,7 @@ inline static REBSER *Alloc_Series_Node(REBFLGS flags) {
 }
 
 
-inline static REBLEN FIND_POOL(size_t size) {
+INLINE REBLEN FIND_POOL(size_t size) {
   #if !defined(NDEBUG)
     if (PG_Always_Malloc)
         return SYSTEM_POOL;
@@ -615,7 +615,7 @@ inline static REBLEN FIND_POOL(size_t size) {
 // This routine can thus be used for an initial construction or an operation
 // like expansion.
 //
-inline static bool Did_Series_Data_Alloc(REBSER *s, REBLEN length) {
+INLINE bool Did_Series_Data_Alloc(REBSER *s, REBLEN length) {
     //
     // Currently once a series becomes dynamic, it never goes back.  There is
     // no shrinking process that will pare it back to fit completely inside
@@ -702,7 +702,7 @@ inline static bool Did_Series_Data_Alloc(REBSER *s, REBLEN length) {
 // Small series will be allocated from a memory pool.
 // Large series will be allocated from system memory.
 //
-inline static REBSER *Make_Ser_Core(
+INLINE REBSER *Make_Ser_Core(
     REBLEN capacity,
     REBYTE wide,
     REBFLGS flags

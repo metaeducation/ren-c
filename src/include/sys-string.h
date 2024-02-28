@@ -85,33 +85,33 @@
 // everything else.
 //
 
-inline static const char *STR_HEAD(REBSTR *str) {
+INLINE const char *STR_HEAD(REBSTR *str) {
     return cs_cast(BIN_HEAD(str));
 }
 
-inline static REBSTR *STR_CANON(REBSTR *str) {
+INLINE REBSTR *STR_CANON(REBSTR *str) {
     while (NOT_SER_INFO(str, STRING_INFO_CANON))
         str = LINK(str).synonym; // circularly linked list
     return str;
 }
 
-inline static Option(SymId) STR_SYMBOL(REBSTR *str) {
+INLINE Option(SymId) STR_SYMBOL(REBSTR *str) {
     uint16_t sym = SECOND_UINT16(str->header);
     assert(sym == SECOND_UINT16(STR_CANON(str)->header));
     return cast(SymId, sym);
 }
 
-inline static size_t STR_SIZE(REBSTR *str) {
+INLINE size_t STR_SIZE(REBSTR *str) {
     return SER_LEN(str); // number of bytes in seris is series length, ATM
 }
 
-inline static REBSTR *Canon(SymId sym) {
+INLINE REBSTR *Canon(SymId sym) {
     assert(cast(REBLEN, sym) != 0);
     assert(cast(REBLEN, sym) < SER_LEN(PG_Symbol_Canons));
     return *SER_AT(REBSTR*, PG_Symbol_Canons, cast(REBLEN, sym));
 }
 
-inline static bool SAME_STR(REBSTR *s1, REBSTR *s2) {
+INLINE bool SAME_STR(REBSTR *s1, REBSTR *s2) {
     if (s1 == s2)
         return true; // !!! does this check speed things up or not?
     return STR_CANON(s1) == STR_CANON(s2); // canon check, quite fast
@@ -123,12 +123,12 @@ inline static bool SAME_STR(REBSTR *s1, REBSTR *s2) {
 // !!! UNI_XXX: Unicode string series macros !!! - Becoming Deprecated
 //
 
-inline static REBLEN UNI_LEN(REBSER *s) {
+INLINE REBLEN UNI_LEN(REBSER *s) {
     assert(SER_WIDE(s) == sizeof(REBUNI));
     return SER_LEN(s);
 }
 
-inline static void SET_UNI_LEN(REBSER *s, REBLEN len) {
+INLINE void SET_UNI_LEN(REBSER *s, REBLEN len) {
     assert(SER_WIDE(s) == sizeof(REBUNI));
     SET_SERIES_LEN(s, len);
 }
@@ -145,7 +145,7 @@ inline static void SET_UNI_LEN(REBSER *s, REBLEN len) {
 #define UNI_LAST(s) \
     SER_LAST(REBUNI, (s))
 
-inline static void TERM_UNI_LEN(REBSER *s, REBLEN len) {
+INLINE void TERM_UNI_LEN(REBSER *s, REBLEN len) {
     SET_SERIES_LEN(s, len);
     *SER_AT(REBUNI, s, len) = '\0';
 }
@@ -168,11 +168,11 @@ inline static void TERM_UNI_LEN(REBSER *s, REBLEN len) {
 // One should thus always prefer to use VAL_UNI_AT() if possible, over trying
 // to calculate a position from scratch.
 //
-inline static REBUNI *VAL_UNI_AT(const Cell* v) {
+INLINE REBUNI *VAL_UNI_AT(const Cell* v) {
     return AS_REBUNI(UNI_AT(VAL_SERIES(v), VAL_INDEX(v)));
 }
 
-inline static REBSIZ VAL_SIZE_LIMIT_AT(
+INLINE REBSIZ VAL_SIZE_LIMIT_AT(
     REBLEN *length, // length in chars to end (including limit)
     const Cell* v,
     REBINT limit // -1 for no limit
@@ -214,11 +214,11 @@ inline static REBSIZ VAL_SIZE_LIMIT_AT(
 // create new strings, if possible.
 //
 
-inline static REBUNI GET_ANY_CHAR(REBSER *s, REBLEN n) {
+INLINE REBUNI GET_ANY_CHAR(REBSER *s, REBLEN n) {
     return BYTE_SIZE(s) ? *BIN_AT(s, n) : *SER_AT(REBUNI, s, n);
 }
 
-inline static void SET_ANY_CHAR(REBSER *s, REBLEN n, REBUNI c) {
+INLINE void SET_ANY_CHAR(REBSER *s, REBLEN n, REBUNI c) {
     if (BYTE_SIZE(s)) {
         assert(c <= 255);
         *BIN_AT(s, n) = c;
@@ -266,7 +266,7 @@ inline static void SET_ANY_CHAR(REBSER *s, REBLEN n, REBUNI c) {
 // with the data itself being malformed (the usual assumption of callers)
 // but rather a limit of the implementation.
 //
-inline static const REBYTE *Back_Scan_UTF8_Char(
+INLINE const REBYTE *Back_Scan_UTF8_Char(
     REBUNI *out,
     const REBYTE *bp,
     REBSIZ *size
@@ -284,23 +284,23 @@ inline static const REBYTE *Back_Scan_UTF8_Char(
 // rebStringXXX() APIs for this).  Note that these routines may fail() if the
 // data they are given is not UTF-8.
 
-inline static REBSER *Make_String_UTF8(const char *utf8)
+INLINE REBSER *Make_String_UTF8(const char *utf8)
 {
     const bool crlf_to_lf = false;
     return Append_UTF8_May_Fail(NULL, utf8, strsize(utf8), crlf_to_lf);
 }
 
-inline static REBSER *Make_Sized_String_UTF8(const char *utf8, size_t size)
+INLINE REBSER *Make_Sized_String_UTF8(const char *utf8, size_t size)
 {
     const bool crlf_to_lf = false;
     return Append_UTF8_May_Fail(NULL, utf8, size, crlf_to_lf);
 }
 
 
-inline static REBINT Hash_String(REBSTR *str)
+INLINE REBINT Hash_String(REBSTR *str)
     { return Hash_UTF8(cb_cast(STR_HEAD(str)), STR_SIZE(str)); }
 
-inline static REBINT First_Hash_Candidate_Slot(
+INLINE REBINT First_Hash_Candidate_Slot(
     REBLEN *skip_out,
     REBLEN hash,
     REBLEN num_slots
@@ -316,14 +316,14 @@ inline static REBINT First_Hash_Candidate_Slot(
 // Copy helpers
 //
 
-inline static REBSER *Copy_Sequence_At_Position(const Value* v)
+INLINE REBSER *Copy_Sequence_At_Position(const Value* v)
 {
     return Copy_Sequence_At_Len_Extra(
         VAL_SERIES(v), VAL_INDEX(v), VAL_LEN_AT(v), 0
     );
 }
 
-inline static REBSER *Copy_Sequence_At_Len(
+INLINE REBSER *Copy_Sequence_At_Len(
     REBSER *s,
     REBLEN index,
     REBLEN len
@@ -337,7 +337,7 @@ inline static REBSER *Copy_Sequence_At_Len(
 // in ASCII range and fixed size.  If this is the case, different algorithms
 // might be applied, for instance a standard C qsort() to sort the characters.
 //
-inline static bool Is_String_ASCII(const Cell* str) {
+INLINE bool Is_String_ASCII(const Cell* str) {
     UNUSED(str);
     return false; // currently all strings are 16-bit REBUNI characters
 }

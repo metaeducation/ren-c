@@ -143,12 +143,12 @@ void Append_OS_Str(Value* dest, const void *src, REBINT len)
 
 
 ATTRIBUTE_NO_RETURN
-inline static void Fail_Permission_Denied(void) {
+INLINE void Fail_Permission_Denied(void) {
     rebJumps("fail {The process does not have enough permission}");
 }
 
 ATTRIBUTE_NO_RETURN
-inline static void Fail_No_Process(const Value* arg) {
+INLINE void Fail_No_Process(const Value* arg) {
     rebJumps("fail [{The target process (group) does not exist:}",
         arg, "]");
 }
@@ -157,7 +157,7 @@ inline static void Fail_No_Process(const Value* arg) {
 #ifdef TO_WINDOWS
 
 ATTRIBUTE_NO_RETURN
-inline static void Fail_Terminate_Failed(DWORD err) { // from GetLastError()
+INLINE void Fail_Terminate_Failed(DWORD err) { // from GetLastError()
     rebJumps(
         "fail [{Terminate failed with error number:}", rebI(err), "]"
     );
@@ -749,7 +749,7 @@ input_error:
 
 #else // !defined(TO_WINDOWS), so POSIX, LINUX, OS X, etc.
 
-static inline bool Open_Pipe_Fails(int pipefd[2]) {
+INLINE bool Open_Pipe_Fails(int pipefd[2]) {
   #ifdef USE_PIPE2_NOT_PIPE
     //
     // NOTE: pipe() is POSIX, but pipe2() is Linux-specific.  With pipe() it
@@ -783,7 +783,7 @@ static inline bool Open_Pipe_Fails(int pipefd[2]) {
     return false;
 }
 
-static inline bool Set_Nonblocking_Fails(int fd) {
+INLINE bool Set_Nonblocking_Fails(int fd) {
     int oldflags;
     oldflags = fcntl(fd, F_GETFL);
     if (oldflags < 0)

@@ -105,7 +105,7 @@
     cast(Value*, &PG_End_Node)
 
 
-inline static REBARR *ACT_PARAMLIST(REBACT *a) {
+INLINE REBARR *ACT_PARAMLIST(REBACT *a) {
     assert(GET_SER_FLAG(&a->paramlist, ARRAY_FLAG_PARAMLIST));
     return &a->paramlist;
 }
@@ -134,7 +134,7 @@ inline static REBARR *ACT_PARAMLIST(REBACT *a) {
 #define IDX_NATIVE_CONTEXT 1 // libRebol binds strings here (and lib)
 #define IDX_NATIVE_MAX (IDX_NATIVE_CONTEXT + 1)
 
-inline static Value* ACT_PARAM(REBACT *a, REBLEN n) {
+INLINE Value* ACT_PARAM(REBACT *a, REBLEN n) {
     assert(n != 0 and n < ARR_LEN(ACT_PARAMLIST(a)));
     return SER_AT(Value, SER(ACT_PARAMLIST(a)), n);
 }
@@ -162,7 +162,7 @@ inline static Value* ACT_PARAM(REBACT *a, REBLEN n) {
 // nullptr in the LINK(info).specialty node in that case--instead the params.
 // This makes Push_Action() slightly faster in assigning f->special.
 //
-inline static REBCTX *ACT_EXEMPLAR(REBACT *a) {
+INLINE REBCTX *ACT_EXEMPLAR(REBACT *a) {
     REBARR *details = ACT_ARCHETYPE(a)->payload.action.details;
     REBARR *specialty = LINK(details).specialty;
     if (GET_SER_FLAG(specialty, ARRAY_FLAG_VARLIST))
@@ -171,7 +171,7 @@ inline static REBCTX *ACT_EXEMPLAR(REBACT *a) {
     return nullptr;
 }
 
-inline static Value* ACT_SPECIALTY_HEAD(REBACT *a) {
+INLINE Value* ACT_SPECIALTY_HEAD(REBACT *a) {
     REBARR *details = ACT_ARCHETYPE(a)->payload.action.details;
     REBSER *s = SER(LINK(details).specialty);
     return cast(Value*, s->content.dynamic.data) + 1; // skip archetype/root
@@ -257,7 +257,7 @@ inline static Value* ACT_SPECIALTY_HEAD(REBACT *a) {
         | ACTION_FLAG_INVISIBLE)
 
 
-inline static REBACT *VAL_ACTION(const Cell* v) {
+INLINE REBACT *VAL_ACTION(const Cell* v) {
     assert(IS_ACTION(v));
     REBSER *s = SER(v->payload.action.paramlist);
     if (GET_SER_INFO(s, SERIES_INFO_INACCESSIBLE))
@@ -277,17 +277,17 @@ inline static REBACT *VAL_ACTION(const Cell* v) {
 #define VAL_ACT_PARAM(v,n) \
     ACT_PARAM(VAL_ACTION(v), n)
 
-inline static REBARR *VAL_ACT_DETAILS(const Cell* v) {
+INLINE REBARR *VAL_ACT_DETAILS(const Cell* v) {
     assert(IS_ACTION(v));
     return v->payload.action.details;
 }
 
-inline static REBNAT VAL_ACT_DISPATCHER(const Cell* v) {
+INLINE REBNAT VAL_ACT_DISPATCHER(const Cell* v) {
     assert(IS_ACTION(v));
     return MISC(v->payload.action.details).dispatcher;
 }
 
-inline static REBCTX *VAL_ACT_META(const Cell* v) {
+INLINE REBCTX *VAL_ACT_META(const Cell* v) {
     assert(IS_ACTION(v));
     return MISC(v->payload.action.paramlist).meta;
 }
@@ -308,7 +308,7 @@ inline static REBCTX *VAL_ACT_META(const Cell* v) {
 // that is its canon form from a single pointer...the cell sitting in
 // the 0 slot of the action's paramlist.
 //
-static inline Value* Init_Action_Unbound(
+INLINE Value* Init_Action_Unbound(
     Cell* out,
     REBACT *a
 ){
@@ -321,7 +321,7 @@ static inline Value* Init_Action_Unbound(
     return KNOWN(out);
 }
 
-static inline Value* Init_Action_Maybe_Bound(
+INLINE Value* Init_Action_Maybe_Bound(
     Cell* out,
     REBACT *a,
     REBNOD *binding // allowed to be UNBOUND

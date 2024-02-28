@@ -50,7 +50,7 @@
 // will occur exactly once (when it is caught).
 //
 
-inline static bool THROWN(const Cell* v) {
+INLINE bool THROWN(const Cell* v) {
     assert(v->header.bits & NODE_FLAG_CELL);
 
     if (v->header.bits & VALUE_FLAG_THROWN) {
@@ -60,7 +60,7 @@ inline static bool THROWN(const Cell* v) {
     return false;
 }
 
-inline static void CONVERT_NAME_TO_THROWN(Value* name, const Value* arg) {
+INLINE void CONVERT_NAME_TO_THROWN(Value* name, const Value* arg) {
     assert(not THROWN(name));
     SET_VAL_FLAG(name, VALUE_FLAG_THROWN);
 
@@ -69,7 +69,7 @@ inline static void CONVERT_NAME_TO_THROWN(Value* name, const Value* arg) {
     Move_Value(&TG_Thrown_Arg, arg);
 }
 
-static inline void CATCH_THROWN(Cell* arg_out, Value* thrown) {
+INLINE void CATCH_THROWN(Cell* arg_out, Value* thrown) {
     //
     // Note: arg_out and thrown may be the same pointer
     //
@@ -89,11 +89,11 @@ static inline void CATCH_THROWN(Cell* arg_out, Value* thrown) {
 //=////////////////////////////////////////////////////////////////////////=//
 
 
-inline static bool FRM_IS_VALIST(REBFRM *f) {
+INLINE bool FRM_IS_VALIST(REBFRM *f) {
     return f->source->vaptr != nullptr;
 }
 
-inline static REBARR *FRM_ARRAY(REBFRM *f) {
+INLINE REBARR *FRM_ARRAY(REBFRM *f) {
     assert(IS_END(f->value) or not FRM_IS_VALIST(f));
     return f->source->array;
 }
@@ -104,7 +104,7 @@ inline static REBARR *FRM_ARRAY(REBFRM *f) {
 // convert these cases to ordinary arrays before running them, in order
 // to accurately present any errors.
 //
-inline static REBLEN FRM_INDEX(REBFRM *f) {
+INLINE REBLEN FRM_INDEX(REBFRM *f) {
     if (IS_END(f->value))
         return ARR_LEN(f->source->array);
 
@@ -112,14 +112,14 @@ inline static REBLEN FRM_INDEX(REBFRM *f) {
     return f->source->index - 1;
 }
 
-inline static REBLEN FRM_EXPR_INDEX(REBFRM *f) {
+INLINE REBLEN FRM_EXPR_INDEX(REBFRM *f) {
     assert(not FRM_IS_VALIST(f));
     return f->expr_index == END_FLAG
         ? ARR_LEN((f)->source->array)
         : f->expr_index - 1;
 }
 
-inline static REBSTR* FRM_FILE(REBFRM *f) {
+INLINE REBSTR* FRM_FILE(REBFRM *f) {
     //
     // !!! the rebValue function could be a variadic macro in C99 or higher, as
     // `rebValueFileLine(__FILE__, __LINE__, ...`.  This could let the file and
@@ -137,7 +137,7 @@ inline static REBSTR* FRM_FILE(REBFRM *f) {
     return LINK(f->source->array).file;
 }
 
-inline static const char* FRM_FILE_UTF8(REBFRM *f) {
+INLINE const char* FRM_FILE_UTF8(REBFRM *f) {
     //
     // !!! Note: This is used too early in boot at the moment to use
     // Canon(__ANONYMOUS__).
@@ -146,7 +146,7 @@ inline static const char* FRM_FILE_UTF8(REBFRM *f) {
     return str ? STR_HEAD(str) : "(anonymous)";
 }
 
-inline static int FRM_LINE(REBFRM *f) {
+INLINE int FRM_LINE(REBFRM *f) {
     if (not f->source->array)
         return 0;
 
@@ -176,7 +176,7 @@ inline static int FRM_LINE(REBFRM *f) {
 #define FRM_SHOVE(f) \
     cast(Value*, &(f)->shove)
 
-inline static bool Is_Frame_Gotten_Shoved(REBFRM *f) {
+INLINE bool Is_Frame_Gotten_Shoved(REBFRM *f) {
     if (f->gotten != FRM_SHOVE(f))
         return false;
     assert(GET_VAL_FLAG(f->gotten, VALUE_FLAG_ENFIXED));
@@ -204,7 +204,7 @@ inline static bool Is_Frame_Gotten_Shoved(REBFRM *f) {
     //
     // Any manipulations aware of this hack need to access the field directly.
     //
-    inline static REBACT* &FRM_PHASE(REBFRM *f) {
+    INLINE REBACT* &FRM_PHASE(REBFRM *f) {
         REBACT* &phase = FRM_PHASE_OR_DUMMY(f);
         assert(phase != PG_Dummy_Action);
         return phase;
@@ -231,7 +231,7 @@ inline static bool Is_Frame_Gotten_Shoved(REBFRM *f) {
     #define FRM_ARG(f,n) \
         ((f)->rootvar + (n))
 #else
-    inline static Value* FRM_ARG(REBFRM *f, REBLEN n) {
+    INLINE Value* FRM_ARG(REBFRM *f, REBLEN n) {
         assert(n != 0 and n <= FRM_NUM_ARGS(f));
 
         Value* var = f->rootvar + n; // 1-indexed
@@ -252,7 +252,7 @@ inline static bool Is_Frame_Gotten_Shoved(REBFRM *f) {
 #define RETURN(v) \
     return Move_Value(D_OUT, (v));
 
-inline static bool Is_Action_Frame(REBFRM *f) {
+INLINE bool Is_Action_Frame(REBFRM *f) {
     if (f->original != nullptr) {
         //
         // Do not count as a function frame unless its gotten to the point
@@ -268,14 +268,14 @@ inline static bool Is_Action_Frame(REBFRM *f) {
 // `f->param` will *not* be a typeset when the function is actually in the
 // process of running.  (So no need to set/clear/test another "mode".)
 //
-inline static bool Is_Action_Frame_Fulfilling(REBFRM *f)
+INLINE bool Is_Action_Frame_Fulfilling(REBFRM *f)
 {
     assert(Is_Action_Frame(f));
     return NOT_END(f->param);
 }
 
 
-inline static void Get_Frame_Label_Or_Blank(Value* out, REBFRM *f) {
+INLINE void Get_Frame_Label_Or_Blank(Value* out, REBFRM *f) {
     assert(Is_Action_Frame(f));
     if (f->opt_label != NULL)
         Init_Word(out, f->opt_label); // invoked via WORD! or PATH!
@@ -283,14 +283,14 @@ inline static void Get_Frame_Label_Or_Blank(Value* out, REBFRM *f) {
         Init_Blank(out); // anonymous invocation
 }
 
-inline static const char* Frame_Label_Or_Anonymous_UTF8(REBFRM *f) {
+INLINE const char* Frame_Label_Or_Anonymous_UTF8(REBFRM *f) {
     assert(Is_Action_Frame(f));
     if (f->opt_label != NULL)
         return STR_HEAD(f->opt_label);
     return "[anonymous]";
 }
 
-inline static void SET_FRAME_VALUE(REBFRM *f, const Cell* value) {
+INLINE void SET_FRAME_VALUE(REBFRM *f, const Cell* value) {
     assert(not f->gotten); // is fetched f->value, we'd be invalidating it!
     f->value = value;
 }
@@ -410,12 +410,12 @@ inline static void SET_FRAME_VALUE(REBFRM *f, const Cell* value) {
 // is itself a bit dodgy to tell a priori if a dispatcher is native or not.
 // This way there is no test and only natives pay the cost of flag setting.
 //
-inline static void Enter_Native(REBFRM *f) {
+INLINE void Enter_Native(REBFRM *f) {
     SET_SER_INFO(f->varlist, SERIES_INFO_HOLD); // may or may not be managed
 }
 
 
-inline static void Begin_Action(
+INLINE void Begin_Action(
     REBFRM *f,
     REBSTR *opt_label,
     Value* mode // LOOKBACK_ARG or ORDINARY_ARG or END
@@ -458,7 +458,7 @@ inline static void Begin_Action(
 // function or the specialization's exemplar frame, those properties are
 // cached during the creation process.
 //
-inline static void Push_Action(
+INLINE void Push_Action(
     REBFRM *f,
     REBACT *act,
     REBNOD *binding
@@ -553,7 +553,7 @@ inline static void Push_Action(
 }
 
 
-inline static void Drop_Action(REBFRM *f) {
+INLINE void Drop_Action(REBFRM *f) {
     assert(NOT_SER_INFO(f->varlist, FRAME_INFO_FAILED));
 
     assert(
@@ -649,7 +649,7 @@ inline static void Drop_Action(REBFRM *f) {
 //
 //  Context_For_Frame_May_Manage: C
 //
-inline static REBCTX *Context_For_Frame_May_Manage(REBFRM *f)
+INLINE REBCTX *Context_For_Frame_May_Manage(REBFRM *f)
 {
     assert(not Is_Action_Frame_Fulfilling(f));
     SET_SER_FLAG(f->varlist, NODE_FLAG_MANAGED);
@@ -657,7 +657,7 @@ inline static REBCTX *Context_For_Frame_May_Manage(REBFRM *f)
 }
 
 
-inline static REBACT *VAL_PHASE(Value* frame) {
+INLINE REBACT *VAL_PHASE(Value* frame) {
     assert(IS_FRAME(frame));
     return frame->payload.any_context.phase;
 }

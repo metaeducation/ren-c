@@ -82,7 +82,7 @@
 #define PVS_PICKER(pvs) \
     FRM_CELL(pvs)
 
-inline static bool Get_Path_Throws_Core(
+INLINE bool Get_Path_Throws_Core(
     Value* out,
     const Cell* any_path,
     REBSPC *specifier
@@ -99,7 +99,7 @@ inline static bool Get_Path_Throws_Core(
 }
 
 
-inline static void Get_Path_Core(
+INLINE void Get_Path_Core(
     Value* out,
     const Cell* any_path,
     REBSPC *specifier
@@ -120,7 +120,7 @@ inline static void Get_Path_Core(
 }
 
 
-inline static bool Set_Path_Throws_Core(
+INLINE bool Set_Path_Throws_Core(
     Value* out,
     const Cell* any_path,
     REBSPC *specifier,
@@ -140,7 +140,7 @@ inline static bool Set_Path_Throws_Core(
 }
 
 
-inline static void Set_Path_Core(
+INLINE void Set_Path_Core(
     const Cell* any_path,
     REBSPC *specifier,
     const Value* setval,

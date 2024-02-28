@@ -109,7 +109,7 @@ static void Mark_Devices_Deep(void);
 // "pairings".  Plus the name Mark_Rebser_Only helps drive home that it's
 // not actually marking an "any_series" type (like array) deeply.
 //
-static inline void Mark_Rebser_Only(REBSER *s)
+INLINE void Mark_Rebser_Only(REBSER *s)
 {
   #if !defined(NDEBUG)
     if (IS_FREE_NODE(s))
@@ -125,7 +125,7 @@ static inline void Mark_Rebser_Only(REBSER *s)
     s->header.bits |= NODE_FLAG_MARKED; // may be already set
 }
 
-static inline void Unmark_Rebser(REBSER *rebser) {
+INLINE void Unmark_Rebser(REBSER *rebser) {
     rebser->header.bits &= ~NODE_FLAG_MARKED;
 }
 
@@ -172,7 +172,7 @@ static void Queue_Mark_Array_Subclass_Deep(REBARR *a)
     SET_SERIES_LEN(GC_Mark_Stack, SER_LEN(GC_Mark_Stack) + 1); // unterminated
 }
 
-inline static void Queue_Mark_Array_Deep(REBARR *a) { // plain array
+INLINE void Queue_Mark_Array_Deep(REBARR *a) { // plain array
     assert(NOT_SER_FLAG(a, ARRAY_FLAG_VARLIST));
     assert(NOT_SER_FLAG(a, ARRAY_FLAG_PARAMLIST));
     assert(NOT_SER_FLAG(a, ARRAY_FLAG_PAIRLIST));
@@ -183,7 +183,7 @@ inline static void Queue_Mark_Array_Deep(REBARR *a) { // plain array
     Queue_Mark_Array_Subclass_Deep(a);
 }
 
-inline static void Queue_Mark_Context_Deep(REBCTX *c) { // ARRAY_FLAG_VARLIST
+INLINE void Queue_Mark_Context_Deep(REBCTX *c) { // ARRAY_FLAG_VARLIST
     REBARR *varlist = CTX_VARLIST(c);
     assert(
         GET_SER_INFO(varlist, SERIES_INFO_INACCESSIBLE)
@@ -198,7 +198,7 @@ inline static void Queue_Mark_Context_Deep(REBCTX *c) { // ARRAY_FLAG_VARLIST
     Queue_Mark_Array_Subclass_Deep(varlist); // see Propagate_All_GC_Marks()
 }
 
-inline static void Queue_Mark_Action_Deep(REBACT *a) { // ARRAY_FLAG_PARAMLIST
+INLINE void Queue_Mark_Action_Deep(REBACT *a) { // ARRAY_FLAG_PARAMLIST
     REBARR *paramlist = ACT_PARAMLIST(a);
     assert(
         SERIES_MASK_ACTION == (SER(paramlist)->header.bits & (
@@ -212,7 +212,7 @@ inline static void Queue_Mark_Action_Deep(REBACT *a) { // ARRAY_FLAG_PARAMLIST
     Queue_Mark_Array_Subclass_Deep(paramlist); // see Propagate_All_GC_Marks()
 }
 
-inline static void Queue_Mark_Map_Deep(REBMAP *m) { // ARRAY_FLAG_PAIRLIST
+INLINE void Queue_Mark_Map_Deep(REBMAP *m) { // ARRAY_FLAG_PAIRLIST
     REBARR *pairlist = MAP_PAIRLIST(m);
     assert(
         ARRAY_FLAG_PAIRLIST == (SER(pairlist)->header.bits & (
@@ -224,7 +224,7 @@ inline static void Queue_Mark_Map_Deep(REBMAP *m) { // ARRAY_FLAG_PAIRLIST
     Queue_Mark_Array_Subclass_Deep(pairlist); // see Propagate_All_GC_Marks()
 }
 
-inline static void Queue_Mark_Binding_Deep(const Cell* v) {
+INLINE void Queue_Mark_Binding_Deep(const Cell* v) {
     REBNOD *binding = VAL_BINDING(v);
     if (not binding)
         return;
@@ -263,7 +263,7 @@ inline static void Queue_Mark_Binding_Deep(const Cell* v) {
 // A singular array, if you know it to be singular, can be marked a little
 // faster by avoiding a queue step for the array node or walk.
 //
-inline static void Queue_Mark_Singular_Array(REBARR *a) {
+INLINE void Queue_Mark_Singular_Array(REBARR *a) {
     assert(
         0 == (SER(a)->header.bits & (
             ARRAY_FLAG_VARLIST | ARRAY_FLAG_PAIRLIST | ARRAY_FLAG_PARAMLIST
@@ -605,13 +605,13 @@ static void Queue_Mark_Opt_End_Cell_Deep(const Cell* v)
   #endif
 }
 
-inline static void Queue_Mark_Opt_Value_Deep(const Cell* v)
+INLINE void Queue_Mark_Opt_Value_Deep(const Cell* v)
 {
     assert(NOT_END(v)); // can be NULLED, just not END
     Queue_Mark_Opt_End_Cell_Deep(v);
 }
 
-inline static void Queue_Mark_Value_Deep(const Cell* v)
+INLINE void Queue_Mark_Value_Deep(const Cell* v)
 {
     assert(NOT_END(v));
     assert(VAL_TYPE_RAW(v) != REB_MAX_NULLED); // Note: Unreadable blanks ok

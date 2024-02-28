@@ -405,7 +405,7 @@ REB_R TO_Logic(Value* out, enum Reb_Kind kind, const Value* arg) {
 }
 
 
-static inline bool Math_Arg_For_Logic(Value* arg)
+INLINE bool Math_Arg_For_Logic(Value* arg)
 {
     if (IS_LOGIC(arg))
         return VAL_LOGIC(arg);

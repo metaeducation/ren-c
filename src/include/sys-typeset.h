@@ -55,7 +55,7 @@
 #define IS_KIND_SYM(s) \
     ((s) < cast(SymId, REB_MAX))
 
-inline static enum Reb_Kind KIND_FROM_SYM(SymId s) {
+INLINE enum Reb_Kind KIND_FROM_SYM(SymId s) {
     assert(IS_KIND_SYM(s));
     return cast(enum Reb_Kind, cast(int, (s)));
 }
@@ -66,7 +66,7 @@ inline static enum Reb_Kind KIND_FROM_SYM(SymId s) {
 #define VAL_TYPE_SYM(v) \
     SYM_FROM_KIND((v)->payload.datatype.kind)
 
-inline static REBSTR *Get_Type_Name(const Cell* value)
+INLINE REBSTR *Get_Type_Name(const Cell* value)
     { return Canon(SYM_FROM_KIND(VAL_TYPE(value))); }
 
 
@@ -224,7 +224,7 @@ enum Reb_Param_Class {
 #define PCLASS_NUM_BITS 3
 #define PCLASS_BYTE_MASK 0x07 // for 3 bits, 0x00000111
 
-inline static enum Reb_Param_Class VAL_PARAM_CLASS(const Cell* v) {
+INLINE enum Reb_Param_Class VAL_PARAM_CLASS(const Cell* v) {
     assert(IS_TYPESET(v));
     return cast(
         enum Reb_Param_Class,
@@ -233,7 +233,7 @@ inline static enum Reb_Param_Class VAL_PARAM_CLASS(const Cell* v) {
     );
 }
 
-inline static void INIT_VAL_PARAM_CLASS(Cell* v, enum Reb_Param_Class c) {
+INLINE void INIT_VAL_PARAM_CLASS(Cell* v, enum Reb_Param_Class c) {
     /* CUSTOM_BYTE(v) &= ~PCLASS_BYTE_MASK;
     CUSTOM_BYTE(v) |= c; */ // can resurrect if needed
     CUSTOM_BYTE(v) = c;
@@ -346,21 +346,21 @@ static_assert(0 < 8 - PCLASS_NUM_BITS, "TYPESET_FLAG_XXX too high");
 //
 // Name should be NULL unless typeset in object keylist or func paramlist
 
-inline static void INIT_TYPESET_NAME(Cell* typeset, REBSTR *str) {
+INLINE void INIT_TYPESET_NAME(Cell* typeset, REBSTR *str) {
     assert(IS_TYPESET(typeset));
     typeset->extra.key_spelling = str;
 }
 
-inline static REBSTR *VAL_KEY_SPELLING(const Cell* typeset) {
+INLINE REBSTR *VAL_KEY_SPELLING(const Cell* typeset) {
     assert(IS_TYPESET(typeset));
     return typeset->extra.key_spelling;
 }
 
-inline static REBSTR *VAL_KEY_CANON(const Cell* typeset) {
+INLINE REBSTR *VAL_KEY_CANON(const Cell* typeset) {
     return STR_CANON(VAL_KEY_SPELLING(typeset));
 }
 
-inline static Option(SymId) VAL_KEY_SYM(const Cell* typeset) {
+INLINE Option(SymId) VAL_KEY_SYM(const Cell* typeset) {
     return STR_SYMBOL(VAL_KEY_SPELLING(typeset)); // mirrors canon's symbol
 }
 

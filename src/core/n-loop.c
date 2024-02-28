@@ -1107,7 +1107,7 @@ struct Remove_Each_State {
 
 // See notes on Remove_Each_State
 //
-static inline REBLEN Finalize_Remove_Each(struct Remove_Each_State *res)
+INLINE REBLEN Finalize_Remove_Each(struct Remove_Each_State *res)
 {
     assert(GET_SER_INFO(res->series, SERIES_INFO_HOLD));
     CLEAR_SER_INFO(res->series, SERIES_INFO_HOLD);
@@ -1594,7 +1594,7 @@ REBNATIVE(repeat)
 
 // Common code for UNTIL & UNTIL-NOT (same frame param layout)
 //
-inline static REB_R Until_Core(
+INLINE REB_R Until_Core(
     REBFRM *frame_,
     bool trigger // body keeps running so until evaluation matches this
 ){
@@ -1673,7 +1673,7 @@ REBNATIVE(until_not)
 
 // Common code for WHILE & WHILE-NOT
 //
-inline static REB_R While_Core(
+INLINE REB_R While_Core(
     REBFRM *frame_,
     bool trigger // body keeps running so long as condition matches
 ){

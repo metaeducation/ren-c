@@ -141,7 +141,7 @@ REBNATIVE(either)
 // This routine is just for basic efficiency behind constructs like ELSE
 // that want to avoid frame creation overhead.  So BLOCK! just means typeset.
 //
-inline static bool Either_Test_Core_Throws(
+bool Either_Test_Core_Throws(
     Value* out, // GC-safe output cell
     Value* test, // modified
     const Value* arg

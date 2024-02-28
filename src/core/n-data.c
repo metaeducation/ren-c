@@ -456,7 +456,7 @@ REBNATIVE(collect_words)
 }
 
 
-inline static void Get_Opt_Polymorphic_May_Fail(
+INLINE void Get_Opt_Polymorphic_May_Fail(
     Value* out,
     const Cell* v,
     REBSPC *specifier,
@@ -567,7 +567,7 @@ REBNATIVE(get_p)
 //
 //  Set_Opt_Polymorphic_May_Fail: C
 //
-inline static void Set_Opt_Polymorphic_May_Fail(
+INLINE void Set_Opt_Polymorphic_May_Fail(
     const Cell* target,
     REBSPC *target_specifier,
     const Cell* value,
@@ -1220,7 +1220,7 @@ REBNATIVE(aliases_q)
 //     SET? 'OBJECT/NON-MEMBER/XXX -> will error
 //     SET? 'DATE/MONTH -> is true, even though not a variable resolution
 //
-inline static bool Is_Set(const Value* location)
+INLINE bool Is_Set(const Value* location)
 {
     if (ANY_WORD(location))
         return ANY_VALUE(Get_Opt_Var_May_Fail(location, SPECIFIED));

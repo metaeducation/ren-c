@@ -95,7 +95,7 @@ emit-proto: func [
     append prototypes proto
 
     e-funcs/emit [proto the-file] {
-        RL_API $<Proto>; /* $<The-File> */
+        $<Proto>; /* $<The-File> */
     }
 
     if "REBTYPE" = proto-parser/proto.id [

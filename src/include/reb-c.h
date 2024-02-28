@@ -248,6 +248,47 @@
 #endif
 
 
+//=//// INLINE MACRO FOR LEVERAGING C++ OPTIMIZATIONS /////////////////////=//
+//
+// "inline" has a long history in C/C++ of being different on different
+// compilers, and took a long time to get into the standard.  Once it was in
+// the standard it essentially didn't mean anything in particular about
+// inlining--just "this function is legal to appear in a header file and be
+// included in multiple source files without generating conflicts."  The
+// compiler makes no particular promises about actually inlining the code.
+//
+// R3-Alpha had few inline functions, but mostly used macros--in unsafe ways
+// (repeating arguments, risking double evaluations, lacking typechecking.)
+// Ren-C reworked the code to use inline functions fairly liberally, even
+// putting fairly large functions in header files to give the compiler the
+// opportunity to not need to push or pop registers to make a call.
+//
+// However, GCC in C99 mode requires you to say `static inline` or else you'll
+// get errors at link time.  This means that every translation unit has its
+// own copy of the code.  A study of the pathology of putting larger functions
+// in headers as inline with `static inline` on them found that about five
+// functions were getting inlined often enough to add 400K to the executable.
+// Moving them out of .h files and into .c files dropped that size, and was
+// only about *0.4%* slower (!) making it an obvious win to un-inline them.
+//
+// This led to experimentation with C++ builds just using `inline`, which
+// saved a not-insignificant 8% of space in an -O2 build, as well as being ever
+// so slightly faster.  Even if link-time-optimization was used, it still
+// saved 3% on space.
+//
+// The long story short here is that plain `inline` is better if you can use
+// it, but you can't use it in gcc in C99 mode (and probably not other places
+// like TinyC compiler or variants).  So this clunky INLINE macro actually
+// isn't some pre-standards anachronism...it has concrete benefits.
+//
+#if CPLUSPLUS_11
+    #define INLINE inline
+#else
+    #define INLINE static inline
+#endif
+
+
+
 //=//// CASTING MACROS ////////////////////////////////////////////////////=//
 //
 // The following code and explanation is from "Casts for the Masses (in C)":
@@ -555,24 +596,24 @@
 #else
     #if defined(__cplusplus) // needed even if not C++11
         template<class T>
-        inline static void TRASH_POINTER_IF_DEBUG(T* &p) {
+        INLINE void TRASH_POINTER_IF_DEBUG(T* &p) {
             p = reinterpret_cast<T*>(static_cast<uintptr_t>(0xDECAFBAD));
         }
 
         template<class T>
-        inline static void TRASH_CFUNC_IF_DEBUG(T* &p) {
+        INLINE void TRASH_CFUNC_IF_DEBUG(T* &p) {
             p = reinterpret_cast<T*>(static_cast<uintptr_t>(0xDECAFBAD));
         }
 
         template<class T>
-        inline static bool IS_POINTER_TRASH_DEBUG(T* p) {
+        INLINE bool IS_POINTER_TRASH_DEBUG(T* p) {
             return (
                 p == reinterpret_cast<T*>(static_cast<uintptr_t>(0xDECAFBAD))
             );
         }
 
         template<class T>
-        inline static bool IS_CFUNC_TRASH_DEBUG(T* p) {
+        INLINE bool IS_CFUNC_TRASH_DEBUG(T* p) {
             return (
                 p == reinterpret_cast<T*>(static_cast<uintptr_t>(0xDECAFBAD))
             );
@@ -898,7 +939,7 @@
     #define COMPARE_BYTES(l,r) \
         strcmp((const char*)(l), (const char*)(r))
 
-    inline static unsigned char *APPEND_BYTES_LIMIT(
+    INLINE unsigned char *APPEND_BYTES_LIMIT(
         unsigned char *dest, const unsigned char *src, size_t max
     ){
         size_t len = LEN_BYTES(dest);
@@ -911,36 +952,36 @@
      * particularly not the already-flipped type.  Instead of type_traits, 4
      * functions check in both C and C++ (here only during Debug builds):
      */
-    inline static unsigned char *b_cast(char *s)
+    INLINE unsigned char *b_cast(char *s)
         { return (unsigned char*)s; }
 
-    inline static const unsigned char *cb_cast(const char *s)
+    INLINE const unsigned char *cb_cast(const char *s)
         { return (const unsigned char*)s; }
 
-    inline static char *s_cast(unsigned char *s)
+    INLINE char *s_cast(unsigned char *s)
         { return (char*)s; }
 
-    inline static const char *cs_cast(const unsigned char *s)
+    INLINE const char *cs_cast(const unsigned char *s)
         { return (const char*)s; }
 
     // Debug build uses inline functions to ensure you pass in unsigned char *
     //
-    inline static unsigned char *COPY_BYTES(
+    INLINE unsigned char *COPY_BYTES(
         unsigned char *dest, const unsigned char *src, size_t count
     ){
         return b_cast(strncpy(s_cast(dest), cs_cast(src), count));
     }
 
-    inline static size_t LEN_BYTES(const unsigned char *str)
+    INLINE size_t LEN_BYTES(const unsigned char *str)
         { return strlen(cs_cast(str)); }
 
-    inline static int COMPARE_BYTES(
+    INLINE int COMPARE_BYTES(
         const unsigned char *lhs, const unsigned char *rhs
     ){
         return strcmp(cs_cast(lhs), cs_cast(rhs));
     }
 
-    inline static unsigned char *APPEND_BYTES_LIMIT(
+    INLINE unsigned char *APPEND_BYTES_LIMIT(
         unsigned char *dest, const unsigned char *src, size_t max
     ){
         size_t len = LEN_BYTES(dest);

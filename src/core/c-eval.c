@@ -107,7 +107,7 @@ REB_R Dispatcher_Core(REBFRM * const f) {
 }
 
 
-static inline bool Start_New_Expression_Throws(REBFRM *f) {
+INLINE bool Start_New_Expression_Throws(REBFRM *f) {
     assert(Eval_Count >= 0);
     if (--Eval_Count == 0) {
         //
@@ -201,11 +201,11 @@ static inline bool Start_New_Expression_Throws(REBFRM *f) {
 // e.g. `IS_NULLED(f->special)` can only match the other two cases.
 //
 
-inline static bool In_Typecheck_Mode(REBFRM *f) {
+INLINE bool In_Typecheck_Mode(REBFRM *f) {
     return f->special == f->arg;
 }
 
-inline static bool In_Unspecialized_Mode(REBFRM *f) {
+INLINE bool In_Unspecialized_Mode(REBFRM *f) {
     return f->special == f->param;
 }
 
@@ -219,7 +219,7 @@ inline static bool In_Unspecialized_Mode(REBFRM *f) {
 // for instance, that may come from an APPLY need to have their linkage
 // updated to the parameter they are now being used in.
 //
-inline static void Finalize_Arg(
+INLINE void Finalize_Arg(
     REBFRM *f_state, // name helps avoid accidental references to f->arg, etc.
     const Cell* param,
     Value* arg,
@@ -334,7 +334,7 @@ inline static void Finalize_Arg(
     SET_VAL_FLAG(arg, ARG_MARKED_CHECKED);
 }
 
-inline static void Finalize_Current_Arg(REBFRM *f) {
+INLINE void Finalize_Current_Arg(REBFRM *f) {
     Finalize_Arg(f, f->param, f->arg, f->refine);
 }
 
@@ -351,7 +351,7 @@ inline static void Finalize_Current_Arg(REBFRM *f) {
 // either a SET-WORD! or a SET-PATH!, so it <skip>s the opportunity to hard
 // quote it and defers execution...in this case, meaning it won't run at all.
 //
-inline static void Seek_First_Param(REBFRM *f, REBACT *action) {
+INLINE void Seek_First_Param(REBFRM *f, REBACT *action) {
     f->param = ACT_PARAMS_HEAD(action);
     f->special = ACT_SPECIALTY_HEAD(action);
     for (; NOT_END(f->param); ++f->param, ++f->special) {
@@ -378,7 +378,7 @@ inline static void Seek_First_Param(REBFRM *f, REBACT *action) {
 #endif
 
 
-inline static void Expire_Out_Cell_Unless_Invisible(REBFRM *f) {
+INLINE void Expire_Out_Cell_Unless_Invisible(REBFRM *f) {
     REBACT *phase = FRM_PHASE_OR_DUMMY(f);
     if (phase != PG_Dummy_Action)
         if (GET_ACT_FLAG(phase, ACTION_FLAG_INVISIBLE)) {

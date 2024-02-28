@@ -221,7 +221,7 @@
 // have to be balanced.  Those seemed to be more irritating than helpful,
 // so the asserts have been left to the evaluator's bracketing.
 //
-inline static void DROP_TRAP_SAME_STACKLEVEL_AS_PUSH(struct Reb_State *s) {
+INLINE void DROP_TRAP_SAME_STACKLEVEL_AS_PUSH(struct Reb_State *s) {
     assert(!s->error);
     Saved_State = s->last_state;
 }
@@ -278,7 +278,7 @@ inline static void DROP_TRAP_SAME_STACKLEVEL_AS_PUSH(struct Reb_State *s) {
         // coded string fail()s, by triggering a compiler error on them.
 
         template <class T>
-        inline static ATTRIBUTE_NO_RETURN void Fail_Core_Cpp(T *p) {
+        INLINE ATTRIBUTE_NO_RETURN void Fail_Core_Cpp(T *p) {
             static_assert(
                 std::is_same<T, REBCTX>::value
                 or std::is_same<T, const char>::value

@@ -117,7 +117,7 @@
             ((c)->touch = TG_Tick)
     #endif
 
-    inline static void Set_Track_Payload_Extra_Debug(
+    INLINE void Set_Track_Payload_Extra_Debug(
         Cell* c,
         const char *file,
         int line
@@ -187,7 +187,7 @@
     #define VAL_TYPE(v) \
         VAL_TYPE_RAW(v)
 #else
-    inline static enum Reb_Kind VAL_TYPE_Debug(
+    INLINE enum Reb_Kind VAL_TYPE_Debug(
         const Cell* v, const char *file, int line
     ){
         // VAL_TYPE is called *a lot*, so that makes it a great place to do
@@ -287,7 +287,7 @@
         // pattern does not catch bad flag checks in asserts.  Review.
 
         template <uintptr_t f>
-        inline static void SET_VAL_FLAG_cplusplus(Cell* v) {
+        INLINE void SET_VAL_FLAG_cplusplus(Cell* v) {
             static_assert(
                 f and (f & (f - 1)) == 0, // only one bit is set
                 "use SET_VAL_FLAGS() to set multiple bits"
@@ -298,7 +298,7 @@
             SET_VAL_FLAG_cplusplus<f>(v)
 
         template <uintptr_t f>
-        inline static bool GET_VAL_FLAG_cplusplus(const Cell* v) {
+        INLINE bool GET_VAL_FLAG_cplusplus(const Cell* v) {
             static_assert(
                 f and (f & (f - 1)) == 0, // only one bit is set
                 "use ANY_VAL_FLAGS() or ALL_VAL_FLAGS() to test multiple bits"
@@ -354,43 +354,43 @@
             SECOND_BYTE(flags) = 0; \
         } \
 
-    inline static void SET_VAL_FLAGS(Cell* v, uintptr_t f) {
+    INLINE void SET_VAL_FLAGS(Cell* v, uintptr_t f) {
         enum Reb_Kind kind = VAL_TYPE_RAW(v);
         CHECK_VALUE_FLAGS_EVIL_MACRO_DEBUG(f);
         v->header.bits |= f;
     }
 
-    inline static void SET_VAL_FLAG(Cell* v, uintptr_t f) {
+    INLINE void SET_VAL_FLAG(Cell* v, uintptr_t f) {
         enum Reb_Kind kind = VAL_TYPE_RAW(v);
         CHECK_VALUE_FLAGS_EVIL_MACRO_DEBUG(f);
         v->header.bits |= f;
     }
 
-    inline static bool GET_VAL_FLAG(const Cell* v, uintptr_t f) {
+    INLINE bool GET_VAL_FLAG(const Cell* v, uintptr_t f) {
         enum Reb_Kind kind = VAL_TYPE_RAW(v);
         CHECK_VALUE_FLAGS_EVIL_MACRO_DEBUG(f);
         return did (v->header.bits & f);
     }
 
-    inline static bool ANY_VAL_FLAGS(const Cell* v, uintptr_t f) {
+    INLINE bool ANY_VAL_FLAGS(const Cell* v, uintptr_t f) {
         enum Reb_Kind kind = VAL_TYPE_RAW(v);
         CHECK_VALUE_FLAGS_EVIL_MACRO_DEBUG(f);
         return (v->header.bits & f) != 0;
     }
 
-    inline static bool ALL_VAL_FLAGS(const Cell* v, uintptr_t f) {
+    INLINE bool ALL_VAL_FLAGS(const Cell* v, uintptr_t f) {
         enum Reb_Kind kind = VAL_TYPE_RAW(v);
         CHECK_VALUE_FLAGS_EVIL_MACRO_DEBUG(f);
         return (v->header.bits & f) == f;
     }
 
-    inline static void CLEAR_VAL_FLAGS(Cell* v, uintptr_t f) {
+    INLINE void CLEAR_VAL_FLAGS(Cell* v, uintptr_t f) {
         enum Reb_Kind kind = VAL_TYPE_RAW(v);
         CHECK_VALUE_FLAGS_EVIL_MACRO_DEBUG(f);
         v->header.bits &= ~f;
     }
 
-    inline static void CLEAR_VAL_FLAG(Cell* v, uintptr_t f) {
+    INLINE void CLEAR_VAL_FLAG(Cell* v, uintptr_t f) {
         enum Reb_Kind kind = VAL_TYPE_RAW(v);
         CHECK_VALUE_FLAGS_EVIL_MACRO_DEBUG(f);
         assert(f and (f & (f - 1)) == 0); // checks that only one bit is set
@@ -462,7 +462,7 @@
 // so that is left as-is also.
 //
 
-inline static Value* RESET_VAL_HEADER_EXTRA_Core(
+INLINE Value* RESET_VAL_HEADER_EXTRA_Core(
     Cell* v,
     enum Reb_Kind kind,
     uintptr_t extra
@@ -507,7 +507,7 @@ inline static Value* RESET_VAL_HEADER_EXTRA_Core(
     // even if you overwrite the Payload/Extra immediately afterward; it also
     // corrupts the data to help ensure all relevant fields are overwritten.)
     //
-    inline static Value* RESET_CELL_EXTRA_Debug(
+    INLINE Value* RESET_CELL_EXTRA_Debug(
         Cell* out,
         enum Reb_Kind kind,
         uintptr_t extra,
@@ -555,7 +555,7 @@ inline static Value* RESET_VAL_HEADER_EXTRA_Core(
 #define CELL_MASK_NON_STACK_END \
     (CELL_MASK_NON_STACK | FLAG_KIND_BYTE(REB_0)) // same, but more explicit
 
-inline static void Prep_Non_Stack_Cell_Core(
+INLINE void Prep_Non_Stack_Cell_Core(
     Cell* c
 
   #if defined(DEBUG_TRACK_CELLS)
@@ -582,7 +582,7 @@ inline static void Prep_Non_Stack_Cell_Core(
 #define CELL_MASK_STACK \
     (NODE_FLAG_NODE | NODE_FLAG_CELL | CELL_FLAG_STACK)
 
-inline static Cell* Prep_Stack_Cell_Core(
+INLINE Cell* Prep_Stack_Cell_Core(
     Cell* c
 
   #if defined(DEBUG_TRACK_CELLS)
@@ -612,7 +612,7 @@ inline static Cell* Prep_Stack_Cell_Core(
 #endif
 
 
-inline static void CHANGE_VAL_TYPE_BITS(Cell* v, enum Reb_Kind kind) {
+INLINE void CHANGE_VAL_TYPE_BITS(Cell* v, enum Reb_Kind kind) {
     //
     // Note: Only use if you are sure the new type payload is in sync with
     // the type and bits (e.g. changing ANY-WORD! to another ANY-WORD!).
@@ -637,7 +637,7 @@ inline static void CHANGE_VAL_TYPE_BITS(Cell* v, enum Reb_Kind kind) {
 //
 
 #if defined(DEBUG_TRASH_MEMORY)
-    inline static void Set_Trash_Debug(
+    INLINE void Set_Trash_Debug(
         Cell* v
 
       #ifdef DEBUG_TRACK_CELLS
@@ -657,7 +657,7 @@ inline static void CHANGE_VAL_TYPE_BITS(Cell* v, enum Reb_Kind kind) {
     #define TRASH_CELL_IF_DEBUG(v) \
         Set_Trash_Debug((v), __FILE__, __LINE__)
 
-    inline static bool IS_TRASH_DEBUG(const Cell* v) {
+    INLINE bool IS_TRASH_DEBUG(const Cell* v) {
         assert(v->header.bits & NODE_FLAG_CELL);
         return VAL_TYPE_RAW(v) == REB_T_TRASH;
     }
@@ -690,7 +690,7 @@ inline static void CHANGE_VAL_TYPE_BITS(Cell* v, enum Reb_Kind kind) {
     cast(const Value*, &PG_End_Node) // rebEND is char*, not Value* aligned!
 
 #if defined(DEBUG_TRACK_CELLS) || defined(DEBUG_CELL_WRITABILITY)
-    inline static Value* SET_END_Debug(
+    INLINE Value* SET_END_Debug(
         Cell* v
 
       #if defined(DEBUG_TRACK_CELLS) || defined(DEBUG_CELL_WRITABILITY)
@@ -710,7 +710,7 @@ inline static void CHANGE_VAL_TYPE_BITS(Cell* v, enum Reb_Kind kind) {
     #define SET_END(v) \
         SET_END_Debug((v), __FILE__, __LINE__)
 #else
-    inline static Value* SET_END(Cell* v) {
+    INLINE Value* SET_END(Cell* v) {
         SECOND_BYTE(v->header) = REB_0_END; // needs to be a prepared cell
         return cast(Value*, v);
     }
@@ -720,7 +720,7 @@ inline static void CHANGE_VAL_TYPE_BITS(Cell* v, enum Reb_Kind kind) {
     #define IS_END(p) \
         (cast(const REBYTE*, p)[1] == REB_0_END)
 #else
-    inline static bool IS_END_Debug(
+    INLINE bool IS_END_Debug(
         const void *p, // may not have NODE_FLAG_CELL, may be short as 2 bytes
         const char *file,
         int line
@@ -772,7 +772,7 @@ inline static void CHANGE_VAL_TYPE_BITS(Cell* v, enum Reb_Kind kind) {
 // An ANY-ARRAY! in the deep copy of a function body must be relative also to
 // the same function if it contains any instances of such relative words.
 //
-inline static bool IS_RELATIVE(const Cell* v) {
+INLINE bool IS_RELATIVE(const Cell* v) {
     if (Not_Bindable(v) or not v->extra.binding)
         return false; // INTEGER! and other types are inherently "specific"
     return GET_SER_FLAG(v->extra.binding, ARRAY_FLAG_PARAMLIST);
@@ -791,7 +791,7 @@ inline static bool IS_RELATIVE(const Cell* v) {
 #define IS_SPECIFIC(v) \
     cast(bool, not IS_RELATIVE(v))
 
-inline static REBACT *VAL_RELATIVE(const Cell* v) {
+INLINE REBACT *VAL_RELATIVE(const Cell* v) {
     assert(IS_RELATIVE(v));
     return ACT(v->extra.binding);
 }
@@ -803,17 +803,17 @@ inline static REBACT *VAL_RELATIVE(const Cell* v) {
 // Use for: "invalid conversion from 'Reb_Value*' to 'Reb_Specific_Value*'"
 
 #if !defined(__cplusplus) // poorer protection in C, loses constness
-    inline static Value* KNOWN(const Cell* v) {
+    INLINE Value* KNOWN(const Cell* v) {
         assert(IS_END(v) or IS_SPECIFIC(v));
         return m_cast(Value*, c_cast(Cell*, v));
     }
 #else
-    inline static const Value* KNOWN(const Cell* v) {
+    INLINE const Value* KNOWN(const Cell* v) {
         assert(IS_END(v) or IS_SPECIFIC(v)); // END for KNOWN(ARR_HEAD()), etc.
         return cast(const Value*, v);
     }
 
-    inline static Value* KNOWN(Cell* v) {
+    INLINE Value* KNOWN(Cell* v) {
         assert(IS_END(v) or IS_SPECIFIC(v)); // END for KNOWN(ARR_HEAD()), etc.
         return cast(Value*, v);
     }
@@ -863,7 +863,7 @@ inline static REBACT *VAL_RELATIVE(const Cell* v) {
     RESET_CELL_EXTRA((out), REB_MAX_NULLED, \
         VALUE_FLAG_FALSEY | VALUE_FLAG_UNEVALUATED)
 
-inline static bool IS_ENDISH_NULLED(const Cell* v) {
+INLINE bool IS_ENDISH_NULLED(const Cell* v) {
     return IS_NULLED(v) and GET_VAL_FLAG(v, VALUE_FLAG_UNEVALUATED);
 }
 
@@ -871,7 +871,7 @@ inline static bool IS_ENDISH_NULLED(const Cell* v) {
 // interface only accepts nullptr.  Any internal code with a Value* that may
 // be a "nulled cell" must translate any such cells to nullptr.
 //
-inline static const Value* NULLIZE(const Value* cell)
+INLINE const Value* NULLIZE(const Value* cell)
   { return VAL_TYPE(cell) == REB_MAX_NULLED ? nullptr : cell; }
 
 
@@ -905,7 +905,7 @@ inline static const Value* NULLIZE(const Value* cell)
 #define Init_Void(out) \
     RESET_CELL((out), REB_VOID)
 
-inline static Value* Voidify_If_Nulled(Value* cell) {
+INLINE Value* Voidify_If_Nulled(Value* cell) {
     if (IS_NULLED(cell))
         Init_Void(cell);
     return cell;
@@ -917,7 +917,7 @@ inline static Value* Voidify_If_Nulled(Value* cell) {
 // than it is to be able to return BLANK! from a loop, so blanks are voidified
 // alongside NULL (reserved for BREAKing)
 //
-inline static Value* Voidify_If_Nulled_Or_Blank(Value* cell) {
+INLINE Value* Voidify_If_Nulled_Or_Blank(Value* cell) {
     if (IS_NULLED_OR_BLANK(cell))
         Init_Void(cell);
     return cell;
@@ -990,7 +990,7 @@ inline static Value* Voidify_If_Nulled_Or_Blank(Value* cell) {
     RESET_CELL_EXTRA((v), REB_BLANK, VALUE_FLAG_FALSEY)
 
 #ifdef DEBUG_UNREADABLE_BLANKS
-    inline static Value* Init_Unreadable_Blank_Debug(
+    INLINE Value* Init_Unreadable_Blank_Debug(
         Cell* out, const char *file, int line
     ){
         RESET_CELL_EXTRA_Debug(out, REB_BLANK, VALUE_FLAG_FALSEY, file, line);
@@ -1002,11 +1002,11 @@ inline static Value* Voidify_If_Nulled_Or_Blank(Value* cell) {
     #define Init_Unreadable_Blank(out) \
         Init_Unreadable_Blank_Debug((out), __FILE__, __LINE__)
 
-    inline static bool IS_BLANK_RAW(const Cell* v) {
+    INLINE bool IS_BLANK_RAW(const Cell* v) {
         return VAL_TYPE_RAW(v) == REB_BLANK;
     }
 
-    inline static bool IS_UNREADABLE_DEBUG(const Cell* v) {
+    INLINE bool IS_UNREADABLE_DEBUG(const Cell* v) {
         if (VAL_TYPE_RAW(v) != REB_BLANK)
             return false;
         return v->extra.tick < 0;
@@ -1053,7 +1053,7 @@ inline static Value* Voidify_If_Nulled_Or_Blank(Value* cell) {
 #define TRUE_VALUE \
     c_cast(const Value*, &PG_True_Value[0])
 
-inline static bool IS_TRUTHY(const Cell* v) {
+INLINE bool IS_TRUTHY(const Cell* v) {
     if (GET_VAL_FLAG(v, VALUE_FLAG_FALSEY))
         return false;
     if (IS_VOID(v))
@@ -1081,7 +1081,7 @@ inline static bool IS_TRUTHY(const Cell* v) {
 // evaluations safe would be limiting, e.g. `foo: any [false-thing []]`...
 // So ANY and ALL use IS_TRUTHY() directly
 //
-inline static bool IS_CONDITIONAL_TRUE(const Value* v) {
+INLINE bool IS_CONDITIONAL_TRUE(const Value* v) {
     if (GET_VAL_FLAG(v, VALUE_FLAG_FALSEY))
         return false;
     if (IS_VOID(v))
@@ -1094,7 +1094,7 @@ inline static bool IS_CONDITIONAL_TRUE(const Value* v) {
 #define IS_CONDITIONAL_FALSE(v) \
     (not IS_CONDITIONAL_TRUE(v))
 
-inline static bool VAL_LOGIC(const Cell* v) {
+INLINE bool VAL_LOGIC(const Cell* v) {
     assert(IS_LOGIC(v));
     return NOT_VAL_FLAG((v), VALUE_FLAG_FALSEY);
 }
@@ -1136,7 +1136,7 @@ inline static bool VAL_LOGIC(const Cell* v) {
 #define VAL_CHAR(v) \
     ((v)->payload.character)
 
-inline static Value* Init_Char(Cell* out, REBUNI uni) {
+INLINE Value* Init_Char(Cell* out, REBUNI uni) {
     RESET_CELL(out, REB_CHAR);
     VAL_CHAR(out) = uni;
     return cast(Value*, out);
@@ -1175,35 +1175,35 @@ inline static Value* Init_Char(Cell* out, REBUNI uni) {
 #else
     // allows an assert, but also lvalue: `VAL_INT64(v) = xxx`
     //
-    inline static REBI64 & VAL_INT64(Cell* v) { // C++ reference type
+    INLINE REBI64 & VAL_INT64(Cell* v) { // C++ reference type
         assert(IS_INTEGER(v));
         return v->payload.integer;
     }
-    inline static REBI64 VAL_INT64(const Cell* v) {
+    INLINE REBI64 VAL_INT64(const Cell* v) {
         assert(IS_INTEGER(v));
         return v->payload.integer;
     }
 #endif
 
-inline static Value* Init_Integer(Cell* out, REBI64 i64) {
+INLINE Value* Init_Integer(Cell* out, REBI64 i64) {
     RESET_CELL(out, REB_INTEGER);
     out->payload.integer = i64;
     return cast(Value*, out);
 }
 
-inline static int32_t VAL_INT32(const Cell* v) {
+INLINE int32_t VAL_INT32(const Cell* v) {
     if (VAL_INT64(v) > INT32_MAX or VAL_INT64(v) < INT32_MIN)
         fail (Error_Out_Of_Range(KNOWN(v)));
     return cast(int32_t, VAL_INT64(v));
 }
 
-inline static uint32_t VAL_UINT32(const Cell* v) {
+INLINE uint32_t VAL_UINT32(const Cell* v) {
     if (VAL_INT64(v) < 0 or VAL_INT64(v) > UINT32_MAX)
         fail (Error_Out_Of_Range(KNOWN(v)));
     return cast(uint32_t, VAL_INT64(v));
 }
 
-inline static REBYTE VAL_UINT8(const Cell* v) {
+INLINE REBYTE VAL_UINT8(const Cell* v) {
     if (VAL_INT64(v) > 255 or VAL_INT64(v) < 0)
         fail (Error_Out_Of_Range(KNOWN(v)));
     return cast(REBYTE, VAL_INT32(v));
@@ -1233,23 +1233,23 @@ inline static REBYTE VAL_UINT8(const Cell* v) {
 #else
     // allows an assert, but also lvalue: `VAL_DECIMAL(v) = xxx`
     //
-    inline static REBDEC & VAL_DECIMAL(Cell* v) { // C++ reference type
+    INLINE REBDEC & VAL_DECIMAL(Cell* v) { // C++ reference type
         assert(IS_DECIMAL(v) or IS_PERCENT(v));
         return v->payload.decimal;
     }
-    inline static REBDEC VAL_DECIMAL(const Cell* v) {
+    INLINE REBDEC VAL_DECIMAL(const Cell* v) {
         assert(IS_DECIMAL(v) or IS_PERCENT(v));
         return v->payload.decimal;
     }
 #endif
 
-inline static Value* Init_Decimal(Cell* out, REBDEC d) {
+INLINE Value* Init_Decimal(Cell* out, REBDEC d) {
     RESET_CELL(out, REB_DECIMAL);
     out->payload.decimal = d;
     return cast(Value*, out);
 }
 
-inline static Value* Init_Percent(Cell* out, REBDEC d) {
+INLINE Value* Init_Percent(Cell* out, REBDEC d) {
     RESET_CELL(out, REB_PERCENT);
     out->payload.decimal = d;
     return cast(Value*, out);
@@ -1277,7 +1277,7 @@ inline static Value* Init_Percent(Cell* out, REBDEC d) {
 // with DECIMAL!, although that name may be changing also.
 //
 
-inline static deci VAL_MONEY_AMOUNT(const Cell* v) {
+INLINE deci VAL_MONEY_AMOUNT(const Cell* v) {
     deci amount;
     amount.m0 = v->extra.m0;
     amount.m1 = v->payload.money.m1;
@@ -1287,7 +1287,7 @@ inline static deci VAL_MONEY_AMOUNT(const Cell* v) {
     return amount;
 }
 
-inline static Value* Init_Money(Cell* out, deci amount) {
+INLINE Value* Init_Money(Cell* out, deci amount) {
     RESET_CELL(out, REB_MONEY);
     out->extra.m0 = amount.m0;
     out->payload.money.m1 = amount.m1;
@@ -1332,39 +1332,39 @@ inline static Value* Init_Money(Cell* out, deci amount) {
 #else
     // C++ build can give const-correctness so you don't change read-only data
 
-    inline static const REBYTE *VAL_TUPLE(const Cell* v) {
+    INLINE const REBYTE *VAL_TUPLE(const Cell* v) {
         assert(IS_TUPLE(v));
         return v->payload.tuple.tuple + 1;
     }
 
-    inline static REBYTE *VAL_TUPLE(Cell* v) {
+    INLINE REBYTE *VAL_TUPLE(Cell* v) {
         assert(IS_TUPLE(v));
         return v->payload.tuple.tuple + 1;
     }
 
-    inline static const REBYTE *VAL_TUPLE_DATA(const Cell* v) {
+    INLINE const REBYTE *VAL_TUPLE_DATA(const Cell* v) {
         assert(IS_TUPLE(v));
         return v->payload.tuple.tuple;
     }
 
-    inline static REBYTE *VAL_TUPLE_DATA(Cell* v) {
+    INLINE REBYTE *VAL_TUPLE_DATA(Cell* v) {
         assert(IS_TUPLE(v));
         return v->payload.tuple.tuple;
     }
 
-    inline static REBYTE VAL_TUPLE_LEN(const Cell* v) {
+    INLINE REBYTE VAL_TUPLE_LEN(const Cell* v) {
         assert(IS_TUPLE(v));
         return v->payload.tuple.tuple[0];
     }
 
-    inline static REBYTE &VAL_TUPLE_LEN(Cell* v) {
+    INLINE REBYTE &VAL_TUPLE_LEN(Cell* v) {
         assert(IS_TUPLE(v));
         return v->payload.tuple.tuple[0];
     }
 #endif
 
 
-inline static Value* Init_Tuple(Cell* out, const REBYTE *data) {
+INLINE Value* Init_Tuple(Cell* out, const REBYTE *data) {
     RESET_CELL(out, REB_TUPLE);
     memcpy(VAL_TUPLE_DATA(out), data, sizeof(out->payload.tuple.tuple));
     return cast(Value*, out);
@@ -1417,7 +1417,7 @@ inline static Value* Init_Tuple(Cell* out, const REBYTE *data) {
 #define IS_EVENT_MODEL(v,f) \
     (VAL_EVENT_MODEL(v) == (f))
 
-inline static void SET_EVENT_INFO(
+INLINE void SET_EVENT_INFO(
     Cell* val,
     uint8_t type,
     uint8_t flags,
@@ -1439,7 +1439,7 @@ inline static void SET_EVENT_INFO(
 #define VAL_EVENT_XY(v) \
     (VAL_EVENT_DATA(v))
 
-inline static void SET_EVENT_XY(Cell* v, REBINT x, REBINT y) {
+INLINE void SET_EVENT_XY(Cell* v, REBINT x, REBINT y) {
     //
     // !!! "conversion to u32 from REBINT may change the sign of the result"
     // Hence cast.  Not clear what the intent is.
@@ -1455,7 +1455,7 @@ inline static void SET_EVENT_XY(Cell* v, REBINT x, REBINT y) {
 #define VAL_EVENT_KCODE(v) \
     ((VAL_EVENT_DATA(v) >> 16) & 0xffff)
 
-inline static void SET_EVENT_KEY(Cell* v, REBLEN k, REBLEN c) {
+INLINE void SET_EVENT_KEY(Cell* v, REBLEN k, REBLEN c) {
     VAL_EVENT_DATA(v) = ((c << 16) + k);
 }
 
@@ -1501,12 +1501,12 @@ inline static void SET_EVENT_KEY(Cell* v, REBLEN k, REBLEN c) {
 #define UNBOUND \
    cast(REBNOD*, 0) // cast() doesn't like nullptr, fix
 
-inline static REBNOD *VAL_BINDING(const Cell* v) {
+INLINE REBNOD *VAL_BINDING(const Cell* v) {
     assert(Is_Bindable(v));
     return v->extra.binding;
 }
 
-inline static void INIT_BINDING(Cell* v, void *p) {
+INLINE void INIT_BINDING(Cell* v, void *p) {
     assert(Is_Bindable(v)); // works on partially formed values
 
     REBNOD *binding = cast(REBNOD*, p);
@@ -1545,7 +1545,7 @@ inline static void INIT_BINDING(Cell* v, void *p) {
   #endif
 }
 
-inline static void Move_Value_Header(Cell* out, const Cell* v)
+INLINE void Move_Value_Header(Cell* out, const Cell* v)
 {
     assert(out != v); // usually a sign of a mistake; not worth supporting
     assert(NOT_END(v)); // SET_END() is the only way to write an end
@@ -1567,7 +1567,7 @@ inline static void Move_Value_Header(Cell* out, const Cell* v)
 // If the cell we're writing into is a stack cell, there's a chance that
 // management/reification of the binding can be avoided.
 //
-inline static void INIT_BINDING_MAY_MANAGE(Cell* out, REBNOD* binding) {
+INLINE void INIT_BINDING_MAY_MANAGE(Cell* out, REBNOD* binding) {
     if (not binding) {
         out->extra.binding = nullptr; // unbound
         return;
@@ -1622,7 +1622,7 @@ inline static void INIT_BINDING_MAY_MANAGE(Cell* out, REBNOD* binding) {
 //
 // Interface designed to line up with Derelativize()
 //
-inline static Value* Move_Value(Cell* out, const Value* v)
+INLINE Value* Move_Value(Cell* out, const Value* v)
 {
     Move_Value_Header(out, v);
 
@@ -1641,7 +1641,7 @@ inline static Value* Move_Value(Cell* out, const Value* v)
 //
 // !!! What about other non-copyable properties like CELL_FLAG_PROTECTED?
 //
-inline static Value* Move_Var(Cell* out, const Value* v)
+INLINE Value* Move_Var(Cell* out, const Value* v)
 {
     assert(not (out->header.bits & CELL_FLAG_STACK));
 
@@ -1663,7 +1663,7 @@ inline static Value* Move_Var(Cell* out, const Value* v)
 // for the rare cases where it's legal, e.g. shuffling a cell from one place
 // in an array to another cell in the same array.
 //
-inline static void Blit_Cell(Cell* out, const Cell* v)
+INLINE void Blit_Cell(Cell* out, const Cell* v)
 {
     assert(out != v); // usually a sign of a mistake; not worth supporting
     assert(NOT_END(v));

@@ -59,19 +59,19 @@
 // marker in its tail slot, which is one past the last position that is
 // valid for writing a full cell.
 
-inline static Cell* ARR_AT(REBARR *a, REBLEN n)
+INLINE Cell* ARR_AT(REBARR *a, REBLEN n)
     { return SER_AT(Cell, cast(REBSER*, a), n); }
 
-inline static Cell* ARR_HEAD(REBARR *a)
+INLINE Cell* ARR_HEAD(REBARR *a)
     { return SER_HEAD(Cell, cast(REBSER*, a)); }
 
-inline static Cell* ARR_TAIL(REBARR *a)
+INLINE Cell* ARR_TAIL(REBARR *a)
     { return SER_TAIL(Cell, cast(REBSER*, a)); }
 
-inline static Cell* ARR_LAST(REBARR *a)
+INLINE Cell* ARR_LAST(REBARR *a)
     { return SER_LAST(Cell, cast(REBSER*, a)); }
 
-inline static Cell* ARR_SINGLE(REBARR *a) {
+INLINE Cell* ARR_SINGLE(REBARR *a) {
     assert(not IS_SER_DYNAMIC(a)); // singular test avoided in release build
     return cast(Cell*, &SER(a)->content.fixed);
 }
@@ -79,7 +79,7 @@ inline static Cell* ARR_SINGLE(REBARR *a) {
 // It's possible to calculate the array from just a cell if you know it's a
 // cell inside a singular array.
 //
-inline static REBARR *Singular_From_Cell(const Cell* v) {
+INLINE REBARR *Singular_From_Cell(const Cell* v) {
     REBARR *singular = ARR( // some checking in debug builds is done by ARR()
         cast(void*,
             cast(REBYTE*, m_cast(Cell*, v))
@@ -107,7 +107,7 @@ inline static REBARR *Singular_From_Cell(const Cell* v) {
 // the moment, fixed size series merely can't expand, but it might be more
 // efficient if they didn't use any "appending" operators to get built.
 //
-inline static void TERM_ARRAY_LEN(REBARR *a, REBLEN len) {
+INLINE void TERM_ARRAY_LEN(REBARR *a, REBLEN len) {
     assert(len < SER_REST(SER(a)));
     SET_SERIES_LEN(SER(a), len);
 
@@ -118,15 +118,15 @@ inline static void TERM_ARRAY_LEN(REBARR *a, REBLEN len) {
     SECOND_BYTE(ARR_AT(a, len)->header.bits) = REB_0_END;
 }
 
-inline static void SET_ARRAY_LEN_NOTERM(REBARR *a, REBLEN len) {
+INLINE void SET_ARRAY_LEN_NOTERM(REBARR *a, REBLEN len) {
     SET_SERIES_LEN(SER(a), len); // call out non-terminating usages
 }
 
-inline static void RESET_ARRAY(REBARR *a) {
+INLINE void RESET_ARRAY(REBARR *a) {
     TERM_ARRAY_LEN(a, 0);
 }
 
-inline static void TERM_SERIES(REBSER *s) {
+INLINE void TERM_SERIES(REBSER *s) {
     if (IS_SER_ARRAY(s))
         TERM_ARRAY_LEN(ARR(s), SER_LEN(s));
     else
@@ -151,13 +151,13 @@ inline static void TERM_SERIES(REBSER *s) {
 // Locking
 //
 
-inline static bool Is_Array_Deeply_Frozen(REBARR *a) {
+INLINE bool Is_Array_Deeply_Frozen(REBARR *a) {
     return GET_SER_INFO(a, SERIES_INFO_FROZEN);
 
     // should be frozen all the way down (can only freeze arrays deeply)
 }
 
-inline static void Deep_Freeze_Array(REBARR *a) {
+INLINE void Deep_Freeze_Array(REBARR *a) {
     Protect_Series(
         SER(a),
         0, // start protection at index 0
@@ -188,7 +188,7 @@ inline static void Deep_Freeze_Array(REBARR *a) {
 // not necessary--and sacrifices generality for code that wants to work just
 // as well on stack values and heap values.
 //
-inline static void Prep_Array(
+INLINE void Prep_Array(
     REBARR *a,
     REBLEN capacity_plus_one // Expand_Series passes 0 on dynamic reallocation
 ){
@@ -250,7 +250,7 @@ inline static void Prep_Array(
 // Make a series that is the right size to store REBVALs (and marked for the
 // garbage collector to look into recursively).  ARR_LEN() will be 0.
 //
-inline static REBARR *Make_Arr_Core(REBLEN capacity, REBFLGS flags) {
+INLINE REBARR *Make_Arr_Core(REBLEN capacity, REBFLGS flags) {
     const REBLEN wide = sizeof(Cell);
 
     REBSER *s = Alloc_Series_Node(flags);
@@ -333,7 +333,7 @@ inline static REBARR *Make_Arr_Core(REBLEN capacity, REBFLGS flags) {
 // compete with the usage of the ->misc and ->link fields of the series node
 // for internal arrays.
 //
-inline static REBARR *Make_Arr_For_Copy(
+INLINE REBARR *Make_Arr_For_Copy(
     REBLEN capacity,
     REBFLGS flags,
     REBARR *original
@@ -371,7 +371,7 @@ inline static REBARR *Make_Arr_For_Copy(
 //
 // For `flags`, be sure to consider if you need SERIES_FLAG_FILE_LINE.
 //
-inline static REBARR *Alloc_Singular(REBFLGS flags) {
+INLINE REBARR *Alloc_Singular(REBFLGS flags) {
     assert(not (flags & SERIES_FLAG_ALWAYS_DYNAMIC));
     REBARR *a = Make_Arr_Core(1, flags | SERIES_FLAG_FIXED_SIZE);
     LEN_BYTE_OR_255(SER(a)) = 1; // non-dynamic length (defaulted to 0)
@@ -434,7 +434,7 @@ enum {
 
 // See TS_NOT_COPIED for the default types excluded from being deep copied
 //
-inline static REBARR* Copy_Array_At_Extra_Deep_Flags_Managed(
+INLINE REBARR* Copy_Array_At_Extra_Deep_Flags_Managed(
     REBARR *original, // ^-- not a macro because original mentioned twice
     REBLEN index,
     REBSPC *specifier,
@@ -479,7 +479,7 @@ inline static REBARR* Copy_Array_At_Extra_Deep_Flags_Managed(
     Root_Empty_Binary
 
 
-inline static void INIT_VAL_ARRAY(Cell* v, REBARR *a) {
+INLINE void INIT_VAL_ARRAY(Cell* v, REBARR *a) {
     INIT_BINDING(v, UNBOUND);
     assert(IS_ARRAY_MANAGED(a));
     v->payload.any_series.series = SER(a);
@@ -498,7 +498,7 @@ inline static void INIT_VAL_ARRAY(Cell* v, REBARR *a) {
 // These operations do not need to take the value's index position into
 // account; they strictly operate on the array series
 //
-inline static REBARR *VAL_ARRAY(const Cell* v) {
+INLINE REBARR *VAL_ARRAY(const Cell* v) {
     assert(ANY_ARRAY(v));
     REBSER *s = v->payload.any_series.series;
     if (s->info.bits & SERIES_INFO_INACCESSIBLE)
@@ -509,7 +509,7 @@ inline static REBARR *VAL_ARRAY(const Cell* v) {
 #define VAL_ARRAY_HEAD(v) \
     ARR_HEAD(VAL_ARRAY(v))
 
-inline static Cell* VAL_ARRAY_TAIL(const Cell* v) {
+INLINE Cell* VAL_ARRAY_TAIL(const Cell* v) {
     return ARR_AT(VAL_ARRAY(v), VAL_ARRAY_LEN_AT(v));
 }
 
@@ -556,7 +556,7 @@ inline static Cell* VAL_ARRAY_TAIL(const Cell* v) {
 // This rule influences the behavior of TO conversions as well:
 // https://forum.rebol.info/t/justifiable-asymmetry-to-on-block/751
 //
-inline static bool Splices_Into_Type_Without_Only(
+INLINE bool Splices_Into_Type_Without_Only(
     enum Reb_Kind array_kind,
     const Value* arg
 ){
@@ -579,7 +579,7 @@ inline static bool Splices_Into_Type_Without_Only(
 
 // Checks to see if a GROUP! is like ((...)) or (...), used by COMPOSE & PARSE
 //
-inline static bool Is_Doubled_Group(const Cell* group) {
+INLINE bool Is_Doubled_Group(const Cell* group) {
     assert(IS_GROUP(group));
     Cell* inner = VAL_ARRAY_AT(group);
     if (VAL_TYPE_RAW(inner) != REB_GROUP or VAL_LEN_AT(group) != 1)
@@ -604,7 +604,7 @@ inline static bool Is_Doubled_Group(const Cell* group) {
     #define ASSERT_ARRAY_MANAGED(array) \
         ASSERT_SERIES_MANAGED(SER(array))
 
-    static inline void ASSERT_SERIES(REBSER *s) {
+    INLINE void ASSERT_SERIES(REBSER *s) {
         if (IS_SER_ARRAY(s))
             Assert_Array_Core(ARR(s));
         else

@@ -1173,7 +1173,7 @@ void GC_Kill_Series(REBSER *s)
 }
 
 
-inline static void Untrack_Manual_Series(REBSER *s)
+INLINE void Untrack_Manual_Series(REBSER *s)
 {
     REBSER ** const last_ptr
         = &cast(REBSER**, GC_Manuals->content.dynamic.data)[

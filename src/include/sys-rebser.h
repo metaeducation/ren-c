@@ -951,7 +951,7 @@ struct Reb_Series {
 // writing...which would likely be less efficient.
 //
 #if CPLUSPLUS_11
-    inline static union Reb_Series_Misc& Get_Series_Misc(REBSER *s) {
+    INLINE union Reb_Series_Misc& Get_Series_Misc(REBSER *s) {
         return s->misc_private;
     }
 
@@ -1052,7 +1052,7 @@ struct Reb_Array {
 #define ANY_SER_FLAGS(s,f) \
     (did (SER(s)->header.bits & (f)))
 
-inline static bool ALL_SER_FLAGS(
+INLINE bool ALL_SER_FLAGS(
     void *s, // to allow REBARR*, REBCTX*, REBACT*... SER(s) checks
     REBFLGS f
 ){
@@ -1085,7 +1085,7 @@ inline static bool ALL_SER_FLAGS(
 #define ANY_SER_INFOS(s,f) \
     (did (SER(s)->info.bits & (f)))
 
-inline static bool ALL_SER_INFOS(
+INLINE bool ALL_SER_INFOS(
     void *s, // to allow REBARR*, REBCTX*, REBACT*... SER(s) checks
     REBFLGS f
 ){
@@ -1119,7 +1119,7 @@ inline static bool ALL_SER_INFOS(
 
 #define MAX_SERIES_WIDE 0x100
 
-inline static REBYTE SER_WIDE(REBSER *s) {
+INLINE REBYTE SER_WIDE(REBSER *s) {
     //
     // Arrays use 0 width as a strategic choice, so that the second byte of
     // the ->info flags is 0.  See Endlike_Header() for why.
@@ -1137,12 +1137,12 @@ inline static REBYTE SER_WIDE(REBSER *s) {
 // Bias is empty space in front of head:
 //
 
-inline static REBLEN SER_BIAS(REBSER *s) {
+INLINE REBLEN SER_BIAS(REBSER *s) {
     assert(IS_SER_DYNAMIC(s));
     return cast(REBLEN, ((s)->content.dynamic.bias >> 16) & 0xffff);
 }
 
-inline static REBLEN SER_REST(REBSER *s) {
+INLINE REBLEN SER_REST(REBSER *s) {
     if (LEN_BYTE_OR_255(s) == 255)
         return s->content.dynamic.rest;
 
@@ -1155,27 +1155,27 @@ inline static REBLEN SER_REST(REBSER *s) {
 
 #define MAX_SERIES_BIAS 0x1000
 
-inline static void SER_SET_BIAS(REBSER *s, REBLEN bias) {
+INLINE void SER_SET_BIAS(REBSER *s, REBLEN bias) {
     assert(IS_SER_DYNAMIC(s));
     s->content.dynamic.bias =
         (s->content.dynamic.bias & 0xffff) | (bias << 16);
 }
 
-inline static void SER_ADD_BIAS(REBSER *s, REBLEN b) {
+INLINE void SER_ADD_BIAS(REBSER *s, REBLEN b) {
     assert(IS_SER_DYNAMIC(s));
     s->content.dynamic.bias += b << 16;
 }
 
-inline static void SER_SUB_BIAS(REBSER *s, REBLEN b) {
+INLINE void SER_SUB_BIAS(REBSER *s, REBLEN b) {
     assert(IS_SER_DYNAMIC(s));
     s->content.dynamic.bias -= b << 16;
 }
 
-inline static size_t SER_TOTAL(REBSER *s) {
+INLINE size_t SER_TOTAL(REBSER *s) {
     return (SER_REST(s) + SER_BIAS(s)) * SER_WIDE(s);
 }
 
-inline static size_t SER_TOTAL_IF_DYNAMIC(REBSER *s) {
+INLINE size_t SER_TOTAL_IF_DYNAMIC(REBSER *s) {
     if (not IS_SER_DYNAMIC(s))
         return 0;
     return SER_TOTAL(s);

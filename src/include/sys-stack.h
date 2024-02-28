@@ -70,7 +70,7 @@
 // a stack location that is an end, e.g. DS_AT(dsp + 1), because that location
 // may be used as the start of a copy which is ultimately of length 0.
 //
-inline static Value* DS_AT(REBDSP d) {
+INLINE Value* DS_AT(REBDSP d) {
     Value* at = KNOWN(ARR_HEAD(DS_Array) + d);
     assert(
         ((at->header.bits & NODE_FLAG_CELL) and d <= (DSP + 1))
@@ -125,7 +125,7 @@ inline static Value* DS_AT(REBDSP d) {
     #define DS_DROP_TO(dsp) \
         (DS_Movable_Top -= (DS_Index - (dsp)), DS_Index = (dsp))
 #else
-    inline static void DS_DROP_Core(void) {
+    INLINE void DS_DROP_Core(void) {
         Init_Unreadable_Blank(DS_TOP); // TRASH makes ASSERT_ARRAY fail
         --DS_Index;
         --DS_Movable_Top;
@@ -134,7 +134,7 @@ inline static Value* DS_AT(REBDSP d) {
     #define DS_DROP \
         DS_DROP_Core()
 
-    inline static void DS_DROP_TO_Core(REBDSP dsp) {
+    INLINE void DS_DROP_TO_Core(REBDSP dsp) {
         assert(DSP >= dsp);
         while (DSP != dsp)
             DS_DROP;

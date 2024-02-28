@@ -230,7 +230,7 @@ static void Set_Vector_At_Core(
     );
 }
 
-inline static void Set_Vector_At(
+INLINE void Set_Vector_At(
     REBSER *series,
     REBLEN index,
     const Value* v

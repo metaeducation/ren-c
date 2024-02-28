@@ -111,7 +111,7 @@ ATTRIBUTE_NO_RETURN void Panic_Value_Debug(const Cell* v) {
 
 #ifdef DEBUG_HAS_PROBE
 
-inline static void Probe_Print_Helper(
+INLINE void Probe_Print_Helper(
     const void *p,
     const char *label,
     const char *file,
@@ -128,7 +128,7 @@ inline static void Probe_Print_Helper(
 }
 
 
-inline static void Probe_Molded_Value(const Value* v)
+INLINE void Probe_Molded_Value(const Value* v)
 {
     DECLARE_MOLD (mo);
     Push_Mold(mo);

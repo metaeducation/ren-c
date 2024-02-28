@@ -42,7 +42,7 @@
 #else
 
     template <typename T>
-    inline static REBNOD *NOD(T *p) {
+    INLINE REBNOD *NOD(T *p) {
         constexpr bool derived =
             std::is_same<T, Value>::value
             or std::is_same<T, REBSER>::value
@@ -88,7 +88,7 @@
 // is required for correct functioning of some types.  (See notes on
 // alignment in %sys-rebval.h.)
 //
-inline static void *Make_Node(REBLEN pool_id)
+INLINE void *Make_Node(REBLEN pool_id)
 {
     REBPOL *pool = &Mem_Pools[pool_id];
     if (not pool->first) // pool has run out of nodes
@@ -128,7 +128,7 @@ inline static void *Make_Node(REBLEN pool_id)
 // have NODE_FLAG_FREE...which will identify the node as not in use to anyone
 // who enumerates the nodes in the pool (such as the garbage collector).
 //
-inline static void Free_Node(REBLEN pool_id, void *p)
+INLINE void Free_Node(REBLEN pool_id, void *p)
 {
   #ifdef DEBUG_MONITOR_SERIES
     if (
@@ -204,7 +204,7 @@ enum Reb_Pointer_Detect {
     DETECTED_AS_END = 5 // may be a cell, or made with Endlike_Header()
 };
 
-inline static enum Reb_Pointer_Detect Detect_Rebol_Pointer(const void *p) {
+INLINE enum Reb_Pointer_Detect Detect_Rebol_Pointer(const void *p) {
     const REBYTE* bp = cast(const REBYTE*, p);
 
     switch (bp[0] >> 4) { // switch on the left 4 bits of the byte

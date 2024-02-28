@@ -564,7 +564,7 @@ static void Move_Cursor(STD_TERM *term, int count)
 // that people could see what the key registered as on their machine and
 // configure their console to respond to it.
 //
-inline static void Unrecognized_Key_Sequence(const unsigned char* cp)
+INLINE void Unrecognized_Key_Sequence(const unsigned char* cp)
 {
     UNUSED(cp);
 

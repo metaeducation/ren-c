@@ -237,12 +237,12 @@ struct devreq_net {
     void *host_info;        // for DNS usage
 };
 
-inline static struct devreq_file* DEVREQ_FILE(struct rebol_devreq *req) {
+INLINE struct devreq_file* DEVREQ_FILE(struct rebol_devreq *req) {
     assert(req->device == RDI_FILE);
     return cast(struct devreq_file*, req);
 }
 
-inline static struct devreq_net *DEVREQ_NET(struct rebol_devreq *req) {
+INLINE struct devreq_net *DEVREQ_NET(struct rebol_devreq *req) {
     assert(req->device == RDI_NET || req->device == RDI_DNS);
     return cast(struct devreq_net*, req);
 }

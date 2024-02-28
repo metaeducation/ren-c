@@ -35,7 +35,7 @@
 //
 
 
-inline static bool Do_At_Throws(
+INLINE bool Do_At_Throws(
     Value* out,
     REBARR *array,
     REBLEN index,
@@ -52,7 +52,7 @@ inline static bool Do_At_Throws(
 }
 
 
-inline static bool Do_Any_Array_At_Throws(
+INLINE bool Do_Any_Array_At_Throws(
     Value* out,
     const Value* any_array // Note: can be same pointer as `out`
 ){
@@ -65,7 +65,7 @@ inline static bool Do_Any_Array_At_Throws(
 }
 
 
-inline static bool Do_Va_Throws(
+INLINE bool Do_Va_Throws(
     Value* out,
     const void *opt_first,
     va_list *vaptr // va_end() will be called on success, fail, throw, etc.
@@ -87,7 +87,7 @@ inline static bool Do_Va_Throws(
 // then calling EVAL/ONLY on it.  If all the inputs are not consumed, an
 // error will be thrown.
 //
-inline static bool Apply_Only_Throws(
+INLINE bool Apply_Only_Throws(
     Value* out,
     bool fully,
     const Value* applicand, // last param before ... mentioned in va_start()
@@ -123,7 +123,7 @@ inline static bool Apply_Only_Throws(
 // Allowing other values was deemed to do more harm than good:
 // https://forum.rebol.info/t/backpedaling-on-non-block-branches/476
 //
-inline static bool Do_Branch_Core_Throws(
+INLINE bool Do_Branch_Core_Throws(
     Value* out,
     const Value* branch,
     const Value* condition // can be END or nullptr--can't be a NULLED cell!

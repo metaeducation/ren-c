@@ -50,56 +50,56 @@ REBOL [
         #define ANY_VALUE(v) \
             (VAL_TYPE(v) != REB_MAX_NULLED)
 
-        inline static bool ANY_SCALAR_KIND(enum Reb_Kind k) {
+        INLINE bool ANY_SCALAR_KIND(enum Reb_Kind k) {
             return k >= REB_LOGIC and k <= REB_DATE;
         }
 
         #define ANY_SCALAR(v) \
             ANY_SCALAR_KIND(VAL_TYPE(v))
 
-        inline static bool ANY_SERIES_KIND(enum Reb_Kind k) {
+        INLINE bool ANY_SERIES_KIND(enum Reb_Kind k) {
             return k >= REB_PATH and k <= REB_VECTOR;
         }
 
         #define ANY_SERIES(v) \
             ANY_SERIES_KIND(VAL_TYPE(v))
 
-        inline static bool ANY_STRING_KIND(enum Reb_Kind k) {
+        INLINE bool ANY_STRING_KIND(enum Reb_Kind k) {
             return k >= REB_TEXT and k <= REB_TAG;
         }
 
         #define ANY_STRING(v) \
             ANY_STRING_KIND(VAL_TYPE(v))
 
-        inline static bool ANY_BINSTR_KIND(enum Reb_Kind k) {
+        INLINE bool ANY_BINSTR_KIND(enum Reb_Kind k) {
             return k >= REB_BINARY and k <= REB_TAG;
         }
 
         #define ANY_BINSTR(v) \
             ANY_BINSTR_KIND(VAL_TYPE(v))
 
-        inline static bool ANY_ARRAY_KIND(enum Reb_Kind k) {
+        INLINE bool ANY_ARRAY_KIND(enum Reb_Kind k) {
             return k >= REB_PATH and k <= REB_BLOCK;
         }
 
         #define ANY_ARRAY(v) \
             ANY_ARRAY_KIND(VAL_TYPE(v))
 
-        inline static bool ANY_WORD_KIND(enum Reb_Kind k) {
+        INLINE bool ANY_WORD_KIND(enum Reb_Kind k) {
             return k >= REB_WORD and k <= REB_ISSUE;
         }
 
         #define ANY_WORD(v) \
             ANY_WORD_KIND(VAL_TYPE(v))
 
-        inline static bool ANY_PATH_KIND(enum Reb_Kind k) {
+        INLINE bool ANY_PATH_KIND(enum Reb_Kind k) {
             return k >= REB_PATH and k <= REB_LIT_PATH;
         }
 
         #define ANY_PATH(v) \
             ANY_PATH_KIND(VAL_TYPE(v))
 
-        inline static bool ANY_CONTEXT_KIND(enum Reb_Kind k) {
+        INLINE bool ANY_CONTEXT_KIND(enum Reb_Kind k) {
             return k >= REB_OBJECT and k <= REB_PORT;
         }
 
@@ -110,7 +110,7 @@ REBOL [
            REB_INTEGER and REB_DECIMAL.  But ANY-NUMBER! the typeset included
            PERCENT! so this adds that and gets rid of IS_NUMBER() */
 
-        inline static bool ANY_NUMBER_KIND(enum Reb_Kind k) {
+        INLINE bool ANY_NUMBER_KIND(enum Reb_Kind k) {
             return k == REB_INTEGER or k == REB_DECIMAL or k == REB_PERCENT;
         }
 
@@ -123,7 +123,7 @@ REBOL [
            get unified, but it's here to show how choosing these values
            carefully can help with speeding up tests. */
 
-        inline static bool ANY_INERT_KIND(enum Reb_Kind k) {
+        INLINE bool ANY_INERT_KIND(enum Reb_Kind k) {
             return (k >= REB_BLOCK and k <= REB_BLANK)
                 or k == REB_ISSUE or k == REB_REFINEMENT;
         }
@@ -135,7 +135,7 @@ REBOL [
            not generally tolerate either voids or nulls.  By having them
            sequential in the type chart they can be tested together fast. */
 
-        inline static bool IS_NULLED_OR_VOID_KIND(enum Reb_Kind k) {
+        INLINE bool IS_NULLED_OR_VOID_KIND(enum Reb_Kind k) {
             return k >= REB_VOID;
         }
 
@@ -147,7 +147,7 @@ REBOL [
          * based on types or bits, or as an alternate to another speedup if
          * it turns out to be more common
          */
-        inline static bool IS_NULLED_OR_BLANK_KIND(enum Reb_Kind k) {
+        INLINE bool IS_NULLED_OR_BLANK_KIND(enum Reb_Kind k) {
             return k == REB_MAX_NULLED or k == REB_BLANK;
         }
 

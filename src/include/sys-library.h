@@ -31,22 +31,22 @@
 // load and execute non-Rebol-aware C code by the FFI extension.
 //
 
-inline static void *LIB_FD(REBLIB *l) {
+INLINE void *LIB_FD(REBLIB *l) {
     return LINK(l).fd; // file descriptor
 }
 
-inline static bool IS_LIB_CLOSED(REBLIB *l) {
+INLINE bool IS_LIB_CLOSED(REBLIB *l) {
     return LINK(l).fd == NULL;
 }
 
-inline static REBCTX *VAL_LIBRARY_META(const Cell* v) {
+INLINE REBCTX *VAL_LIBRARY_META(const Cell* v) {
     return MISC(v->payload.library.singular).meta;
 }
 
-inline static REBLIB *VAL_LIBRARY(const Cell* v) {
+INLINE REBLIB *VAL_LIBRARY(const Cell* v) {
     return v->payload.library.singular;
 }
 
-inline static void *VAL_LIBRARY_FD(const Cell* v) {
+INLINE void *VAL_LIBRARY_FD(const Cell* v) {
     return LIB_FD(VAL_LIBRARY(v));
 }

@@ -50,16 +50,16 @@
 #define BIN_LAST(s) \
     SER_LAST(REBYTE, (s))
 
-inline static REBLEN BIN_LEN(REBSER *s) {
+INLINE REBLEN BIN_LEN(REBSER *s) {
     assert(BYTE_SIZE(s));
     return SER_LEN(s);
 }
 
-inline static void TERM_BIN(REBSER *s) {
+INLINE void TERM_BIN(REBSER *s) {
     BIN_HEAD(s)[SER_LEN(s)] = 0;
 }
 
-inline static void TERM_BIN_LEN(REBSER *s, REBLEN len) {
+INLINE void TERM_BIN_LEN(REBSER *s, REBLEN len) {
     SET_SERIES_LEN(s, len);
     BIN_HEAD(s)[len] = 0;
 }
@@ -74,11 +74,11 @@ inline static void TERM_BIN_LEN(REBSER *s, REBLEN len) {
 #define VAL_BIN_HEAD(v) \
     BIN_HEAD(VAL_SERIES(v))
 
-inline static REBYTE *VAL_BIN_AT(const Cell* v) {
+INLINE REBYTE *VAL_BIN_AT(const Cell* v) {
     return BIN_AT(VAL_SERIES(v), VAL_INDEX(v));
 }
 
-inline static REBYTE *VAL_BIN_TAIL(const Cell* v) {
+INLINE REBYTE *VAL_BIN_TAIL(const Cell* v) {
     return SER_TAIL(REBYTE, VAL_SERIES(v));
 }
 

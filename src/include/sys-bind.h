@@ -58,7 +58,7 @@
     #define VAL_SPECIFIER(v) \
         SPC(v->extra.binding)
 #else
-    inline static REBSPC* SPC(void *p) {
+    INLINE REBSPC* SPC(void *p) {
         assert(p != SPECIFIED); // use SPECIFIED, not SPC(SPECIFIED)
 
         REBCTX *c = CTX(p);
@@ -70,7 +70,7 @@
         return cast(REBSPC*, c);
     }
 
-    inline static REBSPC *VAL_SPECIFIER(const Value* v) {
+    INLINE REBSPC *VAL_SPECIFIER(const Value* v) {
         assert(ANY_ARRAY(v));
         if (not v->extra.binding)
             return SPECIFIED;
@@ -106,7 +106,7 @@
 // is at MAKE-time, o3 put its binding into any functions bound to o2 or o1,
 // thus getting its overriding behavior.
 //
-inline static bool Is_Overriding_Context(REBCTX *stored, REBCTX *override)
+INLINE bool Is_Overriding_Context(REBCTX *stored, REBCTX *override)
 {
     REBNOD *stored_source = LINK(stored).keysource;
     REBNOD *temp = LINK(override).keysource;
@@ -167,7 +167,7 @@ struct Reb_Binder {
 };
 
 
-inline static void INIT_BINDER(struct Reb_Binder *binder) {
+INLINE void INIT_BINDER(struct Reb_Binder *binder) {
     binder->high = true; // !!! what about `did (SPORADICALLY(2))` to test?
 
   #if !defined(NDEBUG)
@@ -180,7 +180,7 @@ inline static void INIT_BINDER(struct Reb_Binder *binder) {
 }
 
 
-inline static void SHUTDOWN_BINDER(struct Reb_Binder *binder) {
+INLINE void SHUTDOWN_BINDER(struct Reb_Binder *binder) {
   #if !defined(NDEBUG)
     assert(binder->count == 0);
 
@@ -195,7 +195,7 @@ inline static void SHUTDOWN_BINDER(struct Reb_Binder *binder) {
 
 // Tries to set the binder index, but return false if already there.
 //
-inline static bool Try_Add_Binder_Index(
+INLINE bool Try_Add_Binder_Index(
     struct Reb_Binder *binder,
     REBSTR *canon,
     REBINT index
@@ -220,7 +220,7 @@ inline static bool Try_Add_Binder_Index(
 }
 
 
-inline static void Add_Binder_Index(
+INLINE void Add_Binder_Index(
     struct Reb_Binder *binder,
     REBSTR *canon,
     REBINT index
@@ -231,7 +231,7 @@ inline static void Add_Binder_Index(
 }
 
 
-inline static REBINT Get_Binder_Index_Else_0( // 0 if not present
+INLINE REBINT Get_Binder_Index_Else_0( // 0 if not present
     struct Reb_Binder *binder,
     REBSTR *canon
 ){
@@ -244,7 +244,7 @@ inline static REBINT Get_Binder_Index_Else_0( // 0 if not present
 }
 
 
-inline static REBINT Remove_Binder_Index_Else_0( // return old value if there
+INLINE REBINT Remove_Binder_Index_Else_0( // return old value if there
     struct Reb_Binder *binder,
     REBSTR *canon
 ){
@@ -272,7 +272,7 @@ inline static REBINT Remove_Binder_Index_Else_0( // return old value if there
 }
 
 
-inline static void Remove_Binder_Index(
+INLINE void Remove_Binder_Index(
     struct Reb_Binder *binder,
     REBSTR *canon
 ){
@@ -312,7 +312,7 @@ struct Reb_Collector {
 // would fail later, but given that the REBFRM's captured binding can outlive
 // the frame that might lose important functionality.
 //
-inline static REBNOD *SPC_BINDING(REBSPC *specifier)
+INLINE REBNOD *SPC_BINDING(REBSPC *specifier)
 {
     assert(specifier != UNBOUND);
     Value* rootvar = CTX_ARCHETYPE(CTX(specifier)); // works even if Decay()d
@@ -362,7 +362,7 @@ inline static REBNOD *SPC_BINDING(REBSPC *specifier)
 // Due to the performance-critical nature of this routine, it is declared
 // as inline so that locations using it can avoid overhead in invocation.
 //
-inline static REBCTX *Get_Var_Context(
+INLINE REBCTX *Get_Var_Context(
     const Cell* any_word,
     REBSPC *specifier
 ){
@@ -445,7 +445,7 @@ inline static REBCTX *Get_Var_Context(
     return c;
 }
 
-static inline const Value* Get_Opt_Var_May_Fail(
+INLINE const Value* Get_Opt_Var_May_Fail(
     const Cell* any_word,
     REBSPC *specifier
 ){
@@ -459,7 +459,7 @@ static inline const Value* Get_Opt_Var_May_Fail(
     return CTX_VAR(c, VAL_WORD_INDEX(any_word));
 }
 
-static inline const Value* Try_Get_Opt_Var(
+INLINE const Value* Try_Get_Opt_Var(
     const Cell* any_word,
     REBSPC *specifier
 ){
@@ -473,7 +473,7 @@ static inline const Value* Try_Get_Opt_Var(
     return CTX_VAR(c, VAL_WORD_INDEX(any_word));
 }
 
-inline static void Move_Opt_Var_May_Fail(
+INLINE void Move_Opt_Var_May_Fail(
     Value* out,
     const Cell* any_word,
     REBSPC *specifier
@@ -481,7 +481,7 @@ inline static void Move_Opt_Var_May_Fail(
     Move_Value(out, Get_Opt_Var_May_Fail(any_word, specifier));
 }
 
-static inline Value* Get_Mutable_Var_May_Fail(
+INLINE Value* Get_Mutable_Var_May_Fail(
     const Cell* any_word,
     REBSPC *specifier
 ){
@@ -513,7 +513,7 @@ static inline Value* Get_Mutable_Var_May_Fail(
     return var;
 }
 
-inline static Value* Sink_Var_May_Fail(
+INLINE Value* Sink_Var_May_Fail(
     const Cell* any_word,
     REBSPC *specifier
 ){
@@ -548,7 +548,7 @@ inline static Value* Sink_Var_May_Fail(
 // a mechanic between both...TBD.
 //
 
-inline static Value* Derelativize(
+INLINE Value* Derelativize(
     Cell* out, // relative destinations are overwritten with specified value
     const Cell* v,
     REBSPC *specifier
@@ -643,7 +643,7 @@ inline static Value* Derelativize(
 #define DS_PUSH_RELVAL(v,specifier) \
     (DS_PUSH_TRASH, Derelativize(DS_TOP, (v), (specifier)))
 
-inline static void DS_PUSH_RELVAL_KEEP_EVAL_FLIP(
+INLINE void DS_PUSH_RELVAL_KEEP_EVAL_FLIP(
     const Cell* v,
     REBSPC *specifier
 ){
@@ -677,7 +677,7 @@ inline static void DS_PUSH_RELVAL_KEEP_EVAL_FLIP(
 // would need such derivation.
 //
 
-inline static REBSPC *Derive_Specifier(REBSPC *parent, const Cell* item) {
+INLINE REBSPC *Derive_Specifier(REBSPC *parent, const Cell* item) {
     if (IS_SPECIFIC(item))
         return VAL_SPECIFIER(KNOWN(item));;
     return parent;

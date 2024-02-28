@@ -50,7 +50,7 @@
 // What distinguishes an API value is that it has both the NODE_FLAG_CELL and
 // NODE_FLAG_ROOT bits set.
 //
-inline static bool Is_Api_Value(const Cell* v) {
+INLINE bool Is_Api_Value(const Cell* v) {
     assert(v->header.bits & NODE_FLAG_CELL);
     return did (v->header.bits & NODE_FLAG_ROOT);
 }
@@ -62,7 +62,7 @@ inline static bool Is_Api_Value(const Cell* v) {
 //
 // Ren-C manages by default.
 //
-inline static Value* Alloc_Value(void)
+INLINE Value* Alloc_Value(void)
 {
     REBARR *a = Alloc_Singular(NODE_FLAG_ROOT | NODE_FLAG_MANAGED);
 
@@ -76,7 +76,7 @@ inline static Value* Alloc_Value(void)
     return v;
 }
 
-inline static void Free_Value(Value* v)
+INLINE void Free_Value(Value* v)
 {
     assert(Is_Api_Value(v));
 
@@ -96,7 +96,7 @@ inline static void Free_Value(Value* v)
 // Instructions should be returned as a const void *, in order to discourage
 // using these anywhere besides as arguments to a variadic API like rebValue().
 //
-inline static REBARR *Alloc_Instruction(void) {
+INLINE REBARR *Alloc_Instruction(void) {
     REBSER *s = Alloc_Series_Node(
         SERIES_FLAG_FIXED_SIZE // not tracked as stray manual, but unmanaged
     );
@@ -112,7 +112,7 @@ inline static REBARR *Alloc_Instruction(void) {
     return ARR(s);
 }
 
-inline static void Free_Instruction(REBARR *instruction) {
+INLINE void Free_Instruction(REBARR *instruction) {
     assert(WIDE_BYTE_OR_0(SER(instruction)) == 0);
     TRASH_CELL_IF_DEBUG(ARR_SINGLE(instruction));
     Free_Node(SER_POOL, instruction);
@@ -128,5 +128,5 @@ inline static void Free_Instruction(REBARR *instruction) {
 //
 // But assuming errors don't happen that often, it's cleaner to have one call.
 //
-inline static Value* rebSpecific(const Cell* v, REBSPC *specifier)
+INLINE Value* rebSpecific(const Cell* v, REBSPC *specifier)
     { return Derelativize(Alloc_Value(), v, specifier);}

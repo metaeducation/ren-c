@@ -257,7 +257,7 @@
 //
 // https://stackoverflow.com/q/51846048
 //
-inline static union Reb_Header Endlike_Header(uintptr_t bits) {
+INLINE union Reb_Header Endlike_Header(uintptr_t bits) {
     assert(
         0 == (bits & (
             NODE_FLAG_NODE | NODE_FLAG_FREE | NODE_FLAG_CELL

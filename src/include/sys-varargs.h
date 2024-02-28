@@ -76,7 +76,7 @@
 #define VARARGS_FLAG_ENFIXED VARARGS_FLAG(0)
 
 
-inline static bool Is_Block_Style_Varargs(
+INLINE bool Is_Block_Style_Varargs(
     Value* *shared_out,
     const Cell* vararg
 ){
@@ -102,7 +102,7 @@ inline static bool Is_Block_Style_Varargs(
 }
 
 
-inline static bool Is_Frame_Style_Varargs_Maybe_Null(
+INLINE bool Is_Frame_Style_Varargs_Maybe_Null(
     REBFRM **f_out,
     const Cell* vararg
 ){
@@ -121,7 +121,7 @@ inline static bool Is_Frame_Style_Varargs_Maybe_Null(
 }
 
 
-inline static bool Is_Frame_Style_Varargs_May_Fail(
+INLINE bool Is_Frame_Style_Varargs_May_Fail(
     REBFRM **f_out,
     const Cell* vararg
 ){
@@ -135,7 +135,7 @@ inline static bool Is_Frame_Style_Varargs_May_Fail(
 }
 
 
-inline static const Value* Param_For_Varargs_Maybe_Null(const Cell* v) {
+INLINE const Value* Param_For_Varargs_Maybe_Null(const Cell* v) {
     assert(IS_VARARGS(v));
 
     REBACT *phase = v->payload.varargs.phase;

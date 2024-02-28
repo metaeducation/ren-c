@@ -62,7 +62,7 @@
 #define HANDLE_FLAG_CFUNC HANDLE_FLAG(0)
 
 
-inline static uintptr_t VAL_HANDLE_LEN(const Cell* v) {
+INLINE uintptr_t VAL_HANDLE_LEN(const Cell* v) {
     assert(IS_HANDLE(v));
     if (v->extra.singular)
         return ARR_HEAD(v->extra.singular)->payload.handle.length;
@@ -70,7 +70,7 @@ inline static uintptr_t VAL_HANDLE_LEN(const Cell* v) {
         return v->payload.handle.length;
 }
 
-inline static void *VAL_HANDLE_VOID_POINTER(const Cell* v) {
+INLINE void *VAL_HANDLE_VOID_POINTER(const Cell* v) {
     assert(IS_HANDLE(v));
     assert(NOT_VAL_FLAG(v, HANDLE_FLAG_CFUNC));
     if (v->extra.singular)
@@ -82,7 +82,7 @@ inline static void *VAL_HANDLE_VOID_POINTER(const Cell* v) {
 #define VAL_HANDLE_POINTER(t, v) \
     cast(t *, VAL_HANDLE_VOID_POINTER(v))
 
-inline static CFUNC *VAL_HANDLE_CFUNC(const Cell* v) {
+INLINE CFUNC *VAL_HANDLE_CFUNC(const Cell* v) {
     assert(IS_HANDLE(v));
     assert(GET_VAL_FLAG(v, HANDLE_FLAG_CFUNC));
     if (v->extra.singular)
@@ -91,13 +91,13 @@ inline static CFUNC *VAL_HANDLE_CFUNC(const Cell* v) {
         return v->payload.handle.data.cfunc;
 }
 
-inline static CLEANUP_CFUNC *VAL_HANDLE_CLEANER(const Cell* v) {
+INLINE CLEANUP_CFUNC *VAL_HANDLE_CLEANER(const Cell* v) {
     assert(IS_HANDLE(v));
     REBARR *singular = v->extra.singular;
     return singular != NULL ? MISC(singular).cleaner : NULL;
 }
 
-inline static void SET_HANDLE_LEN(Cell* v, uintptr_t length) {
+INLINE void SET_HANDLE_LEN(Cell* v, uintptr_t length) {
     assert(IS_HANDLE(v));
     if (v->extra.singular)
         ARR_HEAD(v->extra.singular)->payload.handle.length = length;
@@ -105,7 +105,7 @@ inline static void SET_HANDLE_LEN(Cell* v, uintptr_t length) {
         v->payload.handle.length = length;
 }
 
-inline static void SET_HANDLE_POINTER(Cell* v, void *pointer) {
+INLINE void SET_HANDLE_POINTER(Cell* v, void *pointer) {
     assert(IS_HANDLE(v));
     assert(NOT_VAL_FLAG(v, HANDLE_FLAG_CFUNC));
     if (v->extra.singular)
@@ -114,7 +114,7 @@ inline static void SET_HANDLE_POINTER(Cell* v, void *pointer) {
         v->payload.handle.data.pointer = pointer;
 }
 
-inline static void SET_HANDLE_CFUNC(Cell* v, CFUNC *cfunc) {
+INLINE void SET_HANDLE_CFUNC(Cell* v, CFUNC *cfunc) {
     assert(IS_HANDLE(v));
     assert(GET_VAL_FLAG(v, HANDLE_FLAG_CFUNC));
     if (v->extra.singular)
@@ -123,7 +123,7 @@ inline static void SET_HANDLE_CFUNC(Cell* v, CFUNC *cfunc) {
         v->payload.handle.data.cfunc = cfunc;
 }
 
-inline static Value* Init_Handle_Simple(
+INLINE Value* Init_Handle_Simple(
     Cell* out,
     void *pointer,
     uintptr_t length
@@ -135,7 +135,7 @@ inline static Value* Init_Handle_Simple(
     return KNOWN(out);
 }
 
-inline static Value* Init_Handle_Cfunc(
+INLINE Value* Init_Handle_Cfunc(
     Cell* out,
     CFUNC *cfunc,
     uintptr_t length
@@ -147,7 +147,7 @@ inline static Value* Init_Handle_Cfunc(
     return KNOWN(out);
 }
 
-inline static void Init_Handle_Managed_Common(
+INLINE void Init_Handle_Managed_Common(
     Cell* out,
     uintptr_t length,
     CLEANUP_CFUNC *cleaner
@@ -176,7 +176,7 @@ inline static void Init_Handle_Managed_Common(
     TRASH_POINTER_IF_DEBUG(out->payload.handle.data.pointer);
 }
 
-inline static Value* Init_Handle_Managed(
+INLINE Value* Init_Handle_Managed(
     Cell* out,
     void *pointer,
     uintptr_t length,
@@ -193,7 +193,7 @@ inline static Value* Init_Handle_Managed(
     return KNOWN(out);
 }
 
-inline static Value* Init_Handle_Managed_Cfunc(
+INLINE Value* Init_Handle_Managed_Cfunc(
     Cell* out,
     CFUNC *cfunc,
     uintptr_t length,
