@@ -106,6 +106,7 @@ static struct {
 //      delimiter [<opt> blank! char! text!]
 //      line "Will be copied if already a text value"
 //          [<blank> text! block!]
+//      /tail "Include delimiter at tail of result (if non-NULL)"
 //  ]
 //
 REBNATIVE(delimit)
@@ -128,7 +129,12 @@ REBNATIVE(delimit)
         return R_THROWN;
     }
 
-    return D_OUT;
+    if (IS_NULLED(D_OUT) or not REF(tail))
+        return D_OUT;
+
+    assert(IS_TEXT(D_OUT));
+
+    return rebValue("append", D_OUT, ARG(delimiter), rebEND);
 }
 
 
