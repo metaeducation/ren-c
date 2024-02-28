@@ -2058,8 +2058,6 @@ bool Eval_Core_Throws(REBFRM * const f)
 //
 //    :foo/(print "side effect" 1) ;-- this is allowed
 //
-// Consistent with GET-WORD!, a GET-PATH! acts as GET and won't return VOID!.
-//
 //==//////////////////////////////////////////////////////////////////////==//
 
       case REB_GET_PATH:
@@ -2068,9 +2066,6 @@ bool Eval_Core_Throws(REBFRM * const f)
 
         if (Get_Path_Throws_Core(f->out, current, f->specifier))
             goto return_thrown;
-
-        if (IS_VOID(f->out))
-            fail (Error_Need_Non_Void_Core(current, f->specifier));
         break;
 
 //==//////////////////////////////////////////////////////////////////////==//
