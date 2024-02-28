@@ -623,6 +623,7 @@ inline static void Set_Opt_Polymorphic_May_Fail(
 //      /single "If target and value are blocks, set each to the same value"
 //      /some "blank values (or values past end of block) are not set."
 //      /enfix "ACTION! calls through this word get first arg from left"
+//      /any "do not error on unset words"
 //  ]
 //
 REBNATIVE(set)
@@ -651,6 +652,8 @@ REBNATIVE(set)
 
     REBVAL *target = ARG(target);
     REBVAL *value = ARG(value);
+
+    UNUSED(REF(any));  // !!!provided for bootstrap at this time
 
     if (not IS_BLOCK(target)) {
         assert(ANY_WORD(target) or ANY_PATH(target));
