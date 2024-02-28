@@ -158,7 +158,6 @@ core: [
     t-tuple.c
     t-typeset.c
     t-varargs.c
-    t-vector.c
     t-word.c
 
     ; (U)??? (3rd-party code extractions)

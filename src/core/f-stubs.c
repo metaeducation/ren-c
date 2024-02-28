@@ -293,22 +293,15 @@ Value* Init_Any_Series_At_Core(
 ) {
     ENSURE_SERIES_MANAGED(series);
 
-    if (type != REB_VECTOR) {
-        // Code in various places seemed to have different opinions of
-        // whether a BINARY needed to be zero terminated.  It doesn't
-        // make a lot of sense to zero terminate a binary unless it
-        // simplifies the code assumptions somehow--it's in the class
-        // "ANY_BINSTR()" so that suggests perhaps it has a bit more
-        // obligation to conform.  Also, the original Make_Binary comment
-        // from the open source release read:
-        //
-        //     Make a binary string series. For byte, C, and UTF8 strings.
-        //     Add 1 extra for terminator.
-        //
-        // Until that is consciously overturned, check the REB_BINARY too
-
-        ASSERT_SERIES_TERM(series); // doesn't apply to image/vector
-    }
+    // !!! Binaries are zero-terminated in modern Ren-C, so they can alias
+    // as TEXT! if they are valid UTF-8.  That is not possible in this older
+    // branch where strings are Ucs2(*).  But note the original Make_Binary()
+    // comment from the open source release read:
+    //
+    //     Make a binary string series. For byte, C, and UTF8 strings.
+    //     Add 1 extra for terminator.
+    //
+    ASSERT_SERIES_TERM(series);
 
     RESET_CELL(out, type);
     out->payload.any_series.series = series;

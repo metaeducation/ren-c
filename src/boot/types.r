@@ -58,7 +58,7 @@ REBOL [
             ANY_SCALAR_KIND(VAL_TYPE(v))
 
         INLINE bool ANY_SERIES_KIND(enum Reb_Kind k) {
-            return k >= REB_PATH and k <= REB_VECTOR;
+            return k >= REB_PATH and k <= REB_BITSET;
         }
 
         #define ANY_SERIES(v) \
@@ -195,7 +195,6 @@ url         string      +       +       +       [series string]
 tag         string      +       +       +       [series string]
 
 bitset      bitset      +       +       +       -
-vector      vector      +       +       +       [series]
 
 map         map         +       +       +       -
 

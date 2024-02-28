@@ -66,7 +66,6 @@
 %datatypes/unset.test.reb
 %datatypes/url.test.reb
 %datatypes/varargs.test.reb
-%datatypes/vector.test.reb
 %datatypes/word.test.reb
 %comparison/lesserq.test.reb
 %comparison/maximum-of.test.reb

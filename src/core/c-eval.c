@@ -2201,7 +2201,6 @@ bool Eval_Core_Throws(REBFRM * const f)
       case REB_TAG:
         //
       case REB_BITSET:
-      case REB_VECTOR:
         //
       case REB_MAP:
         //

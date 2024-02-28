@@ -397,9 +397,6 @@ chkDecimal:
     case REB_BINARY:
         return Compare_Binary_Vals(s, t);
 
-    case REB_VECTOR:
-        return Compare_Vector(s, t);
-
     case REB_DATATYPE:
         return VAL_TYPE_KIND(s) - VAL_TYPE_KIND(t);
 

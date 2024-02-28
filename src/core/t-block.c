@@ -182,9 +182,6 @@ REB_R MAKE_Array(Value* out, enum Reb_Kind kind, const Value* arg) {
     else if (ANY_CONTEXT(arg)) {
         return Init_Any_Array(out, kind, Context_To_Array(VAL_CONTEXT(arg), 3));
     }
-    else if (IS_VECTOR(arg)) {
-        return Init_Any_Array(out, kind, Vector_To_Array(arg));
-    }
     else if (IS_VARARGS(arg)) {
         //
         // Converting a VARARGS! to an ANY-ARRAY! involves spooling those

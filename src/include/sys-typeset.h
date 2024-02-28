@@ -93,9 +93,7 @@ INLINE Symbol* Get_Type_Name(const Cell* value)
 // they have been called into question, as to exactly how copying mechanics
 // should work.
 
-#define TS_NOT_COPIED \
-    (FLAGIT_KIND(REB_VECTOR) \
-    | FLAGIT_KIND(REB_PORT))
+#define TS_NOT_COPIED FLAGIT_KIND(REB_PORT)
 
 #define TS_STD_SERIES \
     (TS_SERIES & ~TS_NOT_COPIED)

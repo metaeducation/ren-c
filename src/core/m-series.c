@@ -127,7 +127,7 @@ void Append_Values_Len(REBARR *a, const Value* head, REBLEN len)
 //  Copy_Sequence_Core: C
 //
 // Copy any series that *isn't* an "array" (such as STRING!,
-// BINARY!, BITSET!, VECTOR!...).  Includes the terminator.
+// BINARY!, BITSET!...).  Includes the terminator.
 //
 // Use Copy_Array routines (which specify Shallow, Deep, etc.) for
 // greater detail needed when expressing intent for Rebol Arrays.

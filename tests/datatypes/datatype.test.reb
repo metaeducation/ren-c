@@ -41,7 +41,6 @@
 (datatype? tuple!)
 (datatype? typeset!)  ; typeset! =? block! in R2/Forward, R2 2.7.7+
 (datatype? url!)
-(datatype? vector!)
 (datatype? word!)
 ; alternative literal representation
 (datatype? #[datatype! action!])

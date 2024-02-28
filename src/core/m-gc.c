@@ -454,10 +454,6 @@ static void Queue_Mark_Opt_End_Cell_Deep(const Cell* v)
         }
         break; }
 
-    case REB_VECTOR:
-        Mark_Rebser_Only(VAL_SERIES(v));
-        break;
-
     case REB_LOGIC:
     case REB_INTEGER:
     case REB_DECIMAL:

@@ -851,16 +851,6 @@ union Reb_Series_Misc {
     // REBVALs would see a change--hence the field is in the series.
     //
     bool negated;
-
-    // !!! used for VECTOR!, which also should be a user defined type and not
-    // micro-optimizing with putting bits into the REBSER node like this.
-    //
-    struct {
-        unsigned int non_integer:1; // 0->integer, 1->float/decimal
-        unsigned int sign:1; // 0->unsigned, 1->signed
-        unsigned int bits:7; // 8, 16, 32, 64
-        unsigned int unused:23;
-    } vect_info;
 };
 
 

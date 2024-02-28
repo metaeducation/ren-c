@@ -301,7 +301,6 @@ uint32_t Hash_Value(const Cell* v)
         break; }
 
     case REB_BITSET:
-    case REB_VECTOR:
     case REB_TYPESET:
         //
         // These types are currently not supported.

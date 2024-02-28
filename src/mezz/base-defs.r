@@ -239,7 +239,6 @@ reeval func [
     url?:
     tag?:
     bitset?:
-    vector?:
     block?:
     group?:
     path?:
