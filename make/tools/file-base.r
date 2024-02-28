@@ -125,7 +125,6 @@ core: [
     p-file.c
     p-net.c
     p-signal.c
-;   p-timer.c ;--Marked as unimplemented
 
     ; (S)trings
     s-cases.c
