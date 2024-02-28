@@ -79,7 +79,7 @@ const REBYTE *Grab_Int(const REBYTE *cp, REBINT *val)
 // Return integer scaled to the number of digits specified.
 // Used for the decimal part of numbers (e.g. times).
 //
-const REBYTE *Grab_Int_Scale(const REBYTE *cp, REBINT *val, REBCNT scale)
+const REBYTE *Grab_Int_Scale(const REBYTE *cp, REBINT *val, REBLEN scale)
 {
     REBI64 value = 0;
 

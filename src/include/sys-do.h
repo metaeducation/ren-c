@@ -38,7 +38,7 @@
 inline static bool Do_At_Throws(
     Value* out,
     REBARR *array,
-    REBCNT index,
+    REBLEN index,
     REBSPC *specifier
 ){
     return THROWN_FLAG == Eval_Array_At_Core(

@@ -246,7 +246,7 @@ inline static void Reuse_Varlist_If_Available(REBFRM *f) {
 inline static void Push_Frame_At(
     REBFRM *f,
     REBARR *array,
-    REBCNT index,
+    REBLEN index,
     REBSPC *specifier,
     REBFLGS flags
 ){
@@ -825,7 +825,7 @@ inline static bool Eval_Step_In_Subframe_Throws(
     //
   #if !defined(NDEBUG)
     TRASH_POINTER_IF_DEBUG(higher->gotten);
-    REBCNT old_index = higher->source->index;
+    REBLEN old_index = higher->source->index;
   #endif
 
     child->flags = Endlike_Header(flags);
@@ -869,7 +869,7 @@ inline static REBIXO Eval_Array_At_Core(
     Value* out, // must be initialized, marked stale if empty / all invisible
     const Cell* opt_first, // non-array element to kick off execution with
     REBARR *array,
-    REBCNT index,
+    REBLEN index,
     REBSPC *specifier, // must match array, but also opt_first if relative
     REBFLGS flags // DO_FLAG_TO_END, DO_FLAG_EXPLICIT_EVALUATE, etc.
 ){

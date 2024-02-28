@@ -43,7 +43,7 @@
 // The size is that of a binary structure used by
 // the port for storing internal information.
 //
-REBREQ *Ensure_Port_State(Value* port, REBCNT device)
+REBREQ *Ensure_Port_State(Value* port, REBLEN device)
 {
     assert(device < RDI_MAX);
 
@@ -53,7 +53,7 @@ REBREQ *Ensure_Port_State(Value* port, REBCNT device)
 
     REBCTX *ctx = VAL_CONTEXT(port);
     Value* state = CTX_VAR(ctx, STD_PORT_STATE);
-    REBCNT req_size = dev->req_size;
+    REBLEN req_size = dev->req_size;
 
     if (!IS_BINARY(state)) {
         assert(IS_BLANK(state));
@@ -185,13 +185,13 @@ REBINT Awake_System(REBARR *ports, bool only)
 bool Wait_Ports_Throws(
     Value* out,
     REBARR *ports,
-    REBCNT timeout,
+    REBLEN timeout,
     bool only
 ){
     REBI64 base = OS_DELTA_TIME(0);
-    REBCNT time;
-    REBCNT wt = 1;
-    REBCNT res = (timeout >= 1000) ? 0 : 16;  // OS dependent?
+    REBLEN time;
+    REBLEN wt = 1;
+    REBLEN res = (timeout >= 1000) ? 0 : 16;  // OS dependent?
 
     // Waiting opens the doors to pressing Ctrl-C, which may get this code
     // to throw an error.  There needs to be a state to catch it.
@@ -241,7 +241,7 @@ bool Wait_Ports_Throws(
 
         if (timeout != ALL_BITS) {
             // Figure out how long that (and OS_WAIT) took:
-            time = cast(REBCNT, OS_DELTA_TIME(base) / 1000);
+            time = cast(REBLEN, OS_DELTA_TIME(base) / 1000);
             if (time >= timeout) break;   // done (was dt = 0 before)
             else if (wt > timeout - time) // use smaller residual time
                 wt = timeout - time;
@@ -253,7 +253,7 @@ bool Wait_Ports_Throws(
         OS_WAIT(wt, res);
     }
 
-    //time = (REBCNT)OS_DELTA_TIME(base);
+    //time = (REBLEN)OS_DELTA_TIME(base);
     //Print("dt: %d", time);
 
     Move_Value(out, FALSE_VALUE); // timeout;
@@ -271,7 +271,7 @@ void Sieve_Ports(REBARR *ports)
 {
     Value* port;
     Value* waked;
-    REBCNT n;
+    REBLEN n;
 
     port = Get_System(SYS_PORTS, PORTS_SYSTEM);
     if (!IS_PORT(port)) return;
@@ -433,7 +433,7 @@ REB_R Do_Port_Action(REBFRM *frame_, Value* port, Value* verb)
 
     // Dispatch object function:
 
-    REBCNT n; // goto would cross initialization
+    REBLEN n; // goto would cross initialization
     n = Find_Canon_In_Context(
         VAL_CONTEXT(actor),
         VAL_WORD_CANON(verb),

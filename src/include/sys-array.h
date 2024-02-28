@@ -59,7 +59,7 @@
 // marker in its tail slot, which is one past the last position that is
 // valid for writing a full cell.
 
-inline static Cell* ARR_AT(REBARR *a, REBCNT n)
+inline static Cell* ARR_AT(REBARR *a, REBLEN n)
     { return SER_AT(Cell, cast(REBSER*, a), n); }
 
 inline static Cell* ARR_HEAD(REBARR *a)
@@ -107,7 +107,7 @@ inline static REBARR *Singular_From_Cell(const Cell* v) {
 // the moment, fixed size series merely can't expand, but it might be more
 // efficient if they didn't use any "appending" operators to get built.
 //
-inline static void TERM_ARRAY_LEN(REBARR *a, REBCNT len) {
+inline static void TERM_ARRAY_LEN(REBARR *a, REBLEN len) {
     assert(len < SER_REST(SER(a)));
     SET_SERIES_LEN(SER(a), len);
 
@@ -118,7 +118,7 @@ inline static void TERM_ARRAY_LEN(REBARR *a, REBCNT len) {
     SECOND_BYTE(ARR_AT(a, len)->header.bits) = REB_0_END;
 }
 
-inline static void SET_ARRAY_LEN_NOTERM(REBARR *a, REBCNT len) {
+inline static void SET_ARRAY_LEN_NOTERM(REBARR *a, REBLEN len) {
     SET_SERIES_LEN(SER(a), len); // call out non-terminating usages
 }
 
@@ -190,7 +190,7 @@ inline static void Deep_Freeze_Array(REBARR *a) {
 //
 inline static void Prep_Array(
     REBARR *a,
-    REBCNT capacity_plus_one // Expand_Series passes 0 on dynamic reallocation
+    REBLEN capacity_plus_one // Expand_Series passes 0 on dynamic reallocation
 ){
     assert(IS_SER_DYNAMIC(a));
 
@@ -202,14 +202,14 @@ inline static void Prep_Array(
         // capacity.  Otherwise you'd waste time prepping cells on every
         // expansion and un-prepping them on every shrink.
         //
-        REBCNT n;
+        REBLEN n;
         for (n = 0; n < SER(a)->content.dynamic.rest - 1; ++n, ++prep)
             Prep_Non_Stack_Cell(prep);
     }
     else {
         assert(capacity_plus_one != 0);
 
-        REBCNT n;
+        REBLEN n;
         for (n = 1; n < capacity_plus_one; ++n, ++prep)
             Prep_Non_Stack_Cell(prep); // have to prep cells in useful capacity
 
@@ -250,8 +250,8 @@ inline static void Prep_Array(
 // Make a series that is the right size to store REBVALs (and marked for the
 // garbage collector to look into recursively).  ARR_LEN() will be 0.
 //
-inline static REBARR *Make_Arr_Core(REBCNT capacity, REBFLGS flags) {
-    const REBCNT wide = sizeof(Cell);
+inline static REBARR *Make_Arr_Core(REBLEN capacity, REBFLGS flags) {
+    const REBLEN wide = sizeof(Cell);
 
     REBSER *s = Alloc_Series_Node(flags);
 
@@ -334,7 +334,7 @@ inline static REBARR *Make_Arr_Core(REBCNT capacity, REBFLGS flags) {
 // for internal arrays.
 //
 inline static REBARR *Make_Arr_For_Copy(
-    REBCNT capacity,
+    REBLEN capacity,
     REBFLGS flags,
     REBARR *original
 ){
@@ -436,9 +436,9 @@ enum {
 //
 inline static REBARR* Copy_Array_At_Extra_Deep_Flags_Managed(
     REBARR *original, // ^-- not a macro because original mentioned twice
-    REBCNT index,
+    REBLEN index,
     REBSPC *specifier,
-    REBCNT extra,
+    REBLEN extra,
     REBFLGS flags
 ){
     return Copy_Array_Core_Managed(

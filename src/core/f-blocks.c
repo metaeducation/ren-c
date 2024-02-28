@@ -40,12 +40,12 @@
 //
 REBARR *Copy_Array_At_Extra_Shallow(
     REBARR *original,
-    REBCNT index,
+    REBLEN index,
     REBSPC *specifier,
-    REBCNT extra,
+    REBLEN extra,
     REBFLGS flags
 ){
-    REBCNT len = ARR_LEN(original);
+    REBLEN len = ARR_LEN(original);
 
     if (index > len)
         return Make_Arr_For_Copy(extra, flags, original);
@@ -56,7 +56,7 @@ REBARR *Copy_Array_At_Extra_Shallow(
 
     Cell* src = ARR_AT(original, index);
     Cell* dest = ARR_HEAD(copy);
-    REBCNT count = 0;
+    REBLEN count = 0;
     for (; count < len; ++count, ++dest, ++src)
         Derelativize(dest, src, specifier);
 
@@ -74,9 +74,9 @@ REBARR *Copy_Array_At_Extra_Shallow(
 //
 REBARR *Copy_Array_At_Max_Shallow(
     REBARR *original,
-    REBCNT index,
+    REBLEN index,
     REBSPC *specifier,
-    REBCNT max
+    REBLEN max
 ){
     const REBFLGS flags = 0;
 
@@ -88,7 +88,7 @@ REBARR *Copy_Array_At_Max_Shallow(
 
     REBARR *copy = Make_Arr_For_Copy(max, flags, original);
 
-    REBCNT count = 0;
+    REBLEN count = 0;
     const Cell* src = ARR_AT(original, index);
     Cell* dest = ARR_HEAD(copy);
     for (; count < max; ++count, ++src, ++dest)
@@ -109,13 +109,13 @@ REBARR *Copy_Array_At_Max_Shallow(
 REBARR *Copy_Values_Len_Extra_Shallow_Core(
     const Cell* head,
     REBSPC *specifier,
-    REBCNT len,
-    REBCNT extra,
+    REBLEN len,
+    REBLEN extra,
     REBFLGS flags
 ){
     REBARR *a = Make_Arr_Core(len + extra, flags);
 
-    REBCNT count = 0;
+    REBLEN count = 0;
     const Cell* src = head;
     Cell* dest = ARR_HEAD(a);
     for (; count < len; ++count, ++src, ++dest) {
@@ -149,7 +149,7 @@ REBARR *Copy_Values_Len_Extra_Shallow_Core(
 void Clonify_Values_Len_Managed(
     Cell* head,
     REBSPC *specifier,
-    REBCNT len,
+    REBLEN len,
     REBU64 types
 ) {
     if (C_STACK_OVERFLOWING(&len))
@@ -157,7 +157,7 @@ void Clonify_Values_Len_Managed(
 
     Cell* v = head;
 
-    REBCNT index;
+    REBLEN index;
     for (index = 0; index < len; ++index, ++v) {
         if (types & FLAGIT_KIND(VAL_TYPE(v)) & TS_SERIES_OBJ) {
             //
@@ -249,17 +249,17 @@ void Clonify_Values_Len_Managed(
 //
 static REBARR *Copy_Array_Core_Managed_Inner_Loop(
     REBARR *original,
-    REBCNT index,
+    REBLEN index,
     REBSPC *specifier,
-    REBCNT tail,
-    REBCNT extra, // currently no one uses--would it also apply deep (?)
+    REBLEN tail,
+    REBLEN extra, // currently no one uses--would it also apply deep (?)
     REBFLGS flags,
     REBU64 types
 ){
     assert(index <= tail and tail <= ARR_LEN(original));
     assert(flags & NODE_FLAG_MANAGED);
 
-    REBCNT len = tail - index;
+    REBLEN len = tail - index;
 
     // Currently we start by making a shallow copy and then adjust it
 
@@ -267,7 +267,7 @@ static REBARR *Copy_Array_Core_Managed_Inner_Loop(
 
     Cell* src = ARR_AT(original, index);
     Cell* dest = ARR_HEAD(copy);
-    REBCNT count = 0;
+    REBLEN count = 0;
     for (; count < len; ++count, ++dest, ++src)
         Derelativize(dest, src, specifier);
 
@@ -293,10 +293,10 @@ static REBARR *Copy_Array_Core_Managed_Inner_Loop(
 //
 REBARR *Copy_Array_Core_Managed(
     REBARR *original,
-    REBCNT index,
+    REBLEN index,
     REBSPC *specifier,
-    REBCNT tail,
-    REBCNT extra,
+    REBLEN tail,
+    REBLEN extra,
     REBFLGS flags,
     REBU64 types
 ){

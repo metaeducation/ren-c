@@ -41,7 +41,7 @@ static bool Check_Char_Range(const Value* val, REBINT limit)
 
     assert(ANY_STRING(val));
 
-    REBCNT len = VAL_LEN_AT(val);
+    REBLEN len = VAL_LEN_AT(val);
     REBCHR(const *) up = VAL_UNI_AT(val);
 
     for (; len > 0; len--) {
@@ -141,7 +141,7 @@ REBNATIVE(bind)
     Value* v = ARG(value);
     Value* target = ARG(target);
 
-    REBCNT flags = REF(only) ? BIND_0 : BIND_DEEP;
+    REBLEN flags = REF(only) ? BIND_0 : BIND_DEEP;
 
     REBU64 bind_types = TS_WORD;
 
@@ -781,7 +781,7 @@ REBNATIVE(in)
     if (IS_BLOCK(val) || IS_GROUP(val)) {
         if (IS_WORD(word)) {
             const Value* v;
-            REBCNT i;
+            REBLEN i;
             for (i = VAL_INDEX(val); i < VAL_LEN_HEAD(val); i++) {
                 Get_Simple_Value_Into(
                     safe,
@@ -792,7 +792,7 @@ REBNATIVE(in)
                 v = safe;
                 if (IS_OBJECT(v)) {
                     REBCTX *context = VAL_CONTEXT(v);
-                    REBCNT index = Find_Canon_In_Context(
+                    REBLEN index = Find_Canon_In_Context(
                         context, VAL_WORD_CANON(word), false
                     );
                     if (index != 0)
@@ -819,7 +819,7 @@ REBNATIVE(in)
         RETURN (word);
     }
 
-    REBCNT index = Find_Canon_In_Context(context, VAL_WORD_CANON(word), false);
+    REBLEN index = Find_Canon_In_Context(context, VAL_WORD_CANON(word), false);
     if (index == 0)
         return nullptr;
 

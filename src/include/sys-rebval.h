@@ -393,7 +393,7 @@ struct Reb_Series_Payload {
     // in a systemic way.  VAL_LEN_AT() bounds the length at the index
     // position by the physical length, but VAL_ARRAY_AT() doesn't check.
     //
-    REBCNT index;
+    REBLEN index;
 };
 
 struct Reb_Typeset_Payload {
@@ -520,7 +520,7 @@ struct Reb_Varargs_Payload {
     // the function frame at any point.  Despite this, we proxy the
     // VALUE_FLAG_UNEVALUATED from the last TAKE to reflect its status.
     //
-    REBCNT param_offset;
+    REBLEN param_offset;
 
     REBACT *phase; // where to look up parameter by its offset
 };
@@ -543,7 +543,7 @@ struct Reb_Varargs_Payload {
 
 struct Reb_Partial_Payload {
     REBDSP dsp; // the DSP of this partial slot (if ordered on the stack)
-    REBCNT index; // maps to the index of this parameter in the paramlist
+    REBLEN index; // maps to the index of this parameter in the paramlist
 };
 
 
@@ -654,7 +654,7 @@ union Reb_Value_Extra {
 
     REBSTR *key_spelling; // if typeset is key of object or function parameter
     REBDAT date; // time's payload holds the nanoseconds, this is the date
-    REBCNT struct_offset; // offset for struct in the possibly shared series
+    REBLEN struct_offset; // offset for struct in the possibly shared series
 
     // !!! Biasing Ren-C to helping solve its technical problems led the
     // REBEVT stucture to get split up.  The "eventee" is now in the extra

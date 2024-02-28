@@ -192,7 +192,7 @@ void *RL_rebRealloc(void *ptr, size_t new_size)
 
     REBSER *s = *ps;
 
-    REBCNT old_size = BIN_LEN(s) - ALIGN_SIZE;
+    REBLEN old_size = BIN_LEN(s) - ALIGN_SIZE;
 
     // !!! It's less efficient to create a new series with another call to
     // rebMalloc(), but simpler for the time being.  Switch to do this with
@@ -1133,7 +1133,7 @@ char *RL_rebSpell(const void *p, va_list *vaptr)
 // cause errors.
 //
 // !!! Although the rebSpellInto API deals in bytes, this deals in count of
-// characters.  (The use of REBCNT instead of REBSIZ indicates this.)  It may
+// characters.  (The use of REBLEN instead of REBSIZ indicates this.)  It may
 // be more useful for the wide string APIs to do this so leaving it that way
 // for now.
 //
@@ -1143,8 +1143,8 @@ unsigned int RL_rebSpellIntoW(
     const RebolValue* v
 ){
     REBSER *s;
-    REBCNT index;
-    REBCNT len;
+    REBLEN index;
+    REBLEN len;
     if (ANY_STRING(v)) {
         s = VAL_SERIES(v);
         index = VAL_INDEX(v);
@@ -1166,8 +1166,8 @@ unsigned int RL_rebSpellIntoW(
         return len; // caller must now allocate buffer of len + 1
     }
 
-    REBCNT limit = MIN(buf_chars, len);
-    REBCNT n = 0;
+    REBLEN limit = MIN(buf_chars, len);
+    REBLEN n = 0;
     for (; index < limit; ++n, ++index)
         buf[n] = GET_ANY_CHAR(s, index);
 
@@ -1201,7 +1201,7 @@ REBWCHAR *RL_rebSpellW(const void *p, va_list *vaptr)
     if (IS_NULLED(string))
         return nullptr; // NULL is passed through, for opting out
 
-    REBCNT len = rebSpellIntoW(nullptr, 0, string);
+    REBLEN len = rebSpellIntoW(nullptr, 0, string);
     REBWCHAR *result = cast(
         REBWCHAR*, rebMalloc(sizeof(REBWCHAR) * (len + 1))
     );
@@ -1227,14 +1227,14 @@ size_t RL_rebBytesInto(
     if (not IS_BINARY(binary))
         fail ("rebBytesInto() only works on BINARY!");
 
-    REBCNT size = VAL_LEN_AT(binary);
+    REBLEN size = VAL_LEN_AT(binary);
 
     if (not buf) {
         assert(buf_size == 0);
         return size; // currently, caller must allocate a buffer of size + 1
     }
 
-    REBCNT limit = MIN(buf_size, size);
+    REBLEN limit = MIN(buf_size, size);
     memcpy(s_cast(buf), cs_cast(VAL_BIN_AT(binary)), limit);
     buf[limit] = '\0';
     return size;

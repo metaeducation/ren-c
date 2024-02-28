@@ -135,7 +135,7 @@ void Bin_To_Money_May_Fail(Value* result, const Value* val)
     if (not IS_BINARY(val))
         fail (Error_Invalid(val));
 
-    REBCNT len = VAL_LEN_AT(val);
+    REBLEN len = VAL_LEN_AT(val);
     if (len > 12)
         len = 12;
 

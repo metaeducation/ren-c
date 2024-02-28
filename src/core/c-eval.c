@@ -971,7 +971,7 @@ bool Eval_Core_Throws(REBFRM * const f)
                 // @ the callsite than any refinements added by a PATH!.
                 //
                 if (IS_ISSUE(f->special)) {
-                    REBCNT partial_index = VAL_WORD_INDEX(f->special);
+                    REBLEN partial_index = VAL_WORD_INDEX(f->special);
                     REBSTR *partial_canon = VAL_STORED_CANON(f->special);
 
                     DS_PUSH_TRASH;
@@ -1015,7 +1015,7 @@ bool Eval_Core_Throws(REBFRM * const f)
                     // consume lines up.  Save the position to come back to,
                     // as binding information on the refinement.
                     //
-                    REBCNT offset = f->arg - FRM_ARGS_HEAD(f);
+                    REBLEN offset = f->arg - FRM_ARGS_HEAD(f);
                     INIT_BINDING(ordered, f->varlist);
                     INIT_WORD_INDEX(ordered, offset + 1);
                     f->refine = SKIPPING_REFINEMENT_ARGS; // fill args later
@@ -1959,7 +1959,7 @@ bool Eval_Core_Throws(REBFRM * const f)
         // Since current may be f->cell, extract properties to reuse it.
         //
         REBARR *array = VAL_ARRAY(current); // array of the GROUP!
-        REBCNT index = VAL_INDEX(current); // index may not be @ head
+        REBLEN index = VAL_INDEX(current); // index may not be @ head
         REBSPC *derived = Derive_Specifier(f->specifier, current);
 
         // We want `3 = (1 + 2 ()) 4` to not treat the 1 + 2 as "stale", thus

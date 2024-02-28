@@ -255,7 +255,7 @@ void MF_Event(REB_MOLD *mo, const Cell* v, bool form)
 {
     UNUSED(form);
 
-    REBCNT field;
+    REBLEN field;
     SymId fields[] = {
         SYM_TYPE, SYM_PORT, SYM_0_internal
     };

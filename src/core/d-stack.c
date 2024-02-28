@@ -45,7 +45,7 @@
 // ellipses to show they have been cut off.  It does not change the arrays
 // in question, but replaces them with copies.
 //
-void Collapsify_Array(REBARR *array, REBSPC *specifier, REBCNT limit)
+void Collapsify_Array(REBARR *array, REBSPC *specifier, REBLEN limit)
 {
     Cell* item = ARR_HEAD(array);
     for (; NOT_END(item); ++item) {
@@ -100,7 +100,7 @@ void Collapsify_Array(REBARR *array, REBSPC *specifier, REBCNT limit)
 //
 Value* Init_Near_For_Frame(Cell* out, REBFRM *f)
 {
-    REBCNT dsp_start = DSP;
+    REBLEN dsp_start = DSP;
 
     if (NOT_END(f->value) and FRM_IS_VALIST(f)) {
         //
@@ -133,7 +133,7 @@ Value* Init_Near_For_Frame(Cell* out, REBFRM *f)
     else if (start < 0)
         start = 0;
 
-    REBCNT count = 0;
+    REBLEN count = 0;
     Cell* item = ARR_AT(FRM_ARRAY(f), start);
     for (; NOT_END(item) and count < 6; ++item, ++count) {
         DS_PUSH_TRASH;

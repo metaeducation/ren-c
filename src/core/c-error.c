@@ -328,9 +328,9 @@ ATTRIBUTE_NO_RETURN void Fail_Core(const void *p)
 //
 //  Stack_Depth: C
 //
-REBCNT Stack_Depth(void)
+REBLEN Stack_Depth(void)
 {
-    REBCNT depth = 0;
+    REBLEN depth = 0;
 
     REBFRM *f = FS_TOP;
     while (f) {
@@ -370,11 +370,11 @@ const Value* Find_Error_For_Sym(SymId id_sym)
     REBCTX *categories = VAL_CONTEXT(Get_System(SYS_CATALOG, CAT_ERRORS));
     assert(CTX_KEY_SYM(categories, 1) == SYM_SELF);
 
-    REBCNT ncat = SELFISH(1);
+    REBLEN ncat = SELFISH(1);
     for (; ncat <= CTX_LEN(categories); ++ncat) {
         REBCTX *category = VAL_CONTEXT(CTX_VAR(categories, ncat));
 
-        REBCNT n = SELFISH(1);
+        REBLEN n = SELFISH(1);
         for (; n <= CTX_LEN(category); ++n) {
             if (SAME_STR(CTX_KEY_SPELLING(category, n), id_canon)) {
                 Value* message = CTX_VAR(category, n);
@@ -703,7 +703,7 @@ REBCTX *Make_Error_Managed_Core(
 
     assert(message);
 
-    REBCNT expected_args = 0;
+    REBLEN expected_args = 0;
     if (IS_BLOCK(message)) { // GET-WORD!s in template should match va_list
         Cell* temp = VAL_ARRAY_HEAD(message);
         for (; NOT_END(temp); ++temp) {
@@ -730,7 +730,7 @@ REBCTX *Make_Error_Managed_Core(
         // hold the generic error parameters.  Investigate how this ties in
         // with user-defined types.
 
-        REBCNT root_len = CTX_LEN(root_error);
+        REBLEN root_len = CTX_LEN(root_error);
 
         // Should the error be well-formed, we'll need room for the new
         // expected values *and* their new keys in the keylist.
@@ -962,7 +962,7 @@ REBCTX *Error_No_Arg(REBFRM *f, const Cell* param)
 //
 //  Error_No_Memory: C
 //
-REBCTX *Error_No_Memory(REBCNT bytes)
+REBCTX *Error_No_Memory(REBLEN bytes)
 {
     DECLARE_LOCAL (bytes_value);
 
@@ -1385,7 +1385,7 @@ const REBYTE *Security_Policy(REBSTR *spelling, const Value* name)
 {
     const Value* policy = Get_System(SYS_STATE, STATE_POLICIES);
     const REBYTE *flags;
-    REBCNT len;
+    REBLEN len;
     SymId errcode = SYM_SECURITY_ERROR;
 
     if (!IS_OBJECT(policy)) goto error;
@@ -1456,7 +1456,7 @@ const REBYTE *Security_Policy(REBSTR *spelling, const Value* name)
 // Take action on the policy flags provided. The sym and value
 // are provided for error message purposes only.
 //
-void Trap_Security(REBCNT flag, REBSTR *sym, const Value* value)
+void Trap_Security(REBLEN flag, REBSTR *sym, const Value* value)
 {
     if (flag == SEC_THROW) {
         if (!value) {
@@ -1477,7 +1477,7 @@ void Trap_Security(REBCNT flag, REBSTR *sym, const Value* value)
 // a given symbol (FILE) and value (path), and then tests
 // that they are allowed.
 //
-void Check_Security(REBSTR *sym, REBCNT policy, Value* value)
+void Check_Security(REBSTR *sym, REBLEN policy, Value* value)
 {
     const REBYTE *flags = Security_Policy(sym, value);
     Trap_Security(flags[policy], sym, value);
@@ -1486,9 +1486,9 @@ void Check_Security(REBSTR *sym, REBCNT policy, Value* value)
 
 // Limited molder (used, e.g., for errors)
 //
-static void Mold_Value_Limit(REB_MOLD *mo, Cell* v, REBCNT len)
+static void Mold_Value_Limit(REB_MOLD *mo, Cell* v, REBLEN len)
 {
-    REBCNT start = SER_LEN(mo->series);
+    REBLEN start = SER_LEN(mo->series);
     Mold_Value(mo, v);
 
     if (SER_LEN(mo->series) - start > len) {

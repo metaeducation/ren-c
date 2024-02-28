@@ -117,7 +117,7 @@ static REBARR *Read_Dir_May_Fail(struct devreq_file *dir)
 static void Init_Dir_Path(
     struct devreq_file *dir,
     const Value* path,
-    REBCNT policy
+    REBLEN policy
 ){
     UNUSED(policy);
 
@@ -172,7 +172,7 @@ static REB_R Dir_Actor(REBFRM *frame_, Value* port, Value* verb)
 
         switch (property) {
         case SYM_LENGTH: {
-            REBCNT len = IS_BLOCK(state) ? VAL_ARRAY_LEN_AT(state) : 0;
+            REBLEN len = IS_BLOCK(state) ? VAL_ARRAY_LEN_AT(state) : 0;
             return Init_Integer(D_OUT, len); }
 
         case SYM_OPEN_Q:

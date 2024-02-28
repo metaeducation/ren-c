@@ -34,7 +34,7 @@
 //
 //  Startup_Data_Stack: C
 //
-void Startup_Data_Stack(REBCNT size)
+void Startup_Data_Stack(REBLEN size)
 {
     // Start the data stack out with just one element in it, and make it an
     // unreadable blank in the debug build.  This helps avoid accidental
@@ -259,9 +259,9 @@ REBCTX *Get_Context_From_Stack(void)
 // which could do a push or pop.  (Currently stable w.r.t. pop but there may
 // be compaction at some point.)
 //
-void Expand_Data_Stack_May_Fail(REBCNT amount)
+void Expand_Data_Stack_May_Fail(REBLEN amount)
 {
-    REBCNT len_old = ARR_LEN(DS_Array);
+    REBLEN len_old = ARR_LEN(DS_Array);
 
     // The current requests for expansion should only happen when the stack
     // is at its end.  Sanity check that.
@@ -297,8 +297,8 @@ void Expand_Data_Stack_May_Fail(REBCNT amount)
 
     Value* cell = DS_Movable_Top;
 
-    REBCNT len_new = len_old + amount;
-    REBCNT n;
+    REBLEN len_new = len_old + amount;
+    REBLEN n;
     for (n = len_old; n < len_new; ++n) {
         Init_Unreadable_Blank(cell);
         SET_VAL_FLAGS(cell, CELL_FLAG_STACK | CELL_FLAG_TRANSIENT);
@@ -341,7 +341,7 @@ REBARR *Pop_Stack_Values_Core(REBDSP dsp_start, REBFLGS flags)
 // index of that array will be updated to the insertion tail (/INTO protocol)
 //
 void Pop_Stack_Values_Into(Value* into, REBDSP dsp_start) {
-    REBCNT len = DSP - dsp_start;
+    REBLEN len = DSP - dsp_start;
     Value* values = KNOWN(ARR_AT(DS_Array, dsp_start + 1));
 
     assert(ANY_ARRAY(into));

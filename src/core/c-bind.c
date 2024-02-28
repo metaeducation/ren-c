@@ -63,7 +63,7 @@ void Bind_Values_Inner_Loop(
                 // which provides a feature of building up state about some
                 // words while still not including them in the bind.
                 //
-                assert(cast(REBCNT, n) <= CTX_LEN(context));
+                assert(cast(REBLEN, n) <= CTX_LEN(context));
 
                 // We're overwriting any previous binding, which may have
                 // been relative.
@@ -118,7 +118,7 @@ void Bind_Values_Core(
     // is done by poking the index into the REBSER of the series behind the
     // ANY-WORD!, so it must be cleaned up to not break future bindings.)
 
-    REBCNT index = 1;
+    REBLEN index = 1;
     Value* key = CTX_KEYS_HEAD(context);
     for (; index <= CTX_LEN(context); key++, index++)
         if (not Is_Param_Unbindable(key))
@@ -168,9 +168,9 @@ void Unbind_Values_Core(Cell* head, REBCTX *context, bool deep)
 // Returns 0 if word is not part of the context, otherwise the index of the
 // word in the context.
 //
-REBCNT Try_Bind_Word(REBCTX *context, Value* word)
+REBLEN Try_Bind_Word(REBCTX *context, Value* word)
 {
-    REBCNT n = Find_Canon_In_Context(context, VAL_WORD_CANON(word), false);
+    REBLEN n = Find_Canon_In_Context(context, VAL_WORD_CANON(word), false);
     if (n != 0) {
         INIT_BINDING(word, context); // binding may have been relative before
         INIT_WORD_INDEX(word, n);
@@ -271,7 +271,7 @@ REBARR *Copy_And_Bind_Relative_Deep_Managed(
 
     // Setup binding table from the argument word list
     //
-    REBCNT index = 1;
+    REBLEN index = 1;
     Cell* param = ARR_AT(paramlist, 1); // [0] is ACTION! value
     for (; NOT_END(param); param++, index++)
         Add_Binder_Index(&binder, VAL_KEY_CANON(param), index);
@@ -404,7 +404,7 @@ void Virtual_Bind_Deep_To_New_Context(
 ) {
     assert(IS_BLOCK(body_in_out));
 
-    REBCNT num_vars = IS_BLOCK(spec) ? VAL_LEN_AT(spec) : 1;
+    REBLEN num_vars = IS_BLOCK(spec) ? VAL_LEN_AT(spec) : 1;
     if (num_vars == 0)
         fail (Error_Invalid(spec));
 
@@ -487,7 +487,7 @@ void Virtual_Bind_Deep_To_New_Context(
     Value* key = CTX_KEYS_HEAD(c);
     Value* var = CTX_VARS_HEAD(c);
 
-    REBCNT index = 1;
+    REBLEN index = 1;
     while (index <= num_vars) {
         if (IS_WORD(item)) {
             Init_Typeset(

@@ -36,18 +36,18 @@
 //
 // Returns new dst_idx
 //
-REBCNT Modify_Array(
+REBLEN Modify_Array(
     SymId op,           // INSERT, APPEND, CHANGE
     REBARR *dst_arr,        // target
-    REBCNT dst_idx,         // position
+    REBLEN dst_idx,         // position
     const Value* src_val,  // source
-    REBCNT flags,           // AM_SPLICE, AM_PART
+    REBLEN flags,           // AM_SPLICE, AM_PART
     REBINT dst_len,         // length to remove
     REBINT dups             // dup count
 ){
     assert(op == SYM_INSERT or op == SYM_CHANGE or op == SYM_APPEND);
 
-    REBCNT tail = ARR_LEN(dst_arr);
+    REBLEN tail = ARR_LEN(dst_arr);
 
     const Cell* src_rel;
     REBSPC *specifier;
@@ -223,7 +223,7 @@ REBCNT Modify_Array(
 //
 // Returns new dst_idx.
 //
-REBCNT Modify_Binary(
+REBLEN Modify_Binary(
     Value* dst_val,        // target
     SymId op,            // INSERT, APPEND, CHANGE
     const Value* src_val,  // source
@@ -234,7 +234,7 @@ REBCNT Modify_Binary(
     assert(op == SYM_INSERT or op == SYM_CHANGE or op == SYM_APPEND);
 
     REBSER *dst_ser = VAL_SERIES(dst_val);
-    REBCNT dst_idx = VAL_INDEX(dst_val);
+    REBLEN dst_idx = VAL_INDEX(dst_val);
 
     // For INSERT/PART and APPEND/PART
     //
@@ -256,14 +256,14 @@ REBCNT Modify_Binary(
     if (IS_NULLED(src_val) || limit == 0 || dups < 0)
         return op == SYM_APPEND ? 0 : dst_idx;
 
-    REBCNT tail = SER_LEN(dst_ser);
+    REBLEN tail = SER_LEN(dst_ser);
     if (op == SYM_APPEND || dst_idx > tail)
         dst_idx = tail;
 
     // If the src_val is not a string, then we need to create a string:
 
-    REBCNT src_idx = 0;
-    REBCNT src_len;
+    REBLEN src_idx = 0;
+    REBLEN src_len;
     REBSER *src_ser;
     bool needs_free;
     if (IS_INTEGER(src_val)) {
@@ -298,8 +298,8 @@ REBCNT Modify_Binary(
         limit = -1;
     }
     else if (ANY_STRING(src_val)) {
-        REBCNT len_at = VAL_LEN_AT(src_val);
-        if (limit >= 0 && len_at > cast(REBCNT, limit))
+        REBLEN len_at = VAL_LEN_AT(src_val);
+        if (limit >= 0 && len_at > cast(REBLEN, limit))
             src_ser = Make_UTF8_From_Any_String(src_val, limit);
         else
             src_ser = Make_UTF8_From_Any_String(src_val, len_at);
@@ -374,7 +374,7 @@ REBCNT Modify_Binary(
 //
 // Returns new dst_idx.
 //
-REBCNT Modify_String(
+REBLEN Modify_String(
     Value* dst_val,        // target
     SymId op,            // INSERT, APPEND, CHANGE
     const Value* src_val,  // source
@@ -385,7 +385,7 @@ REBCNT Modify_String(
     assert(op == SYM_INSERT or op == SYM_CHANGE or op == SYM_APPEND);
 
     REBSER *dst_ser = VAL_SERIES(dst_val);
-    REBCNT dst_idx = VAL_INDEX(dst_val);
+    REBLEN dst_idx = VAL_INDEX(dst_val);
 
     // For INSERT/PART and APPEND/PART
     //
@@ -407,15 +407,15 @@ REBCNT Modify_String(
     if (IS_NULLED(src_val) || limit == 0 || dups < 0)
         return op == SYM_APPEND ? 0 : dst_idx;
 
-    REBCNT tail = SER_LEN(dst_ser);
+    REBLEN tail = SER_LEN(dst_ser);
     if (op == SYM_APPEND or dst_idx > tail)
         dst_idx = tail;
 
     // If the src_val is not a string, then we need to create a string:
 
-    REBCNT src_idx = 0;
+    REBLEN src_idx = 0;
     REBSER *src_ser;
-    REBCNT src_len;
+    REBLEN src_len;
     bool needs_free;
     if (IS_CHAR(src_val)) {
         src_ser = Make_Ser_Codepoint(VAL_CHAR(src_val));

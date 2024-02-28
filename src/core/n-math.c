@@ -58,7 +58,7 @@ enum {SINE, COSINE, TANGENT};
 // Convert integer arg, if present, to decimal and convert to radians
 // if necessary.  Clip ranges for correct REBOL behavior.
 //
-static REBDEC Trig_Value(const Value* value, bool radians, REBCNT which)
+static REBDEC Trig_Value(const Value* value, bool radians, REBLEN which)
 {
     REBDEC dval = AS_DECIMAL(value);
 
@@ -85,7 +85,7 @@ static REBDEC Trig_Value(const Value* value, bool radians, REBCNT which)
 //
 //  Arc_Trans: C
 //
-static void Arc_Trans(Value* out, const Value* value, bool radians, REBCNT kind)
+static void Arc_Trans(Value* out, const Value* value, bool radians, REBLEN kind)
 {
     REBDEC dval = AS_DECIMAL(value);
     if (kind != TANGENT and (dval < -1 || dval > 1))
@@ -467,8 +467,8 @@ REBINT CT_Unhooked(const Cell* a, const Cell* b, REBINT mode)
 //
 REBINT Compare_Modify_Values(Cell* a, Cell* b, REBINT strictness)
 {
-    REBCNT ta = VAL_TYPE(a);
-    REBCNT tb = VAL_TYPE(b);
+    REBLEN ta = VAL_TYPE(a);
+    REBLEN tb = VAL_TYPE(b);
 
     if (ta != tb) {
         if (strictness == 1) return 0;

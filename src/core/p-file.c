@@ -32,7 +32,7 @@
 
 // For reference to port/state series that holds the file structure:
 #define AS_FILE(s) cast(REBREQ*, VAL_BIN_HEAD(s))
-#define READ_MAX ((REBCNT)(-1))
+#define READ_MAX ((REBLEN)(-1))
 #define HL64(v) (v##l + (v##h << 32))
 #define MAX_READ_MASK 0x7FFFFFFF // max size per chunk
 
@@ -159,7 +159,7 @@ static void Read_File_Port(
     struct devreq_file *file,
     Value* path,
     REBFLGS flags,
-    REBCNT len
+    REBLEN len
 ) {
     assert(IS_FILE(path));
 
@@ -186,7 +186,7 @@ static void Read_File_Port(
 //
 //  Write_File_Port: C
 //
-static void Write_File_Port(struct devreq_file *file, Value* data, REBCNT len, bool lines)
+static void Write_File_Port(struct devreq_file *file, Value* data, REBLEN len, bool lines)
 {
     REBSER *ser;
     REBREQ *req = AS_REBREQ(file);
@@ -228,7 +228,7 @@ static void Write_File_Port(struct devreq_file *file, Value* data, REBCNT len, b
 // can never be greater than 4GB.  If limit isn't negative it
 // constrains the size of the requested read.
 //
-static REBCNT Set_Length(const struct devreq_file *file, REBI64 limit)
+static REBLEN Set_Length(const struct devreq_file *file, REBI64 limit)
 {
     REBI64 len;
 
@@ -238,11 +238,11 @@ static REBCNT Set_Length(const struct devreq_file *file, REBI64 limit)
     len &= MAX_READ_MASK; // limit the size
 
     // Return requested length:
-    if (limit < 0) return (REBCNT)len;
+    if (limit < 0) return (REBLEN)len;
 
     // Limit size of requested read:
-    if (limit > len) return cast(REBCNT, len);
-    return cast(REBCNT, limit);
+    if (limit > len) return cast(REBLEN, len);
+    return cast(REBLEN, limit);
 }
 
 
@@ -356,7 +356,7 @@ static REB_R File_Actor(REBFRM *frame_, Value* port, Value* verb)
         if (req->flags & RRF_OPEN)
             opened = false; // was already open
         else {
-            REBCNT nargs = AM_OPEN_READ;
+            REBLEN nargs = AM_OPEN_READ;
             if (REF(seek))
                 nargs |= AM_OPEN_SEEK;
             Setup_File(file, nargs, path);
@@ -367,7 +367,7 @@ static REB_R File_Actor(REBFRM *frame_, Value* port, Value* verb)
         if (REF(seek))
             Set_Seek(file, ARG(index));
 
-        REBCNT len = Set_Length(file, REF(part) ? VAL_INT64(ARG(limit)) : -1);
+        REBLEN len = Set_Length(file, REF(part) ? VAL_INT64(ARG(limit)) : -1);
         Read_File_Port(D_OUT, port, file, path, flags, len);
 
         if (opened) {
@@ -415,7 +415,7 @@ static REB_R File_Actor(REBFRM *frame_, Value* port, Value* verb)
             opened = false; // already open
         }
         else {
-            REBCNT nargs = AM_OPEN_WRITE;
+            REBLEN nargs = AM_OPEN_WRITE;
             if (REF(seek) || REF(append))
                 nargs |= AM_OPEN_SEEK;
             else
@@ -433,9 +433,9 @@ static REB_R File_Actor(REBFRM *frame_, Value* port, Value* verb)
             Set_Seek(file, ARG(index));
 
         // Determine length. Clip /PART to size of string if needed.
-        REBCNT len = VAL_LEN_AT(data);
+        REBLEN len = VAL_LEN_AT(data);
         if (REF(part)) {
-            REBCNT n = Int32s(ARG(limit), 0);
+            REBLEN n = Int32s(ARG(limit), 0);
             if (n <= len) len = n;
         }
 
@@ -493,7 +493,7 @@ static REB_R File_Actor(REBFRM *frame_, Value* port, Value* verb)
         if (not (req->flags & RRF_OPEN))
             fail (Error_Not_Open_Raw(path)); // !!! wrong msg
 
-        REBCNT len = Set_Length(file, REF(part) ? VAL_INT64(ARG(limit)) : -1);
+        REBLEN len = Set_Length(file, REF(part) ? VAL_INT64(ARG(limit)) : -1);
         REBFLGS flags = 0;
         Read_File_Port(D_OUT, port, file, path, flags, len);
         return D_OUT; }

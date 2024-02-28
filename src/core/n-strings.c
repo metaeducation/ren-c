@@ -42,26 +42,26 @@
 #if !defined(SHA_DEFINED) && defined(HAS_SHA1)
     // make-headers.r outputs a prototype already, because it is used by cloak
     // (triggers warning -Wredundant-decls)
-    // REBYTE *SHA1(REBYTE *, REBCNT, REBYTE *);
+    // REBYTE *SHA1(REBYTE *, REBLEN, REBYTE *);
 
     EXTERN_C void SHA1_Init(void *c);
-    EXTERN_C void SHA1_Update(void *c, REBYTE *data, REBCNT len);
+    EXTERN_C void SHA1_Update(void *c, REBYTE *data, REBLEN len);
     EXTERN_C void SHA1_Final(REBYTE *md, void *c);
     EXTERN_C int SHA1_CtxSize(void);
 #endif
 
 #if !defined(MD5_DEFINED) && defined(HAS_MD5)
     EXTERN_C void MD5_Init(void *c);
-    EXTERN_C void MD5_Update(void *c, REBYTE *data, REBCNT len);
+    EXTERN_C void MD5_Update(void *c, REBYTE *data, REBLEN len);
     EXTERN_C void MD5_Final(REBYTE *md, void *c);
     EXTERN_C int MD5_CtxSize(void);
 #endif
 
 #ifdef HAS_MD4
-    REBYTE *MD4(REBYTE *, REBCNT, REBYTE *);
+    REBYTE *MD4(REBYTE *, REBLEN, REBYTE *);
 
     EXTERN_C void MD4_Init(void *c);
-    EXTERN_C void MD4_Update(void *c, REBYTE *data, REBCNT len);
+    EXTERN_C void MD4_Update(void *c, REBYTE *data, REBLEN len);
     EXTERN_ void MD4_Final(REBYTE *md, void *c);
     EXTERN_C int MD4_CtxSize(void);
 #endif
@@ -69,14 +69,14 @@
 
 // Table of has functions and parameters:
 static struct {
-    REBYTE *(*digest)(REBYTE *, REBCNT, REBYTE *);
+    REBYTE *(*digest)(REBYTE *, REBLEN, REBYTE *);
     void (*init)(void *);
-    void (*update)(void *, REBYTE *, REBCNT);
+    void (*update)(void *, REBYTE *, REBLEN);
     void (*final)(REBYTE *, void *);
     int (*ctxsize)(void);
     SymId sym;
-    REBCNT len;
-    REBCNT hmacblock;
+    REBLEN len;
+    REBLEN hmacblock;
 } digests[] = {
 
 #ifdef HAS_SHA1
@@ -172,11 +172,11 @@ REBNATIVE(checksum)
 
     Value* arg = ARG(data);
 
-    REBCNT len = Part_Len_May_Modify_Index(arg, ARG(limit));
+    REBLEN len = Part_Len_May_Modify_Index(arg, ARG(limit));
     UNUSED(REF(part)); // checked by if limit is nulled
 
     REBYTE *data = VAL_RAW_DATA_AT(arg); // after Partial() in case of change
-    REBCNT wide = SER_WIDE(VAL_SERIES(arg));
+    REBLEN wide = SER_WIDE(VAL_SERIES(arg));
 
     SymId sym;
     if (REF(method)) {
@@ -214,7 +214,7 @@ REBNATIVE(checksum)
             return Init_Integer(D_OUT, adler);
         }
 
-        REBCNT i;
+        REBLEN i;
         for (i = 0; i != sizeof(digests) / sizeof(digests[0]); i++) {
             if (digests[i].sym != sym)
                 continue;
@@ -226,7 +226,7 @@ REBNATIVE(checksum)
             else {
                 Value* key = ARG(key_value);
 
-                REBCNT blocklen = digests[i].hmacblock;
+                REBLEN blocklen = digests[i].hmacblock;
 
                 REBYTE tmpdigest[20]; // size must be max of all digest[].len
 
@@ -261,7 +261,7 @@ REBNATIVE(checksum)
                 memset(opad, 0, blocklen);
                 memcpy(opad, keycp, keylen);
 
-                REBCNT j;
+                REBLEN j;
                 for (j = 0; j < blocklen; j++) {
                     ipad[j] ^= 0x36; // !!! why do people write this kind of
                     opad[j] ^= 0x5c; // thing without a comment? !!! :-(
@@ -328,7 +328,7 @@ REBNATIVE(deflate)
 
     Value* data = ARG(data);
 
-    REBCNT len = Part_Len_May_Modify_Index(data, ARG(limit));
+    REBLEN len = Part_Len_May_Modify_Index(data, ARG(limit));
     UNUSED(PAR(part)); // checked by if limit is nulled
 
     REBSIZ size;
@@ -405,7 +405,7 @@ REBNATIVE(inflate)
         max = -1;
 
     // v-- measured in bytes (length of a BINARY!)
-    REBCNT len = Part_Len_May_Modify_Index(data, ARG(limit));
+    REBLEN len = Part_Len_May_Modify_Index(data, ARG(limit));
     UNUSED(REF(part)); // checked by if limit is nulled
 
     REBSTR *envelope;
@@ -575,7 +575,7 @@ REBNATIVE(enhex)
             "-._~:/?#[]@!$&'()*+,;=";
   #endif
 
-    REBCNT len = VAL_LEN_AT(ARG(string));
+    REBLEN len = VAL_LEN_AT(ARG(string));
 
     DECLARE_MOLD (mo);
     Push_Mold (mo);
@@ -595,12 +595,12 @@ REBNATIVE(enhex)
 
     REBSER *s = VAL_SERIES(ARG(string));
 
-    REBCNT i = VAL_INDEX(ARG(string));
+    REBLEN i = VAL_INDEX(ARG(string));
     for (; i < len; ++i) {
         REBUNI c = GET_ANY_CHAR(s, i);
 
         REBYTE encoded[4];
-        REBCNT encoded_size;
+        REBLEN encoded_size;
 
         if (c > 0x80) // all non-ASCII characters *must* be percent encoded
             encoded_size = Encode_UTF8_Char(encoded, c);
@@ -686,7 +686,7 @@ REBNATIVE(enhex)
            assert(strchr(no_encode, c) == NULL);
       #endif
 
-        REBCNT n;
+        REBLEN n;
         for (n = 0; n != encoded_size; ++n) {
             *dp++ = '%';
 
@@ -727,7 +727,7 @@ REBNATIVE(dehex)
 {
     INCLUDE_PARAMS_OF_DEHEX;
 
-    REBCNT len = VAL_LEN_AT(ARG(string));
+    REBLEN len = VAL_LEN_AT(ARG(string));
 
     DECLARE_MOLD (mo);
     Push_Mold(mo);
@@ -746,7 +746,7 @@ REBNATIVE(dehex)
 
     REBSER *s = VAL_SERIES(ARG(string));
 
-    REBCNT i = VAL_INDEX(ARG(string));
+    REBLEN i = VAL_INDEX(ARG(string));
 
     REBUNI c = GET_ANY_CHAR(s, i);
     while (i < len) {
@@ -813,7 +813,7 @@ REBNATIVE(dehex)
 
             // Slide any residual UTF-8 data to the head of the buffer
             //
-            REBCNT n;
+            REBLEN n;
             for (n = 0; n < scan_size; ++n) {
                 ++next; // pre-increment (see why it's called "Back_Scan")
                 scan[n] = *next;
@@ -862,14 +862,14 @@ REBNATIVE(deline)
         return Init_Block(D_OUT, Split_Lines(val));
 
     REBSER *s = VAL_SERIES(val);
-    REBCNT len_head = SER_LEN(s);
+    REBLEN len_head = SER_LEN(s);
 
-    REBCNT len_at = VAL_LEN_AT(val);
+    REBLEN len_at = VAL_LEN_AT(val);
 
     REBCHR(*) dest = VAL_UNI_AT(val);
     REBCHR(const *) src = dest;
 
-    REBCNT n;
+    REBLEN n;
     for (n = 0; n < len_at; ++n) {
         REBUNI c;
         src = NEXT_CHR(&c, src);
@@ -906,10 +906,10 @@ REBNATIVE(enline)
     Value* val = ARG(string);
 
     REBSER *ser = VAL_SERIES(val);
-    REBCNT idx = VAL_INDEX(val);
-    REBCNT len = VAL_LEN_AT(val);
+    REBLEN idx = VAL_INDEX(val);
+    REBLEN len = VAL_LEN_AT(val);
 
-    REBCNT delta = 0;
+    REBLEN delta = 0;
 
     // Calculate the size difference by counting the number of LF's
     // that have no CR's in front of them.
@@ -923,7 +923,7 @@ REBNATIVE(enline)
 
     REBUNI c_prev = '\0';
 
-    REBCNT n;
+    REBLEN n;
     for (n = 0; n < len; ++n) {
         REBUNI c;
         cp = NEXT_CHR(&c, cp);
@@ -948,7 +948,7 @@ REBNATIVE(enline)
     // So sliding is done in full character counts.
 
     REBUNI *up = UNI_HEAD(ser); // expand may change the pointer
-    REBCNT tail = SER_LEN(ser); // length after expansion
+    REBLEN tail = SER_LEN(ser); // length after expansion
 
     // Add missing CRs
 
@@ -992,11 +992,11 @@ REBNATIVE(entab)
     DECLARE_MOLD (mo);
     Push_Mold(mo);
 
-    REBCNT len = VAL_LEN_AT(val);
+    REBLEN len = VAL_LEN_AT(val);
     REBYTE *dp = Prep_Mold_Overestimated(mo, len * 4); // max UTF-8 charsize
 
     REBCHR(const *) up = VAL_UNI_AT(val);
-    REBCNT index = VAL_INDEX(val);
+    REBLEN index = VAL_INDEX(val);
 
     REBINT n = 0;
     for (; index < len; index++) {
@@ -1058,7 +1058,7 @@ REBNATIVE(detab)
 
     Value* val = ARG(string);
 
-    REBCNT len = VAL_LEN_AT(val);
+    REBLEN len = VAL_LEN_AT(val);
 
     REBINT tabsize;
     if (REF(size))
@@ -1071,10 +1071,10 @@ REBNATIVE(detab)
     // Estimate new length based on tab expansion:
 
     REBCHR(const *) cp = VAL_UNI_AT(val);
-    REBCNT index = VAL_INDEX(val);
+    REBLEN index = VAL_INDEX(val);
 
-    REBCNT count = 0;
-    REBCNT n;
+    REBLEN count = 0;
+    REBLEN n;
     for (n = index; n < len; n++) {
         REBUNI c;
         cp = NEXT_CHR(&c, cp);

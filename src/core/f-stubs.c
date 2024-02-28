@@ -255,7 +255,7 @@ Value* Type_Of(const Cell* value)
 //
 // Return a second level object field of the system object.
 //
-Value* Get_System(REBCNT i1, REBCNT i2)
+Value* Get_System(REBLEN i1, REBLEN i2)
 {
     Value* obj;
 
@@ -271,7 +271,7 @@ Value* Get_System(REBCNT i1, REBCNT i2)
 //
 // Get an integer from system object.
 //
-REBINT Get_System_Int(REBCNT i1, REBCNT i2, REBINT default_int)
+REBINT Get_System_Int(REBLEN i1, REBLEN i2, REBINT default_int)
 {
     Value* val = Get_System(i1, i2);
     if (IS_INTEGER(val)) return VAL_INT32(val);
@@ -288,7 +288,7 @@ Value* Init_Any_Series_At_Core(
     Cell* out, // allows Cell slot as input, but will be filled w/Value
     enum Reb_Kind type,
     REBSER *series,
-    REBCNT index,
+    REBLEN index,
     REBNOD *binding
 ) {
     ENSURE_SERIES_MANAGED(series);
@@ -332,7 +332,7 @@ Value* Init_Any_Series_At_Core(
 //
 //  Set_Tuple: C
 //
-void Set_Tuple(Value* value, REBYTE *bytes, REBCNT len)
+void Set_Tuple(Value* value, REBYTE *bytes, REBLEN len)
 {
     REBYTE *bp;
 
@@ -428,7 +428,7 @@ void Extra_Init_Action_Checks_Debug(REBACT *a) {
 // or a prior position) the series value will be updated to the earlier
 // position, so that a positive length for the partial region is returned.
 //
-static REBCNT Part_Len_Core(
+static REBLEN Part_Len_Core(
     Value* series, // this is the series whose index may be modified
     const Value* limit // /PART (number, position in value, or NULLED cell)
 ){
@@ -461,7 +461,7 @@ static REBCNT Part_Len_Core(
         len = -len;
         if (len > cast(REBINT, VAL_INDEX(series)))
             len = cast(REBINT, VAL_INDEX(series));
-        VAL_INDEX(series) -= cast(REBCNT, len);
+        VAL_INDEX(series) -= cast(REBLEN, len);
     }
 
     if (len > UINT32_MAX) {
@@ -474,8 +474,8 @@ static REBCNT Part_Len_Core(
     }
 
     assert(len >= 0);
-    assert(VAL_LEN_HEAD(series) >= cast(REBCNT, len));
-    return cast(REBCNT, len);
+    assert(VAL_LEN_HEAD(series) >= cast(REBLEN, len));
+    return cast(REBLEN, len);
 }
 
 
@@ -486,7 +486,7 @@ static REBCNT Part_Len_Core(
 // /PART limit, so that the series index points to the beginning of the
 // subsetted range and gives back a length to the end of that subset.
 //
-REBCNT Part_Len_May_Modify_Index(Value* series, const Value* limit) {
+REBLEN Part_Len_May_Modify_Index(Value* series, const Value* limit) {
     assert(ANY_SERIES(series));
     return Part_Len_Core(series, limit);
 }
@@ -498,9 +498,9 @@ REBCNT Part_Len_May_Modify_Index(Value* series, const Value* limit) {
 // Simple variation that instead of returning the length, returns the absolute
 // tail position in the series of the partial sequence.
 //
-REBCNT Part_Tail_May_Modify_Index(Value* series, const Value* limit)
+REBLEN Part_Tail_May_Modify_Index(Value* series, const Value* limit)
 {
-    REBCNT len = Part_Len_May_Modify_Index(series, limit);
+    REBLEN len = Part_Len_May_Modify_Index(series, limit);
     return len + VAL_INDEX(series); // uses the possibly-updated index
 }
 
@@ -521,7 +521,7 @@ REBCNT Part_Tail_May_Modify_Index(Value* series, const Value* limit)
 //
 // https://github.com/rebol/rebol-issues/issues/1570
 //
-REBCNT Part_Len_Append_Insert_May_Modify_Index(
+REBLEN Part_Len_Append_Insert_May_Modify_Index(
     Value* value,
     const Value* limit
 ){

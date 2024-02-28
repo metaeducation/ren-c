@@ -160,7 +160,7 @@ void Emit(REB_MOLD *mo, const char *fmt, ...)
                 Append_Utf8_Codepoint(s, ' ');
             }
             else
-                va_arg(va, REBCNT); // ignore it
+                va_arg(va, REBLEN); // ignore it
             break;
 
         default:
@@ -197,9 +197,9 @@ void Emit(REB_MOLD *mo, const char *fmt, ...)
 // invalid UTF-8 character as an end-of-buffer signal, much as END markers are
 // used by the data stack)
 //
-REBYTE *Prep_Mold_Overestimated(REB_MOLD *mo, REBCNT num_bytes)
+REBYTE *Prep_Mold_Overestimated(REB_MOLD *mo, REBLEN num_bytes)
 {
-    REBCNT tail = SER_LEN(mo->series);
+    REBLEN tail = SER_LEN(mo->series);
     EXPAND_SERIES_TAIL(mo->series, num_bytes); // terminates, if guessed right
     return BIN_AT(mo->series, tail);
 }
@@ -293,9 +293,9 @@ void New_Indented_Line(REB_MOLD *mo)
 //
 //  Find_Pointer_In_Series: C
 //
-REBCNT Find_Pointer_In_Series(REBSER *s, void *p)
+REBLEN Find_Pointer_In_Series(REBSER *s, void *p)
 {
-    REBCNT index = 0;
+    REBLEN index = 0;
     for (; index < SER_LEN(s); ++index) {
         if (*SER_AT(void*, s, index) == p)
             return index;
@@ -342,7 +342,7 @@ void Drop_Pointer_From_Series(REBSER *s, void *p)
 void Mold_Array_At(
     REB_MOLD *mo,
     REBARR *a,
-    REBCNT index,
+    REBLEN index,
     const char *sep
 ) {
     // Recursion check:
@@ -400,7 +400,7 @@ void Mold_Array_At(
 void Form_Array_At(
     REB_MOLD *mo,
     REBARR *array,
-    REBCNT index,
+    REBLEN index,
     REBCTX *opt_context
 ) {
     // Form a series (part_mold means mold non-string values):
@@ -565,7 +565,7 @@ REBSER *Copy_Mold_Or_Form_Value(const Cell* v, REBFLGS opts, bool form)
 bool Form_Reduce_Throws(
     Value* out,
     REBARR *array,
-    REBCNT index,
+    REBLEN index,
     REBSPC *specifier,
     const Value* delimiter
 ){
@@ -722,7 +722,7 @@ void Push_Mold(REB_MOLD *mo)
             if (idigits < 0)
                 mo->digits = 0;
             else if (idigits > MAX_DIGITS)
-                mo->digits = cast(REBCNT, idigits);
+                mo->digits = cast(REBLEN, idigits);
             else
                 mo->digits = MAX_DIGITS;
         }
@@ -767,7 +767,7 @@ void Throttle_Mold(REB_MOLD *mo) {
 // it will be copied up to `len`.  If there are not enough characters then
 // the debug build will assert.
 //
-REBSER *Pop_Molded_String_Core(REB_MOLD *mo, REBCNT len)
+REBSER *Pop_Molded_String_Core(REB_MOLD *mo, REBLEN len)
 {
     assert(mo->series); // if NULL there was no Push_Mold()
 
@@ -888,7 +888,7 @@ void Drop_Mold_Core(REB_MOLD *mo, bool not_pushed_ok)
 //
 //  Startup_Mold: C
 //
-void Startup_Mold(REBCNT size)
+void Startup_Mold(REBLEN size)
 {
     TG_Mold_Stack = Make_Ser(10, sizeof(void*));
 

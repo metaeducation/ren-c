@@ -97,7 +97,7 @@ void Dump_Frame_Location(const Cell* current, REBFRM *f)
             dump,
             REB_BLOCK,
             SER(f->source->array),
-            cast(REBCNT, f->source->index),
+            cast(REBLEN, f->source->index),
             f->specifier
         );
         PROBE(dump);

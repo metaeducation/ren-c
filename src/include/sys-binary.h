@@ -50,7 +50,7 @@
 #define BIN_LAST(s) \
     SER_LAST(REBYTE, (s))
 
-inline static REBCNT BIN_LEN(REBSER *s) {
+inline static REBLEN BIN_LEN(REBSER *s) {
     assert(BYTE_SIZE(s));
     return SER_LEN(s);
 }
@@ -59,7 +59,7 @@ inline static void TERM_BIN(REBSER *s) {
     BIN_HEAD(s)[SER_LEN(s)] = 0;
 }
 
-inline static void TERM_BIN_LEN(REBSER *s, REBCNT len) {
+inline static void TERM_BIN_LEN(REBSER *s, REBLEN len) {
     SET_SERIES_LEN(s, len);
     BIN_HEAD(s)[len] = 0;
 }

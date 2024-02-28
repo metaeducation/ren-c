@@ -175,12 +175,12 @@ static const REBYTE Enbase64[64] =
 //
 //  Decode_Base2: C
 //
-static REBSER *Decode_Base2(const REBYTE **src, REBCNT len, REBYTE delim)
+static REBSER *Decode_Base2(const REBYTE **src, REBLEN len, REBYTE delim)
 {
     REBYTE *bp;
     const REBYTE *cp;
-    REBCNT count = 0;
-    REBCNT accum = 0;
+    REBLEN count = 0;
+    REBLEN accum = 0;
     REBYTE lex;
     REBSER *ser;
 
@@ -225,12 +225,12 @@ err:
 //
 //  Decode_Base16: C
 //
-static REBSER *Decode_Base16(const REBYTE **src, REBCNT len, REBYTE delim)
+static REBSER *Decode_Base16(const REBYTE **src, REBLEN len, REBYTE delim)
 {
     REBYTE *bp;
     const REBYTE *cp;
-    REBCNT count = 0;
-    REBCNT accum = 0;
+    REBLEN count = 0;
+    REBLEN accum = 0;
     REBYTE lex;
     REBINT val;
     REBSER *ser;
@@ -270,12 +270,12 @@ err:
 //
 //  Decode_Base64: C
 //
-static REBSER *Decode_Base64(const REBYTE **src, REBCNT len, REBYTE delim)
+static REBSER *Decode_Base64(const REBYTE **src, REBLEN len, REBYTE delim)
 {
     REBYTE *bp;
     const REBYTE *cp;
-    REBCNT flip = 0;
-    REBCNT accum = 0;
+    REBLEN flip = 0;
+    REBLEN accum = 0;
     REBYTE lex;
     REBSER *ser;
 
@@ -353,7 +353,7 @@ err:
 const REBYTE *Decode_Binary(
     Value* value,
     const REBYTE *src,
-    REBCNT len,
+    REBLEN len,
     REBINT base,
     REBYTE delim
 ) {
@@ -384,7 +384,7 @@ const REBYTE *Decode_Binary(
 //
 // Base2 encode a range of arbitrary bytes into a byte-sized ASCII series.
 //
-REBSER *Encode_Base2(const REBYTE *src, REBCNT len, bool brk)
+REBSER *Encode_Base2(const REBYTE *src, REBLEN len, bool brk)
 {
     // Account for binary digits, lines, and extra syntax ("slop factor")
     //
@@ -399,11 +399,11 @@ REBSER *Encode_Base2(const REBYTE *src, REBCNT len, bool brk)
     if (len > 8 && brk)
         *dest++ = LF;
 
-    REBCNT i;
+    REBLEN i;
     for (i = 0; i < len; i++) {
         REBYTE b = src[i];
 
-        REBCNT n;
+        REBLEN n;
         for (n = 0x80; n > 0; n = n >> 1)
             *dest++ = (b & n) ? '1' : '0';
 
@@ -416,7 +416,7 @@ REBSER *Encode_Base2(const REBYTE *src, REBCNT len, bool brk)
 
     *dest = '\0';
 
-    SET_SERIES_LEN(s, cast(REBCNT, dest - BIN_HEAD(s)));
+    SET_SERIES_LEN(s, cast(REBLEN, dest - BIN_HEAD(s)));
     ASSERT_SERIES_TERM(s);
     return s;
 }
@@ -427,7 +427,7 @@ REBSER *Encode_Base2(const REBYTE *src, REBCNT len, bool brk)
 //
 // Base16 encode a range of arbitrary bytes into a byte-sized ASCII series.
 //
-REBSER *Encode_Base16(const REBYTE *src, REBCNT len, bool brk)
+REBSER *Encode_Base16(const REBYTE *src, REBLEN len, bool brk)
 {
     // Account for hex digits, lines, and extra syntax ("slop factor")
     //
@@ -442,7 +442,7 @@ REBSER *Encode_Base16(const REBYTE *src, REBCNT len, bool brk)
     if (len >= 32 && brk)
         *dest++ = LF;
 
-    REBCNT count;
+    REBLEN count;
     for (count = 1; count <= len; count++) {
         dest = Form_Hex2_UTF8(dest, *src++);
         if (brk && ((count % 32) == 0))
@@ -454,7 +454,7 @@ REBSER *Encode_Base16(const REBYTE *src, REBCNT len, bool brk)
 
     *dest = '\0';
 
-    SET_SERIES_LEN(s, cast(REBCNT, dest - BIN_HEAD(s)));
+    SET_SERIES_LEN(s, cast(REBLEN, dest - BIN_HEAD(s)));
     ASSERT_SERIES_TERM(s);
     return s;
 }
@@ -465,7 +465,7 @@ REBSER *Encode_Base16(const REBYTE *src, REBCNT len, bool brk)
 //
 // Base64 encode a range of arbitrary bytes into a byte-sized ASCII series.
 //
-REBSER *Encode_Base64(const REBYTE *src, REBCNT len, bool brk)
+REBSER *Encode_Base64(const REBYTE *src, REBLEN len, bool brk)
 {
     // Account for base64 digits, lines, and extra syntax ("slop factor")
     //
@@ -517,7 +517,7 @@ REBSER *Encode_Base64(const REBYTE *src, REBCNT len, bool brk)
 
     *dest = '\0';
 
-    SET_SERIES_LEN(s, cast(REBCNT, dest - BIN_HEAD(s)));
+    SET_SERIES_LEN(s, cast(REBLEN, dest - BIN_HEAD(s)));
     ASSERT_SERIES_TERM(s);
     return s;
 }

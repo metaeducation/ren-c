@@ -82,7 +82,7 @@ REBINT CT_String(const Cell* a, const Cell* b, REBINT mode)
 ***********************************************************************/
 
 // !!! "STRING value to CHAR value (save some code space)" <-- what?
-static void str_to_char(Value* out, Value* val, REBCNT idx)
+static void str_to_char(Value* out, Value* val, REBLEN idx)
 {
     // Note: out may equal val, do assignment in two steps
     REBUNI codepoint = GET_ANY_CHAR(VAL_SERIES(val), idx);
@@ -102,12 +102,12 @@ static void swap_chars(Value* val1, Value* val2)
     SET_ANY_CHAR(s2, VAL_INDEX(val2), c1);
 }
 
-static void reverse_binary(Value* v, REBCNT len)
+static void reverse_binary(Value* v, REBLEN len)
 {
     REBYTE *bp = VAL_BIN_AT(v);
 
-    REBCNT n = 0;
-    REBCNT m = len - 1;
+    REBLEN n = 0;
+    REBLEN m = len - 1;
     for (; n < len / 2; n++, m--) {
         REBYTE b = bp[n];
         bp[n] = bp[m];
@@ -116,7 +116,7 @@ static void reverse_binary(Value* v, REBCNT len)
 }
 
 
-static void reverse_string(Value* v, REBCNT len)
+static void reverse_string(Value* v, REBLEN len)
 {
     if (len == 0)
         return; // if non-zero, at least one character in the string
@@ -132,11 +132,11 @@ static void reverse_string(Value* v, REBCNT len)
         DECLARE_MOLD (mo);
         Push_Mold(mo);
 
-        REBCNT val_len_head = VAL_LEN_HEAD(v);
+        REBLEN val_len_head = VAL_LEN_HEAD(v);
 
         REBSER *ser = VAL_SERIES(v);
         REBCHR(const *) up = UNI_LAST(ser); // last exists due to len != 0
-        REBCNT n;
+        REBLEN n;
         for (n = 0; n < len; ++n) {
             REBUNI c;
             up = BACK_CHR(&c, up);
@@ -169,13 +169,13 @@ static void reverse_string(Value* v, REBCNT len)
 }
 
 
-static REBCNT find_string(
+static REBLEN find_string(
     REBSER *series,
-    REBCNT index,
-    REBCNT end,
+    REBLEN index,
+    REBLEN end,
     Value* target,
-    REBCNT target_len,
-    REBCNT flags,
+    REBLEN target_len,
+    REBLEN flags,
     REBINT skip
 ) {
     assert(end >= index);
@@ -183,7 +183,7 @@ static REBCNT find_string(
     if (target_len > end - index) // series not long enough to have target
         return NOT_FOUND;
 
-    REBCNT start = index;
+    REBLEN start = index;
 
     if (flags & (AM_FIND_REVERSE | AM_FIND_LAST)) {
         skip = -1;
@@ -321,11 +321,11 @@ static REBSER *Make_Binary_BE64(const Value* arg)
     }
 
 #ifdef ENDIAN_LITTLE
-    REBCNT n;
+    REBLEN n;
     for (n = 0; n < 8; ++n)
         bp[n] = cp[7 - n];
 #elif defined(ENDIAN_BIG)
-    REBCNT n;
+    REBLEN n;
     for (n = 0; n < 8; ++n)
         bp[n] = cp[n];
 #else
@@ -496,7 +496,7 @@ enum COMPARE_CHR_FLAGS {
 //
 static int Compare_Chr(void *thunk, const void *v1, const void *v2)
 {
-    REBCNT * const flags = cast(REBCNT*, thunk);
+    REBLEN * const flags = cast(REBLEN*, thunk);
 
     REBUNI c1 = cast(REBUNI, *cast(const REBYTE*, v1));
     REBUNI c2 = cast(REBUNI, *cast(const REBYTE*, v2));
@@ -545,11 +545,11 @@ static void Sort_String(
     if (not IS_NULLED(compv))
         fail (Error_Bad_Refine_Raw(compv)); // !!! didn't seem to be supported (?)
 
-    REBCNT skip = 1;
-    REBCNT size = 1;
-    REBCNT thunk = 0;
+    REBLEN skip = 1;
+    REBLEN size = 1;
+    REBLEN thunk = 0;
 
-    REBCNT len = Part_Len_May_Modify_Index(string, part); // length of sort
+    REBLEN len = Part_Len_May_Modify_Index(string, part); // length of sort
     if (len <= 1)
         return;
 
@@ -610,7 +610,7 @@ REB_R PD_String(
             if (n < 0)
                 ++n; // Rebol2/Red convention, `pick tail "abc" -1` is #"c"
             n += VAL_INDEX(pvs->out) - 1;
-            if (n < 0 or cast(REBCNT, n) >= SER_LEN(ser))
+            if (n < 0 or cast(REBLEN, n) >= SER_LEN(ser))
                 return nullptr;
 
             if (IS_BINARY(pvs->out))
@@ -657,7 +657,7 @@ REB_R PD_String(
         //     >> (x)/("bar")
         //     == %foo/bar
         //
-        REBCNT len = SER_LEN(copy);
+        REBLEN len = SER_LEN(copy);
         if (len == 0)
             Append_Codepoint(copy, '/');
         else {
@@ -682,7 +682,7 @@ REB_R PD_String(
         // path composition.
         //
         REBUNI ch_start = GET_ANY_CHAR(mo->series, mo->start);
-        REBCNT skip = (ch_start == '/' || ch_start == '\\') ? 1 : 0;
+        REBLEN skip = (ch_start == '/' || ch_start == '\\') ? 1 : 0;
 
         // !!! Would be nice if there was a better way of doing this that didn't
         // involve reaching into mo.start and mo.series.
@@ -716,7 +716,7 @@ REB_R PD_String(
     if (n < 0)
         ++n;
     n += VAL_INDEX(pvs->out) - 1;
-    if (n < 0 or cast(REBCNT, n) >= SER_LEN(ser))
+    if (n < 0 or cast(REBLEN, n) >= SER_LEN(ser))
         fail (Error_Out_Of_Range(picker));
 
     REBINT c;
@@ -731,7 +731,7 @@ REB_R PD_String(
             return R_UNHANDLED;
     }
     else if (ANY_BINSTR(opt_setval)) {
-        REBCNT i = VAL_INDEX(opt_setval);
+        REBLEN i = VAL_INDEX(opt_setval);
         if (i >= VAL_LEN_HEAD(opt_setval))
             fail (Error_Invalid(opt_setval));
 
@@ -755,24 +755,24 @@ REB_R PD_String(
 
 
 typedef struct REB_Str_Flags {
-    REBCNT escape;      // escaped chars
-    REBCNT brace_in;    // {
-    REBCNT brace_out;   // }
-    REBCNT newline;     // lf
-    REBCNT quote;       // "
-    REBCNT paren;       // (1234)
-    REBCNT chr1e;
-    REBCNT malign;
+    REBLEN escape;      // escaped chars
+    REBLEN brace_in;    // {
+    REBLEN brace_out;   // }
+    REBLEN newline;     // lf
+    REBLEN quote;       // "
+    REBLEN paren;       // (1234)
+    REBLEN chr1e;
+    REBLEN malign;
 } REB_STRF;
 
 
-static void Sniff_String(REBSER *ser, REBCNT idx, REB_STRF *sf)
+static void Sniff_String(REBSER *ser, REBLEN idx, REB_STRF *sf)
 {
     // Scan to find out what special chars the string contains?
 
     REBCHR(const *) up = UNI_AT(ser, idx);
 
-    REBCNT n;
+    REBLEN n;
     for (n = idx; n < UNI_LEN(ser); n++) {
         REBUNI c;
         up = NEXT_CHR(&c, up);
@@ -821,7 +821,7 @@ static void Sniff_String(REBSER *ser, REBCNT idx, REB_STRF *sf)
 // Fast var-length hex output for uni-chars.
 // Returns next position (just past the insert).
 //
-REBYTE *Form_Uni_Hex(REBYTE *out, REBCNT n)
+REBYTE *Form_Uni_Hex(REBYTE *out, REBLEN n)
 {
     REBYTE buffer[10];
     REBYTE *bp = &buffer[10];
@@ -900,14 +900,14 @@ REBYTE *Emit_Uni_Char(REBYTE *bp, REBUNI chr, bool parened)
 void Mold_Text_Series_At(
     REB_MOLD *mo,
     REBSER *series,
-    REBCNT index
+    REBLEN index
 ){
     if (index >= UNI_LEN(series)) {
         Append_Unencoded(mo->series, "\"\"");
         return;
     }
 
-    REBCNT len_at = UNI_LEN(series) - index;
+    REBLEN len_at = UNI_LEN(series) - index;
 
     REB_STRF sf;
     CLEARS(&sf);
@@ -928,7 +928,7 @@ void Mold_Text_Series_At(
 
         *dp++ = '"';
 
-        REBCNT n;
+        REBLEN n;
         for (n = index; n < UNI_LEN(series); n++) {
             REBUNI c;
             up = NEXT_CHR(&c, up);
@@ -958,7 +958,7 @@ void Mold_Text_Series_At(
 
     *dp++ = '{';
 
-    REBCNT n;
+    REBLEN n;
     for (n = index; n < UNI_LEN(series); n++) {
         REBUNI c;
         up = NEXT_CHR(&c, up);
@@ -1007,10 +1007,10 @@ void Mold_Text_Series_At(
 static void Mold_Url(REB_MOLD *mo, const Cell* v)
 {
     REBSER *series = VAL_SERIES(v);
-    REBCNT len = VAL_LEN_AT(v);
+    REBLEN len = VAL_LEN_AT(v);
     REBYTE *dp = Prep_Mold_Overestimated(mo, len * 4); // 4 bytes max UTF-8
 
-    REBCNT n;
+    REBLEN n;
     for (n = VAL_INDEX(v); n < VAL_LEN_HEAD(v); ++n)
         *dp++ = GET_ANY_CHAR(series, n);
 
@@ -1023,13 +1023,13 @@ static void Mold_Url(REB_MOLD *mo, const Cell* v)
 static void Mold_File(REB_MOLD *mo, const Cell* v)
 {
     REBSER *series = VAL_SERIES(v);
-    REBCNT len = VAL_LEN_AT(v);
+    REBLEN len = VAL_LEN_AT(v);
 
-    REBCNT estimated_bytes = 4 * len; // UTF-8 characters are max 4 bytes
+    REBLEN estimated_bytes = 4 * len; // UTF-8 characters are max 4 bytes
 
     // Compute extra space needed for hex encoded characters:
     //
-    REBCNT n;
+    REBLEN n;
     for (n = VAL_INDEX(v); n < VAL_LEN_HEAD(v); ++n) {
         REBUNI c = GET_ANY_CHAR(series, n);
         if (IS_FILE_ESC(c))
@@ -1079,7 +1079,7 @@ void MF_Binary(REB_MOLD *mo, const Cell* v, bool form)
     if (GET_MOLD_FLAG(mo, MOLD_FLAG_ALL) && VAL_INDEX(v) != 0)
         Pre_Mold(mo, v); // #[binary!
 
-    REBCNT len = VAL_LEN_AT(v);
+    REBLEN len = VAL_LEN_AT(v);
 
     REBSER *enbased;
     switch (Get_System_Int(SYS_OPTIONS, OPTIONS_BINARY_BASE, 16)) {
@@ -1208,7 +1208,7 @@ REBTYPE(String)
 
         UNUSED(REF(only)); // all strings appends are /ONLY...currently unused
 
-        REBCNT len; // length of target
+        REBLEN len; // length of target
         if (Cell_Word_Id(verb) == SYM_CHANGE)
             len = Part_Len_May_Modify_Index(v, ARG(limit));
         else
@@ -1312,17 +1312,17 @@ REBTYPE(String)
         if (REF(part))
             tail = Part_Tail_May_Modify_Index(v, ARG(limit));
 
-        REBCNT skip;
+        REBLEN skip;
         if (REF(skip))
             skip = Part_Len_May_Modify_Index(v, ARG(size));
         else
             skip = 1;
 
-        REBCNT ret = find_string(
+        REBLEN ret = find_string(
             VAL_SERIES(v), index, tail, arg, len, flags, skip
         );
 
-        if (ret >= cast(REBCNT, tail))
+        if (ret >= cast(REBLEN, tail))
             return nullptr;
 
         if (REF(only))
@@ -1335,7 +1335,7 @@ REBTYPE(String)
         }
         else {
             ret++;
-            if (ret >= cast(REBCNT, tail))
+            if (ret >= cast(REBLEN, tail))
                 return nullptr;
 
             if (IS_BINARY(v)) {
@@ -1372,7 +1372,7 @@ REBTYPE(String)
                 len = tail;
             }
             else
-                VAL_INDEX(v) = cast(REBCNT, tail - len);
+                VAL_INDEX(v) = cast(REBLEN, tail - len);
         }
 
         if (cast(REBINT, VAL_INDEX(v)) >= tail) {
@@ -1412,7 +1412,7 @@ REBTYPE(String)
             if (index == 0)
                 Reset_Sequence(VAL_SERIES(v));
             else
-                TERM_SEQUENCE_LEN(VAL_SERIES(v), cast(REBCNT, index));
+                TERM_SEQUENCE_LEN(VAL_SERIES(v), cast(REBLEN, index));
         }
         RETURN (v); }
 
@@ -1513,7 +1513,7 @@ REBTYPE(String)
             fail (Error_Overflow_Raw());
 
         while (amount != 0) {
-            REBCNT wheel = VAL_LEN_HEAD(v) - 1;
+            REBLEN wheel = VAL_LEN_HEAD(v) - 1;
             while (true) {
                 REBYTE *b = VAL_BIN_AT_HEAD(v, wheel);
                 if (amount > 0) {
@@ -1628,7 +1628,7 @@ REBTYPE(String)
         if (REF(only)) {
             if (index >= tail)
                 return nullptr;
-            index += (REBCNT)Random_Int(REF(secure)) % (tail - index);
+            index += (REBLEN)Random_Int(REF(secure)) % (tail - index);
             if (IS_BINARY(v)) // same as PICK
                 return Init_Integer(D_OUT, *VAL_BIN_AT_HEAD(v, index));
 

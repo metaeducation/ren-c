@@ -426,7 +426,7 @@ struct Reb_Frame_Source {
     // This holds the index of the *next* item in the array to fetch as
     // f->value for processing.  It's invalid if the frame is for a C va_list.
     //
-    REBCNT index;
+    REBLEN index;
 };
 
 

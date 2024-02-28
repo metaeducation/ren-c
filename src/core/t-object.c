@@ -193,7 +193,7 @@ static void Append_To_Context(REBCTX *context, Value* arg)
 
     // Append new words to obj
     //
-    REBCNT len; // goto crosses initialization
+    REBLEN len; // goto crosses initialization
     len = CTX_LEN(context) + 1;
     Expand_Context(context, ARR_LEN(BUF_COLLECT) - len);
 
@@ -209,7 +209,7 @@ static void Append_To_Context(REBCTX *context, Value* arg)
 
     // Set new values to obj words
     for (word = item; NOT_END(word); word += 2) {
-        REBCNT i = Get_Binder_Index_Else_0(
+        REBLEN i = Get_Binder_Index_Else_0(
             &collector.binder, VAL_WORD_CANON(word)
         );
         assert(i != 0);
@@ -419,7 +419,7 @@ REB_R PD_Context(
         return R_UNHANDLED;
 
     const bool always = false;
-    REBCNT n = Find_Canon_In_Context(c, VAL_WORD_CANON(picker), always);
+    REBLEN n = Find_Canon_In_Context(c, VAL_WORD_CANON(picker), always);
 
     if (n == 0)
         return nullptr;
@@ -916,7 +916,7 @@ REBTYPE(Context)
         if (not IS_WORD(arg))
             return nullptr;
 
-        REBCNT n = Find_Canon_In_Context(c, VAL_WORD_CANON(arg), false);
+        REBLEN n = Find_Canon_In_Context(c, VAL_WORD_CANON(arg), false);
         if (n == 0)
             return nullptr;
 

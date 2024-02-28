@@ -45,7 +45,7 @@ static REB_R DNS_Actor(REBFRM *frame_, Value* port, Value* verb)
     REBCTX *ctx = VAL_CONTEXT(port);
     Value* spec = CTX_VAR(ctx, STD_PORT_SPEC);
 
-    REBCNT len;
+    REBLEN len;
 
     switch (Cell_Word_Id(verb)) {
 

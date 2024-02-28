@@ -836,7 +836,7 @@ append app-config/cflags opt switch user-config/rigorous [
             <msc:/wd4668>
 
             ; There are a currently a lot of places in the code where `int` is
-            ; passed to REBCNT, where the signs mismatch.  Disable C4365:
+            ; passed to REBLEN, where the signs mismatch.  Disable C4365:
             ;
             ;    'action' : conversion from 'type_1' to 'type_2',
             ;    signed/unsigned mismatch

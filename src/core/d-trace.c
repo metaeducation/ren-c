@@ -62,7 +62,7 @@ REBINT Eval_Depth(void)
 //
 //  Frame_At_Depth: C
 //
-REBFRM *Frame_At_Depth(REBCNT n)
+REBFRM *Frame_At_Depth(REBLEN n)
 {
     REBFRM *frame = FS_TOP;
 
@@ -147,7 +147,7 @@ bool Traced_Eval_Hook_Throws(REBFRM * const f)
             //
             f->flags.bits = saved_flags & (~DO_FLAG_TO_END);
 
-            Debug_Space(cast(REBCNT, 4 * depth));
+            Debug_Space(cast(REBLEN, 4 * depth));
 
             if (FRM_IS_VALIST(f)) {
                 //
@@ -256,7 +256,7 @@ REB_R Traced_Dispatcher_Hook(REBFRM * const f)
         //
         // Only show the label if this phase is the first phase.
 
-        Debug_Space(cast(REBCNT, 4 * depth));
+        Debug_Space(cast(REBLEN, 4 * depth));
         Debug_Fmt_(RM_TRACE_FUNCTION, Frame_Label_Or_Anonymous_UTF8(f));
         if (Trace_Flags & TRACE_FLAG_FUNCTION)
             Debug_Values(FRM_ARG(FS_TOP, 1), FRM_NUM_ARGS(FS_TOP), 20);
@@ -287,7 +287,7 @@ REB_R Traced_Dispatcher_Hook(REBFRM * const f)
         //
         // Only show the return result if this is the last phase.
 
-        Debug_Space(cast(REBCNT, 4 * depth));
+        Debug_Space(cast(REBLEN, 4 * depth));
         Debug_Fmt_(RM_TRACE_RETURN, Frame_Label_Or_Anonymous_UTF8(f));
 
         if (r == f->out) {

@@ -348,8 +348,8 @@ REBNATIVE(of)
 const REBYTE *Scan_Hex(
     Value* out,
     const REBYTE *cp,
-    REBCNT minlen,
-    REBCNT maxlen
+    REBLEN minlen,
+    REBLEN maxlen
 ) {
     TRASH_CELL_IF_DEBUG(out);
 
@@ -357,7 +357,7 @@ const REBYTE *Scan_Hex(
         return_NULL;
 
     REBI64 i = 0;
-    REBCNT cnt = 0;
+    REBLEN cnt = 0;
     REBYTE lex;
     while ((lex = Lex_Map[*cp]) > LEX_WORD) {
         REBYTE v;
@@ -433,7 +433,7 @@ const REBYTE *Scan_Dec_Buf(
     REBYTE *out, // may live in data stack (do not call DS_PUSH, GC, eval)
     bool *found_point,  // found a comma or a dot
     const REBYTE *cp,
-    REBCNT len // max size of buffer
+    REBLEN len // max size of buffer
 ) {
     assert(len >= MAX_NUM_LEN);
     *found_point = false;
@@ -516,7 +516,7 @@ const REBYTE *Scan_Dec_Buf(
 const REBYTE *Scan_Decimal(
     Value* out, // may live in data stack (do not call DS_PUSH, GC, eval)
     const REBYTE *cp,
-    REBCNT len,
+    REBLEN len,
     bool dec_only
 ) {
     TRASH_CELL_IF_DEBUG(out);
@@ -584,7 +584,7 @@ const REBYTE *Scan_Decimal(
 
     *ep = '\0';
 
-    if (cast(REBCNT, cp - bp) != len)
+    if (cast(REBLEN, cp - bp) != len)
         return_NULL;
 
     RESET_VAL_HEADER(out, REB_DECIMAL);
@@ -610,7 +610,7 @@ const REBYTE *Scan_Decimal(
 const REBYTE *Scan_Integer(
     Value* out, // may live in data stack (do not call DS_PUSH, GC, eval)
     const REBYTE *cp,
-    REBCNT len
+    REBLEN len
 ) {
     TRASH_CELL_IF_DEBUG(out);
 
@@ -705,7 +705,7 @@ const REBYTE *Scan_Integer(
 const REBYTE *Scan_Money(
     Value* out, // may live in data stack (do not call DS_PUSH, GC, eval)
     const REBYTE *cp,
-    REBCNT len
+    REBLEN len
 ) {
     TRASH_CELL_IF_DEBUG(out);
 
@@ -734,7 +734,7 @@ const REBYTE *Scan_Money(
 const REBYTE *Scan_Date(
     Value* out, // may live in data stack (do not call DS_PUSH, GC, eval)
     const REBYTE *cp,
-    REBCNT len
+    REBLEN len
 ) {
     TRASH_CELL_IF_DEBUG(out);
 
@@ -765,7 +765,7 @@ const REBYTE *Scan_Date(
     REBINT year;
     REBINT tz;
 
-    REBCNT size = cast(REBCNT, ep - cp);
+    REBLEN size = cast(REBLEN, ep - cp);
     if (size >= 4) {
         // year is set in this branch (we know because day is 0)
         // Ex: 2009/04/20/19:00:00+0:00
@@ -799,7 +799,7 @@ const REBYTE *Scan_Date(
     if (num < 0)
         return_NULL;
 
-    size = cast(REBCNT, ep - cp);
+    size = cast(REBLEN, ep - cp);
 
     if (size > 0)
         month = num; // got a number
@@ -807,7 +807,7 @@ const REBYTE *Scan_Date(
         for (ep = cp; IS_LEX_WORD(*ep); ep++)
             NOOP; // scan word
 
-        size = cast(REBCNT, ep - cp);
+        size = cast(REBLEN, ep - cp);
         if (size < 3)
             return_NULL;
 
@@ -830,7 +830,7 @@ const REBYTE *Scan_Date(
     if (*cp == '-' || num < 0)
         return_NULL;
 
-    size = cast(REBCNT, ep - cp);
+    size = cast(REBLEN, ep - cp);
     if (size == 0)
         return_NULL;
 
@@ -982,7 +982,7 @@ end_date:
 const REBYTE *Scan_File(
     Value* out, // may live in data stack (do not call DS_PUSH, GC, eval)
     const REBYTE *cp,
-    REBCNT len
+    REBLEN len
 ) {
     TRASH_CELL_IF_DEBUG(out);
 
@@ -1025,14 +1025,14 @@ const REBYTE *Scan_File(
 const REBYTE *Scan_Email(
     Value* out, // may live in data stack (do not call DS_PUSH, GC, eval)
     const REBYTE *cp,
-    REBCNT len
+    REBLEN len
 ) {
     TRASH_CELL_IF_DEBUG(out);
 
     REBSER *s = Make_Unicode(len);
     REBCHR(*) up = UNI_HEAD(s);
 
-    REBCNT num_chars = 0;
+    REBLEN num_chars = 0;
 
     bool found_at = false;
     for (; len > 0; len--) {
@@ -1096,7 +1096,7 @@ const REBYTE *Scan_Email(
 const REBYTE *Scan_URL(
     Value* out, // may live in data stack (do not call DS_PUSH, GC, eval)
     const REBYTE *cp,
-    REBCNT len
+    REBLEN len
 ){
     return Scan_Any(out, cp, len, REB_URL);
 }
@@ -1110,7 +1110,7 @@ const REBYTE *Scan_URL(
 const REBYTE *Scan_Pair(
     Value* out, // may live in data stack (do not call DS_PUSH, GC, eval)
     const REBYTE *cp,
-    REBCNT len
+    REBLEN len
 ) {
     TRASH_CELL_IF_DEBUG(out);
 
@@ -1146,7 +1146,7 @@ const REBYTE *Scan_Pair(
     else
         Init_Integer(VAL_PAIR_SECOND(out), atoi(cast(char*, &buf[0])));
 
-    if (len > cast(REBCNT, xp - cp)) {
+    if (len > cast(REBLEN, xp - cp)) {
         Free_Pairing(out->payload.pair);
         return_NULL;
     }
@@ -1164,7 +1164,7 @@ const REBYTE *Scan_Pair(
 const REBYTE *Scan_Tuple(
     Value* out, // may live in data stack (do not call DS_PUSH, GC, eval)
     const REBYTE *cp,
-    REBCNT len
+    REBLEN len
 ) {
     TRASH_CELL_IF_DEBUG(out);
 
@@ -1172,7 +1172,7 @@ const REBYTE *Scan_Tuple(
         return_NULL;
 
     const REBYTE *ep;
-    REBCNT size = 1;
+    REBLEN size = 1;
     REBINT n;
     for (n = cast(REBINT, len), ep = cp; n > 0; n--, ep++) { // count '.'
         if (*ep == '.')
@@ -1191,7 +1191,7 @@ const REBYTE *Scan_Tuple(
     REBYTE *tp = VAL_TUPLE(out);
     memset(tp, 0, sizeof(REBTUP) - 2);
 
-    for (ep = cp; len > cast(REBCNT, ep - cp); ++ep) {
+    for (ep = cp; len > cast(REBLEN, ep - cp); ++ep) {
         ep = Grab_Int(ep, &n);
         if (n < 0 || n > 255)
             return_NULL;
@@ -1201,7 +1201,7 @@ const REBYTE *Scan_Tuple(
             break;
     }
 
-    if (len > cast(REBCNT, ep - cp))
+    if (len > cast(REBLEN, ep - cp))
         return_NULL;
 
     return ep;
@@ -1216,7 +1216,7 @@ const REBYTE *Scan_Tuple(
 const REBYTE *Scan_Binary(
     Value* out, // may live in data stack (do not call DS_PUSH, GC, eval)
     const REBYTE *cp,
-    REBCNT len
+    REBLEN len
 ) {
     TRASH_CELL_IF_DEBUG(out);
 
@@ -1226,7 +1226,7 @@ const REBYTE *Scan_Binary(
         const REBYTE *ep = Grab_Int(cp, &base);
         if (cp == ep || *ep != '#')
             return_NULL;
-        len -= cast(REBCNT, ep - cp);
+        len -= cast(REBLEN, ep - cp);
         cp = ep;
     }
 
@@ -1256,7 +1256,7 @@ const REBYTE *Scan_Binary(
 const REBYTE *Scan_Any(
     Value* out, // may live in data stack (do not call DS_PUSH, GC, eval)
     const REBYTE *cp,
-    REBCNT num_bytes,
+    REBLEN num_bytes,
     enum Reb_Kind type
 ) {
     TRASH_CELL_IF_DEBUG(out);
@@ -1305,7 +1305,7 @@ REBNATIVE(scan_net_header)
     REBARR *result = Make_Arr(10); // Just a guess at size (use STD_BUF?)
 
     Value* header = ARG(header);
-    REBCNT index = VAL_INDEX(header);
+    REBLEN index = VAL_INDEX(header);
     REBSER *utf8 = VAL_SERIES(header);
 
     REBYTE *cp = BIN_HEAD(utf8) + index;

@@ -56,15 +56,15 @@
 //
 //  Dump_Bytes: C
 //
-void Dump_Bytes(REBYTE *bp, REBCNT limit)
+void Dump_Bytes(REBYTE *bp, REBLEN limit)
 {
-    const REBCNT max_lines = 120;
+    const REBLEN max_lines = 120;
 
-    REBCNT total = 0;
+    REBLEN total = 0;
 
     REBYTE buf[2048];
 
-    REBCNT l = 0;
+    REBLEN l = 0;
     for (; l < max_lines; l++) {
         REBYTE *cp = buf;
 
@@ -76,7 +76,7 @@ void Dump_Bytes(REBYTE *bp, REBCNT limit)
         REBYTE str[40];
         REBYTE *tp = str;
 
-        REBCNT n = 0;
+        REBLEN n = 0;
         for (; n < 16; n++) {
             if (total++ >= limit)
                 break;
@@ -157,12 +157,12 @@ void Dump_Series(REBSER *s, const char *memo)
 //
 // Print values in raw hex; If memory is corrupted this still needs to work.
 //
-void Dump_Values(Cell* vp, REBCNT count)
+void Dump_Values(Cell* vp, REBLEN count)
 {
     REBYTE buf[2048];
     REBYTE *cp;
-    REBCNT l, n;
-    REBCNT *bp = (REBCNT*)vp;
+    REBLEN l, n;
+    REBLEN *bp = (REBLEN*)vp;
     const REBYTE *type;
 
     cp = buf;
@@ -172,7 +172,7 @@ void Dump_Values(Cell* vp, REBCNT count)
             break;
         }
         if (IS_BLANK_RAW(val) or IS_NULLED(val)) {
-            bp = cast(REBCNT*, val + 1);
+            bp = cast(REBLEN*, val + 1);
             continue;
         }
 
@@ -187,7 +187,7 @@ void Dump_Values(Cell* vp, REBCNT count)
             else *cp++ = ' ';
         }
         *cp++ = ' ';
-        for (n = 0; n < sizeof(Cell) / sizeof(REBCNT); n++) {
+        for (n = 0; n < sizeof(Cell) / sizeof(REBLEN); n++) {
             cp = Form_Hex_Pad(cp, *bp++, 8);
             *cp++ = ' ';
         }
@@ -236,7 +236,7 @@ void Dump_Info(void)
 //
 // Prints stack counting levels from the passed in number.  Pass 0 to start.
 //
-void Dump_Stack(REBFRM *f, REBCNT level)
+void Dump_Stack(REBFRM *f, REBLEN level)
 {
     printf("\n");
 

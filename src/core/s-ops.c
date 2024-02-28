@@ -37,7 +37,7 @@
 // Returns true if byte string does not use upper code page
 // (e.g. no 128-255 characters)
 //
-bool All_Bytes_ASCII(REBYTE *bp, REBCNT len)
+bool All_Bytes_ASCII(REBYTE *bp, REBLEN len)
 {
     for (; len > 0; len--, bp++)
         if (*bp >= 0x80)
@@ -66,11 +66,11 @@ bool All_Bytes_ASCII(REBYTE *bp, REBCNT len)
 REBYTE *Analyze_String_For_Scan(
     REBSIZ *opt_size_out,
     const Value* any_string,
-    REBCNT max_len // maximum length in *codepoints*
+    REBLEN max_len // maximum length in *codepoints*
 ){
     REBCHR(const *) up = VAL_UNI_AT(any_string);
-    REBCNT index = VAL_INDEX(any_string);
-    REBCNT len = VAL_LEN_AT(any_string);
+    REBLEN index = VAL_INDEX(any_string);
+    REBLEN len = VAL_LEN_AT(any_string);
     if (len == 0)
         fail (Error_Past_End_Raw());
 
@@ -86,7 +86,7 @@ REBYTE *Analyze_String_For_Scan(
 
     // Skip up to max_len non-space characters.
     //
-    REBCNT num_chars = 0;
+    REBLEN num_chars = 0;
     for (; len > 0;) {
         ++num_chars;
         --len;
@@ -154,7 +154,7 @@ REBSER *Temp_UTF8_At_Managed(
     REBSIZ *offset_out,
     REBSIZ *opt_size_out,
     const Cell* str,
-    REBCNT length_limit
+    REBLEN length_limit
 ){
 #if !defined(NDEBUG)
     if (not ANY_STRING(str)) {
@@ -188,10 +188,10 @@ REBSER *Xandor_Binary(Value* verb, Value* value, Value* arg)
     REBYTE *p0 = VAL_BIN_AT(value);
     REBYTE *p1 = VAL_BIN_AT(arg);
 
-    REBCNT t0 = VAL_LEN_AT(value);
-    REBCNT t1 = VAL_LEN_AT(arg);
+    REBLEN t0 = VAL_LEN_AT(value);
+    REBLEN t1 = VAL_LEN_AT(arg);
 
-    REBCNT mt = MIN(t0, t1); // smaller array size
+    REBLEN mt = MIN(t0, t1); // smaller array size
 
     // !!! This used to say "For AND - result is size of shortest input:" but
     // the code was commented out
@@ -202,7 +202,7 @@ REBSER *Xandor_Binary(Value* verb, Value* value, Value* arg)
             t2 = MAX(t0, t1);
     */
 
-    REBCNT t2 = MAX(t0, t1);
+    REBLEN t2 = MAX(t0, t1);
 
     REBSER *series;
     if (IS_BITSET(value)) {
@@ -227,26 +227,26 @@ REBSER *Xandor_Binary(Value* verb, Value* value, Value* arg)
 
     switch (Cell_Word_Id(verb)) {
     case SYM_INTERSECT: { // and
-        REBCNT i;
+        REBLEN i;
         for (i = 0; i < mt; i++)
             *p2++ = *p0++ & *p1++;
         CLEAR(p2, t2 - mt);
         return series; }
 
     case SYM_UNION: { // or
-        REBCNT i;
+        REBLEN i;
         for (i = 0; i < mt; i++)
             *p2++ = *p0++ | *p1++;
         break; }
 
     case SYM_DIFFERENCE: { // xor
-        REBCNT i;
+        REBLEN i;
         for (i = 0; i < mt; i++)
             *p2++ = *p0++ ^ *p1++;
         break; }
 
     case SYM_EXCLUDE: { // !!! not a "type action", word manually in %words.r
-        REBCNT i;
+        REBLEN i;
         for (i = 0; i < mt; i++)
             *p2++ = *p0++ & ~*p1++;
         if (t0 > t1)
@@ -272,7 +272,7 @@ REBSER *Xandor_Binary(Value* verb, Value* value, Value* arg)
 REBSER *Complement_Binary(Value* value)
 {
     const REBYTE *bp = VAL_BIN_AT(value);
-    REBCNT len = VAL_LEN_AT(value);
+    REBLEN len = VAL_LEN_AT(value);
 
     REBSER *bin = Make_Binary(len);
     TERM_SEQUENCE_LEN(bin, len);
@@ -293,14 +293,14 @@ REBSER *Complement_Binary(Value* value)
 //
 void Shuffle_String(Value* value, bool secure)
 {
-    REBCNT n;
-    REBCNT k;
+    REBLEN n;
+    REBLEN k;
     REBSER *series = VAL_SERIES(value);
-    REBCNT idx     = VAL_INDEX(value);
+    REBLEN idx     = VAL_INDEX(value);
     REBUNI swap;
 
     for (n = VAL_LEN_AT(value); n > 1;) {
-        k = idx + (REBCNT)Random_Int(secure) % n;
+        k = idx + (REBLEN)Random_Int(secure) % n;
         n--;
         swap = GET_ANY_CHAR(series, k);
         SET_ANY_CHAR(series, k, GET_ANY_CHAR(series, n + idx));
@@ -318,7 +318,7 @@ void Trim_Tail(REBSER *src, REBYTE chr)
 {
     assert(BYTE_SIZE(src)); // mold buffer
 
-    REBCNT tail;
+    REBLEN tail;
     for (tail = SER_LEN(src); tail > 0; tail--) {
         REBUNI c = *BIN_AT(src, tail - 1);
         if (c != chr)
@@ -351,8 +351,8 @@ void Change_Case(Value* out, Value* val, Value* part, bool upper)
 
     FAIL_IF_READ_ONLY_SERIES(VAL_SERIES(val));
 
-    REBCNT len = Part_Len_May_Modify_Index(val, part);
-    REBCNT n = 0;
+    REBLEN len = Part_Len_May_Modify_Index(val, part);
+    REBLEN n = 0;
 
     if (VAL_BYTE_SIZE(val)) {
         REBYTE *bp = VAL_BIN_AT(val);
@@ -402,8 +402,8 @@ REBARR *Split_Lines(const Value* str)
     REBDSP dsp_orig = DSP;
 
     REBSER *s = VAL_SERIES(str);
-    REBCNT len = VAL_LEN_AT(str);
-    REBCNT i = VAL_INDEX(str);
+    REBLEN len = VAL_LEN_AT(str);
+    REBLEN i = VAL_INDEX(str);
 
     REBCHR(const *) start = VAL_UNI_AT(str);
     REBCHR(const *) up = start;

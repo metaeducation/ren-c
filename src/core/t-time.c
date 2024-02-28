@@ -47,10 +47,10 @@ void Split_Time(REBI64 t, REB_TIMEF *tf)
     s = i / SEC_SEC;
     n = i - (s * SEC_SEC);
 
-    tf->h = (REBCNT)h;
-    tf->m = (REBCNT)m;
-    tf->s = (REBCNT)s;
-    tf->n = (REBCNT)n;
+    tf->h = (REBLEN)h;
+    tf->m = (REBLEN)m;
+    tf->s = (REBLEN)s;
+    tf->n = (REBLEN)n;
 }
 
 //
@@ -75,7 +75,7 @@ REBI64 Join_Time(REB_TIMEF *tf, bool neg)
 //
 // Scan string and convert to time.  Return zero if error.
 //
-const REBYTE *Scan_Time(Value* out, const REBYTE *cp, REBCNT len)
+const REBYTE *Scan_Time(Value* out, const REBYTE *cp, REBLEN len)
 {
     TRASH_CELL_IF_DEBUG(out);
     cast(void, len); // !!! should len be paid attention to?

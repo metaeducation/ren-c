@@ -33,7 +33,7 @@
 // Ren-C gave this encoded value a separate REBIXO type and the name "Indexor"
 // to mean "Index-OR-a-Flag".  In the C build this is the same old unsigned
 // integer.  But the C++ debug build uses a class that at compile time checks
-// to make sure no flag value is implicitly converted to a REBCNT, and at
+// to make sure no flag value is implicitly converted to a REBLEN, and at
 // runtime checks that explicit casts don't violate the rule either.
 //
 // !!! This could be enhanced so that the REBIXO would keep track of whether
@@ -48,7 +48,7 @@
 // https://github.com/metaeducation/ren-c/wiki/
 //
 
-// These values can be assigned directly to a REBCNT, but shouldn't be!
+// These values can be assigned directly to a REBLEN, but shouldn't be!
 // use END_FLAG, THROWN_FLAG, and VA_LIST_FLAG so the C++ build can make sure
 // the values only end up in REBIXOs, that can be "index or a flag"
 //
@@ -80,16 +80,16 @@
     #define VA_LIST_FLAG VA_LIST_FLAG_PRIVATE
 
     // These are not actually used with REBIXO, but have a similar purpose...
-    // fold a flag into an integer (like a std::optional<REBCNT>).
+    // fold a flag into an integer (like a std::optional<REBLEN>).
     //
-    #define NOT_FOUND ((REBCNT)-1)
-    #define UNKNOWN   ((REBCNT)-1)
+    #define NOT_FOUND ((REBLEN)-1)
+    #define UNKNOWN   ((REBLEN)-1)
 #else
     class NOT_FOUND_t {
     public:
         NOT_FOUND_t () {} // clang won't initialize const object w/o this
-        operator REBCNT() const {
-            return ((REBCNT)-1);
+        operator REBLEN() const {
+            return ((REBLEN)-1);
         }
     };
     const NOT_FOUND_t NOT_FOUND;
@@ -124,22 +124,22 @@
 
     public:
         REBIXO () {} // simulate C uninitialization
-        REBIXO (REBCNT bits) : bits (bits) {
-            assert(bits != ((REBCNT)-1)); // not with REBIXO!
+        REBIXO (REBLEN bits) : bits (bits) {
+            assert(bits != ((REBLEN)-1)); // not with REBIXO!
         }
 
-        void operator=(REBCNT rhs) {
-            assert(rhs != ((REBCNT)-1)); // not with REBIXO!
+        void operator=(REBLEN rhs) {
+            assert(rhs != ((REBLEN)-1)); // not with REBIXO!
             bits = rhs;
         }
         bool operator==(REBIXO const &rhs) const { return bits == rhs.bits; }
         bool operator!=(REBIXO const &rhs) const { return !((*this) == rhs); }
 
-        // Basic check: whenever one tries to get an actual REBCNT out of
+        // Basic check: whenever one tries to get an actual REBLEN out of
         // an indexor, it is asserted not to be a magic value.  Called by
-        // the math operations, as well as any explicit `cast(REBCNT, indexor)`
+        // the math operations, as well as any explicit `cast(REBLEN, indexor)`
         //
-        explicit operator REBCNT() const {
+        explicit operator REBLEN() const {
             //
             // Individual asserts so the line number tells you which it is.
             //
@@ -157,60 +157,60 @@
         // addition and subtraction are allowed.  While more operations could
         // be added, the best course of action is generally that if one is
         // to do a lot of math on an indexor it is not a special value...so it
-        // should be extracted by casting to a REBCNT.
+        // should be extracted by casting to a REBLEN.
         //
-        friend bool operator==(REBCNT lhs, const REBIXO &rhs) {
+        friend bool operator==(REBLEN lhs, const REBIXO &rhs) {
             assert(lhs != UNKNOWN and lhs != NOT_FOUND);
             return lhs == rhs.bits;
         }
-        friend bool operator!=(REBCNT lhs, const REBIXO &rhs) {
+        friend bool operator!=(REBLEN lhs, const REBIXO &rhs) {
             assert(lhs != UNKNOWN and lhs != NOT_FOUND);
             return lhs != rhs.bits;
         }
-        bool operator<(REBCNT rhs) const {
-            return cast(REBCNT, *this) < rhs;
+        bool operator<(REBLEN rhs) const {
+            return cast(REBLEN, *this) < rhs;
         }
-        friend bool operator<(REBCNT lhs, const REBIXO &rhs) {
+        friend bool operator<(REBLEN lhs, const REBIXO &rhs) {
             return lhs < rhs.bits;
         }
-        bool operator>(REBCNT rhs) const {
-            return cast(REBCNT, *this) > rhs;
+        bool operator>(REBLEN rhs) const {
+            return cast(REBLEN, *this) > rhs;
         }
-        friend bool operator>(REBCNT lhs, const REBIXO &rhs) {
+        friend bool operator>(REBLEN lhs, const REBIXO &rhs) {
             return lhs > rhs.bits;
         }
-        bool operator<=(REBCNT rhs) const {
-            return cast(REBCNT, *this) <= rhs;
+        bool operator<=(REBLEN rhs) const {
+            return cast(REBLEN, *this) <= rhs;
         }
-        friend bool operator<=(REBCNT lhs, const REBIXO &rhs) {
+        friend bool operator<=(REBLEN lhs, const REBIXO &rhs) {
             return lhs <= rhs.bits;
         }
-        REBCNT operator+(REBCNT rhs) const {
-            return cast(REBCNT, *this) + rhs;
+        REBLEN operator+(REBLEN rhs) const {
+            return cast(REBLEN, *this) + rhs;
         }
-        friend REBCNT operator+(REBCNT lhs, const REBIXO &rhs) {
+        friend REBLEN operator+(REBLEN lhs, const REBIXO &rhs) {
             return rhs + lhs;
         }
-        REBCNT operator-(REBCNT rhs) const {
-            return cast(REBCNT, *this) - rhs;
+        REBLEN operator-(REBLEN rhs) const {
+            return cast(REBLEN, *this) - rhs;
         }
-        friend REBCNT operator-(REBCNT lhs, const REBIXO &rhs) {
+        friend REBLEN operator-(REBLEN lhs, const REBIXO &rhs) {
             return rhs - lhs;
         }
-        REBCNT operator*(REBCNT rhs) const {
-            return cast(REBCNT, *this) * rhs;
+        REBLEN operator*(REBLEN rhs) const {
+            return cast(REBLEN, *this) * rhs;
         }
-        friend REBCNT operator*(REBCNT lhs, const REBIXO &rhs) {
+        friend REBLEN operator*(REBLEN lhs, const REBIXO &rhs) {
             return rhs * lhs;
         }
 
         REBIXO& operator++ () {
-            bits = cast(REBCNT, *this) + 1; // cast ensures no END, THROWN
+            bits = cast(REBLEN, *this) + 1; // cast ensures no END, THROWN
             return *this;
         }
         REBIXO& operator-- () {
             assert(bits != 0); // additional check
-            bits = cast(REBCNT, *this) - 1; // cast ensures no END, THROWN
+            bits = cast(REBLEN, *this) - 1; // cast ensures no END, THROWN
             return *this;
         }
     };

@@ -148,7 +148,7 @@ static REB_R Loop_Series_Common(
     // it must be checked for changing to another series, or non-series.
     //
     Move_Value(var, start);
-    REBCNT *state = &VAL_INDEX(var);
+    REBLEN *state = &VAL_INDEX(var);
 
     // Run only once if start is equal to end...edge case.
     //
@@ -383,8 +383,8 @@ struct Loop_Each_State {
     REBCTX *pseudo_vars_ctx; // vars made by Virtual_Bind_To_New_Context()
     Value* data; // the data argument passed in
     REBSER *data_ser; // series data being enumerated (if applicable)
-    REBCNT data_idx; // index into the data for filling current variable
-    REBCNT data_len; // length of the data
+    REBLEN data_idx; // index into the data for filling current variable
+    REBLEN data_len; // length of the data
 };
 
 // Isolation of central logic for FOR-EACH, MAP-EACH, and EVERY so that it
@@ -456,7 +456,7 @@ static REB_R Loop_Each_Core(struct Loop_Each_State *les) {
               case REB_FRAME: {
                 Value* key;
                 Value* val;
-                REBCNT bind_index;
+                REBLEN bind_index;
                 while (true) { // find next non-hidden key (if any)
                     key = VAL_CONTEXT_KEY(les->data, les->data_idx);
                     val = VAL_CONTEXT_VAR(les->data, les->data_idx);
@@ -1100,14 +1100,14 @@ struct Remove_Each_State {
     bool broke; // e.g. a BREAK ran
     const Value* body;
     REBCTX *context;
-    REBCNT start;
+    REBLEN start;
     REB_MOLD *mo;
 };
 
 
 // See notes on Remove_Each_State
 //
-static inline REBCNT Finalize_Remove_Each(struct Remove_Each_State *res)
+static inline REBLEN Finalize_Remove_Each(struct Remove_Each_State *res)
 {
     assert(GET_SER_INFO(res->series, SERIES_INFO_HOLD));
     CLEAR_SER_INFO(res->series, SERIES_INFO_HOLD);
@@ -1116,7 +1116,7 @@ static inline REBCNT Finalize_Remove_Each(struct Remove_Each_State *res)
     // the loop protocol.  This prevents giving back a return value of
     // how many removals there were, so we don't do the removals.
 
-    REBCNT count = 0;
+    REBLEN count = 0;
     if (ANY_ARRAY(res->data)) {
         if (res->broke) { // cleanup markers, don't do removals
             Cell* temp = VAL_ARRAY_AT(res->data);
@@ -1127,7 +1127,7 @@ static inline REBCNT Finalize_Remove_Each(struct Remove_Each_State *res)
             return 0;
         }
 
-        REBCNT len = VAL_LEN_HEAD(res->data);
+        REBLEN len = VAL_LEN_HEAD(res->data);
 
         Cell* dest = VAL_ARRAY_AT(res->data);
         Cell* src = dest;
@@ -1169,7 +1169,7 @@ static inline REBCNT Finalize_Remove_Each(struct Remove_Each_State *res)
 
         // If there was a THROW, or fail() we need the remaining data
         //
-        REBCNT orig_len = VAL_LEN_HEAD(res->data);
+        REBLEN orig_len = VAL_LEN_HEAD(res->data);
         assert(res->start <= orig_len);
         Append_Unencoded_Len(
             res->mo->series,
@@ -1203,7 +1203,7 @@ static inline REBCNT Finalize_Remove_Each(struct Remove_Each_State *res)
 
         // If there was a BREAK, THROW, or fail() we need the remaining data
         //
-        REBCNT orig_len = VAL_LEN_HEAD(res->data);
+        REBLEN orig_len = VAL_LEN_HEAD(res->data);
         assert(res->start <= orig_len);
 
         for (; res->start != orig_len; ++res->start) {
@@ -1242,9 +1242,9 @@ static REB_R Remove_Each_Core(struct Remove_Each_State *res)
     //
     SET_SER_INFO(res->series, SERIES_INFO_HOLD);
 
-    REBCNT index = res->start; // declare here, avoid longjmp clobber warnings
+    REBLEN index = res->start; // declare here, avoid longjmp clobber warnings
 
-    REBCNT len = SER_LEN(res->series); // temp read-only, this won't change
+    REBLEN len = SER_LEN(res->series); // temp read-only, this won't change
     while (index < len) {
         assert(res->start == index);
 
@@ -1448,7 +1448,7 @@ REBNATIVE(remove_each)
     // Currently, if a fail() happens during the iteration, any removals
     // which were indicated will be enacted before propagating failure.
     //
-    REBCNT removals = Finalize_Remove_Each(&res);
+    REBLEN removals = Finalize_Remove_Each(&res);
 
     if (r == R_THROWN)
         return R_THROWN;

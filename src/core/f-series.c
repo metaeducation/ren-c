@@ -70,7 +70,7 @@ REB_R Series_Common_Action_Maybe_Unhandled(
 
         case SYM_TAIL:
             Move_Value(D_OUT, value);
-            VAL_INDEX(D_OUT) = cast(REBCNT, tail);
+            VAL_INDEX(D_OUT) = cast(REBLEN, tail);
             return D_OUT;
 
         case SYM_HEAD_Q:
@@ -160,7 +160,7 @@ REB_R Series_Common_Action_Maybe_Unhandled(
             i = 0; // past head clips to head if not /ONLY
         }
 
-        VAL_INDEX(value) = cast(REBCNT, i);
+        VAL_INDEX(value) = cast(REBLEN, i);
         RETURN (value); }
 
     case SYM_REMOVE: {
@@ -439,7 +439,7 @@ chkDecimal:
 // Simple search for a value in an array. Return the index of
 // the value or the TAIL index if not found.
 //
-REBCNT Find_In_Array_Simple(REBARR *array, REBCNT index, const Cell* target)
+REBLEN Find_In_Array_Simple(REBARR *array, REBLEN index, const Cell* target)
 {
     Cell* value = ARR_HEAD(array);
 

@@ -76,7 +76,7 @@
 // configured, hence this is an "Alloc" instead of a "Make" (because there
 // is still work to be done before it will pass ASSERT_CONTEXT).
 //
-REBCTX *Alloc_Context_Core(enum Reb_Kind kind, REBCNT capacity, REBFLGS flags)
+REBCTX *Alloc_Context_Core(enum Reb_Kind kind, REBLEN capacity, REBFLGS flags)
 {
     assert(not (flags & ARRAY_FLAG_FILE_LINE)); // LINK and MISC are taken
 
@@ -121,7 +121,7 @@ REBCTX *Alloc_Context_Core(enum Reb_Kind kind, REBCNT capacity, REBFLGS flags)
 //
 // Returns whether or not the expansion invalidated existing keys.
 //
-bool Expand_Context_Keylist_Core(REBCTX *context, REBCNT delta)
+bool Expand_Context_Keylist_Core(REBCTX *context, REBLEN delta)
 {
     REBARR *keylist = CTX_KEYLIST(context);
 
@@ -182,7 +182,7 @@ bool Expand_Context_Keylist_Core(REBCTX *context, REBCNT delta)
 //
 // Expand a context. Copy words if keylist is not unique.
 //
-void Expand_Context(REBCTX *context, REBCNT delta)
+void Expand_Context(REBCTX *context, REBLEN delta)
 {
     // varlist is unique to each object--expand without making a copy.
     //
@@ -248,7 +248,7 @@ Value* Append_Context(
         //
         assert(not opt_spelling);
 
-        REBCNT len = CTX_LEN(context); // length we just bumped
+        REBLEN len = CTX_LEN(context); // length we just bumped
         INIT_BINDING(opt_any_word, context);
         INIT_WORD_INDEX(opt_any_word, len);
     }
@@ -263,7 +263,7 @@ Value* Append_Context(
 // Makes a copy of a context.  If no extra storage space is requested, then
 // the same keylist will be used.
 //
-REBCTX *Copy_Context_Shallow_Extra_Managed(REBCTX *src, REBCNT extra) {
+REBCTX *Copy_Context_Shallow_Extra_Managed(REBCTX *src, REBLEN extra) {
     assert(GET_SER_FLAG(src, ARRAY_FLAG_VARLIST));
     ASSERT_ARRAY_MANAGED(CTX_KEYLIST(src));
 
@@ -559,7 +559,7 @@ static void Collect_Inner_Loop(struct Reb_Collector *cl, const Cell* head)
 // the complexity to move handling for that case in this routine.
 //
 REBARR *Collect_Keylist_Managed(
-    REBCNT *self_index_out, // which context index SELF is in (if COLLECT_SELF)
+    REBLEN *self_index_out, // which context index SELF is in (if COLLECT_SELF)
     const Cell* head,
     REBCTX *prior,
     REBFLGS flags // see %sys-core.h for COLLECT_ANY_WORD, etc.
@@ -790,7 +790,7 @@ REBCTX *Make_Selfish_Context_Detect_Managed(
     const Cell* head,
     REBCTX *opt_parent
 ) {
-    REBCNT self_index;
+    REBLEN self_index;
     REBARR *keylist = Collect_Keylist_Managed(
         &self_index,
         head,
@@ -798,7 +798,7 @@ REBCTX *Make_Selfish_Context_Detect_Managed(
         COLLECT_ONLY_SET_WORDS | COLLECT_ENSURE_SELF
     );
 
-    REBCNT len = ARR_LEN(keylist);
+    REBLEN len = ARR_LEN(keylist);
     REBARR *varlist = Make_Arr_Core(
         len,
         SERIES_MASK_CONTEXT
@@ -969,7 +969,7 @@ REBARR *Context_To_Array(REBCTX *context, REBINT mode)
 
     assert(!(mode & 4));
 
-    REBCNT n = 1;
+    REBLEN n = 1;
     for (; NOT_END(key); n++, key++, var++) {
         if (not Is_Param_Hidden(key)) {
             if (mode & 1) {
@@ -1134,7 +1134,7 @@ REBCTX *Merge_Contexts_Selfish_Managed(REBCTX *parent1, REBCTX *parent2)
 
     // We should have gotten a SELF in the results, one way or another.
     //
-    REBCNT self_index = Find_Canon_In_Context(merged, Canon(SYM_SELF), true);
+    REBLEN self_index = Find_Canon_In_Context(merged, Canon(SYM_SELF), true);
     assert(self_index != 0);
     assert(CTX_KEY_SYM(merged, self_index) == SYM_SELF);
     Move_Value(CTX_VAR(merged, self_index), CTX_ARCHETYPE(merged));
@@ -1158,7 +1158,7 @@ void Resolve_Context(
 ) {
     FAIL_IF_READ_ONLY_CONTEXT(target);
 
-    REBCNT i;
+    REBLEN i;
     if (IS_INTEGER(only_words)) { // Must be: 0 < i <= tail
         i = VAL_INT32(only_words);
         if (i == 0)
@@ -1295,14 +1295,14 @@ void Resolve_Context(
 // Search a context looking for the given canon symbol.  Return the index or
 // 0 if not found.
 //
-REBCNT Find_Canon_In_Context(REBCTX *context, REBSTR *canon, bool always)
+REBLEN Find_Canon_In_Context(REBCTX *context, REBSTR *canon, bool always)
 {
     assert(GET_SER_INFO(canon, STRING_INFO_CANON));
 
     Value* key = CTX_KEYS_HEAD(context);
-    REBCNT len = CTX_LEN(context);
+    REBLEN len = CTX_LEN(context);
 
-    REBCNT n;
+    REBLEN n;
     for (n = 1; n <= len; n++, key++) {
         if (canon == VAL_KEY_CANON(key)) {
             if (Is_Param_Unbindable(key)) {
@@ -1327,7 +1327,7 @@ REBCNT Find_Canon_In_Context(REBCTX *context, REBSTR *canon, bool always)
 Value* Select_Canon_In_Context(REBCTX *context, REBSTR *canon)
 {
     const bool always = false;
-    REBCNT n = Find_Canon_In_Context(context, canon, always);
+    REBLEN n = Find_Canon_In_Context(context, canon, always);
     if (n == 0)
         return NULL;
 
@@ -1345,7 +1345,7 @@ Value* Select_Canon_In_Context(REBCTX *context, REBSTR *canon)
 // field out of a port.  If the port doesn't have the index, should it always
 // be an error?
 //
-Value* Obj_Value(Value* value, REBCNT index)
+Value* Obj_Value(Value* value, REBLEN index)
 {
     REBCTX *context = VAL_CONTEXT(value);
 
@@ -1399,8 +1399,8 @@ void Assert_Context_Core(REBCTX *c)
     if (not ANY_CONTEXT(rootvar))
         panic (rootvar);
 
-    REBCNT keys_len = ARR_LEN(keylist);
-    REBCNT vars_len = ARR_LEN(varlist);
+    REBLEN keys_len = ARR_LEN(keylist);
+    REBLEN vars_len = ARR_LEN(varlist);
 
     if (keys_len < 1)
         panic (keylist);
@@ -1470,7 +1470,7 @@ void Assert_Context_Core(REBCTX *c)
     Value* key = CTX_KEYS_HEAD(c);
     Value* var = CTX_VARS_HEAD(c);
 
-    REBCNT n;
+    REBLEN n;
     for (n = 1; n < keys_len; n++, var++, key++) {
         if (IS_END(key)) {
             printf("** Early key end at index: %d\n", cast(int, n));

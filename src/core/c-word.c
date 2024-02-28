@@ -42,7 +42,7 @@
 // Prime numbers used for hash table sizes. Divide by 2 for
 // number of words that can be held in the symbol table.
 //
-static REBCNT const Primes[] =
+static REBLEN const Primes[] =
 {
     7,
     13,
@@ -84,7 +84,7 @@ static REBCNT const Primes[] =
 //
 // Given a size, return a prime number that is larger.
 //
-REBINT Get_Hash_Prime(REBCNT size)
+REBINT Get_Hash_Prime(REBLEN size)
 {
     REBINT n;
 
@@ -121,10 +121,10 @@ static void Expand_Word_Table(void)
     // The only full list of canon words available is the old hash table.
     // Hold onto it while creating the new hash table.
 
-    REBCNT old_num_slots = SER_LEN(PG_Canons_By_Hash);
+    REBLEN old_num_slots = SER_LEN(PG_Canons_By_Hash);
     REBSTR* *old_canons_by_hash = SER_HEAD(REBSER*, PG_Canons_By_Hash);
 
-    REBCNT num_slots = Get_Hash_Prime(old_num_slots + 1);
+    REBLEN num_slots = Get_Hash_Prime(old_num_slots + 1);
     if (num_slots == 0) { // larger than hash prime table
         DECLARE_LOCAL (temp);
         Init_Integer(temp, old_num_slots + 1);
@@ -143,7 +143,7 @@ static void Expand_Word_Table(void)
 
     REBSTR **new_canons_by_hash = SER_HEAD(REBSER*, ser);
 
-    REBCNT old_slot;
+    REBLEN old_slot;
     for (old_slot = 0; old_slot != old_num_slots; ++old_slot) {
         REBSTR *canon = old_canons_by_hash[old_slot];
         if (not canon)
@@ -157,8 +157,8 @@ static void Expand_Word_Table(void)
             continue;
         }
 
-        REBCNT skip;
-        REBCNT slot = First_Hash_Candidate_Slot(
+        REBLEN skip;
+        REBLEN slot = First_Hash_Candidate_Slot(
             &skip,
             Hash_String(canon),
             num_slots
@@ -203,7 +203,7 @@ REBSTR *Intern_UTF8_Managed(const REBYTE *utf8, size_t size)
     // actually kept larger than that, but to be on the right side of theory,
     // the table is always checked for expansion needs *before* the search.)
     //
-    REBCNT num_slots = SER_LEN(PG_Canons_By_Hash);
+    REBLEN num_slots = SER_LEN(PG_Canons_By_Hash);
     if (PG_Num_Canon_Slots_In_Use > num_slots / 2) {
         Expand_Word_Table();
         num_slots = SER_LEN(PG_Canons_By_Hash); // got larger
@@ -211,8 +211,8 @@ REBSTR *Intern_UTF8_Managed(const REBYTE *utf8, size_t size)
 
     REBSTR* *canons_by_hash = SER_HEAD(REBSER*, PG_Canons_By_Hash);
 
-    REBCNT skip; // how many slots to skip when occupied candidates found
-    REBCNT slot = First_Hash_Candidate_Slot(
+    REBLEN skip; // how many slots to skip when occupied candidates found
+    REBLEN slot = First_Hash_Candidate_Slot(
         &skip,
         Hash_UTF8(utf8, size),
         num_slots
@@ -374,11 +374,11 @@ void GC_Kill_Interning(REBSTR *intern)
     assert(MISC(intern).bind_index.high == 0); // shouldn't GC during binds?
     assert(MISC(intern).bind_index.low == 0);
 
-    REBCNT num_slots = SER_LEN(PG_Canons_By_Hash);
+    REBLEN num_slots = SER_LEN(PG_Canons_By_Hash);
     REBSTR* *canons_by_hash = SER_HEAD(REBSER*, PG_Canons_By_Hash);
 
-    REBCNT skip;
-    REBCNT slot = First_Hash_Candidate_Slot(
+    REBLEN skip;
+    REBLEN slot = First_Hash_Candidate_Slot(
         &skip,
         Hash_String(intern),
         num_slots
@@ -410,7 +410,7 @@ void GC_Kill_Interning(REBSTR *intern)
         // This canon form must be removed from the hash table.  Ripple the
         // collision slots back until a NULL is found, to reduce search times.
         //
-        REBCNT previous_slot = slot;
+        REBLEN previous_slot = slot;
         while (canons_by_hash[slot]) {
             slot += skip;
             if (slot >= num_slots)
@@ -484,7 +484,7 @@ void Startup_Interning(void)
     // reduce long probing chains, it should be significantly larger than that.
     // R3-Alpha used a heuristic of 4 times as big as the number of words.
 
-    REBCNT n;
+    REBLEN n;
 #if defined(NDEBUG)
     n = Get_Hash_Prime(WORD_TABLE_SIZE * 4); // extra reduces rehashing
 #else
@@ -527,7 +527,7 @@ void Startup_Symbols(REBARR *words)
     // and try and use that meaningfully is too risky, so it is simply
     // prohibited to canonize SYM_0, and trash the REBSTR* in the [0] slot.
     //
-    REBCNT sym = SYM_0;
+    REBLEN sym = SYM_0;
     TRASH_POINTER_IF_DEBUG(
         *SER_AT(REBSTR*, PG_Symbol_Canons, sym)
     );
@@ -559,7 +559,7 @@ void Startup_Symbols(REBARR *words)
 
     *SER_AT(REBSTR*, PG_Symbol_Canons, sym) = NULL; // terminate
 
-    SET_SERIES_LEN(PG_Symbol_Canons, 1 + cast(REBCNT, sym));
+    SET_SERIES_LEN(PG_Symbol_Canons, 1 + cast(REBLEN, sym));
     assert(SER_LEN(PG_Symbol_Canons) == 1 + ARR_LEN(words));
 
     // Do some sanity checks.  !!! Fairly critical, is debug-only appropriate?
@@ -602,7 +602,7 @@ void Shutdown_Interning(void)
 
         fflush(stdout);
 
-        REBCNT slot;
+        REBLEN slot;
         for (slot = 0; slot < SER_LEN(PG_Canons_By_Hash); ++slot) {
             REBSTR *canon = *SER_AT(REBSTR*, PG_Canons_By_Hash, slot);
             if (canon and canon != DELETED_CANON)
@@ -623,7 +623,7 @@ void Shutdown_Interning(void)
 // Previously used VAL_WORD_CONTEXT() to check that the spelling was legit.
 // However, that would incarnate running frames.
 //
-void INIT_WORD_INDEX_Extra_Checks_Debug(Cell* v, REBCNT i)
+void INIT_WORD_INDEX_Extra_Checks_Debug(Cell* v, REBLEN i)
 {
     assert(IS_WORD_BOUND(v));
     REBNOD *binding = VAL_BINDING(v);

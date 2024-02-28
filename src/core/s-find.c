@@ -42,9 +42,9 @@
 //
 REBINT Compare_Binary_Vals(const Cell* v1, const Cell* v2)
 {
-    REBCNT l1 = VAL_LEN_AT(v1);
-    REBCNT l2 = VAL_LEN_AT(v2);
-    REBCNT len = MIN(l1, l2);
+    REBLEN l1 = VAL_LEN_AT(v1);
+    REBLEN l2 = VAL_LEN_AT(v2);
+    REBLEN len = MIN(l1, l2);
     REBINT n;
 
     // Image is not "byte size" (note multiplied by 4 above) but still calls
@@ -70,7 +70,7 @@ REBINT Compare_Binary_Vals(const Cell* v1, const Cell* v2)
 //
 // Uncase: compare is case-insensitive.
 //
-REBINT Compare_Bytes(const REBYTE *b1, const REBYTE *b2, REBCNT len, bool uncase)
+REBINT Compare_Bytes(const REBYTE *b1, const REBYTE *b2, REBLEN len, bool uncase)
 {
     REBINT d;
 
@@ -126,8 +126,8 @@ const REBYTE *Match_Bytes(const REBYTE *src, const REBYTE *pat)
 //
 bool Match_Sub_Path(REBSER *s1, REBSER *s2)
 {
-    REBCNT len = SER_LEN(s1);
-    REBCNT n;
+    REBLEN len = SER_LEN(s1);
+    REBLEN n;
     REBUNI c1 = 0;
     REBUNI c2;
 
@@ -166,7 +166,7 @@ bool Match_Sub_Path(REBSER *s1, REBSER *s2)
 REBINT Compare_Uni_Str(
     REBCHR(const *) u1,
     REBCHR(const *) u2,
-    REBCNT len,
+    REBLEN len,
     bool uncase
 ){
     for (; len > 0; len--) {
@@ -203,9 +203,9 @@ REBINT Compare_String_Vals(const Cell* v1, const Cell* v2, bool uncase)
 {
     assert(not IS_BINARY(v1) and not IS_BINARY(v2));
 
-    REBCNT l1  = VAL_LEN_AT(v1);
-    REBCNT l2  = VAL_LEN_AT(v2);
-    REBCNT len = MIN(l1, l2);
+    REBLEN l1  = VAL_LEN_AT(v1);
+    REBLEN l2  = VAL_LEN_AT(v2);
+    REBLEN len = MIN(l1, l2);
 
     REBINT n = Compare_Uni_Str(VAL_UNI_AT(v1), VAL_UNI_AT(v2), len, uncase);
 
@@ -279,13 +279,13 @@ REBINT Compare_UTF8(const REBYTE *s1, const REBYTE *s2, REBSIZ l2)
 //
 // NOTE: Series tail must be > index.
 //
-REBCNT Find_Byte_Str(REBSER *series, REBCNT index, REBYTE *b2, REBCNT l2, bool uncase, bool match)
+REBLEN Find_Byte_Str(REBSER *series, REBLEN index, REBYTE *b2, REBLEN l2, bool uncase, bool match)
 {
     REBYTE *b1;
     REBYTE *e1;
-    REBCNT l1;
+    REBLEN l1;
     REBYTE c;
-    REBCNT n;
+    REBLEN n;
 
     // The pattern empty or is longer than the target:
     if (l2 == 0 || (l2 + index) > SER_LEN(series)) return NOT_FOUND;
@@ -340,12 +340,12 @@ REBCNT Find_Byte_Str(REBSER *series, REBCNT index, REBYTE *b2, REBCNT l2, bool u
 //
 // Flags are set according to ALL_FIND_REFS
 //
-REBCNT Find_Str_Str(REBSER *ser1, REBCNT head, REBCNT index, REBCNT tail, REBINT skip, REBSER *ser2, REBCNT index2, REBCNT len, REBCNT flags)
+REBLEN Find_Str_Str(REBSER *ser1, REBLEN head, REBLEN index, REBLEN tail, REBINT skip, REBSER *ser2, REBLEN index2, REBLEN len, REBLEN flags)
 {
     REBUNI c1;
     REBUNI c2;
     REBUNI c3;
-    REBCNT n = 0;
+    REBLEN n = 0;
     bool uncase = not (flags & AM_FIND_CASE); // case insenstive
 
     c2 = GET_ANY_CHAR(ser2, index2); // starting char
@@ -393,14 +393,14 @@ REBCNT Find_Str_Str(REBSER *ser1, REBCNT head, REBCNT index, REBCNT tail, REBINT
 // index is unsigned and it tries to use a comparison crossing zero.  This
 // is handled by the new version, and will be vetted separately.
 //
-static REBCNT Find_Str_Char_Old(
+static REBLEN Find_Str_Char_Old(
     REBSER *ser,
-    REBCNT head,
-    REBCNT index,
-    REBCNT tail,
+    REBLEN head,
+    REBLEN index,
+    REBLEN tail,
     REBINT skip,
     REBUNI c2,
-    REBCNT flags
+    REBLEN flags
 ) {
     bool uncase = not (flags & AM_FIND_CASE); // case insensitive
 
@@ -444,12 +444,12 @@ static REBCNT Find_Str_Char_Old(
 // routine is run in parallel as a debug check to ensure the same result
 // is coming from the optimized code.
 //
-REBCNT Find_Str_Char(
+REBLEN Find_Str_Char(
     REBUNI uni,         // character to look for
     REBSER *series,     // series with width sizeof(REBYTE) or sizeof(REBUNI)
-    REBCNT lowest,      // lowest return index
-    REBCNT index_orig,  // first index to examine (if out of range, NOT_FOUND)
-    REBCNT highest,     // *one past* highest return result (e.g. SER_LEN)
+    REBLEN lowest,      // lowest return index
+    REBLEN index_orig,  // first index to examine (if out of range, NOT_FOUND)
+    REBLEN highest,     // *one past* highest return result (e.g. SER_LEN)
     REBINT skip,        // step amount while searching, can be negative!
     REBFLGS flags       // AM_FIND_CASE, AM_FIND_MATCH
 ) {
@@ -629,13 +629,13 @@ return_not_found:
 return_index:
 
 #if !defined(NDEBUG)
-    assert(cast(REBCNT, index) == Find_Str_Char_Old(
+    assert(cast(REBLEN, index) == Find_Str_Char_Old(
         series, lowest, index_orig, highest, skip, uni, flags
     ));
 #endif
 
     assert(index >= 0);
-    return cast(REBCNT, index);
+    return cast(REBLEN, index);
 }
 
 
@@ -651,14 +651,14 @@ return_index:
 //
 // Flags are set according to ALL_FIND_REFS
 //
-REBCNT Find_Str_Bitset(
+REBLEN Find_Str_Bitset(
     REBSER *ser,
-    REBCNT head,
-    REBCNT index,
-    REBCNT tail,
+    REBLEN head,
+    REBLEN index,
+    REBLEN tail,
     REBINT skip,
     REBSER *bset,
-    REBCNT flags
+    REBLEN flags
 ) {
     bool uncase = not (flags & AM_FIND_CASE); // case insensitive
 
@@ -681,9 +681,9 @@ REBCNT Find_Str_Bitset(
 //
 // Count lines in a UTF-8 file.
 //
-REBCNT Count_Lines(REBYTE *bp, REBCNT len)
+REBLEN Count_Lines(REBYTE *bp, REBLEN len)
 {
-    REBCNT count = 0;
+    REBLEN count = 0;
 
     for (; len > 0; bp++, len--) {
         if (*bp == CR) {
@@ -703,9 +703,9 @@ REBCNT Count_Lines(REBYTE *bp, REBCNT len)
 //
 // Find next line termination. Advance the bp; return bin length.
 //
-REBCNT Next_Line(REBYTE **bin)
+REBLEN Next_Line(REBYTE **bin)
 {
-    REBCNT count = 0;
+    REBLEN count = 0;
     REBYTE *bp = *bin;
 
     for (; *bp; bp++) {

@@ -401,7 +401,7 @@ int OS_Create_Process(
         // command to cmd.exe needs to be surrounded by quotes to preserve the inner quotes
         const WCHAR *sh = L"cmd.exe /C \"";
 
-        REBCNT len = wcslen(sh) + wcslen(call)
+        REBLEN len = wcslen(sh) + wcslen(call)
             + 1 // terminal quote mark
             + 1; // NUL terminator
 
@@ -1478,7 +1478,7 @@ REBNATIVE(call)
         FAIL_IF_READ_ONLY_SERIES(VAL_SERIES(ARG(err)));
 
     char *os_input;
-    REBCNT input_len;
+    REBLEN input_len;
 
     UNUSED(REF(input)); // implicit by void ARG(in)
     switch (VAL_TYPE(ARG(in))) {
@@ -1753,7 +1753,7 @@ REBNATIVE(get_os_browsers)
         fail ("Could not read registry key for http\\shell\\open\\command");
     }
 
-    REBCNT len = num_bytes / 2;
+    REBLEN len = num_bytes / 2;
 
     WCHAR *buffer = rebAllocN(WCHAR, len + 1); // include terminator
 
@@ -1824,7 +1824,7 @@ REBNATIVE(sleep)
 {
     PROCESS_INCLUDE_PARAMS_OF_SLEEP;
 
-    REBCNT msec = Milliseconds_From_Value(ARG(duration));
+    REBLEN msec = Milliseconds_From_Value(ARG(duration));
 
   #ifdef TO_WINDOWS
     Sleep(msec);
@@ -2117,7 +2117,7 @@ REBNATIVE(list_env)
 
     WCHAR *env = GetEnvironmentStrings();
 
-    REBCNT len;
+    REBLEN len;
     const WCHAR *key_equals_val = env;
     while ((len = wcslen(key_equals_val)) != 0) {
         const WCHAR *eq_pos = wcschr(key_equals_val, '=');
@@ -2158,7 +2158,7 @@ REBNATIVE(list_env)
         const char *key_equals_val = environ[n];
         const char *eq_pos = strchr(key_equals_val, '=');
 
-        REBCNT size = strlen(key_equals_val);
+        REBLEN size = strlen(key_equals_val);
 
         int key_size = eq_pos - key_equals_val;
         Value* key = rebSizedText(key_equals_val, key_size);

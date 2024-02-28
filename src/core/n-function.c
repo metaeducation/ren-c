@@ -82,7 +82,7 @@ void Make_Thrown_Unwind_Value(
         INIT_BINDING(out, VAL_CONTEXT(level));
     }
     else if (IS_INTEGER(level)) {
-        REBCNT count = VAL_INT32(level);
+        REBLEN count = VAL_INT32(level);
         if (count <= 0)
             fail (Error_Invalid_Exit_Raw());
 
@@ -675,7 +675,7 @@ REBNATIVE(hijack)
         // ARR_SINGLE(info) being correct.  That would mean hijack reversals
         // would need to restore the *exact* capacity.  Review.
 
-        REBCNT details_len = ARR_LEN(hijacker_details);
+        REBLEN details_len = ARR_LEN(hijacker_details);
         if (SER_REST(SER(victim_details)) < details_len + 1)
             EXPAND_SERIES_TAIL(
                 SER(victim_details),
@@ -801,7 +801,7 @@ REBNATIVE(tighten)
     // This is why we pass the original in as the "underlying" function,
     // which is used when the frame is being pushed.
     //
-    REBCNT details_len = ARR_LEN(ACT_DETAILS(original));
+    REBLEN details_len = ARR_LEN(ACT_DETAILS(original));
     REBACT *tightened = Make_Action(
         paramlist,
         ACT_DISPATCHER(original),

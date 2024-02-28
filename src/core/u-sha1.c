@@ -665,7 +665,7 @@ int SHA1_CtxSize(void) {
 //
 //  SHA1: C
 //
-REBYTE *SHA1(REBYTE *d, REBCNT n, REBYTE *md)
+REBYTE *SHA1(REBYTE *d, REBLEN n, REBYTE *md)
 {
     // d is data, n is length
     SHA_CTX c;
@@ -678,4 +678,3 @@ REBYTE *SHA1(REBYTE *d, REBCNT n, REBYTE *md)
     memset(&c,0,sizeof(c));
     return md;
 }
-

@@ -142,12 +142,12 @@
 // "content", there's room for a length in the node.
 //
 
-inline static REBCNT SER_LEN(REBSER *s) {
+inline static REBLEN SER_LEN(REBSER *s) {
     REBYTE len_byte = LEN_BYTE_OR_255(s);
     return len_byte == 255 ? s->content.dynamic.len : len_byte;
 }
 
-inline static void SET_SERIES_LEN(REBSER *s, REBCNT len) {
+inline static void SET_SERIES_LEN(REBSER *s, REBLEN len) {
     assert(NOT_SER_FLAG(s, SERIES_FLAG_STACK));
 
     if (LEN_BYTE_OR_255(s) == 255)
@@ -176,7 +176,7 @@ inline static REBYTE *SER_DATA_RAW(REBSER *s) {
         : cast(REBYTE*, &s->content);
 }
 
-inline static REBYTE *SER_AT_RAW(REBYTE w, REBSER *s, REBCNT i) {
+inline static REBYTE *SER_AT_RAW(REBYTE w, REBSER *s, REBLEN i) {
   #if !defined(NDEBUG)
     if (w != SER_WIDE(s)) {
         //
@@ -252,7 +252,7 @@ inline static REBYTE *SER_LAST_RAW(size_t w, REBSER *s) {
 // Optimized expand when at tail (but, does not reterminate)
 //
 
-inline static void EXPAND_SERIES_TAIL(REBSER *s, REBCNT delta) {
+inline static void EXPAND_SERIES_TAIL(REBSER *s, REBLEN delta) {
     if (SER_FITS(s, delta))
         SET_SERIES_LEN(s, SER_LEN(s) + delta);
     else
@@ -268,7 +268,7 @@ inline static void TERM_SEQUENCE(REBSER *s) {
     memset(SER_AT_RAW(SER_WIDE(s), s, SER_LEN(s)), 0, SER_WIDE(s));
 }
 
-inline static void TERM_SEQUENCE_LEN(REBSER *s, REBCNT len) {
+inline static void TERM_SEQUENCE_LEN(REBSER *s, REBLEN len) {
     SET_SERIES_LEN(s, len);
     TERM_SEQUENCE(s);
 }
@@ -510,11 +510,11 @@ inline static void INIT_VAL_SERIES(Cell* v, REBSER *s) {
 #else
     // allows an assert, but also lvalue: `VAL_INDEX(v) = xxx`
     //
-    inline static REBCNT & VAL_INDEX(Cell* v) { // C++ reference type
+    inline static REBLEN & VAL_INDEX(Cell* v) { // C++ reference type
         assert(ANY_SERIES(v));
         return v->payload.any_series.index;
     }
-    inline static REBCNT VAL_INDEX(const Cell* v) {
+    inline static REBLEN VAL_INDEX(const Cell* v) {
         assert(ANY_SERIES(v));
         return v->payload.any_series.index;
     }
@@ -523,7 +523,7 @@ inline static void INIT_VAL_SERIES(Cell* v, REBSER *s) {
 #define VAL_LEN_HEAD(v) \
     SER_LEN(VAL_SERIES(v))
 
-inline static REBCNT VAL_LEN_AT(const Cell* v) {
+inline static REBLEN VAL_LEN_AT(const Cell* v) {
     if (VAL_INDEX(v) >= VAL_LEN_HEAD(v))
         return 0; // avoid negative index
     return VAL_LEN_HEAD(v) - VAL_INDEX(v); // take current index into account
@@ -594,7 +594,7 @@ inline static REBSER *Alloc_Series_Node(REBFLGS flags) {
 }
 
 
-inline static REBCNT FIND_POOL(size_t size) {
+inline static REBLEN FIND_POOL(size_t size) {
   #if !defined(NDEBUG)
     if (PG_Always_Malloc)
         return SYSTEM_POOL;
@@ -615,7 +615,7 @@ inline static REBCNT FIND_POOL(size_t size) {
 // This routine can thus be used for an initial construction or an operation
 // like expansion.
 //
-inline static bool Did_Series_Data_Alloc(REBSER *s, REBCNT length) {
+inline static bool Did_Series_Data_Alloc(REBSER *s, REBLEN length) {
     //
     // Currently once a series becomes dynamic, it never goes back.  There is
     // no shrinking process that will pare it back to fit completely inside
@@ -626,9 +626,9 @@ inline static bool Did_Series_Data_Alloc(REBSER *s, REBCNT length) {
     REBYTE wide = SER_WIDE(s);
     assert(wide != 0);
 
-    REBCNT size; // size of allocation (possibly bigger than we need)
+    REBLEN size; // size of allocation (possibly bigger than we need)
 
-    REBCNT pool_num = FIND_POOL(length * wide);
+    REBLEN pool_num = FIND_POOL(length * wide);
     if (pool_num < SYSTEM_POOL) {
         // ...there is a pool designated for allocations of this size range
         s->content.dynamic.data = cast(char*, Make_Node(pool_num));
@@ -651,7 +651,7 @@ inline static bool Did_Series_Data_Alloc(REBSER *s, REBCNT length) {
 
         size = length * wide;
         if (GET_SER_FLAG(s, SERIES_FLAG_POWER_OF_2)) {
-            REBCNT len = 2048;
+            REBLEN len = 2048;
             while (len < size)
                 len *= 2;
             size = len;
@@ -703,7 +703,7 @@ inline static bool Did_Series_Data_Alloc(REBSER *s, REBCNT length) {
 // Large series will be allocated from system memory.
 //
 inline static REBSER *Make_Ser_Core(
-    REBCNT capacity,
+    REBLEN capacity,
     REBYTE wide,
     REBFLGS flags
 ){

@@ -41,7 +41,7 @@
 // Identical to ROUND mezzanine function.
 // Note: scale arg only valid if RF_TO is set
 //
-REBDEC Round_Dec(REBDEC dec, REBCNT flags, REBDEC scale)
+REBDEC Round_Dec(REBDEC dec, REBLEN flags, REBDEC scale)
 {
     REBDEC r;
     union {REBDEC d; REBI64 i;} m;
@@ -147,7 +147,7 @@ REBDEC Round_Dec(REBDEC dec, REBCNT flags, REBDEC scale)
 // Identical to ROUND mezzanine function.
 // Note: scale arg only valid if RF_TO is set
 //
-REBI64 Round_Int(REBI64 num, REBCNT flags, REBI64 scale)
+REBI64 Round_Int(REBI64 num, REBLEN flags, REBI64 scale)
 {
     /* using safe unsigned arithmetic */
     REBU64 sc, n, r, m, s;
@@ -191,7 +191,7 @@ REBI64 Round_Int(REBI64 num, REBCNT flags, REBI64 scale)
 // Identical to ROUND mezzanine function.
 // Note: scale arg only valid if RF_TO is set
 //
-deci Round_Deci(deci num, REBCNT flags, deci scale)
+deci Round_Deci(deci num, REBLEN flags, deci scale)
 {
     deci deci_one = {1u, 0u, 0u, 0u, 0};
 

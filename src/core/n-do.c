@@ -524,7 +524,7 @@ REBNATIVE(evaluate)
             Move_Value(Sink_Var_May_Fail(ARG(var), SPECIFIED), temp);
 
         Move_Value(D_OUT, source);
-        VAL_INDEX(D_OUT) = cast(REBCNT, indexor) - 1; // was one past
+        VAL_INDEX(D_OUT) = cast(REBLEN, indexor) - 1; // was one past
         assert(VAL_INDEX(D_OUT) <= VAL_LEN_HEAD(source));
         return D_OUT; }
 

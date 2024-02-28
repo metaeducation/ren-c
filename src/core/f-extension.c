@@ -93,7 +93,7 @@ REBNATIVE(builtin_extensions)
     // use the extension (but don't act on the information yet!)
 
     REBARR *list = Make_Arr(NUM_BUILTIN_EXTENSIONS);
-    REBCNT i;
+    REBLEN i;
     for (i = 0; i != NUM_BUILTIN_EXTENSIONS; ++i) {
         COLLATE_CFUNC *collator = Builtin_Extension_Collators[i];
         Value* details = (*collator)();
@@ -190,7 +190,7 @@ REBNATIVE(load_extension)
     Value* specs_compressed = KNOWN(ARR_AT(details, IDX_COLLATOR_SPECS));
     Value* dispatchers_handle = KNOWN(ARR_AT(details, IDX_COLLATOR_DISPATCHERS));
 
-    REBCNT num_natives = VAL_HANDLE_LEN(dispatchers_handle);
+    REBLEN num_natives = VAL_HANDLE_LEN(dispatchers_handle);
     REBNAT *dispatchers = VAL_HANDLE_POINTER(REBNAT, dispatchers_handle);
 
     size_t specs_size;
@@ -234,7 +234,7 @@ REBNATIVE(load_extension)
     REBDSP dsp_orig = DSP; // for accumulating exports
 
     Cell* item = ARR_HEAD(specs);
-    REBCNT i;
+    REBLEN i;
     for (i = 0; i < num_natives; ++i) {
         //
         // Initial extension mechanism had an /export refinement on native.
@@ -452,9 +452,9 @@ REBNATIVE(unload_extension)
 // This has to be considered in the unloading mechanics.
 //
 Value* rebCollateExtension_internal(
-    const REBYTE script_compressed[], REBCNT script_compressed_len,
-    const REBYTE specs_compressed[], REBCNT specs_compressed_len,
-    REBNAT dispatchers[], REBCNT dispatchers_len
+    const REBYTE script_compressed[], REBLEN script_compressed_len,
+    const REBYTE specs_compressed[], REBLEN specs_compressed_len,
+    REBNAT dispatchers[], REBLEN dispatchers_len
 ) {
 
     REBARR *a = Make_Arr(IDX_COLLATOR_MAX); // details

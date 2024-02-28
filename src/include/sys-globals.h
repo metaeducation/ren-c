@@ -58,9 +58,9 @@ PVAR REBU64 PG_Mem_Limit;   // Memory limit set by SECURE
 //
 PVAR REBSTR *PG_Symbol_Canons; // Canon symbol pointers for words in %words.r
 PVAR REBSTR *PG_Canons_By_Hash; // Canon REBSER pointers indexed by hash
-PVAR REBCNT PG_Num_Canon_Slots_In_Use; // Total canon hash slots (+ deleteds)
+PVAR REBLEN PG_Num_Canon_Slots_In_Use; // Total canon hash slots (+ deleteds)
 #if !defined(NDEBUG)
-    PVAR REBCNT PG_Num_Canon_Deleteds; // Deleted canon hash slots "in use"
+    PVAR REBLEN PG_Num_Canon_Deleteds; // Deleted canon hash slots "in use"
 #endif
 
 PVAR REBCTX *Lib_Context;
@@ -247,5 +247,5 @@ TVAR REBFLGS Eval_Sigmask;   // Masking out signal flags
 TVAR REBFLGS Trace_Flags;    // Trace flag
 TVAR REBINT Trace_Level;    // Trace depth desired
 TVAR REBINT Trace_Depth;    // Tracks trace indentation
-TVAR REBCNT Trace_Limit;    // Backtrace buffering limit
+TVAR REBLEN Trace_Limit;    // Backtrace buffering limit
 TVAR REBSER *Trace_Buffer;  // Holds backtrace lines

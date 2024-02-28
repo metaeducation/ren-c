@@ -237,7 +237,7 @@ static bool Subparse_Throws(
     // If there's an array for collecting into, there has to be some way of
     // passing it between frames.
     //
-    REBCNT collect_tail;
+    REBLEN collect_tail;
     if (opt_collection) {
         Init_Block(Prep_Stack_Cell(FRM_ARGS_HEAD(f) + 3), opt_collection);
         collect_tail = ARR_LEN(opt_collection);  // roll back here on failure
@@ -491,7 +491,7 @@ REB_R Process_Group_For_Parse(
 static REBIXO Parse_String_One_Rule(REBFRM *f, const Cell* rule) {
     assert(IS_END(P_OUT));
 
-    REBCNT flags = P_FIND_FLAGS | AM_FIND_MATCH | AM_FIND_TAIL;
+    REBLEN flags = P_FIND_FLAGS | AM_FIND_MATCH | AM_FIND_TAIL;
 
     if (Trace_Level) {
         Trace_Value("match", rule);
@@ -544,7 +544,7 @@ static REBIXO Parse_String_One_Rule(REBFRM *f, const Cell* rule) {
     case REB_EMAIL:
     case REB_TEXT:
     case REB_BINARY: {
-        REBCNT index = Find_Str_Str(
+        REBLEN index = Find_Str_Str(
             P_INPUT,
             0,
             P_POS,
@@ -566,7 +566,7 @@ static REBIXO Parse_String_One_Rule(REBFRM *f, const Cell* rule) {
         // actual series data.  This FORMs it, but could be more optimized.
         //
         REBSER *formed = Copy_Form_Value(rule, 0);
-        REBCNT index = Find_Str_Str(
+        REBLEN index = Find_Str_Str(
             P_INPUT,
             0,
             P_POS,
@@ -621,7 +621,7 @@ static REBIXO Parse_String_One_Rule(REBFRM *f, const Cell* rule) {
 
         REBINT index = VAL_INT32(subresult);
         assert(index >= 0);
-        return cast(REBCNT, index); }
+        return cast(REBLEN, index); }
 
     default:
         fail (Error_Parse_Rule());
@@ -646,7 +646,7 @@ static REBIXO Parse_String_One_Rule(REBFRM *f, const Cell* rule) {
 //
 static REBIXO Parse_Array_One_Rule_Core(
     REBFRM *f,
-    REBCNT pos,
+    REBLEN pos,
     const Cell* rule
 ) {
     assert(IS_END(P_OUT));
@@ -718,7 +718,7 @@ static REBIXO Parse_Array_One_Rule_Core(
         // Hence the return value regarding whether a match occurred or not
         // has to be based on the result that comes back in P_OUT.
         //
-        REBCNT pos_before = P_POS;
+        REBLEN pos_before = P_POS;
         bool interrupted;
 
         P_POS = pos; // modify input position
@@ -747,7 +747,7 @@ static REBIXO Parse_Array_One_Rule_Core(
 
         REBINT index = VAL_INT32(subresult);
         assert(index >= 0);
-        return cast(REBCNT, index); }
+        return cast(REBLEN, index); }
 
     default:
         break;
@@ -778,7 +778,7 @@ inline static REBIXO Parse_Array_One_Rule(REBFRM *f, const Cell* rule) {
 //
 static REBIXO Parse_One_Rule(
     REBFRM *f,
-    REBCNT pos,
+    REBLEN pos,
     const Cell* rule
 ){
     if (ANY_ARRAY(P_INPUT_VALUE))
@@ -806,7 +806,7 @@ static REBIXO To_Thru_Block_Rule(
 ) {
     DECLARE_LOCAL (cell); // holds evaluated rules (use frame cell instead?)
 
-    REBCNT pos = P_POS;
+    REBLEN pos = P_POS;
     for (; pos <= SER_LEN(P_INPUT); ++pos) {
         const Cell* blk = VAL_ARRAY_HEAD(rule_block);
         for (; NOT_END(blk); blk++) {
@@ -877,7 +877,7 @@ static REBIXO To_Thru_Block_Rule(
                 }
 
                 if (i != END_FLAG) {
-                    pos = cast(REBCNT, i); // passed it, so back up if only TO
+                    pos = cast(REBLEN, i); // passed it, so back up if only TO
                     if (is_thru)
                         return pos; // don't back up
                     return pos - 1; // back up
@@ -899,7 +899,7 @@ static REBIXO To_Thru_Block_Rule(
                 }
                 else if (IS_BINARY(rule)) {
                     if (ch1 == *VAL_BIN_AT(rule)) {
-                        REBCNT len = VAL_LEN_AT(rule);
+                        REBLEN len = VAL_LEN_AT(rule);
                         if (len == 1) {
                             if (is_thru)
                                 return pos + 1;
@@ -965,8 +965,8 @@ static REBIXO To_Thru_Block_Rule(
                         // inefficient in the sense that it forms the tag
                         //
                         REBSER *formed = Copy_Form_Value(rule, 0);
-                        REBCNT len = SER_LEN(formed);
-                        REBCNT i = Find_Str_Str(
+                        REBLEN len = SER_LEN(formed);
+                        REBLEN i = Find_Str_Str(
                             P_INPUT,
                             0,
                             pos,
@@ -990,14 +990,14 @@ static REBIXO To_Thru_Block_Rule(
                     if (!P_HAS_CASE) ch2 = UP_CASE(ch2);
 
                     if (ch == ch2) {
-                        REBCNT len = VAL_LEN_AT(rule);
+                        REBLEN len = VAL_LEN_AT(rule);
                         if (len == 1) {
                             if (is_thru)
                                 return pos + 1;
                             return pos;
                         }
 
-                        REBCNT i = Find_Str_Str(
+                        REBLEN i = Find_Str_Str(
                             P_INPUT,
                             0,
                             pos,
@@ -1066,7 +1066,7 @@ static REBIXO To_Thru_Non_Block_Rule(
         // !!! Negative numbers get cast to large integers, needs error!
         // But also, should there be an option for relative addressing?
         //
-        REBCNT i = cast(REBCNT, Int32(rule)) - (is_thru ? 0 : 1);
+        REBLEN i = cast(REBLEN, Int32(rule)) - (is_thru ? 0 : 1);
         if (i > SER_LEN(P_INPUT))
             return SER_LEN(P_INPUT);
         return i;
@@ -1093,7 +1093,7 @@ static REBIXO To_Thru_Non_Block_Rule(
             rule = word;
         }
 
-        REBCNT i = Find_In_Array(
+        REBLEN i = Find_In_Array(
             ARR(P_INPUT),
             P_POS,
             SER_LEN(P_INPUT),
@@ -1118,8 +1118,8 @@ static REBIXO To_Thru_Non_Block_Rule(
         if (not IS_TEXT(rule) and not IS_BINARY(rule)) {
             // !!! Can this be optimized not to use COPY?
             REBSER *formed = Copy_Form_Value(rule, 0);
-            REBCNT form_len = SER_LEN(formed);
-            REBCNT i = Find_Str_Str(
+            REBLEN form_len = SER_LEN(formed);
+            REBLEN i = Find_Str_Str(
                 P_INPUT,
                 0,
                 P_POS,
@@ -1143,7 +1143,7 @@ static REBIXO To_Thru_Non_Block_Rule(
             return i;
         }
 
-        REBCNT i = Find_Str_Str(
+        REBLEN i = Find_Str_Str(
             P_INPUT,
             0,
             P_POS,
@@ -1167,7 +1167,7 @@ static REBIXO To_Thru_Non_Block_Rule(
     }
 
     if (IS_CHAR(rule)) {
-        REBCNT i = Find_Str_Char(
+        REBLEN i = Find_Str_Char(
             VAL_CHAR(rule),
             P_INPUT,
             0,
@@ -1189,7 +1189,7 @@ static REBIXO To_Thru_Non_Block_Rule(
     }
 
     if (IS_BITSET(rule)) {
-        REBCNT i = Find_Str_Bitset(
+        REBLEN i = Find_Str_Bitset(
             P_INPUT,
             0,
             P_POS,
@@ -1296,7 +1296,7 @@ static REBIXO Do_Eval_Rule(REBFRM *f)
         }
 
         if (indexor != END_FLAG)
-            indexor = cast(REBCNT, indexor) - 1; // 1 past
+            indexor = cast(REBLEN, indexor) - 1; // 1 past
 
         // !!! This copies a single value into a block to use as data, because
         // parse input is matched as a series.  Can this be avoided?
@@ -1422,7 +1422,7 @@ REBNATIVE(subparse)
     // were not clear; many cases dropped them on the floor in R3-Alpha, and
     // no real resolution exists...see the UNUSED(interrupted) cases.)
     //
-    REBCNT collection_tail = P_COLLECTION ? ARR_LEN(P_COLLECTION) : 0;
+    REBLEN collection_tail = P_COLLECTION ? ARR_LEN(P_COLLECTION) : 0;
     UNUSED(ARG(collection)); // implicitly accessed as P_COLLECTION
 
     assert(IS_END(P_OUT)); // invariant provided by evaluator
@@ -1433,7 +1433,7 @@ REBNATIVE(subparse)
     // annoying to find to inspect in the debugger.  This makes pointers into
     // the value payloads so they can be seen more easily.
     //
-    const REBCNT *pos_debug = &P_POS;
+    const REBLEN *pos_debug = &P_POS;
     (void)pos_debug; // UNUSED() forces corruption in C++11 debug builds
   #endif
 
@@ -1443,8 +1443,8 @@ REBNATIVE(subparse)
 
     DECLARE_LOCAL (save);
 
-    REBCNT start = P_POS; // recovery restart point
-    REBCNT begin = P_POS; // point at beginning of match
+    REBLEN start = P_POS; // recovery restart point
+    REBLEN begin = P_POS; // point at beginning of match
 
     // The loop iterates across each cell's worth of "rule" in the rule
     // block.  Some of these rules just set `flags` and `continue`, so that
@@ -1694,7 +1694,7 @@ REBNATIVE(subparse)
                     else
                         only = false;
 
-                    REBCNT pos_before = P_POS;
+                    REBLEN pos_before = P_POS;
 
                     rule = Get_Parse_Value(save, P_RULE, P_RULE_SPECIFIER);
 
@@ -1763,7 +1763,7 @@ REBNATIVE(subparse)
                         if (ixo == END_FLAG)  // match of rule failed
                             goto next_alternate;  // backtrack collect, seek |
 
-                        P_POS = cast(REBCNT, ixo);
+                        P_POS = cast(REBLEN, ixo);
                         assert(P_POS >= pos_before);  // 0 or more matches
 
                         REBARR *target;
@@ -1793,7 +1793,7 @@ REBNATIVE(subparse)
                             target = P_COLLECTION;
 
                         if (target) {
-                            REBCNT n;
+                            REBLEN n;
                             for (n = pos_before; n < P_POS; ++n)
                                 Derelativize(
                                     Alloc_Tail_Array(target),
@@ -2224,7 +2224,7 @@ REBNATIVE(subparse)
                     if (i == END_FLAG)
                         P_POS = NOT_FOUND;
                     else
-                        P_POS = cast(REBCNT, i);
+                        P_POS = cast(REBLEN, i);
                     break;
                 }
             }
@@ -2268,14 +2268,14 @@ REBNATIVE(subparse)
                     P_POS = NOT_FOUND; // was not enough
                 }
                 else if (i != END_FLAG) {
-                    P_POS = cast(REBCNT, i);
+                    P_POS = cast(REBLEN, i);
                 }
                 else {
                     // just keep index as is.
                 }
                 break;
             }
-            P_POS = cast(REBCNT, i);
+            P_POS = cast(REBLEN, i);
         }
 
         if (P_POS > SER_LEN(P_INPUT))
@@ -2441,7 +2441,7 @@ REBNATIVE(subparse)
                         DECLARE_LOCAL (specified);
                         Derelativize(specified, rule, P_RULE_SPECIFIER);
 
-                        REBCNT mod_flags = (flags & PF_INSERT) ? 0 : AM_PART;
+                        REBLEN mod_flags = (flags & PF_INSERT) ? 0 : AM_PART;
                         if (
                             not only and
                             Splices_Into_Type_Without_Only(P_TYPE, specified)
@@ -2472,7 +2472,7 @@ REBNATIVE(subparse)
 
                         P_POS = begin;
 
-                        REBCNT mod_flags = (flags & PF_INSERT) ? 0 : AM_PART;
+                        REBLEN mod_flags = (flags & PF_INSERT) ? 0 : AM_PART;
 
                         if (P_TYPE == REB_BINARY)
                             P_POS = Modify_Binary(
@@ -2580,7 +2580,7 @@ REBNATIVE(parse)
     if (IS_NULLED(D_OUT))
         return nullptr;
 
-    REBCNT progress = VAL_UINT32(D_OUT);
+    REBLEN progress = VAL_UINT32(D_OUT);
     assert(progress <= VAL_LEN_HEAD(ARG(input)));
     Move_Value(D_OUT, ARG(input));
     VAL_INDEX(D_OUT) = progress;

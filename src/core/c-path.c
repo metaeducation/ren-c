@@ -292,7 +292,7 @@ bool Eval_Path_Throws_Core(
     Value* out, // if opt_setval, this is only used to return a thrown value
     REBSTR **label_out,
     REBARR *array,
-    REBCNT index,
+    REBLEN index,
     REBSPC *specifier,
     const Value* opt_setval, // Note: may be the same as out!
     REBFLGS flags
@@ -517,7 +517,7 @@ void Get_Simple_Value_Into(Value* out, const Cell* val, REBSPC *specifier)
 // does not execute GROUP! (and perhaps shouldn't?) and only supports a
 // path that picks contexts out of other contexts, via word selection.
 //
-REBCTX *Resolve_Path(const Value* path, REBCNT *index_out)
+REBCTX *Resolve_Path(const Value* path, REBLEN *index_out)
 {
     REBARR *array = VAL_ARRAY(path);
     Cell* picker = ARR_HEAD(array);
@@ -532,7 +532,7 @@ REBCTX *Resolve_Path(const Value* path, REBCNT *index_out)
         return NULL; // !!! does not handle single-element paths
 
     while (ANY_CONTEXT(var) and IS_WORD(picker)) {
-        REBCNT i = Find_Canon_In_Context(
+        REBLEN i = Find_Canon_In_Context(
             VAL_CONTEXT(var), VAL_WORD_CANON(picker), false
         );
         ++picker;

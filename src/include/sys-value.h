@@ -1455,7 +1455,7 @@ inline static void SET_EVENT_XY(Cell* v, REBINT x, REBINT y) {
 #define VAL_EVENT_KCODE(v) \
     ((VAL_EVENT_DATA(v) >> 16) & 0xffff)
 
-inline static void SET_EVENT_KEY(Cell* v, REBCNT k, REBCNT c) {
+inline static void SET_EVENT_KEY(Cell* v, REBLEN k, REBLEN c) {
     VAL_EVENT_DATA(v) = ((c << 16) + k);
 }
 
@@ -1592,8 +1592,8 @@ inline static void INIT_BINDING_MAY_MANAGE(Cell* out, REBNOD* binding) {
         // If the cell we're writing to is a stack cell, there's a chance
         // that management/reification of the binding can be avoided.
         //
-        REBCNT bind_depth = 1; // !!! need to find v's binding stack level
-        REBCNT out_depth;
+        REBLEN bind_depth = 1; // !!! need to find v's binding stack level
+        REBLEN out_depth;
         if (not (out->header.bits & CELL_FLAG_STACK))
             out_depth = 0;
         else

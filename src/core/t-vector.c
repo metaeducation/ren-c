@@ -50,13 +50,13 @@
 //
 //  Get_Vector_At: C
 //
-void Get_Vector_At(Cell* out, REBSER *vec, REBCNT n)
+void Get_Vector_At(Cell* out, REBSER *vec, REBLEN n)
 {
     REBYTE *data = SER_DATA_RAW(vec);
 
     bool non_integer = (MISC(vec).vect_info.non_integer == 1);
     bool sign = (MISC(vec).vect_info.sign == 1);
-    REBCNT bits = MISC(vec).vect_info.bits;
+    REBLEN bits = MISC(vec).vect_info.bits;
 
     if (non_integer) {
         assert(sign);
@@ -121,7 +121,7 @@ void Get_Vector_At(Cell* out, REBSER *vec, REBCNT n)
 
 static void Set_Vector_At_Core(
     REBSER *vec,
-    REBCNT n,
+    REBLEN n,
     const Cell* v,
     REBSPC *specifier
 ){
@@ -129,7 +129,7 @@ static void Set_Vector_At_Core(
 
     bool non_integer = (MISC(vec).vect_info.non_integer == 1);
     bool sign = (MISC(vec).vect_info.sign == 1);
-    REBCNT bits = MISC(vec).vect_info.bits;
+    REBLEN bits = MISC(vec).vect_info.bits;
 
     if (non_integer) {
         assert(sign);
@@ -232,7 +232,7 @@ static void Set_Vector_At_Core(
 
 inline static void Set_Vector_At(
     REBSER *series,
-    REBCNT index,
+    REBLEN index,
     const Value* v
 ){
     Set_Vector_At_Core(series, index, v, SPECIFIED);
@@ -240,13 +240,13 @@ inline static void Set_Vector_At(
 
 void Set_Vector_Row(REBSER *ser, const Value* blk) // !!! can not be BLOCK!?
 {
-    REBCNT idx = VAL_INDEX(blk);
-    REBCNT len = VAL_LEN_AT(blk);
+    REBLEN idx = VAL_INDEX(blk);
+    REBLEN len = VAL_LEN_AT(blk);
 
     if (IS_BLOCK(blk)) {
         Cell* val = VAL_ARRAY_AT(blk);
 
-        REBCNT n = 0;
+        REBLEN n = 0;
         for (; NOT_END(val); val++) {
             //if (n >= ser->tail) Expand_Vector(ser);
 
@@ -258,7 +258,7 @@ void Set_Vector_Row(REBSER *ser, const Value* blk) // !!! can not be BLOCK!?
 
         DECLARE_LOCAL (temp);
 
-        REBCNT n = 0;
+        REBLEN n = 0;
         for (; len > 0; len--, idx++) {
             Init_Integer(temp, cast(REBI64, data[idx]));
             Set_Vector_At(ser, n++, temp);
@@ -275,13 +275,13 @@ void Set_Vector_Row(REBSER *ser, const Value* blk) // !!! can not be BLOCK!?
 REBARR *Vector_To_Array(const Value* vect)
 {
     REBSER *ser = VAL_SERIES(vect);
-    REBCNT len = VAL_LEN_AT(vect);
+    REBLEN len = VAL_LEN_AT(vect);
     if (len <= 0)
         fail (Error_Invalid(vect));
 
     REBARR *arr = Make_Arr(len);
     Cell* dest = ARR_HEAD(arr);
-    REBCNT n;
+    REBLEN n;
     for (n = VAL_INDEX(vect); n < VAL_LEN_HEAD(vect); ++n, ++dest)
         Get_Vector_At(dest, ser, n);
 
@@ -310,16 +310,16 @@ REBINT Compare_Vector(const Cell* v1, const Cell* v2)
     if (non_integer1 != non_integer2)
         fail (Error_Not_Same_Type_Raw()); // !!! is this error necessary?
 
-    REBCNT l1 = VAL_LEN_AT(v1);
-    REBCNT l2 = VAL_LEN_AT(v2);
-    REBCNT len = MIN(l1, l2);
+    REBLEN l1 = VAL_LEN_AT(v1);
+    REBLEN l2 = VAL_LEN_AT(v2);
+    REBLEN len = MIN(l1, l2);
 
     DECLARE_LOCAL(temp1);
     DECLARE_LOCAL(temp2);
     Init_Integer(temp1, 0);
     Init_Integer(temp2, 0);
 
-    REBCNT n;
+    REBLEN n;
     for (n = 0; n < len; n++) {
         Get_Vector_At(temp1, ser1, n + VAL_INDEX(v1));
         Get_Vector_At(temp2, ser2, n + VAL_INDEX(v2));
@@ -341,14 +341,14 @@ REBINT Compare_Vector(const Cell* v1, const Cell* v2)
 void Shuffle_Vector(Value* vect, bool secure)
 {
     REBSER *ser = VAL_SERIES(vect);
-    REBCNT idx = VAL_INDEX(vect);
+    REBLEN idx = VAL_INDEX(vect);
 
     DECLARE_LOCAL(temp1);
     DECLARE_LOCAL(temp2);
 
-    REBCNT n;
+    REBLEN n;
     for (n = VAL_LEN_AT(vect); n > 1;) {
-        REBCNT k = idx + cast(REBCNT, Random_Int(secure)) % n;
+        REBLEN k = idx + cast(REBLEN, Random_Int(secure)) % n;
         n--;
 
         Get_Vector_At(temp1, ser, k);
@@ -367,7 +367,7 @@ static REBSER *Make_Vector(
     bool non_integer, // if true, it's a float/decimal, not integral
     bool sign, // signed or unsigned
     REBINT dims, // number of dimensions
-    REBCNT bits, // number of bits per unit (8, 16, 32, 64)
+    REBLEN bits, // number of bits per unit (8, 16, 32, 64)
     REBINT len
 ){
     assert(dims == 1);
@@ -441,7 +441,7 @@ bool Make_Vector_Spec(Value* out, const Cell* head, REBSPC *specifier)
     else
         non_integer = false; // default to integer, not floating point
 
-    REBCNT bits;
+    REBLEN bits;
     if (not IS_INTEGER(item))
         return false; // bit size required, no defaulting
 
@@ -454,7 +454,7 @@ bool Make_Vector_Spec(Value* out, const Cell* head, REBSPC *specifier)
     if (not (bits == 8 or bits == 16 or bits == 32 or bits == 64))
         return false;
 
-    REBCNT size;
+    REBLEN size;
     if (NOT_END(item) && IS_INTEGER(item)) {
         if (Int32(item) < 0)
             return false;
@@ -468,7 +468,7 @@ bool Make_Vector_Spec(Value* out, const Cell* head, REBSPC *specifier)
 
     const Value* iblk;
     if (NOT_END(item) and (IS_BLOCK(item) or IS_BINARY(item))) {
-        REBCNT len = VAL_LEN_AT(item);
+        REBLEN len = VAL_LEN_AT(item);
         if (IS_BINARY(item) and not non_integer)
             return false;
         if (len > size)
@@ -479,7 +479,7 @@ bool Make_Vector_Spec(Value* out, const Cell* head, REBSPC *specifier)
     else
         iblk = NULL;
 
-    REBCNT index;
+    REBLEN index;
     if (NOT_END(item) && IS_INTEGER(item)) {
         index = (Int32s(item, 1) - 1);
         ++item;
@@ -582,7 +582,7 @@ void Pick_Vector(Value* out, const Value* value, const Value* picker) {
 
     n += VAL_INDEX(value);
 
-    if (n <= 0 or cast(REBCNT, n) > SER_LEN(vect)) {
+    if (n <= 0 or cast(REBLEN, n) > SER_LEN(vect)) {
         Init_Nulled(out);
         return; // out of range of vector data
     }
@@ -615,7 +615,7 @@ void Poke_Vector_Fail_If_Read_Only(
 
     n += VAL_INDEX(value);
 
-    if (n <= 0 or cast(REBCNT, n) > SER_LEN(vect))
+    if (n <= 0 or cast(REBLEN, n) > SER_LEN(vect))
         fail (Error_Out_Of_Range(picker));
 
     Set_Vector_At(vect, n - 1, poke);
@@ -725,8 +725,8 @@ void MF_Vector(REB_MOLD *mo, const Cell* v, bool form)
 {
     REBSER *vect = VAL_SERIES(v);
 
-    REBCNT len;
-    REBCNT n;
+    REBLEN len;
+    REBLEN n;
     if (GET_MOLD_FLAG(mo, MOLD_FLAG_ALL)) {
         len = VAL_LEN_HEAD(v);
         n = 0;
@@ -737,7 +737,7 @@ void MF_Vector(REB_MOLD *mo, const Cell* v, bool form)
 
     bool non_integer = (MISC(vect).vect_info.non_integer == 1);
     bool sign = (MISC(vect).vect_info.sign == 1);
-    REBCNT bits = MISC(vect).vect_info.bits;
+    REBLEN bits = MISC(vect).vect_info.bits;
 
     if (not form) {
         enum Reb_Kind kind = non_integer ? REB_DECIMAL : REB_INTEGER;
@@ -759,7 +759,7 @@ void MF_Vector(REB_MOLD *mo, const Cell* v, bool form)
 
     DECLARE_LOCAL (temp);
 
-    REBCNT c = 0;
+    REBLEN c = 0;
     for (; n < SER_LEN(vect); n++) {
 
         Get_Vector_At(temp, vect, n);

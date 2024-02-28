@@ -119,7 +119,7 @@ REBCTX *Make_Context_For_Action_Int_Partials(
 
     REBACT *act = VAL_ACTION(action);
 
-    REBCNT num_slots = ACT_NUM_PARAMS(act) + 1;
+    REBLEN num_slots = ACT_NUM_PARAMS(act) + 1;
     REBARR *varlist = Make_Arr_Core(
         num_slots, // includes +1 for the CTX_ARCHETYPE() at [0]
         SERIES_MASK_CONTEXT
@@ -138,7 +138,7 @@ REBCTX *Make_Context_For_Action_Int_Partials(
     Value* arg = rootvar + 1;
     const Value* special = ACT_SPECIALTY_HEAD(act); // of exemplar/paramlist
 
-    REBCNT index = 1; // used to bind REFINEMENT! values to parameter slots
+    REBLEN index = 1; // used to bind REFINEMENT! values to parameter slots
 
     REBCTX *exemplar = ACT_EXEMPLAR(act); // may be null
     if (exemplar)
@@ -187,7 +187,7 @@ REBCTX *Make_Context_For_Action_Int_Partials(
         // of their stack order.
 
         if (IS_ISSUE(special)) {
-            REBCNT partial_index = VAL_WORD_INDEX(special);
+            REBLEN partial_index = VAL_WORD_INDEX(special);
             DS_PUSH_TRASH;
             Init_Any_Word_Bound( // push an ISSUE! to data stack
                 DS_TOP,
@@ -465,7 +465,7 @@ bool Specialize_Action_Throws(
     Value* param = rootkey + 1;
     Value* arg = CTX_VARS_HEAD(exemplar);
     Value* refine = ORDINARY_ARG; // parallels states in Eval_Core_Throw()
-    REBCNT index = 1;
+    REBLEN index = 1;
 
     Value* first_partial = nullptr;
     Value* last_partial = nullptr;
@@ -740,7 +740,7 @@ bool Specialize_Action_Throws(
             // code block will come after all the refinements in the path,
             // making it *first* in the exemplar partial/unspecialized slots.
             //
-            REBCNT evoked_index = evoked->payload.partial.index;
+            REBLEN evoked_index = evoked->payload.partial.index;
             Init_Any_Word_Bound(
                 partial,
                 REB_ISSUE,
@@ -1295,7 +1295,7 @@ REBNATIVE(does)
 
     REBACT *unspecialized = VAL_ACTION(specializee);
 
-    REBCNT num_slots = ACT_NUM_PARAMS(unspecialized) + 1;
+    REBLEN num_slots = ACT_NUM_PARAMS(unspecialized) + 1;
     REBARR *paramlist = Make_Arr_Core(num_slots, SERIES_MASK_ACTION);
 
     Cell* archetype = RESET_CELL(ARR_HEAD(paramlist), REB_ACTION);

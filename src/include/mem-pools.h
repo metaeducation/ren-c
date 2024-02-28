@@ -49,8 +49,8 @@ typedef struct rebol_mem_segment {
 // Specifies initial pool sizes
 //
 typedef struct rebol_mem_spec {
-    REBCNT wide; // size of allocation unit
-    REBCNT units; // units per segment allocation
+    REBLEN wide; // size of allocation unit
+    REBLEN units; // units per segment allocation
 } REBPOOLSPEC;
 
 
@@ -60,10 +60,10 @@ struct rebol_mem_pool {
     REBSEG *segs; // first memory segment
     REBNOD *first; // first free node in pool
     REBNOD *last; // last free node in pool
-    REBCNT wide; // size of allocation unit
-    REBCNT units; // units per segment allocation
-    REBCNT free; // number of units remaining
-    REBCNT  has; // total number of units
+    REBLEN wide; // size of allocation unit
+    REBLEN units; // units per segment allocation
+    REBLEN free; // number of units remaining
+    REBLEN  has; // total number of units
 };
 
 #define DEF_POOL(size, count) {size, count}

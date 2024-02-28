@@ -99,7 +99,7 @@ REB_R MAKE_Word(Value* out, enum Reb_Kind kind, const Value* arg)
     }
     else if (IS_CHAR(arg)) {
         REBYTE buf[8];
-        REBCNT len = Encode_UTF8_Char(&buf[0], VAL_CHAR(arg));
+        REBLEN len = Encode_UTF8_Char(&buf[0], VAL_CHAR(arg));
         if (NULL == Scan_Any_Word(out, kind, &buf[0], len))
             fail (Error_Bad_Char_Raw(arg));
         return out;
@@ -249,7 +249,7 @@ REBTYPE(Word)
             REBSTR *spelling = VAL_WORD_SPELLING(val);
             const REBYTE *bp = cb_cast(STR_HEAD(spelling));
             REBSIZ size = STR_SIZE(spelling);
-            REBCNT len = 0;
+            REBLEN len = 0;
             for (; size > 0; ++bp, --size) {
                 if (*bp < 0x80)
                     ++len;

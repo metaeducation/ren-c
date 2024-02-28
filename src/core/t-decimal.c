@@ -88,11 +88,11 @@ static char *gcvt(double value, int digits, char *buffer)
     }
     Notes: {
         the max_diff parameter does not need to be a REBI64 number,
-        a smaller range like REBCNT may suffice
+        a smaller range like REBLEN may suffice
     }
 */
 
-bool almost_equal(REBDEC a, REBDEC b, REBCNT max_diff) {
+bool almost_equal(REBDEC a, REBDEC b, REBLEN max_diff) {
     union {REBDEC d; REBI64 i;} ua, ub;
     REBI64 int_diff;
 
@@ -122,11 +122,11 @@ Value* Init_Decimal_Bits(Cell* out, const REBYTE *bp)
     REBYTE *dp = cast(REBYTE*, &VAL_DECIMAL(out));
 
   #ifdef ENDIAN_LITTLE
-    REBCNT n;
+    REBLEN n;
     for (n = 0; n < 8; ++n)
         dp[n] = bp[7 - n];
   #elif defined(ENDIAN_BIG)
-    REBCNT n;
+    REBLEN n;
     for (n = 0; n < 8; ++n)
         dp[n] = bp[n];
   #else

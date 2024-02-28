@@ -195,12 +195,12 @@ void Debug_Line(void)
 //
 // Print a character out a number of times.
 //
-void Debug_Chars(REBYTE chr, REBCNT num)
+void Debug_Chars(REBYTE chr, REBLEN num)
 {
     assert(num < 100);
 
     REBYTE buffer[100];
-    REBCNT i;
+    REBLEN i;
     for (i = 0; i < num; ++i)
         buffer[i] = chr;
     buffer[num] = '\0';
@@ -213,7 +213,7 @@ void Debug_Chars(REBYTE chr, REBCNT num)
 //
 // Print a number of spaces.
 //
-void Debug_Space(REBCNT num)
+void Debug_Space(REBLEN num)
 {
     if (num > 0) Debug_Chars(' ', num);
 }
@@ -222,12 +222,12 @@ void Debug_Space(REBCNT num)
 //
 //  Debug_Values: C
 //
-void Debug_Values(const Cell* value, REBCNT count, REBCNT limit)
+void Debug_Values(const Cell* value, REBLEN count, REBLEN limit)
 {
-    REBCNT i1;
-    REBCNT i2;
+    REBLEN i1;
+    REBLEN i2;
     REBUNI uc, pc = ' ';
-    REBCNT n;
+    REBLEN n;
 
     for (n = 0; n < count; n++, value++) {
         if (n > 0 && VAL_TYPE(value) <= REB_BLANK) Debug_Chars('.', 1);
@@ -386,7 +386,7 @@ REBYTE *Form_Hex_Pad(REBYTE *buf, REBI64 val, REBINT len)
 //
 // Convert byte-sized int to xx format. Very fast.
 //
-REBYTE *Form_Hex2_UTF8(REBYTE *bp, REBCNT val)
+REBYTE *Form_Hex2_UTF8(REBYTE *bp, REBLEN val)
 {
     bp[0] = Hex_Digits[(val & 0xf0) >> 4];
     bp[1] = Hex_Digits[val & 0xf];
@@ -400,7 +400,7 @@ REBYTE *Form_Hex2_UTF8(REBYTE *bp, REBCNT val)
 //
 // Convert byte-sized int to xx format. Very fast.
 //
-REBUNI *Form_Hex2_Uni(REBUNI *up, REBCNT val)
+REBUNI *Form_Hex2_Uni(REBUNI *up, REBLEN val)
 {
     up[0] = Hex_Digits[(val & 0xf0) >> 4];
     up[1] = Hex_Digits[val & 0xf];
@@ -512,7 +512,7 @@ pick:
                 pad,
                 padding
             );
-            Append_Unencoded_Len(ser, s_cast(buf), cast(REBCNT, cp - buf));
+            Append_Unencoded_Len(ser, s_cast(buf), cast(REBLEN, cp - buf));
             break;
 
         case 's':

@@ -143,7 +143,7 @@ void MF_Char(REB_MOLD *mo, const Cell* v, bool form)
     bool parened = GET_MOLD_FLAG(mo, MOLD_FLAG_ALL);
     REBUNI chr = VAL_CHAR(v);
 
-    REBCNT tail = SER_LEN(out);
+    REBLEN tail = SER_LEN(out);
 
     if (form) {
         EXPAND_SERIES_TAIL(out, 4); // 4 is worst case scenario of bytes
@@ -257,7 +257,7 @@ REBTYPE(Char)
             return nullptr;
         }
         if (chr == 0) break;
-        chr = cast(REBUNI, 1 + cast(REBCNT, Random_Int(REF(secure)) % chr));
+        chr = cast(REBUNI, 1 + cast(REBLEN, Random_Int(REF(secure)) % chr));
         break; }
 
     default:

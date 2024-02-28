@@ -38,9 +38,9 @@
 //
 // Extend a series at its end without affecting its tail index.
 //
-void Extend_Series(REBSER *s, REBCNT delta)
+void Extend_Series(REBSER *s, REBLEN delta)
 {
-    REBCNT len_old = SER_LEN(s);
+    REBLEN len_old = SER_LEN(s);
     EXPAND_SERIES_TAIL(s, delta);
     SET_SERIES_LEN(s, len_old);
 }
@@ -53,11 +53,11 @@ void Extend_Series(REBSER *s, REBCNT delta)
 // series at the given index.  Expand it if necessary.  Does
 // not add a terminator to tail.
 //
-REBCNT Insert_Series(
+REBLEN Insert_Series(
     REBSER *s,
-    REBCNT index,
+    REBLEN index,
     const REBYTE *data,
-    REBCNT len
+    REBLEN len
 ) {
     if (index > SER_LEN(s))
         index = SER_LEN(s);
@@ -83,9 +83,9 @@ REBCNT Insert_Series(
 // The new tail position will be returned as the result.
 // A terminator will be added to the end of the appended data.
 //
-void Append_Series(REBSER *s, const void *data, REBCNT len)
+void Append_Series(REBSER *s, const void *data, REBLEN len)
 {
-    REBCNT len_old = SER_LEN(s);
+    REBLEN len_old = SER_LEN(s);
     REBYTE wide = SER_WIDE(s);
 
     assert(not IS_SER_ARRAY(s));
@@ -104,9 +104,9 @@ void Append_Series(REBSER *s, const void *data, REBCNT len)
 // the number of units and does not include the terminator
 // (which will be added).
 //
-void Append_Values_Len(REBARR *a, const Value* head, REBCNT len)
+void Append_Values_Len(REBARR *a, const Value* head, REBLEN len)
 {
-    REBCNT old_len = ARR_LEN(a);
+    REBLEN old_len = ARR_LEN(a);
 
     // updates tail, which could move data storage.
     //
@@ -144,7 +144,7 @@ REBSER *Copy_Sequence_Core(REBSER *s, REBFLGS flags)
 {
     assert(not IS_SER_ARRAY(s));
 
-    REBCNT len = SER_LEN(s);
+    REBLEN len = SER_LEN(s);
     REBSER *copy = Make_Ser_Core(len + 1, SER_WIDE(s), flags);
 
     memcpy(SER_DATA_RAW(copy), SER_DATA_RAW(s), len * SER_WIDE(s));
@@ -164,9 +164,9 @@ REBSER *Copy_Sequence_Core(REBSER *s, REBFLGS flags)
 //
 REBSER *Copy_Sequence_At_Len_Extra(
     REBSER *s,
-    REBCNT index,
-    REBCNT len,
-    REBCNT extra
+    REBLEN index,
+    REBLEN len,
+    REBLEN extra
 ){
     assert(not IS_SER_ARRAY(s));
 
@@ -187,20 +187,20 @@ REBSER *Copy_Sequence_At_Len_Extra(
 // Remove a series of values (bytes, longs, reb-vals) from the
 // series at the given index.
 //
-void Remove_Series(REBSER *s, REBCNT index, REBINT len)
+void Remove_Series(REBSER *s, REBLEN index, REBINT len)
 {
     if (len <= 0) return;
 
     bool is_dynamic = IS_SER_DYNAMIC(s);
-    REBCNT len_old = SER_LEN(s);
+    REBLEN len_old = SER_LEN(s);
 
-    REBCNT start = index * SER_WIDE(s);
+    REBLEN start = index * SER_WIDE(s);
 
     // Optimized case of head removal.  For a dynamic series this may just
     // add "bias" to the head...rather than move any bytes.
 
     if (is_dynamic and index == 0) {
-        if (cast(REBCNT, len) > len_old)
+        if (cast(REBLEN, len) > len_old)
             len = len_old;
 
         s->content.dynamic.len -= len;
@@ -262,8 +262,8 @@ void Remove_Series(REBSER *s, REBCNT index, REBINT len)
     // be implicit (e.g. there may not be a full SER_WIDE() worth of data
     // at the termination location).  Use TERM_SERIES() instead.
     //
-    REBCNT length = SER_LEN(s) * SER_WIDE(s);
-    SET_SERIES_LEN(s, len_old - cast(REBCNT, len));
+    REBLEN length = SER_LEN(s) * SER_WIDE(s);
+    SET_SERIES_LEN(s, len_old - cast(REBLEN, len));
     len *= SER_WIDE(s);
 
     REBYTE *data = SER_DATA_RAW(s) + start;
@@ -279,7 +279,7 @@ void Remove_Series(REBSER *s, REBCNT index, REBINT len)
 //
 void Unbias_Series(REBSER *s, bool keep)
 {
-    REBCNT len = SER_BIAS(s);
+    REBLEN len = SER_BIAS(s);
     if (len == 0)
         return;
 
@@ -356,7 +356,7 @@ void Clear_Series(REBSER *s)
 // Reset series and expand it to required size.
 // The tail is reset to zero.
 //
-void Resize_Series(REBSER *s, REBCNT size)
+void Resize_Series(REBSER *s, REBLEN size)
 {
     if (IS_SER_DYNAMIC(s)) {
         s->content.dynamic.len = 0;
@@ -379,7 +379,7 @@ void Resize_Series(REBSER *s, REBCNT size)
 // NOTE: The length will be set to the supplied value, but the series will
 // not be terminated.
 //
-REBYTE *Reset_Buffer(REBSER *buf, REBCNT len)
+REBYTE *Reset_Buffer(REBSER *buf, REBLEN len)
 {
     if (buf == NULL)
         panic ("buffer not yet allocated");
@@ -411,9 +411,9 @@ void Assert_Series_Term_Core(REBSER *s)
         // If they are terminated, then non-Cell-bearing series must have
         // their terminal element as all 0 bytes (to use this check)
         //
-        REBCNT len = SER_LEN(s);
-        REBCNT wide = SER_WIDE(s);
-        REBCNT n;
+        REBLEN len = SER_LEN(s);
+        REBLEN wide = SER_WIDE(s);
+        REBLEN n;
         for (n = 0; n < wide; n++) {
             if (0 != SER_DATA_RAW(s)[(len * wide) + n])
                 panic (s);

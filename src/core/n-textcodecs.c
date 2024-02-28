@@ -55,7 +55,7 @@
 // present it is to be considered part of the in-band data stream...so that
 // reading and writing back out will preserve the input.
 //
-REBINT What_UTF(const REBYTE *bp, REBCNT len)
+REBINT What_UTF(const REBYTE *bp, REBLEN len)
 {
     if (len >= 3 && bp[0] == 0xef && bp[1] == 0xbb && bp[2] == 0xbf)
         return 8; // UTF8 (endian agnostic)
@@ -97,7 +97,7 @@ REBINT What_UTF(const REBYTE *bp, REBCNT len)
 int Decode_UTF16_Negative_If_ASCII(
     REBUNI *dst,
     const REBYTE *src,
-    REBCNT len,
+    REBLEN len,
     bool little_endian,
     bool crlf_to_lf
 ){
@@ -218,7 +218,7 @@ REBNATIVE(encode_text)
 static void Encode_Utf16_Core(
     Value* out,
     REBCHR(const *) data,
-    REBCNT len,
+    REBLEN len,
     bool little_endian
 ){
     REBCHR(const *) cp = data;
@@ -226,7 +226,7 @@ static void Encode_Utf16_Core(
     REBSER *bin = Make_Binary(sizeof(uint16_t) * len);
     uint16_t* up = cast(uint16_t*, BIN_HEAD(bin));
 
-    REBCNT i = 0;
+    REBLEN i = 0;
     for (i = 0; i < len; ++i) {
         REBUNI c;
         cp = NEXT_CHR(&c, cp);
@@ -259,7 +259,7 @@ static void Encode_Utf16_Core(
 static void Decode_Utf16_Core(
     Value* out,
     const REBYTE *data,
-    REBCNT len,
+    REBLEN len,
     bool little_endian
 ){
     REBSER *ser = Make_Unicode(len); // 2x too big (?)
@@ -313,7 +313,7 @@ REBNATIVE(decode_utf16le)
     INCLUDE_PARAMS_OF_DECODE_UTF16LE;
 
     REBYTE *data = VAL_BIN_AT(ARG(data));
-    REBCNT len = VAL_LEN_AT(ARG(data));
+    REBLEN len = VAL_LEN_AT(ARG(data));
 
     const bool little_endian = true;
 
@@ -398,7 +398,7 @@ REBNATIVE(decode_utf16be)
     INCLUDE_PARAMS_OF_DECODE_UTF16BE;
 
     REBYTE *data = VAL_BIN_AT(ARG(data));
-    REBCNT len = VAL_LEN_AT(ARG(data));
+    REBLEN len = VAL_LEN_AT(ARG(data));
 
     const bool little_endian = false;
 

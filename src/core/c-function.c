@@ -542,7 +542,7 @@ REBARR *Make_Paramlist_Managed_May_Fail(
 
     // Slots, which is length +1 (includes the rootvar or rootparam)
     //
-    REBCNT num_slots = (DSP - dsp_orig) / 3;
+    REBLEN num_slots = (DSP - dsp_orig) / 3;
 
     // If we pushed a typeset for a return and it's a native, it actually
     // doesn't want a RETURN: key in the frame in release builds.  We'll omit
@@ -808,14 +808,14 @@ REBARR *Make_Paramlist_Managed_May_Fail(
 // !!! This is semi-redundant with similar functions for Find_Word_In_Array
 // and key finding for objects, review...
 //
-REBCNT Find_Param_Index(REBARR *paramlist, REBSTR *spelling)
+REBLEN Find_Param_Index(REBARR *paramlist, REBSTR *spelling)
 {
     REBSTR *canon = STR_CANON(spelling); // don't recalculate each time
 
     Cell* param = ARR_AT(paramlist, 1);
-    REBCNT len = ARR_LEN(paramlist);
+    REBLEN len = ARR_LEN(paramlist);
 
-    REBCNT n;
+    REBLEN n;
     for (n = 1; n < len; ++n, ++param) {
         if (
             spelling == VAL_PARAM_SPELLING(param)
@@ -851,7 +851,7 @@ REBACT *Make_Action(
     REBNAT dispatcher, // native C function called by Eval_Core
     REBACT *opt_underlying, // optional underlying function
     REBCTX *opt_exemplar, // if provided, should be consistent w/next level
-    REBCNT details_capacity // desired capacity of the ACT_DETAILS() array
+    REBLEN details_capacity // desired capacity of the ACT_DETAILS() array
 ){
     ASSERT_ARRAY_MANAGED(paramlist);
 
@@ -1082,7 +1082,7 @@ void Get_Maybe_Fake_Action_Body(Value* out, const Value* action)
         // optimized internal trick is used.  Fake the code if needed.
 
         Value* example;
-        REBCNT real_body_index;
+        REBLEN real_body_index;
         if (ACT_DISPATCHER(a) == &Voider_Dispatcher) {
             example = Get_System(SYS_STANDARD, STD_PROC_BODY);
             real_body_index = 4;

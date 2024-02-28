@@ -98,8 +98,8 @@ bool Do_Signals_Throws(Value* out)
     //
     // !!! This seems overdesigned considering SIG_EVENT_PORT isn't used.
     //
-    REBCNT filtered_sigs = Eval_Signals & Eval_Sigmask;
-    REBCNT saved_mask = Eval_Sigmask;
+    REBLEN filtered_sigs = Eval_Signals & Eval_Sigmask;
+    REBLEN saved_mask = Eval_Sigmask;
     Eval_Sigmask = 0;
 
     // "Be careful of signal loops! EG: do not PRINT from here."

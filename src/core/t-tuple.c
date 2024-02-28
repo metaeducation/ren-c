@@ -78,7 +78,7 @@ REB_R MAKE_Tuple(Value* out, enum Reb_Kind kind, const Value* arg)
     }
 
     if (ANY_ARRAY(arg)) {
-        REBCNT len = 0;
+        REBLEN len = 0;
         REBINT n;
 
         Cell* item = VAL_ARRAY_AT(arg);
@@ -106,7 +106,7 @@ REB_R MAKE_Tuple(Value* out, enum Reb_Kind kind, const Value* arg)
         return out;
     }
 
-    REBCNT alen;
+    REBLEN alen;
 
     if (IS_ISSUE(arg)) {
         REBSTR *spelling = VAL_WORD_SPELLING(arg);
@@ -129,7 +129,7 @@ REB_R MAKE_Tuple(Value* out, enum Reb_Kind kind, const Value* arg)
     }
     else if (IS_BINARY(arg)) {
         REBYTE *ap = VAL_BIN_AT(arg);
-        REBCNT len = VAL_LEN_AT(arg);
+        REBLEN len = VAL_LEN_AT(arg);
         if (len > MAX_TUPLE) len = MAX_TUPLE;
         VAL_TUPLE_LEN(out) = len;
         for (alen = 0; alen < len; alen++) *vp++ = *ap++;
@@ -161,7 +161,7 @@ REB_R TO_Tuple(Value* out, enum Reb_Kind kind, const Value* arg)
 //
 REBINT Cmp_Tuple(const Cell* t1, const Cell* t2)
 {
-    REBCNT  len;
+    REBLEN  len;
     const REBYTE *vp1, *vp2;
     REBINT  n;
 
@@ -287,7 +287,7 @@ void MF_Tuple(REB_MOLD *mo, const Cell* v, bool form)
     //
     REBYTE buf[60];
 
-    REBCNT len = VAL_TUPLE_LEN(v);
+    REBLEN len = VAL_TUPLE_LEN(v);
     const REBYTE *tp = cast(const REBYTE *, VAL_TUPLE(v));
 
     REBYTE *out = buf;
@@ -320,8 +320,8 @@ REBTYPE(Tuple)
     Value* value = D_ARG(1);
     Value* arg = D_ARGC > 1 ? D_ARG(2) : NULL;
     const REBYTE *ap;
-    REBCNT len;
-    REBCNT alen;
+    REBLEN len;
+    REBLEN alen;
     REBINT  a;
     REBDEC  dec;
 
@@ -483,7 +483,7 @@ REBTYPE(Tuple)
             len = MIN(len, VAL_TUPLE_LEN(value));
         }
         if (len > 0) {
-            REBCNT i;
+            REBLEN i;
             //len = MAX(len, 3);
             for (i = 0; i < len/2; i++) {
                 a = vp[len - i - 1];

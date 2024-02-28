@@ -151,7 +151,7 @@ enum {
 struct Reb_Binder {
     bool high;
   #if !defined(NDEBUG)
-    REBCNT count;
+    REBLEN count;
   #endif
 
   #if CPLUSPLUS_11
@@ -296,7 +296,7 @@ struct Reb_Collector {
     REBFLGS flags;
     REBDSP dsp_orig;
     struct Reb_Binder binder;
-    REBCNT index;
+    REBLEN index;
 };
 
 

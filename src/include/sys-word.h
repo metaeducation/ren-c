@@ -97,18 +97,18 @@ inline static REBCTX *VAL_WORD_CONTEXT(const Value* v) {
     return CTX(binding);
 }
 
-inline static void INIT_WORD_INDEX(Cell* v, REBCNT i) {
+inline static void INIT_WORD_INDEX(Cell* v, REBLEN i) {
   #if !defined(NDEBUG)
     INIT_WORD_INDEX_Extra_Checks_Debug(v, i); // not inline, needs FRM_PHASE()
   #endif
     v->payload.any_word.index = cast(REBINT, i);
 }
 
-inline static REBCNT VAL_WORD_INDEX(const Cell* v) {
+inline static REBLEN VAL_WORD_INDEX(const Cell* v) {
     assert(IS_WORD_BOUND(v));
     REBINT i = v->payload.any_word.index;
     assert(i > 0);
-    return cast(REBCNT, i);
+    return cast(REBLEN, i);
 }
 
 inline static void Unbind_Any_Word(Cell* v) {
@@ -157,7 +157,7 @@ inline static Value* Init_Any_Word_Bound(
     enum Reb_Kind type,
     REBSTR *spelling,
     REBCTX *context,
-    REBCNT index
+    REBLEN index
 ) {
     RESET_CELL(out, type);
     out->payload.any_word.spelling = spelling;

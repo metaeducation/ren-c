@@ -64,11 +64,11 @@ REBSER *To_REBOL_Path(const Cell* string, REBFLGS flags)
 
 restart:;
     REBCHR(const *) up = VAL_UNI_AT(string);
-    REBCNT len = VAL_LEN_AT(string);
+    REBLEN len = VAL_LEN_AT(string);
 
     REBUNI c = '\0'; // for test after loop (in case loop does not run)
 
-    REBCNT i;
+    REBLEN i;
     for (i = 0; i < len;) {
         up = NEXT_CHR(&c, up);
         ++i;
@@ -143,9 +143,9 @@ void Mold_File_To_Local(REB_MOLD *mo, const Cell* file, REBFLGS flags) {
     assert(IS_FILE(file));
 
     REBCHR(const *) up = VAL_UNI_AT(file);
-    REBCNT len = VAL_LEN_AT(file);
+    REBLEN len = VAL_LEN_AT(file);
 
-    REBCNT i = 0;
+    REBLEN i = 0;
 
     REBUNI c;
     if (len == 0)
@@ -247,7 +247,7 @@ void Mold_File_To_Local(REB_MOLD *mo, const Cell* file, REBFLGS flags) {
                     // Seek back to the previous slash in the mold buffer and
                     // truncate it there, to trim off one path segment.
                     //
-                    REBCNT n = SER_LEN(mo->series);
+                    REBLEN n = SER_LEN(mo->series);
                     if (n > mo->start) {
                         --n;
                         assert(*BIN_AT(mo->series, n) == OS_DIR_SEP);
@@ -289,7 +289,7 @@ void Mold_File_To_Local(REB_MOLD *mo, const Cell* file, REBFLGS flags) {
                 continue;
             }
 
-            REBCNT n = SER_LEN(mo->series);
+            REBLEN n = SER_LEN(mo->series);
             if (
                 n > mo->start
                 and *BIN_AT(mo->series, n - 1) == OS_DIR_SEP
@@ -327,7 +327,7 @@ void Mold_File_To_Local(REB_MOLD *mo, const Cell* file, REBFLGS flags) {
     // is included in the filename (move, delete), so it might not be wanted.
     //
     if (flags & REB_FILETOLOCAL_NO_TAIL_SLASH) {
-        REBCNT n = SER_LEN(mo->series);
+        REBLEN n = SER_LEN(mo->series);
         if (n > mo->start and *BIN_AT(mo->series, n - 1) == OS_DIR_SEP)
             TERM_SEQUENCE_LEN(mo->series, n - 1);
     }

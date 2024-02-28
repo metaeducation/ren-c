@@ -201,7 +201,7 @@ REBTYPE(Action)
         // whatever underlied the function...even if it was foundational
         // so `underlying = VAL_ACTION(value)`
 
-        REBCNT details_len = ARR_LEN(ACT_DETAILS(act));
+        REBLEN details_len = ARR_LEN(ACT_DETAILS(act));
         REBACT *proxy = Make_Action(
             proxy_paramlist,
             ACT_DISPATCHER(act),

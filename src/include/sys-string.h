@@ -106,9 +106,9 @@ inline static size_t STR_SIZE(REBSTR *str) {
 }
 
 inline static REBSTR *Canon(SymId sym) {
-    assert(cast(REBCNT, sym) != 0);
-    assert(cast(REBCNT, sym) < SER_LEN(PG_Symbol_Canons));
-    return *SER_AT(REBSTR*, PG_Symbol_Canons, cast(REBCNT, sym));
+    assert(cast(REBLEN, sym) != 0);
+    assert(cast(REBLEN, sym) < SER_LEN(PG_Symbol_Canons));
+    return *SER_AT(REBSTR*, PG_Symbol_Canons, cast(REBLEN, sym));
 }
 
 inline static bool SAME_STR(REBSTR *s1, REBSTR *s2) {
@@ -123,12 +123,12 @@ inline static bool SAME_STR(REBSTR *s1, REBSTR *s2) {
 // !!! UNI_XXX: Unicode string series macros !!! - Becoming Deprecated
 //
 
-inline static REBCNT UNI_LEN(REBSER *s) {
+inline static REBLEN UNI_LEN(REBSER *s) {
     assert(SER_WIDE(s) == sizeof(REBUNI));
     return SER_LEN(s);
 }
 
-inline static void SET_UNI_LEN(REBSER *s, REBCNT len) {
+inline static void SET_UNI_LEN(REBSER *s, REBLEN len) {
     assert(SER_WIDE(s) == sizeof(REBUNI));
     SET_SERIES_LEN(s, len);
 }
@@ -145,7 +145,7 @@ inline static void SET_UNI_LEN(REBSER *s, REBCNT len) {
 #define UNI_LAST(s) \
     SER_LAST(REBUNI, (s))
 
-inline static void TERM_UNI_LEN(REBSER *s, REBCNT len) {
+inline static void TERM_UNI_LEN(REBSER *s, REBLEN len) {
     SET_SERIES_LEN(s, len);
     *SER_AT(REBUNI, s, len) = '\0';
 }
@@ -173,7 +173,7 @@ inline static REBUNI *VAL_UNI_AT(const Cell* v) {
 }
 
 inline static REBSIZ VAL_SIZE_LIMIT_AT(
-    REBCNT *length, // length in chars to end (including limit)
+    REBLEN *length, // length in chars to end (including limit)
     const Cell* v,
     REBINT limit // -1 for no limit
 ){
@@ -214,11 +214,11 @@ inline static REBSIZ VAL_SIZE_LIMIT_AT(
 // create new strings, if possible.
 //
 
-inline static REBUNI GET_ANY_CHAR(REBSER *s, REBCNT n) {
+inline static REBUNI GET_ANY_CHAR(REBSER *s, REBLEN n) {
     return BYTE_SIZE(s) ? *BIN_AT(s, n) : *SER_AT(REBUNI, s, n);
 }
 
-inline static void SET_ANY_CHAR(REBSER *s, REBCNT n, REBUNI c) {
+inline static void SET_ANY_CHAR(REBSER *s, REBLEN n, REBUNI c) {
     if (BYTE_SIZE(s)) {
         assert(c <= 255);
         *BIN_AT(s, n) = c;
@@ -301,9 +301,9 @@ inline static REBINT Hash_String(REBSTR *str)
     { return Hash_UTF8(cb_cast(STR_HEAD(str)), STR_SIZE(str)); }
 
 inline static REBINT First_Hash_Candidate_Slot(
-    REBCNT *skip_out,
-    REBCNT hash,
-    REBCNT num_slots
+    REBLEN *skip_out,
+    REBLEN hash,
+    REBLEN num_slots
 ){
     *skip_out = (hash & 0x0000FFFF) % num_slots;
     if (*skip_out == 0)
@@ -325,8 +325,8 @@ inline static REBSER *Copy_Sequence_At_Position(const Value* v)
 
 inline static REBSER *Copy_Sequence_At_Len(
     REBSER *s,
-    REBCNT index,
-    REBCNT len
+    REBLEN index,
+    REBLEN len
 ){
     return Copy_Sequence_At_Len_Extra(s, index, len, 0);
 }

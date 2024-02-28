@@ -712,7 +712,7 @@ ConversionResult ConvertUTF8toUTF32 (
 //
 // !!! Not currently used.
 //
-bool Legal_UTF8_Char(const REBYTE *str, REBCNT len)
+bool Legal_UTF8_Char(const REBYTE *str, REBLEN len)
 {
     return did isLegalUTF8Sequence(str, str + len); // different Boolean
 }
@@ -730,7 +730,7 @@ REBYTE *Check_UTF8(REBYTE *utf8, size_t size)
 {
     REBYTE *end = utf8 + size;
 
-    REBCNT trail;
+    REBLEN trail;
     for (; utf8 != end; utf8 += trail) {
         trail = trailingBytesForUTF8[*utf8] + 1;
         if (utf8 + trail > end || !isLegalUTF8(utf8, trail))
@@ -782,7 +782,7 @@ const REBYTE *Back_Scan_UTF8_Char_Core(
     *out = 0;
 
     const UTF8 *source = bp;
-    REBCNT trail = trailingBytesForUTF8[*source];
+    REBLEN trail = trailingBytesForUTF8[*source];
 
     // Check that we have enough valid source bytes:
     if (size) {
@@ -845,7 +845,7 @@ const REBYTE *Back_Scan_UTF8_Char_Core(
 // !!! There's a hardcoded table of byte lengths which is used other places,
 // it would probably speed this up.
 //
-size_t Size_As_UTF8(const REBUNI *up, REBCNT len)
+size_t Size_As_UTF8(const REBUNI *up, REBLEN len)
 {
     size_t size = 0;
 
@@ -874,7 +874,7 @@ size_t Size_As_UTF8(const REBUNI *up, REBCNT len)
 // Returns length of char stored in dst.
 // Be sure dst has at least 4 bytes available.
 //
-REBCNT Encode_UTF8_Char(REBYTE *dst, uint32_t c)
+REBLEN Encode_UTF8_Char(REBYTE *dst, uint32_t c)
 {
     int len = 0;
     const uint32_t mask = 0xBF;
@@ -923,15 +923,15 @@ REBCNT Encode_UTF8_Char(REBYTE *dst, uint32_t c)
 // Updates len for source chars used.
 // Does not add a terminator.
 //
-REBCNT Encode_UTF8(
+REBLEN Encode_UTF8(
     REBYTE *dst,
-    REBCNT max,
+    REBLEN max,
     const REBUNI *src,
-    REBCNT *len
+    REBLEN *len
 ){
     REBYTE buf[8];
 
-    REBCNT cnt = *len;
+    REBLEN cnt = *len;
 
     REBYTE *bs = dst; // save start
     const REBUNI *up = src;
@@ -965,7 +965,7 @@ REBCNT Encode_UTF8(
 //
 // !!! With UTF-8 Everywhere, strings will already be in UTF-8.
 //
-REBSER *Make_UTF8_From_Any_String(const Cell* any_string, REBCNT len) {
+REBSER *Make_UTF8_From_Any_String(const Cell* any_string, REBLEN len) {
     assert(ANY_STRING(any_string));
 
     const REBUNI *data = VAL_UNI_AT(any_string);

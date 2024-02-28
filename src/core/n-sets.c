@@ -42,7 +42,7 @@ REBSER *Make_Set_Operation_Series(
     const Value* val2,
     REBFLGS flags,
     bool cased,
-    REBCNT skip
+    REBLEN skip
 ){
     assert(ANY_SERIES(val1));
 
@@ -82,7 +82,7 @@ REBSER *Make_Set_Operation_Series(
     // will be allocated at this size, but copied out at the exact size of
     // the actual result.
     //
-    REBCNT i = VAL_LEN_AT(val1);
+    REBLEN i = VAL_LEN_AT(val1);
     if (flags & SOP_FLAG_BOTH)
         i += VAL_LEN_AT(val2);
 

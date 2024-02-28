@@ -161,7 +161,7 @@ void Value_To_Int64(Value* out, const Value* value, bool no_sign)
         // interface could support BigNums in the future.
 
         REBYTE *bp = VAL_BIN_AT(value);
-        REBCNT n = VAL_LEN_AT(value);
+        REBLEN n = VAL_LEN_AT(value);
         bool negative;
         REBINT fill;
 
@@ -285,7 +285,7 @@ void Value_To_Int64(Value* out, const Value* value, bool no_sign)
     }
     else if (ANY_STRING(value)) {
         REBSIZ size;
-        const REBCNT max_len = VAL_LEN_AT(value); // e.g. "no maximum"
+        const REBLEN max_len = VAL_LEN_AT(value); // e.g. "no maximum"
         REBYTE *bp = Analyze_String_For_Scan(&size, value, max_len);
         if (
             memchr(bp, '.', size)
@@ -405,7 +405,7 @@ REBTYPE(Integer)
             arg = VAL_CHAR(val2);
         else {
             // Decimal or other numeric second argument:
-            REBCNT n = 0; // use to flag special case
+            REBLEN n = 0; // use to flag special case
             switch (Cell_Word_Id(verb)) {
             // Anything added to an integer is same as adding the integer:
             case SYM_ADD:
@@ -619,7 +619,7 @@ REBNATIVE(enbin)
             "fail {First element of ENBIN settings must be BE or LE}",
         "]"
     );
-    REBCNT index = VAL_INDEX(settings);
+    REBLEN index = VAL_INDEX(settings);
     bool no_sign = rebDid(
         "switch second", settings, "[",
             "'+ [true] '+/- [false]",
@@ -725,14 +725,14 @@ REBNATIVE(debin)
             "fail {First element of DEBIN settings must be BE or LE}"
         "]"
     );
-    REBCNT index = VAL_INDEX(settings);
+    REBLEN index = VAL_INDEX(settings);
     bool no_sign = rebDid(
         "switch second", settings, "[",
             "'+ [true] '+/- [false]",
             "fail {Second element of DEBIN settings must be + or +/-}"
         "]"
     );
-    REBCNT num_bytes;
+    REBLEN num_bytes;
     Cell* third = VAL_ARRAY_AT_HEAD(settings, index + 2);
     if (IS_END(third))
         num_bytes = VAL_LEN_AT(ARG(binary));

@@ -237,10 +237,10 @@ typedef struct rebol_scan_state {
     //
     /* const REBYTE *limit; */
 
-    REBCNT line;
+    REBLEN line;
     const REBYTE *line_head; // head of current line (used for errors)
 
-    REBCNT start_line;
+    REBLEN start_line;
     const REBYTE *start_line_head;
 
     REBSTR *file;
