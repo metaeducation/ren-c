@@ -24,7 +24,6 @@ extensions: make map! [
     PNG -
     Process -
     UUID -
-    View -
 ]
 
 

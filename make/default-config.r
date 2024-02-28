@@ -33,7 +33,6 @@ extensions: make map! [
     PNG +
     Process +
     UUID +
-    View +
 ]
 
 rebol-tool: _ ; fallback value if system/options/boot fails
