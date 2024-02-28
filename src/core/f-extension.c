@@ -53,14 +53,14 @@
 //
 //  cleanup_extension_init_handler: C
 //
-void cleanup_extension_init_handler(const REBVAL *v)
+void cleanup_extension_init_handler(const Value* v)
   { UNUSED(v); } // cleanup CFUNC* just serves as an ID for the HANDLE!
 
 
 //
 //  cleanup_extension_quit_handler: C
 //
-void cleanup_extension_quit_handler(const REBVAL *v)
+void cleanup_extension_quit_handler(const Value* v)
   { UNUSED(v); } // cleanup CFUNC* just serves as an ID for the HANDLE!
 
 
@@ -96,7 +96,7 @@ REBNATIVE(builtin_extensions)
     REBCNT i;
     for (i = 0; i != NUM_BUILTIN_EXTENSIONS; ++i) {
         COLLATE_CFUNC *collator = Builtin_Extension_Collators[i];
-        REBVAL *details = (*collator)();
+        Value* details = (*collator)();
         assert(IS_BLOCK(details) and VAL_LEN_AT(details) == IDX_COLLATOR_MAX);
         Move_Value(Alloc_Tail_Array(list), details);
         rebRelease(details);
@@ -167,7 +167,7 @@ REBNATIVE(load_extension)
             fail (Error_Bad_Extension_Raw(ARG(where)));
         }
 
-        REBVAL *details_block = (*cast(COLLATE_CFUNC*, collator))();
+        Value* details_block = (*cast(COLLATE_CFUNC*, collator))();
         assert(IS_BLOCK(details_block));
         details = VAL_ARRAY(details_block);
         rebRelease(details_block);
@@ -186,9 +186,9 @@ REBNATIVE(load_extension)
     // in the original extension model was very twisty and was a barrier
     // to enhancement.  So trying a monolithic rewrite for starters.
 
-    REBVAL *script_compressed = KNOWN(ARR_AT(details, IDX_COLLATOR_SCRIPT));
-    REBVAL *specs_compressed = KNOWN(ARR_AT(details, IDX_COLLATOR_SPECS));
-    REBVAL *dispatchers_handle = KNOWN(ARR_AT(details, IDX_COLLATOR_DISPATCHERS));
+    Value* script_compressed = KNOWN(ARR_AT(details, IDX_COLLATOR_SCRIPT));
+    Value* specs_compressed = KNOWN(ARR_AT(details, IDX_COLLATOR_SPECS));
+    Value* dispatchers_handle = KNOWN(ARR_AT(details, IDX_COLLATOR_DISPATCHERS));
 
     REBCNT num_natives = VAL_HANDLE_LEN(dispatchers_handle);
     REBNAT *dispatchers = VAL_HANDLE_POINTER(REBNAT, dispatchers_handle);
@@ -233,7 +233,7 @@ REBNATIVE(load_extension)
 
     REBDSP dsp_orig = DSP; // for accumulating exports
 
-    RELVAL *item = ARR_HEAD(specs);
+    Cell* item = ARR_HEAD(specs);
     REBCNT i;
     for (i = 0; i < num_natives; ++i) {
         //
@@ -249,7 +249,7 @@ REBNATIVE(load_extension)
         else
             is_export = false;
 
-        RELVAL *name = item;
+        Cell* name = item;
         if (not IS_SET_WORD(name))
             panic (name);
 
@@ -259,7 +259,7 @@ REBNATIVE(load_extension)
         // content into the module...so if you override APPEND locally that
         // will be the APPEND that is used by default.
         //
-        REBVAL *native = Make_Native(
+        Value* native = Make_Native(
             &item, // gets advanced/incremented
             SPECIFIED,
             dispatchers[i],
@@ -304,7 +304,7 @@ REBNATIVE(load_extension)
         VAL_HANDLE_LEN(script_compressed),
         -1 // max
     );
-    REBVAL *script_bin = rebRepossess(script_utf8, script_size);
+    Value* script_bin = rebRepossess(script_utf8, script_size);
 
     // Module loading mechanics are supposed to be mostly done in usermode,
     // so try and honor that.  This means everything about whether the module
@@ -343,7 +343,7 @@ REBNATIVE(load_extension)
 //
 // Just an ID for the handler
 //
-static void cleanup_module_handler(const REBVAL *val)
+static void cleanup_module_handler(const Value* val)
 {
     UNUSED(val);
 }
@@ -355,7 +355,7 @@ static void cleanup_module_handler(const REBVAL *val)
 // This will be the dispatcher for the natives in an extension after the
 // extension is unloaded.
 //
-static const REBVAL *Unloaded_Dispatcher(REBFRM *f)
+static const Value* Unloaded_Dispatcher(REBFRM *f)
 {
     UNUSED(f);
 
@@ -451,7 +451,7 @@ REBNATIVE(unload_extension)
 // if the information were not used immediately or it otherwise was not run.
 // This has to be considered in the unloading mechanics.
 //
-REBVAL *rebCollateExtension_internal(
+Value* rebCollateExtension_internal(
     const REBYTE script_compressed[], REBCNT script_compressed_len,
     const REBYTE specs_compressed[], REBCNT specs_compressed_len,
     REBNAT dispatchers[], REBCNT dispatchers_len

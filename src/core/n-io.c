@@ -108,7 +108,7 @@ REBNATIVE(write_stdout)
 {
     INCLUDE_PARAMS_OF_WRITE_STDOUT;
 
-    REBVAL *v = ARG(value);
+    Value* v = ARG(value);
 
     if (IS_BINARY(v)) {
         //
@@ -179,14 +179,14 @@ REBNATIVE(new_line)
     INCLUDE_PARAMS_OF_NEW_LINE;
 
     bool mark = VAL_LOGIC(ARG(mark));
-    REBVAL *pos = ARG(position);
+    Value* pos = ARG(position);
     REBARR *a = VAL_ARRAY(pos);
 
     FAIL_IF_READ_ONLY_ARRAY(a);
 
     Move_Value(D_OUT, pos); // always returns the input position
 
-    RELVAL *item = VAL_ARRAY_AT(pos);
+    Cell* item = VAL_ARRAY_AT(pos);
 
     if (IS_END(item)) { // no value at tail to mark; use bit in array
         if (mark)
@@ -237,14 +237,14 @@ REBNATIVE(new_line_q)
 {
     INCLUDE_PARAMS_OF_NEW_LINE_Q;
 
-    REBVAL *pos = ARG(position);
+    Value* pos = ARG(position);
 
     REBARR *arr;
-    const RELVAL *item;
+    const Cell* item;
 
     if (IS_VARARGS(pos)) {
         REBFRM *f;
-        REBVAL *shared;
+        Value* shared;
         if (Is_Frame_Style_Varargs_May_Fail(&f, pos)) {
             if (not f->source->array) {
                 //
@@ -252,7 +252,7 @@ REBNATIVE(new_line_q)
                 // process of using string components which *might* have
                 // newlines.  Review edge cases, like:
                 //
-                //    REBVAL *new_line_q = rebValue(":new-line?");
+                //    Value* new_line_q = rebValue(":new-line?");
                 //    bool case_one = rebDid("new-line?", "[\n]");
                 //    bool case_two = rebDid(new_line_q, "[\n]");
                 //
@@ -322,7 +322,7 @@ REBNATIVE(now)
 {
     INCLUDE_PARAMS_OF_NOW;
 
-    REBVAL *timestamp = OS_GET_TIME();
+    Value* timestamp = OS_GET_TIME();
 
     // However OS-level date and time is plugged into the system, it needs to
     // have enough granularity to give back date, time, and time zone.
@@ -407,7 +407,7 @@ REBNATIVE(now)
 //
 // Note that this routine is used by the SLEEP extension, as well as by WAIT.
 //
-REBCNT Milliseconds_From_Value(const RELVAL *v) {
+REBCNT Milliseconds_From_Value(const Cell* v) {
     REBINT msec;
 
     switch (VAL_TYPE(v)) {
@@ -453,7 +453,7 @@ REBNATIVE(wait)
     REBINT n = 0;
 
 
-    RELVAL *val;
+    Cell* val;
     if (not IS_BLOCK(ARG(value)))
         val = ARG(value);
     else {
@@ -569,7 +569,7 @@ REBNATIVE(wake_up)
 
     REBCTX *ctx = VAL_CONTEXT(ARG(port));
 
-    REBVAL *actor = CTX_VAR(ctx, STD_PORT_ACTOR);
+    Value* actor = CTX_VAR(ctx, STD_PORT_ACTOR);
     if (Is_Native_Port_Actor(actor)) {
         //
         // We don't pass `actor` or `event` in, because we just pass the
@@ -581,14 +581,14 @@ REBNATIVE(wake_up)
         //
         DECLARE_LOCAL (verb);
         Init_Word(verb, Canon(SYM_ON_WAKE_UP));
-        const REBVAL *r = Do_Port_Action(frame_, ARG(port), verb);
+        const Value* r = Do_Port_Action(frame_, ARG(port), verb);
         assert(IS_BAR(r));
         UNUSED(r);
     }
 
     bool woke_up = true; // start by assuming success
 
-    REBVAL *awake = CTX_VAR(ctx, STD_PORT_AWAKE);
+    Value* awake = CTX_VAR(ctx, STD_PORT_AWAKE);
     if (IS_ACTION(awake)) {
         const bool fully = true; // error if not all arguments consumed
 
@@ -622,7 +622,7 @@ REBNATIVE(local_to_file)
 {
     INCLUDE_PARAMS_OF_LOCAL_TO_FILE;
 
-    REBVAL *path = ARG(path);
+    Value* path = ARG(path);
     if (IS_FILE(path)) {
         if (not REF(pass))
             fail ("LOCAL-TO-FILE only passes through FILE! if /PASS used");
@@ -667,7 +667,7 @@ REBNATIVE(file_to_local)
 {
     INCLUDE_PARAMS_OF_FILE_TO_LOCAL;
 
-    REBVAL *path = ARG(path);
+    Value* path = ARG(path);
     if (IS_TEXT(path)) {
         if (not REF(pass))
             fail ("FILE-TO-LOCAL only passes through STRING! if /PASS used");
@@ -703,7 +703,7 @@ REBNATIVE(file_to_local)
 //
 REBNATIVE(what_dir)
 {
-    REBVAL *current_path = Get_System(SYS_OPTIONS, OPTIONS_CURRENT_PATH);
+    Value* current_path = Get_System(SYS_OPTIONS, OPTIONS_CURRENT_PATH);
 
     if (IS_FILE(current_path) || IS_BLANK(current_path)) {
         //
@@ -715,7 +715,7 @@ REBNATIVE(what_dir)
         // code was already here and it would be more compatible.  But
         // reconsider the duplication.
 
-        REBVAL *refresh = OS_GET_CURRENT_DIR();
+        Value* refresh = OS_GET_CURRENT_DIR();
         Move_Value(current_path, refresh);
         rebRelease(refresh);
     }
@@ -752,8 +752,8 @@ REBNATIVE(change_dir)
 {
     INCLUDE_PARAMS_OF_CHANGE_DIR;
 
-    REBVAL *arg = ARG(path);
-    REBVAL *current_path = Get_System(SYS_OPTIONS, OPTIONS_CURRENT_PATH);
+    Value* arg = ARG(path);
+    Value* current_path = Get_System(SYS_OPTIONS, OPTIONS_CURRENT_PATH);
 
     if (IS_URL(arg)) {
         // There is no directory listing protocol for HTTP (although this

@@ -113,7 +113,7 @@ REBNATIVE(delimit)
 {
     INCLUDE_PARAMS_OF_DELIMIT;
 
-    REBVAL *line = ARG(line);
+    Value* line = ARG(line);
     if (IS_TEXT(line))
         return rebValue("copy", line);  // !!! Review performance
 
@@ -170,7 +170,7 @@ REBNATIVE(checksum)
 {
     INCLUDE_PARAMS_OF_CHECKSUM;
 
-    REBVAL *arg = ARG(data);
+    Value* arg = ARG(data);
 
     REBCNT len = Part_Len_May_Modify_Index(arg, ARG(limit));
     UNUSED(REF(part)); // checked by if limit is nulled
@@ -224,7 +224,7 @@ REBNATIVE(checksum)
             if (not REF(key))
                 digests[i].digest(data, len, BIN_HEAD(digest));
             else {
-                REBVAL *key = ARG(key_value);
+                Value* key = ARG(key_value);
 
                 REBCNT blocklen = digests[i].hmacblock;
 
@@ -326,7 +326,7 @@ REBNATIVE(deflate)
 {
     INCLUDE_PARAMS_OF_DEFLATE;
 
-    REBVAL *data = ARG(data);
+    Value* data = ARG(data);
 
     REBCNT len = Part_Len_May_Modify_Index(data, ARG(limit));
     UNUSED(PAR(part)); // checked by if limit is nulled
@@ -393,7 +393,7 @@ REBNATIVE(inflate)
 {
     INCLUDE_PARAMS_OF_INFLATE;
 
-    REBVAL *data = ARG(data);
+    Value* data = ARG(data);
 
     REBINT max;
     if (REF(max)) {
@@ -499,7 +499,7 @@ REBNATIVE(enbase)
     else
         base = 64;
 
-    REBVAL *v = ARG(value);
+    Value* v = ARG(value);
 
     REBSIZ size;
     REBYTE *bp;
@@ -856,7 +856,7 @@ REBNATIVE(deline)
 {
     INCLUDE_PARAMS_OF_DELINE;
 
-    REBVAL *val = ARG(string);
+    Value* val = ARG(string);
 
     if (REF(lines))
         return Init_Block(D_OUT, Split_Lines(val));
@@ -903,7 +903,7 @@ REBNATIVE(enline)
 {
     INCLUDE_PARAMS_OF_ENLINE;
 
-    REBVAL *val = ARG(string);
+    Value* val = ARG(string);
 
     REBSER *ser = VAL_SERIES(val);
     REBCNT idx = VAL_INDEX(val);
@@ -981,7 +981,7 @@ REBNATIVE(entab)
 {
     INCLUDE_PARAMS_OF_ENTAB;
 
-    REBVAL *val = ARG(string);
+    Value* val = ARG(string);
 
     REBINT tabsize;
     if (REF(size))
@@ -1056,7 +1056,7 @@ REBNATIVE(detab)
 {
     INCLUDE_PARAMS_OF_DETAB;
 
-    REBVAL *val = ARG(string);
+    Value* val = ARG(string);
 
     REBCNT len = VAL_LEN_AT(val);
 
@@ -1179,7 +1179,7 @@ REBNATIVE(to_hex)
 {
     INCLUDE_PARAMS_OF_TO_HEX;
 
-    REBVAL *arg = ARG(value);
+    Value* arg = ARG(value);
 
     REBYTE buffer[(MAX_TUPLE * 2) + 4];  // largest value possible
 
@@ -1238,7 +1238,7 @@ REBNATIVE(find_script)
 {
     INCLUDE_PARAMS_OF_FIND_SCRIPT;
 
-    REBVAL *arg = ARG(script);
+    Value* arg = ARG(script);
 
     REBINT offset = Scan_Header(VAL_BIN_AT(arg), VAL_LEN_AT(arg));
     if (offset == -1)
@@ -1262,7 +1262,7 @@ REBNATIVE(invalid_utf8_q)
 {
     INCLUDE_PARAMS_OF_INVALID_UTF8_Q;
 
-    REBVAL *arg = ARG(data);
+    Value* arg = ARG(data);
 
     REBYTE *bp = Check_UTF8(VAL_BIN_AT(arg), VAL_LEN_AT(arg));
     if (not bp)

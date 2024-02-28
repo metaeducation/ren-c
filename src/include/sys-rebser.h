@@ -54,7 +54,7 @@
 //
 // * For the forward declarations of series subclasses, see %reb-defs.h
 //
-// * Because a series contains a union member that embeds a REBVAL directly,
+// * Because a series contains a union member that embeds a cell directly,
 //   `struct Reb_Value` must be fully defined before this file can compile.
 //   Hence %sys-rebval.h must already be included.
 //
@@ -96,7 +96,7 @@
 
 
 // Detect_Rebol_Pointer() uses the fact that this bit is 0 for series headers
-// to discern between REBSER, REBVAL, and END.  If push comes to shove that
+// to discern between REBSER, Cell, and END.  If push comes to shove that
 // could be done differently, and this bit retaken.
 //
 #define SERIES_FLAG_8_IS_TRUE FLAG_LEFT_BIT(8) // CELL_FLAG_NOT_END
@@ -573,11 +573,11 @@
 // which can be overlaid inside the node:
 //
 //      Dynamic: [header [allocation tracking] info link misc]
-//     Singular: [header [REBVAL cell] info link misc]
-//      Pairing: [[REBVAL cell] [REBVAL cell]]
+//     Singular: [header [cell] info link misc]
+//      Pairing: [[cell] [cell]]
 //
 // `info` is not the start of a "Rebol Node" (REBNODE, e.g. either a REBSER or
-// a REBVAL cell).  But in the singular case it is positioned right where
+// a value Cell).  But in the singular case it is positioned right where
 // the next cell after the embedded cell *would* be.  Hence the second byte
 // in the info corresponding to VAL_TYPE() is 0, making it conform to the
 // "terminating array" pattern.  To lower the risk of this implicit terminator
@@ -593,7 +593,7 @@
 // help exchange a common "currency" of allocation size more efficiently.
 // They are planned for use in the PAIR! and MAP! datatypes, and anticipated
 // to play a crucial part in the API--allowing a persistent handle for a
-// GC'able REBVAL and associated "meta" value (which can be used for
+// GC'able cell and associated "meta" value (which can be used for
 // reference counting or other tracking.)
 //
 // Most of the time, code does not need to be concerned about distinguishing
@@ -646,16 +646,16 @@ union Reb_Series_Content {
     // done, see Endlike_Header()
     //
     union {
-        // Due to strict aliasing requirements, this has to be a RELVAL to
+        // Due to strict aliasing requirements, this has to be a Cell to
         // read cell data.  Unfortunately this means Reb_Series_Content can't
         // be copied by simple assignment, because in the C++ build it is
         // disallowed to say (`*value1 = *value2;`).  Use memcpy().
         //
-        RELVAL values[1];
+        Cell values[1];
 
       #if !defined(NDEBUG) // https://en.wikipedia.org/wiki/Type_punning
-        char utf8_pun[sizeof(RELVAL)]; // debug watchlist insight into UTF-8
-        REBUNI ucs2_pun[sizeof(RELVAL)/sizeof(REBUNI)]; // wchar_t insight
+        char utf8_pun[sizeof(Cell)]; // debug watchlist insight into UTF-8
+        REBUNI ucs2_pun[sizeof(Cell)/sizeof(REBUNI)]; // wchar_t insight
       #endif
     } fixed;
 };
@@ -676,7 +676,7 @@ union Reb_Series_Link {
   #endif
 
     // API handles use "singular" format arrays (see notes on that), which
-    // lay out the link field in the bytes preceding the REBVAL* payload.
+    // lay out the link field in the bytes preceding the Value* payload.
     // Because the API tries to have routines that work across arbitrary
     // rebMalloc() memory as well as individual cells, the bytes preceding
     // the pointer handed out to the client are examined to determine which
@@ -695,7 +695,7 @@ union Reb_Series_Link {
 
     // REBCTX types use this field of their varlist (which is the identity of
     // an ANY-CONTEXT!) to find their "keylist".  It is stored in the REBSER
-    // node of the varlist REBARR vs. in the REBVAL of the ANY-CONTEXT! so
+    // node of the varlist REBARR vs. in the cell of the ANY-CONTEXT! so
     // that the keylist can be changed without needing to update all the
     // REBVALs for that object.
     //
@@ -703,7 +703,7 @@ union Reb_Series_Link {
     // FRAME! on the stack, it points to a REBFRM*.  If it's a FRAME! that
     // is not running on the stack, it will be the function paramlist of the
     // actual phase that function is for.  Since REBFRM* all start with a
-    // REBVAL cell, this means NODE_FLAG_CELL can be used on the node to
+    // leading cell, this means NODE_FLAG_CELL can be used on the node to
     // discern the case where it can be cast to a REBFRM* vs. REBARR*.
     //
     // (Note: FRAME!s used to use a field `misc.f` to track the associated
@@ -884,11 +884,11 @@ struct Reb_Series {
     // The `link` field is generally used for pointers to something that
     // when updated, all references to this series would want to be able
     // to see.  This cannot be done (easily) for properties that are held
-    // in REBVAL cells directly.
+    // in cells directly.
     //
     // This field is in the second pointer-sized slot in the REBSER node to
     // push the `content` so it is 64-bit aligned on 32-bit platforms.  This
-    // is because a REBVAL may be the actual content, and a REBVAL assumes
+    // is because a cell may be the actual content, and a cell assumes
     // it is on a 64-bit boundary to start with...in order to position its
     // "payload" which might need to be 64-bit aligned as well.
     //
@@ -896,7 +896,7 @@ struct Reb_Series {
     //
     union Reb_Series_Link link_private;
 
-    // `content` is the sizeof(REBVAL) data for the series, which is thus
+    // `content` is the sizeof(Cell) data for the series, which is thus
     // 4 platform pointers in size.  If the series is small enough, the header
     // contains the size in bytes and the content lives literally in these
     // bits.  If it's too large, it will instead be a pointer and tracking
@@ -1127,7 +1127,7 @@ inline static REBYTE SER_WIDE(REBSER *s) {
     REBYTE wide = WIDE_BYTE_OR_0(s);
     if (wide == 0) {
         assert(IS_SER_ARRAY(s));
-        return sizeof(REBVAL);
+        return sizeof(Cell);
     }
     return wide;
 }

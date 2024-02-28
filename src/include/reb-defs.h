@@ -116,14 +116,13 @@ typedef struct Reb_Node REBNOD;
 //=//// RELATIVE VALUES ///////////////////////////////////////////////////=//
 //
 // Note that in the C build, %rebol.h forward-declares `struct Reb_Value` and
-// then #defines REBVAL to that.
+// then #defines Value to that.
 //
 #if !defined(CPLUSPLUS_11)
-    #define RELVAL \
-        struct Reb_Value // same as REBVAL, no checking in C build
+    #define Cell RebolValue  // same as Value, no checking in C build
 #else
-    struct Reb_Relative_Value; // won't implicitly downcast to REBVAL
-    #define RELVAL \
+    struct Reb_Relative_Value; // won't implicitly downcast to Value
+    #define Cell \
         struct Reb_Relative_Value // *might* be IS_RELATIVE()
 #endif
 
@@ -181,24 +180,24 @@ struct Reb_State;
 typedef uint_fast32_t REBDSP; // Note: 0 for empty stack ([0] entry is trash)
 
 
-// The REB_R type is a REBVAL* but with the idea that it is legal to hold
+// The REB_R type is a Value* but with the idea that it is legal to hold
 // types like REB_R_THROWN, etc.  This helps document interface contract.
 //
-typedef REBVAL *REB_R;
+typedef Value* REB_R;
 
 
 //=//// DISPATCHERS ///////////////////////////////////////////////////////=//
 //
-typedef REBINT (*COMPARE_HOOK)(const RELVAL *a, const RELVAL *b, REBINT s);
-typedef REB_R (*MAKE_HOOK)(REBVAL*, enum Reb_Kind, const REBVAL*);
-typedef REB_R (*TO_HOOK)(REBVAL*, enum Reb_Kind, const REBVAL*);
+typedef REBINT (*COMPARE_HOOK)(const Cell* a, const Cell* b, REBINT s);
+typedef REB_R (*MAKE_HOOK)(Value*, enum Reb_Kind, const Value*);
+typedef REB_R (*TO_HOOK)(Value*, enum Reb_Kind, const Value*);
 
 
 //=//// MOLDING ///////////////////////////////////////////////////////////=//
 //
 struct rebol_mold;
 typedef struct rebol_mold REB_MOLD;
-typedef void (*MOLD_HOOK)(REB_MOLD *mo, const RELVAL *v, bool form);
+typedef void (*MOLD_HOOK)(REB_MOLD *mo, const Cell* v, bool form);
 
 
 // These definitions are needed in %sys-rebval.h, and can't be put in
@@ -214,18 +213,18 @@ typedef REB_R (*REBNAT)(REBFRM *frame_);
 // Generic hooks: implementing a "verb" ACTION! for a particular
 // type (or class of types).
 //
-typedef REB_R (*GENERIC_HOOK)(REBFRM *frame_, REBVAL *verb);
+typedef REB_R (*GENERIC_HOOK)(REBFRM *frame_, Value* verb);
 #define REBTYPE(n) \
-    REB_R T_##n(REBFRM *frame_, REBVAL *verb)
+    REB_R T_##n(REBFRM *frame_, Value* verb)
 
 // Port hook: for implementing generic ACTION!s on a PORT! class
 //
-typedef REB_R (*PORT_HOOK)(REBFRM *frame_, REBVAL *port, REBVAL *verb);
+typedef REB_R (*PORT_HOOK)(REBFRM *frame_, Value* port, Value* verb);
 
 // Path evaluator function
 //
 typedef REB_R (*PATH_HOOK)(
-    REBPVS *pvs, const REBVAL *picker, const REBVAL *opt_setval
+    REBPVS *pvs, const Value* picker, const Value* opt_setval
 );
 
 
@@ -265,10 +264,10 @@ struct rebol_devreq;
 typedef struct rebol_devreq REBREQ;
 struct devreq_file;
 
-//=//// REBVAL PAYLOAD CONTENTS ///////////////////////////////////////////=//
+//=//// CELL PAYLOAD CONTENTS /////////////////////////////////////////////=//
 //
 // Some internal APIs pass around the extraction of value payloads, like take
-// a REBDAT*, when they could probably just as well pass around a REBVAL*.
+// a REBDAT*, when they could probably just as well pass around a Cell*.
 // The usages are few and far enough between.  But for the moment just define
 // things here.
 //

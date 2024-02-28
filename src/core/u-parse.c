@@ -144,7 +144,7 @@ enum parse_flags {
 // !!! This and other efficiency tricks from R3-Alpha should be reviewed to
 // see if they're really the best option.
 //
-inline static REBSYM VAL_CMD(const RELVAL *v) {
+inline static REBSYM VAL_CMD(const Cell* v) {
     REBSYM sym = VAL_WORD_SYM(v);
     if (sym >= SYM_SET and sym <= SYM_END)
         return sym;
@@ -167,10 +167,10 @@ inline static REBSYM VAL_CMD(const RELVAL *v) {
 //
 static bool Subparse_Throws(
     bool *interrupted_out,
-    REBVAL *out,
-    RELVAL *input,
+    Value* out,
+    Cell* input,
     REBSPC *input_specifier,
-    const RELVAL *rules,
+    const Cell* rules,
     REBSPC *rules_specifier,
     REBARR *opt_collection,
     REBFLGS flags
@@ -214,10 +214,10 @@ static bool Subparse_Throws(
     Reuse_Varlist_If_Available(f);
     Push_Action(f, NAT_ACTION(subparse), UNBOUND);
 
-    Begin_Action(f, Canon(SYM_SUBPARSE), m_cast(REBVAL*, END_NODE));
+    Begin_Action(f, Canon(SYM_SUBPARSE), m_cast(Value*, END_NODE));
 
     f->param = END_NODE; // informs infix lookahead
-    f->arg = m_cast(REBVAL*, END_NODE);
+    f->arg = m_cast(Value*, END_NODE);
     assert(f->refine == END_NODE); // passed to Begin_Action()
     f->special = END_NODE;
 
@@ -258,7 +258,7 @@ static bool Subparse_Throws(
     // vs. going through the evaluator, we don't get the opportunity to do
     // things like HIJACK it.  Consider APPLY-ing it.
     //
-    const REBVAL *r = N_subparse(f);
+    const Value* r = N_subparse(f);
     assert(NOT_END(out));
 
     Drop_Action(f);
@@ -371,7 +371,7 @@ static void Print_Parse_Index(REBFRM *f) {
 //
 static void Set_Parse_Series(
     REBFRM *f,
-    const REBVAL *any_series
+    const Value* any_series
 ) {
     if (any_series != FRM_ARGS_HEAD(f) + 0)
         Move_Value(FRM_ARGS_HEAD(f) + 0, any_series);
@@ -401,9 +401,9 @@ static void Set_Parse_Series(
 // which will be good for as long as the returned pointer is used.  It may
 // not be used--e.g. with a WORD! fetch.
 //
-static const RELVAL *Get_Parse_Value(
-    REBVAL *cell,
-    const RELVAL *rule,
+static const Cell* Get_Parse_Value(
+    Value* cell,
+    const Cell* rule,
     REBSPC *specifier
 ){
     if (IS_WORD(rule)) {
@@ -447,8 +447,8 @@ static const RELVAL *Get_Parse_Value(
 //
 REB_R Process_Group_For_Parse(
     REBFRM *f,
-    REBVAL *cell,
-    const RELVAL *group
+    Value* cell,
+    const Cell* group
 ){
     assert(IS_GROUP(group));
     REBSPC *derived = Derive_Specifier(P_RULE_SPECIFIER, group);
@@ -488,7 +488,7 @@ REB_R Process_Group_For_Parse(
 // Otherwise return END_FLAG.
 // May also return THROWN_FLAG.
 //
-static REBIXO Parse_String_One_Rule(REBFRM *f, const RELVAL *rule) {
+static REBIXO Parse_String_One_Rule(REBFRM *f, const Cell* rule) {
     assert(IS_END(P_OUT));
 
     REBCNT flags = P_FIND_FLAGS | AM_FIND_MATCH | AM_FIND_TAIL;
@@ -647,12 +647,12 @@ static REBIXO Parse_String_One_Rule(REBFRM *f, const RELVAL *rule) {
 static REBIXO Parse_Array_One_Rule_Core(
     REBFRM *f,
     REBCNT pos,
-    const RELVAL *rule
+    const Cell* rule
 ) {
     assert(IS_END(P_OUT));
 
     REBARR *array = ARR(P_INPUT);
-    RELVAL *item = ARR_AT(array, pos);
+    Cell* item = ARR_AT(array, pos);
 
     if (Trace_Level) {
         Trace_Value("input", rule);
@@ -768,7 +768,7 @@ static REBIXO Parse_Array_One_Rule_Core(
 // of the parse, this is the version used in the main loop.  To_Thru uses
 // the random access variation.
 //
-inline static REBIXO Parse_Array_One_Rule(REBFRM *f, const RELVAL *rule) {
+inline static REBIXO Parse_Array_One_Rule(REBFRM *f, const Cell* rule) {
     return Parse_Array_One_Rule_Core(f, P_POS, rule);
 }
 
@@ -779,7 +779,7 @@ inline static REBIXO Parse_Array_One_Rule(REBFRM *f, const RELVAL *rule) {
 static REBIXO Parse_One_Rule(
     REBFRM *f,
     REBCNT pos,
-    const RELVAL *rule
+    const Cell* rule
 ){
     if (ANY_ARRAY(P_INPUT_VALUE))
         return Parse_Array_One_Rule_Core(f, pos, rule);
@@ -801,19 +801,19 @@ static REBIXO Parse_One_Rule(
 //
 static REBIXO To_Thru_Block_Rule(
     REBFRM *f,
-    const RELVAL *rule_block,
+    const Cell* rule_block,
     bool is_thru
 ) {
     DECLARE_LOCAL (cell); // holds evaluated rules (use frame cell instead?)
 
     REBCNT pos = P_POS;
     for (; pos <= SER_LEN(P_INPUT); ++pos) {
-        const RELVAL *blk = VAL_ARRAY_HEAD(rule_block);
+        const Cell* blk = VAL_ARRAY_HEAD(rule_block);
         for (; NOT_END(blk); blk++) {
             if (IS_BAR(blk))
                 fail (Error_Parse_Rule()); // !!! Shouldn't `TO [|]` succeed?
 
-            const RELVAL *rule;
+            const Cell* rule;
             if (not IS_GROUP(blk))
                 rule = blk;
             else {
@@ -1047,7 +1047,7 @@ static REBIXO To_Thru_Block_Rule(
 //
 static REBIXO To_Thru_Non_Block_Rule(
     REBFRM *f,
-    const RELVAL *rule,
+    const Cell* rule,
     bool is_thru
 ) {
     assert(not IS_BLOCK(rule));
@@ -1258,7 +1258,7 @@ static REBIXO Do_Eval_Rule(REBFRM *f)
     if (IS_END(P_RULE))
         fail (Error_Parse_End());
 
-    // The DO'ing of the input series will generate a single REBVAL.  But
+    // The DO'ing of the input series will generate a single Value.  But
     // for a parse to run on some input, that input has to be in a series...
     // so the single item is put into a block holder.  If the item was already
     // a block, then the user will have to use INTO to parse into it.
@@ -1325,7 +1325,7 @@ static REBIXO Do_Eval_Rule(REBFRM *f)
     // redo work like fetching words/paths, which should not be needed.
     //
     DECLARE_LOCAL (cell);
-    const RELVAL *rule = Get_Parse_Value(cell, P_RULE, P_RULE_SPECIFIER);
+    const Cell* rule = Get_Parse_Value(cell, P_RULE, P_RULE_SPECIFIER);
 
     // !!! The actual mechanic here does not permit you to say `do thru x`
     // or other multi-argument things.  A lot of R3-Alpha's PARSE design was
@@ -1446,7 +1446,7 @@ REBNATIVE(subparse)
     REBCNT start = P_POS; // recovery restart point
     REBCNT begin = P_POS; // point at beginning of match
 
-    // The loop iterates across each REBVAL's worth of "rule" in the rule
+    // The loop iterates across each cell's worth of "rule" in the rule
     // block.  Some of these rules just set `flags` and `continue`, so that
     // the flags will apply to the next rule item.  If the flag is PF_SET
     // or PF_COPY, then the `set_or_copy_word` pointers will be assigned
@@ -1460,7 +1460,7 @@ REBNATIVE(subparse)
     // to notice a "grammar error".  It could use review.
     //
     REBFLGS flags = 0;
-    const RELVAL *set_or_copy_word = NULL;
+    const Cell* set_or_copy_word = NULL;
 
     REBINT mincount = 1; // min pattern count
     REBINT maxcount = 1; // max pattern count
@@ -1524,7 +1524,7 @@ REBNATIVE(subparse)
         // that item.  If the code makes it to the iterated rule matching
         // section, then rule should be set to something non-NULL by then...
         //
-        const RELVAL *rule;
+        const Cell* rule;
         if (not IS_GROUP(P_RULE))
             rule = P_RULE;
         else {
@@ -1548,7 +1548,7 @@ REBNATIVE(subparse)
         // `[some "a"]`.  Because it is iterated it is only captured the first
         // time through, nullptr indicates it's not been captured yet.
         //
-        const RELVAL *subrule = nullptr;
+        const Cell* subrule = nullptr;
 
         // If word, set-word, or get-word, process it:
         if (VAL_TYPE(rule) >= REB_WORD and VAL_TYPE(rule) <= REB_GET_WORD) {
@@ -1731,7 +1731,7 @@ REBNATIVE(subparse)
                             );
                         }
                         else {
-                            REBVAL *stacked = DS_AT(dsp_orig);
+                            Value* stacked = DS_AT(dsp_orig);
                             do {
                                 ++stacked;
                                 Move_Value(
@@ -2100,7 +2100,7 @@ REBNATIVE(subparse)
                     if (not subrule) // capture only on iteration #1
                         FETCH_NEXT_RULE_KEEP_LAST(&subrule, f);
 
-                    RELVAL *cmp = ARR_AT(ARR(P_INPUT), P_POS);
+                    Cell* cmp = ARR_AT(ARR(P_INPUT), P_POS);
 
                     if (IS_END(cmp))
                         i = END_FLAG;
@@ -2131,7 +2131,7 @@ REBNATIVE(subparse)
                     if (not IS_SER_ARRAY(P_INPUT))
                         fail (Error_Parse_Rule());
 
-                    RELVAL *into = ARR_AT(ARR(P_INPUT), P_POS);
+                    Cell* into = ARR_AT(ARR(P_INPUT), P_POS);
 
                     if (
                         IS_END(into)
@@ -2367,7 +2367,7 @@ REBNATIVE(subparse)
                     }
                     else {
                         if (count != 0) {
-                            REBVAL *var = Sink_Var_May_Fail(
+                            Value* var = Sink_Var_May_Fail(
                                 set_or_copy_word, P_RULE_SPECIFIER
                             );
                             REBUNI ch = GET_ANY_CHAR(P_INPUT, begin);
@@ -2555,16 +2555,16 @@ REBNATIVE(parse)
 {
     INCLUDE_PARAMS_OF_PARSE;
 
-    REBVAL *rules = ARG(rules);
+    Value* rules = ARG(rules);
 
     bool interrupted;
     if (Subparse_Throws(
         &interrupted,
         D_OUT,
         ARG(input),
-        SPECIFIED, // input is a non-relative REBVAL
+        SPECIFIED, // input is a non-relative Value
         rules,
-        SPECIFIED, // rules is a non-relative REBVAL
+        SPECIFIED, // rules is a non-relative Value
         nullptr,  // start out with no COLLECT in effect, so no P_COLLECTION
         REF(case) or IS_BINARY(ARG(input)) ? AM_FIND_CASE : 0
         //

@@ -31,7 +31,7 @@
 #include "sys-core.h"
 
 
-static bool Check_Char_Range(const REBVAL *val, REBINT limit)
+static bool Check_Char_Range(const Value* val, REBINT limit)
 {
     if (IS_CHAR(val))
         return not (VAL_CHAR(val) > limit);
@@ -101,8 +101,8 @@ REBNATIVE(as_pair)
 {
     INCLUDE_PARAMS_OF_AS_PAIR;
 
-    REBVAL *x = ARG(x);
-    REBVAL *y = ARG(y);
+    Value* x = ARG(x);
+    Value* y = ARG(y);
 
     if (
         not (IS_INTEGER(x) or IS_DECIMAL(x))
@@ -138,8 +138,8 @@ REBNATIVE(bind)
 {
     INCLUDE_PARAMS_OF_BIND;
 
-    REBVAL *v = ARG(value);
-    REBVAL *target = ARG(target);
+    Value* v = ARG(value);
+    Value* target = ARG(target);
 
     REBCNT flags = REF(only) ? BIND_0 : BIND_DEEP;
 
@@ -203,7 +203,7 @@ REBNATIVE(bind)
 
     assert(ANY_ARRAY(v));
 
-    RELVAL *at;
+    Cell* at;
     if (REF(copy)) {
         REBARR *copy = Copy_Array_Core_Managed(
             VAL_ARRAY(v),
@@ -282,7 +282,7 @@ REBNATIVE(use)
 //
 //  Did_Get_Binding_Of: C
 //
-bool Did_Get_Binding_Of(REBVAL *out, const REBVAL *v)
+bool Did_Get_Binding_Of(Value* out, const Value* v)
 {
     switch (VAL_TYPE(v)) {
     case REB_ACTION: {
@@ -406,7 +406,7 @@ REBNATIVE(unbind)
 {
     INCLUDE_PARAMS_OF_UNBIND;
 
-    REBVAL *word = ARG(word);
+    Value* word = ARG(word);
 
     if (ANY_WORD(word))
         Unbind_Any_Word(word);
@@ -448,7 +448,7 @@ REBNATIVE(collect_words)
 
     UNUSED(REF(ignore)); // implied used or unused by ARG(hidden)'s voidness
 
-    RELVAL *head = VAL_ARRAY_AT(ARG(block));
+    Cell* head = VAL_ARRAY_AT(ARG(block));
     return Init_Block(
         D_OUT,
         Collect_Unique_Words_Managed(head, flags, ARG(hidden))
@@ -457,8 +457,8 @@ REBNATIVE(collect_words)
 
 
 inline static void Get_Opt_Polymorphic_May_Fail(
-    REBVAL *out,
-    const RELVAL *v,
+    Value* out,
+    const Cell* v,
     REBSPC *specifier,
     bool any
 ){
@@ -509,7 +509,7 @@ REBNATIVE(get)
 {
     INCLUDE_PARAMS_OF_GET;
 
-    REBVAL *source = ARG(source);
+    Value* source = ARG(source);
 
     if (not IS_BLOCK(source)) {
         Get_Opt_Polymorphic_May_Fail(D_OUT, source, SPECIFIED, REF(any));
@@ -517,8 +517,8 @@ REBNATIVE(get)
     }
 
     REBARR *results = Make_Arr(VAL_LEN_AT(source));
-    REBVAL *dest = KNOWN(ARR_HEAD(results));
-    RELVAL *item = VAL_ARRAY_AT(source);
+    Value* dest = KNOWN(ARR_HEAD(results));
+    Cell* item = VAL_ARRAY_AT(source);
 
     for (; NOT_END(item); ++item, ++dest) {
         Get_Opt_Polymorphic_May_Fail(
@@ -568,9 +568,9 @@ REBNATIVE(get_p)
 //  Set_Opt_Polymorphic_May_Fail: C
 //
 inline static void Set_Opt_Polymorphic_May_Fail(
-    const RELVAL *target,
+    const Cell* target,
     REBSPC *target_specifier,
-    const RELVAL *value,
+    const Cell* value,
     REBSPC *value_specifier,
     bool enfix
 ){
@@ -586,7 +586,7 @@ inline static void Set_Opt_Polymorphic_May_Fail(
         // is not there, so it leads to too many silent errors.
     }
     else if (ANY_WORD(target)) {
-        REBVAL *var = Sink_Var_May_Fail(target, target_specifier);
+        Value* var = Sink_Var_May_Fail(target, target_specifier);
         Derelativize(var, value, value_specifier);
         if (enfix)
             SET_VAL_FLAG(var, VALUE_FLAG_ENFIXED);
@@ -650,8 +650,8 @@ REBNATIVE(set)
 {
     INCLUDE_PARAMS_OF_SET;
 
-    REBVAL *target = ARG(target);
-    REBVAL *value = ARG(value);
+    Value* target = ARG(target);
+    Value* value = ARG(value);
 
     UNUSED(REF(any));  // !!!provided for bootstrap at this time
 
@@ -669,9 +669,9 @@ REBNATIVE(set)
         RETURN (value);
     }
 
-    const RELVAL *item = VAL_ARRAY_AT(target);
+    const Cell* item = VAL_ARRAY_AT(target);
 
-    const RELVAL *v;
+    const Cell* v;
     if (IS_BLOCK(value) and not REF(single))
         v = VAL_ARRAY_AT(value);
     else
@@ -773,14 +773,14 @@ REBNATIVE(in)
 {
     INCLUDE_PARAMS_OF_IN;
 
-    REBVAL *val = ARG(context); // object, error, port, block
-    REBVAL *word = ARG(word);
+    Value* val = ARG(context); // object, error, port, block
+    Value* word = ARG(word);
 
     DECLARE_LOCAL (safe);
 
     if (IS_BLOCK(val) || IS_GROUP(val)) {
         if (IS_WORD(word)) {
-            const REBVAL *v;
+            const Value* v;
             REBCNT i;
             for (i = VAL_INDEX(val); i < VAL_LEN_HEAD(val); i++) {
                 Get_Simple_Value_Into(
@@ -884,10 +884,10 @@ REBNATIVE(enfixed_q)
 {
     INCLUDE_PARAMS_OF_ENFIXED_Q;
 
-    REBVAL *source = ARG(source);
+    Value* source = ARG(source);
 
     if (ANY_WORD(source)) {
-        const REBVAL *var = Get_Opt_Var_May_Fail(source, SPECIFIED);
+        const Value* var = Get_Opt_Var_May_Fail(source, SPECIFIED);
 
         assert(NOT_VAL_FLAG(var, VALUE_FLAG_ENFIXED) or IS_ACTION(var));
         return Init_Logic(D_OUT, GET_VAL_FLAG(var, VALUE_FLAG_ENFIXED));
@@ -924,7 +924,7 @@ REBNATIVE(semiquoted_q)
     // !!! TBD: Enforce this is a function parameter (specific binding branch
     // makes the test different, and easier)
 
-    const REBVAL *var = Get_Opt_Var_May_Fail(ARG(parameter), SPECIFIED);
+    const Value* var = Get_Opt_Var_May_Fail(ARG(parameter), SPECIFIED);
 
     return Init_Logic(D_OUT, GET_VAL_FLAG(var, VALUE_FLAG_UNEVALUATED));
 }
@@ -977,7 +977,7 @@ REBNATIVE(free)
 {
     INCLUDE_PARAMS_OF_FREE;
 
-    REBVAL *v = ARG(memory);
+    Value* v = ARG(memory);
 
     if (ANY_CONTEXT(v) or IS_HANDLE(v))
         fail ("FREE only implemented for ANY-SERIES! at the moment");
@@ -1006,7 +1006,7 @@ REBNATIVE(free_q)
 {
     INCLUDE_PARAMS_OF_FREE_Q;
 
-    REBVAL *v = ARG(value);
+    Value* v = ARG(value);
 
     REBSER *s;
     if (ANY_CONTEXT(v))
@@ -1036,7 +1036,7 @@ REBNATIVE(as)
 {
     INCLUDE_PARAMS_OF_AS;
 
-    REBVAL *v = ARG(value);
+    Value* v = ARG(value);
     enum Reb_Kind new_kind = VAL_TYPE_KIND(ARG(type));
 
     switch (new_kind) {
@@ -1220,7 +1220,7 @@ REBNATIVE(aliases_q)
 //     SET? 'OBJECT/NON-MEMBER/XXX -> will error
 //     SET? 'DATE/MONTH -> is true, even though not a variable resolution
 //
-inline static bool Is_Set(const REBVAL *location)
+inline static bool Is_Set(const Value* location)
 {
     if (ANY_WORD(location))
         return ANY_VALUE(Get_Opt_Var_May_Fail(location, SPECIFIED));
@@ -1289,7 +1289,7 @@ REBNATIVE(quote)
 {
     INCLUDE_PARAMS_OF_QUOTE;
 
-    REBVAL *v = ARG(value);
+    Value* v = ARG(value);
 
     if (REF(soft) and IS_QUOTABLY_SOFT(v))
         fail ("QUOTE/SOFT not currently implemented, should clone EVAL");
@@ -1338,7 +1338,7 @@ REBNATIVE(null_q)
 //
 //  Is_Voided: C
 //
-bool Is_Voided(const REBVAL *location) {
+bool Is_Voided(const Value* location) {
     if (ANY_WORD(location))
         return IS_VOID(Get_Opt_Var_May_Fail(location, SPECIFIED));
 

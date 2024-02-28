@@ -37,7 +37,7 @@
 //
 // That required the Reb_Event--which was previously three 32-bit quantities,
 // to split its payload up.  Now to get a complete event structure through
-// the API, a full alias to a REBVAL is given.
+// the API, a full alias to a cell is given.
 //
 
 #pragma pack(4)
@@ -68,14 +68,14 @@ typedef struct {
   #if defined(__LP64__) || defined(__LLP64__)
     void *padding;
   #endif
-} REBEVT; // mirrors REBVAL holding a Reb_Event payload, should be compatible
+} REBEVT; // mirrors cell holding a Reb_Event payload, should be compatible
 
-// Note: the "eventee" series and the "request" live in the REBVAL
+// Note: the "eventee" series and the "request" live in the cell
 #pragma pack()
 
 // Special event flags:
 //
-// !!! So long as events are directly hooking into the low-level REBVAL
+// !!! So long as events are directly hooking into the low-level cell
 // implementation, this could just use EVENT_FLAG_XXX flags.  eventee could
 // be a binding to a REBNOD that was able to inspect that node to get the
 // data "model".

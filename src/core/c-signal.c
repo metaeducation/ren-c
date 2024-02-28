@@ -76,7 +76,7 @@
 // breakpoints.  The RESUME instruction is able to execute code with /DO,
 // and that code may escape from a debug interrupt signal (like Ctrl-C).
 //
-bool Do_Signals_Throws(REBVAL *out)
+bool Do_Signals_Throws(Value* out)
 {
     // !!! When it was the case that the only way Do_Signals_Throws would run
     // due to the Eval_Count reaching the end of an Eval_Dose, this way of

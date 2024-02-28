@@ -50,7 +50,7 @@
 //
 //  Get_Vector_At: C
 //
-void Get_Vector_At(RELVAL *out, REBSER *vec, REBCNT n)
+void Get_Vector_At(Cell* out, REBSER *vec, REBCNT n)
 {
     REBYTE *data = SER_DATA_RAW(vec);
 
@@ -122,7 +122,7 @@ void Get_Vector_At(RELVAL *out, REBSER *vec, REBCNT n)
 static void Set_Vector_At_Core(
     REBSER *vec,
     REBCNT n,
-    const RELVAL *v,
+    const Cell* v,
     REBSPC *specifier
 ){
     REBYTE *data = SER_DATA_RAW(vec);
@@ -233,18 +233,18 @@ static void Set_Vector_At_Core(
 inline static void Set_Vector_At(
     REBSER *series,
     REBCNT index,
-    const REBVAL *v
+    const Value* v
 ){
     Set_Vector_At_Core(series, index, v, SPECIFIED);
 }
 
-void Set_Vector_Row(REBSER *ser, const REBVAL *blk) // !!! can not be BLOCK!?
+void Set_Vector_Row(REBSER *ser, const Value* blk) // !!! can not be BLOCK!?
 {
     REBCNT idx = VAL_INDEX(blk);
     REBCNT len = VAL_LEN_AT(blk);
 
     if (IS_BLOCK(blk)) {
-        RELVAL *val = VAL_ARRAY_AT(blk);
+        Cell* val = VAL_ARRAY_AT(blk);
 
         REBCNT n = 0;
         for (; NOT_END(val); val++) {
@@ -272,7 +272,7 @@ void Set_Vector_Row(REBSER *ser, const REBVAL *blk) // !!! can not be BLOCK!?
 //
 // Convert a vector to a block.
 //
-REBARR *Vector_To_Array(const REBVAL *vect)
+REBARR *Vector_To_Array(const Value* vect)
 {
     REBSER *ser = VAL_SERIES(vect);
     REBCNT len = VAL_LEN_AT(vect);
@@ -280,7 +280,7 @@ REBARR *Vector_To_Array(const REBVAL *vect)
         fail (Error_Invalid(vect));
 
     REBARR *arr = Make_Arr(len);
-    RELVAL *dest = ARR_HEAD(arr);
+    Cell* dest = ARR_HEAD(arr);
     REBCNT n;
     for (n = VAL_INDEX(vect); n < VAL_LEN_HEAD(vect); ++n, ++dest)
         Get_Vector_At(dest, ser, n);
@@ -300,7 +300,7 @@ REBARR *Vector_To_Array(const REBVAL *vect)
 // <, however the REBINT returned here is supposed to.  Review if this code
 // ever becomes relevant.
 //
-REBINT Compare_Vector(const RELVAL *v1, const RELVAL *v2)
+REBINT Compare_Vector(const Cell* v1, const Cell* v2)
 {
     REBSER *ser1 = VAL_SERIES(v1);
     REBSER *ser2 = VAL_SERIES(v2);
@@ -338,7 +338,7 @@ REBINT Compare_Vector(const RELVAL *v1, const RELVAL *v2)
 // extracting into values.  This could use REBYTE* access to get a similar
 // effect if it were a priority.  Extract and reinsert REBVALs for now.
 //
-void Shuffle_Vector(REBVAL *vect, bool secure)
+void Shuffle_Vector(Value* vect, bool secure)
 {
     REBSER *ser = VAL_SERIES(vect);
     REBCNT idx = VAL_INDEX(vect);
@@ -404,9 +404,9 @@ static REBSER *Make_Vector(
 //           size:       integer units
 //           init:        block of values
 //
-bool Make_Vector_Spec(REBVAL *out, const RELVAL *head, REBSPC *specifier)
+bool Make_Vector_Spec(Value* out, const Cell* head, REBSPC *specifier)
 {
-    const RELVAL *item = head;
+    const Cell* item = head;
 
     if (specifier) {
         //
@@ -466,7 +466,7 @@ bool Make_Vector_Spec(REBVAL *out, const RELVAL *head, REBSPC *specifier)
 
     // Initial data:
 
-    const REBVAL *iblk;
+    const Value* iblk;
     if (NOT_END(item) and (IS_BLOCK(item) or IS_BINARY(item))) {
         REBCNT len = VAL_LEN_AT(item);
         if (IS_BINARY(item) and not non_integer)
@@ -485,7 +485,7 @@ bool Make_Vector_Spec(REBVAL *out, const RELVAL *head, REBSPC *specifier)
         ++item;
     }
     else
-        index = 0; // default index offset inside returned REBVAL to 0
+        index = 0; // default index offset inside returned cell to 0
 
     if (NOT_END(item))
         return false;
@@ -511,7 +511,7 @@ bool Make_Vector_Spec(REBVAL *out, const RELVAL *head, REBSPC *specifier)
 //
 //  MAKE_Vector: C
 //
-REB_R MAKE_Vector(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
+REB_R MAKE_Vector(Value* out, enum Reb_Kind kind, const Value* arg)
 {
     // CASE: make vector! 100
     if (IS_INTEGER(arg) || IS_DECIMAL(arg)) {
@@ -536,7 +536,7 @@ REB_R MAKE_Vector(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 //
 //  TO_Vector: C
 //
-REB_R TO_Vector(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
+REB_R TO_Vector(Value* out, enum Reb_Kind kind, const Value* arg)
 {
     if (IS_BLOCK(arg)) {
         if (Make_Vector_Spec(out, VAL_ARRAY_AT(arg), VAL_SPECIFIER(arg)))
@@ -549,7 +549,7 @@ REB_R TO_Vector(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 //
 //  CT_Vector: C
 //
-REBINT CT_Vector(const RELVAL *a, const RELVAL *b, REBINT mode)
+REBINT CT_Vector(const Cell* a, const Cell* b, REBINT mode)
 {
     REBINT n = Compare_Vector(a, b);  // needs to be expanded for equality
     if (mode >= 0) {
@@ -563,7 +563,7 @@ REBINT CT_Vector(const RELVAL *a, const RELVAL *b, REBINT mode)
 //
 //  Pick_Vector: C
 //
-void Pick_Vector(REBVAL *out, const REBVAL *value, const REBVAL *picker) {
+void Pick_Vector(Value* out, const Value* value, const Value* picker) {
     REBSER *vect = VAL_SERIES(value);
 
     REBINT n;
@@ -595,9 +595,9 @@ void Pick_Vector(REBVAL *out, const REBVAL *value, const REBVAL *picker) {
 //  Poke_Vector_Fail_If_Read_Only: C
 //
 void Poke_Vector_Fail_If_Read_Only(
-    REBVAL *value,
-    const REBVAL *picker,
-    const REBVAL *poke
+    Value* value,
+    const Value* picker,
+    const Value* poke
 ) {
     REBSER *vect = VAL_SERIES(value);
     FAIL_IF_READ_ONLY_SERIES(vect);
@@ -629,8 +629,8 @@ void Poke_Vector_Fail_If_Read_Only(
 //
 REB_R PD_Vector(
     REBPVS *pvs,
-    const REBVAL *picker,
-    const REBVAL *opt_setval
+    const Value* picker,
+    const Value* opt_setval
 ){
     if (opt_setval) {
         Poke_Vector_Fail_If_Read_Only(pvs->out, picker, opt_setval);
@@ -647,7 +647,7 @@ REB_R PD_Vector(
 //
 REBTYPE(Vector)
 {
-    REBVAL *value = D_ARG(1);
+    Value* value = D_ARG(1);
     REBSER *ser;
 
     // Common operations for any series type (length, head, etc.)
@@ -721,7 +721,7 @@ REBTYPE(Vector)
 //
 //  MF_Vector: C
 //
-void MF_Vector(REB_MOLD *mo, const RELVAL *v, bool form)
+void MF_Vector(REB_MOLD *mo, const Cell* v, bool form)
 {
     REBSER *vect = VAL_SERIES(v);
 

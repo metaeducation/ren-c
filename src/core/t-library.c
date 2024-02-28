@@ -34,7 +34,7 @@
 //
 //  CT_Library: C
 //
-REBINT CT_Library(const RELVAL *a, const RELVAL *b, REBINT mode)
+REBINT CT_Library(const Cell* a, const Cell* b, REBINT mode)
 {
     if (mode >= 0) {
         return VAL_LIBRARY(a) == VAL_LIBRARY(b);
@@ -46,7 +46,7 @@ REBINT CT_Library(const RELVAL *a, const RELVAL *b, REBINT mode)
 //
 //  MAKE_Library: C
 //
-REB_R MAKE_Library(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
+REB_R MAKE_Library(Value* out, enum Reb_Kind kind, const Value* arg)
 {
     assert(kind == REB_LIBRARY);
     UNUSED(kind);
@@ -73,7 +73,7 @@ REB_R MAKE_Library(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 //
 //  TO_Library: C
 //
-REB_R TO_Library(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
+REB_R TO_Library(Value* out, enum Reb_Kind kind, const Value* arg)
 {
     return MAKE_Library(out, kind, arg);
 }
@@ -82,7 +82,7 @@ REB_R TO_Library(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 //
 //  MF_Library: C
 //
-void MF_Library(REB_MOLD *mo, const RELVAL *v, bool form)
+void MF_Library(REB_MOLD *mo, const Cell* v, bool form)
 {
     UNUSED(form);
 
@@ -105,7 +105,7 @@ REBTYPE(Library)
     case SYM_CLOSE: {
         INCLUDE_PARAMS_OF_CLOSE;
 
-        REBVAL *lib = ARG(port); // !!! generic arg name is "port"?
+        Value* lib = ARG(port); // !!! generic arg name is "port"?
 
         if (VAL_LIBRARY_FD(lib) == NULL) {
             // allow to CLOSE an already closed library

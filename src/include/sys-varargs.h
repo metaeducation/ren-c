@@ -77,8 +77,8 @@
 
 
 inline static bool Is_Block_Style_Varargs(
-    REBVAL **shared_out,
-    const RELVAL *vararg
+    Value* *shared_out,
+    const Cell* vararg
 ){
     assert(IS_VARARGS(vararg));
 
@@ -104,7 +104,7 @@ inline static bool Is_Block_Style_Varargs(
 
 inline static bool Is_Frame_Style_Varargs_Maybe_Null(
     REBFRM **f_out,
-    const RELVAL *vararg
+    const Cell* vararg
 ){
     assert(IS_VARARGS(vararg));
 
@@ -123,7 +123,7 @@ inline static bool Is_Frame_Style_Varargs_Maybe_Null(
 
 inline static bool Is_Frame_Style_Varargs_May_Fail(
     REBFRM **f_out,
-    const RELVAL *vararg
+    const Cell* vararg
 ){
     if (not Is_Frame_Style_Varargs_Maybe_Null(f_out, vararg))
         return false;
@@ -135,7 +135,7 @@ inline static bool Is_Frame_Style_Varargs_May_Fail(
 }
 
 
-inline static const REBVAL *Param_For_Varargs_Maybe_Null(const RELVAL *v) {
+inline static const Value* Param_For_Varargs_Maybe_Null(const Cell* v) {
     assert(IS_VARARGS(v));
 
     REBACT *phase = v->payload.varargs.phase;

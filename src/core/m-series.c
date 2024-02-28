@@ -104,7 +104,7 @@ void Append_Series(REBSER *s, const void *data, REBCNT len)
 // the number of units and does not include the terminator
 // (which will be added).
 //
-void Append_Values_Len(REBARR *a, const REBVAL *head, REBCNT len)
+void Append_Values_Len(REBARR *a, const Value* head, REBCNT len)
 {
     REBCNT old_len = ARR_LEN(a);
 
@@ -116,7 +116,7 @@ void Append_Values_Len(REBARR *a, const REBVAL *head, REBCNT len)
     memcpy(
         cast(char*, ARR_AT(a, old_len)),
         cast(const char*, head),
-        sizeof(REBVAL) * len
+        sizeof(Cell) * len
     );
 
     TERM_ARRAY_LEN(a, ARR_LEN(a));
@@ -403,12 +403,12 @@ void Assert_Series_Term_Core(REBSER *s)
         //
         // END values aren't canonized to zero bytes, check IS_END explicitly
         //
-        RELVAL *tail = ARR_TAIL(ARR(s));
+        Cell* tail = ARR_TAIL(ARR(s));
         if (NOT_END(tail))
             panic (tail);
     }
     else {
-        // If they are terminated, then non-REBVAL-bearing series must have
+        // If they are terminated, then non-Cell-bearing series must have
         // their terminal element as all 0 bytes (to use this check)
         //
         REBCNT len = SER_LEN(s);

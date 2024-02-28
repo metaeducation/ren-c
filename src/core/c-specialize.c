@@ -110,7 +110,7 @@
 //     specialize 'append/dup [dup: false] ; Note DUP: isn't frame /DUP
 //
 REBCTX *Make_Context_For_Action_Int_Partials(
-    const REBVAL *action, // need ->binding, so can't just be a REBACT*
+    const Value* action, // need ->binding, so can't just be a REBACT*
     REBDSP lowest_ordered_dsp, // caller can add refinement specializations
     struct Reb_Binder *opt_binder,
     REBFLGS prep // cell formatting mask bits, result managed if non-stack
@@ -125,7 +125,7 @@ REBCTX *Make_Context_For_Action_Int_Partials(
         SERIES_MASK_CONTEXT
     );
 
-    REBVAL *rootvar = RESET_CELL(ARR_HEAD(varlist), REB_FRAME);
+    Value* rootvar = RESET_CELL(ARR_HEAD(varlist), REB_FRAME);
     rootvar->payload.any_context.varlist = varlist;
     rootvar->payload.any_context.phase = VAL_ACTION(action);
     INIT_BINDING(rootvar, VAL_BINDING(action));
@@ -134,9 +134,9 @@ REBCTX *Make_Context_For_Action_Int_Partials(
     // used for partial specializations into INTEGER! or null, depending
     // on whether that slot was actually specialized out.
 
-    const REBVAL *param = ACT_PARAMS_HEAD(act);
-    REBVAL *arg = rootvar + 1;
-    const REBVAL *special = ACT_SPECIALTY_HEAD(act); // of exemplar/paramlist
+    const Value* param = ACT_PARAMS_HEAD(act);
+    Value* arg = rootvar + 1;
+    const Value* special = ACT_SPECIALTY_HEAD(act); // of exemplar/paramlist
 
     REBCNT index = 1; // used to bind REFINEMENT! values to parameter slots
 
@@ -203,7 +203,7 @@ REBCTX *Make_Context_For_Action_Int_Partials(
                 // Go back and fill it in, and consider the stack item
                 // to be completed/bound
                 //
-                REBVAL *passed = rootvar + partial_index;
+                Value* passed = rootvar + partial_index;
                 assert(passed->header.bits == prep);
 
                 assert(
@@ -228,7 +228,7 @@ REBCTX *Make_Context_For_Action_Int_Partials(
             canon = VAL_PARAM_CANON(param);
             REBDSP dsp = DSP;
             for (; dsp != highest_ordered_dsp; --dsp) {
-                REBVAL *ordered = DS_AT(dsp);
+                Value* ordered = DS_AT(dsp);
                 assert(IS_WORD_BOUND(ordered));
                 if (VAL_WORD_INDEX(ordered) == index) { // prescient push
                     assert(canon == VAL_STORED_CANON(ordered));
@@ -261,7 +261,7 @@ REBCTX *Make_Context_For_Action_Int_Partials(
         {
             REBDSP dsp = highest_ordered_dsp;
             for (; dsp != lowest_ordered_dsp; --dsp) {
-                REBVAL *ordered = DS_AT(dsp);
+                Value* ordered = DS_AT(dsp);
                 if (VAL_STORED_CANON(ordered) != canon)
                     continue; // just continuing this loop
 
@@ -323,7 +323,7 @@ REBCTX *Make_Context_For_Action_Int_Partials(
 // not absolute.
 //
 REBCTX *Make_Context_For_Action(
-    const REBVAL *action, // need ->binding, so can't just be a REBACT*
+    const Value* action, // need ->binding, so can't just be a REBACT*
     REBDSP lowest_ordered_dsp,
     struct Reb_Binder *opt_binder
 ){
@@ -370,10 +370,10 @@ REBCTX *Make_Context_For_Action(
 // has /DUP at DS_TOP, and /PART under it.  List stops at lowest_ordered_dsp.
 //
 bool Specialize_Action_Throws(
-    REBVAL *out,
-    REBVAL *specializee,
+    Value* out,
+    Value* specializee,
     REBSTR *opt_specializee_name,
-    REBVAL *opt_def, // !!! REVIEW: binding modified directly (not copied)
+    Value* opt_def, // !!! REVIEW: binding modified directly (not copied)
     REBDSP lowest_ordered_dsp
 ){
     assert(out != specializee);
@@ -426,8 +426,8 @@ bool Specialize_Action_Throws(
         // !!! Only one binder can be in effect, and we're calling arbitrary
         // code.  Must clean up now vs. in loop we do at the end.  :-(
         //
-        RELVAL *key = CTX_KEYS_HEAD(exemplar);
-        REBVAL *var = CTX_VARS_HEAD(exemplar);
+        Cell* key = CTX_KEYS_HEAD(exemplar);
+        Value* var = CTX_VARS_HEAD(exemplar);
         for (; NOT_END(key); ++key, ++var) {
             if (Is_Param_Unbindable(key))
                 continue; // !!! is this flag still relevant?
@@ -453,7 +453,7 @@ bool Specialize_Action_Throws(
         }
     }
 
-    REBVAL *rootkey = CTX_ROOTKEY(exemplar);
+    Value* rootkey = CTX_ROOTKEY(exemplar);
 
     // Build up the paramlist for the specialized function on the stack.
     // The same walk used for that is used to link and process REB_X_PARTIAL
@@ -462,15 +462,15 @@ bool Specialize_Action_Throws(
     REBDSP dsp_paramlist = DSP;
     DS_PUSH(ACT_ARCHETYPE(unspecialized));
 
-    REBVAL *param = rootkey + 1;
-    REBVAL *arg = CTX_VARS_HEAD(exemplar);
-    REBVAL *refine = ORDINARY_ARG; // parallels states in Eval_Core_Throw()
+    Value* param = rootkey + 1;
+    Value* arg = CTX_VARS_HEAD(exemplar);
+    Value* refine = ORDINARY_ARG; // parallels states in Eval_Core_Throw()
     REBCNT index = 1;
 
-    REBVAL *first_partial = nullptr;
-    REBVAL *last_partial = nullptr;
+    Value* first_partial = nullptr;
+    Value* last_partial = nullptr;
 
-    REBVAL *evoked = nullptr;
+    Value* evoked = nullptr;
 
     for (; NOT_END(param); ++param, ++arg, ++index) {
         switch (VAL_PARAM_CLASS(param)) {
@@ -675,7 +675,7 @@ bool Specialize_Action_Throws(
         SERIES_MASK_ACTION
     );
     MANAGE_ARRAY(paramlist);
-    RELVAL *rootparam = ARR_HEAD(paramlist);
+    Cell* rootparam = ARR_HEAD(paramlist);
     rootparam->payload.action.paramlist = paramlist;
 
     // PARAM_CLASS_REFINEMENT slots which started partially specialized (or
@@ -702,7 +702,7 @@ bool Specialize_Action_Throws(
     // pushed the end result will be a stack with the highest priority
     // refinements at the top.
     //
-    REBVAL *ordered = DS_AT(lowest_ordered_dsp);
+    Value* ordered = DS_AT(lowest_ordered_dsp);
     while (ordered != DS_TOP) {
         if (IS_BLANK(ordered + 1)) // blanked when seen no longer partial
             ++ordered;
@@ -710,10 +710,10 @@ bool Specialize_Action_Throws(
             break;
     }
 
-    REBVAL *partial = first_partial;
+    Value* partial = first_partial;
     while (partial) {
         assert(VAL_TYPE_RAW(partial) == REB_X_PARTIAL);
-        REBVAL *next_partial = partial->extra.next_partial; // overwritten
+        Value* next_partial = partial->extra.next_partial; // overwritten
 
         if (NOT_VAL_FLAG(partial, PARTIAL_FLAG_IN_USE)) {
             if (ordered == DS_TOP)
@@ -795,7 +795,7 @@ bool Specialize_Action_Throws(
 
     // See %sysobj.r for `specialized-meta:` object template
 
-    REBVAL *example = Get_System(SYS_STANDARD, STD_SPECIALIZED_META);
+    Value* example = Get_System(SYS_STANDARD, STD_SPECIALIZED_META);
 
     REBCTX *meta = Copy_Context_Shallow_Managed(VAL_CONTEXT(example));
 
@@ -828,7 +828,7 @@ bool Specialize_Action_Throws(
     // that binding has to be UNBOUND).  It also remembers the original
     // action in the phase, so Specializer_Dispatcher() knows what to call.
     //
-    RELVAL *body = ARR_HEAD(ACT_DETAILS(specialized));
+    Cell* body = ARR_HEAD(ACT_DETAILS(specialized));
     Move_Value(body, CTX_ARCHETYPE(exemplar));
     INIT_BINDING(body, VAL_BINDING(specializee));
     body->payload.any_context.phase = unspecialized;
@@ -851,7 +851,7 @@ REB_R Specializer_Dispatcher(REBFRM *f)
 {
     REBARR *details = ACT_DETAILS(FRM_PHASE(f));
 
-    REBVAL *exemplar = KNOWN(ARR_HEAD(details));
+    Value* exemplar = KNOWN(ARR_HEAD(details));
     assert(IS_FRAME(exemplar));
 
     FRM_PHASE(f) = exemplar->payload.any_context.phase;
@@ -877,7 +877,7 @@ REBNATIVE(specialize)
 {
     INCLUDE_PARAMS_OF_SPECIALIZE;
 
-    REBVAL *specializee = ARG(specializee);
+    Value* specializee = ARG(specializee);
 
     REBDSP lowest_ordered_dsp = DSP;
 
@@ -939,7 +939,7 @@ REBNATIVE(specialize)
 REB_R Block_Dispatcher(REBFRM *f)
 {
     REBARR *details = ACT_DETAILS(FRM_PHASE(f));
-    RELVAL *block = ARR_HEAD(details);
+    Cell* block = ARR_HEAD(details);
     assert(IS_BLOCK(block));
 
     if (IS_SPECIFIC(block)) {
@@ -980,7 +980,7 @@ REB_R Block_Dispatcher(REBFRM *f)
             SET_SER_FLAG(body_array, ARRAY_FLAG_FILE_LINE);
         }
 
-        // Need to do a raw initialization of this block RELVAL because it is
+        // Need to do a raw initialization of this block Cell because it is
         // relative to a function.  (Init_Block assumes all specific values.)
         //
         INIT_VAL_ARRAY(block, body_array);
@@ -1013,11 +1013,11 @@ REB_R Block_Dispatcher(REBFRM *f)
 // call EVALUATE via Eval_Core_Throws() yet introspect the evaluator step.
 //
 bool Make_Invocation_Frame_Throws(
-    REBVAL *out, // in case there is a throw
+    Value* out, // in case there is a throw
     REBFRM *f,
-    REBVAL **first_arg_ptr, // returned so that MATCH can steal it
-    const REBVAL *action,
-    REBVAL *varargs,
+    Value* *first_arg_ptr, // returned so that MATCH can steal it
+    const Value* action,
+    Value* varargs,
     REBDSP lowest_ordered_dsp
 ){
     assert(IS_ACTION(action));
@@ -1099,9 +1099,9 @@ bool Make_Invocation_Frame_Throws(
 
     *first_arg_ptr = nullptr;
 
-    REBVAL *refine = nullptr;
-    REBVAL *param = CTX_KEYS_HEAD(CTX(f->varlist));
-    REBVAL *arg = CTX_VARS_HEAD(CTX(f->varlist));
+    Value* refine = nullptr;
+    Value* param = CTX_KEYS_HEAD(CTX(f->varlist));
+    Value* arg = CTX_VARS_HEAD(CTX(f->varlist));
     for (; NOT_END(param); ++param, ++arg) {
         enum Reb_Param_Class pclass = VAL_PARAM_CLASS(param);
         switch (pclass) {
@@ -1154,7 +1154,7 @@ REBNATIVE(does)
 {
     INCLUDE_PARAMS_OF_DOES;
 
-    REBVAL *specializee = ARG(specializee);
+    Value* specializee = ARG(specializee);
 
     if (IS_BLOCK(specializee)) {
         REBARR *paramlist = Make_Arr_Core(
@@ -1162,7 +1162,7 @@ REBNATIVE(does)
             SERIES_MASK_ACTION
         );
 
-        REBVAL *archetype = RESET_CELL(Alloc_Tail_Array(paramlist), REB_ACTION);
+        Value* archetype = RESET_CELL(Alloc_Tail_Array(paramlist), REB_ACTION);
         archetype->payload.action.paramlist = paramlist;
         INIT_BINDING(archetype, UNBOUND);
         TERM_ARRAY_LEN(paramlist, 1);
@@ -1189,7 +1189,7 @@ REBNATIVE(does)
         // Block_Dispatcher() *may* copy at an indeterminate time, so to keep
         // things invariant we have to lock it.
         //
-        RELVAL *body = ARR_HEAD(ACT_DETAILS(doer));
+        Cell* body = ARR_HEAD(ACT_DETAILS(doer));
         REBSER *locker = NULL;
         Ensure_Value_Immutable(specializee, locker);
         Move_Value(body, specializee);
@@ -1228,7 +1228,7 @@ REBNATIVE(does)
 
         DECLARE_FRAME (f); // REBFRM whose built FRAME! context we will steal
 
-        REBVAL *first_arg;
+        Value* first_arg;
         if (Make_Invocation_Frame_Throws(
             D_OUT,
             f,
@@ -1277,8 +1277,8 @@ REBNATIVE(does)
         // !!! The error reports that DOES doesn't accept the type for its
         // specializee argument, vs. that DO doesn't accept it.
         //
-        REBVAL *typeset = ACT_PARAM(NAT_ACTION(do), 1);
-        REBVAL *param = PAR(specializee);
+        Value* typeset = ACT_PARAM(NAT_ACTION(do), 1);
+        Value* param = PAR(specializee);
         if (not TYPE_CHECK(typeset, VAL_TYPE(specializee)))
             fail (Error_Arg_Type(frame_, param, VAL_TYPE(specializee)));
 
@@ -1298,15 +1298,15 @@ REBNATIVE(does)
     REBCNT num_slots = ACT_NUM_PARAMS(unspecialized) + 1;
     REBARR *paramlist = Make_Arr_Core(num_slots, SERIES_MASK_ACTION);
 
-    RELVAL *archetype = RESET_CELL(ARR_HEAD(paramlist), REB_ACTION);
+    Cell* archetype = RESET_CELL(ARR_HEAD(paramlist), REB_ACTION);
     archetype->payload.action.paramlist = paramlist;
     INIT_BINDING(archetype, UNBOUND);
     TERM_ARRAY_LEN(paramlist, 1);
 
     MISC(paramlist).meta = nullptr; // REDESCRIBE can be used to add help
 
-    REBVAL *param = ACT_PARAMS_HEAD(unspecialized);
-    RELVAL *alias = archetype + 1;
+    Value* param = ACT_PARAMS_HEAD(unspecialized);
+    Cell* alias = archetype + 1;
     for (; NOT_END(param); ++param, ++alias) {
         Move_Value(alias, param);
         TYPE_SET(alias, REB_TS_HIDDEN);

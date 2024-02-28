@@ -37,7 +37,7 @@
 //
 //  CT_Date: C
 //
-REBINT CT_Date(const RELVAL *a, const RELVAL *b, REBINT mode)
+REBINT CT_Date(const Cell* a, const Cell* b, REBINT mode)
 {
     if (mode == 1) {
         if (GET_VAL_FLAG(a, DATE_FLAG_HAS_ZONE)) {
@@ -85,7 +85,7 @@ REBINT CT_Date(const RELVAL *a, const RELVAL *b, REBINT mode)
 //
 //  MF_Date: C
 //
-void MF_Date(REB_MOLD *mo, const RELVAL *v_orig, bool form)
+void MF_Date(REB_MOLD *mo, const Cell* v_orig, bool form)
 {
     // We don't want to modify the incoming date value we are molding,
     // so we make a copy that we can tweak during the emit process
@@ -340,7 +340,7 @@ static REBDAT Normalize_Date(REBINT day, REBINT month, REBINT year, REBINT tz)
 // Adjust date and time for the timezone.
 // The result should be used for output, not stored.
 //
-void Adjust_Date_Zone(REBVAL *d, bool to_utc)
+void Adjust_Date_Zone(Value* d, bool to_utc)
 {
     if (NOT_VAL_FLAG(d, DATE_FLAG_HAS_ZONE))
         return;
@@ -380,7 +380,7 @@ void Adjust_Date_Zone(REBVAL *d, bool to_utc)
 //
 // Called by DIFFERENCE function.
 //
-void Subtract_Date(REBVAL *d1, REBVAL *d2, REBVAL *result)
+void Subtract_Date(Value* d1, Value* d2, Value* result)
 {
     REBINT diff = Diff_Date(VAL_DATE(d1), VAL_DATE(d2));
     if (cast(REBCNT, abs(diff)) > (((1U << 31) - 1) / SECS_IN_DAY))
@@ -406,7 +406,7 @@ void Subtract_Date(REBVAL *d1, REBVAL *d2, REBVAL *result)
 //
 //  Cmp_Date: C
 //
-REBINT Cmp_Date(const RELVAL *d1, const RELVAL *d2)
+REBINT Cmp_Date(const Cell* d1, const Cell* d2)
 {
     REBINT diff = Diff_Date(VAL_DATE(d1), VAL_DATE(d2));
     if (diff != 0)
@@ -429,7 +429,7 @@ REBINT Cmp_Date(const RELVAL *d1, const RELVAL *d2)
 //
 //  MAKE_Date: C
 //
-REB_R MAKE_Date(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg) {
+REB_R MAKE_Date(Value* out, enum Reb_Kind kind, const Value* arg) {
     assert(kind == REB_DATE);
     UNUSED(kind);
 
@@ -445,7 +445,7 @@ REB_R MAKE_Date(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg) {
     }
 
     if (ANY_ARRAY(arg) && VAL_ARRAY_LEN_AT(arg) >= 3) {
-        const RELVAL *item = VAL_ARRAY_AT(arg);
+        const Cell* item = VAL_ARRAY_AT(arg);
         if (not IS_INTEGER(item))
             goto bad_make;
 
@@ -536,12 +536,12 @@ REB_R MAKE_Date(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg) {
 //
 //  TO_Date: C
 //
-REB_R TO_Date(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg) {
+REB_R TO_Date(Value* out, enum Reb_Kind kind, const Value* arg) {
     return MAKE_Date(out, kind, arg);
 }
 
 
-static REBINT Int_From_Date_Arg(const REBVAL *opt_poke) {
+static REBINT Int_From_Date_Arg(const Value* opt_poke) {
     if (IS_INTEGER(opt_poke) || IS_DECIMAL(opt_poke))
         return Int32s(opt_poke, 0);
 
@@ -556,10 +556,10 @@ static REBINT Int_From_Date_Arg(const REBVAL *opt_poke) {
 //  Pick_Or_Poke_Date: C
 //
 void Pick_Or_Poke_Date(
-    REBVAL *opt_out,
-    REBVAL *v,
-    const REBVAL *picker,
-    const REBVAL *opt_poke
+    Value* opt_out,
+    Value* v,
+    const Value* picker,
+    const Value* opt_poke
 ){
     REBSYM sym;
     if (IS_WORD(picker)) {
@@ -855,8 +855,8 @@ void Pick_Or_Poke_Date(
 //
 REB_R PD_Date(
     REBPVS *pvs,
-    const REBVAL *picker,
-    const REBVAL *opt_setval
+    const Value* picker,
+    const Value* opt_setval
 ){
     if (opt_setval != NULL) {
         //
@@ -882,7 +882,7 @@ REB_R PD_Date(
 //
 REBTYPE(Date)
 {
-    REBVAL *val = D_ARG(1);
+    Value* val = D_ARG(1);
     assert(IS_DATE(val));
 
     REBSYM sym = VAL_WORD_SYM(verb);
@@ -895,7 +895,7 @@ REBTYPE(Date)
     REBCNT year = VAL_YEAR(val);
     REBI64 secs = GET_VAL_FLAG(val, DATE_FLAG_HAS_TIME) ? VAL_NANO(val) : 0;
 
-    REBVAL *arg = D_ARGC > 1 ? D_ARG(2) : NULL;
+    Value* arg = D_ARGC > 1 ? D_ARG(2) : NULL;
 
     if (sym == SYM_SUBTRACT || sym == SYM_ADD) {
         REBINT  type = VAL_TYPE(arg);
@@ -989,8 +989,8 @@ REBTYPE(Date)
         case SYM_DIFFERENCE: {
             INCLUDE_PARAMS_OF_DIFFERENCE;
 
-            REBVAL *val1 = ARG(value1);
-            REBVAL *val2 = ARG(value2);
+            Value* val1 = ARG(value1);
+            Value* val2 = ARG(value2);
 
             if (REF(case))
                 fail (Error_Bad_Refines_Raw());

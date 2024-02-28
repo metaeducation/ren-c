@@ -32,14 +32,14 @@
 
 
 
-static bool Equal_Context(const RELVAL *val, const RELVAL *arg)
+static bool Equal_Context(const Cell* val, const Cell* arg)
 {
     REBCTX *f1;
     REBCTX *f2;
-    REBVAL *key1;
-    REBVAL *key2;
-    REBVAL *var1;
-    REBVAL *var2;
+    Value* key1;
+    Value* key2;
+    Value* var1;
+    Value* var2;
 
     // ERROR! and OBJECT! may both be contexts, for instance, but they will
     // not compare equal just because their keys and fields are equal
@@ -123,7 +123,7 @@ static bool Equal_Context(const RELVAL *val, const RELVAL *arg)
 }
 
 
-static void Append_To_Context(REBCTX *context, REBVAL *arg)
+static void Append_To_Context(REBCTX *context, Value* arg)
 {
     // Can be a word:
     if (ANY_WORD(arg)) {
@@ -140,7 +140,7 @@ static void Append_To_Context(REBCTX *context, REBVAL *arg)
 
     // Process word/value argument block:
 
-    RELVAL *item = VAL_ARRAY_AT(arg);
+    Cell* item = VAL_ARRAY_AT(arg);
 
     // Can't actually fail() during a collect, so make sure any errors are
     // set and then jump to a Collect_End()
@@ -163,7 +163,7 @@ static void Append_To_Context(REBCTX *context, REBVAL *arg)
 
     // Examine word/value argument block
 
-    RELVAL *word;
+    Cell* word;
     for (word = item; NOT_END(word); word += 2) {
         if (!IS_WORD(word) && !IS_SET_WORD(word)) {
             error = Error_Invalid_Core(word, VAL_SPECIFIER(arg));
@@ -197,7 +197,7 @@ static void Append_To_Context(REBCTX *context, REBVAL *arg)
     len = CTX_LEN(context) + 1;
     Expand_Context(context, ARR_LEN(BUF_COLLECT) - len);
 
-    RELVAL *collect_key;
+    Cell* collect_key;
     for (
         collect_key = ARR_AT(BUF_COLLECT, len);
         NOT_END(collect_key);
@@ -214,8 +214,8 @@ static void Append_To_Context(REBCTX *context, REBVAL *arg)
         );
         assert(i != 0);
 
-        REBVAL *key = CTX_KEY(context, i);
-        REBVAL *var = CTX_VAR(context, i);
+        Value* key = CTX_KEY(context, i);
+        Value* var = CTX_VAR(context, i);
 
         if (GET_VAL_FLAG(var, CELL_FLAG_PROTECTED)) {
             error = Error_Protected_Key(key);
@@ -248,7 +248,7 @@ collect_end:
 //
 //  CT_Context: C
 //
-REBINT CT_Context(const RELVAL *a, const RELVAL *b, REBINT mode)
+REBINT CT_Context(const Cell* a, const Cell* b, REBINT mode)
 {
     if (mode < 0) return -1;
     return Equal_Context(a, b) ? 1 : 0;
@@ -261,7 +261,7 @@ REBINT CT_Context(const RELVAL *a, const RELVAL *b, REBINT mode)
 // !!! MAKE functions currently don't have an explicit protocol for
 // thrown values.  So out just might be set as thrown.  Review.
 //
-REB_R MAKE_Context(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
+REB_R MAKE_Context(Value* out, enum Reb_Kind kind, const Value* arg)
 {
     if (kind == REB_FRAME) {
         //
@@ -381,7 +381,7 @@ REB_R MAKE_Context(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 //
 //  TO_Context: C
 //
-REB_R TO_Context(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
+REB_R TO_Context(Value* out, enum Reb_Kind kind, const Value* arg)
 {
     if (kind == REB_ERROR) {
         //
@@ -410,8 +410,8 @@ REB_R TO_Context(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 //
 REB_R PD_Context(
     REBPVS *pvs,
-    const REBVAL *picker,
-    const REBVAL *opt_setval
+    const Value* picker,
+    const Value* opt_setval
 ){
     REBCTX *c = VAL_CONTEXT(pvs->out);
 
@@ -452,7 +452,7 @@ REBNATIVE(meta_of)
 {
     INCLUDE_PARAMS_OF_META_OF;
 
-    REBVAL *v = ARG(value);
+    Value* v = ARG(value);
 
     REBCTX *meta;
     if (IS_ACTION(v))
@@ -497,7 +497,7 @@ REBNATIVE(set_meta)
         meta = nullptr;
     }
 
-    REBVAL *v = ARG(value);
+    Value* v = ARG(value);
 
     if (IS_ACTION(v))
         MISC(VAL_ACT_PARAMLIST(v)).meta = meta;
@@ -532,7 +532,7 @@ REBCTX *Copy_Context_Core_Managed(REBCTX *original, REBU64 types)
         SERIES_MASK_CONTEXT | NODE_FLAG_MANAGED,
         nullptr // original_array, N/A because LINK()/MISC() used otherwise
     );
-    REBVAL *dest = KNOWN(ARR_HEAD(varlist)); // all context vars are SPECIFIED
+    Value* dest = KNOWN(ARR_HEAD(varlist)); // all context vars are SPECIFIED
 
     // The type information and fields in the rootvar (at head of the varlist)
     // get filled in with a copy, but the varlist needs to be updated in the
@@ -546,7 +546,7 @@ REBCTX *Copy_Context_Core_Managed(REBCTX *original, REBU64 types)
     // Now copy the actual vars in the context, from wherever they may be
     // (might be in an array, or might be in the chunk stack for FRAME!)
     //
-    REBVAL *src = CTX_VARS_HEAD(original);
+    Value* src = CTX_VARS_HEAD(original);
     for (; NOT_END(src); ++src, ++dest)
         Move_Var(dest, src); // keep VALUE_FLAG_ENFIXED, ARG_MARKED_CHECKED
 
@@ -590,7 +590,7 @@ REBCTX *Copy_Context_Core_Managed(REBCTX *original, REBU64 types)
 //
 //  MF_Context: C
 //
-void MF_Context(REB_MOLD *mo, const RELVAL *v, bool form)
+void MF_Context(REB_MOLD *mo, const Cell* v, bool form)
 {
     REBSER *out = mo->series;
 
@@ -617,8 +617,8 @@ void MF_Context(REB_MOLD *mo, const RELVAL *v, bool form)
         //
         // Mold all words and their values:
         //
-        REBVAL *key = CTX_KEYS_HEAD(c);
-        REBVAL *var = CTX_VARS_HEAD(c);
+        Value* key = CTX_KEYS_HEAD(c);
+        Value* var = CTX_VARS_HEAD(c);
         bool had_output = false;
         for (; NOT_END(key); key++, var++) {
             if (not Is_Param_Hidden(key)) {
@@ -662,12 +662,12 @@ void MF_Context(REB_MOLD *mo, const RELVAL *v, bool form)
     New_Indented_Line(mo);
     Append_Utf8_Codepoint(out, '[');
 
-    REBVAL *keys_head = CTX_KEYS_HEAD(c);
-    REBVAL *vars_head = CTX_VARS_HEAD(VAL_CONTEXT(v));
+    Value* keys_head = CTX_KEYS_HEAD(c);
+    Value* vars_head = CTX_VARS_HEAD(VAL_CONTEXT(v));
 
     bool first = true;
-    REBVAL *key = keys_head;
-    REBVAL *var = vars_head;
+    Value* key = keys_head;
+    Value* var = vars_head;
     for (; NOT_END(key); ++key, ++var) {
         if (Is_Param_Hidden(key))
             continue;
@@ -740,10 +740,10 @@ void MF_Context(REB_MOLD *mo, const RELVAL *v, bool form)
 //
 REB_R Context_Common_Action_Maybe_Unhandled(
     REBFRM *frame_,
-    REBVAL *verb
+    Value* verb
 ){
-    REBVAL *value = D_ARG(1);
-    REBVAL *arg = D_ARGC > 1 ? D_ARG(2) : NULL;
+    Value* value = D_ARG(1);
+    Value* arg = D_ARGC > 1 ? D_ARG(2) : NULL;
 
     REBCTX *c = VAL_CONTEXT(value);
 
@@ -808,8 +808,8 @@ REBTYPE(Context)
     if (r != R_UNHANDLED)
         return r;
 
-    REBVAL *value = D_ARG(1);
-    REBVAL *arg = D_ARGC > 1 ? D_ARG(2) : NULL;
+    Value* value = D_ARG(1);
+    Value* arg = D_ARGC > 1 ? D_ARG(2) : NULL;
 
     REBCTX *c = VAL_CONTEXT(value);
 
@@ -963,8 +963,8 @@ REBNATIVE(construct)
 {
     INCLUDE_PARAMS_OF_CONSTRUCT;
 
-    REBVAL *spec = ARG(spec);
-    REBVAL *body = ARG(body);
+    Value* spec = ARG(spec);
+    Value* body = ARG(body);
     REBCTX *parent = NULL;
 
     enum Reb_Kind target;
@@ -1039,7 +1039,7 @@ REBNATIVE(construct)
             target, // type
             // scan for toplevel set-words
             IS_BLANK(body)
-                ? cast(const RELVAL*, END_NODE) // gcc/g++ 2.95 needs (bug)
+                ? cast(const Cell*, END_NODE) // gcc/g++ 2.95 needs (bug)
                 : VAL_ARRAY_AT(body),
             parent
         );

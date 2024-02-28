@@ -66,7 +66,7 @@ void OS_Destroy_Graphics(void);
 // Return the current directory path as a FILE!.  The result should be freed
 // with rebRelease().
 //
-REBVAL *OS_Get_Current_Dir(void)
+Value* OS_Get_Current_Dir(void)
 {
     char *path = rebAllocN(char, PATH_MAX);
 
@@ -75,7 +75,7 @@ REBVAL *OS_Get_Current_Dir(void)
         return rebBlank();
     }
 
-    REBVAL *result = rebValue("local-to-file/dir", rebT(path));
+    Value* result = rebValue("local-to-file/dir", rebT(path));
 
     rebFree(path);
     return result;
@@ -87,7 +87,7 @@ REBVAL *OS_Get_Current_Dir(void)
 //
 // Set the current directory to local path.  Return false on failure.
 //
-bool OS_Set_Current_Dir(const REBVAL *path)
+bool OS_Set_Current_Dir(const Value* path)
 {
     char *path_utf8 = rebSpell("file-to-local/full", path);
 

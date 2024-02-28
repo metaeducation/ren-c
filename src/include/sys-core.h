@@ -29,7 +29,7 @@
 // This is the main include file used in the implementation of the core.
 //
 // * It defines all the data types and structures used by the auto-generated
-//   function prototypes.  This includes the obvious REBINT, REBVAL, REBSER.
+//   function prototypes.  This includes the obvious REBINT, Value, REBSER.
 //   It also includes any enumerated type parameters to functions which are
 //   shared between various C files.
 //
@@ -71,7 +71,7 @@
 //
 // Historically, Rebol source did not include the external library, because it
 // was assumed the core would never want to use the less-privileged and higher
-// overhead API.  However, libRebol now operates on REBVAL* directly (though
+// overhead API.  However, libRebol now operates on Value* directly (though
 // opaque to clients).  It has many conveniences, and is the preferred way to
 // work with isolated values that need indefinite duration.
 //
@@ -80,6 +80,7 @@
 #include "pstdbool.h" // polyfill <stdbool.h> for pre-C99/C++11 compilers
 
 #include "rebol.h"
+typedef RebolValue Value;
 
 
 //=//// STANDARD DEPENDENCIES FOR CORE ////////////////////////////////////=//
@@ -274,8 +275,8 @@
 
 #include "sys-rebnod.h"
 
-#include "sys-rebval.h" // REBVAL structure definition
-#include "sys-rebser.h" // REBSER series definition (embeds REBVAL definition)
+#include "sys-rebval.h" // Cell and Value structure definitions
+#include "sys-rebser.h" // REBSER series definition (embeds Cell definition)
 #include "sys-rebact.h" // REBACT and ACT()
 #include "sys-rebctx.h" // REBCTX and CTX()
 

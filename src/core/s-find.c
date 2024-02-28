@@ -40,7 +40,7 @@
 //
 // Used for: Binary comparision function
 //
-REBINT Compare_Binary_Vals(const RELVAL *v1, const RELVAL *v2)
+REBINT Compare_Binary_Vals(const Cell* v1, const Cell* v2)
 {
     REBCNT l1 = VAL_LEN_AT(v1);
     REBCNT l2 = VAL_LEN_AT(v2);
@@ -199,7 +199,7 @@ REBINT Compare_Uni_Str(
 //
 // Used for: general string comparions (various places)
 //
-REBINT Compare_String_Vals(const RELVAL *v1, const RELVAL *v2, bool uncase)
+REBINT Compare_String_Vals(const Cell* v1, const Cell* v2, bool uncase)
 {
     assert(not IS_BINARY(v1) and not IS_BINARY(v2));
 

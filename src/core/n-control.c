@@ -142,9 +142,9 @@ REBNATIVE(either)
 // that want to avoid frame creation overhead.  So BLOCK! just means typeset.
 //
 inline static bool Either_Test_Core_Throws(
-    REBVAL *out, // GC-safe output cell
-    REBVAL *test, // modified
-    const REBVAL *arg
+    Value* out, // GC-safe output cell
+    Value* test, // modified
+    const Value* arg
 ){
     switch (VAL_TYPE(test)) {
 
@@ -219,7 +219,7 @@ inline static bool Either_Test_Core_Throws(
         return false;
 
     case REB_BLOCK: {
-        RELVAL *item = VAL_ARRAY_AT(test);
+        Cell* item = VAL_ARRAY_AT(test);
         if (IS_END(item)) {
             //
             // !!! If the test is just [], what's that?  People aren't likely
@@ -230,7 +230,7 @@ inline static bool Either_Test_Core_Throws(
 
         REBSPC *specifier = VAL_SPECIFIER(test);
         for (; NOT_END(item); ++item) {
-            const RELVAL *var
+            const Cell* var
                 = IS_WORD(item)
                     ? Get_Opt_Var_May_Fail(item, specifier)
                     : item;
@@ -401,7 +401,7 @@ REBNATIVE(match)
 {
     INCLUDE_PARAMS_OF_MATCH;
 
-    REBVAL *test = ARG(test);
+    Value* test = ARG(test);
 
     switch (VAL_TYPE(test)) {
 
@@ -450,7 +450,7 @@ REBNATIVE(match)
 
         DECLARE_FRAME (f); // REBFRM whose built FRAME! context we will steal
 
-        REBVAL *first_arg;
+        Value* first_arg;
         if (Make_Invocation_Frame_Throws(
             D_OUT,
             f,
@@ -517,7 +517,7 @@ either_test:;
     // through with the transformed test.  Just take one normal arg via
     // variadic.
 
-    REBVAL *varpar = PAR(args);
+    Value* varpar = PAR(args);
 
     // !!! Hard-quoted arguments don't accept nulls, but we're tweaking the
     // parameter class... make it allow NULL too.
@@ -569,8 +569,8 @@ REBNATIVE(non)
 {
     INCLUDE_PARAMS_OF_NON;
 
-    REBVAL *test = ARG(test);
-    REBVAL *value = ARG(value);
+    Value* test = ARG(test);
+    Value* value = ARG(value);
 
     if (IS_NULLED(test)) {  // not a datatype, needs special case
         if (IS_NULLED(value))
@@ -723,7 +723,7 @@ static REB_R Case_Choose_Core_May_Throw(
 ){
     INCLUDE_PARAMS_OF_CASE;
 
-    REBVAL *block = ARG(cases); // for CHOOSE, it's "choices" not "cases"
+    Value* block = ARG(cases); // for CHOOSE, it's "choices" not "cases"
 
     DECLARE_FRAME (f);
     Push_Frame(f, block); // array GC safe now, can re-use `block` cell
@@ -923,7 +923,7 @@ REBNATIVE(switch)
     DECLARE_FRAME (f);
     Push_Frame(f, ARG(cases));
 
-    REBVAL *value = ARG(value);
+    Value* value = ARG(value);
 
     if (IS_BLOCK(value) and GET_VAL_FLAG(value, VALUE_FLAG_UNEVALUATED))
         fail (Error_Block_Switch_Raw(value)); // `switch [x] [...]` safeguard
@@ -1066,7 +1066,7 @@ REBNATIVE(default)
 {
     INCLUDE_PARAMS_OF_DEFAULT;
 
-    REBVAL *target = ARG(target);
+    Value* target = ARG(target);
 
     if (IS_NULLED(target)) { // e.g. `case [... default [...]]`
         UNUSED(ARG(look));
@@ -1182,8 +1182,8 @@ REBNATIVE(catch)
         // We use equal? by way of Compare_Modify_Values, and re-use the
         // refinement slots for the mutable space
 
-        REBVAL *temp1 = ARG(quit);
-        REBVAL *temp2 = ARG(any);
+        Value* temp1 = ARG(quit);
+        Value* temp2 = ARG(any);
 
         // !!! The reason we're copying isn't so the VALUE_FLAG_THROWN bit
         // won't confuse the equality comparison...but would it have?
@@ -1192,7 +1192,7 @@ REBNATIVE(catch)
             //
             // Test all the words in the block for a match to catch
 
-            RELVAL *candidate = VAL_ARRAY_AT(ARG(names));
+            Cell* candidate = VAL_ARRAY_AT(ARG(names));
             for (; NOT_END(candidate); candidate++) {
                 //
                 // !!! Should we test a typeset for illegal name types?
@@ -1276,7 +1276,7 @@ REBNATIVE(throw)
 {
     INCLUDE_PARAMS_OF_THROW;
 
-    REBVAL *value = ARG(value);
+    Value* value = ARG(value);
 
     if (REF(name))
         Move_Value(D_OUT, ARG(name_value));

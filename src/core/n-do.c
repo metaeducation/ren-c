@@ -224,7 +224,7 @@ REBNATIVE(eval_enfix)
     // the frame of EVAL-ENFIX that is invoking it.
     //
     assert(IS_POINTER_TRASH_DEBUG(FS_TOP->u.defer.arg));
-    FS_TOP->u.defer.arg = m_cast(REBVAL*, BLANK_VALUE); // !!! signal our hack
+    FS_TOP->u.defer.arg = m_cast(Value*, BLANK_VALUE); // !!! signal our hack
 
     REBFLGS flags = DO_FLAG_FULFILLING_ARG | DO_FLAG_POST_SWITCH;
     if (Eval_Step_In_Subframe_Throws(D_OUT, f, flags, child)) {
@@ -271,7 +271,7 @@ REBNATIVE(do)
 {
     INCLUDE_PARAMS_OF_DO;
 
-    REBVAL *source = ARG(source); // may be only GC reference, don't lose it!
+    Value* source = ARG(source); // may be only GC reference, don't lose it!
   #if !defined(NDEBUG)
     SET_VAL_FLAG(ARG(source), CELL_FLAG_PROTECTED);
   #endif
@@ -298,7 +298,7 @@ REBNATIVE(do)
         return D_OUT; }
 
     case REB_VARARGS: {
-        REBVAL *position;
+        Value* position;
         if (Is_Block_Style_Varargs(&position, source)) {
             //
             // We can execute the array, but we must "consume" elements out
@@ -358,7 +358,7 @@ REBNATIVE(do)
         //
         // See code called in system/intrinsic/do*
         //
-        REBVAL *sys_do_helper = CTX_VAR(Sys_Context, SYS_CTX_DO_P);
+        Value* sys_do_helper = CTX_VAR(Sys_Context, SYS_CTX_DO_P);
         assert(IS_ACTION(sys_do_helper));
 
         UNUSED(REF(args)); // detected via `value? :arg`
@@ -393,7 +393,7 @@ REBNATIVE(do)
         // Ren-C will only run arity 0 functions from DO, otherwise EVAL
         // must be used.  Look for the first non-local parameter to tell.
         //
-        REBVAL *param = ACT_PARAMS_HEAD(VAL_ACTION(source));
+        Value* param = ACT_PARAMS_HEAD(VAL_ACTION(source));
         while (
             NOT_END(param)
             and (VAL_PARAM_CLASS(param) == PARAM_CLASS_LOCAL)
@@ -489,7 +489,7 @@ REBNATIVE(evaluate)
 {
     INCLUDE_PARAMS_OF_EVALUATE;
 
-    REBVAL *source = ARG(source); // may be only GC reference, don't lose it!
+    Value* source = ARG(source); // may be only GC reference, don't lose it!
   #if !defined(NDEBUG)
     SET_VAL_FLAG(ARG(source), CELL_FLAG_PROTECTED);
   #endif
@@ -529,7 +529,7 @@ REBNATIVE(evaluate)
         return D_OUT; }
 
     case REB_VARARGS: {
-        REBVAL *position;
+        Value* position;
         if (Is_Block_Style_Varargs(&position, source)) {
             //
             // We can execute the array, but we must "consume" elements out
@@ -649,7 +649,7 @@ REBNATIVE(redo)
 {
     INCLUDE_PARAMS_OF_REDO;
 
-    REBVAL *restartee = ARG(restartee);
+    Value* restartee = ARG(restartee);
     if (not IS_FRAME(restartee)) {
         if (not Did_Get_Binding_Of(D_OUT, restartee))
             fail ("No context found from restartee in REDO");
@@ -678,7 +678,7 @@ REBNATIVE(redo)
     // than the established check for a common "ancestor".
     //
     if (REF(other)) {
-        REBVAL *sibling = ARG(sibling);
+        Value* sibling = ARG(sibling);
         if (FRM_UNDERLYING(f) != ACT_UNDERLYING(VAL_ACTION(sibling)))
             fail ("/OTHER function passed to REDO has incompatible FRAME!");
 
@@ -737,7 +737,7 @@ REBNATIVE(applique)
 {
     INCLUDE_PARAMS_OF_APPLIQUE;
 
-    REBVAL *applicand = ARG(applicand);
+    Value* applicand = ARG(applicand);
 
     DECLARE_END_FRAME (f); // captures f->dsp
     f->out = D_OUT;
@@ -796,8 +796,8 @@ REBNATIVE(applique)
 
     // Reset all the binder indices to zero, balancing out what was added.
     //
-    REBVAL *key = CTX_KEYS_HEAD(exemplar);
-    REBVAL *var = CTX_VARS_HEAD(exemplar);
+    Value* key = CTX_KEYS_HEAD(exemplar);
+    Value* var = CTX_VARS_HEAD(exemplar);
     for (; NOT_END(key); key++, ++var) {
         if (Is_Param_Unbindable(key))
             continue; // shouldn't have been in the binder

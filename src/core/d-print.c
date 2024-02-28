@@ -59,7 +59,7 @@ void Startup_StdIO(void)
     // !!! "The device is already open, so this call will just setup the
     // request fields properly.
 
-    REBVAL *result = OS_DO_DEVICE(Req_SIO, RDC_OPEN);
+    Value* result = OS_DO_DEVICE(Req_SIO, RDC_OPEN);
     assert(result == NULL); // !!! API not initialized yet, "pending" is a lie
     UNUSED(result);
 }
@@ -92,7 +92,7 @@ void Print_OS_Line(void)
     Req_SIO->length = 1;
     Req_SIO->actual = 0;
 
-    REBVAL *result = OS_DO_DEVICE(Req_SIO, RDC_WRITE);
+    Value* result = OS_DO_DEVICE(Req_SIO, RDC_WRITE);
     assert(result != NULL);
     assert(not IS_ERROR(result));
     rebRelease(result);
@@ -222,7 +222,7 @@ void Debug_Space(REBCNT num)
 //
 //  Debug_Values: C
 //
-void Debug_Values(const RELVAL *value, REBCNT count, REBCNT limit)
+void Debug_Values(const Cell* value, REBCNT count, REBCNT limit)
 {
     REBCNT i1;
     REBCNT i2;
@@ -450,7 +450,7 @@ REBYTE *Form_RGB_Utf8(REBYTE *utf8, const REBYTE *dp)
 //
 // This is an internal routine used for debugging, which is something like
 // `printf` (it understands %d, %s, %c) but stripped down in features.
-// It also knows how to show REBVAL* values FORMed (%v) or MOLDed (%r),
+// It also knows how to show Value* values FORMed (%v) or MOLDed (%r),
 // as well as REBSER* or REBARR* series molded (%m).
 //
 // Initially it was considered to be for low-level debug output only.  It
@@ -540,7 +540,7 @@ pick:
         case 'v':   // use Form
             Mold_Or_Form_Value(
                 mo,
-                va_arg(*vaptr, const REBVAL*),
+                va_arg(*vaptr, const Value*),
                 desc == 'v'
             );
 

@@ -34,17 +34,17 @@
 //
 // Ren-C can run the evaluator across a REBARR-style series of input based on
 // index.  It can also enumerate through C's `va_list`, providing the ability
-// to pass pointers as REBVAL* to comma-separated input at the source level.
+// to pass pointers as Value* to comma-separated input at the source level.
 //
 // To provide even greater flexibility, it allows the very first element's
 // pointer in an evaluation to come from an arbitrary source.  It doesn't
 // have to be resident in the same sequence from which ensuing values are
-// pulled, allowing a free head value (such as an ACTION! REBVAL in a local
+// pulled, allowing a free head value (such as an ACTION! cell in a local
 // C variable) to be evaluated in combination from another source (like a
 // va_list or series representing the arguments.)  This avoids the cost and
 // complexity of allocating a series to combine the values together.
 //
-// These features alone would not cover the case when REBVAL pointers that
+// These features alone would not cover the case when cell pointers that
 // are originating with C source were intended to be supplied to a function
 // with no evaluation.  In R3-Alpha, the only way in an evaluative context
 // to suppress such evaluations would be by adding elements (such as QUOTE).
@@ -62,7 +62,7 @@
 
 // !!! Find a better place for this!
 //
-inline static bool IS_QUOTABLY_SOFT(const RELVAL *v) {
+inline static bool IS_QUOTABLY_SOFT(const Cell* v) {
     return IS_GROUP(v) or IS_GET_WORD(v) or IS_GET_PATH(v);
 }
 
@@ -87,7 +87,7 @@ inline static bool IS_QUOTABLY_SOFT(const RELVAL *v) {
 //
 // One invariant of access is that the input may only advance.  Before any
 // operations are called, any low-level client must have already seeded
-// f->value with a valid "fetched" REBVAL*.
+// f->value with a valid "fetched" Value*.
 //
 // This privileged level of access can be used by natives that feel they can
 // optimize performance by working with the evaluator directly.
@@ -238,7 +238,7 @@ inline static void Reuse_Varlist_If_Available(REBFRM *f) {
     else {
         f->varlist = TG_Reuse;
         TG_Reuse = LINK(TG_Reuse).reuse;
-        f->rootvar = cast(REBVAL*, SER(f->varlist)->content.dynamic.data);
+        f->rootvar = cast(Value*, SER(f->varlist)->content.dynamic.data);
         LINK(f->varlist).keysource = NOD(f);
     }
 }
@@ -267,13 +267,13 @@ inline static void Push_Frame_At(
     // each evaluation.  But the GC expects initialized bits in the output
     // slot at all times; use an unwritable END until the first eval call.
     //
-    f->out = m_cast(REBVAL*, END_NODE);
+    f->out = m_cast(Value*, END_NODE);
 
     Push_Frame_Core(f);
     Reuse_Varlist_If_Available(f);
 }
 
-inline static void Push_Frame(REBFRM *f, const REBVAL *v)
+inline static void Push_Frame(REBFRM *f, const Value* v)
 {
     Push_Frame_At(
         f, VAL_ARRAY(v), VAL_INDEX(v), VAL_SPECIFIER(v), DO_MASK_NONE
@@ -281,7 +281,7 @@ inline static void Push_Frame(REBFRM *f, const REBVAL *v)
 }
 
 
-// Ordinary Rebol internals deal with REBVAL* that are resident in arrays.
+// Ordinary Rebol internals deal with Value* that are resident in arrays.
 // But a va_list can contain UTF-8 string components or special instructions
 // that are other Detect_Rebol_Pointer() types.  Anyone who wants to set or
 // preload a frame's state for a va_list has to do this detection, so this
@@ -289,7 +289,7 @@ inline static void Push_Frame(REBFRM *f, const REBVAL *v)
 // parameter in the variadic).
 //
 inline static void Set_Frame_Detected_Fetch(
-    const RELVAL **opt_lookback,
+    const Cell* *opt_lookback,
     REBFRM *f,
     const void *p
 ){
@@ -316,7 +316,7 @@ inline static void Set_Frame_Detected_Fetch(
         // Eval_Core_Throws() is wants the old f->value, but we're going to
         // free it.  It has to be kept alive -and- kept safe from GC.  e.g.
         //
-        //     REBVAL *word = rebValue("make word! {hello}");
+        //     Value* word = rebValue("make word! {hello}");
         //     rebValue(rebR(word), "-> (recycle :quote)");
         //
         // The `current` cell the evaluator is looking at is the WORD!, then
@@ -336,7 +336,7 @@ inline static void Set_Frame_Detected_Fetch(
     if (GET_SER_INFO(a, SERIES_INFO_API_INSTRUCTION))
         Free_Instruction(Singular_From_Cell(f->value));
     else
-        rebRelease(cast(const REBVAL*, f->value));
+        rebRelease(cast(const Value*, f->value));
 
 
   detect:;
@@ -394,7 +394,7 @@ inline static void Set_Frame_Detected_Fetch(
         Init_Interning_Binder(&binder, ss.context);
         ss.binder = &binder;
 
-        REBVAL *error = rebRescue(cast(REBDNG*, &Scan_To_Stack), &ss);
+        Value* error = rebRescue(cast(REBDNG*, &Scan_To_Stack), &ss);
         Shutdown_Interning_Binder(&binder, ss.context);
 
         if (error) {
@@ -453,7 +453,7 @@ inline static void Set_Frame_Detected_Fetch(
         panic (p);
 
       case DETECTED_AS_CELL: {
-        const REBVAL *cell = cast(const REBVAL*, p);
+        const Value* cell = cast(const Value*, p);
         if (IS_NULLED(cell))
             fail ("NULLED cell leaked to API, see NULLIZE() in C sources");
 
@@ -514,7 +514,7 @@ inline static void Set_Frame_Detected_Fetch(
 // signal that the vaptr (if any) should be consulted next.
 //
 inline static void Fetch_Next_In_Frame(
-    const RELVAL **opt_lookback,
+    const Cell* *opt_lookback,
     REBFRM *f
 ){
     assert(NOT_END(f->value)); // caller should test this first
@@ -544,7 +544,7 @@ inline static void Fetch_Next_In_Frame(
         // means the release build doesn't need to call ARR_AT().
         //
         assert(
-            f->source->array // incrementing plain array of REBVAL[]
+            f->source->array // incrementing plain array of cells
             or f->source->pending == ARR_AT(f->source->array, f->source->index)
         );
 
@@ -592,15 +592,15 @@ inline static void Fetch_Next_In_Frame(
 
   #ifdef DEBUG_EXPIRED_LOOKBACK
     if (opt_lookback) {
-        f->stress = cast(RELVAL*, malloc(sizeof(RELVAL)));
-        memcpy(f->stress, *opt_lookback, sizeof(RELVAL));
+        f->stress = cast(Cell*, malloc(sizeof(Cell)));
+        memcpy(f->stress, *opt_lookback, sizeof(Cell));
         *opt_lookback = f->stress;
     }
   #endif
 }
 
 
-inline static void Quote_Next_In_Frame(REBVAL *dest, REBFRM *f) {
+inline static void Quote_Next_In_Frame(Value* dest, REBFRM *f) {
     Derelativize(dest, f->value, f->specifier);
     SET_VAL_FLAG(dest, VALUE_FLAG_UNEVALUATED);
     Fetch_Next_In_Frame(nullptr, f);
@@ -707,7 +707,7 @@ inline static void Drop_Frame(REBFRM *f)
 // each time.
 //
 inline static bool Eval_Step_Throws(
-    REBVAL *out,
+    Value* out,
     REBFRM *f
 ){
     assert(IS_END(out));
@@ -737,7 +737,7 @@ inline static bool Eval_Step_Throws(
 // run in the frame were invisibles (empty groups, comments) or nothing.
 //
 inline static bool Eval_Step_Maybe_Stale_Throws(
-    REBVAL *out,
+    Value* out,
     REBFRM *f
 ){
     assert(NOT_END(out));
@@ -803,7 +803,7 @@ inline static bool Eval_Step_Mid_Frame_Throws(REBFRM *f, REBFLGS flags) {
 // any common case that actually offered an advantage to optimize for here.
 //
 inline static bool Eval_Step_In_Subframe_Throws(
-    REBVAL *out,
+    Value* out,
     REBFRM *higher, // may not be direct parent (not child->prior upon push!)
     REBFLGS flags,
     REBFRM *child // passed w/dsp_orig preload, refinements can be on stack
@@ -866,8 +866,8 @@ inline static bool Eval_Step_In_Subframe_Throws(
 // array series.
 //
 inline static REBIXO Eval_Array_At_Core(
-    REBVAL *out, // must be initialized, marked stale if empty / all invisible
-    const RELVAL *opt_first, // non-array element to kick off execution with
+    Value* out, // must be initialized, marked stale if empty / all invisible
+    const Cell* opt_first, // non-array element to kick off execution with
     REBARR *array,
     REBCNT index,
     REBSPC *specifier, // must match array, but also opt_first if relative
@@ -916,7 +916,7 @@ inline static REBIXO Eval_Array_At_Core(
 //  Reify_Va_To_Array_In_Frame: C
 //
 // For performance and memory usage reasons, a variadic C function call that
-// wants to invoke the evaluator with just a comma-delimited list of REBVAL*
+// wants to invoke the evaluator with just a comma-delimited list of Value*
 // does not need to make a series to hold them.  Eval_Core is written to use
 // the va_list traversal as an alternate to DO-ing an ARRAY.
 //
@@ -1016,7 +1016,7 @@ inline static void Reify_Va_To_Array_In_Frame(
 // Returns THROWN_FLAG, END_FLAG, or VA_LIST_FLAG
 //
 inline static REBIXO Eval_Va_Core(
-    REBVAL *out, // must be initialized, marked stale if empty / all invisible
+    Value* out, // must be initialized, marked stale if empty / all invisible
     const void *opt_first,
     va_list *vaptr,
     REBFLGS flags
@@ -1076,8 +1076,8 @@ inline static REBIXO Eval_Va_Core(
 
 
 inline static bool Eval_Value_Core_Throws(
-    REBVAL *out,
-    const RELVAL *value, // e.g. a BLOCK! here would just evaluate to itself!
+    Value* out,
+    const Cell* value, // e.g. a BLOCK! here would just evaluate to itself!
     REBSPC *specifier
 ){
     REBIXO indexor = Eval_Array_At_Core(
@@ -1105,7 +1105,7 @@ inline static bool Eval_Value_Core_Throws(
 // so the dispatcher can write things like `return rebValue(...);` and not
 // encounter a leak.
 //
-inline static void Handle_Api_Dispatcher_Result(REBFRM *f, const REBVAL* r) {
+inline static void Handle_Api_Dispatcher_Result(REBFRM *f, const Value* r) {
     assert(not THROWN(r)); // only f->out can return thrown cells
 
   #if !defined(NDEBUG)

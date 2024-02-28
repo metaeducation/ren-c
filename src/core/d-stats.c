@@ -81,7 +81,7 @@ REBNATIVE(stats)
     if (REF(profile)) {
         Move_Value(D_OUT, Get_System(SYS_STANDARD, STD_STATS));
         if (IS_OBJECT(D_OUT)) {
-            REBVAL *stats = VAL_CONTEXT_VAR(D_OUT, 1);
+            Value* stats = VAL_CONTEXT_VAR(D_OUT, 1);
 
             RESET_CELL(stats, REB_TIME);
             VAL_NANO(stats) = OS_DELTA_TIME(PG_Boot_Time) * 1000;
@@ -114,7 +114,7 @@ REBNATIVE(stats)
     }
 
     if (REF(dump_series)) {
-        REBVAL *pool_id = ARG(pool_id);
+        Value* pool_id = ARG(pool_id);
         Dump_Series_In_Pool(VAL_INT32(pool_id));
         return nullptr;
     }
@@ -254,7 +254,7 @@ REB_R Measured_Dispatcher_Hook(REBFRM * const f)
             assert(n != 0); // should have inserted
         }
         else {
-            REBVAL *stats = KNOWN(ARR_AT(MAP_PAIRLIST(m), ((n - 1) * 2) + 1));
+            Value* stats = KNOWN(ARR_AT(MAP_PAIRLIST(m), ((n - 1) * 2) + 1));
 
             REBARR *a = IS_BLOCK(stats) ? VAL_ARRAY(stats) : NULL;
 
@@ -336,7 +336,7 @@ REBNATIVE(metrics)
 {
     INCLUDE_PARAMS_OF_METRICS;
 
-    REBVAL *mode = ARG(mode);
+    Value* mode = ARG(mode);
 
     Check_Security(Canon(SYM_DEBUG), POL_READ, 0);
 

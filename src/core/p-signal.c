@@ -33,7 +33,7 @@
 #ifdef HAS_POSIX_SIGNAL
 #include <sys/signal.h>
 
-static void update(struct devreq_posix_signal *signal, REBINT len, REBVAL *arg)
+static void update(struct devreq_posix_signal *signal, REBINT len, Value* arg)
 {
     REBREQ *req = AS_REBREQ(signal);
     const siginfo_t *sig = cast(siginfo_t *, req->common.data);
@@ -47,7 +47,7 @@ static void update(struct devreq_posix_signal *signal, REBINT len, REBVAL *arg)
 
     for (i = 0; i < len; i ++) {
         REBCTX *obj = Alloc_Context(REB_OBJECT, 8);
-        REBVAL *val = Append_Context(
+        Value* val = Append_Context(
             obj, NULL, Intern_UTF8_Managed(signal_no, LEN_BYTES(signal_no))
         );
         Init_Integer(val, sig[i].si_signo);
@@ -146,13 +146,13 @@ static int sig_word_num(REBSTR *canon)
 //
 //  Signal_Actor: C
 //
-static REB_R Signal_Actor(REBFRM *frame_, REBVAL *port, REBVAL *verb)
+static REB_R Signal_Actor(REBFRM *frame_, Value* port, Value* verb)
 {
     REBREQ *req = Ensure_Port_State(port, RDI_SIGNAL);
     struct devreq_posix_signal *signal = DEVREQ_POSIX_SIGNAL(req);
 
     REBCTX *ctx = VAL_CONTEXT(port);
-    REBVAL *spec = CTX_VAR(ctx, STD_PORT_SPEC);
+    Value* spec = CTX_VAR(ctx, STD_PORT_SPEC);
 
     if (not (req->flags & RRF_OPEN)) {
         switch (VAL_WORD_SYM(verb)) {
@@ -174,13 +174,13 @@ static REB_R Signal_Actor(REBFRM *frame_, REBVAL *port, REBVAL *verb)
 
         case SYM_READ:
         case SYM_OPEN: {
-            REBVAL *val = Obj_Value(spec, STD_PORT_SPEC_SIGNAL_MASK);
+            Value* val = Obj_Value(spec, STD_PORT_SPEC_SIGNAL_MASK);
             if (!IS_BLOCK(val))
                 fail (Error_Invalid_Spec_Raw(val));
 
             sigemptyset(&signal->mask);
 
-            RELVAL *item;
+            Cell* item;
             for (item = VAL_ARRAY_AT_HEAD(val, 0); NOT_END(item); ++item) {
                 DECLARE_LOCAL (sig);
                 Derelativize(sig, item, VAL_SPECIFIER(val));
@@ -245,7 +245,7 @@ static REB_R Signal_Actor(REBFRM *frame_, REBVAL *port, REBVAL *verb)
         // Update the port object after a READ or WRITE operation.
         // This is normally called by the WAKE-UP function.
         //
-        REBVAL *arg = CTX_VAR(ctx, STD_PORT_DATA);
+        Value* arg = CTX_VAR(ctx, STD_PORT_DATA);
         if (req->command == RDC_READ) {
             REBINT len = req->actual;
             if (len > 0) {
@@ -257,7 +257,7 @@ static REB_R Signal_Actor(REBFRM *frame_, REBVAL *port, REBVAL *verb)
     case SYM_READ: {
         // This device is opened on the READ:
         // Issue the read request:
-        REBVAL *arg = CTX_VAR(ctx, STD_PORT_DATA);
+        Value* arg = CTX_VAR(ctx, STD_PORT_DATA);
 
         size_t len = req->length = 8;
         REBSER *ser = Make_Binary(len * sizeof(siginfo_t));

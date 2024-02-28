@@ -202,7 +202,7 @@ static int Read_Directory(struct devreq_file *dir, struct devreq_file *file)
     // trigger a GC and there is nothing proxying the RebReq's data.
     // Long term, this file should have *been* the return result.
     //
-    rebUnmanage(m_cast(REBVAL*, file->path));
+    rebUnmanage(m_cast(Value*, file->path));
 
     file->size =
         (cast(int64_t, info.nFileSizeHigh) << 32) + info.nFileSizeLow;
@@ -578,7 +578,7 @@ DEVICE_CMD Rename_File(REBREQ *req)
 {
     struct devreq_file *file = DEVREQ_FILE(req);
 
-    REBVAL *to = cast(REBVAL*, req->common.data); // !!! hack!
+    Value* to = cast(Value*, req->common.data); // !!! hack!
 
     WCHAR *from_wide = rebSpellW(
         "file-to-local/full/no-tail-slash", file->path

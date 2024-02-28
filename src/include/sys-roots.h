@@ -1,6 +1,6 @@
 //
 //  File: %sys-roots.h
-//  Summary: {Definitions for allocating REBVAL* API handles}
+//  Summary: {Definitions for allocating Value* API handles}
 //  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
 //  Homepage: https://github.com/metaeducation/ren-c/
 //
@@ -35,13 +35,13 @@
 //
 // The API value content is in the single cell, with LINK().owner holding
 // a REBCTX* of the FRAME! that controls its lifetime, or EMPTY_ARRAY.  This
-// link field exists in the pointer immediately prior to the REBVAL*, which
+// link field exists in the pointer immediately prior to the Value*, which
 // means it can be sniffed as a REBNOD* and distinguished from handles that
 // were given back with rebMalloc(), so routines can discern them.
 //
 // MISC() is currently unused, but could serve as a reference count or other
 // purpose.  It's not particularly necessary to have API handles use REBSER
-// nodes--though the 2*sizeof(REBVAL) provides some optimality, and it
+// nodes--though the 2*sizeof(Cell) provides some optimality, and it
 // means that REBSER nodes can be recycled for more purposes.  But it would
 // potentially be better to have them in their own pools, because being
 // roots could be discovered without a "pre-pass" in the GC.
@@ -50,7 +50,7 @@
 // What distinguishes an API value is that it has both the NODE_FLAG_CELL and
 // NODE_FLAG_ROOT bits set.
 //
-inline static bool Is_Api_Value(const RELVAL *v) {
+inline static bool Is_Api_Value(const Cell* v) {
     assert(v->header.bits & NODE_FLAG_CELL);
     return did (v->header.bits & NODE_FLAG_ROOT);
 }
@@ -62,21 +62,21 @@ inline static bool Is_Api_Value(const RELVAL *v) {
 //
 // Ren-C manages by default.
 //
-inline static REBVAL *Alloc_Value(void)
+inline static Value* Alloc_Value(void)
 {
     REBARR *a = Alloc_Singular(NODE_FLAG_ROOT | NODE_FLAG_MANAGED);
 
-    // Giving the cell itself NODE_FLAG_ROOT lets a REBVAL* be discerned as
+    // Giving the cell itself NODE_FLAG_ROOT lets a Value* be discerned as
     // either an API handle or not.  The flag is not copied by Move_Value().
     //
-    REBVAL *v = KNOWN(ARR_SINGLE(a));
+    Value* v = KNOWN(ARR_SINGLE(a));
     v->header.bits |= NODE_FLAG_ROOT; // it's trash (can't use SET_VAL_FLAGS)
 
     LINK(a).owner = NOD(Context_For_Frame_May_Manage(FS_TOP));
     return v;
 }
 
-inline static void Free_Value(REBVAL *v)
+inline static void Free_Value(Value* v)
 {
     assert(Is_Api_Value(v));
 
@@ -123,10 +123,10 @@ inline static void Free_Instruction(REBARR *instruction) {
 // GC.  It's mildly inefficient to do so compared to generating a local cell:
 //
 //      DECLARE_LOCAL (specific);
-//      Derelativize(specific, relval, specifier);
+//      Derelativize(specific, cell, specifier);
 //      fail (Error_Something(specific));
 //
 // But assuming errors don't happen that often, it's cleaner to have one call.
 //
-inline static REBVAL *rebSpecific(const RELVAL *v, REBSPC *specifier)
+inline static Value* rebSpecific(const Cell* v, REBSPC *specifier)
     { return Derelativize(Alloc_Value(), v, specifier);}

@@ -65,7 +65,7 @@ inline static REBMAP *MAP(void *p) {
 }
 
 
-inline static REBMAP *VAL_MAP(const RELVAL *v) {
+inline static REBMAP *VAL_MAP(const Cell* v) {
     assert(IS_MAP(v));
 
     REBSER *s = v->payload.any_series.series;
@@ -77,7 +77,7 @@ inline static REBMAP *VAL_MAP(const RELVAL *v) {
 
 inline static REBCNT Length_Map(REBMAP *map)
 {
-    REBVAL *v = KNOWN(ARR_HEAD(MAP_PAIRLIST(map)));
+    Value* v = KNOWN(ARR_HEAD(MAP_PAIRLIST(map)));
 
     REBCNT count = 0;
     for (; NOT_END(v); v += 2) {

@@ -37,6 +37,7 @@
 #include "pstdbool.h" // polyfill <stdbool.h> for pre-C99/C++11 compilers
 
 #include "rebol.h"
+typedef RebolValue Value;
 
 #include "reb-c.h" // API should only require <stdbool.h> and <stdint.h>
 

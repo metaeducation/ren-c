@@ -44,7 +44,7 @@ static inline void INIT_BITS_NOT(REBSER *s, bool negated) {
 //
 //  CT_Bitset: C
 //
-REBINT CT_Bitset(const RELVAL *a, const RELVAL *b, REBINT mode)
+REBINT CT_Bitset(const Cell* a, const Cell* b, REBINT mode)
 {
     if (mode >= 0) return (
         BITS_NOT(VAL_SERIES(a)) == BITS_NOT(VAL_SERIES(b))
@@ -79,7 +79,7 @@ REBSER *Make_Bitset(REBCNT len)
 //
 //  MF_Bitset: C
 //
-void MF_Bitset(REB_MOLD *mo, const RELVAL *v, bool form)
+void MF_Bitset(REB_MOLD *mo, const Cell* v, bool form)
 {
     UNUSED(form); // all bitsets are "molded" at this time
 
@@ -102,7 +102,7 @@ void MF_Bitset(REB_MOLD *mo, const RELVAL *v, bool form)
 //
 //  MAKE_Bitset: C
 //
-REB_R MAKE_Bitset(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
+REB_R MAKE_Bitset(Value* out, enum Reb_Kind kind, const Value* arg)
 {
     assert(kind == REB_BITSET);
     UNUSED(kind);
@@ -136,7 +136,7 @@ REB_R MAKE_Bitset(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 //
 //  TO_Bitset: C
 //
-REB_R TO_Bitset(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
+REB_R TO_Bitset(Value* out, enum Reb_Kind kind, const Value* arg)
 {
     return MAKE_Bitset(out, kind, arg);
 }
@@ -148,7 +148,7 @@ REB_R TO_Bitset(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 // Return integer number for the maximum bit number defined by
 // the value. Used to determine how much space to allocate.
 //
-REBINT Find_Max_Bit(const RELVAL *val)
+REBINT Find_Max_Bit(const Cell* val)
 {
     REBINT maxi = 0;
     REBINT n;
@@ -275,7 +275,7 @@ void Set_Bit(REBSER *bset, REBCNT n, bool set)
 //
 // Set/clear bits indicated by strings and chars and ranges.
 //
-bool Set_Bits(REBSER *bset, const REBVAL *val, bool set)
+bool Set_Bits(REBSER *bset, const Value* val, bool set)
 {
     FAIL_IF_READ_ONLY_SERIES(bset);
 
@@ -317,7 +317,7 @@ bool Set_Bits(REBSER *bset, const REBVAL *val, bool set)
     if (!ANY_ARRAY(val))
         fail (Error_Invalid_Type(VAL_TYPE(val)));
 
-    RELVAL *item = VAL_ARRAY_AT(val);
+    Cell* item = VAL_ARRAY_AT(val);
 
     if (
         NOT_END(item)
@@ -422,7 +422,7 @@ bool Set_Bits(REBSER *bset, const REBVAL *val, bool set)
 // Check bits indicated by strings and chars and ranges.
 // If uncased is true, try to match either upper or lower case.
 //
-bool Check_Bits(REBSER *bset, const REBVAL *val, bool uncased)
+bool Check_Bits(REBSER *bset, const Value* val, bool uncased)
 {
     if (IS_CHAR(val))
         return Check_Bit(bset, VAL_CHAR(val), uncased);
@@ -457,7 +457,7 @@ bool Check_Bits(REBSER *bset, const REBVAL *val, bool uncased)
 
     // Loop through block of bit specs
 
-    RELVAL *item;
+    Cell* item;
     for (item = VAL_ARRAY_AT(val); NOT_END(item); item++) {
 
         switch (VAL_TYPE(item)) {
@@ -529,8 +529,8 @@ bool Check_Bits(REBSER *bset, const REBVAL *val, bool uncased)
 //
 REB_R PD_Bitset(
     REBPVS *pvs,
-    const REBVAL *picker,
-    const REBVAL *opt_setval
+    const Value* picker,
+    const Value* opt_setval
 ){
     REBSER *ser = VAL_SERIES(pvs->out);
 
@@ -579,8 +579,8 @@ void Trim_Tail_Zeros(REBSER *ser)
 //
 REBTYPE(Bitset)
 {
-    REBVAL *value = D_ARG(1);
-    REBVAL *arg = D_ARGC > 1 ? D_ARG(2) : NULL;
+    Value* value = D_ARG(1);
+    Value* arg = D_ARGC > 1 ? D_ARG(2) : NULL;
     REBSER *ser;
 
     // !!! Set_Bits does locked series check--what should the more general
@@ -730,4 +730,3 @@ REBTYPE(Bitset)
     Move_Value(D_OUT, value);
     return D_OUT;
 }
-

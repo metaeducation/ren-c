@@ -177,7 +177,7 @@ void Detach_Request(REBREQ **node, REBREQ *req)
 // rescue will return this function's result (an INTEGER!) if no error is
 // raised during the device code.
 //
-static REBVAL *Dangerous_Command(REBREQ *req) {
+static Value* Dangerous_Command(REBREQ *req) {
     REBDEV *dev = Devices[req->device];
 
     int result = (dev->commands[req->command])(req);
@@ -195,7 +195,7 @@ static REBVAL *Dangerous_Command(REBREQ *req) {
 // (DR_PEND) and negative numbers for errors.  As the device model is revamped
 // the concept is to return the actual result, NULL if pending, or an ERROR!.
 //
-REBVAL *OS_Do_Device(REBREQ *req, int command)
+Value* OS_Do_Device(REBREQ *req, int command)
 {
     req->command = command;
 
@@ -256,7 +256,7 @@ REBVAL *OS_Do_Device(REBREQ *req, int command)
     // now, preserve that behavior by always running the device code with
     // a trap in effect.
 
-    REBVAL *error_or_int = rebRescue(cast(REBDNG*, &Dangerous_Command), req);
+    Value* error_or_int = rebRescue(cast(REBDNG*, &Dangerous_Command), req);
 
     if (rebDid("error?", error_or_int)) {
         if (dev->pending)
@@ -296,7 +296,7 @@ REBVAL *OS_Do_Device(REBREQ *req, int command)
 //
 void OS_Do_Device_Sync(REBREQ *req, int command)
 {
-    REBVAL *result = OS_DO_DEVICE(req, command);
+    Value* result = OS_DO_DEVICE(req, command);
     assert(result != NULL); // should be synchronous
     if (rebDid("error?", result))
         rebJumps("FAIL", result);

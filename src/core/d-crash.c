@@ -46,7 +46,7 @@
 //
 // Abnormal termination of Rebol.  The debug build is designed to present
 // as much diagnostic information as it can on the passed-in pointer, which
-// includes where a REBSER* was allocated or freed.  Or if a REBVAL* is
+// includes where a REBSER* was allocated or freed.  Or if a Value* is
 // passed in it tries to say what tick it was initialized on and what series
 // it lives in.  If the pointer is a simple UTF-8 string pointer, then that
 // is delivered as a message.
@@ -59,7 +59,7 @@
 // coverity[+kill]
 //
 ATTRIBUTE_NO_RETURN void Panic_Core(
-    const void *p, // REBSER* (array, context, etc), REBVAL*, or UTF-8 char*
+    const void *p, // REBSER* (array, context, etc), Value*, or UTF-8 char*
     REBTCK tick,
     const char *file, // UTF8
     int line
@@ -187,7 +187,7 @@ ATTRIBUTE_NO_RETURN void Panic_Core(
 
     case DETECTED_AS_CELL:
     case DETECTED_AS_END: {
-        const REBVAL *v = cast(const REBVAL*, p);
+        const Value* v = cast(const Value*, p);
       #if defined(NDEBUG)
         UNUSED(v);
         strncat(buf, "value", PANIC_BUF_SIZE - strlen(buf));
@@ -204,7 +204,7 @@ ATTRIBUTE_NO_RETURN void Panic_Core(
       #if defined(NDEBUG)
         strncat(buf, "freed cell", PANIC_BUF_SIZE - strlen(buf));
       #else
-        Panic_Value_Debug(cast(const RELVAL*, p));
+        Panic_Value_Debug(cast(const Cell*, p));
       #endif
         break;
     }
@@ -241,7 +241,7 @@ REBNATIVE(panic)
 {
     INCLUDE_PARAMS_OF_PANIC;
 
-    REBVAL *v = ARG(reason);
+    Value* v = ARG(reason);
     void *p;
 
     // panic() on the string value itself would report information about the

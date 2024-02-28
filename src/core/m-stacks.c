@@ -104,7 +104,7 @@ void Startup_Frame_Stack(void)
     Prep_Stack_Cell(FRM_CELL(f));
     Init_Unreadable_Blank(FRM_CELL(f));
 
-    f->out = m_cast(REBVAL*, END_NODE); // should not be written
+    f->out = m_cast(Value*, END_NODE); // should not be written
     f->source = &TG_Frame_Source_End;
     Push_Frame_At_End(f, DO_MASK_NONE);
 
@@ -116,7 +116,7 @@ void Startup_Frame_Stack(void)
     );
     MISC(paramlist).meta = nullptr;
 
-    REBVAL *archetype = RESET_CELL(ARR_HEAD(paramlist), REB_ACTION);
+    Value* archetype = RESET_CELL(ARR_HEAD(paramlist), REB_ACTION);
     archetype->extra.binding = UNBOUND;
     archetype->payload.action.paramlist = paramlist;
     TERM_ARRAY_LEN(paramlist, 1);
@@ -139,11 +139,11 @@ void Startup_Frame_Stack(void)
     Push_Action(f, PG_Dummy_Action, UNBOUND);
 
     REBSTR *opt_label = nullptr;
-    Begin_Action(f, opt_label, m_cast(REBVAL*, END_NODE));
+    Begin_Action(f, opt_label, m_cast(Value*, END_NODE));
     assert(IS_END(f->arg));
     f->param = END_NODE; // signal all arguments gathered
     assert(f->refine == END_NODE); // passed to Begin_Action();
-    f->arg = m_cast(REBVAL*, END_NODE);
+    f->arg = m_cast(Value*, END_NODE);
     f->special = END_NODE;
 
     TRASH_POINTER_IF_DEBUG(f->prior); // help catch enumeration past FS_BOTTOM
@@ -241,7 +241,7 @@ REBCTX *Get_Context_From_Stack(void)
   #endif
 
     REBARR *details = ACT_DETAILS(phase);
-    REBVAL *context = KNOWN(ARR_AT(details, 1));
+    Value* context = KNOWN(ARR_AT(details, 1));
     return VAL_CONTEXT(context);
 }
 
@@ -255,7 +255,7 @@ REBCTX *Get_Context_From_Stack(void)
 //
 // WARNING: This will invalidate any extant pointers to REBVALs living in
 // the stack.  It is for this reason that stack access should be done by
-// REBDSP "data stack pointers" and not by REBVAL* across *any* operation
+// REBDSP "data stack pointers" and not by Value* across *any* operation
 // which could do a push or pop.  (Currently stable w.r.t. pop but there may
 // be compaction at some point.)
 //
@@ -288,14 +288,14 @@ void Expand_Data_Stack_May_Fail(REBCNT amount)
     // Update the pointer used for fast access to the top of the stack that
     // likely was moved by the above allocation (needed before using DS_TOP)
     //
-    DS_Movable_Top = cast(REBVAL*, ARR_AT(DS_Array, DS_Index));
+    DS_Movable_Top = cast(Value*, ARR_AT(DS_Array, DS_Index));
 
     // We fill in the data stack with "GC safe trash" (which is void in the
     // release build, but will raise an alarm if VAL_TYPE() called on it in
     // the debug build).  In order to serve as a marker for the stack slot
     // being available, it merely must not be IS_END()...
 
-    REBVAL *cell = DS_Movable_Top;
+    Value* cell = DS_Movable_Top;
 
     REBCNT len_new = len_old + amount;
     REBCNT n;
@@ -340,9 +340,9 @@ REBARR *Pop_Stack_Values_Core(REBDSP dsp_start, REBFLGS flags)
 // Pops computed values from the stack into an existing ANY-ARRAY.  The
 // index of that array will be updated to the insertion tail (/INTO protocol)
 //
-void Pop_Stack_Values_Into(REBVAL *into, REBDSP dsp_start) {
+void Pop_Stack_Values_Into(Value* into, REBDSP dsp_start) {
     REBCNT len = DSP - dsp_start;
-    REBVAL *values = KNOWN(ARR_AT(DS_Array, dsp_start + 1));
+    Value* values = KNOWN(ARR_AT(DS_Array, dsp_start + 1));
 
     assert(ANY_ARRAY(into));
     FAIL_IF_READ_ONLY_ARRAY(VAL_ARRAY(into));
@@ -351,7 +351,7 @@ void Pop_Stack_Values_Into(REBVAL *into, REBDSP dsp_start) {
         SER(VAL_ARRAY(into)),
         VAL_INDEX(into),
         cast(REBYTE*, values), // stack only holds fully specified REBVALs
-        len // multiplied by width (sizeof(REBVAL)) in Insert_Series
+        len // multiplied by width (sizeof(Cell)) in Insert_Series
     );
 
     DS_DROP_TO(dsp_start);

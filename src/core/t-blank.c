@@ -33,7 +33,7 @@
 //
 //  CT_Unit: C
 //
-REBINT CT_Unit(const RELVAL *a, const RELVAL *b, REBINT mode)
+REBINT CT_Unit(const Cell* a, const Cell* b, REBINT mode)
 {
     if (mode >= 0) return (VAL_TYPE(a) == VAL_TYPE(b));
     return -1;
@@ -46,7 +46,7 @@ REBINT CT_Unit(const RELVAL *a, const RELVAL *b, REBINT mode)
 // MAKE is disallowed, with the general rule that a blank in will give
 // a null out... for e.g. `make object! try select data spec else [...]`
 //
-REB_R MAKE_Unit(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg) {
+REB_R MAKE_Unit(Value* out, enum Reb_Kind kind, const Value* arg) {
     UNUSED(out);
     fail (Error_Bad_Make(kind, arg));
 }
@@ -57,7 +57,7 @@ REB_R MAKE_Unit(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg) {
 //
 // TO is disallowed, e.g. you can't TO convert an integer of 0 to a blank.
 //
-REB_R TO_Unit(REBVAL *out, enum Reb_Kind kind, const REBVAL *data) {
+REB_R TO_Unit(Value* out, enum Reb_Kind kind, const Value* data) {
     UNUSED(out);
     fail (Error_Bad_Make(kind, data));
 }
@@ -66,7 +66,7 @@ REB_R TO_Unit(REBVAL *out, enum Reb_Kind kind, const REBVAL *data) {
 //
 //  MF_Unit: C
 //
-void MF_Unit(REB_MOLD *mo, const RELVAL *v, bool form)
+void MF_Unit(REB_MOLD *mo, const Cell* v, bool form)
 {
     UNUSED(form); // no distinction between MOLD and FORM
 
@@ -111,8 +111,8 @@ void MF_Unit(REB_MOLD *mo, const RELVAL *v, bool form)
 //
 REB_R PD_Blank(
     REBPVS *pvs,
-    const REBVAL *picker,
-    const REBVAL *opt_setval
+    const Value* picker,
+    const Value* opt_setval
 ){
     UNUSED(picker);
     UNUSED(pvs);
@@ -145,7 +145,7 @@ REB_R PD_Blank(
 //
 REBTYPE(Unit)
 {
-    REBVAL *val = D_ARG(1);
+    Value* val = D_ARG(1);
     assert(not IS_NULLED(val));
 
     switch (VAL_WORD_SYM(verb)) {
@@ -191,7 +191,7 @@ REBTYPE(Unit)
 //
 //  CT_Handle: C
 //
-REBINT CT_Handle(const RELVAL *a, const RELVAL *b, REBINT mode)
+REBINT CT_Handle(const Cell* a, const Cell* b, REBINT mode)
 {
     // Would it be meaningful to allow user code to compare HANDLE!?
     //
@@ -206,7 +206,7 @@ REBINT CT_Handle(const RELVAL *a, const RELVAL *b, REBINT mode)
 //
 //  MF_Handle: C
 //
-void MF_Handle(REB_MOLD *mo, const RELVAL *v, bool form)
+void MF_Handle(REB_MOLD *mo, const Cell* v, bool form)
 {
     // Value has no printable form, so just print its name.
 

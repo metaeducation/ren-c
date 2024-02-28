@@ -108,41 +108,41 @@ static void Assert_Basics(void)
     //
     assert(sizeof(uint32_t) == 4);
 
-    // Although the system is designed to be able to function with REBVAL at
+    // Although the system is designed to be able to function with cells at
     // any size, the optimization of it being 4x(32-bit) on 32-bit platforms
     // and 4x(64-bit) on 64-bit platforms is a rather important performance
     // point.  For the moment we consider it to be essential enough to the
     // intended function of the system that it refuses to run if not true.
     //
     // But if someone is in an odd situation and understands why the size did
-    // not work out as designed, defining UNUSUAL_REBVAL_SIZE should still
+    // not work out as designed, defining UNUSUAL_CELL_SIZE should still
     // work, so long as that size is an even multiple of ALIGN_SIZE.
     //
-    size_t sizeof_REBVAL = sizeof(REBVAL);
-  #if defined(UNUSUAL_REBVAL_SIZE)
-    if (sizeof_REBVAL % ALIGN_SIZE != 0)
-        panic ("size of REBVAL does not evenly divide by ALIGN_SIZE");
+    size_t sizeof_cell = sizeof(Cell);
+  #if defined(UNUSUAL_CELL_SIZE)
+    if (sizeof_cell % ALIGN_SIZE != 0)
+        panic ("size of Cell does not evenly divide by ALIGN_SIZE");
   #else
-    if (sizeof_REBVAL != sizeof(void*) * 4)
-        panic ("size of REBVAL is not sizeof(void*) * 4");
+    if (sizeof_cell != sizeof(void*) * 4)
+        panic ("size of Cell is not sizeof(void*) * 4");
 
     #if defined(DEBUG_SERIES_ORIGINS) || defined(DEBUG_COUNT_TICKS)
-        assert(sizeof(REBSER) == sizeof(REBVAL) * 2 + sizeof(void*) * 2);
+        assert(sizeof(REBSER) == sizeof(Cell) * 2 + sizeof(void*) * 2);
     #else
-        assert(sizeof(REBSER) == sizeof(REBVAL) * 2);
+        assert(sizeof(REBSER) == sizeof(Cell) * 2);
     #endif
 
-    assert(sizeof(REBEVT) == sizeof(REBVAL));
+    assert(sizeof(REBEVT) == sizeof(Cell));
   #endif
 
-    // The REBSER is designed to place the `info` bits exactly after a REBVAL
-    // so they can do double-duty as also a terminator for that REBVAL when
+    // The REBSER is designed to place the `info` bits exactly after a cell
+    // so they can do double-duty as also a terminator for that cell when
     // enumerated as an ARRAY.  Put the offest into a variable to avoid the
     // constant-conditional-expression warning.
     //
     size_t offsetof_REBSER_info = offsetof(REBSER, info);
     if (
-        offsetof_REBSER_info - offsetof(REBSER, content) != sizeof(REBVAL)
+        offsetof_REBSER_info - offsetof(REBSER, content) != sizeof(Cell)
     ){
         panic ("bad structure alignment for internal array termination");
     }
@@ -184,7 +184,7 @@ static void Assert_Basics(void)
 //
 static void Startup_Base(REBARR *boot_base)
 {
-    RELVAL *head = ARR_HEAD(boot_base);
+    Cell* head = ARR_HEAD(boot_base);
 
     // By this point, the Lib_Context contains basic definitions for things
     // like true, false, the natives, and the generics.  But before deeply
@@ -229,7 +229,7 @@ static void Startup_Base(REBARR *boot_base)
 // done by delegating it to Rebol can use a function in sys as a service.
 //
 static void Startup_Sys(REBARR *boot_sys) {
-    RELVAL *head = ARR_HEAD(boot_sys);
+    Cell* head = ARR_HEAD(boot_sys);
 
     // Add all new top-level SET-WORD! found in the sys boot-block to Lib,
     // and then bind deeply all words to Lib and Sys.  See Startup_Base() notes
@@ -265,7 +265,7 @@ static REBARR *Startup_Datatypes(REBARR *boot_types, REBARR *boot_typespecs)
     if (ARR_LEN(boot_types) != REB_MAX - 1)
         panic (boot_types); // Every REB_XXX but REB_0 should have a WORD!
 
-    RELVAL *word = ARR_HEAD(boot_types);
+    Cell* word = ARR_HEAD(boot_types);
 
     if (VAL_WORD_SYM(word) != SYM_ACTION_X)
         panic (word); // First type should be ACTION!
@@ -276,7 +276,7 @@ static REBARR *Startup_Datatypes(REBARR *boot_types, REBARR *boot_typespecs)
     for (n = 1; NOT_END(word); word++, n++) {
         assert(n < REB_MAX);
 
-        REBVAL *value = Append_Context(Lib_Context, KNOWN(word), NULL);
+        Value* value = Append_Context(Lib_Context, KNOWN(word), NULL);
         RESET_CELL(value, REB_DATATYPE);
         VAL_TYPE_KIND(value) = cast(enum Reb_Kind, n);
         VAL_TYPE_SPEC(value) = VAL_ARRAY(ARR_AT(boot_typespecs, n - 1));
@@ -314,11 +314,11 @@ static REBARR *Startup_Datatypes(REBARR *boot_types, REBARR *boot_typespecs)
 //
 static void Startup_True_And_False(void)
 {
-    REBVAL *true_value = Append_Context(Lib_Context, 0, Canon(SYM_TRUE));
+    Value* true_value = Append_Context(Lib_Context, 0, Canon(SYM_TRUE));
     Init_True(true_value);
     assert(IS_TRUTHY(true_value) and VAL_LOGIC(true_value) == true);
 
-    REBVAL *false_value = Append_Context(Lib_Context, 0, Canon(SYM_FALSE));
+    Value* false_value = Append_Context(Lib_Context, 0, Canon(SYM_FALSE));
     Init_False(false_value);
     assert(IS_FALSEY(false_value) and VAL_LOGIC(false_value) == false);
 }
@@ -345,7 +345,7 @@ REBNATIVE(generic)
 {
     INCLUDE_PARAMS_OF_GENERIC;
 
-    REBVAL *spec = ARG(spec);
+    Value* spec = ARG(spec);
 
     // We only want to check the return type in the debug build.  In the
     // release build, we want to have as few argument slots as possible...
@@ -429,15 +429,15 @@ static void Add_Lib_Keys_R3Alpha_Cant_Make(void)
     REBCNT i;
     for (i = 0; names[i] != NULL; ++i) {
         REBSTR *str = Intern_UTF8_Managed(cb_cast(names[i]), strlen(names[i]));
-        REBVAL *val = Append_Context(Lib_Context, NULL, str);
+        Value* val = Append_Context(Lib_Context, NULL, str);
         assert(IS_VOID(val));  // functions will fill in
         UNUSED(val);
     }
 }
 
 
-static REBVAL *Make_Locked_Tag(const char *utf8) { // helper
-    REBVAL *t = rebText(utf8);
+static Value* Make_Locked_Tag(const char *utf8) { // helper
+    Value* t = rebText(utf8);
     RESET_VAL_HEADER(t, REB_TAG);
 
     REBSER *locker = nullptr;
@@ -537,11 +537,11 @@ static void Shutdown_Action_Meta_Shim(void) {
 // native index is being loaded, which is non-obvious.  But these issues
 // could be addressed (e.g. by passing the native index number / DLL in).
 //
-REBVAL *Make_Native(
-    RELVAL **item, // the item will be advanced as necessary
+Value* Make_Native(
+    Cell* *item, // the item will be advanced as necessary
     REBSPC *specifier,
     REBNAT dispatcher,
-    REBVAL *module
+    Value* module
 ){
     assert(specifier == SPECIFIED); // currently a requirement
 
@@ -550,7 +550,7 @@ REBVAL *Make_Native(
     if (not IS_SET_WORD(*item))
         panic (*item);
 
-    REBVAL *name = KNOWN(*item);
+    Value* name = KNOWN(*item);
     ++*item;
 
     bool enfix;
@@ -584,7 +584,7 @@ REBVAL *Make_Native(
     }
     ++*item;
 
-    REBVAL *spec = KNOWN(*item);
+    Value* spec = KNOWN(*item);
     ++*item;
     if (not IS_BLOCK(spec))
         panic (spec);
@@ -613,7 +613,7 @@ REBVAL *Make_Native(
     REBARR *details = ACT_DETAILS(act);
 
     // If a user-equivalent body was provided, we save it in the native's
-    // REBVAL for later lookup.
+    // body cell for later lookup.
     //
     if (has_body) {
         if (not IS_BLOCK(*item))
@@ -633,7 +633,7 @@ REBVAL *Make_Native(
 
     // Append the native to the module under the name given.
     //
-    REBVAL *var = Append_Context(VAL_CONTEXT(module), name, 0);
+    Value* var = Append_Context(VAL_CONTEXT(module), name, 0);
     Init_Action_Unbound(var, act);
     if (enfix)
         SET_VAL_FLAG(var, VALUE_FLAG_ENFIXED);
@@ -664,14 +664,14 @@ REBVAL *Make_Native(
 //
 // Returns an array of words bound to natives for SYSTEM/CATALOG/NATIVES
 //
-static REBARR *Startup_Natives(const REBVAL *boot_natives)
+static REBARR *Startup_Natives(const Value* boot_natives)
 {
     // Must be called before first use of Make_Paramlist_Managed_May_Fail()
     //
     Init_Action_Meta_Shim();
 
     assert(VAL_INDEX(boot_natives) == 0); // should be at head, sanity check
-    RELVAL *item = VAL_ARRAY_AT(boot_natives);
+    Cell* item = VAL_ARRAY_AT(boot_natives);
     REBSPC *specifier = VAL_SPECIFIER(boot_natives);
 
     // Although the natives are not being "executed", there are typesets
@@ -684,16 +684,16 @@ static REBARR *Startup_Natives(const REBVAL *boot_natives)
     REBARR *catalog = Make_Arr(Num_Natives);
 
     REBCNT n = 0;
-    REBVAL *generic_word = nullptr; // gives clear error if GENERIC not found
+    Value* generic_word = nullptr; // gives clear error if GENERIC not found
 
     while (NOT_END(item)) {
         if (n >= Num_Natives)
             panic (item);
 
-        REBVAL *name = KNOWN(item);
+        Value* name = KNOWN(item);
         assert(IS_SET_WORD(name));
 
-        REBVAL *native = Make_Native(
+        Value* native = Make_Native(
             &item,
             specifier,
             Native_C_Funcs[n],
@@ -708,7 +708,7 @@ static REBARR *Startup_Natives(const REBVAL *boot_natives)
         Move_Value(&Natives[n], native); // Note: Loses enfixedness (!)
         SET_VAL_FLAG(&Natives[n], CELL_FLAG_PROTECTED);
 
-        REBVAL *catalog_item = Move_Value(Alloc_Tail_Array(catalog), name);
+        Value* catalog_item = Move_Value(Alloc_Tail_Array(catalog), name);
         CHANGE_VAL_TYPE_BITS(catalog_item, REB_WORD);
 
         if (VAL_WORD_SYM(name) == SYM_GENERIC)
@@ -732,10 +732,10 @@ static REBARR *Startup_Natives(const REBVAL *boot_natives)
 //
 // Returns an array of words bound to generics for SYSTEM/CATALOG/ACTIONS
 //
-static REBARR *Startup_Generics(const REBVAL *boot_generics)
+static REBARR *Startup_Generics(const Value* boot_generics)
 {
     assert(VAL_INDEX(boot_generics) == 0); // should be at head, sanity check
-    RELVAL *head = VAL_ARRAY_AT(boot_generics);
+    Cell* head = VAL_ARRAY_AT(boot_generics);
     REBSPC *specifier = VAL_SPECIFIER(boot_generics);
 
     // Add SET-WORD!s that are top-level in the generics block to the lib
@@ -766,7 +766,7 @@ static REBARR *Startup_Generics(const REBVAL *boot_generics)
 
     REBDSP dsp_orig = DSP;
 
-    RELVAL *item = head;
+    Cell* item = head;
     for (; NOT_END(item); ++item)
         if (IS_SET_WORD(item)) {
             DS_PUSH_RELVAL(item, specifier);
@@ -961,14 +961,14 @@ static void Shutdown_Root_Vars(void)
 // (See also N_context() which creates the subobjects of the system object.)
 //
 static void Init_System_Object(
-    const REBVAL *boot_sysobj_spec,
+    const Value* boot_sysobj_spec,
     REBARR *datatypes_catalog,
     REBARR *natives_catalog,
     REBARR *generics_catalog,
     REBCTX *errors_catalog
 ) {
     assert(VAL_INDEX(boot_sysobj_spec) == 0);
-    RELVAL *spec_head = VAL_ARRAY_AT(boot_sysobj_spec);
+    Cell* spec_head = VAL_ARRAY_AT(boot_sysobj_spec);
 
     // Create the system object from the sysobj block (defined in %sysobj.r)
     //
@@ -1036,7 +1036,7 @@ static void Init_System_Object(
     // `make error!` functionality is not ready when %sysobj.r runs.  Fix
     // up its archetype so that it is an actual ERROR!.
     //
-    REBVAL *std_error = Get_System(SYS_STANDARD, STD_ERROR);
+    Value* std_error = Get_System(SYS_STANDARD, STD_ERROR);
     assert(IS_OBJECT(std_error));
     CHANGE_VAL_TYPE_BITS(std_error, REB_ERROR);
     CHANGE_VAL_TYPE_BITS(CTX_ARCHETYPE(VAL_CONTEXT(std_error)), REB_ERROR);
@@ -1195,7 +1195,7 @@ void Set_Stack_Limit(void *base) {
   #endif
 }
 
-static REBVAL *Startup_Mezzanine(BOOT_BLK *boot);
+static Value* Startup_Mezzanine(BOOT_BLK *boot);
 
 
 #if !defined(NDEBUG)
@@ -1517,7 +1517,7 @@ void Startup_Core(void)
 
     assert(DSP == 0 and FS_TOP == FS_BOTTOM);
 
-    REBVAL *error = rebRescue(cast(REBDNG*, &Startup_Mezzanine), boot);
+    Value* error = rebRescue(cast(REBDNG*, &Startup_Mezzanine), boot);
     if (error) {
         //
         // There is theoretically some level of error recovery that could
@@ -1556,13 +1556,13 @@ void Startup_Core(void)
 // a graceful fashion.  This is the routine protected by rebRescue() so that
 // initialization can handle exceptions.
 //
-static REBVAL *Startup_Mezzanine(BOOT_BLK *boot)
+static Value* Startup_Mezzanine(BOOT_BLK *boot)
 {
     Startup_Base(VAL_ARRAY(&boot->base));
 
     Startup_Sys(VAL_ARRAY(&boot->sys));
 
-    REBVAL *finish_init = CTX_VAR(Sys_Context, SYS_CTX_FINISH_INIT_CORE);
+    Value* finish_init = CTX_VAR(Sys_Context, SYS_CTX_FINISH_INIT_CORE);
     assert(IS_ACTION(finish_init));
 
     // The FINISH-INIT-CORE function should likely do very little.  But right

@@ -38,19 +38,19 @@
 //
 // Ren-C can not only run the evaluator across a REBARR-style series of
 // input based on index, it can also enumerate through C's `va_list`,
-// providing the ability to pass pointers as REBVAL* in a variadic function
+// providing the ability to pass pointers as Value* in a variadic function
 // call from the C (comma-separated arguments, as with printf()).  Future data
-// sources might also include a REBVAL[] raw C array.
+// sources might also include a Value[] raw C array.
 //
 // To provide even greater flexibility, it allows the very first element's
 // pointer in an evaluation to come from an arbitrary source.  It doesn't
 // have to be resident in the same sequence from which ensuing values are
-// pulled, allowing a free head value (such as an ACTION! REBVAL in a local
+// pulled, allowing a free head value (such as an ACTION! cell in a local
 // C variable) to be evaluated in combination from another source (like a
 // va_list or series representing the arguments.)  This avoids the cost and
 // complexity of allocating a series to combine the values together.
 //
-// These features alone would not cover the case when REBVAL pointers that
+// These features alone would not cover the case when cell pointers that
 // are originating with C source were intended to be supplied to a function
 // with no evaluation.  In R3-Alpha, the only way in an evaluative context
 // to suppress such evaluations would be by adding elements (such as QUOTE).
@@ -73,7 +73,7 @@
 
 // See Endlike_Header() for why these are chosen the way they are.  This
 // means that the Reb_Frame->flags field can function as an implicit END for
-// Reb_Frame->cell, as well as be distinguished from a REBVAL*, a REBSER*, or
+// Reb_Frame->cell, as well as be distinguished from a Value*, a REBSER*, or
 // a UTF8 string.
 //
 #define DO_FLAG_0_IS_TRUE FLAG_LEFT_BIT(0) // NODE_FLAG_NODE
@@ -412,7 +412,7 @@ struct Reb_Frame_Source {
     // to consult the va_list (if any).  That end marker may be resident in
     // an array, or if it's a plain va_list source it may be the global END.
     //
-    const RELVAL *pending;
+    const Cell* pending;
 
     // If values are being sourced from an array, this holds the pointer to
     // that array.  By knowing the array it is possible for error and debug
@@ -453,7 +453,7 @@ struct Reb_Frame {
     // location which f->gotten can point to during arbitrary left-hand-side
     // evaluations.
     //
-    RELVAL cell;
+    Cell cell;
 
     // `shove`
     //
@@ -476,7 +476,7 @@ struct Reb_Frame {
     // initialize it until f->gotten indicates it...which only happens with
     // shove operations.
     //
-    RELVAL shove;
+    Cell shove;
 
     // `flags`
     //
@@ -511,13 +511,13 @@ struct Reb_Frame {
     // used as an intermediate free location to do calculations en route to
     // a final result, due to being GC-safe during function evaluation.
     //
-    REBVAL *out;
+    Value* out;
 
     // `source.array`, `source.vaptr`
     //
     // This is the source from which new values will be fetched.  In addition
     // to working with an array, it is also possible to feed the evaluator
-    // arbitrary REBVAL*s through a variable argument list on the C stack.
+    // arbitrary Value*s through a variable argument list on the C stack.
     // This means no array needs to be dynamically allocated (though some
     // conditions require the va_list to be converted to an array, see notes
     // on Reify_Va_To_Array_In_Frame().)
@@ -558,7 +558,7 @@ struct Reb_Frame {
     // !!! Review impacts on debugging; e.g. a debug mode should hold onto
     // the initial value in order to display full error messages.
     //
-    const RELVAL *value;
+    const Cell* value;
 
     // `expr_index`
     //
@@ -581,14 +581,14 @@ struct Reb_Frame {
     // There is an assert to check this, and clients wishing to be robust
     // across this (and other modifications) need to use the INDEXOR-based API.
     //
-    const REBVAL *gotten;
+    const Value* gotten;
 
     // `original`
     //
     // If a function call is currently in effect, FRM_PHASE() is how you get
     // at the curren function being run.  Because functions are identified and
     // passed by a platform pointer as their paramlist REBARR*, you must use
-    // `ACT_ARCHETYPE(FRM_PHASE(f))` to get a pointer to a canon REBVAL
+    // `ACT_ARCHETYPE(FRM_PHASE(f))` to get a pointer to a canon cell
     // representing that function (to examine its value flags, for instance).
     //
     // !!! ACTION_FLAG_XXX should probably be used for frequently checks.
@@ -626,7 +626,7 @@ struct Reb_Frame {
     // reused or freed.  See Push_Action() and Drop_Action() for the logic.
     //
     REBARR *varlist;
-    REBVAL *rootvar; // cache of CTX_ARCHETYPE(varlist) if varlist is not null
+    Value* rootvar; // cache of CTX_ARCHETYPE(varlist) if varlist is not null
 
     // `param`
     //
@@ -639,14 +639,14 @@ struct Reb_Frame {
     // advanced but we'd like to hold the old one...this makes it important
     // to protect it from GC if we have advanced beyond as well!)
     //
-    // Made relative just to have another RELVAL on hand.
+    // Made relative just to have another Cell on hand.
     //
-    const RELVAL *param;
+    const Cell* param;
 
     // `arg`
     //
     // "arg" is the "actual argument"...which holds the pointer to the
-    // REBVAL slot in the `arglist` for that corresponding `param`.  These
+    // Value slot in the `arglist` for that corresponding `param`.  These
     // are moved in sync.  This movement can be done for typechecking or
     // fulfillment, see In_Typecheck_Mode()
     //
@@ -655,7 +655,7 @@ struct Reb_Frame {
     // so it can examine f->arg and avoid trying to protect the random
     // bits that haven't been fulfilled yet.
     //
-    REBVAL *arg;
+    Value* arg;
 
     // `special`
     //
@@ -675,7 +675,7 @@ struct Reb_Frame {
     // item being dispatched (which would be cleaner, but some cases must
     // look ahead with alternate handling).
     //
-    const REBVAL *special;
+    const Value* special;
 
     // `refine`
     //
@@ -717,7 +717,7 @@ struct Reb_Frame {
     // current path item (the "picker").  So on the second step of processing
     // foo/(1 + 2) it would be 3.
     //
-    REBVAL *refine;
+    Value* refine;
 
   union {
     // `deferred`
@@ -749,22 +749,22 @@ struct Reb_Frame {
     // impression that the AND had "tightly" taken the argument all along.
     //
     struct {
-        REBVAL *arg;
-        const RELVAL *param;
-        REBVAL *refine;
+        Value* arg;
+        const Cell* param;
+        Value* refine;
     } defer;
 
     // References are used by path dispatch.
     //
     struct {
-        RELVAL *cell;
+        Cell* cell;
         REBSPC *specifier;
     } ref;
 
     // Used to slip cell to re-evaluate into Eval_Core_Throws()
     //
     struct {
-        const REBVAL *value;
+        const Value* value;
     } reval;
   } u;
 
@@ -826,12 +826,12 @@ struct Reb_Frame {
     // have the old f->current work), then they must not use the old f->value
     // but request the lookback pointer from Fetch_Next_In_Frame().
     //
-    // To help stress this invariant, frames will forcibly expire REBVAL
+    // To help stress this invariant, frames will forcibly expire value
     // cells, handing out disposable lookback pointers on each eval.
     //
     // !!! Test currently leaks on shutdown, review how to not leak.
     //
-    RELVAL *stress;
+    Cell* stress;
   #endif
 };
 
@@ -933,19 +933,19 @@ typedef bool (*REBEVL)(REBFRM * const);
     nullptr // 0 pointer comparison generally faster than to arbitrary pointer
 
 #define ARG_TO_UNUSED_REFINEMENT \
-    m_cast(REBVAL*, FALSE_VALUE)
+    m_cast(Value*, FALSE_VALUE)
 
 #define ARG_TO_IRREVOCABLE_REFINEMENT \
-    m_cast(REBVAL*, TRUE_VALUE)
+    m_cast(Value*, TRUE_VALUE)
 
 #define ARG_TO_REVOKED_REFINEMENT \
-    m_cast(REBVAL*, BLANK_VALUE)
+    m_cast(Value*, BLANK_VALUE)
 
 #define ORDINARY_ARG \
-    m_cast(REBVAL*, EMPTY_BLOCK)
+    m_cast(Value*, EMPTY_BLOCK)
 
 #define LOOKBACK_ARG \
-    m_cast(REBVAL*, EMPTY_TEXT)
+    m_cast(Value*, EMPTY_TEXT)
 
 
 #if !defined(DEBUG_CHECK_CASTS) || !defined(CPLUSPLUS_11)

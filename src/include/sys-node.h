@@ -27,7 +27,7 @@
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // This provides some convenience routines that require more definitions than
-// are available when %sys-rebnod.h is being processed.  (e.g. REBVAL, 
+// are available when %sys-rebnod.h is being processed.  (e.g. Cell,
 // REBSER, REBFRM...)
 //
 // See %sys-rebnod.h for what a "node" means in this context.
@@ -44,7 +44,7 @@
     template <typename T>
     inline static REBNOD *NOD(T *p) {
         constexpr bool derived =
-            std::is_same<T, REBVAL>::value
+            std::is_same<T, Value>::value
             or std::is_same<T, REBSER>::value
             or std::is_same<T, REBSTR>::value
             or std::is_same<T, REBARR>::value
@@ -57,7 +57,7 @@
 
         static_assert(
             derived or base,
-            "NOD() works on void/REBVAL/REBSER/REBSTR/REBARR/REBCTX/REBACT" \
+            "NOD() works on void/Value/REBSER/REBSTR/REBARR/REBCTX/REBACT" \
                "/REBMAP/REBFRM"
         );
 
@@ -194,7 +194,7 @@ inline static void Free_Node(REBCNT pool_id, void *p)
 
 enum Reb_Pointer_Detect {
     DETECTED_AS_UTF8 = 0,
-    
+
     DETECTED_AS_SERIES = 1,
     DETECTED_AS_FREED_SERIES = 2,
 

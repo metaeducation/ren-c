@@ -26,9 +26,9 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// A "Rebol Array" is a series of REBVAL values which is terminated by an
-// END marker.  In R3-Alpha, the END marker was itself a full-sized REBVAL
-// cell...so code was allowed to write one cell past the capacity requested
+// A "Rebol Array" is a series of cell structs which is terminated by an
+// END marker.  In R3-Alpha, the END marker was itself a full-sized cell
+// which meant code was allowed to write one cell past the capacity requested
 // when Make_Arr() was called.  But this always had to be an END.
 //
 // In Ren-C, there is an implicit END marker just past the last cell in the
@@ -57,32 +57,32 @@
 // no last value then ARR_LAST should not be called (this is checked in
 // debug builds).  A fully constructed array should always have an END
 // marker in its tail slot, which is one past the last position that is
-// valid for writing a full REBVAL.
+// valid for writing a full cell.
 
-inline static RELVAL *ARR_AT(REBARR *a, REBCNT n)
-    { return SER_AT(RELVAL, cast(REBSER*, a), n); }
+inline static Cell* ARR_AT(REBARR *a, REBCNT n)
+    { return SER_AT(Cell, cast(REBSER*, a), n); }
 
-inline static RELVAL *ARR_HEAD(REBARR *a)
-    { return SER_HEAD(RELVAL, cast(REBSER*, a)); }
+inline static Cell* ARR_HEAD(REBARR *a)
+    { return SER_HEAD(Cell, cast(REBSER*, a)); }
 
-inline static RELVAL *ARR_TAIL(REBARR *a)
-    { return SER_TAIL(RELVAL, cast(REBSER*, a)); }
+inline static Cell* ARR_TAIL(REBARR *a)
+    { return SER_TAIL(Cell, cast(REBSER*, a)); }
 
-inline static RELVAL *ARR_LAST(REBARR *a)
-    { return SER_LAST(RELVAL, cast(REBSER*, a)); }
+inline static Cell* ARR_LAST(REBARR *a)
+    { return SER_LAST(Cell, cast(REBSER*, a)); }
 
-inline static RELVAL *ARR_SINGLE(REBARR *a) {
+inline static Cell* ARR_SINGLE(REBARR *a) {
     assert(not IS_SER_DYNAMIC(a)); // singular test avoided in release build
-    return cast(RELVAL*, &SER(a)->content.fixed);
+    return cast(Cell*, &SER(a)->content.fixed);
 }
 
 // It's possible to calculate the array from just a cell if you know it's a
 // cell inside a singular array.
 //
-inline static REBARR *Singular_From_Cell(const RELVAL *v) {
+inline static REBARR *Singular_From_Cell(const Cell* v) {
     REBARR *singular = ARR( // some checking in debug builds is done by ARR()
         cast(void*,
-            cast(REBYTE*, m_cast(RELVAL*, v))
+            cast(REBYTE*, m_cast(Cell*, v))
             - offsetof(struct Reb_Series, content)
         )
     );
@@ -174,7 +174,7 @@ inline static void Deep_Freeze_Array(REBARR *a) {
 
 
 //
-// REBVAL cells cannot be written to unless they carry VALUE_FLAG_CELL, and
+// The cells cannot be written to unless they carry VALUE_FLAG_CELL, and
 // have been "formatted" to convey their lifetime (stack or array).  This
 // helps debugging, but is also important information needed by Move_Value()
 // for deciding if the lifetime of a target cell requires the "reification"
@@ -194,7 +194,7 @@ inline static void Prep_Array(
 ){
     assert(IS_SER_DYNAMIC(a));
 
-    RELVAL *prep = ARR_HEAD(a);
+    Cell* prep = ARR_HEAD(a);
 
     if (NOT_SER_FLAG(a, SERIES_FLAG_FIXED_SIZE)) {
         //
@@ -236,7 +236,7 @@ inline static void Prep_Array(
         // fallthrough
     }
 
-    // Although currently all dynamically allocated arrays use a full REBVAL
+    // Although currently all dynamically allocated arrays use a full sized
     // cell for the end marker, it could use everything except the second byte
     // of the first `uintptr_t` (which must be zero to denote end).  To make
     // sure no code depends on a full cell in the last location,  make it
@@ -251,7 +251,7 @@ inline static void Prep_Array(
 // garbage collector to look into recursively).  ARR_LEN() will be 0.
 //
 inline static REBARR *Make_Arr_Core(REBCNT capacity, REBFLGS flags) {
-    const REBCNT wide = sizeof(REBVAL);
+    const REBCNT wide = sizeof(Cell);
 
     REBSER *s = Alloc_Series_Node(flags);
 
@@ -404,7 +404,7 @@ enum {
     Copy_Values_Len_Extra_Shallow_Core((v), (s), (l), 0, (f))
 
 #define Copy_Values_Len_Extra_Shallow(v,s,l,e) \
-    Copy_Values_Len_Extra_Shallow_Core((v), (s), (l), (e), 0) 
+    Copy_Values_Len_Extra_Shallow_Core((v), (s), (l), (e), 0)
 
 
 #define Copy_Array_Shallow(a,s) \
@@ -479,7 +479,7 @@ inline static REBARR* Copy_Array_At_Extra_Deep_Flags_Managed(
     Root_Empty_Binary
 
 
-inline static void INIT_VAL_ARRAY(RELVAL *v, REBARR *a) {
+inline static void INIT_VAL_ARRAY(Cell* v, REBARR *a) {
     INIT_BINDING(v, UNBOUND);
     assert(IS_ARRAY_MANAGED(a));
     v->payload.any_series.series = SER(a);
@@ -498,7 +498,7 @@ inline static void INIT_VAL_ARRAY(RELVAL *v, REBARR *a) {
 // These operations do not need to take the value's index position into
 // account; they strictly operate on the array series
 //
-inline static REBARR *VAL_ARRAY(const RELVAL *v) {
+inline static REBARR *VAL_ARRAY(const Cell* v) {
     assert(ANY_ARRAY(v));
     REBSER *s = v->payload.any_series.series;
     if (s->info.bits & SERIES_INFO_INACCESSIBLE)
@@ -509,7 +509,7 @@ inline static REBARR *VAL_ARRAY(const RELVAL *v) {
 #define VAL_ARRAY_HEAD(v) \
     ARR_HEAD(VAL_ARRAY(v))
 
-inline static RELVAL *VAL_ARRAY_TAIL(const RELVAL *v) {
+inline static Cell* VAL_ARRAY_TAIL(const Cell* v) {
     return ARR_AT(VAL_ARRAY(v), VAL_ARRAY_LEN_AT(v));
 }
 
@@ -558,7 +558,7 @@ inline static RELVAL *VAL_ARRAY_TAIL(const RELVAL *v) {
 //
 inline static bool Splices_Into_Type_Without_Only(
     enum Reb_Kind array_kind,
-    const REBVAL *arg
+    const Value* arg
 ){
     // !!! It's desirable for the system to make VOID! insertion "ornery".
     // Requiring the use of /ONLY to put it into arrays may not be perfect,
@@ -579,9 +579,9 @@ inline static bool Splices_Into_Type_Without_Only(
 
 // Checks to see if a GROUP! is like ((...)) or (...), used by COMPOSE & PARSE
 //
-inline static bool Is_Doubled_Group(const RELVAL *group) {
+inline static bool Is_Doubled_Group(const Cell* group) {
     assert(IS_GROUP(group));
-    RELVAL *inner = VAL_ARRAY_AT(group);
+    Cell* inner = VAL_ARRAY_AT(group);
     if (VAL_TYPE_RAW(inner) != REB_GROUP or VAL_LEN_AT(group) != 1)
         return false; // plain (...) GROUP!
     return true; // a ((...)) GROUP!, inject as rule

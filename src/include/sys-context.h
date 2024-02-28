@@ -33,7 +33,7 @@
 //   symbol ID encoded as an extra piece of information for that key.
 //
 // * "varlist" - an array of equal length to the keylist, which holds an
-//   arbitrary REBVAL in each position that corresponds to its key.
+//   arbitrary Value in each position that corresponds to its key.
 //
 // Contexts coordinate with words, which can have their VAL_WORD_CONTEXT()
 // set to a context's series pointer.  Then they cache the index of that
@@ -51,12 +51,12 @@
 // as not having this property, but it may be just as efficient to check
 // the symbol match as that bit.
 //
-// Frame key/var indices start at one, and they leave two REBVAL slots open
+// Frame key/var indices start at one, and they leave two cell slots open
 // in the 0 spot for other uses.  With an ANY-CONTEXT!, the use for the
-// "ROOTVAR" is to store a canon value image of the ANY-CONTEXT!'s REBVAL
+// "ROOTVAR" is to store a canon value image of the ANY-CONTEXT!'s cell
 // itself.  This trick allows a single REBCTX* to be passed around rather
-// than the REBVAL struct which is 4x larger, yet still reconstitute the
-// entire REBVAL if it is needed.
+// than the cell struct which is 4x larger, yet still reconstitute the
+// entire cell if it is needed.
 //
 
 #ifdef NDEBUG
@@ -73,16 +73,16 @@
 // allocated context, and in that case it will have to come out of the
 // REBSER node data itself.
 //
-inline static REBVAL *CTX_ARCHETYPE(REBCTX *c) {
+inline static Value* CTX_ARCHETYPE(REBCTX *c) {
     REBSER *varlist = SER(CTX_VARLIST(c));
     if (not IS_SER_DYNAMIC(varlist))
-        return cast(REBVAL*, &varlist->content.fixed);
+        return cast(Value*, &varlist->content.fixed);
 
     // If a context has its data freed, it must be converted into non-dynamic
     // form if it wasn't already (e.g. if it wasn't a FRAME!)
     //
     assert(NOT_SER_INFO(varlist, SERIES_INFO_INACCESSIBLE));
-    return cast(REBVAL*, varlist->content.dynamic.data);
+    return cast(Value*, varlist->content.dynamic.data);
 }
 
 // CTX_KEYLIST is called often, and it's worth it to make it as fast as
@@ -100,7 +100,7 @@ inline static REBARR *CTX_KEYLIST(REBCTX *c) {
     // phase changes, a fixed value can't be put into the keylist...that is
     // just the keylist of the underlying function.
     //
-    REBVAL *archetype = CTX_ARCHETYPE(c);
+    Value* archetype = CTX_ARCHETYPE(c);
     assert(VAL_TYPE_RAW(archetype) == REB_FRAME);
     return ACT_PARAMLIST(archetype->payload.any_context.phase);
 }
@@ -127,7 +127,7 @@ static inline void INIT_CTX_KEYLIST_UNIQUE(REBCTX *c, REBARR *keylist) {
     (cast(REBSER*, (c))->content.dynamic.len - 1) // len > 1 => dynamic
 
 #define CTX_ROOTKEY(c) \
-    cast(REBVAL*, SER(CTX_KEYLIST(c))->content.dynamic.data) // len > 1
+    cast(Value*, SER(CTX_KEYLIST(c))->content.dynamic.data) // len > 1
 
 #define CTX_TYPE(c) \
     VAL_TYPE(CTX_ARCHETYPE(c))
@@ -135,7 +135,7 @@ static inline void INIT_CTX_KEYLIST_UNIQUE(REBCTX *c, REBARR *keylist) {
 // The keys and vars are accessed by positive integers starting at 1
 //
 #define CTX_KEYS_HEAD(c) \
-    SER_AT(REBVAL, SER(CTX_KEYLIST(c)), 1) // a CTX_KEY can't hold a RELVAL
+    SER_AT(Value, SER(CTX_KEYLIST(c)), 1)  // a CTX_KEY is always "specific"
 
 inline static REBFRM *CTX_FRAME_IF_ON_STACK(REBCTX *c) {
     REBNOD *keysource = LINK(c).keysource;
@@ -158,21 +158,21 @@ inline static REBFRM *CTX_FRAME_MAY_FAIL(REBCTX *c) {
 }
 
 #define CTX_VARS_HEAD(c) \
-    SER_AT(REBVAL, SER(CTX_VARLIST(c)), 1) // may fail() if inaccessible
+    SER_AT(Value, SER(CTX_VARLIST(c)), 1)  // may fail() if inaccessible
 
-inline static REBVAL *CTX_KEY(REBCTX *c, REBCNT n) {
+inline static Value* CTX_KEY(REBCTX *c, REBCNT n) {
     assert(NOT_SER_FLAG(c, SERIES_INFO_INACCESSIBLE));
     assert(GET_SER_FLAG(c, ARRAY_FLAG_VARLIST));
     assert(n != 0 and n <= CTX_LEN(c));
-    return cast(REBVAL*, cast(REBSER*, CTX_KEYLIST(c))->content.dynamic.data)
+    return cast(Value*, cast(REBSER*, CTX_KEYLIST(c))->content.dynamic.data)
         + n;
 }
 
-inline static REBVAL *CTX_VAR(REBCTX *c, REBCNT n) {
+inline static Value* CTX_VAR(REBCTX *c, REBCNT n) {
     assert(NOT_SER_FLAG(c, SERIES_INFO_INACCESSIBLE));
     assert(GET_SER_FLAG(c, ARRAY_FLAG_VARLIST));
     assert(n != 0 and n <= CTX_LEN(c));
-    return cast(REBVAL*, cast(REBSER*, c)->content.dynamic.data) + n;
+    return cast(Value*, cast(REBSER*, c)->content.dynamic.data) + n;
 }
 
 inline static REBSTR *CTX_KEY_SPELLING(REBCTX *c, REBCNT n) {
@@ -215,7 +215,7 @@ inline static void FAIL_IF_INACCESSIBLE_CTX(REBCTX *c) {
     }
 }
 
-inline static REBCTX *VAL_CONTEXT(const RELVAL *v) {
+inline static REBCTX *VAL_CONTEXT(const Cell* v) {
     assert(ANY_CONTEXT(v));
     assert(not v->payload.any_context.phase or VAL_TYPE(v) == REB_FRAME);
     REBCTX *c = CTX(v->payload.any_context.varlist);
@@ -223,7 +223,7 @@ inline static REBCTX *VAL_CONTEXT(const RELVAL *v) {
     return c;
 }
 
-inline static void INIT_VAL_CONTEXT(REBVAL *v, REBCTX *c) {
+inline static void INIT_VAL_CONTEXT(Value* v, REBCTX *c) {
     v->payload.any_context.varlist = CTX_VARLIST(c);
 }
 
@@ -255,12 +255,12 @@ inline static void INIT_VAL_CONTEXT(REBVAL *v, REBCTX *c) {
 
 // Common routine for initializing OBJECT, MODULE!, PORT!, and ERROR!
 //
-// A fully constructed context can reconstitute the ANY-CONTEXT! REBVAL
-// that is its canon form from a single pointer...the REBVAL sitting in
+// A fully constructed context can reconstitute the ANY-CONTEXT! cell
+// that is its canon form from a single pointer...the cell sitting in
 // the 0 slot of the context's varlist.
 //
-static inline REBVAL *Init_Any_Context(
-    RELVAL *out,
+static inline Value* Init_Any_Context(
+    Cell* out,
     enum Reb_Kind kind,
     REBCTX *c
 ){
@@ -365,7 +365,7 @@ inline static bool Is_Context_Deeply_Frozen(REBCTX *c) {
 // was some validation checking.  This factors out that check instead of
 // repeating the code.
 //
-inline static void FAIL_IF_BAD_PORT(REBVAL *port) {
+inline static void FAIL_IF_BAD_PORT(Value* port) {
     if (not ANY_CONTEXT(port))
         fail (Error_Invalid_Port_Raw());
 
@@ -381,7 +381,7 @@ inline static void FAIL_IF_BAD_PORT(REBVAL *port) {
 // It's helpful to show when a test for a native port actor is being done,
 // rather than just having the code say IS_HANDLE().
 //
-inline static bool Is_Native_Port_Actor(const REBVAL *actor) {
+inline static bool Is_Native_Port_Actor(const Value* actor) {
     if (IS_HANDLE(actor))
         return true;
     assert(IS_OBJECT(actor));
@@ -424,7 +424,7 @@ inline static REBCTX *Steal_Context_Vars(REBCTX *c, REBNOD *keysource) {
     );
     copy->misc_private.meta = nullptr; // let stub have the meta
 
-    REBVAL *rootvar = cast(REBVAL*, copy->content.dynamic.data);
+    Value* rootvar = cast(Value*, copy->content.dynamic.data);
 
     // Convert the old varlist that had outstanding references into a
     // singular "stub", holding only the CTX_ARCHETYPE.  This is needed
@@ -440,7 +440,7 @@ inline static REBCTX *Steal_Context_Vars(REBCTX *c, REBNOD *keysource) {
             | FLAG_LEN_BYTE_OR_255(1) // not dynamic any more, new len is 1
     );
 
-    REBVAL *single = cast(REBVAL*, &stub->content.fixed);
+    Value* single = cast(Value*, &stub->content.fixed);
     single->header.bits =
         NODE_FLAG_NODE | NODE_FLAG_CELL | FLAG_KIND_BYTE(REB_FRAME);
     INIT_BINDING(single, VAL_BINDING(rootvar));

@@ -38,8 +38,8 @@
 // `skip` is the record size.
 //
 REBSER *Make_Set_Operation_Series(
-    const REBVAL *val1,
-    const REBVAL *val2,
+    const Value* val1,
+    const Value* val2,
     REBFLGS flags,
     bool cased,
     REBCNT skip
@@ -117,7 +117,7 @@ REBSER *Make_Set_Operation_Series(
             //
             i = VAL_INDEX(val1);
             for (; i < ARR_LEN(array1); i += skip) {
-                RELVAL *item = ARR_AT(array1, i);
+                Cell* item = ARR_AT(array1, i);
                 if (flags & SOP_FLAG_CHECK) {
                     h = Find_Key_Hashed(
                         VAL_ARRAY(val2),
@@ -164,7 +164,7 @@ REBSER *Make_Set_Operation_Series(
             // Iterate over second series?
             //
             if ((i = ((flags & SOP_FLAG_BOTH) != 0))) {
-                const REBVAL *temp = val1;
+                const Value* temp = val1;
                 val1 = val2;
                 val2 = temp;
             }
@@ -237,7 +237,7 @@ REBSER *Make_Set_Operation_Series(
             // Iterate over second series?
             //
             if ((i = ((flags & SOP_FLAG_BOTH) != 0))) {
-                const REBVAL *temp = val1;
+                const Value* temp = val1;
                 val1 = val2;
                 val2 = temp;
             }
@@ -313,7 +313,7 @@ REBSER *Make_Set_Operation_Series(
             // Iterate over second series?
             //
             if ((i = ((flags & SOP_FLAG_BOTH) != 0))) {
-                const REBVAL *temp = val1;
+                const Value* temp = val1;
                 val1 = val2;
                 val2 = temp;
             }
@@ -346,8 +346,8 @@ REBNATIVE(exclude)
 {
     INCLUDE_PARAMS_OF_EXCLUDE;
 
-    REBVAL *val1 = ARG(series);
-    REBVAL *val2 = ARG(exclusions);
+    Value* val1 = ARG(series);
+    Value* val2 = ARG(exclusions);
 
     if (IS_BITSET(val1) || IS_BITSET(val2)) {
         if (VAL_TYPE(val1) != VAL_TYPE(val2))
@@ -398,7 +398,7 @@ REBNATIVE(unique)
 {
     INCLUDE_PARAMS_OF_UNIQUE;
 
-    REBVAL *val = ARG(series);
+    Value* val = ARG(series);
 
     if (IS_BITSET(val) or IS_TYPESET(val))
         return val; // bitsets & typesets already unique (by definition)

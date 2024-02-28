@@ -69,7 +69,7 @@ struct rebol_mem_pool {
 #define DEF_POOL(size, count) {size, count}
 #define MOD_POOL(size, count) {size * MEM_MIN_SIZE, count}
 
-#define MEM_MIN_SIZE sizeof(REBVAL)
+#define MEM_MIN_SIZE sizeof(Cell)
 #define MEM_BIG_SIZE 1024
 
 #define MEM_BALLAST 3000000
@@ -80,7 +80,7 @@ enum Mem_Pool_Specs {
     MEM_MID_POOLS = MEM_SMALL_POOLS + 4,
     MEM_BIG_POOLS = MEM_MID_POOLS + 4, // larger pools
     SER_POOL = MEM_BIG_POOLS,
-    #ifdef UNUSUAL_REBVAL_SIZE
+    #ifdef UNUSUAL_CELL_SIZE
     PAR_POOL,
     #else
     PAR_POOL = SER_POOL,

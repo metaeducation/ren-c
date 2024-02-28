@@ -65,15 +65,15 @@
 // values, but this is a work in progress.
 //
 #ifdef TO_WINDOWS
-    typedef REBVAL *(__cdecl COLLATE_CFUNC)(void);
+    typedef Value* (__cdecl COLLATE_CFUNC)(void);
 #else
-    typedef REBVAL *(COLLATE_CFUNC)(void);
+    typedef Value* (COLLATE_CFUNC)(void);
 #endif
 
 //=//// EXTENSION MACROS //////////////////////////////////////////////////=//
 
 #define DECLARE_EXT_COLLATE(ext_name) \
-    EXT_API REBVAL *RX_COLLATE_NAME(ext_name)(void)
+    EXT_API Value* RX_COLLATE_NAME(ext_name)(void)
 
 // !!! Currently used for just a BLOCK!, but may become ACT_DETAILS()
 //
@@ -81,4 +81,3 @@
 #define IDX_COLLATOR_SPECS 1
 #define IDX_COLLATOR_DISPATCHERS 2
 #define IDX_COLLATOR_MAX 3
-

@@ -38,7 +38,7 @@
 // the words are equal or not (1 or 0).  This creates bad invariants for
 // sorting etc.  Review.
 //
-REBINT CT_Word(const RELVAL *a, const RELVAL *b, REBINT mode)
+REBINT CT_Word(const Cell* a, const Cell* b, REBINT mode)
 {
     REBINT e;
     REBINT diff;
@@ -71,7 +71,7 @@ REBINT CT_Word(const RELVAL *a, const RELVAL *b, REBINT mode)
 //
 //  MAKE_Word: C
 //
-REB_R MAKE_Word(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
+REB_R MAKE_Word(Value* out, enum Reb_Kind kind, const Value* arg)
 {
     if (ANY_WORD(arg)) {
         //
@@ -122,7 +122,7 @@ REB_R MAKE_Word(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 //
 //  TO_Word: C
 //
-REB_R TO_Word(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
+REB_R TO_Word(Value* out, enum Reb_Kind kind, const Value* arg)
 {
     return MAKE_Word(out, kind, arg);
 }
@@ -131,7 +131,7 @@ REB_R TO_Word(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 //
 //  MF_Word: C
 //
-void MF_Word(REB_MOLD *mo, const RELVAL *v, bool form) {
+void MF_Word(REB_MOLD *mo, const Cell* v, bool form) {
     UNUSED(form); // no difference between MOLD and FORM at this time
 
     REBSTR *spelling = VAL_WORD_SPELLING(v);
@@ -186,8 +186,8 @@ void MF_Word(REB_MOLD *mo, const RELVAL *v, bool form) {
 //
 REB_R PD_Word(
     REBPVS *pvs,
-    const REBVAL *picker,
-    const REBVAL *opt_setval
+    const Value* picker,
+    const Value* opt_setval
 ){
     REBSTR *str = VAL_WORD_SPELLING(pvs->out);
 
@@ -233,7 +233,7 @@ REB_R PD_Word(
 //
 REBTYPE(Word)
 {
-    REBVAL *val = D_ARG(1);
+    Value* val = D_ARG(1);
     assert(ANY_WORD(val));
 
     switch (VAL_WORD_SYM(verb)) {

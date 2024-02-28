@@ -242,19 +242,19 @@ inline static void TERM_UNI_LEN(REBSER *s, REBCNT len) {
 //     if (s->stamp == v->extra.utfcache.stamp)
 //          return v->extra.utfcache.offset;
 //     ...else calculate...
-//    m_cast(REBVAL*, v)->extra.utfcache.stamp = s->stamp;
-//    m_cast(REBVAL*, v)->extra.utfcache.offset = offset;
+//    m_cast(Value*, v)->extra.utfcache.stamp = s->stamp;
+//    m_cast(Value*, v)->extra.utfcache.offset = offset;
 //
 // One should thus always prefer to use VAL_UNI_AT() if possible, over trying
 // to calculate a position from scratch.
 //
-inline static REBUNI *VAL_UNI_AT(const RELVAL *v) {
+inline static REBUNI *VAL_UNI_AT(const Cell* v) {
     return AS_REBUNI(UNI_AT(VAL_SERIES(v), VAL_INDEX(v)));
 }
 
 inline static REBSIZ VAL_SIZE_LIMIT_AT(
     REBCNT *length, // length in chars to end (including limit)
-    const RELVAL *v,
+    const Cell* v,
     REBINT limit // -1 for no limit
 ){
     assert(ANY_STRING(v));
@@ -396,7 +396,7 @@ inline static REBINT First_Hash_Candidate_Slot(
 // Copy helpers
 //
 
-inline static REBSER *Copy_Sequence_At_Position(const REBVAL *v)
+inline static REBSER *Copy_Sequence_At_Position(const Value* v)
 {
     return Copy_Sequence_At_Len_Extra(
         VAL_SERIES(v), VAL_INDEX(v), VAL_LEN_AT(v), 0
@@ -417,7 +417,7 @@ inline static REBSER *Copy_Sequence_At_Len(
 // in ASCII range and fixed size.  If this is the case, different algorithms
 // might be applied, for instance a standard C qsort() to sort the characters.
 //
-inline static bool Is_String_ASCII(const RELVAL *str) {
+inline static bool Is_String_ASCII(const Cell* str) {
     UNUSED(str);
     return false; // currently all strings are 16-bit REBUNI characters
 }

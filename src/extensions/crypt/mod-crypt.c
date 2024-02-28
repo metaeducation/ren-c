@@ -115,7 +115,7 @@ REBNATIVE(shutdown_crypto)
 }
 
 
-static void cleanup_rc4_ctx(const REBVAL *v)
+static void cleanup_rc4_ctx(const Value* v)
 {
     RC4_CTX *rc4_ctx = VAL_HANDLE_POINTER(RC4_CTX, v);
     FREE(RC4_CTX, rc4_ctx);
@@ -154,7 +154,7 @@ REBNATIVE(rc4)
     CRYPT_INCLUDE_PARAMS_OF_RC4;
 
     if (REF(stream)) {
-        REBVAL *data = ARG(data);
+        Value* data = ARG(data);
 
         if (VAL_HANDLE_CLEANER(ARG(ctx)) != cleanup_rc4_ctx)
             rebJumps("fail [{Not a RC4 Context:}", ARG(ctx), "]");
@@ -207,27 +207,27 @@ REBNATIVE(rsa)
 {
     CRYPT_INCLUDE_PARAMS_OF_RSA;
 
-    REBVAL *obj = ARG(key_object);
+    Value* obj = ARG(key_object);
 
     // N and E are required
     //
-    REBVAL *n = rebValue("ensure binary! pick", obj, "'n");
-    REBVAL *e = rebValue("ensure binary! pick", obj, "'e");
+    Value* n = rebValue("ensure binary! pick", obj, "'n");
+    Value* e = rebValue("ensure binary! pick", obj, "'e");
 
     RSA_CTX *rsa_ctx = NULL;
 
     REBINT binary_len;
     if (REF(private)) {
-        REBVAL *d = rebValue("ensure binary! pick", obj, "'d");
+        Value* d = rebValue("ensure binary! pick", obj, "'d");
 
         if (not d)
             fail ("No d returned BLANK, can we assume error for cleanup?");
 
-        REBVAL *p = rebValue("ensure binary! pick", obj, "'p");
-        REBVAL *q = rebValue("ensure binary! pick", obj, "'q");
-        REBVAL *dp = rebValue("ensure binary! pick", obj, "'dp");
-        REBVAL *dq = rebValue("ensure binary! pick", obj, "'dq");
-        REBVAL *qinv = rebValue("ensure binary! pick", obj, "'qinv");
+        Value* p = rebValue("ensure binary! pick", obj, "'p");
+        Value* q = rebValue("ensure binary! pick", obj, "'q");
+        Value* dp = rebValue("ensure binary! pick", obj, "'dp");
+        Value* dq = rebValue("ensure binary! pick", obj, "'dq");
+        Value* qinv = rebValue("ensure binary! pick", obj, "'qinv");
 
         // !!! Because BINARY! is not locked in memory or safe from GC, the
         // libRebol API doesn't allow direct pointer access.  Use the
@@ -367,12 +367,12 @@ REBNATIVE(dh_generate_key)
     DH_CTX dh_ctx;
     memset(&dh_ctx, 0, sizeof(dh_ctx));
 
-    REBVAL *obj = ARG(obj);
+    Value* obj = ARG(obj);
 
     // !!! This used to ensure that all other fields, besides SELF, were blank
     //
-    REBVAL *g = rebValue("ensure binary! pick", obj, "'g"); // generator
-    REBVAL *p = rebValue("ensure binary! pick", obj, "'p"); // modulus
+    Value* g = rebValue("ensure binary! pick", obj, "'g"); // generator
+    Value* p = rebValue("ensure binary! pick", obj, "'p"); // modulus
 
     dh_ctx.g = VAL_BIN_AT(g);
     dh_ctx.glen = rebUnbox("length of", g);
@@ -393,8 +393,8 @@ REBNATIVE(dh_generate_key)
     rebRelease(g);
     rebRelease(p);
 
-    REBVAL *priv = rebRepossess(dh_ctx.x, dh_ctx.len);
-    REBVAL *pub = rebRepossess(dh_ctx.gx, dh_ctx.len);
+    Value* priv = rebRepossess(dh_ctx.x, dh_ctx.len);
+    Value* pub = rebRepossess(dh_ctx.gx, dh_ctx.len);
 
     rebElide("poke", obj, "'priv-key", priv);
     rebElide("poke", obj, "'pub-key", pub);
@@ -426,13 +426,13 @@ REBNATIVE(dh_compute_key)
     DH_CTX dh_ctx;
     memset(&dh_ctx, 0, sizeof(dh_ctx));
 
-    REBVAL *obj = ARG(obj);
+    Value* obj = ARG(obj);
 
     // !!! used to ensure object only had other fields SELF, PUB-KEY, G
     // otherwise gave Error(RE_EXT_CRYPT_INVALID_KEY_FIELD)
 
-    REBVAL *p = rebValue("ensure binary! pick", obj, "'p");
-    REBVAL *priv_key = rebValue("ensure binary! pick", obj, "'priv-key");
+    Value* p = rebValue("ensure binary! pick", obj, "'p");
+    Value* priv_key = rebValue("ensure binary! pick", obj, "'priv-key");
 
     dh_ctx.p = VAL_BIN_AT(p);
     dh_ctx.len = rebUnbox("length of", p);
@@ -455,7 +455,7 @@ REBNATIVE(dh_compute_key)
 }
 
 
-static void cleanup_aes_ctx(const REBVAL *v)
+static void cleanup_aes_ctx(const Value* v)
 {
     AES_CTX *aes_ctx = VAL_HANDLE_POINTER(AES_CTX, v);
     FREE(AES_CTX, aes_ctx);
@@ -601,7 +601,7 @@ REBNATIVE(sha256)
 {
     CRYPT_INCLUDE_PARAMS_OF_SHA256;
 
-    REBVAL *data = ARG(data);
+    Value* data = ARG(data);
 
     REBYTE *bp;
     REBSIZ size;

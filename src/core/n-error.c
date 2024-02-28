@@ -40,7 +40,7 @@
 // This is the code which is protected by the exception mechanism.  See the
 // rebRescue() API for more information.
 //
-static const REBVAL *Trap_Dangerous(REBFRM *frame_) {
+static const Value* Trap_Dangerous(REBFRM *frame_) {
     INCLUDE_PARAMS_OF_TRAP;
     UNUSED(ARG(result));
     UNUSED(ARG(valid));
@@ -88,7 +88,7 @@ REBNATIVE(trap)
 {
     INCLUDE_PARAMS_OF_TRAP;
 
-    REBVAL *error = rebRescue(cast(REBDNG*, &Trap_Dangerous), frame_);
+    Value* error = rebRescue(cast(REBDNG*, &Trap_Dangerous), frame_);
     UNUSED(ARG(code));  // gets used by the above call, via the frame_ pointer
 
     if (not error) {  // code didn't fail() or throw
@@ -110,7 +110,7 @@ REBNATIVE(trap)
 }
 
 
-static REBVAL *Entrap_Dangerous(REBFRM *frame_) {
+static Value* Entrap_Dangerous(REBFRM *frame_) {
     INCLUDE_PARAMS_OF_ENTRAP;
 
     if (Do_Branch_Throws(D_OUT, ARG(code))) {
@@ -167,7 +167,7 @@ REBNATIVE(set_location_of_error)
 {
     INCLUDE_PARAMS_OF_SET_LOCATION_OF_ERROR;
 
-    REBVAL *location = ARG(location);
+    Value* location = ARG(location);
 
     REBCTX *context;
     if (IS_WORD(location)) {

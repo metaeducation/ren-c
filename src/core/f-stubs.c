@@ -39,7 +39,7 @@
 // Allow multiple types. Throw error if not valid.
 // Note that the result is one-based.
 //
-REBINT Get_Num_From_Arg(const REBVAL *val)
+REBINT Get_Num_From_Arg(const Value* val)
 {
     REBINT n;
 
@@ -80,7 +80,7 @@ REBINT Float_Int16(REBD32 f)
 //
 //  Int32: C
 //
-REBINT Int32(const RELVAL *val)
+REBINT Int32(const Cell* val)
 {
     if (IS_DECIMAL(val)) {
         if (VAL_DECIMAL(val) > INT32_MAX or VAL_DECIMAL(val) < INT32_MIN)
@@ -110,7 +110,7 @@ out_of_range:
 //     1: >  0
 //    -1: <  0
 //
-REBINT Int32s(const RELVAL *val, REBINT sign)
+REBINT Int32s(const Cell* val, REBINT sign)
 {
     REBINT n;
 
@@ -146,7 +146,7 @@ out_of_range:
 //
 //  Int64: C
 //
-REBI64 Int64(const REBVAL *val)
+REBI64 Int64(const Value* val)
 {
     if (IS_INTEGER(val))
         return VAL_INT64(val);
@@ -162,7 +162,7 @@ REBI64 Int64(const REBVAL *val)
 //
 //  Dec64: C
 //
-REBDEC Dec64(const REBVAL *val)
+REBDEC Dec64(const Value* val)
 {
     if (IS_DECIMAL(val) or IS_PERCENT(val))
         return VAL_DECIMAL(val);
@@ -184,7 +184,7 @@ REBDEC Dec64(const REBVAL *val)
 //     1: >  0
 //    -1: <  0
 //
-REBI64 Int64s(const REBVAL *val, REBINT sign)
+REBI64 Int64s(const Value* val, REBINT sign)
 {
     REBI64 n;
     if (IS_DECIMAL(val)) {
@@ -218,10 +218,10 @@ REBI64 Int64s(const REBVAL *val, REBINT sign)
 // Returns the specified datatype value from the system context.
 // The datatypes are all at the head of the context.
 //
-const REBVAL *Datatype_From_Kind(enum Reb_Kind kind)
+const Value* Datatype_From_Kind(enum Reb_Kind kind)
 {
     assert(kind > REB_0 and kind < REB_MAX);
-    REBVAL *type = CTX_VAR(Lib_Context, SYM_FROM_KIND(kind));
+    Value* type = CTX_VAR(Lib_Context, SYM_FROM_KIND(kind));
     assert(IS_DATATYPE(type));
     return type;
 }
@@ -230,7 +230,7 @@ const REBVAL *Datatype_From_Kind(enum Reb_Kind kind)
 //
 //  Init_Datatype: C
 //
-REBVAL *Init_Datatype(RELVAL *out, enum Reb_Kind kind)
+Value* Init_Datatype(Cell* out, enum Reb_Kind kind)
 {
     assert(kind > REB_0 and kind < REB_MAX);
     Move_Value(out, Datatype_From_Kind(kind));
@@ -244,7 +244,7 @@ REBVAL *Init_Datatype(RELVAL *out, enum Reb_Kind kind)
 // Returns the datatype value for the given value.
 // The datatypes are all at the head of the context.
 //
-REBVAL *Type_Of(const RELVAL *value)
+Value* Type_Of(const Cell* value)
 {
     return CTX_VAR(Lib_Context, SYM_FROM_KIND(VAL_TYPE(value)));
 }
@@ -255,9 +255,9 @@ REBVAL *Type_Of(const RELVAL *value)
 //
 // Return a second level object field of the system object.
 //
-REBVAL *Get_System(REBCNT i1, REBCNT i2)
+Value* Get_System(REBCNT i1, REBCNT i2)
 {
-    REBVAL *obj;
+    Value* obj;
 
     obj = CTX_VAR(VAL_CONTEXT(Root_System), i1);
     if (i2 == 0) return obj;
@@ -273,7 +273,7 @@ REBVAL *Get_System(REBCNT i1, REBCNT i2)
 //
 REBINT Get_System_Int(REBCNT i1, REBCNT i2, REBINT default_int)
 {
-    REBVAL *val = Get_System(i1, i2);
+    Value* val = Get_System(i1, i2);
     if (IS_INTEGER(val)) return VAL_INT32(val);
     return default_int;
 }
@@ -284,8 +284,8 @@ REBINT Get_System_Int(REBCNT i1, REBCNT i2, REBINT default_int)
 //
 // Common function.
 //
-REBVAL *Init_Any_Series_At_Core(
-    RELVAL *out, // allows RELVAL slot as input, but will be filled w/REBVAL
+Value* Init_Any_Series_At_Core(
+    Cell* out, // allows Cell slot as input, but will be filled w/Value
     enum Reb_Kind type,
     REBSER *series,
     REBCNT index,
@@ -332,7 +332,7 @@ REBVAL *Init_Any_Series_At_Core(
 //
 //  Set_Tuple: C
 //
-void Set_Tuple(REBVAL *value, REBYTE *bytes, REBCNT len)
+void Set_Tuple(Value* value, REBYTE *bytes, REBCNT len)
 {
     REBYTE *bp;
 
@@ -353,7 +353,7 @@ void Set_Tuple(REBVAL *value, REBYTE *bytes, REBCNT len)
 void Extra_Init_Any_Context_Checks_Debug(enum Reb_Kind kind, REBCTX *c) {
     assert(ALL_SER_FLAGS(c, SERIES_MASK_CONTEXT));
 
-    REBVAL *archetype = CTX_ARCHETYPE(c);
+    Value* archetype = CTX_ARCHETYPE(c);
     assert(VAL_CONTEXT(archetype) == c);
     assert(CTX_TYPE(c) == kind);
 
@@ -372,7 +372,7 @@ void Extra_Init_Any_Context_Checks_Debug(enum Reb_Kind kind, REBCTX *c) {
     );
 
     // FRAME!s must always fill in the phase slot, but that piece of the
-    // REBVAL is reserved for future use in other context types...so make
+    // cell is reserved for future use in other context types...so make
     // sure it's null at this point in time.
     //
     if (CTX_TYPE(c) == REB_FRAME) {
@@ -401,7 +401,7 @@ void Extra_Init_Any_Context_Checks_Debug(enum Reb_Kind kind, REBCTX *c) {
 void Extra_Init_Action_Checks_Debug(REBACT *a) {
     assert(ALL_SER_FLAGS(a, SERIES_MASK_ACTION));
 
-    REBVAL *archetype = ACT_ARCHETYPE(a);
+    Value* archetype = ACT_ARCHETYPE(a);
     assert(VAL_ACTION(archetype) == a);
 
     REBARR *paramlist = ACT_PARAMLIST(a);
@@ -429,8 +429,8 @@ void Extra_Init_Action_Checks_Debug(REBACT *a) {
 // position, so that a positive length for the partial region is returned.
 //
 static REBCNT Part_Len_Core(
-    REBVAL *series, // this is the series whose index may be modified
-    const REBVAL *limit // /PART (number, position in value, or NULLED cell)
+    Value* series, // this is the series whose index may be modified
+    const Value* limit // /PART (number, position in value, or NULLED cell)
 ){
     if (IS_NULLED(limit)) // limit is nulled when /PART refinement unused
         return VAL_LEN_AT(series); // leave index alone, use plain length
@@ -486,7 +486,7 @@ static REBCNT Part_Len_Core(
 // /PART limit, so that the series index points to the beginning of the
 // subsetted range and gives back a length to the end of that subset.
 //
-REBCNT Part_Len_May_Modify_Index(REBVAL *series, const REBVAL *limit) {
+REBCNT Part_Len_May_Modify_Index(Value* series, const Value* limit) {
     assert(ANY_SERIES(series));
     return Part_Len_Core(series, limit);
 }
@@ -498,7 +498,7 @@ REBCNT Part_Len_May_Modify_Index(REBVAL *series, const REBVAL *limit) {
 // Simple variation that instead of returning the length, returns the absolute
 // tail position in the series of the partial sequence.
 //
-REBCNT Part_Tail_May_Modify_Index(REBVAL *series, const REBVAL *limit)
+REBCNT Part_Tail_May_Modify_Index(Value* series, const Value* limit)
 {
     REBCNT len = Part_Len_May_Modify_Index(series, limit);
     return len + VAL_INDEX(series); // uses the possibly-updated index
@@ -522,8 +522,8 @@ REBCNT Part_Tail_May_Modify_Index(REBVAL *series, const REBVAL *limit)
 // https://github.com/rebol/rebol-issues/issues/1570
 //
 REBCNT Part_Len_Append_Insert_May_Modify_Index(
-    REBVAL *value,
-    const REBVAL *limit
+    Value* value,
+    const Value* limit
 ){
     if (ANY_SERIES(value))
         return Part_Len_Core(value, limit);

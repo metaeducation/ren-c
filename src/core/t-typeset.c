@@ -67,7 +67,7 @@ const struct {
 //
 //  CT_Typeset: C
 //
-REBINT CT_Typeset(const RELVAL *a, const RELVAL *b, REBINT mode)
+REBINT CT_Typeset(const Cell* a, const Cell* b, REBINT mode)
 {
     if (mode < 0) return -1;
     return EQUAL_TYPESET(a, b);
@@ -127,12 +127,12 @@ void Shutdown_Typesets(void)
 // Name should be set when a typeset is being used as a function parameter
 // specifier, or as a key in an object.
 //
-REBVAL *Init_Typeset(RELVAL *out, REBU64 bits, REBSTR *opt_name)
+Value* Init_Typeset(Cell* out, REBU64 bits, REBSTR *opt_name)
 {
     RESET_CELL(out, REB_TYPESET);
     INIT_TYPESET_NAME(out, opt_name);
     VAL_TYPESET_BITS(out) = bits;
-    return cast(REBVAL*, out);
+    return cast(Value*, out);
 }
 
 
@@ -150,16 +150,16 @@ REBVAL *Init_Typeset(RELVAL *out, REBU64 bits, REBSTR *opt_name)
 // reviewed to see if anything actually used it.
 //
 bool Update_Typeset_Bits_Core(
-    RELVAL *typeset,
-    const RELVAL *head,
+    Cell* typeset,
+    const Cell* head,
     REBSPC *specifier
 ) {
     assert(IS_TYPESET(typeset));
     VAL_TYPESET_BITS(typeset) = 0;
 
-    const RELVAL *maybe_word = head;
+    const Cell* maybe_word = head;
     for (; NOT_END(maybe_word); ++maybe_word) {
-        const RELVAL *item;
+        const Cell* item;
 
         if (IS_WORD(maybe_word)) {
             item = Get_Opt_Var_May_Fail(maybe_word, specifier);
@@ -218,7 +218,7 @@ bool Update_Typeset_Bits_Core(
 //
 //  MAKE_Typeset: C
 //
-REB_R MAKE_Typeset(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
+REB_R MAKE_Typeset(Value* out, enum Reb_Kind kind, const Value* arg)
 {
     assert(kind == REB_TYPESET);
     UNUSED(kind);
@@ -240,7 +240,7 @@ REB_R MAKE_Typeset(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 //
 //  TO_Typeset: C
 //
-REB_R TO_Typeset(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
+REB_R TO_Typeset(Value* out, enum Reb_Kind kind, const Value* arg)
 {
     return MAKE_Typeset(out, kind, arg);
 }
@@ -251,7 +251,7 @@ REB_R TO_Typeset(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 //
 // Converts typeset value to a block of datatypes, no order is guaranteed.
 //
-REBARR *Typeset_To_Array(const REBVAL *tset)
+REBARR *Typeset_To_Array(const Value* tset)
 {
     REBDSP dsp_orig = DSP;
 
@@ -279,7 +279,7 @@ REBARR *Typeset_To_Array(const REBVAL *tset)
 //
 //  MF_Typeset: C
 //
-void MF_Typeset(REB_MOLD *mo, const RELVAL *v, bool form)
+void MF_Typeset(REB_MOLD *mo, const Cell* v, bool form)
 {
     REBINT n;
 
@@ -347,8 +347,8 @@ skip_types:
 //
 REBTYPE(Typeset)
 {
-    REBVAL *val = D_ARG(1);
-    REBVAL *arg = D_ARGC > 1 ? D_ARG(2) : NULL;
+    Value* val = D_ARG(1);
+    Value* arg = D_ARGC > 1 ? D_ARG(2) : NULL;
 
     switch (VAL_WORD_SYM(verb)) {
 

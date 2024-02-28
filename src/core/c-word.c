@@ -440,7 +440,7 @@ void GC_Kill_Interning(REBSTR *intern)
 // Note that words are kept UTF8 encoded.
 // Positive result if s > t and negative if s < t.
 //
-REBINT Compare_Word(const RELVAL *s, const RELVAL *t, bool strict)
+REBINT Compare_Word(const Cell* s, const Cell* t, bool strict)
 {
     const REBYTE *sp = cb_cast(STR_HEAD(VAL_WORD_SPELLING(s)));
     const REBYTE *tp = cb_cast(STR_HEAD(VAL_WORD_SPELLING(t)));
@@ -532,7 +532,7 @@ void Startup_Symbols(REBARR *words)
         *SER_AT(REBSTR*, PG_Symbol_Canons, cast(REBCNT, sym))
     );
 
-    RELVAL *word = ARR_HEAD(words);
+    Cell* word = ARR_HEAD(words);
     for (; NOT_END(word); ++word) {
         REBSTR *canon = VAL_STORED_CANON(word);
 
@@ -623,7 +623,7 @@ void Shutdown_Interning(void)
 // Previously used VAL_WORD_CONTEXT() to check that the spelling was legit.
 // However, that would incarnate running frames.
 //
-void INIT_WORD_INDEX_Extra_Checks_Debug(RELVAL *v, REBCNT i)
+void INIT_WORD_INDEX_Extra_Checks_Debug(Cell* v, REBCNT i)
 {
     assert(IS_WORD_BOUND(v));
     REBNOD *binding = VAL_BINDING(v);

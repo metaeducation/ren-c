@@ -43,13 +43,13 @@
 //
 void Bind_Values_Inner_Loop(
     struct Reb_Binder *binder,
-    RELVAL *head,
+    Cell* head,
     REBCTX *context,
     REBU64 bind_types, // !!! REVIEW: force word types low enough for 32-bit?
     REBU64 add_midstream_types,
     REBFLGS flags
 ) {
-    RELVAL *v = head;
+    Cell* v = head;
     for (; NOT_END(v); ++v) {
         REBU64 type_bit = FLAGIT_KIND(VAL_TYPE(v));
 
@@ -99,13 +99,13 @@ void Bind_Values_Inner_Loop(
 //
 // Bind words in an array of values terminated with END
 // to a specified context.  See warnings on the functions like
-// Bind_Values_Deep() about not passing just a singular REBVAL.
+// Bind_Values_Deep() about not passing just a singular cell.
 //
 // NOTE: If types are added, then they will be added in "midstream".  Only
 // bindings that come after the added value is seen will be bound.
 //
 void Bind_Values_Core(
-    RELVAL *head,
+    Cell* head,
     REBCTX *context,
     REBU64 bind_types,
     REBU64 add_midstream_types,
@@ -119,7 +119,7 @@ void Bind_Values_Core(
     // ANY-WORD!, so it must be cleaned up to not break future bindings.)
 
     REBCNT index = 1;
-    REBVAL *key = CTX_KEYS_HEAD(context);
+    Value* key = CTX_KEYS_HEAD(context);
     for (; index <= CTX_LEN(context); key++, index++)
         if (not Is_Param_Unbindable(key))
             Add_Binder_Index(&binder, VAL_KEY_CANON(key), index);
@@ -146,9 +146,9 @@ void Bind_Values_Core(
 // bound to a particular target (if target is NULL, then all
 // words will be unbound regardless of their VAL_WORD_CONTEXT).
 //
-void Unbind_Values_Core(RELVAL *head, REBCTX *context, bool deep)
+void Unbind_Values_Core(Cell* head, REBCTX *context, bool deep)
 {
-    RELVAL *v = head;
+    Cell* v = head;
     for (; NOT_END(v); ++v) {
         if (
             ANY_WORD(v)
@@ -168,7 +168,7 @@ void Unbind_Values_Core(RELVAL *head, REBCTX *context, bool deep)
 // Returns 0 if word is not part of the context, otherwise the index of the
 // word in the context.
 //
-REBCNT Try_Bind_Word(REBCTX *context, REBVAL *word)
+REBCNT Try_Bind_Word(REBCTX *context, Value* word)
 {
     REBCNT n = Find_Canon_In_Context(context, VAL_WORD_CANON(word), false);
     if (n != 0) {
@@ -188,11 +188,11 @@ REBCNT Try_Bind_Word(REBCTX *context, REBVAL *word)
 //
 static void Bind_Relative_Inner_Loop(
     struct Reb_Binder *binder,
-    RELVAL *head,
+    Cell* head,
     REBARR *paramlist,
     REBU64 bind_types
 ) {
-    RELVAL *v = head;
+    Cell* v = head;
 
     for (; NOT_END(v); ++v) {
         REBU64 type_bit = FLAGIT_KIND(VAL_TYPE(v));
@@ -247,7 +247,7 @@ static void Bind_Relative_Inner_Loop(
 // to which they should be relative.
 //
 REBARR *Copy_And_Bind_Relative_Deep_Managed(
-    const REBVAL *body,
+    const Value* body,
     REBARR *paramlist, // body of function is not actually ready yet
     REBU64 bind_types
 ) {
@@ -272,7 +272,7 @@ REBARR *Copy_And_Bind_Relative_Deep_Managed(
     // Setup binding table from the argument word list
     //
     REBCNT index = 1;
-    RELVAL *param = ARR_AT(paramlist, 1); // [0] is ACTION! value
+    Cell* param = ARR_AT(paramlist, 1); // [0] is ACTION! value
     for (; NOT_END(param); param++, index++)
         Add_Binder_Index(&binder, VAL_KEY_CANON(param), index);
 
@@ -298,10 +298,10 @@ REBARR *Copy_And_Bind_Relative_Deep_Managed(
 void Rebind_Values_Deep(
     REBCTX *src,
     REBCTX *dst,
-    RELVAL *head,
+    Cell* head,
     struct Reb_Binder *opt_binder
 ) {
-    RELVAL *v = head;
+    Cell* v = head;
     for (; NOT_END(v); ++v) {
         if (ANY_ARRAY(v)) {
             Rebind_Values_Deep(src, dst, VAL_ARRAY_AT(v), opt_binder);
@@ -398,9 +398,9 @@ void Rebind_Values_Deep(
 // it mirrors the locks, but longer term remedy will hopefully be better.
 //
 void Virtual_Bind_Deep_To_New_Context(
-    REBVAL *body_in_out, // input *and* output parameter
+    Value* body_in_out, // input *and* output parameter
     REBCTX **context_out,
-    const REBVAL *spec
+    const Value* spec
 ) {
     assert(IS_BLOCK(body_in_out));
 
@@ -408,7 +408,7 @@ void Virtual_Bind_Deep_To_New_Context(
     if (num_vars == 0)
         fail (Error_Invalid(spec));
 
-    const RELVAL *item;
+    const Cell* item;
     REBSPC *specifier;
     bool rebinding;
     if (IS_BLOCK(spec)) {
@@ -484,8 +484,8 @@ void Virtual_Bind_Deep_To_New_Context(
 
     REBSTR *duplicate = NULL;
 
-    REBVAL *key = CTX_KEYS_HEAD(c);
-    REBVAL *var = CTX_VARS_HEAD(c);
+    Value* key = CTX_KEYS_HEAD(c);
+    Value* var = CTX_VARS_HEAD(c);
 
     REBCNT index = 1;
     while (index <= num_vars) {
@@ -659,7 +659,7 @@ void Init_Interning_Binder(
 ){
     INIT_BINDER(binder);
 
-    REBVAL *key;
+    Value* key;
     REBINT index;
 
     // Use positive numbers for all the keys in the context.
@@ -695,7 +695,7 @@ void Init_Interning_Binder(
 //
 void Shutdown_Interning_Binder(struct Reb_Binder *binder, REBCTX *ctx)
 {
-    REBVAL *key;
+    Value* key;
     REBINT index;
 
     // All of the user context keys should be positive, and removable

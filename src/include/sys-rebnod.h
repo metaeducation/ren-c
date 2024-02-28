@@ -28,14 +28,14 @@
 //
 // In order to implement several "tricks", the first pointer-size slots of
 // many datatypes is a `Reb_Header` structure.  The bit layout of this header
-// is chosen in such a way that not only can Rebol value pointers (REBVAL*)
+// is chosen in such a way that not only can Rebol value pointers (Value*)
 // be distinguished from Rebol series pointers (REBSER*), but these can be
 // discerned from a valid UTF-8 string just by looking at the first byte.
 //
 // On a semi-superficial level, this permits a kind of dynamic polymorphism,
 // such as that used by panic():
 //
-//     REBVAL *value = ...;
+//     Value* value = ...;
 //     panic (value); // can tell this is a value
 //
 //     REBSER *series = ...;
@@ -153,7 +153,7 @@
 
 //=////////////////////////////////////////////////////////////////////////=//
 //
-//  NODE HEADER a.k.a `union Reb_Header` (for REBVAL and REBSER uses)
+//  NODE HEADER a.k.a `union Reb_Header` (for Cell and REBSER uses)
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
@@ -163,7 +163,7 @@
 // this is achieved.
 //
 // This control allows the leftmost byte of a Rebol header (the one you'd
-// get by casting REBVAL* to an unsigned char*) to always start with the bit
+// get by casting Value* to an unsigned char*) to always start with the bit
 // pattern `10`.  This pattern corresponds to what UTF-8 calls "continuation
 // bytes", which may never legally start a UTF-8 string:
 //
@@ -171,7 +171,7 @@
 //
 // There are applications of Reb_Header as an "implicit terminator".  Such
 // header patterns don't actually start valid REBNODs, but have a bit pattern
-// able to signal the IS_END() test for REBVAL.  See Endlike_Header()
+// able to signal the IS_END() test for Cell.  See Endlike_Header()
 //
 
 union Reb_Header {
@@ -211,7 +211,7 @@ union Reb_Header {
 //=//// NODE_FLAG_FREE (second-leftmost bit) //////////////////////////////=//
 //
 // The second-leftmost bit will be 0 for all Reb_Header in the system that
-// are "valid".  This completes the plan of making sure all REBVAL and REBSER
+// are "valid".  This completes the plan of making sure all Cell and REBSER
 // that are usable will start with the bit pattern 10xxxxxx, which always
 // indicates an invalid leading byte in UTF-8.
 //
@@ -256,7 +256,7 @@ union Reb_Header {
 //
 // Because "pairings" can wind up marking what looks like both a value cell
 // and a series, it's a bit dangerous to try exploiting this bit on a generic
-// REBVAL.  If one is *certain* that a value is not "paired" (e.g. it's in
+// clel.  If one is *certain* that a value is not "paired" (e.g. it's in
 // a function arglist, or array slot), it may be used for other things, e.g.
 //
 // * ARG_MARKED_CHECKED -- This uses the NODE_FLAG_MARKED bit on args in
@@ -291,7 +291,7 @@ union Reb_Header {
 //
 // The "TRANSIENT" flag is currently used only by node cells, and only in
 // the data stack.  The concept is that data stack cells are so volatile that
-// they cannot be passed as REBVAL* addresses to anything that might write
+// they cannot be passed as Value* addresses to anything that might write
 // between frames.  This means that moving any value with an unmanaged binding
 // into it need not worry about managing...because the data stack cell has
 // no longer lifetime than any cell with which it can interact.
@@ -348,7 +348,7 @@ union Reb_Header {
 //=//// NODE_FLAG_CELL (eighth-leftmost bit) //////////////////////////////=//
 //
 // If this bit is set in the header, it indicates the slot the header is for
-// is `sizeof(REBVAL)`.
+// is `sizeof(Cell)`.
 //
 // In the debug build, it provides safety for all value writing routines,
 // including avoiding writing over "implicit END markers".  For details, see

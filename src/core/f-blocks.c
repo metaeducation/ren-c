@@ -54,8 +54,8 @@ REBARR *Copy_Array_At_Extra_Shallow(
 
     REBARR *copy = Make_Arr_For_Copy(len + extra, flags, original);
 
-    RELVAL *src = ARR_AT(original, index);
-    RELVAL *dest = ARR_HEAD(copy);
+    Cell* src = ARR_AT(original, index);
+    Cell* dest = ARR_HEAD(copy);
     REBCNT count = 0;
     for (; count < len; ++count, ++dest, ++src)
         Derelativize(dest, src, specifier);
@@ -89,8 +89,8 @@ REBARR *Copy_Array_At_Max_Shallow(
     REBARR *copy = Make_Arr_For_Copy(max, flags, original);
 
     REBCNT count = 0;
-    const RELVAL *src = ARR_AT(original, index);
-    RELVAL *dest = ARR_HEAD(copy);
+    const Cell* src = ARR_AT(original, index);
+    Cell* dest = ARR_HEAD(copy);
     for (; count < max; ++count, ++src, ++dest)
         Derelativize(dest, src, specifier);
 
@@ -107,7 +107,7 @@ REBARR *Copy_Array_At_Max_Shallow(
 // series created to hold exactly that many entries.
 //
 REBARR *Copy_Values_Len_Extra_Shallow_Core(
-    const RELVAL *head,
+    const Cell* head,
     REBSPC *specifier,
     REBCNT len,
     REBCNT extra,
@@ -116,8 +116,8 @@ REBARR *Copy_Values_Len_Extra_Shallow_Core(
     REBARR *a = Make_Arr_Core(len + extra, flags);
 
     REBCNT count = 0;
-    const RELVAL *src = head;
-    RELVAL *dest = ARR_HEAD(a);
+    const Cell* src = head;
+    Cell* dest = ARR_HEAD(a);
     for (; count < len; ++count, ++src, ++dest) {
         Derelativize(dest, src, specifier);
         if (flags & ARRAY_FLAG_NULLEDS_LEGAL) {
@@ -147,7 +147,7 @@ REBARR *Copy_Values_Len_Extra_Shallow_Core(
 // are in an array, and assert that they are managed.)
 //
 void Clonify_Values_Len_Managed(
-    RELVAL *head,
+    Cell* head,
     REBSPC *specifier,
     REBCNT len,
     REBU64 types
@@ -155,7 +155,7 @@ void Clonify_Values_Len_Managed(
     if (C_STACK_OVERFLOWING(&len))
         Fail_Stack_Overflow();
 
-    RELVAL *v = head;
+    Cell* v = head;
 
     REBCNT index;
     for (index = 0; index < len; ++index, ++v) {
@@ -265,8 +265,8 @@ static REBARR *Copy_Array_Core_Managed_Inner_Loop(
 
     REBARR *copy = Make_Arr_For_Copy(len + extra, flags, original);
 
-    RELVAL *src = ARR_AT(original, index);
-    RELVAL *dest = ARR_HEAD(copy);
+    Cell* src = ARR_AT(original, index);
+    Cell* dest = ARR_HEAD(copy);
     REBCNT count = 0;
     for (; count < len; ++count, ++dest, ++src)
         Derelativize(dest, src, specifier);
@@ -343,8 +343,8 @@ REBARR *Copy_Rerelativized_Array_Deep_Managed(
     const REBFLGS flags = NODE_FLAG_MANAGED;
 
     REBARR *copy = Make_Arr_For_Copy(ARR_LEN(original), flags, original);
-    RELVAL *src = ARR_HEAD(original);
-    RELVAL *dest = ARR_HEAD(copy);
+    Cell* src = ARR_HEAD(original);
+    Cell* dest = ARR_HEAD(copy);
 
     for (; NOT_END(src); ++src, ++dest) {
         if (not IS_RELATIVE(src)) {
@@ -385,18 +385,18 @@ REBARR *Copy_Rerelativized_Array_Deep_Managed(
 //
 //  Alloc_Tail_Array: C
 //
-// Append a REBVAL-size slot to Rebol Array series at its tail.
+// Append a Cell-size slot to Rebol Array series at its tail.
 // Will use existing memory capacity already in the series if it
 // is available, but will expand the series if necessary.
 // Returns the new value for you to initialize.
 //
 // Note: Updates the termination and tail.
 //
-RELVAL *Alloc_Tail_Array(REBARR *a)
+Cell* Alloc_Tail_Array(REBARR *a)
 {
     EXPAND_SERIES_TAIL(SER(a), 1);
     TERM_ARRAY_LEN(a, ARR_LEN(a));
-    RELVAL *last = ARR_LAST(a);
+    Cell* last = ARR_LAST(a);
     TRASH_CELL_IF_DEBUG(last); // !!! was an END marker, good enough?
     return last;
 }
@@ -412,7 +412,7 @@ void Uncolor_Array(REBARR *a)
 
     Flip_Series_To_White(SER(a));
 
-    RELVAL *val;
+    Cell* val;
     for (val = ARR_HEAD(a); NOT_END(val); ++val)
         if (ANY_ARRAY(val) or IS_MAP(val) or ANY_CONTEXT(val))
             Uncolor(val);
@@ -424,7 +424,7 @@ void Uncolor_Array(REBARR *a)
 //
 // Clear the recusion markers for series and object trees.
 //
-void Uncolor(RELVAL *v)
+void Uncolor(Cell* v)
 {
     REBARR *array;
 

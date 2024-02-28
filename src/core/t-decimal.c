@@ -115,7 +115,7 @@ bool almost_equal(REBDEC a, REBDEC b, REBCNT max_diff) {
 //
 //  Init_Decimal_Bits: C
 //
-REBVAL *Init_Decimal_Bits(RELVAL *out, const REBYTE *bp)
+Value* Init_Decimal_Bits(Cell* out, const REBYTE *bp)
 {
     RESET_CELL(out, REB_DECIMAL);
 
@@ -140,7 +140,7 @@ REBVAL *Init_Decimal_Bits(RELVAL *out, const REBYTE *bp)
 //
 //  MAKE_Decimal: C
 //
-REB_R MAKE_Decimal(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
+REB_R MAKE_Decimal(Value* out, enum Reb_Kind kind, const Value* arg)
 {
     REBDEC d;
 
@@ -194,7 +194,7 @@ REB_R MAKE_Decimal(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 
     default:
         if (ANY_ARRAY(arg) && VAL_ARRAY_LEN_AT(arg) == 2) {
-            RELVAL *item = VAL_ARRAY_AT(arg);
+            Cell* item = VAL_ARRAY_AT(arg);
             if (IS_INTEGER(item))
                 d = cast(REBDEC, VAL_INT64(item));
             else if (IS_DECIMAL(item) || IS_PERCENT(item))
@@ -250,7 +250,7 @@ bad_make:
 //
 //  TO_Decimal: C
 //
-REB_R TO_Decimal(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
+REB_R TO_Decimal(Value* out, enum Reb_Kind kind, const Value* arg)
 {
     return MAKE_Decimal(out, kind, arg);
 }
@@ -277,7 +277,7 @@ bool Eq_Decimal2(REBDEC a, REBDEC b)
 //
 //  CT_Decimal: C
 //
-REBINT CT_Decimal(const RELVAL *a, const RELVAL *b, REBINT mode)
+REBINT CT_Decimal(const Cell* a, const Cell* b, REBINT mode)
 {
     if (mode >= 0) {
         if (mode == 0)
@@ -298,7 +298,7 @@ REBINT CT_Decimal(const RELVAL *a, const RELVAL *b, REBINT mode)
 //
 // Notice this covers both DECIMAL! and PERCENT!
 //
-void MF_Decimal(REB_MOLD *mo, const RELVAL *v, bool form)
+void MF_Decimal(REB_MOLD *mo, const Cell* v, bool form)
 {
     UNUSED(form);
 
@@ -327,9 +327,9 @@ void MF_Decimal(REB_MOLD *mo, const RELVAL *v, bool form)
 //
 REBTYPE(Decimal)
 {
-    REBVAL  *val = D_ARG(1);
-    REBVAL  *arg;
-    REBDEC  d2;
+    Value* val = D_ARG(1);
+    Value* arg;
+    REBDEC d2;
     enum Reb_Kind type;
 
     REBDEC d1 = VAL_DECIMAL(val);

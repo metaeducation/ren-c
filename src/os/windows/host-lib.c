@@ -60,7 +60,7 @@
 // Convert local format of system time into standard date
 // and time structure.
 //
-REBVAL *Convert_Date(long zone, const SYSTEMTIME *stime)
+Value* Convert_Date(long zone, const SYSTEMTIME *stime)
 {
     return rebValue("ensure date! (make-date-ymdsnz",
         rebI(stime->wYear), // year
@@ -87,7 +87,7 @@ REBVAL *Convert_Date(long zone, const SYSTEMTIME *stime)
 //
 // Get the current system date/time in UTC plus zone offset (mins).
 //
-REBVAL *OS_Get_Time(void)
+Value* OS_Get_Time(void)
 {
     SYSTEMTIME stime;
     TIME_ZONE_INFORMATION tzone;
@@ -131,13 +131,13 @@ int64_t OS_Delta_Time(int64_t base)
 // Return the current directory path as a FILE!.  Result should be freed
 // with rebRelease()
 //
-REBVAL *OS_Get_Current_Dir(void)
+Value* OS_Get_Current_Dir(void)
 {
     DWORD len = GetCurrentDirectory(0, NULL); // length, incl terminator.
     WCHAR *path = rebAllocN(WCHAR, len);
     GetCurrentDirectory(len, path);
 
-    REBVAL *result = rebValue("local-to-file/dir", rebR(rebTextW(path)));
+    Value* result = rebValue("local-to-file/dir", rebR(rebTextW(path)));
     rebFree(path);
     return result;
 }
@@ -148,7 +148,7 @@ REBVAL *OS_Get_Current_Dir(void)
 //
 // Set the current directory to local path.  Return false on failure.
 //
-bool OS_Set_Current_Dir(const REBVAL *path)
+bool OS_Set_Current_Dir(const Value* path)
 {
     WCHAR *path_wide = rebSpellW("file-to-local/full", path);
 
@@ -166,7 +166,7 @@ bool OS_Set_Current_Dir(const REBVAL *path)
 // Convert file.time to REBOL date/time format.
 // Time zone is UTC.
 //
-REBVAL *OS_File_Time(struct devreq_file *file)
+Value* OS_File_Time(struct devreq_file *file)
 {
     SYSTEMTIME stime;
     TIME_ZONE_INFORMATION tzone;
@@ -185,7 +185,7 @@ REBVAL *OS_File_Time(struct devreq_file *file)
 // Load a DLL library and return the handle to it.
 // If zero is returned, error indicates the reason.
 //
-void *OS_Open_Library(const REBVAL *path)
+void *OS_Open_Library(const Value* path)
 {
     // While often when communicating with the OS, the local path should be
     // fully resolved, the LoadLibraryW() function searches DLL directories by
@@ -267,7 +267,7 @@ int OS_Reap_Process(int pid, int *status, int flags)
 // Return the current executable path as a FILE!.  The result should be freed
 // with rebRelease()
 //
-REBVAL *OS_Get_Current_Exec(void)
+Value* OS_Get_Current_Exec(void)
 {
     WCHAR *path = rebAllocN(WCHAR, MAX_PATH);
 
@@ -278,7 +278,7 @@ REBVAL *OS_Get_Current_Exec(void)
     }
     path[r] = '\0'; // May not be NULL-terminated if buffer is not big enough
 
-    REBVAL *result = rebValue("local-to-file", rebR(rebTextW(path)));
+    Value* result = rebValue("local-to-file", rebR(rebTextW(path)));
     rebFree(path);
 
     return result;

@@ -34,8 +34,8 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// All THROWN values have two parts: the REBVAL arg being thrown and
-// a REBVAL indicating the /NAME of a labeled throw.  (If the throw was
+// All THROWN values have two parts: the cell arg being thrown and
+// a cell indicating the /NAME of a labeled throw.  (If the throw was
 // created with plain THROW instead of THROW/NAME then its name is null).
 // You cannot fit both values into a single value's bits of course, but
 // since only one THROWN() value is supposed to exist on the stack at a
@@ -50,7 +50,7 @@
 // will occur exactly once (when it is caught).
 //
 
-inline static bool THROWN(const RELVAL *v) {
+inline static bool THROWN(const Cell* v) {
     assert(v->header.bits & NODE_FLAG_CELL);
 
     if (v->header.bits & VALUE_FLAG_THROWN) {
@@ -60,7 +60,7 @@ inline static bool THROWN(const RELVAL *v) {
     return false;
 }
 
-inline static void CONVERT_NAME_TO_THROWN(REBVAL *name, const REBVAL *arg) {
+inline static void CONVERT_NAME_TO_THROWN(Value* name, const Value* arg) {
     assert(not THROWN(name));
     SET_VAL_FLAG(name, VALUE_FLAG_THROWN);
 
@@ -69,7 +69,7 @@ inline static void CONVERT_NAME_TO_THROWN(REBVAL *name, const REBVAL *arg) {
     Move_Value(&TG_Thrown_Arg, arg);
 }
 
-static inline void CATCH_THROWN(RELVAL *arg_out, REBVAL *thrown) {
+static inline void CATCH_THROWN(Cell* arg_out, Value* thrown) {
     //
     // Note: arg_out and thrown may be the same pointer
     //
@@ -143,7 +143,7 @@ inline static const char* FRM_FILE_UTF8(REBFRM *f) {
     // Canon(__ANONYMOUS__).
     //
     REBSTR *str = FRM_FILE(f);
-    return str ? STR_HEAD(str) : "(anonymous)"; 
+    return str ? STR_HEAD(str) : "(anonymous)";
 }
 
 inline static int FRM_LINE(REBFRM *f) {
@@ -171,10 +171,10 @@ inline static int FRM_LINE(REBFRM *f) {
     (cast(REBSER*, (f)->varlist)->content.dynamic.len - 1) // minus rootvar
 
 #define FRM_CELL(f) \
-    cast(REBVAL*, &(f)->cell)
+    cast(Value*, &(f)->cell)
 
 #define FRM_SHOVE(f) \
-    cast(REBVAL*, &(f)->shove)
+    cast(Value*, &(f)->shove)
 
 inline static bool Is_Frame_Gotten_Shoved(REBFRM *f) {
     if (f->gotten != FRM_SHOVE(f))
@@ -231,11 +231,11 @@ inline static bool Is_Frame_Gotten_Shoved(REBFRM *f) {
     #define FRM_ARG(f,n) \
         ((f)->rootvar + (n))
 #else
-    inline static REBVAL *FRM_ARG(REBFRM *f, REBCNT n) {
+    inline static Value* FRM_ARG(REBFRM *f, REBCNT n) {
         assert(n != 0 and n <= FRM_NUM_ARGS(f));
 
-        REBVAL *var = f->rootvar + n; // 1-indexed
-        assert(not IS_RELATIVE(cast(RELVAL*, var)));
+        Value* var = f->rootvar + n; // 1-indexed
+        assert(not IS_RELATIVE(cast(Cell*, var)));
         return var;
     }
 #endif
@@ -275,7 +275,7 @@ inline static bool Is_Action_Frame_Fulfilling(REBFRM *f)
 }
 
 
-inline static void Get_Frame_Label_Or_Blank(REBVAL *out, REBFRM *f) {
+inline static void Get_Frame_Label_Or_Blank(Value* out, REBFRM *f) {
     assert(Is_Action_Frame(f));
     if (f->opt_label != NULL)
         Init_Word(out, f->opt_label); // invoked via WORD! or PATH!
@@ -290,7 +290,7 @@ inline static const char* Frame_Label_Or_Anonymous_UTF8(REBFRM *f) {
     return "[anonymous]";
 }
 
-inline static void SET_FRAME_VALUE(REBFRM *f, const RELVAL* value) {
+inline static void SET_FRAME_VALUE(REBFRM *f, const Cell* value) {
     assert(not f->gotten); // is fetched f->value, we'd be invalidating it!
     f->value = value;
 }
@@ -357,13 +357,13 @@ inline static void SET_FRAME_VALUE(REBFRM *f, const RELVAL* value) {
     struct Native_Param {
         int num;
         enum Reb_Kind kind_cache; // for inspecting in watchlist
-        REBVAL *arg; // for inspecting in watchlist
+        Value* arg; // for inspecting in watchlist
     };
 
     struct Native_Refine {
         int num;
         bool used_cache; // for inspecting in watchlist
-        REBVAL *arg; // for inspecting in watchlist
+        Value* arg; // for inspecting in watchlist
     };
 
     // Note: Assigning non-const initializers to structs, e.g. `= {var, f()};`
@@ -418,7 +418,7 @@ inline static void Enter_Native(REBFRM *f) {
 inline static void Begin_Action(
     REBFRM *f,
     REBSTR *opt_label,
-    REBVAL *mode // LOOKBACK_ARG or ORDINARY_ARG or END
+    Value* mode // LOOKBACK_ARG or ORDINARY_ARG or END
 ){
     assert(not f->original);
     f->original = FRM_PHASE_OR_DUMMY(f);
@@ -499,7 +499,7 @@ inline static void Push_Action(
     if (not Did_Series_Data_Alloc(s, num_args + 1 + 1)) // +rootvar, +end
         fail ("Out of memory in Push_Action()");
 
-    f->rootvar = cast(REBVAL*, s->content.dynamic.data);
+    f->rootvar = cast(Value*, s->content.dynamic.data);
     f->rootvar->header.bits =
         NODE_FLAG_NODE | NODE_FLAG_CELL | NODE_FLAG_STACK
         | CELL_FLAG_PROTECTED // cell payload/binding tweaked, not by user
@@ -513,18 +513,18 @@ inline static void Push_Action(
     f->rootvar->extra.binding = binding; // FRM_BINDING()
 
     s->content.dynamic.len = num_args + 1;
-    RELVAL *tail = ARR_TAIL(f->varlist);
+    Cell* tail = ARR_TAIL(f->varlist);
     tail->header.bits = NODE_FLAG_STACK | FLAG_KIND_BYTE(REB_0);
     TRACK_CELL_IF_DEBUG(tail, __FILE__, __LINE__);
 
     // Current invariant for all arrays (including fixed size), last cell in
     // the allocation is an end.
-    RELVAL *ultimate = ARR_AT(f->varlist, s->content.dynamic.rest - 1);
+    Cell* ultimate = ARR_AT(f->varlist, s->content.dynamic.rest - 1);
     ultimate->header = Endlike_Header(0); // unreadable
     TRACK_CELL_IF_DEBUG(ultimate, __FILE__, __LINE__);
 
   #if !defined(NDEBUG)
-    RELVAL *prep = ultimate - 1;
+    Cell* prep = ultimate - 1;
     for (; prep > tail; --prep) {
         prep->header.bits = FLAG_KIND_BYTE(REB_T_TRASH); // unreadable
         TRACK_CELL_IF_DEBUG(prep, __FILE__, __LINE__);
@@ -611,7 +611,7 @@ inline static void Drop_Action(REBFRM *f) {
     }
     else {
         // We can reuse the varlist and its data allocation, which may be
-        // big enough for ensuing calls.  
+        // big enough for ensuing calls.
         //
         // But no series bits we didn't set should be set...and right now,
         // only Enter_Native() sets HOLD.  Clear that.
@@ -629,7 +629,7 @@ inline static void Drop_Action(REBFRM *f) {
         assert(NOT_SER_INFO(f->varlist, SERIES_INFO_INACCESSIBLE));
         assert(NOT_SER_FLAG(f->varlist, NODE_FLAG_MANAGED));
 
-        REBVAL *rootvar = cast(REBVAL*, ARR_HEAD(f->varlist));
+        Value* rootvar = cast(Value*, ARR_HEAD(f->varlist));
         assert(IS_FRAME(rootvar));
         assert(rootvar->payload.any_context.varlist == f->varlist);
         TRASH_POINTER_IF_DEBUG(rootvar->payload.any_context.phase);
@@ -657,7 +657,7 @@ inline static REBCTX *Context_For_Frame_May_Manage(REBFRM *f)
 }
 
 
-inline static REBACT *VAL_PHASE(REBVAL *frame) {
+inline static REBACT *VAL_PHASE(Value* frame) {
     assert(IS_FRAME(frame));
     return frame->payload.any_context.phase;
 }

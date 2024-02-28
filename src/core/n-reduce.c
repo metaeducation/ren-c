@@ -35,8 +35,8 @@
 // Reduce array from the index position specified in the value.
 //
 bool Reduce_To_Stack_Throws(
-    REBVAL *out,
-    REBVAL *any_array,
+    Value* out,
+    Value* any_array,
     REBFLGS flags
 ){
     // Can't have more than one policy on null conversion in effect.
@@ -101,7 +101,7 @@ REBNATIVE(reduce)
 {
     INCLUDE_PARAMS_OF_REDUCE;
 
-    REBVAL *value = ARG(value);
+    Value* value = ARG(value);
 
     if (REF(opt) and REF(try))
         fail (Error_Bad_Refines_Raw());
@@ -152,15 +152,15 @@ REBNATIVE(reduce)
 }
 
 
-bool Match_For_Compose(const RELVAL *group, const REBVAL *pattern) {
+bool Match_For_Compose(const Cell* group, const Value* pattern) {
     if (IS_NULLED(pattern))
         return true;
 
     if (VAL_LEN_AT(group) == 0) // you have a pattern, so leave `()` as-is
         return false;
 
-    RELVAL *first = VAL_ARRAY_AT(group);
-    RELVAL *last = VAL_ARRAY_TAIL(group) - 1;
+    Cell* first = VAL_ARRAY_AT(group);
+    Cell* last = VAL_ARRAY_TAIL(group) - 1;
     if (IS_BAR(first) != IS_BAR(last))
         fail ("Pattern for COMPOSE must be on both ends of GROUP!");
     if (not IS_BAR(first))
@@ -184,10 +184,10 @@ bool Match_For_Compose(const RELVAL *group, const REBVAL *pattern) {
 // caller wants to add part or all of the popped data to an existing array.
 //
 bool Compose_To_Stack_Throws(
-    REBVAL *out, // if return result is true, will hold the thrown value
-    const RELVAL *any_array, // the template
+    Value* out, // if return result is true, will hold the thrown value
+    const Cell* any_array, // the template
     REBSPC *specifier, // specifier for relative any_array value
-    const REBVAL *pattern, // e.g. if '*, only match `(* ... *)`
+    const Value* pattern, // e.g. if '*, only match `(* ... *)`
     bool deep, // recurse into sub-blocks
     bool only // pattern matches that return blocks are kept as blocks
 ){
@@ -208,7 +208,7 @@ bool Compose_To_Stack_Throws(
         bool splice = not only; // can force no splice if override via ((...))
 
         REBSPC *match_specifier = nullptr;
-        const RELVAL *match = nullptr;
+        const Cell* match = nullptr;
 
         if (not IS_GROUP(f->value)) {
             //
@@ -217,7 +217,7 @@ bool Compose_To_Stack_Throws(
         }
         else {
             if (Is_Doubled_Group(f->value)) { // non-spliced compose, if match
-                RELVAL *inner = VAL_ARRAY_AT(f->value);
+                Cell* inner = VAL_ARRAY_AT(f->value);
                 if (Match_For_Compose(inner, pattern)) {
                     splice = false;
                     match = inner;
@@ -257,7 +257,7 @@ bool Compose_To_Stack_Throws(
                 //
                 // compose [not-only ([a b]) merges] => [not-only a b merges]
 
-                RELVAL *push = VAL_ARRAY_AT(out);
+                Cell* push = VAL_ARRAY_AT(out);
                 if (NOT_END(push)) {
                     //
                     // Only proxy newline flag from the template on *first*
@@ -387,11 +387,11 @@ enum FLATTEN_LEVEL {
 
 
 static void Flatten_Core(
-    RELVAL *head,
+    Cell* head,
     REBSPC *specifier,
     enum FLATTEN_LEVEL level
 ) {
-    RELVAL *item = head;
+    Cell* item = head;
     for (; NOT_END(item); ++item) {
         if (IS_BLOCK(item) and level != FLATTEN_NOT) {
             REBSPC *derived = Derive_Specifier(specifier, item);

@@ -48,7 +48,7 @@
 //
 //  MAKE_Fail: C
 //
-REB_R MAKE_Fail(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
+REB_R MAKE_Fail(Value* out, enum Reb_Kind kind, const Value* arg)
 {
     UNUSED(out);
     UNUSED(kind);
@@ -65,12 +65,12 @@ REB_R MAKE_Fail(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 // aren't ready yet as a general concept, this hook is overwritten in the
 // dispatch table when the extension loads.
 //
-REB_R MAKE_Unhooked(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
+REB_R MAKE_Unhooked(Value* out, enum Reb_Kind kind, const Value* arg)
 {
     UNUSED(out);
     UNUSED(arg);
 
-    const REBVAL *type = Datatype_From_Kind(kind);
+    const Value* type = Datatype_From_Kind(kind);
     UNUSED(type); // !!! put in error message?
 
     fail ("Datatype is provided by an extension that's not currently loaded");
@@ -101,8 +101,8 @@ REBNATIVE(make)
 {
     INCLUDE_PARAMS_OF_MAKE;
 
-    REBVAL *type = ARG(type);
-    REBVAL *arg = ARG(def);
+    Value* type = ARG(type);
+    Value* arg = ARG(def);
 
     enum Reb_Kind kind;
     if (IS_DATATYPE(type))
@@ -148,7 +148,7 @@ REBNATIVE(make)
 //
 //  TO_Fail: C
 //
-REB_R TO_Fail(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
+REB_R TO_Fail(Value* out, enum Reb_Kind kind, const Value* arg)
 {
     UNUSED(out);
     UNUSED(kind);
@@ -161,12 +161,12 @@ REB_R TO_Fail(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 //
 //  TO_Unhooked: C
 //
-REB_R TO_Unhooked(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
+REB_R TO_Unhooked(Value* out, enum Reb_Kind kind, const Value* arg)
 {
     UNUSED(out);
     UNUSED(arg);
 
-    const REBVAL *type = Datatype_From_Kind(kind);
+    const Value* type = Datatype_From_Kind(kind);
     UNUSED(type); // !!! put in error message?
 
     fail ("Datatype does not have extension with a TO handler registered");
@@ -188,7 +188,7 @@ REBNATIVE(to)
 {
     INCLUDE_PARAMS_OF_TO;
 
-    REBVAL *v = ARG(value);
+    Value* v = ARG(value);
     enum Reb_Kind new_kind = VAL_TYPE_KIND(ARG(type));
 
     TO_HOOK hook = To_Hooks[new_kind];
@@ -343,7 +343,7 @@ REBNATIVE(of)
 // field of zero, except for hex values.
 //
 const REBYTE *Scan_Hex(
-    REBVAL *out,
+    Value* out,
     const REBYTE *cp,
     REBCNT minlen,
     REBCNT maxlen
@@ -511,7 +511,7 @@ const REBYTE *Scan_Dec_Buf(
 // Scan and convert a decimal value.  Return zero if error.
 //
 const REBYTE *Scan_Decimal(
-    REBVAL *out, // may live in data stack (do not call DS_PUSH, GC, eval)
+    Value* out, // may live in data stack (do not call DS_PUSH, GC, eval)
     const REBYTE *cp,
     REBCNT len,
     bool dec_only
@@ -605,7 +605,7 @@ const REBYTE *Scan_Decimal(
 // Allow preceding + - and any combination of ' marks.
 //
 const REBYTE *Scan_Integer(
-    REBVAL *out, // may live in data stack (do not call DS_PUSH, GC, eval)
+    Value* out, // may live in data stack (do not call DS_PUSH, GC, eval)
     const REBYTE *cp,
     REBCNT len
 ) {
@@ -700,7 +700,7 @@ const REBYTE *Scan_Integer(
 // Scan and convert money.  Return zero if error.
 //
 const REBYTE *Scan_Money(
-    REBVAL *out, // may live in data stack (do not call DS_PUSH, GC, eval)
+    Value* out, // may live in data stack (do not call DS_PUSH, GC, eval)
     const REBYTE *cp,
     REBCNT len
 ) {
@@ -729,7 +729,7 @@ const REBYTE *Scan_Money(
 // Scan and convert a date. Also can include a time and zone.
 //
 const REBYTE *Scan_Date(
-    REBVAL *out, // may live in data stack (do not call DS_PUSH, GC, eval)
+    Value* out, // may live in data stack (do not call DS_PUSH, GC, eval)
     const REBYTE *cp,
     REBCNT len
 ) {
@@ -977,7 +977,7 @@ end_date:
 // Scan and convert a file name.
 //
 const REBYTE *Scan_File(
-    REBVAL *out, // may live in data stack (do not call DS_PUSH, GC, eval)
+    Value* out, // may live in data stack (do not call DS_PUSH, GC, eval)
     const REBYTE *cp,
     REBCNT len
 ) {
@@ -1020,7 +1020,7 @@ const REBYTE *Scan_File(
 // Scan and convert email.
 //
 const REBYTE *Scan_Email(
-    REBVAL *out, // may live in data stack (do not call DS_PUSH, GC, eval)
+    Value* out, // may live in data stack (do not call DS_PUSH, GC, eval)
     const REBYTE *cp,
     REBCNT len
 ) {
@@ -1091,7 +1091,7 @@ const REBYTE *Scan_Email(
 // on Windows, are expressed as STRING!.)
 //
 const REBYTE *Scan_URL(
-    REBVAL *out, // may live in data stack (do not call DS_PUSH, GC, eval)
+    Value* out, // may live in data stack (do not call DS_PUSH, GC, eval)
     const REBYTE *cp,
     REBCNT len
 ){
@@ -1105,7 +1105,7 @@ const REBYTE *Scan_URL(
 // Scan and convert a pair
 //
 const REBYTE *Scan_Pair(
-    REBVAL *out, // may live in data stack (do not call DS_PUSH, GC, eval)
+    Value* out, // may live in data stack (do not call DS_PUSH, GC, eval)
     const REBYTE *cp,
     REBCNT len
 ) {
@@ -1159,7 +1159,7 @@ const REBYTE *Scan_Pair(
 // Scan and convert a tuple.
 //
 const REBYTE *Scan_Tuple(
-    REBVAL *out, // may live in data stack (do not call DS_PUSH, GC, eval)
+    Value* out, // may live in data stack (do not call DS_PUSH, GC, eval)
     const REBYTE *cp,
     REBCNT len
 ) {
@@ -1211,7 +1211,7 @@ const REBYTE *Scan_Tuple(
 // Scan and convert binary strings.
 //
 const REBYTE *Scan_Binary(
-    REBVAL *out, // may live in data stack (do not call DS_PUSH, GC, eval)
+    Value* out, // may live in data stack (do not call DS_PUSH, GC, eval)
     const REBYTE *cp,
     REBCNT len
 ) {
@@ -1251,7 +1251,7 @@ const REBYTE *Scan_Binary(
 // Scan any string that does not require special decoding.
 //
 const REBYTE *Scan_Any(
-    REBVAL *out, // may live in data stack (do not call DS_PUSH, GC, eval)
+    Value* out, // may live in data stack (do not call DS_PUSH, GC, eval)
     const REBYTE *cp,
     REBCNT num_bytes,
     enum Reb_Kind type
@@ -1301,7 +1301,7 @@ REBNATIVE(scan_net_header)
 
     REBARR *result = Make_Arr(10); // Just a guess at size (use STD_BUF?)
 
-    REBVAL *header = ARG(header);
+    Value* header = ARG(header);
     REBCNT index = VAL_INDEX(header);
     REBSER *utf8 = VAL_SERIES(header);
 
@@ -1330,10 +1330,10 @@ REBNATIVE(scan_net_header)
         if (*cp != ':')
             break;
 
-        REBVAL *val = NULL; // rigorous checks worry it could be uninitialized
+        Value* val = NULL; // rigorous checks worry it could be uninitialized
 
         REBSTR *name = Intern_UTF8_Managed(start, cp - start);
-        RELVAL *item;
+        Cell* item;
 
         cp++;
         // Search if word already present:

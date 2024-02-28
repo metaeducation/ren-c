@@ -68,7 +68,7 @@ static REBARR *Read_Dir_May_Fail(struct devreq_file *dir)
         // "devreq" is can protect its own state, e.g. be a Rebol object,
         // so there'd not be any API handles to free here.
         //
-        rebRelease(m_cast(REBVAL*, file.path));
+        rebRelease(m_cast(Value*, file.path));
     }
 
     // !!! This is some kind of error tolerance, review what it is for.
@@ -116,7 +116,7 @@ static REBARR *Read_Dir_May_Fail(struct devreq_file *dir)
 //
 static void Init_Dir_Path(
     struct devreq_file *dir,
-    const REBVAL *path,
+    const Value* path,
     REBCNT policy
 ){
     UNUSED(policy);
@@ -135,14 +135,14 @@ static void Init_Dir_Path(
 //
 // Internal port handler for file directories.
 //
-static REB_R Dir_Actor(REBFRM *frame_, REBVAL *port, REBVAL *verb)
+static REB_R Dir_Actor(REBFRM *frame_, Value* port, Value* verb)
 {
     REBCTX *ctx = VAL_CONTEXT(port);
-    REBVAL *spec = CTX_VAR(ctx, STD_PORT_SPEC);
+    Value* spec = CTX_VAR(ctx, STD_PORT_SPEC);
     if (not IS_OBJECT(spec))
         fail (Error_Invalid_Spec_Raw(spec));
 
-    REBVAL *path = Obj_Value(spec, STD_PORT_SPEC_HEAD_REF);
+    Value* path = Obj_Value(spec, STD_PORT_SPEC_HEAD_REF);
     if (path == NULL)
         fail (Error_Invalid_Spec_Raw(spec));
 
@@ -151,7 +151,7 @@ static REB_R Dir_Actor(REBFRM *frame_, REBVAL *port, REBVAL *verb)
     else if (not IS_FILE(path))
         fail (Error_Invalid_Spec_Raw(path));
 
-    REBVAL *state = CTX_VAR(ctx, STD_PORT_STATE); // BLOCK! means port open
+    Value* state = CTX_VAR(ctx, STD_PORT_STATE); // BLOCK! means port open
 
     //const REBYTE *flags = Security_Policy(SYM_FILE, path);
 
@@ -227,7 +227,7 @@ static REB_R Dir_Actor(REBFRM *frame_, REBVAL *port, REBVAL *verb)
     create:
         Init_Dir_Path(&dir, path, POL_WRITE); // Sets RFM_DIR too
 
-        REBVAL *result = OS_DO_DEVICE(&dir.devreq, RDC_CREATE);
+        Value* result = OS_DO_DEVICE(&dir.devreq, RDC_CREATE);
         assert(result != NULL); // should be synchronous
 
         if (rebDid("error?", result)) {
@@ -253,7 +253,7 @@ static REB_R Dir_Actor(REBFRM *frame_, REBVAL *port, REBVAL *verb)
         UNUSED(ARG(from)); // implicit
         dir.devreq.common.data = cast(REBYTE*, ARG(to)); // !!! hack!
 
-        REBVAL *result = OS_DO_DEVICE(&dir.devreq, RDC_RENAME);
+        Value* result = OS_DO_DEVICE(&dir.devreq, RDC_RENAME);
         assert(result != NULL); // should be synchronous
 
         if (rebDid("error?", result)) {
@@ -271,7 +271,7 @@ static REB_R Dir_Actor(REBFRM *frame_, REBVAL *port, REBVAL *verb)
 
         // !!! add *.r deletion
         // !!! add recursive delete (?)
-        REBVAL *result = OS_DO_DEVICE(&dir.devreq, RDC_DELETE);
+        Value* result = OS_DO_DEVICE(&dir.devreq, RDC_DELETE);
         assert(result != NULL); // should be synchronous
 
         if (rebDid("error?", result)) {
@@ -316,7 +316,7 @@ static REB_R Dir_Actor(REBFRM *frame_, REBVAL *port, REBVAL *verb)
         Init_Blank(state);
 
         Init_Dir_Path(&dir, path, POL_READ);
-        REBVAL *result = OS_DO_DEVICE(&dir.devreq, RDC_QUERY);
+        Value* result = OS_DO_DEVICE(&dir.devreq, RDC_QUERY);
         assert(result != NULL); // should be synchronous
 
         if (rebDid("error?", result)) {

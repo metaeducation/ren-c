@@ -38,7 +38,7 @@
 // in both Rebol and Red terminology.  It is an item whose pointer is valid
 // for the lifetime of the object, regardless of resizing.  This is where
 // header information is stored, and pointers to these objects may be saved
-// in REBVAL values; such that they are kept alive by the garbage collector.
+// in cells; such that they are kept alive by the garbage collector.
 //
 // The more complicated thing to do memory pooling of is the variable-sized
 // portion of a series (currently called the "series data")...as series sizes
@@ -182,7 +182,7 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
     // small allocations of strings that did not have associated REBSERs..
     // but those don't exist in the code.
 
-    MOD_POOL( 1, 256),  // 9-16 (when REBVAL is 16)
+    MOD_POOL( 1, 256),  // 9-16 (when Cell is 16)
     MOD_POOL( 2, 512),  // 17-32 - Small series (x 16)
     MOD_POOL( 3, 1024), // 33-64
     MOD_POOL( 4, 512),
@@ -210,8 +210,8 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 
     DEF_POOL(sizeof(REBSER), 4096), // Series headers
 
-  #ifdef UNUSUAL_REBVAL_SIZE // sizeof(REBVAL)*2 not sizeof(REBSER)
-    DEF_POOL(sizeof(REBVAL) * 2, 16), // Pairings, PAR_POOL
+  #ifdef UNUSUAL_CELL_SIZE // sizeof(Cell)*2 not sizeof(REBSER)
+    DEF_POOL(sizeof(Cell) * 2, 16), // Pairings, PAR_POOL
   #endif
 
     DEF_POOL(sizeof(REBI64), 1), // Just used for tracking main memory
@@ -473,7 +473,7 @@ REBNOD *Try_Find_Containing_Node_Debug(const void *p)
 
             if (s->header.bits & NODE_FLAG_CELL) { // a "pairing"
                 if (p >= cast(void*, s) and p < cast(void*, s + 1))
-                    return NOD(s); // REBSER is REBVAL[2]
+                    return NOD(s); // REBSER is Cell[2]
                 continue;
             }
 
@@ -552,9 +552,9 @@ REBNOD *Try_Find_Containing_Node_Debug(const void *p)
 // This provides an alternate mechanism for plain C code to do cleanup besides
 // handlers based on PUSH_TRAP().
 //
-REBVAL *Alloc_Pairing(void) {
-    REBVAL *paired = cast(REBVAL*, Make_Node(PAR_POOL)); // 2x REBVAL size
-    REBVAL *key = PAIRING_KEY(paired);
+Value* Alloc_Pairing(void) {
+    Value* paired = cast(Value*, Make_Node(PAR_POOL)); // 2x Cell size
+    Value* key = PAIRING_KEY(paired);
 
     Prep_Non_Stack_Cell(paired);
     TRASH_CELL_IF_DEBUG(paired);
@@ -577,9 +577,9 @@ REBVAL *Alloc_Pairing(void) {
 //  Manage_Pairing: C
 //
 // The paired management status is handled by bits directly in the first (the
-// paired value) REBVAL header.  API handle REBVALs are all managed.
+// paired value) Cell header.  API handle Cells are all managed.
 //
-void Manage_Pairing(REBVAL *paired) {
+void Manage_Pairing(Value* paired) {
     SET_VAL_FLAG(paired, NODE_FLAG_MANAGED);
 }
 
@@ -593,7 +593,7 @@ void Manage_Pairing(REBVAL *paired) {
 // It may be desirable to extend, shorten, or otherwise explicitly control
 // their lifetime.
 //
-void Unmanage_Pairing(REBVAL *paired) {
+void Unmanage_Pairing(Value* paired) {
     assert(GET_VAL_FLAG(paired, NODE_FLAG_MANAGED));
     CLEAR_VAL_FLAG(paired, NODE_FLAG_MANAGED);
 }
@@ -602,7 +602,7 @@ void Unmanage_Pairing(REBVAL *paired) {
 //
 //  Free_Pairing: C
 //
-void Free_Pairing(REBVAL *paired) {
+void Free_Pairing(Value* paired) {
     assert(NOT_VAL_FLAG(paired, NODE_FLAG_MANAGED));
     REBSER *s = cast(REBSER*, paired);
     Free_Node(SER_POOL, s);
@@ -691,7 +691,7 @@ void Free_Unbiased_Series_Data(char *unbiased, REBCNT total)
 // seem a bit high cost for their benefit.  If this were to be
 // changed to Expand_Series_Noterm it would put more burden
 // on the clients...for a *potential* benefit in being able to
-// write just an END marker into the terminal REBVAL vs. copying
+// write just an END marker into the terminal Cell vs. copying
 // the entire value cell.  (Of course, with a good memcpy it
 // might be an irrelevant difference.)  For the moment we reverse
 // the burden by enforcing the assumption that the incoming series
@@ -1078,7 +1078,7 @@ void Decay_Series(REBSER *s)
             memcpy(
                 cast(char*, &s->content.fixed),
                 cast(char*, ARR_HEAD(ARR(s))),
-                sizeof(REBVAL)
+                sizeof(Cell)
             );
         }
 
@@ -1111,7 +1111,7 @@ void Decay_Series(REBSER *s)
         // opposed to the specific singular made for the handle's GC awareness)
 
         if (IS_SER_ARRAY(s)) {
-            RELVAL *v = ARR_HEAD(ARR(s));
+            Cell* v = ARR_HEAD(ARR(s));
             if (NOT_END(v) and VAL_TYPE_RAW(v) == REB_HANDLE) {
                 if (v->extra.singular == ARR(s)) {
                     //
@@ -1604,7 +1604,7 @@ REBU64 Inspect_Series(bool show)
 
     if (show) {
         printf("Series Memory Info:\n");
-        printf("  REBVAL size = %lu\n", cast(unsigned long, sizeof(REBVAL)));
+        printf("  Cell size = %lu\n", cast(unsigned long, sizeof(Cell)));
         printf("  REBSER size = %lu\n", cast(unsigned long, sizeof(REBSER)));
         printf(
             "  %-6d segs = %-7d bytes - headers\n",

@@ -103,7 +103,7 @@ void Emit(REB_MOLD *mo, const char *fmt, ...)
     for (; *fmt; fmt++) {
         switch (*fmt) {
         case 'W': { // Word symbol
-            const REBVAL *any_word = va_arg(va, const REBVAL*);
+            const Value* any_word = va_arg(va, const Value*);
             REBSTR *spelling = VAL_WORD_SPELLING(any_word);
             Append_Utf8_Utf8(
                 s, STR_HEAD(spelling), STR_SIZE(spelling)
@@ -112,7 +112,7 @@ void Emit(REB_MOLD *mo, const char *fmt, ...)
         }
 
         case 'V': // Value
-            Mold_Value(mo, va_arg(va, const REBVAL*));
+            Mold_Value(mo, va_arg(va, const Value*));
             break;
 
         case 'S': // String of bytes
@@ -137,7 +137,7 @@ void Emit(REB_MOLD *mo, const char *fmt, ...)
             break;
 
         case 'T': {  // Type name
-            REBSTR *type_name = Get_Type_Name(va_arg(va, REBVAL*));
+            REBSTR *type_name = Get_Type_Name(va_arg(va, Value*));
             Append_Utf8_Utf8(s, STR_HEAD(type_name), STR_SIZE(type_name));
             break; }
 
@@ -210,7 +210,7 @@ REBYTE *Prep_Mold_Overestimated(REB_MOLD *mo, REBCNT num_bytes)
 //
 // Emit the initial datatype function, depending on /ALL option
 //
-void Pre_Mold(REB_MOLD *mo, const RELVAL *v)
+void Pre_Mold(REB_MOLD *mo, const Cell* v)
 {
     Emit(mo, GET_MOLD_FLAG(mo, MOLD_FLAG_ALL) ? "#[T " : "make T ", v);
 }
@@ -234,7 +234,7 @@ void End_Mold(REB_MOLD *mo)
 // For series that has an index, add the index for mold/all.
 // Add closing block.
 //
-void Post_Mold(REB_MOLD *mo, const RELVAL *v)
+void Post_Mold(REB_MOLD *mo, const Cell* v)
 {
     if (VAL_INDEX(v)) {
         Append_Utf8_Codepoint(mo->series, ' ');
@@ -358,7 +358,7 @@ void Mold_Array_At(
     if (sep[1])
         Append_Utf8_Codepoint(mo->series, sep[0]);
 
-    RELVAL *item = ARR_AT(a, index);
+    Cell* item = ARR_AT(a, index);
     while (NOT_END(item)) {
         if (GET_VAL_FLAG(item, VALUE_FLAG_NEWLINE_BEFORE)) {
            if (not indented and (sep[1] != '\0')) {
@@ -410,8 +410,8 @@ void Form_Array_At(
 
     REBINT n;
     for (n = 0; n < len;) {
-        RELVAL *item = ARR_AT(array, index + n);
-        REBVAL *wval = NULL;
+        Cell* item = ARR_AT(array, index + n);
+        Value* wval = NULL;
         if (opt_context && (IS_WORD(item) || IS_GET_WORD(item))) {
             wval = Select_Canon_In_Context(opt_context, VAL_WORD_CANON(item));
             if (wval)
@@ -438,7 +438,7 @@ void Form_Array_At(
 //
 //  MF_Fail: C
 //
-void MF_Fail(REB_MOLD *mo, const RELVAL *v, bool form)
+void MF_Fail(REB_MOLD *mo, const Cell* v, bool form)
 {
     UNUSED(form);
 
@@ -464,12 +464,12 @@ void MF_Fail(REB_MOLD *mo, const RELVAL *v, bool form)
 //
 //  MF_Unhooked: C
 //
-void MF_Unhooked(REB_MOLD *mo, const RELVAL *v, bool form)
+void MF_Unhooked(REB_MOLD *mo, const Cell* v, bool form)
 {
     UNUSED(mo);
     UNUSED(form);
 
-    const REBVAL *type = Datatype_From_Kind(VAL_TYPE(v));
+    const Value* type = Datatype_From_Kind(VAL_TYPE(v));
     UNUSED(type); // !!! put in error message?
 
     fail ("Datatype does not have extension with a MOLD handler registered");
@@ -481,7 +481,7 @@ void MF_Unhooked(REB_MOLD *mo, const RELVAL *v, bool form)
 //
 // Mold or form any value to string series tail.
 //
-void Mold_Or_Form_Value(REB_MOLD *mo, const RELVAL *v, bool form)
+void Mold_Or_Form_Value(REB_MOLD *mo, const Cell* v, bool form)
 {
     assert(not THROWN(v)); // !!! Note: Thrown bit is being eliminated
 
@@ -537,7 +537,7 @@ void Mold_Or_Form_Value(REB_MOLD *mo, const RELVAL *v, bool form)
 //
 // Form a value based on the mold opts provided.
 //
-REBSER *Copy_Mold_Or_Form_Value(const RELVAL *v, REBFLGS opts, bool form)
+REBSER *Copy_Mold_Or_Form_Value(const Cell* v, REBFLGS opts, bool form)
 {
     DECLARE_MOLD (mo);
     mo->opts = opts;
@@ -563,11 +563,11 @@ REBSER *Copy_Mold_Or_Form_Value(const RELVAL *v, REBFLGS opts, bool form)
 // Note only the last interstitial is considered a candidate for delimiting.
 //
 bool Form_Reduce_Throws(
-    REBVAL *out,
+    Value* out,
     REBARR *array,
     REBCNT index,
     REBSPC *specifier,
-    const REBVAL *delimiter
+    const Value* delimiter
 ){
     assert(
         IS_NULLED(delimiter) or IS_BLANK(delimiter)
@@ -627,13 +627,13 @@ bool Form_Reduce_Throws(
 //
 //  Form_Tight_Block: C
 //
-REBSER *Form_Tight_Block(const REBVAL *blk)
+REBSER *Form_Tight_Block(const Value* blk)
 {
     DECLARE_MOLD (mo);
 
     Push_Mold(mo);
 
-    RELVAL *item;
+    Cell* item;
     for (item = VAL_ARRAY_AT(blk); NOT_END(item); ++item)
         Form_Value(mo, item);
 

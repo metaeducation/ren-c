@@ -15,7 +15,7 @@ REBOL [
     Description: {
         This script is used to preprocess C source files containing code for
         extension DLLs, designed to load new native code into the interpreter.
-        
+
         Such code is very similar to that of the code which is built into
         the EXE itself.  Hence, features like scanning the C comments for
         native specifications is reused.
@@ -81,7 +81,7 @@ module-header: _
 source.text: read c-src
 if system/version > 2.100.0 [ ;-- !!! Why is this necessary?
     source.text: deline to-text source.text
-] 
+]
 
 ; When the header information in the comments at the top of the file is
 ; seen, save it into a variable.
@@ -183,7 +183,7 @@ for-each native native-defs [
         null ;-- not needed in newer Ren-C (CATCH w/no throw is NULL)
     ] else [
         continue ;-- not supported
-    ] 
+    ]
 
     num-natives: num-natives + 1
 
@@ -281,7 +281,7 @@ e1/emit {
      */
     #undef REBNATIVE
     #define REBNATIVE(n) \
-        REBVAL *N_${MOD}_##n(REBFRM *frame_)
+        Value* N_${MOD}_##n(REBFRM *frame_)
 
     /*
      * Forward-declare REBNATIVE() dispatcher prototypes
@@ -320,7 +320,7 @@ e/emit {
     static const REBYTE script_compressed[$<length of script-compressed>] = {
         $<Binary-To-C Script-Compressed>
     };
-    
+
     /*
      * Gzip compression of native specs (no \0 terminator in array)
      * Originally $<length of specs-uncompressed> bytes
@@ -352,7 +352,7 @@ e/emit {
      * box or interface could provide more flexibility for arbitrary future
      * extension implementations.
      */
-    EXT_API REBVAL *RX_COLLATE_NAME(${Mod})(void) {
+    EXT_API Value* RX_COLLATE_NAME(${Mod})(void) {
         return rebCollateExtension_internal(
             script_compressed, sizeof(script_compressed),
             specs_compressed, sizeof(specs_compressed),

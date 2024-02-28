@@ -180,7 +180,7 @@ e-lib/emit {
      *
      * !!! NOTE: This mechanism is being gradually deprecated in Ren-C,
      * preferring to build interactions with code that is Rebol-API-aware vs.
-     * speaking in a C-binary protocol that doesn't know what REBVAL* is.
+     * speaking in a C-binary protocol that doesn't know what Value* is.
      *
      * There were 40-ish separate functions in the Linux build around the time
      * of R3-Alpha.  Some were very narrow in what they did...such as

@@ -42,7 +42,7 @@
 // value itself are not used; instead preferring the data held in the REBARR.
 // This allows one instance of a managed handle to have its code or data
 // pointer changed and be reflected in all instances.  The simple form of
-// handle however is such that each REBVAL copied instance is independent,
+// handle however is such that each cell copied instance is independent,
 // and changing one won't change the others.
 //
 
@@ -62,7 +62,7 @@
 #define HANDLE_FLAG_CFUNC HANDLE_FLAG(0)
 
 
-inline static uintptr_t VAL_HANDLE_LEN(const RELVAL *v) {
+inline static uintptr_t VAL_HANDLE_LEN(const Cell* v) {
     assert(IS_HANDLE(v));
     if (v->extra.singular)
         return ARR_HEAD(v->extra.singular)->payload.handle.length;
@@ -70,7 +70,7 @@ inline static uintptr_t VAL_HANDLE_LEN(const RELVAL *v) {
         return v->payload.handle.length;
 }
 
-inline static void *VAL_HANDLE_VOID_POINTER(const RELVAL *v) {
+inline static void *VAL_HANDLE_VOID_POINTER(const Cell* v) {
     assert(IS_HANDLE(v));
     assert(NOT_VAL_FLAG(v, HANDLE_FLAG_CFUNC));
     if (v->extra.singular)
@@ -82,7 +82,7 @@ inline static void *VAL_HANDLE_VOID_POINTER(const RELVAL *v) {
 #define VAL_HANDLE_POINTER(t, v) \
     cast(t *, VAL_HANDLE_VOID_POINTER(v))
 
-inline static CFUNC *VAL_HANDLE_CFUNC(const RELVAL *v) {
+inline static CFUNC *VAL_HANDLE_CFUNC(const Cell* v) {
     assert(IS_HANDLE(v));
     assert(GET_VAL_FLAG(v, HANDLE_FLAG_CFUNC));
     if (v->extra.singular)
@@ -91,13 +91,13 @@ inline static CFUNC *VAL_HANDLE_CFUNC(const RELVAL *v) {
         return v->payload.handle.data.cfunc;
 }
 
-inline static CLEANUP_CFUNC *VAL_HANDLE_CLEANER(const RELVAL *v) {
+inline static CLEANUP_CFUNC *VAL_HANDLE_CLEANER(const Cell* v) {
     assert(IS_HANDLE(v));
     REBARR *singular = v->extra.singular;
     return singular != NULL ? MISC(singular).cleaner : NULL;
 }
 
-inline static void SET_HANDLE_LEN(RELVAL *v, uintptr_t length) {
+inline static void SET_HANDLE_LEN(Cell* v, uintptr_t length) {
     assert(IS_HANDLE(v));
     if (v->extra.singular)
         ARR_HEAD(v->extra.singular)->payload.handle.length = length;
@@ -105,7 +105,7 @@ inline static void SET_HANDLE_LEN(RELVAL *v, uintptr_t length) {
         v->payload.handle.length = length;
 }
 
-inline static void SET_HANDLE_POINTER(RELVAL *v, void *pointer) {
+inline static void SET_HANDLE_POINTER(Cell* v, void *pointer) {
     assert(IS_HANDLE(v));
     assert(NOT_VAL_FLAG(v, HANDLE_FLAG_CFUNC));
     if (v->extra.singular)
@@ -114,7 +114,7 @@ inline static void SET_HANDLE_POINTER(RELVAL *v, void *pointer) {
         v->payload.handle.data.pointer = pointer;
 }
 
-inline static void SET_HANDLE_CFUNC(RELVAL *v, CFUNC *cfunc) {
+inline static void SET_HANDLE_CFUNC(Cell* v, CFUNC *cfunc) {
     assert(IS_HANDLE(v));
     assert(GET_VAL_FLAG(v, HANDLE_FLAG_CFUNC));
     if (v->extra.singular)
@@ -123,8 +123,8 @@ inline static void SET_HANDLE_CFUNC(RELVAL *v, CFUNC *cfunc) {
         v->payload.handle.data.cfunc = cfunc;
 }
 
-inline static REBVAL *Init_Handle_Simple(
-    RELVAL *out,
+inline static Value* Init_Handle_Simple(
+    Cell* out,
     void *pointer,
     uintptr_t length
 ){
@@ -135,8 +135,8 @@ inline static REBVAL *Init_Handle_Simple(
     return KNOWN(out);
 }
 
-inline static REBVAL *Init_Handle_Cfunc(
-    RELVAL *out,
+inline static Value* Init_Handle_Cfunc(
+    Cell* out,
     CFUNC *cfunc,
     uintptr_t length
 ){
@@ -148,15 +148,15 @@ inline static REBVAL *Init_Handle_Cfunc(
 }
 
 inline static void Init_Handle_Managed_Common(
-    RELVAL *out,
+    Cell* out,
     uintptr_t length,
     CLEANUP_CFUNC *cleaner
 ){
     REBARR *singular = Alloc_Singular(NODE_FLAG_MANAGED);
     MISC(singular).cleaner = cleaner;
 
-    RELVAL *v = ARR_HEAD(singular);
-    v->extra.singular = singular; 
+    Cell* v = ARR_HEAD(singular);
+    v->extra.singular = singular;
     v->payload.handle.length = length;
 
     // Caller will fill in whichever field is needed.  Note these are both
@@ -176,8 +176,8 @@ inline static void Init_Handle_Managed_Common(
     TRASH_POINTER_IF_DEBUG(out->payload.handle.data.pointer);
 }
 
-inline static REBVAL *Init_Handle_Managed(
-    RELVAL *out,
+inline static Value* Init_Handle_Managed(
+    Cell* out,
     void *pointer,
     uintptr_t length,
     CLEANUP_CFUNC *cleaner
@@ -193,8 +193,8 @@ inline static REBVAL *Init_Handle_Managed(
     return KNOWN(out);
 }
 
-inline static REBVAL *Init_Handle_Managed_Cfunc(
-    RELVAL *out,
+inline static Value* Init_Handle_Managed_Cfunc(
+    Cell* out,
     CFUNC *cfunc,
     uintptr_t length,
     CLEANUP_CFUNC *cleaner
@@ -204,7 +204,7 @@ inline static REBVAL *Init_Handle_Managed_Cfunc(
     // Leave the non-singular cfunc as trash; clients should not be using
     //
     RESET_VAL_HEADER_EXTRA(out, REB_HANDLE, HANDLE_FLAG_CFUNC);
-    
+
     RESET_VAL_HEADER_EXTRA(
         ARR_HEAD(out->extra.singular),
         REB_HANDLE,

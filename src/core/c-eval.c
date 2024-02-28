@@ -65,8 +65,8 @@
     //
     // *Plus* you can get the initialization tick for nulled cells, BLANK!s,
     // LOGIC!s, and most end markers by looking at the `track` payload of
-    // the REBVAL cell.  Series contain the `REBSER.tick` where they were
-    // created as well.  See also TOUCH_SERIES() and TOUCH_CELL().
+    // the cell.  Series contain the `REBSER.tick` where they were created as
+    // well.  See also TOUCH_SERIES() and TOUCH_CELL().
     //
     //      *** DON'T COMMIT THIS v-- KEEP IT AT ZERO! ***
     #define TICK_BREAKPOINT        0
@@ -187,7 +187,7 @@ static inline bool Start_New_Expression_Throws(REBFRM *f) {
 // * f->arg, in order to indicate that the arguments should only be
 //   type-checked.
 //
-// * some other pointer to an array of REBVAL which is the same length as the
+// * some other pointer to an array of cells which is the same length as the
 //   argument list.  This indicates that any non-void values in that array
 //   should be used in lieu of an ordinary argument...e.g. that argument has
 //   been "specialized".
@@ -221,9 +221,9 @@ inline static bool In_Unspecialized_Mode(REBFRM *f) {
 //
 inline static void Finalize_Arg(
     REBFRM *f_state, // name helps avoid accidental references to f->arg, etc.
-    const RELVAL *param,
-    REBVAL *arg,
-    REBVAL *refine
+    const Cell* param,
+    Value* arg,
+    Value* refine
 ){
     if (IS_END(arg)) {
 
@@ -315,7 +315,7 @@ inline static void Finalize_Arg(
     // VARARGS!)
     //
     // Store the offset so that both the arg and param locations can
-    // be quickly recovered, while using only a single slot in the REBVAL.
+    // be quickly recovered, while using only a single slot in the cell.
     //
     arg->payload.varargs.param_offset = arg - FRM_ARGS_HEAD(f_state);
     if (FRM_PHASE_OR_DUMMY(f_state) == PG_Dummy_Action) {
@@ -427,7 +427,7 @@ inline static void Expire_Out_Cell_Unless_Invisible(REBFRM *f) {
 // These fields are required upon initialization:
 //
 //     f->out
-//     REBVAL pointer to which the evaluation's result should be written.
+//     Value pointer to which the evaluation's result should be written.
 //     Should be to writable memory in a cell that lives above this call to
 //     Eval_Core in stable memory that is not user-visible (e.g. DECLARE_LOCAL
 //     or the frame's f->cell).  This can't point into an array whose memory
@@ -475,9 +475,9 @@ bool Eval_Core_Throws(REBFRM * const f)
     //
     enum Reb_Kind eval_type;
 
-    const REBVAL *current_gotten;
+    const Value* current_gotten;
     TRASH_POINTER_IF_DEBUG(current_gotten);
-    const RELVAL *current;
+    const Cell* current;
     TRASH_POINTER_IF_DEBUG(current);
 
     // Given how the evaluator is written, it's inevitable that there will
@@ -713,8 +713,8 @@ bool Eval_Core_Throws(REBFRM * const f)
 
             REBSPC *derived = Derive_Specifier(f->specifier, current);
 
-            RELVAL *path_at = VAL_ARRAY_AT(current);
-            const REBVAL *var_at = Try_Get_Opt_Var(path_at, derived);
+            Cell* path_at = VAL_ARRAY_AT(current);
+            const Value* var_at = Try_Get_Opt_Var(path_at, derived);
 
             if (
                 var_at
@@ -912,7 +912,7 @@ bool Eval_Core_Throws(REBFRM * const f)
 
                 TRASH_POINTER_IF_DEBUG(f->refine); // must update to new value
 
-                REBVAL *ordered = DS_TOP;
+                Value* ordered = DS_TOP;
                 REBSTR *param_canon = VAL_PARAM_CANON(f->param); // #2258
 
                 if (f->special == f->param) // acquire all args at callsite
@@ -1592,7 +1592,7 @@ bool Eval_Core_Throws(REBFRM * const f)
         // Note that the dispatcher may push ACTION! values to the data stack
         // which are used to process the return result after the switch.
         //
-        const REBVAL *r; // initialization would be skipped by gotos
+        const Value* r; // initialization would be skipped by gotos
         r = (*PG_Dispatcher)(f); // default just calls FRM_PHASE(f)
 
         if (r == f->out) {

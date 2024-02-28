@@ -34,7 +34,7 @@
 //
 //  CT_Pair: C
 //
-REBINT CT_Pair(const RELVAL *a, const RELVAL *b, REBINT mode)
+REBINT CT_Pair(const Cell* a, const Cell* b, REBINT mode)
 {
     if (mode >= 0) return Cmp_Pair(a, b) == 0; // works for INTEGER=0 too (spans x y)
     if (IS_PAIR(b) && 0 == VAL_INT64(b)) { // for negative? and positive?
@@ -49,7 +49,7 @@ REBINT CT_Pair(const RELVAL *a, const RELVAL *b, REBINT mode)
 //
 //  MAKE_Pair: C
 //
-REB_R MAKE_Pair(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
+REB_R MAKE_Pair(Value* out, enum Reb_Kind kind, const Value* arg)
 {
     assert(kind == REB_PAIR);
     UNUSED(kind);
@@ -70,8 +70,8 @@ REB_R MAKE_Pair(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
         return out;
     }
 
-    const RELVAL *x;
-    const RELVAL *y;
+    const Cell* x;
+    const Cell* y;
 
     if (IS_BLOCK(arg)) {
         if (VAL_LEN_AT(arg) != 2)
@@ -102,7 +102,7 @@ REB_R MAKE_Pair(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 //
 //  TO_Pair: C
 //
-REB_R TO_Pair(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
+REB_R TO_Pair(Value* out, enum Reb_Kind kind, const Value* arg)
 {
     return MAKE_Pair(out, kind, arg);
 }
@@ -113,7 +113,7 @@ REB_R TO_Pair(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 //
 // Given two pairs, compare them.
 //
-REBINT Cmp_Pair(const RELVAL *t1, const RELVAL *t2)
+REBINT Cmp_Pair(const Cell* t1, const Cell* t2)
 {
     REBDEC diff;
 
@@ -126,7 +126,7 @@ REBINT Cmp_Pair(const RELVAL *t1, const RELVAL *t2)
 //
 //  Min_Max_Pair: C
 //
-void Min_Max_Pair(REBVAL *out, const REBVAL *a, const REBVAL *b, bool maxed)
+void Min_Max_Pair(Value* out, const Value* a, const Value* b, bool maxed)
 {
     // !!! This used to use REBXYF (a structure containing "X" and "Y" as
     // floats).  It's not clear why floats would be preferred here, and
@@ -168,8 +168,8 @@ void Min_Max_Pair(REBVAL *out, const REBVAL *a, const REBVAL *b, bool maxed)
 //
 REB_R PD_Pair(
     REBPVS *pvs,
-    const REBVAL *picker,
-    const REBVAL *opt_setval
+    const Value* picker,
+    const Value* opt_setval
 ){
     REBINT n = 0;
 
@@ -225,7 +225,7 @@ REB_R PD_Pair(
 //
 //  MF_Pair: C
 //
-void MF_Pair(REB_MOLD *mo, const RELVAL *v, bool form)
+void MF_Pair(REB_MOLD *mo, const Cell* v, bool form)
 {
     UNUSED(form); // currently no distinction between MOLD and FORM
 
@@ -240,13 +240,13 @@ void MF_Pair(REB_MOLD *mo, const RELVAL *v, bool form)
 //
 REBTYPE(Pair)
 {
-    REBVAL *v = D_ARG(1);
+    Value* v = D_ARG(1);
 
-    REBVAL *first1 = VAL_PAIR_FIRST(v);
-    REBVAL *second1 = VAL_PAIR_SECOND(v);
+    Value* first1 = VAL_PAIR_FIRST(v);
+    Value* second1 = VAL_PAIR_SECOND(v);
 
-    REBVAL *first2 = nullptr;
-    REBVAL *second2 = nullptr;
+    Value* first2 = nullptr;
+    Value* second2 = nullptr;
 
     switch (VAL_WORD_SYM(verb)) {
       case SYM_REVERSE:
@@ -275,20 +275,20 @@ REBTYPE(Pair)
     // mechanical trick vs. the standard DO, because the frame thinks it is
     // already running...and the check for that would be subverted.
 
-    REBVAL *frame = Init_Frame(D_OUT, Context_For_Frame_May_Manage(frame_));
+    Value* frame = Init_Frame(D_OUT, Context_For_Frame_May_Manage(frame_));
 
     Move_Value(D_ARG(1), first1);
     if (first2)
         Move_Value(D_ARG(2), first2);  // use extracted arg x vs pair arg
-    REBVAL *x_frame = rebValue("copy", frame);
+    Value* x_frame = rebValue("copy", frame);
 
     Move_Value(D_ARG(1), second1);
     if (second2)
         Move_Value(D_ARG(2), second2);  // use extracted arg y vs pair arg
-    REBVAL *y_frame = rebValue("copy", frame);
+    Value* y_frame = rebValue("copy", frame);
 
-    REBVAL *x = rebValue(rebEval(NAT_VALUE(do)), rebR(x_frame));
-    REBVAL *y = rebValue(rebEval(NAT_VALUE(do)), rebR(y_frame));
+    Value* x = rebValue(rebEval(NAT_VALUE(do)), rebR(x_frame));
+    Value* y = rebValue(rebEval(NAT_VALUE(do)), rebR(y_frame));
 
     Init_Pair(D_OUT, x, y);
 

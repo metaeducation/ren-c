@@ -34,7 +34,7 @@
 //
 //  CT_Char: C
 //
-REBINT CT_Char(const RELVAL *a, const RELVAL *b, REBINT mode)
+REBINT CT_Char(const Cell* a, const Cell* b, REBINT mode)
 {
     REBINT num;
 
@@ -55,7 +55,7 @@ REBINT CT_Char(const RELVAL *a, const RELVAL *b, REBINT mode)
 //
 //  MAKE_Char: C
 //
-REB_R MAKE_Char(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
+REB_R MAKE_Char(Value* out, enum Reb_Kind kind, const Value* arg)
 {
     assert(kind == REB_CHAR);
     UNUSED(kind);
@@ -109,13 +109,13 @@ REB_R MAKE_Char(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 //
 //  TO_Char: C
 //
-REB_R TO_Char(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
+REB_R TO_Char(Value* out, enum Reb_Kind kind, const Value* arg)
 {
     return MAKE_Char(out, kind, arg);
 }
 
 
-static REBINT Math_Arg_For_Char(REBVAL *arg, REBVAL *verb)
+static REBINT Math_Arg_For_Char(Value* arg, Value* verb)
 {
     switch (VAL_TYPE(arg)) {
     case REB_CHAR:
@@ -136,7 +136,7 @@ static REBINT Math_Arg_For_Char(REBVAL *arg, REBVAL *verb)
 //
 //  MF_Char: C
 //
-void MF_Char(REB_MOLD *mo, const RELVAL *v, bool form)
+void MF_Char(REB_MOLD *mo, const Cell* v, bool form)
 {
     REBSER *out = mo->series;
 
@@ -269,4 +269,3 @@ REBTYPE(Char)
 
     return Init_Char(D_OUT, cast(REBUNI, chr));
 }
-

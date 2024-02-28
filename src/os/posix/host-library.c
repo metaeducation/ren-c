@@ -64,7 +64,7 @@
 // Load a DLL library and return the handle to it.
 // If zero is returned, error indicates the reason.
 //
-void *OS_Open_Library(const REBVAL *path)
+void *OS_Open_Library(const Value* path)
 {
   #ifdef NO_DL_LIB
     return nullptr;

@@ -40,7 +40,7 @@ REBCNT Modify_Array(
     REBSTR *verb,           // INSERT, APPEND, CHANGE
     REBARR *dst_arr,        // target
     REBCNT dst_idx,         // position
-    const REBVAL *src_val,  // source
+    const Value* src_val,  // source
     REBCNT flags,           // AM_SPLICE, AM_PART
     REBINT dst_len,         // length to remove
     REBINT dups             // dup count
@@ -50,7 +50,7 @@ REBCNT Modify_Array(
 
     REBCNT tail = ARR_LEN(dst_arr);
 
-    const RELVAL *src_rel;
+    const Cell* src_rel;
     REBSPC *specifier;
 
     if (IS_NULLED(src_val) and sym == SYM_CHANGE) {
@@ -95,7 +95,7 @@ REBCNT Modify_Array(
             ilen = VAL_LEN_AT(src_val);
 
         if (not tail_newline) {
-            RELVAL *tail_cell = VAL_ARRAY_AT(src_val) + ilen;
+            Cell* tail_cell = VAL_ARRAY_AT(src_val) + ilen;
             if (IS_END(tail_cell)) {
                 tail_newline = GET_SER_FLAG(
                     VAL_ARRAY(src_val),
@@ -129,10 +129,10 @@ REBCNT Modify_Array(
         }
     }
     else {
-        // use passed in RELVAL and specifier
+        // use passed in Cell and specifier
         ilen = 1;
         src_rel = src_val;
-        specifier = SPECIFIED; // it's a REBVAL, not a RELVAL, so specified
+        specifier = SPECIFIED; // it's a Value, not relative Cell, so specified
     }
 
     REBINT size = dups * ilen; // total to insert
@@ -225,9 +225,9 @@ REBCNT Modify_Array(
 // Returns new dst_idx.
 //
 REBCNT Modify_Binary(
-    REBVAL *dst_val,        // target
+    Value* dst_val,        // target
     REBSTR *verb,            // INSERT, APPEND, CHANGE
-    const REBVAL *src_val,  // source
+    const Value* src_val,  // source
     REBFLGS flags,          // AM_PART
     REBINT dst_len,         // length to remove
     REBINT dups             // dup count
@@ -377,9 +377,9 @@ REBCNT Modify_Binary(
 // Returns new dst_idx.
 //
 REBCNT Modify_String(
-    REBVAL *dst_val,        // target
+    Value* dst_val,        // target
     REBSTR *verb,            // INSERT, APPEND, CHANGE
-    const REBVAL *src_val,  // source
+    const Value* src_val,  // source
     REBFLGS flags,          // AM_PART
     REBINT dst_len,         // length to remove
     REBINT dups             // dup count

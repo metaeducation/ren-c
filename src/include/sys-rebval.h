@@ -26,10 +26,10 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// REBVAL is the structure/union for all Rebol values. It's designed to be
+// Cell is the structure/union for all Rebol values. It's designed to be
 // four C pointers in size (so 16 bytes on 32-bit platforms and 32 bytes
 // on 64-bit platforms).  Operation will be most efficient with those sizes,
-// and there are checks on boot to ensure that `sizeof(REBVAL)` is the
+// and there are checks on boot to ensure that `sizeof(Cell)` is the
 // correct value for the platform.  But from a mechanical standpoint, the
 // system should be *able* to work even if the size is different.
 //
@@ -54,7 +54,7 @@
 //
 // This sets things up for the "Payload"--which is the size of two pointers.
 // It is broken into a separate structure at this position so that on 32-bit
-// platforms, it can be aligned on a 64-bit boundary (assuming the REBVAL's
+// platforms, it can be aligned on a 64-bit boundary (assuming the Cell's
 // starting pointer was aligned on a 64-bit boundary to start with).  This is
 // important for 64-bit value processing on 32-bit platforms, which will
 // either be slow or crash if reads of 64-bit floating points/etc. are done
@@ -316,7 +316,7 @@ inline static union Reb_Header Endlike_Header(uintptr_t bits) {
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// `Reb_Track_Payload` is the value payload in debug builds for any REBVAL
+// `Reb_Track_Payload` is the value payload in debug builds for any cell
 // whose VAL_TYPE() doesn't need any information beyond the header.  This
 // offers a chance to inject some information into the payload to help
 // know where the value originated.  It is used by NULL cells, VOID!, BLANK!,
@@ -434,7 +434,7 @@ struct Reb_Action_Payload {
     //
     // In addition, its [0]th element contains an ACTION! value which is
     // self-referentially the function itself.  This means that the paramlist
-    // can be passed around as a single pointer from which a whole REBVAL
+    // can be passed around as a single pointer from which a whole cell
     // for the function can be found (although this value is archetypal, and
     // loses the `binding` property--which must be preserved other ways)
     //
@@ -553,7 +553,7 @@ struct Reb_Partial_Payload {
 // Since a function pointer and a data pointer aren't necessarily the same
 // size, the data has to be a union.
 //
-// Note that the ->extra field of the REBVAL may contain a singular REBARR
+// Note that the ->extra field of the cell may contain a singular REBARR
 // that is leveraged for its GC-awareness.
 //
 struct Reb_Handle_Payload {
@@ -630,7 +630,7 @@ union Reb_Value_Extra {
     //
     // ACTION!: binding is the instance data for archetypal invocation, so
     // although all the RETURN instances have the same paramlist, it is
-    // the binding which is unique to the REBVAL specifying which to exit
+    // the binding which is unique to the cell specifying which to exit
     //
     // ANY-CONTEXT!: if a FRAME!, the binding carries the instance data from
     // the function it is for.  So if the frame was produced for an instance
@@ -645,7 +645,7 @@ union Reb_Value_Extra {
 
     // See REB_X_PARTIAL.
     //
-    REBVAL *next_partial; // links to next potential partial refinement arg
+    Value* next_partial; // links to next potential partial refinement arg
 
     // The remaining properties are the "leftovers" of what won't fit in the
     // payload for other types.  If those types have a quanitity that requires
@@ -660,7 +660,7 @@ union Reb_Value_Extra {
     // REBEVT stucture to get split up.  The "eventee" is now in the extra
     // field, while the event payload is elsewhere.  This brings about a long
     // anticipated change where REBEVTs would need to be passed around in
-    // clients as REBVAL-sized entities.
+    // clients as cell-sized entities.
     //
     // See also rebol_devreq->requestee
 
@@ -702,7 +702,7 @@ union Reb_Value_Payload {
     REBI64 integer;
     REBDEC decimal;
 
-    REBVAL *pair; // actually a "pairing" pointer
+    Value* pair; // actually a "pairing" pointer
     struct Reb_Money_Payload money;
     struct Reb_Handle_Payload handle;
     struct Reb_Time_Payload time;
@@ -791,17 +791,17 @@ union Reb_Value_Payload {
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// A RELVAL is an equivalent struct layout to to REBVAL, but is allowed to
+// A Cell is an equivalent struct layout to to Value, but is allowed to
 // have a REBACT* as its binding.  A relative value pointer can point to a
 // specific value, but a relative word or array cannot be pointed to by a
-// plain REBVAL*.  The RELVAL-vs-REBVAL distinction is purely commentary
-// in the C build, but the C++ build makes REBVAL a type derived from RELVAL.
+// plain Value*.  The Cell-vs-Value distinction is purely commentary
+// in the C build, but the C++ build makes Value a type derived from Cell.
 //
-// RELVAL exists to help quarantine the bit patterns for relative words into
+// Cell exists to help quarantine the bit patterns for relative words into
 // the deep-copied-body of the function they are for.  To actually look them
 // up, they must be paired with a FRAME! matching the actual instance of the
 // running function on the stack they correspond to.  Once made specific,
-// a word may then be freely copied into any REBVAL slot.
+// a word may then be freely copied into any Value slot.
 //
 // In addition to ANY-WORD!, an ANY-ARRAY! can also be relative, if it is
 // part of the deep-copied function body.  The reason that arrays must be
@@ -813,7 +813,7 @@ union Reb_Value_Payload {
 #ifdef CPLUSPLUS_11
     static_assert(
         std::is_standard_layout<struct Reb_Relative_Value>::value,
-        "C++ RELVAL must match C layout: http://stackoverflow.com/a/7189821/"
+        "C++ Cell must match C layout: http://stackoverflow.com/a/7189821/"
     );
 
     struct Reb_Value : public Reb_Relative_Value
@@ -828,7 +828,7 @@ union Reb_Value_Payload {
 
     static_assert(
         std::is_standard_layout<struct Reb_Value>::value,
-        "C++ REBVAL must match C layout: http://stackoverflow.com/a/7189821/"
+        "C++ cell must match C layout: http://stackoverflow.com/a/7189821/"
     );
 #endif
 
@@ -837,4 +837,4 @@ union Reb_Value_Payload {
 // though this is good enough for many usages for now.
 
 #define VAL(p) \
-    cast(const RELVAL*, (p))
+    cast(const Cell*, (p))

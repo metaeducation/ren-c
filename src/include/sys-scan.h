@@ -232,11 +232,11 @@ typedef struct rebol_scan_state {
 
     // The "limit" feature was not implemented, scanning stopped on a null
     // terminator.  It may be interesting in the future, but it doesn't mix
-    // well with scanning variadics which merge REBVAL and UTF-8 strings
+    // well with scanning variadics which merge Cell and UTF-8 strings
     // together...
     //
     /* const REBYTE *limit; */
-    
+
     REBCNT line;
     const REBYTE *line_head; // head of current line (used for errors)
 
@@ -388,7 +388,7 @@ extern const REBYTE Lex_Map[256];
 
     template<>
     class RebchrPtr<void *> : public RebchrPtr<const void *> {
-    
+
     public:
         RebchrPtr () : RebchrPtr<const void*>() {}
         RebchrPtr (REBWCHAR *p) : RebchrPtr<const void*> (p) {}

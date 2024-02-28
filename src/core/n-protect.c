@@ -36,7 +36,7 @@
 //
 static void Protect_Key(REBCTX *context, REBCNT index, REBFLGS flags)
 {
-    REBVAL *var = CTX_VAR(context, index);
+    Value* var = CTX_VAR(context, index);
 
     // Due to the fact that not all the bits in a value header are copied when
     // Move_Value is done, it's possible to set the protection status of a
@@ -60,7 +60,7 @@ static void Protect_Key(REBCTX *context, REBCNT index, REBFLGS flags)
         //
         Ensure_Keylist_Unique_Invalidated(context);
 
-        REBVAL *key = CTX_KEY(context, index);
+        Value* key = CTX_KEY(context, index);
 
         if (flags & PROT_SET) {
             TYPE_SET(key, REB_TS_HIDDEN);
@@ -79,7 +79,7 @@ static void Protect_Key(REBCTX *context, REBCNT index, REBFLGS flags)
 //
 // Anything that calls this must call Uncolor() when done.
 //
-void Protect_Value(RELVAL *v, REBFLGS flags)
+void Protect_Value(Cell* v, REBFLGS flags)
 {
     if (ANY_SERIES(v))
         Protect_Series(VAL_SERIES(v), VAL_INDEX(v), flags);
@@ -118,7 +118,7 @@ void Protect_Series(REBSER *s, REBCNT index, REBFLGS flags)
 
     Flip_Series_To_Black(s); // recursion protection
 
-    RELVAL *val = ARR_AT(ARR(s), index);
+    Cell* val = ARR_AT(ARR(s), index);
     for (; NOT_END(val); val++)
         Protect_Value(val, flags);
 }
@@ -152,7 +152,7 @@ void Protect_Context(REBCTX *c, REBFLGS flags)
 
     Flip_Series_To_Black(SER(CTX_VARLIST(c))); // for recursion
 
-    REBVAL *var = CTX_VARS_HEAD(c);
+    Value* var = CTX_VARS_HEAD(c);
     for (; NOT_END(var); ++var)
         Protect_Value(var, flags);
 }
@@ -161,7 +161,7 @@ void Protect_Context(REBCTX *c, REBFLGS flags)
 //
 //  Protect_Word_Value: C
 //
-static void Protect_Word_Value(REBVAL *word, REBFLGS flags)
+static void Protect_Word_Value(Value* word, REBFLGS flags)
 {
     if (ANY_WORD(word) and IS_WORD_BOUND(word)) {
         Protect_Key(VAL_WORD_CONTEXT(word), VAL_WORD_INDEX(word), flags);
@@ -170,8 +170,8 @@ static void Protect_Word_Value(REBVAL *word, REBFLGS flags)
             // Ignore existing mutability state so that it may be modified.
             // Most routines should NOT do this!
             //
-            REBVAL *var = m_cast(
-                REBVAL*,
+            Value* var = m_cast(
+                Value*,
                 Get_Opt_Var_May_Fail(word, SPECIFIED)
             );
             Protect_Value(var, flags);
@@ -187,7 +187,7 @@ static void Protect_Word_Value(REBVAL *word, REBFLGS flags)
         if (context != NULL) {
             Protect_Key(context, index, flags);
             if (flags & PROT_DEEP) {
-                REBVAL *var = CTX_VAR(context, index);
+                Value* var = CTX_VAR(context, index);
                 Protect_Value(var, flags);
                 Uncolor(var);
             }
@@ -207,7 +207,7 @@ static REB_R Protect_Unprotect_Core(REBFRM *frame_, REBFLGS flags)
 
     UNUSED(PAR(hide)); // unused here, but processed in caller
 
-    REBVAL *value = ARG(value);
+    Value* value = ARG(value);
 
     // flags has PROT_SET bit (set or not)
 
@@ -225,17 +225,17 @@ static REB_R Protect_Unprotect_Core(REBFRM *frame_, REBFLGS flags)
 
     if (IS_BLOCK(value)) {
         if (REF(words)) {
-            RELVAL *val;
+            Cell* val;
             for (val = VAL_ARRAY_AT(value); NOT_END(val); val++) {
-                DECLARE_LOCAL (word); // need binding, can't pass RELVAL
+                DECLARE_LOCAL (word); // need binding, can't pass Cell
                 Derelativize(word, val, VAL_SPECIFIER(value));
                 Protect_Word_Value(word, flags);  // will unmark if deep
             }
             RETURN (ARG(value));
         }
         if (REF(values)) {
-            REBVAL *var;
-            RELVAL *item;
+            Value* var;
+            Cell* item;
 
             DECLARE_LOCAL (safe);
 
@@ -246,7 +246,7 @@ static REB_R Protect_Unprotect_Core(REBFRM *frame_, REBFLGS flags)
                     // references to even protected values to protect them.
                     //
                     var = m_cast(
-                        REBVAL*,
+                        Value*,
                         Get_Opt_Var_May_Fail(item, VAL_SPECIFIER(value))
                     );
                 }
@@ -354,7 +354,7 @@ REBNATIVE(unprotect)
 //
 //  Is_Value_Immutable: C
 //
-bool Is_Value_Immutable(const RELVAL *v) {
+bool Is_Value_Immutable(const Cell* v) {
     if (
         IS_BLANK(v)
         || IS_BAR(v)
@@ -406,7 +406,7 @@ REBNATIVE(locked_q)
 // moment, etc.  Just put a flag at the top level for now, since that is
 // "better than nothing", and revisit later in the design.
 //
-void Ensure_Value_Immutable(const RELVAL *v, REBSER *opt_locker) {
+void Ensure_Value_Immutable(const Cell* v, REBSER *opt_locker) {
     if (Is_Value_Immutable(v))
         return;
 
@@ -464,7 +464,7 @@ REBNATIVE(lock)
 {
     INCLUDE_PARAMS_OF_LOCK;
 
-    REBVAL *v = ARG(value);
+    Value* v = ARG(value);
 
     if (!REF(clone))
         Move_Value(D_OUT, v);

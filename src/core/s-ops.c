@@ -65,7 +65,7 @@ bool All_Bytes_ASCII(REBYTE *bp, REBCNT len)
 //
 REBYTE *Analyze_String_For_Scan(
     REBSIZ *opt_size_out,
-    const REBVAL *any_string,
+    const Value* any_string,
     REBCNT max_len // maximum length in *codepoints*
 ){
     REBCHR(const *) up = VAL_UNI_AT(any_string);
@@ -153,7 +153,7 @@ REBYTE *Analyze_String_For_Scan(
 REBSER *Temp_UTF8_At_Managed(
     REBSIZ *offset_out,
     REBSIZ *opt_size_out,
-    const RELVAL *str,
+    const Cell* str,
     REBCNT length_limit
 ){
 #if !defined(NDEBUG)
@@ -183,7 +183,7 @@ REBSER *Temp_UTF8_At_Managed(
 //
 // Only valid for BINARY data.
 //
-REBSER *Xandor_Binary(REBVAL *verb, REBVAL *value, REBVAL *arg)
+REBSER *Xandor_Binary(Value* verb, Value* value, Value* arg)
 {
     REBYTE *p0 = VAL_BIN_AT(value);
     REBYTE *p1 = VAL_BIN_AT(arg);
@@ -269,7 +269,7 @@ REBSER *Xandor_Binary(REBVAL *verb, REBVAL *value, REBVAL *arg)
 //
 // Only valid for BINARY data.
 //
-REBSER *Complement_Binary(REBVAL *value)
+REBSER *Complement_Binary(Value* value)
 {
     const REBYTE *bp = VAL_BIN_AT(value);
     REBCNT len = VAL_LEN_AT(value);
@@ -291,7 +291,7 @@ REBSER *Complement_Binary(REBVAL *value)
 // Randomize a string. Return a new string series.
 // Handles both BYTE and UNICODE strings.
 //
-void Shuffle_String(REBVAL *value, bool secure)
+void Shuffle_String(Value* value, bool secure)
 {
     REBCNT n;
     REBCNT k;
@@ -334,7 +334,7 @@ void Trim_Tail(REBSER *src, REBYTE chr)
 //
 // Common code for string case handling.
 //
-void Change_Case(REBVAL *out, REBVAL *val, REBVAL *part, bool upper)
+void Change_Case(Value* out, Value* val, Value* part, bool upper)
 {
     Move_Value(out, val);
 
@@ -397,7 +397,7 @@ void Change_Case(REBVAL *out, REBVAL *val, REBVAL *part, bool upper)
 // !!! CR support is likely to be removed...and CR will be handled as a normal
 // character, with special code needed to process it.
 //
-REBARR *Split_Lines(const REBVAL *str)
+REBARR *Split_Lines(const Value* str)
 {
     REBDSP dsp_orig = DSP;
 

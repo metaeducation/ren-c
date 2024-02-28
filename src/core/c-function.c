@@ -36,11 +36,11 @@
 // Return a block of function words, unbound.
 // Note: skips 0th entry.
 //
-REBARR *List_Func_Words(const RELVAL *func, bool pure_locals)
+REBARR *List_Func_Words(const Cell* func, bool pure_locals)
 {
     REBDSP dsp_orig = DSP;
 
-    REBVAL *param = VAL_ACT_PARAMS_HEAD(func);
+    Value* param = VAL_ACT_PARAMS_HEAD(func);
     for (; NOT_END(param); param++) {
         if (Is_Param_Hidden(param)) // specialization hides parameters
             continue;
@@ -95,15 +95,15 @@ REBARR *List_Func_Words(const RELVAL *func, bool pure_locals)
 // Return a block of function arg typesets.
 // Note: skips 0th entry.
 //
-REBARR *List_Func_Typesets(REBVAL *func)
+REBARR *List_Func_Typesets(Value* func)
 {
     REBARR *array = Make_Arr(VAL_ACT_NUM_PARAMS(func));
-    REBVAL *typeset = VAL_ACT_PARAMS_HEAD(func);
+    Value* typeset = VAL_ACT_PARAMS_HEAD(func);
 
     for (; NOT_END(typeset); typeset++) {
         assert(IS_TYPESET(typeset));
 
-        REBVAL *value = Move_Value(Alloc_Tail_Array(array), typeset);
+        Value* value = Move_Value(Alloc_Tail_Array(array), typeset);
 
         // !!! It's already a typeset, but this will clear out the header
         // bits.  This may not be desirable over the long run (what if
@@ -156,7 +156,7 @@ enum Reb_Spec_Mode {
 // variable.  But it won't be a void at the start.
 //
 REBARR *Make_Paramlist_Managed_May_Fail(
-    const REBVAL *spec,
+    const Value* spec,
     REBFLGS flags
 ) {
     assert(ANY_ARRAY(spec));
@@ -201,10 +201,10 @@ REBARR *Make_Paramlist_Managed_May_Fail(
 
     bool refinement_seen = false;
 
-    const RELVAL *value = VAL_ARRAY_AT(spec);
+    const Cell* value = VAL_ARRAY_AT(spec);
 
     while (NOT_END(value)) {
-        const RELVAL *item = value; // "faked", e.g. <return> => RETURN:
+        const Cell* item = value; // "faked", e.g. <return> => RETURN:
         ++value; // go ahead and consume next
 
     //=//// STRING! FOR FUNCTION DESCRIPTION OR PARAMETER NOTE ////////////=//
@@ -283,7 +283,7 @@ REBARR *Make_Paramlist_Managed_May_Fail(
 
             // Save the block for parameter types.
             //
-            REBVAL *typeset;
+            Value* typeset;
             if (IS_TYPESET(DS_TOP)) {
                 REBSPC *derived = Derive_Specifier(VAL_SPECIFIER(spec), item);
                 DS_PUSH_TRASH;
@@ -390,7 +390,7 @@ REBARR *Make_Paramlist_Managed_May_Fail(
         // But Is_Param_Endable() indicates <end>.
         //
         DS_PUSH_TRASH;
-        REBVAL *typeset = Init_Typeset(
+        Value* typeset = Init_Typeset(
             DS_TOP, // volatile if you DS_PUSH!
             (flags & MKF_ANY_VALUE)
                 ? TS_OPT_VALUE
@@ -530,7 +530,7 @@ REBARR *Make_Paramlist_Managed_May_Fail(
             // no need to move it--it's already at the tail position
         }
         else {
-            REBVAL *param = DS_AT(definitional_return_dsp);
+            Value* param = DS_AT(definitional_return_dsp);
             assert(VAL_PARAM_CLASS(param) == PARAM_CLASS_LOCAL);
             INIT_VAL_PARAM_CLASS(param, PARAM_CLASS_RETURN);
 
@@ -554,7 +554,7 @@ REBARR *Make_Paramlist_Managed_May_Fail(
     // There should be no more pushes past this point, so a stable pointer
     // into the stack for the definitional return can be found.
     //
-    REBVAL *definitional_return =
+    Value* definitional_return =
         definitional_return_dsp == 0
             ? NULL
             : DS_AT(definitional_return_dsp);
@@ -564,7 +564,7 @@ REBARR *Make_Paramlist_Managed_May_Fail(
     REBARR *paramlist = Make_Arr_Core(num_slots, SERIES_MASK_ACTION);
 
     if (true) {
-        REBVAL *canon = RESET_CELL_EXTRA(
+        Value* canon = RESET_CELL_EXTRA(
             ARR_HEAD(paramlist),
             REB_ACTION,
             header_bits
@@ -572,7 +572,7 @@ REBARR *Make_Paramlist_Managed_May_Fail(
         canon->payload.action.paramlist = paramlist;
         INIT_BINDING(canon, UNBOUND);
 
-        REBVAL *dest = canon + 1;
+        Value* dest = canon + 1;
 
         // We want to check for duplicates and a Binder can be used for that
         // purpose--but note that a fail() cannot happen while binders are
@@ -587,7 +587,7 @@ REBARR *Make_Paramlist_Managed_May_Fail(
 
         REBSTR *duplicate = NULL;
 
-        REBVAL *src = DS_AT(dsp_orig + 1) + 3;
+        Value* src = DS_AT(dsp_orig + 1) + 3;
 
         for (; src <= DS_TOP; src += 3) {
             assert(IS_TYPESET(src));
@@ -679,14 +679,14 @@ REBARR *Make_Paramlist_Managed_May_Fail(
         MISC(types_varlist).meta = NULL; // GC sees this, must initialize
         INIT_CTX_KEYLIST_SHARED(CTX(types_varlist), paramlist);
 
-        REBVAL *rootvar = RESET_CELL(ARR_HEAD(types_varlist), REB_FRAME);
+        Value* rootvar = RESET_CELL(ARR_HEAD(types_varlist), REB_FRAME);
         rootvar->payload.any_context.varlist = types_varlist; // canon FRAME!
         rootvar->payload.any_context.phase = ACT(paramlist);
         INIT_BINDING(rootvar, UNBOUND);
 
-        REBVAL *dest = rootvar + 1;
+        Value* dest = rootvar + 1;
 
-        REBVAL *src = DS_AT(dsp_orig + 2);
+        Value* src = DS_AT(dsp_orig + 2);
         src += 3;
         for (; src <= DS_TOP; src += 3) {
             assert(IS_BLOCK(src));
@@ -741,14 +741,14 @@ REBARR *Make_Paramlist_Managed_May_Fail(
         MISC(notes_varlist).meta = NULL; // GC sees this, must initialize
         INIT_CTX_KEYLIST_SHARED(CTX(notes_varlist), paramlist);
 
-        REBVAL *rootvar = RESET_CELL(ARR_HEAD(notes_varlist), REB_FRAME);
+        Value* rootvar = RESET_CELL(ARR_HEAD(notes_varlist), REB_FRAME);
         rootvar->payload.any_context.varlist = notes_varlist; // canon FRAME!
         rootvar->payload.any_context.phase = ACT(paramlist);
         INIT_BINDING(rootvar, UNBOUND);
 
-        REBVAL *dest = rootvar + 1;
+        Value* dest = rootvar + 1;
 
-        REBVAL *src = DS_AT(dsp_orig + 3);
+        Value* src = DS_AT(dsp_orig + 3);
         src += 3;
         for (; src <= DS_TOP; src += 3) {
             assert(IS_TEXT(src));
@@ -812,7 +812,7 @@ REBCNT Find_Param_Index(REBARR *paramlist, REBSTR *spelling)
 {
     REBSTR *canon = STR_CANON(spelling); // don't recalculate each time
 
-    RELVAL *param = ARR_AT(paramlist, 1);
+    Cell* param = ARR_AT(paramlist, 1);
     REBCNT len = ARR_LEN(paramlist);
 
     REBCNT n;
@@ -835,11 +835,11 @@ REBCNT Find_Param_Index(REBARR *paramlist, REBSTR *spelling)
 // Create an archetypal form of a function, given C code implementing a
 // dispatcher that will be called by Eval_Core.  Dispatchers are of the form:
 //
-//     const REBVAL *Dispatcher(REBFRM *f) {...}
+//     const Value* Dispatcher(REBFRM *f) {...}
 //
 // The REBACT returned is "archetypal" because individual REBVALs which hold
-// the same REBACT may differ in a per-REBVAL "binding".  (This is how one
-// RETURN is distinguished from another--the binding data stored in the REBVAL
+// the same REBACT may differ in a per-cell "binding".  (This is how one
+// RETURN is distinguished from another--the binding data stored in the cell
 // identifies the pointer of the FRAME! to exit).
 //
 // Actions have an associated REBARR of data, accessible via ACT_DETAILS().
@@ -855,7 +855,7 @@ REBACT *Make_Action(
 ){
     ASSERT_ARRAY_MANAGED(paramlist);
 
-    RELVAL *rootparam = ARR_HEAD(paramlist);
+    Cell* rootparam = ARR_HEAD(paramlist);
     assert(VAL_TYPE_RAW(rootparam) == REB_ACTION); // !!! not fully formed...
     assert(rootparam->payload.action.paramlist == paramlist);
     assert(rootparam->extra.binding == UNBOUND); // archetype
@@ -870,7 +870,7 @@ REBACT *Make_Action(
 
     bool first_arg = true;
 
-    REBVAL *param = KNOWN(rootparam) + 1;
+    Value* param = KNOWN(rootparam) + 1;
     for (; NOT_END(param); ++param) {
         switch (VAL_PARAM_CLASS(param)) {
         case PARAM_CLASS_LOCAL:
@@ -997,11 +997,11 @@ REBACT *Make_Action(
 //  Make_Expired_Frame_Ctx_Managed: C
 //
 // FUNC/PROC bodies contain relative words and relative arrays.  Arrays from
-// this relativized body may only be put into a specified REBVAL once they
+// this relativized body may only be put into a specified Value once they
 // have been combined with a frame.
 //
 // Reflection asks for action body data, when no instance is called.  Hence
-// a REBVAL must be produced somehow.  If the body is being copied, then the
+// a Value must be produced somehow.  If the body is being copied, then the
 // option exists to convert all the references to unbound...but this isn't
 // representative of the actual connections in the body.
 //
@@ -1019,7 +1019,7 @@ REBCTX *Make_Expired_Frame_Ctx_Managed(REBACT *a)
     SET_SER_INFO(varlist, SERIES_INFO_INACCESSIBLE);
     MISC(varlist).meta = nullptr;
 
-    RELVAL *rootvar = RESET_CELL(ARR_SINGLE(varlist), REB_FRAME);
+    Cell* rootvar = RESET_CELL(ARR_SINGLE(varlist), REB_FRAME);
     rootvar->payload.any_context.varlist = varlist;
     rootvar->payload.any_context.phase = a;
     INIT_BINDING(rootvar, UNBOUND); // !!! is a binding relevant?
@@ -1040,7 +1040,7 @@ REBCTX *Make_Expired_Frame_Ctx_Managed(REBACT *a)
 // dispatchers to code to get the BODY OF an ACTION.  For the moment, just
 // handle common kinds so the SOURCE command works adquately, revisit later.
 //
-void Get_Maybe_Fake_Action_Body(REBVAL *out, const REBVAL *action)
+void Get_Maybe_Fake_Action_Body(Value* out, const Value* action)
 {
     REBSPC *binding = VAL_BINDING(action);
     REBACT *a = VAL_ACTION(action);
@@ -1074,14 +1074,14 @@ void Get_Maybe_Fake_Action_Body(REBVAL *out, const REBVAL *action)
         // Interpreted code, the body is a block with some bindings relative
         // to the action.
 
-        RELVAL *body = ARR_HEAD(details);
+        Cell* body = ARR_HEAD(details);
 
         // The ACTION_FLAG_LEAVE/ACTION_FLAG_RETURN tricks for definitional
         // scoping make it seem like a generator authored more code in the
         // action's body...but the code isn't *actually* there and an
         // optimized internal trick is used.  Fake the code if needed.
 
-        REBVAL *example;
+        Value* example;
         REBCNT real_body_index;
         if (ACT_DISPATCHER(a) == &Voider_Dispatcher) {
             example = Get_System(SYS_STANDARD, STD_PROC_BODY);
@@ -1119,7 +1119,7 @@ void Get_Maybe_Fake_Action_Body(REBVAL *out, const REBVAL *action)
             // To give it the appearance of executing code in place, we use
             // a GROUP!.
 
-            RELVAL *slot = ARR_AT(maybe_fake_body, real_body_index); // #BODY
+            Cell* slot = ARR_AT(maybe_fake_body, real_body_index); // #BODY
             assert(IS_ISSUE(slot));
 
             RESET_VAL_HEADER_EXTRA(slot, REB_GROUP, 0); // clear VAL_FLAG_LINE
@@ -1143,14 +1143,14 @@ void Get_Maybe_Fake_Action_Body(REBVAL *out, const REBVAL *action)
         // The FRAME! stored in the body for the specialization has a phase
         // which is actually the function to be run.
         //
-        REBVAL *frame = KNOWN(ARR_HEAD(details));
+        Value* frame = KNOWN(ARR_HEAD(details));
         assert(IS_FRAME(frame));
         Move_Value(out, frame);
         return;
     }
 
     if (ACT_DISPATCHER(a) == &Generic_Dispatcher) {
-        REBVAL *verb = KNOWN(ARR_HEAD(details));
+        Value* verb = KNOWN(ARR_HEAD(details));
         assert(IS_WORD(verb));
         Move_Value(out, verb);
         return;
@@ -1199,8 +1199,8 @@ void Get_Maybe_Fake_Action_Body(REBVAL *out, const REBVAL *action)
 // by usermode generators that want to create something return-like.
 //
 REBACT *Make_Interpreted_Action_May_Fail(
-    const REBVAL *spec,
-    const REBVAL *code,
+    const Value* spec,
+    const Value* code,
     REBFLGS mkf_flags // MKF_RETURN, etc.
 ) {
     assert(IS_BLOCK(spec) and IS_BLOCK(code));
@@ -1217,7 +1217,7 @@ REBACT *Make_Interpreted_Action_May_Fail(
     // the FUNC generator (with MKF_RETURN) but then named a parameter RETURN
     // which overrides it, so the value won't have ACTION_FLAG_RETURN.
     //
-    REBVAL *value = ACT_ARCHETYPE(a);
+    Value* value = ACT_ARCHETYPE(a);
 
     REBARR *copy;
     if (VAL_ARRAY_LEN_AT(code) == 0) { // optimize empty body case
@@ -1229,7 +1229,7 @@ REBACT *Make_Interpreted_Action_May_Fail(
             ACT_DISPATCHER(a) = &Voider_Dispatcher;
         }
         else if (GET_VAL_FLAG(value, ACTION_FLAG_RETURN)) {
-            REBVAL *typeset = ACT_PARAM(a, ACT_NUM_PARAMS(a));
+            Value* typeset = ACT_PARAM(a, ACT_NUM_PARAMS(a));
             assert(VAL_PARAM_SYM(typeset) == SYM_RETURN);
             if (not TYPE_CHECK(typeset, REB_MAX_NULLED)) // what do [] returns
                 ACT_DISPATCHER(a) = &Returner_Dispatcher; // error when run
@@ -1260,7 +1260,7 @@ REBACT *Make_Interpreted_Action_May_Fail(
         );
     }
 
-    RELVAL *body = RESET_CELL(ARR_HEAD(ACT_DETAILS(a)), REB_BLOCK);
+    Cell* body = RESET_CELL(ARR_HEAD(ACT_DETAILS(a)), REB_BLOCK);
     INIT_VAL_ARRAY(body, copy);
     VAL_INDEX(body) = 0;
     INIT_BINDING(body, a); // Record that block is relative to a function
@@ -1347,7 +1347,7 @@ REB_R Generic_Dispatcher(REBFRM *f)
     REBARR *details = ACT_DETAILS(FRM_PHASE(f));
 
     enum Reb_Kind kind = VAL_TYPE(FRM_ARG(f, 1));
-    REBVAL *verb = KNOWN(ARR_HEAD(details));
+    Value* verb = KNOWN(ARR_HEAD(details));
     assert(IS_WORD(verb));
     assert(kind < REB_MAX);
 
@@ -1397,7 +1397,7 @@ REB_R Void_Dispatcher(REBFRM *f)
 REB_R Datatype_Checker_Dispatcher(REBFRM *f)
 {
     REBARR *details = ACT_DETAILS(FRM_PHASE(f));
-    RELVAL *datatype = ARR_HEAD(details);
+    Cell* datatype = ARR_HEAD(details);
     assert(IS_DATATYPE(datatype));
 
     return Init_Logic(
@@ -1415,7 +1415,7 @@ REB_R Datatype_Checker_Dispatcher(REBFRM *f)
 REB_R Typeset_Checker_Dispatcher(REBFRM *f)
 {
     REBARR *details = ACT_DETAILS(FRM_PHASE(f));
-    RELVAL *typeset = ARR_HEAD(details);
+    Cell* typeset = ARR_HEAD(details);
     assert(IS_TYPESET(typeset));
 
     return Init_Logic(f->out, TYPE_CHECK(typeset, VAL_TYPE(FRM_ARG(f, 1))));
@@ -1432,7 +1432,7 @@ REB_R Typeset_Checker_Dispatcher(REBFRM *f)
 REB_R Unchecked_Dispatcher(REBFRM *f)
 {
     REBARR *details = ACT_DETAILS(FRM_PHASE(f));
-    RELVAL *body = ARR_HEAD(details);
+    Cell* body = ARR_HEAD(details);
     assert(IS_BLOCK(body) and IS_RELATIVE(body) and VAL_INDEX(body) == 0);
 
     if (Do_At_Throws(f->out, VAL_ARRAY(body), 0, SPC(f->varlist)))
@@ -1452,7 +1452,7 @@ REB_R Unchecked_Dispatcher(REBFRM *f)
 REB_R Voider_Dispatcher(REBFRM *f)
 {
     REBARR *details = ACT_DETAILS(FRM_PHASE(f));
-    RELVAL *body = ARR_HEAD(details);
+    Cell* body = ARR_HEAD(details);
     assert(IS_BLOCK(body) and IS_RELATIVE(body) and VAL_INDEX(body) == 0);
 
     if (Do_At_Throws(f->out, VAL_ARRAY(body), 0, SPC(f->varlist)))
@@ -1474,13 +1474,13 @@ REB_R Returner_Dispatcher(REBFRM *f)
     REBACT *phase = FRM_PHASE(f);
     REBARR *details = ACT_DETAILS(phase);
 
-    RELVAL *body = ARR_HEAD(details);
+    Cell* body = ARR_HEAD(details);
     assert(IS_BLOCK(body) and IS_RELATIVE(body) and VAL_INDEX(body) == 0);
 
     if (Do_At_Throws(f->out, VAL_ARRAY(body), 0, SPC(f->varlist)))
         return R_THROWN;
 
-    REBVAL *typeset = ACT_PARAM(phase, ACT_NUM_PARAMS(phase));
+    Value* typeset = ACT_PARAM(phase, ACT_NUM_PARAMS(phase));
     assert(VAL_PARAM_SYM(typeset) == SYM_RETURN);
 
     // Typeset bits for locals in frames are usually ignored, but the RETURN:
@@ -1506,7 +1506,7 @@ REB_R Elider_Dispatcher(REBFRM *f)
 {
     REBARR *details = ACT_DETAILS(FRM_PHASE(f));
 
-    RELVAL *body = ARR_HEAD(details);
+    Cell* body = ARR_HEAD(details);
     assert(IS_BLOCK(body) and IS_RELATIVE(body) and VAL_INDEX(body) == 0);
 
     // !!! It would be nice to use the frame's spare "cell" for the thrownaway
@@ -1533,7 +1533,7 @@ REB_R Elider_Dispatcher(REBFRM *f)
 REB_R Commenter_Dispatcher(REBFRM *f)
 {
     REBARR *details = ACT_DETAILS(FRM_PHASE(f));
-    RELVAL *body = ARR_HEAD(details);
+    Cell* body = ARR_HEAD(details);
     assert(VAL_LEN_AT(body) == 0);
     UNUSED(body);
     return R_INVISIBLE;
@@ -1556,7 +1556,7 @@ REB_R Commenter_Dispatcher(REBFRM *f)
 REB_R Hijacker_Dispatcher(REBFRM *f)
 {
     REBARR *details = ACT_DETAILS(FRM_PHASE(f));
-    RELVAL *hijacker = ARR_HEAD(details);
+    Cell* hijacker = ARR_HEAD(details);
 
     // We need to build a new frame compatible with the hijacker, and
     // transform the parameters we've gathered to be compatible with it.
@@ -1578,8 +1578,8 @@ REB_R Adapter_Dispatcher(REBFRM *f)
     REBARR *details = ACT_DETAILS(FRM_PHASE(f));
     assert(ARR_LEN(details) == 2);
 
-    RELVAL* prelude = ARR_AT(details, 0);
-    REBVAL* adaptee = KNOWN(ARR_AT(details, 1));
+    Cell* prelude = ARR_AT(details, 0);
+    Value* adaptee = KNOWN(ARR_AT(details, 1));
 
     // The first thing to do is run the prelude code, which may throw.  If it
     // does throw--including a RETURN--that means the adapted function will
@@ -1617,9 +1617,9 @@ REB_R Encloser_Dispatcher(REBFRM *f)
     REBARR *details = ACT_DETAILS(FRM_PHASE(f));
     assert(ARR_LEN(details) == 2);
 
-    REBVAL *inner = KNOWN(ARR_AT(details, 0)); // same args as f
+    Value* inner = KNOWN(ARR_AT(details, 0)); // same args as f
     assert(IS_ACTION(inner));
-    REBVAL *outer = KNOWN(ARR_AT(details, 1)); // takes 1 arg (a FRAME!)
+    Value* outer = KNOWN(ARR_AT(details, 1)); // takes 1 arg (a FRAME!)
     assert(IS_ACTION(outer));
 
     assert(GET_SER_FLAG(f->varlist, SERIES_FLAG_STACK));
@@ -1644,7 +1644,7 @@ REB_R Encloser_Dispatcher(REBFRM *f)
     // When the DO of the FRAME! executes, we don't want it to run the
     // encloser again (infinite loop).
     //
-    REBVAL *rootvar = CTX_ARCHETYPE(c);
+    Value* rootvar = CTX_ARCHETYPE(c);
     rootvar->payload.any_context.phase = VAL_ACTION(inner);
     INIT_BINDING_MAY_MANAGE(rootvar, VAL_BINDING(inner));
 
@@ -1685,7 +1685,7 @@ REB_R Chainer_Dispatcher(REBFRM *f)
     // Go in reverse order, so the function to apply last is at the bottom of
     // the stack.
     //
-    REBVAL *chained = KNOWN(ARR_LAST(pipeline));
+    Value* chained = KNOWN(ARR_LAST(pipeline));
     for (; chained != ARR_HEAD(pipeline); --chained) {
         assert(IS_ACTION(chained));
         DS_PUSH(KNOWN(chained));
@@ -1715,9 +1715,9 @@ REB_R Chainer_Dispatcher(REBFRM *f)
 // e.g. `specialize 'append/dup [part: true]` can be done with one FRAME!.
 //
 bool Get_If_Word_Or_Path_Throws(
-    REBVAL *out,
+    Value* out,
     REBSTR **opt_name_out,
-    const RELVAL *v,
+    const Cell* v,
     REBSPC *specifier,
     bool push_refinements
 ) {
@@ -1748,4 +1748,3 @@ bool Get_If_Word_Or_Path_Throws(
 
     return false;
 }
-

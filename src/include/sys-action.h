@@ -49,7 +49,7 @@
 // This signals that the evaluator is in a "thrown state".
 //
 #define R_THROWN \
-    cast(REBVAL*, &PG_R_Thrown)
+    cast(Value*, &PG_R_Thrown)
 
 // See ACTION_FLAG_INVISIBLE...this is what any function with that flag needs
 // to return.
@@ -60,7 +60,7 @@
 // SET-PATH! should always evaluate to what was just set)
 //
 #define R_INVISIBLE \
-    cast(REBVAL*, &PG_R_Invisible)
+    cast(Value*, &PG_R_Invisible)
 
 // If Eval_Core gets back an REB_R_REDO from a dispatcher, it will re-execute
 // the f->phase in the frame.  This function may be changed by the dispatcher
@@ -72,10 +72,10 @@
 // who thought the types had been checked.
 //
 #define R_REDO_UNCHECKED \
-    cast(REBVAL*, &PG_R_Redo_Unchecked)
+    cast(Value*, &PG_R_Redo_Unchecked)
 
 #define R_REDO_CHECKED \
-    cast(REBVAL*, &PG_R_Redo_Checked)
+    cast(Value*, &PG_R_Redo_Checked)
 
 
 // Path dispatch used to have a return value PE_SET_IF_END which meant that
@@ -83,7 +83,7 @@
 // set, and if it were doing a set then to write the value to set into the
 // target cell.  That means it had to keep track of a pointer to a cell vs.
 // putting the bits of the cell into the output.  This is now done with a
-// special REB_R_REFERENCE type which holds in its payload a RELVAL and a
+// special REB_R_REFERENCE type which holds in its payload a Cell and a
 // specifier, which is enough to be able to do either a read or a write,
 // depending on the need.
 //
@@ -92,17 +92,17 @@
 // generalized design.
 //
 #define R_REFERENCE \
-    cast(REBVAL*, &PG_R_Reference)
+    cast(Value*, &PG_R_Reference)
 
 // This is used in path dispatch, signifying that a SET-PATH! assignment
 // resulted in the updating of an immediate expression in pvs->out, meaning
 // it will have to be copied back into whatever reference cell it had been in.
 //
 #define R_IMMEDIATE \
-    cast(REBVAL*, &PG_R_Immediate)
+    cast(Value*, &PG_R_Immediate)
 
 #define R_UNHANDLED \
-    cast(REBVAL*, &PG_End_Node)
+    cast(Value*, &PG_End_Node)
 
 
 inline static REBARR *ACT_PARAMLIST(REBACT *a) {
@@ -111,7 +111,7 @@ inline static REBARR *ACT_PARAMLIST(REBACT *a) {
 }
 
 #define ACT_ARCHETYPE(a) \
-    cast(REBVAL*, cast(REBSER*, ACT_PARAMLIST(a))->content.dynamic.data)
+    cast(Value*, cast(REBSER*, ACT_PARAMLIST(a))->content.dynamic.data)
 
 // Functions hold their flags in their canon value, some of which are cached
 // flags put there during Make_Action().
@@ -134,9 +134,9 @@ inline static REBARR *ACT_PARAMLIST(REBACT *a) {
 #define IDX_NATIVE_CONTEXT 1 // libRebol binds strings here (and lib)
 #define IDX_NATIVE_MAX (IDX_NATIVE_CONTEXT + 1)
 
-inline static REBVAL *ACT_PARAM(REBACT *a, REBCNT n) {
+inline static Value* ACT_PARAM(REBACT *a, REBCNT n) {
     assert(n != 0 and n < ARR_LEN(ACT_PARAMLIST(a)));
-    return SER_AT(REBVAL, SER(ACT_PARAMLIST(a)), n);
+    return SER_AT(Value, SER(ACT_PARAMLIST(a)), n);
 }
 
 #define ACT_NUM_PARAMS(a) \
@@ -171,18 +171,18 @@ inline static REBCTX *ACT_EXEMPLAR(REBACT *a) {
     return nullptr;
 }
 
-inline static REBVAL *ACT_SPECIALTY_HEAD(REBACT *a) {
+inline static Value* ACT_SPECIALTY_HEAD(REBACT *a) {
     REBARR *details = ACT_ARCHETYPE(a)->payload.action.details;
     REBSER *s = SER(LINK(details).specialty);
-    return cast(REBVAL*, s->content.dynamic.data) + 1; // skip archetype/root
+    return cast(Value*, s->content.dynamic.data) + 1; // skip archetype/root
 }
 
 
 // There is no binding information in a function parameter (typeset) so a
-// REBVAL should be okay.
+// Value* should be okay.
 //
 #define ACT_PARAMS_HEAD(a) \
-    (cast(REBVAL*, SER(ACT_PARAMLIST(a))->content.dynamic.data) + 1)
+    (cast(Value*, SER(ACT_PARAMLIST(a))->content.dynamic.data) + 1)
 
 
 
@@ -257,7 +257,7 @@ inline static REBVAL *ACT_SPECIALTY_HEAD(REBACT *a) {
         | ACTION_FLAG_INVISIBLE)
 
 
-inline static REBACT *VAL_ACTION(const RELVAL *v) {
+inline static REBACT *VAL_ACTION(const Cell* v) {
     assert(IS_ACTION(v));
     REBSER *s = SER(v->payload.action.paramlist);
     if (GET_SER_INFO(s, SERIES_INFO_INACCESSIBLE))
@@ -277,17 +277,17 @@ inline static REBACT *VAL_ACTION(const RELVAL *v) {
 #define VAL_ACT_PARAM(v,n) \
     ACT_PARAM(VAL_ACTION(v), n)
 
-inline static REBARR *VAL_ACT_DETAILS(const RELVAL *v) {
+inline static REBARR *VAL_ACT_DETAILS(const Cell* v) {
     assert(IS_ACTION(v));
     return v->payload.action.details;
 }
 
-inline static REBNAT VAL_ACT_DISPATCHER(const RELVAL *v) {
+inline static REBNAT VAL_ACT_DISPATCHER(const Cell* v) {
     assert(IS_ACTION(v));
     return MISC(v->payload.action.details).dispatcher;
 }
 
-inline static REBCTX *VAL_ACT_META(const RELVAL *v) {
+inline static REBCTX *VAL_ACT_META(const Cell* v) {
     assert(IS_ACTION(v));
     return MISC(v->payload.action.paramlist).meta;
 }
@@ -304,12 +304,12 @@ inline static REBCTX *VAL_ACT_META(const RELVAL *v) {
     VAL_ACTION(NAT_VALUE(name))
 
 
-// A fully constructed action can reconstitute the ACTION! REBVAL
-// that is its canon form from a single pointer...the REBVAL sitting in
+// A fully constructed action can reconstitute the ACTION! cell
+// that is its canon form from a single pointer...the cell sitting in
 // the 0 slot of the action's paramlist.
 //
-static inline REBVAL *Init_Action_Unbound(
-    RELVAL *out,
+static inline Value* Init_Action_Unbound(
+    Cell* out,
     REBACT *a
 ){
   #if !defined(NDEBUG)
@@ -321,8 +321,8 @@ static inline REBVAL *Init_Action_Unbound(
     return KNOWN(out);
 }
 
-static inline REBVAL *Init_Action_Maybe_Bound(
-    RELVAL *out,
+static inline Value* Init_Action_Maybe_Bound(
+    Cell* out,
     REBACT *a,
     REBNOD *binding // allowed to be UNBOUND
 ){

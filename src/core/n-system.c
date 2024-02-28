@@ -261,7 +261,7 @@ REBNATIVE(check)
 
     fail (Error_Debug_Only_Raw());
 #else
-    REBVAL *value = ARG(value);
+    Value* value = ARG(value);
 
     // For starters, check the memory (if it's bad, all other bets are off)
     //
@@ -321,7 +321,7 @@ int ceil_log2(unsigned long long x) {
 //
 //      return: [<opt>]
 //      tick [<blank> integer!]
-//          {Get from PANIC, REBFRM.tick, REBSER.tick, REBVAL.extra.tick}
+//          {Get from PANIC, REBFRM.tick, REBSER.tick, Cell.extra.tick}
 //      /relative
 //          {TICK parameter represents a count relative to the current tick}
 //      /compensate

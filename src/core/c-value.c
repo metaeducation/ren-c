@@ -1,6 +1,6 @@
 //
 //  File: %c-value.c
-//  Summary: "Generic REBVAL Support Services and Debug Routines"
+//  Summary: "Generic Value Cell Support Services and Debug Routines"
 //  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
 //  Homepage: https://github.com/metaeducation/ren-c/
 //
@@ -28,7 +28,7 @@
 // These are mostly DEBUG-build routines to support the macros and definitions
 // in %sys-value.h.
 //
-// These are not specific to any given type.  For the type-specific REBVAL
+// These are not specific to any given type.  For the type-specific cell
 // code, see files with names like %t-word.c, %t-logic.c, %t-integer.c...
 //
 
@@ -50,7 +50,7 @@
 // information was stored.  (See DEBUG_TRACK_EXTEND_CELLS for more intense
 // debugging scenarios, which track all cell types, but at greater cost.)
 //
-ATTRIBUTE_NO_RETURN void Panic_Value_Debug(const RELVAL *v) {
+ATTRIBUTE_NO_RETURN void Panic_Value_Debug(const Cell* v) {
     fflush(stdout);
     fflush(stderr);
 
@@ -62,7 +62,7 @@ ATTRIBUTE_NO_RETURN void Panic_Value_Debug(const RELVAL *v) {
     case REB_LOGIC:
     case REB_BAR:
       #if defined(DEBUG_TRACK_CELLS)
-        printf("REBVAL init ");
+        printf("Cell init ");
 
         #if defined(DEBUG_TRACK_EXTEND_CELLS)
             #if defined(DEBUG_COUNT_TICKS)
@@ -128,7 +128,7 @@ inline static void Probe_Print_Helper(
 }
 
 
-inline static void Probe_Molded_Value(const REBVAL *v)
+inline static void Probe_Molded_Value(const Value* v)
 {
     DECLARE_MOLD (mo);
     Push_Mold(mo);
@@ -223,7 +223,7 @@ void* Probe_Core_Debug(
 
     case DETECTED_AS_CELL: {
         Probe_Print_Helper(p, "Value", file, line);
-        Mold_Value(mo, cast(const REBVAL*, p));
+        Mold_Value(mo, cast(const Value*, p));
         break; }
 
     case DETECTED_AS_END:

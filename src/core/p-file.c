@@ -42,7 +42,7 @@
 //
 // Convert native action refinements to file modes.
 //
-static void Setup_File(struct devreq_file *file, REBFLGS flags, REBVAL *path)
+static void Setup_File(struct devreq_file *file, REBFLGS flags, Value* path)
 {
     REBREQ *req = AS_REBREQ(file);
 
@@ -84,11 +84,11 @@ static void Cleanup_File(struct devreq_file *file)
 //
 // Produces a STD_FILE_INFO object.
 //
-void Query_File_Or_Dir(REBVAL *out, REBVAL *port, struct devreq_file *file)
+void Query_File_Or_Dir(Value* out, Value* port, struct devreq_file *file)
 {
     REBREQ *req = AS_REBREQ(file);
 
-    REBVAL *info = rebValue(
+    Value* info = rebValue(
         "copy ensure object! (", port , ")/scheme/info"
     ); // shallow copy
 
@@ -100,7 +100,7 @@ void Query_File_Or_Dir(REBVAL *out, REBVAL *port, struct devreq_file *file)
     );
     Init_Integer(CTX_VAR(ctx, STD_FILE_INFO_SIZE), file->size);
 
-    REBVAL *timestamp = OS_FILE_TIME(file);
+    Value* timestamp = OS_FILE_TIME(file);
     Move_Value(CTX_VAR(ctx, STD_FILE_INFO_DATE), timestamp);
     rebRelease(timestamp);
 
@@ -118,9 +118,9 @@ void Query_File_Or_Dir(REBVAL *out, REBVAL *port, struct devreq_file *file)
 // Open a file port.
 //
 static void Open_File_Port(
-    REBVAL *port,
+    Value* port,
     struct devreq_file *file,
-    REBVAL *path
+    Value* path
 ){
     UNUSED(port);
 
@@ -154,10 +154,10 @@ REBINT Mode_Syms[] = {
 // Read from a file port.
 //
 static void Read_File_Port(
-    REBVAL *out,
-    REBVAL *port,
+    Value* out,
+    Value* port,
     struct devreq_file *file,
-    REBVAL *path,
+    Value* path,
     REBFLGS flags,
     REBCNT len
 ) {
@@ -186,7 +186,7 @@ static void Read_File_Port(
 //
 //  Write_File_Port: C
 //
-static void Write_File_Port(struct devreq_file *file, REBVAL *data, REBCNT len, bool lines)
+static void Write_File_Port(struct devreq_file *file, Value* data, REBCNT len, bool lines)
 {
     REBSER *ser;
     REBREQ *req = AS_REBREQ(file);
@@ -251,7 +251,7 @@ static REBCNT Set_Length(const struct devreq_file *file, REBI64 limit)
 //
 // Computes the number of bytes that should be skipped.
 //
-static void Set_Seek(struct devreq_file *file, REBVAL *arg)
+static void Set_Seek(struct devreq_file *file, Value* arg)
 {
     REBI64 cnt;
     REBREQ *req = AS_REBREQ(file);
@@ -271,14 +271,14 @@ static void Set_Seek(struct devreq_file *file, REBVAL *arg)
 //
 // Internal port handler for files.
 //
-static REB_R File_Actor(REBFRM *frame_, REBVAL *port, REBVAL *verb)
+static REB_R File_Actor(REBFRM *frame_, Value* port, Value* verb)
 {
     REBCTX *ctx = VAL_CONTEXT(port);
-    REBVAL *spec = CTX_VAR(ctx, STD_PORT_SPEC);
+    Value* spec = CTX_VAR(ctx, STD_PORT_SPEC);
     if (!IS_OBJECT(spec))
         fail (Error_Invalid_Spec_Raw(spec));
 
-    REBVAL *path = Obj_Value(spec, STD_PORT_SPEC_HEAD_REF);
+    Value* path = Obj_Value(spec, STD_PORT_SPEC_HEAD_REF);
     if (path == NULL)
         fail (Error_Invalid_Spec_Raw(spec));
 
@@ -371,7 +371,7 @@ static REB_R File_Actor(REBFRM *frame_, REBVAL *port, REBVAL *verb)
         Read_File_Port(D_OUT, port, file, path, flags, len);
 
         if (opened) {
-            REBVAL *result = OS_DO_DEVICE(req, RDC_CLOSE);
+            Value* result = OS_DO_DEVICE(req, RDC_CLOSE);
             assert(result != NULL); // should be synchronous
 
             Cleanup_File(file);
@@ -402,7 +402,7 @@ static REB_R File_Actor(REBFRM *frame_, REBVAL *port, REBVAL *verb)
             fail (Error_Bad_Refines_Raw());
         }
 
-        REBVAL *data = ARG(data); // binary, string, or block
+        Value* data = ARG(data); // binary, string, or block
 
         // Handle the WRITE %file shortcut case, where the FILE! is converted
         // to a PORT! but it hasn't been opened yet.
@@ -442,7 +442,7 @@ static REB_R File_Actor(REBFRM *frame_, REBVAL *port, REBVAL *verb)
         Write_File_Port(file, data, len, REF(lines));
 
         if (opened) {
-            REBVAL *result = OS_DO_DEVICE(req, RDC_CLOSE);
+            Value* result = OS_DO_DEVICE(req, RDC_CLOSE);
             assert(result != NULL); // should be synchronous
 
             Cleanup_File(file);
@@ -503,7 +503,7 @@ static REB_R File_Actor(REBFRM *frame_, REBVAL *port, REBVAL *verb)
         UNUSED(PAR(port));
 
         if (req->flags & RRF_OPEN) {
-            REBVAL *result = OS_DO_DEVICE(req, RDC_CLOSE);
+            Value* result = OS_DO_DEVICE(req, RDC_CLOSE);
             assert(result != NULL); // should be synchronous
 
             Cleanup_File(file);
@@ -523,7 +523,7 @@ static REB_R File_Actor(REBFRM *frame_, REBVAL *port, REBVAL *verb)
             fail (Error_No_Delete_Raw(path));
         Setup_File(file, 0, path);
 
-        REBVAL *result = OS_DO_DEVICE(req, RDC_DELETE);
+        Value* result = OS_DO_DEVICE(req, RDC_DELETE);
         assert(result != NULL); // should be synchronous
 
         if (rebDid("error?", result))
@@ -542,7 +542,7 @@ static REB_R File_Actor(REBFRM *frame_, REBVAL *port, REBVAL *verb)
 
         req->common.data = cast(REBYTE*, ARG(to)); // !!! hack!
 
-        REBVAL *result = OS_DO_DEVICE(req, RDC_RENAME);
+        Value* result = OS_DO_DEVICE(req, RDC_RENAME);
         assert(result != NULL); // should be synchronous
         if (rebDid("error?", result))
             rebJumps("FAIL", result);
@@ -554,13 +554,13 @@ static REB_R File_Actor(REBFRM *frame_, REBVAL *port, REBVAL *verb)
         if (not (req->flags & RRF_OPEN)) {
             Setup_File(file, AM_OPEN_WRITE | AM_OPEN_NEW, path);
 
-            REBVAL *cr_result = OS_DO_DEVICE(req, RDC_CREATE);
+            Value* cr_result = OS_DO_DEVICE(req, RDC_CREATE);
             assert(cr_result != NULL);
             if (rebDid("error?", cr_result))
                 rebJumps("FAIL", cr_result);
             rebRelease(cr_result);
 
-            REBVAL *cl_result = OS_DO_DEVICE(req, RDC_CLOSE);
+            Value* cl_result = OS_DO_DEVICE(req, RDC_CLOSE);
             assert(cl_result != NULL);
             if (rebDid("error?", cl_result))
                 rebJumps("FAIL", cl_result);
@@ -582,7 +582,7 @@ static REB_R File_Actor(REBFRM *frame_, REBVAL *port, REBVAL *verb)
 
         if (not (req->flags & RRF_OPEN)) {
             Setup_File(file, 0, path);
-            REBVAL *result = OS_DO_DEVICE(req, RDC_QUERY);
+            Value* result = OS_DO_DEVICE(req, RDC_QUERY);
             assert(result != NULL);
             if (rebDid("error?", result)) {
                 rebRelease(result); // !!! R3-Alpha returned blank on error
@@ -607,7 +607,7 @@ static REB_R File_Actor(REBFRM *frame_, REBVAL *port, REBVAL *verb)
         if (not (req->flags & RRF_OPEN)) {
             Setup_File(file, 0, path);
 
-            REBVAL *result = OS_DO_DEVICE(req, RDC_MODIFY);
+            Value* result = OS_DO_DEVICE(req, RDC_MODIFY);
             assert(result != NULL);
             if (rebDid("error?", result)) {
                 rebRelease(result); // !!! R3-Alpha returned blank on error

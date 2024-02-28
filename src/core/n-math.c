@@ -58,7 +58,7 @@ enum {SINE, COSINE, TANGENT};
 // Convert integer arg, if present, to decimal and convert to radians
 // if necessary.  Clip ranges for correct REBOL behavior.
 //
-static REBDEC Trig_Value(const REBVAL *value, bool radians, REBCNT which)
+static REBDEC Trig_Value(const Value* value, bool radians, REBCNT which)
 {
     REBDEC dval = AS_DECIMAL(value);
 
@@ -85,7 +85,7 @@ static REBDEC Trig_Value(const REBVAL *value, bool radians, REBCNT which)
 //
 //  Arc_Trans: C
 //
-static void Arc_Trans(REBVAL *out, const REBVAL *value, bool radians, REBCNT kind)
+static void Arc_Trans(Value* out, const Value* value, bool radians, REBCNT kind)
 {
     REBDEC dval = AS_DECIMAL(value);
     if (kind != TANGENT and (dval < -1 || dval > 1))
@@ -365,7 +365,7 @@ REBNATIVE(shift)
     INCLUDE_PARAMS_OF_SHIFT;
 
     REBI64 b = VAL_INT64(ARG(bits));
-    REBVAL *a = ARG(value);
+    Value* a = ARG(value);
 
     if (b < 0) {
         REBU64 c = - cast(REBU64, b); // defined, see note on #pragma above
@@ -422,7 +422,7 @@ REBNATIVE(shift)
 
 //  CT_Fail: C
 //
-REBINT CT_Fail(const RELVAL *a, const RELVAL *b, REBINT mode)
+REBINT CT_Fail(const Cell* a, const Cell* b, REBINT mode)
 {
     UNUSED(a);
     UNUSED(b);
@@ -434,7 +434,7 @@ REBINT CT_Fail(const RELVAL *a, const RELVAL *b, REBINT mode)
 
 //  CT_Unhooked: C
 //
-REBINT CT_Unhooked(const RELVAL *a, const RELVAL *b, REBINT mode)
+REBINT CT_Unhooked(const Cell* a, const Cell* b, REBINT mode)
 {
     UNUSED(a);
     UNUSED(b);
@@ -465,7 +465,7 @@ REBINT CT_Unhooked(const RELVAL *a, const RELVAL *b, REBINT mode)
 // in native code that can overwrite its argument values without
 // that being a problem, so it doesn't matter.
 //
-REBINT Compare_Modify_Values(RELVAL *a, RELVAL *b, REBINT strictness)
+REBINT Compare_Modify_Values(Cell* a, Cell* b, REBINT strictness)
 {
     REBCNT ta = VAL_TYPE(a);
     REBCNT tb = VAL_TYPE(b);
@@ -662,8 +662,8 @@ REBNATIVE(same_q)
 {
     INCLUDE_PARAMS_OF_SAME_Q;
 
-    REBVAL *value1 = ARG(value1);
-    REBVAL *value2 = ARG(value2);
+    Value* value1 = ARG(value1);
+    Value* value2 = ARG(value2);
 
     if (VAL_TYPE(value1) != VAL_TYPE(value2))
         return Init_False(D_OUT); // can't be "same" value if not same type
@@ -851,8 +851,8 @@ REBNATIVE(maximum)
 {
     INCLUDE_PARAMS_OF_MAXIMUM;
 
-    const REBVAL *value1 = ARG(value1);
-    const REBVAL *value2 = ARG(value2);
+    const Value* value1 = ARG(value1);
+    const Value* value2 = ARG(value2);
 
     if (IS_PAIR(value1) || IS_PAIR(value2)) {
         Min_Max_Pair(D_OUT, value1, value2, true);
@@ -885,8 +885,8 @@ REBNATIVE(minimum)
 {
     INCLUDE_PARAMS_OF_MINIMUM;
 
-    const REBVAL *value1 = ARG(value1);
-    const REBVAL *value2 = ARG(value2);
+    const Value* value1 = ARG(value1);
+    const Value* value2 = ARG(value2);
 
     if (IS_PAIR(ARG(value1)) || IS_PAIR(ARG(value2))) {
         Min_Max_Pair(D_OUT, ARG(value1), ARG(value2), false);

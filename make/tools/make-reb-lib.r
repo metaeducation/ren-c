@@ -290,10 +290,10 @@ e-lib/emit {
     /*
      * The API can be used by the core on value cell pointers that are in
      * stable locations guarded by GC (e.g. frame argument or output cells).
-     * Since the core uses REBVAL*, it must be accurate (not just a void*)
+     * Since the core uses Value*, it must be accurate (not just a void*)
      */
     struct Reb_Value;
-    #define REBVAL struct Reb_Value
+    typedef struct Reb_Value RebolValue;
 
     /*
      * `wchar_t` is a pre-Unicode abstraction, whose size varies per-platform
@@ -319,27 +319,27 @@ e-lib/emit {
 
     /*
      * "Dangerous Function" which is called by rebRescue().  Argument can be a
-     * REBVAL* but does not have to be.  Result must be a REBVAL* or NULL.
+     * Value* but does not have to be.  Result must be a Value* or NULL.
      *
      * !!! If the dangerous function returns an ERROR!, it will currently be
      * converted to null, which parallels TRAP without a handler.  nulls will
      * be converted to voids.
      */
-    typedef REBVAL* (REBDNG)(void *opaque);
+    typedef RebolValue* (REBDNG)(void* opaque);
 
     /*
      * "Rescue Function" called as the handler in rebRescueWith().  Receives
-     * the REBVAL* of the error that occurred, and the opaque pointer.
+     * the Value* of the error that occurred, and the opaque pointer.
      *
      * !!! If either the dangerous function or the rescuing function return an
      * ERROR! value, that is not interfered with the way rebRescue() does.
      */
-    typedef REBVAL* (REBRSC)(REBVAL *error, void *opaque);
+    typedef RebolValue* (REBRSC)(RebolValue* error, void* opaque);
 
     /*
      * For some HANDLE!s GC callback
      */
-    typedef void (CLEANUP_CFUNC)(const REBVAL*);
+    typedef void (CLEANUP_CFUNC)(const RebolValue*);
 
     /*
      * The API maps Rebol's `null` to C's 0 pointer, **but don't use NULL**.
@@ -356,7 +356,7 @@ e-lib/emit {
      * provided in case defining `nullptr` is not an option--for some reason.
      */
     #define rebNull \
-        ((REBVAL*)0)
+        ((RebolValue*)0)
 
     /*
      * Since a C nullptr (pointer cast of 0) is used to represent the Rebol
@@ -441,7 +441,7 @@ e-lib/emit {
      * Originally R3-Alpha's hostkit had special OS_ALLOC and OS_FREE hooks,
      * to facilitate the core to free memory blocks allocated by the host
      * (or vice-versa).  So they agreed on an allocator.  In Ren-C, all
-     * layers use REBVAL* for the purpose of exchanging such information--so
+     * layers use Value* for the purpose of exchanging such information--so
      * this purpose is obsolete.
      *
      * Yet a new API construct called rebMalloc() offers some advantages over

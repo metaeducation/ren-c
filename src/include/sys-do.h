@@ -36,7 +36,7 @@
 
 
 inline static bool Do_At_Throws(
-    REBVAL *out,
+    Value* out,
     REBARR *array,
     REBCNT index,
     REBSPC *specifier
@@ -53,8 +53,8 @@ inline static bool Do_At_Throws(
 
 
 inline static bool Do_Any_Array_At_Throws(
-    REBVAL *out,
-    const REBVAL *any_array // Note: can be same pointer as `out`
+    Value* out,
+    const Value* any_array // Note: can be same pointer as `out`
 ){
     return Do_At_Throws(
         out,
@@ -66,7 +66,7 @@ inline static bool Do_Any_Array_At_Throws(
 
 
 inline static bool Do_Va_Throws(
-    REBVAL *out,
+    Value* out,
     const void *opt_first,
     va_list *vaptr // va_end() will be called on success, fail, throw, etc.
 ){
@@ -88,9 +88,9 @@ inline static bool Do_Va_Throws(
 // error will be thrown.
 //
 inline static bool Apply_Only_Throws(
-    REBVAL *out,
+    Value* out,
     bool fully,
-    const REBVAL *applicand, // last param before ... mentioned in va_start()
+    const Value* applicand, // last param before ... mentioned in va_start()
     ...
 ) {
     va_list va;
@@ -124,9 +124,9 @@ inline static bool Apply_Only_Throws(
 // https://forum.rebol.info/t/backpedaling-on-non-block-branches/476
 //
 inline static bool Do_Branch_Core_Throws(
-    REBVAL *out,
-    const REBVAL *branch,
-    const REBVAL *condition // can be END or nullptr--can't be a NULLED cell!
+    Value* out,
+    const Value* branch,
+    const Value* condition // can be END or nullptr--can't be a NULLED cell!
 ){
     assert(branch != out and condition != out);
 

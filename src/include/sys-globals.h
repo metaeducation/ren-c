@@ -91,52 +91,52 @@ PVAR REB_OPTS *Reb_Opts;
 // arrays--they are singular values, and the second element is set to
 // be trash to trap any unwanted access.
 //
-PVAR RELVAL PG_End_Node;
-PVAR REBVAL PG_Nulled_Cell[2];
+PVAR Cell PG_End_Node;
+PVAR Value PG_Nulled_Cell[2];
 
-PVAR REBVAL PG_Blank_Value[2];
-PVAR REBVAL PG_Bar_Value[2];
-PVAR REBVAL PG_False_Value[2];
-PVAR REBVAL PG_True_Value[2];
-PVAR REBVAL PG_Void_Value[2];
+PVAR Value PG_Blank_Value[2];
+PVAR Value PG_Bar_Value[2];
+PVAR Value PG_False_Value[2];
+PVAR Value PG_True_Value[2];
+PVAR Value PG_Void_Value[2];
 
-PVAR REBVAL PG_R_Invisible[2]; // has "pseudotype" REB_R_INVISIBLE
-PVAR REBVAL PG_R_Immediate[2]; // has "pseudotype" REB_R_IMMEDIATE
-PVAR REBVAL PG_R_Redo_Unchecked[2]; // "pseudotype" REB_R_REDO + FALSEY flag
-PVAR REBVAL PG_R_Redo_Checked[2]; // "pseudotype" REB_R_REDO + no FALSEY flag
-PVAR REBVAL PG_R_Reference[2]; // "pseudotype" REB_R_REFERENCE
-PVAR REBVAL PG_R_Thrown[2]; // has "pseudotype" REB_R_THROWN
+PVAR Value PG_R_Invisible[2]; // has "pseudotype" REB_R_INVISIBLE
+PVAR Value PG_R_Immediate[2]; // has "pseudotype" REB_R_IMMEDIATE
+PVAR Value PG_R_Redo_Unchecked[2]; // "pseudotype" REB_R_REDO + FALSEY flag
+PVAR Value PG_R_Redo_Checked[2]; // "pseudotype" REB_R_REDO + no FALSEY flag
+PVAR Value PG_R_Reference[2]; // "pseudotype" REB_R_REFERENCE
+PVAR Value PG_R_Thrown[2]; // has "pseudotype" REB_R_THROWN
 
 // These are root variables which used to be described in %root.r and kept
 // alive by keeping that array alive.  Now they are API handles, kept alive
 // by the same mechanism they use.  This means they can be initialized at
 // the appropriate moment during the boot, one at a time.
 
-PVAR REBVAL *Root_System;
-PVAR REBVAL *Root_Typesets;
+PVAR Value* Root_System;
+PVAR Value* Root_Typesets;
 
-PVAR REBVAL *Root_Void_Tag; // used with RETURN: <void> to suppress results
-PVAR REBVAL *Root_With_Tag; // overrides locals gathering (can disable RETURN)
-PVAR REBVAL *Root_Ellipsis_Tag; // marks variadic argument <...>
-PVAR REBVAL *Root_Opt_Tag; // marks optional argument (can be NULL)
-PVAR REBVAL *Root_End_Tag; // marks endable argument (NULL if at end of input)
-PVAR REBVAL *Root_Blank_Tag; // marks that passing blank won't run the action
-PVAR REBVAL *Root_Local_Tag; // marks beginning of a list of "pure locals"
-PVAR REBVAL *Root_Skip_Tag; // marks a hard quote as "skippable" if wrong type
+PVAR Value* Root_Void_Tag; // used with RETURN: <void> to suppress results
+PVAR Value* Root_With_Tag; // overrides locals gathering (can disable RETURN)
+PVAR Value* Root_Ellipsis_Tag; // marks variadic argument <...>
+PVAR Value* Root_Opt_Tag; // marks optional argument (can be NULL)
+PVAR Value* Root_End_Tag; // marks endable argument (NULL if at end of input)
+PVAR Value* Root_Blank_Tag; // marks that passing blank won't run the action
+PVAR Value* Root_Local_Tag; // marks beginning of a list of "pure locals"
+PVAR Value* Root_Skip_Tag; // marks a hard quote as "skippable" if wrong type
 
-PVAR REBVAL *Root_Empty_Text; // read-only ""
-PVAR REBVAL *Root_Empty_Binary; // read-only #{}
-PVAR REBVAL *Root_Empty_Block; // read-only []
+PVAR Value* Root_Empty_Text; // read-only ""
+PVAR Value* Root_Empty_Binary; // read-only #{}
+PVAR Value* Root_Empty_Block; // read-only []
 PVAR REBARR* PG_Empty_Array; // optimization of VAL_ARRAY(Root_Empty_Block)
 
-PVAR REBVAL *Root_Space_Char; // ' ' as a CHAR!
-PVAR REBVAL *Root_Newline_Char; // '\n' as a CHAR!
+PVAR Value* Root_Space_Char; // ' ' as a CHAR!
+PVAR Value* Root_Newline_Char; // '\n' as a CHAR!
 
-PVAR REBVAL *Root_Action_Meta;
+PVAR Value* Root_Action_Meta;
 
-PVAR REBVAL *Root_Stats_Map;
+PVAR Value* Root_Stats_Map;
 
-PVAR REBVAL *Root_Stackoverflow_Error; // made in advance, avoids extra calls
+PVAR Value* Root_Stackoverflow_Error; // made in advance, avoids extra calls
 
 
 // This signal word should be thread-local, but it will not work
@@ -152,7 +152,7 @@ PVAR REBACT *PG_Dummy_Action;
 // single step debugging, etc.
 //
 PVAR REBEVL PG_Eval_Throws; // Evaluator (takes REBFRM, returns void)
-PVAR REBNAT PG_Dispatcher; // Dispatcher (takes REBFRM, returns REBVAL*)
+PVAR REBNAT PG_Dispatcher; // Dispatcher (takes REBFRM, returns Value*)
 
 
 /***********************************************************************
@@ -161,7 +161,7 @@ PVAR REBNAT PG_Dispatcher; // Dispatcher (takes REBFRM, returns REBVAL*)
 **
 ***********************************************************************/
 
-TVAR REBVAL TG_Thrown_Arg;  // Non-GC protected argument to THROW
+TVAR Value TG_Thrown_Arg;  // Non-GC protected argument to THROW
 
 // !!! These values were held in REBVALs for some reason in R3-Alpha, which
 // means that since they were INTEGER! they were signed 64-bit integers.  It
@@ -229,7 +229,7 @@ TVAR REBARR *TG_Reuse;
 //-- Evaluation stack:
 TVAR REBARR *DS_Array;
 TVAR REBDSP DS_Index;
-TVAR REBVAL *DS_Movable_Top;
+TVAR Value* DS_Movable_Top;
 
 TVAR struct Reb_State *Saved_State; // Saved state for Catch (CPU state, etc.)
 

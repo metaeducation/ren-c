@@ -48,7 +48,7 @@ int _NSGetExecutablePath(char* buf, uint32_t* bufsize);
 // Return the current executable path as a STRING!.  The result should be
 // freed with rebRelease()
 //
-REBVAL *OS_Get_Current_Exec(void)
+Value* OS_Get_Current_Exec(void)
 {
     uint32_t path_size = 1024;
 
@@ -73,7 +73,7 @@ REBVAL *OS_Get_Current_Exec(void)
 
     char *resolved_path_utf8 = realpath(path_utf8, NULL);
     if (resolved_path_utf8) {
-        REBVAL *result = rebValue(
+        Value* result = rebValue(
             "local-to-file", rebT(resolved_path_utf8)
         );
         rebFree(path_utf8);
@@ -81,7 +81,7 @@ REBVAL *OS_Get_Current_Exec(void)
         return result;
     }
 
-    REBVAL *result = rebValue(
+    Value* result = rebValue(
         "local-to-file", rebT(path_utf8)  // just return unresolved path
     );
     rebFree(path_utf8);

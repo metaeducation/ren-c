@@ -134,7 +134,7 @@
 //
 // The mechanics of the macros that get or set the length of a series are a
 // little bit complicated.  This is due to the optimization that allows data
-// which is sizeof(REBVAL) or smaller to fit directly inside the series node.
+// which is sizeof(Cell) or smaller to fit directly inside the series node.
 //
 // If a series is not "dynamic" (e.g. has a full pooled allocation) then its
 // length is stored in the header.  But if a series is dynamically allocated
@@ -490,7 +490,7 @@ inline static void FAIL_IF_READ_ONLY_SERIES(REBSER *s) {
 //
 //=////////////////////////////////////////////////////////////////////////=//
 
-inline static REBSER *VAL_SERIES(const RELVAL *v) {
+inline static REBSER *VAL_SERIES(const Cell* v) {
     assert(ANY_SERIES(v) or IS_MAP(v));  // !!! gcc 5.4 -O2 bug
     REBSER *s = v->payload.any_series.series;
     if (GET_SER_INFO(s, SERIES_INFO_INACCESSIBLE))
@@ -498,7 +498,7 @@ inline static REBSER *VAL_SERIES(const RELVAL *v) {
     return s;
 }
 
-inline static void INIT_VAL_SERIES(RELVAL *v, REBSER *s) {
+inline static void INIT_VAL_SERIES(Cell* v, REBSER *s) {
     assert(not IS_SER_ARRAY(s));
     assert(IS_SERIES_MANAGED(s));
     v->payload.any_series.series = s;
@@ -510,11 +510,11 @@ inline static void INIT_VAL_SERIES(RELVAL *v, REBSER *s) {
 #else
     // allows an assert, but also lvalue: `VAL_INDEX(v) = xxx`
     //
-    inline static REBCNT & VAL_INDEX(RELVAL *v) { // C++ reference type
+    inline static REBCNT & VAL_INDEX(Cell* v) { // C++ reference type
         assert(ANY_SERIES(v));
         return v->payload.any_series.index;
     }
-    inline static REBCNT VAL_INDEX(const RELVAL *v) {
+    inline static REBCNT VAL_INDEX(const Cell* v) {
         assert(ANY_SERIES(v));
         return v->payload.any_series.index;
     }
@@ -523,13 +523,13 @@ inline static void INIT_VAL_SERIES(RELVAL *v, REBSER *s) {
 #define VAL_LEN_HEAD(v) \
     SER_LEN(VAL_SERIES(v))
 
-inline static REBCNT VAL_LEN_AT(const RELVAL *v) {
+inline static REBCNT VAL_LEN_AT(const Cell* v) {
     if (VAL_INDEX(v) >= VAL_LEN_HEAD(v))
         return 0; // avoid negative index
     return VAL_LEN_HEAD(v) - VAL_INDEX(v); // take current index into account
 }
 
-inline static REBYTE *VAL_RAW_DATA_AT(const RELVAL *v) {
+inline static REBYTE *VAL_RAW_DATA_AT(const Cell* v) {
     return SER_AT_RAW(SER_WIDE(VAL_SERIES(v)), VAL_SERIES(v), VAL_INDEX(v));
 }
 

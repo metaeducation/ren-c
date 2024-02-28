@@ -52,6 +52,7 @@
 #include "pstdbool.h" // polyfill <stdbool.h> for pre-C99/C++11 compilers
 
 #include "rebol.h"
+typedef RebolValue Value;
 
 #include "tmp-constants.h" // need the extern definitions
 

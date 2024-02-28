@@ -35,7 +35,7 @@
 #include "sys-core.h"
 
 
-inline static void Init_For_Vararg_End(REBVAL *out, enum Reb_Vararg_Op op) {
+inline static void Init_For_Vararg_End(Value* out, enum Reb_Vararg_Op op) {
     if (op == VARARG_OP_TAIL_Q)
         Init_True(out);
     else
@@ -50,9 +50,9 @@ inline static void Init_For_Vararg_End(REBVAL *out, enum Reb_Vararg_Op op) {
 // unit ahead.
 //
 inline static bool Vararg_Op_If_No_Advance_Handled(
-    REBVAL *out,
+    Value* out,
     enum Reb_Vararg_Op op,
-    const RELVAL *opt_look, // the first value in the varargs input
+    const Cell* opt_look, // the first value in the varargs input
     REBSPC *specifier,
     enum Reb_Param_Class pclass
 ){
@@ -100,7 +100,7 @@ inline static bool Vararg_Op_If_No_Advance_Handled(
         // and the rules apply.  Note the raw check is faster, no need to
         // separately test for IS_END()
 
-        const REBVAL *child_gotten = Try_Get_Opt_Var(opt_look, specifier);
+        const Value* child_gotten = Try_Get_Opt_Var(opt_look, specifier);
 
         if (child_gotten and VAL_TYPE(child_gotten) == REB_ACTION) {
             if (GET_VAL_FLAG(child_gotten, VALUE_FLAG_ENFIXED)) {
@@ -159,22 +159,22 @@ inline static bool Vararg_Op_If_No_Advance_Handled(
 // If an evaluation is involved, then a thrown value is possibly returned.
 //
 bool Do_Vararg_Op_Maybe_End_Throws(
-    REBVAL *out,
-    const RELVAL *vararg,
+    Value* out,
+    const Cell* vararg,
     enum Reb_Vararg_Op op
 ){
     TRASH_CELL_IF_DEBUG(out);
 
-    const RELVAL *param = Param_For_Varargs_Maybe_Null(vararg);
+    const Cell* param = Param_For_Varargs_Maybe_Null(vararg);
     enum Reb_Param_Class pclass =
         (param == NULL) ? PARAM_CLASS_HARD_QUOTE :  VAL_PARAM_CLASS(param);
 
-    REBVAL *arg; // for updating VALUE_FLAG_UNEVALUATED
+    Value* arg; // for updating VALUE_FLAG_UNEVALUATED
 
     REBFRM *opt_vararg_frame;
 
     REBFRM *f;
-    REBVAL *shared;
+    Value* shared;
     if (Is_Block_Style_Varargs(&shared, vararg)) {
         //
         // We are processing an ANY-ARRAY!-based varargs, which came from
@@ -204,7 +204,7 @@ bool Do_Vararg_Op_Maybe_End_Throws(
             // TAIL? or FIRST testing on evaluative parameters, we don't
             // want to double evaluation...so return that single element.
             //
-            REBVAL *single = KNOWN(ARR_SINGLE(VAL_ARRAY(shared)));
+            Value* single = KNOWN(ARR_SINGLE(VAL_ARRAY(shared)));
             Move_Value(out, single);
             if (GET_VAL_FLAG(single, VALUE_FLAG_UNEVALUATED))
                 SET_VAL_FLAG(out, VALUE_FLAG_UNEVALUATED); // not auto-copied
@@ -402,7 +402,7 @@ bool Do_Vararg_Op_Maybe_End_Throws(
 //
 //  MAKE_Varargs: C
 //
-REB_R MAKE_Varargs(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
+REB_R MAKE_Varargs(Value* out, enum Reb_Kind kind, const Value* arg)
 {
     assert(kind == REB_VARARGS);
     UNUSED(kind);
@@ -442,7 +442,7 @@ REB_R MAKE_Varargs(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 //
 //  TO_Varargs: C
 //
-REB_R TO_Varargs(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
+REB_R TO_Varargs(Value* out, enum Reb_Kind kind, const Value* arg)
 {
     assert(kind == REB_VARARGS);
     UNUSED(kind);
@@ -460,8 +460,8 @@ REB_R TO_Varargs(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 //
 REB_R PD_Varargs(
     REBPVS *pvs,
-    const REBVAL *picker,
-    const REBVAL *opt_setval
+    const Value* picker,
+    const Value* opt_setval
 ){
     UNUSED(opt_setval);
 
@@ -498,7 +498,7 @@ REB_R PD_Varargs(
 //
 REBTYPE(Varargs)
 {
-    REBVAL *value = D_ARG(1);
+    Value* value = D_ARG(1);
 
     switch (VAL_WORD_SYM(verb)) {
     case SYM_REFLECT: {
@@ -594,7 +594,7 @@ REBTYPE(Varargs)
 // Simple comparison function stub (required for every type--rules TBD for
 // levels of "exactness" in equality checking, or sort-stable comparison.)
 //
-REBINT CT_Varargs(const RELVAL *a, const RELVAL *b, REBINT mode)
+REBINT CT_Varargs(const Cell* a, const Cell* b, REBINT mode)
 {
     UNUSED(mode);
 
@@ -618,7 +618,7 @@ REBINT CT_Varargs(const RELVAL *a, const RELVAL *b, REBINT mode)
 // has reached its end, or if the frame the varargs is attached to is no
 // longer on the stack.
 //
-void MF_Varargs(REB_MOLD *mo, const RELVAL *v, bool form) {
+void MF_Varargs(REB_MOLD *mo, const Cell* v, bool form) {
     UNUSED(form);
 
     Pre_Mold(mo, v);  // #[varargs! or make varargs!
@@ -626,7 +626,7 @@ void MF_Varargs(REB_MOLD *mo, const RELVAL *v, bool form) {
     Append_Utf8_Codepoint(mo->series, '[');
 
     enum Reb_Param_Class pclass;
-    const RELVAL *param = Param_For_Varargs_Maybe_Null(v);
+    const Cell* param = Param_For_Varargs_Maybe_Null(v);
     if (param == NULL) {
         pclass = PARAM_CLASS_HARD_QUOTE;
         Append_Unencoded(mo->series, "???"); // never bound to an argument
@@ -662,7 +662,7 @@ void MF_Varargs(REB_MOLD *mo, const RELVAL *v, bool form) {
     Append_Unencoded(mo->series, " => ");
 
     REBFRM *f;
-    REBVAL *shared;
+    Value* shared;
     if (Is_Block_Style_Varargs(&shared, v)) {
         if (IS_END(shared))
             Append_Unencoded(mo->series, "[]");

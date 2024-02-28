@@ -1,6 +1,6 @@
 //
 //  File: %a-lib.c
-//  Summary: "Lightweight Export API (REBVAL as opaque type)"
+//  Summary: "Lightweight Export API (RebolValue as opaque type)"
 //  Section: environment
 //  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
 //  Homepage: https://github.com/metaeducation/ren-c/
@@ -39,7 +39,7 @@
 // the global namespace.
 //
 // (That was true of the original RL_API in R3-Alpha, but this later iteration
-// speaks in terms of actual REBVAL* cells--vs. creating a new type.  They are
+// speaks in terms of actual Value* cells--vs. creating a new type.  They are
 // just opaque pointers to cells whose lifetime is either indefinite, or
 // tied to particular function FRAME!s.)
 //
@@ -104,7 +104,7 @@ void RL_rebEnterApi_internal(void) {
 // been stylized to use malloc()-ish hooks to produce data, when the eventual
 // target of that data is a Rebol series.  It does this without exposing
 // REBSER* internals to the external API, by allowing one to "rebRepossess()"
-// the underlying series as a BINARY! REBVAL*.
+// the underlying series as a BINARY! Value*.
 //
 
 
@@ -259,7 +259,7 @@ void RL_rebFree(void *ptr)
 // and since C does not have the size exposed in malloc() and you track it
 // yourself, it seems fair to *always* ask the caller to pass in a size.
 //
-REBVAL *RL_rebRepossess(void *ptr, size_t size)
+RebolValue* RL_rebRepossess(void *ptr, size_t size)
 {
     REBSER **ps = cast(REBSER**, ptr) - 1;
     UNPOISON_MEMORY(ps, sizeof(REBSER*)); // need to underrun to fetch `s`
@@ -427,7 +427,7 @@ long RL_rebTick(void)
 // For the moment, this routine specifically accesses arguments of the most
 // recent ACTION! on the stack.
 //
-REBVAL *RL_rebArg(const void *p, va_list *vaptr)
+RebolValue* RL_rebArg(const void *p, va_list *vaptr)
 {
     REBFRM *f = FS_TOP;
     REBACT *act = FRM_PHASE(f);
@@ -446,8 +446,8 @@ REBVAL *RL_rebArg(const void *p, va_list *vaptr)
         LEN_BYTES(cb_cast(name))
     );
 
-    REBVAL *param = ACT_PARAMS_HEAD(act);
-    REBVAL *arg = FRM_ARGS_HEAD(f);
+    Value* param = ACT_PARAMS_HEAD(act);
+    Value* arg = FRM_ARGS_HEAD(f);
     for (; NOT_END(param); ++param, ++arg) {
         if (SAME_STR(VAL_PARAM_SPELLING(param), spelling))
             return Move_Value(Alloc_Value(), arg);
@@ -461,16 +461,16 @@ REBVAL *RL_rebArg(const void *p, va_list *vaptr)
 //  rebValue: RL_API
 //
 // C variadic function which calls the evaluator on multiple pointers.
-// Each pointer may either be a REBVAL* or a UTF-8 string which will be
+// Each pointer may either be a Value* or a UTF-8 string which will be
 // scanned to reflect one or more values in the sequence.
 //
-// All REBVAL* are spliced in inert by default, as if they were an evaluative
+// All Value* are spliced in inert by default, as if they were an evaluative
 // product already.  Use rebEval() to "retrigger" them (which wraps them in
 // a singular REBARR*, another type of detectable pointer.)
 //
-REBVAL *RL_rebValue(const void *p, va_list *vaptr)
+RebolValue* RL_rebValue(const void *p, va_list *vaptr)
 {
-    REBVAL *result = Alloc_Value();
+    Value* result = Alloc_Value();
     if (Do_Va_Throws(result, p, vaptr)) // calls va_end()
         fail (Error_No_Catch_For_Throw(result)); // no need to release result
 
@@ -543,7 +543,7 @@ void RL_rebJumps(const void *p, va_list *vaptr)
 // the console, so that BACKTRACE does not look up and see a Rebol function
 // like DO on the stack.
 //
-REBVAL *RL_rebValueInline(const REBVAL *array)
+RebolValue* RL_rebValueInline(const RebolValue* array)
 {
     if (not IS_BLOCK(array) and not IS_GROUP(array))
         fail ("rebValueInline() only supports BLOCK! and GROUP!");
@@ -559,7 +559,7 @@ REBVAL *RL_rebValueInline(const REBVAL *array)
 //
 //  rebEval: RL_API
 //
-// When rebValue() receives a REBVAL*, the default is to assume it should be
+// When rebValue() receives a Value*, the default is to assume it should be
 // spliced into the input stream as if it had already been evaluated.  It's
 // only segments of code supplied via UTF-8 strings, that are live and can
 // execute functions.
@@ -568,13 +568,13 @@ REBVAL *RL_rebValueInline(const REBVAL *array)
 // evaluated.  So `rebValue(rebEval(some_word), ...)` will execute that word
 // if it's bound to an ACTION! and dereference if it's a variable.
 //
-const void *RL_rebEval(const REBVAL *v)
+const void *RL_rebEval(const RebolValue* v)
 {
     if (IS_NULLED(v))
         fail ("Cannot pass NULL to rebEval()");
 
     REBARR *instruction = Alloc_Instruction();
-    RELVAL *single = ARR_SINGLE(instruction);
+    Cell* single = ARR_SINGLE(instruction);
     Move_Value(single, v);
 
     // !!! The presence of the VALUE_FLAG_EVAL_FLIP is a pretty good
@@ -600,15 +600,15 @@ const void *RL_rebEval(const REBVAL *v)
 //    non-null => `(quote ...)`
 //
 // There's a parallel Rebol action! that does this called UNEVAL, which is
-// for use with REDUCE and COMPOSE/ONLY.  However, rather than return REBVAL*
+// for use with REDUCE and COMPOSE/ONLY.  However, rather than return Value*
 // directly, this acts as an "instruction" that can be passed to the rebValue()
 // variadic stream.  This leaves the implementation method more open, and
 // has the benefit of not requiring a rebRelease().
 //
-const void *RL_rebUneval(const REBVAL *v)
+const void *RL_rebUneval(const RebolValue* v)
 {
     REBARR *instruction = Alloc_Instruction();
-    RELVAL *single = ARR_SINGLE(instruction);
+    Cell* single = ARR_SINGLE(instruction);
     if (not v) {
         //
         // !!! Would like to be using a NULLED cell here, but the current
@@ -644,7 +644,7 @@ const void *RL_rebUneval(const REBVAL *v)
 // they are seen (or even if they are not seen, if there is a failure on that
 // call it will still process the va_list in order to release these handles)
 //
-const void *RL_rebR(REBVAL *v)
+const void *RL_rebR(RebolValue* v)
 {
     if (not Is_Api_Value(v))
         fail ("Cannot apply rebR() to non-API value");
@@ -661,7 +661,7 @@ const void *RL_rebR(REBVAL *v)
 //
 //  rebVoid: RL_API
 //
-REBVAL *RL_rebVoid(void)
+RebolValue* RL_rebVoid(void)
 {
     return Init_Void(Alloc_Value());
 }
@@ -670,7 +670,7 @@ REBVAL *RL_rebVoid(void)
 //
 //  rebBlank: RL_API
 //
-REBVAL *RL_rebBlank(void)
+RebolValue* RL_rebBlank(void)
 {
     return Init_Blank(Alloc_Value());
 }
@@ -693,7 +693,7 @@ REBVAL *RL_rebBlank(void)
 // stdbool would be defined to be the same size as C++'s bool (if such a
 // pre-C99 system could even be used to make a C++ build at all!)
 //
-REBVAL *RL_rebLogic(bool logic)
+RebolValue* RL_rebLogic(bool logic)
 {
     // Use DID on the bool, in case it's a "shim bool" (e.g. just some integer
     // type) and hence may have values other than strictly 0 or 1.
@@ -705,7 +705,7 @@ REBVAL *RL_rebLogic(bool logic)
 //
 //  rebChar: RL_API
 //
-REBVAL *RL_rebChar(uint32_t codepoint)
+RebolValue* RL_rebChar(uint32_t codepoint)
 {
     if (codepoint > MAX_UNI)
         fail ("Codepoint out of range, see: https://forum.rebol.info/t/374");
@@ -720,7 +720,7 @@ REBVAL *RL_rebChar(uint32_t codepoint)
 // !!! Should there be rebSigned() and rebUnsigned(), in order to catch cases
 // of using out of range values?
 //
-REBVAL *RL_rebInteger(int64_t i)
+RebolValue* RL_rebInteger(int64_t i)
 {
     return Init_Integer(Alloc_Value(), i);
 }
@@ -740,7 +740,7 @@ const void *RL_rebI(int64_t i)
 //
 //  rebDecimal: RL_API
 //
-REBVAL *RL_rebDecimal(double dec)
+RebolValue* RL_rebDecimal(double dec)
 {
     return Init_Decimal(Alloc_Value(), dec);
 }
@@ -806,7 +806,7 @@ void RL_rebHalt(void)
 //
 // !!! As a first step, this only implements the setjmp/longjmp logic.
 //
-REBVAL *RL_rebRescue(
+RebolValue* RL_rebRescue(
     REBDNG *dangerous, // !!! pure C function only if not using throw/catch!
     void *opaque
 ){
@@ -826,18 +826,18 @@ REBVAL *RL_rebRescue(
     // now pretend to be applying a dummy native.
     //
     DECLARE_END_FRAME (f);
-    f->out = m_cast(REBVAL*, END_NODE); // should not be written
+    f->out = m_cast(Value*, END_NODE); // should not be written
 
     REBSTR *opt_label = NULL;
     Push_Frame_At_End(f, DO_MASK_NONE); // not FULLY_SPECIALIZED
 
     Reuse_Varlist_If_Available(f); // needed to attach API handles to
     Push_Action(f, PG_Dummy_Action, UNBOUND);
-    Begin_Action(f, opt_label, m_cast(REBVAL*, END_NODE));
+    Begin_Action(f, opt_label, m_cast(Value*, END_NODE));
     assert(IS_END(f->arg));
     f->param = END_NODE; // signal all arguments gathered
     assert(f->refine == END_NODE); // passed to Begin_Action();
-    f->arg = m_cast(REBVAL*, END_NODE);
+    f->arg = m_cast(Value*, END_NODE);
     f->special = END_NODE;
 
     // The first time through the following code 'error' will be null, but...
@@ -852,7 +852,7 @@ REBVAL *RL_rebRescue(
         return Init_Error(Alloc_Value(), error_ctx);
     }
 
-    REBVAL *result = (*dangerous)(opaque);
+    Value* result = (*dangerous)(opaque);
 
     Drop_Action(f);
 
@@ -889,7 +889,7 @@ REBVAL *RL_rebRescue(
     // covered by this, and would have to be unmanaged.  Do another allocation
     // just for the sake of it.
 
-    REBVAL *proxy = Move_Value(Alloc_Value(), result); // parent is not f
+    Value* proxy = Move_Value(Alloc_Value(), result); // parent is not f
     rebRelease(result);
     return proxy;
 }
@@ -902,7 +902,7 @@ REBVAL *RL_rebRescue(
 // for C code as the protected code and the handler).  More similar to
 // Ruby's rescue2 operation.
 //
-REBVAL *RL_rebRescueWith(
+RebolValue* RL_rebRescueWith(
     REBDNG *dangerous, // !!! pure C function only if not using throw/catch!
     REBRSC *rescuer, // errors in the rescuer function will *not* be caught
     void *opaque
@@ -916,15 +916,15 @@ REBVAL *RL_rebRescueWith(
     // `fail` can longjmp here, so 'error' won't be null *if* that happens!
     //
     if (error_ctx) {
-        REBVAL *error = Init_Error(Alloc_Value(), error_ctx);
+        Value* error = Init_Error(Alloc_Value(), error_ctx);
 
-        REBVAL *result = (*rescuer)(error, opaque); // *not* guarded by trap!
+        Value* result = (*rescuer)(error, opaque); // *not* guarded by trap!
 
         rebRelease(error);
         return result; // no special handling, may be null
     }
 
-    REBVAL *result = (*dangerous)(opaque); // guarded by trap
+    Value* result = (*dangerous)(opaque); // guarded by trap
     assert(not IS_NULLED(result)); // nulled cells not exposed by API
 
     DROP_TRAP_SAME_STACKLEVEL_AS_PUSH(&state);
@@ -1053,7 +1053,7 @@ uint32_t RL_rebUnboxChar(const void *p, va_list *vaptr)
 // pointers.  Also, there is an optional size stored in the handle, and a
 // cleanup function the GC may call when references to the handle are gone.
 //
-REBVAL *RL_rebHandle(void *data, size_t length, CLEANUP_CFUNC *cleaner)
+RebolValue* RL_rebHandle(void *data, size_t length, CLEANUP_CFUNC *cleaner)
 {
     return Init_Handle_Managed(Alloc_Value(), data, length, cleaner);
 }
@@ -1071,7 +1071,7 @@ REBVAL *RL_rebHandle(void *data, size_t length, CLEANUP_CFUNC *cleaner)
 size_t RL_rebSpellInto(
     char *buf,
     size_t buf_size, // number of bytes
-    const REBVAL *v
+    const RebolValue* v
 ){
     const char *utf8;
     REBSIZ utf8_size;
@@ -1140,7 +1140,7 @@ char *RL_rebSpell(const void *p, va_list *vaptr)
 unsigned int RL_rebSpellIntoW(
     REBWCHAR *buf,
     unsigned int buf_chars, // chars buf can hold (not including terminator)
-    const REBVAL *v
+    const RebolValue* v
 ){
     REBSER *s;
     REBCNT index;
@@ -1222,7 +1222,7 @@ REBWCHAR *RL_rebSpellW(const void *p, va_list *vaptr)
 size_t RL_rebBytesInto(
     unsigned char *buf,
     size_t buf_size,
-    const REBVAL *binary
+    const RebolValue* binary
 ){
     if (not IS_BINARY(binary))
         fail ("rebBytesInto() only works on BINARY!");
@@ -1285,7 +1285,7 @@ unsigned char *RL_rebBytes(
 //
 //  rebBinary: RL_API
 //
-REBVAL *RL_rebBinary(const void *bytes, size_t size)
+RebolValue* RL_rebBinary(const void *bytes, size_t size)
 {
     REBSER *bin = Make_Binary(size);
     memcpy(BIN_HEAD(bin), bytes, size);
@@ -1300,7 +1300,7 @@ REBVAL *RL_rebBinary(const void *bytes, size_t size)
 //
 // If utf8 does not contain valid UTF-8 data, this may fail().
 //
-REBVAL *RL_rebSizedText(const char *utf8, size_t size)
+RebolValue* RL_rebSizedText(const char *utf8, size_t size)
 {
     return Init_Text(Alloc_Value(), Make_Sized_String_UTF8(utf8, size));
 }
@@ -1309,7 +1309,7 @@ REBVAL *RL_rebSizedText(const char *utf8, size_t size)
 //
 //  rebText: RL_API
 //
-REBVAL *RL_rebText(const char *utf8)
+RebolValue* RL_rebText(const char *utf8)
 {
     return rebSizedText(utf8, strsize(utf8));
 }
@@ -1333,7 +1333,7 @@ const void *RL_rebT(const char *utf8)
 //
 //  rebLengthedTextW: RL_API
 //
-REBVAL *RL_rebLengthedTextW(const REBWCHAR *wstr, unsigned int num_chars)
+RebolValue* RL_rebLengthedTextW(const REBWCHAR *wstr, unsigned int num_chars)
 {
     DECLARE_MOLD (mo);
     Push_Mold(mo);
@@ -1348,7 +1348,7 @@ REBVAL *RL_rebLengthedTextW(const REBWCHAR *wstr, unsigned int num_chars)
 //
 //  rebTextW: RL_API
 //
-REBVAL *RL_rebTextW(const REBWCHAR *wstr)
+RebolValue* RL_rebTextW(const REBWCHAR *wstr)
 {
     DECLARE_MOLD (mo);
     Push_Mold(mo);
@@ -1369,7 +1369,7 @@ REBVAL *RL_rebTextW(const REBWCHAR *wstr)
 // memory if that were the case...so there should be some options for metrics
 // as a form of "leak detection" even so.
 //
-REBVAL *RL_rebManage(REBVAL *v)
+RebolValue* RL_rebManage(RebolValue* v)
 {
     assert(Is_Api_Value(v));
 
@@ -1398,7 +1398,7 @@ void RL_rebUnmanage(void *p)
     if (not (nod->header.bits & NODE_FLAG_CELL))
         fail ("rebUnmanage() not yet implemented for rebMalloc() data");
 
-    REBVAL *v = cast(REBVAL*, nod);
+    Value* v = cast(Value*, nod);
     assert(Is_Api_Value(v));
 
     REBARR *a = Singular_From_Cell(v);
@@ -1431,7 +1431,7 @@ void RL_rebUnmanage(void *p)
 // leak avoidance will need to at least allow for GC of handles across errors
 // for their associated frames.
 //
-void RL_rebRelease(const REBVAL *v)
+void RL_rebRelease(const RebolValue* v)
 {
     if (not v)
         return; // less rigorous, but makes life easier for C programmers
@@ -1439,7 +1439,7 @@ void RL_rebRelease(const REBVAL *v)
     if (not Is_Api_Value(v))
         panic ("Attempt to rebRelease() a non-API handle");
 
-    Free_Value(m_cast(REBVAL*, v));
+    Free_Value(m_cast(Value*, v));
 }
 
 
@@ -1514,7 +1514,7 @@ intptr_t RL_rebPromise(const void *p, va_list *vaptr)
 
     Set_Frame_Detected_Fetch(nullptr, f, p);
 
-    f->out = m_cast(REBVAL*, END_NODE);
+    f->out = m_cast(Value*, END_NODE);
     f->specifier = SPECIFIED; // relative values not allowed in va_lists
     f->gotten = nullptr;
 
@@ -1572,7 +1572,7 @@ void RL_rebPromise_callback(intptr_t promise_id)
     assert(NOT_SER_FLAG(arr, NODE_FLAG_MANAGED));
     SET_SER_FLAG(arr, NODE_FLAG_MANAGED);
 
-    REBVAL *result = Alloc_Value();
+    Value* result = Alloc_Value();
     if (THROWN_FLAG == Eval_Array_At_Core(
         Init_Void(result),
         nullptr, // opt_first (null indicates nothing, not nulled cell)
@@ -1807,7 +1807,7 @@ void RL_rebFail_OS(int errnum)
         error = Error_User("FormatMessage() gave no error description");
     }
     else {
-        REBVAL *message = rebTextW(lpMsgBuf);
+        Value* message = rebTextW(lpMsgBuf);
         LocalFree(lpMsgBuf);
 
         error = Error(SYM_0, SYM_0, message, END_NODE);

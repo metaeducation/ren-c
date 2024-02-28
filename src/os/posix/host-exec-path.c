@@ -63,7 +63,7 @@
 //
 // https://stackoverflow.com/questions/1023306/
 //
-REBVAL *OS_Get_Current_Exec(void)
+Value* OS_Get_Current_Exec(void)
 {
   #if !defined(PROC_EXEC_PATH) && !defined(HAVE_PROC_PATHNAME)
     return rebBlank();
@@ -102,7 +102,7 @@ REBVAL *OS_Get_Current_Exec(void)
 
     path_utf8[r] = '\0';
 
-    REBVAL *result = rebValue("local-to-file", rebT(path_utf8));
+    Value* result = rebValue("local-to-file", rebT(path_utf8));
     rebFree(path_utf8);
     return result;
   #endif

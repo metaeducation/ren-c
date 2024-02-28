@@ -854,7 +854,7 @@ static REBCNT Prescan_Token(SCAN_STATE *ss)
 //
 // Find the beginning and end character pointers for the next token in the
 // scanner state.  If the scanner is being fed variadically by a list of UTF-8
-// strings and REBVAL pointers, then any Rebol values encountered will be
+// strings and cell pointers, then any Rebol values encountered will be
 // spliced into the array being currently gathered by pushing them to the data
 // stack (as tokens can only be located in UTF-8 strings encountered).
 //
@@ -889,7 +889,7 @@ static REBCNT Prescan_Token(SCAN_STATE *ss)
 // !!! This is a somewhat weird separation of responsibilities, that seems to
 // arise from a desire to make "Scan_XXX" functions independent of the
 // "Locate_Token_May_Push_Mold" function.  But if the work of locating the
-// value means you have to basically do what you'd do to read it into a REBVAL
+// value means you have to basically do what you'd do to read it into a cell
 // anyway, why split it?  This is especially true now that the variadic
 // splicing pushes values directly from this routine.
 //
@@ -976,7 +976,7 @@ acquisition_loop:
             return; }
 
         case DETECTED_AS_CELL: {
-            const REBVAL *splice = cast(const REBVAL*, p);
+            const Value* splice = cast(const Value*, p);
             if (IS_NULLED(splice))
                 fail ("VOID cell leaked to API, see NULLIZE() in C sources");
 
@@ -1003,7 +1003,7 @@ acquisition_loop:
             if (Is_Api_Value(splice)) { // moved to DS_TOP, can release *now*
                 REBARR *a = Singular_From_Cell(splice);
                 if (GET_SER_INFO(a, SERIES_INFO_API_RELEASE))
-                    rebRelease(m_cast(REBVAL*, splice)); // !!! m_cast
+                    rebRelease(m_cast(Value*, splice)); // !!! m_cast
             }
 
             break; } // push values to emit stack until UTF-8 or END
@@ -1013,7 +1013,7 @@ acquisition_loop:
             // An "instruction", currently just rebEval() and rebUneval().
 
             REBARR *instruction = cast(REBARR*, c_cast(void*, p));
-            REBVAL *single = KNOWN(ARR_SINGLE(instruction));
+            Value* single = KNOWN(ARR_SINGLE(instruction));
 
             if (GET_VAL_FLAG(single, VALUE_FLAG_EVAL_FLIP)) { // rebEval()
                 if (not (ss->opts & SCAN_FLAG_NULLEDS_LEGAL))
@@ -1074,7 +1074,7 @@ acquisition_loop:
             break; } // fallthrough to "ordinary" scanning
 
         default:
-            panic ("Scanned pointer not END, REBVAL*, or valid UTF-8 string");
+            panic ("Scanned pointer not END, Value*, or valid UTF-8 string");
         }
     }
 
@@ -1759,7 +1759,7 @@ void Init_Va_Scan_State_Core(
 
     // !!! Splicing REBVALs into a scan as it goes creates complexities for
     // error messages based on line numbers.  Fortunately the splice of a
-    // REBVAL* itself shouldn't cause a fail()-class error if there's no
+    // Value* itself shouldn't cause a fail()-class error if there's no
     // data corruption, so it should be able to pick up *a* line head before
     // any errors occur...it just might not give the whole picture when used
     // to offer an error message of what's happening with the spliced values.
@@ -1910,7 +1910,7 @@ static REBARR *Scan_Child_Array(SCAN_STATE *ss, REBYTE mode_char);
 // (It only has a return value because it may be called by rebRescue(), and
 // that's the convention it uses.)
 //
-REBVAL *Scan_To_Stack(SCAN_STATE *ss) {
+Value* Scan_To_Stack(SCAN_STATE *ss) {
     DECLARE_MOLD (mo);
 
     if (C_STACK_OVERFLOWING(&mo))
@@ -2263,7 +2263,7 @@ REBVAL *Scan_To_Stack(SCAN_STATE *ss) {
                 PUSH_GC_GUARD(cell);
 
                 PUSH_GC_GUARD(array);
-                const REBVAL *r = hook(cell, kind, KNOWN(ARR_AT(array, 1)));
+                const Value* r = hook(cell, kind, KNOWN(ARR_AT(array, 1)));
                 if (r == R_THROWN) { // !!! good argument for not using MAKE
                     assert(false);
                     fail ("MAKE during construction syntax threw--illegal");
@@ -2498,7 +2498,7 @@ array_done:
 void Scan_To_Stack_Relaxed(SCAN_STATE *ss) {
     SCAN_STATE ss_before = *ss;
 
-    REBVAL *error = rebRescue(cast(REBDNG*, &Scan_To_Stack), ss);
+    Value* error = rebRescue(cast(REBDNG*, &Scan_To_Stack), ss);
     if (error == NULL)
         return; // scan went fine, hopefully the common case...
 
@@ -2641,9 +2641,9 @@ static REBARR *Scan_Full_Array(SCAN_STATE *ss, REBYTE mode_char)
 // that may be to UTF-8 strings or to Rebol values.  The behavior is to
 // "splice" in the values at the point in the scan that they occur, e.g.
 //
-//     REBVAL *item1 = ...;
-//     REBVAL *item2 = ...;
-//     REBVAL *item3 = ...;
+//     Value* item1 = ...;
+//     Value* item2 = ...;
+//     Value* item3 = ...;
 //     REBSTR *filename = ...; // where to say code came from
 //
 //     REBARR *result = Scan_Va_Managed(filename,
@@ -2888,7 +2888,7 @@ REBNATIVE(transcode)
 // Returns symbol number, or zero for errors.
 //
 const REBYTE *Scan_Any_Word(
-    REBVAL *out,
+    Value* out,
     enum Reb_Kind kind,
     const REBYTE *utf8,
     REBCNT len
@@ -2915,7 +2915,7 @@ const REBYTE *Scan_Any_Word(
 //
 // Scan an issue word, allowing special characters.
 //
-const REBYTE *Scan_Issue(REBVAL *out, const REBYTE *cp, REBCNT len)
+const REBYTE *Scan_Issue(Value* out, const REBYTE *cp, REBCNT len)
 {
     if (len == 0) return NULL; // will trigger error
 

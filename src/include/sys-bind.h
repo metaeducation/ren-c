@@ -70,7 +70,7 @@
         return cast(REBSPC*, c);
     }
 
-    inline static REBSPC *VAL_SPECIFIER(const REBVAL *v) {
+    inline static REBSPC *VAL_SPECIFIER(const Value* v) {
         assert(ANY_ARRAY(v));
         if (not v->extra.binding)
             return SPECIFIED;
@@ -117,7 +117,7 @@ inline static bool Is_Overriding_Context(REBCTX *stored, REBCTX *override)
     // For now, deriving from FRAME! is just disabled.
     //
     // Use a faster check for REB_FRAME than CTX_TYPE() == REB_FRAME, since
-    // we were extracting keysources anyway. 
+    // we were extracting keysources anyway.
     //
     // !!! Note that in virtual binding, something like a FOR-EACH would
     // wind up overriding words bound to FRAME!s, even though not "derived".
@@ -315,7 +315,7 @@ struct Reb_Collector {
 inline static REBNOD *SPC_BINDING(REBSPC *specifier)
 {
     assert(specifier != UNBOUND);
-    REBVAL *rootvar = CTX_ARCHETYPE(CTX(specifier)); // works even if Decay()d
+    Value* rootvar = CTX_ARCHETYPE(CTX(specifier)); // works even if Decay()d
     assert(IS_FRAME(rootvar));
     return rootvar->extra.binding;
 }
@@ -329,7 +329,7 @@ inline static REBNOD *SPC_BINDING(REBSPC *specifier)
 //
 // When a word is bound to a context by an index, it becomes a means of
 // reading and writing from a persistent storage location.  We use "variable"
-// or just VAR to refer to REBVAL slots reached via binding in this way.
+// or just VAR to refer to Value slots reached via binding in this way.
 // More narrowly, a VAR that represents an argument to a function invocation
 // may be called an ARG (and an ARG's "persistence" is only as long as that
 // function call is on the stack).
@@ -341,13 +341,13 @@ inline static REBNOD *SPC_BINDING(REBSPC *specifier)
 // CELL_MASK_COPIED, so it shouldn't be able to leak out of the varlist.
 //
 // The Get_Opt_Var_May_Fail() function takes the conservative default that
-// only const access is needed.  A const pointer to a REBVAL is given back
+// only const access is needed.  A const pointer to a Value is given back
 // which may be inspected, but the contents not modified.  While a bound
 // variable that is not currently set will return a REB_MAX_NULLED value,
 // Get_Opt_Var_May_Fail() on an *unbound* word will raise an error.
 //
 // Get_Mutable_Var_May_Fail() offers a parallel facility for getting a
-// non-const REBVAL back.  It will fail if the variable is either unbound
+// non-const Value back.  It will fail if the variable is either unbound
 // -or- marked with OPT_TYPESET_LOCKED to protect against modification.
 //
 
@@ -363,7 +363,7 @@ inline static REBNOD *SPC_BINDING(REBSPC *specifier)
 // as inline so that locations using it can avoid overhead in invocation.
 //
 inline static REBCTX *Get_Var_Context(
-    const RELVAL *any_word,
+    const Cell* any_word,
     REBSPC *specifier
 ){
     assert(ANY_WORD(any_word));
@@ -376,7 +376,7 @@ inline static REBCTX *Get_Var_Context(
     if (binding->header.bits & ARRAY_FLAG_VARLIST) {
 
         // SPECIFIC BINDING: The context the word is bound to is explicitly
-        // contained in the `any_word` REBVAL payload.  Extract it, but check
+        // contained in the `any_word` Value payload.  Extract it, but check
         // to see if there is an override via "DERIVED BINDING", e.g.:
         //
         //    o1: make object [a: 10 f: method [] [print a]]
@@ -398,7 +398,7 @@ inline static REBCTX *Get_Var_Context(
             REBNOD *f_binding = SPC_BINDING(specifier); // can't fail()
             if (f_binding and Is_Overriding_Context(c, CTX(f_binding))) {
                 //
-                // The specifier binding overrides--because what's happening 
+                // The specifier binding overrides--because what's happening
                 // is that this cell came from a METHOD's body, where the
                 // particular ACTION! value cell triggering it held a binding
                 // of a more derived version of the object to which the
@@ -445,8 +445,8 @@ inline static REBCTX *Get_Var_Context(
     return c;
 }
 
-static inline const REBVAL *Get_Opt_Var_May_Fail(
-    const RELVAL *any_word,
+static inline const Value* Get_Opt_Var_May_Fail(
+    const Cell* any_word,
     REBSPC *specifier
 ){
     if (not VAL_BINDING(any_word))
@@ -459,8 +459,8 @@ static inline const REBVAL *Get_Opt_Var_May_Fail(
     return CTX_VAR(c, VAL_WORD_INDEX(any_word));
 }
 
-static inline const REBVAL *Try_Get_Opt_Var(
-    const RELVAL *any_word,
+static inline const Value* Try_Get_Opt_Var(
+    const Cell* any_word,
     REBSPC *specifier
 ){
     if (not VAL_BINDING(any_word))
@@ -474,15 +474,15 @@ static inline const REBVAL *Try_Get_Opt_Var(
 }
 
 inline static void Move_Opt_Var_May_Fail(
-    REBVAL *out,
-    const RELVAL *any_word,
+    Value* out,
+    const Cell* any_word,
     REBSPC *specifier
 ){
     Move_Value(out, Get_Opt_Var_May_Fail(any_word, specifier));
 }
 
-static inline REBVAL *Get_Mutable_Var_May_Fail(
-    const RELVAL *any_word,
+static inline Value* Get_Mutable_Var_May_Fail(
+    const Cell* any_word,
     REBSPC *specifier
 ){
     if (not VAL_BINDING(any_word))
@@ -499,7 +499,7 @@ static inline REBVAL *Get_Mutable_Var_May_Fail(
     //
     FAIL_IF_READ_ONLY_CONTEXT(context);
 
-    REBVAL *var = CTX_VAR(context, VAL_WORD_INDEX(any_word));
+    Value* var = CTX_VAR(context, VAL_WORD_INDEX(any_word));
 
     // The PROTECT command has a finer-grained granularity for marking
     // not just contexts, but individual fields as protected.
@@ -513,11 +513,11 @@ static inline REBVAL *Get_Mutable_Var_May_Fail(
     return var;
 }
 
-inline static REBVAL *Sink_Var_May_Fail(
-    const RELVAL *any_word,
+inline static Value* Sink_Var_May_Fail(
+    const Cell* any_word,
     REBSPC *specifier
 ){
-    REBVAL *var = Get_Mutable_Var_May_Fail(any_word, specifier);
+    Value* var = Get_Mutable_Var_May_Fail(any_word, specifier);
     TRASH_CELL_IF_DEBUG(var);
     return var;
 }
@@ -529,7 +529,7 @@ inline static REBVAL *Sink_Var_May_Fail(
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// This can be used to turn a RELVAL into a REBVAL.  If the RELVAL is indeed
+// This can be used to turn a Cell into a Value.  If the Cell is indeed
 // relative and needs to be made specific to be put into the target, then the
 // specifier is used to do that.
 //
@@ -548,9 +548,9 @@ inline static REBVAL *Sink_Var_May_Fail(
 // a mechanic between both...TBD.
 //
 
-inline static REBVAL *Derelativize(
-    RELVAL *out, // relative destinations are overwritten with specified value
-    const RELVAL *v,
+inline static Value* Derelativize(
+    Cell* out, // relative destinations are overwritten with specified value
+    const Cell* v,
     REBSPC *specifier
 ){
     Move_Value_Header(out, v);
@@ -591,7 +591,7 @@ inline static REBVAL *Derelativize(
         // such as when creating a new action using relative material, and
         // then adding in the new relativism).
         //
-        REBVAL *rootkey = CTX_ROOTKEY(CTX(specifier));
+        Value* rootkey = CTX_ROOTKEY(CTX(specifier));
         if (binding != NOD(ACT_UNDERLYING(VAL_ACTION(rootkey)))) {
             printf("Function mismatch in specific binding, expected:\n");
             PROBE(ACT_ARCHETYPE(ACT(binding)));
@@ -631,12 +631,12 @@ inline static REBVAL *Derelativize(
 }
 
 
-// In the C++ build, defining this overload that takes a REBVAL* instead of
-// a RELVAL*, and then not defining it...will tell you that you do not need
-// to use Derelativize.  Juse Move_Value() if your source is a REBVAL!
+// In the C++ build, defining this overload that takes a Value* instead of
+// a Cell*, and then not defining it...will tell you that you do not need
+// to use Derelativize.  Juse Move_Value() if your source is a Value!
 //
 #ifdef CPLUSPLUS_11
-    REBVAL *Derelativize(RELVAL *dest, const REBVAL *v, REBSPC *specifier);
+    Value* Derelativize(Cell* dest, const Value* v, REBSPC *specifier);
 #endif
 
 
@@ -644,7 +644,7 @@ inline static REBVAL *Derelativize(
     (DS_PUSH_TRASH, Derelativize(DS_TOP, (v), (specifier)))
 
 inline static void DS_PUSH_RELVAL_KEEP_EVAL_FLIP(
-    const RELVAL *v,
+    const Cell* v,
     REBSPC *specifier
 ){
     DS_PUSH_TRASH;
@@ -677,7 +677,7 @@ inline static void DS_PUSH_RELVAL_KEEP_EVAL_FLIP(
 // would need such derivation.
 //
 
-inline static REBSPC *Derive_Specifier(REBSPC *parent, const RELVAL *item) {
+inline static REBSPC *Derive_Specifier(REBSPC *parent, const Cell* item) {
     if (IS_SPECIFIC(item))
         return VAL_SPECIFIER(KNOWN(item));;
     return parent;
@@ -687,14 +687,14 @@ inline static REBSPC *Derive_Specifier(REBSPC *parent, const RELVAL *item) {
 //
 // BINDING CONVENIENCE MACROS
 //
-// WARNING: Don't pass these routines something like a singular REBVAL* (such
+// WARNING: Don't pass these routines something like a singular Value* (such
 // as a REB_BLOCK) which you wish to have bound.  You must pass its *contents*
 // as an array...as the plural "values" in the name implies!
 //
 // So don't do this:
 //
-//     REBVAL *block = ARG(block);
-//     REBVAL *something = ARG(next_arg_after_block);
+//     Value* block = ARG(block);
+//     Value* something = ARG(next_arg_after_block);
 //     Bind_Values_Deep(block, context);
 //
 // What will happen is that the block will be treated as an array of values
@@ -730,4 +730,3 @@ inline static REBSPC *Derive_Specifier(REBSPC *parent, const RELVAL *item) {
 
 #define Unbind_Values_Deep(values) \
     Unbind_Values_Core((values), nullptr, true)
-

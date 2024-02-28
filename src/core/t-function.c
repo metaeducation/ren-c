@@ -30,7 +30,7 @@
 
 #include "sys-core.h"
 
-static bool Same_Action(const RELVAL *a1, const RELVAL *a2)
+static bool Same_Action(const Cell* a1, const Cell* a2)
 {
     assert(IS_ACTION(a1) && IS_ACTION(a2));
 
@@ -39,7 +39,7 @@ static bool Same_Action(const RELVAL *a1, const RELVAL *a2)
 
         // All actions that have the same paramlist are not necessarily the
         // "same action".  For instance, every RETURN shares a common
-        // paramlist, but the binding is different in the REBVAL instances
+        // paramlist, but the binding is different in the cell instances
         // in order to know where to "exit from".
 
         return VAL_BINDING(a1) == VAL_BINDING(a2);
@@ -52,7 +52,7 @@ static bool Same_Action(const RELVAL *a1, const RELVAL *a2)
 //
 //  CT_Action: C
 //
-REBINT CT_Action(const RELVAL *a1, const RELVAL *a2, REBINT mode)
+REBINT CT_Action(const Cell* a1, const Cell* a2, REBINT mode)
 {
     if (mode >= 0)
         return Same_Action(a1, a2) ? 1 : 0;
@@ -69,7 +69,7 @@ REBINT CT_Action(const RELVAL *a1, const RELVAL *a2, REBINT mode)
 //
 //     [[spec] [body]]
 //
-REB_R MAKE_Action(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
+REB_R MAKE_Action(Value* out, enum Reb_Kind kind, const Value* arg)
 {
     assert(kind == REB_ACTION);
     UNUSED(kind);
@@ -112,7 +112,7 @@ REB_R MAKE_Action(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 // from a BLOCK!, e.g. `x: does [1 + y]`, so TO ACTION! of a block doesn't
 // need to do that (for instance).
 //
-REB_R TO_Action(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
+REB_R TO_Action(Value* out, enum Reb_Kind kind, const Value* arg)
 {
     assert(kind == REB_ACTION);
     UNUSED(kind);
@@ -126,7 +126,7 @@ REB_R TO_Action(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 //
 //  MF_Action: C
 //
-void MF_Action(REB_MOLD *mo, const RELVAL *v, bool form)
+void MF_Action(REB_MOLD *mo, const Cell* v, bool form)
 {
     UNUSED(form);
 
@@ -160,8 +160,8 @@ void MF_Action(REB_MOLD *mo, const RELVAL *v, bool form)
 //
 REBTYPE(Action)
 {
-    REBVAL *value = D_ARG(1);
-    REBVAL *arg = D_ARGC > 1 ? D_ARG(2) : NULL;
+    Value* value = D_ARG(1);
+    Value* arg = D_ARGC > 1 ? D_ARG(2) : NULL;
 
     switch (VAL_WORD_SYM(verb)) {
     case SYM_COPY: {
@@ -213,8 +213,8 @@ REBTYPE(Action)
         // A new body_holder was created inside Make_Action().  Rare case
         // where we can bit-copy a possibly-relative value.
         //
-        RELVAL *src = ARR_HEAD(ACT_DETAILS(act));
-        RELVAL *dest = ARR_HEAD(ACT_DETAILS(proxy));
+        Cell* src = ARR_HEAD(ACT_DETAILS(act));
+        Cell* dest = ARR_HEAD(ACT_DETAILS(proxy));
         for (; NOT_END(src); ++src, ++dest)
             Blit_Cell(dest, src);
         TERM_ARRAY_LEN(ACT_DETAILS(proxy), details_len);
@@ -247,8 +247,8 @@ REBTYPE(Action)
             // special feature for object keys and paramlists!  So clear
             // that symbol out before giving it back.
             //
-            REBVAL *param = VAL_ACT_PARAMS_HEAD(value);
-            REBVAL *typeset = KNOWN(ARR_HEAD(copy));
+            Value* param = VAL_ACT_PARAMS_HEAD(value);
+            Value* typeset = KNOWN(ARR_HEAD(copy));
             for (; NOT_END(param); param++, typeset++) {
                 assert(VAL_PARAM_SPELLING(param) != NULL);
                 Move_Value(typeset, param);
@@ -325,8 +325,8 @@ REBTYPE(Action)
 //
 REB_R PD_Action(
     REBPVS *pvs,
-    const REBVAL *picker,
-    const REBVAL *opt_setval
+    const Value* picker,
+    const Value* opt_setval
 ){
     UNUSED(opt_setval);
 

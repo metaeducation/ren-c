@@ -42,9 +42,9 @@ enum Transport_Types {
 //
 //  Query_Net: C
 //
-static void Query_Net(REBVAL *out, REBVAL *port, struct devreq_net *sock)
+static void Query_Net(Value* out, Value* port, struct devreq_net *sock)
 {
-    REBVAL *info = rebValue(
+    Value* info = rebValue(
         "copy ensure object! (", port , ")/scheme/info"
     ); // shallow copy
 
@@ -80,8 +80,8 @@ static void Query_Net(REBVAL *out, REBVAL *port, struct devreq_net *sock)
 //
 static REB_R Transport_Actor(
     REBFRM *frame_,
-    REBVAL *port,
-    REBVAL *verb,
+    Value* port,
+    Value* verb,
     enum Transport_Types proto
 ){
     // Initialize the IO request
@@ -91,7 +91,7 @@ static REB_R Transport_Actor(
         sock->modes |= RST_UDP;
 
     REBCTX *ctx = VAL_CONTEXT(port);
-    REBVAL *spec = CTX_VAR(ctx, STD_PORT_SPEC);
+    Value* spec = CTX_VAR(ctx, STD_PORT_SPEC);
 
     // sock->timeout = 4000; // where does this go? !!!
 
@@ -122,15 +122,15 @@ static REB_R Transport_Actor(
             fail (Error_On_Port(SYM_NOT_OPEN, port, -12)); }
 
         case SYM_OPEN: {
-            REBVAL *arg = Obj_Value(spec, STD_PORT_SPEC_NET_HOST);
-            REBVAL *port_id = Obj_Value(spec, STD_PORT_SPEC_NET_PORT_ID);
+            Value* arg = Obj_Value(spec, STD_PORT_SPEC_NET_HOST);
+            Value* port_id = Obj_Value(spec, STD_PORT_SPEC_NET_PORT_ID);
 
             // OPEN needs to know to bind() the socket to a local port before
             // the first sendto() is called, if the user is particular about
             // what the port ID of originating messages is.  So local_port
             // must be set before the OS_DO_DEVICE() call.
             //
-            REBVAL *local_id = Obj_Value(spec, STD_PORT_SPEC_NET_LOCAL_ID);
+            Value* local_id = Obj_Value(spec, STD_PORT_SPEC_NET_LOCAL_ID);
             if (IS_BLANK(local_id))
                 DEVREQ_NET(sock)->local_port = 0; // let the system pick
             else if (IS_INTEGER(local_id))
@@ -157,7 +157,7 @@ static REB_R Transport_Actor(
 
                 // Note: sets remote_ip field
                 //
-                REBVAL *l_result = OS_DO_DEVICE(sock, RDC_LOOKUP);
+                Value* l_result = OS_DO_DEVICE(sock, RDC_LOOKUP);
                 DROP_GC_GUARD(temp);
 
                 assert(l_result != NULL);
@@ -215,7 +215,7 @@ static REB_R Transport_Actor(
 
         switch (property) {
         case SYM_LENGTH: {
-            REBVAL *port_data = CTX_VAR(ctx, STD_PORT_DATA);
+            Value* port_data = CTX_VAR(ctx, STD_PORT_DATA);
             return Init_Integer(
                 D_OUT,
                 ANY_SERIES(port_data) ? VAL_LEN_HEAD(port_data) : 0
@@ -241,7 +241,7 @@ static REB_R Transport_Actor(
         // Update the port object after a READ or WRITE operation.
         // This is normally called by the WAKE-UP function.
         //
-        REBVAL *port_data = CTX_VAR(ctx, STD_PORT_DATA);
+        Value* port_data = CTX_VAR(ctx, STD_PORT_DATA);
         if (sock->command == RDC_READ) {
             if (ANY_BINSTR(port_data)) {
                 SET_SERIES_LEN(
@@ -282,7 +282,7 @@ static REB_R Transport_Actor(
 
         // Setup the read buffer (allocate a buffer if needed):
         //
-        REBVAL *port_data = CTX_VAR(ctx, STD_PORT_DATA);
+        Value* port_data = CTX_VAR(ctx, STD_PORT_DATA);
         REBSER *buffer;
         if (not IS_TEXT(port_data) and not IS_BINARY(port_data)) {
             buffer = Make_Binary(NET_BUF_SIZE);
@@ -300,7 +300,7 @@ static REB_R Transport_Actor(
         sock->common.data = BIN_TAIL(buffer); // write at tail
         sock->actual = 0; // actual for THIS read (not for total)
 
-        REBVAL *result = OS_DO_DEVICE(sock, RDC_READ);
+        Value* result = OS_DO_DEVICE(sock, RDC_READ);
         if (result == NULL) {
             //
             // Request pending
@@ -349,7 +349,7 @@ static REB_R Transport_Actor(
         }
 
         // Determine length. Clip /PART to size of string if needed.
-        REBVAL *data = ARG(data);
+        Value* data = ARG(data);
 
         REBCNT len = VAL_LEN_AT(data);
         if (REF(part)) {
@@ -393,7 +393,7 @@ static REB_R Transport_Actor(
 
         sock->actual = 0;
 
-        REBVAL *result = OS_DO_DEVICE(sock, RDC_WRITE);
+        Value* result = OS_DO_DEVICE(sock, RDC_WRITE);
 
         if (temp != NULL)
             DROP_GC_GUARD(temp);
@@ -455,7 +455,7 @@ static REB_R Transport_Actor(
         RETURN (port); }
 
     case SYM_OPEN: {
-        REBVAL *result = OS_DO_DEVICE(sock, RDC_CONNECT);
+        Value* result = OS_DO_DEVICE(sock, RDC_CONNECT);
         if (result == NULL) {
             //
             // Asynchronous connect, this happens in TCP_Actor
@@ -485,7 +485,7 @@ static REB_R Transport_Actor(
 //
 //  TCP_Actor: C
 //
-static REB_R TCP_Actor(REBFRM *frame_, REBVAL *port, REBVAL *verb)
+static REB_R TCP_Actor(REBFRM *frame_, Value* port, Value* verb)
 {
     return Transport_Actor(frame_, port, verb, TRANSPORT_TCP);
 }
@@ -494,7 +494,7 @@ static REB_R TCP_Actor(REBFRM *frame_, REBVAL *port, REBVAL *verb)
 //
 //  UDP_Actor: C
 //
-static REB_R UDP_Actor(REBFRM *frame_, REBVAL *port, REBVAL *verb)
+static REB_R UDP_Actor(REBFRM *frame_, Value* port, Value* verb)
 {
     return Transport_Actor(frame_, port, verb, TRANSPORT_UDP);
 }

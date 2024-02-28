@@ -92,7 +92,7 @@
 // On Windows, the result is a wide-char pointer, but on Linux, its UTF-8.
 // The returned pointer must be freed with OS_FREE.
 //
-OSCHR *rebValSpellingAllocOS(const REBVAL *any_string)
+OSCHR *rebValSpellingAllocOS(const Value* any_string)
 {
   #ifdef OS_WIDE_CHAR
     return rebSpellW(any_string);
@@ -114,12 +114,12 @@ OSCHR *rebValSpellingAllocOS(const REBVAL *any_string)
 // there can be issues of permanent wasted space if the buffer is made too
 // large and not shrunk.
 //
-void Append_OS_Str(REBVAL *dest, const void *src, REBINT len)
+void Append_OS_Str(Value* dest, const void *src, REBINT len)
 {
   #ifdef TO_WINDOWS
-    REBVAL *src_str = rebLengthedTextW(cast(const REBWCHAR*, src), len);
+    Value* src_str = rebLengthedTextW(cast(const REBWCHAR*, src), len);
   #else
-    REBVAL *src_str = rebSizedText(cast(const char*, src), len);
+    Value* src_str = rebSizedText(cast(const char*, src), len);
   #endif
 
     rebElide("append", dest, src_str);
@@ -148,7 +148,7 @@ inline static void Fail_Permission_Denied(void) {
 }
 
 ATTRIBUTE_NO_RETURN
-inline static void Fail_No_Process(const REBVAL *arg) {
+inline static void Fail_No_Process(const Value* arg) {
     rebJumps("fail [{The target process (group) does not exist:}",
         arg, "]");
 }
@@ -1557,7 +1557,7 @@ REBNATIVE(call)
 
         cmd = NULL;
 
-        REBVAL *block = ARG(command);
+        Value* block = ARG(command);
         argc = VAL_LEN_AT(block);
         if (argc == 0)
             fail (Error_Too_Short_Raw());
@@ -1566,7 +1566,7 @@ REBNATIVE(call)
 
         int i;
         for (i = 0; i < argc; i ++) {
-            RELVAL *param = VAL_ARRAY_AT_HEAD(block, i);
+            Cell* param = VAL_ARRAY_AT_HEAD(block, i);
             if (IS_TEXT(param)) {
                 argv[i] = rebValSpellingAllocOS(KNOWN(param));
             }
@@ -1721,7 +1721,7 @@ REBNATIVE(get_os_browsers)
 {
     PROCESS_INCLUDE_PARAMS_OF_GET_OS_BROWSERS;
 
-    REBVAL *list = rebValue("copy []");
+    Value* list = rebValue("copy []");
 
   #if defined(TO_WINDOWS)
 
@@ -1933,7 +1933,7 @@ REBNATIVE(get_env)
 {
     PROCESS_INCLUDE_PARAMS_OF_GET_ENV;
 
-    REBVAL *variable = ARG(variable);
+    Value* variable = ARG(variable);
 
     Check_Security(Canon(SYM_ENVR), POL_READ, variable);
 
@@ -1957,7 +1957,7 @@ REBNATIVE(get_env)
         if (result == 0)
             error = Error_User("Unknown error fetching variable to buffer");
         else {
-            REBVAL *temp = rebLengthedTextW(val, val_len_plus_one - 1);
+            Value* temp = rebLengthedTextW(val, val_len_plus_one - 1);
             Move_Value(D_OUT, temp);
             rebRelease(temp);
         }
@@ -2011,8 +2011,8 @@ REBNATIVE(set_env)
 {
     PROCESS_INCLUDE_PARAMS_OF_SET_ENV;
 
-    REBVAL *variable = ARG(variable);
-    REBVAL *value = ARG(value);
+    Value* variable = ARG(variable);
+    Value* value = ARG(value);
 
     Check_Security(Canon(SYM_ENVR), POL_WRITE, variable);
 
@@ -2104,7 +2104,7 @@ REBNATIVE(list_env)
 {
     PROCESS_INCLUDE_PARAMS_OF_LIST_ENV;
 
-    REBVAL *map = rebValue("make map! []");
+    Value* map = rebValue("make map! []");
 
   #ifdef TO_WINDOWS
     //
@@ -2131,10 +2131,10 @@ REBNATIVE(list_env)
         }
 
         int key_len = eq_pos - key_equals_val;
-        REBVAL *key = rebLengthedTextW(key_equals_val, key_len);
+        Value* key = rebLengthedTextW(key_equals_val, key_len);
 
         int val_len = len - (eq_pos - key_equals_val) - 1;
-        REBVAL *val = rebLengthedTextW(eq_pos + 1, val_len);
+        Value* val = rebLengthedTextW(eq_pos + 1, val_len);
 
         rebElide("append", map, "[", rebR(key), rebR(val), "]");
 
@@ -2161,10 +2161,10 @@ REBNATIVE(list_env)
         REBCNT size = strlen(key_equals_val);
 
         int key_size = eq_pos - key_equals_val;
-        REBVAL *key = rebSizedText(key_equals_val, key_size);
+        Value* key = rebSizedText(key_equals_val, key_size);
 
         int val_size = size - (eq_pos - key_equals_val) - 1;
-        REBVAL *val = rebSizedText(eq_pos + 1, val_size);
+        Value* val = rebSizedText(eq_pos + 1, val_size);
 
         rebElide("append", map, "[", rebR(key), rebR(val), "]");
     }

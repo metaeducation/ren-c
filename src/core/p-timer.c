@@ -47,18 +47,18 @@
 //
 //  Timer_Actor: C
 //
-static REB_R Timer_Actor(REBFRM *frame_, REBVAL *port, REBVAL *verb)
+static REB_R Timer_Actor(REBFRM *frame_, Value* port, Value* verb)
 {
-    REBVAL *arg = D_ARGC > 1 ? D_ARG(2) : NULL;
+    Value* arg = D_ARGC > 1 ? D_ARG(2) : NULL;
 
     REBCTX *ctx = VAL_CONTEXT(port);
-    REBVAL *spec = CTX_VAR(ctx, STD_PORT_SPEC);
+    Value* spec = CTX_VAR(ctx, STD_PORT_SPEC);
     if (!IS_OBJECT(spec))
         fail (Error_Invalid_Spec_Raw(spec));
 
     // Get or setup internal state data:
     //
-    REBVAL *state = CTX_VAR(ctx, STD_PORT_STATE);
+    Value* state = CTX_VAR(ctx, STD_PORT_STATE);
     if (!IS_BLOCK(state))
         Init_Block(state, Make_Arr(127));
 
@@ -101,7 +101,7 @@ static REB_R Timer_Actor(REBFRM *frame_, REBVAL *port, REBVAL *verb)
         Move_Value(&save_port, D_ARG(1)); // save for return
         Move_Value(D_ARG(1), state);
 
-        const REBVAL *r = T_Block(ds, verb);
+        const Value* r = T_Block(ds, verb);
         SET_SIGNAL(SIG_EVENT_PORT);
         if (
             verb == SYM_INSERT

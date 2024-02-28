@@ -225,8 +225,8 @@ REBNATIVE(and)
 {
     INCLUDE_PARAMS_OF_AND;
 
-    REBVAL *left = ARG(left);
-    REBVAL *right = ARG(right);
+    Value* left = ARG(left);
+    Value* right = ARG(right);
 
     if (IS_BLOCK(left) and GET_VAL_FLAG(left, VALUE_FLAG_UNEVALUATED))
         fail ("left hand side of AND should not be literal block");
@@ -261,8 +261,8 @@ REBNATIVE(or)
 {
     INCLUDE_PARAMS_OF_OR;
 
-    REBVAL *left = ARG(left);
-    REBVAL *right = ARG(right);
+    Value* left = ARG(left);
+    Value* right = ARG(right);
 
     if (IS_BLOCK(left) and GET_VAL_FLAG(left, VALUE_FLAG_UNEVALUATED))
         fail ("left hand side of OR should not be literal block");
@@ -299,7 +299,7 @@ REBNATIVE(xor)
 {
     INCLUDE_PARAMS_OF_XOR;
 
-    REBVAL *left = ARG(left);
+    Value* left = ARG(left);
 
     if (IS_BLOCK(left) and GET_VAL_FLAG(left, VALUE_FLAG_UNEVALUATED))
         fail ("left hand side of XOR should not be literal block");
@@ -307,7 +307,7 @@ REBNATIVE(xor)
     if (Do_Any_Array_At_Throws(D_OUT, ARG(right))) // always evaluated
         return R_THROWN;
 
-    REBVAL *right = D_OUT;
+    Value* right = D_OUT;
 
     if (IS_FALSEY(left)) {
         if (IS_FALSEY(right))
@@ -354,7 +354,7 @@ REBNATIVE(unless)
 //
 //  CT_Logic: C
 //
-REBINT CT_Logic(const RELVAL *a, const RELVAL *b, REBINT mode)
+REBINT CT_Logic(const Cell* a, const Cell* b, REBINT mode)
 {
     if (mode >= 0)  return (VAL_LOGIC(a) == VAL_LOGIC(b));
     return -1;
@@ -364,7 +364,7 @@ REBINT CT_Logic(const RELVAL *a, const RELVAL *b, REBINT mode)
 //
 //  MAKE_Logic: C
 //
-REB_R MAKE_Logic(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg) {
+REB_R MAKE_Logic(Value* out, enum Reb_Kind kind, const Value* arg) {
     assert(kind == REB_LOGIC);
     UNUSED(kind);
 
@@ -393,7 +393,7 @@ REB_R MAKE_Logic(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg) {
 //
 //  TO_Logic: C
 //
-REB_R TO_Logic(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg) {
+REB_R TO_Logic(Value* out, enum Reb_Kind kind, const Value* arg) {
     assert(kind == REB_LOGIC);
     UNUSED(kind);
 
@@ -405,7 +405,7 @@ REB_R TO_Logic(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg) {
 }
 
 
-static inline bool Math_Arg_For_Logic(REBVAL *arg)
+static inline bool Math_Arg_For_Logic(Value* arg)
 {
     if (IS_LOGIC(arg))
         return VAL_LOGIC(arg);
@@ -420,7 +420,7 @@ static inline bool Math_Arg_For_Logic(REBVAL *arg)
 //
 //  MF_Logic: C
 //
-void MF_Logic(REB_MOLD *mo, const RELVAL *v, bool form)
+void MF_Logic(REB_MOLD *mo, const Cell* v, bool form)
 {
     UNUSED(form); // currently no distinction between MOLD and FORM
 

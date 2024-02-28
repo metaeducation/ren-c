@@ -26,7 +26,7 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// The data stack (DS_) is for pushing one individual REBVAL at a time.  The
+// The data stack (DS_) is for pushing one individual cell at a time.  The
 // values can then be popped in a Last-In-First-Out way.  It is also possible
 // to mark a stack position, do any number of pushes, and then ask for the
 // range of values pushed since the mark to be placed into a REBARR array.
@@ -64,14 +64,14 @@
 // DS_TOP is the most recently pushed item.
 //
 #define DS_TOP \
-    cast(REBVAL*, DS_Movable_Top) // cast helps stop ++DS_TOP, etc.
+    cast(Value*, DS_Movable_Top) // cast helps stop ++DS_TOP, etc.
 
 // DS_AT accesses value at given stack location.  It is allowed to point at
 // a stack location that is an end, e.g. DS_AT(dsp + 1), because that location
 // may be used as the start of a copy which is ultimately of length 0.
 //
-inline static REBVAL *DS_AT(REBDSP d) {
-    REBVAL *at = KNOWN(ARR_HEAD(DS_Array) + d);
+inline static Value* DS_AT(REBDSP d) {
+    Value* at = KNOWN(ARR_HEAD(DS_Array) + d);
     assert(
         ((at->header.bits & NODE_FLAG_CELL) and d <= (DSP + 1))
         or (not (SECOND_BYTE(at->header) != REB_0 and d == (DSP + 1)))
@@ -94,7 +94,7 @@ inline static REBVAL *DS_AT(REBDSP d) {
 //
 // If the stack runs out of capacity then it will be expanded by the basis
 // defined below.  The number is arbitrary and should be tuned.  Note the
-// number of bytes will be sizeof(REBVAL) * STACK_EXPAND_BASIS
+// number of bytes will be sizeof(Cell) * STACK_EXPAND_BASIS
 //
 
 #define STACK_EXPAND_BASIS 128
@@ -115,7 +115,7 @@ inline static REBVAL *DS_AT(REBDSP d) {
 //
 // Since it's known that END markers were never pushed, a pop can just leave
 // whatever bits had been previously pushed, dropping only the index.  The
-// only END marker will be the one indicating the tail of the stack.  
+// only END marker will be the one indicating the tail of the stack.
 //
 
 #ifdef NDEBUG

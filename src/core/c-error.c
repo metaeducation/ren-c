@@ -363,7 +363,7 @@ REBCNT Stack_Depth(void)
 //
 // If the message is not found, return nullptr.
 //
-const REBVAL *Find_Error_For_Sym(enum Reb_Symbol id_sym)
+const Value* Find_Error_For_Sym(enum Reb_Symbol id_sym)
 {
     REBSTR *id_canon = Canon(id_sym);
 
@@ -377,7 +377,7 @@ const REBVAL *Find_Error_For_Sym(enum Reb_Symbol id_sym)
         REBCNT n = SELFISH(1);
         for (; n <= CTX_LEN(category); ++n) {
             if (SAME_STR(CTX_KEY_SPELLING(category, n), id_canon)) {
-                REBVAL *message = CTX_VAR(category, n);
+                Value* message = CTX_VAR(category, n);
                 assert(IS_BLOCK(message) or IS_TEXT(message));
                 return message;
             }
@@ -487,8 +487,8 @@ void Set_Location_Of_Error(
 // then it can be seen exactly what is changing.
 //
 bool Make_Error_Object_Throws(
-    REBVAL *out, // output location **MUST BE GC SAFE**!
-    const REBVAL *arg
+    Value* out, // output location **MUST BE GC SAFE**!
+    const Value* arg
 ) {
     // Frame from the error object template defined in %sysobj.r
     //
@@ -575,7 +575,7 @@ bool Make_Error_Object_Throws(
         REBCTX *categories = VAL_CONTEXT(Get_System(SYS_CATALOG, CAT_ERRORS));
 
         // Find correct category for TYPE: (if any)
-        REBVAL *category
+        Value* category
             = Select_Canon_In_Context(categories, VAL_WORD_CANON(&vars->type));
 
         if (category) {
@@ -584,7 +584,7 @@ bool Make_Error_Object_Throws(
 
             // Find correct message for ID: (if any)
 
-            REBVAL *message = Select_Canon_In_Context(
+            Value* message = Select_Canon_In_Context(
                 VAL_CONTEXT(category), VAL_WORD_CANON(&vars->id)
             );
 
@@ -683,11 +683,11 @@ REBCTX *Make_Error_Managed_Core(
 
     DECLARE_LOCAL (id);
     DECLARE_LOCAL (type);
-    const REBVAL *message;
+    const Value* message;
     if (cat_sym == SYM_0 and id_sym == SYM_0) {
         Init_Blank(id);
         Init_Blank(type);
-        message = va_arg(*vaptr, const REBVAL*);
+        message = va_arg(*vaptr, const Value*);
     }
     else {
         assert(cat_sym != SYM_0 and id_sym != SYM_0);
@@ -705,7 +705,7 @@ REBCTX *Make_Error_Managed_Core(
 
     REBCNT expected_args = 0;
     if (IS_BLOCK(message)) { // GET-WORD!s in template should match va_list
-        RELVAL *temp = VAL_ARRAY_HEAD(message);
+        Cell* temp = VAL_ARRAY_HEAD(message);
         for (; NOT_END(temp); ++temp) {
             if (IS_GET_WORD(temp))
                 ++expected_args;
@@ -743,18 +743,18 @@ REBCTX *Make_Error_Managed_Core(
         TERM_ARRAY_LEN(CTX_VARLIST(error), root_len + expected_args + 1);
         TERM_ARRAY_LEN(CTX_KEYLIST(error), root_len + expected_args + 1);
 
-        REBVAL *key = CTX_KEY(error, root_len) + 1;
-        REBVAL *value = CTX_VAR(error, root_len) + 1;
+        Value* key = CTX_KEY(error, root_len) + 1;
+        Value* value = CTX_VAR(error, root_len) + 1;
 
     #ifdef NDEBUG
-        const RELVAL *temp = VAL_ARRAY_HEAD(message);
+        const Cell* temp = VAL_ARRAY_HEAD(message);
     #else
         // Will get here even for a parameterless string due to throwing in
         // the extra "arguments" of the __FILE__ and __LINE__
         //
-        const RELVAL *temp =
+        const Cell* temp =
             IS_TEXT(message)
-                ? cast(const RELVAL*, END_NODE) // gcc/g++ 2.95 needs (bug)
+                ? cast(const Cell*, END_NODE) // gcc/g++ 2.95 needs (bug)
                 : VAL_ARRAY_HEAD(message);
     #endif
 
@@ -785,7 +785,7 @@ REBCTX *Make_Error_Managed_Core(
                 }
 
               #if !defined(NDEBUG)
-                if (IS_RELATIVE(cast(const RELVAL*, p))) {
+                if (IS_RELATIVE(cast(const Cell*, p))) {
                     //
                     // Make_Error doesn't have any way to pass in a specifier,
                     // so only specific values should be used.
@@ -795,7 +795,7 @@ REBCTX *Make_Error_Managed_Core(
                 }
               #endif
 
-                const REBVAL *arg = cast(const REBVAL*, p);
+                const Value* arg = cast(const Value*, p);
 
                 Init_Typeset(
                     key,
@@ -829,7 +829,7 @@ REBCTX *Make_Error_Managed_Core(
 //
 //  Error: C
 //
-// This variadic function takes a number of REBVAL* arguments appropriate for
+// This variadic function takes a number of Value* arguments appropriate for
 // the error category and ID passed.  It is commonly used with fail():
 //
 //     fail (Error(SYM_CATEGORY, SYM_SOMETHING, arg1, arg2, ...));
@@ -850,7 +850,7 @@ REBCTX *Make_Error_Managed_Core(
 REBCTX *Error(
     int cat_sym,
     int id_sym, // can't be enum Reb_Symbol, see note below
-    ... /* REBVAL *arg1, REBVAL *arg2, ... */
+    ... /* Value* arg1, Value* arg2, ... */
 ){
     va_list va;
 
@@ -887,7 +887,7 @@ REBCTX *Error_User(const char *utf8) {
 //
 //  Error_Need_Non_End_Core: C
 //
-REBCTX *Error_Need_Non_End_Core(const RELVAL *target, REBSPC *specifier) {
+REBCTX *Error_Need_Non_End_Core(const Cell* target, REBSPC *specifier) {
     assert(IS_SET_WORD(target) or IS_SET_PATH(target));
 
     DECLARE_LOCAL (specific);
@@ -899,7 +899,7 @@ REBCTX *Error_Need_Non_End_Core(const RELVAL *target, REBSPC *specifier) {
 //
 //  Error_Need_Non_Void_Core: C
 //
-REBCTX *Error_Need_Non_Void_Core(const RELVAL *target, REBSPC *specifier) {
+REBCTX *Error_Need_Non_Void_Core(const Cell* target, REBSPC *specifier) {
     assert(ANY_WORD(target) or ANY_PATH(target));
 
     DECLARE_LOCAL (specific);
@@ -916,7 +916,7 @@ REBCTX *Error_Need_Non_Void_Core(const RELVAL *target, REBSPC *specifier) {
 // corresponding to refinements must be canonized to either TRUE or FALSE
 // by these specializations, because that's what the called function expects.
 //
-REBCTX *Error_Non_Logic_Refinement(const RELVAL *param, const REBVAL *arg) {
+REBCTX *Error_Non_Logic_Refinement(const Cell* param, const Value* arg) {
     DECLARE_LOCAL (word);
     Init_Word(word, VAL_PARAM_SPELLING(param));
     return Error_Non_Logic_Refine_Raw(word, Type_Of(arg));
@@ -926,7 +926,7 @@ REBCTX *Error_Non_Logic_Refinement(const RELVAL *param, const REBVAL *arg) {
 //
 //  Error_Bad_Func_Def: C
 //
-REBCTX *Error_Bad_Func_Def(const REBVAL *spec, const REBVAL *body)
+REBCTX *Error_Bad_Func_Def(const Value* spec, const Value* body)
 {
     // !!! Improve this error; it's simply a direct emulation of arity-1
     // error that existed before refactoring code out of MAKE_Function().
@@ -945,7 +945,7 @@ REBCTX *Error_Bad_Func_Def(const REBVAL *spec, const REBVAL *body)
 //
 //  Error_No_Arg: C
 //
-REBCTX *Error_No_Arg(REBFRM *f, const RELVAL *param)
+REBCTX *Error_No_Arg(REBFRM *f, const Cell* param)
 {
     assert(IS_TYPESET(param));
 
@@ -974,7 +974,7 @@ REBCTX *Error_No_Memory(REBCNT bytes)
 //
 //  Error_No_Relative_Core: C
 //
-REBCTX *Error_No_Relative_Core(const RELVAL *any_word)
+REBCTX *Error_No_Relative_Core(const Cell* any_word)
 {
     DECLARE_LOCAL (unbound);
     Init_Any_Word(
@@ -992,7 +992,7 @@ REBCTX *Error_No_Relative_Core(const RELVAL *any_word)
 //
 REBCTX *Error_Not_Varargs(
     REBFRM *f,
-    const RELVAL *param,
+    const Cell* param,
     enum Reb_Kind kind
 ){
     assert(Is_Param_Variadic(param));
@@ -1026,9 +1026,9 @@ REBCTX *Error_Not_Varargs(
 // error, as it could be distinguished from `fail (some_context)` meaning that
 // the context was for an actual intended error.  However, this created a bad
 // incompatibility with rebFail(), where the non-exposure of raw context
-// pointers meant passing REBVAL* was literally failing on an error value.
+// pointers meant passing Value* was literally failing on an error value.
 //
-REBCTX *Error_Invalid(const REBVAL *value)
+REBCTX *Error_Invalid(const Value* value)
 {
     return Error_Invalid_Arg_Raw(value);
 }
@@ -1037,7 +1037,7 @@ REBCTX *Error_Invalid(const REBVAL *value)
 //
 //  Error_Invalid_Core: C
 //
-REBCTX *Error_Invalid_Core(const RELVAL *value, REBSPC *specifier)
+REBCTX *Error_Invalid_Core(const Cell* value, REBSPC *specifier)
 {
     DECLARE_LOCAL (specific);
     Derelativize(specific, value, specifier);
@@ -1049,7 +1049,7 @@ REBCTX *Error_Invalid_Core(const RELVAL *value, REBSPC *specifier)
 //
 //  Error_Bad_Func_Def_Core: C
 //
-REBCTX *Error_Bad_Func_Def_Core(const RELVAL *item, REBSPC *specifier)
+REBCTX *Error_Bad_Func_Def_Core(const Cell* item, REBSPC *specifier)
 {
     DECLARE_LOCAL (specific);
     Derelativize(specific, item, specifier);
@@ -1065,7 +1065,7 @@ REBCTX *Error_Bad_Func_Def_Core(const RELVAL *item, REBSPC *specifier)
 // by the error handling).  See the remarks about the state of f->refine in
 // the Reb_Frame definition.
 //
-REBCTX *Error_Bad_Refine_Revoke(const RELVAL *param, const REBVAL *arg)
+REBCTX *Error_Bad_Refine_Revoke(const Cell* param, const Value* arg)
 {
     assert(IS_TYPESET(param));
 
@@ -1090,7 +1090,7 @@ REBCTX *Error_Bad_Refine_Revoke(const RELVAL *param, const REBVAL *arg)
 //
 //  Error_No_Value_Core: C
 //
-REBCTX *Error_No_Value_Core(const RELVAL *target, REBSPC *specifier) {
+REBCTX *Error_No_Value_Core(const Cell* target, REBSPC *specifier) {
     DECLARE_LOCAL (specified);
     Derelativize(specified, target, specifier);
 
@@ -1101,7 +1101,7 @@ REBCTX *Error_No_Value_Core(const RELVAL *target, REBSPC *specifier) {
 //
 //  Error_No_Value: C
 //
-REBCTX *Error_No_Value(const REBVAL *target) {
+REBCTX *Error_No_Value(const Value* target) {
     return Error_No_Value_Core(target, SPECIFIED);
 }
 
@@ -1109,7 +1109,7 @@ REBCTX *Error_No_Value(const REBVAL *target) {
 //
 //  Error_No_Catch_For_Throw: C
 //
-REBCTX *Error_No_Catch_For_Throw(REBVAL *thrown)
+REBCTX *Error_No_Catch_For_Throw(Value* thrown)
 {
     DECLARE_LOCAL (arg);
 
@@ -1136,7 +1136,7 @@ REBCTX *Error_Invalid_Type(enum Reb_Kind kind)
 //
 // value out of range: <value>
 //
-REBCTX *Error_Out_Of_Range(const REBVAL *arg)
+REBCTX *Error_Out_Of_Range(const Value* arg)
 {
     return Error_Out_Of_Range_Raw(arg);
 }
@@ -1145,7 +1145,7 @@ REBCTX *Error_Out_Of_Range(const REBVAL *arg)
 //
 //  Error_Protected_Key: C
 //
-REBCTX *Error_Protected_Key(REBVAL *key)
+REBCTX *Error_Protected_Key(Value* key)
 {
     assert(IS_TYPESET(key));
 
@@ -1159,7 +1159,7 @@ REBCTX *Error_Protected_Key(REBVAL *key)
 //
 //  Error_Illegal_Action: C
 //
-REBCTX *Error_Illegal_Action(enum Reb_Kind type, REBVAL *verb)
+REBCTX *Error_Illegal_Action(enum Reb_Kind type, Value* verb)
 {
     assert(IS_WORD(verb));
     return Error_Cannot_Use_Raw(verb, Datatype_From_Kind(type));
@@ -1169,7 +1169,7 @@ REBCTX *Error_Illegal_Action(enum Reb_Kind type, REBVAL *verb)
 //
 //  Error_Math_Args: C
 //
-REBCTX *Error_Math_Args(enum Reb_Kind type, REBVAL *verb)
+REBCTX *Error_Math_Args(enum Reb_Kind type, Value* verb)
 {
     assert(IS_WORD(verb));
     return Error_Not_Related_Raw(verb, Datatype_From_Kind(type));
@@ -1199,7 +1199,7 @@ REBCTX *Error_Unexpected_Type(enum Reb_Kind expected, enum Reb_Kind actual)
 //
 REBCTX *Error_Arg_Type(
     REBFRM *f,
-    const RELVAL *param,
+    const Cell* param,
     enum Reb_Kind actual
 ) {
     assert(IS_TYPESET(param));
@@ -1244,7 +1244,7 @@ REBCTX *Error_Bad_Return_Type(REBFRM *f, enum Reb_Kind kind) {
 //
 //  Error_Bad_Make: C
 //
-REBCTX *Error_Bad_Make(enum Reb_Kind type, const REBVAL *spec)
+REBCTX *Error_Bad_Make(enum Reb_Kind type, const Value* spec)
 {
     return Error_Bad_Make_Arg_Raw(Datatype_From_Kind(type), spec);
 }
@@ -1253,7 +1253,7 @@ REBCTX *Error_Bad_Make(enum Reb_Kind type, const REBVAL *spec)
 //
 //  Error_Cannot_Reflect: C
 //
-REBCTX *Error_Cannot_Reflect(enum Reb_Kind type, const REBVAL *arg)
+REBCTX *Error_Cannot_Reflect(enum Reb_Kind type, const Value* arg)
 {
     return Error_Cannot_Use_Raw(arg, Datatype_From_Kind(type));
 }
@@ -1262,14 +1262,14 @@ REBCTX *Error_Cannot_Reflect(enum Reb_Kind type, const REBVAL *arg)
 //
 //  Error_On_Port: C
 //
-REBCTX *Error_On_Port(enum Reb_Symbol id_sym, REBVAL *port, REBINT err_code)
+REBCTX *Error_On_Port(enum Reb_Symbol id_sym, Value* port, REBINT err_code)
 {
     FAIL_IF_BAD_PORT(port);
 
     REBCTX *ctx = VAL_CONTEXT(port);
-    REBVAL *spec = CTX_VAR(ctx, STD_PORT_SPEC);
+    Value* spec = CTX_VAR(ctx, STD_PORT_SPEC);
 
-    REBVAL *val = VAL_CONTEXT_VAR(spec, STD_PORT_SPEC_HEAD_REF);
+    Value* val = VAL_CONTEXT_VAR(spec, STD_PORT_SPEC_HEAD_REF);
     if (IS_BLANK(val))
         val = VAL_CONTEXT_VAR(spec, STD_PORT_SPEC_HEAD_TITLE); // less info
 
@@ -1285,7 +1285,7 @@ REBCTX *Error_On_Port(enum Reb_Symbol id_sym, REBVAL *port, REBINT err_code)
 //
 // Create error objects and error type objects
 //
-REBCTX *Startup_Errors(const REBVAL *boot_errors)
+REBCTX *Startup_Errors(const Value* boot_errors)
 {
   #ifdef DEBUG_HAS_PROBE
     const char *env_probe_failures = getenv("R3_PROBE_FAILURES");
@@ -1312,7 +1312,7 @@ REBCTX *Startup_Errors(const REBVAL *boot_errors)
     // Create objects for all error types (CAT_ERRORS is "selfish", currently
     // so self is in slot 1 and the actual errors start at context slot 2)
     //
-    REBVAL *val;
+    Value* val;
     for (val = CTX_VAR(catalog, SELFISH(1)); NOT_END(val); val++) {
         REBCTX *error = Construct_Context_Managed(
             REB_OBJECT,
@@ -1381,9 +1381,9 @@ void Shutdown_Stackoverflow(void)
 //         eval:  integer (limit)
 //     ]
 //
-const REBYTE *Security_Policy(REBSTR *spelling, const REBVAL *name)
+const REBYTE *Security_Policy(REBSTR *spelling, const Value* name)
 {
-    const REBVAL *policy = Get_System(SYS_STATE, STATE_POLICIES);
+    const Value* policy = Get_System(SYS_STATE, STATE_POLICIES);
     const REBYTE *flags;
     REBCNT len;
     enum Reb_Symbol errcode = SYM_SECURITY_ERROR;
@@ -1456,7 +1456,7 @@ const REBYTE *Security_Policy(REBSTR *spelling, const REBVAL *name)
 // Take action on the policy flags provided. The sym and value
 // are provided for error message purposes only.
 //
-void Trap_Security(REBCNT flag, REBSTR *sym, const REBVAL *value)
+void Trap_Security(REBCNT flag, REBSTR *sym, const Value* value)
 {
     if (flag == SEC_THROW) {
         if (!value) {
@@ -1477,7 +1477,7 @@ void Trap_Security(REBCNT flag, REBSTR *sym, const REBVAL *value)
 // a given symbol (FILE) and value (path), and then tests
 // that they are allowed.
 //
-void Check_Security(REBSTR *sym, REBCNT policy, REBVAL *value)
+void Check_Security(REBSTR *sym, REBCNT policy, Value* value)
 {
     const REBYTE *flags = Security_Policy(sym, value);
     Trap_Security(flags[policy], sym, value);
@@ -1486,7 +1486,7 @@ void Check_Security(REBSTR *sym, REBCNT policy, REBVAL *value)
 
 // Limited molder (used, e.g., for errors)
 //
-static void Mold_Value_Limit(REB_MOLD *mo, RELVAL *v, REBCNT len)
+static void Mold_Value_Limit(REB_MOLD *mo, Cell* v, REBCNT len)
 {
     REBCNT start = SER_LEN(mo->series);
     Mold_Value(mo, v);
@@ -1501,7 +1501,7 @@ static void Mold_Value_Limit(REB_MOLD *mo, RELVAL *v, REBCNT len)
 //
 //  MF_Error: C
 //
-void MF_Error(REB_MOLD *mo, const RELVAL *v, bool form)
+void MF_Error(REB_MOLD *mo, const Cell* v, bool form)
 {
     // Protect against recursion. !!!!
     //
@@ -1530,7 +1530,7 @@ void MF_Error(REB_MOLD *mo, const RELVAL *v, bool form)
         Append_Unencoded(mo->series, RM_BAD_ERROR_FORMAT);
 
     // Form: ** Where: function
-    REBVAL *where = KNOWN(&vars->where);
+    Value* where = KNOWN(&vars->where);
     if (
         not IS_BLANK(where)
         and not (IS_BLOCK(where) and VAL_LEN_AT(where) == 0)
@@ -1541,7 +1541,7 @@ void MF_Error(REB_MOLD *mo, const RELVAL *v, bool form)
     }
 
     // Form: ** Near: location
-    REBVAL *nearest = KNOWN(&vars->nearest);
+    Value* nearest = KNOWN(&vars->nearest);
     if (not IS_BLANK(nearest)) {
         Append_Utf8_Codepoint(mo->series, '\n');
         Append_Unencoded(mo->series, RM_ERROR_NEAR);
@@ -1569,7 +1569,7 @@ void MF_Error(REB_MOLD *mo, const RELVAL *v, bool form)
     // only be used in ANY-WORD! values at the moment, so the filename is
     // not a FILE!.
     //
-    REBVAL *file = KNOWN(&vars->file);
+    Value* file = KNOWN(&vars->file);
     if (not IS_BLANK(file)) {
         Append_Utf8_Codepoint(mo->series, '\n');
         Append_Unencoded(mo->series, RM_ERROR_FILE);
@@ -1580,7 +1580,7 @@ void MF_Error(REB_MOLD *mo, const RELVAL *v, bool form)
     }
 
     // Form: ** Line: line-number
-    REBVAL *line = KNOWN(&vars->line);
+    Value* line = KNOWN(&vars->line);
     if (not IS_BLANK(line)) {
         Append_Utf8_Codepoint(mo->series, '\n');
         Append_Unencoded(mo->series, RM_ERROR_LINE);

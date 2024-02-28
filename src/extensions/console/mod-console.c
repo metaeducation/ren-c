@@ -179,13 +179,13 @@ void Enable_Ctrl_C(void)
 // Can't just use a TRAP when running user code, because it might legitimately
 // evaluate to an ERROR! value, as well as FAIL.  Uses rebRescue().
 
-static REBVAL *Run_Sandboxed_Code(REBVAL *group_or_block) {
+static Value* Run_Sandboxed_Code(Value* group_or_block) {
     //
     // Don't want to use DO here, because that would add an extra stack
     // level of Rebol ACTION! in the backtrace.  See notes on rebValueInline()
     // for its possible future.
     //
-    REBVAL *result = rebValueInline(group_or_block);
+    Value* result = rebValueInline(group_or_block);
     if (not result)
         return nullptr;
 
@@ -246,10 +246,10 @@ REBNATIVE(console)
     REBINT Save_Trace_Level = Trace_Level;
     REBINT Save_Trace_Depth = Trace_Depth;
 
-    REBVAL *result = nullptr;
+    Value* result = nullptr;
     bool no_recover = false; // allow one try at HOST-CONSOLE internal error
 
-    REBVAL *code;
+    Value* code;
     if (REF(provoke)) {
         code = rebValue("quote", ARG(provocation));
         goto provoked;
@@ -268,7 +268,7 @@ REBNATIVE(console)
         // evaluations for the user (or on behalf of the console skin) are
         // done in Run_Sandboxed_Code().
         //
-        REBVAL *trapped; // goto crosses initialization
+        Value* trapped; // goto crosses initialization
         trapped = rebValue(
             "lib/entrap [",
                 "ext-console-impl", // action! that takes 2 args, run it

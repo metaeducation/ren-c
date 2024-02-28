@@ -47,7 +47,7 @@
 //
 void Collapsify_Array(REBARR *array, REBSPC *specifier, REBCNT limit)
 {
-    RELVAL *item = ARR_HEAD(array);
+    Cell* item = ARR_HEAD(array);
     for (; NOT_END(item); ++item) {
         if (ANY_ARRAY(item) and VAL_LEN_AT(item) > limit) {
             REBSPC *derived = Derive_Specifier(specifier, item);
@@ -93,12 +93,12 @@ void Collapsify_Array(REBARR *array, REBSPC *specifier, REBCNT limit)
 //
 // !!! DO also offers a feature whereby values can be supplied at the start
 // of an evaluation which are not resident in the array.  It also can run
-// on an irreversible C va_list of REBVAL*, where these disappear as the
+// on an irreversible C va_list of Value*, where these disappear as the
 // evaluation proceeds.  A special debug setting would be needed to hang
 // onto these values for the purposes of better error messages (at the cost
 // of performance).
 //
-REBVAL *Init_Near_For_Frame(RELVAL *out, REBFRM *f)
+Value* Init_Near_For_Frame(Cell* out, REBFRM *f)
 {
     REBCNT dsp_start = DSP;
 
@@ -134,7 +134,7 @@ REBVAL *Init_Near_For_Frame(RELVAL *out, REBFRM *f)
         start = 0;
 
     REBCNT count = 0;
-    RELVAL *item = ARR_AT(FRM_ARRAY(f), start);
+    Cell* item = ARR_AT(FRM_ARRAY(f), start);
     for (; NOT_END(item) and count < 6; ++item, ++count) {
         DS_PUSH_TRASH;
         if (IS_NULLED(item)) {

@@ -19,12 +19,12 @@ updated to reflect a summary of important changes.
 Rather than be a brand or product in its own right, this project intends to provide smooth
 APIs for embedding an interpreter in C programs...hopefully eventually `rebol.exe` itself.
 
-One of these APIs (libRebol) is "user-friendly" to C programmers, allowing them to avoid the 
+One of these APIs (libRebol) is "user-friendly" to C programmers, allowing them to avoid the
 low-level concerns of the interpreter and just run snippets of code mixed with values, as
 easily as:
 
     int x = 1020;
-    REBVAL *negate_function = rebRun("get 'negate", END);
+    Value* negate_function = rebRun("get 'negate", END);
 
     rebRun("print [", rebInteger(x), "+ (2 *", rebEval(negate_function), "3)]", END);
 
@@ -39,8 +39,8 @@ from [userspace Rebol code][4] (as opposed to hardcoded C).  In addition to mult
 editing and UTF-8 support, it [can be "skinned"][5] and configured in various ways, and
 non-C programmers can easily help contribute to enhancing it.
 
-[4]: https://github.com/metaeducation/ren-c/blob/master/src/os/host-console.r 
-[5]: https://github.com/r3n/reboldocs/wiki/User-and-Console 
+[4]: https://github.com/metaeducation/ren-c/blob/master/src/os/host-console.r
+[5]: https://github.com/r3n/reboldocs/wiki/User-and-Console
 
 A C++ binding is also available, and for those interested in a novel application of this
 code, they might want to see the experimental console based on it and Qt: [Ren Garden][6].
@@ -83,7 +83,7 @@ to reign in compiler dependencies have been a large amount of work, and it still
 a [number of older platforms][15].  However, if it is compiled with a C++ compiler then
 there is significantly more static analysis at build time, to catch errors.
 
-[14]: https://github.com/metaeducation/ren-c/wiki/On-Building-Ren-C-With-Cpp-Compilers 
+[14]: https://github.com/metaeducation/ren-c/wiki/On-Building-Ren-C-With-Cpp-Compilers
 [15]: https://github.com/metaeducation/ren-c/blob/master/make/tools/systems.r
 
 The open-sourced R3-Alpha was based on a build process that depended on GNU make, and

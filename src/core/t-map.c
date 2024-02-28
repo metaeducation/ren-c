@@ -35,7 +35,7 @@
 //
 //  CT_Map: C
 //
-REBINT CT_Map(const RELVAL *a, const RELVAL *b, REBINT mode)
+REBINT CT_Map(const Cell* a, const Cell* b, REBINT mode)
 {
     if (mode < 0) return -1;
     return 0 == Cmp_Array(a, b, false);
@@ -58,7 +58,7 @@ REBMAP *Make_Map(REBCNT capacity)
 }
 
 
-static REBCTX *Error_Conflicting_Key(const RELVAL *key, REBSPC *specifier)
+static REBCTX *Error_Conflicting_Key(const Cell* key, REBSPC *specifier)
 {
     DECLARE_LOCAL (specific);
     Derelativize(specific, key, specifier);
@@ -96,7 +96,7 @@ static REBCTX *Error_Conflicting_Key(const RELVAL *key, REBSPC *specifier)
 REBINT Find_Key_Hashed(
     REBARR *array,
     REBSER *hashlist,
-    const RELVAL *key, // !!! assumes key is followed by value(s) via ++
+    const Cell* key, // !!! assumes key is followed by value(s) via ++
     REBSPC *specifier,
     REBCNT wide,
     bool cased,
@@ -135,7 +135,7 @@ REBINT Find_Key_Hashed(
     if (ANY_WORD(key)) {
         REBCNT n;
         while ((n = indexes[slot]) != 0) {
-            RELVAL *k = ARR_AT(array, (n - 1) * wide); // stored key
+            Cell* k = ARR_AT(array, (n - 1) * wide); // stored key
             if (ANY_WORD(k)) {
                 if (VAL_WORD_SPELLING(key) == VAL_WORD_SPELLING(k))
                     FOUND_EXACT;
@@ -154,7 +154,7 @@ REBINT Find_Key_Hashed(
     else if (ANY_BINSTR(key)) {
         REBCNT n;
         while ((n = indexes[slot]) != 0) {
-            RELVAL *k = ARR_AT(array, (n - 1) * wide); // stored key
+            Cell* k = ARR_AT(array, (n - 1) * wide); // stored key
             if (VAL_TYPE(k) == VAL_TYPE(key)) {
                 if (0 == Compare_String_Vals(k, key, false))
                     FOUND_EXACT;
@@ -173,7 +173,7 @@ REBINT Find_Key_Hashed(
     else {
         REBCNT n;
         while ((n = indexes[slot]) != 0) {
-            RELVAL *k = ARR_AT(array, (n - 1) * wide); // stored key
+            Cell* k = ARR_AT(array, (n - 1) * wide); // stored key
             if (VAL_TYPE(k) == VAL_TYPE(key)) {
                 if (0 == Cmp_Value(k, key, true))
                     FOUND_EXACT;
@@ -203,7 +203,7 @@ REBINT Find_Key_Hashed(
     }
 
     if (mode > 1) { // append new value to the target series
-        const RELVAL *src = key;
+        const Cell* src = key;
         indexes[slot] = (ARR_LEN(array) / wide) + 1;
 
         REBCNT index;
@@ -229,7 +229,7 @@ static void Rehash_Map(REBMAP *map)
     REBCNT *hashes = SER_HEAD(REBCNT, hashlist);
     REBARR *pairlist = MAP_PAIRLIST(map);
 
-    REBVAL *key = KNOWN(ARR_HEAD(pairlist));
+    Value* key = KNOWN(ARR_HEAD(pairlist));
     REBCNT n;
 
     for (n = 0; n < ARR_LEN(pairlist); n += 2, key += 2) {
@@ -299,9 +299,9 @@ void Expand_Hash(REBSER *ser)
 //
 REBCNT Find_Map_Entry(
     REBMAP *map,
-    const RELVAL *key,
+    const Cell* key,
     REBSPC *key_specifier,
-    const RELVAL *val,
+    const Cell* val,
     REBSPC *val_specifier,
     bool cased // case-sensitive if true
 ) {
@@ -367,8 +367,8 @@ REBCNT Find_Map_Entry(
 //
 REB_R PD_Map(
     REBPVS *pvs,
-    const REBVAL *picker,
-    const REBVAL *opt_setval
+    const Value* picker,
+    const Value* opt_setval
 ){
     assert(IS_MAP(pvs->out));
 
@@ -401,7 +401,7 @@ REB_R PD_Map(
     if (n == 0)
         return nullptr;
 
-    REBVAL *val = KNOWN(
+    Value* val = KNOWN(
         ARR_AT(MAP_PAIRLIST(VAL_MAP(pvs->out)), ((n - 1) * 2) + 1)
     );
     if (IS_NULLED(val)) // zombie entry, means unused
@@ -421,7 +421,7 @@ static void Append_Map(
     REBSPC *specifier,
     REBCNT len
 ) {
-    RELVAL *item = ARR_AT(array, index);
+    Cell* item = ARR_AT(array, index);
     REBCNT n = 0;
 
     while (n < len && NOT_END(item)) {
@@ -450,7 +450,7 @@ static void Append_Map(
 //
 //  MAKE_Map: C
 //
-REB_R MAKE_Map(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
+REB_R MAKE_Map(Value* out, enum Reb_Kind kind, const Value* arg)
 {
     if (ANY_NUMBER(arg)) {
         return Init_Map(out, Make_Map(Int32s(arg, 0)));
@@ -486,11 +486,11 @@ inline static REBMAP *Copy_Map(REBMAP *map, REBU64 types) {
     //
     assert(ARR_LEN(copy) % 2 == 0); // should be [key value key value]...
 
-    RELVAL *key = ARR_HEAD(copy);
+    Cell* key = ARR_HEAD(copy);
     for (; NOT_END(key); key += 2) {
         assert(Is_Value_Immutable(key)); // immutable key
 
-        RELVAL *v = key + 1;
+        Cell* v = key + 1;
         if (IS_NULLED(v))
             continue; // "zombie" map element (not present)
 
@@ -506,7 +506,7 @@ inline static REBMAP *Copy_Map(REBMAP *map, REBU64 types) {
 //
 //  TO_Map: C
 //
-REB_R TO_Map(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
+REB_R TO_Map(Value* out, enum Reb_Kind kind, const Value* arg)
 {
     assert(kind == REB_MAP);
     UNUSED(kind);
@@ -551,8 +551,8 @@ REBARR *Map_To_Array(REBMAP *map, REBINT what)
     REBCNT count = Length_Map(map);
     REBARR *a = Make_Arr(count * ((what == 0) ? 2 : 1));
 
-    REBVAL *dest = KNOWN(ARR_HEAD(a));
-    REBVAL *val = KNOWN(ARR_HEAD(MAP_PAIRLIST(map)));
+    Value* dest = KNOWN(ARR_HEAD(a));
+    Value* val = KNOWN(ARR_HEAD(MAP_PAIRLIST(map)));
     for (; NOT_END(val); val += 2) {
         assert(NOT_END(val + 1));
         if (not IS_NULLED(val + 1)) {
@@ -567,7 +567,7 @@ REBARR *Map_To_Array(REBMAP *map, REBINT what)
         }
     }
 
-    TERM_ARRAY_LEN(a, cast(RELVAL*, dest) - ARR_HEAD(a));
+    TERM_ARRAY_LEN(a, cast(Cell*, dest) - ARR_HEAD(a));
     assert(IS_END(dest));
     return a;
 }
@@ -584,7 +584,7 @@ REBCTX *Alloc_Context_From_Map(REBMAP *map)
     // a bit haphazard to have `make object! make map! [x 10 <y> 20]` and
     // just throw out the <y> 20 case...
 
-    REBVAL *mval = KNOWN(ARR_HEAD(MAP_PAIRLIST(map)));
+    Value* mval = KNOWN(ARR_HEAD(MAP_PAIRLIST(map)));
     REBCNT count = 0;
 
     for (; NOT_END(mval); mval += 2) {
@@ -596,8 +596,8 @@ REBCTX *Alloc_Context_From_Map(REBMAP *map)
     // See Alloc_Context() - cannot use it directly because no Collect_Words
 
     REBCTX *context = Alloc_Context(REB_OBJECT, count);
-    REBVAL *key = CTX_KEYS_HEAD(context);
-    REBVAL *var = CTX_VARS_HEAD(context);
+    Value* key = CTX_KEYS_HEAD(context);
+    Value* var = CTX_VARS_HEAD(context);
 
     mval = KNOWN(ARR_HEAD(MAP_PAIRLIST(map)));
 
@@ -630,7 +630,7 @@ REBCTX *Alloc_Context_From_Map(REBMAP *map)
 //
 //  MF_Map: C
 //
-void MF_Map(REB_MOLD *mo, const RELVAL *v, bool form)
+void MF_Map(REB_MOLD *mo, const Cell* v, bool form)
 {
     REBMAP *m = VAL_MAP(v);
 
@@ -652,7 +652,7 @@ void MF_Map(REB_MOLD *mo, const RELVAL *v, bool form)
     //
     mo->indent++;
 
-    RELVAL *key = ARR_HEAD(MAP_PAIRLIST(m));
+    Cell* key = ARR_HEAD(MAP_PAIRLIST(m));
     for (; NOT_END(key); key += 2) {
         assert(NOT_END(key + 1)); // value slot must not be END
         if (IS_NULLED(key + 1))
@@ -682,8 +682,8 @@ void MF_Map(REB_MOLD *mo, const RELVAL *v, bool form)
 //
 REBTYPE(Map)
 {
-    REBVAL *val = D_ARG(1);
-    REBVAL *arg = D_ARGC > 1 ? D_ARG(2) : NULL;
+    Value* val = D_ARG(1);
+    Value* arg = D_ARGC > 1 ? D_ARG(2) : NULL;
 
     REBMAP *map = VAL_MAP(val);
 

@@ -36,7 +36,7 @@
 //
 //  Console_Actor: C
 //
-static REB_R Console_Actor(REBFRM *frame_, REBVAL *port, REBVAL *verb)
+static REB_R Console_Actor(REBFRM *frame_, Value* port, Value* verb)
 {
     REBCTX *ctx = VAL_CONTEXT(port);
     REBREQ *req = Ensure_Port_State(port, RDI_STDIO);
@@ -82,7 +82,7 @@ static REB_R Console_Actor(REBFRM *frame_, REBVAL *port, REBVAL *verb)
 
         // If no buffer, create a buffer:
         //
-        REBVAL *data = CTX_VAR(ctx, STD_PORT_DATA);
+        Value* data = CTX_VAR(ctx, STD_PORT_DATA);
         if (not IS_BINARY(data))
             Init_Binary(data, Make_Binary(OUT_BUF_SIZE));
 

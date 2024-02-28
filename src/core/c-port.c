@@ -43,7 +43,7 @@
 // The size is that of a binary structure used by
 // the port for storing internal information.
 //
-REBREQ *Ensure_Port_State(REBVAL *port, REBCNT device)
+REBREQ *Ensure_Port_State(Value* port, REBCNT device)
 {
     assert(device < RDI_MAX);
 
@@ -52,7 +52,7 @@ REBREQ *Ensure_Port_State(REBVAL *port, REBCNT device)
         return NULL;
 
     REBCTX *ctx = VAL_CONTEXT(port);
-    REBVAL *state = CTX_VAR(ctx, STD_PORT_STATE);
+    Value* state = CTX_VAR(ctx, STD_PORT_STATE);
     REBCNT req_size = dev->req_size;
 
     if (!IS_BINARY(state)) {
@@ -81,9 +81,9 @@ REBREQ *Ensure_Port_State(REBVAL *port, REBCNT device)
 // Return true if port value is pending a signal.
 // Not valid for all ports - requires request struct!!!
 //
-bool Pending_Port(REBVAL *port)
+bool Pending_Port(Value* port)
 {
-    REBVAL *state;
+    Value* state;
     REBREQ *req;
 
     if (IS_PORT(port)) {
@@ -109,17 +109,17 @@ bool Pending_Port(REBVAL *port)
 REBINT Awake_System(REBARR *ports, bool only)
 {
     // Get the system port object:
-    REBVAL *port = Get_System(SYS_PORTS, PORTS_SYSTEM);
+    Value* port = Get_System(SYS_PORTS, PORTS_SYSTEM);
     if (!IS_PORT(port))
         return -10; // verify it is a port object
 
     // Get wait queue block (the state field):
-    REBVAL *state = VAL_CONTEXT_VAR(port, STD_PORT_STATE);
+    Value* state = VAL_CONTEXT_VAR(port, STD_PORT_STATE);
     if (!IS_BLOCK(state))
         return -10;
 
     // Get waked queue block:
-    REBVAL *waked = VAL_CONTEXT_VAR(port, STD_PORT_DATA);
+    Value* waked = VAL_CONTEXT_VAR(port, STD_PORT_DATA);
     if (!IS_BLOCK(waked))
         return -10;
 
@@ -128,7 +128,7 @@ REBINT Awake_System(REBARR *ports, bool only)
         return -1;
 
     // Get the system port AWAKE function:
-    REBVAL *awake = VAL_CONTEXT_VAR(port, STD_PORT_AWAKE);
+    Value* awake = VAL_CONTEXT_VAR(port, STD_PORT_AWAKE);
     if (not IS_ACTION(awake))
         return -1;
 
@@ -183,7 +183,7 @@ REBINT Awake_System(REBARR *ports, bool only)
 //     if a throw happens, out will be the thrown value and returns TRUE
 //
 bool Wait_Ports_Throws(
-    REBVAL *out,
+    Value* out,
     REBARR *ports,
     REBCNT timeout,
     bool only
@@ -231,7 +231,7 @@ bool Wait_Ports_Throws(
             wt *= 2;
             if (wt > MAX_WAIT_MS) wt = MAX_WAIT_MS;
         }
-        REBVAL *pump = Get_System(SYS_PORTS, PORTS_PUMP);
+        Value* pump = Get_System(SYS_PORTS, PORTS_PUMP);
         if (not IS_BLOCK(pump))
             fail ("system/ports/pump must be a block");
 
@@ -269,8 +269,8 @@ bool Wait_Ports_Throws(
 //
 void Sieve_Ports(REBARR *ports)
 {
-    REBVAL *port;
-    REBVAL *waked;
+    Value* port;
+    Value* waked;
     REBCNT n;
 
     port = Get_System(SYS_PORTS, PORTS_SYSTEM);
@@ -279,7 +279,7 @@ void Sieve_Ports(REBARR *ports)
     if (!IS_BLOCK(waked)) return;
 
     for (n = 0; ports and n < ARR_LEN(ports);) {
-        RELVAL *val = ARR_AT(ports, n);
+        Cell* val = ARR_AT(ports, n);
         if (IS_PORT(val)) {
             assert(VAL_LEN_HEAD(waked) != 0);
             if (
@@ -320,13 +320,13 @@ void Sieve_Ports(REBARR *ports)
 bool Redo_Action_Throws(REBFRM *f, REBACT *run)
 {
     REBARR *code_arr = Make_Arr(FRM_NUM_ARGS(f)); // max, e.g. no refines
-    RELVAL *code = ARR_HEAD(code_arr);
+    Cell* code = ARR_HEAD(code_arr);
 
     // The first element of our path will be the ACTION!, followed by its
     // refinements...which in the worst case, all args will be refinements:
     //
     REBARR *path_arr = Make_Arr(FRM_NUM_ARGS(f) + 1);
-    RELVAL *path = ARR_HEAD(path_arr);
+    Cell* path = ARR_HEAD(path_arr);
     Init_Action_Unbound(path, run); // !!! What if there's a binding?
     ++path;
 
@@ -388,7 +388,7 @@ bool Redo_Action_Throws(REBFRM *f, REBACT *run)
         first, // path not in array, will be "virtual" first element
         code_arr,
         0, // index
-        SPECIFIED, // reusing existing REBVAL arguments, no relative values
+        SPECIFIED, // reusing existing Value arguments, no relative cells
         DO_FLAG_EXPLICIT_EVALUATE // DON'T double-evaluate arguments
             | DO_FLAG_NO_RESIDUE // raise an error if all args not consumed
     );
@@ -409,12 +409,12 @@ bool Redo_Action_Throws(REBFRM *f, REBACT *run)
 // NOTE: stack must already be setup correctly for action, and
 // the caller must cleanup the stack.
 //
-REB_R Do_Port_Action(REBFRM *frame_, REBVAL *port, REBVAL *verb)
+REB_R Do_Port_Action(REBFRM *frame_, Value* port, Value* verb)
 {
     FAIL_IF_BAD_PORT(port);
 
     REBCTX *ctx = VAL_CONTEXT(port);
-    REBVAL *actor = CTX_VAR(ctx, STD_PORT_ACTOR);
+    Value* actor = CTX_VAR(ctx, STD_PORT_ACTOR);
 
     REB_R r;
 
@@ -440,7 +440,7 @@ REB_R Do_Port_Action(REBFRM *frame_, REBVAL *port, REBVAL *verb)
         false // !always
     );
 
-    REBVAL *action;
+    Value* action;
     if (n == 0 or not IS_ACTION(action = VAL_CONTEXT_VAR(actor, n)))
         fail (Error_No_Port_Action_Raw(verb));
 
@@ -511,10 +511,10 @@ post_process_output:
 void Secure_Port(
     REBSTR *kind,
     REBREQ *req,
-    const REBVAL *name
-    /* , const REBVAL *path */
+    const Value* name
+    /* , const Value* path */
 ){
-    const REBVAL *path = name;
+    const Value* path = name;
     assert(IS_FILE(path)); // !!! relative, untranslated
 
     const REBYTE *flags = Security_Policy(STR_CANON(kind), path);
@@ -550,7 +550,7 @@ void Secure_Port(
 // function is exposed through a native that returns it.  This is the shared
 // routine used to make a handle out of a PORT_HOOK.
 //
-void Make_Port_Actor_Handle(REBVAL *out, PORT_HOOK paf)
+void Make_Port_Actor_Handle(Value* out, PORT_HOOK paf)
 {
     Init_Handle_Cfunc(out, cast(CFUNC*, paf), 0);
 }

@@ -32,15 +32,15 @@
 //
 //     https://en.wikipedia.org/wiki/Tracing_garbage_collection
 //
-// A REBVAL's "payload" and "extra" field may or may not contain pointers to
+// A cell's "payload" and "extra" field may or may not contain pointers to
 // REBSERs that the GC needs to be aware of.  Some small values like LOGIC!
 // or INTEGER! don't, because they can fit the entirety of their data into the
-// REBVAL's 4*sizeof(void) cell...though this would change if INTEGER! added
+// cell's 4*sizeof(void) cell...though this would change if INTEGER! added
 // support for arbitrary-sized-numbers.
 //
-// Some REBVALs embed REBSER pointers even when the payload would technically
+// Some cells embed REBSER pointers even when the payload would technically
 // fit inside their cell.  They do this in order to create a level of
-// indirection so that their data can be shared among copies of that REBVAL.
+// indirection so that their data can be shared among copies of that cell.
 // For instance, HANDLE! does this.
 //
 // "Deep" marking in R3-Alpha was originally done with recursion, and the
@@ -91,7 +91,7 @@
 // moment, they still need the hook.
 //
 
-static void Queue_Mark_Event_Deep(const RELVAL *value);
+static void Queue_Mark_Event_Deep(const Cell* value);
 
 static void Mark_Devices_Deep(void);
 
@@ -224,7 +224,7 @@ inline static void Queue_Mark_Map_Deep(REBMAP *m) { // ARRAY_FLAG_PAIRLIST
     Queue_Mark_Array_Subclass_Deep(pairlist); // see Propagate_All_GC_Marks()
 }
 
-inline static void Queue_Mark_Binding_Deep(const RELVAL *v) {
+inline static void Queue_Mark_Binding_Deep(const Cell* v) {
     REBNOD *binding = VAL_BINDING(v);
     if (not binding)
         return;
@@ -288,7 +288,7 @@ inline static void Queue_Mark_Singular_Array(REBARR *a) {
 // If a slot is not supposed to allow END, use Queue_Mark_Opt_Value_Deep()
 // If a slot allows neither END nor NULLED cells, use Queue_Mark_Value_Deep()
 //
-static void Queue_Mark_Opt_End_Cell_Deep(const RELVAL *v)
+static void Queue_Mark_Opt_End_Cell_Deep(const Cell* v)
 {
     assert(not in_mark);
   #if !defined(NDEBUG)
@@ -321,7 +321,7 @@ static void Queue_Mark_Opt_End_Cell_Deep(const RELVAL *v)
         // Make sure the [0] slot of the paramlist holds an archetype that is
         // consistent with the paramlist itself.
         //
-        REBVAL *archetype = ACT_ARCHETYPE(a);
+        Value* archetype = ACT_ARCHETYPE(a);
         assert(ACT_PARAMLIST(a) == VAL_ACT_PARAMLIST(archetype));
         assert(ACT_DETAILS(a) == VAL_ACT_DETAILS(archetype));
       #endif
@@ -431,7 +431,7 @@ static void Queue_Mark_Opt_End_Cell_Deep(const RELVAL *v)
 
         #if !defined(NDEBUG)
             assert(ARR_LEN(singular) == 1);
-            RELVAL *single = ARR_SINGLE(singular);
+            Cell* single = ARR_SINGLE(singular);
             assert(IS_HANDLE(single));
             assert(single->extra.singular == v->extra.singular);
             if (v != single) {
@@ -470,7 +470,7 @@ static void Queue_Mark_Opt_End_Cell_Deep(const RELVAL *v)
         //
         // Ren-C's PAIR! uses a special kind of REBSER that does no additional
         // memory allocation, but embeds two REBVALs in the REBSER itself.
-        // A REBVAL has a uintptr_t header at the beginning of its struct,
+        // A cell has a uintptr_t header at the beginning of its struct,
         // just like a REBSER, and the NODE_FLAG_MARKED bit is a 0
         // if unmarked...so it can stealthily participate in the marking
         // process, as long as the bit is cleared at the end.
@@ -523,7 +523,7 @@ static void Queue_Mark_Opt_End_Cell_Deep(const RELVAL *v)
         // Currently the "binding" in a context is only used by FRAME! to
         // preserve the binding of the ACTION! value that spawned that
         // frame.  Currently that binding is typically NULL inside of a
-        // function's REBVAL unless it is a definitional RETURN or LEAVE.
+        // function's cell unless it is a definitional RETURN or LEAVE.
         //
         // !!! Expanded usages may be found in other situations that mix an
         // archetype with an instance (e.g. an archetypal function body that
@@ -565,7 +565,7 @@ static void Queue_Mark_Opt_End_Cell_Deep(const RELVAL *v)
             break;
 
       #if !defined(NDEBUG)
-        REBVAL *archetype = CTX_ARCHETYPE(context);
+        Value* archetype = CTX_ARCHETYPE(context);
         assert(CTX_TYPE(context) == kind);
         assert(VAL_CONTEXT(archetype) == context);
       #endif
@@ -605,13 +605,13 @@ static void Queue_Mark_Opt_End_Cell_Deep(const RELVAL *v)
   #endif
 }
 
-inline static void Queue_Mark_Opt_Value_Deep(const RELVAL *v)
+inline static void Queue_Mark_Opt_Value_Deep(const Cell* v)
 {
     assert(NOT_END(v)); // can be NULLED, just not END
     Queue_Mark_Opt_End_Cell_Deep(v);
 }
 
-inline static void Queue_Mark_Value_Deep(const RELVAL *v)
+inline static void Queue_Mark_Value_Deep(const Cell* v)
 {
     assert(NOT_END(v));
     assert(VAL_TYPE_RAW(v) != REB_MAX_NULLED); // Note: Unreadable blanks ok
@@ -669,7 +669,7 @@ static void Propagate_All_GC_Marks(void)
         assert(not IS_FREE_NODE(SER(a)));
     #endif
 
-        RELVAL *v;
+        Cell* v;
 
         if (GET_SER_FLAG(a, ARRAY_FLAG_PARAMLIST)) {
             v = ARR_HEAD(a); // archetype
@@ -815,15 +815,15 @@ static void Propagate_All_GC_Marks(void)
 //  Reify_Any_C_Valist_Frames: C
 //
 // Some of the call stack frames may have been invoked with a C function call
-// that took a comma-separated list of REBVAL (the way printf works, a
+// that took a comma-separated list of Value* (the way printf works, a
 // variadic "va_list").
 //
 // http://en.cppreference.com/w/c/variadic
 //
-// Although it's a list of REBVAL*, these call frames have no REBARR series
+// Although it's a list of Value*, these call frames have no REBARR series
 // behind.  Yet they still need to be enumerated to protect the values coming
 // up in the later EVALUATEs.  But enumerating a C va_list can't be undone.
-// The REBVAL* is lost if it isn't saved, and these frames may be in
+// The Value* is lost if it isn't saved, and these frames may be in
 // mid-evaluation.
 //
 // Hence, the garbage collector has to "reify" the remaining portion of the
@@ -931,7 +931,7 @@ static void Mark_Root_Series(void)
                     continue; // PAIR! or other value will mark it
 
                 assert(!"unmanaged pairings not believed to exist yet");
-                REBVAL *paired = cast(REBVAL*, s);
+                Value* paired = cast(Value*, s);
                 Queue_Mark_Opt_Value_Deep(paired);
                 Queue_Mark_Opt_Value_Deep(PAIRING_KEY(paired));
             }
@@ -962,7 +962,7 @@ static void Mark_Root_Series(void)
                 if (GET_SER_FLAG(s, ARRAY_FLAG_FILE_LINE))
                     LINK(s).file->header.bits |= NODE_FLAG_MARKED;
 
-                RELVAL *item = ARR_HEAD(cast(REBARR*, s));
+                Cell* item = ARR_HEAD(cast(REBARR*, s));
                 for (; NOT_END(item); ++item)
                     Queue_Mark_Value_Deep(item);
             }
@@ -994,10 +994,10 @@ static void Mark_Root_Series(void)
 //
 static void Mark_Data_Stack(void)
 {
-    REBVAL *head = KNOWN(ARR_HEAD(DS_Array));
+    Value* head = KNOWN(ARR_HEAD(DS_Array));
     ASSERT_UNREADABLE_IF_DEBUG(head);
 
-    REBVAL *stackval = DS_TOP;
+    Value* stackval = DS_TOP;
     for (; stackval != head; --stackval)
         Queue_Mark_Value_Deep(stackval);
 
@@ -1027,7 +1027,7 @@ static void Mark_Symbol_Series(void)
 //
 //  Mark_Natives: C
 //
-// For each native C implemenation, a REBVAL is created during init to
+// For each native C implemenation, a cell is created during init to
 // represent it as an ACTION!.  These are kept in a global array and are
 // protected from GC.  It might not technically be necessary to do so for
 // all natives, but at least some have their paramlists referenced by the
@@ -1060,7 +1060,7 @@ static void Mark_Guarded_Nodes(void)
             //
             // !!! What if someone tried to GC_GUARD a managed paired REBSER?
             //
-            Queue_Mark_Opt_End_Cell_Deep(cast(REBVAL*, node));
+            Queue_Mark_Opt_End_Cell_Deep(cast(Value*, node));
         }
         else { // a series
             assert(node->header.bits & NODE_FLAG_MANAGED);
@@ -1080,7 +1080,7 @@ static void Mark_Guarded_Nodes(void)
 //
 // Mark values being kept live by all call frames.  If a function is running,
 // then this will keep the function itself live, as well as the arguments.
-// There is also an "out" slot--which may point to an arbitrary REBVAL cell
+// There is also an "out" slot--which may point to an arbitrary Value cell
 // on the C stack.  The out slot is initialized to an END marker at the
 // start of every function call, so that it won't be uninitialized bits
 // which would crash the GC...but it must be turned into a value (or a void)
@@ -1207,13 +1207,13 @@ static void Mark_Frame_Stack_Deep(void)
         //
         REBACT *phase; // goto would cross initialization
         phase = FRM_PHASE_OR_DUMMY(f);
-        REBVAL *param;
+        Value* param;
         if (phase == PG_Dummy_Action)
             param = ACT_PARAMS_HEAD(f->original); // no phases will run
         else
             param = ACT_PARAMS_HEAD(phase);
 
-        REBVAL *arg;
+        Value* arg;
         for (arg = FRM_ARGS_HEAD(f); NOT_END(param); ++param, ++arg) {
             //
             // At time of writing, all frame storage is in stack cells...not
@@ -1366,13 +1366,13 @@ static REBCNT Sweep_Series(void)
     }
 
     // For efficiency of memory use, REBSER is nominally defined as
-    // 2*sizeof(REBVAL), and so pairs can use the same nodes.  But features
+    // 2*sizeof(Cell), and so pairs can use the same nodes.  But features
     // that might make the cells a size greater than REBSER size require
     // doing pairings in a different pool.
     //
-  #ifdef UNUSUAL_REBVAL_SIZE
+  #ifdef UNUSUAL_CELL_SIZE
     for (seg = Mem_Pools[PAR_POOL].segs; seg != NULL; seg = seg->next) {
-        REBVAL *v = cast(REBVAL*, seg + 1);
+        Value* v = cast(Value*, seg + 1);
         if (v->header.bits & NODE_FLAG_FREE) {
             assert(FIRST_BYTE(v->header) == FREED_SERIES_BYTE);
             continue;
@@ -1642,7 +1642,7 @@ void Push_Guard_Node(const REBNOD *node)
         // going to happen immediately, and value could theoretically become
         // valid before then.)
         //
-        const REBVAL* value = cast(const REBVAL*, node);
+        const Value* value = cast(const Value*, node);
         assert(
             IS_END(value)
             or IS_BLANK_RAW(value)
@@ -1709,7 +1709,7 @@ REBARR *Snapshot_All_Actions(void)
                 //
                 assert(IS_SERIES_MANAGED(s));
                 if (GET_SER_FLAG(s, ARRAY_FLAG_PARAMLIST)) {
-                    REBVAL *v = KNOWN(ARR_HEAD(ARR(s)));
+                    Value* v = KNOWN(ARR_HEAD(ARR(s)));
                     assert(IS_ACTION(v));
                     DS_PUSH(v);
                 }
@@ -1769,7 +1769,7 @@ void Shutdown_GC(void)
 // one will have to call Propagate_All_GC_Marks() to have the
 // deep transitive closure completely marked.
 //
-static void Queue_Mark_Event_Deep(const RELVAL *value)
+static void Queue_Mark_Event_Deep(const Cell* value)
 {
     REBREQ *req;
 
@@ -1777,7 +1777,7 @@ static void Queue_Mark_Event_Deep(const RELVAL *value)
         IS_EVENT_MODEL(value, EVM_PORT)
         or IS_EVENT_MODEL(value, EVM_OBJECT)
     ){
-        Queue_Mark_Context_Deep(CTX(VAL_EVENT_SER(m_cast(RELVAL*, value))));
+        Queue_Mark_Context_Deep(CTX(VAL_EVENT_SER(m_cast(Cell*, value))));
     }
 
     if (IS_EVENT_MODEL(value, EVM_DEVICE)) {

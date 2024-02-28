@@ -35,15 +35,15 @@
 //
 //  DNS_Actor: C
 //
-static REB_R DNS_Actor(REBFRM *frame_, REBVAL *port, REBVAL *verb)
+static REB_R DNS_Actor(REBFRM *frame_, Value* port, Value* verb)
 {
-    REBVAL *arg = D_ARGC > 1 ? D_ARG(2) : NULL;
+    Value* arg = D_ARGC > 1 ? D_ARG(2) : NULL;
 
     REBREQ *sock = Ensure_Port_State(port, RDI_DNS);
     sock->timeout = 4000; // where does this go? !!!
 
     REBCTX *ctx = VAL_CONTEXT(port);
-    REBVAL *spec = CTX_VAR(ctx, STD_PORT_SPEC);
+    Value* spec = CTX_VAR(ctx, STD_PORT_SPEC);
 
     REBCNT len;
 

@@ -41,8 +41,8 @@
 //
 REB_R PD_Fail(
     REBPVS *pvs,
-    const REBVAL *picker,
-    const REBVAL *opt_setval
+    const Value* picker,
+    const Value* opt_setval
 ){
     UNUSED(pvs);
     UNUSED(picker);
@@ -60,14 +60,14 @@ REB_R PD_Fail(
 //
 REB_R PD_Unhooked(
     REBPVS *pvs,
-    const REBVAL *picker,
-    const REBVAL *opt_setval
+    const Value* picker,
+    const Value* opt_setval
 ){
     UNUSED(pvs);
     UNUSED(picker);
     UNUSED(opt_setval);
 
-    const REBVAL *type = Datatype_From_Kind(VAL_TYPE(pvs->out));
+    const Value* type = Datatype_From_Kind(VAL_TYPE(pvs->out));
     UNUSED(type); // !!! put in error message?
 
     fail ("Datatype is provided by an extension which is not loaded.");
@@ -125,7 +125,7 @@ bool Next_Path_Throws(REBPVS *pvs)
     Fetch_Next_In_Frame(nullptr, pvs); // may be at end
 
     if (IS_END(pvs->value) and PVS_IS_SET_PATH(pvs)) {
-        const REBVAL *r = hook(
+        const Value* r = hook(
             pvs,
             PVS_PICKER(pvs),
             PVS_OPT_SETVAL(pvs)
@@ -192,7 +192,7 @@ bool Next_Path_Throws(REBPVS *pvs)
     else {
         pvs->u.ref.cell = nullptr; // clear status of the reference
 
-        const REBVAL *r = hook(
+        const Value* r = hook(
             pvs,
             PVS_PICKER(pvs),
             nullptr // no opt_setval, GET-PATH! or a SET-PATH! not at the end
@@ -267,7 +267,7 @@ bool Next_Path_Throws(REBPVS *pvs)
 //
 //  Eval_Path_Throws_Core: C
 //
-// Evaluate an ANY_PATH! REBVAL, starting from the index position of that
+// Evaluate an ANY_PATH! Value, starting from the index position of that
 // path value and continuing to the end.
 //
 // The evaluator may throw because GROUP! is evaluated, e.g. `foo/(throw 1020)`
@@ -289,12 +289,12 @@ bool Next_Path_Throws(REBPVS *pvs)
 // vetted very heavily by Ren-C, and needs a review and overhaul.
 //
 bool Eval_Path_Throws_Core(
-    REBVAL *out, // if opt_setval, this is only used to return a thrown value
+    Value* out, // if opt_setval, this is only used to return a thrown value
     REBSTR **label_out,
     REBARR *array,
     REBCNT index,
     REBSPC *specifier,
-    const REBVAL *opt_setval, // Note: may be the same as out!
+    const Value* opt_setval, // Note: may be the same as out!
     REBFLGS flags
 ){
     if (flags & DO_FLAG_SET_PATH_ENFIXED)
@@ -419,8 +419,8 @@ bool Eval_Path_Throws_Core(
         // This way we can just pop them as we go, and know if they weren't
         // all consumed if not back to `dsp_orig` by the end.
 
-        REBVAL *bottom = DS_AT(dsp_orig + 1);
-        REBVAL *top = DS_TOP;
+        Value* bottom = DS_AT(dsp_orig + 1);
+        Value* top = DS_TOP;
 
         while (top > bottom) {
             assert(IS_ISSUE(bottom) and not IS_WORD_BOUND(bottom));
@@ -493,7 +493,7 @@ bool Eval_Path_Throws_Core(
 // were `get x` would look up a variable but `get 3` would give you 3.
 // At time of writing it seems to appear in only two places.
 //
-void Get_Simple_Value_Into(REBVAL *out, const RELVAL *val, REBSPC *specifier)
+void Get_Simple_Value_Into(Value* out, const Cell* val, REBSPC *specifier)
 {
     if (IS_WORD(val) or IS_GET_WORD(val))
         Move_Opt_Var_May_Fail(out, val, specifier);
@@ -517,15 +517,15 @@ void Get_Simple_Value_Into(REBVAL *out, const RELVAL *val, REBSPC *specifier)
 // does not execute GROUP! (and perhaps shouldn't?) and only supports a
 // path that picks contexts out of other contexts, via word selection.
 //
-REBCTX *Resolve_Path(const REBVAL *path, REBCNT *index_out)
+REBCTX *Resolve_Path(const Value* path, REBCNT *index_out)
 {
     REBARR *array = VAL_ARRAY(path);
-    RELVAL *picker = ARR_HEAD(array);
+    Cell* picker = ARR_HEAD(array);
 
     if (IS_END(picker) or not ANY_WORD(picker))
         return NULL; // !!! only handles heads of paths that are ANY-WORD!
 
-    const RELVAL *var = Get_Opt_Var_May_Fail(picker, VAL_SPECIFIER(path));
+    const Cell* var = Get_Opt_Var_May_Fail(picker, VAL_SPECIFIER(path));
 
     ++picker;
     if (IS_END(picker))
@@ -572,7 +572,7 @@ REBNATIVE(pick)
 {
     INCLUDE_PARAMS_OF_PICK;
 
-    REBVAL *location = ARG(location);
+    Value* location = ARG(location);
 
     // PORT!s are kind of a "user defined type" which historically could
     // react to PICK and POKE, but which could not override path dispatch.
@@ -653,7 +653,7 @@ REBNATIVE(poke)
 {
     INCLUDE_PARAMS_OF_POKE;
 
-    REBVAL *location = ARG(location);
+    Value* location = ARG(location);
 
     // PORT!s are kind of a "user defined type" which historically could
     // react to PICK and POKE, but which could not override path dispatch.
@@ -683,7 +683,7 @@ REBNATIVE(poke)
     PATH_HOOK hook = Path_Hooks[VAL_TYPE(location)];
     assert(hook); // &PD_Fail is used instead of nullptr
 
-    const REBVAL *r = hook(pvs, PVS_PICKER(pvs), ARG(value));
+    const Value* r = hook(pvs, PVS_PICKER(pvs), ARG(value));
     switch (VAL_TYPE_RAW(r)) {
     case REB_0_END:
         assert(r == R_UNHANDLED);
@@ -718,8 +718,8 @@ REBNATIVE(path_0)
 {
     INCLUDE_PARAMS_OF_PATH_0;
 
-    REBVAL *left = ARG(left);
-    REBVAL *right = ARG(right);
+    Value* left = ARG(left);
+    Value* right = ARG(right);
 
     // !!! Somewhat whimsically, this goes ahead and guesses at a possible
     // behavior for "dividing" strings using SPLIT.  This is a placeholder

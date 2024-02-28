@@ -54,7 +54,7 @@
 //
 //  Dump_Frame_Location: C
 //
-void Dump_Frame_Location(const RELVAL *current, REBFRM *f)
+void Dump_Frame_Location(const Cell* current, REBFRM *f)
 {
     DECLARE_LOCAL (dump);
 
@@ -299,7 +299,7 @@ void Do_After_Action_Checks_Debug(REBFRM *f) {
     // so native return types are checked instead of just trusting the C.
     //
     if (GET_ACT_FLAG(phase, ACTION_FLAG_RETURN)) {
-        REBVAL *typeset = ACT_PARAM(phase, ACT_NUM_PARAMS(phase));
+        Value* typeset = ACT_PARAM(phase, ACT_NUM_PARAMS(phase));
         assert(VAL_PARAM_SYM(typeset) == SYM_RETURN);
         if (
             not TYPE_CHECK(typeset, VAL_TYPE(f->out))

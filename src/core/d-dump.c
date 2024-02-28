@@ -157,7 +157,7 @@ void Dump_Series(REBSER *s, const char *memo)
 //
 // Print values in raw hex; If memory is corrupted this still needs to work.
 //
-void Dump_Values(RELVAL *vp, REBCNT count)
+void Dump_Values(Cell* vp, REBCNT count)
 {
     REBYTE buf[2048];
     REBYTE *cp;
@@ -167,7 +167,7 @@ void Dump_Values(RELVAL *vp, REBCNT count)
 
     cp = buf;
     for (l = 0; l < count; l++) {
-        REBVAL *val = cast(REBVAL*, bp);
+        Value* val = cast(Value*, bp);
         if (IS_END(val)) {
             break;
         }
@@ -187,7 +187,7 @@ void Dump_Values(RELVAL *vp, REBCNT count)
             else *cp++ = ' ';
         }
         *cp++ = ' ';
-        for (n = 0; n < sizeof(REBVAL) / sizeof(REBCNT); n++) {
+        for (n = 0; n < sizeof(Cell) / sizeof(REBCNT); n++) {
             cp = Form_Hex_Pad(cp, *bp++, 8);
             *cp++ = ' ';
         }
@@ -267,8 +267,8 @@ void Dump_Stack(REBFRM *f, REBCNT level)
     fflush(stdout);
 
     REBINT n = 1;
-    REBVAL *arg = FRM_ARG(f, 1);
-    REBVAL *param = ACT_PARAMS_HEAD(FRM_PHASE(f));
+    Value* arg = FRM_ARG(f, 1);
+    Value* param = ACT_PARAMS_HEAD(FRM_PHASE(f));
 
     for (; NOT_END(param); ++param, ++arg, ++n) {
         if (IS_NULLED(arg))
@@ -310,12 +310,12 @@ REBNATIVE(dump)
     UNUSED(ARG(value));
     fail (Error_Debug_Only_Raw());
 #else
-    REBVAL *v = ARG(value);
+    Value* v = ARG(value);
 
     PROBE(v);
     printf("=> ");
     if (IS_WORD(v)) {
-        const REBVAL *var = Try_Get_Opt_Var(v, SPECIFIED);
+        const Value* var = Try_Get_Opt_Var(v, SPECIFIED);
         if (not var) {
             PROBE("\\unbound\\");
         }

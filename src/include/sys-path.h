@@ -45,7 +45,7 @@
 //     == 10x304
 //
 // Because GOB! stores its size as packed bits that are not a full PAIR!,
-// the `gob/size` path dispatch can't give back a pointer to a REBVAL* to
+// the `gob/size` path dispatch can't give back a pointer to a Value* to
 // which later writes will update the GOB!.  It can only give back a
 // temporary value built from its internal bits.  So workarounds are needed,
 // as they are for a similar situation in trying to set values inside of
@@ -53,7 +53,7 @@
 //
 // The way the workaround works involves allowing a SET-PATH! to run forward
 // and write into a temporary value.  Then in these cases the temporary
-// REBVAL is observed and used to write back into the native bits before the
+// Value is observed and used to write back into the native bits before the
 // SET-PATH! evaluation finishes.  This means that it's not currently
 // prohibited for the effect of a SET-PATH! to be writing into a temporary.
 //
@@ -83,8 +83,8 @@
     FRM_CELL(pvs)
 
 inline static bool Get_Path_Throws_Core(
-    REBVAL *out,
-    const RELVAL *any_path,
+    Value* out,
+    const Cell* any_path,
     REBSPC *specifier
 ){
     return Eval_Path_Throws_Core(
@@ -100,8 +100,8 @@ inline static bool Get_Path_Throws_Core(
 
 
 inline static void Get_Path_Core(
-    REBVAL *out,
-    const RELVAL *any_path,
+    Value* out,
+    const Cell* any_path,
     REBSPC *specifier
 ){
     assert(ANY_PATH(any_path)); // *could* work on ANY_ARRAY(), actually
@@ -121,10 +121,10 @@ inline static void Get_Path_Core(
 
 
 inline static bool Set_Path_Throws_Core(
-    REBVAL *out,
-    const RELVAL *any_path,
+    Value* out,
+    const Cell* any_path,
     REBSPC *specifier,
-    const REBVAL *setval
+    const Value* setval
 ){
     assert(ANY_PATH(any_path)); // *could* work on ANY_ARRAY(), actually
 
@@ -141,9 +141,9 @@ inline static bool Set_Path_Throws_Core(
 
 
 inline static void Set_Path_Core(
-    const RELVAL *any_path,
+    const Cell* any_path,
     REBSPC *specifier,
-    const REBVAL *setval,
+    const Value* setval,
     bool enfix
 ){
     assert(ANY_PATH(any_path)); // *could* work on ANY_ARRAY(), actually

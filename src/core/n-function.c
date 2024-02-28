@@ -71,9 +71,9 @@ REBNATIVE(func)
 // It is used in the implementation of the UNWIND native.
 //
 void Make_Thrown_Unwind_Value(
-    REBVAL *out,
-    const REBVAL *level, // FRAME!, ACTION! (or INTEGER! relative to frame)
-    const REBVAL *value,
+    Value* out,
+    const Value* level, // FRAME!, ACTION! (or INTEGER! relative to frame)
+    const Value* value,
     REBFRM *frame // required if level is INTEGER! or ACTION!
 ) {
     Move_Value(out, NAT_VALUE(unwind));
@@ -143,7 +143,7 @@ void Make_Thrown_Unwind_Value(
 REBNATIVE(unwind)
 //
 // UNWIND is implemented via a THROWN() value that bubbles through the stack.
-// Using UNWIND's action REBVAL with a target `binding` field is the
+// Using UNWIND's action cell with a target `binding` field is the
 // protocol understood by Eval_Core to catch a throw itself.
 //
 // !!! Allowing to pass an INTEGER! to jump from a function based on its
@@ -206,12 +206,12 @@ REBNATIVE(return)
     //
     REBACT *target_fun = FRM_UNDERLYING(target_frame);
 
-    REBVAL *v = ARG(value);
+    Value* v = ARG(value);
 
     // Defininitional returns are "locals"--there's no argument type check.
     // So TYPESET! bits in the RETURN param are used for legal return types.
     //
-    REBVAL *typeset = ACT_PARAM(target_fun, ACT_NUM_PARAMS(target_fun));
+    Value* typeset = ACT_PARAM(target_fun, ACT_NUM_PARAMS(target_fun));
     assert(VAL_PARAM_CLASS(typeset) == PARAM_CLASS_RETURN);
     assert(VAL_PARAM_SYM(typeset) == SYM_RETURN);
 
@@ -262,18 +262,18 @@ REBNATIVE(typechecker)
 {
     INCLUDE_PARAMS_OF_TYPECHECKER;
 
-    REBVAL *type = ARG(type);
+    Value* type = ARG(type);
 
     REBARR *paramlist = Make_Arr_Core(
         2,
         SERIES_MASK_ACTION | NODE_FLAG_MANAGED
     );
 
-    REBVAL *archetype = RESET_CELL(Alloc_Tail_Array(paramlist), REB_ACTION);
+    Value* archetype = RESET_CELL(Alloc_Tail_Array(paramlist), REB_ACTION);
     archetype->payload.action.paramlist = paramlist;
     INIT_BINDING(archetype, UNBOUND);
 
-    REBVAL *param = Init_Typeset(
+    Value* param = Init_Typeset(
         Alloc_Tail_Array(paramlist),
         TS_OPT_VALUE, // Allow null (e.g. <opt>), returns false
         Canon(SYM_VALUE)
@@ -314,9 +314,9 @@ REBNATIVE(chain)
 {
     INCLUDE_PARAMS_OF_CHAIN;
 
-    REBVAL *out = D_OUT; // plan ahead for factoring into Chain_Action(out..
+    Value* out = D_OUT; // plan ahead for factoring into Chain_Action(out..
 
-    REBVAL *pipeline = ARG(pipeline);
+    Value* pipeline = ARG(pipeline);
     REBARR *chainees;
     if (REF(quote))
         chainees = COPY_ANY_ARRAY_AT_DEEP_MANAGED(pipeline);
@@ -331,13 +331,13 @@ REBNATIVE(chain)
         chainees = Pop_Stack_Values(dsp_orig); // no NODE_FLAG_MANAGED
     }
 
-    REBVAL *first = KNOWN(ARR_HEAD(chainees));
+    Value* first = KNOWN(ARR_HEAD(chainees));
 
     // !!! Current validation is that all are functions.  Should there be other
     // checks?  (That inputs match outputs in the chain?)  Should it be
     // a dialect and allow things other than functions?
     //
-    REBVAL *check = first;
+    Value* check = first;
     while (NOT_END(check)) {
         if (not IS_ACTION(check))
             fail (Error_Invalid(check));
@@ -364,7 +364,7 @@ REBNATIVE(chain)
     // accepting lit-words instead of functions--or even by reading the
     // GET-WORD!s in the block.  Consider for the future.
     //
-    REBVAL *std_meta = Get_System(SYS_STANDARD, STD_CHAINED_META);
+    Value* std_meta = Get_System(SYS_STANDARD, STD_CHAINED_META);
     REBCTX *meta = Copy_Context_Shallow_Managed(VAL_CONTEXT(std_meta));
     Init_Nulled(CTX_VAR(meta, STD_CHAINED_META_DESCRIPTION)); // default
     Init_Block(CTX_VAR(meta, STD_CHAINED_META_CHAINEES), chainees);
@@ -400,7 +400,7 @@ REBNATIVE(adapt)
 {
     INCLUDE_PARAMS_OF_ADAPT;
 
-    REBVAL *adaptee = ARG(adaptee);
+    Value* adaptee = ARG(adaptee);
 
     REBSTR *opt_adaptee_name;
     const bool push_refinements = false;
@@ -431,7 +431,7 @@ REBNATIVE(adapt)
 
     // See %sysobj.r for `adapted-meta:` object template
 
-    REBVAL *example = Get_System(SYS_STANDARD, STD_ADAPTED_META);
+    Value* example = Get_System(SYS_STANDARD, STD_ADAPTED_META);
 
     REBCTX *meta = Copy_Context_Shallow_Managed(VAL_CONTEXT(example));
     Init_Nulled(CTX_VAR(meta, STD_ADAPTED_META_DESCRIPTION)); // default
@@ -468,7 +468,7 @@ REBNATIVE(adapt)
 
     REBARR *details = ACT_DETAILS(adaptation);
 
-    REBVAL *block = RESET_CELL(ARR_AT(details, 0), REB_BLOCK);
+    Value* block = RESET_CELL(ARR_AT(details, 0), REB_BLOCK);
     INIT_VAL_ARRAY(block, prelude);
     VAL_INDEX(block) = 0;
     INIT_BINDING(block, underlying); // relative binding
@@ -495,7 +495,7 @@ REBNATIVE(enclose)
 {
     INCLUDE_PARAMS_OF_ENCLOSE;
 
-    REBVAL *inner = ARG(inner);
+    Value* inner = ARG(inner);
     REBSTR *opt_inner_name;
     const bool push_refinements = false;
     if (Get_If_Word_Or_Path_Throws(
@@ -512,7 +512,7 @@ REBNATIVE(enclose)
         fail (Error_Invalid(inner));
     Move_Value(inner, D_OUT); // Frees D_OUT, and GC safe (in ARG slot)
 
-    REBVAL *outer = ARG(outer);
+    Value* outer = ARG(outer);
     REBSTR *opt_outer_name;
     if (Get_If_Word_Or_Path_Throws(
         D_OUT,
@@ -537,7 +537,7 @@ REBNATIVE(enclose)
         SPECIFIED,
         SERIES_MASK_ACTION | NODE_FLAG_MANAGED
     );
-    REBVAL *rootparam = KNOWN(ARR_HEAD(paramlist));
+    Value* rootparam = KNOWN(ARR_HEAD(paramlist));
     rootparam->payload.action.paramlist = paramlist;
 
     // !!! We don't want to inherit the flags of the original action, such
@@ -548,7 +548,7 @@ REBNATIVE(enclose)
 
     // See %sysobj.r for `enclosed-meta:` object template
 
-    REBVAL *example = Get_System(SYS_STANDARD, STD_ENCLOSED_META);
+    Value* example = Get_System(SYS_STANDARD, STD_ENCLOSED_META);
 
     REBCTX *meta = Copy_Context_Shallow_Managed(VAL_CONTEXT(example));
     Init_Nulled(CTX_VAR(meta, STD_ENCLOSED_META_DESCRIPTION)); // default
@@ -682,8 +682,8 @@ REBNATIVE(hijack)
                 details_len + 1 - SER_REST(SER(victim_details))
             );
 
-        RELVAL *src = ARR_HEAD(hijacker_details);
-        RELVAL *dest = ARR_HEAD(victim_details);
+        Cell* src = ARR_HEAD(hijacker_details);
+        Cell* dest = ARR_HEAD(victim_details);
         for (; NOT_END(src); ++src, ++dest)
             Blit_Cell(dest, src);
         TERM_ARRAY_LEN(victim_details, details_len);
@@ -728,7 +728,7 @@ REBNATIVE(variadic_q)
 {
     INCLUDE_PARAMS_OF_VARIADIC_Q;
 
-    REBVAL *param = VAL_ACT_PARAMS_HEAD(ARG(action));
+    Value* param = VAL_ACT_PARAMS_HEAD(ARG(action));
     for (; NOT_END(param); ++param) {
         if (Is_Param_Variadic(param))
             return Init_True(D_OUT);
@@ -773,14 +773,14 @@ REBNATIVE(tighten)
         SERIES_MASK_ACTION | NODE_FLAG_MANAGED // flags not auto-copied
     );
 
-    RELVAL *param = ARR_AT(paramlist, 1); // first parameter (0 is ACTION!)
+    Cell* param = ARR_AT(paramlist, 1); // first parameter (0 is ACTION!)
     for (; NOT_END(param); ++param) {
         enum Reb_Param_Class pclass = VAL_PARAM_CLASS(param);
         if (pclass == PARAM_CLASS_NORMAL)
             INIT_VAL_PARAM_CLASS(param, PARAM_CLASS_TIGHT);
     }
 
-    RELVAL *rootparam = ARR_HEAD(paramlist);
+    Cell* rootparam = ARR_HEAD(paramlist);
     CLEAR_VAL_FLAGS(rootparam, ACTION_FLAG_CACHED_MASK);
     rootparam->payload.action.paramlist = paramlist;
     INIT_BINDING(rootparam, UNBOUND);
@@ -815,8 +815,8 @@ REBNATIVE(tighten)
     // on the source and target are the same, and it preserves relative
     // value information (rarely what you meant, but it's meant here).
     //
-    RELVAL *src = ARR_HEAD(ACT_DETAILS(original));
-    RELVAL *dest = ARR_HEAD(ACT_DETAILS(tightened));
+    Cell* src = ARR_HEAD(ACT_DETAILS(original));
+    Cell* dest = ARR_HEAD(ACT_DETAILS(tightened));
     for (; NOT_END(src); ++src, ++dest)
         Blit_Cell(dest, src);
     TERM_ARRAY_LEN(ACT_DETAILS(tightened), details_len);
@@ -835,12 +835,12 @@ REB_R N_Shot_Dispatcher(REBFRM *f)
     REBARR *details = ACT_DETAILS(FRM_PHASE(f));
     assert(ARR_LEN(details) == 1);
 
-    RELVAL *n = ARR_HEAD(details);
+    Cell* n = ARR_HEAD(details);
     if (VAL_INT64(n) == 0)
         return nullptr; // always return null once 0 is reached
     --VAL_INT64(n);
 
-    REBVAL *code = FRM_ARG(f, 1);
+    Value* code = FRM_ARG(f, 1);
     if (Do_Branch_Throws(f->out, code))
         return R_THROWN;
 
@@ -853,13 +853,13 @@ REB_R N_Upshot_Dispatcher(REBFRM *f)
     REBARR *details = ACT_DETAILS(FRM_PHASE(f));
     assert(ARR_LEN(details) == 1);
 
-    RELVAL *n = ARR_HEAD(details);
+    Cell* n = ARR_HEAD(details);
     if (VAL_INT64(n) < 0) {
         ++VAL_INT64(ARR_HEAD(details));
         return nullptr; // return null until 0 is reached
     }
 
-    REBVAL *code = FRM_ARG(f, 1);
+    Value* code = FRM_ARG(f, 1);
     if (Do_Branch_Throws(f->out, code))
         return R_THROWN;
 
@@ -887,13 +887,13 @@ REBNATIVE(n_shot)
         SERIES_MASK_ACTION | NODE_FLAG_MANAGED
     );
 
-    REBVAL *archetype = RESET_CELL(Alloc_Tail_Array(paramlist), REB_ACTION);
+    Value* archetype = RESET_CELL(Alloc_Tail_Array(paramlist), REB_ACTION);
     archetype->payload.action.paramlist = paramlist;
     INIT_BINDING(archetype, UNBOUND);
 
     // !!! Should anything DO would accept be legal, as DOES would run?
     //
-    REBVAL *param = Init_Typeset(
+    Value* param = Init_Typeset(
         Alloc_Tail_Array(paramlist),
         FLAGIT_KIND(REB_BLOCK) | FLAGIT_KIND(REB_ACTION),
         Canon(SYM_VALUE) // SYM_CODE ?

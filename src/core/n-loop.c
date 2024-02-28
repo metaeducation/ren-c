@@ -46,7 +46,7 @@ typedef enum {
 //
 // Returning false means the throw was neither BREAK nor CONTINUE.
 //
-bool Catching_Break_Or_Continue(REBVAL *val, bool *broke)
+bool Catching_Break_Or_Continue(Value* val, bool *broke)
 {
     assert(THROWN(val));
 
@@ -127,10 +127,10 @@ REBNATIVE(continue)
 //  Loop_Series_Common: C
 //
 static REB_R Loop_Series_Common(
-    REBVAL *out,
-    REBVAL *var, // Must not be movable from context expansion, see #2274
-    const REBVAL *body,
-    REBVAL *start,
+    Value* out,
+    Value* var, // Must not be movable from context expansion, see #2274
+    const Value* body,
+    Value* start,
     REBINT end,
     REBINT bump
 ){
@@ -210,9 +210,9 @@ static REB_R Loop_Series_Common(
 //  Loop_Integer_Common: C
 //
 static REB_R Loop_Integer_Common(
-    REBVAL *out,
-    REBVAL *var, // Must not be movable from context expansion, see #2274
-    const REBVAL *body,
+    Value* out,
+    Value* var, // Must not be movable from context expansion, see #2274
+    const Value* body,
     REBI64 start,
     REBI64 end,
     REBI64 bump
@@ -273,12 +273,12 @@ static REB_R Loop_Integer_Common(
 //  Loop_Number_Common: C
 //
 static REB_R Loop_Number_Common(
-    REBVAL *out,
-    REBVAL *var, // Must not be movable from context expansion, see #2274
-    const REBVAL *body,
-    REBVAL *start,
-    REBVAL *end,
-    REBVAL *bump
+    Value* out,
+    Value* var, // Must not be movable from context expansion, see #2274
+    const Value* body,
+    Value* start,
+    Value* end,
+    Value* bump
 ){
     Init_Blank(out); // result if body never runs
 
@@ -362,7 +362,7 @@ static REB_R Loop_Number_Common(
 // It accomplishes this by putting a word into the "variable" slot, and having
 // a flag to indicate a dereference is necessary.
 //
-REBVAL *Real_Var_From_Pseudo(REBVAL *pseudo_var) {
+Value* Real_Var_From_Pseudo(Value* pseudo_var) {
     if (NOT_VAL_FLAG(pseudo_var, VAR_MARKED_REUSE))
         return pseudo_var;
 
@@ -377,11 +377,11 @@ REBVAL *Real_Var_From_Pseudo(REBVAL *pseudo_var) {
 
 
 struct Loop_Each_State {
-    REBVAL *out; // where to write the output data (must be GC safe)
-    const REBVAL *body; // body to run on each loop iteration
+    Value* out; // where to write the output data (must be GC safe)
+    const Value* body; // body to run on each loop iteration
     LOOP_MODE mode; // FOR-EACH, MAP-EACH, EVERY
     REBCTX *pseudo_vars_ctx; // vars made by Virtual_Bind_To_New_Context()
-    REBVAL *data; // the data argument passed in
+    Value* data; // the data argument passed in
     REBSER *data_ser; // series data being enumerated (if applicable)
     REBCNT data_idx; // index into the data for filling current variable
     REBCNT data_len; // length of the data
@@ -409,9 +409,9 @@ static REB_R Loop_Each_Core(struct Loop_Each_State *les) {
         //
         // ANY-CONTEXT! and MAP! allow one var (keys) or two vars (keys/vals)
         //
-        REBVAL *pseudo_var = CTX_VAR(les->pseudo_vars_ctx, 1);
+        Value* pseudo_var = CTX_VAR(les->pseudo_vars_ctx, 1);
         for (; NOT_END(pseudo_var); ++pseudo_var) {
-            REBVAL *var = Real_Var_From_Pseudo(pseudo_var);
+            Value* var = Real_Var_From_Pseudo(pseudo_var);
 
             // Even if data runs out, we could still have one last loop body
             // incarnation to run...with some variables unset.  Null those
@@ -454,8 +454,8 @@ static REB_R Loop_Each_Core(struct Loop_Each_State *les) {
               case REB_PORT:
               case REB_MODULE:
               case REB_FRAME: {
-                REBVAL *key;
-                REBVAL *val;
+                Value* key;
+                Value* val;
                 REBCNT bind_index;
                 while (true) { // find next non-hidden key (if any)
                     key = VAL_CONTEXT_KEY(les->data, les->data_idx);
@@ -502,8 +502,8 @@ static REB_R Loop_Each_Core(struct Loop_Each_State *les) {
               case REB_MAP: {
                 assert(les->data_idx % 2 == 0); // should be on key slot
 
-                REBVAL *key;
-                REBVAL *val;
+                Value* key;
+                Value* val;
                 while (true) { // pass over the unused map slots
                     key = KNOWN(ARR_AT(ARR(les->data_ser), les->data_idx));
                     ++les->data_idx;
@@ -553,7 +553,7 @@ static REB_R Loop_Each_Core(struct Loop_Each_State *les) {
                 break;
 
               case REB_ACTION: {
-                REBVAL *generated = rebValue(rebEval(les->data));
+                Value* generated = rebValue(rebEval(les->data));
                 if (generated) {
                     Move_Value(var, generated);
                     rebRelease(generated);
@@ -813,7 +813,7 @@ REBNATIVE(for)
     );
     Init_Object(ARG(word), context); // keep GC safe
 
-    REBVAL *var = CTX_VAR(context, 1); // not movable, see #2274
+    Value* var = CTX_VAR(context, 1); // not movable, see #2274
 
     if (
         IS_INTEGER(ARG(start))
@@ -882,7 +882,7 @@ REBNATIVE(for_skip)
 {
     INCLUDE_PARAMS_OF_FOR_SKIP;
 
-    REBVAL *series = ARG(series);
+    Value* series = ARG(series);
 
     Init_Blank(D_OUT); // result if body never runs, like `while [null] [...]`
 
@@ -902,8 +902,8 @@ REBNATIVE(for_skip)
     );
     Init_Object(ARG(word), context); // keep GC safe
 
-    REBVAL *pseudo_var = CTX_VAR(context, 1); // not movable, see #2274
-    REBVAL *var = Real_Var_From_Pseudo(pseudo_var);
+    Value* pseudo_var = CTX_VAR(context, 1); // not movable, see #2274
+    Value* var = Real_Var_From_Pseudo(pseudo_var);
     Move_Value(var, series);
 
     // Starting location when past end with negative skip:
@@ -981,7 +981,7 @@ REBNATIVE(stop)
 {
     INCLUDE_PARAMS_OF_STOP;
 
-    REBVAL *v = ARG(value);
+    Value* v = ARG(value);
 
     Move_Value(D_OUT, NAT_VALUE(stop));
     if (IS_ENDISH_NULLED(v))
@@ -1094,11 +1094,11 @@ REBNATIVE(every)
 // fail() exceptions, rebRescue() must be used with a state structure.
 //
 struct Remove_Each_State {
-    REBVAL *out;
-    REBVAL *data;
+    Value* out;
+    Value* data;
     REBSER *series;
     bool broke; // e.g. a BREAK ran
-    const REBVAL *body;
+    const Value* body;
     REBCTX *context;
     REBCNT start;
     REB_MOLD *mo;
@@ -1119,7 +1119,7 @@ static inline REBCNT Finalize_Remove_Each(struct Remove_Each_State *res)
     REBCNT count = 0;
     if (ANY_ARRAY(res->data)) {
         if (res->broke) { // cleanup markers, don't do removals
-            RELVAL *temp = VAL_ARRAY_AT(res->data);
+            Cell* temp = VAL_ARRAY_AT(res->data);
             for (; NOT_END(temp); ++temp) {
                 if (GET_VAL_FLAG(temp, NODE_FLAG_MARKED))
                     CLEAR_VAL_FLAG(temp, NODE_FLAG_MARKED);
@@ -1129,8 +1129,8 @@ static inline REBCNT Finalize_Remove_Each(struct Remove_Each_State *res)
 
         REBCNT len = VAL_LEN_HEAD(res->data);
 
-        RELVAL *dest = VAL_ARRAY_AT(res->data);
-        RELVAL *src = dest;
+        Cell* dest = VAL_ARRAY_AT(res->data);
+        Cell* src = dest;
 
         // avoid blitting cells onto themselves by making the first thing we
         // do is to pass up all the unmarked (kept) cells.
@@ -1248,7 +1248,7 @@ static REB_R Remove_Each_Core(struct Remove_Each_State *res)
     while (index < len) {
         assert(res->start == index);
 
-        REBVAL *var = CTX_VAR(res->context, 1); // not movable, see #2274
+        Value* var = CTX_VAR(res->context, 1); // not movable, see #2274
         for (; NOT_END(var); ++var) {
             if (index == len) {
                 //
@@ -1561,7 +1561,7 @@ REBNATIVE(repeat)
 {
     INCLUDE_PARAMS_OF_REPEAT;
 
-    REBVAL *value = ARG(value);
+    Value* value = ARG(value);
 
     if (IS_DECIMAL(value) or IS_PERCENT(value))
         Init_Integer(value, Int64(value));
@@ -1576,7 +1576,7 @@ REBNATIVE(repeat)
 
     assert(CTX_LEN(context) == 1);
 
-    REBVAL *var = CTX_VAR(context, 1); // not movable, see #2274
+    Value* var = CTX_VAR(context, 1); // not movable, see #2274
     if (ANY_SERIES(value))
         return Loop_Series_Common(
             D_OUT, var, ARG(body), value, VAL_LEN_HEAD(value) - 1, 1

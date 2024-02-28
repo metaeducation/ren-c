@@ -572,7 +572,7 @@
 
         #define TRASH_CFUNC_IF_DEBUG(p) \
             ((p) = cast(CFUNC*, cast(uintptr_t, 0xDECAFBAD)))
-            
+
         #define IS_POINTER_TRASH_DEBUG(p) \
             ((p) == cast(void*, cast(uintptr_t, 0xDECAFBAD)))
 
@@ -711,7 +711,7 @@
 //
 // These can form *compile-time constants*, which can be singly assigned to
 // a uintptr_t in one instruction.  Quantities smaller than a byte can be
-// mixed in on with bytes: 
+// mixed in on with bytes:
 //
 //    uintptr_t flags
 //        = FLAG_LEFT_BIT(0) | FLAG_LEFT_BIT(1) | FLAG_SECOND_BYTE(13);
@@ -725,7 +725,7 @@
 //
 // Note: It is simpler to not worry about the underlying bytes and just use
 // ordinary bit masking.  But this is used for an important feature (the
-// discernment of a `void*` to a REBVAL from that of a valid UTF-8 string).
+// discernment of a `void*` to a cell from that of a valid UTF-8 string).
 // Other tools that might be tried with this all have downsides:
 //
 // * bitfields arranged in a `union` with integers have no layout guarantee

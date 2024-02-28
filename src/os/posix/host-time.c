@@ -120,7 +120,7 @@ static int Get_Timezone(struct tm *utc_tm_unused)
 // Convert local format of system time into standard date
 // and time structure (for date/time and file timestamps).
 //
-REBVAL *Convert_Date(time_t *stime, long usec)
+Value* Convert_Date(time_t *stime, long usec)
 {
     // gmtime() is badly named.  It's utc time.  Note we have to be careful as
     // it returns a system static buffer, so we have to copy the result
@@ -154,7 +154,7 @@ REBVAL *Convert_Date(time_t *stime, long usec)
 //
 // Get the current system date/time in UTC plus zone offset (mins).
 //
-REBVAL *OS_Get_Time(void)
+Value* OS_Get_Time(void)
 {
     struct timeval tv;
     struct timezone * const tz_ptr = NULL; // obsolete
@@ -201,7 +201,7 @@ int64_t OS_Delta_Time(int64_t base)
 // Convert file.time to REBOL date/time format.
 // Time zone is UTC.
 //
-REBVAL *OS_File_Time(struct devreq_file *file)
+Value* OS_File_Time(struct devreq_file *file)
 {
     if (sizeof(time_t) > sizeof(file->time.l)) {
         int64_t t = file->time.l;

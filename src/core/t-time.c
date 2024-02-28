@@ -75,7 +75,7 @@ REBI64 Join_Time(REB_TIMEF *tf, bool neg)
 //
 // Scan string and convert to time.  Return zero if error.
 //
-const REBYTE *Scan_Time(REBVAL *out, const REBYTE *cp, REBCNT len)
+const REBYTE *Scan_Time(Value* out, const REBYTE *cp, REBCNT len)
 {
     TRASH_CELL_IF_DEBUG(out);
     cast(void, len); // !!! should len be paid attention to?
@@ -186,7 +186,7 @@ const REBYTE *Scan_Time(REBVAL *out, const REBYTE *cp, REBCNT len)
 //
 //  MF_Time: C
 //
-void MF_Time(REB_MOLD *mo, const RELVAL *v, bool form)
+void MF_Time(REB_MOLD *mo, const Cell* v, bool form)
 {
     UNUSED(form); // no difference between MOLD and FORM at this time
 
@@ -212,7 +212,7 @@ void MF_Time(REB_MOLD *mo, const RELVAL *v, bool form)
 //
 //  CT_Time: C
 //
-REBINT CT_Time(const RELVAL *a, const RELVAL *b, REBINT mode)
+REBINT CT_Time(const Cell* a, const Cell* b, REBINT mode)
 {
     REBINT num = Cmp_Time(a, b);
     if (mode >= 0)  return (num == 0);
@@ -224,7 +224,7 @@ REBINT CT_Time(const RELVAL *a, const RELVAL *b, REBINT mode)
 //
 //  MAKE_Time: C
 //
-REB_R MAKE_Time(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
+REB_R MAKE_Time(Value* out, enum Reb_Kind kind, const Value* arg)
 {
     assert(kind == REB_TIME);
     UNUSED(kind);
@@ -261,7 +261,7 @@ REB_R MAKE_Time(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
         if (VAL_ARRAY_LEN_AT(arg) > 3)
             goto no_time;
 
-        RELVAL *item = VAL_ARRAY_AT(arg);
+        Cell* item = VAL_ARRAY_AT(arg);
         if (not IS_INTEGER(item))
             goto no_time;
 
@@ -334,7 +334,7 @@ REB_R MAKE_Time(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 //
 //  TO_Time: C
 //
-REB_R TO_Time(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
+REB_R TO_Time(Value* out, enum Reb_Kind kind, const Value* arg)
 {
     return MAKE_Time(out, kind, arg);
 }
@@ -345,7 +345,7 @@ REB_R TO_Time(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 //
 // Given two TIME!s (or DATE!s with a time componet), compare them.
 //
-REBINT Cmp_Time(const RELVAL *v1, const RELVAL *v2)
+REBINT Cmp_Time(const Cell* v1, const Cell* v2)
 {
     REBI64 t1 = VAL_NANO(v1);
     REBI64 t2 = VAL_NANO(v2);
@@ -361,7 +361,7 @@ REBINT Cmp_Time(const RELVAL *v1, const RELVAL *v2)
 //
 //  Pick_Time: C
 //
-void Pick_Time(REBVAL *out, const REBVAL *value, const REBVAL *picker)
+void Pick_Time(Value* out, const Value* value, const Value* picker)
 {
     REBINT i;
     if (IS_WORD(picker)) {
@@ -404,9 +404,9 @@ void Pick_Time(REBVAL *out, const REBVAL *value, const REBVAL *picker)
 //  Poke_Time_Immediate: C
 //
 void Poke_Time_Immediate(
-    REBVAL *value,
-    const REBVAL *picker,
-    const REBVAL *poke
+    Value* value,
+    const Value* picker,
+    const Value* poke
 ) {
     REBINT i;
     if (IS_WORD(picker)) {
@@ -469,8 +469,8 @@ void Poke_Time_Immediate(
 //
 REB_R PD_Time(
     REBPVS *pvs,
-    const REBVAL *picker,
-    const REBVAL *opt_setval
+    const Value* picker,
+    const Value* opt_setval
 ){
     if (opt_setval) {
         //
@@ -493,11 +493,11 @@ REB_R PD_Time(
 //
 REBTYPE(Time)
 {
-    REBVAL *val = D_ARG(1);
+    Value* val = D_ARG(1);
 
     REBI64 secs = VAL_NANO(val);
 
-    REBVAL *arg = D_ARGC > 1 ? D_ARG(2) : NULL;
+    Value* arg = D_ARGC > 1 ? D_ARG(2) : NULL;
 
     REBSYM sym = VAL_WORD_SYM(verb);
 

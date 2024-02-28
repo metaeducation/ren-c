@@ -34,7 +34,7 @@
 //
 //  CT_Datatype: C
 //
-REBINT CT_Datatype(const RELVAL *a, const RELVAL *b, REBINT mode)
+REBINT CT_Datatype(const Cell* a, const Cell* b, REBINT mode)
 {
     if (mode >= 0) return (VAL_TYPE_KIND(a) == VAL_TYPE_KIND(b));
     return -1;
@@ -44,7 +44,7 @@ REBINT CT_Datatype(const RELVAL *a, const RELVAL *b, REBINT mode)
 //
 //  MAKE_Datatype: C
 //
-REB_R MAKE_Datatype(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg) {
+REB_R MAKE_Datatype(Value* out, enum Reb_Kind kind, const Value* arg) {
     if (IS_WORD(arg)) {
         REBSYM sym = VAL_WORD_SYM(arg);
         if (sym == SYM_0 or sym >= SYM_FROM_KIND(REB_MAX))
@@ -61,7 +61,7 @@ REB_R MAKE_Datatype(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg) {
 //
 //  TO_Datatype: C
 //
-REB_R TO_Datatype(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg) {
+REB_R TO_Datatype(Value* out, enum Reb_Kind kind, const Value* arg) {
     return MAKE_Datatype(out, kind, arg);
 }
 
@@ -69,7 +69,7 @@ REB_R TO_Datatype(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg) {
 //
 //  MF_Datatype: C
 //
-void MF_Datatype(REB_MOLD *mo, const RELVAL *v, bool form)
+void MF_Datatype(REB_MOLD *mo, const Cell* v, bool form)
 {
     REBSTR *name = Canon(VAL_TYPE_SYM(v));
     if (form)
@@ -84,8 +84,8 @@ void MF_Datatype(REB_MOLD *mo, const RELVAL *v, bool form)
 //
 REBTYPE(Datatype)
 {
-    REBVAL *value = D_ARG(1);
-    REBVAL *arg = D_ARG(2);
+    Value* value = D_ARG(1);
+    Value* arg = D_ARG(2);
     enum Reb_Kind kind = VAL_TYPE_KIND(value);
 
     switch (VAL_WORD_SYM(verb)) {
@@ -104,8 +104,8 @@ REBTYPE(Datatype)
 
             assert(CTX_TYPE(context) == REB_OBJECT);
 
-            REBVAL *var = CTX_VARS_HEAD(context);
-            REBVAL *key = CTX_KEYS_HEAD(context);
+            Value* var = CTX_VARS_HEAD(context);
+            Value* key = CTX_KEYS_HEAD(context);
 
             // !!! Account for the "invisible" self key in the current
             // stop-gap implementation of self, still default on MAKE OBJECT!s
@@ -113,7 +113,7 @@ REBTYPE(Datatype)
             assert(VAL_KEY_SYM(key) == SYM_SELF);
             ++key; ++var;
 
-            RELVAL *item = ARR_HEAD(
+            Cell* item = ARR_HEAD(
                 VAL_TYPE_SPEC(CTX_VAR(Lib_Context, SYM_FROM_KIND(kind)))
             );
 

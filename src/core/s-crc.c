@@ -186,7 +186,7 @@ REBINT Hash_UTF8(const REBYTE *utf8, REBSIZ size)
 // Fails if datatype cannot be hashed.  Note that the specifier is not used
 // in hashing, because it is not used in comparisons either.
 //
-uint32_t Hash_Value(const RELVAL *v)
+uint32_t Hash_Value(const Cell* v)
 {
     uint32_t hash;
 
@@ -414,7 +414,7 @@ REBSER *Make_Hash_Sequence(REBCNT len)
 // field of the REBSER which needs to be given to memory
 // management as well.
 //
-REBVAL *Init_Map(RELVAL *out, REBMAP *map)
+Value* Init_Map(Cell* out, REBMAP *map)
 {
     if (MAP_HASHLIST(map))
         ENSURE_SERIES_MANAGED(MAP_HASHLIST(map));
@@ -438,13 +438,13 @@ REBVAL *Init_Map(RELVAL *out, REBMAP *map)
 //
 // Note: hash array contents (indexes) are 1-based!
 //
-REBSER *Hash_Block(const REBVAL *block, REBCNT skip, bool cased)
+REBSER *Hash_Block(const Value* block, REBCNT skip, bool cased)
 {
     REBCNT n;
     REBSER *hashlist;
     REBCNT *hashes;
     REBARR *array = VAL_ARRAY(block);
-    RELVAL *value;
+    Cell* value;
 
     // Create the hash array (integer indexes):
     hashlist = Make_Hash_Sequence(VAL_LEN_AT(block));

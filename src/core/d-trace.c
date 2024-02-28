@@ -82,7 +82,7 @@ REBFRM *Frame_At_Depth(REBCNT n)
 //
 void Trace_Value(
     const char* label, // currently "match" or "input"
-    const RELVAL *value
+    const Cell* value
 ) {
     Debug_Fmt(RM_TRACE_PARSE_VALUE, label, value);
 }
@@ -106,7 +106,7 @@ void Trace_String(const REBYTE *str, REBINT limit)
 //
 // !!! This does not appear to be used
 //
-void Trace_Error(const REBVAL *value)
+void Trace_Error(const Value* value)
 {
     Debug_Fmt(
         RM_TRACE_ERROR,
@@ -151,7 +151,7 @@ bool Traced_Eval_Hook_Throws(REBFRM * const f)
 
             if (FRM_IS_VALIST(f)) {
                 //
-                // If you are doing a sequence of REBVAL* held in a C va_list,
+                // If you are doing a sequence of Value* held in a C va_list,
                 // it doesn't have an "index".  It could manufacture one if
                 // you reified it (which will be necessary for any inspections
                 // beyond the current element), but TRACE does not currently
@@ -163,7 +163,7 @@ bool Traced_Eval_Hook_Throws(REBFRM * const f)
                 Debug_Fmt_("%-02d: %50r", FRM_INDEX(f), f->value);
 
             if (IS_WORD(f->value) || IS_GET_WORD(f->value)) {
-                const RELVAL *var = Try_Get_Opt_Var(
+                const Cell* var = Try_Get_Opt_Var(
                     f->value,
                     f->specifier
                 );
@@ -368,7 +368,7 @@ REBNATIVE(trace)
 {
     INCLUDE_PARAMS_OF_TRACE;
 
-    REBVAL *mode = ARG(mode);
+    Value* mode = ARG(mode);
 
     Check_Security(Canon(SYM_DEBUG), POL_READ, 0);
 

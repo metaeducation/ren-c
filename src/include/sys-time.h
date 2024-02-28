@@ -61,14 +61,14 @@
     #define VAL_NANO(v) \
         ((v)->payload.time.nanoseconds)
 #else
-    inline static REBI64 VAL_NANO(const RELVAL *v) {
+    inline static REBI64 VAL_NANO(const Cell* v) {
         assert(
             IS_TIME(v) or (IS_DATE(v) and GET_VAL_FLAG(v, DATE_FLAG_HAS_TIME))
         );
         return v->payload.time.nanoseconds;
     }
 
-    inline static REBI64 &VAL_NANO(RELVAL *v) {
+    inline static REBI64 &VAL_NANO(Cell* v) {
         assert(
             IS_TIME(v) or (IS_DATE(v) and GET_VAL_FLAG(v, DATE_FLAG_HAS_TIME))
         );
@@ -122,10 +122,10 @@
 #define TIME_IN_DAY \
     SEC_TIME(cast(REBI64, SECS_IN_DAY))
 
-inline static REBVAL *Init_Time_Nanoseconds(RELVAL *v, REBI64 nanoseconds) {
+inline static Value* Init_Time_Nanoseconds(Cell* v, REBI64 nanoseconds) {
     RESET_CELL(v, REB_TIME);
     VAL_NANO(v) = nanoseconds;
-    return cast(REBVAL*, v);
+    return cast(Value*, v);
 }
 
 
@@ -153,12 +153,12 @@ inline static REBVAL *Init_Time_Nanoseconds(RELVAL *v, REBI64 nanoseconds) {
 // Note: can't use reference trick as with VAL_NANO() above to allow using
 // VAL_ZONE() as an lvalue, because it is a bit field.
 //
-inline static int VAL_ZONE(const RELVAL *v) {
+inline static int VAL_ZONE(const Cell* v) {
     assert(IS_DATE(v) && GET_VAL_FLAG(v, DATE_FLAG_HAS_ZONE));
     return v->extra.date.date.zone;
 }
 
-inline static void INIT_VAL_ZONE(RELVAL *v, int zone) {
+inline static void INIT_VAL_ZONE(Cell* v, int zone) {
     assert(IS_DATE(v) && GET_VAL_FLAG(v, DATE_FLAG_HAS_ZONE));
     v->extra.date.date.zone = zone;
 }

@@ -34,7 +34,7 @@
 //
 //  CT_Port: C
 //
-REBINT CT_Port(const RELVAL *a, const RELVAL *b, REBINT mode)
+REBINT CT_Port(const Cell* a, const Cell* b, REBINT mode)
 {
     if (mode < 0) return -1;
     return VAL_CONTEXT(a) == VAL_CONTEXT(b);
@@ -47,14 +47,14 @@ REBINT CT_Port(const RELVAL *a, const RELVAL *b, REBINT mode)
 // Create a new port. This is done by calling the MAKE_PORT
 // function stored in the system/intrinsic object.
 //
-REB_R MAKE_Port(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
+REB_R MAKE_Port(Value* out, enum Reb_Kind kind, const Value* arg)
 {
     assert(kind == REB_PORT);
     UNUSED(kind);
 
     const bool fully = true; // error if not all arguments consumed
 
-    REBVAL *make_port_helper = CTX_VAR(Sys_Context, SYS_CTX_MAKE_PORT_P);
+    Value* make_port_helper = CTX_VAR(Sys_Context, SYS_CTX_MAKE_PORT_P);
     assert(IS_ACTION(make_port_helper));
 
     assert(not IS_NULLED(arg)); // would need to DEVOID it otherwise
@@ -72,7 +72,7 @@ REB_R MAKE_Port(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 //
 //  TO_Port: C
 //
-REB_R TO_Port(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
+REB_R TO_Port(Value* out, enum Reb_Kind kind, const Value* arg)
 {
     assert(kind == REB_PORT);
     UNUSED(kind);
@@ -172,7 +172,7 @@ REBTYPE(Port)
             // are going to read the D_ARG(1) slot *implicitly* regardless of
             // what value points to.
             //
-            const REBVAL *made = rebValue("make port!", D_ARG(1));
+            const Value* made = rebValue("make port!", D_ARG(1));
             assert(IS_PORT(made));
             Move_Value(D_ARG(1), made);
             rebRelease(made);
@@ -192,7 +192,7 @@ REBTYPE(Port)
     if (not IS_PORT(D_ARG(1)))
         fail (Error_Illegal_Action(VAL_TYPE(D_ARG(1)), verb));
 
-    REBVAL *port = D_ARG(1);
+    Value* port = D_ARG(1);
 
     REB_R r = Context_Common_Action_Maybe_Unhandled(frame_, verb);
     if (r != R_UNHANDLED)

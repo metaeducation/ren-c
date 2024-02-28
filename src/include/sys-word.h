@@ -50,7 +50,7 @@
 #endif
 
 
-inline static bool IS_WORD_UNBOUND(const RELVAL *v) {
+inline static bool IS_WORD_UNBOUND(const Cell* v) {
     assert(ANY_WORD(v));
     return v->extra.binding == nullptr;
 }
@@ -58,12 +58,12 @@ inline static bool IS_WORD_UNBOUND(const RELVAL *v) {
 #define IS_WORD_BOUND(v) \
     cast(bool, not IS_WORD_UNBOUND(v))
 
-inline static REBSTR *VAL_WORD_SPELLING(const RELVAL *v) {
+inline static REBSTR *VAL_WORD_SPELLING(const Cell* v) {
     assert(ANY_WORD(v));
     return v->payload.any_word.spelling;
 }
 
-inline static REBSTR *VAL_WORD_CANON(const RELVAL *v) {
+inline static REBSTR *VAL_WORD_CANON(const Cell* v) {
     assert(ANY_WORD(v));
     return STR_CANON(v->payload.any_word.spelling);
 }
@@ -76,17 +76,17 @@ inline static REBSTR *VAL_WORD_CANON(const RELVAL *v) {
 // But they won't if there are any words outstanding that hold that spelling,
 // so this is a safe technique as long as these words are GC-mark-visible.
 //
-inline static REBSTR *VAL_STORED_CANON(const RELVAL *v) {
+inline static REBSTR *VAL_STORED_CANON(const Cell* v) {
     assert(ANY_WORD(v));
     assert(GET_SER_INFO(v->payload.any_word.spelling, STRING_INFO_CANON));
     return v->payload.any_word.spelling;
 }
 
-inline static OPT_REBSYM VAL_WORD_SYM(const RELVAL *v) {
+inline static OPT_REBSYM VAL_WORD_SYM(const Cell* v) {
     return STR_SYMBOL(v->payload.any_word.spelling);
 }
 
-inline static REBCTX *VAL_WORD_CONTEXT(const REBVAL *v) {
+inline static REBCTX *VAL_WORD_CONTEXT(const Value* v) {
     assert(IS_WORD_BOUND(v));
     REBNOD *binding = VAL_BINDING(v);
     assert(
@@ -97,29 +97,29 @@ inline static REBCTX *VAL_WORD_CONTEXT(const REBVAL *v) {
     return CTX(binding);
 }
 
-inline static void INIT_WORD_INDEX(RELVAL *v, REBCNT i) {
+inline static void INIT_WORD_INDEX(Cell* v, REBCNT i) {
   #if !defined(NDEBUG)
     INIT_WORD_INDEX_Extra_Checks_Debug(v, i); // not inline, needs FRM_PHASE()
   #endif
     v->payload.any_word.index = cast(REBINT, i);
 }
 
-inline static REBCNT VAL_WORD_INDEX(const RELVAL *v) {
+inline static REBCNT VAL_WORD_INDEX(const Cell* v) {
     assert(IS_WORD_BOUND(v));
     REBINT i = v->payload.any_word.index;
     assert(i > 0);
     return cast(REBCNT, i);
 }
 
-inline static void Unbind_Any_Word(RELVAL *v) {
+inline static void Unbind_Any_Word(Cell* v) {
     INIT_BINDING(v, UNBOUND);
 #if !defined(NDEBUG)
     v->payload.any_word.index = 0;
 #endif
 }
 
-inline static REBVAL *Init_Any_Word(
-    RELVAL *out,
+inline static Value* Init_Any_Word(
+    Cell* out,
     enum Reb_Kind kind,
     REBSTR *spelling
 ){
@@ -152,8 +152,8 @@ inline static REBVAL *Init_Any_Word(
 
 // Initialize an ANY-WORD! type with a binding to a context.
 //
-inline static REBVAL *Init_Any_Word_Bound(
-    RELVAL *out,
+inline static Value* Init_Any_Word_Bound(
+    Cell* out,
     enum Reb_Kind type,
     REBSTR *spelling,
     REBCTX *context,
@@ -168,7 +168,7 @@ inline static REBVAL *Init_Any_Word_Bound(
 
 
 // To make interfaces easier for some functions that take REBSTR* strings,
-// it can be useful to allow passing UTF-8 text, a REBVAL* with an ANY-WORD!
+// it can be useful to allow passing UTF-8 text, a Value* with an ANY-WORD!
 // or ANY-STRING!, or just plain UTF-8 text.
 //
 // !!! Should NULLED_CELL or other arguments make anonymous symbols?
@@ -178,10 +178,10 @@ template<typename T>
 inline static REBSTR* Intern(const T *p)
 {
     static_assert(
-        std::is_same<T, REBVAL>::value
+        std::is_same<T, Value>::value
         or std::is_same<T, char>::value
         or std::is_same<T, REBSTR>::value,
-        "STR works on: char*, REBVAL*, REBSTR*"
+        "STR works on: char*, Value*, REBSTR*"
     );
 #else
 inline static REBSTR* Intern(const void *p)
@@ -198,7 +198,7 @@ inline static REBSTR* Intern(const void *p)
         return s; }
 
     case DETECTED_AS_CELL: {
-        const REBVAL *v = cast(const REBVAL*, p);
+        const Value* v = cast(const Value*, p);
         if (ANY_WORD(v))
             return VAL_WORD_SPELLING(v);
 

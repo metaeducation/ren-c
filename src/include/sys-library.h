@@ -39,14 +39,14 @@ inline static bool IS_LIB_CLOSED(REBLIB *l) {
     return LINK(l).fd == NULL;
 }
 
-inline static REBCTX *VAL_LIBRARY_META(const RELVAL *v) {
+inline static REBCTX *VAL_LIBRARY_META(const Cell* v) {
     return MISC(v->payload.library.singular).meta;
 }
 
-inline static REBLIB *VAL_LIBRARY(const RELVAL *v) {
+inline static REBLIB *VAL_LIBRARY(const Cell* v) {
     return v->payload.library.singular;
 }
 
-inline static void *VAL_LIBRARY_FD(const RELVAL *v) {
+inline static void *VAL_LIBRARY_FD(const Cell* v) {
     return LIB_FD(VAL_LIBRARY(v));
 }

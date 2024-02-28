@@ -102,7 +102,7 @@ void Insert_Char(REBSER *dst, REBCNT index, REBCNT chr)
 // other series due to the length being counted in characters and not
 // units of the series width.
 //
-REBSER *Copy_String_At_Len(const RELVAL *src, REBINT limit)
+REBSER *Copy_String_At_Len(const Cell* src, REBINT limit)
 {
     REBCNT length_limit;
     REBSIZ size = VAL_SIZE_LIMIT_AT(&length_limit, src, limit);
@@ -231,7 +231,7 @@ void Append_Utf8_Utf8(REBSER *dst, const char *utf8, size_t size)
 //
 // !!! Used only with mold series at the moment.
 //
-void Append_Utf8_String(REBSER *dst, const RELVAL *src, REBCNT length_limit)
+void Append_Utf8_String(REBSER *dst, const Cell* src, REBCNT length_limit)
 {
     assert(
         SER_WIDE(dst) == sizeof(REBYTE)
@@ -371,7 +371,7 @@ REBSER *Append_UTF8_May_Fail(
 //
 // WARNING: returns BYTE_BUF, not a copy!
 //
-REBSER *Join_Binary(const REBVAL *blk, REBINT limit)
+REBSER *Join_Binary(const Value* blk, REBINT limit)
 {
     REBSER *series = BYTE_BUF;
 
@@ -382,7 +382,7 @@ REBSER *Join_Binary(const REBVAL *blk, REBINT limit)
 
     SET_SERIES_LEN(series, 0);
 
-    RELVAL *val;
+    Cell* val;
     for (val = VAL_ARRAY_AT(blk); limit > 0; val++, limit--) {
         switch (VAL_TYPE(val)) {
         case REB_INTEGER:

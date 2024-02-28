@@ -280,7 +280,7 @@ e-dispatch/emit {
     /*
      * PER-TYPE MAKE HOOKS: for `make datatype def`
      *
-     * These functions must return a REBVAL* to the type they are making
+     * These functions must return a Value* to the type they are making
      * (either in the output cell given or an API cell)...or they can return
      * R_THROWN if they throw.  (e.g. `make object! [return]` can throw)
      */
@@ -292,7 +292,7 @@ e-dispatch/emit {
     /*
      * PER-TYPE TO HOOKS: for `to datatype value`
      *
-     * These functions must return a REBVAL* to the type they are making
+     * These functions must return a Value* to the type they are making
      * (either in the output cell or an API cell).  They are NOT allowed to
      * throw, and are not supposed to make use of any binding information in
      * blocks they are passed...so no evaluations should be performed.
@@ -617,12 +617,12 @@ e-sysobj/write-emitted
 e-errfuncs: make-emitter "Error structure and functions" inc/tmp-error-funcs.h
 
 fields: collect [
-    keep {RELVAL self}
+    keep {Cell self}
     for-each word words-of ob/standard/error [
         either word = 'near [
-            keep {/* near/far are old C keywords */ RELVAL nearest}
+            keep {/* near/far are old C keywords */ Cell nearest}
         ][
-            keep cscape/with {RELVAL ${word}} 'word
+            keep cscape/with {Cell ${word}} 'word
         ]
     ]
 ]
@@ -639,7 +639,7 @@ e-errfuncs/emit {
 e-errfuncs/emit {
     /*
      * The variadic Error() function must be passed the exact right number of
-     * fully resolved REBVAL* that the error spec specifies.  This is easy
+     * fully resolved Value* that the error spec specifies.  This is easy
      * to get wrong in C, since variadics aren't checked.  Also, the category
      * symbol needs to be right for the error ID.
      *
@@ -688,7 +688,7 @@ for-each [sw-cat list] boot-errors [
             args: ["rebEND"]
         ] else [
             params: collect [
-                count-up i arity [keep unspaced ["const REBVAL *arg" i]]
+                count-up i arity [keep unspaced ["const Value* arg" i]]
             ]
             args: collect [
                 count-up i arity [keep unspaced ["arg" i]]
@@ -791,7 +791,7 @@ e-bootblock/emit {
 
     #define NUM_NATIVES $<length of nats>
     const REBCNT Num_Natives = NUM_NATIVES;
-    REBVAL Natives[NUM_NATIVES];
+    Value Natives[NUM_NATIVES];
 
     const REBNAT Native_C_Funcs[NUM_NATIVES] = {
         $(Nats),
@@ -856,7 +856,7 @@ fields: collect [
     for-each word sections [
         word: form word
         remove/part word 5 ; boot_
-        keep cscape/with {RELVAL ${word}} 'word
+        keep cscape/with {Cell ${word}} 'word
     ]
 ]
 
@@ -868,15 +868,15 @@ e-boot/emit {
     EXTERN_C const REBYTE Native_Specs[];
 
     /*
-     * Raw C function pointers for natives, take REBFRM* and return REBVAL*.
+     * Raw C function pointers for natives, take REBFRM* and return Value*.
      */
     EXTERN_C const REBCNT Num_Natives;
     EXTERN_C const REBNAT Native_C_Funcs[];
 
     /*
-     * A canon ACTION! REBVAL of the native, accessible by native's index #
+     * A canon ACTION! Value of the native, accessible by native's index #
      */
-    EXTERN_C REBVAL Natives[]; /* size is Num_Natives */
+    EXTERN_C Value Natives[]; /* size is Num_Natives */
 
     enum Native_Indices {
         $(Nids),

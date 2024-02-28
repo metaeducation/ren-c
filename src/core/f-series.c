@@ -42,10 +42,10 @@
 //
 REB_R Series_Common_Action_Maybe_Unhandled(
     REBFRM *frame_,
-    REBVAL *verb
+    Value* verb
 ){
-    REBVAL *value = D_ARG(1);
-    REBVAL *arg = D_ARGC > 1 ? D_ARG(2) : NULL;
+    Value* value = D_ARG(1);
+    Value* arg = D_ARGC > 1 ? D_ARG(2) : NULL;
 
     REBINT index = cast(REBINT, VAL_INDEX(value));
     REBINT tail = cast(REBINT, VAL_LEN_HEAD(value));
@@ -261,10 +261,10 @@ REB_R Series_Common_Action_Maybe_Unhandled(
 // Compare two arrays and return the difference of the first
 // non-matching value.
 //
-REBINT Cmp_Array(const RELVAL *sval, const RELVAL *tval, bool is_case)
+REBINT Cmp_Array(const Cell* sval, const Cell* tval, bool is_case)
 {
-    RELVAL *s = VAL_ARRAY_AT(sval);
-    RELVAL *t = VAL_ARRAY_AT(tval);
+    Cell* s = VAL_ARRAY_AT(sval);
+    Cell* t = VAL_ARRAY_AT(tval);
 
     if (C_STACK_OVERFLOWING(&s))
         Fail_Stack_Overflow();
@@ -316,7 +316,7 @@ diff_of_ends:
 //
 // is_case should be true for case sensitive compare
 //
-REBINT Cmp_Value(const RELVAL *s, const RELVAL *t, bool is_case)
+REBINT Cmp_Value(const Cell* s, const Cell* t, bool is_case)
 {
     REBDEC  d1, d2;
 
@@ -439,9 +439,9 @@ chkDecimal:
 // Simple search for a value in an array. Return the index of
 // the value or the TAIL index if not found.
 //
-REBCNT Find_In_Array_Simple(REBARR *array, REBCNT index, const RELVAL *target)
+REBCNT Find_In_Array_Simple(REBARR *array, REBCNT index, const Cell* target)
 {
-    RELVAL *value = ARR_HEAD(array);
+    Cell* value = ARR_HEAD(array);
 
     for (; index < ARR_LEN(array); index++) {
         if (0 == Cmp_Value(value + index, target, false))

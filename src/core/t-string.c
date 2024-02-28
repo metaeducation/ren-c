@@ -54,7 +54,7 @@ enum {
 //
 //  CT_String: C
 //
-REBINT CT_String(const RELVAL *a, const RELVAL *b, REBINT mode)
+REBINT CT_String(const Cell* a, const Cell* b, REBINT mode)
 {
     REBINT num;
 
@@ -82,7 +82,7 @@ REBINT CT_String(const RELVAL *a, const RELVAL *b, REBINT mode)
 ***********************************************************************/
 
 // !!! "STRING value to CHAR value (save some code space)" <-- what?
-static void str_to_char(REBVAL *out, REBVAL *val, REBCNT idx)
+static void str_to_char(Value* out, Value* val, REBCNT idx)
 {
     // Note: out may equal val, do assignment in two steps
     REBUNI codepoint = GET_ANY_CHAR(VAL_SERIES(val), idx);
@@ -90,7 +90,7 @@ static void str_to_char(REBVAL *out, REBVAL *val, REBCNT idx)
 }
 
 
-static void swap_chars(REBVAL *val1, REBVAL *val2)
+static void swap_chars(Value* val1, Value* val2)
 {
     REBSER *s1 = VAL_SERIES(val1);
     REBSER *s2 = VAL_SERIES(val2);
@@ -102,7 +102,7 @@ static void swap_chars(REBVAL *val1, REBVAL *val2)
     SET_ANY_CHAR(s2, VAL_INDEX(val2), c1);
 }
 
-static void reverse_binary(REBVAL *v, REBCNT len)
+static void reverse_binary(Value* v, REBCNT len)
 {
     REBYTE *bp = VAL_BIN_AT(v);
 
@@ -116,7 +116,7 @@ static void reverse_binary(REBVAL *v, REBCNT len)
 }
 
 
-static void reverse_string(REBVAL *v, REBCNT len)
+static void reverse_string(Value* v, REBCNT len)
 {
     if (len == 0)
         return; // if non-zero, at least one character in the string
@@ -173,7 +173,7 @@ static REBCNT find_string(
     REBSER *series,
     REBCNT index,
     REBCNT end,
-    REBVAL *target,
+    Value* target,
     REBCNT target_len,
     REBCNT flags,
     REBINT skip
@@ -271,7 +271,7 @@ static REBCNT find_string(
 }
 
 
-static REBSER *MAKE_TO_String_Common(const REBVAL *arg)
+static REBSER *MAKE_TO_String_Common(const Value* arg)
 {
     REBSER *ser;
 
@@ -300,7 +300,7 @@ static REBSER *MAKE_TO_String_Common(const REBVAL *arg)
 }
 
 
-static REBSER *Make_Binary_BE64(const REBVAL *arg)
+static REBSER *Make_Binary_BE64(const Value* arg)
 {
     REBSER *ser = Make_Binary(8);
 
@@ -337,7 +337,7 @@ static REBSER *Make_Binary_BE64(const REBVAL *arg)
 }
 
 
-static REBSER *make_binary(const REBVAL *arg, bool make)
+static REBSER *make_binary(const Value* arg, bool make)
 {
     REBSER *ser;
 
@@ -402,7 +402,7 @@ static REBSER *make_binary(const REBVAL *arg, bool make)
 //
 //  MAKE_String: C
 //
-REB_R MAKE_String(REBVAL *out, enum Reb_Kind kind, const REBVAL *def) {
+REB_R MAKE_String(Value* out, enum Reb_Kind kind, const Value* def) {
     REBSER *ser; // goto would cross initialization
 
     if (IS_INTEGER(def)) {
@@ -428,13 +428,13 @@ REB_R MAKE_String(REBVAL *out, enum Reb_Kind kind, const REBVAL *def) {
         if (VAL_ARRAY_LEN_AT(def) != 2)
             goto bad_make;
 
-        RELVAL *any_binstr = VAL_ARRAY_AT(def);
+        Cell* any_binstr = VAL_ARRAY_AT(def);
         if (!ANY_BINSTR(any_binstr))
             goto bad_make;
         if (IS_BINARY(any_binstr) != (kind == REB_BINARY))
             goto bad_make;
 
-        RELVAL *index = VAL_ARRAY_AT(def) + 1;
+        Cell* index = VAL_ARRAY_AT(def) + 1;
         if (!IS_INTEGER(index))
             goto bad_make;
 
@@ -463,7 +463,7 @@ REB_R MAKE_String(REBVAL *out, enum Reb_Kind kind, const REBVAL *def) {
 //
 //  TO_String: C
 //
-REB_R TO_String(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
+REB_R TO_String(Value* out, enum Reb_Kind kind, const Value* arg)
 {
     REBSER *ser;
     if (kind == REB_BINARY)
@@ -530,11 +530,11 @@ static int Compare_Chr(void *thunk, const void *v1, const void *v2)
 //  Sort_String: C
 //
 static void Sort_String(
-    REBVAL *string,
+    Value* string,
     bool ccase,
-    REBVAL *skipv,
-    REBVAL *compv,
-    REBVAL *part,
+    Value* skipv,
+    Value* compv,
+    Value* part,
     bool rev
 ){
     // !!! System appears to boot without a sort of a string.  A different
@@ -581,8 +581,8 @@ static void Sort_String(
 //
 REB_R PD_String(
     REBPVS *pvs,
-    const REBVAL *picker,
-    const REBVAL *opt_setval
+    const Value* picker,
+    const Value* opt_setval
 ){
     REBSER *ser = VAL_SERIES(pvs->out);
 
@@ -1004,7 +1004,7 @@ void Mold_Text_Series_At(
 // wishes to preserve round-trip copy-and-paste from URL bars in browsers
 // to source and back.  Encoding concerns are handled elsewhere.
 //
-static void Mold_Url(REB_MOLD *mo, const RELVAL *v)
+static void Mold_Url(REB_MOLD *mo, const Cell* v)
 {
     REBSER *series = VAL_SERIES(v);
     REBCNT len = VAL_LEN_AT(v);
@@ -1020,7 +1020,7 @@ static void Mold_Url(REB_MOLD *mo, const RELVAL *v)
 }
 
 
-static void Mold_File(REB_MOLD *mo, const RELVAL *v)
+static void Mold_File(REB_MOLD *mo, const Cell* v)
 {
     REBSER *series = VAL_SERIES(v);
     REBCNT len = VAL_LEN_AT(v);
@@ -1056,7 +1056,7 @@ static void Mold_File(REB_MOLD *mo, const RELVAL *v)
 }
 
 
-static void Mold_Tag(REB_MOLD *mo, const RELVAL *v)
+static void Mold_Tag(REB_MOLD *mo, const Cell* v)
 {
     Append_Utf8_Codepoint(mo->series, '<');
 
@@ -1072,7 +1072,7 @@ static void Mold_Tag(REB_MOLD *mo, const RELVAL *v)
 //
 //  MF_Binary: C
 //
-void MF_Binary(REB_MOLD *mo, const RELVAL *v, bool form)
+void MF_Binary(REB_MOLD *mo, const Cell* v, bool form)
 {
     UNUSED(form);
 
@@ -1116,7 +1116,7 @@ void MF_Binary(REB_MOLD *mo, const RELVAL *v, bool form)
 //
 //  MF_String: C
 //
-void MF_String(REB_MOLD *mo, const RELVAL *v, bool form)
+void MF_String(REB_MOLD *mo, const Cell* v, bool form)
 {
     REBSER *s = mo->series;
 
@@ -1180,10 +1180,10 @@ void MF_String(REB_MOLD *mo, const RELVAL *v, bool form)
 //
 REBTYPE(String)
 {
-    REBVAL *v = D_ARG(1);
+    Value* v = D_ARG(1);
     assert(IS_BINARY(v) || ANY_STRING(v));
 
-    REBVAL *arg = D_ARGC > 1 ? D_ARG(2) : NULL;
+    Value* arg = D_ARGC > 1 ? D_ARG(2) : NULL;
 
     // Common operations for any series type (length, head, etc.)
     //

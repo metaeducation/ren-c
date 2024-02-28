@@ -965,7 +965,7 @@ REBCNT Encode_UTF8(
 //
 // !!! With UTF-8 Everywhere, strings will already be in UTF-8.
 //
-REBSER *Make_UTF8_From_Any_String(const RELVAL *any_string, REBCNT len) {
+REBSER *Make_UTF8_From_Any_String(const Cell* any_string, REBCNT len) {
     assert(ANY_STRING(any_string));
 
     const REBUNI *data = VAL_UNI_AT(any_string);

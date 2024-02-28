@@ -216,7 +216,7 @@ REBNATIVE(encode_text)
 
 
 static void Encode_Utf16_Core(
-    REBVAL *out,
+    Value* out,
     REBCHR(const *) data,
     REBCNT len,
     bool little_endian
@@ -257,7 +257,7 @@ static void Encode_Utf16_Core(
 
 
 static void Decode_Utf16_Core(
-    REBVAL *out,
+    Value* out,
     const REBYTE *data,
     REBCNT len,
     bool little_endian

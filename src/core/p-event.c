@@ -72,13 +72,13 @@ REBREQ *req;        //!!! move this global
 // so do NOT extend the event queue here. If it does not have
 // space, return 0. (Should it overwrite or wrap???)
 //
-REBVAL *Append_Event(void)
+Value* Append_Event(void)
 {
-    REBVAL *port = Get_System(SYS_PORTS, PORTS_SYSTEM);
+    Value* port = Get_System(SYS_PORTS, PORTS_SYSTEM);
     if (!IS_PORT(port)) return 0; // verify it is a port object
 
     // Get queue block:
-    REBVAL *state = VAL_CONTEXT_VAR(port, STD_PORT_STATE);
+    Value* state = VAL_CONTEXT_VAR(port, STD_PORT_STATE);
     if (!IS_BLOCK(state)) return 0;
 
     // Append to tail if room:
@@ -100,11 +100,11 @@ REBVAL *Append_Event(void)
 // Find the last event in the queue by the model
 // Check its type, if it matches, then return the event or NULL
 //
-REBVAL *Find_Last_Event(REBINT model, REBINT type)
+Value* Find_Last_Event(REBINT model, REBINT type)
 {
-    REBVAL *port;
-    RELVAL *value;
-    REBVAL *state;
+    Value* port;
+    Cell* value;
+    Value* state;
 
     port = Get_System(SYS_PORTS, PORTS_SYSTEM);
     if (!IS_PORT(port)) return NULL; // verify it is a port object
@@ -132,15 +132,15 @@ REBVAL *Find_Last_Event(REBINT model, REBINT type)
 //
 // Internal port handler for events.
 //
-static REB_R Event_Actor(REBFRM *frame_, REBVAL *port, REBVAL *verb)
+static REB_R Event_Actor(REBFRM *frame_, Value* port, Value* verb)
 {
-    REBVAL *arg = D_ARGC > 1 ? D_ARG(2) : NULL;
+    Value* arg = D_ARGC > 1 ? D_ARG(2) : NULL;
 
     // Validate and fetch relevant PORT fields:
     //
     REBCTX *ctx = VAL_CONTEXT(port);
-    REBVAL *state = CTX_VAR(ctx, STD_PORT_STATE);
-    REBVAL *spec = CTX_VAR(ctx, STD_PORT_SPEC);
+    Value* state = CTX_VAR(ctx, STD_PORT_STATE);
+    Value* spec = CTX_VAR(ctx, STD_PORT_SPEC);
     if (!IS_OBJECT(spec))
         fail (Error_Invalid_Spec_Raw(spec));
 
@@ -230,7 +230,7 @@ static REB_R Event_Actor(REBFRM *frame_, REBVAL *port, REBVAL *verb)
         if (req == NULL) { //!!!
             req = OS_MAKE_DEVREQ(RDI_EVENT);
             req->flags |= RRF_OPEN;
-            REBVAL *result = OS_DO_DEVICE(req, RDC_CONNECT);
+            Value* result = OS_DO_DEVICE(req, RDC_CONNECT);
             if (result == NULL) {
                 //
                 // comment said "stays queued", hence seems pending happens

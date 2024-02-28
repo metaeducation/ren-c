@@ -35,7 +35,7 @@
 //
 //  CT_Money: C
 //
-REBINT CT_Money(const RELVAL *a, const RELVAL *b, REBINT mode)
+REBINT CT_Money(const Cell* a, const Cell* b, REBINT mode)
 {
     bool e = deci_is_equal(VAL_MONEY_AMOUNT(a), VAL_MONEY_AMOUNT(b));
 
@@ -56,7 +56,7 @@ REBINT CT_Money(const RELVAL *a, const RELVAL *b, REBINT mode)
 //
 //  MAKE_Money: C
 //
-REB_R MAKE_Money(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
+REB_R MAKE_Money(Value* out, enum Reb_Kind kind, const Value* arg)
 {
     assert(kind == REB_MONEY);
     UNUSED(kind);
@@ -101,7 +101,7 @@ REB_R MAKE_Money(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 //
 //  TO_Money: C
 //
-REB_R TO_Money(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
+REB_R TO_Money(Value* out, enum Reb_Kind kind, const Value* arg)
 {
     return MAKE_Money(out, kind, arg);
 }
@@ -110,7 +110,7 @@ REB_R TO_Money(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 //
 //  MF_Money: C
 //
-void MF_Money(REB_MOLD *mo, const RELVAL *v, bool form)
+void MF_Money(REB_MOLD *mo, const Cell* v, bool form)
 {
     UNUSED(form);
 
@@ -130,7 +130,7 @@ void MF_Money(REB_MOLD *mo, const RELVAL *v, bool form)
 //
 // Will successfully convert or fail (longjmp) with an error.
 //
-void Bin_To_Money_May_Fail(REBVAL *result, const REBVAL *val)
+void Bin_To_Money_May_Fail(Value* result, const Value* val)
 {
     if (not IS_BINARY(val))
         fail (Error_Invalid(val));
@@ -147,7 +147,7 @@ void Bin_To_Money_May_Fail(REBVAL *result, const REBVAL *val)
 }
 
 
-static REBVAL *Math_Arg_For_Money(REBVAL *store, REBVAL *arg, REBVAL *verb)
+static Value* Math_Arg_For_Money(Value* store, Value* arg, Value* verb)
 {
     if (IS_MONEY(arg))
         return arg;
@@ -171,8 +171,8 @@ static REBVAL *Math_Arg_For_Money(REBVAL *store, REBVAL *arg, REBVAL *verb)
 //
 REBTYPE(Money)
 {
-    REBVAL *val = D_ARG(1);
-    REBVAL *arg;
+    Value* val = D_ARG(1);
+    Value* arg;
 
     switch (VAL_WORD_SYM(verb)) {
     case SYM_ADD:
@@ -235,7 +235,7 @@ REBTYPE(Money)
             | (REF(half_ceiling) ? RF_HALF_CEILING : 0)
         );
 
-        REBVAL *scale = ARG(scale);
+        Value* scale = ARG(scale);
 
         DECLARE_LOCAL (temp);
         if (REF(to)) {
@@ -285,4 +285,3 @@ REBTYPE(Money)
     RESET_VAL_HEADER(D_OUT, REB_MONEY);
     return D_OUT;
 }
-

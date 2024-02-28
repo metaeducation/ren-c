@@ -49,10 +49,10 @@
 //
 static REB_R Clipboard_Actor(
     REBFRM *frame_,
-    REBVAL *port,
-    REBVAL *verb
+    Value* port,
+    Value* verb
 ){
-    REBVAL *arg = D_ARGC > 1 ? D_ARG(2) : NULL;
+    Value* arg = D_ARGC > 1 ? D_ARG(2) : NULL;
 
     switch (VAL_WORD_SYM(verb)) {
 
@@ -121,7 +121,7 @@ static REB_R Clipboard_Actor(
             );
         }
 
-        REBVAL *str = rebTextW(wide);
+        Value* str = rebTextW(wide);
 
         GlobalUnlock(h);
         CloseClipboard();

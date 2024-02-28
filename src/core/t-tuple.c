@@ -34,7 +34,7 @@
 //
 //  CT_Tuple: C
 //
-REBINT CT_Tuple(const RELVAL *a, const RELVAL *b, REBINT mode)
+REBINT CT_Tuple(const Cell* a, const Cell* b, REBINT mode)
 {
     REBINT num = Cmp_Tuple(a, b);
     if (mode > 1) return (num == 0 && VAL_TUPLE_LEN(a) == VAL_TUPLE_LEN(b));
@@ -48,7 +48,7 @@ REBINT CT_Tuple(const RELVAL *a, const RELVAL *b, REBINT mode)
 //
 //  MAKE_Tuple: C
 //
-REB_R MAKE_Tuple(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
+REB_R MAKE_Tuple(Value* out, enum Reb_Kind kind, const Value* arg)
 {
     assert(kind == REB_TUPLE);
     UNUSED(kind);
@@ -81,7 +81,7 @@ REB_R MAKE_Tuple(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
         REBCNT len = 0;
         REBINT n;
 
-        RELVAL *item = VAL_ARRAY_AT(arg);
+        Cell* item = VAL_ARRAY_AT(arg);
 
         for (; NOT_END(item); ++item, ++vp, ++len) {
             if (len >= MAX_TUPLE)
@@ -148,7 +148,7 @@ REB_R MAKE_Tuple(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 //
 //  TO_Tuple: C
 //
-REB_R TO_Tuple(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
+REB_R TO_Tuple(Value* out, enum Reb_Kind kind, const Value* arg)
 {
     return MAKE_Tuple(out, kind, arg);
 }
@@ -159,7 +159,7 @@ REB_R TO_Tuple(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 //
 // Given two tuples, compare them.
 //
-REBINT Cmp_Tuple(const RELVAL *t1, const RELVAL *t2)
+REBINT Cmp_Tuple(const Cell* t1, const Cell* t2)
 {
     REBCNT  len;
     const REBYTE *vp1, *vp2;
@@ -181,7 +181,7 @@ REBINT Cmp_Tuple(const RELVAL *t1, const RELVAL *t2)
 //
 //  Pick_Tuple: C
 //
-void Pick_Tuple(REBVAL *out, const REBVAL *value, const REBVAL *picker)
+void Pick_Tuple(Value* out, const Value* value, const Value* picker)
 {
     const REBYTE *dat = VAL_TUPLE(value);
 
@@ -214,9 +214,9 @@ void Pick_Tuple(REBVAL *out, const REBVAL *value, const REBVAL *picker)
 // So a POKE only changes the `value` in your hand.
 //
 void Poke_Tuple_Immediate(
-    REBVAL *value,
-    const REBVAL *picker,
-    const REBVAL *poke
+    Value* value,
+    const Value* picker,
+    const Value* poke
 ) {
     REBYTE *dat = VAL_TUPLE(value);
 
@@ -256,8 +256,8 @@ void Poke_Tuple_Immediate(
 //
 REB_R PD_Tuple(
     REBPVS *pvs,
-    const REBVAL *picker,
-    const REBVAL *opt_setval
+    const Value* picker,
+    const Value* opt_setval
 ){
     if (opt_setval) {
         //
@@ -276,7 +276,7 @@ REB_R PD_Tuple(
 //
 //  MF_Tuple: C
 //
-void MF_Tuple(REB_MOLD *mo, const RELVAL *v, bool form)
+void MF_Tuple(REB_MOLD *mo, const Cell* v, bool form)
 {
     UNUSED(form);
 
@@ -317,8 +317,8 @@ void MF_Tuple(REB_MOLD *mo, const RELVAL *v, bool form)
 //
 REBTYPE(Tuple)
 {
-    REBVAL *value = D_ARG(1);
-    REBVAL *arg = D_ARGC > 1 ? D_ARG(2) : NULL;
+    Value* value = D_ARG(1);
+    Value* arg = D_ARGC > 1 ? D_ARG(2) : NULL;
     const REBYTE *ap;
     REBCNT len;
     REBCNT alen;

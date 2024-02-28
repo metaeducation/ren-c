@@ -74,11 +74,11 @@ inline static void TERM_BIN_LEN(REBSER *s, REBCNT len) {
 #define VAL_BIN_HEAD(v) \
     BIN_HEAD(VAL_SERIES(v))
 
-inline static REBYTE *VAL_BIN_AT(const RELVAL *v) {
+inline static REBYTE *VAL_BIN_AT(const Cell* v) {
     return BIN_AT(VAL_SERIES(v), VAL_INDEX(v));
 }
 
-inline static REBYTE *VAL_BIN_TAIL(const RELVAL *v) {
+inline static REBYTE *VAL_BIN_TAIL(const Cell* v) {
     return SER_TAIL(REBYTE, VAL_SERIES(v));
 }
 

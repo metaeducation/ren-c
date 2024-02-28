@@ -44,7 +44,7 @@
 //     CT_Get_Path()
 //     CT_Lit_Path()
 //
-REBINT CT_Array(const RELVAL *a, const RELVAL *b, REBINT mode)
+REBINT CT_Array(const Cell* a, const Cell* b, REBINT mode)
 {
     REBINT num = Cmp_Array(a, b, mode == 1);
     if (mode >= 0)
@@ -67,7 +67,7 @@ REBINT CT_Array(const RELVAL *a, const RELVAL *b, REBINT mode)
 //     MAKE_Get_Path
 //     MAKE_Lit_Path
 //
-REB_R MAKE_Array(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg) {
+REB_R MAKE_Array(Value* out, enum Reb_Kind kind, const Value* arg) {
     if (IS_INTEGER(arg) or IS_DECIMAL(arg)) {
         //
         // `make block! 10` => creates array with certain initial capacity
@@ -135,7 +135,7 @@ REB_R MAKE_Array(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg) {
             goto bad_make;
         }
 
-        RELVAL *any_array = VAL_ARRAY_AT(arg);
+        Cell* any_array = VAL_ARRAY_AT(arg);
         REBINT index = VAL_INDEX(any_array) + Int32(VAL_ARRAY_AT(arg) + 1) - 1;
 
         if (index < 0 || index > cast(REBINT, VAL_LEN_HEAD(any_array)))
@@ -217,7 +217,7 @@ REB_R MAKE_Array(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg) {
             REBCTX *context = CTX(arg->extra.binding);
             REBFRM *param_frame = CTX_FRAME_MAY_FAIL(context);
 
-            REBVAL *param = ACT_PARAMS_HEAD(FRM_PHASE(param_frame))
+            Value* param = ACT_PARAMS_HEAD(FRM_PHASE(param_frame))
                 + arg->payload.varargs.param_offset;
 
             if (TYPE_CHECK(param, REB_MAX_NULLED))
@@ -251,7 +251,7 @@ REB_R MAKE_Array(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg) {
         //
         REBDSP dsp_orig = DSP;
         while (true) {
-            REBVAL *generated = rebValue(rebEval(arg));
+            Value* generated = rebValue(rebEval(arg));
             if (not generated)
                 break;
             DS_PUSH(generated);
@@ -268,7 +268,7 @@ REB_R MAKE_Array(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg) {
 //
 //  TO_Array: C
 //
-REB_R TO_Array(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg) {
+REB_R TO_Array(Value* out, enum Reb_Kind kind, const Value* arg) {
     if (
         kind == VAL_TYPE(arg) // always act as COPY if types match
         or Splices_Into_Type_Without_Only(kind, arg) // see comments
@@ -301,7 +301,7 @@ REBCNT Find_In_Array(
     REBARR *array,
     REBCNT index, // index to start search
     REBCNT end, // ending position
-    const RELVAL *target,
+    const Cell* target,
     REBCNT len, // length of target
     REBFLGS flags, // see AM_FIND_XXX
     REBINT skip // skip factor
@@ -321,7 +321,7 @@ REBCNT Find_In_Array(
     //
     if (ANY_WORD(target)) {
         for (; index >= start && index < end; index += skip) {
-            RELVAL *item = ARR_AT(array, index);
+            Cell* item = ARR_AT(array, index);
             REBSTR *target_canon = VAL_WORD_CANON(target); // canonize once
             if (ANY_WORD(item)) {
                 if (flags & AM_FIND_CASE) { // Must be same type and spelling
@@ -347,10 +347,10 @@ REBCNT Find_In_Array(
     //
     if (ANY_ARRAY(target) and not (flags & AM_FIND_ONLY)) {
         for (; index >= start and index < end; index += skip) {
-            RELVAL *item = ARR_AT(array, index);
+            Cell* item = ARR_AT(array, index);
 
             REBCNT count = 0;
-            RELVAL *other = VAL_ARRAY_AT(target);
+            Cell* other = VAL_ARRAY_AT(target);
             for (; NOT_END(other); ++other, ++item) {
                 if (
                     IS_END(item) ||
@@ -371,7 +371,7 @@ REBCNT Find_In_Array(
     //
     if (IS_DATATYPE(target) || IS_TYPESET(target)) {
         for (; index >= start && index < end; index += skip) {
-            RELVAL *item = ARR_AT(array, index);
+            Cell* item = ARR_AT(array, index);
 
             if (IS_DATATYPE(target)) {
                 if (VAL_TYPE(item) == VAL_TYPE_KIND(target))
@@ -404,7 +404,7 @@ REBCNT Find_In_Array(
     // All other cases
 
     for (; index >= start && index < end; index += skip) {
-        RELVAL *item = ARR_AT(array, index);
+        Cell* item = ARR_AT(array, index);
         if (0 == Cmp_Value(item, target, did (flags & AM_FIND_CASE)))
             return index;
 
@@ -420,7 +420,7 @@ struct sort_flags {
     bool cased;
     bool reverse;
     REBCNT offset;
-    REBVAL *comparator;
+    Value* comparator;
     bool all; // !!! not used?
 };
 
@@ -436,14 +436,14 @@ static int Compare_Val(void *arg, const void *v1, const void *v2)
 
     if (flags->reverse)
         return Cmp_Value(
-            cast(const RELVAL*, v2) + flags->offset,
-            cast(const RELVAL*, v1) + flags->offset,
+            cast(const Cell*, v2) + flags->offset,
+            cast(const Cell*, v1) + flags->offset,
             flags->cased
         );
     else
         return Cmp_Value(
-            cast(const RELVAL*, v1) + flags->offset,
-            cast(const RELVAL*, v2) + flags->offset,
+            cast(const Cell*, v1) + flags->offset,
+            cast(const Cell*, v2) + flags->offset,
             flags->cased
         );
 }
@@ -510,11 +510,11 @@ static int Compare_Val_Custom(void *arg, const void *v1, const void *v2)
 // /reverse {Reverse sort order}
 //
 static void Sort_Block(
-    REBVAL *block,
+    Value* block,
     bool ccase,
-    REBVAL *skipv,
-    REBVAL *compv,
-    REBVAL *part,
+    Value* skipv,
+    Value* compv,
+    Value* part,
     bool all,
     bool rev
 ) {
@@ -554,7 +554,7 @@ static void Sort_Block(
     reb_qsort_r(
         VAL_ARRAY_AT(block),
         len / skip,
-        sizeof(REBVAL) * skip,
+        sizeof(Cell) * skip,
         &flags,
         flags.comparator != NULL ? &Compare_Val_Custom : &Compare_Val
     );
@@ -564,17 +564,17 @@ static void Sort_Block(
 //
 //  Shuffle_Block: C
 //
-void Shuffle_Block(REBVAL *value, bool secure)
+void Shuffle_Block(Value* value, bool secure)
 {
     REBCNT n;
     REBCNT k;
     REBCNT idx = VAL_INDEX(value);
-    RELVAL *data = VAL_ARRAY_HEAD(value);
+    Cell* data = VAL_ARRAY_HEAD(value);
 
-    // Rare case where RELVAL bit copying is okay...between spots in the
+    // Rare case where Cell bit copying is okay...between spots in the
     // same array.
     //
-    RELVAL swap;
+    Cell swap;
 
     for (n = VAL_LEN_AT(value); n > 1;) {
         k = idx + (REBCNT)Random_Int(secure) % n;
@@ -608,8 +608,8 @@ void Shuffle_Block(REBVAL *value, bool secure)
 //
 REB_R PD_Array(
     REBPVS *pvs,
-    const REBVAL *picker,
-    const REBVAL *opt_setval
+    const Value* picker,
+    const Value* opt_setval
 ){
     REBINT n;
 
@@ -629,7 +629,7 @@ REB_R PD_Array(
         n = -1;
 
         REBSTR *canon = VAL_WORD_CANON(picker);
-        RELVAL *item = VAL_ARRAY_AT(pvs->out);
+        Cell* item = VAL_ARRAY_AT(pvs->out);
         REBCNT index = VAL_INDEX(pvs->out);
         for (; NOT_END(item); ++item, ++index) {
             if (ANY_WORD(item) && canon == VAL_WORD_CANON(item)) {
@@ -683,7 +683,7 @@ REB_R PD_Array(
 //
 // Fills out with void if no pick.
 //
-RELVAL *Pick_Block(REBVAL *out, const REBVAL *block, const REBVAL *picker)
+Cell* Pick_Block(Value* out, const Value* block, const Value* picker)
 {
     REBINT n = Get_Num_From_Arg(picker);
     n += VAL_INDEX(block) - 1;
@@ -692,7 +692,7 @@ RELVAL *Pick_Block(REBVAL *out, const REBVAL *block, const REBVAL *picker)
         return NULL;
     }
 
-    RELVAL *slot = VAL_ARRAY_AT_HEAD(block, n);
+    Cell* slot = VAL_ARRAY_AT_HEAD(block, n);
     Derelativize(out, slot, VAL_SPECIFIER(block));
     return slot;
 }
@@ -701,7 +701,7 @@ RELVAL *Pick_Block(REBVAL *out, const REBVAL *block, const REBVAL *picker)
 //
 //  MF_Array: C
 //
-void MF_Array(REB_MOLD *mo, const RELVAL *v, bool form)
+void MF_Array(REB_MOLD *mo, const Cell* v, bool form)
 {
     if (form && (IS_BLOCK(v) || IS_GROUP(v))) {
         Form_Array_At(mo, VAL_ARRAY(v), VAL_INDEX(v), 0);
@@ -792,8 +792,8 @@ void MF_Array(REB_MOLD *mo, const RELVAL *v, bool form)
 //
 REBTYPE(Array)
 {
-    REBVAL *array = D_ARG(1);
-    REBVAL *arg = D_ARGC > 1 ? D_ARG(2) : NULL;
+    Value* array = D_ARG(1);
+    Value* arg = D_ARGC > 1 ? D_ARG(2) : NULL;
 
     // Common operations for any series type (length, head, etc.)
     //
@@ -1011,10 +1011,10 @@ REBTYPE(Array)
             index < VAL_LEN_HEAD(array)
             && VAL_INDEX(arg) < VAL_LEN_HEAD(arg)
         ){
-            // RELVAL bits can be copied within the same array
+            // Cell bits can be copied within the same array
             //
-            RELVAL *a = VAL_ARRAY_AT(array);
-            RELVAL temp;
+            Cell* a = VAL_ARRAY_AT(array);
+            Cell temp;
             temp.header = a->header;
             temp.payload = a->payload;
             temp.extra = a->extra;
@@ -1031,8 +1031,8 @@ REBTYPE(Array)
         if (len == 0)
             RETURN (array); // !!! do 1-element reversals update newlines?
 
-        RELVAL *front = VAL_ARRAY_AT(array);
-        RELVAL *back = front + len - 1;
+        Cell* front = VAL_ARRAY_AT(array);
+        Cell* back = front + len - 1;
 
         // We must reverse the sense of the newline markers as well, #2326
         // Elements that used to be the *end* of lines now *start* lines.
@@ -1051,7 +1051,7 @@ REBTYPE(Array)
                 VALUE_FLAG_NEWLINE_BEFORE
             );
 
-            RELVAL temp;
+            Cell temp;
             temp.header = front->header;
             temp.extra = front->extra;
             temp.payload = front->payload;
@@ -1119,7 +1119,7 @@ REBTYPE(Array)
                 1 + (Random_Int(REF(secure)) % (VAL_LEN_HEAD(array) - index))
             );
 
-            RELVAL *slot = Pick_Block(D_OUT, array, ARG(seed));
+            Cell* slot = Pick_Block(D_OUT, array, ARG(seed));
             if (IS_NULLED(D_OUT)) {
                 assert(slot);
                 UNUSED(slot);
@@ -1165,7 +1165,7 @@ void Assert_Array_Core(REBARR *a)
     if (not IS_SER_ARRAY(a))
         panic (a);
 
-    RELVAL *item = ARR_HEAD(a);
+    Cell* item = ARR_HEAD(a);
     REBCNT i;
     for (i = 0; i < ARR_LEN(a); ++i, ++item) {
         if (IS_END(item)) {
@@ -1200,7 +1200,7 @@ void Assert_Array_Core(REBARR *a)
         }
         assert(item == ARR_AT(a, rest - 1));
 
-        RELVAL *ultimate = ARR_AT(a, rest - 1);
+        Cell* ultimate = ARR_AT(a, rest - 1);
         if (NOT_END(ultimate) or (ultimate->header.bits & NODE_FLAG_CELL)) {
             printf("Implicit termination/unwritable END missing from array\n");
             panic (a);

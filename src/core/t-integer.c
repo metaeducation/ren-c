@@ -36,7 +36,7 @@
 //
 //  CT_Integer: C
 //
-REBINT CT_Integer(const RELVAL *a, const RELVAL *b, REBINT mode)
+REBINT CT_Integer(const Cell* a, const Cell* b, REBINT mode)
 {
     if (mode >= 0)  return (VAL_INT64(a) == VAL_INT64(b));
     if (mode == -1) return (VAL_INT64(a) >= VAL_INT64(b));
@@ -47,7 +47,7 @@ REBINT CT_Integer(const RELVAL *a, const RELVAL *b, REBINT mode)
 //
 //  MAKE_Integer: C
 //
-REB_R MAKE_Integer(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
+REB_R MAKE_Integer(Value* out, enum Reb_Kind kind, const Value* arg)
 {
     assert(kind == REB_INTEGER);
     UNUSED(kind);
@@ -86,7 +86,7 @@ REB_R MAKE_Integer(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 //
 //  TO_Integer: C
 //
-REB_R TO_Integer(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
+REB_R TO_Integer(Value* out, enum Reb_Kind kind, const Value* arg)
 {
     assert(kind == REB_INTEGER);
     UNUSED(kind);
@@ -116,7 +116,7 @@ REB_R TO_Integer(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 //
 // If a type is added or removed, update REBNATIVE(to_integer)'s spec
 //
-void Value_To_Int64(REBVAL *out, const REBVAL *value, bool no_sign)
+void Value_To_Int64(Value* out, const Value* value, bool no_sign)
 {
     // !!! Code extracted from REBTYPE(Integer)'s A_MAKE and A_TO cases
     // Use SWITCH instead of IF chain? (was written w/ANY_STR test)
@@ -361,7 +361,7 @@ REBNATIVE(to_integer)
 //
 //  MF_Integer: C
 //
-void MF_Integer(REB_MOLD *mo, const RELVAL *v, bool form)
+void MF_Integer(REB_MOLD *mo, const Cell* v, bool form)
 {
     UNUSED(form);
 
@@ -376,7 +376,7 @@ void MF_Integer(REB_MOLD *mo, const RELVAL *v, bool form)
 //
 REBTYPE(Integer)
 {
-    REBVAL *val = D_ARG(1);
+    Value* val = D_ARG(1);
     REBI64 num = VAL_INT64(val);
 
     REBI64 arg;
@@ -397,7 +397,7 @@ REBTYPE(Integer)
         or sym == SYM_DIFFERENCE
         or sym == SYM_REMAINDER
     ){
-        REBVAL *val2 = D_ARG(2);
+        Value* val2 = D_ARG(2);
 
         if (IS_INTEGER(val2))
             arg = VAL_INT64(val2);
@@ -538,7 +538,7 @@ REBTYPE(Integer)
             | (REF(half_ceiling) ? RF_HALF_CEILING : 0)
         );
 
-        REBVAL *val2 = ARG(scale);
+        Value* val2 = ARG(scale);
         if (REF(to)) {
             if (IS_MONEY(val2))
                 return Init_Money(
@@ -610,7 +610,7 @@ REBNATIVE(enbin)
 {
     INCLUDE_PARAMS_OF_ENBIN;
 
-    REBVAL *settings = rebValue("compose", ARG(settings));
+    Value* settings = rebValue("compose", ARG(settings));
     if (VAL_LEN_AT(settings) != 3)
         fail ("ENBIN requires array of length 3 for settings for now");
     bool little = rebDid(
@@ -626,7 +626,7 @@ REBNATIVE(enbin)
             "fail {Second element of ENBIN settings must be + or +/-}",
         "]"
     );
-    RELVAL *third = VAL_ARRAY_AT_HEAD(settings, index + 2);
+    Cell* third = VAL_ARRAY_AT_HEAD(settings, index + 2);
     if (not IS_INTEGER(third))
         fail ("Third element of ENBIN settings must be an integer}");
     REBINT num_bytes = VAL_INT32(third);
@@ -716,7 +716,7 @@ REBNATIVE(debin)
 {
     INCLUDE_PARAMS_OF_DEBIN;
 
-    REBVAL* settings = rebValue("compose", ARG(settings));
+    Value* settings = rebValue("compose", ARG(settings));
     if (VAL_LEN_AT(settings) != 2 and VAL_LEN_AT(settings) != 3)
         fail("DEBIN requires array of length 2 or 3 for settings for now");
     bool little = rebDid(
@@ -733,7 +733,7 @@ REBNATIVE(debin)
         "]"
     );
     REBCNT num_bytes;
-    RELVAL *third = VAL_ARRAY_AT_HEAD(settings, index + 2);
+    Cell* third = VAL_ARRAY_AT_HEAD(settings, index + 2);
     if (IS_END(third))
         num_bytes = VAL_LEN_AT(ARG(binary));
     else {
