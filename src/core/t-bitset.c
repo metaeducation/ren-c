@@ -170,7 +170,7 @@ REBINT Find_Max_Bit(const Cell* val)
 //  case REB_ISSUE:
     case REB_TAG: {
         n = VAL_INDEX(val);
-        REBCHR(const *) up = VAL_UNI_AT(val);
+        REBCHR(const*) up = VAL_UNI_AT(val);
         for (; n < cast(REBINT, VAL_LEN_HEAD(val)); n++) {
             REBUNI c;
             up = NEXT_CHR(&c, up);
@@ -304,7 +304,7 @@ bool Set_Bits(REBSER *bset, const Value* val, bool set)
 
     if (ANY_STRING(val)) {
         REBLEN i = VAL_INDEX(val);
-        REBCHR(const *) up = VAL_UNI_AT(val);
+        REBCHR(const*) up = VAL_UNI_AT(val);
         for (; i < VAL_LEN_HEAD(val); ++i) {
             REBUNI c;
             up = NEXT_CHR(&c, up);
@@ -441,7 +441,7 @@ bool Check_Bits(REBSER *bset, const Value* val, bool uncased)
 
     if (ANY_STRING(val)) {
         REBLEN i = VAL_INDEX(val);
-        REBCHR(const *) up = VAL_UNI_AT(val);
+        REBCHR(const*) up = VAL_UNI_AT(val);
         for (; i != VAL_LEN_HEAD(val); ++i) {
             REBUNI c;
             up = NEXT_CHR(&c, up);

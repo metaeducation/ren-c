@@ -42,7 +42,7 @@ static bool Check_Char_Range(const Value* val, REBINT limit)
     assert(ANY_STRING(val));
 
     REBLEN len = VAL_LEN_AT(val);
-    REBCHR(const *) up = VAL_UNI_AT(val);
+    REBCHR(const*) up = VAL_UNI_AT(val);
 
     for (; len > 0; len--) {
         REBUNI c;

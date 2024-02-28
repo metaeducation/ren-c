@@ -309,7 +309,7 @@ extern const REBYTE Lex_Map[256];
 
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// REBCHR(*) or REBCHR(const *)- UTF-8 EVERYWHERE UNICODE HELPER MACROS
+// REBCHR(*) or REBCHR(const*)- UTF-8 EVERYWHERE UNICODE HELPER MACROS
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
@@ -450,7 +450,7 @@ extern const REBYTE Lex_Map[256];
 
     INLINE REBCHR(*) BACK_CHR(
         REBWCHAR *codepoint_out,
-        REBCHR(const *) p
+        REBCHR(const*) p
     ){
         if (codepoint_out != NULL)
             *codepoint_out = *p;
@@ -459,7 +459,7 @@ extern const REBYTE Lex_Map[256];
 
     INLINE REBCHR(*) NEXT_CHR(
         REBWCHAR *codepoint_out,
-        REBCHR(const *) p
+        REBCHR(const*) p
     ){
         if (codepoint_out != NULL)
             *codepoint_out = *p;

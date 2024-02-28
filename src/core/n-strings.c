@@ -867,7 +867,7 @@ DECLARE_NATIVE(deline)
     REBLEN len_at = VAL_LEN_AT(val);
 
     REBCHR(*) dest = VAL_UNI_AT(val);
-    REBCHR(const *) src = dest;
+    REBCHR(const*) src = dest;
 
     REBLEN n;
     for (n = 0; n < len_at; ++n) {
@@ -995,7 +995,7 @@ DECLARE_NATIVE(entab)
     REBLEN len = VAL_LEN_AT(val);
     REBYTE *dp = Prep_Mold_Overestimated(mo, len * 4); // max UTF-8 charsize
 
-    REBCHR(const *) up = VAL_UNI_AT(val);
+    REBCHR(const*) up = VAL_UNI_AT(val);
     REBLEN index = VAL_INDEX(val);
 
     REBINT n = 0;
@@ -1070,7 +1070,7 @@ DECLARE_NATIVE(detab)
 
     // Estimate new length based on tab expansion:
 
-    REBCHR(const *) cp = VAL_UNI_AT(val);
+    REBCHR(const*) cp = VAL_UNI_AT(val);
     REBLEN index = VAL_INDEX(val);
 
     REBLEN count = 0;

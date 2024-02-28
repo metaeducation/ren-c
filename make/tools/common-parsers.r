@@ -257,11 +257,17 @@ proto-parser: context [
 
         ; http://blog.hostilefork.com/kinda-smart-pointers-in-c/
         ;
-        ;     TYPEMACRO(*) Some_Function(TYPEMACRO(const *) value, ...)
+        ;     TYPEMACRO(*) Some_Function(TYPEMACRO(const*) value, ...)
         ;     { ...
         ;
         typemacro-parentheses: [
-            "(*)" | "(const *)"
+            "Option(" opt [identifier "(" thru ")"] thru ")"
+            | "Sink(" opt [identifier "(" thru ")"] thru ")"
+            | "Option(Sink(" opt [identifier "(" thru ")"] thru "))"
+            | "(*)" | "(const*)"
+            | "(const *)" (fail "use (const*) not (const *)")
+            | "(const Cell*)"
+            | "(const Cell* )" (fail "use (const Cell*) not (const Cell* )")
         ]
 
         function-proto: [

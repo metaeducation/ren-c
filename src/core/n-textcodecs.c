@@ -217,11 +217,11 @@ DECLARE_NATIVE(encode_text)
 
 static void Encode_Utf16_Core(
     Value* out,
-    REBCHR(const *) data,
+    REBCHR(const*) data,
     REBLEN len,
     bool little_endian
 ){
-    REBCHR(const *) cp = data;
+    REBCHR(const*) cp = data;
 
     REBSER *bin = Make_Binary(sizeof(uint16_t) * len);
     uint16_t* up = cast(uint16_t*, BIN_HEAD(bin));

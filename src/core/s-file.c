@@ -63,7 +63,7 @@ REBSER *To_REBOL_Path(const Cell* string, REBFLGS flags)
     bool last_was_slash = false; // was last character appended a slash?
 
 restart:;
-    REBCHR(const *) up = VAL_UNI_AT(string);
+    REBCHR(const*) up = VAL_UNI_AT(string);
     REBLEN len = VAL_LEN_AT(string);
 
     REBUNI c = '\0'; // for test after loop (in case loop does not run)
@@ -142,7 +142,7 @@ restart:;
 void Mold_File_To_Local(REB_MOLD *mo, const Cell* file, REBFLGS flags) {
     assert(IS_FILE(file));
 
-    REBCHR(const *) up = VAL_UNI_AT(file);
+    REBCHR(const*) up = VAL_UNI_AT(file);
     REBLEN len = VAL_LEN_AT(file);
 
     REBLEN i = 0;
@@ -169,7 +169,7 @@ void Mold_File_To_Local(REB_MOLD *mo, const Cell* file, REBFLGS flags) {
             // peek ahead for a '/'
             //
             REBUNI d = '/';
-            REBCHR(const *) dp;
+            REBCHR(const*) dp;
             if (i < len)
                 dp = NEXT_CHR(&d, up);
             else

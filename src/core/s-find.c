@@ -164,8 +164,8 @@ bool Match_Sub_Path(REBSER *s1, REBSER *s2)
 // Uncase: compare is case-insensitive.
 //
 REBINT Compare_Uni_Str(
-    REBCHR(const *) u1,
-    REBCHR(const *) u2,
+    REBCHR(const*) u1,
+    REBCHR(const*) u2,
     REBLEN len,
     bool uncase
 ){

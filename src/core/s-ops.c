@@ -68,7 +68,7 @@ REBYTE *Analyze_String_For_Scan(
     const Value* any_string,
     REBLEN max_len // maximum length in *codepoints*
 ){
-    REBCHR(const *) up = VAL_UNI_AT(any_string);
+    REBCHR(const*) up = VAL_UNI_AT(any_string);
     REBLEN index = VAL_INDEX(any_string);
     REBLEN len = VAL_LEN_AT(any_string);
     if (len == 0)
@@ -405,8 +405,8 @@ REBARR *Split_Lines(const Value* str)
     REBLEN len = VAL_LEN_AT(str);
     REBLEN i = VAL_INDEX(str);
 
-    REBCHR(const *) start = VAL_UNI_AT(str);
-    REBCHR(const *) up = start;
+    REBCHR(const*) start = VAL_UNI_AT(str);
+    REBCHR(const*) up = start;
 
     if (i == len)
         return Make_Arr(0);

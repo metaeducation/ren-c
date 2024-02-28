@@ -135,7 +135,7 @@ static void reverse_string(Value* v, REBLEN len)
         REBLEN val_len_head = VAL_LEN_HEAD(v);
 
         REBSER *ser = VAL_SERIES(v);
-        REBCHR(const *) up = UNI_LAST(ser); // last exists due to len != 0
+        REBCHR(const*) up = UNI_LAST(ser); // last exists due to len != 0
         REBLEN n;
         for (n = 0; n < len; ++n) {
             REBUNI c;
@@ -770,7 +770,7 @@ static void Sniff_String(REBSER *ser, REBLEN idx, REB_STRF *sf)
 {
     // Scan to find out what special chars the string contains?
 
-    REBCHR(const *) up = UNI_AT(ser, idx);
+    REBCHR(const*) up = UNI_AT(ser, idx);
 
     REBLEN n;
     for (n = idx; n < UNI_LEN(ser); n++) {
@@ -915,7 +915,7 @@ void Mold_Text_Series_At(
     if (NOT_MOLD_FLAG(mo, MOLD_FLAG_NON_ANSI_PARENED))
         sf.paren = 0;
 
-    REBCHR(const *) up = UNI_AT(series, index);
+    REBCHR(const*) up = UNI_AT(series, index);
 
     // If it is a short quoted string, emit it as "string"
     //

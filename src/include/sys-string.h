@@ -179,8 +179,8 @@ INLINE REBSIZ VAL_SIZE_LIMIT_AT(
 ){
     assert(ANY_STRING(v));
 
-    REBCHR(const *) at = VAL_UNI_AT(v); // !!! update cache if needed
-    REBCHR(const *) tail;
+    REBCHR(const*) at = VAL_UNI_AT(v); // !!! update cache if needed
+    REBCHR(const*) tail;
 
     if (limit == -1) {
         if (length != NULL)
