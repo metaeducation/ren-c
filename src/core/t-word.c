@@ -135,8 +135,8 @@ void MF_Word(REB_MOLD *mo, const Cell* v, bool form) {
     UNUSED(form); // no difference between MOLD and FORM at this time
 
     Symbol* symbol = Cell_Word_Symbol(v);
-    const char *head = STR_HEAD(symbol);  // UTF-8
-    size_t size = STR_SIZE(symbol);  // number of UTF-8 bytes
+    const char *head = Symbol_Head(symbol);  // UTF-8
+    size_t size = Symbol_Size(symbol);  // number of UTF-8 bytes
 
     REBSER *s = mo->series;
 
@@ -198,7 +198,7 @@ REB_R PD_Word(
                 return nullptr;
 
             REBSIZ size = SER_LEN(str);
-            const REBYTE *bp = cb_cast(STR_HEAD(str));
+            const REBYTE *bp = cb_cast(Symbol_Head(str));
             REBUNI c;
             do {
                 if (size == 0)
@@ -247,8 +247,8 @@ REBTYPE(Word)
         switch (property) {
         case SYM_LENGTH: {
             Symbol* symbol = Cell_Word_Symbol(val);
-            const REBYTE *bp = cb_cast(STR_HEAD(symbol));
-            REBSIZ size = STR_SIZE(symbol);
+            const REBYTE *bp = cb_cast(Symbol_Head(symbol));
+            REBSIZ size = Symbol_Size(symbol);
             REBLEN len = 0;
             for (; size > 0; ++bp, --size) {
                 if (*bp < 0x80)

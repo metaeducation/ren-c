@@ -135,11 +135,11 @@ static void reverse_string(Value* v, REBLEN len)
         REBLEN val_len_head = VAL_LEN_HEAD(v);
 
         REBSER *ser = VAL_SERIES(v);
-        REBCHR(const*) up = UNI_LAST(ser); // last exists due to len != 0
+        Ucs2(const*) up = String_Last(ser); // last exists due to len != 0
         REBLEN n;
         for (n = 0; n < len; ++n) {
             REBUNI c;
-            up = BACK_CHR(&c, up);
+            up = Ucs2_Back(&c, up);
             Append_Utf8_Codepoint(mo->series, c);
         }
 
@@ -413,7 +413,7 @@ REB_R MAKE_String(Value* out, enum Reb_Kind kind, const Value* def) {
         if (kind == REB_BINARY)
             return Init_Binary(out, Make_Binary(Int32s(def, 0)));
         else
-            return Init_Any_Series(out, kind, Make_Unicode(Int32s(def, 0)));
+            return Init_Any_Series(out, kind, Make_String(Int32s(def, 0)));
     }
     else if (IS_BLOCK(def)) {
         //
@@ -770,12 +770,12 @@ static void Sniff_String(REBSER *ser, REBLEN idx, REB_STRF *sf)
 {
     // Scan to find out what special chars the string contains?
 
-    REBCHR(const*) up = UNI_AT(ser, idx);
+    Ucs2(const*) up = String_At(ser, idx);
 
     REBLEN n;
-    for (n = idx; n < UNI_LEN(ser); n++) {
+    for (n = idx; n < String_Len(ser); n++) {
         REBUNI c;
-        up = NEXT_CHR(&c, up);
+        up = Ucs2_Next(&c, up);
 
         switch (c) {
         case '{':
@@ -902,12 +902,12 @@ void Mold_Text_Series_At(
     REBSER *series,
     REBLEN index
 ){
-    if (index >= UNI_LEN(series)) {
+    if (index >= String_Len(series)) {
         Append_Unencoded(mo->series, "\"\"");
         return;
     }
 
-    REBLEN len_at = UNI_LEN(series) - index;
+    REBLEN len_at = String_Len(series) - index;
 
     REB_STRF sf;
     CLEARS(&sf);
@@ -915,7 +915,7 @@ void Mold_Text_Series_At(
     if (NOT_MOLD_FLAG(mo, MOLD_FLAG_NON_ANSI_PARENED))
         sf.paren = 0;
 
-    REBCHR(const*) up = UNI_AT(series, index);
+    Ucs2(const*) up = String_At(series, index);
 
     // If it is a short quoted string, emit it as "string"
     //
@@ -929,9 +929,9 @@ void Mold_Text_Series_At(
         *dp++ = '"';
 
         REBLEN n;
-        for (n = index; n < UNI_LEN(series); n++) {
+        for (n = index; n < String_Len(series); n++) {
             REBUNI c;
-            up = NEXT_CHR(&c, up);
+            up = Ucs2_Next(&c, up);
             dp = Emit_Uni_Char(
                 dp, c, GET_MOLD_FLAG(mo, MOLD_FLAG_NON_ANSI_PARENED)
             );
@@ -959,9 +959,9 @@ void Mold_Text_Series_At(
     *dp++ = '{';
 
     REBLEN n;
-    for (n = index; n < UNI_LEN(series); n++) {
+    for (n = index; n < String_Len(series); n++) {
         REBUNI c;
-        up = NEXT_CHR(&c, up);
+        up = Ucs2_Next(&c, up);
 
         switch (c) {
         case '{':

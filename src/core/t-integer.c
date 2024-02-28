@@ -264,8 +264,8 @@ void Value_To_Int64(Value* out, const Value* value, bool no_sign)
         // who rarely do 2s-complement math in their head.
 
         Symbol* symbol= Cell_Word_Symbol(value);
-        const REBYTE *bp = cb_cast(STR_HEAD(symbol));
-        size_t size = STR_SIZE(symbol);
+        const REBYTE *bp = cb_cast(Symbol_Head(symbol));
+        size_t size = Symbol_Size(symbol);
 
         if (size > MAX_HEX_LEN) {
             // Lacks BINARY!'s accommodation of leading 00s or FFs

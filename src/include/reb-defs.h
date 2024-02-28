@@ -99,7 +99,7 @@ typedef uintptr_t REBTCK; // type the debug build uses for evaluator "ticks"
 // Ren-C is being adapted to where this will become a full 32-bit value.  The
 // goal is to retrofit the code to use "UTF-8 Everywhere".  In the meantime,
 // REBUNI is used internally to store Rebol ANY-STRING!s.  When all references
-// to it have been changed to use the REBCHR(*) interface for safe variable
+// to it have been changed to use the Ucs2(*) interface for safe variable
 // sized encoding enumeration, a switch can be flipped and it can be upgraded.
 //
 typedef REBWCHAR REBUNI;
@@ -138,6 +138,7 @@ struct Reb_Series;
 typedef struct Reb_Series REBSER;
 
 typedef REBSER Symbol;
+typedef REBSER String;
 
 struct Reb_Array;
 typedef struct Reb_Array REBARR;
@@ -275,7 +276,7 @@ enum Reb_Vararg_Op {
 };
 
 
-// REBCHR(*) is defined in %sys-scan.h, along with SCAN_STATE, and both are
+// Ucs2(*) is defined in %sys-scan.h, along with SCAN_STATE, and both are
 // referenced by internal API functions.
 //
 // (Note: %sys-do.h needs to call into the scanner if Fetch_Next_In_Frame() is

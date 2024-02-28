@@ -106,7 +106,7 @@ void Emit(REB_MOLD *mo, const char *fmt, ...)
             const Value* any_word = va_arg(va, const Value*);
             Symbol* symbol = Cell_Word_Symbol(any_word);
             Append_Utf8_Utf8(
-                s, STR_HEAD(symbol), STR_SIZE(symbol)
+                s, Symbol_Head(symbol), Symbol_Size(symbol)
             );
             break;
         }
@@ -138,12 +138,12 @@ void Emit(REB_MOLD *mo, const char *fmt, ...)
 
         case 'T': {  // Type name
             Symbol* type_name = Get_Type_Name(va_arg(va, Value*));
-            Append_Utf8_Utf8(s, STR_HEAD(type_name), STR_SIZE(type_name));
+            Append_Utf8_Utf8(s, Symbol_Head(type_name), Symbol_Size(type_name));
             break; }
 
         case 'N': {  // Symbol name
             Symbol* symbol = va_arg(va, Symbol*);
-            Append_Utf8_Utf8(s, STR_HEAD(symbol), STR_SIZE(symbol));
+            Append_Utf8_Utf8(s, Symbol_Head(symbol), Symbol_Size(symbol));
             break; }
 
         case '+': // Add #[ if mold/all
@@ -156,7 +156,7 @@ void Emit(REB_MOLD *mo, const char *fmt, ...)
         case 'D': // Datatype symbol: #[type
             if (ender != '\0') {
                 Symbol* canon = Canon(cast(SymId, va_arg(va, int)));
-                Append_Utf8_Utf8(s, STR_HEAD(canon), STR_SIZE(canon));
+                Append_Utf8_Utf8(s, Symbol_Head(canon), Symbol_Size(canon));
                 Append_Utf8_Codepoint(s, ' ');
             }
             else

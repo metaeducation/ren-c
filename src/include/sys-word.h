@@ -65,7 +65,7 @@ INLINE Symbol* Cell_Word_Symbol(const Cell* v) {
 
 INLINE Symbol* VAL_WORD_CANON(const Cell* v) {
     assert(ANY_WORD(v));
-    return STR_CANON(v->payload.any_word.symbol);
+    return Canon_Symbol(v->payload.any_word.symbol);
 }
 
 // Some scenarios deliberately store canon symbols in words, to avoid

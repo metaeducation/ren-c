@@ -761,7 +761,7 @@ static REBARR *Startup_Generics(const Value* boot_generics)
 
     // Sanity check the symbol transformation
     //
-    if (0 != strcmp("open", STR_HEAD(Canon(SYM_OPEN))))
+    if (0 != strcmp("open", Symbol_Head(Canon(SYM_OPEN))))
         panic (Canon(SYM_OPEN));
 
     REBDSP dsp_orig = DSP;
@@ -910,9 +910,9 @@ static void Init_Root_Vars(void)
 
     // Note: rebText() can't run yet, review.
     //
-    REBSER *nulled_uni = Make_Unicode(1);
-    assert(CHR_CODE(UNI_AT(nulled_uni, 0)) == '\0');
-    assert(UNI_LEN(nulled_uni) == 0);
+    String* nulled_uni = Make_String(1);
+    assert(Codepoint_At(String_At(nulled_uni, 0)) == '\0');
+    assert(String_Len(nulled_uni) == 0);
     Root_Empty_Text = Init_Text(Alloc_Value(), nulled_uni);
     Ensure_Value_Immutable(Root_Empty_Text, locker);
 
@@ -1370,7 +1370,7 @@ void Startup_Core(void)
 
     Startup_Task();
 
-    Init_Action_Spec_Tags(); // Note: uses BUF_UTF8, not available until here
+    Init_Action_Spec_Tags(); // Note: uses BUF_UCS2, not available until here
 
 //==//////////////////////////////////////////////////////////////////////==//
 //

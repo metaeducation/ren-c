@@ -1391,7 +1391,7 @@ const REBYTE *Security_Policy(Symbol* symbol, const Value* name)
     if (!IS_OBJECT(policy)) goto error;
 
     // Find the security class in the block: (file net call...)
-    policy = Select_Canon_In_Context(VAL_CONTEXT(policy), STR_CANON(symbol));
+    policy = Select_Canon_In_Context(VAL_CONTEXT(policy), Canon_Symbol(symbol));
     if (!policy) goto error;
 
     // Obtain the policies for it:

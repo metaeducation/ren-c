@@ -2778,7 +2778,7 @@ void Startup_Scanner(void)
         ++n;
     assert(cast(enum Reb_Token, n) == TOKEN_MAX);
 
-    TG_Buf_Utf8 = Make_Unicode(1020);
+    TG_Buf_Ucs2 = Make_String(1020);
 }
 
 
@@ -2787,8 +2787,8 @@ void Startup_Scanner(void)
 //
 void Shutdown_Scanner(void)
 {
-    Free_Unmanaged_Series(TG_Buf_Utf8);
-    TG_Buf_Utf8 = nullptr;
+    Free_Unmanaged_Series(TG_Buf_Ucs2);
+    TG_Buf_Ucs2 = nullptr;
 }
 
 

@@ -143,7 +143,7 @@ INLINE const char* FRM_FILE_UTF8(REBFRM *f) {
     // Canon(__ANONYMOUS__).
     //
     Symbol* str = FRM_FILE(f);
-    return str ? STR_HEAD(str) : "(anonymous)";
+    return str ? Symbol_Head(str) : "(anonymous)";
 }
 
 INLINE int FRM_LINE(REBFRM *f) {
@@ -286,7 +286,7 @@ INLINE void Get_Frame_Label_Or_Blank(Value* out, REBFRM *f) {
 INLINE const char* Frame_Label_Or_Anonymous_UTF8(REBFRM *f) {
     assert(Is_Action_Frame(f));
     if (f->opt_label != nullptr)
-        return STR_HEAD(f->opt_label);
+        return Symbol_Head(f->opt_label);
     return "[anonymous]";
 }
 

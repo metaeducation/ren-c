@@ -866,25 +866,25 @@ DECLARE_NATIVE(deline)
 
     REBLEN len_at = VAL_LEN_AT(val);
 
-    REBCHR(*) dest = VAL_UNI_AT(val);
-    REBCHR(const*) src = dest;
+    Ucs2(*) dest = Cell_String_At(val);
+    Ucs2(const*) src = dest;
 
     REBLEN n;
     for (n = 0; n < len_at; ++n) {
         REBUNI c;
-        src = NEXT_CHR(&c, src);
+        src = Ucs2_Next(&c, src);
         if (c == CR) {
-            dest = WRITE_CHR(dest, LF);
-            src = NEXT_CHR(&c, src);
+            dest = Write_Codepoint(dest, LF);
+            src = Ucs2_Next(&c, src);
             if (c == LF) {
                 --len_head; // don't write carraige return, note loss of char
                 continue;
             }
         }
-        dest = WRITE_CHR(dest, c);
+        dest = Write_Codepoint(dest, c);
     }
 
-    TERM_UNI_LEN(s, len_head);
+    Term_String_Len(s, len_head);
 
     RETURN (ARG(string));
 }
@@ -914,19 +914,19 @@ DECLARE_NATIVE(enline)
     // Calculate the size difference by counting the number of LF's
     // that have no CR's in front of them.
     //
-    // !!! The REBCHR(*) interface isn't technically necessary if one is
+    // !!! The Ucs2(*) interface isn't technically necessary if one is
     // counting to the end (one could just go by bytes instead of characters)
     // but this would not work if someone added, say, an ENLINE/PART...since
     // the byte ending position of interest might not be end of the string.
 
-    REBCHR(*) cp = UNI_AT(ser, idx);
+    Ucs2(*) cp = String_At(ser, idx);
 
     REBUNI c_prev = '\0';
 
     REBLEN n;
     for (n = 0; n < len; ++n) {
         REBUNI c;
-        cp = NEXT_CHR(&c, cp);
+        cp = Ucs2_Next(&c, cp);
         if (c == LF and c_prev != CR)
             ++delta;
         c_prev = c;
@@ -947,7 +947,7 @@ DECLARE_NATIVE(enline)
     // UCS-2 has the CR LF bytes in codepoint sequences that aren't CR LF.
     // So sliding is done in full character counts.
 
-    REBUNI *up = UNI_HEAD(ser); // expand may change the pointer
+    REBUNI *up = String_Head(ser); // expand may change the pointer
     REBLEN tail = SER_LEN(ser); // length after expansion
 
     // Add missing CRs
@@ -995,13 +995,13 @@ DECLARE_NATIVE(entab)
     REBLEN len = VAL_LEN_AT(val);
     REBYTE *dp = Prep_Mold_Overestimated(mo, len * 4); // max UTF-8 charsize
 
-    REBCHR(const*) up = VAL_UNI_AT(val);
+    Ucs2(const*) up = Cell_String_At(val);
     REBLEN index = VAL_INDEX(val);
 
     REBINT n = 0;
     for (; index < len; index++) {
         REBUNI c;
-        up = NEXT_CHR(&c, up);
+        up = Ucs2_Next(&c, up);
 
         // Count leading spaces, insert TAB for each tabsize:
         if (c == ' ') {
@@ -1029,7 +1029,7 @@ DECLARE_NATIVE(entab)
                     break;
                 }
                 dp += Encode_UTF8_Char(dp, c);
-                up = NEXT_CHR(&c, up);
+                up = Ucs2_Next(&c, up);
             }
         }
     }
@@ -1070,14 +1070,14 @@ DECLARE_NATIVE(detab)
 
     // Estimate new length based on tab expansion:
 
-    REBCHR(const*) cp = VAL_UNI_AT(val);
+    Ucs2(const*) cp = Cell_String_At(val);
     REBLEN index = VAL_INDEX(val);
 
     REBLEN count = 0;
     REBLEN n;
     for (n = index; n < len; n++) {
         REBUNI c;
-        cp = NEXT_CHR(&c, cp);
+        cp = Ucs2_Next(&c, cp);
         if (c == '\t') // tab character
             ++count;
     }
@@ -1090,12 +1090,12 @@ DECLARE_NATIVE(detab)
             + (count * (tabsize - 1)) // expanded tabs add tabsize - 1 to len
     );
 
-    cp = VAL_UNI_AT(val);
+    cp = Cell_String_At(val);
 
     n = 0;
     for (; index < len; ++index) {
         REBUNI c;
-        cp = NEXT_CHR(&c, cp);
+        cp = Ucs2_Next(&c, cp);
 
         if (c == '\t') {
             *dp++ = ' ';

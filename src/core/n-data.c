@@ -42,11 +42,11 @@ static bool Check_Char_Range(const Value* val, REBINT limit)
     assert(ANY_STRING(val));
 
     REBLEN len = VAL_LEN_AT(val);
-    REBCHR(const*) up = VAL_UNI_AT(val);
+    Ucs2(const*) up = Cell_String_At(val);
 
     for (; len > 0; len--) {
         REBUNI c;
-        up = NEXT_CHR(&c, up);
+        up = Ucs2_Next(&c, up);
 
         if (c > limit)
             return false;
@@ -1069,8 +1069,8 @@ DECLARE_NATIVE(as)
         if (ANY_WORD(v)) {
             Symbol* symbol = Cell_Word_Symbol(v);
             REBSER *string = Make_Sized_String_UTF8(
-                STR_HEAD(symbol),
-                STR_SIZE(symbol)
+                Symbol_Head(symbol),
+                Symbol_Size(symbol)
             );
             SET_SER_INFO(string, SERIES_INFO_FROZEN);
             return Init_Any_Series(D_OUT, new_kind, string);

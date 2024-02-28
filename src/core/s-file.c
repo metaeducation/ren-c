@@ -63,14 +63,14 @@ REBSER *To_REBOL_Path(const Cell* string, REBFLGS flags)
     bool last_was_slash = false; // was last character appended a slash?
 
 restart:;
-    REBCHR(const*) up = VAL_UNI_AT(string);
+    Ucs2(const*) up = Cell_String_At(string);
     REBLEN len = VAL_LEN_AT(string);
 
     REBUNI c = '\0'; // for test after loop (in case loop does not run)
 
     REBLEN i;
     for (i = 0; i < len;) {
-        up = NEXT_CHR(&c, up);
+        up = Ucs2_Next(&c, up);
         ++i;
 
         if (c == ':') {
@@ -95,7 +95,7 @@ restart:;
             Append_Utf8_Codepoint(mo->series, '/'); // replace : with a /
 
             if (i < len) {
-                up = NEXT_CHR(&c, up);
+                up = Ucs2_Next(&c, up);
                 ++i;
 
                 if (c == '\\' || c == '/') {
@@ -104,7 +104,7 @@ restart:;
                     //
                     if (i >= len)
                         break;
-                    up = NEXT_CHR(&c, up);
+                    up = Ucs2_Next(&c, up);
                     ++i;
                 }
             }
@@ -142,7 +142,7 @@ restart:;
 void Mold_File_To_Local(REB_MOLD *mo, const Cell* file, REBFLGS flags) {
     assert(IS_FILE(file));
 
-    REBCHR(const*) up = VAL_UNI_AT(file);
+    Ucs2(const*) up = Cell_String_At(file);
     REBLEN len = VAL_LEN_AT(file);
 
     REBLEN i = 0;
@@ -151,13 +151,13 @@ void Mold_File_To_Local(REB_MOLD *mo, const Cell* file, REBFLGS flags) {
     if (len == 0)
         c = '\0';
     else
-        up = NEXT_CHR(&c, up);
+        up = Ucs2_Next(&c, up);
 
     // Prescan for: /c/dir = c:/dir, /vol/dir = //vol/dir, //dir = ??
     //
     if (c == '/') { // %/
         if (i < len) {
-            up = NEXT_CHR(&c, up);
+            up = Ucs2_Next(&c, up);
             ++i;
         }
         else
@@ -169,16 +169,16 @@ void Mold_File_To_Local(REB_MOLD *mo, const Cell* file, REBFLGS flags) {
             // peek ahead for a '/'
             //
             REBUNI d = '/';
-            REBCHR(const*) dp;
+            Ucs2(const*) dp;
             if (i < len)
-                dp = NEXT_CHR(&d, up);
+                dp = Ucs2_Next(&d, up);
             else
                 dp = up;
             if (d == '/') { // %/c/ => "c:/"
                 ++i;
                 Append_Utf8_Codepoint(mo->series, c);
                 Append_Utf8_Codepoint(mo->series, ':');
-                up = NEXT_CHR(&c, dp);
+                up = Ucs2_Next(&c, dp);
                 ++i;
             }
             else {
@@ -211,7 +211,7 @@ void Mold_File_To_Local(REB_MOLD *mo, const Cell* file, REBFLGS flags) {
     // this loop always follows / or start).  Each iteration takes care of one
     // segment of the path, i.e. stops after OS_DIR_SEP
     //
-    for (; i < len; up = NEXT_CHR(&c, up), ++i) {
+    for (; i < len; up = Ucs2_Next(&c, up), ++i) {
         if (flags & REB_FILETOLOCAL_FULL) {
             //
             // While file and directory names like %.foo or %..foo/ are legal,
@@ -219,7 +219,7 @@ void Mold_File_To_Local(REB_MOLD *mo, const Cell* file, REBFLGS flags) {
             // starts with `.` then look ahead for special consideration.
             //
             if (c == '.') {
-                up = NEXT_CHR(&c, up);
+                up = Ucs2_Next(&c, up);
                 ++i;
                 assert(c != '\0' || i == len);
 
@@ -238,7 +238,7 @@ void Mold_File_To_Local(REB_MOLD *mo, const Cell* file, REBFLGS flags) {
 
                 // We've seen two sequential dots, so .. or ../ or ..xxx
 
-                up = NEXT_CHR(&c, up);
+                up = Ucs2_Next(&c, up);
                 ++i;
                 assert(c != '\0' || i == len);
 
@@ -279,7 +279,7 @@ void Mold_File_To_Local(REB_MOLD *mo, const Cell* file, REBFLGS flags) {
         }
 
     segment_loop:;
-        for (; i < len; up = NEXT_CHR(&c, up), ++i) {
+        for (; i < len; up = Ucs2_Next(&c, up), ++i) {
             //
             // Keep copying characters out of the path segment until we find
             // a slash or hit the end of the input path string.
@@ -314,7 +314,7 @@ void Mold_File_To_Local(REB_MOLD *mo, const Cell* file, REBFLGS flags) {
         }
 
         // If we're past the end of the content, we don't want to run the
-        // outer loop test and NEXT_CHR() again...that's past the terminator.
+        // outer loop test and Ucs2_Next() again...that's past the terminator.
         //
         assert(i <= len);
         if (i == len) {

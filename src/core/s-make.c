@@ -49,12 +49,11 @@ REBSER *Make_Binary(REBLEN capacity)
 
 
 //
-//  Make_Unicode: C
+//  Make_String: C
 //
-// Make a unicode string series. Used for internal strings.
-// Add 1 extra for terminator.
+// Make a unicode string series. Add 1 extra to capacity for terminator.
 //
-REBSER *Make_Unicode(REBLEN capacity)
+String* Make_String(REBLEN capacity)
 {
     REBSER *ser = Make_Ser(capacity + 1, sizeof(REBUNI));
     TERM_SEQUENCE(ser);
@@ -108,8 +107,8 @@ REBSER *Copy_String_At_Len(const Cell* src, REBINT limit)
     REBSIZ size = VAL_SIZE_LIMIT_AT(&length_limit, src, limit);
     assert(length_limit * 2 == size); // !!! Temporary
 
-    REBSER *dst = Make_Unicode(size / 2);
-    memcpy(AS_REBUNI(UNI_AT(dst, 0)), VAL_UNI_AT(src), size);
+    String* dst = Make_String(size / 2);
+    memcpy(AS_REBUNI(String_At(dst, 0)), Cell_String_At(src), size);
     TERM_SEQUENCE_LEN(dst, length_limit);
 
     return dst;
@@ -168,9 +167,9 @@ REBSER *Append_Codepoint(REBSER *dst, REBUNI codepoint)
     REBLEN tail = SER_LEN(dst);
     EXPAND_SERIES_TAIL(dst, 1);
 
-    REBCHR(*) cp = UNI_AT(dst, tail);
-    cp = WRITE_CHR(cp, codepoint);
-    cp = WRITE_CHR(cp, '\0'); // should always be capacity for terminator
+    Ucs2(*) cp = String_At(dst, tail);
+    cp = Write_Codepoint(cp, codepoint);
+    cp = Write_Codepoint(cp, '\0'); // should always be capacity for terminator
 
     return dst;
 }
@@ -202,9 +201,9 @@ REBSER *Make_Ser_Codepoint(REBLEN codepoint)
 {
     assert(codepoint < (1 << 16));
 
-    REBSER *out = Make_Unicode(1);
-    *UNI_HEAD(out) = codepoint;
-    TERM_UNI_LEN(out, 1);
+    String* out = Make_String(1);
+    *String_Head(out) = codepoint;
+    Term_String_Len(out, 1);
 
     return out;
 }
@@ -289,7 +288,7 @@ void Append_Int_Pad(REBSER *dst, REBINT num, REBINT digs)
 // `dst = nullptr` means make a new string.
 //
 REBSER *Append_UTF8_May_Fail(
-    REBSER *dst,
+    String* dst,
     const char *utf8,
     size_t size,
     bool crlf_to_lf
@@ -304,11 +303,11 @@ REBSER *Append_UTF8_May_Fail(
     // * In the future, some operations will be accelerated by knowing that
     //   a string only contains ASCII codepoints.
 
-    REBSER *temp = BUF_UTF8; // buffer is Unicode width
+    String* temp = BUF_UCS2; // buffer is Unicode width
 
     Resize_Series(temp, size + 1); // needs at most this many unicode chars
 
-    REBUNI *up = UNI_HEAD(temp);
+    REBUNI *up = String_Head(temp);
     const REBYTE *src = cb_cast(utf8);
 
     bool all_ascii = true;
@@ -335,11 +334,11 @@ REBSER *Append_UTF8_May_Fail(
         *up++ = ch;
     }
 
-    up = UNI_HEAD(temp);
+    up = String_Head(temp);
 
     REBLEN old_len;
     if (dst == nullptr) {
-        dst = Make_Unicode(num_codepoints);
+        dst = Make_String(num_codepoints);
         old_len = 0;
     }
     else {
@@ -347,7 +346,7 @@ REBSER *Append_UTF8_May_Fail(
         EXPAND_SERIES_TAIL(dst, num_codepoints);
     }
 
-    REBUNI *dp = AS_REBUNI(UNI_AT(dst, old_len));
+    REBUNI *dp = AS_REBUNI(String_At(dst, old_len));
     SET_SERIES_LEN(dst, old_len + num_codepoints); // counted down to 0 below
 
     for (; num_codepoints > 0; --num_codepoints)
@@ -404,7 +403,7 @@ REBSER *Join_Binary(const Value* blk, REBINT limit)
         case REB_URL:
         case REB_TAG: {
             REBLEN val_len = VAL_LEN_AT(val);
-            size_t val_size = Size_As_UTF8(VAL_UNI_AT(val), val_len);
+            size_t val_size = Size_As_UTF8(Cell_String_At(val), val_len);
 
             EXPAND_SERIES_TAIL(series, val_size);
             SET_SERIES_LEN(
@@ -412,7 +411,7 @@ REBSER *Join_Binary(const Value* blk, REBINT limit)
                 tail + Encode_UTF8(
                     BIN_AT(series, tail),
                     val_size,
-                    VAL_UNI_AT(val),
+                    Cell_String_At(val),
                     &val_len
                 )
             );

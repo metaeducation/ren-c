@@ -181,7 +181,7 @@ void Dump_Values(Cell* vp, REBLEN count)
         *cp++ = ':';
         *cp++ = ' ';
 
-        type = cb_cast(STR_HEAD(Get_Type_Name(val)));
+        type = cb_cast(Symbol_Head(Get_Type_Name(val)));
         for (n = 0; n < 11; n++) {
             if (*type) *cp++ = *type++;
             else *cp++ = ' ';
@@ -193,7 +193,7 @@ void Dump_Values(Cell* vp, REBLEN count)
         }
         n = 0;
         if (IS_WORD(val) || IS_GET_WORD(val) || IS_SET_WORD(val)) {
-            const char *name_utf8 = STR_HEAD(Cell_Word_Symbol(val));
+            const char *name_utf8 = Symbol_Head(Cell_Word_Symbol(val));
             n = snprintf(
                 s_cast(cp), sizeof(buf) - (cp - buf), " (%s)", name_utf8
             );
@@ -274,12 +274,12 @@ void Dump_Stack(REBFRM *f, REBLEN level)
         if (IS_NULLED(arg))
             Debug_Fmt(
                 "    %s:",
-                STR_HEAD(Cell_Parameter_Symbol(param))
+                Symbol_Head(Cell_Parameter_Symbol(param))
             );
         else
             Debug_Fmt(
                 "    %s: %72r",
-                STR_HEAD(Cell_Parameter_Symbol(param)),
+                Symbol_Head(Cell_Parameter_Symbol(param)),
                 arg
             );
     }

@@ -357,7 +357,7 @@ INLINE Symbol* Key_Symbol(const Cell* typeset) {
 }
 
 INLINE Symbol* Key_Canon(const Cell* typeset) {
-    return STR_CANON(Key_Symbol(typeset));
+    return Canon_Symbol(Key_Symbol(typeset));
 }
 
 INLINE Option(SymId) Key_Id(const Cell* typeset) {

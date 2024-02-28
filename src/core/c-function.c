@@ -810,7 +810,7 @@ REBARR *Make_Paramlist_Managed_May_Fail(
 //
 REBLEN Find_Param_Index(REBARR *paramlist, Symbol* symbol)
 {
-    Symbol* canon = STR_CANON(symbol);  // don't recalculate each time
+    Symbol* canon = Canon_Symbol(symbol);  // don't recalculate each time
 
     Cell* param = ARR_AT(paramlist, 1);
     REBLEN len = ARR_LEN(paramlist);

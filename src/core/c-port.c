@@ -517,15 +517,15 @@ void Secure_Port(
     const Value* path = name;
     assert(IS_FILE(path)); // !!! relative, untranslated
 
-    const REBYTE *flags = Security_Policy(STR_CANON(kind), path);
+    const REBYTE *flags = Security_Policy(Canon_Symbol(kind), path);
 
     // Check policy integer:
     // Mask is [xxxx wwww rrrr] - each holds the action
     if (req->modes & RFM_READ)
-        Trap_Security(flags[POL_READ], STR_CANON(kind), name);
+        Trap_Security(flags[POL_READ], Canon_Symbol(kind), name);
 
     if (req->modes & RFM_WRITE)
-        Trap_Security(flags[POL_WRITE], STR_CANON(kind), name);
+        Trap_Security(flags[POL_WRITE], Canon_Symbol(kind), name);
 }
 
 

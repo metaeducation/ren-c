@@ -68,7 +68,7 @@ REBYTE *Analyze_String_For_Scan(
     const Value* any_string,
     REBLEN max_len // maximum length in *codepoints*
 ){
-    REBCHR(const*) up = VAL_UNI_AT(any_string);
+    Ucs2(const*) up = Cell_String_At(any_string);
     REBLEN index = VAL_INDEX(any_string);
     REBLEN len = VAL_LEN_AT(any_string);
     if (len == 0)
@@ -79,7 +79,7 @@ REBYTE *Analyze_String_For_Scan(
     // Skip leading whitespace
     //
     for (; index < len; ++index, --len) {
-        up = NEXT_CHR(&c, up);
+        up = Ucs2_Next(&c, up);
         if (not IS_SPACE(c))
             break;
     }
@@ -100,7 +100,7 @@ REBYTE *Analyze_String_For_Scan(
         if (num_chars > max_len)
             fail (Error_Too_Long_Raw());
 
-        up = NEXT_CHR(&c, up);
+        up = Ucs2_Next(&c, up);
         if (IS_SPACE(c)) {
             --len;
             break;
@@ -110,7 +110,7 @@ REBYTE *Analyze_String_For_Scan(
     // Rest better be just spaces
     //
     for (; len > 0; --len) {
-        up = NEXT_CHR(&c, up);
+        up = Ucs2_Next(&c, up);
         if (!IS_SPACE(c))
             fail (Error_Invalid_Chars_Raw());
     }
@@ -364,7 +364,7 @@ void Change_Case(Value* out, Value* val, Value* part, bool upper)
                 bp[n] = cast(REBYTE, LO_CASE(bp[n]));
         }
     } else {
-        REBUNI *up = VAL_UNI_AT(val);
+        REBUNI *up = Cell_String_At(val);
         if (upper) {
             for (; n != len; n++) {
                 if (up[n] < UNICODE_CASES)
@@ -405,14 +405,14 @@ REBARR *Split_Lines(const Value* str)
     REBLEN len = VAL_LEN_AT(str);
     REBLEN i = VAL_INDEX(str);
 
-    REBCHR(const*) start = VAL_UNI_AT(str);
-    REBCHR(const*) up = start;
+    Ucs2(const*) start = Cell_String_At(str);
+    Ucs2(const*) up = start;
 
     if (i == len)
         return Make_Arr(0);
 
     REBUNI c;
-    up = NEXT_CHR(&c, up);
+    up = Ucs2_Next(&c, up);
     ++i;
 
     while (i != len) {
@@ -422,14 +422,14 @@ REBARR *Split_Lines(const Value* str)
                 DS_TOP,
                 Copy_Sequence_At_Len(
                     s,
-                    AS_REBUNI(start) - UNI_HEAD(s),
+                    AS_REBUNI(start) - String_Head(s),
                     AS_REBUNI(up) - AS_REBUNI(start) - 1
                 )
             );
             SET_VAL_FLAG(DS_TOP, VALUE_FLAG_NEWLINE_BEFORE);
             start = up;
             if (c == CR) {
-                up = NEXT_CHR(&c, up);
+                up = Ucs2_Next(&c, up);
                 ++i;
                 if (i == len)
                     break; // if it was the last CR/LF don't fetch again
@@ -442,14 +442,14 @@ REBARR *Split_Lines(const Value* str)
         }
 
         ++i;
-        up = NEXT_CHR(&c, up);
+        up = Ucs2_Next(&c, up);
     }
 
     // `c` is now the last character in the string.  See remarks above about
     // not requiring the last character to be a newline.
 
     if (c == CR or c == LF)
-        up = BACK_CHR(nullptr, up); // back up
+        up = Ucs2_Back(nullptr, up); // back up
 
     if (AS_REBUNI(up) > AS_REBUNI(start)) {
         DS_PUSH_TRASH;
@@ -457,7 +457,7 @@ REBARR *Split_Lines(const Value* str)
             DS_TOP,
             Copy_Sequence_At_Len(
                 s,
-                AS_REBUNI(start) - UNI_HEAD(s),
+                AS_REBUNI(start) - String_Head(s),
                 AS_REBUNI(up) - AS_REBUNI(start) // no -1, backed up if '\n'
             )
         );

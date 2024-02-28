@@ -968,7 +968,7 @@ REBLEN Encode_UTF8(
 REBSER *Make_UTF8_From_Any_String(const Cell* any_string, REBLEN len) {
     assert(ANY_STRING(any_string));
 
-    const REBUNI *data = VAL_UNI_AT(any_string);
+    const REBUNI *data = Cell_String_At(any_string);
     size_t size = Size_As_UTF8(data, len);
     REBSER *bin = Make_Binary(size);
     SET_SERIES_LEN(bin, Encode_UTF8(BIN_HEAD(bin), size, data, &len));

@@ -26,70 +26,37 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// !!! R3-Alpha and Red would work with strings in their decoded form, in
-// series of varying widths.  Ren-C's goal is to replace this with the idea
-// of "UTF-8 everywhere", working with the strings as UTF-8 and only
-// converting if the platform requires it for I/O (e.g. Windows):
+// !!! THIS IS AN ANTIQUATED IMPLEMENTATION OF REBOL'S ANY-STRING! TYPE !!!
 //
-// http://utf8everywhere.org/
+// This implementation was captured at a transitional point in the quest to
+// implement "UTF-8 Everywhere".  That was accomplished in March 2019:
 //
-// As a first step toward this goal, one place where strings were kept in
-// UTF-8 form has been converted into series...the word table.  So for now,
-// all Symbol instances are for ANY-WORD!.
+//   https://forum.rebol.info/t/374
 //
-//=////////////////////////////////////////////////////////////////////////=//
+// The complexity of UTF-8 Everywhere is such that this service branch will
+// not be updated to it.  But the names have been changed to reflect what it
+// does, to hopefully avoid confusion.
 //
-// The *current* implementation of Rebol's ANY-STRING! type has two different
-// series widths that are used.  One is the BYTE_SIZED() series which encodes
-// ASCII in the low bits, and Latin-1 extensions in the range 0x80 - 0xFF.
-// So long as a codepoint can fit in this range, the string can be stored in
-// single bytes:
-//
-// https://en.wikipedia.org/wiki/Latin-1_Supplement_(Unicode_block)
-//
-// (Note: This is not to be confused with the other "byte-width" encoding,
-// which is UTF-8.  Rebol series routines are not set up to handle insertions
-// or manipulations of UTF-8 encoded data in a Reb_Any_String payload at
-// this time...it is a format used only in I/O.)
-//
-// The second format that is used puts codepoints into a 16-bit REBUNI-sized
-// element.  If an insertion of a string or character into a byte sized
-// string cannot be represented in 0xFF or lower, then the target string will
-// be "widened"--doubling the storage space taken and requiring updating of
-// the character data in memory.  At this time there are no "in-place"
-// cases where a string is reduced from REBUNI to byte sized, but operations
-// like Copy_String_At_Len() will scan a source string to see if a byte-size
-// copy can be made from a REBUNI-sized one without loss of information.
-//
-// Byte-sized series are also used by the BINARY! datatype.  There is no
-// technical difference between such series used as strings or used as binary,
-// the difference comes from being marked REB_BINARY or REB_TEXT in the
-// header of the value carrying the series.
-//
-// For easier type-correctness, the series macros are given with names BIN_XXX
-// and UNI_XXX.  There aren't distinct data types for the series themselves,
-// just REBSER* is used.  Hence BIN_LEN() and UNI_LEN() aren't needed as you
-// could just use SER_LEN(), but it helps a bit for readability...and an
-// assert is included to ensure the size matches up.
+// This uses simple UCS-2 encoding for all strings--no variation in encoding.
+// Symbols (e.g. those stored for WORD!) are encoded as UTF-8.
 //
 
-
 //=////////////////////////////////////////////////////////////////////////=//
 //
-//  Symbol series for UTF-8 strings
+//  Symbol Series (UTF-8 encoding)
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// The concept is that a SYM refers to one of the built-in words and can
-// be used in C switch statements.  A canon STR is used to identify
+// The concept is that a SYM_XXX refers to one of the built-in words and can
+// be used in C switch statements.  A canon Symbol is used to identify
 // everything else.
 //
 
-INLINE const char *STR_HEAD(Symbol* str) {
+INLINE const char *Symbol_Head(Symbol* str) {
     return cs_cast(BIN_HEAD(str));
 }
 
-INLINE Symbol* STR_CANON(Symbol* str) {
+INLINE Symbol* Canon_Symbol(Symbol* str) {
     while (NOT_SER_INFO(str, STRING_INFO_CANON))
         str = LINK(str).synonym; // circularly linked list
     return str;
@@ -97,11 +64,11 @@ INLINE Symbol* STR_CANON(Symbol* str) {
 
 INLINE Option(SymId) Symbol_Id(Symbol* str) {
     uint16_t sym = SECOND_UINT16(str->header);
-    assert(sym == SECOND_UINT16(STR_CANON(str)->header));
+    assert(sym == SECOND_UINT16(Canon_Symbol(str)->header));
     return cast(SymId, sym);
 }
 
-INLINE size_t STR_SIZE(Symbol* str) {
+INLINE size_t Symbol_Size(Symbol* str) {
     return SER_LEN(str); // number of bytes in seris is series length, ATM
 }
 
@@ -114,62 +81,53 @@ INLINE Symbol* Canon(SymId sym) {
 INLINE bool Are_Synonyms(Symbol* s1, Symbol* s2) {
     if (s1 == s2)
         return true; // !!! does this check speed things up or not?
-    return STR_CANON(s1) == STR_CANON(s2); // canon check, quite fast
+    return Canon_Symbol(s1) == Canon_Symbol(s2); // canon check, quite fast
 }
 
 
 
+//=////////////////////////////////////////////////////////////////////////=//
 //
-// !!! UNI_XXX: Unicode string series macros !!! - Becoming Deprecated
+//  UCS-2 series for ANY-STRING!
+//
+//=////////////////////////////////////////////////////////////////////////=//
 //
 
-INLINE REBLEN UNI_LEN(REBSER *s) {
+INLINE REBLEN String_Len(REBSER *s) {
     assert(SER_WIDE(s) == sizeof(REBUNI));
     return SER_LEN(s);
 }
 
-INLINE void SET_UNI_LEN(REBSER *s, REBLEN len) {
+INLINE void Set_String_Len(REBSER *s, REBLEN len) {
     assert(SER_WIDE(s) == sizeof(REBUNI));
     SET_SERIES_LEN(s, len);
 }
 
-#define UNI_AT(s,n) \
+#define String_At(s,n) \
     AS_REBCHR(SER_AT(REBUNI, (s), (n)))
 
-#define UNI_HEAD(s) \
+#define String_Head(s) \
     SER_HEAD(REBUNI, (s))
 
-#define UNI_TAIL(s) \
+#define String_Tail(s) \
     SER_TAIL(REBUNI, (s))
 
-#define UNI_LAST(s) \
+#define String_Last(s) \
     SER_LAST(REBUNI, (s))
 
-INLINE void TERM_UNI_LEN(REBSER *s, REBLEN len) {
+INLINE void Term_String_Len(String* s, REBLEN len) {
     SET_SERIES_LEN(s, len);
     *SER_AT(REBUNI, s, len) = '\0';
 }
 
-#define VAL_UNI_HEAD(v) \
-    UNI_HEAD(VAL_SERIES(v))
+#define Cell_String_Head(v) \
+    String_Head(VAL_SERIES(v))
 
-#define VAL_UNI_TAIL(v) \
-    UNI_TAIL(VAL_SERIES(v))
+#define Cell_String_Tail(v) \
+    String_Tail(VAL_SERIES(v))
 
-// This should be an updating operation, which may refresh the cache in the
-// value.  It would look something like:
-//
-//     if (s->stamp == v->extra.utfcache.stamp)
-//          return v->extra.utfcache.offset;
-//     ...else calculate...
-//    m_cast(Value*, v)->extra.utfcache.stamp = s->stamp;
-//    m_cast(Value*, v)->extra.utfcache.offset = offset;
-//
-// One should thus always prefer to use VAL_UNI_AT() if possible, over trying
-// to calculate a position from scratch.
-//
-INLINE REBUNI *VAL_UNI_AT(const Cell* v) {
-    return AS_REBUNI(UNI_AT(VAL_SERIES(v), VAL_INDEX(v)));
+INLINE REBUNI *Cell_String_At(const Cell* v) {
+    return AS_REBUNI(String_At(VAL_SERIES(v), VAL_INDEX(v)));
 }
 
 INLINE REBSIZ VAL_SIZE_LIMIT_AT(
@@ -179,20 +137,20 @@ INLINE REBSIZ VAL_SIZE_LIMIT_AT(
 ){
     assert(ANY_STRING(v));
 
-    REBCHR(const*) at = VAL_UNI_AT(v); // !!! update cache if needed
-    REBCHR(const*) tail;
+    Ucs2(const*) at = Cell_String_At(v); // !!! update cache if needed
+    Ucs2(const*) tail;
 
     if (limit == -1) {
         if (length != nullptr)
             *length = VAL_LEN_AT(v);
-        tail = VAL_UNI_TAIL(v); // byte count known (fast)
+        tail = Cell_String_Tail(v); // byte count known (fast)
     }
     else {
         if (length != nullptr)
             *length = limit;
         tail = at;
         for (; limit > 0; --limit)
-            tail = NEXT_CHR(nullptr, tail);
+            tail = Ucs2_Next(nullptr, tail);
     }
 
     return (
@@ -298,7 +256,7 @@ INLINE REBSER *Make_Sized_String_UTF8(const char *utf8, size_t size)
 
 
 INLINE REBINT Hash_String(Symbol* str)
-    { return Hash_UTF8(cb_cast(STR_HEAD(str)), STR_SIZE(str)); }
+    { return Hash_UTF8(cb_cast(Symbol_Head(str)), Symbol_Size(str)); }
 
 INLINE REBINT First_Hash_Candidate_Slot(
     REBLEN *skip_out,

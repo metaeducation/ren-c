@@ -1029,8 +1029,8 @@ const REBYTE *Scan_Email(
 ) {
     TRASH_CELL_IF_DEBUG(out);
 
-    REBSER *s = Make_Unicode(len);
-    REBCHR(*) up = UNI_HEAD(s);
+    String* s = Make_String(len);
+    Ucs2(*) up = String_Head(s);
 
     REBLEN num_chars = 0;
 
@@ -1048,14 +1048,14 @@ const REBYTE *Scan_Email(
             if (len <= 2 || !Scan_Hex2(&ch, cp + 1, unicode))
                 return_NULL;
 
-            up = WRITE_CHR(up, ch);
+            up = Write_Codepoint(up, ch);
             ++num_chars;
 
             cp += 3;
             len -= 2;
         }
         else {
-            up = WRITE_CHR(up, *cp++);
+            up = Write_Codepoint(up, *cp++);
             ++num_chars;
         }
     }
@@ -1063,7 +1063,7 @@ const REBYTE *Scan_Email(
     if (not found_at)
         return_NULL;
 
-    TERM_UNI_LEN(s, num_chars);
+    Term_String_Len(s, num_chars);
 
     Init_Email(out, s);
     return cp;
@@ -1400,14 +1400,14 @@ DECLARE_NATIVE(scan_net_header)
         // correctly, it would need to use NEXT_CHR to count the characters
         // in the loop above.  Better to convert to usermode.
 
-        REBSER *string = Make_Unicode(len);
-        REBCHR(*) str = UNI_HEAD(string);
+        String* string = Make_String(len);
+        Ucs2(*) str = String_Head(string);
         cp = start;
 
         // "Code below *MUST* mirror that above:"
 
         while (!ANY_CR_LF_END(*cp))
-            str = WRITE_CHR(str, *cp++);
+            str = Write_Codepoint(str, *cp++);
         while (*cp != '\0') {
             if (*cp == CR)
                 ++cp;
@@ -1418,9 +1418,9 @@ DECLARE_NATIVE(scan_net_header)
             while (IS_LEX_SPACE(*cp))
                 ++cp;
             while (!ANY_CR_LF_END(*cp))
-                str = WRITE_CHR(str, *cp++);
+                str = Write_Codepoint(str, *cp++);
         }
-        TERM_UNI_LEN(string, len);
+        Term_String_Len(string, len);
         Init_Text(val, string);
     }
 

@@ -180,7 +180,7 @@ INLINE Symbol* CTX_KEY_SPELLING(REBCTX *c, REBLEN n) {
 }
 
 INLINE Symbol* CTX_KEY_CANON(REBCTX *c, REBLEN n) {
-    return STR_CANON(CTX_KEY_SPELLING(c, n));
+    return Canon_Symbol(CTX_KEY_SPELLING(c, n));
 }
 
 INLINE Option(SymId) CTX_KEY_SYM(REBCTX *c, REBLEN n) {

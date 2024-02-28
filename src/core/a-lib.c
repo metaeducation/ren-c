@@ -1086,8 +1086,8 @@ size_t RL_rebSpellInto(
         assert(ANY_WORD(v));
 
         Symbol* symbol = Cell_Word_Symbol(v);
-        utf8 = STR_HEAD(symbol);
-        utf8_size = STR_SIZE(symbol);
+        utf8 = Symbol_Head(symbol);
+        utf8_size = Symbol_Size(symbol);
     }
 
     if (not buf) {
@@ -1154,7 +1154,7 @@ unsigned int RL_rebSpellIntoW(
         assert(ANY_WORD(v));
 
         Symbol* symbol = Cell_Word_Symbol(v);
-        s = Make_Sized_String_UTF8(STR_HEAD(symbol), STR_SIZE(symbol));
+        s = Make_Sized_String_UTF8(Symbol_Head(symbol), Symbol_Size(symbol));
         index = 0;
         len = SER_LEN(s);
     }

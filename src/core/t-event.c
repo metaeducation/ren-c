@@ -274,7 +274,7 @@ void MF_Event(REB_MOLD *mo, const Cell* v, bool form)
         New_Indented_Line(mo);
 
         Symbol* canon = Canon(fields[field]);
-        Append_Utf8_Utf8(mo->series, STR_HEAD(canon), STR_SIZE(canon));
+        Append_Utf8_Utf8(mo->series, Symbol_Head(canon), Symbol_Size(canon));
         Append_Unencoded(mo->series, ": ");
         if (IS_WORD(var))
             Append_Utf8_Codepoint(mo->series, '\'');

@@ -164,8 +164,8 @@ bool Match_Sub_Path(REBSER *s1, REBSER *s2)
 // Uncase: compare is case-insensitive.
 //
 REBINT Compare_Uni_Str(
-    REBCHR(const*) u1,
-    REBCHR(const*) u2,
+    Ucs2(const*) u1,
+    Ucs2(const*) u2,
     REBLEN len,
     bool uncase
 ){
@@ -173,8 +173,8 @@ REBINT Compare_Uni_Str(
         REBUNI c1;
         REBUNI c2;
 
-        u1 = NEXT_CHR(&c1, u1);
-        u2 = NEXT_CHR(&c2, u2);
+        u1 = Ucs2_Next(&c1, u1);
+        u2 = Ucs2_Next(&c2, u2);
 
         REBINT d;
         if (uncase && c1 < UNICODE_CASES && c2 < UNICODE_CASES)
@@ -207,7 +207,7 @@ REBINT Compare_String_Vals(const Cell* v1, const Cell* v2, bool uncase)
     REBLEN l2  = VAL_LEN_AT(v2);
     REBLEN len = MIN(l1, l2);
 
-    REBINT n = Compare_Uni_Str(VAL_UNI_AT(v1), VAL_UNI_AT(v2), len, uncase);
+    REBINT n = Compare_Uni_Str(Cell_String_At(v1), Cell_String_At(v2), len, uncase);
 
     if (n != 0)
         return n;
@@ -606,7 +606,7 @@ REBLEN Find_Str_Char(
         }
     }
     else {
-        REBUNI *up = UNI_HEAD(series);
+        REBUNI *up = String_Head(series);
         while (true) {
             if (up[index] == casings[0] || up[index] == casings[1])
                 goto return_index;

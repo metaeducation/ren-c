@@ -708,7 +708,7 @@ void MF_Context(REB_MOLD *mo, const Cell* v, bool form)
         New_Indented_Line(mo);
 
         Symbol* symbol = Key_Symbol(key);
-        Append_Utf8_Utf8(out, STR_HEAD(symbol), STR_SIZE(symbol));
+        Append_Utf8_Utf8(out, Symbol_Head(symbol), Symbol_Size(symbol));
 
         Append_Unencoded(out, ": ");
 

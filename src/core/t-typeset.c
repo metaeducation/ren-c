@@ -307,7 +307,7 @@ void MF_Typeset(REB_MOLD *mo, const Cell* v, bool form)
         //
         Append_Unencoded(mo->series, "(");
 
-        Append_Utf8_Utf8(mo->series, STR_HEAD(symbol), STR_SIZE(symbol));
+        Append_Utf8_Utf8(mo->series, Symbol_Head(symbol), Symbol_Size(symbol));
         Append_Unencoded(mo->series, ") ");
 
         // REVIEW: should detect when a lot of types are active and condense

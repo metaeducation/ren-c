@@ -175,7 +175,7 @@ bool Traced_Eval_Hook_Throws(REBFRM * const f)
                 }
                 else if (IS_ACTION(var)) {
                     const bool locals = false;
-                    const char *type_utf8 = STR_HEAD(Get_Type_Name(var));
+                    const char *type_utf8 = Symbol_Head(Get_Type_Name(var));
                     DECLARE_VALUE (words);
                     Init_Block(words, List_Func_Words(var, locals));
                     Debug_Fmt_(" : %s %50r", type_utf8, words);
@@ -199,7 +199,7 @@ bool Traced_Eval_Hook_Throws(REBFRM * const f)
                 else {
                     // Just print the type if it's a context, etc.
                     //
-                    const char *type_utf8 = STR_HEAD(Get_Type_Name(var));
+                    const char *type_utf8 = Symbol_Head(Get_Type_Name(var));
                     Debug_Fmt_(" : %s", type_utf8);
                 }
             }

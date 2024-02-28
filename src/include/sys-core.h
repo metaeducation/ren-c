@@ -637,8 +637,8 @@ INLINE void SET_SIGNAL(REBFLGS f) { // used in %sys-series.h
 #define MOLD_BUF \
     TG_Mold_Buf
 
-#define BUF_UTF8 \
-    TG_Buf_Utf8
+#define BUF_UCS2 \
+    TG_Buf_Ucs2
 
 enum {
     TRACE_FLAG_FUNCTION = 1 << 0

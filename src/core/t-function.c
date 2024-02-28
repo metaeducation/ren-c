@@ -279,7 +279,7 @@ REBTYPE(Action)
             // !!! How to tell whether it's a URL! or a FILE! ?
             //
             Scan_File(
-                D_OUT, cb_cast(STR_HEAD(LINK(a).file)), SER_LEN(LINK(a).file)
+                D_OUT, cb_cast(Symbol_Head(LINK(a).file)), SER_LEN(LINK(a).file)
             );
             return D_OUT; }
 

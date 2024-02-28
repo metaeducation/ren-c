@@ -217,11 +217,11 @@ DECLARE_NATIVE(encode_text)
 
 static void Encode_Utf16_Core(
     Value* out,
-    REBCHR(const*) data,
+    Ucs2(const*) data,
     REBLEN len,
     bool little_endian
 ){
-    REBCHR(const*) cp = data;
+    Ucs2(const*) cp = data;
 
     REBSER *bin = Make_Binary(sizeof(uint16_t) * len);
     uint16_t* up = cast(uint16_t*, BIN_HEAD(bin));
@@ -229,7 +229,7 @@ static void Encode_Utf16_Core(
     REBLEN i = 0;
     for (i = 0; i < len; ++i) {
         REBUNI c;
-        cp = NEXT_CHR(&c, cp);
+        cp = Ucs2_Next(&c, cp);
 
         // !!! TBD: handle large codepoints bigger than 0xffff, and encode
         // as UTF16.  (REBUNI is only 16 bits at time of writing)
@@ -262,14 +262,14 @@ static void Decode_Utf16_Core(
     REBLEN len,
     bool little_endian
 ){
-    REBSER *ser = Make_Unicode(len); // 2x too big (?)
+    String* ser = Make_String(len); // 2x too big (?)
 
     REBINT size = Decode_UTF16_Negative_If_ASCII(
-        UNI_HEAD(ser), data, len, little_endian, false
+        String_Head(ser), data, len, little_endian, false
     );
     if (size < 0) // ASCII
         size = -size;
-    TERM_UNI_LEN(ser, size);
+    Term_String_Len(ser, size);
 
     Init_Text(out, ser);
 }
@@ -351,7 +351,7 @@ DECLARE_NATIVE(encode_utf16le)
     const bool little_endian = true;
     Encode_Utf16_Core(
         D_OUT,
-        VAL_UNI_AT(ARG(text)),
+        Cell_String_At(ARG(text)),
         VAL_LEN_AT(ARG(text)),
         little_endian
     );
@@ -437,7 +437,7 @@ DECLARE_NATIVE(encode_utf16be)
 
     Encode_Utf16_Core(
         D_OUT,
-        VAL_UNI_AT(ARG(text)),
+        Cell_String_At(ARG(text)),
         VAL_LEN_AT(ARG(text)),
         little_endian
     );

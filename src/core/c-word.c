@@ -235,7 +235,7 @@ Symbol* Intern_UTF8_Managed(const REBYTE *utf8, size_t size)
         assert(GET_SER_INFO(canon, STRING_INFO_CANON));
 
         REBINT cmp;
-        cmp = Compare_UTF8(cb_cast(STR_HEAD(canon)), utf8, size);
+        cmp = Compare_UTF8(cb_cast(Symbol_Head(canon)), utf8, size);
         if (cmp == 0)
             return canon; // was a case-sensitive match
         if (cmp < 0)
@@ -251,7 +251,7 @@ Symbol* Intern_UTF8_Managed(const REBYTE *utf8, size_t size)
         while (synonym != canon) {
             assert(NOT_SER_INFO(synonym, STRING_INFO_CANON));
 
-            cmp = Compare_UTF8(cb_cast(STR_HEAD(synonym)), utf8, size);
+            cmp = Compare_UTF8(cb_cast(Symbol_Head(synonym)), utf8, size);
             if (cmp == 0)
                 return synonym; // exact spelling match means no new interning
 
@@ -336,7 +336,7 @@ Symbol* Intern_UTF8_Managed(const REBYTE *utf8, size_t size)
     }
 
   #if !defined(NDEBUG)
-    uint16_t sym_canon = cast(uint16_t, Symbol_Id(STR_CANON(intern)));
+    uint16_t sym_canon = cast(uint16_t, Symbol_Id(Canon_Symbol(intern)));
     uint16_t sym = cast(uint16_t, Symbol_Id(intern));
     assert(sym == sym_canon); // C++ build disallows compare w/o cast
   #endif
@@ -442,8 +442,8 @@ void GC_Kill_Interning(Symbol* intern)
 //
 REBINT Compare_Word(const Cell* s, const Cell* t, bool strict)
 {
-    const REBYTE *sp = cb_cast(STR_HEAD(Cell_Word_Symbol(s)));
-    const REBYTE *tp = cb_cast(STR_HEAD(Cell_Word_Symbol(t)));
+    const REBYTE *sp = cb_cast(Symbol_Head(Cell_Word_Symbol(s)));
+    const REBYTE *tp = cb_cast(Symbol_Head(Cell_Word_Symbol(t)));
 
     if (strict)
         return COMPARE_BYTES(sp, tp); // must match byte-for-byte
@@ -564,10 +564,10 @@ void Startup_Symbols(REBARR *words)
 
     // Do some sanity checks.  !!! Fairly critical, is debug-only appropriate?
 
-    if (0 != strcmp("blank!", STR_HEAD(Canon(SYM_BLANK_X))))
+    if (0 != strcmp("blank!", Symbol_Head(Canon(SYM_BLANK_X))))
         panic (Canon(SYM_BLANK_X));
 
-    if (0 != strcmp("true", STR_HEAD(Canon(SYM_TRUE))))
+    if (0 != strcmp("true", Symbol_Head(Canon(SYM_TRUE))))
         panic (Canon(SYM_TRUE));
 }
 

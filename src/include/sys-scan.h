@@ -309,7 +309,7 @@ extern const REBYTE Lex_Map[256];
 
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// REBCHR(*) or REBCHR(const*)- UTF-8 EVERYWHERE UNICODE HELPER MACROS
+// Ucs2(*) or Ucs2(const*)- UTF-8 EVERYWHERE UNICODE HELPER MACROS
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
@@ -323,19 +323,19 @@ extern const REBYTE Lex_Map[256];
 // build uses a class that disables the ability to directly increment or
 // decrement pointers to REBCHR without going through helper routines.  To get
 // this checking, raw pointers cannot be used.  So a technique described here
-// was used to create the REBCHR(*) macro to be used in place of REBUNI*:
+// was used to create the Ucs2(*) macro to be used in place of REBUNI*:
 //
 // http://blog.hostilefork.com/kinda-smart-pointers-in-c/
 //
 // So for instance: instead of simply saying:
 //
-//     REBUNI *ptr = UNI_HEAD(string_series);
+//     REBUNI *ptr = String_Head(string_series);
 //     REBUNI c = *ptr++;
 //
 // ...one must instead write:
 //
-//     REBCHR(*) ptr = CHR_HEAD(string_series);
-//     ptr = NEXT_CHR(&c, ptr); // ++ptr or ptr[n] will error in C++ build
+//     Ucs2(*) ptr = CHR_HEAD(string_series);
+//     ptr = Ucs2_Next(&c, ptr); // ++ptr or ptr[n] will error in C++ build
 //
 // The code that runs behind the scenes is currently equivalent to the pointer
 // incrementing and decrementing.  But it will become typical UTF-8 forward
@@ -423,18 +423,18 @@ extern const REBYTE Lex_Map[256];
         }
     };
 
-    #define REBCHR(x) RebchrPtr<void x>
+    #define Ucs2(x) RebchrPtr<void x>
 
-    #define CHR_CODE(p) \
+    #define Codepoint_At(p) \
         (p).code()
 
-    #define BACK_CHR(codepoint_out, p) \
+    #define Ucs2_Back(codepoint_out, p) \
         (p).back(codepoint_out)
 
-    #define NEXT_CHR(codepoint_out, p) \
+    #define Ucs2_Next(codepoint_out, p) \
         (p).next(codepoint_out)
 
-    #define WRITE_CHR(p, codepoint) \
+    #define Write_Codepoint(p, codepoint) \
         (p).write(codepoint)
 
     #define AS_REBUNI(p) \
@@ -443,30 +443,30 @@ extern const REBYTE Lex_Map[256];
     #define AS_REBCHR(p) \
         RebchrPtr<void *>::as_rebchr(p)
 #else
-    #define REBCHR(x) REBWCHAR x
+    #define Ucs2(x) REBWCHAR x
 
-    #define CHR_CODE(p) \
+    #define Codepoint_At(p) \
         (*p)
 
-    INLINE REBCHR(*) BACK_CHR(
+    INLINE Ucs2(*) Ucs2_Back(
         REBWCHAR *codepoint_out,
-        REBCHR(const*) p
+        Ucs2(const*) p
     ){
         if (codepoint_out != nullptr)
             *codepoint_out = *p;
-        return m_cast(REBCHR(*), p - 1); // don't write if input was const!
+        return m_cast(Ucs2(*), p - 1); // don't write if input was const!
     }
 
-    INLINE REBCHR(*) NEXT_CHR(
+    INLINE Ucs2(*) Ucs2_Next(
         REBWCHAR *codepoint_out,
-        REBCHR(const*) p
+        Ucs2(const*) p
     ){
         if (codepoint_out != nullptr)
             *codepoint_out = *p;
-        return m_cast(REBCHR(*), p + 1);
+        return m_cast(Ucs2(*), p + 1);
     }
 
-    INLINE REBCHR(*) WRITE_CHR(REBCHR(*) p, REBWCHAR codepoint) {
+    INLINE Ucs2(*) Write_Codepoint(Ucs2(*) p, REBWCHAR codepoint) {
         *p = codepoint;
         return p + 1;
     }

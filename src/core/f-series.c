@@ -90,7 +90,7 @@ REB_R Series_Common_Action_Maybe_Unhandled(
                 //
                 Scan_File(
                     D_OUT,
-                    cb_cast(STR_HEAD(LINK(s).file)),
+                    cb_cast(Symbol_Head(LINK(s).file)),
                     SER_LEN(LINK(s).file)
                 );
                 return D_OUT;
