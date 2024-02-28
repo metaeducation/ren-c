@@ -61,8 +61,6 @@ static void Setup_File(struct devreq_file *file, REBFLGS flags, Value* path)
 
     file->path = path;
 
-    Secure_Port(Canon(SYM_FILE), req, path /* , file->path */);
-
     // !!! For the moment, assume `path` has a lifetime that will exceed
     // the operation.  This will be easier to ensure once the REQ state is
     // Rebol-structured data, visible to the GC.

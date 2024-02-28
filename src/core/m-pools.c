@@ -100,8 +100,6 @@ void *Alloc_Mem(size_t size)
     // Trap memory usage limit *before* the allocation is performed
 
     PG_Mem_Usage += size;
-    if (PG_Mem_Limit != 0 and PG_Mem_Usage > PG_Mem_Limit)
-        Check_Security(Canon(SYM_MEMORY), POL_EXEC, 0);
 
     // malloc() internally remembers the size of the allocation, and is hence
     // "overkill" for this operation.  Yet the current implementations on all

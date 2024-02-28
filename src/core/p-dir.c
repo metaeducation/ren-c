@@ -124,8 +124,6 @@ static void Init_Dir_Path(
     REBREQ *req = AS_REBREQ(dir);
     req->modes |= RFM_DIR;
 
-    Secure_Port(Canon(SYM_FILE), req, path /* , dir->path */);
-
     dir->path = path;
 }
 

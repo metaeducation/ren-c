@@ -146,16 +146,9 @@ usage: function [
         --import file    Import a module prior to script
         --quiet (-q)     No startup banners or information
         --resources dir  Manually set where Rebol resources directory lives
-        --secure policy  Can be: none allow ask throw quit
         --suppress ""    Suppress any found start-up scripts  Use "*" to suppress all.
         --trace (-t)     Enable trace mode during boot
         --verbose        Show detailed startup information
-
-    Other quick options:
-
-        -s               No security
-        +s               Full security
-        -qs              Quiet and secure (combining other switches not implemented yet)
 
     Examples:
 
@@ -564,20 +557,8 @@ host-start: function [
                 o/quiet: true
             )
         |
-            "-qs" end (
-                ; !!! historically you could combine switches when used with
-                ; a single dash, but this feature should be part of a better
-                ; thought out implementation.  For now, any historically
-                ; significant combinations (e.g. used in make.r) will
-                ; be supported manually.  This is "quiet unsecure"
-                ;
-                o/quiet: true
-                o/secure: 'allow
-            )
-        |
             "-cs" end (
                 ; every tutorial on Rebol CGI shows these flags.
-                o/secure: 'allow
                 o/quiet: true
                 o/cgi: true
             )
@@ -596,22 +577,6 @@ host-start: function [
                 ] else [
                     make block! param
                 ]
-            )
-        |
-            "--secure" end (
-                o/secure: to word! param-or-die "SECURE"
-                if o/secure <> 'allow [
-                    die "SECURE is disabled (never finished for R3-Alpha)"
-                ]
-            )
-        |
-            "-s" end (
-                o/secure: 'allow ;-- "secure-min"
-            )
-        |
-            "+s" end (
-                o/secure: 'quit ;-- "secure-max"
-                die "SECURE is disabled (never finished for R3-Alpha)"
             )
         |
             "--script" end (
@@ -688,7 +653,7 @@ host-start: function [
 
     if any [boot-embedded o/script] [o/quiet: true]
 
-    ;-- Set option/paths for /path, /boot, /home, and script path (for SECURE)
+    ;-- Set option/paths for /path, /boot, /home, and script path
     o/path: what-dir  ;dirize any [o/path o/home]
 
     ;-- !!! this was commented out.  Is it important?
@@ -696,7 +661,7 @@ host-start: function [
         if slash <> first o/boot [o/boot: clean-path o/boot]
     ]
 
-    if file? o/script [ ; Get the path (needed for SECURE setup)
+    if file? o/script [ ; Get the path
         script-path: split-path o/script
         case [
             slash = first first script-path []      ; absolute
@@ -709,28 +674,8 @@ host-start: function [
     ;-- Convert command line arg strings as needed:
     script-args: o/args ; save for below
 
-    ; version, import, secure are all of valid type or blank
-
-
     for-each [spec body] host-prot [module spec body]
     host-prot: 'done
-
-    ;-- Setup SECURE configuration (a NO-OP for min boot)
-    ;; Note: After refactoring `file` was removed from above.
-    ;;       file (below) -> o/bin (would have been same)
-
-comment [
-    lib/secure case [
-        o/secure [
-            o/secure
-        ]
-        file? o/script [
-            compose [file throw (file) [allow read] (first script-path) allow]
-        ]
-    ] else [
-        compose [file throw (file) [allow read] %. allow] ; default
-    ]
-]
 
     ;
     ; start-up scripts, o/loaded tracks which ones are loaded (with full path)

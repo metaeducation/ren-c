@@ -1383,7 +1383,7 @@ vars: reduce [
     ]
     make rebmake/var-class [
         name: {REBOL}
-        value: {$(REBOL_TOOL) -qs}
+        value: {$(REBOL_TOOL) -q}
     ]
     make rebmake/var-class [
         name: {T}

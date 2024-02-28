@@ -118,45 +118,6 @@ const REBYTE *Match_Bytes(const REBYTE *src, const REBYTE *pat)
 
 
 //
-//  Match_Sub_Path: C
-//
-// Compare two file path series, regardless of char size.
-// Return true if s1 is a subpath of s2.
-// Case insensitive.
-//
-bool Match_Sub_Path(REBSER *s1, REBSER *s2)
-{
-    REBLEN len = SER_LEN(s1);
-    REBLEN n;
-    REBUNI c1 = 0;
-    REBUNI c2;
-
-    // s1 len must be <= s2 len
-    if (len > SER_LEN(s2))
-        return false;
-
-    for (n = 0; n < len; n++) { // includes terminator
-
-        c1 = GET_ANY_CHAR(s1, n);
-        c2 = GET_ANY_CHAR(s2, n);
-
-        if (c1 < UNICODE_CASES) c1 = LO_CASE(c1);
-        if (c2 < UNICODE_CASES) c2 = LO_CASE(c2);
-
-        if (c1 != c2) break;
-    }
-
-    // a/b matches: a/b, a/b/, a/b/c
-    c2 = GET_ANY_CHAR(s2, n);
-    return did (
-        n >= len  // all chars matched
-        and  // Must be at end or at dir sep:
-        (c1 == '/' or c1 == '\\' or c2 == 0 or c2 == '/' or c2 == '\\')
-    );
-}
-
-
-//
 //  Compare_Uni_Str: C
 //
 // Compare two ranges of string data.  Return lexical difference.

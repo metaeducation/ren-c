@@ -370,8 +370,6 @@ DECLARE_NATIVE(trace)
 
     Value* mode = ARG(mode);
 
-    Check_Security(Canon(SYM_DEBUG), POL_READ, 0);
-
     // Set the trace level:
     if (IS_LOGIC(mode))
         Trace_Level = VAL_LOGIC(mode) ? 100000 : 0;

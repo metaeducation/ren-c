@@ -145,8 +145,6 @@ DECLARE_NATIVE(load_extension)
     else { // It's a DLL, must locate and call its RX_Collate() function
         assert(IS_FILE(ARG(where)));
 
-        //Check_Security(SYM_EXTENSION, POL_EXEC, val);
-
         MAKE_Library(lib, REB_LIBRARY, ARG(where));
 
         // !!! This code used to check for loading an already loaded

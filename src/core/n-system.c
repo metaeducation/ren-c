@@ -204,39 +204,6 @@ DECLARE_NATIVE(recycle)
 
 
 //
-//  limit-usage: native [
-//
-//  "Set a usage limit only once (used for SECURE)."
-//
-//      field [word!]
-//          "eval (count) or memory (bytes)"
-//      limit [any-number!]
-//  ]
-//
-DECLARE_NATIVE(limit_usage)
-{
-    INCLUDE_PARAMS_OF_LIMIT_USAGE;
-
-    Option(SymId) sym = Cell_Word_Id(ARG(field));
-
-    // !!! comment said "Only gets set once"...why?
-    //
-    if (sym == SYM_EVAL) {
-        if (Eval_Limit == 0)
-            Eval_Limit = Int64(ARG(limit));
-    }
-    else if (sym == SYM_MEMORY) {
-        if (PG_Mem_Limit == 0)
-            PG_Mem_Limit = Int64(ARG(limit));
-    }
-    else
-        fail (Error_Invalid(ARG(field)));
-
-    return nullptr;
-}
-
-
-//
 //  check: native [
 //
 //  "Run an integrity check on a value in debug builds of the interpreter"

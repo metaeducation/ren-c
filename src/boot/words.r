@@ -131,17 +131,6 @@ y
 unsigned
 code        ; error field
 
-; Secure:  (add to system/state/policies object too)
-secure
-protect
-net
-call
-envr
-eval
-memory
-debug
-browse
-extension
 ;file -- already provided for FILE OF
 dir
 

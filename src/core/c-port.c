@@ -493,43 +493,6 @@ post_process_output:
 
 
 //
-//  Secure_Port: C
-//
-// kind: word that represents the type (e.g. 'file)
-// req:  I/O request
-// name: value that holds the original user spec
-// path: the path to compare with
-//
-// !!! SECURE was not implemented in R3-Alpha.  This routine took a translated
-// local path (as a REBSER) which had been expanded fully.  The concept of
-// "local paths" is not something the core is going to be concerned with (e.g.
-// backslash translation), rather something that the OS-specific extension
-// code does.  If security is going to be implemented at a higher-level, then
-// it may have to be in the PORT! code itself.  As it isn't active, it doesn't
-// matter at the moment--but is a placeholder for finding the right place.
-//
-void Secure_Port(
-    Symbol* kind,
-    REBREQ *req,
-    const Value* name
-    /* , const Value* path */
-){
-    const Value* path = name;
-    assert(IS_FILE(path)); // !!! relative, untranslated
-
-    const REBYTE *flags = Security_Policy(Canon_Symbol(kind), path);
-
-    // Check policy integer:
-    // Mask is [xxxx wwww rrrr] - each holds the action
-    if (req->modes & RFM_READ)
-        Trap_Security(flags[POL_READ], Canon_Symbol(kind), name);
-
-    if (req->modes & RFM_WRITE)
-        Trap_Security(flags[POL_WRITE], Canon_Symbol(kind), name);
-}
-
-
-//
 //  Make_Port_Actor_Handle: C
 //
 // When users write a "port scheme", they provide an actor...which contains

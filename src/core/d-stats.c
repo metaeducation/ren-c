@@ -338,8 +338,6 @@ DECLARE_NATIVE(metrics)
 
     Value* mode = ARG(mode);
 
-    Check_Security(Canon(SYM_DEBUG), POL_READ, 0);
-
     if (VAL_LOGIC(mode)) {
         //PG_Eval_Throws = &Measured_Eval_Hook_Throws;
         PG_Dispatcher = &Measured_Dispatcher_Hook;

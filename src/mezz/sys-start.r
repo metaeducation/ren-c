@@ -57,12 +57,6 @@ finish-init-core: func [
 
     system/contexts/user: tmp
 
-    ; It was a stated goal at one point that it should be possible to protect
-    ; the entire system object and still run the interpreter.  This was
-    ; commented out, so the state of that feature is unknown.
-    ;
-    comment [if :lib/secure [protect-system-object]]
-
     ; The mezzanine is currently considered part of what Startup_Core() will
     ; initialize for all clients.
     ;

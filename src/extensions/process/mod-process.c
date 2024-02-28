@@ -1465,10 +1465,6 @@ DECLARE_NATIVE(call)
     UNUSED(REF(shell)); // looked at via frame_ by OS_Create_Process
     UNUSED(REF(console)); // same
 
-    // SECURE was never actually done for R3-Alpha
-    //
-    Check_Security(Canon(SYM_CALL), POL_EXEC, ARG(command));
-
     // Make sure that if the output or error series are STRING! or BINARY!,
     // they are not read-only, before we try appending to them.
     //
@@ -1935,8 +1931,6 @@ DECLARE_NATIVE(get_env)
 
     Value* variable = ARG(variable);
 
-    Check_Security(Canon(SYM_ENVR), POL_READ, variable);
-
     REBCTX *error = nullptr;
 
   #ifdef TO_WINDOWS
@@ -2013,8 +2007,6 @@ DECLARE_NATIVE(set_env)
 
     Value* variable = ARG(variable);
     Value* value = ARG(value);
-
-    Check_Security(Canon(SYM_ENVR), POL_WRITE, variable);
 
   #ifdef TO_WINDOWS
     WCHAR *key_wide = rebSpellW(variable);

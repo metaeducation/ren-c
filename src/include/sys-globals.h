@@ -45,7 +45,6 @@ PVAR REBINT PG_Boot_Level;  // User specified startup level
 #endif
 
 PVAR REBU64 PG_Mem_Usage;   // Overall memory used
-PVAR REBU64 PG_Mem_Limit;   // Memory limit set by SECURE
 
 // In Ren-C, words are REBSER nodes (Symbol subtype).  They may be GC'd (unless
 // they are in the %words.r list, in which case their canon forms are
@@ -239,7 +238,6 @@ TVAR struct Reb_State *Saved_State; // Saved state for Catch (CPU state, etc.)
 
 //-- Evaluation variables:
 TVAR REBI64 Eval_Cycles;    // Total evaluation counter (upward)
-TVAR REBI64 Eval_Limit;     // Evaluation limit (set by secure)
 TVAR int_fast32_t Eval_Count;     // Evaluation counter (downward)
 TVAR uint_fast32_t Eval_Dose;      // Evaluation counter reset value
 TVAR REBFLGS Eval_Sigmask;   // Masking out signal flags

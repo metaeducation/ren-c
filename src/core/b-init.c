@@ -1102,7 +1102,6 @@ void Startup_Task(void)
     Eval_Count = Eval_Dose;
     Eval_Signals = 0;
     Eval_Sigmask = ALL_BITS;
-    Eval_Limit = 0;
 
     TG_Ballast = MEM_BALLAST; // or overwritten by debug build below...
     TG_Max_Ballast = MEM_BALLAST;
@@ -1304,7 +1303,6 @@ void Startup_Core(void)
     PG_Boot_Phase = BOOT_START;
     PG_Boot_Level = BOOT_LEVEL_FULL;
     PG_Mem_Usage = 0;
-    PG_Mem_Limit = 0;
     Reb_Opts = ALLOC(REB_OPTS);
     CLEAR(Reb_Opts, sizeof(REB_OPTS));
     Saved_State = nullptr;

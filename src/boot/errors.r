@@ -258,10 +258,6 @@ Access: [
     bad-file-mode:      [{bad file mode:} :arg1]
 ;   protocol:           [{protocol error} :arg1]
 
-    security:           [{security violation:} :arg1 { (refer to SECURE function)}]
-    security-level:     [{attempt to lower security to} :arg1]
-    security-error:     [{invalid} :arg1 {security policy:} :arg2]
-
     no-codec:           [{cannot decode or encode (no codec):} :arg1]
     bad-media:          [{bad media data (corrupt image, sound, video)}]
 ;   would-block:        [{operation on port} :arg1 {would block}]

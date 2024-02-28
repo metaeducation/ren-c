@@ -211,8 +211,6 @@ static REB_R Protect_Unprotect_Core(REBFRM *frame_, REBFLGS flags)
 
     // flags has PROT_SET bit (set or not)
 
-    Check_Security(Canon(SYM_PROTECT), POL_WRITE, value);
-
     if (REF(deep))
         flags |= PROT_DEEP;
     //if (REF(words))

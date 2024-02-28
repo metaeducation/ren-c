@@ -765,8 +765,6 @@ DECLARE_NATIVE(change_dir)
     else {
         assert(IS_FILE(arg));
 
-        Check_Security(Canon(SYM_FILE), POL_EXEC, arg);
-
         bool success = OS_SET_CURRENT_DIR(arg);
 
         if (not success)
