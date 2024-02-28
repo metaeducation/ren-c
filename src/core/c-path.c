@@ -580,7 +580,7 @@ DECLARE_NATIVE(pick)
     // be a compatible frame with the historical "action".
     //
     if (IS_PORT(location)) {
-        DECLARE_LOCAL (word);
+        DECLARE_VALUE (word);
         Init_Word(word, Canon(SYM_PICK));
         return Do_Port_Action(frame_, location, word);
     }
@@ -661,7 +661,7 @@ DECLARE_NATIVE(poke)
     // be a compatible frame with the historical "action".
     //
     if (IS_PORT(location)) {
-        DECLARE_LOCAL (word);
+        DECLARE_VALUE (word);
         Init_Word(word, Canon(SYM_POKE));
         return Do_Port_Action(frame_, location, word);
     }

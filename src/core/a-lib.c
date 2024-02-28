@@ -490,7 +490,7 @@ RebolValue* RL_rebValue(const void *p, va_list *vaptr)
 //
 void RL_rebElide(const void *p, va_list *vaptr)
 {
-    DECLARE_LOCAL (elided);
+    DECLARE_VALUE (elided);
     if (Do_Va_Throws(elided, p, vaptr)) // calls va_end()
         fail (Error_No_Catch_For_Throw(elided));
 }
@@ -519,7 +519,7 @@ void RL_rebElide(const void *p, va_list *vaptr)
 //
 void RL_rebJumps(const void *p, va_list *vaptr)
 {
-    DECLARE_LOCAL (elided);
+    DECLARE_VALUE (elided);
     if (Do_Va_Throws(elided, p, vaptr)) { // calls va_end()
         //
         // !!! Being able to THROW across C stacks is necessary in the general
@@ -548,7 +548,7 @@ RebolValue* RL_rebValueInline(const RebolValue* array)
     if (not IS_BLOCK(array) and not IS_GROUP(array))
         fail ("rebValueInline() only supports BLOCK! and GROUP!");
 
-    DECLARE_LOCAL (group);
+    DECLARE_VALUE (group);
     Move_Value(group, array);
     CHANGE_VAL_TYPE_BITS(group, REB_GROUP);
 
@@ -938,7 +938,7 @@ RebolValue* RL_rebRescueWith(
 //
 bool RL_rebDid(const void *p, va_list *vaptr)
 {
-    DECLARE_LOCAL (condition);
+    DECLARE_VALUE (condition);
     if (Do_Va_Throws(condition, p, vaptr)) // calls va_end()
         fail (Error_No_Catch_For_Throw(condition));
 
@@ -954,7 +954,7 @@ bool RL_rebDid(const void *p, va_list *vaptr)
 //
 bool RL_rebNot(const void *p, va_list *vaptr)
 {
-    DECLARE_LOCAL (condition);
+    DECLARE_VALUE (condition);
     if (Do_Va_Throws(condition, p, vaptr)) // calls va_end()
         fail (Error_No_Catch_For_Throw(condition));
 
@@ -974,7 +974,7 @@ bool RL_rebNot(const void *p, va_list *vaptr)
 //
 long RL_rebUnbox(const void *p, va_list *vaptr)
 {
-    DECLARE_LOCAL (result);
+    DECLARE_VALUE (result);
     if (Do_Va_Throws(result, p, vaptr))
         fail (Error_No_Catch_For_Throw(result));
 
@@ -999,7 +999,7 @@ long RL_rebUnbox(const void *p, va_list *vaptr)
 //
 long RL_rebUnboxInteger(const void *p, va_list *vaptr)
 {
-    DECLARE_LOCAL (result);
+    DECLARE_VALUE (result);
     if (Do_Va_Throws(result, p, vaptr))
         fail (Error_No_Catch_For_Throw(result));
 
@@ -1015,7 +1015,7 @@ long RL_rebUnboxInteger(const void *p, va_list *vaptr)
 //
 double RL_rebUnboxDecimal(const void *p, va_list *vaptr)
 {
-    DECLARE_LOCAL (result);
+    DECLARE_VALUE (result);
     if (Do_Va_Throws(result, p, vaptr))
         fail (Error_No_Catch_For_Throw(result));
 
@@ -1034,7 +1034,7 @@ double RL_rebUnboxDecimal(const void *p, va_list *vaptr)
 //
 uint32_t RL_rebUnboxChar(const void *p, va_list *vaptr)
 {
-    DECLARE_LOCAL (result);
+    DECLARE_VALUE (result);
     if (Do_Va_Throws(result, p, vaptr))
         fail (Error_No_Catch_For_Throw(result));
 
@@ -1111,7 +1111,7 @@ size_t RL_rebSpellInto(
 //
 char *RL_rebSpell(const void *p, va_list *vaptr)
 {
-    DECLARE_LOCAL (string);
+    DECLARE_VALUE (string);
     if (Do_Va_Throws(string, p, vaptr)) // calls va_end()
         fail (Error_No_Catch_For_Throw(string));
 
@@ -1194,7 +1194,7 @@ unsigned int RL_rebSpellIntoW(
 //
 REBWCHAR *RL_rebSpellW(const void *p, va_list *vaptr)
 {
-    DECLARE_LOCAL (string);
+    DECLARE_VALUE (string);
     if (Do_Va_Throws(string, p, vaptr)) // calls va_end()
         fail (Error_No_Catch_For_Throw(string));
 
@@ -1255,7 +1255,7 @@ unsigned char *RL_rebBytes(
     size_t *size_out, // !!! Enforce non-null, to ensure type safety?
     const void *p, va_list *vaptr
 ){
-    DECLARE_LOCAL (series);
+    DECLARE_VALUE (series);
     if (Do_Va_Throws(series, p, vaptr)) // calls va_end()
         fail (Error_No_Catch_For_Throw(series));
 
@@ -1506,7 +1506,7 @@ intptr_t RL_rebPromise(const void *p, va_list *vaptr)
     // We reuse logic in Fetch_Next_In_Frame() and Set_Frame_Detected_Fetch()
     // but the previous f->value will be tested for NODE_FLAG_ROOT.
     //
-    DECLARE_LOCAL (junk);
+    DECLARE_VALUE (junk);
     f->value = Init_Unreadable_Blank(junk); // shows where garbage came from
   #else
     f->value = BLANK_VALUE; // less informative but faster to initialize
@@ -1870,7 +1870,7 @@ void RL_rebFail_OS(int errnum)
     #endif
   #endif
 
-    DECLARE_LOCAL (temp);
+    DECLARE_VALUE (temp);
     Init_Error(temp, error);
     rebJumps("fail", temp);
 }

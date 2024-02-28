@@ -116,7 +116,7 @@ void Prin_OS_String(const REBYTE *utf8, REBSIZ size, REBFLGS opts)
 
     Req_SIO->actual = 0;
 
-    DECLARE_LOCAL (temp);
+    DECLARE_VALUE (temp);
     SET_END(temp);
 
     // !!! The historical division of labor between the "core" and the "host"
@@ -470,7 +470,7 @@ void Form_Args_Core(REB_MOLD *mo, const char *fmt, va_list *vaptr)
     REBSER *ser = mo->series;
     REBYTE buf[MAX_SCAN_DECIMAL];
 
-    DECLARE_LOCAL (value);
+    DECLARE_VALUE (value);
 
     // buffer used for making byte-oriented renderings to add to the REBUNI
     // mold series.  Should be more formally checked as it's used for

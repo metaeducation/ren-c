@@ -319,20 +319,20 @@ INLINE REBCTX *Error_Parse_End(void) {
 }
 
 INLINE REBCTX *Error_Parse_Command(REBFRM *f) {
-    DECLARE_LOCAL (command);
+    DECLARE_VALUE (command);
     Derelativize(command, P_RULE, P_RULE_SPECIFIER);
     return Error_Parse_Command_Raw(command);
 }
 
 INLINE REBCTX *Error_Parse_Variable(REBFRM *f) {
-    DECLARE_LOCAL (variable);
+    DECLARE_VALUE (variable);
     Derelativize(variable, P_RULE, P_RULE_SPECIFIER);
     return Error_Parse_Variable_Raw(variable);
 }
 
 
 static void Print_Parse_Index(REBFRM *f) {
-    DECLARE_LOCAL (input);
+    DECLARE_VALUE (input);
     Init_Any_Series_At_Core(
         input,
         P_TYPE,
@@ -598,7 +598,7 @@ static REBIXO Parse_String_One_Rule(REBFRM *f, const Cell* rule) {
         // This parses a sub-rule block.  It may throw, and it may mutate the
         // input series.
         //
-        DECLARE_LOCAL (subresult);
+        DECLARE_VALUE (subresult);
         bool interrupted;
         if (Subparse_Throws(
             &interrupted,
@@ -723,7 +723,7 @@ static REBIXO Parse_Array_One_Rule_Core(
 
         P_POS = pos; // modify input position
 
-        DECLARE_LOCAL (subresult);
+        DECLARE_VALUE (subresult);
         if (Subparse_Throws(
             &interrupted,
             subresult,
@@ -804,7 +804,7 @@ static REBIXO To_Thru_Block_Rule(
     const Cell* rule_block,
     bool is_thru
 ) {
-    DECLARE_LOCAL (cell); // holds evaluated rules (use frame cell instead?)
+    DECLARE_VALUE (cell); // holds evaluated rules (use frame cell instead?)
 
     REBLEN pos = P_POS;
     for (; pos <= SER_LEN(P_INPUT); ++pos) {
@@ -1086,7 +1086,7 @@ static REBIXO To_Thru_Non_Block_Rule(
         // !!! This adjusts it to search for non-literal words, but are there
         // other considerations for how non-block rules act with array input?
         //
-        DECLARE_LOCAL (word);
+        DECLARE_VALUE (word);
         if (IS_LIT_WORD(rule)) {
             Derelativize(word, rule, P_RULE_SPECIFIER);
             CHANGE_VAL_TYPE_BITS(word, REB_WORD);
@@ -1315,7 +1315,7 @@ static REBIXO Do_Eval_Rule(REBFRM *f)
     // duration of the next rule the *input* is the temporary evaluative
     // result.
     //
-    DECLARE_LOCAL (saved_input);
+    DECLARE_VALUE (saved_input);
     Move_Value(saved_input, P_INPUT_VALUE); // series and P_POS position
     PUSH_GC_GUARD(saved_input);
     Init_Block(P_INPUT_VALUE, holder);
@@ -1324,7 +1324,7 @@ static REBIXO Do_Eval_Rule(REBFRM *f)
     // The particular factoring of the one-rule form of parsing makes us
     // redo work like fetching words/paths, which should not be needed.
     //
-    DECLARE_LOCAL (cell);
+    DECLARE_VALUE (cell);
     const Cell* rule = Get_Parse_Value(cell, P_RULE, P_RULE_SPECIFIER);
 
     // !!! The actual mechanic here does not permit you to say `do thru x`
@@ -1441,7 +1441,7 @@ DECLARE_NATIVE(subparse)
     REBTCK tick = TG_Tick; // helpful to cache for visibility also
   #endif
 
-    DECLARE_LOCAL (save);
+    DECLARE_VALUE (save);
 
     REBLEN start = P_POS; // recovery restart point
     REBLEN begin = P_POS; // point at beginning of match
@@ -1818,7 +1818,7 @@ DECLARE_NATIVE(subparse)
                         // to just say the current rule succeeded...it climbs
                         // up and affects an enclosing parse loop.
                         //
-                        DECLARE_LOCAL (thrown_arg);
+                        DECLARE_VALUE (thrown_arg);
                         Init_Integer(thrown_arg, P_POS);
                         Move_Value(P_OUT, NAT_VALUE(parse_accept));
 
@@ -1857,7 +1857,7 @@ DECLARE_NATIVE(subparse)
                             fail (Error_Parse_Rule());
 
                         // might GC
-                        DECLARE_LOCAL (condition);
+                        DECLARE_VALUE (condition);
                         if (Do_At_Throws(
                             condition,
                             VAL_ARRAY(P_RULE),
@@ -1914,10 +1914,10 @@ DECLARE_NATIVE(subparse)
 
                 // :word - change the index for the series to a new position
                 if (IS_GET_WORD(rule)) {
-                    DECLARE_LOCAL (temp);
+                    DECLARE_VALUE (temp);
                     Move_Opt_Var_May_Fail(temp, rule, P_RULE_SPECIFIER);
                     if (not ANY_SERIES(temp)) { // #1263
-                        DECLARE_LOCAL (non_series);
+                        DECLARE_VALUE (non_series);
                         Derelativize(non_series, P_RULE, P_RULE_SPECIFIER);
                         fail (Error_Parse_Series_Raw(non_series));
                     }
@@ -2315,7 +2315,7 @@ DECLARE_NATIVE(subparse)
                 count = (begin > P_POS) ? 0 : P_POS - begin;
 
                 if (flags & PF_COPY) {
-                    DECLARE_LOCAL (temp);
+                    DECLARE_VALUE (temp);
                     if (ANY_ARRAY(P_INPUT_VALUE)) {
                         Init_Any_Array(
                             temp,
@@ -2337,7 +2337,7 @@ DECLARE_NATIVE(subparse)
                     else {
                         assert(ANY_STRING(P_INPUT_VALUE));
 
-                        DECLARE_LOCAL (begin_val);
+                        DECLARE_VALUE (begin_val);
                         Init_Any_Series_At(begin_val, P_TYPE, P_INPUT, begin);
 
                         Init_Any_Series(
@@ -2418,7 +2418,7 @@ DECLARE_NATIVE(subparse)
 
                     // If a GROUP!, then execute it first.  See #1279
                     //
-                    DECLARE_LOCAL (evaluated);
+                    DECLARE_VALUE (evaluated);
                     if (IS_GROUP(rule)) {
                         REBSPC *derived = Derive_Specifier(
                             P_RULE_SPECIFIER,
@@ -2438,7 +2438,7 @@ DECLARE_NATIVE(subparse)
                     }
 
                     if (IS_SER_ARRAY(P_INPUT)) {
-                        DECLARE_LOCAL (specified);
+                        DECLARE_VALUE (specified);
                         Derelativize(specified, rule, P_RULE_SPECIFIER);
 
                         REBLEN mod_flags = (flags & PF_INSERT) ? 0 : AM_PART;
@@ -2467,7 +2467,7 @@ DECLARE_NATIVE(subparse)
                             );
                     }
                     else {
-                        DECLARE_LOCAL (specified);
+                        DECLARE_VALUE (specified);
                         Derelativize(specified, rule, P_RULE_SPECIFIER);
 
                         P_POS = begin;

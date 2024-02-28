@@ -458,7 +458,7 @@ static int Compare_Val_Custom(void *arg, const void *v1, const void *v2)
 
     const bool fully = true; // error if not all arguments consumed
 
-    DECLARE_LOCAL (result);
+    DECLARE_VALUE (result);
     if (Apply_Only_Throws(
         result,
         fully,

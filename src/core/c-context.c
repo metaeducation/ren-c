@@ -500,7 +500,7 @@ static void Collect_Inner_Loop(struct Reb_Collector *cl, const Cell* head)
             REBSTR *canon = VAL_WORD_CANON(v);
             if (not Try_Add_Binder_Index(&cl->binder, canon, cl->index)) {
                 if (cl->flags & COLLECT_NO_DUP) {
-                    DECLARE_LOCAL (duplicate);
+                    DECLARE_VALUE (duplicate);
                     Init_Word(duplicate, VAL_WORD_SPELLING(v));
                     fail (Error_Dup_Vars_Raw(duplicate)); // cleans bindings
                 }

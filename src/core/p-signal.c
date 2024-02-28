@@ -135,7 +135,7 @@ static int sig_word_num(REBSTR *canon)
         case SYM_SIGXFSZ:
             return SIGXFSZ;
         default: {
-            DECLARE_LOCAL (word);
+            DECLARE_VALUE (word);
             Init_Word(word, canon);
 
             fail (Error_Invalid_Spec_Raw(word));
@@ -182,7 +182,7 @@ static REB_R Signal_Actor(REBFRM *frame_, Value* port, Value* verb)
 
             Cell* item;
             for (item = VAL_ARRAY_AT_HEAD(val, 0); NOT_END(item); ++item) {
-                DECLARE_LOCAL (sig);
+                DECLARE_VALUE (sig);
                 Derelativize(sig, item, VAL_SPECIFIER(val));
 
                 if (not IS_WORD(sig))

@@ -471,7 +471,7 @@ REB_R PD_Varargs(
     if (VAL_INT32(picker) != 1)
         fail (Error_Varargs_No_Look_Raw());
 
-    DECLARE_LOCAL (location);
+    DECLARE_VALUE (location);
     Move_Value(location, pvs->out);
 
     if (Do_Vararg_Op_Maybe_End_Throws(
@@ -654,7 +654,7 @@ void MF_Varargs(REB_MOLD *mo, const Cell* v, bool form) {
             panic (NULL);
         };
 
-        DECLARE_LOCAL (param_word);
+        DECLARE_VALUE (param_word);
         Init_Any_Word(param_word, kind, VAL_PARAM_SPELLING(param));
         Mold_Value(mo, param_word);
     }

@@ -90,7 +90,7 @@ void MF_Date(REB_MOLD *mo, const Cell* v_orig, bool form)
     // We don't want to modify the incoming date value we are molding,
     // so we make a copy that we can tweak during the emit process
 
-    DECLARE_LOCAL (v);
+    DECLARE_VALUE (v);
     Move_Value(v, KNOWN(v_orig));
 
     if (
@@ -870,7 +870,7 @@ REB_R PD_Date(
 
     // !!! The date picking as written can't both read and write the out cell.
     //
-    DECLARE_LOCAL (temp);
+    DECLARE_VALUE (temp);
     Move_Value(temp, pvs->out);
     Pick_Or_Poke_Date(pvs->out, temp, picker, NULL);
     return pvs->out;

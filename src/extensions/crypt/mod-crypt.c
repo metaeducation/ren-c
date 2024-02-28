@@ -559,7 +559,7 @@ DECLARE_NATIVE(aes)
 
         REBINT len = VAL_LEN_AT(ARG(crypt_key)) << 3;
         if (len != 128 and len != 256) {
-            DECLARE_LOCAL (i);
+            DECLARE_VALUE (i);
             Init_Integer(i, len);
             rebJumps(
                 "fail [{AES key length has to be 16 or 32, not:}",

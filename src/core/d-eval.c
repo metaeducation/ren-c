@@ -56,7 +56,7 @@
 //
 void Dump_Frame_Location(const Cell* current, REBFRM *f)
 {
-    DECLARE_LOCAL (dump);
+    DECLARE_VALUE (dump);
 
     if (current) {
         Derelativize(dump, current, f->specifier);

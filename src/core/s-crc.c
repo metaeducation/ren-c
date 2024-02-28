@@ -393,7 +393,7 @@ REBSER *Make_Hash_Sequence(REBLEN len)
 {
     REBLEN n = Get_Hash_Prime(len * 2); // best when 2X # of keys
     if (n == 0) {
-        DECLARE_LOCAL (temp);
+        DECLARE_VALUE (temp);
         Init_Integer(temp, len);
 
         fail (Error_Size_Limit_Raw(temp));

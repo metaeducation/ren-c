@@ -114,8 +114,8 @@ static bool Set_Event_Var(Value* event, const Value* word, const Value* val)
 //
 void Set_Event_Vars(Value* evt, Cell* blk, REBSPC *specifier)
 {
-    DECLARE_LOCAL (var);
-    DECLARE_LOCAL (val);
+    DECLARE_VALUE (var);
+    DECLARE_VALUE (val);
 
     while (NOT_END(blk)) {
         Derelativize(var, blk, specifier);
@@ -264,7 +264,7 @@ void MF_Event(REB_MOLD *mo, const Cell* v, bool form)
     Append_Utf8_Codepoint(mo->series, '[');
     mo->indent++;
 
-    DECLARE_LOCAL (var); // declare outside loop (has init code)
+    DECLARE_VALUE (var); // declare outside loop (has init code)
 
     for (field = 0; fields[field] != SYM_0; field++) {
         Get_Event_Var(var, v, Canon(fields[field]));

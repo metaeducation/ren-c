@@ -190,7 +190,7 @@ static REB_R Event_Actor(REBFRM *frame_, Value* port, Value* verb)
         // the state value in the first slot of the frame, and calls the
         // array type dispatcher.  :-/
         //
-        DECLARE_LOCAL (save_port);
+        DECLARE_VALUE (save_port);
         Move_Value(save_port, D_ARG(1));
         Move_Value(D_ARG(1), state);
 

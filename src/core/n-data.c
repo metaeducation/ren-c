@@ -592,7 +592,7 @@ INLINE void Set_Opt_Polymorphic_May_Fail(
             SET_VAL_FLAG(var, VALUE_FLAG_ENFIXED);
     }
     else if (ANY_PATH(target)) {
-        DECLARE_LOCAL (specific);
+        DECLARE_VALUE (specific);
         Derelativize(specific, value, value_specifier);
 
         // `set 'foo/bar 1` acts as `foo/bar: 1`
@@ -776,7 +776,7 @@ DECLARE_NATIVE(in)
     Value* val = ARG(context); // object, error, port, block
     Value* word = ARG(word);
 
-    DECLARE_LOCAL (safe);
+    DECLARE_VALUE (safe);
 
     if (IS_BLOCK(val) || IS_GROUP(val)) {
         if (IS_WORD(word)) {
@@ -895,7 +895,7 @@ DECLARE_NATIVE(enfixed_q)
     else {
         assert(ANY_PATH(source));
 
-        DECLARE_LOCAL (temp);
+        DECLARE_VALUE (temp);
         Get_Path_Core(temp, source, SPECIFIED);
         assert(NOT_VAL_FLAG(temp, VALUE_FLAG_ENFIXED) or IS_ACTION(temp));
         return Init_Logic(D_OUT, GET_VAL_FLAG(temp, VALUE_FLAG_ENFIXED));
@@ -1225,7 +1225,7 @@ INLINE bool Is_Set(const Value* location)
     if (ANY_WORD(location))
         return ANY_VALUE(Get_Opt_Var_May_Fail(location, SPECIFIED));
 
-    DECLARE_LOCAL (temp); // result may be generated
+    DECLARE_VALUE (temp); // result may be generated
     Get_Path_Core(temp, location, SPECIFIED);
     return ANY_VALUE(temp);
 }
@@ -1342,7 +1342,7 @@ bool Is_Voided(const Value* location) {
     if (ANY_WORD(location))
         return IS_VOID(Get_Opt_Var_May_Fail(location, SPECIFIED));
 
-    DECLARE_LOCAL (temp); // result may be generated
+    DECLARE_VALUE (temp); // result may be generated
     Get_Path_Core(temp, location, SPECIFIED);
     return IS_VOID(temp);
 }

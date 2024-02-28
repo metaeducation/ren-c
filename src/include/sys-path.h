@@ -151,7 +151,7 @@ INLINE void Set_Path_Core(
     // If there's no throw, there's no result of setting a path (hence it's
     // not in the interface)
     //
-    DECLARE_LOCAL (out);
+    DECLARE_VALUE (out);
 
     REBFLGS flags = DO_FLAG_NO_PATH_GROUPS;
     if (enfix)

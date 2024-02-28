@@ -96,7 +96,7 @@ INLINE bool Apply_Only_Throws(
     va_list va;
     va_start(va, applicand);
 
-    DECLARE_LOCAL (applicand_eval);
+    DECLARE_VALUE (applicand_eval);
     Move_Value(applicand_eval, applicand);
     SET_VAL_FLAG(applicand_eval, VALUE_FLAG_EVAL_FLIP);
 

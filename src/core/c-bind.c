@@ -635,7 +635,7 @@ void Virtual_Bind_Deep_To_New_Context(
     SHUTDOWN_BINDER(&binder);
 
     if (duplicate) {
-        DECLARE_LOCAL (word);
+        DECLARE_VALUE (word);
         Init_Word(word, duplicate);
         fail (Error_Dup_Vars_Raw(word));
     }

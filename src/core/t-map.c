@@ -60,7 +60,7 @@ REBMAP *Make_Map(REBLEN capacity)
 
 static REBCTX *Error_Conflicting_Key(const Cell* key, REBSPC *specifier)
 {
-    DECLARE_LOCAL (specific);
+    DECLARE_VALUE (specific);
     Derelativize(specific, key, specifier);
     return Error_Conflicting_Key_Raw(specific);
 }
@@ -271,7 +271,7 @@ void Expand_Hash(REBSER *ser)
 {
     REBINT pnum = Get_Hash_Prime(SER_LEN(ser) + 1);
     if (pnum == 0) {
-        DECLARE_LOCAL (temp);
+        DECLARE_VALUE (temp);
         Init_Integer(temp, SER_LEN(ser) + 1);
         fail (Error_Size_Limit_Raw(temp));
     }

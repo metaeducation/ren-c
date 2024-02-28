@@ -579,7 +579,7 @@ DECLARE_NATIVE(wake_up)
         // support".  Added assertion and convention here that this call
         // doesn't throw or return meaningful data... (?)
         //
-        DECLARE_LOCAL (verb);
+        DECLARE_VALUE (verb);
         Init_Word(verb, Canon(SYM_ON_WAKE_UP));
         const Value* r = Do_Port_Action(frame_, ARG(port), verb);
         assert(IS_BAR(r));

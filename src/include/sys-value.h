@@ -1694,12 +1694,12 @@ INLINE void Blit_Cell(Cell* out, const Cell* v)
 // of a stack value.
 //
 // Note: because this will run instructions, a routine should avoid doing a
-// DECLARE_LOCAL inside of a loop.  It should be at the outermost scope of
+// DECLARE_VALUE inside of a loop.  It should be at the outermost scope of
 // the function.
 //
 // Note: It sets NODE_FLAG_FREE, so this is a "trash" cell by default.
 //
-#define DECLARE_LOCAL(name) \
+#define DECLARE_VALUE(name) \
     Value name##_pair[2]; \
     Prep_Stack_Cell(cast(Value*, &name##_pair)); \
     Value* const name = cast(Value*, &name##_pair) + 1; \

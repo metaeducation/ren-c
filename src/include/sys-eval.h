@@ -1034,7 +1034,7 @@ INLINE REBIXO Eval_Va_Core(
     // We reuse logic in Fetch_Next_In_Frame() and Set_Frame_Detected_Fetch()
     // but the previous f->value will be tested for NODE_FLAG_ROOT.
     //
-    DECLARE_LOCAL (junk);
+    DECLARE_VALUE (junk);
     f->value = Init_Unreadable_Blank(junk); // shows where garbage came from
   #else
     f->value = BLANK_VALUE; // less informative but faster to initialize

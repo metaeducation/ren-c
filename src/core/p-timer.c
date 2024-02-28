@@ -97,7 +97,7 @@ static REB_R Timer_Actor(REBFRM *frame_, Value* port, Value* verb)
             fail (Error_Invalid(arg));
     case SYM_PICK: {
     act_blk:
-        DECLARE_LOCAL (save_port);
+        DECLARE_VALUE (save_port);
         Move_Value(&save_port, D_ARG(1)); // save for return
         Move_Value(D_ARG(1), state);
 

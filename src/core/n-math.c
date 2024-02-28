@@ -858,9 +858,9 @@ DECLARE_NATIVE(maximum)
         Min_Max_Pair(D_OUT, value1, value2, true);
     }
     else {
-        DECLARE_LOCAL (coerced1);
+        DECLARE_VALUE (coerced1);
         Move_Value(coerced1, value1);
-        DECLARE_LOCAL (coerced2);
+        DECLARE_VALUE (coerced2);
         Move_Value(coerced2, value2);
 
         if (Compare_Modify_Values(coerced1, coerced2, -1))
@@ -892,9 +892,9 @@ DECLARE_NATIVE(minimum)
         Min_Max_Pair(D_OUT, ARG(value1), ARG(value2), false);
     }
     else {
-        DECLARE_LOCAL (coerced1);
+        DECLARE_VALUE (coerced1);
         Move_Value(coerced1, value1);
-        DECLARE_LOCAL (coerced2);
+        DECLARE_VALUE (coerced2);
         Move_Value(coerced2, value2);
 
         if (Compare_Modify_Values(coerced1, coerced2, -1))
@@ -918,7 +918,7 @@ DECLARE_NATIVE(negative_q)
 {
     INCLUDE_PARAMS_OF_NEGATIVE_Q;
 
-    DECLARE_LOCAL (zero);
+    DECLARE_VALUE (zero);
     Init_Zeroed_Hack(zero, VAL_TYPE(ARG(number)));
 
     if (Compare_Modify_Values(ARG(number), zero, -1))
@@ -940,7 +940,7 @@ DECLARE_NATIVE(positive_q)
 {
     INCLUDE_PARAMS_OF_POSITIVE_Q;
 
-    DECLARE_LOCAL (zero);
+    DECLARE_VALUE (zero);
     Init_Zeroed_Hack(zero, VAL_TYPE(ARG(number)));
 
     if (Compare_Modify_Values(ARG(number), zero, -2))
@@ -965,7 +965,7 @@ DECLARE_NATIVE(zero_q)
     enum Reb_Kind type = VAL_TYPE(ARG(value));
 
     if (type >= REB_INTEGER and type <= REB_TIME) {
-        DECLARE_LOCAL (zero);
+        DECLARE_VALUE (zero);
         Init_Zeroed_Hack(zero, type);
 
         if (Compare_Modify_Values(ARG(value), zero, 1))

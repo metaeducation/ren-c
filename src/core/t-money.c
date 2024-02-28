@@ -237,7 +237,7 @@ REBTYPE(Money)
 
         Value* scale = ARG(scale);
 
-        DECLARE_LOCAL (temp);
+        DECLARE_VALUE (temp);
         if (REF(to)) {
             if (IS_INTEGER(scale))
                 Init_Money(temp, int_to_deci(VAL_INT64(scale)));

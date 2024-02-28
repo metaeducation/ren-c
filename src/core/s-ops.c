@@ -118,7 +118,7 @@ REBYTE *Analyze_String_For_Scan(
     if (num_chars == 0)
         fail (Error_Past_End_Raw());
 
-    DECLARE_LOCAL (reindexed);
+    DECLARE_VALUE (reindexed);
     Move_Value(reindexed, any_string);
     VAL_INDEX(reindexed) = index;
 

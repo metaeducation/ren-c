@@ -227,7 +227,7 @@ static REB_R Protect_Unprotect_Core(REBFRM *frame_, REBFLGS flags)
         if (REF(words)) {
             Cell* val;
             for (val = VAL_ARRAY_AT(value); NOT_END(val); val++) {
-                DECLARE_LOCAL (word); // need binding, can't pass Cell
+                DECLARE_VALUE (word); // need binding, can't pass Cell
                 Derelativize(word, val, VAL_SPECIFIER(value));
                 Protect_Word_Value(word, flags);  // will unmark if deep
             }
@@ -237,7 +237,7 @@ static REB_R Protect_Unprotect_Core(REBFRM *frame_, REBFLGS flags)
             Value* var;
             Cell* item;
 
-            DECLARE_LOCAL (safe);
+            DECLARE_VALUE (safe);
 
             for (item = VAL_ARRAY_AT(value); NOT_END(item); ++item) {
                 if (IS_WORD(item)) {

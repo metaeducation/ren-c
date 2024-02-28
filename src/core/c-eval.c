@@ -429,7 +429,7 @@ INLINE void Expire_Out_Cell_Unless_Invisible(REBFRM *f) {
 //     f->out
 //     Value pointer to which the evaluation's result should be written.
 //     Should be to writable memory in a cell that lives above this call to
-//     Eval_Core in stable memory that is not user-visible (e.g. DECLARE_LOCAL
+//     Eval_Core in stable memory that is not user-visible (e.g. DECLARE_VALUE
 //     or the frame's f->cell).  This can't point into an array whose memory
 //     may move during arbitrary evaluation, and that includes cells on the
 //     expandable data stack.  It also usually can't write a function argument

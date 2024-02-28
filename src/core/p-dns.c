@@ -103,7 +103,7 @@ static REB_R DNS_Actor(REBFRM *frame_, Value* port, Value* verb)
                 &offset, &size, arg, VAL_LEN_AT(arg)
             );
 
-            DECLARE_LOCAL (tmp);
+            DECLARE_VALUE (tmp);
             if (Scan_Tuple(tmp, BIN_AT(temp, offset), size) != NULL) {
                 sock->modes |= RST_REVERSE;
                 memcpy(&(DEVREQ_NET(sock)->remote_ip), VAL_TUPLE(tmp), 4);

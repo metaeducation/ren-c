@@ -1296,7 +1296,7 @@ void Assert_Pointer_Detection_Working(void)
     // form of trashing than TRASH_CELL_IF_DEBUG().
     //
   #ifdef DEBUG_TRASH_MEMORY
-    DECLARE_LOCAL (freed_cell);
+    DECLARE_VALUE (freed_cell);
     freed_cell->header.bits =
         NODE_FLAG_NODE | NODE_FLAG_FREE | NODE_FLAG_CELL
         | FLAG_KIND_BYTE(REB_T_TRASH)
@@ -1304,7 +1304,7 @@ void Assert_Pointer_Detection_Working(void)
     assert(Detect_Rebol_Pointer(freed_cell) == DETECTED_AS_FREED_CELL);
   #endif
 
-    DECLARE_LOCAL (end_cell);
+    DECLARE_VALUE (end_cell);
     SET_END(end_cell);
     assert(Detect_Rebol_Pointer(end_cell) == DETECTED_AS_END);
     assert(Detect_Rebol_Pointer(END_NODE) == DETECTED_AS_END);

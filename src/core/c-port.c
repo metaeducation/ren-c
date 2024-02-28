@@ -132,13 +132,13 @@ REBINT Awake_System(REBARR *ports, bool only)
     if (not IS_ACTION(awake))
         return -1;
 
-    DECLARE_LOCAL (tmp);
+    DECLARE_VALUE (tmp);
     if (ports)
         Init_Block(tmp, ports);
     else
         Init_Blank(tmp);
 
-    DECLARE_LOCAL (awake_only);
+    DECLARE_VALUE (awake_only);
     if (only) {
         //
         // If we're using /ONLY, we need path AWAKE/ONLY to call.  (Ren-C's
@@ -153,7 +153,7 @@ REBINT Awake_System(REBARR *ports, bool only)
 
     // Call the system awake function:
     //
-    DECLARE_LOCAL (result);
+    DECLARE_VALUE (result);
     if (Apply_Only_Throws(
         result,
         true, // fully
@@ -235,7 +235,7 @@ bool Wait_Ports_Throws(
         if (not IS_BLOCK(pump))
             fail ("system/ports/pump must be a block");
 
-        DECLARE_LOCAL (result);
+        DECLARE_VALUE (result);
         if (Do_Any_Array_At_Throws(result, pump))
             fail (Error_No_Catch_For_Throw(result));
 
@@ -375,7 +375,7 @@ bool Redo_Action_Throws(REBFRM *f, REBACT *run)
     TERM_ARRAY_LEN(code_arr, code - ARR_HEAD(code_arr));
     MANAGE_ARRAY(code_arr);
 
-    DECLARE_LOCAL (first);
+    DECLARE_VALUE (first);
     TERM_ARRAY_LEN(path_arr, path - ARR_HEAD(path_arr));
     Init_Path(first, path_arr);
     SET_VAL_FLAG(first, VALUE_FLAG_EVAL_FLIP); // make the PATH! invoke action
@@ -482,7 +482,7 @@ post_process_output:
         if (REF(lines)) { // caller wants a BLOCK! of STRING!s, not one string
             assert(IS_TEXT(D_OUT));
 
-            DECLARE_LOCAL (temp);
+            DECLARE_VALUE (temp);
             Move_Value(temp, D_OUT);
             Init_Block(D_OUT, Split_Lines(temp));
         }

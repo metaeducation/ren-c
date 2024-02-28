@@ -240,7 +240,7 @@ REB_R Measured_Dispatcher_Hook(REBFRM * const f)
             Init_Integer(ARR_AT(a, IDX_STATS_NUMCALLS), 1);
             TERM_ARRAY_LEN(a, IDX_STATS_MAX);
 
-            DECLARE_LOCAL (stats);
+            DECLARE_VALUE (stats);
             Init_Block(stats, a);
 
             n = Find_Map_Entry(

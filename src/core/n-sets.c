@@ -224,7 +224,7 @@ REBSER *Make_Set_Operation_Series(
                         cased ? AM_FIND_CASE : 0 // flags
                     )
                 ){
-                    DECLARE_LOCAL (temp);
+                    DECLARE_VALUE (temp);
                     Init_Any_Series_At(temp, REB_TEXT, ser, i);
                     Append_Utf8_String(mo->series, temp, skip);
                 }
@@ -353,7 +353,7 @@ DECLARE_NATIVE(exclude)
         if (VAL_TYPE(val1) != VAL_TYPE(val2))
             fail (Error_Unexpected_Type(VAL_TYPE(val1), VAL_TYPE(val2)));
 
-        DECLARE_LOCAL (verb); // initial code did something weird w/this
+        DECLARE_VALUE (verb); // initial code did something weird w/this
         Init_Word(verb, Canon(SYM_EXCLUDE));
         return Init_Bitset(D_OUT, Xandor_Binary(verb, val1, val2));
     }

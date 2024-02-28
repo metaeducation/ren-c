@@ -256,7 +256,7 @@ void Set_Vector_Row(REBSER *ser, const Value* blk) // !!! can not be BLOCK!?
     else { // !!! This would just interpet the data as int64_t pointers (???)
         REBYTE *data = VAL_BIN_AT(blk);
 
-        DECLARE_LOCAL (temp);
+        DECLARE_VALUE (temp);
 
         REBLEN n = 0;
         for (; len > 0; len--, idx++) {
@@ -314,8 +314,8 @@ REBINT Compare_Vector(const Cell* v1, const Cell* v2)
     REBLEN l2 = VAL_LEN_AT(v2);
     REBLEN len = MIN(l1, l2);
 
-    DECLARE_LOCAL(temp1);
-    DECLARE_LOCAL(temp2);
+    DECLARE_VALUE(temp1);
+    DECLARE_VALUE(temp2);
     Init_Integer(temp1, 0);
     Init_Integer(temp2, 0);
 
@@ -343,8 +343,8 @@ void Shuffle_Vector(Value* vect, bool secure)
     REBSER *ser = VAL_SERIES(vect);
     REBLEN idx = VAL_INDEX(vect);
 
-    DECLARE_LOCAL(temp1);
-    DECLARE_LOCAL(temp2);
+    DECLARE_VALUE(temp1);
+    DECLARE_VALUE(temp2);
 
     REBLEN n;
     for (n = VAL_LEN_AT(vect); n > 1;) {
@@ -757,7 +757,7 @@ void MF_Vector(REB_MOLD *mo, const Cell* v, bool form)
             New_Indented_Line(mo);
     }
 
-    DECLARE_LOCAL (temp);
+    DECLARE_VALUE (temp);
 
     REBLEN c = 0;
     for (; n < SER_LEN(vect); n++) {

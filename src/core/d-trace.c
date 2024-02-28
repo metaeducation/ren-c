@@ -176,7 +176,7 @@ bool Traced_Eval_Hook_Throws(REBFRM * const f)
                 else if (IS_ACTION(var)) {
                     const bool locals = false;
                     const char *type_utf8 = STR_HEAD(Get_Type_Name(var));
-                    DECLARE_LOCAL (words);
+                    DECLARE_VALUE (words);
                     Init_Block(words, List_Func_Words(var, locals));
                     Debug_Fmt_(" : %s %50r", type_utf8, words);
                 }
@@ -317,7 +317,7 @@ REB_R Traced_Dispatcher_Hook(REBFRM * const f)
             // "Catch" it temporarily, long enough to output it, then
             // re-throw it.
             //
-            DECLARE_LOCAL (arg);
+            DECLARE_VALUE (arg);
             CATCH_THROWN(arg, f->out); // clears bit
 
             if (IS_NULLED(f->out))

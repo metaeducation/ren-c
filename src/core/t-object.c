@@ -681,7 +681,7 @@ void MF_Context(REB_MOLD *mo, const Cell* v, bool form)
         // but if it paralleled how <local> works for functions then it would
         // be shown as SET-WORD!
         //
-        DECLARE_LOCAL (any_word);
+        DECLARE_VALUE (any_word);
         Init_Any_Word(any_word, REB_WORD, VAL_KEY_SPELLING(key));
         Mold_Value(mo, any_word);
     }
@@ -1052,7 +1052,7 @@ DECLARE_NATIVE(construct)
             //
             Bind_Values_Deep(VAL_ARRAY_AT(body), context);
 
-            DECLARE_LOCAL (temp);
+            DECLARE_VALUE (temp);
             if (Do_Any_Array_At_Throws(temp, body)) {
                 Move_Value(D_OUT, temp);
                 return R_THROWN; // evaluation result ignored unless thrown

@@ -123,11 +123,11 @@ DECLARE_NATIVE(load_extension)
 {
     INCLUDE_PARAMS_OF_LOAD_EXTENSION;
 
-    DECLARE_LOCAL (lib);
+    DECLARE_VALUE (lib);
     SET_END(lib);
     PUSH_GC_GUARD(lib);
 
-    DECLARE_LOCAL (path);
+    DECLARE_VALUE (path);
     SET_END(path);
     PUSH_GC_GUARD(path);
 
@@ -227,7 +227,7 @@ DECLARE_NATIVE(load_extension)
         80,
         NODE_FLAG_MANAGED // !!! Is GC guard unnecessary due to references?
     );
-    DECLARE_LOCAL (module);
+    DECLARE_VALUE (module);
     Init_Any_Context(module, REB_MODULE, module_ctx);
     PUSH_GC_GUARD(module);
 
@@ -290,7 +290,7 @@ DECLARE_NATIVE(load_extension)
     }
 
     REBARR *exports_arr = Pop_Stack_Values(dsp_orig);
-    DECLARE_LOCAL (exports);
+    DECLARE_VALUE (exports);
     Init_Block(exports, exports_arr);
     PUSH_GC_GUARD(exports);
 

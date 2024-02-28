@@ -204,7 +204,7 @@ static void Startup_Base(REBARR *boot_base)
 
     Bind_Values_Deep(head, Lib_Context);
 
-    DECLARE_LOCAL (result);
+    DECLARE_VALUE (result);
     if (Do_At_Throws(result, boot_base, 0, SPECIFIED))
         panic (result);
 
@@ -239,7 +239,7 @@ static void Startup_Sys(REBARR *boot_sys) {
     Bind_Values_Deep(head, Lib_Context);
     Bind_Values_Deep(head, Sys_Context);
 
-    DECLARE_LOCAL (result);
+    DECLARE_VALUE (result);
     if (Do_At_Throws(result, boot_sys, 0, SPECIFIED))
         panic (result);
 
@@ -752,7 +752,7 @@ static REBARR *Startup_Generics(const Value* boot_generics)
     //
     Bind_Values_Deep(head, Lib_Context);
 
-    DECLARE_LOCAL (result);
+    DECLARE_VALUE (result);
     if (Do_Any_Array_At_Throws(result, boot_generics))
         panic (result);
 
@@ -986,7 +986,7 @@ static void Init_System_Object(
 
     // Evaluate the block (will eval CONTEXTs within).  Expects void result.
     //
-    DECLARE_LOCAL (result);
+    DECLARE_VALUE (result);
     if (Do_Any_Array_At_Throws(result, boot_sysobj_spec))
         panic (result);
     if (not IS_BLANK(result))
@@ -1570,7 +1570,7 @@ static Value* Startup_Mezzanine(BOOT_BLK *boot)
     // copy with some omissions), and where the mezzanine definitions are
     // bound to the lib context and DO'd.
     //
-    DECLARE_LOCAL (result);
+    DECLARE_VALUE (result);
     if (Apply_Only_Throws(
         result,
         true, // fully = true (error if all arguments aren't consumed)

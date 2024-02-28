@@ -68,7 +68,7 @@ REBINT Get_Num_From_Arg(const Value* val)
 REBINT Float_Int16(REBD32 f)
 {
     if (fabs(f) > cast(REBD32, 0x7FFF)) {
-        DECLARE_LOCAL (temp);
+        DECLARE_VALUE (temp);
         Init_Decimal(temp, f);
 
         fail (Error_Out_Of_Range(temp));

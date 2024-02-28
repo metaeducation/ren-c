@@ -126,7 +126,7 @@ static void Expand_Word_Table(void)
 
     REBLEN num_slots = Get_Hash_Prime(old_num_slots + 1);
     if (num_slots == 0) { // larger than hash prime table
-        DECLARE_LOCAL (temp);
+        DECLARE_VALUE (temp);
         Init_Integer(temp, old_num_slots + 1);
         fail (Error_Size_Limit_Raw(temp));
     }

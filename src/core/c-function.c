@@ -413,7 +413,7 @@ REBARR *Make_Paramlist_Managed_May_Fail(
         //
         if (STR_SYMBOL(canon) == SYM_RETURN) {
             if (definitional_return_dsp != 0) {
-                DECLARE_LOCAL (word);
+                DECLARE_VALUE (word);
                 Init_Word(word, canon);
                 fail (Error_Dup_Vars_Raw(word)); // most dup checks done later
             }
@@ -634,7 +634,7 @@ REBARR *Make_Paramlist_Managed_May_Fail(
         SHUTDOWN_BINDER(&binder);
 
         if (duplicate) {
-            DECLARE_LOCAL (word);
+            DECLARE_VALUE (word);
             Init_Word(word, duplicate);
             fail (Error_Dup_Vars_Raw(word));
         }
@@ -1512,7 +1512,7 @@ REB_R Elider_Dispatcher(REBFRM *f)
     // !!! It would be nice to use the frame's spare "cell" for the thrownaway
     // result, but Fetch_Next code expects to use the cell.
     //
-    DECLARE_LOCAL (dummy);
+    DECLARE_VALUE (dummy);
     SET_END(dummy);
 
     if (Do_At_Throws(dummy, VAL_ARRAY(body), 0, SPC(f->varlist))) {
@@ -1589,7 +1589,7 @@ REB_R Adapter_Dispatcher(REBFRM *f)
     // adaptation of an invisible (e.g. DUMP).  Would be nice to use the frame
     // spare cell but can't as Fetch_Next() uses it.
 
-    DECLARE_LOCAL (dummy);
+    DECLARE_VALUE (dummy);
     if (Do_At_Throws(
         dummy,
         VAL_ARRAY(prelude),

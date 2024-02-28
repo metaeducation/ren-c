@@ -83,10 +83,10 @@ REB_R MAKE_Action(Value* out, enum Reb_Kind kind, const Value* arg)
         fail (Error_Bad_Make(REB_ACTION, arg));
     }
 
-    DECLARE_LOCAL (spec);
+    DECLARE_VALUE (spec);
     Derelativize(spec, VAL_ARRAY_AT(arg), VAL_SPECIFIER(arg));
 
-    DECLARE_LOCAL (body);
+    DECLARE_VALUE (body);
     Derelativize(body, VAL_ARRAY_AT(arg) + 1, VAL_SPECIFIER(arg));
 
     // Spec-constructed functions do *not* have definitional returns

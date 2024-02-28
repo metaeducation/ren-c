@@ -690,13 +690,13 @@ static REBCTX *Error_Syntax(SCAN_STATE *ss) {
     assert(ss->end != NULL and not IS_POINTER_TRASH_DEBUG(ss->end));
     assert(ss->end >= ss->begin);
 
-    DECLARE_LOCAL (token_name);
+    DECLARE_VALUE (token_name);
     Init_Text(
         token_name,
         Make_String_UTF8(Token_Names[ss->token])
     );
 
-    DECLARE_LOCAL (token_text);
+    DECLARE_VALUE (token_text);
     Init_Text(
         token_text,
         Make_Sized_String_UTF8(
@@ -721,7 +721,7 @@ static REBCTX *Error_Syntax(SCAN_STATE *ss) {
 // report all the unclosed terms.
 //
 static REBCTX *Error_Missing(SCAN_STATE *ss, char wanted) {
-    DECLARE_LOCAL (expected);
+    DECLARE_VALUE (expected);
     Init_Text(expected, Make_Ser_Codepoint(wanted));
 
     REBCTX *error = Error_Scan_Missing_Raw(expected);
@@ -736,7 +736,7 @@ static REBCTX *Error_Missing(SCAN_STATE *ss, char wanted) {
 // For instance, `load "abc ]"`
 //
 static REBCTX *Error_Extra(SCAN_STATE *ss, char seen) {
-    DECLARE_LOCAL (unexpected);
+    DECLARE_VALUE (unexpected);
     Init_Text(unexpected, Make_Ser_Codepoint(seen));
 
     REBCTX *error = Error_Scan_Extra_Raw(unexpected);
@@ -2234,7 +2234,7 @@ Value* Scan_To_Stack(SCAN_STATE *ss) {
             Bind_Values_All_Deep(ARR_HEAD(array), Lib_Context);
 
             if (ARR_LEN(array) == 0 or not IS_WORD(ARR_HEAD(array))) {
-                DECLARE_LOCAL (temp);
+                DECLARE_VALUE (temp);
                 Init_Block(temp, array);
                 fail (Error_Malconstruct_Raw(temp));
             }
@@ -2249,7 +2249,7 @@ Value* Scan_To_Stack(SCAN_STATE *ss) {
                 MAKE_HOOK hook = Make_Hooks[kind];
 
                 if (hook == NULL or ARR_LEN(array) != 2) {
-                    DECLARE_LOCAL (temp);
+                    DECLARE_VALUE (temp);
                     Init_Block(temp, array);
                     fail (Error_Malconstruct_Raw(temp));
                 }
@@ -2261,7 +2261,7 @@ Value* Scan_To_Stack(SCAN_STATE *ss) {
                 // used as the destination...because a raw pointer into the
                 // data stack could go bad on any DS_PUSH or DS_DROP.
                 //
-                DECLARE_LOCAL (cell);
+                DECLARE_VALUE (cell);
                 Init_Unreadable_Blank(cell);
                 PUSH_GC_GUARD(cell);
 
@@ -2283,7 +2283,7 @@ Value* Scan_To_Stack(SCAN_STATE *ss) {
             }
             else {
                 if (ARR_LEN(array) != 1) {
-                    DECLARE_LOCAL (temp);
+                    DECLARE_VALUE (temp);
                     Init_Block(temp, array);
                     fail (Error_Malconstruct_Raw(temp));
                 }
@@ -2318,7 +2318,7 @@ Value* Scan_To_Stack(SCAN_STATE *ss) {
                     break;
 
                 default: {
-                    DECLARE_LOCAL (temp);
+                    DECLARE_VALUE (temp);
                     Init_Block(temp, array);
                     fail (Error_Malconstruct_Raw(temp)); }
                 }

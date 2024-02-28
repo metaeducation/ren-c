@@ -837,7 +837,7 @@ struct Reb_Frame {
 
 
 // It is more pleasant to have a uniform way of speaking of frames by pointer,
-// so this macro sets that up for you, the same way DECLARE_LOCAL does.  The
+// so this macro sets that up for you, the same way DECLARE_VALUE does.  The
 // optimizer should eliminate the extra pointer.
 //
 // Just to simplify matters, the frame cell is set to a bit pattern the GC

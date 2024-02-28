@@ -143,13 +143,13 @@ static void reverse_string(Value* v, REBLEN len)
             Append_Utf8_Codepoint(mo->series, c);
         }
 
-        DECLARE_LOCAL (temp);
+        DECLARE_VALUE (temp);
         Init_Text(temp, Pop_Molded_String(mo));
 
         // Effectively do a CHANGE/PART to overwrite the reversed portion of
         // the string (from the input value's index to the tail).
 
-        DECLARE_LOCAL (verb);
+        DECLARE_VALUE (verb);
         Init_Word(verb, Canon(SYM_CHANGE));
         Modify_String(
             v,

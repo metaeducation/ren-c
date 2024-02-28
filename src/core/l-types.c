@@ -270,7 +270,7 @@ REB_R Reflect_Core(REBFRM *frame_)
         fail ("NULL isn't valid for REFLECT, except for TYPE OF ()");
 
     GENERIC_HOOK hook = Generic_Hooks[kind];
-    DECLARE_LOCAL (verb);
+    DECLARE_VALUE (verb);
     Init_Word(verb, Canon(SYM_REFLECT));
     return hook(frame_, verb);
 }
@@ -324,7 +324,7 @@ DECLARE_NATIVE(of)
     // fit the type action dispatcher rule... dispatch item in first arg,
     // property in the second.
     //
-    DECLARE_LOCAL (temp);
+    DECLARE_VALUE (temp);
     Move_Value(temp, ARG(property));
     Move_Value(ARG(property), ARG(value));
     Move_Value(ARG(value), temp);

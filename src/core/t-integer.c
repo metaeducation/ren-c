@@ -292,7 +292,7 @@ void Value_To_Int64(Value* out, const Value* value, bool no_sign)
             || memchr(bp, 'e', size)
             || memchr(bp, 'E', size)
         ){
-            DECLARE_LOCAL (d);
+            DECLARE_VALUE (d);
             if (Scan_Decimal(d, bp, size, true)) {
                 if (
                     VAL_DECIMAL(d) < cast(REBDEC, INT64_MAX)

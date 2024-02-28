@@ -1679,7 +1679,7 @@ INLINE REB_R While_Core(
 ){
     INCLUDE_PARAMS_OF_WHILE;
 
-    DECLARE_LOCAL (cell); // unsafe to use ARG() slots as frame output cells
+    DECLARE_VALUE (cell); // unsafe to use ARG() slots as frame output cells
     SET_END(cell);
     PUSH_GC_GUARD(cell);
 

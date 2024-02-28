@@ -528,7 +528,7 @@ bool Make_Error_Object_Throws(
         Rebind_Context_Deep(root_error, error, NULL); // NULL=>no more binds
         Bind_Values_Deep(VAL_ARRAY_AT(arg), error);
 
-        DECLARE_LOCAL (evaluated);
+        DECLARE_VALUE (evaluated);
         if (Do_Any_Array_At_Throws(evaluated, arg)) {
             Move_Value(out, evaluated);
             return true;
@@ -674,15 +674,15 @@ REBCTX *Make_Error_Managed_Core(
         );
       #endif
 
-        DECLARE_LOCAL (id_value);
+        DECLARE_VALUE (id_value);
         Init_Integer(id_value, cast(int, id_sym));
         panic (id_value);
     }
 
     REBCTX *root_error = VAL_CONTEXT(Get_System(SYS_STANDARD, STD_ERROR));
 
-    DECLARE_LOCAL (id);
-    DECLARE_LOCAL (type);
+    DECLARE_VALUE (id);
+    DECLARE_VALUE (type);
     const Value* message;
     if (cat_sym == SYM_0 and id_sym == SYM_0) {
         Init_Blank(id);
@@ -878,7 +878,7 @@ REBCTX *Error(
 // without any error template in %errors.r)
 //
 REBCTX *Error_User(const char *utf8) {
-    DECLARE_LOCAL (message);
+    DECLARE_VALUE (message);
     Init_Text(message, Make_String_UTF8(utf8));
     return Error(SYM_0, SYM_0, message, rebEND);
 }
@@ -890,7 +890,7 @@ REBCTX *Error_User(const char *utf8) {
 REBCTX *Error_Need_Non_End_Core(const Cell* target, REBSPC *specifier) {
     assert(IS_SET_WORD(target) or IS_SET_PATH(target));
 
-    DECLARE_LOCAL (specific);
+    DECLARE_VALUE (specific);
     Derelativize(specific, target, specifier);
     return Error_Need_Non_End_Raw(specific);
 }
@@ -902,7 +902,7 @@ REBCTX *Error_Need_Non_End_Core(const Cell* target, REBSPC *specifier) {
 REBCTX *Error_Need_Non_Void_Core(const Cell* target, REBSPC *specifier) {
     assert(ANY_WORD(target) or ANY_PATH(target));
 
-    DECLARE_LOCAL (specific);
+    DECLARE_VALUE (specific);
     Derelativize(specific, target, specifier);
     return Error_Need_Non_Void_Raw(specific);
 }
@@ -917,7 +917,7 @@ REBCTX *Error_Need_Non_Void_Core(const Cell* target, REBSPC *specifier) {
 // by these specializations, because that's what the called function expects.
 //
 REBCTX *Error_Non_Logic_Refinement(const Cell* param, const Value* arg) {
-    DECLARE_LOCAL (word);
+    DECLARE_VALUE (word);
     Init_Word(word, VAL_PARAM_SPELLING(param));
     return Error_Non_Logic_Refine_Raw(word, Type_Of(arg));
 }
@@ -935,7 +935,7 @@ REBCTX *Error_Bad_Func_Def(const Value* spec, const Value* body)
     Append_Value(a, spec);
     Append_Value(a, body);
 
-    DECLARE_LOCAL (def);
+    DECLARE_VALUE (def);
     Init_Block(def, a);
 
     return Error_Bad_Func_Def_Raw(def);
@@ -949,10 +949,10 @@ REBCTX *Error_No_Arg(REBFRM *f, const Cell* param)
 {
     assert(IS_TYPESET(param));
 
-    DECLARE_LOCAL (param_word);
+    DECLARE_VALUE (param_word);
     Init_Word(param_word, VAL_PARAM_SPELLING(param));
 
-    DECLARE_LOCAL (label);
+    DECLARE_VALUE (label);
     Get_Frame_Label_Or_Blank(label, f);
 
     return Error_No_Arg_Raw(label, param_word);
@@ -964,7 +964,7 @@ REBCTX *Error_No_Arg(REBFRM *f, const Cell* param)
 //
 REBCTX *Error_No_Memory(REBLEN bytes)
 {
-    DECLARE_LOCAL (bytes_value);
+    DECLARE_VALUE (bytes_value);
 
     Init_Integer(bytes_value, bytes);
     return Error_No_Memory_Raw(bytes_value);
@@ -976,7 +976,7 @@ REBCTX *Error_No_Memory(REBLEN bytes)
 //
 REBCTX *Error_No_Relative_Core(const Cell* any_word)
 {
-    DECLARE_LOCAL (unbound);
+    DECLARE_VALUE (unbound);
     Init_Any_Word(
         unbound,
         VAL_TYPE(any_word),
@@ -1002,7 +1002,7 @@ REBCTX *Error_Not_Varargs(
     // VARARGS! when fulfilled in a frame directly, not INTEGER!) then
     // an "honest" parameter has to be made to give the error.
     //
-    DECLARE_LOCAL (honest_param);
+    DECLARE_VALUE (honest_param);
     Init_Typeset(
         honest_param,
         FLAGIT_KIND(REB_VARARGS), // actually expected
@@ -1039,7 +1039,7 @@ REBCTX *Error_Invalid(const Value* value)
 //
 REBCTX *Error_Invalid_Core(const Cell* value, REBSPC *specifier)
 {
-    DECLARE_LOCAL (specific);
+    DECLARE_VALUE (specific);
     Derelativize(specific, value, specifier);
 
     return Error_Invalid_Arg_Raw(specific);
@@ -1051,7 +1051,7 @@ REBCTX *Error_Invalid_Core(const Cell* value, REBSPC *specifier)
 //
 REBCTX *Error_Bad_Func_Def_Core(const Cell* item, REBSPC *specifier)
 {
-    DECLARE_LOCAL (specific);
+    DECLARE_VALUE (specific);
     Derelativize(specific, item, specifier);
     return Error_Bad_Func_Def_Raw(specific);
 }
@@ -1069,13 +1069,13 @@ REBCTX *Error_Bad_Refine_Revoke(const Cell* param, const Value* arg)
 {
     assert(IS_TYPESET(param));
 
-    DECLARE_LOCAL (param_name);
+    DECLARE_VALUE (param_name);
     Init_Word(param_name, VAL_PARAM_SPELLING(param));
 
     while (VAL_PARAM_CLASS(param) != PARAM_CLASS_REFINEMENT)
         --param;
 
-    DECLARE_LOCAL (refine_name);
+    DECLARE_VALUE (refine_name);
     Init_Refinement(refine_name, VAL_PARAM_SPELLING(param));
 
     if (IS_NULLED(arg)) // was void and shouldn't have been
@@ -1091,7 +1091,7 @@ REBCTX *Error_Bad_Refine_Revoke(const Cell* param, const Value* arg)
 //  Error_No_Value_Core: C
 //
 REBCTX *Error_No_Value_Core(const Cell* target, REBSPC *specifier) {
-    DECLARE_LOCAL (specified);
+    DECLARE_VALUE (specified);
     Derelativize(specified, target, specifier);
 
     return Error_No_Value_Raw(specified);
@@ -1111,7 +1111,7 @@ REBCTX *Error_No_Value(const Value* target) {
 //
 REBCTX *Error_No_Catch_For_Throw(Value* thrown)
 {
-    DECLARE_LOCAL (arg);
+    DECLARE_VALUE (arg);
 
     assert(THROWN(thrown));
     CATCH_THROWN(arg, thrown); // clears bit, thrown is now the /NAME
@@ -1149,7 +1149,7 @@ REBCTX *Error_Protected_Key(Value* key)
 {
     assert(IS_TYPESET(key));
 
-    DECLARE_LOCAL (key_name);
+    DECLARE_VALUE (key_name);
     Init_Word(key_name, VAL_KEY_SPELLING(key));
 
     return Error_Protected_Word_Raw(key_name);
@@ -1204,10 +1204,10 @@ REBCTX *Error_Arg_Type(
 ) {
     assert(IS_TYPESET(param));
 
-    DECLARE_LOCAL (param_word);
+    DECLARE_VALUE (param_word);
     Init_Word(param_word, VAL_PARAM_SPELLING(param));
 
-    DECLARE_LOCAL (label);
+    DECLARE_VALUE (label);
     Get_Frame_Label_Or_Blank(label, f);
 
     if (actual != REB_MAX_NULLED)
@@ -1228,7 +1228,7 @@ REBCTX *Error_Arg_Type(
 //  Error_Bad_Return_Type: C
 //
 REBCTX *Error_Bad_Return_Type(REBFRM *f, enum Reb_Kind kind) {
-    DECLARE_LOCAL (label);
+    DECLARE_VALUE (label);
     Get_Frame_Label_Or_Blank(label, f);
 
     if (kind == REB_MAX_NULLED)
@@ -1273,7 +1273,7 @@ REBCTX *Error_On_Port(SymId id_sym, Value* port, REBINT err_code)
     if (IS_BLANK(val))
         val = VAL_CONTEXT_VAR(spec, STD_PORT_SPEC_HEAD_TITLE); // less info
 
-    DECLARE_LOCAL (err_code_value);
+    DECLARE_VALUE (err_code_value);
     Init_Integer(err_code_value, err_code);
 
     return Error(SYM_ACCESS, id_sym, val, err_code_value, rebEND);
@@ -1438,7 +1438,7 @@ const REBYTE *Security_Policy(REBSTR *spelling, const Value* name)
 
     error:
         ; // need statement
-        DECLARE_LOCAL (temp);
+        DECLARE_VALUE (temp);
         if (!policy) {
             Init_Word(temp, spelling);
             policy = temp;

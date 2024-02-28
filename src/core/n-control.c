@@ -467,7 +467,7 @@ DECLARE_NATIVE(match)
 
         Move_Value(D_OUT, first_arg); // steal first argument before call
 
-        DECLARE_LOCAL (temp);
+        DECLARE_VALUE (temp);
         f->out = SET_END(temp);
 
         f->rootvar = CTX_ARCHETYPE(CTX(f->varlist));
@@ -534,7 +534,7 @@ either_test:;
     INIT_VAL_PARAM_CLASS(varpar, PARAM_CLASS_HARD_QUOTE);
     VAL_TYPESET_BITS(varpar) &= ~FLAGIT_KIND(REB_MAX_NULLED);
 
-    DECLARE_LOCAL (temp);
+    DECLARE_VALUE (temp);
     if (Either_Test_Core_Throws(temp, test, D_OUT))
         return R_THROWN;
 
@@ -730,7 +730,7 @@ static REB_R Case_Choose_Core_May_Throw(
 
     Init_Nulled(D_OUT); // default return result
 
-    DECLARE_LOCAL (cell); // unsafe to use ARG() slots as frame's f->out
+    DECLARE_VALUE (cell); // unsafe to use ARG() slots as frame's f->out
     SET_END(cell);
     PUSH_GC_GUARD(cell);
 

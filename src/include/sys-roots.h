@@ -122,7 +122,7 @@ INLINE void Free_Instruction(REBARR *instruction) {
 // If you're going to just fail() anyway, then loose API handles are safe to
 // GC.  It's mildly inefficient to do so compared to generating a local cell:
 //
-//      DECLARE_LOCAL (specific);
+//      DECLARE_VALUE (specific);
 //      Derelativize(specific, cell, specifier);
 //      fail (Error_Something(specific));
 //

@@ -173,7 +173,7 @@ DECLARE_NATIVE(eval_enfix)
 
     const bool push_refinements = true;
     REBSTR *opt_label;
-    DECLARE_LOCAL (temp);
+    DECLARE_VALUE (temp);
     if (Get_If_Word_Or_Path_Throws(
         temp,
         &opt_label,
@@ -206,7 +206,7 @@ DECLARE_NATIVE(eval_enfix)
     // Since enfix dispatch only works for words (for the moment), we lie
     // and use the label found in path processing as a word.
     //
-    DECLARE_LOCAL (word);
+    DECLARE_VALUE (word);
     Init_Word(word, opt_label);
     f->value = word;
 
@@ -500,7 +500,7 @@ DECLARE_NATIVE(evaluate)
 
     case REB_BLOCK:
     case REB_GROUP: {
-        DECLARE_LOCAL (temp);
+        DECLARE_VALUE (temp);
         REBIXO indexor = Eval_Array_At_Core(
             SET_END(temp), // use END to distinguish residual non-values
             nullptr, // opt_head
@@ -539,7 +539,7 @@ DECLARE_NATIVE(evaluate)
             // array during execution, there will be problems if it is TAKE'n
             // or DO'd while this operation is in progress.
             //
-            DECLARE_LOCAL (temp);
+            DECLARE_VALUE (temp);
             REBIXO indexor = Eval_Array_At_Core(
                 SET_END(temp),
                 nullptr, // opt_head (interpreted as nothing, not nulled cell)
@@ -584,7 +584,7 @@ DECLARE_NATIVE(evaluate)
         if (IS_END(f->value))
             return nullptr;
 
-        DECLARE_LOCAL (temp);
+        DECLARE_VALUE (temp);
         if (Eval_Step_In_Subframe_Throws(SET_END(temp), f, flags, child))
             RETURN (temp);
 
@@ -810,7 +810,7 @@ DECLARE_NATIVE(applique)
     // Run the bound code, ignore evaluative result (unless thrown)
     //
     PUSH_GC_GUARD(exemplar);
-    DECLARE_LOCAL (temp);
+    DECLARE_VALUE (temp);
     bool def_threw = Do_Any_Array_At_Throws(temp, ARG(def));
     DROP_GC_GUARD(exemplar);
 
