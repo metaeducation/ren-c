@@ -785,7 +785,7 @@ struct Reb_Frame {
     //
     // Knowing the label symbol is not as handy as knowing the actual string
     // of the function this call represents (if any).  It is in UTF8 format,
-    // and cast to `char*` to help debuggers that have trouble with REBYTE.
+    // and cast to `char*` to help debuggers that have trouble with Byte.
     //
     const char *label_utf8;
   #endif
@@ -800,7 +800,7 @@ struct Reb_Frame {
     // them.  As the feature gets better, it will certainly be useful to be
     // able to quickly see the information in the debugger for f->source.
     //
-    const char *file; // is REBYTE (UTF-8), but char* for debug watch
+    const char *file; // is Byte (UTF-8), but char* for debug watch
     int line;
   #endif
 

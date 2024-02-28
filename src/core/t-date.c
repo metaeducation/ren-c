@@ -108,10 +108,10 @@ void MF_Date(REB_MOLD *mo, const Cell* v_orig, bool form)
         Adjust_Date_Zone(v, to_utc);
     }
 
-    REBYTE dash = GET_MOLD_FLAG(mo, MOLD_FLAG_SLASH_DATE) ? '/' : '-';
+    Byte dash = GET_MOLD_FLAG(mo, MOLD_FLAG_SLASH_DATE) ? '/' : '-';
 
-    REBYTE buf[64];
-    REBYTE *bp = &buf[0];
+    Byte buf[64];
+    Byte *bp = &buf[0];
 
     bp = Form_Int(bp, cast(REBINT, VAL_DAY(v)));
     *bp++ = dash;
@@ -438,7 +438,7 @@ REB_R MAKE_Date(Value* out, enum Reb_Kind kind, const Value* arg) {
 
     if (IS_TEXT(arg)) {
         REBSIZ size;
-        REBYTE *bp = Analyze_String_For_Scan(&size, arg, MAX_SCAN_DATE);
+        Byte *bp = Analyze_String_For_Scan(&size, arg, MAX_SCAN_DATE);
         if (nullptr == Scan_Date(out, bp, size))
             goto bad_make;
         return out;

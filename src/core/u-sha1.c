@@ -665,13 +665,13 @@ int SHA1_CtxSize(void) {
 //
 //  SHA1: C
 //
-REBYTE *SHA1(REBYTE *d, REBLEN n, REBYTE *md)
+Byte *SHA1(Byte *d, REBLEN n, Byte *md)
 {
     // d is data, n is length
     SHA_CTX c;
     static unsigned char m[SHA_DIGEST_LENGTH];
 
-    if (md == nullptr) md = (REBYTE*)m;
+    if (md == nullptr) md = (Byte*)m;
     SHA1_Init(&c);
     SHA1_Update(&c,(unsigned char*)d,n);
     SHA1_Final((unsigned char*)md,&c);

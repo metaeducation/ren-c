@@ -85,7 +85,7 @@ REB_R MAKE_Word(Value* out, enum Reb_Kind kind, const Value* arg)
 
     if (ANY_STRING(arg)) {
         REBSIZ size;
-        REBYTE *bp = Analyze_String_For_Scan(&size, arg, MAX_SCAN_WORD);
+        Byte *bp = Analyze_String_For_Scan(&size, arg, MAX_SCAN_WORD);
 
         if (kind == REB_ISSUE) {
             if (nullptr == Scan_Issue(out, bp, size))
@@ -98,7 +98,7 @@ REB_R MAKE_Word(Value* out, enum Reb_Kind kind, const Value* arg)
         return out;
     }
     else if (IS_CHAR(arg)) {
-        REBYTE buf[8];
+        Byte buf[8];
         REBLEN len = Encode_UTF8_Char(&buf[0], VAL_CHAR(arg));
         if (nullptr == Scan_Any_Word(out, kind, &buf[0], len))
             fail (Error_Bad_Char_Raw(arg));
@@ -198,7 +198,7 @@ REB_R PD_Word(
                 return nullptr;
 
             REBSIZ size = SER_LEN(str);
-            const REBYTE *bp = cb_cast(Symbol_Head(str));
+            const Byte *bp = cb_cast(Symbol_Head(str));
             REBUNI c;
             do {
                 if (size == 0)
@@ -247,7 +247,7 @@ REBTYPE(Word)
         switch (property) {
         case SYM_LENGTH: {
             Symbol* symbol = Cell_Word_Symbol(val);
-            const REBYTE *bp = cb_cast(Symbol_Head(symbol));
+            const Byte *bp = cb_cast(Symbol_Head(symbol));
             REBSIZ size = Symbol_Size(symbol);
             REBLEN len = 0;
             for (; size > 0; ++bp, --size) {

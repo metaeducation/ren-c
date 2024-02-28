@@ -47,7 +47,7 @@ static REBARR *Read_Dir_May_Fail(struct devreq_file *dir)
 
     REBREQ *req = AS_REBREQ(dir);
     req->modes |= RFM_DIR;
-    req->common.data = cast(REBYTE*, &file);
+    req->common.data = cast(Byte*, &file);
 
     REBDSP dsp_orig = DSP;
 
@@ -151,7 +151,7 @@ static REB_R Dir_Actor(REBFRM *frame_, Value* port, Value* verb)
 
     Value* state = CTX_VAR(ctx, STD_PORT_STATE); // BLOCK! means port open
 
-    //const REBYTE *flags = Security_Policy(SYM_FILE, path);
+    //const Byte *flags = Security_Policy(SYM_FILE, path);
 
     // Get or setup internal state data:
 
@@ -249,7 +249,7 @@ static REB_R Dir_Actor(REBFRM *frame_, Value* port, Value* verb)
         Init_Dir_Path(&dir, path, POL_WRITE); // Sets RFM_DIR
 
         UNUSED(ARG(from)); // implicit
-        dir.devreq.common.data = cast(REBYTE*, ARG(to)); // !!! hack!
+        dir.devreq.common.data = cast(Byte*, ARG(to)); // !!! hack!
 
         Value* result = OS_DO_DEVICE(&dir.devreq, RDC_RENAME);
         assert(result != nullptr); // should be synchronous

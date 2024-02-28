@@ -274,7 +274,7 @@ void Startup_Pools(REBINT scale)
     }
 
     // For pool lookup. Maps size to pool index. (See Find_Pool below)
-    PG_Pool_Map = ALLOC_N(REBYTE, (4 * MEM_BIG_SIZE) + 1);
+    PG_Pool_Map = ALLOC_N(Byte, (4 * MEM_BIG_SIZE) + 1);
 
     // sizes 0 - 8 are pool 0
     for (n = 0; n <= 8; n++) PG_Pool_Map[n] = 0;
@@ -351,7 +351,7 @@ void Shutdown_Pools(void)
 
     FREE_N(REBPOL, MAX_POOLS, Mem_Pools);
 
-    FREE_N(REBYTE, (4 * MEM_BIG_SIZE) + 1, PG_Pool_Map);
+    FREE_N(Byte, (4 * MEM_BIG_SIZE) + 1, PG_Pool_Map);
 
     // !!! Revisit location (just has to be after all series are freed)
     FREE_N(REBSER*, MAX_EXPAND_LIST, Prior_Expand);
@@ -441,7 +441,7 @@ void Fill_Pool(REBPOL *pool)
 
         // Can't use NOD() here because it tests for NODE_FLAG_FREE
         //
-        node->next_if_free = cast(REBNOD*, cast(REBYTE*, node) + pool->wide);
+        node->next_if_free = cast(REBNOD*, cast(Byte*, node) + pool->wide);
         node = node->next_if_free;
     }
 
@@ -708,7 +708,7 @@ void Expand_Series(REBSER *s, REBLEN index, REBLEN delta)
 
     REBLEN len_old = SER_LEN(s);
 
-    REBYTE wide = SER_WIDE(s);
+    Byte wide = SER_WIDE(s);
 
     const bool was_dynamic = IS_SER_DYNAMIC(s);
 
@@ -921,11 +921,11 @@ void Swap_Series_Content(REBSER* a, REBSER* b)
     // the node itself, the width (right 8 bits), etc.  Note that the length
     // of non-dynamic series lives in the info.
 
-    REBYTE a_wide = WIDE_BYTE_OR_0(a); // indicates array if 0
+    Byte a_wide = WIDE_BYTE_OR_0(a); // indicates array if 0
     WIDE_BYTE_OR_0(a) = WIDE_BYTE_OR_0(b);
     WIDE_BYTE_OR_0(b) = a_wide;
 
-    REBYTE a_len = LEN_BYTE_OR_255(a); // indicates dynamic if 255
+    Byte a_len = LEN_BYTE_OR_255(a); // indicates dynamic if 255
     LEN_BYTE_OR_255(a) = LEN_BYTE_OR_255(b);
     LEN_BYTE_OR_255(b) = a_len;
 
@@ -956,7 +956,7 @@ void Swap_Series_Content(REBSER* a, REBSER* b)
 // Reallocate a series as a given maximum size.  Content in the retained
 // portion of the length will be preserved if NODE_FLAG_NODE is passed in.
 //
-void Remake_Series(REBSER *s, REBLEN units, REBYTE wide, REBFLGS flags)
+void Remake_Series(REBSER *s, REBLEN units, Byte wide, REBFLGS flags)
 {
     // !!! This routine is being scaled back in terms of what it's allowed to
     // do for the moment; so the method of passing in flags is a bit strange.
@@ -966,7 +966,7 @@ void Remake_Series(REBSER *s, REBLEN units, REBYTE wide, REBFLGS flags)
     bool preserve = did (flags & NODE_FLAG_NODE);
 
     REBLEN len_old = SER_LEN(s);
-    REBYTE wide_old = SER_WIDE(s);
+    Byte wide_old = SER_WIDE(s);
 
   #if !defined(NDEBUG)
     if (preserve)
@@ -1060,7 +1060,7 @@ void Decay_Series(REBSER *s)
     }
 
     if (IS_SER_DYNAMIC(s)) {
-        REBYTE wide = SER_WIDE(s);
+        Byte wide = SER_WIDE(s);
         REBLEN bias = SER_BIAS(s);
         REBLEN total = (bias + SER_REST(s)) * wide;
         char *unbiased = s->content.dynamic.data - (wide * bias);

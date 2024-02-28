@@ -160,7 +160,7 @@ void Value_To_Int64(Value* out, const Value* value, bool no_sign)
         // attempts to "future-proof" for other integer sizes and as an
         // interface could support BigNums in the future.
 
-        REBYTE *bp = Cell_Binary_At(value);
+        Byte *bp = Cell_Binary_At(value);
         REBLEN n = VAL_LEN_AT(value);
         bool negative;
         REBINT fill;
@@ -264,7 +264,7 @@ void Value_To_Int64(Value* out, const Value* value, bool no_sign)
         // who rarely do 2s-complement math in their head.
 
         Symbol* symbol= Cell_Word_Symbol(value);
-        const REBYTE *bp = cb_cast(Symbol_Head(symbol));
+        const Byte *bp = cb_cast(Symbol_Head(symbol));
         size_t size = Symbol_Size(symbol);
 
         if (size > MAX_HEX_LEN) {
@@ -286,7 +286,7 @@ void Value_To_Int64(Value* out, const Value* value, bool no_sign)
     else if (ANY_STRING(value)) {
         REBSIZ size;
         const REBLEN max_len = VAL_LEN_AT(value); // e.g. "no maximum"
-        REBYTE *bp = Analyze_String_For_Scan(&size, value, max_len);
+        Byte *bp = Analyze_String_For_Scan(&size, value, max_len);
         if (
             memchr(bp, '.', size)
             || memchr(bp, 'e', size)
@@ -365,7 +365,7 @@ void MF_Integer(REB_MOLD *mo, const Cell* v, bool form)
 {
     UNUSED(form);
 
-    REBYTE buf[60];
+    Byte buf[60];
     REBINT len = Emit_Integer(buf, VAL_INT64(v));
     Append_Unencoded_Len(mo->series, s_cast(buf), len);
 }
@@ -642,7 +642,7 @@ DECLARE_NATIVE(enbin)
     REBSER* bin = Make_Binary(num_bytes);
 
     REBINT delta = little ? 1 : -1;
-    REBYTE* bp = Binary_Head(bin);
+    Byte* bp = Binary_Head(bin);
     if (not little)
         bp += num_bytes - 1;  // go backwards for big endian
 
@@ -758,7 +758,7 @@ DECLARE_NATIVE(debin)
     // to be correct for starters...
 
     REBINT delta = little ? -1 : 1;
-    REBYTE* bp = Cell_Binary_At(ARG(binary));
+    Byte* bp = Cell_Binary_At(ARG(binary));
     if (little)
         bp += num_bytes - 1;  // go backwards
 

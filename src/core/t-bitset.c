@@ -253,7 +253,7 @@ void Set_Bit(REBSER *bset, REBLEN n, bool set)
 {
     REBLEN i = n >> 3;
     REBLEN tail = SER_LEN(bset);
-    REBYTE bit;
+    Byte bit;
 
     // Expand if not enough room:
     if (i >= tail) {
@@ -295,7 +295,7 @@ bool Set_Bits(REBSER *bset, const Value* val, bool set)
     if (IS_BINARY(val)) {
         REBLEN i = VAL_INDEX(val);
 
-        REBYTE *bp = VAL_BIN_HEAD(val);
+        Byte *bp = VAL_BIN_HEAD(val);
         for (; i != VAL_LEN_HEAD(val); i++)
             Set_Bit(bset, bp[i], set);
 
@@ -432,7 +432,7 @@ bool Check_Bits(REBSER *bset, const Value* val, bool uncased)
 
     if (IS_BINARY(val)) {
         REBLEN i = VAL_INDEX(val);
-        REBYTE *bp = VAL_BIN_HEAD(val);
+        Byte *bp = VAL_BIN_HEAD(val);
         for (; i != VAL_LEN_HEAD(val); ++i)
             if (Check_Bit(bset, bp[i], uncased))
                 return true;
@@ -562,7 +562,7 @@ REB_R PD_Bitset(
 void Trim_Tail_Zeros(REBSER *ser)
 {
     REBLEN len = SER_LEN(ser);
-    REBYTE *bp = Binary_Head(ser);
+    Byte *bp = Binary_Head(ser);
 
     while (len > 0 && bp[len] == 0)
         len--;

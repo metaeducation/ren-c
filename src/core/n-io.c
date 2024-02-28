@@ -129,7 +129,7 @@ DECLARE_NATIVE(write_stdout)
         //
         if (VAL_CHAR(v) > 0x7f)
             fail ("non-ASCII CHAR! output temporarily disabled.");
-        Prin_OS_String(cast(REBYTE*, &VAL_CHAR(v)), 1, OPT_ENC_0);
+        Prin_OS_String(cast(Byte*, &VAL_CHAR(v)), 1, OPT_ENC_0);
     }
     else {
         // !!! Temporary until UTF-8 Everywhere: translate string into UTF-8.

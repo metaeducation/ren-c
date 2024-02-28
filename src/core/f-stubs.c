@@ -325,12 +325,12 @@ Value* Init_Any_Series_At_Core(
 //
 //  Set_Tuple: C
 //
-void Set_Tuple(Value* value, REBYTE *bytes, REBLEN len)
+void Set_Tuple(Value* value, Byte *bytes, REBLEN len)
 {
-    REBYTE *bp;
+    Byte *bp;
 
     RESET_CELL(value, REB_TUPLE);
-    VAL_TUPLE_LEN(value) = (REBYTE)len;
+    VAL_TUPLE_LEN(value) = (Byte)len;
     for (bp = VAL_TUPLE(value); len > 0; len--)
         *bp++ = *bytes++;
 }

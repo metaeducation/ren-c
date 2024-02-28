@@ -37,7 +37,7 @@
 // Returns true if byte string does not use upper code page
 // (e.g. no 128-255 characters)
 //
-bool All_Bytes_ASCII(REBYTE *bp, REBLEN len)
+bool All_Bytes_ASCII(Byte *bp, REBLEN len)
 {
     for (; len > 0; len--, bp++)
         if (*bp >= 0x80)
@@ -63,7 +63,7 @@ bool All_Bytes_ASCII(REBYTE *bp, REBLEN len)
 // with the scan.  Leverages Temp_UTF8_At_Managed, so the pointer that is
 // returned could be GC'd if it's not guarded and evaluator logic runs.
 //
-REBYTE *Analyze_String_For_Scan(
+Byte *Analyze_String_For_Scan(
     REBSIZ *opt_size_out,
     const Value* any_string,
     REBLEN max_len // maximum length in *codepoints*
@@ -184,8 +184,8 @@ Binary* Temp_UTF8_At_Managed(
 //
 REBSER *Xandor_Binary(Value* verb, Value* value, Value* arg)
 {
-    REBYTE *p0 = Cell_Binary_At(value);
-    REBYTE *p1 = Cell_Binary_At(arg);
+    Byte *p0 = Cell_Binary_At(value);
+    Byte *p1 = Cell_Binary_At(arg);
 
     REBLEN t0 = VAL_LEN_AT(value);
     REBLEN t1 = VAL_LEN_AT(arg);
@@ -222,7 +222,7 @@ REBSER *Xandor_Binary(Value* verb, Value* value, Value* arg)
         TERM_SEQUENCE_LEN(series, t2);
     }
 
-    REBYTE *p2 = Binary_Head(series);
+    Byte *p2 = Binary_Head(series);
 
     switch (Cell_Word_Id(verb)) {
     case SYM_INTERSECT: { // and
@@ -270,13 +270,13 @@ REBSER *Xandor_Binary(Value* verb, Value* value, Value* arg)
 //
 REBSER *Complement_Binary(Value* value)
 {
-    const REBYTE *bp = Cell_Binary_At(value);
+    const Byte *bp = Cell_Binary_At(value);
     REBLEN len = VAL_LEN_AT(value);
 
     REBSER *bin = Make_Binary(len);
     TERM_SEQUENCE_LEN(bin, len);
 
-    REBYTE *dp = Binary_Head(bin);
+    Byte *dp = Binary_Head(bin);
     for (; len > 0; len--, ++bp, ++dp)
         *dp = ~(*bp);
 
@@ -313,7 +313,7 @@ void Shuffle_String(Value* value, bool secure)
 //
 // Used to trim off hanging spaces during FORM and MOLD.
 //
-void Trim_Tail(REBSER *src, REBYTE chr)
+void Trim_Tail(REBSER *src, Byte chr)
 {
     assert(BYTE_SIZE(src)); // mold buffer
 
@@ -354,13 +354,13 @@ void Change_Case(Value* out, Value* val, Value* part, bool upper)
     REBLEN n = 0;
 
     if (VAL_BYTE_SIZE(val)) {
-        REBYTE *bp = Cell_Binary_At(val);
+        Byte *bp = Cell_Binary_At(val);
         if (upper)
             for (; n != len; n++)
-                bp[n] = cast(REBYTE, UP_CASE(bp[n]));
+                bp[n] = cast(Byte, UP_CASE(bp[n]));
         else {
             for (; n != len; n++)
-                bp[n] = cast(REBYTE, LO_CASE(bp[n]));
+                bp[n] = cast(Byte, LO_CASE(bp[n]));
         }
     } else {
         REBUNI *up = Cell_String_At(val);

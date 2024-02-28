@@ -357,7 +357,7 @@ INLINE void Set_Frame_Detected_Fetch(
             &ss,
             Intern("sys-do.h"),
             start_line,
-            cast(const REBYTE*, p),
+            cast(const Byte*, p),
             f->source->vaptr
         );
 

@@ -335,7 +335,7 @@ INLINE union Reb_Header Endlike_Header(uintptr_t bits) {
 
 #if defined(DEBUG_TRACK_CELLS)
     struct Reb_Track_Payload {
-        const char *file; // is REBYTE (UTF-8), but char* for debug watch
+        const char *file; // is Byte (UTF-8), but char* for debug watch
         int line;
     };
 #endif
@@ -368,7 +368,7 @@ struct Reb_Time_Payload {
 };
 
 typedef struct Reb_Tuple_Payload {
-    REBYTE tuple[8];
+    Byte tuple[8];
 } REBTUP;
 
 

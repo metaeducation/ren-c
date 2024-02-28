@@ -91,7 +91,7 @@ void Trace_Value(
 //
 //  Trace_String: C
 //
-void Trace_String(const REBYTE *str, REBINT limit)
+void Trace_String(const Byte *str, REBINT limit)
 {
     static char tracebuf[64];
     int len = MIN(60, limit);

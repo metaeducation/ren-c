@@ -42,37 +42,37 @@
 #if !defined(SHA_DEFINED) && defined(HAS_SHA1)
     // make-headers.r outputs a prototype already, because it is used by cloak
     // (triggers warning -Wredundant-decls)
-    // REBYTE *SHA1(REBYTE *, REBLEN, REBYTE *);
+    // Byte *SHA1(Byte *, REBLEN, Byte *);
 
     EXTERN_C void SHA1_Init(void *c);
-    EXTERN_C void SHA1_Update(void *c, REBYTE *data, REBLEN len);
-    EXTERN_C void SHA1_Final(REBYTE *md, void *c);
+    EXTERN_C void SHA1_Update(void *c, Byte *data, REBLEN len);
+    EXTERN_C void SHA1_Final(Byte *md, void *c);
     EXTERN_C int SHA1_CtxSize(void);
 #endif
 
 #if !defined(MD5_DEFINED) && defined(HAS_MD5)
     EXTERN_C void MD5_Init(void *c);
-    EXTERN_C void MD5_Update(void *c, REBYTE *data, REBLEN len);
-    EXTERN_C void MD5_Final(REBYTE *md, void *c);
+    EXTERN_C void MD5_Update(void *c, Byte *data, REBLEN len);
+    EXTERN_C void MD5_Final(Byte *md, void *c);
     EXTERN_C int MD5_CtxSize(void);
 #endif
 
 #ifdef HAS_MD4
-    REBYTE *MD4(REBYTE *, REBLEN, REBYTE *);
+    Byte *MD4(Byte *, REBLEN, Byte *);
 
     EXTERN_C void MD4_Init(void *c);
-    EXTERN_C void MD4_Update(void *c, REBYTE *data, REBLEN len);
-    EXTERN_ void MD4_Final(REBYTE *md, void *c);
+    EXTERN_C void MD4_Update(void *c, Byte *data, REBLEN len);
+    EXTERN_ void MD4_Final(Byte *md, void *c);
     EXTERN_C int MD4_CtxSize(void);
 #endif
 
 
 // Table of has functions and parameters:
 static struct {
-    REBYTE *(*digest)(REBYTE *, REBLEN, REBYTE *);
+    Byte *(*digest)(Byte *, REBLEN, Byte *);
     void (*init)(void *);
-    void (*update)(void *, REBYTE *, REBLEN);
-    void (*final)(REBYTE *, void *);
+    void (*update)(void *, Byte *, REBLEN);
+    void (*final)(Byte *, void *);
     int (*ctxsize)(void);
     SymId sym;
     REBLEN len;
@@ -175,7 +175,7 @@ DECLARE_NATIVE(checksum)
     REBLEN len = Part_Len_May_Modify_Index(arg, ARG(limit));
     UNUSED(REF(part)); // checked by if limit is nulled
 
-    REBYTE *data = VAL_RAW_DATA_AT(arg); // after Partial() in case of change
+    Byte *data = VAL_RAW_DATA_AT(arg); // after Partial() in case of change
     REBLEN wide = SER_WIDE(VAL_SERIES(arg));
 
     SymId sym;
@@ -228,9 +228,9 @@ DECLARE_NATIVE(checksum)
 
                 REBLEN blocklen = digests[i].hmacblock;
 
-                REBYTE tmpdigest[20]; // size must be max of all digest[].len
+                Byte tmpdigest[20]; // size must be max of all digest[].len
 
-                REBYTE *keycp;
+                Byte *keycp;
                 REBSIZ keylen;
                 if (IS_BINARY(key)) {
                     keycp = Cell_Binary_At(key);
@@ -253,11 +253,11 @@ DECLARE_NATIVE(checksum)
                     keylen = digests[i].len;
                 }
 
-                REBYTE ipad[64]; // size must be max of all digest[].hmacblock
+                Byte ipad[64]; // size must be max of all digest[].hmacblock
                 memset(ipad, 0, blocklen);
                 memcpy(ipad, keycp, keylen);
 
-                REBYTE opad[64]; // size must be max of all digest[].hmacblock
+                Byte opad[64]; // size must be max of all digest[].hmacblock
                 memset(opad, 0, blocklen);
                 memcpy(opad, keycp, keylen);
 
@@ -332,10 +332,10 @@ DECLARE_NATIVE(deflate)
     UNUSED(PAR(part)); // checked by if limit is nulled
 
     REBSIZ size;
-    REBYTE *bp;
+    Byte *bp;
     if (IS_BINARY(data)) {
         bp = Cell_Binary_At(data);
-        size = len; // width = sizeof(REBYTE), so limit = len
+        size = len; // width = sizeof(Byte), so limit = len
     }
     else {
         REBSIZ offset;
@@ -502,7 +502,7 @@ DECLARE_NATIVE(enbase)
     Value* v = ARG(value);
 
     REBSIZ size;
-    REBYTE *bp;
+    Byte *bp;
     if (IS_BINARY(v)) {
         bp = Cell_Binary_At(v);
         size = VAL_LEN_AT(v);
@@ -591,7 +591,7 @@ DECLARE_NATIVE(enhex)
     // is smarter and expands the buffer on-demand so routines like this don't
     // need to preallocate it.
     //
-    REBYTE *dp = Prep_Mold_Overestimated(mo, len * 12);
+    Byte *dp = Prep_Mold_Overestimated(mo, len * 12);
 
     REBSER *s = VAL_SERIES(ARG(string));
 
@@ -599,7 +599,7 @@ DECLARE_NATIVE(enhex)
     for (; i < len; ++i) {
         REBUNI c = GET_ANY_CHAR(s, i);
 
-        REBYTE encoded[4];
+        Byte encoded[4];
         REBLEN encoded_size;
 
         if (c > 0x80) // all non-ASCII characters *must* be percent encoded
@@ -610,7 +610,7 @@ DECLARE_NATIVE(enhex)
             // be retooled to help more with this.  For now just use it to
             // speed things up a little.
 
-            encoded[0] = cast(REBYTE, c);
+            encoded[0] = cast(Byte, c);
             encoded_size = 1;
 
             switch (GET_LEX_CLASS(c)) {
@@ -735,13 +735,13 @@ DECLARE_NATIVE(dehex)
     // Conservatively assume no %NNs, and output is same length as input, with
     // all codepoints expanding to 4 bytes.
     //
-    REBYTE *dp = Prep_Mold_Overestimated(mo, len * 4);
+    Byte *dp = Prep_Mold_Overestimated(mo, len * 4);
 
     // RFC 3986 says the encoding/decoding must use UTF-8.  This temporary
     // buffer is used to hold up to 4 bytes (and a terminator) that need
     // UTF-8 decoding--the maximum one UTF-8 encoded codepoint may have.
     //
-    REBYTE scan[5];
+    Byte scan[5];
     REBSIZ scan_size = 0;
 
     REBSER *s = VAL_SERIES(ARG(string));
@@ -759,16 +759,16 @@ DECLARE_NATIVE(dehex)
             if (i + 2 >= len)
                fail ("Percent decode has less than two codepoints after %");
 
-            REBYTE lex1 = Lex_Map[GET_ANY_CHAR(s, i + 1)];
-            REBYTE lex2 = Lex_Map[GET_ANY_CHAR(s, i + 2)];
+            Byte lex1 = Lex_Map[GET_ANY_CHAR(s, i + 1)];
+            Byte lex2 = Lex_Map[GET_ANY_CHAR(s, i + 2)];
             i += 3;
 
             // If class LEX_WORD or LEX_NUMBER, there is a value contained in
             // the mask which is the value of that "digit".  So A-F and
             // a-f can quickly get their numeric values.
             //
-            REBYTE d1 = lex1 & LEX_VALUE;
-            REBYTE d2 = lex2 & LEX_VALUE;
+            Byte d1 = lex1 & LEX_VALUE;
+            Byte d2 = lex2 & LEX_VALUE;
 
             if (
                 lex1 < LEX_WORD or (d1 == 0 and lex1 < LEX_NUMBER)
@@ -781,7 +781,7 @@ DECLARE_NATIVE(dehex)
             // need to consider it a "flushing point" for the scan buffer,
             // in order to not gloss over incomplete UTF-8 sequences.
             //
-            REBYTE b = (d1 << 4) + d2;
+            Byte b = (d1 << 4) + d2;
             scan[scan_size++] = b;
         }
 
@@ -797,7 +797,7 @@ DECLARE_NATIVE(dehex)
 
         decode_codepoint:
             scan[scan_size] = '\0';
-            const REBYTE *next; // goto would cross initialization
+            const Byte *next; // goto would cross initialization
             REBUNI decoded;
             if (scan[0] < 0x80) {
                 decoded = scan[0];
@@ -993,7 +993,7 @@ DECLARE_NATIVE(entab)
     Push_Mold(mo);
 
     REBLEN len = VAL_LEN_AT(val);
-    REBYTE *dp = Prep_Mold_Overestimated(mo, len * 4); // max UTF-8 charsize
+    Byte *dp = Prep_Mold_Overestimated(mo, len * 4); // max UTF-8 charsize
 
     Ucs2(const*) up = Cell_String_At(val);
     REBLEN index = VAL_INDEX(val);
@@ -1014,7 +1014,7 @@ DECLARE_NATIVE(entab)
 
         // Hitting a leading TAB resets space counter:
         if (c == '\t') {
-            *dp++ = cast(REBYTE, c);
+            *dp++ = cast(Byte, c);
             n = 0;
         }
         else {
@@ -1084,7 +1084,7 @@ DECLARE_NATIVE(detab)
 
     Push_Mold(mo);
 
-    REBYTE *dp = Prep_Mold_Overestimated(
+    Byte *dp = Prep_Mold_Overestimated(
         mo,
         (len * 4) // assume worst case, all characters encode UTF-8 4 bytes
             + (count * (tabsize - 1)) // expanded tabs add tabsize - 1 to len
@@ -1181,9 +1181,9 @@ DECLARE_NATIVE(to_hex)
 
     Value* arg = ARG(value);
 
-    REBYTE buffer[(MAX_TUPLE * 2) + 4];  // largest value possible
+    Byte buffer[(MAX_TUPLE * 2) + 4];  // largest value possible
 
-    REBYTE *buf = &buffer[0];
+    Byte *buf = &buffer[0];
 
     REBINT len;
     if (REF(size)) {
@@ -1264,7 +1264,7 @@ DECLARE_NATIVE(invalid_utf8_q)
 
     Value* arg = ARG(data);
 
-    REBYTE *bp = Check_UTF8(Cell_Binary_At(arg), VAL_LEN_AT(arg));
+    Byte *bp = Check_UTF8(Cell_Binary_At(arg), VAL_LEN_AT(arg));
     if (not bp)
         return nullptr;
 

@@ -345,9 +345,9 @@ DECLARE_NATIVE(of)
 // Note, this function relies on LEX_WORD lex values having a LEX_VALUE
 // field of zero, except for hex values.
 //
-const REBYTE *Scan_Hex(
+const Byte *Scan_Hex(
     Value* out,
-    const REBYTE *cp,
+    const Byte *cp,
     REBLEN minlen,
     REBLEN maxlen
 ) {
@@ -358,12 +358,12 @@ const REBYTE *Scan_Hex(
 
     REBI64 i = 0;
     REBLEN cnt = 0;
-    REBYTE lex;
+    Byte lex;
     while ((lex = Lex_Map[*cp]) > LEX_WORD) {
-        REBYTE v;
+        Byte v;
         if (++cnt > maxlen)
             return_NULL;
-        v = cast(REBYTE, lex & LEX_VALUE); // char num encoded into lex
+        v = cast(Byte, lex & LEX_VALUE); // char num encoded into lex
         if (!v && lex < LEX_NUMBER)
             return_NULL;  // invalid char (word but no val)
         i = (i << 4) + v;
@@ -398,18 +398,18 @@ bool Scan_Hex2(REBUNI *out, const void *p, bool unicode)
         c2 = up[1];
     }
     else {
-        const REBYTE *bp = cast(const REBYTE*, p);
+        const Byte *bp = cast(const Byte*, p);
         c1 = bp[0];
         c2 = bp[1];
     }
 
-    REBYTE lex1 = Lex_Map[c1];
-    REBYTE d1 = lex1 & LEX_VALUE;
+    Byte lex1 = Lex_Map[c1];
+    Byte d1 = lex1 & LEX_VALUE;
     if (lex1 < LEX_WORD || (d1 == 0 && lex1 < LEX_NUMBER))
         return false;
 
-    REBYTE lex2 = Lex_Map[c2];
-    REBYTE d2 = lex2 & LEX_VALUE;
+    Byte lex2 = Lex_Map[c2];
+    Byte d2 = lex2 & LEX_VALUE;
     if (lex2 < LEX_WORD || (d2 == 0 && lex2 < LEX_NUMBER))
         return false;
 
@@ -429,17 +429,17 @@ bool Scan_Hex2(REBUNI *out, const void *p, bool unicode)
 //
 // !!! Is this redundant with Scan_Decimal?  Appears to be similar code.
 //
-const REBYTE *Scan_Dec_Buf(
-    REBYTE *out, // may live in data stack (do not call DS_PUSH, GC, eval)
+const Byte *Scan_Dec_Buf(
+    Byte *out, // may live in data stack (do not call DS_PUSH, GC, eval)
     bool *found_point,  // found a comma or a dot
-    const REBYTE *cp,
+    const Byte *cp,
     REBLEN len // max size of buffer
 ) {
     assert(len >= MAX_NUM_LEN);
     *found_point = false;
 
-    REBYTE *bp = out;
-    REBYTE *be = bp + len - 1;
+    Byte *bp = out;
+    Byte *be = bp + len - 1;
 
     if (*cp == '+' || *cp == '-')
         *bp++ = *cp++;
@@ -513,20 +513,20 @@ const REBYTE *Scan_Dec_Buf(
 //
 // Scan and convert a decimal value.  Return zero if error.
 //
-const REBYTE *Scan_Decimal(
+const Byte *Scan_Decimal(
     Value* out, // may live in data stack (do not call DS_PUSH, GC, eval)
-    const REBYTE *cp,
+    const Byte *cp,
     REBLEN len,
     bool dec_only
 ) {
     TRASH_CELL_IF_DEBUG(out);
 
-    REBYTE buf[MAX_NUM_LEN + 4];
-    REBYTE *ep = buf;
+    Byte buf[MAX_NUM_LEN + 4];
+    Byte *ep = buf;
     if (len > MAX_NUM_LEN)
         return_NULL;
 
-    const REBYTE *bp = cp;
+    const Byte *bp = cp;
 
     if (*cp == '+' || *cp == '-')
         *ep++ = *cp++;
@@ -607,9 +607,9 @@ const REBYTE *Scan_Decimal(
 // Scan and convert an integer value.  Return zero if error.
 // Allow preceding + - and any combination of ' marks.
 //
-const REBYTE *Scan_Integer(
+const Byte *Scan_Integer(
     Value* out, // may live in data stack (do not call DS_PUSH, GC, eval)
-    const REBYTE *cp,
+    const Byte *cp,
     REBLEN len
 ) {
     TRASH_CELL_IF_DEBUG(out);
@@ -626,11 +626,11 @@ const REBYTE *Scan_Integer(
          }
     }
 
-    REBYTE buf[MAX_NUM_LEN + 4];
+    Byte buf[MAX_NUM_LEN + 4];
     if (len > MAX_NUM_LEN)
         return_NULL; // prevent buffer overflow
 
-    REBYTE *bp = buf;
+    Byte *bp = buf;
 
     bool neg = false;
 
@@ -702,14 +702,14 @@ const REBYTE *Scan_Integer(
 //
 // Scan and convert money.  Return zero if error.
 //
-const REBYTE *Scan_Money(
+const Byte *Scan_Money(
     Value* out, // may live in data stack (do not call DS_PUSH, GC, eval)
-    const REBYTE *cp,
+    const Byte *cp,
     REBLEN len
 ) {
     TRASH_CELL_IF_DEBUG(out);
 
-    const REBYTE *end;
+    const Byte *end;
 
     if (*cp == '$') {
         ++cp;
@@ -731,20 +731,20 @@ const REBYTE *Scan_Money(
 //
 // Scan and convert a date. Also can include a time and zone.
 //
-const REBYTE *Scan_Date(
+const Byte *Scan_Date(
     Value* out, // may live in data stack (do not call DS_PUSH, GC, eval)
-    const REBYTE *cp,
+    const Byte *cp,
     REBLEN len
 ) {
     TRASH_CELL_IF_DEBUG(out);
 
-    const REBYTE *end = cp + len;
+    const Byte *end = cp + len;
 
     // Skip spaces:
     for (; *cp == ' ' && cp != end; cp++);
 
     // Skip day name, comma, and spaces:
-    const REBYTE *ep;
+    const Byte *ep;
     for (ep = cp; *ep != ',' && ep != end; ep++);
     if (ep != end) {
         cp = ep + 1;
@@ -792,7 +792,7 @@ const REBYTE *Scan_Date(
     if (*cp != '/' && *cp != '-' && *cp != '.' && *cp != ' ')
         return_NULL;
 
-    REBYTE sep = *cp++;
+    Byte sep = *cp++;
 
     // Month as number or name:
     ep = Grab_Int(cp, &num);
@@ -979,9 +979,9 @@ end_date:
 //
 // Scan and convert a file name.
 //
-const REBYTE *Scan_File(
+const Byte *Scan_File(
     Value* out, // may live in data stack (do not call DS_PUSH, GC, eval)
-    const REBYTE *cp,
+    const Byte *cp,
     REBLEN len
 ) {
     TRASH_CELL_IF_DEBUG(out);
@@ -992,7 +992,7 @@ const REBYTE *Scan_File(
     }
 
     REBUNI term = 0;
-    const REBYTE *invalid;
+    const Byte *invalid;
     if (*cp == '"') {
         cp++;
         len--;
@@ -1022,9 +1022,9 @@ const REBYTE *Scan_File(
 //
 // Scan and convert email.
 //
-const REBYTE *Scan_Email(
+const Byte *Scan_Email(
     Value* out, // may live in data stack (do not call DS_PUSH, GC, eval)
-    const REBYTE *cp,
+    const Byte *cp,
     REBLEN len
 ) {
     TRASH_CELL_IF_DEBUG(out);
@@ -1093,9 +1093,9 @@ const REBYTE *Scan_Email(
 // (This is similar to how local FILE!s, where e.g. slashes become backslash
 // on Windows, are expressed as STRING!.)
 //
-const REBYTE *Scan_URL(
+const Byte *Scan_URL(
     Value* out, // may live in data stack (do not call DS_PUSH, GC, eval)
-    const REBYTE *cp,
+    const Byte *cp,
     REBLEN len
 ){
     return Scan_Any(out, cp, len, REB_URL);
@@ -1107,17 +1107,17 @@ const REBYTE *Scan_URL(
 //
 // Scan and convert a pair
 //
-const REBYTE *Scan_Pair(
+const Byte *Scan_Pair(
     Value* out, // may live in data stack (do not call DS_PUSH, GC, eval)
-    const REBYTE *cp,
+    const Byte *cp,
     REBLEN len
 ) {
     TRASH_CELL_IF_DEBUG(out);
 
-    REBYTE buf[MAX_NUM_LEN + 4];
+    Byte buf[MAX_NUM_LEN + 4];
 
     bool found_x_point;
-    const REBYTE *ep = Scan_Dec_Buf(&buf[0], &found_x_point, cp, MAX_NUM_LEN);
+    const Byte *ep = Scan_Dec_Buf(&buf[0], &found_x_point, cp, MAX_NUM_LEN);
     if (ep == nullptr)
         return_NULL;
     if (*ep != 'x' && *ep != 'X')
@@ -1135,7 +1135,7 @@ const REBYTE *Scan_Pair(
     ep++;
 
     bool found_y_point;
-    const REBYTE *xp = Scan_Dec_Buf(&buf[0], &found_y_point, ep, MAX_NUM_LEN);
+    const Byte *xp = Scan_Dec_Buf(&buf[0], &found_y_point, ep, MAX_NUM_LEN);
     if (!xp) {
         Free_Pairing(out->payload.pair);
         return_NULL;
@@ -1161,9 +1161,9 @@ const REBYTE *Scan_Pair(
 //
 // Scan and convert a tuple.
 //
-const REBYTE *Scan_Tuple(
+const Byte *Scan_Tuple(
     Value* out, // may live in data stack (do not call DS_PUSH, GC, eval)
-    const REBYTE *cp,
+    const Byte *cp,
     REBLEN len
 ) {
     TRASH_CELL_IF_DEBUG(out);
@@ -1171,7 +1171,7 @@ const REBYTE *Scan_Tuple(
     if (len == 0)
         return_NULL;
 
-    const REBYTE *ep;
+    const Byte *ep;
     REBLEN size = 1;
     REBINT n;
     for (n = cast(REBINT, len), ep = cp; n > 0; n--, ep++) { // count '.'
@@ -1186,9 +1186,9 @@ const REBYTE *Scan_Tuple(
         size = 3;
 
     RESET_CELL(out, REB_TUPLE);
-    VAL_TUPLE_LEN(out) = cast(REBYTE, size);
+    VAL_TUPLE_LEN(out) = cast(Byte, size);
 
-    REBYTE *tp = VAL_TUPLE(out);
+    Byte *tp = VAL_TUPLE(out);
     memset(tp, 0, sizeof(REBTUP) - 2);
 
     for (ep = cp; len > cast(REBLEN, ep - cp); ++ep) {
@@ -1196,7 +1196,7 @@ const REBYTE *Scan_Tuple(
         if (n < 0 || n > 255)
             return_NULL;
 
-        *tp++ = cast(REBYTE, n);
+        *tp++ = cast(Byte, n);
         if (*ep != '.')
             break;
     }
@@ -1213,9 +1213,9 @@ const REBYTE *Scan_Tuple(
 //
 // Scan and convert binary strings.
 //
-const REBYTE *Scan_Binary(
+const Byte *Scan_Binary(
     Value* out, // may live in data stack (do not call DS_PUSH, GC, eval)
-    const REBYTE *cp,
+    const Byte *cp,
     REBLEN len
 ) {
     TRASH_CELL_IF_DEBUG(out);
@@ -1223,7 +1223,7 @@ const REBYTE *Scan_Binary(
     REBINT base = 16;
 
     if (*cp != '#') {
-        const REBYTE *ep = Grab_Int(cp, &base);
+        const Byte *ep = Grab_Int(cp, &base);
         if (cp == ep || *ep != '#')
             return_NULL;
         len -= cast(REBLEN, ep - cp);
@@ -1253,9 +1253,9 @@ const REBYTE *Scan_Binary(
 //
 // Scan any string that does not require special decoding.
 //
-const REBYTE *Scan_Any(
+const Byte *Scan_Any(
     Value* out, // may live in data stack (do not call DS_PUSH, GC, eval)
-    const REBYTE *cp,
+    const Byte *cp,
     REBLEN num_bytes,
     enum Reb_Kind type
 ) {
@@ -1308,11 +1308,11 @@ DECLARE_NATIVE(scan_net_header)
     REBLEN index = VAL_INDEX(header);
     REBSER *utf8 = VAL_SERIES(header);
 
-    REBYTE *cp = Binary_Head(utf8) + index;
+    Byte *cp = Binary_Head(utf8) + index;
 
     while (IS_LEX_ANY_SPACE(*cp)) cp++; // skip white space
 
-    REBYTE *start;
+    Byte *start;
     REBINT len;
 
     while (true) {

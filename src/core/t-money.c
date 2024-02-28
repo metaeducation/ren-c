@@ -73,9 +73,9 @@ REB_R MAKE_Money(Value* out, enum Reb_Kind kind, const Value* arg)
         return Move_Value(out, arg);
 
       case REB_TEXT: {
-        REBYTE *bp = Analyze_String_For_Scan(nullptr, arg, MAX_SCAN_MONEY);
+        Byte *bp = Analyze_String_For_Scan(nullptr, arg, MAX_SCAN_MONEY);
 
-        const REBYTE *end;
+        const Byte *end;
         Init_Money(out, string_to_deci(bp, &end));
         if (end == bp or *end != '\0')
             goto bad_make;
@@ -119,7 +119,7 @@ void MF_Money(REB_MOLD *mo, const Cell* v, bool form)
         // at least the limit.
     }
 
-    REBYTE buf[60];
+    Byte buf[60];
     REBINT len = deci_to_string(buf, VAL_MONEY_AMOUNT(v), '$', '.');
     Append_Unencoded_Len(mo->series, s_cast(buf), len);
 }
@@ -139,7 +139,7 @@ void Bin_To_Money_May_Fail(Value* result, const Value* val)
     if (len > 12)
         len = 12;
 
-    REBYTE buf[MAX_HEX_LEN+4] = {0}; // binary to convert
+    Byte buf[MAX_HEX_LEN+4] = {0}; // binary to convert
     memcpy(buf, Cell_Binary_At(val), len);
     memcpy(buf + 12 - len, buf, len); // shift to right side
     memset(buf, 0, 12 - len);

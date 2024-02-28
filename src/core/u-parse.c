@@ -884,7 +884,7 @@ static REBIXO To_Thru_Block_Rule(
                 }
             }
             else if (P_TYPE == REB_BINARY) {
-                REBYTE ch1 = *Binary_At(P_INPUT, pos);
+                Byte ch1 = *Binary_At(P_INPUT, pos);
 
                 // Handle special string types:
                 if (IS_CHAR(rule)) {

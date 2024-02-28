@@ -825,7 +825,7 @@ e-bootblock/emit {
      * is enough to sync up the referencing sites.
      */
     const REBLEN Nat_Compressed_Size = $<length of compressed>;
-    const REBYTE Native_Specs[$<length of compressed>] = {
+    const Byte Native_Specs[$<length of compressed>] = {
         $<Binary-To-C Compressed>
     };
 }
@@ -865,7 +865,7 @@ e-boot/emit {
      * Compressed data of the native specifications, uncompressed during boot.
      */
     EXTERN_C const REBLEN Nat_Compressed_Size;
-    EXTERN_C const REBYTE Native_Specs[];
+    EXTERN_C const Byte Native_Specs[];
 
     /*
      * Raw C function pointers for natives, take REBFRM* and return Value*.

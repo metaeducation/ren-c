@@ -82,7 +82,7 @@ INLINE Cell* ARR_SINGLE(REBARR *a) {
 INLINE REBARR *Singular_From_Cell(const Cell* v) {
     REBARR *singular = ARR( // some checking in debug builds is done by ARR()
         cast(void*,
-            cast(REBYTE*, m_cast(Cell*, v))
+            cast(Byte*, m_cast(Cell*, v))
             - offsetof(struct Reb_Series, content)
         )
     );

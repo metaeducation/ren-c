@@ -288,7 +288,7 @@ DECLARE_NATIVE(rsa)
 
     // !!! See notes above about direct binary access via libRebol
     //
-    REBYTE *dataBuffer = Cell_Binary_At(ARG(data));
+    Byte *dataBuffer = Cell_Binary_At(ARG(data));
     REBINT data_len = rebUnbox("length of", ARG(data));
 
     BI_CTX *bi_ctx = rsa_ctx->bi_ctx;
@@ -297,7 +297,7 @@ DECLARE_NATIVE(rsa)
     // Buffer suitable for recapturing as a BINARY! for either the encrypted
     // or decrypted data
     //
-    REBYTE *crypted = rebAllocN(REBYTE, binary_len);
+    Byte *crypted = rebAllocN(Byte, binary_len);
 
     if (REF(decrypt)) {
         int result = RSA_decrypt(
@@ -383,9 +383,9 @@ DECLARE_NATIVE(dh_generate_key)
     // Generate the private and public keys into memory that can be
     // rebRepossess()'d as the memory backing a BINARY! series
     //
-    dh_ctx.x = rebAllocN(REBYTE, dh_ctx.len); // x => private key
+    dh_ctx.x = rebAllocN(Byte, dh_ctx.len); // x => private key
     memset(dh_ctx.x, 0, dh_ctx.len);
-    dh_ctx.gx = rebAllocN(REBYTE, dh_ctx.len); // gx => public key
+    dh_ctx.gx = rebAllocN(Byte, dh_ctx.len); // gx => public key
     memset(dh_ctx.gx, 0, dh_ctx.len);
 
     DH_generate_key(&dh_ctx);
@@ -443,7 +443,7 @@ DECLARE_NATIVE(dh_compute_key)
     dh_ctx.gy = Cell_Binary_At(ARG(public_key));
     // !!! No length check here, should there be?
 
-    dh_ctx.k = rebAllocN(REBYTE, dh_ctx.len);
+    dh_ctx.k = rebAllocN(Byte, dh_ctx.len);
     memset(dh_ctx.k, 0, dh_ctx.len);
 
     DH_compute_key(&dh_ctx);
@@ -496,7 +496,7 @@ DECLARE_NATIVE(aes)
 
         AES_CTX *aes_ctx = VAL_HANDLE_POINTER(AES_CTX, ARG(ctx));
 
-        REBYTE *dataBuffer = Cell_Binary_At(ARG(data));
+        Byte *dataBuffer = Cell_Binary_At(ARG(data));
         REBINT len = VAL_LEN_AT(ARG(data));
 
         if (len == 0)
@@ -504,12 +504,12 @@ DECLARE_NATIVE(aes)
 
         REBINT pad_len = (((len - 1) >> 4) << 4) + AES_BLOCKSIZE;
 
-        REBYTE *pad_data;
+        Byte *pad_data;
         if (len < pad_len) {
             //
             //  make new data input with zero-padding
             //
-            pad_data = rebAllocN(REBYTE, pad_len);
+            pad_data = rebAllocN(Byte, pad_len);
             memset(pad_data, 0, pad_len);
             memcpy(pad_data, dataBuffer, len);
             dataBuffer = pad_data;
@@ -517,7 +517,7 @@ DECLARE_NATIVE(aes)
         else
             pad_data = nullptr;
 
-        REBYTE *data_out = rebAllocN(REBYTE, pad_len);
+        Byte *data_out = rebAllocN(Byte, pad_len);
         memset(data_out, 0, pad_len);
 
         if (aes_ctx->key_mode == AES_MODE_DECRYPT)
@@ -603,7 +603,7 @@ DECLARE_NATIVE(sha256)
 
     Value* data = ARG(data);
 
-    REBYTE *bp;
+    Byte *bp;
     REBSIZ size;
     if (IS_TEXT(data)) {
         REBSIZ offset;
@@ -624,7 +624,7 @@ DECLARE_NATIVE(sha256)
     sha256_init(&ctx);
     sha256_update(&ctx, bp, size);
 
-    REBYTE *buf = rebAllocN(REBYTE, SHA256_BLOCK_SIZE);
+    Byte *buf = rebAllocN(Byte, SHA256_BLOCK_SIZE);
     sha256_final(&ctx, buf);
     return rebRepossess(buf, SHA256_BLOCK_SIZE);
 }

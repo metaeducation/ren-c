@@ -75,7 +75,7 @@ REBI64 Join_Time(REB_TIMEF *tf, bool neg)
 //
 // Scan string and convert to time.  Return zero if error.
 //
-const REBYTE *Scan_Time(Value* out, const REBYTE *cp, REBLEN len)
+const Byte *Scan_Time(Value* out, const Byte *cp, REBLEN len)
 {
     TRASH_CELL_IF_DEBUG(out);
     cast(void, len); // !!! should len be paid attention to?
@@ -109,7 +109,7 @@ const REBYTE *Scan_Time(Value* out, const REBYTE *cp, REBLEN len)
     if (*cp++ != ':')
         return nullptr;
 
-    const REBYTE *sp;
+    const Byte *sp;
 
     REBINT part2 = -1;
     sp = Grab_Int(cp, &part2);
@@ -134,12 +134,12 @@ const REBYTE *Scan_Time(Value* out, const REBYTE *cp, REBLEN len)
             part4 = -1;
     }
 
-    REBYTE merid;
+    Byte merid;
     if (
         (UP_CASE(*cp) == 'A' || UP_CASE(*cp) == 'P')
         && (UP_CASE(cp[1]) == 'M')
     ){
-        merid = cast(REBYTE, UP_CASE(*cp));
+        merid = cast(Byte, UP_CASE(*cp));
         cp += 2;
     }
     else
@@ -235,7 +235,7 @@ REB_R MAKE_Time(Value* out, enum Reb_Kind kind, const Value* arg)
 
     case REB_TEXT: { // scan using same decoding as LOAD would
         REBSIZ size;
-        REBYTE *bp = Analyze_String_For_Scan(&size, arg, MAX_SCAN_TIME);
+        Byte *bp = Analyze_String_For_Scan(&size, arg, MAX_SCAN_TIME);
 
         if (Scan_Time(out, bp, size) == nullptr)
             goto no_time;

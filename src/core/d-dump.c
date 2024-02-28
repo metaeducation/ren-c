@@ -56,32 +56,32 @@
 //
 //  Dump_Bytes: C
 //
-void Dump_Bytes(REBYTE *bp, REBLEN limit)
+void Dump_Bytes(Byte *bp, REBLEN limit)
 {
     const REBLEN max_lines = 120;
 
     REBLEN total = 0;
 
-    REBYTE buf[2048];
+    Byte buf[2048];
 
     REBLEN l = 0;
     for (; l < max_lines; l++) {
-        REBYTE *cp = buf;
+        Byte *cp = buf;
 
         cp = Form_Hex_Pad(cp, cast(uintptr_t, bp), 8);
 
         *cp++ = ':';
         *cp++ = ' ';
 
-        REBYTE str[40];
-        REBYTE *tp = str;
+        Byte str[40];
+        Byte *tp = str;
 
         REBLEN n = 0;
         for (; n < 16; n++) {
             if (total++ >= limit)
                 break;
 
-            REBYTE c = *bp++;
+            Byte c = *bp++;
 
             cp = Form_Hex2_UTF8(cp, c);
             if ((n & 3) == 3)
@@ -92,7 +92,7 @@ void Dump_Bytes(REBYTE *bp, REBLEN limit)
         }
 
         for (; n < 16; n++) {
-            REBYTE c = ' ';
+            Byte c = ' ';
             *cp++ = c;
             *cp++ = c;
             if ((n & 3) == 3)
@@ -159,11 +159,11 @@ void Dump_Series(REBSER *s, const char *memo)
 //
 void Dump_Values(Cell* vp, REBLEN count)
 {
-    REBYTE buf[2048];
-    REBYTE *cp;
+    Byte buf[2048];
+    Byte *cp;
     REBLEN l, n;
     REBLEN *bp = (REBLEN*)vp;
-    const REBYTE *type;
+    const Byte *type;
 
     cp = buf;
     for (l = 0; l < count; l++) {

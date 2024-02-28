@@ -72,7 +72,7 @@ REB_R MAKE_Char(Value* out, enum Reb_Kind kind, const Value* arg)
         return Init_Char(out, n); }
 
       case REB_BINARY: {
-        const REBYTE *bp = VAL_BIN_HEAD(arg);
+        const Byte *bp = VAL_BIN_HEAD(arg);
         REBSIZ len = VAL_LEN_AT(arg);
         if (len == 0)
             goto bad_make;
@@ -153,7 +153,7 @@ void MF_Char(REB_MOLD *mo, const Cell* v, bool form)
     else {
         EXPAND_SERIES_TAIL(out, 10); // worst case: #"^(1234)"
 
-        REBYTE *bp = Binary_At(out, tail);
+        Byte *bp = Binary_At(out, tail);
         *bp++ = '#';
         *bp++ = '"';
         bp = Emit_Uni_Char(bp, chr, parened);

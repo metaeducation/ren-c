@@ -98,7 +98,7 @@ void Emit(REB_MOLD *mo, const char *fmt, ...)
     va_list va;
     va_start(va, fmt);
 
-    REBYTE ender = '\0';
+    Byte ender = '\0';
 
     for (; *fmt; fmt++) {
         switch (*fmt) {
@@ -197,7 +197,7 @@ void Emit(REB_MOLD *mo, const char *fmt, ...)
 // invalid UTF-8 character as an end-of-buffer signal, much as END markers are
 // used by the data stack)
 //
-REBYTE *Prep_Mold_Overestimated(REB_MOLD *mo, REBLEN num_bytes)
+Byte *Prep_Mold_Overestimated(REB_MOLD *mo, REBLEN num_bytes)
 {
     REBLEN tail = SER_LEN(mo->series);
     EXPAND_SERIES_TAIL(mo->series, num_bytes); // terminates, if guessed right
@@ -254,7 +254,7 @@ void New_Indented_Line(REB_MOLD *mo)
 {
     // Check output string has content already but no terminator:
     //
-    REBYTE *bp;
+    Byte *bp;
     if (SER_LEN(mo->series) == 0)
         bp = nullptr;
     else {
@@ -486,7 +486,7 @@ void Mold_Or_Form_Value(REB_MOLD *mo, const Cell* v, bool form)
     assert(not THROWN(v)); // !!! Note: Thrown bit is being eliminated
 
     REBSER *s = mo->series;
-    assert(SER_WIDE(s) == sizeof(REBYTE));
+    assert(SER_WIDE(s) == sizeof(Byte));
     ASSERT_SERIES_TERM(s);
 
     if (C_STACK_OVERFLOWING(&s))

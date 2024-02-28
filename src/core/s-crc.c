@@ -82,7 +82,7 @@ static REBLEN *crc24_table;
 // message by initializing the CRC accumulator to some agreed-upon
 // nonzero "random-like" value, but this is a bit nonstandard.
 //
-static REBLEN Generate_CRC24(REBYTE ch, REBLEN poly, REBLEN accum)
+static REBLEN Generate_CRC24(Byte ch, REBLEN poly, REBLEN accum)
 {
     REBINT i;
     REBLEN data;
@@ -111,7 +111,7 @@ static void Make_CRC24_Table(REBLEN poly)
     REBINT i;
 
     for (i = 0; i < 256; i++)
-        crc24_table[i] = Generate_CRC24(cast(REBYTE, i), poly, 0);
+        crc24_table[i] = Generate_CRC24(cast(Byte, i), poly, 0);
 }
 
 
@@ -124,12 +124,12 @@ static void Make_CRC24_Table(REBLEN poly)
 // are necessary so long as compatibility with the historical results
 // of the CHECKSUM native is needed.
 //
-REBINT Compute_CRC24(REBYTE *str, REBLEN len)
+REBINT Compute_CRC24(Byte *str, REBLEN len)
 {
-    REBINT crc = cast(REBINT, len) + cast(REBINT, cast(REBYTE, *str));
+    REBINT crc = cast(REBINT, len) + cast(REBINT, cast(Byte, *str));
 
     for (; len > 0; len--) {
-        REBYTE n = cast(REBYTE, (crc >> CRCSHIFTS) ^ cast(REBYTE, *str++));
+        Byte n = cast(Byte, (crc >> CRCSHIFTS) ^ cast(Byte, *str++));
 
         // Left shift math must use unsigned to avoid undefined behavior
         // http://stackoverflow.com/q/3784996/211160
@@ -145,10 +145,10 @@ REBINT Compute_CRC24(REBYTE *str, REBLEN len)
 //
 // Return a case insensitive hash value for the string.
 //
-REBINT Hash_UTF8(const REBYTE *utf8, REBSIZ size)
+REBINT Hash_UTF8(const Byte *utf8, REBSIZ size)
 {
     REBINT hash =
-        cast(REBINT, size) + cast(REBINT, cast(REBYTE, LO_CASE(*utf8)));
+        cast(REBINT, size) + cast(REBINT, cast(Byte, LO_CASE(*utf8)));
 
     for (; size != 0; ++utf8, --size) {
         REBUNI n = *utf8;
@@ -158,15 +158,15 @@ REBINT Hash_UTF8(const REBYTE *utf8, REBSIZ size)
             assert(utf8 != nullptr);  // should have already been verified good
         }
 
-        // Optimize `n = cast(REBYTE, LO_CASE(n))` (drop upper 8 bits)
+        // Optimize `n = cast(Byte, LO_CASE(n))` (drop upper 8 bits)
         // !!! Is this actually faster?
         //
         if (n < UNICODE_CASES)
-            n = cast(REBYTE, LO_CASE(n));
+            n = cast(Byte, LO_CASE(n));
         else
-            n = cast(REBYTE, n);
+            n = cast(Byte, n);
 
-        n = cast(REBYTE, (hash >> CRCSHIFTS) ^ n);
+        n = cast(Byte, (hash >> CRCSHIFTS) ^ n);
 
         // Left shift math must use unsigned to avoid undefined behavior
         // http://stackoverflow.com/q/3784996/211160
@@ -231,7 +231,7 @@ uint32_t Hash_Value(const Cell* v)
         // accomplish the same thing (whether it was good or not, at least it
         // isn't breaking the C standard)
 
-        const REBYTE *payload = cast(const REBYTE*, &v->payload.money);
+        const Byte *payload = cast(const Byte*, &v->payload.money);
 
         uintptr_t bits0;
         uintptr_t bits1;
@@ -501,10 +501,10 @@ REBSER *Hash_Block(const Value* block, REBLEN skip, bool cased)
 // Compute an IP checksum given some data and a length.
 // Used only on BINARY values.
 //
-REBINT Compute_IPC(REBYTE *data, REBLEN length)
+REBINT Compute_IPC(Byte *data, REBLEN length)
 {
     REBLEN  lSum = 0;   // stores the summation
-    REBYTE  *up = data;
+    Byte  *up = data;
 
     while (length > 1) {
         lSum += (up[0] << 8) | up[1];
@@ -530,14 +530,14 @@ REBINT Compute_IPC(REBYTE *data, REBLEN length)
 // string does not have to be zero terminated and UTF8 is ok.
 //
 REBINT Hash_Bytes_Or_Uni(
-    const void *data, // REBYTE* or REBUNI*
+    const void *data, // Byte* or REBUNI*
     REBLEN len, // chars, not bytes
     REBLEN wide // 1 = byte-sized, 2 = Unicode
 ){
     uint32_t c = 0x00000000;
     uint32_t c2 = 0x00000000; // don't change, see [1] below
     REBLEN n;
-    const REBYTE *b = cast(const REBYTE*, data);
+    const Byte *b = cast(const Byte*, data);
     const REBUNI *u = cast(const REBUNI*, data);
 
     if (wide == 1) {

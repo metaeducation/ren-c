@@ -56,7 +56,7 @@ void Extend_Series(REBSER *s, REBLEN delta)
 REBLEN Insert_Series(
     REBSER *s,
     REBLEN index,
-    const REBYTE *data,
+    const Byte *data,
     REBLEN len
 ) {
     if (index > SER_LEN(s))
@@ -86,7 +86,7 @@ REBLEN Insert_Series(
 void Append_Series(REBSER *s, const void *data, REBLEN len)
 {
     REBLEN len_old = SER_LEN(s);
-    REBYTE wide = SER_WIDE(s);
+    Byte wide = SER_WIDE(s);
 
     assert(not IS_SER_ARRAY(s));
 
@@ -219,7 +219,7 @@ void Remove_Series(REBSER *s, REBLEN index, REBINT len)
                 fail (Error_Overflow_Raw());
 
             if (bias > 0xffff) { // 16-bit, simple SER_ADD_BIAS could overflow
-                REBYTE *data = cast(REBYTE*, s->content.dynamic.data);
+                Byte *data = cast(Byte*, s->content.dynamic.data);
 
                 data += SER_WIDE(s) * len;
                 s->content.dynamic.data -= SER_WIDE(s) * SER_BIAS(s);
@@ -266,7 +266,7 @@ void Remove_Series(REBSER *s, REBLEN index, REBINT len)
     SET_SERIES_LEN(s, len_old - cast(REBLEN, len));
     len *= SER_WIDE(s);
 
-    REBYTE *data = SER_DATA_RAW(s) + start;
+    Byte *data = SER_DATA_RAW(s) + start;
     memmove(data, data + len, length - (start + len));
     TERM_SERIES(s);
 }
@@ -283,7 +283,7 @@ void Unbias_Series(REBSER *s, bool keep)
     if (len == 0)
         return;
 
-    REBYTE *data = cast(REBYTE*, s->content.dynamic.data);
+    Byte *data = cast(Byte*, s->content.dynamic.data);
 
     SER_SET_BIAS(s, 0);
     s->content.dynamic.rest += len;
@@ -344,7 +344,7 @@ void Clear_Series(REBSER *s)
         CLEAR(s->content.dynamic.data, SER_REST(s) * SER_WIDE(s));
     }
     else
-        CLEAR(cast(REBYTE*, &s->content), sizeof(s->content));
+        CLEAR(cast(Byte*, &s->content), sizeof(s->content));
 
     TERM_SERIES(s);
 }
@@ -379,7 +379,7 @@ void Resize_Series(REBSER *s, REBLEN size)
 // NOTE: The length will be set to the supplied value, but the series will
 // not be terminated.
 //
-REBYTE *Reset_Buffer(REBSER *buf, REBLEN len)
+Byte *Reset_Buffer(REBSER *buf, REBLEN len)
 {
     if (buf == nullptr)
         panic ("buffer not yet allocated");

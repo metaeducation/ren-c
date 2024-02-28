@@ -538,7 +538,7 @@ static REB_R File_Actor(REBFRM *frame_, Value* port, Value* verb)
 
         Setup_File(file, 0, path);
 
-        req->common.data = cast(REBYTE*, ARG(to)); // !!! hack!
+        req->common.data = cast(Byte*, ARG(to)); // !!! hack!
 
         Value* result = OS_DO_DEVICE(req, RDC_RENAME);
         assert(result != nullptr);  // should be synchronous

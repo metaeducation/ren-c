@@ -192,7 +192,7 @@ static void Expand_Word_Table(void)
 // one "canon" interning to use for fast case-insensitive compares.  If that
 // canon form is GC'd, the agreed upon canon for the group will change.
 //
-Symbol* Intern_UTF8_Managed(const REBYTE *utf8, size_t size)
+Symbol* Intern_UTF8_Managed(const Byte *utf8, size_t size)
 {
     // The hashing technique used is called "linear probing":
     //
@@ -278,7 +278,7 @@ Symbol* Intern_UTF8_Managed(const REBYTE *utf8, size_t size)
     //
     Symbol* intern = Make_Ser_Core(
         size + 1,
-        sizeof(REBYTE),
+        sizeof(Byte),
         SERIES_FLAG_UTF8_STRING | SERIES_FLAG_FIXED_SIZE
     );
 
@@ -442,8 +442,8 @@ void GC_Kill_Interning(Symbol* intern)
 //
 REBINT Compare_Word(const Cell* s, const Cell* t, bool strict)
 {
-    const REBYTE *sp = cb_cast(Symbol_Head(Cell_Word_Symbol(s)));
-    const REBYTE *tp = cb_cast(Symbol_Head(Cell_Word_Symbol(t)));
+    const Byte *sp = cb_cast(Symbol_Head(Cell_Word_Symbol(s)));
+    const Byte *tp = cb_cast(Symbol_Head(Cell_Word_Symbol(t)));
 
     if (strict)
         return COMPARE_BYTES(sp, tp); // must match byte-for-byte

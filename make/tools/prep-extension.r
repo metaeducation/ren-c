@@ -317,7 +317,7 @@ e/emit {
      * Gzip compression of $<Script-Name> (no \0 terminator in array)
      * Originally $<length of script-uncompressed> bytes
      */
-    static const REBYTE script_compressed[$<length of script-compressed>] = {
+    static const Byte script_compressed[$<length of script-compressed>] = {
         $<Binary-To-C Script-Compressed>
     };
 
@@ -325,7 +325,7 @@ e/emit {
      * Gzip compression of native specs (no \0 terminator in array)
      * Originally $<length of specs-uncompressed> bytes
      */
-    static const REBYTE specs_compressed[$<length of specs-compressed>] = {
+    static const Byte specs_compressed[$<length of specs-compressed>] = {
         $<Binary-To-C Specs-Compressed>
     };
 

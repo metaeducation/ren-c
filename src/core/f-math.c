@@ -50,7 +50,7 @@
 //     2. If no integer found, pointer doesn't change position.
 //     3. Integers may contain REBOL tick (') marks.
 //
-const REBYTE *Grab_Int(const REBYTE *cp, REBINT *val)
+const Byte *Grab_Int(const Byte *cp, REBINT *val)
 {
     REBINT value = 0;
     bool neg = false;
@@ -79,7 +79,7 @@ const REBYTE *Grab_Int(const REBYTE *cp, REBINT *val)
 // Return integer scaled to the number of digits specified.
 // Used for the decimal part of numbers (e.g. times).
 //
-const REBYTE *Grab_Int_Scale(const REBYTE *cp, REBINT *val, REBLEN scale)
+const Byte *Grab_Int_Scale(const Byte *cp, REBINT *val, REBLEN scale)
 {
     REBI64 value = 0;
 
@@ -114,10 +114,10 @@ const REBYTE *Grab_Int_Scale(const REBYTE *cp, REBINT *val, REBLEN scale)
 //     1. If result is longer than maxl, returns 0 length.
 //     2. Make sure you have room in your buffer!
 //
-REBINT Form_Int_Len(REBYTE *buf, REBI64 val, REBINT maxl)
+REBINT Form_Int_Len(Byte *buf, REBI64 val, REBINT maxl)
 {
-    REBYTE tmp[MAX_NUM_LEN];
-    REBYTE *tp = tmp;
+    Byte tmp[MAX_NUM_LEN];
+    Byte *tp = tmp;
     REBI64 n;
     REBI64 r;
     REBINT len = 0;
@@ -154,7 +154,7 @@ REBINT Form_Int_Len(REBYTE *buf, REBI64 val, REBINT maxl)
     while (val != 0 && maxl > 0 && tp < tmp + MAX_NUM_LEN) {
         n = val / 10;   // not using ldiv for easier compatibility
         r = val % 10;
-        *tp++ = (REBYTE)('0' + (REBYTE)(r));
+        *tp++ = (Byte)('0' + (Byte)(r));
         val = n;
         maxl --;
     }
@@ -179,9 +179,9 @@ REBINT Form_Int_Len(REBYTE *buf, REBI64 val, REBINT maxl)
 // If len = 0 and val = 0, a null string is formed.
 // Make sure you have room in your buffer before calling this!
 //
-REBYTE *Form_Int_Pad(REBYTE *buf, REBI64 val, REBINT max, REBINT len, REBYTE pad)
+Byte *Form_Int_Pad(Byte *buf, REBI64 val, REBINT max, REBINT len, Byte pad)
 {
-    REBYTE tmp[MAX_NUM_LEN];
+    Byte tmp[MAX_NUM_LEN];
     REBINT n;
 
     n = Form_Int_Len(tmp, val, max + 1);
@@ -212,7 +212,7 @@ REBYTE *Form_Int_Pad(REBYTE *buf, REBI64 val, REBINT max, REBINT len, REBYTE pad
 // Form 32 bit integer string in the given buffer.
 // Make sure you have room in your buffer before calling this!
 //
-REBYTE *Form_Int(REBYTE *buf, REBINT val)
+Byte *Form_Int(Byte *buf, REBINT val)
 {
     REBINT len = Form_Int_Len(buf, val, MAX_NUM_LEN);
     return buf + len;
@@ -225,7 +225,7 @@ REBYTE *Form_Int(REBYTE *buf, REBINT val)
 // Form standard REBOL integer value (32 or 64).
 // Make sure you have room in your buffer before calling this!
 //
-REBYTE *Form_Integer(REBYTE *buf, REBI64 val)
+Byte *Form_Integer(Byte *buf, REBI64 val)
 {
     INT_TO_STR(val, buf);
     return buf+LEN_BYTES(buf);
@@ -235,7 +235,7 @@ REBYTE *Form_Integer(REBYTE *buf, REBI64 val)
 //
 //  Emit_Integer: C
 //
-REBINT Emit_Integer(REBYTE *buf, REBI64 val)
+REBINT Emit_Integer(Byte *buf, REBI64 val)
 {
     INT_TO_STR(val, buf);
     return LEN_BYTES(buf);
@@ -251,13 +251,13 @@ REBINT Emit_Integer(REBYTE *buf, REBI64 val)
 //  Emit_Decimal: C
 //
 REBINT Emit_Decimal(
-    REBYTE *cp,
+    Byte *cp,
     REBDEC d,
     REBFLGS flags, // DEC_MOLD_PERCENT, DEC_MOLD_MINIMAL
-    REBYTE point,
+    Byte point,
     REBINT decimal_digits
 ) {
-    REBYTE *start = cp, *sig, *rve;
+    Byte *start = cp, *sig, *rve;
     int e, sgn;
     REBINT digits_obtained;
 
@@ -265,7 +265,7 @@ REBINT Emit_Decimal(
     if (decimal_digits < MIN_DIGITS) decimal_digits = MIN_DIGITS;
     else if (decimal_digits > MAX_DIGITS) decimal_digits = MAX_DIGITS;
 
-    sig = (REBYTE *) dtoa (d, 0, decimal_digits, &e, &sgn, (char **) &rve);
+    sig = (Byte *) dtoa (d, 0, decimal_digits, &e, &sgn, (char **) &rve);
 
     digits_obtained = rve - sig;
 

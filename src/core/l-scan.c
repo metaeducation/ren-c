@@ -52,7 +52,7 @@
 //
 // UTF8: The values C0, C1, F5 to FF never appear.
 //
-const REBYTE Lex_Map[256] =
+const Byte Lex_Map[256] =
 {
     /* 00 EOF */    LEX_DELIMIT|LEX_DELIMIT_END,
     /* 01     */    LEX_DEFAULT,
@@ -238,7 +238,7 @@ const REBYTE Lex_Map[256] =
 // Maps each character to its upper case value.  Done this
 // way for speed.  Note the odd cases in last block.
 //
-const REBYTE Upper_Case[256] =
+const Byte Upper_Case[256] =
 {
       0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15,
      16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31,
@@ -267,7 +267,7 @@ const REBYTE Upper_Case[256] =
 // Maps each character to its lower case value.  Done this
 // way for speed.  Note the odd cases in last block.
 //
-const REBYTE Lower_Case[256] =
+const Byte Lower_Case[256] =
 {
       0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15,
      16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31,
@@ -305,11 +305,11 @@ const REBYTE Lower_Case[256] =
 //
 // test: to-integer load to-binary mold to-char 1234
 //
-static const REBYTE *Scan_UTF8_Char_Escapable(REBUNI *out, const REBYTE *bp)
+static const Byte *Scan_UTF8_Char_Escapable(REBUNI *out, const Byte *bp)
 {
-    const REBYTE *cp;
-    REBYTE c;
-    REBYTE lex;
+    const Byte *cp;
+    Byte c;
+    Byte lex;
 
     c = *bp;
 
@@ -411,9 +411,9 @@ static const REBYTE *Scan_UTF8_Char_Escapable(REBUNI *out, const REBYTE *bp)
 // optimizations will be possible.  As a first try, just getting it working
 // is the goal.
 //
-static const REBYTE *Scan_Quote_Push_Mold(
+static const Byte *Scan_Quote_Push_Mold(
     REB_MOLD *mo,
-    const REBYTE *src,
+    const Byte *src,
     SCAN_STATE *ss
 ){
     Push_Mold(mo);
@@ -505,12 +505,12 @@ static const REBYTE *Scan_Quote_Push_Mold(
 // !!! See notes on Scan_Quote_Push_Mold about the inefficiency of this
 // interim time of changing the mold buffer from 16-bit codepoints to UTF-8
 //
-const REBYTE *Scan_Item_Push_Mold(
+const Byte *Scan_Item_Push_Mold(
     REB_MOLD *mo,
-    const REBYTE *bp,
-    const REBYTE *ep,
-    REBYTE opt_term, // '\0' if file like %foo - '"' if file like %"foo bar"
-    const REBYTE *opt_invalids
+    const Byte *bp,
+    const Byte *ep,
+    Byte opt_term, // '\0' if file like %foo - '"' if file like %"foo bar"
+    const Byte *opt_invalids
 ){
     assert(opt_term < 128); // method below doesn't search for high chars
 
@@ -596,7 +596,7 @@ const REBYTE *Scan_Item_Push_Mold(
 // Skip the entire contents of a tag, including quoted strings.
 // The argument points to the opening '<'.  nullptr is returned on errors.
 //
-static const REBYTE *Skip_Tag(const REBYTE *cp)
+static const Byte *Skip_Tag(const Byte *cp)
 {
     if (*cp == '<')
         ++cp;
@@ -633,18 +633,18 @@ static const REBYTE *Skip_Tag(const REBYTE *cp)
 static void Update_Error_Near_For_Line(
     REBCTX *error,
     REBLEN line,
-    const REBYTE *line_head
+    const Byte *line_head
 ){
     // Skip indentation (don't include in the NEAR)
     //
-    const REBYTE *cp = line_head;
+    const Byte *cp = line_head;
     while (IS_LEX_SPACE(*cp))
         ++cp;
 
     // Find end of line to capture in error message
     //
     REBLEN len = 0;
-    const REBYTE *bp = cp;
+    const Byte *bp = cp;
     while (!ANY_CR_LF_END(*cp)) {
         cp++;
         len++;
@@ -795,7 +795,7 @@ static REBLEN Prescan_Token(SCAN_STATE *ss)
 {
     assert(IS_POINTER_TRASH_DEBUG(ss->end)); // prescan only uses ->begin
 
-    const REBYTE *cp = ss->begin;
+    const Byte *cp = ss->begin;
     REBLEN flags = 0;
 
     // Skip whitespace (if any) and update the ss
@@ -1055,7 +1055,7 @@ acquisition_loop:
             break; }
 
         case DETECTED_AS_UTF8: {
-            ss->begin = cast(const REBYTE*, p);
+            ss->begin = cast(const Byte*, p);
 
             // If we're using a va_list, we start the scan with no C string
             // pointer to serve as the beginning of line for an error message.
@@ -1080,7 +1080,7 @@ acquisition_loop:
 
     REBLEN flags = Prescan_Token(ss); // sets ->begin, ->end
 
-    const REBYTE *cp = ss->begin;
+    const Byte *cp = ss->begin;
 
     switch (GET_LEX_CLASS(*cp)) {
 
@@ -1747,7 +1747,7 @@ void Init_Va_Scan_State_Core(
     SCAN_STATE *ss,
     Symbol* file,
     REBLIN line,
-    const REBYTE *opt_begin, // preload the scanner outside the va_list
+    const Byte *opt_begin, // preload the scanner outside the va_list
     va_list *vaptr
 ){
     ss->mode_char = '\0';
@@ -1791,7 +1791,7 @@ void Init_Scan_State(
     SCAN_STATE *ss,
     Symbol* file,
     REBLIN line,
-    const REBYTE *utf8,
+    const Byte *utf8,
     REBLEN limit
 ){
     // The limit feature was not actually supported...just check to make sure
@@ -1844,9 +1844,9 @@ void Init_Scan_State(
 //
 static REBINT Scan_Head(SCAN_STATE *ss)
 {
-    const REBYTE *rp = 0;   /* pts to the REBOL word */
-    const REBYTE *bp = 0;   /* pts to optional [ just before REBOL */
-    const REBYTE *cp = ss->begin;
+    const Byte *rp = 0;   /* pts to the REBOL word */
+    const Byte *bp = 0;   /* pts to optional [ just before REBOL */
+    const Byte *cp = ss->begin;
     REBLEN count = ss->line;
 
     while (true) {
@@ -1889,8 +1889,8 @@ static REBINT Scan_Head(SCAN_STATE *ss)
 }
 
 
-static REBARR *Scan_Full_Array(SCAN_STATE *ss, REBYTE mode_char);
-static REBARR *Scan_Child_Array(SCAN_STATE *ss, REBYTE mode_char);
+static REBARR *Scan_Full_Array(SCAN_STATE *ss, Byte mode_char);
+static REBARR *Scan_Child_Array(SCAN_STATE *ss, Byte mode_char);
 
 //
 //  Scan_To_Stack: C
@@ -1928,8 +1928,8 @@ Value* Scan_To_Stack(SCAN_STATE *ss) {
         assert(ss->begin != nullptr and ss->end != nullptr);
         assert(ss->begin < ss->end);
 
-        const REBYTE *bp = ss->begin;
-        const REBYTE *ep = ss->end;
+        const Byte *bp = ss->begin;
+        const Byte *ep = ss->end;
         REBLEN len = cast(REBLEN, ep - bp);
 
         ss->begin = ss->end; // accept token
@@ -2560,7 +2560,7 @@ void Scan_To_Stack_Relaxed(SCAN_STATE *ss) {
 // reflection, allowing for better introspection and error messages.  (This
 // is similar to the benefits of Reb_Frame.)
 //
-static REBARR *Scan_Child_Array(SCAN_STATE *ss, REBYTE mode_char)
+static REBARR *Scan_Child_Array(SCAN_STATE *ss, Byte mode_char)
 {
     SCAN_STATE child = *ss;
 
@@ -2623,7 +2623,7 @@ static REBARR *Scan_Child_Array(SCAN_STATE *ss, REBYTE mode_char)
 // Simple variation of scan_block to avoid problem with
 // construct of aggregate values.
 //
-static REBARR *Scan_Full_Array(SCAN_STATE *ss, REBYTE mode_char)
+static REBARR *Scan_Full_Array(SCAN_STATE *ss, Byte mode_char)
 {
     bool saved_only = did (ss->opts & SCAN_FLAG_ONLY);
     ss->opts &= ~SCAN_FLAG_ONLY;
@@ -2715,7 +2715,7 @@ REBARR *Scan_Va_Managed(
 //
 // Scan source code. Scan state initialized. No header required.
 //
-REBARR *Scan_UTF8_Managed(Symbol* filename, const REBYTE *utf8, REBLEN size)
+REBARR *Scan_UTF8_Managed(Symbol* filename, const Byte *utf8, REBLEN size)
 {
     SCAN_STATE ss;
     const REBLIN start_line = 1;
@@ -2743,7 +2743,7 @@ REBARR *Scan_UTF8_Managed(Symbol* filename, const REBYTE *utf8, REBLEN size)
 //
 // Scan for header, return its offset if found or -1 if not.
 //
-REBINT Scan_Header(const REBYTE *utf8, REBLEN len)
+REBINT Scan_Header(const Byte *utf8, REBLEN len)
 {
     SCAN_STATE ss;
     Symbol*  const filename = Canon(SYM___ANONYMOUS__);
@@ -2754,7 +2754,7 @@ REBINT Scan_Header(const REBYTE *utf8, REBLEN len)
     if (result == 0)
         return -1;
 
-    const REBYTE *cp = ss.begin - 2;
+    const Byte *cp = ss.begin - 2;
 
     // Backup to start of it:
     if (result > 0) { // normal header found
@@ -2890,10 +2890,10 @@ DECLARE_NATIVE(transcode)
 // This method gets exactly the same results as scanner.
 // Returns symbol number, or zero for errors.
 //
-const REBYTE *Scan_Any_Word(
+const Byte *Scan_Any_Word(
     Value* out,
     enum Reb_Kind kind,
-    const REBYTE *utf8,
+    const Byte *utf8,
     REBLEN len
 ) {
     SCAN_STATE ss;
@@ -2918,13 +2918,13 @@ const REBYTE *Scan_Any_Word(
 //
 // Scan an issue word, allowing special characters.
 //
-const REBYTE *Scan_Issue(Value* out, const REBYTE *cp, REBLEN len)
+const Byte *Scan_Issue(Value* out, const Byte *cp, REBLEN len)
 {
     if (len == 0) return nullptr; // will trigger error
 
     while (IS_LEX_SPACE(*cp)) cp++; /* skip white space */
 
-    const REBYTE *bp = cp;
+    const Byte *bp = cp;
 
     REBLEN l = len;
     while (l > 0) {

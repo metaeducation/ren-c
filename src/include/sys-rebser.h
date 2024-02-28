@@ -1104,17 +1104,17 @@ INLINE bool ALL_SER_INFOS(
 //
 // !!! Can't `assert((w) < MAX_SERIES_WIDE)` without triggering "range of
 // type makes this always false" warning; C++ build could sense if it's a
-// REBYTE and dodge the comparison if so.
+// Byte and dodge the comparison if so.
 //
 
 #define MAX_SERIES_WIDE 0x100
 
-INLINE REBYTE SER_WIDE(REBSER *s) {
+INLINE Byte SER_WIDE(REBSER *s) {
     //
     // Arrays use 0 width as a strategic choice, so that the second byte of
     // the ->info flags is 0.  See Endlike_Header() for why.
     //
-    REBYTE wide = WIDE_BYTE_OR_0(s);
+    Byte wide = WIDE_BYTE_OR_0(s);
     if (wide == 0) {
         assert(IS_SER_ARRAY(s));
         return sizeof(Cell);

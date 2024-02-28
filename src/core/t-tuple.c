@@ -57,7 +57,7 @@ REB_R MAKE_Tuple(Value* out, enum Reb_Kind kind, const Value* arg)
         return Move_Value(out, arg);
 
     RESET_CELL(out, REB_TUPLE);
-    REBYTE *vp = VAL_TUPLE(out);
+    Byte *vp = VAL_TUPLE(out);
 
     // !!! Net lookup parses IP addresses out of `tcp://93.184.216.34` or
     // similar URL!s.  In Rebol3 these captures come back the same type
@@ -71,7 +71,7 @@ REB_R MAKE_Tuple(Value* out, enum Reb_Kind kind, const Value* arg)
     //
     if (IS_TEXT(arg) or IS_URL(arg)) {
         REBSIZ size;
-        REBYTE *bp = Analyze_String_For_Scan(&size, arg, MAX_SCAN_TUPLE);
+        Byte *bp = Analyze_String_For_Scan(&size, arg, MAX_SCAN_TUPLE);
         if (Scan_Tuple(out, bp, size) == nullptr)
             fail (Error_Invalid(arg));
         return out;
@@ -110,7 +110,7 @@ REB_R MAKE_Tuple(Value* out, enum Reb_Kind kind, const Value* arg)
 
     if (IS_ISSUE(arg)) {
         Symbol* symbol = Cell_Word_Symbol(arg);
-        const REBYTE *ap = cb_cast(Symbol_Head(symbol));
+        const Byte *ap = cb_cast(Symbol_Head(symbol));
         size_t size = Symbol_Size(symbol); // UTF-8 len
         if (size & 1)
             fail (arg); // must have even # of chars
@@ -123,12 +123,12 @@ REB_R MAKE_Tuple(Value* out, enum Reb_Kind kind, const Value* arg)
             REBUNI ch;
             if (!Scan_Hex2(&ch, ap, unicode))
                 fail (Error_Invalid(arg));
-            *vp++ = cast(REBYTE, ch);
+            *vp++ = cast(Byte, ch);
             ap += 2;
         }
     }
     else if (IS_BINARY(arg)) {
-        REBYTE *ap = Cell_Binary_At(arg);
+        Byte *ap = Cell_Binary_At(arg);
         REBLEN len = VAL_LEN_AT(arg);
         if (len > MAX_TUPLE) len = MAX_TUPLE;
         VAL_TUPLE_LEN(out) = len;
@@ -162,7 +162,7 @@ REB_R TO_Tuple(Value* out, enum Reb_Kind kind, const Value* arg)
 REBINT Cmp_Tuple(const Cell* t1, const Cell* t2)
 {
     REBLEN  len;
-    const REBYTE *vp1, *vp2;
+    const Byte *vp1, *vp2;
     REBINT  n;
 
     len = MAX(VAL_TUPLE_LEN(t1), VAL_TUPLE_LEN(t2));
@@ -183,7 +183,7 @@ REBINT Cmp_Tuple(const Cell* t1, const Cell* t2)
 //
 void Pick_Tuple(Value* out, const Value* value, const Value* picker)
 {
-    const REBYTE *dat = VAL_TUPLE(value);
+    const Byte *dat = VAL_TUPLE(value);
 
     REBINT len = VAL_TUPLE_LEN(value);
     if (len < 3)
@@ -199,7 +199,7 @@ void Pick_Tuple(Value* out, const Value* value, const Value* picker)
     // By always accessing the array and always being in bounds, there's no
     // speculative execution accessing unbound locations.
     //
-    REBYTE byte = dat[(n - 1) % len];
+    Byte byte = dat[(n - 1) % len];
     if (n > 0 and n <= len)
         Init_Integer(out, byte);
     else
@@ -218,7 +218,7 @@ void Poke_Tuple_Immediate(
     const Value* picker,
     const Value* poke
 ) {
-    REBYTE *dat = VAL_TUPLE(value);
+    Byte *dat = VAL_TUPLE(value);
 
     REBINT len = VAL_TUPLE_LEN(value);
     if (len < 3)
@@ -285,12 +285,12 @@ void MF_Tuple(REB_MOLD *mo, const Cell* v, bool form)
     //
     // !!! ^-- Out of date comments; TUPLE! needs review and replacement.
     //
-    REBYTE buf[60];
+    Byte buf[60];
 
     REBLEN len = VAL_TUPLE_LEN(v);
-    const REBYTE *tp = cast(const REBYTE *, VAL_TUPLE(v));
+    const Byte *tp = cast(const Byte *, VAL_TUPLE(v));
 
-    REBYTE *out = buf;
+    Byte *out = buf;
 
     for (; len > 0; len--, tp++) {
         out = Form_Int(out, *tp);
@@ -319,7 +319,7 @@ REBTYPE(Tuple)
 {
     Value* value = D_ARG(1);
     Value* arg = D_ARGC > 1 ? D_ARG(2) : nullptr;
-    const REBYTE *ap;
+    const Byte *ap;
     REBLEN len;
     REBLEN alen;
     REBINT  a;
@@ -327,7 +327,7 @@ REBTYPE(Tuple)
 
     assert(IS_TUPLE(value));
 
-    REBYTE *vp = VAL_TUPLE(value);
+    Byte *vp = VAL_TUPLE(value);
     len = VAL_TUPLE_LEN(value);
 
     Option(SymId) sym = Cell_Word_Id(verb);
@@ -426,7 +426,7 @@ REBTYPE(Tuple)
                 v = 255;
             else if (v < 0)
                 v = 0;
-            *vp = cast(REBYTE, v);
+            *vp = cast(Byte, v);
         }
         RETURN (value);
     }
@@ -434,7 +434,7 @@ REBTYPE(Tuple)
     // !!!! merge with SWITCH below !!!
     if (sym == SYM_COMPLEMENT) {
         for (; len > 0; len--, vp++)
-            *vp = cast(REBYTE, ~*vp);
+            *vp = cast(Byte, ~*vp);
         RETURN (value);
     }
     if (sym == SYM_RANDOM) {
@@ -449,7 +449,7 @@ REBTYPE(Tuple)
             fail (Error_Bad_Refines_Raw());
         for (; len > 0; len--, vp++) {
             if (*vp)
-                *vp = cast(REBYTE, Random_Int(REF(secure)) % (1 + *vp));
+                *vp = cast(Byte, Random_Int(REF(secure)) % (1 + *vp));
         }
         RETURN (value);
     }

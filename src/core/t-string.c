@@ -35,11 +35,11 @@
 
 #define MAX_QUOTED_STR  50  // max length of "string" before going to { }
 
-REBYTE *Char_Escapes;
+Byte *Char_Escapes;
 #define MAX_ESC_CHAR (0x60-1) // size of escape table
 #define IS_CHR_ESC(c) ((c) <= MAX_ESC_CHAR && Char_Escapes[c])
 
-REBYTE *URL_Escapes;
+Byte *URL_Escapes;
 #define MAX_URL_CHAR (0x80-1)
 #define IS_URL_ESC(c)  ((c) <= MAX_URL_CHAR && (URL_Escapes[c] & ESC_URL))
 #define IS_FILE_ESC(c) ((c) <= MAX_URL_CHAR && (URL_Escapes[c] & ESC_FILE))
@@ -104,12 +104,12 @@ static void swap_chars(Value* val1, Value* val2)
 
 static void reverse_binary(Value* v, REBLEN len)
 {
-    REBYTE *bp = Cell_Binary_At(v);
+    Byte *bp = Cell_Binary_At(v);
 
     REBLEN n = 0;
     REBLEN m = len - 1;
     for (; n < len / 2; n++, m--) {
-        REBYTE b = bp[n];
+        Byte b = bp[n];
         bp[n] = bp[m];
         bp[m] = b;
     }
@@ -304,20 +304,20 @@ static REBSER *Make_Binary_BE64(const Value* arg)
 {
     REBSER *ser = Make_Binary(8);
 
-    REBYTE *bp = Binary_Head(ser);
+    Byte *bp = Binary_Head(ser);
 
     REBI64 i;
     REBDEC d;
-    const REBYTE *cp;
+    const Byte *cp;
     if (IS_INTEGER(arg)) {
         assert(sizeof(REBI64) == 8);
         i = VAL_INT64(arg);
-        cp = cast(const REBYTE*, &i);
+        cp = cast(const Byte*, &i);
     }
     else {
         assert(sizeof(REBDEC) == 8);
         d = VAL_DECIMAL(arg);
-        cp = cast(const REBYTE*, &d);
+        cp = cast(const Byte*, &d);
     }
 
 #ifdef ENDIAN_LITTLE
@@ -498,14 +498,14 @@ static int Compare_Chr(void *thunk, const void *v1, const void *v2)
 {
     REBLEN * const flags = cast(REBLEN*, thunk);
 
-    REBUNI c1 = cast(REBUNI, *cast(const REBYTE*, v1));
-    REBUNI c2 = cast(REBUNI, *cast(const REBYTE*, v2));
+    REBUNI c1 = cast(REBUNI, *cast(const Byte*, v1));
+    REBUNI c2 = cast(REBUNI, *cast(const Byte*, v2));
 
     if (*flags & CC_FLAG_CASE) {
         if (*flags & CC_FLAG_REVERSE)
-            return *cast(const REBYTE*, v2) - *cast(const REBYTE*, v1);
+            return *cast(const Byte*, v2) - *cast(const Byte*, v1);
         else
-            return *cast(const REBYTE*, v1) - *cast(const REBYTE*, v2);
+            return *cast(const Byte*, v1) - *cast(const Byte*, v2);
     }
     else {
         if (*flags & CC_FLAG_REVERSE) {
@@ -744,7 +744,7 @@ REB_R PD_String(
         if (c > 0xff)
             fail (Error_Out_Of_Range(opt_setval));
 
-        Binary_Head(ser)[n] = cast(REBYTE, c);
+        Binary_Head(ser)[n] = cast(Byte, c);
         return R_INVISIBLE;
     }
 
@@ -821,10 +821,10 @@ static void Sniff_String(REBSER *ser, REBLEN idx, REB_STRF *sf)
 // Fast var-length hex output for uni-chars.
 // Returns next position (just past the insert).
 //
-REBYTE *Form_Uni_Hex(REBYTE *out, REBLEN n)
+Byte *Form_Uni_Hex(Byte *out, REBLEN n)
 {
-    REBYTE buffer[10];
-    REBYTE *bp = &buffer[10];
+    Byte buffer[10];
+    Byte *bp = &buffer[10];
 
     while (n != 0) {
         *(--bp) = Hex_Digits[n & 0xf];
@@ -848,7 +848,7 @@ REBYTE *Form_Uni_Hex(REBYTE *out, REBLEN n)
 //
 // For now just preserve what was there, but do it as UTF8 bytes.
 //
-REBYTE *Emit_Uni_Char(REBYTE *bp, REBUNI chr, bool parened)
+Byte *Emit_Uni_Char(Byte *bp, REBUNI chr, bool parened)
 {
     // !!! The UTF-8 "Byte Order Mark" is an insidious thing which is not
     // necessary for UTF-8, not recommended by the Unicode standard, and
@@ -920,7 +920,7 @@ void Mold_Text_Series_At(
     // If it is a short quoted string, emit it as "string"
     //
     if (len_at <= MAX_QUOTED_STR && sf.quote == 0 && sf.newline < 3) {
-        REBYTE *dp = Prep_Mold_Overestimated( // not accurate, must terminate
+        Byte *dp = Prep_Mold_Overestimated( // not accurate, must terminate
             mo,
             (len_at * 4) // 4 character max for unicode encoding of 1 char
                 + sf.newline + sf.escape + sf.paren + sf.chr1e + 2
@@ -948,7 +948,7 @@ void Mold_Text_Series_At(
     if (!sf.malign)
         sf.brace_in = sf.brace_out = 0;
 
-    REBYTE *dp = Prep_Mold_Overestimated( // not accurate, must terminate
+    Byte *dp = Prep_Mold_Overestimated( // not accurate, must terminate
         mo,
         (len_at * 4) // 4 bytes maximum for UTF-8 encoding
             + sf.brace_in + sf.brace_out
@@ -1008,7 +1008,7 @@ static void Mold_Url(REB_MOLD *mo, const Cell* v)
 {
     REBSER *series = VAL_SERIES(v);
     REBLEN len = VAL_LEN_AT(v);
-    REBYTE *dp = Prep_Mold_Overestimated(mo, len * 4); // 4 bytes max UTF-8
+    Byte *dp = Prep_Mold_Overestimated(mo, len * 4); // 4 bytes max UTF-8
 
     REBLEN n;
     for (n = VAL_INDEX(v); n < VAL_LEN_HEAD(v); ++n)
@@ -1038,7 +1038,7 @@ static void Mold_File(REB_MOLD *mo, const Cell* v)
 
     ++estimated_bytes; // room for % at start
 
-    REBYTE *dp = Prep_Mold_Overestimated(mo, estimated_bytes);
+    Byte *dp = Prep_Mold_Overestimated(mo, estimated_bytes);
 
     *dp++ = '%';
 
@@ -1515,7 +1515,7 @@ REBTYPE(String)
         while (amount != 0) {
             REBLEN wheel = VAL_LEN_HEAD(v) - 1;
             while (true) {
-                REBYTE *b = VAL_BIN_AT_HEAD(v, wheel);
+                Byte *b = VAL_BIN_AT_HEAD(v, wheel);
                 if (amount > 0) {
                     if (*b == 255) {
                         if (wheel == VAL_INDEX(v))
@@ -1658,24 +1658,24 @@ REBTYPE(String)
 //
 void Startup_String(void)
 {
-    Char_Escapes = ALLOC_N_ZEROFILL(REBYTE, MAX_ESC_CHAR + 1);
+    Char_Escapes = ALLOC_N_ZEROFILL(Byte, MAX_ESC_CHAR + 1);
 
-    REBYTE *cp = Char_Escapes;
-    REBYTE c;
+    Byte *cp = Char_Escapes;
+    Byte c;
     for (c = '@'; c <= '_'; c++)
         *cp++ = c;
 
-    Char_Escapes[cast(REBYTE, '\t')] = '-'; // tab
-    Char_Escapes[cast(REBYTE, '\n')] = '/'; // line feed
-    Char_Escapes[cast(REBYTE, '"')] = '"';
-    Char_Escapes[cast(REBYTE, '^')] = '^';
+    Char_Escapes[cast(Byte, '\t')] = '-'; // tab
+    Char_Escapes[cast(Byte, '\n')] = '/'; // line feed
+    Char_Escapes[cast(Byte, '"')] = '"';
+    Char_Escapes[cast(Byte, '^')] = '^';
 
-    URL_Escapes = ALLOC_N_ZEROFILL(REBYTE, MAX_URL_CHAR + 1);
+    URL_Escapes = ALLOC_N_ZEROFILL(Byte, MAX_URL_CHAR + 1);
 
     for (c = 0; c <= ' '; c++)
         URL_Escapes[c] = ESC_URL | ESC_FILE;
 
-    const REBYTE *dc = cb_cast(";%\"()[]{}<>");
+    const Byte *dc = cb_cast(";%\"()[]{}<>");
 
     for (c = LEN_BYTES(dc); c > 0; c--)
         URL_Escapes[*dc++] = ESC_URL | ESC_FILE;
@@ -1687,6 +1687,6 @@ void Startup_String(void)
 //
 void Shutdown_String(void)
 {
-    FREE_N(REBYTE, MAX_ESC_CHAR + 1, Char_Escapes);
-    FREE_N(REBYTE, MAX_URL_CHAR + 1, URL_Escapes);
+    FREE_N(Byte, MAX_ESC_CHAR + 1, Char_Escapes);
+    FREE_N(Byte, MAX_URL_CHAR + 1, URL_Escapes);
 }

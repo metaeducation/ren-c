@@ -493,10 +493,10 @@ enum {
 // Skip to the specified byte but not past the provided end
 // pointer of the byte string.  Return nullptr if byte is not found.
 //
-INLINE const REBYTE *Skip_To_Byte(
-    const REBYTE *cp,
-    const REBYTE *ep,
-    REBYTE b
+INLINE const Byte *Skip_To_Byte(
+    const Byte *cp,
+    const Byte *ep,
+    Byte b
 ) {
     while (cp != ep && *cp != b) cp++;
     if (*cp == b) return cp;

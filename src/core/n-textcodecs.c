@@ -55,7 +55,7 @@
 // present it is to be considered part of the in-band data stream...so that
 // reading and writing back out will preserve the input.
 //
-REBINT What_UTF(const REBYTE *bp, REBLEN len)
+REBINT What_UTF(const Byte *bp, REBLEN len)
 {
     if (len >= 3 && bp[0] == 0xef && bp[1] == 0xbb && bp[2] == 0xbf)
         return 8; // UTF8 (endian agnostic)
@@ -96,7 +96,7 @@ REBINT What_UTF(const REBYTE *bp, REBLEN len)
 //
 int Decode_UTF16_Negative_If_ASCII(
     REBUNI *dst,
-    const REBYTE *src,
+    const Byte *src,
     REBLEN len,
     bool little_endian,
     bool crlf_to_lf
@@ -258,7 +258,7 @@ static void Encode_Utf16_Core(
 
 static void Decode_Utf16_Core(
     Value* out,
-    const REBYTE *data,
+    const Byte *data,
     REBLEN len,
     bool little_endian
 ){
@@ -312,7 +312,7 @@ DECLARE_NATIVE(decode_utf16le)
 {
     INCLUDE_PARAMS_OF_DECODE_UTF16LE;
 
-    REBYTE *data = Cell_Binary_At(ARG(data));
+    Byte *data = Cell_Binary_At(ARG(data));
     REBLEN len = VAL_LEN_AT(ARG(data));
 
     const bool little_endian = true;
@@ -397,7 +397,7 @@ DECLARE_NATIVE(decode_utf16be)
 {
     INCLUDE_PARAMS_OF_DECODE_UTF16BE;
 
-    REBYTE *data = Cell_Binary_At(ARG(data));
+    Byte *data = Cell_Binary_At(ARG(data));
     REBLEN len = VAL_LEN_AT(ARG(data));
 
     const bool little_endian = false;

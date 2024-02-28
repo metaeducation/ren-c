@@ -34,11 +34,11 @@
 //
 // Base-64 binary decoder table.
 //
-static const REBYTE Debase64[128] =
+static const Byte Debase64[128] =
 {
-    #define BIN_ERROR   (REBYTE)0x80
-    #define BIN_SPACE   (REBYTE)0x40
-    #define BIN_VALUE   (REBYTE)0x3f
+    #define BIN_ERROR   (Byte)0x80
+    #define BIN_SPACE   (Byte)0x40
+    #define BIN_VALUE   (Byte)0x3f
     #define IS_BIN_SPACE(c) (did (Debase64[c] & BIN_SPACE))
 
     /* Control Chars */
@@ -162,7 +162,7 @@ static const REBYTE Debase64[128] =
 // a string literal were used.  This helps memory tools trap
 // errant accesses to Enbase64[64] if there's an algorithm bug.
 //
-static const REBYTE Enbase64[64] =
+static const Byte Enbase64[64] =
 {
     'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
     'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
@@ -175,13 +175,13 @@ static const REBYTE Enbase64[64] =
 //
 //  Decode_Base2: C
 //
-static REBSER *Decode_Base2(const REBYTE **src, REBLEN len, REBYTE delim)
+static REBSER *Decode_Base2(const Byte **src, REBLEN len, Byte delim)
 {
-    REBYTE *bp;
-    const REBYTE *cp;
+    Byte *bp;
+    const Byte *cp;
     REBLEN count = 0;
     REBLEN accum = 0;
-    REBYTE lex;
+    Byte lex;
     REBSER *ser;
 
     ser = Make_Binary(len >> 3);
@@ -201,7 +201,7 @@ static REBSER *Decode_Base2(const REBYTE **src, REBLEN len, REBYTE delim)
             else goto err;
 
             if (count++ >= 7) {
-                *bp++ = cast(REBYTE, accum);
+                *bp++ = cast(Byte, accum);
                 count = 0;
                 accum = 0;
             }
@@ -225,13 +225,13 @@ err:
 //
 //  Decode_Base16: C
 //
-static REBSER *Decode_Base16(const REBYTE **src, REBLEN len, REBYTE delim)
+static REBSER *Decode_Base16(const Byte **src, REBLEN len, Byte delim)
 {
-    REBYTE *bp;
-    const REBYTE *cp;
+    Byte *bp;
+    const Byte *cp;
     REBLEN count = 0;
     REBLEN accum = 0;
-    REBYTE lex;
+    Byte lex;
     REBINT val;
     REBSER *ser;
 
@@ -249,7 +249,7 @@ static REBSER *Decode_Base16(const REBYTE **src, REBLEN len, REBYTE delim)
             val = lex & LEX_VALUE; // char num encoded into lex
             if (!val && lex < LEX_NUMBER) goto err;  // invalid char (word but no val)
             accum = (accum << 4) + val;
-            if (count++ & 1) *bp++ = cast(REBYTE, accum);
+            if (count++ & 1) *bp++ = cast(Byte, accum);
         }
         else if (!*cp || lex > LEX_DELIMIT_RETURN) goto err;
     }
@@ -270,13 +270,13 @@ err:
 //
 //  Decode_Base64: C
 //
-static REBSER *Decode_Base64(const REBYTE **src, REBLEN len, REBYTE delim)
+static REBSER *Decode_Base64(const Byte **src, REBLEN len, Byte delim)
 {
-    REBYTE *bp;
-    const REBYTE *cp;
+    Byte *bp;
+    const Byte *cp;
     REBLEN flip = 0;
     REBLEN accum = 0;
-    REBYTE lex;
+    Byte lex;
     REBSER *ser;
 
     // Allocate buffer large enough to hold result:
@@ -303,9 +303,9 @@ static REBSER *Decode_Base64(const REBYTE **src, REBLEN len, REBYTE delim)
             if (*cp != '=') {
                 accum = (accum << 6) + lex;
                 if (flip++ == 3) {
-                    *bp++ = cast(REBYTE, accum >> 16);
-                    *bp++ = cast(REBYTE, accum >> 8);
-                    *bp++ = cast(REBYTE, accum);
+                    *bp++ = cast(Byte, accum >> 16);
+                    *bp++ = cast(Byte, accum >> 8);
+                    *bp++ = cast(Byte, accum);
                     accum = 0;
                     flip = 0;
                 }
@@ -314,14 +314,14 @@ static REBSER *Decode_Base64(const REBYTE **src, REBLEN len, REBYTE delim)
                 cp++;
                 len--;
                 if (flip == 3) {
-                    *bp++ = cast(REBYTE, accum >> 10);
-                    *bp++ = cast(REBYTE, accum >> 2);
+                    *bp++ = cast(Byte, accum >> 10);
+                    *bp++ = cast(Byte, accum >> 2);
                     flip = 0;
                 }
                 else if (flip == 2) {
                     if (!Skip_To_Byte(cp, cp + len, '=')) goto err;
                     cp++;
-                    *bp++ = cast(REBYTE, accum >> 4);
+                    *bp++ = cast(Byte, accum >> 4);
                     flip = 0;
                 }
                 else goto err;
@@ -350,12 +350,12 @@ err:
 //
 // Scan and convert a binary string.
 //
-const REBYTE *Decode_Binary(
+const Byte *Decode_Binary(
     Value* value,
-    const REBYTE *src,
+    const Byte *src,
     REBLEN len,
     REBINT base,
-    REBYTE delim
+    Byte delim
 ) {
     REBSER *ser = 0;
 
@@ -384,12 +384,12 @@ const REBYTE *Decode_Binary(
 //
 // Base2 encode a range of arbitrary bytes into a byte-sized ASCII series.
 //
-REBSER *Encode_Base2(const REBYTE *src, REBLEN len, bool brk)
+REBSER *Encode_Base2(const Byte *src, REBLEN len, bool brk)
 {
     // Account for binary digits, lines, and extra syntax ("slop factor")
     //
     REBSER *s = Make_Binary(8 * len + 2 * (len / 8) + 4);
-    REBYTE *dest = Binary_Head(s);
+    Byte *dest = Binary_Head(s);
 
     if (len == 0) { // return empty series if input was zero length
         TERM_SEQUENCE_LEN(s, 0);
@@ -401,7 +401,7 @@ REBSER *Encode_Base2(const REBYTE *src, REBLEN len, bool brk)
 
     REBLEN i;
     for (i = 0; i < len; i++) {
-        REBYTE b = src[i];
+        Byte b = src[i];
 
         REBLEN n;
         for (n = 0x80; n > 0; n = n >> 1)
@@ -427,12 +427,12 @@ REBSER *Encode_Base2(const REBYTE *src, REBLEN len, bool brk)
 //
 // Base16 encode a range of arbitrary bytes into a byte-sized ASCII series.
 //
-REBSER *Encode_Base16(const REBYTE *src, REBLEN len, bool brk)
+REBSER *Encode_Base16(const Byte *src, REBLEN len, bool brk)
 {
     // Account for hex digits, lines, and extra syntax ("slop factor")
     //
     REBSER *s = Make_Binary(len * 2 + len / 32 + 32);
-    REBYTE *dest = Binary_Head(s);
+    Byte *dest = Binary_Head(s);
 
     if (len == 0) { // return empty series if input was zero length
         TERM_SEQUENCE_LEN(s, 0);
@@ -465,12 +465,12 @@ REBSER *Encode_Base16(const REBYTE *src, REBLEN len, bool brk)
 //
 // Base64 encode a range of arbitrary bytes into a byte-sized ASCII series.
 //
-REBSER *Encode_Base64(const REBYTE *src, REBLEN len, bool brk)
+REBSER *Encode_Base64(const Byte *src, REBLEN len, bool brk)
 {
     // Account for base64 digits, lines, and extra syntax ("slop factor")
     //
     REBSER *s = Make_Binary(4 * len / 3 + 2 * (len / 32) + 5);
-    REBYTE *dest = Binary_Head(s);
+    Byte *dest = Binary_Head(s);
 
     if (len == 0) { // return empty series if input was zero length
         TERM_SEQUENCE_LEN(s, 0);

@@ -154,8 +154,8 @@ INLINE REBSIZ VAL_SIZE_LIMIT_AT(
     }
 
     return (
-        cast(const REBYTE*, AS_REBUNI(tail))
-        - cast(const REBYTE*, AS_REBUNI(at))
+        cast(const Byte*, AS_REBUNI(tail))
+        - cast(const Byte*, AS_REBUNI(at))
     );
 }
 
@@ -224,13 +224,13 @@ INLINE void SET_ANY_CHAR(REBSER *s, REBLEN n, REBUNI c) {
 // with the data itself being malformed (the usual assumption of callers)
 // but rather a limit of the implementation.
 //
-INLINE const REBYTE *Back_Scan_UTF8_Char(
+INLINE const Byte *Back_Scan_UTF8_Char(
     REBUNI *out,
-    const REBYTE *bp,
+    const Byte *bp,
     REBSIZ *size
 ){
     unsigned long ch; // "UTF32" is defined as unsigned long
-    const REBYTE *bp_new = Back_Scan_UTF8_Char_Core(&ch, bp, size);
+    const Byte *bp_new = Back_Scan_UTF8_Char_Core(&ch, bp, size);
     if (bp_new and ch > 0xFFFF)
         fail (Error_Codepoint_Too_High_Raw(rebInteger(ch)));
     *out = cast(REBUNI, ch);

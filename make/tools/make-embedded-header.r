@@ -64,8 +64,8 @@ e/emit {
      * ever need it (e.g. for a C string conversion).  But since this is not
      * compressed it doesn't get it for free.  Add manually, but review.
      */
-    extern const REBYTE core_header_source[];
-    const REBYTE core_header_source[] = {
+    extern const Byte core_header_source[];
+    const Byte core_header_source[] = {
         $<Binary-To-C Join-Of Inp #{00}>
     };
 }

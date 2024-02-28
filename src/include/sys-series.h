@@ -143,7 +143,7 @@
 //
 
 INLINE REBLEN SER_LEN(REBSER *s) {
-    REBYTE len_byte = LEN_BYTE_OR_255(s);
+    Byte len_byte = LEN_BYTE_OR_255(s);
     return len_byte == 255 ? s->content.dynamic.len : len_byte;
 }
 
@@ -163,7 +163,7 @@ INLINE void SET_SERIES_LEN(REBSER *s, REBLEN len) {
 // for instance a generic debugging routine might just want a byte pointer
 // but have no element type pointer to pass in.
 //
-INLINE REBYTE *SER_DATA_RAW(REBSER *s) {
+INLINE Byte *SER_DATA_RAW(REBSER *s) {
     // if updating, also update manual inlining in SER_AT_RAW
 
     // The VAL_CONTEXT(), VAL_SERIES(), VAL_ARRAY() extractors do the failing
@@ -172,11 +172,11 @@ INLINE REBYTE *SER_DATA_RAW(REBSER *s) {
     assert(not (s->info.bits & SERIES_INFO_INACCESSIBLE));
 
     return LEN_BYTE_OR_255(s) == 255
-        ? cast(REBYTE*, s->content.dynamic.data)
-        : cast(REBYTE*, &s->content);
+        ? cast(Byte*, s->content.dynamic.data)
+        : cast(Byte*, &s->content);
 }
 
-INLINE REBYTE *SER_AT_RAW(REBYTE w, REBSER *s, REBLEN i) {
+INLINE Byte *SER_AT_RAW(Byte w, REBSER *s, REBLEN i) {
   #if !defined(NDEBUG)
     if (w != SER_WIDE(s)) {
         //
@@ -184,7 +184,7 @@ INLINE REBYTE *SER_AT_RAW(REBYTE w, REBSER *s, REBLEN i) {
         // caller passing in the wrong width (freeing sets width to 0).  But
         // give some debug tracking either way.
         //
-        REBYTE wide = SER_WIDE(s);
+        Byte wide = SER_WIDE(s);
         if (wide == 0)
             printf("SER_AT_RAW asked on freed series\n");
         else
@@ -199,8 +199,8 @@ INLINE REBYTE *SER_AT_RAW(REBYTE w, REBSER *s, REBLEN i) {
 
     return ((w) * (i)) + ( // v-- inlining of SER_DATA_RAW
         (LEN_BYTE_OR_255(s) == 255)
-            ? cast(REBYTE*, s->content.dynamic.data)
-            : cast(REBYTE*, &s->content)
+            ? cast(Byte*, s->content.dynamic.data)
+            : cast(Byte*, &s->content)
         );
 }
 
@@ -222,14 +222,14 @@ INLINE REBYTE *SER_AT_RAW(REBYTE w, REBSER *s, REBLEN i) {
 #define SER_HEAD(t,s) \
     SER_AT(t, (s), 0)
 
-INLINE REBYTE *SER_TAIL_RAW(size_t w, REBSER *s) {
+INLINE Byte *SER_TAIL_RAW(size_t w, REBSER *s) {
     return SER_AT_RAW(w, s, SER_LEN(s));
 }
 
 #define SER_TAIL(t,s) \
     ((t*)SER_TAIL_RAW(sizeof(t), (s)))
 
-INLINE REBYTE *SER_LAST_RAW(size_t w, REBSER *s) {
+INLINE Byte *SER_LAST_RAW(size_t w, REBSER *s) {
     assert(SER_LEN(s) != 0);
     return SER_AT_RAW(w, s, SER_LEN(s) - 1);
 }
@@ -529,7 +529,7 @@ INLINE REBLEN VAL_LEN_AT(const Cell* v) {
     return VAL_LEN_HEAD(v) - VAL_INDEX(v); // take current index into account
 }
 
-INLINE REBYTE *VAL_RAW_DATA_AT(const Cell* v) {
+INLINE Byte *VAL_RAW_DATA_AT(const Cell* v) {
     return SER_AT_RAW(SER_WIDE(VAL_SERIES(v)), VAL_SERIES(v), VAL_INDEX(v));
 }
 
@@ -623,7 +623,7 @@ INLINE bool Did_Series_Data_Alloc(REBSER *s, REBLEN length) {
     //
     assert(IS_SER_DYNAMIC(s)); // caller sets
 
-    REBYTE wide = SER_WIDE(s);
+    Byte wide = SER_WIDE(s);
     assert(wide != 0);
 
     REBLEN size; // size of allocation (possibly bigger than we need)
@@ -704,7 +704,7 @@ INLINE bool Did_Series_Data_Alloc(REBSER *s, REBLEN length) {
 //
 INLINE REBSER *Make_Ser_Core(
     REBLEN capacity,
-    REBYTE wide,
+    Byte wide,
     REBFLGS flags
 ){
     assert(not (flags & ARRAY_FLAG_FILE_LINE));

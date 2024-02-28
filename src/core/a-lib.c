@@ -134,12 +134,12 @@ void *RL_rebMalloc(size_t size)
         ALIGN_SIZE // stores REBSER* (must be at least big enough for void*)
             + size // for the actual data capacity (may be 0...see notes)
             + 1, // for termination (even BINARY! has this, review necessity)
-        sizeof(REBYTE), // rebRepossess() only creates binary series ATM
+        sizeof(Byte), // rebRepossess() only creates binary series ATM
         SERIES_FLAG_DONT_RELOCATE // direct data pointer is being handed back!
             | SERIES_FLAG_ALWAYS_DYNAMIC // rebRepossess() needs bias field
     );
 
-    REBYTE *ptr = Binary_Head(s) + ALIGN_SIZE;
+    Byte *ptr = Binary_Head(s) + ALIGN_SIZE;
 
     REBSER **ps = (cast(REBSER**, ptr) - 1);
     *ps = s; // save self in bytes *right before* data
@@ -1266,14 +1266,14 @@ unsigned char *RL_rebBytes(
 
     if (ANY_WORD(series) or ANY_STRING(series)) {
         *size_out = rebSpellInto(nullptr, 0, series);
-        REBYTE *result = rebAllocN(REBYTE, (*size_out + 1));
+        Byte *result = rebAllocN(Byte, (*size_out + 1));
         rebSpell(result, *size_out, series);
         return result;
     }
 
     if (IS_BINARY(series)) {
         *size_out = rebBytesInto(nullptr, 0, series);
-        REBYTE *result = rebAllocN(REBYTE, (*size_out + 1));
+        Byte *result = rebAllocN(Byte, (*size_out + 1));
         rebBytesInto(result, *size_out, series);
         return result;
     }

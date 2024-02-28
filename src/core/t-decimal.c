@@ -115,11 +115,11 @@ bool almost_equal(REBDEC a, REBDEC b, REBLEN max_diff) {
 //
 //  Init_Decimal_Bits: C
 //
-Value* Init_Decimal_Bits(Cell* out, const REBYTE *bp)
+Value* Init_Decimal_Bits(Cell* out, const Byte *bp)
 {
     RESET_CELL(out, REB_DECIMAL);
 
-    REBYTE *dp = cast(REBYTE*, &VAL_DECIMAL(out));
+    Byte *dp = cast(Byte*, &VAL_DECIMAL(out));
 
   #ifdef ENDIAN_LITTLE
     REBLEN n;
@@ -175,7 +175,7 @@ REB_R MAKE_Decimal(Value* out, enum Reb_Kind kind, const Value* arg)
 
     case REB_TEXT: {
         REBSIZ size;
-        REBYTE *bp = Analyze_String_For_Scan(&size, arg, MAX_SCAN_DECIMAL);
+        Byte *bp = Analyze_String_For_Scan(&size, arg, MAX_SCAN_DECIMAL);
 
         if (nullptr == Scan_Decimal(out, bp, size, kind != REB_PERCENT))
             goto bad_make;
@@ -305,7 +305,7 @@ void MF_Decimal(REB_MOLD *mo, const Cell* v, bool form)
     switch (VAL_TYPE(v)) {
     case REB_DECIMAL:
     case REB_PERCENT: {
-        REBYTE buf[60];
+        Byte buf[60];
         REBINT len = Emit_Decimal(
             buf,
             VAL_DECIMAL(v),

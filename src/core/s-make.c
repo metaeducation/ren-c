@@ -42,7 +42,7 @@
 //
 REBSER *Make_Binary(REBLEN capacity)
 {
-    REBSER *bin = Make_Ser(capacity + 1, sizeof(REBYTE));
+    REBSER *bin = Make_Ser(capacity + 1, sizeof(Byte));
     TERM_SEQUENCE(bin);
     return bin;
 }
@@ -67,7 +67,7 @@ String* Make_String(REBLEN capacity)
 // Create a string series from the given bytes.
 // Source is always latin-1 valid. Result is always 8bit.
 //
-REBSER *Copy_Bytes(const REBYTE *src, REBINT len)
+REBSER *Copy_Bytes(const Byte *src, REBINT len)
 {
     if (len < 0)
         len = LEN_BYTES(src);
@@ -182,7 +182,7 @@ REBSER *Append_Codepoint(REBSER *dst, REBUNI codepoint)
 //
 REBSER *Append_Utf8_Codepoint(REBSER *dst, uint32_t codepoint)
 {
-    assert(SER_WIDE(dst) == sizeof(REBYTE));
+    assert(SER_WIDE(dst) == sizeof(Byte));
 
     REBLEN tail = SER_LEN(dst);
     EXPAND_SERIES_TAIL(dst, 4); // !!! Conservative, assume long codepoint
@@ -233,7 +233,7 @@ void Append_Utf8_Utf8(REBSER *dst, const char *utf8, size_t size)
 void Append_Utf8_String(REBSER *dst, const Cell* src, REBLEN length_limit)
 {
     assert(
-        SER_WIDE(dst) == sizeof(REBYTE)
+        SER_WIDE(dst) == sizeof(Byte)
         && SER_WIDE(VAL_SERIES(src)) == sizeof(REBUNI)
     );
 
@@ -255,7 +255,7 @@ void Append_Utf8_String(REBSER *dst, const Cell* src, REBLEN length_limit)
 //
 void Append_Int(REBSER *dst, REBINT num)
 {
-    REBYTE buf[32];
+    Byte buf[32];
 
     Form_Int(buf, num);
     Append_Unencoded(dst, s_cast(buf));
@@ -269,7 +269,7 @@ void Append_Int(REBSER *dst, REBINT num)
 //
 void Append_Int_Pad(REBSER *dst, REBINT num, REBINT digs)
 {
-    REBYTE buf[32];
+    Byte buf[32];
     if (digs > 0)
         Form_Int_Pad(buf, num, digs, -digs, '0');
     else
@@ -308,7 +308,7 @@ REBSER *Append_UTF8_May_Fail(
     Resize_Series(temp, size + 1); // needs at most this many unicode chars
 
     REBUNI *up = String_Head(temp);
-    const REBYTE *src = cb_cast(utf8);
+    const Byte *src = cb_cast(utf8);
 
     bool all_ascii = true;
 
@@ -388,7 +388,7 @@ REBSER *Join_Binary(const Value* blk, REBINT limit)
             if (VAL_INT64(val) > 255 || VAL_INT64(val) < 0)
                 fail (Error_Out_Of_Range(KNOWN(val)));
             EXPAND_SERIES_TAIL(series, 1);
-            *Binary_At(series, tail) = (REBYTE)VAL_INT32(val);
+            *Binary_At(series, tail) = (Byte)VAL_INT32(val);
             break;
 
         case REB_BINARY: {

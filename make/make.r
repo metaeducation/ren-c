@@ -853,7 +853,7 @@ append app-config/cflags opt switch user-config/rigorous [
             ; attention to overflow in arithmetic.  There are a lot of places
             ; in the code where a bigger type is converted into a smaller type
             ; without an explicit cast.  (e.g. REBI64 => SQLUSMALLINT,
-            ; REBINT => REBYTE).  Disable C4242:
+            ; REBINT => Byte).  Disable C4242:
             ;
             ;     'identifier' : conversion from 'type1' to 'type2', possible
             ;     loss of data

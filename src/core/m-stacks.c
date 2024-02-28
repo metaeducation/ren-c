@@ -350,7 +350,7 @@ void Pop_Stack_Values_Into(Value* into, REBDSP dsp_start) {
     VAL_INDEX(into) = Insert_Series(
         SER(VAL_ARRAY(into)),
         VAL_INDEX(into),
-        cast(REBYTE*, values), // stack only holds fully specified REBVALs
+        cast(Byte*, values), // stack only holds fully specified REBVALs
         len // multiplied by width (sizeof(Cell)) in Insert_Series
     );
 

@@ -100,7 +100,7 @@ REBINT Find_Key_Hashed(
     REBSPC *specifier,
     REBLEN wide,
     bool cased,
-    REBYTE mode
+    Byte mode
 ){
     // Hashlists store a indexes into the actual data array, of where the
     // first key corresponding to that hash is.  There may be more keys
@@ -319,7 +319,7 @@ REBLEN Find_Map_Entry(
     }
 
     const REBLEN wide = 2;
-    const REBYTE mode = 0; // just search for key, don't add it
+    const Byte mode = 0; // just search for key, don't add it
     REBLEN slot = Find_Key_Hashed(
         pairlist, hashlist, key, key_specifier, wide, cased, mode
     );

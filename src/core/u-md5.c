@@ -394,7 +394,7 @@ int MD5_CtxSize(void) {
 //
 //  MD5: C
 //
-REBYTE *MD5(REBYTE *d, REBLEN n, REBYTE *md)
+Byte *MD5(Byte *d, REBLEN n, Byte *md)
 {
     MD5_CTX c;
     static unsigned char m[MD5_DIGEST_LENGTH];

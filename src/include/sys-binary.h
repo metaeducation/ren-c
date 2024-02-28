@@ -39,16 +39,16 @@
 //
 
 #define Binary_At(bin,n) \
-    SER_AT(REBYTE, (bin), (n))
+    SER_AT(Byte, (bin), (n))
 
 #define Binary_Head(bin) \
-    SER_HEAD(REBYTE, (bin))
+    SER_HEAD(Byte, (bin))
 
 #define Binary_Tail(bin) \
-    SER_TAIL(REBYTE, (bin))
+    SER_TAIL(Byte, (bin))
 
 #define Binary_Last(bin) \
-    SER_LAST(REBYTE, (bin))
+    SER_LAST(Byte, (bin))
 
 INLINE REBLEN Binary_Len(Binary* bin) {
     assert(BYTE_SIZE(bin));
@@ -74,12 +74,12 @@ INLINE void TERM_BIN_LEN(Binary* bin, REBLEN len) {
 #define VAL_BIN_HEAD(v) \
     Binary_Head(VAL_SERIES(v))
 
-INLINE REBYTE *Cell_Binary_At(const Cell* v) {
+INLINE Byte *Cell_Binary_At(const Cell* v) {
     return Binary_At(VAL_SERIES(v), VAL_INDEX(v));
 }
 
-INLINE REBYTE *Cell_Binary_Tail(const Cell* v) {
-    return SER_TAIL(REBYTE, VAL_SERIES(v));
+INLINE Byte *Cell_Binary_Tail(const Cell* v) {
+    return SER_TAIL(Byte, VAL_SERIES(v));
 }
 
 // !!! RE: VAL_BIN_AT_HEAD() see remarks on VAL_ARRAY_AT_HEAD()

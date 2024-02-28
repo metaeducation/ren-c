@@ -77,8 +77,8 @@ enum Reb_Token {
 #define LEX_CLASS       (3<<LEX_SHIFT)  /* class bit field */
 #define LEX_VALUE       (0x1F)          /* value bit field */
 
-#define GET_LEX_CLASS(c)  (Lex_Map[(REBYTE)c] >> LEX_SHIFT)
-#define GET_LEX_VALUE(c)  (Lex_Map[(REBYTE)c] & LEX_VALUE)
+#define GET_LEX_CLASS(c)  (Lex_Map[(Byte)c] >> LEX_SHIFT)
+#define GET_LEX_VALUE(c)  (Lex_Map[(Byte)c] & LEX_VALUE)
 
 
 /*
@@ -126,17 +126,17 @@ enum LEX_CLASS_ENUM {
 #define HAS_LEX_FLAG(f,l)       (f & LEX_FLAG(l))
 #define ONLY_LEX_FLAG(f,l)      (f == LEX_FLAG(l))
 
-#define MASK_LEX_CLASS(c)               (Lex_Map[(REBYTE)c] & LEX_CLASS)
-#define IS_LEX_SPACE(c)                 (!Lex_Map[(REBYTE)c])
-#define IS_LEX_ANY_SPACE(c)             (Lex_Map[(REBYTE)c]<=LEX_DELIMIT_RETURN)
+#define MASK_LEX_CLASS(c)               (Lex_Map[(Byte)c] & LEX_CLASS)
+#define IS_LEX_SPACE(c)                 (!Lex_Map[(Byte)c])
+#define IS_LEX_ANY_SPACE(c)             (Lex_Map[(Byte)c]<=LEX_DELIMIT_RETURN)
 #define IS_LEX_DELIMIT(c)               (MASK_LEX_CLASS(c) == LEX_DELIMIT)
 #define IS_LEX_SPECIAL(c)               (MASK_LEX_CLASS(c) == LEX_SPECIAL)
 #define IS_LEX_WORD(c)                  (MASK_LEX_CLASS(c) == LEX_WORD)
 // Optimization (necessary?)
-#define IS_LEX_NUMBER(c)                (Lex_Map[(REBYTE)c] >= LEX_NUMBER)
+#define IS_LEX_NUMBER(c)                (Lex_Map[(Byte)c] >= LEX_NUMBER)
 
-#define IS_LEX_NOT_DELIMIT(c)           (Lex_Map[(REBYTE)c] >= LEX_SPECIAL)
-#define IS_LEX_WORD_OR_NUMBER(c)        (Lex_Map[(REBYTE)c] >= LEX_WORD)
+#define IS_LEX_NOT_DELIMIT(c)           (Lex_Map[(Byte)c] >= LEX_SPECIAL)
+#define IS_LEX_WORD_OR_NUMBER(c)        (Lex_Map[(Byte)c] >= LEX_WORD)
 
 //
 //  Special Chars (encoded in the LEX_VALUE field)
@@ -219,7 +219,7 @@ typedef struct rebol_scan_state {
     //
     // The mode_char can be '\0', ']', ')', or '/'
     //
-    REBYTE mode_char;
+    Byte mode_char;
 
     // If vaptr is nullptr, then it's assumed that the `begin` is the source of
     // the UTF-8 data to scan.  Otherwise, it is a variadic feed of UTF-8
@@ -227,21 +227,21 @@ typedef struct rebol_scan_state {
     //
     va_list *vaptr;
 
-    const REBYTE *begin;
-    const REBYTE *end;
+    const Byte *begin;
+    const Byte *end;
 
     // The "limit" feature was not implemented, scanning stopped on a null
     // terminator.  It may be interesting in the future, but it doesn't mix
     // well with scanning variadics which merge Cell and UTF-8 strings
     // together...
     //
-    /* const REBYTE *limit; */
+    /* const Byte *limit; */
 
     REBLEN line;
-    const REBYTE *line_head; // head of current line (used for errors)
+    const Byte *line_head; // head of current line (used for errors)
 
     REBLEN start_line;
-    const REBYTE *start_line_head;
+    const Byte *start_line_head;
 
     Symbol* file;
 
@@ -304,7 +304,7 @@ enum {
 /*
 **  Externally Accessed Variables
 */
-extern const REBYTE Lex_Map[256];
+extern const Byte Lex_Map[256];
 
 
 //=////////////////////////////////////////////////////////////////////////=//

@@ -718,22 +718,22 @@ INLINE void CHANGE_VAL_TYPE_BITS(Cell* v, enum Reb_Kind kind) {
 
 #ifdef NDEBUG
     #define IS_END(p) \
-        (cast(const REBYTE*, p)[1] == REB_0_END)
+        (cast(const Byte*, p)[1] == REB_0_END)
 #else
     INLINE bool IS_END_Debug(
         const void *p, // may not have NODE_FLAG_CELL, may be short as 2 bytes
         const char *file,
         int line
     ){
-        if (cast(const REBYTE*, p)[0] & 0x40) { // e.g. NODE_FLAG_FREE
+        if (cast(const Byte*, p)[0] & 0x40) { // e.g. NODE_FLAG_FREE
             printf("NOT_END() called on garbage\n");
             panic_at(p, file, line);
         }
 
-        if (cast(const REBYTE*, p)[1] == REB_0_END)
+        if (cast(const Byte*, p)[1] == REB_0_END)
             return true;
 
-        if (not (cast(const REBYTE*, p)[0] & 0x01)) { // e.g. NODE_FLAG_CELL
+        if (not (cast(const Byte*, p)[0] & 0x01)) { // e.g. NODE_FLAG_CELL
             printf("IS_END() found non-END pointer that's not a cell\n");
             panic_at(p, file, line);
         }
@@ -1203,10 +1203,10 @@ INLINE uint32_t VAL_UINT32(const Cell* v) {
     return cast(uint32_t, VAL_INT64(v));
 }
 
-INLINE REBYTE VAL_UINT8(const Cell* v) {
+INLINE Byte VAL_UINT8(const Cell* v) {
     if (VAL_INT64(v) > 255 or VAL_INT64(v) < 0)
         fail (Error_Out_Of_Range(KNOWN(v)));
-    return cast(REBYTE, VAL_INT32(v));
+    return cast(Byte, VAL_INT32(v));
 }
 
 
@@ -1332,39 +1332,39 @@ INLINE Value* Init_Money(Cell* out, deci amount) {
 #else
     // C++ build can give const-correctness so you don't change read-only data
 
-    INLINE const REBYTE *VAL_TUPLE(const Cell* v) {
+    INLINE const Byte *VAL_TUPLE(const Cell* v) {
         assert(IS_TUPLE(v));
         return v->payload.tuple.tuple + 1;
     }
 
-    INLINE REBYTE *VAL_TUPLE(Cell* v) {
+    INLINE Byte *VAL_TUPLE(Cell* v) {
         assert(IS_TUPLE(v));
         return v->payload.tuple.tuple + 1;
     }
 
-    INLINE const REBYTE *VAL_TUPLE_DATA(const Cell* v) {
+    INLINE const Byte *VAL_TUPLE_DATA(const Cell* v) {
         assert(IS_TUPLE(v));
         return v->payload.tuple.tuple;
     }
 
-    INLINE REBYTE *VAL_TUPLE_DATA(Cell* v) {
+    INLINE Byte *VAL_TUPLE_DATA(Cell* v) {
         assert(IS_TUPLE(v));
         return v->payload.tuple.tuple;
     }
 
-    INLINE REBYTE VAL_TUPLE_LEN(const Cell* v) {
+    INLINE Byte VAL_TUPLE_LEN(const Cell* v) {
         assert(IS_TUPLE(v));
         return v->payload.tuple.tuple[0];
     }
 
-    INLINE REBYTE &VAL_TUPLE_LEN(Cell* v) {
+    INLINE Byte &VAL_TUPLE_LEN(Cell* v) {
         assert(IS_TUPLE(v));
         return v->payload.tuple.tuple[0];
     }
 #endif
 
 
-INLINE Value* Init_Tuple(Cell* out, const REBYTE *data) {
+INLINE Value* Init_Tuple(Cell* out, const Byte *data) {
     RESET_CELL(out, REB_TUPLE);
     memcpy(VAL_TUPLE_DATA(out), data, sizeof(out->payload.tuple.tuple));
     return cast(Value*, out);

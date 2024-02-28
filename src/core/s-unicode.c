@@ -712,7 +712,7 @@ ConversionResult ConvertUTF8toUTF32 (
 //
 // !!! Not currently used.
 //
-bool Legal_UTF8_Char(const REBYTE *str, REBLEN len)
+bool Legal_UTF8_Char(const Byte *str, REBLEN len)
 {
     return did isLegalUTF8Sequence(str, str + len); // different Boolean
 }
@@ -726,9 +726,9 @@ bool Legal_UTF8_Char(const REBYTE *str, REBLEN len)
 // Currently not used in the system (all UTF-8 checking is done on the fly)
 // but provided as a native via INVALID-UTF8?
 //
-REBYTE *Check_UTF8(REBYTE *utf8, size_t size)
+Byte *Check_UTF8(Byte *utf8, size_t size)
 {
-    REBYTE *end = utf8 + size;
+    Byte *end = utf8 + size;
 
     REBLEN trail;
     for (; utf8 != end; utf8 += trail) {
@@ -774,9 +774,9 @@ REBYTE *Check_UTF8(REBYTE *utf8, size_t size)
 // If failure due to insufficient data or malformed bytes, then nullptr is
 // returned (size is not decremented).
 //
-const REBYTE *Back_Scan_UTF8_Char_Core(
+const Byte *Back_Scan_UTF8_Char_Core(
     unsigned long *out, // "UTF32" is defined as unsigned long above
-    const REBYTE *bp,
+    const Byte *bp,
     REBSIZ *size
 ) {
     *out = 0;
@@ -874,7 +874,7 @@ size_t Size_As_UTF8(const REBUNI *up, REBLEN len)
 // Returns length of char stored in dst.
 // Be sure dst has at least 4 bytes available.
 //
-REBLEN Encode_UTF8_Char(REBYTE *dst, uint32_t c)
+REBLEN Encode_UTF8_Char(Byte *dst, uint32_t c)
 {
     int len = 0;
     const uint32_t mask = 0xBF;
@@ -897,16 +897,16 @@ REBLEN Encode_UTF8_Char(REBYTE *dst, uint32_t c)
 
     switch (len) {
     case 4:
-        *--dst = cast(REBYTE, (c | mark) & mask);
+        *--dst = cast(Byte, (c | mark) & mask);
         c >>= 6; // falls through
     case 3:
-        *--dst = cast(REBYTE, (c | mark) & mask);
+        *--dst = cast(Byte, (c | mark) & mask);
         c >>= 6; // falls through
     case 2:
-        *--dst = cast(REBYTE, (c | mark) & mask);
+        *--dst = cast(Byte, (c | mark) & mask);
         c >>= 6; // falls through
     case 1:
-        *--dst = cast(REBYTE, c | firstByteMark[len]);
+        *--dst = cast(Byte, c | firstByteMark[len]);
     }
 
     return len;
@@ -924,22 +924,22 @@ REBLEN Encode_UTF8_Char(REBYTE *dst, uint32_t c)
 // Does not add a terminator.
 //
 REBLEN Encode_UTF8(
-    REBYTE *dst,
+    Byte *dst,
     REBLEN max,
     const REBUNI *src,
     REBLEN *len
 ){
-    REBYTE buf[8];
+    Byte buf[8];
 
     REBLEN cnt = *len;
 
-    REBYTE *bs = dst; // save start
+    Byte *bs = dst; // save start
     const REBUNI *up = src;
 
     for (; max > 0 && cnt > 0; cnt--) {
         REBUNI c = *up++;
         if (c < 0x80) {
-            *dst++ = cast(REBYTE, c);
+            *dst++ = cast(Byte, c);
             max--;
         }
         else {

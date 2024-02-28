@@ -70,7 +70,7 @@ REBINT Compare_Binary_Vals(const Cell* v1, const Cell* v2)
 //
 // Uncase: compare is case-insensitive.
 //
-REBINT Compare_Bytes(const REBYTE *b1, const REBYTE *b2, REBLEN len, bool uncase)
+REBINT Compare_Bytes(const Byte *b1, const Byte *b2, REBLEN len, bool uncase)
 {
     REBINT d;
 
@@ -103,7 +103,7 @@ REBINT Compare_Bytes(const REBYTE *b1, const REBYTE *b2, REBLEN len, bool uncase
 // Compare two binary strings. Return where the first differed.
 // Case insensitive.
 //
-const REBYTE *Match_Bytes(const REBYTE *src, const REBYTE *pat)
+const Byte *Match_Bytes(const Byte *src, const Byte *pat)
 {
     while (*src != '\0' and *pat != '\0') {
         if (LO_CASE(*src++) != LO_CASE(*pat++))
@@ -197,7 +197,7 @@ REBINT Compare_String_Vals(const Cell* v1, const Cell* v2, bool uncase)
 //
 // Used for: WORD comparison.
 //
-REBINT Compare_UTF8(const REBYTE *s1, const REBYTE *s2, REBSIZ l2)
+REBINT Compare_UTF8(const Byte *s1, const Byte *s2, REBSIZ l2)
 {
     REBUNI c1, c2;
     REBSIZ l1 = LEN_BYTES(s1);
@@ -240,12 +240,12 @@ REBINT Compare_UTF8(const REBYTE *s1, const REBYTE *s2, REBSIZ l2)
 //
 // NOTE: Series tail must be > index.
 //
-REBLEN Find_Byte_Str(REBSER *series, REBLEN index, REBYTE *b2, REBLEN l2, bool uncase, bool match)
+REBLEN Find_Byte_Str(REBSER *series, REBLEN index, Byte *b2, REBLEN l2, bool uncase, bool match)
 {
-    REBYTE *b1;
-    REBYTE *e1;
+    Byte *b1;
+    Byte *e1;
     REBLEN l1;
-    REBYTE c;
+    Byte c;
     REBLEN n;
 
     // The pattern empty or is longer than the target:
@@ -272,7 +272,7 @@ REBLEN Find_Byte_Str(REBSER *series, REBLEN index, REBYTE *b2, REBLEN l2, bool u
 
     } else {
 
-        c = (REBYTE)LO_CASE(c); // OK! (never > 255)
+        c = (Byte)LO_CASE(c); // OK! (never > 255)
 
         while (b1 != e1) {
             if (LO_CASE(*b1) == c) { // matched first char
@@ -407,7 +407,7 @@ static REBLEN Find_Str_Char_Old(
 //
 REBLEN Find_Str_Char(
     REBUNI uni,         // character to look for
-    REBSER *series,     // series with width sizeof(REBYTE) or sizeof(REBUNI)
+    REBSER *series,     // series with width sizeof(Byte) or sizeof(REBUNI)
     REBLEN lowest,      // lowest return index
     REBLEN index_orig,  // first index to examine (if out of range, NOT_FOUND)
     REBLEN highest,     // *one past* highest return result (e.g. SER_LEN)
@@ -471,8 +471,8 @@ REBLEN Find_Str_Char(
     // use optimized C library functions if possible.
     //
     if (BYTE_SIZE(series)) {
-        REBYTE *bp = Binary_Head(series);
-        REBYTE breakset[3];
+        Byte *bp = Binary_Head(series);
+        Byte breakset[3];
 
         // We need to cover when the lowercase or uppercase variant of a
         // unicode character is <= 0xFF even though the character itself
@@ -483,17 +483,17 @@ REBLEN Find_Str_Char(
         if (casings[0] > 0xFF) {
             if (casings[1] > 0xFF) goto return_not_found;
 
-            breakset[0] = cast(REBYTE, casings[1]);
+            breakset[0] = cast(Byte, casings[1]);
             breakset[1] = '\0';
         }
         else {
-            breakset[0] = cast(REBYTE, casings[0]);
+            breakset[0] = cast(Byte, casings[0]);
 
             if (casings[1] > 0xFF || casings[1] == casings[0]) {
                 breakset[1] = '\0';
             }
             else {
-                breakset[1] = cast(REBYTE, casings[1]);
+                breakset[1] = cast(Byte, casings[1]);
                 breakset[2] = '\0';
             }
         }
@@ -516,7 +516,7 @@ REBLEN Find_Str_Char(
             //
             void *v = memchr(bp + index, breakset[0], highest - index);
             if (v) {
-                index = cast(REBYTE*, v) - bp;
+                index = cast(Byte*, v) - bp;
                 goto return_index;
             }
         }
@@ -642,7 +642,7 @@ REBLEN Find_Str_Bitset(
 //
 // Count lines in a UTF-8 file.
 //
-REBLEN Count_Lines(REBYTE *bp, REBLEN len)
+REBLEN Count_Lines(Byte *bp, REBLEN len)
 {
     REBLEN count = 0;
 
@@ -664,10 +664,10 @@ REBLEN Count_Lines(REBYTE *bp, REBLEN len)
 //
 // Find next line termination. Advance the bp; return bin length.
 //
-REBLEN Next_Line(REBYTE **bin)
+REBLEN Next_Line(Byte **bin)
 {
     REBLEN count = 0;
-    REBYTE *bp = *bin;
+    Byte *bp = *bin;
 
     for (; *bp; bp++) {
         if (*bp == CR) {

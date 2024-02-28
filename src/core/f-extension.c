@@ -192,9 +192,9 @@ DECLARE_NATIVE(load_extension)
     REBNAT *dispatchers = VAL_HANDLE_POINTER(REBNAT, dispatchers_handle);
 
     size_t specs_size;
-    REBYTE *specs_utf8 = Decompress_Alloc_Core(
+    Byte *specs_utf8 = Decompress_Alloc_Core(
         &specs_size,
-        VAL_HANDLE_POINTER(REBYTE, specs_compressed),
+        VAL_HANDLE_POINTER(Byte, specs_compressed),
         VAL_HANDLE_LEN(specs_compressed),
         -1, // max
         Canon(SYM_GZIP)
@@ -298,7 +298,7 @@ DECLARE_NATIVE(load_extension)
     size_t script_size;
     void *script_utf8 = rebGunzipAlloc(
         &script_size,
-        VAL_HANDLE_POINTER(REBYTE, script_compressed),
+        VAL_HANDLE_POINTER(Byte, script_compressed),
         VAL_HANDLE_LEN(script_compressed),
         -1 // max
     );
@@ -450,20 +450,20 @@ DECLARE_NATIVE(unload_extension)
 // This has to be considered in the unloading mechanics.
 //
 Value* rebCollateExtension_internal(
-    const REBYTE script_compressed[], REBLEN script_compressed_len,
-    const REBYTE specs_compressed[], REBLEN specs_compressed_len,
+    const Byte script_compressed[], REBLEN script_compressed_len,
+    const Byte specs_compressed[], REBLEN specs_compressed_len,
     REBNAT dispatchers[], REBLEN dispatchers_len
 ) {
 
     REBARR *a = Make_Arr(IDX_COLLATOR_MAX); // details
     Init_Handle_Simple(
         ARR_AT(a, IDX_COLLATOR_SCRIPT),
-        m_cast(REBYTE*, script_compressed), // !!! by contract, don't change!
+        m_cast(Byte*, script_compressed), // !!! by contract, don't change!
         script_compressed_len
     );
     Init_Handle_Simple(
         ARR_AT(a, IDX_COLLATOR_SPECS),
-        m_cast(REBYTE*, specs_compressed), // !!! by contract, don't change!
+        m_cast(Byte*, specs_compressed), // !!! by contract, don't change!
         specs_compressed_len
     );
     Init_Handle_Simple(

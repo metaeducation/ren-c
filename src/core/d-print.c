@@ -86,7 +86,7 @@ void Print_OS_Line(void)
 {
     // !!! Don't put const literal directly into mutable Req_SIO->data
 
-    static REBYTE newline[] = "\n";
+    static Byte newline[] = "\n";
 
     Req_SIO->common.data = newline;
     Req_SIO->length = 1;
@@ -106,7 +106,7 @@ void Print_OS_Line(void)
 //
 // The encoding options are OPT_ENC_XXX flags OR'd together.
 //
-void Prin_OS_String(const REBYTE *utf8, REBSIZ size, REBFLGS opts)
+void Prin_OS_String(const Byte *utf8, REBSIZ size, REBFLGS opts)
 {
     Req_SIO->flags |= RRF_FLUSH;
     if (opts & OPT_ENC_RAW)
@@ -128,7 +128,7 @@ void Prin_OS_String(const REBYTE *utf8, REBSIZ size, REBFLGS opts)
     //
     // There may well be a better way to go about this.
     //
-    Req_SIO->common.data = m_cast(REBYTE*, utf8); // !!! promises to not write
+    Req_SIO->common.data = m_cast(Byte*, utf8); // !!! promises to not write
     while (size > 0) {
         if (Do_Signals_Throws(temp))
             fail (Error_No_Catch_For_Throw(temp));
@@ -164,7 +164,7 @@ void Prin_OS_String(const REBYTE *utf8, REBSIZ size, REBFLGS opts)
 //
 //  Debug_String_No_Newline: C
 //
-void Debug_String_No_Newline(const REBYTE *utf8, REBSIZ size)
+void Debug_String_No_Newline(const Byte *utf8, REBSIZ size)
 {
     bool disabled = GC_Disabled;
     GC_Disabled = true;
@@ -195,11 +195,11 @@ void Debug_Line(void)
 //
 // Print a character out a number of times.
 //
-void Debug_Chars(REBYTE chr, REBLEN num)
+void Debug_Chars(Byte chr, REBLEN num)
 {
     assert(num < 100);
 
-    REBYTE buffer[100];
+    Byte buffer[100];
     REBLEN i;
     for (i = 0; i < num; ++i)
         buffer[i] = chr;
@@ -353,10 +353,10 @@ void Debug_Fmt(const char *fmt, ...)
 // Does not insert a #.
 // Make sure you have room in your buffer before calling this!
 //
-REBYTE *Form_Hex_Pad(REBYTE *buf, REBI64 val, REBINT len)
+Byte *Form_Hex_Pad(Byte *buf, REBI64 val, REBINT len)
 {
-    REBYTE buffer[MAX_HEX_LEN + 4];
-    REBYTE *bp = buffer + MAX_HEX_LEN + 1;
+    Byte buffer[MAX_HEX_LEN + 4];
+    Byte *bp = buffer + MAX_HEX_LEN + 1;
 
     // !!! val parameter was REBU64 at one point; changed to REBI64
     // as this does signed comparisons (val < 0 was never true...)
@@ -386,7 +386,7 @@ REBYTE *Form_Hex_Pad(REBYTE *buf, REBI64 val, REBINT len)
 //
 // Convert byte-sized int to xx format. Very fast.
 //
-REBYTE *Form_Hex2_UTF8(REBYTE *bp, REBLEN val)
+Byte *Form_Hex2_UTF8(Byte *bp, REBLEN val)
 {
     bp[0] = Hex_Digits[(val & 0xf0) >> 4];
     bp[1] = Hex_Digits[val & 0xf];
@@ -414,7 +414,7 @@ REBUNI *Form_Hex2_Uni(REBUNI *up, REBLEN val)
 //
 // Convert byte to %xx format
 //
-REBYTE *Form_Hex_Esc(REBYTE *bp, REBYTE b)
+Byte *Form_Hex_Esc(Byte *bp, Byte b)
 {
     bp[0] = '%';
     bp[1] = Hex_Digits[(b & 0xf0) >> 4];
@@ -429,7 +429,7 @@ REBYTE *Form_Hex_Esc(REBYTE *bp, REBYTE b)
 //
 // Convert 24 bit RGB to xxxxxx format.
 //
-REBYTE *Form_RGB_Utf8(REBYTE *utf8, const REBYTE *dp)
+Byte *Form_RGB_Utf8(Byte *utf8, const Byte *dp)
 {
     utf8[0] = Hex_Digits[(dp[0] >> 4) & 0xf];
     utf8[1] = Hex_Digits[dp[0] & 0xf];
@@ -463,12 +463,12 @@ REBYTE *Form_RGB_Utf8(REBYTE *utf8, const REBYTE *dp)
 //
 void Form_Args_Core(REB_MOLD *mo, const char *fmt, va_list *vaptr)
 {
-    REBYTE *cp;
+    Byte *cp;
     REBINT pad;
-    REBYTE desc;
-    REBYTE padding;
+    Byte desc;
+    Byte padding;
     REBSER *ser = mo->series;
-    REBYTE buf[MAX_SCAN_DECIMAL];
+    Byte buf[MAX_SCAN_DECIMAL];
 
     DECLARE_VALUE (value);
 
@@ -516,7 +516,7 @@ pick:
             break;
 
         case 's':
-            cp = va_arg(*vaptr, REBYTE *);
+            cp = va_arg(*vaptr, Byte *);
             if (pad == 1) pad = LEN_BYTES(cp);
             if (pad < 0) {
                 pad = -pad;
@@ -556,7 +556,7 @@ pick:
         case 'c':
             Append_Utf8_Codepoint(
                 ser,
-                cast(REBYTE, va_arg(*vaptr, REBINT))
+                cast(Byte, va_arg(*vaptr, REBINT))
             );
             break;
 
@@ -565,7 +565,7 @@ pick:
             if (pad == 1) pad = 8;
             cp = Form_Hex_Pad(
                 buf,
-                cast(REBU64, cast(uintptr_t, va_arg(*vaptr, REBYTE*))),
+                cast(REBU64, cast(uintptr_t, va_arg(*vaptr, Byte*))),
                 pad
             );
             Append_Unencoded_Len(ser, s_cast(buf), cp - buf);

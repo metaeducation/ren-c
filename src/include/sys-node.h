@@ -205,7 +205,7 @@ enum Reb_Pointer_Detect {
 };
 
 INLINE enum Reb_Pointer_Detect Detect_Rebol_Pointer(const void *p) {
-    const REBYTE* bp = cast(const REBYTE*, p);
+    const Byte* bp = cast(const Byte*, p);
 
     switch (bp[0] >> 4) { // switch on the left 4 bits of the byte
     case 0:

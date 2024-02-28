@@ -52,7 +52,7 @@ static void Query_Net(Value* out, Value* port, struct devreq_net *sock)
 
     Set_Tuple(
         CTX_VAR(ctx, STD_NET_INFO_LOCAL_IP),
-        cast(REBYTE*, &sock->local_ip),
+        cast(Byte*, &sock->local_ip),
         4
     );
     Init_Integer(
@@ -62,7 +62,7 @@ static void Query_Net(Value* out, Value* port, struct devreq_net *sock)
 
     Set_Tuple(
         CTX_VAR(ctx, STD_NET_INFO_REMOTE_IP),
-        cast(REBYTE*, &sock->remote_ip),
+        cast(Byte*, &sock->remote_ip),
         4
     );
     Init_Integer(
@@ -570,7 +570,7 @@ DECLARE_NATIVE(set_udp_multicast)
 
     REBREQ *sock = Ensure_Port_State(ARG(port), RDI_NET);
 
-    sock->common.data = cast(REBYTE*, frame_);
+    sock->common.data = cast(Byte*, frame_);
 
     // sock->command is going to just be RDC_MODIFY, so all there is to go
     // by is the data and flags.  Since RFC3171 specifies IPv4 multicast
@@ -605,7 +605,7 @@ DECLARE_NATIVE(set_udp_ttl)
 
     REBREQ *sock = Ensure_Port_State(ARG(port), RDI_NET);
 
-    sock->common.data = cast(REBYTE*, frame_);
+    sock->common.data = cast(Byte*, frame_);
 
     // sock->command is going to just be RDC_MODIFY, so all there is to go
     // by is the data and flags.  Since RFC2365 specifies IPv4 multicast

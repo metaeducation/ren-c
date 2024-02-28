@@ -51,7 +51,7 @@
 // Decode bytes in Big Endian format (least significant byte first) into a
 // uint32.  GZIP format uses this to store the decompressed-size-mod-2^32.
 //
-static uint32_t Bytes_To_U32_BE(const REBYTE * const in)
+static uint32_t Bytes_To_U32_BE(const Byte * const in)
 {
     return cast(uint32_t, in[0])
         | cast(uint32_t, in[1] << 8)
@@ -191,7 +191,7 @@ unsigned char *Compress_Alloc_Core(
     strm.avail_in = in_len;
     strm.next_in = cast(const z_Bytef*, input);
 
-    REBYTE *output = rebAllocN(REBYTE, buf_size);
+    Byte *output = rebAllocN(Byte, buf_size);
     strm.avail_out = buf_size;
     strm.next_out = output;
 
@@ -220,7 +220,7 @@ unsigned char *Compress_Alloc_Core(
     //
     assert(buf_size >= strm.total_out);
     if (buf_size - strm.total_out > 1024)
-        output = cast(REBYTE*, rebRealloc(output, strm.total_out));
+        output = cast(Byte*, rebRealloc(output, strm.total_out));
 
     deflateEnd(&strm);
     return output; // done last (so strm variables can be read up to end)
@@ -300,7 +300,7 @@ unsigned char *Decompress_Alloc_Core(
         // (compared to the input data) is actually wrong.
         //
         buf_size = Bytes_To_U32_BE(
-            cast(const REBYTE*, input) + len_in - sizeof(uint32_t)
+            cast(const Byte*, input) + len_in - sizeof(uint32_t)
         );
     }
     else {
@@ -331,9 +331,9 @@ unsigned char *Decompress_Alloc_Core(
     // Use memory backed by a managed series (can be converted to a series
     // later if desired, via Rebserize)
     //
-    REBYTE *output = rebAllocN(REBYTE, buf_size);
+    Byte *output = rebAllocN(Byte, buf_size);
     strm.avail_out = buf_size;
-    strm.next_out = cast(REBYTE*, output);
+    strm.next_out = cast(Byte*, output);
 
     // Loop through and allocate a larger buffer each time we find the
     // decompression did not run to completion.  Stop if we exceed max.
@@ -366,7 +366,7 @@ unsigned char *Decompress_Alloc_Core(
         if (max >= 0 and buf_size > cast(REBLEN, max))
             buf_size = max;
 
-        output = cast(REBYTE*, rebRealloc(output, buf_size));
+        output = cast(Byte*, rebRealloc(output, buf_size));
 
         // Extending keeps the content but may realloc the pointer, so
         // put it at the same spot to keep writing to
@@ -381,7 +381,7 @@ unsigned char *Decompress_Alloc_Core(
     //
     assert(buf_size >= strm.total_out);
     if (strm.total_out - buf_size > 1024)
-        output = cast(REBYTE*, rebRealloc(output, strm.total_out));
+        output = cast(Byte*, rebRealloc(output, strm.total_out));
 
     if (len_out)
         *len_out = strm.total_out;
