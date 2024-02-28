@@ -340,15 +340,6 @@ init-schemes: func [
         awake: func [event] [print ['UDP-event event/type] true]
     ]
 
-    if 4 == fourth system/version [
-        make-scheme [
-            title: "Signal"
-            name: 'signal
-            actor: get-signal-actor-handle
-            spec: system/standard/port-spec-signal
-        ]
-    ]
-
     system/ports/system:   open [scheme: 'system]
     system/ports/input:    open [scheme: 'console]
 

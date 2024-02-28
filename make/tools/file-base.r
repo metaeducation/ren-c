@@ -124,7 +124,6 @@ core: [
     p-event.c
     p-file.c
     p-net.c
-    p-signal.c
 
     ; (S)trings
     s-cases.c
