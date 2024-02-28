@@ -128,7 +128,6 @@ INLINE bool Vararg_Op_If_No_Advance_Handled(
             fail (Error_Varargs_No_Look_Raw()); // hard quote only
 
         Derelativize(out, opt_look, specifier);
-        SET_VAL_FLAG(out, VALUE_FLAG_UNEVALUATED);
 
         return true; // only a lookahead, no need to advance
     }
@@ -169,8 +168,6 @@ bool Do_Vararg_Op_Maybe_End_Throws(
     enum Reb_Param_Class pclass =
         (param == nullptr) ? PARAM_CLASS_HARD_QUOTE :  VAL_PARAM_CLASS(param);
 
-    Value* arg; // for updating VALUE_FLAG_UNEVALUATED
-
     REBFRM *opt_vararg_frame;
 
     REBFRM *f;
@@ -183,7 +180,6 @@ bool Do_Vararg_Op_Maybe_End_Throws(
         // array during that creation, flattening its entire output).
 
         opt_vararg_frame = nullptr;
-        arg = nullptr; // no corresponding varargs argument either
 
         if (Vararg_Op_If_No_Advance_Handled(
             out,
@@ -206,8 +202,6 @@ bool Do_Vararg_Op_Maybe_End_Throws(
             //
             Value* single = KNOWN(ARR_SINGLE(Cell_Array(shared)));
             Move_Value(out, single);
-            if (GET_VAL_FLAG(single, VALUE_FLAG_UNEVALUATED))
-                SET_VAL_FLAG(out, VALUE_FLAG_UNEVALUATED); // not auto-copied
             SET_END(shared);
             goto type_check_and_return;
         }
@@ -254,7 +248,6 @@ bool Do_Vararg_Op_Maybe_End_Throws(
 
         case PARAM_CLASS_HARD_QUOTE:
             Derelativize(out, Cell_Array_At(shared), VAL_SPECIFIER(shared));
-            SET_VAL_FLAG(out, VALUE_FLAG_UNEVALUATED);
             VAL_INDEX(shared) += 1;
             break;
 
@@ -268,7 +261,6 @@ bool Do_Vararg_Op_Maybe_End_Throws(
             }
             else { // not a soft-"exception" case, quote ordinarily
                 Derelativize(out, Cell_Array_At(shared), VAL_SPECIFIER(shared));
-                SET_VAL_FLAG(out, VALUE_FLAG_UNEVALUATED);
             }
             VAL_INDEX(shared) += 1;
             break;
@@ -291,7 +283,6 @@ bool Do_Vararg_Op_Maybe_End_Throws(
         assert(NOT_VAL_FLAG(vararg, VARARGS_FLAG_ENFIXED));
 
         opt_vararg_frame = f;
-        arg = FRM_ARG(f, vararg->payload.varargs.param_offset + 1);
 
         if (Vararg_Op_If_No_Advance_Handled(
             out,
@@ -384,13 +375,6 @@ bool Do_Vararg_Op_Maybe_End_Throws(
             fail (Error_Invalid(out));
 
         fail (Error_Arg_Type(opt_vararg_frame, param, VAL_TYPE(out)));
-    }
-
-    if (arg) {
-        if (GET_VAL_FLAG(out, VALUE_FLAG_UNEVALUATED))
-            SET_VAL_FLAG(arg, VALUE_FLAG_UNEVALUATED);
-        else
-            CLEAR_VAL_FLAG(arg, VALUE_FLAG_UNEVALUATED);
     }
 
     // Note: may be at end now, but reflect that at *next* call

@@ -861,10 +861,10 @@ INLINE REBACT *VAL_RELATIVE(const Cell* v) {
 //
 #define Init_Endish_Nulled(out) \
     RESET_CELL_EXTRA((out), REB_MAX_NULLED, \
-        VALUE_FLAG_FALSEY | VALUE_FLAG_UNEVALUATED)
+        VALUE_FLAG_FALSEY | VALUE_FLAG_ENDISH)
 
 INLINE bool IS_ENDISH_NULLED(const Cell* v) {
-    return IS_NULLED(v) and GET_VAL_FLAG(v, VALUE_FLAG_UNEVALUATED);
+    return IS_NULLED(v) and GET_VAL_FLAG(v, VALUE_FLAG_ENDISH);
 }
 
 // To help ensure full nulled cells don't leak to the API, the variadic
@@ -1086,8 +1086,6 @@ INLINE bool IS_CONDITIONAL_TRUE(const Value* v) {
         return false;
     if (IS_VOID(v))
         fail (Error_Void_Conditional_Raw());
-    if (IS_BLOCK(v) and GET_VAL_FLAG(v, VALUE_FLAG_UNEVALUATED))
-        fail (Error_Block_Conditional_Raw(v));
     return true;
 }
 

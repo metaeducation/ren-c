@@ -1141,192 +1141,54 @@ found_first_arg_ptr:
 //
 //  does: native [
 //
-//  {Specializes DO for a value (or for args of another named function)}
+//  {Create an arity-0 function that runs a block}
 //
 //      return: [action!]
-//      'specializee [any-value!]
-//          {WORD! or PATH! names function to specialize, else arg to DO}
-//      :args [any-value! <...>]
-//          {arguments which will be consumed to fulfill a named function}
+//      value [block!]
 //  ]
 //
 DECLARE_NATIVE(does)
 {
     INCLUDE_PARAMS_OF_DOES;
 
-    Value* specializee = ARG(specializee);
+    Value* value = ARG(value);
 
-    if (IS_BLOCK(specializee)) {
-        Array* paramlist = Make_Arr_Core(
-            1, // archetype only...DOES always makes action with no arguments
-            SERIES_MASK_ACTION
-        );
+    Array* paramlist = Make_Arr_Core(
+        1, // archetype only...DOES always makes action with no arguments
+        SERIES_MASK_ACTION
+    );
 
-        Value* archetype = RESET_CELL(Alloc_Tail_Array(paramlist), REB_ACTION);
-        archetype->payload.action.paramlist = paramlist;
-        INIT_BINDING(archetype, UNBOUND);
-        TERM_ARRAY_LEN(paramlist, 1);
-
-        MISC(paramlist).meta = nullptr; // REDESCRIBE can be used to add help
-
-        //
-        // `does [...]` and `does do [...]` are not exactly the same.  The
-        // generated ACTION! of the first form uses Block_Dispatcher() and
-        // does on-demand relativization, so it's "kind of like" a `func []`
-        // in forwarding references to members of derived objects.  Also, it
-        // is optimized to not run the block with the DO native...hence a
-        // HIJACK of DO won't be triggered by invocations of the first form.
-        //
-        MANAGE_ARRAY(paramlist);
-        REBACT *doer = Make_Action(
-            paramlist,
-            &Block_Dispatcher, // **SEE COMMENTS**, not quite like plain DO!
-            nullptr, // no underlying action (use paramlist)
-            nullptr, // no specialization exemplar (or inherited exemplar)
-            1 // details array capacity
-        );
-
-        // Block_Dispatcher() *may* copy at an indeterminate time, so to keep
-        // things invariant we have to lock it.
-        //
-        Cell* body = ARR_HEAD(ACT_DETAILS(doer));
-        REBSER *locker = nullptr;
-        Ensure_Value_Immutable(specializee, locker);
-        Move_Value(body, specializee);
-
-        return Init_Action_Unbound(D_OUT, doer);
-    }
-
-    REBCTX *exemplar;
-    if (
-        GET_VAL_FLAG(specializee, VALUE_FLAG_UNEVALUATED)
-        and (IS_WORD(specializee) or IS_PATH(specializee))
-    ){
-        Symbol* opt_label;
-        REBDSP lowest_ordered_dsp = DSP;
-        if (Get_If_Word_Or_Path_Throws(
-            D_OUT,
-            &opt_label,
-            specializee,
-            SPECIFIED,
-            true // push_refinements = true
-        )){
-            return R_THROWN;
-        }
-
-        if (not IS_ACTION(D_OUT))
-            fail (Error_Invalid(specializee));
-
-        Move_Value(specializee, D_OUT);
-
-        // We interpret phrasings like `x: does all [...]` to mean something
-        // like `x: specialize 'all [block: [...]]`.  While this originated
-        // from the Rebmu code golfing language to eliminate a pair of bracket
-        // characters from `x: does [all [...]]`, it actually has different
-        // semantics...which can be useful in their own right, plus the
-        // resulting function will run faster.
-
-        DECLARE_FRAME (f); // REBFRM whose built FRAME! context we will steal
-
-        Value* first_arg;
-        if (Make_Invocation_Frame_Throws(
-            D_OUT,
-            f,
-            &first_arg,
-            specializee,
-            ARG(args),
-            lowest_ordered_dsp
-        )){
-            return R_THROWN;
-        }
-        assert(NOT_SER_FLAG(f->varlist, NODE_FLAG_MANAGED)); // not invoked yet
-        assert(FRM_BINDING(f) == VAL_BINDING(specializee));
-        exemplar = Steal_Context_Vars(
-            CTX(f->varlist),
-            NOD(VAL_ACTION(specializee))
-        );
-        LINK(exemplar).keysource = NOD(VAL_ACTION(specializee));
-        assert(
-            ACT_NUM_PARAMS(VAL_ACTION(specializee))
-            == CTX_LEN(exemplar)
-        );
-
-        SET_SER_FLAG(f->varlist, NODE_FLAG_MANAGED); // is inaccessible
-        f->varlist = nullptr; // just let it GC, for now
-
-        // May not be at end or thrown, e.g. (x: does quote y x = 'y)
-        //
-        Drop_Frame(f);
-
-        // The exemplar may or may not be managed as of yet.  We want it
-        // managed, but Push_Action() does not use ordinary series creation to
-        // make its nodes, so manual ones don't wind up in the tracking list.
-        //
-        SET_SER_FLAG(exemplar, NODE_FLAG_MANAGED); // can't use Manage_Series
-
-        UNUSED(first_arg);
-        UNUSED(opt_label);
-    }
-    else {
-        // On all other types, we just make it act like a specialized call to
-        // DO for that value.  But since we're manually specializing it, we
-        // are responsible for type-checking...the evaluator expects any
-        // specialization process to do so (otherwise it would have to pay
-        // for type checking on each call).
-        //
-        // !!! The error reports that DOES doesn't accept the type for its
-        // specializee argument, vs. that DO doesn't accept it.
-        //
-        Value* typeset = ACT_PARAM(NAT_ACTION(do), 1);
-        Value* param = PAR(specializee);
-        if (not TYPE_CHECK(typeset, VAL_TYPE(specializee)))
-            fail (Error_Arg_Type(frame_, param, VAL_TYPE(specializee)));
-
-        exemplar = Make_Context_For_Action(
-            NAT_VALUE(do),
-            DSP, // lower dsp would be if we wanted to add refinements
-            nullptr // don't set up a binder; just poke specializee in frame
-        );
-        assert(GET_SER_FLAG(exemplar, NODE_FLAG_MANAGED));
-        Move_Value(CTX_VAR(exemplar, 1), specializee);
-        SET_VAL_FLAG(CTX_VAR(exemplar, 1), ARG_MARKED_CHECKED); // checked
-        Move_Value(specializee, NAT_VALUE(do));
-    }
-
-    REBACT *unspecialized = VAL_ACTION(specializee);
-
-    REBLEN num_slots = ACT_NUM_PARAMS(unspecialized) + 1;
-    Array* paramlist = Make_Arr_Core(num_slots, SERIES_MASK_ACTION);
-
-    Cell* archetype = RESET_CELL(ARR_HEAD(paramlist), REB_ACTION);
+    Value* archetype = RESET_CELL(Alloc_Tail_Array(paramlist), REB_ACTION);
     archetype->payload.action.paramlist = paramlist;
     INIT_BINDING(archetype, UNBOUND);
     TERM_ARRAY_LEN(paramlist, 1);
 
     MISC(paramlist).meta = nullptr; // REDESCRIBE can be used to add help
 
-    Value* param = ACT_PARAMS_HEAD(unspecialized);
-    Cell* alias = archetype + 1;
-    for (; NOT_END(param); ++param, ++alias) {
-        Move_Value(alias, param);
-        TYPE_SET(alias, REB_TS_HIDDEN);
-        TYPE_SET(alias, REB_TS_UNBINDABLE);
-    }
-
-    TERM_ARRAY_LEN(paramlist, num_slots);
+    //
+    // `does [...]` and `does do [...]` are not exactly the same.  The
+    // generated ACTION! of the first form uses Block_Dispatcher() and
+    // does on-demand relativization, so it's "kind of like" a `func []`
+    // in forwarding references to members of derived objects.  Also, it
+    // is optimized to not run the block with the DO native...hence a
+    // HIJACK of DO won't be triggered by invocations of the first form.
+    //
     MANAGE_ARRAY(paramlist);
-
-    // This code parallels Specialize_Action_Throws(), see comments there
-
     REBACT *doer = Make_Action(
         paramlist,
-        &Specializer_Dispatcher,
-        ACT_UNDERLYING(unspecialized), // common underlying action
-        exemplar, // also provide a context of specialization values
+        &Block_Dispatcher, // **SEE COMMENTS**, not quite like plain DO!
+        nullptr, // no underlying action (use paramlist)
+        nullptr, // no specialization exemplar (or inherited exemplar)
         1 // details array capacity
     );
 
-    Init_Frame(ARR_HEAD(ACT_DETAILS(doer)), exemplar);
+    // Block_Dispatcher() *may* copy at an indeterminate time, so to keep
+    // things invariant we have to lock it.
+    //
+    Cell* body = ARR_HEAD(ACT_DETAILS(doer));
+    REBSER *locker = nullptr;
+    Ensure_Value_Immutable(value, locker);
+    Move_Value(body, value);
 
     return Init_Action_Unbound(D_OUT, doer);
 }

@@ -30,8 +30,7 @@
 ; bitset
 (if make bitset! "" [true])
 
-; literal blocks illegal as condition in Ren-C, but evaluation products ok
-(error? trap [if [] [true]])
+(not error? trap [if [] [true]])  ; no error (CELL_FLAG_UNEVALUATED removed)
 (if identity [] [true])
 
 ; datatype

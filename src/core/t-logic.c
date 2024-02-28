@@ -228,9 +228,6 @@ DECLARE_NATIVE(and)
     Value* left = ARG(left);
     Value* right = ARG(right);
 
-    if (IS_BLOCK(left) and GET_VAL_FLAG(left, VALUE_FLAG_UNEVALUATED))
-        fail ("left hand side of AND should not be literal block");
-
     if (IS_FALSEY(left)) {
         if (IS_GROUP(right)) { // no need to evaluate right if BLOCK!
             if (Do_Any_Array_At_Throws(D_OUT, right))
@@ -263,9 +260,6 @@ DECLARE_NATIVE(or)
 
     Value* left = ARG(left);
     Value* right = ARG(right);
-
-    if (IS_BLOCK(left) and GET_VAL_FLAG(left, VALUE_FLAG_UNEVALUATED))
-        fail ("left hand side of OR should not be literal block");
 
     if (IS_TRUTHY(left)) {
         if (IS_GROUP(right)) { // no need to evaluate right if BLOCK!
@@ -300,9 +294,6 @@ DECLARE_NATIVE(xor)
     INCLUDE_PARAMS_OF_XOR;
 
     Value* left = ARG(left);
-
-    if (IS_BLOCK(left) and GET_VAL_FLAG(left, VALUE_FLAG_UNEVALUATED))
-        fail ("left hand side of XOR should not be literal block");
 
     if (Do_Any_Array_At_Throws(D_OUT, ARG(right))) // always evaluated
         return R_THROWN;

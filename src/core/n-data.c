@@ -904,33 +904,6 @@ DECLARE_NATIVE(enfixed_q)
 
 
 //
-//  semiquoted?: native [
-//
-//  {Discern if a function parameter came from an "active" evaluation.}
-//
-//      parameter [word!]
-//  ]
-//
-DECLARE_NATIVE(semiquoted_q)
-//
-// This operation is somewhat dodgy.  So even though the flag is carried by
-// all values, and could be generalized in the system somehow to query on
-// anything--we don't.  It's strictly for function parameters, and
-// even then it should be restricted to functions that have labeled
-// themselves as absolutely needing to do this for ergonomic reasons.
-{
-    INCLUDE_PARAMS_OF_SEMIQUOTED_Q;
-
-    // !!! TBD: Enforce this is a function parameter (specific binding branch
-    // makes the test different, and easier)
-
-    const Value* var = Get_Opt_Var_May_Fail(ARG(parameter), SPECIFIED);
-
-    return Init_Logic(D_OUT, GET_VAL_FLAG(var, VALUE_FLAG_UNEVALUATED));
-}
-
-
-//
 //  identity: native [
 //
 //  {Function for returning the same value that it got in (identity function)}
@@ -938,16 +911,12 @@ DECLARE_NATIVE(semiquoted_q)
 //      return: [<opt> any-value!]
 //      value [<end> <opt> any-value!]
 //          {!!! <end> flag is hack to limit enfix reach to the left}
-//      /quote
-//          {Make it seem that the return result was quoted}
 //  ]
 //
 DECLARE_NATIVE(identity)
 //
 // https://en.wikipedia.org/wiki/Identity_function
 // https://stackoverflow.com/q/3136338
-//
-// !!! Quoting version is currently specialized as SEMIQUOTE, for convenience.
 //
 // This is assigned to <- for convenience, but cannot be used under that name
 // in bootstrap with R3-Alpha.  It uses the <end>-ability to stop left reach,
@@ -956,9 +925,6 @@ DECLARE_NATIVE(identity)
     INCLUDE_PARAMS_OF_IDENTITY;
 
     Move_Value(D_OUT, ARG(value));
-
-    if (REF(quote))
-        SET_VAL_FLAG(D_OUT, VALUE_FLAG_UNEVALUATED);
 
     return D_OUT;
 }
@@ -1295,7 +1261,6 @@ DECLARE_NATIVE(quote)
         fail ("QUOTE/SOFT not currently implemented, should clone EVAL");
 
     Move_Value(D_OUT, v);
-    SET_VAL_FLAG(D_OUT, VALUE_FLAG_UNEVALUATED);
     return D_OUT;
 }
 

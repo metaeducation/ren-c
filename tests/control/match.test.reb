@@ -1,14 +1,7 @@
+; %match.test.reb
 ;
-; MATCH started out as a userspace function, but gained frequent usage...and
-; also has an interesting variadic feature that is not (yet) available to
-; userspace VARARGS!.  This enables it to intercept the first argument of a
-; filter function, that is invoked.
+; MATCH started out as a userspace function, but gained frequent usage..
 ;
-; https://github.com/metaeducation/ren-c/pull/730
-;
-
-("aaa" = match parse "aaa" [some "a" end])
-(null = match parse "aaa" [some "b" end])
 
 (10 = match integer! 10)
 (null = match integer! "ten")
@@ -19,8 +12,6 @@
 
 (10 = match :even? 10)
 (null = match :even? 3)
-(null = match 'odd? 20)
-(7 = match 'odd? 7)
 
 (void? match blank! _)
 (null = match blank! 10)

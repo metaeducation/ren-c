@@ -239,14 +239,6 @@
     i == 2
 )
 
-; Use MATCH to get input on success, see #2165
-(
-    "abc" = match parse "abc" ["a" "b" "c" end]
-)
-(
-    null? match parse "abc" ["a" "b" "d" end]
-)
-
 
 ;; DOUBLED GROUPS
 ;; Doubled groups inject their material into the PARSE, if it is not null.

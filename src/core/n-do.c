@@ -294,7 +294,6 @@ DECLARE_NATIVE(do)
         if (indexor == THROWN_FLAG)
             return R_THROWN;
 
-        assert(NOT_VAL_FLAG(D_OUT, VALUE_FLAG_UNEVALUATED));
         return D_OUT; }
 
     case REB_VARARGS: {
@@ -517,8 +516,6 @@ DECLARE_NATIVE(evaluate)
 
         if (indexor == END_FLAG or IS_END(temp))
             return nullptr; // no disruption of output result
-
-        assert(NOT_VAL_FLAG(temp, VALUE_FLAG_UNEVALUATED));
 
         if (REF(set))
             Move_Value(Sink_Var_May_Fail(ARG(var), SPECIFIED), temp);

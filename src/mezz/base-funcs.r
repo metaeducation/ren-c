@@ -53,16 +53,6 @@ maybe: enfix func [
 
     <local> gotten
 ][
-    if semiquoted? 'optional [
-        ;
-        ; While DEFAULT requires a BLOCK!, MAYBE does not.  Catch mistakes
-        ; such as `x: maybe [...]`
-        ;
-        fail/where [
-            "Literal" type of :optional "used w/MAYBE, use () if intentional"
-        ] 'optional
-    ]
-
     case [
         set-word? target [
             if null? :optional [return get target]
@@ -487,11 +477,6 @@ default*: enfix redescribe [
 )
 
 
-; Though this name is questionable, it's nice to be easier to call
-;
-semiquote: specialize 'identity [quote: true]
-
-
 skip*: redescribe [
     {Variant of SKIP that returns NULL instead of clipping to series bounds}
 ](
@@ -548,15 +533,6 @@ really: func [
     return: [any-value!]
     value [any-value!] ;-- always checked for null, since no <opt>
 ][
-    ; While DEFAULT requires a BLOCK!, REALLY does not.  Catch mistakes such
-    ; as `x: really [...]`
-    ;
-    if semiquoted? 'value [
-        fail/where [
-            "Literal" type of :value "used w/REALLY, use () if intentional"
-        ] 'value
-    ]
-
     :value
 ]
 

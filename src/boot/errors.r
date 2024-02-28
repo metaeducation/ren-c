@@ -196,10 +196,8 @@ Script: [
 
     conflicting-key:    [:arg1 {key conflicts; use SELECT or PUT with /CASE}]
 
-    block-conditional:  [{Literal block used as conditional} :arg1]
     void-conditional:   [{VOID! values are not conditionally true or false}]
     non-block-branch:   [{Evaluated non-block/function used as branch} :arg1]
-    block-switch:       [{Literal block used as switch value} :arg1]
 
     native-unloaded:    [{Native has been unloaded:} :arg1]
 ]

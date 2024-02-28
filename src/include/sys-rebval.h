@@ -171,25 +171,11 @@
     FLAG_LEFT_BIT(19)
 
 
-//=//// VALUE_FLAG_UNEVALUATED ////////////////////////////////////////////=//
+//=//// VALUE_FLAG_ENDISH /////////////////////////////////////////////////=//
 //
-// Some functions wish to be sensitive to whether or not their argument came
-// as a literal in source or as a product of an evaluation.  While all values
-// carry the bit, it is only guaranteed to be meaningful on arguments in
-// function frames...though it is valid on any result at the moment of taking
-// it from Eval_Core_Throws().
+// Somewhat wasteful use of flag to indicate "endish" nulleds.
 //
-// It is in the negative sense because the act of requesting it is uncommon,
-// e.g. from the QUOTE operator.  So most Init_Blank() or other assignment
-// should default to being "evaluative".
-//
-// !!! This concept is somewhat dodgy and experimental, but it shows promise
-// in addressing problems like being able to give errors if a user writes
-// something like `if [x > 2] [print "true"]` vs. `if x > 2 [print "true"]`,
-// while still tolerating `item: [a b c] | if item [print "it's an item"]`.
-// That has a lot of impact for the new user experience.
-//
-#define VALUE_FLAG_UNEVALUATED \
+#define VALUE_FLAG_ENDISH \
     FLAG_LEFT_BIT(20)
 
 
@@ -307,7 +293,7 @@ INLINE union Reb_Header Endlike_Header(uintptr_t bits) {
 
 #define CELL_MASK_COPY \
     ~(CELL_MASK_PERSIST | NODE_FLAG_MARKED | CELL_FLAG_PROTECTED \
-        | VALUE_FLAG_ENFIXED | VALUE_FLAG_UNEVALUATED | VALUE_FLAG_EVAL_FLIP)
+        | VALUE_FLAG_ENFIXED | VALUE_FLAG_EVAL_FLIP)
 
 
 //=////////////////////////////////////////////////////////////////////////=//
@@ -517,8 +503,7 @@ struct Reb_Varargs_Payload {
     // It can also find the arg.  Similar to the param, the arg is only good
     // for the lifetime of the FRAME! in extra->binding...but even less so,
     // because VARARGS! can (currently) be overwritten with another value in
-    // the function frame at any point.  Despite this, we proxy the
-    // VALUE_FLAG_UNEVALUATED from the last TAKE to reflect its status.
+    // the function frame at any point.
     //
     REBLEN param_offset;
 

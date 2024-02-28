@@ -728,9 +728,6 @@ bool Eval_Core_Throws(REBFRM * const f)
     // the lookback value was quoted, for some double-check tests.
     //
     Derelativize(f->out, current, f->specifier); // lookback in f->out
-  #if !defined(NDEBUG)
-    SET_VAL_FLAG(f->out, VALUE_FLAG_UNEVALUATED);
-  #endif
 
     Fetch_Next_In_Frame(nullptr, f); // skip the WORD! that invoked the action
     goto process_action;
@@ -1165,40 +1162,19 @@ bool Eval_Core_Throws(REBFRM * const f)
                 switch (pclass) {
                   case PARAM_CLASS_NORMAL:
                     Move_Value(f->arg, f->out);
-                    if (GET_VAL_FLAG(f->out, VALUE_FLAG_UNEVALUATED))
-                        SET_VAL_FLAG(f->arg, VALUE_FLAG_UNEVALUATED);
                     break;
 
                   case PARAM_CLASS_TIGHT:
                     Move_Value(f->arg, f->out);
-                    if (GET_VAL_FLAG(f->out, VALUE_FLAG_UNEVALUATED))
-                        SET_VAL_FLAG(f->arg, VALUE_FLAG_UNEVALUATED);
                     break;
 
                   case PARAM_CLASS_HARD_QUOTE:
-                  #if !defined(NDEBUG)
-                    //
-                    // Only in debug builds, the before-switch lookahead sets
-                    // this flag to help indicate that's where it came from.
-                    //
-                    assert(GET_VAL_FLAG(f->out, VALUE_FLAG_UNEVALUATED));
-                  #endif
-
                     // Is_Param_Skippable() accounted for in pre-lookback
 
                     Move_Value(f->arg, f->out);
-                    SET_VAL_FLAG(f->arg, VALUE_FLAG_UNEVALUATED);
                     break;
 
                   case PARAM_CLASS_SOFT_QUOTE:
-                  #if !defined(NDEBUG)
-                    //
-                    // Only in debug builds, the before-switch lookahead sets
-                    // this flag to help indicate that's where it came from.
-                    //
-                    assert(GET_VAL_FLAG(f->out, VALUE_FLAG_UNEVALUATED));
-                  #endif
-
                     if (IS_QUOTABLY_SOFT(f->out)) {
                         if (Eval_Value_Throws(f->arg, f->out)) {
                             Move_Value(f->out, f->arg);
@@ -1214,7 +1190,6 @@ bool Eval_Core_Throws(REBFRM * const f)
                     }
                     else {
                         Move_Value(f->arg, f->out);
-                        SET_VAL_FLAG(f->arg, VALUE_FLAG_UNEVALUATED);
                     }
                     break;
 
@@ -1383,13 +1358,10 @@ bool Eval_Core_Throws(REBFRM * const f)
                         goto continue_arg_loop;
                     }
                     Quote_Next_In_Frame(f->arg, f);
-                    SET_VAL_FLAGS(
-                        f->arg,
-                        ARG_MARKED_CHECKED | VALUE_FLAG_UNEVALUATED
-                    );
+                    SET_VAL_FLAG(f->arg, ARG_MARKED_CHECKED);
                     goto continue_arg_loop;
                 }
-                Quote_Next_In_Frame(f->arg, f); // has VALUE_FLAG_UNEVALUATED
+                Quote_Next_In_Frame(f->arg, f);
                 break;
 
     //=//// SOFT QUOTED ARG-OR-REFINEMENT-ARG  ////////////////////////////=//
@@ -1404,7 +1376,7 @@ bool Eval_Core_Throws(REBFRM * const f)
                 }
 
                 if (not IS_QUOTABLY_SOFT(f->value)) {
-                    Quote_Next_In_Frame(f->arg, f); // VALUE_FLAG_UNEVALUATED
+                    Quote_Next_In_Frame(f->arg, f);
                     Finalize_Current_Arg(f);
                     goto continue_arg_loop;
                 }
@@ -1820,7 +1792,7 @@ bool Eval_Core_Throws(REBFRM * const f)
         if (IS_VOID(current_gotten))  // need `:x` if `x` is unset
             fail (Error_Need_Non_Void_Core(current, f->specifier));
 
-        Move_Value(f->out, current_gotten); // no copy VALUE_FLAG_UNEVALUATED
+        Move_Value(f->out, current_gotten);
         break;
 
 //==//////////////////////////////////////////////////////////////////////==//
@@ -1879,8 +1851,6 @@ bool Eval_Core_Throws(REBFRM * const f)
             goto inert;
 
         Move_Opt_Var_May_Fail(f->out, current, f->specifier);
-
-        assert(NOT_VAL_FLAG(f->out, VALUE_FLAG_UNEVALUATED));
         break;
 
 //==/////////////////////////////////////////////////////////////////////==//
@@ -1898,7 +1868,6 @@ bool Eval_Core_Throws(REBFRM * const f)
 
         Derelativize(f->out, current, f->specifier);
         CHANGE_VAL_TYPE_BITS(f->out, REB_WORD);
-        assert(NOT_VAL_FLAG(f->out, VALUE_FLAG_UNEVALUATED));
         break;
 
 //==//// INERT WORD AND STRING TYPES /////////////////////////////////////==//
@@ -1967,7 +1936,7 @@ bool Eval_Core_Throws(REBFRM * const f)
             goto finished;
         }
 
-        Move_Value(f->out, FRM_CELL(f)); // no VALUE_FLAG_UNEVALUATED
+        Move_Value(f->out, FRM_CELL(f));
         break; }
 
 //==//////////////////////////////////////////////////////////////////////==//
@@ -2033,12 +2002,6 @@ bool Eval_Core_Throws(REBFRM * const f)
             Expire_Out_Cell_Unless_Invisible(f);
             goto process_action;
         }
-
-        // !!! Usually not true but seems true for path evaluation in varargs,
-        // e.g. while running `-- "a" "a"`.  Review.
-        //
-        CLEAR_VAL_FLAG(f->out, VALUE_FLAG_UNEVALUATED);
-        /* assert(NOT_VAL_FLAG(f->out, VALUE_FLAG_UNEVALUATED)); */
         break; }
 
 //==//////////////////////////////////////////////////////////////////////==//
@@ -2101,8 +2064,6 @@ bool Eval_Core_Throws(REBFRM * const f)
             Move_Value(f->out, FRM_CELL(f));
             goto return_thrown;
         }
-
-        assert(NOT_VAL_FLAG(f->out, VALUE_FLAG_UNEVALUATED));
         break; }
 
 //==//////////////////////////////////////////////////////////////////////==//
@@ -2133,12 +2094,6 @@ bool Eval_Core_Throws(REBFRM * const f)
 
         if (IS_VOID(f->out))
             fail (Error_Need_Non_Void_Core(current, f->specifier));
-
-        // !!! This didn't appear to be true for `-- "hi" "hi"`, processing
-        // GET-PATH! of a variadic.  Review if it should be true.
-        //
-        /* assert(NOT_VAL_FLAG(f->out, VALUE_FLAG_UNEVALUATED)); */
-        CLEAR_VAL_FLAG(f->out, VALUE_FLAG_UNEVALUATED);
         break;
 
 //==//////////////////////////////////////////////////////////////////////==//
@@ -2158,7 +2113,6 @@ bool Eval_Core_Throws(REBFRM * const f)
 
         Derelativize(f->out, current, f->specifier);
         CHANGE_VAL_TYPE_BITS(f->out, REB_PATH);
-        assert(NOT_VAL_FLAG(f->out, VALUE_FLAG_UNEVALUATED));
         break;
 
 //==//////////////////////////////////////////////////////////////////////==//
@@ -2218,7 +2172,6 @@ bool Eval_Core_Throws(REBFRM * const f)
       inert:;
 
         Derelativize(f->out, current, f->specifier);
-        SET_VAL_FLAG(f->out, VALUE_FLAG_UNEVALUATED);
         break;
 
 //==//////////////////////////////////////////////////////////////////////==//
@@ -2613,11 +2566,6 @@ bool Eval_Core_Throws(REBFRM * const f)
   finished:;
 
     assert(THROWN(f->out) == threw);
-
-    // The unevaluated flag is meaningless outside of arguments to functions.
-
-    if (not (f->flags.bits & DO_FLAG_FULFILLING_ARG))
-        f->out->header.bits &= ~VALUE_FLAG_UNEVALUATED; // may be an END cell
 
     // Most clients would prefer not to read the stale flag, and be burdened
     // with clearing it (can't be present on frame output).  Also, argument

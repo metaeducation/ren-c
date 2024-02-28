@@ -383,165 +383,29 @@ DECLARE_NATIVE(also)
 //
 //      return: "Input if it matched, otherwise null (void if falsey match)"
 //          [<opt> any-value!]
-//      'test "Typeset membership, LOGIC! to test for truth, filter function"
+//      test "Typeset membership, LOGIC! to test for truth, filter function"
 //          [
-//              word! path! ;- special "first-arg-stealing" magic
-//              lit-word! lit-path! ;-- like EITHER-TEST's WORD! and PATH!
 //              datatype! typeset! block! logic! action! ;-- like EITHER-TEST
 //          ]
-//      :args [any-value! <...>]
+//      value [<opt> any-value!]
 //  ]
 //
 DECLARE_NATIVE(match)
-//
-// This routine soft quotes its `test` argument, and has to be variadic, in
-// order to get the special `MATCH PARSE "AAA" [SOME "A"]` -> "AAA" behavior.
-// But despite quoting its first argument, it processes it in a way to try
-// and mimic EITHER-TEST for compatibility for other cases.
 {
     INCLUDE_PARAMS_OF_MATCH;
 
     Value* test = ARG(test);
 
-    switch (VAL_TYPE(test)) {
-
-    case REB_LIT_WORD:
-    case REB_LIT_PATH: {
-        if (NOT_VAL_FLAG(test, VALUE_FLAG_UNEVALUATED)) // soft quote eval'd
-            fail (Error_Invalid(test)); // disallow `MATCH (QUOTE 'NULL?) ...`
-
-        if (IS_LIT_WORD(test))
-            CHANGE_VAL_TYPE_BITS(test, REB_WORD);
-        else
-            CHANGE_VAL_TYPE_BITS(test, REB_PATH);
-        goto either_test; }
-
-    case REB_WORD:
-    case REB_PATH: {
-        if (NOT_VAL_FLAG(test, VALUE_FLAG_UNEVALUATED)) // soft quote eval'd
-            goto either_test; // allow `MATCH ('NULL?) ...`
-
-        Symbol* opt_label = nullptr;
-        REBDSP lowest_ordered_dsp = DSP;
-        if (Get_If_Word_Or_Path_Throws(
-            D_OUT,
-            &opt_label,
-            test,
-            SPECIFIED,
-            true // push_refinements
-        )){
-            return R_THROWN;
-        }
-
-        Move_Value(test, D_OUT);
-
-        if (not IS_ACTION(test)) {
-            if (ANY_WORD(test) or ANY_PATH(test))
-                fail (Error_Invalid(test)); // disallow `X: 'Y | MATCH X ...`
-            goto either_test; // will typecheck the result
-        }
-
-        // It was a non-soft quote eval'd word, the kind we want to give the
-        // "magical" functionality to.
-        //
-        // We run the testing function in place in a way that appears "normal"
-        // but actually captures its first argument.  That will be MATCH's
-        // return value if the filter function returns a truthy result.
-
-        DECLARE_FRAME (f); // REBFRM whose built FRAME! context we will steal
-
-        Value* first_arg;
-        if (Make_Invocation_Frame_Throws(
-            D_OUT,
-            f,
-            &first_arg,
-            test,
-            ARG(args),
-            lowest_ordered_dsp
-        )){
-            return R_THROWN;
-        }
-
-        if (not first_arg)
-            fail ("MATCH with a function pattern must take at least 1 arg");
-
-        Move_Value(D_OUT, first_arg); // steal first argument before call
-
-        DECLARE_VALUE (temp);
-        f->out = SET_END(temp);
-
-        f->rootvar = CTX_ARCHETYPE(CTX(f->varlist));
-        f->param = ACT_PARAMS_HEAD(VAL_ACTION(test));
-        f->arg = f->rootvar + 1;
-        f->special = f->arg;
-
-        f->flags = Endlike_Header(
-            DO_FLAG_FULLY_SPECIALIZED | DO_FLAG_PROCESS_ACTION
-        );
-
-        Begin_Action(f, opt_label, ORDINARY_ARG);
-
-        bool threw = Eval_Core_Throws(f);
-
-        Drop_Frame(f);
-
-        if (threw)
-            return R_THROWN;
-
-        assert(IS_END(f->value)); // we started at END_FLAG, can only throw
-
-        if (IS_VOID(temp))
-            fail (Error_Void_Conditional_Raw());
-
-        // We still have the first argument from the filter call in D_OUT.
-
-        // MATCH *wants* to pass through the argument on a match, but
-        // won't do so if the argument was falsey, as that is misleading.
-        // Instead it passes a VOID! back (test with `value?` or `null?`)
-
-        if (IS_TRUTHY(temp)) {
-            if (IS_FALSEY(D_OUT))
-                return Init_Void(D_OUT);
-            return D_OUT;
-        }
-
-        return nullptr; }
-
-    default:
-        break;
-    }
-
-either_test:;
-
-    // For the "non-magic" cases that are handled by plain EITHER-TEST, call
-    // through with the transformed test.  Just take one normal arg via
-    // variadic.
-
-    Value* varpar = PAR(args);
-
-    // !!! Hard-quoted arguments don't accept nulls, but we're tweaking the
-    // parameter class... make it allow NULL too.
-    //
-    VAL_TYPESET_BITS(varpar) |= FLAGIT_KIND(REB_MAX_NULLED);
-    INIT_VAL_PARAM_CLASS(varpar, PARAM_CLASS_NORMAL); // !!! hack
-
-    if (Do_Vararg_Op_Maybe_End_Throws(D_OUT, ARG(args), VARARG_OP_TAKE))
-        return R_THROWN;
-
-    if (IS_END(D_OUT))
-        fail ("Frame hack is written to need argument!");
-
-    INIT_VAL_PARAM_CLASS(varpar, PARAM_CLASS_HARD_QUOTE);
-    VAL_TYPESET_BITS(varpar) &= ~FLAGIT_KIND(REB_MAX_NULLED);
+    Value* value = ARG(value);
 
     DECLARE_VALUE (temp);
-    if (Either_Test_Core_Throws(temp, test, D_OUT))
+    if (Either_Test_Core_Throws(temp, test, value))
         return R_THROWN;
 
     if (VAL_LOGIC(temp)) {
-        if (IS_FALSEY(D_OUT)) // see above for why false match not passed thru
+        if (IS_FALSEY(value)) // see above for why false match not passed thru
             return Init_Void(D_OUT);
-        return D_OUT;
+        return Move_Value(D_OUT, value);
     }
 
     return nullptr;
@@ -924,9 +788,6 @@ DECLARE_NATIVE(switch)
     Push_Frame(f, ARG(cases));
 
     Value* value = ARG(value);
-
-    if (IS_BLOCK(value) and GET_VAL_FLAG(value, VALUE_FLAG_UNEVALUATED))
-        fail (Error_Block_Switch_Raw(value)); // `switch [x] [...]` safeguard
 
     Init_Nulled(D_OUT); // used for "fallout"
 

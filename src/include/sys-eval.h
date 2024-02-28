@@ -602,7 +602,6 @@ INLINE void Fetch_Next_In_Frame(
 
 INLINE void Quote_Next_In_Frame(Value* dest, REBFRM *f) {
     Derelativize(dest, f->value, f->specifier);
-    SET_VAL_FLAG(dest, VALUE_FLAG_UNEVALUATED);
     Fetch_Next_In_Frame(nullptr, f);
 }
 
