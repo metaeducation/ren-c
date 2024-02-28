@@ -61,9 +61,8 @@ union Reb_Eventee {
 typedef struct {
     void *header;
     union Reb_Eventee eventee;
-    uint8_t type;
+    uint16_t type;  // SYMID
     uint8_t flags;
-    uint8_t win;
     uint8_t model;
     uint32_t data;
   #if defined(__LP64__) || defined(__LLP64__)
@@ -79,7 +78,7 @@ typedef struct {
 // !!! So long as events are directly hooking into the low-level REBVAL
 // implementation, this could just use EVENT_FLAG_XXX flags.  eventee could
 // be a binding to a REBNOD that was able to inspect that node to get the
-// data "model".  
+// data "model".
 
 enum {
     EVF_COPIED = 1 << 0, // event data has been copied
@@ -96,7 +95,6 @@ enum {
     EVM_DEVICE,     // I/O request holds the port pointer
     EVM_PORT,       // event holds port pointer
     EVM_OBJECT,     // event holds object context pointer
-    EVM_GUI,        // GUI event uses system/view/event/port
     EVM_CALLBACK,   // Callback event uses system/ports/callback port
     EVM_MAX
 };

@@ -345,7 +345,7 @@ rebs: collect [
 ]
 
 for-each-record t type-table [
-    
+
 ]
 
 e-types/emit {
@@ -602,44 +602,8 @@ make-obj-defs e-sysobj ob/ports "PORTS" 4
 make-obj-defs e-sysobj ob/options "OPTIONS" 4
 ;make-obj-defs e-sysobj ob/intrinsic "INTRINSIC" 4
 make-obj-defs e-sysobj ob/locale "LOCALE" 4
-make-obj-defs e-sysobj ob/view "VIEW" 4
 
 e-sysobj/write-emitted
-
-
-;----------------------------------------------------------------------------
-;
-; Event Types
-;
-;----------------------------------------------------------------------------
-
-e-event: make-emitter "Event Types" inc/reb-evtypes.h
-
-evts: collect [
-    for-each field ob/view/event-types [
-        keep cscape/with {EVT_${FIELD}} 'field
-    ]
-]
-
-evks: collect [
-    for-each field ob/view/event-keys [
-        keep cscape/with {EVK_${FIELD}} 'field
-    ]
-]
-
-e-event/emit {
-    enum event_types {
-        $[Evts],
-        EVT_MAX
-    };
-
-    enum event_keys {
-        $[Evks],
-        EVK_MAX
-    };
-}
-
-e-event/write-emitted
 
 
 ;----------------------------------------------------------------------------
@@ -678,7 +642,7 @@ e-errfuncs/emit {
      * fully resolved REBVAL* that the error spec specifies.  This is easy
      * to get wrong in C, since variadics aren't checked.  Also, the category
      * symbol needs to be right for the error ID.
-     * 
+     *
      * These are inline function stubs made for each "raw" error in %errors.r.
      * They shouldn't add overhead in release builds, but help catch mistakes
      * at compile time.

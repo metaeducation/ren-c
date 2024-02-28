@@ -82,7 +82,6 @@ static void Assert_Basics(void)
     printf(fmt, sizeof(dummy_payload->event), "event");
     printf(fmt, sizeof(dummy_payload->library), "library");
     printf(fmt, sizeof(dummy_payload->structure), "struct");
-    printf(fmt, sizeof(dummy_payload->gob), "gob");
     printf(fmt, sizeof(dummy_payload->money), "money");
     printf(fmt, sizeof(dummy_payload->handle), "handle");
     printf(fmt, sizeof(dummy_payload->all), "all");

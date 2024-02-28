@@ -91,18 +91,7 @@
 // moment, they still need the hook.
 //
 
-#include "reb-evtypes.h"
 static void Queue_Mark_Event_Deep(const RELVAL *value);
-
-#define IS_GOB_MARK(g) \
-    (did ((g)->header.bits & NODE_FLAG_MARKED))
-#define MARK_GOB(g) \
-    ((g)->header.bits |= NODE_FLAG_MARKED)
-#define UNMARK_GOB(g) \
-    ((g)->header.bits &= ~NODE_FLAG_MARKED)
-
-static void Queue_Mark_Gob_Deep(REBGOB *gob);
-static REBCNT Sweep_Gobs(void);
 
 static void Mark_Devices_Deep(void);
 
@@ -465,10 +454,6 @@ static void Queue_Mark_Opt_End_Cell_Deep(const RELVAL *v)
         }
         break; }
 
-    case REB_IMAGE:
-        Mark_Rebser_Only(VAL_SERIES(v));
-        break;
-
     case REB_VECTOR:
         Mark_Rebser_Only(VAL_SERIES(v));
         break;
@@ -590,10 +575,6 @@ static void Queue_Mark_Opt_End_Cell_Deep(const RELVAL *v)
         // has gone bad, in which case it should be ignored.
 
         break; }
-
-    case REB_GOB:
-        Queue_Mark_Gob_Deep(VAL_GOB(v));
-        break;
 
     case REB_EVENT:
         Queue_Mark_Event_Deep(v);
@@ -1569,13 +1550,6 @@ REBCNT Recycle_Core(bool shutdown, REBSER *sweeplist)
     else
         count += Sweep_Series();
 
-    // !!! The intent is for GOB! to be unified in the REBNOD pattern, the
-    // way that the FFI structures were.  So they are not included in the
-    // count, in order to help make the numbers returned consistent between
-    // when the sweeplist is used and not.
-    //
-    Sweep_Gobs();
-
 #if !defined(NDEBUG)
     // Compute new stats:
     PG_Reb_Stats->Recycle_Series
@@ -1789,108 +1763,6 @@ void Shutdown_GC(void)
 //=////////////////////////////////////////////////////////////////////////=//
 
 //
-//  Queue_Mark_Gob_Deep: C
-//
-// 'Queue' refers to the fact that after calling this routine,
-// one will have to call Propagate_All_GC_Marks() to have the
-// deep transitive closure be guaranteed fully marked.
-//
-// Note: only referenced blocks are queued, the GOB structure
-// itself is processed via recursion.  Deeply nested GOBs could
-// in theory overflow the C stack.
-//
-static void Queue_Mark_Gob_Deep(REBGOB *gob)
-{
-    REBGOB **pane;
-    REBCNT i;
-
-    if (IS_GOB_MARK(gob)) return;
-
-    MARK_GOB(gob);
-
-    if (GOB_PANE(gob)) {
-        Mark_Rebser_Only(GOB_PANE(gob));
-        pane = GOB_HEAD(gob);
-        for (i = 0; i < GOB_LEN(gob); i++, pane++)
-            Queue_Mark_Gob_Deep(*pane);
-    }
-
-    if (GOB_PARENT(gob)) Queue_Mark_Gob_Deep(GOB_PARENT(gob));
-
-    if (GOB_CONTENT(gob)) {
-        if (GOB_TYPE(gob) >= GOBT_IMAGE and GOB_TYPE(gob) <= GOBT_STRING)
-            Mark_Rebser_Only(GOB_CONTENT(gob));
-        else if (GOB_TYPE(gob) >= GOBT_DRAW and GOB_TYPE(gob) <= GOBT_EFFECT)
-            Queue_Mark_Array_Deep(ARR(GOB_CONTENT(gob)));
-    }
-
-    if (GOB_DATA(gob)) {
-        switch (GOB_DTYPE(gob)) {
-        case GOBD_INTEGER:
-        case GOBD_NONE:
-        default:
-            break;
-        case GOBD_OBJECT:
-            Queue_Mark_Context_Deep(CTX(GOB_DATA(gob)));
-            break;
-        case GOBD_STRING:
-        case GOBD_BINARY:
-            Mark_Rebser_Only(GOB_DATA(gob));
-            break;
-        case GOBD_BLOCK:
-            Queue_Mark_Array_Deep(ARR(GOB_DATA(gob)));
-        }
-    }
-}
-
-
-//
-//  Sweep_Gobs: C
-//
-// Free all unmarked gobs.
-//
-// Scans all gobs in all segments that are part of the
-// GOB_POOL. Free gobs that have not been marked.
-//
-static REBCNT Sweep_Gobs(void)
-{
-    REBCNT count = 0;
-
-    REBSEG *seg;
-    for (seg = Mem_Pools[GOB_POOL].segs; seg; seg = seg->next) {
-        REBGOB *gob = cast(REBGOB*, seg + 1);
-
-        REBCNT n;
-        for (n = Mem_Pools[GOB_POOL].units; n > 0; --n, ++gob) {
-            if (IS_FREE_NODE(gob)) // unused REBNOD
-                continue;
-
-            if (IS_GOB_MARK(gob))
-                UNMARK_GOB(gob);
-            else {
-                Free_Node(GOB_POOL, gob);
-
-                // GC_Ballast is of type REBINT, which might be long
-                // and REB_I32_ADD_OF takes (int*)
-                // it's illegal to convert form (long*) to (int*) in C++
-                int tmp;
-                GC_Ballast = REB_I32_ADD_OF(
-                    GC_Ballast, Mem_Pools[GOB_POOL].wide, &tmp
-                ) ? INT32_MAX : tmp;
-
-                if (GC_Ballast > 0)
-                    CLR_SIGNAL(SIG_RECYCLE);
-
-                count++;
-            }
-        }
-    }
-
-    return count;
-}
-
-
-//
 //  Queue_Mark_Event_Deep: C
 //
 // 'Queue' refers to the fact that after calling this routine,
@@ -1906,18 +1778,6 @@ static void Queue_Mark_Event_Deep(const RELVAL *value)
         or IS_EVENT_MODEL(value, EVM_OBJECT)
     ){
         Queue_Mark_Context_Deep(CTX(VAL_EVENT_SER(m_cast(RELVAL*, value))));
-    }
-    else if (IS_EVENT_MODEL(value, EVM_GUI)) {
-        Queue_Mark_Gob_Deep(cast(REBGOB*, VAL_EVENT_SER(m_cast(RELVAL*, value))));
-    }
-
-    // FIXME: This test is not in parallel to others.
-    if (
-        VAL_EVENT_TYPE(value) == EVT_DROP_FILE
-        and (VAL_EVENT_FLAGS(value) & EVF_COPIED)
-    ){
-        assert(false);
-        Queue_Mark_Array_Deep(ARR(VAL_EVENT_SER(m_cast(RELVAL*, value))));
     }
 
     if (IS_EVENT_MODEL(value, EVM_DEVICE)) {

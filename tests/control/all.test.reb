@@ -40,10 +40,6 @@
     :a-value == all [:a-value]
 )
 (#"^@" == all [#"^@"])
-(
-    a-value: make image! 0x0
-    same? a-value all [a-value]
-)
 (0 == all [0])
 (1 == all [1])
 (#a == all [#a])
@@ -138,10 +134,6 @@
     same? :a-value all [true :a-value]
 )
 (#"^@" == all [true #"^@"])
-(
-    a-value: make image! 0x0
-    same? a-value all [true a-value]
-)
 (0 == all [true 0])
 (1 == all [true 1])
 (#a == all [true #a])
@@ -233,10 +225,6 @@
     true = all [:a-value true]
 )
 (true = all [#"^@" true])
-(
-    a-value: make image! 0x0
-    true = all [a-value true]
-)
 (true = all [0 true])
 (true = all [1 true])
 (true = all [#a true])

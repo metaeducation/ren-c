@@ -197,7 +197,7 @@ bool Traced_Eval_Hook_Throws(REBFRM * const f)
                     Debug_Fmt_(" : %50r", var);
                 }
                 else {
-                    // Just print the type if it's a context, GOB!, etc.
+                    // Just print the type if it's a context, etc.
                     //
                     const char *type_utf8 = STR_HEAD(Get_Type_Name(var));
                     Debug_Fmt_(" : %s", type_utf8);

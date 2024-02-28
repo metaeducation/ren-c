@@ -301,7 +301,6 @@ uint32_t Hash_Value(const RELVAL *v)
         break; }
 
     case REB_BITSET:
-    case REB_IMAGE:
     case REB_VECTOR:
     case REB_TYPESET:
         //
@@ -368,7 +367,6 @@ uint32_t Hash_Value(const RELVAL *v)
         hash = cast(uint32_t, cast(uintptr_t, VAL_MAP(v)) >> 4);
         break;
 
-    case REB_GOB:
     case REB_EVENT:
     case REB_HANDLE:
     case REB_LIBRARY:

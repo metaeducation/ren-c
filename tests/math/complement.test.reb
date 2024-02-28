@@ -23,9 +23,3 @@
     a: make bitset! #{FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF}
     a == complement complement a
 )
-; image
-[#1706
-    ((make image! [1x1 #{000000} #{00}]) = complement make image! [1x1 #{ffffff} #{ff}])
-]
-((make image! [1x1 #{ffffff} #{ff}]) = complement make image! [1x1 #{000000} #{00}])
-; typeset

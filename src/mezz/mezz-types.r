@@ -30,7 +30,7 @@ to-text: to-bitset: to-image: to-vector: to-block: to-group:
 to-path: to-set-path: to-get-path: to-lit-path: to-map: to-datatype: to-typeset:
 to-word: to-set-word: to-get-word: to-lit-word: to-refinement: to-issue:
 to-function: to-object: to-module: to-error: to-port:
-to-gob: to-event:
+to-event:
     blank
 
 ; Auto-build the functions for the above TO-* words.

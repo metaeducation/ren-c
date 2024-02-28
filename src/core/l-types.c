@@ -111,27 +111,24 @@ REBNATIVE(make)
         kind = VAL_TYPE(type);
 
 #if !defined(NDEBUG)
-    if (IS_GOB(type)) {
+    if (IS_EVENT(type)) {
         //
-        // !!! It appears that GOBs had some kind of inheritance mechanism, by
+        // !!! It seems that EVENTs had some kind of inheritance mechanism, by
         // which you would write:
         //
-        //     gob1: make gob! [...]
-        //     gob2: make gob1 [...]
+        //     event1: make event! [...]
+        //     event2: make event1 [...]
         //
         // The new plan is that MAKE operates on a definition spec, and that
         // this type slot is always a value or exemplar.  So if the feature
         // is needed, it should be something like:
         //
-        //     gob1: make gob! [...]
-        //     gob2: make gob! [gob1 ...]
+        //     event1: make event! [...]
+        //     event2: make event! [event1 ...]
         //
         // Or perhaps not use make at all, but some other operation.
         //
         assert(false);
-    }
-    else if (IS_EVENT(type)) {
-        assert(false); // ^-- same for events (?)
     }
 #endif
 

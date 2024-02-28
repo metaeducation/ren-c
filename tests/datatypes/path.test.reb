@@ -56,10 +56,6 @@
     blank? a-value/type
 )
 (
-    a-value: make image! 1x1
-    0.0.0.255 == a-value/1
-)
-(
     a-value: first ['a/b]
     'a == a-value/1
 )

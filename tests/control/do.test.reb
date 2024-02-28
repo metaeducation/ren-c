@@ -50,10 +50,6 @@
     :a-value == do reduce [:a-value]
 )
 (#"^@" == do [#"^@"])
-(
-    a-value: make image! 0x0
-    same? a-value do reduce [a-value]
-)
 (0 == do [0])
 (1 == do [1])
 (#a == do [#a])
@@ -132,10 +128,6 @@
     :a == reeval :a-value
 )
 (#"^@" == reeval #"^@")
-(
-    a-value: make image! 0x0
-    same? a-value reeval a-value
-)
 (0 == reeval 0)
 (1 == reeval 1)
 (#a == reeval #a)

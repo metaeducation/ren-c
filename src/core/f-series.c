@@ -368,9 +368,6 @@ chkDecimal:
     case REB_EVENT:
         return Cmp_Event(s, t);
 
-    case REB_GOB:
-        return Cmp_Gob(s, t);
-
     case REB_TUPLE:
         return Cmp_Tuple(s, t);
 
@@ -398,7 +395,6 @@ chkDecimal:
 
     case REB_BITSET:
     case REB_BINARY:
-    case REB_IMAGE:
         return Compare_Binary_Vals(s, t);
 
     case REB_VECTOR:

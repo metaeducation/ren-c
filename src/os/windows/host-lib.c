@@ -53,10 +53,6 @@
 
 #include "reb-host.h"
 
-#ifndef REB_CORE
-REBSER* Gob_To_Image(REBGOB *gob);
-#endif
-
 
 //
 //  Convert_Date: C
@@ -264,22 +260,6 @@ int OS_Reap_Process(int pid, int *status, int flags)
     return 0;
 }
 
-
-//
-//  OS_GOB_To_Image: C
-//
-// Render a GOB into an image. Returns an image or zero if
-// it cannot be done.
-//
-REBVAL *OS_GOB_To_Image(const REBVAL *gob)
-{
-#if (defined REB_CORE)
-    UNUSED(gob);
-    return 0;
-#else
-    return Gob_To_Image(gob);
-#endif
-}
 
 //
 //  OS_Get_Current_Exec: C

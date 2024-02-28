@@ -970,29 +970,10 @@ REBNATIVE(construct)
     enum Reb_Kind target;
     REBCTX *context;
 
-    if (IS_GOB(spec)) {
+    if (IS_EVENT(spec)) {
         //
-        // !!! Compatibility for `MAKE gob [...]` or `MAKE gob NxN` from
-        // R3-Alpha GUI.  Start by copying the gob (minus pane and parent),
-        // then apply delta to its properties from arg.  Doesn't save memory,
-        // or keep any parent linkage--could be done in user code as a copy
-        // and then apply the difference.
-        //
-        REBGOB *gob = Make_Gob();
-        *gob = *VAL_GOB(spec);
-        gob->pane = NULL;
-        gob->parent = NULL;
-
-        if (!IS_BLOCK(body))
-            fail (Error_Bad_Make(REB_GOB, body));
-
-        Extend_Gob_Core(gob, body);
-        return Init_Gob(D_OUT, gob);
-    }
-    else if (IS_EVENT(spec)) {
-        //
-        // !!! As with GOB!, the 2-argument form of MAKE-ing an event is just
-        // a shorthand for copy-and-apply.  Could be user code.
+        // !!! The 2-argument form of MAKE-ing an event is just a shorthand
+        // for copy-and-apply.  Could be user code.
         //
         if (!IS_BLOCK(body))
             fail (Error_Bad_Make(REB_EVENT, body));

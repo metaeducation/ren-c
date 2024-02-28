@@ -862,18 +862,6 @@ union Reb_Series_Misc {
     //
     bool negated;
 
-    // used for IMAGE!
-    //
-    // !!! The optimization by which images live in a single REBSER vs.
-    // actually being a class of OBJECT! with something like an ordinary
-    // PAIR! for its size is superfluous, and would be excised when it
-    // is possible to make images a user-defined type.
-    //
-    struct {
-        int wide:16; // Note: bitfields can only be int
-        int high:16;
-    } area;
-
     // !!! used for VECTOR!, which also should be a user defined type and not
     // micro-optimizing with putting bits into the REBSER node like this.
     //

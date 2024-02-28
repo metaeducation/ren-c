@@ -79,19 +79,8 @@ tenth: redescribe [
 last: func [
     {Returns the last value of a series.}
     return: [<opt> any-value!]
-    value [any-series! tuple! gob!]
+    value [any-series! tuple!]
 ][
-    if gob? value [
-        ;
-        ; The C code effectively used 'pick value t' with:
-        ;
-        ; t = GOB_PANE(VAL_GOB(val)) ? GOB_LEN(VAL_GOB(val)) : 0;
-        ; VAL_GOB_INDEX(val) = 0;
-        ;
-        print "Caution: LAST on GOB! may not work, look over the code"
-        wait 2
-    ]
-
     pick value length of value
 ]
 
@@ -121,8 +110,8 @@ repend: redescribe [
 ;
 join: func [ ;-- renamed to ADJOIN in %sys-start.r for user context, temporary
     "Concatenates values to the end of a series."
-    return: [any-series! port! map! gob! object! module! bitset!]
-    series [any-series! port! map! gob! object! module! bitset!]
+    return: [any-series! port! map! object! module! bitset!]
+    series [any-series! port! map! object! module! bitset!]
     value [<opt> any-value!]
 ][
     case [

@@ -50,7 +50,6 @@
 (if does [] [true])
 (if first [:first] [true])
 (if #"^@" [true])
-(if make image! 0x0 [true])
 ; integer
 (if 0 [true])
 (if 1 [true])

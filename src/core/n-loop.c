@@ -542,14 +542,6 @@ static REB_R Loop_Each_Core(struct Loop_Each_State *les) {
                     more_data = false;
                 break;
 
-              case REB_IMAGE: {
-                REBYTE *rgba = BIN_AT(les->data_ser, les->data_idx);
-                Init_Tuple_From_Pixel(var, rgba);
-                les->data_idx += 4;
-                if (les->data_idx == les->data_len)
-                    more_data = false;
-                break; }
-
               case REB_TEXT:
               case REB_TAG:
               case REB_FILE:
@@ -1372,8 +1364,8 @@ REBNATIVE(remove_each)
     struct Remove_Each_State res;
     res.data = ARG(data);
 
-    // !!! Currently there is no support for VECTOR!, or IMAGE! (what would
-    // that even *mean*?) yet these are in the ANY-SERIES! typeset.
+    // !!! Currently there is no support for VECTOR! yet these are in the
+    // ANY-SERIES! typeset.
     //
     if (not (
         ANY_ARRAY(res.data) or ANY_STRING(res.data) or IS_BINARY(res.data)

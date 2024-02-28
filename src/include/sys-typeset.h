@@ -92,10 +92,9 @@ inline static REBSTR *Get_Type_Name(const RELVAL *value)
 // !!! R3-Alpha made frequent use of these predefined typesets.  In Ren-C
 // they have been called into question, as to exactly how copying mechanics
 // should work.
- 
+
 #define TS_NOT_COPIED \
-    (FLAGIT_KIND(REB_IMAGE) \
-    | FLAGIT_KIND(REB_VECTOR) \
+    (FLAGIT_KIND(REB_VECTOR) \
     | FLAGIT_KIND(REB_PORT))
 
 #define TS_STD_SERIES \

@@ -197,7 +197,6 @@ dump-obj: function [
     form-val: func [val [any-value!]] [
         ; Form a limited string from the value provided.
         if any-array? :val [return spaced ["length:" length of val]]
-        if image? :val [return spaced ["size:" val/size]]
         if datatype? :val [return form val]
         if action? :val [
             return clip-str any [title-of :val | mold spec-of :val]
@@ -205,7 +204,6 @@ dump-obj: function [
         if object? :val [val: words of val]
         if typeset? :val [val: make block! val]
         if port? :val [val: reduce [val/spec/title val/spec/ref]]
-        if gob? :val [return spaced ["offset:" val/offset "size:" val/size]]
         clip-str mold :val
     ]
 

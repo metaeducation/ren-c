@@ -268,9 +268,9 @@ struct devreq_file;
 //=//// REBVAL PAYLOAD CONTENTS ///////////////////////////////////////////=//
 //
 // Some internal APIs pass around the extraction of value payloads, like take
-// a REBDAT* or REBGOB*, when they could probably just as well pass around a
-// REBVAL*.  The usages are few and far enough between.  But for the moment
-// just define things here.
+// a REBDAT*, when they could probably just as well pass around a REBVAL*.
+// The usages are few and far enough between.  But for the moment just define
+// things here.
 //
 
 // !!! This structure varies the layout based on endianness, so that when it
@@ -295,7 +295,7 @@ typedef struct reb_ymdz {
 
 typedef union reb_date {
     REBYMD date;
-    REBCNT bits; // !!! alias used for hashing date, is this standards-legal? 
+    REBCNT bits; // !!! alias used for hashing date, is this standards-legal?
 } REBDAT;
 
 typedef struct rebol_time_fields {
@@ -306,5 +306,3 @@ typedef struct rebol_time_fields {
 } REB_TIMEF;
 
 #include "sys-deci.h"
-
-typedef struct rebol_gob REBGOB;

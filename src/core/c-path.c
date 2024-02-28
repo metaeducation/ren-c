@@ -226,21 +226,7 @@ bool Next_Path_Throws(REBPVS *pvs)
             panic ("Path dispatch isn't allowed to throw, only GROUP!s");
 
         case REB_R_INVISIBLE:
-            assert(PVS_IS_SET_PATH(pvs));
-            if (
-                hook != Path_Hooks[REB_GOB]
-            ){
-                panic("SET-PATH! evaluation ran assignment before path end");
-            }
-
-            // !!! Temporary exception for STRUCT! and GOB!, the hack the
-            // dispatcher uses to do "sub-value addressing" is to call
-            // Next_Path_Throws inside of them, to be able to do a write
-            // while they still have memory of what the struct and variable
-            // are (which would be lost in this protocol otherwise).
-            //
-            assert(IS_END(pvs->value));
-            break;
+            panic("SET-PATH! evaluation ran assignment before path end");
 
         case REB_R_REFERENCE:
             Derelativize(
@@ -579,7 +565,7 @@ REBNATIVE(pick)
 // In R3-Alpha, PICK was an "action", which dispatched on types through the
 // "action mechanic" for the following types:
 //
-//     [any-series! map! gob! pair! date! time! tuple! bitset! port! varargs!]
+//     [any-series! map! pair! date! time! tuple! bitset! port! varargs!]
 //
 // In Ren-C, PICK is rethought to use the same dispatch mechanic as paths,
 // to cut down on the total number of operations the system has to define.

@@ -95,8 +95,22 @@ binding
 file
 line
 action
+parent
 near
 label
+
+; EVENT TYPES
+;
+read
+wrote
+connect
+close
+error
+done
+ready
+lookup
+custom
+
 
 value ; used by TYPECHECKER to name the argument of the generated function
 
@@ -268,38 +282,6 @@ n32-soft-float; mips abi
 n64-soft-float; mips abi
 ...
 varargs
-
-; Gobs:
-gob
-offset
-size
-pane
-parent
-image
-draw
-text
-effect
-color
-flags
-rgb
-alpha
-data
-resize
-rotate
-no-title
-no-border
-dropable
-transparent
-popup
-modal
-on-top
-hidden
-owner
-active
-minimize
-maximize
-restore
-fullscreen
 
 *port-modes*
 

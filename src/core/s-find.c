@@ -47,8 +47,6 @@ REBINT Compare_Binary_Vals(const RELVAL *v1, const RELVAL *v2)
     REBCNT len = MIN(l1, l2);
     REBINT n;
 
-    if (IS_IMAGE(v1)) len *= 4;
-
     // Image is not "byte size" (note multiplied by 4 above) but still calls
     // binary compare...can't use VAL_BIN_AT as long as it does, because
     // that asserts BYTE_SIZE().

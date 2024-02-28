@@ -176,7 +176,7 @@ inline static REBYTE *SER_DATA_RAW(REBSER *s) {
         : cast(REBYTE*, &s->content);
 }
 
-inline static REBYTE *SER_AT_RAW(REBYTE w, REBSER *s, REBCNT i) {   
+inline static REBYTE *SER_AT_RAW(REBYTE w, REBSER *s, REBCNT i) {
   #if !defined(NDEBUG)
     if (w != SER_WIDE(s)) {
         //
@@ -491,7 +491,7 @@ inline static void FAIL_IF_READ_ONLY_SERIES(REBSER *s) {
 //=////////////////////////////////////////////////////////////////////////=//
 
 inline static REBSER *VAL_SERIES(const RELVAL *v) {
-    assert(ANY_SERIES(v) or IS_MAP(v) or IS_IMAGE(v)); // !!! gcc 5.4 -O2 bug
+    assert(ANY_SERIES(v) or IS_MAP(v));  // !!! gcc 5.4 -O2 bug
     REBSER *s = v->payload.any_series.series;
     if (GET_SER_INFO(s, SERIES_INFO_INACCESSIBLE))
         fail (Error_Series_Data_Freed_Raw());

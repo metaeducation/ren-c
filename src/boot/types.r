@@ -195,7 +195,6 @@ url         string      +       +       +       [series string]
 tag         string      +       +       +       [series string]
 
 bitset      bitset      +       +       +       -
-image       image       +       +       +       [series]
 vector      vector      +       +       +       [series]
 
 map         map         +       +       +       -
@@ -232,7 +231,6 @@ typeset     typeset     -       +       +       -
 
 ; things likely to become user-defined types or extensions
 
-gob         gob         +       +       +       -
 event       event       +       +       +       -
 handle      handle      -       -       +       -
 library     library     -       +       +       -

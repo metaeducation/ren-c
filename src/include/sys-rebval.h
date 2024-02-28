@@ -576,15 +576,6 @@ struct Reb_Library_Payload {
 typedef REBARR REBLIB;
 
 
-#include "reb-gob.h"
-
-struct Reb_Gob_Payload {
-    REBGOB *gob;
-    REBCNT index;
-};
-
-
-
 //=////////////////////////////////////////////////////////////////////////=//
 //
 //  VALUE CELL DEFINITION (`struct Reb_Value` or `struct Reb_Relative_Value`)
@@ -722,7 +713,6 @@ union Reb_Value_Payload {
     struct Reb_Library_Payload library;
 
     struct Reb_Event_Payload event;
-    struct Reb_Gob_Payload gob;
 
     // These use `specific` or `relative` in `binding`, based on IS_RELATIVE()
 

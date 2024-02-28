@@ -132,10 +132,10 @@
         #else
             c->extra.tick = 1; // unreadable blank needs for debug payload
         #endif
-      #else // in space that is overwritten for cells that fill in payloads 
+      #else // in space that is overwritten for cells that fill in payloads
         c->payload.track.file = file;
         c->payload.track.line = line;
-          
+
         #ifdef DEBUG_COUNT_TICKS
             c->extra.tick = TG_Tick;
         #else
@@ -296,7 +296,7 @@
         }
         #define SET_VAL_FLAG(v,f) \
             SET_VAL_FLAG_cplusplus<f>(v)
-        
+
         template <uintptr_t f>
         inline static bool GET_VAL_FLAG_cplusplus(const RELVAL *v) {
             static_assert(
@@ -1169,7 +1169,7 @@ inline static REBVAL *Init_Char(RELVAL *out, REBUNI uni) {
 // for these cases.
 //
 
-#if defined(NDEBUG) || !defined(CPLUSPLUS_11) 
+#if defined(NDEBUG) || !defined(CPLUSPLUS_11)
     #define VAL_INT64(v) \
         ((v)->payload.integer)
 #else
@@ -1388,7 +1388,6 @@ inline static REBVAL *Init_Tuple(RELVAL *out, const REBYTE *data) {
 // * EVM_OBJECT
 // * EVM_DEVICE
 // * EVM_CALLBACK
-// * EVM_GUI
 //
 
 #define VAL_EVENT_TYPE(v) \
@@ -1458,58 +1457,6 @@ inline static void SET_EVENT_XY(RELVAL *v, REBINT x, REBINT y) {
 
 inline static void SET_EVENT_KEY(RELVAL *v, REBCNT k, REBCNT c) {
     VAL_EVENT_DATA(v) = ((c << 16) + k);
-}
-
-
-//=////////////////////////////////////////////////////////////////////////=//
-//
-//  GOB! Graphic Object
-//
-//=////////////////////////////////////////////////////////////////////////=//
-//
-// !!! The GOB! is a datatype specific to R3-View.  Its data is a small
-// fixed-size object.  It is linked together by series containing more
-// GOBs and values, and participates in the garbage collection process.
-//
-// The monolithic structure of Rebol had made it desirable to take advantage
-// of the memory pooling to quickly allocate, free, and garbage collect
-// these.  With GOB! being moved to an extension, it is not likely that it
-// would hook the memory pools directly.
-//
-
-#if defined(NDEBUG) || !defined(CPLUSPLUS_11)
-    #define VAL_GOB(v) \
-        (v)->payload.gob.gob
-
-    #define VAL_GOB_INDEX(v) \
-        (v)->payload.gob.index
-#else
-    inline static REBGOB* const &VAL_GOB(const RELVAL *v) {
-        assert(IS_GOB(v));
-        return v->payload.gob.gob;
-    }
-
-    inline static REBCNT const &VAL_GOB_INDEX(const RELVAL *v) {
-        assert(IS_GOB(v));
-        return v->payload.gob.index;
-    }
-
-    inline static REBGOB* &VAL_GOB(RELVAL *v) {
-        assert(IS_GOB(v));
-        return v->payload.gob.gob;
-    }
-
-    inline static REBCNT &VAL_GOB_INDEX(RELVAL *v) {
-        assert(IS_GOB(v));
-        return v->payload.gob.index;
-    }
-#endif
-
-inline static REBVAL *Init_Gob(RELVAL *out, REBGOB *g) {
-    RESET_CELL(out, REB_GOB);
-    VAL_GOB(out) = g;
-    VAL_GOB_INDEX(out) = 0;
-    return KNOWN(out);
 }
 
 
@@ -1635,7 +1582,7 @@ inline static void INIT_BINDING_MAY_MANAGE(RELVAL *out, REBNOD* binding) {
     }
 
     assert(GET_SER_FLAG(binding, SERIES_FLAG_STACK));
- 
+
     REBFRM *f = FRM(LINK(binding).keysource);
     assert(IS_END(f->param)); // cannot manage frame varlist in mid fulfill!
     UNUSED(f); // !!! not actually used yet, coming soon
@@ -1652,7 +1599,7 @@ inline static void INIT_BINDING_MAY_MANAGE(RELVAL *out, REBNOD* binding) {
         else
             out_depth = 1; // !!! need to find out's stack level
 
-        bool smarts_enabled = false; 
+        bool smarts_enabled = false;
         if (smarts_enabled and out_depth >= bind_depth)
             return; // binding will outlive `out`, don't manage
 

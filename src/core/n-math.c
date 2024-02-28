@@ -677,7 +677,7 @@ REBNATIVE(same_q)
         return Init_True(D_OUT);
     }
 
-    if (ANY_SERIES(value1) || IS_IMAGE(value1)) {
+    if (ANY_SERIES(value1)) {
         //
         // ANY-SERIES! can only be the same if pointers and indices match.
         //

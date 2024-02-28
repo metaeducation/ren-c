@@ -293,7 +293,7 @@ REBVAL *Init_Any_Series_At_Core(
 ) {
     ENSURE_SERIES_MANAGED(series);
 
-    if (type != REB_IMAGE and type != REB_VECTOR) {
+    if (type != REB_VECTOR) {
         // Code in various places seemed to have different opinions of
         // whether a BINARY needed to be zero terminated.  It doesn't
         // make a lot of sense to zero terminate a binary unless it
@@ -563,4 +563,3 @@ int64_t Mul_Max(enum Reb_Kind type, int64_t n, int64_t m, int64_t maxi)
         fail (Error_Type_Limit_Raw(Datatype_From_Kind(type)));
     return cast(int, r); // !!! (?) review this cast
 }
-

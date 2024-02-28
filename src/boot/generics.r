@@ -153,7 +153,7 @@ negate: generic [
 
 complement: generic [
     {Returns the one's complement value.}
-    value [logic! integer! tuple! binary! bitset! typeset! image!]
+    value [logic! integer! tuple! binary! bitset! typeset!]
 ]
 
 absolute: generic [
@@ -197,9 +197,9 @@ even?: generic [
 
 skip: generic [
     {Returns the series forward or backward from the current position.}
-    return: [<opt> blank! any-series! gob! port!]
+    return: [<opt> blank! any-series! port!]
         {Input skipped by the given offset, clipped to head/tail if not /ONLY}
-    series [blank! any-series! gob! port!]
+    series [blank! any-series! port!]
     offset [any-number! logic! pair!]
     /only
         {Don't clip to the boundaries of the series (return blank if beyond)}
@@ -207,9 +207,9 @@ skip: generic [
 
 at: generic [
     {Returns the series at the specified index.}
-    return: [<opt> blank! any-series! gob! port!]
+    return: [<opt> blank! any-series! port!]
         {Input at the given index, clipped to head/tail if not /ONLY}
-    series [blank! any-series! gob! port!]
+    series [blank! any-series! port!]
     index [any-number! logic! pair!]
     /only
         {Don't clip to the boundaries of the series (return blank if beyond)}
@@ -222,7 +222,7 @@ find: generic [
     {Searches for the position where a matching value is found}
     return: {position found, else blank (void if series is itself blank)}
         [<opt> any-series! blank! bar!]
-    series [<blank> any-series! any-context! map! gob! bitset! typeset!]
+    series [<blank> any-series! any-context! map! bitset! typeset!]
     value [any-value!]
     /part {Limits the search to a given length or position}
     limit [any-number! any-series! pair!]
@@ -288,7 +288,7 @@ take: generic [
     {Removes and returns one or more elements}
 
     return: [<opt> any-value!]
-    series [any-series! port! gob! blank! varargs!] {At position (modified)}
+    series [any-series! port! blank! varargs!] {At position (modified)}
     /part {Specifies a length or end position}
     limit [any-number! any-series! pair! bar!]
     /deep {Also copies series values within the block}
@@ -302,7 +302,7 @@ insert: generic [
     {Inserts element(s); for series, returns just past the insert.}
     return: {Just past the insert (<opt> needed for COLLECT/KEEP, see notes)}
         [<opt> any-value!]
-    series [any-series! port! map! gob! object! bitset! port!] {At position (modified)}
+    series [any-series! port! map! object! bitset! port!] {At position (modified)}
     value [<opt> any-value!] {The value to insert}
     /part {Limits to a given length or position}
     limit [any-number! any-series! pair!]
@@ -317,7 +317,7 @@ insert: generic [
 ;
 append: generic [
     {Inserts element(s) at tail; for series, returns head.}
-    series [any-series! port! map! gob! object! module! bitset!]
+    series [any-series! port! map! object! module! bitset!]
         {Any position (modified)}
     value [<opt> any-value!] {The value to insert}
     /part {Limits to a given length or position}
@@ -333,7 +333,7 @@ append: generic [
 ;
 change: generic [
     {Replaces element(s); returns just past the change.}
-    series [any-series! gob! port!]{At position (modified)}
+    series [any-series! port!]{At position (modified)}
     value [<opt> any-value!] {The new value}
     /part {Limits the amount to change to a given length or position}
     limit [any-number! any-series! pair!]
@@ -345,7 +345,7 @@ change: generic [
 
 remove: generic [
     {Removes element(s); returns same position.}
-    series [any-series! map! gob! port! bitset!] {At position (modified)}
+    series [any-series! map! port! bitset!] {At position (modified)}
     /part {Removes multiple elements or to a given position}
     limit [any-number! any-series! pair! char!]
     /map {Remove key from map}
@@ -354,18 +354,18 @@ remove: generic [
 
 clear: generic [
     {Removes elements from current position to tail; returns at new tail.}
-    series [any-series! port! map! gob! bitset!] {At position (modified)}
+    series [any-series! port! map! bitset!] {At position (modified)}
 ]
 
 swap: generic [
     {Swaps elements between two series or the same series.}
-    series1 [any-series! gob!] {At position (modified)}
-    series2 [any-series! gob!] {At position (modified)}
+    series1 [any-series!] {At position (modified)}
+    series2 [any-series!] {At position (modified)}
 ]
 
 reverse: generic [
     {Reverses the order of elements; returns at same position.}
-    series [any-series! gob! tuple! pair!] {At position (modified)}
+    series [any-series! tuple! pair!] {At position (modified)}
     /part {Limits to a given length or position}
     limit [any-number! any-series!]
 ]

@@ -385,11 +385,6 @@ static REBSER *make_binary(const REBVAL *arg, bool make)
         ser = Copy_Bytes(VAL_BIN_HEAD(arg), VAL_LEN_HEAD(arg));
         break;
 
-    // MAKE/TO BINARY! <image!>
-    case REB_IMAGE:
-        ser = Make_Image_Binary(arg);
-        break;
-
     case REB_MONEY:
         ser = Make_Binary(12);
         deci_to_binary(BIN_HEAD(ser), VAL_MONEY_AMOUNT(arg));
