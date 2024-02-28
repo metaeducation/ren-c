@@ -291,6 +291,23 @@ print: func [
 ]
 
 
+; Simple "divider-style" thing for remarks.  At a certain verbosity level,
+; it could dump those remarks out...perhaps based on how many == there are.
+; (This is a good reason for retaking ==, as that looks like a divider.)
+;
+; Only supports strings in bootstrap, because sea of words is not in bootstrap
+; executable, so plain words here creates a bunch of variables...could confuse
+; the global state more than it already is.
+;
+===: func [
+    ; note: <...> is now a TUPLE!, and : used to be "hard quote" (vs ')
+    label [text!]
+    'terminal [word!]
+][
+    assert [equal? terminal '===]
+]
+
+
 decode-url: _ ; set in sys init
 
 ; used only by Ren-C++ as a test of how to patch the lib context prior to
