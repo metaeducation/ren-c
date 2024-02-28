@@ -15,9 +15,6 @@ extensions: make map! [
     ; * dynamic
     ; [modules] dynamic with selected modules
 
-    ; FFI and ODBC have dependencies outside of what's available on a stock
-    ; standard C compiler with POSIX or Win32.  Disable these extensions by
-    ; default.  (Review the general policy for default inclusions.)
     ; Clipboard is only implemented in Windows at the moment.
 
     BMP +
@@ -26,7 +23,6 @@ extensions: make map! [
     Crypt +
     GIF +
     JPG +
-    ODBC -
     PNG +
     Process +
     UUID +
@@ -59,8 +55,6 @@ rigorous: no
 
 static: no
 pkg-config: try get-env "PKGCONFIG" ;path to pkg-config, or default
-
-odbc-requires-ltdl: no
 
 ; Console API for windows does not exist before vista.
 ;
