@@ -741,16 +741,6 @@ union Reb_Series_Link {
     //
     REBSTR *synonym;
 
-    // For a writable REBSTR, this mutation stamp is used to track how many
-    // times it has changed in ways that could affect an extant character
-    // positioning in a REBVAL* somewhere.  The stamp is mirrored in the
-    // REBVAL, and if it doesn't match the value must re-seek instead of
-    // using an offset in the value.
-    //
-    // !!! Work in progress.
-    //
-    uintptr_t stamp;
-
     // REBACT uses this.  It can hold either the varlist of a frame containing
     // specialized values (e.g. an "exemplar"), with ARRAY_FLAG_VARLIST set.
     // Or just hold the paramlist.  This speeds up Push_Action() because
