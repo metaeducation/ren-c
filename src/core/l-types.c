@@ -1308,7 +1308,7 @@ DECLARE_NATIVE(scan_net_header)
     REBLEN index = VAL_INDEX(header);
     REBSER *utf8 = VAL_SERIES(header);
 
-    REBYTE *cp = BIN_HEAD(utf8) + index;
+    REBYTE *cp = Binary_Head(utf8) + index;
 
     while (IS_LEX_ANY_SPACE(*cp)) cp++; // skip white space
 

@@ -146,10 +146,10 @@ DECLARE_NATIVE(write_stdout)
 
         REBSIZ offset;
         REBSIZ size;
-        REBSER *temp = Temp_UTF8_At_Managed(&offset, &size, v, VAL_LEN_AT(v));
+        Binary* temp = Temp_UTF8_At_Managed(&offset, &size, v, VAL_LEN_AT(v));
         PUSH_GC_GUARD(temp);
 
-        Prin_OS_String(BIN_AT(temp, offset), size, OPT_ENC_0);
+        Prin_OS_String(Binary_At(temp, offset), size, OPT_ENC_0);
 
         DROP_GC_GUARD(temp);
     }

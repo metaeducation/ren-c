@@ -124,7 +124,7 @@ REB_R MAKE_Bitset(Value* out, enum Reb_Kind kind, const Value* arg)
         return out; // allocated at a size, no contents.
 
     if (IS_BINARY(arg)) {
-        memcpy(BIN_HEAD(ser), VAL_BIN_AT(arg), len/8 + 1);
+        memcpy(Binary_Head(ser), Cell_Binary_At(arg), len/8 + 1);
         return out;
     }
 
@@ -228,7 +228,7 @@ bool Check_Bit(REBSER *bset, REBLEN c, bool uncased)
 retry:
     i = n >> 3;
     if (i < tail)
-        flag = did (BIN_HEAD(bset)[i] & (1 << (7 - (n & 7))));
+        flag = did (Binary_Head(bset)[i] & (1 << (7 - (n & 7))));
 
     // Check uppercase if needed:
     if (uncased && !flag) {
@@ -259,14 +259,14 @@ void Set_Bit(REBSER *bset, REBLEN n, bool set)
     if (i >= tail) {
         if (!set) return; // no need to expand
         Expand_Series(bset, tail, (i - tail) + 1);
-        CLEAR(BIN_AT(bset, tail), (i - tail) + 1);
+        CLEAR(Binary_At(bset, tail), (i - tail) + 1);
     }
 
     bit = 1 << (7 - ((n) & 7));
     if (set)
-        BIN_HEAD(bset)[i] |= bit;
+        Binary_Head(bset)[i] |= bit;
     else
-        BIN_HEAD(bset)[i] &= ~bit;
+        Binary_Head(bset)[i] &= ~bit;
 }
 
 
@@ -402,9 +402,9 @@ bool Set_Bits(REBSER *bset, const Value* val, bool set)
             REBUNI c = SER_LEN(bset);
             if (n >= c) {
                 Expand_Series(bset, c, (n - c));
-                CLEAR(BIN_AT(bset, c), (n - c));
+                CLEAR(Binary_At(bset, c), (n - c));
             }
-            memcpy(BIN_HEAD(bset), VAL_BIN_AT(item), n);
+            memcpy(Binary_Head(bset), Cell_Binary_At(item), n);
             break; }
 
         default:
@@ -562,7 +562,7 @@ REB_R PD_Bitset(
 void Trim_Tail_Zeros(REBSER *ser)
 {
     REBLEN len = SER_LEN(ser);
-    REBYTE *bp = BIN_HEAD(ser);
+    REBYTE *bp = Binary_Head(ser);
 
     while (len > 0 && bp[len] == 0)
         len--;

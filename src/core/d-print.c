@@ -252,7 +252,7 @@ void Debug_Values(const Cell* value, REBLEN count, REBLEN limit)
             SET_ANY_CHAR(mo->series, i2, '\0');
 
             Debug_String_No_Newline(
-                BIN_AT(mo->series, mo->start), i2 - mo->start
+                Binary_At(mo->series, mo->start), i2 - mo->start
             );
 
             Drop_Mold(mo);
@@ -295,7 +295,7 @@ void Debug_Buf_No_Newline(const char *fmt, va_list *vaptr)
     Form_Args_Core(mo, fmt, vaptr);
 
     Debug_String_No_Newline(
-        BIN_AT(mo->series, mo->start), SER_LEN(mo->series) - mo->start
+        Binary_At(mo->series, mo->start), SER_LEN(mo->series) - mo->start
     );
 
     Drop_Mold(mo);

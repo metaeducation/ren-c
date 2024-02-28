@@ -83,7 +83,7 @@ REB_R MAKE_Array(Value* out, enum Reb_Kind kind, const Value* arg) {
         //
         REBSIZ offset;
         REBSIZ size;
-        REBSER *temp = Temp_UTF8_At_Managed(
+        Binary* temp = Temp_UTF8_At_Managed(
             &offset, &size, arg, VAL_LEN_AT(arg)
         );
         PUSH_GC_GUARD(temp);
@@ -91,7 +91,7 @@ REB_R MAKE_Array(Value* out, enum Reb_Kind kind, const Value* arg) {
         Init_Any_Array(
             out,
             kind,
-            Scan_UTF8_Managed(filename, BIN_AT(temp, offset), size)
+            Scan_UTF8_Managed(filename, Binary_At(temp, offset), size)
         );
         DROP_GC_GUARD(temp);
         return out;
@@ -173,7 +173,7 @@ REB_R MAKE_Array(Value* out, enum Reb_Kind kind, const Value* arg) {
         return Init_Any_Array(
             out,
             kind,
-            Scan_UTF8_Managed(filename, VAL_BIN_AT(arg), VAL_LEN_AT(arg))
+            Scan_UTF8_Managed(filename, Cell_Binary_At(arg), VAL_LEN_AT(arg))
         );
     }
     else if (IS_MAP(arg)) {

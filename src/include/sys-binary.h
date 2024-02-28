@@ -38,30 +38,30 @@
 // BIN_XXX: Binary or byte-size string seres macros
 //
 
-#define BIN_AT(s,n) \
-    SER_AT(REBYTE, (s), (n))
+#define Binary_At(bin,n) \
+    SER_AT(REBYTE, (bin), (n))
 
-#define BIN_HEAD(s) \
-    SER_HEAD(REBYTE, (s))
+#define Binary_Head(bin) \
+    SER_HEAD(REBYTE, (bin))
 
-#define BIN_TAIL(s) \
-    SER_TAIL(REBYTE, (s))
+#define Binary_Tail(bin) \
+    SER_TAIL(REBYTE, (bin))
 
-#define BIN_LAST(s) \
-    SER_LAST(REBYTE, (s))
+#define Binary_Last(bin) \
+    SER_LAST(REBYTE, (bin))
 
-INLINE REBLEN BIN_LEN(REBSER *s) {
-    assert(BYTE_SIZE(s));
-    return SER_LEN(s);
+INLINE REBLEN Binary_Len(Binary* bin) {
+    assert(BYTE_SIZE(bin));
+    return SER_LEN(bin);
 }
 
-INLINE void TERM_BIN(REBSER *s) {
-    BIN_HEAD(s)[SER_LEN(s)] = 0;
+INLINE void TERM_BIN(Binary* bin) {
+    Binary_Head(bin)[SER_LEN(bin)] = 0;
 }
 
-INLINE void TERM_BIN_LEN(REBSER *s, REBLEN len) {
-    SET_SERIES_LEN(s, len);
-    BIN_HEAD(s)[len] = 0;
+INLINE void TERM_BIN_LEN(Binary* bin, REBLEN len) {
+    SET_SERIES_LEN(bin, len);
+    Binary_Head(bin)[len] = 0;
 }
 
 
@@ -72,20 +72,20 @@ INLINE void TERM_BIN_LEN(REBSER *s, REBLEN len) {
 //=////////////////////////////////////////////////////////////////////////=//
 
 #define VAL_BIN_HEAD(v) \
-    BIN_HEAD(VAL_SERIES(v))
+    Binary_Head(VAL_SERIES(v))
 
-INLINE REBYTE *VAL_BIN_AT(const Cell* v) {
-    return BIN_AT(VAL_SERIES(v), VAL_INDEX(v));
+INLINE REBYTE *Cell_Binary_At(const Cell* v) {
+    return Binary_At(VAL_SERIES(v), VAL_INDEX(v));
 }
 
-INLINE REBYTE *VAL_BIN_TAIL(const Cell* v) {
+INLINE REBYTE *Cell_Binary_Tail(const Cell* v) {
     return SER_TAIL(REBYTE, VAL_SERIES(v));
 }
 
 // !!! RE: VAL_BIN_AT_HEAD() see remarks on VAL_ARRAY_AT_HEAD()
 //
 #define VAL_BIN_AT_HEAD(v,n) \
-    BIN_AT(VAL_SERIES(v), (n))
+    Binary_At(VAL_SERIES(v), (n))
 
 #define VAL_BYTE_SIZE(v) \
     BYTE_SIZE(VAL_SERIES(v))

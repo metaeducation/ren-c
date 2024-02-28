@@ -104,7 +104,7 @@ static void swap_chars(Value* val1, Value* val2)
 
 static void reverse_binary(Value* v, REBLEN len)
 {
-    REBYTE *bp = VAL_BIN_AT(v);
+    REBYTE *bp = Cell_Binary_At(v);
 
     REBLEN n = 0;
     REBLEN m = len - 1;
@@ -202,7 +202,7 @@ static REBLEN find_string(
             return Find_Byte_Str(
                 series,
                 start,
-                VAL_BIN_AT(target),
+                Cell_Binary_At(target),
                 target_len,
                 not (flags & AM_FIND_CASE),
                 did (flags & AM_FIND_MATCH)
@@ -227,7 +227,7 @@ static REBLEN find_string(
         return Find_Byte_Str(
             series,
             start,
-            VAL_BIN_AT(target),
+            Cell_Binary_At(target),
             target_len,
             uncase, // "don't treat case insensitively"
             did (flags & AM_FIND_MATCH)
@@ -278,7 +278,7 @@ static REBSER *MAKE_TO_String_Common(const Value* arg)
     // MAKE/TO <type> <binary!>
     if (IS_BINARY(arg)) {
         ser = Make_Sized_String_UTF8(
-            cs_cast(VAL_BIN_AT(arg)), VAL_LEN_AT(arg)
+            cs_cast(Cell_Binary_At(arg)), VAL_LEN_AT(arg)
         );
     }
     // MAKE/TO <type> <any-string>
@@ -304,7 +304,7 @@ static REBSER *Make_Binary_BE64(const Value* arg)
 {
     REBSER *ser = Make_Binary(8);
 
-    REBYTE *bp = BIN_HEAD(ser);
+    REBYTE *bp = Binary_Head(ser);
 
     REBI64 i;
     REBDEC d;
@@ -351,7 +351,7 @@ static REBSER *make_binary(const Value* arg, bool make)
 
     // MAKE/TO BINARY! BINARY!
     case REB_BINARY:
-        ser = Copy_Bytes(VAL_BIN_AT(arg), VAL_LEN_AT(arg));
+        ser = Copy_Bytes(Cell_Binary_At(arg), VAL_LEN_AT(arg));
         break;
 
     // MAKE/TO BINARY! <any-string>
@@ -377,7 +377,7 @@ static REBSER *make_binary(const Value* arg, bool make)
     // MAKE/TO BINARY! <char!>
     case REB_CHAR:
         ser = Make_Binary(6);
-        TERM_SEQUENCE_LEN(ser, Encode_UTF8_Char(BIN_HEAD(ser), VAL_CHAR(arg)));
+        TERM_SEQUENCE_LEN(ser, Encode_UTF8_Char(Binary_Head(ser), VAL_CHAR(arg)));
         break;
 
     // MAKE/TO BINARY! <bitset!>
@@ -387,7 +387,7 @@ static REBSER *make_binary(const Value* arg, bool make)
 
     case REB_MONEY:
         ser = Make_Binary(12);
-        deci_to_binary(BIN_HEAD(ser), VAL_MONEY_AMOUNT(arg));
+        deci_to_binary(Binary_Head(ser), VAL_MONEY_AMOUNT(arg));
         TERM_SEQUENCE_LEN(ser, 12);
         break;
 
@@ -614,7 +614,7 @@ REB_R PD_String(
                 return nullptr;
 
             if (IS_BINARY(pvs->out))
-                Init_Integer(pvs->out, *BIN_AT(ser, n));
+                Init_Integer(pvs->out, *Binary_At(ser, n));
             else
                 Init_Char(pvs->out, GET_ANY_CHAR(ser, n));
 
@@ -690,7 +690,7 @@ REB_R PD_String(
         const bool crlf_to_lf = false;
         Append_UTF8_May_Fail(
             copy, // dst
-            cs_cast(BIN_AT(mo->series, mo->start + skip)), // src
+            cs_cast(Binary_At(mo->series, mo->start + skip)), // src
             SER_LEN(mo->series) - mo->start - skip, // len
             crlf_to_lf
         );
@@ -744,7 +744,7 @@ REB_R PD_String(
         if (c > 0xff)
             fail (Error_Out_Of_Range(opt_setval));
 
-        BIN_HEAD(ser)[n] = cast(REBYTE, c);
+        Binary_Head(ser)[n] = cast(REBYTE, c);
         return R_INVISIBLE;
     }
 
@@ -940,7 +940,7 @@ void Mold_Text_Series_At(
         *dp++ = '"';
         *dp = '\0';
 
-        TERM_BIN_LEN(mo->series, dp - BIN_HEAD(mo->series));
+        TERM_BIN_LEN(mo->series, dp - Binary_Head(mo->series));
         return;
     }
 
@@ -987,7 +987,7 @@ void Mold_Text_Series_At(
     *dp++ = '}';
     *dp = '\0';
 
-    TERM_BIN_LEN(mo->series, dp - BIN_HEAD(mo->series));
+    TERM_BIN_LEN(mo->series, dp - Binary_Head(mo->series));
 }
 
 
@@ -1016,7 +1016,7 @@ static void Mold_Url(REB_MOLD *mo, const Cell* v)
 
     *dp = '\0';
 
-    SET_SERIES_LEN(mo->series, dp - BIN_HEAD(mo->series)); // correction
+    SET_SERIES_LEN(mo->series, dp - Binary_Head(mo->series)); // correction
 }
 
 
@@ -1052,7 +1052,7 @@ static void Mold_File(REB_MOLD *mo, const Cell* v)
 
     *dp = '\0';
 
-    SET_SERIES_LEN(mo->series, dp - BIN_HEAD(mo->series)); // correction
+    SET_SERIES_LEN(mo->series, dp - Binary_Head(mo->series)); // correction
 }
 
 
@@ -1062,8 +1062,8 @@ static void Mold_Tag(REB_MOLD *mo, const Cell* v)
 
     REBSIZ offset;
     REBSIZ size;
-    REBSER *temp = Temp_UTF8_At_Managed(&offset, &size, v, VAL_LEN_AT(v));
-    Append_Utf8_Utf8(mo->series, cs_cast(BIN_AT(temp, offset)), size);
+    Binary* temp = Temp_UTF8_At_Managed(&offset, &size, v, VAL_LEN_AT(v));
+    Append_Utf8_Utf8(mo->series, cs_cast(Binary_At(temp, offset)), size);
 
     Append_Utf8_Codepoint(mo->series, '>');
 }
@@ -1086,24 +1086,24 @@ void MF_Binary(REB_MOLD *mo, const Cell* v, bool form)
     default:
     case 16: {
         const bool brk = (len > 32);
-        enbased = Encode_Base16(VAL_BIN_AT(v), len, brk);
+        enbased = Encode_Base16(Cell_Binary_At(v), len, brk);
         break; }
 
     case 64: {
         const bool brk = (len > 64);
         Append_Unencoded(mo->series, "64");
-        enbased = Encode_Base64(VAL_BIN_AT(v), len, brk);
+        enbased = Encode_Base64(Cell_Binary_At(v), len, brk);
         break; }
 
     case 2: {
         const bool brk = (len > 8);
         Append_Utf8_Codepoint(mo->series, '2');
-        enbased = Encode_Base2(VAL_BIN_AT(v), len, brk);
+        enbased = Encode_Base2(Cell_Binary_At(v), len, brk);
         break; }
     }
 
     Append_Unencoded(mo->series, "#{");
-    Append_Utf8_Utf8(mo->series, cs_cast(BIN_HEAD(enbased)), BIN_LEN(enbased));
+    Append_Utf8_Utf8(mo->series, cs_cast(Binary_Head(enbased)), Binary_Len(enbased));
     Append_Unencoded(mo->series, "}");
 
     Free_Unmanaged_Series(enbased);
@@ -1137,9 +1137,9 @@ void MF_String(REB_MOLD *mo, const Cell* v, bool form)
     if (form and not IS_TAG(v)) {
         REBSIZ offset;
         REBSIZ size;
-        REBSER *temp = Temp_UTF8_At_Managed(&offset, &size, v, VAL_LEN_AT(v));
+        Binary* temp = Temp_UTF8_At_Managed(&offset, &size, v, VAL_LEN_AT(v));
 
-        Append_Utf8_Utf8(mo->series, cs_cast(BIN_AT(temp, offset)), size);
+        Append_Utf8_Utf8(mo->series, cs_cast(Binary_At(temp, offset)), size);
         return;
     }
 
@@ -1339,7 +1339,7 @@ REBTYPE(String)
                 return nullptr;
 
             if (IS_BINARY(v)) {
-                Init_Integer(v, *BIN_AT(VAL_SERIES(v), ret));
+                Init_Integer(v, *Binary_At(VAL_SERIES(v), ret));
             }
             else
                 str_to_char(v, v, ret);
@@ -1388,7 +1388,7 @@ REBTYPE(String)
         //
         if (not REF(part)) {
             if (IS_BINARY(v))
-                Init_Integer(D_OUT, *VAL_BIN_AT(v));
+                Init_Integer(D_OUT, *Cell_Binary_At(v));
             else
                 str_to_char(D_OUT, v, VAL_INDEX(v));
         }

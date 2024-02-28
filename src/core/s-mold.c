@@ -201,7 +201,7 @@ REBYTE *Prep_Mold_Overestimated(REB_MOLD *mo, REBLEN num_bytes)
 {
     REBLEN tail = SER_LEN(mo->series);
     EXPAND_SERIES_TAIL(mo->series, num_bytes); // terminates, if guessed right
-    return BIN_AT(mo->series, tail);
+    return Binary_At(mo->series, tail);
 }
 
 
@@ -258,7 +258,7 @@ void New_Indented_Line(REB_MOLD *mo)
     if (SER_LEN(mo->series) == 0)
         bp = nullptr;
     else {
-        bp = BIN_LAST(mo->series);
+        bp = Binary_Last(mo->series);
         if (*bp == ' ' || *bp == '\t')
             *bp = '\n';
         else
@@ -425,7 +425,7 @@ void Form_Array_At(
         else {
             // Add a space if needed:
             if (n < len && SER_LEN(mo->series)
-                && *BIN_LAST(mo->series) != LF
+                && *Binary_Last(mo->series) != LF
                 && NOT_MOLD_FLAG(mo, MOLD_FLAG_TIGHT)
             ){
                 Append_Utf8_Codepoint(mo->series, ' ');
@@ -779,7 +779,7 @@ REBSER *Pop_Molded_String_Core(REB_MOLD *mo, REBLEN len)
         len = SER_LEN(mo->series) - mo->start;
 
     REBSER *result = Make_Sized_String_UTF8(
-        cs_cast(BIN_AT(mo->series, mo->start)),
+        cs_cast(Binary_At(mo->series, mo->start)),
         len
     );
     assert(SER_WIDE(result) == sizeof(REBUNI));

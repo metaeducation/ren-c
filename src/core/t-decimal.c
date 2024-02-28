@@ -187,7 +187,7 @@ REB_R MAKE_Decimal(Value* out, enum Reb_Kind kind, const Value* arg)
         if (VAL_LEN_AT(arg) < 8)
             fail (Error_Invalid(arg));
 
-        Init_Decimal_Bits(out, VAL_BIN_AT(arg)); // makes REB_DECIMAL
+        Init_Decimal_Bits(out, Cell_Binary_At(arg)); // makes REB_DECIMAL
         RESET_VAL_HEADER(out, kind); // override type if REB_PERCENT
         d = VAL_DECIMAL(out);
         break;

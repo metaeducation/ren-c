@@ -171,7 +171,7 @@ static void Read_File_Port(
     Init_Binary(out, ser);
 
     // Do the read, check for errors:
-    req->common.data = BIN_HEAD(ser);
+    req->common.data = Binary_Head(ser);
     req->length = len;
 
     OS_DO_DEVICE_SYNC(req, RDC_READ);
@@ -186,7 +186,7 @@ static void Read_File_Port(
 //
 static void Write_File_Port(struct devreq_file *file, Value* data, REBLEN len, bool lines)
 {
-    REBSER *ser;
+    Binary* bin;
     REBREQ *req = AS_REBREQ(file);
 
     if (IS_BLOCK(data)) {
@@ -203,14 +203,14 @@ static void Write_File_Port(struct devreq_file *file, Value* data, REBLEN len, b
     }
 
     if (IS_TEXT(data)) {
-        ser = Make_UTF8_From_Any_String(data, len);
-        MANAGE_SERIES(ser);
-        req->common.data = BIN_HEAD(ser);
-        len = SER_LEN(ser);
+        bin = Make_UTF8_From_Any_String(data, len);
+        MANAGE_SERIES(bin);
+        req->common.data = Binary_Head(bin);
+        len = SER_LEN(bin);
         req->modes |= RFM_TEXT; // do LF => CR LF, e.g. on Windows
     }
     else {
-        req->common.data = VAL_BIN_AT(data);
+        req->common.data = Cell_Binary_At(data);
         req->modes &= ~RFM_TEXT; // don't do LF => CR LF, e.g. on Windows
     }
     req->length = len;

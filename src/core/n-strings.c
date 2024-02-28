@@ -222,7 +222,7 @@ DECLARE_NATIVE(checksum)
             REBSER *digest = Make_Ser(digests[i].len + 1, sizeof(char));
 
             if (not REF(key))
-                digests[i].digest(data, len, BIN_HEAD(digest));
+                digests[i].digest(data, len, Binary_Head(digest));
             else {
                 Value* key = ARG(key_value);
 
@@ -233,18 +233,18 @@ DECLARE_NATIVE(checksum)
                 REBYTE *keycp;
                 REBSIZ keylen;
                 if (IS_BINARY(key)) {
-                    keycp = VAL_BIN_AT(key);
+                    keycp = Cell_Binary_At(key);
                     keylen = VAL_LEN_AT(key);
                 }
                 else {
                     assert(IS_TEXT(key));
 
                     REBSIZ offset;
-                    REBSER *temp = Temp_UTF8_At_Managed(
+                    Binary* temp = Temp_UTF8_At_Managed(
                         &offset, &keylen, key, VAL_LEN_AT(key)
                     );
                     PUSH_GC_GUARD(temp);
-                    keycp = BIN_AT(temp, offset);
+                    keycp = Binary_At(temp, offset);
                 }
 
                 if (keylen > blocklen) {
@@ -275,7 +275,7 @@ DECLARE_NATIVE(checksum)
                 digests[i].init(ctx);
                 digests[i].update(ctx,opad,blocklen);
                 digests[i].update(ctx,tmpdigest,digests[i].len);
-                digests[i].final(BIN_HEAD(digest),ctx);
+                digests[i].final(Binary_Head(digest),ctx);
 
                 FREE_N(char, digests[i].ctxsize(), ctx);
             }
@@ -334,13 +334,13 @@ DECLARE_NATIVE(deflate)
     REBSIZ size;
     REBYTE *bp;
     if (IS_BINARY(data)) {
-        bp = VAL_BIN_AT(data);
+        bp = Cell_Binary_At(data);
         size = len; // width = sizeof(REBYTE), so limit = len
     }
     else {
         REBSIZ offset;
-        REBSER *temp = Temp_UTF8_At_Managed(&offset, &size, data, len);
-        bp = BIN_AT(temp, offset);
+        Binary* temp = Temp_UTF8_At_Managed(&offset, &size, data, len);
+        bp = Binary_At(temp, offset);
     }
 
     Symbol* envelope;
@@ -427,7 +427,7 @@ DECLARE_NATIVE(inflate)
     size_t decompressed_size;
     void *decompressed = Decompress_Alloc_Core(
         &decompressed_size,
-        VAL_BIN_AT(data),
+        Cell_Binary_At(data),
         len,
         max,
         envelope
@@ -458,7 +458,7 @@ DECLARE_NATIVE(debase)
 
     REBSIZ offset;
     REBSIZ size;
-    REBSER *temp = Temp_UTF8_At_Managed(
+    Binary* temp = Temp_UTF8_At_Managed(
         &offset, &size, ARG(value), VAL_LEN_AT(ARG(value))
     );
 
@@ -468,7 +468,7 @@ DECLARE_NATIVE(debase)
     else
         base = 64;
 
-    if (!Decode_Binary(D_OUT, BIN_AT(temp, offset), size, base, 0))
+    if (!Decode_Binary(D_OUT, Binary_At(temp, offset), size, base, 0))
         fail (Error_Invalid_Data_Raw(ARG(value)));
 
     return D_OUT;
@@ -504,14 +504,14 @@ DECLARE_NATIVE(enbase)
     REBSIZ size;
     REBYTE *bp;
     if (IS_BINARY(v)) {
-        bp = VAL_BIN_AT(v);
+        bp = Cell_Binary_At(v);
         size = VAL_LEN_AT(v);
     }
     else { // Convert the string to UTF-8
         assert(ANY_STRING(v));
         REBSIZ offset;
-        REBSER *temp = Temp_UTF8_At_Managed(&offset, &size, v, VAL_LEN_AT(v));
-        bp = BIN_AT(temp, offset);
+        Binary* temp = Temp_UTF8_At_Managed(&offset, &size, v, VAL_LEN_AT(v));
+        bp = Binary_At(temp, offset);
     }
 
     REBSER *enbased;
@@ -539,7 +539,7 @@ DECLARE_NATIVE(enbase)
 
     Init_Text(
         D_OUT,
-        Make_Sized_String_UTF8(cs_cast(BIN_HEAD(enbased)), BIN_LEN(enbased))
+        Make_Sized_String_UTF8(cs_cast(Binary_Head(enbased)), Binary_Len(enbased))
     );
     Free_Unmanaged_Series(enbased);
 
@@ -702,7 +702,7 @@ DECLARE_NATIVE(enhex)
 
     *dp = '\0';
 
-    SET_SERIES_LEN(mo->series, dp - BIN_HEAD(mo->series));
+    SET_SERIES_LEN(mo->series, dp - Binary_Head(mo->series));
 
     return Init_Any_Series(
         D_OUT,
@@ -830,7 +830,7 @@ DECLARE_NATIVE(dehex)
 
     *dp = '\0';
 
-    SET_SERIES_LEN(mo->series, dp - BIN_HEAD(mo->series));
+    SET_SERIES_LEN(mo->series, dp - Binary_Head(mo->series));
 
     return Init_Any_Series(
         D_OUT,
@@ -1034,7 +1034,7 @@ DECLARE_NATIVE(entab)
         }
     }
 
-    TERM_BIN_LEN(mo->series, dp - BIN_HEAD(mo->series));
+    TERM_BIN_LEN(mo->series, dp - Binary_Head(mo->series));
 
     return Init_Any_Series(D_OUT, VAL_TYPE(val), Pop_Molded_String(mo));
 }
@@ -1113,7 +1113,7 @@ DECLARE_NATIVE(detab)
         dp += Encode_UTF8_Char(dp, c);
     }
 
-    TERM_BIN_LEN(mo->series, dp - BIN_HEAD(mo->series));
+    TERM_BIN_LEN(mo->series, dp - Binary_Head(mo->series));
 
     return Init_Any_Series(D_OUT, VAL_TYPE(val), Pop_Molded_String(mo));
 }
@@ -1240,7 +1240,7 @@ DECLARE_NATIVE(find_script)
 
     Value* arg = ARG(script);
 
-    REBINT offset = Scan_Header(VAL_BIN_AT(arg), VAL_LEN_AT(arg));
+    REBINT offset = Scan_Header(Cell_Binary_At(arg), VAL_LEN_AT(arg));
     if (offset == -1)
         return nullptr;
 
@@ -1264,7 +1264,7 @@ DECLARE_NATIVE(invalid_utf8_q)
 
     Value* arg = ARG(data);
 
-    REBYTE *bp = Check_UTF8(VAL_BIN_AT(arg), VAL_LEN_AT(arg));
+    REBYTE *bp = Check_UTF8(Cell_Binary_At(arg), VAL_LEN_AT(arg));
     if (not bp)
         return nullptr;
 

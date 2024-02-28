@@ -500,7 +500,7 @@ static REBIXO Parse_String_One_Rule(REBFRM *f, const Cell* rule) {
         // necessarily a byte sized series.  Switched to BIN_AT, which will
         // assert if it's not BYTE_SIZE()
 
-        Trace_String(BIN_AT(P_INPUT, P_POS), BIN_LEN(P_INPUT) - P_POS);
+        Trace_String(Binary_At(P_INPUT, P_POS), Binary_Len(P_INPUT) - P_POS);
     }
 
     if (P_POS >= SER_LEN(P_INPUT))
@@ -884,7 +884,7 @@ static REBIXO To_Thru_Block_Rule(
                 }
             }
             else if (P_TYPE == REB_BINARY) {
-                REBYTE ch1 = *BIN_AT(P_INPUT, pos);
+                REBYTE ch1 = *Binary_At(P_INPUT, pos);
 
                 // Handle special string types:
                 if (IS_CHAR(rule)) {
@@ -898,7 +898,7 @@ static REBIXO To_Thru_Block_Rule(
                     }
                 }
                 else if (IS_BINARY(rule)) {
-                    if (ch1 == *VAL_BIN_AT(rule)) {
+                    if (ch1 == *Cell_Binary_At(rule)) {
                         REBLEN len = VAL_LEN_AT(rule);
                         if (len == 1) {
                             if (is_thru)
@@ -907,8 +907,8 @@ static REBIXO To_Thru_Block_Rule(
                         }
 
                         if (0 == Compare_Bytes(
-                            BIN_AT(P_INPUT, pos),
-                            VAL_BIN_AT(rule),
+                            Binary_At(P_INPUT, pos),
+                            Cell_Binary_At(rule),
                             len,
                             false
                         )) {

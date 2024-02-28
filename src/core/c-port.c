@@ -58,10 +58,10 @@ REBREQ *Ensure_Port_State(Value* port, REBLEN device)
     if (!IS_BINARY(state)) {
         assert(IS_BLANK(state));
         REBSER *data = Make_Binary(req_size);
-        CLEAR(BIN_HEAD(data), req_size);
+        CLEAR(Binary_Head(data), req_size);
         TERM_BIN_LEN(data, req_size);
 
-        REBREQ *req = cast(REBREQ*, BIN_HEAD(data));
+        REBREQ *req = cast(REBREQ*, Binary_Head(data));
         req->port_ctx = ctx;
         req->device = device;
         Init_Binary(state, data);
@@ -473,7 +473,7 @@ post_process_output:
                 fail ("/STRING or /LINES used on a non-BINARY!/STRING! read");
 
             REBSER *decoded = Make_Sized_String_UTF8(
-                cs_cast(VAL_BIN_AT(D_OUT)),
+                cs_cast(Cell_Binary_At(D_OUT)),
                 VAL_LEN_AT(D_OUT)
             );
             Init_Text(D_OUT, decoded);

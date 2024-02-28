@@ -147,19 +147,19 @@ void MF_Char(REB_MOLD *mo, const Cell* v, bool form)
 
     if (form) {
         EXPAND_SERIES_TAIL(out, 4); // 4 is worst case scenario of bytes
-        tail += Encode_UTF8_Char(BIN_AT(out, tail), chr);
+        tail += Encode_UTF8_Char(Binary_At(out, tail), chr);
         SET_SERIES_LEN(out, tail);
     }
     else {
         EXPAND_SERIES_TAIL(out, 10); // worst case: #"^(1234)"
 
-        REBYTE *bp = BIN_AT(out, tail);
+        REBYTE *bp = Binary_At(out, tail);
         *bp++ = '#';
         *bp++ = '"';
         bp = Emit_Uni_Char(bp, chr, parened);
         *bp++ = '"';
 
-        SET_SERIES_LEN(out, bp - BIN_HEAD(out));
+        SET_SERIES_LEN(out, bp - Binary_Head(out));
     }
     TERM_BIN(out);
 }

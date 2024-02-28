@@ -251,7 +251,7 @@ REBLEN Find_Byte_Str(REBSER *series, REBLEN index, REBYTE *b2, REBLEN l2, bool u
     // The pattern empty or is longer than the target:
     if (l2 == 0 || (l2 + index) > SER_LEN(series)) return NOT_FOUND;
 
-    b1 = BIN_AT(series, index);
+    b1 = Binary_At(series, index);
     l1 = SER_LEN(series) - index;
 
     e1 = b1 + (match ? 1 : l1 - (l2 - 1));
@@ -265,7 +265,7 @@ REBLEN Find_Byte_Str(REBSER *series, REBLEN index, REBYTE *b2, REBLEN l2, bool u
                 for (n = 1; n < l2; n++) {
                     if (b1[n] != b2[n]) break;
                 }
-                if (n == l2) return (b1 - BIN_HEAD(series));
+                if (n == l2) return (b1 - Binary_Head(series));
             }
             b1++;
         }
@@ -279,7 +279,7 @@ REBLEN Find_Byte_Str(REBSER *series, REBLEN index, REBYTE *b2, REBLEN l2, bool u
                 for (n = 1; n != l2; n++) {
                     if (LO_CASE(b1[n]) != LO_CASE(b2[n])) break;
                 }
-                if (n == l2) return (b1 - BIN_HEAD(series));
+                if (n == l2) return (b1 - Binary_Head(series));
             }
             b1++;
         }
@@ -471,7 +471,7 @@ REBLEN Find_Str_Char(
     // use optimized C library functions if possible.
     //
     if (BYTE_SIZE(series)) {
-        REBYTE *bp = BIN_HEAD(series);
+        REBYTE *bp = Binary_Head(series);
         REBYTE breakset[3];
 
         // We need to cover when the lowercase or uppercase variant of a

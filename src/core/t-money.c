@@ -140,7 +140,7 @@ void Bin_To_Money_May_Fail(Value* result, const Value* val)
         len = 12;
 
     REBYTE buf[MAX_HEX_LEN+4] = {0}; // binary to convert
-    memcpy(buf, VAL_BIN_AT(val), len);
+    memcpy(buf, Cell_Binary_At(val), len);
     memcpy(buf + 12 - len, buf, len); // shift to right side
     memset(buf, 0, 12 - len);
     Init_Money(result, binary_to_deci(buf));

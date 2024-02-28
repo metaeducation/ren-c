@@ -90,7 +90,7 @@ static REB_R Console_Actor(REBFRM *frame_, Value* port, Value* verb)
         SET_SERIES_LEN(ser, 0);
         TERM_SERIES(ser);
 
-        req->common.data = BIN_HEAD(ser);
+        req->common.data = Binary_Head(ser);
         req->length = SER_AVAIL(ser);
 
         OS_DO_DEVICE_SYNC(req, RDC_READ);

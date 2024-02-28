@@ -73,7 +73,7 @@ REBSER *Copy_Bytes(const REBYTE *src, REBINT len)
         len = LEN_BYTES(src);
 
     REBSER *dst = Make_Binary(len);
-    memcpy(BIN_HEAD(dst), src, len);
+    memcpy(Binary_Head(dst), src, len);
     TERM_SEQUENCE_LEN(dst, len);
 
     return dst;
@@ -135,7 +135,7 @@ REBSER *Append_Unencoded_Len(REBSER *dst, const char *src, REBLEN len)
 
     assert(BYTE_SIZE(dst));
 
-    memcpy(BIN_AT(dst, tail), src, len);
+    memcpy(Binary_At(dst, tail), src, len);
     TERM_SEQUENCE(dst);
     return dst;
 }
@@ -186,7 +186,7 @@ REBSER *Append_Utf8_Codepoint(REBSER *dst, uint32_t codepoint)
 
     REBLEN tail = SER_LEN(dst);
     EXPAND_SERIES_TAIL(dst, 4); // !!! Conservative, assume long codepoint
-    tail += Encode_UTF8_Char(BIN_AT(dst, tail), codepoint); // 1 to 4 bytes
+    tail += Encode_UTF8_Char(Binary_At(dst, tail), codepoint); // 1 to 4 bytes
     TERM_BIN_LEN(dst, tail);
     return dst;
 }
@@ -239,12 +239,12 @@ void Append_Utf8_String(REBSER *dst, const Cell* src, REBLEN length_limit)
 
     REBSIZ offset;
     REBSIZ size;
-    REBSER *temp = Temp_UTF8_At_Managed(&offset, &size, src, length_limit);
+    Binary* temp = Temp_UTF8_At_Managed(&offset, &size, src, length_limit);
 
     REBLEN tail = SER_LEN(dst);
     Expand_Series(dst, tail, size); // tail changed too
 
-    memcpy(BIN_AT(dst, tail), BIN_AT(temp, offset), size);
+    memcpy(Binary_At(dst, tail), Binary_At(temp, offset), size);
 }
 
 
@@ -388,13 +388,13 @@ REBSER *Join_Binary(const Value* blk, REBINT limit)
             if (VAL_INT64(val) > 255 || VAL_INT64(val) < 0)
                 fail (Error_Out_Of_Range(KNOWN(val)));
             EXPAND_SERIES_TAIL(series, 1);
-            *BIN_AT(series, tail) = (REBYTE)VAL_INT32(val);
+            *Binary_At(series, tail) = (REBYTE)VAL_INT32(val);
             break;
 
         case REB_BINARY: {
             REBLEN len = VAL_LEN_AT(val);
             EXPAND_SERIES_TAIL(series, len);
-            memcpy(BIN_AT(series, tail), VAL_BIN_AT(val), len);
+            memcpy(Binary_At(series, tail), Cell_Binary_At(val), len);
             break; }
 
         case REB_TEXT:
@@ -409,7 +409,7 @@ REBSER *Join_Binary(const Value* blk, REBINT limit)
             SET_SERIES_LEN(
                 series,
                 tail + Encode_UTF8(
-                    BIN_AT(series, tail),
+                    Binary_At(series, tail),
                     val_size,
                     Cell_String_At(val),
                     &val_len
@@ -420,7 +420,7 @@ REBSER *Join_Binary(const Value* blk, REBINT limit)
         case REB_CHAR: {
             EXPAND_SERIES_TAIL(series, 6);
             REBLEN len =
-                Encode_UTF8_Char(BIN_AT(series, tail), VAL_CHAR(val));
+                Encode_UTF8_Char(Binary_At(series, tail), VAL_CHAR(val));
             SET_SERIES_LEN(series, tail + len);
             break; }
 
@@ -431,7 +431,7 @@ REBSER *Join_Binary(const Value* blk, REBINT limit)
         tail = SER_LEN(series);
     }
 
-    *BIN_AT(series, tail) = 0;
+    *Binary_At(series, tail) = 0;
 
     return series;  // SHARED FORM SERIES!
 }

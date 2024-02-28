@@ -53,7 +53,7 @@
 //
 
 INLINE const char *Symbol_Head(Symbol* str) {
-    return cs_cast(BIN_HEAD(str));
+    return cs_cast(Binary_Head(str));
 }
 
 INLINE Symbol* Canon_Symbol(Symbol* str) {
@@ -173,13 +173,13 @@ INLINE REBSIZ VAL_SIZE_LIMIT_AT(
 //
 
 INLINE REBUNI GET_ANY_CHAR(REBSER *s, REBLEN n) {
-    return BYTE_SIZE(s) ? *BIN_AT(s, n) : *SER_AT(REBUNI, s, n);
+    return BYTE_SIZE(s) ? *Binary_At(s, n) : *SER_AT(REBUNI, s, n);
 }
 
 INLINE void SET_ANY_CHAR(REBSER *s, REBLEN n, REBUNI c) {
     if (BYTE_SIZE(s)) {
         assert(c <= 255);
-        *BIN_AT(s, n) = c;
+        *Binary_At(s, n) = c;
     }
     else
         *SER_AT(REBUNI, s, n) = c;

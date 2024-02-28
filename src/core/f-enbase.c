@@ -185,7 +185,7 @@ static REBSER *Decode_Base2(const REBYTE **src, REBLEN len, REBYTE delim)
     REBSER *ser;
 
     ser = Make_Binary(len >> 3);
-    bp = BIN_HEAD(ser);
+    bp = Binary_Head(ser);
     cp = *src;
 
     for (; len > 0; cp++, len--) {
@@ -211,7 +211,7 @@ static REBSER *Decode_Base2(const REBYTE **src, REBLEN len, REBYTE delim)
     if (count) goto err; // improper modulus
 
     *bp = 0;
-    SET_SERIES_LEN(ser, bp - BIN_HEAD(ser));
+    SET_SERIES_LEN(ser, bp - Binary_Head(ser));
     ASSERT_SERIES_TERM(ser);
     return ser;
 
@@ -236,7 +236,7 @@ static REBSER *Decode_Base16(const REBYTE **src, REBLEN len, REBYTE delim)
     REBSER *ser;
 
     ser = Make_Binary(len / 2);
-    bp = BIN_HEAD(ser);
+    bp = Binary_Head(ser);
     cp = *src;
 
     for (; len > 0; cp++, len--) {
@@ -256,7 +256,7 @@ static REBSER *Decode_Base16(const REBYTE **src, REBLEN len, REBYTE delim)
     if (count & 1) goto err; // improper modulus
 
     *bp = 0;
-    SET_SERIES_LEN(ser, bp - BIN_HEAD(ser));
+    SET_SERIES_LEN(ser, bp - Binary_Head(ser));
     ASSERT_SERIES_TERM(ser);
     return ser;
 
@@ -282,7 +282,7 @@ static REBSER *Decode_Base64(const REBYTE **src, REBLEN len, REBYTE delim)
     // Allocate buffer large enough to hold result:
     // Accounts for e bytes decoding into 3 bytes.
     ser = Make_Binary(((len + 3) * 3) / 4);
-    bp = BIN_HEAD(ser);
+    bp = Binary_Head(ser);
     cp = *src;
 
     for (; len > 0; cp++, len--) {
@@ -334,7 +334,7 @@ static REBSER *Decode_Base64(const REBYTE **src, REBLEN len, REBYTE delim)
     if (flip) goto err;
 
     *bp = 0;
-    SET_SERIES_LEN(ser, bp - BIN_HEAD(ser));
+    SET_SERIES_LEN(ser, bp - Binary_Head(ser));
     ASSERT_SERIES_TERM(ser);
     return ser;
 
@@ -389,7 +389,7 @@ REBSER *Encode_Base2(const REBYTE *src, REBLEN len, bool brk)
     // Account for binary digits, lines, and extra syntax ("slop factor")
     //
     REBSER *s = Make_Binary(8 * len + 2 * (len / 8) + 4);
-    REBYTE *dest = BIN_HEAD(s);
+    REBYTE *dest = Binary_Head(s);
 
     if (len == 0) { // return empty series if input was zero length
         TERM_SEQUENCE_LEN(s, 0);
@@ -416,7 +416,7 @@ REBSER *Encode_Base2(const REBYTE *src, REBLEN len, bool brk)
 
     *dest = '\0';
 
-    SET_SERIES_LEN(s, cast(REBLEN, dest - BIN_HEAD(s)));
+    SET_SERIES_LEN(s, cast(REBLEN, dest - Binary_Head(s)));
     ASSERT_SERIES_TERM(s);
     return s;
 }
@@ -432,7 +432,7 @@ REBSER *Encode_Base16(const REBYTE *src, REBLEN len, bool brk)
     // Account for hex digits, lines, and extra syntax ("slop factor")
     //
     REBSER *s = Make_Binary(len * 2 + len / 32 + 32);
-    REBYTE *dest = BIN_HEAD(s);
+    REBYTE *dest = Binary_Head(s);
 
     if (len == 0) { // return empty series if input was zero length
         TERM_SEQUENCE_LEN(s, 0);
@@ -454,7 +454,7 @@ REBSER *Encode_Base16(const REBYTE *src, REBLEN len, bool brk)
 
     *dest = '\0';
 
-    SET_SERIES_LEN(s, cast(REBLEN, dest - BIN_HEAD(s)));
+    SET_SERIES_LEN(s, cast(REBLEN, dest - Binary_Head(s)));
     ASSERT_SERIES_TERM(s);
     return s;
 }
@@ -470,7 +470,7 @@ REBSER *Encode_Base64(const REBYTE *src, REBLEN len, bool brk)
     // Account for base64 digits, lines, and extra syntax ("slop factor")
     //
     REBSER *s = Make_Binary(4 * len / 3 + 2 * (len / 32) + 5);
-    REBYTE *dest = BIN_HEAD(s);
+    REBYTE *dest = Binary_Head(s);
 
     if (len == 0) { // return empty series if input was zero length
         TERM_SEQUENCE_LEN(s, 0);
@@ -517,7 +517,7 @@ REBSER *Encode_Base64(const REBYTE *src, REBLEN len, bool brk)
 
     *dest = '\0';
 
-    SET_SERIES_LEN(s, cast(REBLEN, dest - BIN_HEAD(s)));
+    SET_SERIES_LEN(s, cast(REBLEN, dest - Binary_Head(s)));
     ASSERT_SERIES_TERM(s);
     return s;
 }

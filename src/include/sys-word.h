@@ -219,8 +219,8 @@ INLINE Symbol* Intern(const void *p)
         //
         REBSIZ offset;
         REBSIZ size;
-        REBSER *temp = Temp_UTF8_At_Managed(&offset, &size, v, VAL_LEN_AT(v));
-        return Intern_UTF8_Managed(BIN_AT(temp, offset), size); }
+        Binary* temp = Temp_UTF8_At_Managed(&offset, &size, v, VAL_LEN_AT(v));
+        return Intern_UTF8_Managed(Binary_At(temp, offset), size); }
 
     default:
         panic ("Bad pointer type passed to Intern()");

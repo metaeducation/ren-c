@@ -184,7 +184,7 @@ DECLARE_NATIVE(decode_text)
     // is to UTF-8 for source code, a .TXT file is a different beast, so
     // having wider format support might be a good thing.
 
-    Init_Text(D_OUT, Make_String_UTF8(cs_cast(VAL_BIN_AT(ARG(data)))));
+    Init_Text(D_OUT, Make_String_UTF8(cs_cast(Cell_Binary_At(ARG(data)))));
     return D_OUT;
 }
 
@@ -224,7 +224,7 @@ static void Encode_Utf16_Core(
     Ucs2(const*) cp = data;
 
     REBSER *bin = Make_Binary(sizeof(uint16_t) * len);
-    uint16_t* up = cast(uint16_t*, BIN_HEAD(bin));
+    uint16_t* up = cast(uint16_t*, Binary_Head(bin));
 
     REBLEN i = 0;
     for (i = 0; i < len; ++i) {
@@ -312,7 +312,7 @@ DECLARE_NATIVE(decode_utf16le)
 {
     INCLUDE_PARAMS_OF_DECODE_UTF16LE;
 
-    REBYTE *data = VAL_BIN_AT(ARG(data));
+    REBYTE *data = Cell_Binary_At(ARG(data));
     REBLEN len = VAL_LEN_AT(ARG(data));
 
     const bool little_endian = true;
@@ -397,7 +397,7 @@ DECLARE_NATIVE(decode_utf16be)
 {
     INCLUDE_PARAMS_OF_DECODE_UTF16BE;
 
-    REBYTE *data = VAL_BIN_AT(ARG(data));
+    REBYTE *data = Cell_Binary_At(ARG(data));
     REBLEN len = VAL_LEN_AT(ARG(data));
 
     const bool little_endian = false;

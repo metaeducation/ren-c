@@ -251,9 +251,9 @@ DECLARE_NATIVE(panic)
     if (IS_TEXT(v)) {
         REBSIZ offset;
         REBSIZ size;
-        REBSER *temp = Temp_UTF8_At_Managed(&offset, &size, v, VAL_LEN_AT(v));
+        Binary* temp = Temp_UTF8_At_Managed(&offset, &size, v, VAL_LEN_AT(v));
 
-        p = BIN_AT(temp, offset); // UTF-8 data
+        p = Binary_At(temp, offset); // UTF-8 data
     }
     else {
         assert(IS_ERROR(v));

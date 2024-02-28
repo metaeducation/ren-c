@@ -480,7 +480,7 @@ static const REBYTE *Scan_Quote_Push_Mold(
         if (SER_LEN(mo->series) + 4 >= SER_REST(mo->series)) // incl term
             Extend_Series(mo->series, 4);
 
-        REBLEN encoded_len = Encode_UTF8_Char(BIN_TAIL(mo->series), chr);
+        REBLEN encoded_len = Encode_UTF8_Char(Binary_Tail(mo->series), chr);
         SET_SERIES_LEN(mo->series, SER_LEN(mo->series) + encoded_len);
     }
 
@@ -577,7 +577,7 @@ const REBYTE *Scan_Item_Push_Mold(
         if (SER_LEN(mo->series) + 4 >= SER_REST(mo->series)) // incl term
             Extend_Series(mo->series, 4);
 
-        REBLEN encoded_len = Encode_UTF8_Char(BIN_TAIL(mo->series), c);
+        REBLEN encoded_len = Encode_UTF8_Char(Binary_Tail(mo->series), c);
         SET_SERIES_LEN(mo->series, SER_LEN(mo->series) + encoded_len);
     }
 
@@ -2526,11 +2526,11 @@ void Scan_To_Stack_Relaxed(SCAN_STATE *ss) {
         //
         REBLEN limit = ss->begin - ss_before.begin;
         REBSER *bin = Make_Binary(limit);
-        memcpy(BIN_HEAD(bin), ss_before.begin, limit);
+        memcpy(Binary_Head(bin), ss_before.begin, limit);
         TERM_BIN_LEN(bin, limit);
 
-        SET_SER_FLAG(bin, SERIES_FLAG_DONT_RELOCATE); // BIN_HEAD() is cached
-        ss_before.begin = BIN_HEAD(bin);
+        SET_SER_FLAG(bin, SERIES_FLAG_DONT_RELOCATE); // Binary_Head() is cached
+        ss_before.begin = Binary_Head(bin);
         TRASH_POINTER_IF_DEBUG(ss_before.end);
 
         Scan_To_Stack(&ss_before); // !!! Shouldn't error...check that?
@@ -2835,7 +2835,7 @@ DECLARE_NATIVE(transcode)
         &ss,
         filename,
         start_line,
-        VAL_BIN_AT(ARG(source)),
+        Cell_Binary_At(ARG(source)),
         VAL_LEN_AT(ARG(source))
     );
 

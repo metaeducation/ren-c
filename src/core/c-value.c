@@ -134,7 +134,7 @@ INLINE void Probe_Molded_Value(const Value* v)
     Push_Mold(mo);
     Mold_Value(mo, v);
 
-    printf("%s\n", s_cast(BIN_AT(mo->series, mo->start)));
+    printf("%s\n", s_cast(Binary_At(mo->series, mo->start)));
     fflush(stdout);
 
     Drop_Mold(mo);
@@ -181,12 +181,12 @@ void* Probe_Core_Debug(
 
             // !!! Duplication of code in MF_Binary
             //
-            const bool brk = (BIN_LEN(s) > 32);
-            REBSER *enbased = Encode_Base16(BIN_HEAD(s), BIN_LEN(s), brk);
+            const bool brk = (Binary_Len(s) > 32);
+            REBSER *enbased = Encode_Base16(Binary_Head(s), Binary_Len(s), brk);
             Append_Unencoded(mo->series, "#{");
             Append_Utf8_Utf8(
                 mo->series,
-                cs_cast(BIN_HEAD(enbased)), BIN_LEN(enbased)
+                cs_cast(Binary_Head(enbased)), Binary_Len(enbased)
             );
             Append_Unencoded(mo->series, "}");
             Free_Unmanaged_Series(enbased);
@@ -236,7 +236,7 @@ void* Probe_Core_Debug(
     }
 
     if (mo->start != SER_LEN(mo->series))
-        printf("%s\n", s_cast(BIN_AT(mo->series, mo->start)));
+        printf("%s\n", s_cast(Binary_At(mo->series, mo->start)));
     fflush(stdout);
 
     Drop_Mold(mo);

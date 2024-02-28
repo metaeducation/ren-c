@@ -128,7 +128,7 @@ REB_R MAKE_Tuple(Value* out, enum Reb_Kind kind, const Value* arg)
         }
     }
     else if (IS_BINARY(arg)) {
-        REBYTE *ap = VAL_BIN_AT(arg);
+        REBYTE *ap = Cell_Binary_At(arg);
         REBLEN len = VAL_LEN_AT(arg);
         if (len > MAX_TUPLE) len = MAX_TUPLE;
         VAL_TUPLE_LEN(out) = len;

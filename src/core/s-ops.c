@@ -123,11 +123,11 @@ REBYTE *Analyze_String_For_Scan(
     VAL_INDEX(reindexed) = index;
 
     REBSIZ offset;
-    REBSER *temp = Temp_UTF8_At_Managed(
+    Binary* temp = Temp_UTF8_At_Managed(
         &offset, opt_size_out, reindexed, VAL_LEN_AT(reindexed)
     );
 
-    return BIN_AT(temp, offset);
+    return Binary_At(temp, offset);
 }
 
 
@@ -140,17 +140,16 @@ REBYTE *Analyze_String_For_Scan(
 // byte-sized and have codepoints > 128, or wide characters and thus be
 // UTF-8 incompatible).
 //
-// After the UTF-8 Everywhere conversion, this routine will not be necessary
-// because all strings will be usable as UTF-8.  But as an interim step for
-// "Latin1 Nowhere" where all strings are wide, this will *always* involve
-// an allocation.
+// This branch of code requires it to always convert strings, because they
+// are all encoded as UCS-2.  Modern Ren-C does not need it, because all
+// strings are "UTF-8 Everywhere".  There will be no patching this branch
+// to the new code--it's too complex--so this will always be "Latin1 Nowhere"
+// and always involve an allocation.
 //
 // Mutation of the result is not allowed because those mutations will not
-// be reflected in the original string, due to generation.  Once the routine
-// is eliminated, use of the original string will mean getting whatever
-// mutability characteristics the original had.
+// be reflected in the original string, due to generation.
 //
-REBSER *Temp_UTF8_At_Managed(
+Binary* Temp_UTF8_At_Managed(
     REBSIZ *offset_out,
     REBSIZ *opt_size_out,
     const Cell* str,
@@ -165,16 +164,16 @@ REBSER *Temp_UTF8_At_Managed(
 
     assert(length_limit <= VAL_LEN_AT(str));
 
-    REBSER *s = Make_UTF8_From_Any_String(str, length_limit);
-    assert(BYTE_SIZE(s));
+    Binary* bin = Make_UTF8_From_Any_String(str, length_limit);
+    assert(BYTE_SIZE(bin));
 
-    MANAGE_SERIES(s);
-    SET_SER_INFO(s, SERIES_INFO_FROZEN);
+    MANAGE_SERIES(bin);
+    SET_SER_INFO(bin, SERIES_INFO_FROZEN);
 
     *offset_out = 0;
     if (opt_size_out != nullptr)
-        *opt_size_out = SER_LEN(s);
-    return s;
+        *opt_size_out = Binary_Len(bin);
+    return bin;
 }
 
 
@@ -185,8 +184,8 @@ REBSER *Temp_UTF8_At_Managed(
 //
 REBSER *Xandor_Binary(Value* verb, Value* value, Value* arg)
 {
-    REBYTE *p0 = VAL_BIN_AT(value);
-    REBYTE *p1 = VAL_BIN_AT(arg);
+    REBYTE *p0 = Cell_Binary_At(value);
+    REBYTE *p1 = Cell_Binary_At(arg);
 
     REBLEN t0 = VAL_LEN_AT(value);
     REBLEN t1 = VAL_LEN_AT(arg);
@@ -223,7 +222,7 @@ REBSER *Xandor_Binary(Value* verb, Value* value, Value* arg)
         TERM_SEQUENCE_LEN(series, t2);
     }
 
-    REBYTE *p2 = BIN_HEAD(series);
+    REBYTE *p2 = Binary_Head(series);
 
     switch (Cell_Word_Id(verb)) {
     case SYM_INTERSECT: { // and
@@ -271,13 +270,13 @@ REBSER *Xandor_Binary(Value* verb, Value* value, Value* arg)
 //
 REBSER *Complement_Binary(Value* value)
 {
-    const REBYTE *bp = VAL_BIN_AT(value);
+    const REBYTE *bp = Cell_Binary_At(value);
     REBLEN len = VAL_LEN_AT(value);
 
     REBSER *bin = Make_Binary(len);
     TERM_SEQUENCE_LEN(bin, len);
 
-    REBYTE *dp = BIN_HEAD(bin);
+    REBYTE *dp = Binary_Head(bin);
     for (; len > 0; len--, ++bp, ++dp)
         *dp = ~(*bp);
 
@@ -320,7 +319,7 @@ void Trim_Tail(REBSER *src, REBYTE chr)
 
     REBLEN tail;
     for (tail = SER_LEN(src); tail > 0; tail--) {
-        REBUNI c = *BIN_AT(src, tail - 1);
+        REBUNI c = *Binary_At(src, tail - 1);
         if (c != chr)
             break;
     }
@@ -355,7 +354,7 @@ void Change_Case(Value* out, Value* val, Value* part, bool upper)
     REBLEN n = 0;
 
     if (VAL_BYTE_SIZE(val)) {
-        REBYTE *bp = VAL_BIN_AT(val);
+        REBYTE *bp = Cell_Binary_At(val);
         if (upper)
             for (; n != len; n++)
                 bp[n] = cast(REBYTE, UP_CASE(bp[n]));

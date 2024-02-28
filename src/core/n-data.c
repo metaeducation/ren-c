@@ -1081,7 +1081,7 @@ DECLARE_NATIVE(as)
         //
         if (IS_BINARY(v)) {
             REBSER *string = Make_Sized_String_UTF8(
-                cs_cast(VAL_BIN_AT(v)),
+                cs_cast(Cell_Binary_At(v)),
                 VAL_LEN_AT(v)
             );
             if (Is_Value_Immutable(v))
@@ -1124,13 +1124,13 @@ DECLARE_NATIVE(as)
 
             REBSIZ utf8_size;
             REBSIZ offset;
-            REBSER *temp = Temp_UTF8_At_Managed(
+            Binary* temp = Temp_UTF8_At_Managed(
                 &offset, &utf8_size, v, VAL_LEN_AT(v)
             );
             return Init_Any_Word(
                 D_OUT,
                 new_kind,
-                Intern_UTF8_Managed(BIN_AT(temp, offset), utf8_size)
+                Intern_UTF8_Managed(Binary_At(temp, offset), utf8_size)
             );
         }
 
@@ -1147,7 +1147,7 @@ DECLARE_NATIVE(as)
             return Init_Any_Word(
                 D_OUT,
                 new_kind,
-                Intern_UTF8_Managed(VAL_BIN_AT(v), VAL_LEN_AT(v))
+                Intern_UTF8_Managed(Cell_Binary_At(v), VAL_LEN_AT(v))
             );
         }
 
@@ -1168,7 +1168,7 @@ DECLARE_NATIVE(as)
         }
 
         if (ANY_STRING(v)) {
-            REBSER *bin = Make_UTF8_From_Any_String(v, VAL_LEN_AT(v));
+            Binary* bin = Make_UTF8_From_Any_String(v, VAL_LEN_AT(v));
 
             // !!! Making a binary out of a UCS-2 encoded string currently
             // frees the string data if it's mutable, and if that's not

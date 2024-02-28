@@ -531,7 +531,7 @@ static REB_R Loop_Each_Core(struct Loop_Each_State *les) {
                 break; }
 
               case REB_BINARY:
-                Init_Integer(var, BIN_HEAD(les->data_ser)[les->data_idx]);
+                Init_Integer(var, Binary_Head(les->data_ser)[les->data_idx]);
                 if (++les->data_idx == les->data_len)
                     more_data = false;
                 break;
@@ -1167,7 +1167,7 @@ INLINE REBLEN Finalize_Remove_Each(struct Remove_Each_State *res)
         assert(res->start <= orig_len);
         Append_Unencoded_Len(
             res->mo->series,
-            cs_cast(BIN_AT(res->series, res->start)),
+            cs_cast(Binary_At(res->series, res->start)),
             orig_len - res->start
         );
 
@@ -1262,7 +1262,7 @@ static REB_R Remove_Each_Core(struct Remove_Each_State *res)
                     VAL_SPECIFIER(res->data)
                 );
             else if (IS_BINARY(res->data))
-                Init_Integer(var, cast(REBI64, BIN_HEAD(res->series)[index]));
+                Init_Integer(var, cast(REBI64, Binary_Head(res->series)[index]));
             else {
                 assert(ANY_STRING(res->data));
                 Init_Char(var, GET_ANY_CHAR(res->series, index));
@@ -1313,7 +1313,7 @@ static REB_R Remove_Each_Core(struct Remove_Each_State *res)
                 if (IS_BINARY(res->data)) {
                     Append_Unencoded_Len(
                         res->mo->series,
-                        cs_cast(BIN_AT(res->series, res->start)),
+                        cs_cast(Binary_At(res->series, res->start)),
                         1
                     );
                 }

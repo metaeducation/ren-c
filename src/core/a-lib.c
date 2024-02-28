@@ -139,7 +139,7 @@ void *RL_rebMalloc(size_t size)
             | SERIES_FLAG_ALWAYS_DYNAMIC // rebRepossess() needs bias field
     );
 
-    REBYTE *ptr = BIN_HEAD(s) + ALIGN_SIZE;
+    REBYTE *ptr = Binary_Head(s) + ALIGN_SIZE;
 
     REBSER **ps = (cast(REBSER**, ptr) - 1);
     *ps = s; // save self in bytes *right before* data
@@ -192,7 +192,7 @@ void *RL_rebRealloc(void *ptr, size_t new_size)
 
     REBSER *s = *ps;
 
-    REBLEN old_size = BIN_LEN(s) - ALIGN_SIZE;
+    REBLEN old_size = Binary_Len(s) - ALIGN_SIZE;
 
     // !!! It's less efficient to create a new series with another call to
     // rebMalloc(), but simpler for the time being.  Switch to do this with
@@ -252,7 +252,7 @@ void RL_rebFree(void *ptr)
 // point, as failure to do so will mean reads crash the interpreter.  See
 // remarks in rebMalloc() about the issue, and possibly doing zero fills.
 //
-// !!! It might seem tempting to use (BIN_LEN(s) - ALIGN_SIZE).  However,
+// !!! It might seem tempting to use (Binary_Len(s) - ALIGN_SIZE).  However,
 // some routines make allocations bigger than they ultimately need and do not
 // realloc() before converting the memory to a series...rebInflate() and
 // rebDeflate() do this.  So a version passing the size will be necessary,
@@ -267,7 +267,7 @@ RebolValue* RL_rebRepossess(void *ptr, size_t size)
     REBSER *s = *ps;
     assert(not IS_SERIES_MANAGED(s));
 
-    if (size > BIN_LEN(s) - ALIGN_SIZE)
+    if (size > Binary_Len(s) - ALIGN_SIZE)
         fail ("Attempt to rebRepossess() more than rebMalloc() capacity");
 
     assert(GET_SER_FLAG(s, SERIES_FLAG_DONT_RELOCATE));
@@ -287,8 +287,8 @@ RebolValue* RL_rebRepossess(void *ptr, size_t size)
         // Data is in REBSER node itself, no bias.  Just slide the bytes down.
         //
         memmove( // src overlaps destination, can't use memcpy()
-            BIN_HEAD(s),
-            BIN_HEAD(s) + ALIGN_SIZE,
+            Binary_Head(s),
+            Binary_Head(s) + ALIGN_SIZE,
             size
         );
     }
@@ -1077,10 +1077,10 @@ size_t RL_rebSpellInto(
     REBSIZ utf8_size;
     if (ANY_STRING(v)) {
         REBSIZ offset;
-        REBSER *temp = Temp_UTF8_At_Managed(
+        Binary* temp = Temp_UTF8_At_Managed(
             &offset, &utf8_size, v, VAL_LEN_AT(v)
         );
-        utf8 = cs_cast(BIN_AT(temp, offset));
+        utf8 = cs_cast(Binary_At(temp, offset));
     }
     else {
         assert(ANY_WORD(v));
@@ -1235,7 +1235,7 @@ size_t RL_rebBytesInto(
     }
 
     REBLEN limit = MIN(buf_size, size);
-    memcpy(s_cast(buf), cs_cast(VAL_BIN_AT(binary)), limit);
+    memcpy(s_cast(buf), cs_cast(Cell_Binary_At(binary)), limit);
     buf[limit] = '\0';
     return size;
 }
@@ -1288,7 +1288,7 @@ unsigned char *RL_rebBytes(
 RebolValue* RL_rebBinary(const void *bytes, size_t size)
 {
     REBSER *bin = Make_Binary(size);
-    memcpy(BIN_HEAD(bin), bytes, size);
+    memcpy(Binary_Head(bin), bytes, size);
     TERM_BIN_LEN(bin, size);
 
     return Init_Binary(Alloc_Value(), bin);

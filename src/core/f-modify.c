@@ -272,7 +272,7 @@ REBLEN Modify_Binary(
             fail ("Inserting out-of-range INTEGER! into BINARY!");
 
         src_ser = Make_Binary(1);
-        *BIN_HEAD(src_ser) = cast(REBYTE, i);
+        *Binary_Head(src_ser) = cast(REBYTE, i);
         TERM_BIN_LEN(src_ser, 1);
         needs_free = true;
         limit = -1;
@@ -292,7 +292,7 @@ REBLEN Modify_Binary(
         src_ser = Make_Binary(6);
         SET_SERIES_LEN(
             src_ser,
-            Encode_UTF8_Char(BIN_HEAD(src_ser), VAL_CHAR(src_val))
+            Encode_UTF8_Char(Binary_Head(src_ser), VAL_CHAR(src_val))
         );
         needs_free = true;
         limit = -1;
@@ -356,7 +356,11 @@ REBLEN Modify_Binary(
 
     // For dup count:
     for (; dups > 0; dups--) {
-        memcpy(BIN_AT(dst_ser, dst_idx), BIN_AT(src_ser, src_idx), src_len);
+        memcpy(
+            Binary_At(dst_ser, dst_idx),
+            Binary_At(src_ser, src_idx),
+            src_len
+        );
         dst_idx += src_len;
     }
 

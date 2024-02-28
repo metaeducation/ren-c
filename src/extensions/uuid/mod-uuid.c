@@ -67,18 +67,18 @@ DECLARE_NATIVE(generate)
     // uuid.data* is in litte endian
     // the string form is in big endian
     REBSER *ser = Make_Binary(16);
-    *BIN_AT(ser, 0) = cast(char*, &uuid.Data1)[3];
-    *BIN_AT(ser, 1) = cast(char*, &uuid.Data1)[2];
-    *BIN_AT(ser, 2) = cast(char*, &uuid.Data1)[1];
-    *BIN_AT(ser, 3) = cast(char*, &uuid.Data1)[0];
+    *Binary_At(ser, 0) = cast(char*, &uuid.Data1)[3];
+    *Binary_At(ser, 1) = cast(char*, &uuid.Data1)[2];
+    *Binary_At(ser, 2) = cast(char*, &uuid.Data1)[1];
+    *Binary_At(ser, 3) = cast(char*, &uuid.Data1)[0];
 
-    *BIN_AT(ser, 4) = cast(char*, &uuid.Data2)[1];
-    *BIN_AT(ser, 5) = cast(char*, &uuid.Data2)[0];
+    *Binary_At(ser, 4) = cast(char*, &uuid.Data2)[1];
+    *Binary_At(ser, 5) = cast(char*, &uuid.Data2)[0];
 
-    *BIN_AT(ser, 6) = cast(char*, &uuid.Data3)[1];
-    *BIN_AT(ser, 7) = cast(char*, &uuid.Data3)[0];
+    *Binary_At(ser, 6) = cast(char*, &uuid.Data3)[1];
+    *Binary_At(ser, 7) = cast(char*, &uuid.Data3)[0];
 
-    memcpy(BIN_AT(ser, 8), uuid.Data4, 8);
+    memcpy(Binary_At(ser, 8), uuid.Data4, 8);
 
     TERM_BIN_LEN(ser, 16);
 
@@ -90,22 +90,22 @@ DECLARE_NATIVE(generate)
     CFRelease(newId);
 
     REBSER *ser = Make_Binary(16);
-    *BIN_AT(ser, 0) = bytes.byte0;
-    *BIN_AT(ser, 1) = bytes.byte1;
-    *BIN_AT(ser, 2) = bytes.byte2;
-    *BIN_AT(ser, 3) = bytes.byte3;
-    *BIN_AT(ser, 4) = bytes.byte4;
-    *BIN_AT(ser, 5) = bytes.byte5;
-    *BIN_AT(ser, 6) = bytes.byte6;
-    *BIN_AT(ser, 7) = bytes.byte7;
-    *BIN_AT(ser, 8) = bytes.byte8;
-    *BIN_AT(ser, 9) = bytes.byte9;
-    *BIN_AT(ser, 10) = bytes.byte10;
-    *BIN_AT(ser, 11) = bytes.byte11;
-    *BIN_AT(ser, 12) = bytes.byte12;
-    *BIN_AT(ser, 13) = bytes.byte13;
-    *BIN_AT(ser, 14) = bytes.byte14;
-    *BIN_AT(ser, 15) = bytes.byte15;
+    *Binary_At(ser, 0) = bytes.byte0;
+    *Binary_At(ser, 1) = bytes.byte1;
+    *Binary_At(ser, 2) = bytes.byte2;
+    *Binary_At(ser, 3) = bytes.byte3;
+    *Binary_At(ser, 4) = bytes.byte4;
+    *Binary_At(ser, 5) = bytes.byte5;
+    *Binary_At(ser, 6) = bytes.byte6;
+    *Binary_At(ser, 7) = bytes.byte7;
+    *Binary_At(ser, 8) = bytes.byte8;
+    *Binary_At(ser, 9) = bytes.byte9;
+    *Binary_At(ser, 10) = bytes.byte10;
+    *Binary_At(ser, 11) = bytes.byte11;
+    *Binary_At(ser, 12) = bytes.byte12;
+    *Binary_At(ser, 13) = bytes.byte13;
+    *Binary_At(ser, 14) = bytes.byte14;
+    *Binary_At(ser, 15) = bytes.byte15;
 
     TERM_BIN_LEN(ser, 16);
 

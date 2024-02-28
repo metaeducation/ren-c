@@ -971,7 +971,7 @@ REBSER *Make_UTF8_From_Any_String(const Cell* any_string, REBLEN len) {
     const REBUNI *data = Cell_String_At(any_string);
     size_t size = Size_As_UTF8(data, len);
     REBSER *bin = Make_Binary(size);
-    SET_SERIES_LEN(bin, Encode_UTF8(BIN_HEAD(bin), size, data, &len));
+    SET_SERIES_LEN(bin, Encode_UTF8(Binary_Head(bin), size, data, &len));
     assert(SER_LEN(bin) == size);
     TERM_SEQUENCE(bin);
     return bin;

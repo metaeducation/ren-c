@@ -137,6 +137,7 @@ typedef struct Reb_Node REBNOD;
 struct Reb_Series;
 typedef struct Reb_Series REBSER;
 
+typedef REBSER Binary;
 typedef REBSER Symbol;
 typedef REBSER String;
 

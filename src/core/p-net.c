@@ -146,12 +146,12 @@ static REB_R Transport_Actor(
             if (IS_TEXT(arg)) {
                 REBSIZ offset;
                 REBSIZ size;
-                REBSER *temp = Temp_UTF8_At_Managed(
+                Binary* temp = Temp_UTF8_At_Managed(
                     &offset, &size, arg, VAL_LEN_AT(arg)
                 );
                 PUSH_GC_GUARD(temp);
 
-                sock->common.data = BIN_AT(temp, offset);
+                sock->common.data = Binary_At(temp, offset);
                 DEVREQ_NET(sock)->remote_port =
                     IS_INTEGER(port_id) ? VAL_INT32(port_id) : 80;
 
@@ -297,7 +297,7 @@ static REB_R Transport_Actor(
         }
 
         sock->length = SER_AVAIL(buffer);
-        sock->common.data = BIN_TAIL(buffer); // write at tail
+        sock->common.data = Binary_Tail(buffer); // write at tail
         sock->actual = 0; // actual for THIS read (not for total)
 
         Value* result = OS_DO_DEVICE(sock, RDC_READ);
@@ -360,10 +360,10 @@ static REB_R Transport_Actor(
 
         // Setup the write:
 
-        REBSER *temp;
+        Binary* temp;
         if (IS_BINARY(data)) {
             temp = nullptr;
-            sock->common.data = VAL_BIN_AT(data);
+            sock->common.data = Cell_Binary_At(data);
             sock->length = len;
 
             Move_Value(CTX_VAR(ctx, STD_PORT_DATA), data); // keep it GC safe
@@ -385,7 +385,7 @@ static REB_R Transport_Actor(
                 data,
                 len
             );
-            sock->common.data = BIN_AT(temp, offset);
+            sock->common.data = Binary_At(temp, offset);
             sock->length = size;
 
             PUSH_GC_GUARD(temp);

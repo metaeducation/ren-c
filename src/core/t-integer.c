@@ -160,7 +160,7 @@ void Value_To_Int64(Value* out, const Value* value, bool no_sign)
         // attempts to "future-proof" for other integer sizes and as an
         // interface could support BigNums in the future.
 
-        REBYTE *bp = VAL_BIN_AT(value);
+        REBYTE *bp = Cell_Binary_At(value);
         REBLEN n = VAL_LEN_AT(value);
         bool negative;
         REBINT fill;
@@ -642,7 +642,7 @@ DECLARE_NATIVE(enbin)
     REBSER* bin = Make_Binary(num_bytes);
 
     REBINT delta = little ? 1 : -1;
-    REBYTE* bp = BIN_HEAD(bin);
+    REBYTE* bp = Binary_Head(bin);
     if (not little)
         bp += num_bytes - 1;  // go backwards for big endian
 
@@ -758,7 +758,7 @@ DECLARE_NATIVE(debin)
     // to be correct for starters...
 
     REBINT delta = little ? -1 : 1;
-    REBYTE* bp = VAL_BIN_AT(ARG(binary));
+    REBYTE* bp = Cell_Binary_At(ARG(binary));
     if (little)
         bp += num_bytes - 1;  // go backwards
 

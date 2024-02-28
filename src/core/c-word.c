@@ -285,7 +285,7 @@ Symbol* Intern_UTF8_Managed(const REBYTE *utf8, size_t size)
     // The incoming string isn't always null terminated, e.g. if you are
     // interning `foo` in `foo: bar + 1` it would be colon-terminated.
     //
-    memcpy(BIN_HEAD(intern), utf8, size);
+    memcpy(Binary_Head(intern), utf8, size);
     TERM_BIN_LEN(intern, size);
 
     if (not canon) { // no canon found, so this interning must become canon
