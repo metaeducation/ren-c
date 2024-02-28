@@ -124,8 +124,6 @@ REBSER *Copy_String_At_Len(const Cell* src, REBINT limit)
 //
 REBSER *Append_Unencoded_Len(REBSER *dst, const char *src, REBLEN len)
 {
-    assert(BYTE_SIZE(dst));
-
     REBLEN tail;
     if (dst == NULL) {
         dst = Make_Binary(len);
@@ -135,6 +133,8 @@ REBSER *Append_Unencoded_Len(REBSER *dst, const char *src, REBLEN len)
         tail = SER_LEN(dst);
         EXPAND_SERIES_TAIL(dst, len);
     }
+
+    assert(BYTE_SIZE(dst));
 
     memcpy(BIN_AT(dst, tail), src, len);
     TERM_SEQUENCE(dst);
