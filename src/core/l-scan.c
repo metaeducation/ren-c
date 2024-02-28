@@ -1029,11 +1029,10 @@ acquisition_loop:
                         IS_ACTION(single)
                         and VAL_ACTION(single) == NAT_ACTION(null)
                     ) or (
-                        IS_GROUP(single)
-                        and (ANY_SER_INFOS(
-                            Cell_Array(single),
-                            SERIES_INFO_HOLD | SERIES_INFO_FROZEN
-                        ))
+                        IS_GROUP(single) and (
+                            GET_SER_INFO(Cell_Array(single), SERIES_INFO_HOLD)
+                            or GET_SER_INFO(Cell_Array(single), SERIES_INFO_FROZEN)
+                        )
                     )
                 );
 

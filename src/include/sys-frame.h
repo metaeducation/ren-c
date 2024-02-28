@@ -616,7 +616,7 @@ INLINE void Drop_Action(REBFRM *f) {
         // But no series bits we didn't set should be set...and right now,
         // only Enter_Native() sets HOLD.  Clear that.
         //
-        CLEAR_SER_INFOS(f->varlist, SERIES_INFO_HOLD);
+        CLEAR_SER_INFO(f->varlist, SERIES_INFO_HOLD);
         assert(0 == (SER(f->varlist)->info.bits & ~( // <- note bitwise not
             SERIES_INFO_0_IS_TRUE // parallels NODE_FLAG_NODE
             | FLAG_WIDE_BYTE_OR_0(0) // don't mask out wide (0 for arrays))

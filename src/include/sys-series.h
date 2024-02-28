@@ -403,8 +403,9 @@ INLINE bool Is_Series_Frozen(REBSER *s) {
 }
 
 INLINE bool Is_Series_Read_Only(REBSER *s) { // may be temporary...
-    return ANY_SER_INFOS(
-        s, SERIES_INFO_FROZEN | SERIES_INFO_HOLD | SERIES_INFO_PROTECTED
+    return did (
+        s->info.bits &
+        (SERIES_INFO_FROZEN | SERIES_INFO_HOLD | SERIES_INFO_PROTECTED)
     );
 }
 

@@ -949,12 +949,11 @@ static void Mark_Root_Series(void)
                 // complex...they must be managed before evaluations happen.
                 // Manage and use PUSH_GC_GUARD and DROP_GC_GUARD on them.
                 //
-                assert(not ANY_SER_FLAGS(
-                    s,
-                    ARRAY_FLAG_VARLIST
-                        | ARRAY_FLAG_PARAMLIST
-                        | ARRAY_FLAG_PAIRLIST
-                ));
+                assert(
+                    NOT_SER_FLAG(s, ARRAY_FLAG_VARLIST)
+                    and NOT_SER_FLAG(s, ARRAY_FLAG_PARAMLIST)
+                    and NOT_SER_FLAG(s, ARRAY_FLAG_PAIRLIST)
+                );
 
                 // Note: Arrays which are using their LINK() or MISC() for
                 // other purposes than file and line will not be marked here!

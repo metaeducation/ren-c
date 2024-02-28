@@ -1071,7 +1071,10 @@ void Decay_Series(REBSER *s)
         // Preserving ACTION!'s archetype is speculative--to point out the
         // possibility exists for the other array with a "canon" [0]
         //
-        if (ANY_SER_FLAGS(s, ARRAY_FLAG_VARLIST | ARRAY_FLAG_PARAMLIST)) {
+        if (
+            GET_SER_FLAG(s, ARRAY_FLAG_VARLIST)
+            or GET_SER_FLAG(s, ARRAY_FLAG_PARAMLIST)
+        ){
             // `char*` casts needed: https://stackoverflow.com/q/57721104
             memcpy(
                 cast(char*, &s->content.fixed),

@@ -1039,24 +1039,8 @@ struct Reb_Array {
 #define GET_SER_FLAG(s,f) \
     (did (SER(s)->header.bits & (f))) // !!! ensure it's just one flag?
 
-#define ANY_SER_FLAGS(s,f) \
-    (did (SER(s)->header.bits & (f)))
-
-INLINE bool ALL_SER_FLAGS(
-    void *s, // to allow Array*, REBCTX*, REBACT*... SER(s) checks
-    REBFLGS f
-){
-    return (SER(s)->header.bits & f) == f; // repeats f, so not a macro
-}
-
 #define NOT_SER_FLAG(s,f) \
     (not (SER(s)->header.bits & (f)))
-
-#define SET_SER_FLAGS(s,f) \
-    SET_SER_FLAG((s), (f))
-
-#define CLEAR_SER_FLAGS(s,f) \
-    CLEAR_SER_FLAG((s), (f))
 
 
 //
@@ -1070,26 +1054,10 @@ INLINE bool ALL_SER_FLAGS(
     cast(void, SER(s)->info.bits &= ~(f))
 
 #define GET_SER_INFO(s,f) \
-    (did (SER(s)->info.bits & (f))) // !!! ensure it's just one flag?
-
-#define ANY_SER_INFOS(s,f) \
     (did (SER(s)->info.bits & (f)))
-
-INLINE bool ALL_SER_INFOS(
-    void *s, // to allow Array*, REBCTX*, REBACT*... SER(s) checks
-    REBFLGS f
-){
-    return (SER(s)->info.bits & f) == f; // repeats f, so not a macro
-}
 
 #define NOT_SER_INFO(s,f) \
     (not (SER(s)->info.bits & (f)))
-
-#define SET_SER_INFOS(s,f) \
-    SET_SER_INFO((s), (f))
-
-#define CLEAR_SER_INFOS(s,f) \
-    CLEAR_SER_INFO((s), (f))
 
 
 #define IS_SER_ARRAY(s) \

@@ -1014,8 +1014,12 @@ REBCTX *Make_Expired_Frame_Ctx_Managed(REBACT *a)
     // don't pass it in to the allocation...it needs to be set, but will be
     // overridden by SERIES_INFO_INACCESSIBLE.
     //
-    Array* varlist = Alloc_Singular(SERIES_FLAG_STACK | NODE_FLAG_MANAGED);
-    SET_SER_FLAGS(varlist, SERIES_MASK_CONTEXT);
+    Array* varlist = Alloc_Singular(
+        ARRAY_FLAG_VARLIST
+        | SERIES_FLAG_STACK
+        | NODE_FLAG_MANAGED
+    );
+    SET_SER_FLAG(varlist, SERIES_FLAG_ALWAYS_DYNAMIC);  // asserts check
     SET_SER_INFO(varlist, SERIES_INFO_INACCESSIBLE);
     MISC(varlist).meta = nullptr;
 

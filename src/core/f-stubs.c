@@ -344,7 +344,7 @@ void Set_Tuple(Value* value, Byte *bytes, REBLEN len)
 // !!! Overlaps with ASSERT_CONTEXT, review folding them together.
 //
 void Extra_Init_Any_Context_Checks_Debug(enum Reb_Kind kind, REBCTX *c) {
-    assert(ALL_SER_FLAGS(c, SERIES_MASK_CONTEXT));
+    assert(SER(c)->header.bits & SERIES_MASK_CONTEXT);
 
     Value* archetype = CTX_ARCHETYPE(c);
     assert(VAL_CONTEXT(archetype) == c);
@@ -392,7 +392,7 @@ void Extra_Init_Any_Context_Checks_Debug(enum Reb_Kind kind, REBCTX *c) {
 // !!! Overlaps with ASSERT_ACTION, review folding them together.
 //
 void Extra_Init_Action_Checks_Debug(REBACT *a) {
-    assert(ALL_SER_FLAGS(a, SERIES_MASK_ACTION));
+    assert(SER(a)->header.bits & SERIES_MASK_ACTION);
 
     Value* archetype = ACT_ARCHETYPE(a);
     assert(VAL_ACTION(archetype) == a);
