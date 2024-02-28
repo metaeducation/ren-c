@@ -376,6 +376,22 @@ REBNATIVE(value_q)
 
 
 //
+//  element?: native [
+//
+//  "Test if value can be put in a block (e.g. `element? null` is FALSE)"
+//
+//      optional [<opt> any-value!]
+//  ]
+//
+REBNATIVE(element_q)
+{
+    INCLUDE_PARAMS_OF_ELEMENT_Q;
+
+    return Init_Logic(D_OUT, ANY_VALUE(ARG(optional)));
+}
+
+
+//
 //  unbind: native [
 //
 //  "Unbinds words from context."
