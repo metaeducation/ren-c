@@ -1,8 +1,7 @@
 REBOL []
 
-;;;; DO & IMPORT ;;;;
-
-change-dir do %tools/bootstrap-shim.r
+; **SENSITIVE MAGIC LINE OF VOODOO** - see "Usage" in %bootstrap-shim.r
+(change-dir do join copy system/script/path %tools/bootstrap-shim.r)
 
 do <tools/common.r>
 

@@ -55,25 +55,39 @@ do*: function [
 
     next: :lib/next
 
-    ; !!! DEMONSTRATION OF CONCEPT... this translates a tag into a URL!, but
-    ; it should be using a more "official" URL instead of on individuals
-    ; websites.  There should also be some kind of local caching facility.
+    ; TAG! means load new script relative to current system/script/path
     ;
     if tag? source [
-        ; Convert value into a URL!
-        source: switch source
-            load rebol/locale/library/utilities
-        else [
-            fail [
-                {Module} source {not in rebol/locale/library}
-            ]
+        if not system/script/path [
+            fail ["Can't relatively load" source "- system/script/path not set"]
         ]
+        source: join system/script/path to text! source
     ]
 
-    ; Note that DO of file path evaluates in the directory of the target file.
+    ; 1. DO of file path no longer evaluates in the directory of the script
+    ; But we want to set the directory in the script header to the normalized
+    ; version (with the `../../` and `/./` bits taken out).  Previously we
+    ; got that normalization by letting the OS process it in the CHANGE-DIR
+    ; instruction and then using WHAT-DIR to get where we changed to.  We
+    ; don't have access to CLEAN-PATH here in sys context, and rather than
+    ; sort it out for this legacy build just change to the directory and back.
     ;
-    original-path: what-dir
-    original-script: _
+    if match [file! url!] source [
+        saved-dir: null
+        if file: find/last/tail source slash [  ; may not have path part
+            saved-dir: what-dir
+            dir: copy/part source file
+            change-dir dir  ; use OS to normalize path [1]
+        ]
+        dir: what-dir  ; effectively CLEAN-PATH'd
+        if saved-dir [
+            change-dir saved-dir
+        ]
+    ] else [
+        dir: null
+    ]
+
+    original-script: null
 
     finalizer: func [
         value [<opt> any-value!]
@@ -83,23 +97,15 @@ do*: function [
         quit_FINALIZER: quit
         quit: :lib/quit
 
-        ; Restore system/script and the dir if they were changed
+        ; Restore system/script if it was changed
 
         if original-script [system/script: original-script]
-        if original-path [change-dir original-path]
 
         if quit_FINALIZER and [only] [
             quit/with get* 'value  ; "rethrow" the QUIT if DO/ONLY
         ]
 
         return get* 'value  ; returns from DO*, because of <with> return
-    ]
-
-    ; If a file is being mentioned as a DO location and the "current path"
-    ; is a URL!, then adjust the source to be a URL! based from that path.
-    ;
-    if all [url? original-path | file? source] [
-         source: join original-path source
     ]
 
     ; Load the code (do this before CHANGE-DIR so if there's an error in the
@@ -138,39 +144,14 @@ do*: function [
             set the result: do code ;-- !!! pass args implicitly?
         ] then :finalizer/quit
     ] else [
-        ; Otherwise we are in script mode.  When we run a script, the
-        ; "current" directory is changed to the directory of that script.
-        ; This way, relative path lookups to find dependent files will look
-        ; relative to the script.
-        ;
-        ; We want this behavior for both FILE! and for URL!, which means
-        ; that the "current" path may become a URL!.  This can be processed
-        ; with change-dir commands, but it will be protocol dependent as
-        ; to whether a directory listing would be possible (HTTP does not
-        ; define a standard for that)
-        ;
-        all [
-            match [file! url!] source
-            file: find/last/tail source slash
-        ] then [
-            change-dir copy/part source file
-        ]
-
-        ; Also in script mode, the code is immutable by default.
-        ;
-        ; !!! Note that this does not currently protect the code from binding
-        ; changes, and it gets INTERNed below, or by "module/mixin" (?!)
-        ;
-        lock code
-
         ; Make the new script object
         original-script: system/script  ; and save old one
         system/script: construct system/standard/script [
-            title: try select hdr 'title
+            title: select hdr 'title
             header: hdr
             parent: :original-script
-            path: what-dir
-            args: try :arg
+            path: dir
+            args: arg
         ]
 
         if set? 'script-pre-load-hook [

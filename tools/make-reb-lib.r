@@ -14,7 +14,9 @@ REBOL [
     Needs: 2.100.100
 ]
 
-change-dir do %bootstrap-shim.r
+; **SENSITIVE MAGIC LINE OF VOODOO** - see "Usage" in %bootstrap-shim.r
+(change-dir do join copy system/script/path %bootstrap-shim.r)
+
 do <common.r>
 do <common-parsers.r>
 do <common-emitter.r>

@@ -317,7 +317,9 @@ fix-const-char: func [
     source
 ]
 
-change-dir do %bootstrap-shim.r
+; **SENSITIVE MAGIC LINE OF VOODOO** - see "Usage" in %bootstrap-shim.r
+(change-dir do join copy system/script/path %bootstrap-shim.r)
+
 do <common.r>
 
 ;;

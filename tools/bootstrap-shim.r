@@ -28,6 +28,21 @@ REBOL [
         since it was created.  This is facilitated by Ren-C's compositional
         operations, like ADAPT, CHAIN, SPECIALIZE, and ENCLOSE.
     }
+    Usage: {
+        This should be called like:
+
+          (change-dir do join copy system/script/path %bootstrap-shim.r)
+
+        The reason is that historical Rebol would change the working directory
+        to match the script directory, while modern ones do not.  This is
+        an incantation which makes it clear that the directory may be changed
+        by running the shim (to SYSTEM/OPTIONS/PATH)...if it wasn't a new
+        version that was set to that already.
+
+        Also important is JOIN COPY, because some older Ren-Cs had a mutating
+        JOIN...and this one has to run before the shim makes those versions
+        of JOIN do copying.
+    }
 ]
 
 read: lib/read: adapt 'lib/read [
@@ -37,6 +52,26 @@ read: lib/read: adapt 'lib/read [
     ;
     ; if not port? source [print ["READING:" mold source "from" what-dir]]
 ]
+
+
+; The snapshotted Ren-C existed right before <blank> was legal to mark an
+; argument as meaning a function returns null if that argument is blank.
+; See if this causes an error, and if so assume it's the old Ren-C, not a
+; new one...?
+;
+; What this really means is that we are only catering the shim code to the
+; snapshot.  (It would be possible to rig up shim code for pretty much any
+; specific other version if push came to shove, but it would be work for no
+; obvious reward.)
+;
+trap [
+    func [i [<blank> integer!]] [...]
+] or [
+    nulled?: func [var [word! path!]] [return null = get var]
+    quit/with system/options/path
+]
+
+print "== SHIMMING OLDER R3 TO MODERN LANGUAGE DEFINITIONS =="
 
 
 ; New interpreters do not change the working directory when a script is
@@ -83,24 +118,6 @@ load: func [source /all /header] [  ; can't ENCLOSE, does not take TAG!
     ]
 ]
 
-; The snapshotted Ren-C existed right before <blank> was legal to mark an
-; argument as meaning a function returns null if that argument is blank.
-; See if this causes an error, and if so assume it's the old Ren-C, not a
-; new one...?
-;
-; What this really means is that we are only catering the shim code to the
-; snapshot.  (It would be possible to rig up shim code for pretty much any
-; specific other version if push came to shove, but it would be work for no
-; obvious reward.)
-;
-trap [
-    func [i [<blank> integer!]] [...]
-] or [
-    nulled?: func [var [word! path!]] [return null = get var]
-    quit/with system/options/path
-]
-
-print "== SHIMMING OLDER R3 TO MODERN LANGUAGE DEFINITIONS =="
 
 ; Older Ren-C considers nulled variables to be "unset".
 ;

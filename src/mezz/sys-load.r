@@ -272,7 +272,7 @@ load: function [
     {Loads code or data from a file, URL, text string, or binary.}
 
     source "Source or block of sources"
-        [file! url! text! binary! block!]
+        [tag! file! url! text! binary!]
     /header "Result includes REBOL header object "
     /all "Load all values (cannot be used with /HEADER)"
     /type "Override default file-type"
@@ -281,6 +281,15 @@ load: function [
     <in> no-all ;-- temporary fake of <unbind> option
 ][
     self: binding of 'return ;-- so you can say SELF/ALL
+
+    ; TAG! means load new script relative to current system/script/path
+    ;
+    if tag? source [
+        if not system/script/path [
+            fail ["Can't relatively load" source "- system/script/path not set"]
+        ]
+        source: join system/script/path to text! source
+    ]
 
     ; NOTES:
     ; Note that code/data can be embedded in other datatypes, including
@@ -296,19 +305,6 @@ load: function [
 
     if header and [self/all] [
         fail "Cannot use /ALL and /HEADER refinements together"
-    ]
-
-    ;-- A BLOCK! means load multiple sources, calls LOAD recursively for each
-    if block? source [
-        a: self/all ;-- !!! Some bad interaction requires this, review
-        return map-each s source [
-            applique 'load [
-                source: s
-                header: header
-                all: a
-                set the ftype: :ftype
-            ]
-        ]
     ]
 
     ;-- What type of file? Decode it too:
@@ -862,22 +858,13 @@ import: function [
     /no-lib "Don't export to the runtime library (lib)"
     /no-user "Don't export to the user context"
 ][
-    ; `import <name>` will look in the module library for the "actual"
-    ; module to load up, and drop through.
+    ; `import <name>` looks up relative path
     ;
     if tag? module [
-        tmp: (select load rebol/locale/library/modules module) else [
-            cause-error 'access 'cannot-open reduce [
-                module "module not found in system/locale/library/modules"
-            ]
+        if not system/script/path [
+            fail ["Can't relatively load" module "- system/script/path not set"]
         ]
-
-        module: (first tmp) else [
-            cause-error 'access 'cannot-open reduce [
-                module "error occurred in loading module"
-                    "from system/locale/library/modules"
-            ]
-        ]
+        module: join system/script/path to text! module
     ]
 
     ; If it's a needs dialect block, call DO-NEEDS/block:
