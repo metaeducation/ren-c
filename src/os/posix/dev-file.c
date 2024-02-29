@@ -56,7 +56,7 @@
 #include <errno.h>
 #include <assert.h>
 
-#include "reb-host.h"
+#include "sys-core.h"
 
 #ifndef O_BINARY
 #define O_BINARY 0
@@ -382,8 +382,10 @@ DEVICE_CMD Open_File(REBREQ *req)
 
     rebFree(path_utf8);
 
-    if (h < 0)
-        rebFail_OS (errno);
+    if (h < 0) {
+        Value* open_error = rebError_OS(errno);
+        fail (Error_Cannot_Open_Raw(file->path, open_error));
+    }
 
     // Confirm that a seek-mode file is actually seekable:
     if (req->modes & RFM_SEEK) {

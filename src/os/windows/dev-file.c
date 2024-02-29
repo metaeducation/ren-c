@@ -34,7 +34,7 @@
 #include <process.h>
 #include <assert.h>
 
-#include "reb-host.h"
+#include "sys-core.h"
 
 // MSDN V6 missed this define:
 #ifndef INVALID_SET_FILE_POINTER
@@ -282,8 +282,10 @@ DEVICE_CMD Open_File(REBREQ *req)
 
     rebFree(path_wide);
 
-    if (h == INVALID_HANDLE_VALUE)
-        rebFail_OS (GetLastError());
+    if (h == INVALID_HANDLE_VALUE) {
+        Value* open_error = rebError_OS(GetLastError());
+        fail (Error_Cannot_Open_Raw(file->path, open_error));
+    }
 
     if (req->modes & RFM_SEEK) {
         //
