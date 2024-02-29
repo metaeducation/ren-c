@@ -155,8 +155,10 @@ static int Read_Directory(struct devreq_file *dir, struct devreq_file *file)
         h = FindFirstFile(dir_wide, &info);
         rebFree(dir_wide);
 
-        if (h == INVALID_HANDLE_VALUE)
-            rebFail_OS (GetLastError());
+        if (h == INVALID_HANDLE_VALUE) {
+            Value* open_error = rebError_OS(GetLastError());
+            fail (Error_Cannot_Open_Raw(dir->path, open_error));
+        }
 
         got_info = true;
         dir_req->requestee.handle = h;

@@ -246,7 +246,8 @@ static int Read_Directory(struct devreq_file *dir, struct devreq_file *file)
 
         if (h == nullptr) {
             rebFree(dir_utf8);
-            rebFail_OS (errno);
+            Value* open_error = rebError_OS(errno);
+            fail (Error_Cannot_Open_Raw(dir->path, open_error));
         }
 
         dir_req->requestee.handle = h;
