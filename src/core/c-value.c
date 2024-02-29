@@ -176,7 +176,16 @@ void* Probe_Core_Debug(
         // This routine is also a little catalog of the outlying series
         // types in terms of sizing, just to know what they are.
 
-        if (SER_WIDE(s) == sizeof(Byte)) {
+        if (GET_SER_FLAG(s, SERIES_FLAG_UTF8_STRING)) {
+            assert(SER_WIDE(s) == sizeof(Byte));
+            Probe_Print_Helper(p, "Symbol Series", file, line);
+
+            const char *head = Symbol_Head(s);  // UTF-8
+            size_t size = Symbol_Size(s);  // number of UTF-8 bytes
+
+            Append_Utf8_Utf8(mo->series, head, size);
+        }
+        else if (SER_WIDE(s) == sizeof(Byte)) {
             Probe_Print_Helper(p, "Byte-Size Series", file, line);
 
             // !!! Duplication of code in MF_Binary
