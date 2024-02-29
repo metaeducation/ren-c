@@ -848,7 +848,7 @@ DECLARE_NATIVE(switch)
         // !!! A branch composed into the switch cases block may want to see
         // the un-mutated condition value.
 
-        if (!Compare_Modify_Values(ARG(value), OUT, REF(strict) ? 1 : 0))
+        if (!Compare_Modify_Values(value, OUT, REF(strict) ? 1 : 0))
             continue;
 
         // Skip ahead to try and find a block, to treat as code for the match
