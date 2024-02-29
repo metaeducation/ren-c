@@ -315,8 +315,7 @@ use [extension-dir entry][
 extension-names: map-each x available-extensions [to-lit-word x/name]
 
 ;;;; TARGETS
-; I need targets here, for gathering names
-; and use they with --help targets ...
+
 targets: [
     'clean [
         rebmake/execution/run make rebmake/solution-class [
@@ -382,121 +381,6 @@ for-each x targets [
     ] else [
         take/last target-names
         append target-names newline
-    ]
-]
-
-;;;; HELP ;;;;
-indent: func [
-    text [text!]
-    /space
-][
-    replace/all text ;\
-        either space [" "] [newline]
-        "^/    "
-]
-
-help-topics: reduce [
-;; !! Only 1 indentation level in help strings !!
-
-'usage copy {=== USAGE ===^/
-    > PATH/TO/r3-make PATH/TO/make.r [CONFIG | OPTION | TARGET ...]^/
-NOTE 1: current dir is the build dir,
-    that will contain all generated stuff
-    (%prep/, %objs/, %makefile, %r3 ...)
-    You can have multiple build dirs.^/
-NOTE 2: order of configs and options IS relevant^/
-MORE HELP:^/
-    { -h | -help | --help } { HELP-TOPICS }
-    }
-
-'targets unspaced [{=== TARGETS ===^/
-    }
-    indent form target-names
-    ]
-
-'configs unspaced [ {=== CONFIGS ===^/
-    { config: | load: | do: } PATH/TO/CONFIG-FILE^/
-FILES IN %make/configs/ SUBFOLDER:^/
-    }
-    indent/space form sort map-each x ;\
-        load repo-dir/configs/%
-        [to-text x]
-    newline ]
-
-'options unspaced [ {=== OPTIONS ===^/
-CURRENT VALUES:^/
-    }
-    indent mold/only body-of user-config
-    {^/
-NOTES:^/
-    - names are case-insensitive
-    - `_` instead of '-' is ok
-    - NAME=VALUE is the same as NAME: VALUE
-    - e.g `OS_ID=0.4.3` === `os-id: 0.4.3`
-    } ]
-
-'os-id unspaced [ {=== OS-ID ===^/
-CURRENT OS:^/
-    }
-    indent mold/only body-of config-system user-config/os-id
-    {^/
-LIST:^/
-    OS-ID:  OS-NAME:}
-    indent form collect [for-each-system s [
-        keep unspaced [
-            newline format 8 s/id s/os-name
-        ]
-    ]]
-    newline
-    ]
-
-'extensions unspaced [{=== EXTENSIONS ===^/
-    [FLAG] [ NAME {FLAG|[MODULES]} ... ]^/
-FLAG:
-    + => builtin
-    - => disable
-    * => dynamic^/
-NOTE: 1st 'anonymous' FLAG, if present, set the default^/
-NAME: one of
-    }
-    indent delimit " | " extension-names
-    {^/
-EXAMPLES:
-    extensions: +
-    => enable all extensions as builtin
-    extensions: "- gif + jpg * png [lodepng]"
-    => disable all extensions but gif (builtin),jpg and png (dynamic)^/
-CURRENT VALUE:
-    }
-    indent mold user-config/extensions
-    newline
-    ]
-]
-; dynamically fill help topics list ;-)
-replace help-topics/usage "HELP-TOPICS" ;\
-    form append map-each x help-topics [either text? x ['|] [x]] 'all
-
-help: function [topic [text! blank!]] [
-    topic: try attempt [to-word topic]
-    print ""
-    case [
-        topic = 'all [
-            for-each [topic msg] help-topics [
-                print msg
-            ]
-        ]
-        msg: select help-topics topic [
-            print msg
-        ]
-        default [print help-topics/usage]
-    ]
-]
-
-; process help: {-h | -help | --help} [TOPIC]
-
-iterate commands [
-    if find ["-h" "-help" "--help"] commands/1 [
-        help try :commands/2 quit
     ]
 ]
 
@@ -1699,7 +1583,6 @@ iterate target [
             newline
             newline
             "UNSUPPORTED TARGET" user-config/target newline
-            "TRY --HELP TARGETS" newline
         ]
     ]
 ]
