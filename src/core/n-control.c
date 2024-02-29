@@ -247,6 +247,16 @@ bool Either_Test_Core_Throws(
                     return false;
                 }
             }
+            else if (IS_TAG(var)) {
+                if (0 == Compare_String_Vals(item, Root_Opt_Tag, true)) {
+                    if (IS_NULLED(arg)) {
+                        Init_True(out);
+                        return false;
+                    }
+                }
+                else
+                    fail (arg);
+            }
             else
                 fail (Error_Invalid_Type(VAL_TYPE(var)));
         }

@@ -2010,7 +2010,7 @@ DECLARE_NATIVE(set_env)
 
   #ifdef TO_WINDOWS
     WCHAR *key_wide = rebSpellW(variable);
-    WCHAR *opt_val_wide = rebSpellW("ensure* [text!]", value);
+    WCHAR *opt_val_wide = rebSpellW("ensure [<opt> text!]", value);
 
     if (not SetEnvironmentVariable(key_wide, opt_val_wide)) // null unsets
         fail ("environment variable couldn't be modified");
