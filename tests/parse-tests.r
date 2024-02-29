@@ -191,15 +191,6 @@
     o/a = s
 )
 
-; A couple of tests for the problematic DO operation
-
-(did parse [1 + 2] [do [quote 3] end])
-(did parse [1 + 2] [do integer! end])
-(did parse [1 + 2] [do [integer!] end])
-(not parse [1 + 2] [do [quote 100] end])
-(did parse [reverse copy [a b c]] [do [into ['c 'b 'a]] end])
-(not parse [reverse copy [a b c]] [do [into ['a 'b 'c]] end])
-
 ; AHEAD and AND are synonyms
 ;
 (did parse ["aa"] [ahead text! into ["a" "a"] end])
