@@ -475,6 +475,23 @@ e-lib/emit {
     #define rebAllocN(t,n) \
         cast(t *, rebMalloc(sizeof(t) * (n)))
 
+
+    /*
+     * !!! This is a convenience wrapper over the function that makes a
+     * failure code from an OS error ID.  Since rebError_OS() links in OS
+     * specific knowledge to the build, it probably doesn't belong in the
+     * core build.  But to make things easier it's there for the moment.
+     * Ultimately it should come from a "Windows Extension"/"POSIX extension"
+     * or something otherwise.
+     *
+     * Note: There is no need to rebR() the handle due to the failure; the
+     * handles will auto-GC.
+     */
+
+    #define rebFail_OS(errnum) \
+        rebJumps("fail", rebR(rebError_OS(errnum)));
+
+
     #ifdef __cplusplus
     }
     #endif
