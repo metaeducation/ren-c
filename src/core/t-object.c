@@ -643,8 +643,6 @@ void MF_Context(REB_MOLD *mo, const Cell* v, bool form)
 
     Append_Utf8_Codepoint(out, '[');
 
-    mo->indent++;
-
     // !!! New experimental Ren-C code for the [[spec][body]] format of the
     // non-evaluative MAKE OBJECT!.
 
@@ -658,50 +656,16 @@ void MF_Context(REB_MOLD *mo, const Cell* v, bool form)
     // the object...but regenerate one from the keylist.  If this were done
     // with functions, they would "forget" their help strings in MOLDing.
 
-    New_Indented_Line(mo);
-    Append_Utf8_Codepoint(out, '[');
-
     Value* keys_head = CTX_KEYS_HEAD(c);
     Value* vars_head = CTX_VARS_HEAD(VAL_CONTEXT(v));
 
-    bool first = true;
-    Value* key = keys_head;
-    Value* var = vars_head;
-    for (; NOT_END(key); ++key, ++var) {
-        if (Is_Param_Hidden(key))
-            continue;
-
-        if (first)
-            first = false;
-        else
-            Append_Utf8_Codepoint(out, ' ');
-
-        // !!! Feature of "private" words in object specs not yet implemented,
-        // but if it paralleled how <local> works for functions then it would
-        // be shown as SET-WORD!
-        //
-        DECLARE_VALUE (any_word);
-        Init_Any_Word(any_word, REB_WORD, Key_Symbol(key));
-        Mold_Value(mo, any_word);
-    }
-
-    Append_Utf8_Codepoint(out, ']');
-    New_Indented_Line(mo);
-    Append_Utf8_Codepoint(out, '[');
-
     mo->indent++;
 
-    key = keys_head;
-    var = vars_head;
+    Value* key = keys_head;
+    Value* var = vars_head;
 
-    for (; NOT_END(key); var ? (++key, ++var) : ++key) {
+    for (; NOT_END(key); ++key, ++var) {
         if (Is_Param_Hidden(key))
-            continue;
-
-        // Having the key mentioned in the spec and then not being assigned
-        // a value in the body is how voids are denoted.
-        //
-        if (var && IS_NULLED(var))
             continue;
 
         New_Indented_Line(mo);
@@ -711,15 +675,12 @@ void MF_Context(REB_MOLD *mo, const Cell* v, bool form)
 
         Append_Unencoded(out, ": ");
 
-        if (var)
-            Mold_Value(mo, var);
+        if (IS_NULLED(var))
+            Append_Unencoded(out, "~null~");
         else
-            Append_Unencoded(out, ": --optimized out--");
+            Mold_Value(mo, var);
     }
 
-    mo->indent--;
-    New_Indented_Line(mo);
-    Append_Utf8_Codepoint(out, ']');
     mo->indent--;
     New_Indented_Line(mo);
     Append_Utf8_Codepoint(out, ']');
