@@ -955,7 +955,10 @@ bool Eval_Core_Throws(REBFRM * const f)
                 if (f->dsp_orig == DSP) // no refinements left on stack
                     goto unused_refinement;
 
-                if (VAL_STORED_CANON(ordered) == param_canon) {
+                if (IS_ACTION(ordered)) {
+                    // chained function to call later
+                }
+                else if (VAL_STORED_CANON(ordered) == param_canon) {
                     DS_DROP; // we're lucky: this was next refinement used
                     f->refine = f->arg; // remember so we can revoke!
                     goto used_refinement;
@@ -966,6 +969,9 @@ bool Eval_Core_Throws(REBFRM * const f)
               unspecialized_refinement_must_pickup:; // fulfill on 2nd pass
 
                 for (; ordered != DS_AT(f->dsp_orig); --ordered) {
+                    if (IS_ACTION(ordered))
+                        continue;  // chained function to call later
+
                     if (VAL_STORED_CANON(ordered) != param_canon)
                         continue;
 
