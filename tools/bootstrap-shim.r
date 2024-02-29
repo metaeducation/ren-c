@@ -115,6 +115,9 @@ nulled?: :unset?
 applique: :apply
 unset 'apply
 
+the: :quote
+quote: func [] [fail/where "Use THE instead of QUOTE for literalizing" 'return]
+
 collect*: :collect
 collect: :collect-block
 

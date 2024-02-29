@@ -56,8 +56,8 @@
 ('a/X/o/X = replace/case 'a/X/x/X 'x 'o)
 ('a/o/x/o = replace/case/all 'a/X/x/X 'X 'o)
 (["a" "B" "x"] = replace/case/all ["a" "B" "a" "b"] ["a" "b"] "x")
-((quote :x/b/A/x/B) = replace/case/all quote :a/b/A/a/B [a] 'x)
-((quote (x A x)) = replace/case/all quote (a A a) 'a 'x)
+((the :x/b/A/x/B) = replace/case/all the :a/b/A/a/B [a] 'x)
+((the (x A x)) = replace/case/all the (a A a) 'a 'x)
 
 ;((make hash! [x a b [a B]]) = replace/case make hash! [a B a b [a B]] [a B] 'x)
 

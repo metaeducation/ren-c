@@ -596,8 +596,8 @@ const void *RL_rebEval(const RebolValue* v)
 // works around it by splicing in a GROUP!, and if it's not null then it puts
 // a QUOTE and the value inside.
 //
-//    null => `()`
-//    non-null => `(quote ...)`
+//    null => `(null)`
+//    non-null => `(the ...)`
 //
 // There's a parallel Rebol action! that does this called UNEVAL, which is
 // for use with REDUCE and COMPOSE/ONLY.  However, rather than return Value*
@@ -618,12 +618,12 @@ const void *RL_rebUneval(const RebolValue* v)
         // should be revisited where instructions encode what they are in the
         // header/info/link/misc.
         //
-        Move_Value(single, NAT_VALUE(null));
+        Move_Value(single, NAT_VALUE(null));  // the NULL function
     }
     else {
         Array* a = Make_Arr(2);
         SET_SER_INFO(a, SERIES_INFO_HOLD);
-        Move_Value(Alloc_Tail_Array(a), NAT_VALUE(quote));
+        Move_Value(Alloc_Tail_Array(a), NAT_VALUE(the));  // the THE function
         Move_Value(Alloc_Tail_Array(a), v);
 
         Init_Group(single, a);

@@ -440,7 +440,7 @@ rebsource: context [
             any [nl | eol | wsp]
         ]
 
-        append/only grammar/other-segment quote (
+        append/only grammar/other-segment the (
             last-func-end: _
         )
 

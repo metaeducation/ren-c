@@ -549,8 +549,8 @@ INLINE Cell* VAL_ARRAY_TAIL(const Cell* v) {
 //
 //     [a b c d/e/f] -- append copy [a b c] 'd/e/f
 //      a/b/c/d/e/f  -- append copy 'a/b/c [d e f]
-//     (a b c d/e/f) -- append copy quote (a b c) 'd/e/f
-//      a/b/c/d/e/f  -- append copy 'a/b/c quote (d e f)
+//     (a b c d/e/f) -- append copy the (a b c) 'd/e/f
+//      a/b/c/d/e/f  -- append copy 'a/b/c the (d e f)
 //      a/b/c/d/e/f  -- append copy 'a/b/c 'd/e/f
 //
 // This rule influences the behavior of TO conversions as well:

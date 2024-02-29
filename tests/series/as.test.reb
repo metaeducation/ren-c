@@ -8,7 +8,7 @@
     block: copy [a b c]
     group: as group! block
     append block 'd
-    group = quote (a b c d)
+    group = the (a b c d)
 )
 
 ; With UTF-8 Everywhere, AS will be able to alias series data for

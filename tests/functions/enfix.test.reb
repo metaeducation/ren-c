@@ -65,7 +65,7 @@
     ; type matched what it was looking for.
     (
         var: ~
-        block: [quote 1 lefty "hi"]
+        block: [the 1 lefty "hi"]
         did all [
             [lefty "hi"] = block: evaluate/set block 'var
             1 = var

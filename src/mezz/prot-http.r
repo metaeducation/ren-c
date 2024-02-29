@@ -328,7 +328,7 @@ check-response: function [port] [
         ]
         remove/part conn/data d2
         state/state: 'reading-data
-        if quote (txt) <> last body-of :net-log [ ; net-log is in active state
+        if the (txt) <> last body-of :net-log [ ; net-log is in active state
             print "Dumping Webserver headers and body"
             net-log/S info
             trap [

@@ -26,7 +26,7 @@
             arg: block/1
             try next block
         ] else [
-            try evaluate/set block quote arg:
+            try evaluate/set block the arg:
         ]
 
         if refinement? params/1 [
@@ -111,10 +111,10 @@
 ; REEVAL/ONLY
 (
     o: make object! [a: 0]
-    b: reeval/only (quote o/a:) 1 + 2
+    b: reeval/only (the o/a:) 1 + 2
     did all [
         o/a = 1
-        b = 3 ;-- above acts as `b: (reeval/only (quote o/a:) 1) + 2`
+        b = 3 ;-- above acts as `b: (reeval/only (the o/a:) 1) + 2`
     ]
 )
 (

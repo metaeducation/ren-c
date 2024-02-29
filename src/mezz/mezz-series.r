@@ -282,7 +282,7 @@ reword: function [
                 ; match necessarily happened, as the enclosing rule may have
                 ; a `suffix` left to take into account.
                 ;
-                compose quote (keyword-match: quote (keyword))
+                compose the (keyword-match: the (keyword))
             ]
 
             keep [
@@ -295,8 +295,8 @@ reword: function [
     ; Note that `any-keyword-rule` will look something like:
     ;
     ; [
-    ;     "keyword1" (keyword-match: quote keyword1)
-    ;     | "keyword2" (keyword-match: quote keyword2)
+    ;     "keyword1" (keyword-match: the keyword1)
+    ;     | "keyword2" (keyword-match: the keyword2)
     ;     | fail
     ; ]
 

@@ -33,7 +33,7 @@
 ; https://forum.rebol.info/t/justifiable-asymmetry-to-on-block/751
 ;
 ([a b c d/e/f] = append copy [a b c] 'd/e/f)
-(quote a/b/c/d/e/f = append copy 'a/b/c [d e f])
-(quote (a b c d/e/f) = append copy quote (a b c) 'd/e/f)
-(quote a/b/c/d/e/f = append copy 'a/b/c quote (d e f))
-(quote a/b/c/d/e/f = append copy 'a/b/c 'd/e/f)
+(the a/b/c/d/e/f = append copy 'a/b/c [d e f])
+(the (a b c d/e/f) = append copy the (a b c) 'd/e/f)
+(the a/b/c/d/e/f = append copy 'a/b/c the (d e f))
+(the a/b/c/d/e/f = append copy 'a/b/c 'd/e/f)

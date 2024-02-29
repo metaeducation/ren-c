@@ -124,7 +124,7 @@ rejoin: function [
     ;
     values: copy []
     pos: block
-    while [pos: evaluate/set pos (quote evaluated:)][
+    while [pos: evaluate/set pos (the evaluated:)][
         append/only values :evaluated
     ]
 

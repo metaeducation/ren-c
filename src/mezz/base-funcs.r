@@ -66,7 +66,7 @@ maybe: enfix func [
             ; https://github.com/rebol/rebol-issues/issues/2275
             ;
             if null? :optional [return do compose [(as get-path! target)]]
-            do compose [(target) quote ((:optional))]
+            do compose [(target) the ((:optional))]
         ]
     ]
 ]
@@ -401,7 +401,7 @@ redescribe: function [
             ;
             opt [[set note: text!] (
                 on-demand-meta
-                either equal? param (quote return:) [
+                either equal? param (the return:) [
                     meta/return-note: all [
                         not equal? note {}
                         copy note
@@ -574,7 +574,7 @@ iterate-skip: redescribe [
 
         ; !!! https://github.com/rebol/rebol-issues/issues/2331
         comment [
-            trap [set quote result: do f] then lambda e [
+            trap [set the result: do f] then lambda e [
                 set word saved
                 fail e
             ]

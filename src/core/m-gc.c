@@ -1149,7 +1149,7 @@ static void Mark_Frame_Stack_Deep(void)
 
         if (not Is_Action_Frame(f)) {
             //
-            // Consider something like `eval copy quote (recycle)`, because
+            // Consider something like `eval copy the (recycle)`, because
             // while evaluating the group it has no anchor anywhere in the
             // root set and could be GC'd.  The Reb_Frame's array ref is it.
             //

@@ -41,7 +41,7 @@
         ; Rather than have MATCH return a falsey result in these cases of
         ; success, pass back a BAR! in the hopes of drawing attention.
 
-        set quote result: do f  ; can't access f/arg after the DO
+        set the result: do f  ; can't access f/arg after the DO
 
         if not :arg and [not null? :result] [
             return '| ;-- BAR! if matched a falsey type

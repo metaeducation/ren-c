@@ -289,7 +289,7 @@
 ; It's likely more useful for EVAL to give TRASH than error if asked to
 ; evaluate something that turns out to be invisible.
 ;
-(trash? reeval quote (comment "void is better than failing here"))
+(trash? reeval the (comment "void is better than failing here"))
 (
     x: <before>
     did all [

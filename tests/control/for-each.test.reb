@@ -110,7 +110,7 @@
         error? trap [for-each [x x] [1 2 3 4] [sum: sum + x]]
         error? trap [
             for-each (compose [ ;-- see above
-                x (bind quote 'x obj1)
+                x (bind the 'x obj1)
             ])[
                 1 2 3 4
             ][
@@ -119,7 +119,7 @@
         ]
         error? trap [
             for-each (compose [ ;-- see above
-                (bind quote 'x obj2) x
+                (bind the 'x obj2) x
             ])[
                 1 2 3 4
             ][
@@ -128,7 +128,7 @@
         ]
         not error? trap [
             for-each (compose [ ;-- see above
-                (bind quote 'x obj1) (bind quote 'x obj2)
+                (bind the 'x obj1) (bind the 'x obj2)
             ])[
                 1 2 3 4
             ][
@@ -187,4 +187,3 @@
         [a b c 10] = append block 10
     ]
 )
-

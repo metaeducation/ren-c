@@ -236,7 +236,7 @@ DECLARE_NATIVE(console)
 
     Value* code;
     if (REF(provoke)) {
-        code = rebValue("quote", ARG(provocation));
+        code = rebValue("the", ARG(provocation));
         goto provoked;
     }
     else

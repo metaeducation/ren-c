@@ -1234,26 +1234,20 @@ DECLARE_NATIVE(unset_q)
 
 
 //
-//  quote: native/body [
+//  the: native [
 //
 //  "Returns value passed in without evaluation."
 //
 //      return: {The input value, verbatim--unless /SOFT and soft quoted type}
 //          [<opt> any-value!]
-//      :value {Value to quote, <opt> is impossible (see UNEVAL)}
+//      :value {Value to literalize, <opt> is impossible (see UNEVAL)}
 //          [any-value!]
 //      /soft {Evaluate if a GROUP!, GET-WORD!, or GET-PATH!}
-//  ][
-//      if soft and [match [group! get-word! get-path!] :value] [
-//          eval value
-//      ] else [
-//          :value ;-- also sets unevaluated bit, how could a user do so?
-//      ]
 //  ]
 //
-DECLARE_NATIVE(quote)
+DECLARE_NATIVE(the)
 {
-    INCLUDE_PARAMS_OF_QUOTE;
+    INCLUDE_PARAMS_OF_THE;
 
     Value* v = ARG(value);
 

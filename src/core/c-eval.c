@@ -623,17 +623,17 @@ bool Eval_Core_Throws(REBFRM * const f)
     // It's a backward quoter!  But...before allowing it to try, first give an
     // operation on the left which quotes to the right priority.  So:
     //
-    //     foo: quote => [print quote]
+    //     foo: the => [print the]
     //
     // Would be interpreted as:
     //
-    //     foo: (quote =>) [print quote]
+    //     foo: (the =>) [print the]
     //
     // This is a good argument for not making enfixed operations that
     // hard-quote things that can dispatch functions.  A soft-quote would give
     // more flexibility to override the left hand side's precedence:
     //
-    //     foo: ('quote) => [print quote]
+    //     foo: ('the) => [print the]
 
     if (eval_type == REB_WORD and EVALUATING(current)) {
         if (not current_gotten)
@@ -2433,8 +2433,8 @@ bool Eval_Core_Throws(REBFRM * const f)
         // Left-quoting by enfix needs to be done in the lookahead before an
         // evaluation, not this one that's after.  This happens in cases like:
         //
-        //     left-quote: enfix func [:value] [:value]
-        //     quote <something> left-quote
+        //     left-the: enfix func [:value] [:value]
+        //     the <something> left-the
         //
         // But due to the existence of <end>-able and <skip>-able parameters,
         // the left quoting function might be okay with seeing nothing on the

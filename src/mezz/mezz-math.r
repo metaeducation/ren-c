@@ -132,7 +132,7 @@ math: function [
 
     <static>
 
-    slash (quote /)
+    slash (the /)
 
     expr-val (_)
 

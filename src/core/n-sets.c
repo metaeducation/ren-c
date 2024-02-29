@@ -55,7 +55,7 @@ REBSER *Make_Set_Operation_Series(
 
             // As long as they're both arrays, we're willing to do:
             //
-            //     >> union quote (a b c) 'b/d/e
+            //     >> union the (a b c) 'b/d/e
             //     (a b c d e)
             //
             // The type of the result will match the first value.

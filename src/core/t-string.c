@@ -633,7 +633,7 @@ REB_R PD_String(
         // generate a new FILE! or URL! with a slash in it.
         //
         //     >> x: %foo
-        //     >> type of quote x/bar
+        //     >> type of the x/bar
         //     == path!
         //
         //     >> x/bar
@@ -642,7 +642,7 @@ REB_R PD_String(
         // This can only be done with evaluations, since FILE! and URL! have
         // slashes in their literal form:
         //
-        //     >> type of quote %foo/bar
+        //     >> type of the %foo/bar
         //     == file!
         //
         // Because Ren-C unified picking and pathing, this somewhat odd

@@ -19,12 +19,12 @@
 ;
 (
     value: null
-    error? trap [set quote a: non null value]
+    error? trap [set the a: non null value]
 )
 (not error? trap [set 'a null])
 (
     value: ~
-    error? trap [set quote a: non trash! :value]
+    error? trap [set the a: non trash! :value]
 )
 (not error? trap [set 'a ~])
 

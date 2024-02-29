@@ -50,7 +50,7 @@ probe: func [
 
 ; Convenience helper for making enfixed functions
 
-set/enfix quote enfix: func [
+set/enfix the enfix: func [
     "Convenience version of SET/ENFIX, e.g `+: enfix :add`"
     return: <void> "`x: y: enfix :z` wouldn't enfix x, so returns void"
     :target [set-word! set-path!]
@@ -105,14 +105,14 @@ end: func [
 uneval: func [
     {Make expression that when evaluated, will produce the input}
 
-    return: {`(null)` if null, or `(quote ...)` where ... is passed-in cell}
+    return: {`(null)` if null, or `(the ...)` where ... is passed-in cell}
         [group!]
     optional [<opt> any-value!]
 ][
-    either null? get* 'optional [
-        quote (null)
-    ][
-        reduce quote ('quote get* 'optional)
+    case [
+        null? :optional [the (null)]
+        trash? :optional [the (~)]
+        true [as group! reduce ['the :optional]]
     ]
 ]
 

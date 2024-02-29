@@ -317,13 +317,13 @@ INLINE void Set_Frame_Detected_Fetch(
         // free it.  It has to be kept alive -and- kept safe from GC.  e.g.
         //
         //     Value* word = rebValue("make word! {hello}");
-        //     rebValue(rebR(word), "-> (recycle :quote)");
+        //     rebValue(rebR(word), "-> (recycle :the)");
         //
         // The `current` cell the evaluator is looking at is the WORD!, then
         // f->value receives the "shove" `->`.  The shove runs the code in
         // the GROUP!.  But there are no other references to `hello` after
         // the Free_Value() done by rebR(), so it's a candidate for recycle,
-        // which would mean shoving a bad `current` as the arg to `:quote`
+        // which would mean shoving a bad `current` as the arg to `:the`
         //
         // The FRM_CELL(f) is used as the GC-safe location proxied to.
         //
@@ -765,7 +765,7 @@ INLINE bool Eval_Step_Maybe_Stale_Throws(
 // It also reuses the frame...but has to clear and restore the frame's
 // flags.  It is currently used only by SET-WORD! and SET-PATH!.
 //
-// Note: Consider pathological case `x: eval quote y: eval eval quote z: ...`
+// Note: Consider pathological case `x: eval the y: eval eval the z: ...`
 // This can be done without making a new frame, but the eval cell which holds
 // the SET-WORD! needs to be put back in place before returning, so that the
 // set knows where to write.  The caller handles this with the data stack.

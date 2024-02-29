@@ -11,8 +11,8 @@
 ; https://forum.rebol.info/t/justifiable-asymmetry-to-on-block/751
 ;
 ([a/b/c] = to block! 'a/b/c)
-(quote (a/b/c) = to group! 'a/b/c)
-([a b c] = to block! quote (a b c))
-(quote (a b c) = to group! [a b c])
-(quote a/b/c = to path! [a b c])
-(quote a/b/c = to path! quote (a b c))
+(the (a/b/c) = to group! 'a/b/c)
+([a b c] = to block! the (a b c))
+(the (a b c) = to group! [a b c])
+(the a/b/c = to path! [a b c])
+(the a/b/c = to path! the (a b c))

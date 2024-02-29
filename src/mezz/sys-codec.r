@@ -36,16 +36,16 @@ register-codec*: func [
     if not block? suffixes [suffixes: reduce [suffixes]]
 
     codec: construct [] compose [
-        name: quote (name)
+        name: the (name)
 
         ; !!! There was a "type:" field here before, which was always set to
         ; IMAGE!.  Should the argument types of the encode function be cached
         ; here, or be another parameter, or...?
 
         suffixes: ((suffixes))
-        identify?: quote (:identify?)
-        decode: quote (:decode)
-        encode: quote (:encode)
+        identify?: the (:identify?)
+        decode: the (:decode)
+        encode: the (:encode)
     ]
 
     append system/codecs reduce [(to set-word! name) codec]

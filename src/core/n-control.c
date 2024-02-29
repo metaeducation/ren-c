@@ -891,7 +891,7 @@ DECLARE_NATIVE(switch)
 
 
 //
-//  default: enfix native/body [
+//  default: enfix native [
 //
 //  {Set word or path to a default value if it is not set yet or blank.}
 //
@@ -904,23 +904,6 @@ DECLARE_NATIVE(switch)
 //      :look "Variadic lookahead used to make sure at end if no target"
 //          [<...>]
 //      /only "Consider target being BLANK! to be a value not to overwrite"
-//  ][
-//      if unset? 'target [ ;-- `case [... default [...]]`
-//          if not tail? look [
-//              fail ["DEFAULT usage with no left hand side must be at <end>"]
-//          ]
-//          return do :branch
-//      ]
-//      either all [
-//          value? set quote gotten: get target
-//          only or [not blank? :gotten]
-//      ][
-//          :gotten  ; so that `x: y: default z` leads to `x = y`
-//      ][
-//          set target <- do :branch else [
-//              fail ["DEFAULT for" target "came back NULL"]
-//          ]
-//      ]
 //  ]
 //
 DECLARE_NATIVE(default)
