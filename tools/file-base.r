@@ -69,7 +69,12 @@ core: [
         ; code if they change their policies, including Spectre mitigation:
         ;
         <msc:/wd5045> ;-- https://stackoverflow.com/q/50399940
+        <msc:/wd4146>  ; unary minus operator applied to unsigned type
 
+        <gnu:-Wno-cast-qual>  ; e.g. `*sp = (char*)s0 - 1;`
+        <gnu:-Wno-unused-const-variable>  ; e.g. `tinytens`, `bigtens`, `tens`
+
+        <no-sign-compare>
         <no-uninitialized>
         <implicit-fallthru>
     ]

@@ -36,4 +36,10 @@ EXTERN_C char *dtoa(
     char **rve
 );
 
-EXTERN_C double STRTOD(const char *s00, const char **se);
+// Note: `strtod()` is generally considered to be part of the standard C
+// library.  R3-Alpha did not include that part of the dtoa.c code, e.g.
+// there is no definition of strtod() here, only a prototype:
+//
+// https://github.com/rebol/rebol/blob/master/src/core/f-dtoa.c
+//
+// See further notes in %f-dtoa.c

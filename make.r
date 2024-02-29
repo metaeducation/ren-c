@@ -185,10 +185,18 @@ gen-obj: func [
                         <msc:/wd4701> <msc:/wd4703>
                     ]
                 ]
+                <no-sign-compare> [
+                    [
+                        <gnu:-Wno-sign-compare>
+                        <msc:/wd4388>
+                        <msc:/wd4018>  ; a 32-bit variant of the error
+                    ]
+                ]
                 <implicit-fallthru> [
                     [
                         <gnu:-Wno-unknown-warning>
                         <gnu:-Wno-implicit-fallthrough>
+                        <msc:/wd5262>
                     ]
                 ]
                 <no-unused-parameter> [
