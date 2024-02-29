@@ -90,8 +90,7 @@ The open-sourced R3-Alpha was based on a build process that depended on GNU make
 needed an existing R3-Alpha executable in order to generate that makefile (as well as other
 generated supporting C files).  This process was recently replaced with a Rebol-only
 building solution (`%rebmake.r`) which requires no other tool, and can spawn compilation
-processes itself.  Yet it still can generate GNU makefiles or a Visual Studio Solution
-if desired.
+processes itself.  Yet it still can generate GNU makefiles or NMAKE files if desired.
 
 While this process *works*, it introduced considerable complexity...and needs a relatively
 modern Ren-C build to bootstrap--as opposed to a historical R3-Alpha.  For the moment,

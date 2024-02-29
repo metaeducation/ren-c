@@ -373,15 +373,6 @@ targets: [
     'nmake [
         rebmake/nmake/generate (join-of output-dir %makefile) solution
     ]
-    'vs2017
-    'visual-studio [
-        x86: try if system-config/os-name = 'Windows-x86 ['x86]
-        rebmake/visual-studio/generate/(x86) %. solution
-    ]
-    'vs2015 [
-        x86: try if system-config/os-name = 'Windows-x86 ['x86]
-        rebmake/vs2015/generate/(x86) %. solution
-    ]
 ]
 target-names: make block! 16
 for-each x targets [

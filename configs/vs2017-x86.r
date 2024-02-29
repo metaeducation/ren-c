@@ -1,7 +1,7 @@
 REBOL []
 
 os-id: 0.3.1
-target: 'visual-studio
+target: 'nmake
 
 toolset: [
     cl %cl.exe
