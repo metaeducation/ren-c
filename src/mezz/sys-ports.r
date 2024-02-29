@@ -28,10 +28,10 @@ make-port*: function [
     really switch type of spec [
         file! [
             name: pick [dir file] dir? spec
-            spec: join-of [ref:] spec
+            spec: append copy [ref:] spec
         ]
         url! [
-            spec: join decode-url spec [to set-word! 'ref spec]
+            spec: append (decode-url spec) reduce [to set-word! 'ref spec]
             name: select spec to set-word! 'scheme
         ]
         block! [

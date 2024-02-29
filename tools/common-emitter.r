@@ -246,10 +246,10 @@ make-emitter: function [
             data: take data
             switch type of data [
                 text! [
-                    adjoin buf-emit cscape/with data opt context
+                    append buf-emit cscape/with data opt context
                 ]
                 char! [
-                    adjoin buf-emit data
+                    append buf-emit data
                 ]
             ]
         ]

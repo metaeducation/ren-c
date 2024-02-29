@@ -198,5 +198,5 @@ export: func [
     "Low level export of values (e.g. functions) to lib."
     words [block!] "Block of words (already defined in local context)"
 ][
-    for-each word words [join lib [word get word]]
+    for-each word words [append lib reduce [word get word]]
 ]

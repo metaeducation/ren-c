@@ -195,7 +195,7 @@ load-header: function [
     ]
 
     if find hdr/options 'content [
-        join hdr ['content data] ; as of start of header
+        append hdr reduce ['content data]  ; as of start of header
     ]
 
     if 13 = rest/1 [rest: next rest] ; skip CR
@@ -478,7 +478,7 @@ do-needs: function [
             set name [word! | file! | url! | tag!]
             set vers opt tuple!
             set hash opt binary!
-            (join mods [name vers hash])
+            (append mods reduce [name vers hash])
         ]
         end
     ] or [
@@ -646,7 +646,7 @@ load-module: function [
                         word! | module! | file! | url! | text! | binary!
                     ]
                     set ver opt tuple! (
-                        join data [mod ver if name [to word! name]]
+                        append data reduce [mod ver if name [to word! name]]
                     )
                 ]
                 end

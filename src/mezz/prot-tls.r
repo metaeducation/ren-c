@@ -147,7 +147,7 @@ emit: function [
             ]
         ]
     ] else [
-        join ctx/msg code
+        append ctx/msg code
     ]
 ]
 

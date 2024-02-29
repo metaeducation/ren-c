@@ -1085,7 +1085,7 @@ append app-config/ldflags opt user-config/ldflags
 
 libr3-core: make rebmake/object-library-class [
     name: 'libr3-core
-    definitions: join-of ["REB_API"] app-config/definitions
+    definitions: append copy ["REB_API"] app-config/definitions
 
     ; might be modified by the generator, thus copying
     includes: append-of app-config/includes %prep/core
@@ -1113,7 +1113,7 @@ remove-each plus file-base/os [plus = '+] ;remove the '+ sign, we don't care her
 libr3-os: make libr3-core [
     name: 'libr3-os
 
-    definitions: join-of ["REB_CORE"] app-config/definitions
+    definitions: append copy ["REB_CORE"] app-config/definitions
     includes: append-of app-config/includes %prep/os ; generator may modify
     cflags: copy app-config/cflags ; generator may modify
 
@@ -1209,7 +1209,7 @@ for-each [label list] reduce [
     ]
 ]
 
-all-extensions: join-of builtin-extensions dynamic-extensions
+all-extensions: append (copy builtin-extensions) dynamic-extensions
 
 add-project-flags: func [
     return: <void>
@@ -1341,7 +1341,7 @@ for-each ext builtin-extensions [
     ; Modify module properties
     add-project-flags/I/D/c/O/g mod-obj
         app-config/includes
-        join-of ["REB_API"] app-config/definitions
+        append copy ["REB_API"] app-config/definitions
         app-config/cflags
         app-config/optimization
         app-config/debug
@@ -1581,7 +1581,7 @@ for-each ext dynamic-extensions [
         ; Modify module properties
         add-project-flags/I/D/c/O/g mod-obj
             ext-includes
-            join-of ["EXT_DLL"] app-config/definitions
+            append copy ["EXT_DLL"] app-config/definitions
             app-config/cflags
             app-config/optimization
             app-config/debug
@@ -1622,7 +1622,7 @@ for-each ext dynamic-extensions [
 
     add-project-flags/I/D/c/O/g ext-proj
         ext-includes
-        join-of ["EXT_DLL"] app-config/definitions
+        append copy ["EXT_DLL"] app-config/definitions
         app-config/cflags
         app-config/optimization
         app-config/debug
@@ -1655,7 +1655,7 @@ clean: make rebmake/entry-class [
 
 check: make rebmake/entry-class [
     target: 'check ; phony target
-    depends: join-of dynamic-libs app
+    depends: append copy dynamic-libs app
     commands: collect [
         keep make rebmake/cmd-strip-class [
             file: join-of app/output opt rebmake/target-platform/exe-suffix

@@ -224,11 +224,13 @@ make-http-request: func [
         space "HTTP/1.0" CR LF
     ]
     for-each [word string] headers [
-        join result [mold word space string CR LF]
+        append result unspaced [mold word space string CR LF]
     ]
     if content [
         content: to binary! content
-        join result ["Content-Length:" space (length of content) CR LF]
+        append result unspaced [
+            "Content-Length:" space (length of content) CR LF
+        ]
     ]
     append result unspaced [CR LF]
     result: to binary! result
